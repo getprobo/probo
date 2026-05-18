@@ -25,6 +25,7 @@ import (
 	"go.probo.inc/probo/pkg/cookiebanner"
 	"go.probo.inc/probo/pkg/esign"
 	"go.probo.inc/probo/pkg/iam"
+	"go.probo.inc/probo/pkg/itam"
 	"go.probo.inc/probo/pkg/mailman"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/riskmanagement"
@@ -49,6 +50,7 @@ func NewGraphQLHandler(
 	logger *log.Logger,
 	thirdPartySvc *thirdparty.Service,
 	riskManagementSvc *riskmanagement.Service,
+	itamSvc *itam.Service,
 ) http.Handler {
 	config := schema.Config{
 		Resolvers: &Resolver{
@@ -65,6 +67,7 @@ func NewGraphQLHandler(
 			providerRegistry:  providerRegistry,
 			riskManagement:    riskManagementSvc,
 			thirdParty:        thirdPartySvc,
+			itam:              itamSvc,
 			customDomainCname: customDomainCname,
 			logger:            logger,
 		},

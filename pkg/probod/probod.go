@@ -65,6 +65,7 @@ import (
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/iam/oauth2server"
 	"go.probo.inc/probo/pkg/iam/oidc"
+	"go.probo.inc/probo/pkg/itam"
 	"go.probo.inc/probo/pkg/mailer"
 	"go.probo.inc/probo/pkg/mailman"
 	"go.probo.inc/probo/pkg/probo"
@@ -599,6 +600,8 @@ func (impl *Implm) Run(
 	thirdPartyService := thirdparty.NewService(pgClient, fileService, thirdPartyVetter)
 	riskManagementService := riskmanagement.NewService(pgClient)
 
+	itamService := itam.NewService(pgClient, iamService, l.Named("itam"))
+
 	serverHandler, err := server.NewServer(
 		server.Config{
 			AllowedOrigins:    impl.cfg.Api.Cors.AllowedOrigins,
@@ -615,6 +618,7 @@ func (impl *Implm) Run(
 			Geoloc:            geolocService,
 			ThirdParty:        thirdPartyService,
 			RiskManagement:    riskManagementService,
+			ITAM:              itamService,
 			Slack:             slackService,
 			ConnectorRegistry: defaultConnectorRegistry,
 			ProviderRegistry:  providerRegistry,

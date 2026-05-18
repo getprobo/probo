@@ -30,21 +30,21 @@ import (
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/bearertoken"
 	"go.probo.inc/probo/pkg/coredata"
-	"go.probo.inc/probo/pkg/probo"
+	"go.probo.inc/probo/pkg/itam"
 	"go.probo.inc/probo/pkg/server/api/agent/v1/types"
 	"go.probo.inc/probo/pkg/server/jsonutil"
 )
 
 type Handler struct {
 	logger      *log.Logger
-	proboSvc    *probo.Service
+	itamSvc     *itam.Service
 	agentServer string
 }
 
-func NewMux(logger *log.Logger, proboSvc *probo.Service, agentServer string) *chi.Mux {
+func NewMux(logger *log.Logger, itamSvc *itam.Service, agentServer string) *chi.Mux {
 	h := &Handler{
 		logger:      logger,
-		proboSvc:    proboSvc,
+		itamSvc:     itamSvc,
 		agentServer: agentServer,
 	}
 
@@ -77,9 +77,9 @@ func (h *Handler) handleEnroll(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, err := h.proboSvc.EnrollDevice(
+	result, err := h.itamSvc.EnrollDevice(
 		r.Context(),
-		probo.EnrollDeviceRequest{
+		itam.EnrollDeviceRequest{
 			EnrollmentSecret: req.EnrollmentToken,
 			HardwareUUID:     req.HardwareUUID,
 			SerialNumber:     req.SerialNumber,
@@ -90,7 +90,7 @@ func (h *Handler) handleEnroll(w http.ResponseWriter, r *http.Request) {
 		},
 	)
 	if err != nil {
-		if errors.Is(err, probo.ErrEnrollmentTokenInvalid) {
+		if errors.Is(err, itam.ErrEnrollmentTokenInvalid) {
 			jsonutil.RenderUnauthorized(w, errors.New("enrollment token is invalid"))
 			return
 		}
@@ -106,8 +106,8 @@ func (h *Handler) handleEnroll(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) handleHeartbeat(w http.ResponseWriter, r *http.Request) {
 	defer func() { _ = r.Body.Close() }()
 
-	device := deviceFromContext(r.Context())
-	if device == nil {
+	dev := deviceFromContext(r.Context())
+	if dev == nil {
 		jsonutil.RenderUnauthorized(w, errors.New("unauthorized"))
 		return
 	}
@@ -123,14 +123,17 @@ func (h *Handler) handleHeartbeat(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.proboSvc.RecordHeartbeat(
+	scope := coredata.NewScopeFromObjectID(dev.ID)
+
+	if err := h.itamSvc.RecordHeartbeat(
 		r.Context(),
-		device.ID,
+		scope,
+		dev.ID,
 		req.Hostname,
 		req.OSVersion,
 		req.AgentVersion,
 	); err != nil {
-		if errors.Is(err, probo.ErrDeviceRevoked) {
+		if errors.Is(err, itam.ErrDeviceRevoked) {
 			jsonutil.RenderUnauthorized(w, errors.New("device revoked"))
 			return
 		}
@@ -146,8 +149,8 @@ func (h *Handler) handleHeartbeat(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) handlePostures(w http.ResponseWriter, r *http.Request) {
 	defer func() { _ = r.Body.Close() }()
 
-	device := deviceFromContext(r.Context())
-	if device == nil {
+	dev := deviceFromContext(r.Context())
+	if dev == nil {
 		jsonutil.RenderUnauthorized(w, errors.New("unauthorized"))
 		return
 	}
@@ -168,11 +171,11 @@ func (h *Handler) handlePostures(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	results := make([]probo.RecordPostureResult, 0, len(req.Results))
+	results := make([]itam.RecordPostureResult, 0, len(req.Results))
 	for _, pr := range req.Results {
 		results = append(
 			results,
-			probo.RecordPostureResult{
+			itam.RecordPostureResult{
 				CheckKey:   pr.CheckKey,
 				Status:     pr.Status,
 				Evidence:   pr.Evidence,
@@ -181,8 +184,10 @@ func (h *Handler) handlePostures(w http.ResponseWriter, r *http.Request) {
 		)
 	}
 
-	if err := h.proboSvc.RecordPostures(r.Context(), device.ID, results); err != nil {
-		if errors.Is(err, probo.ErrDeviceRevoked) {
+	scope := coredata.NewScopeFromObjectID(dev.ID)
+
+	if err := h.itamSvc.RecordPostures(r.Context(), scope, dev.ID, results); err != nil {
+		if errors.Is(err, itam.ErrDeviceRevoked) {
 			jsonutil.RenderUnauthorized(w, errors.New("device revoked"))
 			return
 		}
@@ -198,13 +203,15 @@ func (h *Handler) handlePostures(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) handleUnenroll(w http.ResponseWriter, r *http.Request) {
 	defer func() { _ = r.Body.Close() }()
 
-	device := deviceFromContext(r.Context())
-	if device == nil {
+	dev := deviceFromContext(r.Context())
+	if dev == nil {
 		jsonutil.RenderUnauthorized(w, errors.New("unauthorized"))
 		return
 	}
 
-	if err := h.proboSvc.UnenrollDevice(r.Context(), device.ID); err != nil {
+	scope := coredata.NewScopeFromObjectID(dev.ID)
+
+	if err := h.itamSvc.UnenrollDevice(r.Context(), scope, dev.ID); err != nil {
 		h.logger.ErrorCtx(r.Context(), "cannot unenroll device", log.Error(err))
 		jsonutil.RenderInternalServerError(w)
 		return
@@ -236,9 +243,9 @@ func (h *Handler) deviceAuthMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		device, err := h.proboSvc.AuthenticateDevice(r.Context(), token)
+		dev, err := h.itamSvc.AuthenticateDevice(r.Context(), token)
 		if err != nil {
-			if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, probo.ErrDeviceRevoked) {
+			if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, itam.ErrDeviceRevoked) {
 				jsonutil.RenderUnauthorized(w, errors.New("unauthorized"))
 				return
 			}
@@ -247,7 +254,7 @@ func (h *Handler) deviceAuthMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		ctx := contextWithDevice(r.Context(), device)
+		ctx := contextWithDevice(r.Context(), dev)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

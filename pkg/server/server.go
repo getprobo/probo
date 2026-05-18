@@ -35,6 +35,7 @@ import (
 	"go.probo.inc/probo/pkg/geoloc"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/iam/oauth2server"
+	"go.probo.inc/probo/pkg/itam"
 	"go.probo.inc/probo/pkg/mailman"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/riskmanagement"
@@ -67,6 +68,7 @@ type Config struct {
 	Geoloc            *geoloc.Service
 	ThirdParty        *thirdparty.Service
 	RiskManagement    *riskmanagement.Service
+	ITAM              *itam.Service
 	Cookie            securecookie.Config
 	TokenSecret       string
 	ConnectorRegistry *connector.ConnectorRegistry
@@ -106,6 +108,7 @@ func NewServer(cfg Config) (*Server, error) {
 		Geoloc:            cfg.Geoloc,
 		ThirdParty:        cfg.ThirdParty,
 		RiskManagement:    cfg.RiskManagement,
+		ITAM:              cfg.ITAM,
 		Cookie:            cfg.Cookie,
 		TokenSecret:       cfg.TokenSecret,
 		ConnectorRegistry: cfg.ConnectorRegistry,
