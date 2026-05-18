@@ -48,7 +48,7 @@ func (impl *Implm) buildTrackerMappingConfig(
 		LLMClient:         llmClient,
 		Model:             agentCfg.ModelName,
 		SearchEndpoint:    impl.cfg.SearchEndpoint,
-		FirecrawlEndpoint: impl.cfg.FirecrawlEndpoint,
-		FirecrawlAPIKey:   impl.cfg.FirecrawlAPIKey,
+		FirecrawlEndpoint: impl.cfg.Firecrawl.Endpoint,
+		FirecrawlAPIKey:   impl.cfg.Firecrawl.APIKey,
 	}, nil
 }

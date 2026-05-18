@@ -197,6 +197,11 @@ func TestBuilder_Build_Defaults(t *testing.T) {
 	assert.Equal(t, 5, cfg.Probod.Notifications.Webhook.SenderInterval)
 	assert.Equal(t, 86400, cfg.Probod.Notifications.Webhook.CacheTTL)
 
+	// Search and Firecrawl — empty by default
+	assert.Empty(t, cfg.Probod.SearchEndpoint)
+	assert.Empty(t, cfg.Probod.Firecrawl.Endpoint)
+	assert.Empty(t, cfg.Probod.Firecrawl.APIKey)
+
 	// Agents config — default
 	assert.Equal(t, "openai", cfg.Probod.Agents.Default.Provider)
 	assert.Equal(t, "gpt-4o", cfg.Probod.Agents.Default.ModelName)
@@ -211,6 +216,10 @@ func TestBuilder_Build_Defaults(t *testing.T) {
 	assert.Empty(t, cfg.Probod.Agents.EvidenceDescriber.ModelName)
 	assert.Nil(t, cfg.Probod.Agents.EvidenceDescriber.Temperature)
 	assert.Nil(t, cfg.Probod.Agents.EvidenceDescriber.MaxTokens)
+	assert.Empty(t, cfg.Probod.Agents.TrackerMapping.Provider)
+	assert.Empty(t, cfg.Probod.Agents.TrackerMapping.ModelName)
+	assert.Nil(t, cfg.Probod.Agents.TrackerMapping.Temperature)
+	assert.Nil(t, cfg.Probod.Agents.TrackerMapping.MaxTokens)
 
 	// Custom domains config
 	assert.Equal(t, 3600, cfg.Probod.CustomDomains.RenewalInterval)
@@ -285,6 +294,10 @@ func TestBuilder_Build_CustomValues(t *testing.T) {
 	env["WEBHOOK_SENDER_INTERVAL"] = "10"
 	env["WEBHOOK_CACHE_TTL"] = "3600"
 	env["CONNECTOR_SLACK_SIGNING_SECRET"] = "slack-signing-secret"
+	// Search and Firecrawl
+	env["SEARCH_ENDPOINT"] = "https://search.example.com"
+	env["FIRECRAWL_ENDPOINT"] = "https://api.firecrawl.dev/v2"
+	env["FIRECRAWL_API_KEY"] = "fc-test-key"
 	// Agents — providers
 	env["OPENAI_API_KEY"] = "sk-test-key"
 	env["ANTHROPIC_API_KEY"] = "sk-ant-test-key"
@@ -298,6 +311,11 @@ func TestBuilder_Build_CustomValues(t *testing.T) {
 	env["AGENT_EVIDENCE_DESCRIBER_MODEL_NAME"] = "claude-sonnet-4-20250514"
 	env["AGENT_EVIDENCE_DESCRIBER_TEMPERATURE"] = "0.2"
 	env["AGENT_EVIDENCE_DESCRIBER_MAX_TOKENS"] = "4096"
+	// Agents — tracker-mapping override
+	env["AGENT_TRACKER_MAPPING_PROVIDER"] = "openai"
+	env["AGENT_TRACKER_MAPPING_MODEL_NAME"] = "gpt-4o-mini"
+	env["AGENT_TRACKER_MAPPING_TEMPERATURE"] = "0.1"
+	env["AGENT_TRACKER_MAPPING_MAX_TOKENS"] = "1024"
 	// Custom domains
 	env["CUSTOM_DOMAINS_RESOLVER_ADDR"] = "1.1.1.1:53"
 	env["ACME_ACCOUNT_KEY"] = "-----BEGIN EC PRIVATE KEY-----\ntest\n-----END EC PRIVATE KEY-----"
@@ -364,6 +382,10 @@ func TestBuilder_Build_CustomValues(t *testing.T) {
 	assert.Equal(t, "slack-signing-secret", cfg.Probod.Notifications.Slack.SigningSecret)
 	assert.Equal(t, 10, cfg.Probod.Notifications.Webhook.SenderInterval)
 	assert.Equal(t, 3600, cfg.Probod.Notifications.Webhook.CacheTTL)
+	// Search and Firecrawl
+	assert.Equal(t, "https://search.example.com", cfg.Probod.SearchEndpoint)
+	assert.Equal(t, "https://api.firecrawl.dev/v2", cfg.Probod.Firecrawl.Endpoint)
+	assert.Equal(t, "fc-test-key", cfg.Probod.Firecrawl.APIKey)
 	// Agents — providers
 	assert.Equal(t, "openai", cfg.Probod.Agents.Providers["openai"].Type)
 	assert.Equal(t, "sk-test-key", cfg.Probod.Agents.Providers["openai"].APIKey)
@@ -382,6 +404,11 @@ func TestBuilder_Build_CustomValues(t *testing.T) {
 	assert.Equal(t, "claude-sonnet-4-20250514", cfg.Probod.Agents.EvidenceDescriber.ModelName)
 	assert.Equal(t, new(0.2), cfg.Probod.Agents.EvidenceDescriber.Temperature)
 	assert.Equal(t, new(4096), cfg.Probod.Agents.EvidenceDescriber.MaxTokens)
+	// Agents — tracker-mapping overrides
+	assert.Equal(t, "openai", cfg.Probod.Agents.TrackerMapping.Provider)
+	assert.Equal(t, "gpt-4o-mini", cfg.Probod.Agents.TrackerMapping.ModelName)
+	assert.Equal(t, new(0.1), cfg.Probod.Agents.TrackerMapping.Temperature)
+	assert.Equal(t, new(1024), cfg.Probod.Agents.TrackerMapping.MaxTokens)
 	// Custom domains
 	assert.Equal(t, "1.1.1.1:53", cfg.Probod.CustomDomains.ResolverAddr)
 	assert.Equal(t, "-----BEGIN EC PRIVATE KEY-----\ntest\n-----END EC PRIVATE KEY-----", cfg.Probod.CustomDomains.ACME.AccountKey)

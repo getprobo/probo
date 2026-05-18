@@ -159,6 +159,21 @@ probo:
     modelName: "gpt-4o"
     maxTokens: 4096
 
+  # Firecrawl web search (optional, used by tracker mapping agent)
+  # firecrawl:
+  #   endpoint: "https://api.firecrawl.dev/v2"
+  #   apiKey: "CHANGE_ME_FIRECRAWL_API_KEY"
+
+  # SearXNG search endpoint (optional, fallback when Firecrawl is not configured)
+  # searchEndpoint: "https://search.example.com"
+
+  # Tracker mapping agent (optional, auto-links tracker patterns to vendors)
+  # trackerMapping:
+  #   provider: "openai"
+  #   modelName: "gpt-4o-mini"
+  #   temperature: "0.1"
+  #   maxTokens: "1024"
+
   # OpenTelemetry tracing (optional)
   tracing:
     enabled: true

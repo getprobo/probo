@@ -47,6 +47,12 @@ type (
 		TSAURL string `json:"tsa-url"`
 	}
 
+	// FirecrawlConfig contains Firecrawl web scraping API configuration.
+	FirecrawlConfig struct {
+		Endpoint string `json:"endpoint"`
+		APIKey   string `json:"api-key"`
+	}
+
 	// Config represents the probod application configuration.
 	Config struct {
 		BaseURL           string                  `json:"base-url"`
@@ -62,8 +68,7 @@ type (
 		EvidenceDescriber EvidenceDescriberConfig `json:"evidence-describer"`
 		ChromeDPAddr      string                  `json:"chrome-dp-addr"`
 		SearchEndpoint    string                  `json:"search-endpoint"`
-		FirecrawlEndpoint string                  `json:"firecrawl-endpoint"`
-		FirecrawlAPIKey   string                  `json:"firecrawl-api-key"`
+		Firecrawl         FirecrawlConfig         `json:"firecrawl"`
 		CustomDomains     CustomDomainsConfig     `json:"custom-domains"`
 		SCIMBridge        SCIMBridgeConfig        `json:"scim-bridge"`
 		ESign             ESignConfig             `json:"esign"`

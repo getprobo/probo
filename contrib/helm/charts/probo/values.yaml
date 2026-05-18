@@ -257,6 +257,21 @@ probo:
     modelName: "gpt-4o"
     maxTokens: 4096
 
+  # Firecrawl web search integration (optional, used by tracker mapping agent)
+  firecrawl:
+    endpoint: ""
+    apiKey: ""
+
+  # Search endpoint for SearXNG (optional, fallback when Firecrawl is not configured)
+  searchEndpoint: ""
+
+  # Tracker mapping agent (optional, requires openai.apiKey or anthropic key)
+  trackerMapping:
+    provider: ""
+    modelName: ""
+    temperature: ""
+    maxTokens: ""
+
   # Custom domains configuration (optional)
   customDomains:
     enabled: false

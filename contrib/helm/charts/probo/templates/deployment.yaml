@@ -232,6 +232,40 @@ spec:
             - name: OPENAI_MAX_TOKENS
               value: {{ .Values.probo.openai.maxTokens | quote }}
             {{- end }}
+            # Firecrawl Integration
+            {{- if .Values.probo.firecrawl.endpoint }}
+            - name: FIRECRAWL_ENDPOINT
+              value: {{ .Values.probo.firecrawl.endpoint | quote }}
+            {{- end }}
+            {{- if .Values.probo.firecrawl.apiKey }}
+            - name: FIRECRAWL_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "probo.fullname" . }}
+                  key: firecrawl-api-key
+            {{- end }}
+            # Search Endpoint
+            {{- if .Values.probo.searchEndpoint }}
+            - name: SEARCH_ENDPOINT
+              value: {{ .Values.probo.searchEndpoint | quote }}
+            {{- end }}
+            # Tracker Mapping Agent
+            {{- if .Values.probo.trackerMapping.provider }}
+            - name: AGENT_TRACKER_MAPPING_PROVIDER
+              value: {{ .Values.probo.trackerMapping.provider | quote }}
+            {{- end }}
+            {{- if .Values.probo.trackerMapping.modelName }}
+            - name: AGENT_TRACKER_MAPPING_MODEL_NAME
+              value: {{ .Values.probo.trackerMapping.modelName | quote }}
+            {{- end }}
+            {{- if .Values.probo.trackerMapping.temperature }}
+            - name: AGENT_TRACKER_MAPPING_TEMPERATURE
+              value: {{ .Values.probo.trackerMapping.temperature | quote }}
+            {{- end }}
+            {{- if .Values.probo.trackerMapping.maxTokens }}
+            - name: AGENT_TRACKER_MAPPING_MAX_TOKENS
+              value: {{ .Values.probo.trackerMapping.maxTokens | quote }}
+            {{- end }}
             # Custom Domains
             {{- if .Values.probo.customDomains.enabled }}
             - name: CUSTOM_DOMAINS_RENEWAL_INTERVAL
