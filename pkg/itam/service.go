@@ -33,32 +33,31 @@ import (
 )
 
 var (
-	// ErrEnrollmentTokenInvalid is returned when an /enroll request is
-	// made with a token that does not exist, is revoked, expired, or has
-	// hit its max-uses cap.
+	// ErrEnrollmentTokenInvalid is returned when the presented
+	// enrollment token is unknown, revoked, expired, or exhausted.
 	ErrEnrollmentTokenInvalid = errors.New("enrollment token is invalid")
 
-	// ErrDeviceRevoked is returned when an agent authenticates with a
-	// device API key for a revoked device.
+	// ErrDeviceRevoked is returned when the authenticated device has
+	// been revoked.
 	ErrDeviceRevoked = errors.New("device is revoked")
 )
 
 const (
-	// EnrollmentTokenRawLength is the number of random bytes used for an
-	// enrollment token secret. base64url-encoded that's 43 chars.
+	// EnrollmentTokenRawLength is the random byte length of an
+	// enrollment token secret (43 chars once base64url-encoded).
 	EnrollmentTokenRawLength = 32
 
-	// APIKeyRawLength is the number of random bytes for a device API
-	// key secret. base64url-encoded that's 64 chars.
+	// APIKeyRawLength is the random byte length of a device API key
+	// secret (64 chars once base64url-encoded).
 	APIKeyRawLength = 48
 )
 
 type (
-	// Service is the IT Asset Management service. Tenant-scoped admin
-	// operations take a scope parameter from the caller; agent-facing
-	// operations (enroll, authenticate, heartbeat, postures, unenroll)
-	// resolve their own scope internally because the agent does not know
-	// which tenant it belongs to until enrolment resolves it.
+	// Service is the IT Asset Management service. Admin operations are
+	// tenant-scoped via a caller-supplied scope; agent-facing operations
+	// (enroll, authenticate, heartbeat, postures, unenroll) resolve
+	// their own scope, since the agent does not know its tenant until
+	// enrollment.
 	Service struct {
 		pg     *pg.Client
 		logger *log.Logger
@@ -72,13 +71,11 @@ type (
 		CreatedByIdentityID *gid.GID
 	}
 
-	// CreateEnrollmentTokenResult is returned to the caller once, at
-	// creation time. The plain token is never persisted; only its hash
-	// is stored.
+	// CreateEnrollmentTokenResult carries the persisted token and its
+	// plaintext secret. Only the hash is stored, so Secret is available
+	// only at this point.
 	CreateEnrollmentTokenResult struct {
-		Token *coredata.DeviceEnrollmentToken
-		// Secret is the unhashed token value the admin needs to give the
-		// agent installer. Shown once.
+		Token  *coredata.DeviceEnrollmentToken
 		Secret string
 	}
 
@@ -92,10 +89,11 @@ type (
 		AgentVersion     string
 	}
 
+	// EnrollDeviceResult carries the device row and the plaintext API
+	// key the agent must persist. Only the hash is stored, so APIKey is
+	// available only at this point.
 	EnrollDeviceResult struct {
 		Device *coredata.Device
-		// APIKey is the unhashed device-API-key the agent must persist
-		// and present on every subsequent call. Shown once.
 		APIKey string
 	}
 
@@ -116,15 +114,16 @@ func NewService(pgClient *pg.Client, iamSvc *iam.Service, logger *log.Logger) *S
 	}
 }
 
-// hashSecret hashes a token/api-key value the same way for storage and
-// lookup. SHA-256 is sufficient: the secret is high-entropy random.
+// hashSecret hashes an enrollment token or device API key for storage
+// and lookup. Unsalted SHA-256 is sufficient: the input is a random
+// secret with at least 256 bits of entropy.
 func hashSecret(secret string) []byte {
 	sum := sha256.Sum256([]byte(secret))
 	return sum[:]
 }
 
-// generateSecret returns a base64url-encoded random secret of the given
-// raw byte length.
+// generateSecret returns a base64url-encoded random secret of rawLen
+// bytes.
 func generateSecret(rawLen int) (string, error) {
 	buf := make([]byte, rawLen)
 	if _, err := rand.Read(buf); err != nil {
@@ -132,10 +131,6 @@ func generateSecret(rawLen int) (string, error) {
 	}
 	return base64.RawURLEncoding.EncodeToString(buf), nil
 }
-
-// ------------------------------------------------------------------
-// Admin-facing operations (tenant-scoped via caller-provided scope)
-// ------------------------------------------------------------------
 
 func (s *Service) CreateEnrollmentToken(
 	ctx context.Context,
@@ -145,6 +140,7 @@ func (s *Service) CreateEnrollmentToken(
 	if req.OrganizationID == gid.Nil {
 		return nil, fmt.Errorf("organization_id is required")
 	}
+
 	if req.Name == "" {
 		return nil, fmt.Errorf("name is required")
 	}
@@ -227,6 +223,7 @@ func (s *Service) ListEnrollmentTokens(
 	organizationID gid.GID,
 ) (coredata.DeviceEnrollmentTokens, error) {
 	var tokens coredata.DeviceEnrollmentTokens
+
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
@@ -250,6 +247,7 @@ func (s *Service) GetDevice(
 	deviceID gid.GID,
 ) (*coredata.Device, error) {
 	device := &coredata.Device{}
+
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
@@ -297,13 +295,14 @@ func (s *Service) CountForOrganizationID(
 	organizationID gid.GID,
 ) (int, error) {
 	var count int
+
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
 			var ds coredata.Devices
 			c, err := ds.CountByOrganizationID(ctx, conn, scope, organizationID)
 			if err != nil {
-				return err
+				return fmt.Errorf("cannot count devices: %w", err)
 			}
 
 			count = c
@@ -321,6 +320,7 @@ func (s *Service) RevokeDevice(
 	deviceID gid.GID,
 ) (*coredata.Device, error) {
 	device := &coredata.Device{}
+
 	err := s.pg.WithTx(
 		ctx, func(
 			ctx context.Context, conn pg.Tx) error {
@@ -466,8 +466,9 @@ func (s *Service) EnrollDevice(
 		err := existing.LoadByHardwareUUID(ctx, conn, scope, token.OrganizationID, req.HardwareUUID)
 		switch {
 		case err == nil:
-			// Re-enroll: rotate API key, refresh metadata, clear
-			// revocation. This makes installer re-runs idempotent.
+			// Re-enrollment: rotate the API key, refresh metadata,
+			// and clear any prior revocation so installer re-runs
+			// are idempotent.
 			existing.APIKeyHash = apiKeyHash
 			existing.Hostname = req.Hostname
 			existing.SerialNumber = req.SerialNumber
@@ -517,9 +518,9 @@ func (s *Service) EnrollDevice(
 	return &EnrollDeviceResult{Device: device, APIKey: apiKey}, nil
 }
 
-// AuthenticateDevice resolves a Bearer device API key to its device row.
-// Returns ErrResourceNotFound or ErrDeviceRevoked when authentication
-// fails.
+// AuthenticateDevice resolves a device API key to its device row.
+// Returns coredata.ErrResourceNotFound when no device matches the key
+// and ErrDeviceRevoked when the matching device has been revoked.
 func (s *Service) AuthenticateDevice(
 	ctx context.Context,
 	apiKey string,
@@ -542,7 +543,8 @@ func (s *Service) AuthenticateDevice(
 	return device, nil
 }
 
-// RecordHeartbeat updates the device's last-seen / version columns.
+// RecordHeartbeat refreshes the device's last-seen timestamp and any
+// version fields the agent sends.
 func (s *Service) RecordHeartbeat(
 	ctx context.Context,
 	scope coredata.Scoper,
@@ -551,25 +553,37 @@ func (s *Service) RecordHeartbeat(
 	osVersion string,
 	agentVersion string,
 ) error {
-	return s.pg.WithTx(ctx, func(ctx context.Context, conn pg.Tx) error {
-		device := &coredata.Device{}
-		if err := device.LoadByID(ctx, conn, scope, deviceID); err != nil {
-			return fmt.Errorf("cannot load device: %w", err)
-		}
-		if device.RevokedAt != nil {
-			return ErrDeviceRevoked
-		}
-		if hostname != "" {
-			device.Hostname = hostname
-		}
-		if osVersion != "" {
-			device.OSVersion = osVersion
-		}
-		if agentVersion != "" {
-			device.AgentVersion = agentVersion
-		}
-		return device.UpdateHeartbeat(ctx, conn, scope)
-	})
+	return s.pg.WithTx(
+		ctx,
+		func(ctx context.Context, conn pg.Tx) error {
+			device := &coredata.Device{}
+			if err := device.LoadByID(ctx, conn, scope, deviceID); err != nil {
+				return fmt.Errorf("cannot load device: %w", err)
+			}
+
+			if device.RevokedAt != nil {
+				return ErrDeviceRevoked
+			}
+
+			if hostname != "" {
+				device.Hostname = hostname
+			}
+
+			if osVersion != "" {
+				device.OSVersion = osVersion
+			}
+
+			if agentVersion != "" {
+				device.AgentVersion = agentVersion
+			}
+
+			if err := device.UpdateHeartbeat(ctx, conn, scope); err != nil {
+				return fmt.Errorf("cannot update device heartbeat: %w", err)
+			}
+
+			return nil
+		},
+	)
 }
 
 // RecordPostures appends posture results for a device.
@@ -584,53 +598,63 @@ func (s *Service) RecordPostures(
 	}
 	now := time.Now()
 
-	return s.pg.WithTx(ctx, func(ctx context.Context, conn pg.Tx) error {
-		device := &coredata.Device{}
-		if err := device.LoadByID(ctx, conn, scope, deviceID); err != nil {
-			return fmt.Errorf("cannot load device: %w", err)
-		}
-		if device.RevokedAt != nil {
-			return ErrDeviceRevoked
-		}
+	return s.pg.WithTx(
+		ctx,
+		func(ctx context.Context, conn pg.Tx) error {
+			device := &coredata.Device{}
+			if err := device.LoadByID(ctx, conn, scope, deviceID); err != nil {
+				return fmt.Errorf("cannot load device: %w", err)
+			}
 
-		for _, r := range results {
-			if !r.Status.IsValid() {
-				return fmt.Errorf("invalid posture status: %q", r.Status)
+			if device.RevokedAt != nil {
+				return ErrDeviceRevoked
 			}
-			observed := r.ObservedAt
-			if observed.IsZero() {
-				observed = now
+
+			for _, r := range results {
+				observed := r.ObservedAt
+				if observed.IsZero() {
+					observed = now
+				}
+
+				posture := coredata.DevicePosture{
+					ID:             gid.New(device.OrganizationID.TenantID(), coredata.DevicePostureEntityType),
+					OrganizationID: device.OrganizationID,
+					DeviceID:       device.ID,
+					CheckKey:       r.CheckKey,
+					Status:         r.Status,
+					Evidence:       r.Evidence,
+					ObservedAt:     observed,
+					CreatedAt:      now,
+				}
+				if err := posture.Insert(ctx, conn, scope); err != nil {
+					return fmt.Errorf("cannot insert device posture: %w", err)
+				}
+
 			}
-			posture := coredata.DevicePosture{
-				ID:             gid.New(device.OrganizationID.TenantID(), coredata.DevicePostureEntityType),
-				OrganizationID: device.OrganizationID,
-				DeviceID:       device.ID,
-				CheckKey:       r.CheckKey,
-				Status:         r.Status,
-				Evidence:       r.Evidence,
-				ObservedAt:     observed,
-				CreatedAt:      now,
-			}
-			if err := posture.Insert(ctx, conn, scope); err != nil {
-				return fmt.Errorf("cannot insert device posture: %w", err)
-			}
-		}
-		return nil
-	})
+			return nil
+		},
+	)
 }
 
-// UnenrollDevice marks the device as revoked. The agent calls this from
-// its uninstaller, before the local key is wiped.
+// UnenrollDevice revokes the device. The agent invokes this from its
+// uninstaller before wiping its local API key.
 func (s *Service) UnenrollDevice(
 	ctx context.Context,
 	scope coredata.Scoper,
 	deviceID gid.GID,
 ) error {
-	return s.pg.WithTx(ctx, func(ctx context.Context, conn pg.Tx) error {
-		device := &coredata.Device{}
-		if err := device.LoadByID(ctx, conn, scope, deviceID); err != nil {
-			return fmt.Errorf("cannot load device: %w", err)
-		}
-		return device.Revoke(ctx, conn, scope)
-	})
+	return s.pg.WithTx(
+		ctx,
+		func(ctx context.Context, conn pg.Tx) error {
+			device := &coredata.Device{}
+			if err := device.LoadByID(ctx, conn, scope, deviceID); err != nil {
+				return fmt.Errorf("cannot load device: %w", err)
+			}
+			if err := device.Revoke(ctx, conn, scope); err != nil {
+				return fmt.Errorf("cannot revoke device: %w", err)
+			}
+
+			return nil
+		},
+	)
 }
