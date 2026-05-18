@@ -63,7 +63,6 @@ const devicesPageFragment = graphql`
       before: $before
       orderBy: $order
     ) @connection(key: "DevicesPage_devices", filters: ["orderBy"]) {
-      __id
       edges {
         node {
           id

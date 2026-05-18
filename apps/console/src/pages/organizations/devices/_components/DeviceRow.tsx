@@ -40,9 +40,7 @@ const deviceRowFragment = graphql`
     revokedAt
     latestPostures {
       id
-      checkKey
       status
-      observedAt
     }
   }
 `;
