@@ -22,6 +22,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -31,6 +32,7 @@ import (
 	"go.probo.inc/probo/pkg/bearertoken"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/probo"
+	"go.probo.inc/probo/pkg/server/jsonutil"
 )
 
 const (
@@ -41,6 +43,8 @@ const (
 	// DefaultPostureIntervalSeconds is how often the agent should run the
 	// posture check set.
 	DefaultPostureIntervalSeconds = 3600
+
+	maxPostureResultsPerRequest = 200
 )
 
 // Handler bundles the dependencies for the /api/agent/v1 router.
@@ -70,10 +74,6 @@ func NewMux(logger *log.Logger, proboSvc *probo.Service, agentServer string) *ch
 
 	return r
 }
-
-// ------------------------------------------------------------------
-// Request/response payloads
-// ------------------------------------------------------------------
 
 type (
 	enrollRequest struct {
@@ -117,30 +117,22 @@ type (
 	postureRequest struct {
 		Results []postureResult `json:"results"`
 	}
-
-	errorBody struct {
-		Error string `json:"error"`
-	}
 )
-
-// ------------------------------------------------------------------
-// Handlers
-// ------------------------------------------------------------------
 
 func (h *Handler) handleEnroll(w http.ResponseWriter, r *http.Request) {
 	defer func() { _ = r.Body.Close() }()
 
 	var req enrollRequest
 	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<16)).Decode(&req); err != nil {
-		httpserver.RenderJSON(w, http.StatusBadRequest, errorBody{Error: "invalid json"})
+		jsonutil.RenderBadRequest(w, fmt.Errorf("invalid request body"))
 		return
 	}
 	if req.EnrollmentToken == "" || req.HardwareUUID == "" || req.Hostname == "" || req.Platform == "" {
-		httpserver.RenderJSON(w, http.StatusBadRequest, errorBody{Error: "missing required field"})
+		jsonutil.RenderBadRequest(w, fmt.Errorf("missing required field"))
 		return
 	}
 	if !req.Platform.IsValid() {
-		httpserver.RenderJSON(w, http.StatusBadRequest, errorBody{Error: "invalid platform"})
+		jsonutil.RenderBadRequest(w, fmt.Errorf("invalid platform"))
 		return
 	}
 
@@ -155,11 +147,11 @@ func (h *Handler) handleEnroll(w http.ResponseWriter, r *http.Request) {
 	})
 	if err != nil {
 		if errors.Is(err, probo.ErrEnrollmentTokenInvalid) {
-			httpserver.RenderJSON(w, http.StatusUnauthorized, errorBody{Error: "enrollment token is invalid"})
+			jsonutil.RenderUnauthorized(w, fmt.Errorf("enrollment token is invalid"))
 			return
 		}
 		h.logger.ErrorCtx(r.Context(), "cannot enroll device", log.Error(err))
-		httpserver.RenderJSON(w, http.StatusInternalServerError, errorBody{Error: "enrollment failed"})
+		jsonutil.RenderInternalServerError(w)
 		return
 	}
 
@@ -177,7 +169,7 @@ func (h *Handler) handleHeartbeat(w http.ResponseWriter, r *http.Request) {
 
 	device := deviceFromContext(r.Context())
 	if device == nil {
-		httpserver.RenderJSON(w, http.StatusUnauthorized, errorBody{Error: "unauthorized"})
+		jsonutil.RenderUnauthorized(w, fmt.Errorf("unauthorized"))
 		return
 	}
 
@@ -192,11 +184,11 @@ func (h *Handler) handleHeartbeat(w http.ResponseWriter, r *http.Request) {
 		req.AgentVersion,
 	); err != nil {
 		if errors.Is(err, probo.ErrDeviceRevoked) {
-			httpserver.RenderJSON(w, http.StatusUnauthorized, errorBody{Error: "device revoked"})
+			jsonutil.RenderUnauthorized(w, fmt.Errorf("device revoked"))
 			return
 		}
 		h.logger.ErrorCtx(r.Context(), "cannot record heartbeat", log.Error(err))
-		httpserver.RenderJSON(w, http.StatusInternalServerError, errorBody{Error: "heartbeat failed"})
+		jsonutil.RenderInternalServerError(w)
 		return
 	}
 
@@ -212,28 +204,28 @@ func (h *Handler) handlePostures(w http.ResponseWriter, r *http.Request) {
 
 	device := deviceFromContext(r.Context())
 	if device == nil {
-		httpserver.RenderJSON(w, http.StatusUnauthorized, errorBody{Error: "unauthorized"})
+		jsonutil.RenderUnauthorized(w, fmt.Errorf("unauthorized"))
 		return
 	}
 
 	var req postureRequest
 	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<20)).Decode(&req); err != nil {
-		httpserver.RenderJSON(w, http.StatusBadRequest, errorBody{Error: "invalid json"})
+		jsonutil.RenderBadRequest(w, fmt.Errorf("invalid request body"))
 		return
 	}
 	if len(req.Results) == 0 {
 		w.WriteHeader(http.StatusNoContent)
 		return
 	}
-	if len(req.Results) > 200 {
-		httpserver.RenderJSON(w, http.StatusBadRequest, errorBody{Error: "too many results in one request"})
+	if len(req.Results) > maxPostureResultsPerRequest {
+		jsonutil.RenderBadRequest(w, fmt.Errorf("too many results, maximum is %d", maxPostureResultsPerRequest))
 		return
 	}
 
 	results := make([]probo.RecordPostureResult, 0, len(req.Results))
 	for _, pr := range req.Results {
 		if pr.CheckKey == "" || !pr.Status.IsValid() {
-			httpserver.RenderJSON(w, http.StatusBadRequest, errorBody{Error: "invalid posture entry"})
+			jsonutil.RenderBadRequest(w, fmt.Errorf("invalid posture entry"))
 			return
 		}
 		results = append(results, probo.RecordPostureResult{
@@ -246,11 +238,11 @@ func (h *Handler) handlePostures(w http.ResponseWriter, r *http.Request) {
 
 	if err := h.proboSvc.RecordPostures(r.Context(), device.ID, results); err != nil {
 		if errors.Is(err, probo.ErrDeviceRevoked) {
-			httpserver.RenderJSON(w, http.StatusUnauthorized, errorBody{Error: "device revoked"})
+			jsonutil.RenderUnauthorized(w, fmt.Errorf("device revoked"))
 			return
 		}
 		h.logger.ErrorCtx(r.Context(), "cannot record postures", log.Error(err))
-		httpserver.RenderJSON(w, http.StatusInternalServerError, errorBody{Error: "posture push failed"})
+		jsonutil.RenderInternalServerError(w)
 		return
 	}
 
@@ -262,22 +254,18 @@ func (h *Handler) handleUnenroll(w http.ResponseWriter, r *http.Request) {
 
 	device := deviceFromContext(r.Context())
 	if device == nil {
-		httpserver.RenderJSON(w, http.StatusUnauthorized, errorBody{Error: "unauthorized"})
+		jsonutil.RenderUnauthorized(w, fmt.Errorf("unauthorized"))
 		return
 	}
 
 	if err := h.proboSvc.UnenrollDevice(r.Context(), device.ID); err != nil {
 		h.logger.ErrorCtx(r.Context(), "cannot unenroll device", log.Error(err))
-		httpserver.RenderJSON(w, http.StatusInternalServerError, errorBody{Error: "unenroll failed"})
+		jsonutil.RenderInternalServerError(w)
 		return
 	}
 
 	w.WriteHeader(http.StatusNoContent)
 }
-
-// ------------------------------------------------------------------
-// Middleware
-// ------------------------------------------------------------------
 
 type ctxKey struct{ name string }
 
@@ -293,23 +281,23 @@ func (h *Handler) deviceAuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		auth := r.Header.Get("Authorization")
 		if auth == "" {
-			httpserver.RenderJSON(w, http.StatusUnauthorized, errorBody{Error: "missing authorization"})
+			jsonutil.RenderUnauthorized(w, fmt.Errorf("missing authorization"))
 			return
 		}
 		token, err := bearertoken.Parse(auth)
 		if err != nil {
-			httpserver.RenderJSON(w, http.StatusUnauthorized, errorBody{Error: "invalid bearer token"})
+			jsonutil.RenderUnauthorized(w, fmt.Errorf("invalid bearer token"))
 			return
 		}
 
 		device, err := h.proboSvc.AuthenticateDevice(r.Context(), token)
 		if err != nil {
 			if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, probo.ErrDeviceRevoked) {
-				httpserver.RenderJSON(w, http.StatusUnauthorized, errorBody{Error: "unauthorized"})
+				jsonutil.RenderUnauthorized(w, fmt.Errorf("unauthorized"))
 				return
 			}
 			h.logger.ErrorCtx(r.Context(), "cannot authenticate device", log.Error(err))
-			httpserver.RenderJSON(w, http.StatusInternalServerError, errorBody{Error: "auth failure"})
+			jsonutil.RenderInternalServerError(w)
 			return
 		}
 
