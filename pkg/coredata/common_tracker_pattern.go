@@ -274,13 +274,9 @@ func (p CommonTrackerPattern) Delete(
 
 	args := pgx.StrictNamedArgs{"id": id}
 
-	result, err := conn.Exec(ctx, q, args)
+	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
 		return fmt.Errorf("cannot delete common tracker pattern: %w", err)
-	}
-
-	if result.RowsAffected() == 0 {
-		return ErrResourceNotFound
 	}
 
 	return nil

@@ -113,6 +113,8 @@ This ensures the compiler catches renamed or removed enum values instead of sile
 
 Use `conn.Query` + `pgx.Collect*` only for `SELECT` and `INSERT … RETURNING` statements that return rows. For `UPDATE` and `DELETE`, use `conn.Exec` — there is no need for `RETURNING` since the caller already owns all the field values.
 
+**Delete must not check `RowsAffected()`.** A DELETE that affects zero rows is not an error — the resource may have already been deleted (idempotent deletes). Only `Update` checks `RowsAffected() == 0` to return `ErrResourceNotFound`.
+
 ```go
 // Single row (SELECT / INSERT … RETURNING)
 rows, err := conn.Query(ctx, q, args)
@@ -127,13 +129,19 @@ rows, err := conn.Query(ctx, q, args)
 assets, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Asset])
 *a = assets
 
-// Update / Delete — no RETURNING
+// Update — no RETURNING, check RowsAffected
 result, err := conn.Exec(ctx, q, args)
 if err != nil {
     return err
 }
 if result.RowsAffected() == 0 {
     return ErrResourceNotFound
+}
+
+// Delete — no RETURNING, do NOT check RowsAffected
+_, err := conn.Exec(ctx, q, args)
+if err != nil {
+    return err
 }
 ```
 

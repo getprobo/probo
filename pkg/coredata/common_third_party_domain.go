@@ -172,13 +172,9 @@ func (d CommonThirdPartyDomain) Delete(
 
 	args := pgx.StrictNamedArgs{"id": d.ID}
 
-	result, err := conn.Exec(ctx, q, args)
+	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
 		return fmt.Errorf("cannot delete common third party domain: %w", err)
-	}
-
-	if result.RowsAffected() == 0 {
-		return ErrResourceNotFound
 	}
 
 	return nil
