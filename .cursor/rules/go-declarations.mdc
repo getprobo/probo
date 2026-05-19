@@ -1,0 +1,59 @@
+---
+description: Go declarations — group related types/consts/vars, no iota for string enums
+globs: "**/*.go"
+alwaysApply: false
+---
+
+# Go grouped declarations
+
+Group related declarations using `type ()`, `const ()`, and `var ()` blocks.
+
+```go
+// GOOD — grouped type block
+type (
+	CreateFooRequest struct {
+		Name   string
+		Active bool
+	}
+
+	UpdateFooRequest struct {
+		ID     gid.GID
+		Name   *string
+		Active *bool
+	}
+)
+
+// GOOD — grouped const block
+const (
+	NameMaxLength    = 100
+	ContentMaxLength = 5000
+)
+
+// GOOD — interface satisfaction checks
+var (
+	_ Reader = (*FileReader)(nil)
+	_ Writer = (*FileWriter)(nil)
+)
+```
+
+## String enums
+
+Use explicit typed string values, **not** `iota`:
+
+```go
+// GOOD
+type Status string
+
+const (
+	StatusActive   Status = "active"
+	StatusInactive Status = "inactive"
+)
+
+// BAD — iota for string-like enums
+type Status int
+
+const (
+	StatusActive Status = iota
+	StatusInactive
+)
+```

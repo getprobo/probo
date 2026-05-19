@@ -1,0 +1,77 @@
+---
+description: Enforce single-line-or-multiline formatting for Go parameter and argument lists
+globs: "**/*.go"
+alwaysApply: false
+---
+
+# Go multiline parameter and argument lists
+
+Parameter/argument lists are either **all on one line** or **each on its own line** — never mixed.
+
+## Function/method definitions
+
+```go
+// GOOD — fits on one line
+func (s *Service) GetFoo(ctx context.Context, id gid.GID) (*Foo, error) {
+
+// GOOD — multiline: one param per line, closing ) on its own line
+func (s *Service) CreateFoo(
+	ctx context.Context,
+	tenantID gid.TenantID,
+	req CreateFooRequest,
+) (*Foo, error) {
+
+// BAD — mixed
+func (s *Service) CreateFoo(ctx context.Context, tenantID gid.TenantID,
+	req CreateFooRequest) (*Foo, error) {
+
+// BAD — closing ) stuck on last param line
+func (s *Service) CreateFoo(
+	ctx context.Context,
+	req CreateFooRequest) (*Foo, error) {
+```
+
+## Call expressions
+
+```go
+// GOOD — one line
+id := gid.New(tenantID, "Foo")
+
+// GOOD — multiline: one arg per line, trailing comma, closing ) alone
+svc, err := foo.NewService(
+	ctx,
+	db,
+	logger,
+)
+
+// BAD — some args on the call line, rest below
+svc, err := foo.NewService(ctx, db,
+	logger,
+)
+
+// BAD — first args on the callee line with multiline composite literal
+svc, err := foo.NewService(ctx, db, foo.Config{
+	MaxRetry: 3,
+})
+
+// BAD — single multiline argument starts on the opening ( line
+body, err := json.Marshal(firecrawlRequest{
+	Query: query,
+	Limit: maxResults,
+})
+
+// GOOD — single multiline argument: break after (, trailing comma, ) alone
+body, err := json.Marshal(
+	firecrawlRequest{
+		Query: query,
+		Limit: maxResults,
+	},
+)
+```
+
+## Quick checklist when writing or reviewing Go code
+
+1. Does the signature/call fit on one line? → keep it on one line.
+2. Doesn't fit? → break after `(`, one item per line, `)` on its own line.
+3. Never place some items on the opening line and others below.
+4. Even a single argument that spans multiple lines must break after `(`.

@@ -1,0 +1,40 @@
+---
+description: PostgreSQL constraint error handling — always check both error code and constraint name
+globs: "pkg/coredata/**/*.go"
+alwaysApply: false
+---
+
+# PostgreSQL constraint error mapping
+
+When mapping `*pgconn.PgError` to sentinel errors, always check **both** `pgErr.Code` and `pgErr.ConstraintName`. A table may have multiple unique constraints; a code-only check silently maps unrelated violations to the wrong sentinel.
+
+```go
+// GOOD — checks both code and constraint name
+if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
+	if pgErr.Code == "23505" && pgErr.ConstraintName == "controls_framework_ref_unique" {
+		return ErrResourceAlreadyExists
+	}
+}
+
+// GOOD — multiple constraints on the same table
+if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
+	if pgErr.Code == "23505" {
+		switch pgErr.ConstraintName {
+		case "document_versions_document_id_major_minor_key",
+			"document_one_active_version_idx":
+			return ErrResourceAlreadyExists
+		}
+	}
+}
+
+// BAD — code-only check
+if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
+	if pgErr.Code == "23505" {
+		return ErrResourceAlreadyExists
+	}
+}
+```
+
+This applies to all PostgreSQL error codes mapped to sentinel errors:
+- `"23505"` (unique violation) → `ErrResourceAlreadyExists`
+- `"23503"` (foreign key violation) → `ErrResourceInUse`

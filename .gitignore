@@ -2,6 +2,8 @@ bin/
 node_modules/
 .turbo
 .vscode
+.cursor/*
+!.cursor/rules/
 dist/
 .react-email/
 sbom.json

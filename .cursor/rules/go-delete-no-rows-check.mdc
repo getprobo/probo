@@ -1,0 +1,32 @@
+---
+description: Delete methods must not check RowsAffected — deletes are idempotent
+globs: "pkg/coredata/**/*.go"
+alwaysApply: false
+---
+
+# Delete must not check RowsAffected
+
+In `Delete` methods, do **not** check `result.RowsAffected() == 0`. A DELETE that affects zero rows is not an error — the resource may have already been deleted. Deletes are idempotent.
+
+Discard the result with `_`:
+
+```go
+// GOOD — Delete ignores RowsAffected
+_, err := conn.Exec(ctx, q, args)
+if err != nil {
+	return fmt.Errorf("cannot delete foo: %w", err)
+}
+return nil
+
+// BAD — Delete checks RowsAffected
+result, err := conn.Exec(ctx, q, args)
+if err != nil {
+	return fmt.Errorf("cannot delete foo: %w", err)
+}
+if result.RowsAffected() == 0 {
+	return ErrResourceNotFound
+}
+return nil
+```
+
+This rule applies only to `Delete`. `Update` methods **must** still check `RowsAffected() == 0` and return `ErrResourceNotFound`.

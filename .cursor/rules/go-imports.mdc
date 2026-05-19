@@ -1,0 +1,41 @@
+---
+description: Go import ordering — stdlib first, then third-party and internal together
+globs: "**/*.go"
+alwaysApply: false
+---
+
+# Go import ordering
+
+Two groups separated by a blank line:
+1. Standard library
+2. Everything else (third-party and internal sorted together alphabetically)
+
+```go
+// GOOD
+import (
+	"context"
+	"errors"
+	"fmt"
+
+	"github.com/go-chi/chi/v5"
+	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/iam"
+)
+
+// BAD — three groups (stdlib / third-party / internal separated)
+import (
+	"context"
+	"fmt"
+
+	"github.com/go-chi/chi/v5"
+
+	"go.probo.inc/probo/pkg/iam"
+)
+
+// BAD — no separation at all
+import (
+	"context"
+	"github.com/go-chi/chi/v5"
+	"go.probo.inc/probo/pkg/iam"
+)
+```

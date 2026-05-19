@@ -1,0 +1,33 @@
+---
+description: Never pass domain data through React Router Outlet context — use page loaders with their own queries
+globs: "**/*.tsx"
+alwaysApply: false
+---
+
+# No domain data via Outlet context
+
+Child routes under a layout MUST NOT receive domain data through `useOutletContext`.
+Each page that needs GraphQL data must follow the Loader + Page pattern with its
+own query, just like sibling pages.
+
+```tsx
+// BAD — layout passes data through Outlet context
+<Outlet context={{ showBranding: banner.showBranding }} />
+
+// child page
+const { showBranding } = useOutletContext<{ showBranding: boolean }>();
+
+// GOOD — child page has its own Loader + Query
+// SnippetPageLoader.tsx:
+const [queryRef, loadQuery] = useQueryLoader(snippetPageQuery);
+useEffect(() => { loadQuery({ cookieBannerId }); }, [loadQuery, cookieBannerId]);
+
+// SnippetPage.tsx:
+export const snippetPageQuery = graphql`
+  query SnippetPageQuery($cookieBannerId: ID!) {
+    node(id: $cookieBannerId) {
+      ... on CookieBanner { ...ThemePreview_cookieBanner }
+    }
+  }
+`;
+```

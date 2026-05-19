@@ -1,0 +1,83 @@
+---
+description: Coredata Load vs LoadAll naming and no cross-entity JOINs
+globs: "pkg/coredata/**/*.go"
+alwaysApply: false
+---
+
+# Coredata Load vs LoadAll naming
+
+The method name signals whether the result set is bounded:
+
+- **`LoadBy*` with a `cursor` param** — paginated list; the cursor provides limit and ordering.
+- **`Load` / `LoadBy*` with a `limit int` param** — filtered list with explicit limit, when cursor pagination is not needed but the caller controls the result count.
+- **`LoadAllBy*`** — returns all matching rows, no limit or cursor.
+- **`LoadAll`** — same as `LoadAllBy*` but without a parent key; returns all rows matching a filter.
+
+`LoadAll*` methods must **never** accept a cursor or limit parameter — `All` means the entire matching set is returned. The codebase has some legacy `LoadAllBy*` methods that accept a cursor; do not follow that pattern — new code must use `LoadBy*` for paginated queries.
+
+```go
+// GOOD — explicit limit, named Load
+func (ds *Things) Load(
+	ctx context.Context,
+	conn pg.Querier,
+	limit int,
+	filter *ThingFilter,
+) error {
+
+// GOOD — no limit, named LoadAll
+func (ds *Things) LoadAll(
+	ctx context.Context,
+	conn pg.Querier,
+	filter *ThingFilter,
+) error {
+
+// BAD — LoadAll with a limit
+func (ds *Things) LoadAll(
+	ctx context.Context,
+	conn pg.Querier,
+	limit int,
+	filter *ThingFilter,
+) error {
+
+// BAD — LoadAllBy with a cursor (legacy pattern, do not use)
+func (ds *Things) LoadAllByParentID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	parentID gid.GID,
+	cursor *page.Cursor[ThingOrderField],
+) error {
+
+// GOOD — paginated query uses LoadBy, not LoadAll
+func (ds *Things) LoadByParentID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	parentID gid.GID,
+	cursor *page.Cursor[ThingOrderField],
+) error {
+```
+
+# No cross-entity JOINs
+
+Each entity file in `pkg/coredata` queries only its own table. When data from multiple entities is needed, the caller orchestrates separate calls.
+
+- Never JOIN two entity tables inside an entity method.
+- Never return a raw ID belonging to a different entity — return the full entity and let the caller read the foreign key field.
+
+```go
+// BAD — cross-entity JOIN inside DetectedTrackers
+q := `
+SELECT ctpd.common_third_party_id
+FROM detected_trackers dt
+JOIN common_third_party_domains ctpd ON ctpd.domain = dt.initiator_domain
+WHERE dt.tracker_pattern_id = @tracker_pattern_id
+`
+
+// GOOD — caller orchestrates two entity calls
+domains, err := trackers.LoadInitiatorDomainsByTrackerPatternID(ctx, conn, patternID, 10)
+filter := coredata.NewCommonThirdPartyDomainFilter(domains)
+var matched coredata.CommonThirdPartyDomains
+err = matched.Load(ctx, conn, 1, filter)
+thirdPartyID := matched[0].CommonThirdPartyID
+```
