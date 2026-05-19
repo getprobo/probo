@@ -344,12 +344,15 @@ var domainValidRe = regexp.MustCompile(`^[a-zA-Z0-9][a-zA-Z0-9.-]*[a-zA-Z]$`)
 func normalizeDomain(s string) string {
 	s = strings.TrimSpace(s)
 
-	s = strings.Map(func(r rune) rune {
-		if r == '\u200b' || r == '\ufeff' {
-			return -1
-		}
-		return r
-	}, s)
+	s = strings.Map(
+		func(r rune) rune {
+			if r == '\u200b' || r == '\ufeff' {
+				return -1
+			}
+			return r
+		},
+		s,
+	)
 
 	if idx := strings.Index(s, " or "); idx != -1 {
 		s = s[:idx]

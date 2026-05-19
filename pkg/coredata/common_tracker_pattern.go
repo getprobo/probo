@@ -251,10 +251,13 @@ RETURNING id, (xmax = 0) AS inserted
 		Inserted bool
 	}
 
-	res, err := pgx.CollectExactlyOneRow(rows, func(row pgx.CollectableRow) (upsertResult, error) {
-		var r upsertResult
-		return r, row.Scan(&r.ID, &r.Inserted)
-	})
+	res, err := pgx.CollectExactlyOneRow(
+		rows,
+		func(row pgx.CollectableRow) (upsertResult, error) {
+			var r upsertResult
+			return r, row.Scan(&r.ID, &r.Inserted)
+		},
+	)
 	if err != nil {
 		return gid.GID{}, false, fmt.Errorf("cannot collect upsert result: %w", err)
 	}

@@ -91,10 +91,12 @@ func firecrawlSearch(
 		return nil, fmt.Errorf("cannot build search URL: %w", err)
 	}
 
-	body, err := json.Marshal(firecrawlRequest{
-		Query: query,
-		Limit: maxResults,
-	})
+	body, err := json.Marshal(
+		firecrawlRequest{
+			Query: query,
+			Limit: maxResults,
+		},
+	)
 	if err != nil {
 		return nil, fmt.Errorf("cannot marshal request: %w", err)
 	}
@@ -132,11 +134,14 @@ func firecrawlSearch(
 
 	results := make([]searchResult, 0, len(fcResp.Data.Web))
 	for _, r := range fcResp.Data.Web {
-		results = append(results, searchResult{
-			Title:   r.Title,
-			URL:     r.URL,
-			Snippet: r.Description,
-		})
+		results = append(
+			results,
+			searchResult{
+				Title:   r.Title,
+				URL:     r.URL,
+				Snippet: r.Description,
+			},
+		)
 	}
 
 	return results, nil

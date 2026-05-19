@@ -106,6 +106,33 @@ t.Run(
 svc, err := foo.NewService(ctx, db, logger, foo.Config{
 	Interval: 10 * time.Second,
 })
+
+// Bad — single multiline argument starts on the opening ( line
+body, err := json.Marshal(firecrawlRequest{
+	Query: query,
+	Limit: maxResults,
+})
+
+// Good — single multiline argument: break after (, trailing comma, ) alone
+body, err := json.Marshal(
+	firecrawlRequest{
+		Query: query,
+		Limit: maxResults,
+	},
+)
+
+// Bad — function literal starts on the opening ( line
+sort.Slice(items, func(i, j int) bool {
+	return items[i].Name < items[j].Name
+})
+
+// Good — function literal on its own line
+sort.Slice(
+	items,
+	func(i, j int) bool {
+		return items[i].Name < items[j].Name
+	},
+)
 ```
 
 The same rule applies to **method calls** `x.M(a1, …)` — the receiver is already bound; the rule applies to the **argument list** after the method name.

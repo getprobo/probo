@@ -306,18 +306,21 @@ func findMergeGroups(
 	// Sort: heuristic first, then descending specificity (more fixed
 	// characters), then descending coverage, then template name for a
 	// fully deterministic order.
-	sort.Slice(candidates, func(i, j int) bool {
-		if candidates[i].isHeuristic != candidates[j].isHeuristic {
-			return candidates[i].isHeuristic
-		}
-		if candidates[i].fixedChars != candidates[j].fixedChars {
-			return candidates[i].fixedChars > candidates[j].fixedChars
-		}
-		if len(candidates[i].patterns) != len(candidates[j].patterns) {
-			return len(candidates[i].patterns) > len(candidates[j].patterns)
-		}
-		return candidates[i].key.template < candidates[j].key.template
-	})
+	sort.Slice(
+		candidates,
+		func(i, j int) bool {
+			if candidates[i].isHeuristic != candidates[j].isHeuristic {
+				return candidates[i].isHeuristic
+			}
+			if candidates[i].fixedChars != candidates[j].fixedChars {
+				return candidates[i].fixedChars > candidates[j].fixedChars
+			}
+			if len(candidates[i].patterns) != len(candidates[j].patterns) {
+				return len(candidates[i].patterns) > len(candidates[j].patterns)
+			}
+			return candidates[i].key.template < candidates[j].key.template
+		},
+	)
 
 	assigned := make(map[*coredata.TrackerPattern]bool)
 	groups := make(map[mergeGroupKey][]*coredata.TrackerPattern)
@@ -598,9 +601,12 @@ func (h *patternAnalysisHandler) adoptUncategorisedPatterns(
 		return false, nil
 	}
 
-	sort.Slice(globPatterns, func(i, j int) bool {
-		return len(globPatterns[i].Pattern) > len(globPatterns[j].Pattern)
-	})
+	sort.Slice(
+		globPatterns,
+		func(i, j int) bool {
+			return len(globPatterns[i].Pattern) > len(globPatterns[j].Pattern)
+		},
+	)
 
 	exactMatchType := coredata.TrackerPatternMatchTypeExact
 	var uncategorisedExact coredata.TrackerPatterns
