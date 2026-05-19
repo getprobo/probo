@@ -22,9 +22,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"time"
 
-	"go.gearno.de/kit/httpclient"
 	"go.probo.inc/probo/pkg/agent"
 )
 
@@ -33,10 +31,6 @@ type (
 		Title   string `json:"title"`
 		URL     string `json:"url"`
 		Snippet string `json:"snippet"`
-	}
-
-	userAgentTransport struct {
-		next http.RoundTripper
 	}
 
 	firecrawlParams struct {
@@ -63,19 +57,11 @@ type (
 	}
 )
 
-func (t *userAgentTransport) RoundTrip(r *http.Request) (*http.Response, error) {
-	r2 := r.Clone(r.Context())
-	r2.Header.Set("User-Agent", "Probo-Agent/1.0")
-	return t.next.RoundTrip(r2)
-}
-
 // FirecrawlSearchTool creates a tool that searches the web using the Firecrawl
 // API. The endpoint should be the base URL of the Firecrawl instance (e.g.
 // "https://api.firecrawl.dev/v2"). The apiKey is used for Bearer authentication.
 func FirecrawlSearchTool(endpoint, apiKey string) agent.Tool {
-	client := httpclient.DefaultPooledClient()
-	client.Timeout = 15 * time.Second
-	client.Transport = &userAgentTransport{next: client.Transport}
+	client := newHTTPClient()
 
 	return agent.FunctionTool(
 		"web_search",

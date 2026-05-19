@@ -21,7 +21,6 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"time"
 
 	"go.probo.inc/probo/pkg/agent"
 )
@@ -57,7 +56,7 @@ type (
 )
 
 func CheckWaybackTool() agent.Tool {
-	client := &http.Client{Timeout: 15 * time.Second}
+	client := newHTTPClient()
 
 	return agent.FunctionTool(
 		"check_wayback",

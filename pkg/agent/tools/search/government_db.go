@@ -18,7 +18,6 @@ import (
 	"context"
 	"fmt"
 
-	"go.gearno.de/kit/httpclient"
 	"go.probo.inc/probo/pkg/agent"
 )
 
@@ -45,8 +44,7 @@ type (
 )
 
 func CheckGovernmentDBTool(endpoint, apiKey string) agent.Tool {
-	client := httpclient.DefaultPooledClient()
-	client.Transport = &userAgentTransport{next: client.Transport}
+	client := newHTTPClient()
 
 	return agent.FunctionTool(
 		"check_government_databases",
