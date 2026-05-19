@@ -88,6 +88,7 @@ WHERE
 	}
 
 	*w = events
+
 	return nil
 }
 

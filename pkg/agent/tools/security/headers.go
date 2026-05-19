@@ -52,6 +52,7 @@ type (
 
 func checkHeader(h http.Header, name string) headerCheck {
 	v := h.Get(name)
+
 	return headerCheck{
 		Present: v != "",
 		Value:   v,
@@ -92,6 +93,7 @@ func CheckSecurityHeadersTool() agent.Tool {
 
 			// First check the HTTP version to detect HTTP→HTTPS redirect.
 			redirectsToHTTPS := false
+
 			httpURL := p.URL
 			if after, ok := strings.CutPrefix(httpURL, "https://"); ok {
 				httpURL = "http://" + after
@@ -118,18 +120,21 @@ func CheckSecurityHeadersTool() agent.Tool {
 			}
 
 			followClient := &http.Client{Timeout: 10 * time.Second}
+
 			httpsReq, err := http.NewRequestWithContext(ctx, http.MethodGet, httpsURL, nil)
 			if err != nil {
 				return agent.ResultJSON(headersResult{
 					ErrorDetail: fmt.Sprintf("cannot create request for %s: %s", httpsURL, err),
 				}), nil
 			}
+
 			resp, err := followClient.Do(httpsReq)
 			if err != nil {
 				return agent.ResultJSON(headersResult{
 					ErrorDetail: fmt.Sprintf("cannot fetch %s: %s", httpsURL, err),
 				}), nil
 			}
+
 			defer func() { _ = resp.Body.Close() }()
 
 			result := headersFromResponse(resp)

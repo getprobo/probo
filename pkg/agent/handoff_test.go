@@ -156,11 +156,13 @@ func TestWithHandoffInputFilter(t *testing.T) {
 				target,
 				agent.WithHandoffInputFilter(func(data agent.HandoffInputData) []llm.Message {
 					var filtered []llm.Message
+
 					for _, m := range data.NewItems {
 						if m.Role == llm.RoleUser {
 							filtered = append(filtered, m)
 						}
 					}
+
 					return filtered
 				}),
 			)
@@ -194,6 +196,7 @@ func TestWithHandoffInputFilter(t *testing.T) {
 					all := make([]llm.Message, 0, len(data.InputHistory)+len(data.NewItems))
 					all = append(all, data.InputHistory...)
 					all = append(all, data.NewItems...)
+
 					return all
 				}),
 			)

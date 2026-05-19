@@ -49,6 +49,7 @@ func NewListControlAuditsOutput(auditPage *page.Page[*coredata.Audit, coredata.A
 	}
 
 	var nextCursor *page.CursorKey
+
 	if len(auditPage.Data) > 0 {
 		cursorKey := auditPage.Data[len(auditPage.Data)-1].CursorKey(auditPage.Cursor.OrderBy.Field)
 		nextCursor = &cursorKey
@@ -67,6 +68,7 @@ func NewListAuditsOutput(auditPage *page.Page[*coredata.Audit, coredata.AuditOrd
 	}
 
 	var nextCursor *page.CursorKey
+
 	if len(auditPage.Data) > 0 {
 		cursorKey := auditPage.Data[len(auditPage.Data)-1].CursorKey(auditPage.Cursor.OrderBy.Field)
 		nextCursor = &cursorKey
@@ -85,6 +87,7 @@ func NewListFindingAuditsOutput(auditPage *page.Page[*coredata.Audit, coredata.A
 	}
 
 	var nextCursor *page.CursorKey
+
 	if len(auditPage.Data) > 0 {
 		cursorKey := auditPage.Data[len(auditPage.Data)-1].CursorKey(auditPage.Cursor.OrderBy.Field)
 		nextCursor = &cursorKey

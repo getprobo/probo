@@ -540,6 +540,7 @@ func TestAccessReviewCampaign_DeleteRemovesFromListAndNode(t *testing.T) {
 
 	err = owner.Execute(listQuery, map[string]any{"id": orgID}, &listResult)
 	require.NoError(t, err)
+
 	for _, edge := range listResult.Node.AccessReviewCampaigns.Edges {
 		assert.NotEqual(t, campaignID, edge.Node.ID, "deleted campaign must not appear in the connection")
 	}
@@ -557,6 +558,7 @@ func TestAccessReviewCampaign_DeleteRemovesFromListAndNode(t *testing.T) {
 	`
 
 	_, err = owner.Do(nodeQuery, map[string]any{"id": campaignID})
+
 	var gqlErrors testutil.GraphQLErrors
 	require.ErrorAs(t, err, &gqlErrors)
 	require.Len(t, gqlErrors, 1)
@@ -1114,11 +1116,13 @@ func TestAccessReviewCampaign_FullLifecycle(t *testing.T) {
 	}
 
 	var campaignResult campaignQueryResult
+
 	require.Eventually(t, func() bool {
 		err := owner.Execute(nodeQuery, map[string]any{"id": campaignID}, &campaignResult)
 		if err != nil {
 			return false
 		}
+
 		return campaignResult.Node.Status == "PENDING_ACTIONS"
 	}, 60*time.Second, 1*time.Second, "campaign should transition to PENDING_ACTIONS")
 
@@ -1239,6 +1243,7 @@ func TestAccessReviewCampaign_CloseRequiresAllDecisions(t *testing.T) {
 			}
 		}
 	`
+
 	err := owner.Execute(startQuery, map[string]any{
 		"input": map[string]any{
 			"accessReviewCampaignId": campaignID,
@@ -1264,6 +1269,7 @@ func TestAccessReviewCampaign_CloseRequiresAllDecisions(t *testing.T) {
 		if err := owner.Execute(nodeQuery, map[string]any{"id": campaignID}, &r); err != nil {
 			return false
 		}
+
 		return r.Node.Status == "PENDING_ACTIONS"
 	}, 60*time.Second, 1*time.Second)
 

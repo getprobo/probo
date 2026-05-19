@@ -39,6 +39,7 @@ func (r *evidenceResolver) File(ctx context.Context, obj *types.Evidence) (*type
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot load evidence file", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -65,6 +66,7 @@ func (r *evidenceResolver) Task(ctx context.Context, obj *types.Evidence) (*type
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot load task", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -86,6 +88,7 @@ func (r *evidenceResolver) Measure(ctx context.Context, obj *types.Evidence) (*t
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot load measure", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -112,6 +115,7 @@ func (r *evidenceConnectionResolver) TotalCount(ctx context.Context, obj *types.
 			r.logger.ErrorCtx(ctx, "cannot count measure evidence", log.Error(err))
 			return 0, gqlutils.Internal(ctx)
 		}
+
 		return count, nil
 	case *taskResolver:
 		count, err := prb.Evidences.CountForTaskID(ctx, obj.ParentID)
@@ -119,10 +123,12 @@ func (r *evidenceConnectionResolver) TotalCount(ctx context.Context, obj *types.
 			r.logger.ErrorCtx(ctx, "cannot count task evidence", log.Error(err))
 			return 0, gqlutils.Internal(ctx)
 		}
+
 		return count, nil
 	}
 
 	r.logger.ErrorCtx(ctx, "unsupported resolver")
+
 	return 0, gqlutils.Internal(ctx)
 }
 
@@ -169,7 +175,9 @@ func (r *mutationResolver) UploadMeasureEvidence(ctx context.Context, input type
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot upload measure evidence", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 

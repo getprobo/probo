@@ -112,9 +112,11 @@ func (sc *scimClient) doRequest(method, path string, payload any) (string, int) 
 	sc.t.Helper()
 
 	var body io.Reader
+
 	if payload != nil {
 		data, err := json.Marshal(payload)
 		require.NoError(sc.t, err)
+
 		body = bytes.NewReader(data)
 	}
 
@@ -122,12 +124,14 @@ func (sc *scimClient) doRequest(method, path string, payload any) (string, int) 
 	require.NoError(sc.t, err)
 
 	req.Header.Set("Authorization", "Bearer "+sc.token)
+
 	if payload != nil {
 		req.Header.Set("Content-Type", "application/scim+json")
 	}
 
 	resp, err := sc.client.Do(req)
 	require.NoError(sc.t, err)
+
 	defer func() { _ = resp.Body.Close() }()
 
 	respBody, err := io.ReadAll(resp.Body)
@@ -269,6 +273,7 @@ func TestSCIM_Unauthorized(t *testing.T) {
 
 	resp, err := client.Do(req)
 	require.NoError(t, err)
+
 	defer func() { _ = resp.Body.Close() }()
 
 	assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)

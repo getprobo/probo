@@ -106,6 +106,7 @@ func (s FrameworkService) RequestExport(
 	recipientName string,
 ) (*coredata.ExportJob, error) {
 	var exportJobID gid.GID
+
 	exportJob := &coredata.ExportJob{}
 
 	err := s.svc.pg.WithTx(ctx, func(ctx context.Context, conn pg.Tx) error {
@@ -120,6 +121,7 @@ func (s FrameworkService) RequestExport(
 		args := coredata.FrameworkExportArguments{
 			FrameworkID: frameworkID,
 		}
+
 		argsJSON, err := json.Marshal(args)
 		if err != nil {
 			return fmt.Errorf("cannot marshal framework export arguments: %w", err)
@@ -142,7 +144,6 @@ func (s FrameworkService) RequestExport(
 
 		return nil
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -156,6 +157,7 @@ func (s FrameworkService) Export(
 	file io.Writer,
 ) error {
 	archive := zip.NewWriter(file)
+
 	defer func() { _ = archive.Close() }()
 
 	return s.svc.pg.WithTx(
@@ -167,6 +169,7 @@ func (s FrameworkService) Export(
 			}
 
 			controls := coredata.Controls{}
+
 			err := controls.LoadByFrameworkID(
 				ctx,
 				conn,
@@ -194,6 +197,7 @@ func (s FrameworkService) Export(
 				}
 
 				measures := coredata.Measures{}
+
 				err = measures.LoadByControlID(
 					ctx,
 					conn,
@@ -221,6 +225,7 @@ func (s FrameworkService) Export(
 					}
 
 					evidences := coredata.Evidences{}
+
 					err = evidences.LoadByMeasureID(
 						ctx,
 						conn,
@@ -262,6 +267,7 @@ func (s FrameworkService) Export(
 						if err != nil {
 							return fmt.Errorf("cannot download evidence: %w", err)
 						}
+
 						defer func() { _ = object.Body.Close() }()
 
 						w, err := archive.Create(fmt.Sprintf("%s/%s/%s/%s", framework.Name, control.SectionTitle, measure.Name, evidence_file.FileName))
@@ -277,6 +283,7 @@ func (s FrameworkService) Export(
 				}
 
 				documents := coredata.Documents{}
+
 				err = documents.LoadByControlID(
 					ctx,
 					conn,
@@ -366,7 +373,6 @@ func (s FrameworkService) Create(
 
 		return nil
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -382,13 +388,14 @@ func (s FrameworkService) CountForOrganizationID(
 
 	err := s.svc.pg.WithConn(ctx, func(ctx context.Context, conn pg.Querier) (err error) {
 		frameworks := &coredata.Frameworks{}
+
 		count, err = frameworks.CountByOrganizationID(ctx, conn, s.svc.scope, organizationID)
 		if err != nil {
 			return fmt.Errorf("cannot count frameworks: %w", err)
 		}
+
 		return nil
 	})
-
 	if err != nil {
 		return 0, fmt.Errorf("cannot count frameworks: %w", err)
 	}
@@ -402,6 +409,7 @@ func (s FrameworkService) ListForOrganizationID(
 	cursor *page.Cursor[coredata.FrameworkOrderField],
 ) (*page.Page[*coredata.Framework, coredata.FrameworkOrderField], error) {
 	var frameworks coredata.Frameworks
+
 	organization := &coredata.Organization{}
 
 	err := s.svc.pg.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
@@ -422,7 +430,6 @@ func (s FrameworkService) ListForOrganizationID(
 
 		return nil
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -439,7 +446,6 @@ func (s FrameworkService) Get(
 	err := s.svc.pg.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
 		return framework.LoadByID(ctx, conn, s.svc.scope, frameworkID)
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -524,6 +530,7 @@ func (s FrameworkService) Import(
 	req ImportFrameworkRequest,
 ) (*coredata.Framework, error) {
 	var framework *coredata.Framework
+
 	frameworkID := gid.New(organizationID.TenantID(), coredata.FrameworkEntityType)
 	now := time.Now()
 
@@ -548,6 +555,7 @@ func (s FrameworkService) Import(
 				"dark":  req.Framework.Logo.Dark,
 			} {
 				fileID := gid.New(s.svc.scope.GetTenantID(), coredata.FileEntityType)
+
 				objectKey, err := uuid.NewV7()
 				if err != nil {
 					return fmt.Errorf("cannot generate object key: %w", err)
@@ -600,21 +608,26 @@ func (s FrameworkService) Import(
 
 			now := time.Now()
 			description := control.Description
+
 			bestPractice := true
 			if control.BestPractice != nil {
 				bestPractice = *control.BestPractice
 			}
+
 			maturityLevel := coredata.ControlMaturityLevelInitial
+
 			if control.MaturityLevel != nil {
 				ml := coredata.ControlMaturityLevel(*control.MaturityLevel)
 				if ml.IsValid() {
 					maturityLevel = ml
 				}
 			}
+
 			var notImplementedJustification *string
 			if maturityLevel == coredata.ControlMaturityLevelNone {
 				notImplementedJustification = control.NotImplementedJustification
 			}
+
 			control := &coredata.Control{
 				ID:                          controlID,
 				FrameworkID:                 frameworkID,
@@ -636,7 +649,6 @@ func (s FrameworkService) Import(
 
 		return nil
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -710,7 +722,6 @@ func (s FrameworkService) GenerateFrameworkExportDownloadURL(
 			opts.Expires = frameworkExportEmailExpiresIn
 		},
 	)
-
 	if err != nil {
 		return "", fmt.Errorf("cannot presign GetObject request: %w", err)
 	}
@@ -720,6 +731,7 @@ func (s FrameworkService) GenerateFrameworkExportDownloadURL(
 
 func (s *FrameworkService) BuildAndUploadExport(ctx context.Context, exportJobID gid.GID) (*coredata.ExportJob, error) {
 	exportJob := &coredata.ExportJob{}
+
 	err := s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
@@ -738,10 +750,12 @@ func (s *FrameworkService) BuildAndUploadExport(ctx context.Context, exportJobID
 			}
 
 			tempDir := os.TempDir()
+
 			tempFile, err := os.CreateTemp(tempDir, "probo-framework-export-*.zip")
 			if err != nil {
 				return fmt.Errorf("cannot create temp file: %w", err)
 			}
+
 			defer func() { _ = tempFile.Close() }()
 			defer func() { _ = os.Remove(tempFile.Name()) }()
 

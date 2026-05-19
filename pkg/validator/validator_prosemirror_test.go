@@ -40,6 +40,7 @@ func TestProseMirrorDocumentContent(t *testing.T) {
 	}
 
 	fn := ProseMirrorDocumentContent()
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
@@ -48,6 +49,7 @@ func TestProseMirrorDocumentContent(t *testing.T) {
 			if (err != nil) != tt.wantError {
 				t.Errorf("ProseMirrorDocumentContent() error = %v, wantError %v", err, tt.wantError)
 			}
+
 			if err != nil && err.Code != ErrorCodeInvalidFormat {
 				t.Errorf("expected code %s, got %s", ErrorCodeInvalidFormat, err.Code)
 			}
@@ -82,6 +84,7 @@ func TestProseMirrorDocumentMaxTextLength(t *testing.T) {
 	}
 
 	fn := ProseMirrorDocumentMaxTextLength(maxLen)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
@@ -90,6 +93,7 @@ func TestProseMirrorDocumentMaxTextLength(t *testing.T) {
 			if (err != nil) != tt.wantError {
 				t.Errorf("ProseMirrorDocumentMaxTextLength() error = %v, wantError %v", err, tt.wantError)
 			}
+
 			if err != nil && tt.wantCode != "" && err.Code != tt.wantCode {
 				t.Errorf("expected code %s, got %s", tt.wantCode, err.Code)
 			}

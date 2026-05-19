@@ -325,6 +325,7 @@ func BenchmarkParseMargin(b *testing.B) {
 	}
 
 	b.ResetTimer()
+
 	for i := 0; i < b.N; i++ {
 		for _, tc := range testCases {
 			ParseMargin(tc)
@@ -341,6 +342,7 @@ func BenchmarkMarginToInches(b *testing.B) {
 	}
 
 	b.ResetTimer()
+
 	for i := 0; i < b.N; i++ {
 		for _, margin := range margins {
 			margin.ToInches()
@@ -357,6 +359,7 @@ func BenchmarkMarginString(b *testing.B) {
 	}
 
 	b.ResetTimer()
+
 	for i := 0; i < b.N; i++ {
 		for _, margin := range margins {
 			_ = margin.String()

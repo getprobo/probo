@@ -43,7 +43,6 @@ func (s FrameworkService) Get(
 
 		return nil
 	})
-
 	if err != nil {
 		return nil, err
 	}

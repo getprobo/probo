@@ -84,15 +84,19 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 			if cmd.Flags().Changed("data-subjects") {
 				input["dataSubjects"] = flagDataSubjects
 			}
+
 			if cmd.Flags().Changed("legal-mechanism") {
 				input["legalMechanism"] = flagLegalMechanism
 			}
+
 			if cmd.Flags().Changed("transfer") {
 				input["transfer"] = flagTransfer
 			}
+
 			if cmd.Flags().Changed("local-law-risk") {
 				input["localLawRisk"] = flagLocalLawRisk
 			}
+
 			if cmd.Flags().Changed("supplementary-measures") {
 				input["supplementaryMeasures"] = flagSupplementaryMeasures
 			}

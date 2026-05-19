@@ -341,6 +341,7 @@ func TestThirdParty_RequiredFields(t *testing.T) {
 			if !tt.skipOrganization {
 				input["organizationId"] = owner.GetOrganizationID().String()
 			}
+
 			maps.Copy(input, tt.input)
 
 			_, err := owner.Do(query, map[string]any{"input": input})
@@ -1020,6 +1021,7 @@ func TestThirdParty_Assess(t *testing.T) {
 		thirdPartyID := factory.NewThirdParty(owner).WithName("Unconfigured assess").Create()
 
 		var result resultShape
+
 		err := owner.Execute(query, map[string]any{
 			"input": map[string]any{
 				"id":         thirdPartyID,
@@ -1037,6 +1039,7 @@ func TestThirdParty_Assess(t *testing.T) {
 		thirdPartyID := factory.NewThirdParty(owner).WithName("Admin-assessed thirdParty").Create()
 
 		var result resultShape
+
 		err := admin.Execute(query, map[string]any{
 			"input": map[string]any{
 				"id":         thirdPartyID,
@@ -1054,6 +1057,7 @@ func TestThirdParty_Assess(t *testing.T) {
 		thirdPartyID := factory.NewThirdParty(owner).WithName("Viewer attempt").Create()
 
 		var result resultShape
+
 		err := viewer.Execute(query, map[string]any{
 			"input": map[string]any{
 				"id":         thirdPartyID,
@@ -1071,6 +1075,7 @@ func TestThirdParty_Assess(t *testing.T) {
 		thirdPartyID := factory.NewThirdParty(org1Owner).WithName("Org1 thirdParty").Create()
 
 		var result resultShape
+
 		err := org2Owner.Execute(query, map[string]any{
 			"input": map[string]any{
 				"id":         thirdPartyID,
@@ -1087,6 +1092,7 @@ func TestThirdParty_Assess(t *testing.T) {
 		thirdPartyID := factory.NewThirdParty(owner).WithName("Procedure test").Create()
 
 		var result resultShape
+
 		err := owner.Execute(query, map[string]any{
 			"input": map[string]any{
 				"id":         thirdPartyID,

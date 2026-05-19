@@ -71,6 +71,7 @@ func (ej *ExportJob) AuthorizationAttributes(ctx context.Context, conn pg.Querie
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrResourceNotFound
 		}
+
 		return nil, fmt.Errorf("cannot query export job authorization attributes: %w", err)
 	}
 
@@ -116,6 +117,7 @@ INSERT INTO export_jobs (
 		"created_at":      ej.CreatedAt,
 	}
 	_, err := conn.Exec(ctx, q, args)
+
 	return err
 }
 
@@ -148,6 +150,7 @@ WHERE
 	}
 	maps.Copy(args, scope.SQLArguments())
 	_, err := conn.Exec(ctx, q, args)
+
 	return err
 }
 
@@ -192,6 +195,7 @@ WHERE
 	}
 
 	*ej = ej2
+
 	return nil
 }
 
@@ -225,6 +229,7 @@ FOR UPDATE SKIP LOCKED
 	args := pgx.StrictNamedArgs{
 		"status": ExportJobStatusPending,
 	}
+
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
 		return err
@@ -235,10 +240,12 @@ FOR UPDATE SKIP LOCKED
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrNoExportJobAvailable
 		}
+
 		return fmt.Errorf("cannot collect export job: %w", err)
 	}
 
 	*ej = ej2
+
 	return nil
 }
 
@@ -273,6 +280,7 @@ func (ej *ExportJob) GetDocumentIDs() ([]gid.GID, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return args.DocumentIDs, nil
 }
 
@@ -281,5 +289,6 @@ func (ej *ExportJob) GetFrameworkID() (gid.GID, error) {
 	if err != nil {
 		return gid.GID{}, err
 	}
+
 	return args.FrameworkID, nil
 }

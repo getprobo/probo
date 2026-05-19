@@ -47,6 +47,7 @@ func agentToolDepth(ctx context.Context) int {
 	if v, ok := ctx.Value(agentToolDepthKey{}).(int); ok {
 		return v
 	}
+
 	return 0
 }
 
@@ -124,6 +125,7 @@ func (t *agentTool) Execute(ctx context.Context, arguments string) (ToolResult, 
 			if len(preview) > 500 {
 				preview = preview[:500] + "... (truncated)"
 			}
+
 			return ToolResult{
 				Content: fmt.Sprintf("Sub-agent %q returned invalid JSON. Raw output:\n%s", t.agent.name, preview),
 				IsError: true,

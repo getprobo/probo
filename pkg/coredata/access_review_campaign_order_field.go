@@ -29,6 +29,7 @@ func (p AccessReviewCampaignOrderField) Column() string {
 	case AccessReviewCampaignOrderFieldCreatedAt:
 		return "created_at"
 	}
+
 	panic(fmt.Sprintf("unsupported order by: %s", p))
 }
 
@@ -37,6 +38,7 @@ func (p AccessReviewCampaignOrderField) IsValid() bool {
 	case AccessReviewCampaignOrderFieldCreatedAt:
 		return true
 	}
+
 	return false
 }
 
@@ -53,5 +55,6 @@ func (p *AccessReviewCampaignOrderField) UnmarshalText(text []byte) error {
 	if !p.IsValid() {
 		return fmt.Errorf("%s is not a valid AccessReviewCampaignOrderField", string(text))
 	}
+
 	return nil
 }

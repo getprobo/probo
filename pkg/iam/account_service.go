@@ -101,6 +101,7 @@ func (s AccountService) ChangeEmail(ctx context.Context, identityID gid.GID, req
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			identity := &coredata.Identity{}
+
 			err := identity.LoadByID(ctx, tx, identityID)
 			if err != nil {
 				if err == coredata.ErrResourceNotFound {
@@ -164,6 +165,7 @@ func (s AccountService) VerifyEmail(ctx context.Context, token string) error {
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			identity := &coredata.Identity{}
+
 			err := identity.LoadByID(ctx, tx, payload.Data.IdentityID)
 			if err != nil {
 				if err == coredata.ErrResourceNotFound {
@@ -208,6 +210,7 @@ func (s *AccountService) ListPendingInvitations(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
 			profile := coredata.MembershipProfile{}
+
 			err := profile.LoadByID(ctx, conn, scope, userID)
 			if err != nil {
 				if err == coredata.ErrResourceNotFound {
@@ -227,7 +230,6 @@ func (s *AccountService) ListPendingInvitations(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -244,6 +246,7 @@ func (s AccountService) ChangePassword(ctx context.Context, identityID gid.GID, 
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			identity := &coredata.Identity{}
+
 			err := identity.LoadByID(ctx, tx, identityID)
 			if err != nil {
 				if err == coredata.ErrResourceNotFound {
@@ -294,6 +297,7 @@ func (s AccountService) CountSessions(ctx context.Context, identityID gid.GID) (
 		ctx,
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			sessions := coredata.Sessions{}
+
 			count, err = sessions.CountByIdentityID(ctx, conn, identityID)
 			if err != nil {
 				return fmt.Errorf("cannot count sessions: %w", err)
@@ -324,7 +328,6 @@ func (s AccountService) ListSessions(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -411,7 +414,6 @@ func (s AccountService) ListPersonalAPIKeys(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -426,6 +428,7 @@ func (s AccountService) CountPersonalAPIKeys(ctx context.Context, identityID gid
 		ctx,
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			personalAccessTokens := coredata.PersonalAPIKeys{}
+
 			count, err = personalAccessTokens.CountByIdentityID(ctx, conn, identityID)
 			if err != nil {
 				return fmt.Errorf("cannot count personal access tokens: %w", err)
@@ -452,6 +455,7 @@ func (s *AccountService) RevealPersonalAPIKeyToken(
 				if err == coredata.ErrResourceNotFound {
 					return NewPersonalAPIKeyNotFoundError(personalAPIKeyID)
 				}
+
 				return fmt.Errorf("cannot load personal api key: %w", err)
 			}
 
@@ -470,7 +474,6 @@ func (s *AccountService) RevealPersonalAPIKeyToken(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return "", err
 	}
@@ -488,6 +491,7 @@ func (s AccountService) GetIdentityForMembership(ctx context.Context, membership
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
 			membership := &coredata.Membership{}
+
 			err := membership.LoadByID(ctx, conn, scope, membershipID)
 			if err != nil {
 				if err == coredata.ErrResourceNotFound {
@@ -509,7 +513,6 @@ func (s AccountService) GetIdentityForMembership(ctx context.Context, membership
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -557,7 +560,6 @@ func (s *AccountService) CreatePersonalAPIKey(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, "", err
 	}
@@ -574,6 +576,7 @@ func (s *AccountService) DeletePersonalAPIKey(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			personalAPIKey := &coredata.PersonalAPIKey{}
+
 			err := personalAPIKey.LoadByID(ctx, tx, personalAPIKeyID)
 			if err != nil {
 				if err == coredata.ErrResourceNotFound {
@@ -599,6 +602,7 @@ func (s *AccountService) DeletePersonalAPIKey(
 
 func (s AccountService) ListOrganizations(ctx context.Context, identityID gid.GID) ([]*coredata.Organization, error) {
 	var organizations coredata.Organizations
+
 	orderBy := page.OrderBy[coredata.OrganizationOrderField]{
 		Field:     coredata.OrganizationOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
@@ -616,7 +620,6 @@ func (s AccountService) ListOrganizations(ctx context.Context, identityID gid.GI
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -657,7 +660,6 @@ func (s AccountService) GetMembershipForOrganization(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -736,7 +738,6 @@ func (s *AccountService) ListProfilesForIdentity(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -757,6 +758,7 @@ func (s AccountService) CountProfiles(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			profiles := coredata.MembershipProfiles{}
+
 			count, err = profiles.CountByIdentityID(ctx, conn, identityID, filter)
 			if err != nil {
 				return fmt.Errorf("cannot count profiles: %w", err)

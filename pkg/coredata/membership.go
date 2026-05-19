@@ -99,6 +99,7 @@ WHERE
 	}
 
 	*m = membership
+
 	return nil
 }
 
@@ -195,6 +196,7 @@ WHERE
 	}
 
 	*m = membership
+
 	return nil
 }
 
@@ -211,9 +213,12 @@ WHERE
 LIMIT 1;
 `
 
-	var identityID gid.GID
-	var organizationID gid.GID
-	var role MembershipRole
+	var (
+		identityID     gid.GID
+		organizationID gid.GID
+		role           MembershipRole
+	)
+
 	if err := conn.QueryRow(ctx, q, m.ID).Scan(
 		&identityID,
 		&organizationID,
@@ -222,6 +227,7 @@ LIMIT 1;
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrResourceNotFound
 		}
+
 		return nil, fmt.Errorf("cannot query membership iam attributes: %w", err)
 	}
 
@@ -278,6 +284,7 @@ WHERE
 	}
 
 	*m = membership
+
 	return nil
 }
 
@@ -390,5 +397,6 @@ LIMIT 1
 	}
 
 	*m = *membership
+
 	return nil
 }

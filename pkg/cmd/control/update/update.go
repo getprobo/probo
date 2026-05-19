@@ -102,9 +102,11 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 			if cmd.Flags().Changed("section-title") {
 				input["sectionTitle"] = flagSectionTitle
 			}
+
 			if cmd.Flags().Changed("name") {
 				input["name"] = flagName
 			}
+
 			if cmd.Flags().Changed("description") {
 				if flagDescription == "" {
 					input["description"] = nil
@@ -112,15 +114,19 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 					input["description"] = flagDescription
 				}
 			}
+
 			if cmd.Flags().Changed("best-practice") {
 				input["bestPractice"] = flagBestPractice
 			}
+
 			if cmd.Flags().Changed("maturity-level") {
 				if err := cmdutil.ValidateEnum("maturity-level", flagMaturityLevel, maturityLevelValues); err != nil {
 					return err
 				}
+
 				input["maturityLevel"] = flagMaturityLevel
 			}
+
 			if cmd.Flags().Changed("not-implemented-justification") {
 				if flagNotImplementedJustification == "" {
 					input["notImplementedJustification"] = nil

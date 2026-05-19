@@ -36,8 +36,10 @@ func (r *mutationResolver) InviteUser(ctx context.Context, input types.InviteUse
 		},
 	)
 	if err != nil {
-		var errOrganizationNotFound *iam.ErrOrganizationNotFound
-		var errUserAlreadyExists *iam.ErrUserAlreadyExists
+		var (
+			errOrganizationNotFound *iam.ErrOrganizationNotFound
+			errUserAlreadyExists    *iam.ErrUserAlreadyExists
+		)
 
 		if errors.As(err, &errOrganizationNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
@@ -48,6 +50,7 @@ func (r *mutationResolver) InviteUser(ctx context.Context, input types.InviteUse
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot invite user", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 

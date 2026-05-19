@@ -103,6 +103,7 @@ func NewCmdAssess(f *cmdutil.Factory) *cobra.Command {
 				if err != nil {
 					return fmt.Errorf("cannot read procedure file: %w", err)
 				}
+
 				input["procedure"] = string(data)
 			}
 

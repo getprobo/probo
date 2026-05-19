@@ -65,6 +65,7 @@ func CheckSPFTool() agent.Tool {
 			}
 
 			client := dns.NewClient()
+
 			answers, err := queryDNS(
 				ctx,
 				client,
@@ -83,6 +84,7 @@ func CheckSPFTool() agent.Tool {
 			}
 
 			var spfRecords []string
+
 			for _, answer := range answers {
 				txt, ok := answer.(*dns.TXT)
 				if !ok {
@@ -106,6 +108,7 @@ func CheckSPFTool() agent.Tool {
 
 			if len(spfRecords) == 1 {
 				record := spfRecords[0]
+
 				return agent.ResultJSON(spfResult{
 					Found:      true,
 					RawRecord:  record,

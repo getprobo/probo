@@ -74,6 +74,7 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 						return fmt.Errorf("invalid --event value %q: valid values are %s", e, strings.Join(shared.ValidEvents, ", "))
 					}
 				}
+
 				input["selectedEvents"] = flagEvents
 			}
 

@@ -130,6 +130,7 @@ instead of publishing immediately. Approvers are ignored with --minor.`,
 					v.Minor,
 					v.Status,
 				)
+
 				return nil
 			}
 

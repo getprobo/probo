@@ -127,6 +127,7 @@ func (c Condition) Evaluate(ctx ConditionContext) bool {
 				return true
 			}
 		}
+
 		return false
 
 	case ConditionNotEquals:
@@ -136,6 +137,7 @@ func (c Condition) Evaluate(ctx ConditionContext) bool {
 				return false
 			}
 		}
+
 		return true
 
 	case ConditionIn:
@@ -153,6 +155,7 @@ func (c Condition) Evaluate(ctx ConditionContext) bool {
 						return true
 					}
 				}
+
 				continue
 			}
 
@@ -160,6 +163,7 @@ func (c Condition) Evaluate(ctx ConditionContext) bool {
 				return true
 			}
 		}
+
 		return false
 
 	case ConditionNotIn:
@@ -175,6 +179,7 @@ func (c Condition) Evaluate(ctx ConditionContext) bool {
 						return false
 					}
 				}
+
 				continue
 			}
 
@@ -182,6 +187,7 @@ func (c Condition) Evaluate(ctx ConditionContext) bool {
 				return false
 			}
 		}
+
 		return true
 
 	default:
@@ -196,12 +202,14 @@ func resolveKey(key string, ctx ConditionContext) (string, bool) {
 	if len(key) > 10 && key[:10] == "principal." {
 		attrKey := key[10:]
 		val, ok := ctx.Principal[attrKey]
+
 		return val, ok
 	}
 
 	if len(key) > 9 && key[:9] == "resource." {
 		attrKey := key[9:]
 		val, ok := ctx.Resource[attrKey]
+
 		return val, ok
 	}
 

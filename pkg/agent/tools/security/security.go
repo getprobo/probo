@@ -26,6 +26,7 @@ func resolverAddr() string {
 	if addr := os.Getenv("DNS_RESOLVER_ADDR"); addr != "" {
 		return addr
 	}
+
 	return "8.8.8.8:53"
 }
 

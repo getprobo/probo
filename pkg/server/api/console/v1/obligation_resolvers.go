@@ -48,7 +48,9 @@ func (r *mutationResolver) CreateObligation(ctx context.Context, input types.Cre
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot create obligation", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -84,7 +86,9 @@ func (r *mutationResolver) UpdateObligation(ctx context.Context, input types.Upd
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot update obligation", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -125,10 +129,13 @@ func (r *mutationResolver) PublishObligationList(ctx context.Context, input type
 		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
 			return nil, gqlutils.Conflict(ctx, err)
 		}
+
 		if errMinor, ok := errors.AsType[*probo.ErrCannotPublishMinorWithoutMajor](err); ok {
 			return nil, gqlutils.Invalid(ctx, errMinor)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot publish obligation list", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -153,6 +160,7 @@ func (r *obligationResolver) Organization(ctx context.Context, obj *types.Obliga
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get obligation organization", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -174,6 +182,7 @@ func (r *obligationResolver) Owner(ctx context.Context, obj *types.Obligation) (
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get obligation owner", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -200,6 +209,7 @@ func (r *obligationConnectionResolver) TotalCount(ctx context.Context, obj *type
 			r.logger.ErrorCtx(ctx, "cannot count obligations", log.Error(err))
 			return 0, gqlutils.Internal(ctx)
 		}
+
 		return count, nil
 	case *riskResolver:
 		count, err := prb.Obligations.CountForRiskID(ctx, obj.ParentID)
@@ -207,10 +217,12 @@ func (r *obligationConnectionResolver) TotalCount(ctx context.Context, obj *type
 			r.logger.ErrorCtx(ctx, "cannot count risk obligations", log.Error(err))
 			return 0, gqlutils.Internal(ctx)
 		}
+
 		return count, nil
 	}
 
 	r.logger.ErrorCtx(ctx, "unsupported resolver")
+
 	return 0, gqlutils.Internal(ctx)
 }
 

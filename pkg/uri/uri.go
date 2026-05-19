@@ -44,6 +44,7 @@ func (u *URI) UnmarshalText(text []byte) error {
 	}
 
 	*u = parsed
+
 	return nil
 }
 
@@ -53,6 +54,7 @@ func (u URI) MarshalText() ([]byte, error) {
 
 func (u *URI) Scan(value any) error {
 	var s string
+
 	switch v := value.(type) {
 	case string:
 		s = v
@@ -68,6 +70,7 @@ func (u *URI) Scan(value any) error {
 	}
 
 	*u = parsed
+
 	return nil
 }
 

@@ -44,6 +44,7 @@ func TestURL(t *testing.T) {
 			if (err != nil) != tt.wantError {
 				t.Errorf("URL() error = %v, wantError %v", err, tt.wantError)
 			}
+
 			if err != nil && err.Code != ErrorCodeInvalidURL {
 				t.Errorf("Expected error code %s, got %s", ErrorCodeInvalidURL, err.Code)
 			}
@@ -54,6 +55,7 @@ func TestURL(t *testing.T) {
 func TestHTTPSUrl(t *testing.T) {
 	t.Run("valid https URL", func(t *testing.T) {
 		str := "https://example.com"
+
 		err := HTTPSUrl()(&str)
 		if err != nil {
 			t.Errorf("expected no error, got: %v", err)
@@ -62,6 +64,7 @@ func TestHTTPSUrl(t *testing.T) {
 
 	t.Run("valid https URL with path", func(t *testing.T) {
 		str := "https://example.com/path/to/resource"
+
 		err := HTTPSUrl()(&str)
 		if err != nil {
 			t.Errorf("expected no error, got: %v", err)
@@ -70,6 +73,7 @@ func TestHTTPSUrl(t *testing.T) {
 
 	t.Run("valid https URL with query", func(t *testing.T) {
 		str := "https://api.example.com/v1/users?page=1"
+
 		err := HTTPSUrl()(&str)
 		if err != nil {
 			t.Errorf("expected no error, got: %v", err)
@@ -78,10 +82,12 @@ func TestHTTPSUrl(t *testing.T) {
 
 	t.Run("invalid - http scheme", func(t *testing.T) {
 		str := "http://example.com"
+
 		err := HTTPSUrl()(&str)
 		if err == nil {
 			t.Fatal("expected validation error for http")
 		}
+
 		if err.Message != "URL must use https scheme" {
 			t.Errorf("unexpected error message: %s", err.Message)
 		}
@@ -89,6 +95,7 @@ func TestHTTPSUrl(t *testing.T) {
 
 	t.Run("invalid - ftp scheme", func(t *testing.T) {
 		str := "ftp://example.com"
+
 		err := HTTPSUrl()(&str)
 		if err == nil {
 			t.Error("expected validation error for ftp")
@@ -97,6 +104,7 @@ func TestHTTPSUrl(t *testing.T) {
 
 	t.Run("invalid - no scheme", func(t *testing.T) {
 		str := "example.com"
+
 		err := HTTPSUrl()(&str)
 		if err == nil {
 			t.Error("expected validation error for missing scheme")
@@ -105,6 +113,7 @@ func TestHTTPSUrl(t *testing.T) {
 
 	t.Run("invalid - no host", func(t *testing.T) {
 		str := "https://"
+
 		err := HTTPSUrl()(&str)
 		if err == nil {
 			t.Error("expected validation error for missing host")
@@ -113,6 +122,7 @@ func TestHTTPSUrl(t *testing.T) {
 
 	t.Run("empty string", func(t *testing.T) {
 		str := ""
+
 		err := HTTPSUrl()(&str)
 		if err != nil {
 			t.Errorf("expected no error for empty string, got: %v", err)
@@ -121,6 +131,7 @@ func TestHTTPSUrl(t *testing.T) {
 
 	t.Run("nil pointer", func(t *testing.T) {
 		var str *string
+
 		err := HTTPSUrl()(str)
 		if err != nil {
 			t.Errorf("expected no error for nil, got: %v", err)
@@ -157,6 +168,7 @@ func TestOrigin(t *testing.T) {
 			if (err != nil) != tt.wantError {
 				t.Errorf("Origin() error = %v, wantError %v", err, tt.wantError)
 			}
+
 			if err != nil && err.Code != ErrorCodeInvalidFormat {
 				t.Errorf("Expected error code %s, got %s", ErrorCodeInvalidFormat, err.Code)
 			}
@@ -200,6 +212,7 @@ func TestSlug(t *testing.T) {
 			if (err != nil) != tt.wantError {
 				t.Errorf("Slug(%d) error = %v, wantError %v", tt.maxLen, err, tt.wantError)
 			}
+
 			if err != nil && tt.wantCode != "" && err.Code != tt.wantCode {
 				t.Errorf("Expected error code %s, got %s", tt.wantCode, err.Code)
 			}
@@ -210,6 +223,7 @@ func TestSlug(t *testing.T) {
 func TestDomain(t *testing.T) {
 	t.Run("valid domain", func(t *testing.T) {
 		str := "example.com"
+
 		err := Domain()(&str)
 		if err != nil {
 			t.Errorf("expected no error, got: %v", err)
@@ -218,6 +232,7 @@ func TestDomain(t *testing.T) {
 
 	t.Run("valid subdomain", func(t *testing.T) {
 		str := "api.example.com"
+
 		err := Domain()(&str)
 		if err != nil {
 			t.Errorf("expected no error, got: %v", err)
@@ -226,6 +241,7 @@ func TestDomain(t *testing.T) {
 
 	t.Run("valid nested subdomain", func(t *testing.T) {
 		str := "api.v1.example.com"
+
 		err := Domain()(&str)
 		if err != nil {
 			t.Errorf("expected no error, got: %v", err)
@@ -234,6 +250,7 @@ func TestDomain(t *testing.T) {
 
 	t.Run("valid domain with hyphens", func(t *testing.T) {
 		str := "my-api.example-site.com"
+
 		err := Domain()(&str)
 		if err != nil {
 			t.Errorf("expected no error, got: %v", err)
@@ -242,6 +259,7 @@ func TestDomain(t *testing.T) {
 
 	t.Run("single word domain", func(t *testing.T) {
 		str := "localhost"
+
 		err := Domain()(&str)
 		if err != nil {
 			t.Errorf("expected no error, got: %v", err)
@@ -250,6 +268,7 @@ func TestDomain(t *testing.T) {
 
 	t.Run("invalid - starts with hyphen", func(t *testing.T) {
 		str := "-example.com"
+
 		err := Domain()(&str)
 		if err == nil {
 			t.Error("expected validation error for domain starting with hyphen")
@@ -258,6 +277,7 @@ func TestDomain(t *testing.T) {
 
 	t.Run("invalid - ends with hyphen", func(t *testing.T) {
 		str := "example-.com"
+
 		err := Domain()(&str)
 		if err == nil {
 			t.Error("expected validation error for domain ending with hyphen")
@@ -266,6 +286,7 @@ func TestDomain(t *testing.T) {
 
 	t.Run("invalid - contains underscore", func(t *testing.T) {
 		str := "example_site.com"
+
 		err := Domain()(&str)
 		if err == nil {
 			t.Error("expected validation error for underscore")
@@ -274,6 +295,7 @@ func TestDomain(t *testing.T) {
 
 	t.Run("invalid - contains spaces", func(t *testing.T) {
 		str := "example site.com"
+
 		err := Domain()(&str)
 		if err == nil {
 			t.Error("expected validation error for spaces")
@@ -282,6 +304,7 @@ func TestDomain(t *testing.T) {
 
 	t.Run("invalid - empty label", func(t *testing.T) {
 		str := "example..com"
+
 		err := Domain()(&str)
 		if err == nil {
 			t.Error("expected validation error for empty label")
@@ -290,10 +313,12 @@ func TestDomain(t *testing.T) {
 
 	t.Run("invalid - too long", func(t *testing.T) {
 		str := strings.Repeat("a", 254)
+
 		err := Domain()(&str)
 		if err == nil {
 			t.Fatal("expected validation error for domain too long")
 		}
+
 		if err.Message != "domain name too long (max 253 characters)" {
 			t.Errorf("unexpected error message: %s", err.Message)
 		}
@@ -301,6 +326,7 @@ func TestDomain(t *testing.T) {
 
 	t.Run("empty string", func(t *testing.T) {
 		str := ""
+
 		err := Domain()(&str)
 		if err != nil {
 			t.Errorf("expected no error for empty string, got: %v", err)
@@ -309,6 +335,7 @@ func TestDomain(t *testing.T) {
 
 	t.Run("nil pointer", func(t *testing.T) {
 		var str *string
+
 		err := Domain()(str)
 		if err != nil {
 			t.Errorf("expected no error for nil, got: %v", err)
@@ -347,9 +374,11 @@ func TestGID(t *testing.T) {
 		if err == nil {
 			t.Fatal("expected validation error for wrong entity type")
 		}
+
 		if err.Code != ErrorCodeInvalidGID {
 			t.Errorf("expected error code %s, got %s", ErrorCodeInvalidGID, err.Code)
 		}
+
 		if err.Message != "GID has invalid entity type" {
 			t.Errorf("unexpected error message: %s", err.Message)
 		}
@@ -371,6 +400,7 @@ func TestGID(t *testing.T) {
 
 	t.Run("nil GID pointer", func(t *testing.T) {
 		var gidPtr *gid.GID
+
 		err := GID()(gidPtr)
 		if err != nil {
 			t.Errorf("expected no error for nil GID pointer, got: %v", err)
@@ -396,6 +426,7 @@ func TestGID(t *testing.T) {
 		if err == nil {
 			t.Fatal("expected validation error for non-GID type")
 		}
+
 		if err.Message != "value must be a GID" {
 			t.Errorf("unexpected error message: %s", err.Message)
 		}
@@ -406,6 +437,7 @@ func TestGID(t *testing.T) {
 		if err == nil {
 			t.Fatal("expected validation error for string type")
 		}
+
 		if err.Message != "value must be a GID" {
 			t.Errorf("unexpected error message: %s", err.Message)
 		}

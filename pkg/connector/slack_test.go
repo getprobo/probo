@@ -36,6 +36,7 @@ func TestParseSlackTokenResponse(t *testing.T) {
 
 	t.Run("with incoming webhook", func(t *testing.T) {
 		t.Parallel()
+
 		body := []byte(`{"ok":true,"incoming_webhook":{"url":"https://hooks.slack.com/services/T/B/X","channel":"#general","channel_id":"C123"}}`)
 
 		conn, returnedOrgID, err := ParseSlackTokenResponse(body, base, orgID)
@@ -52,6 +53,7 @@ func TestParseSlackTokenResponse(t *testing.T) {
 
 	t.Run("without incoming webhook", func(t *testing.T) {
 		t.Parallel()
+
 		body := []byte(`{"ok":true}`)
 
 		conn, returnedOrgID, err := ParseSlackTokenResponse(body, base, orgID)
@@ -67,6 +69,7 @@ func TestParseSlackTokenResponse(t *testing.T) {
 
 	t.Run("slack error response", func(t *testing.T) {
 		t.Parallel()
+
 		body := []byte(`{"ok":false,"error":"invalid_code"}`)
 
 		conn, returnedOrgID, err := ParseSlackTokenResponse(body, base, orgID)
@@ -78,6 +81,7 @@ func TestParseSlackTokenResponse(t *testing.T) {
 
 	t.Run("missing access token", func(t *testing.T) {
 		t.Parallel()
+
 		body := []byte(`{"ok":true}`)
 		connWithoutToken := base
 		connWithoutToken.AccessToken = ""

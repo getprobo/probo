@@ -119,6 +119,7 @@ func GID(entityTypes ...uint16) ValidatorFunc {
 			if v == nil {
 				return nil
 			}
+
 			gidValue = *v
 		default:
 			return newValidationError(ErrorCodeInvalidGID, "value must be a GID")
@@ -126,6 +127,7 @@ func GID(entityTypes ...uint16) ValidatorFunc {
 
 		if len(entityTypes) > 0 {
 			parsedEntityType := gidValue.EntityType()
+
 			valid := slices.Contains(entityTypes, parsedEntityType)
 			if !valid {
 				return newValidationError(ErrorCodeInvalidGID, "GID has invalid entity type")

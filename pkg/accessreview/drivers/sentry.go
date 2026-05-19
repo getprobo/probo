@@ -67,12 +67,14 @@ func (d *SentryDriver) resolveOrgSlug(ctx context.Context) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("cannot create sentry organizations request: %w", err)
 	}
+
 	req.Header.Set("Accept", "application/json")
 
 	resp, err := d.httpClient.Do(req)
 	if err != nil {
 		return "", fmt.Errorf("cannot fetch sentry organizations: %w", err)
 	}
+
 	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
@@ -100,6 +102,7 @@ func (d *SentryDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error
 		if err != nil {
 			return nil, fmt.Errorf("cannot resolve sentry organization slug: %w", err)
 		}
+
 		orgSlug = slug
 	}
 
@@ -130,6 +133,7 @@ func (d *SentryDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error
 			isAdmin := m.OrgRole == "admin" || m.OrgRole == "owner"
 
 			mfaStatus := coredata.MFAStatusUnknown
+
 			if m.User != nil {
 				if m.User.Has2FA {
 					mfaStatus = coredata.MFAStatusEnabled
@@ -188,6 +192,7 @@ func (d *SentryDriver) queryMembers(ctx context.Context, url string) ([]sentryMe
 	if err != nil {
 		return nil, "", fmt.Errorf("cannot execute sentry members request: %w", err)
 	}
+
 	defer func() {
 		_ = httpResp.Body.Close()
 	}()
@@ -221,8 +226,10 @@ func sentryAuthMethod(flags map[string]bool, user *sentryUser) coredata.AccessEn
 	if flags["sso:linked"] {
 		return coredata.AccessEntryAuthMethodSSO
 	}
+
 	if user != nil && user.HasPasswordAuth {
 		return coredata.AccessEntryAuthMethodPassword
 	}
+
 	return coredata.AccessEntryAuthMethodUnknown
 }

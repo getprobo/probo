@@ -45,6 +45,7 @@ func (e SessionRequirement) IsValid() bool {
 	case SessionRequirementPresent, SessionRequirementNone, SessionRequirementOptional:
 		return true
 	}
+
 	return false
 }
 
@@ -62,6 +63,7 @@ func (e *SessionRequirement) UnmarshalGQL(v any) error {
 	if !e.IsValid() {
 		return fmt.Errorf("%s is not a valid SessionRequirement", str)
 	}
+
 	return nil
 }
 
@@ -74,12 +76,14 @@ func (e *SessionRequirement) UnmarshalJSON(b []byte) error {
 	if err != nil {
 		return err
 	}
+
 	return e.UnmarshalGQL(s)
 }
 
 func (e SessionRequirement) MarshalJSON() ([]byte, error) {
 	var buf bytes.Buffer
 	e.MarshalGQL(&buf)
+
 	return buf.Bytes(), nil
 }
 

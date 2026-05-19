@@ -58,6 +58,7 @@ LIMIT 1
 `
 
 	args := pgx.NamedArgs{"domain": domain}
+
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
 		return fmt.Errorf("cannot query certificate cache: %w", err)
@@ -69,6 +70,7 @@ LIMIT 1
 	}
 
 	*cc = cache
+
 	return nil
 }
 
@@ -136,6 +138,7 @@ func (cc *CachedCertificates) CountAll(ctx context.Context, conn pg.Querier) (in
 	q := `SELECT COUNT(*) FROM cached_certificates`
 
 	var count int
+
 	err := conn.QueryRow(ctx, q, pgx.NamedArgs{}).Scan(&count)
 	if err != nil {
 		return 0, fmt.Errorf("cannot count certificate cache: %w", err)

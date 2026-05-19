@@ -179,6 +179,7 @@ func UploadStaticAssets(ctx context.Context, s3Client *s3.Client, staticAssetsBu
 		if err != nil {
 			return err
 		}
+
 		defer func() { _ = file.Close() }()
 
 		_, err = s3Client.PutObject(
@@ -200,7 +201,6 @@ func UploadStaticAssets(ctx context.Context, s3Client *s3.Client, staticAssetsBu
 
 		return nil
 	})
-
 	if err != nil {
 		return fmt.Errorf("cannot generate asset URLs: %w", err)
 	}
@@ -261,6 +261,7 @@ func (p *Presenter) getCommonVariables(ctx context.Context) (*CommonVariables, e
 	if err != nil {
 		return nil, fmt.Errorf("cannot generate probo logo URL: %w", err)
 	}
+
 	senderCompanyLogoURL, err := p.fm.GenerateFileUrl(ctx, &p.config.SenderCompanyLogo, staticAssetsDuration)
 	if err != nil {
 		return nil, fmt.Errorf("cannot generate sender logo URL: %w", err)
@@ -298,6 +299,7 @@ func (p *Presenter) RenderConfirmEmail(ctx context.Context, confirmationURLPath 
 	}
 
 	textBody, htmlBody, err = renderEmail(confirmEmailTextTemplate, confirmEmailHTMLTemplate, data)
+
 	return subjectConfirmEmail, textBody, htmlBody, err
 }
 
@@ -322,6 +324,7 @@ func (p *Presenter) RenderPasswordReset(ctx context.Context, resetPasswordURLPat
 	}
 
 	textBody, htmlBody, err = renderEmail(passwordResetTextTemplate, passwordResetHTMLTemplate, data)
+
 	return subjectPasswordReset, textBody, htmlBody, err
 }
 
@@ -348,6 +351,7 @@ func (p *Presenter) RenderInvitation(ctx context.Context, invitationURLPath stri
 	}
 
 	textBody, htmlBody, err = renderEmail(invitationTextTemplate, invitationHTMLTemplate, data)
+
 	return fmt.Sprintf(subjectInvitation, organizationName), textBody, htmlBody, err
 }
 
@@ -381,6 +385,7 @@ func (p *Presenter) RenderDocumentApproval(
 	}
 
 	textBody, htmlBody, err = renderEmail(documentApprovalTextTemplate, documentApprovalHTMLTemplate, data)
+
 	return fmt.Sprintf(subjectDocumentApproval, documentName), textBody, htmlBody, err
 }
 
@@ -411,6 +416,7 @@ func (p *Presenter) RenderDocumentSigning(
 	}
 
 	textBody, htmlBody, err = renderEmail(documentSigningTextTemplate, documentSigningHTMLTemplate, data)
+
 	return fmt.Sprintf(subjectDocumentSigning, organizationName), textBody, htmlBody, err
 }
 
@@ -429,6 +435,7 @@ func (p *Presenter) RenderDocumentExport(ctx context.Context, downloadUrl string
 	}
 
 	textBody, htmlBody, err = renderEmail(documentExportTextTemplate, documentExportHTMLTemplate, data)
+
 	return subjectDocumentExport, textBody, htmlBody, err
 }
 
@@ -447,6 +454,7 @@ func (p *Presenter) RenderFrameworkExport(ctx context.Context, downloadUrl strin
 	}
 
 	textBody, htmlBody, err = renderEmail(frameworkExportTextTemplate, frameworkExportHTMLTemplate, data)
+
 	return subjectFrameworkExport, textBody, htmlBody, err
 }
 
@@ -465,6 +473,7 @@ func (p *Presenter) RenderTrustCenterAccess(ctx context.Context, organizationNam
 	}
 
 	textBody, htmlBody, err = renderEmail(trustCenterAccessTextTemplate, trustCenterAccessHTMLTemplate, data)
+
 	return fmt.Sprintf(subjectTrustCenterAccess, organizationName), textBody, htmlBody, err
 }
 
@@ -489,6 +498,7 @@ func (p *Presenter) RenderTrustCenterDocumentAccessRejected(
 	}
 
 	textBody, htmlBody, err = renderEmail(trustCenterDocumentAccessRejectedTextTemplate, trustCenterDocumentAccessRejectedHTMLTemplate, data)
+
 	return fmt.Sprintf(subjectTrustCenterDocumentAccessRejected, organizationName), textBody, htmlBody, err
 }
 
@@ -511,6 +521,7 @@ func (p *Presenter) RenderMagicLink(ctx context.Context, magicLinkUrlPath string
 	}
 
 	textBody, htmlBody, err = renderEmail(magicLinkTextTemplate, magicLinkHTMLTemplate, data)
+
 	return fmt.Sprintf(subjectMagicLink, organizationName), textBody, htmlBody, err
 }
 
@@ -531,6 +542,7 @@ func (p *Presenter) RenderElectronicSignatureCertificate(ctx context.Context, si
 	}
 
 	textBody, htmlBody, err = renderEmail(electronicSignatureCertificateTextTemplate, electronicSignatureCertificateHTMLTemplate, data)
+
 	return fmt.Sprintf(subjectElectronicSignatureCertificate, documentName), textBody, htmlBody, err
 }
 
@@ -617,12 +629,14 @@ func renderEmail(textTemplate *texttemplate.Template, htmlTemplate *htmltemplate
 	if err := textTemplate.Execute(&textBuf, data); err != nil {
 		return "", nil, fmt.Errorf("cannot execute text template: %w", err)
 	}
+
 	textBody = textBuf.String()
 
 	var htmlBuf bytes.Buffer
 	if err := htmlTemplate.Execute(&htmlBuf, data); err != nil {
 		return "", nil, fmt.Errorf("cannot execute html template: %w", err)
 	}
+
 	htmlBodyStr := htmlBuf.String()
 	htmlBody = &htmlBodyStr
 

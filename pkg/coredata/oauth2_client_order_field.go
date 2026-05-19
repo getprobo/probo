@@ -36,6 +36,7 @@ func (f OAuth2ClientOrderField) IsValid() bool {
 	case OAuth2ClientOrderFieldCreatedAt:
 		return true
 	}
+
 	return false
 }
 
@@ -48,6 +49,7 @@ func (f *OAuth2ClientOrderField) UnmarshalText(text []byte) error {
 	if !f.IsValid() {
 		return fmt.Errorf("%s is not a valid OAuth2ClientOrderField", string(text))
 	}
+
 	return nil
 }
 

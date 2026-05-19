@@ -32,6 +32,7 @@ func NewSystemPromptLeakGuardrail(fingerprints []string) *SystemPromptLeakGuardr
 		if f == "" {
 			continue
 		}
+
 		lowered = append(lowered, strings.ToLower(f))
 	}
 

@@ -103,8 +103,10 @@ func NewCmdCommonTrackerPatterns(f *cmdutil.Factory) *cobra.Command {
 
 			_, _ = fmt.Fprintf(out, "seeding %d common tracker patterns from Open Cookie Database\n", len(patterns))
 
-			var inserted, updated, skipped int
-			var partiesCreated int
+			var (
+				inserted, updated, skipped int
+				partiesCreated             int
+			)
 
 			if err := pgClient.WithTx(
 				ctx,
@@ -122,6 +124,7 @@ func NewCmdCommonTrackerPatterns(f *cmdutil.Factory) *cobra.Command {
 						if err != nil {
 							_, _ = fmt.Fprintf(errOut, "warning: %v, skipping pattern %q\n", err, p.Pattern)
 							skipped++
+
 							continue
 						}
 
@@ -129,6 +132,7 @@ func NewCmdCommonTrackerPatterns(f *cmdutil.Factory) *cobra.Command {
 						if err != nil {
 							_, _ = fmt.Fprintf(errOut, "warning: %v, skipping pattern %q\n", err, p.Pattern)
 							skipped++
+
 							continue
 						}
 
@@ -207,6 +211,7 @@ func loadPatternsFromOCD(dir string) ([]trackerPatternData, error) {
 	if err != nil {
 		return nil, fmt.Errorf("cannot open %s: %w", ocdJSONFile, err)
 	}
+
 	defer func() { _ = f.Close() }()
 
 	var db map[string][]ocdEntry
@@ -218,9 +223,11 @@ func loadPatternsFromOCD(dir string) ([]trackerPatternData, error) {
 	for k := range db {
 		platforms = append(platforms, k)
 	}
+
 	sort.Strings(platforms)
 
 	var patterns []trackerPatternData
+
 	for _, platform := range platforms {
 		for _, e := range db[platform] {
 			if e.Cookie == "" {
@@ -273,6 +280,7 @@ func resolveThirdParty(
 	if platformSlug == "" {
 		return nil, nil
 	}
+
 	if cached, ok := cache[platformSlug]; ok {
 		return cached, nil
 	}
@@ -298,7 +306,9 @@ func resolveThirdParty(
 			if err := party.LoadByID(ctx, tx, domainRow.CommonThirdPartyID); err != nil {
 				return nil, fmt.Errorf("cannot load common third party by ID %s: %w", domainRow.CommonThirdPartyID, err)
 			}
+
 			cache[platformSlug] = &party.ID
+
 			return &party.ID, nil
 		}
 	}
@@ -336,6 +346,7 @@ func resolveThirdParty(
 
 	*created++
 	cache[platformSlug] = &party.ID
+
 	return &party.ID, nil
 }
 
@@ -349,6 +360,7 @@ func normalizeDomain(s string) string {
 			if r == '\u200b' || r == '\ufeff' {
 				return -1
 			}
+
 			return r
 		},
 		s,
@@ -357,6 +369,7 @@ func normalizeDomain(s string) string {
 	if idx := strings.Index(s, " or "); idx != -1 {
 		s = s[:idx]
 	}
+
 	s = strings.TrimPrefix(s, "or ")
 
 	if idx := strings.IndexByte(s, '('); idx != -1 {
@@ -374,6 +387,7 @@ func normalizeDomain(s string) string {
 	if s == "" || !domainValidRe.MatchString(s) {
 		return ""
 	}
+
 	return s
 }
 
@@ -419,6 +433,7 @@ func parseRetentionPeriod(s string) *int {
 	}
 
 	var multiplier int
+
 	switch strings.ToLower(m[2]) {
 	case "second", "seconds", "sec", "secs":
 		multiplier = 1
@@ -439,6 +454,7 @@ func parseRetentionPeriod(s string) *int {
 	}
 
 	result := min(n*multiplier, math.MaxInt32)
+
 	return &result
 }
 

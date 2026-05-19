@@ -39,6 +39,7 @@ func (p ProcessingActivityDataProtectionImpactAssessment) String() string {
 
 func (p *ProcessingActivityDataProtectionImpactAssessment) Scan(value any) error {
 	var s string
+
 	switch v := value.(type) {
 	case string:
 		s = v
@@ -56,6 +57,7 @@ func (p *ProcessingActivityDataProtectionImpactAssessment) Scan(value any) error
 	default:
 		return fmt.Errorf("invalid ProcessingActivityDataProtectionImpactAssessment value: %q", s)
 	}
+
 	return nil
 }
 

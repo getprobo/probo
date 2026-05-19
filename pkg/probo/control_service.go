@@ -103,6 +103,7 @@ func (s ControlService) CountForDocumentID(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			controls := &coredata.Controls{}
+
 			count, err = controls.CountByDocumentID(ctx, conn, s.svc.scope, documentID, filter)
 			if err != nil {
 				return fmt.Errorf("cannot count controls: %w", err)
@@ -111,7 +112,6 @@ func (s ControlService) CountForDocumentID(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return 0, fmt.Errorf("cannot count controls: %w", err)
 	}
@@ -126,6 +126,7 @@ func (s ControlService) ListForDocumentID(
 	filter *coredata.ControlFilter,
 ) (*page.Page[*coredata.Control, coredata.ControlOrderField], error) {
 	var controls coredata.Controls
+
 	document := &coredata.Document{}
 
 	err := s.svc.pg.WithConn(
@@ -138,7 +139,6 @@ func (s ControlService) ListForDocumentID(
 			return controls.LoadByDocumentID(ctx, conn, s.svc.scope, documentID, cursor, filter)
 		},
 	)
-
 	if err != nil {
 		return nil, fmt.Errorf("cannot list controls: %w", err)
 	}
@@ -157,6 +157,7 @@ func (s ControlService) CountForMeasureID(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			controls := &coredata.Controls{}
+
 			count, err = controls.CountByMeasureID(ctx, conn, s.svc.scope, measureID, filter)
 			if err != nil {
 				return fmt.Errorf("cannot count controls: %w", err)
@@ -165,7 +166,6 @@ func (s ControlService) CountForMeasureID(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return 0, fmt.Errorf("cannot count controls: %w", err)
 	}
@@ -180,6 +180,7 @@ func (s ControlService) ListForMeasureID(
 	filter *coredata.ControlFilter,
 ) (*page.Page[*coredata.Control, coredata.ControlOrderField], error) {
 	var controls coredata.Controls
+
 	measure := &coredata.Measure{}
 
 	err := s.svc.pg.WithConn(
@@ -192,7 +193,6 @@ func (s ControlService) ListForMeasureID(
 			return controls.LoadByMeasureID(ctx, conn, s.svc.scope, measureID, cursor, filter)
 		},
 	)
-
 	if err != nil {
 		return nil, fmt.Errorf("cannot list controls: %w", err)
 	}
@@ -211,6 +211,7 @@ func (s ControlService) CountForFrameworkID(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			controls := &coredata.Controls{}
+
 			count, err = controls.CountByFrameworkID(ctx, conn, s.svc.scope, frameworkID, filter)
 			if err != nil {
 				return fmt.Errorf("cannot count controls: %w", err)
@@ -219,7 +220,6 @@ func (s ControlService) CountForFrameworkID(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return 0, fmt.Errorf("cannot count controls: %w", err)
 	}
@@ -234,6 +234,7 @@ func (s ControlService) ListForFrameworkID(
 	filter *coredata.ControlFilter,
 ) (*page.Page[*coredata.Control, coredata.ControlOrderField], error) {
 	var controls coredata.Controls
+
 	framework := &coredata.Framework{}
 
 	err := s.svc.pg.WithConn(
@@ -253,7 +254,6 @@ func (s ControlService) ListForFrameworkID(
 			)
 		},
 	)
-
 	if err != nil {
 		return nil, fmt.Errorf("cannot list controls: %w", err)
 	}
@@ -272,6 +272,7 @@ func (s ControlService) CountForOrganizationID(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			controls := &coredata.Controls{}
+
 			count, err = controls.CountByOrganizationID(ctx, conn, s.svc.scope, organizationID, filter)
 			if err != nil {
 				return fmt.Errorf("cannot count controls: %w", err)
@@ -280,7 +281,6 @@ func (s ControlService) CountForOrganizationID(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return 0, fmt.Errorf("cannot count controls: %w", err)
 	}
@@ -295,6 +295,7 @@ func (s ControlService) ListForOrganizationID(
 	filter *coredata.ControlFilter,
 ) (*page.Page[*coredata.Control, coredata.ControlOrderField], error) {
 	var controls coredata.Controls
+
 	organization := &coredata.Organization{}
 
 	err := s.svc.pg.WithConn(
@@ -314,7 +315,6 @@ func (s ControlService) ListForOrganizationID(
 			)
 		},
 	)
-
 	if err != nil {
 		return nil, fmt.Errorf("cannot list controls: %w", err)
 	}
@@ -333,6 +333,7 @@ func (s ControlService) CountForRiskID(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			controls := &coredata.Controls{}
+
 			count, err = controls.CountByRiskID(ctx, conn, s.svc.scope, riskID, filter)
 			if err != nil {
 				return fmt.Errorf("cannot count controls: %w", err)
@@ -341,7 +342,6 @@ func (s ControlService) CountForRiskID(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return 0, fmt.Errorf("cannot count controls: %w", err)
 	}
@@ -356,6 +356,7 @@ func (s ControlService) ListForRiskID(
 	filter *coredata.ControlFilter,
 ) (*page.Page[*coredata.Control, coredata.ControlOrderField], error) {
 	var controls coredata.Controls
+
 	risk := &coredata.Risk{}
 
 	err := s.svc.pg.WithConn(
@@ -368,7 +369,6 @@ func (s ControlService) ListForRiskID(
 			return controls.LoadByRiskID(ctx, conn, s.svc.scope, risk.ID, cursor, filter)
 		},
 	)
-
 	if err != nil {
 		return nil, fmt.Errorf("cannot list controls: %w", err)
 	}
@@ -406,7 +406,6 @@ func (s ControlService) CreateMeasureMapping(
 			return controlMeasure.Upsert(ctx, conn, s.svc.scope)
 		},
 	)
-
 	if err != nil {
 		return nil, nil, fmt.Errorf("cannot create control measure mapping: %w", err)
 	}
@@ -441,7 +440,6 @@ func (s ControlService) DeleteMeasureMapping(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, nil, fmt.Errorf("cannot delete control measure mapping: %w", err)
 	}
@@ -483,7 +481,6 @@ func (s ControlService) CreateDocumentMapping(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, nil, fmt.Errorf("cannot create control document mapping: %w", err)
 	}
@@ -518,7 +515,6 @@ func (s ControlService) DeleteDocumentMapping(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, nil, fmt.Errorf("cannot delete control document mapping: %w", err)
 	}
@@ -559,7 +555,6 @@ func (s ControlService) CreateAuditMapping(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, nil, err
 	}
@@ -594,7 +589,6 @@ func (s ControlService) DeleteAuditMapping(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, nil, fmt.Errorf("cannot delete control audit mapping: %w", err)
 	}
@@ -634,7 +628,6 @@ func (s ControlService) CreateObligationMapping(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, nil, err
 	}
@@ -669,7 +662,6 @@ func (s ControlService) DeleteObligationMapping(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, nil, fmt.Errorf("cannot delete control obligation mapping: %w", err)
 	}
@@ -684,6 +676,7 @@ func (s ControlService) ListForAuditID(
 	filter *coredata.ControlFilter,
 ) (*page.Page[*coredata.Control, coredata.ControlOrderField], error) {
 	var controls coredata.Controls
+
 	audit := &coredata.Audit{}
 
 	err := s.svc.pg.WithConn(
@@ -692,6 +685,7 @@ func (s ControlService) ListForAuditID(
 			if err := audit.LoadByID(ctx, conn, s.svc.scope, auditID); err != nil {
 				return fmt.Errorf("cannot load audit: %w", err)
 			}
+
 			if err := controls.LoadByAuditID(ctx, conn, s.svc.scope, auditID, cursor, filter); err != nil {
 				return fmt.Errorf("cannot load controls: %w", err)
 			}
@@ -699,7 +693,6 @@ func (s ControlService) ListForAuditID(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -718,6 +711,7 @@ func (s ControlService) CountForStatementOfApplicabilityID(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			controls := &coredata.Controls{}
+
 			count, err = controls.CountByStatementOfApplicabilityID(ctx, conn, s.svc.scope, statementOfApplicabilityID, filter)
 			if err != nil {
 				return fmt.Errorf("cannot count controls: %w", err)
@@ -726,7 +720,6 @@ func (s ControlService) CountForStatementOfApplicabilityID(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return 0, fmt.Errorf("cannot count controls: %w", err)
 	}
@@ -776,7 +769,6 @@ func (s ControlService) Create(
 			return control.Insert(ctx, conn, s.svc.scope)
 		},
 	)
-
 	if err != nil {
 		return nil, fmt.Errorf("cannot create control: %w", err)
 	}
@@ -796,7 +788,6 @@ func (s ControlService) Get(
 			return control.LoadByID(ctx, conn, s.svc.scope, controlID)
 		},
 	)
-
 	if err != nil {
 		return nil, fmt.Errorf("cannot get control: %w", err)
 	}
@@ -915,11 +906,14 @@ func (s ControlService) HasRegulatoryObligation(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
 			var controlObligations coredata.ControlObligations
+
 			count, err := controlObligations.CountByControlID(ctx, conn, s.svc.scope, controlID, filter)
 			if err != nil {
 				return fmt.Errorf("cannot count regulatory obligations: %w", err)
 			}
+
 			hasRegulatory = count > 0
+
 			return nil
 		},
 	)
@@ -940,11 +934,14 @@ func (s ControlService) HasContractualObligation(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
 			var controlObligations coredata.ControlObligations
+
 			count, err := controlObligations.CountByControlID(ctx, conn, s.svc.scope, controlID, filter)
 			if err != nil {
 				return fmt.Errorf("cannot count contractual obligations: %w", err)
 			}
+
 			hasContractual = count > 0
+
 			return nil
 		},
 	)
@@ -967,6 +964,7 @@ func (s ControlService) HasRiskAssessment(
 			}
 
 			hasRisk = len(controlsWithRisk) > 0
+
 			return nil
 		},
 	)

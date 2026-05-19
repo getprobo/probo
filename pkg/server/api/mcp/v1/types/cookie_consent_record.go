@@ -48,6 +48,7 @@ func NewListCookieConsentRecordsOutput(p *page.Page[*coredata.CookieConsentRecor
 	}
 
 	var nextCursor *page.CursorKey
+
 	if len(p.Data) > 0 {
 		cursorKey := p.Data[len(p.Data)-1].CursorKey(p.Cursor.OrderBy.Field)
 		nextCursor = &cursorKey

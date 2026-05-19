@@ -80,6 +80,7 @@ func AssertTimestampsOnUpdate(t *testing.T, createdAt, updatedAt, originalCreate
 
 func AssertOptionalStringEqual(t *testing.T, expected, actual *string, fieldName string) {
 	t.Helper()
+
 	if expected == nil {
 		assert.Nil(t, actual, "%s should be nil", fieldName)
 	} else {
@@ -95,6 +96,7 @@ func AssertOrderedAscending[T cmp.Ordered](t *testing.T, values []T, fieldName s
 
 func AssertOrderedDescending[T cmp.Ordered](t *testing.T, values []T, fieldName string) {
 	t.Helper()
+
 	reversed := slices.Clone(values)
 	slices.Reverse(reversed)
 	assert.True(t, slices.IsSorted(reversed), "%s should be in descending order, got: %v", fieldName, values)
@@ -102,6 +104,7 @@ func AssertOrderedDescending[T cmp.Ordered](t *testing.T, values []T, fieldName 
 
 func AssertTimesOrderedAscending(t *testing.T, times []time.Time, fieldName string) {
 	t.Helper()
+
 	isSorted := slices.IsSortedFunc(times, func(a, b time.Time) int {
 		return a.Compare(b)
 	})
@@ -110,6 +113,7 @@ func AssertTimesOrderedAscending(t *testing.T, times []time.Time, fieldName stri
 
 func AssertTimesOrderedDescending(t *testing.T, times []time.Time, fieldName string) {
 	t.Helper()
+
 	isSorted := slices.IsSortedFunc(times, func(a, b time.Time) int {
 		return b.Compare(a)
 	})
@@ -118,9 +122,11 @@ func AssertTimesOrderedDescending(t *testing.T, times []time.Time, fieldName str
 
 func AssertNodeNotAccessible(t *testing.T, err error, nodeIsNil bool, resourceType string) {
 	t.Helper()
+
 	if err == nil {
 		assert.True(t, nodeIsNil, "should not be able to access %s from another org", resourceType)
 	}
+
 	// If there's an error, that's also acceptable (access denied)
 }
 

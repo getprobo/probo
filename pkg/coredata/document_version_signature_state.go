@@ -84,12 +84,16 @@ func (states DocumentVersionSignatureStates) Value() (driver.Value, error) {
 
 	var result strings.Builder
 	result.WriteString("{")
+
 	for i, state := range states {
 		if i > 0 {
 			result.WriteString(",")
 		}
+
 		fmt.Fprintf(&result, "%q", state.String())
 	}
+
 	result.WriteString("}")
+
 	return result.String(), nil
 }

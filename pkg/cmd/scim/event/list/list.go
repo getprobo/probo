@@ -125,12 +125,15 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 					if err := json.Unmarshal(data, &resp); err != nil {
 						return nil, err
 					}
+
 					if resp.Node == nil {
 						return nil, fmt.Errorf("SCIM configuration %s not found", args[0])
 					}
+
 					if resp.Node.Typename != "SCIMConfiguration" {
 						return nil, fmt.Errorf("expected SCIMConfiguration node, got %s", resp.Node.Typename)
 					}
+
 					return &resp.Node.Events, nil
 				},
 			)

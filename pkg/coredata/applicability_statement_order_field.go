@@ -52,5 +52,6 @@ func (p *ApplicabilityStatementOrderField) UnmarshalText(text []byte) error {
 		*p = ApplicabilityStatementOrderField(val)
 		return nil
 	}
+
 	return fmt.Errorf("invalid ApplicabilityStatementOrderField value: %q", val)
 }

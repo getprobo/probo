@@ -61,6 +61,7 @@ func (e *AuditLogEntry) AuthorizationAttributes(ctx context.Context, conn pg.Que
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrResourceNotFound
 		}
+
 		return nil, fmt.Errorf("cannot query audit log entry authorization attributes: %w", err)
 	}
 
@@ -159,10 +160,12 @@ LIMIT 1;
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
 		}
+
 		return fmt.Errorf("cannot collect audit log entry: %w", err)
 	}
 
 	*e = entry
+
 	return nil
 }
 
@@ -211,6 +214,7 @@ WHERE
 	}
 
 	*es = entries
+
 	return nil
 }
 

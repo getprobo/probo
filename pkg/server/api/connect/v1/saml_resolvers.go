@@ -43,7 +43,6 @@ func (r *mutationResolver) CreateSAMLConfiguration(ctx context.Context, input ty
 		input.OrganizationID,
 		req,
 	)
-
 	if err != nil {
 		var errSAMLConfigurationEmailDomainAlreadyExists *iam.ErrSAMLConfigurationEmailDomainAlreadyExists
 		if errors.As(err, &errSAMLConfigurationEmailDomainAlreadyExists) {
@@ -51,6 +50,7 @@ func (r *mutationResolver) CreateSAMLConfiguration(ctx context.Context, input ty
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot create saml configuration", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -133,10 +133,12 @@ func (r *sAMLConfigurationConnectionResolver) TotalCount(ctx context.Context, ob
 			r.logger.ErrorCtx(ctx, "cannot count saml configurations", log.Error(err))
 			return nil, gqlutils.Internal(ctx)
 		}
+
 		return &count, nil
 	}
 
 	r.logger.ErrorCtx(ctx, "unsupported resolver", log.Any("resolver", obj.Resolver))
+
 	return nil, gqlutils.Internal(ctx)
 }
 

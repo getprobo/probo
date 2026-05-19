@@ -101,6 +101,7 @@ func (a *PersonalAPIKey) AuthorizationAttributes(ctx context.Context, conn pg.Qu
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrResourceNotFound
 		}
+
 		return nil, fmt.Errorf("cannot query personal api key iam attributes: %w", err)
 	}
 
@@ -159,6 +160,7 @@ ORDER BY created_at DESC;
 
 	args := pgx.StrictNamedArgs{"identity_id": identityID}
 	row := conn.QueryRow(ctx, q, args)
+
 	var count int
 	if err := row.Scan(&count); err != nil {
 		return 0, fmt.Errorf("cannot scan count: %w", err)

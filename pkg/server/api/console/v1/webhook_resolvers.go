@@ -42,7 +42,9 @@ func (r *mutationResolver) CreateWebhookSubscription(ctx context.Context, input 
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot create webhook subscription", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -71,7 +73,9 @@ func (r *mutationResolver) UpdateWebhookSubscription(ctx context.Context, input 
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot update webhook subscription", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -131,6 +135,7 @@ func (r *webhookSubscriptionResolver) Organization(ctx context.Context, obj *typ
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot load organization", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -204,10 +209,12 @@ func (r *webhookSubscriptionConnectionResolver) TotalCount(ctx context.Context, 
 			r.logger.ErrorCtx(ctx, "cannot count webhook subscriptions", log.Error(err))
 			return 0, gqlutils.Internal(ctx)
 		}
+
 		return count, nil
 	}
 
 	r.logger.ErrorCtx(ctx, "unsupported resolver for webhook subscription connection", log.String("resolver", fmt.Sprintf("%T", obj.Resolver)))
+
 	return 0, gqlutils.Internal(ctx)
 }
 

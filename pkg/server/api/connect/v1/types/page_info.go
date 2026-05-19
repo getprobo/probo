@@ -21,6 +21,7 @@ import (
 
 func NewPageInfo[T page.Paginable[O], O page.OrderField](p *page.Page[T, O]) *PageInfo {
 	data := pageinfo.NewPageInfo(p)
+
 	return &PageInfo{
 		HasNextPage:     data.HasNextPage,
 		HasPreviousPage: data.HasPreviousPage,

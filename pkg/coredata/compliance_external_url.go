@@ -49,6 +49,7 @@ func (c ComplianceExternalURL) CursorKey(orderBy ComplianceExternalURLOrderField
 	case ComplianceExternalURLOrderFieldRank:
 		return page.NewCursorKey(c.ID, c.Rank)
 	}
+
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
@@ -60,6 +61,7 @@ func (c *ComplianceExternalURL) AuthorizationAttributes(ctx context.Context, con
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrResourceNotFound
 		}
+
 		return nil, fmt.Errorf("cannot query compliance external URL authorization attributes: %w", err)
 	}
 
@@ -104,6 +106,7 @@ LIMIT 1;
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
 		}
+
 		return fmt.Errorf("cannot collect compliance external URL: %w", err)
 	}
 

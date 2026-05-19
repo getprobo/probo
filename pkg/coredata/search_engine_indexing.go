@@ -35,6 +35,7 @@ func (s SearchEngineIndexing) IsValid() bool {
 	case SearchEngineIndexingIndexable, SearchEngineIndexingNotIndexable:
 		return true
 	}
+
 	return false
 }
 
@@ -43,6 +44,7 @@ func (s *SearchEngineIndexing) UnmarshalText(text []byte) error {
 	if !s.IsValid() {
 		return fmt.Errorf("%s is not a valid SearchEngineIndexing", string(text))
 	}
+
 	return nil
 }
 
@@ -52,6 +54,7 @@ func (s SearchEngineIndexing) MarshalText() ([]byte, error) {
 
 func (s *SearchEngineIndexing) Scan(value any) error {
 	var str string
+
 	switch v := value.(type) {
 	case string:
 		str = v
@@ -69,6 +72,7 @@ func (s *SearchEngineIndexing) Scan(value any) error {
 	default:
 		return fmt.Errorf("invalid SearchEngineIndexing value: %q", str)
 	}
+
 	return nil
 }
 

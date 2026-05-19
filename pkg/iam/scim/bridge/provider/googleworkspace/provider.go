@@ -55,6 +55,7 @@ func (p *Provider) isExcluded(email string) bool {
 			return true
 		}
 	}
+
 	return false
 }
 
@@ -65,6 +66,7 @@ func (p *Provider) ListUsers(ctx context.Context) (scimclient.Users, error) {
 	}
 
 	var allUsers scimclient.Users
+
 	pageToken := ""
 
 	for {
@@ -128,12 +130,16 @@ func (p *Provider) extractOrganizationFields(raw any, user *scimclient.User) {
 		return
 	}
 
-	var primary *admin.UserOrganization
-	var first *admin.UserOrganization
+	var (
+		primary *admin.UserOrganization
+		first   *admin.UserOrganization
+	)
+
 	for i := range orgs {
 		if first == nil {
 			first = &orgs[i]
 		}
+
 		if orgs[i].Primary {
 			primary = &orgs[i]
 			break
@@ -144,6 +150,7 @@ func (p *Provider) extractOrganizationFields(raw any, user *scimclient.User) {
 	if org == nil {
 		org = first
 	}
+
 	if org == nil {
 		return
 	}

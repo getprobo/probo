@@ -84,6 +84,7 @@ func TestCookieBanner_Create(t *testing.T) {
 		}, &result)
 
 		require.NoError(t, err)
+
 		node := result.CreateCookieBanner.CookieBannerEdge.Node
 		assert.NotEmpty(t, node.ID)
 		assert.Equal(t, name, node.Name)
@@ -135,6 +136,7 @@ func TestCookieBanner_Create(t *testing.T) {
 		}, &result)
 
 		require.NoError(t, err)
+
 		node := result.CreateCookieBanner.CookieBannerEdge.Node
 		assert.NotEmpty(t, node.ID)
 		require.NotNil(t, node.PrivacyPolicyUrl)
@@ -189,6 +191,7 @@ func TestCookieBanner_Create(t *testing.T) {
 		for _, e := range result.Node.ConsentCategories.Edges {
 			kinds[e.Node.Kind] = true
 		}
+
 		assert.True(t, kinds["NECESSARY"], "should have a NECESSARY category")
 	})
 
@@ -262,6 +265,7 @@ func TestCookieBanner_Update(t *testing.T) {
 		`
 
 		newName := factory.SafeName("Updated")
+
 		var result struct {
 			UpdateCookieBanner struct {
 				CookieBanner struct {
@@ -410,6 +414,7 @@ func TestCookieBanner_ActivateDeactivate(t *testing.T) {
 				} `json:"cookieBanner"`
 			} `json:"deactivateCookieBanner"`
 		}
+
 		err := owner.Execute(`
 			mutation($input: DeactivateCookieBannerInput!) {
 				deactivateCookieBanner(input: $input) {
@@ -751,8 +756,10 @@ func TestCookieBanner_UpsertTranslation(t *testing.T) {
 				} `json:"cookieBannerTranslation"`
 			} `json:"upsertCookieBannerTranslation"`
 		}
+
 		err := owner.Execute(query, input, &result1)
 		require.NoError(t, err)
+
 		firstID := result1.UpsertCookieBannerTranslation.CookieBannerTranslation.ID
 
 		input["input"].(map[string]any)["translations"] = `{"title":"Ajustes de cookies"}`
@@ -765,6 +772,7 @@ func TestCookieBanner_UpsertTranslation(t *testing.T) {
 				} `json:"cookieBannerTranslation"`
 			} `json:"upsertCookieBannerTranslation"`
 		}
+
 		err = owner.Execute(query, input, &result2)
 		require.NoError(t, err)
 		assert.Equal(t, firstID, result2.UpsertCookieBannerTranslation.CookieBannerTranslation.ID)

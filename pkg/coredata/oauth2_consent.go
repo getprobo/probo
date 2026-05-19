@@ -129,6 +129,7 @@ LIMIT 1;
 	}
 
 	*c = consent
+
 	return nil
 }
 
@@ -187,6 +188,7 @@ LIMIT 1;
 	}
 
 	*c = consent
+
 	return nil
 }
 
@@ -246,6 +248,7 @@ FOR UPDATE;
 	}
 
 	*c = consent
+
 	return nil
 }
 
@@ -306,6 +309,7 @@ LIMIT 1;
 	}
 
 	*c = consent
+
 	return nil
 }
 
@@ -465,6 +469,7 @@ WHERE
 	}
 
 	*c = consents
+
 	return nil
 }
 
@@ -484,6 +489,7 @@ WHERE
 `
 
 	var count int
+
 	err := conn.QueryRow(
 		ctx,
 		q,

@@ -47,5 +47,6 @@ func (p *ThirdPartyServiceOrderField) UnmarshalText(text []byte) error {
 		*p = ThirdPartyServiceOrderField(val)
 		return nil
 	}
+
 	return fmt.Errorf("invalid ThirdPartyServiceOrderField value: %q", val)
 }

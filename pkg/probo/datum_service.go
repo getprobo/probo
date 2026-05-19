@@ -88,7 +88,6 @@ func (s DatumService) Get(
 			return datum.LoadByID(ctx, conn, s.svc.scope, datumID)
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -108,7 +107,6 @@ func (s DatumService) GetByOwnerID(
 			return datum.LoadByOwnerID(ctx, conn, s.svc.scope)
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -126,6 +124,7 @@ func (s DatumService) CountForOrganizationID(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			data := coredata.Data{}
+
 			count, err = data.CountByOrganizationID(ctx, conn, s.svc.scope, organizationID)
 			if err != nil {
 				return fmt.Errorf("cannot count data: %w", err)
@@ -134,7 +133,6 @@ func (s DatumService) CountForOrganizationID(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return 0, err
 	}
@@ -161,7 +159,6 @@ func (s DatumService) ListForOrganizationID(
 			)
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -189,16 +186,20 @@ func (s DatumService) Update(
 		if req.Name != nil {
 			datum.Name = *req.Name
 		}
+
 		if req.DataClassification != nil {
 			datum.DataClassification = *req.DataClassification
 		}
+
 		if req.OwnerID != nil {
 			owner := &coredata.MembershipProfile{}
 			if err := owner.LoadByID(ctx, conn, s.svc.scope, *req.OwnerID); err != nil {
 				return fmt.Errorf("cannot load owner profile: %w", err)
 			}
+
 			datum.OwnerID = *req.OwnerID
 		}
+
 		datum.UpdatedAt = now
 
 		if err := datum.Update(ctx, conn, s.svc.scope); err != nil {
@@ -213,7 +214,6 @@ func (s DatumService) Update(
 
 		return nil
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -264,7 +264,6 @@ func (s DatumService) Create(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -299,7 +298,6 @@ func (s DatumService) ListThirdParties(
 			return thirdParties.LoadByDatumID(ctx, conn, s.svc.scope, datumID, cursor)
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}

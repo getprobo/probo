@@ -57,6 +57,7 @@ func (c *Config) GetSlackSigningSecret() string {
 			}
 		}
 	}
+
 	return ""
 }
 
@@ -80,6 +81,7 @@ func (c *ConnectorConfig) UnmarshalJSON(data []byte) error {
 		if err := json.NewDecoder(bytes.NewReader(tmp.Settings)).Decode(&settings); err != nil {
 			return fmt.Errorf("cannot unmarshal settings: %w", err)
 		}
+
 		c.Settings = settings
 	}
 

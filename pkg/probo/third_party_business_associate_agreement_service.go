@@ -70,8 +70,10 @@ func (s ThirdPartyBusinessAssociateAgreementService) GetByThirdPartyID(
 	ctx context.Context,
 	thirdPartyID gid.GID,
 ) (*coredata.ThirdPartyBusinessAssociateAgreement, *coredata.File, error) {
-	var thirdPartyBusinessAssociateAgreement *coredata.ThirdPartyBusinessAssociateAgreement
-	var file *coredata.File
+	var (
+		thirdPartyBusinessAssociateAgreement *coredata.ThirdPartyBusinessAssociateAgreement
+		file                                 *coredata.File
+	)
 
 	err := s.svc.pg.WithConn(
 		ctx,
@@ -89,7 +91,6 @@ func (s ThirdPartyBusinessAssociateAgreementService) GetByThirdPartyID(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, nil, err
 	}
@@ -111,8 +112,10 @@ func (s ThirdPartyBusinessAssociateAgreementService) Upload(
 		return nil, nil, fmt.Errorf("cannot generate object key: %w", err)
 	}
 
-	var thirdPartyBusinessAssociateAgreement *coredata.ThirdPartyBusinessAssociateAgreement
-	var file *coredata.File
+	var (
+		thirdPartyBusinessAssociateAgreement *coredata.ThirdPartyBusinessAssociateAgreement
+		file                                 *coredata.File
+	)
 
 	err = s.svc.pg.WithTx(
 		ctx,
@@ -186,7 +189,6 @@ func (s ThirdPartyBusinessAssociateAgreementService) Upload(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, nil, err
 	}
@@ -198,8 +200,10 @@ func (s ThirdPartyBusinessAssociateAgreementService) Get(
 	ctx context.Context,
 	thirdPartyBusinessAssociateAgreementID gid.GID,
 ) (*coredata.ThirdPartyBusinessAssociateAgreement, *coredata.File, error) {
-	var thirdPartyBusinessAssociateAgreement *coredata.ThirdPartyBusinessAssociateAgreement
-	var file *coredata.File
+	var (
+		thirdPartyBusinessAssociateAgreement *coredata.ThirdPartyBusinessAssociateAgreement
+		file                                 *coredata.File
+	)
 
 	err := s.svc.pg.WithConn(
 		ctx,
@@ -217,7 +221,6 @@ func (s ThirdPartyBusinessAssociateAgreementService) Get(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, nil, fmt.Errorf("cannot load thirdParty business associate agreement: %w", err)
 	}
@@ -293,9 +296,11 @@ func (s ThirdPartyBusinessAssociateAgreementService) Update(
 			}
 
 			now := time.Now()
+
 			if req.ValidFrom != nil {
 				existingAgreement.ValidFrom = *req.ValidFrom
 			}
+
 			if req.ValidUntil != nil {
 				existingAgreement.ValidUntil = *req.ValidUntil
 			}
@@ -313,7 +318,6 @@ func (s ThirdPartyBusinessAssociateAgreementService) Update(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, nil, err
 	}

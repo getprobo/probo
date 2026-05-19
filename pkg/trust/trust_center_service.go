@@ -48,7 +48,6 @@ func (s TrustCenterService) Get(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, fmt.Errorf("cannot load trust center: %w", err)
 	}
@@ -73,7 +72,6 @@ func (s TrustCenterService) GetByOrganizationID(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}

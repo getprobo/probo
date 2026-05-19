@@ -53,6 +53,7 @@ func NewSNIMiddleware(trustSvc *trust.Service) func(next http.Handler) http.Hand
 						},
 					},
 				)
+
 				return
 			}
 
@@ -72,6 +73,7 @@ func NewSNIMiddleware(trustSvc *trust.Service) func(next http.Handler) http.Hand
 			if compliancePage.Active {
 				ctx = context.WithValue(ctx, compliancePageKey, compliancePage)
 				next.ServeHTTP(w, r.WithContext(ctx))
+
 				return
 			}
 

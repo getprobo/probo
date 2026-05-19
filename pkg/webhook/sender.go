@@ -123,6 +123,7 @@ func (s *Sender) processEvents(ctx context.Context) error {
 			if errors.Is(err, coredata.ErrResourceNotFound) {
 				return nil
 			}
+
 			return fmt.Errorf("cannot claim next webhook data: %w", err)
 		}
 
@@ -131,8 +132,10 @@ func (s *Sender) processEvents(ctx context.Context) error {
 }
 
 func (s *Sender) claimNextWebhookData(ctx context.Context) (*coredata.WebhookData, []pendingDelivery, error) {
-	var webhookData coredata.WebhookData
-	var deliveries []pendingDelivery
+	var (
+		webhookData coredata.WebhookData
+		deliveries  []pendingDelivery
+	)
 
 	err := s.pg.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		if err := webhookData.LoadNextUnprocessedForUpdate(ctx, tx); err != nil {
@@ -180,7 +183,6 @@ func (s *Sender) claimNextWebhookData(ctx context.Context) (*coredata.WebhookDat
 
 		return nil
 	})
-
 	if err != nil {
 		return nil, nil, err
 	}
@@ -207,6 +209,7 @@ func (s *Sender) deliver(ctx context.Context, webhookData *coredata.WebhookData,
 			log.String("subscription_id", d.Config.ID.String()),
 		)
 		s.updateEventStatus(ctx, d.Event, scope, coredata.WebhookEventStatusFailed, nil)
+
 		return
 	}
 
@@ -215,6 +218,7 @@ func (s *Sender) deliver(ctx context.Context, webhookData *coredata.WebhookData,
 	eventStatus := coredata.WebhookEventStatusSucceeded
 	if sendErr != nil {
 		eventStatus = coredata.WebhookEventStatusFailed
+
 		s.logger.ErrorCtx(
 			ctx,
 			"error delivering webhook",
@@ -292,6 +296,7 @@ func (s *Sender) doHTTPCall(
 		CreatedAt:      webhookData.CreatedAt,
 		Data:           webhookData.Data,
 	}
+
 	body, err := json.Marshal(payload)
 	if err != nil {
 		return nil, fmt.Errorf("cannot marshal webhook payload: %w", err)
@@ -319,6 +324,7 @@ func (s *Sender) doHTTPCall(
 	if err != nil {
 		return nil, fmt.Errorf("cannot send request: %w", err)
 	}
+
 	defer func() { _ = resp.Body.Close() }()
 
 	respBody, _ := io.ReadAll(io.LimitReader(resp.Body, maxResponseBodySize))
@@ -369,15 +375,18 @@ func buildResponseJSON(resp *http.Response, body []byte) json.RawMessage {
 				trailers[k] = v
 			}
 		}
+
 		respObj["trailers"] = trailers
 	}
 
 	data, _ := json.Marshal(respObj)
+
 	return data
 }
 
 func computeSignature(signingSecret, timestamp string, body []byte) string {
 	h := hmac.New(sha256.New, []byte(signingSecret))
 	_, _ = fmt.Fprintf(h, "%s:%s", timestamp, body)
+
 	return hex.EncodeToString(h.Sum(nil))
 }

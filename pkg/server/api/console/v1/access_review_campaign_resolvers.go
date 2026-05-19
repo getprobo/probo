@@ -34,6 +34,7 @@ func (r *accessEntryResolver) Campaign(ctx context.Context, obj *types.AccessEnt
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
 		}
+
 		panic(fmt.Errorf("cannot get access review campaign: %w", err))
 	}
 
@@ -53,6 +54,7 @@ func (r *accessEntryResolver) AccessSource(ctx context.Context, obj *types.Acces
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
 		}
+
 		panic(fmt.Errorf("cannot get access source: %w", err))
 	}
 
@@ -96,12 +98,15 @@ func (r *accessEntryConnectionResolver) TotalCount(ctx context.Context, obj *typ
 			if err != nil {
 				panic(fmt.Errorf("cannot count access entries: %w", err))
 			}
+
 			return count, nil
 		}
+
 		count, err := r.accessReview.Entries(scope).CountForCampaignID(ctx, obj.ParentID, obj.Filter)
 		if err != nil {
 			panic(fmt.Errorf("cannot count access entries: %w", err))
 		}
+
 		return count, nil
 	}
 
@@ -248,6 +253,7 @@ func (r *accessReviewCampaignResolver) Entries(ctx context.Context, obj *types.A
 	} else {
 		p, err = r.accessReview.Entries(scope).ListForCampaignID(ctx, obj.ID, cursor, filter)
 	}
+
 	if err != nil {
 		panic(fmt.Errorf("cannot list access entries: %w", err))
 	}
@@ -302,6 +308,7 @@ func (r *accessReviewCampaignConnectionResolver) TotalCount(ctx context.Context,
 		if err != nil {
 			panic(fmt.Errorf("cannot count access review campaigns: %w", err))
 		}
+
 		return count, nil
 	}
 
@@ -335,6 +342,7 @@ func (r *accessReviewCampaignScopeSourceResolver) Entries(ctx context.Context, o
 	}
 
 	sourceID := obj.ID
+
 	return types.NewAccessEntryConnection(p, r, obj.CampaignID, &sourceID, filter), nil
 }
 
@@ -372,6 +380,7 @@ func (r *accessSourceResolver) Connector(ctx context.Context, obj *types.AccessS
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, nil
 		}
+
 		panic(fmt.Errorf("cannot get connector: %w", err))
 	}
 
@@ -395,6 +404,7 @@ func (r *accessSourceResolver) ProviderOrganizations(ctx context.Context, obj *t
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return []*types.ProviderOrganization{}, nil
 		}
+
 		return nil, fmt.Errorf("cannot get connector HTTP client: %w", err)
 	}
 
@@ -412,6 +422,7 @@ func (r *accessSourceResolver) ProviderOrganizations(ctx context.Context, obj *t
 	for i, o := range orgs {
 		result[i] = &types.ProviderOrganization{Slug: o.Slug, DisplayName: o.DisplayName}
 	}
+
 	return result, nil
 }
 
@@ -437,6 +448,7 @@ func (r *accessSourceResolver) NeedsConfiguration(ctx context.Context, obj *type
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return false, nil
 		}
+
 		panic(fmt.Errorf("cannot get connector: %w", err))
 	}
 
@@ -444,6 +456,7 @@ func (r *accessSourceResolver) NeedsConfiguration(ctx context.Context, obj *type
 	if !ok || !cfg.NeedsPicker {
 		return false, nil
 	}
+
 	return cfg.SelectedSlug(dbConnector) == "", nil
 }
 
@@ -460,6 +473,7 @@ func (r *accessSourceResolver) ConnectionStatus(ctx context.Context, obj *types.
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return types.AccessSourceConnectionStatusNotApplicable, nil
 		}
+
 		return types.AccessSourceConnectionStatusDisconnected, nil
 	}
 
@@ -495,6 +509,7 @@ func (r *accessSourceResolver) SelectedOrganization(ctx context.Context, obj *ty
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, nil
 		}
+
 		panic(fmt.Errorf("cannot get connector: %w", err))
 	}
 
@@ -502,10 +517,12 @@ func (r *accessSourceResolver) SelectedOrganization(ctx context.Context, obj *ty
 	if !ok {
 		return nil, nil
 	}
+
 	slug := cfg.SelectedSlug(dbConnector)
 	if slug == "" {
 		return nil, nil
 	}
+
 	return &slug, nil
 }
 
@@ -524,6 +541,7 @@ func (r *accessSourceConnectionResolver) TotalCount(ctx context.Context, obj *ty
 		if err != nil {
 			panic(fmt.Errorf("cannot count access sources: %w", err))
 		}
+
 		return count, nil
 	}
 
@@ -568,9 +586,11 @@ func (r *mutationResolver) UpdateAccessSource(ctx context.Context, input types.U
 	if input.Name.IsSet() {
 		req.Name = input.Name.Value()
 	}
+
 	if input.ConnectorID.IsSet() {
 		req.ConnectorID = gqlutils.UnwrapOmittable(input.ConnectorID)
 	}
+
 	if input.CSVData.IsSet() {
 		req.CsvData = gqlutils.UnwrapOmittable(input.CSVData)
 	}
@@ -580,6 +600,7 @@ func (r *mutationResolver) UpdateAccessSource(ctx context.Context, input types.U
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
 		}
+
 		panic(fmt.Errorf("cannot update access source: %w", err))
 	}
 
@@ -600,6 +621,7 @@ func (r *mutationResolver) DeleteAccessSource(ctx context.Context, input types.D
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
 		}
+
 		panic(fmt.Errorf("cannot delete access source: %w", err))
 	}
 
@@ -627,6 +649,7 @@ func (r *mutationResolver) ConfigureAccessSource(ctx context.Context, input type
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
 		}
+
 		panic(fmt.Errorf("cannot configure access source: %w", err))
 	}
 
@@ -678,9 +701,11 @@ func (r *mutationResolver) UpdateAccessReviewCampaign(ctx context.Context, input
 	if input.Name.IsSet() {
 		req.Name = input.Name.Value()
 	}
+
 	if input.Description.IsSet() {
 		req.Description = input.Description.Value()
 	}
+
 	if input.FrameworkControls.IsSet() {
 		controls := input.FrameworkControls.Value()
 		req.FrameworkControls = &controls
@@ -691,6 +716,7 @@ func (r *mutationResolver) UpdateAccessReviewCampaign(ctx context.Context, input
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
 		}
+
 		panic(fmt.Errorf("cannot update access review campaign: %w", err))
 	}
 
@@ -711,6 +737,7 @@ func (r *mutationResolver) DeleteAccessReviewCampaign(ctx context.Context, input
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
 		}
+
 		panic(fmt.Errorf("cannot delete access review campaign: %w", err))
 	}
 
@@ -850,6 +877,7 @@ func (r *mutationResolver) RecordAccessEntryDecision(ctx context.Context, input 
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
 		}
+
 		panic(fmt.Errorf("cannot record access entry decision: %w", err))
 	}
 
@@ -893,6 +921,7 @@ func (r *mutationResolver) RecordAccessEntryDecisions(ctx context.Context, input
 	decisions := make([]accessreview.RecordAccessEntryDecisionRequest, len(input.Decisions))
 	for i, d := range input.Decisions {
 		var decidedByID *gid.GID
+
 		organizationID, err := r.accessReview.ResolveEntryOrganizationID(ctx, d.AccessEntryID)
 		if err == nil {
 			if cached, ok := profileCache[organizationID]; ok {
@@ -902,6 +931,7 @@ func (r *mutationResolver) RecordAccessEntryDecisions(ctx context.Context, input
 				if err == nil {
 					decidedByID = &profile.ID
 				}
+
 				profileCache[organizationID] = decidedByID
 			}
 		}
@@ -919,6 +949,7 @@ func (r *mutationResolver) RecordAccessEntryDecisions(ctx context.Context, input
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
 		}
+
 		panic(fmt.Errorf("cannot record access entry decisions: %w", err))
 	}
 
@@ -949,6 +980,7 @@ func (r *mutationResolver) FlagAccessEntry(ctx context.Context, input types.Flag
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
 		}
+
 		panic(fmt.Errorf("cannot flag access entry: %w", err))
 	}
 

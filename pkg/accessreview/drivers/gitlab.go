@@ -117,12 +117,14 @@ func (d *GitLabDriver) queryMembers(ctx context.Context, endpoint string) ([]git
 	if err != nil {
 		return nil, "", fmt.Errorf("cannot create gitlab members request: %w", err)
 	}
+
 	req.Header.Set("Accept", "application/json")
 
 	httpResp, err := d.httpClient.Do(req)
 	if err != nil {
 		return nil, "", fmt.Errorf("cannot execute gitlab members request: %w", err)
 	}
+
 	defer func() { _ = httpResp.Body.Close() }()
 
 	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {

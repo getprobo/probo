@@ -505,12 +505,14 @@ func TestEmployeeDocument_FilterModeIsolation(t *testing.T) {
 		require.NoError(t, err)
 
 		var found bool
+
 		for _, edge := range result.Viewer.SignableDocuments.Edges {
 			if edge.Node.ID == docID {
 				found = true
 				break
 			}
 		}
+
 		assert.True(t, found, "signer should see document in signableDocuments list")
 	})
 
@@ -613,12 +615,14 @@ func TestEmployeeDocument_ApproverFilterModeIsolation(t *testing.T) {
 		require.NoError(t, err)
 
 		var found bool
+
 		for _, edge := range result.Viewer.ApprovableDocuments.Edges {
 			if edge.Node.ID == docID {
 				found = true
 				break
 			}
 		}
+
 		assert.True(t, found, "approver should see document in approvableDocuments list")
 	})
 

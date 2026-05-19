@@ -49,24 +49,29 @@ var (
 			if b == nil {
 				return ""
 			}
+
 			if *b {
 				return "yes"
 			}
+
 			return "no"
 		},
 		"derefString": func(s *string) string {
 			if s == nil {
 				return ""
 			}
+
 			return *s
 		},
 		"boolToYesNoDash": func(b *bool) string {
 			if b == nil {
 				return "-"
 			}
+
 			if *b {
 				return "Yes"
 			}
+
 			return "No"
 		},
 		"imgTag": func(src, alt, class string) template.HTML {
@@ -106,6 +111,7 @@ var (
 			if safeguard == nil {
 				return ""
 			}
+
 			switch *safeguard {
 			case coredata.ProcessingActivityTransferSafeguardStandardContractualClauses:
 				return "Standard Contractual Clauses"
@@ -157,6 +163,7 @@ var (
 			if risk == nil {
 				return ""
 			}
+
 			switch *risk {
 			case coredata.DataProtectionImpactAssessmentResidualRiskLow:
 				return "Low"
@@ -468,6 +475,7 @@ func BoolLabel(v bool) string {
 	if v {
 		return "Yes"
 	}
+
 	return "No"
 }
 
@@ -486,6 +494,7 @@ func MaturityLabel(l coredata.ControlMaturityLevel) string {
 	case coredata.ControlMaturityLevelOptimizing:
 		return "5 - Optimizing"
 	}
+
 	return "Not set"
 }
 
@@ -503,14 +512,17 @@ func ProseMirrorJSONToHTML(content json.RawMessage) template.HTML {
 	if s == "" {
 		return template.HTML("")
 	}
+
 	node, err := prosemirror.Parse(s)
 	if err != nil {
 		return template.HTML(fmt.Sprintf("<p>%s</p>", html.EscapeString(s)))
 	}
+
 	htmlStr, err := prosemirror.RenderHTML(node)
 	if err != nil {
 		return template.HTML(fmt.Sprintf("<p>%s</p>", html.EscapeString(s)))
 	}
+
 	return template.HTML(htmlStr)
 }
 

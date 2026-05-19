@@ -87,6 +87,7 @@ func buildTrackerMappingAgent(
 
 func trackerMappingInstructions(_ context.Context, _ *agent.Agent) string {
 	categories := coredata.ThirdPartyCategories()
+
 	parts := make([]string, len(categories))
 	for i, c := range categories {
 		parts[i] = string(c)

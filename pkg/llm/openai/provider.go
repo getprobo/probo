@@ -87,23 +87,29 @@ func NewProvider(apiKey string, opts ...Option) *Provider {
 	if cfg.httpClient != nil {
 		reqOpts = append(reqOpts, option.WithHTTPClient(cfg.httpClient))
 	}
+
 	if cfg.baseURL != "" {
 		reqOpts = append(reqOpts, option.WithBaseURL(cfg.baseURL))
 	}
+
 	if cfg.organization != "" {
 		reqOpts = append(reqOpts, option.WithOrganization(cfg.organization))
 	}
+
 	if cfg.project != "" {
 		reqOpts = append(reqOpts, option.WithProject(cfg.project))
 	}
+
 	if cfg.requestTimeout > 0 {
 		reqOpts = append(reqOpts, option.WithRequestTimeout(cfg.requestTimeout))
 	}
+
 	if cfg.maxRetries != nil {
 		reqOpts = append(reqOpts, option.WithMaxRetries(*cfg.maxRetries))
 	}
 
 	client := openai.NewClient(reqOpts...)
+
 	return &Provider{client: &client}
 }
 
@@ -125,6 +131,7 @@ func (p *Provider) ChatCompletionStream(ctx context.Context, req *llm.ChatComple
 	}
 
 	stream := p.client.Chat.Completions.NewStreaming(ctx, params)
+
 	return &openaiStream{stream: stream}, nil
 }
 
@@ -137,35 +144,45 @@ func buildParams(req *llm.ChatCompletionRequest) openai.ChatCompletionNewParams 
 	if req.MaxTokens != nil {
 		params.MaxCompletionTokens = param.NewOpt(int64(*req.MaxTokens))
 	}
+
 	if req.Temperature != nil {
 		params.Temperature = param.NewOpt(*req.Temperature)
 	}
+
 	if req.TopP != nil {
 		params.TopP = param.NewOpt(*req.TopP)
 	}
+
 	if req.FrequencyPenalty != nil {
 		params.FrequencyPenalty = param.NewOpt(*req.FrequencyPenalty)
 	}
+
 	if req.PresencePenalty != nil {
 		params.PresencePenalty = param.NewOpt(*req.PresencePenalty)
 	}
+
 	if len(req.StopSequences) > 0 {
 		params.Stop = openai.ChatCompletionNewParamsStopUnion{
 			OfStringArray: req.StopSequences,
 		}
 	}
+
 	if len(req.Tools) > 0 {
 		params.Tools = buildTools(req.Tools)
 	}
+
 	if req.ToolChoice != nil {
 		params.ToolChoice = buildToolChoice(req.ToolChoice)
 	}
+
 	if req.ParallelToolCalls != nil {
 		params.ParallelToolCalls = param.NewOpt(*req.ParallelToolCalls)
 	}
+
 	if req.ResponseFormat != nil {
 		params.ResponseFormat = buildResponseFormat(req.ResponseFormat)
 	}
+
 	if req.Thinking != nil && req.Thinking.Enabled && isReasoningModel(req.Model) {
 		switch {
 		case req.Thinking.BudgetTokens <= 1024:
@@ -205,6 +222,7 @@ func buildMessages(messages []llm.Message) []openai.ChatCompletionMessageParamUn
 					parts = append(parts, buildFilePart(p))
 				}
 			}
+
 			out = append(out, openai.UserMessage(parts))
 		case llm.RoleAssistant:
 			m := openai.ChatCompletionAssistantMessageParam{
@@ -224,6 +242,7 @@ func buildMessages(messages []llm.Message) []openai.ChatCompletionMessageParamUn
 					}
 				}
 			}
+
 			out = append(out, openai.ChatCompletionMessageParamUnion{OfAssistant: &m})
 		case llm.RoleTool:
 			out = append(out, openai.ToolMessage(msg.Text(), msg.ToolCallID))
@@ -247,8 +266,10 @@ func buildTools(tools []llm.Tool) []openai.ChatCompletionToolParam {
 				fn.Parameters = params
 			}
 		}
+
 		out[i] = openai.ChatCompletionToolParam{Function: fn}
 	}
+
 	return out
 }
 
@@ -294,13 +315,16 @@ func buildResponseFormat(rf *llm.ResponseFormat) openai.ChatCompletionNewParamsR
 			if rf.JSONSchema.Description != "" {
 				schema.Description = param.NewOpt(rf.JSONSchema.Description)
 			}
+
 			if rf.JSONSchema.Schema != nil {
 				schema.Schema = rf.JSONSchema.Schema
 			}
+
 			return openai.ChatCompletionNewParamsResponseFormatUnion{
 				OfJSONSchema: &shared.ResponseFormatJSONSchemaParam{JSONSchema: schema},
 			}
 		}
+
 		return openai.ChatCompletionNewParamsResponseFormatUnion{}
 	default:
 		return openai.ChatCompletionNewParamsResponseFormatUnion{}
@@ -319,6 +343,7 @@ func mapResponse(c *openai.ChatCompletion) *llm.ChatCompletionResponse {
 	if len(c.Choices) > 0 {
 		choice := c.Choices[0]
 		resp.FinishReason = mapFinishReason(choice.FinishReason)
+
 		resp.Message = llm.Message{
 			Role:  llm.RoleAssistant,
 			Parts: []llm.Part{llm.TextPart{Text: choice.Message.Content}},
@@ -371,9 +396,11 @@ func mapError(err error) error {
 		if apiErr.Code == "context_length_exceeded" {
 			return &llm.ErrContextLength{Err: err}
 		}
+
 		if apiErr.Code == "content_filter" {
 			return &llm.ErrContentFilter{Err: err}
 		}
+
 		return err
 	default:
 		return err
@@ -384,13 +411,16 @@ func parseRetryAfter(resp *http.Response) time.Duration {
 	if resp == nil {
 		return 0
 	}
+
 	h := resp.Header.Get("Retry-After")
 	if h == "" {
 		return 0
 	}
+
 	if secs, err := strconv.Atoi(h); err == nil {
 		return time.Duration(secs) * time.Second
 	}
+
 	return 0
 }
 
@@ -407,6 +437,7 @@ func (s *openaiStream) Next() bool {
 
 	chunk := s.stream.Current()
 	s.current = mapChunkToEvent(&chunk)
+
 	return true
 }
 
@@ -419,6 +450,7 @@ func (s *openaiStream) Err() error {
 	if err != nil {
 		return mapError(err)
 	}
+
 	return nil
 }
 
@@ -474,6 +506,7 @@ func isReasoningModel(model string) bool {
 			return true
 		}
 	}
+
 	return false
 }
 
@@ -488,6 +521,7 @@ func buildFilePart(p llm.FilePart) openai.ChatCompletionContentPartUnionParam {
 		if err != nil {
 			return openai.TextContentPart(fmt.Sprintf("[file: %s, type: %s, error decoding content]", p.Filename, p.MimeType))
 		}
+
 		return openai.TextContentPart(fmt.Sprintf("File: %s\n\n%s", p.Filename, string(decoded)))
 	default:
 		return openai.FileContentPart(openai.ChatCompletionContentPartFileFileParam{

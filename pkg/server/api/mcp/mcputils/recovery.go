@@ -88,5 +88,6 @@ func sanitizeError(ctx context.Context, logger *log.Logger, err error) error {
 	}
 
 	logger.ErrorCtx(ctx, "internal error in MCP tool handler", log.Error(err))
+
 	return fmt.Errorf("internal server error")
 }

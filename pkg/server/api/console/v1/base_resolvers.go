@@ -37,6 +37,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			if err != nil {
 				return nil, err
 			}
+
 			return types.NewOrganization(organization), nil
 		}
 	case coredata.ThirdPartyEntityType:
@@ -46,6 +47,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			if err != nil {
 				return nil, err
 			}
+
 			return types.NewThirdParty(thirdParty), nil
 		}
 	case coredata.FrameworkEntityType:
@@ -55,6 +57,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			if err != nil {
 				return nil, err
 			}
+
 			return types.NewFramework(framework), nil
 		}
 	case coredata.MeasureEntityType:
@@ -64,6 +67,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			if err != nil {
 				return nil, err
 			}
+
 			return types.NewMeasure(measure), nil
 		}
 	case coredata.TaskEntityType:
@@ -73,6 +77,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			if err != nil {
 				return nil, err
 			}
+
 			return types.NewTask(task), nil
 		}
 	case coredata.EvidenceEntityType:
@@ -82,6 +87,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			if err != nil {
 				return nil, err
 			}
+
 			return types.NewEvidence(evidence), nil
 		}
 	case coredata.DocumentEntityType:
@@ -91,6 +97,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			if err != nil {
 				return nil, err
 			}
+
 			return types.NewDocument(document), nil
 		}
 	case coredata.ControlEntityType:
@@ -100,6 +107,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			if err != nil {
 				return nil, err
 			}
+
 			return types.NewControl(control), nil
 		}
 	case coredata.RiskEntityType:
@@ -109,6 +117,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			if err != nil {
 				return nil, err
 			}
+
 			return types.NewRisk(risk), nil
 		}
 	case coredata.RiskAssessmentEntityType:
@@ -178,6 +187,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			if err != nil {
 				return nil, err
 			}
+
 			return types.NewThirdPartyComplianceReport(thirdPartyComplianceReport), nil
 		}
 	case coredata.ThirdPartyContactEntityType:
@@ -187,6 +197,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			if err != nil {
 				return nil, err
 			}
+
 			return types.NewThirdPartyContact(thirdPartyContact), nil
 		}
 	case coredata.ThirdPartyServiceEntityType:
@@ -196,6 +207,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			if err != nil {
 				return nil, err
 			}
+
 			return types.NewThirdPartyService(thirdPartyService), nil
 		}
 	case coredata.DocumentVersionEntityType:
@@ -205,6 +217,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			if err != nil {
 				return nil, err
 			}
+
 			return types.NewDocumentVersion(documentVersion), nil
 		}
 	case coredata.DocumentVersionSignatureEntityType:
@@ -214,6 +227,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			if err != nil {
 				return nil, err
 			}
+
 			return types.NewDocumentVersionSignature(documentVersionSignature), nil
 		}
 	case coredata.AssetEntityType:
@@ -223,6 +237,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			if err != nil {
 				return nil, err
 			}
+
 			return types.NewAsset(asset), nil
 		}
 	case coredata.DatumEntityType:
@@ -232,6 +247,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			if err != nil {
 				return nil, err
 			}
+
 			return types.NewDatum(datum), nil
 		}
 	case coredata.AuditEntityType:
@@ -241,6 +257,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			if err != nil {
 				return nil, err
 			}
+
 			return types.NewAudit(audit), nil
 		}
 	case coredata.FindingEntityType:
@@ -250,6 +267,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			if err != nil {
 				return nil, err
 			}
+
 			return types.NewFinding(finding), nil
 		}
 	case coredata.ObligationEntityType:
@@ -259,6 +277,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			if err != nil {
 				return nil, err
 			}
+
 			return types.NewObligation(obligation), nil
 		}
 	case coredata.ReportEntityType:
@@ -268,6 +287,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			if err != nil {
 				return nil, err
 			}
+
 			return types.NewReport(report), nil
 		}
 	case coredata.ProcessingActivityEntityType:
@@ -277,6 +297,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			if err != nil {
 				return nil, err
 			}
+
 			return types.NewProcessingActivity(processingActivity), nil
 		}
 	case coredata.DataProtectionImpactAssessmentEntityType:
@@ -287,6 +308,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			if err != nil {
 				return nil, err
 			}
+
 			return types.NewDataProtectionImpactAssessment(dpia), nil
 		}
 	case coredata.TransferImpactAssessmentEntityType:
@@ -297,6 +319,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			if err != nil {
 				return nil, err
 			}
+
 			return types.NewTransferImpactAssessment(tia), nil
 		}
 	case coredata.TrustCenterEntityType:
@@ -324,6 +347,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			if err != nil {
 				return nil, err
 			}
+
 			return types.NewTrustCenterAccess(trustCenterAccess), nil
 		}
 	case coredata.RightsRequestEntityType:
@@ -333,6 +357,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			if err != nil {
 				return nil, err
 			}
+
 			return types.NewRightsRequest(rightsRequest), nil
 		}
 	case coredata.StatementOfApplicabilityEntityType:
@@ -342,6 +367,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			if err != nil {
 				return nil, err
 			}
+
 			return types.NewStatementOfApplicability(statementOfApplicability), nil
 		}
 	case coredata.WebhookSubscriptionEntityType:
@@ -351,76 +377,91 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			if err != nil {
 				return nil, err
 			}
+
 			return types.NewWebhookSubscription(wc), nil
 		}
 	case coredata.AccessReviewCampaignEntityType:
 		action = probo.ActionAccessReviewCampaignGet
 		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
 			scope := coredata.NewScopeFromObjectID(id)
+
 			campaign, err := r.accessReview.Campaigns(scope).Get(ctx, id)
 			if err != nil {
 				return nil, err
 			}
+
 			return types.NewAccessReviewCampaign(campaign), nil
 		}
 	case coredata.AccessSourceEntityType:
 		action = probo.ActionAccessSourceGet
 		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
 			scope := coredata.NewScopeFromObjectID(id)
+
 			source, err := r.accessReview.Sources(scope).Get(ctx, id)
 			if err != nil {
 				return nil, err
 			}
+
 			return types.NewAccessSource(source), nil
 		}
 	case coredata.AccessEntryEntityType:
 		action = probo.ActionAccessEntryGet
 		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
 			scope := coredata.NewScopeFromObjectID(id)
+
 			entry, err := r.accessReview.Entries(scope).Get(ctx, id)
 			if err != nil {
 				return nil, err
 			}
+
 			return types.NewAccessEntry(entry), nil
 		}
 	case coredata.CookieBannerEntityType:
 		action = probo.ActionCookieBannerGet
 		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
 			scope := coredata.NewScopeFromObjectID(id)
+
 			banner, err := r.cookieBanner.GetCookieBanner(ctx, scope, id)
 			if err != nil {
 				return nil, err
 			}
+
 			return types.NewCookieBanner(banner), nil
 		}
 	case coredata.CookieCategoryEntityType:
 		action = probo.ActionCookieCategoryGet
 		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
 			scope := coredata.NewScopeFromObjectID(id)
+
 			category, err := r.cookieBanner.GetCookieCategory(ctx, scope, id)
 			if err != nil {
 				return nil, err
 			}
+
 			return types.NewCookieCategory(category), nil
 		}
 	case coredata.CookieConsentRecordEntityType:
 		action = probo.ActionCookieConsentRecordList
 		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
 			scope := coredata.NewScopeFromObjectID(id)
+
 			record, err := r.cookieBanner.GetCookieConsentRecord(ctx, scope, id)
 			if err != nil {
 				return nil, err
 			}
+
 			return types.NewCookieConsentRecord(record), nil
 		}
 	case coredata.CookieBannerVersionEntityType:
 		action = probo.ActionCookieBannerVersionGet
 		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
 			scope := coredata.NewScopeFromObjectID(id)
+
 			version, err := r.cookieBanner.GetCookieBannerVersion(ctx, scope, id)
 			if err != nil {
 				return nil, err
 			}
+
 			return &types.CookieBannerVersion{
 				ID:        version.ID,
 				Version:   version.Version,
@@ -443,6 +484,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot load node", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 

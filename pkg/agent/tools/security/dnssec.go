@@ -48,6 +48,7 @@ func CheckDNSSECTool() agent.Tool {
 			}
 
 			client := dns.NewClient()
+
 			answers, err := queryDNS(
 				ctx,
 				client,
@@ -66,8 +67,11 @@ func CheckDNSSECTool() agent.Tool {
 				}), nil
 			}
 
-			var keyCount int
-			var keyDetails []string
+			var (
+				keyCount   int
+				keyDetails []string
+			)
+
 			for _, answer := range answers {
 				if key, ok := answer.(*dns.DNSKEY); ok {
 					keyCount++
@@ -76,6 +80,7 @@ func CheckDNSSECTool() agent.Tool {
 					if key.Flags&0x0001 != 0 {
 						flags = "KSK"
 					}
+
 					keyDetails = append(
 						keyDetails,
 						fmt.Sprintf("%s (algorithm=%d, flags=%d)", flags, key.Algorithm, key.Flags),

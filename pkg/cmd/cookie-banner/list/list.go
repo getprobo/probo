@@ -93,6 +93,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 			if flagOrg == "" {
 				flagOrg = hc.Organization
 			}
+
 			if flagOrg == "" {
 				return fmt.Errorf("organization is required; pass --org or set a default with 'prb auth login'")
 			}
@@ -114,12 +115,15 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 					if err := json.Unmarshal(data, &resp); err != nil {
 						return nil, err
 					}
+
 					if resp.Node == nil {
 						return nil, fmt.Errorf("organization %s not found", flagOrg)
 					}
+
 					if resp.Node.Typename != "Organization" {
 						return nil, fmt.Errorf("expected Organization node, got %s", resp.Node.Typename)
 					}
+
 					return &resp.Node.CookieBanners, nil
 				},
 			)

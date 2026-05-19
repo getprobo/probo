@@ -85,16 +85,20 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 			if cmd.Flags().Changed("name") {
 				input["name"] = flagName
 			}
+
 			if cmd.Flags().Changed("description") {
 				input["description"] = flagDescription
 			}
+
 			if cmd.Flags().Changed("category") {
 				input["category"] = flagCategory
 			}
+
 			if cmd.Flags().Changed("state") {
 				if err := cmdutil.ValidateEnum("state", flagState, []string{"NOT_STARTED", "IN_PROGRESS", "NOT_APPLICABLE", "IMPLEMENTED"}); err != nil {
 					return err
 				}
+
 				input["state"] = flagState
 			}
 

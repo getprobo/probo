@@ -96,6 +96,7 @@ func (d *NotionDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error
 		if !resp.HasMore || resp.NextCursor == "" {
 			return records, nil
 		}
+
 		nextCursor := resp.NextCursor
 		startCursor = &nextCursor
 	}
@@ -114,15 +115,18 @@ func (d *NotionDriver) queryUsers(ctx context.Context, startCursor *string) (*no
 
 	q := req.URL.Query()
 	q.Set("page_size", "100")
+
 	if startCursor != nil {
 		q.Set("start_cursor", *startCursor)
 	}
+
 	req.URL.RawQuery = q.Encode()
 
 	httpResp, err := d.httpClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("cannot execute notion users request: %w", err)
 	}
+
 	defer func() {
 		_ = httpResp.Body.Close()
 	}()

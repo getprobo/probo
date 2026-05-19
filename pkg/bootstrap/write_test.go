@@ -46,6 +46,7 @@ func TestWriteConfig(t *testing.T) {
 	require.NoError(t, err)
 
 	var loaded probodconfig.FullConfig
+
 	err = yaml.Unmarshal(data, &loaded)
 	require.NoError(t, err)
 
@@ -143,6 +144,7 @@ func TestWriteConfig_CompleteConfig(t *testing.T) {
 	require.NoError(t, err)
 
 	var loaded probodconfig.FullConfig
+
 	err = yaml.Unmarshal(data, &loaded)
 	require.NoError(t, err)
 

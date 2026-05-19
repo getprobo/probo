@@ -124,16 +124,20 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Match Type:"), v.MatchType)
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Tracker Type:"), v.TrackerType)
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Source:"), v.Source)
+
 			_, _ = fmt.Fprintf(out, "%s%v\n", label.Render("Excluded:"), v.Excluded)
 			if v.MaxAgeSeconds != nil {
 				_, _ = fmt.Fprintf(out, "%s%d\n", label.Render("Max Age (seconds):"), *v.MaxAgeSeconds)
 			}
+
 			if v.Description != nil && *v.Description != "" {
 				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Description:"), *v.Description)
 			}
+
 			if v.LastMatchedAt != nil {
 				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Last Matched:"), cmdutil.FormatTime(*v.LastMatchedAt))
 			}
+
 			_, _ = fmt.Fprintln(out)
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Created:"), cmdutil.FormatTime(v.CreatedAt))
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Updated:"), cmdutil.FormatTime(v.UpdatedAt))

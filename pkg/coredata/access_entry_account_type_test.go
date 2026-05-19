@@ -36,17 +36,20 @@ func TestAccessEntryAccountTypeScan(t *testing.T) {
 			t.Parallel()
 
 			var got AccessEntryAccountType
+
 			err := got.Scan(tt.input)
 			if tt.wantErr {
 				if err == nil {
 					t.Fatalf("Scan(%v) expected error", tt.input)
 				}
+
 				return
 			}
 
 			if err != nil {
 				t.Fatalf("Scan(%v) returned error: %v", tt.input, err)
 			}
+
 			if got != tt.want {
 				t.Fatalf("Scan(%v) = %q, want %q", tt.input, got, tt.want)
 			}
@@ -61,6 +64,7 @@ func TestAccessEntryAccountTypeValue(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Value() returned error: %v", err)
 	}
+
 	if got != "USER" {
 		t.Fatalf("Value() = %q, want %q", got, "USER")
 	}

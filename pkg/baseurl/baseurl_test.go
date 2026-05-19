@@ -75,6 +75,7 @@ func TestParse(t *testing.T) {
 				t.Errorf("Parse() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
+
 			if !tt.wantErr && got == nil {
 				t.Error("Parse() returned nil without error")
 			}
@@ -133,6 +134,7 @@ func TestBaseURL_WithPath(t *testing.T) {
 				t.Errorf("WithPath().String() error = %v", err)
 				return
 			}
+
 			if got != tt.want {
 				t.Errorf("WithPath().String() = %v, want %v", got, tt.want)
 			}
@@ -147,7 +149,6 @@ func TestBaseURL_WithQuery(t *testing.T) {
 		WithQuery("q", "test").
 		WithQuery("limit", "10").
 		String()
-
 	if err != nil {
 		t.Fatalf("WithPath().WithQuery().String() error = %v", err)
 	}

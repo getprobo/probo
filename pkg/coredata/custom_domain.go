@@ -57,6 +57,7 @@ type (
 
 func NewCustomDomain(tenantID gid.TenantID, domain string) *CustomDomain {
 	now := time.Now()
+
 	return &CustomDomain{
 		ID:        gid.New(tenantID, CustomDomainEntityType),
 		SSLStatus: CustomDomainSSLStatusPending,
@@ -75,6 +76,7 @@ func (cd *CustomDomain) AuthorizationAttributes(ctx context.Context, conn pg.Que
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrResourceNotFound
 		}
+
 		return nil, fmt.Errorf("cannot query custom domain authorization attributes: %w", err)
 	}
 
@@ -119,6 +121,7 @@ func (cd *CustomDomain) EncryptPrivateKey(privateKeyPEM []byte, encryptionKey ci
 	}
 
 	cd.EncryptedSSLPrivateKey = encrypted
+
 	return nil
 }
 
@@ -147,6 +150,7 @@ func (cd *CustomDomain) ParseCertificate(encryptionKey cipher.EncryptionKey) err
 	}
 
 	cd.SSLCertificate = &tlsCert
+
 	return nil
 }
 
@@ -460,6 +464,7 @@ INSERT INTO custom_domains (
 				return ErrResourceAlreadyExists
 			}
 		}
+
 		return fmt.Errorf("cannot insert custom domain: %w", err)
 	}
 
@@ -658,6 +663,7 @@ ORDER BY
 	}
 
 	*domains = result
+
 	return nil
 }
 
@@ -714,6 +720,7 @@ WHERE
 	}
 
 	*domains = result
+
 	return nil
 }
 
@@ -765,6 +772,7 @@ WHERE
 	}
 
 	*domains = result
+
 	return nil
 }
 
@@ -826,5 +834,6 @@ WHERE
 	}
 
 	*domains = result
+
 	return nil
 }

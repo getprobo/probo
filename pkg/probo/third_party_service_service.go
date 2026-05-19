@@ -81,7 +81,6 @@ func (s ThirdPartyServiceService) Get(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -107,7 +106,6 @@ func (s ThirdPartyServiceService) List(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -150,7 +148,6 @@ func (s ThirdPartyServiceService) Create(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -179,9 +176,11 @@ func (s ThirdPartyServiceService) Update(
 			if req.Name != nil {
 				thirdPartyService.Name = *req.Name
 			}
+
 			if req.Description != nil {
 				thirdPartyService.Description = *req.Description
 			}
+
 			thirdPartyService.UpdatedAt = time.Now()
 
 			if err := thirdPartyService.Update(ctx, conn, s.svc.scope); err != nil {
@@ -191,7 +190,6 @@ func (s ThirdPartyServiceService) Update(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -204,6 +202,7 @@ func (s ThirdPartyServiceService) Delete(
 	thirdPartyServiceID gid.GID,
 ) error {
 	thirdPartyService := coredata.ThirdPartyService{ID: thirdPartyServiceID}
+
 	return s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {

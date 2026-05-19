@@ -91,6 +91,7 @@ func CheckGovernmentDBTool(apiKey string) agent.Tool {
 				if err != nil {
 					continue
 				}
+
 				for _, e := range entries {
 					*s.target = append(
 						*s.target,

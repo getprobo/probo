@@ -31,6 +31,7 @@ func (c SAMLConfig) SessionDurationTime() time.Duration {
 	if c.SessionDuration == 0 {
 		return 7 * 24 * time.Hour
 	}
+
 	return time.Duration(c.SessionDuration) * time.Second
 }
 

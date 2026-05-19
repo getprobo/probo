@@ -139,18 +139,23 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 			if flagDescription != "" {
 				input["description"] = flagDescription
 			}
+
 			if flagPriority != "" {
 				input["priority"] = flagPriority
 			}
+
 			if flagMeasure != "" {
 				input["measureId"] = flagMeasure
 			}
+
 			if flagTimeEstimate != "" {
 				input["timeEstimate"] = flagTimeEstimate
 			}
+
 			if flagAssignedTo != "" {
 				input["assignedToId"] = flagAssignedTo
 			}
+
 			if flagDeadline != "" {
 				input["deadline"] = flagDeadline
 			}

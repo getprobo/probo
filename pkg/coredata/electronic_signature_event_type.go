@@ -74,6 +74,7 @@ func (t ElectronicSignatureEventType) String() string {
 
 func (t *ElectronicSignatureEventType) Scan(value any) error {
 	var s string
+
 	switch v := value.(type) {
 	case string:
 		s = v

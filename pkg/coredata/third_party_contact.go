@@ -65,6 +65,7 @@ func (vc *ThirdPartyContact) AuthorizationAttributes(ctx context.Context, conn p
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrResourceNotFound
 		}
+
 		return nil, fmt.Errorf("cannot query thirdParty contact authorization attributes: %w", err)
 	}
 

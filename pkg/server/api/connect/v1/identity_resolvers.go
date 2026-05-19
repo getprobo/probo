@@ -168,9 +168,11 @@ func (r *identityResolver) SsoLoginURL(ctx context.Context, obj *types.Identity)
 		r.logger.ErrorCtx(ctx, "cannot find SAML config")
 		return nil, gqlutils.NotFoundf(ctx, "cannot find SAML config")
 	}
+
 	samlConfig := samlConfigs[0]
 
 	loginURL := r.SSOLoginURL(samlConfig.ID)
+
 	return &loginURL, nil
 }
 

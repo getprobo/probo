@@ -43,5 +43,6 @@ func (tcdaof *TrustCenterDocumentAccessOrderField) UnmarshalText(text []byte) er
 		*tcdaof = TrustCenterDocumentAccessOrderField(val)
 		return nil
 	}
+
 	return fmt.Errorf("invalid TrustCenterDocumentAccessOrderField value: %q", val)
 }

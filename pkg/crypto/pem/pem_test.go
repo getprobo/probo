@@ -122,10 +122,12 @@ func TestEncodePrivateKey(t *testing.T) {
 				if err != nil {
 					return nil, err
 				}
+
 				signer, ok := key.(crypto.Signer)
 				if !ok {
 					return nil, errors.New("key is not a crypto.Signer")
 				}
+
 				return signer, nil
 			},
 		},
@@ -205,6 +207,7 @@ func TestRoundTrip(t *testing.T) {
 
 			// Parse key based on type
 			var parsedKey crypto.Signer
+
 			switch block.Type {
 			case "EC PRIVATE KEY":
 				parsedKey, err = x509.ParseECPrivateKey(block.Bytes)
@@ -228,8 +231,10 @@ func TestRoundTrip(t *testing.T) {
 			h.Write(testData)
 			hashed := h.Sum(nil)
 
-			var dataToSign []byte
-			var hashFunc crypto.Hash
+			var (
+				dataToSign []byte
+				hashFunc   crypto.Hash
+			)
 
 			switch originalKey.(type) {
 			case *rsa.PrivateKey:
@@ -309,6 +314,7 @@ func BenchmarkEncodeCertificate(b *testing.B) {
 	certDER, _ := x509.CreateCertificate(rand.Reader, &template, &template, &priv.PublicKey, priv)
 
 	b.ResetTimer()
+
 	for i := 0; i < b.N; i++ {
 		_ = pem.EncodeCertificate(certDER)
 	}
@@ -344,5 +350,6 @@ func mustGenerateKey(gen func() (crypto.Signer, error)) crypto.Signer {
 	if err != nil {
 		panic(err)
 	}
+
 	return key
 }

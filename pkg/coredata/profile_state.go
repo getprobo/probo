@@ -32,6 +32,7 @@ func (s ProfileState) String() string {
 
 func (s *ProfileState) Scan(value any) error {
 	var str string
+
 	switch v := value.(type) {
 	case string:
 		str = v
@@ -49,6 +50,7 @@ func (s *ProfileState) Scan(value any) error {
 	default:
 		return fmt.Errorf("invalid ProfileState value: %q", str)
 	}
+
 	return nil
 }
 

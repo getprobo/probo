@@ -186,6 +186,7 @@ func TestFinding_Update(t *testing.T) {
 		},
 	}, &createResult)
 	require.NoError(t, err)
+
 	findingID := createResult.CreateFinding.FindingEdge.Node.ID
 
 	query := `
@@ -274,6 +275,7 @@ func TestFinding_Delete(t *testing.T) {
 		},
 	}, &createResult)
 	require.NoError(t, err)
+
 	findingID := createResult.CreateFinding.FindingEdge.Node.ID
 
 	query := `
@@ -510,6 +512,7 @@ func TestFinding_CreateAuditMapping(t *testing.T) {
 		},
 	}, &createResult)
 	require.NoError(t, err)
+
 	findingID := createResult.CreateFinding.FindingEdge.Node.ID
 
 	// Link finding to audit
@@ -635,6 +638,7 @@ func TestFinding_DeleteAuditMapping(t *testing.T) {
 		},
 	}, &createResult)
 	require.NoError(t, err)
+
 	findingID := createResult.CreateFinding.FindingEdge.Node.ID
 
 	// Link finding to audit
@@ -753,6 +757,7 @@ func TestFinding_StatusAndPriorityValues(t *testing.T) {
 		"status values",
 		func(t *testing.T) {
 			t.Parallel()
+
 			riskID := factory.CreateRisk(owner)
 			statuses := []string{"OPEN", "IN_PROGRESS", "CLOSED", "RISK_ACCEPTED", "MITIGATED", "FALSE_POSITIVE"}
 
@@ -761,6 +766,7 @@ func TestFinding_StatusAndPriorityValues(t *testing.T) {
 					status,
 					func(t *testing.T) {
 						t.Parallel()
+
 						var result struct {
 							CreateFinding struct {
 								FindingEdge struct {
@@ -799,6 +805,7 @@ func TestFinding_StatusAndPriorityValues(t *testing.T) {
 		"priority values",
 		func(t *testing.T) {
 			t.Parallel()
+
 			priorities := []string{"LOW", "MEDIUM", "HIGH"}
 
 			for _, priority := range priorities {
@@ -806,6 +813,7 @@ func TestFinding_StatusAndPriorityValues(t *testing.T) {
 					priority,
 					func(t *testing.T) {
 						t.Parallel()
+
 						var result struct {
 							CreateFinding struct {
 								FindingEdge struct {

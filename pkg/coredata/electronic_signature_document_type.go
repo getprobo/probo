@@ -174,6 +174,7 @@ func (dt ElectronicSignatureDocumentType) DisplayName() string {
 
 func (dt ElectronicSignatureDocumentType) ConsentText() (string, error) {
 	var docAgreement string
+
 	switch dt {
 	case ElectronicSignatureDocumentTypeNDA:
 		docAgreement = "I agree to the terms of this Non-Disclosure Agreement."

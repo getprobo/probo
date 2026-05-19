@@ -89,21 +89,27 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 			if cmd.Flags().Changed("name") {
 				input["name"] = flagName
 			}
+
 			if cmd.Flags().Changed("description") {
 				input["description"] = flagDescription
 			}
+
 			if cmd.Flags().Changed("state") {
 				input["state"] = flagState
 			}
+
 			if cmd.Flags().Changed("priority") {
 				input["priority"] = flagPriority
 			}
+
 			if cmd.Flags().Changed("time-estimate") {
 				input["timeEstimate"] = flagTimeEstimate
 			}
+
 			if cmd.Flags().Changed("deadline") {
 				input["deadline"] = flagDeadline
 			}
+
 			if cmd.Flags().Changed("assigned-to") {
 				if flagAssignedTo == "" {
 					input["assignedToId"] = nil
@@ -111,6 +117,7 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 					input["assignedToId"] = flagAssignedTo
 				}
 			}
+
 			if cmd.Flags().Changed("measure") {
 				if flagMeasure == "" {
 					input["measureId"] = nil

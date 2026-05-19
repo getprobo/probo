@@ -98,6 +98,7 @@ func (d *AsanaDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error)
 		if page.NextPage == nil || page.NextPage.URI == "" {
 			return records, nil
 		}
+
 		next = page.NextPage.URI
 	}
 
@@ -109,12 +110,14 @@ func (d *AsanaDriver) queryUsers(ctx context.Context, endpoint string) (*asanaUs
 	if err != nil {
 		return nil, fmt.Errorf("cannot create asana users request: %w", err)
 	}
+
 	req.Header.Set("Accept", "application/json")
 
 	httpResp, err := d.httpClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("cannot execute asana users request: %w", err)
 	}
+
 	defer func() { _ = httpResp.Body.Close() }()
 
 	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {

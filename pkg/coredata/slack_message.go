@@ -65,6 +65,7 @@ func (sm *SlackMessage) AuthorizationAttributes(ctx context.Context, conn pg.Que
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrResourceNotFound
 		}
+
 		return nil, fmt.Errorf("cannot query slack message authorization attributes: %w", err)
 	}
 
@@ -79,6 +80,7 @@ func NewSlackMessage(
 ) *SlackMessage {
 	now := time.Now()
 	id := gid.New(scope.GetTenantID(), SlackMessageEntityType)
+
 	return &SlackMessage{
 		ID:                    id,
 		OrganizationID:        organizationID,
@@ -295,6 +297,7 @@ LIMIT 1
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrSlackMessageNotFound{}
 		}
+
 		return fmt.Errorf("cannot collect slack message: %w", err)
 	}
 
@@ -398,6 +401,7 @@ LIMIT 1
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrSlackMessageNotFound{}
 		}
+
 		return fmt.Errorf("cannot collect slack message: %w", err)
 	}
 
@@ -438,6 +442,7 @@ LIMIT 1
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrSlackMessageNotFound{}
 		}
+
 		return err
 	}
 
@@ -487,6 +492,7 @@ LIMIT 1
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrSlackMessageNotFound{}
 		}
+
 		return err
 	}
 

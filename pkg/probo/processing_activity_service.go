@@ -147,7 +147,6 @@ func (s ProcessingActivityService) Get(
 			return processingActivity.LoadByID(ctx, conn, s.svc.scope, processingActivityID)
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -209,7 +208,6 @@ func (s *ProcessingActivityService) Create(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -234,57 +232,75 @@ func (s *ProcessingActivityService) Update(
 			if req.Name != nil {
 				processingActivity.Name = *req.Name
 			}
+
 			if req.Purpose != nil {
 				processingActivity.Purpose = *req.Purpose
 			}
+
 			if req.DataSubjectCategory != nil {
 				processingActivity.DataSubjectCategory = *req.DataSubjectCategory
 			}
+
 			if req.PersonalDataCategory != nil {
 				processingActivity.PersonalDataCategory = *req.PersonalDataCategory
 			}
+
 			if req.SpecialOrCriminalData != nil {
 				processingActivity.SpecialOrCriminalData = *req.SpecialOrCriminalData
 			}
+
 			if req.ConsentEvidenceLink != nil {
 				processingActivity.ConsentEvidenceLink = *req.ConsentEvidenceLink
 			}
+
 			if req.LawfulBasis != nil {
 				processingActivity.LawfulBasis = *req.LawfulBasis
 			}
+
 			if req.Recipients != nil {
 				processingActivity.Recipients = *req.Recipients
 			}
+
 			if req.Location != nil {
 				processingActivity.Location = *req.Location
 			}
+
 			if req.InternationalTransfers != nil {
 				processingActivity.InternationalTransfers = *req.InternationalTransfers
 			}
+
 			if req.TransferSafeguard != nil {
 				processingActivity.TransferSafeguard = *req.TransferSafeguard
 			}
+
 			if req.RetentionPeriod != nil {
 				processingActivity.RetentionPeriod = *req.RetentionPeriod
 			}
+
 			if req.SecurityMeasures != nil {
 				processingActivity.SecurityMeasures = *req.SecurityMeasures
 			}
+
 			if req.DataProtectionImpactAssessmentNeeded != nil {
 				processingActivity.DataProtectionImpactAssessmentNeeded = *req.DataProtectionImpactAssessmentNeeded
 			}
+
 			if req.TransferImpactAssessmentNeeded != nil {
 				processingActivity.TransferImpactAssessmentNeeded = *req.TransferImpactAssessmentNeeded
 			}
+
 			if req.LastReviewDate != nil {
 				processingActivity.LastReviewDate = *req.LastReviewDate
 			}
+
 			if req.NextReviewDate != nil {
 				processingActivity.NextReviewDate = *req.NextReviewDate
 			}
+
 			if req.Role != nil {
 				processingActivity.Role = *req.Role
 			}
+
 			if req.DataProtectionOfficerID != nil {
 				processingActivity.DataProtectionOfficerID = *req.DataProtectionOfficerID
 			}
@@ -304,7 +320,6 @@ func (s *ProcessingActivityService) Update(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -317,6 +332,7 @@ func (s ProcessingActivityService) Delete(
 	processingActivityID gid.GID,
 ) error {
 	processingActivity := coredata.ProcessingActivity{ID: processingActivityID}
+
 	return s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
@@ -324,6 +340,7 @@ func (s ProcessingActivityService) Delete(
 			if err != nil {
 				return fmt.Errorf("cannot delete processing activity: %w", err)
 			}
+
 			return nil
 		},
 	)
@@ -347,7 +364,6 @@ func (s ProcessingActivityService) ListForOrganizationID(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -365,6 +381,7 @@ func (s ProcessingActivityService) CountForOrganizationID(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			processingActivities := coredata.ProcessingActivities{}
+
 			count, err = processingActivities.CountByOrganizationID(ctx, conn, s.svc.scope, organizationID)
 			if err != nil {
 				return fmt.Errorf("cannot count processing activities: %w", err)
@@ -373,7 +390,6 @@ func (s ProcessingActivityService) CountForOrganizationID(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return 0, err
 	}

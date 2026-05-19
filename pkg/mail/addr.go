@@ -81,6 +81,7 @@ func (a *Addr) Scan(value any) error {
 	}
 
 	var str string
+
 	switch v := value.(type) {
 	case string:
 		str = v
@@ -126,13 +127,16 @@ func (a Addrs) Value() (driver.Value, error) {
 	if a == nil {
 		return nil, nil
 	}
+
 	if len(a) == 0 {
 		return "{}", nil
 	}
+
 	strs := make([]string, len(a))
 	for i, addr := range a {
 		strs[i] = addr.String()
 	}
+
 	return "{" + strings.Join(strs, ",") + "}", nil
 }
 
@@ -143,6 +147,7 @@ func (a *Addrs) Scan(value any) error {
 	}
 
 	var strs []string
+
 	switch v := value.(type) {
 	case []string:
 		strs = v
@@ -167,10 +172,12 @@ func (a *Addrs) Scan(value any) error {
 				strs[i] = ""
 				continue
 			}
+
 			str, ok := elem.(string)
 			if !ok {
 				return fmt.Errorf("array element is not a string: %T", elem)
 			}
+
 			strs[i] = str
 		}
 	default:
@@ -183,11 +190,14 @@ func (a *Addrs) Scan(value any) error {
 			(*a)[i] = Nil
 			continue
 		}
+
 		parsed, err := ParseAddr(str)
 		if err != nil {
 			return fmt.Errorf("invalid email at index %d: %w", i, err)
 		}
+
 		(*a)[i] = parsed
 	}
+
 	return nil
 }

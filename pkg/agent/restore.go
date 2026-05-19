@@ -37,13 +37,16 @@ func Restore(
 	if err != nil {
 		return nil, fmt.Errorf("cannot load checkpoint: %w", err)
 	}
+
 	if cp == nil {
 		return nil, fmt.Errorf("cannot restore: no checkpoint for run %s", runID)
 	}
+
 	agent, err := registry.Agent(cp.AgentName)
 	if err != nil {
 		return nil, fmt.Errorf("cannot resolve agent %q: %w", cp.AgentName, err)
 	}
+
 	agent = applyCheckpointConfig(agent, cp.Config)
 
 	return restoreCheckpoint(ctx, agent, cp, store, runID, registry)
@@ -58,6 +61,7 @@ func applyCheckpointConfig(agent *Agent, cfg AgentConfig) *Agent {
 	if cfg.MaxTurns <= 0 {
 		return agent
 	}
+
 	return agent.Clone(WithMaxTurns(cfg.MaxTurns))
 }
 
@@ -154,13 +158,17 @@ func restoreNestedSuspended(
 	}
 
 	entries := make([]nestedRestoreEntry, len(cp.AllToolCalls))
+
 	var wg sync.WaitGroup
+
 	for i, tc := range cp.AllToolCalls {
 		entries[i].toolCall = tc
+
 		result, ok := completedByID[tc.ID]
 		if ok {
 			entries[i].result = result
 			entries[i].completed = true
+
 			continue
 		}
 
@@ -169,6 +177,7 @@ func restoreNestedSuspended(
 			entries[i].err = fmt.Errorf("cannot restore nested tool call %q: missing inner checkpoint", tc.ID)
 			continue
 		}
+
 		entries[i].originalCheckpoint = innerCP
 
 		innerAgent, err := registry.Agent(innerCP.AgentName)
@@ -176,9 +185,11 @@ func restoreNestedSuspended(
 			entries[i].err = fmt.Errorf("cannot resolve inner agent %q: %w", innerCP.AgentName, err)
 			continue
 		}
+
 		innerAgent = applyCheckpointConfig(innerAgent, innerCP.Config)
 
 		wg.Add(1)
+
 		go func(i int, tc llm.ToolCall, innerAgent *Agent, innerCP *Checkpoint) {
 			defer wg.Done()
 
@@ -189,10 +200,14 @@ func restoreNestedSuspended(
 						entries[i].err = fmt.Errorf("cannot restore nested tool call %q: missing suspension checkpoint", tc.ID)
 						return
 					}
+
 					entries[i].suspendedCheckpoint = se.Checkpoint
+
 					return
 				}
+
 				entries[i].err = fmt.Errorf("cannot restore nested tool call %q: %w", tc.ID, err)
+
 				return
 			}
 
@@ -200,6 +215,7 @@ func restoreNestedSuspended(
 			entries[i].completed = true
 		}(i, tc, innerAgent, innerCP)
 	}
+
 	wg.Wait()
 
 	messages := make([]llm.Message, len(cp.Messages))
@@ -207,16 +223,20 @@ func restoreNestedSuspended(
 
 	completedCalls := make([]CompletedCall, 0, len(cp.AllToolCalls))
 	remainingInner := make(map[string]*Checkpoint)
+
 	var restoreErr error
+
 	for _, entry := range entries {
 		switch {
 		case entry.err != nil:
 			if entry.originalCheckpoint != nil {
 				remainingInner[entry.toolCall.ID] = entry.originalCheckpoint
 			}
+
 			if restoreErr == nil {
 				restoreErr = entry.err
 			}
+
 			continue
 
 		case entry.suspendedCheckpoint != nil:
@@ -227,6 +247,7 @@ func restoreNestedSuspended(
 			if restoreErr == nil {
 				restoreErr = fmt.Errorf("cannot restore nested tool call %q: no result", entry.toolCall.ID)
 			}
+
 			continue
 		}
 
@@ -250,13 +271,16 @@ func restoreNestedSuspended(
 	saveProgress := func() (*Checkpoint, error) {
 		next := *cp
 		next.InnerCheckpoints = remainingInner
+
 		next.CompletedCalls = completedCalls
 		if store != nil && runID != "" {
 			if err := store.Save(saveCtx, runID, &next); err != nil {
 				return nil, fmt.Errorf("cannot save nested restore progress: %w", err)
 			}
+
 			emitHook(agent, func(h RunHooks) { h.OnRunSnapshot(saveCtx, agent, &next) })
 		}
+
 		return &next, nil
 	}
 
@@ -264,6 +288,7 @@ func restoreNestedSuspended(
 		if _, err := saveProgress(); err != nil {
 			return nil, errors.Join(restoreErr, err)
 		}
+
 		return nil, restoreErr
 	}
 
@@ -272,6 +297,7 @@ func restoreNestedSuspended(
 		if err != nil {
 			return nil, err
 		}
+
 		return nil, &SuspendedError{RunID: runID, Checkpoint: next}
 	}
 
@@ -301,11 +327,13 @@ func restoreAwaitingApproval(
 		if len(cp.InnerCheckpoints) > 1 {
 			return nil, fmt.Errorf("cannot restore approval checkpoint: expected one inner checkpoint, got %d", len(cp.InnerCheckpoints))
 		}
+
 		for toolCallID, innerCP := range cp.InnerCheckpoints {
 			innerAgent, err := registry.Agent(innerCP.AgentName)
 			if err != nil {
 				return nil, fmt.Errorf("cannot resolve inner agent %q: %w", innerCP.AgentName, err)
 			}
+
 			innerAgent = applyCheckpointConfig(innerAgent, innerCP.Config)
 
 			innerIE := &InterruptedError{
@@ -334,6 +362,7 @@ func restoreAwaitingApproval(
 				completedCalls: cp.CompletedCalls,
 				innerInterrupt: innerIE,
 			}
+
 			break
 		}
 	}

@@ -46,10 +46,12 @@ func NewCmdDelete(f *cmdutil.Factory) *cobra.Command {
 				if !f.IOStreams.IsInteractive() {
 					return fmt.Errorf("cannot delete tracker resource: confirmation required, use --yes to confirm")
 				}
+
 				var confirmed bool
 				if err := huh.NewConfirm().Title(fmt.Sprintf("Delete tracker resource %s?", args[0])).Value(&confirmed).Run(); err != nil {
 					return err
 				}
+
 				if !confirmed {
 					return nil
 				}

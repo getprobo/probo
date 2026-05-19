@@ -102,7 +102,6 @@ func (s OrganizationService) Get(
 			)
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -160,7 +159,6 @@ func (s OrganizationService) GetContext(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -219,7 +217,6 @@ func (s OrganizationService) UpdateContext(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -265,6 +262,7 @@ func (s OrganizationService) Update(
 						return fmt.Errorf("invalid email address: %w", err)
 					}
 				}
+
 				organization.Email = *req.Email
 			}
 
@@ -278,6 +276,7 @@ func (s OrganizationService) Update(
 
 			if req.File != nil {
 				fileID := gid.New(s.svc.scope.GetTenantID(), coredata.FileEntityType)
+
 				objectKey, err := uuid.NewV7()
 				if err != nil {
 					return fmt.Errorf("cannot generate object key: %w", err)
@@ -288,6 +287,7 @@ func (s OrganizationService) Update(
 
 				if contentType == "" {
 					contentType = "application/octet-stream"
+
 					if filename != "" {
 						if detectedType := mime.TypeByExtension(filepath.Ext(filename)); detectedType != "" {
 							contentType = detectedType
@@ -339,6 +339,7 @@ func (s OrganizationService) Update(
 
 			if req.HorizontalLogoFile != nil {
 				fileID := gid.New(s.svc.scope.GetTenantID(), coredata.FileEntityType)
+
 				objectKey, err := uuid.NewV7()
 				if err != nil {
 					return fmt.Errorf("cannot generate object key: %w", err)
@@ -349,6 +350,7 @@ func (s OrganizationService) Update(
 
 				if contentType == "" {
 					contentType = "application/octet-stream"
+
 					if filename != "" {
 						if detectedType := mime.TypeByExtension(filepath.Ext(filename)); detectedType != "" {
 							contentType = detectedType
@@ -405,7 +407,6 @@ func (s OrganizationService) Update(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -520,7 +521,6 @@ func (s OrganizationService) DeleteHorizontalLogo(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}

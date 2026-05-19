@@ -44,6 +44,7 @@ func parseScopes(s string) (coredata.OAuth2Scopes, error) {
 	if err := scopes.UnmarshalText([]byte(s)); err != nil {
 		return nil, err
 	}
+
 	return scopes, nil
 }
 

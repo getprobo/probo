@@ -68,6 +68,7 @@ func (s *SCIMBridge) AuthorizationAttributes(ctx context.Context, conn pg.Querie
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrResourceNotFound
 		}
+
 		return nil, fmt.Errorf("cannot query scim bridge authorization attributes: %w", err)
 	}
 
@@ -409,10 +410,12 @@ FOR UPDATE SKIP LOCKED
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrNoSCIMBridgeAvailable
 		}
+
 		return fmt.Errorf("cannot collect scim_bridge: %w", err)
 	}
 
 	*s = bridge
+
 	return nil
 }
 

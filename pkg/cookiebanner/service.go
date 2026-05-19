@@ -328,6 +328,7 @@ func (r *UpsertCookieBannerTranslationRequest) Validate() error {
 					}
 				}
 			}
+
 			continue
 		}
 
@@ -340,6 +341,7 @@ func (r *UpsertCookieBannerTranslationRequest) Validate() error {
 		if key == "banner_description" {
 			validators = append(validators, validator.ContainsSubstring("{{cookie_policy_link}}"))
 		}
+
 		v.Check(s, "translations."+key, validators...)
 	}
 
@@ -353,10 +355,12 @@ func (r *CreateTrackerPatternRequest) Validate() error {
 	v.Check(string(r.TrackerType), "tracker_type", validator.Required(), validator.OneOfSlice(
 		func() []string {
 			types := coredata.TrackerTypes()
+
 			s := make([]string, len(types))
 			for i, t := range types {
 				s[i] = string(t)
 			}
+
 			return s
 		}(),
 	))
@@ -364,15 +368,18 @@ func (r *CreateTrackerPatternRequest) Validate() error {
 	v.Check(string(r.MatchType), "match_type", validator.Required(), validator.OneOfSlice(
 		func() []string {
 			types := coredata.TrackerPatternMatchTypes()
+
 			s := make([]string, len(types))
 			for i, t := range types {
 				s[i] = string(t)
 			}
+
 			return s
 		}(),
 	))
 	v.Check(r.Pattern, "pattern", func(value any) *validator.ValidationError {
 		s, _ := value.(string)
+
 		switch r.MatchType {
 		case coredata.TrackerPatternMatchTypeGlob:
 			if strings.Count(s, "*") != 1 {
@@ -389,6 +396,7 @@ func (r *CreateTrackerPatternRequest) Validate() error {
 				}
 			}
 		}
+
 		return nil
 	})
 	v.Check(r.DisplayName, "display_name", validator.Required(), validator.SafeTextNoNewLine(255))
@@ -401,6 +409,7 @@ func (r *UpdateTrackerPatternRequest) Validate() error {
 	v := validator.New()
 
 	v.Check(r.TrackerPatternID, "tracker_pattern_id", validator.Required(), validator.GID(coredata.TrackerPatternEntityType))
+
 	if r.Description != nil {
 		v.Check(*r.Description, "description", validator.SafeText(1000))
 	}
@@ -415,10 +424,12 @@ func (r *CreateTrackerResourceRequest) Validate() error {
 	v.Check(string(r.ResourceType), "resource_type", validator.Required(), validator.OneOfSlice(
 		func() []string {
 			types := coredata.TrackerResourceTypes()
+
 			s := make([]string, len(types))
 			for i, t := range types {
 				s[i] = string(t)
 			}
+
 			return s
 		}(),
 	))
@@ -434,9 +445,11 @@ func (r *UpdateTrackerResourceRequest) Validate() error {
 	v := validator.New()
 
 	v.Check(r.TrackerResourceID, "tracker_resource_id", validator.Required(), validator.GID(coredata.TrackerResourceEntityType))
+
 	if r.DisplayName != nil {
 		v.Check(*r.DisplayName, "display_name", validator.SafeTextNoNewLine(255))
 	}
+
 	if r.Description != nil {
 		v.Check(*r.Description, "description", validator.SafeText(1000))
 	}
@@ -472,8 +485,8 @@ func (s *Service) ensureDraftVersion(
 	snapshot := buildSnapshot(banner, categories, allPatterns)
 
 	var latest coredata.CookieBannerVersion
-	err := latest.LoadLatestByCookieBannerID(ctx, tx, scope, banner.ID)
 
+	err := latest.LoadLatestByCookieBannerID(ctx, tx, scope, banner.ID)
 	if err == nil {
 		if latestSnapshot, snapErr := latest.GetSnapshot(); snapErr == nil && snapshotsEqual(snapshot, latestSnapshot) {
 			return &latest, nil
@@ -483,10 +496,12 @@ func (s *Service) ensureDraftVersion(
 			if err := latest.SetSnapshot(snapshot); err != nil {
 				return nil, fmt.Errorf("cannot set snapshot: %w", err)
 			}
+
 			latest.UpdatedAt = time.Now()
 			if err := latest.Update(ctx, tx, scope); err != nil {
 				return nil, fmt.Errorf("cannot update draft version: %w", err)
 			}
+
 			return &latest, nil
 		}
 	}
@@ -509,6 +524,7 @@ func (s *Service) ensureDraftVersion(
 	if err != nil {
 		return nil, fmt.Errorf("cannot determine next version: %w", err)
 	}
+
 	version.Version = nextVersion
 
 	if err := version.SetSnapshot(snapshot); err != nil {
@@ -588,6 +604,7 @@ func (s *Service) CreateCookieBanner(
 				if errors.Is(err, coredata.ErrResourceAlreadyExists) {
 					return ErrOriginAlreadyInUse
 				}
+
 				return fmt.Errorf("cannot insert cookie banner: %w", err)
 			}
 
@@ -597,6 +614,7 @@ func (s *Service) CreateCookieBanner(
 				if gcmConsentTypes == nil {
 					gcmConsentTypes = []string{}
 				}
+
 				category := &coredata.CookieCategory{
 					ID:              gid.New(scope.GetTenantID(), coredata.CookieCategoryEntityType),
 					OrganizationID:  banner.OrganizationID,
@@ -620,6 +638,7 @@ func (s *Service) CreateCookieBanner(
 
 				if dc.Kind == coredata.CookieCategoryKindNecessary {
 					consentMaxAge := req.ConsentExpiryDays * 86400
+
 					consentPattern := &coredata.TrackerPattern{
 						ID:               gid.New(scope.GetTenantID(), coredata.TrackerPatternEntityType),
 						OrganizationID:   banner.OrganizationID,
@@ -657,6 +676,7 @@ func (s *Service) CreateCookieBanner(
 							}
 						}
 					}
+
 					if len(catMap) > 0 {
 						blob["categories"] = catMap
 					}
@@ -710,6 +730,7 @@ func (s *Service) GetCookieBanner(
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return ErrBannerNotFound
 				}
+
 				return fmt.Errorf("cannot load cookie banner: %w", err)
 			}
 
@@ -760,6 +781,7 @@ func (s *Service) GetActiveCookieBanner(
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return ErrBannerNotFound
 				}
+
 				return fmt.Errorf("cannot load cookie banner: %w", err)
 			}
 
@@ -810,8 +832,10 @@ func (s *Service) CountCookieBannersForOrganization(
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			var banners coredata.CookieBanners
-			var err error
+			var (
+				banners coredata.CookieBanners
+				err     error
+			)
 
 			count, err = banners.CountByOrganizationID(ctx, conn, scope, organizationID, filter)
 			if err != nil {
@@ -846,6 +870,7 @@ func (s *Service) UpdateCookieBanner(
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return ErrBannerNotFound
 				}
+
 				return fmt.Errorf("cannot load cookie banner: %w", err)
 			}
 
@@ -864,15 +889,19 @@ func (s *Service) UpdateCookieBanner(
 			if req.Name != nil {
 				banner.Name = *req.Name
 			}
+
 			if req.PrivacyPolicyURL != nil {
 				banner.PrivacyPolicyURL = req.PrivacyPolicyURL
 			}
+
 			if req.CookiePolicyURL != nil {
 				banner.CookiePolicyURL = *req.CookiePolicyURL
 			}
+
 			if req.ConsentExpiryDays != nil {
 				banner.ConsentExpiryDays = *req.ConsentExpiryDays
 			}
+
 			if req.DefaultLanguage != nil {
 				banner.DefaultLanguage = *req.DefaultLanguage
 			}
@@ -883,6 +912,7 @@ func (s *Service) UpdateCookieBanner(
 				if errors.Is(err, coredata.ErrResourceAlreadyExists) {
 					return ErrOriginAlreadyInUse
 				}
+
 				return fmt.Errorf("cannot update cookie banner: %w", err)
 			}
 
@@ -916,6 +946,7 @@ func (s *Service) PublishCookieBannerVersion(
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return ErrNoDraftVersion
 				}
+
 				return fmt.Errorf("cannot load latest version: %w", err)
 			}
 
@@ -954,6 +985,7 @@ func (s *Service) ActivateCookieBanner(
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return ErrBannerNotFound
 				}
+
 				return fmt.Errorf("cannot load cookie banner: %w", err)
 			}
 
@@ -968,6 +1000,7 @@ func (s *Service) ActivateCookieBanner(
 				if errors.Is(err, coredata.ErrResourceAlreadyExists) {
 					return ErrOriginAlreadyInUse
 				}
+
 				return fmt.Errorf("cannot update cookie banner: %w", err)
 			}
 
@@ -995,6 +1028,7 @@ func (s *Service) DeactivateCookieBanner(
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return ErrBannerNotFound
 				}
+
 				return fmt.Errorf("cannot load cookie banner: %w", err)
 			}
 
@@ -1032,6 +1066,7 @@ func (s *Service) DeleteCookieBanner(
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return ErrBannerNotFound
 				}
+
 				return fmt.Errorf("cannot load cookie banner: %w", err)
 			}
 
@@ -1063,6 +1098,7 @@ func (s *Service) CreateCookieCategory(
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return ErrBannerNotFound
 				}
+
 				return fmt.Errorf("cannot load cookie banner: %w", err)
 			}
 
@@ -1086,6 +1122,7 @@ func (s *Service) CreateCookieCategory(
 				if errors.Is(err, coredata.ErrResourceAlreadyExists) {
 					return ErrCategorySlugAlreadyExists
 				}
+
 				return fmt.Errorf("cannot insert cookie category: %w", err)
 			}
 
@@ -1117,6 +1154,7 @@ func (s *Service) GetCookieCategory(
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return ErrCategoryNotFound
 				}
+
 				return fmt.Errorf("cannot load cookie category: %w", err)
 			}
 
@@ -1189,8 +1227,10 @@ func (s *Service) CountCookieCategoriesForBanner(
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			var categories coredata.CookieCategories
-			var err error
+			var (
+				categories coredata.CookieCategories
+				err        error
+			)
 
 			count, err = categories.CountConsentCategoriesByCookieBannerID(ctx, conn, scope, bannerID)
 			if err != nil {
@@ -1225,6 +1265,7 @@ func (s *Service) UpdateCookieCategory(
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return ErrCategoryNotFound
 				}
+
 				return fmt.Errorf("cannot load cookie category: %w", err)
 			}
 
@@ -1241,25 +1282,31 @@ func (s *Service) UpdateCookieCategory(
 			if req.Name != nil {
 				category.Name = *req.Name
 			}
+
 			if req.Slug != nil {
 				category.Slug = *req.Slug
 			}
+
 			if req.Description != nil {
 				category.Description = *req.Description
 			}
+
 			if req.GCMConsentTypes != nil {
 				category.GCMConsentTypes = *req.GCMConsentTypes
 			}
+
 			if posthogChanged {
 				if *req.PostHogConsent && category.Kind != coredata.CookieCategoryKindNormal {
 					return ErrPostHogConsentKindInvalid
 				}
+
 				if *req.PostHogConsent {
 					var categories coredata.CookieCategories
 					if err := categories.ClearPostHogConsentByBannerID(ctx, tx, scope, category.CookieBannerID); err != nil {
 						return fmt.Errorf("cannot clear posthog consent: %w", err)
 					}
 				}
+
 				category.PostHogConsent = *req.PostHogConsent
 			}
 
@@ -1269,6 +1316,7 @@ func (s *Service) UpdateCookieCategory(
 				if errors.Is(err, coredata.ErrResourceAlreadyExists) {
 					return ErrCategorySlugAlreadyExists
 				}
+
 				return fmt.Errorf("cannot update cookie category: %w", err)
 			}
 
@@ -1305,6 +1353,7 @@ func (s *Service) ReorderCookieCategory(
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return ErrCategoryNotFound
 				}
+
 				return fmt.Errorf("cannot load cookie category: %w", err)
 			}
 
@@ -1350,6 +1399,7 @@ func (s *Service) DeleteCookieCategory(
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return ErrCategoryNotFound
 				}
+
 				return fmt.Errorf("cannot load cookie category: %w", err)
 			}
 
@@ -1396,6 +1446,7 @@ func (s *Service) GetCookieBannerVersion(
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return ErrVersionNotFound
 				}
+
 				return fmt.Errorf("cannot load cookie banner version: %w", err)
 			}
 
@@ -1444,8 +1495,10 @@ func (s *Service) CountCookieBannerVersionsForBanner(
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			var versions coredata.CookieBannerVersions
-			var err error
+			var (
+				versions coredata.CookieBannerVersions
+				err      error
+			)
 
 			count, err = versions.CountByCookieBannerID(ctx, conn, scope, bannerID)
 			if err != nil {
@@ -1527,8 +1580,10 @@ func (s *Service) CountCookieConsentRecordsForBanner(
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			var records coredata.CookieConsentRecords
-			var err error
+			var (
+				records coredata.CookieConsentRecords
+				err     error
+			)
 
 			count, err = records.CountByCookieBannerID(ctx, conn, scope, bannerID, filter)
 			if err != nil {
@@ -1562,6 +1617,7 @@ func (s *Service) GetActiveBannerConfig(
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return ErrBannerNotFound
 				}
+
 				return fmt.Errorf("cannot load active cookie banner: %w", err)
 			}
 
@@ -1572,6 +1628,7 @@ func (s *Service) GetActiveBannerConfig(
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return ErrNoPublishedVersion
 				}
+
 				return fmt.Errorf("cannot load latest published version: %w", err)
 			}
 
@@ -1601,6 +1658,7 @@ func (s *Service) GetActiveBannerConfig(
 	}
 
 	config.Regulation = regulation
+
 	config.ConsentMode = ConsentModeForRegulation(regulation)
 	if !isLegacySDK(sdkVersion) {
 		remapTextsForConsentMode(config.Texts, config.ConsentMode)
@@ -1622,6 +1680,7 @@ func buildBannerConfig(
 	}
 
 	resolvedLang := defaultLang
+
 	if lang != "" {
 		if _, ok := translations[lang]; ok {
 			resolvedLang = lang
@@ -1634,6 +1693,7 @@ func buildBannerConfig(
 			categories = append(categories, c)
 		}
 	}
+
 	texts := make(map[string]string)
 
 	if t, ok := translations[resolvedLang]; ok {
@@ -1642,14 +1702,17 @@ func buildBannerConfig(
 		if len(t.Categories) == len(categories) {
 			translated := make([]coredata.CookieBannerVersionSnapshotCategory, len(categories))
 			copy(translated, categories)
+
 			for i, ct := range t.Categories {
 				if ct.Name != "" {
 					translated[i].Name = ct.Name
 				}
+
 				if ct.Description != "" {
 					translated[i].Description = ct.Description
 				}
 			}
+
 			categories = translated
 		}
 	}
@@ -1707,6 +1770,7 @@ func isLegacySDK(version string) bool {
 
 func parseMajorMinor(version string) (major, minor int, ok bool) {
 	v := strings.TrimPrefix(version, "v")
+
 	parts := strings.SplitN(v, ".", 3)
 	if len(parts) < 2 {
 		return 0, 0, false
@@ -1740,13 +1804,16 @@ func (s *Service) SetShowBranding(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			var banner coredata.CookieBanner
+
 			banner.ID = bannerID
 			if err := banner.UpdateShowBranding(ctx, tx, coredata.NewNoScope(), show); err != nil {
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return ErrBannerNotFound
 				}
+
 				return fmt.Errorf("cannot update show_branding: %w", err)
 			}
+
 			return nil
 		},
 	)
@@ -1771,14 +1838,15 @@ func (s *Service) UpsertCookieBannerTranslation(
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return ErrBannerNotFound
 				}
+
 				return fmt.Errorf("cannot load cookie banner: %w", err)
 			}
 
 			now := time.Now()
 
 			var existing coredata.CookieBannerTranslation
-			err := existing.LoadByCookieBannerIDAndLanguage(ctx, tx, scope, req.CookieBannerID, req.Language)
 
+			err := existing.LoadByCookieBannerIDAndLanguage(ctx, tx, scope, req.CookieBannerID, req.Language)
 			if err == nil {
 				same, eqErr := jsonEqual(existing.Translations, req.Translations)
 				if eqErr == nil && same {
@@ -1787,10 +1855,12 @@ func (s *Service) UpsertCookieBannerTranslation(
 				}
 
 				existing.Translations = req.Translations
+
 				existing.UpdatedAt = now
 				if err := existing.Update(ctx, tx, scope); err != nil {
 					return fmt.Errorf("cannot update cookie banner translation: %w", err)
 				}
+
 				result = &existing
 			} else if errors.Is(err, coredata.ErrResourceNotFound) {
 				t := &coredata.CookieBannerTranslation{
@@ -1805,6 +1875,7 @@ func (s *Service) UpsertCookieBannerTranslation(
 				if err := t.Insert(ctx, tx, scope); err != nil {
 					return fmt.Errorf("cannot insert cookie banner translation: %w", err)
 				}
+
 				result = t
 			} else {
 				return fmt.Errorf("cannot load cookie banner translation: %w", err)
@@ -1855,6 +1926,7 @@ func (s *Service) GetVisitorConsent(
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return ErrBannerNotFound
 				}
+
 				return fmt.Errorf("cannot load active cookie banner: %w", err)
 			}
 
@@ -1865,6 +1937,7 @@ func (s *Service) GetVisitorConsent(
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return ErrConsentNotFound
 				}
+
 				return fmt.Errorf("cannot load consent record: %w", err)
 			}
 
@@ -1915,6 +1988,7 @@ func (s *Service) RecordConsent(
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return ErrBannerNotFound
 				}
+
 				return fmt.Errorf("cannot load active cookie banner: %w", err)
 			}
 
@@ -1925,6 +1999,7 @@ func (s *Service) RecordConsent(
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return ErrVersionNotFound
 				}
+
 				return fmt.Errorf("cannot load cookie banner version: %w", err)
 			}
 
@@ -1995,6 +2070,7 @@ func (s *Service) ReportDetectedTrackers(
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return ErrBannerNotFound
 				}
+
 				return fmt.Errorf("cannot load cookie banner: %w", err)
 			}
 
@@ -2005,6 +2081,7 @@ func (s *Service) ReportDetectedTrackers(
 
 			inserted := 0
 			now := time.Now()
+
 			var matchedPatternIDs []gid.GID
 
 			for _, dc := range req.Cookies {
@@ -2063,6 +2140,7 @@ func (s *Service) ReportDetectedTrackers(
 				if err != nil {
 					return err
 				}
+
 				if wasInserted {
 					inserted++
 				}
@@ -2107,6 +2185,7 @@ func (s *Service) reportDetectedTracker(
 	matchedPatternIDs *[]gid.GID,
 ) error {
 	var matchedPattern coredata.TrackerPattern
+
 	err := matchedPattern.FindMatchingPattern(ctx, tx, scope, banner.ID, info.TrackerType, info.Identifier)
 	if err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
 		return fmt.Errorf("cannot find matching tracker pattern: %w", err)
@@ -2138,10 +2217,12 @@ func (s *Service) reportDetectedTracker(
 			CreatedAt:          now,
 			UpdatedAt:          now,
 		}
+
 		wasInserted, err := newPattern.InsertIfNotExists(ctx, tx, scope)
 		if err != nil {
 			return fmt.Errorf("cannot insert tracker pattern: %w", err)
 		}
+
 		if wasInserted {
 			patternID = &newPattern.ID
 			*inserted++
@@ -2150,11 +2231,13 @@ func (s *Service) reportDetectedTracker(
 			if err := existingPattern.FindMatchingPattern(ctx, tx, scope, banner.ID, info.TrackerType, info.Identifier); err != nil {
 				return fmt.Errorf("cannot load existing tracker pattern: %w", err)
 			}
+
 			patternID = &existingPattern.ID
 		}
 	}
 
 	var initiatorDomain *string
+
 	if info.InitiatorURL != nil {
 		if domain := uri.ExtractDomain(*info.InitiatorURL); domain != "" {
 			initiatorDomain = &domain
@@ -2199,6 +2282,7 @@ func (s *Service) reportDetectedResource(
 	}
 
 	origin := u.Scheme + "://" + u.Host
+
 	path := u.Path
 	if path == "" {
 		path = "/"
@@ -2246,6 +2330,7 @@ func (s *Service) CreateTrackerPattern(
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return ErrCategoryNotFound
 				}
+
 				return fmt.Errorf("cannot load cookie category: %w", err)
 			}
 
@@ -2271,6 +2356,7 @@ func (s *Service) CreateTrackerPattern(
 				if errors.Is(err, coredata.ErrResourceAlreadyExists) {
 					return ErrPatternAlreadyExists
 				}
+
 				return fmt.Errorf("cannot insert tracker pattern: %w", err)
 			}
 
@@ -2321,10 +2407,13 @@ func (s *Service) CountTrackerPatternsForCategory(
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			var patterns coredata.TrackerPatterns
-			var err error
+			var (
+				patterns coredata.TrackerPatterns
+				err      error
+			)
 
 			count, err = patterns.CountByCookieCategoryID(ctx, conn, scope, categoryID)
+
 			return err
 		},
 	)
@@ -2349,6 +2438,7 @@ func (s *Service) GetTrackerPattern(
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return ErrTrackerPatternNotFound
 				}
+
 				return fmt.Errorf("cannot load tracker pattern: %w", err)
 			}
 
@@ -2380,6 +2470,7 @@ func (s *Service) UpdateTrackerPattern(
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return ErrTrackerPatternNotFound
 				}
+
 				return fmt.Errorf("cannot load tracker pattern: %w", err)
 			}
 
@@ -2396,9 +2487,11 @@ func (s *Service) UpdateTrackerPattern(
 			if req.MaxAgeSeconds != nil {
 				pattern.MaxAgeSeconds = *req.MaxAgeSeconds
 			}
+
 			if req.Description != nil {
 				pattern.Description = *req.Description
 			}
+
 			if req.Excluded != nil {
 				pattern.Excluded = *req.Excluded
 			}
@@ -2438,6 +2531,7 @@ func (s *Service) DeleteTrackerPattern(
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return ErrTrackerPatternNotFound
 				}
+
 				return fmt.Errorf("cannot load tracker pattern: %w", err)
 			}
 
@@ -2473,6 +2567,7 @@ func (s *Service) MoveTrackerPatternToCategory(
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return ErrTrackerPatternNotFound
 				}
+
 				return fmt.Errorf("cannot load tracker pattern: %w", err)
 			}
 
@@ -2481,6 +2576,7 @@ func (s *Service) MoveTrackerPatternToCategory(
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return ErrCategoryNotFound
 				}
+
 				return fmt.Errorf("cannot load target cookie category: %w", err)
 			}
 
@@ -2562,8 +2658,10 @@ func (s *Service) CountUncategorisedTrackerPatterns(
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			var patterns coredata.TrackerPatterns
-			var err error
+			var (
+				patterns coredata.TrackerPatterns
+				err      error
+			)
 
 			count, err = patterns.CountUncategorisedByCookieBannerID(ctx, conn, scope, bannerID, filter)
 			if err != nil {
@@ -2590,8 +2688,10 @@ func (s *Service) CountDetectedTrackersByPatternID(
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			var trackers coredata.DetectedTrackers
-			var err error
+			var (
+				trackers coredata.DetectedTrackers
+				err      error
+			)
 
 			count, err = trackers.CountByTrackerPatternID(ctx, conn, scope, trackerPatternID)
 			if err != nil {
@@ -2627,6 +2727,7 @@ func (s *Service) CreateTrackerResource(
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return ErrCategoryNotFound
 				}
+
 				return fmt.Errorf("cannot load cookie category: %w", err)
 			}
 
@@ -2650,6 +2751,7 @@ func (s *Service) CreateTrackerResource(
 				if errors.Is(err, coredata.ErrResourceAlreadyExists) {
 					return ErrResourceAlreadyExists
 				}
+
 				return fmt.Errorf("cannot insert tracker resource: %w", err)
 			}
 
@@ -2677,6 +2779,7 @@ func (s *Service) GetTrackerResource(
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return ErrTrackerResourceNotFound
 				}
+
 				return fmt.Errorf("cannot load tracker resource: %w", err)
 			}
 
@@ -2708,6 +2811,7 @@ func (s *Service) UpdateTrackerResource(
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return ErrTrackerResourceNotFound
 				}
+
 				return fmt.Errorf("cannot load tracker resource: %w", err)
 			}
 
@@ -2722,9 +2826,11 @@ func (s *Service) UpdateTrackerResource(
 			if req.DisplayName != nil {
 				resource.DisplayName = *req.DisplayName
 			}
+
 			if req.Description != nil {
 				resource.Description = *req.Description
 			}
+
 			if req.Excluded != nil {
 				resource.Excluded = *req.Excluded
 			}
@@ -2758,6 +2864,7 @@ func (s *Service) DeleteTrackerResource(
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return ErrTrackerResourceNotFound
 				}
+
 				return fmt.Errorf("cannot load tracker resource: %w", err)
 			}
 
@@ -2785,6 +2892,7 @@ func (s *Service) MoveTrackerResourceToCategory(
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return ErrTrackerResourceNotFound
 				}
+
 				return fmt.Errorf("cannot load tracker resource: %w", err)
 			}
 
@@ -2793,6 +2901,7 @@ func (s *Service) MoveTrackerResourceToCategory(
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return ErrCategoryNotFound
 				}
+
 				return fmt.Errorf("cannot load target cookie category: %w", err)
 			}
 
@@ -2860,10 +2969,13 @@ func (s *Service) CountTrackerResourcesForCategory(
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			var resources coredata.TrackerResources
-			var err error
+			var (
+				resources coredata.TrackerResources
+				err       error
+			)
 
 			count, err = resources.CountByCookieCategoryID(ctx, conn, scope, categoryID)
+
 			return err
 		},
 	)
@@ -2911,8 +3023,10 @@ func (s *Service) CountUncategorisedTrackerResources(
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			var resources coredata.TrackerResources
-			var err error
+			var (
+				resources coredata.TrackerResources
+				err       error
+			)
 
 			count, err = resources.CountUncategorisedByCookieBannerID(ctx, conn, scope, bannerID, filter)
 			if err != nil {

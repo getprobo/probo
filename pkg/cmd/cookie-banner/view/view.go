@@ -122,10 +122,12 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("State:"), v.State)
 			_, _ = fmt.Fprintf(out, "%s%d days\n", label.Render("Consent Expiry:"), v.ConsentExpiryDays)
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Default Language:"), v.DefaultLanguage)
+
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Cookie Policy:"), v.CookiePolicyUrl)
 			if v.PrivacyPolicyUrl != nil && *v.PrivacyPolicyUrl != "" {
 				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Privacy Policy:"), *v.PrivacyPolicyUrl)
 			}
+
 			_, _ = fmt.Fprintln(out)
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Created:"), cmdutil.FormatTime(v.CreatedAt))
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Updated:"), cmdutil.FormatTime(v.UpdatedAt))

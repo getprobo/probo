@@ -54,6 +54,7 @@ func NewIDMiddleware(trustSvc *trust.Service, baseURL string) func(next http.Han
 								},
 							},
 						)
+
 						return
 					}
 
@@ -68,6 +69,7 @@ func NewIDMiddleware(trustSvc *trust.Service, baseURL string) func(next http.Han
 
 					ctx = context.WithValue(ctx, compliancePageKey, compliancePage)
 					next.ServeHTTP(w, r.WithContext(ctx))
+
 					return
 				}
 
@@ -87,6 +89,7 @@ func NewIDMiddleware(trustSvc *trust.Service, baseURL string) func(next http.Han
 							},
 						},
 					)
+
 					return
 				}
 
@@ -97,6 +100,7 @@ func NewIDMiddleware(trustSvc *trust.Service, baseURL string) func(next http.Han
 				if compliancePage.Active {
 					ctx = context.WithValue(ctx, compliancePageKey, compliancePage)
 					next.ServeHTTP(w, r.WithContext(ctx))
+
 					return
 				}
 

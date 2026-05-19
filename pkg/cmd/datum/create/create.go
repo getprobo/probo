@@ -125,6 +125,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 			if flagName == "" {
 				return fmt.Errorf("name is required; pass --name or run interactively")
 			}
+
 			if flagClassification == "" {
 				return fmt.Errorf("data classification is required; pass --data-classification or run interactively")
 			}
@@ -138,6 +139,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 			if flagOwner != "" {
 				input["ownerId"] = flagOwner
 			}
+
 			if len(flagThirdPartyIDs) > 0 {
 				input["thirdPartyIds"] = flagThirdPartyIDs
 			}

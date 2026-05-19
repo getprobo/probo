@@ -55,5 +55,6 @@ func (p *FindingOrderField) UnmarshalText(text []byte) error {
 		*p = FindingOrderField(val)
 		return nil
 	}
+
 	return fmt.Errorf("invalid FindingOrderField value: %q", val)
 }

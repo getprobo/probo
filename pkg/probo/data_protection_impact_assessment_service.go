@@ -92,7 +92,6 @@ func (s DataProtectionImpactAssessmentService) Get(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -116,7 +115,6 @@ func (s DataProtectionImpactAssessmentService) GetByProcessingActivityID(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -142,7 +140,6 @@ func (s DataProtectionImpactAssessmentService) ListForOrganizationID(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -161,10 +158,10 @@ func (s DataProtectionImpactAssessmentService) CountForOrganizationID(
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			dpias := coredata.DataProtectionImpactAssessments{}
 			count, err = dpias.CountByOrganizationID(ctx, conn, s.svc.scope, organizationID)
+
 			return err
 		},
 	)
-
 	if err != nil {
 		return 0, err
 	}
@@ -211,7 +208,6 @@ func (s *DataProtectionImpactAssessmentService) Create(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -265,7 +261,6 @@ func (s *DataProtectionImpactAssessmentService) Update(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}

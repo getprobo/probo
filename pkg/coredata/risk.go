@@ -49,6 +49,7 @@ WHERE
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, nil
 	}
+
 	if err != nil {
 		return nil, fmt.Errorf("cannot get risk list document ID: %w", err)
 	}
@@ -189,6 +190,7 @@ func (r *Risk) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (ma
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrResourceNotFound
 		}
+
 		return nil, fmt.Errorf("cannot query risk authorization attributes: %w", err)
 	}
 
@@ -620,6 +622,7 @@ VALUES (@id, @tenant_id, @organization_id, @name, @description, @category, @owne
 	}
 
 	_, err := conn.Exec(ctx, q, args)
+
 	return err
 }
 
@@ -690,6 +693,7 @@ DELETE FROM risks WHERE %s AND id = @id
 	maps.Copy(args, scope.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
+
 	return err
 }
 

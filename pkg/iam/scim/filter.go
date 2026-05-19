@@ -64,6 +64,7 @@ func ParseUserFilter(expr scimfilter.Expression) (*coredata.MembershipProfileFil
 				return nil, scimerrors.ScimErrorBadRequest(
 					fmt.Sprintf("logical operator '%s' is not supported, only 'and' is supported", e.Operator))
 			}
+
 			stack = append(stack, e.Left, e.Right)
 
 		case *scimfilter.NotExpression:

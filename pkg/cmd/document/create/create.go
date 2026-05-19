@@ -157,9 +157,11 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 			if flagTitle == "" {
 				return fmt.Errorf("title is required; pass --title or run interactively")
 			}
+
 			if flagDocumentType == "" {
 				return fmt.Errorf("document type is required; pass --document-type or run interactively")
 			}
+
 			if flagClassification == "" {
 				return fmt.Errorf("classification is required; pass --classification or run interactively")
 			}
@@ -199,6 +201,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 				); err != nil {
 					return err
 				}
+
 				input["trustCenterVisibility"] = flagTrustCenterVisibility
 			}
 

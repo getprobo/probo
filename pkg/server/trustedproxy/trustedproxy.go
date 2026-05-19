@@ -46,6 +46,7 @@ func NewMiddleware(trusted []string) (func(http.Handler) http.Handler, error) {
 					r.Header.Del(h)
 				}
 			}
+
 			next.ServeHTTP(w, r)
 		})
 	}, nil
@@ -53,6 +54,7 @@ func NewMiddleware(trusted []string) (func(http.Handler) http.Handler, error) {
 
 func parseTrusted(trusted []string) ([]net.IP, []*net.IPNet, error) {
 	ips := make([]net.IP, 0, len(trusted))
+
 	nets := make([]*net.IPNet, 0, len(trusted))
 	for _, entry := range trusted {
 		if strings.Contains(entry, "/") {
@@ -60,7 +62,9 @@ func parseTrusted(trusted []string) ([]net.IP, []*net.IPNet, error) {
 			if err != nil {
 				return nil, nil, fmt.Errorf("cannot parse CIDR %q: %w", entry, err)
 			}
+
 			nets = append(nets, ipNet)
+
 			continue
 		}
 
@@ -68,8 +72,10 @@ func parseTrusted(trusted []string) ([]net.IP, []*net.IPNet, error) {
 		if ip == nil {
 			return nil, nil, fmt.Errorf("cannot parse IP address %q", entry)
 		}
+
 		ips = append(ips, ip)
 	}
+
 	return ips, nets, nil
 }
 

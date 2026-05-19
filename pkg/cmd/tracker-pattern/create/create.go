@@ -91,6 +91,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 						return err
 					}
 				}
+
 				if flagMatchType == "" {
 					if err := huh.NewSelect[string]().
 						Title("Match type").
@@ -102,6 +103,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 						return err
 					}
 				}
+
 				if flagDisplayName == "" {
 					if err := huh.NewInput().Title("Display name").Value(&flagDisplayName).Run(); err != nil {
 						return err
@@ -112,9 +114,11 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 			if flagPattern == "" {
 				return fmt.Errorf("pattern is required; pass --pattern or run interactively")
 			}
+
 			if flagMatchType == "" {
 				return fmt.Errorf("match-type is required; pass --match-type or run interactively")
 			}
+
 			if flagDisplayName == "" {
 				return fmt.Errorf("display-name is required; pass --display-name or run interactively")
 			}
@@ -128,6 +132,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 			if flagDescription != "" {
 				input["description"] = flagDescription
 			}
+
 			if cmd.Flags().Changed("max-age-seconds") {
 				input["maxAgeSeconds"] = flagMaxAge
 			}

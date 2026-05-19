@@ -65,6 +65,7 @@ func (m *Measure) AuthorizationAttributes(ctx context.Context, conn pg.Querier) 
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrResourceNotFound
 		}
+
 		return nil, fmt.Errorf("cannot query measure authorization attributes: %w", err)
 	}
 
@@ -626,8 +627,8 @@ VALUES (
 		"updated_at":      m.UpdatedAt,
 		"state":           m.State,
 	}
-	_, err := conn.Exec(ctx, q, args)
 
+	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) {
@@ -635,6 +636,7 @@ VALUES (
 				return ErrResourceAlreadyExists
 			}
 		}
+
 		return fmt.Errorf("cannot insert measure: %w", err)
 	}
 
@@ -671,6 +673,7 @@ WHERE %s
 	maps.Copy(args, scope.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
+
 	return err
 }
 
@@ -691,5 +694,6 @@ WHERE %s
 	maps.Copy(args, scope.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
+
 	return err
 }

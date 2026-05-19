@@ -38,6 +38,7 @@ func (e InvitationOrderField) IsValid() bool {
 	case InvitationOrderFieldCreatedAt:
 		return true
 	}
+
 	return false
 }
 
@@ -50,6 +51,7 @@ func (e *InvitationOrderField) UnmarshalText(text []byte) error {
 	if !e.IsValid() {
 		return fmt.Errorf("%s is not a valid InvitationOrderField", string(text))
 	}
+
 	return nil
 }
 

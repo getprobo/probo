@@ -68,6 +68,7 @@ func run() error {
 	}
 
 	fmt.Println("done")
+
 	return nil
 }
 
@@ -95,6 +96,7 @@ func newPgClientFromDSN(dsn string) (*pg.Client, error) {
 		if u.Port() == "" {
 			host = net.JoinHostPort(u.Hostname(), "5432")
 		}
+
 		opts = append(opts, pg.WithAddr(host))
 	}
 

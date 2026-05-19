@@ -82,6 +82,7 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 			if orgID == "" {
 				orgID = hc.Organization
 			}
+
 			if orgID == "" {
 				return fmt.Errorf("organization ID is required: pass --org or run `prb auth login`")
 			}
@@ -93,15 +94,19 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 			if cmd.Flags().Changed("product") {
 				input["product"] = flagProduct
 			}
+
 			if cmd.Flags().Changed("architecture") {
 				input["architecture"] = flagArchitecture
 			}
+
 			if cmd.Flags().Changed("team") {
 				input["team"] = flagTeam
 			}
+
 			if cmd.Flags().Changed("processes") {
 				input["processes"] = flagProcesses
 			}
+
 			if cmd.Flags().Changed("customers") {
 				input["customers"] = flagCustomers
 			}

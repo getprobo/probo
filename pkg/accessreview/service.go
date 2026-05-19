@@ -78,6 +78,7 @@ func NewService(
 	} else {
 		fetchWorkerOpts = append(fetchWorkerOpts, worker.WithInterval(30*time.Second))
 	}
+
 	fetchWorkerOpts = append(fetchWorkerOpts, worker.WithMaxConcurrency(20))
 
 	s.fetchWorker = NewSourceFetchWorker(
@@ -137,11 +138,14 @@ func (s *Service) ResolveEntryOrganizationID(ctx context.Context, entryID gid.GI
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
 			var err error
+
 			entry := &coredata.AccessEntry{}
+
 			organizationID, err = entry.LoadOrganizationID(ctx, conn, entryID)
 			if err != nil {
 				return fmt.Errorf("cannot load organization id: %w", err)
 			}
+
 			return nil
 		},
 	)

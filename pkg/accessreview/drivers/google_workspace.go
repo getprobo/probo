@@ -59,6 +59,7 @@ func (rt *retryRoundTripper) RoundTrip(req *http.Request) (*http.Response, error
 	}
 
 	var lastResp *http.Response
+
 	for attempt := range rt.maxRetries {
 		resp, err := transport.RoundTrip(req)
 		if err != nil {
@@ -94,6 +95,7 @@ func (d *GoogleWorkspaceDriver) ListAccounts(ctx context.Context) ([]AccountReco
 	}
 
 	var records []AccountRecord
+
 	pageToken := ""
 
 	for range maxPaginationPages {

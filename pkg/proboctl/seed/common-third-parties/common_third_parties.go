@@ -118,6 +118,7 @@ func NewCmdCommonThirdParties(f *cmdutil.Factory) *cobra.Command {
 							inserted++
 						} else {
 							updated++
+
 							if err := party.LoadByName(ctx, tx, tp.Name); err != nil {
 								return fmt.Errorf("cannot reload common third party %q: %w", tp.Name, err)
 							}

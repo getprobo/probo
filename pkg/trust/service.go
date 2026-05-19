@@ -152,13 +152,13 @@ func (s *Service) Get(
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return ErrPageNotFound
 				}
+
 				return fmt.Errorf("cannot load trust center: %w", err)
 			}
 
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -180,13 +180,13 @@ func (s *Service) GetBySlug(
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return ErrPageNotFound
 				}
+
 				return fmt.Errorf("cannot load trust center: %w", err)
 			}
 
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -230,7 +230,6 @@ func (s *Service) GetByDomainName(ctx context.Context, domain string) (*coredata
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -263,13 +262,16 @@ func (s *Service) GetCustomDomainByOrganizationID(ctx context.Context, organizat
 // esign certificate worker which needs per-org branding at render time.
 func (s *Service) EmailPresenterConfigByOrganizationID(ctx context.Context, orgID gid.GID) (emails.PresenterConfig, error) {
 	var trustCenter coredata.TrustCenter
+
 	scope := coredata.NewScopeFromObjectID(orgID)
+
 	err := s.pg.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
 		return trustCenter.LoadByOrganizationID(ctx, conn, scope, orgID)
 	})
 	if err != nil {
 		return emails.PresenterConfig{}, fmt.Errorf("cannot load trust center for org %s: %w", orgID, err)
 	}
+
 	return s.WithTenant(orgID.TenantID()).TrustCenters.EmailPresenterConfig(ctx, trustCenter.ID)
 }
 
@@ -404,8 +406,10 @@ func (s *Service) ProvisionMember(
 				}
 
 				var sig *coredata.ElectronicSignature
+
 				if compliancePage.NonDisclosureAgreementFileID != nil && s.esign != nil {
 					var err error
+
 					sig, err = s.esign.CreateSignature(
 						ctx,
 						tx,

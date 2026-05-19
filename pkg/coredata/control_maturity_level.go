@@ -53,6 +53,7 @@ func (l ControlMaturityLevel) IsValid() bool {
 		ControlMaturityLevelOptimizing:
 		return true
 	}
+
 	return false
 }
 
@@ -69,7 +70,9 @@ func (l *ControlMaturityLevel) UnmarshalText(data []byte) error {
 	if !val.IsValid() {
 		return fmt.Errorf("invalid ControlMaturityLevel value: %q", string(data))
 	}
+
 	*l = val
+
 	return nil
 }
 
@@ -78,6 +81,7 @@ func (l *ControlMaturityLevel) Scan(value any) error {
 	if !ok {
 		return fmt.Errorf("invalid scan source for ControlMaturityLevel, expected string got %T", value)
 	}
+
 	return l.UnmarshalText([]byte(val))
 }
 

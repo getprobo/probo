@@ -39,6 +39,7 @@ func (p ProcessingActivityRole) String() string {
 
 func (p *ProcessingActivityRole) Scan(value any) error {
 	var s string
+
 	switch v := value.(type) {
 	case string:
 		s = v
@@ -56,6 +57,7 @@ func (p *ProcessingActivityRole) Scan(value any) error {
 	default:
 		return fmt.Errorf("invalid ProcessingActivityRole value: %q", s)
 	}
+
 	return nil
 }
 

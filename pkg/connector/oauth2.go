@@ -143,11 +143,13 @@ func (c *OAuth2Connector) Initiate(
 		ConnectorID:     opts.ConnectorID,
 		RequestedScopes: opts.Scopes,
 	}
+
 	if r != nil {
 		if continueURL := r.URL.Query().Get("continue"); continueURL != "" {
 			stateData.ContinueURL = continueURL
 		}
 	}
+
 	return c.InitiateWithState(ctx, stateData, opts)
 }
 
@@ -166,6 +168,7 @@ func (c *OAuth2Connector) InitiateWithState(
 		if err != nil {
 			return "", fmt.Errorf("cannot generate PKCE verifier: %w", err)
 		}
+
 		stateData.CodeVerifier = verifier
 	}
 
@@ -179,6 +182,7 @@ func (c *OAuth2Connector) InitiateWithState(
 	authCodeQuery.Set("client_id", c.ClientID)
 	authCodeQuery.Set("redirect_uri", c.RedirectURI)
 	authCodeQuery.Set("response_type", "code")
+
 	if len(opts.Scopes) > 0 {
 		authCodeQuery.Set("scope", strings.Join(opts.Scopes, " "))
 	}
@@ -200,6 +204,7 @@ func (c *OAuth2Connector) InitiateWithState(
 		if incrementalAuth && k == "prompt" && v == "consent" {
 			continue
 		}
+
 		authCodeQuery.Set(k, v)
 	}
 
@@ -220,6 +225,7 @@ func generatePKCEVerifier() (string, error) {
 	if _, err := rand.Read(b); err != nil {
 		return "", fmt.Errorf("cannot read random bytes: %w", err)
 	}
+
 	return base64.RawURLEncoding.EncodeToString(b), nil
 }
 
@@ -277,6 +283,7 @@ func (c *OAuth2Connector) CompleteWithState(ctx context.Context, r *http.Request
 	if err != nil {
 		return nil, nil, fmt.Errorf("cannot post token URL: %w", err)
 	}
+
 	defer func() { _ = tokenResp.Body.Close() }()
 
 	if tokenResp.StatusCode != http.StatusOK {
@@ -351,6 +358,7 @@ func (c *OAuth2Connector) buildTokenRequest(ctx context.Context, code, redirectU
 		if codeVerifier != "" {
 			body["code_verifier"] = codeVerifier
 		}
+
 		jsonBody, err := json.Marshal(body)
 		if err != nil {
 			return nil, fmt.Errorf("cannot marshal token request body: %w", err)
@@ -370,6 +378,7 @@ func (c *OAuth2Connector) buildTokenRequest(ctx context.Context, code, redirectU
 		req.Header.Set("Accept", "application/json")
 		req.Header.Set("User-Agent", "Probo Connector")
 		req.Header.Set("Authorization", basicAuthHeader(c.ClientID, c.ClientSecret))
+
 		return req, nil
 
 	case "basic-form":
@@ -378,6 +387,7 @@ func (c *OAuth2Connector) buildTokenRequest(ctx context.Context, code, redirectU
 		formData.Set("code", code)
 		formData.Set("redirect_uri", redirectURI)
 		formData.Set("grant_type", "authorization_code")
+
 		if codeVerifier != "" {
 			formData.Set("code_verifier", codeVerifier)
 		}
@@ -396,6 +406,7 @@ func (c *OAuth2Connector) buildTokenRequest(ctx context.Context, code, redirectU
 		req.Header.Set("Accept", "application/json")
 		req.Header.Set("User-Agent", "Probo Connector")
 		req.Header.Set("Authorization", basicAuthHeader(c.ClientID, c.ClientSecret))
+
 		return req, nil
 
 	default:
@@ -406,6 +417,7 @@ func (c *OAuth2Connector) buildTokenRequest(ctx context.Context, code, redirectU
 		formData.Set("code", code)
 		formData.Set("redirect_uri", redirectURI)
 		formData.Set("grant_type", "authorization_code")
+
 		if codeVerifier != "" {
 			formData.Set("code_verifier", codeVerifier)
 		}
@@ -423,6 +435,7 @@ func (c *OAuth2Connector) buildTokenRequest(ctx context.Context, code, redirectU
 		req.Header.Set("Content-Type", "application/x-www-form-urlencoded; charset=utf-8")
 		req.Header.Set("Accept", "application/json")
 		req.Header.Set("User-Agent", "Probo Connector")
+
 		return req, nil
 	}
 }
@@ -457,6 +470,7 @@ func (c *OAuth2Connection) ClientWithOptions(ctx context.Context, opts ...httpcl
 	client := &http.Client{
 		Transport: transport,
 	}
+
 	return client, nil
 }
 
@@ -481,6 +495,7 @@ func (c *OAuth2Connection) RefreshableClient(ctx context.Context, cfg OAuth2Refr
 
 	// Determine auth style based on TokenEndpointAuth
 	authStyle := oauth2.AuthStyleInParams
+
 	switch cfg.TokenEndpointAuth {
 	case "basic-form", "basic-json":
 		authStyle = oauth2.AuthStyleInHeader
@@ -529,6 +544,7 @@ func (c *OAuth2Connection) RefreshableClient(ctx context.Context, cfg OAuth2Refr
 	// Update the connection with the potentially refreshed token
 	c.AccessToken = newToken.AccessToken
 	c.ExpiresAt = newToken.Expiry
+
 	c.TokenType = newToken.TokenType
 	if newToken.RefreshToken != "" {
 		c.RefreshToken = newToken.RefreshToken
@@ -558,6 +574,7 @@ func (c *OAuth2Connection) clientCredentialsClient(ctx context.Context, opts ...
 
 	formData := url.Values{}
 	formData.Set("grant_type", "client_credentials")
+
 	if c.Scope != "" {
 		formData.Set("scope", c.Scope)
 	}
@@ -585,6 +602,7 @@ func (c *OAuth2Connection) clientCredentialsClient(ctx context.Context, opts ...
 	if err != nil {
 		return nil, fmt.Errorf("cannot post client credentials token URL: %w", err)
 	}
+
 	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
@@ -609,9 +627,11 @@ func (c *OAuth2Connection) clientCredentialsClient(ctx context.Context, opts ...
 	if rawToken.TokenType != "" {
 		c.TokenType = rawToken.TokenType
 	}
+
 	if c.TokenType == "" {
 		c.TokenType = "Bearer"
 	}
+
 	if rawToken.ExpiresIn > 0 {
 		c.ExpiresAt = time.Now().Add(time.Duration(rawToken.ExpiresIn) * time.Second)
 	}
@@ -627,6 +647,7 @@ func (c *OAuth2Connection) clientCredentialsClient(ctx context.Context, opts ...
 
 func (c OAuth2Connection) MarshalJSON() ([]byte, error) {
 	type Alias OAuth2Connection
+
 	return json.Marshal(&struct {
 		Type string `json:"type"`
 		Alias
@@ -638,11 +659,13 @@ func (c OAuth2Connection) MarshalJSON() ([]byte, error) {
 
 func (c *OAuth2Connection) UnmarshalJSON(data []byte) error {
 	type Alias OAuth2Connection
+
 	aux := &struct {
 		*Alias
 	}{
 		Alias: (*Alias)(c),
 	}
+
 	return json.Unmarshal(data, &aux)
 }
 
@@ -660,5 +683,6 @@ func (t *oauth2Transport) RoundTrip(req *http.Request) (*http.Response, error) {
 	// string), so we always send "Bearer" -- the only scheme any connector in
 	// this codebase actually needs.
 	req2.Header.Set("Authorization", "Bearer "+t.token)
+
 	return t.underlying.RoundTrip(req2)
 }

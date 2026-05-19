@@ -69,6 +69,7 @@ func (rr *RightsRequest) AuthorizationAttributes(ctx context.Context, conn pg.Qu
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrResourceNotFound
 		}
+
 		return nil, fmt.Errorf("cannot query rights request authorization attributes: %w", err)
 	}
 
@@ -150,6 +151,7 @@ WHERE
 	row := conn.QueryRow(ctx, q, args)
 
 	var count int
+
 	err := row.Scan(&count)
 	if err != nil {
 		return 0, fmt.Errorf("cannot count rights requests: %w", err)

@@ -46,7 +46,6 @@ func (s TrustCenterReferenceService) ListForTrustCenterID(
 
 		return nil
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -61,6 +60,7 @@ func (s TrustCenterReferenceService) GenerateLogoURL(
 ) (string, error) {
 	reference := &coredata.TrustCenterReference{}
 	file := &coredata.File{}
+
 	err := s.svc.pg.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		err := reference.LoadByID(ctx, tx, s.svc.scope, referenceID)
 		if err != nil {
@@ -74,7 +74,6 @@ func (s TrustCenterReferenceService) GenerateLogoURL(
 
 		return nil
 	})
-
 	if err != nil {
 		return "", nil
 	}
@@ -117,7 +116,6 @@ func (s TrustCenterReferenceService) Get(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}

@@ -91,7 +91,9 @@ func TestRenderMarkdown_HeadingLevels(t *testing.T) {
 			"level "+string(rune('0'+tc.level)),
 			func(t *testing.T) {
 				t.Parallel()
+
 				raw := `{"type":"doc","content":[{"type":"heading","attrs":{"level":` + string(rune('0'+tc.level)) + `},"content":[{"type":"text","text":"X"}]}]}`
+
 				var n Node
 				require.NoError(t, json.Unmarshal([]byte(raw), &n))
 
@@ -107,6 +109,7 @@ func TestRenderMarkdown_HeadingInvalidLevel(t *testing.T) {
 	t.Parallel()
 
 	raw := `{"type":"heading","attrs":{"level":7},"content":[{"type":"text","text":"X"}]}`
+
 	var n Node
 	require.NoError(t, json.Unmarshal([]byte(raw), &n))
 
@@ -119,6 +122,7 @@ func TestRenderMarkdown_Bold(t *testing.T) {
 	t.Parallel()
 
 	raw := `{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","marks":[{"type":"bold"}],"text":"bold"}]}]}`
+
 	var n Node
 	require.NoError(t, json.Unmarshal([]byte(raw), &n))
 
@@ -131,6 +135,7 @@ func TestRenderMarkdown_Italic(t *testing.T) {
 	t.Parallel()
 
 	raw := `{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","marks":[{"type":"italic"}],"text":"italic"}]}]}`
+
 	var n Node
 	require.NoError(t, json.Unmarshal([]byte(raw), &n))
 
@@ -143,6 +148,7 @@ func TestRenderMarkdown_ItalicTrailingSpace(t *testing.T) {
 	t.Parallel()
 
 	raw := `{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","marks":[{"type":"italic"}],"text":"italic "},{"type":"text","text":"rest"}]}]}`
+
 	var n Node
 	require.NoError(t, json.Unmarshal([]byte(raw), &n))
 
@@ -155,6 +161,7 @@ func TestRenderMarkdown_Strikethrough(t *testing.T) {
 	t.Parallel()
 
 	raw := `{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","marks":[{"type":"strike"}],"text":"deleted"}]}]}`
+
 	var n Node
 	require.NoError(t, json.Unmarshal([]byte(raw), &n))
 
@@ -167,6 +174,7 @@ func TestRenderMarkdown_Underline(t *testing.T) {
 	t.Parallel()
 
 	raw := `{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","marks":[{"type":"underline"}],"text":"underlined"}]}]}`
+
 	var n Node
 	require.NoError(t, json.Unmarshal([]byte(raw), &n))
 
@@ -179,6 +187,7 @@ func TestRenderMarkdown_InlineCode(t *testing.T) {
 	t.Parallel()
 
 	raw := `{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","marks":[{"type":"code"}],"text":"code"}]}]}`
+
 	var n Node
 	require.NoError(t, json.Unmarshal([]byte(raw), &n))
 
@@ -191,6 +200,7 @@ func TestRenderMarkdown_InlineCodeWithBacktick(t *testing.T) {
 	t.Parallel()
 
 	raw := `{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","marks":[{"type":"code"}],"text":"a ` + "`" + ` b"}]}]}`
+
 	var n Node
 	require.NoError(t, json.Unmarshal([]byte(raw), &n))
 
@@ -204,6 +214,7 @@ func TestRenderMarkdown_InlineCodeWithDoubleBacktickRun(t *testing.T) {
 
 	// Two consecutive backticks in content need a 3+ backtick fence.
 	raw := `{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","marks":[{"type":"code"}],"text":"` + "``" + `x"}]}]}`
+
 	var n Node
 	require.NoError(t, json.Unmarshal([]byte(raw), &n))
 
@@ -216,6 +227,7 @@ func TestRenderMarkdown_InlineCodeWithTripleBacktickRun(t *testing.T) {
 	t.Parallel()
 
 	raw := `{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","marks":[{"type":"code"}],"text":"` + "```" + `"}]}]}`
+
 	var n Node
 	require.NoError(t, json.Unmarshal([]byte(raw), &n))
 
@@ -228,6 +240,7 @@ func TestRenderMarkdown_Link(t *testing.T) {
 	t.Parallel()
 
 	raw := `{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","marks":[{"type":"link","attrs":{"href":"https://example.com","target":null,"rel":null,"class":null,"title":null}}],"text":"click"}]}]}`
+
 	var n Node
 	require.NoError(t, json.Unmarshal([]byte(raw), &n))
 
@@ -240,6 +253,7 @@ func TestRenderMarkdown_LinkWithTitle(t *testing.T) {
 	t.Parallel()
 
 	raw := `{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","marks":[{"type":"link","attrs":{"href":"https://example.com","target":null,"rel":null,"class":null,"title":"My Title"}}],"text":"click"}]}]}`
+
 	var n Node
 	require.NoError(t, json.Unmarshal([]byte(raw), &n))
 
@@ -267,9 +281,12 @@ func TestRenderMarkdown_LinkSanitizesDangerousHrefs(t *testing.T) {
 			tc.name,
 			func(t *testing.T) {
 				t.Parallel()
+
 				hrefJSON, err := json.Marshal(tc.href)
 				require.NoError(t, err)
+
 				raw := `{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","marks":[{"type":"link","attrs":{"href":` + string(hrefJSON) + `,"target":null,"rel":null,"class":null,"title":null}}],"text":"x"}]}]}`
+
 				var n Node
 				require.NoError(t, json.Unmarshal([]byte(raw), &n))
 
@@ -285,6 +302,7 @@ func TestRenderMarkdown_MultipleMarks(t *testing.T) {
 	t.Parallel()
 
 	raw := `{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","marks":[{"type":"bold"},{"type":"italic"}],"text":"hello"}]}]}`
+
 	var n Node
 	require.NoError(t, json.Unmarshal([]byte(raw), &n))
 
@@ -297,6 +315,7 @@ func TestRenderMarkdown_CodeBlockWithLanguage(t *testing.T) {
 	t.Parallel()
 
 	raw := `{"type":"doc","content":[{"type":"codeBlock","attrs":{"language":"go"},"content":[{"type":"text","text":"fmt.Println()"}]}]}`
+
 	var n Node
 	require.NoError(t, json.Unmarshal([]byte(raw), &n))
 
@@ -309,6 +328,7 @@ func TestRenderMarkdown_CodeBlockWithoutLanguage(t *testing.T) {
 	t.Parallel()
 
 	raw := `{"type":"doc","content":[{"type":"codeBlock","attrs":{"language":null},"content":[{"type":"text","text":"hello"}]}]}`
+
 	var n Node
 	require.NoError(t, json.Unmarshal([]byte(raw), &n))
 
@@ -321,6 +341,7 @@ func TestRenderMarkdown_CodeBlockWithTripleBackticks(t *testing.T) {
 	t.Parallel()
 
 	raw := `{"type":"doc","content":[{"type":"codeBlock","attrs":{"language":null},"content":[{"type":"text","text":"` + "```" + `\nsome code"}]}]}`
+
 	var n Node
 	require.NoError(t, json.Unmarshal([]byte(raw), &n))
 
@@ -369,6 +390,7 @@ func TestRenderMarkdown_Image(t *testing.T) {
 	t.Parallel()
 
 	raw := `{"type":"doc","content":[{"type":"paragraph","content":[{"type":"image","attrs":{"src":"https://example.com/img.png","alt":"A photo","title":"My image"}}]}]}`
+
 	var n Node
 	require.NoError(t, json.Unmarshal([]byte(raw), &n))
 
@@ -381,6 +403,7 @@ func TestRenderMarkdown_ImageWithoutTitle(t *testing.T) {
 	t.Parallel()
 
 	raw := `{"type":"doc","content":[{"type":"paragraph","content":[{"type":"image","attrs":{"src":"https://example.com/img.png","alt":"A photo","title":null}}]}]}`
+
 	var n Node
 	require.NoError(t, json.Unmarshal([]byte(raw), &n))
 
@@ -393,6 +416,7 @@ func TestRenderMarkdown_ImageSanitizesDangerousSrc(t *testing.T) {
 	t.Parallel()
 
 	raw := `{"type":"doc","content":[{"type":"paragraph","content":[{"type":"image","attrs":{"src":"javascript:alert(1)","alt":null,"title":null}}]}]}`
+
 	var n Node
 	require.NoError(t, json.Unmarshal([]byte(raw), &n))
 
@@ -405,6 +429,7 @@ func TestRenderMarkdown_BulletList(t *testing.T) {
 	t.Parallel()
 
 	raw := `{"type":"doc","content":[{"type":"bulletList","content":[{"type":"listItem","content":[{"type":"paragraph","content":[{"type":"text","text":"one"}]}]},{"type":"listItem","content":[{"type":"paragraph","content":[{"type":"text","text":"two"}]}]},{"type":"listItem","content":[{"type":"paragraph","content":[{"type":"text","text":"three"}]}]}]}]}`
+
 	var n Node
 	require.NoError(t, json.Unmarshal([]byte(raw), &n))
 
@@ -417,6 +442,7 @@ func TestRenderMarkdown_OrderedList(t *testing.T) {
 	t.Parallel()
 
 	raw := `{"type":"doc","content":[{"type":"orderedList","attrs":{"start":1,"type":null},"content":[{"type":"listItem","content":[{"type":"paragraph","content":[{"type":"text","text":"first"}]}]},{"type":"listItem","content":[{"type":"paragraph","content":[{"type":"text","text":"second"}]}]}]}]}`
+
 	var n Node
 	require.NoError(t, json.Unmarshal([]byte(raw), &n))
 
@@ -429,6 +455,7 @@ func TestRenderMarkdown_OrderedListWithStart(t *testing.T) {
 	t.Parallel()
 
 	raw := `{"type":"doc","content":[{"type":"orderedList","attrs":{"start":5,"type":null},"content":[{"type":"listItem","content":[{"type":"paragraph","content":[{"type":"text","text":"item"}]}]}]}]}`
+
 	var n Node
 	require.NoError(t, json.Unmarshal([]byte(raw), &n))
 
@@ -441,6 +468,7 @@ func TestRenderMarkdown_NestedList(t *testing.T) {
 	t.Parallel()
 
 	raw := `{"type":"doc","content":[{"type":"bulletList","content":[{"type":"listItem","content":[{"type":"paragraph","content":[{"type":"text","text":"parent"}]},{"type":"bulletList","content":[{"type":"listItem","content":[{"type":"paragraph","content":[{"type":"text","text":"child"}]}]}]}]}]}]}`
+
 	var n Node
 	require.NoError(t, json.Unmarshal([]byte(raw), &n))
 
@@ -453,6 +481,7 @@ func TestRenderMarkdown_Blockquote(t *testing.T) {
 	t.Parallel()
 
 	raw := `{"type":"doc","content":[{"type":"blockquote","content":[{"type":"paragraph","content":[{"type":"text","text":"quoted"}]}]}]}`
+
 	var n Node
 	require.NoError(t, json.Unmarshal([]byte(raw), &n))
 
@@ -465,6 +494,7 @@ func TestRenderMarkdown_BlockquoteMultipleParagraphs(t *testing.T) {
 	t.Parallel()
 
 	raw := `{"type":"doc","content":[{"type":"blockquote","content":[{"type":"paragraph","content":[{"type":"text","text":"first"}]},{"type":"paragraph","content":[{"type":"text","text":"second"}]}]}]}`
+
 	var n Node
 	require.NoError(t, json.Unmarshal([]byte(raw), &n))
 
@@ -477,6 +507,7 @@ func TestRenderMarkdown_GFMTable(t *testing.T) {
 	t.Parallel()
 
 	raw := `{"type":"doc","content":[{"type":"table","content":[{"type":"tableRow","content":[{"type":"tableHeader","attrs":{"colspan":1,"rowspan":1,"colwidth":null},"content":[{"type":"paragraph","content":[{"type":"text","text":"Name"}]}]},{"type":"tableHeader","attrs":{"colspan":1,"rowspan":1,"colwidth":null},"content":[{"type":"paragraph","content":[{"type":"text","text":"Age"}]}]}]},{"type":"tableRow","content":[{"type":"tableCell","attrs":{"colspan":1,"rowspan":1,"colwidth":null},"content":[{"type":"paragraph","content":[{"type":"text","text":"Alice"}]}]},{"type":"tableCell","attrs":{"colspan":1,"rowspan":1,"colwidth":null},"content":[{"type":"paragraph","content":[{"type":"text","text":"30"}]}]}]}]}]}`
+
 	var n Node
 	require.NoError(t, json.Unmarshal([]byte(raw), &n))
 
@@ -489,6 +520,7 @@ func TestRenderMarkdown_TableWithBlockContent(t *testing.T) {
 	t.Parallel()
 
 	raw := `{"type":"doc","content":[{"type":"table","content":[{"type":"tableRow","content":[{"type":"tableHeader","attrs":{"colspan":1,"rowspan":1,"colwidth":null},"content":[{"type":"paragraph","content":[{"type":"text","text":"Header"}]}]}]},{"type":"tableRow","content":[{"type":"tableCell","attrs":{"colspan":1,"rowspan":1,"colwidth":null},"content":[{"type":"bulletList","content":[{"type":"listItem","content":[{"type":"paragraph","content":[{"type":"text","text":"item"}]}]}]}]}]}]}]}`
+
 	var n Node
 	require.NoError(t, json.Unmarshal([]byte(raw), &n))
 
@@ -562,6 +594,7 @@ func TestRenderMarkdown_MixedContent(t *testing.T) {
 	t.Parallel()
 
 	raw := `{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Normal "},{"type":"text","marks":[{"type":"bold"}],"text":"bold"},{"type":"text","text":" and "},{"type":"text","marks":[{"type":"italic"}],"text":"italic"},{"type":"text","text":" text"}]}]}`
+
 	var n Node
 	require.NoError(t, json.Unmarshal([]byte(raw), &n))
 
@@ -574,6 +607,7 @@ func TestRenderMarkdown_BlockquoteWithHardBreak(t *testing.T) {
 	t.Parallel()
 
 	raw := `{"type":"doc","content":[{"type":"blockquote","content":[{"type":"paragraph","content":[{"type":"text","text":"line one"},{"type":"hardBreak"},{"type":"text","text":"line two"}]}]}]}`
+
 	var n Node
 	require.NoError(t, json.Unmarshal([]byte(raw), &n))
 
@@ -586,6 +620,7 @@ func TestRenderMarkdown_GFMTableWithMarks(t *testing.T) {
 	t.Parallel()
 
 	raw := `{"type":"doc","content":[{"type":"table","content":[{"type":"tableRow","content":[{"type":"tableHeader","attrs":{"colspan":1,"rowspan":1,"colwidth":null},"content":[{"type":"paragraph","content":[{"type":"text","text":"Header"}]}]}]},{"type":"tableRow","content":[{"type":"tableCell","attrs":{"colspan":1,"rowspan":1,"colwidth":null},"content":[{"type":"paragraph","content":[{"type":"text","marks":[{"type":"bold"}],"text":"bold"},{"type":"text","text":" and "},{"type":"text","marks":[{"type":"italic"}],"text":"italic"}]}]}]}]}]}`
+
 	var n Node
 	require.NoError(t, json.Unmarshal([]byte(raw), &n))
 
@@ -617,6 +652,7 @@ func TestRenderMarkdown_CodeBlockInBlockquote(t *testing.T) {
 	t.Parallel()
 
 	raw := `{"type":"doc","content":[{"type":"blockquote","content":[{"type":"codeBlock","attrs":{"language":"go"},"content":[{"type":"text","text":"fmt.Println()"}]}]}]}`
+
 	var n Node
 	require.NoError(t, json.Unmarshal([]byte(raw), &n))
 
@@ -645,6 +681,7 @@ func TestRenderMarkdown_TableBlockCellEscapesPipes(t *testing.T) {
 	t.Parallel()
 
 	raw := `{"type":"doc","content":[{"type":"table","content":[{"type":"tableRow","content":[{"type":"tableHeader","attrs":{"colspan":1,"rowspan":1,"colwidth":null},"content":[{"type":"paragraph","content":[{"type":"text","text":"H"}]}]}]},{"type":"tableRow","content":[{"type":"tableCell","attrs":{"colspan":1,"rowspan":1,"colwidth":null},"content":[{"type":"bulletList","content":[{"type":"listItem","content":[{"type":"paragraph","content":[{"type":"text","text":"a | b"}]}]}]}]}]}]}]}`
+
 	var n Node
 	require.NoError(t, json.Unmarshal([]byte(raw), &n))
 

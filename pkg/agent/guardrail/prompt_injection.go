@@ -83,6 +83,7 @@ func (g *PromptInjectionGuardrail) Check(ctx context.Context, messages []llm.Mes
 			"prompt injection classifier failed, allowing message through",
 			log.Error(err),
 		)
+
 		return &agent.GuardrailResult{Tripwire: false}, nil
 	}
 

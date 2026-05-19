@@ -63,6 +63,7 @@ func (v *ThirdPartyRiskAssessment) AuthorizationAttributes(ctx context.Context, 
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrResourceNotFound
 		}
+
 		return nil, fmt.Errorf("cannot query thirdParty risk assessment authorization attributes: %w", err)
 	}
 
@@ -116,6 +117,7 @@ VALUES (
 		"updated_at":       r.UpdatedAt,
 	}
 	_, err := conn.Exec(ctx, q, args)
+
 	return err
 }
 

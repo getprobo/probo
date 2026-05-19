@@ -162,6 +162,7 @@ func handleConnectorComplete(
 		if err != nil {
 			logger.ErrorCtx(r.Context(), "cannot complete connector", log.Error(err))
 			httpserver.RenderError(w, http.StatusInternalServerError, fmt.Errorf("internal error"))
+
 			return
 		}
 
@@ -196,6 +197,7 @@ func handleConnectorComplete(
 			if err != nil {
 				logger.ErrorCtx(r.Context(), "cannot reconnect connector", log.Error(err))
 				httpserver.RenderError(w, http.StatusInternalServerError, fmt.Errorf("internal error"))
+
 				return
 			}
 		} else {
@@ -218,6 +220,7 @@ func handleConnectorComplete(
 					// token response body.
 					subdomain = state.ProviderMetadata["subdomain"]
 				}
+
 				// The subdomain comes from an attacker-influenceable
 				// callback parameter; refuse anything that isn't a valid
 				// DNS label so it cannot be smuggled into URLs or logs.
@@ -225,8 +228,10 @@ func handleConnectorComplete(
 					logger.WarnCtx(r.Context(), "rejecting invalid pagerduty subdomain",
 						log.String("provider", string(connectorProvider)),
 					)
+
 					subdomain = ""
 				}
+
 				if subdomain != "" {
 					createReq.PagerDutySettings = &coredata.PagerDutyConnectorSettings{
 						Subdomain: subdomain,
@@ -250,6 +255,7 @@ func handleConnectorComplete(
 						}
 					}
 				}
+
 				if teamID != "" {
 					createReq.VercelSettings = &coredata.VercelConnectorSettings{
 						TeamID: teamID,
@@ -261,6 +267,7 @@ func handleConnectorComplete(
 			if err != nil {
 				logger.ErrorCtx(r.Context(), "cannot create connector", log.Error(err))
 				httpserver.RenderError(w, http.StatusInternalServerError, fmt.Errorf("internal error"))
+
 				return
 			}
 		}
@@ -273,8 +280,10 @@ func handleConnectorComplete(
 		parsedURL, err := url.Parse(redirectURL)
 		if err != nil {
 			logger.ErrorCtx(r.Context(), "cannot parse redirect URL", log.Error(err))
+
 			parsedURL, _ = url.Parse(baseURL.WithPath("/organizations/" + organizationID.String()).MustString())
 		}
+
 		q := parsedURL.Query()
 		q.Set("connector_id", cnnctr.ID.String())
 		q.Set("provider", string(connectorProvider))
@@ -296,11 +305,13 @@ func handleConnectorOAuth2Error(
 
 	provider := "unknown"
 	redirectURL := baseURL.String()
+
 	if stateToken := query.Get("state"); stateToken != "" {
 		if payload, err := connector.DecodeOAuth2StatePayload(stateToken); err == nil {
 			if payload.Data.Provider != "" {
 				provider = payload.Data.Provider
 			}
+
 			if payload.Data.ContinueURL != "" {
 				redirectURL = payload.Data.ContinueURL
 			}
@@ -331,6 +342,7 @@ func isValidPagerDutySubdomain(s string) bool {
 	if s == "" || len(s) > 63 {
 		return false
 	}
+
 	for _, c := range s {
 		switch {
 		case c >= 'a' && c <= 'z':
@@ -341,6 +353,7 @@ func isValidPagerDutySubdomain(s string) bool {
 			return false
 		}
 	}
+
 	return true
 }
 

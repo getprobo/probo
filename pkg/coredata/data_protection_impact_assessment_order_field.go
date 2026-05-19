@@ -41,5 +41,6 @@ func (p *DataProtectionImpactAssessmentOrderField) UnmarshalText(text []byte) er
 		*p = DataProtectionImpactAssessmentOrderFieldCreatedAt
 		return nil
 	}
+
 	return fmt.Errorf("invalid DataProtectionImpactAssessmentOrderField value: %q", val)
 }

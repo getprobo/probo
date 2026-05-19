@@ -65,6 +65,7 @@ func (d *PagerDutyDriver) ListAccounts(ctx context.Context) ([]AccountRecord, er
 	var records []AccountRecord
 
 	const limit = 100
+
 	offset := 0
 
 	for range maxPaginationPages {
@@ -113,6 +114,7 @@ func (d *PagerDutyDriver) ListAccounts(ctx context.Context) ([]AccountRecord, er
 		if pageSize <= 0 {
 			pageSize = limit
 		}
+
 		offset += pageSize
 	}
 
@@ -130,12 +132,14 @@ func (d *PagerDutyDriver) queryUsers(ctx context.Context, offset, limit int) (*p
 	if err != nil {
 		return nil, fmt.Errorf("cannot create pagerduty users request: %w", err)
 	}
+
 	req.Header.Set("Accept", "application/vnd.pagerduty+json;version=2")
 
 	httpResp, err := d.httpClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("cannot execute pagerduty users request: %w", err)
 	}
+
 	defer func() { _ = httpResp.Body.Close() }()
 
 	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {

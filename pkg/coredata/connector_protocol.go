@@ -39,6 +39,7 @@ func (cp ConnectorProtocol) String() string {
 
 func (cp *ConnectorProtocol) Scan(value any) error {
 	var s string
+
 	switch v := value.(type) {
 	case string:
 		s = v
@@ -56,6 +57,7 @@ func (cp *ConnectorProtocol) Scan(value any) error {
 	default:
 		return fmt.Errorf("invalid ConnectorProtocol value: %q", s)
 	}
+
 	return nil
 }
 

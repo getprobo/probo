@@ -41,5 +41,6 @@ func (f *CommonThirdPartyFilter) SQLArguments() pgx.StrictNamedArgs {
 	if f.name != nil {
 		args["filter_name"] = *f.name
 	}
+
 	return args
 }

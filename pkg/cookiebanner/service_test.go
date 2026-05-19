@@ -30,6 +30,7 @@ func TestSnapshotsEqual(t *testing.T) {
 	baseSnapshot := func() coredata.CookieBannerVersionSnapshot {
 		policy := "https://example.com/privacy"
 		maxAge := 3600
+
 		return coredata.CookieBannerVersionSnapshot{
 			PrivacyPolicyURL:  &policy,
 			CookiePolicyURL:   "https://example.com/cookies",

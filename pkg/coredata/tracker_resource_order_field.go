@@ -36,6 +36,7 @@ func (p TrackerResourceOrderField) Column() string {
 	case TrackerResourceOrderFieldUpdatedAt:
 		return "updated_at"
 	}
+
 	panic(fmt.Sprintf("unsupported order by: %s", p))
 }
 
@@ -47,6 +48,7 @@ func (p TrackerResourceOrderField) IsValid() bool {
 		TrackerResourceOrderFieldUpdatedAt:
 		return true
 	}
+
 	return false
 }
 
@@ -59,6 +61,7 @@ func (p *TrackerResourceOrderField) UnmarshalText(text []byte) error {
 	if !p.IsValid() {
 		return fmt.Errorf("%s is not a valid TrackerResourceOrderField", string(text))
 	}
+
 	return nil
 }
 

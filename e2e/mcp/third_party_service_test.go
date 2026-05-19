@@ -120,6 +120,7 @@ func TestMCP_ListThirdPartyServices(t *testing.T) {
 			"name":         factory.SafeName("Service"),
 		}, &result)
 		require.NotEmpty(t, result.ThirdPartyService.ID)
+
 		_ = i
 	}
 

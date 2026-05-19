@@ -116,6 +116,7 @@ func TestURIUnmarshalText(t *testing.T) {
 			t.Parallel()
 
 			var u URI
+
 			err := u.UnmarshalText([]byte("https://example.com/callback"))
 			require.NoError(t, err)
 			assert.Equal(t, URI("https://example.com/callback"), u)
@@ -128,6 +129,7 @@ func TestURIUnmarshalText(t *testing.T) {
 			t.Parallel()
 
 			var u URI
+
 			err := u.UnmarshalText([]byte("not-a-url"))
 			require.Error(t, err)
 		},
@@ -200,6 +202,7 @@ func TestURIScan(t *testing.T) {
 			t.Parallel()
 
 			var u URI
+
 			err := u.Scan("https://example.com")
 			require.NoError(t, err)
 			assert.Equal(t, URI("https://example.com"), u)
@@ -212,6 +215,7 @@ func TestURIScan(t *testing.T) {
 			t.Parallel()
 
 			var u URI
+
 			err := u.Scan([]byte("https://example.com"))
 			require.NoError(t, err)
 			assert.Equal(t, URI("https://example.com"), u)
@@ -224,6 +228,7 @@ func TestURIScan(t *testing.T) {
 			t.Parallel()
 
 			var u URI
+
 			err := u.Scan("not-a-url")
 			require.Error(t, err)
 		},
@@ -235,6 +240,7 @@ func TestURIScan(t *testing.T) {
 			t.Parallel()
 
 			var u URI
+
 			err := u.Scan(123)
 			require.Error(t, err)
 		},

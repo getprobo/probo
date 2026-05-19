@@ -85,6 +85,7 @@ func (d *GitHubDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error
 			d.logger.WarnCtx(ctx, "cannot fetch github membership, skipping member",
 				log.Error(err),
 			)
+
 			continue
 		}
 
@@ -93,6 +94,7 @@ func (d *GitHubDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error
 			d.logger.WarnCtx(ctx, "cannot fetch github user profile, skipping member",
 				log.Error(err),
 			)
+
 			continue
 		}
 
@@ -107,6 +109,7 @@ func (d *GitHubDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error
 		}
 
 		mfaStatus := coredata.MFAStatusUnknown
+
 		if no2FASet != nil {
 			if no2FASet[m.Login] {
 				mfaStatus = coredata.MFAStatusDisabled
@@ -158,6 +161,7 @@ func (d *GitHubDriver) fetchAllMembers(ctx context.Context) ([]githubMember, err
 		if nextURL == "" {
 			return members, nil
 		}
+
 		url = nextURL
 	}
 
@@ -176,6 +180,7 @@ func (d *GitHubDriver) fetchMembersPage(ctx context.Context, url string) ([]gith
 	if err != nil {
 		return nil, "", fmt.Errorf("cannot execute github members request: %w", err)
 	}
+
 	defer func() {
 		_ = httpResp.Body.Close()
 	}()
@@ -215,6 +220,7 @@ func (d *GitHubDriver) fetchAll2FADisabledLogins(ctx context.Context) (map[strin
 		if nextURL == "" {
 			return set, nil
 		}
+
 		url = nextURL
 	}
 
@@ -239,6 +245,7 @@ func (d *GitHubDriver) fetchMembership(ctx context.Context, login string) (*gith
 	if err != nil {
 		return nil, fmt.Errorf("cannot execute github membership request: %w", err)
 	}
+
 	defer func() {
 		_ = httpResp.Body.Close()
 	}()
@@ -269,6 +276,7 @@ func (d *GitHubDriver) fetchUserProfile(ctx context.Context, login string) (*git
 	if err != nil {
 		return nil, fmt.Errorf("cannot execute github user profile request: %w", err)
 	}
+
 	defer func() {
 		_ = httpResp.Body.Close()
 	}()

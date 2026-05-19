@@ -124,6 +124,7 @@ func (a *Agent) Clone(opts ...Option) *Agent {
 			copy(newApproval.ToolNames, a.approval.ToolNames)
 			newApproval.toolNameSet = buildToolNameSet(newApproval.ToolNames)
 		}
+
 		cp.approval = &newApproval
 	}
 
@@ -205,6 +206,7 @@ func WithMaxTurns(n int) Option {
 		if n < 1 {
 			n = 1
 		}
+
 		a.maxTurns = n
 	}
 }
@@ -217,6 +219,7 @@ func WithMaxEmptyOutputRetries(n int) Option {
 		if n < 0 {
 			n = 0
 		}
+
 		a.maxEmptyOutputRetries = n
 	}
 }
@@ -226,6 +229,7 @@ func WithMaxToolDepth(n int) Option {
 		if n < 1 {
 			n = 1
 		}
+
 		a.maxToolDepth = n
 	}
 }
@@ -348,6 +352,7 @@ func WithMCPServers(servers ...*MCPServer) Option {
 
 func WithApproval(config ApprovalConfig) Option {
 	config.toolNameSet = buildToolNameSet(config.ToolNames)
+
 	return func(a *Agent) {
 		a.approval = &config
 	}
@@ -369,6 +374,7 @@ func (a *Agent) resolveTools(ctx context.Context) ([]ToolDescriptor, map[string]
 		if err != nil {
 			return nil, nil, fmt.Errorf("cannot resolve MCP tools from %q: %w", s.name, err)
 		}
+
 		for _, t := range mcpTools {
 			all = append(all, t)
 		}
@@ -380,6 +386,7 @@ func (a *Agent) resolveTools(ctx context.Context) ([]ToolDescriptor, map[string]
 		if _, exists := toolMap[name]; exists {
 			return nil, nil, fmt.Errorf("cannot resolve tools: duplicate tool name %q", name)
 		}
+
 		toolMap[name] = t
 	}
 

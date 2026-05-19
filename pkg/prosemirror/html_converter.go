@@ -46,14 +46,18 @@ func convertProseMirrorFromInlineHTML(raw string) ([]Node, error) {
 	}
 
 	c := &htmlBlockConverter{}
+
 	var out []Node
+
 	for _, root := range roots {
 		nodes, err := c.convertInlineNode(root)
 		if err != nil {
 			return nil, err
 		}
+
 		out = append(out, nodes...)
 	}
+
 	if len(out) > 0 {
 		return out, nil
 	}
@@ -62,6 +66,7 @@ func convertProseMirrorFromInlineHTML(raw string) ([]Node, error) {
 	if plain == "" {
 		return nil, nil
 	}
+
 	return []Node{{Type: NodeText, Text: &plain}}, nil
 }
 
@@ -75,6 +80,7 @@ func convertProseMirrorFromHTMLBlock(raw string) ([]Node, error) {
 	if err != nil {
 		return nil, fmt.Errorf("cannot convert html block to prosemirror: %w", err)
 	}
+
 	if len(nodes) > 0 {
 		return nodes, nil
 	}
@@ -83,6 +89,7 @@ func convertProseMirrorFromHTMLBlock(raw string) ([]Node, error) {
 	if plain == "" {
 		return nil, nil
 	}
+
 	return []Node{paragraphWithPlainText(plain)}, nil
 }
 
@@ -109,12 +116,17 @@ func plainTextFromHTMLFragment(htmlStr string) string {
 	if err != nil {
 		return ""
 	}
-	var b strings.Builder
-	var walk func(*html.Node)
+
+	var (
+		b    strings.Builder
+		walk func(*html.Node)
+	)
+
 	walk = func(n *html.Node) {
 		if n.Type == html.TextNode {
 			b.WriteString(n.Data)
 		}
+
 		for c := n.FirstChild; c != nil; c = c.NextSibling {
 			walk(c)
 		}
@@ -122,6 +134,7 @@ func plainTextFromHTMLFragment(htmlStr string) string {
 	for _, root := range roots {
 		walk(root)
 	}
+
 	return b.String()
 }
 
@@ -132,14 +145,18 @@ func htmlFragmentToProseMirrorBlocks(htmlStr string) ([]Node, error) {
 	}
 
 	c := &htmlBlockConverter{}
+
 	var out []Node
+
 	for _, root := range roots {
 		nodes, err := c.convertTopLevel(root)
 		if err != nil {
 			return nil, err
 		}
+
 		out = append(out, nodes...)
 	}
+
 	return out, nil
 }
 
@@ -154,6 +171,7 @@ func (c *htmlBlockConverter) convertTopLevel(n *html.Node) ([]Node, error) {
 		if t == "" {
 			return nil, nil
 		}
+
 		return []Node{paragraphWithPlainText(t)}, nil
 	case html.ElementNode:
 		return c.convertBlockElement(n)
@@ -169,17 +187,21 @@ func (c *htmlBlockConverter) convertBlockElement(n *html.Node) ([]Node, error) {
 		if err != nil {
 			return nil, err
 		}
+
 		return []Node{{Type: NodeParagraph, Content: inlines}}, nil
 	case "h1", "h2", "h3", "h4", "h5", "h6":
 		level := int(n.Data[1] - '0')
+
 		inlines, err := c.convertInlineFragments(n)
 		if err != nil {
 			return nil, err
 		}
+
 		attrs, err := json.Marshal(HeadingAttrs{Level: level})
 		if err != nil {
 			return nil, fmt.Errorf("cannot marshal heading attrs: %w", err)
 		}
+
 		return []Node{{
 			Type:    NodeHeading,
 			Attrs:   attrs,
@@ -207,9 +229,11 @@ func (c *htmlBlockConverter) convertBlockElement(n *html.Node) ([]Node, error) {
 		if err != nil {
 			return nil, err
 		}
+
 		if img == nil {
 			return nil, nil
 		}
+
 		return []Node{{
 			Type:    NodeParagraph,
 			Content: []Node{*img},
@@ -228,23 +252,29 @@ func (c *htmlBlockConverter) unwrapBlockElement(n *html.Node) ([]Node, error) {
 		if err != nil {
 			return nil, err
 		}
+
 		if len(inlines) == 0 {
 			return nil, nil
 		}
+
 		return []Node{{Type: NodeParagraph, Content: inlines}}, nil
 	}
+
 	return c.convertBlockChildren(n)
 }
 
 func (c *htmlBlockConverter) convertBlockChildren(n *html.Node) ([]Node, error) {
 	var out []Node
+
 	for ch := n.FirstChild; ch != nil; ch = ch.NextSibling {
 		nodes, err := c.convertTopLevel(ch)
 		if err != nil {
 			return nil, err
 		}
+
 		out = append(out, nodes...)
 	}
+
 	return out, nil
 }
 
@@ -254,44 +284,58 @@ func (c *htmlBlockConverter) convertBlockquote(n *html.Node) ([]Node, error) {
 		if err != nil {
 			return nil, err
 		}
+
 		return []Node{{Type: NodeBlockquote, Content: inner}}, nil
 	}
+
 	inlines, err := c.convertInlineFragments(n)
 	if err != nil {
 		return nil, err
 	}
+
 	var content []Node
 	if len(inlines) > 0 {
 		content = []Node{{Type: NodeParagraph, Content: inlines}}
 	}
+
 	return []Node{{Type: NodeBlockquote, Content: content}}, nil
 }
 
 func (c *htmlBlockConverter) convertPre(n *html.Node) ([]Node, error) {
-	var lang *string
-	var textBuf strings.Builder
+	var (
+		lang    *string
+		textBuf strings.Builder
+	)
+
 	for ch := n.FirstChild; ch != nil; ch = ch.NextSibling {
 		if ch.Type == html.ElementNode && ch.Data == "code" {
 			lang = codeLanguageFromClass(attrVal(ch, "class"))
+
 			var walkText func(*html.Node)
+
 			walkText = func(x *html.Node) {
 				if x.Type == html.TextNode {
 					textBuf.WriteString(x.Data)
 				}
+
 				for cc := x.FirstChild; cc != nil; cc = cc.NextSibling {
 					walkText(cc)
 				}
 			}
 			walkText(ch)
+
 			break
 		}
 	}
+
 	if textBuf.Len() == 0 {
 		var walkText func(*html.Node)
+
 		walkText = func(x *html.Node) {
 			if x.Type == html.TextNode {
 				textBuf.WriteString(x.Data)
 			}
+
 			for cc := x.FirstChild; cc != nil; cc = cc.NextSibling {
 				walkText(cc)
 			}
@@ -300,6 +344,7 @@ func (c *htmlBlockConverter) convertPre(n *html.Node) ([]Node, error) {
 	}
 
 	content := textBuf.String()
+
 	attrs, err := json.Marshal(CodeBlockAttrs{Language: lang})
 	if err != nil {
 		return nil, fmt.Errorf("cannot marshal code block attrs: %w", err)
@@ -309,6 +354,7 @@ func (c *htmlBlockConverter) convertPre(n *html.Node) ([]Node, error) {
 	if content != "" {
 		textNodes = []Node{{Type: NodeText, Text: &content}}
 	}
+
 	return []Node{{
 		Type:    NodeCodeBlock,
 		Attrs:   attrs,
@@ -326,39 +372,49 @@ func codeLanguageFromClass(class string) *string {
 			}
 		}
 	}
+
 	return nil
 }
 
 func (c *htmlBlockConverter) convertList(n *html.Node, ordered bool) ([]Node, error) {
 	var items []Node
+
 	for li := n.FirstChild; li != nil; li = li.NextSibling {
 		if li.Type != html.ElementNode || li.Data != "li" {
 			continue
 		}
+
 		body, err := c.convertListItem(li)
 		if err != nil {
 			return nil, err
 		}
+
 		if len(body) == 0 {
 			continue
 		}
+
 		items = append(items, Node{Type: NodeListItem, Content: body})
 	}
+
 	if len(items) == 0 {
 		return nil, nil
 	}
+
 	if ordered {
 		start := parseOlStart(n)
+
 		attrs, err := json.Marshal(OrderedListAttrs{Start: start})
 		if err != nil {
 			return nil, fmt.Errorf("cannot marshal ordered list attrs: %w", err)
 		}
+
 		return []Node{{
 			Type:    NodeOrderedList,
 			Attrs:   attrs,
 			Content: items,
 		}}, nil
 	}
+
 	return []Node{{
 		Type:    NodeBulletList,
 		Content: items,
@@ -370,10 +426,12 @@ func parseOlStart(n *html.Node) int {
 	if s == "" {
 		return 1
 	}
+
 	v, err := strconv.Atoi(strings.TrimSpace(s))
 	if err != nil || v < 1 {
 		return 1
 	}
+
 	return v
 }
 
@@ -381,13 +439,16 @@ func (c *htmlBlockConverter) convertListItem(li *html.Node) ([]Node, error) {
 	if hasBlockElementChild(li) {
 		return c.convertBlockChildren(li)
 	}
+
 	inlines, err := c.convertInlineFragments(li)
 	if err != nil {
 		return nil, err
 	}
+
 	if len(inlines) == 0 {
 		return nil, nil
 	}
+
 	return []Node{{Type: NodeParagraph, Content: inlines}}, nil
 }
 
@@ -397,6 +458,7 @@ func hasBlockElementChild(n *html.Node) bool {
 			return true
 		}
 	}
+
 	return false
 }
 
@@ -419,10 +481,12 @@ func blockTagName(name string) bool {
 // tables cannot contribute rows to the outer table.
 func collectTableRows(table *html.Node) []*html.Node {
 	var rows []*html.Node
+
 	for ch := table.FirstChild; ch != nil; ch = ch.NextSibling {
 		if ch.Type != html.ElementNode {
 			continue
 		}
+
 		switch ch.Data {
 		case "thead", "tbody", "tfoot":
 			for tr := ch.FirstChild; tr != nil; tr = tr.NextSibling {
@@ -438,6 +502,7 @@ func collectTableRows(table *html.Node) []*html.Node {
 			// Ignore other direct children (e.g. invalid markup).
 		}
 	}
+
 	return rows
 }
 
@@ -445,29 +510,38 @@ func (c *htmlBlockConverter) convertTable(n *html.Node) ([]Node, error) {
 	rows := collectTableRows(n)
 
 	var rowNodes []Node
+
 	for _, tr := range rows {
 		row, err := c.convertTableRow(tr)
 		if err != nil {
 			return nil, err
 		}
+
 		if row != nil {
 			rowNodes = append(rowNodes, *row)
 		}
 	}
+
 	if len(rowNodes) == 0 {
 		return nil, nil
 	}
+
 	return []Node{{Type: NodeTable, Content: rowNodes}}, nil
 }
 
 func (c *htmlBlockConverter) convertTableRow(tr *html.Node) (*Node, error) {
 	var cells []Node
+
 	for ch := tr.FirstChild; ch != nil; ch = ch.NextSibling {
 		if ch.Type != html.ElementNode {
 			continue
 		}
-		var cell *Node
-		var err error
+
+		var (
+			cell *Node
+			err  error
+		)
+
 		switch ch.Data {
 		case "th":
 			cell, err = c.convertTableCell(ch, NodeTableHeader)
@@ -476,16 +550,20 @@ func (c *htmlBlockConverter) convertTableRow(tr *html.Node) (*Node, error) {
 		default:
 			continue
 		}
+
 		if err != nil {
 			return nil, err
 		}
+
 		if cell != nil {
 			cells = append(cells, *cell)
 		}
 	}
+
 	if len(cells) == 0 {
 		return nil, nil
 	}
+
 	return &Node{Type: NodeTableRow, Content: cells}, nil
 }
 
@@ -494,27 +572,34 @@ func (c *htmlBlockConverter) convertTableCell(n *html.Node, typ NodeType) (*Node
 		Colspan: tableSpanFromHTML(n, "colspan"),
 		Rowspan: tableSpanFromHTML(n, "rowspan"),
 	}
+
 	attrs, err := json.Marshal(cellAttrs)
 	if err != nil {
 		return nil, fmt.Errorf("cannot marshal table cell attrs: %w", err)
 	}
+
 	inlines, err := c.convertInlineFragments(n)
 	if err != nil {
 		return nil, err
 	}
+
 	content := []Node{{Type: NodeParagraph, Content: inlines}}
+
 	return &Node{Type: typ, Attrs: attrs, Content: content}, nil
 }
 
 func (c *htmlBlockConverter) convertInlineFragments(parent *html.Node) ([]Node, error) {
 	var out []Node
+
 	for ch := parent.FirstChild; ch != nil; ch = ch.NextSibling {
 		nodes, err := c.convertInlineNode(ch)
 		if err != nil {
 			return nil, err
 		}
+
 		out = append(out, nodes...)
 	}
+
 	return out, nil
 }
 
@@ -524,7 +609,9 @@ func (c *htmlBlockConverter) convertInlineNode(n *html.Node) ([]Node, error) {
 		if n.Data == "" {
 			return nil, nil
 		}
+
 		t := n.Data
+
 		return []Node{{
 			Type:  NodeText,
 			Text:  &t,
@@ -562,6 +649,7 @@ func (c *htmlBlockConverter) convertInlineElement(n *html.Node) ([]Node, error) 
 		if err != nil || img == nil {
 			return nil, err
 		}
+
 		return []Node{*img}, nil
 	case "span":
 		return c.convertInlineFragments(n)
@@ -574,9 +662,11 @@ func (c *htmlBlockConverter) withMark(m Mark, n *html.Node) ([]Node, error) {
 	c.marks = append(c.marks, m)
 	nodes, err := c.convertInlineFragments(n)
 	c.marks = c.marks[:len(c.marks)-1]
+
 	if err != nil {
 		return nil, err
 	}
+
 	return nodes, nil
 }
 
@@ -585,21 +675,26 @@ func (c *htmlBlockConverter) convertAnchor(n *html.Node) ([]Node, error) {
 	if href == "" {
 		return c.convertInlineFragments(n)
 	}
+
 	var title *string
 	if t := attrVal(n, "title"); t != "" {
 		title = &t
 	}
+
 	attrs, err := json.Marshal(LinkAttrs{Href: safeLinkHref(href), Title: title})
 	if err != nil {
 		return nil, fmt.Errorf("cannot marshal link attrs: %w", err)
 	}
+
 	m := Mark{Type: MarkLink, Attrs: attrs}
 	c.marks = append(c.marks, m)
 	nodes, err := c.convertInlineFragments(n)
 	c.marks = c.marks[:len(c.marks)-1]
+
 	if err != nil {
 		return nil, err
 	}
+
 	return nodes, nil
 }
 
@@ -608,17 +703,21 @@ func (c *htmlBlockConverter) convertImageElement(n *html.Node) (*Node, error) {
 	if src == "" {
 		return nil, nil
 	}
+
 	var alt, title *string
 	if a := attrVal(n, "alt"); a != "" {
 		alt = &a
 	}
+
 	if t := attrVal(n, "title"); t != "" {
 		title = &t
 	}
+
 	attrs, err := json.Marshal(ImageAttrs{Src: src, Alt: alt, Title: title})
 	if err != nil {
 		return nil, fmt.Errorf("cannot marshal image attrs: %w", err)
 	}
+
 	return &Node{Type: NodeImage, Attrs: attrs}, nil
 }
 
@@ -628,6 +727,7 @@ func attrVal(n *html.Node, key string) string {
 			return a.Val
 		}
 	}
+
 	return ""
 }
 
@@ -639,9 +739,11 @@ func tableSpanFromHTML(n *html.Node, key string) int {
 	if s == "" {
 		return 1
 	}
+
 	v, err := strconv.Atoi(s)
 	if err != nil || v < 1 {
 		return 1
 	}
+
 	return v
 }

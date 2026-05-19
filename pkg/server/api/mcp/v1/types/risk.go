@@ -47,6 +47,7 @@ func NewListMeasureRisksOutput(riskPage *page.Page[*coredata.Risk, coredata.Risk
 	}
 
 	var nextCursor *page.CursorKey
+
 	if len(riskPage.Data) > 0 {
 		cursorKey := riskPage.Data[len(riskPage.Data)-1].CursorKey(riskPage.Cursor.OrderBy.Field)
 		nextCursor = &cursorKey
@@ -65,6 +66,7 @@ func NewListRisksOutput(riskPage *page.Page[*coredata.Risk, coredata.RiskOrderFi
 	}
 
 	var nextCursor *page.CursorKey
+
 	if len(riskPage.Data) > 0 {
 		cursorKey := riskPage.Data[len(riskPage.Data)-1].CursorKey(riskPage.Cursor.OrderBy.Field)
 		nextCursor = &cursorKey

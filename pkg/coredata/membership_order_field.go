@@ -39,6 +39,7 @@ func (p MembershipOrderField) Column() string {
 	case MembershipOrderFieldCreatedAt:
 		return "created_at"
 	}
+
 	return string(p)
 }
 

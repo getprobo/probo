@@ -70,8 +70,10 @@ func (s ThirdPartyDataPrivacyAgreementService) GetByThirdPartyID(
 	ctx context.Context,
 	thirdPartyID gid.GID,
 ) (*coredata.ThirdPartyDataPrivacyAgreement, *coredata.File, error) {
-	var thirdPartyDataPrivacyAgreement *coredata.ThirdPartyDataPrivacyAgreement
-	var file *coredata.File
+	var (
+		thirdPartyDataPrivacyAgreement *coredata.ThirdPartyDataPrivacyAgreement
+		file                           *coredata.File
+	)
 
 	err := s.svc.pg.WithConn(
 		ctx,
@@ -89,7 +91,6 @@ func (s ThirdPartyDataPrivacyAgreementService) GetByThirdPartyID(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, nil, err
 	}
@@ -111,9 +112,11 @@ func (s ThirdPartyDataPrivacyAgreementService) Upload(
 		return nil, nil, fmt.Errorf("cannot generate object key: %w", err)
 	}
 
-	var thirdPartyDataPrivacyAgreement *coredata.ThirdPartyDataPrivacyAgreement
-	var file *coredata.File
-	var thirdParty *coredata.ThirdParty
+	var (
+		thirdPartyDataPrivacyAgreement *coredata.ThirdPartyDataPrivacyAgreement
+		file                           *coredata.File
+		thirdParty                     *coredata.ThirdParty
+	)
 
 	err = s.svc.pg.WithTx(
 		ctx,
@@ -124,6 +127,7 @@ func (s ThirdPartyDataPrivacyAgreementService) Upload(
 			}
 
 			mimeType := mime.TypeByExtension(filepath.Ext(req.FileName))
+
 			_, err := s.svc.s3.PutObject(ctx, &s3.PutObjectInput{
 				Bucket:       &s.svc.bucket,
 				Key:          new(objectKey.String()),
@@ -139,6 +143,7 @@ func (s ThirdPartyDataPrivacyAgreementService) Upload(
 			if err != nil {
 				return fmt.Errorf("cannot upload file to S3: %w", err)
 			}
+
 			headOutput, err := s.svc.s3.HeadObject(ctx, &s3.HeadObjectInput{
 				Bucket: new(s.svc.bucket),
 				Key:    new(objectKey.String()),
@@ -184,7 +189,6 @@ func (s ThirdPartyDataPrivacyAgreementService) Upload(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, nil, err
 	}
@@ -196,8 +200,10 @@ func (s ThirdPartyDataPrivacyAgreementService) Get(
 	ctx context.Context,
 	thirdPartyDataPrivacyAgreementID gid.GID,
 ) (*coredata.ThirdPartyDataPrivacyAgreement, *coredata.File, error) {
-	var thirdPartyDataPrivacyAgreement *coredata.ThirdPartyDataPrivacyAgreement
-	var file *coredata.File
+	var (
+		thirdPartyDataPrivacyAgreement *coredata.ThirdPartyDataPrivacyAgreement
+		file                           *coredata.File
+	)
 
 	err := s.svc.pg.WithConn(
 		ctx,
@@ -215,7 +221,6 @@ func (s ThirdPartyDataPrivacyAgreementService) Get(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, nil, fmt.Errorf("cannot load thirdParty data privacy agreement: %w", err)
 	}
@@ -291,9 +296,11 @@ func (s ThirdPartyDataPrivacyAgreementService) Update(
 			}
 
 			now := time.Now()
+
 			if req.ValidFrom != nil {
 				existingAgreement.ValidFrom = *req.ValidFrom
 			}
+
 			if req.ValidUntil != nil {
 				existingAgreement.ValidUntil = *req.ValidUntil
 			}
@@ -311,7 +318,6 @@ func (s ThirdPartyDataPrivacyAgreementService) Update(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, nil, err
 	}

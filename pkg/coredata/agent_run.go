@@ -88,6 +88,7 @@ func (e *AgentRun) AuthorizationAttributes(ctx context.Context, conn pg.Querier)
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrResourceNotFound
 		}
+
 		return nil, fmt.Errorf("cannot load agent run authorization attributes: %w", err)
 	}
 
@@ -138,6 +139,7 @@ LIMIT 1;
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
 		}
+
 		return fmt.Errorf("cannot load agent run: %w", err)
 	}
 
@@ -191,6 +193,7 @@ FOR UPDATE;
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
 		}
+
 		return fmt.Errorf("cannot load agent run: %w", err)
 	}
 
@@ -485,6 +488,7 @@ FOR UPDATE SKIP LOCKED;
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
 		}
+
 		return fmt.Errorf("cannot load pending agent run: %w", err)
 	}
 
@@ -584,6 +588,7 @@ func NewPGCheckpointer(pgClient *pg.Client, opts ...PGCheckpointerOption) *PGChe
 	for _, opt := range opts {
 		opt(s)
 	}
+
 	return s
 }
 
@@ -661,6 +666,7 @@ WHERE
 				if errors.Is(err, pgx.ErrNoRows) {
 					return ErrResourceNotFound
 				}
+
 				return fmt.Errorf("cannot load checkpoint: %w", err)
 			}
 

@@ -60,6 +60,7 @@ func (s *StatementOfApplicability) AuthorizationAttributes(ctx context.Context, 
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrResourceNotFound
 		}
+
 		return nil, fmt.Errorf("cannot query statement of applicability authorization attributes: %w", err)
 	}
 
@@ -108,6 +109,7 @@ LIMIT 1;
 	}
 
 	*s = statementOfApplicability
+
 	return nil
 }
 
@@ -150,6 +152,7 @@ WHERE
 	}
 
 	*s = statementsOfApplicability
+
 	return nil
 }
 
@@ -176,6 +179,7 @@ WHERE
 	maps.Copy(args, scope.SQLArguments())
 
 	row := conn.QueryRow(ctx, q, args)
+
 	var count int
 	if err := row.Scan(&count); err != nil {
 		return 0, fmt.Errorf("cannot count statements_of_applicability: %w", err)
@@ -220,8 +224,8 @@ VALUES (
 		"created_at":                    s.CreatedAt,
 		"updated_at":                    s.UpdatedAt,
 	}
-	_, err := conn.Exec(ctx, q, args)
 
+	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) {
@@ -229,6 +233,7 @@ VALUES (
 				return ErrResourceAlreadyExists
 			}
 		}
+
 		return fmt.Errorf("cannot insert statement_of_applicability: %w", err)
 	}
 
@@ -269,6 +274,7 @@ WHERE
 				return ErrResourceAlreadyExists
 			}
 		}
+
 		return fmt.Errorf("cannot update statement_of_applicability: %w", err)
 	}
 

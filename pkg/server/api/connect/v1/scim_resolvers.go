@@ -44,6 +44,7 @@ func (r *mutationResolver) CreateSCIMConfiguration(ctx context.Context, input ty
 			r.logger.ErrorCtx(ctx, "cannot create scim bridge", log.Error(err))
 			return nil, gqlutils.Internal(ctx)
 		}
+
 		bridge = types.NewSCIMBridge(scimBridge)
 	}
 
@@ -188,6 +189,7 @@ func (r *sCIMConfigurationResolver) Organization(ctx context.Context, obj *types
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get organization for scim configuration", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -212,6 +214,7 @@ func (r *sCIMConfigurationResolver) Bridge(ctx context.Context, obj *types.SCIMC
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get scim bridge", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -267,10 +270,12 @@ func (r *sCIMEventConnectionResolver) TotalCount(ctx context.Context, obj *types
 			r.logger.ErrorCtx(ctx, "cannot count scim events", log.Error(err))
 			return nil, gqlutils.Internal(ctx)
 		}
+
 		return &count, nil
 	}
 
 	r.logger.ErrorCtx(ctx, "unsupported resolver", log.Any("resolver", obj.Resolver))
+
 	return nil, gqlutils.Internal(ctx)
 }
 

@@ -122,6 +122,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				if err := cmdutil.ValidateEnum("order-by", flagOrder, []string{"FULL_NAME", "CREATED_AT", "KIND"}); err != nil {
 					return err
 				}
+
 				variables["orderBy"] = map[string]any{
 					"field":     flagOrder,
 					"direction": flagOrderDir,
@@ -134,6 +135,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				if err := cmdutil.ValidateEnum("contract-ended", flagContractEnded, []string{"true", "false"}); err != nil {
 					return err
 				}
+
 				filter["contractEnded"] = flagContractEnded == "true"
 			}
 
@@ -141,6 +143,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				if err := cmdutil.ValidateEnum("state", flagState, []string{"ACTIVE", "INACTIVE"}); err != nil {
 					return err
 				}
+
 				filter["state"] = flagState
 			}
 
@@ -163,12 +166,15 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 					if err := json.Unmarshal(data, &resp); err != nil {
 						return nil, err
 					}
+
 					if resp.Node == nil {
 						return nil, fmt.Errorf("organization %s not found", flagOrg)
 					}
+
 					if resp.Node.Typename != "Organization" {
 						return nil, fmt.Errorf("expected Organization node, got %s", resp.Node.Typename)
 					}
+
 					return &resp.Node.Profiles, nil
 				},
 			)

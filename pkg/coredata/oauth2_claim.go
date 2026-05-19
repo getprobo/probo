@@ -58,6 +58,7 @@ func (c *OAuth2Claim) UnmarshalText(text []byte) error {
 	if !c.IsValid() {
 		return fmt.Errorf("%s is not a valid OAuth2Claim", string(text))
 	}
+
 	return nil
 }
 

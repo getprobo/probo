@@ -67,6 +67,7 @@ func CheckWhoisTool() agent.Tool {
 			if whoisServer == "" {
 				whoisServer = parseWhoisField(referral, "whois")
 			}
+
 			if whoisServer == "" {
 				// Try common TLD WHOIS servers as fallback.
 				parts := strings.Split(p.Domain, ".")
@@ -84,6 +85,7 @@ func CheckWhoisTool() agent.Tool {
 			if whoisHost == "" {
 				whoisHost = whoisServer
 			}
+
 			if err := netcheck.ValidatePublicDomain(whoisHost); err != nil {
 				return agent.ResultJSON(whoisResult{
 					ErrorDetail: fmt.Sprintf("WHOIS referral server not allowed: %s", err),
@@ -114,6 +116,7 @@ func CheckWhoisTool() agent.Tool {
 						years := int(age.Hours() / 24 / 365)
 						months := int(age.Hours()/24/30) % 12
 						result.DomainAge = fmt.Sprintf("%d years, %d months", years, months)
+
 						break
 					}
 				}
@@ -126,10 +129,12 @@ func CheckWhoisTool() agent.Tool {
 
 func queryWhois(ctx context.Context, server, domain string) (string, error) {
 	dialer := net.Dialer{Timeout: 10 * time.Second}
+
 	conn, err := dialer.DialContext(ctx, "tcp", server)
 	if err != nil {
 		return "", fmt.Errorf("cannot connect to %s: %w", server, err)
 	}
+
 	defer func() { _ = conn.Close() }()
 
 	_ = conn.SetDeadline(time.Now().Add(10 * time.Second))
@@ -140,11 +145,13 @@ func queryWhois(ctx context.Context, server, domain string) (string, error) {
 	}
 
 	var sb strings.Builder
+
 	scanner := bufio.NewScanner(conn)
 	for scanner.Scan() {
 		sb.WriteString(scanner.Text())
 		sb.WriteString("\n")
 	}
+
 	if err := scanner.Err(); err != nil {
 		return "", fmt.Errorf("cannot read from %s: %w", server, err)
 	}
@@ -154,19 +161,23 @@ func queryWhois(ctx context.Context, server, domain string) (string, error) {
 
 func parseWhoisField(raw, field string) string {
 	field = strings.ToLower(field)
+
 	for line := range strings.SplitSeq(raw, "\n") {
 		line = strings.TrimSpace(line)
 		if line == "" || strings.HasPrefix(line, "%") || strings.HasPrefix(line, "#") {
 			continue
 		}
+
 		k, v, ok := strings.Cut(line, ":")
 		if !ok {
 			continue
 		}
+
 		if strings.ToLower(strings.TrimSpace(k)) == field {
 			return strings.TrimSpace(v)
 		}
 	}
+
 	return ""
 }
 
@@ -199,16 +210,20 @@ var (
 
 func parseWhoisResponse(raw string) whoisResult {
 	var result whoisResult
+
 	for line := range strings.SplitSeq(raw, "\n") {
 		line = strings.TrimSpace(line)
 		if line == "" || strings.HasPrefix(line, "%") || strings.HasPrefix(line, "#") {
 			continue
 		}
+
 		k, v, ok := strings.Cut(line, ":")
 		if !ok {
 			continue
 		}
+
 		key := strings.ToLower(strings.TrimSpace(k))
+
 		val := strings.TrimSpace(v)
 		if val == "" {
 			continue

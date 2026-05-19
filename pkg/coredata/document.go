@@ -78,6 +78,7 @@ LIMIT 1;
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrResourceNotFound
 		}
+
 		return nil, fmt.Errorf("cannot query document authorization attributes: %w", err)
 	}
 
@@ -287,6 +288,7 @@ WHERE
 	maps.Copy(args, filter.SQLArguments())
 
 	row := conn.QueryRow(ctx, q, args)
+
 	var count int
 	if err := row.Scan(&count); err != nil {
 		return 0, fmt.Errorf("cannot scan count: %w", err)
@@ -540,6 +542,7 @@ VALUES (
 		"updated_at":              p.UpdatedAt,
 	}
 	_, err := conn.Exec(ctx, q, args)
+
 	return err
 }
 
@@ -558,6 +561,7 @@ UPDATE documents SET deleted_at = @deleted_at WHERE %s AND id = @document_id
 	maps.Copy(args, scope.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
+
 	return err
 }
 
@@ -577,6 +581,7 @@ DELETE FROM documents WHERE %s AND organization_id = @organization_id
 	maps.Copy(args, scope.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
+
 	return err
 }
 
@@ -649,6 +654,7 @@ WHERE cp.control_id = @control_id
 	maps.Copy(args, filter.SQLArguments())
 
 	row := conn.QueryRow(ctx, q, args)
+
 	var count int
 	if err := row.Scan(&count); err != nil {
 		return 0, fmt.Errorf("cannot scan count: %w", err)
@@ -749,6 +755,7 @@ WHERE rp.risk_id = @risk_id
 	maps.Copy(args, filter.SQLArguments())
 
 	row := conn.QueryRow(ctx, q, args)
+
 	var count int
 	if err := row.Scan(&count); err != nil {
 		return 0, fmt.Errorf("cannot scan count: %w", err)
@@ -849,6 +856,7 @@ WHERE md.measure_id = @measure_id
 	maps.Copy(args, filter.SQLArguments())
 
 	row := conn.QueryRow(ctx, q, args)
+
 	var count int
 	if err := row.Scan(&count); err != nil {
 		return 0, fmt.Errorf("cannot scan count: %w", err)
@@ -942,6 +950,7 @@ UPDATE documents SET deleted_at = @deleted_at WHERE %s AND id = ANY(@document_id
 	maps.Copy(args, scope.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
+
 	return err
 }
 
@@ -969,6 +978,7 @@ UPDATE documents SET status = 'ARCHIVED', archived_at = @archived_at, trust_cent
 	if _, err := conn.Exec(ctx, q, args); err != nil {
 		return fmt.Errorf("cannot bulk archive documents: %w", err)
 	}
+
 	return nil
 }
 
@@ -995,6 +1005,7 @@ UPDATE documents SET status = 'ACTIVE', archived_at = NULL WHERE %s AND id = ANY
 	if _, err := conn.Exec(ctx, q, args); err != nil {
 		return fmt.Errorf("cannot bulk unarchive documents: %w", err)
 	}
+
 	return nil
 }
 
@@ -1106,6 +1117,7 @@ LIMIT 1
 		if errors.Is(err, pgx.ErrNoRows) {
 			return "", nil
 		}
+
 		return "", fmt.Errorf("cannot collect approval state: %w", err)
 	}
 

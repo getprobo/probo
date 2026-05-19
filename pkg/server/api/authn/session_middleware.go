@@ -46,6 +46,7 @@ func NewSessionMiddleware(svc *iam.Service, cookieConfig securecookie.Config) fu
 				if err != nil {
 					securecookie.Clear(w, cookieConfig)
 					next.ServeHTTP(w, r)
+
 					return
 				}
 
@@ -60,17 +61,21 @@ func NewSessionMiddleware(svc *iam.Service, cookieConfig securecookie.Config) fu
 							},
 						},
 					)
+
 					return
 				}
 
 				session, err := svc.SessionService.GetSession(ctx, sessionID)
 				if err != nil {
-					var errSessionNotFound *iam.ErrSessionNotFound
-					var errSessionExpired *iam.ErrSessionExpired
+					var (
+						errSessionNotFound *iam.ErrSessionNotFound
+						errSessionExpired  *iam.ErrSessionExpired
+					)
 
 					if errors.As(err, &errSessionNotFound) || errors.As(err, &errSessionExpired) {
 						securecookie.Clear(w, cookieConfig)
 						next.ServeHTTP(w, r)
+
 						return
 					}
 
@@ -83,6 +88,7 @@ func NewSessionMiddleware(svc *iam.Service, cookieConfig securecookie.Config) fu
 					if errors.As(err, &errIdentityNotFound) {
 						securecookie.Clear(w, cookieConfig)
 						next.ServeHTTP(w, r)
+
 						return
 					}
 

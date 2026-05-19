@@ -100,6 +100,7 @@ func (v *CookieBannerVersion) GetSnapshot() (CookieBannerVersionSnapshot, error)
 	if err := json.Unmarshal(v.Snapshot, &snapshot); err != nil {
 		return snapshot, fmt.Errorf("cannot unmarshal cookie banner version snapshot: %w", err)
 	}
+
 	return snapshot, nil
 }
 
@@ -108,7 +109,9 @@ func (v *CookieBannerVersion) SetSnapshot(snapshot CookieBannerVersionSnapshot) 
 	if err != nil {
 		return fmt.Errorf("cannot marshal cookie banner version snapshot: %w", err)
 	}
+
 	v.Snapshot = data
+
 	return nil
 }
 
@@ -151,6 +154,7 @@ LIMIT 1;
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
 		}
+
 		return fmt.Errorf("cannot collect cookie banner version: %w", err)
 	}
 
@@ -280,6 +284,7 @@ LIMIT 1;
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
 		}
+
 		return fmt.Errorf("cannot collect cookie banner version: %w", err)
 	}
 
@@ -328,6 +333,7 @@ LIMIT 1;
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
 		}
+
 		return fmt.Errorf("cannot collect cookie banner version: %w", err)
 	}
 
@@ -498,6 +504,7 @@ LIMIT 1;
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
 		}
+
 		return fmt.Errorf("cannot collect cookie banner version: %w", err)
 	}
 

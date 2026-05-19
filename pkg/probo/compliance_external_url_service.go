@@ -53,6 +53,7 @@ func (r *CreateComplianceExternalURLRequest) Validate() error {
 	v := validator.New()
 	v.Check(r.TrustCenterID, "trust_center_id", validator.Required(), validator.GID(coredata.TrustCenterEntityType))
 	v.Check(r.URL, "url", validator.Required(), validator.URL())
+
 	return v.Error()
 }
 
@@ -61,12 +62,14 @@ func (r *UpdateComplianceExternalURLRequest) Validate() error {
 	v.Check(r.ID, "id", validator.Required(), validator.GID(coredata.ComplianceExternalURLEntityType))
 	v.Check(r.URL, "url", validator.Required(), validator.URL())
 	v.Check(r.Rank, "rank", validator.Min(1))
+
 	return v.Error()
 }
 
 func (r *DeleteComplianceExternalURLRequest) Validate() error {
 	v := validator.New()
 	v.Check(r.ID, "id", validator.Required(), validator.GID(coredata.ComplianceExternalURLEntityType))
+
 	return v.Error()
 }
 
@@ -83,6 +86,7 @@ func (s ComplianceExternalURLService) List(
 			if err := items.LoadByTrustCenterID(ctx, conn, s.svc.scope, trustCenterID, cursor); err != nil {
 				return fmt.Errorf("cannot load compliance external URLs: %w", err)
 			}
+
 			return nil
 		},
 	)

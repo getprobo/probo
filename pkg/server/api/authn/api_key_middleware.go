@@ -58,13 +58,16 @@ func NewAPIKeyMiddleware(svc *iam.Service, tokenSecret string) func(next http.Ha
 							},
 						},
 					)
+
 					return
 				}
 
 				apiKey, err := svc.APIKeyService.GetAPIKey(ctx, keyID)
 				if err != nil {
-					var errPersonalAPIKeyNotFound *iam.ErrPersonalAPIKeyNotFound
-					var errPersonalAPIKeyExpired *iam.ErrPersonalAPIKeyExpired
+					var (
+						errPersonalAPIKeyNotFound *iam.ErrPersonalAPIKeyNotFound
+						errPersonalAPIKeyExpired  *iam.ErrPersonalAPIKeyExpired
+					)
 
 					if errors.As(err, &errPersonalAPIKeyNotFound) || errors.As(err, &errPersonalAPIKeyExpired) {
 						next.ServeHTTP(w, r)

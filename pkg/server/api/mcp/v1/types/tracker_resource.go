@@ -44,6 +44,7 @@ func NewListTrackerResourcesOutput(pg *page.Page[*coredata.TrackerResource, core
 	}
 
 	var nextCursor *page.CursorKey
+
 	if len(pg.Data) > 0 {
 		cursorKey := pg.Data[len(pg.Data)-1].CursorKey(pg.Cursor.OrderBy.Field)
 		nextCursor = &cursorKey

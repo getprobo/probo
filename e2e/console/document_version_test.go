@@ -84,6 +84,7 @@ func createTestDocument(t *testing.T, owner *testutil.Client) (docID string, doc
 	if len(result.CreateDocument.DocumentEdge.Node.Versions.Edges) > 0 {
 		docVersionID = result.CreateDocument.DocumentEdge.Node.Versions.Edges[0].Node.ID
 	}
+
 	return docID, docVersionID
 }
 
@@ -502,6 +503,7 @@ func TestDocumentVersion_BulkPublish(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, 2, len(result.BulkPublishDocuments.DocumentVersions))
+
 	for _, dv := range result.BulkPublishDocuments.DocumentVersions {
 		assert.Equal(t, "PUBLISHED", dv.Status)
 	}
@@ -720,6 +722,7 @@ func TestDocumentVersion_BulkRequestSignatures(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, 2, len(result.BulkRequestSignatures.DocumentVersionSignatureEdges))
+
 	for _, edge := range result.BulkRequestSignatures.DocumentVersionSignatureEdges {
 		assert.Equal(t, "REQUESTED", edge.Node.State)
 	}
@@ -1028,6 +1031,7 @@ func TestDocumentVersion_VoidApproval(t *testing.T) {
 	require.NotEmpty(t, quorumResult.Node.Versions.Edges[0].Node.ApprovalQuorums.Edges)
 	decisions := quorumResult.Node.Versions.Edges[0].Node.ApprovalQuorums.Edges[0].Node.Decisions.Edges
 	require.NotEmpty(t, decisions)
+
 	for _, d := range decisions {
 		assert.Equal(t, "VOIDED", d.Node.State, "decisions should be VOIDED after voiding")
 	}
@@ -1382,6 +1386,7 @@ func TestDocumentVersion_DeleteDraft(t *testing.T) {
 					}
 				}
 			`
+
 			var updateResult struct {
 				UpdateDocument struct {
 					Document struct {
@@ -1393,6 +1398,7 @@ func TestDocumentVersion_DeleteDraft(t *testing.T) {
 					} `json:"documentVersion"`
 				} `json:"updateDocument"`
 			}
+
 			err := owner.Execute(updateQuery, map[string]any{
 				"input": map[string]any{
 					"id":      docID,
@@ -1411,6 +1417,7 @@ func TestDocumentVersion_DeleteDraft(t *testing.T) {
 					} `json:"document"`
 				} `json:"deleteDocumentDraft"`
 			}
+
 			err = owner.Execute(query, map[string]any{
 				"input": map[string]any{"documentId": docID},
 			}, &result)
@@ -1427,6 +1434,7 @@ func TestDocumentVersion_DeleteDraft(t *testing.T) {
 			docID, _ := createTestDocument(t, owner)
 
 			var result struct{}
+
 			err := owner.Execute(query, map[string]any{
 				"input": map[string]any{"documentId": docID},
 			}, &result)
@@ -1443,6 +1451,7 @@ func TestDocumentVersion_DeleteDraft(t *testing.T) {
 			approveTestDocument(t, owner, docID)
 
 			var result struct{}
+
 			err := owner.Execute(query, map[string]any{
 				"input": map[string]any{"documentId": docID},
 			}, &result)
@@ -1469,6 +1478,7 @@ func TestDocumentVersion_DeleteDraft(t *testing.T) {
 					}
 				}
 			`
+
 			var updateResult struct {
 				UpdateDocument struct {
 					Document struct {
@@ -1479,6 +1489,7 @@ func TestDocumentVersion_DeleteDraft(t *testing.T) {
 					} `json:"documentVersion"`
 				} `json:"updateDocument"`
 			}
+
 			err := owner.Execute(updateQuery, map[string]any{
 				"input": map[string]any{
 					"id":      docID,
@@ -1488,6 +1499,7 @@ func TestDocumentVersion_DeleteDraft(t *testing.T) {
 			require.NoError(t, err)
 
 			var result struct{}
+
 			err = viewer.Execute(query, map[string]any{
 				"input": map[string]any{"documentId": docID},
 			}, &result)

@@ -168,6 +168,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				if err := cmdutil.ValidateEnum("order-by", flagOrderBy, []string{"CREATED_AT"}); err != nil {
 					return err
 				}
+
 				variables["orderBy"] = map[string]any{
 					"field":     flagOrderBy,
 					"direction": flagOrderDir,
@@ -179,6 +180,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 			}
 
 			filter := map[string]any{}
+
 			if flagDecision != "" {
 				if err := cmdutil.ValidateEnum(
 					"decision",
@@ -187,8 +189,10 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				); err != nil {
 					return err
 				}
+
 				filter["decision"] = flagDecision
 			}
+
 			if flagFlag != "" {
 				if err := cmdutil.ValidateEnum(
 					"flag",
@@ -202,8 +206,10 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				); err != nil {
 					return err
 				}
+
 				filter["flag"] = flagFlag
 			}
+
 			if flagIncTag != "" {
 				if err := cmdutil.ValidateEnum(
 					"incremental-tag",
@@ -212,11 +218,14 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				); err != nil {
 					return err
 				}
+
 				filter["incrementalTag"] = flagIncTag
 			}
+
 			if cmd.Flags().Changed("is-admin") {
 				filter["isAdmin"] = *flagIsAdmin
 			}
+
 			if flagAuthMethod != "" {
 				if err := cmdutil.ValidateEnum(
 					"auth-method",
@@ -225,8 +234,10 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				); err != nil {
 					return err
 				}
+
 				filter["authMethod"] = flagAuthMethod
 			}
+
 			if flagAccountType != "" {
 				if err := cmdutil.ValidateEnum(
 					"account-type",
@@ -235,8 +246,10 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				); err != nil {
 					return err
 				}
+
 				filter["accountType"] = flagAccountType
 			}
+
 			if len(filter) > 0 {
 				variables["filter"] = filter
 			}
@@ -256,12 +269,15 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 					if err := json.Unmarshal(data, &resp); err != nil {
 						return nil, err
 					}
+
 					if resp.Node == nil {
 						return nil, fmt.Errorf("campaign %s not found", args[0])
 					}
+
 					if resp.Node.Typename != "AccessReviewCampaign" {
 						return nil, fmt.Errorf("expected AccessReviewCampaign node, got %s", resp.Node.Typename)
 					}
+
 					return &resp.Node.Entries, nil
 				},
 			)
@@ -273,6 +289,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				if entries == nil {
 					entries = []entryNode{}
 				}
+
 				return cmdutil.PrintJSON(f.IOStreams.Out, entries)
 			}
 
@@ -287,6 +304,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				if e.IsAdmin {
 					admin = "yes"
 				}
+
 				rows = append(rows, []string{
 					e.ID,
 					e.Email,

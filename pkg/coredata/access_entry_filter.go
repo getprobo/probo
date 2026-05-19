@@ -89,18 +89,23 @@ func (f *AccessEntryFilter) SQLArguments() pgx.StrictNamedArgs {
 	if f.Decision != nil {
 		args["filter_decision"] = string(*f.Decision)
 	}
+
 	if f.Flag != nil {
 		args["filter_flag"] = string(*f.Flag)
 	}
+
 	if f.IncrementalTag != nil {
 		args["filter_incremental_tag"] = string(*f.IncrementalTag)
 	}
+
 	if f.IsAdmin != nil {
 		args["filter_is_admin"] = *f.IsAdmin
 	}
+
 	if f.AuthMethod != nil {
 		args["filter_auth_method"] = string(*f.AuthMethod)
 	}
+
 	if f.AccountType != nil {
 		args["filter_account_type"] = string(*f.AccountType)
 	}

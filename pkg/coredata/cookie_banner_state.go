@@ -39,6 +39,7 @@ func (s CookieBannerState) String() string {
 
 func (s *CookieBannerState) Scan(value any) error {
 	var v string
+
 	switch val := value.(type) {
 	case string:
 		v = val
@@ -56,6 +57,7 @@ func (s *CookieBannerState) Scan(value any) error {
 	default:
 		return fmt.Errorf("invalid CookieBannerState value: %q", v)
 	}
+
 	return nil
 }
 

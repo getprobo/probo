@@ -43,6 +43,7 @@ func (tp TaskPriority) String() string {
 
 func (tp *TaskPriority) Scan(value any) error {
 	var s string
+
 	switch v := value.(type) {
 	case string:
 		s = v
@@ -64,6 +65,7 @@ func (tp *TaskPriority) Scan(value any) error {
 	default:
 		return fmt.Errorf("invalid TaskPriority value: %q", s)
 	}
+
 	return nil
 }
 

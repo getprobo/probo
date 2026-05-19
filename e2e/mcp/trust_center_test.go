@@ -220,6 +220,7 @@ func TestMCP_ListTrustCenterReferences(t *testing.T) {
 			"url":           "https://example.com/" + factory.SafeName("path"),
 		}, &result)
 		require.NotEmpty(t, result.TrustCenterReference.ID)
+
 		_ = i
 	}
 
@@ -395,6 +396,7 @@ func TestMCP_ListComplianceExternalURLs(t *testing.T) {
 			"url":           "https://example.com/" + factory.SafeName("path"),
 		}, &result)
 		require.NotEmpty(t, result.ComplianceExternalURL.ID)
+
 		_ = i
 	}
 

@@ -119,7 +119,9 @@ func NewPinnedTransport() *http.Transport {
 
 			// Dial the first validated IP directly to prevent DNS rebinding.
 			pinnedAddr := net.JoinHostPort(ips[0].IP.String(), port)
+
 			var d net.Dialer
+
 			return d.DialContext(ctx, network, pinnedAddr)
 		},
 	}

@@ -27,6 +27,7 @@ func ptrEqual[T comparable](a, b *T) bool {
 	if a == nil || b == nil {
 		return a == b
 	}
+
 	return *a == *b
 }
 
@@ -38,8 +39,10 @@ func jsonEqual(a, b json.RawMessage) (bool, error) {
 	if err := json.Unmarshal(a, &av); err != nil {
 		return false, fmt.Errorf("cannot unmarshal first json blob: %w", err)
 	}
+
 	if err := json.Unmarshal(b, &bv); err != nil {
 		return false, fmt.Errorf("cannot unmarshal second json blob: %w", err)
 	}
+
 	return reflect.DeepEqual(av, bv), nil
 }

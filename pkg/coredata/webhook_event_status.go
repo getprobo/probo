@@ -36,6 +36,7 @@ func (s WebhookEventStatus) IsValid() bool {
 	case WebhookEventStatusPending, WebhookEventStatusSucceeded, WebhookEventStatusFailed:
 		return true
 	}
+
 	return false
 }
 
@@ -48,6 +49,7 @@ func (s *WebhookEventStatus) UnmarshalText(text []byte) error {
 	if !s.IsValid() {
 		return fmt.Errorf("%s is not a valid WebhookEventStatus", string(text))
 	}
+
 	return nil
 }
 

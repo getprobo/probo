@@ -45,6 +45,7 @@ func (as AuditState) String() string {
 
 func (as *AuditState) Scan(value any) error {
 	var s string
+
 	switch v := value.(type) {
 	case string:
 		s = v
@@ -68,6 +69,7 @@ func (as *AuditState) Scan(value any) error {
 	default:
 		return fmt.Errorf("invalid AuditState value: %q", s)
 	}
+
 	return nil
 }
 

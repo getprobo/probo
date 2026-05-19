@@ -77,12 +77,14 @@ func (h *sourceFetchHandler) Claim(ctx context.Context) (coredata.AccessReviewCa
 			if err := sourceFetch.Update(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot update source fetch status: %w", err)
 			}
+
 			return nil
 		},
 	); err != nil {
 		if errors.Is(err, coredata.ErrNoAccessReviewCampaignSourceFetchAvailable) {
 			return coredata.AccessReviewCampaignSourceFetch{}, worker.ErrNoTask
 		}
+
 		return coredata.AccessReviewCampaignSourceFetch{}, fmt.Errorf("cannot claim source fetch: %w", err)
 	}
 
@@ -101,6 +103,7 @@ func (h *sourceFetchHandler) RecoverStale(ctx context.Context) error {
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			var fetches coredata.AccessReviewCampaignSourceFetches
+
 			count, err := fetches.RecoverStale(ctx, tx, staleThreshold, now)
 			if err != nil {
 				return fmt.Errorf("cannot recover stale source fetches: %w", err)
@@ -135,6 +138,7 @@ func (h *sourceFetchHandler) handle(
 		if commitErr != nil {
 			return fmt.Errorf("cannot load campaign: %w, and cannot commit failed source fetch: %w", err, commitErr)
 		}
+
 		return fmt.Errorf("cannot load campaign: %w", err)
 	}
 
@@ -148,6 +152,7 @@ func (h *sourceFetchHandler) handle(
 		if finalizeErr := h.finalizeCampaignFetchLifecycle(ctx, sourceFetch.TenantID, sourceFetch.AccessReviewCampaignID); finalizeErr != nil {
 			return fmt.Errorf("cannot finalize campaign after failed source fetch: %w", finalizeErr)
 		}
+
 		return fmt.Errorf("cannot fetch source: %w", err)
 	}
 
@@ -250,6 +255,7 @@ func (h *sourceFetchHandler) finalizeCampaignFetchLifecycle(
 
 			campaign.Status = coredata.AccessReviewCampaignStatusPendingActions
 			campaign.UpdatedAt = time.Now()
+
 			return campaign.Update(ctx, tx, scope)
 		},
 	)

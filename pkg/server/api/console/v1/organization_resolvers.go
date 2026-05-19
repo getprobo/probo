@@ -48,7 +48,9 @@ func (r *mutationResolver) UpdateOrganizationContext(ctx context.Context, input 
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot update organization context", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -236,6 +238,7 @@ func (r *organizationResolver) AssetListDocument(ctx context.Context, obj *types
 	if err != nil {
 		return nil, fmt.Errorf("cannot get asset list document ID: %w", err)
 	}
+
 	if assetDocumentID == nil {
 		return nil, nil
 	}
@@ -290,6 +293,7 @@ func (r *organizationResolver) DataListDocument(ctx context.Context, obj *types.
 	if err != nil {
 		return nil, fmt.Errorf("cannot get data export document ID: %w", err)
 	}
+
 	if dataDocumentID == nil {
 		return nil, nil
 	}
@@ -374,6 +378,7 @@ func (r *organizationResolver) FindingsDocument(ctx context.Context, obj *types.
 	if err != nil {
 		return nil, fmt.Errorf("cannot get finding list document ID: %w", err)
 	}
+
 	if findingDocumentID == nil {
 		return nil, nil
 	}
@@ -452,16 +457,20 @@ func (r *organizationResolver) AuditLogEntries(ctx context.Context, obj *types.O
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
 	coredataFilter := coredata.NewAuditLogEntryFilter()
+
 	if filter != nil {
 		if filter.Action != nil {
 			coredataFilter.WithAction(*filter.Action)
 		}
+
 		if filter.ActorID != nil {
 			coredataFilter.WithActorID(*filter.ActorID)
 		}
+
 		if filter.ResourceType != nil {
 			coredataFilter.WithResourceType(*filter.ResourceType)
 		}
+
 		if filter.ResourceID != nil {
 			coredataFilter.WithResourceID(*filter.ResourceID)
 		}
@@ -533,6 +542,7 @@ func (r *organizationResolver) Connectors(ctx context.Context, obj *types.Organi
 				filtered = append(filtered, cnnctr)
 			}
 		}
+
 		connectors = filtered
 	}
 
@@ -546,12 +556,15 @@ func (r *organizationResolver) ConnectorProviderInfos(ctx context.Context, obj *
 	}
 
 	var infos []*types.ConnectorProviderInfo
+
 	for _, provider := range coredata.ConnectorProviders() {
 		_, oauthErr := r.connectorRegistry.Get(string(provider))
+
 		scopes := drivers.ProviderOAuth2Scopes(provider)
 		if scopes == nil {
 			scopes = []string{}
 		}
+
 		info := &types.ConnectorProviderInfo{
 			Provider:                   provider,
 			DisplayName:                providerDisplayName(provider),
@@ -563,6 +576,7 @@ func (r *organizationResolver) ConnectorProviderInfos(ctx context.Context, obj *
 		}
 		infos = append(infos, info)
 	}
+
 	return infos, nil
 }
 
@@ -675,6 +689,7 @@ func (r *organizationResolver) DataProtectionImpactAssessmentsDocument(ctx conte
 		r.logger.ErrorCtx(ctx, "cannot get DPIA list document ID", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
+
 	if documentID == nil {
 		return nil, nil
 	}
@@ -684,7 +699,9 @@ func (r *organizationResolver) DataProtectionImpactAssessmentsDocument(ctx conte
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, nil
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot load DPIA list document", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -735,6 +752,7 @@ func (r *organizationResolver) TransferImpactAssessmentsDocument(ctx context.Con
 		r.logger.ErrorCtx(ctx, "cannot get TIA list document ID", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
+
 	if documentID == nil {
 		return nil, nil
 	}
@@ -744,7 +762,9 @@ func (r *organizationResolver) TransferImpactAssessmentsDocument(ctx context.Con
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, nil
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot load TIA list document", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -872,6 +892,7 @@ func (r *organizationResolver) ObligationsDocument(ctx context.Context, obj *typ
 	if err != nil {
 		return nil, fmt.Errorf("cannot get obligation list document ID: %w", err)
 	}
+
 	if obligationDocumentID == nil {
 		return nil, nil
 	}
@@ -959,6 +980,7 @@ func (r *organizationResolver) ProcessingActivitiesDocument(ctx context.Context,
 		r.logger.ErrorCtx(ctx, "cannot get processing activities document ID", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
+
 	if documentID == nil {
 		return nil, nil
 	}
@@ -968,7 +990,9 @@ func (r *organizationResolver) ProcessingActivitiesDocument(ctx context.Context,
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, nil
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot load processing activities document", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -1054,6 +1078,7 @@ func (r *organizationResolver) RisksDocument(ctx context.Context, obj *types.Org
 		r.logger.ErrorCtx(ctx, "cannot get risks document ID", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
+
 	if documentID == nil {
 		return nil, nil
 	}
@@ -1063,7 +1088,9 @@ func (r *organizationResolver) RisksDocument(ctx context.Context, obj *types.Org
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, nil
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot load risks document", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -1313,6 +1340,7 @@ func (r *organizationResolver) ThirdPartiesDocument(ctx context.Context, obj *ty
 		r.logger.ErrorCtx(ctx, "cannot get thirdParties document ID", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
+
 	if documentID == nil {
 		return nil, nil
 	}
@@ -1322,7 +1350,9 @@ func (r *organizationResolver) ThirdPartiesDocument(ctx context.Context, obj *ty
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, nil
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot load thirdParties document", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -1382,18 +1412,22 @@ func (r *profileConnectionResolver) TotalCount(ctx context.Context, obj *types.P
 			r.logger.ErrorCtx(ctx, "cannot count profiles", log.Error(err))
 			return 0, gqlutils.Internal(ctx)
 		}
+
 		return count, nil
 	case *documentVersionResolver:
 		prb := r.ProboService(ctx, obj.ParentID.TenantID())
+
 		count, err := prb.Documents.CountVersionApprovers(ctx, obj.ParentID)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count document version approvers", log.Error(err))
 			return 0, gqlutils.Internal(ctx)
 		}
+
 		return count, nil
 	}
 
 	r.logger.ErrorCtx(ctx, "unsupported resolver for profile connection", log.String("resolver", fmt.Sprintf("%T", obj.Resolver)))
+
 	return 0, gqlutils.Internal(ctx)
 }
 

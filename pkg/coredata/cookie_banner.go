@@ -433,6 +433,7 @@ INSERT INTO cookie_banners (
 				return ErrResourceAlreadyExists
 			}
 		}
+
 		return fmt.Errorf("cannot insert cookie banner: %w", err)
 	}
 
@@ -482,6 +483,7 @@ WHERE
 				return ErrResourceAlreadyExists
 			}
 		}
+
 		return fmt.Errorf("cannot update cookie banner: %w", err)
 	}
 
@@ -595,6 +597,7 @@ LIMIT 1;
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
 		}
+
 		return fmt.Errorf("cannot collect cookie banner: %w", err)
 	}
 

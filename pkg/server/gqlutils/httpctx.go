@@ -29,7 +29,6 @@ var (
 )
 
 func WithHTTPContext(ctx context.Context, w http.ResponseWriter, r *http.Request) context.Context {
-
 	ctx = context.WithValue(ctx, httpResponseWriterKey, w)
 	ctx = context.WithValue(ctx, httpRequestKey, r)
 

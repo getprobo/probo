@@ -88,6 +88,7 @@ func (cp ConnectorProvider) String() string {
 
 func (cp *ConnectorProvider) Scan(value any) error {
 	var s string
+
 	switch v := value.(type) {
 	case string:
 		s = v
@@ -153,6 +154,7 @@ func (cp *ConnectorProvider) Scan(value any) error {
 	default:
 		return fmt.Errorf("invalid ConnectorProvider value: %q", s)
 	}
+
 	return nil
 }
 

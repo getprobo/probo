@@ -32,6 +32,7 @@ import (
 func generateUniqueID() string {
 	randomBytes := make([]byte, 4)
 	_, _ = rand.Read(randomBytes)
+
 	return fmt.Sprintf("%d-%s", time.Now().UnixNano(), hex.EncodeToString(randomBytes))
 }
 
@@ -139,6 +140,7 @@ func (c *Client) SetupTestUserInOrg(ownerClient *Client) {
 	c.userID = identityID
 	c.profileID = profileID
 	ownerClient.inviteUser(profileID)
+
 	token := c.getActivationToken(email)
 	passwordToken := c.activateUser(token)
 	c.resetPassword(password, passwordToken)
@@ -285,12 +287,14 @@ func (c *Client) updateOwnMembershipRole(role coredata.MembershipRole) {
 	require.NoError(c.T, err, "cannot query organization members")
 
 	var membershipID string
+
 	for _, edge := range qResult.Node.Members.Edges {
 		if edge.Node.Identity.ID == c.userID.String() {
 			membershipID = edge.Node.ID
 			break
 		}
 	}
+
 	require.NotEmpty(c.T, membershipID, "membership not found for user")
 
 	// Update the role
@@ -422,6 +426,7 @@ func (c *Client) getActivationToken(email string) string {
 
 	c.T.Logf("activation token not found")
 	c.T.FailNow()
+
 	return ""
 }
 

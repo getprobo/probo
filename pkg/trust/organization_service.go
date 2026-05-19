@@ -52,7 +52,6 @@ func (s OrganizationService) Get(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -86,7 +85,6 @@ func (s OrganizationService) GetOrganizationCustomDomain(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -109,6 +107,7 @@ func (s OrganizationService) GenerateLogoURL(
 	}
 
 	file := &coredata.File{}
+
 	err = s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {

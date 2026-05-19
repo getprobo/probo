@@ -43,6 +43,7 @@ func (c AccessSourceCategory) String() string {
 
 func (c *AccessSourceCategory) Scan(value any) error {
 	var str string
+
 	switch v := value.(type) {
 	case string:
 		str = v
@@ -64,6 +65,7 @@ func (c *AccessSourceCategory) Scan(value any) error {
 	default:
 		return fmt.Errorf("cannot parse AccessSourceCategory: invalid value %q", str)
 	}
+
 	return nil
 }
 

@@ -96,6 +96,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				if err := cmdutil.ValidateEnum("order-by", flagOrderBy, []string{"CREATED_AT"}); err != nil {
 					return err
 				}
+
 				variables["orderBy"] = map[string]any{
 					"field":     flagOrderBy,
 					"direction": flagOrderDir,
@@ -118,6 +119,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 					if err := json.Unmarshal(data, &resp); err != nil {
 						return nil, err
 					}
+
 					return &resp.Viewer.Organization.WebhookSubscriptions, nil
 				},
 			)
@@ -129,6 +131,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				if webhooks == nil {
 					webhooks = []webhookSubscription{}
 				}
+
 				return cmdutil.PrintJSON(f.IOStreams.Out, webhooks)
 			}
 

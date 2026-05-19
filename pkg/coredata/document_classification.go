@@ -48,6 +48,7 @@ func (dc DocumentClassification) String() string {
 	case DocumentClassificationSecret:
 		return "SECRET"
 	}
+
 	panic(fmt.Errorf("invalid DocumentClassification value: %s", string(dc)))
 }
 
@@ -58,6 +59,7 @@ func (dc *DocumentClassification) Scan(value any) error {
 	}
 
 	var sv string
+
 	switch v := value.(type) {
 	case string:
 		sv = v
@@ -68,6 +70,7 @@ func (dc *DocumentClassification) Scan(value any) error {
 	}
 
 	*dc = DocumentClassification(sv)
+
 	return nil
 }
 

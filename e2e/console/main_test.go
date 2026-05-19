@@ -23,7 +23,9 @@ import (
 
 func TestMain(m *testing.M) {
 	testutil.Setup()
+
 	code := m.Run()
+
 	testutil.Teardown()
 	os.Exit(code)
 }

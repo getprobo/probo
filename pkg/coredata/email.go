@@ -162,6 +162,7 @@ VALUES (
 	}
 
 	_, err := conn.Exec(ctx, q, args)
+
 	return err
 }
 
@@ -197,6 +198,7 @@ func (emails Emails) BulkInsert(
 		[]string{"id", "recipient_email", "recipient_name", "sender_name", "reply_to", "unsubscribe_url", "mailing_list_update_id", "subject", "text_body", "html_body", "created_at", "updated_at"},
 		pgx.CopyFromRows(rows),
 	)
+
 	return err
 }
 
@@ -264,6 +266,7 @@ WHERE id = @id
 	}
 
 	_, err := conn.Exec(ctx, q, args)
+
 	return err
 }
 
@@ -278,6 +281,7 @@ SET status = 'PENDING', processing_started_at = NULL, updated_at = NOW()
 WHERE status = 'PROCESSING'
 	AND processing_started_at < NOW() - $1::interval
 `
+
 	_, err := conn.Exec(ctx, q, staleAfter)
 	if err != nil {
 		return fmt.Errorf("cannot reset stale processing emails: %w", err)

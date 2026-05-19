@@ -94,12 +94,14 @@ func (d *NetlifyDriver) queryMembers(ctx context.Context, endpoint string) ([]ne
 	if err != nil {
 		return nil, "", fmt.Errorf("cannot create netlify members request: %w", err)
 	}
+
 	req.Header.Set("Accept", "application/json")
 
 	httpResp, err := d.httpClient.Do(req)
 	if err != nil {
 		return nil, "", fmt.Errorf("cannot execute netlify members request: %w", err)
 	}
+
 	defer func() { _ = httpResp.Body.Close() }()
 
 	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {

@@ -42,6 +42,7 @@ func NewCompliancePagePresenceMiddleware() func(next http.Handler) http.Handler 
 							},
 						},
 					)
+
 					return
 				}
 

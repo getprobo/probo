@@ -123,6 +123,7 @@ func (b *Browser) checkAlive() *agent.ToolResult {
 			IsError: true,
 		}
 	}
+
 	return nil
 }
 

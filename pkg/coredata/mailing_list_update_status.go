@@ -34,6 +34,7 @@ func (s MailingListUpdateStatus) String() string {
 
 func (s *MailingListUpdateStatus) Scan(value any) error {
 	var str string
+
 	switch v := value.(type) {
 	case string:
 		str = v

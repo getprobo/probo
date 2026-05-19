@@ -62,7 +62,9 @@ func (r *dataProtectionImpactAssessmentResolver) Organization(ctx context.Contex
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot get organization", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -89,10 +91,12 @@ func (r *dataProtectionImpactAssessmentConnectionResolver) TotalCount(ctx contex
 			r.logger.ErrorCtx(ctx, "cannot count organization data protection impact assessments", log.Error(err))
 			return 0, gqlutils.Internal(ctx)
 		}
+
 		return count, nil
 	}
 
 	r.logger.ErrorCtx(ctx, "unsupported resolver")
+
 	return 0, gqlutils.Internal(ctx)
 }
 
@@ -122,7 +126,9 @@ func (r *mutationResolver) CreateDataProtectionImpactAssessment(ctx context.Cont
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot create data protection impact assessment", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -153,7 +159,9 @@ func (r *mutationResolver) UpdateDataProtectionImpactAssessment(ctx context.Cont
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot update data protection impact assessment", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -207,7 +215,9 @@ func (r *mutationResolver) CreateTransferImpactAssessment(ctx context.Context, i
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot create transfer impact assessment", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -238,7 +248,9 @@ func (r *mutationResolver) UpdateTransferImpactAssessment(ctx context.Context, i
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot update transfer impact assessment", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -279,10 +291,13 @@ func (r *mutationResolver) PublishDataProtectionImpactAssessmentList(ctx context
 		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
 			return nil, gqlutils.Conflict(ctx, err)
 		}
+
 		if errMinor, ok := errors.AsType[*probo.ErrCannotPublishMinorWithoutMajor](err); ok {
 			return nil, gqlutils.Invalid(ctx, errMinor)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot publish data protection impact assessment list", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -305,10 +320,13 @@ func (r *mutationResolver) PublishTransferImpactAssessmentList(ctx context.Conte
 		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
 			return nil, gqlutils.Conflict(ctx, err)
 		}
+
 		if errMinor, ok := errors.AsType[*probo.ErrCannotPublishMinorWithoutMajor](err); ok {
 			return nil, gqlutils.Invalid(ctx, errMinor)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot publish transfer impact assessment list", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -350,6 +368,7 @@ func (r *transferImpactAssessmentResolver) Organization(ctx context.Context, obj
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get organization", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -376,10 +395,12 @@ func (r *transferImpactAssessmentConnectionResolver) TotalCount(ctx context.Cont
 			r.logger.ErrorCtx(ctx, "cannot count organization transfer impact assessments", log.Error(err))
 			return 0, gqlutils.Internal(ctx)
 		}
+
 		return count, nil
 	}
 
 	r.logger.ErrorCtx(ctx, "unsupported resolver")
+
 	return 0, gqlutils.Internal(ctx)
 }
 

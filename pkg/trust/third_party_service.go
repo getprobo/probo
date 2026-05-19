@@ -45,7 +45,6 @@ func (s ThirdPartyService) Get(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -74,7 +73,6 @@ func (s ThirdPartyService) ListForOrganizationId(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -99,6 +97,7 @@ func (s ThirdPartyService) CountForTrustCenterId(
 			thirdParties := &coredata.ThirdParties{}
 			showOnTrustCenter := true
 			filter := coredata.NewThirdPartyFilter(&showOnTrustCenter)
+
 			count, err = thirdParties.CountByOrganizationID(ctx, conn, s.svc.scope, trustCenter.OrganizationID, filter)
 			if err != nil {
 				return fmt.Errorf("cannot count thirdParties: %w", err)
@@ -107,7 +106,6 @@ func (s ThirdPartyService) CountForTrustCenterId(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return 0, err
 	}

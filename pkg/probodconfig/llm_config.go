@@ -66,14 +66,18 @@ func (c *AgentsConfig) ResolveAgent(agent LLMAgentConfig) LLMAgentConfig {
 	if agent.Provider == "" {
 		agent.Provider = c.Default.Provider
 	}
+
 	if agent.ModelName == "" {
 		agent.ModelName = c.Default.ModelName
 	}
+
 	if agent.Temperature == nil {
 		agent.Temperature = c.Default.Temperature
 	}
+
 	if agent.MaxTokens == nil {
 		agent.MaxTokens = c.Default.MaxTokens
 	}
+
 	return agent
 }

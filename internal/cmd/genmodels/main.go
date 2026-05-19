@@ -96,6 +96,7 @@ func main() {
 		fmt.Fprintf(os.Stderr, "cannot fetch models: %v\n", err)
 		os.Exit(1)
 	}
+
 	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
@@ -126,6 +127,7 @@ var generatedModels = map[string]ModelDefinition{
 	)
 
 	var count int
+
 	for _, m := range result.Data {
 		provider := providerFromID(m.ID)
 		if _, ok := includedProviders[provider]; !ok {
@@ -148,6 +150,7 @@ var generatedModels = map[string]ModelDefinition{
 			m.TopProvider.MaxCompletionTokens,
 			buildSupports(m.SupportedParams),
 		)
+
 		count++
 	}
 
@@ -172,11 +175,13 @@ func providerFromID(id string) string {
 	if ok {
 		return provider
 	}
+
 	return ""
 }
 
 func buildSupports(params []string) string {
 	fields := make(map[string]bool)
+
 	for _, p := range params {
 		if field, ok := paramFieldMap[p]; ok {
 			fields[field] = true
@@ -184,6 +189,7 @@ func buildSupports(params []string) string {
 	}
 
 	var buf strings.Builder
+
 	fieldNames := []string{
 		"Temperature", "TopP", "TopK", "FrequencyPenalty", "PresencePenalty",
 		"Stop", "Seed", "MaxTokens", "ToolChoice", "ParallelToolCalls",
@@ -192,5 +198,6 @@ func buildSupports(params []string) string {
 	for _, f := range fieldNames {
 		fmt.Fprintf(&buf, "			%s: %t,\n", f, fields[f])
 	}
+
 	return buf.String()
 }

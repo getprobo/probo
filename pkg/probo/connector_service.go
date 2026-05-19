@@ -77,6 +77,7 @@ func (car *CreateConnectorRequest) Validate() error {
 	v.Check(car.Provider, "provider", validator.Required(), validator.OneOfSlice(coredata.ConnectorProviders()))
 	v.Check(car.Protocol, "protocol", validator.Required(), validator.OneOfSlice(coredata.ConnectorProtocols()))
 	v.Check(car.Connection, "connection", validator.Required())
+
 	return v.Error()
 }
 
@@ -86,6 +87,7 @@ func (rcr *ReconnectConnectorRequest) Validate() error {
 	v.Check(rcr.OrganizationID, "organization_id", validator.Required(), validator.GID(coredata.OrganizationEntityType))
 	v.Check(rcr.Provider, "provider", validator.Required(), validator.OneOfSlice(coredata.ConnectorProviders()))
 	v.Check(rcr.Connection, "connection", validator.Required())
+
 	return v.Error()
 }
 
@@ -110,7 +112,6 @@ func (s *ConnectorService) ListForOrganizationID(
 			)
 		},
 	)
-
 	if err != nil {
 		return nil, fmt.Errorf("cannot list connectors: %w", err)
 	}
@@ -325,7 +326,6 @@ func (s *ConnectorService) Create(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -359,9 +359,11 @@ func (s *ConnectorService) Reconnect(
 			if cnnctr.OrganizationID != req.OrganizationID {
 				return fmt.Errorf("cannot reconnect connector: organization mismatch")
 			}
+
 			if cnnctr.Provider != req.Provider {
 				return fmt.Errorf("cannot reconnect connector: provider mismatch")
 			}
+
 			if cnnctr.Protocol != coredata.ConnectorProtocolOAuth2 {
 				return fmt.Errorf("cannot reconnect connector: not an OAuth2 connector")
 			}
@@ -397,6 +399,7 @@ func preserveConnectionFields(newConn, oldConn connector.Connection) {
 			if n.RefreshToken == "" {
 				n.RefreshToken = o.RefreshToken
 			}
+
 			if n.Settings.WebhookURL == "" {
 				n.Settings.WebhookURL = o.Settings.WebhookURL
 				n.Settings.Channel = o.Settings.Channel

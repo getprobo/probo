@@ -43,6 +43,7 @@ func InsertData(
 	data any,
 ) error {
 	var configs coredata.WebhookSubscriptions
+
 	exists, err := configs.ExistsByOrganizationIDAndEventType(ctx, tx, scope, organizationID, eventType)
 	if err != nil {
 		return fmt.Errorf("cannot check webhook subscriptions: %w", err)

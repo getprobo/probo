@@ -120,15 +120,18 @@ func (d *Microsoft365Driver) ListAccounts(ctx context.Context) ([]AccountRecord,
 	}
 
 	rolesByUser := make(map[string][]string)
+
 	for _, role := range roles {
 		members, err := d.listRoleMembers(ctx, role.ID)
 		if err != nil {
 			return nil, fmt.Errorf("cannot list members of role %q: %w", role.DisplayName, err)
 		}
+
 		for _, m := range members {
 			if m.ODataType != "" && m.ODataType != "#microsoft.graph.user" {
 				continue
 			}
+
 			rolesByUser[m.ID] = append(rolesByUser[m.ID], role.DisplayName)
 		}
 	}
@@ -147,6 +150,7 @@ func (d *Microsoft365Driver) ListAccounts(ctx context.Context) ([]AccountRecord,
 
 		userRoles := rolesByUser[u.ID]
 		isAdmin := false
+
 		for _, r := range userRoles {
 			if adminRoleDisplayNames[r] {
 				isAdmin = true
@@ -214,6 +218,7 @@ func pickHighestRole(roles []string) string {
 	if len(roles) > 0 {
 		return roles[0]
 	}
+
 	return ""
 }
 
@@ -224,15 +229,18 @@ func (d *Microsoft365Driver) listUsers(ctx context.Context) ([]microsoft365User,
 	}
 
 	var all []microsoft365User
+
 	for range microsoft365MaxPaginationOK {
 		var page microsoft365UsersPage
 		if err := d.fetchJSON(ctx, pageURL, &page); err != nil {
 			return nil, err
 		}
+
 		all = append(all, page.Value...)
 		if page.NextLink == "" {
 			return all, nil
 		}
+
 		pageURL = page.NextLink
 	}
 
@@ -258,15 +266,18 @@ func (d *Microsoft365Driver) listDirectoryRoles(ctx context.Context) ([]microsof
 	url := fmt.Sprintf("%s/directoryRoles", microsoft365GraphBaseURL)
 
 	var all []microsoft365DirectoryRole
+
 	for range microsoft365MaxPaginationOK {
 		var page microsoft365RolesPage
 		if err := d.fetchJSON(ctx, url, &page); err != nil {
 			return nil, err
 		}
+
 		all = append(all, page.Value...)
 		if page.NextLink == "" {
 			return all, nil
 		}
+
 		url = page.NextLink
 	}
 
@@ -277,15 +288,18 @@ func (d *Microsoft365Driver) listRoleMembers(ctx context.Context, roleID string)
 	url := fmt.Sprintf("%s/directoryRoles/%s/members", microsoft365GraphBaseURL, roleID)
 
 	var all []microsoft365RoleMember
+
 	for range microsoft365MaxPaginationOK {
 		var page microsoft365MembersPage
 		if err := d.fetchJSON(ctx, url, &page); err != nil {
 			return nil, err
 		}
+
 		all = append(all, page.Value...)
 		if page.NextLink == "" {
 			return all, nil
 		}
+
 		url = page.NextLink
 	}
 
@@ -297,12 +311,14 @@ func (d *Microsoft365Driver) fetchJSON(ctx context.Context, url string, dst any)
 	if err != nil {
 		return fmt.Errorf("cannot create graph request: %w", err)
 	}
+
 	req.Header.Set("Accept", "application/json")
 
 	resp, err := d.httpClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("cannot execute graph request: %w", err)
 	}
+
 	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {

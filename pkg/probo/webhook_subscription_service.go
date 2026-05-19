@@ -68,6 +68,7 @@ func (s WebhookSubscriptionService) ListForOrganizationID(
 	cursor *page.Cursor[coredata.WebhookSubscriptionOrderField],
 ) (*page.Page[*coredata.WebhookSubscription, coredata.WebhookSubscriptionOrderField], error) {
 	var subscriptions coredata.WebhookSubscriptions
+
 	organization := &coredata.Organization{}
 
 	err := s.svc.pg.WithConn(
@@ -91,7 +92,6 @@ func (s WebhookSubscriptionService) ListForOrganizationID(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -109,6 +109,7 @@ func (s WebhookSubscriptionService) CountForOrganizationID(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			subscriptions := &coredata.WebhookSubscriptions{}
+
 			count, err = subscriptions.CountByOrganizationID(ctx, conn, s.svc.scope, organizationID)
 			if err != nil {
 				return fmt.Errorf("cannot count webhook subscriptions: %w", err)
@@ -117,7 +118,6 @@ func (s WebhookSubscriptionService) CountForOrganizationID(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return 0, err
 	}
@@ -141,7 +141,6 @@ func (s WebhookSubscriptionService) Get(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -158,7 +157,9 @@ func (s WebhookSubscriptionService) Create(
 	}
 
 	now := time.Now()
+
 	var wc *coredata.WebhookSubscription
+
 	organization := &coredata.Organization{}
 
 	err := s.svc.pg.WithTx(
@@ -188,7 +189,6 @@ func (s WebhookSubscriptionService) Create(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -216,6 +216,7 @@ func (s WebhookSubscriptionService) Update(
 			if req.EndpointURL != nil {
 				wc.EndpointURL = *req.EndpointURL
 			}
+
 			if req.SelectedEvents != nil {
 				wc.SelectedEvents = req.SelectedEvents
 			}
@@ -229,7 +230,6 @@ func (s WebhookSubscriptionService) Update(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -253,7 +253,6 @@ func (s WebhookSubscriptionService) GetSigningSecret(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return "", err
 	}
@@ -278,7 +277,6 @@ func (s WebhookSubscriptionService) ListEventsForSubscriptionID(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -296,8 +294,8 @@ func (s WebhookSubscriptionService) CountEventsForSubscriptionID(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			events := &coredata.WebhookEvents{}
-			count, err = events.CountBySubscriptionID(ctx, conn, s.svc.scope, webhookSubscriptionID)
 
+			count, err = events.CountBySubscriptionID(ctx, conn, s.svc.scope, webhookSubscriptionID)
 			if err != nil {
 				return fmt.Errorf("cannot count webhook events: %w", err)
 			}
@@ -305,7 +303,6 @@ func (s WebhookSubscriptionService) CountEventsForSubscriptionID(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return 0, err
 	}
@@ -333,7 +330,6 @@ func (s WebhookSubscriptionService) Delete(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return err
 	}

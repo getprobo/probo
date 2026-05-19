@@ -56,6 +56,7 @@ func (tr *TrackerResource) CursorKey(field TrackerResourceOrderField) page.Curso
 		if tr.LastDetectedAt == nil {
 			return page.NewCursorKey(tr.ID, time.Time{})
 		}
+
 		return page.NewCursorKey(tr.ID, *tr.LastDetectedAt)
 	case TrackerResourceOrderFieldOrigin:
 		return page.NewCursorKey(tr.ID, tr.Origin)
@@ -125,6 +126,7 @@ LIMIT 1;
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
 		}
+
 		return fmt.Errorf("cannot collect tracker resource: %w", err)
 	}
 
@@ -188,6 +190,7 @@ LIMIT 1;
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
 		}
+
 		return fmt.Errorf("cannot collect tracker resource: %w", err)
 	}
 
@@ -259,6 +262,7 @@ INSERT INTO tracker_resources (
 				return ErrResourceAlreadyExists
 			}
 		}
+
 		return fmt.Errorf("cannot insert tracker resource: %w", err)
 	}
 

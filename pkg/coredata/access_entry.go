@@ -77,6 +77,7 @@ func (e *AccessEntry) AuthorizationAttributes(ctx context.Context, conn pg.Queri
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrResourceNotFound
 		}
+
 		return nil, fmt.Errorf("cannot query access entry authorization attributes: %w", err)
 	}
 
@@ -139,6 +140,7 @@ LIMIT 1;
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
 		}
+
 		return fmt.Errorf("cannot collect access entry: %w", err)
 	}
 
@@ -243,6 +245,7 @@ VALUES (
 		"created_at":                e.CreatedAt,
 		"updated_at":                e.UpdatedAt,
 	}
+
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
 		return fmt.Errorf("cannot insert access_entry: %w", err)
@@ -529,6 +532,7 @@ func (e *AccessEntry) LoadOrganizationID(
 		if errors.Is(err, pgx.ErrNoRows) {
 			return gid.GID{}, ErrResourceNotFound
 		}
+
 		return gid.GID{}, fmt.Errorf("cannot load organization id for access entry: %w", err)
 	}
 
@@ -731,13 +735,16 @@ WHERE %s
 	defer rows.Close()
 
 	var result []BaselineAccountEntry
+
 	for rows.Next() {
 		var entry BaselineAccountEntry
 		if err := rows.Scan(&entry.AccountKey, &entry.Email, &entry.FullName); err != nil {
 			return nil, fmt.Errorf("cannot scan baseline entry: %w", err)
 		}
+
 		result = append(result, entry)
 	}
+
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("cannot iterate baseline entries: %w", err)
 	}
@@ -795,13 +802,16 @@ ORDER BY
 	defer rows.Close()
 
 	var result []MembershipAccount
+
 	for rows.Next() {
 		var account MembershipAccount
 		if err := rows.Scan(&account.ID, &account.Email, &account.FullName, &account.State, &account.Role, &account.CreatedAt); err != nil {
 			return nil, fmt.Errorf("cannot scan membership account: %w", err)
 		}
+
 		result = append(result, account)
 	}
+
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("cannot iterate membership accounts: %w", err)
 	}

@@ -72,6 +72,7 @@ func (dvs *DocumentVersionSignature) AuthorizationAttributes(ctx context.Context
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrResourceNotFound
 		}
+
 		return nil, fmt.Errorf("cannot query document version signature authorization attributes: %w", err)
 	}
 
@@ -221,6 +222,7 @@ INSERT INTO document_version_signatures (
 				return ErrResourceAlreadyExists
 			}
 		}
+
 		return fmt.Errorf("cannot insert document version signature: %w", err)
 	}
 
@@ -506,6 +508,7 @@ WHERE
 	maps.Copy(args, filter.SQLArguments())
 
 	row := conn.QueryRow(ctx, q, args)
+
 	var count int
 	if err := row.Scan(&count); err != nil {
 		return 0, fmt.Errorf("cannot scan count: %w", err)

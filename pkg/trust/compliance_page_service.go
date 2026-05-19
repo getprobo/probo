@@ -44,6 +44,7 @@ var complianceTmpl = template.Must(
 				s = strings.ReplaceAll(s, `|`, `\|`)
 				s = strings.ReplaceAll(s, "\n", " ")
 				s = strings.ReplaceAll(s, "\r", "")
+
 				return s
 			},
 		}).
@@ -136,9 +137,11 @@ func (s *Service) RenderCompliancePageMarkdown(
 	if org.WebsiteURL != nil && *org.WebsiteURL != "" {
 		data.Details = append(data.Details, compliancePageDetail{Label: "Website", Value: *org.WebsiteURL})
 	}
+
 	if org.Email != nil && *org.Email != "" {
 		data.Details = append(data.Details, compliancePageDetail{Label: "Email", Value: *org.Email})
 	}
+
 	if org.HeadquarterAddress != nil && *org.HeadquarterAddress != "" {
 		data.Details = append(data.Details, compliancePageDetail{Label: "Headquarters", Value: *org.HeadquarterAddress})
 	}
@@ -264,6 +267,7 @@ func (s *Service) fetchDocumentIDs(ctx context.Context, tenantSvc *TenantService
 			if doc.TrustCenterVisibility == coredata.TrustCenterVisibilityNone {
 				continue
 			}
+
 			ids = append(ids, doc.ID.String())
 		}
 
@@ -313,6 +317,7 @@ func (s *Service) fetchComplianceFrameworks(ctx context.Context, tenantSvc *Tena
 			if fw.Description != nil {
 				fi.Description = *fw.Description
 			}
+
 			frameworks = append(frameworks, fi)
 		}
 
@@ -352,6 +357,7 @@ func (s *Service) fetchDocuments(ctx context.Context, tenantSvc *TenantService, 
 			if doc.TrustCenterVisibility == coredata.TrustCenterVisibilityNone {
 				continue
 			}
+
 			docs = append(
 				docs,
 				compliancePageDocument{
@@ -399,6 +405,7 @@ func (s *Service) fetchAudits(ctx context.Context, tenantSvc *TenantService, org
 			}
 
 			frameworkName := ""
+
 			fw, err := tenantSvc.Frameworks.Get(ctx, audit.FrameworkID)
 			if err == nil {
 				frameworkName = fw.Name
@@ -411,9 +418,11 @@ func (s *Service) fetchAudits(ctx context.Context, tenantSvc *TenantService, org
 			if audit.ValidFrom != nil {
 				ai.ValidFrom = audit.ValidFrom.Format("2006-01-02")
 			}
+
 			if audit.ValidUntil != nil {
 				ai.ValidUntil = audit.ValidUntil.Format("2006-01-02")
 			}
+
 			audits = append(audits, ai)
 		}
 
@@ -506,6 +515,7 @@ func (s *Service) fetchReferences(ctx context.Context, tenantSvc *TenantService,
 			if r.Description != nil {
 				ri.Description = *r.Description
 			}
+
 			refs = append(refs, ri)
 		}
 

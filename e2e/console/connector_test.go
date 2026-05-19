@@ -75,6 +75,7 @@ func TestConnectorProviderInfos(t *testing.T) {
 		assert.NotEmpty(t, infos)
 
 		providerNames := make(map[string]bool)
+
 		for _, info := range infos {
 			assert.NotEmpty(t, info.Provider)
 			assert.NotEmpty(t, info.DisplayName)

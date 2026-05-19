@@ -33,9 +33,11 @@ func main() {
 	if isNonInteractiveEnv() {
 		ios.ForceNonInteractive = true
 	}
+
 	if isNoColorEnv() {
 		ios.ForceNoColor = true
 	}
+
 	ios.ApplyColorProfile()
 
 	f := &cmdutil.Factory{
@@ -58,15 +60,19 @@ func isNonInteractiveEnv() bool {
 	if v := os.Getenv("PROBO_NO_INTERACTIVE"); v == "1" || v == "true" {
 		return true
 	}
+
 	if v := os.Getenv("CI"); v == "true" || v == "1" {
 		return true
 	}
+
 	if os.Getenv("DEBIAN_FRONTEND") == "noninteractive" {
 		return true
 	}
+
 	if os.Getenv("TERM") == "dumb" {
 		return true
 	}
+
 	return false
 }
 
@@ -74,8 +80,10 @@ func isNoColorEnv() bool {
 	if _, ok := os.LookupEnv("NO_COLOR"); ok {
 		return true
 	}
+
 	if os.Getenv("TERM") == "dumb" {
 		return true
 	}
+
 	return false
 }

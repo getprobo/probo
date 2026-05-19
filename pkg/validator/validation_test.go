@@ -198,6 +198,7 @@ func TestDuplicateValidators(t *testing.T) {
 		if errors[0].Message != "must be at least 5 characters" {
 			t.Errorf("unexpected first error: %s", errors[0].Message)
 		}
+
 		if errors[1].Message != "must be at least 5 characters" {
 			t.Errorf("unexpected second error: %s", errors[1].Message)
 		}
@@ -238,6 +239,7 @@ func TestDuplicateValidators(t *testing.T) {
 		if errors[0].Message != "must be at least 5 characters" {
 			t.Errorf("unexpected first error: %s", errors[0].Message)
 		}
+
 		if errors[1].Message != "must be at least 10 characters" {
 			t.Errorf("unexpected second error: %s", errors[1].Message)
 		}
@@ -250,6 +252,7 @@ func TestStandardErrorPattern(t *testing.T) {
 		v := New()
 		v.Check(&email, "email", Required(), NotEmpty())
 		v.Check(&password, "password", Required(), MinLen(8))
+
 		return v.Error()
 	}
 

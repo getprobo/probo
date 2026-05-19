@@ -89,6 +89,7 @@ func (d *TallyDriver) listUsers(ctx context.Context) ([]AccountRecord, error) {
 	if err != nil {
 		return nil, fmt.Errorf("cannot execute tally users request: %w", err)
 	}
+
 	defer func() {
 		_ = httpResp.Body.Close()
 	}()
@@ -106,6 +107,7 @@ func (d *TallyDriver) listUsers(ctx context.Context) ([]AccountRecord, error) {
 	}
 
 	var records []AccountRecord
+
 	for _, u := range users {
 		mfaStatus := coredata.MFAStatusDisabled
 		if u.HasTwoFactorEnabled {
@@ -149,6 +151,7 @@ func (d *TallyDriver) listInvites(ctx context.Context) ([]AccountRecord, error) 
 	if err != nil {
 		return nil, fmt.Errorf("cannot execute tally invites request: %w", err)
 	}
+
 	defer func() {
 		_ = httpResp.Body.Close()
 	}()
@@ -166,6 +169,7 @@ func (d *TallyDriver) listInvites(ctx context.Context) ([]AccountRecord, error) 
 	}
 
 	var records []AccountRecord
+
 	for _, inv := range invites {
 		record := AccountRecord{
 			Email:       inv.Email,

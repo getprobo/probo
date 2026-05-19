@@ -36,6 +36,7 @@ func TestMCP_ThirdParty_CRUD(t *testing.T) {
 			Name string `json:"name"`
 		} `json:"third_party"`
 	}
+
 	name := factory.SafeName("ThirdParty")
 	mc.CallToolInto("addThirdParty", map[string]any{
 		"organizationId": orgID,

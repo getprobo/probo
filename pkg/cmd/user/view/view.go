@@ -139,6 +139,7 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 
 			if len(p.AdditionalEmailAddresses) > 0 {
 				_, _ = fmt.Fprintln(out)
+
 				_, _ = fmt.Fprintf(out, "%s\n", bold.Render("Additional Emails"))
 				for _, email := range p.AdditionalEmailAddresses {
 					_, _ = fmt.Fprintf(out, "  %s\n", email)
@@ -149,6 +150,7 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 			if p.ContractStartDate != nil {
 				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Contract Start:"), *p.ContractStartDate)
 			}
+
 			if p.ContractEndDate != nil {
 				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Contract End:"), *p.ContractEndDate)
 			}

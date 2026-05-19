@@ -54,6 +54,7 @@ func (o *Organization) AuthorizationAttributes(ctx context.Context, conn pg.Quer
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrResourceNotFound
 		}
+
 		return nil, fmt.Errorf("cannot query organization authorization attributes: %w", err)
 	}
 

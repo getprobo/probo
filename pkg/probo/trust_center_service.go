@@ -121,7 +121,6 @@ func (s TrustCenterService) Get(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, fmt.Errorf("cannot load trust center: %w", err)
 	}
@@ -146,7 +145,6 @@ func (s TrustCenterService) GetByOrganizationID(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -162,8 +160,10 @@ func (s TrustCenterService) Update(
 		return nil, nil, err
 	}
 
-	var trustCenter *coredata.TrustCenter
-	var file *coredata.File
+	var (
+		trustCenter *coredata.TrustCenter
+		file        *coredata.File
+	)
 
 	err := s.svc.pg.WithTx(
 		ctx,
@@ -176,12 +176,15 @@ func (s TrustCenterService) Update(
 			if req.Active != nil {
 				trustCenter.Active = *req.Active
 			}
+
 			if req.Slug != nil {
 				trustCenter.Slug = *req.Slug
 			}
+
 			if req.SearchEngineIndexing != nil {
 				trustCenter.SearchEngineIndexing = *req.SearchEngineIndexing
 			}
+
 			trustCenter.UpdatedAt = time.Now()
 
 			if err := trustCenter.Update(ctx, conn, s.svc.scope); err != nil {
@@ -198,7 +201,6 @@ func (s TrustCenterService) Update(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, nil, err
 	}
@@ -219,8 +221,10 @@ func (s TrustCenterService) UploadNDA(
 		return nil, nil, fmt.Errorf("cannot generate object key: %w", err)
 	}
 
-	var trustCenter *coredata.TrustCenter
-	var file *coredata.File
+	var (
+		trustCenter *coredata.TrustCenter
+		file        *coredata.File
+	)
 
 	err = s.svc.pg.WithTx(
 		ctx,
@@ -285,7 +289,6 @@ func (s TrustCenterService) UploadNDA(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, nil, err
 	}
@@ -317,7 +320,6 @@ func (s TrustCenterService) DeleteNDA(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, nil, err
 	}
@@ -333,8 +335,10 @@ func (s TrustCenterService) UpdateTrustCenterBrand(
 		return nil, nil, err
 	}
 
-	var trustCenter *coredata.TrustCenter
-	var ndaFile *coredata.File
+	var (
+		trustCenter *coredata.TrustCenter
+		ndaFile     *coredata.File
+	)
 
 	err := s.svc.pg.WithTx(
 		ctx,
@@ -354,6 +358,7 @@ func (s TrustCenterService) UpdateTrustCenterBrand(
 					if err != nil {
 						return fmt.Errorf("cannot upload logo file: %w", err)
 					}
+
 					trustCenter.LogoFileID = &file.ID
 				}
 			}
@@ -366,6 +371,7 @@ func (s TrustCenterService) UpdateTrustCenterBrand(
 					if err != nil {
 						return fmt.Errorf("cannot upload dark logo file: %w", err)
 					}
+
 					trustCenter.DarkLogoFileID = &file.ID
 				}
 			}
@@ -386,7 +392,6 @@ func (s TrustCenterService) UpdateTrustCenterBrand(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, nil, err
 	}
@@ -464,6 +469,7 @@ func (s TrustCenterService) GenerateNDAFileURL(
 	expiresIn time.Duration,
 ) (*string, error) {
 	var file *coredata.File
+
 	trustCenter := &coredata.TrustCenter{}
 
 	err := s.svc.pg.WithConn(

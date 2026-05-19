@@ -39,6 +39,7 @@ func (r *frameworkResolver) Organization(ctx context.Context, obj *types.Framewo
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot load organization", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -122,10 +123,12 @@ func (r *frameworkConnectionResolver) TotalCount(ctx context.Context, obj *types
 			r.logger.ErrorCtx(ctx, "cannot count frameworks", log.Error(err))
 			return 0, gqlutils.Internal(ctx)
 		}
+
 		return count, nil
 	}
 
 	r.logger.ErrorCtx(ctx, "unsupported resolver")
+
 	return 0, gqlutils.Internal(ctx)
 }
 
@@ -148,7 +151,9 @@ func (r *mutationResolver) CreateFramework(ctx context.Context, input types.Crea
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot create framework", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -177,7 +182,9 @@ func (r *mutationResolver) UpdateFramework(ctx context.Context, input types.Upda
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot update framework", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -207,6 +214,7 @@ func (r *mutationResolver) ImportFramework(ctx context.Context, input types.Impo
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot import framework", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 

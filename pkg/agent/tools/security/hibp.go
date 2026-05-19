@@ -81,6 +81,7 @@ func CheckBreachesTool() agent.Tool {
 					ErrorDetail: fmt.Sprintf("cannot fetch breaches: %s", err),
 				}), nil
 			}
+
 			defer func() { _ = resp.Body.Close() }()
 
 			body, err := io.ReadAll(resp.Body)

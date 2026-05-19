@@ -39,6 +39,7 @@ func (p TrackerPatternOrderField) Column() string {
 	case TrackerPatternOrderFieldSource:
 		return "COALESCE(source, '')"
 	}
+
 	panic(fmt.Sprintf("unsupported order by: %s", p))
 }
 
@@ -51,6 +52,7 @@ func (p TrackerPatternOrderField) IsValid() bool {
 		TrackerPatternOrderFieldSource:
 		return true
 	}
+
 	return false
 }
 
@@ -63,6 +65,7 @@ func (p *TrackerPatternOrderField) UnmarshalText(text []byte) error {
 	if !p.IsValid() {
 		return fmt.Errorf("%s is not a valid TrackerPatternOrderField", string(text))
 	}
+
 	return nil
 }
 

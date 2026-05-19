@@ -69,6 +69,7 @@ func (h *Handler) handleGetPublicFile(w http.ResponseWriter, r *http.Request) {
 			log.String("file_id", fileIDStr),
 		)
 		http.Error(w, "internal server error", http.StatusInternalServerError)
+
 		return
 	}
 

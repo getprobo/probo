@@ -67,6 +67,7 @@ LIMIT 1;
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrResourceNotFound
 		}
+
 		return nil, fmt.Errorf("cannot query document version authorization attributes: %w", err)
 	}
 
@@ -193,6 +194,7 @@ LIMIT 1;
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
 		}
+
 		return fmt.Errorf("cannot collect document version: %w", err)
 	}
 
@@ -279,6 +281,7 @@ VALUES (
 				}
 			}
 		}
+
 		return fmt.Errorf("error creating document version: %w", err)
 	}
 
@@ -341,6 +344,7 @@ LIMIT 1;
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
 		}
+
 		return fmt.Errorf("cannot collect document version: %w", err)
 	}
 
@@ -399,6 +403,7 @@ LIMIT 1;
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
 		}
+
 		return fmt.Errorf("cannot collect document version: %w", err)
 	}
 
@@ -459,6 +464,7 @@ LIMIT 1;
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
 		}
+
 		return fmt.Errorf("cannot collect document version: %w", err)
 	}
 
@@ -595,6 +601,7 @@ FOR UPDATE OF dv SKIP LOCKED;
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrNoDocumentPDFJobAvailable
 		}
+
 		return fmt.Errorf("cannot collect document version: %w", err)
 	}
 
@@ -651,6 +658,7 @@ WHERE
 	maps.Copy(args, filter.SQLArguments())
 
 	row := conn.QueryRow(ctx, q, args)
+
 	var count int
 	if err := row.Scan(&count); err != nil {
 		return 0, fmt.Errorf("cannot scan count: %w", err)

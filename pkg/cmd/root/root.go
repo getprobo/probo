@@ -67,9 +67,11 @@ func NewCmdRoot(f *cmdutil.Factory) *cobra.Command {
 			if noInteractive, _ := cmd.Flags().GetBool("no-interactive"); noInteractive {
 				f.IOStreams.ForceNonInteractive = true
 			}
+
 			if noColor, _ := cmd.Flags().GetBool("no-color"); noColor {
 				f.IOStreams.ForceNoColor = true
 			}
+
 			f.IOStreams.ApplyColorProfile()
 		},
 	}

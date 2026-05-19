@@ -91,10 +91,13 @@ func (r *documentResolver) IsUserAuthorized(ctx context.Context, obj *types.Docu
 		if errors.Is(err, trust.ErrDocumentNotFound) || errors.Is(err, trust.ErrDocumentNotVisible) || errors.Is(err, coredata.ErrResourceNotFound) {
 			return false, gqlutils.NotFoundf(ctx, "document %q not found", obj.ID)
 		}
+
 		if _, ok := errors.AsType[*trust.ErrDocumentArchived](err); ok {
 			return false, gqlutils.NotFoundf(ctx, "document %q not found", obj.ID)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot load document", log.Error(err))
+
 		return false, gqlutils.Internal(ctx)
 	}
 
@@ -122,6 +125,7 @@ func (r *documentResolver) IsUserAuthorized(ctx context.Context, obj *types.Docu
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot check document access", log.Error(err))
+
 		return false, gqlutils.Internal(ctx)
 	}
 
@@ -156,6 +160,7 @@ func (r *documentResolver) Access(ctx context.Context, obj *types.Document) (*ty
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get document access", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -222,10 +227,13 @@ func (r *mutationResolver) ExportDocumentPDF(ctx context.Context, input types.Ex
 		if errors.Is(err, trust.ErrDocumentNotFound) || errors.Is(err, trust.ErrDocumentNotVisible) || errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlutils.NotFoundf(ctx, "document %q not found", input.DocumentID)
 		}
+
 		if _, ok := errors.AsType[*trust.ErrDocumentArchived](err); ok {
 			return nil, gqlutils.NotFoundf(ctx, "document %q not found", input.DocumentID)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot load document", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -335,7 +343,9 @@ func (r *mutationResolver) ExportTrustCenterFile(ctx context.Context, input type
 		if errors.Is(err, trust.ErrTrustCenterFileNotFound) || errors.Is(err, trust.ErrTrustCenterFileNotVisible) {
 			return nil, gqlutils.NotFoundf(ctx, "trust center file %q not found", input.TrustCenterFileID)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot load trust center file", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -390,12 +400,16 @@ func (r *mutationResolver) RequestDocumentAccess(ctx context.Context, input type
 		if errors.Is(err, trust.ErrDocumentNotFound) || errors.Is(err, trust.ErrDocumentNotVisible) || errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlutils.NotFoundf(ctx, "document %q not found", input.DocumentID)
 		}
+
 		if _, ok := errors.AsType[*trust.ErrDocumentArchived](err); ok {
 			return nil, gqlutils.NotFoundf(ctx, "document %q not found", input.DocumentID)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot load document", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
+
 	if document.TrustCenterVisibility == coredata.TrustCenterVisibilityPublic {
 		return nil, gqlutils.Invalidf(
 			ctx,
@@ -479,7 +493,9 @@ func (r *mutationResolver) RequestTrustCenterFileAccess(ctx context.Context, inp
 		if errors.Is(err, trust.ErrTrustCenterFileNotFound) || errors.Is(err, trust.ErrTrustCenterFileNotVisible) {
 			return nil, gqlutils.NotFoundf(ctx, "trust center file %q not found", input.TrustCenterFileID)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot load trust center file", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -549,6 +565,7 @@ func (r *reportResolver) IsUserAuthorized(ctx context.Context, obj *types.Report
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot check report access", log.Error(err))
+
 		return false, gqlutils.Internal(ctx)
 	}
 
@@ -583,6 +600,7 @@ func (r *reportResolver) Access(ctx context.Context, obj *types.Report) (*types.
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get audit report access", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -603,10 +621,12 @@ func (r *subprocessorConnectionResolver) TotalCount(ctx context.Context, obj *ty
 			r.logger.ErrorCtx(ctx, "cannot count subprocessors", log.Error(err))
 			return 0, gqlutils.Internal(ctx)
 		}
+
 		return count, nil
 	}
 
 	r.logger.ErrorCtx(ctx, "not implemented: TotalCount for parent type")
+
 	return 0, gqlutils.Internal(ctx)
 }
 
@@ -638,6 +658,7 @@ func (r *trustCenterResolver) NonDisclosureAgreement(ctx context.Context, obj *t
 		r.logger.ErrorCtx(ctx, "cannot load NDA file", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
+
 	if file == nil {
 		return nil, nil
 	}
@@ -767,6 +788,7 @@ func (r *trustCenterResolver) TrustCenterFiles(ctx context.Context, obj *types.T
 			coredata.TrustCenterVisibilityPrivate,
 		),
 	)
+
 	trustCenterFilePage, err := trustService.TrustCenterFiles.ListForOrganizationId(ctx, obj.Organization.ID, cursor, filter)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list public trust center files", log.Error(err))
@@ -854,7 +876,9 @@ func (r *trustCenterFileResolver) IsUserAuthorized(ctx context.Context, obj *typ
 		if errors.Is(err, trust.ErrTrustCenterFileNotFound) || errors.Is(err, trust.ErrTrustCenterFileNotVisible) {
 			return false, gqlutils.NotFoundf(ctx, "trust center file %q not found", obj.ID)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot load trust center file", log.Error(err))
+
 		return false, gqlutils.Internal(ctx)
 	}
 
@@ -881,6 +905,7 @@ func (r *trustCenterFileResolver) IsUserAuthorized(ctx context.Context, obj *typ
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot check trust center file access", log.Error(err))
+
 		return false, gqlutils.Internal(ctx)
 	}
 
@@ -915,6 +940,7 @@ func (r *trustCenterFileResolver) Access(ctx context.Context, obj *types.TrustCe
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get file access", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 

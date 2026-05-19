@@ -33,6 +33,7 @@ func (s ProfileSource) String() string {
 
 func (s *ProfileSource) Scan(value any) error {
 	var str string
+
 	switch v := value.(type) {
 	case string:
 		str = v
@@ -52,6 +53,7 @@ func (s *ProfileSource) Scan(value any) error {
 	default:
 		return fmt.Errorf("invalid ProfileSource value: %q", str)
 	}
+
 	return nil
 }
 

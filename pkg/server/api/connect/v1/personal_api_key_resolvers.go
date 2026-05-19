@@ -99,6 +99,7 @@ func (r *personalAPIKeyConnectionResolver) TotalCount(ctx context.Context, obj *
 	}
 
 	r.logger.ErrorCtx(ctx, "unsupported resolver", log.Any("resolver", obj.Resolver))
+
 	return nil, gqlutils.Internal(ctx)
 }
 

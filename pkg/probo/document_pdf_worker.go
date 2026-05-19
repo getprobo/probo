@@ -61,6 +61,7 @@ func (h *documentPDFHandler) Claim(ctx context.Context) (coredata.DocumentVersio
 		if errors.Is(err, coredata.ErrNoDocumentPDFJobAvailable) {
 			return coredata.DocumentVersion{}, worker.ErrNoTask
 		}
+
 		return coredata.DocumentVersion{}, err
 	}
 
@@ -78,6 +79,7 @@ func (h *documentPDFHandler) Process(ctx context.Context, version coredata.Docum
 			log.String("document_version_id", version.ID.String()),
 			log.Int("attempt", version.PdfAttemptCount),
 		)
+
 		return err
 	}
 

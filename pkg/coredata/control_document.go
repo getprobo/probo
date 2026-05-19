@@ -69,8 +69,8 @@ VALUES (
 		"tenant_id":       scope.GetTenantID(),
 		"created_at":      cp.CreatedAt,
 	}
-	_, err := conn.Exec(ctx, q, args)
 
+	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) {
@@ -111,6 +111,7 @@ WHERE
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	_, err := conn.Exec(ctx, q, args)
+
 	return err
 }
 

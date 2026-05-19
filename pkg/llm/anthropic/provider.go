@@ -76,17 +76,21 @@ func NewProvider(apiKey string, opts ...Option) *Provider {
 	if cfg.httpClient != nil {
 		reqOpts = append(reqOpts, option.WithHTTPClient(cfg.httpClient))
 	}
+
 	if cfg.baseURL != "" {
 		reqOpts = append(reqOpts, option.WithBaseURL(cfg.baseURL))
 	}
+
 	if cfg.requestTimeout > 0 {
 		reqOpts = append(reqOpts, option.WithRequestTimeout(cfg.requestTimeout))
 	}
+
 	if cfg.maxRetries != nil {
 		reqOpts = append(reqOpts, option.WithMaxRetries(*cfg.maxRetries))
 	}
 
 	client := anthropic.NewClient(reqOpts...)
+
 	return &Provider{client: &client}
 }
 
@@ -111,6 +115,7 @@ func (p *Provider) ChatCompletionStream(ctx context.Context, req *llm.ChatComple
 	}
 
 	stream := p.client.Messages.NewStreaming(ctx, params)
+
 	return &anthropicStream{stream: stream}, nil
 }
 
@@ -134,37 +139,46 @@ func buildParams(req *llm.ChatCompletionRequest) (anthropic.MessageNewParams, er
 		for i, s := range system {
 			blocks[i] = anthropic.TextBlockParam{Text: s}
 		}
+
 		params.System = blocks
 	}
 
 	if req.Temperature != nil {
 		params.Temperature = param.NewOpt(*req.Temperature)
 	}
+
 	if req.TopP != nil {
 		params.TopP = param.NewOpt(*req.TopP)
 	}
+
 	if len(req.StopSequences) > 0 {
 		params.StopSequences = req.StopSequences
 	}
+
 	if len(req.Tools) > 0 {
 		params.Tools = buildTools(req.Tools)
 	}
+
 	if req.ToolChoice != nil {
 		params.ToolChoice = buildToolChoice(req.ToolChoice)
 	}
+
 	if req.Thinking != nil && req.Thinking.Enabled {
 		params.Thinking = anthropic.ThinkingConfigParamOfEnabled(int64(req.Thinking.BudgetTokens))
 	}
+
 	if req.ResponseFormat != nil {
 		switch req.ResponseFormat.Type {
 		case llm.ResponseFormatJSONSchema:
 			if req.ResponseFormat.JSONSchema == nil {
 				return anthropic.MessageNewParams{}, fmt.Errorf("cannot apply JSON schema output format: schema is nil")
 			}
+
 			var schema map[string]any
 			if err := json.Unmarshal(req.ResponseFormat.JSONSchema.Schema, &schema); err != nil {
 				return anthropic.MessageNewParams{}, fmt.Errorf("cannot unmarshal JSON schema for output format: %w", err)
 			}
+
 			params.OutputConfig = anthropic.OutputConfigParam{
 				Format: anthropic.JSONOutputFormatParam{Schema: schema},
 			}
@@ -186,6 +200,7 @@ func extractSystem(messages []llm.Message) (system []string, rest []llm.Message)
 			rest = append(rest, msg)
 		}
 	}
+
 	return
 }
 
@@ -213,9 +228,11 @@ func buildMessages(messages []llm.Message) []anthropic.MessageParam {
 					blocks = append(blocks, buildFilePart(p))
 				}
 			}
+
 			out = append(out, anthropic.NewUserMessage(blocks...))
 		case llm.RoleAssistant:
 			var blocks []anthropic.ContentBlockParamUnion
+
 			for _, p := range msg.Parts {
 				switch part := p.(type) {
 				case llm.ThinkingPart:
@@ -226,13 +243,16 @@ func buildMessages(messages []llm.Message) []anthropic.MessageParam {
 					}
 				}
 			}
+
 			for _, tc := range msg.ToolCalls {
 				var input any
 				if err := json.Unmarshal([]byte(tc.Function.Arguments), &input); err != nil || input == nil {
 					input = map[string]any{}
 				}
+
 				blocks = append(blocks, anthropic.NewToolUseBlock(tc.ID, input, tc.Function.Name))
 			}
+
 			out = append(out, anthropic.NewAssistantMessage(blocks...))
 		case llm.RoleTool:
 			out = append(
@@ -264,6 +284,7 @@ func buildTools(tools []llm.Tool) []anthropic.ToolUnionParam {
 			if err := json.Unmarshal(t.Parameters, &schema); err == nil {
 				props := schema["properties"]
 				required, _ := schema["required"].([]any)
+
 				reqStrings := make([]string, 0, len(required))
 				for _, r := range required {
 					if s, ok := r.(string); ok {
@@ -272,6 +293,7 @@ func buildTools(tools []llm.Tool) []anthropic.ToolUnionParam {
 				}
 
 				extra := make(map[string]any)
+
 				for k, v := range schema {
 					switch k {
 					case "type", "properties", "required":
@@ -287,12 +309,14 @@ func buildTools(tools []llm.Tool) []anthropic.ToolUnionParam {
 				if len(extra) > 0 {
 					inputSchema.ExtraFields = extra
 				}
+
 				tool.InputSchema = inputSchema
 			}
 		}
 
 		out[i] = anthropic.ToolUnionParam{OfTool: &tool}
 	}
+
 	return out
 }
 
@@ -392,13 +416,16 @@ func parseRetryAfter(resp *http.Response) time.Duration {
 	if resp == nil {
 		return 0
 	}
+
 	h := resp.Header.Get("Retry-After")
 	if h == "" {
 		return 0
 	}
+
 	if secs, err := strconv.Atoi(h); err == nil {
 		return time.Duration(secs) * time.Second
 	}
+
 	return 0
 }
 
@@ -415,12 +442,14 @@ type anthropicStream struct {
 func (s *anthropicStream) Next() bool {
 	for s.stream.Next() {
 		event := s.stream.Current()
+
 		mapped, ok := s.mapStreamEvent(&event)
 		if ok {
 			s.current = mapped
 			return true
 		}
 	}
+
 	return false
 }
 
@@ -433,6 +462,7 @@ func (s *anthropicStream) Err() error {
 	if err != nil {
 		return mapError(err)
 	}
+
 	return nil
 }
 
@@ -448,6 +478,7 @@ func (s *anthropicStream) mapStreamEvent(event *anthropic.MessageStreamEventUnio
 		case "tool_use":
 			s.inToolUse = true
 			tu := cb.AsToolUse()
+
 			return llm.ChatCompletionStreamEvent{
 				Delta: llm.MessageDelta{
 					ToolCalls: []llm.ToolCallDelta{{
@@ -460,6 +491,7 @@ func (s *anthropicStream) mapStreamEvent(event *anthropic.MessageStreamEventUnio
 		case "thinking":
 			return llm.ChatCompletionStreamEvent{}, false
 		}
+
 		return llm.ChatCompletionStreamEvent{}, false
 
 	case "content_block_delta":
@@ -475,6 +507,7 @@ func (s *anthropicStream) mapStreamEvent(event *anthropic.MessageStreamEventUnio
 			}, true
 		case "signature_delta":
 			s.thinkingSignature = delta.Signature
+
 			return llm.ChatCompletionStreamEvent{
 				Delta: llm.MessageDelta{ThinkingSignature: delta.Signature},
 			}, true
@@ -488,6 +521,7 @@ func (s *anthropicStream) mapStreamEvent(event *anthropic.MessageStreamEventUnio
 				},
 			}, true
 		}
+
 		return llm.ChatCompletionStreamEvent{}, false
 
 	case "content_block_stop":
@@ -495,10 +529,12 @@ func (s *anthropicStream) mapStreamEvent(event *anthropic.MessageStreamEventUnio
 			s.toolCallIndex++
 			s.inToolUse = false
 		}
+
 		return llm.ChatCompletionStreamEvent{}, false
 
 	case "message_delta":
 		fr := mapStopReason(anthropic.StopReason(event.Delta.StopReason))
+
 		evt := llm.ChatCompletionStreamEvent{
 			FinishReason: &fr,
 		}
@@ -508,6 +544,7 @@ func (s *anthropicStream) mapStreamEvent(event *anthropic.MessageStreamEventUnio
 				OutputTokens: int(event.Usage.OutputTokens),
 			}
 		}
+
 		return evt, true
 
 	case "message_start":
@@ -520,6 +557,7 @@ func (s *anthropicStream) mapStreamEvent(event *anthropic.MessageStreamEventUnio
 				OutputTokens: int(event.Message.Usage.OutputTokens),
 			}
 		}
+
 		return evt, true
 
 	default:
@@ -540,6 +578,7 @@ func buildFilePart(p llm.FilePart) anthropic.ContentBlockParamUnion {
 		if err != nil {
 			return anthropic.NewTextBlock(fmt.Sprintf("[file: %s, type: %s, error decoding content]", p.Filename, p.MimeType))
 		}
+
 		return anthropic.NewDocumentBlock(anthropic.PlainTextSourceParam{
 			Data: string(decoded),
 		})

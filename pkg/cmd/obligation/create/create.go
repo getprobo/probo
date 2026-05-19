@@ -158,12 +158,15 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 			if flagArea == "" {
 				return fmt.Errorf("area is required; pass --area or run interactively")
 			}
+
 			if flagSource == "" {
 				return fmt.Errorf("source is required; pass --source or run interactively")
 			}
+
 			if flagStatus == "" {
 				return fmt.Errorf("status is required; pass --status or run interactively")
 			}
+
 			if flagType == "" {
 				return fmt.Errorf("type is required; pass --type or run interactively")
 			}
@@ -179,18 +182,23 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 			if flagRequirement != "" {
 				input["requirement"] = flagRequirement
 			}
+
 			if flagActionsToBeImplemented != "" {
 				input["actionsToBeImplemented"] = flagActionsToBeImplemented
 			}
+
 			if flagRegulator != "" {
 				input["regulator"] = flagRegulator
 			}
+
 			if flagOwner != "" {
 				input["ownerId"] = flagOwner
 			}
+
 			if flagLastReviewDate != "" {
 				input["lastReviewDate"] = flagLastReviewDate
 			}
+
 			if flagDueDate != "" {
 				input["dueDate"] = flagDueDate
 			}

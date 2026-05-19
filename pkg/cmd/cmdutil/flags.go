@@ -39,6 +39,7 @@ func AddOutputFlag(cmd *cobra.Command) *string {
 		"",
 		"Output format: json, table (default)",
 	)
+
 	return &output
 }
 
@@ -65,6 +66,7 @@ func ValidateEnum(flag string, value string, allowed []string) error {
 	if slices.Contains(allowed, value) {
 		return nil
 	}
+
 	return fmt.Errorf(
 		"invalid --%s value %q: valid values are %s",
 		flag,

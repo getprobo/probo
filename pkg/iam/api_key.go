@@ -75,7 +75,6 @@ func (s *APIKeyService) GetAPIKey(ctx context.Context, keyID gid.GID) (*coredata
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}

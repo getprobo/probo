@@ -75,5 +75,6 @@ func providerExtraSettings(provider coredata.ConnectorProvider) []*types.Connect
 	if settings, ok := providerExtraSettingsMap[provider]; ok {
 		return settings
 	}
+
 	return []*types.ConnectorProviderSettingInfo{}
 }

@@ -29,6 +29,7 @@ func RenderHTML(node Node) (string, error) {
 	if err := renderNode(&buf, node); err != nil {
 		return "", err
 	}
+
 	return buf.String(), nil
 }
 
@@ -38,54 +39,70 @@ func renderNode(buf *bytes.Buffer, n Node) error {
 		return renderChildren(buf, n.Content)
 	case NodeParagraph:
 		buf.WriteString("<p>")
+
 		if err := renderChildren(buf, n.Content); err != nil {
 			return err
 		}
+
 		buf.WriteString("</p>")
 	case NodeHeading:
 		attrs, err := n.HeadingAttrs()
 		if err != nil {
 			return fmt.Errorf("cannot render heading node: %w", err)
 		}
+
 		if attrs.Level < 1 || attrs.Level > 6 {
 			return fmt.Errorf("cannot render heading node: invalid level %d", attrs.Level)
 		}
+
 		level := strconv.Itoa(attrs.Level)
+
 		buf.WriteString("<h")
 		buf.WriteString(level)
 		buf.WriteByte('>')
+
 		if err := renderChildren(buf, n.Content); err != nil {
 			return err
 		}
+
 		buf.WriteString("</h")
 		buf.WriteString(level)
 		buf.WriteByte('>')
 	case NodeBlockquote:
 		buf.WriteString("<blockquote>")
+
 		if err := renderChildren(buf, n.Content); err != nil {
 			return err
 		}
+
 		buf.WriteString("</blockquote>")
 	case NodeCodeBlock:
 		attrs, err := n.CodeBlockAttrs()
 		if err != nil {
 			return fmt.Errorf("cannot render code block node: %w", err)
 		}
+
 		if attrs.Language != nil && *attrs.Language == "mermaid" {
 			buf.WriteString(`<pre class="mermaid">`)
+
 			if err := renderChildren(buf, n.Content); err != nil {
 				return err
 			}
+
 			buf.WriteString("</pre>")
 		} else {
 			buf.WriteString("<pre><code")
+
 			if attrs.Language != nil {
 				writeAttr(buf, "class", "language-"+*attrs.Language)
 			}
+
 			buf.WriteByte('>')
+
 			if err := renderChildren(buf, n.Content); err != nil {
 				return err
 			}
+
 			buf.WriteString("</code></pre>")
 		}
 	case NodeHorizontalRule:
@@ -99,55 +116,73 @@ func renderNode(buf *bytes.Buffer, n Node) error {
 		if err != nil {
 			return fmt.Errorf("cannot render image node: %w", err)
 		}
+
 		buf.WriteString("<img")
 		writeAttr(buf, "src", safeImageSrc(attrs.Src))
+
 		if attrs.Alt != nil {
 			writeAttr(buf, "alt", *attrs.Alt)
 		}
+
 		if attrs.Title != nil {
 			writeAttr(buf, "title", *attrs.Title)
 		}
+
 		buf.WriteByte('>')
 	case NodeBulletList:
 		buf.WriteString("<ul>")
+
 		if err := renderChildren(buf, n.Content); err != nil {
 			return err
 		}
+
 		buf.WriteString("</ul>")
 	case NodeOrderedList:
 		attrs, err := n.OrderedListAttrs()
 		if err != nil {
 			return fmt.Errorf("cannot render ordered list node: %w", err)
 		}
+
 		buf.WriteString("<ol")
+
 		if attrs.Start != 1 {
 			writeAttr(buf, "start", strconv.Itoa(attrs.Start))
 		}
+
 		if attrs.Type != nil {
 			writeAttr(buf, "type", *attrs.Type)
 		}
+
 		buf.WriteByte('>')
+
 		if err := renderChildren(buf, n.Content); err != nil {
 			return err
 		}
+
 		buf.WriteString("</ol>")
 	case NodeListItem:
 		buf.WriteString("<li>")
+
 		if err := renderChildren(buf, n.Content); err != nil {
 			return err
 		}
+
 		buf.WriteString("</li>")
 	case NodeTable:
 		buf.WriteString("<table>")
+
 		if err := renderChildren(buf, n.Content); err != nil {
 			return err
 		}
+
 		buf.WriteString("</table>")
 	case NodeTableRow:
 		buf.WriteString("<tr>")
+
 		if err := renderChildren(buf, n.Content); err != nil {
 			return err
 		}
+
 		buf.WriteString("</tr>")
 	case NodeTableCell:
 		return renderTableCell(buf, n, "td")
@@ -156,6 +191,7 @@ func renderNode(buf *bytes.Buffer, n Node) error {
 	default:
 		return fmt.Errorf("cannot render node: unknown type %q", n.Type)
 	}
+
 	return nil
 }
 
@@ -165,6 +201,7 @@ func renderChildren(buf *bytes.Buffer, nodes []Node) error {
 			return err
 		}
 	}
+
 	return nil
 }
 
@@ -172,15 +209,19 @@ func renderText(buf *bytes.Buffer, n Node) error {
 	if n.Text == nil {
 		return fmt.Errorf("cannot render text node: text is nil")
 	}
+
 	for _, m := range n.Marks {
 		if err := openMark(buf, m); err != nil {
 			return err
 		}
 	}
+
 	buf.WriteString(html.EscapeString(*n.Text))
+
 	for i := len(n.Marks) - 1; i >= 0; i-- {
 		closeMark(buf, n.Marks[i])
 	}
+
 	return nil
 }
 
@@ -201,25 +242,32 @@ func openMark(buf *bytes.Buffer, m Mark) error {
 		if err != nil {
 			return fmt.Errorf("cannot render link mark: %w", err)
 		}
+
 		buf.WriteString("<a")
 		writeAttr(buf, "href", safeLinkHref(attrs.Href))
+
 		if attrs.Target != nil {
 			writeAttr(buf, "target", *attrs.Target)
 		}
+
 		rel := linkRelToEmit(attrs)
 		if rel != "" {
 			writeAttr(buf, "rel", rel)
 		}
+
 		if attrs.Class != nil {
 			writeAttr(buf, "class", *attrs.Class)
 		}
+
 		if attrs.Title != nil {
 			writeAttr(buf, "title", *attrs.Title)
 		}
+
 		buf.WriteByte('>')
 	default:
 		return fmt.Errorf("cannot render mark: unknown type %q", m.Type)
 	}
+
 	return nil
 }
 
@@ -245,28 +293,37 @@ func renderTableCell(buf *bytes.Buffer, n Node, tag string) error {
 	if err != nil {
 		return fmt.Errorf("cannot render %s node: %w", tag, err)
 	}
+
 	buf.WriteByte('<')
 	buf.WriteString(tag)
+
 	if attrs.Colspan > 1 {
 		writeAttr(buf, "colspan", strconv.Itoa(attrs.Colspan))
 	}
+
 	if attrs.Rowspan > 1 {
 		writeAttr(buf, "rowspan", strconv.Itoa(attrs.Rowspan))
 	}
+
 	if len(attrs.Colwidth) > 0 {
 		total := 0
 		for _, w := range attrs.Colwidth {
 			total += w
 		}
+
 		writeAttr(buf, "style", "min-width: "+strconv.Itoa(total)+"px")
 	}
+
 	buf.WriteByte('>')
+
 	if err := renderChildren(buf, n.Content); err != nil {
 		return err
 	}
+
 	buf.WriteString("</")
 	buf.WriteString(tag)
 	buf.WriteByte('>')
+
 	return nil
 }
 
@@ -285,6 +342,7 @@ func linkRelToEmit(attrs LinkAttrs) string {
 			if blanksTarget {
 				return ensureNoopener(s)
 			}
+
 			return s
 		}
 	}
@@ -292,6 +350,7 @@ func linkRelToEmit(attrs LinkAttrs) string {
 	if blanksTarget {
 		return linkRelBlankTargetDefault
 	}
+
 	return ""
 }
 
@@ -303,6 +362,7 @@ func ensureNoopener(rel string) string {
 			return rel
 		}
 	}
+
 	return rel + " noopener"
 }
 
@@ -323,19 +383,24 @@ func safeLinkHref(href string) string {
 	if href == "" {
 		return "#"
 	}
+
 	if href[0] == '#' {
 		return href
 	}
+
 	if strings.HasPrefix(href, "/") {
 		if len(href) > 1 && (href[1] == '/' || href[1] == '\\') {
 			return "#"
 		}
+
 		return href
 	}
+
 	u, err := url.Parse(href)
 	if err != nil {
 		return "#"
 	}
+
 	if u.Scheme != "" {
 		switch strings.ToLower(u.Scheme) {
 		case "http", "https", "mailto", "tel":
@@ -344,9 +409,11 @@ func safeLinkHref(href string) string {
 			return "#"
 		}
 	}
+
 	if u.Host != "" {
 		return "#"
 	}
+
 	return href
 }
 
@@ -359,16 +426,20 @@ func safeImageSrc(src string) string {
 	if src == "" {
 		return ""
 	}
+
 	if strings.HasPrefix(src, "/") {
 		if len(src) > 1 && (src[1] == '/' || src[1] == '\\') {
 			return ""
 		}
+
 		return src
 	}
+
 	u, err := url.Parse(src)
 	if err != nil {
 		return ""
 	}
+
 	if u.Scheme != "" {
 		switch strings.ToLower(u.Scheme) {
 		case "http", "https", "data":
@@ -377,8 +448,10 @@ func safeImageSrc(src string) string {
 			return ""
 		}
 	}
+
 	if u.Host != "" {
 		return ""
 	}
+
 	return src
 }

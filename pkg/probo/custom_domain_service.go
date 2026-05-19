@@ -83,7 +83,6 @@ func (s *CustomDomainService) CreateCustomDomain(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -152,7 +151,6 @@ func (s *CustomDomainService) GetOrganizationCustomDomain(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}

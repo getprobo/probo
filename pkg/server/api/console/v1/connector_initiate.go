@@ -65,6 +65,7 @@ func handleConnectorInitiate(
 			httpserver.RenderError(w, http.StatusUnauthorized, fmt.Errorf("authentication required"))
 			return
 		}
+
 		session := authn.SessionFromContext(r.Context())
 		if session == nil {
 			httpserver.RenderError(w, http.StatusUnauthorized, fmt.Errorf("authentication required"))
@@ -94,12 +95,15 @@ func handleConnectorInitiate(
 				httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("cannot reconnect: connector not found"))
 				return
 			}
+
 			if errors.Is(err, errInvalidReconnectConnector) {
 				httpserver.RenderError(w, http.StatusBadRequest, err)
 				return
 			}
+
 			logger.ErrorCtx(r.Context(), "cannot look up existing connector", log.Error(err))
 			httpserver.RenderError(w, http.StatusInternalServerError, fmt.Errorf("internal error"))
+
 			return
 		}
 
@@ -118,6 +122,7 @@ func handleConnectorInitiate(
 		if err != nil {
 			logger.ErrorCtx(r.Context(), "cannot initiate connector", log.Error(err))
 			httpserver.RenderError(w, http.StatusInternalServerError, fmt.Errorf("internal error"))
+
 			return
 		}
 
@@ -147,6 +152,7 @@ func loadExistingConnector(
 		if err != nil {
 			return nil, err
 		}
+
 		return found, nil
 	}
 
@@ -158,5 +164,6 @@ func loadExistingConnector(
 	if errors.Is(err, coredata.ErrResourceNotFound) {
 		return nil, nil
 	}
+
 	return found, err
 }

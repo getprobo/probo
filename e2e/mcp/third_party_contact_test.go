@@ -127,6 +127,7 @@ func TestMCP_ListThirdPartyContacts(t *testing.T) {
 			"email":        factory.SafeEmail(),
 		}, &result)
 		require.NotEmpty(t, result.ThirdPartyContact.ID)
+
 		_ = i
 	}
 

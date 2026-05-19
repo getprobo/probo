@@ -95,6 +95,7 @@ LIMIT 1;
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
 		}
+
 		return fmt.Errorf("cannot collect cookie banner translation: %w", err)
 	}
 
@@ -146,6 +147,7 @@ LIMIT 1;
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
 		}
+
 		return fmt.Errorf("cannot collect cookie banner translation: %w", err)
 	}
 
@@ -243,6 +245,7 @@ INSERT INTO cookie_banner_translations (
 				return ErrResourceAlreadyExists
 			}
 		}
+
 		return fmt.Errorf("cannot insert cookie banner translation: %w", err)
 	}
 

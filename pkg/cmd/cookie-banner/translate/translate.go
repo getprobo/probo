@@ -48,6 +48,7 @@ func NewCmdTranslate(f *cmdutil.Factory) *cobra.Command {
 			if flagLanguage == "" {
 				return fmt.Errorf("--language is required")
 			}
+
 			if flagTranslations == "" {
 				return fmt.Errorf("--translations is required")
 			}

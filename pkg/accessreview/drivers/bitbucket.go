@@ -110,12 +110,14 @@ func (d *BitbucketDriver) queryMembers(ctx context.Context, endpoint string) (*b
 	if err != nil {
 		return nil, fmt.Errorf("cannot create bitbucket members request: %w", err)
 	}
+
 	req.Header.Set("Accept", "application/json")
 
 	httpResp, err := d.httpClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("cannot execute bitbucket members request: %w", err)
 	}
+
 	defer func() { _ = httpResp.Body.Close() }()
 
 	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {

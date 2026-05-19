@@ -72,6 +72,7 @@ func (t *Task) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (ma
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrResourceNotFound
 		}
+
 		return nil, fmt.Errorf("cannot query task authorization attributes: %w", err)
 	}
 
@@ -257,6 +258,7 @@ RETURNING rank, priority_rank;
 				return ErrResourceAlreadyExists
 			}
 		}
+
 		return fmt.Errorf("cannot insert task: %w", err)
 	}
 
@@ -348,6 +350,7 @@ RETURNING
 		"created_at":             t.CreatedAt,
 		"updated_at":             t.UpdatedAt,
 	}
+
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
 		return fmt.Errorf("cannot upsert task: %w", err)
@@ -387,6 +390,7 @@ func (t *Tasks) CountByOrganizationID(
 	row := conn.QueryRow(ctx, q, args)
 
 	var count int
+
 	err := row.Scan(&count)
 	if err != nil {
 		return 0, fmt.Errorf("cannot collect tasks: %w", err)
@@ -471,6 +475,7 @@ WHERE
 	row := conn.QueryRow(ctx, q, args)
 
 	var count int
+
 	err := row.Scan(&count)
 	if err != nil {
 		return 0, fmt.Errorf("cannot collect tasks: %w", err)
@@ -569,6 +574,7 @@ WHERE %s
 	maps.Copy(args, scope.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
+
 	return err
 }
 
@@ -608,6 +614,7 @@ WHERE
 	}
 
 	t.Rank = rank
+
 	return nil
 }
 

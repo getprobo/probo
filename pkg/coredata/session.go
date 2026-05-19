@@ -62,6 +62,7 @@ const (
 
 func NewRootSession(identityID gid.GID, method AuthMethod, duration time.Duration) *Session {
 	now := time.Now()
+
 	return &Session{
 		ID:              gid.New(gid.NilTenant, SessionEntityType),
 		IdentityID:      identityID,
@@ -137,6 +138,7 @@ LIMIT 1;
 
 		return fmt.Errorf("cannot collect session: %w", err)
 	}
+
 	*s = session
 
 	return nil
@@ -160,6 +162,7 @@ LIMIT 1;
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrResourceNotFound
 		}
+
 		return nil, fmt.Errorf("cannot query session iam attributes: %w", err)
 	}
 
@@ -209,6 +212,7 @@ VALUES (
 	}
 
 	_, err := conn.Exec(ctx, q, args)
+
 	return err
 }
 

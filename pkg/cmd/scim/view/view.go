@@ -152,7 +152,9 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 				if *flagOutput == cmdutil.OutputJSON {
 					return cmdutil.PrintJSON(f.IOStreams.Out, nil)
 				}
+
 				_, _ = fmt.Fprintln(f.IOStreams.Out, "No SCIM configuration found.")
+
 				return nil
 			}
 

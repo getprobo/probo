@@ -74,6 +74,7 @@ ORDER BY created_at ASC;
 	}
 
 	*das = result
+
 	return nil
 }
 
@@ -139,5 +140,6 @@ WHEN NOT MATCHED BY SOURCE
 	}
 
 	*das = result
+
 	return nil
 }

@@ -102,6 +102,7 @@ func NewCmdDecideAll(f *cmdutil.Factory) *cobra.Command {
 				if flagNote != "" {
 					d["decisionNote"] = flagNote
 				}
+
 				decisions[i] = d
 			}
 

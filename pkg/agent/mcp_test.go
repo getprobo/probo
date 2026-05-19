@@ -106,6 +106,7 @@ func TestMCPServer_Tools(t *testing.T) {
 
 			// Mutating one slice must not affect the other.
 			tools1[0] = nil
+
 			assert.NotNil(t, tools2[0])
 
 			// Underlying cache must be untouched.
@@ -131,6 +132,7 @@ func TestMCPServer_Tools(t *testing.T) {
 			s.toolsCached = true
 
 			const goroutines = 50
+
 			var wg sync.WaitGroup
 			wg.Add(goroutines)
 
@@ -212,12 +214,14 @@ func TestMCPServer_ResetCache(t *testing.T) {
 			s.toolsCached = true
 
 			const goroutines = 50
+
 			var wg sync.WaitGroup
 			wg.Add(goroutines)
 
 			for range goroutines {
 				go func() {
 					defer wg.Done()
+
 					s.ResetCache()
 				}()
 			}
@@ -321,6 +325,7 @@ func TestExtractMCPContent(t *testing.T) {
 		"empty content returns empty",
 		func(t *testing.T) {
 			t.Parallel()
+
 			result := &mcp.CallToolResult{Content: []mcp.Content{}}
 			assert.Equal(t, "", extractMCPContent(result))
 		},
@@ -330,6 +335,7 @@ func TestExtractMCPContent(t *testing.T) {
 		"single text content",
 		func(t *testing.T) {
 			t.Parallel()
+
 			result := &mcp.CallToolResult{
 				Content: []mcp.Content{
 					&mcp.TextContent{Text: "hello world"},
@@ -343,6 +349,7 @@ func TestExtractMCPContent(t *testing.T) {
 		"multiple text contents joined by newline",
 		func(t *testing.T) {
 			t.Parallel()
+
 			result := &mcp.CallToolResult{
 				Content: []mcp.Content{
 					&mcp.TextContent{Text: "line one"},
@@ -357,6 +364,7 @@ func TestExtractMCPContent(t *testing.T) {
 		"non-text content is skipped",
 		func(t *testing.T) {
 			t.Parallel()
+
 			result := &mcp.CallToolResult{
 				Content: []mcp.Content{
 					&mcp.TextContent{Text: "text part"},
@@ -371,6 +379,7 @@ func TestExtractMCPContent(t *testing.T) {
 		"only non-text content returns empty",
 		func(t *testing.T) {
 			t.Parallel()
+
 			result := &mcp.CallToolResult{
 				Content: []mcp.Content{
 					&mcp.ImageContent{Data: []byte("base64data"), MIMEType: "image/png"},
@@ -384,6 +393,7 @@ func TestExtractMCPContent(t *testing.T) {
 		"falls back to structured content when no text content",
 		func(t *testing.T) {
 			t.Parallel()
+
 			result := &mcp.CallToolResult{
 				StructuredContent: map[string]any{
 					"status": "ok",
@@ -400,6 +410,7 @@ func TestExtractMCPContent(t *testing.T) {
 		"text content takes precedence over structured content",
 		func(t *testing.T) {
 			t.Parallel()
+
 			result := &mcp.CallToolResult{
 				Content: []mcp.Content{
 					&mcp.TextContent{Text: "text wins"},
@@ -414,6 +425,7 @@ func TestExtractMCPContent(t *testing.T) {
 		"structured content used when content has only non-text",
 		func(t *testing.T) {
 			t.Parallel()
+
 			result := &mcp.CallToolResult{
 				Content: []mcp.Content{
 					&mcp.ImageContent{Data: []byte("img"), MIMEType: "image/png"},

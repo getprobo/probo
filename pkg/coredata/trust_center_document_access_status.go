@@ -34,6 +34,7 @@ func (tcdas TrustCenterDocumentAccessStatus) String() string {
 
 func (tcdas *TrustCenterDocumentAccessStatus) Scan(value any) error {
 	var s string
+
 	switch v := value.(type) {
 	case string:
 		s = v
@@ -55,6 +56,7 @@ func (tcdas *TrustCenterDocumentAccessStatus) Scan(value any) error {
 	default:
 		return fmt.Errorf("invalid TrustCenterDocumentAccessStatus value: %q", s)
 	}
+
 	return nil
 }
 

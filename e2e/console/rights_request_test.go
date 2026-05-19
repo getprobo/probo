@@ -120,6 +120,7 @@ func TestRightsRequest_Update(t *testing.T) {
 		},
 	}, &createResult)
 	require.NoError(t, err)
+
 	rrID := createResult.CreateRightsRequest.RightsRequestEdge.Node.ID
 
 	query := `
@@ -208,6 +209,7 @@ func TestRightsRequest_Delete(t *testing.T) {
 		},
 	}, &createResult)
 	require.NoError(t, err)
+
 	rrID := createResult.CreateRightsRequest.RightsRequestEdge.Node.ID
 
 	query := `

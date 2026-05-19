@@ -72,11 +72,13 @@ func NewService(
 
 func (s *Service) Run(ctx context.Context) error {
 	wg := sync.WaitGroup{}
+
 	ctx, cancel := context.WithCancelCause(ctx)
 	defer cancel(context.Canceled)
 
 	gcCtx, stopGC := context.WithCancel(context.WithoutCancel(ctx))
 	gc := NewGarbageCollector(s.pg, s.logger)
+
 	wg.Go(func() {
 		if err := gc.Run(gcCtx); err != nil {
 			cancel(fmt.Errorf("saml garbage collector crashed: %w", err))
@@ -112,6 +114,7 @@ func (s *Service) InitiateLogin(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			config := &coredata.SAMLConfiguration{}
+
 			err := config.LoadByID(ctx, tx, coredata.NewNoScope(), configID)
 			if err != nil {
 				if err == coredata.ErrResourceNotFound {
@@ -349,10 +352,12 @@ func (s *Service) HandleAssertion(
 
 			if profile.Source != coredata.ProfileSourceSCIM {
 				profile.FullName = fullname
+
 				profile.UpdatedAt = now
 				if profile.Source == coredata.ProfileSourceManual {
 					profile.Source = coredata.ProfileSourceSAML
 				}
+
 				err = profile.Update(ctx, tx, scope)
 				if err != nil {
 					return fmt.Errorf("cannot update profile: %w", err)
@@ -371,6 +376,7 @@ func (s *Service) HandleAssertion(
 
 			// Expire pending invitations for user (in case source switched to SAML)
 			invitations := &coredata.Invitations{}
+
 			onlyPending := coredata.NewInvitationFilter([]coredata.InvitationStatus{coredata.InvitationStatusPending})
 			if err := invitations.ExpireByUserID(
 				ctx,
@@ -385,7 +391,6 @@ func (s *Service) HandleAssertion(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, nil, err
 	}
@@ -436,6 +441,7 @@ func (s *Service) validateAssertion(assertion *saml.Assertion, config *coredata.
 	expectedAudience := baseurl.MustParse(s.baseURL).WithPath("/api/connect/v1/saml/2.0/metadata").MustString()
 
 	audienceValid := false
+
 	for _, restriction := range assertion.Conditions.AudienceRestrictions {
 		if restriction.Audience.Value == expectedAudience {
 			audienceValid = true

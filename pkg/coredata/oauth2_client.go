@@ -88,6 +88,7 @@ LIMIT 1;
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrResourceNotFound
 		}
+
 		return nil, fmt.Errorf("cannot query oauth2 client authorization attributes: %w", err)
 	}
 
@@ -150,6 +151,7 @@ LIMIT 1;
 	}
 
 	*c = client
+
 	return nil
 }
 
@@ -206,6 +208,7 @@ WHERE
 	}
 
 	*c = clients
+
 	return nil
 }
 

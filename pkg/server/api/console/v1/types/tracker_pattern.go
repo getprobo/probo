@@ -68,6 +68,7 @@ func NewTrackerPatternConnectionWithFilter(
 ) *TrackerPatternConnection {
 	conn := NewTrackerPatternConnection(p, parentType, parentID)
 	conn.Filter = filter
+
 	return conn
 }
 

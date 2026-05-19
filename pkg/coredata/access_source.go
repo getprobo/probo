@@ -60,6 +60,7 @@ func (as *AccessSource) AuthorizationAttributes(ctx context.Context, conn pg.Que
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrResourceNotFound
 		}
+
 		return nil, fmt.Errorf("cannot query access source authorization attributes: %w", err)
 	}
 
@@ -105,6 +106,7 @@ LIMIT 1;
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
 		}
+
 		return fmt.Errorf("cannot collect access source: %w", err)
 	}
 
@@ -158,6 +160,7 @@ VALUES (
 		"created_at":      as.CreatedAt,
 		"updated_at":      as.UpdatedAt,
 	}
+
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
 		return fmt.Errorf("cannot insert access_source: %w", err)
@@ -426,9 +429,11 @@ FOR UPDATE SKIP LOCKED;
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrNoAccessSourceNameSyncAvailable
 		}
+
 		return fmt.Errorf("cannot collect unsynced access source: %w", err)
 	}
 
 	*as = row
+
 	return nil
 }

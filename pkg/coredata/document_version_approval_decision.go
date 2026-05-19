@@ -62,6 +62,7 @@ func (d *DocumentVersionApprovalDecision) AuthorizationAttributes(ctx context.Co
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrResourceNotFound
 		}
+
 		return nil, fmt.Errorf("cannot query document version approval decision authorization attributes: %w", err)
 	}
 
@@ -108,6 +109,7 @@ WHERE
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
 		}
+
 		return fmt.Errorf("cannot collect document version approval decision: %w", err)
 	}
 
@@ -162,6 +164,7 @@ LIMIT 1
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
 		}
+
 		return fmt.Errorf("cannot collect document version approval decision: %w", err)
 	}
 
@@ -193,6 +196,7 @@ WHERE
 	maps.Copy(args, scope.SQLArguments())
 
 	row := conn.QueryRow(ctx, q, args)
+
 	var count int
 	if err := row.Scan(&count); err != nil {
 		return 0, fmt.Errorf("cannot scan count: %w", err)
@@ -307,6 +311,7 @@ INSERT INTO document_version_approval_decisions (
 				return ErrResourceAlreadyExists
 			}
 		}
+
 		return fmt.Errorf("cannot insert document version approval decision: %w", err)
 	}
 
@@ -357,6 +362,7 @@ func (ds DocumentVersionApprovalDecisions) BulkInsert(
 		},
 		pgx.CopyFromRows(rows),
 	)
+
 	return err
 }
 
@@ -483,6 +489,7 @@ WHERE
 	maps.Copy(args, filter.SQLArguments())
 
 	row := conn.QueryRow(ctx, q, args)
+
 	var count int
 	if err := row.Scan(&count); err != nil {
 		return 0, fmt.Errorf("cannot scan count: %w", err)

@@ -81,6 +81,7 @@ func (h *OIDCHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		h.logger.ErrorCtx(ctx, "cannot initiate OIDC login", log.Error(err))
 		httpserver.RenderError(w, http.StatusInternalServerError, errors.New("internal server error"))
+
 		return
 	}
 
@@ -105,6 +106,7 @@ func (h *OIDCHandler) CallbackHandler(w http.ResponseWriter, r *http.Request) {
 			log.String("error_description", r.URL.Query().Get("error_description")),
 		)
 		httpserver.RenderError(w, http.StatusUnauthorized, errors.New("authentication failed"))
+
 		return
 	}
 
@@ -120,6 +122,7 @@ func (h *OIDCHandler) CallbackHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		h.logger.ErrorCtx(ctx, "cannot handle OIDC callback", log.Error(err))
 		httpserver.RenderError(w, http.StatusUnauthorized, errors.New("authentication failed"))
+
 		return
 	}
 
@@ -131,6 +134,7 @@ func (h *OIDCHandler) CallbackHandler(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			h.logger.ErrorCtx(ctx, "cannot open root session", log.Error(err))
 			httpserver.RenderError(w, http.StatusInternalServerError, errors.New("internal server error"))
+
 			return
 		}
 	case rootSession.IdentityID != identity.ID:
@@ -138,6 +142,7 @@ func (h *OIDCHandler) CallbackHandler(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			h.logger.ErrorCtx(ctx, "cannot close session", log.Error(err))
 			httpserver.RenderError(w, http.StatusInternalServerError, errors.New("internal server error"))
+
 			return
 		}
 
@@ -145,6 +150,7 @@ func (h *OIDCHandler) CallbackHandler(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			h.logger.ErrorCtx(ctx, "cannot open root session", log.Error(err))
 			httpserver.RenderError(w, http.StatusInternalServerError, errors.New("internal server error"))
+
 			return
 		}
 	}

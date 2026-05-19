@@ -26,5 +26,6 @@ func (g OAuth2GrantType) IsValid() bool {
 	case OAuth2GrantTypeAuthorizationCode, OAuth2GrantTypeClientCredentials:
 		return true
 	}
+
 	return false
 }

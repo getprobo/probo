@@ -62,7 +62,6 @@ func (s ThirdPartyComplianceReportService) ListForThirdPartyID(
 			return thirdPartyComplianceReports.LoadForThirdPartyID(ctx, conn, s.svc.scope, thirdPartyID, cursor)
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -93,7 +92,6 @@ func (s ThirdPartyComplianceReportService) Upload(
 			"organization-id": thirdParty.OrganizationID.String(),
 		},
 		&req.File)
-
 	if err != nil {
 		return nil, err
 	}
@@ -120,7 +118,6 @@ func (s ThirdPartyComplianceReportService) Upload(
 			return thirdPartyComplianceReport.Insert(ctx, tx, s.svc.scope)
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -140,7 +137,6 @@ func (s ThirdPartyComplianceReportService) Get(
 			return thirdPartyComplianceReport.LoadByID(ctx, conn, s.svc.scope, thirdPartyComplianceReportID)
 		},
 	)
-
 	if err != nil {
 		return nil, fmt.Errorf("cannot load thirdParty compliance report: %w", err)
 	}
@@ -164,7 +160,6 @@ func (s ThirdPartyComplianceReportService) Delete(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return fmt.Errorf("cannot delete thirdParty compliance report: %w", err)
 	}

@@ -42,6 +42,7 @@ func NewIdentityPresenceMiddleware() func(next http.Handler) http.Handler {
 							},
 						},
 					)
+
 					return
 				}
 

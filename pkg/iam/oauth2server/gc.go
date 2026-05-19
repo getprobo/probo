@@ -88,24 +88,28 @@ func (h *gcHandler) cleanup(ctx context.Context) error {
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			var authCode coredata.OAuth2AuthorizationCode
+
 			authCodesDeleted, err := authCode.DeleteExpired(ctx, tx, now)
 			if err != nil {
 				return fmt.Errorf("cannot delete expired authorization codes: %w", err)
 			}
 
 			var accessToken coredata.OAuth2AccessToken
+
 			accessTokensDeleted, err := accessToken.DeleteExpired(ctx, tx, now)
 			if err != nil {
 				return fmt.Errorf("cannot delete expired access tokens: %w", err)
 			}
 
 			var refreshToken coredata.OAuth2RefreshToken
+
 			refreshTokensDeleted, err := refreshToken.DeleteExpired(ctx, tx, now)
 			if err != nil {
 				return fmt.Errorf("cannot delete expired refresh tokens: %w", err)
 			}
 
 			var deviceCode coredata.OAuth2DeviceCode
+
 			deviceCodesDeleted, err := deviceCode.DeleteExpired(ctx, tx, now)
 			if err != nil {
 				return fmt.Errorf("cannot delete expired device codes: %w", err)

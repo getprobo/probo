@@ -38,6 +38,7 @@ func (s AccessReviewCampaignSourceFetchStatus) String() string {
 
 func (s *AccessReviewCampaignSourceFetchStatus) Scan(value any) error {
 	var str string
+
 	switch v := value.(type) {
 	case string:
 		str = v

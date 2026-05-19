@@ -36,6 +36,7 @@ func (a AuditLogActorType) IsValid() bool {
 	case AuditLogActorTypeUser, AuditLogActorTypeAPIKey, AuditLogActorTypeSystem:
 		return true
 	}
+
 	return false
 }
 
@@ -48,11 +49,13 @@ func (a *AuditLogActorType) UnmarshalText(text []byte) error {
 	if !a.IsValid() {
 		return fmt.Errorf("%s is not a valid AuditLogActorType", string(text))
 	}
+
 	return nil
 }
 
 func (a *AuditLogActorType) Scan(value any) error {
 	var s string
+
 	switch v := value.(type) {
 	case string:
 		s = v

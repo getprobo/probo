@@ -46,6 +46,7 @@ func (f *DocumentVersionFilter) WithStatuses(statuses ...DocumentVersionStatus) 
 func (f *DocumentVersionFilter) WithEmployeeIdentityID(identityID *gid.GID, modes ...EmployeeFilterMode) *DocumentVersionFilter {
 	f.employeeIdentityID = identityID
 	f.employeeFilterModes = modes
+
 	return f
 }
 

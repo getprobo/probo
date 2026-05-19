@@ -37,6 +37,7 @@ func TestPGCheckpointer(t *testing.T) {
 		"load returns nil when no checkpoint exists",
 		func(t *testing.T) {
 			t.Parallel()
+
 			ctx := context.Background()
 			run := agentruntest.InsertPendingRun(
 				t,
@@ -55,6 +56,7 @@ func TestPGCheckpointer(t *testing.T) {
 		"save and load round-trip",
 		func(t *testing.T) {
 			t.Parallel()
+
 			ctx := context.Background()
 			run := agentruntest.InsertPendingRun(
 				t,
@@ -96,6 +98,7 @@ func TestPGCheckpointer(t *testing.T) {
 		"save overwrites previous checkpoint",
 		func(t *testing.T) {
 			t.Parallel()
+
 			ctx := context.Background()
 			run := agentruntest.InsertPendingRun(
 				t,
@@ -138,6 +141,7 @@ func TestPGCheckpointer(t *testing.T) {
 		"save and load preserves approval state",
 		func(t *testing.T) {
 			t.Parallel()
+
 			ctx := context.Background()
 			run := agentruntest.InsertPendingRun(
 				t,
@@ -196,6 +200,7 @@ func TestPGCheckpointer(t *testing.T) {
 		"save to nonexistent run returns error",
 		func(t *testing.T) {
 			t.Parallel()
+
 			ctx := context.Background()
 			run := agentruntest.InsertPendingRun(
 				t,

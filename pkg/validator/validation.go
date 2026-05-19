@@ -42,6 +42,7 @@ func (v *Validator) Check(value any, field string, validators ...ValidatorFunc) 
 			val = val.Elem()
 			actualValue = val.Interface()
 		}
+
 		// If we ended up with a nil pointer at any level, set actualValue to nil
 		if val.Kind() == reflect.Pointer && val.IsNil() {
 			actualValue = nil
@@ -69,6 +70,7 @@ func (v *Validator) CheckEach(items any, field string, fn func(index int, item a
 		for i, item := range slice {
 			fn(i, item)
 		}
+
 		return
 	}
 
@@ -78,6 +80,7 @@ func (v *Validator) CheckEach(items any, field string, fn func(index int, item a
 		if val.IsNil() {
 			return
 		}
+
 		val = val.Elem()
 	}
 
@@ -88,6 +91,7 @@ func (v *Validator) CheckEach(items any, field string, fn func(index int, item a
 			Message: "expected a slice",
 			Value:   items,
 		})
+
 		return
 	}
 
@@ -100,6 +104,7 @@ func (v *Validator) Error() error {
 	if len(v.errors) == 0 {
 		return nil
 	}
+
 	return v.errors
 }
 
@@ -118,6 +123,7 @@ func dereferenceValue(value any) (any, bool) {
 		if val.IsNil() {
 			return nil, true
 		}
+
 		val = val.Elem()
 	}
 

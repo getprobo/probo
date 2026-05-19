@@ -120,6 +120,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 			if flagName == "" {
 				return fmt.Errorf("name is required; pass --name or run interactively")
 			}
+
 			if flagCategory == "" {
 				return fmt.Errorf("category is required; pass --category or run interactively")
 			}

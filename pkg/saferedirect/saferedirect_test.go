@@ -115,6 +115,7 @@ func TestSafeRedirect_Validate(t *testing.T) {
 			if gotIsValid != tt.expectedIsValid {
 				t.Errorf("Validate() isValid = %v, want %v", gotIsValid, tt.expectedIsValid)
 			}
+
 			if gotURL != tt.expectedURL {
 				t.Errorf("Validate() url = %v, want %v", gotURL, tt.expectedURL)
 			}
@@ -349,6 +350,7 @@ func TestStaticHosts(t *testing.T) {
 		if !fn(context.Background(), "example.com") {
 			t.Error("expected example.com to be allowed")
 		}
+
 		if fn(context.Background(), "other.com") {
 			t.Error("expected other.com to be rejected")
 		}
@@ -361,12 +363,15 @@ func TestStaticHosts(t *testing.T) {
 		if !fn(context.Background(), "a.com") {
 			t.Error("expected a.com to be allowed")
 		}
+
 		if !fn(context.Background(), "b.com") {
 			t.Error("expected b.com to be allowed")
 		}
+
 		if !fn(context.Background(), "c.com") {
 			t.Error("expected c.com to be allowed")
 		}
+
 		if fn(context.Background(), "d.com") {
 			t.Error("expected d.com to be rejected")
 		}
@@ -379,6 +384,7 @@ func TestStaticHosts(t *testing.T) {
 		if fn(context.Background(), "") {
 			t.Error("expected empty host to be rejected")
 		}
+
 		if !fn(context.Background(), "example.com") {
 			t.Error("expected example.com to be allowed")
 		}

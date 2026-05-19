@@ -64,5 +64,6 @@ func NewGraphQLHandler(
 
 	es := schema.NewExecutableSchema(config)
 	gqlh := gqlutils.NewHandler(es, logger)
+
 	return gqlh
 }

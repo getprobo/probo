@@ -41,5 +41,6 @@ func (f *CommonThirdPartyDomainFilter) SQLArguments() pgx.StrictNamedArgs {
 	if len(f.domains) > 0 {
 		args["filter_domains"] = f.domains
 	}
+
 	return args
 }

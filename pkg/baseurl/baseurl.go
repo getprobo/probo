@@ -64,6 +64,7 @@ func MustParse(rawURL string) *BaseURL {
 	if err != nil {
 		panic(err)
 	}
+
 	return b
 }
 
@@ -72,6 +73,7 @@ func (b *BaseURL) String() string {
 	if b == nil {
 		return ""
 	}
+
 	return b.raw
 }
 
@@ -80,6 +82,7 @@ func (b *BaseURL) Scheme() string {
 	if b == nil || b.parsed == nil {
 		return ""
 	}
+
 	return b.parsed.Scheme
 }
 
@@ -88,6 +91,7 @@ func (b *BaseURL) Host() string {
 	if b == nil || b.parsed == nil {
 		return ""
 	}
+
 	return b.parsed.Host
 }
 
@@ -96,6 +100,7 @@ func (b *BaseURL) Hostname() string {
 	if b == nil || b.parsed == nil {
 		return ""
 	}
+
 	return b.parsed.Hostname()
 }
 
@@ -104,6 +109,7 @@ func (b *BaseURL) Port() string {
 	if b == nil || b.parsed == nil {
 		return ""
 	}
+
 	return b.parsed.Port()
 }
 
@@ -168,7 +174,9 @@ func (ub *URLBuilder) WithQuery(key, value string) *URLBuilder {
 	if ub.err != nil {
 		return ub
 	}
+
 	ub.query.Add(key, value)
+
 	return ub
 }
 
@@ -177,11 +185,13 @@ func (ub *URLBuilder) WithQueryValues(values url.Values) *URLBuilder {
 	if ub.err != nil {
 		return ub
 	}
+
 	for key, vals := range values {
 		for _, val := range vals {
 			ub.query.Add(key, val)
 		}
 	}
+
 	return ub
 }
 
@@ -208,6 +218,7 @@ func (ub *URLBuilder) MustString() string {
 	if err != nil {
 		panic(err)
 	}
+
 	return s
 }
 
@@ -224,6 +235,7 @@ func (b *BaseURL) UnmarshalJSON(data []byte) error {
 	}
 
 	*b = *parsed
+
 	return nil
 }
 
@@ -232,6 +244,7 @@ func (b *BaseURL) MarshalJSON() ([]byte, error) {
 	if b == nil {
 		return json.Marshal("")
 	}
+
 	return json.Marshal(b.raw)
 }
 
@@ -243,6 +256,7 @@ func (b *BaseURL) UnmarshalText(text []byte) error {
 	}
 
 	*b = *parsed
+
 	return nil
 }
 
@@ -251,6 +265,7 @@ func (b *BaseURL) MarshalText() ([]byte, error) {
 	if b == nil {
 		return []byte(""), nil
 	}
+
 	return []byte(b.raw), nil
 }
 

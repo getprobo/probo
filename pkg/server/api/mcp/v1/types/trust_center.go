@@ -49,6 +49,7 @@ func NewListTrustCenterReferencesOutput(p *page.Page[*coredata.TrustCenterRefere
 	}
 
 	var nextCursor *page.CursorKey
+
 	if len(p.Data) > 0 {
 		cursorKey := p.Data[len(p.Data)-1].CursorKey(p.Cursor.OrderBy.Field)
 		nextCursor = &cursorKey
@@ -75,6 +76,7 @@ func NewTrustCenterFile(f *coredata.TrustCenterFile, fileURL string) *TrustCente
 
 func NewListTrustCenterFilesOutput(files []*TrustCenterFile, p *page.Page[*coredata.TrustCenterFile, coredata.TrustCenterFileOrderField]) ListTrustCenterFilesOutput {
 	var nextCursor *page.CursorKey
+
 	if len(p.Data) > 0 {
 		cursorKey := p.Data[len(p.Data)-1].CursorKey(p.Cursor.OrderBy.Field)
 		nextCursor = &cursorKey

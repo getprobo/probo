@@ -107,6 +107,7 @@ func (d *OnePasswordUsersAPIDriver) ListAccounts(ctx context.Context) ([]Account
 		if resp.NextPageToken == "" {
 			return records, nil
 		}
+
 		pageToken = resp.NextPageToken
 	}
 
@@ -118,6 +119,7 @@ func (d *OnePasswordUsersAPIDriver) queryUsers(ctx context.Context, pageToken st
 	if err != nil {
 		return nil, fmt.Errorf("cannot parse 1password users api base url: %w", err)
 	}
+
 	u = u.JoinPath("v1beta1", "accounts", d.accountID, "users")
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u.String(), nil)
@@ -127,9 +129,11 @@ func (d *OnePasswordUsersAPIDriver) queryUsers(ctx context.Context, pageToken st
 
 	q := req.URL.Query()
 	q.Set("max_page_size", "100")
+
 	if pageToken != "" {
 		q.Set("page_token", pageToken)
 	}
+
 	req.URL.RawQuery = q.Encode()
 
 	req.Header.Set("Accept", "application/json")
@@ -138,6 +142,7 @@ func (d *OnePasswordUsersAPIDriver) queryUsers(ctx context.Context, pageToken st
 	if err != nil {
 		return nil, fmt.Errorf("cannot execute 1password users api request: %w", err)
 	}
+
 	defer func() {
 		_ = httpResp.Body.Close()
 	}()

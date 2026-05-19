@@ -97,6 +97,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				if err := cmdutil.ValidateEnum("order-by", flagOrderBy, []string{"CREATED_AT"}); err != nil {
 					return err
 				}
+
 				variables["orderBy"] = map[string]any{
 					"field":     flagOrderBy,
 					"direction": flagOrderDir,
@@ -118,12 +119,15 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 					if err := json.Unmarshal(data, &resp); err != nil {
 						return nil, err
 					}
+
 					if resp.Node == nil {
 						return nil, fmt.Errorf("webhook subscription %s not found", args[0])
 					}
+
 					if resp.Node.Typename != "WebhookSubscription" {
 						return nil, fmt.Errorf("expected WebhookSubscription node, got %s", resp.Node.Typename)
 					}
+
 					return &resp.Node.Events, nil
 				},
 			)
@@ -135,6 +139,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				if events == nil {
 					events = []webhookEvent{}
 				}
+
 				return cmdutil.PrintJSON(f.IOStreams.Out, events)
 			}
 

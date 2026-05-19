@@ -49,5 +49,6 @@ func (p *ObligationOrderField) UnmarshalText(text []byte) error {
 		*p = ObligationOrderField(val)
 		return nil
 	}
+
 	return fmt.Errorf("invalid ObligationOrderField value: %q", val)
 }

@@ -84,15 +84,19 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 			if cmd.Flags().Changed("description") {
 				input["description"] = flagDescription
 			}
+
 			if cmd.Flags().Changed("necessity") {
 				input["necessityAndProportionality"] = flagNecessityAndProportionality
 			}
+
 			if cmd.Flags().Changed("potential-risk") {
 				input["potentialRisk"] = flagPotentialRisk
 			}
+
 			if cmd.Flags().Changed("mitigations") {
 				input["mitigations"] = flagMitigations
 			}
+
 			if cmd.Flags().Changed("residual-risk") {
 				input["residualRisk"] = flagResidualRisk
 			}

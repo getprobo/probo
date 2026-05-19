@@ -137,10 +137,13 @@ func (r *mutationResolver) PublishProcessingActivityList(ctx context.Context, in
 		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
 			return nil, gqlutils.Conflict(ctx, err)
 		}
+
 		if errMinor, ok := errors.AsType[*probo.ErrCannotPublishMinorWithoutMajor](err); ok {
 			return nil, gqlutils.Invalid(ctx, errMinor)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot publish processing activity list", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -165,6 +168,7 @@ func (r *processingActivityResolver) Organization(ctx context.Context, obj *type
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get organization", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -190,6 +194,7 @@ func (r *processingActivityResolver) DataProtectionOfficer(ctx context.Context, 
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get data protection officer", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -239,7 +244,9 @@ func (r *processingActivityResolver) DataProtectionImpactAssessment(ctx context.
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, nil
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot get processing activity dpia", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -259,7 +266,9 @@ func (r *processingActivityResolver) TransferImpactAssessment(ctx context.Contex
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, nil
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot get processing activity tia", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -286,10 +295,12 @@ func (r *processingActivityConnectionResolver) TotalCount(ctx context.Context, o
 			r.logger.ErrorCtx(ctx, "cannot count organization processing activities", log.Error(err))
 			return 0, gqlutils.Internal(ctx)
 		}
+
 		return count, nil
 	}
 
 	r.logger.ErrorCtx(ctx, "unsupported resolver")
+
 	return 0, gqlutils.Internal(ctx)
 }
 

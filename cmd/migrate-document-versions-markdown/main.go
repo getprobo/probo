@@ -73,6 +73,7 @@ func run() error {
 	}
 
 	var ids []string
+
 	err = pgClient.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
 		rows, err := conn.Query(
 			ctx,
@@ -94,8 +95,10 @@ ORDER BY id;
 			if err := rows.Scan(&id); err != nil {
 				return fmt.Errorf("cannot scan document version id: %w", err)
 			}
+
 			ids = append(ids, id)
 		}
+
 		return rows.Err()
 	})
 	if err != nil {
@@ -103,13 +106,16 @@ ORDER BY id;
 	}
 
 	var failures int
+
 	for _, idStr := range ids {
 		if err := migrateOneInTx(ctx, pgClient, idStr, dryRun); err != nil {
 			fmt.Fprintf(os.Stderr, "%v\n", err)
+
 			failures++
 			if !continueOnError {
 				return fmt.Errorf("stopped after %d failure(s)", failures)
 			}
+
 			continue
 		}
 	}
@@ -119,6 +125,7 @@ ORDER BY id;
 	}
 
 	fmt.Println("done")
+
 	return nil
 }
 
@@ -135,6 +142,7 @@ func newPgClientFromDSN(dsn string) (*pg.Client, error) {
 		if u.Port() == "" {
 			host = net.JoinHostPort(u.Hostname(), "5432")
 		}
+
 		opts = append(opts, pg.WithAddr(host))
 	}
 
@@ -197,6 +205,7 @@ func migrateOne(ctx context.Context, tx pg.Tx, idStr string, dryRun bool) error 
 	}
 
 	fmt.Printf("updated %s\n", idStr)
+
 	return nil
 }
 
@@ -207,5 +216,6 @@ func isProseMirrorDocJSON(s string) bool {
 	if err := json.Unmarshal([]byte(s), &probe); err != nil {
 		return false
 	}
+
 	return probe.Type == "doc"
 }

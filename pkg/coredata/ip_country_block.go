@@ -48,6 +48,7 @@ LIMIT 1;
 		if err == pgx.ErrNoRows {
 			return "", nil
 		}
+
 		return "", fmt.Errorf("cannot collect ip country block row: %w", err)
 	}
 

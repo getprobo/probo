@@ -101,6 +101,7 @@ func CheckCORSTool() agent.Tool {
 					ErrorDetail: fmt.Sprintf("cannot fetch %s: %s", p.URL, err),
 				}), nil
 			}
+
 			defer func() { _ = resp.Body.Close() }()
 
 			allowOrigin := resp.Header.Get("Access-Control-Allow-Origin")

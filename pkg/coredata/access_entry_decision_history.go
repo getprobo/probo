@@ -100,6 +100,7 @@ func (h *AccessEntryDecisionHistory) AuthorizationAttributes(
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrResourceNotFound
 		}
+
 		return nil, fmt.Errorf("cannot load authorization attributes: %w", err)
 	}
 

@@ -49,5 +49,6 @@ func (p *AuditOrderField) UnmarshalText(text []byte) error {
 		*p = AuditOrderField(val)
 		return nil
 	}
+
 	return fmt.Errorf("invalid AuditOrderField value: %q", val)
 }

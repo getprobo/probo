@@ -72,6 +72,7 @@ func FirecrawlSearchTool(apiKey string) agent.Tool {
 			if maxResults <= 0 {
 				maxResults = 5
 			}
+
 			if maxResults > 10 {
 				maxResults = 10
 			}
@@ -111,6 +112,7 @@ func firecrawlSearch(
 	if err != nil {
 		return nil, fmt.Errorf("cannot create request: %w", err)
 	}
+
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", "Bearer "+apiKey)
 
@@ -118,6 +120,7 @@ func firecrawlSearch(
 	if err != nil {
 		return nil, fmt.Errorf("cannot execute search request: %w", err)
 	}
+
 	defer func() { _ = resp.Body.Close() }()
 
 	respBody, err := io.ReadAll(resp.Body)

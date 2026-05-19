@@ -71,6 +71,7 @@ func (s *SAMLConfiguration) AuthorizationAttributes(ctx context.Context, conn pg
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrResourceNotFound
 		}
+
 		return nil, fmt.Errorf("cannot query saml configuration authorization attributes: %w", err)
 	}
 
@@ -505,6 +506,7 @@ WHERE
 	}
 
 	var count int
+
 	err = rows.Scan(&count)
 	if err != nil {
 		return 0, fmt.Errorf("cannot collect count: %w", err)
@@ -572,6 +574,7 @@ WHERE
 `
 
 	row := conn.QueryRow(ctx, q, pgx.StrictNamedArgs{"email_domain": emailDomain})
+
 	var count int
 	if err := row.Scan(&count); err != nil {
 		return 0, fmt.Errorf("cannot count SAML configurations: %w", err)

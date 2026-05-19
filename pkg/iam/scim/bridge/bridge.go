@@ -67,6 +67,7 @@ func (s *Bridge) Run(ctx context.Context) (created, updated, deleted, deactivate
 	}
 
 	scimUsersByEmail := make(map[string]*scimclient.User)
+
 	for i := range scimUsers {
 		email := strings.ToLower(scimUsers[i].UserName)
 		scimUsersByEmail[email] = &scimUsers[i]
@@ -86,6 +87,7 @@ func (s *Bridge) Run(ctx context.Context) (created, updated, deleted, deactivate
 				errs = append(errs, fmt.Errorf("cannot create user %q: %w", pu.ExternalID, err))
 				continue
 			}
+
 			created++
 		} else {
 			needsUpdate := existingSCIM.Active != pu.Active ||
@@ -107,6 +109,7 @@ func (s *Bridge) Run(ctx context.Context) (created, updated, deleted, deactivate
 					errs = append(errs, fmt.Errorf("cannot update user %q: %w", pu.ExternalID, err))
 					continue
 				}
+
 				updated++
 			} else {
 				skipped++
@@ -124,7 +127,9 @@ func (s *Bridge) Run(ctx context.Context) (created, updated, deleted, deactivate
 				errs = append(errs, fmt.Errorf("cannot delete user %q: %w", scimUser.ExternalID, err))
 				continue
 			}
+
 			deleted++
+
 			continue
 		}
 
@@ -136,6 +141,7 @@ func (s *Bridge) Run(ctx context.Context) (created, updated, deleted, deactivate
 			errs = append(errs, fmt.Errorf("cannot deactivate user %q: %w", scimUser.ExternalID, err))
 			continue
 		}
+
 		deactivated++
 	}
 
@@ -148,5 +154,6 @@ func (s *Bridge) isExcluded(email string) bool {
 			return true
 		}
 	}
+
 	return false
 }

@@ -60,6 +60,7 @@ func (tca *TrustCenterAccess) AuthorizationAttributes(ctx context.Context, conn 
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrResourceNotFound
 		}
+
 		return nil, fmt.Errorf("cannot query trust center access authorization attributes: %w", err)
 	}
 
@@ -213,6 +214,7 @@ INSERT INTO trust_center_accesses (
 				return ErrResourceAlreadyExists
 			}
 		}
+
 		return fmt.Errorf("cannot insert trust center access: %w", err)
 	}
 

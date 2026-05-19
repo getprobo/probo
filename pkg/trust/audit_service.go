@@ -45,7 +45,6 @@ func (s AuditService) Get(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -70,7 +69,6 @@ func (s AuditService) GetByReportID(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -89,6 +87,7 @@ func (s AuditService) ListForOrganizationId(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
 			filter := coredata.NewAuditTrustCenterFilter()
+
 			err := audits.LoadByOrganizationID(ctx, conn, s.svc.scope, organizationID, cursor, filter)
 			if err != nil {
 				return fmt.Errorf("cannot load audits: %w", err)
@@ -97,7 +96,6 @@ func (s AuditService) ListForOrganizationId(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}

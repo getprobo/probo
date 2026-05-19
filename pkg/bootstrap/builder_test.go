@@ -114,6 +114,7 @@ func TestBuilder_Build_MissingRequiredEnvVars(t *testing.T) {
 			_, err := b.Build()
 
 			require.Error(t, err)
+
 			for _, missing := range tt.wantMissing {
 				assert.Contains(t, err.Error(), missing)
 			}
@@ -480,6 +481,7 @@ func TestBuilder_Build_AccessReviewConnectors(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Len(t, cfg.Probod.Connectors, len(providers))
+
 	byProvider := make(map[string]probodconfig.ConnectorConfig, len(cfg.Probod.Connectors))
 	for _, c := range cfg.Probod.Connectors {
 		byProvider[c.Provider] = c
@@ -539,6 +541,7 @@ func TestBuilder_Build_SlackConnector(t *testing.T) {
 	rawConfig := connector.RawConfig.(probodconfig.ConnectorConfigOAuth2)
 	assert.Equal(t, "slack-client-id", rawConfig.ClientID)
 	assert.Equal(t, "slack-client-secret", rawConfig.ClientSecret)
+
 	rawSettings := connector.RawSettings.(map[string]any)
 	assert.Equal(t, "slack-signing-secret", rawSettings["signing-secret"])
 }

@@ -72,6 +72,7 @@ func NewClient(httpClient *http.Client, endpoint, token string) *Client {
 
 func (c *Client) ListUsers(ctx context.Context) (Users, error) {
 	var allUsers Users
+
 	startIndex := 1
 	count := 100
 
@@ -107,6 +108,7 @@ func (c *Client) listUsersPage(ctx context.Context, startIndex, count int) (User
 	if err != nil {
 		return nil, 0, fmt.Errorf("cannot fetch users: %w", err)
 	}
+
 	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
@@ -131,6 +133,7 @@ func (c *Client) CreateUser(ctx context.Context, user *User) error {
 	}
 
 	reqURL := fmt.Sprintf("%s/Users", c.endpoint)
+
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, reqURL, bytes.NewReader(body))
 	if err != nil {
 		return fmt.Errorf("cannot create request: %w", err)
@@ -143,6 +146,7 @@ func (c *Client) CreateUser(ctx context.Context, user *User) error {
 	if err != nil {
 		return fmt.Errorf("cannot create user: %w", err)
 	}
+
 	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusCreated && resp.StatusCode != http.StatusOK {
@@ -162,6 +166,7 @@ func (c *Client) UpdateUser(ctx context.Context, userID string, user *User) erro
 	}
 
 	reqURL := fmt.Sprintf("%s/Users/%s", c.endpoint, url.PathEscape(userID))
+
 	req, err := http.NewRequestWithContext(ctx, http.MethodPut, reqURL, bytes.NewReader(body))
 	if err != nil {
 		return fmt.Errorf("cannot create request: %w", err)
@@ -174,6 +179,7 @@ func (c *Client) UpdateUser(ctx context.Context, userID string, user *User) erro
 	if err != nil {
 		return fmt.Errorf("cannot update user: %w", err)
 	}
+
 	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
@@ -244,6 +250,7 @@ func (c *Client) DeactivateUser(ctx context.Context, userID string) error {
 	}
 
 	reqURL := fmt.Sprintf("%s/Users/%s", c.endpoint, url.PathEscape(userID))
+
 	req, err := http.NewRequestWithContext(ctx, http.MethodPatch, reqURL, bytes.NewReader(body))
 	if err != nil {
 		return fmt.Errorf("cannot create request: %w", err)
@@ -256,6 +263,7 @@ func (c *Client) DeactivateUser(ctx context.Context, userID string) error {
 	if err != nil {
 		return fmt.Errorf("cannot deactivate user: %w", err)
 	}
+
 	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusNoContent {
@@ -268,6 +276,7 @@ func (c *Client) DeactivateUser(ctx context.Context, userID string) error {
 
 func (c *Client) DeleteUser(ctx context.Context, userID string) error {
 	reqURL := fmt.Sprintf("%s/Users/%s", c.endpoint, url.PathEscape(userID))
+
 	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, reqURL, nil)
 	if err != nil {
 		return fmt.Errorf("cannot create request: %w", err)
@@ -279,6 +288,7 @@ func (c *Client) DeleteUser(ctx context.Context, userID string) error {
 	if err != nil {
 		return fmt.Errorf("cannot delete user: %w", err)
 	}
+
 	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusNoContent && resp.StatusCode != http.StatusNotFound {

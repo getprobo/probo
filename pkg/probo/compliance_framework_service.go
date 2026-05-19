@@ -84,6 +84,7 @@ func (s ComplianceFrameworkService) ListWithHiddenForTrustCenterID(
 			if err := cfs.LoadWithHiddenByTrustCenterID(ctx, conn, s.svc.scope, trustCenterID, cursor); err != nil {
 				return fmt.Errorf("cannot load compliance frameworks with hidden: %w", err)
 			}
+
 			return nil
 		},
 	)
@@ -132,7 +133,6 @@ func (s ComplianceFrameworkService) Create(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -169,7 +169,6 @@ func (s ComplianceFrameworkService) Update(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}

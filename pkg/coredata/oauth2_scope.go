@@ -96,6 +96,7 @@ func (s OAuth2Scopes) OrDefault(defaultScopes OAuth2Scopes) OAuth2Scopes {
 	if len(s) == 0 {
 		return defaultScopes
 	}
+
 	return s
 }
 
@@ -107,6 +108,7 @@ func (s *OAuth2Scopes) UnmarshalText(text []byte) error {
 	}
 
 	fields := strings.Fields(str)
+
 	scopes := make(OAuth2Scopes, len(fields))
 	for i, f := range fields {
 		if err := scopes[i].UnmarshalText([]byte(f)); err != nil {
@@ -115,5 +117,6 @@ func (s *OAuth2Scopes) UnmarshalText(text []byte) error {
 	}
 
 	*s = scopes
+
 	return nil
 }

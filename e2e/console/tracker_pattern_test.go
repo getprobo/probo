@@ -91,6 +91,7 @@ func TestTrackerPattern_Create(t *testing.T) {
 		}, &result)
 
 		require.NoError(t, err)
+
 		node := result.CreateTrackerPattern.TrackerPatternEdge.Node
 		assert.NotEmpty(t, node.ID)
 		assert.Equal(t, "_ga", node.Pattern)
@@ -151,6 +152,7 @@ func TestTrackerPattern_Create(t *testing.T) {
 		}, &result)
 
 		require.NoError(t, err)
+
 		node := result.CreateTrackerPattern.TrackerPatternEdge.Node
 		assert.Equal(t, "_gat_*", node.Pattern)
 		assert.Equal(t, "GLOB", node.MatchType)

@@ -30,10 +30,12 @@ func RenderMarkdown(node Node) (string, error) {
 	if err := r.renderNode(node); err != nil {
 		return "", err
 	}
+
 	out := strings.TrimRight(r.buf.String(), "\n")
 	if out != "" {
 		out += "\n"
 	}
+
 	return out, nil
 }
 
@@ -62,53 +64,69 @@ func (r *mdRenderer) renderNode(n Node) error {
 		return r.renderBlocks(n.Content)
 	case NodeParagraph:
 		r.ensurePrefix()
+
 		if err := r.renderInline(n.Content); err != nil {
 			return err
 		}
+
 		r.newLine()
 	case NodeHeading:
 		attrs, err := n.HeadingAttrs()
 		if err != nil {
 			return fmt.Errorf("cannot render heading node: %w", err)
 		}
+
 		if attrs.Level < 1 || attrs.Level > 6 {
 			return fmt.Errorf("cannot render heading node: invalid level %d", attrs.Level)
 		}
+
 		r.ensurePrefix()
+
 		for i := 0; i < attrs.Level; i++ {
 			r.buf.WriteByte('#')
 		}
+
 		r.buf.WriteByte(' ')
+
 		if err := r.renderInline(n.Content); err != nil {
 			return err
 		}
+
 		r.newLine()
 	case NodeBlockquote:
 		oldPrefix := r.prefix
+
 		r.prefix += "> "
 		if err := r.renderBlocks(n.Content); err != nil {
 			r.prefix = oldPrefix
 			return err
 		}
+
 		r.prefix = oldPrefix
 	case NodeCodeBlock:
 		attrs, err := n.CodeBlockAttrs()
 		if err != nil {
 			return fmt.Errorf("cannot render code block node: %w", err)
 		}
+
 		code := collectText(n.Content)
 		fence := chooseFence(code)
+
 		r.ensurePrefix()
 		r.buf.WriteString(fence)
+
 		if attrs.Language != nil {
 			r.buf.WriteString(*attrs.Language)
 		}
+
 		r.newLine()
+
 		for line := range strings.SplitSeq(code, "\n") {
 			r.ensurePrefix()
 			r.buf.WriteString(line)
 			r.newLine()
 		}
+
 		r.ensurePrefix()
 		r.buf.WriteString(fence)
 		r.newLine()
@@ -126,18 +144,23 @@ func (r *mdRenderer) renderNode(n Node) error {
 		if err != nil {
 			return fmt.Errorf("cannot render image node: %w", err)
 		}
+
 		r.ensurePrefix()
 		r.buf.WriteString("![")
+
 		if attrs.Alt != nil {
 			r.buf.WriteString(escapeMarkdown(*attrs.Alt))
 		}
+
 		r.buf.WriteString("](")
 		r.buf.WriteString(safeImageSrc(attrs.Src))
+
 		if attrs.Title != nil {
 			r.buf.WriteString(` "`)
 			r.buf.WriteString(strings.ReplaceAll(*attrs.Title, `"`, `\"`))
 			r.buf.WriteByte('"')
 		}
+
 		r.buf.WriteByte(')')
 	case NodeBulletList:
 		return r.renderBulletList(n)
@@ -152,6 +175,7 @@ func (r *mdRenderer) renderNode(n Node) error {
 	default:
 		return fmt.Errorf("cannot render node: unknown type %q", n.Type)
 	}
+
 	return nil
 }
 
@@ -161,10 +185,12 @@ func (r *mdRenderer) renderBlocks(nodes []Node) error {
 			r.ensurePrefix()
 			r.newLine()
 		}
+
 		if err := r.renderNode(n); err != nil {
 			return err
 		}
 	}
+
 	return nil
 }
 
@@ -174,6 +200,7 @@ func (r *mdRenderer) renderInline(nodes []Node) error {
 			return err
 		}
 	}
+
 	return nil
 }
 
@@ -190,12 +217,14 @@ func (r *mdRenderer) renderText(n Node) error {
 	}
 
 	var hasCode bool
+
 	for _, m := range n.Marks {
 		if m.Type == MarkCode {
 			hasCode = true
 			break
 		}
 	}
+
 	if hasCode {
 		return r.renderCodeText(n)
 	}
@@ -203,6 +232,7 @@ func (r *mdRenderer) renderText(n Node) error {
 	text := *n.Text
 
 	var needsTrim bool
+
 	for _, m := range n.Marks {
 		switch m.Type {
 		case MarkStrong, MarkEm, MarkStrike:
@@ -211,6 +241,7 @@ func (r *mdRenderer) renderText(n Node) error {
 	}
 
 	var leading, trailing string
+
 	if needsTrim {
 		origLen := len(text)
 		text = strings.TrimLeft(text, " ")
@@ -223,6 +254,7 @@ func (r *mdRenderer) renderText(n Node) error {
 	if text == "" {
 		r.buf.WriteString(leading)
 		r.buf.WriteString(trailing)
+
 		return nil
 	}
 
@@ -251,6 +283,7 @@ func (r *mdRenderer) renderText(n Node) error {
 // Inline code fences must be longer than this value (CommonMark).
 func maxConsecutiveBackticks(s string) int {
 	max, cur := 0, 0
+
 	for i := 0; i < len(s); i++ {
 		if s[i] == '`' {
 			cur++
@@ -261,6 +294,7 @@ func maxConsecutiveBackticks(s string) int {
 			cur = 0
 		}
 	}
+
 	return max
 }
 
@@ -269,6 +303,7 @@ func (r *mdRenderer) renderCodeText(n Node) error {
 	fence := strings.Repeat("`", maxConsecutiveBackticks(text)+1)
 
 	var otherMarks []Mark
+
 	for _, m := range n.Marks {
 		if m.Type != MarkCode {
 			otherMarks = append(otherMarks, m)
@@ -282,13 +317,17 @@ func (r *mdRenderer) renderCodeText(n Node) error {
 	}
 
 	r.buf.WriteString(fence)
+
 	if len(fence) > 1 {
 		r.buf.WriteByte(' ')
 	}
+
 	r.buf.WriteString(text)
+
 	if len(fence) > 1 {
 		r.buf.WriteByte(' ')
 	}
+
 	r.buf.WriteString(fence)
 
 	for i := len(otherMarks) - 1; i >= 0; i-- {
@@ -315,6 +354,7 @@ func (r *mdRenderer) openMark(m Mark) error {
 	default:
 		return fmt.Errorf("cannot render mark: unknown type %q", m.Type)
 	}
+
 	return nil
 }
 
@@ -333,17 +373,21 @@ func (r *mdRenderer) closeMark(m Mark) error {
 		if err != nil {
 			return fmt.Errorf("cannot render link mark: %w", err)
 		}
+
 		r.buf.WriteString("](")
 		r.buf.WriteString(safeLinkHref(attrs.Href))
+
 		if attrs.Title != nil {
 			r.buf.WriteString(` "`)
 			r.buf.WriteString(strings.ReplaceAll(*attrs.Title, `"`, `\"`))
 			r.buf.WriteByte('"')
 		}
+
 		r.buf.WriteByte(')')
 	default:
 		return fmt.Errorf("cannot render mark: unknown type %q", m.Type)
 	}
+
 	return nil
 }
 
@@ -352,11 +396,13 @@ func (r *mdRenderer) renderBulletList(n Node) error {
 	if err != nil {
 		return fmt.Errorf("cannot render bullet list: %w", err)
 	}
+
 	for i, item := range n.Content {
 		if i > 0 && !tight {
 			r.ensurePrefix()
 			r.newLine()
 		}
+
 		r.ensurePrefix()
 		r.buf.WriteString("- ")
 		r.atLineStart = false
@@ -369,12 +415,14 @@ func (r *mdRenderer) renderBulletList(n Node) error {
 		if err := r.renderBlocks(item.Content); err != nil {
 			r.prefix = oldPrefix
 			r.tight = oldTight
+
 			return err
 		}
 
 		r.prefix = oldPrefix
 		r.tight = oldTight
 	}
+
 	return nil
 }
 
@@ -383,17 +431,22 @@ func (r *mdRenderer) renderOrderedList(n Node) error {
 	if err != nil {
 		return fmt.Errorf("cannot render ordered list node: %w", err)
 	}
+
 	tight, err := listTightness(n)
 	if err != nil {
 		return fmt.Errorf("cannot render ordered list: %w", err)
 	}
+
 	start := max(attrs.Start, 1)
+
 	for i, item := range n.Content {
 		if i > 0 && !tight {
 			r.ensurePrefix()
 			r.newLine()
 		}
+
 		r.ensurePrefix()
+
 		num := strconv.Itoa(start + i)
 		r.buf.WriteString(num)
 		r.buf.WriteString(". ")
@@ -408,12 +461,14 @@ func (r *mdRenderer) renderOrderedList(n Node) error {
 		if err := r.renderBlocks(item.Content); err != nil {
 			r.prefix = oldPrefix
 			r.tight = oldTight
+
 			return err
 		}
 
 		r.prefix = oldPrefix
 		r.tight = oldTight
 	}
+
 	return nil
 }
 
@@ -427,34 +482,45 @@ func (r *mdRenderer) renderGFMTable(n Node) error {
 	}
 
 	headerRow := n.Content[0]
+
 	r.ensurePrefix()
 	r.buf.WriteByte('|')
+
 	for _, cell := range headerRow.Content {
 		r.buf.WriteByte(' ')
+
 		if err := r.renderCellInline(cell); err != nil {
 			return err
 		}
+
 		r.buf.WriteString(" |")
 	}
+
 	r.newLine()
 
 	r.ensurePrefix()
 	r.buf.WriteByte('|')
+
 	for range headerRow.Content {
 		r.buf.WriteString(" --- |")
 	}
+
 	r.newLine()
 
 	for _, row := range n.Content[1:] {
 		r.ensurePrefix()
 		r.buf.WriteByte('|')
+
 		for _, cell := range row.Content {
 			r.buf.WriteByte(' ')
+
 			if err := r.renderCellInline(cell); err != nil {
 				return err
 			}
+
 			r.buf.WriteString(" |")
 		}
+
 		r.newLine()
 	}
 
@@ -465,13 +531,16 @@ func (r *mdRenderer) renderCellInline(cell Node) error {
 	if len(cell.Content) == 1 && cell.Content[0].Type == NodeParagraph {
 		return r.renderInline(cell.Content[0].Content)
 	}
+
 	for _, child := range cell.Content {
 		h, err := RenderHTML(child)
 		if err != nil {
 			return fmt.Errorf("cannot render table cell content: %w", err)
 		}
+
 		r.buf.WriteString(strings.ReplaceAll(h, "|", `\|`))
 	}
+
 	return nil
 }
 
@@ -479,6 +548,7 @@ func (r *mdRenderer) renderCellInline(cell Node) error {
 // Every direct child of n must be a listItem; otherwise listTightness returns an error.
 func listTightness(n Node) (tight bool, err error) {
 	tight = true
+
 	for _, item := range n.Content {
 		if item.Type != NodeListItem {
 			return false, fmt.Errorf(
@@ -487,20 +557,24 @@ func listTightness(n Node) (tight bool, err error) {
 				NodeListItem,
 			)
 		}
+
 		if len(item.Content) != 1 {
 			tight = false
 		}
 	}
+
 	return tight, nil
 }
 
 func collectText(nodes []Node) string {
 	var buf strings.Builder
+
 	for _, n := range nodes {
 		if n.Text != nil {
 			buf.WriteString(*n.Text)
 		}
 	}
+
 	return buf.String()
 }
 
@@ -509,18 +583,22 @@ func chooseFence(code string) string {
 	for strings.Contains(code, fence) {
 		fence += "`"
 	}
+
 	return fence
 }
 
 func escapeMarkdown(s string) string {
 	var buf strings.Builder
 	buf.Grow(len(s))
+
 	for _, c := range s {
 		switch c {
 		case '\\', '*', '_', '`', '[', ']', '~', '|', '<':
 			buf.WriteByte('\\')
 		}
+
 		buf.WriteRune(c)
 	}
+
 	return buf.String()
 }

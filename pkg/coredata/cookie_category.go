@@ -60,6 +60,7 @@ func (c CookieItems) MarshalJSON() ([]byte, error) {
 	if c == nil {
 		return []byte("[]"), nil
 	}
+
 	return json.Marshal([]CookieItem(c))
 }
 
@@ -68,6 +69,7 @@ func (c *CookieItems) UnmarshalJSON(data []byte) error {
 		*c = CookieItems{}
 		return nil
 	}
+
 	return json.Unmarshal(data, (*[]CookieItem)(c))
 }
 
@@ -138,6 +140,7 @@ LIMIT 1;
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
 		}
+
 		return fmt.Errorf("cannot collect cookie category: %w", err)
 	}
 
@@ -527,6 +530,7 @@ INSERT INTO cookie_categories (
 				return ErrResourceAlreadyExists
 			}
 		}
+
 		return fmt.Errorf("cannot insert cookie category: %w", err)
 	}
 
@@ -572,6 +576,7 @@ WHERE
 				return ErrResourceAlreadyExists
 			}
 		}
+
 		return fmt.Errorf("cannot update cookie category: %w", err)
 	}
 
@@ -740,6 +745,7 @@ LIMIT 1;
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
 		}
+
 		return fmt.Errorf("cannot collect uncategorised cookie category: %w", err)
 	}
 

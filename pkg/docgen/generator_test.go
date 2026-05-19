@@ -396,10 +396,12 @@ func TestDocumentVersionSignatureStates(t *testing.T) {
 func TestLargeContent(t *testing.T) {
 	var largeContent strings.Builder
 	largeContent.WriteString(`{"type":"doc","content":[`)
+
 	for i := range 1000 {
 		if i > 0 {
 			largeContent.WriteByte(',')
 		}
+
 		largeContent.WriteString(`{"type":"heading","attrs":{"level":1},"content":[{"type":"text","text":"Section `)
 		largeContent.WriteByte(byte('A' + i%26))
 		largeContent.WriteString(`"}]},`)
@@ -416,6 +418,7 @@ func TestLargeContent(t *testing.T) {
 			`{"type":"listItem","content":[{"type":"paragraph","content":[{"type":"text","text":"List item 3"}]}]}` +
 			`]}`)
 	}
+
 	largeContent.WriteString(`]}`)
 
 	data := DocumentData{
@@ -465,6 +468,7 @@ func BenchmarkGenerateHTML(b *testing.B) {
 	}
 
 	b.ResetTimer()
+
 	for i := 0; i < b.N; i++ {
 		_, err := RenderHTML(data)
 		if err != nil {

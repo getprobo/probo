@@ -37,6 +37,7 @@ func (tcv InvitationStatus) String() string {
 
 func (tcv *InvitationStatus) Scan(value any) error {
 	var s string
+
 	switch v := value.(type) {
 	case string:
 		s = v
@@ -56,6 +57,7 @@ func (tcv *InvitationStatus) Scan(value any) error {
 	default:
 		return fmt.Errorf("invalid InvitationStatus value: %q", s)
 	}
+
 	return nil
 }
 
@@ -70,12 +72,16 @@ func (statuses InvitationStatuses) Value() (driver.Value, error) {
 
 	var result strings.Builder
 	result.WriteString("{")
+
 	for i, status := range statuses {
 		if i > 0 {
 			result.WriteString(",")
 		}
+
 		fmt.Fprintf(&result, "%q", status.String())
 	}
+
 	result.WriteString("}")
+
 	return result.String(), nil
 }

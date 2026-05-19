@@ -80,17 +80,21 @@ func TestAuditLog_List(t *testing.T) {
 
 	// Find the thirdParty create entry.
 	found := false
+
 	for _, edge := range result.Node.AuditLogEntries.Edges {
 		if edge.Node.Action == "core:thirdParty:create" {
 			found = true
+
 			assert.Equal(t, "USER", edge.Node.ActorType)
 			assert.Equal(t, "ThirdParty", edge.Node.ResourceType)
 			assert.NotEmpty(t, edge.Node.ActorID)
 			assert.NotEmpty(t, edge.Node.ResourceID)
 			assert.NotEmpty(t, edge.Node.CreatedAt)
+
 			break
 		}
 	}
+
 	assert.True(t, found, "expected to find core:thirdParty:create audit log entry")
 }
 
@@ -143,6 +147,7 @@ func TestAuditLog_Filter(t *testing.T) {
 		}, &result)
 		require.NoError(t, err)
 		assert.GreaterOrEqual(t, result.Node.AuditLogEntries.TotalCount, 1)
+
 		for _, edge := range result.Node.AuditLogEntries.Edges {
 			assert.Equal(t, "core:thirdParty:create", edge.Node.Action)
 		}
@@ -171,6 +176,7 @@ func TestAuditLog_Filter(t *testing.T) {
 		}, &result)
 		require.NoError(t, err)
 		assert.GreaterOrEqual(t, result.Node.AuditLogEntries.TotalCount, 1)
+
 		for _, edge := range result.Node.AuditLogEntries.Edges {
 			assert.Equal(t, "ThirdParty", edge.Node.ResourceType)
 		}

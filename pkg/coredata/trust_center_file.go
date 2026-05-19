@@ -51,6 +51,7 @@ func (t TrustCenterFile) CursorKey(orderBy TrustCenterFileOrderField) page.Curso
 	case TrustCenterFileOrderFieldUpdatedAt:
 		return page.NewCursorKey(t.ID, t.UpdatedAt)
 	}
+
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
@@ -62,6 +63,7 @@ func (t *TrustCenterFile) AuthorizationAttributes(ctx context.Context, conn pg.Q
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrResourceNotFound
 		}
+
 		return nil, fmt.Errorf("cannot query trust center file authorization attributes: %w", err)
 	}
 
@@ -355,6 +357,7 @@ WHERE
 	maps.Copy(args, scope.SQLArguments())
 
 	var count int
+
 	err := conn.QueryRow(ctx, q, args).Scan(&count)
 	if err != nil {
 		return 0, fmt.Errorf("cannot count trust center files: %w", err)

@@ -64,6 +64,7 @@ func (tp *TrackerPattern) CursorKey(field TrackerPatternOrderField) page.CursorK
 		if tp.LastMatchedAt == nil {
 			return page.NewCursorKey(tp.ID, time.Time{})
 		}
+
 		return page.NewCursorKey(tp.ID, *tp.LastMatchedAt)
 	case TrackerPatternOrderFieldUpdatedAt:
 		return page.NewCursorKey(tp.ID, tp.UpdatedAt)
@@ -71,6 +72,7 @@ func (tp *TrackerPattern) CursorKey(field TrackerPatternOrderField) page.CursorK
 		if tp.Source == nil {
 			return page.NewCursorKey(tp.ID, "")
 		}
+
 		return page.NewCursorKey(tp.ID, string(*tp.Source))
 	}
 
@@ -141,6 +143,7 @@ LIMIT 1;
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
 		}
+
 		return fmt.Errorf("cannot collect tracker pattern: %w", err)
 	}
 
@@ -209,6 +212,7 @@ LIMIT 1;
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
 		}
+
 		return fmt.Errorf("cannot collect tracker pattern: %w", err)
 	}
 
@@ -288,6 +292,7 @@ LIMIT 1;
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
 		}
+
 		return fmt.Errorf("cannot collect tracker pattern: %w", err)
 	}
 
@@ -374,6 +379,7 @@ INSERT INTO tracker_patterns (
 				return ErrResourceAlreadyExists
 			}
 		}
+
 		return fmt.Errorf("cannot insert tracker pattern: %w", err)
 	}
 
@@ -501,6 +507,7 @@ WHERE
 				return ErrResourceAlreadyExists
 			}
 		}
+
 		return fmt.Errorf("cannot update tracker pattern: %w", err)
 	}
 
@@ -955,6 +962,7 @@ LIMIT 1;
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
 		}
+
 		return fmt.Errorf("cannot collect tracker pattern for mapping: %w", err)
 	}
 

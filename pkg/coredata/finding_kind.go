@@ -43,6 +43,7 @@ func (fk FindingKind) String() string {
 
 func (fk *FindingKind) Scan(value any) error {
 	var s string
+
 	switch v := value.(type) {
 	case string:
 		s = v
@@ -64,6 +65,7 @@ func (fk *FindingKind) Scan(value any) error {
 	default:
 		return fmt.Errorf("invalid FindingKind value: %q", s)
 	}
+
 	return nil
 }
 

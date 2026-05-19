@@ -52,6 +52,7 @@ func TestOAuth2Scope_UnmarshalText(t *testing.T) {
 			t.Parallel()
 
 			var scope coredata.OAuth2Scope
+
 			err := scope.UnmarshalText([]byte("offline_access"))
 			assert.NoError(t, err)
 			assert.Equal(t, coredata.OAuth2ScopeOfflineAccess, scope)
@@ -64,6 +65,7 @@ func TestOAuth2Scope_UnmarshalText(t *testing.T) {
 			t.Parallel()
 
 			var scope coredata.OAuth2Scope
+
 			err := scope.UnmarshalText([]byte("admin"))
 			assert.Error(t, err)
 		},
@@ -114,6 +116,7 @@ func TestOAuth2Scopes_OrDefault(t *testing.T) {
 			t.Parallel()
 
 			var scopes coredata.OAuth2Scopes
+
 			result := scopes.OrDefault(defaultScopes)
 			assert.Equal(t, defaultScopes, result)
 		},

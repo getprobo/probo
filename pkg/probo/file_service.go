@@ -65,7 +65,6 @@ func (s FileService) Get(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, fmt.Errorf("cannot load file: %w", err)
 	}
@@ -146,13 +145,17 @@ func (s FileService) UploadAndSaveFile(
 	now := time.Now()
 
 	fileID := gid.New(s.svc.scope.GetTenantID(), coredata.FileEntityType)
+
 	var file *coredata.File
 
 	// Extract organization ID from S3 metadata
 	organizationIDStr, hasOrgID := s3Metadata["organization-id"]
+
 	var organizationID gid.GID
+
 	if hasOrgID {
 		var err error
+
 		organizationID, err = gid.ParseGID(organizationIDStr)
 		if err != nil {
 			return nil, fmt.Errorf("invalid organization-id in metadata: %w", err)
@@ -182,7 +185,6 @@ func (s FileService) UploadAndSaveFile(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}

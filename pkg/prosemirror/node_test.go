@@ -31,6 +31,7 @@ func loadTestDocument(t *testing.T) Node {
 
 	var doc Node
 	require.NoError(t, json.Unmarshal(data, &doc))
+
 	return doc
 }
 
@@ -46,6 +47,7 @@ func TestUnmarshalDocument(t *testing.T) {
 		"heading level 1",
 		func(t *testing.T) {
 			t.Parallel()
+
 			h1 := doc.Content[0]
 			assert.Equal(t, NodeHeading, h1.Type)
 
@@ -64,6 +66,7 @@ func TestUnmarshalDocument(t *testing.T) {
 		"paragraph with mixed marks",
 		func(t *testing.T) {
 			t.Parallel()
+
 			p := doc.Content[1]
 			assert.Equal(t, NodeParagraph, p.Type)
 			require.True(t, len(p.Content) > 5)
@@ -119,6 +122,7 @@ func TestUnmarshalDocument(t *testing.T) {
 		"heading level 2",
 		func(t *testing.T) {
 			t.Parallel()
+
 			h2 := doc.Content[2]
 			assert.Equal(t, NodeHeading, h2.Type)
 
@@ -132,6 +136,7 @@ func TestUnmarshalDocument(t *testing.T) {
 		"code block",
 		func(t *testing.T) {
 			t.Parallel()
+
 			cb := doc.Content[4]
 			assert.Equal(t, NodeCodeBlock, cb.Type)
 
@@ -149,6 +154,7 @@ func TestUnmarshalDocument(t *testing.T) {
 		"heading level 3",
 		func(t *testing.T) {
 			t.Parallel()
+
 			h3 := doc.Content[5]
 			attrs, err := h3.HeadingAttrs()
 			require.NoError(t, err)
@@ -160,6 +166,7 @@ func TestUnmarshalDocument(t *testing.T) {
 		"bullet list",
 		func(t *testing.T) {
 			t.Parallel()
+
 			bl := doc.Content[6]
 			assert.Equal(t, NodeBulletList, bl.Type)
 			require.Len(t, bl.Content, 3)
@@ -186,6 +193,7 @@ func TestUnmarshalDocument(t *testing.T) {
 		"ordered list",
 		func(t *testing.T) {
 			t.Parallel()
+
 			ol := doc.Content[8]
 			assert.Equal(t, NodeOrderedList, ol.Type)
 			require.Len(t, ol.Content, 3)
@@ -201,6 +209,7 @@ func TestUnmarshalDocument(t *testing.T) {
 		"blockquote",
 		func(t *testing.T) {
 			t.Parallel()
+
 			bq := doc.Content[10]
 			assert.Equal(t, NodeBlockquote, bq.Type)
 			require.Len(t, bq.Content, 1)
@@ -217,6 +226,7 @@ func TestUnmarshalDocument(t *testing.T) {
 		"table",
 		func(t *testing.T) {
 			t.Parallel()
+
 			table := doc.Content[12]
 			assert.Equal(t, NodeTable, table.Type)
 			require.Len(t, table.Content, 3)
@@ -225,6 +235,7 @@ func TestUnmarshalDocument(t *testing.T) {
 			headerRow := table.Content[0]
 			assert.Equal(t, NodeTableRow, headerRow.Type)
 			require.Len(t, headerRow.Content, 4)
+
 			for _, cell := range headerRow.Content {
 				assert.Equal(t, NodeTableHeader, cell.Type)
 			}
@@ -247,6 +258,7 @@ func TestUnmarshalDocument(t *testing.T) {
 			for _, row := range table.Content[1:] {
 				assert.Equal(t, NodeTableRow, row.Type)
 				require.Len(t, row.Content, 4)
+
 				for _, cell := range row.Content {
 					assert.Equal(t, NodeTableCell, cell.Type)
 				}
@@ -268,6 +280,7 @@ func TestUnmarshalDocument(t *testing.T) {
 		"trailing empty paragraph",
 		func(t *testing.T) {
 			t.Parallel()
+
 			emptyP := doc.Content[13]
 			assert.Equal(t, NodeParagraph, emptyP.Type)
 			assert.Empty(t, emptyP.Content)
@@ -297,6 +310,7 @@ func TestHeadingAttrs(t *testing.T) {
 	t.Parallel()
 
 	raw := `{"type":"heading","attrs":{"level":3},"content":[{"type":"text","text":"Hello"}]}`
+
 	var n Node
 	require.NoError(t, json.Unmarshal([]byte(raw), &n))
 
@@ -312,7 +326,9 @@ func TestCodeBlockAttrs(t *testing.T) {
 		"with language",
 		func(t *testing.T) {
 			t.Parallel()
+
 			raw := `{"type":"codeBlock","attrs":{"language":"go"},"content":[{"type":"text","text":"fmt.Println()"}]}`
+
 			var n Node
 			require.NoError(t, json.Unmarshal([]byte(raw), &n))
 
@@ -327,7 +343,9 @@ func TestCodeBlockAttrs(t *testing.T) {
 		"with null language",
 		func(t *testing.T) {
 			t.Parallel()
+
 			raw := `{"type":"codeBlock","attrs":{"language":null}}`
+
 			var n Node
 			require.NoError(t, json.Unmarshal([]byte(raw), &n))
 
@@ -342,6 +360,7 @@ func TestOrderedListAttrs(t *testing.T) {
 	t.Parallel()
 
 	raw := `{"type":"orderedList","attrs":{"start":5,"type":null}}`
+
 	var n Node
 	require.NoError(t, json.Unmarshal([]byte(raw), &n))
 
@@ -355,6 +374,7 @@ func TestImageAttrs(t *testing.T) {
 	t.Parallel()
 
 	raw := `{"type":"image","attrs":{"src":"https://example.com/img.png","alt":"An image","title":null}}`
+
 	var n Node
 	require.NoError(t, json.Unmarshal([]byte(raw), &n))
 
@@ -373,7 +393,9 @@ func TestTableCellAttrs(t *testing.T) {
 		"with colwidth",
 		func(t *testing.T) {
 			t.Parallel()
+
 			raw := `{"type":"tableCell","attrs":{"colspan":2,"rowspan":1,"colwidth":[100,200]}}`
+
 			var n Node
 			require.NoError(t, json.Unmarshal([]byte(raw), &n))
 
@@ -389,7 +411,9 @@ func TestTableCellAttrs(t *testing.T) {
 		"with null colwidth",
 		func(t *testing.T) {
 			t.Parallel()
+
 			raw := `{"type":"tableHeader","attrs":{"colspan":1,"rowspan":1,"colwidth":null}}`
+
 			var n Node
 			require.NoError(t, json.Unmarshal([]byte(raw), &n))
 
@@ -406,6 +430,7 @@ func TestLinkAttrs(t *testing.T) {
 	t.Parallel()
 
 	raw := `{"type":"link","attrs":{"href":"https://example.com","target":"_blank","rel":"noopener","class":null,"title":"Example"}}`
+
 	var m Mark
 	require.NoError(t, json.Unmarshal([]byte(raw), &m))
 
@@ -428,6 +453,7 @@ func TestTextLength(t *testing.T) {
 		"empty doc",
 		func(t *testing.T) {
 			t.Parallel()
+
 			n := Node{Type: NodeDoc}
 			assert.Equal(t, 0, n.TextLength())
 		},
@@ -437,6 +463,7 @@ func TestTextLength(t *testing.T) {
 		"single text node",
 		func(t *testing.T) {
 			t.Parallel()
+
 			text := "hello"
 			n := Node{Type: NodeText, Text: &text}
 			assert.Equal(t, 5, n.TextLength())
@@ -447,6 +474,7 @@ func TestTextLength(t *testing.T) {
 		"paragraph with text",
 		func(t *testing.T) {
 			t.Parallel()
+
 			raw := `{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"hello world"}]}]}`
 			doc, err := Parse(raw)
 			require.NoError(t, err)
@@ -458,6 +486,7 @@ func TestTextLength(t *testing.T) {
 		"multiple paragraphs",
 		func(t *testing.T) {
 			t.Parallel()
+
 			raw := `{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"aaa"}]},{"type":"paragraph","content":[{"type":"text","text":"bb"}]}]}`
 			doc, err := Parse(raw)
 			require.NoError(t, err)
@@ -469,6 +498,7 @@ func TestTextLength(t *testing.T) {
 		"formatted text counts only text",
 		func(t *testing.T) {
 			t.Parallel()
+
 			raw := `{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"plain "},{"type":"text","marks":[{"type":"bold"}],"text":"bold"}]}]}`
 			doc, err := Parse(raw)
 			require.NoError(t, err)
@@ -480,6 +510,7 @@ func TestTextLength(t *testing.T) {
 		"nested list structure",
 		func(t *testing.T) {
 			t.Parallel()
+
 			raw := `{"type":"doc","content":[{"type":"bulletList","content":[{"type":"listItem","content":[{"type":"paragraph","content":[{"type":"text","text":"item 1"}]}]},{"type":"listItem","content":[{"type":"paragraph","content":[{"type":"text","text":"item 2"}]}]}]}]}`
 			doc, err := Parse(raw)
 			require.NoError(t, err)
@@ -491,6 +522,7 @@ func TestTextLength(t *testing.T) {
 		"multi-byte unicode characters",
 		func(t *testing.T) {
 			t.Parallel()
+
 			raw := `{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"café résumé"}]}]}`
 			doc, err := Parse(raw)
 			require.NoError(t, err)
@@ -512,6 +544,7 @@ func TestNodeWithNoAttrs(t *testing.T) {
 	t.Parallel()
 
 	raw := `{"type":"paragraph","content":[{"type":"text","text":"Hello"}]}`
+
 	var n Node
 	require.NoError(t, json.Unmarshal([]byte(raw), &n))
 

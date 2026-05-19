@@ -94,6 +94,7 @@ func NewAuthorizeFunc(
 			}
 
 			logger.ErrorCtx(ctx, "cannot authorize", log.Error(err))
+
 			return gqlutils.Internal(ctx)
 		}
 

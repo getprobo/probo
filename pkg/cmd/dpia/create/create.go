@@ -113,15 +113,19 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 			if flagDescription != "" {
 				input["description"] = flagDescription
 			}
+
 			if flagNecessityAndProportionality != "" {
 				input["necessityAndProportionality"] = flagNecessityAndProportionality
 			}
+
 			if flagPotentialRisk != "" {
 				input["potentialRisk"] = flagPotentialRisk
 			}
+
 			if flagMitigations != "" {
 				input["mitigations"] = flagMitigations
 			}
+
 			if flagResidualRisk != "" {
 				input["residualRisk"] = flagResidualRisk
 			}

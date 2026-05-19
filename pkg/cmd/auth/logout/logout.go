@@ -64,6 +64,7 @@ func NewCmdLogout(f *cmdutil.Factory) *cobra.Command {
 					for i, h := range hosts {
 						options[i] = huh.NewOption(h, h)
 					}
+
 					err := huh.NewSelect[string]().
 						Title("Select a host to log out of").
 						Options(options...).
@@ -85,6 +86,7 @@ func NewCmdLogout(f *cmdutil.Factory) *cobra.Command {
 			revokeTokens(flagHost, hc, f)
 
 			delete(cfg.Hosts, flagHost)
+
 			if cfg.ActiveHost == flagHost {
 				cfg.ActiveHost = ""
 			}
@@ -152,6 +154,7 @@ func fetchRevocationEndpoint(client *http.Client, baseURL string) (*oidcDiscover
 	if err != nil {
 		return nil, fmt.Errorf("cannot fetch discovery document: %w", err)
 	}
+
 	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
@@ -194,6 +197,7 @@ func revokeToken(
 	if err != nil {
 		return fmt.Errorf("cannot send revocation request: %w", err)
 	}
+
 	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
@@ -208,5 +212,6 @@ func normalizeHostToURL(host string) string {
 	if strings.HasPrefix(lower, "http://") || strings.HasPrefix(lower, "https://") {
 		return strings.TrimRight(host, "/")
 	}
+
 	return "https://" + strings.TrimRight(host, "/")
 }

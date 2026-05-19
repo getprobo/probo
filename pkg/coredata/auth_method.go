@@ -45,6 +45,7 @@ func (a AccessEntryAuthMethod) String() string {
 
 func (a *AccessEntryAuthMethod) Scan(value any) error {
 	var str string
+
 	switch v := value.(type) {
 	case string:
 		str = v
@@ -68,6 +69,7 @@ func (a *AccessEntryAuthMethod) Scan(value any) error {
 	default:
 		return fmt.Errorf("cannot parse AccessEntryAuthMethod: invalid value %q", str)
 	}
+
 	return nil
 }
 

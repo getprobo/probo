@@ -80,15 +80,19 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 			if cmd.Flags().Changed("name") {
 				input["name"] = flagName
 			}
+
 			if cmd.Flags().Changed("cookie-policy-url") {
 				input["cookiePolicyUrl"] = flagCookiePolicyUrl
 			}
+
 			if cmd.Flags().Changed("privacy-policy-url") {
 				input["privacyPolicyUrl"] = flagPrivacyPolicyUrl
 			}
+
 			if cmd.Flags().Changed("consent-expiry-days") {
 				input["consentExpiryDays"] = flagConsentExpiry
 			}
+
 			if cmd.Flags().Changed("default-language") {
 				input["defaultLanguage"] = flagDefaultLanguage
 			}

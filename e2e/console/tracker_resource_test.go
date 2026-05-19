@@ -85,6 +85,7 @@ func TestTrackerResource_Create(t *testing.T) {
 		}, &result)
 
 		require.NoError(t, err)
+
 		node := result.CreateTrackerResource.TrackerResourceEdge.Node
 		assert.NotEmpty(t, node.ID)
 		assert.Equal(t, "SCRIPT", node.Type)

@@ -64,6 +64,7 @@ func (s *SCIMEvent) AuthorizationAttributes(ctx context.Context, conn pg.Querier
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrResourceNotFound
 		}
+
 		return nil, fmt.Errorf("cannot query scim event authorization attributes: %w", err)
 	}
 
@@ -255,6 +256,7 @@ WHERE
 	maps.Copy(args, scope.SQLArguments())
 
 	row := conn.QueryRow(ctx, q, args)
+
 	var count int
 	if err := row.Scan(&count); err != nil {
 		return 0, fmt.Errorf("cannot count scim_events: %w", err)
@@ -335,6 +337,7 @@ WHERE
 	maps.Copy(args, scope.SQLArguments())
 
 	row := conn.QueryRow(ctx, q, args)
+
 	var count int
 	if err := row.Scan(&count); err != nil {
 		return 0, fmt.Errorf("cannot count scim_events: %w", err)

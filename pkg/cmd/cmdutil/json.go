@@ -26,6 +26,8 @@ func PrintJSON(out io.Writer, v any) error {
 	if err != nil {
 		return fmt.Errorf("cannot marshal JSON: %w", err)
 	}
+
 	_, err = fmt.Fprintln(out, string(data))
+
 	return err
 }

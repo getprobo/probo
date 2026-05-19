@@ -92,6 +92,7 @@ func AnalyzeCSPTool() agent.Tool {
 					ErrorDetail: fmt.Sprintf("cannot fetch %s: %s", p.URL, err),
 				}), nil
 			}
+
 			defer func() { _ = resp.Body.Close() }()
 
 			raw := resp.Header.Get("Content-Security-Policy")
@@ -111,6 +112,7 @@ func AnalyzeCSPTool() agent.Tool {
 			directives := parseCSPDirectives(raw)
 
 			var hasUnsafeEval, hasUnsafeInline, hasWildcard bool
+
 			for _, d := range directives {
 				for _, v := range d.Values {
 					switch v {

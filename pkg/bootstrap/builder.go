@@ -36,6 +36,7 @@ func NewBuilder(getEnv EnvGetter) *Builder {
 	if getEnv == nil {
 		getEnv = os.Getenv
 	}
+
 	return &Builder{getEnv: getEnv}
 }
 
@@ -372,6 +373,7 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 		if clientID == "" {
 			continue
 		}
+
 		cfg.Probod.Connectors = append(cfg.Probod.Connectors, probodconfig.ConnectorConfig{
 			Provider: provider,
 			Protocol: "oauth2",
@@ -480,6 +482,7 @@ func (b *Builder) getSAMLCredentials() (cert, key string, err error) {
 	if cert == "" {
 		cert = b.getEnv("SAML_CERTIFICATE")
 	}
+
 	if key == "" {
 		key = b.getEnv("SAML_PRIVATE_KEY")
 	}
@@ -498,6 +501,7 @@ func (b *Builder) getOAuth2SigningKey() string {
 	if b.oauth2SigningKey != "" {
 		return b.oauth2SigningKey
 	}
+
 	return b.getEnv("OAUTH2_SERVER_SIGNING_KEY")
 }
 
@@ -516,6 +520,7 @@ func (b *Builder) getEnvOrDefault(key, defaultValue string) string {
 	if value := b.getEnv(key); value != "" {
 		return value
 	}
+
 	return defaultValue
 }
 
@@ -525,6 +530,7 @@ func (b *Builder) getEnvIntOrDefault(key string, defaultValue int) int {
 			return int(intValue)
 		}
 	}
+
 	return defaultValue
 }
 
@@ -534,6 +540,7 @@ func (b *Builder) getEnvFloatOrDefault(key string, defaultValue float64) float64
 			return floatValue
 		}
 	}
+
 	return defaultValue
 }
 
@@ -543,6 +550,7 @@ func (b *Builder) getEnvFloatPtr(key string) *float64 {
 			return &floatValue
 		}
 	}
+
 	return nil
 }
 
@@ -553,6 +561,7 @@ func (b *Builder) getEnvIntPtr(key string) *int {
 			return &v
 		}
 	}
+
 	return nil
 }
 
@@ -562,6 +571,7 @@ func (b *Builder) getEnvBoolOrDefault(key string, defaultValue bool) bool {
 			return boolValue
 		}
 	}
+
 	return defaultValue
 }
 
@@ -572,12 +582,15 @@ func (b *Builder) parseOriginsList(s string) []string {
 	}
 
 	var result []string
+
 	for part := range strings.SplitSeq(s, ",") {
 		part = strings.TrimSpace(part)
+
 		part = strings.Trim(part, "\"")
 		if part != "" {
 			result = append(result, part)
 		}
 	}
+
 	return result
 }

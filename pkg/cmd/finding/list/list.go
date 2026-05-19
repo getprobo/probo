@@ -110,6 +110,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				if err := cmdutil.ValidateEnum("order-by", flagOrderBy, []string{"CREATED_AT", "REFERENCE_ID", "IDENTIFIED_ON", "DUE_DATE", "STATUS", "PRIORITY", "KIND"}); err != nil {
 					return err
 				}
+
 				variables["orderBy"] = map[string]any{
 					"field":     flagOrderBy,
 					"direction": flagOrderDir,
@@ -117,12 +118,15 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 			}
 
 			filter := map[string]any{}
+
 			if flagKind != "" {
 				if err := cmdutil.ValidateEnum("kind", flagKind, []string{"MINOR_NONCONFORMITY", "MAJOR_NONCONFORMITY", "OBSERVATION", "EXCEPTION"}); err != nil {
 					return err
 				}
+
 				filter["kind"] = flagKind
 			}
+
 			if len(filter) > 0 {
 				variables["filter"] = filter
 			}
@@ -142,12 +146,15 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 					if err := json.Unmarshal(data, &resp); err != nil {
 						return nil, err
 					}
+
 					if resp.Node == nil {
 						return nil, fmt.Errorf("organization %s not found", flagOrganization)
 					}
+
 					if resp.Node.Typename != "Organization" {
 						return nil, fmt.Errorf("expected Organization node, got %s", resp.Node.Typename)
 					}
+
 					return &resp.Node.Findings, nil
 				},
 			)
@@ -170,6 +177,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				if fi.DueDate != nil {
 					dueDate = cmdutil.FormatTime(*fi.DueDate)
 				}
+
 				rows = append(rows, []string{
 					fi.ID,
 					fi.ReferenceID,

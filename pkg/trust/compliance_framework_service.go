@@ -46,7 +46,6 @@ func (s ComplianceFrameworkService) ListByTrustCenterID(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}

@@ -49,6 +49,7 @@ func (r *BridgeRunner) executeSync(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			var err error
+
 			idp, token, dbConnector, err = r.prepareSync(
 				ctx,
 				tx,
@@ -56,7 +57,6 @@ func (r *BridgeRunner) executeSync(
 				scope,
 				logger,
 			)
-
 			if err != nil {
 				return fmt.Errorf("cannot prepare sync: %w", err)
 			}
@@ -126,6 +126,7 @@ func (r *BridgeRunner) prepareSync(
 	}
 
 	scimConfig.HashedToken = HashToken(token)
+
 	scimConfig.UpdatedAt = time.Now()
 	if err := scimConfig.Update(ctx, tx, scope); err != nil {
 		return nil, "", nil, fmt.Errorf("cannot update SCIM configuration token: %w", err)
@@ -192,6 +193,7 @@ func (r *BridgeRunner) createOAuth2BridgeProvider(
 	}
 
 	providerName := dbConnector.Provider.String()
+
 	refreshCfg := r.connectorRegistry.GetOAuth2RefreshConfig(providerName)
 	if refreshCfg == nil {
 		logger.WarnCtx(
@@ -200,10 +202,12 @@ func (r *BridgeRunner) createOAuth2BridgeProvider(
 			log.String("connector_id", dbConnector.ID.String()),
 			log.String("connector_provider", providerName),
 		)
+
 		httpClient, err := oauth2Conn.ClientWithOptions(ctx, httpClientOpts...)
 		if err != nil {
 			return nil, fmt.Errorf("cannot create HTTP client: %w", err)
 		}
+
 		return factory(httpClient), nil
 	}
 

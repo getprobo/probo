@@ -71,12 +71,14 @@ func TestUser_UpdateMembership(t *testing.T) {
 
 	// Find the admin
 	var adminMembershipID string
+
 	for _, edge := range result.Node.Profiles.Edges {
 		if edge.Node.Membership.Role == "ADMIN" {
 			adminMembershipID = edge.Node.Membership.ID
 			break
 		}
 	}
+
 	require.NotEmpty(t, adminMembershipID, "Should find admin member")
 
 	// Update the member role to VIEWER
@@ -162,12 +164,14 @@ func TestUser_RemoveUser(t *testing.T) {
 
 	// Find a viewer user to remove
 	var userID string
+
 	for _, edge := range result.Node.Profiles.Edges {
 		if edge.Node.Membership.Role == "VIEWER" {
 			userID = edge.Node.ID
 			break
 		}
 	}
+
 	assert.NotEmpty(t, userID, "Should find viewer member")
 
 	// Remove the member
@@ -251,12 +255,14 @@ func TestUser_RemoveOwner(t *testing.T) {
 
 	// Find the other owner (not the calling owner)
 	var targetProfileID string
+
 	for _, edge := range result.Node.Profiles.Edges {
 		if edge.Node.Membership.Role == "OWNER" && edge.Node.Identity.ID != owner.GetUserID().String() {
 			targetProfileID = edge.Node.ID
 			break
 		}
 	}
+
 	require.NotEmpty(t, targetProfileID, "Should find another owner to remove")
 
 	mutation := `

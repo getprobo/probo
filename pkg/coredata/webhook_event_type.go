@@ -45,6 +45,7 @@ func (w WebhookEventType) IsValid() bool {
 		WebhookEventTypeObligationCreated, WebhookEventTypeObligationUpdated, WebhookEventTypeObligationDeleted:
 		return true
 	}
+
 	return false
 }
 
@@ -57,11 +58,13 @@ func (w *WebhookEventType) UnmarshalText(text []byte) error {
 	if !w.IsValid() {
 		return fmt.Errorf("%s is not a valid WebhookEventType", string(text))
 	}
+
 	return nil
 }
 
 func (w *WebhookEventType) Scan(value any) error {
 	var s string
+
 	switch v := value.(type) {
 	case string:
 		s = v
@@ -116,10 +119,12 @@ func (s *WebhookEventTypes) scanFromString(str string) error {
 		if err := et.Scan(part); err != nil {
 			return fmt.Errorf("invalid webhook event type in array: %s", part)
 		}
+
 		result[i] = et
 	}
 
 	*s = result
+
 	return nil
 }
 

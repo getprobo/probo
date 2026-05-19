@@ -145,6 +145,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 			if flagName == "" {
 				return fmt.Errorf("name is required; pass --name or run interactively")
 			}
+
 			if flagCategory == "" {
 				return fmt.Errorf("category is required; pass --category or run interactively")
 			}
@@ -158,12 +159,15 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 			if flagDescription != "" {
 				input["description"] = flagDescription
 			}
+
 			if flagLegalName != "" {
 				input["legalName"] = flagLegalName
 			}
+
 			if flagAddress != "" {
 				input["headquarterAddress"] = flagAddress
 			}
+
 			if flagWebsite != "" {
 				input["websiteUrl"] = flagWebsite
 			}

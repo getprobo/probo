@@ -88,7 +88,6 @@ func (s ThirdPartyContactService) Get(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -114,7 +113,6 @@ func (s ThirdPartyContactService) List(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -159,7 +157,6 @@ func (s ThirdPartyContactService) Create(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -188,21 +185,24 @@ func (s ThirdPartyContactService) Update(
 			if req.FullName != nil {
 				thirdPartyContact.FullName = *req.FullName
 			}
+
 			if req.Email != nil {
 				thirdPartyContact.Email = *req.Email
 			}
+
 			if req.Phone != nil {
 				thirdPartyContact.Phone = *req.Phone
 			}
+
 			if req.Role != nil {
 				thirdPartyContact.Role = *req.Role
 			}
+
 			thirdPartyContact.UpdatedAt = time.Now()
 
 			return thirdPartyContact.Update(ctx, conn, s.svc.scope)
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -215,6 +215,7 @@ func (s ThirdPartyContactService) Delete(
 	thirdPartyContactID gid.GID,
 ) error {
 	thirdPartyContact := coredata.ThirdPartyContact{ID: thirdPartyContactID}
+
 	return s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {

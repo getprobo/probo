@@ -119,13 +119,16 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Slug:"), v.Slug)
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Description:"), v.Description)
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Kind:"), v.Kind)
+
 			_, _ = fmt.Fprintf(out, "%s%d\n", label.Render("Rank:"), v.Rank)
 			if len(v.GcmConsentTypes) > 0 {
 				_, _ = fmt.Fprintf(out, "%s%v\n", label.Render("GCM Consent Types:"), v.GcmConsentTypes)
 			}
+
 			if v.PosthogConsent != "" {
 				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("PostHog Consent:"), v.PosthogConsent)
 			}
+
 			_, _ = fmt.Fprintln(out)
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Created:"), cmdutil.FormatTime(v.CreatedAt))
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Updated:"), cmdutil.FormatTime(v.UpdatedAt))

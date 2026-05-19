@@ -136,6 +136,7 @@ WHERE
 	}
 
 	*i = invitation
+
 	return nil
 }
 
@@ -152,12 +153,16 @@ WHERE
 LIMIT 1;
 `
 
-	var email string
-	var organizationID gid.GID
+	var (
+		email          string
+		organizationID gid.GID
+	)
+
 	if err := conn.QueryRow(ctx, q, i.ID).Scan(&email, &organizationID); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrResourceNotFound
 		}
+
 		return nil, fmt.Errorf("cannot query invitation iam attributes: %w", err)
 	}
 
@@ -276,6 +281,7 @@ WHERE
 	}
 
 	*i = invitations
+
 	return nil
 }
 

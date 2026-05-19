@@ -30,6 +30,7 @@ func TestOptionalByDefault(t *testing.T) {
 
 	t.Run("nil pointer skips validation by default", func(t *testing.T) {
 		v := New()
+
 		var str *string
 		v.Check(str, "field", MinLen(5))
 
@@ -80,6 +81,7 @@ func TestOptionalByDefault(t *testing.T) {
 
 	t.Run("Required() validates nil values", func(t *testing.T) {
 		v := New()
+
 		var str *string
 		v.Check(str, "field", Required())
 
@@ -92,6 +94,7 @@ func TestOptionalByDefault(t *testing.T) {
 func TestRequired(t *testing.T) {
 	t.Run("valid string", func(t *testing.T) {
 		str := "hello"
+
 		err := Required()(&str)
 		if err != nil {
 			t.Errorf("expected no error, got: %v", err)
@@ -100,6 +103,7 @@ func TestRequired(t *testing.T) {
 
 	t.Run("empty string", func(t *testing.T) {
 		str := ""
+
 		err := Required()(&str)
 		if err == nil {
 			t.Fatal("expected validation error")
@@ -110,6 +114,7 @@ func TestRequired(t *testing.T) {
 
 	t.Run("whitespace string", func(t *testing.T) {
 		str := "   "
+
 		err := Required()(&str)
 		if err == nil {
 			t.Error("expected validation error for whitespace")
@@ -118,6 +123,7 @@ func TestRequired(t *testing.T) {
 
 	t.Run("nil string pointer", func(t *testing.T) {
 		var str *string
+
 		err := Required()(str)
 		if err == nil {
 			t.Error("expected validation error for nil pointer")
@@ -126,6 +132,7 @@ func TestRequired(t *testing.T) {
 
 	t.Run("valid string pointer", func(t *testing.T) {
 		str := "hello"
+
 		err := Required()(&str)
 		if err != nil {
 			t.Errorf("expected no error, got: %v", err)
@@ -141,6 +148,7 @@ func TestRequired(t *testing.T) {
 
 	t.Run("zero int", func(t *testing.T) {
 		num := 0
+
 		err := Required()(&num)
 		if err != nil {
 			t.Errorf("expected no error for zero int, got: %v", err)
@@ -149,6 +157,7 @@ func TestRequired(t *testing.T) {
 
 	t.Run("positive int", func(t *testing.T) {
 		num := 42
+
 		err := Required()(&num)
 		if err != nil {
 			t.Errorf("expected no error, got: %v", err)
@@ -157,6 +166,7 @@ func TestRequired(t *testing.T) {
 
 	t.Run("nil int pointer", func(t *testing.T) {
 		var num *int
+
 		err := Required()(num)
 		if err == nil {
 			t.Error("expected validation error for nil int pointer")
@@ -165,6 +175,7 @@ func TestRequired(t *testing.T) {
 
 	t.Run("valid int pointer", func(t *testing.T) {
 		num := 42
+
 		err := Required()(&num)
 		if err != nil {
 			t.Errorf("expected no error, got: %v", err)
@@ -173,6 +184,7 @@ func TestRequired(t *testing.T) {
 
 	t.Run("empty slice", func(t *testing.T) {
 		slice := []any{}
+
 		err := Required()(slice)
 		if err == nil {
 			t.Error("expected validation error for empty slice")
@@ -181,6 +193,7 @@ func TestRequired(t *testing.T) {
 
 	t.Run("non-empty slice", func(t *testing.T) {
 		slice := []any{1, 2, 3}
+
 		err := Required()(slice)
 		if err != nil {
 			t.Errorf("expected no error, got: %v", err)
@@ -189,6 +202,7 @@ func TestRequired(t *testing.T) {
 
 	t.Run("empty string slice", func(t *testing.T) {
 		slice := []string{}
+
 		err := Required()(slice)
 		if err == nil {
 			t.Fatal("expected validation error for empty []string slice")
@@ -199,6 +213,7 @@ func TestRequired(t *testing.T) {
 
 	t.Run("non-empty string slice", func(t *testing.T) {
 		slice := []string{"a", "b", "c"}
+
 		err := Required()(slice)
 		if err != nil {
 			t.Errorf("expected no error for non-empty []string, got: %v", err)
@@ -207,6 +222,7 @@ func TestRequired(t *testing.T) {
 
 	t.Run("empty int slice", func(t *testing.T) {
 		slice := []int{}
+
 		err := Required()(slice)
 		if err == nil {
 			t.Fatal("expected validation error for empty []int slice")
@@ -217,6 +233,7 @@ func TestRequired(t *testing.T) {
 
 	t.Run("non-empty int slice", func(t *testing.T) {
 		slice := []int{1, 2, 3}
+
 		err := Required()(slice)
 		if err != nil {
 			t.Errorf("expected no error for non-empty []int, got: %v", err)
@@ -227,7 +244,9 @@ func TestRequired(t *testing.T) {
 		type CustomType struct {
 			ID int
 		}
+
 		slice := []CustomType{}
+
 		err := Required()(slice)
 		if err == nil {
 			t.Fatal("expected validation error for empty custom type slice")
@@ -240,7 +259,9 @@ func TestRequired(t *testing.T) {
 		type CustomType struct {
 			ID int
 		}
+
 		slice := []CustomType{{ID: 1}, {ID: 2}}
+
 		err := Required()(slice)
 		if err != nil {
 			t.Errorf("expected no error for non-empty custom type slice, got: %v", err)
@@ -249,6 +270,7 @@ func TestRequired(t *testing.T) {
 
 	t.Run("empty pointer slice", func(t *testing.T) {
 		slice := []*string{}
+
 		err := Required()(slice)
 		if err == nil {
 			t.Error("expected validation error for empty []*string slice")
@@ -258,6 +280,7 @@ func TestRequired(t *testing.T) {
 	t.Run("non-empty pointer slice", func(t *testing.T) {
 		str1, str2 := "a", "b"
 		slice := []*string{&str1, &str2}
+
 		err := Required()(slice)
 		if err != nil {
 			t.Errorf("expected no error for non-empty []*string, got: %v", err)
@@ -268,6 +291,7 @@ func TestRequired(t *testing.T) {
 func TestNoDuplicates(t *testing.T) {
 	t.Run("nil slice", func(t *testing.T) {
 		var slice []string
+
 		err := NoDuplicates()(slice)
 		if err != nil {
 			t.Errorf("expected no error for nil slice, got: %v", err)
@@ -276,6 +300,7 @@ func TestNoDuplicates(t *testing.T) {
 
 	t.Run("empty slice", func(t *testing.T) {
 		slice := []string{}
+
 		err := NoDuplicates()(slice)
 		if err != nil {
 			t.Errorf("expected no error for empty slice, got: %v", err)
@@ -284,6 +309,7 @@ func TestNoDuplicates(t *testing.T) {
 
 	t.Run("unique strings", func(t *testing.T) {
 		slice := []string{"a", "b", "c"}
+
 		err := NoDuplicates()(slice)
 		if err != nil {
 			t.Errorf("expected no error, got: %v", err)
@@ -292,6 +318,7 @@ func TestNoDuplicates(t *testing.T) {
 
 	t.Run("duplicate strings", func(t *testing.T) {
 		slice := []string{"a", "b", "a"}
+
 		err := NoDuplicates()(slice)
 		if err == nil {
 			t.Fatal("expected validation error for duplicates")
@@ -302,6 +329,7 @@ func TestNoDuplicates(t *testing.T) {
 
 	t.Run("unique ints", func(t *testing.T) {
 		slice := []int{1, 2, 3}
+
 		err := NoDuplicates()(slice)
 		if err != nil {
 			t.Errorf("expected no error, got: %v", err)
@@ -310,6 +338,7 @@ func TestNoDuplicates(t *testing.T) {
 
 	t.Run("duplicate ints", func(t *testing.T) {
 		slice := []int{1, 2, 1}
+
 		err := NoDuplicates()(slice)
 		if err == nil {
 			t.Fatal("expected validation error for duplicates")
@@ -318,6 +347,7 @@ func TestNoDuplicates(t *testing.T) {
 
 	t.Run("non-comparable elements", func(t *testing.T) {
 		slice := []map[string]string{{"a": "b"}}
+
 		err := NoDuplicates()(slice)
 		if err == nil {
 			t.Fatal("expected validation error for non-comparable elements")

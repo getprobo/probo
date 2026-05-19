@@ -211,10 +211,12 @@ LIMIT 1
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
 		}
+
 		return fmt.Errorf("cannot collect electronic signature: %w", err)
 	}
 
 	*es = sig
+
 	return nil
 }
 
@@ -247,10 +249,12 @@ FOR UPDATE SKIP LOCKED
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
 		}
+
 		return fmt.Errorf("cannot collect electronic signature: %w", err)
 	}
 
 	*es = sig
+
 	return nil
 }
 
@@ -286,10 +290,12 @@ FOR UPDATE SKIP LOCKED
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
 		}
+
 		return fmt.Errorf("cannot collect electronic signature: %w", err)
 	}
 
 	*es = sig
+
 	return nil
 }
 
@@ -304,6 +310,7 @@ SET status = 'ACCEPTED', processing_started_at = NULL, updated_at = NOW()
 WHERE status = 'PROCESSING'
 	AND processing_started_at < NOW() - $1::interval
 `
+
 	_, err := conn.Exec(ctx, q, staleAfter)
 	if err != nil {
 		return fmt.Errorf("cannot reset stale processing signatures: %w", err)
@@ -344,12 +351,14 @@ func (es *ElectronicSignature) computeSealV1() (string, error) {
 		if f == "" {
 			return "", fmt.Errorf("seal field %d must not be empty", i)
 		}
+
 		if strings.Contains(f, "\n") {
 			return "", fmt.Errorf("seal field %d must not contain newline", i)
 		}
 	}
 
 	input := strings.Join(fields, "\n")
+
 	return hash.SHA256HexString(input), nil
 }
 
@@ -367,6 +376,7 @@ WHERE status = 'COMPLETED'
 	AND certificate_processing_started_at < NOW() - $1::interval
 	AND attempt_count < max_attempts
 `
+
 	_, err := conn.Exec(ctx, q, staleAfter)
 	if err != nil {
 		return fmt.Errorf("cannot reset stale certificate processing: %w", err)

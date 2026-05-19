@@ -96,7 +96,6 @@ func (s *Service) GetInitialSlackMessageByChannelAndTS(
 
 		return nil
 	})
-
 	if err != nil {
 		return nil, err
 	}

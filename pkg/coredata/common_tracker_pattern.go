@@ -78,6 +78,7 @@ LIMIT 1;
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
 		}
+
 		return fmt.Errorf("cannot collect common tracker pattern: %w", err)
 	}
 
@@ -130,6 +131,7 @@ LIMIT 1;
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
 		}
+
 		return fmt.Errorf("cannot collect common tracker pattern: %w", err)
 	}
 
@@ -340,6 +342,7 @@ LIMIT 1;
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, nil
 		}
+
 		return nil, fmt.Errorf("cannot collect common tracker pattern: %w", err)
 	}
 

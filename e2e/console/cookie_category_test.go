@@ -89,6 +89,7 @@ func TestCookieCategory_Create(t *testing.T) {
 		}, &result)
 
 		require.NoError(t, err)
+
 		node := result.CreateCookieCategory.CookieCategoryEdge.Node
 		assert.NotEmpty(t, node.ID)
 		assert.Equal(t, "Marketing", node.Name)
@@ -343,12 +344,14 @@ func TestCookieCategory_Delete(t *testing.T) {
 		require.NoError(t, err)
 
 		var necessaryCategoryID string
+
 		for _, e := range listResult.Node.ConsentCategories.Edges {
 			if e.Node.Kind == "NECESSARY" {
 				necessaryCategoryID = e.Node.ID
 				break
 			}
 		}
+
 		require.NotEmpty(t, necessaryCategoryID, "should find a NECESSARY category")
 
 		_, err = owner.Do(`

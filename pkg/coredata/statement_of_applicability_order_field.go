@@ -34,6 +34,7 @@ func (s StatementOfApplicabilityOrderField) Column() string {
 	case StatementOfApplicabilityOrderFieldCreatedAt:
 		return "created_at"
 	}
+
 	panic(fmt.Sprintf("unsupported order by: %s", s))
 }
 
@@ -46,6 +47,7 @@ func (s StatementOfApplicabilityOrderField) IsValid() bool {
 	case StatementOfApplicabilityOrderFieldName, StatementOfApplicabilityOrderFieldCreatedAt:
 		return true
 	}
+
 	return false
 }
 
@@ -58,5 +60,6 @@ func (s *StatementOfApplicabilityOrderField) UnmarshalText(text []byte) error {
 	if !s.IsValid() {
 		return fmt.Errorf("%s is not a valid StatementOfApplicabilityOrderField", string(text))
 	}
+
 	return nil
 }

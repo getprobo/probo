@@ -144,6 +144,7 @@ func (d *MondayDriver) queryUsers(ctx context.Context, page int) ([]mondayUser, 
 	if err != nil {
 		return nil, fmt.Errorf("cannot create monday users request: %w", err)
 	}
+
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/json")
 
@@ -151,6 +152,7 @@ func (d *MondayDriver) queryUsers(ctx context.Context, page int) ([]mondayUser, 
 	if err != nil {
 		return nil, fmt.Errorf("cannot execute monday users request: %w", err)
 	}
+
 	defer func() { _ = httpResp.Body.Close() }()
 
 	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {

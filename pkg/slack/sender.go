@@ -87,6 +87,7 @@ func (s *Sender) batchSendMessages(ctx context.Context) error {
 						}
 
 						s.logger.ErrorCtx(ctx, "panic while sending slack message", log.String("error", panicErr), log.String("message_id", message.ID.String()))
+
 						err = fmt.Errorf("panic recovered: %v", r)
 					}
 				}()
@@ -121,6 +122,7 @@ func (s *Sender) batchSendMessages(ctx context.Context) error {
 					}
 
 					s.logger.ErrorCtx(ctx, "error sending slack message", log.Error(sendErr), log.String("message_id", message.ID.String()))
+
 					return nil
 				}
 
@@ -160,6 +162,7 @@ func (s *Sender) sendMessage(ctx context.Context, tx pg.Querier, message *coreda
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, nil, fmt.Errorf("cannot send slack message: no connector configured for organization")
 		}
+
 		return nil, nil, fmt.Errorf("cannot send slack message: %w", err)
 	}
 
@@ -216,6 +219,7 @@ func (s *Sender) batchUpdateMessages(ctx context.Context) error {
 						}
 
 						s.logger.ErrorCtx(ctx, "panic while updating slack message", log.String("error", panicErr), log.String("message_id", updateMessage.ID.String()))
+
 						err = fmt.Errorf("panic recovered: %v", r)
 					}
 				}()
@@ -241,6 +245,7 @@ func (s *Sender) batchUpdateMessages(ctx context.Context) error {
 					}
 
 					s.logger.ErrorCtx(ctx, "error updating slack message", log.Error(updateErr), log.String("message_id", updateMessage.ID.String()))
+
 					return nil
 				}
 
@@ -284,6 +289,7 @@ func (s *Sender) updateMessage(ctx context.Context, tx pg.Querier, updateMessage
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return fmt.Errorf("cannot update slack message: no connector configured for organization")
 		}
+
 		return fmt.Errorf("cannot update slack message: %w", err)
 	}
 

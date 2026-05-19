@@ -80,9 +80,11 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 			if err := cmdutil.ValidateEnum("kind", flagKind, []string{"MINOR_NONCONFORMITY", "MAJOR_NONCONFORMITY", "OBSERVATION", "EXCEPTION"}); err != nil {
 				return err
 			}
+
 			if err := cmdutil.ValidateEnum("status", flagStatus, []string{"OPEN", "IN_PROGRESS", "CLOSED", "RISK_ACCEPTED", "MITIGATED", "FALSE_POSITIVE"}); err != nil {
 				return err
 			}
+
 			if err := cmdutil.ValidateEnum("priority", flagPriority, []string{"LOW", "MEDIUM", "HIGH"}); err != nil {
 				return err
 			}
@@ -115,27 +117,35 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 			if flagOwnerID != "" {
 				input["ownerId"] = flagOwnerID
 			}
+
 			if flagDescription != "" {
 				input["description"] = flagDescription
 			}
+
 			if flagSource != "" {
 				input["source"] = flagSource
 			}
+
 			if flagIdentifiedOn != "" {
 				input["identifiedOn"] = flagIdentifiedOn
 			}
+
 			if flagRootCause != "" {
 				input["rootCause"] = flagRootCause
 			}
+
 			if flagCorrectiveAction != "" {
 				input["correctiveAction"] = flagCorrectiveAction
 			}
+
 			if flagDueDate != "" {
 				input["dueDate"] = flagDueDate
 			}
+
 			if flagRiskID != "" {
 				input["riskId"] = flagRiskID
 			}
+
 			if flagEffectivenessChk != "" {
 				input["effectivenessCheck"] = flagEffectivenessChk
 			}

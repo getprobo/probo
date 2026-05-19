@@ -60,9 +60,11 @@ func durationBucket(maxAge *int) int {
 
 	remaining := *maxAge
 	total := 0
+
 	for _, u := range durationUnits {
 		if remaining >= u.seconds-u.snap {
 			count := remaining / u.seconds
+
 			leftover := remaining - count*u.seconds
 			if leftover >= u.seconds-u.snap {
 				count++
@@ -72,9 +74,11 @@ func durationBucket(maxAge *int) int {
 			} else {
 				remaining = leftover
 			}
+
 			total += count * u.seconds
 		}
 	}
+
 	return total
 }
 
@@ -120,6 +124,7 @@ func (h *patternAnalysisHandler) Claim(ctx context.Context) (coredata.CookieBann
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return coredata.CookieBanner{}, worker.ErrNoTask
 		}
+
 		return coredata.CookieBanner{}, fmt.Errorf("cannot claim pattern analysis task: %w", err)
 	}
 
@@ -133,11 +138,14 @@ func (h *patternAnalysisHandler) Process(ctx context.Context, banner coredata.Co
 			scope := coredata.NewScopeFromObjectID(banner.ID)
 
 			var uncategorised coredata.CookieCategory
+
 			hasUncategorised := true
+
 			if err := uncategorised.LoadUncategorisedByCookieBannerID(ctx, tx, scope, banner.ID); err != nil {
 				if !errors.Is(err, coredata.ErrResourceNotFound) {
 					return fmt.Errorf("cannot load uncategorised category: %w", err)
 				}
+
 				hasUncategorised = false
 			}
 
@@ -156,8 +164,10 @@ func (h *patternAnalysisHandler) Process(ctx context.Context, banner coredata.Co
 			mergeGroups := findMergeGroups(exactPatterns, patternMergeThreshold)
 
 			consentChanged := false
+
 			for key, group := range mergeGroups {
 				var maxAge *int
+
 				if key.durationBucket >= 0 {
 					v := key.durationBucket
 					maxAge = &v
@@ -187,6 +197,7 @@ func (h *patternAnalysisHandler) Process(ctx context.Context, banner coredata.Co
 				if err != nil {
 					return fmt.Errorf("cannot insert glob pattern %q: %w", key.template, err)
 				}
+
 				if !inserted {
 					if err := globPattern.LoadByBannerIDTypeAndPattern(ctx, tx, scope, banner.ID, key.trackerType, key.template, maxAge); err != nil {
 						return fmt.Errorf("cannot load existing glob pattern %q: %w", key.template, err)
@@ -266,19 +277,24 @@ func findMergeGroups(
 
 		if tmpl, ok := heuristicTemplate(p.Pattern); ok {
 			key := mergeGroupKey{categoryID: p.CookieCategoryID, trackerType: p.TrackerType, template: tmpl, durationBucket: bucket}
+
 			mk := memberKey{key, p}
 			if !seen[mk] {
 				seen[mk] = true
+
 				templateCounts[key] = append(templateCounts[key], p)
 			}
+
 			heuristicKeys[key] = true
 		}
 
 		for _, tmpl := range templateCandidates(p.Pattern) {
 			key := mergeGroupKey{categoryID: p.CookieCategoryID, trackerType: p.TrackerType, template: tmpl, durationBucket: bucket}
+
 			mk := memberKey{key, p}
 			if !seen[mk] {
 				seen[mk] = true
+
 				templateCounts[key] = append(templateCounts[key], p)
 			}
 		}
@@ -292,12 +308,15 @@ func findMergeGroups(
 	}
 
 	var candidates []candidate
+
 	for key, pats := range templateCounts {
 		isH := heuristicKeys[key]
+
 		effectiveThreshold := threshold
 		if isH {
 			effectiveThreshold = 1
 		}
+
 		if len(pats) >= effectiveThreshold {
 			candidates = append(candidates, candidate{key, len(strings.ReplaceAll(key.template, "*", "")), isH, pats})
 		}
@@ -312,12 +331,15 @@ func findMergeGroups(
 			if candidates[i].isHeuristic != candidates[j].isHeuristic {
 				return candidates[i].isHeuristic
 			}
+
 			if candidates[i].fixedChars != candidates[j].fixedChars {
 				return candidates[i].fixedChars > candidates[j].fixedChars
 			}
+
 			if len(candidates[i].patterns) != len(candidates[j].patterns) {
 				return len(candidates[i].patterns) > len(candidates[j].patterns)
 			}
+
 			return candidates[i].key.template < candidates[j].key.template
 		},
 	)
@@ -332,6 +354,7 @@ func findMergeGroups(
 		}
 
 		var unassigned []*coredata.TrackerPattern
+
 		for _, p := range c.patterns {
 			if !assigned[p] {
 				unassigned = append(unassigned, p)
@@ -361,6 +384,7 @@ func heuristicTemplate(name string) (string, bool) {
 	var prefix strings.Builder
 	for len(tokens) > 1 && tokens[0] == "" {
 		prefix.WriteString(string(seps[0]))
+
 		tokens = tokens[1:]
 		seps = seps[1:]
 	}
@@ -378,21 +402,28 @@ func heuristicTemplate(name string) (string, bool) {
 	}
 
 	changed := false
-	var resultTokens []string
-	var resultSeps []byte
+
+	var (
+		resultTokens []string
+		resultSeps   []byte
+	)
+
 	for i, t := range tokens {
 		if looksVariable(t) {
 			changed = true
+
 			if len(resultTokens) == 0 || resultTokens[len(resultTokens)-1] != "*" {
 				if i > 0 {
 					resultSeps = append(resultSeps, seps[i-1])
 				}
+
 				resultTokens = append(resultTokens, "*")
 			}
 		} else {
 			if i > 0 {
 				resultSeps = append(resultSeps, seps[i-1])
 			}
+
 			resultTokens = append(resultTokens, t)
 		}
 	}
@@ -435,6 +466,7 @@ func looksVariable(token string) bool {
 	hasLetter := false
 	allHex := true
 	allDigits := true
+
 	for _, ch := range token {
 		switch {
 		case ch >= '0' && ch <= '9':
@@ -478,25 +510,31 @@ func isUUIDShape(s string) bool {
 	if len(s) != 36 {
 		return false
 	}
+
 	for i, ch := range s {
 		if i == 8 || i == 13 || i == 18 || i == 23 {
 			if ch != '-' {
 				return false
 			}
+
 			continue
 		}
+
 		if (ch < '0' || ch > '9') && (ch < 'a' || ch > 'f') && (ch < 'A' || ch > 'F') {
 			return false
 		}
 	}
+
 	return true
 }
 
 func splitTokens(name string) ([]string, []byte) {
 	underscoreParts := strings.Split(name, "_")
 
-	var tokens []string
-	var seps []byte
+	var (
+		tokens []string
+		seps   []byte
+	)
 
 	for i, part := range underscoreParts {
 		if i > 0 {
@@ -510,6 +548,7 @@ func splitTokens(name string) ([]string, []byte) {
 				if j > 0 {
 					seps = append(seps, '-')
 				}
+
 				tokens = append(tokens, sub)
 			}
 		}
@@ -524,12 +563,15 @@ func splitTokens(name string) ([]string, []byte) {
 
 func joinTokens(tokens []string, seps []byte) string {
 	var b strings.Builder
+
 	for i, t := range tokens {
 		if i > 0 {
 			b.WriteByte(seps[i-1])
 		}
+
 		b.WriteString(t)
 	}
+
 	return b.String()
 }
 
@@ -542,12 +584,14 @@ func globMatch(pattern, name string) bool {
 	if !strings.HasPrefix(name, parts[0]) {
 		return false
 	}
+
 	name = name[len(parts[0]):]
 
 	last := parts[len(parts)-1]
 	if !strings.HasSuffix(name, last) {
 		return false
 	}
+
 	name = name[:len(name)-len(last)]
 
 	for _, part := range parts[1 : len(parts)-1] {
@@ -555,6 +599,7 @@ func globMatch(pattern, name string) bool {
 		if idx == -1 {
 			return false
 		}
+
 		name = name[idx+len(part):]
 	}
 
@@ -567,7 +612,9 @@ func bestSource(patterns []*coredata.TrackerPattern) *coredata.CookieSource {
 			return p.Source
 		}
 	}
+
 	src := coredata.CookieSourcePreExisting
+
 	return &src
 }
 
@@ -582,6 +629,7 @@ func (h *patternAnalysisHandler) adoptUncategorisedPatterns(
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return false, nil
 		}
+
 		return false, fmt.Errorf("cannot load uncategorised category: %w", err)
 	}
 
@@ -609,6 +657,7 @@ func (h *patternAnalysisHandler) adoptUncategorisedPatterns(
 	)
 
 	exactMatchType := coredata.TrackerPatternMatchTypeExact
+
 	var uncategorisedExact coredata.TrackerPatterns
 	if err := uncategorisedExact.LoadAllByCookieBannerID(
 		ctx,
@@ -622,8 +671,10 @@ func (h *patternAnalysisHandler) adoptUncategorisedPatterns(
 	}
 
 	adopted := false
+
 	for _, ep := range uncategorisedExact {
 		var match *coredata.TrackerPattern
+
 		epBucket := durationBucket(ep.MaxAgeSeconds)
 		for _, gp := range globPatterns {
 			if ep.TrackerType == gp.TrackerType && globMatch(gp.Pattern, ep.Pattern) && durationBucket(gp.MaxAgeSeconds) == epBucket {
@@ -646,6 +697,7 @@ func (h *patternAnalysisHandler) adoptUncategorisedPatterns(
 		}
 
 		adopted = true
+
 		h.logger.InfoCtx(
 			ctx,
 			"adopted uncategorised exact pattern into glob pattern",

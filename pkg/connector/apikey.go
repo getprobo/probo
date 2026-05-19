@@ -42,11 +42,13 @@ func (c *APIKeyConnection) Client(ctx context.Context) (*http.Client, error) {
 		tokenType:  "Bearer",
 		underlying: httpclient.DefaultPooledTransport(httpclient.WithSSRFProtection()),
 	}
+
 	return &http.Client{Transport: transport}, nil
 }
 
 func (c APIKeyConnection) MarshalJSON() ([]byte, error) {
 	type Alias APIKeyConnection
+
 	return json.Marshal(&struct {
 		Type string `json:"type"`
 		Alias
@@ -58,10 +60,12 @@ func (c APIKeyConnection) MarshalJSON() ([]byte, error) {
 
 func (c *APIKeyConnection) UnmarshalJSON(data []byte) error {
 	type Alias APIKeyConnection
+
 	aux := &struct {
 		*Alias
 	}{
 		Alias: (*Alias)(c),
 	}
+
 	return json.Unmarshal(data, &aux)
 }

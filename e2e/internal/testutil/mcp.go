@@ -128,6 +128,7 @@ func (mc *MCPClient) doRequest(method string, params any) (json.RawMessage, erro
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/json, text/event-stream")
 	req.Header.Set("Authorization", "Bearer "+mc.apiToken)
+
 	if mc.sessionID != "" {
 		req.Header.Set("Mcp-Session-Id", mc.sessionID)
 	}
@@ -136,6 +137,7 @@ func (mc *MCPClient) doRequest(method string, params any) (json.RawMessage, erro
 	if err != nil {
 		return nil, fmt.Errorf("request failed: %w", err)
 	}
+
 	defer func() { _ = resp.Body.Close() }()
 
 	respBody, err := io.ReadAll(resp.Body)
@@ -198,6 +200,7 @@ func (mc *MCPClient) CallTool(toolName string, args map[string]any) *MCPToolResu
 	require.NoError(mc.t, err, "MCP tools/call %s failed", toolName)
 
 	var toolResult MCPToolResult
+
 	err = json.Unmarshal(result, &toolResult)
 	require.NoError(mc.t, err, "cannot unmarshal tool result for %s", toolName)
 
@@ -212,6 +215,7 @@ func (mc *MCPClient) CallToolExpectToolError(toolName string, args map[string]an
 	require.NotEmpty(mc.t, tr.Content, "tool %s returned no content", toolName)
 
 	var text string
+
 	err := json.Unmarshal(tr.Content[0].Text, &text)
 	require.NoError(mc.t, err, "cannot unmarshal error text for %s", toolName)
 
@@ -227,6 +231,7 @@ func (mc *MCPClient) CallToolInto(toolName string, args map[string]any, dest any
 	// The text field in MCP content is a JSON-encoded string of the output.
 	// First unmarshal the raw JSON to get the string.
 	var textStr string
+
 	err := json.Unmarshal(tr.Content[0].Text, &textStr)
 	require.NoError(mc.t, err, "cannot unmarshal text content for %s", toolName)
 

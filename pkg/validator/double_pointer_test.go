@@ -62,6 +62,7 @@ func TestDoublePointerValidation(t *testing.T) {
 
 	t.Run("optional double pointer - nil outer pointer", func(t *testing.T) {
 		v := validator.New()
+
 		var doublePtr **string = nil
 
 		v.Check(doublePtr, "name", validator.NotEmpty(), validator.MaxLen(1000))
@@ -73,7 +74,9 @@ func TestDoublePointerValidation(t *testing.T) {
 
 	t.Run("optional double pointer - nil inner pointer", func(t *testing.T) {
 		v := validator.New()
+
 		var ptr *string = nil
+
 		doublePtr := &ptr
 
 		v.Check(doublePtr, "name", validator.NotEmpty(), validator.MaxLen(1000))

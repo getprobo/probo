@@ -69,6 +69,7 @@ func FetchRobotsTxtTool() agent.Tool {
 					ErrorDetail: fmt.Sprintf("cannot fetch robots.txt: %s", err),
 				}), nil
 			}
+
 			defer func() { _ = resp.Body.Close() }()
 
 			if resp.StatusCode != http.StatusOK {
@@ -79,6 +80,7 @@ func FetchRobotsTxtTool() agent.Tool {
 			}
 
 			var result robotsResult
+
 			result.Found = true
 
 			scanner := bufio.NewScanner(resp.Body)

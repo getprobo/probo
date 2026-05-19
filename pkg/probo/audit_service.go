@@ -88,6 +88,7 @@ func (uarr *UploadAuditReportRequest) Validate() error {
 	v := validator.New()
 
 	v.Check(uarr.AuditID, "audit_id", validator.Required(), validator.GID(coredata.AuditEntityType))
+
 	if err := v.Error(); err != nil {
 		return err
 	}
@@ -115,7 +116,6 @@ func (s AuditService) Get(
 			return audit.LoadByID(ctx, conn, s.svc.scope, auditID)
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -135,7 +135,6 @@ func (s AuditService) GetByReportID(
 			return audit.LoadByReportID(ctx, conn, s.svc.scope, reportID)
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -193,7 +192,6 @@ func (s *AuditService) Create(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -210,6 +208,7 @@ func (s *AuditService) Update(
 	}
 
 	audit := &coredata.Audit{}
+
 	err := s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
@@ -220,15 +219,19 @@ func (s *AuditService) Update(
 			if req.Name != nil {
 				audit.Name = *req.Name
 			}
+
 			if req.ValidFrom != nil {
 				audit.ValidFrom = req.ValidFrom
 			}
+
 			if req.ValidUntil != nil {
 				audit.ValidUntil = req.ValidUntil
 			}
+
 			if req.State != nil {
 				audit.State = *req.State
 			}
+
 			if req.TrustCenterVisibility != nil {
 				audit.TrustCenterVisibility = *req.TrustCenterVisibility
 			}
@@ -242,7 +245,6 @@ func (s *AuditService) Update(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -255,6 +257,7 @@ func (s AuditService) Delete(
 	auditID gid.GID,
 ) error {
 	audit := coredata.Audit{ID: auditID}
+
 	return s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
@@ -262,6 +265,7 @@ func (s AuditService) Delete(
 			if err != nil {
 				return fmt.Errorf("cannot delete audit: %w", err)
 			}
+
 			return nil
 		},
 	)
@@ -278,6 +282,7 @@ func (s AuditService) ListForOrganizationID(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
 			filter := coredata.NewAuditFilter()
+
 			err := audits.LoadByOrganizationID(ctx, conn, s.svc.scope, organizationID, cursor, filter)
 			if err != nil {
 				return fmt.Errorf("cannot load audits: %w", err)
@@ -286,7 +291,6 @@ func (s AuditService) ListForOrganizationID(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -304,6 +308,7 @@ func (s AuditService) CountForOrganizationID(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			audits := coredata.Audits{}
+
 			count, err = audits.CountByOrganizationID(ctx, conn, s.svc.scope, organizationID)
 			if err != nil {
 				return fmt.Errorf("cannot count audits: %w", err)
@@ -312,7 +317,6 @@ func (s AuditService) CountForOrganizationID(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return 0, err
 	}
@@ -386,7 +390,6 @@ func (s AuditService) UploadReport(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -447,7 +450,6 @@ func (s AuditService) DeleteReport(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -461,6 +463,7 @@ func (s AuditService) ListForControlID(
 	cursor *page.Cursor[coredata.AuditOrderField],
 ) (*page.Page[*coredata.Audit, coredata.AuditOrderField], error) {
 	var audits coredata.Audits
+
 	control := &coredata.Control{}
 
 	err := s.svc.pg.WithConn(
@@ -478,7 +481,6 @@ func (s AuditService) ListForControlID(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -496,6 +498,7 @@ func (s AuditService) CountForControlID(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			audits := coredata.Audits{}
+
 			count, err = audits.CountByControlID(ctx, conn, s.svc.scope, controlID)
 			if err != nil {
 				return fmt.Errorf("cannot count audits: %w", err)
@@ -504,7 +507,6 @@ func (s AuditService) CountForControlID(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return 0, err
 	}
@@ -522,6 +524,7 @@ func (s AuditService) CountForFindingID(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			audits := coredata.Audits{}
+
 			count, err = audits.CountByFindingID(ctx, conn, s.svc.scope, findingID)
 			if err != nil {
 				return fmt.Errorf("cannot count audits: %w", err)
@@ -530,7 +533,6 @@ func (s AuditService) CountForFindingID(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return 0, err
 	}
@@ -544,6 +546,7 @@ func (s AuditService) ListForFindingID(
 	cursor *page.Cursor[coredata.AuditOrderField],
 ) (*page.Page[*coredata.Audit, coredata.AuditOrderField], error) {
 	var audits coredata.Audits
+
 	finding := &coredata.Finding{}
 
 	err := s.svc.pg.WithConn(
@@ -561,7 +564,6 @@ func (s AuditService) ListForFindingID(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}

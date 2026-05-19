@@ -29,6 +29,7 @@ func (p AccessSourceOrderField) Column() string {
 	case AccessSourceOrderFieldCreatedAt:
 		return "created_at"
 	}
+
 	panic(fmt.Sprintf("unsupported order by: %s", p))
 }
 
@@ -37,6 +38,7 @@ func (p AccessSourceOrderField) IsValid() bool {
 	case AccessSourceOrderFieldCreatedAt:
 		return true
 	}
+
 	return false
 }
 
@@ -53,5 +55,6 @@ func (p *AccessSourceOrderField) UnmarshalText(text []byte) error {
 	if !p.IsValid() {
 		return fmt.Errorf("%s is not a valid AccessSourceOrderField", string(text))
 	}
+
 	return nil
 }

@@ -85,6 +85,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 			if flagOrg == "" {
 				flagOrg = hc.Organization
 			}
+
 			if flagOrg == "" {
 				return fmt.Errorf("organization is required; pass --org or set a default with 'prb auth login'")
 			}
@@ -95,11 +96,13 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 						return err
 					}
 				}
+
 				if flagOrigin == "" {
 					if err := huh.NewInput().Title("Website origin (e.g. https://example.com)").Value(&flagOrigin).Run(); err != nil {
 						return err
 					}
 				}
+
 				if flagCookiePolicyUrl == "" {
 					if err := huh.NewInput().Title("Cookie policy URL").Value(&flagCookiePolicyUrl).Run(); err != nil {
 						return err
@@ -110,9 +113,11 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 			if flagName == "" {
 				return fmt.Errorf("name is required; pass --name or run interactively")
 			}
+
 			if flagOrigin == "" {
 				return fmt.Errorf("origin is required; pass --origin or run interactively")
 			}
+
 			if flagCookiePolicyUrl == "" {
 				return fmt.Errorf("cookie-policy-url is required; pass --cookie-policy-url or run interactively")
 			}

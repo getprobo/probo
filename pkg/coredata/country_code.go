@@ -282,6 +282,7 @@ func (ct CountryCode) String() string {
 
 func (ct *CountryCode) Scan(value any) error {
 	var s string
+
 	switch v := value.(type) {
 	case string:
 		s = v
@@ -791,6 +792,7 @@ func (ct *CountryCode) Scan(value any) error {
 	default:
 		return fmt.Errorf("invalid CountryCode value: %q", s)
 	}
+
 	return nil
 }
 
@@ -836,10 +838,12 @@ func (s *CountryCodes) scanFromString(str string) error {
 		if err := ct.Scan(part); err != nil {
 			return fmt.Errorf("invalid country code in array: %s", part)
 		}
+
 		result[i] = ct
 	}
 
 	*s = result
+
 	return nil
 }
 

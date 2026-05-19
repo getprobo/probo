@@ -119,13 +119,16 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Type:"), v.Type)
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Origin:"), v.Origin)
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Path:"), v.Path)
+
 			_, _ = fmt.Fprintf(out, "%s%v\n", label.Render("Excluded:"), v.Excluded)
 			if v.Description != "" {
 				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Description:"), v.Description)
 			}
+
 			if v.LastDetectedAt != nil {
 				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Last Detected:"), cmdutil.FormatTime(*v.LastDetectedAt))
 			}
+
 			_, _ = fmt.Fprintln(out)
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Created:"), cmdutil.FormatTime(v.CreatedAt))
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Updated:"), cmdutil.FormatTime(v.UpdatedAt))

@@ -52,6 +52,7 @@ func (s *Service) ImportFromDir(ctx context.Context, dataDir string) error {
 		}
 
 		code := strings.ToUpper(entry.Name())
+
 		var cc coredata.CountryCode
 		if err := cc.Scan(code); err != nil {
 			continue
@@ -64,6 +65,7 @@ func (s *Service) ImportFromDir(ctx context.Context, dataDir string) error {
 			if errors.Is(err, os.ErrNotExist) {
 				continue
 			}
+
 			if err != nil {
 				return fmt.Errorf("cannot parse CIDR file %s: %w", path, err)
 			}
@@ -166,9 +168,11 @@ func parseCIDRFile(path string) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	defer func() { _ = f.Close() }()
 
 	var cidrs []string
+
 	scanner := bufio.NewScanner(f)
 
 	for scanner.Scan() {

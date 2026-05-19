@@ -44,6 +44,7 @@ func (a CookieConsentAction) String() string {
 
 func (a *CookieConsentAction) Scan(value any) error {
 	var v string
+
 	switch val := value.(type) {
 	case string:
 		v = val

@@ -56,12 +56,15 @@ func (s *MCPServer) Name() string {
 
 func (s *MCPServer) Tools(ctx context.Context) ([]Tool, error) {
 	s.mu.RLock()
+
 	if s.toolsCached {
 		cp := make([]Tool, len(s.cachedTools))
 		copy(cp, s.cachedTools)
 		s.mu.RUnlock()
+
 		return cp, nil
 	}
+
 	s.mu.RUnlock()
 
 	s.mu.Lock()
@@ -70,11 +73,14 @@ func (s *MCPServer) Tools(ctx context.Context) ([]Tool, error) {
 	if s.toolsCached {
 		cp := make([]Tool, len(s.cachedTools))
 		copy(cp, s.cachedTools)
+
 		return cp, nil
 	}
 
-	var allTools []*mcp.Tool
-	var cursor string
+	var (
+		allTools []*mcp.Tool
+		cursor   string
+	)
 
 	for {
 		params := &mcp.ListToolsParams{}
@@ -92,6 +98,7 @@ func (s *MCPServer) Tools(ctx context.Context) ([]Tool, error) {
 		if result.NextCursor == "" {
 			break
 		}
+
 		cursor = result.NextCursor
 	}
 
@@ -172,6 +179,7 @@ func extractMCPContent(result *mcp.CallToolResult) string {
 	}
 
 	var parts []string
+
 	for _, c := range result.Content {
 		if tc, ok := c.(*mcp.TextContent); ok {
 			parts = append(parts, tc.Text)

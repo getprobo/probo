@@ -88,12 +88,15 @@ func (h *Handler) handleGetConfig(w http.ResponseWriter, r *http.Request) {
 			jsonutil.RenderNotFound(w, fmt.Errorf("banner not found"))
 			return
 		}
+
 		if errors.Is(err, cookiebanner.ErrNoPublishedVersion) {
 			jsonutil.RenderNotFound(w, fmt.Errorf("no published version"))
 			return
 		}
+
 		h.logger.ErrorCtx(r.Context(), "cannot get banner config", log.Error(err), log.String("sdk_version", sdkVersion))
 		jsonutil.RenderInternalServerError(w)
+
 		return
 	}
 
@@ -111,6 +114,7 @@ func (h *Handler) resolveCountryCode(r *http.Request) *coredata.CountryCode {
 			log.Error(err),
 			log.String("sdk_version", sdkVersionFromContext(r.Context())),
 		)
+
 		return nil
 	}
 
@@ -140,10 +144,12 @@ func (h *Handler) handleGetConsent(w http.ResponseWriter, r *http.Request) {
 			jsonutil.RenderNotFound(w, fmt.Errorf("banner not found"))
 			return
 		}
+
 		if errors.Is(err, cookiebanner.ErrConsentNotFound) {
 			jsonutil.RenderNotFound(w, fmt.Errorf("consent not found"))
 			return
 		}
+
 		h.logger.ErrorCtx(
 			r.Context(),
 			"cannot get visitor consent",
@@ -151,6 +157,7 @@ func (h *Handler) handleGetConsent(w http.ResponseWriter, r *http.Request) {
 			log.String("sdk_version", sdkVersionFromContext(r.Context())),
 		)
 		jsonutil.RenderInternalServerError(w)
+
 		return
 	}
 
@@ -221,12 +228,15 @@ func (h *Handler) handlePostConsent(w http.ResponseWriter, r *http.Request) {
 			jsonutil.RenderNotFound(w, fmt.Errorf("banner not found"))
 			return
 		}
+
 		if errors.Is(err, cookiebanner.ErrVersionNotFound) || errors.Is(err, cookiebanner.ErrVersionNotPublished) {
 			jsonutil.RenderBadRequest(w, fmt.Errorf("invalid version"))
 			return
 		}
+
 		h.logger.ErrorCtx(r.Context(), "cannot record consent", log.Error(err), log.String("sdk_version", sdkVersion))
 		jsonutil.RenderInternalServerError(w)
+
 		return
 	}
 
@@ -266,20 +276,25 @@ func sanitizeInitiatorURL(raw *string) *string {
 	if raw == nil {
 		return nil
 	}
+
 	s := strings.TrimSpace(*raw)
 	if s == "" || len(s) > maxInitiatorURLLength {
 		return nil
 	}
+
 	u, err := url.Parse(s)
 	if err != nil {
 		return nil
 	}
+
 	if u.Scheme != "http" && u.Scheme != "https" {
 		return nil
 	}
+
 	if u.Host == "" {
 		return nil
 	}
+
 	return &s
 }
 
@@ -314,6 +329,7 @@ func (h *Handler) handleReportDetectedCookies(w http.ResponseWriter, r *http.Req
 		}
 
 		var source coredata.CookieSource
+
 		switch strings.TrimSpace(c.Source) {
 		case "pre-existing":
 			source = coredata.CookieSourcePreExisting
@@ -356,6 +372,7 @@ func (h *Handler) handleReportDetectedCookies(w http.ResponseWriter, r *http.Req
 			log.String("sdk_version", sdkVersionFromContext(r.Context())),
 		)
 		jsonutil.RenderInternalServerError(w)
+
 		return
 	}
 
@@ -415,6 +432,7 @@ func (h *Handler) handleReportDetectedTrackers(w http.ResponseWriter, r *http.Re
 		}
 
 		var source coredata.CookieSource
+
 		switch strings.TrimSpace(c.Source) {
 		case "pre-existing":
 			source = coredata.CookieSourcePreExisting
@@ -442,6 +460,7 @@ func (h *Handler) handleReportDetectedTrackers(w http.ResponseWriter, r *http.Re
 		}
 
 		var storageType coredata.TrackerType
+
 		switch strings.TrimSpace(s.StorageType) {
 		case "local_storage":
 			storageType = coredata.TrackerTypeLocalStorage
@@ -476,6 +495,7 @@ func (h *Handler) handleReportDetectedTrackers(w http.ResponseWriter, r *http.Re
 		}
 
 		var resourceType coredata.TrackerResourceType
+
 		switch strings.TrimSpace(res.ResourceType) {
 		case "script":
 			resourceType = coredata.TrackerResourceTypeScript
@@ -521,6 +541,7 @@ func (h *Handler) handleReportDetectedTrackers(w http.ResponseWriter, r *http.Re
 
 		h.logger.ErrorCtx(r.Context(), "cannot report detected trackers", log.Error(err), log.String("sdk_version", sdkVersionFromContext(r.Context())))
 		jsonutil.RenderInternalServerError(w)
+
 		return
 	}
 

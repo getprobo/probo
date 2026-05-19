@@ -113,5 +113,6 @@ func NewThirdPartySubprocessors(sps []probo.Subprocessor) []*ThirdPartySubproces
 			Purpose: sp.Purpose,
 		}
 	}
+
 	return result
 }

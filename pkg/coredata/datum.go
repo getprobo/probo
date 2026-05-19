@@ -63,6 +63,7 @@ func (d *Datum) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (m
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrResourceNotFound
 		}
+
 		return nil, fmt.Errorf("cannot query datum authorization attributes: %w", err)
 	}
 
@@ -178,6 +179,7 @@ WHERE
 	row := conn.QueryRow(ctx, q, args)
 
 	var count int
+
 	err := row.Scan(&count)
 	if err != nil {
 		return 0, fmt.Errorf("cannot count data: %w", err)
@@ -419,6 +421,7 @@ WHERE
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, nil
 	}
+
 	if err != nil {
 		return nil, fmt.Errorf("cannot get data document ID: %w", err)
 	}

@@ -51,7 +51,9 @@ func (r *mutationResolver) CreateTask(ctx context.Context, input types.CreateTas
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot create task", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -87,7 +89,9 @@ func (r *mutationResolver) UpdateTask(ctx context.Context, input types.UpdateTas
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot update task", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -134,6 +138,7 @@ func (r *taskResolver) AssignedTo(ctx context.Context, obj *types.Task) (*types.
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get assigned to", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -155,6 +160,7 @@ func (r *taskResolver) Organization(ctx context.Context, obj *types.Task) (*type
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get organization", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -180,6 +186,7 @@ func (r *taskResolver) Measure(ctx context.Context, obj *types.Task) (*types.Mea
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get measure", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -206,6 +213,7 @@ func (r *taskResolver) Evidences(ctx context.Context, obj *types.Task, first *in
 	}
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
 	page, err := prb.Evidences.ListForTaskID(ctx, obj.ID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list task evidences", log.Error(err))
@@ -235,6 +243,7 @@ func (r *taskConnectionResolver) TotalCount(ctx context.Context, obj *types.Task
 			r.logger.ErrorCtx(ctx, "cannot count tasks", log.Error(err))
 			return 0, gqlutils.Internal(ctx)
 		}
+
 		return count, nil
 	case *organizationResolver:
 		count, err := prb.Tasks.CountForOrganizationID(ctx, obj.ParentID)
@@ -242,10 +251,12 @@ func (r *taskConnectionResolver) TotalCount(ctx context.Context, obj *types.Task
 			r.logger.ErrorCtx(ctx, "cannot count tasks", log.Error(err))
 			return 0, gqlutils.Internal(ctx)
 		}
+
 		return count, nil
 	}
 
 	r.logger.ErrorCtx(ctx, "unsupported resolver")
+
 	return 0, gqlutils.Internal(ctx)
 }
 

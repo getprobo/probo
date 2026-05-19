@@ -33,6 +33,7 @@ func (t AccessEntryIncrementalTag) String() string {
 
 func (t *AccessEntryIncrementalTag) Scan(value any) error {
 	var str string
+
 	switch v := value.(type) {
 	case string:
 		str = v

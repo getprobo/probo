@@ -65,6 +65,7 @@ func (s *ApplicabilityStatement) AuthorizationAttributes(ctx context.Context, co
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrResourceNotFound
 		}
+
 		return nil, fmt.Errorf("cannot query applicability statement authorization attributes: %w", err)
 	}
 
@@ -131,6 +132,7 @@ LIMIT 1;
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
 		}
+
 		return fmt.Errorf("cannot collect applicability statement: %w", err)
 	}
 
@@ -194,10 +196,12 @@ LIMIT 1;
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
 		}
+
 		return fmt.Errorf("cannot collect applicability statement: %w", err)
 	}
 
 	*sac = control
+
 	return nil
 }
 
@@ -243,8 +247,8 @@ VALUES (
 		"created_at":                    sac.CreatedAt,
 		"updated_at":                    sac.UpdatedAt,
 	}
-	_, err := conn.Exec(ctx, q, args)
 
+	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) {
@@ -357,6 +361,7 @@ WHERE statement_of_applicability_id IN (SELECT id FROM current_soa)
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	_, err := conn.Exec(ctx, q, args)
+
 	return err
 }
 
@@ -453,6 +458,7 @@ WHERE
 	}
 
 	*sacs = controls
+
 	return nil
 }
 
@@ -503,6 +509,7 @@ ORDER BY
 	}
 
 	*sacs = controls
+
 	return nil
 }
 
@@ -599,5 +606,6 @@ WHERE
 	}
 
 	*sacs = controls
+
 	return nil
 }

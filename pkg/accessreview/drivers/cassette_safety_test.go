@@ -82,6 +82,7 @@ func TestCassettesUseSyntheticEmails(t *testing.T) {
 				if seen[email] {
 					continue
 				}
+
 				seen[email] = true
 
 				domain := email[strings.IndexByte(email, '@')+1:]
@@ -90,6 +91,7 @@ func TestCassettesUseSyntheticEmails(t *testing.T) {
 				}
 
 				ok := false
+
 				for _, suffix := range allowedDomainSuffixes {
 					if strings.HasSuffix("."+domain, suffix) || domain == strings.TrimPrefix(suffix, ".") {
 						ok = true

@@ -43,7 +43,9 @@ func (r *mutationResolver) CreateRightsRequest(ctx context.Context, input types.
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot create rights request", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -76,7 +78,9 @@ func (r *mutationResolver) UpdateRightsRequest(ctx context.Context, input types.
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot update rights request", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -123,7 +127,9 @@ func (r *rightsRequestResolver) Organization(ctx context.Context, obj *types.Rig
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot get organization", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 

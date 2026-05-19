@@ -61,6 +61,7 @@ func (mlu *MailingListUpdate) AuthorizationAttributes(ctx context.Context, conn 
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrResourceNotFound
 		}
+
 		return nil, fmt.Errorf("cannot query mailing list update authorization attributes: %w", err)
 	}
 
@@ -104,6 +105,7 @@ INSERT INTO mailing_list_updates (
 	maps.Copy(args, scope.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
+
 	return err
 }
 
@@ -134,9 +136,11 @@ WHERE
 	if err != nil {
 		return fmt.Errorf("cannot update mailing list update: %w", err)
 	}
+
 	if tag.RowsAffected() == 0 {
 		return ErrResourceNotFound
 	}
+
 	return nil
 }
 
@@ -158,9 +162,11 @@ WHERE
 	if err != nil {
 		return fmt.Errorf("cannot delete mailing list update: %w", err)
 	}
+
 	if tag.RowsAffected() == 0 {
 		return ErrResourceNotFound
 	}
+
 	return nil
 }
 
@@ -198,10 +204,12 @@ LIMIT 1;
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
 		}
+
 		return fmt.Errorf("cannot collect mailing list update: %w", err)
 	}
 
 	*mlu = result
+
 	return nil
 }
 
@@ -249,6 +257,7 @@ WHERE
 	}
 
 	*mlul = results
+
 	return nil
 }
 
@@ -295,6 +304,7 @@ WHERE
 	}
 
 	*mlul = results
+
 	return nil
 }
 
@@ -358,10 +368,12 @@ FOR UPDATE SKIP LOCKED
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
 		}
+
 		return fmt.Errorf("cannot collect enqueued mailing list update: %w", err)
 	}
 
 	*mlu = result
+
 	return nil
 }
 
@@ -376,6 +388,7 @@ SET status = 'ENQUEUED', updated_at = NOW()
 WHERE status = 'PROCESSING'
 	AND updated_at < NOW() - @stale_after::interval
 `
+
 	_, err := conn.Exec(ctx, q, pgx.StrictNamedArgs{"stale_after": staleAfter})
 	if err != nil {
 		return fmt.Errorf("cannot reset stale processing mailing list updates: %w", err)

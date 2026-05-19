@@ -250,9 +250,11 @@ func TestAudit_Create_Validation(t *testing.T) {
 			if !tt.skipOrganization {
 				input["organizationId"] = owner.GetOrganizationID().String()
 			}
+
 			if !tt.skipFramework {
 				input["frameworkId"] = frameworkID
 			}
+
 			maps.Copy(input, tt.input)
 
 			_, err := owner.Do(query, map[string]any{"input": input})
@@ -376,6 +378,7 @@ func TestAudit_Update(t *testing.T) {
 			require.NoError(t, err)
 
 			audit := result.UpdateAudit.Audit
+
 			switch tt.assertField {
 			case "name":
 				assert.Equal(t, tt.assertValue, audit.Name)
@@ -1188,6 +1191,7 @@ func TestAudit_Pagination(t *testing.T) {
 		assert.GreaterOrEqual(t, result.Node.Audits.TotalCount, 5)
 
 		testutil.AssertHasMorePages(t, result.Node.Audits.PageInfo)
+
 		queryAfter := `
 			query($id: ID!, $after: CursorKey) {
 				node(id: $id) {
@@ -1372,7 +1376,6 @@ func TestAudit_TenantIsolation(t *testing.T) {
 		err := org2Owner.Execute(query, map[string]any{
 			"id": org1Owner.GetOrganizationID().String(),
 		}, &result)
-
 		if err == nil {
 			for _, edge := range result.Node.Audits.Edges {
 				assert.NotEqual(t, auditID, edge.Node.ID, "Should not see audit from another org")
@@ -1434,6 +1437,7 @@ func TestAudit_Ordering(t *testing.T) {
 		for i, edge := range result.Node.Audits.Edges {
 			times[i] = edge.Node.CreatedAt
 		}
+
 		testutil.AssertTimesOrderedDescending(t, times, "createdAt")
 	})
 }
@@ -1539,6 +1543,7 @@ func TestAudit_UploadReport(t *testing.T) {
 			Content:     pdfContent1,
 		}, &result1)
 		require.NoError(t, err)
+
 		firstReportID := result1.UploadAuditReport.Audit.Report.ID
 
 		// Upload second report (should replace)

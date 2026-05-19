@@ -47,5 +47,6 @@ func (p *DatumOrderField) UnmarshalText(text []byte) error {
 		*p = DatumOrderField(val)
 		return nil
 	}
+
 	return fmt.Errorf("invalid DatumOrderField value: %q", val)
 }

@@ -38,6 +38,7 @@ func (p AgentRunOrderField) IsValid() bool {
 	case AgentRunOrderFieldCreatedAt:
 		return true
 	}
+
 	return false
 }
 
@@ -50,6 +51,7 @@ func (p *AgentRunOrderField) UnmarshalText(text []byte) error {
 	if !p.IsValid() {
 		return fmt.Errorf("%s is not a valid AgentRunOrderField", string(text))
 	}
+
 	return nil
 }
 

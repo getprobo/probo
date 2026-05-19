@@ -61,6 +61,7 @@ func (c *AccessReviewCampaign) AuthorizationAttributes(ctx context.Context, conn
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrResourceNotFound
 		}
+
 		return nil, fmt.Errorf("cannot query access review campaign authorization attributes: %w", err)
 	}
 
@@ -107,6 +108,7 @@ LIMIT 1;
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
 		}
+
 		return fmt.Errorf("cannot collect access review campaign: %w", err)
 	}
 
@@ -163,6 +165,7 @@ VALUES (
 		"created_at":         c.CreatedAt,
 		"updated_at":         c.UpdatedAt,
 	}
+
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
 		return fmt.Errorf("cannot insert access_review_campaign: %w", err)
@@ -357,6 +360,7 @@ LIMIT 1;
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
 		}
+
 		return fmt.Errorf("cannot collect access review campaign: %w", err)
 	}
 

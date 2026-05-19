@@ -87,12 +87,15 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 			if cmd.Flags().Changed("name") {
 				input["name"] = flagName
 			}
+
 			if cmd.Flags().Changed("asset-type") {
 				input["assetType"] = flagAssetType
 			}
+
 			if cmd.Flags().Changed("amount") {
 				input["amount"] = flagAmount
 			}
+
 			if cmd.Flags().Changed("owner") {
 				if flagOwner == "" {
 					input["ownerId"] = nil
@@ -100,9 +103,11 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 					input["ownerId"] = flagOwner
 				}
 			}
+
 			if cmd.Flags().Changed("data-types-stored") {
 				input["dataTypesStored"] = flagDataTypesStored
 			}
+
 			if cmd.Flags().Changed("thirdParty-ids") {
 				input["thirdPartyIds"] = flagThirdPartyIDs
 			}

@@ -67,7 +67,6 @@ func (s EvidenceService) Get(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, fmt.Errorf("cannot load evidence: %w", err)
 	}
@@ -106,8 +105,11 @@ func (s EvidenceService) UploadMeasureEvidence(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
 			measure := &coredata.Measure{}
-			var file *coredata.File
-			var err error
+
+			var (
+				file *coredata.File
+				err  error
+			)
 
 			if err := measure.LoadByID(ctx, conn, s.svc.scope, req.MeasureID); err != nil {
 				return fmt.Errorf("cannot load measure %q: %w", req.MeasureID, err)
@@ -122,7 +124,6 @@ func (s EvidenceService) UploadMeasureEvidence(
 					"organization-id": measure.OrganizationID.String(),
 				},
 				&req.File)
-
 			if err != nil {
 				return fmt.Errorf("cannot upload or file: %w", err)
 			}
@@ -138,7 +139,6 @@ func (s EvidenceService) UploadMeasureEvidence(
 			return nil
 		},
 	)
-
 	if err != nil {
 		// TODO try do delete file from s3 if it's a file type
 		return nil, err
@@ -157,6 +157,7 @@ func (s EvidenceService) CountForMeasureID(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			evidences := coredata.Evidences{}
+
 			count, err = evidences.CountByMeasureID(ctx, conn, s.svc.scope, measureID)
 			if err != nil {
 				return fmt.Errorf("cannot count evidences: %w", err)
@@ -165,7 +166,6 @@ func (s EvidenceService) CountForMeasureID(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return 0, err
 	}
@@ -192,7 +192,6 @@ func (s EvidenceService) ListForMeasureID(
 			)
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -210,6 +209,7 @@ func (s EvidenceService) CountForTaskID(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			evidences := coredata.Evidences{}
+
 			count, err = evidences.CountByTaskID(ctx, conn, s.svc.scope, taskID)
 			if err != nil {
 				return fmt.Errorf("cannot count evidences: %w", err)
@@ -218,7 +218,6 @@ func (s EvidenceService) CountForTaskID(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return 0, err
 	}
@@ -245,7 +244,6 @@ func (s EvidenceService) ListForTaskID(
 			)
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}

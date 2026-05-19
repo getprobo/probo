@@ -37,9 +37,11 @@ func (h *hostRewriter) RoundTrip(r *http.Request) (*http.Response, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	r2 := r.Clone(r.Context())
 	r2.URL.Scheme = u.Scheme
 	r2.URL.Host = u.Host
+
 	return http.DefaultTransport.RoundTrip(r2)
 }
 
@@ -88,11 +90,13 @@ func TestNotionNameResolver(t *testing.T) {
 			defer srv.Close()
 
 			client := &http.Client{Transport: &hostRewriter{target: srv.URL}}
+
 			got, err := NewNotionNameResolver(client).ResolveInstanceName(context.Background())
 			if tc.wantErr {
 				require.Error(t, err)
 				return
 			}
+
 			require.NoError(t, err)
 			assert.Equal(t, tc.want, got)
 		})

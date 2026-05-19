@@ -120,9 +120,11 @@ func ParseSlackTokenResponse(body []byte, oauth2Conn OAuth2Connection, organizat
 	if slackResponse.Error != "" {
 		return nil, nil, fmt.Errorf("cannot complete Slack OAuth2 flow: %s", slackResponse.Error)
 	}
+
 	if !slackResponse.Ok {
 		return nil, nil, fmt.Errorf("cannot complete Slack OAuth2 flow: ok=false")
 	}
+
 	if oauth2Conn.AccessToken == "" {
 		return nil, nil, fmt.Errorf("cannot complete Slack OAuth2 flow: missing access token")
 	}

@@ -57,12 +57,14 @@ func (c *TSAClient) Timestamp(ctx context.Context, data []byte) ([]byte, error) 
 	if err != nil {
 		return nil, fmt.Errorf("esign: cannot build TSA HTTP request: %w", err)
 	}
+
 	req.Header.Set("Content-Type", "application/timestamp-query")
 
 	resp, err := httpClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("esign: TSA request failed: %w", err)
 	}
+
 	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {

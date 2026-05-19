@@ -89,16 +89,19 @@ func CheckSSLCertificateTool() agent.Tool {
 				},
 			}
 			netConn, err := dialer.DialContext(ctx, "tcp", p.Domain+":443")
+
 			var conn *tls.Conn
 			if netConn != nil {
 				conn = netConn.(*tls.Conn)
 			}
+
 			if err != nil {
 				return agent.ResultJSON(sslResult{
 					Valid:       false,
 					ErrorDetail: err.Error(),
 				}), nil
 			}
+
 			defer func() { _ = conn.Close() }()
 
 			state := conn.ConnectionState()
@@ -124,6 +127,7 @@ func CheckSSLCertificateTool() agent.Tool {
 				for _, ic := range state.PeerCertificates[1:] {
 					opts.Intermediates.AddCert(ic)
 				}
+
 				if _, err := cert.Verify(opts); err != nil {
 					valid = false
 				}

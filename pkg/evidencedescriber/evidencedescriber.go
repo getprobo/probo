@@ -77,5 +77,6 @@ func (d *Describer) Describe(ctx context.Context, filename string, mimeType stri
 	}
 
 	text := result.FinalMessage().Text()
+
 	return &text, nil
 }

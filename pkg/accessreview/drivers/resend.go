@@ -54,6 +54,7 @@ func (d *ResendDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error
 	}
 
 	var records []AccountRecord
+
 	for _, k := range resp.Data {
 		record := AccountRecord{
 			FullName:    k.Name,
@@ -96,6 +97,7 @@ func (d *ResendDriver) fetchAPIKeys(ctx context.Context) (*resendAPIKeysResponse
 	if err != nil {
 		return nil, fmt.Errorf("cannot execute resend api-keys request: %w", err)
 	}
+
 	defer func() {
 		_ = httpResp.Body.Close()
 	}()

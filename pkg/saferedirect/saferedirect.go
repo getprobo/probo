@@ -57,6 +57,7 @@ func (sr *SafeRedirect) Validate(ctx context.Context, redirectURL string) (strin
 		if len(redirectURL) > 1 && (redirectURL[1] == '/' || redirectURL[1] == '\\') {
 			return "", false
 		}
+
 		return redirectURL, true
 	}
 
@@ -84,6 +85,7 @@ func (sr *SafeRedirect) GetSafeRedirectURL(ctx context.Context, redirectURL, fal
 	if safeURL, isValid := sr.Validate(ctx, redirectURL); isValid {
 		return safeURL
 	}
+
 	return fallbackURL
 }
 

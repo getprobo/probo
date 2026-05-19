@@ -84,6 +84,7 @@ func (d *BrexDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error) 
 		if resp.NextCursor == "" {
 			return records, nil
 		}
+
 		nextCursor := resp.NextCursor
 		cursor = &nextCursor
 	}
@@ -110,6 +111,7 @@ func (d *BrexDriver) queryUsers(ctx context.Context, cursor *string) (*brexUsers
 	if err != nil {
 		return nil, fmt.Errorf("cannot execute brex users request: %w", err)
 	}
+
 	defer func() {
 		_ = httpResp.Body.Close()
 	}()

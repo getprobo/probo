@@ -66,9 +66,12 @@ func (r *mutationResolver) CreateThirdParty(ctx context.Context, input types.Cre
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot create thirdParty", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
+
 	return &types.CreateThirdPartyPayload{
 		ThirdPartyEdge: types.NewThirdPartyEdge(thirdParty, coredata.ThirdPartyOrderFieldName),
 	}, nil
@@ -112,7 +115,9 @@ func (r *mutationResolver) UpdateThirdParty(ctx context.Context, input types.Upd
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot update thirdParty", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -161,7 +166,9 @@ func (r *mutationResolver) CreateThirdPartyContact(ctx context.Context, input ty
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot create thirdParty contact", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -191,7 +198,9 @@ func (r *mutationResolver) UpdateThirdPartyContact(ctx context.Context, input ty
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot update thirdParty contact", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -238,7 +247,9 @@ func (r *mutationResolver) CreateThirdPartyService(ctx context.Context, input ty
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot create thirdParty service", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -266,7 +277,9 @@ func (r *mutationResolver) UpdateThirdPartyService(ctx context.Context, input ty
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot update thirdParty service", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -316,7 +329,9 @@ func (r *mutationResolver) UploadThirdPartyComplianceReport(ctx context.Context,
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot upload thirdParty compliance report", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -366,7 +381,9 @@ func (r *mutationResolver) UploadThirdPartyBusinessAssociateAgreement(ctx contex
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot upload thirdParty business associate agreement", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -395,7 +412,9 @@ func (r *mutationResolver) UpdateThirdPartyBusinessAssociateAgreement(ctx contex
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot update thirdParty business associate agreement", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -445,7 +464,9 @@ func (r *mutationResolver) UploadThirdPartyDataPrivacyAgreement(ctx context.Cont
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot upload thirdParty data privacy agreement", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -474,7 +495,9 @@ func (r *mutationResolver) UpdateThirdPartyDataPrivacyAgreement(ctx context.Cont
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot update thirdParty data privacy agreement", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -524,7 +547,9 @@ func (r *mutationResolver) CreateThirdPartyRiskAssessment(ctx context.Context, i
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot create thirdParty risk assessment", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -555,6 +580,7 @@ func (r *mutationResolver) AssessThirdParty(ctx context.Context, input types.Ass
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot assess thirdParty", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -578,10 +604,13 @@ func (r *mutationResolver) PublishThirdPartyList(ctx context.Context, input type
 		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
 			return nil, gqlutils.Conflict(ctx, err)
 		}
+
 		if errMinor, ok := errors.AsType[*probo.ErrCannotPublishMinorWithoutMajor](err); ok {
 			return nil, gqlutils.Invalid(ctx, errMinor)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot publish thirdParty list", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -606,6 +635,7 @@ func (r *thirdPartyResolver) Organization(ctx context.Context, obj *types.ThirdP
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get organization", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -657,6 +687,7 @@ func (r *thirdPartyResolver) BusinessAssociateAgreement(ctx context.Context, obj
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get thirdParty business associate agreement", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -678,6 +709,7 @@ func (r *thirdPartyResolver) DataPrivacyAgreement(ctx context.Context, obj *type
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get thirdParty data privacy agreement", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -793,6 +825,7 @@ func (r *thirdPartyResolver) BusinessOwner(ctx context.Context, obj *types.Third
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get business owner", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -818,6 +851,7 @@ func (r *thirdPartyResolver) SecurityOwner(ctx context.Context, obj *types.Third
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get security owner", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -886,6 +920,7 @@ func (r *thirdPartyComplianceReportResolver) ThirdParty(ctx context.Context, obj
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get thirdParty", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -917,6 +952,7 @@ func (r *thirdPartyComplianceReportResolver) File(ctx context.Context, obj *type
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot load evidence file", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -943,6 +979,7 @@ func (r *thirdPartyConnectionResolver) TotalCount(ctx context.Context, obj *type
 			r.logger.ErrorCtx(ctx, "cannot count thirdParties", log.Error(err))
 			return 0, gqlutils.Internal(ctx)
 		}
+
 		return count, nil
 	case *assetResolver:
 		count, err := prb.ThirdParties.CountForAssetID(ctx, obj.ParentID)
@@ -950,6 +987,7 @@ func (r *thirdPartyConnectionResolver) TotalCount(ctx context.Context, obj *type
 			r.logger.ErrorCtx(ctx, "cannot count thirdParties", log.Error(err))
 			return 0, gqlutils.Internal(ctx)
 		}
+
 		return count, nil
 	case *datumResolver:
 		count, err := prb.ThirdParties.CountForDatumID(ctx, obj.ParentID)
@@ -957,10 +995,12 @@ func (r *thirdPartyConnectionResolver) TotalCount(ctx context.Context, obj *type
 			r.logger.ErrorCtx(ctx, "cannot count thirdParties", log.Error(err))
 			return 0, gqlutils.Internal(ctx)
 		}
+
 		return count, nil
 	}
 
 	r.logger.ErrorCtx(ctx, "unsupported resolver")
+
 	return 0, gqlutils.Internal(ctx)
 }
 
@@ -986,6 +1026,7 @@ func (r *thirdPartyContactResolver) ThirdParty(ctx context.Context, obj *types.T
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get thirdParty", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -1012,6 +1053,7 @@ func (r *thirdPartyDataPrivacyAgreementResolver) ThirdParty(ctx context.Context,
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get thirdParty", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -1055,6 +1097,7 @@ func (r *thirdPartyRiskAssessmentResolver) ThirdParty(ctx context.Context, obj *
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get thirdParty", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -1081,6 +1124,7 @@ func (r *thirdPartyServiceResolver) ThirdParty(ctx context.Context, obj *types.T
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get thirdParty", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 

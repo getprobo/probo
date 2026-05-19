@@ -105,6 +105,7 @@ func (h *completionCertificateHandler) Claim(ctx context.Context) (coredata.Elec
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return coredata.ElectronicSignature{}, worker.ErrNoTask
 		}
+
 		return coredata.ElectronicSignature{}, err
 	}
 
@@ -118,6 +119,7 @@ func (h *completionCertificateHandler) Process(ctx context.Context, signature co
 		if err := h.handleCertFailure(ctx, &signature, scope, err); err != nil {
 			h.logger.ErrorCtx(ctx, "cannot handle certificate failure", log.Error(err))
 		}
+
 		return err
 	}
 
@@ -148,6 +150,7 @@ func (h *completionCertificateHandler) generateAndCommit(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			signature.CertificateFileID = &attachments[1].FileID
+
 			signature.UpdatedAt = time.Now()
 			if err := signature.Update(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot update signature: %w", err)
@@ -261,12 +264,14 @@ func (h *completionCertificateHandler) generateCertificate(
 	if err != nil {
 		return nil, nil, fmt.Errorf("cannot resolve presenter config: %w", err)
 	}
+
 	emailPresenter := emails.NewPresenterFromConfig(h.fileManager, presenterCfg, ref.UnrefOrZero(signature.SignerFullName))
 
 	docName := ref.UnrefOrZero(signature.DocumentName)
 	if docName == "" {
 		docName = signature.DocumentType.DisplayName()
 	}
+
 	subject, textBody, htmlBody, err := emailPresenter.RenderElectronicSignatureCertificate(ctx, ref.UnrefOrZero(signature.SignerFullName), docName)
 	if err != nil {
 		return nil, nil, fmt.Errorf("cannot render email: %w", err)

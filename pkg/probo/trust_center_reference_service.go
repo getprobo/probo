@@ -93,7 +93,6 @@ func (s TrustCenterReferenceService) ListForTrustCenterID(
 
 		return nil
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -109,6 +108,7 @@ func (s TrustCenterReferenceService) CountForTrustCenterID(
 
 	err := s.svc.pg.WithConn(ctx, func(ctx context.Context, conn pg.Querier) (err error) {
 		references := coredata.TrustCenterReferences{}
+
 		count, err = references.CountByTrustCenterID(ctx, conn, s.svc.scope, trustCenterID)
 		if err != nil {
 			return fmt.Errorf("cannot count trust center references: %w", err)
@@ -116,7 +116,6 @@ func (s TrustCenterReferenceService) CountForTrustCenterID(
 
 		return nil
 	})
-
 	if err != nil {
 		return 0, err
 	}
@@ -138,7 +137,6 @@ func (s TrustCenterReferenceService) Get(
 
 		return nil
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -172,6 +170,7 @@ func (s TrustCenterReferenceService) Create(
 		if err != nil {
 			return fmt.Errorf("cannot upload logo file: %w", err)
 		}
+
 		logoKey = s3Key
 
 		reference = &coredata.TrustCenterReference{
@@ -192,7 +191,6 @@ func (s TrustCenterReferenceService) Create(
 
 		return nil
 	})
-
 	if err != nil {
 		s.cleanupS3Object(ctx, logoKey)
 		return nil, err
@@ -211,9 +209,11 @@ func (s TrustCenterReferenceService) Update(
 
 	now := time.Now()
 
-	var reference *coredata.TrustCenterReference
-	var newFileID *gid.GID
-	var logoKey string
+	var (
+		reference *coredata.TrustCenterReference
+		newFileID *gid.GID
+		logoKey   string
+	)
 
 	err := s.svc.pg.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		reference = &coredata.TrustCenterReference{}
@@ -227,6 +227,7 @@ func (s TrustCenterReferenceService) Update(
 			if err != nil {
 				return fmt.Errorf("cannot upload logo file: %w", err)
 			}
+
 			newFileID = &fileID
 			logoKey = s3Key
 		}
@@ -234,15 +235,19 @@ func (s TrustCenterReferenceService) Update(
 		if req.Name != nil {
 			reference.Name = *req.Name
 		}
+
 		if req.Description != nil {
 			reference.Description = *req.Description
 		}
+
 		if req.WebsiteURL != nil {
 			reference.WebsiteURL = *req.WebsiteURL
 		}
+
 		if newFileID != nil {
 			reference.LogoFileID = *newFileID
 		}
+
 		reference.UpdatedAt = now
 
 		if req.Rank != nil {
@@ -258,7 +263,6 @@ func (s TrustCenterReferenceService) Update(
 
 		return nil
 	})
-
 	if err != nil {
 		s.cleanupS3Object(ctx, logoKey)
 		return nil, err
@@ -295,6 +299,7 @@ func (s TrustCenterReferenceService) GenerateLogoURL(
 ) (string, error) {
 	reference := &coredata.TrustCenterReference{}
 	file := &coredata.File{}
+
 	err := s.svc.pg.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		err := reference.LoadByID(ctx, tx, s.svc.scope, referenceID)
 		if err != nil {
@@ -308,7 +313,6 @@ func (s TrustCenterReferenceService) GenerateLogoURL(
 
 		return nil
 	})
-
 	if err != nil {
 		return "", nil
 	}
@@ -354,8 +358,11 @@ func (s TrustCenterReferenceService) uploadLogoFile(
 		return gid.GID{}, "", fmt.Errorf("cannot load trust center: %w", err)
 	}
 
-	var fileSize int64
-	var fileContent io.ReadSeeker
+	var (
+		fileSize    int64
+		fileContent io.ReadSeeker
+	)
+
 	filename := file.Filename
 	contentType := file.ContentType
 
@@ -365,6 +372,7 @@ func (s TrustCenterReferenceService) uploadLogoFile(
 			if err != nil {
 				return gid.GID{}, "", fmt.Errorf("cannot determine file size: %w", err)
 			}
+
 			fileSize = size
 
 			_, err = readSeeker.Seek(0, io.SeekStart)
@@ -374,18 +382,21 @@ func (s TrustCenterReferenceService) uploadLogoFile(
 		} else {
 			fileSize = file.Size
 		}
+
 		fileContent = readSeeker
 	} else {
 		buf, err := io.ReadAll(file.Content)
 		if err != nil {
 			return gid.GID{}, "", fmt.Errorf("cannot read file: %w", err)
 		}
+
 		fileSize = int64(len(buf))
 		fileContent = bytes.NewReader(buf)
 	}
 
 	if contentType == "" {
 		contentType = "application/octet-stream"
+
 		if filename != "" {
 			if detectedType := mime.TypeByExtension(filepath.Ext(filename)); detectedType != "" {
 				contentType = detectedType

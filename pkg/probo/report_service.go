@@ -46,7 +46,6 @@ func (s ReportService) Get(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -88,6 +87,7 @@ func (s ReportService) Delete(
 ) error {
 	return s.svc.pg.WithTx(ctx, func(ctx context.Context, conn pg.Tx) error {
 		report := &coredata.Report{}
+
 		err := report.LoadByID(ctx, conn, s.svc.scope, reportID)
 		if err != nil {
 			return fmt.Errorf("cannot get report: %w", err)

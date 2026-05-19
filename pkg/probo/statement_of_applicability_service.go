@@ -66,6 +66,7 @@ func (s StatementOfApplicabilityService) ListForOrganizationID(
 	cursor *page.Cursor[coredata.StatementOfApplicabilityOrderField],
 ) (*page.Page[*coredata.StatementOfApplicability, coredata.StatementOfApplicabilityOrderField], error) {
 	var statementsOfApplicability coredata.StatementsOfApplicability
+
 	organization := &coredata.Organization{}
 
 	err := s.svc.pg.WithConn(
@@ -89,7 +90,6 @@ func (s StatementOfApplicabilityService) ListForOrganizationID(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -107,6 +107,7 @@ func (s StatementOfApplicabilityService) CountForOrganizationID(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			statementsOfApplicability := &coredata.StatementsOfApplicability{}
+
 			count, err = statementsOfApplicability.CountByOrganizationID(ctx, conn, s.svc.scope, organizationID)
 			if err != nil {
 				return fmt.Errorf("cannot count statements_of_applicability: %w", err)
@@ -115,7 +116,6 @@ func (s StatementOfApplicabilityService) CountForOrganizationID(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return 0, err
 	}
@@ -135,7 +135,6 @@ func (s StatementOfApplicabilityService) Get(
 			return statementOfApplicability.LoadByID(ctx, conn, s.svc.scope, statementOfApplicabilityID)
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -183,7 +182,6 @@ func (s StatementOfApplicabilityService) Create(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -221,7 +219,6 @@ func (s StatementOfApplicabilityService) Update(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -249,7 +246,6 @@ func (s StatementOfApplicabilityService) Delete(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return err
 	}
@@ -289,10 +285,10 @@ func (s StatementOfApplicabilityService) ListApplicabilityStatements(
 			if err := statements.LoadByStatementOfApplicabilityID(ctx, conn, s.svc.scope, statementOfApplicabilityID, cursor); err != nil {
 				return fmt.Errorf("cannot load applicability statements: %w", err)
 			}
+
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -310,14 +306,15 @@ func (s StatementOfApplicabilityService) CountApplicabilityStatements(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			statements := &coredata.ApplicabilityStatements{}
+
 			count, err = statements.CountByStatementOfApplicabilityID(ctx, conn, s.svc.scope, statementOfApplicabilityID)
 			if err != nil {
 				return fmt.Errorf("cannot count applicability statements: %w", err)
 			}
+
 			return nil
 		},
 	)
-
 	if err != nil {
 		return 0, err
 	}

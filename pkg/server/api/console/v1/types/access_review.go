@@ -108,9 +108,13 @@ func NewAccessReviewCampaignScopeSource(
 	status := coredata.AccessReviewCampaignSourceFetchStatusQueued
 	fetchedAccountsCount := 0
 	attemptCount := 0
-	var lastError *string
-	var fetchStartedAt *time.Time
-	var fetchCompletedAt *time.Time
+
+	var (
+		lastError        *string
+		fetchStartedAt   *time.Time
+		fetchCompletedAt *time.Time
+	)
+
 	if fetch != nil {
 		status = fetch.Status
 		fetchedAccountsCount = fetch.FetchedAccountsCount

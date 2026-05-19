@@ -51,6 +51,7 @@ func searchTrackerPatternsTool(pgClient *pg.Client) agent.Tool {
 				ctx,
 				func(ctx context.Context, conn pg.Querier) error {
 					var patterns coredata.CommonTrackerPatterns
+
 					results, err := patterns.FindByKeyword(ctx, conn, p.Query, 10)
 					if err != nil {
 						return err

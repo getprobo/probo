@@ -27,6 +27,7 @@ func (p CookieBannerVersionOrderField) Column() string {
 	case CookieBannerVersionOrderFieldCreatedAt:
 		return "created_at"
 	}
+
 	panic(fmt.Sprintf("unsupported order by: %s", p))
 }
 
@@ -35,6 +36,7 @@ func (p CookieBannerVersionOrderField) IsValid() bool {
 	case CookieBannerVersionOrderFieldCreatedAt:
 		return true
 	}
+
 	return false
 }
 
@@ -47,6 +49,7 @@ func (p *CookieBannerVersionOrderField) UnmarshalText(text []byte) error {
 	if !p.IsValid() {
 		return fmt.Errorf("%s is not a valid CookieBannerVersionOrderField", string(text))
 	}
+
 	return nil
 }
 

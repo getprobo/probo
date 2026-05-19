@@ -300,6 +300,7 @@ func TestMeasure_Create_Validation(t *testing.T) {
 			if !tt.skipOrganization {
 				input["organizationId"] = owner.GetOrganizationID().String()
 			}
+
 			maps.Copy(input, tt.input)
 
 			_, err := owner.Do(query, map[string]any{"input": input})
@@ -403,6 +404,7 @@ func TestMeasure_Update(t *testing.T) {
 			require.NoError(t, err)
 
 			measure := result.UpdateMeasure.Measure
+
 			switch tt.assertField {
 			case "name":
 				assert.Equal(t, tt.assertValue, measure.Name)
@@ -1349,6 +1351,7 @@ func TestMeasure_SubResolvers_WithData(t *testing.T) {
 		for i, edge := range result.Node.Tasks.Edges {
 			taskIDs[i] = edge.Node.ID
 		}
+
 		assert.Contains(t, taskIDs, task1ID)
 		assert.Contains(t, taskIDs, task2ID)
 	})
@@ -1543,6 +1546,7 @@ func TestMeasure_Pagination(t *testing.T) {
 
 		// Get next page using cursor
 		testutil.AssertHasMorePages(t, result.Node.Measures.PageInfo)
+
 		queryAfter := `
 			query($id: ID!, $after: CursorKey) {
 				node(id: $id) {
@@ -1698,12 +1702,14 @@ func TestMeasure_Filtering(t *testing.T) {
 
 		// Should contain our implemented measure
 		found := false
+
 		for _, edge := range result.Node.Measures.Edges {
 			if edge.Node.ID == measure1ID {
 				found = true
 				break
 			}
 		}
+
 		assert.True(t, found, "Expected to find implemented measure in filtered results")
 	})
 
@@ -1749,6 +1755,7 @@ func TestMeasure_Filtering(t *testing.T) {
 		for i, edge := range result.Node.Measures.Edges {
 			foundIDs[i] = edge.Node.ID
 		}
+
 		assert.Contains(t, foundIDs, measure1ID)
 		assert.Contains(t, foundIDs, measure2ID)
 	})
@@ -1804,17 +1811,20 @@ func TestMeasure_FilterByCategory(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.GreaterOrEqual(t, result.Node.Measures.TotalCount, 1)
+
 		for _, edge := range result.Node.Measures.Edges {
 			assert.Equal(t, "POLICY", edge.Node.Category)
 		}
 
 		found := false
+
 		for _, edge := range result.Node.Measures.Edges {
 			if edge.Node.ID == policyID {
 				found = true
 				break
 			}
 		}
+
 		assert.True(t, found, "Expected to find POLICY measure in filtered results")
 	})
 
@@ -2127,6 +2137,7 @@ func TestMeasure_Ordering(t *testing.T) {
 		for i, edge := range result.Node.Measures.Edges {
 			names[i] = edge.Node.Name
 		}
+
 		testutil.AssertOrderedAscending(t, names, "name")
 	})
 
@@ -2175,6 +2186,7 @@ func TestMeasure_Ordering(t *testing.T) {
 		for i, edge := range result.Node.Measures.Edges {
 			names[i] = edge.Node.Name
 		}
+
 		testutil.AssertOrderedDescending(t, names, "name")
 	})
 
@@ -2223,6 +2235,7 @@ func TestMeasure_Ordering(t *testing.T) {
 		for i, edge := range result.Node.Measures.Edges {
 			times[i] = edge.Node.CreatedAt
 		}
+
 		testutil.AssertTimesOrderedDescending(t, times, "createdAt")
 	})
 }

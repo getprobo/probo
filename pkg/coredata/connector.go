@@ -41,11 +41,13 @@ func (j *jsonRawMessageOrNull) Scan(src any) error {
 		*j = nil
 		return nil
 	}
+
 	switch v := src.(type) {
 	case []byte:
 		cp := make(jsonRawMessageOrNull, len(v))
 		copy(cp, v)
 		*j = cp
+
 		return nil
 	case string:
 		*j = jsonRawMessageOrNull(v)
@@ -91,6 +93,7 @@ func (c *Connector) AuthorizationAttributes(ctx context.Context, conn pg.Querier
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrResourceNotFound
 		}
+
 		return nil, fmt.Errorf("cannot query connector authorization attributes: %w", err)
 	}
 
@@ -152,10 +155,12 @@ func (c *Connector) LoadOneByOrganizationIDAndProvider(
 		if ci != cj {
 			return ci > cj
 		}
+
 		return connectors[i].UpdatedAt.After(connectors[j].UpdatedAt)
 	})
 
 	*c = *connectors[0]
+
 	return nil
 }
 
@@ -166,6 +171,7 @@ func connectorScopeCount(c *Connector) int {
 	if c == nil || c.Connection == nil {
 		return 0
 	}
+
 	return len(c.Connection.Scopes())
 }
 
@@ -265,6 +271,7 @@ LIMIT 1;
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
 		}
+
 		return fmt.Errorf("cannot collect connector row: %w", err)
 	}
 

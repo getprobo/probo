@@ -50,6 +50,7 @@ func (r *Report) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrResourceNotFound
 		}
+
 		return nil, fmt.Errorf("cannot query report authorization attributes: %w", err)
 	}
 

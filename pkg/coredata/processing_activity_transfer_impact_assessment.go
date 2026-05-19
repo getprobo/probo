@@ -39,6 +39,7 @@ func (p ProcessingActivityTransferImpactAssessment) String() string {
 
 func (p *ProcessingActivityTransferImpactAssessment) Scan(value any) error {
 	var s string
+
 	switch v := value.(type) {
 	case string:
 		s = v
@@ -56,6 +57,7 @@ func (p *ProcessingActivityTransferImpactAssessment) Scan(value any) error {
 	default:
 		return fmt.Errorf("invalid ProcessingActivityTransferImpactAssessment value: %q", s)
 	}
+
 	return nil
 }
 

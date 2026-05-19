@@ -58,6 +58,7 @@ func (q *DocumentVersionApprovalQuorum) AuthorizationAttributes(ctx context.Cont
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrResourceNotFound
 		}
+
 		return nil, fmt.Errorf("cannot query approval quorum authorization attributes: %w", err)
 	}
 
@@ -100,6 +101,7 @@ WHERE
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
 		}
+
 		return fmt.Errorf("cannot collect approval quorum: %w", err)
 	}
 
@@ -153,6 +155,7 @@ LIMIT 1
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
 		}
+
 		return fmt.Errorf("cannot collect last approval quorum: %w", err)
 	}
 
@@ -241,6 +244,7 @@ WHERE
 	maps.Copy(args, scope.SQLArguments())
 
 	row := conn.QueryRow(ctx, query, args)
+
 	var count int
 	if err := row.Scan(&count); err != nil {
 		return 0, fmt.Errorf("cannot scan count: %w", err)
@@ -292,6 +296,7 @@ INSERT INTO document_version_approval_quorums (
 				return ErrResourceAlreadyExists
 			}
 		}
+
 		return fmt.Errorf("cannot insert approval quorum: %w", err)
 	}
 

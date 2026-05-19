@@ -49,6 +49,7 @@ WHERE
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, nil
 	}
+
 	if err != nil {
 		return nil, fmt.Errorf("cannot get thirdParty list document ID: %w", err)
 	}
@@ -188,6 +189,7 @@ func (v *ThirdParty) AuthorizationAttributes(ctx context.Context, conn pg.Querie
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrResourceNotFound
 		}
+
 		return nil, fmt.Errorf("cannot query thirdParty authorization attributes: %w", err)
 	}
 
@@ -416,6 +418,7 @@ VALUES (
 		"updated_at":                       v.UpdatedAt,
 	}
 	_, err := conn.Exec(ctx, q, args)
+
 	return err
 }
 
@@ -434,6 +437,7 @@ DELETE FROM third_parties WHERE %s AND id = @third_party_id
 	maps.Copy(args, scope.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
+
 	return err
 }
 
@@ -464,6 +468,7 @@ WHERE
 	row := conn.QueryRow(ctx, q, args)
 
 	var count int
+
 	err := row.Scan(&count)
 	if err != nil {
 		return 0, fmt.Errorf("cannot count thirdParties: %w", err)
@@ -661,6 +666,7 @@ WHERE %s
 	maps.Copy(args, scope.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
+
 	return err
 }
 
@@ -729,6 +735,7 @@ WHERE %s
 	row := conn.QueryRow(ctx, q, args)
 
 	var count int
+
 	err := row.Scan(&count)
 	if err != nil {
 		return 0, fmt.Errorf("cannot count thirdParties: %w", err)
@@ -864,6 +871,7 @@ WHERE %s
 	row := conn.QueryRow(ctx, q, args)
 
 	var count int
+
 	err := row.Scan(&count)
 	if err != nil {
 		return 0, fmt.Errorf("cannot count thirdParties: %w", err)
@@ -1210,12 +1218,17 @@ ORDER BY
 	defer rows.Close()
 
 	thirdPartyMap := make(map[gid.GID][]string)
+
 	for rows.Next() {
-		var processingActivityID gid.GID
-		var thirdPartyName string
+		var (
+			processingActivityID gid.GID
+			thirdPartyName       string
+		)
+
 		if err := rows.Scan(&processingActivityID, &thirdPartyName); err != nil {
 			return nil, fmt.Errorf("cannot scan thirdParty: %w", err)
 		}
+
 		thirdPartyMap[processingActivityID] = append(thirdPartyMap[processingActivityID], thirdPartyName)
 	}
 
@@ -1381,6 +1394,7 @@ LIMIT 1;
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
 		}
+
 		return fmt.Errorf("cannot collect vendor by common third party: %w", err)
 	}
 

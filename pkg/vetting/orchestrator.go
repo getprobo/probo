@@ -85,6 +85,7 @@ func newOrchestratorAgent(
 		if reporter != nil {
 			opts = append(opts, agent.WithHooks(newSubProgressHooks(reporter, step)))
 		}
+
 		return opts
 	}
 
@@ -190,6 +191,7 @@ func newOrchestratorAgent(
 			out := make([]agent.Tool, 0, len(extra)+len(researchBrowserTools))
 			out = append(out, extra...)
 			out = append(out, researchBrowserTools...)
+
 			return out
 		}
 
@@ -232,12 +234,14 @@ func newOrchestratorAgent(
 		if err != nil {
 			return nil, fmt.Errorf("cannot create %s sub-agent: %w", e.toolName, err)
 		}
+
 		tools = append(tools, ag.AsTool(e.toolName, e.description))
 	}
 
 	if procedure == "" {
 		procedure = defaultProcedure
 	}
+
 	systemPrompt := strings.Replace(orchestratorBasePrompt, "{procedure}", procedure, 1)
 
 	opts := []agent.Option{

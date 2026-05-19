@@ -39,6 +39,7 @@ func (p WebhookEventOrderField) IsValid() bool {
 	case WebhookEventOrderFieldCreatedAt:
 		return true
 	}
+
 	return false
 }
 
@@ -51,5 +52,6 @@ func (p *WebhookEventOrderField) UnmarshalText(text []byte) error {
 	if !p.IsValid() {
 		return fmt.Errorf("%s is not a valid WebhookEventOrderField", string(text))
 	}
+
 	return nil
 }

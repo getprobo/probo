@@ -86,6 +86,7 @@ func NewClient(host string, token string, endpoint string, timeout time.Duration
 	for _, opt := range opts {
 		opt(c)
 	}
+
 	return c
 }
 
@@ -106,9 +107,11 @@ func (c *Client) Do(
 	if len(resp.Errors) > 0 {
 		var msg strings.Builder
 		msg.WriteString(resp.Errors[0].Message)
+
 		for _, e := range resp.Errors[1:] {
 			msg.WriteString("; " + e.Message)
 		}
+
 		return nil, fmt.Errorf("GraphQL error: %s", msg.String())
 	}
 
@@ -171,6 +174,7 @@ func (c *Client) doRequest(
 	}
 
 	reqURL := host + c.endpoint
+
 	req, err := http.NewRequest(http.MethodPost, reqURL, bytes.NewReader(body))
 	if err != nil {
 		return nil, 0, fmt.Errorf("cannot create HTTP request: %w", err)
@@ -184,6 +188,7 @@ func (c *Client) doRequest(
 	if err != nil {
 		return nil, 0, fmt.Errorf("cannot send HTTP request: %w", err)
 	}
+
 	defer func() { _ = resp.Body.Close() }()
 
 	respBody, err := io.ReadAll(resp.Body)
@@ -217,9 +222,11 @@ func (c *Client) DoUpload(
 	if len(resp.Errors) > 0 {
 		var msg strings.Builder
 		msg.WriteString(resp.Errors[0].Message)
+
 		for _, e := range resp.Errors[1:] {
 			msg.WriteString("; " + e.Message)
 		}
+
 		return nil, fmt.Errorf("GraphQL error: %s", msg.String())
 	}
 
@@ -234,6 +241,7 @@ func (c *Client) doUploadRequest(
 	file io.Reader,
 ) ([]byte, error) {
 	var buf bytes.Buffer
+
 	writer := multipart.NewWriter(&buf)
 
 	// Part 1: operations
@@ -281,6 +289,7 @@ func (c *Client) doUploadRequest(
 	}
 
 	reqURL := host + c.endpoint
+
 	req, err := http.NewRequest(http.MethodPost, reqURL, &buf)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create HTTP request: %w", err)
@@ -294,6 +303,7 @@ func (c *Client) doUploadRequest(
 	if err != nil {
 		return nil, fmt.Errorf("cannot send HTTP request: %w", err)
 	}
+
 	defer func() { _ = resp.Body.Close() }()
 
 	respBody, err := io.ReadAll(resp.Body)
@@ -347,6 +357,7 @@ func (c *Client) tryRefreshToken() error {
 	if err != nil {
 		return fmt.Errorf("cannot send refresh request: %w", err)
 	}
+
 	defer func() { _ = resp.Body.Close() }()
 
 	body, err := io.ReadAll(resp.Body)

@@ -35,6 +35,7 @@ func (r MembershipRole) String() string {
 
 func (r *MembershipRole) Scan(value any) error {
 	var s string
+
 	switch v := value.(type) {
 	case string:
 		s = v
@@ -58,6 +59,7 @@ func (r *MembershipRole) Scan(value any) error {
 	default:
 		return fmt.Errorf("invalid MembershipRole value: %q", s)
 	}
+
 	return nil
 }
 

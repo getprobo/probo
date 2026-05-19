@@ -32,6 +32,7 @@ func (fv FileVisibility) String() string {
 
 func (fv *FileVisibility) Scan(value any) error {
 	var s string
+
 	switch v := value.(type) {
 	case string:
 		s = v
@@ -49,6 +50,7 @@ func (fv *FileVisibility) Scan(value any) error {
 	default:
 		return fmt.Errorf("invalid FileVisibility value: %q", s)
 	}
+
 	return nil
 }
 

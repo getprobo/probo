@@ -95,7 +95,6 @@ func (s TrustCenterFileService) ListForOrganizationID(
 
 			return nil
 		})
-
 	if err != nil {
 		return nil, err
 	}
@@ -113,6 +112,7 @@ func (s TrustCenterFileService) CountForOrganizationID(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
 			var err error
+
 			count, err = (&coredata.TrustCenterFiles{}).CountByOrganizationID(ctx, conn, s.svc.scope, organizationID)
 			if err != nil {
 				return fmt.Errorf("cannot count trust center files: %w", err)
@@ -120,7 +120,6 @@ func (s TrustCenterFileService) CountForOrganizationID(
 
 			return nil
 		})
-
 	if err != nil {
 		return 0, err
 	}
@@ -142,7 +141,6 @@ func (s TrustCenterFileService) Get(
 
 		return nil
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -161,6 +159,7 @@ func (s TrustCenterFileService) Create(
 	// Validate file
 	filename := req.File.Filename
 	contentType := req.File.ContentType
+
 	fileSize, err := s.svc.fileManager.GetFileSize(req.File.Content)
 	if err != nil {
 		return nil, fmt.Errorf("cannot get file size: %w", err)
@@ -174,8 +173,10 @@ func (s TrustCenterFileService) Create(
 
 	trustCenterFileID := gid.New(s.svc.scope.GetTenantID(), coredata.TrustCenterFileEntityType)
 
-	var file *coredata.TrustCenterFile
-	var s3Key string
+	var (
+		file  *coredata.TrustCenterFile
+		s3Key string
+	)
 
 	err = s.svc.pg.WithTx(
 		ctx,
@@ -184,6 +185,7 @@ func (s TrustCenterFileService) Create(
 			if err != nil {
 				return fmt.Errorf("cannot upload file: %w", err)
 			}
+
 			s3Key = objectKey
 
 			file = &coredata.TrustCenterFile{
@@ -204,7 +206,6 @@ func (s TrustCenterFileService) Create(
 			return nil
 		},
 	)
-
 	if err != nil {
 		s.cleanupS3Object(ctx, s3Key)
 		return nil, err
@@ -237,12 +238,15 @@ func (s TrustCenterFileService) Update(
 			if req.Name != nil {
 				file.Name = *req.Name
 			}
+
 			if req.Category != nil {
 				file.Category = *req.Category
 			}
+
 			if req.TrustCenterVisibility != nil {
 				file.TrustCenterVisibility = *req.TrustCenterVisibility
 			}
+
 			file.UpdatedAt = now
 
 			if err := file.Update(ctx, tx, s.svc.scope); err != nil {
@@ -252,7 +256,6 @@ func (s TrustCenterFileService) Update(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -306,7 +309,6 @@ func (s TrustCenterFileService) GenerateFileURL(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return "", err
 	}
@@ -334,8 +336,11 @@ func (s TrustCenterFileService) uploadFile(
 		return gid.GID{}, "", fmt.Errorf("cannot generate object key: %w", err)
 	}
 
-	var fileSize int64
-	var fileContent io.ReadSeeker
+	var (
+		fileSize    int64
+		fileContent io.ReadSeeker
+	)
+
 	filename := file.Filename
 	contentType := file.ContentType
 
@@ -345,6 +350,7 @@ func (s TrustCenterFileService) uploadFile(
 			if err != nil {
 				return gid.GID{}, "", fmt.Errorf("cannot determine file size: %w", err)
 			}
+
 			fileSize = size
 
 			_, err = readSeeker.Seek(0, io.SeekStart)
@@ -354,18 +360,21 @@ func (s TrustCenterFileService) uploadFile(
 		} else {
 			fileSize = file.Size
 		}
+
 		fileContent = readSeeker
 	} else {
 		buf, err := io.ReadAll(file.Content)
 		if err != nil {
 			return gid.GID{}, "", fmt.Errorf("cannot read file: %w", err)
 		}
+
 		fileSize = int64(len(buf))
 		fileContent = bytes.NewReader(buf)
 	}
 
 	if contentType == "" {
 		contentType = "application/octet-stream"
+
 		if filename != "" {
 			if detectedType := mime.TypeByExtension(filepath.Ext(filename)); detectedType != "" {
 				contentType = detectedType

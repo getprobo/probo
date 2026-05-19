@@ -154,6 +154,7 @@ func Invalid(ctx context.Context, err error) *gqlerror.Error {
 			"value": errValidation.Value,
 		}
 	}
+
 	extensions := map[string]any{"code": "INVALID"}
 	if details != nil {
 		maps.Copy(extensions, details)
@@ -175,6 +176,7 @@ func InvalidValidationErrors(ctx context.Context, errs validator.ValidationError
 	for _, ve := range errs {
 		gqlErrors = append(gqlErrors, Invalid(ctx, ve))
 	}
+
 	return gqlErrors
 }
 

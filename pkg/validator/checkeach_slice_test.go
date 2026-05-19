@@ -44,6 +44,7 @@ func TestCheckEach_NonEmptyTypedSlice(t *testing.T) {
 	slice := []CustomType{"abc", "def"}
 
 	callCount := 0
+
 	v.CheckEach(slice, "items", func(index int, item any) {
 		callCount++
 		// Verify the item is the correct type
@@ -51,9 +52,11 @@ func TestCheckEach_NonEmptyTypedSlice(t *testing.T) {
 		if !ok {
 			t.Errorf("expected CustomType, got %T", item)
 		}
+
 		if index == 0 && str != "abc" {
 			t.Errorf("expected 'abc', got %s", str)
 		}
+
 		if index == 1 && str != "def" {
 			t.Errorf("expected 'def', got %s", str)
 		}
@@ -92,12 +95,15 @@ func TestCheckEach_PointerToNonEmptySlice(t *testing.T) {
 	ptrToSlice := &slice
 
 	callCount := 0
+
 	v.CheckEach(ptrToSlice, "items", func(index int, item any) {
 		callCount++
+
 		str, ok := item.(CustomType)
 		if !ok {
 			t.Errorf("expected CustomType, got %T", item)
 		}
+
 		expectedValues := []CustomType{"abc", "def", "ghi"}
 		if str != expectedValues[index] {
 			t.Errorf("at index %d: expected %s, got %s", index, expectedValues[index], str)
@@ -153,12 +159,15 @@ func TestCheckEach_DoublePointerToSlice(t *testing.T) {
 	doublePtrToSlice := &ptrToSlice
 
 	callCount := 0
+
 	v.CheckEach(doublePtrToSlice, "items", func(index int, item any) {
 		callCount++
+
 		str, ok := item.(CustomType)
 		if !ok {
 			t.Errorf("expected CustomType, got %T", item)
 		}
+
 		expectedValues := []CustomType{"x", "y"}
 		if str != expectedValues[index] {
 			t.Errorf("at index %d: expected %s, got %s", index, expectedValues[index], str)
@@ -192,9 +201,11 @@ func TestCheckEach_NonSliceValue(t *testing.T) {
 	if len(errors) != 1 {
 		t.Errorf("expected 1 error, got %d", len(errors))
 	}
+
 	if errors[0].Code != ErrorCodeInvalidFormat {
 		t.Errorf("expected error code %s, got %s", ErrorCodeInvalidFormat, errors[0].Code)
 	}
+
 	if errors[0].Message != "expected a slice" {
 		t.Errorf("expected message 'expected a slice', got '%s'", errors[0].Message)
 	}

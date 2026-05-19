@@ -61,6 +61,7 @@ func (c *Cursor[T]) SQLFragment() string {
 	fieldName := c.OrderBy.Field.Column()
 
 	var orderDirection string
+
 	switch {
 	case c.OrderBy.Direction == OrderDirectionAsc && c.Position == Head:
 		orderDirection = "ASC"

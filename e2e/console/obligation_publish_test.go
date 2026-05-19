@@ -237,6 +237,7 @@ func TestObligation_PublishObligationList(t *testing.T) {
 
 			ver1Major := result1.PublishObligationList.DocumentVersionEdge.Node.Major
 			ver2Major := result2.PublishObligationList.DocumentVersionEdge.Node.Major
+
 			assert.Equal(t, 1, ver1Major)
 			assert.Equal(t, 2, ver2Major)
 		},

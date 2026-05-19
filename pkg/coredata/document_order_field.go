@@ -38,6 +38,7 @@ func (p DocumentOrderField) Column() string {
 	case DocumentOrderFieldDocumentType:
 		return "document_type"
 	}
+
 	panic(fmt.Sprintf("unsupported order by: %s", p))
 }
 
@@ -49,6 +50,7 @@ func (p DocumentOrderField) IsValid() bool {
 		DocumentOrderFieldDocumentType:
 		return true
 	}
+
 	return false
 }
 
@@ -65,5 +67,6 @@ func (p *DocumentOrderField) UnmarshalText(text []byte) error {
 	if !p.IsValid() {
 		return fmt.Errorf("%s is not a valid DocumentOrderField", string(text))
 	}
+
 	return nil
 }

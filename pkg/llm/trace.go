@@ -36,12 +36,15 @@ func startChatSpan(ctx context.Context, tracer trace.Tracer, system string, req 
 	if req.Temperature != nil {
 		attrs = append(attrs, semconv.GenAIRequestTemperature(*req.Temperature))
 	}
+
 	if req.MaxTokens != nil {
 		attrs = append(attrs, semconv.GenAIRequestMaxTokens(*req.MaxTokens))
 	}
+
 	if req.TopP != nil {
 		attrs = append(attrs, semconv.GenAIRequestTopP(*req.TopP))
 	}
+
 	if len(req.StopSequences) > 0 {
 		attrs = append(attrs, semconv.GenAIRequestStopSequences(req.StopSequences...))
 	}
@@ -59,6 +62,7 @@ func endChatSpan(span trace.Span, resp *ChatCompletionResponse, err error) {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		span.End()
+
 		return
 	}
 
@@ -95,13 +99,16 @@ func (s *tracedStream) Next() bool {
 		s.finalizeSpan()
 		return false
 	}
+
 	s.lastEvent = s.inner.Event()
 	if s.lastEvent.FinishReason != nil {
 		s.finishReason = s.lastEvent.FinishReason
 	}
+
 	if s.lastEvent.Usage != nil {
 		s.usage = s.lastEvent.Usage
 	}
+
 	return true
 }
 
@@ -119,7 +126,9 @@ func (s *tracedStream) Close() error {
 		s.span.RecordError(err)
 		s.span.SetStatus(codes.Error, err.Error())
 	}
+
 	s.finalizeSpan()
+
 	return err
 }
 
@@ -129,6 +138,7 @@ func (s *tracedStream) finalizeSpan() {
 			s.span.RecordError(err)
 			s.span.SetStatus(codes.Error, err.Error())
 			s.span.End()
+
 			return
 		}
 
@@ -139,12 +149,15 @@ func (s *tracedStream) finalizeSpan() {
 				semconv.GenAIUsageOutputTokens(s.usage.OutputTokens),
 			)
 		}
+
 		if s.finishReason != nil {
 			attrs = append(attrs, semconv.GenAIResponseFinishReasons(string(*s.finishReason)))
 		}
+
 		if len(attrs) > 0 {
 			s.span.SetAttributes(attrs...)
 		}
+
 		s.span.End()
 	})
 }

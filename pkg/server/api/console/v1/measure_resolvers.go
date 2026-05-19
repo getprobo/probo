@@ -208,6 +208,7 @@ func (r *measureConnectionResolver) TotalCount(ctx context.Context, obj *types.M
 			r.logger.ErrorCtx(ctx, "cannot count measures", log.Error(err))
 			return 0, gqlutils.Internal(ctx)
 		}
+
 		return count, nil
 	case *controlResolver:
 		count, err := prb.Measures.CountForControlID(ctx, obj.ParentID, obj.Filters)
@@ -215,6 +216,7 @@ func (r *measureConnectionResolver) TotalCount(ctx context.Context, obj *types.M
 			r.logger.ErrorCtx(ctx, "cannot count measures", log.Error(err))
 			return 0, gqlutils.Internal(ctx)
 		}
+
 		return count, nil
 	case *riskResolver:
 		count, err := prb.Measures.CountForRiskID(ctx, obj.ParentID, obj.Filters)
@@ -222,10 +224,12 @@ func (r *measureConnectionResolver) TotalCount(ctx context.Context, obj *types.M
 			r.logger.ErrorCtx(ctx, "cannot count measures", log.Error(err))
 			return 0, gqlutils.Internal(ctx)
 		}
+
 		return count, nil
 	}
 
 	r.logger.ErrorCtx(ctx, "unsupported resolver")
+
 	return 0, gqlutils.Internal(ctx)
 }
 
@@ -254,7 +258,9 @@ func (r *mutationResolver) CreateMeasure(ctx context.Context, input types.Create
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot create measure", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -285,7 +291,9 @@ func (r *mutationResolver) UpdateMeasure(ctx context.Context, input types.Update
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot update measure", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -358,6 +366,7 @@ func (r *mutationResolver) CreateMeasureDocumentMapping(ctx context.Context, inp
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot create measure document mapping", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 

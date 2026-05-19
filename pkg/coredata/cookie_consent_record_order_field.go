@@ -27,6 +27,7 @@ func (p CookieConsentRecordOrderField) Column() string {
 	case CookieConsentRecordOrderFieldCreatedAt:
 		return "created_at"
 	}
+
 	panic(fmt.Sprintf("unsupported order by: %s", p))
 }
 
@@ -35,6 +36,7 @@ func (p CookieConsentRecordOrderField) IsValid() bool {
 	case CookieConsentRecordOrderFieldCreatedAt:
 		return true
 	}
+
 	return false
 }
 
@@ -47,6 +49,7 @@ func (p *CookieConsentRecordOrderField) UnmarshalText(text []byte) error {
 	if !p.IsValid() {
 		return fmt.Errorf("%s is not a valid CookieConsentRecordOrderField", string(text))
 	}
+
 	return nil
 }
 

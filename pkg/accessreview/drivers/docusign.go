@@ -79,6 +79,7 @@ func (d *DocuSignDriver) ListAccounts(ctx context.Context) ([]AccountRecord, err
 	}
 
 	var records []AccountRecord
+
 	startPosition := 0
 
 	for range maxPaginationPages {
@@ -143,12 +144,14 @@ func (d *DocuSignDriver) discoverAccount(ctx context.Context) (accountID string,
 	if err != nil {
 		return "", "", fmt.Errorf("cannot create docusign userinfo request: %w", err)
 	}
+
 	req.Header.Set("Accept", "application/json")
 
 	httpResp, err := d.httpClient.Do(req)
 	if err != nil {
 		return "", "", fmt.Errorf("cannot execute docusign userinfo request: %w", err)
 	}
+
 	defer func() {
 		_ = httpResp.Body.Close()
 	}()
@@ -183,12 +186,14 @@ func (d *DocuSignDriver) queryUsers(ctx context.Context, baseURI string, account
 	if err != nil {
 		return nil, fmt.Errorf("cannot create docusign users request: %w", err)
 	}
+
 	req.Header.Set("Accept", "application/json")
 
 	httpResp, err := d.httpClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("cannot execute docusign users request: %w", err)
 	}
+
 	defer func() {
 		_ = httpResp.Body.Close()
 	}()

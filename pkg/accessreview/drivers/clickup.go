@@ -77,12 +77,14 @@ func (d *ClickUpDriver) ListAccounts(ctx context.Context) ([]AccountRecord, erro
 	if err != nil {
 		return nil, fmt.Errorf("cannot create clickup team request: %w", err)
 	}
+
 	req.Header.Set("Accept", "application/json")
 
 	httpResp, err := d.httpClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("cannot execute clickup team request: %w", err)
 	}
+
 	defer func() { _ = httpResp.Body.Close() }()
 
 	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
@@ -159,5 +161,6 @@ func parseClickUpTime(raw string) (time.Time, error) {
 	if err != nil {
 		return time.Time{}, fmt.Errorf("cannot parse clickup time %q: %w", raw, err)
 	}
+
 	return time.UnixMilli(ms).UTC(), nil
 }

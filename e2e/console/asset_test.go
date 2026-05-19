@@ -125,6 +125,7 @@ func TestAsset_Update(t *testing.T) {
 		},
 	}, &createResult)
 	require.NoError(t, err)
+
 	assetID := createResult.CreateAsset.AssetEdge.Node.ID
 
 	const query = `
@@ -205,6 +206,7 @@ func TestAsset_Delete(t *testing.T) {
 		},
 	}, &createResult)
 	require.NoError(t, err)
+
 	assetID := createResult.CreateAsset.AssetEdge.Node.ID
 
 	const query = `

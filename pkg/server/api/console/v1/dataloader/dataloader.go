@@ -102,6 +102,7 @@ func (f *batchFetcher) fetchOrganizations(ctx context.Context, keys []gid.GID) (
 	for _, org := range orgs {
 		result[org.ID] = org
 	}
+
 	return result, nil
 }
 
@@ -117,6 +118,7 @@ func (f *batchFetcher) fetchFrameworks(ctx context.Context, keys []gid.GID) (map
 	for _, v := range frameworks {
 		result[v.ID] = v
 	}
+
 	return result, nil
 }
 
@@ -132,6 +134,7 @@ func (f *batchFetcher) fetchControls(ctx context.Context, keys []gid.GID) (map[g
 	for _, v := range controls {
 		result[v.ID] = v
 	}
+
 	return result, nil
 }
 
@@ -147,6 +150,7 @@ func (f *batchFetcher) fetchThirdParties(ctx context.Context, keys []gid.GID) (m
 	for _, v := range thirdParties {
 		result[v.ID] = v
 	}
+
 	return result, nil
 }
 
@@ -162,6 +166,7 @@ func (f *batchFetcher) fetchDocuments(ctx context.Context, keys []gid.GID) (map[
 	for _, v := range documents {
 		result[v.ID] = v
 	}
+
 	return result, nil
 }
 
@@ -177,6 +182,7 @@ func (f *batchFetcher) fetchProfiles(ctx context.Context, keys []gid.GID) (map[g
 	for _, v := range profiles {
 		result[v.ID] = v
 	}
+
 	return result, nil
 }
 
@@ -192,6 +198,7 @@ func (f *batchFetcher) fetchRisks(ctx context.Context, keys []gid.GID) (map[gid.
 	for _, v := range risks {
 		result[v.ID] = v
 	}
+
 	return result, nil
 }
 
@@ -207,6 +214,7 @@ func (f *batchFetcher) fetchMeasures(ctx context.Context, keys []gid.GID) (map[g
 	for _, v := range measures {
 		result[v.ID] = v
 	}
+
 	return result, nil
 }
 
@@ -222,6 +230,7 @@ func (f *batchFetcher) fetchTasks(ctx context.Context, keys []gid.GID) (map[gid.
 	for _, v := range tasks {
 		result[v.ID] = v
 	}
+
 	return result, nil
 }
 
@@ -237,6 +246,7 @@ func (f *batchFetcher) fetchFiles(ctx context.Context, keys []gid.GID) (map[gid.
 	for _, v := range files {
 		result[v.ID] = v
 	}
+
 	return result, nil
 }
 
@@ -252,6 +262,7 @@ func (f *batchFetcher) fetchReports(ctx context.Context, keys []gid.GID) (map[gi
 	for _, v := range reports {
 		result[v.ID] = v
 	}
+
 	return result, nil
 }
 
@@ -267,6 +278,7 @@ func (f *batchFetcher) fetchCookieBanners(ctx context.Context, keys []gid.GID) (
 	for _, v := range banners {
 		result[v.ID] = v
 	}
+
 	return result, nil
 }
 
@@ -282,5 +294,6 @@ func (f *batchFetcher) fetchCookieCategories(ctx context.Context, keys []gid.GID
 	for _, v := range categories {
 		result[v.ID] = v
 	}
+
 	return result, nil
 }

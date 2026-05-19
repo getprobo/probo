@@ -102,6 +102,7 @@ func (r Regulation) String() string {
 
 func (r *Regulation) Scan(value any) error {
 	var v string
+
 	switch val := value.(type) {
 	case string:
 		v = val
@@ -117,6 +118,7 @@ func (r *Regulation) Scan(value any) error {
 	}
 
 	*r = parsed
+
 	return nil
 }
 
@@ -148,5 +150,6 @@ func (r *Regulation) UnmarshalJSON(data []byte) error {
 	}
 
 	*r = parsed
+
 	return nil
 }

@@ -314,6 +314,7 @@ func TestOAuth2_AuthorizationCodeFlow(t *testing.T) {
 			require.NoError(t, err)
 
 			var code string
+
 			if testutil.IsConsentRedirect(authResp) {
 				consentID, err := testutil.ExtractConsentIDFromResponse(authResp)
 				require.NoError(t, err)
@@ -365,6 +366,7 @@ func TestOAuth2_AuthorizationCodeFlow(t *testing.T) {
 			require.NoError(t, err)
 
 			var code string
+
 			if testutil.IsConsentRedirect(authResp) {
 				consentID, err := testutil.ExtractConsentIDFromResponse(authResp)
 				require.NoError(t, err)
@@ -1564,6 +1566,7 @@ func TestOAuth2_Security(t *testing.T) {
 			require.NoError(t, err)
 
 			var code string
+
 			if testutil.IsConsentRedirect(authResp) {
 				consentID, err := testutil.ExtractConsentIDFromResponse(authResp)
 				require.NoError(t, err)
@@ -1617,6 +1620,7 @@ func TestOAuth2_Security(t *testing.T) {
 			require.NoError(t, err)
 
 			var redirectLoc string
+
 			if testutil.IsConsentRedirect(authResp) {
 				consentID, err := testutil.ExtractConsentIDFromResponse(authResp)
 				require.NoError(t, err)
@@ -1696,6 +1700,7 @@ func TestOAuth2_Security(t *testing.T) {
 			require.NoError(t, err)
 
 			var code string
+
 			if testutil.IsConsentRedirect(authResp) {
 				consentID, err := testutil.ExtractConsentIDFromResponse(authResp)
 				require.NoError(t, err)
@@ -1822,6 +1827,7 @@ func TestOAuth2_Security(t *testing.T) {
 			require.NoError(t, err)
 
 			_, challenge2 := testutil.GeneratePKCE()
+
 			params.Set("state", "consent-second")
 			params.Set("code_challenge", challenge2)
 
@@ -1862,6 +1868,7 @@ func TestOAuth2_Security(t *testing.T) {
 			require.NoError(t, err)
 
 			var code string
+
 			if testutil.IsConsentRedirect(authResp) {
 				consentID, err := testutil.ExtractConsentIDFromResponse(authResp)
 				require.NoError(t, err)
@@ -2003,12 +2010,14 @@ func TestOAuth2_Security(t *testing.T) {
 			require.NotNil(t, jwks)
 
 			var matchingKey map[string]any
+
 			for _, k := range jwks.Keys {
 				if kid, ok := k["kid"].(string); ok && kid == header.Kid {
 					matchingKey = k
 					break
 				}
 			}
+
 			require.NotNil(t, matchingKey, "JWKS must contain key matching kid=%s", header.Kid)
 
 			// Reconstruct the RSA public key from JWK.
@@ -2157,6 +2166,7 @@ func TestOAuth2_Security(t *testing.T) {
 			require.NoError(t, err)
 
 			var code string
+
 			if testutil.IsConsentRedirect(authResp) {
 				consentID, err := testutil.ExtractConsentIDFromResponse(authResp)
 				require.NoError(t, err)
@@ -2222,6 +2232,7 @@ func TestOAuth2_ClientSecretPost(t *testing.T) {
 			require.NoError(t, err)
 
 			var code string
+
 			if testutil.IsConsentRedirect(authResp) {
 				consentID, err := testutil.ExtractConsentIDFromResponse(authResp)
 				require.NoError(t, err)
@@ -2309,6 +2320,7 @@ func TestOAuth2_PublicClientAuthCodeFlow(t *testing.T) {
 			require.NoError(t, err)
 
 			var code string
+
 			if testutil.IsConsentRedirect(authResp) {
 				consentID, err := testutil.ExtractConsentIDFromResponse(authResp)
 				require.NoError(t, err)
@@ -2486,6 +2498,7 @@ func TestOAuth2_IDTokenClaims(t *testing.T) {
 			require.NoError(t, err)
 
 			var code string
+
 			if testutil.IsConsentRedirect(authResp) {
 				consentID, err := testutil.ExtractConsentIDFromResponse(authResp)
 				require.NoError(t, err)
@@ -2585,6 +2598,7 @@ func TestOAuth2_CacheHeaders(t *testing.T) {
 			require.NoError(t, err)
 
 			var code string
+
 			if testutil.IsConsentRedirect(authResp) {
 				consentID, err := testutil.ExtractConsentIDFromResponse(authResp)
 				require.NoError(t, err)
@@ -2825,6 +2839,7 @@ func TestOAuth2_Expiry(t *testing.T) {
 			require.NoError(t, err)
 
 			var code string
+
 			if testutil.IsConsentRedirect(authResp) {
 				consentID, err := testutil.ExtractConsentIDFromResponse(authResp)
 				require.NoError(t, err)
@@ -3010,6 +3025,7 @@ func TestOAuth2_OfflineAccessScope(t *testing.T) {
 			require.NoError(t, err)
 
 			var code string
+
 			if testutil.IsConsentRedirect(authResp) {
 				consentID, err := testutil.ExtractConsentIDFromResponse(authResp)
 				require.NoError(t, err)
@@ -3065,6 +3081,7 @@ func TestOAuth2_OfflineAccessScope(t *testing.T) {
 			require.NoError(t, err)
 
 			var code string
+
 			if testutil.IsConsentRedirect(authResp) {
 				consentID, err := testutil.ExtractConsentIDFromResponse(authResp)
 				require.NoError(t, err)
@@ -3470,6 +3487,7 @@ func TestOAuth2_AuthorizationCodeReplayRevokesTokens(t *testing.T) {
 			require.NoError(t, err)
 
 			var code string
+
 			if testutil.IsConsentRedirect(authResp) {
 				consentID, err := testutil.ExtractConsentIDFromResponse(authResp)
 				require.NoError(t, err)

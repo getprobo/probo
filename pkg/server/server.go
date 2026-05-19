@@ -188,6 +188,7 @@ func (s *Server) oidcDiscoveryHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	metadata := s.iamService.OAuth2ServerService.Metadata(endpoints)
+
 	w.Header().Set("Cache-Control", "public, max-age=3600")
 	httpserver.RenderJSON(w, http.StatusOK, metadata)
 }
@@ -204,6 +205,7 @@ func (s *Server) stripTrustPrefix(next http.Handler) http.Handler {
 		if r.URL.Path == prefix {
 			cleanPath := path.Clean(prefix) + "/"
 			http.Redirect(w, r, cleanPath, http.StatusMovedPermanently)
+
 			return
 		}
 

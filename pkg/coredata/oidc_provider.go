@@ -28,6 +28,7 @@ func (p OIDCProvider) IsValid() bool {
 	case OIDCProviderGoogle, OIDCProviderMicrosoft:
 		return true
 	}
+
 	return false
 }
 
@@ -38,6 +39,7 @@ func (p *OIDCProvider) UnmarshalText(text []byte) error {
 	if !p.IsValid() {
 		return fmt.Errorf("%s is not a valid OIDCProvider", string(text))
 	}
+
 	return nil
 }
 

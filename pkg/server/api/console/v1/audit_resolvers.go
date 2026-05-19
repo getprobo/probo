@@ -39,6 +39,7 @@ func (r *auditResolver) Organization(ctx context.Context, obj *types.Audit) (*ty
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot load organization", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -60,6 +61,7 @@ func (r *auditResolver) Framework(ctx context.Context, obj *types.Audit) (*types
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot load framework", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -85,6 +87,7 @@ func (r *auditResolver) Report(ctx context.Context, obj *types.Audit) (*types.Re
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot load report", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -212,6 +215,7 @@ func (r *auditConnectionResolver) TotalCount(ctx context.Context, obj *types.Aud
 			r.logger.ErrorCtx(ctx, "cannot count audits", log.Error(err))
 			return 0, gqlutils.Internal(ctx)
 		}
+
 		return count, nil
 	case *findingResolver:
 		count, err := prb.Audits.CountForFindingID(ctx, obj.ParentID)
@@ -219,6 +223,7 @@ func (r *auditConnectionResolver) TotalCount(ctx context.Context, obj *types.Aud
 			r.logger.ErrorCtx(ctx, "cannot count audits", log.Error(err))
 			return 0, gqlutils.Internal(ctx)
 		}
+
 		return count, nil
 	case *controlResolver:
 		count, err := prb.Audits.CountForControlID(ctx, obj.ParentID)
@@ -226,6 +231,7 @@ func (r *auditConnectionResolver) TotalCount(ctx context.Context, obj *types.Aud
 			r.logger.ErrorCtx(ctx, "cannot count audits", log.Error(err))
 			return 0, gqlutils.Internal(ctx)
 		}
+
 		return count, nil
 	default:
 		r.logger.ErrorCtx(ctx, "unsupported resolver", log.Any("resolver", obj.Resolver))
@@ -248,6 +254,7 @@ func (r *findingResolver) Organization(ctx context.Context, obj *types.Finding) 
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get finding organization", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -303,6 +310,7 @@ func (r *findingResolver) Owner(ctx context.Context, obj *types.Finding) (*types
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get finding owner", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -328,6 +336,7 @@ func (r *findingResolver) Risk(ctx context.Context, obj *types.Finding) (*types.
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get finding risk", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -369,6 +378,7 @@ func (r *findingConnectionResolver) TotalCount(ctx context.Context, obj *types.F
 			r.logger.ErrorCtx(ctx, "cannot count findings", log.Error(err))
 			return 0, gqlutils.Internal(ctx)
 		}
+
 		return count, nil
 	case *auditResolver:
 		count, err := prb.Findings.CountForAuditID(ctx, obj.ParentID, findingFilter)
@@ -376,10 +386,12 @@ func (r *findingConnectionResolver) TotalCount(ctx context.Context, obj *types.F
 			r.logger.ErrorCtx(ctx, "cannot count findings", log.Error(err))
 			return 0, gqlutils.Internal(ctx)
 		}
+
 		return count, nil
 	}
 
 	r.logger.ErrorCtx(ctx, "unsupported resolver", log.Any("resolver", obj.Resolver))
+
 	return 0, gqlutils.Internal(ctx)
 }
 
@@ -406,7 +418,9 @@ func (r *mutationResolver) CreateAudit(ctx context.Context, input types.CreateAu
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot create audit", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -426,7 +440,9 @@ func (r *mutationResolver) CreateAudit(ctx context.Context, input types.CreateAu
 			if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 				return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
 			}
+
 			r.logger.ErrorCtx(ctx, "cannot upload audit report", log.Error(err))
+
 			return nil, gqlutils.Internal(ctx)
 		}
 	}
@@ -458,7 +474,9 @@ func (r *mutationResolver) UpdateAudit(ctx context.Context, input types.UpdateAu
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot update audit", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -509,7 +527,9 @@ func (r *mutationResolver) UploadAuditReport(ctx context.Context, input types.Up
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot upload audit report", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -566,7 +586,9 @@ func (r *mutationResolver) CreateFinding(ctx context.Context, input types.Create
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot create finding", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -603,7 +625,9 @@ func (r *mutationResolver) UpdateFinding(ctx context.Context, input types.Update
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot update finding", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -684,10 +708,13 @@ func (r *mutationResolver) PublishFindingList(ctx context.Context, input types.P
 		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
 			return nil, gqlutils.Conflict(ctx, err)
 		}
+
 		if errMinor, ok := errors.AsType[*probo.ErrCannotPublishMinorWithoutMajor](err); ok {
 			return nil, gqlutils.Invalid(ctx, errMinor)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot publish finding list", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 

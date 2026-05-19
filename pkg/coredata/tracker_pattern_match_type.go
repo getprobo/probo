@@ -40,6 +40,7 @@ func (m TrackerPatternMatchType) String() string {
 
 func (m *TrackerPatternMatchType) Scan(value any) error {
 	var v string
+
 	switch val := value.(type) {
 	case string:
 		v = val
@@ -59,6 +60,7 @@ func (m *TrackerPatternMatchType) Scan(value any) error {
 	default:
 		return fmt.Errorf("invalid TrackerPatternMatchType value: %q", v)
 	}
+
 	return nil
 }
 

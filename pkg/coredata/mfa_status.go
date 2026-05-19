@@ -41,6 +41,7 @@ func (m MFAStatus) String() string {
 
 func (m *MFAStatus) Scan(value any) error {
 	var str string
+
 	switch v := value.(type) {
 	case string:
 		str = v
@@ -60,6 +61,7 @@ func (m *MFAStatus) Scan(value any) error {
 	default:
 		return fmt.Errorf("cannot parse MFAStatus: invalid value %q", str)
 	}
+
 	return nil
 }
 

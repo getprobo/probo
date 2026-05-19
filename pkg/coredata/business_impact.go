@@ -60,6 +60,7 @@ func (i *BusinessImpact) Scan(value any) error {
 	default:
 		return fmt.Errorf("unsupported type for BusinessImpact: %T", value)
 	}
+
 	return nil
 }
 
@@ -89,6 +90,7 @@ func (i *BusinessImpact) UnmarshalJSON(data []byte) error {
 	default:
 		return fmt.Errorf("invalid BusinessImpact value: %q", s)
 	}
+
 	return nil
 }
 
@@ -106,5 +108,6 @@ func (i *BusinessImpact) UnmarshalText(text []byte) error {
 	default:
 		return fmt.Errorf("invalid BusinessImpact value: %q", s)
 	}
+
 	return nil
 }

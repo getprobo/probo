@@ -178,9 +178,11 @@ func (a *Assessor) Assess(ctx context.Context, websiteURL string, procedure stri
 	if err != nil {
 		return nil, fmt.Errorf("cannot parse website URL %q: %w", websiteURL, err)
 	}
+
 	if u.Scheme != "http" && u.Scheme != "https" {
 		return nil, fmt.Errorf("website URL must use http or https, got %q", u.Scheme)
 	}
+
 	if u.Hostname() == "" {
 		return nil, fmt.Errorf("website URL %q has no host", websiteURL)
 	}
@@ -324,6 +326,7 @@ func thirdPartyInfoOutputType() (*agent.OutputType, error) {
 		if !ok {
 			return nil, fmt.Errorf("thirdParty info schema has no %q property", field)
 		}
+
 		prop["enum"] = values
 	}
 
@@ -331,6 +334,7 @@ func thirdPartyInfoOutputType() (*agent.OutputType, error) {
 	if err != nil {
 		return nil, fmt.Errorf("cannot marshal decorated thirdParty info schema: %w", err)
 	}
+
 	outputType.Schema = decorated
 
 	return outputType, nil

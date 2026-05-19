@@ -249,9 +249,11 @@ func TestDatum_Create_Validation(t *testing.T) {
 			if !tt.skipOrganization {
 				input["organizationId"] = owner.GetOrganizationID().String()
 			}
+
 			if !tt.skipOwner {
 				input["ownerId"] = profileID
 			}
+
 			maps.Copy(input, tt.input)
 
 			_, err := owner.Do(query, map[string]any{"input": input})
@@ -348,6 +350,7 @@ func TestDatum_Update(t *testing.T) {
 			require.NoError(t, err)
 
 			datum := result.UpdateDatum.Datum
+
 			switch tt.assertField {
 			case "name":
 				assert.Equal(t, tt.assertValue, datum.Name)
@@ -1159,6 +1162,7 @@ func TestDatum_Pagination(t *testing.T) {
 		assert.GreaterOrEqual(t, result.Node.Data.TotalCount, 5)
 
 		testutil.AssertHasMorePages(t, result.Node.Data.PageInfo)
+
 		queryAfter := `
 			query($id: ID!, $after: CursorKey) {
 				node(id: $id) {
@@ -1343,7 +1347,6 @@ func TestDatum_TenantIsolation(t *testing.T) {
 		err := org2Owner.Execute(query, map[string]any{
 			"id": org1Owner.GetOrganizationID().String(),
 		}, &result)
-
 		if err == nil {
 			for _, edge := range result.Node.Data.Edges {
 				assert.NotEqual(t, datumID, edge.Node.ID, "Should not see datum from another org")
@@ -1404,6 +1407,7 @@ func TestDatum_Ordering(t *testing.T) {
 		for i, edge := range result.Node.Data.Edges {
 			times[i] = edge.Node.CreatedAt
 		}
+
 		testutil.AssertTimesOrderedDescending(t, times, "createdAt")
 	})
 }

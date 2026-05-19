@@ -61,6 +61,7 @@ func NewCmdRegenerateToken(f *cmdutil.Factory) *cobra.Command {
 				}
 
 				var confirmed bool
+
 				err := huh.NewConfirm().
 					Title("Regenerate SCIM token? The current token will be invalidated.").
 					Value(&confirmed).
@@ -68,6 +69,7 @@ func NewCmdRegenerateToken(f *cmdutil.Factory) *cobra.Command {
 				if err != nil {
 					return err
 				}
+
 				if !confirmed {
 					return nil
 				}

@@ -183,6 +183,7 @@ func TestBuildTokenRequest_BasicJSON(t *testing.T) {
 	require.NoError(t, err)
 
 	var jsonBody map[string]string
+
 	err = json.Unmarshal(body, &jsonBody)
 	require.NoError(t, err)
 
@@ -193,6 +194,7 @@ func TestBuildTokenRequest_BasicJSON(t *testing.T) {
 	// JSON body must NOT contain client credentials
 	_, hasClientID := jsonBody["client_id"]
 	_, hasClientSecret := jsonBody["client_secret"]
+
 	assert.False(t, hasClientID, "JSON body should not contain client_id")
 	assert.False(t, hasClientSecret, "JSON body should not contain client_secret")
 }
@@ -636,12 +638,14 @@ func TestInitiateWithState_PKCE(t *testing.T) {
 		t.Parallel()
 
 		var capturedVerifier string
+
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			body, err := io.ReadAll(r.Body)
 			assert.NoError(t, err)
 
 			form, err := url.ParseQuery(string(body))
 			assert.NoError(t, err)
+
 			capturedVerifier = form.Get("code_verifier")
 
 			w.Header().Set("Content-Type", "application/json")
@@ -676,6 +680,7 @@ func TestInitiateWithState_PKCE(t *testing.T) {
 
 		payload, err := DecodeOAuth2StatePayload(stateToken)
 		require.NoError(t, err)
+
 		expectedVerifier := payload.Data.CodeVerifier
 		require.NotEmpty(t, expectedVerifier)
 
@@ -705,11 +710,13 @@ func TestApplyProviderDefaults_AuthURLTemplating(t *testing.T) {
 	// test so we do not have to wait for a real Vercel-style provider
 	// to land. Restore on teardown.
 	const fakeProvider = "TEST_TEMPLATED_AUTH_URL"
+
 	previous, hadPrevious := providerDefinitions[fakeProvider]
 	providerDefinitions[fakeProvider] = providerDefinition{
 		AuthURL:  "https://example.com/integrations/{integration_slug}/new",
 		TokenURL: "https://example.com/oauth/token",
 	}
+
 	t.Cleanup(func() {
 		if hadPrevious {
 			providerDefinitions[fakeProvider] = previous

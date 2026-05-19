@@ -41,6 +41,7 @@ func (rrt RightsRequestType) String() string {
 
 func (rrt *RightsRequestType) Scan(value any) error {
 	var s string
+
 	switch v := value.(type) {
 	case string:
 		s = v
@@ -60,6 +61,7 @@ func (rrt *RightsRequestType) Scan(value any) error {
 	default:
 		return fmt.Errorf("invalid RightsRequestType value: %q", s)
 	}
+
 	return nil
 }
 

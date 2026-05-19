@@ -29,6 +29,7 @@ func (e DocumentVersionApprovalQuorumOrderField) Column() string {
 	case DocumentVersionApprovalQuorumOrderFieldCreatedAt:
 		return "created_at"
 	}
+
 	panic(fmt.Sprintf("unsupported order by: %s", e))
 }
 
@@ -37,6 +38,7 @@ func (e DocumentVersionApprovalQuorumOrderField) IsValid() bool {
 	case DocumentVersionApprovalQuorumOrderFieldCreatedAt:
 		return true
 	}
+
 	return false
 }
 
@@ -47,6 +49,7 @@ func (e *DocumentVersionApprovalQuorumOrderField) UnmarshalText(text []byte) err
 	if !e.IsValid() {
 		return fmt.Errorf("%s is not a valid DocumentVersionApprovalQuorumOrderField", string(text))
 	}
+
 	return nil
 }
 

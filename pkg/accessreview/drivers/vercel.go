@@ -111,6 +111,7 @@ func (d *VercelDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error
 		if page.Pagination.Next == nil {
 			return records, nil
 		}
+
 		cursor = strconv.FormatInt(*page.Pagination.Next, 10)
 	}
 
@@ -120,9 +121,11 @@ func (d *VercelDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error
 func (d *VercelDriver) queryMembers(ctx context.Context, cursor string) (*vercelMembersPage, error) {
 	q := url.Values{}
 	q.Set("limit", "100")
+
 	if cursor != "" {
 		q.Set("until", cursor)
 	}
+
 	u := url.URL{
 		Scheme:   "https",
 		Host:     "api.vercel.com",
@@ -134,12 +137,14 @@ func (d *VercelDriver) queryMembers(ctx context.Context, cursor string) (*vercel
 	if err != nil {
 		return nil, fmt.Errorf("cannot create vercel members request: %w", err)
 	}
+
 	req.Header.Set("Accept", "application/json")
 
 	httpResp, err := d.httpClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("cannot execute vercel members request: %w", err)
 	}
+
 	defer func() { _ = httpResp.Body.Close() }()
 
 	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {

@@ -119,6 +119,7 @@ func (s *Service) Run(ctx context.Context, presenterConfigFunc EmailPresenterCon
 		s.logger.Named("sealing-worker"),
 		nil,
 	)
+
 	g.Go(func() error { return sealingWorker.Run(sealingWorkerCtx) })
 
 	certWorkerCtx, stopCertWorker := context.WithCancel(ctx)
@@ -130,6 +131,7 @@ func (s *Service) Run(ctx context.Context, presenterConfigFunc EmailPresenterCon
 		s.bucket,
 		s.logger.Named("completion-certificate-worker"),
 	)
+
 	g.Go(func() error { return certWorker.Run(certWorkerCtx) })
 
 	<-gctx.Done()
@@ -148,6 +150,7 @@ func (s *Service) CreateSignature(
 	consentText := req.ConsentText
 	if consentText == "" {
 		var err error
+
 		consentText, err = req.DocumentType.ConsentText()
 		if err != nil {
 			return nil, fmt.Errorf("cannot derive consent text: %w", err)
@@ -500,6 +503,7 @@ func (s *Service) GetEventsBySignatureID(
 		scope  = coredata.NewScopeFromObjectID(signatureID)
 		events = coredata.ElectronicSignatureEvents{}
 	)
+
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
@@ -510,7 +514,6 @@ func (s *Service) GetEventsBySignatureID(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}

@@ -245,8 +245,10 @@ func TestHeuristicTemplate(t *testing.T) {
 			tt.name,
 			func(t *testing.T) {
 				t.Parallel()
+
 				tmpl, changed := heuristicTemplate(tt.input)
 				assert.Equal(t, tt.changed, changed)
+
 				if changed {
 					assert.Equal(t, tt.template, tmpl)
 				}
@@ -329,6 +331,7 @@ func TestTemplateCandidates(t *testing.T) {
 			tt.name,
 			func(t *testing.T) {
 				t.Parallel()
+
 				result := templateCandidates(tt.input)
 				assert.Equal(t, tt.expected, result)
 			},
@@ -506,6 +509,7 @@ func TestSplitTokens(t *testing.T) {
 			tt.name,
 			func(t *testing.T) {
 				t.Parallel()
+
 				tokens, seps := splitTokens(tt.input)
 				assert.Equal(t, tt.tokens, tokens)
 				assert.Equal(t, tt.seps, seps)
@@ -988,6 +992,7 @@ func TestDurationBucket(t *testing.T) {
 			tt.name,
 			func(t *testing.T) {
 				t.Parallel()
+
 				result := durationBucket(tt.maxAge)
 				assert.Equal(t, tt.expected, result)
 			},

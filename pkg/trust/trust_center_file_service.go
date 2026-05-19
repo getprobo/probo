@@ -50,7 +50,6 @@ func (s *TrustCenterFileService) Get(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -85,7 +84,6 @@ func (s *TrustCenterFileService) ListForOrganizationId(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -108,6 +106,7 @@ func (s *TrustCenterFileService) ExportFile(
 		if err != nil {
 			return nil, "", fmt.Errorf("cannot add watermark to PDF: %w", err)
 		}
+
 		return watermarkedPDF, mimeType, nil
 	}
 
@@ -125,8 +124,10 @@ func (s *TrustCenterFileService) exportFileData(
 	ctx context.Context,
 	trustCenterFileID gid.GID,
 ) ([]byte, string, error) {
-	var trustCenterFile *coredata.TrustCenterFile
-	var file *coredata.File
+	var (
+		trustCenterFile *coredata.TrustCenterFile
+		file            *coredata.File
+	)
 
 	err := s.svc.pg.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
 		trustCenterFile = &coredata.TrustCenterFile{}
@@ -152,6 +153,7 @@ func (s *TrustCenterFileService) exportFileData(
 	if err != nil {
 		return nil, "", fmt.Errorf("cannot download file from S3: %w", err)
 	}
+
 	defer func() { _ = result.Body.Close() }()
 
 	fileData, err := io.ReadAll(result.Body)

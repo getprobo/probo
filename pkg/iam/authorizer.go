@@ -101,8 +101,10 @@ func (a *Authorizer) authorize(ctx context.Context, tx pg.Tx, params AuthorizePa
 			*params.Session,
 			membership.ID,
 		); err != nil {
-			var errSessionNotFound *ErrSessionNotFound
-			var errSessionExpired *ErrSessionExpired
+			var (
+				errSessionNotFound *ErrSessionNotFound
+				errSessionExpired  *ErrSessionExpired
+			)
 
 			if errors.As(err, &errSessionNotFound) || errors.As(err, &errSessionExpired) {
 				return NewAssumptionRequiredError(params.Principal, membership.ID)
@@ -222,6 +224,7 @@ func (a *Authorizer) buildPrincipalAttributes(
 			if err != nil {
 				return nil, fmt.Errorf("cannot load principal attributes: %w", err)
 			}
+
 			maps.Copy(attrs, entityAttrs)
 		}
 	}
@@ -252,6 +255,7 @@ func (a *Authorizer) buildResourceAttributes(
 	if err != nil {
 		return nil, fmt.Errorf("cannot load resource attributes: %w", err)
 	}
+
 	maps.Copy(attrs, entityAttrs)
 
 	if params.ResourceAttributes != nil {
@@ -312,6 +316,7 @@ func (a *Authorizer) recordAuditLog(
 			"cannot parse organization id for audit log",
 			log.Error(err),
 		)
+
 		return
 	}
 
@@ -331,6 +336,7 @@ func (a *Authorizer) recordAuditLog(
 			"cannot marshal audit log metadata",
 			log.Error(err),
 		)
+
 		return
 	}
 

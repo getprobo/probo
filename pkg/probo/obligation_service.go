@@ -110,7 +110,6 @@ func (s ObligationService) Get(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -169,7 +168,6 @@ func (s *ObligationService) Create(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -219,6 +217,7 @@ func (s *ObligationService) Update(
 				if err := owner.LoadByID(ctx, conn, s.svc.scope, *req.OwnerID); err != nil {
 					return fmt.Errorf("cannot load owner profile: %w", err)
 				}
+
 				obligation.OwnerID = *req.OwnerID
 			}
 
@@ -251,7 +250,6 @@ func (s *ObligationService) Update(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -296,6 +294,7 @@ func (s ObligationService) CountForOrganizationID(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			obligations := coredata.Obligations{}
+
 			count, err = obligations.CountByOrganizationID(ctx, conn, s.svc.scope, organizationID)
 			if err != nil {
 				return fmt.Errorf("cannot count obligations: %w", err)
@@ -304,7 +303,6 @@ func (s ObligationService) CountForOrganizationID(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return 0, err
 	}
@@ -318,6 +316,7 @@ func (s ObligationService) ListForControlID(
 	cursor *page.Cursor[coredata.ObligationOrderField],
 ) (*page.Page[*coredata.Obligation, coredata.ObligationOrderField], error) {
 	var obligations coredata.Obligations
+
 	control := &coredata.Control{}
 
 	err := s.svc.pg.WithConn(
@@ -335,7 +334,6 @@ func (s ObligationService) ListForControlID(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -361,7 +359,6 @@ func (s ObligationService) ListForOrganizationID(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -379,6 +376,7 @@ func (s ObligationService) CountForRiskID(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			obligations := &coredata.Obligations{}
+
 			count, err = obligations.CountByRiskID(ctx, conn, s.svc.scope, riskID)
 			if err != nil {
 				return fmt.Errorf("cannot count obligations: %w", err)
@@ -387,7 +385,6 @@ func (s ObligationService) CountForRiskID(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return 0, err
 	}
@@ -413,7 +410,6 @@ func (s ObligationService) ListForRiskID(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}

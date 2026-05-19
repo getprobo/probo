@@ -188,6 +188,7 @@ func (s AccessSourceService) Update(
 						return fmt.Errorf("cannot load connector: %w", err)
 					}
 				}
+
 				source.ConnectorID = *req.ConnectorID
 			}
 
@@ -256,6 +257,7 @@ func (s AccessSourceService) CountForOrganizationID(
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			sources := coredata.AccessSources{}
 			count, err = sources.CountByOrganizationID(ctx, conn, s.scope, organizationID)
+
 			return err
 		},
 	)
@@ -300,6 +302,7 @@ func (s AccessSourceService) ConnectorHTTPClient(
 			if err := dbConnector.LoadByID(ctx, conn, s.scope, connectorID, s.encryptionKey); err != nil {
 				return fmt.Errorf("cannot load connector: %w", err)
 			}
+
 			return nil
 		},
 	)
@@ -308,16 +311,19 @@ func (s AccessSourceService) ConnectorHTTPClient(
 	}
 
 	var tokenBefore string
+
 	oauth2Conn, isOAuth2 := dbConnector.Connection.(*connector.OAuth2Connection)
 	if isOAuth2 {
 		tokenBefore = oauth2Conn.AccessToken
 	}
 
 	var httpClient *http.Client
+
 	if isOAuth2 && s.connectorRegistry != nil {
 		refreshCfg := s.connectorRegistry.GetOAuth2RefreshConfig(string(dbConnector.Provider))
 		if refreshCfg != nil {
 			var err error
+
 			httpClient, err = oauth2Conn.RefreshableClient(ctx, *refreshCfg)
 			if err != nil {
 				return nil, nil, fmt.Errorf("cannot create refreshable HTTP client: %w", err)
@@ -327,6 +333,7 @@ func (s AccessSourceService) ConnectorHTTPClient(
 
 	if httpClient == nil {
 		var err error
+
 		httpClient, err = dbConnector.Connection.Client(ctx)
 		if err != nil {
 			return nil, nil, fmt.Errorf("cannot create HTTP client: %w", err)
@@ -336,6 +343,7 @@ func (s AccessSourceService) ConnectorHTTPClient(
 	// Persist refreshed token if it changed.
 	if isOAuth2 && oauth2Conn.AccessToken != tokenBefore {
 		dbConnector.UpdatedAt = time.Now()
+
 		if err := s.pg.WithTx(
 			ctx,
 			func(ctx context.Context, tx pg.Tx) error {

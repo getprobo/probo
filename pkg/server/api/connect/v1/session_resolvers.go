@@ -38,6 +38,7 @@ func (r *mutationResolver) SignIn(ctx context.Context, input types.SignInInput) 
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot check credentials", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -46,6 +47,7 @@ func (r *mutationResolver) SignIn(ctx context.Context, input types.SignInInput) 
 	switch {
 	case session == nil:
 		var err error
+
 		session, err = r.iam.AuthService.OpenSessionWithPassword(
 			ctx,
 			identity.ID,
@@ -75,17 +77,21 @@ func (r *mutationResolver) SignIn(ctx context.Context, input types.SignInInput) 
 
 	if input.OrganizationID != nil {
 		var err error
+
 		_, _, err = r.iam.SessionService.OpenPasswordChildSessionForOrganization(ctx, session.ID, *input.OrganizationID)
 		if err != nil {
 			// Here session middleware already took care of expired/nil root session so we only handle membership related errors
-			var errMembershipNotFound *iam.ErrMembershipNotFound
-			var errUserInactive *iam.ErrUserInactive
+			var (
+				errMembershipNotFound *iam.ErrMembershipNotFound
+				errUserInactive       *iam.ErrUserInactive
+			)
 
 			if errors.As(err, &errMembershipNotFound) || errors.As(err, &errUserInactive) {
 				return nil, gqlutils.Forbiddenf(ctx, "forbidden")
 			}
 
 			r.logger.ErrorCtx(ctx, "cannot assume organization", log.Error(err))
+
 			return nil, gqlutils.Internal(ctx)
 		}
 	}
@@ -118,6 +124,7 @@ func (r *mutationResolver) SignUp(ctx context.Context, input types.SignUpInput) 
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot create identity with password", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -141,6 +148,7 @@ func (r *mutationResolver) SignOut(ctx context.Context) (*types.SignOutPayload, 
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot close session", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -163,7 +171,6 @@ func (r *mutationResolver) ActivateAccount(ctx context.Context, input types.Acti
 				r.logger.ErrorCtx(ctx, "cannot close session", log.Error(err))
 				return nil, gqlutils.Internal(ctx)
 			}
-
 		}
 
 		w := gqlutils.HTTPResponseWriterFromContext(ctx)
@@ -196,10 +203,12 @@ func (r *mutationResolver) ActivateAccount(ctx context.Context, input types.Acti
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot activate account from invitation", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
 	var ssoLoginURL *string
+
 	samlConfigs, err := r.iam.AccountService.ListSAMLConfigurationsForEmail(ctx, user.EmailAddress)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list saml configurations", log.Error(err))
@@ -223,6 +232,7 @@ func (r *mutationResolver) ActivateAccount(ctx context.Context, input types.Acti
 	}
 
 	var createPasswordToken *string
+
 	if identity.HashedPassword == nil {
 		token, err := r.iam.AuthService.GetResetPasswordToken(ctx, identity.EmailAddress)
 		if err != nil {
@@ -272,6 +282,7 @@ func (r *mutationResolver) ResetPassword(ctx context.Context, input types.ResetP
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot reset password", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -307,6 +318,7 @@ func (r *mutationResolver) VerifyEmail(ctx context.Context, input types.VerifyEm
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot verify email", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -344,6 +356,7 @@ func (r *mutationResolver) ChangePassword(ctx context.Context, input types.Chang
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot change password", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -379,6 +392,7 @@ func (r *mutationResolver) ChangeEmail(ctx context.Context, input types.ChangeEm
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot change email", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -447,6 +461,7 @@ func (r *mutationResolver) RevokeSession(ctx context.Context, input types.Revoke
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot revoke session", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -506,6 +521,7 @@ func (r *sessionConnectionResolver) TotalCount(ctx context.Context, obj *types.S
 	}
 
 	r.logger.ErrorCtx(ctx, "unsupported resolver", log.Any("resolver", obj.Resolver))
+
 	return nil, gqlutils.Internal(ctx)
 }
 

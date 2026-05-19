@@ -96,6 +96,7 @@ func (g *CertificateGenerator) Generate(
 	if signature.SignedAt == nil {
 		return nil, fmt.Errorf("cannot generate certificate: signature %s has no signed_at timestamp", signature.ID)
 	}
+
 	data.SignedAt = signature.SignedAt.UTC().Format(time.RFC3339)
 
 	if len(signature.TSAToken) == 0 {
@@ -161,6 +162,7 @@ func tsaAuthorityName(ts *timestamp.Timestamp) string {
 		if cert.Subject.CommonName != "" {
 			return org + " (" + cert.Subject.CommonName + ")"
 		}
+
 		return org
 	}
 

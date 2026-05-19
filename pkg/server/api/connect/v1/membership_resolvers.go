@@ -38,6 +38,7 @@ func (r *membershipResolver) LastSession(ctx context.Context, obj *types.Members
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get active session for membership", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 

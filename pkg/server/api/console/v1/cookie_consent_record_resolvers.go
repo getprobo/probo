@@ -33,7 +33,9 @@ func (r *cookieConsentRecordResolver) CookieBanner(ctx context.Context, obj *typ
 		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
 			return nil, nil
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot get cookie banner", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -53,7 +55,9 @@ func (r *cookieConsentRecordResolver) CookieBannerVersion(ctx context.Context, o
 		if errors.Is(err, cookiebanner.ErrVersionNotFound) {
 			return nil, nil
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot get cookie banner version", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 

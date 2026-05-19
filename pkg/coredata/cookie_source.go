@@ -41,6 +41,7 @@ func (s CookieSource) String() string {
 
 func (s *CookieSource) Scan(value any) error {
 	var v string
+
 	switch val := value.(type) {
 	case string:
 		v = val
@@ -60,6 +61,7 @@ func (s *CookieSource) Scan(value any) error {
 	default:
 		return fmt.Errorf("invalid CookieSource value: %q", v)
 	}
+
 	return nil
 }
 

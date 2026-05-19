@@ -41,6 +41,7 @@ func NewListThirdPartyRiskAssessmentsOutput(p *page.Page[*coredata.ThirdPartyRis
 	}
 
 	var nextCursor *page.CursorKey
+
 	if len(p.Data) > 0 {
 		cursorKey := p.Data[len(p.Data)-1].CursorKey(p.Cursor.OrderBy.Field)
 		nextCursor = &cursorKey
@@ -98,6 +99,7 @@ func NewListThirdPartiesOutput(thirdPartyPage *page.Page[*coredata.ThirdParty, c
 	}
 
 	var nextCursor *page.CursorKey
+
 	if len(thirdPartyPage.Data) > 0 {
 		cursorKey := thirdPartyPage.Data[len(thirdPartyPage.Data)-1].CursorKey(thirdPartyPage.Cursor.OrderBy.Field)
 		nextCursor = &cursorKey
@@ -161,6 +163,7 @@ func NewListThirdPartyContactsOutput(p *page.Page[*coredata.ThirdPartyContact, c
 	}
 
 	var nextCursor *page.CursorKey
+
 	if len(p.Data) > 0 {
 		cursorKey := p.Data[len(p.Data)-1].CursorKey(p.Cursor.OrderBy.Field)
 		nextCursor = &cursorKey
@@ -195,6 +198,7 @@ func NewListThirdPartyServicesOutput(p *page.Page[*coredata.ThirdPartyService, c
 	}
 
 	var nextCursor *page.CursorKey
+
 	if len(p.Data) > 0 {
 		cursorKey := p.Data[len(p.Data)-1].CursorKey(p.Cursor.OrderBy.Field)
 		nextCursor = &cursorKey
@@ -215,6 +219,7 @@ func NewThirdPartySubprocessors(sps []probo.Subprocessor) []*ThirdPartySubproces
 			Purpose: sp.Purpose,
 		}
 	}
+
 	return result
 }
 

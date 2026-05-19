@@ -80,11 +80,13 @@ func (e *ReviewEngine) FetchSource(
 			if err := source.LoadByID(ctx, tx, e.scope, sourceID); err != nil {
 				return fmt.Errorf("cannot load access source %s: %w", sourceID, err)
 			}
+
 			if source.OrganizationID != campaign.OrganizationID {
 				return fmt.Errorf("cannot process access source: %s does not belong to campaign organization", sourceID)
 			}
 
 			var err error
+
 			driver, err = e.resolveDriver(ctx, tx, source)
 			if err != nil {
 				return fmt.Errorf("cannot resolve driver for source %s: %w", source.Name, err)
@@ -97,6 +99,7 @@ func (e *ReviewEngine) FetchSource(
 				}
 			} else {
 				entries := &coredata.AccessEntries{}
+
 				baseline, err = entries.LoadBaselineBySourceID(ctx, tx, e.scope, lastCompletedCampaign.ID, sourceID)
 				if err != nil {
 					return fmt.Errorf("cannot load baseline entries by source: %w", err)
@@ -117,10 +120,13 @@ func (e *ReviewEngine) FetchSource(
 
 	sourceCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	accounts, err := driver.ListAccounts(sourceCtx)
+
 	cancel()
+
 	if err != nil {
 		return 0, fmt.Errorf("cannot list accounts from source %s: %w", source.Name, err)
 	}
+
 	fetchedCount = len(accounts)
 
 	err = e.pg.WithTx(
@@ -132,6 +138,7 @@ func (e *ReviewEngine) FetchSource(
 			for _, account := range accounts {
 				accountKey := normalizeAccountKey(account.Email, account.ExternalID)
 				seenAccountKeys[accountKey] = struct{}{}
+
 				incrementalTag := coredata.AccessEntryIncrementalTagNew
 				if _, ok := previousByAccountKey[accountKey]; ok {
 					incrementalTag = coredata.AccessEntryIncrementalTagUnchanged
@@ -210,6 +217,7 @@ func (e *ReviewEngine) FetchSource(
 
 func normalizeAccountKey(email, externalID string) string {
 	emailKey := strings.ToLower(strings.TrimSpace(email))
+
 	externalID = strings.TrimSpace(externalID)
 	if externalID != "" {
 		return emailKey + "|" + externalID
@@ -231,6 +239,7 @@ func (e *ReviewEngine) oauthClient(
 			return conn.RefreshableClient(ctx, *refreshCfg)
 		}
 	}
+
 	return conn.Client(ctx)
 }
 
@@ -245,6 +254,7 @@ func (e *ReviewEngine) connectorHTTPClient(
 	if oauth2Conn, ok := dbConnector.Connection.(*connector.OAuth2Connection); ok {
 		return e.oauthClient(ctx, oauth2Conn, dbConnector.Provider)
 	}
+
 	return dbConnector.Connection.Client(ctx)
 }
 
@@ -312,15 +322,19 @@ func (e *ReviewEngine) resolveDriver(
 			if err != nil {
 				return nil, fmt.Errorf("cannot read 1password users api settings: %w", err)
 			}
+
 			return drivers.NewOnePasswordUsersAPIDriver(httpClient, settings.AccountID, settings.Region), nil
 		}
+
 		onePasswordSettings, err := coredata.ConnectorSettings[coredata.OnePasswordConnectorSettings](dbConnector)
 		if err != nil {
 			return nil, fmt.Errorf("cannot read 1password connector settings: %w", err)
 		}
+
 		if onePasswordSettings.SCIMBridgeURL == "" {
 			return nil, fmt.Errorf("1password connector requires scim_bridge_url in settings")
 		}
+
 		return drivers.NewOnePasswordDriver(httpClient, onePasswordSettings.SCIMBridgeURL), nil
 	case coredata.ConnectorProviderHubSpot:
 		return drivers.NewHubSpotDriver(httpClient), nil
@@ -335,9 +349,11 @@ func (e *ReviewEngine) resolveDriver(
 		if err != nil {
 			return nil, fmt.Errorf("cannot read tally connector settings: %w", err)
 		}
+
 		if tallySettings.OrganizationID == "" {
 			return nil, fmt.Errorf("tally connector requires organization_id in settings")
 		}
+
 		return drivers.NewTallyDriver(httpClient, tallySettings.OrganizationID), nil
 	case coredata.ConnectorProviderCloudflare:
 		return drivers.NewCloudflareDriver(httpClient), nil
@@ -348,6 +364,7 @@ func (e *ReviewEngine) resolveDriver(
 		if err != nil {
 			return nil, fmt.Errorf("cannot read sentry connector settings: %w", err)
 		}
+
 		// OrganizationSlug may be empty for OAuth connections; the driver auto-discovers it.
 		return drivers.NewSentryDriver(httpClient, sentrySettings.OrganizationSlug), nil
 	case coredata.ConnectorProviderSupabase:
@@ -355,18 +372,22 @@ func (e *ReviewEngine) resolveDriver(
 		if err != nil {
 			return nil, fmt.Errorf("cannot read supabase connector settings: %w", err)
 		}
+
 		if supabaseSettings.OrganizationSlug == "" {
 			return nil, fmt.Errorf("supabase connector requires organization_slug in settings")
 		}
+
 		return drivers.NewSupabaseDriver(httpClient, supabaseSettings.OrganizationSlug), nil
 	case coredata.ConnectorProviderGitHub:
 		githubSettings, err := coredata.ConnectorSettings[coredata.GitHubConnectorSettings](dbConnector)
 		if err != nil {
 			return nil, fmt.Errorf("cannot read github connector settings: %w", err)
 		}
+
 		if githubSettings.Organization == "" {
 			return nil, fmt.Errorf("github connector requires organization in settings")
 		}
+
 		return drivers.NewGitHubDriver(httpClient, githubSettings.Organization, e.logger.Named("github")), nil
 	case coredata.ConnectorProviderIntercom:
 		return drivers.NewIntercomDriver(httpClient), nil
@@ -379,27 +400,33 @@ func (e *ReviewEngine) resolveDriver(
 		if err != nil {
 			return nil, fmt.Errorf("cannot read gitlab connector settings: %w", err)
 		}
+
 		if gitlabSettings.GroupID == "" {
 			return nil, fmt.Errorf("gitlab connector requires group_id in settings")
 		}
+
 		return drivers.NewGitLabDriver(httpClient, gitlabSettings.GroupID), nil
 	case coredata.ConnectorProviderBitbucket:
 		bitbucketSettings, err := coredata.ConnectorSettings[coredata.BitbucketConnectorSettings](dbConnector)
 		if err != nil {
 			return nil, fmt.Errorf("cannot read bitbucket connector settings: %w", err)
 		}
+
 		if bitbucketSettings.Workspace == "" {
 			return nil, fmt.Errorf("bitbucket connector requires workspace in settings")
 		}
+
 		return drivers.NewBitbucketDriver(httpClient, bitbucketSettings.Workspace), nil
 	case coredata.ConnectorProviderHeroku:
 		herokuSettings, err := coredata.ConnectorSettings[coredata.HerokuConnectorSettings](dbConnector)
 		if err != nil {
 			return nil, fmt.Errorf("cannot read heroku connector settings: %w", err)
 		}
+
 		if herokuSettings.TeamID == "" {
 			return nil, fmt.Errorf("heroku connector requires team_id in settings")
 		}
+
 		return drivers.NewHerokuDriver(httpClient, herokuSettings.TeamID), nil
 	case coredata.ConnectorProviderPagerDuty:
 		// PagerDuty's REST API uses the regional api.pagerduty.com host;
@@ -413,36 +440,44 @@ func (e *ReviewEngine) resolveDriver(
 		if err != nil {
 			return nil, fmt.Errorf("cannot read asana connector settings: %w", err)
 		}
+
 		if asanaSettings.WorkspaceGID == "" {
 			return nil, fmt.Errorf("asana connector requires workspace_gid in settings")
 		}
+
 		return drivers.NewAsanaDriver(httpClient, asanaSettings.WorkspaceGID), nil
 	case coredata.ConnectorProviderNetlify:
 		netlifySettings, err := coredata.ConnectorSettings[coredata.NetlifyConnectorSettings](dbConnector)
 		if err != nil {
 			return nil, fmt.Errorf("cannot read netlify connector settings: %w", err)
 		}
+
 		if netlifySettings.AccountSlug == "" {
 			return nil, fmt.Errorf("netlify connector requires account_slug in settings")
 		}
+
 		return drivers.NewNetlifyDriver(httpClient, netlifySettings.AccountSlug), nil
 	case coredata.ConnectorProviderClickUp:
 		clickupSettings, err := coredata.ConnectorSettings[coredata.ClickUpConnectorSettings](dbConnector)
 		if err != nil {
 			return nil, fmt.Errorf("cannot read clickup connector settings: %w", err)
 		}
+
 		if clickupSettings.TeamID == "" {
 			return nil, fmt.Errorf("clickup connector requires team_id in settings")
 		}
+
 		return drivers.NewClickUpDriver(httpClient, clickupSettings.TeamID), nil
 	case coredata.ConnectorProviderVercel:
 		vercelSettings, err := coredata.ConnectorSettings[coredata.VercelConnectorSettings](dbConnector)
 		if err != nil {
 			return nil, fmt.Errorf("cannot read vercel connector settings: %w", err)
 		}
+
 		if vercelSettings.TeamID == "" {
 			return nil, fmt.Errorf("vercel connector requires team_id in settings")
 		}
+
 		return drivers.NewVercelDriver(httpClient, vercelSettings.TeamID), nil
 	case coredata.ConnectorProviderMonday:
 		return drivers.NewMondayDriver(httpClient), nil

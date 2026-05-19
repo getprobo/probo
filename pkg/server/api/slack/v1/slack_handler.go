@@ -70,6 +70,7 @@ func SlackHandler(slackSvc *slack.Service, slackSigningSecret string, logger *lo
 		r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
 
 		timestamp := r.Header.Get("X-Slack-Request-Timestamp")
+
 		signature := r.Header.Get("X-Slack-Signature")
 		if timestamp == "" || signature == "" {
 			httpserver.RenderJSON(w, http.StatusBadRequest, SlackInteractiveResponse{Success: false, Message: "missing Slack signature headers"})
@@ -79,10 +80,12 @@ func SlackHandler(slackSvc *slack.Service, slackSigningSecret string, logger *lo
 		if err := slack.VerifySignature(slackSigningSecret, timestamp, signature, bodyBytes); err != nil {
 			logger.ErrorCtx(ctx, "invalid Slack signature", log.Error(err))
 			httpserver.RenderJSON(w, http.StatusUnauthorized, SlackInteractiveResponse{Success: false, Message: "invalid Slack signature"})
+
 			return
 		}
 
 		var slackPayload SlackInteractivePayload
+
 		if ct := r.Header.Get("Content-Type"); ct != "application/x-www-form-urlencoded" {
 			httpserver.RenderJSON(w, http.StatusBadRequest, SlackInteractiveResponse{Success: false, Message: "unsupported content type"})
 			return
@@ -102,6 +105,7 @@ func SlackHandler(slackSvc *slack.Service, slackSigningSecret string, logger *lo
 		if err := json.NewDecoder(strings.NewReader(raw)).Decode(&slackPayload); err != nil {
 			logger.ErrorCtx(ctx, "cannot parse Slack payload", log.Error(err))
 			httpserver.RenderJSON(w, http.StatusBadRequest, SlackInteractiveResponse{Success: false, Message: "cannot parse Slack payload"})
+
 			return
 		}
 
@@ -136,6 +140,7 @@ func SlackHandler(slackSvc *slack.Service, slackSigningSecret string, logger *lo
 		if err != nil {
 			logger.ErrorCtx(ctx, "cannot load slack message", log.Error(err))
 			httpserver.RenderJSON(w, http.StatusInternalServerError, SlackInteractiveResponse{Success: false, Message: "internal server error"})
+
 			return
 		}
 
@@ -149,16 +154,21 @@ func SlackHandler(slackSvc *slack.Service, slackSigningSecret string, logger *lo
 		if initialSlackMessage.RequesterEmail == nil {
 			logger.ErrorCtx(ctx, "missing requester email", log.String("slack_message_id", initialSlackMessage.ID.String()))
 			httpserver.RenderJSON(w, http.StatusInternalServerError, SlackInteractiveResponse{Success: false, Message: "internal server error"})
+
 			return
 		}
+
 		requesterEmail := *initialSlackMessage.RequesterEmail
 
 		tenantSvc := trustSvc.WithTenant(initialSlackMessage.OrganizationID.TenantID())
 
-		var documentIDs []gid.GID
-		var reportIDs []gid.GID
-		var fileIDs []gid.GID
-		var statusAction string
+		var (
+			documentIDs  []gid.GID
+			reportIDs    []gid.GID
+			fileIDs      []gid.GID
+			statusAction string
+		)
+
 		tenantSlackSvc := slackSvc.WithTenant(initialSlackMessage.OrganizationID.TenantID())
 
 		// accept_all, reject_all
@@ -173,6 +183,7 @@ func SlackHandler(slackSvc *slack.Service, slackSigningSecret string, logger *lo
 			if err != nil {
 				logger.ErrorCtx(ctx, "cannot load slack message document ids", log.Error(err))
 				httpserver.RenderJSON(w, http.StatusInternalServerError, SlackInteractiveResponse{Success: false, Message: "internal server error"})
+
 				return
 			}
 
@@ -195,6 +206,7 @@ func SlackHandler(slackSvc *slack.Service, slackSigningSecret string, logger *lo
 				}
 
 				statusAction = params[0]
+
 				gID, err = gid.ParseGID(params[1])
 				if err != nil {
 					httpserver.RenderJSON(w, http.StatusBadRequest, SlackInteractiveResponse{Success: false, Message: "invalid ID"})
@@ -225,6 +237,7 @@ func SlackHandler(slackSvc *slack.Service, slackSigningSecret string, logger *lo
 			default:
 				logger.ErrorCtx(ctx, "unknown entity type", log.Error(err))
 				httpserver.RenderJSON(w, http.StatusInternalServerError, SlackInteractiveResponse{Success: false, Message: "internal server error"})
+
 				return
 			}
 		}
@@ -241,6 +254,7 @@ func SlackHandler(slackSvc *slack.Service, slackSigningSecret string, logger *lo
 			); err != nil {
 				logger.ErrorCtx(ctx, "cannot grant access", log.Error(err))
 				httpserver.RenderJSON(w, http.StatusInternalServerError, SlackInteractiveResponse{Success: false, Message: "internal server error"})
+
 				return
 			}
 		case StatusReject:
@@ -254,11 +268,13 @@ func SlackHandler(slackSvc *slack.Service, slackSigningSecret string, logger *lo
 			); err != nil {
 				logger.ErrorCtx(ctx, "cannot reject access", log.Error(err))
 				httpserver.RenderJSON(w, http.StatusInternalServerError, SlackInteractiveResponse{Success: false, Message: "internal server error"})
+
 				return
 			}
 		default:
 			logger.ErrorCtx(ctx, "unknown status action", log.String("status_action", statusAction))
 			httpserver.RenderJSON(w, http.StatusInternalServerError, SlackInteractiveResponse{Success: false, Message: "internal server error"})
+
 			return
 		}
 
@@ -270,6 +286,7 @@ func SlackHandler(slackSvc *slack.Service, slackSigningSecret string, logger *lo
 		); err != nil {
 			logger.ErrorCtx(ctx, "cannot update Slack message", log.Error(err))
 			httpserver.RenderJSON(w, http.StatusInternalServerError, SlackInteractiveResponse{Success: false, Message: "internal server error"})
+
 			return
 		}
 

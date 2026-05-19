@@ -65,6 +65,7 @@ func NewCookieCategory(c *coredata.CookieCategory) *CookieCategory {
 	if gcmConsentTypes == nil {
 		gcmConsentTypes = []string{}
 	}
+
 	return &CookieCategory{
 		ID: c.ID,
 		CookieBanner: &CookieBanner{

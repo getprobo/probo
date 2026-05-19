@@ -40,6 +40,7 @@ func Parse(header string) []Link {
 		}
 
 		start := strings.Index(part, "<")
+
 		end := strings.Index(part, ">")
 		if start == -1 || end == -1 || end <= start {
 			continue

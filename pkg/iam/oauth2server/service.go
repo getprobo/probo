@@ -154,6 +154,7 @@ func NewService(
 	opts ...Option,
 ) *Service {
 	var activeIdx []int
+
 	for i, k := range signingKeys {
 		if k.Active {
 			activeIdx = append(activeIdx, i)
@@ -185,6 +186,7 @@ func NewService(
 func (s *Service) signingKey() *SigningKey {
 	n := s.rrCounter.Add(1)
 	idx := s.activeSigningIdx[n%uint64(len(s.activeSigningIdx))]
+
 	return &s.signingKeys[idx]
 }
 
@@ -772,6 +774,7 @@ func (s *Service) PollDeviceCode(
 
 			// Rate limiting.
 			var slowDown bool
+
 			if deviceCode.LastPolledAt != nil {
 				elapsed := now.Sub(ref.UnrefOrZero(deviceCode.LastPolledAt))
 				if elapsed < time.Duration(deviceCode.PollInterval)*time.Second {
@@ -1091,6 +1094,7 @@ func (s *Service) RegisterClient(
 	)
 
 	var membership coredata.Membership
+
 	err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
@@ -1171,9 +1175,12 @@ func (s *Service) IntrospectToken(
 			if errors.Is(err, coredata.ErrResourceNotFound) {
 				return nil
 			}
+
 			return fmt.Errorf("cannot load access token: %w", err)
 		}
+
 		hasAccess = true
+
 		return nil
 	}
 
@@ -1182,9 +1189,12 @@ func (s *Service) IntrospectToken(
 			if errors.Is(err, coredata.ErrResourceNotFound) {
 				return nil
 			}
+
 			return fmt.Errorf("cannot load refresh token: %w", err)
 		}
+
 		hasRefresh = true
+
 		return nil
 	}
 
@@ -1197,18 +1207,22 @@ func (s *Service) IntrospectToken(
 				if err := loadRefresh(ctx, conn); err != nil {
 					return err
 				}
+
 				if hasRefresh {
 					return nil
 				}
+
 				return loadAccess(ctx, conn)
 			}
 
 			if err := loadAccess(ctx, conn); err != nil {
 				return err
 			}
+
 			if hasAccess {
 				return nil
 			}
+
 			return loadRefresh(ctx, conn)
 		},
 	); err != nil {
@@ -1220,6 +1234,7 @@ func (s *Service) IntrospectToken(
 		if now.After(accessToken.ExpiresAt) {
 			return nil, nil
 		}
+
 		return &IntrospectResult{
 			ClientID:   accessToken.ClientID,
 			IdentityID: accessToken.IdentityID,
@@ -1232,6 +1247,7 @@ func (s *Service) IntrospectToken(
 		if refreshToken.RevokedAt != nil || now.After(refreshToken.ExpiresAt) {
 			return nil, nil
 		}
+
 		return &IntrospectResult{
 			ClientID:   refreshToken.ClientID,
 			IdentityID: refreshToken.IdentityID,
@@ -1299,10 +1315,12 @@ func (s *Service) RevokeToken(
 		func(ctx context.Context, tx pg.Tx) error {
 			if tokenTypeHint != nil && *tokenTypeHint == coredata.OAuth2TokenTypeHintRefreshToken {
 				refreshToken := coredata.OAuth2RefreshToken{}
+
 				err := refreshToken.LoadByHashedValueAndClientID(ctx, tx, hashedValue, clientID)
 				if err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
 					return fmt.Errorf("cannot load refresh token: %w", err)
 				}
+
 				if err == nil {
 					now := time.Now()
 					if err := refreshToken.Revoke(ctx, tx, now); err != nil {
@@ -1320,10 +1338,12 @@ func (s *Service) RevokeToken(
 				}
 
 				accessToken := coredata.OAuth2AccessToken{}
+
 				err = accessToken.LoadByHashedValueAndClientID(ctx, tx, hashedValue, clientID)
 				if err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
 					return fmt.Errorf("cannot load access token: %w", err)
 				}
+
 				if err == nil {
 					if err := accessToken.Delete(ctx, tx); err != nil {
 						return fmt.Errorf("cannot delete access token: %w", err)
@@ -1334,22 +1354,27 @@ func (s *Service) RevokeToken(
 			}
 
 			accessToken := coredata.OAuth2AccessToken{}
+
 			err := accessToken.LoadByHashedValueAndClientID(ctx, tx, hashedValue, clientID)
 			if err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
 				return fmt.Errorf("cannot load access token: %w", err)
 			}
+
 			if err == nil {
 				if err := accessToken.Delete(ctx, tx); err != nil {
 					return fmt.Errorf("cannot delete access token: %w", err)
 				}
+
 				return nil
 			}
 
 			refreshToken := coredata.OAuth2RefreshToken{}
+
 			err = refreshToken.LoadByHashedValueAndClientID(ctx, tx, hashedValue, clientID)
 			if err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
 				return fmt.Errorf("cannot load refresh token: %w", err)
 			}
+
 			if err == nil {
 				now := time.Now()
 				if err := refreshToken.Revoke(ctx, tx, now); err != nil {
@@ -1452,6 +1477,7 @@ func (s *Service) Authorize(
 					requestedScopes,
 				); err == nil {
 					var err error
+
 					code, err = s.issueAuthorizationCode(
 						ctx,
 						tx,
@@ -1517,6 +1543,7 @@ func (s *Service) GetConsentByID(
 	consentID gid.GID,
 ) (*coredata.OAuth2Consent, error) {
 	var consent coredata.OAuth2Consent
+
 	if err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
@@ -1645,6 +1672,7 @@ func (s *Service) ApproveConsent(
 				}
 
 				result.IsDeviceFlow = true
+
 				return nil
 			}
 

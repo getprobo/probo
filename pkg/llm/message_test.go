@@ -95,6 +95,7 @@ func TestMessageJSONRoundTrip(t *testing.T) {
 			require.NoError(t, err)
 
 			var got Message
+
 			err = json.Unmarshal(data, &got)
 			require.NoError(t, err)
 			assert.Equal(t, tt.msg, got)

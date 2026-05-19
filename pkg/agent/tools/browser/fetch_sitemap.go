@@ -73,6 +73,7 @@ func FetchSitemapTool() agent.Tool {
 					ErrorDetail: fmt.Sprintf("cannot fetch sitemap: %s", err),
 				}), nil
 			}
+
 			defer func() { _ = resp.Body.Close() }()
 
 			if resp.StatusCode != http.StatusOK {
@@ -92,7 +93,9 @@ func FetchSitemapTool() agent.Tool {
 						ErrorDetail: fmt.Sprintf("cannot decompress gzipped sitemap: %s", err),
 					}), nil
 				}
+
 				defer func() { _ = gz.Close() }()
+
 				reader = gz
 			}
 
@@ -125,6 +128,7 @@ func FetchSitemapTool() agent.Tool {
 
 func parseSitemapXML(r io.Reader) ([]string, error) {
 	var urls []string
+
 	decoder := xml.NewDecoder(r)
 
 	for {
@@ -132,6 +136,7 @@ func parseSitemapXML(r io.Reader) ([]string, error) {
 		if err == io.EOF {
 			break
 		}
+
 		if err != nil {
 			return urls, err
 		}

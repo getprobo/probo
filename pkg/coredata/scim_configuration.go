@@ -58,6 +58,7 @@ func (s *SCIMConfiguration) AuthorizationAttributes(ctx context.Context, conn pg
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrResourceNotFound
 		}
+
 		return nil, fmt.Errorf("cannot query scim configuration authorization attributes: %w", err)
 	}
 

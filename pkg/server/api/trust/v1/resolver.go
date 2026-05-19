@@ -97,6 +97,7 @@ func NewMux(
 	r.Method(http.MethodGet, "/session-transfer", sessionTransferHandler)
 
 	graphqlHandler := NewGraphQLHandler(iamSvc, trustSvc, esignSvc, mailmanSvc, logger, baseURL, cookieConfig, tokenSecret)
+
 	r.Group(
 		func(r chi.Router) {
 			r.Use(authn.NewSessionMiddleware(iamSvc, cookieConfig))

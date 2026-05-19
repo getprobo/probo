@@ -71,6 +71,7 @@ ON CONFLICT (finding_id, audit_id) DO NOTHING;
 		"tenant_id":       scope.GetTenantID(),
 		"created_at":      fa.CreatedAt,
 	}
+
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
 		return fmt.Errorf("cannot upsert finding audit: %w", err)

@@ -127,6 +127,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 			if flagName == "" {
 				return fmt.Errorf("name is required; pass --name or run interactively")
 			}
+
 			if flagAssetType == "" {
 				return fmt.Errorf("asset type is required; pass --asset-type or run interactively")
 			}
@@ -140,12 +141,15 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 			if cmd.Flags().Changed("amount") {
 				input["amount"] = flagAmount
 			}
+
 			if flagOwner != "" {
 				input["ownerId"] = flagOwner
 			}
+
 			if flagDataTypesStored != "" {
 				input["dataTypesStored"] = flagDataTypesStored
 			}
+
 			if len(flagThirdPartyIDs) > 0 {
 				input["thirdPartyIds"] = flagThirdPartyIDs
 			}

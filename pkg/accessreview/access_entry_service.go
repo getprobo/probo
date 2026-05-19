@@ -102,13 +102,16 @@ func (s AccessEntryService) RecordDecision(
 			entry.DecisionNote = req.DecisionNote
 			entry.DecidedBy = req.DecidedByID
 			entry.DecidedAt = &now
+
 			entry.UpdatedAt = now
 			if entry.Flags == nil {
 				entry.Flags = []coredata.AccessEntryFlag{}
 			}
+
 			if entry.FlagReasons == nil {
 				entry.FlagReasons = []string{}
 			}
+
 			if req.Decision == coredata.AccessEntryDecisionRevoke || req.Decision == coredata.AccessEntryDecisionEscalate {
 				if len(entry.Flags) == 0 {
 					entry.Flags = []coredata.AccessEntryFlag{coredata.AccessEntryFlagExcessive}
@@ -156,6 +159,7 @@ func (s AccessEntryService) RecordDecisions(
 		if d.Decision == coredata.AccessEntryDecisionPending {
 			return nil, fmt.Errorf("cannot bulk decide access entries: invalid decision %q", d.Decision)
 		}
+
 		if d.Decision != coredata.AccessEntryDecisionApproved {
 			if d.DecisionNote == nil || strings.TrimSpace(*d.DecisionNote) == "" {
 				return nil, fmt.Errorf(
@@ -189,9 +193,11 @@ func (s AccessEntryService) RecordDecisions(
 					if err := campaign.LoadByID(ctx, conn, s.scope, entry.AccessReviewCampaignID); err != nil {
 						return fmt.Errorf("cannot load campaign: %w", err)
 					}
+
 					if campaign.Status != coredata.AccessReviewCampaignStatusPendingActions {
 						return fmt.Errorf("cannot decide access entry: campaign status is %s, expected PENDING_ACTIONS", campaign.Status)
 					}
+
 					verifiedCampaigns[entry.AccessReviewCampaignID] = true
 				}
 
@@ -200,13 +206,16 @@ func (s AccessEntryService) RecordDecisions(
 				entry.DecisionNote = d.DecisionNote
 				entry.DecidedBy = d.DecidedByID
 				entry.DecidedAt = &now
+
 				entry.UpdatedAt = now
 				if entry.Flags == nil {
 					entry.Flags = []coredata.AccessEntryFlag{}
 				}
+
 				if entry.FlagReasons == nil {
 					entry.FlagReasons = []string{}
 				}
+
 				if d.Decision == coredata.AccessEntryDecisionRevoke || d.Decision == coredata.AccessEntryDecisionEscalate {
 					if len(entry.Flags) == 0 {
 						entry.Flags = []coredata.AccessEntryFlag{coredata.AccessEntryFlagExcessive}
@@ -245,6 +254,7 @@ func (s AccessEntryService) RecordDecisions(
 		if err != nil {
 			return nil, fmt.Errorf("cannot reload access entry %s: %w", id, err)
 		}
+
 		entries[i] = entry
 	}
 
@@ -274,14 +284,17 @@ func (s AccessEntryService) FlagEntry(
 			}
 
 			now := time.Now()
+
 			entry.Flags = req.Flags
 			if entry.Flags == nil {
 				entry.Flags = []coredata.AccessEntryFlag{}
 			}
+
 			entry.FlagReasons = req.FlagReasons
 			if entry.FlagReasons == nil {
 				entry.FlagReasons = []string{}
 			}
+
 			entry.UpdatedAt = now
 
 			return entry.UpdateFlags(ctx, conn, s.scope)
@@ -348,10 +361,12 @@ func (s AccessEntryService) CountForCampaignID(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			entries := coredata.AccessEntries{}
+
 			count, err = entries.CountByCampaignID(ctx, conn, s.scope, campaignID, filter)
 			if err != nil {
 				return fmt.Errorf("cannot count access entries by campaign: %w", err)
 			}
+
 			return nil
 		},
 	)
@@ -374,10 +389,12 @@ func (s AccessEntryService) CountForCampaignIDAndSourceID(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			entries := coredata.AccessEntries{}
+
 			count, err = entries.CountByCampaignIDAndSourceID(ctx, conn, s.scope, campaignID, sourceID, filter)
 			if err != nil {
 				return fmt.Errorf("cannot count access entries by campaign and source: %w", err)
 			}
+
 			return nil
 		},
 	)
@@ -398,10 +415,12 @@ func (s AccessEntryService) CountPendingForCampaignID(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			entries := coredata.AccessEntries{}
+
 			count, err = entries.CountPendingByCampaignID(ctx, conn, s.scope, campaignID)
 			if err != nil {
 				return fmt.Errorf("cannot count pending access entries: %w", err)
 			}
+
 			return nil
 		},
 	)

@@ -66,6 +66,7 @@ func NewRegistry(models map[string]ModelDefinition) *Registry {
 		m.ID = id
 		r.index(&m)
 	}
+
 	return r
 }
 
@@ -74,6 +75,7 @@ func DefaultRegistry() *Registry {
 	defaultRegistryOnce.Do(func() {
 		defaultRegistry = NewRegistry(generatedModels)
 	})
+
 	return defaultRegistry
 }
 
@@ -84,9 +86,11 @@ func (r *Registry) Lookup(modelID string) (ModelDefinition, bool) {
 	if m, ok := r.byID[modelID]; ok {
 		return *m, true
 	}
+
 	if m, ok := r.byID[normalizeModelID(modelID)]; ok {
 		return *m, true
 	}
+
 	return ModelDefinition{}, false
 }
 
@@ -114,5 +118,6 @@ func normalizeModelID(id string) string {
 	if idx := strings.IndexByte(id, '/'); idx >= 0 {
 		id = id[idx+1:]
 	}
+
 	return strings.ReplaceAll(id, ".", "-")
 }

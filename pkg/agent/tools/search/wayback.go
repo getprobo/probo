@@ -66,6 +66,7 @@ func CheckWaybackTool() agent.Tool {
 
 			// Check availability.
 			availURL := "https://archive.org/wayback/available?url=" + url.QueryEscape(p.URL)
+
 			body, err := httpGet(ctx, client, availURL)
 			if err != nil {
 				result.ErrorDetail = fmt.Sprintf("cannot check Wayback Machine availability: %s", err)
@@ -118,6 +119,7 @@ func httpGet(ctx context.Context, client *http.Client, rawURL string) ([]byte, e
 	if err != nil {
 		return nil, err
 	}
+
 	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {

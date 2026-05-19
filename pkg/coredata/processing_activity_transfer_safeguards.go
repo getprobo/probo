@@ -47,6 +47,7 @@ func (p ProcessingActivityTransferSafeguard) String() string {
 
 func (p *ProcessingActivityTransferSafeguard) Scan(value any) error {
 	var s string
+
 	switch v := value.(type) {
 	case string:
 		s = v
@@ -72,6 +73,7 @@ func (p *ProcessingActivityTransferSafeguard) Scan(value any) error {
 	default:
 		return fmt.Errorf("invalid ProcessingActivityTransferSafeguard value: %q", s)
 	}
+
 	return nil
 }
 

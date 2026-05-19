@@ -39,21 +39,25 @@ func NewConnectorRegistry() *ConnectorRegistry {
 func (r *ConnectorRegistry) Register(provider string, c Connector) error {
 	r.Lock()
 	defer r.Unlock()
+
 	if _, ok := r.connectors[provider]; ok {
 		return fmt.Errorf("cannot register connector %q: already registered", provider)
 	}
 
 	r.connectors[provider] = c
+
 	return nil
 }
 
 func (r *ConnectorRegistry) Get(provider string) (Connector, error) {
 	r.RLock()
 	defer r.RUnlock()
+
 	c, ok := r.connectors[provider]
 	if !ok {
 		return nil, fmt.Errorf("cannot find connector %q", provider)
 	}
+
 	return c, nil
 }
 

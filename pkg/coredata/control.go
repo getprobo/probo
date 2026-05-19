@@ -66,6 +66,7 @@ func (c *Control) AuthorizationAttributes(ctx context.Context, conn pg.Querier) 
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrResourceNotFound
 		}
+
 		return nil, fmt.Errorf("cannot query control authorization attributes: %w", err)
 	}
 
@@ -652,6 +653,7 @@ LIMIT 1;
 
 	args := pgx.StrictNamedArgs{"framework_id": frameworkID, "section_title": sectionTitle}
 	maps.Copy(args, scope.SQLArguments())
+
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
 		return fmt.Errorf("cannot query controls: %w", err)
@@ -701,6 +703,7 @@ LIMIT 1;
 
 	args := pgx.StrictNamedArgs{"control_id": controlID}
 	maps.Copy(args, scope.SQLArguments())
+
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
 		return fmt.Errorf("cannot query controls: %w", err)
@@ -816,8 +819,8 @@ VALUES (
 		"created_at":                    c.CreatedAt,
 		"updated_at":                    c.UpdatedAt,
 	}
-	_, err := conn.Exec(ctx, q, args)
 
+	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) {
@@ -825,6 +828,7 @@ VALUES (
 				return ErrResourceAlreadyExists
 			}
 		}
+
 		return fmt.Errorf("cannot insert control: %w", err)
 	}
 
@@ -850,6 +854,7 @@ WHERE
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	_, err := conn.Exec(ctx, q, args)
+
 	return err
 }
 
@@ -893,6 +898,7 @@ WHERE %s
 				return ErrResourceAlreadyExists
 			}
 		}
+
 		return fmt.Errorf("cannot update control: %w", err)
 	}
 

@@ -56,6 +56,7 @@ func (r *mutationResolver) CreateOrganization(ctx context.Context, input types.C
 			Size:        input.HorizontalLogoFile.Size,
 		}
 	}
+
 	organization, profile, err := r.iam.OrganizationService.CreateOrganization(
 		ctx,
 		identity.ID,
@@ -71,6 +72,7 @@ func (r *mutationResolver) CreateOrganization(ctx context.Context, input types.C
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot create organization", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -267,6 +269,7 @@ func (r *organizationResolver) ScimConfiguration(ctx context.Context, obj *types
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get scim configuration", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -307,16 +310,20 @@ func (r *organizationResolver) AuditLogEntries(ctx context.Context, obj *types.O
 	c := cursor.NewCursor(first, after, last, before, pageOrderBy)
 
 	coredataFilter := coredata.NewAuditLogEntryFilter()
+
 	if filter != nil {
 		if filter.Action != nil {
 			coredataFilter.WithAction(*filter.Action)
 		}
+
 		if filter.ActorID != nil {
 			coredataFilter.WithActorID(*filter.ActorID)
 		}
+
 		if filter.ResourceType != nil {
 			coredataFilter.WithResourceType(*filter.ResourceType)
 		}
+
 		if filter.ResourceID != nil {
 			coredataFilter.WithResourceID(*filter.ResourceID)
 		}
@@ -347,6 +354,7 @@ func (r *organizationResolver) Viewer(ctx context.Context, obj *types.Organizati
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get profile", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 

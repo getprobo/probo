@@ -143,10 +143,12 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 			if cmd.Flags().Changed("active") {
 				input["active"] = flagActive
 			}
+
 			if cmd.Flags().Changed("search-engine-indexing") {
 				if err := cmdutil.ValidateEnum("search-engine-indexing", flagSearchEngineIndexing, []string{"INDEXABLE", "NOT_INDEXABLE"}); err != nil {
 					return err
 				}
+
 				input["searchEngineIndexing"] = flagSearchEngineIndexing
 			}
 

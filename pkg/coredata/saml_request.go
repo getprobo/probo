@@ -79,7 +79,9 @@ WHERE organization_id = @organization_id AND expires_at > @now
 
 	requestIDs, err := pgx.CollectRows(rows, func(row pgx.CollectableRow) (string, error) {
 		var id string
+
 		err := row.Scan(&id)
+
 		return id, err
 	})
 	if err != nil {

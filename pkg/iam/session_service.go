@@ -57,6 +57,7 @@ func (s SessionService) GetSession(ctx context.Context, sessionID gid.GID) (*cor
 			if now.After(session.ExpiredAt) {
 				session.ExpireReason = new(coredata.ExpireReasonIdleTimeout)
 				session.ExpiredAt = now
+
 				session.UpdatedAt = now
 				if err := session.Update(ctx, tx); err != nil {
 					return fmt.Errorf("cannot update session: %w", err)
@@ -68,7 +69,6 @@ func (s SessionService) GetSession(ctx context.Context, sessionID gid.GID) (*cor
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -95,6 +95,7 @@ func (s SessionService) CloseSession(ctx context.Context, sessionID gid.GID) err
 
 			session.ExpireReason = new(coredata.ExpireReasonClosed)
 			session.ExpiredAt = time.Now()
+
 			session.UpdatedAt = time.Now()
 			if err := session.Update(ctx, conn); err != nil {
 				if err == coredata.ErrResourceNotFound {
@@ -116,6 +117,7 @@ func (s SessionService) RevokeSession(ctx context.Context, identityID gid.GID, s
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			identity := &coredata.Identity{}
+
 			err := identity.LoadByID(ctx, tx, identityID)
 			if err != nil {
 				if err == coredata.ErrResourceNotFound {
@@ -126,6 +128,7 @@ func (s SessionService) RevokeSession(ctx context.Context, identityID gid.GID, s
 			}
 
 			session := &coredata.Session{}
+
 			err = session.LoadByID(ctx, tx, sessionID)
 			if err != nil {
 				if err == coredata.ErrResourceNotFound {
@@ -146,6 +149,7 @@ func (s SessionService) RevokeSession(ctx context.Context, identityID gid.GID, s
 
 			session.ExpireReason = new(coredata.ExpireReasonRevoked)
 			session.ExpiredAt = now
+
 			session.UpdatedAt = now
 			if err := session.Update(ctx, tx); err != nil {
 				if err == coredata.ErrResourceNotFound {
@@ -156,7 +160,6 @@ func (s SessionService) RevokeSession(ctx context.Context, identityID gid.GID, s
 			}
 
 			return nil
-
 		},
 	)
 }
@@ -168,6 +171,7 @@ func (s SessionService) RevokeAllSessions(ctx context.Context, currentSessionID 
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			session := coredata.Session{}
+
 			err := session.LoadByID(ctx, tx, currentSessionID)
 			if err != nil {
 				if err == coredata.ErrResourceNotFound {
@@ -178,6 +182,7 @@ func (s SessionService) RevokeAllSessions(ctx context.Context, currentSessionID 
 			}
 
 			sessions := coredata.Sessions{}
+
 			count, err = sessions.ExpireAllForIdentityExceptOneSession(ctx, tx, session.IdentityID, session.ID)
 			if err != nil {
 				return fmt.Errorf("cannot expire all sessions: %w", err)
@@ -195,6 +200,7 @@ func (s SessionService) UpdateSessionInfo(ctx context.Context, sessionID gid.GID
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			session := &coredata.Session{}
+
 			err := session.LoadByID(ctx, tx, sessionID)
 			if err != nil {
 				if err == coredata.ErrResourceNotFound {
@@ -226,6 +232,7 @@ func (s SessionService) UpdateSessionData(ctx context.Context, sessionID gid.GID
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			session := &coredata.Session{}
+
 			err := session.LoadByID(ctx, tx, sessionID)
 			if err != nil {
 				if err == coredata.ErrResourceNotFound {
@@ -258,6 +265,7 @@ func (s SessionService) GetActiveSessionForMembership(ctx context.Context, rootS
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			rootSession := &coredata.Session{}
+
 			err := rootSession.LoadByID(ctx, tx, rootSessionID)
 			if err != nil {
 				if err == coredata.ErrResourceNotFound {
@@ -276,6 +284,7 @@ func (s SessionService) GetActiveSessionForMembership(ctx context.Context, rootS
 			}
 
 			membership := &coredata.Membership{}
+
 			err = membership.LoadByID(ctx, tx, coredata.NewScopeFromObjectID(membershipID), membershipID)
 			if err != nil {
 				return fmt.Errorf("cannot load membership: %w", err)
@@ -293,7 +302,6 @@ func (s SessionService) GetActiveSessionForMembership(ctx context.Context, rootS
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -324,6 +332,7 @@ func (s SessionService) OpenPasswordChildSessionForOrganization(
 				if err == coredata.ErrResourceNotFound {
 					return NewSessionNotFoundError(rootSessionID)
 				}
+
 				return fmt.Errorf("cannot load session: %w", err)
 			}
 
@@ -345,6 +354,7 @@ func (s SessionService) OpenPasswordChildSessionForOrganization(
 				if err == coredata.ErrResourceNotFound {
 					return NewProfileNotFoundError(gid.Nil)
 				}
+
 				return fmt.Errorf("cannot load profile: %w", err)
 			}
 
@@ -357,6 +367,7 @@ func (s SessionService) OpenPasswordChildSessionForOrganization(
 				if err == coredata.ErrResourceNotFound {
 					return NewMembershipNotFoundError(organizationID)
 				}
+
 				return fmt.Errorf("cannot load membership: %w", err)
 			}
 
@@ -426,6 +437,7 @@ func (s SessionService) OpenSAMLChildSessionForOrganization(
 				if err == coredata.ErrResourceNotFound {
 					return NewSessionNotFoundError(rootSessionID)
 				}
+
 				return fmt.Errorf("cannot load session: %w", err)
 			}
 
@@ -447,6 +459,7 @@ func (s SessionService) OpenSAMLChildSessionForOrganization(
 				if err == coredata.ErrResourceNotFound {
 					return NewProfileNotFoundError(gid.Nil)
 				}
+
 				return fmt.Errorf("cannot load profile: %w", err)
 			}
 
@@ -459,6 +472,7 @@ func (s SessionService) OpenSAMLChildSessionForOrganization(
 				if err == coredata.ErrResourceNotFound {
 					return NewMembershipNotFoundError(organizationID)
 				}
+
 				return fmt.Errorf("cannot load membership: %w", err)
 			}
 
@@ -514,6 +528,7 @@ func (s SessionService) AssumeOrganizationSession(
 				if err == coredata.ErrResourceNotFound {
 					return NewSessionNotFoundError(sessionID)
 				}
+
 				return fmt.Errorf("cannot load session: %w", err)
 			}
 
@@ -533,6 +548,7 @@ func (s SessionService) AssumeOrganizationSession(
 				if err == coredata.ErrResourceNotFound {
 					return NewProfileNotFoundError(gid.Nil)
 				}
+
 				return fmt.Errorf("cannot load profile: %w", err)
 			}
 
@@ -544,10 +560,12 @@ func (s SessionService) AssumeOrganizationSession(
 				if err == coredata.ErrResourceNotFound {
 					return NewMembershipNotFoundError(organizationID)
 				}
+
 				return fmt.Errorf("cannot load membership: %w", err)
 			}
 
 			samlConfig := &coredata.SAMLConfiguration{}
+
 			err := samlConfig.LoadByOrganizationIDAndEmailDomain(
 				ctx,
 				tx,
@@ -611,7 +629,6 @@ func (s SessionService) AssumeOrganizationSession(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, nil, err
 	}

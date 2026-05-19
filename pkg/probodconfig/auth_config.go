@@ -68,6 +68,7 @@ func (c AuthConfig) GetPepperBytes() ([]byte, error) {
 		if len(decoded) < 32 {
 			return nil, fmt.Errorf("decoded pepper must be at least 32 bytes long")
 		}
+
 		return decoded, nil
 	}
 
@@ -87,6 +88,7 @@ func (c AuthConfig) GetCookieSecretBytes() ([]byte, error) {
 		if len(decoded) < 32 {
 			return nil, fmt.Errorf("decoded cookie secret must be at least 32 bytes long")
 		}
+
 		return decoded, nil
 	}
 

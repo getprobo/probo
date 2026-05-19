@@ -60,8 +60,10 @@ func (s *mockStream) Next() bool {
 	if s.idx >= len(s.events) {
 		return false
 	}
+
 	s.current = s.events[s.idx]
 	s.idx++
+
 	return true
 }
 
@@ -78,6 +80,7 @@ func newTestClient(provider llm.Provider) (*llm.Client, *tracetest.SpanRecorder)
 		"test",
 		llm.WithTracerProvider(tp),
 	)
+
 	return client, recorder
 }
 
@@ -86,10 +89,12 @@ func spanAttrMap(recorder *tracetest.SpanRecorder) map[string]any {
 	if len(spans) == 0 {
 		return nil
 	}
+
 	m := make(map[string]any)
 	for _, a := range spans[0].Attributes() {
 		m[string(a.Key)] = a.Value.AsInterface()
 	}
+
 	return m
 }
 
@@ -179,6 +184,7 @@ func TestErrors(t *testing.T) {
 
 		t.Run("with retry after", func(t *testing.T) {
 			t.Parallel()
+
 			e := &llm.ErrRateLimit{RetryAfter: 30 * time.Second, Err: inner}
 			assert.Contains(t, e.Error(), "retry after 30s")
 			assert.Contains(t, e.Error(), "upstream")
@@ -187,6 +193,7 @@ func TestErrors(t *testing.T) {
 
 		t.Run("without retry after", func(t *testing.T) {
 			t.Parallel()
+
 			e := &llm.ErrRateLimit{Err: inner}
 			assert.Contains(t, e.Error(), "rate limited")
 			assert.NotContains(t, e.Error(), "retry after")
@@ -195,7 +202,9 @@ func TestErrors(t *testing.T) {
 
 		t.Run("errors.As", func(t *testing.T) {
 			t.Parallel()
+
 			var target *llm.ErrRateLimit
+
 			e := &llm.ErrRateLimit{RetryAfter: 5 * time.Second, Err: inner}
 			require.ErrorAs(t, e, &target)
 			assert.Equal(t, 5*time.Second, target.RetryAfter)
@@ -207,6 +216,7 @@ func TestErrors(t *testing.T) {
 
 		t.Run("with max tokens", func(t *testing.T) {
 			t.Parallel()
+
 			e := &llm.ErrContextLength{MaxTokens: 4096, Err: inner}
 			assert.Contains(t, e.Error(), "4096")
 			assert.ErrorIs(t, e, inner)
@@ -214,6 +224,7 @@ func TestErrors(t *testing.T) {
 
 		t.Run("without max tokens", func(t *testing.T) {
 			t.Parallel()
+
 			e := &llm.ErrContextLength{Err: inner}
 			assert.Contains(t, e.Error(), "context length exceeded")
 			assert.NotContains(t, e.Error(), "max")
@@ -223,6 +234,7 @@ func TestErrors(t *testing.T) {
 
 	t.Run("ErrContentFilter", func(t *testing.T) {
 		t.Parallel()
+
 		e := &llm.ErrContentFilter{Err: inner}
 		assert.Contains(t, e.Error(), "content filtered")
 		assert.ErrorIs(t, e, inner)
@@ -230,6 +242,7 @@ func TestErrors(t *testing.T) {
 
 	t.Run("ErrAuthentication", func(t *testing.T) {
 		t.Parallel()
+
 		e := &llm.ErrAuthentication{Err: inner}
 		assert.Contains(t, e.Error(), "authentication failed")
 		assert.ErrorIs(t, e, inner)
@@ -374,12 +387,14 @@ func TestChatCompletionStream(t *testing.T) {
 		require.NoError(t, err)
 
 		var collected []string
+
 		for stream.Next() {
 			e := stream.Event()
 			if e.Delta.Content != "" {
 				collected = append(collected, e.Delta.Content)
 			}
 		}
+
 		require.NoError(t, stream.Err())
 		require.NoError(t, stream.Close())
 
@@ -428,6 +443,7 @@ func TestChatCompletionStream(t *testing.T) {
 
 		for stream.Next() {
 		}
+
 		assert.ErrorContains(t, stream.Err(), "connection reset")
 		_ = stream.Close()
 
@@ -511,6 +527,7 @@ func TestChatCompletionStream(t *testing.T) {
 
 		for stream.Next() {
 		}
+
 		require.NoError(t, stream.Err())
 		require.NoError(t, stream.Close())
 
@@ -521,6 +538,7 @@ func TestChatCompletionStream(t *testing.T) {
 		for _, a := range spans[0].Attributes() {
 			attrs[string(a.Key)] = a.Value.AsInterface()
 		}
+
 		assert.Equal(t, int64(100), attrs["gen_ai.usage.input_tokens"])
 		assert.Equal(t, int64(50), attrs["gen_ai.usage.output_tokens"])
 		assert.Equal(t, []string{"length"}, attrs["gen_ai.response.finish_reasons"])
@@ -564,6 +582,7 @@ func TestStreamAccumulator(t *testing.T) {
 		acc := llm.NewStreamAccumulator(&mockStream{events: events})
 		for acc.Next() {
 		}
+
 		require.NoError(t, acc.Err())
 
 		resp := acc.Response()
@@ -614,6 +633,7 @@ func TestStreamAccumulator(t *testing.T) {
 		acc := llm.NewStreamAccumulator(&mockStream{events: events})
 		for acc.Next() {
 		}
+
 		require.NoError(t, acc.Err())
 
 		resp := acc.Response()
@@ -642,6 +662,7 @@ func TestStreamAccumulator(t *testing.T) {
 		acc := llm.NewStreamAccumulator(&mockStream{events: events})
 		for acc.Next() {
 		}
+
 		require.NoError(t, acc.Err())
 
 		resp := acc.Response()
@@ -660,7 +681,9 @@ func TestStreamAccumulator(t *testing.T) {
 		}
 
 		acc := llm.NewStreamAccumulator(&mockStream{events: events})
+
 		var seen []string
+
 		for acc.Next() {
 			e := acc.Event()
 			if e.Delta.Content != "" {

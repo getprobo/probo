@@ -211,6 +211,7 @@ func (a *StreamAccumulator) Response() *ChatCompletionResponse {
 			Signature: a.thinkingSignature,
 		})
 	}
+
 	parts = append(parts, TextPart{Text: a.content.String()})
 
 	return &ChatCompletionResponse{
@@ -232,6 +233,7 @@ func (a *StreamAccumulator) accumulate(event ChatCompletionStreamEvent) {
 
 	a.content.WriteString(event.Delta.Content)
 	a.thinking.WriteString(event.Delta.Thinking)
+
 	if event.Delta.ThinkingSignature != "" {
 		a.thinkingSignature = event.Delta.ThinkingSignature
 	}
@@ -246,15 +248,18 @@ func (a *StreamAccumulator) accumulate(event ChatCompletionStreamEvent) {
 		if tcd.ID != "" {
 			tc.ID = tcd.ID
 		}
+
 		if tcd.Name != "" {
 			tc.Function.Name = tcd.Name
 		}
+
 		tc.Function.Arguments += tcd.Arguments
 	}
 
 	if event.Usage != nil {
 		a.usage = *event.Usage
 	}
+
 	if event.FinishReason != nil {
 		a.finishReason = *event.FinishReason
 	}

@@ -56,6 +56,7 @@ func (t TrustCenterReference) CursorKey(orderBy TrustCenterReferenceOrderField) 
 	case TrustCenterReferenceOrderFieldUpdatedAt:
 		return page.NewCursorKey(t.ID, t.UpdatedAt)
 	}
+
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
@@ -67,6 +68,7 @@ func (t *TrustCenterReference) AuthorizationAttributes(ctx context.Context, conn
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrResourceNotFound
 		}
+
 		return nil, fmt.Errorf("cannot query trust center reference authorization attributes: %w", err)
 	}
 
@@ -175,6 +177,7 @@ RETURNING rank;
 				return ErrResourceAlreadyExists
 			}
 		}
+
 		return fmt.Errorf("cannot insert trust center reference: %w", err)
 	}
 
@@ -369,6 +372,7 @@ WHERE
 	maps.Copy(args, scope.SQLArguments())
 
 	var count int
+
 	err := conn.QueryRow(ctx, q, args).Scan(&count)
 	if err != nil {
 		return 0, fmt.Errorf("cannot count trust center references: %w", err)

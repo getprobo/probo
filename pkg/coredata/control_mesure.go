@@ -69,6 +69,7 @@ ON CONFLICT (control_id, measure_id) DO NOTHING;
 		"created_at":      cm.CreatedAt,
 	}
 	_, err := conn.Exec(ctx, q, args)
+
 	return err
 }
 
@@ -97,6 +98,7 @@ WHERE
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	_, err := conn.Exec(ctx, q, args)
+
 	return err
 }
 
@@ -169,5 +171,6 @@ WHERE
 	}
 
 	*cwrs = controlsWithRisk
+
 	return nil
 }

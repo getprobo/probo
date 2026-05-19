@@ -22,6 +22,7 @@ func NewTransferImpactAssessment(t *coredata.TransferImpactAssessment) *Transfer
 	if t == nil {
 		return nil
 	}
+
 	return &TransferImpactAssessment{
 		ID:                    t.ID,
 		OrganizationID:        t.OrganizationID,
@@ -41,11 +42,14 @@ func NewListTransferImpactAssessmentsOutput(pg *page.Page[*coredata.TransferImpa
 	for _, v := range pg.Data {
 		items = append(items, NewTransferImpactAssessment(v))
 	}
+
 	var nextCursor *page.CursorKey
+
 	if len(pg.Data) > 0 {
 		cursorKey := pg.Data[len(pg.Data)-1].CursorKey(pg.Cursor.OrderBy.Field)
 		nextCursor = &cursorKey
 	}
+
 	return ListTransferImpactAssessmentsOutput{
 		NextCursor:                nextCursor,
 		TransferImpactAssessments: items,

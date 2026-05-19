@@ -311,6 +311,7 @@ func (s TaskService) Update(
 					if err := assignee.LoadByID(ctx, conn, s.svc.scope, **req.AssignedToID); err != nil {
 						return fmt.Errorf("cannot load assignee profile: %w", err)
 					}
+
 					task.AssignedToID = *req.AssignedToID
 				}
 			}
@@ -323,6 +324,7 @@ func (s TaskService) Update(
 					if err := measure.LoadByID(ctx, conn, s.svc.scope, **req.MeasureID); err != nil {
 						return fmt.Errorf("cannot load measure: %w", err)
 					}
+
 					task.MeasureID = *req.MeasureID
 				}
 			}
@@ -393,6 +395,7 @@ func (s TaskService) CountForOrganizationID(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			tasks := coredata.Tasks{}
+
 			count, err = tasks.CountByOrganizationID(ctx, conn, s.svc.scope, organizationID)
 			if err != nil {
 				return fmt.Errorf("cannot count tasks: %w", err)
@@ -438,6 +441,7 @@ func (s TaskService) CountForMeasureID(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			tasks := coredata.Tasks{}
+
 			count, err = tasks.CountByMeasureID(ctx, conn, s.svc.scope, measureID)
 			if err != nil {
 				return fmt.Errorf("cannot count tasks: %w", err)

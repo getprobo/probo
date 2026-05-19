@@ -33,12 +33,14 @@ func probeConnection(ctx context.Context, httpClient *http.Client, probeURL stri
 	if err != nil {
 		return fmt.Errorf("cannot create probe request: %w", err)
 	}
+
 	req.Header.Set("Accept", "application/json")
 
 	resp, err := httpClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("probe request failed: %w", err)
 	}
+
 	defer func() {
 		_, _ = io.Copy(io.Discard, resp.Body)
 		_ = resp.Body.Close()

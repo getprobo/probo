@@ -124,6 +124,7 @@ func (d *HerokuDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error
 		if nextRange == "" {
 			return records, nil
 		}
+
 		rangeHeader = nextRange
 	}
 
@@ -135,7 +136,9 @@ func (d *HerokuDriver) queryMembers(ctx context.Context, endpoint, rangeHeader s
 	if err != nil {
 		return nil, "", fmt.Errorf("cannot create heroku members request: %w", err)
 	}
+
 	req.Header.Set("Accept", "application/vnd.heroku+json; version=3")
+
 	if rangeHeader != "" {
 		req.Header.Set("Range", rangeHeader)
 	}
@@ -144,6 +147,7 @@ func (d *HerokuDriver) queryMembers(ctx context.Context, endpoint, rangeHeader s
 	if err != nil {
 		return nil, "", fmt.Errorf("cannot execute heroku members request: %w", err)
 	}
+
 	defer func() { _ = httpResp.Body.Close() }()
 
 	// Heroku returns 206 Partial Content for ranged responses with more

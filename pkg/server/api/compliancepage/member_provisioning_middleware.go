@@ -51,6 +51,7 @@ func NewMemberProvisioningMiddleware(trustSvc *trust.Service, logger *log.Logger
 							},
 						},
 					)
+
 					return
 				}
 

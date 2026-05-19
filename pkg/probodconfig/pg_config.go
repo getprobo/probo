@@ -92,14 +92,17 @@ func (cfg PgConfig) Options(options ...pg.Option) []pg.Option {
 
 	if cfg.CACertBundle != "" {
 		var certs []*x509.Certificate
+
 		pemData := []byte(cfg.CACertBundle)
 
 		for len(pemData) > 0 {
 			var block *pem.Block
+
 			block, pemData = pem.Decode(pemData)
 			if block == nil {
 				break
 			}
+
 			if block.Type != "CERTIFICATE" {
 				continue
 			}

@@ -98,6 +98,7 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 					input["description"] = flagDescription
 				}
 			}
+
 			if cmd.Flags().Changed("source") {
 				if flagSource == "" {
 					input["source"] = nil
@@ -105,6 +106,7 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 					input["source"] = flagSource
 				}
 			}
+
 			if cmd.Flags().Changed("identified-on") {
 				if flagIdentifiedOn == "" {
 					input["identifiedOn"] = nil
@@ -112,6 +114,7 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 					input["identifiedOn"] = flagIdentifiedOn
 				}
 			}
+
 			if cmd.Flags().Changed("root-cause") {
 				if flagRootCause == "" {
 					input["rootCause"] = nil
@@ -119,6 +122,7 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 					input["rootCause"] = flagRootCause
 				}
 			}
+
 			if cmd.Flags().Changed("corrective-action") {
 				if flagCorrectiveAction == "" {
 					input["correctiveAction"] = nil
@@ -126,9 +130,11 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 					input["correctiveAction"] = flagCorrectiveAction
 				}
 			}
+
 			if cmd.Flags().Changed("owner-id") {
 				input["ownerId"] = flagOwnerID
 			}
+
 			if cmd.Flags().Changed("due-date") {
 				if flagDueDate == "" {
 					input["dueDate"] = nil
@@ -136,18 +142,23 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 					input["dueDate"] = flagDueDate
 				}
 			}
+
 			if cmd.Flags().Changed("status") {
 				if err := cmdutil.ValidateEnum("status", flagStatus, []string{"OPEN", "IN_PROGRESS", "CLOSED", "RISK_ACCEPTED", "MITIGATED", "FALSE_POSITIVE"}); err != nil {
 					return err
 				}
+
 				input["status"] = flagStatus
 			}
+
 			if cmd.Flags().Changed("priority") {
 				if err := cmdutil.ValidateEnum("priority", flagPriority, []string{"LOW", "MEDIUM", "HIGH"}); err != nil {
 					return err
 				}
+
 				input["priority"] = flagPriority
 			}
+
 			if cmd.Flags().Changed("risk-id") {
 				if flagRiskID == "" {
 					input["riskId"] = nil
@@ -155,6 +166,7 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 					input["riskId"] = flagRiskID
 				}
 			}
+
 			if cmd.Flags().Changed("effectiveness-check") {
 				if flagEffectivenessChk == "" {
 					input["effectivenessCheck"] = nil

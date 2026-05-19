@@ -325,6 +325,7 @@ func (s *Service) ExportJob(ctx context.Context) error {
 		if err := s.commitFailedExport(ctx, exportJob, unknownTypeErr); err != nil {
 			return fmt.Errorf("unknown export job type %q, and cannot commit failed export: %w", exportJob.Type, err)
 		}
+
 		return unknownTypeErr
 	}
 
@@ -338,8 +339,10 @@ func (s *Service) ExportJob(ctx context.Context) error {
 				err,
 			)
 		}
+
 		return fmt.Errorf("cannot build and upload %s export: %w", exportJob.Type, buildErr)
 	}
+
 	exportJob = updatedExportJob
 
 	if emailErr := exportService.SendExportEmail(ctx, *exportJob.FileID, exportJob.RecipientName, exportJob.RecipientEmail); emailErr != nil {
@@ -350,6 +353,7 @@ func (s *Service) ExportJob(ctx context.Context) error {
 				err,
 			)
 		}
+
 		return fmt.Errorf("cannot send completion email: %w", emailErr)
 	}
 
@@ -362,6 +366,7 @@ func (s *Service) ExportJob(ctx context.Context) error {
 
 func (s *Service) lockExportJob(ctx context.Context) (*coredata.ExportJob, error) {
 	exportJob := &coredata.ExportJob{}
+
 	var scope coredata.Scoper
 
 	err := s.pg.WithTx(
@@ -374,6 +379,7 @@ func (s *Service) lockExportJob(ctx context.Context) (*coredata.ExportJob, error
 			scope = coredata.NewScope(exportJob.ID.TenantID())
 
 			exportJob.Status = coredata.ExportJobStatusProcessing
+
 			exportJob.StartedAt = new(time.Now())
 			if err := exportJob.Update(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot update %s export job: %w", exportJob.Type, err)

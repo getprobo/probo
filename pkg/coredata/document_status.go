@@ -31,6 +31,7 @@ func (s DocumentStatus) IsValid() bool {
 	case DocumentStatusActive, DocumentStatusArchived:
 		return true
 	}
+
 	return false
 }
 
@@ -41,6 +42,7 @@ func (s *DocumentStatus) UnmarshalText(text []byte) error {
 	if !s.IsValid() {
 		return fmt.Errorf("%s is not a valid DocumentStatus", string(text))
 	}
+
 	return nil
 }
 
@@ -53,6 +55,7 @@ func (s *DocumentStatus) Scan(value any) error {
 	if !ok {
 		return fmt.Errorf("invalid scan source for DocumentStatus, expected string got %T", value)
 	}
+
 	return s.UnmarshalText([]byte(val))
 }
 

@@ -28,6 +28,7 @@ type userAgentTransport struct {
 func (t *userAgentTransport) RoundTrip(r *http.Request) (*http.Response, error) {
 	r2 := r.Clone(r.Context())
 	r2.Header.Set("User-Agent", "Probo-Agent/1.0")
+
 	return t.next.RoundTrip(r2)
 }
 
@@ -35,5 +36,6 @@ func newHTTPClient() *http.Client {
 	client := httpclient.DefaultPooledClient()
 	client.Timeout = 15 * time.Second
 	client.Transport = &userAgentTransport{next: client.Transport}
+
 	return client
 }

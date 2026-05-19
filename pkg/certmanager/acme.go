@@ -66,6 +66,7 @@ func NewACMEService(
 ) (*ACMEService, error) {
 	if accountKey == nil {
 		var err error
+
 		accountKey, err = keys.Generate(keyType)
 		if err != nil {
 			return nil, fmt.Errorf("cannot generate account key: %w", err)
@@ -130,6 +131,7 @@ func (s *ACMEService) GetHTTPChallenge(ctx context.Context, domain string) (*HTT
 	}
 
 	var challenge *acme.Challenge
+
 	for _, auth := range order.AuthzURLs {
 		authz, err := s.client.GetAuthorization(ctx, auth)
 		if err != nil {
@@ -170,7 +172,6 @@ func (s *ACMEService) CompleteHTTPChallenge(
 	ctx context.Context,
 	challenge0 *HTTPChallenge,
 ) (*Certificate, error) {
-
 	challenge1 := &acme.Challenge{
 		URI:   challenge0.URL,
 		Token: challenge0.Token,
@@ -206,6 +207,7 @@ func (s *ACMEService) CompleteHTTPChallenge(
 	}
 
 	certPEM := pem.EncodeCertificate(der[0])
+
 	keyPEM, err := pem.EncodePrivateKey(certKey)
 	if err != nil {
 		return nil, fmt.Errorf("cannot encode key: %w", err)
@@ -215,6 +217,7 @@ func (s *ACMEService) CompleteHTTPChallenge(
 	if len(der) > 1 {
 		chainDER = der[1:]
 	}
+
 	chainPEM := pem.EncodeCertificateChain(chainDER)
 
 	return &Certificate{

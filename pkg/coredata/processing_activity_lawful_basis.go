@@ -47,6 +47,7 @@ func (p ProcessingActivityLawfulBasis) String() string {
 
 func (p *ProcessingActivityLawfulBasis) Scan(value any) error {
 	var s string
+
 	switch v := value.(type) {
 	case string:
 		s = v
@@ -72,6 +73,7 @@ func (p *ProcessingActivityLawfulBasis) Scan(value any) error {
 	default:
 		return fmt.Errorf("invalid ProcessingActivityLawfulBasis value: %q", s)
 	}
+
 	return nil
 }
 

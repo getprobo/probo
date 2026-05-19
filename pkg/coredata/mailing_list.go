@@ -43,6 +43,7 @@ func (ml *MailingList) AuthorizationAttributes(ctx context.Context, conn pg.Quer
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrResourceNotFound
 		}
+
 		return nil, fmt.Errorf("cannot query mailing list authorization attributes: %w", err)
 	}
 
@@ -85,6 +86,7 @@ LIMIT 1;
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
 		}
+
 		return fmt.Errorf("cannot collect mailing list: %w", err)
 	}
 

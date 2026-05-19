@@ -96,6 +96,7 @@ func (req ResetPasswordRequest) Validate() error {
 	v := validator.New()
 	v.Check(req.Token, "token", validator.NotEmpty())
 	v.Check(req.Password, "password", PasswordValidator())
+
 	return v.Error()
 }
 
@@ -107,6 +108,7 @@ func (req ChangePasswordRequest) Validate() error {
 	v.Check(req.CurrentPassword, "currentPassword", validator.NotEmpty(), validator.MaxLen(255))
 
 	v.Check(req.NewPassword, "newPassword", PasswordValidator())
+
 	return v.Error()
 }
 
@@ -202,6 +204,7 @@ func (s *AuthService) ActivateAccount(
 
 			// Expire other pending invitations for user
 			invitations := &coredata.Invitations{}
+
 			onlyPending := coredata.NewInvitationFilter([]coredata.InvitationStatus{coredata.InvitationStatusPending})
 			if err := invitations.ExpireByUserID(
 				ctx,
@@ -258,6 +261,7 @@ func (s AuthService) ResetPassword(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			identity := &coredata.Identity{}
+
 			err := identity.LoadByEmail(ctx, tx, payload.Data.Email)
 			if err != nil {
 				if err == coredata.ErrResourceNotFound {
@@ -433,6 +437,7 @@ func (s AuthService) OpenSessionWithSAML(ctx context.Context, identityID gid.GID
 		ctx,
 		func(ctx context.Context, conn pg.Tx) (err error) {
 			session = coredata.NewRootSession(identityID, coredata.AuthMethodSAML, s.sessionDuration)
+
 			err = session.Insert(ctx, conn)
 			if err != nil {
 				return fmt.Errorf("cannot insert session: %w", err)
@@ -441,7 +446,6 @@ func (s AuthService) OpenSessionWithSAML(ctx context.Context, identityID gid.GID
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -456,6 +460,7 @@ func (s AuthService) OpenSessionWithOIDC(ctx context.Context, identityID gid.GID
 		ctx,
 		func(ctx context.Context, conn pg.Tx) (err error) {
 			session = coredata.NewRootSession(identityID, authMethod, s.sessionDuration)
+
 			err = session.Insert(ctx, conn)
 			if err != nil {
 				return fmt.Errorf("cannot insert session: %w", err)
@@ -464,7 +469,6 @@ func (s AuthService) OpenSessionWithOIDC(ctx context.Context, identityID gid.GID
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -528,6 +532,7 @@ func (s AuthService) OpenSessionWithPassword(ctx context.Context, identityID gid
 		ctx,
 		func(ctx context.Context, conn pg.Tx) (err error) {
 			session = coredata.NewRootSession(identityID, coredata.AuthMethodPassword, s.sessionDuration)
+
 			err = session.Insert(ctx, conn)
 			if err != nil {
 				return fmt.Errorf("cannot insert session: %w", err)
@@ -536,7 +541,6 @@ func (s AuthService) OpenSessionWithPassword(ctx context.Context, identityID gid
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -562,6 +566,7 @@ func (s AuthService) SendMagicLink(ctx context.Context, req *SendMagicLinkReques
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			hashedToken := HashToken(tokenString)
+
 			token := &coredata.Token{
 				ID:          gid.New(gid.NilTenant, coredata.TokenEntityType),
 				HashedValue: hashedToken,
@@ -590,8 +595,10 @@ func (s AuthService) SendMagicLink(ctx context.Context, req *SendMagicLinkReques
 			}
 
 			emailPresenterCfg := emails.DefaultPresenterConfig(s.bucket, s.baseURL)
+
 			if req.CompliancePageID != nil {
 				var err error
+
 				emailPresenterCfg, err = s.CompliancePageService.EmailPresenterConfig(ctx, *req.CompliancePageID)
 				if err != nil {
 					return fmt.Errorf("cannot get compliance page email presenter config: %w", err)
@@ -701,6 +708,7 @@ func (s AuthService) OpenSessionWithMagicLink(ctx context.Context, tokenString s
 			}
 
 			session = coredata.NewRootSession(identity.ID, coredata.AuthMethodMagicLink, s.sessionDuration)
+
 			err = session.Insert(ctx, tx)
 			if err != nil {
 				return fmt.Errorf("cannot insert session: %w", err)

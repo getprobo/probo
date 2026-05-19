@@ -51,6 +51,7 @@ func NewSlackConnection(c *coredata.Connector) *SlackConnection {
 	if settings.Channel != "" {
 		conn.Channel = &settings.Channel
 	}
+
 	if settings.ChannelID != "" {
 		conn.ChannelID = &settings.ChannelID
 	}

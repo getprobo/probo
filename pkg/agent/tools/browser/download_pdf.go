@@ -72,6 +72,7 @@ func DownloadPDFTool() agent.Tool {
 					ErrorDetail: fmt.Sprintf("cannot download PDF: %s", err),
 				}), nil
 			}
+
 			defer func() { _ = resp.Body.Close() }()
 
 			if resp.StatusCode != http.StatusOK {
@@ -95,6 +96,7 @@ func DownloadPDFTool() agent.Tool {
 					ErrorDetail: fmt.Sprintf("cannot create temp dir: %s", err),
 				}), nil
 			}
+
 			defer func() { _ = os.RemoveAll(tmpDir) }()
 
 			tmpFile := filepath.Join(tmpDir, "input.pdf")
@@ -106,6 +108,7 @@ func DownloadPDFTool() agent.Tool {
 
 			// Get page count.
 			conf := model.NewDefaultConfiguration()
+
 			pageCount, err := api.PageCountFile(tmpFile)
 			if err != nil {
 				return agent.ResultJSON(downloadPDFResult{
@@ -130,15 +133,18 @@ func DownloadPDFTool() agent.Tool {
 
 			// Read all extracted content files.
 			var sb strings.Builder
+
 			entries, _ := os.ReadDir(outDir)
 			for _, entry := range entries {
 				if entry.IsDir() {
 					continue
 				}
+
 				content, err := os.ReadFile(filepath.Join(outDir, entry.Name()))
 				if err != nil {
 					continue
 				}
+
 				sb.Write(content)
 				sb.WriteString("\n")
 			}

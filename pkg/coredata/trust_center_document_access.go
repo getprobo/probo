@@ -61,6 +61,7 @@ func (tcda *TrustCenterDocumentAccess) AuthorizationAttributes(ctx context.Conte
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrResourceNotFound
 		}
+
 		return nil, fmt.Errorf("cannot query trust center document access authorization attributes: %w", err)
 	}
 
@@ -107,6 +108,7 @@ LIMIT 1;
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
 		}
+
 		return fmt.Errorf("cannot collect trust center document access: %w", err)
 	}
 
@@ -280,6 +282,7 @@ INSERT INTO trust_center_document_accesses (
 				}
 			}
 		}
+
 		return fmt.Errorf("cannot insert trust center document access: %w", err)
 	}
 

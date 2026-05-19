@@ -90,12 +90,16 @@ func (p MembershipProfile) CursorKey(orderBy MembershipProfileOrderField) page.C
 func (p *MembershipProfile) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
 	q := `SELECT organization_id, identity_id FROM iam_membership_profiles WHERE id = $1 LIMIT 1;`
 
-	var organizationID gid.GID
-	var identityID gid.GID
+	var (
+		organizationID gid.GID
+		identityID     gid.GID
+	)
+
 	if err := conn.QueryRow(ctx, q, p.ID).Scan(&organizationID, &identityID); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrResourceNotFound
 		}
+
 		return nil, fmt.Errorf("cannot query profile authorization attributes: %w", err)
 	}
 
@@ -903,6 +907,7 @@ WHERE
 	maps.Copy(args, scope.SQLArguments())
 
 	var count int
+
 	err := conn.QueryRow(ctx, q, args).Scan(&count)
 	if err != nil {
 		return 0, fmt.Errorf("cannot query document version approver profiles count: %w", err)
@@ -1012,6 +1017,7 @@ WHERE
 	row := conn.QueryRow(ctx, q, args)
 
 	var count int
+
 	err := row.Scan(&count)
 	if err != nil {
 		return 0, fmt.Errorf("cannot collect count: %w", err)
@@ -1048,6 +1054,7 @@ WHERE
 	row := conn.QueryRow(ctx, q, args)
 
 	var count int
+
 	err := row.Scan(&count)
 	if err != nil {
 		return 0, fmt.Errorf("cannot collect count: %w", err)
@@ -1087,6 +1094,7 @@ WHERE
 	row := conn.QueryRow(ctx, q, args)
 
 	var count int
+
 	err := row.Scan(&count)
 	if err != nil {
 		return 0, fmt.Errorf("cannot collect count: %w", err)

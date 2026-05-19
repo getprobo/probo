@@ -35,8 +35,10 @@ func (m *mockProvider) ChatCompletion(_ context.Context, _ *llm.ChatCompletionRe
 	if m.calls >= len(m.responses) {
 		return nil, errors.New("no more mock responses")
 	}
+
 	resp := m.responses[m.calls]
 	m.calls++
+
 	return resp, nil
 }
 
@@ -56,6 +58,7 @@ func (s *mockChatStream) Next() bool {
 func (s *mockChatStream) Event() llm.ChatCompletionStreamEvent {
 	ev := s.events[s.pos]
 	s.pos++
+
 	return ev
 }
 
@@ -89,8 +92,10 @@ func (p *mockMultiStreamProvider) ChatCompletionStream(_ context.Context, _ *llm
 	if p.calls >= len(p.streams) {
 		return nil, errors.New("no more mock streams")
 	}
+
 	s := p.streams[p.calls]
 	p.calls++
+
 	return s, nil
 }
 
@@ -115,6 +120,7 @@ func (g *blockingGuardrail) Check(_ context.Context, messages []llm.Message) (*a
 			}
 		}
 	}
+
 	return nil, nil
 }
 
@@ -129,6 +135,7 @@ func (g *outputBlocker) Check(_ context.Context, message llm.Message) (*agent.Gu
 			Message:  "output blocked",
 		}, nil
 	}
+
 	return nil, nil
 }
 
@@ -192,6 +199,7 @@ func (s *testSession) Load(_ context.Context, sessionID string) ([]llm.Message, 
 	msgs := s.messages[sessionID]
 	cp := make([]llm.Message, len(msgs))
 	copy(cp, msgs)
+
 	return cp, nil
 }
 
@@ -199,6 +207,7 @@ func (s *testSession) Save(_ context.Context, sessionID string, messages []llm.M
 	cp := make([]llm.Message, len(messages))
 	copy(cp, messages)
 	s.messages[sessionID] = cp
+
 	return nil
 }
 
@@ -410,6 +419,7 @@ func TestRun(t *testing.T) {
 			}
 
 			type Params struct{}
+
 			noopTool := agent.FunctionTool[Params](
 				"noop",
 				"No-op",
@@ -432,6 +442,7 @@ func TestRun(t *testing.T) {
 			)
 
 			require.Error(t, err)
+
 			var maxTurnsErr *agent.MaxTurnsExceededError
 			require.ErrorAs(t, err, &maxTurnsErr)
 			assert.Equal(t, 2, maxTurnsErr.MaxTurns)
@@ -444,6 +455,7 @@ func TestRun(t *testing.T) {
 			t.Parallel()
 
 			type Params struct{}
+
 			makeTool := func(name string) agent.Tool {
 				tool := agent.FunctionTool[Params](
 					name,
@@ -452,6 +464,7 @@ func TestRun(t *testing.T) {
 						return agent.ToolResult{Content: "ok"}, nil
 					},
 				)
+
 				return tool
 			}
 
@@ -600,11 +613,13 @@ func TestRun(t *testing.T) {
 			assert.Equal(t, "Both done.", result.FinalMessage().Text())
 
 			var toolMsgs []llm.Message
+
 			for _, m := range result.Messages {
 				if m.Role == llm.RoleTool {
 					toolMsgs = append(toolMsgs, m)
 				}
 			}
+
 			require.Len(t, toolMsgs, 2)
 			assert.Equal(t, "tc_1", toolMsgs[0].ToolCallID)
 			assert.Equal(t, "result_1", toolMsgs[0].Text())
@@ -667,11 +682,13 @@ func TestRun(t *testing.T) {
 			assert.Equal(t, "Handled both.", result.FinalMessage().Text())
 
 			var toolMsgs []llm.Message
+
 			for _, m := range result.Messages {
 				if m.Role == llm.RoleTool {
 					toolMsgs = append(toolMsgs, m)
 				}
 			}
+
 			require.Len(t, toolMsgs, 2)
 			assert.Equal(t, "tc_ok", toolMsgs[0].ToolCallID)
 			assert.Equal(t, "success_result", toolMsgs[0].Text())
@@ -692,12 +709,14 @@ func TestRun(t *testing.T) {
 			var capturedTenantID string
 
 			type Params struct{}
+
 			tool := agent.FunctionTool[Params](
 				"check_tenant",
 				"Check current tenant",
 				func(ctx context.Context, _ Params) (agent.ToolResult, error) {
 					rc := agent.RunContextFrom[*RequestContext](ctx)
 					capturedTenantID = rc.TenantID
+
 					return agent.ToolResult{Content: "tenant: " + rc.TenantID}, nil
 				},
 			)
@@ -912,11 +931,13 @@ func TestRun_Handoff(t *testing.T) {
 						specialist,
 						agent.WithHandoffInputFilter(func(data agent.HandoffInputData) []llm.Message {
 							var filtered []llm.Message
+
 							for _, m := range data.NewItems {
 								if m.Role == llm.RoleUser {
 									filtered = append(filtered, m)
 								}
 							}
+
 							return filtered
 						}),
 					),
@@ -1017,6 +1038,7 @@ func TestRun_Guardrails(t *testing.T) {
 			)
 
 			require.Error(t, err)
+
 			var tripErr *agent.InputGuardrailTrippedError
 			require.ErrorAs(t, err, &tripErr)
 			assert.Equal(t, "blocker", tripErr.Guardrail)
@@ -1048,6 +1070,7 @@ func TestRun_Guardrails(t *testing.T) {
 			)
 
 			require.Error(t, err)
+
 			var tripErr *agent.OutputGuardrailTrippedError
 			require.ErrorAs(t, err, &tripErr)
 			assert.Equal(t, "output_blocker", tripErr.Guardrail)
@@ -1064,6 +1087,7 @@ func TestRun_Hooks(t *testing.T) {
 			t.Parallel()
 
 			type Params struct{}
+
 			noopTool := agent.FunctionTool[Params](
 				"noop",
 				"No-op",
@@ -1348,6 +1372,7 @@ func TestRun_ToolUseBehavior(t *testing.T) {
 			t.Parallel()
 
 			type Params struct{}
+
 			tool := agent.FunctionTool[Params](
 				"compute",
 				"Compute something",
@@ -1440,6 +1465,7 @@ func TestRun_ToolUseBehavior(t *testing.T) {
 			t.Parallel()
 
 			type Params struct{}
+
 			tool := agent.FunctionTool[Params](
 				"noop",
 				"No-op",
@@ -1482,6 +1508,7 @@ func TestRun_ToolUseBehavior(t *testing.T) {
 			t.Parallel()
 
 			type Params struct{}
+
 			tool := agent.FunctionTool[Params](
 				"compute",
 				"Compute something",
@@ -1594,6 +1621,7 @@ func TestRun_Approval(t *testing.T) {
 			)
 
 			require.Error(t, err)
+
 			var interrupted *agent.InterruptedError
 			require.ErrorAs(t, err, &interrupted)
 			assert.Len(t, interrupted.ToolCalls, 1)
@@ -2107,8 +2135,10 @@ func TestRunStreamed(t *testing.T) {
 				[]llm.Message{userMessage("Hi")},
 			)
 
-			var deltas []string
-			var gotComplete bool
+			var (
+				deltas      []string
+				gotComplete bool
+			)
 
 			for ev := range sr.Events {
 				switch ev.Type {
@@ -2134,6 +2164,7 @@ func TestRunStreamed(t *testing.T) {
 			t.Parallel()
 
 			type Params struct{}
+
 			tool := agent.FunctionTool[Params](
 				"noop",
 				"No-op",
@@ -2186,6 +2217,7 @@ func TestRunStreamed(t *testing.T) {
 			)
 
 			var gotToolStart, gotToolEnd, gotComplete bool
+
 			for ev := range sr.Events {
 				switch ev.Type {
 				case agent.StreamEventToolStart:
@@ -2238,6 +2270,7 @@ func TestRunStreamed(t *testing.T) {
 			)
 
 			var gotComplete, gotError bool
+
 			for ev := range sr.Events {
 				switch ev.Type {
 				case agent.StreamEventComplete:
@@ -2287,22 +2320,29 @@ func TestRunStreamed(t *testing.T) {
 			)
 
 			var collected []agent.StreamEvent
+
 			done := make(chan struct{})
+
 			go func() {
 				defer close(done)
+
 				for ev := range sr.Events {
 					collected = append(collected, ev)
 				}
 			}()
 
 			result, err := sr.Wait()
+
 			<-done
 
 			require.NoError(t, err)
 			assert.Equal(t, "Hello world!", result.FinalMessage().Text())
 
-			var deltaCount int
-			var gotAgentStart, gotAgentEnd, gotComplete bool
+			var (
+				deltaCount                              int
+				gotAgentStart, gotAgentEnd, gotComplete bool
+			)
+
 			for _, ev := range collected {
 				switch ev.Type {
 				case agent.StreamEventLLMDelta:
@@ -2359,6 +2399,7 @@ func TestClone(t *testing.T) {
 			t.Parallel()
 
 			type Params struct{}
+
 			tool1 := agent.FunctionTool[Params](
 				"t1",
 				"desc",
@@ -2474,6 +2515,7 @@ func TestGenerateSchema_EmbeddedStruct(t *testing.T) {
 		ID   string `json:"id" jsonschema:"unique identifier"`
 		Kind string `json:"kind"`
 	}
+
 	type Params struct {
 		Base
 		Name string `json:"name"`
@@ -2653,6 +2695,7 @@ func TestRun_UnknownToolCall(t *testing.T) {
 	}
 
 	type Params struct{}
+
 	tool := agent.FunctionTool[Params](
 		"real_tool",
 		"A real tool",
@@ -2746,6 +2789,7 @@ func TestClone_WithApprovalConfig(t *testing.T) {
 	)
 
 	require.Error(t, err)
+
 	var interrupted *agent.InterruptedError
 	require.ErrorAs(t, err, &interrupted)
 	assert.Len(t, interrupted.PendingApprovals, 1)
@@ -2771,6 +2815,7 @@ func TestRun_HandoffWithPreHandoffTools(t *testing.T) {
 			var executionOrder []string
 
 			type Params struct{}
+
 			tool1 := agent.FunctionTool[Params](
 				"prepare",
 				"Prepare data",
@@ -2830,6 +2875,7 @@ func TestRun_HandoffWithPreHandoffTools(t *testing.T) {
 			t.Parallel()
 
 			type Params struct{}
+
 			tool1 := agent.FunctionTool[Params](
 				"prepare",
 				"Prepare data",
@@ -2892,6 +2938,7 @@ func TestRun_HandoffWithPreHandoffTools(t *testing.T) {
 			assert.Equal(t, "specialist", result.LastAgent.Name())
 
 			var toolMsgs []llm.Message
+
 			for _, m := range result.Messages {
 				if m.Role == llm.RoleTool {
 					toolMsgs = append(toolMsgs, m)
@@ -2914,6 +2961,7 @@ func TestRun_HandoffWithPreHandoffTools(t *testing.T) {
 			t.Parallel()
 
 			type Params struct{}
+
 			failingTool := agent.FunctionTool[Params](
 				"prepare",
 				"Prepare data",

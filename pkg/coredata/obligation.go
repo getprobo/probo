@@ -71,6 +71,7 @@ func (o *Obligation) AuthorizationAttributes(ctx context.Context, conn pg.Querie
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrResourceNotFound
 		}
+
 		return nil, fmt.Errorf("cannot query obligation authorization attributes: %w", err)
 	}
 
@@ -151,6 +152,7 @@ WHERE
 	row := conn.QueryRow(ctx, q, args)
 
 	var count int
+
 	err := row.Scan(&count)
 	if err != nil {
 		return 0, fmt.Errorf("cannot count obligations: %w", err)
@@ -193,6 +195,7 @@ WHERE %s
 	row := conn.QueryRow(ctx, q, args)
 
 	var count int
+
 	err := row.Scan(&count)
 	if err != nil {
 		return 0, fmt.Errorf("cannot count obligations: %w", err)
@@ -361,6 +364,7 @@ WHERE %s
 	row := conn.QueryRow(ctx, q, args)
 
 	var count int
+
 	err := row.Scan(&count)
 	if err != nil {
 		return 0, fmt.Errorf("cannot count obligations: %w", err)
@@ -656,6 +660,7 @@ WHERE
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, nil
 	}
+
 	if err != nil {
 		return nil, fmt.Errorf("cannot get obligation list document ID: %w", err)
 	}

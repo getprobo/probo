@@ -36,6 +36,7 @@ func (ejs ExportJobStatus) String() string {
 
 func (ejs *ExportJobStatus) Scan(value any) error {
 	var s string
+
 	switch v := value.(type) {
 	case string:
 		s = v
@@ -57,6 +58,7 @@ func (ejs *ExportJobStatus) Scan(value any) error {
 	default:
 		return fmt.Errorf("invalid ExportJobStatus value: %q", s)
 	}
+
 	return nil
 }
 

@@ -52,6 +52,7 @@ func (c ComplianceFramework) CursorKey(orderBy ComplianceFrameworkOrderField) pa
 	case ComplianceFrameworkOrderFieldRank:
 		return page.NewCursorKey(c.ID, c.Rank)
 	}
+
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
@@ -63,6 +64,7 @@ func (c *ComplianceFramework) AuthorizationAttributes(ctx context.Context, conn 
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrResourceNotFound
 		}
+
 		return nil, fmt.Errorf("cannot query compliance framework authorization attributes: %w", err)
 	}
 
@@ -107,6 +109,7 @@ LIMIT 1;
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
 		}
+
 		return fmt.Errorf("cannot collect compliance framework: %w", err)
 	}
 
@@ -158,6 +161,7 @@ LIMIT 1;
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
 		}
+
 		return fmt.Errorf("cannot collect compliance framework: %w", err)
 	}
 
@@ -214,6 +218,7 @@ RETURNING rank;
 				return ErrResourceAlreadyExists
 			}
 		}
+
 		return fmt.Errorf("cannot insert compliance framework: %w", err)
 	}
 

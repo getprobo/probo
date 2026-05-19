@@ -57,6 +57,7 @@ func TestUser_UnmarshalJSON(t *testing.T) {
 			}`)
 
 			var user scimclient.User
+
 			err := json.Unmarshal(data, &user)
 
 			require.NoError(t, err)
@@ -96,6 +97,7 @@ func TestUser_UnmarshalJSON(t *testing.T) {
 			}`)
 
 			var user scimclient.User
+
 			err := json.Unmarshal(data, &user)
 
 			require.NoError(t, err)
@@ -123,6 +125,7 @@ func TestUser_UnmarshalJSON(t *testing.T) {
 			}`)
 
 			var user scimclient.User
+
 			err := json.Unmarshal(data, &user)
 
 			require.NoError(t, err)

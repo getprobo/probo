@@ -162,6 +162,7 @@ WHERE
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrResourceNotFound
 		}
+
 		return nil, fmt.Errorf("cannot query identity iam attributes: %w", err)
 	}
 
@@ -202,7 +203,6 @@ VALUES (
 	}
 
 	_, err := conn.Exec(ctx, q, args)
-
 	if err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) {
@@ -314,6 +314,7 @@ WHERE
 	args := pgx.StrictNamedArgs{"identity_id": i.ID}
 
 	var count int
+
 	err := conn.QueryRow(ctx, q, args).Scan(&count)
 	if err != nil {
 		return 0, fmt.Errorf("cannot count identity memberships: %w", err)

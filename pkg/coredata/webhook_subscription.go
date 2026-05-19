@@ -92,6 +92,7 @@ func (w *WebhookSubscription) AuthorizationAttributes(ctx context.Context, conn 
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrResourceNotFound
 		}
+
 		return nil, fmt.Errorf("cannot query webhook subscription authorization attributes: %w", err)
 	}
 
@@ -141,6 +142,7 @@ LIMIT 1;
 	}
 
 	*w = wc
+
 	return nil
 }
 
@@ -184,6 +186,7 @@ WHERE
 	}
 
 	*w = subscriptions
+
 	return nil
 }
 
@@ -210,6 +213,7 @@ WHERE
 	maps.Copy(args, scope.SQLArguments())
 
 	row := conn.QueryRow(ctx, q, args)
+
 	var count int
 	if err := row.Scan(&count); err != nil {
 		return 0, fmt.Errorf("cannot count webhook subscriptions: %w", err)
@@ -289,8 +293,8 @@ VALUES (
 		"created_at":               w.CreatedAt,
 		"updated_at":               w.UpdatedAt,
 	}
-	_, err := conn.Exec(ctx, q, args)
 
+	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
 		return fmt.Errorf("cannot insert webhook subscription: %w", err)
 	}
@@ -377,6 +381,7 @@ WHERE
 	}
 
 	*w = subscriptions
+
 	return nil
 }
 

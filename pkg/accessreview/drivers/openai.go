@@ -89,6 +89,7 @@ func (d *OpenAIDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error
 		if !resp.HasMore || resp.LastID == "" {
 			return records, nil
 		}
+
 		after = resp.LastID
 	}
 
@@ -103,9 +104,11 @@ func (d *OpenAIDriver) fetchUsers(ctx context.Context, after string) (*openaiUse
 
 	q := req.URL.Query()
 	q.Set("limit", "100")
+
 	if after != "" {
 		q.Set("after", after)
 	}
+
 	req.URL.RawQuery = q.Encode()
 
 	req.Header.Set("Accept", "application/json")
@@ -114,6 +117,7 @@ func (d *OpenAIDriver) fetchUsers(ctx context.Context, after string) (*openaiUse
 	if err != nil {
 		return nil, fmt.Errorf("cannot execute openai users request: %w", err)
 	}
+
 	defer func() {
 		_ = httpResp.Body.Close()
 	}()

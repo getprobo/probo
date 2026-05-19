@@ -33,6 +33,7 @@ func (sep SAMLEnforcementPolicy) String() string {
 
 func (sep *SAMLEnforcementPolicy) Scan(value any) error {
 	var s string
+
 	switch v := value.(type) {
 	case string:
 		s = v
@@ -52,6 +53,7 @@ func (sep *SAMLEnforcementPolicy) Scan(value any) error {
 	default:
 		return fmt.Errorf("invalid SAMLEnforcementPolicy value: %q", s)
 	}
+
 	return nil
 }
 

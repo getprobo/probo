@@ -36,6 +36,7 @@ func unsubscribeGetHandler() http.HandlerFunc {
 					Body:    "This unsubscribe link is missing required information. Please use the link from your email.",
 				},
 			)
+
 			return
 		}
 
@@ -69,6 +70,7 @@ func unsubscribePostHandler(mailmanSvc *mailman.Service, tokenSecret string) htt
 					Body:    "This unsubscribe link is missing required information. Please use the link from your email.",
 				},
 			)
+
 			return
 		}
 
@@ -83,6 +85,7 @@ func unsubscribePostHandler(mailmanSvc *mailman.Service, tokenSecret string) htt
 					Body:    "This unsubscribe link is invalid or has expired.",
 				},
 			)
+
 			return
 		}
 
@@ -97,6 +100,7 @@ func unsubscribePostHandler(mailmanSvc *mailman.Service, tokenSecret string) htt
 						Body:    "We could not process your request. Please try again later.",
 					},
 				)
+
 				return
 			}
 		}

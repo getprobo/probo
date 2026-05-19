@@ -63,7 +63,6 @@ func (s *DocumentService) ListForOrganizationId(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -118,7 +117,6 @@ func (s DocumentService) Get(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -172,7 +170,6 @@ func (s *DocumentService) exportPDFData(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -204,6 +201,7 @@ func (s *DocumentService) generatePDFOnTheFly(
 	version *coredata.DocumentVersion,
 ) ([]byte, error) {
 	organization := &coredata.Organization{}
+
 	var approverNames []string
 
 	err := s.svc.pg.WithConn(
@@ -216,6 +214,7 @@ func (s *DocumentService) generatePDFOnTheFly(
 				}
 			} else if lastQuorum.Status == coredata.DocumentVersionApprovalQuorumStatusApproved {
 				approvedDecisions := &coredata.DocumentVersionApprovalDecisions{}
+
 				approvedFilter := coredata.NewDocumentVersionApprovalDecisionFilter(
 					coredata.DocumentVersionApprovalDecisionStates{coredata.DocumentVersionApprovalDecisionStateApproved},
 				)
@@ -262,12 +261,12 @@ func (s *DocumentService) generatePDFOnTheFly(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
 
 	classification := docgen.ClassificationSecret
+
 	switch version.Classification {
 	case coredata.DocumentClassificationPublic:
 		classification = docgen.ClassificationPublic
@@ -278,8 +277,10 @@ func (s *DocumentService) generatePDFOnTheFly(
 	}
 
 	horizontalLogoBase64 := ""
+
 	if organization.HorizontalLogoFileID != nil {
 		fileRecord := &coredata.File{}
+
 		fileErr := s.svc.pg.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
 			return fileRecord.LoadByID(ctx, conn, s.svc.scope, *organization.HorizontalLogoFileID)
 		})

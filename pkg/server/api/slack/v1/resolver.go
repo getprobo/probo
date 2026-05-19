@@ -27,6 +27,7 @@ func NewMux(
 	trustSvc *trust.Service,
 ) *chi.Mux {
 	r := chi.NewMux()
+
 	logger.Info("Registering Slack interactive endpoint")
 
 	r.Post("/interactive", SlackHandler(

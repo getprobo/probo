@@ -131,6 +131,7 @@ func (d *CloudflareDriver) queryAccounts(ctx context.Context, page int) (*cloudf
 	if err != nil {
 		return nil, fmt.Errorf("cannot execute cloudflare accounts request: %w", err)
 	}
+
 	defer func() {
 		_ = httpResp.Body.Close()
 	}()
@@ -168,6 +169,7 @@ func (d *CloudflareDriver) queryAllMembers(ctx context.Context, accountID string
 			}
 
 			isAdmin := false
+
 			for _, r := range m.Roles {
 				if r.Name == "Super Administrator - All Privileges" || r.Name == "Administrator" {
 					isAdmin = true
@@ -224,6 +226,7 @@ func (d *CloudflareDriver) queryMembers(ctx context.Context, accountID string, p
 	if err != nil {
 		return nil, fmt.Errorf("cannot execute cloudflare members request: %w", err)
 	}
+
 	defer func() {
 		_ = httpResp.Body.Close()
 	}()

@@ -119,6 +119,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			if err != nil {
 				return nil, err
 			}
+
 			return types.NewPersonalAPIKey(personalAPIKey), nil
 		}
 	case coredata.SCIMConfigurationEntityType:
@@ -128,6 +129,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			if err != nil {
 				return nil, err
 			}
+
 			return types.NewSCIMConfiguration(scimConfiguration), nil
 		}
 	case coredata.SCIMEventEntityType:
@@ -137,6 +139,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			if err != nil {
 				return nil, err
 			}
+
 			return types.NewSCIMEvent(scimEvent), nil
 		}
 	default:
@@ -174,6 +177,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot load node", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 

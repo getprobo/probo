@@ -41,6 +41,7 @@ func (fp FindingPriority) String() string {
 
 func (fp *FindingPriority) Scan(value any) error {
 	var s string
+
 	switch v := value.(type) {
 	case string:
 		s = v
@@ -60,6 +61,7 @@ func (fp *FindingPriority) Scan(value any) error {
 	default:
 		return fmt.Errorf("invalid FindingPriority value: %q", s)
 	}
+
 	return nil
 }
 

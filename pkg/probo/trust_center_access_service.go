@@ -62,12 +62,15 @@ func (utcar *UpdateTrustCenterAccessRequest) Validate() error {
 	v := validator.New()
 
 	v.Check(utcar.ID, "id", validator.Required(), validator.GID(coredata.TrustCenterAccessEntityType))
+
 	for i, docAccess := range utcar.DocumentAccesses {
 		v.Check(docAccess.ID, fmt.Sprintf("documentAccesses[%d].ID", i), validator.Required(), validator.GID(coredata.DocumentEntityType))
 	}
+
 	for i, reportAccess := range utcar.ReportAccesses {
 		v.Check(reportAccess.ID, fmt.Sprintf("reportAccesses[%d].ID", i), validator.Required(), validator.GID(coredata.ReportEntityType))
 	}
+
 	for i, reportAccess := range utcar.TrustCenterFileAccesses {
 		v.Check(reportAccess.ID, fmt.Sprintf("trustCenterFileAccesses[%d].ID", i), validator.Required(), validator.GID(coredata.TrustCenterFileEntityType))
 	}
@@ -88,7 +91,6 @@ func (s TrustCenterAccessService) ListForTrustCenterID(
 			return accesses.LoadByTrustCenterID(ctx, conn, s.svc.scope, trustCenterID, cursor)
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -109,7 +111,6 @@ func (s TrustCenterAccessService) ListAvailableDocumentAccesses(
 			return documentAccesses.LoadAvailableByTrustCenterAccessID(ctx, conn, s.svc.scope, trustCenterAccessID, cursor)
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -129,7 +130,6 @@ func (s TrustCenterAccessService) Get(
 			return access.LoadByID(ctx, conn, s.svc.scope, accessID)
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -142,16 +142,20 @@ func (s TrustCenterAccessService) CountDocumentAccesses(
 	trustCenterAccessID gid.GID,
 ) (int, error) {
 	var count int
+
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			var documentAccesses coredata.TrustCenterDocumentAccesses
-			var err error
+			var (
+				documentAccesses coredata.TrustCenterDocumentAccesses
+				err              error
+			)
+
 			count, err = documentAccesses.CountByTrustCenterAccessID(ctx, conn, s.svc.scope, trustCenterAccessID)
+
 			return err
 		},
 	)
-
 	if err != nil {
 		return 0, err
 	}
@@ -164,16 +168,20 @@ func (s TrustCenterAccessService) CountPendingRequestDocumentAccesses(
 	trustCenterAccessID gid.GID,
 ) (int, error) {
 	var count int
+
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			var documentAccesses coredata.TrustCenterDocumentAccesses
-			var err error
+			var (
+				documentAccesses coredata.TrustCenterDocumentAccesses
+				err              error
+			)
+
 			count, err = documentAccesses.CountPendingRequestByTrustCenterAccessID(ctx, conn, s.svc.scope, trustCenterAccessID)
+
 			return err
 		},
 	)
-
 	if err != nil {
 		return 0, err
 	}
@@ -186,16 +194,20 @@ func (s TrustCenterAccessService) CountActiveDocumentAccesses(
 	trustCenterAccessID gid.GID,
 ) (int, error) {
 	var count int
+
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			var documentAccesses coredata.TrustCenterDocumentAccesses
-			var err error
+			var (
+				documentAccesses coredata.TrustCenterDocumentAccesses
+				err              error
+			)
+
 			count, err = documentAccesses.CountActiveByTrustCenterAccessID(ctx, conn, s.svc.scope, trustCenterAccessID)
+
 			return err
 		},
 	)
-
 	if err != nil {
 		return 0, err
 	}
@@ -284,7 +296,6 @@ func (s TrustCenterAccessService) Update(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -374,5 +385,6 @@ func (s TrustCenterAccessService) sendAccessEmail(ctx context.Context, tx pg.Tx,
 	if err := accessEmail.Insert(ctx, tx); err != nil {
 		return fmt.Errorf("cannot insert access email: %w", err)
 	}
+
 	return nil
 }

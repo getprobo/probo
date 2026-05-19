@@ -132,6 +132,7 @@ func (i *ThirdPartyCategory) Scan(value any) error {
 	default:
 		return fmt.Errorf("unsupported type for ThirdPartyCategory: %T", value)
 	}
+
 	return nil
 }
 
@@ -197,6 +198,7 @@ func (i *ThirdPartyCategory) UnmarshalJSON(data []byte) error {
 	default:
 		return fmt.Errorf("invalid ThirdPartyCategory value: %q", s)
 	}
+
 	return nil
 }
 
@@ -251,5 +253,6 @@ func (i *ThirdPartyCategory) UnmarshalText(text []byte) error {
 	default:
 		return fmt.Errorf("invalid ThirdPartyCategory value: %q", s)
 	}
+
 	return nil
 }

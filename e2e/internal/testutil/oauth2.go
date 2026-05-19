@@ -129,6 +129,7 @@ func postForm(
 	if err != nil {
 		return nil, fmt.Errorf("cannot post form: %w", err)
 	}
+
 	defer func() { _ = resp.Body.Close() }()
 
 	body, err := io.ReadAll(resp.Body)
@@ -153,6 +154,7 @@ func postJSON(
 	if err != nil {
 		return nil, fmt.Errorf("cannot post json: %w", err)
 	}
+
 	defer func() { _ = resp.Body.Close() }()
 
 	body, err := io.ReadAll(resp.Body)
@@ -181,6 +183,7 @@ func getJSON(
 	if err != nil {
 		return nil, fmt.Errorf("cannot execute request: %w", err)
 	}
+
 	defer func() { _ = resp.Body.Close() }()
 
 	body, err := io.ReadAll(resp.Body)
@@ -213,6 +216,7 @@ func postFormWithBasicAuth(
 	if err != nil {
 		return nil, fmt.Errorf("cannot execute request: %w", err)
 	}
+
 	defer func() { _ = resp.Body.Close() }()
 
 	body, err := io.ReadAll(resp.Body)
@@ -298,10 +302,12 @@ func OAuth2Authorize(
 	}
 
 	reqURL := oauth2BaseURL(c) + "/authorize?" + params.Encode()
+
 	resp, err := noRedirectClient.Get(reqURL)
 	if err != nil {
 		return nil, fmt.Errorf("cannot get authorize: %w", err)
 	}
+
 	defer func() { _ = resp.Body.Close() }()
 
 	body, err := io.ReadAll(resp.Body)
@@ -521,6 +527,7 @@ func OAuth2TokenWithDeviceCode(
 		if err := json.Unmarshal(raw.Body, &result); err != nil {
 			return nil, nil, raw, fmt.Errorf("cannot decode token response: %w", err)
 		}
+
 		return &result, nil, raw, nil
 	}
 
@@ -799,6 +806,7 @@ func GeneratePKCE() (verifier, challenge string) {
 	for i := range b {
 		b[i] = charset[rand.IntN(len(charset))]
 	}
+
 	verifier = string(b)
 
 	h := sha256.Sum256([]byte(verifier))
@@ -814,11 +822,14 @@ func IsConsentRedirect(resp *OAuth2HTTPResponse) bool {
 	if resp.StatusCode != http.StatusFound {
 		return false
 	}
+
 	loc := resp.Header.Get("Location")
+
 	u, err := url.Parse(loc)
 	if err != nil {
 		return false
 	}
+
 	return u.Query().Get("consent_id") != ""
 }
 
@@ -831,14 +842,17 @@ func ExtractConsentIDFromResponse(resp *OAuth2HTTPResponse) (string, error) {
 		if loc == "" {
 			return "", fmt.Errorf("no Location header in redirect response")
 		}
+
 		u, err := url.Parse(loc)
 		if err != nil {
 			return "", fmt.Errorf("cannot parse redirect url: %w", err)
 		}
+
 		consentID := u.Query().Get("consent_id")
 		if consentID == "" {
 			return "", fmt.Errorf("no consent_id in redirect url: %s", loc)
 		}
+
 		return consentID, nil
 	}
 
@@ -850,12 +864,14 @@ func ExtractConsentID(body []byte) (string, error) {
 	s := string(body)
 
 	needle := `name="consent_id" value="`
+
 	idx := strings.Index(s, needle)
 	if idx == -1 {
 		return "", fmt.Errorf("consent_id not found in page")
 	}
 
 	start := idx + len(needle)
+
 	end := strings.Index(s[start:], `"`)
 	if end == -1 {
 		return "", fmt.Errorf("malformed consent_id value")
@@ -890,6 +906,7 @@ func OAuth2PerformAuthorizationCodeFlow(
 	require.NoError(t, err)
 
 	var code string
+
 	if IsConsentRedirect(authResp) {
 		consentID, err := ExtractConsentIDFromResponse(authResp)
 		require.NoError(t, err)

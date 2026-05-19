@@ -29,6 +29,7 @@ func (p AuditLogEntryOrderField) Column() string {
 	case AuditLogEntryOrderFieldCreatedAt:
 		return "created_at"
 	}
+
 	panic(fmt.Sprintf("unsupported order by: %s", p))
 }
 
@@ -41,6 +42,7 @@ func (p AuditLogEntryOrderField) IsValid() bool {
 	case AuditLogEntryOrderFieldCreatedAt:
 		return true
 	}
+
 	return false
 }
 
@@ -53,5 +55,6 @@ func (p *AuditLogEntryOrderField) UnmarshalText(text []byte) error {
 	if !p.IsValid() {
 		return fmt.Errorf("%s is not a valid AuditLogEntryOrderField", string(text))
 	}
+
 	return nil
 }

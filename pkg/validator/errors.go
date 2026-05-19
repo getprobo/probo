@@ -57,6 +57,7 @@ func (ve ValidationErrors) Error() string {
 	for _, err := range ve {
 		messages = append(messages, err.Error())
 	}
+
 	return strings.Join(messages, "; ")
 }
 
@@ -69,26 +70,31 @@ func (ve ValidationErrors) Fields() []string {
 	for _, err := range ve {
 		fields = append(fields, err.Field)
 	}
+
 	return fields
 }
 
 func (ve ValidationErrors) ByField(field string) ValidationErrors {
 	var errors ValidationErrors
+
 	for _, err := range ve {
 		if err.Field == field {
 			errors = append(errors, err)
 		}
 	}
+
 	return errors
 }
 
 func (ve ValidationErrors) ByCode(code ErrorCode) ValidationErrors {
 	var errors ValidationErrors
+
 	for _, err := range ve {
 		if err.Code == code {
 			errors = append(errors, err)
 		}
 	}
+
 	return errors
 }
 
@@ -96,6 +102,7 @@ func (ve ValidationErrors) First() *ValidationError {
 	if len(ve) == 0 {
 		return nil
 	}
+
 	return ve[0]
 }
 

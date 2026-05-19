@@ -177,6 +177,7 @@ func NoNewLine() ValidatorFunc {
 			if r == '\n' {
 				return newValidationError(ErrorCodeInvalidFormat, fmt.Sprintf("contains newline character at position %d", i))
 			}
+
 			if r == '\r' {
 				return newValidationError(ErrorCodeInvalidFormat, fmt.Sprintf("contains carriage return character at position %d", i))
 			}
@@ -204,6 +205,7 @@ func SafeText(maxLen int) ValidatorFunc {
 				return err
 			}
 		}
+
 		return nil
 	}
 }
@@ -226,6 +228,7 @@ func SafeTextNoNewLine(maxLen int) ValidatorFunc {
 				return err
 			}
 		}
+
 		return nil
 	}
 }

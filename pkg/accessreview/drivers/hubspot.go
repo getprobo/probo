@@ -83,6 +83,7 @@ func (d *HubSpotDriver) ListAccounts(ctx context.Context) ([]AccountRecord, erro
 
 		for _, u := range resp.Results {
 			role := "User"
+
 			if roleMap != nil && u.RoleID != "" {
 				if name, ok := roleMap[u.RoleID]; ok {
 					role = name
@@ -114,6 +115,7 @@ func (d *HubSpotDriver) ListAccounts(ctx context.Context) ([]AccountRecord, erro
 		if resp.Paging == nil || resp.Paging.Next == nil || resp.Paging.Next.After == "" {
 			return records, nil
 		}
+
 		after = resp.Paging.Next.After
 	}
 
@@ -128,9 +130,11 @@ func (d *HubSpotDriver) fetchUsers(ctx context.Context, after string) (*hubspotU
 
 	q := req.URL.Query()
 	q.Set("limit", "100")
+
 	if after != "" {
 		q.Set("after", after)
 	}
+
 	req.URL.RawQuery = q.Encode()
 
 	req.Header.Set("Accept", "application/json")
@@ -139,6 +143,7 @@ func (d *HubSpotDriver) fetchUsers(ctx context.Context, after string) (*hubspotU
 	if err != nil {
 		return nil, fmt.Errorf("cannot execute hubspot users request: %w", err)
 	}
+
 	defer func() {
 		_ = httpResp.Body.Close()
 	}()
@@ -167,6 +172,7 @@ func (d *HubSpotDriver) fetchRoles(ctx context.Context) (map[string]string, erro
 	if err != nil {
 		return nil, fmt.Errorf("cannot execute hubspot roles request: %w", err)
 	}
+
 	defer func() {
 		_ = httpResp.Body.Close()
 	}()

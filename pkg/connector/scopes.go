@@ -31,16 +31,21 @@ func ParseScopeString(s string) []string {
 	if len(fields) == 0 {
 		return []string{}
 	}
+
 	seen := make(map[string]struct{}, len(fields))
+
 	out := make([]string, 0, len(fields))
 	for _, f := range fields {
 		if _, ok := seen[f]; ok {
 			continue
 		}
+
 		seen[f] = struct{}{}
 		out = append(out, f)
 	}
+
 	sort.Strings(out)
+
 	return out
 }
 
@@ -50,9 +55,11 @@ func FormatScopeString(scopes []string) string {
 	if len(scopes) == 0 {
 		return ""
 	}
+
 	sorted := make([]string, len(scopes))
 	copy(sorted, scopes)
 	sort.Strings(sorted)
+
 	return strings.Join(sorted, " ")
 }
 
@@ -61,18 +68,23 @@ func FormatScopeString(scopes []string) string {
 // result is a fresh slice and never aliases any input.
 func UnionScopes(scopeSets ...[]string) []string {
 	seen := map[string]struct{}{}
+
 	for _, set := range scopeSets {
 		for _, s := range set {
 			if s == "" {
 				continue
 			}
+
 			seen[s] = struct{}{}
 		}
 	}
+
 	out := make([]string, 0, len(seen))
 	for s := range seen {
 		out = append(out, s)
 	}
+
 	sort.Strings(out)
+
 	return out
 }

@@ -193,6 +193,7 @@ func TestFunctionTool_Execute(t *testing.T) {
 			}
 
 			var received string
+
 			tool := agent.FunctionTool(
 				"weather",
 				"Get weather",
@@ -257,6 +258,7 @@ func TestFunctionTool_Execute(t *testing.T) {
 			t.Parallel()
 
 			type ctxKey struct{}
+
 			type Params struct{}
 
 			tool := agent.FunctionTool(

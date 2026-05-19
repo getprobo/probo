@@ -37,6 +37,7 @@ func UnmarshalBigIntScalar(v any) (int64, error) {
 		if err != nil {
 			return 0, fmt.Errorf("invalid BigInt value: %v", err)
 		}
+
 		return i, nil
 	case int:
 		return int64(val), nil
@@ -48,11 +49,13 @@ func UnmarshalBigIntScalar(v any) (int64, error) {
 		if val != float32(int64(val)) {
 			return 0, fmt.Errorf("BigInt cannot represent non-integer value: %v", val)
 		}
+
 		return int64(val), nil
 	case float64:
 		if val != float64(int64(val)) {
 			return 0, fmt.Errorf("BigInt cannot represent non-integer value: %v", val)
 		}
+
 		return int64(val), nil
 	default:
 		return 0, fmt.Errorf("cannot unmarshal %T into BigInt", v)

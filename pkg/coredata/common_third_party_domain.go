@@ -70,6 +70,7 @@ LIMIT 1;
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
 		}
+
 		return fmt.Errorf("cannot collect common third party domain: %w", err)
 	}
 
@@ -113,6 +114,7 @@ INSERT INTO common_third_party_domains (
 				return ErrResourceAlreadyExists
 			}
 		}
+
 		return fmt.Errorf("cannot insert common third party domain: %w", err)
 	}
 

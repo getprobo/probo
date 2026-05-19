@@ -44,6 +44,7 @@ func (r *complianceFrameworkResolver) Framework(ctx context.Context, obj *types.
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot load framework", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -75,7 +76,9 @@ func (r *mutationResolver) UpdateTrustCenter(ctx context.Context, input types.Up
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot update trust center", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -104,7 +107,9 @@ func (r *mutationResolver) UploadTrustCenterNda(ctx context.Context, input types
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot upload trust center NDA", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -148,6 +153,7 @@ func (r *mutationResolver) UpdateTrustCenterBrand(ctx context.Context, input typ
 		logoFile := input.LogoFile.Value()
 		if logoFile == nil {
 			var nilFile *probo.FileUpload
+
 			req.LogoFile = &nilFile
 		} else {
 			fileUpload := &probo.FileUpload{
@@ -164,6 +170,7 @@ func (r *mutationResolver) UpdateTrustCenterBrand(ctx context.Context, input typ
 		darkLogoFile := input.DarkLogoFile.Value()
 		if darkLogoFile == nil {
 			var nilFile *probo.FileUpload
+
 			req.DarkLogoFile = &nilFile
 		} else {
 			fileUpload := &probo.FileUpload{
@@ -181,7 +188,9 @@ func (r *mutationResolver) UpdateTrustCenterBrand(ctx context.Context, input typ
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot update trust center brand", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -198,27 +207,33 @@ func (r *mutationResolver) UpdateTrustCenterAccess(ctx context.Context, input ty
 
 	prb := r.ProboService(ctx, input.ID.TenantID())
 
-	var documentAccesses []probo.UpdateTrustCenterDocumentAccessRequest
-	var reportAccesses []probo.UpdateTrustCenterDocumentAccessRequest
-	var fileAccesses []probo.UpdateTrustCenterDocumentAccessRequest
+	var (
+		documentAccesses []probo.UpdateTrustCenterDocumentAccessRequest
+		reportAccesses   []probo.UpdateTrustCenterDocumentAccessRequest
+		fileAccesses     []probo.UpdateTrustCenterDocumentAccessRequest
+	)
+
 	for _, documentAccess := range input.Documents {
 		documentAccesses = append(documentAccesses, probo.UpdateTrustCenterDocumentAccessRequest{
 			ID:     documentAccess.ID,
 			Status: documentAccess.Status,
 		})
 	}
+
 	for _, reportAccess := range input.Reports {
 		reportAccesses = append(reportAccesses, probo.UpdateTrustCenterDocumentAccessRequest{
 			ID:     reportAccess.ID,
 			Status: reportAccess.Status,
 		})
 	}
+
 	for _, fileAccess := range input.TrustCenterFiles {
 		fileAccesses = append(fileAccesses, probo.UpdateTrustCenterDocumentAccessRequest{
 			ID:     fileAccess.ID,
 			Status: fileAccess.Status,
 		})
 	}
+
 	access, err := prb.TrustCenterAccesses.Update(
 		ctx,
 		&probo.UpdateTrustCenterAccessRequest{
@@ -232,7 +247,9 @@ func (r *mutationResolver) UpdateTrustCenterAccess(ctx context.Context, input ty
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot update trust center access", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -287,7 +304,9 @@ func (r *mutationResolver) CreateTrustCenterReference(ctx context.Context, input
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot create trust center reference", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -326,7 +345,9 @@ func (r *mutationResolver) UpdateTrustCenterReference(ctx context.Context, input
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot update trust center reference", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -373,7 +394,9 @@ func (r *mutationResolver) CreateComplianceFramework(ctx context.Context, input 
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot create compliance framework", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -398,7 +421,9 @@ func (r *mutationResolver) UpdateComplianceFramework(ctx context.Context, input 
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot update compliance framework", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -425,7 +450,9 @@ func (r *mutationResolver) DeleteComplianceFramework(ctx context.Context, input 
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot delete compliance framework", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -454,7 +481,9 @@ func (r *mutationResolver) CreateComplianceExternalURL(ctx context.Context, inpu
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot create compliance external URL", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -481,7 +510,9 @@ func (r *mutationResolver) UpdateComplianceExternalURL(ctx context.Context, inpu
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot update compliance external URL", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -502,7 +533,9 @@ func (r *mutationResolver) DeleteComplianceExternalURL(ctx context.Context, inpu
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot delete compliance external URL", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -538,7 +571,9 @@ func (r *mutationResolver) CreateTrustCenterFile(ctx context.Context, input type
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot create trust center file", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -568,7 +603,9 @@ func (r *mutationResolver) UpdateTrustCenterFile(ctx context.Context, input type
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot update trust center file", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -634,7 +671,9 @@ func (r *mutationResolver) CreateCustomDomain(ctx context.Context, input types.C
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot create custom domain", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -753,6 +792,7 @@ func (r *trustCenterResolver) Organization(ctx context.Context, obj *types.Trust
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get organization", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -956,6 +996,7 @@ func (r *trustCenterAccessResolver) ActiveCount(ctx context.Context, obj *types.
 	if err := r.authorize(ctx, obj.ID, probo.ActionTrustCenterAccessGet); err != nil {
 		return 0, err
 	}
+
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	count, err := prb.TrustCenterAccesses.CountActiveDocumentAccesses(ctx, obj.ID)
@@ -980,6 +1021,7 @@ func (r *trustCenterAccessResolver) Profile(ctx context.Context, obj *types.Trus
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get profile", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -1040,6 +1082,7 @@ func (r *trustCenterDocumentAccessResolver) Document(ctx context.Context, obj *t
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot load document", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -1143,6 +1186,7 @@ func (r *trustCenterFileResolver) Organization(ctx context.Context, obj *types.T
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get organization", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -1167,6 +1211,7 @@ func (r *trustCenterFileConnectionResolver) TotalCount(ctx context.Context, obj 
 		r.logger.ErrorCtx(ctx, "cannot count trust center files", log.Error(err))
 		return 0, gqlutils.Internal(ctx)
 	}
+
 	return count, nil
 }
 

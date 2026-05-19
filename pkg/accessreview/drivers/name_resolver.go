@@ -69,6 +69,7 @@ func ProviderDisplayName(provider coredata.ConnectorProvider) string {
 	if name, ok := providerDisplayNames[provider]; ok {
 		return name
 	}
+
 	return string(provider)
 }
 
@@ -91,6 +92,7 @@ func (r *slackNameResolver) ResolveInstanceName(ctx context.Context) (string, er
 	if err != nil {
 		return "", fmt.Errorf("cannot execute slack auth.test request: %w", err)
 	}
+
 	defer func() { _ = httpResp.Body.Close() }()
 
 	var resp struct {
@@ -156,6 +158,7 @@ func (r *linearNameResolver) ResolveInstanceName(ctx context.Context) (string, e
 	if err != nil {
 		return "", fmt.Errorf("cannot create linear organization request: %w", err)
 	}
+
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/json")
 
@@ -163,6 +166,7 @@ func (r *linearNameResolver) ResolveInstanceName(ctx context.Context) (string, e
 	if err != nil {
 		return "", fmt.Errorf("cannot execute linear organization request: %w", err)
 	}
+
 	defer func() { _ = httpResp.Body.Close() }()
 
 	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
@@ -182,6 +186,7 @@ func (r *linearNameResolver) ResolveInstanceName(ctx context.Context) (string, e
 	if err := json.NewDecoder(httpResp.Body).Decode(&resp); err != nil {
 		return "", fmt.Errorf("cannot decode linear organization response: %w", err)
 	}
+
 	if len(resp.Errors) > 0 {
 		return "", fmt.Errorf("linear graphql error: %s", resp.Errors[0].Message)
 	}
@@ -208,12 +213,14 @@ func (r *cloudflareNameResolver) ResolveInstanceName(ctx context.Context) (strin
 	if err != nil {
 		return "", fmt.Errorf("cannot create cloudflare accounts request: %w", err)
 	}
+
 	req.Header.Set("Accept", "application/json")
 
 	httpResp, err := r.httpClient.Do(req)
 	if err != nil {
 		return "", fmt.Errorf("cannot execute cloudflare accounts request: %w", err)
 	}
+
 	defer func() { _ = httpResp.Body.Close() }()
 
 	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
@@ -255,12 +262,14 @@ func (r *brexNameResolver) ResolveInstanceName(ctx context.Context) (string, err
 	if err != nil {
 		return "", fmt.Errorf("cannot create brex company request: %w", err)
 	}
+
 	req.Header.Set("Accept", "application/json")
 
 	httpResp, err := r.httpClient.Do(req)
 	if err != nil {
 		return "", fmt.Errorf("cannot execute brex company request: %w", err)
 	}
+
 	defer func() { _ = httpResp.Body.Close() }()
 
 	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
@@ -297,12 +306,14 @@ func (r *tallyNameResolver) ResolveInstanceName(ctx context.Context) (string, er
 	if err != nil {
 		return "", fmt.Errorf("cannot create tally organization request: %w", err)
 	}
+
 	req.Header.Set("Accept", "application/json")
 
 	httpResp, err := r.httpClient.Do(req)
 	if err != nil {
 		return "", fmt.Errorf("cannot execute tally organization request: %w", err)
 	}
+
 	defer func() { _ = httpResp.Body.Close() }()
 
 	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
@@ -338,12 +349,14 @@ func (r *hubspotNameResolver) ResolveInstanceName(ctx context.Context) (string, 
 	if err != nil {
 		return "", fmt.Errorf("cannot create hubspot account-info request: %w", err)
 	}
+
 	req.Header.Set("Accept", "application/json")
 
 	httpResp, err := r.httpClient.Do(req)
 	if err != nil {
 		return "", fmt.Errorf("cannot execute hubspot account-info request: %w", err)
 	}
+
 	defer func() { _ = httpResp.Body.Close() }()
 
 	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
@@ -375,12 +388,14 @@ func (r *docusignNameResolver) ResolveInstanceName(ctx context.Context) (string,
 	if err != nil {
 		return "", fmt.Errorf("cannot create docusign userinfo request: %w", err)
 	}
+
 	req.Header.Set("Accept", "application/json")
 
 	httpResp, err := r.httpClient.Do(req)
 	if err != nil {
 		return "", fmt.Errorf("cannot execute docusign userinfo request: %w", err)
 	}
+
 	defer func() { _ = httpResp.Body.Close() }()
 
 	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
@@ -429,12 +444,14 @@ func (r *openaiNameResolver) ResolveInstanceName(ctx context.Context) (string, e
 	if err != nil {
 		return "", fmt.Errorf("cannot create openai organization request: %w", err)
 	}
+
 	req.Header.Set("Accept", "application/json")
 
 	httpResp, err := r.httpClient.Do(req)
 	if err != nil {
 		return "", fmt.Errorf("cannot execute openai organization request: %w", err)
 	}
+
 	defer func() { _ = httpResp.Body.Close() }()
 
 	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
@@ -473,12 +490,14 @@ func (r *sentryNameResolver) ResolveInstanceName(ctx context.Context) (string, e
 	if err != nil {
 		return "", fmt.Errorf("cannot create sentry organization request: %w", err)
 	}
+
 	req.Header.Set("Accept", "application/json")
 
 	httpResp, err := r.httpClient.Do(req)
 	if err != nil {
 		return "", fmt.Errorf("cannot execute sentry organization request: %w", err)
 	}
+
 	defer func() { _ = httpResp.Body.Close() }()
 
 	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
@@ -512,12 +531,14 @@ func (r *githubNameResolver) ResolveInstanceName(ctx context.Context) (string, e
 	if err != nil {
 		return "", fmt.Errorf("cannot create github organization request: %w", err)
 	}
+
 	req.Header.Set("Accept", "application/vnd.github+json")
 
 	httpResp, err := r.httpClient.Do(req)
 	if err != nil {
 		return "", fmt.Errorf("cannot execute github organization request: %w", err)
 	}
+
 	defer func() { _ = httpResp.Body.Close() }()
 
 	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
@@ -565,6 +586,7 @@ func (r *intercomNameResolver) ResolveInstanceName(ctx context.Context) (string,
 	if err != nil {
 		return "", fmt.Errorf("cannot create intercom me request: %w", err)
 	}
+
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("Intercom-Version", "2.11")
 
@@ -572,6 +594,7 @@ func (r *intercomNameResolver) ResolveInstanceName(ctx context.Context) (string,
 	if err != nil {
 		return "", fmt.Errorf("cannot execute intercom me request: %w", err)
 	}
+
 	defer func() { _ = httpResp.Body.Close() }()
 
 	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
@@ -622,12 +645,14 @@ func (r *gitlabNameResolver) ResolveInstanceName(ctx context.Context) (string, e
 	if err != nil {
 		return "", fmt.Errorf("cannot create gitlab group request: %w", err)
 	}
+
 	req.Header.Set("Accept", "application/json")
 
 	httpResp, err := r.httpClient.Do(req)
 	if err != nil {
 		return "", fmt.Errorf("cannot execute gitlab group request: %w", err)
 	}
+
 	defer func() { _ = httpResp.Body.Close() }()
 
 	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
@@ -645,6 +670,7 @@ func (r *gitlabNameResolver) ResolveInstanceName(ctx context.Context) (string, e
 	if resp.Name != "" {
 		return resp.Name, nil
 	}
+
 	return resp.FullPath, nil
 }
 
@@ -669,12 +695,14 @@ func (r *bitbucketNameResolver) ResolveInstanceName(ctx context.Context) (string
 	if err != nil {
 		return "", fmt.Errorf("cannot create bitbucket workspace request: %w", err)
 	}
+
 	req.Header.Set("Accept", "application/json")
 
 	httpResp, err := r.httpClient.Do(req)
 	if err != nil {
 		return "", fmt.Errorf("cannot execute bitbucket workspace request: %w", err)
 	}
+
 	defer func() { _ = httpResp.Body.Close() }()
 
 	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
@@ -692,6 +720,7 @@ func (r *bitbucketNameResolver) ResolveInstanceName(ctx context.Context) (string
 	if resp.Name != "" {
 		return resp.Name, nil
 	}
+
 	return resp.Slug, nil
 }
 
@@ -716,12 +745,14 @@ func (r *herokuNameResolver) ResolveInstanceName(ctx context.Context) (string, e
 	if err != nil {
 		return "", fmt.Errorf("cannot create heroku team request: %w", err)
 	}
+
 	req.Header.Set("Accept", "application/vnd.heroku+json; version=3")
 
 	httpResp, err := r.httpClient.Do(req)
 	if err != nil {
 		return "", fmt.Errorf("cannot execute heroku team request: %w", err)
 	}
+
 	defer func() { _ = httpResp.Body.Close() }()
 
 	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
@@ -774,12 +805,14 @@ func (r *asanaNameResolver) ResolveInstanceName(ctx context.Context) (string, er
 	if err != nil {
 		return "", fmt.Errorf("cannot create asana workspace request: %w", err)
 	}
+
 	req.Header.Set("Accept", "application/json")
 
 	httpResp, err := r.httpClient.Do(req)
 	if err != nil {
 		return "", fmt.Errorf("cannot execute asana workspace request: %w", err)
 	}
+
 	defer func() { _ = httpResp.Body.Close() }()
 
 	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
@@ -819,12 +852,14 @@ func (r *netlifyNameResolver) ResolveInstanceName(ctx context.Context) (string, 
 	if err != nil {
 		return "", fmt.Errorf("cannot create netlify account request: %w", err)
 	}
+
 	req.Header.Set("Accept", "application/json")
 
 	httpResp, err := r.httpClient.Do(req)
 	if err != nil {
 		return "", fmt.Errorf("cannot execute netlify account request: %w", err)
 	}
+
 	defer func() { _ = httpResp.Body.Close() }()
 
 	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
@@ -862,12 +897,14 @@ func (r *clickupNameResolver) ResolveInstanceName(ctx context.Context) (string, 
 	if err != nil {
 		return "", fmt.Errorf("cannot create clickup team request: %w", err)
 	}
+
 	req.Header.Set("Accept", "application/json")
 
 	httpResp, err := r.httpClient.Do(req)
 	if err != nil {
 		return "", fmt.Errorf("cannot execute clickup team request: %w", err)
 	}
+
 	defer func() { _ = httpResp.Body.Close() }()
 
 	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
@@ -905,16 +942,19 @@ func (r *vercelNameResolver) ResolveInstanceName(ctx context.Context) (string, e
 	}
 
 	teamURL := fmt.Sprintf("https://api.vercel.com/v2/teams/%s", url.PathEscape(r.teamID))
+
 	teamReq, err := http.NewRequestWithContext(ctx, http.MethodGet, teamURL, nil)
 	if err != nil {
 		return "", fmt.Errorf("cannot create vercel team request: %w", err)
 	}
+
 	teamReq.Header.Set("Accept", "application/json")
 
 	teamResp, err := r.httpClient.Do(teamReq)
 	if err != nil {
 		return "", fmt.Errorf("cannot execute vercel team request: %w", err)
 	}
+
 	defer func() { _ = teamResp.Body.Close() }()
 
 	if teamResp.StatusCode == http.StatusOK {
@@ -925,9 +965,11 @@ func (r *vercelNameResolver) ResolveInstanceName(ctx context.Context) (string, e
 		if err := json.NewDecoder(teamResp.Body).Decode(&body); err != nil {
 			return "", fmt.Errorf("cannot decode vercel team response: %w", err)
 		}
+
 		if body.Name != "" {
 			return body.Name, nil
 		}
+
 		return body.Slug, nil
 	}
 
@@ -941,9 +983,11 @@ func (r *vercelNameResolver) ResolveInstanceName(ctx context.Context) (string, e
 	if err != nil {
 		return "", err
 	}
+
 	if user.Username != "" {
 		return user.Username, nil
 	}
+
 	return user.Name, nil
 }
 
@@ -972,6 +1016,7 @@ func (r *mondayNameResolver) ResolveInstanceName(ctx context.Context) (string, e
 	if err != nil {
 		return "", fmt.Errorf("cannot create monday account request: %w", err)
 	}
+
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/json")
 
@@ -979,6 +1024,7 @@ func (r *mondayNameResolver) ResolveInstanceName(ctx context.Context) (string, e
 	if err != nil {
 		return "", fmt.Errorf("cannot execute monday account request: %w", err)
 	}
+
 	defer func() { _ = httpResp.Body.Close() }()
 
 	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
@@ -1023,6 +1069,7 @@ func (r *notionNameResolver) ResolveInstanceName(ctx context.Context) (string, e
 	if err != nil {
 		return "", fmt.Errorf("cannot create notion users/me request: %w", err)
 	}
+
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("Notion-Version", notionAPIVersion)
 
@@ -1030,6 +1077,7 @@ func (r *notionNameResolver) ResolveInstanceName(ctx context.Context) (string, e
 	if err != nil {
 		return "", fmt.Errorf("cannot execute notion users/me request: %w", err)
 	}
+
 	defer func() { _ = httpResp.Body.Close() }()
 
 	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
@@ -1068,12 +1116,14 @@ func (r *microsoft365NameResolver) ResolveInstanceName(ctx context.Context) (str
 	if err != nil {
 		return "", fmt.Errorf("cannot create microsoft 365 organization request: %w", err)
 	}
+
 	req.Header.Set("Accept", "application/json")
 
 	httpResp, err := r.httpClient.Do(req)
 	if err != nil {
 		return "", fmt.Errorf("cannot execute microsoft 365 organization request: %w", err)
 	}
+
 	defer func() { _ = httpResp.Body.Close() }()
 
 	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
@@ -1101,13 +1151,16 @@ func (r *microsoft365NameResolver) ResolveInstanceName(ctx context.Context) (str
 	if org.DisplayName != "" {
 		return org.DisplayName, nil
 	}
+
 	for _, d := range org.VerifiedDomains {
 		if d.IsDefault {
 			return d.Name, nil
 		}
 	}
+
 	if len(org.VerifiedDomains) > 0 {
 		return org.VerifiedDomains[0].Name, nil
 	}
+
 	return "", nil
 }

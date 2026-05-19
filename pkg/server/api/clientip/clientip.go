@@ -36,11 +36,13 @@ func Extract(r *http.Request) string {
 		if i := strings.LastIndexByte(xff, ','); i != -1 {
 			xff = xff[i+1:]
 		}
+
 		xff = strings.TrimSpace(xff)
 
 		if ip, _, err := net.SplitHostPort(xff); err == nil {
 			return ip
 		}
+
 		return xff
 	}
 
@@ -77,6 +79,7 @@ func parseForwardedFor(header string) string {
 		if ip, _, err := net.SplitHostPort(val); err == nil {
 			return ip
 		}
+
 		return val
 	}
 

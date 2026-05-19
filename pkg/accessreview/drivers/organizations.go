@@ -38,12 +38,14 @@ func ListGitHubOrganizations(ctx context.Context, httpClient *http.Client) ([]Or
 	if err != nil {
 		return nil, fmt.Errorf("cannot create github organizations request: %w", err)
 	}
+
 	req.Header.Set("Accept", "application/json")
 
 	resp, err := httpClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("cannot fetch github organizations: %w", err)
 	}
+
 	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
@@ -64,8 +66,10 @@ func ListGitHubOrganizations(ctx context.Context, httpClient *http.Client) ([]Or
 		if displayName == "" {
 			displayName = org.Login
 		}
+
 		result[i] = Organization{Slug: org.Login, DisplayName: displayName}
 	}
+
 	return result, nil
 }
 
@@ -81,12 +85,14 @@ func ListSentryOrganizations(ctx context.Context, httpClient *http.Client) ([]Or
 	if err != nil {
 		return nil, fmt.Errorf("cannot create sentry organizations request: %w", err)
 	}
+
 	req.Header.Set("Accept", "application/json")
 
 	resp, err := httpClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("cannot fetch sentry organizations: %w", err)
 	}
+
 	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
@@ -107,8 +113,10 @@ func ListSentryOrganizations(ctx context.Context, httpClient *http.Client) ([]Or
 		if displayName == "" {
 			displayName = org.Slug
 		}
+
 		result[i] = Organization{Slug: org.Slug, DisplayName: displayName}
 	}
+
 	return result, nil
 }
 
@@ -125,12 +133,14 @@ func ListGitLabOrganizations(ctx context.Context, httpClient *http.Client) ([]Or
 	if err != nil {
 		return nil, fmt.Errorf("cannot create gitlab organizations request: %w", err)
 	}
+
 	req.Header.Set("Accept", "application/json")
 
 	resp, err := httpClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("cannot fetch gitlab organizations: %w", err)
 	}
+
 	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
@@ -152,11 +162,13 @@ func ListGitLabOrganizations(ctx context.Context, httpClient *http.Client) ([]Or
 		if displayName == "" {
 			displayName = g.FullPath
 		}
+
 		result[i] = Organization{
 			Slug:        strconv.FormatInt(g.ID, 10),
 			DisplayName: displayName,
 		}
 	}
+
 	return result, nil
 }
 
@@ -174,6 +186,7 @@ func ListBitbucketOrganizations(ctx context.Context, httpClient *http.Client) ([
 		if err != nil {
 			return nil, fmt.Errorf("cannot create bitbucket organizations request: %w", err)
 		}
+
 		req.Header.Set("Accept", "application/json")
 
 		resp, err := httpClient.Do(req)
@@ -203,6 +216,7 @@ func ListBitbucketOrganizations(ctx context.Context, httpClient *http.Client) ([
 			_ = resp.Body.Close()
 			return nil, fmt.Errorf("cannot decode bitbucket organizations response: %w", err)
 		}
+
 		_ = resp.Body.Close()
 
 		for _, v := range body.Values {
@@ -211,18 +225,22 @@ func ListBitbucketOrganizations(ctx context.Context, httpClient *http.Client) ([
 				slug = v.Workspace.Slug
 				name = v.Workspace.Name
 			}
+
 			displayName := name
 			if displayName == "" {
 				displayName = slug
 			}
+
 			result = append(result, Organization{Slug: slug, DisplayName: displayName})
 		}
 
 		if body.Next == "" {
 			return result, nil
 		}
+
 		pageURL = body.Next
 	}
+
 	return nil, fmt.Errorf("cannot list all bitbucket organizations: %w", ErrPaginationLimitReached)
 }
 
@@ -233,12 +251,14 @@ func ListHerokuOrganizations(ctx context.Context, httpClient *http.Client) ([]Or
 	if err != nil {
 		return nil, fmt.Errorf("cannot create heroku organizations request: %w", err)
 	}
+
 	req.Header.Set("Accept", "application/vnd.heroku+json; version=3")
 
 	resp, err := httpClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("cannot fetch heroku organizations: %w", err)
 	}
+
 	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
@@ -259,8 +279,10 @@ func ListHerokuOrganizations(ctx context.Context, httpClient *http.Client) ([]Or
 		if displayName == "" {
 			displayName = t.ID
 		}
+
 		result[i] = Organization{Slug: t.ID, DisplayName: displayName}
 	}
+
 	return result, nil
 }
 
@@ -276,12 +298,14 @@ func ListAsanaOrganizations(ctx context.Context, httpClient *http.Client) ([]Org
 	if err != nil {
 		return nil, fmt.Errorf("cannot create asana organizations request: %w", err)
 	}
+
 	req.Header.Set("Accept", "application/json")
 
 	resp, err := httpClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("cannot fetch asana organizations: %w", err)
 	}
+
 	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
@@ -304,8 +328,10 @@ func ListAsanaOrganizations(ctx context.Context, httpClient *http.Client) ([]Org
 		if displayName == "" {
 			displayName = w.GID
 		}
+
 		result[i] = Organization{Slug: w.GID, DisplayName: displayName}
 	}
+
 	return result, nil
 }
 
@@ -321,12 +347,14 @@ func ListNetlifyOrganizations(ctx context.Context, httpClient *http.Client) ([]O
 	if err != nil {
 		return nil, fmt.Errorf("cannot create netlify organizations request: %w", err)
 	}
+
 	req.Header.Set("Accept", "application/json")
 
 	resp, err := httpClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("cannot fetch netlify organizations: %w", err)
 	}
+
 	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
@@ -348,8 +376,10 @@ func ListNetlifyOrganizations(ctx context.Context, httpClient *http.Client) ([]O
 		if displayName == "" {
 			displayName = a.Slug
 		}
+
 		result[i] = Organization{Slug: a.Slug, DisplayName: displayName}
 	}
+
 	return result, nil
 }
 
@@ -365,12 +395,14 @@ func ListClickUpOrganizations(ctx context.Context, httpClient *http.Client) ([]O
 	if err != nil {
 		return nil, fmt.Errorf("cannot create clickup organizations request: %w", err)
 	}
+
 	req.Header.Set("Accept", "application/json")
 
 	resp, err := httpClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("cannot fetch clickup organizations: %w", err)
 	}
+
 	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
@@ -393,7 +425,9 @@ func ListClickUpOrganizations(ctx context.Context, httpClient *http.Client) ([]O
 		if displayName == "" {
 			displayName = t.ID
 		}
+
 		result[i] = Organization{Slug: t.ID, DisplayName: displayName}
 	}
+
 	return result, nil
 }

@@ -67,6 +67,7 @@ func (e *Evidence) AuthorizationAttributes(ctx context.Context, conn pg.Querier)
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrResourceNotFound
 		}
+
 		return nil, fmt.Errorf("cannot query evidence authorization attributes: %w", err)
 	}
 
@@ -136,6 +137,7 @@ WHERE evidences.state = 'REQUESTED';
 		"description_processing_started_at": e.DescriptionProcessingStartedAt,
 	}
 	_, err := conn.Exec(ctx, q, args)
+
 	return err
 }
 
@@ -199,8 +201,8 @@ VALUES (
 		"description_status":                e.DescriptionStatus,
 		"description_processing_started_at": e.DescriptionProcessingStartedAt,
 	}
-	_, err := conn.Exec(ctx, q, args)
 
+	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) {
@@ -208,6 +210,7 @@ VALUES (
 				return ErrResourceAlreadyExists
 			}
 		}
+
 		return fmt.Errorf("cannot insert evidence: %w", err)
 	}
 
@@ -288,6 +291,7 @@ WHERE
 	row := conn.QueryRow(ctx, q, args)
 
 	var count int
+
 	err := row.Scan(&count)
 	if err != nil {
 		return 0, fmt.Errorf("cannot collect evidence: %w", err)
@@ -372,6 +376,7 @@ WHERE
 	row := conn.QueryRow(ctx, q, args)
 
 	var count int
+
 	err := row.Scan(&count)
 	if err != nil {
 		return 0, fmt.Errorf("cannot collect evidence: %w", err)
@@ -470,6 +475,7 @@ WHERE
 	maps.Copy(args, scope.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
+
 	return err
 }
 
@@ -540,6 +546,7 @@ FOR UPDATE SKIP LOCKED;
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
 		}
+
 		return fmt.Errorf("cannot collect evidence: %w", err)
 	}
 
@@ -564,5 +571,6 @@ WHERE
 `
 
 	_, err := conn.Exec(ctx, q, time.Now().Add(-staleAfter))
+
 	return err
 }

@@ -98,7 +98,6 @@ func (s RightsRequestService) Get(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -145,7 +144,6 @@ func (s *RightsRequestService) Create(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -207,7 +205,6 @@ func (s *RightsRequestService) Update(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -248,6 +245,7 @@ func (s RightsRequestService) CountByOrganizationID(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			requests := coredata.RightsRequests{}
+
 			count, err = requests.CountByOrganizationID(ctx, conn, s.svc.scope, organizationID)
 			if err != nil {
 				return fmt.Errorf("cannot count rights requests: %w", err)
@@ -256,7 +254,6 @@ func (s RightsRequestService) CountByOrganizationID(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return 0, err
 	}
@@ -282,7 +279,6 @@ func (s RightsRequestService) ListForOrganizationID(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}

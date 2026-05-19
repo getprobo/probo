@@ -57,6 +57,7 @@ func newRecorder(t *testing.T, cassettePath string, envVar string) *recorder.Rec
 		if mode == recorder.ModeReplayOnly {
 			t.Skipf("cassette not found (record with %s env var): %v", envVar, err)
 		}
+
 		t.Fatalf("cannot create vcr recorder: %v", err)
 	}
 
@@ -81,6 +82,7 @@ func (rt *authRoundTripper) RoundTrip(req *http.Request) (*http.Response, error)
 	if rt.authValue != "" {
 		req.Header.Set("Authorization", rt.authValue)
 	}
+
 	return rt.transport.RoundTrip(req)
 }
 
@@ -89,6 +91,7 @@ func bearerAuth(token string) string {
 	if token == "" {
 		return ""
 	}
+
 	return "Bearer " + token
 }
 
@@ -104,5 +107,6 @@ func newVCRClient(rec *recorder.Recorder, authValue string) *http.Client {
 			transport: transport,
 		}
 	}
+
 	return &http.Client{Transport: transport}
 }

@@ -63,9 +63,11 @@ func normalizeCodeBlockContent(content string) string {
 	if content == "" {
 		return content
 	}
+
 	if strings.HasSuffix(content, "\n") && !strings.HasSuffix(content, "\n\n") {
 		return strings.TrimSuffix(content, "\n")
 	}
+
 	return content
 }
 
@@ -82,6 +84,7 @@ func (c *converter) convertChildren(n ast.Node) ([]Node, error) {
 		if err != nil {
 			return nil, err
 		}
+
 		nodes = append(nodes, converted...)
 	}
 
@@ -97,12 +100,15 @@ func (c *converter) convertInlineChildren(n ast.Node) ([]Node, error) {
 	for ch := n.FirstChild(); ch != nil; {
 		if ch.Kind() == ast.KindRawHTML {
 			run, next := c.collectRawHTMLRun(ch)
+
 			inodes, err := convertProseMirrorFromInlineHTML(run)
 			if err != nil {
 				return nil, err
 			}
+
 			nodes = append(nodes, prependOuterMarks(copyMarks(c.marks), inodes)...)
 			ch = next
+
 			continue
 		}
 
@@ -110,6 +116,7 @@ func (c *converter) convertInlineChildren(n ast.Node) ([]Node, error) {
 		if err != nil {
 			return nil, err
 		}
+
 		nodes = append(nodes, converted...)
 		ch = ch.NextSibling()
 	}
@@ -122,6 +129,7 @@ func (c *converter) convertInlineChildren(n ast.Node) ([]Node, error) {
 // sibling not consumed (or nil).
 func (c *converter) collectRawHTMLRun(start ast.Node) (run string, next ast.Node) {
 	var buf bytes.Buffer
+
 	ch := start
 	for ch != nil {
 		switch ch.Kind() {
@@ -134,6 +142,7 @@ func (c *converter) collectRawHTMLRun(start ast.Node) (run string, next ast.Node
 		case ast.KindText:
 			t := ch.(*ast.Text)
 			buf.Write(t.Segment.Value(c.source))
+
 			if t.SoftLineBreak() {
 				buf.WriteByte(' ')
 			}
@@ -142,8 +151,10 @@ func (c *converter) collectRawHTMLRun(start ast.Node) (run string, next ast.Node
 		default:
 			return buf.String(), ch
 		}
+
 		ch = ch.NextSibling()
 	}
+
 	return buf.String(), nil
 }
 
@@ -198,6 +209,7 @@ func (c *converter) convertNode(n ast.Node) ([]Node, error) {
 		case goldmarkast.KindTableCell:
 			return nil, fmt.Errorf("cannot convert table cell outside of a table row")
 		}
+
 		return nil, fmt.Errorf("cannot convert markdown node of kind %s", n.Kind())
 	}
 }
@@ -255,6 +267,7 @@ func (c *converter) convertFencedCodeBlock(n *ast.FencedCodeBlock) ([]Node, erro
 	content := normalizeCodeBlockContent(buf.String())
 
 	var lang *string
+
 	if n.Language(c.source) != nil {
 		l := string(n.Language(c.source))
 		lang = &l
@@ -321,6 +334,7 @@ func (c *converter) convertList(n *ast.List) ([]Node, error) {
 		if err != nil {
 			return nil, fmt.Errorf("cannot marshal ordered list attrs: %w", err)
 		}
+
 		return []Node{{
 			Type:    NodeOrderedList,
 			Content: children,
@@ -376,6 +390,7 @@ func (c *converter) convertText(n *ast.Text) ([]Node, error) {
 	if n.SoftLineBreak() {
 		content += " "
 	}
+
 	if content == "" {
 		return nil, nil
 	}
@@ -417,6 +432,7 @@ func (c *converter) convertEmphasis(n *ast.Emphasis) ([]Node, error) {
 	c.marks = append(c.marks, mark)
 	children, err := c.convertInlineChildren(n)
 	c.marks = c.marks[:len(c.marks)-1]
+
 	if err != nil {
 		return nil, err
 	}
@@ -466,6 +482,7 @@ func (c *converter) convertLink(n *ast.Link) ([]Node, error) {
 	c.marks = append(c.marks, Mark{Type: MarkLink, Attrs: attrs})
 	children, err := c.convertInlineChildren(n)
 	c.marks = c.marks[:len(c.marks)-1]
+
 	if err != nil {
 		return nil, err
 	}
@@ -477,6 +494,7 @@ func (c *converter) convertAutoLink(n *ast.AutoLink) ([]Node, error) {
 	url := string(n.URL(c.source))
 
 	linkAttrs := LinkAttrs{Href: safeLinkHref(url)}
+
 	attrs, err := json.Marshal(linkAttrs)
 	if err != nil {
 		return nil, fmt.Errorf("cannot marshal link attrs: %w", err)
@@ -496,19 +514,24 @@ func (c *converter) convertRawHTML(n ast.Node) ([]Node, error) {
 	if !ok {
 		return nil, fmt.Errorf("cannot convert raw html: unexpected node type %T", n)
 	}
+
 	var buf bytes.Buffer
+
 	for i := 0; i < raw.Segments.Len(); i++ {
 		seg := raw.Segments.At(i)
 		buf.Write(seg.Value(c.source))
 	}
+
 	run := buf.String()
 	if run == "" {
 		return nil, nil
 	}
+
 	nodes, err := convertProseMirrorFromInlineHTML(run)
 	if err != nil {
 		return nil, err
 	}
+
 	return prependOuterMarks(copyMarks(c.marks), nodes), nil
 }
 
@@ -519,6 +542,7 @@ func (c *converter) convertHTMLBlock(n *ast.HTMLBlock) ([]Node, error) {
 		line := n.Lines().At(i)
 		buf.Write(line.Value(c.source))
 	}
+
 	if n.HasClosure() {
 		buf.Write(n.ClosureLine.Value(c.source))
 	}
@@ -535,6 +559,7 @@ func (c *converter) convertStrikethrough(n ast.Node) ([]Node, error) {
 	c.marks = append(c.marks, Mark{Type: MarkStrike})
 	children, err := c.convertInlineChildren(n)
 	c.marks = c.marks[:len(c.marks)-1]
+
 	if err != nil {
 		return nil, err
 	}
@@ -550,6 +575,7 @@ func (c *converter) convertTable(n ast.Node) ([]Node, error) {
 		if err != nil {
 			return nil, err
 		}
+
 		rows = append(rows, converted...)
 	}
 
@@ -622,10 +648,12 @@ func (c *converter) convertTableCells(row ast.Node, cellType NodeType) ([]Node, 
 func (c *converter) convertTableCellContent(cell ast.Node) ([]Node, error) {
 	if c.cellHasBlockHTML(cell) {
 		raw := c.collectCellRawContent(cell)
+
 		nodes, err := convertProseMirrorFromHTMLBlock(raw)
 		if err != nil {
 			return nil, err
 		}
+
 		if len(nodes) > 0 {
 			return nodes, nil
 		}
@@ -635,6 +663,7 @@ func (c *converter) convertTableCellContent(cell ast.Node) ([]Node, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return []Node{{Type: NodeParagraph, Content: inlineContent}}, nil
 }
 
@@ -643,15 +672,18 @@ func (c *converter) cellHasBlockHTML(cell ast.Node) bool {
 		if ch.Kind() != ast.KindRawHTML {
 			continue
 		}
+
 		raw := ch.(*ast.RawHTML)
 		for i := 0; i < raw.Segments.Len(); i++ {
 			seg := raw.Segments.At(i)
+
 			val := strings.ToLower(string(seg.Value(c.source)))
 			if containsBlockOpenTag(val) {
 				return true
 			}
 		}
 	}
+
 	return false
 }
 
@@ -664,11 +696,13 @@ func containsBlockOpenTag(s string) bool {
 			return true
 		}
 	}
+
 	return false
 }
 
 func (c *converter) collectCellRawContent(cell ast.Node) string {
 	var buf bytes.Buffer
+
 	for ch := cell.FirstChild(); ch != nil; ch = ch.NextSibling() {
 		switch ch.Kind() {
 		case ast.KindRawHTML:
@@ -680,6 +714,7 @@ func (c *converter) collectCellRawContent(cell ast.Node) string {
 		case ast.KindText:
 			t := ch.(*ast.Text)
 			buf.Write(t.Segment.Value(c.source))
+
 			if t.SoftLineBreak() {
 				buf.WriteByte(' ')
 			}
@@ -689,12 +724,14 @@ func (c *converter) collectCellRawContent(cell ast.Node) string {
 			buf.WriteString(c.extractText(ch))
 		}
 	}
+
 	return buf.String()
 }
 
 // extractText recursively collects the text content of all descendant nodes.
 func (c *converter) extractText(n ast.Node) string {
 	var buf bytes.Buffer
+
 	for child := n.FirstChild(); child != nil; child = child.NextSibling() {
 		switch child.Kind() {
 		case ast.KindText:
@@ -705,6 +742,7 @@ func (c *converter) extractText(n ast.Node) string {
 			buf.WriteString(c.extractText(child))
 		}
 	}
+
 	return buf.String()
 }
 
@@ -725,11 +763,14 @@ func prependOuterMarks(outer []Mark, nodes []Node) []Node {
 	if len(outer) == 0 {
 		return nodes
 	}
+
 	for i := range nodes {
 		if nodes[i].Type == NodeImage {
 			continue
 		}
+
 		nodes[i].Marks = append(copyMarks(outer), nodes[i].Marks...)
 	}
+
 	return nodes
 }

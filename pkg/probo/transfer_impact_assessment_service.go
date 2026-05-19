@@ -92,7 +92,6 @@ func (s TransferImpactAssessmentService) Get(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -116,7 +115,6 @@ func (s TransferImpactAssessmentService) GetByProcessingActivityID(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -142,7 +140,6 @@ func (s TransferImpactAssessmentService) ListForOrganizationID(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -161,10 +158,10 @@ func (s TransferImpactAssessmentService) CountForOrganizationID(
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			tias := coredata.TransferImpactAssessments{}
 			count, err = tias.CountByOrganizationID(ctx, conn, s.svc.scope, organizationID)
+
 			return err
 		},
 	)
-
 	if err != nil {
 		return 0, err
 	}
@@ -211,7 +208,6 @@ func (s *TransferImpactAssessmentService) Create(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -265,7 +261,6 @@ func (s *TransferImpactAssessmentService) Update(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}

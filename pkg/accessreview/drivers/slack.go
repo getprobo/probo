@@ -120,6 +120,7 @@ func (d *SlackDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error)
 		if resp.ResponseMetadata.NextCursor == "" {
 			return records, nil
 		}
+
 		cursor = resp.ResponseMetadata.NextCursor
 	}
 
@@ -134,15 +135,18 @@ func (d *SlackDriver) queryUsers(ctx context.Context, cursor string) (*slackUser
 
 	q := req.URL.Query()
 	q.Set("limit", "200")
+
 	if cursor != "" {
 		q.Set("cursor", cursor)
 	}
+
 	req.URL.RawQuery = q.Encode()
 
 	httpResp, err := d.httpClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("cannot execute slack users.list request: %w", err)
 	}
+
 	defer func() {
 		_ = httpResp.Body.Close()
 	}()
@@ -180,5 +184,6 @@ func slackMFAStatus(has2FA bool) coredata.MFAStatus {
 	if has2FA {
 		return coredata.MFAStatusEnabled
 	}
+
 	return coredata.MFAStatusDisabled
 }

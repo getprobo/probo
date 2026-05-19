@@ -80,6 +80,8 @@ func UnwrapOmittable[T any](field mcpgenmcp.Omittable[T]) *T {
 	if !field.IsSet() {
 		return nil
 	}
+
 	value, _ := field.Value()
+
 	return &value
 }

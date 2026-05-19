@@ -47,6 +47,7 @@ func (fs FindingStatus) String() string {
 
 func (fs *FindingStatus) Scan(value any) error {
 	var s string
+
 	switch v := value.(type) {
 	case string:
 		s = v
@@ -72,6 +73,7 @@ func (fs *FindingStatus) Scan(value any) error {
 	default:
 		return fmt.Errorf("invalid FindingStatus value: %q", s)
 	}
+
 	return nil
 }
 

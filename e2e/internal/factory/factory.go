@@ -42,9 +42,11 @@ func (a Attrs) get(key string, defaultVal any) any {
 	if a == nil {
 		return defaultVal
 	}
+
 	if v, ok := a[key]; ok {
 		return v
 	}
+
 	return defaultVal
 }
 
@@ -52,6 +54,7 @@ func (a Attrs) getString(key string, defaultVal string) string {
 	if v, ok := a.get(key, defaultVal).(string); ok {
 		return v
 	}
+
 	return defaultVal
 }
 
@@ -59,11 +62,13 @@ func (a Attrs) getStringPtr(key string) *string {
 	if a == nil {
 		return nil
 	}
+
 	if v, ok := a[key]; ok {
 		if s, ok := v.(string); ok {
 			return &s
 		}
 	}
+
 	return nil
 }
 
@@ -71,6 +76,7 @@ func (a Attrs) getInt(key string, defaultVal int) int {
 	if a == nil {
 		return defaultVal
 	}
+
 	if v, ok := a[key]; ok {
 		switch val := v.(type) {
 		case int:
@@ -81,6 +87,7 @@ func (a Attrs) getInt(key string, defaultVal int) int {
 			return int(val)
 		}
 	}
+
 	return defaultVal
 }
 
@@ -88,11 +95,13 @@ func (a Attrs) getBool(key string, defaultVal bool) bool {
 	if a == nil {
 		return defaultVal
 	}
+
 	if v, ok := a[key]; ok {
 		if b, ok := v.(bool); ok {
 			return b
 		}
 	}
+
 	return defaultVal
 }
 
@@ -167,9 +176,11 @@ func CreateThirdParty(c *testutil.Client, attrs ...Attrs) string {
 	if desc := a.getStringPtr("description"); desc != nil {
 		input["description"] = *desc
 	}
+
 	if url := a.getStringPtr("websiteUrl"); url != nil {
 		input["websiteUrl"] = *url
 	}
+
 	if cat := a.getStringPtr("category"); cat != nil {
 		input["category"] = *cat
 	}
@@ -348,6 +359,7 @@ func CreateTask(c *testutil.Client, measureID *string, attrs ...Attrs) string {
 	if measureID != nil {
 		input["measureId"] = *measureID
 	}
+
 	if desc := a.getStringPtr("description"); desc != nil {
 		input["description"] = *desc
 	}
@@ -951,6 +963,7 @@ func CreateAccessSource(c *testutil.Client, organizationID string, attrs ...Attr
 	if csvData := a.getStringPtr("csvData"); csvData != nil {
 		input["csvData"] = *csvData
 	}
+
 	if connectorID := a.getStringPtr("connectorId"); connectorID != nil {
 		input["connectorId"] = *connectorID
 	}
@@ -1446,7 +1459,9 @@ func ReportDetectedResources(c *testutil.Client, bannerID string, count int) {
 	url := fmt.Sprintf("%s/api/cookie-banner/v1/%s/report", c.BaseURL(), bannerID)
 	resp, err := http.Post(url, "application/json", bytes.NewReader(body))
 	require.NoError(c.T, err, "report detected resources request failed")
+
 	defer func() { _ = resp.Body.Close() }()
+
 	require.Equal(c.T, http.StatusNoContent, resp.StatusCode, "report detected resources unexpected status")
 }
 

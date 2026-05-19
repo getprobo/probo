@@ -45,6 +45,7 @@ func (s TrackerType) String() string {
 
 func (s *TrackerType) Scan(value any) error {
 	var v string
+
 	switch val := value.(type) {
 	case string:
 		v = val
@@ -68,6 +69,7 @@ func (s *TrackerType) Scan(value any) error {
 	default:
 		return fmt.Errorf("invalid TrackerType value: %q", v)
 	}
+
 	return nil
 }
 

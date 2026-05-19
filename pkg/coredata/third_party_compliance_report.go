@@ -62,6 +62,7 @@ func (v *ThirdPartyComplianceReport) AuthorizationAttributes(ctx context.Context
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrResourceNotFound
 		}
+
 		return nil, fmt.Errorf("cannot query thirdParty compliance report authorization attributes: %w", err)
 	}
 
@@ -262,6 +263,7 @@ VALUES (
 	}
 
 	_, err := conn.Exec(ctx, q, args)
+
 	return err
 }
 
@@ -286,8 +288,8 @@ RETURNING report_file_id
 	maps.Copy(args, scope.SQLArguments())
 
 	var vcrFileId *gid.GID
-	err := conn.QueryRow(ctx, q, args).Scan(&vcrFileId)
 
+	err := conn.QueryRow(ctx, q, args).Scan(&vcrFileId)
 	if err != nil {
 		return fmt.Errorf("cannot delete thirdParty compliance report: %w", err)
 	}
@@ -298,5 +300,6 @@ RETURNING report_file_id
 			return fmt.Errorf("cannot soft delete thirdParty compliance file: %w", err)
 		}
 	}
+
 	return nil
 }

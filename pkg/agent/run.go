@@ -104,14 +104,17 @@ func blockingCallLLM(ctx context.Context, agent *Agent, req *llm.ChatCompletionR
 	if sErr != nil {
 		return nil, err // return the original error
 	}
+
 	defer func() { _ = stream.Close() }()
 
 	acc := llm.NewStreamAccumulator(stream)
 	for acc.Next() {
 	}
+
 	if sErr := acc.Err(); sErr != nil {
 		return nil, sErr
 	}
+
 	return acc.Response(), nil
 }
 
@@ -143,6 +146,7 @@ func (s *loopState) resolveAgentTools(ctx context.Context) error {
 
 	s.toolMap = toolMap
 	s.toolDefs = toolDefs
+
 	return nil
 }
 
@@ -218,6 +222,7 @@ func (s *loopState) finishRun(ctx context.Context, result *Result, err error) (*
 	)
 
 	s.opts.onEvent(ctx, StreamEvent{Type: StreamEventComplete, Agent: s.agent, Result: result})
+
 	return result, err
 }
 
@@ -385,6 +390,7 @@ func coreLoop(ctx context.Context, startAgent *Agent, inputMessages []llm.Messag
 			if s.opts.checkpointer != nil {
 				if saveErr := s.opts.checkpointer.Save(ctx, s.opts.runID, cp); saveErr != nil {
 					s.logger.ErrorCtx(ctx, "cannot save suspension checkpoint", log.Error(saveErr))
+
 					se.Checkpoint = cp
 				} else {
 					emitHook(s.agent, func(h RunHooks) { h.OnRunSnapshot(ctx, s.agent, cp) })
@@ -412,6 +418,7 @@ func coreLoop(ctx context.Context, startAgent *Agent, inputMessages []llm.Messag
 		if s.toolUsedInRun && s.agent.resetToolChoice && toolChoice != nil {
 			toolChoice = nil
 		}
+
 		if !exploring && structuredFormat != nil && len(s.toolDefs) > 0 {
 			// On the synthesis turn, forbid further tool calls so the
 			// model is forced to convert what it has into JSON.
@@ -478,9 +485,11 @@ func coreLoop(ctx context.Context, startAgent *Agent, inputMessages []llm.Messag
 			// conclusions during synthesis.
 			if exploring && s.turns < s.agent.maxTurns {
 				exploring = false
+
 				if resp.Message.Text() == "" {
 					s.messages = s.messages[:len(s.messages)-1]
 				}
+
 				s.messages = append(
 					s.messages,
 					llm.Message{
@@ -494,6 +503,7 @@ func coreLoop(ctx context.Context, startAgent *Agent, inputMessages []llm.Messag
 					log.Int("turn", s.turns),
 					log.Int("output_tokens", resp.Usage.OutputTokens),
 				)
+
 				continue
 			}
 
@@ -514,8 +524,10 @@ func coreLoop(ctx context.Context, startAgent *Agent, inputMessages []llm.Messag
 					log.Int("retry", emptyOutputRetries),
 					log.Int("output_tokens", resp.Usage.OutputTokens),
 				)
+
 				continue
 			}
+
 			if err := runOutputGuardrails(ctx, s.agent, resp.Message); err != nil {
 				return s.finishRun(ctx, nil, err)
 			}
@@ -530,6 +542,7 @@ func coreLoop(ctx context.Context, startAgent *Agent, inputMessages []llm.Messag
 			emitAgentHook(s.agent, func(h AgentHooks) { h.OnEnd(ctx, s.agent, resp.Message.Text()) })
 
 			opts.onEvent(ctx, StreamEvent{Type: StreamEventAgentEnd, Agent: s.agent})
+
 			return s.finishRun(ctx, result, nil)
 
 		case llm.FinishReasonToolCalls:
@@ -561,6 +574,7 @@ func coreLoop(ctx context.Context, startAgent *Agent, inputMessages []llm.Messag
 						outerCP.InnerCheckpoints = se.Checkpoint.InnerCheckpoints
 						outerCP.CompletedCalls = se.Checkpoint.CompletedCalls
 					}
+
 					if s.opts.checkpointer != nil {
 						if saveErr := s.opts.checkpointer.Save(ctx, s.opts.runID, outerCP); saveErr != nil {
 							s.logger.ErrorCtx(ctx, "cannot save checkpoint", log.Error(saveErr))
@@ -568,6 +582,7 @@ func coreLoop(ctx context.Context, startAgent *Agent, inputMessages []llm.Messag
 							emitHook(s.agent, func(h RunHooks) { h.OnRunSnapshot(ctx, s.agent, outerCP) })
 						}
 					}
+
 					return s.finishRun(ctx, nil, &SuspendedError{RunID: s.opts.runID, Checkpoint: outerCP})
 				}
 
@@ -584,6 +599,7 @@ func coreLoop(ctx context.Context, startAgent *Agent, inputMessages []llm.Messag
 					if s.opts.checkpointer != nil {
 						cp := s.buildCheckpoint(AgentStatusAwaitingApproval)
 						cp.PendingToolCalls = nae.allToolCalls
+
 						cp.PendingApprovals = nae.pendingApprovals
 						if saveErr := s.opts.checkpointer.Save(ctx, s.opts.runID, cp); saveErr != nil {
 							s.logger.ErrorCtx(ctx, "cannot save approval checkpoint", log.Error(saveErr))
@@ -623,6 +639,7 @@ func coreLoop(ctx context.Context, startAgent *Agent, inputMessages []llm.Messag
 						cp.PendingApprovals = nie.inner.PendingApprovals
 						cp.AllToolCalls = nie.allToolCalls
 						cp.CompletedCalls = nie.completedCalls
+
 						cp.InnerCheckpoints = map[string]*Checkpoint{
 							nie.toolCallID: {
 								Status:           AgentStatusAwaitingApproval,
@@ -692,6 +709,7 @@ func coreLoop(ctx context.Context, startAgent *Agent, inputMessages []llm.Messag
 				emitAgentHook(s.agent, func(h AgentHooks) { h.OnEnd(ctx, s.agent, finalOutput) })
 
 				opts.onEvent(ctx, StreamEvent{Type: StreamEventAgentEnd, Agent: s.agent})
+
 				return s.finishRun(ctx, result, nil)
 			}
 
@@ -748,6 +766,7 @@ func callLLMWithHooks(
 	if err != nil {
 		emitHook(agent, func(h RunHooks) { h.OnLLMEnd(ctx, agent, nil, err) })
 		emitAgentHook(agent, func(h AgentHooks) { h.OnLLMEnd(ctx, agent, nil, err) })
+
 		return nil, err
 	}
 
@@ -790,6 +809,7 @@ func executeToolCalls(
 		if !ok {
 			return nil, nil, nil, fmt.Errorf("cannot dispatch tool call: unknown tool %q", tc.Function.Name)
 		}
+
 		descriptors[i] = desc
 		if _, isHandoff := desc.(*handoffToolAdapter); isHandoff && handoffIdx == -1 {
 			handoffIdx = i
@@ -806,6 +826,7 @@ func executeToolCalls(
 	}
 
 	results, msgs, err := executeParallel(ctx, tracer, agent, toolCalls, tools, onEvent, logger)
+
 	return nil, results, msgs, err
 }
 
@@ -844,6 +865,7 @@ func executeWithHandoff(
 						},
 					)
 				}
+
 				return nil, nil, msgs, &nestedInterruptionError{
 					inner:          ie,
 					toolCallID:     toolCalls[i].ID,
@@ -851,6 +873,7 @@ func executeWithHandoff(
 					completedCalls: completed,
 				}
 			}
+
 			return nil, nil, msgs, err
 		}
 
@@ -915,9 +938,11 @@ func executeParallel(
 	logger *log.Logger,
 ) ([]ToolCallResult, []llm.Message, error) {
 	entries := make([]parallelToolEntry, len(toolCalls))
+
 	var wg sync.WaitGroup
 
 	wg.Add(len(toolCalls))
+
 	for i := range toolCalls {
 		go func(idx int, tc llm.ToolCall, tool Tool) {
 			defer wg.Done()
@@ -927,6 +952,7 @@ func executeParallel(
 				entries[idx] = parallelToolEntry{err: err}
 				return
 			}
+
 			entries[idx] = parallelToolEntry{result: tr}
 		}(i, toolCalls[i], tools[i])
 	}
@@ -940,10 +966,12 @@ func executeParallel(
 		}
 
 		var completed []CompletedCall
+
 		for j, other := range entries {
 			if j == i {
 				continue
 			}
+
 			if other.err != nil {
 				completed = append(
 					completed,
@@ -955,8 +983,10 @@ func executeParallel(
 						},
 					},
 				)
+
 				continue
 			}
+
 			completed = append(
 				completed,
 				CompletedCall{
@@ -965,6 +995,7 @@ func executeParallel(
 				},
 			)
 		}
+
 		return nil, nil, &nestedInterruptionError{
 			inner:          ie,
 			toolCallID:     toolCalls[i].ID,
@@ -978,15 +1009,18 @@ func executeParallel(
 		if entry.err == nil {
 			continue
 		}
+
 		se, ok := errors.AsType[*SuspendedError](entry.err)
 		if ok && se.Checkpoint != nil {
 			innerCheckpoints := make(map[string]*Checkpoint)
+
 			var completed []CompletedCall
 
 			for j, other := range entries {
 				if j == i {
 					continue
 				}
+
 				if other.err == nil {
 					completed = append(
 						completed,
@@ -995,8 +1029,10 @@ func executeParallel(
 							Result:     other.result,
 						},
 					)
+
 					continue
 				}
+
 				otherSE, ok := errors.AsType[*SuspendedError](other.err)
 				if ok && otherSE.Checkpoint != nil {
 					innerCheckpoints[toolCalls[j].ID] = otherSE.Checkpoint
@@ -1024,6 +1060,7 @@ func executeParallel(
 					CompletedCalls:   completed,
 				},
 			}
+
 			return nil, nil, outerSE
 		}
 	}
@@ -1060,6 +1097,7 @@ func executeParallel(
 					},
 				},
 			)
+
 			continue
 		}
 
@@ -1169,6 +1207,7 @@ func executeSingleTool(
 		if len(content) > 200 {
 			content = content[:200] + "... (truncated)"
 		}
+
 		logger.WarnCtx(
 			ctx,
 			"tool returned error",
@@ -1192,6 +1231,7 @@ func checkApproval(ctx context.Context, a *Agent, toolCalls []llm.ToolCall) erro
 	}
 
 	var pending []llm.ToolCall
+
 	for _, tc := range toolCalls {
 		if a.approval.requiresApproval(ctx, tc) {
 			pending = append(pending, tc)
@@ -1363,6 +1403,7 @@ func resumeWithOpts(ctx context.Context, interrupted *InterruptedError, input Re
 			)
 
 			handoffTarget = ht.handoff
+
 			break
 		}
 
@@ -1464,6 +1505,7 @@ func resumeNested(ctx context.Context, interrupted *InterruptedError, input Resu
 				},
 			}
 		}
+
 		return nil, fmt.Errorf("cannot resume nested agent: %w", err)
 	}
 
@@ -1534,8 +1576,10 @@ func resolveStructuredFormat(a *Agent) *llm.ResponseFormat {
 	if a.responseFormat != nil {
 		return a.responseFormat
 	}
+
 	if a.outputType != nil {
 		return a.outputType.responseFormat()
 	}
+
 	return nil
 }

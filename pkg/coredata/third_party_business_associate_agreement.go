@@ -61,6 +61,7 @@ func (vbaa *ThirdPartyBusinessAssociateAgreement) AuthorizationAttributes(ctx co
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrResourceNotFound
 		}
+
 		return nil, fmt.Errorf("cannot query thirdParty business associate agreement authorization attributes: %w", err)
 	}
 
@@ -297,6 +298,7 @@ ON CONFLICT (organization_id, third_party_id) DO UPDATE SET
 	if err != nil {
 		return fmt.Errorf("cannot upsert thirdParty business associate agreement: %w", err)
 	}
+
 	return nil
 }
 
@@ -320,6 +322,7 @@ WHERE
 	maps.Copy(args, scope.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
+
 	return err
 }
 
@@ -344,5 +347,6 @@ WHERE
 	maps.Copy(args, scope.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
+
 	return err
 }

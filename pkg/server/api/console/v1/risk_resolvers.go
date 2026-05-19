@@ -54,7 +54,9 @@ func (r *mutationResolver) CreateRisk(ctx context.Context, input types.CreateRis
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot create risk", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -91,7 +93,9 @@ func (r *mutationResolver) UpdateRisk(ctx context.Context, input types.UpdateRis
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot update risk", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -252,10 +256,13 @@ func (r *mutationResolver) PublishRiskList(ctx context.Context, input types.Publ
 		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
 			return nil, gqlutils.Conflict(ctx, err)
 		}
+
 		if errMinor, ok := errors.AsType[*probo.ErrCannotPublishMinorWithoutMajor](err); ok {
 			return nil, gqlutils.Invalid(ctx, errMinor)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot publish risk list", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -284,6 +291,7 @@ func (r *riskResolver) Owner(ctx context.Context, obj *types.Risk) (*types.Profi
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get owner", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -305,6 +313,7 @@ func (r *riskResolver) Organization(ctx context.Context, obj *types.Risk) (*type
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get organization", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -404,6 +413,7 @@ func (r *riskResolver) Controls(ctx context.Context, obj *types.Risk, first *int
 	}
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
 	var filters = coredata.NewControlFilter(nil)
 	if filter != nil {
 		filters = coredata.NewControlFilter(filter.Query)
@@ -490,6 +500,7 @@ func (r *riskConnectionResolver) TotalCount(ctx context.Context, obj *types.Risk
 			r.logger.ErrorCtx(ctx, "cannot count risks", log.Error(err))
 			return 0, gqlutils.Internal(ctx)
 		}
+
 		return count, nil
 	case *organizationResolver:
 		count, err := prb.Risks.CountForOrganizationID(ctx, obj.ParentID, obj.Filters)
@@ -497,6 +508,7 @@ func (r *riskConnectionResolver) TotalCount(ctx context.Context, obj *types.Risk
 			r.logger.ErrorCtx(ctx, "cannot count risks", log.Error(err))
 			return 0, gqlutils.Internal(ctx)
 		}
+
 		return count, nil
 	case *riskAssessmentScenarioResolver:
 		scope := coredata.NewScopeFromObjectID(obj.ParentID)
@@ -509,6 +521,7 @@ func (r *riskConnectionResolver) TotalCount(ctx context.Context, obj *types.Risk
 	}
 
 	r.logger.ErrorCtx(ctx, "unsupported resolver")
+
 	return 0, gqlutils.Internal(ctx)
 }
 

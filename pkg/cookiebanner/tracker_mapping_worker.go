@@ -75,6 +75,7 @@ func (h *trackerMappingHandler) Claim(ctx context.Context) (coredata.TrackerPatt
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return coredata.TrackerPattern{}, worker.ErrNoTask
 		}
+
 		return coredata.TrackerPattern{}, fmt.Errorf("cannot claim tracker mapping task: %w", err)
 	}
 
@@ -85,9 +86,11 @@ func (h *trackerMappingHandler) Process(ctx context.Context, tp coredata.Tracker
 	return h.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			var commonPatternID *gid.GID
-			var thirdPartyID *gid.GID
-			var err error
+			var (
+				commonPatternID *gid.GID
+				thirdPartyID    *gid.GID
+				err             error
+			)
 
 			commonPatternID, thirdPartyID, err = h.matchByPattern(ctx, tx, tp)
 			if err != nil {
@@ -143,12 +146,15 @@ func (h *trackerMappingHandler) matchByPattern(
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, nil, nil
 		}
+
 		return nil, nil, fmt.Errorf("cannot load common tracker pattern: %w", err)
 	}
 
 	var thirdPartyID *gid.GID
+
 	if commonPattern.CommonThirdPartyID != nil {
 		var err error
+
 		thirdPartyID, err = h.resolveThirdParty(ctx, conn, tp, &commonPattern)
 		if err != nil {
 			return nil, nil, fmt.Errorf("cannot resolve third party from pattern match: %w", err)
@@ -164,6 +170,7 @@ func (h *trackerMappingHandler) matchByDomain(
 	tp coredata.TrackerPattern,
 ) (*gid.GID, *gid.GID, error) {
 	var trackers coredata.DetectedTrackers
+
 	domains, err := trackers.LoadInitiatorDomainsByTrackerPatternID(ctx, tx, tp.ID, 10)
 	if err != nil {
 		return nil, nil, fmt.Errorf("cannot load initiator domains: %w", err)
@@ -174,6 +181,7 @@ func (h *trackerMappingHandler) matchByDomain(
 	}
 
 	filter := coredata.NewCommonThirdPartyDomainFilter(domains)
+
 	var matchedDomains coredata.CommonThirdPartyDomains
 	if err := matchedDomains.Load(ctx, tx, 1, filter); err != nil {
 		return nil, nil, fmt.Errorf("cannot load common third party domain by domain match: %w", err)
@@ -217,6 +225,7 @@ func (h *trackerMappingHandler) identifyWithAgent(
 	tp coredata.TrackerPattern,
 ) (*gid.GID, *gid.GID, error) {
 	var trackers coredata.DetectedTrackers
+
 	domains, err := trackers.LoadInitiatorDomainsByTrackerPatternID(ctx, tx, tp.ID, 5)
 	if err != nil {
 		h.logger.WarnCtx(ctx, "cannot load initiator domains for agent", log.Error(err))
@@ -244,6 +253,7 @@ func (h *trackerMappingHandler) identifyWithAgent(
 			log.Error(err),
 			log.String("pattern", tp.Pattern),
 		)
+
 		return nil, nil, nil
 	}
 
@@ -256,6 +266,7 @@ func (h *trackerMappingHandler) identifyWithAgent(
 			log.String("pattern", tp.Pattern),
 			log.Float64("confidence", identification.Confidence),
 		)
+
 		return nil, nil, nil
 	}
 
@@ -420,6 +431,7 @@ func (h *trackerMappingHandler) resolveThirdParty(
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, nil
 		}
+
 		return nil, fmt.Errorf("cannot resolve third party: %w", err)
 	}
 

@@ -45,12 +45,14 @@ func (c *Client) SearchMails(query string) (*MailpitSearchResponse, error) {
 	if err != nil {
 		return nil, fmt.Errorf("cannot create request: %w", err)
 	}
+
 	req.Header.Set("Content-Type", "application/json")
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("request failed: %w", err)
 	}
+
 	defer func() { _ = resp.Body.Close() }()
 
 	respBody, err := io.ReadAll(resp.Body)
@@ -75,12 +77,14 @@ func (c *Client) CheckMessageLinks(messageID string) (*MailpitLinkCheckResponse,
 	if err != nil {
 		return nil, fmt.Errorf("cannot create request: %w", err)
 	}
+
 	req.Header.Set("Content-Type", "application/json")
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("request failed: %w", err)
 	}
+
 	defer func() { _ = resp.Body.Close() }()
 
 	respBody, err := io.ReadAll(resp.Body)

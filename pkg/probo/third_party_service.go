@@ -217,6 +217,7 @@ func (s ThirdPartyService) CountForOrganizationID(
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			thirdParties := coredata.ThirdParties{}
 			filter := &coredata.ThirdPartyFilter{}
+
 			count, err = thirdParties.CountByOrganizationID(ctx, conn, s.svc.scope, organizationID, filter)
 			if err != nil {
 				return fmt.Errorf("cannot count thirdParties: %w", err)
@@ -225,7 +226,6 @@ func (s ThirdPartyService) CountForOrganizationID(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return 0, err
 	}
@@ -240,6 +240,7 @@ func (s ThirdPartyService) ListForOrganizationID(
 	filter *coredata.ThirdPartyFilter,
 ) (*page.Page[*coredata.ThirdParty, coredata.ThirdPartyOrderField], error) {
 	var thirdParties coredata.ThirdParties
+
 	organization := &coredata.Organization{}
 
 	err := s.svc.pg.WithConn(
@@ -259,7 +260,6 @@ func (s ThirdPartyService) ListForOrganizationID(
 			)
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -277,6 +277,7 @@ func (s ThirdPartyService) CountForDatumID(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			thirdParties := coredata.ThirdParties{}
+
 			count, err = thirdParties.CountByDatumID(ctx, conn, s.svc.scope, datumID)
 			if err != nil {
 				return fmt.Errorf("cannot count thirdParties: %w", err)
@@ -285,7 +286,6 @@ func (s ThirdPartyService) CountForDatumID(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return 0, err
 	}
@@ -312,7 +312,6 @@ func (s ThirdPartyService) ListForDatumID(
 			)
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -421,6 +420,7 @@ func (s ThirdPartyService) Update(
 					if err := businessOwner.LoadByID(ctx, conn, s.svc.scope, **req.BusinessOwnerID); err != nil {
 						return fmt.Errorf("cannot load business owner profile: %w", err)
 					}
+
 					thirdParty.BusinessOwnerID = &businessOwner.ID
 				} else {
 					thirdParty.BusinessOwnerID = nil
@@ -433,6 +433,7 @@ func (s ThirdPartyService) Update(
 					if err := securityOwner.LoadByID(ctx, conn, s.svc.scope, **req.SecurityOwnerID); err != nil {
 						return fmt.Errorf("cannot load security owner profile: %w", err)
 					}
+
 					thirdParty.SecurityOwnerID = &securityOwner.ID
 				} else {
 					thirdParty.SecurityOwnerID = nil
@@ -459,7 +460,6 @@ func (s ThirdPartyService) Update(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -479,7 +479,6 @@ func (s ThirdPartyService) Get(
 			return thirdParty.LoadByID(ctx, conn, s.svc.scope, thirdPartyID)
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -591,6 +590,7 @@ func (s ThirdPartyService) Create(
 				if err := businessOwner.LoadByID(ctx, conn, s.svc.scope, *req.BusinessOwnerID); err != nil {
 					return fmt.Errorf("cannot load business owner profile: %w", err)
 				}
+
 				thirdParty.BusinessOwnerID = &businessOwner.ID
 			}
 
@@ -599,6 +599,7 @@ func (s ThirdPartyService) Create(
 				if err := securityOwner.LoadByID(ctx, conn, s.svc.scope, *req.SecurityOwnerID); err != nil {
 					return fmt.Errorf("cannot load security owner profile: %w", err)
 				}
+
 				thirdParty.SecurityOwnerID = &securityOwner.ID
 			}
 
@@ -626,7 +627,6 @@ func (s ThirdPartyService) Create(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -644,6 +644,7 @@ func (s ThirdPartyService) CountForAssetID(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			thirdParties := coredata.ThirdParties{}
+
 			count, err = thirdParties.CountByAssetID(ctx, conn, s.svc.scope, assetID)
 			if err != nil {
 				return fmt.Errorf("cannot count thirdParties: %w", err)
@@ -652,7 +653,6 @@ func (s ThirdPartyService) CountForAssetID(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return 0, err
 	}
@@ -673,7 +673,6 @@ func (s ThirdPartyService) ListForAssetID(
 			return thirdParties.LoadByAssetID(ctx, conn, s.svc.scope, assetID, cursor)
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -699,7 +698,6 @@ func (s ThirdPartyService) ListForProcessingActivityID(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -720,7 +718,6 @@ func (s ThirdPartyService) ListRiskAssessments(
 			return thirdPartyRiskAssessments.LoadByThirdPartyID(ctx, conn, s.svc.scope, thirdPartyID, cursor)
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -772,10 +769,10 @@ func (s ThirdPartyService) CreateRiskAssessment(
 			if err := thirdPartyRiskAssessment.Insert(ctx, tx, s.svc.scope); err != nil {
 				return fmt.Errorf("cannot insert thirdParty risk assessment: %w", err)
 			}
+
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -795,7 +792,6 @@ func (s ThirdPartyService) GetRiskAssessment(
 			return thirdPartyRiskAssessment.LoadByID(ctx, conn, s.svc.scope, thirdPartyRiskAssessmentID)
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -824,7 +820,6 @@ func (s ThirdPartyService) GetByRiskAssessmentID(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -860,41 +855,53 @@ func (s ThirdPartyService) Assess(
 			if info.Category != "" {
 				thirdParty.Category = coredata.ThirdPartyCategory(info.Category)
 			}
+
 			thirdParty.UpdatedAt = time.Now()
 
 			if info.Description != "" {
 				thirdParty.Description = &info.Description
 			}
+
 			if info.HeadquarterAddress != "" {
 				thirdParty.HeadquarterAddress = &info.HeadquarterAddress
 			}
+
 			if info.LegalName != "" {
 				thirdParty.LegalName = &info.LegalName
 			}
+
 			if info.PrivacyPolicyURL != "" {
 				thirdParty.PrivacyPolicyURL = &info.PrivacyPolicyURL
 			}
+
 			if info.ServiceLevelAgreementURL != "" {
 				thirdParty.ServiceLevelAgreementURL = &info.ServiceLevelAgreementURL
 			}
+
 			if info.DataProcessingAgreementURL != "" {
 				thirdParty.DataProcessingAgreementURL = &info.DataProcessingAgreementURL
 			}
+
 			if info.BusinessAssociateAgreementURL != "" {
 				thirdParty.BusinessAssociateAgreementURL = &info.BusinessAssociateAgreementURL
 			}
+
 			if info.SubprocessorsListURL != "" {
 				thirdParty.SubprocessorsListURL = &info.SubprocessorsListURL
 			}
+
 			if info.SecurityPageURL != "" {
 				thirdParty.SecurityPageURL = &info.SecurityPageURL
 			}
+
 			if info.TrustPageURL != "" {
 				thirdParty.TrustPageURL = &info.TrustPageURL
 			}
+
 			if info.TermsOfServiceURL != "" {
 				thirdParty.TermsOfServiceURL = &info.TermsOfServiceURL
 			}
+
 			if info.StatusPageURL != "" {
 				thirdParty.StatusPageURL = &info.StatusPageURL
 			}

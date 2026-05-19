@@ -41,6 +41,7 @@ func (p DataProtectionImpactAssessmentResidualRisk) String() string {
 
 func (p *DataProtectionImpactAssessmentResidualRisk) Scan(value any) error {
 	var s string
+
 	switch v := value.(type) {
 	case string:
 		s = v
@@ -60,6 +61,7 @@ func (p *DataProtectionImpactAssessmentResidualRisk) Scan(value any) error {
 	default:
 		return fmt.Errorf("invalid DataProtectionImpactAssessmentResidualRisk value: %q", s)
 	}
+
 	return nil
 }
 

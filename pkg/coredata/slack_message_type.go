@@ -32,6 +32,7 @@ func (smt SlackMessageType) String() string {
 
 func (smt *SlackMessageType) Scan(value any) error {
 	var s string
+
 	switch v := value.(type) {
 	case string:
 		s = v
@@ -49,6 +50,7 @@ func (smt *SlackMessageType) Scan(value any) error {
 	default:
 		return fmt.Errorf("invalid SlackMessageType value: %q", s)
 	}
+
 	return nil
 }
 

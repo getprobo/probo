@@ -64,6 +64,7 @@ func (i *DataSensitivity) Scan(value any) error {
 	default:
 		return fmt.Errorf("unsupported type for DataSensitivity: %T", value)
 	}
+
 	return nil
 }
 
@@ -95,6 +96,7 @@ func (i *DataSensitivity) UnmarshalJSON(data []byte) error {
 	default:
 		return fmt.Errorf("invalid DataSensitivity value: %q", s)
 	}
+
 	return nil
 }
 
@@ -118,5 +120,6 @@ func (i *DataSensitivity) UnmarshalText(text []byte) error {
 	default:
 		return fmt.Errorf("invalid DataSensitivity value: %q", s)
 	}
+
 	return nil
 }

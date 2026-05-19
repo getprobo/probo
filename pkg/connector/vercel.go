@@ -43,12 +43,14 @@ func FetchVercelUser(ctx context.Context, client *http.Client) (VercelUser, erro
 	if err != nil {
 		return VercelUser{}, fmt.Errorf("cannot create vercel user request: %w", err)
 	}
+
 	req.Header.Set("Accept", "application/json")
 
 	resp, err := client.Do(req)
 	if err != nil {
 		return VercelUser{}, fmt.Errorf("cannot execute vercel user request: %w", err)
 	}
+
 	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
@@ -61,6 +63,7 @@ func FetchVercelUser(ctx context.Context, client *http.Client) (VercelUser, erro
 	if err := json.NewDecoder(resp.Body).Decode(&body); err != nil {
 		return VercelUser{}, fmt.Errorf("cannot decode vercel user response: %w", err)
 	}
+
 	return body.User, nil
 }
 
@@ -77,14 +80,17 @@ func FetchVercelUserID(ctx context.Context, accessToken string) (string, error) 
 	if err != nil {
 		return "", fmt.Errorf("cannot create vercel user request: %w", err)
 	}
+
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("Authorization", "Bearer "+accessToken)
 
 	client := httpclient.DefaultClient(httpclient.WithSSRFProtection())
+
 	resp, err := client.Do(req)
 	if err != nil {
 		return "", fmt.Errorf("cannot execute vercel user request: %w", err)
 	}
+
 	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
@@ -97,5 +103,6 @@ func FetchVercelUserID(ctx context.Context, accessToken string) (string, error) 
 	if err := json.NewDecoder(resp.Body).Decode(&body); err != nil {
 		return "", fmt.Errorf("cannot decode vercel user response: %w", err)
 	}
+
 	return body.User.ID, nil
 }

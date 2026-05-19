@@ -52,19 +52,23 @@ func newTestPgClient(t *testing.T) *pg.Client {
 	// registry every time to avoid "duplicate collector" panics when tests
 	// run in parallel.
 	opts := []pg.Option{pg.WithRegisterer(prometheus.NewRegistry())}
+
 	if u.Host != "" {
 		host := u.Host
 		if u.Port() == "" {
 			host = net.JoinHostPort(u.Hostname(), "5432")
 		}
+
 		opts = append(opts, pg.WithAddr(host))
 	}
+
 	if u.User != nil {
 		opts = append(opts, pg.WithUser(u.User.Username()))
 		if password, ok := u.User.Password(); ok {
 			opts = append(opts, pg.WithPassword(password))
 		}
 	}
+
 	if len(u.Path) > 1 {
 		opts = append(opts, pg.WithDatabase(u.Path[1:]))
 	}
@@ -146,15 +150,19 @@ func seedAccessEntryFixture(t *testing.T, ctx context.Context, client *pg.Client
 			if _, err := tx.Exec(ctx, `DELETE FROM access_entries WHERE access_review_campaign_id = $1`, campaignID); err != nil {
 				return err
 			}
+
 			if _, err := tx.Exec(ctx, `DELETE FROM access_review_campaigns WHERE id = $1`, campaignID); err != nil {
 				return err
 			}
+
 			if _, err := tx.Exec(ctx, `DELETE FROM access_sources WHERE id = $1`, sourceID); err != nil {
 				return err
 			}
+
 			if _, err := tx.Exec(ctx, `DELETE FROM organizations WHERE id = $1`, organizationID); err != nil {
 				return err
 			}
+
 			return nil
 		})
 	})
@@ -231,6 +239,7 @@ func TestAccessEntry_Upsert_FreezesDecidedFields(t *testing.T) {
 		DecidedAt:    &decisionTime,
 		UpdatedAt:    decisionTime,
 	}
+
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		return decided.Update(ctx, tx, fx.scope)
 	}))
@@ -267,12 +276,14 @@ func TestAccessEntry_Upsert_FreezesDecidedFields(t *testing.T) {
 		CreatedAt:              t2,
 		UpdatedAt:              t2,
 	}
+
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		return refresh.Upsert(ctx, tx, fx.scope)
 	}))
 
 	// Step 4: Load and assert the freeze semantics.
 	loaded := &coredata.AccessEntry{}
+
 	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
 		return loaded.LoadByID(ctx, conn, fx.scope, entryID)
 	}))
@@ -341,6 +352,7 @@ func TestAccessEntry_Upsert_RefreshesSourceTrackingFields(t *testing.T) {
 		CreatedAt:              t0,
 		UpdatedAt:              t0,
 	}
+
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		return first.Upsert(ctx, tx, fx.scope)
 	}))
@@ -366,11 +378,13 @@ func TestAccessEntry_Upsert_RefreshesSourceTrackingFields(t *testing.T) {
 		CreatedAt:              t1,
 		UpdatedAt:              t1,
 	}
+
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		return second.Upsert(ctx, tx, fx.scope)
 	}))
 
 	loaded := &coredata.AccessEntry{}
+
 	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
 		return loaded.LoadByID(ctx, conn, fx.scope, entryID)
 	}))
@@ -428,11 +442,13 @@ func TestAccessEntry_Upsert_InsertsActiveAccount(t *testing.T) {
 		CreatedAt:              t0,
 		UpdatedAt:              t0,
 	}
+
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		return entry.Upsert(ctx, tx, fx.scope)
 	}))
 
 	loaded := &coredata.AccessEntry{}
+
 	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
 		return loaded.LoadByID(ctx, conn, fx.scope, entryID)
 	}))

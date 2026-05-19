@@ -63,6 +63,7 @@ func (a *Asset) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (m
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrResourceNotFound
 		}
+
 		return nil, fmt.Errorf("cannot query asset authorization attributes: %w", err)
 	}
 
@@ -446,6 +447,7 @@ WHERE
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, nil
 	}
+
 	if err != nil {
 		return nil, fmt.Errorf("cannot get asset list document ID: %w", err)
 	}

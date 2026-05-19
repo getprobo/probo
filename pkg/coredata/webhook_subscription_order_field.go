@@ -39,6 +39,7 @@ func (p WebhookSubscriptionOrderField) IsValid() bool {
 	case WebhookSubscriptionOrderFieldCreatedAt:
 		return true
 	}
+
 	return false
 }
 
@@ -51,5 +52,6 @@ func (p *WebhookSubscriptionOrderField) UnmarshalText(text []byte) error {
 	if !p.IsValid() {
 		return fmt.Errorf("%s is not a valid WebhookSubscriptionOrderField", string(text))
 	}
+
 	return nil
 }

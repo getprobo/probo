@@ -39,6 +39,7 @@ func (ot ObligationType) String() string {
 
 func (ot *ObligationType) Scan(value any) error {
 	var s string
+
 	switch v := value.(type) {
 	case string:
 		s = v
@@ -56,6 +57,7 @@ func (ot *ObligationType) Scan(value any) error {
 	default:
 		return fmt.Errorf("invalid ObligationType value: %q", s)
 	}
+
 	return nil
 }
 

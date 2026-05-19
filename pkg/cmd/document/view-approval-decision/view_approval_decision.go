@@ -142,6 +142,7 @@ func NewCmdViewApprovalDecision(f *cmdutil.Factory) *cobra.Command {
 			if d.DecidedAt != nil {
 				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Decided:"), cmdutil.FormatTime(*d.DecidedAt))
 			}
+
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Created:"), cmdutil.FormatTime(d.CreatedAt))
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Updated:"), cmdutil.FormatTime(d.UpdatedAt))
 

@@ -125,6 +125,7 @@ func (d *LinearDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error
 		if !resp.Data.Users.PageInfo.HasNextPage || resp.Data.Users.PageInfo.EndCursor == "" {
 			return records, nil
 		}
+
 		nextCursor := resp.Data.Users.PageInfo.EndCursor
 		after = &nextCursor
 	}
@@ -170,6 +171,7 @@ query AccessReviewLinearUsers($after: String) {
 	if err != nil {
 		return nil, fmt.Errorf("cannot create linear users request: %w", err)
 	}
+
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/json")
 
@@ -177,6 +179,7 @@ query AccessReviewLinearUsers($after: String) {
 	if err != nil {
 		return nil, fmt.Errorf("cannot execute linear users request: %w", err)
 	}
+
 	defer func() {
 		_ = httpResp.Body.Close()
 	}()
@@ -189,6 +192,7 @@ query AccessReviewLinearUsers($after: String) {
 	if err := json.NewDecoder(httpResp.Body).Decode(&resp); err != nil {
 		return nil, fmt.Errorf("cannot decode linear users response: %w", err)
 	}
+
 	if len(resp.Errors) > 0 {
 		return nil, fmt.Errorf("linear graphql error: %s", resp.Errors[0].Message)
 	}

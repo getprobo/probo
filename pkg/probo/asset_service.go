@@ -94,7 +94,6 @@ func (s AssetService) Get(
 			return asset.LoadByID(ctx, conn, s.svc.scope, assetID)
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -114,7 +113,6 @@ func (s AssetService) GetByOwnerID(
 			return asset.LoadByOwnerID(ctx, conn, s.svc.scope)
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -132,6 +130,7 @@ func (s AssetService) CountForOrganizationID(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			assets := coredata.Assets{}
+
 			count, err = assets.CountByOrganizationID(ctx, conn, s.svc.scope, organizationID)
 			if err != nil {
 				return fmt.Errorf("cannot count assets: %w", err)
@@ -140,7 +139,6 @@ func (s AssetService) CountForOrganizationID(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return 0, err
 	}
@@ -167,7 +165,6 @@ func (s AssetService) ListForOrganizationID(
 			)
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -196,19 +193,24 @@ func (s AssetService) Update(
 		if req.Name != nil {
 			asset.Name = *req.Name
 		}
+
 		if req.Amount != nil {
 			asset.Amount = *req.Amount
 		}
+
 		if req.OwnerID != nil {
 			profile := &coredata.MembershipProfile{}
 			if err := profile.LoadByID(ctx, conn, s.svc.scope, *req.OwnerID); err != nil {
 				return fmt.Errorf("cannot load owner profile: %w", err)
 			}
+
 			asset.OwnerID = *req.OwnerID
 		}
+
 		if req.AssetType != nil {
 			asset.AssetType = *req.AssetType
 		}
+
 		if req.DataTypesStored != nil {
 			asset.DataTypesStored = *req.DataTypesStored
 		}
@@ -225,7 +227,6 @@ func (s AssetService) Update(
 
 		return nil
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -275,7 +276,6 @@ func (s AssetService) Create(
 
 		return nil
 	})
-
 	if err != nil {
 		return nil, err
 	}

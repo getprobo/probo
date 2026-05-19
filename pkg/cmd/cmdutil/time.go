@@ -23,5 +23,6 @@ func FormatTime(raw string) string {
 	if err != nil {
 		return raw
 	}
+
 	return t.Local().Format("Jan 02, 2006 15:04 MST")
 }

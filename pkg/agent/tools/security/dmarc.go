@@ -46,6 +46,7 @@ func parseDMARCTag(record, tag string) string {
 			return after
 		}
 	}
+
 	return ""
 }
 
@@ -60,6 +61,7 @@ func CheckDMARCTool() agent.Tool {
 			}
 
 			client := dns.NewClient()
+
 			answers, err := queryDNS(
 				ctx,
 				client,

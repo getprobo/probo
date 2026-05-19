@@ -95,30 +95,39 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 			if cmd.Flags().Changed("name") {
 				input["name"] = flagName
 			}
+
 			if cmd.Flags().Changed("category") {
 				input["category"] = flagCategory
 			}
+
 			if cmd.Flags().Changed("treatment") {
 				input["treatment"] = flagTreatment
 			}
+
 			if cmd.Flags().Changed("inherent-likelihood") {
 				input["inherentLikelihood"] = flagInherentLikelihood
 			}
+
 			if cmd.Flags().Changed("inherent-impact") {
 				input["inherentImpact"] = flagInherentImpact
 			}
+
 			if cmd.Flags().Changed("residual-likelihood") {
 				input["residualLikelihood"] = flagResidualLikelihood
 			}
+
 			if cmd.Flags().Changed("residual-impact") {
 				input["residualImpact"] = flagResidualImpact
 			}
+
 			if cmd.Flags().Changed("description") {
 				input["description"] = flagDescription
 			}
+
 			if cmd.Flags().Changed("note") {
 				input["note"] = flagNote
 			}
+
 			if cmd.Flags().Changed("owner") {
 				if flagOwner == "" {
 					input["ownerId"] = nil

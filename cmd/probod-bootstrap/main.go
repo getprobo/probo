@@ -30,6 +30,7 @@ var (
 func main() {
 	outputPath := flag.String("output", "/etc/probod/config.yml", "output path for the generated config file")
 	showVersion := flag.Bool("version", false, "print version and exit")
+
 	flag.Parse()
 
 	if *showVersion {

@@ -31,18 +31,22 @@ func runMiddleware(t *testing.T, trusted []string, remoteAddr string, headers ma
 	require.NoError(t, err)
 
 	var captured *http.Request
+
 	handler := middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		captured = r
 	}))
 
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
+
 	req.RemoteAddr = remoteAddr
 	for k, v := range headers {
 		req.Header.Set(k, v)
 	}
+
 	handler.ServeHTTP(httptest.NewRecorder(), req)
 
 	require.NotNil(t, captured)
+
 	return captured
 }
 

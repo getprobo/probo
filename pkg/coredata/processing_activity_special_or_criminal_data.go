@@ -41,6 +41,7 @@ func (p ProcessingActivitySpecialOrCriminalDatum) String() string {
 
 func (p *ProcessingActivitySpecialOrCriminalDatum) Scan(value any) error {
 	var s string
+
 	switch v := value.(type) {
 	case string:
 		s = v
@@ -60,6 +61,7 @@ func (p *ProcessingActivitySpecialOrCriminalDatum) Scan(value any) error {
 	default:
 		return fmt.Errorf("invalid ProcessingActivitySpecialOrCriminalDatum value: %q", s)
 	}
+
 	return nil
 }
 

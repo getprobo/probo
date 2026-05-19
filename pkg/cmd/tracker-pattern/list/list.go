@@ -115,12 +115,15 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 					if err := json.Unmarshal(data, &resp); err != nil {
 						return nil, err
 					}
+
 					if resp.Node == nil {
 						return nil, fmt.Errorf("cookie category %s not found", flagCategoryID)
 					}
+
 					if resp.Node.Typename != "CookieCategory" {
 						return nil, fmt.Errorf("expected CookieCategory node, got %s", resp.Node.Typename)
 					}
+
 					return &resp.Node.TrackerPatterns, nil
 				},
 			)
@@ -143,14 +146,17 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				if p.Excluded {
 					excluded = "yes"
 				}
+
 				source := ""
 				if p.Source != nil {
 					source = *p.Source
 				}
+
 				lastMatched := ""
 				if p.LastMatchedAt != nil {
 					lastMatched = cmdutil.FormatTime(*p.LastMatchedAt)
 				}
+
 				rows = append(rows, []string{p.ID, p.Pattern, p.MatchType, p.TrackerType, p.DisplayName, source, excluded, lastMatched})
 			}
 

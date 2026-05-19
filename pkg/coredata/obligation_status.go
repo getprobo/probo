@@ -41,6 +41,7 @@ func (os ObligationStatus) String() string {
 
 func (os *ObligationStatus) Scan(value any) error {
 	var s string
+
 	switch v := value.(type) {
 	case string:
 		s = v
@@ -60,6 +61,7 @@ func (os *ObligationStatus) Scan(value any) error {
 	default:
 		return fmt.Errorf("invalid ObligationStatus value: %q", s)
 	}
+
 	return nil
 }
 

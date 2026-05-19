@@ -54,6 +54,7 @@ func (r *applicabilityStatementResolver) Control(ctx context.Context, obj *types
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get control", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -80,10 +81,12 @@ func (r *applicabilityStatementConnectionResolver) TotalCount(ctx context.Contex
 			r.logger.ErrorCtx(ctx, "cannot count applicability statements", log.Error(err))
 			return 0, gqlutils.Internal(ctx)
 		}
+
 		return count, nil
 	}
 
 	r.logger.ErrorCtx(ctx, "unsupported resolver for applicability statement connection", log.String("resolver", fmt.Sprintf("%T", obj.Resolver)))
+
 	return 0, gqlutils.Internal(ctx)
 }
 
@@ -102,8 +105,10 @@ func (r *controlResolver) Organization(ctx context.Context, obj *types.Control) 
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get organization", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
+
 	return types.NewOrganization(organization), nil
 }
 
@@ -161,6 +166,7 @@ func (r *controlResolver) Framework(ctx context.Context, obj *types.Control) (*t
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get framework", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -320,6 +326,7 @@ func (r *controlConnectionResolver) TotalCount(ctx context.Context, obj *types.C
 			r.logger.ErrorCtx(ctx, "cannot count controls", log.Error(err))
 			return 0, gqlutils.Internal(ctx)
 		}
+
 		return count, nil
 	case *frameworkResolver:
 		count, err := prb.Controls.CountForFrameworkID(ctx, obj.ParentID, obj.Filters)
@@ -327,6 +334,7 @@ func (r *controlConnectionResolver) TotalCount(ctx context.Context, obj *types.C
 			r.logger.ErrorCtx(ctx, "cannot count controls", log.Error(err))
 			return 0, gqlutils.Internal(ctx)
 		}
+
 		return count, nil
 	case *documentResolver:
 		count, err := prb.Controls.CountForDocumentID(ctx, obj.ParentID, obj.Filters)
@@ -334,6 +342,7 @@ func (r *controlConnectionResolver) TotalCount(ctx context.Context, obj *types.C
 			r.logger.ErrorCtx(ctx, "cannot count controls", log.Error(err))
 			return 0, gqlutils.Internal(ctx)
 		}
+
 		return count, nil
 	case *measureResolver:
 		count, err := prb.Controls.CountForMeasureID(ctx, obj.ParentID, obj.Filters)
@@ -341,6 +350,7 @@ func (r *controlConnectionResolver) TotalCount(ctx context.Context, obj *types.C
 			r.logger.ErrorCtx(ctx, "cannot count controls", log.Error(err))
 			return 0, gqlutils.Internal(ctx)
 		}
+
 		return count, nil
 	case *riskResolver:
 		count, err := prb.Controls.CountForRiskID(ctx, obj.ParentID, obj.Filters)
@@ -348,6 +358,7 @@ func (r *controlConnectionResolver) TotalCount(ctx context.Context, obj *types.C
 			r.logger.ErrorCtx(ctx, "cannot count controls", log.Error(err))
 			return 0, gqlutils.Internal(ctx)
 		}
+
 		return count, nil
 	case *statementOfApplicabilityResolver:
 		count, err := prb.Controls.CountForStatementOfApplicabilityID(ctx, obj.ParentID, obj.Filters)
@@ -355,10 +366,12 @@ func (r *controlConnectionResolver) TotalCount(ctx context.Context, obj *types.C
 			r.logger.ErrorCtx(ctx, "cannot count controls", log.Error(err))
 			return 0, gqlutils.Internal(ctx)
 		}
+
 		return count, nil
 	}
 
 	r.logger.ErrorCtx(ctx, "unsupported resolver")
+
 	return 0, gqlutils.Internal(ctx)
 }
 
@@ -390,7 +403,9 @@ func (r *mutationResolver) CreateControl(ctx context.Context, input types.Create
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot create control", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -419,7 +434,6 @@ func (r *mutationResolver) UpdateControl(ctx context.Context, input types.Update
 			NotImplementedJustification: gqlutils.UnwrapOmittable(input.NotImplementedJustification),
 		},
 	)
-
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
 			return nil, gqlutils.Conflict(ctx, err)
@@ -428,7 +442,9 @@ func (r *mutationResolver) UpdateControl(ctx context.Context, input types.Update
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot update control", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -491,6 +507,7 @@ func (r *mutationResolver) CreateControlDocumentMapping(ctx context.Context, inp
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot create control document mapping", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -696,10 +713,13 @@ func (r *mutationResolver) CreateStatementOfApplicability(ctx context.Context, i
 		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
 			return nil, gqlutils.Conflict(ctx, err)
 		}
+
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot create statement_of_applicability", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -732,10 +752,13 @@ func (r *mutationResolver) UpdateStatementOfApplicability(ctx context.Context, i
 		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
 			return nil, gqlutils.Conflict(ctx, err)
 		}
+
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot update statement_of_applicability", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -776,10 +799,13 @@ func (r *mutationResolver) PublishStatementOfApplicability(ctx context.Context, 
 		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
 			return nil, gqlutils.Conflict(ctx, err)
 		}
+
 		if errMinor, ok := errors.AsType[*probo.ErrCannotPublishMinorWithoutMajor](err); ok {
 			return nil, gqlutils.Invalid(ctx, errMinor)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot publish statement of applicability", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -806,7 +832,9 @@ func (r *statementOfApplicabilityResolver) Document(ctx context.Context, obj *ty
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, nil
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot load document", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -826,7 +854,9 @@ func (r *statementOfApplicabilityResolver) Organization(ctx context.Context, obj
 		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot load organization", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -879,10 +909,12 @@ func (r *statementOfApplicabilityConnectionResolver) TotalCount(ctx context.Cont
 			r.logger.ErrorCtx(ctx, "cannot count statements_of_applicability", log.Error(err))
 			return 0, gqlutils.Internal(ctx)
 		}
+
 		return count, nil
 	}
 
 	r.logger.ErrorCtx(ctx, "unsupported resolver")
+
 	return 0, gqlutils.Internal(ctx)
 }
 

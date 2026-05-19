@@ -60,6 +60,7 @@ func (vs *ThirdPartyService) AuthorizationAttributes(ctx context.Context, conn p
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrResourceNotFound
 		}
+
 		return nil, fmt.Errorf("cannot query thirdParty service authorization attributes: %w", err)
 	}
 

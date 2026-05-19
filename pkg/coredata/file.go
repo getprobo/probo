@@ -73,6 +73,7 @@ func (f *File) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (ma
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrResourceNotFound
 		}
+
 		return nil, fmt.Errorf("cannot query file authorization attributes: %w", err)
 	}
 
@@ -228,8 +229,8 @@ VALUES (
 		"updated_at":      f.UpdatedAt,
 		"deleted_at":      f.DeletedAt,
 	}
-	_, err := conn.Exec(ctx, q, args)
 
+	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) {
@@ -237,6 +238,7 @@ VALUES (
 				return ErrResourceAlreadyExists
 			}
 		}
+
 		return fmt.Errorf("cannot insert file: %w", err)
 	}
 

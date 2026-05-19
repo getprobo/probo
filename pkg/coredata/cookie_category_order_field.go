@@ -27,6 +27,7 @@ func (p CookieCategoryOrderField) Column() string {
 	case CookieCategoryOrderFieldRank:
 		return "rank"
 	}
+
 	panic(fmt.Sprintf("unsupported order by: %s", p))
 }
 
@@ -35,6 +36,7 @@ func (p CookieCategoryOrderField) IsValid() bool {
 	case CookieCategoryOrderFieldRank:
 		return true
 	}
+
 	return false
 }
 
@@ -47,6 +49,7 @@ func (p *CookieCategoryOrderField) UnmarshalText(text []byte) error {
 	if !p.IsValid() {
 		return fmt.Errorf("%s is not a valid CookieCategoryOrderField", string(text))
 	}
+
 	return nil
 }
 

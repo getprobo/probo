@@ -189,6 +189,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 			if flagDescription != "" {
 				input["description"] = flagDescription
 			}
+
 			if flagWebsite != "" {
 				input["websiteUrl"] = flagWebsite
 			}

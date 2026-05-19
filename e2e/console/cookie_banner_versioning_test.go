@@ -166,6 +166,7 @@ func TestCookieBannerVersioning_NoOpUpdates(t *testing.T) {
 		`
 
 		var result struct{}
+
 		err := owner.Execute(query, map[string]any{
 			"input": map[string]any{
 				"cookieBannerId":    bannerID,
@@ -238,6 +239,7 @@ func TestCookieBannerVersioning_NoOpUpdates(t *testing.T) {
 		`
 
 		var result struct{}
+
 		err := owner.Execute(query, map[string]any{
 			"input": map[string]any{
 				"cookieCategoryId": categoryID,
@@ -273,6 +275,7 @@ func TestCookieBannerVersioning_NoOpUpdates(t *testing.T) {
 		`
 
 		var result struct{}
+
 		err := owner.Execute(query, map[string]any{
 			"input": map[string]any{
 				"cookieCategoryId": categoryID,
@@ -308,6 +311,7 @@ func TestCookieBannerVersioning_NoOpUpdates(t *testing.T) {
 		`
 
 		var result struct{}
+
 		err := owner.Execute(query, map[string]any{
 			"input": map[string]any{
 				"cookieCategoryId": categoryID,
@@ -342,6 +346,7 @@ func TestCookieBannerVersioning_NoOpUpdates(t *testing.T) {
 		`
 
 		var result struct{}
+
 		err := owner.Execute(query, map[string]any{
 			"input": map[string]any{
 				"trackerPatternId": patternID,
@@ -424,6 +429,7 @@ func TestCookieBannerVersioning_ExcludedPattern(t *testing.T) {
 		`
 
 		var result struct{}
+
 		err := owner.Execute(query, map[string]any{
 			"input": map[string]any{"trackerPatternId": patternID},
 		}, &result)
@@ -456,6 +462,7 @@ func TestCookieBannerVersioning_ExcludedPattern(t *testing.T) {
 		`
 
 		var result struct{}
+
 		err := owner.Execute(query, map[string]any{
 			"input": map[string]any{
 				"trackerPatternId":       patternID,
@@ -531,6 +538,7 @@ func reportDetectedCookies(t *testing.T, c *testutil.Client, bannerID string, na
 		Name   string `json:"name"`
 		Source string `json:"source"`
 	}
+
 	cookies := make([]entry, len(names))
 	for i, n := range names {
 		cookies[i] = entry{Name: n, Source: "script"}
@@ -542,7 +550,9 @@ func reportDetectedCookies(t *testing.T, c *testutil.Client, bannerID string, na
 	endpoint := fmt.Sprintf("%s/api/cookie-banner/v1/%s/report", c.BaseURL(), bannerID)
 	resp, err := c.HTTPClient().Post(endpoint, "application/json", bytes.NewReader(body))
 	require.NoError(t, err)
+
 	defer func() { _ = resp.Body.Close() }()
+
 	require.Equal(t, http.StatusNoContent, resp.StatusCode,
 		"report endpoint should return 204")
 }
@@ -584,7 +594,9 @@ func TestCookieBannerVersioning_RealChangesStillBumpVersion(t *testing.T) {
 				updateCookieBanner(input: $input) { cookieBanner { id } }
 			}
 		`
+
 		var result struct{}
+
 		err := owner.Execute(query, map[string]any{
 			"input": map[string]any{
 				"cookieBannerId":    bannerID,
@@ -617,7 +629,9 @@ func TestCookieBannerVersioning_RealChangesStillBumpVersion(t *testing.T) {
 				updateTrackerPattern(input: $input) { trackerPattern { id } }
 			}
 		`
+
 		var result struct{}
+
 		err := owner.Execute(query, map[string]any{
 			"input": map[string]any{
 				"trackerPatternId": patternID,

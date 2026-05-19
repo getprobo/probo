@@ -124,6 +124,7 @@ func WithCategories(categories ...string) Option {
 					if v.AllowedExtensions[ext] == nil {
 						v.AllowedExtensions[ext] = []string{}
 					}
+
 					v.AllowedExtensions[ext] = append(v.AllowedExtensions[ext], fileType.MimeType)
 				}
 			}

@@ -34,6 +34,7 @@ func (ejt ExportJobType) String() string {
 
 func (ejt *ExportJobType) Scan(value any) error {
 	var s string
+
 	switch v := value.(type) {
 	case string:
 		s = v
@@ -51,6 +52,7 @@ func (ejt *ExportJobType) Scan(value any) error {
 	default:
 		return fmt.Errorf("invalid ExportJobType value: %q", s)
 	}
+
 	return nil
 }
 

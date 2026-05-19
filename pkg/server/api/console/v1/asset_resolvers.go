@@ -38,6 +38,7 @@ func (r *assetResolver) Owner(ctx context.Context, obj *types.Asset) (*types.Pro
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get owner", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -84,7 +85,6 @@ func (r *assetResolver) Organization(ctx context.Context, obj *types.Asset) (*ty
 
 	asset, err := prb.Assets.Get(ctx, obj.ID)
 	if err != nil {
-
 		r.logger.ErrorCtx(ctx, "cannot load audit", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
@@ -96,6 +96,7 @@ func (r *assetResolver) Organization(ctx context.Context, obj *types.Asset) (*ty
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get organization", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -122,10 +123,12 @@ func (r *assetConnectionResolver) TotalCount(ctx context.Context, obj *types.Ass
 			r.logger.ErrorCtx(ctx, "cannot count assets", log.Error(err))
 			return 0, gqlutils.Internal(ctx)
 		}
+
 		return count, nil
 	}
 
 	r.logger.ErrorCtx(ctx, "unsupported resolver")
+
 	return 0, gqlutils.Internal(ctx)
 }
 
@@ -194,6 +197,7 @@ func (r *datumResolver) Organization(ctx context.Context, obj *types.Datum) (*ty
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get organization", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -220,10 +224,12 @@ func (r *datumConnectionResolver) TotalCount(ctx context.Context, obj *types.Dat
 			r.logger.ErrorCtx(ctx, "cannot count data", log.Error(err))
 			return 0, gqlutils.Internal(ctx)
 		}
+
 		return count, nil
 	}
 
 	r.logger.ErrorCtx(ctx, "unsupported resolver")
+
 	return 0, gqlutils.Internal(ctx)
 }
 
@@ -247,12 +253,13 @@ func (r *mutationResolver) CreateAsset(ctx context.Context, input types.CreateAs
 			ThirdPartyIDs:   input.ThirdPartyIds,
 		},
 	)
-
 	if err != nil {
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot create asset", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -285,7 +292,9 @@ func (r *mutationResolver) UpdateAsset(ctx context.Context, input types.UpdateAs
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot update asset", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -331,12 +340,13 @@ func (r *mutationResolver) CreateDatum(ctx context.Context, input types.CreateDa
 			ThirdPartyIDs:      input.ThirdPartyIds,
 		},
 	)
-
 	if err != nil {
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot create datum", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -363,12 +373,13 @@ func (r *mutationResolver) UpdateDatum(ctx context.Context, input types.UpdateDa
 			ThirdPartyIDs:      input.ThirdPartyIds,
 		},
 	)
-
 	if err != nil {
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot update datum", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -408,10 +419,13 @@ func (r *mutationResolver) PublishDataList(ctx context.Context, input types.Publ
 		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
 			return nil, gqlutils.Conflict(ctx, err)
 		}
+
 		if errMinor, ok := errors.AsType[*probo.ErrCannotPublishMinorWithoutMajor](err); ok {
 			return nil, gqlutils.Invalid(ctx, errMinor)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot publish data list", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -434,10 +448,13 @@ func (r *mutationResolver) PublishAssetList(ctx context.Context, input types.Pub
 		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
 			return nil, gqlutils.Conflict(ctx, err)
 		}
+
 		if errMinor, ok := errors.AsType[*probo.ErrCannotPublishMinorWithoutMajor](err); ok {
 			return nil, gqlutils.Invalid(ctx, errMinor)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot publish asset list", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 

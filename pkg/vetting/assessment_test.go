@@ -60,6 +60,7 @@ func TestThirdPartyInfoOutputType_DecoratesEnums(t *testing.T) {
 			for i, v := range enumRaw {
 				actual[i] = v.(string)
 			}
+
 			assert.Equal(t, tt.expected, actual)
 		})
 	}

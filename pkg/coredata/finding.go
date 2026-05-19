@@ -80,6 +80,7 @@ func (f *Finding) AuthorizationAttributes(ctx context.Context, conn pg.Querier) 
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrResourceNotFound
 		}
+
 		return nil, fmt.Errorf("cannot query finding authorization attributes: %w", err)
 	}
 
@@ -166,6 +167,7 @@ WHERE
 	row := conn.QueryRow(ctx, q, args)
 
 	var count int
+
 	err := row.Scan(&count)
 	if err != nil {
 		return 0, fmt.Errorf("cannot count findings: %w", err)
@@ -524,6 +526,7 @@ WHERE
 	row := conn.QueryRow(ctx, q, args)
 
 	var count int
+
 	err := row.Scan(&count)
 	if err != nil {
 		return 0, fmt.Errorf("cannot count findings: %w", err)
@@ -608,6 +611,7 @@ WHERE
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, nil
 	}
+
 	if err != nil {
 		return nil, fmt.Errorf("cannot get finding list document ID: %w", err)
 	}

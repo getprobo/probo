@@ -26,6 +26,7 @@ func (r *connectorResolver) Oauth2Scopes(ctx context.Context, obj *types.Connect
 	if scopes == nil {
 		return []string{}, nil
 	}
+
 	return scopes, nil
 }
 
@@ -49,26 +50,31 @@ func (r *mutationResolver) CreateAPIKeyConnector(ctx context.Context, input type
 			OrganizationID: *input.TallyOrganizationID,
 		}
 	}
+
 	if input.SentryOrganizationSlug != nil {
 		req.SentrySettings = &coredata.SentryConnectorSettings{
 			OrganizationSlug: *input.SentryOrganizationSlug,
 		}
 	}
+
 	if input.SupabaseOrganizationSlug != nil {
 		req.SupabaseSettings = &coredata.SupabaseConnectorSettings{
 			OrganizationSlug: *input.SupabaseOrganizationSlug,
 		}
 	}
+
 	if input.GithubOrganization != nil {
 		req.GitHubSettings = &coredata.GitHubConnectorSettings{
 			Organization: *input.GithubOrganization,
 		}
 	}
+
 	if input.OnePasswordScimBridgeURL != nil {
 		req.OnePasswordSettings = &coredata.OnePasswordConnectorSettings{
 			SCIMBridgeURL: *input.OnePasswordScimBridgeURL,
 		}
 	}
+
 	cnnctr, err := prb.Connectors.Create(ctx, req)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceAlreadyExists) {

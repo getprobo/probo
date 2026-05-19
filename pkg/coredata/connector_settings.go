@@ -89,7 +89,9 @@ func (c *Connector) SetSettings(v any) error {
 	if err != nil {
 		return fmt.Errorf("cannot marshal connector settings: %w", err)
 	}
+
 	c.RawSettings = data
+
 	return nil
 }
 
@@ -103,8 +105,10 @@ func ConnectorSettings[T any](c *Connector) (T, error) {
 	if len(c.RawSettings) == 0 || string(c.RawSettings) == "null" {
 		return s, nil
 	}
+
 	if err := json.Unmarshal(c.RawSettings, &s); err != nil {
 		return s, fmt.Errorf("cannot unmarshal connector settings: %w", err)
 	}
+
 	return s, nil
 }

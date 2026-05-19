@@ -242,6 +242,7 @@ func TestDatum_PublishDataList(t *testing.T) {
 
 			ver1Major := result1.PublishDataList.DocumentVersionEdge.Node.Major
 			ver2Major := result2.PublishDataList.DocumentVersionEdge.Node.Major
+
 			assert.Equal(t, 1, ver1Major)
 			assert.Equal(t, 2, ver2Major)
 		},

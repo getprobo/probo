@@ -284,9 +284,11 @@ func TestConditionHelpers(t *testing.T) {
 		if c.Operator != ConditionEquals {
 			t.Errorf("Expected ConditionEquals, got %v", c.Operator)
 		}
+
 		if c.Key != "principal.id" {
 			t.Errorf("Expected principal.id, got %v", c.Key)
 		}
+
 		if len(c.Values) != 2 {
 			t.Errorf("Expected 2 values, got %d", len(c.Values))
 		}

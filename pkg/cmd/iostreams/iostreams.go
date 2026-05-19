@@ -42,6 +42,7 @@ func (s *IOStreams) IsInteractive() bool {
 	if s.ForceNonInteractive {
 		return false
 	}
+
 	return s.isStdinTTY() && s.isStdoutTTY()
 }
 
@@ -49,6 +50,7 @@ func (s *IOStreams) isStdinTTY() bool {
 	if f, ok := s.In.(*os.File); ok {
 		return term.IsTerminal(int(f.Fd()))
 	}
+
 	return false
 }
 
@@ -56,6 +58,7 @@ func (s *IOStreams) isStdoutTTY() bool {
 	if f, ok := s.Out.(*os.File); ok {
 		return term.IsTerminal(int(f.Fd()))
 	}
+
 	return false
 }
 
@@ -67,6 +70,7 @@ func (s *IOStreams) IsStdoutTTY() bool {
 	if s.ForceNonInteractive {
 		return false
 	}
+
 	return s.isStdoutTTY()
 }
 
@@ -74,6 +78,7 @@ func (s *IOStreams) ColorEnabled() bool {
 	if s.ForceNoColor {
 		return false
 	}
+
 	return s.isStdoutTTY()
 }
 
@@ -96,6 +101,7 @@ func System() *IOStreams {
 func Test() (*IOStreams, *bytes.Buffer, *bytes.Buffer) {
 	out := new(bytes.Buffer)
 	errOut := new(bytes.Buffer)
+
 	return &IOStreams{
 		In:     io.NopCloser(new(bytes.Buffer)),
 		Out:    out,

@@ -189,6 +189,7 @@ func NewCmdLogin(f *cmdutil.Factory) *cobra.Command {
 
 				if orgsErr == nil && len(orgs) > 0 {
 					selected := orgs[0].ID
+
 					options := make([]huh.Option[string], 0, len(orgs)+1)
 					for _, org := range orgs {
 						options = append(
@@ -199,6 +200,7 @@ func NewCmdLogin(f *cmdutil.Factory) *cobra.Command {
 							),
 						)
 					}
+
 					options = append(
 						options,
 						huh.NewOption("Skip (no default)", ""),
@@ -260,6 +262,7 @@ func normalizeHostToURL(host string) string {
 	if strings.HasPrefix(lower, "http://") || strings.HasPrefix(lower, "https://") {
 		return strings.TrimRight(host, "/")
 	}
+
 	return "https://" + strings.TrimRight(host, "/")
 }
 
@@ -279,6 +282,7 @@ func fetchDiscovery(client *http.Client, baseURL string) (*oidcDiscovery, error)
 	if err != nil {
 		return nil, fmt.Errorf("cannot fetch discovery document: %w", err)
 	}
+
 	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
@@ -327,6 +331,7 @@ func requestDeviceCode(
 	if err != nil {
 		return nil, fmt.Errorf("cannot request device code: %w", err)
 	}
+
 	defer func() { _ = resp.Body.Close() }()
 
 	body, err := io.ReadAll(resp.Body)
@@ -391,6 +396,7 @@ func pollForToken(
 
 		body, err := io.ReadAll(resp.Body)
 		_ = resp.Body.Close()
+
 		if err != nil {
 			return nil, fmt.Errorf("cannot read token response: %w", err)
 		}
@@ -400,6 +406,7 @@ func pollForToken(
 			if err := json.Unmarshal(body, &token); err != nil {
 				return nil, fmt.Errorf("cannot decode token response: %w", err)
 			}
+
 			return &token, nil
 		}
 

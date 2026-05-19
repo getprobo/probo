@@ -47,6 +47,7 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input types.CreateUse
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot create user", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -66,7 +67,6 @@ func (r *mutationResolver) DeactivateUser(ctx context.Context, input types.Deact
 		input.ProfileID,
 		coredata.ProfileStateInactive,
 	)
-
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot deactivate profile", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -113,8 +113,10 @@ func (r *mutationResolver) RemoveUser(ctx context.Context, input types.RemoveUse
 
 	err := r.iam.OrganizationService.RemoveUser(ctx, input.OrganizationID, input.ProfileID)
 	if err != nil {
-		var errManagedBySCIM *iam.ErrUserManagedBySCIM
-		var errLastActiveOwner *iam.ErrLastActiveOwner
+		var (
+			errManagedBySCIM   *iam.ErrUserManagedBySCIM
+			errLastActiveOwner *iam.ErrLastActiveOwner
+		)
 
 		if errors.As(err, &errManagedBySCIM) {
 			return nil, gqlutils.Conflict(ctx, err)
@@ -125,6 +127,7 @@ func (r *mutationResolver) RemoveUser(ctx context.Context, input types.RemoveUse
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot remove user from organization", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -150,6 +153,7 @@ func (r *profileResolver) Identity(ctx context.Context, obj *types.Profile) (*ty
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get identity", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -170,6 +174,7 @@ func (r *profileResolver) Organization(ctx context.Context, obj *types.Profile) 
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get organization", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -190,6 +195,7 @@ func (r *profileResolver) Membership(ctx context.Context, obj *types.Profile) (*
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get membership", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -232,6 +238,7 @@ func (r *profileConnectionResolver) TotalCount(ctx context.Context, obj *types.P
 			r.logger.ErrorCtx(ctx, "cannot count profiles", log.Error(err))
 			return nil, gqlutils.Internal(ctx)
 		}
+
 		return &count, nil
 	case *organizationResolver:
 		count, err := r.iam.OrganizationService.CountProfiles(ctx, obj.ParentID, obj.Filters)
@@ -239,10 +246,12 @@ func (r *profileConnectionResolver) TotalCount(ctx context.Context, obj *types.P
 			r.logger.ErrorCtx(ctx, "cannot count profiles", log.Error(err))
 			return nil, gqlutils.Internal(ctx)
 		}
+
 		return &count, nil
 	}
 
 	r.logger.ErrorCtx(ctx, "unsupported resolver", log.Any("resolver", obj.Resolver))
+
 	return nil, gqlutils.Internal(ctx)
 }
 

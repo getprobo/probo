@@ -29,14 +29,17 @@ func AbsorbPagerDutyTokenResponse(state *OAuth2State, body []byte) {
 	if state == nil || state.Provider != PagerDutyProvider {
 		return
 	}
+
 	var pd struct {
 		Subdomain string `json:"subdomain"`
 	}
 	if err := json.Unmarshal(body, &pd); err != nil || pd.Subdomain == "" {
 		return
 	}
+
 	if state.ProviderMetadata == nil {
 		state.ProviderMetadata = map[string]string{}
 	}
+
 	state.ProviderMetadata["subdomain"] = pd.Subdomain
 }

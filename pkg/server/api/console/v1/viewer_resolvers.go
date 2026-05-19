@@ -79,6 +79,7 @@ func (r *viewerResolver) SignableDocument(ctx context.Context, obj *types.Viewer
 	identity := authn.IdentityFromContext(ctx)
 
 	documentFilter := coredata.NewDocumentFilter(nil).WithEmployeeIdentityID(&identity.ID, coredata.EmployeeFilterModeSignature)
+
 	document, err := prb.Documents.GetWithFilter(ctx, id, documentFilter)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
@@ -86,6 +87,7 @@ func (r *viewerResolver) SignableDocument(ctx context.Context, obj *types.Viewer
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get signable document", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -158,6 +160,7 @@ func (r *viewerResolver) ApprovableDocument(ctx context.Context, obj *types.View
 	identity := authn.IdentityFromContext(ctx)
 
 	documentFilter := coredata.NewDocumentFilter(nil).WithEmployeeIdentityID(&identity.ID, coredata.EmployeeFilterModeApproval)
+
 	document, err := prb.Documents.GetWithFilter(ctx, id, documentFilter)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
@@ -165,6 +168,7 @@ func (r *viewerResolver) ApprovableDocument(ctx context.Context, obj *types.View
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get approvable document", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 

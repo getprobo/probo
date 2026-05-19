@@ -45,5 +45,6 @@ func (p *ProcessingActivityOrderField) UnmarshalText(text []byte) error {
 		*p = ProcessingActivityOrderField(val)
 		return nil
 	}
+
 	return fmt.Errorf("invalid ProcessingActivityOrderField value: %q", val)
 }

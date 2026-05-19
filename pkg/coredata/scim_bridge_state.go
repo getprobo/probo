@@ -35,6 +35,7 @@ func (s SCIMBridgeState) String() string {
 
 func (s *SCIMBridgeState) Scan(value any) error {
 	var str string
+
 	switch v := value.(type) {
 	case string:
 		str = v
@@ -58,6 +59,7 @@ func (s *SCIMBridgeState) Scan(value any) error {
 	default:
 		return fmt.Errorf("invalid SCIMBridgeState value: %q", str)
 	}
+
 	return nil
 }
 

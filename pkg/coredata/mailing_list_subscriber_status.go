@@ -32,6 +32,7 @@ func (s MailingListSubscriberStatus) String() string {
 
 func (s *MailingListSubscriberStatus) Scan(value any) error {
 	var str string
+
 	switch v := value.(type) {
 	case string:
 		str = v

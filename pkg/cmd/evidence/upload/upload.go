@@ -63,6 +63,7 @@ func NewCmdUpload(f *cmdutil.Factory) *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("cannot open file: %w", err)
 			}
+
 			defer func() { _ = file.Close() }()
 
 			cfg, err := f.Config()

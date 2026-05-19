@@ -62,6 +62,7 @@ func (f *Framework) AuthorizationAttributes(ctx context.Context, conn pg.Querier
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrResourceNotFound
 		}
+
 		return nil, fmt.Errorf("cannot query framework authorization attributes: %w", err)
 	}
 
@@ -174,6 +175,7 @@ LIMIT 1;
 
 	args := pgx.StrictNamedArgs{"reference_id": referenceID}
 	maps.Copy(args, scope.SQLArguments())
+
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
 		return fmt.Errorf("cannot query frameworks: %w", err)
@@ -222,6 +224,7 @@ LIMIT 1;
 
 	args := pgx.StrictNamedArgs{"framework_id": frameworkID}
 	maps.Copy(args, scope.SQLArguments())
+
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
 		return fmt.Errorf("cannot query frameworks: %w", err)
@@ -330,8 +333,8 @@ VALUES (
 		"created_at":         f.CreatedAt,
 		"updated_at":         f.UpdatedAt,
 	}
-	_, err := conn.Exec(ctx, q, args)
 
+	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) {
@@ -366,6 +369,7 @@ WHERE
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	_, err := conn.Exec(ctx, q, args)
+
 	return err
 }
 
@@ -396,5 +400,6 @@ WHERE
 	maps.Copy(args, scope.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
+
 	return err
 }

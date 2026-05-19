@@ -30,6 +30,7 @@ func (e DocumentWriteMode) IsValid() bool {
 	case DocumentWriteModeAuthored, DocumentWriteModeGenerated:
 		return true
 	}
+
 	return false
 }
 
@@ -40,6 +41,7 @@ func (e *DocumentWriteMode) UnmarshalText(text []byte) error {
 	if !e.IsValid() {
 		return fmt.Errorf("%s is not a valid DocumentWriteMode", string(text))
 	}
+
 	return nil
 }
 

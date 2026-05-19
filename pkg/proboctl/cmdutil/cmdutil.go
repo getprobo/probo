@@ -32,5 +32,6 @@ func (f *Factory) PgClient() (*pg.Client, error) {
 	if f.PgDSN == "" {
 		return nil, fmt.Errorf("set --pg-dsn or DATABASE_URL")
 	}
+
 	return pgconn.NewPgClientFromDSN(f.PgDSN)
 }

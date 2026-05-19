@@ -32,6 +32,7 @@ func (p TaskOrderField) Column() string {
 	case TaskOrderFieldCreatedAt:
 		return "created_at"
 	}
+
 	panic(fmt.Sprintf("unsupported order by: %s", p))
 }
 
@@ -40,6 +41,7 @@ func (p TaskOrderField) IsValid() bool {
 	case TaskOrderFieldPriorityRank, TaskOrderFieldCreatedAt:
 		return true
 	}
+
 	return false
 }
 
@@ -56,5 +58,6 @@ func (p *TaskOrderField) UnmarshalText(text []byte) error {
 	if !p.IsValid() {
 		return fmt.Errorf("%s is not a valid TaskOrderField", string(text))
 	}
+
 	return nil
 }

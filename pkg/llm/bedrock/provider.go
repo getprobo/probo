@@ -48,6 +48,7 @@ func NewProvider(cfg aws.Config, opts ...Option) *Provider {
 	}
 
 	client := bedrockruntime.NewFromConfig(cfg, fns...)
+
 	return &Provider{client: client}
 }
 
@@ -112,14 +113,17 @@ func buildInferenceConfig(req *llm.ChatCompletionRequest) *types.InferenceConfig
 		v := int32(*req.MaxTokens)
 		cfg.MaxTokens = &v
 	}
+
 	if req.Temperature != nil {
 		v := float32(*req.Temperature)
 		cfg.Temperature = &v
 	}
+
 	if req.TopP != nil {
 		v := float32(*req.TopP)
 		cfg.TopP = &v
 	}
+
 	if len(req.StopSequences) > 0 {
 		cfg.StopSequences = req.StopSequences
 	}
@@ -129,6 +133,7 @@ func buildInferenceConfig(req *llm.ChatCompletionRequest) *types.InferenceConfig
 
 func buildSystem(messages []llm.Message) []types.SystemContentBlock {
 	var system []types.SystemContentBlock
+
 	for _, msg := range messages {
 		if msg.Role == llm.RoleSystem {
 			system = append(
@@ -139,6 +144,7 @@ func buildSystem(messages []llm.Message) []types.SystemContentBlock {
 			)
 		}
 	}
+
 	return system
 }
 
@@ -151,11 +157,13 @@ func buildMessages(messages []llm.Message) []types.Message {
 			continue
 		case llm.RoleUser:
 			var content []types.ContentBlock
+
 			for _, p := range msg.Parts {
 				if tp, ok := p.(llm.TextPart); ok {
 					content = append(content, &types.ContentBlockMemberText{Value: tp.Text})
 				}
 			}
+
 			out = append(
 				out, types.Message{
 					Role:    types.ConversationRoleUser,
@@ -168,8 +176,10 @@ func buildMessages(messages []llm.Message) []types.Message {
 			if text := msg.Text(); text != "" {
 				content = append(content, &types.ContentBlockMemberText{Value: text})
 			}
+
 			for _, tc := range msg.ToolCalls {
 				var input any
+
 				_ = json.Unmarshal([]byte(tc.Function.Arguments), &input)
 				content = append(
 					content,
@@ -182,6 +192,7 @@ func buildMessages(messages []llm.Message) []types.Message {
 					},
 				)
 			}
+
 			out = append(
 				out, types.Message{
 					Role:    types.ConversationRoleAssistant,
@@ -220,13 +231,16 @@ func buildToolConfig(req *llm.ChatCompletionRequest) *types.ToolConfiguration {
 		}
 		if t.Parameters != nil {
 			var schema any
+
 			_ = json.Unmarshal(t.Parameters, &schema)
 			spec.InputSchema = &types.ToolInputSchemaMemberJson{
 				Value: document.NewLazyDocument(schema),
 			}
 		}
+
 		tools[i] = &types.ToolMemberToolSpec{Value: spec}
 	}
+
 	config.Tools = tools
 
 	if req.ToolChoice != nil {
@@ -283,6 +297,7 @@ func mapResponse(output *bedrockruntime.ConverseOutput, model string) *llm.ChatC
 				if b.Value.Input != nil {
 					_ = b.Value.Input.UnmarshalSmithyDocument(&args)
 				}
+
 				argsJSON, _ := json.Marshal(args)
 				resp.Message.ToolCalls = append(resp.Message.ToolCalls, llm.ToolCall{
 					ID: aws.ToString(b.Value.ToolUseId),
@@ -321,6 +336,7 @@ func mapError(err error) error {
 		if strings.Contains(msg, "throttling") || strings.Contains(msg, "ThrottlingException") {
 			return &llm.ErrRateLimit{Err: err}
 		}
+
 		return err
 	}
 
@@ -334,6 +350,7 @@ func mapError(err error) error {
 		if strings.Contains(msg, "context") || strings.Contains(msg, "token") {
 			return &llm.ErrContextLength{Err: err}
 		}
+
 		return err
 	default:
 		return err
@@ -368,7 +385,9 @@ func (s *bedrockStream) Next() bool {
 				mapped.Model = s.model
 				s.modelSent = true
 			}
+
 			s.current = mapped
+
 			return true
 		}
 	}
@@ -376,6 +395,7 @@ func (s *bedrockStream) Next() bool {
 	if err := s.eventStream.Err(); err != nil {
 		s.err = mapError(err)
 	}
+
 	return false
 }
 
@@ -396,6 +416,7 @@ func (s *bedrockStream) mapEvent(event types.ConverseStreamOutput) (llm.ChatComp
 	case *types.ConverseStreamOutputMemberContentBlockStart:
 		if start, ok := e.Value.Start.(*types.ContentBlockStartMemberToolUse); ok {
 			s.inToolUse = true
+
 			return llm.ChatCompletionStreamEvent{
 				Delta: llm.MessageDelta{
 					ToolCalls: []llm.ToolCallDelta{{
@@ -406,7 +427,9 @@ func (s *bedrockStream) mapEvent(event types.ConverseStreamOutput) (llm.ChatComp
 				},
 			}, true
 		}
+
 		s.inToolUse = false
+
 		return llm.ChatCompletionStreamEvent{}, false
 
 	case *types.ConverseStreamOutputMemberContentBlockDelta:
@@ -425,6 +448,7 @@ func (s *bedrockStream) mapEvent(event types.ConverseStreamOutput) (llm.ChatComp
 				},
 			}, true
 		}
+
 		return llm.ChatCompletionStreamEvent{}, false
 
 	case *types.ConverseStreamOutputMemberContentBlockStop:
@@ -432,10 +456,12 @@ func (s *bedrockStream) mapEvent(event types.ConverseStreamOutput) (llm.ChatComp
 			s.toolIndex++
 			s.inToolUse = false
 		}
+
 		return llm.ChatCompletionStreamEvent{}, false
 
 	case *types.ConverseStreamOutputMemberMessageStop:
 		fr := mapStopReason(e.Value.StopReason)
+
 		return llm.ChatCompletionStreamEvent{
 			FinishReason: &fr,
 		}, true
@@ -449,6 +475,7 @@ func (s *bedrockStream) mapEvent(event types.ConverseStreamOutput) (llm.ChatComp
 				},
 			}, true
 		}
+
 		return llm.ChatCompletionStreamEvent{}, false
 
 	default:

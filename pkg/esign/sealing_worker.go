@@ -104,6 +104,7 @@ func (h *sealingHandler) Claim(ctx context.Context) (coredata.ElectronicSignatur
 			signature.ProcessingStartedAt = &now
 			signature.AttemptCount++
 			signature.LastAttemptedAt = &now
+
 			signature.UpdatedAt = now
 			if err := signature.Update(ctx, tx, coredata.NewNoScope()); err != nil {
 				return fmt.Errorf("cannot update signature: %w", err)
@@ -115,6 +116,7 @@ func (h *sealingHandler) Claim(ctx context.Context) (coredata.ElectronicSignatur
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return coredata.ElectronicSignature{}, worker.ErrNoTask
 		}
+
 		return coredata.ElectronicSignature{}, err
 	}
 
@@ -126,8 +128,10 @@ func (h *sealingHandler) Process(ctx context.Context, signature coredata.Electro
 		if err := h.failSignature(ctx, &signature, err); err != nil {
 			h.logger.ErrorCtx(ctx, "cannot fail signature", log.Error(err))
 		}
+
 		return err
 	}
+
 	return nil
 }
 
@@ -175,6 +179,7 @@ func (h *sealingHandler) sealAndCommit(
 	if err != nil {
 		return fmt.Errorf("%w: %w", ErrComputeSeal, err)
 	}
+
 	signature.Seal = &seal
 	signature.SealVersion = currentSealVersion
 	events = append(
@@ -187,10 +192,12 @@ func (h *sealingHandler) sealAndCommit(
 
 	tsaCtx, cancel := context.WithTimeout(ctx, h.tsaTimeout)
 	defer cancel()
+
 	tsaToken, err := h.tsaClient.Timestamp(tsaCtx, []byte(seal))
 	if err != nil {
 		return fmt.Errorf("%w: %w", ErrTSATimestamp, err)
 	}
+
 	signature.TSAToken = tsaToken
 	events = append(
 		events,
@@ -213,10 +220,12 @@ func (h *sealingHandler) sealAndCommit(
 			}
 
 			signature.Status = coredata.ElectronicSignatureStatusCompleted
+
 			signature.UpdatedAt = time.Now()
 			if err := signature.Update(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot update signature: %w", err)
 			}
+
 			events = append(
 				events,
 				signature.NewEvent(
@@ -260,12 +269,14 @@ func (h *sealingHandler) failSignature(
 			errStr := userFacingError(processingError)
 			signature.LastError = &errStr
 			signature.ProcessingStartedAt = nil
+
 			signature.UpdatedAt = time.Now()
 			if signature.AttemptCount >= signature.MaxAttempts {
 				signature.Status = coredata.ElectronicSignatureStatusFailed
 			} else {
 				signature.Status = coredata.ElectronicSignatureStatusAccepted
 			}
+
 			if err := signature.Update(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot update signature: %w", err)
 			}

@@ -45,6 +45,7 @@ func NewCmdRemove(f *cmdutil.Factory) *cobra.Command {
 				}
 
 				var confirmed bool
+
 				err := huh.NewConfirm().
 					Title(fmt.Sprintf("Remove applicability statement %s?", args[0])).
 					Value(&confirmed).
@@ -52,6 +53,7 @@ func NewCmdRemove(f *cmdutil.Factory) *cobra.Command {
 				if err != nil {
 					return err
 				}
+
 				if !confirmed {
 					return nil
 				}

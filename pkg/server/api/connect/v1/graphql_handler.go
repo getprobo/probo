@@ -44,5 +44,6 @@ func NewGraphQLHandler(svc *iam.Service, logger *log.Logger, baseURL *baseurl.Ba
 
 	es := schema.NewExecutableSchema(config)
 	gqlh := gqlutils.NewHandler(es, logger)
+
 	return gqlh
 }

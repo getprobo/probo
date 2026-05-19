@@ -107,6 +107,7 @@ func (s RiskService) CountForMeasureID(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			risks := &coredata.Risks{}
+
 			count, err = risks.CountByMeasureID(ctx, conn, s.svc.scope, measureID, filter)
 			if err != nil {
 				return fmt.Errorf("cannot count risks: %w", err)
@@ -115,7 +116,6 @@ func (s RiskService) CountForMeasureID(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return 0, fmt.Errorf("cannot count risks: %w", err)
 	}
@@ -137,7 +137,6 @@ func (s RiskService) ListForMeasureID(
 			return risks.LoadByMeasureID(ctx, conn, s.svc.scope, measureID, cursor, filter)
 		},
 	)
-
 	if err != nil {
 		return nil, fmt.Errorf("cannot list risks: %w", err)
 	}
@@ -156,6 +155,7 @@ func (s RiskService) CountForOrganizationID(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			risks := &coredata.Risks{}
+
 			count, err = risks.CountByOrganizationID(ctx, conn, s.svc.scope, organizationID, filter)
 			if err != nil {
 				return fmt.Errorf("cannot count risks: %w", err)
@@ -164,7 +164,6 @@ func (s RiskService) CountForOrganizationID(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return 0, fmt.Errorf("cannot count risks: %w", err)
 	}
@@ -193,7 +192,6 @@ func (s RiskService) ListForOrganizationID(
 			)
 		},
 	)
-
 	if err != nil {
 		return nil, fmt.Errorf("cannot list risks: %w", err)
 	}
@@ -230,7 +228,6 @@ func (s RiskService) CreateDocumentMapping(
 			return riskDocument.Insert(ctx, tx, s.svc.scope)
 		},
 	)
-
 	if err != nil {
 		return nil, nil, fmt.Errorf("cannot create risk document mapping: %w", err)
 	}
@@ -261,7 +258,6 @@ func (s RiskService) DeleteDocumentMapping(
 			return riskDocument.Delete(ctx, tx, s.svc.scope, risk.ID, document.ID)
 		},
 	)
-
 	if err != nil {
 		return nil, nil, fmt.Errorf("cannot delete risk document mapping: %w", err)
 	}
@@ -298,7 +294,6 @@ func (s RiskService) CreateMeasureMapping(
 			return riskMeasure.Insert(ctx, tx, s.svc.scope)
 		},
 	)
-
 	if err != nil {
 		return nil, nil, fmt.Errorf("cannot create risk measure mapping: %w", err)
 	}
@@ -335,7 +330,6 @@ func (s RiskService) DeleteMeasureMapping(
 			return riskMeasure.Delete(ctx, tx, s.svc.scope, risk.ID, measure.ID)
 		},
 	)
-
 	if err != nil {
 		return nil, nil, fmt.Errorf("cannot delete risk measure mapping: %w", err)
 	}
@@ -372,7 +366,6 @@ func (s RiskService) CreateObligationMapping(
 			return riskObligation.Insert(ctx, tx, s.svc.scope)
 		},
 	)
-
 	if err != nil {
 		return nil, nil, fmt.Errorf("cannot create risk obligation mapping: %w", err)
 	}
@@ -406,7 +399,6 @@ func (s RiskService) DeleteObligationMapping(
 			return riskObligation.Delete(ctx, tx, s.svc.scope)
 		},
 	)
-
 	if err != nil {
 		return nil, nil, fmt.Errorf("cannot delete risk obligation mapping: %w", err)
 	}
@@ -470,7 +462,6 @@ func (s RiskService) Create(
 			return risk.Insert(ctx, tx, s.svc.scope)
 		},
 	)
-
 	if err != nil {
 		return nil, fmt.Errorf("cannot create risk: %w", err)
 	}
@@ -490,7 +481,6 @@ func (s RiskService) Get(
 			return risk.LoadByID(ctx, conn, s.svc.scope, riskID)
 		},
 	)
-
 	if err != nil {
 		return nil, fmt.Errorf("cannot get risk: %w", err)
 	}
@@ -577,6 +567,7 @@ func (s RiskService) Update(
 					if err := owner.LoadByID(ctx, conn, s.svc.scope, **req.OwnerID); err != nil {
 						return fmt.Errorf("cannot load owner profile: %w", err)
 					}
+
 					risk.OwnerID = *req.OwnerID
 				} else {
 					risk.OwnerID = nil
