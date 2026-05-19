@@ -71,12 +71,13 @@ var (
 
 type (
 	Config struct {
-		Client         *llm.Client
-		Model          string
-		MaxTokens      int
-		ChromeAddr     string
-		SearchEndpoint string
-		Logger         *log.Logger
+		Client            *llm.Client
+		Model             string
+		MaxTokens         int
+		ChromeAddr        string
+		FirecrawlEndpoint string
+		FirecrawlAPIKey   string
+		Logger            *log.Logger
 	}
 
 	Assessor struct {
@@ -209,7 +210,8 @@ func (a *Assessor) Assess(ctx context.Context, websiteURL string, procedure stri
 		a.cfg.Logger,
 		thirdPartyBrowser,
 		researchBrowser,
-		a.cfg.SearchEndpoint,
+		a.cfg.FirecrawlEndpoint,
+		a.cfg.FirecrawlAPIKey,
 		reporter,
 	)
 	if err != nil {

@@ -176,7 +176,6 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 					CacheTTL:       b.getEnvIntOrDefault("WEBHOOK_CACHE_TTL", 86400),
 				},
 			},
-			SearchEndpoint: b.getEnv("SEARCH_ENDPOINT"),
 			Firecrawl: probodconfig.FirecrawlConfig{
 				Endpoint: b.getEnv("FIRECRAWL_ENDPOINT"),
 				APIKey:   b.getEnv("FIRECRAWL_API_KEY"),

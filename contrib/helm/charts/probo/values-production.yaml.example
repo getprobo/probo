@@ -164,9 +164,6 @@ probo:
   #   endpoint: "https://api.firecrawl.dev/v2"
   #   apiKey: "CHANGE_ME_FIRECRAWL_API_KEY"
 
-  # SearXNG search endpoint (optional, fallback when Firecrawl is not configured)
-  # searchEndpoint: "https://search.example.com"
-
   # Tracker mapping agent (optional, auto-links tracker patterns to vendors)
   # trackerMapping:
   #   provider: "openai"

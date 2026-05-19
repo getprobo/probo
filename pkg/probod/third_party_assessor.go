@@ -48,11 +48,12 @@ func (impl *Implm) buildThirdPartyAssessor(
 	}
 
 	return vetting.NewAssessor(vetting.Config{
-		Client:         llmClient,
-		Model:          agentCfg.ModelName,
-		MaxTokens:      maxTokens,
-		ChromeAddr:     impl.cfg.ChromeDPAddr,
-		SearchEndpoint: impl.cfg.SearchEndpoint,
-		Logger:         l.Named("third-party-assessor"),
+		Client:            llmClient,
+		Model:             agentCfg.ModelName,
+		MaxTokens:         maxTokens,
+		ChromeAddr:        impl.cfg.ChromeDPAddr,
+		FirecrawlEndpoint: impl.cfg.Firecrawl.Endpoint,
+		FirecrawlAPIKey:   impl.cfg.Firecrawl.APIKey,
+		Logger:            l.Named("third-party-assessor"),
 	}), nil
 }

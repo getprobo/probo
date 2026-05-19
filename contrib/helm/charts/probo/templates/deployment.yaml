@@ -244,11 +244,6 @@ spec:
                   name: {{ include "probo.fullname" . }}
                   key: firecrawl-api-key
             {{- end }}
-            # Search Endpoint
-            {{- if .Values.probo.searchEndpoint }}
-            - name: SEARCH_ENDPOINT
-              value: {{ .Values.probo.searchEndpoint | quote }}
-            {{- end }}
             # Tracker Mapping Agent
             {{- if .Values.probo.trackerMapping.provider }}
             - name: AGENT_TRACKER_MAPPING_PROVIDER

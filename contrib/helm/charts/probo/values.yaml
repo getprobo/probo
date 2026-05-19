@@ -262,9 +262,6 @@ probo:
     endpoint: ""
     apiKey: ""
 
-  # Search endpoint for SearXNG (optional, fallback when Firecrawl is not configured)
-  searchEndpoint: ""
-
   # Tracker mapping agent (optional, requires openai.apiKey or anthropic key)
   trackerMapping:
     provider: ""

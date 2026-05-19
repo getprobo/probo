@@ -65,7 +65,8 @@ func newOrchestratorAgent(
 	logger *log.Logger,
 	thirdPartyBrowser *browser.Browser,
 	researchBrowser *browser.Browser,
-	searchEndpoint string,
+	firecrawlEndpoint string,
+	firecrawlAPIKey string,
 	reporter agent.ProgressReporter,
 ) (*agent.Agent, error) {
 	readOnlyBrowserTools := browser.NewReadOnlyToolset(thirdPartyBrowser).Tools()
@@ -88,11 +89,13 @@ func newOrchestratorAgent(
 		return opts
 	}
 
+	hasFirecrawl := firecrawlEndpoint != "" && firecrawlAPIKey != ""
+
 	// Subprocessor agent benefits from web search when available so it can
 	// find subprocessor pages hosted on third-party platforms.
 	subprocessorTools := unrestrictedBrowserTools
-	if searchEndpoint != "" {
-		subprocessorTools = append(subprocessorTools, search.WebSearchTool(searchEndpoint))
+	if hasFirecrawl {
+		subprocessorTools = append(subprocessorTools, search.FirecrawlSearchTool(firecrawlEndpoint, firecrawlAPIKey))
 	}
 
 	// Core sub-agents that always run.
@@ -171,12 +174,12 @@ func newOrchestratorAgent(
 		},
 	}
 
-	// Optional sub-agents: only added when a search endpoint is configured.
-	if searchEndpoint != "" {
+	// Optional sub-agents: only added when Firecrawl is configured.
+	if hasFirecrawl {
 		researchBrowserTools := browser.NewInteractiveToolset(researchBrowser).Tools()
 
-		searchTool := search.WebSearchTool(searchEndpoint)
-		govDBTool := search.CheckGovernmentDBTool(searchEndpoint)
+		searchTool := search.FirecrawlSearchTool(firecrawlEndpoint, firecrawlAPIKey)
+		govDBTool := search.CheckGovernmentDBTool(firecrawlEndpoint, firecrawlAPIKey)
 		waybackTool := search.CheckWaybackTool()
 		diffTool := search.DiffDocumentsTool()
 

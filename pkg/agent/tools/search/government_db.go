@@ -16,11 +16,7 @@ package search
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"io"
-	"net/http"
-	"net/url"
 
 	"go.gearno.de/kit/httpclient"
 	"go.probo.inc/probo/pkg/agent"
@@ -48,7 +44,7 @@ type (
 	}
 )
 
-func CheckGovernmentDBTool(searchEndpoint string) agent.Tool {
+func CheckGovernmentDBTool(endpoint, apiKey string) agent.Tool {
 	client := httpclient.DefaultPooledClient()
 	client.Transport = &userAgentTransport{next: client.Transport}
 
@@ -93,78 +89,24 @@ func CheckGovernmentDBTool(searchEndpoint string) agent.Tool {
 			}
 
 			for _, s := range searches {
-				entries, err := searxngSearch(ctx, client, searchEndpoint, s.query, 3)
+				entries, err := firecrawlSearch(ctx, client, endpoint, apiKey, s.query, 3)
 				if err != nil {
 					continue
 				}
 				for _, e := range entries {
-					*s.target = append(*s.target, govDBEntry{
-						Source:  s.source,
-						Title:   e.Title,
-						URL:     e.URL,
-						Snippet: e.Snippet,
-					})
+					*s.target = append(
+						*s.target,
+						govDBEntry{
+							Source:  s.source,
+							Title:   e.Title,
+							URL:     e.URL,
+							Snippet: e.Snippet,
+						},
+					)
 				}
 			}
 
 			return agent.ResultJSON(result), nil
 		},
 	)
-}
-
-func searxngSearch(ctx context.Context, client *http.Client, endpoint, query string, maxResults int) ([]searchResult, error) {
-	u, err := url.JoinPath(endpoint, "search")
-	if err != nil {
-		return nil, fmt.Errorf("cannot build search URL: %w", err)
-	}
-
-	parsed, err := url.Parse(u)
-	if err != nil {
-		return nil, fmt.Errorf("cannot parse search URL: %w", err)
-	}
-
-	q := parsed.Query()
-	q.Set("q", query)
-	q.Set("format", "json")
-	q.Set("categories", "general")
-	parsed.RawQuery = q.Encode()
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, parsed.String(), nil)
-	if err != nil {
-		return nil, fmt.Errorf("cannot create request: %w", err)
-	}
-
-	resp, err := client.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("cannot execute search request: %w", err)
-	}
-	defer func() { _ = resp.Body.Close() }()
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("cannot read response body: %w", err)
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("search returned status %d", resp.StatusCode)
-	}
-
-	var searxResp searxngResponse
-	if err := json.Unmarshal(body, &searxResp); err != nil {
-		return nil, fmt.Errorf("cannot unmarshal response: %w", err)
-	}
-
-	results := make([]searchResult, 0, maxResults)
-	for i, r := range searxResp.Results {
-		if i >= maxResults {
-			break
-		}
-		results = append(results, searchResult{
-			Title:   r.Title,
-			URL:     r.URL,
-			Snippet: r.Content,
-		})
-	}
-
-	return results, nil
 }

@@ -53,7 +53,6 @@ type trackerMappingHandler struct {
 type TrackerMappingConfig struct {
 	LLMClient         *llm.Client
 	Model             string
-	SearchEndpoint    string
 	FirecrawlEndpoint string
 	FirecrawlAPIKey   string
 }
@@ -93,8 +92,6 @@ func buildTrackerMappingAgent(
 
 	if cfg.FirecrawlEndpoint != "" && cfg.FirecrawlAPIKey != "" {
 		tools = append(tools, search.FirecrawlSearchTool(cfg.FirecrawlEndpoint, cfg.FirecrawlAPIKey))
-	} else if cfg.SearchEndpoint != "" {
-		tools = append(tools, search.WebSearchTool(cfg.SearchEndpoint))
 	}
 
 	outputType, err := agent.NewOutputType[TrackerIdentification]("tracker_identification")

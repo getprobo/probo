@@ -197,8 +197,7 @@ func TestBuilder_Build_Defaults(t *testing.T) {
 	assert.Equal(t, 5, cfg.Probod.Notifications.Webhook.SenderInterval)
 	assert.Equal(t, 86400, cfg.Probod.Notifications.Webhook.CacheTTL)
 
-	// Search and Firecrawl — empty by default
-	assert.Empty(t, cfg.Probod.SearchEndpoint)
+	// Firecrawl — empty by default
 	assert.Empty(t, cfg.Probod.Firecrawl.Endpoint)
 	assert.Empty(t, cfg.Probod.Firecrawl.APIKey)
 
@@ -294,8 +293,7 @@ func TestBuilder_Build_CustomValues(t *testing.T) {
 	env["WEBHOOK_SENDER_INTERVAL"] = "10"
 	env["WEBHOOK_CACHE_TTL"] = "3600"
 	env["CONNECTOR_SLACK_SIGNING_SECRET"] = "slack-signing-secret"
-	// Search and Firecrawl
-	env["SEARCH_ENDPOINT"] = "https://search.example.com"
+	// Firecrawl
 	env["FIRECRAWL_ENDPOINT"] = "https://api.firecrawl.dev/v2"
 	env["FIRECRAWL_API_KEY"] = "fc-test-key"
 	// Agents — providers
@@ -382,8 +380,7 @@ func TestBuilder_Build_CustomValues(t *testing.T) {
 	assert.Equal(t, "slack-signing-secret", cfg.Probod.Notifications.Slack.SigningSecret)
 	assert.Equal(t, 10, cfg.Probod.Notifications.Webhook.SenderInterval)
 	assert.Equal(t, 3600, cfg.Probod.Notifications.Webhook.CacheTTL)
-	// Search and Firecrawl
-	assert.Equal(t, "https://search.example.com", cfg.Probod.SearchEndpoint)
+	// Firecrawl
 	assert.Equal(t, "https://api.firecrawl.dev/v2", cfg.Probod.Firecrawl.Endpoint)
 	assert.Equal(t, "fc-test-key", cfg.Probod.Firecrawl.APIKey)
 	// Agents — providers
