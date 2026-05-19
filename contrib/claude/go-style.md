@@ -36,7 +36,38 @@ var (
 )
 ```
 
-## Call expressions and argument lists
+## Multiline parameter and argument lists
+
+The same single-line-or-multiline rule applies to **both** function/method **definitions** (parameter lists) and **call expressions** (argument lists). Never mix — if any parameter or argument breaks onto another line, put every one on its own line.
+
+### Function and method definitions
+
+- **Single-line signature** — the entire `func` line (name, parameters, return types) fits on one source line.
+- **Multiline signature** — if it doesn't fit on one line, each parameter goes on its own indented line with a trailing comma. The closing `)` sits on its own line, followed by the return types.
+
+```go
+// Good — fits on one line
+func (s *Service) GetFoo(ctx context.Context, id gid.GID) (*Foo, error) {
+
+// Good — multiline: each parameter on its own line
+func (s *Service) CreateFoo(
+	ctx context.Context,
+	tenantID gid.TenantID,
+	req CreateFooRequest,
+) (*Foo, error) {
+
+// Bad — mixed: some params on the func line, rest on the next
+func (s *Service) CreateFoo(ctx context.Context, tenantID gid.TenantID,
+	req CreateFooRequest) (*Foo, error) {
+
+// Bad — closing paren on the last param line
+func (s *Service) CreateFoo(
+	ctx context.Context,
+	tenantID gid.TenantID,
+	req CreateFooRequest) (*Foo, error) {
+```
+
+### Call expressions
 
 In the [Go spec](https://go.dev/ref/spec#Calls), a **call** is a primary expression `f(a1, a2, … an)` where `f` is the **function value** (or **method value**) and `a1` … `an` are **arguments** passed to the matching parameters.
 
@@ -104,11 +135,34 @@ Short receivers: usually single-letter matching the type (`s` for Service, `c` f
 
 ## Error handling
 
-Wrap errors with `fmt.Errorf` using lowercase messages starting with `cannot`:
+Always name error variables `err`. When a function can return errors from multiple call sites, every error must be wrapped so the caller can distinguish them. Wrap with `fmt.Errorf` using lowercase messages starting with `cannot`:
 
 ```go
 return nil, fmt.Errorf("cannot load trust center: %w", err)
 return nil, fmt.Errorf("cannot create SAML service: %w", err)
+```
+
+When multiple errors can come from the same function, each must have a distinct wrap message:
+
+```go
+func (s *Service) DoSomething(ctx context.Context) error {
+	foo, err := s.loadFoo(ctx)
+	if err != nil {
+		return fmt.Errorf("cannot load foo: %w", err)
+	}
+
+	bar, err := s.loadBar(ctx, foo.ID)
+	if err != nil {
+		return fmt.Errorf("cannot load bar: %w", err)
+	}
+
+	err = s.save(ctx, bar)
+	if err != nil {
+		return fmt.Errorf("cannot save bar: %w", err)
+	}
+
+	return nil
+}
 ```
 
 Sentinel errors in grouped `var ()` blocks. Custom error types implement `Unwrap() error`. Use `errors.Is` for sentinel checks. Use `errors.AsType[T](err)` (generic form) instead of `errors.As(err, &ptr)` for type assertions:
