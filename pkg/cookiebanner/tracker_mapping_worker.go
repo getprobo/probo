@@ -16,43 +16,24 @@ package cookiebanner
 
 import (
 	"context"
-	_ "embed"
 	"errors"
 	"fmt"
-	"strings"
 	"time"
 
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
 	"go.gearno.de/kit/worker"
 	"go.probo.inc/probo/pkg/agent"
-	"go.probo.inc/probo/pkg/agent/tools/search"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/llm"
 	"go.probo.inc/probo/pkg/slug"
 )
 
-const (
-	agentTimeout              = 60 * time.Second
-	agentMaxTurns             = 5
-	agentConfidenceThreshold  = 0.6
-	agentMaxPatternConfidence = 0.8
-)
-
-//go:embed prompts/tracker_identification.txt.tmpl
-var trackerIdentificationPrompt string
-
 type trackerMappingHandler struct {
 	pg     *pg.Client
 	logger *log.Logger
 	agent  *agent.Agent
-}
-
-type TrackerMappingConfig struct {
-	LLMClient       *llm.Client
-	Model           string
-	FirecrawlAPIKey string
 }
 
 func NewTrackerMappingWorker(
@@ -75,52 +56,6 @@ func NewTrackerMappingWorker(
 		h,
 		logger,
 		opts...,
-	)
-}
-
-func buildTrackerMappingAgent(
-	cfg TrackerMappingConfig,
-	pgClient *pg.Client,
-	logger *log.Logger,
-) *agent.Agent {
-	tools := []agent.Tool{
-		searchTrackerPatternsTool(pgClient),
-		searchThirdPartiesTool(pgClient),
-	}
-
-	if cfg.FirecrawlAPIKey != "" {
-		tools = append(tools, search.FirecrawlSearchTool(cfg.FirecrawlAPIKey))
-	}
-
-	outputType, err := agent.NewOutputType[TrackerIdentification]("tracker_identification")
-	if err != nil {
-		panic(fmt.Sprintf("cookiebanner: cannot build tracker identification output type: %s", err))
-	}
-
-	return agent.New(
-		"tracker-mapping",
-		cfg.LLMClient,
-		agent.WithInstructionsFunc(trackerMappingInstructions),
-		agent.WithModel(cfg.Model),
-		agent.WithTools(tools...),
-		agent.WithOutputType(outputType),
-		agent.WithMaxTurns(agentMaxTurns),
-		agent.WithLogger(logger),
-	)
-}
-
-func trackerMappingInstructions(_ context.Context, _ *agent.Agent) string {
-	categories := coredata.ThirdPartyCategories()
-	parts := make([]string, len(categories))
-	for i, c := range categories {
-		parts[i] = string(c)
-	}
-
-	return strings.Replace(
-		trackerIdentificationPrompt,
-		"{{.Categories}}",
-		strings.Join(parts, ", "),
-		1,
 	)
 }
 
@@ -292,7 +227,7 @@ func (h *trackerMappingHandler) identifyWithAgent(
 	agentCtx, cancel := context.WithTimeout(ctx, agentTimeout)
 	defer cancel()
 
-	result, err := agent.RunTyped[TrackerIdentification](
+	result, err := agent.RunTyped[TrackerMappingAgentResult](
 		agentCtx,
 		h.agent,
 		[]llm.Message{
@@ -379,7 +314,7 @@ func (h *trackerMappingHandler) identifyWithAgent(
 func (h *trackerMappingHandler) resolveOrCreateCommonThirdParty(
 	ctx context.Context,
 	tx pg.Tx,
-	identification TrackerIdentification,
+	identification TrackerMappingAgentResult,
 	domains []string,
 ) (*gid.GID, error) {
 	var party coredata.CommonThirdParty
@@ -489,29 +424,4 @@ func (h *trackerMappingHandler) resolveThirdParty(
 	}
 
 	return &t.ID, nil
-}
-
-func buildAgentPrompt(tp coredata.TrackerPattern, domains []string) string {
-	maxAge := "session"
-	if tp.MaxAgeSeconds != nil {
-		maxAge = fmt.Sprintf("%d seconds", *tp.MaxAgeSeconds)
-	}
-
-	prompt := fmt.Sprintf(
-		"Identify the following tracker:\n\n"+
-			"<pattern> %s </pattern>\n"+
-			"<type> %s </type>\n"+
-			"<match_type> %s </match_type>\n"+
-			"<max_age> %s </max_age>\n",
-		tp.Pattern,
-		tp.TrackerType,
-		tp.MatchType,
-		maxAge,
-	)
-
-	if len(domains) > 0 {
-		prompt += fmt.Sprintf("<observed_domains> %s </observed_domains>\n", strings.Join(domains, ", "))
-	}
-
-	return prompt
 }

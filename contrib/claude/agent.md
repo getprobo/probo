@@ -24,7 +24,17 @@ result.FinalMessage().Text()  // final output
 result.LastAgent              // agent that produced the result
 ```
 
-Typed output via `RunTyped[T](ctx, agent, messages)` — validates against JSON Schema.
+Prefer `RunTyped[T]` over `Run` + manual unmarshalling when the agent declares a
+structured output type via `WithOutputType`. `RunTyped` validates the response
+against the JSON Schema and returns the typed value directly:
+
+```go
+result, err := agent.RunTyped[TrackerIdentification](ctx, ag, messages)
+identification := result.Output  // already typed, no json.Unmarshal needed
+```
+
+Only fall back to `agent.Run` when the agent produces free-form text with no
+output schema.
 
 ## Tool interface
 

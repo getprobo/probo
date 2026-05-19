@@ -34,16 +34,6 @@ type (
 		ThirdPartyName string  `json:"third_party_name,omitempty"`
 		Confidence     float32 `json:"confidence"`
 	}
-
-	searchThirdPartiesParams struct {
-		Query string `json:"query" jsonschema:"Search fragment to match against known third party names (e.g. 'Google', 'Meta', 'Hotjar')"`
-	}
-
-	searchThirdPartiesResult struct {
-		Name       string `json:"name"`
-		Category   string `json:"category"`
-		WebsiteURL string `json:"website_url,omitempty"`
-	}
 )
 
 func searchTrackerPatternsTool(pgClient *pg.Client) agent.Tool {
@@ -76,51 +66,6 @@ func searchTrackerPatternsTool(pgClient *pg.Client) agent.Tool {
 						}
 						if r.ThirdPartyName != nil {
 							out[i].ThirdPartyName = *r.ThirdPartyName
-						}
-					}
-
-					return nil
-				},
-			); err != nil {
-				return agent.ResultErrorf("search failed: %s", err), nil
-			}
-
-			return agent.ResultJSON(out), nil
-		},
-	)
-}
-
-func searchThirdPartiesTool(pgClient *pg.Client) agent.Tool {
-	return agent.FunctionTool(
-		"search_third_parties",
-		"Search the internal database of known third parties (companies/services) by name fragment. Returns matching third party names, categories, and website URLs. Use this to find the exact name of a known third party to link the tracker to.",
-		func(ctx context.Context, p searchThirdPartiesParams) (agent.ToolResult, error) {
-			if p.Query == "" {
-				return agent.ResultError("query is required"), nil
-			}
-
-			var out []searchThirdPartiesResult
-
-			if err := pgClient.WithConn(
-				ctx,
-				func(ctx context.Context, conn pg.Querier) error {
-					var parties coredata.CommonThirdParties
-					if err := parties.LoadAll(
-						ctx,
-						conn,
-						coredata.NewCommonThirdPartyFilter(&p.Query),
-					); err != nil {
-						return err
-					}
-
-					out = make([]searchThirdPartiesResult, len(parties))
-					for i, tp := range parties {
-						out[i] = searchThirdPartiesResult{
-							Name:     tp.Name,
-							Category: string(tp.Category),
-						}
-						if tp.WebsiteURL != nil {
-							out[i].WebsiteURL = *tp.WebsiteURL
 						}
 					}
 
