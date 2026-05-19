@@ -24,7 +24,6 @@ import (
 	"net/url"
 
 	"go.gearno.de/kit/httpclient"
-
 	"go.probo.inc/probo/pkg/agent"
 )
 
@@ -81,7 +80,12 @@ func FirecrawlSearchTool(endpoint, apiKey string) agent.Tool {
 	)
 }
 
-func firecrawlSearch(ctx context.Context, client *http.Client, endpoint, apiKey, query string, maxResults int) ([]searchResult, error) {
+func firecrawlSearch(
+	ctx context.Context,
+	client *http.Client,
+	endpoint, apiKey, query string,
+	maxResults int,
+) ([]searchResult, error) {
 	u, err := url.JoinPath(endpoint, "search")
 	if err != nil {
 		return nil, fmt.Errorf("cannot build search URL: %w", err)
@@ -97,20 +101,20 @@ func firecrawlSearch(ctx context.Context, client *http.Client, endpoint, apiKey,
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, u, bytes.NewReader(body))
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("cannot create request: %w", err)
 	}
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", "Bearer "+apiKey)
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("cannot execute search request: %w", err)
 	}
 	defer func() { _ = resp.Body.Close() }()
 
 	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("cannot read response body: %w", err)
 	}
 
 	if resp.StatusCode != http.StatusOK {
@@ -119,7 +123,7 @@ func firecrawlSearch(ctx context.Context, client *http.Client, endpoint, apiKey,
 
 	var fcResp firecrawlResponse
 	if err := json.Unmarshal(respBody, &fcResp); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("cannot unmarshal response: %w", err)
 	}
 
 	if !fcResp.Success {

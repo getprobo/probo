@@ -19,7 +19,6 @@ import (
 	"net/http"
 
 	"go.gearno.de/kit/httpclient"
-
 	"go.probo.inc/probo/pkg/agent"
 )
 

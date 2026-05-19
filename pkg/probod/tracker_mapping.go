@@ -15,6 +15,8 @@
 package probod
 
 import (
+	"fmt"
+
 	"github.com/prometheus/client_golang/prometheus"
 	"go.gearno.de/kit/log"
 	"go.opentelemetry.io/otel/trace"
@@ -41,7 +43,7 @@ func (impl *Implm) buildTrackerMappingConfig(
 		r,
 	)
 	if err != nil {
-		return cookiebanner.TrackerMappingConfig{}, err
+		return cookiebanner.TrackerMappingConfig{}, fmt.Errorf("cannot resolve tracker mapping agent client: %w", err)
 	}
 
 	return cookiebanner.TrackerMappingConfig{

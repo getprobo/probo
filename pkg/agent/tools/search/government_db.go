@@ -23,7 +23,6 @@ import (
 	"net/url"
 
 	"go.gearno.de/kit/httpclient"
-
 	"go.probo.inc/probo/pkg/agent"
 )
 
@@ -114,31 +113,36 @@ func CheckGovernmentDBTool(searchEndpoint string) agent.Tool {
 }
 
 func searxngSearch(ctx context.Context, client *http.Client, endpoint, query string, maxResults int) ([]searchResult, error) {
-	u, err := url.Parse(endpoint + "/search")
+	u, err := url.JoinPath(endpoint, "search")
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("cannot build search URL: %w", err)
 	}
 
-	q := u.Query()
+	parsed, err := url.Parse(u)
+	if err != nil {
+		return nil, fmt.Errorf("cannot parse search URL: %w", err)
+	}
+
+	q := parsed.Query()
 	q.Set("q", query)
 	q.Set("format", "json")
 	q.Set("categories", "general")
-	u.RawQuery = q.Encode()
+	parsed.RawQuery = q.Encode()
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u.String(), nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, parsed.String(), nil)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("cannot create request: %w", err)
 	}
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("cannot execute search request: %w", err)
 	}
 	defer func() { _ = resp.Body.Close() }()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("cannot read response body: %w", err)
 	}
 
 	if resp.StatusCode != http.StatusOK {
@@ -147,7 +151,7 @@ func searxngSearch(ctx context.Context, client *http.Client, endpoint, query str
 
 	var searxResp searxngResponse
 	if err := json.Unmarshal(body, &searxResp); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("cannot unmarshal response: %w", err)
 	}
 
 	results := make([]searchResult, 0, maxResults)
