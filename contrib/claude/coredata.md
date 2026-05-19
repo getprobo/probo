@@ -149,6 +149,37 @@ var (
 
 Map `pgx.ErrNoRows` to `ErrResourceNotFound`. Check unique constraint violations for `ErrResourceAlreadyExists`, foreign key violations for `ErrResourceInUse`.
 
+**Always check both `pgErr.Code` and `pgErr.ConstraintName`** when mapping PostgreSQL errors to sentinel errors. Checking only the error code (e.g. `"23505"`) is not enough — a table may have multiple unique constraints, and a blind code-only check maps unrelated constraint violations to the wrong sentinel error.
+
+```go
+// Good — checks both code and constraint name
+if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
+    if pgErr.Code == "23505" && pgErr.ConstraintName == "controls_framework_ref_unique" {
+        return ErrResourceAlreadyExists
+    }
+}
+
+// Good — multiple constraints on the same table
+if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
+    if pgErr.Code == "23505" {
+        switch pgErr.ConstraintName {
+        case "document_versions_document_id_major_minor_key",
+            "document_one_active_version_idx":
+            return ErrResourceAlreadyExists
+        }
+    }
+}
+
+// Bad — code-only check; any unique violation silently becomes ErrResourceAlreadyExists
+if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
+    if pgErr.Code == "23505" {
+        return ErrResourceAlreadyExists
+    }
+}
+```
+
+The same applies to foreign key violations (`"23503"`) mapped to `ErrResourceInUse` — always verify the constraint name.
+
 ## Filters
 
 Filters implement `SQLFragment() string` and `SQLArguments() pgx.NamedArgs`. Use double pointers for three-state filtering: `nil` = no filter, `*nil` = IS NULL, `*val` = equals.

@@ -108,7 +108,7 @@ INSERT INTO common_third_party_domains (
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
 		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
-			if pgErr.Code == "23505" {
+			if pgErr.Code == "23505" && pgErr.ConstraintName == "common_third_party_domains_party_domain_key" {
 				return ErrResourceAlreadyExists
 			}
 		}
