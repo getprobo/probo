@@ -17,7 +17,6 @@ package cookiebanner
 import (
 	"context"
 	_ "embed"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -138,19 +137,32 @@ func (h *trackerMappingHandler) Process(ctx context.Context, tp coredata.Tracker
 		func(ctx context.Context, tx pg.Tx) error {
 			var commonPatternID *gid.GID
 			var thirdPartyID *gid.GID
+			var err error
 
-			commonPatternID, thirdPartyID = h.matchByPattern(ctx, tx, tp)
+			commonPatternID, thirdPartyID, err = h.matchByPattern(ctx, tx, tp)
+			if err != nil {
+				return fmt.Errorf("cannot match by pattern: %w", err)
+			}
 
 			if commonPatternID == nil {
-				commonPatternID, thirdPartyID = h.matchByDomain(ctx, tx, tp)
+				commonPatternID, thirdPartyID, err = h.matchByDomain(ctx, tx, tp)
+				if err != nil {
+					return fmt.Errorf("cannot match by domain: %w", err)
+				}
 			}
 
 			if commonPatternID == nil && h.agent != nil {
-				commonPatternID, thirdPartyID = h.identifyWithAgent(ctx, tx, tp)
+				commonPatternID, thirdPartyID, err = h.identifyWithAgent(ctx, tx, tp)
+				if err != nil {
+					return fmt.Errorf("cannot identify with agent: %w", err)
+				}
 			}
 
 			if commonPatternID == nil {
-				commonPatternID = h.createUnmatchedPattern(ctx, tx, tp)
+				commonPatternID, err = h.createUnmatchedPattern(ctx, tx, tp)
+				if err != nil {
+					return fmt.Errorf("cannot create unmatched pattern: %w", err)
+				}
 			}
 
 			if commonPatternID != nil || thirdPartyID != nil {
@@ -175,13 +187,13 @@ func (h *trackerMappingHandler) matchByPattern(
 	ctx context.Context,
 	conn pg.Querier,
 	tp coredata.TrackerPattern,
-) (*gid.GID, *gid.GID) {
+) (*gid.GID, *gid.GID, error) {
 	var commonPattern coredata.CommonTrackerPattern
 	if err := commonPattern.LoadByPattern(ctx, conn, tp.TrackerType, tp.Pattern, tp.MaxAgeSeconds); err != nil {
-		if !errors.Is(err, coredata.ErrResourceNotFound) {
-			h.logger.ErrorCtx(ctx, "cannot load common tracker pattern", log.Error(err))
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, nil, nil
 		}
-		return nil, nil
+		return nil, nil, fmt.Errorf("cannot load common tracker pattern: %w", err)
 	}
 
 	var thirdPartyID *gid.GID
@@ -189,28 +201,26 @@ func (h *trackerMappingHandler) matchByPattern(
 		var err error
 		thirdPartyID, err = h.resolveThirdParty(ctx, conn, tp, &commonPattern)
 		if err != nil {
-			h.logger.ErrorCtx(ctx, "cannot resolve third party from pattern match", log.Error(err))
-			return nil, nil
+			return nil, nil, fmt.Errorf("cannot resolve third party from pattern match: %w", err)
 		}
 	}
 
-	return &commonPattern.ID, thirdPartyID
+	return &commonPattern.ID, thirdPartyID, nil
 }
 
 func (h *trackerMappingHandler) matchByDomain(
 	ctx context.Context,
 	tx pg.Tx,
 	tp coredata.TrackerPattern,
-) (*gid.GID, *gid.GID) {
+) (*gid.GID, *gid.GID, error) {
 	var trackers coredata.DetectedTrackers
 	commonThirdPartyID, err := trackers.LoadCommonThirdPartyIDByDomainMatch(ctx, tx, tp.ID)
 	if err != nil {
-		h.logger.ErrorCtx(ctx, "cannot load common third party ID from domain", log.Error(err))
-		return nil, nil
+		return nil, nil, fmt.Errorf("cannot load common third party ID from domain: %w", err)
 	}
 
 	if commonThirdPartyID == nil {
-		return nil, nil
+		return nil, nil, nil
 	}
 
 	now := time.Now()
@@ -229,29 +239,23 @@ func (h *trackerMappingHandler) matchByDomain(
 
 	actualID, _, err := commonPattern.Upsert(ctx, tx)
 	if err != nil {
-		h.logger.ErrorCtx(
-			ctx,
-			"cannot upsert common tracker pattern from domain match",
-			log.Error(err),
-		)
-		return nil, nil
+		return nil, nil, fmt.Errorf("cannot upsert common tracker pattern from domain match: %w", err)
 	}
 
 	commonPattern.ID = actualID
 	thirdPartyID, err := h.resolveThirdParty(ctx, tx, tp, &commonPattern)
 	if err != nil {
-		h.logger.ErrorCtx(ctx, "cannot resolve third party from domain match", log.Error(err))
-		return &commonPattern.ID, nil
+		return nil, nil, fmt.Errorf("cannot resolve third party from domain match: %w", err)
 	}
 
-	return &commonPattern.ID, thirdPartyID
+	return &commonPattern.ID, thirdPartyID, nil
 }
 
 func (h *trackerMappingHandler) identifyWithAgent(
 	ctx context.Context,
 	tx pg.Tx,
 	tp coredata.TrackerPattern,
-) (*gid.GID, *gid.GID) {
+) (*gid.GID, *gid.GID, error) {
 	var trackers coredata.DetectedTrackers
 	domains, err := trackers.LoadInitiatorDomainsByTrackerPatternID(ctx, tx, tp.ID)
 	if err != nil {
@@ -263,8 +267,9 @@ func (h *trackerMappingHandler) identifyWithAgent(
 	agentCtx, cancel := context.WithTimeout(ctx, agentTimeout)
 	defer cancel()
 
-	result, err := h.agent.Run(
+	result, err := agent.RunTyped[TrackerIdentification](
 		agentCtx,
+		h.agent,
 		[]llm.Message{
 			{
 				Role:  llm.RoleUser,
@@ -279,19 +284,10 @@ func (h *trackerMappingHandler) identifyWithAgent(
 			log.Error(err),
 			log.String("pattern", tp.Pattern),
 		)
-		return nil, nil
+		return nil, nil, nil
 	}
 
-	var identification TrackerIdentification
-	if err := json.Unmarshal([]byte(result.FinalMessage().Text()), &identification); err != nil {
-		h.logger.WarnCtx(
-			ctx,
-			"cannot parse agent identification output",
-			log.Error(err),
-			log.String("pattern", tp.Pattern),
-		)
-		return nil, nil
-	}
+	identification := result.Output
 
 	if identification.Confidence < agentConfidenceThreshold {
 		h.logger.InfoCtx(
@@ -300,7 +296,7 @@ func (h *trackerMappingHandler) identifyWithAgent(
 			log.String("pattern", tp.Pattern),
 			log.Float64("confidence", identification.Confidence),
 		)
-		return nil, nil
+		return nil, nil, nil
 	}
 
 	confidence := float32(identification.Confidence)
@@ -310,12 +306,15 @@ func (h *trackerMappingHandler) identifyWithAgent(
 
 	var commonThirdPartyID *gid.GID
 	if identification.ThirdPartyName != "" {
-		commonThirdPartyID = h.resolveOrCreateCommonThirdParty(
+		commonThirdPartyID, err = h.resolveOrCreateCommonThirdParty(
 			ctx,
 			tx,
 			identification,
 			domains,
 		)
+		if err != nil {
+			return nil, nil, fmt.Errorf("cannot resolve or create common third party: %w", err)
+		}
 	}
 
 	now := time.Now()
@@ -334,20 +333,13 @@ func (h *trackerMappingHandler) identifyWithAgent(
 
 	actualID, _, err := commonPattern.Upsert(ctx, tx)
 	if err != nil {
-		h.logger.ErrorCtx(
-			ctx,
-			"cannot upsert common tracker pattern from agent",
-			log.Error(err),
-			log.String("pattern", tp.Pattern),
-		)
-		return nil, nil
+		return nil, nil, fmt.Errorf("cannot upsert common tracker pattern from agent: %w", err)
 	}
 
 	commonPattern.ID = actualID
 	thirdPartyID, err := h.resolveThirdParty(ctx, tx, tp, &commonPattern)
 	if err != nil {
-		h.logger.ErrorCtx(ctx, "cannot resolve third party from agent match", log.Error(err))
-		return &commonPattern.ID, nil
+		return nil, nil, fmt.Errorf("cannot resolve third party from agent match: %w", err)
 	}
 
 	h.logger.InfoCtx(
@@ -358,7 +350,7 @@ func (h *trackerMappingHandler) identifyWithAgent(
 		log.Float64("confidence", identification.Confidence),
 	)
 
-	return &commonPattern.ID, thirdPartyID
+	return &commonPattern.ID, thirdPartyID, nil
 }
 
 func (h *trackerMappingHandler) resolveOrCreateCommonThirdParty(
@@ -366,19 +358,19 @@ func (h *trackerMappingHandler) resolveOrCreateCommonThirdParty(
 	tx pg.Tx,
 	identification TrackerIdentification,
 	domains []string,
-) *gid.GID {
+) (*gid.GID, error) {
 	var party coredata.CommonThirdParty
 	if err := party.LoadByName(ctx, tx, identification.ThirdPartyName); err == nil {
-		return &party.ID
+		return &party.ID, nil
 	}
 
 	partySlug := slug.Make(identification.ThirdPartyName)
 	if partySlug == "" {
-		return nil
+		return nil, nil
 	}
 
 	if err := party.LoadBySlug(ctx, tx, partySlug); err == nil {
-		return &party.ID
+		return &party.ID, nil
 	}
 
 	category := coredata.ThirdPartyCategoryOther
@@ -398,13 +390,7 @@ func (h *trackerMappingHandler) resolveOrCreateCommonThirdParty(
 	}
 
 	if err := party.Insert(ctx, tx); err != nil {
-		h.logger.WarnCtx(
-			ctx,
-			"cannot create common third party from agent",
-			log.Error(err),
-			log.String("name", identification.ThirdPartyName),
-		)
-		return nil
+		return nil, fmt.Errorf("cannot create common third party: %w", err)
 	}
 
 	for _, domain := range domains {
@@ -417,12 +403,7 @@ func (h *trackerMappingHandler) resolveOrCreateCommonThirdParty(
 		}
 
 		if _, err := domainRecord.Upsert(ctx, tx); err != nil {
-			h.logger.WarnCtx(
-				ctx,
-				"cannot create common third party domain from agent",
-				log.Error(err),
-				log.String("domain", domain),
-			)
+			return nil, fmt.Errorf("cannot create common third party domain: %w", err)
 		}
 	}
 
@@ -433,14 +414,14 @@ func (h *trackerMappingHandler) resolveOrCreateCommonThirdParty(
 		log.String("category", string(category)),
 	)
 
-	return &party.ID
+	return &party.ID, nil
 }
 
 func (h *trackerMappingHandler) createUnmatchedPattern(
 	ctx context.Context,
 	tx pg.Tx,
 	tp coredata.TrackerPattern,
-) *gid.GID {
+) (*gid.GID, error) {
 	now := time.Now()
 	commonPattern := coredata.CommonTrackerPattern{
 		ID:            gid.New(gid.NilTenant, coredata.CommonTrackerPatternEntityType),
@@ -456,15 +437,10 @@ func (h *trackerMappingHandler) createUnmatchedPattern(
 
 	actualID, _, err := commonPattern.Upsert(ctx, tx)
 	if err != nil {
-		h.logger.ErrorCtx(
-			ctx,
-			"cannot upsert common tracker pattern for unmatched pattern",
-			log.Error(err),
-		)
-		return nil
+		return nil, fmt.Errorf("cannot upsert unmatched common tracker pattern: %w", err)
 	}
 
-	return &actualID
+	return &actualID, nil
 }
 
 func (h *trackerMappingHandler) resolveThirdParty(
