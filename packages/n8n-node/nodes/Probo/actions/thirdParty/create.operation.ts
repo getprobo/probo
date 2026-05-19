@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -184,6 +184,13 @@ export const description: INodeProperties[] = [
 				default: '',
 			},
 			{
+				displayName: 'Root',
+				name: 'firstLevel',
+				type: 'boolean',
+				default: false,
+				description: 'Whether this is a first-level third party',
+			},
+			{
 				displayName: 'Security Page URL',
 				name: 'securityPageUrl',
 				type: 'string',
@@ -249,6 +256,7 @@ export async function execute(
 		trustPageUrl?: string;
 		certifications?: string;
 		countries?: string;
+		firstLevel?: boolean;
 	};
 
 	const query = `
@@ -275,6 +283,7 @@ export async function execute(
 						certifications
 						countries
 						showOnTrustCenter
+						firstLevel
 						createdAt
 						updatedAt
 					}
@@ -303,6 +312,7 @@ export async function execute(
 	if (additionalFields.subprocessorsListUrl) input.subprocessorsListUrl = additionalFields.subprocessorsListUrl;
 	if (additionalFields.securityPageUrl) input.securityPageUrl = additionalFields.securityPageUrl;
 	if (additionalFields.trustPageUrl) input.trustPageUrl = additionalFields.trustPageUrl;
+	if (additionalFields.firstLevel !== undefined) input.firstLevel = additionalFields.firstLevel;
 	if (additionalFields.certifications) {
 		input.certifications = additionalFields.certifications.split(',').map((c) => c.trim()).filter(Boolean);
 	}

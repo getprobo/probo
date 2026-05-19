@@ -70,7 +70,7 @@ func (r *Resolver) ListThirdPartiesTool(ctx context.Context, req *mcp.CallToolRe
 
 	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
 
-	thirdPartyFilter := coredata.NewThirdPartyFilter(nil)
+	thirdPartyFilter := coredata.NewThirdPartyFilter(nil, input.FirstLevel)
 
 	page, err := prb.ThirdParties.ListForOrganizationID(ctx, scope, input.OrganizationID, cursor, thirdPartyFilter)
 	if err != nil {
@@ -6146,6 +6146,59 @@ func (r *Resolver) MoveTrackerResourceToCategoryTool(ctx context.Context, req *m
 	}
 
 	return nil, types.MoveTrackerResourceToCategoryOutput{TrackerResource: types.NewTrackerResource(result.TrackerResource)}, nil
+}
+
+func (r *Resolver) CreateThirdPartyThirdPartyMappingTool(ctx context.Context, req *mcp.CallToolRequest, input *types.CreateThirdPartyThirdPartyMappingInput) (*mcp.CallToolResult, types.CreateThirdPartyThirdPartyMappingOutput, error) {
+	scope, err := r.Authorize(ctx, input.ParentThirdPartyID, probo.ActionThirdPartyRelationCreate)
+	if err != nil {
+		return nil, types.CreateThirdPartyThirdPartyMappingOutput{}, err
+	}
+
+	if _, err := r.proboSvc.ThirdParties.CreateThirdPartyMapping(ctx, scope, input.ParentThirdPartyID, input.ChildThirdPartyID); err != nil {
+		return nil, types.CreateThirdPartyThirdPartyMappingOutput{}, fmt.Errorf("cannot create third party mapping: %w", err)
+	}
+
+	return nil, types.CreateThirdPartyThirdPartyMappingOutput{}, nil
+}
+
+func (r *Resolver) DeleteThirdPartyThirdPartyMappingTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteThirdPartyThirdPartyMappingInput) (*mcp.CallToolResult, types.DeleteThirdPartyThirdPartyMappingOutput, error) {
+	scope, err := r.Authorize(ctx, input.ParentThirdPartyID, probo.ActionThirdPartyRelationDelete)
+	if err != nil {
+		return nil, types.DeleteThirdPartyThirdPartyMappingOutput{}, err
+	}
+
+	if err := r.proboSvc.ThirdParties.DeleteThirdPartyMapping(ctx, scope, input.ParentThirdPartyID, input.ChildThirdPartyID); err != nil {
+		return nil, types.DeleteThirdPartyThirdPartyMappingOutput{}, fmt.Errorf("cannot delete third party mapping: %w", err)
+	}
+
+	return nil, types.DeleteThirdPartyThirdPartyMappingOutput{}, nil
+}
+
+func (r *Resolver) ListChildThirdPartiesTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListChildThirdPartiesInput) (*mcp.CallToolResult, types.ListChildThirdPartiesOutput, error) {
+	scope, err := r.Authorize(ctx, input.ParentThirdPartyID, probo.ActionThirdPartyRelationList)
+	if err != nil {
+		return nil, types.ListChildThirdPartiesOutput{}, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.ThirdPartyOrderField]{
+		Field:     coredata.ThirdPartyOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if input.OrderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.ThirdPartyOrderField]{
+			Field:     input.OrderBy.Field,
+			Direction: input.OrderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
+
+	page, err := r.proboSvc.ThirdParties.ListForParentThirdPartyID(ctx, scope, input.ParentThirdPartyID, cursor)
+	if err != nil {
+		panic(fmt.Errorf("cannot list child third parties: %w", err))
+	}
+
+	return nil, types.NewListChildThirdPartiesOutput(page), nil
 }
 
 func (r *Resolver) ListRiskAssessmentsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListRiskAssessmentsInput) (*mcp.CallToolResult, types.ListRiskAssessmentsOutput, error) {

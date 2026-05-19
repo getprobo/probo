@@ -627,6 +627,9 @@ components:
         organization_id:
           $ref: "#/components/schemas/GID"
           description: Organization ID
+        first_level:
+          type: boolean
+          description: Filter by first-level status
         order_by:
           $ref: "#/components/schemas/ThirdPartyOrderBy"
           description: ThirdParty order by
@@ -650,6 +653,69 @@ components:
           items:
             $ref: "#/components/schemas/ThirdParty"
 
+    CreateThirdPartyThirdPartyMappingInput:
+      type: object
+      required:
+        - parent_third_party_id
+        - child_third_party_id
+      properties:
+        parent_third_party_id:
+          $ref: "#/components/schemas/GID"
+          description: Parent third party ID
+        child_third_party_id:
+          $ref: "#/components/schemas/GID"
+          description: Child third party ID
+
+    CreateThirdPartyThirdPartyMappingOutput:
+      type: object
+
+    DeleteThirdPartyThirdPartyMappingInput:
+      type: object
+      required:
+        - parent_third_party_id
+        - child_third_party_id
+      properties:
+        parent_third_party_id:
+          $ref: "#/components/schemas/GID"
+          description: Parent third party ID
+        child_third_party_id:
+          $ref: "#/components/schemas/GID"
+          description: Child third party ID
+
+    DeleteThirdPartyThirdPartyMappingOutput:
+      type: object
+
+    ListChildThirdPartiesInput:
+      type: object
+      required:
+        - parent_third_party_id
+      properties:
+        parent_third_party_id:
+          $ref: "#/components/schemas/GID"
+          description: Parent third party ID
+        order_by:
+          $ref: "#/components/schemas/ThirdPartyOrderBy"
+          description: ThirdParty order by
+        size:
+          type: integer
+          description: Page size
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Page cursor
+
+    ListChildThirdPartiesOutput:
+      type: object
+      required:
+        - thirdParties
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Next cursor
+        thirdParties:
+          type: array
+          items:
+            $ref: "#/components/schemas/ThirdParty"
+
     ThirdParty:
       type: object
       required:
@@ -657,6 +723,7 @@ components:
         - name
         - organization_id
         - category
+        - first_level
         - created_at
         - updated_at
       properties:
@@ -780,6 +847,9 @@ components:
             - string
             - "null"
           description: Trust page URL
+        first_level:
+          type: boolean
+          description: Whether this is a first-level third party
         created_at:
           type: string
           format: date-time
@@ -11788,6 +11858,31 @@ tools:
       $ref: "#/components/schemas/ListThirdPartiesInput"
     outputSchema:
       $ref: "#/components/schemas/ListThirdPartiesOutput"
+  - name: createThirdPartyThirdPartyMapping
+    description: Link a child third party to a parent third party
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/CreateThirdPartyThirdPartyMappingInput"
+    outputSchema:
+      $ref: "#/components/schemas/CreateThirdPartyThirdPartyMappingOutput"
+  - name: deleteThirdPartyThirdPartyMapping
+    description: Unlink a child third party from a parent third party
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/DeleteThirdPartyThirdPartyMappingInput"
+    outputSchema:
+      $ref: "#/components/schemas/DeleteThirdPartyThirdPartyMappingOutput"
+  - name: listChildThirdParties
+    description: List child third parties linked to a parent third party
+    hints:
+      readonly: true
+      idempotent: true
+    inputSchema:
+      $ref: "#/components/schemas/ListChildThirdPartiesInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListChildThirdPartiesOutput"
   - name: listUsers
     description: List all users for the organization
     hints:

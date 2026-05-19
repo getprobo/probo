@@ -21,12 +21,14 @@ import (
 type (
 	ThirdPartyFilter struct {
 		showOnTrustCenter *bool
+		firstLevel        *bool
 	}
 )
 
-func NewThirdPartyFilter(showOnTrustCenter *bool) *ThirdPartyFilter {
+func NewThirdPartyFilter(showOnTrustCenter *bool, firstLevel *bool) *ThirdPartyFilter {
 	return &ThirdPartyFilter{
 		showOnTrustCenter: showOnTrustCenter,
+		firstLevel:        firstLevel,
 	}
 }
 
@@ -39,6 +41,12 @@ func (f *ThirdPartyFilter) SQLArguments() pgx.StrictNamedArgs {
 		args["show_on_trust_center"] = nil
 	}
 
+	if f.firstLevel != nil {
+		args["first_level"] = *f.firstLevel
+	} else {
+		args["first_level"] = nil
+	}
+
 	return args
 }
 
@@ -48,6 +56,14 @@ func (f *ThirdPartyFilter) SQLFragment() string {
 	CASE
 		WHEN @show_on_trust_center::boolean IS NOT NULL THEN
 			show_on_trust_center = @show_on_trust_center::boolean
+		ELSE TRUE
+	END
+)
+AND
+(
+	CASE
+		WHEN @first_level::boolean IS NOT NULL THEN
+			first_level = @first_level::boolean
 		ELSE TRUE
 	END
 )`

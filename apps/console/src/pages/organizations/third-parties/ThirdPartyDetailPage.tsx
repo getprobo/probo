@@ -16,6 +16,7 @@ import { faviconUrl } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import {
   ActionDropdown,
+  Badge,
   Breadcrumb,
   Button,
   DropdownItem,
@@ -91,7 +92,12 @@ export default function ThirdPartyDetailPage(props: Props) {
               className="shadow-mid rounded-2xl"
             />
           )}
-          <div className="text-2xl">{thirdParty.name}</div>
+          <div className="flex items-center gap-3">
+            <div className="text-2xl">{thirdParty.name}</div>
+            <Badge variant={thirdParty.firstLevel ? "info" : "neutral"}>
+              {thirdParty.firstLevel ? __("First Level") : __("Indirect")}
+            </Badge>
+          </div>
         </div>
         <div className="flex gap-2 items-center">
           {thirdParty.canAssess && (
@@ -127,6 +133,9 @@ export default function ThirdPartyDetailPage(props: Props) {
         <TabLink to={`${baseThirdPartyUrl}/risks`}>{__("Risk Assessment")}</TabLink>
         <TabLink to={`${baseThirdPartyUrl}/contacts`}>{__("Contacts")}</TabLink>
         <TabLink to={`${baseThirdPartyUrl}/services`}>{__("Services")}</TabLink>
+        <TabLink to={`${baseThirdPartyUrl}/third-parties`}>
+          {__("Third Parties")}
+        </TabLink>
       </Tabs>
 
       <Outlet context={{ thirdParty }} />

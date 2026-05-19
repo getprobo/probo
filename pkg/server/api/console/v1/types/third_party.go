@@ -84,6 +84,7 @@ func NewThirdParty(v *coredata.ThirdParty) *ThirdParty {
 		WebsiteURL:                    v.WebsiteURL,
 		Category:                      v.Category,
 		ShowOnTrustCenter:             v.ShowOnTrustCenter,
+		FirstLevel:                    v.FirstLevel,
 		Countries:                     v.Countries,
 		UpdatedAt:                     v.UpdatedAt,
 		CreatedAt:                     v.CreatedAt,

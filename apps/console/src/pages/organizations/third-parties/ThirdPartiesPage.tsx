@@ -26,12 +26,15 @@ import {
   IconUpload,
   PageHeader,
   RiskBadge,
+  TabItem,
+  Tabs,
   Tbody,
   Td,
   Th,
   Thead,
   Tr,
 } from "@probo/ui";
+import { useState, useTransition } from "react";
 import {
   type PreloadedQuery,
   usePaginationFragment,
@@ -76,8 +79,20 @@ export default function ThirdPartiesPage(props: Props) {
 
   const thirdParties = pagination.data.thirdParties?.edges.map(edge => edge.node);
   const connectionId = pagination.data.thirdParties.__id;
+  const [, startTransition] = useTransition();
+  const [firstLevelFilter, setFirstLevelFilter] = useState<boolean | null>(true);
 
   usePageTitle(__("Third parties"));
+
+  const handleFilterChange = (firstLevel: boolean | null) => {
+    setFirstLevelFilter(firstLevel);
+    startTransition(() => {
+      pagination.refetch(
+        { filter: firstLevel !== null ? { firstLevel } : {} },
+        { fetchPolicy: "store-and-network" },
+      );
+    });
+  };
 
   const hasAnyAction
     = thirdParties.some(({ canUpdate, canDelete }) => canUpdate || canDelete);
@@ -129,6 +144,20 @@ export default function ThirdPartiesPage(props: Props) {
           )}
         </div>
       </PageHeader>
+      <Tabs>
+        <TabItem
+          active={firstLevelFilter === true}
+          onClick={() => handleFilterChange(true)}
+        >
+          {__("First Level")}
+        </TabItem>
+        <TabItem
+          active={firstLevelFilter === null}
+          onClick={() => handleFilterChange(null)}
+        >
+          {__("All")}
+        </TabItem>
+      </Tabs>
       <SortableTable {...pagination}>
         <Thead>
           <Tr>

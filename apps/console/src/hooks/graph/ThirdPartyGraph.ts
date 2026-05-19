@@ -138,6 +138,7 @@ export const paginatedThirdPartiesFragment = graphql`
     after: { type: "CursorKey", defaultValue: null }
     before: { type: "CursorKey", defaultValue: null }
     last: { type: "Int", defaultValue: null }
+    filter: { type: "ThirdPartyFilter", defaultValue: { firstLevel: true } }
   ) {
     thirdParties(
       first: $first
@@ -145,7 +146,8 @@ export const paginatedThirdPartiesFragment = graphql`
       last: $last
       before: $before
       orderBy: $order
-    ) @connection(key: "ThirdPartiesListQuery_thirdParties") {
+      filter: $filter
+    ) @connection(key: "ThirdPartiesListQuery_thirdParties", filters: ["filter"]) {
       __id
       edges {
         node {
@@ -182,6 +184,7 @@ export const thirdPartyNodeQuery = graphql`
       ... on ThirdParty {
         name
         websiteUrl
+        firstLevel
         canAssess: permission(action: "core:thirdParty:assess")
         canUpdate: permission(action: "core:thirdParty:update")
         canDelete: permission(action: "core:thirdParty:delete")
@@ -224,6 +227,7 @@ export const thirdPartiesSelectQuery = graphql`
               id
               name
               websiteUrl
+              firstLevel
             }
           }
         }

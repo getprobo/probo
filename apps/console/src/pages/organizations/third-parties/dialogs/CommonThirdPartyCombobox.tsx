@@ -27,7 +27,7 @@ import type { CreateThirdPartyInput } from "#/__generated__/core/ThirdPartyGraph
 export type CommonThirdPartyRef
   = CommonThirdPartyCombobox_commonThirdParty$data;
 
-const commonThirdPartyFragment = graphql`
+export const commonThirdPartyFragment = graphql`
   fragment CommonThirdPartyCombobox_commonThirdParty on CommonThirdParty @inline {
     name
     logoUrl
@@ -57,20 +57,44 @@ export const commonThirdPartiesQuery = graphql`
   }
 `;
 
+function toCreateInput(tp: CommonThirdPartyRef): Omit<CreateThirdPartyInput, "organizationId"> {
+  return {
+    name: tp.name,
+    headquarterAddress: tp.headquarterAddress,
+    legalName: tp.legalName,
+    websiteUrl: tp.websiteUrl,
+    category: tp.category,
+    privacyPolicyUrl: tp.privacyPolicyUrl,
+    serviceLevelAgreementUrl: tp.serviceLevelAgreementUrl,
+    dataProcessingAgreementUrl: tp.dataProcessingAgreementUrl,
+    certifications: tp.certifications,
+    securityPageUrl: tp.securityPageUrl,
+    trustPageUrl: tp.trustPageUrl,
+    statusPageUrl: tp.statusPageUrl,
+    termsOfServiceUrl: tp.termsOfServiceUrl,
+  };
+}
+
 interface CommonThirdPartyComboboxProps {
   queryRef: PreloadedQuery<CommonThirdPartyComboboxQuery>;
-  onSelect: (thridParty: Omit<CreateThirdPartyInput, "organizationId">) => void;
+  onSelect: (thirdParty: Omit<CreateThirdPartyInput, "organizationId">) => void;
+  excludeNames?: Set<string>;
 }
 
 export function CommonThirdPartyCombobox({
   queryRef,
   onSelect,
+  excludeNames,
 }: CommonThirdPartyComboboxProps) {
   const data = usePreloadedQuery(commonThirdPartiesQuery, queryRef);
 
+  const items = excludeNames
+    ? data.commonThirdParties.filter(tp => !excludeNames.has(tp.name.toLowerCase()))
+    : data.commonThirdParties;
+
   return (
     <>
-      {data.commonThirdParties.map(thirdParty => (
+      {items.map(thirdParty => (
         <ComboboxItem
           key={thirdParty.id}
           onClick={() => {
@@ -78,21 +102,7 @@ export function CommonThirdPartyCombobox({
               commonThirdPartyFragment,
               thirdParty,
             );
-            onSelect({
-              name: tp.name,
-              headquarterAddress: tp.headquarterAddress,
-              legalName: tp.legalName,
-              websiteUrl: tp.websiteUrl,
-              category: tp.category,
-              privacyPolicyUrl: tp.privacyPolicyUrl,
-              serviceLevelAgreementUrl: tp.serviceLevelAgreementUrl,
-              dataProcessingAgreementUrl: tp.dataProcessingAgreementUrl,
-              certifications: tp.certifications,
-              securityPageUrl: tp.securityPageUrl,
-              trustPageUrl: tp.trustPageUrl,
-              statusPageUrl: tp.statusPageUrl,
-              termsOfServiceUrl: tp.termsOfServiceUrl,
-            });
+            onSelect(toCreateInput(tp));
           }}
         >
           <Avatar

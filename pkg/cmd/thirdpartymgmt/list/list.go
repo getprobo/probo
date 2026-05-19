@@ -24,11 +24,11 @@ import (
 )
 
 const listQuery = `
-query($id: ID!, $first: Int, $after: CursorKey, $orderBy: ThirdPartyOrder) {
+query($id: ID!, $first: Int, $after: CursorKey, $orderBy: ThirdPartyOrder, $filter: ThirdPartyFilter) {
   node(id: $id) {
     __typename
     ... on Organization {
-      third_parties(first: $first, after: $after, orderBy: $orderBy) {
+      third_parties(first: $first, after: $after, orderBy: $orderBy, filter: $filter) {
         totalCount
         edges {
           node {
@@ -55,11 +55,12 @@ type thirdParty struct {
 
 func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 	var (
-		flagOrg      string
-		flagLimit    int
-		flagOrderBy  string
-		flagOrderDir string
-		flagOutput   *string
+		flagOrg        string
+		flagLimit      int
+		flagOrderBy    string
+		flagOrderDir   string
+		flagFirstLevel bool
+		flagOutput     *string
 	)
 
 	cmd := &cobra.Command{
@@ -105,6 +106,12 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 
 			variables := map[string]any{
 				"id": flagOrg,
+			}
+
+			if cmd.Flags().Changed("first-level") {
+				variables["filter"] = map[string]any{
+					"first-level": flagFirstLevel,
+				}
 			}
 
 			if flagOrderBy != "" {
@@ -188,6 +195,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().IntVarP(&flagLimit, "limit", "L", 30, "Maximum number of thirdParties to list")
 	cmd.Flags().StringVar(&flagOrderBy, "order-by", "", "Order by field (NAME, CREATED_AT, UPDATED_AT)")
 	cmd.Flags().StringVar(&flagOrderDir, "order-direction", "DESC", "Sort direction (ASC, DESC)")
+	cmd.Flags().BoolVar(&flagFirstLevel, "first-level", false, "Filter by first-level thirdParties only")
 	flagOutput = cmdutil.AddOutputFlag(cmd)
 
 	return cmd

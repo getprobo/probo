@@ -87,6 +87,7 @@ func NewThirdParty(v *coredata.ThirdParty) *ThirdParty {
 		TermsOfServiceURL:             v.TermsOfServiceURL,
 		SecurityPageURL:               v.SecurityPageURL,
 		TrustPageURL:                  v.TrustPageURL,
+		FirstLevel:                    v.FirstLevel,
 		CreatedAt:                     v.CreatedAt,
 		UpdatedAt:                     v.UpdatedAt,
 	}
@@ -106,6 +107,25 @@ func NewListThirdPartiesOutput(thirdPartyPage *page.Page[*coredata.ThirdParty, c
 	}
 
 	return ListThirdPartiesOutput{
+		NextCursor:   nextCursor,
+		ThirdParties: thirdParties,
+	}
+}
+
+func NewListChildThirdPartiesOutput(thirdPartyPage *page.Page[*coredata.ThirdParty, coredata.ThirdPartyOrderField]) ListChildThirdPartiesOutput {
+	thirdParties := make([]*ThirdParty, 0, len(thirdPartyPage.Data))
+	for _, v := range thirdPartyPage.Data {
+		thirdParties = append(thirdParties, NewThirdParty(v))
+	}
+
+	var nextCursor *page.CursorKey
+
+	if len(thirdPartyPage.Data) > 0 {
+		cursorKey := thirdPartyPage.Data[len(thirdPartyPage.Data)-1].CursorKey(thirdPartyPage.Cursor.OrderBy.Field)
+		nextCursor = &cursorKey
+	}
+
+	return ListChildThirdPartiesOutput{
 		NextCursor:   nextCursor,
 		ThirdParties: thirdParties,
 	}

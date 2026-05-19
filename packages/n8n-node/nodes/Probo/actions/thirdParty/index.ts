@@ -39,6 +39,9 @@ import * as updateBusinessAssociateAgreementOp from './updateBusinessAssociateAg
 import * as getDataPrivacyAgreementOp from './getDataPrivacyAgreement.operation';
 import * as deleteDataPrivacyAgreementOp from './deleteDataPrivacyAgreement.operation';
 import * as updateDataPrivacyAgreementOp from './updateDataPrivacyAgreement.operation';
+import * as linkThirdPartyOp from './linkThirdParty.operation';
+import * as unlinkThirdPartyOp from './unlinkThirdParty.operation';
+import * as listChildThirdPartiesOp from './listChildThirdParties.operation';
 import * as publishOp from './publish.operation';
 
 export const description: INodeProperties[] = [
@@ -144,6 +147,12 @@ export const description: INodeProperties[] = [
 				action: 'Get many third parties',
 			},
 			{
+				name: 'Get Many Child Third Parties',
+				value: 'listChildThirdParties',
+				description: 'Get child third parties linked to a parent',
+				action: 'Get many child third parties',
+			},
+			{
 				name: 'Get Many Compliance Reports',
 				value: 'getAllComplianceReports',
 				description: 'Get many third party compliance reports',
@@ -180,10 +189,22 @@ export const description: INodeProperties[] = [
 				action: 'Get a third party service',
 			},
 			{
+				name: 'Link Third Party',
+				value: 'linkThirdParty',
+				description: 'Link a child third party to a parent third party',
+				action: 'Link a child third party',
+			},
+			{
 				name: 'Publish List',
 				value: 'publish',
 				description: 'Publish the third party register as a document version',
 				action: 'Publish the third party register',
+			},
+			{
+				name: 'Unlink Third Party',
+				value: 'unlinkThirdParty',
+				description: 'Unlink a child third party from a parent third party',
+				action: 'Unlink a child third party',
 			},
 			{
 				name: 'Update',
@@ -244,6 +265,9 @@ export const description: INodeProperties[] = [
 	...getDataPrivacyAgreementOp.description,
 	...deleteDataPrivacyAgreementOp.description,
 	...updateDataPrivacyAgreementOp.description,
+	...linkThirdPartyOp.description,
+	...unlinkThirdPartyOp.description,
+	...listChildThirdPartiesOp.description,
 	...publishOp.description,
 ];
 
@@ -274,5 +298,8 @@ export {
 	getDataPrivacyAgreementOp as getDataPrivacyAgreement,
 	deleteDataPrivacyAgreementOp as deleteDataPrivacyAgreement,
 	updateDataPrivacyAgreementOp as updateDataPrivacyAgreement,
+	linkThirdPartyOp as linkThirdParty,
+	unlinkThirdPartyOp as unlinkThirdParty,
+	listChildThirdPartiesOp as listChildThirdParties,
 	publishOp as publish,
 };

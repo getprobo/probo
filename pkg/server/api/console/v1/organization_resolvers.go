@@ -1271,7 +1271,7 @@ func (r *organizationResolver) CookieBanners(ctx context.Context, obj *types.Org
 }
 
 // ThirdParties is the resolver for the thirdParties field.
-func (r *organizationResolver) ThirdParties(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ThirdPartyOrderBy) (*types.ThirdPartyConnection, error) {
+func (r *organizationResolver) ThirdParties(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ThirdPartyOrderBy, filter *types.ThirdPartyFilter) (*types.ThirdPartyConnection, error) {
 	scope, err := r.authorize(ctx, obj.ID, probo.ActionThirdPartyList)
 	if err != nil {
 		return nil, err
@@ -1291,7 +1291,12 @@ func (r *organizationResolver) ThirdParties(ctx context.Context, obj *types.Orga
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	thirdPartyFilter := coredata.NewThirdPartyFilter(nil)
+	var firstLevel *bool
+	if filter != nil {
+		firstLevel = filter.FirstLevel
+	}
+
+	thirdPartyFilter := coredata.NewThirdPartyFilter(nil, firstLevel)
 
 	page, err := r.probo.ThirdParties.ListForOrganizationID(ctx, scope, obj.ID, cursor, thirdPartyFilter)
 	if err != nil {

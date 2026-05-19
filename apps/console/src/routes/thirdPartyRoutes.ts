@@ -97,6 +97,14 @@ export const thirdPartyRoutes = [
           () => import("../pages/organizations/third-parties/tabs/ThirdPartyServicesTab"),
         ),
       },
+      {
+        path: "third-parties",
+        Fallback: LinkCardSkeleton,
+        Component: lazy(
+          () =>
+            import("../pages/organizations/third-parties/third-parties/ThirdPartyThirdPartiesPageLoader"),
+        ),
+      },
     ],
   },
 ] satisfies AppRoute[];

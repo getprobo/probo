@@ -55,6 +55,7 @@ func (r *mutationResolver) CreateThirdParty(ctx context.Context, input types.Cre
 			BusinessOwnerID:               input.BusinessOwnerID,
 			SecurityOwnerID:               input.SecurityOwnerID,
 			Countries:                     input.Countries,
+			FirstLevel:                    input.FirstLevel,
 		},
 	)
 	if err != nil {
@@ -106,6 +107,7 @@ func (r *mutationResolver) UpdateThirdParty(ctx context.Context, input types.Upd
 			BusinessOwnerID:               gqlutils.UnwrapOmittable(input.BusinessOwnerID),
 			SecurityOwnerID:               gqlutils.UnwrapOmittable(input.SecurityOwnerID),
 			ShowOnTrustCenter:             input.ShowOnTrustCenter,
+			FirstLevel:                    input.FirstLevel,
 			Countries:                     input.Countries,
 		},
 	)
@@ -594,6 +596,46 @@ func (r *mutationResolver) PublishThirdPartyList(ctx context.Context, input type
 	}, nil
 }
 
+// CreateThirdPartyThirdPartyMapping is the resolver for the linkThirdPartyThirdParty field.
+func (r *mutationResolver) CreateThirdPartyThirdPartyMapping(ctx context.Context, input types.CreateThirdPartyThirdPartyMappingInput) (*types.CreateThirdPartyThirdPartyMappingPayload, error) {
+	scope, err := r.authorize(ctx, input.ParentThirdPartyID, probo.ActionThirdPartyRelationCreate)
+	if err != nil {
+		return nil, err
+	}
+
+	childThirdParty, err := r.probo.ThirdParties.CreateThirdPartyMapping(ctx, scope, input.ParentThirdPartyID, input.ChildThirdPartyID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot create third party mapping", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.CreateThirdPartyThirdPartyMappingPayload{
+		ThirdPartyEdge: types.NewThirdPartyEdge(childThirdParty, coredata.ThirdPartyOrderFieldName),
+	}, nil
+}
+
+// DeleteThirdPartyThirdPartyMapping is the resolver for the deleteThirdPartyThirdPartyMapping field.
+func (r *mutationResolver) DeleteThirdPartyThirdPartyMapping(ctx context.Context, input types.DeleteThirdPartyThirdPartyMappingInput) (*types.DeleteThirdPartyThirdPartyMappingPayload, error) {
+	scope, err := r.authorize(ctx, input.ParentThirdPartyID, probo.ActionThirdPartyRelationDelete)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := r.probo.ThirdParties.DeleteThirdPartyMapping(ctx, scope, input.ParentThirdPartyID, input.ChildThirdPartyID); err != nil {
+		r.logger.ErrorCtx(ctx, "cannot delete third party mapping", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.DeleteThirdPartyThirdPartyMappingPayload{
+		RemovedThirdPartyID: input.ChildThirdPartyID,
+	}, nil
+}
+
 // Organization is the resolver for the organization field.
 func (r *thirdPartyResolver) Organization(ctx context.Context, obj *types.ThirdParty) (*types.Organization, error) {
 	if _, err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGet); err != nil {
@@ -830,6 +872,35 @@ func (r *thirdPartyResolver) SecurityOwner(ctx context.Context, obj *types.Third
 	return types.NewProfile(securityOwner), nil
 }
 
+// ChildThirdParties is the resolver for the childThirdParties field.
+func (r *thirdPartyResolver) ChildThirdParties(ctx context.Context, obj *types.ThirdParty, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ThirdPartyOrderBy) (*types.ThirdPartyConnection, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionThirdPartyRelationList)
+	if err != nil {
+		return nil, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.ThirdPartyOrderField]{
+		Field:     coredata.ThirdPartyOrderFieldName,
+		Direction: page.OrderDirectionAsc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.ThirdPartyOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	page, err := r.probo.ThirdParties.ListForParentThirdPartyID(ctx, scope, obj.ID, cursor)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list child third parties", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewThirdPartyConnection(page, r, obj.ID), nil
+}
+
 // Permission is the resolver for the permission field.
 func (r *thirdPartyResolver) Permission(ctx context.Context, obj *types.ThirdParty, action string) (bool, error) {
 	return r.Resolver.Permission(ctx, obj, action)
@@ -960,6 +1031,19 @@ func (r *thirdPartyConnectionResolver) TotalCount(ctx context.Context, obj *type
 		count, err := r.probo.ThirdParties.CountForDatumID(ctx, scope, obj.ParentID)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count thirdParties", log.Error(err))
+			return 0, gqlutils.Internal(ctx)
+		}
+
+		return count, nil
+	case *thirdPartyResolver:
+		if _, err := r.authorize(ctx, obj.ParentID, probo.ActionThirdPartyRelationList); err != nil {
+			return 0, err
+		}
+
+		count, err := r.probo.ThirdParties.CountForParentThirdPartyID(ctx, scope, obj.ParentID)
+		if err != nil {
+			r.logger.ErrorCtx(ctx, "cannot count child third parties", log.Error(err))
+
 			return 0, gqlutils.Internal(ctx)
 		}
 
@@ -1145,3 +1229,15 @@ type thirdPartyContactResolver struct{ *Resolver }
 type thirdPartyDataPrivacyAgreementResolver struct{ *Resolver }
 type thirdPartyRiskAssessmentResolver struct{ *Resolver }
 type thirdPartyServiceResolver struct{ *Resolver }
+
+// !!! WARNING !!!
+// The code below was going to be deleted when updating resolvers. It has been copied here so you have
+// one last chance to move it out of harms way if you want. There are two reasons this happens:
+//  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
+//    it when you're done.
+//  - You have helper methods in this file. Move them out to keep these resolver files clean.
+/*
+	func (r *mutationResolver) UncreateThirdPartyThirdPartyMapping(ctx context.Context, input types.UncreateThirdPartyThirdPartyMappingInput) (*types.UncreateThirdPartyThirdPartyMappingPayload, error) {
+	panic(fmt.Errorf("not implemented: UncreateThirdPartyThirdPartyMapping - uncreateThirdPartyThirdPartyMapping"))
+}
+*/

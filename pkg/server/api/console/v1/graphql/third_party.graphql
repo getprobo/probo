@@ -177,6 +177,10 @@ input ThirdPartyOrder
     field: ThirdPartyOrderField!
 }
 
+input ThirdPartyFilter {
+    firstLevel: Boolean
+}
+
 input ThirdPartyComplianceReportOrder
     @goModel(
         model: "go.probo.inc/probo/pkg/server/api/console/v1/types.ThirdPartyComplianceReportOrderBy"
@@ -269,6 +273,16 @@ type ThirdParty implements Node {
     legalName: String
     websiteUrl: String
     showOnTrustCenter: Boolean!
+    firstLevel: Boolean!
+
+    childThirdParties(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: ThirdPartyOrder
+    ): ThirdPartyConnection! @goField(forceResolver: true)
+
     createdAt: Datetime!
     updatedAt: Datetime!
 
@@ -460,6 +474,12 @@ extend type Mutation {
     publishThirdPartyList(
         input: PublishThirdPartyListInput!
     ): PublishThirdPartyListPayload!
+    createThirdPartyThirdPartyMapping(
+        input: CreateThirdPartyThirdPartyMappingInput!
+    ): CreateThirdPartyThirdPartyMappingPayload!
+    deleteThirdPartyThirdPartyMapping(
+        input: DeleteThirdPartyThirdPartyMappingInput!
+    ): DeleteThirdPartyThirdPartyMappingPayload!
 }
 
 input PublishThirdPartyListInput {
@@ -494,6 +514,7 @@ input CreateThirdPartyInput {
     termsOfServiceUrl: String
     businessOwnerId: ID
     securityOwnerId: ID
+    firstLevel: Boolean
 }
 
 input UpdateThirdPartyInput {
@@ -518,6 +539,7 @@ input UpdateThirdPartyInput {
     businessOwnerId: ID @goField(omittable: true)
     securityOwnerId: ID @goField(omittable: true)
     showOnTrustCenter: Boolean
+    firstLevel: Boolean
 }
 
 input DeleteThirdPartyInput {
@@ -708,4 +730,22 @@ type AssessThirdPartyPayload {
     thirdParty: ThirdParty!
     report: String!
     subprocessors: [ThirdPartySubprocessor!]!
+}
+
+input CreateThirdPartyThirdPartyMappingInput {
+    parentThirdPartyId: ID!
+    childThirdPartyId: ID!
+}
+
+type CreateThirdPartyThirdPartyMappingPayload {
+    thirdPartyEdge: ThirdPartyEdge!
+}
+
+input DeleteThirdPartyThirdPartyMappingInput {
+    parentThirdPartyId: ID!
+    childThirdPartyId: ID!
+}
+
+type DeleteThirdPartyThirdPartyMappingPayload {
+    removedThirdPartyId: ID!
 }

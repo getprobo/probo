@@ -162,6 +162,7 @@ type (
 		SecurityPageURL               *string            `db:"security_page_url"`
 		TrustPageURL                  *string            `db:"trust_page_url"`
 		ShowOnTrustCenter             bool               `db:"show_on_trust_center"`
+		FirstLevel                    bool               `db:"first_level"`
 		CreatedAt                     time.Time          `db:"created_at"`
 		UpdatedAt                     time.Time          `db:"updated_at"`
 	}
@@ -253,6 +254,7 @@ SELECT
     security_page_url,
     trust_page_url,
     show_on_trust_center,
+    first_level,
     created_at,
     updated_at
 FROM
@@ -320,6 +322,7 @@ SELECT
     security_page_url,
     trust_page_url,
     show_on_trust_center,
+    first_level,
     created_at,
     updated_at
 FROM
@@ -381,6 +384,7 @@ INSERT INTO
         security_page_url,
         trust_page_url,
         show_on_trust_center,
+        first_level,
         created_at,
         updated_at
     )
@@ -409,6 +413,7 @@ VALUES (
     @security_page_url,
     @trust_page_url,
     @show_on_trust_center,
+    @first_level,
     @created_at,
     @updated_at
 )
@@ -439,6 +444,7 @@ VALUES (
 		"security_page_url":                v.SecurityPageURL,
 		"trust_page_url":                   v.TrustPageURL,
 		"show_on_trust_center":             v.ShowOnTrustCenter,
+		"first_level":                      v.FirstLevel,
 		"created_at":                       v.CreatedAt,
 		"updated_at":                       v.UpdatedAt,
 	}
@@ -534,6 +540,7 @@ SELECT
 	security_page_url,
 	trust_page_url,
 	show_on_trust_center,
+	first_level,
 	created_at,
 	updated_at
 FROM
@@ -597,6 +604,7 @@ SELECT
 	security_page_url,
 	trust_page_url,
 	show_on_trust_center,
+	first_level,
 	created_at,
 	updated_at
 FROM
@@ -657,6 +665,7 @@ SET
 	business_owner_profile_id = @business_owner_profile_id,
 	security_owner_profile_id = @security_owner_profile_id,
 	show_on_trust_center = @show_on_trust_center,
+	first_level = @first_level,
 	updated_at = @updated_at
 WHERE %s
     AND id = @third_party_id
@@ -686,6 +695,7 @@ WHERE %s
 		"business_owner_profile_id":        v.BusinessOwnerID,
 		"security_owner_profile_id":        v.SecurityOwnerID,
 		"show_on_trust_center":             v.ShowOnTrustCenter,
+		"first_level":                      v.FirstLevel,
 	}
 
 	maps.Copy(args, scope.SQLArguments())
@@ -803,6 +813,7 @@ WITH vend AS (
 		v.security_page_url,
 		v.trust_page_url,
 		v.show_on_trust_center,
+		v.first_level,
 		v.created_at,
 		v.updated_at
 	FROM
@@ -837,6 +848,7 @@ SELECT
 	security_page_url,
 	trust_page_url,
 	show_on_trust_center,
+	first_level,
 	created_at,
 	updated_at
 FROM
@@ -938,6 +950,7 @@ WITH vend AS (
 		v.security_page_url,
 		v.trust_page_url,
 		v.show_on_trust_center,
+		v.first_level,
 		v.created_at,
 		v.updated_at
 	FROM
@@ -972,6 +985,7 @@ SELECT
 	security_page_url,
 	trust_page_url,
 	show_on_trust_center,
+	first_level,
 	created_at,
 	updated_at
 FROM
@@ -1033,6 +1047,7 @@ WITH vend AS (
 		v.security_page_url,
 		v.trust_page_url,
 		v.show_on_trust_center,
+		v.first_level,
 		v.created_at,
 		v.updated_at
 	FROM
@@ -1067,6 +1082,7 @@ SELECT
 	security_page_url,
 	trust_page_url,
 	show_on_trust_center,
+	first_level,
 	created_at,
 	updated_at
 FROM
@@ -1129,6 +1145,7 @@ WITH vend AS (
 		v.security_page_url,
 		v.trust_page_url,
 		v.show_on_trust_center,
+		v.first_level,
 		v.created_at,
 		v.updated_at
 	FROM
@@ -1163,6 +1180,7 @@ SELECT
 	security_page_url,
 	trust_page_url,
 	show_on_trust_center,
+	first_level,
 	created_at,
 	updated_at
 FROM
@@ -1293,6 +1311,7 @@ WITH vend AS (
 		v.security_page_url,
 		v.trust_page_url,
 		v.show_on_trust_center,
+		v.first_level,
 		v.created_at,
 		v.updated_at
 	FROM
@@ -1327,6 +1346,7 @@ SELECT
 	security_page_url,
 	trust_page_url,
 	show_on_trust_center,
+	first_level,
 	created_at,
 	updated_at
 FROM
@@ -1387,6 +1407,7 @@ SELECT
 	security_page_url,
 	trust_page_url,
 	show_on_trust_center,
+	first_level,
 	created_at,
 	updated_at
 FROM

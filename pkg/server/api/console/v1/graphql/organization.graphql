@@ -331,6 +331,7 @@ type Organization implements Node {
         last: Int
         before: CursorKey
         orderBy: ThirdPartyOrder
+        filter: ThirdPartyFilter
     ): ThirdPartyConnection! @goField(forceResolver: true)
 
     thirdPartiesDocument: Document @goField(forceResolver: true)

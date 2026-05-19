@@ -24,6 +24,7 @@ type ThirdParty = {
   id: string;
   name: string;
   websiteUrl: string | null | undefined;
+  firstLevel?: boolean;
 };
 
 type Props<T extends FieldValues = FieldValues> = {
@@ -66,7 +67,7 @@ function ThirdPartiesMultiSelectWithQuery<T extends FieldValues = FieldValues>(
   const thirdParties = useThirdParties(organizationId);
   const [isOpen, setIsOpen] = useState(false);
 
-  const allThirdParties = [...thirdParties];
+  const allThirdParties: ThirdParty[] = [...thirdParties];
   if (props.disabled) {
     selectedThirdParties.forEach((selectedThirdParty) => {
       if (!allThirdParties.find(v => v.id === selectedThirdParty.id)) {

@@ -92,6 +92,11 @@ const (
 	ActionThirdPartyAssess  = "core:thirdParty:assess"
 	ActionThirdPartyPublish = "core:thirdParty:publish"
 
+	// ThirdPartyRelation actions
+	ActionThirdPartyRelationCreate = "core:thirdParty-relation:create"
+	ActionThirdPartyRelationDelete = "core:thirdParty-relation:delete"
+	ActionThirdPartyRelationList   = "core:thirdParty-relation:list"
+
 	// ThirdPartyContact actions
 	ActionThirdPartyContactGet    = "core:thirdParty-contact:get"
 	ActionThirdPartyContactList   = "core:thirdParty-contact:list"

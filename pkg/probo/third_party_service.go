@@ -92,6 +92,7 @@ type (
 		StatusPageURL                 *string
 		BusinessOwnerID               *gid.GID
 		SecurityOwnerID               *gid.GID
+		FirstLevel                    *bool
 	}
 
 	UpdateThirdPartyRequest struct {
@@ -116,6 +117,7 @@ type (
 		BusinessOwnerID               **gid.GID
 		SecurityOwnerID               **gid.GID
 		ShowOnTrustCenter             *bool
+		FirstLevel                    *bool
 	}
 
 	AssessThirdPartyRequest struct {
@@ -386,6 +388,10 @@ func (s ThirdPartyService) Update(
 				thirdParty.ShowOnTrustCenter = *req.ShowOnTrustCenter
 			}
 
+			if req.FirstLevel != nil {
+				thirdParty.FirstLevel = *req.FirstLevel
+			}
+
 			if req.TrustPageURL != nil {
 				thirdParty.TrustPageURL = *req.TrustPageURL
 			}
@@ -573,6 +579,11 @@ func (s ThirdPartyService) Create(
 		StatusPageURL:                 req.StatusPageURL,
 		TermsOfServiceURL:             req.TermsOfServiceURL,
 		ShowOnTrustCenter:             false,
+		FirstLevel:                    true,
+	}
+
+	if req.FirstLevel != nil {
+		thirdParty.FirstLevel = *req.FirstLevel
 	}
 
 	err := s.svc.pg.WithTx(
@@ -946,4 +957,117 @@ func (s ThirdPartyService) Assess(
 		Report:        result.Document,
 		Subprocessors: subprocessors,
 	}, nil
+}
+
+func (s ThirdPartyService) CreateThirdPartyMapping(
+	ctx context.Context,
+	scope coredata.Scoper,
+	parentThirdPartyID gid.GID,
+	childThirdPartyID gid.GID,
+) (*coredata.ThirdParty, error) {
+	childThirdParty := &coredata.ThirdParty{}
+
+	err := s.svc.pg.WithTx(
+		ctx,
+		func(ctx context.Context, conn pg.Tx) error {
+			parentThirdParty := &coredata.ThirdParty{}
+			if err := parentThirdParty.LoadByID(ctx, conn, scope, parentThirdPartyID); err != nil {
+				return fmt.Errorf("cannot load parent third party: %w", err)
+			}
+
+			if err := childThirdParty.LoadByID(ctx, conn, scope, childThirdPartyID); err != nil {
+				return fmt.Errorf("cannot load child third party: %w", err)
+			}
+
+			if parentThirdParty.OrganizationID != childThirdParty.OrganizationID {
+				return fmt.Errorf("cannot create mapping for third parties from different organizations: %w", coredata.ErrResourceNotFound)
+			}
+
+			relation := &coredata.ThirdPartyThirdParty{
+				ParentThirdPartyID: parentThirdPartyID,
+				ChildThirdPartyID:  childThirdPartyID,
+				CreatedAt:          time.Now(),
+			}
+			if err := relation.Insert(ctx, conn, scope); err != nil {
+				return fmt.Errorf("cannot create third party mapping: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return childThirdParty, nil
+}
+
+func (s ThirdPartyService) DeleteThirdPartyMapping(
+	ctx context.Context,
+	scope coredata.Scoper,
+	parentThirdPartyID gid.GID,
+	childThirdPartyID gid.GID,
+) error {
+	return s.svc.pg.WithTx(
+		ctx,
+		func(ctx context.Context, conn pg.Tx) error {
+			relation := &coredata.ThirdPartyThirdParty{
+				ParentThirdPartyID: parentThirdPartyID,
+				ChildThirdPartyID:  childThirdPartyID,
+			}
+			if err := relation.Delete(ctx, conn, scope); err != nil {
+				return fmt.Errorf("cannot delete third party mapping: %w", err)
+			}
+
+			return nil
+		},
+	)
+}
+
+func (s ThirdPartyService) CountForParentThirdPartyID(
+	ctx context.Context,
+	scope coredata.Scoper,
+	parentThirdPartyID gid.GID,
+) (int, error) {
+	var count int
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) (err error) {
+			thirdParties := coredata.ThirdParties{}
+
+			count, err = thirdParties.CountByParentThirdPartyID(ctx, conn, scope, parentThirdPartyID)
+			if err != nil {
+				return fmt.Errorf("cannot count child third parties: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}
+
+func (s ThirdPartyService) ListForParentThirdPartyID(
+	ctx context.Context,
+	scope coredata.Scoper,
+	parentThirdPartyID gid.GID,
+	cursor *page.Cursor[coredata.ThirdPartyOrderField],
+) (*page.Page[*coredata.ThirdParty, coredata.ThirdPartyOrderField], error) {
+	var thirdParties coredata.ThirdParties
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			return thirdParties.LoadByParentThirdPartyID(ctx, conn, scope, parentThirdPartyID, cursor)
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return page.NewPage(thirdParties, cursor), nil
 }

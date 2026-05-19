@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -74,6 +74,13 @@ export const description: INodeProperties[] = [
 		},
 		options: [
 			{
+				displayName: 'Filter by Root',
+				name: 'filterFirstLevel',
+				type: 'boolean',
+				default: false,
+				description: 'Whether to filter by first-level third parties only',
+			},
+			{
 				displayName: 'Include Organization',
 				name: 'includeOrganization',
 				type: 'boolean',
@@ -106,6 +113,7 @@ export async function execute(
 	const returnAll = this.getNodeParameter('returnAll', itemIndex) as boolean;
 	const limit = this.getNodeParameter('limit', itemIndex, 50) as number;
 	const options = this.getNodeParameter('options', itemIndex, {}) as {
+		filterFirstLevel?: boolean;
 		includeOrganization?: boolean;
 		includeBusinessOwner?: boolean;
 		includeSecurityOwner?: boolean;
@@ -134,11 +142,14 @@ export async function execute(
 		}`
 		: '';
 
+	const filterVariable = options.filterFirstLevel !== undefined ? ', $filter: ThirdPartyFilter' : '';
+	const filterArgument = options.filterFirstLevel !== undefined ? ', filter: $filter' : '';
+
 	const query = `
-		query GetThirdParties($organizationId: ID!, $first: Int, $after: CursorKey) {
+		query GetThirdParties($organizationId: ID!, $first: Int, $after: CursorKey${filterVariable}) {
 			node(id: $organizationId) {
 				... on Organization {
-					thirdParties(first: $first, after: $after) {
+					thirdParties(first: $first, after: $after${filterArgument}) {
 						edges {
 							node {
 								id
@@ -160,6 +171,7 @@ export async function execute(
 								certifications
 								countries
 								showOnTrustCenter
+								firstLevel
 								${organizationFragment}
 								${businessOwnerFragment}
 								${securityOwnerFragment}
@@ -177,10 +189,15 @@ export async function execute(
 		}
 	`;
 
+	const variables: IDataObject = { organizationId };
+	if (options.filterFirstLevel) {
+		variables.filter = { firstLevel: true };
+	}
+
 	const thirdParties = await proboApiRequestAllItems.call(
 		this,
 		query,
-		{ organizationId },
+		variables,
 		(response) => {
 			const data = response?.data as IDataObject | undefined;
 			const node = data?.node as IDataObject | undefined;
