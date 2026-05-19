@@ -72,6 +72,27 @@ shutdown broadcast onto a per-run `cancelRun(agent.ErrSuspendForCheckpoint)`,
 so the same contract drives both the public Go API and the worker
 infrastructure path.
 
+## Prompt templates
+
+Prompt files with placeholders use `.txt.tmpl` (see general template naming
+convention in `.cursor/rules/template-files.mdc`).
+
+Use `agent.WithInstructionsFunc` to build prompts dynamically at runtime:
+
+```go
+//go:embed prompts/tracker_identification.txt.tmpl
+var trackerIdentificationPrompt string
+
+func trackerMappingInstructions(_ context.Context, _ *agent.Agent) string {
+    categories := coredata.ThirdPartyCategories()
+    parts := make([]string, len(categories))
+    for i, c := range categories {
+        parts[i] = string(c)
+    }
+    return strings.Replace(trackerIdentificationPrompt, "{{.Categories}}", strings.Join(parts, ", "), 1)
+}
+```
+
 ## Limits
 
 - Max turns: 10 (default)

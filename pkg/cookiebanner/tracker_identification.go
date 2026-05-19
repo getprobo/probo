@@ -14,13 +14,13 @@
 
 package cookiebanner
 
+import "go.probo.inc/probo/pkg/coredata"
+
 // TrackerIdentification is the structured output the tracker-mapping
-// agent returns. The Category field uses the same values as the
-// third_party_category PostgreSQL enum so auto-created CommonThirdParty
-// rows get a valid category without mapping.
+// agent returns.
 type TrackerIdentification struct {
-	ThirdPartyName string  `json:"third_party_name" jsonschema:"Name of the company or service that sets this tracker (e.g. 'Google Analytics', 'Meta Pixel'). Empty string if truly unknown."`
-	Category       string  `json:"category" jsonschema:"Third party category. One of: ANALYTICS, ADVERTISING, CLOUD_MONITORING, CLOUD_PROVIDER, COLLABORATION, CUSTOMER_SUPPORT, DATA_STORAGE_AND_PROCESSING, DOCUMENT_MANAGEMENT, EMPLOYEE_MANAGEMENT, ENGINEERING, FINANCE, IDENTITY_PROVIDER, IT, MARKETING, OFFICE_OPERATIONS, OTHER, PASSWORD_MANAGEMENT, PRODUCT_AND_DESIGN, PROFESSIONAL_SERVICES, RECRUITING, SALES, SECURITY, VERSION_CONTROL"`
-	Description    string  `json:"description" jsonschema:"What this tracker does in one sentence"`
-	Confidence     float64 `json:"confidence" jsonschema:"Confidence level from 0.0 to 1.0. Set below 0.5 if unsure."`
+	ThirdPartyName string                      `json:"third_party_name" jsonschema:"Name of the company or service that sets this tracker (e.g. 'Google Analytics', 'Meta Pixel'). Empty string if truly unknown."`
+	Category       coredata.ThirdPartyCategory `json:"category" jsonschema:"Third party category"`
+	Description    string                      `json:"description" jsonschema:"What this tracker does in one sentence"`
+	Confidence     float64                     `json:"confidence" jsonschema:"Confidence level from 0.0 to 1.0. Set below 0.5 if unsure."`
 }

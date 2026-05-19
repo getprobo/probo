@@ -40,7 +40,7 @@ const (
 	agentMaxPatternConfidence = 0.8
 )
 
-//go:embed prompts/tracker_identification.txt
+//go:embed prompts/tracker_identification.txt.tmpl
 var trackerIdentificationPrompt string
 
 type trackerMappingHandler struct {
@@ -100,12 +100,27 @@ func buildTrackerMappingAgent(
 	return agent.New(
 		"tracker-mapping",
 		cfg.LLMClient,
-		agent.WithInstructions(trackerIdentificationPrompt),
+		agent.WithInstructionsFunc(trackerMappingInstructions),
 		agent.WithModel(cfg.Model),
 		agent.WithTools(tools...),
 		agent.WithOutputType(outputType),
 		agent.WithMaxTurns(agentMaxTurns),
 		agent.WithLogger(logger),
+	)
+}
+
+func trackerMappingInstructions(_ context.Context, _ *agent.Agent) string {
+	categories := coredata.ThirdPartyCategories()
+	parts := make([]string, len(categories))
+	for i, c := range categories {
+		parts[i] = string(c)
+	}
+
+	return strings.Replace(
+		trackerIdentificationPrompt,
+		"{{.Categories}}",
+		strings.Join(parts, ", "),
+		1,
 	)
 }
 
@@ -373,10 +388,7 @@ func (h *trackerMappingHandler) resolveOrCreateCommonThirdParty(
 		return &party.ID, nil
 	}
 
-	category := coredata.ThirdPartyCategoryOther
-	if parsed := parseThirdPartyCategory(identification.Category); parsed != "" {
-		category = parsed
-	}
+	category := identification.Category
 
 	now := time.Now()
 	party = coredata.CommonThirdParty{
@@ -411,7 +423,7 @@ func (h *trackerMappingHandler) resolveOrCreateCommonThirdParty(
 		ctx,
 		"created common third party from agent identification",
 		log.String("name", identification.ThirdPartyName),
-		log.String("category", string(category)),
+		log.String("category", category.String()),
 	)
 
 	return &party.ID, nil
@@ -473,75 +485,26 @@ func (h *trackerMappingHandler) resolveThirdParty(
 }
 
 func buildAgentPrompt(tp coredata.TrackerPattern, domains []string) string {
-	var b strings.Builder
-
-	fmt.Fprintf(&b, "Identify the following tracker:\n\n")
-	fmt.Fprintf(&b, "- Pattern: %s\n", tp.Pattern)
-	fmt.Fprintf(&b, "- Type: %s\n", tp.TrackerType)
-	fmt.Fprintf(&b, "- Match type: %s\n", tp.MatchType)
-
+	maxAge := "session"
 	if tp.MaxAgeSeconds != nil {
-		fmt.Fprintf(&b, "- Max age: %d seconds\n", *tp.MaxAgeSeconds)
-	} else {
-		fmt.Fprintf(&b, "- Max age: session\n")
+		maxAge = fmt.Sprintf("%d seconds", *tp.MaxAgeSeconds)
 	}
+
+	prompt := fmt.Sprintf(
+		"Identify the following tracker:\n\n"+
+			"<pattern> %s </pattern>\n"+
+			"<type> %s </type>\n"+
+			"<match_type> %s </match_type>\n"+
+			"<max_age> %s </max_age>\n",
+		tp.Pattern,
+		tp.TrackerType,
+		tp.MatchType,
+		maxAge,
+	)
 
 	if len(domains) > 0 {
-		fmt.Fprintf(&b, "- Observed on domains: %s\n", strings.Join(domains, ", "))
+		prompt += fmt.Sprintf("<observed_domains> %s </observed_domains>\n", strings.Join(domains, ", "))
 	}
 
-	return b.String()
-}
-
-func parseThirdPartyCategory(s string) coredata.ThirdPartyCategory {
-	switch s {
-	case "ANALYTICS":
-		return coredata.ThirdPartyCategoryAnalytics
-	case "ADVERTISING":
-		return coredata.ThirdPartyCategoryMarketing
-	case "CLOUD_MONITORING":
-		return coredata.ThirdPartyCategoryCloudMonitoring
-	case "CLOUD_PROVIDER":
-		return coredata.ThirdPartyCategoryCloudProvider
-	case "COLLABORATION":
-		return coredata.ThirdPartyCategoryCollaboration
-	case "CUSTOMER_SUPPORT":
-		return coredata.ThirdPartyCategoryCustomerSupport
-	case "DATA_STORAGE_AND_PROCESSING":
-		return coredata.ThirdPartyCategoryDataStorageAndProcessing
-	case "DOCUMENT_MANAGEMENT":
-		return coredata.ThirdPartyCategoryDocumentManagement
-	case "EMPLOYEE_MANAGEMENT":
-		return coredata.ThirdPartyCategoryEmployeeManagement
-	case "ENGINEERING":
-		return coredata.ThirdPartyCategoryEngineering
-	case "FINANCE":
-		return coredata.ThirdPartyCategoryFinance
-	case "IDENTITY_PROVIDER":
-		return coredata.ThirdPartyCategoryIdentityProvider
-	case "IT":
-		return coredata.ThirdPartyCategoryIT
-	case "MARKETING":
-		return coredata.ThirdPartyCategoryMarketing
-	case "OFFICE_OPERATIONS":
-		return coredata.ThirdPartyCategoryOfficeOperations
-	case "OTHER":
-		return coredata.ThirdPartyCategoryOther
-	case "PASSWORD_MANAGEMENT":
-		return coredata.ThirdPartyCategoryPasswordManagement
-	case "PRODUCT_AND_DESIGN":
-		return coredata.ThirdPartyCategoryProductAndDesign
-	case "PROFESSIONAL_SERVICES":
-		return coredata.ThirdPartyCategoryProfessionalServices
-	case "RECRUITING":
-		return coredata.ThirdPartyCategoryRecruiting
-	case "SALES":
-		return coredata.ThirdPartyCategorySales
-	case "SECURITY":
-		return coredata.ThirdPartyCategorySecurity
-	case "VERSION_CONTROL":
-		return coredata.ThirdPartyCategoryVersionControl
-	default:
-		return ""
-	}
+	return prompt
 }
