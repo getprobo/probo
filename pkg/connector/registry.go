@@ -149,6 +149,10 @@ var (
 		// does not expose a Bearer-protected GET userinfo endpoint, so
 		// there is no valid probe URL. The probe handler skips empty
 		// entries; an invalid token surfaces at the next /v2 query.
+		"SNYK":  "https://api.snyk.io/rest/self?version=2024-10-15",
+		"RAMP":  "https://api.ramp.com/developer/v1/business",
+		"LEVER": "https://api.lever.co/v1/users?limit=1",
+		"DEEL":  "https://api.letsdeel.com/rest/v2/people?limit=1",
 	}
 )
 

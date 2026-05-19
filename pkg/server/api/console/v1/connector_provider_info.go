@@ -57,6 +57,9 @@ var providerExtraSettingsMap = map[coredata.ConnectorProvider][]*types.Connector
 		{Key: "accountId", Label: "Account ID", Required: true},
 		{Key: "region", Label: "Region", Required: true},
 	},
+	coredata.ConnectorProviderSnyk: {
+		{Key: "orgId", Label: "Organization ID", Required: true},
+	},
 }
 
 func providerDisplayName(provider coredata.ConnectorProvider) string {

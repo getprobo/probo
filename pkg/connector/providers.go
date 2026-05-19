@@ -39,6 +39,10 @@ type providerDefinition struct {
 	// request and replays the verifier on the token exchange. Default
 	// false; existing providers are unaffected.
 	RequiresPKCE bool
+	// TokenExtraParams are merged into the token-exchange request body
+	// (form-encoded for "post-form"/"basic-form", JSON for "basic-json").
+	// Used by providers like Lever that require an `audience` parameter.
+	TokenExtraParams map[string]string
 }
 
 // providerDefinitions maps provider names to their static OAuth2 definitions.
@@ -145,6 +149,41 @@ var (
 			AuthURL:  "https://auth.monday.com/oauth2/authorize",
 			TokenURL: "https://auth.monday.com/oauth2/token",
 		},
+		"SNYK": {
+			AuthURL:      "https://app.snyk.io/oauth2/authorize",
+			TokenURL:     "https://api.snyk.io/oauth2/token",
+			RequiresPKCE: true,
+		},
+		"RAMP": {
+			AuthURL:           "https://app.ramp.com/v1/authorize",
+			TokenURL:          "https://api.ramp.com/developer/v1/token",
+			TokenEndpointAuth: "basic-form",
+		},
+		// Lever runs on Auth0: the `audience` parameter is required in
+		// BOTH the authorize URL and the token-exchange POST body. The
+		// trailing slash on the audience value is mandatory.
+		"LEVER": {
+			AuthURL:  "https://auth.lever.co/authorize",
+			TokenURL: "https://auth.lever.co/oauth/token",
+			ExtraAuthParams: map[string]string{
+				"audience": "https://api.lever.co/v1/",
+				"prompt":   "consent",
+			},
+			TokenExtraParams: map[string]string{
+				"audience": "https://api.lever.co/v1/",
+			},
+		},
+		// Deel: the token endpoint path is "/oauth2/tokens" (plural) —
+		// Deel's docs are inconsistent on the singular vs plural form.
+		// The API base host (api.letsdeel.com) differs from the auth host
+		// (app.deel.com). Deel's token endpoint requires HTTP Basic auth
+		// (base64(client_id:client_secret)); credentials placed in the
+		// form body are rejected with 401 invalid basic credentials.
+		"DEEL": {
+			AuthURL:           "https://app.deel.com/oauth2/authorize",
+			TokenURL:          "https://app.deel.com/oauth2/tokens",
+			TokenEndpointAuth: "basic-form",
+		},
 	}
 )
 
@@ -163,13 +202,18 @@ func ApplyProviderDefaults(provider string, redirectURI string, c *OAuth2Connect
 		c.SupportsIncrementalAuth = def.SupportsIncrementalAuth
 		c.RequiresPKCE = def.RequiresPKCE
 
-		// Deep copy ExtraAuthParams so per-connector mutations (e.g.
-		// incremental auth, scope overrides) cannot alias back into the
-		// shared providerDefinitions map.
+		// Deep copy ExtraAuthParams and TokenExtraParams so per-connector
+		// mutations (e.g. incremental auth, scope overrides) cannot alias
+		// back into the shared providerDefinitions map.
 		if len(def.ExtraAuthParams) > 0 {
 			extra := make(map[string]string, len(def.ExtraAuthParams))
 			maps.Copy(extra, def.ExtraAuthParams)
 			c.ExtraAuthParams = extra
+		}
+		if len(def.TokenExtraParams) > 0 {
+			tokenExtra := make(map[string]string, len(def.TokenExtraParams))
+			maps.Copy(tokenExtra, def.TokenExtraParams)
+			c.TokenExtraParams = tokenExtra
 		}
 
 		// Resolve operator-supplied placeholders in the static AuthURL

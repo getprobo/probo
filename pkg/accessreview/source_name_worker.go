@@ -341,6 +341,19 @@ func (h *sourceNameHandler) buildResolver(
 		return drivers.NewVercelNameResolver(httpClient, vercelSettings.TeamID)
 	case coredata.ConnectorProviderMonday:
 		return drivers.NewMondayNameResolver(httpClient)
+	case coredata.ConnectorProviderSnyk:
+		snykSettings, err := coredata.ConnectorSettings[coredata.SnykConnectorSettings](dbConnector)
+		if err != nil {
+			h.logger.Error("cannot read snyk connector settings", log.Error(err))
+			return nil
+		}
+		return drivers.NewSnykNameResolver(httpClient, snykSettings.OrgID)
+	case coredata.ConnectorProviderRamp:
+		return drivers.NewRampNameResolver(httpClient)
+	case coredata.ConnectorProviderLever:
+		return drivers.NewLeverNameResolver()
+	case coredata.ConnectorProviderDeel:
+		return drivers.NewDeelNameResolver(httpClient)
 	default:
 		return nil
 	}

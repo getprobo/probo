@@ -46,6 +46,10 @@ var providerOAuth2Scopes = map[coredata.ConnectorProvider][]string{
 	coredata.ConnectorProviderPagerDuty: {"users.read"},
 	coredata.ConnectorProviderAsana:     {"workspaces:read", "users:read"},
 	coredata.ConnectorProviderMonday:    {"users:read", "account:read"},
+	coredata.ConnectorProviderSnyk:      {"org.read", "org.membership.read", "offline_access"},
+	coredata.ConnectorProviderRamp:      {"users:read"},
+	coredata.ConnectorProviderLever:     {"users:read:admin", "offline_access"},
+	coredata.ConnectorProviderDeel:      {"people:read", "organizations:read"},
 	// Notion and Intercom have no scopes here: Notion authorizes via
 	// extra-auth-params (owner=user), Intercom configures scopes at the app
 	// level. Bitbucket scopes are pinned on the OAuth consumer at

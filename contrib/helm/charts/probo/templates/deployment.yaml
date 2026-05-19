@@ -280,6 +280,26 @@ spec:
                   key: connector-slack-signing-secret
             {{- end }}
             {{- end }}
+            # Connectors (access-review OAuth2 providers added 2026)
+            {{- $accessReviewProviders := list "snyk" "ramp" "lever" "deel" }}
+            {{- if has .name $accessReviewProviders }}
+            {{- $envPrefix := printf "CONNECTOR_%s" (.name | upper) }}
+            {{- $secretPrefix := printf "connector-%s" .name }}
+            - name: {{ $envPrefix }}_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "probo.fullname" $ }}
+                  key: {{ $secretPrefix }}-client-id
+            - name: {{ $envPrefix }}_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "probo.fullname" $ }}
+                  key: {{ $secretPrefix }}-client-secret
+            {{- if .config.redirectUri }}
+            - name: {{ $envPrefix }}_REDIRECT_URI
+              value: {{ .config.redirectUri | quote }}
+            {{- end }}
+            {{- end }}
             {{- end }}
           ports:
             - name: http

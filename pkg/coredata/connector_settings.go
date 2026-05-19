@@ -81,6 +81,10 @@ type (
 	VercelConnectorSettings struct {
 		TeamID string `json:"team_id"`
 	}
+
+	SnykConnectorSettings struct {
+		OrgID string `json:"org_id"`
+	}
 )
 
 // SetSettings marshals a typed settings struct into the connector's RawSettings.

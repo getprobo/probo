@@ -19,6 +19,7 @@ import { Bitbucket } from "./Bitbucket";
 import { Brex } from "./Brex";
 import { ClickUp } from "./ClickUp";
 import { Cloudflare } from "./Cloudflare";
+import { Deel } from "./Deel";
 import { DocuSign } from "./DocuSign";
 import { Figma } from "./Figma";
 import { GitHub } from "./GitHub";
@@ -27,6 +28,7 @@ import { Google } from "./Google";
 import { Heroku } from "./Heroku";
 import { HubSpot } from "./HubSpot";
 import { Intercom } from "./Intercom";
+import { Lever } from "./Lever";
 import { Linear } from "./Linear";
 import { Microsoft } from "./Microsoft";
 import { Monday } from "./Monday";
@@ -35,9 +37,11 @@ import { Notion } from "./Notion";
 import { OnePassword } from "./OnePassword";
 import { OpenAI } from "./OpenAI";
 import { PagerDuty } from "./PagerDuty";
+import { Ramp } from "./Ramp";
 import { Resend } from "./Resend";
 import { Sentry } from "./Sentry";
 import { Slack } from "./Slack";
+import { Snyk } from "./Snyk";
 import { Supabase } from "./Supabase";
 import { Tally } from "./Tally";
 import { Vercel } from "./Vercel";
@@ -48,6 +52,7 @@ const thirdParties: Record<string, FC<ComponentProps<"svg">>> = {
   BREX: Brex,
   CLICKUP: ClickUp,
   CLOUDFLARE: Cloudflare,
+  DEEL: Deel,
   DOCUSIGN: DocuSign,
   FIGMA: Figma,
   GITHUB: GitHub,
@@ -57,6 +62,7 @@ const thirdParties: Record<string, FC<ComponentProps<"svg">>> = {
   HEROKU: Heroku,
   HUBSPOT: HubSpot,
   INTERCOM: Intercom,
+  LEVER: Lever,
   LINEAR: Linear,
   MICROSOFT: Microsoft,
   MICROSOFT_365: Microsoft,
@@ -67,9 +73,11 @@ const thirdParties: Record<string, FC<ComponentProps<"svg">>> = {
   ONEPASSWORD: OnePassword,
   OPENAI: OpenAI,
   PAGERDUTY: PagerDuty,
+  RAMP: Ramp,
   RESEND: Resend,
   SENTRY: Sentry,
   SLACK: Slack,
+  SNYK: Snyk,
   SUPABASE: Supabase,
   TALLY: Tally,
   VERCEL: Vercel,

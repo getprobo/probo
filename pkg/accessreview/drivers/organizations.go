@@ -397,3 +397,55 @@ func ListClickUpOrganizations(ctx context.Context, httpClient *http.Client) ([]O
 	}
 	return result, nil
 }
+
+// ListSnykOrganizations fetches the Snyk organizations the authenticated
+// user belongs to. The Snyk REST API is JSON:API; the org id is the
+// unique identifier surfaced as the slug.
+func ListSnykOrganizations(ctx context.Context, httpClient *http.Client) ([]Organization, error) {
+	req, err := http.NewRequestWithContext(
+		ctx,
+		http.MethodGet,
+		"https://api.snyk.io/rest/orgs?version=2024-10-15&limit=100",
+		nil,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("cannot create snyk organizations request: %w", err)
+	}
+	req.Header.Set("Accept", "application/vnd.api+json")
+
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("cannot fetch snyk organizations: %w", err)
+	}
+	defer func() { _ = resp.Body.Close() }()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("cannot fetch snyk organizations: unexpected status %d", resp.StatusCode)
+	}
+
+	var body struct {
+		Data []struct {
+			ID         string `json:"id"`
+			Attributes struct {
+				Slug string `json:"slug"`
+				Name string `json:"name"`
+			} `json:"attributes"`
+		} `json:"data"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&body); err != nil {
+		return nil, fmt.Errorf("cannot decode snyk organizations response: %w", err)
+	}
+
+	result := make([]Organization, len(body.Data))
+	for i, org := range body.Data {
+		displayName := org.Attributes.Name
+		if displayName == "" {
+			displayName = org.Attributes.Slug
+		}
+		if displayName == "" {
+			displayName = org.ID
+		}
+		result[i] = Organization{Slug: org.ID, DisplayName: displayName}
+	}
+	return result, nil
+}

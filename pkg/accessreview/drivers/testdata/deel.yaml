@@ -1,0 +1,67 @@
+---
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: api.letsdeel.com
+        form:
+            limit:
+                - "100"
+            offset:
+                - "0"
+        headers:
+            Accept:
+                - application/json
+        url: https://api.letsdeel.com/rest/v2/people?limit=100&offset=0
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"data":[{"id":"d_jane","email":"jane@example.com","first_name":"Jane","last_name":"Doe","job_title":"Engineering Lead","hiring_status":"active","start_date":"2024-06-01","end_date":""},{"id":"d_bob","email":"bob@example.com","first_name":"Bob","last_name":"Smith","job_title":"Designer","hiring_status":"inactive","start_date":"2023-01-15","end_date":"2025-09-30"}]}'
+        headers:
+            Content-Type:
+                - application/json
+            Date:
+                - Thu, 01 May 2026 12:00:00 GMT
+        status: 200 OK
+        code: 200
+        duration: 100ms
+    - id: 1
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: api.letsdeel.com
+        form:
+            limit:
+                - "100"
+            offset:
+                - "100"
+        headers:
+            Accept:
+                - application/json
+        url: https://api.letsdeel.com/rest/v2/people?limit=100&offset=100
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"data":[]}'
+        headers:
+            Content-Type:
+                - application/json
+            Date:
+                - Thu, 01 May 2026 12:00:00 GMT
+        status: 200 OK
+        code: 200
+        duration: 100ms
