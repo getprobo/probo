@@ -229,19 +229,31 @@ func (h *trackerMappingHandler) matchByDomain(
 	tp coredata.TrackerPattern,
 ) (*gid.GID, *gid.GID, error) {
 	var trackers coredata.DetectedTrackers
-	commonThirdPartyID, err := trackers.LoadCommonThirdPartyIDByDomainMatch(ctx, tx, tp.ID)
+	domains, err := trackers.LoadInitiatorDomainsByTrackerPatternID(ctx, tx, tp.ID, 10)
 	if err != nil {
-		return nil, nil, fmt.Errorf("cannot load common third party ID from domain: %w", err)
+		return nil, nil, fmt.Errorf("cannot load initiator domains: %w", err)
 	}
 
-	if commonThirdPartyID == nil {
+	if len(domains) == 0 {
 		return nil, nil, nil
 	}
+
+	filter := coredata.NewCommonThirdPartyDomainFilter(domains)
+	var matchedDomains coredata.CommonThirdPartyDomains
+	if err := matchedDomains.Load(ctx, tx, 1, filter); err != nil {
+		return nil, nil, fmt.Errorf("cannot load common third party domain by domain match: %w", err)
+	}
+
+	if len(matchedDomains) == 0 {
+		return nil, nil, nil
+	}
+
+	commonThirdPartyID := matchedDomains[0].CommonThirdPartyID
 
 	now := time.Now()
 	commonPattern := coredata.CommonTrackerPattern{
 		ID:                 gid.New(gid.NilTenant, coredata.CommonTrackerPatternEntityType),
-		CommonThirdPartyID: commonThirdPartyID,
+		CommonThirdPartyID: &commonThirdPartyID,
 		TrackerType:        tp.TrackerType,
 		Pattern:            tp.Pattern,
 		MatchType:          tp.MatchType,
@@ -270,7 +282,7 @@ func (h *trackerMappingHandler) identifyWithAgent(
 	tp coredata.TrackerPattern,
 ) (*gid.GID, *gid.GID, error) {
 	var trackers coredata.DetectedTrackers
-	domains, err := trackers.LoadInitiatorDomainsByTrackerPatternID(ctx, tx, tp.ID)
+	domains, err := trackers.LoadInitiatorDomainsByTrackerPatternID(ctx, tx, tp.ID, 5)
 	if err != nil {
 		h.logger.WarnCtx(ctx, "cannot load initiator domains for agent", log.Error(err))
 	}

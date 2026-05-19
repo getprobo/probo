@@ -16,7 +16,6 @@ package coredata
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"maps"
 	"time"
@@ -152,47 +151,24 @@ WHERE
 	return count, nil
 }
 
-func (dts *DetectedTrackers) LoadCommonThirdPartyIDByDomainMatch(
-	ctx context.Context,
-	conn pg.Querier,
-	trackerPatternID gid.GID,
-) (*gid.GID, error) {
-	q := `
-SELECT DISTINCT ctpd.common_third_party_id
-FROM detected_trackers dt
-JOIN common_third_party_domains ctpd ON ctpd.domain = dt.initiator_domain
-WHERE dt.tracker_pattern_id = @tracker_pattern_id
-  AND dt.initiator_domain IS NOT NULL
-LIMIT 1;
-`
-
-	args := pgx.StrictNamedArgs{"tracker_pattern_id": trackerPatternID}
-
-	var commonThirdPartyID gid.GID
-	if err := conn.QueryRow(ctx, q, args).Scan(&commonThirdPartyID); err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, nil
-		}
-		return nil, fmt.Errorf("cannot load common third party ID by tracker pattern: %w", err)
-	}
-
-	return &commonThirdPartyID, nil
-}
-
 func (dts *DetectedTrackers) LoadInitiatorDomainsByTrackerPatternID(
 	ctx context.Context,
 	conn pg.Querier,
 	trackerPatternID gid.GID,
+	limit int,
 ) ([]string, error) {
 	q := `
 SELECT DISTINCT initiator_domain
 FROM detected_trackers
 WHERE tracker_pattern_id = @tracker_pattern_id
   AND initiator_domain IS NOT NULL
-LIMIT 5;
+LIMIT @limit;
 `
 
-	args := pgx.StrictNamedArgs{"tracker_pattern_id": trackerPatternID}
+	args := pgx.StrictNamedArgs{
+		"tracker_pattern_id": trackerPatternID,
+		"limit":              limit,
+	}
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {

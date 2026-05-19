@@ -100,7 +100,10 @@ This ensures the compiler catches renamed or removed enum values instead of sile
 | -------------------------------------------------------- | ----------- | ---------------------------- | ------------------------------------ |
 | `LoadByID(ctx, conn, scope, id)`                         | `*Entity`   | `error`                      | Single entity by ID                  |
 | `LoadBy*(ctx, conn, scope, key)`                         | `*Entity`   | `error`                      | Single entity by unique key          |
-| `LoadAllBy*(ctx, conn, scope, parentID, cursor, filter)` | `*Entities` | `error`                      | Paginated list                       |
+| `LoadBy*(ctx, conn, scope, parentID, cursor, filter)`    | `*Entities` | `error`                      | Paginated list (cursor provides limit) |
+| `Load(ctx, conn, limit, filter)`                         | `*Entities` | `error`                      | Filtered list with explicit limit    |
+| `LoadAllBy*(ctx, conn, scope, parentID)`                 | `*Entities` | `error`                      | All matching rows (never cursor/limit) |
+| `LoadAll(ctx, conn, filter)`                             | `*Entities` | `error`                      | All matching rows with filter (never cursor/limit) |
 | `CountBy*(ctx, conn, scope, parentID, filter)`           | `*Entities` | `(int, error)`               | Count matching rows                  |
 | `Insert(ctx, conn, scope)`                               | `*Entity`   | `error`                      | Insert, uses `scope.GetTenantID()`   |
 | `Update(ctx, conn, scope)`                               | `*Entity`   | `error`                      | Update via `Exec` (no `RETURNING`)   |
@@ -108,6 +111,20 @@ This ensures the compiler catches renamed or removed enum values instead of sile
 | `CursorKey(orderField)`                                  | `*Entity`   | `page.CursorKey`             | Cursor for pagination                |
 | `AuthorizationAttributes(ctx, conn)`                     | `*Entity`   | `(map[string]string, error)` | Attributes for IAM policy evaluation |
 
+### Load vs LoadAll naming
+
+The method name signals whether the result set is bounded:
+
+- **`LoadBy*` with a `cursor` param** — paginated list tied to a GraphQL connection; the cursor provides the limit and ordering. Example: `Assets.LoadByOrganizationID(ctx, conn, scope, orgID, cursor)`.
+- **`Load` / `LoadBy*` with a `limit int` param** — filtered list with an explicit limit, used when cursor pagination is not needed but the caller controls the result count. Example: `CommonThirdPartyDomains.Load(ctx, conn, 1, filter)`.
+- **`LoadAllBy*`** — returns all matching rows with no limit or cursor. Use only when the full set is needed (e.g. all categories for a banner).
+- **`LoadAll`** — same as `LoadAllBy*` but without a parent key; returns all rows matching a filter. Example: `CommonThirdParties.LoadAll(ctx, conn, filter)`.
+
+`LoadAll*` methods must **never** accept a cursor or limit parameter — the `All` suffix means the entire matching set is returned. If a bounded result is needed, use `Load*` or `LoadBy*` with a `cursor` or `limit int` instead. The codebase has some legacy `LoadAllBy*` methods that accept a cursor; do not follow that pattern — new code must use `LoadBy*` for paginated queries.
+
+## No cross-entity JOINs
+
+Each entity file queries only its own table. When data from multiple entities is needed, the caller orchestrates separate calls. Never write a JOIN between two entity tables inside an entity method, and never return a raw ID belonging to a different entity — return the full entity and let the caller read the foreign key field.
 
 ## Row collection
 

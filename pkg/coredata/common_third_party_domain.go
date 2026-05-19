@@ -18,6 +18,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -185,6 +186,47 @@ func (d CommonThirdPartyDomain) Delete(
 	if err != nil {
 		return fmt.Errorf("cannot delete common third party domain: %w", err)
 	}
+
+	return nil
+}
+
+func (ds *CommonThirdPartyDomains) Load(
+	ctx context.Context,
+	conn pg.Querier,
+	limit int,
+	filter *CommonThirdPartyDomainFilter,
+) error {
+	q := `
+SELECT
+    id,
+    common_third_party_id,
+    domain,
+    created_at,
+    updated_at
+FROM
+    common_third_party_domains
+WHERE
+    %s
+ORDER BY domain ASC
+LIMIT @limit;
+`
+
+	q = fmt.Sprintf(q, filter.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"limit": limit}
+	maps.Copy(args, filter.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query common third party domains: %w", err)
+	}
+
+	domains, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[CommonThirdPartyDomain])
+	if err != nil {
+		return fmt.Errorf("cannot collect common third party domains: %w", err)
+	}
+
+	*ds = domains
 
 	return nil
 }
