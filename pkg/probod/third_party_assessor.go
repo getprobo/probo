@@ -52,7 +52,7 @@ func (impl *Implm) buildThirdPartyAssessor(
 		Model:           agentCfg.ModelName,
 		MaxTokens:       maxTokens,
 		ChromeAddr:      impl.cfg.ChromeDPAddr,
-		FirecrawlAPIKey: impl.cfg.Firecrawl.APIKey,
+		FirecrawlAPIKey: impl.cfg.Agents.Tools.FirecrawlAPIKey,
 		Logger:          l.Named("third-party-assessor"),
 	}), nil
 }

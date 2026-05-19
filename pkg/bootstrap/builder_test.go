@@ -197,8 +197,8 @@ func TestBuilder_Build_Defaults(t *testing.T) {
 	assert.Equal(t, 5, cfg.Probod.Notifications.Webhook.SenderInterval)
 	assert.Equal(t, 86400, cfg.Probod.Notifications.Webhook.CacheTTL)
 
-	// Firecrawl — empty by default
-	assert.Empty(t, cfg.Probod.Firecrawl.APIKey)
+	// Agents tools — Firecrawl empty by default
+	assert.Empty(t, cfg.Probod.Agents.Tools.FirecrawlAPIKey)
 
 	// Agents config — default
 	assert.Equal(t, "openai", cfg.Probod.Agents.Default.Provider)
@@ -378,8 +378,8 @@ func TestBuilder_Build_CustomValues(t *testing.T) {
 	assert.Equal(t, "slack-signing-secret", cfg.Probod.Notifications.Slack.SigningSecret)
 	assert.Equal(t, 10, cfg.Probod.Notifications.Webhook.SenderInterval)
 	assert.Equal(t, 3600, cfg.Probod.Notifications.Webhook.CacheTTL)
-	// Firecrawl
-	assert.Equal(t, "fc-test-key", cfg.Probod.Firecrawl.APIKey)
+	// Agents tools — Firecrawl
+	assert.Equal(t, "fc-test-key", cfg.Probod.Agents.Tools.FirecrawlAPIKey)
 	// Agents — providers
 	assert.Equal(t, "openai", cfg.Probod.Agents.Providers["openai"].Type)
 	assert.Equal(t, "sk-test-key", cfg.Probod.Agents.Providers["openai"].APIKey)

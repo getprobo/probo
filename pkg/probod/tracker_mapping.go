@@ -49,6 +49,6 @@ func (impl *Implm) buildTrackerMappingConfig(
 	return cookiebanner.TrackerMappingConfig{
 		LLMClient:       llmClient,
 		Model:           agentCfg.ModelName,
-		FirecrawlAPIKey: impl.cfg.Firecrawl.APIKey,
+		FirecrawlAPIKey: impl.cfg.Agents.Tools.FirecrawlAPIKey,
 	}, nil
 }

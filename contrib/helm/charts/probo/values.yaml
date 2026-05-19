@@ -257,9 +257,10 @@ probo:
     modelName: "gpt-4o"
     maxTokens: 4096
 
-  # Firecrawl web search integration (optional, used by tracker mapping agent)
-  firecrawl:
-    apiKey: ""
+  # Agent tools (optional, shared across agents)
+  agentTools:
+    # Firecrawl web search API key (used by tracker mapping and third-party assessor agents)
+    firecrawlApiKey: ""
 
   # Tracker mapping agent (optional, requires openai.apiKey or anthropic key)
   trackerMapping:

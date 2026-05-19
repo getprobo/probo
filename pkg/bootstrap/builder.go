@@ -176,9 +176,6 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 					CacheTTL:       b.getEnvIntOrDefault("WEBHOOK_CACHE_TTL", 86400),
 				},
 			},
-			Firecrawl: probodconfig.FirecrawlConfig{
-				APIKey: b.getEnv("FIRECRAWL_API_KEY"),
-			},
 			Agents: probodconfig.AgentsConfig{
 				Providers: map[string]probodconfig.LLMProviderConfig{
 					"openai": {
@@ -213,6 +210,9 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 					ModelName:   b.getEnvOrDefault("AGENT_TRACKER_MAPPING_MODEL_NAME", ""),
 					Temperature: b.getEnvFloatPtr("AGENT_TRACKER_MAPPING_TEMPERATURE"),
 					MaxTokens:   b.getEnvIntPtr("AGENT_TRACKER_MAPPING_MAX_TOKENS"),
+				},
+				Tools: probodconfig.AgentToolsConfig{
+					FirecrawlAPIKey: b.getEnv("FIRECRAWL_API_KEY"),
 				},
 			},
 			CustomDomains: probodconfig.CustomDomainsConfig{

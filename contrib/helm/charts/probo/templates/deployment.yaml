@@ -232,8 +232,8 @@ spec:
             - name: OPENAI_MAX_TOKENS
               value: {{ .Values.probo.openai.maxTokens | quote }}
             {{- end }}
-            # Firecrawl Integration
-            {{- if .Values.probo.firecrawl.apiKey }}
+            # Agent Tools
+            {{- if .Values.probo.agentTools.firecrawlApiKey }}
             - name: FIRECRAWL_API_KEY
               valueFrom:
                 secretKeyRef:

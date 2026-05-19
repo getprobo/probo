@@ -40,6 +40,12 @@ type (
 		MaxConcurrency int `json:"max-concurrency"`
 	}
 
+	// AgentToolsConfig holds API keys and settings for external tools
+	// that agents can use (web search, scraping, etc.).
+	AgentToolsConfig struct {
+		FirecrawlAPIKey string `json:"firecrawl-api-key"`
+	}
+
 	// AgentsConfig groups LLM provider credentials and per-agent model
 	// settings. Default is used as a fallback when an agent-specific field
 	// is zero-valued.
@@ -50,6 +56,7 @@ type (
 		EvidenceDescriber  LLMAgentConfig               `json:"evidence-describer"`
 		ThirdPartyAssessor LLMAgentConfig               `json:"third-party-assessor"`
 		TrackerMapping     LLMAgentConfig               `json:"tracker-mapping"`
+		Tools              AgentToolsConfig             `json:"tools"`
 	}
 )
 
