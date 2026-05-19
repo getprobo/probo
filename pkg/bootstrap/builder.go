@@ -177,8 +177,7 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 				},
 			},
 			Firecrawl: probodconfig.FirecrawlConfig{
-				Endpoint: b.getEnv("FIRECRAWL_ENDPOINT"),
-				APIKey:   b.getEnv("FIRECRAWL_API_KEY"),
+				APIKey: b.getEnv("FIRECRAWL_API_KEY"),
 			},
 			Agents: probodconfig.AgentsConfig{
 				Providers: map[string]probodconfig.LLMProviderConfig{

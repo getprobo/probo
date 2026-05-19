@@ -198,7 +198,6 @@ func TestBuilder_Build_Defaults(t *testing.T) {
 	assert.Equal(t, 86400, cfg.Probod.Notifications.Webhook.CacheTTL)
 
 	// Firecrawl — empty by default
-	assert.Empty(t, cfg.Probod.Firecrawl.Endpoint)
 	assert.Empty(t, cfg.Probod.Firecrawl.APIKey)
 
 	// Agents config — default
@@ -294,7 +293,6 @@ func TestBuilder_Build_CustomValues(t *testing.T) {
 	env["WEBHOOK_CACHE_TTL"] = "3600"
 	env["CONNECTOR_SLACK_SIGNING_SECRET"] = "slack-signing-secret"
 	// Firecrawl
-	env["FIRECRAWL_ENDPOINT"] = "https://api.firecrawl.dev/v2"
 	env["FIRECRAWL_API_KEY"] = "fc-test-key"
 	// Agents — providers
 	env["OPENAI_API_KEY"] = "sk-test-key"
@@ -381,7 +379,6 @@ func TestBuilder_Build_CustomValues(t *testing.T) {
 	assert.Equal(t, 10, cfg.Probod.Notifications.Webhook.SenderInterval)
 	assert.Equal(t, 3600, cfg.Probod.Notifications.Webhook.CacheTTL)
 	// Firecrawl
-	assert.Equal(t, "https://api.firecrawl.dev/v2", cfg.Probod.Firecrawl.Endpoint)
 	assert.Equal(t, "fc-test-key", cfg.Probod.Firecrawl.APIKey)
 	// Agents — providers
 	assert.Equal(t, "openai", cfg.Probod.Agents.Providers["openai"].Type)

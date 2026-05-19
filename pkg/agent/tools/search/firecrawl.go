@@ -26,6 +26,8 @@ import (
 	"go.probo.inc/probo/pkg/agent"
 )
 
+const firecrawlBaseURL = "https://api.firecrawl.dev/v2"
+
 type (
 	searchResult struct {
 		Title   string `json:"title"`
@@ -58,9 +60,8 @@ type (
 )
 
 // FirecrawlSearchTool creates a tool that searches the web using the Firecrawl
-// API. The endpoint should be the base URL of the Firecrawl instance (e.g.
-// "https://api.firecrawl.dev/v2"). The apiKey is used for Bearer authentication.
-func FirecrawlSearchTool(endpoint, apiKey string) agent.Tool {
+// API. The apiKey is used for Bearer authentication.
+func FirecrawlSearchTool(apiKey string) agent.Tool {
 	client := newHTTPClient()
 
 	return agent.FunctionTool(
@@ -75,7 +76,7 @@ func FirecrawlSearchTool(endpoint, apiKey string) agent.Tool {
 				maxResults = 10
 			}
 
-			results, err := firecrawlSearch(ctx, client, endpoint, apiKey, p.Query, maxResults)
+			results, err := firecrawlSearch(ctx, client, apiKey, p.Query, maxResults)
 			if err != nil {
 				return agent.ResultErrorf("search request failed: %s", err), nil
 			}
@@ -88,10 +89,10 @@ func FirecrawlSearchTool(endpoint, apiKey string) agent.Tool {
 func firecrawlSearch(
 	ctx context.Context,
 	client *http.Client,
-	endpoint, apiKey, query string,
+	apiKey, query string,
 	maxResults int,
 ) ([]searchResult, error) {
-	u, err := url.JoinPath(endpoint, "search")
+	u, err := url.JoinPath(firecrawlBaseURL, "search")
 	if err != nil {
 		return nil, fmt.Errorf("cannot build search URL: %w", err)
 	}

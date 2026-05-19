@@ -259,7 +259,6 @@ probo:
 
   # Firecrawl web search integration (optional, used by tracker mapping agent)
   firecrawl:
-    endpoint: ""
     apiKey: ""
 
   # Tracker mapping agent (optional, requires openai.apiKey or anthropic key)

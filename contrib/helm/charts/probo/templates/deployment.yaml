@@ -233,10 +233,6 @@ spec:
               value: {{ .Values.probo.openai.maxTokens | quote }}
             {{- end }}
             # Firecrawl Integration
-            {{- if .Values.probo.firecrawl.endpoint }}
-            - name: FIRECRAWL_ENDPOINT
-              value: {{ .Values.probo.firecrawl.endpoint | quote }}
-            {{- end }}
             {{- if .Values.probo.firecrawl.apiKey }}
             - name: FIRECRAWL_API_KEY
               valueFrom:

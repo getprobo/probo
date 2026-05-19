@@ -161,7 +161,6 @@ probo:
 
   # Firecrawl web search (optional, used by tracker mapping agent)
   # firecrawl:
-  #   endpoint: "https://api.firecrawl.dev/v2"
   #   apiKey: "CHANGE_ME_FIRECRAWL_API_KEY"
 
   # Tracker mapping agent (optional, auto-links tracker patterns to vendors)

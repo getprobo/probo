@@ -49,8 +49,7 @@ type (
 
 	// FirecrawlConfig contains Firecrawl web scraping API configuration.
 	FirecrawlConfig struct {
-		Endpoint string `json:"endpoint"`
-		APIKey   string `json:"api-key"`
+		APIKey string `json:"api-key"`
 	}
 
 	// Config represents the probod application configuration.

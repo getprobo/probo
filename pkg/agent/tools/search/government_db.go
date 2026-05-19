@@ -43,7 +43,7 @@ type (
 	}
 )
 
-func CheckGovernmentDBTool(endpoint, apiKey string) agent.Tool {
+func CheckGovernmentDBTool(apiKey string) agent.Tool {
 	client := newHTTPClient()
 
 	return agent.FunctionTool(
@@ -87,7 +87,7 @@ func CheckGovernmentDBTool(endpoint, apiKey string) agent.Tool {
 			}
 
 			for _, s := range searches {
-				entries, err := firecrawlSearch(ctx, client, endpoint, apiKey, s.query, 3)
+				entries, err := firecrawlSearch(ctx, client, apiKey, s.query, 3)
 				if err != nil {
 					continue
 				}
