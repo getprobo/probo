@@ -189,10 +189,10 @@ INSERT INTO common_tracker_patterns (
 	return nil
 }
 
-func (p CommonTrackerPattern) Upsert(
+func (p *CommonTrackerPattern) Upsert(
 	ctx context.Context,
 	conn pg.Tx,
-) (actualID gid.GID, inserted bool, err error) {
+) (inserted bool, err error) {
 	q := `
 INSERT INTO common_tracker_patterns (
     id,
@@ -224,8 +224,20 @@ SET
     description           = EXCLUDED.description,
     confidence            = EXCLUDED.confidence,
     updated_at            = EXCLUDED.updated_at
-RETURNING id, (xmax = 0) AS inserted
+RETURNING
+    id,
+    common_third_party_id,
+    tracker_type,
+    pattern,
+    match_type,
+    description,
+    max_age_seconds,
+    confidence,
+    created_at,
+    updated_at
 `
+
+	originalID := p.ID
 
 	args := pgx.StrictNamedArgs{
 		"id":                    p.ID,
@@ -242,27 +254,18 @@ RETURNING id, (xmax = 0) AS inserted
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
-		return gid.GID{}, false, fmt.Errorf("cannot upsert common tracker pattern: %w", err)
+		return false, fmt.Errorf("cannot upsert common tracker pattern: %w", err)
 	}
 	defer rows.Close()
 
-	type upsertResult struct {
-		ID       gid.GID
-		Inserted bool
-	}
-
-	res, err := pgx.CollectExactlyOneRow(
-		rows,
-		func(row pgx.CollectableRow) (upsertResult, error) {
-			var r upsertResult
-			return r, row.Scan(&r.ID, &r.Inserted)
-		},
-	)
+	row, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[CommonTrackerPattern])
 	if err != nil {
-		return gid.GID{}, false, fmt.Errorf("cannot collect upsert result: %w", err)
+		return false, fmt.Errorf("cannot collect upsert result: %w", err)
 	}
 
-	return res.ID, res.Inserted, nil
+	*p = row
+
+	return originalID == p.ID, nil
 }
 
 func (p CommonTrackerPattern) Delete(

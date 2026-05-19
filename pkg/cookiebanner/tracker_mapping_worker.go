@@ -252,12 +252,10 @@ func (h *trackerMappingHandler) matchByDomain(
 		UpdatedAt:          now,
 	}
 
-	actualID, _, err := commonPattern.Upsert(ctx, tx)
-	if err != nil {
+	if _, err := commonPattern.Upsert(ctx, tx); err != nil {
 		return nil, nil, fmt.Errorf("cannot upsert common tracker pattern from domain match: %w", err)
 	}
 
-	commonPattern.ID = actualID
 	thirdPartyID, err := h.resolveThirdParty(ctx, tx, tp, &commonPattern)
 	if err != nil {
 		return nil, nil, fmt.Errorf("cannot resolve third party from domain match: %w", err)
@@ -346,12 +344,10 @@ func (h *trackerMappingHandler) identifyWithAgent(
 		UpdatedAt:          now,
 	}
 
-	actualID, _, err := commonPattern.Upsert(ctx, tx)
-	if err != nil {
+	if _, err := commonPattern.Upsert(ctx, tx); err != nil {
 		return nil, nil, fmt.Errorf("cannot upsert common tracker pattern from agent: %w", err)
 	}
 
-	commonPattern.ID = actualID
 	thirdPartyID, err := h.resolveThirdParty(ctx, tx, tp, &commonPattern)
 	if err != nil {
 		return nil, nil, fmt.Errorf("cannot resolve third party from agent match: %w", err)
@@ -447,12 +443,11 @@ func (h *trackerMappingHandler) createUnmatchedPattern(
 		UpdatedAt:     now,
 	}
 
-	actualID, _, err := commonPattern.Upsert(ctx, tx)
-	if err != nil {
+	if _, err := commonPattern.Upsert(ctx, tx); err != nil {
 		return nil, fmt.Errorf("cannot upsert unmatched common tracker pattern: %w", err)
 	}
 
-	return &actualID, nil
+	return &commonPattern.ID, nil
 }
 
 func (h *trackerMappingHandler) resolveThirdParty(

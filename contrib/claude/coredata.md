@@ -145,6 +145,50 @@ if err != nil {
 }
 ```
 
+## Upsert with insert detection and receiver sync
+
+When an upsert needs to report whether a row was inserted or already existed, `RETURNING` all struct columns and scan the full row back into the receiver. Save the original ID before the query; on a fresh insert the returned ID matches, on a conflict/update the existing row's ID is returned. The receiver is a **pointer** so the caller always sees the actual DB state after the upsert.
+
+Do **not** use `RETURNING (xmax = 0) AS inserted` — `xmax` is a PostgreSQL internal system column and is fragile.
+
+```go
+// Good — RETURNING full row, sync receiver, compare original ID
+func (t *Thing) Upsert(ctx context.Context, conn pg.Tx) (inserted bool, err error) {
+    q := `
+INSERT INTO things (id, name, created_at, updated_at)
+VALUES (@id, @name, @created_at, @updated_at)
+ON CONFLICT (name) DO UPDATE
+SET
+    name       = EXCLUDED.name,
+    updated_at = EXCLUDED.updated_at
+RETURNING
+    id,
+    name,
+    created_at,
+    updated_at
+`
+    originalID := t.ID
+    args := pgx.StrictNamedArgs{...}
+
+    rows, err := conn.Query(ctx, q, args)
+    if err != nil {
+        return false, fmt.Errorf("cannot upsert thing: %w", err)
+    }
+    defer rows.Close()
+
+    row, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[Thing])
+    if err != nil {
+        return false, fmt.Errorf("cannot collect upsert result: %w", err)
+    }
+
+    *t = row
+    return originalID == t.ID, nil
+}
+
+// Bad — xmax trick: relies on PostgreSQL internal column
+RETURNING (xmax = 0) AS inserted
+```
+
 ## Sentinel errors
 
 ```go

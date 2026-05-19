@@ -310,7 +310,7 @@ INSERT INTO common_third_parties (
 // Upsert inserts a row, or on slug conflict updates every column except
 // id and created_at. Returns true if a new row was inserted, false if an
 // existing row was updated.
-func (t CommonThirdParty) Upsert(
+func (t *CommonThirdParty) Upsert(
 	ctx context.Context,
 	conn pg.Tx,
 ) (inserted bool, err error) {
@@ -379,8 +379,31 @@ SET
     security_page_url                = EXCLUDED.security_page_url,
     trust_page_url                   = EXCLUDED.trust_page_url,
     updated_at                       = EXCLUDED.updated_at
-RETURNING (xmax = 0) AS inserted
+RETURNING
+    id,
+    name,
+    slug,
+    category,
+    headquarter_address,
+    legal_name,
+    website_url,
+    privacy_policy_url,
+    service_level_agreement_url,
+    service_software_agreement_url,
+    data_processing_agreement_url,
+    business_associate_agreement_url,
+    subprocessors_list_url,
+    certifications,
+    status_page_url,
+    terms_of_service_url,
+    security_page_url,
+    trust_page_url,
+    logo_file_id,
+    created_at,
+    updated_at
 `
+
+	originalID := t.ID
 
 	args := pgx.StrictNamedArgs{
 		"id":                               t.ID,
@@ -412,12 +435,14 @@ RETURNING (xmax = 0) AS inserted
 	}
 	defer rows.Close()
 
-	inserted, err = pgx.CollectExactlyOneRow(rows, pgx.RowTo[bool])
+	row, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[CommonThirdParty])
 	if err != nil {
 		return false, fmt.Errorf("cannot collect upsert result: %w", err)
 	}
 
-	return inserted, nil
+	*t = row
+
+	return originalID == t.ID, nil
 }
 
 func (t CommonThirdParty) Delete(

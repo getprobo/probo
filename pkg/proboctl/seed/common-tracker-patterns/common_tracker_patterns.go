@@ -145,7 +145,7 @@ func NewCmdCommonTrackerPatterns(f *cmdutil.Factory) *cobra.Command {
 							UpdatedAt:          now,
 						}
 
-						_, wasInserted, err := pattern.Upsert(ctx, tx)
+						wasInserted, err := pattern.Upsert(ctx, tx)
 						if err != nil {
 							return fmt.Errorf("cannot upsert common tracker pattern %q: %w", p.Pattern, err)
 						}

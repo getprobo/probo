@@ -118,7 +118,7 @@ INSERT INTO common_third_party_domains (
 	return nil
 }
 
-func (d CommonThirdPartyDomain) Upsert(
+func (d *CommonThirdPartyDomain) Upsert(
 	ctx context.Context,
 	conn pg.Tx,
 ) (inserted bool, err error) {
@@ -139,8 +139,15 @@ INSERT INTO common_third_party_domains (
 ON CONFLICT (common_third_party_id, domain) DO UPDATE
 SET
     updated_at = EXCLUDED.updated_at
-RETURNING (xmax = 0) AS inserted
+RETURNING
+    id,
+    common_third_party_id,
+    domain,
+    created_at,
+    updated_at
 `
+
+	originalID := d.ID
 
 	args := pgx.StrictNamedArgs{
 		"id":                    d.ID,
@@ -156,12 +163,14 @@ RETURNING (xmax = 0) AS inserted
 	}
 	defer rows.Close()
 
-	inserted, err = pgx.CollectExactlyOneRow(rows, pgx.RowTo[bool])
+	row, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[CommonThirdPartyDomain])
 	if err != nil {
 		return false, fmt.Errorf("cannot collect upsert result: %w", err)
 	}
 
-	return inserted, nil
+	*d = row
+
+	return originalID == d.ID, nil
 }
 
 func (d CommonThirdPartyDomain) Delete(
