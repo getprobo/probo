@@ -67,7 +67,7 @@ type bitbucketMembersPage struct {
 func (d *BitbucketDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error) {
 	var records []AccountRecord
 
-	u, err := url.JoinPath("https://api.bitbucket.org", "2.0", "workspaces", d.workspace, "members")
+	u, err := url.JoinPath("https://api.bitbucket.org", "2.0", "workspaces", url.PathEscape(d.workspace), "members")
 	if err != nil {
 		return nil, fmt.Errorf("cannot build bitbucket members URL: %w", err)
 	}

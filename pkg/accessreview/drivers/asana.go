@@ -67,7 +67,7 @@ type asanaUsersPage struct {
 func (d *AsanaDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error) {
 	var records []AccountRecord
 
-	u, err := url.JoinPath("https://app.asana.com", "api", "1.0", "workspaces", d.workspaceGID, "users")
+	u, err := url.JoinPath("https://app.asana.com", "api", "1.0", "workspaces", url.PathEscape(d.workspaceGID), "users")
 	if err != nil {
 		return nil, fmt.Errorf("cannot build asana users URL: %w", err)
 	}

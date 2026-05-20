@@ -67,7 +67,7 @@ type gitlabMember struct {
 func (d *GitLabDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error) {
 	var records []AccountRecord
 
-	u, err := url.JoinPath("https://gitlab.com", "api", "v4", "groups", d.groupID, "members", "all")
+	u, err := url.JoinPath("https://gitlab.com", "api", "v4", "groups", url.PathEscape(d.groupID), "members", "all")
 	if err != nil {
 		return nil, fmt.Errorf("cannot build gitlab members URL: %w", err)
 	}

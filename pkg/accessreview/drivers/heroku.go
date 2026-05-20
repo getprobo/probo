@@ -72,7 +72,7 @@ type herokuTeamMember struct {
 func (d *HerokuDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error) {
 	var records []AccountRecord
 
-	endpoint, err := url.JoinPath("https://api.heroku.com", "teams", d.teamID, "members")
+	endpoint, err := url.JoinPath("https://api.heroku.com", "teams", url.PathEscape(d.teamID), "members")
 	if err != nil {
 		return nil, fmt.Errorf("cannot build heroku members URL: %w", err)
 	}

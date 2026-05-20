@@ -262,7 +262,7 @@ var trustCenterIDKey = &ctxKey{name: "trust_center_id"}
 
 - Use `url.URL` struct to build full URLs (scheme, host, path, query).
 - Use `url.Values` to build query parameters, then call `.Encode()`.
-- Use `url.QueryEscape` or `url.PathEscape` when embedding a single value into a known-safe base.
+- **Always** wrap user-supplied path segments with `url.PathEscape` before passing them to `url.JoinPath`. `url.JoinPath` does **not** percent-encode slashes or reserved characters — a value like `parent/child` silently adds an extra path segment.
 - Use the `pkg/baseurl.URLBuilder` when constructing URLs from configured base URLs.
 
 ```go
@@ -272,8 +272,11 @@ endpoint := fmt.Sprintf("https://api.example.com/users/%s?active=%t", userID, ac
 // Bad — string concatenation
 endpoint := "https://api.example.com/orgs/" + orgID + "/members"
 
-// Good — url.JoinPath escapes each segment and sets Path + RawPath
-u, err := url.JoinPath("https://api.example.com", "users", userID)
+// Bad — user-supplied value without PathEscape
+u, err := url.JoinPath("https://api.example.com", "groups", groupID, "members")
+
+// Good — url.JoinPath with PathEscape on user-supplied segments
+u, err := url.JoinPath("https://api.example.com", "groups", url.PathEscape(groupID), "members")
 if err != nil {
 	return fmt.Errorf("cannot build URL: %w", err)
 }

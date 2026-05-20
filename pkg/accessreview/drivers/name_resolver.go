@@ -652,7 +652,7 @@ func (r *gitlabNameResolver) ResolveInstanceName(ctx context.Context) (string, e
 		return "", nil
 	}
 
-	endpoint, err := url.JoinPath("https://gitlab.com", "api", "v4", "groups", r.groupID)
+	endpoint, err := url.JoinPath("https://gitlab.com", "api", "v4", "groups", url.PathEscape(r.groupID))
 	if err != nil {
 		return "", fmt.Errorf("cannot build gitlab group URL: %w", err)
 	}
@@ -705,7 +705,7 @@ func (r *bitbucketNameResolver) ResolveInstanceName(ctx context.Context) (string
 		return "", nil
 	}
 
-	endpoint, err := url.JoinPath("https://api.bitbucket.org", "2.0", "workspaces", r.workspace)
+	endpoint, err := url.JoinPath("https://api.bitbucket.org", "2.0", "workspaces", url.PathEscape(r.workspace))
 	if err != nil {
 		return "", fmt.Errorf("cannot build bitbucket workspace URL: %w", err)
 	}
@@ -758,7 +758,7 @@ func (r *herokuNameResolver) ResolveInstanceName(ctx context.Context) (string, e
 		return "", nil
 	}
 
-	endpoint, err := url.JoinPath("https://api.heroku.com", "teams", r.teamID)
+	endpoint, err := url.JoinPath("https://api.heroku.com", "teams", url.PathEscape(r.teamID))
 	if err != nil {
 		return "", fmt.Errorf("cannot build heroku team URL: %w", err)
 	}
@@ -821,7 +821,7 @@ func (r *asanaNameResolver) ResolveInstanceName(ctx context.Context) (string, er
 		return "", nil
 	}
 
-	endpoint, err := url.JoinPath("https://app.asana.com", "api", "1.0", "workspaces", r.workspaceGID)
+	endpoint, err := url.JoinPath("https://app.asana.com", "api", "1.0", "workspaces", url.PathEscape(r.workspaceGID))
 	if err != nil {
 		return "", fmt.Errorf("cannot build asana workspace URL: %w", err)
 	}
@@ -871,7 +871,7 @@ func (r *netlifyNameResolver) ResolveInstanceName(ctx context.Context) (string, 
 		return "", nil
 	}
 
-	endpoint, err := url.JoinPath("https://api.netlify.com", "api", "v1", "accounts", r.accountSlug)
+	endpoint, err := url.JoinPath("https://api.netlify.com", "api", "v1", "accounts", url.PathEscape(r.accountSlug))
 	if err != nil {
 		return "", fmt.Errorf("cannot build netlify account URL: %w", err)
 	}
@@ -919,7 +919,7 @@ func (r *clickupNameResolver) ResolveInstanceName(ctx context.Context) (string, 
 		return "", nil
 	}
 
-	endpoint, err := url.JoinPath("https://api.clickup.com", "api", "v2", "team", r.teamID)
+	endpoint, err := url.JoinPath("https://api.clickup.com", "api", "v2", "team", url.PathEscape(r.teamID))
 	if err != nil {
 		return "", fmt.Errorf("cannot build clickup team URL: %w", err)
 	}
@@ -972,7 +972,7 @@ func (r *vercelNameResolver) ResolveInstanceName(ctx context.Context) (string, e
 		return "", nil
 	}
 
-	teamURL, err := url.JoinPath("https://api.vercel.com", "v2", "teams", r.teamID)
+	teamURL, err := url.JoinPath("https://api.vercel.com", "v2", "teams", url.PathEscape(r.teamID))
 	if err != nil {
 		return "", fmt.Errorf("cannot build vercel team URL: %w", err)
 	}

@@ -56,7 +56,7 @@ type netlifyMember struct {
 func (d *NetlifyDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error) {
 	var records []AccountRecord
 
-	u, err := url.JoinPath("https://api.netlify.com", "api", "v1", d.accountSlug, "members")
+	u, err := url.JoinPath("https://api.netlify.com", "api", "v1", url.PathEscape(d.accountSlug), "members")
 	if err != nil {
 		return nil, fmt.Errorf("cannot build netlify members URL: %w", err)
 	}
