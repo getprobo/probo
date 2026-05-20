@@ -28,18 +28,19 @@ import (
 )
 
 type TrustCenterReferenceService struct {
-	svc *TenantService
+	svc *Service
 }
 
 func (s TrustCenterReferenceService) ListForTrustCenterID(
 	ctx context.Context,
+	scope coredata.Scoper,
 	trustCenterID gid.GID,
 	cursor *page.Cursor[coredata.TrustCenterReferenceOrderField],
 ) (*page.Page[*coredata.TrustCenterReference, coredata.TrustCenterReferenceOrderField], error) {
 	var references coredata.TrustCenterReferences
 
 	err := s.svc.pg.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
-		err := references.LoadByTrustCenterID(ctx, conn, s.svc.scope, trustCenterID, cursor)
+		err := references.LoadByTrustCenterID(ctx, conn, scope, trustCenterID, cursor)
 		if err != nil {
 			return fmt.Errorf("cannot load trust center references: %w", err)
 		}
@@ -55,6 +56,7 @@ func (s TrustCenterReferenceService) ListForTrustCenterID(
 
 func (s TrustCenterReferenceService) GenerateLogoURL(
 	ctx context.Context,
+	scope coredata.Scoper,
 	referenceID gid.GID,
 	duration time.Duration,
 ) (string, error) {
@@ -62,12 +64,12 @@ func (s TrustCenterReferenceService) GenerateLogoURL(
 	file := &coredata.File{}
 
 	err := s.svc.pg.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
-		err := reference.LoadByID(ctx, tx, s.svc.scope, referenceID)
+		err := reference.LoadByID(ctx, tx, scope, referenceID)
 		if err != nil {
 			return fmt.Errorf("cannot load trust center reference: %w", err)
 		}
 
-		err = file.LoadByID(ctx, tx, s.svc.scope, reference.LogoFileID)
+		err = file.LoadByID(ctx, tx, scope, reference.LogoFileID)
 		if err != nil {
 			return fmt.Errorf("cannot load logo file: %w", err)
 		}
@@ -101,6 +103,7 @@ func (s TrustCenterReferenceService) GenerateLogoURL(
 
 func (s TrustCenterReferenceService) Get(
 	ctx context.Context,
+	scope coredata.Scoper,
 	referenceID gid.GID,
 ) (*coredata.TrustCenterReference, error) {
 	reference := &coredata.TrustCenterReference{}
@@ -108,7 +111,7 @@ func (s TrustCenterReferenceService) Get(
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			err := reference.LoadByID(ctx, conn, s.svc.scope, referenceID)
+			err := reference.LoadByID(ctx, conn, scope, referenceID)
 			if err != nil {
 				return fmt.Errorf("cannot load trust center reference: %w", err)
 			}

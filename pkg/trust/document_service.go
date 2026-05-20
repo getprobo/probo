@@ -33,7 +33,7 @@ import (
 
 type (
 	DocumentService struct {
-		svc               *TenantService
+		svc               *Service
 		html2pdfConverter *html2pdf.Converter
 	}
 
@@ -46,6 +46,7 @@ func (e ErrDocumentArchived) Error() string {
 
 func (s *DocumentService) ListForOrganizationId(
 	ctx context.Context,
+	scope coredata.Scoper,
 	organizationID gid.GID,
 	cursor *page.Cursor[coredata.DocumentOrderField],
 ) (*page.Page[*coredata.Document, coredata.DocumentOrderField], error) {
@@ -56,7 +57,7 @@ func (s *DocumentService) ListForOrganizationId(
 		func(ctx context.Context, conn pg.Querier) error {
 			filter := coredata.NewDocumentTrustCenterFilter()
 
-			if err := documents.LoadPublishedByOrganizationID(ctx, conn, s.svc.scope, organizationID, cursor, filter); err != nil {
+			if err := documents.LoadPublishedByOrganizationID(ctx, conn, scope, organizationID, cursor, filter); err != nil {
 				return fmt.Errorf("cannot load published documents: %w", err)
 			}
 
@@ -72,10 +73,11 @@ func (s *DocumentService) ListForOrganizationId(
 
 func (s *DocumentService) ExportPDF(
 	ctx context.Context,
+	scope coredata.Scoper,
 	documentID gid.GID,
 	email mail.Addr,
 ) ([]byte, error) {
-	pdfData, err := s.exportPDFData(ctx, documentID)
+	pdfData, err := s.exportPDFData(ctx, scope, documentID)
 	if err != nil {
 		return nil, fmt.Errorf("cannot export document PDF: %w", err)
 	}
@@ -90,13 +92,15 @@ func (s *DocumentService) ExportPDF(
 
 func (s *DocumentService) ExportPDFWithoutWatermark(
 	ctx context.Context,
+	scope coredata.Scoper,
 	documentID gid.GID,
 ) ([]byte, error) {
-	return s.exportPDFData(ctx, documentID)
+	return s.exportPDFData(ctx, scope, documentID)
 }
 
 func (s DocumentService) Get(
 	ctx context.Context,
+	scope coredata.Scoper,
 	organizationID gid.GID,
 	documentID gid.GID,
 ) (*coredata.Document, error) {
@@ -105,7 +109,7 @@ func (s DocumentService) Get(
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			err := document.LoadByID(ctx, conn, s.svc.scope, documentID)
+			err := document.LoadByID(ctx, conn, scope, documentID)
 			if err != nil {
 				return fmt.Errorf("cannot load document: %w", err)
 			}
@@ -134,6 +138,7 @@ func (s DocumentService) Get(
 
 func (s *DocumentService) exportPDFData(
 	ctx context.Context,
+	scope coredata.Scoper,
 	documentID gid.GID,
 ) ([]byte, error) {
 	document := &coredata.Document{}
@@ -143,7 +148,7 @@ func (s *DocumentService) exportPDFData(
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			if err := document.LoadByID(ctx, conn, s.svc.scope, documentID); err != nil {
+			if err := document.LoadByID(ctx, conn, scope, documentID); err != nil {
 				return fmt.Errorf("cannot load document: %w", err)
 			}
 
@@ -155,7 +160,7 @@ func (s *DocumentService) exportPDFData(
 				return fmt.Errorf("document not visible on trust center")
 			}
 
-			if err := version.LoadLatestPublishedVersion(ctx, conn, s.svc.scope, documentID); err != nil {
+			if err := version.LoadLatestPublishedVersion(ctx, conn, scope, documentID); err != nil {
 				return fmt.Errorf("cannot load latest published document version: %w", err)
 			}
 
@@ -163,7 +168,7 @@ func (s *DocumentService) exportPDFData(
 				return nil
 			}
 
-			if err := fileRecord.LoadByID(ctx, conn, s.svc.scope, *version.FileID); err != nil {
+			if err := fileRecord.LoadByID(ctx, conn, scope, *version.FileID); err != nil {
 				return fmt.Errorf("cannot load document version file: %w", err)
 			}
 
@@ -184,7 +189,7 @@ func (s *DocumentService) exportPDFData(
 	}
 
 	// TODO: remove on-the-fly fallback once all published versions have a stored PDF.
-	pdfData, err := s.generatePDFOnTheFly(ctx, document, version)
+	pdfData, err := s.generatePDFOnTheFly(ctx, scope, document, version)
 	if err != nil {
 		return nil, fmt.Errorf("cannot generate PDF on the fly: %w", err)
 	}
@@ -197,6 +202,7 @@ func (s *DocumentService) exportPDFData(
 // processed by the document PDF worker.
 func (s *DocumentService) generatePDFOnTheFly(
 	ctx context.Context,
+	scope coredata.Scoper,
 	document *coredata.Document,
 	version *coredata.DocumentVersion,
 ) ([]byte, error) {
@@ -208,7 +214,7 @@ func (s *DocumentService) generatePDFOnTheFly(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
 			lastQuorum := &coredata.DocumentVersionApprovalQuorum{}
-			if err := lastQuorum.LoadLastByDocumentVersionID(ctx, conn, s.svc.scope, version.ID); err != nil {
+			if err := lastQuorum.LoadLastByDocumentVersionID(ctx, conn, scope, version.ID); err != nil {
 				if !errors.Is(err, coredata.ErrResourceNotFound) {
 					return fmt.Errorf("cannot load last approval quorum: %w", err)
 				}
@@ -221,7 +227,7 @@ func (s *DocumentService) generatePDFOnTheFly(
 				if err := approvedDecisions.LoadByQuorumID(
 					ctx,
 					conn,
-					s.svc.scope,
+					scope,
 					lastQuorum.ID,
 					page.NewCursor(
 						100,
@@ -244,7 +250,7 @@ func (s *DocumentService) generatePDFOnTheFly(
 
 				if len(approverProfileIDs) > 0 {
 					profiles := coredata.MembershipProfiles{}
-					if err := profiles.LoadByIDs(ctx, conn, s.svc.scope, approverProfileIDs); err != nil {
+					if err := profiles.LoadByIDs(ctx, conn, scope, approverProfileIDs); err != nil {
 						return fmt.Errorf("cannot load approver profiles: %w", err)
 					}
 
@@ -254,7 +260,7 @@ func (s *DocumentService) generatePDFOnTheFly(
 				}
 			}
 
-			if err := organization.LoadByID(ctx, conn, s.svc.scope, document.OrganizationID); err != nil {
+			if err := organization.LoadByID(ctx, conn, scope, document.OrganizationID); err != nil {
 				return fmt.Errorf("cannot load organization: %w", err)
 			}
 
@@ -282,7 +288,7 @@ func (s *DocumentService) generatePDFOnTheFly(
 		fileRecord := &coredata.File{}
 
 		fileErr := s.svc.pg.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
-			return fileRecord.LoadByID(ctx, conn, s.svc.scope, *organization.HorizontalLogoFileID)
+			return fileRecord.LoadByID(ctx, conn, scope, *organization.HorizontalLogoFileID)
 		})
 		if fileErr == nil {
 			base64Data, mimeType, logoErr := s.svc.fileManager.GetFileBase64(ctx, fileRecord)

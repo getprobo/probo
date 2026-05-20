@@ -30,7 +30,7 @@ import (
 )
 
 type AuditService struct {
-	svc *TenantService
+	svc *Service
 }
 
 type (
@@ -105,7 +105,7 @@ func (uarr *UploadAuditReportRequest) Validate() error {
 }
 
 func (s AuditService) Get(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	auditID gid.GID,
 ) (*coredata.Audit, error) {
 	audit := &coredata.Audit{}
@@ -113,7 +113,7 @@ func (s AuditService) Get(
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			return audit.LoadByID(ctx, conn, s.svc.scope, auditID)
+			return audit.LoadByID(ctx, conn, scope, auditID)
 		},
 	)
 	if err != nil {
@@ -124,7 +124,7 @@ func (s AuditService) Get(
 }
 
 func (s AuditService) GetByReportID(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	reportID gid.GID,
 ) (*coredata.Audit, error) {
 	audit := &coredata.Audit{}
@@ -132,7 +132,7 @@ func (s AuditService) GetByReportID(
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			return audit.LoadByReportID(ctx, conn, s.svc.scope, reportID)
+			return audit.LoadByReportID(ctx, conn, scope, reportID)
 		},
 	)
 	if err != nil {
@@ -143,7 +143,7 @@ func (s AuditService) GetByReportID(
 }
 
 func (s *AuditService) Create(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	req *CreateAuditRequest,
 ) (*coredata.Audit, error) {
 	if err := req.Validate(); err != nil {
@@ -152,7 +152,7 @@ func (s *AuditService) Create(
 
 	now := time.Now()
 	audit := &coredata.Audit{
-		ID:                    gid.New(s.svc.scope.GetTenantID(), coredata.AuditEntityType),
+		ID:                    gid.New(scope.GetTenantID(), coredata.AuditEntityType),
 		Name:                  req.Name,
 		OrganizationID:        req.OrganizationID,
 		FrameworkID:           req.FrameworkID,
@@ -176,16 +176,16 @@ func (s *AuditService) Create(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
 			organization := &coredata.Organization{}
-			if err := organization.LoadByID(ctx, conn, s.svc.scope, req.OrganizationID); err != nil {
+			if err := organization.LoadByID(ctx, conn, scope, req.OrganizationID); err != nil {
 				return fmt.Errorf("cannot load organization: %w", err)
 			}
 
 			framework := &coredata.Framework{}
-			if err := framework.LoadByID(ctx, conn, s.svc.scope, req.FrameworkID); err != nil {
+			if err := framework.LoadByID(ctx, conn, scope, req.FrameworkID); err != nil {
 				return fmt.Errorf("cannot load framework: %w", err)
 			}
 
-			if err := audit.Insert(ctx, conn, s.svc.scope); err != nil {
+			if err := audit.Insert(ctx, conn, scope); err != nil {
 				return fmt.Errorf("cannot insert audit: %w", err)
 			}
 
@@ -200,7 +200,7 @@ func (s *AuditService) Create(
 }
 
 func (s *AuditService) Update(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	req *UpdateAuditRequest,
 ) (*coredata.Audit, error) {
 	if err := req.Validate(); err != nil {
@@ -212,7 +212,7 @@ func (s *AuditService) Update(
 	err := s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
-			if err := audit.LoadByID(ctx, conn, s.svc.scope, req.ID); err != nil {
+			if err := audit.LoadByID(ctx, conn, scope, req.ID); err != nil {
 				return fmt.Errorf("cannot load audit: %w", err)
 			}
 
@@ -238,7 +238,7 @@ func (s *AuditService) Update(
 
 			audit.UpdatedAt = time.Now()
 
-			if err := audit.Update(ctx, conn, s.svc.scope); err != nil {
+			if err := audit.Update(ctx, conn, scope); err != nil {
 				return fmt.Errorf("cannot update audit: %w", err)
 			}
 
@@ -253,7 +253,7 @@ func (s *AuditService) Update(
 }
 
 func (s AuditService) Delete(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	auditID gid.GID,
 ) error {
 	audit := coredata.Audit{ID: auditID}
@@ -261,7 +261,7 @@ func (s AuditService) Delete(
 	return s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			err := audit.Delete(ctx, tx, s.svc.scope)
+			err := audit.Delete(ctx, tx, scope)
 			if err != nil {
 				return fmt.Errorf("cannot delete audit: %w", err)
 			}
@@ -272,7 +272,7 @@ func (s AuditService) Delete(
 }
 
 func (s AuditService) ListForOrganizationID(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	organizationID gid.GID,
 	cursor *page.Cursor[coredata.AuditOrderField],
 ) (*page.Page[*coredata.Audit, coredata.AuditOrderField], error) {
@@ -283,7 +283,7 @@ func (s AuditService) ListForOrganizationID(
 		func(ctx context.Context, conn pg.Querier) error {
 			filter := coredata.NewAuditFilter()
 
-			err := audits.LoadByOrganizationID(ctx, conn, s.svc.scope, organizationID, cursor, filter)
+			err := audits.LoadByOrganizationID(ctx, conn, scope, organizationID, cursor, filter)
 			if err != nil {
 				return fmt.Errorf("cannot load audits: %w", err)
 			}
@@ -299,7 +299,7 @@ func (s AuditService) ListForOrganizationID(
 }
 
 func (s AuditService) CountForOrganizationID(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	organizationID gid.GID,
 ) (int, error) {
 	var count int
@@ -309,7 +309,7 @@ func (s AuditService) CountForOrganizationID(
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			audits := coredata.Audits{}
 
-			count, err = audits.CountByOrganizationID(ctx, conn, s.svc.scope, organizationID)
+			count, err = audits.CountByOrganizationID(ctx, conn, scope, organizationID)
 			if err != nil {
 				return fmt.Errorf("cannot count audits: %w", err)
 			}
@@ -325,7 +325,7 @@ func (s AuditService) CountForOrganizationID(
 }
 
 func (s AuditService) UploadReport(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	req UploadAuditReportRequest,
 ) (*coredata.Audit, error) {
 	if err := req.Validate(); err != nil {
@@ -337,11 +337,11 @@ func (s AuditService) UploadReport(
 	err := s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
-			if err := audit.LoadByID(ctx, conn, s.svc.scope, req.AuditID); err != nil {
+			if err := audit.LoadByID(ctx, conn, scope, req.AuditID); err != nil {
 				return fmt.Errorf("cannot load audit: %w", err)
 			}
 
-			reportID := gid.New(s.svc.scope.GetTenantID(), coredata.ReportEntityType)
+			reportID := gid.New(scope.GetTenantID(), coredata.ReportEntityType)
 			now := time.Now()
 
 			objectKey, err := uuid.NewV7()
@@ -376,14 +376,14 @@ func (s AuditService) UploadReport(
 				UpdatedAt:      now,
 			}
 
-			if err := report.Insert(ctx, conn, s.svc.scope); err != nil {
+			if err := report.Insert(ctx, conn, scope); err != nil {
 				return fmt.Errorf("cannot insert report: %w", err)
 			}
 
 			audit.ReportID = &report.ID
 			audit.UpdatedAt = time.Now()
 
-			if err := audit.Update(ctx, conn, s.svc.scope); err != nil {
+			if err := audit.Update(ctx, conn, scope); err != nil {
 				return fmt.Errorf("cannot update audit: %w", err)
 			}
 
@@ -398,11 +398,11 @@ func (s AuditService) UploadReport(
 }
 
 func (s AuditService) GenerateReportURL(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	auditID gid.GID,
 	expiresIn time.Duration,
 ) (*string, error) {
-	audit, err := s.Get(ctx, auditID)
+	audit, err := s.Get(ctx, scope, auditID)
 	if err != nil {
 		return nil, fmt.Errorf("cannot get audit: %w", err)
 	}
@@ -411,7 +411,7 @@ func (s AuditService) GenerateReportURL(
 		return nil, fmt.Errorf("audit has no report")
 	}
 
-	url, err := s.svc.Reports.GenerateDownloadURL(ctx, *audit.ReportID, expiresIn)
+	url, err := s.svc.Reports.GenerateDownloadURL(ctx, scope, *audit.ReportID, expiresIn)
 	if err != nil {
 		return nil, fmt.Errorf("cannot generate report download URL: %w", err)
 	}
@@ -420,7 +420,7 @@ func (s AuditService) GenerateReportURL(
 }
 
 func (s AuditService) DeleteReport(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	auditID gid.GID,
 ) (*coredata.Audit, error) {
 	audit := &coredata.Audit{}
@@ -428,21 +428,21 @@ func (s AuditService) DeleteReport(
 	err := s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
-			if err := audit.LoadByID(ctx, conn, s.svc.scope, auditID); err != nil {
+			if err := audit.LoadByID(ctx, conn, scope, auditID); err != nil {
 				return fmt.Errorf("cannot load audit: %w", err)
 			}
 
 			if audit.ReportID != nil {
 				report := &coredata.Report{ID: *audit.ReportID}
 
-				if err := report.Delete(ctx, conn, s.svc.scope); err != nil {
+				if err := report.Delete(ctx, conn, scope); err != nil {
 					return fmt.Errorf("cannot delete report: %w", err)
 				}
 
 				audit.ReportID = nil
 				audit.UpdatedAt = time.Now()
 
-				if err := audit.Update(ctx, conn, s.svc.scope); err != nil {
+				if err := audit.Update(ctx, conn, scope); err != nil {
 					return fmt.Errorf("cannot update audit: %w", err)
 				}
 			}
@@ -458,7 +458,7 @@ func (s AuditService) DeleteReport(
 }
 
 func (s AuditService) ListForControlID(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	controlID gid.GID,
 	cursor *page.Cursor[coredata.AuditOrderField],
 ) (*page.Page[*coredata.Audit, coredata.AuditOrderField], error) {
@@ -469,11 +469,11 @@ func (s AuditService) ListForControlID(
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			if err := control.LoadByID(ctx, conn, s.svc.scope, controlID); err != nil {
+			if err := control.LoadByID(ctx, conn, scope, controlID); err != nil {
 				return fmt.Errorf("cannot load control: %w", err)
 			}
 
-			err := audits.LoadByControlID(ctx, conn, s.svc.scope, control.ID, cursor)
+			err := audits.LoadByControlID(ctx, conn, scope, control.ID, cursor)
 			if err != nil {
 				return fmt.Errorf("cannot load audits: %w", err)
 			}
@@ -489,7 +489,7 @@ func (s AuditService) ListForControlID(
 }
 
 func (s AuditService) CountForControlID(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	controlID gid.GID,
 ) (int, error) {
 	var count int
@@ -499,7 +499,7 @@ func (s AuditService) CountForControlID(
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			audits := coredata.Audits{}
 
-			count, err = audits.CountByControlID(ctx, conn, s.svc.scope, controlID)
+			count, err = audits.CountByControlID(ctx, conn, scope, controlID)
 			if err != nil {
 				return fmt.Errorf("cannot count audits: %w", err)
 			}
@@ -515,7 +515,7 @@ func (s AuditService) CountForControlID(
 }
 
 func (s AuditService) CountForFindingID(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	findingID gid.GID,
 ) (int, error) {
 	var count int
@@ -525,7 +525,7 @@ func (s AuditService) CountForFindingID(
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			audits := coredata.Audits{}
 
-			count, err = audits.CountByFindingID(ctx, conn, s.svc.scope, findingID)
+			count, err = audits.CountByFindingID(ctx, conn, scope, findingID)
 			if err != nil {
 				return fmt.Errorf("cannot count audits: %w", err)
 			}
@@ -541,7 +541,7 @@ func (s AuditService) CountForFindingID(
 }
 
 func (s AuditService) ListForFindingID(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	findingID gid.GID,
 	cursor *page.Cursor[coredata.AuditOrderField],
 ) (*page.Page[*coredata.Audit, coredata.AuditOrderField], error) {
@@ -552,11 +552,11 @@ func (s AuditService) ListForFindingID(
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			if err := finding.LoadByID(ctx, conn, s.svc.scope, findingID); err != nil {
+			if err := finding.LoadByID(ctx, conn, scope, findingID); err != nil {
 				return fmt.Errorf("cannot load finding: %w", err)
 			}
 
-			err := audits.LoadByFindingID(ctx, conn, s.svc.scope, finding.ID, cursor)
+			err := audits.LoadByFindingID(ctx, conn, scope, finding.ID, cursor)
 			if err != nil {
 				return fmt.Errorf("cannot load audits: %w", err)
 			}

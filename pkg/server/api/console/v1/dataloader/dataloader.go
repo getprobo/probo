@@ -91,9 +91,9 @@ func (f *batchFetcher) newLoaders() *Loaders {
 }
 
 func (f *batchFetcher) fetchOrganizations(ctx context.Context, keys []gid.GID) (map[gid.GID]*coredata.Organization, error) {
-	tenantSvc := f.probo.WithTenant(keys[0].TenantID())
+	scope := coredata.NewScopeFromObjectID(keys[0])
 
-	orgs, err := tenantSvc.Organizations.GetByIDs(ctx, keys...)
+	orgs, err := f.probo.Organizations.GetByIDs(ctx, scope, keys...)
 	if err != nil {
 		return nil, fmt.Errorf("cannot batch load organizations: %w", err)
 	}
@@ -107,9 +107,9 @@ func (f *batchFetcher) fetchOrganizations(ctx context.Context, keys []gid.GID) (
 }
 
 func (f *batchFetcher) fetchFrameworks(ctx context.Context, keys []gid.GID) (map[gid.GID]*coredata.Framework, error) {
-	tenantSvc := f.probo.WithTenant(keys[0].TenantID())
+	scope := coredata.NewScopeFromObjectID(keys[0])
 
-	frameworks, err := tenantSvc.Frameworks.GetByIDs(ctx, keys...)
+	frameworks, err := f.probo.Frameworks.GetByIDs(ctx, scope, keys...)
 	if err != nil {
 		return nil, fmt.Errorf("cannot batch load frameworks: %w", err)
 	}
@@ -123,9 +123,9 @@ func (f *batchFetcher) fetchFrameworks(ctx context.Context, keys []gid.GID) (map
 }
 
 func (f *batchFetcher) fetchControls(ctx context.Context, keys []gid.GID) (map[gid.GID]*coredata.Control, error) {
-	tenantSvc := f.probo.WithTenant(keys[0].TenantID())
+	scope := coredata.NewScopeFromObjectID(keys[0])
 
-	controls, err := tenantSvc.Controls.GetByIDs(ctx, keys...)
+	controls, err := f.probo.Controls.GetByIDs(ctx, scope, keys...)
 	if err != nil {
 		return nil, fmt.Errorf("cannot batch load controls: %w", err)
 	}
@@ -139,9 +139,9 @@ func (f *batchFetcher) fetchControls(ctx context.Context, keys []gid.GID) (map[g
 }
 
 func (f *batchFetcher) fetchThirdParties(ctx context.Context, keys []gid.GID) (map[gid.GID]*coredata.ThirdParty, error) {
-	tenantSvc := f.probo.WithTenant(keys[0].TenantID())
+	scope := coredata.NewScopeFromObjectID(keys[0])
 
-	thirdParties, err := tenantSvc.ThirdParties.GetByIDs(ctx, keys...)
+	thirdParties, err := f.probo.ThirdParties.GetByIDs(ctx, scope, keys...)
 	if err != nil {
 		return nil, fmt.Errorf("cannot batch load thirdParties: %w", err)
 	}
@@ -155,9 +155,9 @@ func (f *batchFetcher) fetchThirdParties(ctx context.Context, keys []gid.GID) (m
 }
 
 func (f *batchFetcher) fetchDocuments(ctx context.Context, keys []gid.GID) (map[gid.GID]*coredata.Document, error) {
-	tenantSvc := f.probo.WithTenant(keys[0].TenantID())
+	scope := coredata.NewScopeFromObjectID(keys[0])
 
-	documents, err := tenantSvc.Documents.GetByIDs(ctx, keys...)
+	documents, err := f.probo.Documents.GetByIDs(ctx, scope, keys...)
 	if err != nil {
 		return nil, fmt.Errorf("cannot batch load documents: %w", err)
 	}
@@ -187,9 +187,9 @@ func (f *batchFetcher) fetchProfiles(ctx context.Context, keys []gid.GID) (map[g
 }
 
 func (f *batchFetcher) fetchRisks(ctx context.Context, keys []gid.GID) (map[gid.GID]*coredata.Risk, error) {
-	tenantSvc := f.probo.WithTenant(keys[0].TenantID())
+	scope := coredata.NewScopeFromObjectID(keys[0])
 
-	risks, err := tenantSvc.Risks.GetByIDs(ctx, keys...)
+	risks, err := f.probo.Risks.GetByIDs(ctx, scope, keys...)
 	if err != nil {
 		return nil, fmt.Errorf("cannot batch load risks: %w", err)
 	}
@@ -203,9 +203,9 @@ func (f *batchFetcher) fetchRisks(ctx context.Context, keys []gid.GID) (map[gid.
 }
 
 func (f *batchFetcher) fetchMeasures(ctx context.Context, keys []gid.GID) (map[gid.GID]*coredata.Measure, error) {
-	tenantSvc := f.probo.WithTenant(keys[0].TenantID())
+	scope := coredata.NewScopeFromObjectID(keys[0])
 
-	measures, err := tenantSvc.Measures.GetByIDs(ctx, keys...)
+	measures, err := f.probo.Measures.GetByIDs(ctx, scope, keys...)
 	if err != nil {
 		return nil, fmt.Errorf("cannot batch load measures: %w", err)
 	}
@@ -219,9 +219,9 @@ func (f *batchFetcher) fetchMeasures(ctx context.Context, keys []gid.GID) (map[g
 }
 
 func (f *batchFetcher) fetchTasks(ctx context.Context, keys []gid.GID) (map[gid.GID]*coredata.Task, error) {
-	tenantSvc := f.probo.WithTenant(keys[0].TenantID())
+	scope := coredata.NewScopeFromObjectID(keys[0])
 
-	tasks, err := tenantSvc.Tasks.GetByIDs(ctx, keys...)
+	tasks, err := f.probo.Tasks.GetByIDs(ctx, scope, keys...)
 	if err != nil {
 		return nil, fmt.Errorf("cannot batch load tasks: %w", err)
 	}
@@ -235,9 +235,9 @@ func (f *batchFetcher) fetchTasks(ctx context.Context, keys []gid.GID) (map[gid.
 }
 
 func (f *batchFetcher) fetchFiles(ctx context.Context, keys []gid.GID) (map[gid.GID]*coredata.File, error) {
-	tenantSvc := f.probo.WithTenant(keys[0].TenantID())
+	scope := coredata.NewScopeFromObjectID(keys[0])
 
-	files, err := tenantSvc.Files.GetByIDs(ctx, keys...)
+	files, err := f.probo.Files.GetByIDs(ctx, scope, keys...)
 	if err != nil {
 		return nil, fmt.Errorf("cannot batch load files: %w", err)
 	}
@@ -251,9 +251,9 @@ func (f *batchFetcher) fetchFiles(ctx context.Context, keys []gid.GID) (map[gid.
 }
 
 func (f *batchFetcher) fetchReports(ctx context.Context, keys []gid.GID) (map[gid.GID]*coredata.Report, error) {
-	tenantSvc := f.probo.WithTenant(keys[0].TenantID())
+	scope := coredata.NewScopeFromObjectID(keys[0])
 
-	reports, err := tenantSvc.Reports.GetByIDs(ctx, keys...)
+	reports, err := f.probo.Reports.GetByIDs(ctx, scope, keys...)
 	if err != nil {
 		return nil, fmt.Errorf("cannot batch load reports: %w", err)
 	}

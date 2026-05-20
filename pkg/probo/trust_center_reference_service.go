@@ -35,7 +35,7 @@ import (
 
 type (
 	TrustCenterReferenceService struct {
-		svc *TenantService
+		svc *Service
 	}
 
 	CreateTrustCenterReferenceRequest struct {
@@ -79,14 +79,14 @@ func (utcrr *UpdateTrustCenterReferenceRequest) Validate() error {
 }
 
 func (s TrustCenterReferenceService) ListForTrustCenterID(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	trustCenterID gid.GID,
 	cursor *page.Cursor[coredata.TrustCenterReferenceOrderField],
 ) (*page.Page[*coredata.TrustCenterReference, coredata.TrustCenterReferenceOrderField], error) {
 	var references coredata.TrustCenterReferences
 
 	err := s.svc.pg.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
-		err := references.LoadByTrustCenterID(ctx, conn, s.svc.scope, trustCenterID, cursor)
+		err := references.LoadByTrustCenterID(ctx, conn, scope, trustCenterID, cursor)
 		if err != nil {
 			return fmt.Errorf("cannot load trust center references: %w", err)
 		}
@@ -101,7 +101,7 @@ func (s TrustCenterReferenceService) ListForTrustCenterID(
 }
 
 func (s TrustCenterReferenceService) CountForTrustCenterID(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	trustCenterID gid.GID,
 ) (int, error) {
 	var count int
@@ -109,7 +109,7 @@ func (s TrustCenterReferenceService) CountForTrustCenterID(
 	err := s.svc.pg.WithConn(ctx, func(ctx context.Context, conn pg.Querier) (err error) {
 		references := coredata.TrustCenterReferences{}
 
-		count, err = references.CountByTrustCenterID(ctx, conn, s.svc.scope, trustCenterID)
+		count, err = references.CountByTrustCenterID(ctx, conn, scope, trustCenterID)
 		if err != nil {
 			return fmt.Errorf("cannot count trust center references: %w", err)
 		}
@@ -124,13 +124,13 @@ func (s TrustCenterReferenceService) CountForTrustCenterID(
 }
 
 func (s TrustCenterReferenceService) Get(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	referenceID gid.GID,
 ) (*coredata.TrustCenterReference, error) {
 	var reference coredata.TrustCenterReference
 
 	err := s.svc.pg.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
-		err := reference.LoadByID(ctx, conn, s.svc.scope, referenceID)
+		err := reference.LoadByID(ctx, conn, scope, referenceID)
 		if err != nil {
 			return fmt.Errorf("cannot load trust center reference: %w", err)
 		}
@@ -145,7 +145,7 @@ func (s TrustCenterReferenceService) Get(
 }
 
 func (s TrustCenterReferenceService) Create(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	req *CreateTrustCenterReferenceRequest,
 ) (*coredata.TrustCenterReference, error) {
 	if err := req.Validate(); err != nil {
@@ -154,7 +154,7 @@ func (s TrustCenterReferenceService) Create(
 
 	now := time.Now()
 
-	referenceID := gid.New(s.svc.scope.GetTenantID(), coredata.TrustCenterReferenceEntityType)
+	referenceID := gid.New(scope.GetTenantID(), coredata.TrustCenterReferenceEntityType)
 
 	var reference *coredata.TrustCenterReference
 
@@ -162,11 +162,11 @@ func (s TrustCenterReferenceService) Create(
 
 	err := s.svc.pg.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		trustCenter := &coredata.TrustCenter{}
-		if err := trustCenter.LoadByID(ctx, tx, s.svc.scope, req.TrustCenterID); err != nil {
+		if err := trustCenter.LoadByID(ctx, tx, scope, req.TrustCenterID); err != nil {
 			return fmt.Errorf("cannot load trust center: %w", err)
 		}
 
-		fileID, s3Key, err := s.uploadLogoFile(ctx, tx, req.LogoFile, referenceID, req.TrustCenterID, now)
+		fileID, s3Key, err := s.uploadLogoFile(ctx, scope, tx, req.LogoFile, referenceID, req.TrustCenterID, now)
 		if err != nil {
 			return fmt.Errorf("cannot upload logo file: %w", err)
 		}
@@ -185,14 +185,14 @@ func (s TrustCenterReferenceService) Create(
 			UpdatedAt:      now,
 		}
 
-		if err := reference.Insert(ctx, tx, s.svc.scope); err != nil {
+		if err := reference.Insert(ctx, tx, scope); err != nil {
 			return fmt.Errorf("cannot insert trust center reference: %w", err)
 		}
 
 		return nil
 	})
 	if err != nil {
-		s.cleanupS3Object(ctx, logoKey)
+		s.cleanupS3Object(ctx, scope, logoKey)
 		return nil, err
 	}
 
@@ -200,7 +200,7 @@ func (s TrustCenterReferenceService) Create(
 }
 
 func (s TrustCenterReferenceService) Update(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	req *UpdateTrustCenterReferenceRequest,
 ) (*coredata.TrustCenterReference, error) {
 	if err := req.Validate(); err != nil {
@@ -218,12 +218,12 @@ func (s TrustCenterReferenceService) Update(
 	err := s.svc.pg.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		reference = &coredata.TrustCenterReference{}
 
-		if err := reference.LoadByID(ctx, tx, s.svc.scope, req.ID); err != nil {
+		if err := reference.LoadByID(ctx, tx, scope, req.ID); err != nil {
 			return fmt.Errorf("cannot load trust center reference: %w", err)
 		}
 
 		if req.LogoFile != nil {
-			fileID, s3Key, err := s.uploadLogoFile(ctx, tx, *req.LogoFile, req.ID, reference.TrustCenterID, now)
+			fileID, s3Key, err := s.uploadLogoFile(ctx, scope, tx, *req.LogoFile, req.ID, reference.TrustCenterID, now)
 			if err != nil {
 				return fmt.Errorf("cannot upload logo file: %w", err)
 			}
@@ -252,19 +252,19 @@ func (s TrustCenterReferenceService) Update(
 
 		if req.Rank != nil {
 			reference.Rank = *req.Rank
-			if err := reference.UpdateRank(ctx, tx, s.svc.scope); err != nil {
+			if err := reference.UpdateRank(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot update rank: %w", err)
 			}
 		}
 
-		if err := reference.Update(ctx, tx, s.svc.scope); err != nil {
+		if err := reference.Update(ctx, tx, scope); err != nil {
 			return fmt.Errorf("cannot update trust center reference: %w", err)
 		}
 
 		return nil
 	})
 	if err != nil {
-		s.cleanupS3Object(ctx, logoKey)
+		s.cleanupS3Object(ctx, scope, logoKey)
 		return nil, err
 	}
 
@@ -272,17 +272,17 @@ func (s TrustCenterReferenceService) Update(
 }
 
 func (s TrustCenterReferenceService) Delete(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	trustCenterReferenceID gid.GID,
 ) error {
 	err := s.svc.pg.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		reference := &coredata.TrustCenterReference{}
 
-		if err := reference.LoadByID(ctx, tx, s.svc.scope, trustCenterReferenceID); err != nil {
+		if err := reference.LoadByID(ctx, tx, scope, trustCenterReferenceID); err != nil {
 			return fmt.Errorf("cannot load trust center reference: %w", err)
 		}
 
-		if err := reference.Delete(ctx, tx, s.svc.scope); err != nil {
+		if err := reference.Delete(ctx, tx, scope); err != nil {
 			return fmt.Errorf("cannot delete trust center reference: %w", err)
 		}
 
@@ -293,7 +293,7 @@ func (s TrustCenterReferenceService) Delete(
 }
 
 func (s TrustCenterReferenceService) GenerateLogoURL(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	referenceID gid.GID,
 	duration time.Duration,
 ) (string, error) {
@@ -301,12 +301,12 @@ func (s TrustCenterReferenceService) GenerateLogoURL(
 	file := &coredata.File{}
 
 	err := s.svc.pg.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
-		err := reference.LoadByID(ctx, tx, s.svc.scope, referenceID)
+		err := reference.LoadByID(ctx, tx, scope, referenceID)
 		if err != nil {
 			return fmt.Errorf("cannot load trust center reference: %w", err)
 		}
 
-		err = file.LoadByID(ctx, tx, s.svc.scope, reference.LogoFileID)
+		err = file.LoadByID(ctx, tx, scope, reference.LogoFileID)
 		if err != nil {
 			return fmt.Errorf("cannot load logo file: %w", err)
 		}
@@ -339,14 +339,14 @@ func (s TrustCenterReferenceService) GenerateLogoURL(
 }
 
 func (s TrustCenterReferenceService) uploadLogoFile(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	tx pg.Tx,
 	file File,
 	referenceID gid.GID,
 	trustCenterID gid.GID,
 	now time.Time,
 ) (gid.GID, string, error) {
-	fileID := gid.New(s.svc.scope.GetTenantID(), coredata.FileEntityType)
+	fileID := gid.New(scope.GetTenantID(), coredata.FileEntityType)
 
 	objectKey, err := uuid.NewV7()
 	if err != nil {
@@ -354,7 +354,7 @@ func (s TrustCenterReferenceService) uploadLogoFile(
 	}
 
 	trustCenter := &coredata.TrustCenter{}
-	if err := trustCenter.LoadByID(ctx, tx, s.svc.scope, trustCenterID); err != nil {
+	if err := trustCenter.LoadByID(ctx, tx, scope, trustCenterID); err != nil {
 		return gid.GID{}, "", fmt.Errorf("cannot load trust center: %w", err)
 	}
 
@@ -432,14 +432,14 @@ func (s TrustCenterReferenceService) uploadLogoFile(
 		UpdatedAt:  now,
 	}
 
-	if err := fileRecord.Insert(ctx, tx, s.svc.scope); err != nil {
+	if err := fileRecord.Insert(ctx, tx, scope); err != nil {
 		return gid.GID{}, "", fmt.Errorf("cannot insert file: %w", err)
 	}
 
 	return fileID, objectKey.String(), nil
 }
 
-func (s TrustCenterReferenceService) cleanupS3Object(ctx context.Context, s3Key string) {
+func (s TrustCenterReferenceService) cleanupS3Object(ctx context.Context, scope coredata.Scoper, s3Key string) {
 	if s3Key == "" {
 		return
 	}

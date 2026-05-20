@@ -87,9 +87,10 @@ func (r *nonDisclosureAgreementResolver) FileURL(ctx context.Context, obj *types
 	trustCenter := compliancepage.CompliancePageFromContext(ctx)
 
 	if identity := authn.IdentityFromContext(ctx); identity != nil && r.esign != nil {
-		trustService := r.TrustService(ctx, trustCenter.ID.TenantID())
+		scope := coredata.NewScopeFromObjectID(trustCenter.ID)
+		trustService := r.trust
 
-		access, err := trustService.TrustCenterAccesses.GetAccess(ctx, trustCenter.ID, identity.ID)
+		access, err := trustService.TrustCenterAccesses.GetAccess(ctx, scope, trustCenter.ID, identity.ID)
 		if err == nil && access.ElectronicSignatureID != nil {
 			fileURL, err := r.esign.GenerateSignatureFileURL(ctx, *access.ElectronicSignatureID, 15*time.Minute)
 			if err == nil {
@@ -100,9 +101,10 @@ func (r *nonDisclosureAgreementResolver) FileURL(ctx context.Context, obj *types
 		}
 	}
 
-	trustService := r.TrustService(ctx, trustCenter.ID.TenantID())
+	scope := coredata.NewScopeFromObjectID(trustCenter.ID)
+	trustService := r.trust
 
-	fileURL, err := trustService.TrustCenters.GenerateNDAFileURL(ctx, trustCenter.ID, 15*time.Minute)
+	fileURL, err := trustService.TrustCenters.GenerateNDAFileURL(ctx, scope, trustCenter.ID, 15*time.Minute)
 	if err != nil {
 		return "", gqlutils.Internal(ctx)
 	}
@@ -118,9 +120,10 @@ func (r *nonDisclosureAgreementResolver) ViewerSignature(ctx context.Context, ob
 	}
 
 	trustCenter := compliancepage.CompliancePageFromContext(ctx)
-	trustService := r.TrustService(ctx, trustCenter.ID.TenantID())
+	scope := coredata.NewScopeFromObjectID(trustCenter.ID)
+	trustService := r.trust
 
-	access, err := trustService.TrustCenterAccesses.GetAccess(ctx, trustCenter.ID, identity.ID)
+	access, err := trustService.TrustCenterAccesses.GetAccess(ctx, scope, trustCenter.ID, identity.ID)
 	if err != nil {
 		return nil, nil
 	}

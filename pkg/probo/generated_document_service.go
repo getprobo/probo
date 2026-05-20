@@ -31,11 +31,11 @@ import (
 )
 
 type GeneratedDocumentService struct {
-	svc *TenantService
+	svc *Service
 }
 
 func (s *GeneratedDocumentService) PublishStatementOfApplicability(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	statementOfApplicabilityID gid.GID,
 	approverIDs []gid.GID,
 	minor bool,
@@ -49,11 +49,11 @@ func (s *GeneratedDocumentService) PublishStatementOfApplicability(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			soa := &coredata.StatementOfApplicability{}
-			if err := soa.LoadByID(ctx, tx, s.svc.scope, statementOfApplicabilityID); err != nil {
+			if err := soa.LoadByID(ctx, tx, scope, statementOfApplicabilityID); err != nil {
 				return fmt.Errorf("cannot load statement of applicability: %w", err)
 			}
 
-			documentData, err := s.buildStatementOfApplicabilityDocumentData(ctx, tx, soa)
+			documentData, err := s.buildStatementOfApplicabilityDocumentData(ctx, scope, tx, soa)
 			if err != nil {
 				return fmt.Errorf("cannot build document data: %w", err)
 			}
@@ -70,7 +70,7 @@ func (s *GeneratedDocumentService) PublishStatementOfApplicability(
 			if soa.DocumentID != nil {
 				doc := &coredata.Document{}
 
-				err = doc.LoadByID(ctx, tx, s.svc.scope, *soa.DocumentID)
+				err = doc.LoadByID(ctx, tx, scope, *soa.DocumentID)
 				if err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
 					return fmt.Errorf("cannot load statement of applicability document: %w", err)
 				}
@@ -81,14 +81,14 @@ func (s *GeneratedDocumentService) PublishStatementOfApplicability(
 					soa.DocumentID = nil
 
 					soa.UpdatedAt = now
-					if err := soa.Update(ctx, tx, s.svc.scope); err != nil {
+					if err := soa.Update(ctx, tx, scope); err != nil {
 						return fmt.Errorf("cannot clear document reference: %w", err)
 					}
 				}
 			}
 
 			if existingDoc == nil {
-				documentID := gid.New(s.svc.scope.GetTenantID(), coredata.DocumentEntityType)
+				documentID := gid.New(scope.GetTenantID(), coredata.DocumentEntityType)
 
 				document = &coredata.Document{
 					ID:                    documentID,
@@ -100,21 +100,21 @@ func (s *GeneratedDocumentService) PublishStatementOfApplicability(
 					UpdatedAt:             now,
 				}
 
-				if err := document.Insert(ctx, tx, s.svc.scope); err != nil {
+				if err := document.Insert(ctx, tx, scope); err != nil {
 					return fmt.Errorf("cannot insert document: %w", err)
 				}
 
 				soa.DocumentID = &documentID
 
 				soa.UpdatedAt = now
-				if err := soa.Update(ctx, tx, s.svc.scope); err != nil {
+				if err := soa.Update(ctx, tx, scope); err != nil {
 					return fmt.Errorf("cannot update document reference: %w", err)
 				}
 			} else {
 				document = existingDoc
 			}
 
-			documentVersionID := gid.New(s.svc.scope.GetTenantID(), coredata.DocumentVersionEntityType)
+			documentVersionID := gid.New(scope.GetTenantID(), coredata.DocumentVersionEntityType)
 			documentVersion = &coredata.DocumentVersion{
 				ID:             documentVersionID,
 				OrganizationID: soa.OrganizationID,
@@ -128,7 +128,7 @@ func (s *GeneratedDocumentService) PublishStatementOfApplicability(
 				UpdatedAt:      now,
 			}
 
-			return s.publishOrRequestApproval(ctx, tx, document, documentVersion, soa.OrganizationID, approverIDs, minor, now)
+			return s.publishOrRequestApproval(ctx, scope, tx, document, documentVersion, soa.OrganizationID, approverIDs, minor, now)
 		},
 	)
 	if err != nil {
@@ -139,17 +139,17 @@ func (s *GeneratedDocumentService) PublishStatementOfApplicability(
 }
 
 func (s *GeneratedDocumentService) buildStatementOfApplicabilityDocumentData(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	conn pg.Querier,
 	statementOfApplicability *coredata.StatementOfApplicability,
 ) (docgen.StatementOfApplicabilityData, error) {
 	organization := &coredata.Organization{}
-	if err := organization.LoadByID(ctx, conn, s.svc.scope, statementOfApplicability.OrganizationID); err != nil {
+	if err := organization.LoadByID(ctx, conn, scope, statementOfApplicability.OrganizationID); err != nil {
 		return docgen.StatementOfApplicabilityData{}, fmt.Errorf("cannot load organization: %w", err)
 	}
 
 	var applicabilityStatements coredata.ApplicabilityStatements
-	if err := applicabilityStatements.LoadAllByStatementOfApplicabilityID(ctx, conn, s.svc.scope, statementOfApplicability.ID); err != nil {
+	if err := applicabilityStatements.LoadAllByStatementOfApplicabilityID(ctx, conn, scope, statementOfApplicability.ID); err != nil {
 		return docgen.StatementOfApplicabilityData{}, fmt.Errorf("cannot load applicability statements: %w", err)
 	}
 
@@ -168,7 +168,7 @@ func (s *GeneratedDocumentService) buildStatementOfApplicabilityDocumentData(
 	}
 
 	var controls coredata.Controls
-	if err := controls.LoadByIDs(ctx, conn, s.svc.scope, controlIDs); err != nil {
+	if err := controls.LoadByIDs(ctx, conn, scope, controlIDs); err != nil {
 		return docgen.StatementOfApplicabilityData{}, fmt.Errorf("cannot load controls: %w", err)
 	}
 
@@ -186,7 +186,7 @@ func (s *GeneratedDocumentService) buildStatementOfApplicabilityDocumentData(
 	}
 
 	var frameworks coredata.Frameworks
-	if err := frameworks.LoadByIDs(ctx, conn, s.svc.scope, frameworkIDs); err != nil {
+	if err := frameworks.LoadByIDs(ctx, conn, scope, frameworkIDs); err != nil {
 		return docgen.StatementOfApplicabilityData{}, fmt.Errorf("cannot load frameworks: %w", err)
 	}
 
@@ -195,7 +195,7 @@ func (s *GeneratedDocumentService) buildStatementOfApplicabilityDocumentData(
 		frameworkMap[f.ID] = f
 	}
 
-	controlOblTypes, err := coredata.LoadObligationTypesByControlIDs(ctx, conn, s.svc.scope, controlIDs)
+	controlOblTypes, err := coredata.LoadObligationTypesByControlIDs(ctx, conn, scope, controlIDs)
 	if err != nil {
 		return docgen.StatementOfApplicabilityData{}, fmt.Errorf("cannot load obligation types: %w", err)
 	}
@@ -211,7 +211,7 @@ func (s *GeneratedDocumentService) buildStatementOfApplicabilityDocumentData(
 	}
 
 	var controlsWithRisk coredata.ControlsWithRisk
-	if err := controlsWithRisk.LoadByControlIDs(ctx, conn, s.svc.scope, controlIDs); err != nil {
+	if err := controlsWithRisk.LoadByControlIDs(ctx, conn, scope, controlIDs); err != nil {
 		return docgen.StatementOfApplicabilityData{}, fmt.Errorf("cannot load controls with risks: %w", err)
 	}
 
@@ -290,7 +290,7 @@ func (s *GeneratedDocumentService) buildStatementOfApplicabilityDocumentData(
 }
 
 func (s *GeneratedDocumentService) PublishDataList(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	organizationID gid.GID,
 	approverIDs []gid.GID,
 	minor bool,
@@ -304,11 +304,11 @@ func (s *GeneratedDocumentService) PublishDataList(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			organization := &coredata.Organization{}
-			if err := organization.LoadByID(ctx, tx, s.svc.scope, organizationID); err != nil {
+			if err := organization.LoadByID(ctx, tx, scope, organizationID); err != nil {
 				return fmt.Errorf("cannot load organization: %w", err)
 			}
 
-			documentData, err := s.buildDataListDocumentData(ctx, tx, organization)
+			documentData, err := s.buildDataListDocumentData(ctx, scope, tx, organization)
 			if err != nil {
 				return fmt.Errorf("cannot build document data: %w", err)
 			}
@@ -332,7 +332,7 @@ func (s *GeneratedDocumentService) PublishDataList(
 			if dataDocumentID != nil {
 				doc := &coredata.Document{}
 
-				err = doc.LoadByID(ctx, tx, s.svc.scope, *dataDocumentID)
+				err = doc.LoadByID(ctx, tx, scope, *dataDocumentID)
 				if err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
 					return fmt.Errorf("cannot load data list document: %w", err)
 				}
@@ -347,7 +347,7 @@ func (s *GeneratedDocumentService) PublishDataList(
 			}
 
 			if existingDoc == nil {
-				documentID := gid.New(s.svc.scope.GetTenantID(), coredata.DocumentEntityType)
+				documentID := gid.New(scope.GetTenantID(), coredata.DocumentEntityType)
 
 				document = &coredata.Document{
 					ID:                    documentID,
@@ -359,18 +359,18 @@ func (s *GeneratedDocumentService) PublishDataList(
 					UpdatedAt:             now,
 				}
 
-				if err := document.Insert(ctx, tx, s.svc.scope); err != nil {
+				if err := document.Insert(ctx, tx, scope); err != nil {
 					return fmt.Errorf("cannot insert document: %w", err)
 				}
 
-				if err := datum.UpsertGeneratedDocumentID(ctx, tx, organizationID, s.svc.scope.GetTenantID(), documentID); err != nil {
+				if err := datum.UpsertGeneratedDocumentID(ctx, tx, organizationID, scope.GetTenantID(), documentID); err != nil {
 					return fmt.Errorf("cannot upsert generated documents: %w", err)
 				}
 			} else {
 				document = existingDoc
 			}
 
-			documentVersionID := gid.New(s.svc.scope.GetTenantID(), coredata.DocumentVersionEntityType)
+			documentVersionID := gid.New(scope.GetTenantID(), coredata.DocumentVersionEntityType)
 			documentVersion = &coredata.DocumentVersion{
 				ID:             documentVersionID,
 				OrganizationID: organizationID,
@@ -384,7 +384,7 @@ func (s *GeneratedDocumentService) PublishDataList(
 				UpdatedAt:      now,
 			}
 
-			return s.publishOrRequestApproval(ctx, tx, document, documentVersion, organizationID, approverIDs, minor, now)
+			return s.publishOrRequestApproval(ctx, scope, tx, document, documentVersion, organizationID, approverIDs, minor, now)
 		},
 	)
 	if err != nil {
@@ -395,7 +395,7 @@ func (s *GeneratedDocumentService) PublishDataList(
 }
 
 func (s *GeneratedDocumentService) GetDataListDocumentID(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	organizationID gid.GID,
 ) (*gid.GID, error) {
 	var dataDocumentID *gid.GID
@@ -417,12 +417,12 @@ func (s *GeneratedDocumentService) GetDataListDocumentID(
 }
 
 func (s *GeneratedDocumentService) buildDataListDocumentData(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	conn pg.Querier,
 	organization *coredata.Organization,
 ) (docgen.DataListData, error) {
 	var data coredata.Data
-	if err := data.LoadAllByOrganizationID(ctx, conn, s.svc.scope, organization.ID); err != nil {
+	if err := data.LoadAllByOrganizationID(ctx, conn, scope, organization.ID); err != nil {
 		return docgen.DataListData{}, fmt.Errorf("cannot load data: %w", err)
 	}
 
@@ -446,7 +446,7 @@ func (s *GeneratedDocumentService) buildDataListDocumentData(
 	}
 
 	var profiles coredata.MembershipProfiles
-	if err := profiles.LoadByIDs(ctx, conn, s.svc.scope, ownerIDs); err != nil {
+	if err := profiles.LoadByIDs(ctx, conn, scope, ownerIDs); err != nil {
 		return docgen.DataListData{}, fmt.Errorf("cannot load profiles: %w", err)
 	}
 
@@ -463,7 +463,7 @@ func (s *GeneratedDocumentService) buildDataListDocumentData(
 		}
 
 		var thirdParties coredata.ThirdParties
-		if err := thirdParties.LoadAllByDatumID(ctx, conn, s.svc.scope, d.ID); err != nil {
+		if err := thirdParties.LoadAllByDatumID(ctx, conn, scope, d.ID); err != nil {
 			return docgen.DataListData{}, fmt.Errorf("cannot load thirdParties for datum %s: %w", d.ID, err)
 		}
 
@@ -534,7 +534,7 @@ func BuildDataListDocument(data docgen.DataListData) (string, error) {
 }
 
 func (s *GeneratedDocumentService) PublishAssetList(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	organizationID gid.GID,
 	approverIDs []gid.GID,
 	minor bool,
@@ -548,11 +548,11 @@ func (s *GeneratedDocumentService) PublishAssetList(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			organization := &coredata.Organization{}
-			if err := organization.LoadByID(ctx, tx, s.svc.scope, organizationID); err != nil {
+			if err := organization.LoadByID(ctx, tx, scope, organizationID); err != nil {
 				return fmt.Errorf("cannot load organization: %w", err)
 			}
 
-			documentData, err := s.buildAssetListDocumentData(ctx, tx, organization)
+			documentData, err := s.buildAssetListDocumentData(ctx, scope, tx, organization)
 			if err != nil {
 				return fmt.Errorf("cannot build document data: %w", err)
 			}
@@ -576,7 +576,7 @@ func (s *GeneratedDocumentService) PublishAssetList(
 			if assetDocumentID != nil {
 				doc := &coredata.Document{}
 
-				err = doc.LoadByID(ctx, tx, s.svc.scope, *assetDocumentID)
+				err = doc.LoadByID(ctx, tx, scope, *assetDocumentID)
 				if err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
 					return fmt.Errorf("cannot load asset list document: %w", err)
 				}
@@ -591,7 +591,7 @@ func (s *GeneratedDocumentService) PublishAssetList(
 			}
 
 			if existingDoc == nil {
-				documentID := gid.New(s.svc.scope.GetTenantID(), coredata.DocumentEntityType)
+				documentID := gid.New(scope.GetTenantID(), coredata.DocumentEntityType)
 
 				document = &coredata.Document{
 					ID:                    documentID,
@@ -603,18 +603,18 @@ func (s *GeneratedDocumentService) PublishAssetList(
 					UpdatedAt:             now,
 				}
 
-				if err := document.Insert(ctx, tx, s.svc.scope); err != nil {
+				if err := document.Insert(ctx, tx, scope); err != nil {
 					return fmt.Errorf("cannot insert document: %w", err)
 				}
 
-				if err := asset.UpsertGeneratedDocumentID(ctx, tx, organizationID, s.svc.scope.GetTenantID(), documentID); err != nil {
+				if err := asset.UpsertGeneratedDocumentID(ctx, tx, organizationID, scope.GetTenantID(), documentID); err != nil {
 					return fmt.Errorf("cannot upsert generated documents: %w", err)
 				}
 			} else {
 				document = existingDoc
 			}
 
-			documentVersionID := gid.New(s.svc.scope.GetTenantID(), coredata.DocumentVersionEntityType)
+			documentVersionID := gid.New(scope.GetTenantID(), coredata.DocumentVersionEntityType)
 			documentVersion = &coredata.DocumentVersion{
 				ID:             documentVersionID,
 				OrganizationID: organizationID,
@@ -628,7 +628,7 @@ func (s *GeneratedDocumentService) PublishAssetList(
 				UpdatedAt:      now,
 			}
 
-			return s.publishOrRequestApproval(ctx, tx, document, documentVersion, organizationID, approverIDs, minor, now)
+			return s.publishOrRequestApproval(ctx, scope, tx, document, documentVersion, organizationID, approverIDs, minor, now)
 		},
 	)
 	if err != nil {
@@ -639,7 +639,7 @@ func (s *GeneratedDocumentService) PublishAssetList(
 }
 
 func (s *GeneratedDocumentService) GetAssetListDocumentID(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	organizationID gid.GID,
 ) (*gid.GID, error) {
 	var assetDocumentID *gid.GID
@@ -661,12 +661,12 @@ func (s *GeneratedDocumentService) GetAssetListDocumentID(
 }
 
 func (s *GeneratedDocumentService) buildAssetListDocumentData(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	conn pg.Querier,
 	organization *coredata.Organization,
 ) (docgen.AssetListData, error) {
 	var assets coredata.Assets
-	if err := assets.LoadAllByOrganizationID(ctx, conn, s.svc.scope, organization.ID); err != nil {
+	if err := assets.LoadAllByOrganizationID(ctx, conn, scope, organization.ID); err != nil {
 		return docgen.AssetListData{}, fmt.Errorf("cannot load assets: %w", err)
 	}
 
@@ -690,7 +690,7 @@ func (s *GeneratedDocumentService) buildAssetListDocumentData(
 	}
 
 	var profiles coredata.MembershipProfiles
-	if err := profiles.LoadByIDs(ctx, conn, s.svc.scope, ownerIDs); err != nil {
+	if err := profiles.LoadByIDs(ctx, conn, scope, ownerIDs); err != nil {
 		return docgen.AssetListData{}, fmt.Errorf("cannot load profiles: %w", err)
 	}
 
@@ -707,7 +707,7 @@ func (s *GeneratedDocumentService) buildAssetListDocumentData(
 		}
 
 		var thirdParties coredata.ThirdParties
-		if err := thirdParties.LoadAllByAssetID(ctx, conn, s.svc.scope, a.ID); err != nil {
+		if err := thirdParties.LoadAllByAssetID(ctx, conn, scope, a.ID); err != nil {
 			return docgen.AssetListData{}, fmt.Errorf("cannot load thirdParties for asset %s: %w", a.ID, err)
 		}
 
@@ -801,7 +801,7 @@ func BuildStatementOfApplicabilityDocument(data docgen.StatementOfApplicabilityD
 }
 
 func (s *GeneratedDocumentService) PublishFindingList(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	organizationID gid.GID,
 	approverIDs []gid.GID,
 	minor bool,
@@ -815,11 +815,11 @@ func (s *GeneratedDocumentService) PublishFindingList(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			organization := &coredata.Organization{}
-			if err := organization.LoadByID(ctx, tx, s.svc.scope, organizationID); err != nil {
+			if err := organization.LoadByID(ctx, tx, scope, organizationID); err != nil {
 				return fmt.Errorf("cannot load organization: %w", err)
 			}
 
-			documentData, err := s.buildFindingListDocumentData(ctx, tx, organization)
+			documentData, err := s.buildFindingListDocumentData(ctx, scope, tx, organization)
 			if err != nil {
 				return fmt.Errorf("cannot build document data: %w", err)
 			}
@@ -843,7 +843,7 @@ func (s *GeneratedDocumentService) PublishFindingList(
 			if findingDocumentID != nil {
 				doc := &coredata.Document{}
 
-				err = doc.LoadByID(ctx, tx, s.svc.scope, *findingDocumentID)
+				err = doc.LoadByID(ctx, tx, scope, *findingDocumentID)
 				if err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
 					return fmt.Errorf("cannot load finding list document: %w", err)
 				}
@@ -858,7 +858,7 @@ func (s *GeneratedDocumentService) PublishFindingList(
 			}
 
 			if existingDoc == nil {
-				documentID := gid.New(s.svc.scope.GetTenantID(), coredata.DocumentEntityType)
+				documentID := gid.New(scope.GetTenantID(), coredata.DocumentEntityType)
 
 				document = &coredata.Document{
 					ID:                    documentID,
@@ -870,18 +870,18 @@ func (s *GeneratedDocumentService) PublishFindingList(
 					UpdatedAt:             now,
 				}
 
-				if err := document.Insert(ctx, tx, s.svc.scope); err != nil {
+				if err := document.Insert(ctx, tx, scope); err != nil {
 					return fmt.Errorf("cannot insert document: %w", err)
 				}
 
-				if err := finding.UpsertGeneratedDocumentID(ctx, tx, organizationID, s.svc.scope.GetTenantID(), documentID); err != nil {
+				if err := finding.UpsertGeneratedDocumentID(ctx, tx, organizationID, scope.GetTenantID(), documentID); err != nil {
 					return fmt.Errorf("cannot upsert generated documents: %w", err)
 				}
 			} else {
 				document = existingDoc
 			}
 
-			documentVersionID := gid.New(s.svc.scope.GetTenantID(), coredata.DocumentVersionEntityType)
+			documentVersionID := gid.New(scope.GetTenantID(), coredata.DocumentVersionEntityType)
 			documentVersion = &coredata.DocumentVersion{
 				ID:             documentVersionID,
 				OrganizationID: organizationID,
@@ -895,7 +895,7 @@ func (s *GeneratedDocumentService) PublishFindingList(
 				UpdatedAt:      now,
 			}
 
-			return s.publishOrRequestApproval(ctx, tx, document, documentVersion, organizationID, approverIDs, minor, now)
+			return s.publishOrRequestApproval(ctx, scope, tx, document, documentVersion, organizationID, approverIDs, minor, now)
 		},
 	)
 	if err != nil {
@@ -906,7 +906,7 @@ func (s *GeneratedDocumentService) PublishFindingList(
 }
 
 func (s *GeneratedDocumentService) GetFindingsDocumentID(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	organizationID gid.GID,
 ) (*gid.GID, error) {
 	var findingDocumentID *gid.GID
@@ -928,12 +928,12 @@ func (s *GeneratedDocumentService) GetFindingsDocumentID(
 }
 
 func (s *GeneratedDocumentService) buildFindingListDocumentData(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	conn pg.Querier,
 	organization *coredata.Organization,
 ) (docgen.FindingListData, error) {
 	var findings coredata.Findings
-	if err := findings.LoadAllByOrganizationID(ctx, conn, s.svc.scope, organization.ID); err != nil {
+	if err := findings.LoadAllByOrganizationID(ctx, conn, scope, organization.ID); err != nil {
 		return docgen.FindingListData{}, fmt.Errorf("cannot load findings: %w", err)
 	}
 
@@ -962,7 +962,7 @@ func (s *GeneratedDocumentService) buildFindingListDocumentData(
 
 	if len(ownerIDs) > 0 {
 		var profiles coredata.MembershipProfiles
-		if err := profiles.LoadByIDs(ctx, conn, s.svc.scope, ownerIDs); err != nil {
+		if err := profiles.LoadByIDs(ctx, conn, scope, ownerIDs); err != nil {
 			return docgen.FindingListData{}, fmt.Errorf("cannot load profiles: %w", err)
 		}
 
@@ -1113,7 +1113,7 @@ func BuildFindingListDocument(data docgen.FindingListData) (string, error) {
 }
 
 func (s *GeneratedDocumentService) PublishObligationList(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	organizationID gid.GID,
 	approverIDs []gid.GID,
 	minor bool,
@@ -1127,11 +1127,11 @@ func (s *GeneratedDocumentService) PublishObligationList(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			organization := &coredata.Organization{}
-			if err := organization.LoadByID(ctx, tx, s.svc.scope, organizationID); err != nil {
+			if err := organization.LoadByID(ctx, tx, scope, organizationID); err != nil {
 				return fmt.Errorf("cannot load organization: %w", err)
 			}
 
-			documentData, err := s.buildObligationListDocumentData(ctx, tx, organization)
+			documentData, err := s.buildObligationListDocumentData(ctx, scope, tx, organization)
 			if err != nil {
 				return fmt.Errorf("cannot build document data: %w", err)
 			}
@@ -1155,7 +1155,7 @@ func (s *GeneratedDocumentService) PublishObligationList(
 			if obligationDocumentID != nil {
 				doc := &coredata.Document{}
 
-				err = doc.LoadByID(ctx, tx, s.svc.scope, *obligationDocumentID)
+				err = doc.LoadByID(ctx, tx, scope, *obligationDocumentID)
 				if err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
 					return fmt.Errorf("cannot load obligation list document: %w", err)
 				}
@@ -1170,7 +1170,7 @@ func (s *GeneratedDocumentService) PublishObligationList(
 			}
 
 			if existingDoc == nil {
-				documentID := gid.New(s.svc.scope.GetTenantID(), coredata.DocumentEntityType)
+				documentID := gid.New(scope.GetTenantID(), coredata.DocumentEntityType)
 
 				document = &coredata.Document{
 					ID:                    documentID,
@@ -1182,18 +1182,18 @@ func (s *GeneratedDocumentService) PublishObligationList(
 					UpdatedAt:             now,
 				}
 
-				if err := document.Insert(ctx, tx, s.svc.scope); err != nil {
+				if err := document.Insert(ctx, tx, scope); err != nil {
 					return fmt.Errorf("cannot insert document: %w", err)
 				}
 
-				if err := obligation.UpsertGeneratedDocumentID(ctx, tx, organizationID, s.svc.scope.GetTenantID(), documentID); err != nil {
+				if err := obligation.UpsertGeneratedDocumentID(ctx, tx, organizationID, scope.GetTenantID(), documentID); err != nil {
 					return fmt.Errorf("cannot upsert generated documents: %w", err)
 				}
 			} else {
 				document = existingDoc
 			}
 
-			documentVersionID := gid.New(s.svc.scope.GetTenantID(), coredata.DocumentVersionEntityType)
+			documentVersionID := gid.New(scope.GetTenantID(), coredata.DocumentVersionEntityType)
 			documentVersion = &coredata.DocumentVersion{
 				ID:             documentVersionID,
 				OrganizationID: organizationID,
@@ -1207,7 +1207,7 @@ func (s *GeneratedDocumentService) PublishObligationList(
 				UpdatedAt:      now,
 			}
 
-			return s.publishOrRequestApproval(ctx, tx, document, documentVersion, organizationID, approverIDs, minor, now)
+			return s.publishOrRequestApproval(ctx, scope, tx, document, documentVersion, organizationID, approverIDs, minor, now)
 		},
 	)
 	if err != nil {
@@ -1218,7 +1218,7 @@ func (s *GeneratedDocumentService) PublishObligationList(
 }
 
 func (s *GeneratedDocumentService) GetObligationsDocumentID(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	organizationID gid.GID,
 ) (*gid.GID, error) {
 	var obligationDocumentID *gid.GID
@@ -1240,12 +1240,12 @@ func (s *GeneratedDocumentService) GetObligationsDocumentID(
 }
 
 func (s *GeneratedDocumentService) buildObligationListDocumentData(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	conn pg.Querier,
 	organization *coredata.Organization,
 ) (docgen.ObligationListData, error) {
 	var obligations coredata.Obligations
-	if err := obligations.LoadAllByOrganizationID(ctx, conn, s.svc.scope, organization.ID); err != nil {
+	if err := obligations.LoadAllByOrganizationID(ctx, conn, scope, organization.ID); err != nil {
 		return docgen.ObligationListData{}, fmt.Errorf("cannot load obligations: %w", err)
 	}
 
@@ -1276,7 +1276,7 @@ func (s *GeneratedDocumentService) buildObligationListDocumentData(
 
 	if len(ownerIDs) > 0 {
 		var profiles coredata.MembershipProfiles
-		if err := profiles.LoadByIDs(ctx, conn, s.svc.scope, ownerIDs); err != nil {
+		if err := profiles.LoadByIDs(ctx, conn, scope, ownerIDs); err != nil {
 			return docgen.ObligationListData{}, fmt.Errorf("cannot load profiles: %w", err)
 		}
 
@@ -1393,7 +1393,7 @@ func BuildObligationListDocument(data docgen.ObligationListData) (string, error)
 }
 
 func (s *GeneratedDocumentService) PublishProcessingActivityList(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	organizationID gid.GID,
 	approverIDs []gid.GID,
 	minor bool,
@@ -1407,11 +1407,11 @@ func (s *GeneratedDocumentService) PublishProcessingActivityList(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			organization := &coredata.Organization{}
-			if err := organization.LoadByID(ctx, tx, s.svc.scope, organizationID); err != nil {
+			if err := organization.LoadByID(ctx, tx, scope, organizationID); err != nil {
 				return fmt.Errorf("cannot load organization: %w", err)
 			}
 
-			documentData, err := s.buildProcessingActivityListDocumentData(ctx, tx, organization)
+			documentData, err := s.buildProcessingActivityListDocumentData(ctx, scope, tx, organization)
 			if err != nil {
 				return fmt.Errorf("cannot build document data: %w", err)
 			}
@@ -1435,7 +1435,7 @@ func (s *GeneratedDocumentService) PublishProcessingActivityList(
 			if processingActivityDocumentID != nil {
 				doc := &coredata.Document{}
 
-				err = doc.LoadByID(ctx, tx, s.svc.scope, *processingActivityDocumentID)
+				err = doc.LoadByID(ctx, tx, scope, *processingActivityDocumentID)
 				if err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
 					return fmt.Errorf("cannot load processing activity list document: %w", err)
 				}
@@ -1450,7 +1450,7 @@ func (s *GeneratedDocumentService) PublishProcessingActivityList(
 			}
 
 			if existingDoc == nil {
-				documentID := gid.New(s.svc.scope.GetTenantID(), coredata.DocumentEntityType)
+				documentID := gid.New(scope.GetTenantID(), coredata.DocumentEntityType)
 
 				document = &coredata.Document{
 					ID:                    documentID,
@@ -1462,18 +1462,18 @@ func (s *GeneratedDocumentService) PublishProcessingActivityList(
 					UpdatedAt:             now,
 				}
 
-				if err := document.Insert(ctx, tx, s.svc.scope); err != nil {
+				if err := document.Insert(ctx, tx, scope); err != nil {
 					return fmt.Errorf("cannot insert document: %w", err)
 				}
 
-				if err := processingActivity.UpsertGeneratedDocumentID(ctx, tx, organizationID, s.svc.scope.GetTenantID(), documentID); err != nil {
+				if err := processingActivity.UpsertGeneratedDocumentID(ctx, tx, organizationID, scope.GetTenantID(), documentID); err != nil {
 					return fmt.Errorf("cannot upsert generated documents: %w", err)
 				}
 			} else {
 				document = existingDoc
 			}
 
-			documentVersionID := gid.New(s.svc.scope.GetTenantID(), coredata.DocumentVersionEntityType)
+			documentVersionID := gid.New(scope.GetTenantID(), coredata.DocumentVersionEntityType)
 			documentVersion = &coredata.DocumentVersion{
 				ID:             documentVersionID,
 				OrganizationID: organizationID,
@@ -1487,7 +1487,7 @@ func (s *GeneratedDocumentService) PublishProcessingActivityList(
 				UpdatedAt:      now,
 			}
 
-			return s.publishOrRequestApproval(ctx, tx, document, documentVersion, organizationID, approverIDs, minor, now)
+			return s.publishOrRequestApproval(ctx, scope, tx, document, documentVersion, organizationID, approverIDs, minor, now)
 		},
 	)
 	if err != nil {
@@ -1498,7 +1498,7 @@ func (s *GeneratedDocumentService) PublishProcessingActivityList(
 }
 
 func (s *GeneratedDocumentService) GetProcessingActivitiesDocumentID(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	organizationID gid.GID,
 ) (*gid.GID, error) {
 	var documentID *gid.GID
@@ -1520,12 +1520,12 @@ func (s *GeneratedDocumentService) GetProcessingActivitiesDocumentID(
 }
 
 func (s *GeneratedDocumentService) buildProcessingActivityListDocumentData(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	conn pg.Querier,
 	organization *coredata.Organization,
 ) (docgen.ProcessingActivityListData, error) {
 	var processingActivities coredata.ProcessingActivities
-	if err := processingActivities.LoadAllByOrganizationID(ctx, conn, s.svc.scope, organization.ID); err != nil {
+	if err := processingActivities.LoadAllByOrganizationID(ctx, conn, scope, organization.ID); err != nil {
 		return docgen.ProcessingActivityListData{}, fmt.Errorf("cannot load processing activities: %w", err)
 	}
 
@@ -1540,7 +1540,7 @@ func (s *GeneratedDocumentService) buildProcessingActivityListDocumentData(
 
 	var thirdParties coredata.ThirdParties
 
-	thirdPartyMap, err := thirdParties.LoadAllByProcessingActivities(ctx, conn, s.svc.scope, organization.ID)
+	thirdPartyMap, err := thirdParties.LoadAllByProcessingActivities(ctx, conn, scope, organization.ID)
 	if err != nil {
 		return docgen.ProcessingActivityListData{}, fmt.Errorf("cannot load thirdParties: %w", err)
 	}
@@ -1561,7 +1561,7 @@ func (s *GeneratedDocumentService) buildProcessingActivityListDocumentData(
 
 	if len(dpoIDs) > 0 {
 		var profiles coredata.MembershipProfiles
-		if err := profiles.LoadByIDs(ctx, conn, s.svc.scope, dpoIDs); err != nil {
+		if err := profiles.LoadByIDs(ctx, conn, scope, dpoIDs); err != nil {
 			return docgen.ProcessingActivityListData{}, fmt.Errorf("cannot load DPO profiles: %w", err)
 		}
 
@@ -1774,7 +1774,7 @@ func BuildProcessingActivityListDocument(data docgen.ProcessingActivityListData)
 }
 
 func (s *GeneratedDocumentService) PublishDataProtectionImpactAssessmentList(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	organizationID gid.GID,
 	approverIDs []gid.GID,
 	minor bool,
@@ -1788,11 +1788,11 @@ func (s *GeneratedDocumentService) PublishDataProtectionImpactAssessmentList(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			organization := &coredata.Organization{}
-			if err := organization.LoadByID(ctx, tx, s.svc.scope, organizationID); err != nil {
+			if err := organization.LoadByID(ctx, tx, scope, organizationID); err != nil {
 				return fmt.Errorf("cannot load organization: %w", err)
 			}
 
-			documentData, err := s.buildDataProtectionImpactAssessmentListDocumentData(ctx, tx, organization)
+			documentData, err := s.buildDataProtectionImpactAssessmentListDocumentData(ctx, scope, tx, organization)
 			if err != nil {
 				return fmt.Errorf("cannot build document data: %w", err)
 			}
@@ -1816,7 +1816,7 @@ func (s *GeneratedDocumentService) PublishDataProtectionImpactAssessmentList(
 			if dpiaDocumentID != nil {
 				doc := &coredata.Document{}
 
-				err = doc.LoadByID(ctx, tx, s.svc.scope, *dpiaDocumentID)
+				err = doc.LoadByID(ctx, tx, scope, *dpiaDocumentID)
 				if err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
 					return fmt.Errorf("cannot load DPIA list document: %w", err)
 				}
@@ -1831,7 +1831,7 @@ func (s *GeneratedDocumentService) PublishDataProtectionImpactAssessmentList(
 			}
 
 			if existingDoc == nil {
-				documentID := gid.New(s.svc.scope.GetTenantID(), coredata.DocumentEntityType)
+				documentID := gid.New(scope.GetTenantID(), coredata.DocumentEntityType)
 
 				document = &coredata.Document{
 					ID:                    documentID,
@@ -1843,18 +1843,18 @@ func (s *GeneratedDocumentService) PublishDataProtectionImpactAssessmentList(
 					UpdatedAt:             now,
 				}
 
-				if err := document.Insert(ctx, tx, s.svc.scope); err != nil {
+				if err := document.Insert(ctx, tx, scope); err != nil {
 					return fmt.Errorf("cannot insert document: %w", err)
 				}
 
-				if err := dpia.UpsertGeneratedDocumentID(ctx, tx, organizationID, s.svc.scope.GetTenantID(), documentID); err != nil {
+				if err := dpia.UpsertGeneratedDocumentID(ctx, tx, organizationID, scope.GetTenantID(), documentID); err != nil {
 					return fmt.Errorf("cannot upsert generated documents: %w", err)
 				}
 			} else {
 				document = existingDoc
 			}
 
-			documentVersionID := gid.New(s.svc.scope.GetTenantID(), coredata.DocumentVersionEntityType)
+			documentVersionID := gid.New(scope.GetTenantID(), coredata.DocumentVersionEntityType)
 			documentVersion = &coredata.DocumentVersion{
 				ID:             documentVersionID,
 				OrganizationID: organizationID,
@@ -1868,7 +1868,7 @@ func (s *GeneratedDocumentService) PublishDataProtectionImpactAssessmentList(
 				UpdatedAt:      now,
 			}
 
-			return s.publishOrRequestApproval(ctx, tx, document, documentVersion, organizationID, approverIDs, minor, now)
+			return s.publishOrRequestApproval(ctx, scope, tx, document, documentVersion, organizationID, approverIDs, minor, now)
 		},
 	)
 	if err != nil {
@@ -1879,7 +1879,7 @@ func (s *GeneratedDocumentService) PublishDataProtectionImpactAssessmentList(
 }
 
 func (s *GeneratedDocumentService) GetDataProtectionImpactAssessmentsDocumentID(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	organizationID gid.GID,
 ) (*gid.GID, error) {
 	var documentID *gid.GID
@@ -1901,12 +1901,12 @@ func (s *GeneratedDocumentService) GetDataProtectionImpactAssessmentsDocumentID(
 }
 
 func (s *GeneratedDocumentService) buildDataProtectionImpactAssessmentListDocumentData(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	conn pg.Querier,
 	organization *coredata.Organization,
 ) (docgen.DataProtectionImpactAssessmentListData, error) {
 	var assessments coredata.DataProtectionImpactAssessments
-	if err := assessments.LoadAllByOrganizationID(ctx, conn, s.svc.scope, organization.ID); err != nil {
+	if err := assessments.LoadAllByOrganizationID(ctx, conn, scope, organization.ID); err != nil {
 		return docgen.DataProtectionImpactAssessmentListData{}, fmt.Errorf("cannot load DPIAs: %w", err)
 	}
 
@@ -1930,7 +1930,7 @@ func (s *GeneratedDocumentService) buildDataProtectionImpactAssessmentListDocume
 	}
 
 	var processingActivities coredata.ProcessingActivities
-	if err := processingActivities.LoadByIDs(ctx, conn, s.svc.scope, processingActivityIDs); err != nil {
+	if err := processingActivities.LoadByIDs(ctx, conn, scope, processingActivityIDs); err != nil {
 		return docgen.DataProtectionImpactAssessmentListData{}, fmt.Errorf("cannot load processing activities: %w", err)
 	}
 
@@ -1992,7 +1992,7 @@ func BuildDataProtectionImpactAssessmentListDocument(data docgen.DataProtectionI
 }
 
 func (s *GeneratedDocumentService) PublishTransferImpactAssessmentList(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	organizationID gid.GID,
 	approverIDs []gid.GID,
 	minor bool,
@@ -2006,11 +2006,11 @@ func (s *GeneratedDocumentService) PublishTransferImpactAssessmentList(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			organization := &coredata.Organization{}
-			if err := organization.LoadByID(ctx, tx, s.svc.scope, organizationID); err != nil {
+			if err := organization.LoadByID(ctx, tx, scope, organizationID); err != nil {
 				return fmt.Errorf("cannot load organization: %w", err)
 			}
 
-			documentData, err := s.buildTransferImpactAssessmentListDocumentData(ctx, tx, organization)
+			documentData, err := s.buildTransferImpactAssessmentListDocumentData(ctx, scope, tx, organization)
 			if err != nil {
 				return fmt.Errorf("cannot build document data: %w", err)
 			}
@@ -2034,7 +2034,7 @@ func (s *GeneratedDocumentService) PublishTransferImpactAssessmentList(
 			if tiaDocumentID != nil {
 				doc := &coredata.Document{}
 
-				err = doc.LoadByID(ctx, tx, s.svc.scope, *tiaDocumentID)
+				err = doc.LoadByID(ctx, tx, scope, *tiaDocumentID)
 				if err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
 					return fmt.Errorf("cannot load TIA list document: %w", err)
 				}
@@ -2049,7 +2049,7 @@ func (s *GeneratedDocumentService) PublishTransferImpactAssessmentList(
 			}
 
 			if existingDoc == nil {
-				documentID := gid.New(s.svc.scope.GetTenantID(), coredata.DocumentEntityType)
+				documentID := gid.New(scope.GetTenantID(), coredata.DocumentEntityType)
 
 				document = &coredata.Document{
 					ID:                    documentID,
@@ -2061,18 +2061,18 @@ func (s *GeneratedDocumentService) PublishTransferImpactAssessmentList(
 					UpdatedAt:             now,
 				}
 
-				if err := document.Insert(ctx, tx, s.svc.scope); err != nil {
+				if err := document.Insert(ctx, tx, scope); err != nil {
 					return fmt.Errorf("cannot insert document: %w", err)
 				}
 
-				if err := tia.UpsertGeneratedDocumentID(ctx, tx, organizationID, s.svc.scope.GetTenantID(), documentID); err != nil {
+				if err := tia.UpsertGeneratedDocumentID(ctx, tx, organizationID, scope.GetTenantID(), documentID); err != nil {
 					return fmt.Errorf("cannot upsert generated documents: %w", err)
 				}
 			} else {
 				document = existingDoc
 			}
 
-			documentVersionID := gid.New(s.svc.scope.GetTenantID(), coredata.DocumentVersionEntityType)
+			documentVersionID := gid.New(scope.GetTenantID(), coredata.DocumentVersionEntityType)
 			documentVersion = &coredata.DocumentVersion{
 				ID:             documentVersionID,
 				OrganizationID: organizationID,
@@ -2086,7 +2086,7 @@ func (s *GeneratedDocumentService) PublishTransferImpactAssessmentList(
 				UpdatedAt:      now,
 			}
 
-			return s.publishOrRequestApproval(ctx, tx, document, documentVersion, organizationID, approverIDs, minor, now)
+			return s.publishOrRequestApproval(ctx, scope, tx, document, documentVersion, organizationID, approverIDs, minor, now)
 		},
 	)
 	if err != nil {
@@ -2097,7 +2097,7 @@ func (s *GeneratedDocumentService) PublishTransferImpactAssessmentList(
 }
 
 func (s *GeneratedDocumentService) GetTransferImpactAssessmentsDocumentID(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	organizationID gid.GID,
 ) (*gid.GID, error) {
 	var documentID *gid.GID
@@ -2119,12 +2119,12 @@ func (s *GeneratedDocumentService) GetTransferImpactAssessmentsDocumentID(
 }
 
 func (s *GeneratedDocumentService) buildTransferImpactAssessmentListDocumentData(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	conn pg.Querier,
 	organization *coredata.Organization,
 ) (docgen.TransferImpactAssessmentListData, error) {
 	var assessments coredata.TransferImpactAssessments
-	if err := assessments.LoadAllByOrganizationID(ctx, conn, s.svc.scope, organization.ID); err != nil {
+	if err := assessments.LoadAllByOrganizationID(ctx, conn, scope, organization.ID); err != nil {
 		return docgen.TransferImpactAssessmentListData{}, fmt.Errorf("cannot load TIAs: %w", err)
 	}
 
@@ -2148,7 +2148,7 @@ func (s *GeneratedDocumentService) buildTransferImpactAssessmentListDocumentData
 	}
 
 	var processingActivities coredata.ProcessingActivities
-	if err := processingActivities.LoadByIDs(ctx, conn, s.svc.scope, processingActivityIDs); err != nil {
+	if err := processingActivities.LoadByIDs(ctx, conn, scope, processingActivityIDs); err != nil {
 		return docgen.TransferImpactAssessmentListData{}, fmt.Errorf("cannot load processing activities: %w", err)
 	}
 
@@ -2210,7 +2210,7 @@ func BuildTransferImpactAssessmentListDocument(data docgen.TransferImpactAssessm
 }
 
 func (s *GeneratedDocumentService) PublishThirdPartyList(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	organizationID gid.GID,
 	approverIDs []gid.GID,
 	minor bool,
@@ -2223,13 +2223,13 @@ func (s *GeneratedDocumentService) PublishThirdPartyList(
 
 	err := s.svc.pg.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
 		organization := &coredata.Organization{}
-		if err := organization.LoadByID(ctx, conn, s.svc.scope, organizationID); err != nil {
+		if err := organization.LoadByID(ctx, conn, scope, organizationID); err != nil {
 			return fmt.Errorf("cannot load organization: %w", err)
 		}
 
 		var err error
 
-		documentData, err = s.buildThirdPartyListDocumentData(ctx, conn, organization)
+		documentData, err = s.buildThirdPartyListDocumentData(ctx, scope, conn, organization)
 		if err != nil {
 			return fmt.Errorf("cannot build document data: %w", err)
 		}
@@ -2268,7 +2268,7 @@ func (s *GeneratedDocumentService) PublishThirdPartyList(
 			if thirdPartyDocumentID != nil {
 				doc := &coredata.Document{}
 
-				err = doc.LoadByID(ctx, tx, s.svc.scope, *thirdPartyDocumentID)
+				err = doc.LoadByID(ctx, tx, scope, *thirdPartyDocumentID)
 				if err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
 					return fmt.Errorf("cannot load thirdParty list document: %w", err)
 				}
@@ -2283,7 +2283,7 @@ func (s *GeneratedDocumentService) PublishThirdPartyList(
 			}
 
 			if existingDoc == nil {
-				documentID := gid.New(s.svc.scope.GetTenantID(), coredata.DocumentEntityType)
+				documentID := gid.New(scope.GetTenantID(), coredata.DocumentEntityType)
 
 				document = &coredata.Document{
 					ID:                    documentID,
@@ -2295,18 +2295,18 @@ func (s *GeneratedDocumentService) PublishThirdPartyList(
 					UpdatedAt:             now,
 				}
 
-				if err := document.Insert(ctx, tx, s.svc.scope); err != nil {
+				if err := document.Insert(ctx, tx, scope); err != nil {
 					return fmt.Errorf("cannot insert document: %w", err)
 				}
 
-				if err := thirdParty.UpsertGeneratedDocumentID(ctx, tx, organizationID, s.svc.scope.GetTenantID(), documentID); err != nil {
+				if err := thirdParty.UpsertGeneratedDocumentID(ctx, tx, organizationID, scope.GetTenantID(), documentID); err != nil {
 					return fmt.Errorf("cannot upsert generated documents: %w", err)
 				}
 			} else {
 				document = existingDoc
 			}
 
-			documentVersionID := gid.New(s.svc.scope.GetTenantID(), coredata.DocumentVersionEntityType)
+			documentVersionID := gid.New(scope.GetTenantID(), coredata.DocumentVersionEntityType)
 			documentVersion = &coredata.DocumentVersion{
 				ID:             documentVersionID,
 				OrganizationID: organizationID,
@@ -2320,7 +2320,7 @@ func (s *GeneratedDocumentService) PublishThirdPartyList(
 				UpdatedAt:      now,
 			}
 
-			return s.publishOrRequestApproval(ctx, tx, document, documentVersion, organizationID, approverIDs, minor, now)
+			return s.publishOrRequestApproval(ctx, scope, tx, document, documentVersion, organizationID, approverIDs, minor, now)
 		},
 	)
 	if err != nil {
@@ -2331,7 +2331,7 @@ func (s *GeneratedDocumentService) PublishThirdPartyList(
 }
 
 func (s *GeneratedDocumentService) GetThirdPartiesDocumentID(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	organizationID gid.GID,
 ) (*gid.GID, error) {
 	var documentID *gid.GID
@@ -2353,12 +2353,12 @@ func (s *GeneratedDocumentService) GetThirdPartiesDocumentID(
 }
 
 func (s *GeneratedDocumentService) buildThirdPartyListDocumentData(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	conn pg.Querier,
 	organization *coredata.Organization,
 ) (docgen.ThirdPartyListData, error) {
 	var thirdParties coredata.ThirdParties
-	if err := thirdParties.LoadAllByOrganizationID(ctx, conn, s.svc.scope, organization.ID); err != nil {
+	if err := thirdParties.LoadAllByOrganizationID(ctx, conn, scope, organization.ID); err != nil {
 		return docgen.ThirdPartyListData{}, fmt.Errorf("cannot load thirdParties: %w", err)
 	}
 
@@ -2394,7 +2394,7 @@ func (s *GeneratedDocumentService) buildThirdPartyListDocumentData(
 
 	if len(ownerIDs) > 0 {
 		var profiles coredata.MembershipProfiles
-		if err := profiles.LoadByIDs(ctx, conn, s.svc.scope, ownerIDs); err != nil {
+		if err := profiles.LoadByIDs(ctx, conn, scope, ownerIDs); err != nil {
 			return docgen.ThirdPartyListData{}, fmt.Errorf("cannot load owner profiles: %w", err)
 		}
 
@@ -2409,7 +2409,7 @@ func (s *GeneratedDocumentService) buildThirdPartyListDocumentData(
 	}
 
 	var allServices coredata.ThirdPartyServices
-	if err := allServices.LoadByThirdPartyIDs(ctx, conn, s.svc.scope, thirdPartyIDs); err != nil {
+	if err := allServices.LoadByThirdPartyIDs(ctx, conn, scope, thirdPartyIDs); err != nil {
 		return docgen.ThirdPartyListData{}, fmt.Errorf("cannot load thirdParty services: %w", err)
 	}
 
@@ -2419,7 +2419,7 @@ func (s *GeneratedDocumentService) buildThirdPartyListDocumentData(
 	}
 
 	var allContacts coredata.ThirdPartyContacts
-	if err := allContacts.LoadByThirdPartyIDs(ctx, conn, s.svc.scope, thirdPartyIDs); err != nil {
+	if err := allContacts.LoadByThirdPartyIDs(ctx, conn, scope, thirdPartyIDs); err != nil {
 		return docgen.ThirdPartyListData{}, fmt.Errorf("cannot load thirdParty contacts: %w", err)
 	}
 
@@ -2429,7 +2429,7 @@ func (s *GeneratedDocumentService) buildThirdPartyListDocumentData(
 	}
 
 	var allAssessments coredata.ThirdPartyRiskAssessments
-	if err := allAssessments.LoadByThirdPartyIDs(ctx, conn, s.svc.scope, thirdPartyIDs); err != nil {
+	if err := allAssessments.LoadByThirdPartyIDs(ctx, conn, scope, thirdPartyIDs); err != nil {
 		return docgen.ThirdPartyListData{}, fmt.Errorf("cannot load thirdParty risk assessments: %w", err)
 	}
 
@@ -2439,7 +2439,7 @@ func (s *GeneratedDocumentService) buildThirdPartyListDocumentData(
 	}
 
 	var allReports coredata.ThirdPartyComplianceReports
-	if err := allReports.LoadByThirdPartyIDs(ctx, conn, s.svc.scope, thirdPartyIDs); err != nil {
+	if err := allReports.LoadByThirdPartyIDs(ctx, conn, scope, thirdPartyIDs); err != nil {
 		return docgen.ThirdPartyListData{}, fmt.Errorf("cannot load thirdParty compliance reports: %w", err)
 	}
 
@@ -2449,7 +2449,7 @@ func (s *GeneratedDocumentService) buildThirdPartyListDocumentData(
 	}
 
 	var allBAAs coredata.ThirdPartyBusinessAssociateAgreements
-	if err := allBAAs.LoadByThirdPartyIDs(ctx, conn, s.svc.scope, thirdPartyIDs); err != nil {
+	if err := allBAAs.LoadByThirdPartyIDs(ctx, conn, scope, thirdPartyIDs); err != nil {
 		return docgen.ThirdPartyListData{}, fmt.Errorf("cannot load thirdParty business associate agreements: %w", err)
 	}
 
@@ -2459,7 +2459,7 @@ func (s *GeneratedDocumentService) buildThirdPartyListDocumentData(
 	}
 
 	var allDPAs coredata.ThirdPartyDataPrivacyAgreements
-	if err := allDPAs.LoadByThirdPartyIDs(ctx, conn, s.svc.scope, thirdPartyIDs); err != nil {
+	if err := allDPAs.LoadByThirdPartyIDs(ctx, conn, scope, thirdPartyIDs); err != nil {
 		return docgen.ThirdPartyListData{}, fmt.Errorf("cannot load thirdParty data privacy agreements: %w", err)
 	}
 
@@ -2742,7 +2742,7 @@ func BuildRiskListDocument(data docgen.RiskListData) (string, error) {
 }
 
 func (s *GeneratedDocumentService) PublishRiskList(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	organizationID gid.GID,
 	approverIDs []gid.GID,
 	minor bool,
@@ -2756,11 +2756,11 @@ func (s *GeneratedDocumentService) PublishRiskList(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			organization := &coredata.Organization{}
-			if err := organization.LoadByID(ctx, tx, s.svc.scope, organizationID); err != nil {
+			if err := organization.LoadByID(ctx, tx, scope, organizationID); err != nil {
 				return fmt.Errorf("cannot load organization: %w", err)
 			}
 
-			documentData, err := s.buildRiskListDocumentData(ctx, tx, organization)
+			documentData, err := s.buildRiskListDocumentData(ctx, scope, tx, organization)
 			if err != nil {
 				return fmt.Errorf("cannot build document data: %w", err)
 			}
@@ -2784,7 +2784,7 @@ func (s *GeneratedDocumentService) PublishRiskList(
 			if riskDocumentID != nil {
 				doc := &coredata.Document{}
 
-				err = doc.LoadByID(ctx, tx, s.svc.scope, *riskDocumentID)
+				err = doc.LoadByID(ctx, tx, scope, *riskDocumentID)
 				if err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
 					return fmt.Errorf("cannot load risk list document: %w", err)
 				}
@@ -2799,7 +2799,7 @@ func (s *GeneratedDocumentService) PublishRiskList(
 			}
 
 			if existingDoc == nil {
-				documentID := gid.New(s.svc.scope.GetTenantID(), coredata.DocumentEntityType)
+				documentID := gid.New(scope.GetTenantID(), coredata.DocumentEntityType)
 
 				document = &coredata.Document{
 					ID:                    documentID,
@@ -2811,18 +2811,18 @@ func (s *GeneratedDocumentService) PublishRiskList(
 					UpdatedAt:             now,
 				}
 
-				if err := document.Insert(ctx, tx, s.svc.scope); err != nil {
+				if err := document.Insert(ctx, tx, scope); err != nil {
 					return fmt.Errorf("cannot insert document: %w", err)
 				}
 
-				if err := risk.UpsertGeneratedDocumentID(ctx, tx, organizationID, s.svc.scope.GetTenantID(), documentID); err != nil {
+				if err := risk.UpsertGeneratedDocumentID(ctx, tx, organizationID, scope.GetTenantID(), documentID); err != nil {
 					return fmt.Errorf("cannot upsert generated documents: %w", err)
 				}
 			} else {
 				document = existingDoc
 			}
 
-			documentVersionID := gid.New(s.svc.scope.GetTenantID(), coredata.DocumentVersionEntityType)
+			documentVersionID := gid.New(scope.GetTenantID(), coredata.DocumentVersionEntityType)
 			documentVersion = &coredata.DocumentVersion{
 				ID:             documentVersionID,
 				OrganizationID: organizationID,
@@ -2836,7 +2836,7 @@ func (s *GeneratedDocumentService) PublishRiskList(
 				UpdatedAt:      now,
 			}
 
-			return s.publishOrRequestApproval(ctx, tx, document, documentVersion, organizationID, approverIDs, minor, now)
+			return s.publishOrRequestApproval(ctx, scope, tx, document, documentVersion, organizationID, approverIDs, minor, now)
 		},
 	)
 	if err != nil {
@@ -2847,7 +2847,7 @@ func (s *GeneratedDocumentService) PublishRiskList(
 }
 
 func (s *GeneratedDocumentService) GetRisksDocumentID(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	organizationID gid.GID,
 ) (*gid.GID, error) {
 	var riskDocumentID *gid.GID
@@ -2869,12 +2869,12 @@ func (s *GeneratedDocumentService) GetRisksDocumentID(
 }
 
 func (s *GeneratedDocumentService) buildRiskListDocumentData(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	conn pg.Querier,
 	organization *coredata.Organization,
 ) (docgen.RiskListData, error) {
 	var risks coredata.Risks
-	if err := risks.LoadAllByOrganizationID(ctx, conn, s.svc.scope, organization.ID); err != nil {
+	if err := risks.LoadAllByOrganizationID(ctx, conn, scope, organization.ID); err != nil {
 		return docgen.RiskListData{}, fmt.Errorf("cannot load risks: %w", err)
 	}
 
@@ -2903,7 +2903,7 @@ func (s *GeneratedDocumentService) buildRiskListDocumentData(
 
 	if len(ownerIDs) > 0 {
 		var profiles coredata.MembershipProfiles
-		if err := profiles.LoadByIDs(ctx, conn, s.svc.scope, ownerIDs); err != nil {
+		if err := profiles.LoadByIDs(ctx, conn, scope, ownerIDs); err != nil {
 			return docgen.RiskListData{}, fmt.Errorf("cannot load profiles: %w", err)
 		}
 
@@ -3014,7 +3014,7 @@ func formatRiskTreatment(t coredata.RiskTreatment) string {
 // request at (currentMajor+1).0; otherwise the version is published at
 // (currentMajor+1).0.
 func (s *GeneratedDocumentService) publishOrRequestApproval(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	tx pg.Tx,
 	document *coredata.Document,
 	version *coredata.DocumentVersion,
@@ -3025,7 +3025,7 @@ func (s *GeneratedDocumentService) publishOrRequestApproval(
 ) error {
 	previousVersion := &coredata.DocumentVersion{}
 
-	err := previousVersion.LoadLatestVersion(ctx, tx, s.svc.scope, document.ID)
+	err := previousVersion.LoadLatestVersion(ctx, tx, scope, document.ID)
 	switch {
 	case err == nil:
 		version.Title = previousVersion.Title
@@ -3064,7 +3064,7 @@ func (s *GeneratedDocumentService) publishOrRequestApproval(
 		}
 	}
 
-	if err := version.Insert(ctx, tx, s.svc.scope); err != nil {
+	if err := version.Insert(ctx, tx, scope); err != nil {
 		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
 			switch previousVersion.Status {
 			case coredata.DocumentVersionStatusDraft:
@@ -3081,11 +3081,11 @@ func (s *GeneratedDocumentService) publishOrRequestApproval(
 
 	if len(approverIDs) > 0 {
 		defaultApprovers := &coredata.DocumentDefaultApprovers{}
-		if err := defaultApprovers.MergeByDocumentID(ctx, tx, s.svc.scope, document.ID, organizationID, approverIDs); err != nil {
+		if err := defaultApprovers.MergeByDocumentID(ctx, tx, scope, document.ID, organizationID, approverIDs); err != nil {
 			return fmt.Errorf("cannot save default approvers: %w", err)
 		}
 
-		if _, err := s.svc.DocumentApprovals.RequestApprovalInTx(ctx, tx, document, version, approverIDs, nil); err != nil {
+		if _, err := s.svc.DocumentApprovals.RequestApprovalInTx(ctx, scope, tx, document, version, approverIDs, nil); err != nil {
 			return fmt.Errorf("cannot request approval: %w", err)
 		}
 
@@ -3096,7 +3096,7 @@ func (s *GeneratedDocumentService) publishOrRequestApproval(
 	document.CurrentPublishedMinor = &version.Minor
 	document.UpdatedAt = now
 
-	if err := document.Update(ctx, tx, s.svc.scope); err != nil {
+	if err := document.Update(ctx, tx, scope); err != nil {
 		return fmt.Errorf("cannot update document: %w", err)
 	}
 

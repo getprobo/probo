@@ -28,10 +28,11 @@ func (r *mutationResolver) CreateTask(ctx context.Context, input types.CreateTas
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
+	scope := coredata.NewScopeFromObjectID(input.OrganizationID)
+	prb := r.probo
 
 	task, err := prb.Tasks.Create(
-		ctx,
+		ctx, scope,
 		probo.CreateTaskRequest{
 			MeasureID:      input.MeasureID,
 			OrganizationID: input.OrganizationID,
@@ -68,10 +69,11 @@ func (r *mutationResolver) UpdateTask(ctx context.Context, input types.UpdateTas
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, input.TaskID.TenantID())
+	scope := coredata.NewScopeFromObjectID(input.TaskID)
+	prb := r.probo
 
 	task, err := prb.Tasks.Update(
-		ctx,
+		ctx, scope,
 		probo.UpdateTaskRequest{
 			TaskID:       input.TaskID,
 			Name:         input.Name,
@@ -106,9 +108,10 @@ func (r *mutationResolver) DeleteTask(ctx context.Context, input types.DeleteTas
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, input.TaskID.TenantID())
+	scope := coredata.NewScopeFromObjectID(input.TaskID)
+	prb := r.probo
 
-	err := prb.Tasks.Delete(ctx, input.TaskID)
+	err := prb.Tasks.Delete(ctx, scope, input.TaskID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete task", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -199,7 +202,8 @@ func (r *taskResolver) Evidences(ctx context.Context, obj *types.Task, first *in
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	scope := coredata.NewScopeFromObjectID(obj.ID)
+	prb := r.probo
 
 	pageOrderBy := page.OrderBy[coredata.EvidenceOrderField]{
 		Field:     coredata.EvidenceOrderFieldCreatedAt,
@@ -214,7 +218,7 @@ func (r *taskResolver) Evidences(ctx context.Context, obj *types.Task, first *in
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	page, err := prb.Evidences.ListForTaskID(ctx, obj.ID, cursor)
+	page, err := prb.Evidences.ListForTaskID(ctx, scope, obj.ID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list task evidences", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -234,11 +238,12 @@ func (r *taskConnectionResolver) TotalCount(ctx context.Context, obj *types.Task
 		return 0, err
 	}
 
-	prb := r.ProboService(ctx, obj.ParentID.TenantID())
+	scope := coredata.NewScopeFromObjectID(obj.ParentID)
+	prb := r.probo
 
 	switch obj.Resolver.(type) {
 	case *measureResolver:
-		count, err := prb.Tasks.CountForMeasureID(ctx, obj.ParentID)
+		count, err := prb.Tasks.CountForMeasureID(ctx, scope, obj.ParentID)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count tasks", log.Error(err))
 			return 0, gqlutils.Internal(ctx)
@@ -246,7 +251,7 @@ func (r *taskConnectionResolver) TotalCount(ctx context.Context, obj *types.Task
 
 		return count, nil
 	case *organizationResolver:
-		count, err := prb.Tasks.CountForOrganizationID(ctx, obj.ParentID)
+		count, err := prb.Tasks.CountForOrganizationID(ctx, scope, obj.ParentID)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count tasks", log.Error(err))
 			return 0, gqlutils.Internal(ctx)

@@ -29,11 +29,12 @@ import (
 )
 
 type TrustCenterFileService struct {
-	svc *TenantService
+	svc *Service
 }
 
 func (s *TrustCenterFileService) Get(
 	ctx context.Context,
+	scope coredata.Scoper,
 	organizationID gid.GID,
 	trustCenterFileID gid.GID,
 ) (*coredata.TrustCenterFile, error) {
@@ -42,7 +43,7 @@ func (s *TrustCenterFileService) Get(
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			err := trustCenterFile.LoadByID(ctx, conn, s.svc.scope, trustCenterFileID)
+			err := trustCenterFile.LoadByID(ctx, conn, scope, trustCenterFileID)
 			if err != nil {
 				return fmt.Errorf("cannot load trust center file: %w", err)
 			}
@@ -67,6 +68,7 @@ func (s *TrustCenterFileService) Get(
 
 func (s *TrustCenterFileService) ListForOrganizationId(
 	ctx context.Context,
+	scope coredata.Scoper,
 	organizationID gid.GID,
 	cursor *page.Cursor[coredata.TrustCenterFileOrderField],
 	filter *coredata.TrustCenterFileFilter,
@@ -76,7 +78,7 @@ func (s *TrustCenterFileService) ListForOrganizationId(
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			err := trustCenterFiles.LoadByOrganizationID(ctx, conn, s.svc.scope, organizationID, cursor, filter)
+			err := trustCenterFiles.LoadByOrganizationID(ctx, conn, scope, organizationID, cursor, filter)
 			if err != nil {
 				return fmt.Errorf("cannot load trust center files: %w", err)
 			}
@@ -93,10 +95,11 @@ func (s *TrustCenterFileService) ListForOrganizationId(
 
 func (s *TrustCenterFileService) ExportFile(
 	ctx context.Context,
+	scope coredata.Scoper,
 	trustCenterFileID gid.GID,
 	email mail.Addr,
 ) ([]byte, string, error) {
-	fileData, mimeType, err := s.exportFileData(ctx, trustCenterFileID)
+	fileData, mimeType, err := s.exportFileData(ctx, scope, trustCenterFileID)
 	if err != nil {
 		return nil, "", fmt.Errorf("cannot export trust center file: %w", err)
 	}
@@ -115,13 +118,15 @@ func (s *TrustCenterFileService) ExportFile(
 
 func (s *TrustCenterFileService) ExportFileWithoutWatermark(
 	ctx context.Context,
+	scope coredata.Scoper,
 	trustCenterFileID gid.GID,
 ) ([]byte, string, error) {
-	return s.exportFileData(ctx, trustCenterFileID)
+	return s.exportFileData(ctx, scope, trustCenterFileID)
 }
 
 func (s *TrustCenterFileService) exportFileData(
 	ctx context.Context,
+	scope coredata.Scoper,
 	trustCenterFileID gid.GID,
 ) ([]byte, string, error) {
 	var (
@@ -131,12 +136,12 @@ func (s *TrustCenterFileService) exportFileData(
 
 	err := s.svc.pg.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
 		trustCenterFile = &coredata.TrustCenterFile{}
-		if err := trustCenterFile.LoadByID(ctx, conn, s.svc.scope, trustCenterFileID); err != nil {
+		if err := trustCenterFile.LoadByID(ctx, conn, scope, trustCenterFileID); err != nil {
 			return fmt.Errorf("cannot load trust center file: %w", err)
 		}
 
 		file = &coredata.File{}
-		if err := file.LoadByID(ctx, conn, s.svc.scope, trustCenterFile.FileID); err != nil {
+		if err := file.LoadByID(ctx, conn, scope, trustCenterFile.FileID); err != nil {
 			return fmt.Errorf("cannot load file: %w", err)
 		}
 

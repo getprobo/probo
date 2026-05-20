@@ -29,15 +29,16 @@ import (
 )
 
 type ReportService struct {
-	svc *TenantService
+	svc *Service
 }
 
 func (s ReportService) Get(
 	ctx context.Context,
+	scope coredata.Scoper,
 	organizationID gid.GID,
 	reportID gid.GID,
 ) (*coredata.Report, error) {
-	report, err := s.loadByID(ctx, reportID)
+	report, err := s.loadByID(ctx, scope, reportID)
 	if err != nil {
 		return nil, err
 	}
@@ -51,6 +52,7 @@ func (s ReportService) Get(
 
 func (s ReportService) loadByID(
 	ctx context.Context,
+	scope coredata.Scoper,
 	reportID gid.GID,
 ) (*coredata.Report, error) {
 	report := &coredata.Report{}
@@ -58,7 +60,7 @@ func (s ReportService) loadByID(
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			err := report.LoadByID(ctx, conn, s.svc.scope, reportID)
+			err := report.LoadByID(ctx, conn, scope, reportID)
 			if err != nil {
 				return fmt.Errorf("cannot load report: %w", err)
 			}
@@ -75,10 +77,11 @@ func (s ReportService) loadByID(
 
 func (s ReportService) GenerateDownloadURL(
 	ctx context.Context,
+	scope coredata.Scoper,
 	reportID gid.GID,
 	expiresIn time.Duration,
 ) (*string, error) {
-	report, err := s.loadByID(ctx, reportID)
+	report, err := s.loadByID(ctx, scope, reportID)
 	if err != nil {
 		return nil, fmt.Errorf("cannot get report: %w", err)
 	}
@@ -103,10 +106,11 @@ func (s ReportService) GenerateDownloadURL(
 
 func (s ReportService) ExportPDF(
 	ctx context.Context,
+	scope coredata.Scoper,
 	reportID gid.GID,
 	email mail.Addr,
 ) ([]byte, error) {
-	pdfData, err := s.exportPDFData(ctx, reportID)
+	pdfData, err := s.exportPDFData(ctx, scope, reportID)
 	if err != nil {
 		return nil, fmt.Errorf("cannot export report PDF: %w", err)
 	}
@@ -121,16 +125,18 @@ func (s ReportService) ExportPDF(
 
 func (s ReportService) ExportPDFWithoutWatermark(
 	ctx context.Context,
+	scope coredata.Scoper,
 	reportID gid.GID,
 ) ([]byte, error) {
-	return s.exportPDFData(ctx, reportID)
+	return s.exportPDFData(ctx, scope, reportID)
 }
 
 func (s ReportService) exportPDFData(
 	ctx context.Context,
+	scope coredata.Scoper,
 	reportID gid.GID,
 ) ([]byte, error) {
-	report, err := s.loadByID(ctx, reportID)
+	report, err := s.loadByID(ctx, scope, reportID)
 	if err != nil {
 		return nil, fmt.Errorf("cannot get report: %w", err)
 	}

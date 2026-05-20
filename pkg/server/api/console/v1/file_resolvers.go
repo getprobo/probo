@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
@@ -22,9 +23,10 @@ func (r *fileResolver) DownloadURL(ctx context.Context, obj *types.File) (string
 		return "", err
 	}
 
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	scope := coredata.NewScopeFromObjectID(obj.ID)
+	prb := r.probo
 
-	downloadUrl, err := prb.Files.GenerateFileTempURL(ctx, obj.ID, 60*time.Second)
+	downloadUrl, err := prb.Files.GenerateFileTempURL(ctx, scope, obj.ID, 60*time.Second)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot generate download URL", log.Error(err))
 		return "", gqlutils.Internal(ctx)

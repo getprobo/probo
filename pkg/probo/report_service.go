@@ -26,11 +26,11 @@ import (
 )
 
 type ReportService struct {
-	svc *TenantService
+	svc *Service
 }
 
 func (s ReportService) Get(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	reportID gid.GID,
 ) (*coredata.Report, error) {
 	report := &coredata.Report{}
@@ -38,7 +38,7 @@ func (s ReportService) Get(
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			err := report.LoadByID(ctx, conn, s.svc.scope, reportID)
+			err := report.LoadByID(ctx, conn, scope, reportID)
 			if err != nil {
 				return fmt.Errorf("cannot load report: %w", err)
 			}
@@ -54,7 +54,7 @@ func (s ReportService) Get(
 }
 
 func (s ReportService) GetByIDs(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	reportIDs ...gid.GID,
 ) (coredata.Reports, error) {
 	var reports coredata.Reports
@@ -65,7 +65,7 @@ func (s ReportService) GetByIDs(
 			if err := reports.LoadByIDs(
 				ctx,
 				conn,
-				s.svc.scope,
+				scope,
 				reportIDs,
 			); err != nil {
 				return fmt.Errorf("cannot load reports by ids: %w", err)
@@ -82,18 +82,18 @@ func (s ReportService) GetByIDs(
 }
 
 func (s ReportService) Delete(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	reportID gid.GID,
 ) error {
 	return s.svc.pg.WithTx(ctx, func(ctx context.Context, conn pg.Tx) error {
 		report := &coredata.Report{}
 
-		err := report.LoadByID(ctx, conn, s.svc.scope, reportID)
+		err := report.LoadByID(ctx, conn, scope, reportID)
 		if err != nil {
 			return fmt.Errorf("cannot get report: %w", err)
 		}
 
-		err = report.Delete(ctx, conn, s.svc.scope)
+		err = report.Delete(ctx, conn, scope)
 		if err != nil {
 			return fmt.Errorf("cannot delete report: %w", err)
 		}
@@ -103,11 +103,11 @@ func (s ReportService) Delete(
 }
 
 func (s ReportService) GenerateDownloadURL(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	reportID gid.GID,
 	expiresIn time.Duration,
 ) (*string, error) {
-	report, err := s.Get(ctx, reportID)
+	report, err := s.Get(ctx, scope, reportID)
 	if err != nil {
 		return nil, fmt.Errorf("cannot get report: %w", err)
 	}

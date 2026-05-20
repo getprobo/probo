@@ -83,13 +83,14 @@ func handleConnectorInitiate(
 		}
 
 		requestedScopes := r.URL.Query()["scope"]
-		prb := proboSvc.WithTenant(organizationID.TenantID())
+		scope := coredata.NewScopeFromObjectID(organizationID)
+		prb := proboSvc
 
 		// Look up any existing connector so we can union its stored scopes
 		// into the new auth request. Cross-org/provider/protocol mismatches
 		// are caught inside Reconnect at callback time; this handler only
 		// needs the scope set.
-		existing, err := loadExistingConnector(r, prb, organizationID, provider)
+		existing, err := loadExistingConnector(r, prb, scope, organizationID, provider)
 		if err != nil {
 			if errors.Is(err, coredata.ErrResourceNotFound) {
 				httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("cannot reconnect: connector not found"))
@@ -138,7 +139,8 @@ func handleConnectorInitiate(
 // from nil (no existing row — fresh install path).
 func loadExistingConnector(
 	r *http.Request,
-	prb *probo.TenantService,
+	prb *probo.Service,
+	scope coredata.Scoper,
 	organizationID gid.GID,
 	provider string,
 ) (*coredata.Connector, error) {
@@ -148,7 +150,7 @@ func loadExistingConnector(
 			return nil, fmt.Errorf("%w: cannot parse connector id: %w", errInvalidReconnectConnector, err)
 		}
 
-		found, err := prb.Connectors.GetWithConnection(r.Context(), parsedID)
+		found, err := prb.Connectors.GetWithConnection(r.Context(), scope, parsedID)
 		if err != nil {
 			return nil, err
 		}
@@ -158,6 +160,7 @@ func loadExistingConnector(
 
 	found, err := prb.Connectors.GetByOrganizationIDAndProvider(
 		r.Context(),
+		scope,
 		organizationID,
 		coredata.ConnectorProvider(provider),
 	)

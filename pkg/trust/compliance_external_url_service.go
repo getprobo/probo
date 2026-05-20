@@ -25,11 +25,12 @@ import (
 )
 
 type ComplianceExternalURLService struct {
-	svc *TenantService
+	svc *Service
 }
 
 func (s ComplianceExternalURLService) ListForTrustCenterID(
 	ctx context.Context,
+	scope coredata.Scoper,
 	trustCenterID gid.GID,
 	cursor *page.Cursor[coredata.ComplianceExternalURLOrderField],
 ) (*page.Page[*coredata.ComplianceExternalURL, coredata.ComplianceExternalURLOrderField], error) {
@@ -38,7 +39,7 @@ func (s ComplianceExternalURLService) ListForTrustCenterID(
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			err := items.LoadByTrustCenterID(ctx, conn, s.svc.scope, trustCenterID, cursor)
+			err := items.LoadByTrustCenterID(ctx, conn, scope, trustCenterID, cursor)
 			if err != nil {
 				return fmt.Errorf("cannot load compliance external URLs: %w", err)
 			}

@@ -159,8 +159,7 @@ func SlackHandler(slackSvc *slack.Service, slackSigningSecret string, logger *lo
 		}
 
 		requesterEmail := *initialSlackMessage.RequesterEmail
-
-		tenantSvc := trustSvc.WithTenant(initialSlackMessage.OrganizationID.TenantID())
+		scope := coredata.NewScopeFromObjectID(initialSlackMessage.OrganizationID)
 
 		var (
 			documentIDs  []gid.GID
@@ -168,8 +167,6 @@ func SlackHandler(slackSvc *slack.Service, slackSigningSecret string, logger *lo
 			fileIDs      []gid.GID
 			statusAction string
 		)
-
-		tenantSlackSvc := slackSvc.WithTenant(initialSlackMessage.OrganizationID.TenantID())
 
 		// accept_all, reject_all
 		if strings.HasSuffix(action.ActionID, "_all") {
@@ -179,7 +176,7 @@ func SlackHandler(slackSvc *slack.Service, slackSigningSecret string, logger *lo
 				return
 			}
 
-			documentIDs, reportIDs, fileIDs, err = tenantSlackSvc.SlackMessages.GetSlackMessageDocumentIDs(ctx, currentMessageId)
+			documentIDs, reportIDs, fileIDs, err = slackSvc.GetSlackMessageDocumentIDs(ctx, scope, currentMessageId)
 			if err != nil {
 				logger.ErrorCtx(ctx, "cannot load slack message document ids", log.Error(err))
 				httpserver.RenderJSON(w, http.StatusInternalServerError, SlackInteractiveResponse{Success: false, Message: "internal server error"})
@@ -244,8 +241,9 @@ func SlackHandler(slackSvc *slack.Service, slackSigningSecret string, logger *lo
 
 		switch statusAction {
 		case StatusAccept:
-			if err := tenantSvc.TrustCenterAccesses.GrantByIDs(
+			if err := trustSvc.TrustCenterAccesses.GrantByIDs(
 				ctx,
+				scope,
 				initialSlackMessage.OrganizationID,
 				requesterEmail,
 				documentIDs,
@@ -258,8 +256,9 @@ func SlackHandler(slackSvc *slack.Service, slackSigningSecret string, logger *lo
 				return
 			}
 		case StatusReject:
-			if err := tenantSvc.TrustCenterAccesses.RejectOrRevokeByIDs(
+			if err := trustSvc.TrustCenterAccesses.RejectOrRevokeByIDs(
 				ctx,
+				scope,
 				initialSlackMessage.OrganizationID,
 				requesterEmail,
 				documentIDs,
@@ -278,8 +277,9 @@ func SlackHandler(slackSvc *slack.Service, slackSigningSecret string, logger *lo
 			return
 		}
 
-		if err := tenantSlackSvc.SlackMessages.UpdateSlackAccessMessage(
+		if err := slackSvc.UpdateSlackAccessMessage(
 			ctx,
+			scope,
 			initialSlackMessage.ID,
 			slackPayload.ResponseURL,
 			requesterEmail,

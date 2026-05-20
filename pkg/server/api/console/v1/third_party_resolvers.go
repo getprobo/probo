@@ -31,10 +31,11 @@ func (r *mutationResolver) CreateThirdParty(ctx context.Context, input types.Cre
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
+	scope := coredata.NewScopeFromObjectID(input.OrganizationID)
+	prb := r.probo
 
 	thirdParty, err := prb.ThirdParties.Create(
-		ctx,
+		ctx, scope,
 		probo.CreateThirdPartyRequest{
 			OrganizationID:                input.OrganizationID,
 			Name:                          input.Name,
@@ -83,10 +84,11 @@ func (r *mutationResolver) UpdateThirdParty(ctx context.Context, input types.Upd
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, input.ID.TenantID())
+	scope := coredata.NewScopeFromObjectID(input.ID)
+	prb := r.probo
 
 	thirdParty, err := prb.ThirdParties.Update(
-		ctx,
+		ctx, scope,
 		probo.UpdateThirdPartyRequest{
 			ID:                            input.ID,
 			Name:                          input.Name,
@@ -132,9 +134,10 @@ func (r *mutationResolver) DeleteThirdParty(ctx context.Context, input types.Del
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, input.ThirdPartyID.TenantID())
+	scope := coredata.NewScopeFromObjectID(input.ThirdPartyID)
+	prb := r.probo
 
-	err := prb.ThirdParties.Delete(ctx, input.ThirdPartyID)
+	err := prb.ThirdParties.Delete(ctx, scope, input.ThirdPartyID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete thirdParty", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -151,7 +154,8 @@ func (r *mutationResolver) CreateThirdPartyContact(ctx context.Context, input ty
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, input.ThirdPartyID.TenantID())
+	scope := coredata.NewScopeFromObjectID(input.ThirdPartyID)
+	prb := r.probo
 
 	req := probo.CreateThirdPartyContactRequest{
 		ThirdPartyID: input.ThirdPartyID,
@@ -161,7 +165,7 @@ func (r *mutationResolver) CreateThirdPartyContact(ctx context.Context, input ty
 		Role:         input.Role,
 	}
 
-	thirdPartyContact, err := prb.ThirdPartyContacts.Create(ctx, req)
+	thirdPartyContact, err := prb.ThirdPartyContacts.Create(ctx, scope, req)
 	if err != nil {
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
@@ -183,7 +187,8 @@ func (r *mutationResolver) UpdateThirdPartyContact(ctx context.Context, input ty
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, input.ID.TenantID())
+	scope := coredata.NewScopeFromObjectID(input.ID)
+	prb := r.probo
 
 	req := probo.UpdateThirdPartyContactRequest{
 		ID:       input.ID,
@@ -193,7 +198,7 @@ func (r *mutationResolver) UpdateThirdPartyContact(ctx context.Context, input ty
 		Role:     gqlutils.UnwrapOmittable(input.Role),
 	}
 
-	thirdPartyContact, err := prb.ThirdPartyContacts.Update(ctx, req)
+	thirdPartyContact, err := prb.ThirdPartyContacts.Update(ctx, scope, req)
 	if err != nil {
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
@@ -215,9 +220,10 @@ func (r *mutationResolver) DeleteThirdPartyContact(ctx context.Context, input ty
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, input.ThirdPartyContactID.TenantID())
+	scope := coredata.NewScopeFromObjectID(input.ThirdPartyContactID)
+	prb := r.probo
 
-	err := prb.ThirdPartyContacts.Delete(ctx, input.ThirdPartyContactID)
+	err := prb.ThirdPartyContacts.Delete(ctx, scope, input.ThirdPartyContactID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete thirdParty contact", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -234,7 +240,8 @@ func (r *mutationResolver) CreateThirdPartyService(ctx context.Context, input ty
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, input.ThirdPartyID.TenantID())
+	scope := coredata.NewScopeFromObjectID(input.ThirdPartyID)
+	prb := r.probo
 
 	req := probo.CreateThirdPartyServiceRequest{
 		ThirdPartyID: input.ThirdPartyID,
@@ -242,7 +249,7 @@ func (r *mutationResolver) CreateThirdPartyService(ctx context.Context, input ty
 		Description:  input.Description,
 	}
 
-	thirdPartyService, err := prb.ThirdPartyServices.Create(ctx, req)
+	thirdPartyService, err := prb.ThirdPartyServices.Create(ctx, scope, req)
 	if err != nil {
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
@@ -264,7 +271,8 @@ func (r *mutationResolver) UpdateThirdPartyService(ctx context.Context, input ty
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, input.ID.TenantID())
+	scope := coredata.NewScopeFromObjectID(input.ID)
+	prb := r.probo
 
 	req := probo.UpdateThirdPartyServiceRequest{
 		ID:          input.ID,
@@ -272,7 +280,7 @@ func (r *mutationResolver) UpdateThirdPartyService(ctx context.Context, input ty
 		Description: gqlutils.UnwrapOmittable(input.Description),
 	}
 
-	thirdPartyService, err := prb.ThirdPartyServices.Update(ctx, req)
+	thirdPartyService, err := prb.ThirdPartyServices.Update(ctx, scope, req)
 	if err != nil {
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
@@ -294,9 +302,10 @@ func (r *mutationResolver) DeleteThirdPartyService(ctx context.Context, input ty
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, input.ThirdPartyServiceID.TenantID())
+	scope := coredata.NewScopeFromObjectID(input.ThirdPartyServiceID)
+	prb := r.probo
 
-	err := prb.ThirdPartyServices.Delete(ctx, input.ThirdPartyServiceID)
+	err := prb.ThirdPartyServices.Delete(ctx, scope, input.ThirdPartyServiceID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete thirdParty service", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -313,10 +322,11 @@ func (r *mutationResolver) UploadThirdPartyComplianceReport(ctx context.Context,
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, input.ThirdPartyID.TenantID())
+	scope := coredata.NewScopeFromObjectID(input.ThirdPartyID)
+	prb := r.probo
 
 	thirdPartyComplianceReport, err := prb.ThirdPartyComplianceReports.Upload(
-		ctx,
+		ctx, scope,
 		input.ThirdPartyID,
 		&probo.ThirdPartyComplianceReportCreateRequest{
 			File:       probo.FileUpload{Filename: input.File.Filename, Size: input.File.Size, Content: input.File.File, ContentType: input.File.ContentType},
@@ -346,9 +356,10 @@ func (r *mutationResolver) DeleteThirdPartyComplianceReport(ctx context.Context,
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, input.ReportID.TenantID())
+	scope := coredata.NewScopeFromObjectID(input.ReportID)
+	prb := r.probo
 
-	err := prb.ThirdPartyComplianceReports.Delete(ctx, input.ReportID)
+	err := prb.ThirdPartyComplianceReports.Delete(ctx, scope, input.ReportID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete thirdParty compliance report", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -365,10 +376,11 @@ func (r *mutationResolver) UploadThirdPartyBusinessAssociateAgreement(ctx contex
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, input.ThirdPartyID.TenantID())
+	scope := coredata.NewScopeFromObjectID(input.ThirdPartyID)
+	prb := r.probo
 
 	thirdPartyBusinessAssociateAgreement, file, err := prb.ThirdPartyBusinessAssociateAgreements.Upload(
-		ctx,
+		ctx, scope,
 		input.ThirdPartyID,
 		&probo.ThirdPartyBusinessAssociateAgreementCreateRequest{
 			File:       input.File.File,
@@ -398,10 +410,11 @@ func (r *mutationResolver) UpdateThirdPartyBusinessAssociateAgreement(ctx contex
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, input.ThirdPartyID.TenantID())
+	scope := coredata.NewScopeFromObjectID(input.ThirdPartyID)
+	prb := r.probo
 
 	thirdPartyBusinessAssociateAgreement, file, err := prb.ThirdPartyBusinessAssociateAgreements.Update(
-		ctx,
+		ctx, scope,
 		input.ThirdPartyID,
 		&probo.ThirdPartyBusinessAssociateAgreementUpdateRequest{
 			ValidFrom:  gqlutils.UnwrapOmittable(input.ValidFrom),
@@ -429,9 +442,10 @@ func (r *mutationResolver) DeleteThirdPartyBusinessAssociateAgreement(ctx contex
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, input.ThirdPartyID.TenantID())
+	scope := coredata.NewScopeFromObjectID(input.ThirdPartyID)
+	prb := r.probo
 
-	err := prb.ThirdPartyBusinessAssociateAgreements.DeleteByThirdPartyID(ctx, input.ThirdPartyID)
+	err := prb.ThirdPartyBusinessAssociateAgreements.DeleteByThirdPartyID(ctx, scope, input.ThirdPartyID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete thirdParty business associate agreement", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -448,10 +462,11 @@ func (r *mutationResolver) UploadThirdPartyDataPrivacyAgreement(ctx context.Cont
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, input.ThirdPartyID.TenantID())
+	scope := coredata.NewScopeFromObjectID(input.ThirdPartyID)
+	prb := r.probo
 
 	thirdPartyDataPrivacyAgreement, file, err := prb.ThirdPartyDataPrivacyAgreements.Upload(
-		ctx,
+		ctx, scope,
 		input.ThirdPartyID,
 		&probo.ThirdPartyDataPrivacyAgreementCreateRequest{
 			File:       input.File.File,
@@ -481,10 +496,11 @@ func (r *mutationResolver) UpdateThirdPartyDataPrivacyAgreement(ctx context.Cont
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, input.ThirdPartyID.TenantID())
+	scope := coredata.NewScopeFromObjectID(input.ThirdPartyID)
+	prb := r.probo
 
 	thirdPartyDataPrivacyAgreement, file, err := prb.ThirdPartyDataPrivacyAgreements.Update(
-		ctx,
+		ctx, scope,
 		input.ThirdPartyID,
 		&probo.ThirdPartyDataPrivacyAgreementUpdateRequest{
 			ValidFrom:  gqlutils.UnwrapOmittable(input.ValidFrom),
@@ -512,9 +528,10 @@ func (r *mutationResolver) DeleteThirdPartyDataPrivacyAgreement(ctx context.Cont
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, input.ThirdPartyID.TenantID())
+	scope := coredata.NewScopeFromObjectID(input.ThirdPartyID)
+	prb := r.probo
 
-	err := prb.ThirdPartyDataPrivacyAgreements.DeleteByThirdPartyID(ctx, input.ThirdPartyID)
+	err := prb.ThirdPartyDataPrivacyAgreements.DeleteByThirdPartyID(ctx, scope, input.ThirdPartyID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete thirdParty data privacy agreement", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -531,10 +548,11 @@ func (r *mutationResolver) CreateThirdPartyRiskAssessment(ctx context.Context, i
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, input.ThirdPartyID.TenantID())
+	scope := coredata.NewScopeFromObjectID(input.ThirdPartyID)
+	prb := r.probo
 
 	thirdPartyRiskAssessment, err := prb.ThirdParties.CreateRiskAssessment(
-		ctx,
+		ctx, scope,
 		probo.CreateThirdPartyRiskAssessmentRequest{
 			ThirdPartyID:    input.ThirdPartyID,
 			ExpiresAt:       input.ExpiresAt,
@@ -564,10 +582,11 @@ func (r *mutationResolver) AssessThirdParty(ctx context.Context, input types.Ass
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, input.ID.TenantID())
+	scope := coredata.NewScopeFromObjectID(input.ID)
+	prb := r.probo
 
 	result, err := prb.ThirdParties.Assess(
-		ctx,
+		ctx, scope,
 		probo.AssessThirdPartyRequest{
 			ID:         input.ID,
 			WebsiteURL: input.WebsiteURL,
@@ -597,9 +616,10 @@ func (r *mutationResolver) PublishThirdPartyList(ctx context.Context, input type
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
+	scope := coredata.NewScopeFromObjectID(input.OrganizationID)
+	prb := r.probo
 
-	document, documentVersion, err := prb.GeneratedDocuments.PublishThirdPartyList(ctx, input.OrganizationID, input.ApproverIds, input.Minor)
+	document, documentVersion, err := prb.GeneratedDocuments.PublishThirdPartyList(ctx, scope, input.OrganizationID, input.ApproverIds, input.Minor)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
 			return nil, gqlutils.Conflict(ctx, err)
@@ -648,7 +668,8 @@ func (r *thirdPartyResolver) ComplianceReports(ctx context.Context, obj *types.T
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	scope := coredata.NewScopeFromObjectID(obj.ID)
+	prb := r.probo
 
 	pageOrderBy := page.OrderBy[coredata.ThirdPartyComplianceReportOrderField]{
 		Field:     coredata.ThirdPartyComplianceReportOrderFieldReportDate,
@@ -663,7 +684,7 @@ func (r *thirdPartyResolver) ComplianceReports(ctx context.Context, obj *types.T
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	page, err := prb.ThirdPartyComplianceReports.ListForThirdPartyID(ctx, obj.ID, cursor)
+	page, err := prb.ThirdPartyComplianceReports.ListForThirdPartyID(ctx, scope, obj.ID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list thirdParty compliance reports", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -678,9 +699,10 @@ func (r *thirdPartyResolver) BusinessAssociateAgreement(ctx context.Context, obj
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	scope := coredata.NewScopeFromObjectID(obj.ID)
+	prb := r.probo
 
-	thirdPartyBusinessAssociateAgreement, file, err := prb.ThirdPartyBusinessAssociateAgreements.GetByThirdPartyID(ctx, obj.ID)
+	thirdPartyBusinessAssociateAgreement, file, err := prb.ThirdPartyBusinessAssociateAgreements.GetByThirdPartyID(ctx, scope, obj.ID)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, nil
@@ -700,9 +722,10 @@ func (r *thirdPartyResolver) DataPrivacyAgreement(ctx context.Context, obj *type
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	scope := coredata.NewScopeFromObjectID(obj.ID)
+	prb := r.probo
 
-	thirdPartyDataPrivacyAgreement, file, err := prb.ThirdPartyDataPrivacyAgreements.GetByThirdPartyID(ctx, obj.ID)
+	thirdPartyDataPrivacyAgreement, file, err := prb.ThirdPartyDataPrivacyAgreements.GetByThirdPartyID(ctx, scope, obj.ID)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, nil
@@ -722,7 +745,8 @@ func (r *thirdPartyResolver) Contacts(ctx context.Context, obj *types.ThirdParty
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	scope := coredata.NewScopeFromObjectID(obj.ID)
+	prb := r.probo
 
 	pageOrderBy := page.OrderBy[coredata.ThirdPartyContactOrderField]{
 		Field:     coredata.ThirdPartyContactOrderFieldCreatedAt,
@@ -737,7 +761,7 @@ func (r *thirdPartyResolver) Contacts(ctx context.Context, obj *types.ThirdParty
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	page, err := prb.ThirdPartyContacts.List(ctx, obj.ID, cursor)
+	page, err := prb.ThirdPartyContacts.List(ctx, scope, obj.ID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list thirdParty contacts", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -752,7 +776,8 @@ func (r *thirdPartyResolver) Services(ctx context.Context, obj *types.ThirdParty
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	scope := coredata.NewScopeFromObjectID(obj.ID)
+	prb := r.probo
 
 	pageOrderBy := page.OrderBy[coredata.ThirdPartyServiceOrderField]{
 		Field:     coredata.ThirdPartyServiceOrderFieldCreatedAt,
@@ -767,7 +792,7 @@ func (r *thirdPartyResolver) Services(ctx context.Context, obj *types.ThirdParty
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	page, err := prb.ThirdPartyServices.List(ctx, obj.ID, cursor)
+	page, err := prb.ThirdPartyServices.List(ctx, scope, obj.ID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list thirdParty services", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -782,7 +807,8 @@ func (r *thirdPartyResolver) RiskAssessments(ctx context.Context, obj *types.Thi
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	scope := coredata.NewScopeFromObjectID(obj.ID)
+	prb := r.probo
 
 	pageOrderBy := page.OrderBy[coredata.ThirdPartyRiskAssessmentOrderField]{
 		Field:     coredata.ThirdPartyRiskAssessmentOrderFieldCreatedAt,
@@ -797,7 +823,7 @@ func (r *thirdPartyResolver) RiskAssessments(ctx context.Context, obj *types.Thi
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	page, err := prb.ThirdParties.ListRiskAssessments(ctx, obj.ID, cursor)
+	page, err := prb.ThirdParties.ListRiskAssessments(ctx, scope, obj.ID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list thirdParty risk assessments", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -869,9 +895,10 @@ func (r *thirdPartyBusinessAssociateAgreementResolver) ThirdParty(ctx context.Co
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	scope := coredata.NewScopeFromObjectID(obj.ID)
+	prb := r.probo
 
-	thirdParty, err := prb.ThirdParties.Get(ctx, obj.ID)
+	thirdParty, err := prb.ThirdParties.Get(ctx, scope, obj.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
@@ -889,9 +916,10 @@ func (r *thirdPartyBusinessAssociateAgreementResolver) FileURL(ctx context.Conte
 		return "", err
 	}
 
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	scope := coredata.NewScopeFromObjectID(obj.ID)
+	prb := r.probo
 
-	fileURL, err := prb.ThirdPartyBusinessAssociateAgreements.GenerateFileURL(ctx, obj.ID, 1*time.Hour)
+	fileURL, err := prb.ThirdPartyBusinessAssociateAgreements.GenerateFileURL(ctx, scope, obj.ID, 1*time.Hour)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot generate file URL", log.Error(err))
 		return "", gqlutils.Internal(ctx)
@@ -911,9 +939,10 @@ func (r *thirdPartyComplianceReportResolver) ThirdParty(ctx context.Context, obj
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	scope := coredata.NewScopeFromObjectID(obj.ID)
+	prb := r.probo
 
-	thirdParty, err := prb.ThirdParties.Get(ctx, obj.ID)
+	thirdParty, err := prb.ThirdParties.Get(ctx, scope, obj.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
@@ -933,9 +962,10 @@ func (r *thirdPartyComplianceReportResolver) File(ctx context.Context, obj *type
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	scope := coredata.NewScopeFromObjectID(obj.ID)
+	prb := r.probo
 
-	evidence, err := prb.ThirdPartyComplianceReports.Get(ctx, obj.ID)
+	evidence, err := prb.ThirdPartyComplianceReports.Get(ctx, scope, obj.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot load evidence", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -945,7 +975,7 @@ func (r *thirdPartyComplianceReportResolver) File(ctx context.Context, obj *type
 		return nil, nil
 	}
 
-	file, err := prb.Files.Get(ctx, *evidence.ReportFileId)
+	file, err := prb.Files.Get(ctx, scope, *evidence.ReportFileId)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
@@ -970,11 +1000,12 @@ func (r *thirdPartyConnectionResolver) TotalCount(ctx context.Context, obj *type
 		return 0, err
 	}
 
-	prb := r.ProboService(ctx, obj.ParentID.TenantID())
+	scope := coredata.NewScopeFromObjectID(obj.ParentID)
+	prb := r.probo
 
 	switch obj.Resolver.(type) {
 	case *organizationResolver:
-		count, err := prb.ThirdParties.CountForOrganizationID(ctx, obj.ParentID)
+		count, err := prb.ThirdParties.CountForOrganizationID(ctx, scope, obj.ParentID)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count thirdParties", log.Error(err))
 			return 0, gqlutils.Internal(ctx)
@@ -982,7 +1013,7 @@ func (r *thirdPartyConnectionResolver) TotalCount(ctx context.Context, obj *type
 
 		return count, nil
 	case *assetResolver:
-		count, err := prb.ThirdParties.CountForAssetID(ctx, obj.ParentID)
+		count, err := prb.ThirdParties.CountForAssetID(ctx, scope, obj.ParentID)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count thirdParties", log.Error(err))
 			return 0, gqlutils.Internal(ctx)
@@ -990,7 +1021,7 @@ func (r *thirdPartyConnectionResolver) TotalCount(ctx context.Context, obj *type
 
 		return count, nil
 	case *datumResolver:
-		count, err := prb.ThirdParties.CountForDatumID(ctx, obj.ParentID)
+		count, err := prb.ThirdParties.CountForDatumID(ctx, scope, obj.ParentID)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count thirdParties", log.Error(err))
 			return 0, gqlutils.Internal(ctx)
@@ -1010,16 +1041,17 @@ func (r *thirdPartyContactResolver) ThirdParty(ctx context.Context, obj *types.T
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	scope := coredata.NewScopeFromObjectID(obj.ID)
+	prb := r.probo
 
 	// Get the thirdParty contact to access the ThirdPartyID
-	thirdPartyContact, err := prb.ThirdPartyContacts.Get(ctx, obj.ID)
+	thirdPartyContact, err := prb.ThirdPartyContacts.Get(ctx, scope, obj.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot get thirdParty contact", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	thirdParty, err := prb.ThirdParties.Get(ctx, thirdPartyContact.ThirdPartyID)
+	thirdParty, err := prb.ThirdParties.Get(ctx, scope, thirdPartyContact.ThirdPartyID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
@@ -1044,9 +1076,10 @@ func (r *thirdPartyDataPrivacyAgreementResolver) ThirdParty(ctx context.Context,
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	scope := coredata.NewScopeFromObjectID(obj.ID)
+	prb := r.probo
 
-	thirdParty, err := prb.ThirdParties.Get(ctx, obj.ID)
+	thirdParty, err := prb.ThirdParties.Get(ctx, scope, obj.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
@@ -1066,9 +1099,10 @@ func (r *thirdPartyDataPrivacyAgreementResolver) FileURL(ctx context.Context, ob
 		return "", err
 	}
 
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	scope := coredata.NewScopeFromObjectID(obj.ID)
+	prb := r.probo
 
-	fileURL, err := prb.ThirdPartyDataPrivacyAgreements.GenerateFileURL(ctx, obj.ID, 1*time.Hour)
+	fileURL, err := prb.ThirdPartyDataPrivacyAgreements.GenerateFileURL(ctx, scope, obj.ID, 1*time.Hour)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot generate file URL", log.Error(err))
 		return "", gqlutils.Internal(ctx)
@@ -1088,9 +1122,10 @@ func (r *thirdPartyRiskAssessmentResolver) ThirdParty(ctx context.Context, obj *
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	scope := coredata.NewScopeFromObjectID(obj.ID)
+	prb := r.probo
 
-	thirdParty, err := prb.ThirdParties.GetByRiskAssessmentID(ctx, obj.ID)
+	thirdParty, err := prb.ThirdParties.GetByRiskAssessmentID(ctx, scope, obj.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)

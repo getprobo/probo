@@ -32,7 +32,7 @@ import (
 
 type (
 	TrustCenterAccessService struct {
-		svc *TenantService
+		svc *Service
 	}
 
 	CreateTrustCenterAccessRequest struct {
@@ -79,7 +79,7 @@ func (utcar *UpdateTrustCenterAccessRequest) Validate() error {
 }
 
 func (s TrustCenterAccessService) ListForTrustCenterID(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	trustCenterID gid.GID,
 	cursor *page.Cursor[coredata.TrustCenterAccessOrderField],
 ) (*page.Page[*coredata.TrustCenterAccess, coredata.TrustCenterAccessOrderField], error) {
@@ -88,7 +88,7 @@ func (s TrustCenterAccessService) ListForTrustCenterID(
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			return accesses.LoadByTrustCenterID(ctx, conn, s.svc.scope, trustCenterID, cursor)
+			return accesses.LoadByTrustCenterID(ctx, conn, scope, trustCenterID, cursor)
 		},
 	)
 	if err != nil {
@@ -99,7 +99,7 @@ func (s TrustCenterAccessService) ListForTrustCenterID(
 }
 
 func (s TrustCenterAccessService) ListAvailableDocumentAccesses(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	trustCenterAccessID gid.GID,
 	cursor *page.Cursor[coredata.TrustCenterDocumentAccessOrderField],
 ) (*page.Page[*coredata.TrustCenterDocumentAccess, coredata.TrustCenterDocumentAccessOrderField], error) {
@@ -108,7 +108,7 @@ func (s TrustCenterAccessService) ListAvailableDocumentAccesses(
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			return documentAccesses.LoadAvailableByTrustCenterAccessID(ctx, conn, s.svc.scope, trustCenterAccessID, cursor)
+			return documentAccesses.LoadAvailableByTrustCenterAccessID(ctx, conn, scope, trustCenterAccessID, cursor)
 		},
 	)
 	if err != nil {
@@ -119,7 +119,7 @@ func (s TrustCenterAccessService) ListAvailableDocumentAccesses(
 }
 
 func (s TrustCenterAccessService) Get(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	accessID gid.GID,
 ) (*coredata.TrustCenterAccess, error) {
 	var access coredata.TrustCenterAccess
@@ -127,7 +127,7 @@ func (s TrustCenterAccessService) Get(
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			return access.LoadByID(ctx, conn, s.svc.scope, accessID)
+			return access.LoadByID(ctx, conn, scope, accessID)
 		},
 	)
 	if err != nil {
@@ -138,7 +138,7 @@ func (s TrustCenterAccessService) Get(
 }
 
 func (s TrustCenterAccessService) CountDocumentAccesses(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	trustCenterAccessID gid.GID,
 ) (int, error) {
 	var count int
@@ -151,7 +151,7 @@ func (s TrustCenterAccessService) CountDocumentAccesses(
 				err              error
 			)
 
-			count, err = documentAccesses.CountByTrustCenterAccessID(ctx, conn, s.svc.scope, trustCenterAccessID)
+			count, err = documentAccesses.CountByTrustCenterAccessID(ctx, conn, scope, trustCenterAccessID)
 
 			return err
 		},
@@ -164,7 +164,7 @@ func (s TrustCenterAccessService) CountDocumentAccesses(
 }
 
 func (s TrustCenterAccessService) CountPendingRequestDocumentAccesses(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	trustCenterAccessID gid.GID,
 ) (int, error) {
 	var count int
@@ -177,7 +177,7 @@ func (s TrustCenterAccessService) CountPendingRequestDocumentAccesses(
 				err              error
 			)
 
-			count, err = documentAccesses.CountPendingRequestByTrustCenterAccessID(ctx, conn, s.svc.scope, trustCenterAccessID)
+			count, err = documentAccesses.CountPendingRequestByTrustCenterAccessID(ctx, conn, scope, trustCenterAccessID)
 
 			return err
 		},
@@ -190,7 +190,7 @@ func (s TrustCenterAccessService) CountPendingRequestDocumentAccesses(
 }
 
 func (s TrustCenterAccessService) CountActiveDocumentAccesses(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	trustCenterAccessID gid.GID,
 ) (int, error) {
 	var count int
@@ -203,7 +203,7 @@ func (s TrustCenterAccessService) CountActiveDocumentAccesses(
 				err              error
 			)
 
-			count, err = documentAccesses.CountActiveByTrustCenterAccessID(ctx, conn, s.svc.scope, trustCenterAccessID)
+			count, err = documentAccesses.CountActiveByTrustCenterAccessID(ctx, conn, scope, trustCenterAccessID)
 
 			return err
 		},
@@ -216,7 +216,7 @@ func (s TrustCenterAccessService) CountActiveDocumentAccesses(
 }
 
 func (s TrustCenterAccessService) Update(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	req *UpdateTrustCenterAccessRequest,
 ) (*coredata.TrustCenterAccess, error) {
 	if err := req.Validate(); err != nil {
@@ -234,7 +234,7 @@ func (s TrustCenterAccessService) Update(
 		func(ctx context.Context, tx pg.Tx) error {
 			access = &coredata.TrustCenterAccess{}
 
-			if err := access.LoadByID(ctx, tx, s.svc.scope, req.ID); err != nil {
+			if err := access.LoadByID(ctx, tx, scope, req.ID); err != nil {
 				return fmt.Errorf("cannot load trust center access: %w", err)
 			}
 
@@ -249,7 +249,7 @@ func (s TrustCenterAccessService) Update(
 					})
 				}
 
-				if err := tcdas.MergeDocumentAccesses(ctx, tx, s.svc.scope, access.OrganizationID, access.ID, documentData); err != nil {
+				if err := tcdas.MergeDocumentAccesses(ctx, tx, scope, access.OrganizationID, access.ID, documentData); err != nil {
 					return fmt.Errorf("cannot merge document accesses: %w", err)
 				}
 			}
@@ -263,7 +263,7 @@ func (s TrustCenterAccessService) Update(
 					})
 				}
 
-				if err := tcdas.MergeReportAccesses(ctx, tx, s.svc.scope, access.OrganizationID, access.ID, reportData); err != nil {
+				if err := tcdas.MergeReportAccesses(ctx, tx, scope, access.OrganizationID, access.ID, reportData); err != nil {
 					return fmt.Errorf("cannot merge report accesses: %w", err)
 				}
 			}
@@ -277,13 +277,13 @@ func (s TrustCenterAccessService) Update(
 					})
 				}
 
-				if err := tcdas.MergeTrustCenterFileAccesses(ctx, tx, s.svc.scope, access.OrganizationID, access.ID, fileData); err != nil {
+				if err := tcdas.MergeTrustCenterFileAccesses(ctx, tx, scope, access.OrganizationID, access.ID, fileData); err != nil {
 					return fmt.Errorf("cannot merge trust center file accesses: %w", err)
 				}
 			}
 
 			if trustCenterAcessActivated {
-				if err := s.sendAccessEmail(ctx, tx, access); err != nil {
+				if err := s.sendAccessEmail(ctx, scope, tx, access); err != nil {
 					return fmt.Errorf("cannot send access email: %w", err)
 				}
 			}
@@ -301,7 +301,7 @@ func (s TrustCenterAccessService) Update(
 	}
 
 	if shouldUpdateSlackMessage {
-		if err := s.svc.SlackMessages.QueueSlackNotification(ctx, access.IdentityID, access.TrustCenterID); err != nil {
+		if err := s.svc.SlackMessages.QueueSlackNotification(ctx, scope, access.IdentityID, access.TrustCenterID); err != nil {
 			if !errors.Is(err, slack.ErrNoSlackConnector) {
 				return nil, fmt.Errorf("cannot queue slack notification: %w", err)
 			}
@@ -312,7 +312,7 @@ func (s TrustCenterAccessService) Update(
 }
 
 func (s TrustCenterAccessService) Delete(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	trustCenterAccessID gid.GID,
 ) error {
 	err := s.svc.pg.WithTx(
@@ -320,11 +320,11 @@ func (s TrustCenterAccessService) Delete(
 		func(ctx context.Context, tx pg.Tx) error {
 			access := &coredata.TrustCenterAccess{}
 
-			if err := access.LoadByID(ctx, tx, s.svc.scope, trustCenterAccessID); err != nil {
+			if err := access.LoadByID(ctx, tx, scope, trustCenterAccessID); err != nil {
 				return fmt.Errorf("cannot load trust center access: %w", err)
 			}
 
-			if err := access.Delete(ctx, tx, s.svc.scope); err != nil {
+			if err := access.Delete(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot delete trust center access: %w", err)
 			}
 
@@ -335,16 +335,16 @@ func (s TrustCenterAccessService) Delete(
 	return err
 }
 
-func (s TrustCenterAccessService) sendAccessEmail(ctx context.Context, tx pg.Tx, access *coredata.TrustCenterAccess) error {
+func (s TrustCenterAccessService) sendAccessEmail(ctx context.Context, scope coredata.Scoper, tx pg.Tx, access *coredata.TrustCenterAccess) error {
 	organization := &coredata.Organization{}
-	if err := organization.LoadByID(ctx, tx, s.svc.scope, access.OrganizationID); err != nil {
+	if err := organization.LoadByID(ctx, tx, scope, access.OrganizationID); err != nil {
 		return fmt.Errorf("cannot load organization: %w", err)
 	}
 
 	now := time.Now()
 	access.UpdatedAt = now
 
-	if err := access.Update(ctx, tx, s.svc.scope); err != nil {
+	if err := access.Update(ctx, tx, scope); err != nil {
 		return fmt.Errorf("cannot update trust center access with expiration: %w", err)
 	}
 
@@ -352,14 +352,14 @@ func (s TrustCenterAccessService) sendAccessEmail(ctx context.Context, tx pg.Tx,
 	if err := profile.LoadByIdentityIDAndOrganizationID(
 		ctx,
 		tx,
-		s.svc.scope,
+		scope,
 		access.IdentityID,
 		access.OrganizationID,
 	); err != nil {
 		return fmt.Errorf("cannot load profile: %w", err)
 	}
 
-	emailPresenterCfg, err := s.svc.TrustCenters.EmailPresenterConfig(ctx, access.TrustCenterID)
+	emailPresenterCfg, err := s.svc.TrustCenters.EmailPresenterConfig(ctx, scope, access.TrustCenterID)
 	if err != nil {
 		return fmt.Errorf("cannot get compliance page email presenter config: %w", err)
 	}

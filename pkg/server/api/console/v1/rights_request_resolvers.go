@@ -25,7 +25,8 @@ func (r *mutationResolver) CreateRightsRequest(ctx context.Context, input types.
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
+	scope := coredata.NewScopeFromObjectID(input.OrganizationID)
+	prb := r.probo
 
 	req := probo.CreateRightsRequestRequest{
 		OrganizationID: input.OrganizationID,
@@ -38,7 +39,7 @@ func (r *mutationResolver) CreateRightsRequest(ctx context.Context, input types.
 		ActionTaken:    input.ActionTaken,
 	}
 
-	rightsRequest, err := prb.RightsRequests.Create(ctx, &req)
+	rightsRequest, err := prb.RightsRequests.Create(ctx, scope, &req)
 	if err != nil {
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
@@ -60,7 +61,8 @@ func (r *mutationResolver) UpdateRightsRequest(ctx context.Context, input types.
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, input.ID.TenantID())
+	scope := coredata.NewScopeFromObjectID(input.ID)
+	prb := r.probo
 
 	req := probo.UpdateRightsRequestRequest{
 		ID:           input.ID,
@@ -73,7 +75,7 @@ func (r *mutationResolver) UpdateRightsRequest(ctx context.Context, input types.
 		ActionTaken:  gqlutils.UnwrapOmittable(input.ActionTaken),
 	}
 
-	rightsRequest, err := prb.RightsRequests.Update(ctx, &req)
+	rightsRequest, err := prb.RightsRequests.Update(ctx, scope, &req)
 	if err != nil {
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
@@ -95,9 +97,10 @@ func (r *mutationResolver) DeleteRightsRequest(ctx context.Context, input types.
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, input.RightsRequestID.TenantID())
+	scope := coredata.NewScopeFromObjectID(input.RightsRequestID)
+	prb := r.probo
 
-	err := prb.RightsRequests.Delete(ctx, input.RightsRequestID)
+	err := prb.RightsRequests.Delete(ctx, scope, input.RightsRequestID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete rights request", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -114,15 +117,16 @@ func (r *rightsRequestResolver) Organization(ctx context.Context, obj *types.Rig
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	scope := coredata.NewScopeFromObjectID(obj.ID)
+	prb := r.probo
 
-	rightsRequest, err := prb.RightsRequests.Get(ctx, obj.ID)
+	rightsRequest, err := prb.RightsRequests.Get(ctx, scope, obj.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot get rights request", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	organization, err := prb.Organizations.Get(ctx, rightsRequest.OrganizationID)
+	organization, err := prb.Organizations.Get(ctx, scope, rightsRequest.OrganizationID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
@@ -147,11 +151,12 @@ func (r *rightsRequestConnectionResolver) TotalCount(ctx context.Context, obj *t
 		return 0, err
 	}
 
-	prb := r.ProboService(ctx, obj.ParentID.TenantID())
+	scope := coredata.NewScopeFromObjectID(obj.ParentID)
+	prb := r.probo
 
 	switch obj.Resolver.(type) {
 	case *organizationResolver:
-		count, err := prb.RightsRequests.CountByOrganizationID(ctx, obj.ParentID)
+		count, err := prb.RightsRequests.CountByOrganizationID(ctx, scope, obj.ParentID)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count rights requests", log.Error(err))
 			return 0, gqlutils.Internal(ctx)

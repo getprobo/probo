@@ -26,14 +26,15 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 	var (
 		loadNode func(ctx context.Context, id gid.GID) (types.Node, error)
 		action   string
-		prb      = r.ProboService(ctx, id.TenantID())
+		scope    = coredata.NewScopeFromObjectID(id)
+		prb      = r.probo
 	)
 
 	switch id.EntityType() {
 	case coredata.OrganizationEntityType:
 		action = iam.ActionOrganizationGet
 		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
-			organization, err := prb.Organizations.Get(ctx, id)
+			organization, err := prb.Organizations.Get(ctx, scope, id)
 			if err != nil {
 				return nil, err
 			}
@@ -43,7 +44,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 	case coredata.ThirdPartyEntityType:
 		action = probo.ActionThirdPartyGet
 		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
-			thirdParty, err := prb.ThirdParties.Get(ctx, id)
+			thirdParty, err := prb.ThirdParties.Get(ctx, scope, id)
 			if err != nil {
 				return nil, err
 			}
@@ -53,7 +54,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 	case coredata.FrameworkEntityType:
 		action = probo.ActionFrameworkGet
 		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
-			framework, err := prb.Frameworks.Get(ctx, id)
+			framework, err := prb.Frameworks.Get(ctx, scope, id)
 			if err != nil {
 				return nil, err
 			}
@@ -63,7 +64,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 	case coredata.MeasureEntityType:
 		action = probo.ActionMeasureGet
 		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
-			measure, err := prb.Measures.Get(ctx, id)
+			measure, err := prb.Measures.Get(ctx, scope, id)
 			if err != nil {
 				return nil, err
 			}
@@ -73,7 +74,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 	case coredata.TaskEntityType:
 		action = probo.ActionTaskGet
 		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
-			task, err := prb.Tasks.Get(ctx, id)
+			task, err := prb.Tasks.Get(ctx, scope, id)
 			if err != nil {
 				return nil, err
 			}
@@ -83,7 +84,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 	case coredata.EvidenceEntityType:
 		action = probo.ActionEvidenceList
 		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
-			evidence, err := prb.Evidences.Get(ctx, id)
+			evidence, err := prb.Evidences.Get(ctx, scope, id)
 			if err != nil {
 				return nil, err
 			}
@@ -93,7 +94,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 	case coredata.DocumentEntityType:
 		action = probo.ActionDocumentGet
 		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
-			document, err := prb.Documents.Get(ctx, id)
+			document, err := prb.Documents.Get(ctx, scope, id)
 			if err != nil {
 				return nil, err
 			}
@@ -103,7 +104,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 	case coredata.ControlEntityType:
 		action = probo.ActionControlList
 		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
-			control, err := prb.Controls.Get(ctx, id)
+			control, err := prb.Controls.Get(ctx, scope, id)
 			if err != nil {
 				return nil, err
 			}
@@ -113,7 +114,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 	case coredata.RiskEntityType:
 		action = probo.ActionRiskGet
 		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
-			risk, err := prb.Risks.Get(ctx, id)
+			risk, err := prb.Risks.Get(ctx, scope, id)
 			if err != nil {
 				return nil, err
 			}
@@ -195,7 +196,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 	case coredata.ThirdPartyComplianceReportEntityType:
 		action = probo.ActionThirdPartyComplianceReportGet
 		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
-			thirdPartyComplianceReport, err := prb.ThirdPartyComplianceReports.Get(ctx, id)
+			thirdPartyComplianceReport, err := prb.ThirdPartyComplianceReports.Get(ctx, scope, id)
 			if err != nil {
 				return nil, err
 			}
@@ -205,7 +206,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 	case coredata.ThirdPartyContactEntityType:
 		action = probo.ActionThirdPartyContactGet
 		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
-			thirdPartyContact, err := prb.ThirdPartyContacts.Get(ctx, id)
+			thirdPartyContact, err := prb.ThirdPartyContacts.Get(ctx, scope, id)
 			if err != nil {
 				return nil, err
 			}
@@ -215,7 +216,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 	case coredata.ThirdPartyServiceEntityType:
 		action = probo.ActionThirdPartyServiceGet
 		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
-			thirdPartyService, err := prb.ThirdPartyServices.Get(ctx, id)
+			thirdPartyService, err := prb.ThirdPartyServices.Get(ctx, scope, id)
 			if err != nil {
 				return nil, err
 			}
@@ -225,7 +226,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 	case coredata.DocumentVersionEntityType:
 		action = probo.ActionDocumentVersionList
 		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
-			documentVersion, err := prb.Documents.GetVersion(ctx, id)
+			documentVersion, err := prb.Documents.GetVersion(ctx, scope, id)
 			if err != nil {
 				return nil, err
 			}
@@ -235,7 +236,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 	case coredata.DocumentVersionSignatureEntityType:
 		action = probo.ActionDocumentVersionSignatureList
 		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
-			documentVersionSignature, err := prb.Documents.GetVersionSignature(ctx, id)
+			documentVersionSignature, err := prb.Documents.GetVersionSignature(ctx, scope, id)
 			if err != nil {
 				return nil, err
 			}
@@ -245,7 +246,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 	case coredata.AssetEntityType:
 		action = probo.ActionAssetList
 		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
-			asset, err := prb.Assets.Get(ctx, id)
+			asset, err := prb.Assets.Get(ctx, scope, id)
 			if err != nil {
 				return nil, err
 			}
@@ -255,7 +256,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 	case coredata.DatumEntityType:
 		action = probo.ActionDatumList
 		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
-			datum, err := prb.Data.Get(ctx, id)
+			datum, err := prb.Data.Get(ctx, scope, id)
 			if err != nil {
 				return nil, err
 			}
@@ -265,7 +266,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 	case coredata.AuditEntityType:
 		action = probo.ActionAuditList
 		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
-			audit, err := prb.Audits.Get(ctx, id)
+			audit, err := prb.Audits.Get(ctx, scope, id)
 			if err != nil {
 				return nil, err
 			}
@@ -275,7 +276,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 	case coredata.FindingEntityType:
 		action = probo.ActionFindingList
 		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
-			finding, err := prb.Findings.Get(ctx, id)
+			finding, err := prb.Findings.Get(ctx, scope, id)
 			if err != nil {
 				return nil, err
 			}
@@ -285,7 +286,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 	case coredata.ObligationEntityType:
 		action = probo.ActionObligationList
 		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
-			obligation, err := prb.Obligations.Get(ctx, id)
+			obligation, err := prb.Obligations.Get(ctx, scope, id)
 			if err != nil {
 				return nil, err
 			}
@@ -295,7 +296,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 	case coredata.ReportEntityType:
 		action = probo.ActionReportGet
 		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
-			report, err := prb.Reports.Get(ctx, id)
+			report, err := prb.Reports.Get(ctx, scope, id)
 			if err != nil {
 				return nil, err
 			}
@@ -305,7 +306,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 	case coredata.ProcessingActivityEntityType:
 		action = probo.ActionProcessingActivityList
 		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
-			processingActivity, err := prb.ProcessingActivities.Get(ctx, id)
+			processingActivity, err := prb.ProcessingActivities.Get(ctx, scope, id)
 			if err != nil {
 				return nil, err
 			}
@@ -316,7 +317,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 		// TODO: add action
 		// action = probo.ActionDataProtectionImpactAssessmentGet
 		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
-			dpia, err := prb.DataProtectionImpactAssessments.Get(ctx, id)
+			dpia, err := prb.DataProtectionImpactAssessments.Get(ctx, scope, id)
 			if err != nil {
 				return nil, err
 			}
@@ -327,7 +328,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 		// TODO: add action
 		//action = probo.ActionTransferImpactAssessmentGet
 		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
-			tia, err := prb.TransferImpactAssessments.Get(ctx, id)
+			tia, err := prb.TransferImpactAssessments.Get(ctx, scope, id)
 			if err != nil {
 				return nil, err
 			}
@@ -337,14 +338,14 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 	case coredata.TrustCenterEntityType:
 		action = probo.ActionTrustCenterGet
 		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
-			trustCenter, err := prb.TrustCenters.Get(ctx, id)
+			trustCenter, err := prb.TrustCenters.Get(ctx, scope, id)
 			if err != nil {
 				return nil, err
 			}
 
 			var file *coredata.File
 			if trustCenter.NonDisclosureAgreementFileID != nil {
-				file, err = prb.Files.Get(ctx, *trustCenter.NonDisclosureAgreementFileID)
+				file, err = prb.Files.Get(ctx, scope, *trustCenter.NonDisclosureAgreementFileID)
 				if err != nil {
 					return nil, fmt.Errorf("cannot get NDA file: %w", err)
 				}
@@ -355,7 +356,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 	case coredata.TrustCenterAccessEntityType:
 		action = probo.ActionTrustCenterAccessGet
 		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
-			trustCenterAccess, err := prb.TrustCenterAccesses.Get(ctx, id)
+			trustCenterAccess, err := prb.TrustCenterAccesses.Get(ctx, scope, id)
 			if err != nil {
 				return nil, err
 			}
@@ -365,7 +366,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 	case coredata.RightsRequestEntityType:
 		action = probo.ActionRightsRequestGet
 		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
-			rightsRequest, err := prb.RightsRequests.Get(ctx, id)
+			rightsRequest, err := prb.RightsRequests.Get(ctx, scope, id)
 			if err != nil {
 				return nil, err
 			}
@@ -375,7 +376,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 	case coredata.StatementOfApplicabilityEntityType:
 		action = probo.ActionStatementOfApplicabilityGet
 		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
-			statementOfApplicability, err := prb.StatementsOfApplicability.Get(ctx, id)
+			statementOfApplicability, err := prb.StatementsOfApplicability.Get(ctx, scope, id)
 			if err != nil {
 				return nil, err
 			}
@@ -385,7 +386,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 	case coredata.WebhookSubscriptionEntityType:
 		action = probo.ActionWebhookSubscriptionGet
 		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
-			wc, err := prb.WebhookSubscriptions.Get(ctx, id)
+			wc, err := prb.WebhookSubscriptions.Get(ctx, scope, id)
 			if err != nil {
 				return nil, err
 			}

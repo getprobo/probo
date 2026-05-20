@@ -28,7 +28,7 @@ import (
 
 type (
 	ComplianceFrameworkService struct {
-		svc *TenantService
+		svc *Service
 	}
 
 	CreateComplianceFrameworkRequest struct {
@@ -72,7 +72,7 @@ func (r *DeleteComplianceFrameworkRequest) Validate() error {
 }
 
 func (s ComplianceFrameworkService) ListWithHiddenForTrustCenterID(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	trustCenterID gid.GID,
 	cursor *page.Cursor[coredata.ComplianceFrameworkOrderField],
 ) (*page.Page[*coredata.ComplianceFramework, coredata.ComplianceFrameworkOrderField], error) {
@@ -81,7 +81,7 @@ func (s ComplianceFrameworkService) ListWithHiddenForTrustCenterID(
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			if err := cfs.LoadWithHiddenByTrustCenterID(ctx, conn, s.svc.scope, trustCenterID, cursor); err != nil {
+			if err := cfs.LoadWithHiddenByTrustCenterID(ctx, conn, scope, trustCenterID, cursor); err != nil {
 				return fmt.Errorf("cannot load compliance frameworks with hidden: %w", err)
 			}
 
@@ -96,7 +96,7 @@ func (s ComplianceFrameworkService) ListWithHiddenForTrustCenterID(
 }
 
 func (s ComplianceFrameworkService) Create(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	req *CreateComplianceFrameworkRequest,
 ) (*coredata.ComplianceFramework, error) {
 	if err := req.Validate(); err != nil {
@@ -105,7 +105,7 @@ func (s ComplianceFrameworkService) Create(
 
 	now := time.Now()
 
-	cfID := gid.New(s.svc.scope.GetTenantID(), coredata.ComplianceFrameworkEntityType)
+	cfID := gid.New(scope.GetTenantID(), coredata.ComplianceFrameworkEntityType)
 
 	var cf *coredata.ComplianceFramework
 
@@ -113,7 +113,7 @@ func (s ComplianceFrameworkService) Create(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			trustCenter := &coredata.TrustCenter{}
-			if err := trustCenter.LoadByID(ctx, tx, s.svc.scope, req.TrustCenterID); err != nil {
+			if err := trustCenter.LoadByID(ctx, tx, scope, req.TrustCenterID); err != nil {
 				return fmt.Errorf("cannot load trust center: %w", err)
 			}
 
@@ -126,7 +126,7 @@ func (s ComplianceFrameworkService) Create(
 				UpdatedAt:      now,
 			}
 
-			if err := cf.Insert(ctx, tx, s.svc.scope); err != nil {
+			if err := cf.Insert(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot insert compliance framework: %w", err)
 			}
 
@@ -141,7 +141,7 @@ func (s ComplianceFrameworkService) Create(
 }
 
 func (s ComplianceFrameworkService) Update(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	req *UpdateComplianceFrameworkRequest,
 ) (*coredata.ComplianceFramework, error) {
 	if err := req.Validate(); err != nil {
@@ -155,14 +155,14 @@ func (s ComplianceFrameworkService) Update(
 		func(ctx context.Context, tx pg.Tx) error {
 			cf = &coredata.ComplianceFramework{}
 
-			if err := cf.LoadByID(ctx, tx, s.svc.scope, req.ID); err != nil {
+			if err := cf.LoadByID(ctx, tx, scope, req.ID); err != nil {
 				return fmt.Errorf("cannot load compliance framework: %w", err)
 			}
 
 			cf.Rank = req.Rank
 			cf.UpdatedAt = time.Now()
 
-			if err := cf.UpdateRank(ctx, tx, s.svc.scope); err != nil {
+			if err := cf.UpdateRank(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot update compliance framework rank: %w", err)
 			}
 
@@ -177,7 +177,7 @@ func (s ComplianceFrameworkService) Update(
 }
 
 func (s ComplianceFrameworkService) Delete(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	req *DeleteComplianceFrameworkRequest,
 ) error {
 	if err := req.Validate(); err != nil {
@@ -189,11 +189,11 @@ func (s ComplianceFrameworkService) Delete(
 		func(ctx context.Context, tx pg.Tx) error {
 			cf := &coredata.ComplianceFramework{}
 
-			if err := cf.LoadByID(ctx, tx, s.svc.scope, req.ID); err != nil {
+			if err := cf.LoadByID(ctx, tx, scope, req.ID); err != nil {
 				return fmt.Errorf("cannot load compliance framework: %w", err)
 			}
 
-			if err := cf.Delete(ctx, tx, s.svc.scope); err != nil {
+			if err := cf.Delete(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot delete compliance framework: %w", err)
 			}
 

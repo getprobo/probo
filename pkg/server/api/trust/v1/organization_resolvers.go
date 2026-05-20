@@ -9,15 +9,17 @@ import (
 	"context"
 	"time"
 
+	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/server/api/trust/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/trust/v1/types"
 )
 
 // LogoURL is the resolver for the logoUrl field.
 func (r *organizationResolver) LogoURL(ctx context.Context, obj *types.Organization) (*string, error) {
-	trustService := r.TrustService(ctx, obj.ID.TenantID())
+	scope := coredata.NewScopeFromObjectID(obj.ID)
+	trustService := r.trust
 
-	return trustService.Organizations.GenerateLogoURL(ctx, obj.ID, 1*time.Hour)
+	return trustService.Organizations.GenerateLogoURL(ctx, scope, obj.ID, 1*time.Hour)
 }
 
 // Organization returns schema.OrganizationResolver implementation.

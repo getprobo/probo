@@ -27,7 +27,7 @@ import (
 )
 
 type TransferImpactAssessmentService struct {
-	svc *TenantService
+	svc *Service
 }
 
 type (
@@ -77,7 +77,7 @@ func (req *UpdateTransferImpactAssessmentRequest) Validate() error {
 }
 
 func (s TransferImpactAssessmentService) Get(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	tiaID gid.GID,
 ) (*coredata.TransferImpactAssessment, error) {
 	tia := &coredata.TransferImpactAssessment{}
@@ -85,7 +85,7 @@ func (s TransferImpactAssessmentService) Get(
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			if err := tia.LoadByID(ctx, conn, s.svc.scope, tiaID); err != nil {
+			if err := tia.LoadByID(ctx, conn, scope, tiaID); err != nil {
 				return fmt.Errorf("cannot load transfer impact assessment: %w", err)
 			}
 
@@ -100,7 +100,7 @@ func (s TransferImpactAssessmentService) Get(
 }
 
 func (s TransferImpactAssessmentService) GetByProcessingActivityID(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	processingActivityID gid.GID,
 ) (*coredata.TransferImpactAssessment, error) {
 	tia := &coredata.TransferImpactAssessment{}
@@ -108,7 +108,7 @@ func (s TransferImpactAssessmentService) GetByProcessingActivityID(
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			if err := tia.LoadByProcessingActivityID(ctx, conn, s.svc.scope, processingActivityID); err != nil {
+			if err := tia.LoadByProcessingActivityID(ctx, conn, scope, processingActivityID); err != nil {
 				return fmt.Errorf("cannot load transfer impact assessment: %w", err)
 			}
 
@@ -123,7 +123,7 @@ func (s TransferImpactAssessmentService) GetByProcessingActivityID(
 }
 
 func (s TransferImpactAssessmentService) ListForOrganizationID(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	organizationID gid.GID,
 	cursor *page.Cursor[coredata.TransferImpactAssessmentOrderField],
 ) (*page.Page[*coredata.TransferImpactAssessment, coredata.TransferImpactAssessmentOrderField], error) {
@@ -132,7 +132,7 @@ func (s TransferImpactAssessmentService) ListForOrganizationID(
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			err := tias.LoadByOrganizationID(ctx, conn, s.svc.scope, organizationID, cursor)
+			err := tias.LoadByOrganizationID(ctx, conn, scope, organizationID, cursor)
 			if err != nil {
 				return fmt.Errorf("cannot load transfer impact assessments: %w", err)
 			}
@@ -148,7 +148,7 @@ func (s TransferImpactAssessmentService) ListForOrganizationID(
 }
 
 func (s TransferImpactAssessmentService) CountForOrganizationID(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	organizationID gid.GID,
 ) (int, error) {
 	var count int
@@ -157,7 +157,7 @@ func (s TransferImpactAssessmentService) CountForOrganizationID(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			tias := coredata.TransferImpactAssessments{}
-			count, err = tias.CountByOrganizationID(ctx, conn, s.svc.scope, organizationID)
+			count, err = tias.CountByOrganizationID(ctx, conn, scope, organizationID)
 
 			return err
 		},
@@ -170,7 +170,7 @@ func (s TransferImpactAssessmentService) CountForOrganizationID(
 }
 
 func (s *TransferImpactAssessmentService) Create(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	req *CreateTransferImpactAssessmentRequest,
 ) (*coredata.TransferImpactAssessment, error) {
 	if err := req.Validate(); err != nil {
@@ -180,7 +180,7 @@ func (s *TransferImpactAssessmentService) Create(
 	now := time.Now()
 
 	tia := &coredata.TransferImpactAssessment{
-		ID:                    gid.New(s.svc.scope.GetTenantID(), coredata.TransferImpactAssessmentEntityType),
+		ID:                    gid.New(scope.GetTenantID(), coredata.TransferImpactAssessmentEntityType),
 		ProcessingActivityID:  req.ProcessingActivityID,
 		DataSubjects:          req.DataSubjects,
 		LegalMechanism:        req.LegalMechanism,
@@ -195,13 +195,13 @@ func (s *TransferImpactAssessmentService) Create(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
 			processingActivity := &coredata.ProcessingActivity{}
-			if err := processingActivity.LoadByID(ctx, conn, s.svc.scope, req.ProcessingActivityID); err != nil {
+			if err := processingActivity.LoadByID(ctx, conn, scope, req.ProcessingActivityID); err != nil {
 				return fmt.Errorf("cannot load processing activity: %w", err)
 			}
 
 			tia.OrganizationID = processingActivity.OrganizationID
 
-			if err := tia.Insert(ctx, conn, s.svc.scope); err != nil {
+			if err := tia.Insert(ctx, conn, scope); err != nil {
 				return fmt.Errorf("cannot insert transfer impact assessment: %w", err)
 			}
 
@@ -216,7 +216,7 @@ func (s *TransferImpactAssessmentService) Create(
 }
 
 func (s *TransferImpactAssessmentService) Update(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	req *UpdateTransferImpactAssessmentRequest,
 ) (*coredata.TransferImpactAssessment, error) {
 	if err := req.Validate(); err != nil {
@@ -228,7 +228,7 @@ func (s *TransferImpactAssessmentService) Update(
 	err := s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
-			if err := tia.LoadByID(ctx, conn, s.svc.scope, req.ID); err != nil {
+			if err := tia.LoadByID(ctx, conn, scope, req.ID); err != nil {
 				return fmt.Errorf("cannot load transfer impact assessment: %w", err)
 			}
 
@@ -254,7 +254,7 @@ func (s *TransferImpactAssessmentService) Update(
 
 			tia.UpdatedAt = time.Now()
 
-			if err := tia.Update(ctx, conn, s.svc.scope); err != nil {
+			if err := tia.Update(ctx, conn, scope); err != nil {
 				return fmt.Errorf("cannot update transfer impact assessment: %w", err)
 			}
 
@@ -269,18 +269,18 @@ func (s *TransferImpactAssessmentService) Update(
 }
 
 func (s *TransferImpactAssessmentService) Delete(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	tiaID gid.GID,
 ) error {
 	err := s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
 			tia := &coredata.TransferImpactAssessment{}
-			if err := tia.LoadByID(ctx, conn, s.svc.scope, tiaID); err != nil {
+			if err := tia.LoadByID(ctx, conn, scope, tiaID); err != nil {
 				return fmt.Errorf("cannot load transfer impact assessment: %w", err)
 			}
 
-			if err := tia.Delete(ctx, conn, s.svc.scope); err != nil {
+			if err := tia.Delete(ctx, conn, scope); err != nil {
 				return fmt.Errorf("cannot delete transfer impact assessment: %w", err)
 			}
 

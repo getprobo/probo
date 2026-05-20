@@ -32,7 +32,8 @@ func (r *mutationResolver) UpdateOrganizationContext(ctx context.Context, input 
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
+	scope := coredata.NewScopeFromObjectID(input.OrganizationID)
+	prb := r.probo
 
 	req := probo.UpdateOrganizationContextRequest{
 		OrganizationID: input.OrganizationID,
@@ -43,7 +44,7 @@ func (r *mutationResolver) UpdateOrganizationContext(ctx context.Context, input 
 		Customers:      gqlutils.UnwrapOmittable(input.Customers),
 	}
 
-	organizationContext, err := prb.Organizations.UpdateContext(ctx, req)
+	organizationContext, err := prb.Organizations.UpdateContext(ctx, scope, req)
 	if err != nil {
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
@@ -65,9 +66,10 @@ func (r *organizationResolver) LogoURL(ctx context.Context, obj *types.Organizat
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	scope := coredata.NewScopeFromObjectID(obj.ID)
+	prb := r.probo
 
-	logoURL, err := prb.Organizations.GenerateLogoURL(ctx, obj.ID, 1*time.Hour)
+	logoURL, err := prb.Organizations.GenerateLogoURL(ctx, scope, obj.ID, 1*time.Hour)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot generate logo url", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -82,9 +84,10 @@ func (r *organizationResolver) HorizontalLogoURL(ctx context.Context, obj *types
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	scope := coredata.NewScopeFromObjectID(obj.ID)
+	prb := r.probo
 
-	horizontalLogoURL, err := prb.Organizations.GenerateHorizontalLogoURL(ctx, obj.ID, 1*time.Hour)
+	horizontalLogoURL, err := prb.Organizations.GenerateHorizontalLogoURL(ctx, scope, obj.ID, 1*time.Hour)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot generate horizontal logo url", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -99,9 +102,10 @@ func (r *organizationResolver) Context(ctx context.Context, obj *types.Organizat
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	scope := coredata.NewScopeFromObjectID(obj.ID)
+	prb := r.probo
 
-	orgContext, err := prb.Organizations.GetContext(ctx, obj.ID)
+	orgContext, err := prb.Organizations.GetContext(ctx, scope, obj.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot load organization context", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -157,9 +161,10 @@ func (r *organizationResolver) MeasureCategories(ctx context.Context, obj *types
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	scope := coredata.NewScopeFromObjectID(obj.ID)
+	prb := r.probo
 
-	categories, err := prb.Measures.ListDistinctCategoriesForOrganizationID(ctx, obj.ID)
+	categories, err := prb.Measures.ListDistinctCategoriesForOrganizationID(ctx, scope, obj.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list measure categories", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -232,9 +237,10 @@ func (r *organizationResolver) AssetListDocument(ctx context.Context, obj *types
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	scope := coredata.NewScopeFromObjectID(obj.ID)
+	prb := r.probo
 
-	assetDocumentID, err := prb.GeneratedDocuments.GetAssetListDocumentID(ctx, obj.ID)
+	assetDocumentID, err := prb.GeneratedDocuments.GetAssetListDocumentID(ctx, scope, obj.ID)
 	if err != nil {
 		return nil, fmt.Errorf("cannot get asset list document ID: %w", err)
 	}
@@ -243,7 +249,7 @@ func (r *organizationResolver) AssetListDocument(ctx context.Context, obj *types
 		return nil, nil
 	}
 
-	doc, err := prb.Documents.Get(ctx, *assetDocumentID)
+	doc, err := prb.Documents.Get(ctx, scope, *assetDocumentID)
 	if err != nil {
 		return nil, fmt.Errorf("cannot get asset list document: %w", err)
 	}
@@ -257,7 +263,8 @@ func (r *organizationResolver) Assets(ctx context.Context, obj *types.Organizati
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	scope := coredata.NewScopeFromObjectID(obj.ID)
+	prb := r.probo
 
 	pageOrderBy := page.OrderBy[coredata.AssetOrderField]{
 		Field:     coredata.AssetOrderFieldCreatedAt,
@@ -272,7 +279,7 @@ func (r *organizationResolver) Assets(ctx context.Context, obj *types.Organizati
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	page, err := prb.Assets.ListForOrganizationID(ctx, obj.ID, cursor)
+	page, err := prb.Assets.ListForOrganizationID(ctx, scope, obj.ID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list organization assets", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -287,9 +294,10 @@ func (r *organizationResolver) DataListDocument(ctx context.Context, obj *types.
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	scope := coredata.NewScopeFromObjectID(obj.ID)
+	prb := r.probo
 
-	dataDocumentID, err := prb.GeneratedDocuments.GetDataListDocumentID(ctx, obj.ID)
+	dataDocumentID, err := prb.GeneratedDocuments.GetDataListDocumentID(ctx, scope, obj.ID)
 	if err != nil {
 		return nil, fmt.Errorf("cannot get data export document ID: %w", err)
 	}
@@ -298,7 +306,7 @@ func (r *organizationResolver) DataListDocument(ctx context.Context, obj *types.
 		return nil, nil
 	}
 
-	doc, err := prb.Documents.Get(ctx, *dataDocumentID)
+	doc, err := prb.Documents.Get(ctx, scope, *dataDocumentID)
 	if err != nil {
 		return nil, fmt.Errorf("cannot get data export document: %w", err)
 	}
@@ -312,7 +320,8 @@ func (r *organizationResolver) Data(ctx context.Context, obj *types.Organization
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	scope := coredata.NewScopeFromObjectID(obj.ID)
+	prb := r.probo
 
 	pageOrderBy := page.OrderBy[coredata.DatumOrderField]{
 		Field:     coredata.DatumOrderFieldCreatedAt,
@@ -327,7 +336,7 @@ func (r *organizationResolver) Data(ctx context.Context, obj *types.Organization
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	page, err := prb.Data.ListForOrganizationID(ctx, obj.ID, cursor)
+	page, err := prb.Data.ListForOrganizationID(ctx, scope, obj.ID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list organization data", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -342,7 +351,8 @@ func (r *organizationResolver) Audits(ctx context.Context, obj *types.Organizati
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	scope := coredata.NewScopeFromObjectID(obj.ID)
+	prb := r.probo
 
 	pageOrderBy := page.OrderBy[coredata.AuditOrderField]{
 		Field:     coredata.AuditOrderFieldCreatedAt,
@@ -357,7 +367,7 @@ func (r *organizationResolver) Audits(ctx context.Context, obj *types.Organizati
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	page, err := prb.Audits.ListForOrganizationID(ctx, obj.ID, cursor)
+	page, err := prb.Audits.ListForOrganizationID(ctx, scope, obj.ID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list organization audits", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -372,9 +382,10 @@ func (r *organizationResolver) FindingsDocument(ctx context.Context, obj *types.
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	scope := coredata.NewScopeFromObjectID(obj.ID)
+	prb := r.probo
 
-	findingDocumentID, err := prb.GeneratedDocuments.GetFindingsDocumentID(ctx, obj.ID)
+	findingDocumentID, err := prb.GeneratedDocuments.GetFindingsDocumentID(ctx, scope, obj.ID)
 	if err != nil {
 		return nil, fmt.Errorf("cannot get finding list document ID: %w", err)
 	}
@@ -383,7 +394,7 @@ func (r *organizationResolver) FindingsDocument(ctx context.Context, obj *types.
 		return nil, nil
 	}
 
-	doc, err := prb.Documents.Get(ctx, *findingDocumentID)
+	doc, err := prb.Documents.Get(ctx, scope, *findingDocumentID)
 	if err != nil {
 		return nil, fmt.Errorf("cannot get finding list document: %w", err)
 	}
@@ -397,7 +408,8 @@ func (r *organizationResolver) Findings(ctx context.Context, obj *types.Organiza
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	scope := coredata.NewScopeFromObjectID(obj.ID)
+	prb := r.probo
 
 	pageOrderBy := page.OrderBy[coredata.FindingOrderField]{
 		Field:     coredata.FindingOrderFieldCreatedAt,
@@ -428,7 +440,7 @@ func (r *organizationResolver) Findings(ctx context.Context, obj *types.Organiza
 
 	findingFilter := coredata.NewFindingFilter(kind, status, priority, ownerID)
 
-	page, err := prb.Findings.ListForOrganizationID(ctx, obj.ID, cursor, findingFilter)
+	page, err := prb.Findings.ListForOrganizationID(ctx, scope, obj.ID, cursor, findingFilter)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list organization findings", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -491,7 +503,8 @@ func (r *organizationResolver) SlackConnections(ctx context.Context, obj *types.
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	scope := coredata.NewScopeFromObjectID(obj.ID)
+	prb := r.probo
 
 	slackProvider := coredata.ConnectorProviderSlack
 	filter := coredata.NewConnectorProviderFilter(&slackProvider)
@@ -503,7 +516,7 @@ func (r *organizationResolver) SlackConnections(ctx context.Context, obj *types.
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	page, err := prb.Connectors.ListForOrganizationID(ctx, obj.ID, cursor, filter)
+	page, err := prb.Connectors.ListForOrganizationID(ctx, scope, obj.ID, cursor, filter)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list organization slack connections", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -523,9 +536,10 @@ func (r *organizationResolver) Connectors(ctx context.Context, obj *types.Organi
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	scope := coredata.NewScopeFromObjectID(obj.ID)
+	prb := r.probo
 
-	connectors, err := prb.Connectors.ListAllForOrganizationID(ctx, obj.ID)
+	connectors, err := prb.Connectors.ListAllForOrganizationID(ctx, scope, obj.ID)
 	if err != nil {
 		panic(fmt.Errorf("cannot list organization connectors: %w", err))
 	}
@@ -586,7 +600,8 @@ func (r *organizationResolver) Controls(ctx context.Context, obj *types.Organiza
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	scope := coredata.NewScopeFromObjectID(obj.ID)
+	prb := r.probo
 
 	pageOrderBy := page.OrderBy[coredata.ControlOrderField]{
 		Field:     coredata.ControlOrderFieldCreatedAt,
@@ -606,7 +621,7 @@ func (r *organizationResolver) Controls(ctx context.Context, obj *types.Organiza
 		controlFilter = coredata.NewControlFilter(filter.Query)
 	}
 
-	page, err := prb.Controls.ListForOrganizationID(ctx, obj.ID, cursor, controlFilter)
+	page, err := prb.Controls.ListForOrganizationID(ctx, scope, obj.ID, cursor, controlFilter)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list controls", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -621,7 +636,8 @@ func (r *organizationResolver) StatementsOfApplicability(ctx context.Context, ob
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	scope := coredata.NewScopeFromObjectID(obj.ID)
+	prb := r.probo
 
 	pageOrderBy := page.OrderBy[coredata.StatementOfApplicabilityOrderField]{
 		Field:     coredata.StatementOfApplicabilityOrderFieldCreatedAt,
@@ -636,7 +652,7 @@ func (r *organizationResolver) StatementsOfApplicability(ctx context.Context, ob
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	page, err := prb.StatementsOfApplicability.ListForOrganizationID(ctx, obj.ID, cursor)
+	page, err := prb.StatementsOfApplicability.ListForOrganizationID(ctx, scope, obj.ID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list organization statements_of_applicability", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -651,7 +667,8 @@ func (r *organizationResolver) DataProtectionImpactAssessments(ctx context.Conte
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	scope := coredata.NewScopeFromObjectID(obj.ID)
+	prb := r.probo
 
 	pageOrderBy := page.OrderBy[coredata.DataProtectionImpactAssessmentOrderField]{
 		Field:     coredata.DataProtectionImpactAssessmentOrderFieldCreatedAt,
@@ -667,7 +684,7 @@ func (r *organizationResolver) DataProtectionImpactAssessments(ctx context.Conte
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	page, err := prb.DataProtectionImpactAssessments.ListForOrganizationID(ctx, obj.ID, cursor)
+	page, err := prb.DataProtectionImpactAssessments.ListForOrganizationID(ctx, scope, obj.ID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list organization data protection impact assessments", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -682,9 +699,10 @@ func (r *organizationResolver) DataProtectionImpactAssessmentsDocument(ctx conte
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	scope := coredata.NewScopeFromObjectID(obj.ID)
+	prb := r.probo
 
-	documentID, err := prb.GeneratedDocuments.GetDataProtectionImpactAssessmentsDocumentID(ctx, obj.ID)
+	documentID, err := prb.GeneratedDocuments.GetDataProtectionImpactAssessmentsDocumentID(ctx, scope, obj.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot get DPIA list document ID", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -694,7 +712,7 @@ func (r *organizationResolver) DataProtectionImpactAssessmentsDocument(ctx conte
 		return nil, nil
 	}
 
-	document, err := prb.Documents.Get(ctx, *documentID)
+	document, err := prb.Documents.Get(ctx, scope, *documentID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, nil
@@ -714,7 +732,8 @@ func (r *organizationResolver) TransferImpactAssessments(ctx context.Context, ob
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	scope := coredata.NewScopeFromObjectID(obj.ID)
+	prb := r.probo
 
 	pageOrderBy := page.OrderBy[coredata.TransferImpactAssessmentOrderField]{
 		Field:     coredata.TransferImpactAssessmentOrderFieldCreatedAt,
@@ -730,7 +749,7 @@ func (r *organizationResolver) TransferImpactAssessments(ctx context.Context, ob
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	page, err := prb.TransferImpactAssessments.ListForOrganizationID(ctx, obj.ID, cursor)
+	page, err := prb.TransferImpactAssessments.ListForOrganizationID(ctx, scope, obj.ID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list organization transfer impact assessments", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -745,9 +764,10 @@ func (r *organizationResolver) TransferImpactAssessmentsDocument(ctx context.Con
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	scope := coredata.NewScopeFromObjectID(obj.ID)
+	prb := r.probo
 
-	documentID, err := prb.GeneratedDocuments.GetTransferImpactAssessmentsDocumentID(ctx, obj.ID)
+	documentID, err := prb.GeneratedDocuments.GetTransferImpactAssessmentsDocumentID(ctx, scope, obj.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot get TIA list document ID", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -757,7 +777,7 @@ func (r *organizationResolver) TransferImpactAssessmentsDocument(ctx context.Con
 		return nil, nil
 	}
 
-	document, err := prb.Documents.Get(ctx, *documentID)
+	document, err := prb.Documents.Get(ctx, scope, *documentID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, nil
@@ -777,7 +797,8 @@ func (r *organizationResolver) Documents(ctx context.Context, obj *types.Organiz
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	scope := coredata.NewScopeFromObjectID(obj.ID)
+	prb := r.probo
 
 	pageOrderBy := page.OrderBy[coredata.DocumentOrderField]{
 		Field:     coredata.DocumentOrderFieldTitle,
@@ -801,7 +822,7 @@ func (r *organizationResolver) Documents(ctx context.Context, obj *types.Organiz
 			WithStatus(filter.Status)
 	}
 
-	page, err := prb.Documents.ListByOrganizationID(ctx, obj.ID, cursor, documentFilter)
+	page, err := prb.Documents.ListByOrganizationID(ctx, scope, obj.ID, cursor, documentFilter)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list organization documents", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -821,7 +842,8 @@ func (r *organizationResolver) Frameworks(ctx context.Context, obj *types.Organi
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	scope := coredata.NewScopeFromObjectID(obj.ID)
+	prb := r.probo
 
 	pageOrderBy := page.OrderBy[coredata.FrameworkOrderField]{
 		Field:     coredata.FrameworkOrderFieldCreatedAt,
@@ -836,7 +858,7 @@ func (r *organizationResolver) Frameworks(ctx context.Context, obj *types.Organi
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	page, err := prb.Frameworks.ListForOrganizationID(ctx, obj.ID, cursor)
+	page, err := prb.Frameworks.ListForOrganizationID(ctx, scope, obj.ID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list organization frameworks", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -851,7 +873,8 @@ func (r *organizationResolver) Measures(ctx context.Context, obj *types.Organiza
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	scope := coredata.NewScopeFromObjectID(obj.ID)
+	prb := r.probo
 
 	pageOrderBy := page.OrderBy[coredata.MeasureOrderField]{
 		Field:     coredata.MeasureOrderFieldCreatedAt,
@@ -871,7 +894,7 @@ func (r *organizationResolver) Measures(ctx context.Context, obj *types.Organiza
 		measureFilter = coredata.NewMeasureFilter(filter.Query, filter.State, filter.Category)
 	}
 
-	page, err := prb.Measures.ListForOrganizationID(ctx, obj.ID, cursor, measureFilter)
+	page, err := prb.Measures.ListForOrganizationID(ctx, scope, obj.ID, cursor, measureFilter)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list organization measures", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -886,9 +909,10 @@ func (r *organizationResolver) ObligationsDocument(ctx context.Context, obj *typ
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	scope := coredata.NewScopeFromObjectID(obj.ID)
+	prb := r.probo
 
-	obligationDocumentID, err := prb.GeneratedDocuments.GetObligationsDocumentID(ctx, obj.ID)
+	obligationDocumentID, err := prb.GeneratedDocuments.GetObligationsDocumentID(ctx, scope, obj.ID)
 	if err != nil {
 		return nil, fmt.Errorf("cannot get obligation list document ID: %w", err)
 	}
@@ -897,7 +921,7 @@ func (r *organizationResolver) ObligationsDocument(ctx context.Context, obj *typ
 		return nil, nil
 	}
 
-	doc, err := prb.Documents.Get(ctx, *obligationDocumentID)
+	doc, err := prb.Documents.Get(ctx, scope, *obligationDocumentID)
 	if err != nil {
 		return nil, fmt.Errorf("cannot get obligation list document: %w", err)
 	}
@@ -911,7 +935,8 @@ func (r *organizationResolver) Obligations(ctx context.Context, obj *types.Organ
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	scope := coredata.NewScopeFromObjectID(obj.ID)
+	prb := r.probo
 
 	pageOrderBy := page.OrderBy[coredata.ObligationOrderField]{
 		Field:     coredata.ObligationOrderFieldCreatedAt,
@@ -927,7 +952,7 @@ func (r *organizationResolver) Obligations(ctx context.Context, obj *types.Organ
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	page, err := prb.Obligations.ListForOrganizationID(ctx, obj.ID, cursor)
+	page, err := prb.Obligations.ListForOrganizationID(ctx, scope, obj.ID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list organization obligations", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -942,7 +967,8 @@ func (r *organizationResolver) ProcessingActivities(ctx context.Context, obj *ty
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	scope := coredata.NewScopeFromObjectID(obj.ID)
+	prb := r.probo
 
 	pageOrderBy := page.OrderBy[coredata.ProcessingActivityOrderField]{
 		Field:     coredata.ProcessingActivityOrderFieldCreatedAt,
@@ -958,7 +984,7 @@ func (r *organizationResolver) ProcessingActivities(ctx context.Context, obj *ty
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	page, err := prb.ProcessingActivities.ListForOrganizationID(ctx, obj.ID, cursor)
+	page, err := prb.ProcessingActivities.ListForOrganizationID(ctx, scope, obj.ID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list organization processing activities", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -973,9 +999,10 @@ func (r *organizationResolver) ProcessingActivitiesDocument(ctx context.Context,
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	scope := coredata.NewScopeFromObjectID(obj.ID)
+	prb := r.probo
 
-	documentID, err := prb.GeneratedDocuments.GetProcessingActivitiesDocumentID(ctx, obj.ID)
+	documentID, err := prb.GeneratedDocuments.GetProcessingActivitiesDocumentID(ctx, scope, obj.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot get processing activities document ID", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -985,7 +1012,7 @@ func (r *organizationResolver) ProcessingActivitiesDocument(ctx context.Context,
 		return nil, nil
 	}
 
-	document, err := prb.Documents.Get(ctx, *documentID)
+	document, err := prb.Documents.Get(ctx, scope, *documentID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, nil
@@ -1005,7 +1032,8 @@ func (r *organizationResolver) RightsRequests(ctx context.Context, obj *types.Or
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	scope := coredata.NewScopeFromObjectID(obj.ID)
+	prb := r.probo
 
 	pageOrderBy := page.OrderBy[coredata.RightsRequestOrderField]{
 		Field:     coredata.RightsRequestOrderFieldCreatedAt,
@@ -1021,7 +1049,7 @@ func (r *organizationResolver) RightsRequests(ctx context.Context, obj *types.Or
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	page, err := prb.RightsRequests.ListForOrganizationID(ctx, obj.ID, cursor)
+	page, err := prb.RightsRequests.ListForOrganizationID(ctx, scope, obj.ID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list organization rights requests", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -1036,7 +1064,8 @@ func (r *organizationResolver) Risks(ctx context.Context, obj *types.Organizatio
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	scope := coredata.NewScopeFromObjectID(obj.ID)
+	prb := r.probo
 
 	pageOrderBy := page.OrderBy[coredata.RiskOrderField]{
 		Field:     coredata.RiskOrderFieldCreatedAt,
@@ -1056,7 +1085,7 @@ func (r *organizationResolver) Risks(ctx context.Context, obj *types.Organizatio
 		riskFilter = coredata.NewRiskFilter(filter.Query)
 	}
 
-	page, err := prb.Risks.ListForOrganizationID(ctx, obj.ID, cursor, riskFilter)
+	page, err := prb.Risks.ListForOrganizationID(ctx, scope, obj.ID, cursor, riskFilter)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list organization risks", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -1071,9 +1100,10 @@ func (r *organizationResolver) RisksDocument(ctx context.Context, obj *types.Org
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	scope := coredata.NewScopeFromObjectID(obj.ID)
+	prb := r.probo
 
-	documentID, err := prb.GeneratedDocuments.GetRisksDocumentID(ctx, obj.ID)
+	documentID, err := prb.GeneratedDocuments.GetRisksDocumentID(ctx, scope, obj.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot get risks document ID", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -1083,7 +1113,7 @@ func (r *organizationResolver) RisksDocument(ctx context.Context, obj *types.Org
 		return nil, nil
 	}
 
-	document, err := prb.Documents.Get(ctx, *documentID)
+	document, err := prb.Documents.Get(ctx, scope, *documentID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, nil
@@ -1163,7 +1193,8 @@ func (r *organizationResolver) Tasks(ctx context.Context, obj *types.Organizatio
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	scope := coredata.NewScopeFromObjectID(obj.ID)
+	prb := r.probo
 
 	pageOrderBy := page.OrderBy[coredata.TaskOrderField]{
 		Field:     coredata.TaskOrderFieldCreatedAt,
@@ -1178,7 +1209,7 @@ func (r *organizationResolver) Tasks(ctx context.Context, obj *types.Organizatio
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	page, err := prb.Tasks.ListForOrganizationID(ctx, obj.ID, cursor)
+	page, err := prb.Tasks.ListForOrganizationID(ctx, scope, obj.ID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list organization tasks", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -1193,9 +1224,10 @@ func (r *organizationResolver) TrustCenter(ctx context.Context, obj *types.Organ
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	scope := coredata.NewScopeFromObjectID(obj.ID)
+	prb := r.probo
 
-	trustCenter, err := prb.TrustCenters.GetByOrganizationID(ctx, obj.ID)
+	trustCenter, err := prb.TrustCenters.GetByOrganizationID(ctx, scope, obj.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot get trust center", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -1203,7 +1235,7 @@ func (r *organizationResolver) TrustCenter(ctx context.Context, obj *types.Organ
 
 	var file *coredata.File
 	if trustCenter.NonDisclosureAgreementFileID != nil {
-		file, err = prb.Files.Get(ctx, *trustCenter.NonDisclosureAgreementFileID)
+		file, err = prb.Files.Get(ctx, scope, *trustCenter.NonDisclosureAgreementFileID)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot get NDA file", log.Error(err))
 			return nil, gqlutils.Internal(ctx)
@@ -1219,9 +1251,10 @@ func (r *organizationResolver) CustomDomain(ctx context.Context, obj *types.Orga
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	scope := coredata.NewScopeFromObjectID(obj.ID)
+	prb := r.probo
 
-	domain, err := prb.CustomDomains.GetOrganizationCustomDomain(ctx, obj.ID)
+	domain, err := prb.CustomDomains.GetOrganizationCustomDomain(ctx, scope, obj.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot get custom domain", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -1240,7 +1273,8 @@ func (r *organizationResolver) TrustCenterFiles(ctx context.Context, obj *types.
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	scope := coredata.NewScopeFromObjectID(obj.ID)
+	prb := r.probo
 
 	pageOrderBy := page.OrderBy[coredata.TrustCenterFileOrderField]{
 		Field:     coredata.TrustCenterFileOrderFieldCreatedAt,
@@ -1255,7 +1289,7 @@ func (r *organizationResolver) TrustCenterFiles(ctx context.Context, obj *types.
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	pageResult, err := prb.TrustCenterFiles.ListForOrganizationID(ctx, obj.ID, cursor, &coredata.TrustCenterFileFilter{})
+	pageResult, err := prb.TrustCenterFiles.ListForOrganizationID(ctx, scope, obj.ID, cursor, &coredata.TrustCenterFileFilter{})
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list organization trust center files", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -1301,7 +1335,8 @@ func (r *organizationResolver) ThirdParties(ctx context.Context, obj *types.Orga
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	scope := coredata.NewScopeFromObjectID(obj.ID)
+	prb := r.probo
 
 	pageOrderBy := page.OrderBy[coredata.ThirdPartyOrderField]{
 		Field:     coredata.ThirdPartyOrderFieldCreatedAt,
@@ -1318,7 +1353,7 @@ func (r *organizationResolver) ThirdParties(ctx context.Context, obj *types.Orga
 
 	thirdPartyFilter := coredata.NewThirdPartyFilter(nil)
 
-	page, err := prb.ThirdParties.ListForOrganizationID(ctx, obj.ID, cursor, thirdPartyFilter)
+	page, err := prb.ThirdParties.ListForOrganizationID(ctx, scope, obj.ID, cursor, thirdPartyFilter)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list organization thirdParties", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -1333,9 +1368,10 @@ func (r *organizationResolver) ThirdPartiesDocument(ctx context.Context, obj *ty
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	scope := coredata.NewScopeFromObjectID(obj.ID)
+	prb := r.probo
 
-	documentID, err := prb.GeneratedDocuments.GetThirdPartiesDocumentID(ctx, obj.ID)
+	documentID, err := prb.GeneratedDocuments.GetThirdPartiesDocumentID(ctx, scope, obj.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot get thirdParties document ID", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -1345,7 +1381,7 @@ func (r *organizationResolver) ThirdPartiesDocument(ctx context.Context, obj *ty
 		return nil, nil
 	}
 
-	document, err := prb.Documents.Get(ctx, *documentID)
+	document, err := prb.Documents.Get(ctx, scope, *documentID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, nil
@@ -1365,7 +1401,8 @@ func (r *organizationResolver) WebhookSubscriptions(ctx context.Context, obj *ty
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	scope := coredata.NewScopeFromObjectID(obj.ID)
+	prb := r.probo
 
 	pageOrderBy := page.OrderBy[coredata.WebhookSubscriptionOrderField]{
 		Field:     coredata.WebhookSubscriptionOrderFieldCreatedAt,
@@ -1380,7 +1417,7 @@ func (r *organizationResolver) WebhookSubscriptions(ctx context.Context, obj *ty
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	page, err := prb.WebhookSubscriptions.ListForOrganizationID(ctx, obj.ID, cursor)
+	page, err := prb.WebhookSubscriptions.ListForOrganizationID(ctx, scope, obj.ID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list organization webhook subscriptions", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -1415,9 +1452,10 @@ func (r *profileConnectionResolver) TotalCount(ctx context.Context, obj *types.P
 
 		return count, nil
 	case *documentVersionResolver:
-		prb := r.ProboService(ctx, obj.ParentID.TenantID())
+		scope := coredata.NewScopeFromObjectID(obj.ParentID)
+		prb := r.probo
 
-		count, err := prb.Documents.CountVersionApprovers(ctx, obj.ParentID)
+		count, err := prb.Documents.CountVersionApprovers(ctx, scope, obj.ParentID)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count document version approvers", log.Error(err))
 			return 0, gqlutils.Internal(ctx)

@@ -172,7 +172,8 @@ func handleConnectorComplete(
 			return
 		}
 
-		svc := proboSvc.WithTenant(organizationID.TenantID())
+		scope := coredata.NewScopeFromObjectID(organizationID)
+		svc := proboSvc
 
 		var cnnctr *coredata.Connector
 
@@ -187,6 +188,7 @@ func handleConnectorComplete(
 
 			cnnctr, err = svc.Connectors.Reconnect(
 				r.Context(),
+				scope,
 				probo.ReconnectConnectorRequest{
 					ConnectorID:    connectorID,
 					OrganizationID: organizationID,
@@ -263,7 +265,7 @@ func handleConnectorComplete(
 				}
 			}
 
-			cnnctr, err = svc.Connectors.Create(r.Context(), createReq)
+			cnnctr, err = svc.Connectors.Create(r.Context(), scope, createReq)
 			if err != nil {
 				logger.ErrorCtx(r.Context(), "cannot create connector", log.Error(err))
 				httpserver.RenderError(w, http.StatusInternalServerError, fmt.Errorf("internal error"))
@@ -355,10 +357,6 @@ func isValidPagerDutySubdomain(s string) bool {
 	}
 
 	return true
-}
-
-func (r *Resolver) ProboService(ctx context.Context, tenantID gid.TenantID) *probo.TenantService {
-	return r.probo.WithTenant(tenantID)
 }
 
 func (r *Resolver) Permission(ctx context.Context, obj types.Node, action string) (bool, error) {

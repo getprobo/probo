@@ -39,7 +39,6 @@ import (
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/esign"
-	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/mailman"
 	"go.probo.inc/probo/pkg/securecookie"
@@ -107,8 +106,4 @@ func NewMux(
 	)
 
 	return r
-}
-
-func (r *Resolver) TrustService(ctx context.Context, tenantID gid.TenantID) *trust.TenantService {
-	return r.trust.WithTenant(tenantID)
 }

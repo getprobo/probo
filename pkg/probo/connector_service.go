@@ -45,7 +45,7 @@ var (
 
 type (
 	ConnectorService struct {
-		svc *TenantService
+		svc *Service
 	}
 
 	CreateConnectorRequest struct {
@@ -92,7 +92,7 @@ func (rcr *ReconnectConnectorRequest) Validate() error {
 }
 
 func (s *ConnectorService) ListForOrganizationID(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	organizationID gid.GID,
 	cursor *page.Cursor[coredata.ConnectorOrderField],
 	filter *coredata.ConnectorFilter,
@@ -105,7 +105,7 @@ func (s *ConnectorService) ListForOrganizationID(
 			return connectors.LoadByOrganizationIDWithoutDecryptedConnection(
 				ctx,
 				conn,
-				s.svc.scope,
+				scope,
 				organizationID,
 				cursor,
 				filter,
@@ -120,7 +120,7 @@ func (s *ConnectorService) ListForOrganizationID(
 }
 
 func (s *ConnectorService) ListAllForOrganizationID(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	organizationID gid.GID,
 ) (coredata.Connectors, error) {
 	var connectors coredata.Connectors
@@ -131,7 +131,7 @@ func (s *ConnectorService) ListAllForOrganizationID(
 			return connectors.LoadAllByOrganizationIDWithoutDecryptedConnection(
 				ctx,
 				conn,
-				s.svc.scope,
+				scope,
 				organizationID,
 			)
 		},
@@ -144,7 +144,7 @@ func (s *ConnectorService) ListAllForOrganizationID(
 }
 
 func (s *ConnectorService) GetByOrganizationIDAndProvider(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	organizationID gid.GID,
 	provider coredata.ConnectorProvider,
 ) (*coredata.Connector, error) {
@@ -156,7 +156,7 @@ func (s *ConnectorService) GetByOrganizationIDAndProvider(
 			return cnnctr.LoadOneByOrganizationIDAndProvider(
 				ctx,
 				conn,
-				s.svc.scope,
+				scope,
 				s.svc.encryptionKey,
 				organizationID,
 				provider,
@@ -177,7 +177,7 @@ func (s *ConnectorService) GetByOrganizationIDAndProvider(
 // Contrast with Get, which uses LoadMetadataByID and returns a
 // connector with Connection == nil.
 func (s *ConnectorService) GetWithConnection(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	connectorID gid.GID,
 ) (*coredata.Connector, error) {
 	cnnctr := &coredata.Connector{}
@@ -185,7 +185,7 @@ func (s *ConnectorService) GetWithConnection(
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			return cnnctr.LoadByID(ctx, conn, s.svc.scope, connectorID, s.svc.encryptionKey)
+			return cnnctr.LoadByID(ctx, conn, scope, connectorID, s.svc.encryptionKey)
 		},
 	)
 	if err != nil {
@@ -196,7 +196,7 @@ func (s *ConnectorService) GetWithConnection(
 }
 
 func (s *ConnectorService) Get(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	connectorID gid.GID,
 ) (*coredata.Connector, error) {
 	connector := &coredata.Connector{}
@@ -204,7 +204,7 @@ func (s *ConnectorService) Get(
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			return connector.LoadMetadataByID(ctx, conn, s.svc.scope, connectorID)
+			return connector.LoadMetadataByID(ctx, conn, scope, connectorID)
 		},
 	)
 	if err != nil {
@@ -215,27 +215,27 @@ func (s *ConnectorService) Get(
 }
 
 func (s *ConnectorService) Delete(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	connectorID gid.GID,
 ) error {
 	return s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			cnnctr := &coredata.Connector{ID: connectorID}
-			return cnnctr.Delete(ctx, tx, s.svc.scope)
+			return cnnctr.Delete(ctx, tx, scope)
 		},
 	)
 }
 
 func (s *ConnectorService) Create(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	req CreateConnectorRequest,
 ) (*coredata.Connector, error) {
 	if err := req.Validate(); err != nil {
 		return nil, fmt.Errorf("invalid request: %w", err)
 	}
 
-	id := gid.New(s.svc.scope.GetTenantID(), coredata.ConnectorEntityType)
+	id := gid.New(scope.GetTenantID(), coredata.ConnectorEntityType)
 	now := time.Now()
 
 	newConnector := &coredata.Connector{
@@ -286,7 +286,7 @@ func (s *ConnectorService) Create(
 	err := s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			if err := newConnector.Insert(ctx, tx, s.svc.scope, s.svc.encryptionKey); err != nil {
+			if err := newConnector.Insert(ctx, tx, scope, s.svc.encryptionKey); err != nil {
 				return fmt.Errorf("cannot create connector: %w", err)
 			}
 
@@ -294,7 +294,7 @@ func (s *ConnectorService) Create(
 				slackConn, ok := req.Connection.(*connector.SlackConnection)
 				if ok && slackConn.Settings.Channel != "" {
 					var organization coredata.Organization
-					if err := organization.LoadByID(ctx, tx, s.svc.scope, req.OrganizationID); err != nil {
+					if err := organization.LoadByID(ctx, tx, scope, req.OrganizationID); err != nil {
 						return fmt.Errorf("cannot load organization: %w", err)
 					}
 
@@ -316,8 +316,8 @@ func (s *ConnectorService) Create(
 						return fmt.Errorf("cannot parse template JSON: %w", err)
 					}
 
-					slackMessage := coredata.NewSlackMessage(s.svc.scope, req.OrganizationID, coredata.SlackMessageTypeWelcome, body)
-					if err := slackMessage.Insert(ctx, tx, s.svc.scope); err != nil {
+					slackMessage := coredata.NewSlackMessage(scope, req.OrganizationID, coredata.SlackMessageTypeWelcome, body)
+					if err := slackMessage.Insert(ctx, tx, scope); err != nil {
 						return fmt.Errorf("cannot insert slack message: %w", err)
 					}
 				}
@@ -340,7 +340,7 @@ func (s *ConnectorService) Create(
 // in the initiate URL. Refresh tokens and Slack webhook settings are
 // preserved from the existing connection when the new one omits them.
 func (s *ConnectorService) Reconnect(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	req ReconnectConnectorRequest,
 ) (*coredata.Connector, error) {
 	if err := req.Validate(); err != nil {
@@ -352,7 +352,7 @@ func (s *ConnectorService) Reconnect(
 	err := s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
-			if err := cnnctr.LoadByID(ctx, conn, s.svc.scope, req.ConnectorID, s.svc.encryptionKey); err != nil {
+			if err := cnnctr.LoadByID(ctx, conn, scope, req.ConnectorID, s.svc.encryptionKey); err != nil {
 				return fmt.Errorf("cannot load connector: %w", err)
 			}
 
@@ -372,7 +372,7 @@ func (s *ConnectorService) Reconnect(
 			cnnctr.Connection = req.Connection
 			cnnctr.UpdatedAt = time.Now()
 
-			return cnnctr.Update(ctx, conn, s.svc.scope, s.svc.encryptionKey)
+			return cnnctr.Update(ctx, conn, scope, s.svc.encryptionKey)
 		},
 	)
 	if err != nil {

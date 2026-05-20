@@ -36,7 +36,8 @@ func (r *mutationResolver) CreateAPIKeyConnector(ctx context.Context, input type
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
+	scope := coredata.NewScopeFromObjectID(input.OrganizationID)
+	prb := r.probo
 
 	req := probo.CreateConnectorRequest{
 		OrganizationID: input.OrganizationID,
@@ -75,7 +76,7 @@ func (r *mutationResolver) CreateAPIKeyConnector(ctx context.Context, input type
 		}
 	}
 
-	cnnctr, err := prb.Connectors.Create(ctx, req)
+	cnnctr, err := prb.Connectors.Create(ctx, scope, req)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
 			return nil, gqlutils.Conflict(ctx, err)
@@ -95,7 +96,8 @@ func (r *mutationResolver) CreateClientCredentialsConnector(ctx context.Context,
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
+	scope := coredata.NewScopeFromObjectID(input.OrganizationID)
+	prb := r.probo
 
 	oauth2Conn := &connector.OAuth2Connection{
 		GrantType:    connector.OAuth2GrantTypeClientCredentials,
@@ -121,7 +123,7 @@ func (r *mutationResolver) CreateClientCredentialsConnector(ctx context.Context,
 		}
 	}
 
-	cnnctr, err := prb.Connectors.Create(ctx, req)
+	cnnctr, err := prb.Connectors.Create(ctx, scope, req)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
 			return nil, gqlutils.Conflict(ctx, err)
@@ -141,9 +143,10 @@ func (r *mutationResolver) DeleteConnector(ctx context.Context, input types.Dele
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, input.ConnectorID.TenantID())
+	scope := coredata.NewScopeFromObjectID(input.ConnectorID)
+	prb := r.probo
 
-	if err := prb.Connectors.Delete(ctx, input.ConnectorID); err != nil {
+	if err := prb.Connectors.Delete(ctx, scope, input.ConnectorID); err != nil {
 		panic(fmt.Errorf("cannot delete connector: %w", err))
 	}
 
@@ -158,9 +161,10 @@ func (r *mutationResolver) DeleteSlackConnection(ctx context.Context, input type
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, input.SlackConnectionID.TenantID())
+	scope := coredata.NewScopeFromObjectID(input.SlackConnectionID)
+	prb := r.probo
 
-	err := prb.Connectors.Delete(ctx, input.SlackConnectionID)
+	err := prb.Connectors.Delete(ctx, scope, input.SlackConnectionID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete slack connection", log.Error(err))
 		return nil, gqlutils.Internal(ctx)

@@ -17,6 +17,7 @@ package compliancepage
 import (
 	"net/http"
 
+	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/trust"
 )
 
@@ -37,7 +38,9 @@ func (h *Handler) HandleLLMsTxt(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 
-	if err := h.trustService.RenderCompliancePageMarkdown(r.Context(), w, tc.ID, tc.TenantID); err != nil {
+	scope := coredata.NewScopeFromObjectID(tc.ID)
+
+	if err := h.trustService.RenderCompliancePageMarkdown(r.Context(), w, tc.ID, scope); err != nil {
 		http.Error(w, "internal server error", http.StatusInternalServerError)
 	}
 }
@@ -77,7 +80,9 @@ func (h *Handler) HandleSitemap(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/xml; charset=utf-8")
 
-	if err := h.trustService.RenderSitemap(r.Context(), w, tc.ID, tc.TenantID, *baseURL); err != nil {
+	scope := coredata.NewScopeFromObjectID(tc.ID)
+
+	if err := h.trustService.RenderSitemap(r.Context(), w, tc.ID, scope, *baseURL); err != nil {
 		http.Error(w, "internal server error", http.StatusInternalServerError)
 	}
 }

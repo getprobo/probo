@@ -15,7 +15,6 @@
 package mcp_v1
 
 import (
-	"context"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -24,17 +23,12 @@ import (
 	mcpgenmcp "go.probo.inc/mcpgen/mcp"
 	"go.probo.inc/probo/pkg/accessreview"
 	"go.probo.inc/probo/pkg/cookiebanner"
-	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/mcp/mcputils"
 	"go.probo.inc/probo/pkg/server/api/mcp/v1/server"
 )
-
-func (r *Resolver) ProboService(ctx context.Context, objectID gid.GID) *probo.TenantService {
-	return r.proboSvc.WithTenant(objectID.TenantID())
-}
 
 func NewMux(logger *log.Logger, proboSvc *probo.Service, iamSvc *iam.Service, accessReviewSvc *accessreview.Service, cookieBannerSvc *cookiebanner.Service, tokenSecret string) *chi.Mux {
 	logger = logger.Named("mcp.v1")

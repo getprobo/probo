@@ -27,7 +27,7 @@ import (
 )
 
 type StatementOfApplicabilityService struct {
-	svc *TenantService
+	svc *Service
 }
 
 type (
@@ -61,7 +61,7 @@ func (usr *UpdateStatementOfApplicabilityRequest) Validate() error {
 }
 
 func (s StatementOfApplicabilityService) ListForOrganizationID(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	organizationID gid.GID,
 	cursor *page.Cursor[coredata.StatementOfApplicabilityOrderField],
 ) (*page.Page[*coredata.StatementOfApplicability, coredata.StatementOfApplicabilityOrderField], error) {
@@ -72,14 +72,14 @@ func (s StatementOfApplicabilityService) ListForOrganizationID(
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			if err := organization.LoadByID(ctx, conn, s.svc.scope, organizationID); err != nil {
+			if err := organization.LoadByID(ctx, conn, scope, organizationID); err != nil {
 				return fmt.Errorf("cannot load organization: %w", err)
 			}
 
 			err := statementsOfApplicability.LoadByOrganizationID(
 				ctx,
 				conn,
-				s.svc.scope,
+				scope,
 				organization.ID,
 				cursor,
 			)
@@ -98,7 +98,7 @@ func (s StatementOfApplicabilityService) ListForOrganizationID(
 }
 
 func (s StatementOfApplicabilityService) CountForOrganizationID(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	organizationID gid.GID,
 ) (int, error) {
 	var count int
@@ -108,7 +108,7 @@ func (s StatementOfApplicabilityService) CountForOrganizationID(
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			statementsOfApplicability := &coredata.StatementsOfApplicability{}
 
-			count, err = statementsOfApplicability.CountByOrganizationID(ctx, conn, s.svc.scope, organizationID)
+			count, err = statementsOfApplicability.CountByOrganizationID(ctx, conn, scope, organizationID)
 			if err != nil {
 				return fmt.Errorf("cannot count statements_of_applicability: %w", err)
 			}
@@ -124,7 +124,7 @@ func (s StatementOfApplicabilityService) CountForOrganizationID(
 }
 
 func (s StatementOfApplicabilityService) Get(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	statementOfApplicabilityID gid.GID,
 ) (*coredata.StatementOfApplicability, error) {
 	statementOfApplicability := &coredata.StatementOfApplicability{}
@@ -132,7 +132,7 @@ func (s StatementOfApplicabilityService) Get(
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			return statementOfApplicability.LoadByID(ctx, conn, s.svc.scope, statementOfApplicabilityID)
+			return statementOfApplicability.LoadByID(ctx, conn, scope, statementOfApplicabilityID)
 		},
 	)
 	if err != nil {
@@ -143,7 +143,7 @@ func (s StatementOfApplicabilityService) Get(
 }
 
 func (s StatementOfApplicabilityService) Create(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	req CreateStatementOfApplicabilityRequest,
 ) (*coredata.StatementOfApplicability, error) {
 	if err := req.Validate(); err != nil {
@@ -156,7 +156,7 @@ func (s StatementOfApplicabilityService) Create(
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			return organization.LoadByID(ctx, conn, s.svc.scope, req.OrganizationID)
+			return organization.LoadByID(ctx, conn, scope, req.OrganizationID)
 		},
 	)
 	if err != nil {
@@ -175,7 +175,7 @@ func (s StatementOfApplicabilityService) Create(
 	err = s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
-			if err := statementOfApplicability.Insert(ctx, conn, s.svc.scope); err != nil {
+			if err := statementOfApplicability.Insert(ctx, conn, scope); err != nil {
 				return fmt.Errorf("cannot insert statement_of_applicability: %w", err)
 			}
 
@@ -190,7 +190,7 @@ func (s StatementOfApplicabilityService) Create(
 }
 
 func (s StatementOfApplicabilityService) Update(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	req UpdateStatementOfApplicabilityRequest,
 ) (*coredata.StatementOfApplicability, error) {
 	if err := req.Validate(); err != nil {
@@ -202,7 +202,7 @@ func (s StatementOfApplicabilityService) Update(
 	err := s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
-			if err := statementOfApplicability.LoadByID(ctx, conn, s.svc.scope, req.StatementOfApplicabilityID); err != nil {
+			if err := statementOfApplicability.LoadByID(ctx, conn, scope, req.StatementOfApplicabilityID); err != nil {
 				return fmt.Errorf("cannot load statement_of_applicability: %w", err)
 			}
 
@@ -212,7 +212,7 @@ func (s StatementOfApplicabilityService) Update(
 
 			statementOfApplicability.UpdatedAt = time.Now()
 
-			if err := statementOfApplicability.Update(ctx, conn, s.svc.scope); err != nil {
+			if err := statementOfApplicability.Update(ctx, conn, scope); err != nil {
 				return fmt.Errorf("cannot update statement_of_applicability: %w", err)
 			}
 
@@ -227,7 +227,7 @@ func (s StatementOfApplicabilityService) Update(
 }
 
 func (s StatementOfApplicabilityService) Delete(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	statementOfApplicabilityID gid.GID,
 ) error {
 	statementOfApplicability := &coredata.StatementOfApplicability{ID: statementOfApplicabilityID}
@@ -235,11 +235,11 @@ func (s StatementOfApplicabilityService) Delete(
 	err := s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
-			if err := statementOfApplicability.LoadByID(ctx, conn, s.svc.scope, statementOfApplicabilityID); err != nil {
+			if err := statementOfApplicability.LoadByID(ctx, conn, scope, statementOfApplicabilityID); err != nil {
 				return fmt.Errorf("cannot load statement_of_applicability: %w", err)
 			}
 
-			if err := statementOfApplicability.Delete(ctx, conn, s.svc.scope); err != nil {
+			if err := statementOfApplicability.Delete(ctx, conn, scope); err != nil {
 				return fmt.Errorf("cannot delete statement_of_applicability: %w", err)
 			}
 
@@ -254,7 +254,7 @@ func (s StatementOfApplicabilityService) Delete(
 }
 
 func (s StatementOfApplicabilityService) GetApplicabilityStatement(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	applicabilityStatementID gid.GID,
 ) (*coredata.ApplicabilityStatement, error) {
 	applicabilityStatement := &coredata.ApplicabilityStatement{}
@@ -262,7 +262,7 @@ func (s StatementOfApplicabilityService) GetApplicabilityStatement(
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			return applicabilityStatement.LoadByID(ctx, conn, s.svc.scope, applicabilityStatementID)
+			return applicabilityStatement.LoadByID(ctx, conn, scope, applicabilityStatementID)
 		},
 	)
 	if err != nil {
@@ -273,7 +273,7 @@ func (s StatementOfApplicabilityService) GetApplicabilityStatement(
 }
 
 func (s StatementOfApplicabilityService) ListApplicabilityStatements(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	statementOfApplicabilityID gid.GID,
 	cursor *page.Cursor[coredata.ApplicabilityStatementOrderField],
 ) (*page.Page[*coredata.ApplicabilityStatement, coredata.ApplicabilityStatementOrderField], error) {
@@ -282,7 +282,7 @@ func (s StatementOfApplicabilityService) ListApplicabilityStatements(
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			if err := statements.LoadByStatementOfApplicabilityID(ctx, conn, s.svc.scope, statementOfApplicabilityID, cursor); err != nil {
+			if err := statements.LoadByStatementOfApplicabilityID(ctx, conn, scope, statementOfApplicabilityID, cursor); err != nil {
 				return fmt.Errorf("cannot load applicability statements: %w", err)
 			}
 
@@ -297,7 +297,7 @@ func (s StatementOfApplicabilityService) ListApplicabilityStatements(
 }
 
 func (s StatementOfApplicabilityService) CountApplicabilityStatements(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	statementOfApplicabilityID gid.GID,
 ) (int, error) {
 	var count int
@@ -307,7 +307,7 @@ func (s StatementOfApplicabilityService) CountApplicabilityStatements(
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			statements := &coredata.ApplicabilityStatements{}
 
-			count, err = statements.CountByStatementOfApplicabilityID(ctx, conn, s.svc.scope, statementOfApplicabilityID)
+			count, err = statements.CountByStatementOfApplicabilityID(ctx, conn, scope, statementOfApplicabilityID)
 			if err != nil {
 				return fmt.Errorf("cannot count applicability statements: %w", err)
 			}
@@ -323,7 +323,7 @@ func (s StatementOfApplicabilityService) CountApplicabilityStatements(
 }
 
 func (s StatementOfApplicabilityService) CreateApplicabilityStatement(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	statementOfApplicabilityID gid.GID,
 	controlID gid.GID,
 	applicability bool,
@@ -338,12 +338,12 @@ func (s StatementOfApplicabilityService) CreateApplicabilityStatement(
 	err := s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
-			if err := statementOfApplicability.LoadByID(ctx, conn, s.svc.scope, statementOfApplicabilityID); err != nil {
+			if err := statementOfApplicability.LoadByID(ctx, conn, scope, statementOfApplicabilityID); err != nil {
 				return fmt.Errorf("cannot load statement of applicability: %w", err)
 			}
 
 			applicabilityStatement = &coredata.ApplicabilityStatement{
-				ID:                         gid.New(s.svc.scope.GetTenantID(), coredata.ApplicabilityStatementEntityType),
+				ID:                         gid.New(scope.GetTenantID(), coredata.ApplicabilityStatementEntityType),
 				StatementOfApplicabilityID: statementOfApplicabilityID,
 				ControlID:                  controlID,
 				OrganizationID:             statementOfApplicability.OrganizationID,
@@ -353,7 +353,7 @@ func (s StatementOfApplicabilityService) CreateApplicabilityStatement(
 				UpdatedAt:                  now,
 			}
 
-			if err := applicabilityStatement.Insert(ctx, conn, s.svc.scope); err != nil {
+			if err := applicabilityStatement.Insert(ctx, conn, scope); err != nil {
 				return fmt.Errorf("cannot insert applicability statement: %w", err)
 			}
 
@@ -368,7 +368,7 @@ func (s StatementOfApplicabilityService) CreateApplicabilityStatement(
 }
 
 func (s StatementOfApplicabilityService) UpdateApplicabilityStatement(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	applicabilityStatementID gid.GID,
 	applicability bool,
 	justification *string,
@@ -378,7 +378,7 @@ func (s StatementOfApplicabilityService) UpdateApplicabilityStatement(
 	err := s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
-			if err := applicabilityStatement.LoadByID(ctx, conn, s.svc.scope, applicabilityStatementID); err != nil {
+			if err := applicabilityStatement.LoadByID(ctx, conn, scope, applicabilityStatementID); err != nil {
 				return err
 			}
 
@@ -386,7 +386,7 @@ func (s StatementOfApplicabilityService) UpdateApplicabilityStatement(
 			applicabilityStatement.Justification = justification
 			applicabilityStatement.UpdatedAt = time.Now()
 
-			return applicabilityStatement.UpdateByID(ctx, conn, s.svc.scope)
+			return applicabilityStatement.UpdateByID(ctx, conn, scope)
 		},
 	)
 	if err != nil {
@@ -397,7 +397,7 @@ func (s StatementOfApplicabilityService) UpdateApplicabilityStatement(
 }
 
 func (s StatementOfApplicabilityService) DeleteApplicabilityStatement(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	applicabilityStatementID gid.GID,
 ) error {
 	applicabilityStatement := &coredata.ApplicabilityStatement{}
@@ -405,20 +405,20 @@ func (s StatementOfApplicabilityService) DeleteApplicabilityStatement(
 	return s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
-			return applicabilityStatement.DeleteByID(ctx, conn, s.svc.scope, applicabilityStatementID)
+			return applicabilityStatement.DeleteByID(ctx, conn, scope, applicabilityStatementID)
 		},
 	)
 }
 
 func (s StatementOfApplicabilityService) ListControlLinks(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	controlID gid.GID,
 	cursor *page.Cursor[coredata.ApplicabilityStatementOrderField],
 ) (*page.Page[*coredata.ApplicabilityStatement, coredata.ApplicabilityStatementOrderField], error) {
 	var controls coredata.ApplicabilityStatements
 
 	err := s.svc.pg.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
-		return controls.LoadByControlID(ctx, conn, s.svc.scope, controlID, cursor)
+		return controls.LoadByControlID(ctx, conn, scope, controlID, cursor)
 	})
 	if err != nil {
 		return nil, err

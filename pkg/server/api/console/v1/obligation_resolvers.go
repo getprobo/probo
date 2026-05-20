@@ -27,7 +27,8 @@ func (r *mutationResolver) CreateObligation(ctx context.Context, input types.Cre
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
+	scope := coredata.NewScopeFromObjectID(input.OrganizationID)
+	prb := r.probo
 
 	req := probo.CreateObligationRequest{
 		OrganizationID:         input.OrganizationID,
@@ -43,7 +44,7 @@ func (r *mutationResolver) CreateObligation(ctx context.Context, input types.Cre
 		Type:                   input.Type,
 	}
 
-	obligation, err := prb.Obligations.Create(ctx, &req)
+	obligation, err := prb.Obligations.Create(ctx, scope, &req)
 	if err != nil {
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
@@ -65,7 +66,8 @@ func (r *mutationResolver) UpdateObligation(ctx context.Context, input types.Upd
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, input.ID.TenantID())
+	scope := coredata.NewScopeFromObjectID(input.ID)
+	prb := r.probo
 
 	req := probo.UpdateObligationRequest{
 		ID:                     input.ID,
@@ -81,7 +83,7 @@ func (r *mutationResolver) UpdateObligation(ctx context.Context, input types.Upd
 		Type:                   input.Type,
 	}
 
-	obligation, err := prb.Obligations.Update(ctx, &req)
+	obligation, err := prb.Obligations.Update(ctx, scope, &req)
 	if err != nil {
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
@@ -103,9 +105,10 @@ func (r *mutationResolver) DeleteObligation(ctx context.Context, input types.Del
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, input.ObligationID.TenantID())
+	scope := coredata.NewScopeFromObjectID(input.ObligationID)
+	prb := r.probo
 
-	err := prb.Obligations.Delete(ctx, input.ObligationID)
+	err := prb.Obligations.Delete(ctx, scope, input.ObligationID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete obligation", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -122,9 +125,10 @@ func (r *mutationResolver) PublishObligationList(ctx context.Context, input type
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
+	scope := coredata.NewScopeFromObjectID(input.OrganizationID)
+	prb := r.probo
 
-	document, documentVersion, err := prb.GeneratedDocuments.PublishObligationList(ctx, input.OrganizationID, input.ApproverIds, input.Minor)
+	document, documentVersion, err := prb.GeneratedDocuments.PublishObligationList(ctx, scope, input.OrganizationID, input.ApproverIds, input.Minor)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
 			return nil, gqlutils.Conflict(ctx, err)
@@ -200,11 +204,12 @@ func (r *obligationConnectionResolver) TotalCount(ctx context.Context, obj *type
 		return 0, err
 	}
 
-	prb := r.ProboService(ctx, obj.ParentID.TenantID())
+	scope := coredata.NewScopeFromObjectID(obj.ParentID)
+	prb := r.probo
 
 	switch obj.Resolver.(type) {
 	case *organizationResolver:
-		count, err := prb.Obligations.CountForOrganizationID(ctx, obj.ParentID)
+		count, err := prb.Obligations.CountForOrganizationID(ctx, scope, obj.ParentID)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count obligations", log.Error(err))
 			return 0, gqlutils.Internal(ctx)
@@ -212,7 +217,7 @@ func (r *obligationConnectionResolver) TotalCount(ctx context.Context, obj *type
 
 		return count, nil
 	case *riskResolver:
-		count, err := prb.Obligations.CountForRiskID(ctx, obj.ParentID)
+		count, err := prb.Obligations.CountForRiskID(ctx, scope, obj.ParentID)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count risk obligations", log.Error(err))
 			return 0, gqlutils.Internal(ctx)

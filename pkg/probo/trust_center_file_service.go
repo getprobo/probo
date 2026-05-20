@@ -35,7 +35,7 @@ import (
 
 type (
 	TrustCenterFileService struct {
-		svc           *TenantService
+		svc           *Service
 		fileValidator *filevalidation.FileValidator
 	}
 
@@ -79,7 +79,7 @@ func (utcfr *UpdateTrustCenterFileRequest) Validate() error {
 }
 
 func (s TrustCenterFileService) ListForOrganizationID(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	organizationID gid.GID,
 	cursor *page.Cursor[coredata.TrustCenterFileOrderField],
 	filter *coredata.TrustCenterFileFilter,
@@ -89,7 +89,7 @@ func (s TrustCenterFileService) ListForOrganizationID(
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			if err := files.LoadByOrganizationID(ctx, conn, s.svc.scope, organizationID, cursor, filter); err != nil {
+			if err := files.LoadByOrganizationID(ctx, conn, scope, organizationID, cursor, filter); err != nil {
 				return fmt.Errorf("cannot load trust center files: %w", err)
 			}
 
@@ -103,7 +103,7 @@ func (s TrustCenterFileService) ListForOrganizationID(
 }
 
 func (s TrustCenterFileService) CountForOrganizationID(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	organizationID gid.GID,
 ) (int, error) {
 	var count int
@@ -113,7 +113,7 @@ func (s TrustCenterFileService) CountForOrganizationID(
 		func(ctx context.Context, conn pg.Querier) error {
 			var err error
 
-			count, err = (&coredata.TrustCenterFiles{}).CountByOrganizationID(ctx, conn, s.svc.scope, organizationID)
+			count, err = (&coredata.TrustCenterFiles{}).CountByOrganizationID(ctx, conn, scope, organizationID)
 			if err != nil {
 				return fmt.Errorf("cannot count trust center files: %w", err)
 			}
@@ -128,14 +128,14 @@ func (s TrustCenterFileService) CountForOrganizationID(
 }
 
 func (s TrustCenterFileService) Get(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	id gid.GID,
 ) (*coredata.TrustCenterFile, error) {
 	var file *coredata.TrustCenterFile
 
 	err := s.svc.pg.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
 		file = &coredata.TrustCenterFile{}
-		if err := file.LoadByID(ctx, conn, s.svc.scope, id); err != nil {
+		if err := file.LoadByID(ctx, conn, scope, id); err != nil {
 			return fmt.Errorf("cannot load trust center file: %w", err)
 		}
 
@@ -149,7 +149,7 @@ func (s TrustCenterFileService) Get(
 }
 
 func (s TrustCenterFileService) Create(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	req *CreateTrustCenterFileRequest,
 ) (*coredata.TrustCenterFile, error) {
 	if err := req.Validate(); err != nil {
@@ -171,7 +171,7 @@ func (s TrustCenterFileService) Create(
 
 	now := time.Now()
 
-	trustCenterFileID := gid.New(s.svc.scope.GetTenantID(), coredata.TrustCenterFileEntityType)
+	trustCenterFileID := gid.New(scope.GetTenantID(), coredata.TrustCenterFileEntityType)
 
 	var (
 		file  *coredata.TrustCenterFile
@@ -181,7 +181,7 @@ func (s TrustCenterFileService) Create(
 	err = s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			fileID, objectKey, err := s.uploadFile(ctx, tx, req.File, trustCenterFileID, req.OrganizationID, now)
+			fileID, objectKey, err := s.uploadFile(ctx, scope, tx, req.File, trustCenterFileID, req.OrganizationID, now)
 			if err != nil {
 				return fmt.Errorf("cannot upload file: %w", err)
 			}
@@ -199,7 +199,7 @@ func (s TrustCenterFileService) Create(
 				UpdatedAt:             now,
 			}
 
-			if err := file.Insert(ctx, tx, s.svc.scope); err != nil {
+			if err := file.Insert(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot insert trust center file: %w", err)
 			}
 
@@ -207,7 +207,7 @@ func (s TrustCenterFileService) Create(
 		},
 	)
 	if err != nil {
-		s.cleanupS3Object(ctx, s3Key)
+		s.cleanupS3Object(ctx, scope, s3Key)
 		return nil, err
 	}
 
@@ -215,7 +215,7 @@ func (s TrustCenterFileService) Create(
 }
 
 func (s TrustCenterFileService) Update(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	req *UpdateTrustCenterFileRequest,
 ) (*coredata.TrustCenterFile, error) {
 	if err := req.Validate(); err != nil {
@@ -231,7 +231,7 @@ func (s TrustCenterFileService) Update(
 		func(ctx context.Context, tx pg.Tx) error {
 			file = &coredata.TrustCenterFile{}
 
-			if err := file.LoadByID(ctx, tx, s.svc.scope, req.ID); err != nil {
+			if err := file.LoadByID(ctx, tx, scope, req.ID); err != nil {
 				return fmt.Errorf("cannot load trust center file: %w", err)
 			}
 
@@ -249,7 +249,7 @@ func (s TrustCenterFileService) Update(
 
 			file.UpdatedAt = now
 
-			if err := file.Update(ctx, tx, s.svc.scope); err != nil {
+			if err := file.Update(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot update trust center file: %w", err)
 			}
 
@@ -264,7 +264,7 @@ func (s TrustCenterFileService) Update(
 }
 
 func (s TrustCenterFileService) Delete(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	trustCenterFileID gid.GID,
 ) error {
 	err := s.svc.pg.WithTx(
@@ -272,11 +272,11 @@ func (s TrustCenterFileService) Delete(
 		func(ctx context.Context, tx pg.Tx) error {
 			file := &coredata.TrustCenterFile{}
 
-			if err := file.LoadByID(ctx, tx, s.svc.scope, trustCenterFileID); err != nil {
+			if err := file.LoadByID(ctx, tx, scope, trustCenterFileID); err != nil {
 				return fmt.Errorf("cannot load trust center file: %w", err)
 			}
 
-			if err := file.Delete(ctx, tx, s.svc.scope); err != nil {
+			if err := file.Delete(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot delete trust center file: %w", err)
 			}
 
@@ -287,7 +287,7 @@ func (s TrustCenterFileService) Delete(
 }
 
 func (s TrustCenterFileService) GenerateFileURL(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	trustCenterFileID gid.GID,
 	duration time.Duration,
 ) (string, error) {
@@ -297,12 +297,12 @@ func (s TrustCenterFileService) GenerateFileURL(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
 			file := &coredata.TrustCenterFile{}
-			if err := file.LoadByID(ctx, conn, s.svc.scope, trustCenterFileID); err != nil {
+			if err := file.LoadByID(ctx, conn, scope, trustCenterFileID); err != nil {
 				return fmt.Errorf("cannot load trust center file: %w", err)
 			}
 
 			storedFile = &coredata.File{}
-			if err := storedFile.LoadByID(ctx, conn, s.svc.scope, file.FileID); err != nil {
+			if err := storedFile.LoadByID(ctx, conn, scope, file.FileID); err != nil {
 				return fmt.Errorf("cannot load file: %w", err)
 			}
 
@@ -322,14 +322,14 @@ func (s TrustCenterFileService) GenerateFileURL(
 }
 
 func (s TrustCenterFileService) uploadFile(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	tx pg.Tx,
 	file File,
 	trustCenterFileID gid.GID,
 	organizationID gid.GID,
 	now time.Time,
 ) (gid.GID, string, error) {
-	fileID := gid.New(s.svc.scope.GetTenantID(), coredata.FileEntityType)
+	fileID := gid.New(scope.GetTenantID(), coredata.FileEntityType)
 
 	objectKey, err := uuid.NewV7()
 	if err != nil {
@@ -410,14 +410,14 @@ func (s TrustCenterFileService) uploadFile(
 		UpdatedAt:  now,
 	}
 
-	if err := fileRecord.Insert(ctx, tx, s.svc.scope); err != nil {
+	if err := fileRecord.Insert(ctx, tx, scope); err != nil {
 		return gid.GID{}, "", fmt.Errorf("cannot insert file: %w", err)
 	}
 
 	return fileID, objectKey.String(), nil
 }
 
-func (s TrustCenterFileService) cleanupS3Object(ctx context.Context, s3Key string) {
+func (s TrustCenterFileService) cleanupS3Object(ctx context.Context, scope coredata.Scoper, s3Key string) {
 	if s3Key == "" {
 		return
 	}

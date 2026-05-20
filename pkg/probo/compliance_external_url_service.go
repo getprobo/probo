@@ -28,7 +28,7 @@ import (
 
 type (
 	ComplianceExternalURLService struct {
-		svc *TenantService
+		svc *Service
 	}
 
 	CreateComplianceExternalURLRequest struct {
@@ -74,7 +74,7 @@ func (r *DeleteComplianceExternalURLRequest) Validate() error {
 }
 
 func (s ComplianceExternalURLService) List(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	trustCenterID gid.GID,
 	cursor *page.Cursor[coredata.ComplianceExternalURLOrderField],
 ) (*page.Page[*coredata.ComplianceExternalURL, coredata.ComplianceExternalURLOrderField], error) {
@@ -83,7 +83,7 @@ func (s ComplianceExternalURLService) List(
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			if err := items.LoadByTrustCenterID(ctx, conn, s.svc.scope, trustCenterID, cursor); err != nil {
+			if err := items.LoadByTrustCenterID(ctx, conn, scope, trustCenterID, cursor); err != nil {
 				return fmt.Errorf("cannot load compliance external URLs: %w", err)
 			}
 
@@ -98,7 +98,7 @@ func (s ComplianceExternalURLService) List(
 }
 
 func (s ComplianceExternalURLService) Create(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	req *CreateComplianceExternalURLRequest,
 ) (*coredata.ComplianceExternalURL, error) {
 	if err := req.Validate(); err != nil {
@@ -106,7 +106,7 @@ func (s ComplianceExternalURLService) Create(
 	}
 
 	now := time.Now()
-	id := gid.New(s.svc.scope.GetTenantID(), coredata.ComplianceExternalURLEntityType)
+	id := gid.New(scope.GetTenantID(), coredata.ComplianceExternalURLEntityType)
 
 	var item *coredata.ComplianceExternalURL
 
@@ -114,7 +114,7 @@ func (s ComplianceExternalURLService) Create(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			trustCenter := &coredata.TrustCenter{}
-			if err := trustCenter.LoadByID(ctx, tx, s.svc.scope, req.TrustCenterID); err != nil {
+			if err := trustCenter.LoadByID(ctx, tx, scope, req.TrustCenterID); err != nil {
 				return fmt.Errorf("cannot load trust center: %w", err)
 			}
 
@@ -128,7 +128,7 @@ func (s ComplianceExternalURLService) Create(
 				UpdatedAt:      now,
 			}
 
-			if err := item.Insert(ctx, tx, s.svc.scope); err != nil {
+			if err := item.Insert(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot insert compliance external URL: %w", err)
 			}
 
@@ -143,7 +143,7 @@ func (s ComplianceExternalURLService) Create(
 }
 
 func (s ComplianceExternalURLService) Update(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	req *UpdateComplianceExternalURLRequest,
 ) (*coredata.ComplianceExternalURL, error) {
 	if err := req.Validate(); err != nil {
@@ -157,7 +157,7 @@ func (s ComplianceExternalURLService) Update(
 		func(ctx context.Context, tx pg.Tx) error {
 			item = &coredata.ComplianceExternalURL{}
 
-			if err := item.LoadByID(ctx, tx, s.svc.scope, req.ID); err != nil {
+			if err := item.LoadByID(ctx, tx, scope, req.ID); err != nil {
 				return fmt.Errorf("cannot load compliance external URL: %w", err)
 			}
 
@@ -167,12 +167,12 @@ func (s ComplianceExternalURLService) Update(
 
 			if req.Rank != nil {
 				item.Rank = *req.Rank
-				if err := item.UpdateRank(ctx, tx, s.svc.scope); err != nil {
+				if err := item.UpdateRank(ctx, tx, scope); err != nil {
 					return fmt.Errorf("cannot update compliance external URL rank: %w", err)
 				}
 			}
 
-			if err := item.Update(ctx, tx, s.svc.scope); err != nil {
+			if err := item.Update(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot update compliance external URL: %w", err)
 			}
 
@@ -187,7 +187,7 @@ func (s ComplianceExternalURLService) Update(
 }
 
 func (s ComplianceExternalURLService) Delete(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	req *DeleteComplianceExternalURLRequest,
 ) error {
 	if err := req.Validate(); err != nil {
@@ -199,11 +199,11 @@ func (s ComplianceExternalURLService) Delete(
 		func(ctx context.Context, tx pg.Tx) error {
 			item := &coredata.ComplianceExternalURL{}
 
-			if err := item.LoadByID(ctx, tx, s.svc.scope, req.ID); err != nil {
+			if err := item.LoadByID(ctx, tx, scope, req.ID); err != nil {
 				return fmt.Errorf("cannot load compliance external URL: %w", err)
 			}
 
-			if err := item.Delete(ctx, tx, s.svc.scope); err != nil {
+			if err := item.Delete(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot delete compliance external URL: %w", err)
 			}
 

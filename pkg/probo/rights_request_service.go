@@ -27,7 +27,7 @@ import (
 )
 
 type RightsRequestService struct {
-	svc *TenantService
+	svc *Service
 }
 
 type (
@@ -83,7 +83,7 @@ func (urrr *UpdateRightsRequestRequest) Validate() error {
 }
 
 func (s RightsRequestService) Get(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	rightsRequestID gid.GID,
 ) (*coredata.RightsRequest, error) {
 	request := &coredata.RightsRequest{}
@@ -91,7 +91,7 @@ func (s RightsRequestService) Get(
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			if err := request.LoadByID(ctx, conn, s.svc.scope, rightsRequestID); err != nil {
+			if err := request.LoadByID(ctx, conn, scope, rightsRequestID); err != nil {
 				return fmt.Errorf("cannot load rights request: %w", err)
 			}
 
@@ -106,7 +106,7 @@ func (s RightsRequestService) Get(
 }
 
 func (s *RightsRequestService) Create(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	req *CreateRightsRequestRequest,
 ) (*coredata.RightsRequest, error) {
 	if err := req.Validate(); err != nil {
@@ -116,7 +116,7 @@ func (s *RightsRequestService) Create(
 	now := time.Now()
 
 	request := &coredata.RightsRequest{
-		ID:             gid.New(s.svc.scope.GetTenantID(), coredata.RightsRequestEntityType),
+		ID:             gid.New(scope.GetTenantID(), coredata.RightsRequestEntityType),
 		OrganizationID: req.OrganizationID,
 		RequestType:    *req.RequestType,
 		RequestState:   *req.RequestState,
@@ -133,11 +133,11 @@ func (s *RightsRequestService) Create(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
 			organization := &coredata.Organization{}
-			if err := organization.LoadByID(ctx, conn, s.svc.scope, req.OrganizationID); err != nil {
+			if err := organization.LoadByID(ctx, conn, scope, req.OrganizationID); err != nil {
 				return fmt.Errorf("cannot load organization: %w", err)
 			}
 
-			if err := request.Insert(ctx, conn, s.svc.scope); err != nil {
+			if err := request.Insert(ctx, conn, scope); err != nil {
 				return fmt.Errorf("cannot insert rights request: %w", err)
 			}
 
@@ -152,7 +152,7 @@ func (s *RightsRequestService) Create(
 }
 
 func (s *RightsRequestService) Update(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	req *UpdateRightsRequestRequest,
 ) (*coredata.RightsRequest, error) {
 	if err := req.Validate(); err != nil {
@@ -164,7 +164,7 @@ func (s *RightsRequestService) Update(
 	err := s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
-			if err := request.LoadByID(ctx, conn, s.svc.scope, req.ID); err != nil {
+			if err := request.LoadByID(ctx, conn, scope, req.ID); err != nil {
 				return fmt.Errorf("cannot load rights request: %w", err)
 			}
 
@@ -198,7 +198,7 @@ func (s *RightsRequestService) Update(
 
 			request.UpdatedAt = time.Now()
 
-			if err := request.Update(ctx, conn, s.svc.scope); err != nil {
+			if err := request.Update(ctx, conn, scope); err != nil {
 				return fmt.Errorf("cannot update rights request: %w", err)
 			}
 
@@ -213,18 +213,18 @@ func (s *RightsRequestService) Update(
 }
 
 func (s *RightsRequestService) Delete(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	rightsRequestID gid.GID,
 ) error {
 	err := s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
 			request := &coredata.RightsRequest{}
-			if err := request.LoadByID(ctx, conn, s.svc.scope, rightsRequestID); err != nil {
+			if err := request.LoadByID(ctx, conn, scope, rightsRequestID); err != nil {
 				return fmt.Errorf("cannot load rights request: %w", err)
 			}
 
-			if err := request.Delete(ctx, conn, s.svc.scope); err != nil {
+			if err := request.Delete(ctx, conn, scope); err != nil {
 				return fmt.Errorf("cannot delete rights request: %w", err)
 			}
 
@@ -236,7 +236,7 @@ func (s *RightsRequestService) Delete(
 }
 
 func (s RightsRequestService) CountByOrganizationID(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	organizationID gid.GID,
 ) (int, error) {
 	var count int
@@ -246,7 +246,7 @@ func (s RightsRequestService) CountByOrganizationID(
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			requests := coredata.RightsRequests{}
 
-			count, err = requests.CountByOrganizationID(ctx, conn, s.svc.scope, organizationID)
+			count, err = requests.CountByOrganizationID(ctx, conn, scope, organizationID)
 			if err != nil {
 				return fmt.Errorf("cannot count rights requests: %w", err)
 			}
@@ -262,7 +262,7 @@ func (s RightsRequestService) CountByOrganizationID(
 }
 
 func (s RightsRequestService) ListForOrganizationID(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	organizationID gid.GID,
 	cursor *page.Cursor[coredata.RightsRequestOrderField],
 ) (*page.Page[*coredata.RightsRequest, coredata.RightsRequestOrderField], error) {
@@ -271,7 +271,7 @@ func (s RightsRequestService) ListForOrganizationID(
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			err := requests.LoadByOrganizationID(ctx, conn, s.svc.scope, organizationID, cursor)
+			err := requests.LoadByOrganizationID(ctx, conn, scope, organizationID, cursor)
 			if err != nil {
 				return fmt.Errorf("cannot load rights requests: %w", err)
 			}

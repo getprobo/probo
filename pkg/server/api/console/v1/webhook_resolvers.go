@@ -28,10 +28,11 @@ func (r *mutationResolver) CreateWebhookSubscription(ctx context.Context, input 
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
+	scope := coredata.NewScopeFromObjectID(input.OrganizationID)
+	prb := r.probo
 
 	wc, err := prb.WebhookSubscriptions.Create(
-		ctx,
+		ctx, scope,
 		probo.CreateWebhookSubscriptionRequest{
 			OrganizationID: input.OrganizationID,
 			EndpointURL:    input.EndpointURL,
@@ -59,10 +60,11 @@ func (r *mutationResolver) UpdateWebhookSubscription(ctx context.Context, input 
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, input.ID.TenantID())
+	scope := coredata.NewScopeFromObjectID(input.ID)
+	prb := r.probo
 
 	wc, err := prb.WebhookSubscriptions.Update(
-		ctx,
+		ctx, scope,
 		probo.UpdateWebhookSubscriptionRequest{
 			WebhookSubscriptionID: input.ID,
 			EndpointURL:           input.EndpointURL,
@@ -90,9 +92,10 @@ func (r *mutationResolver) DeleteWebhookSubscription(ctx context.Context, input 
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, input.WebhookSubscriptionID.TenantID())
+	scope := coredata.NewScopeFromObjectID(input.WebhookSubscriptionID)
+	prb := r.probo
 
-	err := prb.WebhookSubscriptions.Delete(ctx, input.WebhookSubscriptionID)
+	err := prb.WebhookSubscriptions.Delete(ctx, scope, input.WebhookSubscriptionID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete webhook subscription", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -109,9 +112,10 @@ func (r *webhookEventConnectionResolver) TotalCount(ctx context.Context, obj *ty
 		return 0, err
 	}
 
-	prb := r.ProboService(ctx, obj.ParentID.TenantID())
+	scope := coredata.NewScopeFromObjectID(obj.ParentID)
+	prb := r.probo
 
-	count, err := prb.WebhookSubscriptions.CountEventsForSubscriptionID(ctx, obj.ParentID)
+	count, err := prb.WebhookSubscriptions.CountEventsForSubscriptionID(ctx, scope, obj.ParentID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot count webhook events", log.Error(err))
 		return 0, gqlutils.Internal(ctx)
@@ -148,9 +152,10 @@ func (r *webhookSubscriptionResolver) SigningSecret(ctx context.Context, obj *ty
 		return "", err
 	}
 
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	scope := coredata.NewScopeFromObjectID(obj.ID)
+	prb := r.probo
 
-	signingSecret, err := prb.WebhookSubscriptions.GetSigningSecret(ctx, obj.ID)
+	signingSecret, err := prb.WebhookSubscriptions.GetSigningSecret(ctx, scope, obj.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot get signing secret", log.Error(err))
 		return "", gqlutils.Internal(ctx)
@@ -165,7 +170,8 @@ func (r *webhookSubscriptionResolver) Events(ctx context.Context, obj *types.Web
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	scope := coredata.NewScopeFromObjectID(obj.ID)
+	prb := r.probo
 
 	pageOrderBy := page.OrderBy[coredata.WebhookEventOrderField]{
 		Field:     coredata.WebhookEventOrderFieldCreatedAt,
@@ -180,7 +186,7 @@ func (r *webhookSubscriptionResolver) Events(ctx context.Context, obj *types.Web
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	page, err := prb.WebhookSubscriptions.ListEventsForSubscriptionID(ctx, obj.ID, cursor)
+	page, err := prb.WebhookSubscriptions.ListEventsForSubscriptionID(ctx, scope, obj.ID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list webhook events", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -200,11 +206,12 @@ func (r *webhookSubscriptionConnectionResolver) TotalCount(ctx context.Context, 
 		return 0, err
 	}
 
-	prb := r.ProboService(ctx, obj.ParentID.TenantID())
+	scope := coredata.NewScopeFromObjectID(obj.ParentID)
+	prb := r.probo
 
 	switch obj.Resolver.(type) {
 	case *organizationResolver:
-		count, err := prb.WebhookSubscriptions.CountForOrganizationID(ctx, obj.ParentID)
+		count, err := prb.WebhookSubscriptions.CountForOrganizationID(ctx, scope, obj.ParentID)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count webhook subscriptions", log.Error(err))
 			return 0, gqlutils.Internal(ctx)

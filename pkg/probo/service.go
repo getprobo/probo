@@ -44,48 +44,41 @@ const (
 )
 
 type ExportService interface {
-	BuildAndUploadExport(ctx context.Context, exportJobID gid.GID) (*coredata.ExportJob, error)
-	SendExportEmail(ctx context.Context, fileID gid.GID, recipientName string, recipientEmail mail.Addr) error
+	BuildAndUploadExport(
+		ctx context.Context,
+		scope coredata.Scoper,
+		exportJobID gid.GID,
+	) (*coredata.ExportJob, error)
+	SendExportEmail(
+		ctx context.Context,
+		scope coredata.Scoper,
+		fileID gid.GID,
+		recipientName string,
+		recipientEmail mail.Addr,
+	) error
 }
 
 type (
 	Service struct {
-		pg                      *pg.Client
-		s3                      *s3.Client
-		bucket                  string
-		encryptionKey           cipher.EncryptionKey
-		baseURL                 string
-		tokenSecret             string
-		llmClient               *llm.Client
-		llmModel                string
-		llmTemperature          float64
-		llmMaxTokens            int
-		html2pdfConverter       *html2pdf.Converter
-		acmeService             *certmanager.ACMEService
-		fileManager             *filemanager.Service
-		logger                  *log.Logger
-		slack                   *slack.Service
-		esign                   *esign.Service
-		connectorRegistry       *connector.ConnectorRegistry
-		invitationTokenValidity time.Duration
-		thirdPartyAssessor      ThirdPartyAssessor
-	}
-
-	TenantService struct {
 		pg                                    *pg.Client
 		s3                                    *s3.Client
 		bucket                                string
 		encryptionKey                         cipher.EncryptionKey
-		scope                                 coredata.Scoper
 		baseURL                               string
 		tokenSecret                           string
 		llmClient                             *llm.Client
 		llmModel                              string
 		llmTemperature                        float64
 		llmMaxTokens                          int
-		thirdPartyAssessor                    ThirdPartyAssessor
+		html2pdfConverter                     *html2pdf.Converter
+		acmeService                           *certmanager.ACMEService
 		fileManager                           *filemanager.Service
+		logger                                *log.Logger
+		slack                                 *slack.Service
 		esign                                 *esign.Service
+		connectorRegistry                     *connector.ConnectorRegistry
+		invitationTokenValidity               time.Duration
+		thirdPartyAssessor                    ThirdPartyAssessor
 		Frameworks                            *FrameworkService
 		Measures                              *MeasureService
 		Tasks                                 *TaskService
@@ -123,7 +116,7 @@ type (
 		GeneratedDocuments                    *GeneratedDocumentService
 		Files                                 *FileService
 		CustomDomains                         *CustomDomainService
-		SlackMessages                         *slack.SlackMessageService
+		SlackMessages                         *slack.Service
 	}
 )
 
@@ -178,35 +171,14 @@ func NewService(
 		thirdPartyAssessor:      thirdPartyAssessor,
 	}
 
-	return svc, nil
-}
-
-func (s *Service) WithTenant(tenantID gid.TenantID) *TenantService {
-	tenantService := &TenantService{
-		pg:                 s.pg,
-		s3:                 s.s3,
-		bucket:             s.bucket,
-		encryptionKey:      s.encryptionKey,
-		baseURL:            s.baseURL,
-		scope:              coredata.NewScope(tenantID),
-		tokenSecret:        s.tokenSecret,
-		llmClient:          s.llmClient,
-		llmModel:           s.llmModel,
-		llmTemperature:     s.llmTemperature,
-		llmMaxTokens:       s.llmMaxTokens,
-		thirdPartyAssessor: s.thirdPartyAssessor,
-		fileManager:        s.fileManager,
-		esign:              s.esign,
+	svc.Frameworks = &FrameworkService{
+		svc:               svc,
+		html2pdfConverter: html2pdfConverter,
 	}
-
-	tenantService.Frameworks = &FrameworkService{
-		svc:               tenantService,
-		html2pdfConverter: s.html2pdfConverter,
-	}
-	tenantService.Measures = &MeasureService{svc: tenantService}
-	tenantService.Tasks = &TaskService{svc: tenantService}
-	tenantService.Evidences = &EvidenceService{
-		svc: tenantService,
+	svc.Measures = &MeasureService{svc: svc}
+	svc.Tasks = &TaskService{svc: svc}
+	svc.Evidences = &EvidenceService{
+		svc: svc,
 		fileValidator: filevalidation.NewValidator(
 			filevalidation.WithCategories(
 				filevalidation.CategoryDocument,
@@ -219,50 +191,50 @@ func (s *Service) WithTenant(tenantID gid.TenantID) *TenantService {
 			),
 		),
 	}
-	tenantService.ThirdParties = &ThirdPartyService{svc: tenantService}
-	tenantService.Documents = &DocumentService{
-		svc:                     tenantService,
-		html2pdfConverter:       s.html2pdfConverter,
-		invitationTokenValidity: s.invitationTokenValidity,
-		tokenSecret:             s.tokenSecret,
+	svc.ThirdParties = &ThirdPartyService{svc: svc}
+	svc.Documents = &DocumentService{
+		svc:                     svc,
+		html2pdfConverter:       html2pdfConverter,
+		invitationTokenValidity: invitationTokenValidity,
+		tokenSecret:             tokenSecret,
 	}
-	tenantService.DocumentApprovals = &DocumentApprovalService{
-		svc:                     tenantService,
-		html2pdfConverter:       s.html2pdfConverter,
-		invitationTokenValidity: s.invitationTokenValidity,
-		tokenSecret:             s.tokenSecret,
+	svc.DocumentApprovals = &DocumentApprovalService{
+		svc:                     svc,
+		html2pdfConverter:       html2pdfConverter,
+		invitationTokenValidity: invitationTokenValidity,
+		tokenSecret:             tokenSecret,
 	}
-	tenantService.Organizations = &OrganizationService{
-		svc: tenantService,
+	svc.Organizations = &OrganizationService{
+		svc: svc,
 		fileValidator: filevalidation.NewValidator(
 			filevalidation.WithCategories(filevalidation.CategoryImage),
 		),
 	}
-	tenantService.Controls = &ControlService{svc: tenantService}
-	tenantService.Risks = &RiskService{svc: tenantService}
-	tenantService.ThirdPartyComplianceReports = &ThirdPartyComplianceReportService{
-		svc: tenantService,
+	svc.Controls = &ControlService{svc: svc}
+	svc.Risks = &RiskService{svc: svc}
+	svc.ThirdPartyComplianceReports = &ThirdPartyComplianceReportService{
+		svc: svc,
 		fileValidator: filevalidation.NewValidator(
 			filevalidation.WithCategories(filevalidation.CategoryDocument),
 		),
 	}
-	tenantService.ThirdPartyBusinessAssociateAgreements = &ThirdPartyBusinessAssociateAgreementService{svc: tenantService}
-	tenantService.ThirdPartyContacts = &ThirdPartyContactService{svc: tenantService}
-	tenantService.ThirdPartyDataPrivacyAgreements = &ThirdPartyDataPrivacyAgreementService{svc: tenantService}
-	tenantService.ThirdPartyServices = &ThirdPartyServiceService{svc: tenantService}
-	tenantService.Connectors = &ConnectorService{svc: tenantService}
-	tenantService.Assets = &AssetService{svc: tenantService}
-	tenantService.Data = &DatumService{svc: tenantService}
-	tenantService.Audits = &AuditService{svc: tenantService}
-	tenantService.WebhookSubscriptions = &WebhookSubscriptionService{svc: tenantService}
-	tenantService.Reports = &ReportService{svc: tenantService}
-	tenantService.TrustCenters = &TrustCenterService{svc: tenantService}
-	tenantService.TrustCenterAccesses = &TrustCenterAccessService{svc: tenantService}
-	tenantService.TrustCenterReferences = &TrustCenterReferenceService{svc: tenantService}
-	tenantService.ComplianceFrameworks = &ComplianceFrameworkService{svc: tenantService}
-	tenantService.ComplianceExternalURLs = &ComplianceExternalURLService{svc: tenantService}
-	tenantService.TrustCenterFiles = &TrustCenterFileService{
-		svc: tenantService,
+	svc.ThirdPartyBusinessAssociateAgreements = &ThirdPartyBusinessAssociateAgreementService{svc: svc}
+	svc.ThirdPartyContacts = &ThirdPartyContactService{svc: svc}
+	svc.ThirdPartyDataPrivacyAgreements = &ThirdPartyDataPrivacyAgreementService{svc: svc}
+	svc.ThirdPartyServices = &ThirdPartyServiceService{svc: svc}
+	svc.Connectors = &ConnectorService{svc: svc}
+	svc.Assets = &AssetService{svc: svc}
+	svc.Data = &DatumService{svc: svc}
+	svc.Audits = &AuditService{svc: svc}
+	svc.WebhookSubscriptions = &WebhookSubscriptionService{svc: svc}
+	svc.Reports = &ReportService{svc: svc}
+	svc.TrustCenters = &TrustCenterService{svc: svc}
+	svc.TrustCenterAccesses = &TrustCenterAccessService{svc: svc}
+	svc.TrustCenterReferences = &TrustCenterReferenceService{svc: svc}
+	svc.ComplianceFrameworks = &ComplianceFrameworkService{svc: svc}
+	svc.ComplianceExternalURLs = &ComplianceExternalURLService{svc: svc}
+	svc.TrustCenterFiles = &TrustCenterFileService{
+		svc: svc,
 		fileValidator: filevalidation.NewValidator(
 			filevalidation.WithCategories(
 				filevalidation.CategoryData,
@@ -275,34 +247,24 @@ func (s *Service) WithTenant(tenantID gid.TenantID) *TenantService {
 			filevalidation.WithMaxFileSize(10*1024*1024), // 10MB
 		),
 	}
-	tenantService.Findings = &FindingService{svc: tenantService}
-	tenantService.Obligations = &ObligationService{svc: tenantService}
-	tenantService.RightsRequests = &RightsRequestService{svc: tenantService}
-	tenantService.ProcessingActivities = &ProcessingActivityService{
-		svc: tenantService,
+	svc.Findings = &FindingService{svc: svc}
+	svc.Obligations = &ObligationService{svc: svc}
+	svc.RightsRequests = &RightsRequestService{svc: svc}
+	svc.ProcessingActivities = &ProcessingActivityService{svc: svc}
+	svc.DataProtectionImpactAssessments = &DataProtectionImpactAssessmentService{svc: svc}
+	svc.TransferImpactAssessments = &TransferImpactAssessmentService{svc: svc}
+	svc.StatementsOfApplicability = &StatementOfApplicabilityService{svc: svc}
+	svc.GeneratedDocuments = &GeneratedDocumentService{svc: svc}
+	svc.Files = &FileService{svc: svc}
+	svc.CustomDomains = &CustomDomainService{
+		svc:           svc,
+		encryptionKey: encryptionKey,
+		acmeService:   acmeService,
+		logger:        logger.Named("custom_domains"),
 	}
-	tenantService.DataProtectionImpactAssessments = &DataProtectionImpactAssessmentService{
-		svc: tenantService,
-	}
-	tenantService.TransferImpactAssessments = &TransferImpactAssessmentService{
-		svc: tenantService,
-	}
-	tenantService.StatementsOfApplicability = &StatementOfApplicabilityService{
-		svc: tenantService,
-	}
-	tenantService.GeneratedDocuments = &GeneratedDocumentService{
-		svc: tenantService,
-	}
-	tenantService.Files = &FileService{svc: tenantService}
-	tenantService.CustomDomains = &CustomDomainService{
-		svc:           tenantService,
-		encryptionKey: s.encryptionKey,
-		acmeService:   s.acmeService,
-		logger:        s.logger.Named("custom_domains"),
-	}
-	tenantService.SlackMessages = s.slack.WithTenant(tenantID).SlackMessages
+	svc.SlackMessages = slackService
 
-	return tenantService
+	return svc, nil
 }
 
 func (s *Service) ExportJob(ctx context.Context) error {
@@ -311,15 +273,15 @@ func (s *Service) ExportJob(ctx context.Context) error {
 		return fmt.Errorf("cannot lock export job: %w", err)
 	}
 
-	tenantService := s.WithTenant(exportJob.ID.TenantID())
+	scope := coredata.NewScope(exportJob.ID.TenantID())
 
 	var exportService ExportService
 
 	switch exportJob.Type {
 	case coredata.ExportJobTypeFramework:
-		exportService = tenantService.Frameworks
+		exportService = s.Frameworks
 	case coredata.ExportJobTypeDocument:
-		exportService = tenantService.Documents
+		exportService = s.Documents
 	default:
 		unknownTypeErr := fmt.Errorf("unknown export job type: %q", exportJob.Type)
 		if err := s.commitFailedExport(ctx, exportJob, unknownTypeErr); err != nil {
@@ -329,7 +291,7 @@ func (s *Service) ExportJob(ctx context.Context) error {
 		return unknownTypeErr
 	}
 
-	updatedExportJob, buildErr := exportService.BuildAndUploadExport(ctx, exportJob.ID)
+	updatedExportJob, buildErr := exportService.BuildAndUploadExport(ctx, scope, exportJob.ID)
 	if buildErr != nil {
 		if err := s.commitFailedExport(ctx, exportJob, buildErr); err != nil {
 			return fmt.Errorf(
@@ -345,7 +307,13 @@ func (s *Service) ExportJob(ctx context.Context) error {
 
 	exportJob = updatedExportJob
 
-	if emailErr := exportService.SendExportEmail(ctx, *exportJob.FileID, exportJob.RecipientName, exportJob.RecipientEmail); emailErr != nil {
+	if emailErr := exportService.SendExportEmail(
+		ctx,
+		scope,
+		*exportJob.FileID,
+		exportJob.RecipientName,
+		exportJob.RecipientEmail,
+	); emailErr != nil {
 		if err := s.commitFailedExport(ctx, exportJob, emailErr); err != nil {
 			return fmt.Errorf(
 				"cannot send completion email: %w, and cannot commit failed export: %w",

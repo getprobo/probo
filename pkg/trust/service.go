@@ -36,32 +36,18 @@ import (
 
 type (
 	Service struct {
-		pg                 *pg.Client
-		s3                 *s3.Client
-		bucket             string
-		proboSvc           *probo.Service
-		slackSigningSecret string
-		baseURL            string
-		iam                *iam.Service
-		esign              *esign.Service
-		html2pdfConverter  *html2pdf.Converter
-		fileManager        *filemanager.Service
-		logger             *log.Logger
-		slack              *slack.Service
-	}
-
-	TenantService struct {
 		pg                     *pg.Client
 		s3                     *s3.Client
 		bucket                 string
-		scope                  coredata.Scoper
 		proboSvc               *probo.Service
+		slackSigningSecret     string
 		baseURL                string
 		iam                    *iam.Service
 		esign                  *esign.Service
 		html2pdfConverter      *html2pdf.Converter
 		fileManager            *filemanager.Service
 		logger                 *log.Logger
+		slack                  *slack.Service
 		TrustCenters           *TrustCenterService
 		Documents              *DocumentService
 		Audits                 *AuditService
@@ -74,7 +60,6 @@ type (
 		Reports                *ReportService
 		Organizations          *OrganizationService
 		ComplianceExternalURLs *ComplianceExternalURLService
-		SlackMessages          *slack.SlackMessageService
 	}
 )
 
@@ -91,7 +76,7 @@ func NewService(
 	logger *log.Logger,
 	slack *slack.Service,
 ) *Service {
-	return &Service{
+	svc := &Service{
 		pg:                 pgClient,
 		s3:                 s3Client,
 		bucket:             bucket,
@@ -104,38 +89,20 @@ func NewService(
 		logger:             logger,
 		slack:              slack,
 	}
-}
+	svc.TrustCenters = &TrustCenterService{svc: svc}
+	svc.Documents = &DocumentService{svc: svc, html2pdfConverter: html2pdfConverter}
+	svc.Audits = &AuditService{svc: svc}
+	svc.ThirdParties = &ThirdPartyService{svc: svc}
+	svc.Frameworks = &FrameworkService{svc: svc}
+	svc.ComplianceFrameworks = &ComplianceFrameworkService{svc: svc}
+	svc.TrustCenterAccesses = &TrustCenterAccessService{svc: svc, iamSvc: iam, logger: logger}
+	svc.TrustCenterReferences = &TrustCenterReferenceService{svc: svc}
+	svc.TrustCenterFiles = &TrustCenterFileService{svc: svc}
+	svc.Reports = &ReportService{svc: svc}
+	svc.Organizations = &OrganizationService{svc: svc}
+	svc.ComplianceExternalURLs = &ComplianceExternalURLService{svc: svc}
 
-func (s *Service) WithTenant(tenantID gid.TenantID) *TenantService {
-	tenantService := &TenantService{
-		pg:                s.pg,
-		s3:                s.s3,
-		bucket:            s.bucket,
-		scope:             coredata.NewScope(tenantID),
-		proboSvc:          s.proboSvc,
-		baseURL:           s.baseURL,
-		iam:               s.iam,
-		esign:             s.esign,
-		html2pdfConverter: s.html2pdfConverter,
-		fileManager:       s.fileManager,
-		logger:            s.logger,
-	}
-
-	tenantService.TrustCenters = &TrustCenterService{svc: tenantService}
-	tenantService.Documents = &DocumentService{svc: tenantService, html2pdfConverter: s.html2pdfConverter}
-	tenantService.Audits = &AuditService{svc: tenantService}
-	tenantService.ThirdParties = &ThirdPartyService{svc: tenantService}
-	tenantService.Frameworks = &FrameworkService{svc: tenantService}
-	tenantService.ComplianceFrameworks = &ComplianceFrameworkService{svc: tenantService}
-	tenantService.TrustCenterAccesses = &TrustCenterAccessService{svc: tenantService, iamSvc: s.iam, logger: s.logger}
-	tenantService.TrustCenterReferences = &TrustCenterReferenceService{svc: tenantService}
-	tenantService.TrustCenterFiles = &TrustCenterFileService{svc: tenantService}
-	tenantService.Reports = &ReportService{svc: tenantService}
-	tenantService.Organizations = &OrganizationService{svc: tenantService}
-	tenantService.ComplianceExternalURLs = &ComplianceExternalURLService{svc: tenantService}
-	tenantService.SlackMessages = s.slack.WithTenant(tenantID).SlackMessages
-
-	return tenantService
+	return svc
 }
 
 func (s *Service) Get(
@@ -272,7 +239,7 @@ func (s *Service) EmailPresenterConfigByOrganizationID(ctx context.Context, orgI
 		return emails.PresenterConfig{}, fmt.Errorf("cannot load trust center for org %s: %w", orgID, err)
 	}
 
-	return s.WithTenant(orgID.TenantID()).TrustCenters.EmailPresenterConfig(ctx, trustCenter.ID)
+	return s.TrustCenters.EmailPresenterConfig(ctx, scope, trustCenter.ID)
 }
 
 func (s *Service) GetOrganizationByTrustCenterID(

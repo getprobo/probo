@@ -26,15 +26,16 @@ func (r *dataProtectionImpactAssessmentResolver) ProcessingActivity(ctx context.
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	scope := coredata.NewScopeFromObjectID(obj.ID)
+	prb := r.probo
 
-	dpia, err := prb.DataProtectionImpactAssessments.Get(ctx, obj.ID)
+	dpia, err := prb.DataProtectionImpactAssessments.Get(ctx, scope, obj.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot get processing activity dpia", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	processingActivity, err := prb.ProcessingActivities.Get(ctx, dpia.ProcessingActivityID)
+	processingActivity, err := prb.ProcessingActivities.Get(ctx, scope, dpia.ProcessingActivityID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot get processing activity", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -49,15 +50,16 @@ func (r *dataProtectionImpactAssessmentResolver) Organization(ctx context.Contex
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	scope := coredata.NewScopeFromObjectID(obj.ID)
+	prb := r.probo
 
-	dpia, err := prb.DataProtectionImpactAssessments.Get(ctx, obj.ID)
+	dpia, err := prb.DataProtectionImpactAssessments.Get(ctx, scope, obj.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot get processing activity dpia", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	organization, err := prb.Organizations.Get(ctx, dpia.OrganizationID)
+	organization, err := prb.Organizations.Get(ctx, scope, dpia.OrganizationID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
@@ -82,11 +84,12 @@ func (r *dataProtectionImpactAssessmentConnectionResolver) TotalCount(ctx contex
 		return 0, err
 	}
 
-	prb := r.ProboService(ctx, obj.ParentID.TenantID())
+	scope := coredata.NewScopeFromObjectID(obj.ParentID)
+	prb := r.probo
 
 	switch obj.Resolver.(type) {
 	case *organizationResolver:
-		count, err := prb.DataProtectionImpactAssessments.CountForOrganizationID(ctx, obj.ParentID)
+		count, err := prb.DataProtectionImpactAssessments.CountForOrganizationID(ctx, scope, obj.ParentID)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count organization data protection impact assessments", log.Error(err))
 			return 0, gqlutils.Internal(ctx)
@@ -106,7 +109,8 @@ func (r *mutationResolver) CreateDataProtectionImpactAssessment(ctx context.Cont
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, input.ProcessingActivityID.TenantID())
+	scope := coredata.NewScopeFromObjectID(input.ProcessingActivityID)
+	prb := r.probo
 
 	req := probo.CreateDataProtectionImpactAssessmentRequest{
 		ProcessingActivityID:        input.ProcessingActivityID,
@@ -117,7 +121,7 @@ func (r *mutationResolver) CreateDataProtectionImpactAssessment(ctx context.Cont
 		ResidualRisk:                input.ResidualRisk,
 	}
 
-	dpia, err := prb.DataProtectionImpactAssessments.Create(ctx, &req)
+	dpia, err := prb.DataProtectionImpactAssessments.Create(ctx, scope, &req)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
 			return nil, gqlutils.Conflict(ctx, err)
@@ -143,7 +147,8 @@ func (r *mutationResolver) UpdateDataProtectionImpactAssessment(ctx context.Cont
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, input.ID.TenantID())
+	scope := coredata.NewScopeFromObjectID(input.ID)
+	prb := r.probo
 
 	req := probo.UpdateDataProtectionImpactAssessmentRequest{
 		ID:                          input.ID,
@@ -154,7 +159,7 @@ func (r *mutationResolver) UpdateDataProtectionImpactAssessment(ctx context.Cont
 		ResidualRisk:                input.ResidualRisk,
 	}
 
-	dpia, err := prb.DataProtectionImpactAssessments.Update(ctx, &req)
+	dpia, err := prb.DataProtectionImpactAssessments.Update(ctx, scope, &req)
 	if err != nil {
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
@@ -176,9 +181,10 @@ func (r *mutationResolver) DeleteDataProtectionImpactAssessment(ctx context.Cont
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, input.DataProtectionImpactAssessmentID.TenantID())
+	scope := coredata.NewScopeFromObjectID(input.DataProtectionImpactAssessmentID)
+	prb := r.probo
 
-	err := prb.DataProtectionImpactAssessments.Delete(ctx, input.DataProtectionImpactAssessmentID)
+	err := prb.DataProtectionImpactAssessments.Delete(ctx, scope, input.DataProtectionImpactAssessmentID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete data protection impact assessment", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -195,7 +201,8 @@ func (r *mutationResolver) CreateTransferImpactAssessment(ctx context.Context, i
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, input.ProcessingActivityID.TenantID())
+	scope := coredata.NewScopeFromObjectID(input.ProcessingActivityID)
+	prb := r.probo
 
 	req := probo.CreateTransferImpactAssessmentRequest{
 		ProcessingActivityID:  input.ProcessingActivityID,
@@ -206,7 +213,7 @@ func (r *mutationResolver) CreateTransferImpactAssessment(ctx context.Context, i
 		SupplementaryMeasures: input.SupplementaryMeasures,
 	}
 
-	tia, err := prb.TransferImpactAssessments.Create(ctx, &req)
+	tia, err := prb.TransferImpactAssessments.Create(ctx, scope, &req)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
 			return nil, gqlutils.Conflict(ctx, err)
@@ -232,7 +239,8 @@ func (r *mutationResolver) UpdateTransferImpactAssessment(ctx context.Context, i
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, input.ID.TenantID())
+	scope := coredata.NewScopeFromObjectID(input.ID)
+	prb := r.probo
 
 	req := probo.UpdateTransferImpactAssessmentRequest{
 		ID:                    input.ID,
@@ -243,7 +251,7 @@ func (r *mutationResolver) UpdateTransferImpactAssessment(ctx context.Context, i
 		SupplementaryMeasures: gqlutils.UnwrapOmittable(input.SupplementaryMeasures),
 	}
 
-	tia, err := prb.TransferImpactAssessments.Update(ctx, &req)
+	tia, err := prb.TransferImpactAssessments.Update(ctx, scope, &req)
 	if err != nil {
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
@@ -265,9 +273,10 @@ func (r *mutationResolver) DeleteTransferImpactAssessment(ctx context.Context, i
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, input.TransferImpactAssessmentID.TenantID())
+	scope := coredata.NewScopeFromObjectID(input.TransferImpactAssessmentID)
+	prb := r.probo
 
-	err := prb.TransferImpactAssessments.Delete(ctx, input.TransferImpactAssessmentID)
+	err := prb.TransferImpactAssessments.Delete(ctx, scope, input.TransferImpactAssessmentID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete transfer impact assessment", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -284,9 +293,10 @@ func (r *mutationResolver) PublishDataProtectionImpactAssessmentList(ctx context
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
+	scope := coredata.NewScopeFromObjectID(input.OrganizationID)
+	prb := r.probo
 
-	document, documentVersion, err := prb.GeneratedDocuments.PublishDataProtectionImpactAssessmentList(ctx, input.OrganizationID, input.ApproverIds, input.Minor)
+	document, documentVersion, err := prb.GeneratedDocuments.PublishDataProtectionImpactAssessmentList(ctx, scope, input.OrganizationID, input.ApproverIds, input.Minor)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
 			return nil, gqlutils.Conflict(ctx, err)
@@ -313,9 +323,10 @@ func (r *mutationResolver) PublishTransferImpactAssessmentList(ctx context.Conte
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
+	scope := coredata.NewScopeFromObjectID(input.OrganizationID)
+	prb := r.probo
 
-	document, documentVersion, err := prb.GeneratedDocuments.PublishTransferImpactAssessmentList(ctx, input.OrganizationID, input.ApproverIds, input.Minor)
+	document, documentVersion, err := prb.GeneratedDocuments.PublishTransferImpactAssessmentList(ctx, scope, input.OrganizationID, input.ApproverIds, input.Minor)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
 			return nil, gqlutils.Conflict(ctx, err)
@@ -342,9 +353,10 @@ func (r *transferImpactAssessmentResolver) ProcessingActivity(ctx context.Contex
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	scope := coredata.NewScopeFromObjectID(obj.ID)
+	prb := r.probo
 
-	processingActivity, err := prb.ProcessingActivities.Get(ctx, obj.ProcessingActivity.ID)
+	processingActivity, err := prb.ProcessingActivities.Get(ctx, scope, obj.ProcessingActivity.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot get processing activity", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -386,11 +398,12 @@ func (r *transferImpactAssessmentConnectionResolver) TotalCount(ctx context.Cont
 		return 0, err
 	}
 
-	prb := r.ProboService(ctx, obj.ParentID.TenantID())
+	scope := coredata.NewScopeFromObjectID(obj.ParentID)
+	prb := r.probo
 
 	switch obj.Resolver.(type) {
 	case *organizationResolver:
-		count, err := prb.TransferImpactAssessments.CountForOrganizationID(ctx, obj.ParentID)
+		count, err := prb.TransferImpactAssessments.CountForOrganizationID(ctx, scope, obj.ParentID)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count organization transfer impact assessments", log.Error(err))
 			return 0, gqlutils.Internal(ctx)

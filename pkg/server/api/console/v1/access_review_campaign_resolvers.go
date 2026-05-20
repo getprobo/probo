@@ -373,9 +373,10 @@ func (r *accessSourceResolver) Connector(ctx context.Context, obj *types.AccessS
 		return nil, nil
 	}
 
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	scope := coredata.NewScopeFromObjectID(obj.ID)
+	prb := r.probo
 
-	connector, err := prb.Connectors.Get(ctx, *obj.ConnectorID)
+	connector, err := prb.Connectors.Get(ctx, scope, *obj.ConnectorID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, nil
@@ -441,9 +442,10 @@ func (r *accessSourceResolver) NeedsConfiguration(ctx context.Context, obj *type
 		return false, nil
 	}
 
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	scope := coredata.NewScopeFromObjectID(obj.ID)
+	prb := r.probo
 
-	dbConnector, err := prb.Connectors.Get(ctx, *obj.ConnectorID)
+	dbConnector, err := prb.Connectors.Get(ctx, scope, *obj.ConnectorID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return false, nil
@@ -502,9 +504,10 @@ func (r *accessSourceResolver) SelectedOrganization(ctx context.Context, obj *ty
 		return nil, nil
 	}
 
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	scope := coredata.NewScopeFromObjectID(obj.ID)
+	prb := r.probo
 
-	dbConnector, err := prb.Connectors.Get(ctx, *obj.ConnectorID)
+	dbConnector, err := prb.Connectors.Get(ctx, scope, *obj.ConnectorID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, nil
