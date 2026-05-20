@@ -30,42 +30,42 @@
       "type": "paragraph",
       "content": [
         { "type": "text", "text": "Legal Name: ", "marks": [{ "type": "bold" }] },
-        { "type": "text", "text": {{json $r.LegalName}} }
+        { "type": "text", "text": {{json (default "—" $r.LegalName)}} }
       ]
     },
     {
       "type": "paragraph",
       "content": [
         { "type": "text", "text": "Description: ", "marks": [{ "type": "bold" }] },
-        { "type": "text", "text": {{json $r.Description}} }
+        { "type": "text", "text": {{json (default "—" $r.Description)}} }
       ]
     },
     {
       "type": "paragraph",
       "content": [
         { "type": "text", "text": "Category: ", "marks": [{ "type": "bold" }] },
-        { "type": "text", "text": {{json $r.Category}} }
+        { "type": "text", "text": {{json (default "—" $r.Category)}} }
       ]
     },
     {
       "type": "paragraph",
       "content": [
         { "type": "text", "text": "Headquarter Address: ", "marks": [{ "type": "bold" }] },
-        { "type": "text", "text": {{json $r.HeadquarterAddress}} }
+        { "type": "text", "text": {{json (default "—" $r.HeadquarterAddress)}} }
       ]
     },
     {
       "type": "paragraph",
       "content": [
         { "type": "text", "text": "Countries: ", "marks": [{ "type": "bold" }] },
-        { "type": "text", "text": {{json $r.Countries}} }
+        { "type": "text", "text": {{json (default "—" $r.Countries)}} }
       ]
     },
     {
       "type": "paragraph",
       "content": [
         { "type": "text", "text": "Certifications: ", "marks": [{ "type": "bold" }] },
-        { "type": "text", "text": {{json $r.Certifications}} }
+        { "type": "text", "text": {{json (default "—" $r.Certifications)}} }
       ]
     },
     {
@@ -77,70 +77,70 @@
       "type": "paragraph",
       "content": [
         { "type": "text", "text": "Website: ", "marks": [{ "type": "bold" }] },
-        { "type": "text", "text": {{json $r.WebsiteURL}} }
+        { "type": "text", "text": {{json (default "—" $r.WebsiteURL)}} }
       ]
     },
     {
       "type": "paragraph",
       "content": [
         { "type": "text", "text": "Privacy Policy: ", "marks": [{ "type": "bold" }] },
-        { "type": "text", "text": {{json $r.PrivacyPolicyURL}} }
+        { "type": "text", "text": {{json (default "—" $r.PrivacyPolicyURL)}} }
       ]
     },
     {
       "type": "paragraph",
       "content": [
         { "type": "text", "text": "Service Level Agreement: ", "marks": [{ "type": "bold" }] },
-        { "type": "text", "text": {{json $r.ServiceLevelAgreementURL}} }
+        { "type": "text", "text": {{json (default "—" $r.ServiceLevelAgreementURL)}} }
       ]
     },
     {
       "type": "paragraph",
       "content": [
         { "type": "text", "text": "Data Processing Agreement: ", "marks": [{ "type": "bold" }] },
-        { "type": "text", "text": {{json $r.DataProcessingAgreementURL}} }
+        { "type": "text", "text": {{json (default "—" $r.DataProcessingAgreementURL)}} }
       ]
     },
     {
       "type": "paragraph",
       "content": [
         { "type": "text", "text": "Business Associate Agreement: ", "marks": [{ "type": "bold" }] },
-        { "type": "text", "text": {{json $r.BusinessAssociateAgreementURL}} }
+        { "type": "text", "text": {{json (default "—" $r.BusinessAssociateAgreementURL)}} }
       ]
     },
     {
       "type": "paragraph",
       "content": [
         { "type": "text", "text": "Subprocessors List: ", "marks": [{ "type": "bold" }] },
-        { "type": "text", "text": {{json $r.SubprocessorsListURL}} }
+        { "type": "text", "text": {{json (default "—" $r.SubprocessorsListURL)}} }
       ]
     },
     {
       "type": "paragraph",
       "content": [
         { "type": "text", "text": "Status Page: ", "marks": [{ "type": "bold" }] },
-        { "type": "text", "text": {{json $r.StatusPageURL}} }
+        { "type": "text", "text": {{json (default "—" $r.StatusPageURL)}} }
       ]
     },
     {
       "type": "paragraph",
       "content": [
         { "type": "text", "text": "Terms of Service: ", "marks": [{ "type": "bold" }] },
-        { "type": "text", "text": {{json $r.TermsOfServiceURL}} }
+        { "type": "text", "text": {{json (default "—" $r.TermsOfServiceURL)}} }
       ]
     },
     {
       "type": "paragraph",
       "content": [
         { "type": "text", "text": "Security Page: ", "marks": [{ "type": "bold" }] },
-        { "type": "text", "text": {{json $r.SecurityPageURL}} }
+        { "type": "text", "text": {{json (default "—" $r.SecurityPageURL)}} }
       ]
     },
     {
       "type": "paragraph",
       "content": [
         { "type": "text", "text": "Trust Page: ", "marks": [{ "type": "bold" }] },
-        { "type": "text", "text": {{json $r.TrustPageURL}} }
+        { "type": "text", "text": {{json (default "—" $r.TrustPageURL)}} }
       ]
     },
     {
@@ -152,14 +152,14 @@
       "type": "paragraph",
       "content": [
         { "type": "text", "text": "Business Owner: ", "marks": [{ "type": "bold" }] },
-        { "type": "text", "text": {{json $r.BusinessOwner}} }
+        { "type": "text", "text": {{json (default "—" $r.BusinessOwner)}} }
       ]
     },
     {
       "type": "paragraph",
       "content": [
         { "type": "text", "text": "Security Owner: ", "marks": [{ "type": "bold" }] },
-        { "type": "text", "text": {{json $r.SecurityOwner}} }
+        { "type": "text", "text": {{json (default "—" $r.SecurityOwner)}} }
       ]
     },
     {
@@ -171,7 +171,7 @@
       "type": "paragraph",
       "content": [
         { "type": "text", "text": {{json (printf "%s — " .Name)}}, "marks": [{ "type": "bold" }] },
-        { "type": "text", "text": {{json .Description}} }
+        { "type": "text", "text": {{json (default "—" .Description)}} }
       ]
     }{{end}}{{else}},
     {
@@ -203,20 +203,20 @@
       "type": "paragraph",
       "content": [
         { "type": "text", "text": "Assessed on: ", "marks": [{ "type": "bold" }] },
-        { "type": "text", "text": {{json .AssessedAt}} },
+        { "type": "text", "text": {{json (default "—" .AssessedAt)}} },
         { "type": "text", "text": " · Expires on: ", "marks": [{ "type": "bold" }] },
-        { "type": "text", "text": {{json .ExpiresAt}} },
+        { "type": "text", "text": {{json (default "—" .ExpiresAt)}} },
         { "type": "text", "text": " · Data Sensitivity: ", "marks": [{ "type": "bold" }] },
-        { "type": "text", "text": {{json .DataSensitivity}} },
+        { "type": "text", "text": {{json (default "—" .DataSensitivity)}} },
         { "type": "text", "text": " · Business Impact: ", "marks": [{ "type": "bold" }] },
-        { "type": "text", "text": {{json .BusinessImpact}} }
+        { "type": "text", "text": {{json (default "—" .BusinessImpact)}} }
       ]
     },
     {
       "type": "paragraph",
       "content": [
         { "type": "text", "text": "Notes: ", "marks": [{ "type": "bold" }] },
-        { "type": "text", "text": {{json .Notes}} }
+        { "type": "text", "text": {{json (default "—" .Notes)}} }
       ]
     }{{end}}{{else}},
     {

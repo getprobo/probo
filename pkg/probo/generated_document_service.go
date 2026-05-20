@@ -2702,6 +2702,25 @@ var thirdPartyListTemplate = template.Must(
 			},
 			"printf": fmt.Sprintf,
 			"add":    func(a, b int) int { return a + b },
+			"default": func(fallback string, v any) string {
+				switch s := v.(type) {
+				case nil:
+					return fallback
+				case string:
+					if s == "" {
+						return fallback
+					}
+
+					return s
+				default:
+					str := fmt.Sprint(v)
+					if str == "" {
+						return fallback
+					}
+
+					return str
+				}
+			},
 		}).
 		ParseFS(Templates, "templates/third_party_list.json.tmpl"),
 )
