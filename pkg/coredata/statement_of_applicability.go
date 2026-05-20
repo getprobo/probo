@@ -227,8 +227,10 @@ VALUES (
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
-		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
-			if pgErr.Code == "23505" && pgErr.ConstraintName == "statements_of_applicability_document_id_key" {
+		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok && pgErr.Code == "23505" {
+			switch pgErr.ConstraintName {
+			case "statements_of_applicability_document_id_key",
+				"states_of_applicability_name_organization_id_uniq":
 				return ErrResourceAlreadyExists
 			}
 		}
@@ -267,8 +269,10 @@ WHERE
 
 	result, err := conn.Exec(ctx, q, args)
 	if err != nil {
-		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
-			if pgErr.Code == "23505" && pgErr.ConstraintName == "statements_of_applicability_document_id_key" {
+		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok && pgErr.Code == "23505" {
+			switch pgErr.ConstraintName {
+			case "statements_of_applicability_document_id_key",
+				"states_of_applicability_name_organization_id_uniq":
 				return ErrResourceAlreadyExists
 			}
 		}

@@ -22,7 +22,6 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgconn"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
@@ -367,10 +366,6 @@ INSERT INTO iam_oauth2_consents (
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
-		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok && pgErr.Code == "23505" && pgErr.ConstraintName == "iam_oauth2_consents_pkey" {
-			return ErrResourceAlreadyExists
-		}
-
 		return fmt.Errorf("cannot insert oauth2_consent: %w", err)
 	}
 

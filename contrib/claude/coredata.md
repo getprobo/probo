@@ -249,6 +249,20 @@ if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
 
 The same applies to foreign key violations (`"23503"`) mapped to `ErrResourceInUse` — always verify the constraint name.
 
+**Primary key handling:** Do not add a 23505 check for a single-column GID primary key (`id TEXT PRIMARY KEY`). GIDs are generated and cannot realistically collide — such a check is dead code. Only check the primary key constraint on **composite-PK junction tables** where the PK represents a business uniqueness constraint (e.g. linking a scenario to a threat).
+
+```go
+// Good — composite PK on junction table (real business constraint)
+if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok && pgErr.Code == "23505" && pgErr.ConstraintName == "risk_assessment_scenario_threats_pkey" {
+    return ErrResourceAlreadyExists
+}
+
+// Bad — single GID PK (cannot collide, dead code)
+if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok && pgErr.Code == "23505" && pgErr.ConstraintName == "risk_assessments_pkey" {
+    return ErrResourceAlreadyExists
+}
+```
+
 ## Filters
 
 Filters implement `SQLFragment() string` and `SQLArguments() pgx.NamedArgs`. Use double pointers for three-state filtering: `nil` = no filter, `*nil` = IS NULL, `*val` = equals.

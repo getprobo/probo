@@ -38,3 +38,21 @@ if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
 This applies to all PostgreSQL error codes mapped to sentinel errors:
 - `"23505"` (unique violation) → `ErrResourceAlreadyExists`
 - `"23503"` (foreign key violation) → `ErrResourceInUse`
+
+# Primary key constraint handling
+
+**Do not** add a 23505 check for a single-column GID primary key (`id TEXT PRIMARY KEY`). GIDs are generated and cannot realistically collide; such a check is dead code.
+
+**Do** check the composite primary key on junction tables where the PK represents a business uniqueness constraint (e.g. a link between two entities).
+
+```go
+// GOOD — composite PK on a junction table (real business constraint)
+if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok && pgErr.Code == "23505" && pgErr.ConstraintName == "risk_assessment_scenario_threats_pkey" {
+	return ErrResourceAlreadyExists
+}
+
+// BAD — single GID PK (can never collide, dead code)
+if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok && pgErr.Code == "23505" && pgErr.ConstraintName == "risk_assessments_pkey" {
+	return ErrResourceAlreadyExists
+}
+```
