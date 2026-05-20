@@ -49,6 +49,15 @@ export const cookieBannerTrackersPageQuery = graphql`
       __typename
       ... on CookieBanner {
         ...CookieBannerTrackersPageFragment
+        categories(first: 50, orderBy: { field: RANK, direction: ASC })
+          @required(action: THROW) {
+          edges {
+            node {
+              id
+              name
+            }
+          }
+        }
       }
     }
   }
@@ -66,17 +75,18 @@ const trackersFragment = graphql`
     query: { type: "String", defaultValue: null }
     source: { type: "CookieSource", defaultValue: null }
     trackerType: { type: "TrackerType", defaultValue: null }
+    cookieCategoryId: { type: "ID", defaultValue: null }
   ) {
-    uncategorisedTrackerPatterns(
+    trackerPatterns(
       first: $first
       after: $after
       last: $last
       before: $before
       orderBy: $order
-      filter: { query: $query, source: $source, trackerType: $trackerType }
+      filter: { query: $query, source: $source, trackerType: $trackerType, cookieCategoryId: $cookieCategoryId }
     )
       @connection(
-        key: "CookieBannerTrackersPage_uncategorisedTrackerPatterns"
+        key: "CookieBannerTrackersPage_trackerPatterns"
         filters: ["filter", "orderBy"]
       )
       @required(action: THROW) {
@@ -109,14 +119,19 @@ export default function CookieBannerTrackersPage({
   const [queryFilter, setQueryFilter] = useState("");
   const [sourceFilter, setSourceFilter] = useState<CookieSource | null>(null);
   const [trackerTypeFilter, setTrackerTypeFilter] = useState<TrackerType | null>(null);
+  const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
 
   const { data: fragmentData, ...pagination } = usePaginationFragment<
     CookieBannerTrackersPageRefetchQuery,
     CookieBannerTrackersPageFragment$key
   >(trackersFragment, data.node);
 
-  const connectionId = fragmentData.uncategorisedTrackerPatterns.__id;
-  const patterns = fragmentData.uncategorisedTrackerPatterns.edges.map(edge => edge.node) ?? [];
+  const connectionId = fragmentData.trackerPatterns.__id;
+  const patterns = fragmentData.trackerPatterns.edges.map(edge => edge.node) ?? [];
+
+  const categories = data.node.__typename === "CookieBanner"
+    ? data.node.categories.edges.map(edge => edge.node)
+    : [];
 
   const refetchFilters = (overrides: Record<string, unknown> = {}) => {
     startTransition(() => {
@@ -125,6 +140,7 @@ export default function CookieBannerTrackersPage({
           query: queryFilter || null,
           source: sourceFilter,
           trackerType: trackerTypeFilter,
+          cookieCategoryId: categoryFilter,
           ...overrides,
         },
         { fetchPolicy: "network-only" },
@@ -148,12 +164,19 @@ export default function CookieBannerTrackersPage({
     refetchFilters({ trackerType: newType });
   };
 
+  const handleCategoryFilterChange = (value: string) => {
+    const newCategory = value === "ALL" ? null : value;
+    setCategoryFilter(newCategory);
+    refetchFilters({ cookieCategoryId: newCategory });
+  };
+
   const refetchWithFilters: ComponentProps<typeof SortableTable>["refetch"] = ({ order }) => {
     pagination.refetch({
       order: { direction: order.direction, field: order.field as TrackerPatternOrderField },
       query: queryFilter || null,
       source: sourceFilter,
       trackerType: trackerTypeFilter,
+      cookieCategoryId: categoryFilter,
     });
   };
 
@@ -187,6 +210,15 @@ export default function CookieBannerTrackersPage({
           <Option value="SCRIPT">{__("Script")}</Option>
           <Option value="PRE_EXISTING">{__("Pre-existing")}</Option>
         </Select>
+        <Select
+          value={categoryFilter ?? "ALL"}
+          onValueChange={handleCategoryFilterChange}
+        >
+          <Option value="ALL">{__("All categories")}</Option>
+          {categories.map(category => (
+            <Option key={category.id} value={category.id}>{category.name}</Option>
+          ))}
+        </Select>
       </div>
 
       <div className={isPending ? "opacity-50 pointer-events-none transition-opacity" : ""}>
@@ -202,6 +234,7 @@ export default function CookieBannerTrackersPage({
                     <SortableTh field="NAME">{__("Name")}</SortableTh>
                     <Th>{__("Type")}</Th>
                     <SortableTh field="SOURCE">{__("Source")}</SortableTh>
+                    <Th>{__("Category")}</Th>
                     <SortableTh field="LAST_MATCHED_AT">{__("Last Matched")}</SortableTh>
                     <Th className="w-28" />
                   </Tr>
@@ -221,10 +254,10 @@ export default function CookieBannerTrackersPage({
               <Card padded>
                 <div className="text-center py-12">
                   <h3 className="text-lg font-semibold mb-2">
-                    {__("No uncategorised patterns")}
+                    {__("No tracker patterns")}
                   </h3>
                   <p className="text-txt-tertiary">
-                    {__("All detected cookie patterns have been categorised. New patterns will appear here when detected.")}
+                    {__("No cookie patterns have been detected yet. Patterns will appear here when detected.")}
                   </p>
                 </div>
               </Card>

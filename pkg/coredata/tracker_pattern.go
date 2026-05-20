@@ -647,7 +647,7 @@ WHERE
 	return nil
 }
 
-func (tps *TrackerPatterns) LoadUncategorisedByCookieBannerID(
+func (tps *TrackerPatterns) LoadByCookieBannerID(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
@@ -680,22 +680,14 @@ FROM
 WHERE
 	%s
 	AND cookie_banner_id = @cookie_banner_id
-	AND cookie_category_id = (
-		SELECT id FROM cookie_categories
-		WHERE cookie_banner_id = @cookie_banner_id
-			AND kind = @category_kind
-			AND %s
-		LIMIT 1
-	)
 	AND %s
 	AND %s
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment(), scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
+	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"cookie_banner_id": cookieBannerID,
-		"category_kind":    CookieCategoryKindUncategorised,
 	}
 	maps.Copy(args, scope.SQLArguments())
 	maps.Copy(args, filter.SQLArguments())
@@ -703,12 +695,12 @@ WHERE
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot query uncategorised tracker patterns: %w", err)
+		return fmt.Errorf("cannot query tracker patterns: %w", err)
 	}
 
 	patterns, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[TrackerPattern])
 	if err != nil {
-		return fmt.Errorf("cannot collect uncategorised tracker patterns: %w", err)
+		return fmt.Errorf("cannot collect tracker patterns: %w", err)
 	}
 
 	*tps = patterns
@@ -716,7 +708,7 @@ WHERE
 	return nil
 }
 
-func (tps *TrackerPatterns) CountUncategorisedByCookieBannerID(
+func (tps *TrackerPatterns) CountByCookieBannerID(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
@@ -731,21 +723,13 @@ FROM
 WHERE
 	%s
 	AND cookie_banner_id = @cookie_banner_id
-	AND cookie_category_id = (
-		SELECT id FROM cookie_categories
-		WHERE cookie_banner_id = @cookie_banner_id
-			AND kind = @category_kind
-			AND %s
-		LIMIT 1
-	)
 	AND %s
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment(), scope.SQLFragment(), filter.SQLFragment())
+	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"cookie_banner_id": cookieBannerID,
-		"category_kind":    CookieCategoryKindUncategorised,
 	}
 	maps.Copy(args, scope.SQLArguments())
 	maps.Copy(args, filter.SQLArguments())
@@ -754,7 +738,7 @@ WHERE
 
 	var count int
 	if err := row.Scan(&count); err != nil {
-		return 0, fmt.Errorf("cannot scan count: %w", err)
+		return 0, fmt.Errorf("cannot count tracker patterns: %w", err)
 	}
 
 	return count, nil

@@ -85,7 +85,7 @@ export const categorySectionFragment = graphql`
       }
     }
     cookieBanner @required(action: THROW) {
-      consentCategories(first: 50, orderBy: { field: RANK, direction: ASC }) @required(action: THROW) {
+      categories(first: 50, orderBy: { field: RANK, direction: ASC }, filter: { excludeKind: UNCATEGORISED }) @required(action: THROW) {
         edges {
           node {
             id
@@ -252,7 +252,7 @@ const reorderCategoryMutation = graphql`
     reorderCookieCategory(input: $input) {
       cookieBanner {
         id
-        consentCategories(first: 50, orderBy: { field: RANK, direction: ASC }) {
+        categories(first: 50, orderBy: { field: RANK, direction: ASC }, filter: { excludeKind: UNCATEGORISED }) {
           edges {
             node {
               id
@@ -517,7 +517,7 @@ export function CategorySection({ categoryKey, connectionId }: CategorySectionPr
     );
   };
 
-  const allCategories = category.cookieBanner.consentCategories.edges.map(e => e.node) ?? [];
+  const allCategories = category.cookieBanner.categories.edges.map(e => e.node) ?? [];
   const siblingCategories = allCategories.filter(c => c.id !== category.id);
   const selfIndex = allCategories.findIndex(c => c.id === category.id);
   const isFirst = selfIndex === 0;

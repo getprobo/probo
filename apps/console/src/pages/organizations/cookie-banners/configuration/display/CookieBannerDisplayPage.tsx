@@ -30,8 +30,8 @@ export const cookieBannerDisplayPageQuery = graphql`
       __typename
       ... on CookieBanner {
         id
-        consentCategories(first: 50, orderBy: { field: RANK, direction: ASC })
-          @connection(key: "CookieBannerDisplayPage_consentCategories")
+        categories(first: 50, orderBy: { field: RANK, direction: ASC }, filter: { excludeKind: UNCATEGORISED })
+          @connection(key: "CookieBannerDisplayPage_categories")
           @required(action: THROW) {
           __id
           edges {
@@ -63,8 +63,8 @@ export default function CookieBannerDisplayPage({
   }
 
   const banner = data.node;
-  const connectionId = banner.consentCategories.__id;
-  const categories = banner.consentCategories.edges.map(e => e.node);
+  const connectionId = banner.categories.__id;
+  const categories = banner.categories.edges.map(e => e.node);
 
   const [showCreateDialog, setShowCreateDialog] = useState(false);
 

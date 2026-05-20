@@ -53,6 +53,9 @@ const trackerPatternFragment = graphql`
     maxAgeSeconds
     excluded
     lastMatchedAt
+    cookieCategory {
+      name
+    }
   }
 `;
 
@@ -314,6 +317,11 @@ export function TrackerPatternRow({ patternKey, connectionId }: TrackerPatternRo
       <Td>
         {srcBadge
           ? <Badge variant={srcBadge.variant}>{srcBadge.label}</Badge>
+          : <span className="text-txt-tertiary">-</span>}
+      </Td>
+      <Td>
+        {pattern.cookieCategory
+          ? <span>{pattern.cookieCategory.name}</span>
           : <span className="text-txt-tertiary">-</span>}
       </Td>
       <Td>

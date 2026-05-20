@@ -112,6 +112,13 @@ input CookieCategoryOrder
     field: CookieCategoryOrderField!
 }
 
+input CookieCategoryFilter
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.CookieCategoryFilter"
+    ) {
+    excludeKind: CookieCategoryKind
+}
+
 type CookieBanner implements Node {
     id: ID!
     name: String!
@@ -125,12 +132,13 @@ type CookieBanner implements Node {
 
     organization: Organization @goField(forceResolver: true)
 
-    consentCategories(
+    categories(
         first: Int
         after: CursorKey
         last: Int
         before: CursorKey
         orderBy: CookieCategoryOrder
+        filter: CookieCategoryFilter
     ): CookieCategoryConnection @goField(forceResolver: true)
 
     translations: [CookieBannerTranslation!]! @goField(forceResolver: true)
@@ -146,7 +154,7 @@ type CookieBanner implements Node {
         filter: CookieConsentRecordFilter
     ): CookieConsentRecordConnection @goField(forceResolver: true)
 
-    uncategorisedTrackerPatterns(
+    trackerPatterns(
         first: Int
         after: CursorKey
         last: Int
@@ -299,6 +307,7 @@ input TrackerPatternFilter
     query: String
     source: CookieSource
     trackerType: TrackerType
+    cookieCategoryId: ID
 }
 
 enum TrackerResourceType

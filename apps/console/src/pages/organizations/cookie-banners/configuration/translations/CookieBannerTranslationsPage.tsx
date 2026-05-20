@@ -36,7 +36,7 @@ export const cookieBannerTranslationsPageQuery = graphql`
           language
           translations
         }
-        consentCategories(first: 50, orderBy: { field: RANK, direction: ASC }) @required(action: THROW) {
+        categories(first: 50, orderBy: { field: RANK, direction: ASC }, filter: { excludeKind: UNCATEGORISED }) @required(action: THROW) {
           edges {
             node {
               id
@@ -101,14 +101,14 @@ export default function CookieBannerTranslationsPage({
 
   const categories = useMemo(
     () =>
-      banner.consentCategories.edges.map(e => ({
+      banner.categories.edges.map(e => ({
         id: e.node.id,
         name: e.node.name,
         slug: e.node.slug,
         description: e.node.description,
         kind: e.node.kind,
       })),
-    [banner.consentCategories],
+    [banner.categories],
   );
 
   const necessaryCategoryName = useMemo(

@@ -62,6 +62,7 @@ export function TrackerPatternRowEdit({
         <span className="font-medium">{pattern}</span>
       </Td>
       <Td />
+      <Td />
       <Td className="pr-3">
         <Controller
           name="duration"

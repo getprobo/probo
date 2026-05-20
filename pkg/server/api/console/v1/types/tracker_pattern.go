@@ -34,9 +34,10 @@ type (
 	}
 
 	TrackerPatternFilter struct {
-		Query       *string
-		Source      *coredata.CookieSource
-		TrackerType *coredata.TrackerType
+		Query            *string
+		Source           *coredata.CookieSource
+		TrackerType      *coredata.TrackerType
+		CookieCategoryID *gid.GID
 	}
 )
 
