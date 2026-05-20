@@ -17,14 +17,14 @@
 -- table, controls_snapshots, snapshots_type enum, snapshot-scoped indexes) is
 -- dropped in a follow-up migration.
 
--- processing_activity_vendors stores snapshot_id without an FK to snapshots, so
--- the cascade delete below would not reach it. Clean it up explicitly first.
-DELETE FROM processing_activity_vendors WHERE snapshot_id IS NOT NULL;
+-- processing_activity_third_parties stores snapshot_id without an FK to snapshots,
+-- so the cascade delete below would not reach it. Clean it up explicitly first.
+DELETE FROM processing_activity_third_parties WHERE snapshot_id IS NOT NULL;
 
 -- Every other table with a snapshot_id has a FOREIGN KEY (snapshot_id) REFERENCES
 -- snapshots(id) ON DELETE CASCADE, so deleting all snapshots removes every
--- snapshot-scoped row across data, vendors, assets, risks, findings, obligations,
--- processing_activities, statements_of_applicability, applicability_statements,
--- the vendor_* sub-tables, the processing_activity DPIA/TIA tables, and the
--- controls_snapshots junction.
+-- snapshot-scoped row across data, third_parties, assets, risks, findings,
+-- obligations, processing_activities, statements_of_applicability,
+-- applicability_statements, the third_party_* sub-tables, the processing_activity
+-- DPIA/TIA tables, and the controls_snapshots junction.
 DELETE FROM snapshots;
