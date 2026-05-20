@@ -14,7 +14,12 @@
 
 package coredata
 
-import "fmt"
+import (
+	"encoding"
+	"fmt"
+
+	"go.probo.inc/probo/pkg/page"
+)
 
 type (
 	AccessSourceOrderField string
@@ -24,6 +29,48 @@ const (
 	AccessSourceOrderFieldCreatedAt AccessSourceOrderField = "CREATED_AT"
 )
 
+var (
+	_ page.OrderField          = AccessSourceOrderField("")
+	_ fmt.Stringer             = AccessSourceOrderField("")
+	_ encoding.TextMarshaler   = AccessSourceOrderField("")
+	_ encoding.TextUnmarshaler = (*AccessSourceOrderField)(nil)
+)
+
+func AccessSourceOrderFields() []AccessSourceOrderField {
+	return []AccessSourceOrderField{
+		AccessSourceOrderFieldCreatedAt,
+	}
+}
+
+func (v AccessSourceOrderField) IsValid() bool {
+	switch v {
+	case
+		AccessSourceOrderFieldCreatedAt:
+		return true
+	}
+
+	return false
+}
+
+func (v AccessSourceOrderField) String() string {
+	return string(v)
+}
+
+func (v AccessSourceOrderField) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *AccessSourceOrderField) UnmarshalText(text []byte) error {
+	val := AccessSourceOrderField(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid AccessSourceOrderField value: %q", string(text))
+	}
+
+	*v = val
+
+	return nil
+}
+
 func (p AccessSourceOrderField) Column() string {
 	switch p {
 	case AccessSourceOrderFieldCreatedAt:
@@ -31,30 +78,4 @@ func (p AccessSourceOrderField) Column() string {
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", p))
-}
-
-func (p AccessSourceOrderField) IsValid() bool {
-	switch p {
-	case AccessSourceOrderFieldCreatedAt:
-		return true
-	}
-
-	return false
-}
-
-func (p AccessSourceOrderField) String() string {
-	return string(p)
-}
-
-func (p AccessSourceOrderField) MarshalText() ([]byte, error) {
-	return []byte(p.String()), nil
-}
-
-func (p *AccessSourceOrderField) UnmarshalText(text []byte) error {
-	*p = AccessSourceOrderField(text)
-	if !p.IsValid() {
-		return fmt.Errorf("%s is not a valid AccessSourceOrderField", string(text))
-	}
-
-	return nil
 }

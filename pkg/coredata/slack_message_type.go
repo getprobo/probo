@@ -15,7 +15,7 @@
 package coredata
 
 import (
-	"database/sql/driver"
+	"encoding"
 	"fmt"
 )
 
@@ -26,34 +26,45 @@ const (
 	SlackMessageTypeWelcome                  SlackMessageType = "WELCOME"
 )
 
-func (smt SlackMessageType) String() string {
-	return string(smt)
+var (
+	_ fmt.Stringer             = SlackMessageType("")
+	_ encoding.TextMarshaler   = SlackMessageType("")
+	_ encoding.TextUnmarshaler = (*SlackMessageType)(nil)
+)
+
+func SlackMessageTypes() []SlackMessageType {
+	return []SlackMessageType{
+		SlackMessageTypeTrustCenterAccessRequest,
+		SlackMessageTypeWelcome,
+	}
 }
 
-func (smt *SlackMessageType) Scan(value any) error {
-	var s string
-
-	switch v := value.(type) {
-	case string:
-		s = v
-	case []byte:
-		s = string(v)
-	default:
-		return fmt.Errorf("unsupported type for SlackMessageType: %T", value)
+func (v SlackMessageType) IsValid() bool {
+	switch v {
+	case
+		SlackMessageTypeTrustCenterAccessRequest,
+		SlackMessageTypeWelcome:
+		return true
 	}
 
-	switch s {
-	case "TRUST_CENTER_ACCESS_REQUEST":
-		*smt = SlackMessageTypeTrustCenterAccessRequest
-	case "WELCOME":
-		*smt = SlackMessageTypeWelcome
-	default:
-		return fmt.Errorf("invalid SlackMessageType value: %q", s)
+	return false
+}
+
+func (v SlackMessageType) String() string {
+	return string(v)
+}
+
+func (v SlackMessageType) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *SlackMessageType) UnmarshalText(text []byte) error {
+	val := SlackMessageType(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid SlackMessageType value: %q", string(text))
 	}
+
+	*v = val
 
 	return nil
-}
-
-func (smt SlackMessageType) Value() (driver.Value, error) {
-	return smt.String(), nil
 }

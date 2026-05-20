@@ -14,25 +14,61 @@
 
 package coredata
 
+import (
+	"encoding"
+	"fmt"
+
+	"go.probo.inc/probo/pkg/page"
+)
+
 type TrustCenterOrderField string
 
 const (
 	TrustCenterOrderFieldCreatedAt TrustCenterOrderField = "CREATED_AT"
 )
 
+var (
+	_ page.OrderField          = TrustCenterOrderField("")
+	_ fmt.Stringer             = TrustCenterOrderField("")
+	_ encoding.TextMarshaler   = TrustCenterOrderField("")
+	_ encoding.TextUnmarshaler = (*TrustCenterOrderField)(nil)
+)
+
+func TrustCenterOrderFields() []TrustCenterOrderField {
+	return []TrustCenterOrderField{
+		TrustCenterOrderFieldCreatedAt,
+	}
+}
+
+func (v TrustCenterOrderField) IsValid() bool {
+	switch v {
+	case
+		TrustCenterOrderFieldCreatedAt:
+		return true
+	}
+
+	return false
+}
+
+func (v TrustCenterOrderField) String() string {
+	return string(v)
+}
+
+func (v TrustCenterOrderField) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *TrustCenterOrderField) UnmarshalText(text []byte) error {
+	val := TrustCenterOrderField(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid TrustCenterOrderField value: %q", string(text))
+	}
+
+	*v = val
+
+	return nil
+}
+
 func (p TrustCenterOrderField) Column() string {
 	return string(p)
-}
-
-func (p TrustCenterOrderField) String() string {
-	return string(p)
-}
-
-func (p TrustCenterOrderField) MarshalText() ([]byte, error) {
-	return []byte(p.String()), nil
-}
-
-func (p *TrustCenterOrderField) UnmarshalText(text []byte) error {
-	*p = TrustCenterOrderField(text)
-	return nil
 }

@@ -14,6 +14,13 @@
 
 package coredata
 
+import (
+	"encoding"
+	"fmt"
+
+	"go.probo.inc/probo/pkg/page"
+)
+
 type (
 	ComplianceFrameworkOrderField string
 )
@@ -22,6 +29,50 @@ const (
 	ComplianceFrameworkOrderFieldCreatedAt ComplianceFrameworkOrderField = "CREATED_AT"
 	ComplianceFrameworkOrderFieldRank      ComplianceFrameworkOrderField = "RANK"
 )
+
+var (
+	_ page.OrderField          = ComplianceFrameworkOrderField("")
+	_ fmt.Stringer             = ComplianceFrameworkOrderField("")
+	_ encoding.TextMarshaler   = ComplianceFrameworkOrderField("")
+	_ encoding.TextUnmarshaler = (*ComplianceFrameworkOrderField)(nil)
+)
+
+func ComplianceFrameworkOrderFields() []ComplianceFrameworkOrderField {
+	return []ComplianceFrameworkOrderField{
+		ComplianceFrameworkOrderFieldCreatedAt,
+		ComplianceFrameworkOrderFieldRank,
+	}
+}
+
+func (v ComplianceFrameworkOrderField) IsValid() bool {
+	switch v {
+	case
+		ComplianceFrameworkOrderFieldCreatedAt,
+		ComplianceFrameworkOrderFieldRank:
+		return true
+	}
+
+	return false
+}
+
+func (v ComplianceFrameworkOrderField) String() string {
+	return string(v)
+}
+
+func (v ComplianceFrameworkOrderField) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *ComplianceFrameworkOrderField) UnmarshalText(text []byte) error {
+	val := ComplianceFrameworkOrderField(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid ComplianceFrameworkOrderField value: %q", string(text))
+	}
+
+	*v = val
+
+	return nil
+}
 
 func (p ComplianceFrameworkOrderField) Column() string {
 	switch p {
@@ -32,17 +83,4 @@ func (p ComplianceFrameworkOrderField) Column() string {
 	default:
 		return string(p)
 	}
-}
-
-func (p ComplianceFrameworkOrderField) String() string {
-	return string(p)
-}
-
-func (p ComplianceFrameworkOrderField) MarshalText() ([]byte, error) {
-	return []byte(p.String()), nil
-}
-
-func (p *ComplianceFrameworkOrderField) UnmarshalText(text []byte) error {
-	*p = ComplianceFrameworkOrderField(text)
-	return nil
 }

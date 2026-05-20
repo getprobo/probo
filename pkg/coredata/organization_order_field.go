@@ -14,6 +14,13 @@
 
 package coredata
 
+import (
+	"encoding"
+	"fmt"
+
+	"go.probo.inc/probo/pkg/page"
+)
+
 type (
 	OrganizationOrderField string
 )
@@ -24,19 +31,52 @@ const (
 	OrganizationOrderFieldUpdatedAt OrganizationOrderField = "UPDATED_AT"
 )
 
+var (
+	_ page.OrderField          = OrganizationOrderField("")
+	_ fmt.Stringer             = OrganizationOrderField("")
+	_ encoding.TextMarshaler   = OrganizationOrderField("")
+	_ encoding.TextUnmarshaler = (*OrganizationOrderField)(nil)
+)
+
+func OrganizationOrderFields() []OrganizationOrderField {
+	return []OrganizationOrderField{
+		OrganizationOrderFieldName,
+		OrganizationOrderFieldCreatedAt,
+		OrganizationOrderFieldUpdatedAt,
+	}
+}
+
+func (v OrganizationOrderField) IsValid() bool {
+	switch v {
+	case
+		OrganizationOrderFieldName,
+		OrganizationOrderFieldCreatedAt,
+		OrganizationOrderFieldUpdatedAt:
+		return true
+	}
+
+	return false
+}
+
+func (v OrganizationOrderField) String() string {
+	return string(v)
+}
+
+func (v OrganizationOrderField) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *OrganizationOrderField) UnmarshalText(text []byte) error {
+	val := OrganizationOrderField(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid OrganizationOrderField value: %q", string(text))
+	}
+
+	*v = val
+
+	return nil
+}
+
 func (p OrganizationOrderField) Column() string {
 	return string(p)
-}
-
-func (p OrganizationOrderField) String() string {
-	return string(p)
-}
-
-func (p OrganizationOrderField) MarshalText() ([]byte, error) {
-	return []byte(p.String()), nil
-}
-
-func (p *OrganizationOrderField) UnmarshalText(text []byte) error {
-	*p = OrganizationOrderField(text)
-	return nil
 }

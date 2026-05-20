@@ -14,6 +14,13 @@
 
 package coredata
 
+import (
+	"encoding"
+	"fmt"
+
+	"go.probo.inc/probo/pkg/page"
+)
+
 type RiskAssessmentThreatOrderField string
 
 const (
@@ -21,14 +28,48 @@ const (
 	RiskAssessmentThreatOrderFieldName      RiskAssessmentThreatOrderField = "NAME"
 )
 
-func (p RiskAssessmentThreatOrderField) Column() string { return string(p) }
-func (p RiskAssessmentThreatOrderField) String() string { return string(p) }
+var (
+	_ page.OrderField          = RiskAssessmentThreatOrderField("")
+	_ fmt.Stringer             = RiskAssessmentThreatOrderField("")
+	_ encoding.TextMarshaler   = RiskAssessmentThreatOrderField("")
+	_ encoding.TextUnmarshaler = (*RiskAssessmentThreatOrderField)(nil)
+)
 
-func (p RiskAssessmentThreatOrderField) MarshalText() ([]byte, error) {
-	return []byte(p.String()), nil
+func RiskAssessmentThreatOrderFields() []RiskAssessmentThreatOrderField {
+	return []RiskAssessmentThreatOrderField{
+		RiskAssessmentThreatOrderFieldCreatedAt,
+		RiskAssessmentThreatOrderFieldName,
+	}
 }
 
-func (p *RiskAssessmentThreatOrderField) UnmarshalText(text []byte) error {
-	*p = RiskAssessmentThreatOrderField(text)
+func (v RiskAssessmentThreatOrderField) IsValid() bool {
+	switch v {
+	case
+		RiskAssessmentThreatOrderFieldCreatedAt,
+		RiskAssessmentThreatOrderFieldName:
+		return true
+	}
+
+	return false
+}
+
+func (v RiskAssessmentThreatOrderField) String() string {
+	return string(v)
+}
+
+func (v RiskAssessmentThreatOrderField) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *RiskAssessmentThreatOrderField) UnmarshalText(text []byte) error {
+	val := RiskAssessmentThreatOrderField(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid RiskAssessmentThreatOrderField value: %q", string(text))
+	}
+
+	*v = val
+
 	return nil
 }
+
+func (p RiskAssessmentThreatOrderField) Column() string { return string(p) }

@@ -15,7 +15,7 @@
 package coredata
 
 import (
-	"database/sql/driver"
+	"encoding"
 	"fmt"
 )
 
@@ -26,6 +26,12 @@ const (
 	CookieBannerVersionStatePublished CookieBannerVersionState = "PUBLISHED"
 )
 
+var (
+	_ fmt.Stringer             = CookieBannerVersionState("")
+	_ encoding.TextMarshaler   = CookieBannerVersionState("")
+	_ encoding.TextUnmarshaler = (*CookieBannerVersionState)(nil)
+)
+
 func CookieBannerVersionStates() []CookieBannerVersionState {
 	return []CookieBannerVersionState{
 		CookieBannerVersionStateDraft,
@@ -33,40 +39,32 @@ func CookieBannerVersionStates() []CookieBannerVersionState {
 	}
 }
 
-func (s CookieBannerVersionState) String() string {
-	return string(s)
+func (v CookieBannerVersionState) IsValid() bool {
+	switch v {
+	case
+		CookieBannerVersionStateDraft,
+		CookieBannerVersionStatePublished:
+		return true
+	}
+
+	return false
 }
 
-func (s *CookieBannerVersionState) Scan(value any) error {
-	var v string
+func (v CookieBannerVersionState) String() string {
+	return string(v)
+}
 
-	switch val := value.(type) {
-	case string:
-		v = val
-	case []byte:
-		v = string(val)
-	default:
-		return fmt.Errorf("unsupported type for CookieBannerVersionState: %T", value)
+func (v CookieBannerVersionState) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *CookieBannerVersionState) UnmarshalText(text []byte) error {
+	val := CookieBannerVersionState(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid CookieBannerVersionState value: %q", string(text))
 	}
 
-	switch CookieBannerVersionState(v) {
-	case CookieBannerVersionStateDraft:
-		*s = CookieBannerVersionStateDraft
-	case CookieBannerVersionStatePublished:
-		*s = CookieBannerVersionStatePublished
-	default:
-		return fmt.Errorf("invalid CookieBannerVersionState value: %q", v)
-	}
+	*v = val
 
 	return nil
-}
-
-func (s CookieBannerVersionState) Value() (driver.Value, error) {
-	switch s {
-	case CookieBannerVersionStateDraft,
-		CookieBannerVersionStatePublished:
-		return string(s), nil
-	default:
-		return nil, fmt.Errorf("invalid CookieBannerVersionState: %s", s)
-	}
 }

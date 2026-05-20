@@ -15,7 +15,7 @@
 package coredata
 
 import (
-	"database/sql/driver"
+	"encoding"
 	"fmt"
 )
 
@@ -39,60 +39,71 @@ const (
 	AccessEntryFlagSharedAccount           AccessEntryFlag = "SHARED_ACCOUNT"
 )
 
-func (f AccessEntryFlag) String() string {
-	return string(f)
+var (
+	_ fmt.Stringer             = AccessEntryFlag("")
+	_ encoding.TextMarshaler   = AccessEntryFlag("")
+	_ encoding.TextUnmarshaler = (*AccessEntryFlag)(nil)
+)
+
+func AccessEntryFlags() []AccessEntryFlag {
+	return []AccessEntryFlag{
+		AccessEntryFlagNone,
+		AccessEntryFlagOrphaned,
+		AccessEntryFlagInactive,
+		AccessEntryFlagExcessive,
+		AccessEntryFlagRoleMismatch,
+		AccessEntryFlagNew,
+		AccessEntryFlagDormant,
+		AccessEntryFlagTerminatedUser,
+		AccessEntryFlagContractorExpired,
+		AccessEntryFlagSoDConflict,
+		AccessEntryFlagPrivilegedAccess,
+		AccessEntryFlagRoleCreep,
+		AccessEntryFlagNoBusinessJustification,
+		AccessEntryFlagOutOfDepartment,
+		AccessEntryFlagSharedAccount,
+	}
 }
 
-func (f *AccessEntryFlag) Scan(value any) error {
-	var str string
-
-	switch v := value.(type) {
-	case string:
-		str = v
-	case []byte:
-		str = string(v)
-	default:
-		return fmt.Errorf("cannot scan AccessEntryFlag: unsupported type %T", value)
+func (v AccessEntryFlag) IsValid() bool {
+	switch v {
+	case
+		AccessEntryFlagNone,
+		AccessEntryFlagOrphaned,
+		AccessEntryFlagInactive,
+		AccessEntryFlagExcessive,
+		AccessEntryFlagRoleMismatch,
+		AccessEntryFlagNew,
+		AccessEntryFlagDormant,
+		AccessEntryFlagTerminatedUser,
+		AccessEntryFlagContractorExpired,
+		AccessEntryFlagSoDConflict,
+		AccessEntryFlagPrivilegedAccess,
+		AccessEntryFlagRoleCreep,
+		AccessEntryFlagNoBusinessJustification,
+		AccessEntryFlagOutOfDepartment,
+		AccessEntryFlagSharedAccount:
+		return true
 	}
 
-	switch str {
-	case "NONE":
-		*f = AccessEntryFlagNone
-	case "ORPHANED":
-		*f = AccessEntryFlagOrphaned
-	case "INACTIVE":
-		*f = AccessEntryFlagInactive
-	case "EXCESSIVE":
-		*f = AccessEntryFlagExcessive
-	case "ROLE_MISMATCH":
-		*f = AccessEntryFlagRoleMismatch
-	case "NEW":
-		*f = AccessEntryFlagNew
-	case "DORMANT":
-		*f = AccessEntryFlagDormant
-	case "TERMINATED_USER":
-		*f = AccessEntryFlagTerminatedUser
-	case "CONTRACTOR_EXPIRED":
-		*f = AccessEntryFlagContractorExpired
-	case "SOD_CONFLICT":
-		*f = AccessEntryFlagSoDConflict
-	case "PRIVILEGED_ACCESS":
-		*f = AccessEntryFlagPrivilegedAccess
-	case "ROLE_CREEP":
-		*f = AccessEntryFlagRoleCreep
-	case "NO_BUSINESS_JUSTIFICATION":
-		*f = AccessEntryFlagNoBusinessJustification
-	case "OUT_OF_DEPARTMENT":
-		*f = AccessEntryFlagOutOfDepartment
-	case "SHARED_ACCOUNT":
-		*f = AccessEntryFlagSharedAccount
-	default:
-		return fmt.Errorf("cannot parse AccessEntryFlag: invalid value %q", str)
+	return false
+}
+
+func (v AccessEntryFlag) String() string {
+	return string(v)
+}
+
+func (v AccessEntryFlag) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *AccessEntryFlag) UnmarshalText(text []byte) error {
+	val := AccessEntryFlag(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid AccessEntryFlag value: %q", string(text))
 	}
+
+	*v = val
 
 	return nil
-}
-
-func (f AccessEntryFlag) Value() (driver.Value, error) {
-	return f.String(), nil
 }

@@ -15,7 +15,7 @@
 package coredata
 
 import (
-	"database/sql/driver"
+	"encoding"
 	"fmt"
 )
 
@@ -27,6 +27,12 @@ const (
 	ObligationStatusCompliant          ObligationStatus = "COMPLIANT"
 )
 
+var (
+	_ fmt.Stringer             = ObligationStatus("")
+	_ encoding.TextMarshaler   = ObligationStatus("")
+	_ encoding.TextUnmarshaler = (*ObligationStatus)(nil)
+)
+
 func ObligationStatuses() []ObligationStatus {
 	return []ObligationStatus{
 		ObligationStatusNonCompliant,
@@ -35,36 +41,33 @@ func ObligationStatuses() []ObligationStatus {
 	}
 }
 
-func (os ObligationStatus) String() string {
-	return string(os)
+func (v ObligationStatus) IsValid() bool {
+	switch v {
+	case
+		ObligationStatusNonCompliant,
+		ObligationStatusPartiallyCompliant,
+		ObligationStatusCompliant:
+		return true
+	}
+
+	return false
 }
 
-func (os *ObligationStatus) Scan(value any) error {
-	var s string
+func (v ObligationStatus) String() string {
+	return string(v)
+}
 
-	switch v := value.(type) {
-	case string:
-		s = v
-	case []byte:
-		s = string(v)
-	default:
-		return fmt.Errorf("unsupported type for ObligationStatus: %T", value)
+func (v ObligationStatus) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *ObligationStatus) UnmarshalText(text []byte) error {
+	val := ObligationStatus(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid ObligationStatus value: %q", string(text))
 	}
 
-	switch s {
-	case "NON_COMPLIANT":
-		*os = ObligationStatusNonCompliant
-	case "PARTIALLY_COMPLIANT":
-		*os = ObligationStatusPartiallyCompliant
-	case "COMPLIANT":
-		*os = ObligationStatusCompliant
-	default:
-		return fmt.Errorf("invalid ObligationStatus value: %q", s)
-	}
+	*v = val
 
 	return nil
-}
-
-func (os ObligationStatus) Value() (driver.Value, error) {
-	return os.String(), nil
 }

@@ -15,7 +15,7 @@
 package coredata
 
 import (
-	"database/sql/driver"
+	"encoding"
 	"fmt"
 )
 
@@ -28,42 +28,53 @@ const (
 	AccessReviewCampaignSourceFetchStatusFailed   AccessReviewCampaignSourceFetchStatus = "FAILED"
 )
 
-func (s AccessReviewCampaignSourceFetchStatus) IsTerminal() bool {
-	return s == AccessReviewCampaignSourceFetchStatusSuccess || s == AccessReviewCampaignSourceFetchStatusFailed
+var (
+	_ fmt.Stringer             = AccessReviewCampaignSourceFetchStatus("")
+	_ encoding.TextMarshaler   = AccessReviewCampaignSourceFetchStatus("")
+	_ encoding.TextUnmarshaler = (*AccessReviewCampaignSourceFetchStatus)(nil)
+)
+
+func AccessReviewCampaignSourceFetchStatuses() []AccessReviewCampaignSourceFetchStatus {
+	return []AccessReviewCampaignSourceFetchStatus{
+		AccessReviewCampaignSourceFetchStatusQueued,
+		AccessReviewCampaignSourceFetchStatusFetching,
+		AccessReviewCampaignSourceFetchStatusSuccess,
+		AccessReviewCampaignSourceFetchStatusFailed,
+	}
 }
 
-func (s AccessReviewCampaignSourceFetchStatus) String() string {
-	return string(s)
+func (v AccessReviewCampaignSourceFetchStatus) IsValid() bool {
+	switch v {
+	case
+		AccessReviewCampaignSourceFetchStatusQueued,
+		AccessReviewCampaignSourceFetchStatusFetching,
+		AccessReviewCampaignSourceFetchStatusSuccess,
+		AccessReviewCampaignSourceFetchStatusFailed:
+		return true
+	}
+
+	return false
 }
 
-func (s *AccessReviewCampaignSourceFetchStatus) Scan(value any) error {
-	var str string
+func (v AccessReviewCampaignSourceFetchStatus) String() string {
+	return string(v)
+}
 
-	switch v := value.(type) {
-	case string:
-		str = v
-	case []byte:
-		str = string(v)
-	default:
-		return fmt.Errorf("cannot scan AccessReviewCampaignSourceFetchStatus: unsupported type %T", value)
+func (v AccessReviewCampaignSourceFetchStatus) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *AccessReviewCampaignSourceFetchStatus) UnmarshalText(text []byte) error {
+	val := AccessReviewCampaignSourceFetchStatus(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid AccessReviewCampaignSourceFetchStatus value: %q", string(text))
 	}
 
-	switch str {
-	case "QUEUED":
-		*s = AccessReviewCampaignSourceFetchStatusQueued
-	case "FETCHING":
-		*s = AccessReviewCampaignSourceFetchStatusFetching
-	case "SUCCESS":
-		*s = AccessReviewCampaignSourceFetchStatusSuccess
-	case "FAILED":
-		*s = AccessReviewCampaignSourceFetchStatusFailed
-	default:
-		return fmt.Errorf("cannot parse AccessReviewCampaignSourceFetchStatus: invalid value %q", str)
-	}
+	*v = val
 
 	return nil
 }
 
-func (s AccessReviewCampaignSourceFetchStatus) Value() (driver.Value, error) {
-	return s.String(), nil
+func (s AccessReviewCampaignSourceFetchStatus) IsTerminal() bool {
+	return s == AccessReviewCampaignSourceFetchStatusSuccess || s == AccessReviewCampaignSourceFetchStatusFailed
 }

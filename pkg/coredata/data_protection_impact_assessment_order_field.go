@@ -14,7 +14,12 @@
 
 package coredata
 
-import "fmt"
+import (
+	"encoding"
+	"fmt"
+
+	"go.probo.inc/probo/pkg/page"
+)
 
 type DataProtectionImpactAssessmentOrderField string
 
@@ -22,25 +27,48 @@ const (
 	DataProtectionImpactAssessmentOrderFieldCreatedAt DataProtectionImpactAssessmentOrderField = "CREATED_AT"
 )
 
-func (p DataProtectionImpactAssessmentOrderField) Column() string {
-	return string(p)
+var (
+	_ page.OrderField          = DataProtectionImpactAssessmentOrderField("")
+	_ fmt.Stringer             = DataProtectionImpactAssessmentOrderField("")
+	_ encoding.TextMarshaler   = DataProtectionImpactAssessmentOrderField("")
+	_ encoding.TextUnmarshaler = (*DataProtectionImpactAssessmentOrderField)(nil)
+)
+
+func DataProtectionImpactAssessmentOrderFields() []DataProtectionImpactAssessmentOrderField {
+	return []DataProtectionImpactAssessmentOrderField{
+		DataProtectionImpactAssessmentOrderFieldCreatedAt,
+	}
 }
 
-func (p DataProtectionImpactAssessmentOrderField) String() string {
-	return string(p)
-}
-
-func (p DataProtectionImpactAssessmentOrderField) MarshalText() ([]byte, error) {
-	return []byte(p.String()), nil
-}
-
-func (p *DataProtectionImpactAssessmentOrderField) UnmarshalText(text []byte) error {
-	val := string(text)
-	switch val {
-	case string(DataProtectionImpactAssessmentOrderFieldCreatedAt):
-		*p = DataProtectionImpactAssessmentOrderFieldCreatedAt
-		return nil
+func (v DataProtectionImpactAssessmentOrderField) IsValid() bool {
+	switch v {
+	case
+		DataProtectionImpactAssessmentOrderFieldCreatedAt:
+		return true
 	}
 
-	return fmt.Errorf("invalid DataProtectionImpactAssessmentOrderField value: %q", val)
+	return false
+}
+
+func (v DataProtectionImpactAssessmentOrderField) String() string {
+	return string(v)
+}
+
+func (v DataProtectionImpactAssessmentOrderField) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *DataProtectionImpactAssessmentOrderField) UnmarshalText(text []byte) error {
+	val := DataProtectionImpactAssessmentOrderField(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid DataProtectionImpactAssessmentOrderField value: %q", string(text))
+	}
+
+	*v = val
+
+	return nil
+}
+
+func (p DataProtectionImpactAssessmentOrderField) Column() string {
+	return string(p)
 }

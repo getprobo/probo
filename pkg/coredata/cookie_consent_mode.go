@@ -15,7 +15,7 @@
 package coredata
 
 import (
-	"database/sql/driver"
+	"encoding"
 	"fmt"
 )
 
@@ -26,6 +26,12 @@ const (
 	CookieConsentModeOptOut CookieConsentMode = "OPT_OUT"
 )
 
+var (
+	_ fmt.Stringer             = CookieConsentMode("")
+	_ encoding.TextMarshaler   = CookieConsentMode("")
+	_ encoding.TextUnmarshaler = (*CookieConsentMode)(nil)
+)
+
 func CookieConsentModes() []CookieConsentMode {
 	return []CookieConsentMode{
 		CookieConsentModeOptIn,
@@ -33,40 +39,32 @@ func CookieConsentModes() []CookieConsentMode {
 	}
 }
 
-func (m CookieConsentMode) String() string {
-	return string(m)
+func (v CookieConsentMode) IsValid() bool {
+	switch v {
+	case
+		CookieConsentModeOptIn,
+		CookieConsentModeOptOut:
+		return true
+	}
+
+	return false
 }
 
-func (m *CookieConsentMode) Scan(value any) error {
-	var v string
+func (v CookieConsentMode) String() string {
+	return string(v)
+}
 
-	switch val := value.(type) {
-	case string:
-		v = val
-	case []byte:
-		v = string(val)
-	default:
-		return fmt.Errorf("unsupported type for CookieConsentMode: %T", value)
+func (v CookieConsentMode) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *CookieConsentMode) UnmarshalText(text []byte) error {
+	val := CookieConsentMode(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid CookieConsentMode value: %q", string(text))
 	}
 
-	switch CookieConsentMode(v) {
-	case CookieConsentModeOptIn:
-		*m = CookieConsentModeOptIn
-	case CookieConsentModeOptOut:
-		*m = CookieConsentModeOptOut
-	default:
-		return fmt.Errorf("invalid CookieConsentMode value: %q", v)
-	}
+	*v = val
 
 	return nil
-}
-
-func (m CookieConsentMode) Value() (driver.Value, error) {
-	switch m {
-	case CookieConsentModeOptIn,
-		CookieConsentModeOptOut:
-		return string(m), nil
-	default:
-		return nil, fmt.Errorf("invalid CookieConsentMode: %s", m)
-	}
 }

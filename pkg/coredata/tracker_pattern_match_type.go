@@ -15,7 +15,7 @@
 package coredata
 
 import (
-	"database/sql/driver"
+	"encoding"
 	"fmt"
 )
 
@@ -27,50 +27,47 @@ const (
 	TrackerPatternMatchTypeGlob   TrackerPatternMatchType = "GLOB"
 )
 
+var (
+	_ fmt.Stringer             = TrackerPatternMatchType("")
+	_ encoding.TextMarshaler   = TrackerPatternMatchType("")
+	_ encoding.TextUnmarshaler = (*TrackerPatternMatchType)(nil)
+)
+
 func TrackerPatternMatchTypes() []TrackerPatternMatchType {
 	return []TrackerPatternMatchType{
 		TrackerPatternMatchTypeExact,
+		TrackerPatternMatchTypePrefix,
 		TrackerPatternMatchTypeGlob,
 	}
 }
 
-func (m TrackerPatternMatchType) String() string {
-	return string(m)
-}
-
-func (m *TrackerPatternMatchType) Scan(value any) error {
-	var v string
-
-	switch val := value.(type) {
-	case string:
-		v = val
-	case []byte:
-		v = string(val)
-	default:
-		return fmt.Errorf("unsupported type for TrackerPatternMatchType: %T", value)
-	}
-
-	switch TrackerPatternMatchType(v) {
-	case TrackerPatternMatchTypeExact:
-		*m = TrackerPatternMatchTypeExact
-	case TrackerPatternMatchTypePrefix:
-		*m = TrackerPatternMatchTypePrefix
-	case TrackerPatternMatchTypeGlob:
-		*m = TrackerPatternMatchTypeGlob
-	default:
-		return fmt.Errorf("invalid TrackerPatternMatchType value: %q", v)
-	}
-
-	return nil
-}
-
-func (m TrackerPatternMatchType) Value() (driver.Value, error) {
-	switch m {
-	case TrackerPatternMatchTypeExact,
+func (v TrackerPatternMatchType) IsValid() bool {
+	switch v {
+	case
+		TrackerPatternMatchTypeExact,
 		TrackerPatternMatchTypePrefix,
 		TrackerPatternMatchTypeGlob:
-		return string(m), nil
-	default:
-		return nil, fmt.Errorf("invalid TrackerPatternMatchType: %s", m)
+		return true
 	}
+
+	return false
+}
+
+func (v TrackerPatternMatchType) String() string {
+	return string(v)
+}
+
+func (v TrackerPatternMatchType) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *TrackerPatternMatchType) UnmarshalText(text []byte) error {
+	val := TrackerPatternMatchType(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid TrackerPatternMatchType value: %q", string(text))
+	}
+
+	*v = val
+
+	return nil
 }

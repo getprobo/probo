@@ -15,7 +15,7 @@
 package coredata
 
 import (
-	"database/sql/driver"
+	"encoding"
 	"fmt"
 )
 
@@ -28,38 +28,49 @@ const (
 	MailingListUpdateStatusSent       MailingListUpdateStatus = "SENT"
 )
 
-func (s MailingListUpdateStatus) String() string {
-	return string(s)
+var (
+	_ fmt.Stringer             = MailingListUpdateStatus("")
+	_ encoding.TextMarshaler   = MailingListUpdateStatus("")
+	_ encoding.TextUnmarshaler = (*MailingListUpdateStatus)(nil)
+)
+
+func MailingListUpdateStatuses() []MailingListUpdateStatus {
+	return []MailingListUpdateStatus{
+		MailingListUpdateStatusDraft,
+		MailingListUpdateStatusEnqueued,
+		MailingListUpdateStatusProcessing,
+		MailingListUpdateStatusSent,
+	}
 }
 
-func (s *MailingListUpdateStatus) Scan(value any) error {
-	var str string
-
-	switch v := value.(type) {
-	case string:
-		str = v
-	case []byte:
-		str = string(v)
-	default:
-		return fmt.Errorf("unsupported type for MailingListUpdateStatus: %T", value)
+func (v MailingListUpdateStatus) IsValid() bool {
+	switch v {
+	case
+		MailingListUpdateStatusDraft,
+		MailingListUpdateStatusEnqueued,
+		MailingListUpdateStatusProcessing,
+		MailingListUpdateStatusSent:
+		return true
 	}
 
-	switch str {
-	case "DRAFT":
-		*s = MailingListUpdateStatusDraft
-	case "ENQUEUED":
-		*s = MailingListUpdateStatusEnqueued
-	case "PROCESSING":
-		*s = MailingListUpdateStatusProcessing
-	case "SENT":
-		*s = MailingListUpdateStatusSent
-	default:
-		return fmt.Errorf("invalid MailingListUpdateStatus value: %q", str)
+	return false
+}
+
+func (v MailingListUpdateStatus) String() string {
+	return string(v)
+}
+
+func (v MailingListUpdateStatus) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *MailingListUpdateStatus) UnmarshalText(text []byte) error {
+	val := MailingListUpdateStatus(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid MailingListUpdateStatus value: %q", string(text))
 	}
+
+	*v = val
 
 	return nil
-}
-
-func (s MailingListUpdateStatus) Value() (driver.Value, error) {
-	return s.String(), nil
 }

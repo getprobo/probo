@@ -15,7 +15,7 @@
 package coredata
 
 import (
-	"database/sql/driver"
+	"encoding"
 	"fmt"
 )
 
@@ -26,34 +26,45 @@ const (
 	MailingListSubscriberStatusConfirmed MailingListSubscriberStatus = "CONFIRMED"
 )
 
-func (s MailingListSubscriberStatus) String() string {
-	return string(s)
+var (
+	_ fmt.Stringer             = MailingListSubscriberStatus("")
+	_ encoding.TextMarshaler   = MailingListSubscriberStatus("")
+	_ encoding.TextUnmarshaler = (*MailingListSubscriberStatus)(nil)
+)
+
+func MailingListSubscriberStatuses() []MailingListSubscriberStatus {
+	return []MailingListSubscriberStatus{
+		MailingListSubscriberStatusPending,
+		MailingListSubscriberStatusConfirmed,
+	}
 }
 
-func (s *MailingListSubscriberStatus) Scan(value any) error {
-	var str string
-
-	switch v := value.(type) {
-	case string:
-		str = v
-	case []byte:
-		str = string(v)
-	default:
-		return fmt.Errorf("unsupported type for MailingListSubscriberStatus: %T", value)
+func (v MailingListSubscriberStatus) IsValid() bool {
+	switch v {
+	case
+		MailingListSubscriberStatusPending,
+		MailingListSubscriberStatusConfirmed:
+		return true
 	}
 
-	switch str {
-	case "PENDING":
-		*s = MailingListSubscriberStatusPending
-	case "CONFIRMED":
-		*s = MailingListSubscriberStatusConfirmed
-	default:
-		return fmt.Errorf("invalid MailingListSubscriberStatus value: %q", str)
+	return false
+}
+
+func (v MailingListSubscriberStatus) String() string {
+	return string(v)
+}
+
+func (v MailingListSubscriberStatus) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *MailingListSubscriberStatus) UnmarshalText(text []byte) error {
+	val := MailingListSubscriberStatus(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid MailingListSubscriberStatus value: %q", string(text))
 	}
+
+	*v = val
 
 	return nil
-}
-
-func (s MailingListSubscriberStatus) Value() (driver.Value, error) {
-	return s.String(), nil
 }

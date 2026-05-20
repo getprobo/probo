@@ -14,7 +14,12 @@
 
 package coredata
 
-import "fmt"
+import (
+	"encoding"
+	"fmt"
+
+	"go.probo.inc/probo/pkg/page"
+)
 
 type TrackerPatternOrderField string
 
@@ -25,6 +30,56 @@ const (
 	TrackerPatternOrderFieldUpdatedAt     TrackerPatternOrderField = "UPDATED_AT"
 	TrackerPatternOrderFieldSource        TrackerPatternOrderField = "SOURCE"
 )
+
+var (
+	_ page.OrderField          = TrackerPatternOrderField("")
+	_ fmt.Stringer             = TrackerPatternOrderField("")
+	_ encoding.TextMarshaler   = TrackerPatternOrderField("")
+	_ encoding.TextUnmarshaler = (*TrackerPatternOrderField)(nil)
+)
+
+func TrackerPatternOrderFields() []TrackerPatternOrderField {
+	return []TrackerPatternOrderField{
+		TrackerPatternOrderFieldCreatedAt,
+		TrackerPatternOrderFieldName,
+		TrackerPatternOrderFieldLastMatchedAt,
+		TrackerPatternOrderFieldUpdatedAt,
+		TrackerPatternOrderFieldSource,
+	}
+}
+
+func (v TrackerPatternOrderField) IsValid() bool {
+	switch v {
+	case
+		TrackerPatternOrderFieldCreatedAt,
+		TrackerPatternOrderFieldName,
+		TrackerPatternOrderFieldLastMatchedAt,
+		TrackerPatternOrderFieldUpdatedAt,
+		TrackerPatternOrderFieldSource:
+		return true
+	}
+
+	return false
+}
+
+func (v TrackerPatternOrderField) String() string {
+	return string(v)
+}
+
+func (v TrackerPatternOrderField) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *TrackerPatternOrderField) UnmarshalText(text []byte) error {
+	val := TrackerPatternOrderField(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid TrackerPatternOrderField value: %q", string(text))
+	}
+
+	*v = val
+
+	return nil
+}
 
 func (p TrackerPatternOrderField) Column() string {
 	switch p {
@@ -41,34 +96,4 @@ func (p TrackerPatternOrderField) Column() string {
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", p))
-}
-
-func (p TrackerPatternOrderField) IsValid() bool {
-	switch p {
-	case TrackerPatternOrderFieldCreatedAt,
-		TrackerPatternOrderFieldName,
-		TrackerPatternOrderFieldLastMatchedAt,
-		TrackerPatternOrderFieldUpdatedAt,
-		TrackerPatternOrderFieldSource:
-		return true
-	}
-
-	return false
-}
-
-func (p TrackerPatternOrderField) String() string {
-	return string(p)
-}
-
-func (p *TrackerPatternOrderField) UnmarshalText(text []byte) error {
-	*p = TrackerPatternOrderField(text)
-	if !p.IsValid() {
-		return fmt.Errorf("%s is not a valid TrackerPatternOrderField", string(text))
-	}
-
-	return nil
-}
-
-func (p TrackerPatternOrderField) MarshalText() ([]byte, error) {
-	return []byte(p.String()), nil
 }

@@ -15,7 +15,7 @@
 package coredata
 
 import (
-	"database/sql/driver"
+	"encoding"
 	"fmt"
 )
 
@@ -30,6 +30,12 @@ const (
 	ProcessingActivityTransferSafeguardCertificationMechanisms    ProcessingActivityTransferSafeguard = "CERTIFICATION_MECHANISMS"
 )
 
+var (
+	_ fmt.Stringer             = ProcessingActivityTransferSafeguard("")
+	_ encoding.TextMarshaler   = ProcessingActivityTransferSafeguard("")
+	_ encoding.TextUnmarshaler = (*ProcessingActivityTransferSafeguard)(nil)
+)
+
 func ProcessingActivityTransferSafeguards() []ProcessingActivityTransferSafeguard {
 	return []ProcessingActivityTransferSafeguard{
 		ProcessingActivityTransferSafeguardStandardContractualClauses,
@@ -41,42 +47,36 @@ func ProcessingActivityTransferSafeguards() []ProcessingActivityTransferSafeguar
 	}
 }
 
-func (p ProcessingActivityTransferSafeguard) String() string {
-	return string(p)
+func (v ProcessingActivityTransferSafeguard) IsValid() bool {
+	switch v {
+	case
+		ProcessingActivityTransferSafeguardStandardContractualClauses,
+		ProcessingActivityTransferSafeguardBindingCorporateRules,
+		ProcessingActivityTransferSafeguardAdequacyDecision,
+		ProcessingActivityTransferSafeguardDerogations,
+		ProcessingActivityTransferSafeguardCodesOfConduct,
+		ProcessingActivityTransferSafeguardCertificationMechanisms:
+		return true
+	}
+
+	return false
 }
 
-func (p *ProcessingActivityTransferSafeguard) Scan(value any) error {
-	var s string
+func (v ProcessingActivityTransferSafeguard) String() string {
+	return string(v)
+}
 
-	switch v := value.(type) {
-	case string:
-		s = v
-	case []byte:
-		s = string(v)
-	default:
-		return fmt.Errorf("unsupported type for ProcessingActivityTransferSafeguard: %T", value)
+func (v ProcessingActivityTransferSafeguard) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *ProcessingActivityTransferSafeguard) UnmarshalText(text []byte) error {
+	val := ProcessingActivityTransferSafeguard(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid ProcessingActivityTransferSafeguard value: %q", string(text))
 	}
 
-	switch s {
-	case "STANDARD_CONTRACTUAL_CLAUSES":
-		*p = ProcessingActivityTransferSafeguardStandardContractualClauses
-	case "BINDING_CORPORATE_RULES":
-		*p = ProcessingActivityTransferSafeguardBindingCorporateRules
-	case "ADEQUACY_DECISION":
-		*p = ProcessingActivityTransferSafeguardAdequacyDecision
-	case "DEROGATIONS":
-		*p = ProcessingActivityTransferSafeguardDerogations
-	case "CODES_OF_CONDUCT":
-		*p = ProcessingActivityTransferSafeguardCodesOfConduct
-	case "CERTIFICATION_MECHANISMS":
-		*p = ProcessingActivityTransferSafeguardCertificationMechanisms
-	default:
-		return fmt.Errorf("invalid ProcessingActivityTransferSafeguard value: %q", s)
-	}
+	*v = val
 
 	return nil
-}
-
-func (p ProcessingActivityTransferSafeguard) Value() (driver.Value, error) {
-	return p.String(), nil
 }

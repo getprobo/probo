@@ -14,6 +14,11 @@
 
 package coredata
 
+import (
+	"encoding"
+	"fmt"
+)
+
 type (
 	ExpireReason string
 )
@@ -23,3 +28,48 @@ const (
 	ExpireReasonRevoked     ExpireReason = "revoked"
 	ExpireReasonClosed      ExpireReason = "closed"
 )
+
+var (
+	_ fmt.Stringer             = ExpireReason("")
+	_ encoding.TextMarshaler   = ExpireReason("")
+	_ encoding.TextUnmarshaler = (*ExpireReason)(nil)
+)
+
+func ExpireReasons() []ExpireReason {
+	return []ExpireReason{
+		ExpireReasonIdleTimeout,
+		ExpireReasonRevoked,
+		ExpireReasonClosed,
+	}
+}
+
+func (v ExpireReason) IsValid() bool {
+	switch v {
+	case
+		ExpireReasonIdleTimeout,
+		ExpireReasonRevoked,
+		ExpireReasonClosed:
+		return true
+	}
+
+	return false
+}
+
+func (v ExpireReason) String() string {
+	return string(v)
+}
+
+func (v ExpireReason) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *ExpireReason) UnmarshalText(text []byte) error {
+	val := ExpireReason(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid ExpireReason value: %q", string(text))
+	}
+
+	*v = val
+
+	return nil
+}

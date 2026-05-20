@@ -15,7 +15,7 @@
 package coredata
 
 import (
-	"database/sql/driver"
+	"encoding"
 	"fmt"
 )
 
@@ -28,6 +28,12 @@ const (
 	RiskAssessmentNodeTypeData     RiskAssessmentNodeType = "DATA"
 )
 
+var (
+	_ fmt.Stringer             = RiskAssessmentNodeType("")
+	_ encoding.TextMarshaler   = RiskAssessmentNodeType("")
+	_ encoding.TextUnmarshaler = (*RiskAssessmentNodeType)(nil)
+)
+
 func RiskAssessmentNodeTypes() []RiskAssessmentNodeType {
 	return []RiskAssessmentNodeType{
 		RiskAssessmentNodeTypeEntity,
@@ -37,42 +43,34 @@ func RiskAssessmentNodeTypes() []RiskAssessmentNodeType {
 	}
 }
 
-func (t RiskAssessmentNodeType) MarshalText() ([]byte, error) {
-	return []byte(t.String()), nil
+func (v RiskAssessmentNodeType) IsValid() bool {
+	switch v {
+	case
+		RiskAssessmentNodeTypeEntity,
+		RiskAssessmentNodeTypeBoundary,
+		RiskAssessmentNodeTypeAsset,
+		RiskAssessmentNodeTypeData:
+		return true
+	}
+
+	return false
 }
 
-func (t *RiskAssessmentNodeType) UnmarshalText(data []byte) error {
-	val := string(data)
+func (v RiskAssessmentNodeType) String() string {
+	return string(v)
+}
 
-	switch val {
-	case RiskAssessmentNodeTypeEntity.String():
-		*t = RiskAssessmentNodeTypeEntity
-	case RiskAssessmentNodeTypeBoundary.String():
-		*t = RiskAssessmentNodeTypeBoundary
-	case RiskAssessmentNodeTypeAsset.String():
-		*t = RiskAssessmentNodeTypeAsset
-	case RiskAssessmentNodeTypeData.String():
-		*t = RiskAssessmentNodeTypeData
-	default:
-		return fmt.Errorf("invalid RiskAssessmentNodeType value: %q", val)
+func (v RiskAssessmentNodeType) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *RiskAssessmentNodeType) UnmarshalText(text []byte) error {
+	val := RiskAssessmentNodeType(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid RiskAssessmentNodeType value: %q", string(text))
 	}
+
+	*v = val
 
 	return nil
-}
-
-func (t RiskAssessmentNodeType) String() string {
-	return string(t)
-}
-
-func (t *RiskAssessmentNodeType) Scan(value any) error {
-	val, ok := value.(string)
-	if !ok {
-		return fmt.Errorf("invalid scan source for RiskAssessmentNodeType, expected string got %T", value)
-	}
-
-	return t.UnmarshalText([]byte(val))
-}
-
-func (t RiskAssessmentNodeType) Value() (driver.Value, error) {
-	return t.String(), nil
 }

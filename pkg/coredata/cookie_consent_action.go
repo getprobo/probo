@@ -15,7 +15,7 @@
 package coredata
 
 import (
-	"database/sql/driver"
+	"encoding"
 	"fmt"
 )
 
@@ -29,6 +29,12 @@ const (
 	CookieConsentActionGPC CookieConsentAction = "GPC"
 )
 
+var (
+	_ fmt.Stringer             = CookieConsentAction("")
+	_ encoding.TextMarshaler   = CookieConsentAction("")
+	_ encoding.TextUnmarshaler = (*CookieConsentAction)(nil)
+)
+
 func CookieConsentActions() []CookieConsentAction {
 	return []CookieConsentAction{
 		CookieConsentActionAcceptAll,
@@ -38,46 +44,34 @@ func CookieConsentActions() []CookieConsentAction {
 	}
 }
 
-func (a CookieConsentAction) String() string {
-	return string(a)
-}
-
-func (a *CookieConsentAction) Scan(value any) error {
-	var v string
-
-	switch val := value.(type) {
-	case string:
-		v = val
-	case []byte:
-		v = string(val)
-	default:
-		return fmt.Errorf("unsupported type for CookieConsentAction: %T", value)
-	}
-
-	switch CookieConsentAction(v) {
-	case CookieConsentActionAcceptAll:
-		*a = CookieConsentActionAcceptAll
-	case CookieConsentActionRejectAll:
-		*a = CookieConsentActionRejectAll
-	case CookieConsentActionCustomize:
-		*a = CookieConsentActionCustomize
-	case CookieConsentActionGPC:
-		*a = CookieConsentActionGPC
-	default:
-		return fmt.Errorf("invalid CookieConsentAction value: %q", v)
-	}
-
-	return nil
-}
-
-func (a CookieConsentAction) Value() (driver.Value, error) {
-	switch a {
-	case CookieConsentActionAcceptAll,
+func (v CookieConsentAction) IsValid() bool {
+	switch v {
+	case
+		CookieConsentActionAcceptAll,
 		CookieConsentActionRejectAll,
 		CookieConsentActionCustomize,
 		CookieConsentActionGPC:
-		return string(a), nil
-	default:
-		return nil, fmt.Errorf("invalid CookieConsentAction: %s", a)
+		return true
 	}
+
+	return false
+}
+
+func (v CookieConsentAction) String() string {
+	return string(v)
+}
+
+func (v CookieConsentAction) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *CookieConsentAction) UnmarshalText(text []byte) error {
+	val := CookieConsentAction(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid CookieConsentAction value: %q", string(text))
+	}
+
+	*v = val
+
+	return nil
 }

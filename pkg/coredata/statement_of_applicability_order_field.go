@@ -15,7 +15,10 @@
 package coredata
 
 import (
+	"encoding"
 	"fmt"
+
+	"go.probo.inc/probo/pkg/page"
 )
 
 type (
@@ -27,6 +30,50 @@ const (
 	StatementOfApplicabilityOrderFieldCreatedAt StatementOfApplicabilityOrderField = "CREATED_AT"
 )
 
+var (
+	_ page.OrderField          = StatementOfApplicabilityOrderField("")
+	_ fmt.Stringer             = StatementOfApplicabilityOrderField("")
+	_ encoding.TextMarshaler   = StatementOfApplicabilityOrderField("")
+	_ encoding.TextUnmarshaler = (*StatementOfApplicabilityOrderField)(nil)
+)
+
+func StatementOfApplicabilityOrderFields() []StatementOfApplicabilityOrderField {
+	return []StatementOfApplicabilityOrderField{
+		StatementOfApplicabilityOrderFieldName,
+		StatementOfApplicabilityOrderFieldCreatedAt,
+	}
+}
+
+func (v StatementOfApplicabilityOrderField) IsValid() bool {
+	switch v {
+	case
+		StatementOfApplicabilityOrderFieldName,
+		StatementOfApplicabilityOrderFieldCreatedAt:
+		return true
+	}
+
+	return false
+}
+
+func (v StatementOfApplicabilityOrderField) String() string {
+	return string(v)
+}
+
+func (v StatementOfApplicabilityOrderField) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *StatementOfApplicabilityOrderField) UnmarshalText(text []byte) error {
+	val := StatementOfApplicabilityOrderField(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid StatementOfApplicabilityOrderField value: %q", string(text))
+	}
+
+	*v = val
+
+	return nil
+}
+
 func (s StatementOfApplicabilityOrderField) Column() string {
 	switch s {
 	case StatementOfApplicabilityOrderFieldName:
@@ -36,30 +83,4 @@ func (s StatementOfApplicabilityOrderField) Column() string {
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", s))
-}
-
-func (s StatementOfApplicabilityOrderField) String() string {
-	return string(s)
-}
-
-func (s StatementOfApplicabilityOrderField) IsValid() bool {
-	switch s {
-	case StatementOfApplicabilityOrderFieldName, StatementOfApplicabilityOrderFieldCreatedAt:
-		return true
-	}
-
-	return false
-}
-
-func (s StatementOfApplicabilityOrderField) MarshalText() ([]byte, error) {
-	return []byte(s.String()), nil
-}
-
-func (s *StatementOfApplicabilityOrderField) UnmarshalText(text []byte) error {
-	*s = StatementOfApplicabilityOrderField(text)
-	if !s.IsValid() {
-		return fmt.Errorf("%s is not a valid StatementOfApplicabilityOrderField", string(text))
-	}
-
-	return nil
 }

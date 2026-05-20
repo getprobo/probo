@@ -15,7 +15,7 @@
 package coredata
 
 import (
-	"database/sql/driver"
+	"encoding"
 	"fmt"
 )
 
@@ -27,6 +27,12 @@ const (
 	CookieSourceHTTP        CookieSource = "HTTP"
 )
 
+var (
+	_ fmt.Stringer             = CookieSource("")
+	_ encoding.TextMarshaler   = CookieSource("")
+	_ encoding.TextUnmarshaler = (*CookieSource)(nil)
+)
+
 func CookieSources() []CookieSource {
 	return []CookieSource{
 		CookieSourceScript,
@@ -35,43 +41,33 @@ func CookieSources() []CookieSource {
 	}
 }
 
-func (s CookieSource) String() string {
-	return string(s)
-}
-
-func (s *CookieSource) Scan(value any) error {
-	var v string
-
-	switch val := value.(type) {
-	case string:
-		v = val
-	case []byte:
-		v = string(val)
-	default:
-		return fmt.Errorf("unsupported type for CookieSource: %T", value)
-	}
-
-	switch CookieSource(v) {
-	case CookieSourceScript:
-		*s = CookieSourceScript
-	case CookieSourcePreExisting:
-		*s = CookieSourcePreExisting
-	case CookieSourceHTTP:
-		*s = CookieSourceHTTP
-	default:
-		return fmt.Errorf("invalid CookieSource value: %q", v)
-	}
-
-	return nil
-}
-
-func (s CookieSource) Value() (driver.Value, error) {
-	switch s {
-	case CookieSourceScript,
+func (v CookieSource) IsValid() bool {
+	switch v {
+	case
+		CookieSourceScript,
 		CookieSourcePreExisting,
 		CookieSourceHTTP:
-		return string(s), nil
-	default:
-		return nil, fmt.Errorf("invalid CookieSource: %s", s)
+		return true
 	}
+
+	return false
+}
+
+func (v CookieSource) String() string {
+	return string(v)
+}
+
+func (v CookieSource) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *CookieSource) UnmarshalText(text []byte) error {
+	val := CookieSource(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid CookieSource value: %q", string(text))
+	}
+
+	*v = val
+
+	return nil
 }

@@ -15,7 +15,7 @@
 package coredata
 
 import (
-	"database/sql/driver"
+	"encoding"
 	"fmt"
 )
 
@@ -45,6 +45,12 @@ const (
 	ESignProcessConsentText = "By typing my full name and clicking Accept, I consent to sign this document electronically and agree that my electronic signature has the same legal validity as a handwritten signature."
 )
 
+var (
+	_ fmt.Stringer             = ElectronicSignatureDocumentType("")
+	_ encoding.TextMarshaler   = ElectronicSignatureDocumentType("")
+	_ encoding.TextUnmarshaler = (*ElectronicSignatureDocumentType)(nil)
+)
+
 func ElectronicSignatureDocumentTypes() []ElectronicSignatureDocumentType {
 	return []ElectronicSignatureDocumentType{
 		ElectronicSignatureDocumentTypeNDA,
@@ -67,70 +73,49 @@ func ElectronicSignatureDocumentTypes() []ElectronicSignatureDocumentType {
 	}
 }
 
-func (dt ElectronicSignatureDocumentType) MarshalText() ([]byte, error) {
-	return []byte(dt.String()), nil
+func (v ElectronicSignatureDocumentType) IsValid() bool {
+	switch v {
+	case
+		ElectronicSignatureDocumentTypeNDA,
+		ElectronicSignatureDocumentTypeDPA,
+		ElectronicSignatureDocumentTypeMSA,
+		ElectronicSignatureDocumentTypeSOW,
+		ElectronicSignatureDocumentTypeSLA,
+		ElectronicSignatureDocumentTypeTOS,
+		ElectronicSignatureDocumentTypePrivacyPolicy,
+		ElectronicSignatureDocumentTypeGovernance,
+		ElectronicSignatureDocumentTypePolicy,
+		ElectronicSignatureDocumentTypeProcedure,
+		ElectronicSignatureDocumentTypePlan,
+		ElectronicSignatureDocumentTypeRegister,
+		ElectronicSignatureDocumentTypeRecord,
+		ElectronicSignatureDocumentTypeReport,
+		ElectronicSignatureDocumentTypeTemplate,
+		ElectronicSignatureDocumentTypeStatementOfApplicability,
+		ElectronicSignatureDocumentTypeOther:
+		return true
+	}
+
+	return false
 }
 
-func (dt *ElectronicSignatureDocumentType) UnmarshalText(data []byte) error {
-	val := string(data)
+func (v ElectronicSignatureDocumentType) String() string {
+	return string(v)
+}
 
-	switch val {
-	case ElectronicSignatureDocumentTypeNDA.String():
-		*dt = ElectronicSignatureDocumentTypeNDA
-	case ElectronicSignatureDocumentTypeDPA.String():
-		*dt = ElectronicSignatureDocumentTypeDPA
-	case ElectronicSignatureDocumentTypeMSA.String():
-		*dt = ElectronicSignatureDocumentTypeMSA
-	case ElectronicSignatureDocumentTypeSOW.String():
-		*dt = ElectronicSignatureDocumentTypeSOW
-	case ElectronicSignatureDocumentTypeSLA.String():
-		*dt = ElectronicSignatureDocumentTypeSLA
-	case ElectronicSignatureDocumentTypeTOS.String():
-		*dt = ElectronicSignatureDocumentTypeTOS
-	case ElectronicSignatureDocumentTypePrivacyPolicy.String():
-		*dt = ElectronicSignatureDocumentTypePrivacyPolicy
-	case ElectronicSignatureDocumentTypeGovernance.String():
-		*dt = ElectronicSignatureDocumentTypeGovernance
-	case ElectronicSignatureDocumentTypePolicy.String():
-		*dt = ElectronicSignatureDocumentTypePolicy
-	case ElectronicSignatureDocumentTypeProcedure.String():
-		*dt = ElectronicSignatureDocumentTypeProcedure
-	case ElectronicSignatureDocumentTypePlan.String():
-		*dt = ElectronicSignatureDocumentTypePlan
-	case ElectronicSignatureDocumentTypeRegister.String():
-		*dt = ElectronicSignatureDocumentTypeRegister
-	case ElectronicSignatureDocumentTypeRecord.String():
-		*dt = ElectronicSignatureDocumentTypeRecord
-	case ElectronicSignatureDocumentTypeReport.String():
-		*dt = ElectronicSignatureDocumentTypeReport
-	case ElectronicSignatureDocumentTypeTemplate.String():
-		*dt = ElectronicSignatureDocumentTypeTemplate
-	case ElectronicSignatureDocumentTypeStatementOfApplicability.String():
-		*dt = ElectronicSignatureDocumentTypeStatementOfApplicability
-	case ElectronicSignatureDocumentTypeOther.String():
-		*dt = ElectronicSignatureDocumentTypeOther
-	default:
-		return fmt.Errorf("cannot unmarshal ElectronicSignatureDocumentType: invalid value %q", val)
+func (v ElectronicSignatureDocumentType) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *ElectronicSignatureDocumentType) UnmarshalText(text []byte) error {
+	val := ElectronicSignatureDocumentType(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid ElectronicSignatureDocumentType value: %q", string(text))
 	}
+
+	*v = val
 
 	return nil
-}
-
-func (dt ElectronicSignatureDocumentType) String() string {
-	return string(dt)
-}
-
-func (dt *ElectronicSignatureDocumentType) Scan(value any) error {
-	val, ok := value.(string)
-	if !ok {
-		return fmt.Errorf("cannot scan ElectronicSignatureDocumentType: expected string, got %T", value)
-	}
-
-	return dt.UnmarshalText([]byte(val))
-}
-
-func (dt ElectronicSignatureDocumentType) Value() (driver.Value, error) {
-	return dt.String(), nil
 }
 
 func (dt ElectronicSignatureDocumentType) DisplayName() string {

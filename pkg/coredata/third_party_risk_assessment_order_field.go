@@ -14,6 +14,13 @@
 
 package coredata
 
+import (
+	"encoding"
+	"fmt"
+
+	"go.probo.inc/probo/pkg/page"
+)
+
 type (
 	ThirdPartyRiskAssessmentOrderField string
 )
@@ -23,19 +30,50 @@ const (
 	ThirdPartyRiskAssessmentOrderFieldExpiresAt ThirdPartyRiskAssessmentOrderField = "EXPIRES_AT"
 )
 
+var (
+	_ page.OrderField          = ThirdPartyRiskAssessmentOrderField("")
+	_ fmt.Stringer             = ThirdPartyRiskAssessmentOrderField("")
+	_ encoding.TextMarshaler   = ThirdPartyRiskAssessmentOrderField("")
+	_ encoding.TextUnmarshaler = (*ThirdPartyRiskAssessmentOrderField)(nil)
+)
+
+func ThirdPartyRiskAssessmentOrderFields() []ThirdPartyRiskAssessmentOrderField {
+	return []ThirdPartyRiskAssessmentOrderField{
+		ThirdPartyRiskAssessmentOrderFieldCreatedAt,
+		ThirdPartyRiskAssessmentOrderFieldExpiresAt,
+	}
+}
+
+func (v ThirdPartyRiskAssessmentOrderField) IsValid() bool {
+	switch v {
+	case
+		ThirdPartyRiskAssessmentOrderFieldCreatedAt,
+		ThirdPartyRiskAssessmentOrderFieldExpiresAt:
+		return true
+	}
+
+	return false
+}
+
+func (v ThirdPartyRiskAssessmentOrderField) String() string {
+	return string(v)
+}
+
+func (v ThirdPartyRiskAssessmentOrderField) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *ThirdPartyRiskAssessmentOrderField) UnmarshalText(text []byte) error {
+	val := ThirdPartyRiskAssessmentOrderField(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid ThirdPartyRiskAssessmentOrderField value: %q", string(text))
+	}
+
+	*v = val
+
+	return nil
+}
+
 func (p ThirdPartyRiskAssessmentOrderField) Column() string {
 	return string(p)
-}
-
-func (p ThirdPartyRiskAssessmentOrderField) String() string {
-	return string(p)
-}
-
-func (p ThirdPartyRiskAssessmentOrderField) MarshalText() ([]byte, error) {
-	return []byte(p.String()), nil
-}
-
-func (p *ThirdPartyRiskAssessmentOrderField) UnmarshalText(text []byte) error {
-	*p = ThirdPartyRiskAssessmentOrderField(text)
-	return nil
 }

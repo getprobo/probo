@@ -7,8 +7,8 @@ package trust_v1
 
 import (
 	"context"
-
 	"errors"
+
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/coredata"

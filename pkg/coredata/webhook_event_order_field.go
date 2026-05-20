@@ -15,7 +15,10 @@
 package coredata
 
 import (
+	"encoding"
 	"fmt"
+
+	"go.probo.inc/probo/pkg/page"
 )
 
 type (
@@ -26,32 +29,48 @@ const (
 	WebhookEventOrderFieldCreatedAt WebhookEventOrderField = "CREATED_AT"
 )
 
-func (p WebhookEventOrderField) Column() string {
-	return string(p)
+var (
+	_ page.OrderField          = WebhookEventOrderField("")
+	_ fmt.Stringer             = WebhookEventOrderField("")
+	_ encoding.TextMarshaler   = WebhookEventOrderField("")
+	_ encoding.TextUnmarshaler = (*WebhookEventOrderField)(nil)
+)
+
+func WebhookEventOrderFields() []WebhookEventOrderField {
+	return []WebhookEventOrderField{
+		WebhookEventOrderFieldCreatedAt,
+	}
 }
 
-func (p WebhookEventOrderField) String() string {
-	return string(p)
-}
-
-func (p WebhookEventOrderField) IsValid() bool {
-	switch p {
-	case WebhookEventOrderFieldCreatedAt:
+func (v WebhookEventOrderField) IsValid() bool {
+	switch v {
+	case
+		WebhookEventOrderFieldCreatedAt:
 		return true
 	}
 
 	return false
 }
 
-func (p WebhookEventOrderField) MarshalText() ([]byte, error) {
-	return []byte(p.String()), nil
+func (v WebhookEventOrderField) String() string {
+	return string(v)
 }
 
-func (p *WebhookEventOrderField) UnmarshalText(text []byte) error {
-	*p = WebhookEventOrderField(text)
-	if !p.IsValid() {
-		return fmt.Errorf("%s is not a valid WebhookEventOrderField", string(text))
+func (v WebhookEventOrderField) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *WebhookEventOrderField) UnmarshalText(text []byte) error {
+	val := WebhookEventOrderField(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid WebhookEventOrderField value: %q", string(text))
 	}
 
+	*v = val
+
 	return nil
+}
+
+func (p WebhookEventOrderField) Column() string {
+	return string(p)
 }

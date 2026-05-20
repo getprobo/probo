@@ -15,7 +15,7 @@
 package coredata
 
 import (
-	"database/sql/driver"
+	"encoding"
 	"fmt"
 )
 
@@ -27,6 +27,12 @@ const (
 	MFAStatusUnknown  MFAStatus = "UNKNOWN"
 )
 
+var (
+	_ fmt.Stringer             = MFAStatus("")
+	_ encoding.TextMarshaler   = MFAStatus("")
+	_ encoding.TextUnmarshaler = (*MFAStatus)(nil)
+)
+
 func MFAStatuses() []MFAStatus {
 	return []MFAStatus{
 		MFAStatusEnabled,
@@ -35,36 +41,33 @@ func MFAStatuses() []MFAStatus {
 	}
 }
 
-func (m MFAStatus) String() string {
-	return string(m)
+func (v MFAStatus) IsValid() bool {
+	switch v {
+	case
+		MFAStatusEnabled,
+		MFAStatusDisabled,
+		MFAStatusUnknown:
+		return true
+	}
+
+	return false
 }
 
-func (m *MFAStatus) Scan(value any) error {
-	var str string
+func (v MFAStatus) String() string {
+	return string(v)
+}
 
-	switch v := value.(type) {
-	case string:
-		str = v
-	case []byte:
-		str = string(v)
-	default:
-		return fmt.Errorf("cannot scan MFAStatus: unsupported type %T", value)
+func (v MFAStatus) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *MFAStatus) UnmarshalText(text []byte) error {
+	val := MFAStatus(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid MFAStatus value: %q", string(text))
 	}
 
-	switch str {
-	case "ENABLED":
-		*m = MFAStatusEnabled
-	case "DISABLED":
-		*m = MFAStatusDisabled
-	case "UNKNOWN":
-		*m = MFAStatusUnknown
-	default:
-		return fmt.Errorf("cannot parse MFAStatus: invalid value %q", str)
-	}
+	*v = val
 
 	return nil
-}
-
-func (m MFAStatus) Value() (driver.Value, error) {
-	return m.String(), nil
 }

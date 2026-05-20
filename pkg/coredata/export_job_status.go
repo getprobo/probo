@@ -15,7 +15,7 @@
 package coredata
 
 import (
-	"database/sql/driver"
+	"encoding"
 	"fmt"
 )
 
@@ -30,38 +30,49 @@ const (
 	ExportJobStatusFailed     ExportJobStatus = "FAILED"
 )
 
-func (ejs ExportJobStatus) String() string {
-	return string(ejs)
+var (
+	_ fmt.Stringer             = ExportJobStatus("")
+	_ encoding.TextMarshaler   = ExportJobStatus("")
+	_ encoding.TextUnmarshaler = (*ExportJobStatus)(nil)
+)
+
+func ExportJobStatuses() []ExportJobStatus {
+	return []ExportJobStatus{
+		ExportJobStatusPending,
+		ExportJobStatusProcessing,
+		ExportJobStatusCompleted,
+		ExportJobStatusFailed,
+	}
 }
 
-func (ejs *ExportJobStatus) Scan(value any) error {
-	var s string
-
-	switch v := value.(type) {
-	case string:
-		s = v
-	case []byte:
-		s = string(v)
-	default:
-		return fmt.Errorf("unsupported type for ExportJobStatus: %T", value)
+func (v ExportJobStatus) IsValid() bool {
+	switch v {
+	case
+		ExportJobStatusPending,
+		ExportJobStatusProcessing,
+		ExportJobStatusCompleted,
+		ExportJobStatusFailed:
+		return true
 	}
 
-	switch s {
-	case ExportJobStatusPending.String():
-		*ejs = ExportJobStatusPending
-	case ExportJobStatusProcessing.String():
-		*ejs = ExportJobStatusProcessing
-	case ExportJobStatusCompleted.String():
-		*ejs = ExportJobStatusCompleted
-	case ExportJobStatusFailed.String():
-		*ejs = ExportJobStatusFailed
-	default:
-		return fmt.Errorf("invalid ExportJobStatus value: %q", s)
+	return false
+}
+
+func (v ExportJobStatus) String() string {
+	return string(v)
+}
+
+func (v ExportJobStatus) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *ExportJobStatus) UnmarshalText(text []byte) error {
+	val := ExportJobStatus(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid ExportJobStatus value: %q", string(text))
 	}
+
+	*v = val
 
 	return nil
-}
-
-func (ejs ExportJobStatus) Value() (driver.Value, error) {
-	return ejs.String(), nil
 }

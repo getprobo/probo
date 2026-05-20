@@ -15,7 +15,7 @@
 package coredata
 
 import (
-	"database/sql/driver"
+	"encoding"
 	"fmt"
 )
 
@@ -30,42 +30,49 @@ const (
 	EvidenceDescriptionStatusFailed     EvidenceDescriptionStatus = "FAILED"
 )
 
-func (s EvidenceDescriptionStatus) MarshalText() ([]byte, error) {
-	return []byte(s.String()), nil
+var (
+	_ fmt.Stringer             = EvidenceDescriptionStatus("")
+	_ encoding.TextMarshaler   = EvidenceDescriptionStatus("")
+	_ encoding.TextUnmarshaler = (*EvidenceDescriptionStatus)(nil)
+)
+
+func EvidenceDescriptionStatuses() []EvidenceDescriptionStatus {
+	return []EvidenceDescriptionStatus{
+		EvidenceDescriptionStatusPending,
+		EvidenceDescriptionStatusProcessing,
+		EvidenceDescriptionStatusCompleted,
+		EvidenceDescriptionStatusFailed,
+	}
 }
 
-func (s *EvidenceDescriptionStatus) UnmarshalText(data []byte) error {
-	val := string(data)
-
-	switch val {
-	case EvidenceDescriptionStatusPending.String():
-		*s = EvidenceDescriptionStatusPending
-	case EvidenceDescriptionStatusProcessing.String():
-		*s = EvidenceDescriptionStatusProcessing
-	case EvidenceDescriptionStatusCompleted.String():
-		*s = EvidenceDescriptionStatusCompleted
-	case EvidenceDescriptionStatusFailed.String():
-		*s = EvidenceDescriptionStatusFailed
-	default:
-		return fmt.Errorf("invalid EvidenceDescriptionStatus value: %q", val)
+func (v EvidenceDescriptionStatus) IsValid() bool {
+	switch v {
+	case
+		EvidenceDescriptionStatusPending,
+		EvidenceDescriptionStatusProcessing,
+		EvidenceDescriptionStatusCompleted,
+		EvidenceDescriptionStatusFailed:
+		return true
 	}
+
+	return false
+}
+
+func (v EvidenceDescriptionStatus) String() string {
+	return string(v)
+}
+
+func (v EvidenceDescriptionStatus) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *EvidenceDescriptionStatus) UnmarshalText(text []byte) error {
+	val := EvidenceDescriptionStatus(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid EvidenceDescriptionStatus value: %q", string(text))
+	}
+
+	*v = val
 
 	return nil
-}
-
-func (s EvidenceDescriptionStatus) String() string {
-	return string(s)
-}
-
-func (s *EvidenceDescriptionStatus) Scan(value any) error {
-	val, ok := value.(string)
-	if !ok {
-		return fmt.Errorf("invalid scan source for EvidenceDescriptionStatus, expected string got %T", value)
-	}
-
-	return s.UnmarshalText([]byte(val))
-}
-
-func (s EvidenceDescriptionStatus) Value() (driver.Value, error) {
-	return s.String(), nil
 }

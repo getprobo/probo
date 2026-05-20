@@ -15,7 +15,7 @@
 package coredata
 
 import (
-	"database/sql/driver"
+	"encoding"
 	"fmt"
 )
 
@@ -33,6 +33,12 @@ const (
 	TrackerResourceTypeServiceWorker TrackerResourceType = "SERVICE_WORKER"
 )
 
+var (
+	_ fmt.Stringer             = TrackerResourceType("")
+	_ encoding.TextMarshaler   = TrackerResourceType("")
+	_ encoding.TextUnmarshaler = (*TrackerResourceType)(nil)
+)
+
 func TrackerResourceTypes() []TrackerResourceType {
 	return []TrackerResourceType{
 		TrackerResourceTypeScript,
@@ -47,51 +53,10 @@ func TrackerResourceTypes() []TrackerResourceType {
 	}
 }
 
-func (s TrackerResourceType) String() string {
-	return string(s)
-}
-
-func (s *TrackerResourceType) Scan(value any) error {
-	var v string
-
-	switch val := value.(type) {
-	case string:
-		v = val
-	case []byte:
-		v = string(val)
-	default:
-		return fmt.Errorf("unsupported type for TrackerResourceType: %T", value)
-	}
-
-	switch TrackerResourceType(v) {
-	case TrackerResourceTypeScript:
-		*s = TrackerResourceTypeScript
-	case TrackerResourceTypeIframe:
-		*s = TrackerResourceTypeIframe
-	case TrackerResourceTypeImage:
-		*s = TrackerResourceTypeImage
-	case TrackerResourceTypeStylesheet:
-		*s = TrackerResourceTypeStylesheet
-	case TrackerResourceTypeFont:
-		*s = TrackerResourceTypeFont
-	case TrackerResourceTypeBeacon:
-		*s = TrackerResourceTypeBeacon
-	case TrackerResourceTypeFetch:
-		*s = TrackerResourceTypeFetch
-	case TrackerResourceTypeMedia:
-		*s = TrackerResourceTypeMedia
-	case TrackerResourceTypeServiceWorker:
-		*s = TrackerResourceTypeServiceWorker
-	default:
-		return fmt.Errorf("invalid TrackerResourceType value: %q", v)
-	}
-
-	return nil
-}
-
-func (s TrackerResourceType) Value() (driver.Value, error) {
-	switch s {
-	case TrackerResourceTypeScript,
+func (v TrackerResourceType) IsValid() bool {
+	switch v {
+	case
+		TrackerResourceTypeScript,
 		TrackerResourceTypeIframe,
 		TrackerResourceTypeImage,
 		TrackerResourceTypeStylesheet,
@@ -100,8 +65,27 @@ func (s TrackerResourceType) Value() (driver.Value, error) {
 		TrackerResourceTypeFetch,
 		TrackerResourceTypeMedia,
 		TrackerResourceTypeServiceWorker:
-		return string(s), nil
-	default:
-		return nil, fmt.Errorf("invalid TrackerResourceType: %s", s)
+		return true
 	}
+
+	return false
+}
+
+func (v TrackerResourceType) String() string {
+	return string(v)
+}
+
+func (v TrackerResourceType) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *TrackerResourceType) UnmarshalText(text []byte) error {
+	val := TrackerResourceType(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid TrackerResourceType value: %q", string(text))
+	}
+
+	*v = val
+
+	return nil
 }

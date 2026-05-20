@@ -14,7 +14,12 @@
 
 package coredata
 
-import "fmt"
+import (
+	"encoding"
+	"fmt"
+
+	"go.probo.inc/probo/pkg/page"
+)
 
 type TrackerResourceOrderField string
 
@@ -24,6 +29,54 @@ const (
 	TrackerResourceOrderFieldOrigin         TrackerResourceOrderField = "ORIGIN"
 	TrackerResourceOrderFieldUpdatedAt      TrackerResourceOrderField = "UPDATED_AT"
 )
+
+var (
+	_ page.OrderField          = TrackerResourceOrderField("")
+	_ fmt.Stringer             = TrackerResourceOrderField("")
+	_ encoding.TextMarshaler   = TrackerResourceOrderField("")
+	_ encoding.TextUnmarshaler = (*TrackerResourceOrderField)(nil)
+)
+
+func TrackerResourceOrderFields() []TrackerResourceOrderField {
+	return []TrackerResourceOrderField{
+		TrackerResourceOrderFieldCreatedAt,
+		TrackerResourceOrderFieldLastDetectedAt,
+		TrackerResourceOrderFieldOrigin,
+		TrackerResourceOrderFieldUpdatedAt,
+	}
+}
+
+func (v TrackerResourceOrderField) IsValid() bool {
+	switch v {
+	case
+		TrackerResourceOrderFieldCreatedAt,
+		TrackerResourceOrderFieldLastDetectedAt,
+		TrackerResourceOrderFieldOrigin,
+		TrackerResourceOrderFieldUpdatedAt:
+		return true
+	}
+
+	return false
+}
+
+func (v TrackerResourceOrderField) String() string {
+	return string(v)
+}
+
+func (v TrackerResourceOrderField) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *TrackerResourceOrderField) UnmarshalText(text []byte) error {
+	val := TrackerResourceOrderField(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid TrackerResourceOrderField value: %q", string(text))
+	}
+
+	*v = val
+
+	return nil
+}
 
 func (p TrackerResourceOrderField) Column() string {
 	switch p {
@@ -38,33 +91,4 @@ func (p TrackerResourceOrderField) Column() string {
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", p))
-}
-
-func (p TrackerResourceOrderField) IsValid() bool {
-	switch p {
-	case TrackerResourceOrderFieldCreatedAt,
-		TrackerResourceOrderFieldLastDetectedAt,
-		TrackerResourceOrderFieldOrigin,
-		TrackerResourceOrderFieldUpdatedAt:
-		return true
-	}
-
-	return false
-}
-
-func (p TrackerResourceOrderField) String() string {
-	return string(p)
-}
-
-func (p *TrackerResourceOrderField) UnmarshalText(text []byte) error {
-	*p = TrackerResourceOrderField(text)
-	if !p.IsValid() {
-		return fmt.Errorf("%s is not a valid TrackerResourceOrderField", string(text))
-	}
-
-	return nil
-}
-
-func (p TrackerResourceOrderField) MarshalText() ([]byte, error) {
-	return []byte(p.String()), nil
 }

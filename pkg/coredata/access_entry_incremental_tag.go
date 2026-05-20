@@ -15,7 +15,7 @@
 package coredata
 
 import (
-	"database/sql/driver"
+	"encoding"
 	"fmt"
 )
 
@@ -27,36 +27,47 @@ const (
 	AccessEntryIncrementalTagUnchanged AccessEntryIncrementalTag = "UNCHANGED"
 )
 
-func (t AccessEntryIncrementalTag) String() string {
-	return string(t)
+var (
+	_ fmt.Stringer             = AccessEntryIncrementalTag("")
+	_ encoding.TextMarshaler   = AccessEntryIncrementalTag("")
+	_ encoding.TextUnmarshaler = (*AccessEntryIncrementalTag)(nil)
+)
+
+func AccessEntryIncrementalTags() []AccessEntryIncrementalTag {
+	return []AccessEntryIncrementalTag{
+		AccessEntryIncrementalTagNew,
+		AccessEntryIncrementalTagRemoved,
+		AccessEntryIncrementalTagUnchanged,
+	}
 }
 
-func (t *AccessEntryIncrementalTag) Scan(value any) error {
-	var str string
-
-	switch v := value.(type) {
-	case string:
-		str = v
-	case []byte:
-		str = string(v)
-	default:
-		return fmt.Errorf("cannot scan AccessEntryIncrementalTag: unsupported type %T", value)
+func (v AccessEntryIncrementalTag) IsValid() bool {
+	switch v {
+	case
+		AccessEntryIncrementalTagNew,
+		AccessEntryIncrementalTagRemoved,
+		AccessEntryIncrementalTagUnchanged:
+		return true
 	}
 
-	switch str {
-	case "NEW":
-		*t = AccessEntryIncrementalTagNew
-	case "REMOVED":
-		*t = AccessEntryIncrementalTagRemoved
-	case "UNCHANGED":
-		*t = AccessEntryIncrementalTagUnchanged
-	default:
-		return fmt.Errorf("cannot parse AccessEntryIncrementalTag: invalid value %q", str)
+	return false
+}
+
+func (v AccessEntryIncrementalTag) String() string {
+	return string(v)
+}
+
+func (v AccessEntryIncrementalTag) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *AccessEntryIncrementalTag) UnmarshalText(text []byte) error {
+	val := AccessEntryIncrementalTag(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid AccessEntryIncrementalTag value: %q", string(text))
 	}
+
+	*v = val
 
 	return nil
-}
-
-func (t AccessEntryIncrementalTag) Value() (driver.Value, error) {
-	return t.String(), nil
 }

@@ -15,7 +15,7 @@
 package coredata
 
 import (
-	"database/sql/driver"
+	"encoding"
 	"fmt"
 )
 
@@ -26,34 +26,45 @@ const (
 	FileVisibilityPublic  FileVisibility = "PUBLIC"
 )
 
-func (fv FileVisibility) String() string {
-	return string(fv)
+var (
+	_ fmt.Stringer             = FileVisibility("")
+	_ encoding.TextMarshaler   = FileVisibility("")
+	_ encoding.TextUnmarshaler = (*FileVisibility)(nil)
+)
+
+func FileVisibilities() []FileVisibility {
+	return []FileVisibility{
+		FileVisibilityPrivate,
+		FileVisibilityPublic,
+	}
 }
 
-func (fv *FileVisibility) Scan(value any) error {
-	var s string
-
-	switch v := value.(type) {
-	case string:
-		s = v
-	case []byte:
-		s = string(v)
-	default:
-		return fmt.Errorf("unsupported type for FileVisibility: %T", value)
+func (v FileVisibility) IsValid() bool {
+	switch v {
+	case
+		FileVisibilityPrivate,
+		FileVisibilityPublic:
+		return true
 	}
 
-	switch s {
-	case "PRIVATE":
-		*fv = FileVisibilityPrivate
-	case "PUBLIC":
-		*fv = FileVisibilityPublic
-	default:
-		return fmt.Errorf("invalid FileVisibility value: %q", s)
+	return false
+}
+
+func (v FileVisibility) String() string {
+	return string(v)
+}
+
+func (v FileVisibility) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *FileVisibility) UnmarshalText(text []byte) error {
+	val := FileVisibility(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid FileVisibility value: %q", string(text))
 	}
+
+	*v = val
 
 	return nil
-}
-
-func (fv FileVisibility) Value() (driver.Value, error) {
-	return fv.String(), nil
 }

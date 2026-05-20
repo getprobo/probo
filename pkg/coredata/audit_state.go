@@ -15,7 +15,7 @@
 package coredata
 
 import (
-	"database/sql/driver"
+	"encoding"
 	"fmt"
 )
 
@@ -29,6 +29,12 @@ const (
 	AuditStateOutdated   AuditState = "OUTDATED"
 )
 
+var (
+	_ fmt.Stringer             = AuditState("")
+	_ encoding.TextMarshaler   = AuditState("")
+	_ encoding.TextUnmarshaler = (*AuditState)(nil)
+)
+
 func AuditStates() []AuditState {
 	return []AuditState{
 		AuditStateNotStarted,
@@ -39,40 +45,35 @@ func AuditStates() []AuditState {
 	}
 }
 
-func (as AuditState) String() string {
-	return string(as)
+func (v AuditState) IsValid() bool {
+	switch v {
+	case
+		AuditStateNotStarted,
+		AuditStateInProgress,
+		AuditStateCompleted,
+		AuditStateRejected,
+		AuditStateOutdated:
+		return true
+	}
+
+	return false
 }
 
-func (as *AuditState) Scan(value any) error {
-	var s string
+func (v AuditState) String() string {
+	return string(v)
+}
 
-	switch v := value.(type) {
-	case string:
-		s = v
-	case []byte:
-		s = string(v)
-	default:
-		return fmt.Errorf("unsupported type for AuditState: %T", value)
+func (v AuditState) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *AuditState) UnmarshalText(text []byte) error {
+	val := AuditState(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid AuditState value: %q", string(text))
 	}
 
-	switch s {
-	case "NOT_STARTED":
-		*as = AuditStateNotStarted
-	case "IN_PROGRESS":
-		*as = AuditStateInProgress
-	case "COMPLETED":
-		*as = AuditStateCompleted
-	case "REJECTED":
-		*as = AuditStateRejected
-	case "OUTDATED":
-		*as = AuditStateOutdated
-	default:
-		return fmt.Errorf("invalid AuditState value: %q", s)
-	}
+	*v = val
 
 	return nil
-}
-
-func (as AuditState) Value() (driver.Value, error) {
-	return as.String(), nil
 }

@@ -15,7 +15,10 @@
 package coredata
 
 import (
+	"encoding"
 	"fmt"
+
+	"go.probo.inc/probo/pkg/page"
 )
 
 type AuditOrderField string
@@ -27,28 +30,54 @@ const (
 	AuditOrderFieldState      AuditOrderField = "STATE"
 )
 
-func (p AuditOrderField) Column() string {
-	return string(p)
+var (
+	_ page.OrderField          = AuditOrderField("")
+	_ fmt.Stringer             = AuditOrderField("")
+	_ encoding.TextMarshaler   = AuditOrderField("")
+	_ encoding.TextUnmarshaler = (*AuditOrderField)(nil)
+)
+
+func AuditOrderFields() []AuditOrderField {
+	return []AuditOrderField{
+		AuditOrderFieldCreatedAt,
+		AuditOrderFieldValidFrom,
+		AuditOrderFieldValidUntil,
+		AuditOrderFieldState,
+	}
 }
 
-func (p AuditOrderField) String() string {
-	return string(p)
-}
-
-func (p AuditOrderField) MarshalText() ([]byte, error) {
-	return []byte(p.String()), nil
-}
-
-func (p *AuditOrderField) UnmarshalText(text []byte) error {
-	val := string(text)
-	switch val {
-	case string(AuditOrderFieldCreatedAt),
-		string(AuditOrderFieldValidFrom),
-		string(AuditOrderFieldValidUntil),
-		string(AuditOrderFieldState):
-		*p = AuditOrderField(val)
-		return nil
+func (v AuditOrderField) IsValid() bool {
+	switch v {
+	case
+		AuditOrderFieldCreatedAt,
+		AuditOrderFieldValidFrom,
+		AuditOrderFieldValidUntil,
+		AuditOrderFieldState:
+		return true
 	}
 
-	return fmt.Errorf("invalid AuditOrderField value: %q", val)
+	return false
+}
+
+func (v AuditOrderField) String() string {
+	return string(v)
+}
+
+func (v AuditOrderField) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *AuditOrderField) UnmarshalText(text []byte) error {
+	val := AuditOrderField(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid AuditOrderField value: %q", string(text))
+	}
+
+	*v = val
+
+	return nil
+}
+
+func (p AuditOrderField) Column() string {
+	return string(p)
 }

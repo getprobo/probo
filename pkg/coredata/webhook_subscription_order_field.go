@@ -15,7 +15,10 @@
 package coredata
 
 import (
+	"encoding"
 	"fmt"
+
+	"go.probo.inc/probo/pkg/page"
 )
 
 type (
@@ -26,32 +29,48 @@ const (
 	WebhookSubscriptionOrderFieldCreatedAt WebhookSubscriptionOrderField = "CREATED_AT"
 )
 
-func (p WebhookSubscriptionOrderField) Column() string {
-	return string(p)
+var (
+	_ page.OrderField          = WebhookSubscriptionOrderField("")
+	_ fmt.Stringer             = WebhookSubscriptionOrderField("")
+	_ encoding.TextMarshaler   = WebhookSubscriptionOrderField("")
+	_ encoding.TextUnmarshaler = (*WebhookSubscriptionOrderField)(nil)
+)
+
+func WebhookSubscriptionOrderFields() []WebhookSubscriptionOrderField {
+	return []WebhookSubscriptionOrderField{
+		WebhookSubscriptionOrderFieldCreatedAt,
+	}
 }
 
-func (p WebhookSubscriptionOrderField) String() string {
-	return string(p)
-}
-
-func (p WebhookSubscriptionOrderField) IsValid() bool {
-	switch p {
-	case WebhookSubscriptionOrderFieldCreatedAt:
+func (v WebhookSubscriptionOrderField) IsValid() bool {
+	switch v {
+	case
+		WebhookSubscriptionOrderFieldCreatedAt:
 		return true
 	}
 
 	return false
 }
 
-func (p WebhookSubscriptionOrderField) MarshalText() ([]byte, error) {
-	return []byte(p.String()), nil
+func (v WebhookSubscriptionOrderField) String() string {
+	return string(v)
 }
 
-func (p *WebhookSubscriptionOrderField) UnmarshalText(text []byte) error {
-	*p = WebhookSubscriptionOrderField(text)
-	if !p.IsValid() {
-		return fmt.Errorf("%s is not a valid WebhookSubscriptionOrderField", string(text))
+func (v WebhookSubscriptionOrderField) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *WebhookSubscriptionOrderField) UnmarshalText(text []byte) error {
+	val := WebhookSubscriptionOrderField(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid WebhookSubscriptionOrderField value: %q", string(text))
 	}
 
+	*v = val
+
 	return nil
+}
+
+func (p WebhookSubscriptionOrderField) Column() string {
+	return string(p)
 }

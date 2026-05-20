@@ -15,7 +15,7 @@
 package coredata
 
 import (
-	"database/sql/driver"
+	"encoding"
 	"fmt"
 )
 
@@ -26,6 +26,12 @@ const (
 	ConnectorProtocolAPIKey ConnectorProtocol = "API_KEY"
 )
 
+var (
+	_ fmt.Stringer             = ConnectorProtocol("")
+	_ encoding.TextMarshaler   = ConnectorProtocol("")
+	_ encoding.TextUnmarshaler = (*ConnectorProtocol)(nil)
+)
+
 func ConnectorProtocols() []ConnectorProtocol {
 	return []ConnectorProtocol{
 		ConnectorProtocolOAuth2,
@@ -33,34 +39,32 @@ func ConnectorProtocols() []ConnectorProtocol {
 	}
 }
 
-func (cp ConnectorProtocol) String() string {
-	return string(cp)
+func (v ConnectorProtocol) IsValid() bool {
+	switch v {
+	case
+		ConnectorProtocolOAuth2,
+		ConnectorProtocolAPIKey:
+		return true
+	}
+
+	return false
 }
 
-func (cp *ConnectorProtocol) Scan(value any) error {
-	var s string
+func (v ConnectorProtocol) String() string {
+	return string(v)
+}
 
-	switch v := value.(type) {
-	case string:
-		s = v
-	case []byte:
-		s = string(v)
-	default:
-		return fmt.Errorf("unsupported type for ConnectorProtocol: %T", value)
+func (v ConnectorProtocol) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *ConnectorProtocol) UnmarshalText(text []byte) error {
+	val := ConnectorProtocol(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid ConnectorProtocol value: %q", string(text))
 	}
 
-	switch s {
-	case "OAUTH2":
-		*cp = ConnectorProtocolOAuth2
-	case "API_KEY":
-		*cp = ConnectorProtocolAPIKey
-	default:
-		return fmt.Errorf("invalid ConnectorProtocol value: %q", s)
-	}
+	*v = val
 
 	return nil
-}
-
-func (cp ConnectorProtocol) Value() (driver.Value, error) {
-	return cp.String(), nil
 }

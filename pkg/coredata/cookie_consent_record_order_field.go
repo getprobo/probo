@@ -14,13 +14,60 @@
 
 package coredata
 
-import "fmt"
+import (
+	"encoding"
+	"fmt"
+
+	"go.probo.inc/probo/pkg/page"
+)
 
 type CookieConsentRecordOrderField string
 
 const (
 	CookieConsentRecordOrderFieldCreatedAt CookieConsentRecordOrderField = "CREATED_AT"
 )
+
+var (
+	_ page.OrderField          = CookieConsentRecordOrderField("")
+	_ fmt.Stringer             = CookieConsentRecordOrderField("")
+	_ encoding.TextMarshaler   = CookieConsentRecordOrderField("")
+	_ encoding.TextUnmarshaler = (*CookieConsentRecordOrderField)(nil)
+)
+
+func CookieConsentRecordOrderFields() []CookieConsentRecordOrderField {
+	return []CookieConsentRecordOrderField{
+		CookieConsentRecordOrderFieldCreatedAt,
+	}
+}
+
+func (v CookieConsentRecordOrderField) IsValid() bool {
+	switch v {
+	case
+		CookieConsentRecordOrderFieldCreatedAt:
+		return true
+	}
+
+	return false
+}
+
+func (v CookieConsentRecordOrderField) String() string {
+	return string(v)
+}
+
+func (v CookieConsentRecordOrderField) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *CookieConsentRecordOrderField) UnmarshalText(text []byte) error {
+	val := CookieConsentRecordOrderField(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid CookieConsentRecordOrderField value: %q", string(text))
+	}
+
+	*v = val
+
+	return nil
+}
 
 func (p CookieConsentRecordOrderField) Column() string {
 	switch p {
@@ -29,30 +76,4 @@ func (p CookieConsentRecordOrderField) Column() string {
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", p))
-}
-
-func (p CookieConsentRecordOrderField) IsValid() bool {
-	switch p {
-	case CookieConsentRecordOrderFieldCreatedAt:
-		return true
-	}
-
-	return false
-}
-
-func (p CookieConsentRecordOrderField) String() string {
-	return string(p)
-}
-
-func (p *CookieConsentRecordOrderField) UnmarshalText(text []byte) error {
-	*p = CookieConsentRecordOrderField(text)
-	if !p.IsValid() {
-		return fmt.Errorf("%s is not a valid CookieConsentRecordOrderField", string(text))
-	}
-
-	return nil
-}
-
-func (p CookieConsentRecordOrderField) MarshalText() ([]byte, error) {
-	return []byte(p.String()), nil
 }

@@ -15,7 +15,7 @@
 package coredata
 
 import (
-	"database/sql/driver"
+	"encoding"
 	"fmt"
 )
 
@@ -26,6 +26,12 @@ const (
 	ProcessingActivityTransferImpactAssessmentNotNeeded ProcessingActivityTransferImpactAssessment = "NOT_NEEDED"
 )
 
+var (
+	_ fmt.Stringer             = ProcessingActivityTransferImpactAssessment("")
+	_ encoding.TextMarshaler   = ProcessingActivityTransferImpactAssessment("")
+	_ encoding.TextUnmarshaler = (*ProcessingActivityTransferImpactAssessment)(nil)
+)
+
 func ProcessingActivityTransferImpactAssessments() []ProcessingActivityTransferImpactAssessment {
 	return []ProcessingActivityTransferImpactAssessment{
 		ProcessingActivityTransferImpactAssessmentNeeded,
@@ -33,34 +39,32 @@ func ProcessingActivityTransferImpactAssessments() []ProcessingActivityTransferI
 	}
 }
 
-func (p ProcessingActivityTransferImpactAssessment) String() string {
-	return string(p)
+func (v ProcessingActivityTransferImpactAssessment) IsValid() bool {
+	switch v {
+	case
+		ProcessingActivityTransferImpactAssessmentNeeded,
+		ProcessingActivityTransferImpactAssessmentNotNeeded:
+		return true
+	}
+
+	return false
 }
 
-func (p *ProcessingActivityTransferImpactAssessment) Scan(value any) error {
-	var s string
+func (v ProcessingActivityTransferImpactAssessment) String() string {
+	return string(v)
+}
 
-	switch v := value.(type) {
-	case string:
-		s = v
-	case []byte:
-		s = string(v)
-	default:
-		return fmt.Errorf("unsupported type for ProcessingActivityTransferImpactAssessment: %T", value)
+func (v ProcessingActivityTransferImpactAssessment) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *ProcessingActivityTransferImpactAssessment) UnmarshalText(text []byte) error {
+	val := ProcessingActivityTransferImpactAssessment(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid ProcessingActivityTransferImpactAssessment value: %q", string(text))
 	}
 
-	switch s {
-	case "NEEDED":
-		*p = ProcessingActivityTransferImpactAssessmentNeeded
-	case "NOT_NEEDED":
-		*p = ProcessingActivityTransferImpactAssessmentNotNeeded
-	default:
-		return fmt.Errorf("invalid ProcessingActivityTransferImpactAssessment value: %q", s)
-	}
+	*v = val
 
 	return nil
-}
-
-func (p ProcessingActivityTransferImpactAssessment) Value() (driver.Value, error) {
-	return p.String(), nil
 }

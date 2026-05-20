@@ -15,7 +15,7 @@
 package coredata
 
 import (
-	"database/sql/driver"
+	"encoding"
 	"fmt"
 )
 
@@ -27,47 +27,47 @@ const (
 	AuditLogActorTypeSystem AuditLogActorType = "SYSTEM"
 )
 
-func (a AuditLogActorType) String() string {
-	return string(a)
+var (
+	_ fmt.Stringer             = AuditLogActorType("")
+	_ encoding.TextMarshaler   = AuditLogActorType("")
+	_ encoding.TextUnmarshaler = (*AuditLogActorType)(nil)
+)
+
+func AuditLogActorTypes() []AuditLogActorType {
+	return []AuditLogActorType{
+		AuditLogActorTypeUser,
+		AuditLogActorTypeAPIKey,
+		AuditLogActorTypeSystem,
+	}
 }
 
-func (a AuditLogActorType) IsValid() bool {
-	switch a {
-	case AuditLogActorTypeUser, AuditLogActorTypeAPIKey, AuditLogActorTypeSystem:
+func (v AuditLogActorType) IsValid() bool {
+	switch v {
+	case
+		AuditLogActorTypeUser,
+		AuditLogActorTypeAPIKey,
+		AuditLogActorTypeSystem:
 		return true
 	}
 
 	return false
 }
 
-func (a AuditLogActorType) MarshalText() ([]byte, error) {
-	return []byte(a.String()), nil
+func (v AuditLogActorType) String() string {
+	return string(v)
 }
 
-func (a *AuditLogActorType) UnmarshalText(text []byte) error {
-	*a = AuditLogActorType(text)
-	if !a.IsValid() {
-		return fmt.Errorf("%s is not a valid AuditLogActorType", string(text))
+func (v AuditLogActorType) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *AuditLogActorType) UnmarshalText(text []byte) error {
+	val := AuditLogActorType(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid AuditLogActorType value: %q", string(text))
 	}
+
+	*v = val
 
 	return nil
-}
-
-func (a *AuditLogActorType) Scan(value any) error {
-	var s string
-
-	switch v := value.(type) {
-	case string:
-		s = v
-	case []byte:
-		s = string(v)
-	default:
-		return fmt.Errorf("unsupported type for AuditLogActorType: %T", value)
-	}
-
-	return a.UnmarshalText([]byte(s))
-}
-
-func (a AuditLogActorType) Value() (driver.Value, error) {
-	return a.String(), nil
 }

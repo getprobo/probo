@@ -14,6 +14,13 @@
 
 package coredata
 
+import (
+	"encoding"
+	"fmt"
+
+	"go.probo.inc/probo/pkg/page"
+)
+
 type (
 	MembershipOrderField string
 )
@@ -25,6 +32,56 @@ const (
 	MembershipOrderFieldRole             MembershipOrderField = "ROLE"
 	MembershipOrderFieldCreatedAt        MembershipOrderField = "CREATED_AT"
 )
+
+var (
+	_ page.OrderField          = MembershipOrderField("")
+	_ fmt.Stringer             = MembershipOrderField("")
+	_ encoding.TextMarshaler   = MembershipOrderField("")
+	_ encoding.TextUnmarshaler = (*MembershipOrderField)(nil)
+)
+
+func MembershipOrderFields() []MembershipOrderField {
+	return []MembershipOrderField{
+		MembershipOrderFieldOrganizationName,
+		MembershipOrderFieldFullName,
+		MembershipOrderFieldEmailAddress,
+		MembershipOrderFieldRole,
+		MembershipOrderFieldCreatedAt,
+	}
+}
+
+func (v MembershipOrderField) IsValid() bool {
+	switch v {
+	case
+		MembershipOrderFieldOrganizationName,
+		MembershipOrderFieldFullName,
+		MembershipOrderFieldEmailAddress,
+		MembershipOrderFieldRole,
+		MembershipOrderFieldCreatedAt:
+		return true
+	}
+
+	return false
+}
+
+func (v MembershipOrderField) String() string {
+	return string(v)
+}
+
+func (v MembershipOrderField) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *MembershipOrderField) UnmarshalText(text []byte) error {
+	val := MembershipOrderField(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid MembershipOrderField value: %q", string(text))
+	}
+
+	*v = val
+
+	return nil
+}
 
 func (p MembershipOrderField) Column() string {
 	switch p {
@@ -41,17 +98,4 @@ func (p MembershipOrderField) Column() string {
 	}
 
 	return string(p)
-}
-
-func (p MembershipOrderField) String() string {
-	return string(p)
-}
-
-func (p MembershipOrderField) MarshalText() ([]byte, error) {
-	return []byte(p.String()), nil
-}
-
-func (p *MembershipOrderField) UnmarshalText(text []byte) error {
-	*p = MembershipOrderField(text)
-	return nil
 }

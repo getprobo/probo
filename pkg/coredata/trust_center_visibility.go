@@ -15,7 +15,7 @@
 package coredata
 
 import (
-	"database/sql/driver"
+	"encoding"
 	"fmt"
 )
 
@@ -27,6 +27,12 @@ const (
 	TrustCenterVisibilityPublic  TrustCenterVisibility = "PUBLIC"
 )
 
+var (
+	_ fmt.Stringer             = TrustCenterVisibility("")
+	_ encoding.TextMarshaler   = TrustCenterVisibility("")
+	_ encoding.TextUnmarshaler = (*TrustCenterVisibility)(nil)
+)
+
 func TrustCenterVisibilities() []TrustCenterVisibility {
 	return []TrustCenterVisibility{
 		TrustCenterVisibilityNone,
@@ -35,36 +41,33 @@ func TrustCenterVisibilities() []TrustCenterVisibility {
 	}
 }
 
-func (tcv TrustCenterVisibility) String() string {
-	return string(tcv)
+func (v TrustCenterVisibility) IsValid() bool {
+	switch v {
+	case
+		TrustCenterVisibilityNone,
+		TrustCenterVisibilityPrivate,
+		TrustCenterVisibilityPublic:
+		return true
+	}
+
+	return false
 }
 
-func (tcv *TrustCenterVisibility) Scan(value any) error {
-	var s string
+func (v TrustCenterVisibility) String() string {
+	return string(v)
+}
 
-	switch v := value.(type) {
-	case string:
-		s = v
-	case []byte:
-		s = string(v)
-	default:
-		return fmt.Errorf("unsupported type for TrustCenterVisibility: %T", value)
+func (v TrustCenterVisibility) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *TrustCenterVisibility) UnmarshalText(text []byte) error {
+	val := TrustCenterVisibility(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid TrustCenterVisibility value: %q", string(text))
 	}
 
-	switch s {
-	case "NONE":
-		*tcv = TrustCenterVisibilityNone
-	case "PRIVATE":
-		*tcv = TrustCenterVisibilityPrivate
-	case "PUBLIC":
-		*tcv = TrustCenterVisibilityPublic
-	default:
-		return fmt.Errorf("invalid TrustCenterVisibility value: %q", s)
-	}
+	*v = val
 
 	return nil
-}
-
-func (tcv TrustCenterVisibility) Value() (driver.Value, error) {
-	return tcv.String(), nil
 }

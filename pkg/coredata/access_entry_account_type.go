@@ -15,7 +15,7 @@
 package coredata
 
 import (
-	"database/sql/driver"
+	"encoding"
 	"fmt"
 )
 
@@ -26,6 +26,12 @@ const (
 	AccessEntryAccountTypeServiceAccount AccessEntryAccountType = "SERVICE_ACCOUNT"
 )
 
+var (
+	_ fmt.Stringer             = AccessEntryAccountType("")
+	_ encoding.TextMarshaler   = AccessEntryAccountType("")
+	_ encoding.TextUnmarshaler = (*AccessEntryAccountType)(nil)
+)
+
 func AccessEntryAccountTypes() []AccessEntryAccountType {
 	return []AccessEntryAccountType{
 		AccessEntryAccountTypeUser,
@@ -33,34 +39,32 @@ func AccessEntryAccountTypes() []AccessEntryAccountType {
 	}
 }
 
-func (a AccessEntryAccountType) String() string {
-	return string(a)
+func (v AccessEntryAccountType) IsValid() bool {
+	switch v {
+	case
+		AccessEntryAccountTypeUser,
+		AccessEntryAccountTypeServiceAccount:
+		return true
+	}
+
+	return false
 }
 
-func (a *AccessEntryAccountType) Scan(value any) error {
-	var str string
+func (v AccessEntryAccountType) String() string {
+	return string(v)
+}
 
-	switch v := value.(type) {
-	case string:
-		str = v
-	case []byte:
-		str = string(v)
-	default:
-		return fmt.Errorf("cannot scan AccessEntryAccountType: unsupported type %T", value)
+func (v AccessEntryAccountType) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *AccessEntryAccountType) UnmarshalText(text []byte) error {
+	val := AccessEntryAccountType(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid AccessEntryAccountType value: %q", string(text))
 	}
 
-	switch str {
-	case "USER":
-		*a = AccessEntryAccountTypeUser
-	case "SERVICE_ACCOUNT":
-		*a = AccessEntryAccountTypeServiceAccount
-	default:
-		return fmt.Errorf("cannot parse AccessEntryAccountType: invalid value %q", str)
-	}
+	*v = val
 
 	return nil
-}
-
-func (a AccessEntryAccountType) Value() (driver.Value, error) {
-	return a.String(), nil
 }

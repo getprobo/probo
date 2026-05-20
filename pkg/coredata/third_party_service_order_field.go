@@ -15,7 +15,10 @@
 package coredata
 
 import (
+	"encoding"
 	"fmt"
+
+	"go.probo.inc/probo/pkg/page"
 )
 
 type (
@@ -27,26 +30,50 @@ const (
 	ThirdPartyServiceOrderFieldName      ThirdPartyServiceOrderField = "NAME"
 )
 
-func (p ThirdPartyServiceOrderField) Column() string {
-	return string(p)
+var (
+	_ page.OrderField          = ThirdPartyServiceOrderField("")
+	_ fmt.Stringer             = ThirdPartyServiceOrderField("")
+	_ encoding.TextMarshaler   = ThirdPartyServiceOrderField("")
+	_ encoding.TextUnmarshaler = (*ThirdPartyServiceOrderField)(nil)
+)
+
+func ThirdPartyServiceOrderFields() []ThirdPartyServiceOrderField {
+	return []ThirdPartyServiceOrderField{
+		ThirdPartyServiceOrderFieldCreatedAt,
+		ThirdPartyServiceOrderFieldName,
+	}
 }
 
-func (p ThirdPartyServiceOrderField) String() string {
-	return string(p)
-}
-
-func (p ThirdPartyServiceOrderField) MarshalText() ([]byte, error) {
-	return []byte(p.String()), nil
-}
-
-func (p *ThirdPartyServiceOrderField) UnmarshalText(text []byte) error {
-	val := string(text)
-	switch val {
-	case string(ThirdPartyServiceOrderFieldCreatedAt),
-		string(ThirdPartyServiceOrderFieldName):
-		*p = ThirdPartyServiceOrderField(val)
-		return nil
+func (v ThirdPartyServiceOrderField) IsValid() bool {
+	switch v {
+	case
+		ThirdPartyServiceOrderFieldCreatedAt,
+		ThirdPartyServiceOrderFieldName:
+		return true
 	}
 
-	return fmt.Errorf("invalid ThirdPartyServiceOrderField value: %q", val)
+	return false
+}
+
+func (v ThirdPartyServiceOrderField) String() string {
+	return string(v)
+}
+
+func (v ThirdPartyServiceOrderField) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *ThirdPartyServiceOrderField) UnmarshalText(text []byte) error {
+	val := ThirdPartyServiceOrderField(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid ThirdPartyServiceOrderField value: %q", string(text))
+	}
+
+	*v = val
+
+	return nil
+}
+
+func (p ThirdPartyServiceOrderField) Column() string {
+	return string(p)
 }

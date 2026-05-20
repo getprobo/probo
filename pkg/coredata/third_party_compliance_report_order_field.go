@@ -14,6 +14,13 @@
 
 package coredata
 
+import (
+	"encoding"
+	"fmt"
+
+	"go.probo.inc/probo/pkg/page"
+)
+
 type (
 	ThirdPartyComplianceReportOrderField string
 )
@@ -23,19 +30,50 @@ const (
 	ThirdPartyComplianceReportOrderFieldCreatedAt  ThirdPartyComplianceReportOrderField = "CREATED_AT"
 )
 
+var (
+	_ page.OrderField          = ThirdPartyComplianceReportOrderField("")
+	_ fmt.Stringer             = ThirdPartyComplianceReportOrderField("")
+	_ encoding.TextMarshaler   = ThirdPartyComplianceReportOrderField("")
+	_ encoding.TextUnmarshaler = (*ThirdPartyComplianceReportOrderField)(nil)
+)
+
+func ThirdPartyComplianceReportOrderFields() []ThirdPartyComplianceReportOrderField {
+	return []ThirdPartyComplianceReportOrderField{
+		ThirdPartyComplianceReportOrderFieldReportDate,
+		ThirdPartyComplianceReportOrderFieldCreatedAt,
+	}
+}
+
+func (v ThirdPartyComplianceReportOrderField) IsValid() bool {
+	switch v {
+	case
+		ThirdPartyComplianceReportOrderFieldReportDate,
+		ThirdPartyComplianceReportOrderFieldCreatedAt:
+		return true
+	}
+
+	return false
+}
+
+func (v ThirdPartyComplianceReportOrderField) String() string {
+	return string(v)
+}
+
+func (v ThirdPartyComplianceReportOrderField) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *ThirdPartyComplianceReportOrderField) UnmarshalText(text []byte) error {
+	val := ThirdPartyComplianceReportOrderField(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid ThirdPartyComplianceReportOrderField value: %q", string(text))
+	}
+
+	*v = val
+
+	return nil
+}
+
 func (p ThirdPartyComplianceReportOrderField) Column() string {
 	return string(p)
-}
-
-func (p ThirdPartyComplianceReportOrderField) String() string {
-	return string(p)
-}
-
-func (p ThirdPartyComplianceReportOrderField) MarshalText() ([]byte, error) {
-	return []byte(p.String()), nil
-}
-
-func (p *ThirdPartyComplianceReportOrderField) UnmarshalText(text []byte) error {
-	*p = ThirdPartyComplianceReportOrderField(text)
-	return nil
 }

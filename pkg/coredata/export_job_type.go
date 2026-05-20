@@ -15,7 +15,7 @@
 package coredata
 
 import (
-	"database/sql/driver"
+	"encoding"
 	"fmt"
 )
 
@@ -28,34 +28,45 @@ const (
 	ExportJobTypeDocument  ExportJobType = "DOCUMENT"
 )
 
-func (ejt ExportJobType) String() string {
-	return string(ejt)
+var (
+	_ fmt.Stringer             = ExportJobType("")
+	_ encoding.TextMarshaler   = ExportJobType("")
+	_ encoding.TextUnmarshaler = (*ExportJobType)(nil)
+)
+
+func ExportJobTypes() []ExportJobType {
+	return []ExportJobType{
+		ExportJobTypeFramework,
+		ExportJobTypeDocument,
+	}
 }
 
-func (ejt *ExportJobType) Scan(value any) error {
-	var s string
-
-	switch v := value.(type) {
-	case string:
-		s = v
-	case []byte:
-		s = string(v)
-	default:
-		return fmt.Errorf("unsupported type for ExportJobType: %T", value)
+func (v ExportJobType) IsValid() bool {
+	switch v {
+	case
+		ExportJobTypeFramework,
+		ExportJobTypeDocument:
+		return true
 	}
 
-	switch s {
-	case ExportJobTypeFramework.String():
-		*ejt = ExportJobTypeFramework
-	case ExportJobTypeDocument.String():
-		*ejt = ExportJobTypeDocument
-	default:
-		return fmt.Errorf("invalid ExportJobType value: %q", s)
+	return false
+}
+
+func (v ExportJobType) String() string {
+	return string(v)
+}
+
+func (v ExportJobType) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *ExportJobType) UnmarshalText(text []byte) error {
+	val := ExportJobType(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid ExportJobType value: %q", string(text))
 	}
+
+	*v = val
 
 	return nil
-}
-
-func (ejt ExportJobType) Value() (driver.Value, error) {
-	return ejt.String(), nil
 }

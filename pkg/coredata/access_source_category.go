@@ -15,7 +15,7 @@
 package coredata
 
 import (
-	"database/sql/driver"
+	"encoding"
 	"fmt"
 )
 
@@ -28,6 +28,12 @@ const (
 	AccessSourceCategoryOther      AccessSourceCategory = "OTHER"
 )
 
+var (
+	_ fmt.Stringer             = AccessSourceCategory("")
+	_ encoding.TextMarshaler   = AccessSourceCategory("")
+	_ encoding.TextUnmarshaler = (*AccessSourceCategory)(nil)
+)
+
 func AccessSourceCategories() []AccessSourceCategory {
 	return []AccessSourceCategory{
 		AccessSourceCategorySaaS,
@@ -37,38 +43,34 @@ func AccessSourceCategories() []AccessSourceCategory {
 	}
 }
 
-func (c AccessSourceCategory) String() string {
-	return string(c)
+func (v AccessSourceCategory) IsValid() bool {
+	switch v {
+	case
+		AccessSourceCategorySaaS,
+		AccessSourceCategoryCloudInfra,
+		AccessSourceCategorySourceCode,
+		AccessSourceCategoryOther:
+		return true
+	}
+
+	return false
 }
 
-func (c *AccessSourceCategory) Scan(value any) error {
-	var str string
+func (v AccessSourceCategory) String() string {
+	return string(v)
+}
 
-	switch v := value.(type) {
-	case string:
-		str = v
-	case []byte:
-		str = string(v)
-	default:
-		return fmt.Errorf("cannot scan AccessSourceCategory: unsupported type %T", value)
+func (v AccessSourceCategory) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *AccessSourceCategory) UnmarshalText(text []byte) error {
+	val := AccessSourceCategory(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid AccessSourceCategory value: %q", string(text))
 	}
 
-	switch str {
-	case "SAAS":
-		*c = AccessSourceCategorySaaS
-	case "CLOUD_INFRA":
-		*c = AccessSourceCategoryCloudInfra
-	case "SOURCE_CODE":
-		*c = AccessSourceCategorySourceCode
-	case "OTHER":
-		*c = AccessSourceCategoryOther
-	default:
-		return fmt.Errorf("cannot parse AccessSourceCategory: invalid value %q", str)
-	}
+	*v = val
 
 	return nil
-}
-
-func (c AccessSourceCategory) Value() (driver.Value, error) {
-	return c.String(), nil
 }

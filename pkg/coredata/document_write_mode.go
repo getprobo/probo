@@ -14,7 +14,10 @@
 
 package coredata
 
-import "fmt"
+import (
+	"encoding"
+	"fmt"
+)
 
 type (
 	DocumentWriteMode string
@@ -25,26 +28,45 @@ const (
 	DocumentWriteModeGenerated DocumentWriteMode = "GENERATED"
 )
 
-func (e DocumentWriteMode) IsValid() bool {
-	switch e {
-	case DocumentWriteModeAuthored, DocumentWriteModeGenerated:
+var (
+	_ fmt.Stringer             = DocumentWriteMode("")
+	_ encoding.TextMarshaler   = DocumentWriteMode("")
+	_ encoding.TextUnmarshaler = (*DocumentWriteMode)(nil)
+)
+
+func DocumentWriteModes() []DocumentWriteMode {
+	return []DocumentWriteMode{
+		DocumentWriteModeAuthored,
+		DocumentWriteModeGenerated,
+	}
+}
+
+func (v DocumentWriteMode) IsValid() bool {
+	switch v {
+	case
+		DocumentWriteModeAuthored,
+		DocumentWriteModeGenerated:
 		return true
 	}
 
 	return false
 }
 
-func (e DocumentWriteMode) String() string { return string(e) }
-
-func (e *DocumentWriteMode) UnmarshalText(text []byte) error {
-	*e = DocumentWriteMode(text)
-	if !e.IsValid() {
-		return fmt.Errorf("%s is not a valid DocumentWriteMode", string(text))
-	}
-
-	return nil
+func (v DocumentWriteMode) String() string {
+	return string(v)
 }
 
-func (e DocumentWriteMode) MarshalText() ([]byte, error) {
-	return []byte(e.String()), nil
+func (v DocumentWriteMode) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *DocumentWriteMode) UnmarshalText(text []byte) error {
+	val := DocumentWriteMode(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid DocumentWriteMode value: %q", string(text))
+	}
+
+	*v = val
+
+	return nil
 }

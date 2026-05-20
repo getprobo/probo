@@ -15,7 +15,7 @@
 package coredata
 
 import (
-	"database/sql/driver"
+	"encoding"
 	"fmt"
 )
 
@@ -27,6 +27,12 @@ const (
 	RightsRequestStateDone       RightsRequestState = "DONE"
 )
 
+var (
+	_ fmt.Stringer             = RightsRequestState("")
+	_ encoding.TextMarshaler   = RightsRequestState("")
+	_ encoding.TextUnmarshaler = (*RightsRequestState)(nil)
+)
+
 func RightsRequestStates() []RightsRequestState {
 	return []RightsRequestState{
 		RightsRequestStateTodo,
@@ -35,36 +41,33 @@ func RightsRequestStates() []RightsRequestState {
 	}
 }
 
-func (rrs RightsRequestState) String() string {
-	return string(rrs)
+func (v RightsRequestState) IsValid() bool {
+	switch v {
+	case
+		RightsRequestStateTodo,
+		RightsRequestStateInProgress,
+		RightsRequestStateDone:
+		return true
+	}
+
+	return false
 }
 
-func (rrs *RightsRequestState) Scan(value any) error {
-	var s string
+func (v RightsRequestState) String() string {
+	return string(v)
+}
 
-	switch v := value.(type) {
-	case string:
-		s = v
-	case []byte:
-		s = string(v)
-	default:
-		return fmt.Errorf("unsupported type for RightsRequestState: %T", value)
+func (v RightsRequestState) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *RightsRequestState) UnmarshalText(text []byte) error {
+	val := RightsRequestState(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid RightsRequestState value: %q", string(text))
 	}
 
-	switch s {
-	case "TODO":
-		*rrs = RightsRequestStateTodo
-	case "IN_PROGRESS":
-		*rrs = RightsRequestStateInProgress
-	case "DONE":
-		*rrs = RightsRequestStateDone
-	default:
-		return fmt.Errorf("invalid RightsRequestState value: %q", s)
-	}
+	*v = val
 
 	return nil
-}
-
-func (rrs RightsRequestState) Value() (driver.Value, error) {
-	return string(rrs), nil
 }

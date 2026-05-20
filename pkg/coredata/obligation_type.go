@@ -15,7 +15,7 @@
 package coredata
 
 import (
-	"database/sql/driver"
+	"encoding"
 	"fmt"
 )
 
@@ -26,6 +26,12 @@ const (
 	ObligationTypeContractual ObligationType = "CONTRACTUAL"
 )
 
+var (
+	_ fmt.Stringer             = ObligationType("")
+	_ encoding.TextMarshaler   = ObligationType("")
+	_ encoding.TextUnmarshaler = (*ObligationType)(nil)
+)
+
 func ObligationTypes() []ObligationType {
 	return []ObligationType{
 		ObligationTypeLegal,
@@ -33,34 +39,32 @@ func ObligationTypes() []ObligationType {
 	}
 }
 
-func (ot ObligationType) String() string {
-	return string(ot)
+func (v ObligationType) IsValid() bool {
+	switch v {
+	case
+		ObligationTypeLegal,
+		ObligationTypeContractual:
+		return true
+	}
+
+	return false
 }
 
-func (ot *ObligationType) Scan(value any) error {
-	var s string
+func (v ObligationType) String() string {
+	return string(v)
+}
 
-	switch v := value.(type) {
-	case string:
-		s = v
-	case []byte:
-		s = string(v)
-	default:
-		return fmt.Errorf("unsupported type for ObligationType: %T", value)
+func (v ObligationType) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *ObligationType) UnmarshalText(text []byte) error {
+	val := ObligationType(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid ObligationType value: %q", string(text))
 	}
 
-	switch s {
-	case "LEGAL":
-		*ot = ObligationTypeLegal
-	case "CONTRACTUAL":
-		*ot = ObligationTypeContractual
-	default:
-		return fmt.Errorf("invalid ObligationType value: %q", s)
-	}
+	*v = val
 
 	return nil
-}
-
-func (ot ObligationType) Value() (driver.Value, error) {
-	return ot.String(), nil
 }

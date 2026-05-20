@@ -14,7 +14,10 @@
 
 package coredata
 
-import "fmt"
+import (
+	"encoding"
+	"fmt"
+)
 
 type OIDCProvider string
 
@@ -23,26 +26,45 @@ const (
 	OIDCProviderMicrosoft OIDCProvider = "MICROSOFT"
 )
 
-func (p OIDCProvider) IsValid() bool {
-	switch p {
-	case OIDCProviderGoogle, OIDCProviderMicrosoft:
+var (
+	_ fmt.Stringer             = OIDCProvider("")
+	_ encoding.TextMarshaler   = OIDCProvider("")
+	_ encoding.TextUnmarshaler = (*OIDCProvider)(nil)
+)
+
+func OIDCProviders() []OIDCProvider {
+	return []OIDCProvider{
+		OIDCProviderGoogle,
+		OIDCProviderMicrosoft,
+	}
+}
+
+func (v OIDCProvider) IsValid() bool {
+	switch v {
+	case
+		OIDCProviderGoogle,
+		OIDCProviderMicrosoft:
 		return true
 	}
 
 	return false
 }
 
-func (p OIDCProvider) String() string { return string(p) }
-
-func (p *OIDCProvider) UnmarshalText(text []byte) error {
-	*p = OIDCProvider(text)
-	if !p.IsValid() {
-		return fmt.Errorf("%s is not a valid OIDCProvider", string(text))
-	}
-
-	return nil
+func (v OIDCProvider) String() string {
+	return string(v)
 }
 
-func (p OIDCProvider) MarshalText() ([]byte, error) {
-	return []byte(p.String()), nil
+func (v OIDCProvider) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *OIDCProvider) UnmarshalText(text []byte) error {
+	val := OIDCProvider(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid OIDCProvider value: %q", string(text))
+	}
+
+	*v = val
+
+	return nil
 }

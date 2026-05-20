@@ -16,60 +16,63 @@ package coredata
 
 import "testing"
 
-func TestAccessEntryFlagScan(t *testing.T) {
+func TestAccessEntryFlagIsValid(t *testing.T) {
 	t.Parallel()
 
-	tests := []struct {
-		name    string
-		input   any
-		want    AccessEntryFlag
-		wantErr bool
-	}{
-		{name: "none string", input: "NONE", want: AccessEntryFlagNone},
-		{name: "orphaned string", input: "ORPHANED", want: AccessEntryFlagOrphaned},
-		{name: "inactive string", input: "INACTIVE", want: AccessEntryFlagInactive},
-		{name: "excessive string", input: "EXCESSIVE", want: AccessEntryFlagExcessive},
-		{name: "role_mismatch bytes", input: []byte("ROLE_MISMATCH"), want: AccessEntryFlagRoleMismatch},
-		{name: "new string", input: "NEW", want: AccessEntryFlagNew},
-		{name: "invalid value", input: "BOGUS", wantErr: true},
-		{name: "unsupported type", input: 42, wantErr: true},
+	for _, value := range AccessEntryFlags() {
+		if !value.IsValid() {
+			t.Fatalf("IsValid() = false for %q", value)
+		}
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
-			var got AccessEntryFlag
-
-			err := got.Scan(tt.input)
-			if tt.wantErr {
-				if err == nil {
-					t.Fatalf("Scan(%v) expected error", tt.input)
-				}
-
-				return
-			}
-
-			if err != nil {
-				t.Fatalf("Scan(%v) returned error: %v", tt.input, err)
-			}
-
-			if got != tt.want {
-				t.Fatalf("Scan(%v) = %q, want %q", tt.input, got, tt.want)
-			}
-		})
+	if AccessEntryFlag("BOGUS").IsValid() {
+		t.Fatal("IsValid() = true for invalid value")
 	}
 }
 
-func TestAccessEntryFlagValue(t *testing.T) {
+func TestAccessEntryFlagUnmarshalText(t *testing.T) {
 	t.Parallel()
 
-	got, err := AccessEntryFlagNone.Value()
-	if err != nil {
-		t.Fatalf("Value() returned error: %v", err)
+	for _, value := range AccessEntryFlags() {
+		t.Run(string(value), func(t *testing.T) {
+			t.Parallel()
+
+			var got AccessEntryFlag
+			if err := got.UnmarshalText([]byte(value)); err != nil {
+				t.Fatalf("UnmarshalText(%q) returned error: %v", value, err)
+			}
+
+			if got != value {
+				t.Fatalf("UnmarshalText(%q) = %q, want %q", value, got, value)
+			}
+		})
 	}
 
-	if got != "NONE" {
-		t.Fatalf("Value() = %q, want %q", got, "NONE")
+	t.Run("invalid", func(t *testing.T) {
+		t.Parallel()
+
+		var got AccessEntryFlag
+		if err := got.UnmarshalText([]byte("BOGUS")); err == nil {
+			t.Fatal("UnmarshalText(BOGUS) expected error")
+		}
+	})
+}
+
+func TestAccessEntryFlagMarshalText(t *testing.T) {
+	t.Parallel()
+
+	for _, value := range AccessEntryFlags() {
+		t.Run(string(value), func(t *testing.T) {
+			t.Parallel()
+
+			got, err := value.MarshalText()
+			if err != nil {
+				t.Fatalf("MarshalText() returned error: %v", err)
+			}
+
+			if string(got) != value.String() {
+				t.Fatalf("MarshalText() = %q, want %q", string(got), value.String())
+			}
+		})
 	}
 }

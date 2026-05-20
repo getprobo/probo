@@ -14,7 +14,12 @@
 
 package coredata
 
-import "fmt"
+import (
+	"encoding"
+	"fmt"
+
+	"go.probo.inc/probo/pkg/page"
+)
 
 type (
 	AccessReviewCampaignOrderField string
@@ -24,6 +29,48 @@ const (
 	AccessReviewCampaignOrderFieldCreatedAt AccessReviewCampaignOrderField = "CREATED_AT"
 )
 
+var (
+	_ page.OrderField          = AccessReviewCampaignOrderField("")
+	_ fmt.Stringer             = AccessReviewCampaignOrderField("")
+	_ encoding.TextMarshaler   = AccessReviewCampaignOrderField("")
+	_ encoding.TextUnmarshaler = (*AccessReviewCampaignOrderField)(nil)
+)
+
+func AccessReviewCampaignOrderFields() []AccessReviewCampaignOrderField {
+	return []AccessReviewCampaignOrderField{
+		AccessReviewCampaignOrderFieldCreatedAt,
+	}
+}
+
+func (v AccessReviewCampaignOrderField) IsValid() bool {
+	switch v {
+	case
+		AccessReviewCampaignOrderFieldCreatedAt:
+		return true
+	}
+
+	return false
+}
+
+func (v AccessReviewCampaignOrderField) String() string {
+	return string(v)
+}
+
+func (v AccessReviewCampaignOrderField) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *AccessReviewCampaignOrderField) UnmarshalText(text []byte) error {
+	val := AccessReviewCampaignOrderField(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid AccessReviewCampaignOrderField value: %q", string(text))
+	}
+
+	*v = val
+
+	return nil
+}
+
 func (p AccessReviewCampaignOrderField) Column() string {
 	switch p {
 	case AccessReviewCampaignOrderFieldCreatedAt:
@@ -31,30 +78,4 @@ func (p AccessReviewCampaignOrderField) Column() string {
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", p))
-}
-
-func (p AccessReviewCampaignOrderField) IsValid() bool {
-	switch p {
-	case AccessReviewCampaignOrderFieldCreatedAt:
-		return true
-	}
-
-	return false
-}
-
-func (p AccessReviewCampaignOrderField) String() string {
-	return string(p)
-}
-
-func (p AccessReviewCampaignOrderField) MarshalText() ([]byte, error) {
-	return []byte(p.String()), nil
-}
-
-func (p *AccessReviewCampaignOrderField) UnmarshalText(text []byte) error {
-	*p = AccessReviewCampaignOrderField(text)
-	if !p.IsValid() {
-		return fmt.Errorf("%s is not a valid AccessReviewCampaignOrderField", string(text))
-	}
-
-	return nil
 }

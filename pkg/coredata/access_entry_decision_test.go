@@ -16,74 +16,62 @@ package coredata
 
 import "testing"
 
-func TestAccessEntryDecisionScan(t *testing.T) {
+func TestAccessEntryDecisionIsValid(t *testing.T) {
 	t.Parallel()
 
-	tests := []struct {
-		name    string
-		input   any
-		want    AccessEntryDecision
-		wantErr bool
-	}{
-		{name: "pending string", input: "PENDING", want: AccessEntryDecisionPending},
-		{name: "approved string", input: "APPROVED", want: AccessEntryDecisionApproved},
-		{name: "revoke string", input: "REVOKE", want: AccessEntryDecisionRevoke},
-		{name: "defer bytes", input: []byte("DEFER"), want: AccessEntryDecisionDefer},
-		{name: "escalate string", input: "ESCALATE", want: AccessEntryDecisionEscalate},
-		{name: "invalid value", input: "BOGUS", wantErr: true},
-		{name: "unsupported type", input: 42, wantErr: true},
+	for _, value := range AccessEntryDecisions() {
+		if !value.IsValid() {
+			t.Fatalf("IsValid() = false for %q", value)
+		}
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
-			var got AccessEntryDecision
-
-			err := got.Scan(tt.input)
-			if tt.wantErr {
-				if err == nil {
-					t.Fatalf("Scan(%v) expected error", tt.input)
-				}
-
-				return
-			}
-
-			if err != nil {
-				t.Fatalf("Scan(%v) returned error: %v", tt.input, err)
-			}
-
-			if got != tt.want {
-				t.Fatalf("Scan(%v) = %q, want %q", tt.input, got, tt.want)
-			}
-		})
+	if AccessEntryDecision("BOGUS").IsValid() {
+		t.Fatal("IsValid() = true for invalid value")
 	}
 }
 
-func TestAccessEntryDecisionValue(t *testing.T) {
+func TestAccessEntryDecisionUnmarshalText(t *testing.T) {
 	t.Parallel()
 
-	tests := []struct {
-		name     string
-		decision AccessEntryDecision
-		want     string
-	}{
-		{name: "pending", decision: AccessEntryDecisionPending, want: "PENDING"},
-		{name: "approved", decision: AccessEntryDecisionApproved, want: "APPROVED"},
-		{name: "revoke", decision: AccessEntryDecisionRevoke, want: "REVOKE"},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+	for _, value := range AccessEntryDecisions() {
+		t.Run(string(value), func(t *testing.T) {
 			t.Parallel()
 
-			got, err := tt.decision.Value()
-			if err != nil {
-				t.Fatalf("Value() returned error: %v", err)
+			var got AccessEntryDecision
+			if err := got.UnmarshalText([]byte(value)); err != nil {
+				t.Fatalf("UnmarshalText(%q) returned error: %v", value, err)
 			}
 
-			if got != tt.want {
-				t.Fatalf("Value() = %q, want %q", got, tt.want)
+			if got != value {
+				t.Fatalf("UnmarshalText(%q) = %q, want %q", value, got, value)
+			}
+		})
+	}
+
+	t.Run("invalid", func(t *testing.T) {
+		t.Parallel()
+
+		var got AccessEntryDecision
+		if err := got.UnmarshalText([]byte("BOGUS")); err == nil {
+			t.Fatal("UnmarshalText(BOGUS) expected error")
+		}
+	})
+}
+
+func TestAccessEntryDecisionMarshalText(t *testing.T) {
+	t.Parallel()
+
+	for _, value := range AccessEntryDecisions() {
+		t.Run(string(value), func(t *testing.T) {
+			t.Parallel()
+
+			got, err := value.MarshalText()
+			if err != nil {
+				t.Fatalf("MarshalText() returned error: %v", err)
+			}
+
+			if string(got) != value.String() {
+				t.Fatalf("MarshalText() = %q, want %q", string(got), value.String())
 			}
 		})
 	}

@@ -16,56 +16,63 @@ package coredata
 
 import "testing"
 
-func TestAccessEntryAccountTypeScan(t *testing.T) {
+func TestAccessEntryAccountTypeIsValid(t *testing.T) {
 	t.Parallel()
 
-	tests := []struct {
-		name    string
-		input   any
-		want    AccessEntryAccountType
-		wantErr bool
-	}{
-		{name: "user string", input: "USER", want: AccessEntryAccountTypeUser},
-		{name: "service_account bytes", input: []byte("SERVICE_ACCOUNT"), want: AccessEntryAccountTypeServiceAccount},
-		{name: "invalid value", input: "BOGUS", wantErr: true},
-		{name: "unsupported type", input: 42, wantErr: true},
+	for _, value := range AccessEntryAccountTypes() {
+		if !value.IsValid() {
+			t.Fatalf("IsValid() = false for %q", value)
+		}
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
-			var got AccessEntryAccountType
-
-			err := got.Scan(tt.input)
-			if tt.wantErr {
-				if err == nil {
-					t.Fatalf("Scan(%v) expected error", tt.input)
-				}
-
-				return
-			}
-
-			if err != nil {
-				t.Fatalf("Scan(%v) returned error: %v", tt.input, err)
-			}
-
-			if got != tt.want {
-				t.Fatalf("Scan(%v) = %q, want %q", tt.input, got, tt.want)
-			}
-		})
+	if AccessEntryAccountType("BOGUS").IsValid() {
+		t.Fatal("IsValid() = true for invalid value")
 	}
 }
 
-func TestAccessEntryAccountTypeValue(t *testing.T) {
+func TestAccessEntryAccountTypeUnmarshalText(t *testing.T) {
 	t.Parallel()
 
-	got, err := AccessEntryAccountTypeUser.Value()
-	if err != nil {
-		t.Fatalf("Value() returned error: %v", err)
+	for _, value := range AccessEntryAccountTypes() {
+		t.Run(string(value), func(t *testing.T) {
+			t.Parallel()
+
+			var got AccessEntryAccountType
+			if err := got.UnmarshalText([]byte(value)); err != nil {
+				t.Fatalf("UnmarshalText(%q) returned error: %v", value, err)
+			}
+
+			if got != value {
+				t.Fatalf("UnmarshalText(%q) = %q, want %q", value, got, value)
+			}
+		})
 	}
 
-	if got != "USER" {
-		t.Fatalf("Value() = %q, want %q", got, "USER")
+	t.Run("invalid", func(t *testing.T) {
+		t.Parallel()
+
+		var got AccessEntryAccountType
+		if err := got.UnmarshalText([]byte("BOGUS")); err == nil {
+			t.Fatal("UnmarshalText(BOGUS) expected error")
+		}
+	})
+}
+
+func TestAccessEntryAccountTypeMarshalText(t *testing.T) {
+	t.Parallel()
+
+	for _, value := range AccessEntryAccountTypes() {
+		t.Run(string(value), func(t *testing.T) {
+			t.Parallel()
+
+			got, err := value.MarshalText()
+			if err != nil {
+				t.Fatalf("MarshalText() returned error: %v", err)
+			}
+
+			if string(got) != value.String() {
+				t.Fatalf("MarshalText() = %q, want %q", string(got), value.String())
+			}
+		})
 	}
 }

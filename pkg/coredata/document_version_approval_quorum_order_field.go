@@ -14,7 +14,12 @@
 
 package coredata
 
-import "fmt"
+import (
+	"encoding"
+	"fmt"
+
+	"go.probo.inc/probo/pkg/page"
+)
 
 type (
 	DocumentVersionApprovalQuorumOrderField string
@@ -24,6 +29,48 @@ const (
 	DocumentVersionApprovalQuorumOrderFieldCreatedAt DocumentVersionApprovalQuorumOrderField = "CREATED_AT"
 )
 
+var (
+	_ page.OrderField          = DocumentVersionApprovalQuorumOrderField("")
+	_ fmt.Stringer             = DocumentVersionApprovalQuorumOrderField("")
+	_ encoding.TextMarshaler   = DocumentVersionApprovalQuorumOrderField("")
+	_ encoding.TextUnmarshaler = (*DocumentVersionApprovalQuorumOrderField)(nil)
+)
+
+func DocumentVersionApprovalQuorumOrderFields() []DocumentVersionApprovalQuorumOrderField {
+	return []DocumentVersionApprovalQuorumOrderField{
+		DocumentVersionApprovalQuorumOrderFieldCreatedAt,
+	}
+}
+
+func (v DocumentVersionApprovalQuorumOrderField) IsValid() bool {
+	switch v {
+	case
+		DocumentVersionApprovalQuorumOrderFieldCreatedAt:
+		return true
+	}
+
+	return false
+}
+
+func (v DocumentVersionApprovalQuorumOrderField) String() string {
+	return string(v)
+}
+
+func (v DocumentVersionApprovalQuorumOrderField) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *DocumentVersionApprovalQuorumOrderField) UnmarshalText(text []byte) error {
+	val := DocumentVersionApprovalQuorumOrderField(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid DocumentVersionApprovalQuorumOrderField value: %q", string(text))
+	}
+
+	*v = val
+
+	return nil
+}
+
 func (e DocumentVersionApprovalQuorumOrderField) Column() string {
 	switch e {
 	case DocumentVersionApprovalQuorumOrderFieldCreatedAt:
@@ -31,28 +78,4 @@ func (e DocumentVersionApprovalQuorumOrderField) Column() string {
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", e))
-}
-
-func (e DocumentVersionApprovalQuorumOrderField) IsValid() bool {
-	switch e {
-	case DocumentVersionApprovalQuorumOrderFieldCreatedAt:
-		return true
-	}
-
-	return false
-}
-
-func (e DocumentVersionApprovalQuorumOrderField) String() string { return string(e) }
-
-func (e *DocumentVersionApprovalQuorumOrderField) UnmarshalText(text []byte) error {
-	*e = DocumentVersionApprovalQuorumOrderField(text)
-	if !e.IsValid() {
-		return fmt.Errorf("%s is not a valid DocumentVersionApprovalQuorumOrderField", string(text))
-	}
-
-	return nil
-}
-
-func (e DocumentVersionApprovalQuorumOrderField) MarshalText() ([]byte, error) {
-	return []byte(e.String()), nil
 }

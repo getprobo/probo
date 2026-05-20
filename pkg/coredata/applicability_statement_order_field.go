@@ -15,7 +15,10 @@
 package coredata
 
 import (
+	"encoding"
 	"fmt"
+
+	"go.probo.inc/probo/pkg/page"
 )
 
 type ApplicabilityStatementOrderField string
@@ -24,6 +27,50 @@ const (
 	ApplicabilityStatementOrderFieldCreatedAt           ApplicabilityStatementOrderField = "CREATED_AT"
 	ApplicabilityStatementOrderFieldControlSectionTitle ApplicabilityStatementOrderField = "CONTROL_SECTION_TITLE"
 )
+
+var (
+	_ page.OrderField          = ApplicabilityStatementOrderField("")
+	_ fmt.Stringer             = ApplicabilityStatementOrderField("")
+	_ encoding.TextMarshaler   = ApplicabilityStatementOrderField("")
+	_ encoding.TextUnmarshaler = (*ApplicabilityStatementOrderField)(nil)
+)
+
+func ApplicabilityStatementOrderFields() []ApplicabilityStatementOrderField {
+	return []ApplicabilityStatementOrderField{
+		ApplicabilityStatementOrderFieldCreatedAt,
+		ApplicabilityStatementOrderFieldControlSectionTitle,
+	}
+}
+
+func (v ApplicabilityStatementOrderField) IsValid() bool {
+	switch v {
+	case
+		ApplicabilityStatementOrderFieldCreatedAt,
+		ApplicabilityStatementOrderFieldControlSectionTitle:
+		return true
+	}
+
+	return false
+}
+
+func (v ApplicabilityStatementOrderField) String() string {
+	return string(v)
+}
+
+func (v ApplicabilityStatementOrderField) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *ApplicabilityStatementOrderField) UnmarshalText(text []byte) error {
+	val := ApplicabilityStatementOrderField(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid ApplicabilityStatementOrderField value: %q", string(text))
+	}
+
+	*v = val
+
+	return nil
+}
 
 func (p ApplicabilityStatementOrderField) Column() string {
 	switch p {
@@ -34,24 +81,4 @@ func (p ApplicabilityStatementOrderField) Column() string {
 	}
 
 	panic("unknown ApplicabilityStatementOrderField")
-}
-
-func (p ApplicabilityStatementOrderField) String() string {
-	return string(p)
-}
-
-func (p ApplicabilityStatementOrderField) MarshalText() ([]byte, error) {
-	return []byte(p.String()), nil
-}
-
-func (p *ApplicabilityStatementOrderField) UnmarshalText(text []byte) error {
-	val := string(text)
-	switch val {
-	case string(ApplicabilityStatementOrderFieldCreatedAt),
-		string(ApplicabilityStatementOrderFieldControlSectionTitle):
-		*p = ApplicabilityStatementOrderField(val)
-		return nil
-	}
-
-	return fmt.Errorf("invalid ApplicabilityStatementOrderField value: %q", val)
 }

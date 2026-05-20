@@ -14,7 +14,10 @@
 
 package coredata
 
-import "fmt"
+import (
+	"encoding"
+	"fmt"
+)
 
 type OAuth2ClientVisibility string
 
@@ -23,26 +26,45 @@ const (
 	OAuth2ClientVisibilityPublic  OAuth2ClientVisibility = "public"
 )
 
+var (
+	_ fmt.Stringer             = OAuth2ClientVisibility("")
+	_ encoding.TextMarshaler   = OAuth2ClientVisibility("")
+	_ encoding.TextUnmarshaler = (*OAuth2ClientVisibility)(nil)
+)
+
+func OAuth2ClientVisibilities() []OAuth2ClientVisibility {
+	return []OAuth2ClientVisibility{
+		OAuth2ClientVisibilityPrivate,
+		OAuth2ClientVisibilityPublic,
+	}
+}
+
 func (v OAuth2ClientVisibility) IsValid() bool {
 	switch v {
-	case OAuth2ClientVisibilityPrivate, OAuth2ClientVisibilityPublic:
+	case
+		OAuth2ClientVisibilityPrivate,
+		OAuth2ClientVisibilityPublic:
 		return true
 	}
 
 	return false
 }
 
-func (v OAuth2ClientVisibility) String() string { return string(v) }
-
-func (v *OAuth2ClientVisibility) UnmarshalText(text []byte) error {
-	*v = OAuth2ClientVisibility(text)
-	if !v.IsValid() {
-		return fmt.Errorf("%s is not a valid OAuth2ClientVisibility", string(text))
-	}
-
-	return nil
+func (v OAuth2ClientVisibility) String() string {
+	return string(v)
 }
 
 func (v OAuth2ClientVisibility) MarshalText() ([]byte, error) {
 	return []byte(v.String()), nil
+}
+
+func (v *OAuth2ClientVisibility) UnmarshalText(text []byte) error {
+	val := OAuth2ClientVisibility(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid OAuth2ClientVisibility value: %q", string(text))
+	}
+
+	*v = val
+
+	return nil
 }

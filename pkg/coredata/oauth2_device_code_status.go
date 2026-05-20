@@ -14,7 +14,10 @@
 
 package coredata
 
-import "fmt"
+import (
+	"encoding"
+	"fmt"
+)
 
 type OAuth2DeviceCodeStatus string
 
@@ -25,9 +28,25 @@ const (
 	OAuth2DeviceCodeStatusExpired    OAuth2DeviceCodeStatus = "expired"
 )
 
-func (s OAuth2DeviceCodeStatus) IsValid() bool {
-	switch s {
-	case OAuth2DeviceCodeStatusPending,
+var (
+	_ fmt.Stringer             = OAuth2DeviceCodeStatus("")
+	_ encoding.TextMarshaler   = OAuth2DeviceCodeStatus("")
+	_ encoding.TextUnmarshaler = (*OAuth2DeviceCodeStatus)(nil)
+)
+
+func OAuth2DeviceCodeStatuses() []OAuth2DeviceCodeStatus {
+	return []OAuth2DeviceCodeStatus{
+		OAuth2DeviceCodeStatusPending,
+		OAuth2DeviceCodeStatusAuthorized,
+		OAuth2DeviceCodeStatusDenied,
+		OAuth2DeviceCodeStatusExpired,
+	}
+}
+
+func (v OAuth2DeviceCodeStatus) IsValid() bool {
+	switch v {
+	case
+		OAuth2DeviceCodeStatusPending,
 		OAuth2DeviceCodeStatusAuthorized,
 		OAuth2DeviceCodeStatusDenied,
 		OAuth2DeviceCodeStatusExpired:
@@ -37,17 +56,21 @@ func (s OAuth2DeviceCodeStatus) IsValid() bool {
 	return false
 }
 
-func (s OAuth2DeviceCodeStatus) String() string { return string(s) }
-
-func (s *OAuth2DeviceCodeStatus) UnmarshalText(text []byte) error {
-	*s = OAuth2DeviceCodeStatus(text)
-	if !s.IsValid() {
-		return fmt.Errorf("%s is not a valid OAuth2DeviceCodeStatus", string(text))
-	}
-
-	return nil
+func (v OAuth2DeviceCodeStatus) String() string {
+	return string(v)
 }
 
-func (s OAuth2DeviceCodeStatus) MarshalText() ([]byte, error) {
-	return []byte(s.String()), nil
+func (v OAuth2DeviceCodeStatus) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *OAuth2DeviceCodeStatus) UnmarshalText(text []byte) error {
+	val := OAuth2DeviceCodeStatus(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid OAuth2DeviceCodeStatus value: %q", string(text))
+	}
+
+	*v = val
+
+	return nil
 }

@@ -14,6 +14,13 @@
 
 package coredata
 
+import (
+	"encoding"
+	"fmt"
+
+	"go.probo.inc/probo/pkg/page"
+)
+
 type (
 	FrameworkOrderField string
 )
@@ -22,19 +29,48 @@ const (
 	FrameworkOrderFieldCreatedAt FrameworkOrderField = "CREATED_AT"
 )
 
+var (
+	_ page.OrderField          = FrameworkOrderField("")
+	_ fmt.Stringer             = FrameworkOrderField("")
+	_ encoding.TextMarshaler   = FrameworkOrderField("")
+	_ encoding.TextUnmarshaler = (*FrameworkOrderField)(nil)
+)
+
+func FrameworkOrderFields() []FrameworkOrderField {
+	return []FrameworkOrderField{
+		FrameworkOrderFieldCreatedAt,
+	}
+}
+
+func (v FrameworkOrderField) IsValid() bool {
+	switch v {
+	case
+		FrameworkOrderFieldCreatedAt:
+		return true
+	}
+
+	return false
+}
+
+func (v FrameworkOrderField) String() string {
+	return string(v)
+}
+
+func (v FrameworkOrderField) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *FrameworkOrderField) UnmarshalText(text []byte) error {
+	val := FrameworkOrderField(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid FrameworkOrderField value: %q", string(text))
+	}
+
+	*v = val
+
+	return nil
+}
+
 func (p FrameworkOrderField) Column() string {
 	return string(p)
-}
-
-func (p FrameworkOrderField) String() string {
-	return string(p)
-}
-
-func (p FrameworkOrderField) MarshalText() ([]byte, error) {
-	return []byte(p.String()), nil
-}
-
-func (p *FrameworkOrderField) UnmarshalText(text []byte) error {
-	*p = FrameworkOrderField(text)
-	return nil
 }

@@ -14,7 +14,10 @@
 
 package coredata
 
-import "fmt"
+import (
+	"encoding"
+	"fmt"
+)
 
 type OAuth2Claim string
 
@@ -32,9 +35,32 @@ const (
 	OAuth2ClaimName          OAuth2Claim = "name"
 )
 
-func (c OAuth2Claim) IsValid() bool {
-	switch c {
-	case OAuth2ClaimIssuer,
+var (
+	_ fmt.Stringer             = OAuth2Claim("")
+	_ encoding.TextMarshaler   = OAuth2Claim("")
+	_ encoding.TextUnmarshaler = (*OAuth2Claim)(nil)
+)
+
+func OAuth2Claims() []OAuth2Claim {
+	return []OAuth2Claim{
+		OAuth2ClaimIssuer,
+		OAuth2ClaimSubject,
+		OAuth2ClaimAudience,
+		OAuth2ClaimExpiration,
+		OAuth2ClaimIssuedAt,
+		OAuth2ClaimAuthTime,
+		OAuth2ClaimNonce,
+		OAuth2ClaimAtHash,
+		OAuth2ClaimEmail,
+		OAuth2ClaimEmailVerified,
+		OAuth2ClaimName,
+	}
+}
+
+func (v OAuth2Claim) IsValid() bool {
+	switch v {
+	case
+		OAuth2ClaimIssuer,
 		OAuth2ClaimSubject,
 		OAuth2ClaimAudience,
 		OAuth2ClaimExpiration,
@@ -51,17 +77,21 @@ func (c OAuth2Claim) IsValid() bool {
 	return false
 }
 
-func (c OAuth2Claim) String() string { return string(c) }
-
-func (c *OAuth2Claim) UnmarshalText(text []byte) error {
-	*c = OAuth2Claim(text)
-	if !c.IsValid() {
-		return fmt.Errorf("%s is not a valid OAuth2Claim", string(text))
-	}
-
-	return nil
+func (v OAuth2Claim) String() string {
+	return string(v)
 }
 
-func (c OAuth2Claim) MarshalText() ([]byte, error) {
-	return []byte(c.String()), nil
+func (v OAuth2Claim) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *OAuth2Claim) UnmarshalText(text []byte) error {
+	val := OAuth2Claim(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid OAuth2Claim value: %q", string(text))
+	}
+
+	*v = val
+
+	return nil
 }

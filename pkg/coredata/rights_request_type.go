@@ -15,7 +15,7 @@
 package coredata
 
 import (
-	"database/sql/driver"
+	"encoding"
 	"fmt"
 )
 
@@ -27,6 +27,12 @@ const (
 	RightsRequestTypePortability RightsRequestType = "PORTABILITY"
 )
 
+var (
+	_ fmt.Stringer             = RightsRequestType("")
+	_ encoding.TextMarshaler   = RightsRequestType("")
+	_ encoding.TextUnmarshaler = (*RightsRequestType)(nil)
+)
+
 func RightsRequestTypes() []RightsRequestType {
 	return []RightsRequestType{
 		RightsRequestTypeAccess,
@@ -35,36 +41,33 @@ func RightsRequestTypes() []RightsRequestType {
 	}
 }
 
-func (rrt RightsRequestType) String() string {
-	return string(rrt)
+func (v RightsRequestType) IsValid() bool {
+	switch v {
+	case
+		RightsRequestTypeAccess,
+		RightsRequestTypeDeletion,
+		RightsRequestTypePortability:
+		return true
+	}
+
+	return false
 }
 
-func (rrt *RightsRequestType) Scan(value any) error {
-	var s string
+func (v RightsRequestType) String() string {
+	return string(v)
+}
 
-	switch v := value.(type) {
-	case string:
-		s = v
-	case []byte:
-		s = string(v)
-	default:
-		return fmt.Errorf("unsupported type for RightsRequestType: %T", value)
+func (v RightsRequestType) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *RightsRequestType) UnmarshalText(text []byte) error {
+	val := RightsRequestType(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid RightsRequestType value: %q", string(text))
 	}
 
-	switch s {
-	case "ACCESS":
-		*rrt = RightsRequestTypeAccess
-	case "DELETION":
-		*rrt = RightsRequestTypeDeletion
-	case "PORTABILITY":
-		*rrt = RightsRequestTypePortability
-	default:
-		return fmt.Errorf("invalid RightsRequestType value: %q", s)
-	}
+	*v = val
 
 	return nil
-}
-
-func (rrt RightsRequestType) Value() (driver.Value, error) {
-	return string(rrt), nil
 }

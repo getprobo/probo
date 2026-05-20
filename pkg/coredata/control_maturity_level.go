@@ -15,7 +15,7 @@
 package coredata
 
 import (
-	"database/sql/driver"
+	"encoding"
 	"fmt"
 )
 
@@ -32,6 +32,12 @@ const (
 	ControlMaturityLevelOptimizing            ControlMaturityLevel = "OPTIMIZING"
 )
 
+var (
+	_ fmt.Stringer             = ControlMaturityLevel("")
+	_ encoding.TextMarshaler   = ControlMaturityLevel("")
+	_ encoding.TextUnmarshaler = (*ControlMaturityLevel)(nil)
+)
+
 func ControlMaturityLevels() []ControlMaturityLevel {
 	return []ControlMaturityLevel{
 		ControlMaturityLevelNone,
@@ -43,9 +49,10 @@ func ControlMaturityLevels() []ControlMaturityLevel {
 	}
 }
 
-func (l ControlMaturityLevel) IsValid() bool {
-	switch l {
-	case ControlMaturityLevelNone,
+func (v ControlMaturityLevel) IsValid() bool {
+	switch v {
+	case
+		ControlMaturityLevelNone,
 		ControlMaturityLevelInitial,
 		ControlMaturityLevelManaged,
 		ControlMaturityLevelDefined,
@@ -57,34 +64,21 @@ func (l ControlMaturityLevel) IsValid() bool {
 	return false
 }
 
-func (l ControlMaturityLevel) String() string {
-	return string(l)
+func (v ControlMaturityLevel) String() string {
+	return string(v)
 }
 
-func (l ControlMaturityLevel) MarshalText() ([]byte, error) {
-	return []byte(l.String()), nil
+func (v ControlMaturityLevel) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
 }
 
-func (l *ControlMaturityLevel) UnmarshalText(data []byte) error {
-	val := ControlMaturityLevel(data)
+func (v *ControlMaturityLevel) UnmarshalText(text []byte) error {
+	val := ControlMaturityLevel(text)
 	if !val.IsValid() {
-		return fmt.Errorf("invalid ControlMaturityLevel value: %q", string(data))
+		return fmt.Errorf("invalid ControlMaturityLevel value: %q", string(text))
 	}
 
-	*l = val
+	*v = val
 
 	return nil
-}
-
-func (l *ControlMaturityLevel) Scan(value any) error {
-	val, ok := value.(string)
-	if !ok {
-		return fmt.Errorf("invalid scan source for ControlMaturityLevel, expected string got %T", value)
-	}
-
-	return l.UnmarshalText([]byte(val))
-}
-
-func (l ControlMaturityLevel) Value() (driver.Value, error) {
-	return l.String(), nil
 }

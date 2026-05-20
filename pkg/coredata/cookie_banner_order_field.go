@@ -14,13 +14,60 @@
 
 package coredata
 
-import "fmt"
+import (
+	"encoding"
+	"fmt"
+
+	"go.probo.inc/probo/pkg/page"
+)
 
 type CookieBannerOrderField string
 
 const (
 	CookieBannerOrderFieldCreatedAt CookieBannerOrderField = "CREATED_AT"
 )
+
+var (
+	_ page.OrderField          = CookieBannerOrderField("")
+	_ fmt.Stringer             = CookieBannerOrderField("")
+	_ encoding.TextMarshaler   = CookieBannerOrderField("")
+	_ encoding.TextUnmarshaler = (*CookieBannerOrderField)(nil)
+)
+
+func CookieBannerOrderFields() []CookieBannerOrderField {
+	return []CookieBannerOrderField{
+		CookieBannerOrderFieldCreatedAt,
+	}
+}
+
+func (v CookieBannerOrderField) IsValid() bool {
+	switch v {
+	case
+		CookieBannerOrderFieldCreatedAt:
+		return true
+	}
+
+	return false
+}
+
+func (v CookieBannerOrderField) String() string {
+	return string(v)
+}
+
+func (v CookieBannerOrderField) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *CookieBannerOrderField) UnmarshalText(text []byte) error {
+	val := CookieBannerOrderField(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid CookieBannerOrderField value: %q", string(text))
+	}
+
+	*v = val
+
+	return nil
+}
 
 func (p CookieBannerOrderField) Column() string {
 	switch p {
@@ -29,30 +76,4 @@ func (p CookieBannerOrderField) Column() string {
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", p))
-}
-
-func (p CookieBannerOrderField) IsValid() bool {
-	switch p {
-	case CookieBannerOrderFieldCreatedAt:
-		return true
-	}
-
-	return false
-}
-
-func (p CookieBannerOrderField) String() string {
-	return string(p)
-}
-
-func (p *CookieBannerOrderField) UnmarshalText(text []byte) error {
-	*p = CookieBannerOrderField(text)
-	if !p.IsValid() {
-		return fmt.Errorf("%s is not a valid CookieBannerOrderField", string(text))
-	}
-
-	return nil
-}
-
-func (p CookieBannerOrderField) MarshalText() ([]byte, error) {
-	return []byte(p.String()), nil
 }

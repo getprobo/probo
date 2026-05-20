@@ -15,7 +15,7 @@
 package coredata
 
 import (
-	"database/sql/driver"
+	"encoding"
 	"fmt"
 )
 
@@ -26,34 +26,45 @@ const (
 	SCIMBridgeTypeMicrosoft365    SCIMBridgeType = "MICROSOFT_365"
 )
 
-func (t SCIMBridgeType) String() string {
-	return string(t)
+var (
+	_ fmt.Stringer             = SCIMBridgeType("")
+	_ encoding.TextMarshaler   = SCIMBridgeType("")
+	_ encoding.TextUnmarshaler = (*SCIMBridgeType)(nil)
+)
+
+func SCIMBridgeTypes() []SCIMBridgeType {
+	return []SCIMBridgeType{
+		SCIMBridgeTypeGoogleWorkspace,
+		SCIMBridgeTypeMicrosoft365,
+	}
 }
 
-func (t *SCIMBridgeType) Scan(value any) error {
-	var str string
-
-	switch v := value.(type) {
-	case string:
-		str = v
-	case []byte:
-		str = string(v)
-	default:
-		return fmt.Errorf("unsupported type for SCIMBridgeType: %T", value)
+func (v SCIMBridgeType) IsValid() bool {
+	switch v {
+	case
+		SCIMBridgeTypeGoogleWorkspace,
+		SCIMBridgeTypeMicrosoft365:
+		return true
 	}
 
-	switch str {
-	case "GOOGLE_WORKSPACE":
-		*t = SCIMBridgeTypeGoogleWorkspace
-	case "MICROSOFT_365":
-		*t = SCIMBridgeTypeMicrosoft365
-	default:
-		return fmt.Errorf("invalid SCIMBridgeType value: %q", str)
+	return false
+}
+
+func (v SCIMBridgeType) String() string {
+	return string(v)
+}
+
+func (v SCIMBridgeType) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *SCIMBridgeType) UnmarshalText(text []byte) error {
+	val := SCIMBridgeType(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid SCIMBridgeType value: %q", string(text))
 	}
+
+	*v = val
 
 	return nil
-}
-
-func (t SCIMBridgeType) Value() (driver.Value, error) {
-	return t.String(), nil
 }

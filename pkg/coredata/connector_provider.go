@@ -15,7 +15,7 @@
 package coredata
 
 import (
-	"database/sql/driver"
+	"encoding"
 	"fmt"
 )
 
@@ -51,6 +51,12 @@ const (
 	ConnectorProviderMonday       ConnectorProvider = "MONDAY"
 )
 
+var (
+	_ fmt.Stringer             = ConnectorProvider("")
+	_ encoding.TextMarshaler   = ConnectorProvider("")
+	_ encoding.TextUnmarshaler = (*ConnectorProvider)(nil)
+)
+
 func ConnectorProviders() []ConnectorProvider {
 	return []ConnectorProvider{
 		ConnectorProviderSlack,
@@ -82,82 +88,56 @@ func ConnectorProviders() []ConnectorProvider {
 	}
 }
 
-func (cp ConnectorProvider) String() string {
-	return string(cp)
+func (v ConnectorProvider) IsValid() bool {
+	switch v {
+	case
+		ConnectorProviderSlack,
+		ConnectorProviderGoogleWorkspace,
+		ConnectorProviderLinear,
+		ConnectorProviderOnePassword,
+		ConnectorProviderHubSpot,
+		ConnectorProviderDocuSign,
+		ConnectorProviderNotion,
+		ConnectorProviderBrex,
+		ConnectorProviderTally,
+		ConnectorProviderCloudflare,
+		ConnectorProviderOpenAI,
+		ConnectorProviderSentry,
+		ConnectorProviderSupabase,
+		ConnectorProviderGitHub,
+		ConnectorProviderIntercom,
+		ConnectorProviderResend,
+		ConnectorProviderMicrosoft365,
+		ConnectorProviderGitLab,
+		ConnectorProviderBitbucket,
+		ConnectorProviderHeroku,
+		ConnectorProviderPagerDuty,
+		ConnectorProviderAsana,
+		ConnectorProviderNetlify,
+		ConnectorProviderClickUp,
+		ConnectorProviderVercel,
+		ConnectorProviderMonday:
+		return true
+	}
+
+	return false
 }
 
-func (cp *ConnectorProvider) Scan(value any) error {
-	var s string
+func (v ConnectorProvider) String() string {
+	return string(v)
+}
 
-	switch v := value.(type) {
-	case string:
-		s = v
-	case []byte:
-		s = string(v)
-	default:
-		return fmt.Errorf("unsupported type for ConnectorProvider: %T", value)
+func (v ConnectorProvider) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *ConnectorProvider) UnmarshalText(text []byte) error {
+	val := ConnectorProvider(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid ConnectorProvider value: %q", string(text))
 	}
 
-	switch s {
-	case "SLACK":
-		*cp = ConnectorProviderSlack
-	case "GOOGLE_WORKSPACE":
-		*cp = ConnectorProviderGoogleWorkspace
-	case "LINEAR":
-		*cp = ConnectorProviderLinear
-	case "ONE_PASSWORD":
-		*cp = ConnectorProviderOnePassword
-	case "HUBSPOT":
-		*cp = ConnectorProviderHubSpot
-	case "DOCUSIGN":
-		*cp = ConnectorProviderDocuSign
-	case "NOTION":
-		*cp = ConnectorProviderNotion
-	case "BREX":
-		*cp = ConnectorProviderBrex
-	case "TALLY":
-		*cp = ConnectorProviderTally
-	case "CLOUDFLARE":
-		*cp = ConnectorProviderCloudflare
-	case "OPENAI":
-		*cp = ConnectorProviderOpenAI
-	case "SENTRY":
-		*cp = ConnectorProviderSentry
-	case "SUPABASE":
-		*cp = ConnectorProviderSupabase
-	case "GITHUB":
-		*cp = ConnectorProviderGitHub
-	case "INTERCOM":
-		*cp = ConnectorProviderIntercom
-	case "RESEND":
-		*cp = ConnectorProviderResend
-	case "MICROSOFT_365":
-		*cp = ConnectorProviderMicrosoft365
-	case "GITLAB":
-		*cp = ConnectorProviderGitLab
-	case "BITBUCKET":
-		*cp = ConnectorProviderBitbucket
-	case "HEROKU":
-		*cp = ConnectorProviderHeroku
-	case "PAGERDUTY":
-		*cp = ConnectorProviderPagerDuty
-	case "ASANA":
-		*cp = ConnectorProviderAsana
-	case "NETLIFY":
-		*cp = ConnectorProviderNetlify
-	case "CLICKUP":
-		*cp = ConnectorProviderClickUp
-	case "VERCEL":
-		*cp = ConnectorProviderVercel
-	case "MONDAY":
-		*cp = ConnectorProviderMonday
-	default:
-		return fmt.Errorf("invalid ConnectorProvider value: %q", s)
-	}
+	*v = val
 
 	return nil
-}
-
-func (cp ConnectorProvider) Value() (driver.Value, error) {
-	return cp.String(), nil
 }

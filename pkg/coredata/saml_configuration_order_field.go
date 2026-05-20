@@ -14,6 +14,13 @@
 
 package coredata
 
+import (
+	"encoding"
+	"fmt"
+
+	"go.probo.inc/probo/pkg/page"
+)
+
 type (
 	SAMLConfigurationOrderField string
 )
@@ -22,19 +29,48 @@ const (
 	SAMLConfigurationOrderFieldCreatedAt SAMLConfigurationOrderField = "CREATED_AT"
 )
 
+var (
+	_ page.OrderField          = SAMLConfigurationOrderField("")
+	_ fmt.Stringer             = SAMLConfigurationOrderField("")
+	_ encoding.TextMarshaler   = SAMLConfigurationOrderField("")
+	_ encoding.TextUnmarshaler = (*SAMLConfigurationOrderField)(nil)
+)
+
+func SAMLConfigurationOrderFields() []SAMLConfigurationOrderField {
+	return []SAMLConfigurationOrderField{
+		SAMLConfigurationOrderFieldCreatedAt,
+	}
+}
+
+func (v SAMLConfigurationOrderField) IsValid() bool {
+	switch v {
+	case
+		SAMLConfigurationOrderFieldCreatedAt:
+		return true
+	}
+
+	return false
+}
+
+func (v SAMLConfigurationOrderField) String() string {
+	return string(v)
+}
+
+func (v SAMLConfigurationOrderField) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *SAMLConfigurationOrderField) UnmarshalText(text []byte) error {
+	val := SAMLConfigurationOrderField(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid SAMLConfigurationOrderField value: %q", string(text))
+	}
+
+	*v = val
+
+	return nil
+}
+
 func (p SAMLConfigurationOrderField) Column() string {
 	return string(p)
-}
-
-func (p SAMLConfigurationOrderField) String() string {
-	return string(p)
-}
-
-func (p SAMLConfigurationOrderField) MarshalText() ([]byte, error) {
-	return []byte(p.String()), nil
-}
-
-func (p *SAMLConfigurationOrderField) UnmarshalText(text []byte) error {
-	*p = SAMLConfigurationOrderField(text)
-	return nil
 }

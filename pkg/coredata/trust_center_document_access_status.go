@@ -15,7 +15,7 @@
 package coredata
 
 import (
-	"database/sql/driver"
+	"encoding"
 	"fmt"
 )
 
@@ -28,38 +28,49 @@ const (
 	TrustCenterDocumentAccessStatusRevoked   TrustCenterDocumentAccessStatus = "REVOKED"
 )
 
-func (tcdas TrustCenterDocumentAccessStatus) String() string {
-	return string(tcdas)
+var (
+	_ fmt.Stringer             = TrustCenterDocumentAccessStatus("")
+	_ encoding.TextMarshaler   = TrustCenterDocumentAccessStatus("")
+	_ encoding.TextUnmarshaler = (*TrustCenterDocumentAccessStatus)(nil)
+)
+
+func TrustCenterDocumentAccessStatuses() []TrustCenterDocumentAccessStatus {
+	return []TrustCenterDocumentAccessStatus{
+		TrustCenterDocumentAccessStatusRequested,
+		TrustCenterDocumentAccessStatusGranted,
+		TrustCenterDocumentAccessStatusRejected,
+		TrustCenterDocumentAccessStatusRevoked,
+	}
 }
 
-func (tcdas *TrustCenterDocumentAccessStatus) Scan(value any) error {
-	var s string
-
-	switch v := value.(type) {
-	case string:
-		s = v
-	case []byte:
-		s = string(v)
-	default:
-		return fmt.Errorf("unsupported type for TrustCenterDocumentAccessStatus: %T", value)
+func (v TrustCenterDocumentAccessStatus) IsValid() bool {
+	switch v {
+	case
+		TrustCenterDocumentAccessStatusRequested,
+		TrustCenterDocumentAccessStatusGranted,
+		TrustCenterDocumentAccessStatusRejected,
+		TrustCenterDocumentAccessStatusRevoked:
+		return true
 	}
 
-	switch s {
-	case "REQUESTED":
-		*tcdas = TrustCenterDocumentAccessStatusRequested
-	case "GRANTED":
-		*tcdas = TrustCenterDocumentAccessStatusGranted
-	case "REJECTED":
-		*tcdas = TrustCenterDocumentAccessStatusRejected
-	case "REVOKED":
-		*tcdas = TrustCenterDocumentAccessStatusRevoked
-	default:
-		return fmt.Errorf("invalid TrustCenterDocumentAccessStatus value: %q", s)
+	return false
+}
+
+func (v TrustCenterDocumentAccessStatus) String() string {
+	return string(v)
+}
+
+func (v TrustCenterDocumentAccessStatus) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *TrustCenterDocumentAccessStatus) UnmarshalText(text []byte) error {
+	val := TrustCenterDocumentAccessStatus(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid TrustCenterDocumentAccessStatus value: %q", string(text))
 	}
+
+	*v = val
 
 	return nil
-}
-
-func (tcdas TrustCenterDocumentAccessStatus) Value() (driver.Value, error) {
-	return tcdas.String(), nil
 }

@@ -16,6 +16,7 @@ package coredata
 
 import (
 	"database/sql/driver"
+	"encoding"
 	"fmt"
 	"strings"
 )
@@ -31,38 +32,41 @@ const (
 	InvitationStatusExpired  InvitationStatus = "EXPIRED"
 )
 
-func (tcv InvitationStatus) String() string {
-	return string(tcv)
+var (
+	_ fmt.Stringer             = InvitationStatus("")
+	_ encoding.TextMarshaler   = InvitationStatus("")
+	_ encoding.TextUnmarshaler = (*InvitationStatus)(nil)
+)
+
+func (v InvitationStatus) IsValid() bool {
+	switch v {
+	case
+		InvitationStatusPending,
+		InvitationStatusAccepted,
+		InvitationStatusExpired:
+		return true
+	}
+
+	return false
 }
 
-func (tcv *InvitationStatus) Scan(value any) error {
-	var s string
+func (v InvitationStatus) String() string {
+	return string(v)
+}
 
-	switch v := value.(type) {
-	case string:
-		s = v
-	case []byte:
-		s = string(v)
-	default:
-		return fmt.Errorf("unsupported type for TrustCenterVisibility: %T", value)
+func (v InvitationStatus) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *InvitationStatus) UnmarshalText(text []byte) error {
+	val := InvitationStatus(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid InvitationStatus value: %q", string(text))
 	}
 
-	switch s {
-	case "PENDING":
-		*tcv = InvitationStatusPending
-	case "ACCEPTED":
-		*tcv = InvitationStatusAccepted
-	case "EXPIRED":
-		*tcv = InvitationStatusExpired
-	default:
-		return fmt.Errorf("invalid InvitationStatus value: %q", s)
-	}
+	*v = val
 
 	return nil
-}
-
-func (tcv InvitationStatus) Value() (driver.Value, error) {
-	return tcv.String(), nil
 }
 
 func (statuses InvitationStatuses) Value() (driver.Value, error) {

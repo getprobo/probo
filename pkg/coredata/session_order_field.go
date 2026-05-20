@@ -14,6 +14,13 @@
 
 package coredata
 
+import (
+	"encoding"
+	"fmt"
+
+	"go.probo.inc/probo/pkg/page"
+)
+
 type (
 	SessionOrderField string
 )
@@ -23,6 +30,52 @@ const (
 	SessionOrderFieldExpiredAt SessionOrderField = "EXPIRED_AT"
 	SessionOrderFieldUpdatedAt SessionOrderField = "UPDATED_AT"
 )
+
+var (
+	_ page.OrderField          = SessionOrderField("")
+	_ fmt.Stringer             = SessionOrderField("")
+	_ encoding.TextMarshaler   = SessionOrderField("")
+	_ encoding.TextUnmarshaler = (*SessionOrderField)(nil)
+)
+
+func SessionOrderFields() []SessionOrderField {
+	return []SessionOrderField{
+		SessionOrderFieldCreatedAt,
+		SessionOrderFieldExpiredAt,
+		SessionOrderFieldUpdatedAt,
+	}
+}
+
+func (v SessionOrderField) IsValid() bool {
+	switch v {
+	case
+		SessionOrderFieldCreatedAt,
+		SessionOrderFieldExpiredAt,
+		SessionOrderFieldUpdatedAt:
+		return true
+	}
+
+	return false
+}
+
+func (v SessionOrderField) String() string {
+	return string(v)
+}
+
+func (v SessionOrderField) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *SessionOrderField) UnmarshalText(text []byte) error {
+	val := SessionOrderField(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid SessionOrderField value: %q", string(text))
+	}
+
+	*v = val
+
+	return nil
+}
 
 func (p SessionOrderField) Column() string {
 	switch p {
@@ -35,17 +88,4 @@ func (p SessionOrderField) Column() string {
 	}
 
 	return string(p)
-}
-
-func (p SessionOrderField) String() string {
-	return string(p)
-}
-
-func (p SessionOrderField) MarshalText() ([]byte, error) {
-	return []byte(p.String()), nil
-}
-
-func (p *SessionOrderField) UnmarshalText(text []byte) error {
-	*p = SessionOrderField(text)
-	return nil
 }

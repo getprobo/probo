@@ -14,13 +14,60 @@
 
 package coredata
 
-import "fmt"
+import (
+	"encoding"
+	"fmt"
+
+	"go.probo.inc/probo/pkg/page"
+)
 
 type CookieBannerVersionOrderField string
 
 const (
 	CookieBannerVersionOrderFieldCreatedAt CookieBannerVersionOrderField = "CREATED_AT"
 )
+
+var (
+	_ page.OrderField          = CookieBannerVersionOrderField("")
+	_ fmt.Stringer             = CookieBannerVersionOrderField("")
+	_ encoding.TextMarshaler   = CookieBannerVersionOrderField("")
+	_ encoding.TextUnmarshaler = (*CookieBannerVersionOrderField)(nil)
+)
+
+func CookieBannerVersionOrderFields() []CookieBannerVersionOrderField {
+	return []CookieBannerVersionOrderField{
+		CookieBannerVersionOrderFieldCreatedAt,
+	}
+}
+
+func (v CookieBannerVersionOrderField) IsValid() bool {
+	switch v {
+	case
+		CookieBannerVersionOrderFieldCreatedAt:
+		return true
+	}
+
+	return false
+}
+
+func (v CookieBannerVersionOrderField) String() string {
+	return string(v)
+}
+
+func (v CookieBannerVersionOrderField) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *CookieBannerVersionOrderField) UnmarshalText(text []byte) error {
+	val := CookieBannerVersionOrderField(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid CookieBannerVersionOrderField value: %q", string(text))
+	}
+
+	*v = val
+
+	return nil
+}
 
 func (p CookieBannerVersionOrderField) Column() string {
 	switch p {
@@ -29,30 +76,4 @@ func (p CookieBannerVersionOrderField) Column() string {
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", p))
-}
-
-func (p CookieBannerVersionOrderField) IsValid() bool {
-	switch p {
-	case CookieBannerVersionOrderFieldCreatedAt:
-		return true
-	}
-
-	return false
-}
-
-func (p CookieBannerVersionOrderField) String() string {
-	return string(p)
-}
-
-func (p *CookieBannerVersionOrderField) UnmarshalText(text []byte) error {
-	*p = CookieBannerVersionOrderField(text)
-	if !p.IsValid() {
-		return fmt.Errorf("%s is not a valid CookieBannerVersionOrderField", string(text))
-	}
-
-	return nil
-}
-
-func (p CookieBannerVersionOrderField) MarshalText() ([]byte, error) {
-	return []byte(p.String()), nil
 }

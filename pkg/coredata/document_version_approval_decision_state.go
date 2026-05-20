@@ -16,6 +16,7 @@ package coredata
 
 import (
 	"database/sql/driver"
+	"encoding"
 	"fmt"
 	"strings"
 )
@@ -32,59 +33,42 @@ const (
 	DocumentVersionApprovalDecisionStateVoided   DocumentVersionApprovalDecisionState = "VOIDED"
 )
 
-func (s DocumentVersionApprovalDecisionState) MarshalText() ([]byte, error) {
-	return []byte(s.String()), nil
+var (
+	_ fmt.Stringer             = DocumentVersionApprovalDecisionState("")
+	_ encoding.TextMarshaler   = DocumentVersionApprovalDecisionState("")
+	_ encoding.TextUnmarshaler = (*DocumentVersionApprovalDecisionState)(nil)
+)
+
+func (v DocumentVersionApprovalDecisionState) IsValid() bool {
+	switch v {
+	case
+		DocumentVersionApprovalDecisionStatePending,
+		DocumentVersionApprovalDecisionStateApproved,
+		DocumentVersionApprovalDecisionStateRejected,
+		DocumentVersionApprovalDecisionStateVoided:
+		return true
+	}
+
+	return false
 }
 
-func (s *DocumentVersionApprovalDecisionState) UnmarshalText(data []byte) error {
-	val := string(data)
+func (v DocumentVersionApprovalDecisionState) String() string {
+	return string(v)
+}
 
-	switch val {
-	case DocumentVersionApprovalDecisionStatePending.String():
-		*s = DocumentVersionApprovalDecisionStatePending
-	case DocumentVersionApprovalDecisionStateApproved.String():
-		*s = DocumentVersionApprovalDecisionStateApproved
-	case DocumentVersionApprovalDecisionStateRejected.String():
-		*s = DocumentVersionApprovalDecisionStateRejected
-	case DocumentVersionApprovalDecisionStateVoided.String():
-		*s = DocumentVersionApprovalDecisionStateVoided
-	default:
-		return fmt.Errorf("invalid DocumentVersionApprovalDecisionState value: %q", val)
+func (v DocumentVersionApprovalDecisionState) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *DocumentVersionApprovalDecisionState) UnmarshalText(text []byte) error {
+	val := DocumentVersionApprovalDecisionState(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid DocumentVersionApprovalDecisionState value: %q", string(text))
 	}
+
+	*v = val
 
 	return nil
-}
-
-func (s DocumentVersionApprovalDecisionState) String() string {
-	var val string
-
-	switch s {
-	case DocumentVersionApprovalDecisionStatePending:
-		val = "PENDING"
-	case DocumentVersionApprovalDecisionStateApproved:
-		val = "APPROVED"
-	case DocumentVersionApprovalDecisionStateRejected:
-		val = "REJECTED"
-	case DocumentVersionApprovalDecisionStateVoided:
-		val = "VOIDED"
-	default:
-		panic(fmt.Errorf("invalid DocumentVersionApprovalDecisionState value: %q", string(s)))
-	}
-
-	return val
-}
-
-func (s *DocumentVersionApprovalDecisionState) Scan(value any) error {
-	val, ok := value.(string)
-	if !ok {
-		return fmt.Errorf("invalid scan source for DocumentVersionApprovalDecisionState, expected string got %T", value)
-	}
-
-	return s.UnmarshalText([]byte(val))
-}
-
-func (s DocumentVersionApprovalDecisionState) Value() (driver.Value, error) {
-	return s.String(), nil
 }
 
 func (states DocumentVersionApprovalDecisionStates) Value() (driver.Value, error) {

@@ -15,7 +15,7 @@
 package coredata
 
 import (
-	"database/sql/driver"
+	"encoding"
 	"fmt"
 )
 
@@ -30,46 +30,53 @@ const (
 	CustomDomainSSLStatusFailed       CustomDomainSSLStatus = "FAILED"
 )
 
-func (s CustomDomainSSLStatus) MarshalText() ([]byte, error) {
-	return []byte(s.String()), nil
+var (
+	_ fmt.Stringer             = CustomDomainSSLStatus("")
+	_ encoding.TextMarshaler   = CustomDomainSSLStatus("")
+	_ encoding.TextUnmarshaler = (*CustomDomainSSLStatus)(nil)
+)
+
+func CustomDomainSSLStatuses() []CustomDomainSSLStatus {
+	return []CustomDomainSSLStatus{
+		CustomDomainSSLStatusPending,
+		CustomDomainSSLStatusProvisioning,
+		CustomDomainSSLStatusActive,
+		CustomDomainSSLStatusRenewing,
+		CustomDomainSSLStatusExpired,
+		CustomDomainSSLStatusFailed,
+	}
 }
 
-func (s *CustomDomainSSLStatus) UnmarshalText(data []byte) error {
-	val := string(data)
-
-	switch val {
-	case CustomDomainSSLStatusPending.String():
-		*s = CustomDomainSSLStatusPending
-	case CustomDomainSSLStatusProvisioning.String():
-		*s = CustomDomainSSLStatusProvisioning
-	case CustomDomainSSLStatusActive.String():
-		*s = CustomDomainSSLStatusActive
-	case CustomDomainSSLStatusRenewing.String():
-		*s = CustomDomainSSLStatusRenewing
-	case CustomDomainSSLStatusExpired.String():
-		*s = CustomDomainSSLStatusExpired
-	case CustomDomainSSLStatusFailed.String():
-		*s = CustomDomainSSLStatusFailed
-	default:
-		return fmt.Errorf("invalid CustomDomainSSLStatus value: %q", val)
+func (v CustomDomainSSLStatus) IsValid() bool {
+	switch v {
+	case
+		CustomDomainSSLStatusPending,
+		CustomDomainSSLStatusProvisioning,
+		CustomDomainSSLStatusActive,
+		CustomDomainSSLStatusRenewing,
+		CustomDomainSSLStatusExpired,
+		CustomDomainSSLStatusFailed:
+		return true
 	}
+
+	return false
+}
+
+func (v CustomDomainSSLStatus) String() string {
+	return string(v)
+}
+
+func (v CustomDomainSSLStatus) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *CustomDomainSSLStatus) UnmarshalText(text []byte) error {
+	val := CustomDomainSSLStatus(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid CustomDomainSSLStatus value: %q", string(text))
+	}
+
+	*v = val
 
 	return nil
-}
-
-func (s CustomDomainSSLStatus) String() string {
-	return string(s)
-}
-
-func (s *CustomDomainSSLStatus) Scan(value any) error {
-	val, ok := value.(string)
-	if !ok {
-		return fmt.Errorf("invalid scan source for CustomDomainSSLStatus, expected string got %T", value)
-	}
-
-	return s.UnmarshalText([]byte(val))
-}
-
-func (s CustomDomainSSLStatus) Value() (driver.Value, error) {
-	return s.String(), nil
 }

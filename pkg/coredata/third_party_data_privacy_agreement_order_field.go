@@ -14,6 +14,13 @@
 
 package coredata
 
+import (
+	"encoding"
+	"fmt"
+
+	"go.probo.inc/probo/pkg/page"
+)
+
 type (
 	ThirdPartyDataPrivacyAgreementOrderField string
 )
@@ -23,19 +30,50 @@ const (
 	ThirdPartyDataPrivacyAgreementOrderFieldCreatedAt ThirdPartyDataPrivacyAgreementOrderField = "CREATED_AT"
 )
 
+var (
+	_ page.OrderField          = ThirdPartyDataPrivacyAgreementOrderField("")
+	_ fmt.Stringer             = ThirdPartyDataPrivacyAgreementOrderField("")
+	_ encoding.TextMarshaler   = ThirdPartyDataPrivacyAgreementOrderField("")
+	_ encoding.TextUnmarshaler = (*ThirdPartyDataPrivacyAgreementOrderField)(nil)
+)
+
+func ThirdPartyDataPrivacyAgreementOrderFields() []ThirdPartyDataPrivacyAgreementOrderField {
+	return []ThirdPartyDataPrivacyAgreementOrderField{
+		ThirdPartyDataPrivacyAgreementOrderFieldValidFrom,
+		ThirdPartyDataPrivacyAgreementOrderFieldCreatedAt,
+	}
+}
+
+func (v ThirdPartyDataPrivacyAgreementOrderField) IsValid() bool {
+	switch v {
+	case
+		ThirdPartyDataPrivacyAgreementOrderFieldValidFrom,
+		ThirdPartyDataPrivacyAgreementOrderFieldCreatedAt:
+		return true
+	}
+
+	return false
+}
+
+func (v ThirdPartyDataPrivacyAgreementOrderField) String() string {
+	return string(v)
+}
+
+func (v ThirdPartyDataPrivacyAgreementOrderField) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *ThirdPartyDataPrivacyAgreementOrderField) UnmarshalText(text []byte) error {
+	val := ThirdPartyDataPrivacyAgreementOrderField(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid ThirdPartyDataPrivacyAgreementOrderField value: %q", string(text))
+	}
+
+	*v = val
+
+	return nil
+}
+
 func (p ThirdPartyDataPrivacyAgreementOrderField) Column() string {
 	return string(p)
-}
-
-func (p ThirdPartyDataPrivacyAgreementOrderField) String() string {
-	return string(p)
-}
-
-func (p ThirdPartyDataPrivacyAgreementOrderField) MarshalText() ([]byte, error) {
-	return []byte(p.String()), nil
-}
-
-func (p *ThirdPartyDataPrivacyAgreementOrderField) UnmarshalText(text []byte) error {
-	*p = ThirdPartyDataPrivacyAgreementOrderField(text)
-	return nil
 }

@@ -15,7 +15,10 @@
 package coredata
 
 import (
+	"encoding"
 	"fmt"
+
+	"go.probo.inc/probo/pkg/page"
 )
 
 type ProcessingActivityOrderField string
@@ -25,26 +28,50 @@ const (
 	ProcessingActivityOrderFieldName      ProcessingActivityOrderField = "NAME"
 )
 
-func (p ProcessingActivityOrderField) Column() string {
-	return string(p)
+var (
+	_ page.OrderField          = ProcessingActivityOrderField("")
+	_ fmt.Stringer             = ProcessingActivityOrderField("")
+	_ encoding.TextMarshaler   = ProcessingActivityOrderField("")
+	_ encoding.TextUnmarshaler = (*ProcessingActivityOrderField)(nil)
+)
+
+func ProcessingActivityOrderFields() []ProcessingActivityOrderField {
+	return []ProcessingActivityOrderField{
+		ProcessingActivityOrderFieldCreatedAt,
+		ProcessingActivityOrderFieldName,
+	}
 }
 
-func (p ProcessingActivityOrderField) String() string {
-	return string(p)
-}
-
-func (p ProcessingActivityOrderField) MarshalText() ([]byte, error) {
-	return []byte(p.String()), nil
-}
-
-func (p *ProcessingActivityOrderField) UnmarshalText(text []byte) error {
-	val := string(text)
-	switch val {
-	case string(ProcessingActivityOrderFieldCreatedAt),
-		string(ProcessingActivityOrderFieldName):
-		*p = ProcessingActivityOrderField(val)
-		return nil
+func (v ProcessingActivityOrderField) IsValid() bool {
+	switch v {
+	case
+		ProcessingActivityOrderFieldCreatedAt,
+		ProcessingActivityOrderFieldName:
+		return true
 	}
 
-	return fmt.Errorf("invalid ProcessingActivityOrderField value: %q", val)
+	return false
+}
+
+func (v ProcessingActivityOrderField) String() string {
+	return string(v)
+}
+
+func (v ProcessingActivityOrderField) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *ProcessingActivityOrderField) UnmarshalText(text []byte) error {
+	val := ProcessingActivityOrderField(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid ProcessingActivityOrderField value: %q", string(text))
+	}
+
+	*v = val
+
+	return nil
+}
+
+func (p ProcessingActivityOrderField) Column() string {
+	return string(p)
 }

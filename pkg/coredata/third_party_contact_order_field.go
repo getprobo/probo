@@ -14,6 +14,13 @@
 
 package coredata
 
+import (
+	"encoding"
+	"fmt"
+
+	"go.probo.inc/probo/pkg/page"
+)
+
 type (
 	ThirdPartyContactOrderField string
 )
@@ -24,19 +31,52 @@ const (
 	ThirdPartyContactOrderFieldEmail     ThirdPartyContactOrderField = "EMAIL"
 )
 
+var (
+	_ page.OrderField          = ThirdPartyContactOrderField("")
+	_ fmt.Stringer             = ThirdPartyContactOrderField("")
+	_ encoding.TextMarshaler   = ThirdPartyContactOrderField("")
+	_ encoding.TextUnmarshaler = (*ThirdPartyContactOrderField)(nil)
+)
+
+func ThirdPartyContactOrderFields() []ThirdPartyContactOrderField {
+	return []ThirdPartyContactOrderField{
+		ThirdPartyContactOrderFieldCreatedAt,
+		ThirdPartyContactOrderFieldFullName,
+		ThirdPartyContactOrderFieldEmail,
+	}
+}
+
+func (v ThirdPartyContactOrderField) IsValid() bool {
+	switch v {
+	case
+		ThirdPartyContactOrderFieldCreatedAt,
+		ThirdPartyContactOrderFieldFullName,
+		ThirdPartyContactOrderFieldEmail:
+		return true
+	}
+
+	return false
+}
+
+func (v ThirdPartyContactOrderField) String() string {
+	return string(v)
+}
+
+func (v ThirdPartyContactOrderField) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *ThirdPartyContactOrderField) UnmarshalText(text []byte) error {
+	val := ThirdPartyContactOrderField(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid ThirdPartyContactOrderField value: %q", string(text))
+	}
+
+	*v = val
+
+	return nil
+}
+
 func (p ThirdPartyContactOrderField) Column() string {
 	return string(p)
-}
-
-func (p ThirdPartyContactOrderField) String() string {
-	return string(p)
-}
-
-func (p ThirdPartyContactOrderField) MarshalText() ([]byte, error) {
-	return []byte(p.String()), nil
-}
-
-func (p *ThirdPartyContactOrderField) UnmarshalText(text []byte) error {
-	*p = ThirdPartyContactOrderField(text)
-	return nil
 }

@@ -14,6 +14,13 @@
 
 package coredata
 
+import (
+	"encoding"
+	"fmt"
+
+	"go.probo.inc/probo/pkg/page"
+)
+
 type (
 	MembershipProfileOrderField string
 )
@@ -26,19 +33,56 @@ const (
 	MembershipProfileOrderFieldState            MembershipProfileOrderField = "STATE"
 )
 
+var (
+	_ page.OrderField          = MembershipProfileOrderField("")
+	_ fmt.Stringer             = MembershipProfileOrderField("")
+	_ encoding.TextMarshaler   = MembershipProfileOrderField("")
+	_ encoding.TextUnmarshaler = (*MembershipProfileOrderField)(nil)
+)
+
+func MembershipProfileOrderFields() []MembershipProfileOrderField {
+	return []MembershipProfileOrderField{
+		MembershipProfileOrderFieldCreatedAt,
+		MembershipProfileOrderFieldFullName,
+		MembershipProfileOrderFieldKind,
+		MembershipProfileOrderFieldOrganizationName,
+		MembershipProfileOrderFieldState,
+	}
+}
+
+func (v MembershipProfileOrderField) IsValid() bool {
+	switch v {
+	case
+		MembershipProfileOrderFieldCreatedAt,
+		MembershipProfileOrderFieldFullName,
+		MembershipProfileOrderFieldKind,
+		MembershipProfileOrderFieldOrganizationName,
+		MembershipProfileOrderFieldState:
+		return true
+	}
+
+	return false
+}
+
+func (v MembershipProfileOrderField) String() string {
+	return string(v)
+}
+
+func (v MembershipProfileOrderField) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *MembershipProfileOrderField) UnmarshalText(text []byte) error {
+	val := MembershipProfileOrderField(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid MembershipProfileOrderField value: %q", string(text))
+	}
+
+	*v = val
+
+	return nil
+}
+
 func (p MembershipProfileOrderField) Column() string {
 	return string(p)
-}
-
-func (p MembershipProfileOrderField) String() string {
-	return string(p)
-}
-
-func (p MembershipProfileOrderField) MarshalText() ([]byte, error) {
-	return []byte(p.String()), nil
-}
-
-func (p *MembershipProfileOrderField) UnmarshalText(text []byte) error {
-	*p = MembershipProfileOrderField(text)
-	return nil
 }

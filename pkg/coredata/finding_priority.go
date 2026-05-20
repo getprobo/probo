@@ -15,7 +15,7 @@
 package coredata
 
 import (
-	"database/sql/driver"
+	"encoding"
 	"fmt"
 )
 
@@ -27,6 +27,12 @@ const (
 	FindingPriorityHigh   FindingPriority = "HIGH"
 )
 
+var (
+	_ fmt.Stringer             = FindingPriority("")
+	_ encoding.TextMarshaler   = FindingPriority("")
+	_ encoding.TextUnmarshaler = (*FindingPriority)(nil)
+)
+
 func FindingPriorities() []FindingPriority {
 	return []FindingPriority{
 		FindingPriorityLow,
@@ -35,36 +41,33 @@ func FindingPriorities() []FindingPriority {
 	}
 }
 
-func (fp FindingPriority) String() string {
-	return string(fp)
+func (v FindingPriority) IsValid() bool {
+	switch v {
+	case
+		FindingPriorityLow,
+		FindingPriorityMedium,
+		FindingPriorityHigh:
+		return true
+	}
+
+	return false
 }
 
-func (fp *FindingPriority) Scan(value any) error {
-	var s string
+func (v FindingPriority) String() string {
+	return string(v)
+}
 
-	switch v := value.(type) {
-	case string:
-		s = v
-	case []byte:
-		s = string(v)
-	default:
-		return fmt.Errorf("unsupported type for FindingPriority: %T", value)
+func (v FindingPriority) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *FindingPriority) UnmarshalText(text []byte) error {
+	val := FindingPriority(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid FindingPriority value: %q", string(text))
 	}
 
-	switch s {
-	case "LOW":
-		*fp = FindingPriorityLow
-	case "MEDIUM":
-		*fp = FindingPriorityMedium
-	case "HIGH":
-		*fp = FindingPriorityHigh
-	default:
-		return fmt.Errorf("invalid FindingPriority value: %q", s)
-	}
+	*v = val
 
 	return nil
-}
-
-func (fp FindingPriority) Value() (driver.Value, error) {
-	return fp.String(), nil
 }

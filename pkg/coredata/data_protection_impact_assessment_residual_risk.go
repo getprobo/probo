@@ -15,7 +15,7 @@
 package coredata
 
 import (
-	"database/sql/driver"
+	"encoding"
 	"fmt"
 )
 
@@ -27,6 +27,12 @@ const (
 	DataProtectionImpactAssessmentResidualRiskHigh   DataProtectionImpactAssessmentResidualRisk = "HIGH"
 )
 
+var (
+	_ fmt.Stringer             = DataProtectionImpactAssessmentResidualRisk("")
+	_ encoding.TextMarshaler   = DataProtectionImpactAssessmentResidualRisk("")
+	_ encoding.TextUnmarshaler = (*DataProtectionImpactAssessmentResidualRisk)(nil)
+)
+
 func DataProtectionImpactAssessmentResidualRisks() []DataProtectionImpactAssessmentResidualRisk {
 	return []DataProtectionImpactAssessmentResidualRisk{
 		DataProtectionImpactAssessmentResidualRiskLow,
@@ -35,36 +41,33 @@ func DataProtectionImpactAssessmentResidualRisks() []DataProtectionImpactAssessm
 	}
 }
 
-func (p DataProtectionImpactAssessmentResidualRisk) String() string {
-	return string(p)
+func (v DataProtectionImpactAssessmentResidualRisk) IsValid() bool {
+	switch v {
+	case
+		DataProtectionImpactAssessmentResidualRiskLow,
+		DataProtectionImpactAssessmentResidualRiskMedium,
+		DataProtectionImpactAssessmentResidualRiskHigh:
+		return true
+	}
+
+	return false
 }
 
-func (p *DataProtectionImpactAssessmentResidualRisk) Scan(value any) error {
-	var s string
+func (v DataProtectionImpactAssessmentResidualRisk) String() string {
+	return string(v)
+}
 
-	switch v := value.(type) {
-	case string:
-		s = v
-	case []byte:
-		s = string(v)
-	default:
-		return fmt.Errorf("unsupported type for DataProtectionImpactAssessmentResidualRisk: %T", value)
+func (v DataProtectionImpactAssessmentResidualRisk) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *DataProtectionImpactAssessmentResidualRisk) UnmarshalText(text []byte) error {
+	val := DataProtectionImpactAssessmentResidualRisk(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid DataProtectionImpactAssessmentResidualRisk value: %q", string(text))
 	}
 
-	switch s {
-	case "LOW":
-		*p = DataProtectionImpactAssessmentResidualRiskLow
-	case "MEDIUM":
-		*p = DataProtectionImpactAssessmentResidualRiskMedium
-	case "HIGH":
-		*p = DataProtectionImpactAssessmentResidualRiskHigh
-	default:
-		return fmt.Errorf("invalid DataProtectionImpactAssessmentResidualRisk value: %q", s)
-	}
+	*v = val
 
 	return nil
-}
-
-func (p DataProtectionImpactAssessmentResidualRisk) Value() (driver.Value, error) {
-	return p.String(), nil
 }

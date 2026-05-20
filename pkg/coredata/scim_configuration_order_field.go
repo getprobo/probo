@@ -14,6 +14,13 @@
 
 package coredata
 
+import (
+	"encoding"
+	"fmt"
+
+	"go.probo.inc/probo/pkg/page"
+)
+
 type (
 	SCIMConfigurationOrderField string
 )
@@ -22,19 +29,48 @@ const (
 	SCIMConfigurationOrderFieldCreatedAt SCIMConfigurationOrderField = "CREATED_AT"
 )
 
+var (
+	_ page.OrderField          = SCIMConfigurationOrderField("")
+	_ fmt.Stringer             = SCIMConfigurationOrderField("")
+	_ encoding.TextMarshaler   = SCIMConfigurationOrderField("")
+	_ encoding.TextUnmarshaler = (*SCIMConfigurationOrderField)(nil)
+)
+
+func SCIMConfigurationOrderFields() []SCIMConfigurationOrderField {
+	return []SCIMConfigurationOrderField{
+		SCIMConfigurationOrderFieldCreatedAt,
+	}
+}
+
+func (v SCIMConfigurationOrderField) IsValid() bool {
+	switch v {
+	case
+		SCIMConfigurationOrderFieldCreatedAt:
+		return true
+	}
+
+	return false
+}
+
+func (v SCIMConfigurationOrderField) String() string {
+	return string(v)
+}
+
+func (v SCIMConfigurationOrderField) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *SCIMConfigurationOrderField) UnmarshalText(text []byte) error {
+	val := SCIMConfigurationOrderField(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid SCIMConfigurationOrderField value: %q", string(text))
+	}
+
+	*v = val
+
+	return nil
+}
+
 func (p SCIMConfigurationOrderField) Column() string {
 	return string(p)
-}
-
-func (p SCIMConfigurationOrderField) String() string {
-	return string(p)
-}
-
-func (p SCIMConfigurationOrderField) MarshalText() ([]byte, error) {
-	return []byte(p.String()), nil
-}
-
-func (p *SCIMConfigurationOrderField) UnmarshalText(text []byte) error {
-	*p = SCIMConfigurationOrderField(text)
-	return nil
 }

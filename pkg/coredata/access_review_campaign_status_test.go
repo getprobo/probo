@@ -16,74 +16,62 @@ package coredata
 
 import "testing"
 
-func TestAccessReviewCampaignStatusScan(t *testing.T) {
+func TestAccessReviewCampaignStatusIsValid(t *testing.T) {
 	t.Parallel()
 
-	tests := []struct {
-		name    string
-		input   any
-		want    AccessReviewCampaignStatus
-		wantErr bool
-	}{
-		{name: "draft string", input: "DRAFT", want: AccessReviewCampaignStatusDraft},
-		{name: "in_progress string", input: "IN_PROGRESS", want: AccessReviewCampaignStatusInProgress},
-		{name: "pending_actions string", input: "PENDING_ACTIONS", want: AccessReviewCampaignStatusPendingActions},
-		{name: "completed string", input: "COMPLETED", want: AccessReviewCampaignStatusCompleted},
-		{name: "cancelled bytes", input: []byte("CANCELLED"), want: AccessReviewCampaignStatusCancelled},
-		{name: "invalid value", input: "BOGUS", wantErr: true},
-		{name: "unsupported type", input: 42, wantErr: true},
+	for _, value := range AccessReviewCampaignStatuses() {
+		if !value.IsValid() {
+			t.Fatalf("IsValid() = false for %q", value)
+		}
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
-			var got AccessReviewCampaignStatus
-
-			err := got.Scan(tt.input)
-			if tt.wantErr {
-				if err == nil {
-					t.Fatalf("Scan(%v) expected error", tt.input)
-				}
-
-				return
-			}
-
-			if err != nil {
-				t.Fatalf("Scan(%v) returned error: %v", tt.input, err)
-			}
-
-			if got != tt.want {
-				t.Fatalf("Scan(%v) = %q, want %q", tt.input, got, tt.want)
-			}
-		})
+	if AccessReviewCampaignStatus("BOGUS").IsValid() {
+		t.Fatal("IsValid() = true for invalid value")
 	}
 }
 
-func TestAccessReviewCampaignStatusValue(t *testing.T) {
+func TestAccessReviewCampaignStatusUnmarshalText(t *testing.T) {
 	t.Parallel()
 
-	tests := []struct {
-		name   string
-		status AccessReviewCampaignStatus
-		want   string
-	}{
-		{name: "draft", status: AccessReviewCampaignStatusDraft, want: "DRAFT"},
-		{name: "in_progress", status: AccessReviewCampaignStatusInProgress, want: "IN_PROGRESS"},
-		{name: "completed", status: AccessReviewCampaignStatusCompleted, want: "COMPLETED"},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+	for _, value := range AccessReviewCampaignStatuses() {
+		t.Run(string(value), func(t *testing.T) {
 			t.Parallel()
 
-			got, err := tt.status.Value()
-			if err != nil {
-				t.Fatalf("Value() returned error: %v", err)
+			var got AccessReviewCampaignStatus
+			if err := got.UnmarshalText([]byte(value)); err != nil {
+				t.Fatalf("UnmarshalText(%q) returned error: %v", value, err)
 			}
 
-			if got != tt.want {
-				t.Fatalf("Value() = %q, want %q", got, tt.want)
+			if got != value {
+				t.Fatalf("UnmarshalText(%q) = %q, want %q", value, got, value)
+			}
+		})
+	}
+
+	t.Run("invalid", func(t *testing.T) {
+		t.Parallel()
+
+		var got AccessReviewCampaignStatus
+		if err := got.UnmarshalText([]byte("BOGUS")); err == nil {
+			t.Fatal("UnmarshalText(BOGUS) expected error")
+		}
+	})
+}
+
+func TestAccessReviewCampaignStatusMarshalText(t *testing.T) {
+	t.Parallel()
+
+	for _, value := range AccessReviewCampaignStatuses() {
+		t.Run(string(value), func(t *testing.T) {
+			t.Parallel()
+
+			got, err := value.MarshalText()
+			if err != nil {
+				t.Fatalf("MarshalText() returned error: %v", err)
+			}
+
+			if string(got) != value.String() {
+				t.Fatalf("MarshalText() = %q, want %q", string(got), value.String())
 			}
 		})
 	}

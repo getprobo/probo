@@ -14,6 +14,13 @@
 
 package coredata
 
+import (
+	"encoding"
+	"fmt"
+
+	"go.probo.inc/probo/pkg/page"
+)
+
 type (
 	SCIMBridgeOrderField string
 )
@@ -22,19 +29,48 @@ const (
 	SCIMBridgeOrderFieldCreatedAt SCIMBridgeOrderField = "CREATED_AT"
 )
 
+var (
+	_ page.OrderField          = SCIMBridgeOrderField("")
+	_ fmt.Stringer             = SCIMBridgeOrderField("")
+	_ encoding.TextMarshaler   = SCIMBridgeOrderField("")
+	_ encoding.TextUnmarshaler = (*SCIMBridgeOrderField)(nil)
+)
+
+func SCIMBridgeOrderFields() []SCIMBridgeOrderField {
+	return []SCIMBridgeOrderField{
+		SCIMBridgeOrderFieldCreatedAt,
+	}
+}
+
+func (v SCIMBridgeOrderField) IsValid() bool {
+	switch v {
+	case
+		SCIMBridgeOrderFieldCreatedAt:
+		return true
+	}
+
+	return false
+}
+
+func (v SCIMBridgeOrderField) String() string {
+	return string(v)
+}
+
+func (v SCIMBridgeOrderField) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *SCIMBridgeOrderField) UnmarshalText(text []byte) error {
+	val := SCIMBridgeOrderField(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid SCIMBridgeOrderField value: %q", string(text))
+	}
+
+	*v = val
+
+	return nil
+}
+
 func (p SCIMBridgeOrderField) Column() string {
 	return string(p)
-}
-
-func (p SCIMBridgeOrderField) String() string {
-	return string(p)
-}
-
-func (p SCIMBridgeOrderField) MarshalText() ([]byte, error) {
-	return []byte(p.String()), nil
-}
-
-func (p *SCIMBridgeOrderField) UnmarshalText(text []byte) error {
-	*p = SCIMBridgeOrderField(text)
-	return nil
 }

@@ -16,6 +16,7 @@ package coredata
 
 import (
 	"database/sql/driver"
+	"encoding"
 	"fmt"
 	"strings"
 )
@@ -276,528 +277,287 @@ const (
 	CountryCodeZW CountryCode = "ZW"
 )
 
-func (ct CountryCode) String() string {
-	return string(ct)
+var (
+	_ fmt.Stringer             = CountryCode("")
+	_ encoding.TextMarshaler   = CountryCode("")
+	_ encoding.TextUnmarshaler = (*CountryCode)(nil)
+)
+
+func (v CountryCode) IsValid() bool {
+	switch v {
+	case
+		CountryCodeAD,
+		CountryCodeAE,
+		CountryCodeAF,
+		CountryCodeAG,
+		CountryCodeAI,
+		CountryCodeAL,
+		CountryCodeAM,
+		CountryCodeAO,
+		CountryCodeAQ,
+		CountryCodeAR,
+		CountryCodeAS,
+		CountryCodeAT,
+		CountryCodeAU,
+		CountryCodeAW,
+		CountryCodeAX,
+		CountryCodeAZ,
+		CountryCodeBA,
+		CountryCodeBB,
+		CountryCodeBD,
+		CountryCodeBE,
+		CountryCodeBF,
+		CountryCodeBG,
+		CountryCodeBH,
+		CountryCodeBI,
+		CountryCodeBJ,
+		CountryCodeBL,
+		CountryCodeBM,
+		CountryCodeBN,
+		CountryCodeBO,
+		CountryCodeBQ,
+		CountryCodeBR,
+		CountryCodeBS,
+		CountryCodeBT,
+		CountryCodeBV,
+		CountryCodeBW,
+		CountryCodeBY,
+		CountryCodeBZ,
+		CountryCodeCA,
+		CountryCodeCC,
+		CountryCodeCD,
+		CountryCodeCF,
+		CountryCodeCG,
+		CountryCodeCH,
+		CountryCodeCI,
+		CountryCodeCK,
+		CountryCodeCL,
+		CountryCodeCM,
+		CountryCodeCN,
+		CountryCodeCO,
+		CountryCodeCR,
+		CountryCodeCU,
+		CountryCodeCV,
+		CountryCodeCW,
+		CountryCodeCX,
+		CountryCodeCY,
+		CountryCodeCZ,
+		CountryCodeDE,
+		CountryCodeDJ,
+		CountryCodeDK,
+		CountryCodeDM,
+		CountryCodeDO,
+		CountryCodeDZ,
+		CountryCodeEC,
+		CountryCodeEE,
+		CountryCodeEG,
+		CountryCodeEH,
+		CountryCodeER,
+		CountryCodeES,
+		CountryCodeET,
+		CountryCodeEU,
+		CountryCodeFI,
+		CountryCodeFJ,
+		CountryCodeFK,
+		CountryCodeFM,
+		CountryCodeFO,
+		CountryCodeFR,
+		CountryCodeGA,
+		CountryCodeGB,
+		CountryCodeGD,
+		CountryCodeGE,
+		CountryCodeGF,
+		CountryCodeGG,
+		CountryCodeGH,
+		CountryCodeGI,
+		CountryCodeGL,
+		CountryCodeGM,
+		CountryCodeGN,
+		CountryCodeGP,
+		CountryCodeGQ,
+		CountryCodeGR,
+		CountryCodeGT,
+		CountryCodeGU,
+		CountryCodeGW,
+		CountryCodeGY,
+		CountryCodeHK,
+		CountryCodeHM,
+		CountryCodeHN,
+		CountryCodeHR,
+		CountryCodeHT,
+		CountryCodeHU,
+		CountryCodeID,
+		CountryCodeIE,
+		CountryCodeIL,
+		CountryCodeIM,
+		CountryCodeIN,
+		CountryCodeIO,
+		CountryCodeIQ,
+		CountryCodeIR,
+		CountryCodeIS,
+		CountryCodeIT,
+		CountryCodeJE,
+		CountryCodeJM,
+		CountryCodeJO,
+		CountryCodeJP,
+		CountryCodeKE,
+		CountryCodeKG,
+		CountryCodeKH,
+		CountryCodeKI,
+		CountryCodeKM,
+		CountryCodeKN,
+		CountryCodeKP,
+		CountryCodeKR,
+		CountryCodeKW,
+		CountryCodeKY,
+		CountryCodeKZ,
+		CountryCodeLA,
+		CountryCodeLB,
+		CountryCodeLC,
+		CountryCodeLI,
+		CountryCodeLK,
+		CountryCodeLR,
+		CountryCodeLS,
+		CountryCodeLT,
+		CountryCodeLU,
+		CountryCodeLV,
+		CountryCodeLY,
+		CountryCodeMA,
+		CountryCodeMC,
+		CountryCodeMD,
+		CountryCodeME,
+		CountryCodeMF,
+		CountryCodeMG,
+		CountryCodeMH,
+		CountryCodeMK,
+		CountryCodeML,
+		CountryCodeMM,
+		CountryCodeMN,
+		CountryCodeMO,
+		CountryCodeMP,
+		CountryCodeMQ,
+		CountryCodeMR,
+		CountryCodeMS,
+		CountryCodeMT,
+		CountryCodeMU,
+		CountryCodeMV,
+		CountryCodeMW,
+		CountryCodeMX,
+		CountryCodeMY,
+		CountryCodeMZ,
+		CountryCodeNA,
+		CountryCodeNC,
+		CountryCodeNE,
+		CountryCodeNF,
+		CountryCodeNG,
+		CountryCodeNI,
+		CountryCodeNL,
+		CountryCodeNO,
+		CountryCodeNP,
+		CountryCodeNR,
+		CountryCodeNU,
+		CountryCodeNZ,
+		CountryCodeOM,
+		CountryCodePA,
+		CountryCodePE,
+		CountryCodePF,
+		CountryCodePG,
+		CountryCodePH,
+		CountryCodePK,
+		CountryCodePL,
+		CountryCodePM,
+		CountryCodePN,
+		CountryCodePR,
+		CountryCodePS,
+		CountryCodePT,
+		CountryCodePW,
+		CountryCodePY,
+		CountryCodeQA,
+		CountryCodeRE,
+		CountryCodeRO,
+		CountryCodeRS,
+		CountryCodeRU,
+		CountryCodeRW,
+		CountryCodeSA,
+		CountryCodeSB,
+		CountryCodeSC,
+		CountryCodeSD,
+		CountryCodeSE,
+		CountryCodeSG,
+		CountryCodeSH,
+		CountryCodeSI,
+		CountryCodeSJ,
+		CountryCodeSK,
+		CountryCodeSL,
+		CountryCodeSM,
+		CountryCodeSN,
+		CountryCodeSO,
+		CountryCodeSR,
+		CountryCodeSS,
+		CountryCodeST,
+		CountryCodeSV,
+		CountryCodeSX,
+		CountryCodeSY,
+		CountryCodeSZ,
+		CountryCodeTC,
+		CountryCodeTD,
+		CountryCodeTF,
+		CountryCodeTG,
+		CountryCodeTH,
+		CountryCodeTJ,
+		CountryCodeTK,
+		CountryCodeTL,
+		CountryCodeTM,
+		CountryCodeTN,
+		CountryCodeTO,
+		CountryCodeTR,
+		CountryCodeTT,
+		CountryCodeTV,
+		CountryCodeTW,
+		CountryCodeTZ,
+		CountryCodeUA,
+		CountryCodeUG,
+		CountryCodeUM,
+		CountryCodeUS,
+		CountryCodeUY,
+		CountryCodeUZ,
+		CountryCodeVA,
+		CountryCodeVC,
+		CountryCodeVE,
+		CountryCodeVG,
+		CountryCodeVI,
+		CountryCodeVN,
+		CountryCodeVU,
+		CountryCodeWF,
+		CountryCodeWS,
+		CountryCodeYE,
+		CountryCodeYT,
+		CountryCodeZA,
+		CountryCodeZM,
+		CountryCodeZW:
+		return true
+	}
+
+	return false
 }
 
-func (ct *CountryCode) Scan(value any) error {
-	var s string
+func (v CountryCode) String() string {
+	return string(v)
+}
 
-	switch v := value.(type) {
-	case string:
-		s = v
-	case []byte:
-		s = string(v)
-	default:
-		return fmt.Errorf("unsupported type for CountryCode: %T", value)
+func (v CountryCode) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *CountryCode) UnmarshalText(text []byte) error {
+	val := CountryCode(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid CountryCode value: %q", string(text))
 	}
 
-	switch s {
-	case CountryCodeAD.String():
-		*ct = CountryCodeAD
-	case CountryCodeAE.String():
-		*ct = CountryCodeAE
-	case CountryCodeAF.String():
-		*ct = CountryCodeAF
-	case CountryCodeAG.String():
-		*ct = CountryCodeAG
-	case CountryCodeAI.String():
-		*ct = CountryCodeAI
-	case CountryCodeAL.String():
-		*ct = CountryCodeAL
-	case CountryCodeAM.String():
-		*ct = CountryCodeAM
-	case CountryCodeAO.String():
-		*ct = CountryCodeAO
-	case CountryCodeAQ.String():
-		*ct = CountryCodeAQ
-	case CountryCodeAR.String():
-		*ct = CountryCodeAR
-	case CountryCodeAS.String():
-		*ct = CountryCodeAS
-	case CountryCodeAT.String():
-		*ct = CountryCodeAT
-	case CountryCodeAU.String():
-		*ct = CountryCodeAU
-	case CountryCodeAW.String():
-		*ct = CountryCodeAW
-	case CountryCodeAX.String():
-		*ct = CountryCodeAX
-	case CountryCodeAZ.String():
-		*ct = CountryCodeAZ
-	case CountryCodeBA.String():
-		*ct = CountryCodeBA
-	case CountryCodeBB.String():
-		*ct = CountryCodeBB
-	case CountryCodeBD.String():
-		*ct = CountryCodeBD
-	case CountryCodeBE.String():
-		*ct = CountryCodeBE
-	case CountryCodeBF.String():
-		*ct = CountryCodeBF
-	case CountryCodeBG.String():
-		*ct = CountryCodeBG
-	case CountryCodeBH.String():
-		*ct = CountryCodeBH
-	case CountryCodeBI.String():
-		*ct = CountryCodeBI
-	case CountryCodeBJ.String():
-		*ct = CountryCodeBJ
-	case CountryCodeBL.String():
-		*ct = CountryCodeBL
-	case CountryCodeBM.String():
-		*ct = CountryCodeBM
-	case CountryCodeBN.String():
-		*ct = CountryCodeBN
-	case CountryCodeBO.String():
-		*ct = CountryCodeBO
-	case CountryCodeBQ.String():
-		*ct = CountryCodeBQ
-	case CountryCodeBR.String():
-		*ct = CountryCodeBR
-	case CountryCodeBS.String():
-		*ct = CountryCodeBS
-	case CountryCodeBT.String():
-		*ct = CountryCodeBT
-	case CountryCodeBV.String():
-		*ct = CountryCodeBV
-	case CountryCodeBW.String():
-		*ct = CountryCodeBW
-	case CountryCodeBY.String():
-		*ct = CountryCodeBY
-	case CountryCodeBZ.String():
-		*ct = CountryCodeBZ
-	case CountryCodeCA.String():
-		*ct = CountryCodeCA
-	case CountryCodeCC.String():
-		*ct = CountryCodeCC
-	case CountryCodeCD.String():
-		*ct = CountryCodeCD
-	case CountryCodeCF.String():
-		*ct = CountryCodeCF
-	case CountryCodeCG.String():
-		*ct = CountryCodeCG
-	case CountryCodeCH.String():
-		*ct = CountryCodeCH
-	case CountryCodeCI.String():
-		*ct = CountryCodeCI
-	case CountryCodeCK.String():
-		*ct = CountryCodeCK
-	case CountryCodeCL.String():
-		*ct = CountryCodeCL
-	case CountryCodeCM.String():
-		*ct = CountryCodeCM
-	case CountryCodeCN.String():
-		*ct = CountryCodeCN
-	case CountryCodeCO.String():
-		*ct = CountryCodeCO
-	case CountryCodeCR.String():
-		*ct = CountryCodeCR
-	case CountryCodeCU.String():
-		*ct = CountryCodeCU
-	case CountryCodeCV.String():
-		*ct = CountryCodeCV
-	case CountryCodeCW.String():
-		*ct = CountryCodeCW
-	case CountryCodeCX.String():
-		*ct = CountryCodeCX
-	case CountryCodeCY.String():
-		*ct = CountryCodeCY
-	case CountryCodeCZ.String():
-		*ct = CountryCodeCZ
-	case CountryCodeDE.String():
-		*ct = CountryCodeDE
-	case CountryCodeDJ.String():
-		*ct = CountryCodeDJ
-	case CountryCodeDK.String():
-		*ct = CountryCodeDK
-	case CountryCodeDM.String():
-		*ct = CountryCodeDM
-	case CountryCodeDO.String():
-		*ct = CountryCodeDO
-	case CountryCodeDZ.String():
-		*ct = CountryCodeDZ
-	case CountryCodeEC.String():
-		*ct = CountryCodeEC
-	case CountryCodeEE.String():
-		*ct = CountryCodeEE
-	case CountryCodeEG.String():
-		*ct = CountryCodeEG
-	case CountryCodeEH.String():
-		*ct = CountryCodeEH
-	case CountryCodeER.String():
-		*ct = CountryCodeER
-	case CountryCodeES.String():
-		*ct = CountryCodeES
-	case CountryCodeET.String():
-		*ct = CountryCodeET
-	case CountryCodeEU.String():
-		*ct = CountryCodeEU
-	case CountryCodeFI.String():
-		*ct = CountryCodeFI
-	case CountryCodeFJ.String():
-		*ct = CountryCodeFJ
-	case CountryCodeFK.String():
-		*ct = CountryCodeFK
-	case CountryCodeFM.String():
-		*ct = CountryCodeFM
-	case CountryCodeFO.String():
-		*ct = CountryCodeFO
-	case CountryCodeFR.String():
-		*ct = CountryCodeFR
-	case CountryCodeGA.String():
-		*ct = CountryCodeGA
-	case CountryCodeGB.String():
-		*ct = CountryCodeGB
-	case CountryCodeGD.String():
-		*ct = CountryCodeGD
-	case CountryCodeGE.String():
-		*ct = CountryCodeGE
-	case CountryCodeGF.String():
-		*ct = CountryCodeGF
-	case CountryCodeGG.String():
-		*ct = CountryCodeGG
-	case CountryCodeGH.String():
-		*ct = CountryCodeGH
-	case CountryCodeGI.String():
-		*ct = CountryCodeGI
-	case CountryCodeGL.String():
-		*ct = CountryCodeGL
-	case CountryCodeGM.String():
-		*ct = CountryCodeGM
-	case CountryCodeGN.String():
-		*ct = CountryCodeGN
-	case CountryCodeGP.String():
-		*ct = CountryCodeGP
-	case CountryCodeGQ.String():
-		*ct = CountryCodeGQ
-	case CountryCodeGR.String():
-		*ct = CountryCodeGR
-	case CountryCodeGT.String():
-		*ct = CountryCodeGT
-	case CountryCodeGU.String():
-		*ct = CountryCodeGU
-	case CountryCodeGW.String():
-		*ct = CountryCodeGW
-	case CountryCodeGY.String():
-		*ct = CountryCodeGY
-	case CountryCodeHK.String():
-		*ct = CountryCodeHK
-	case CountryCodeHM.String():
-		*ct = CountryCodeHM
-	case CountryCodeHN.String():
-		*ct = CountryCodeHN
-	case CountryCodeHR.String():
-		*ct = CountryCodeHR
-	case CountryCodeHT.String():
-		*ct = CountryCodeHT
-	case CountryCodeHU.String():
-		*ct = CountryCodeHU
-	case CountryCodeID.String():
-		*ct = CountryCodeID
-	case CountryCodeIE.String():
-		*ct = CountryCodeIE
-	case CountryCodeIL.String():
-		*ct = CountryCodeIL
-	case CountryCodeIM.String():
-		*ct = CountryCodeIM
-	case CountryCodeIN.String():
-		*ct = CountryCodeIN
-	case CountryCodeIO.String():
-		*ct = CountryCodeIO
-	case CountryCodeIQ.String():
-		*ct = CountryCodeIQ
-	case CountryCodeIR.String():
-		*ct = CountryCodeIR
-	case CountryCodeIS.String():
-		*ct = CountryCodeIS
-	case CountryCodeIT.String():
-		*ct = CountryCodeIT
-	case CountryCodeJE.String():
-		*ct = CountryCodeJE
-	case CountryCodeJM.String():
-		*ct = CountryCodeJM
-	case CountryCodeJO.String():
-		*ct = CountryCodeJO
-	case CountryCodeJP.String():
-		*ct = CountryCodeJP
-	case CountryCodeKE.String():
-		*ct = CountryCodeKE
-	case CountryCodeKG.String():
-		*ct = CountryCodeKG
-	case CountryCodeKH.String():
-		*ct = CountryCodeKH
-	case CountryCodeKI.String():
-		*ct = CountryCodeKI
-	case CountryCodeKM.String():
-		*ct = CountryCodeKM
-	case CountryCodeKN.String():
-		*ct = CountryCodeKN
-	case CountryCodeKP.String():
-		*ct = CountryCodeKP
-	case CountryCodeKR.String():
-		*ct = CountryCodeKR
-	case CountryCodeKW.String():
-		*ct = CountryCodeKW
-	case CountryCodeKY.String():
-		*ct = CountryCodeKY
-	case CountryCodeKZ.String():
-		*ct = CountryCodeKZ
-	case CountryCodeLA.String():
-		*ct = CountryCodeLA
-	case CountryCodeLB.String():
-		*ct = CountryCodeLB
-	case CountryCodeLC.String():
-		*ct = CountryCodeLC
-	case CountryCodeLI.String():
-		*ct = CountryCodeLI
-	case CountryCodeLK.String():
-		*ct = CountryCodeLK
-	case CountryCodeLR.String():
-		*ct = CountryCodeLR
-	case CountryCodeLS.String():
-		*ct = CountryCodeLS
-	case CountryCodeLT.String():
-		*ct = CountryCodeLT
-	case CountryCodeLU.String():
-		*ct = CountryCodeLU
-	case CountryCodeLV.String():
-		*ct = CountryCodeLV
-	case CountryCodeLY.String():
-		*ct = CountryCodeLY
-	case CountryCodeMA.String():
-		*ct = CountryCodeMA
-	case CountryCodeMC.String():
-		*ct = CountryCodeMC
-	case CountryCodeMD.String():
-		*ct = CountryCodeMD
-	case CountryCodeME.String():
-		*ct = CountryCodeME
-	case CountryCodeMF.String():
-		*ct = CountryCodeMF
-	case CountryCodeMG.String():
-		*ct = CountryCodeMG
-	case CountryCodeMH.String():
-		*ct = CountryCodeMH
-	case CountryCodeMK.String():
-		*ct = CountryCodeMK
-	case CountryCodeML.String():
-		*ct = CountryCodeML
-	case CountryCodeMM.String():
-		*ct = CountryCodeMM
-	case CountryCodeMN.String():
-		*ct = CountryCodeMN
-	case CountryCodeMO.String():
-		*ct = CountryCodeMO
-	case CountryCodeMP.String():
-		*ct = CountryCodeMP
-	case CountryCodeMQ.String():
-		*ct = CountryCodeMQ
-	case CountryCodeMR.String():
-		*ct = CountryCodeMR
-	case CountryCodeMS.String():
-		*ct = CountryCodeMS
-	case CountryCodeMT.String():
-		*ct = CountryCodeMT
-	case CountryCodeMU.String():
-		*ct = CountryCodeMU
-	case CountryCodeMV.String():
-		*ct = CountryCodeMV
-	case CountryCodeMW.String():
-		*ct = CountryCodeMW
-	case CountryCodeMX.String():
-		*ct = CountryCodeMX
-	case CountryCodeMY.String():
-		*ct = CountryCodeMY
-	case CountryCodeMZ.String():
-		*ct = CountryCodeMZ
-	case CountryCodeNA.String():
-		*ct = CountryCodeNA
-	case CountryCodeNC.String():
-		*ct = CountryCodeNC
-	case CountryCodeNE.String():
-		*ct = CountryCodeNE
-	case CountryCodeNF.String():
-		*ct = CountryCodeNF
-	case CountryCodeNG.String():
-		*ct = CountryCodeNG
-	case CountryCodeNI.String():
-		*ct = CountryCodeNI
-	case CountryCodeNL.String():
-		*ct = CountryCodeNL
-	case CountryCodeNO.String():
-		*ct = CountryCodeNO
-	case CountryCodeNP.String():
-		*ct = CountryCodeNP
-	case CountryCodeNR.String():
-		*ct = CountryCodeNR
-	case CountryCodeNU.String():
-		*ct = CountryCodeNU
-	case CountryCodeNZ.String():
-		*ct = CountryCodeNZ
-	case CountryCodeOM.String():
-		*ct = CountryCodeOM
-	case CountryCodePA.String():
-		*ct = CountryCodePA
-	case CountryCodePE.String():
-		*ct = CountryCodePE
-	case CountryCodePF.String():
-		*ct = CountryCodePF
-	case CountryCodePG.String():
-		*ct = CountryCodePG
-	case CountryCodePH.String():
-		*ct = CountryCodePH
-	case CountryCodePK.String():
-		*ct = CountryCodePK
-	case CountryCodePL.String():
-		*ct = CountryCodePL
-	case CountryCodePM.String():
-		*ct = CountryCodePM
-	case CountryCodePN.String():
-		*ct = CountryCodePN
-	case CountryCodePR.String():
-		*ct = CountryCodePR
-	case CountryCodePS.String():
-		*ct = CountryCodePS
-	case CountryCodePT.String():
-		*ct = CountryCodePT
-	case CountryCodePW.String():
-		*ct = CountryCodePW
-	case CountryCodePY.String():
-		*ct = CountryCodePY
-	case CountryCodeQA.String():
-		*ct = CountryCodeQA
-	case CountryCodeRE.String():
-		*ct = CountryCodeRE
-	case CountryCodeRO.String():
-		*ct = CountryCodeRO
-	case CountryCodeRS.String():
-		*ct = CountryCodeRS
-	case CountryCodeRU.String():
-		*ct = CountryCodeRU
-	case CountryCodeRW.String():
-		*ct = CountryCodeRW
-	case CountryCodeSA.String():
-		*ct = CountryCodeSA
-	case CountryCodeSB.String():
-		*ct = CountryCodeSB
-	case CountryCodeSC.String():
-		*ct = CountryCodeSC
-	case CountryCodeSD.String():
-		*ct = CountryCodeSD
-	case CountryCodeSE.String():
-		*ct = CountryCodeSE
-	case CountryCodeSG.String():
-		*ct = CountryCodeSG
-	case CountryCodeSH.String():
-		*ct = CountryCodeSH
-	case CountryCodeSI.String():
-		*ct = CountryCodeSI
-	case CountryCodeSJ.String():
-		*ct = CountryCodeSJ
-	case CountryCodeSK.String():
-		*ct = CountryCodeSK
-	case CountryCodeSL.String():
-		*ct = CountryCodeSL
-	case CountryCodeSM.String():
-		*ct = CountryCodeSM
-	case CountryCodeSN.String():
-		*ct = CountryCodeSN
-	case CountryCodeSO.String():
-		*ct = CountryCodeSO
-	case CountryCodeSR.String():
-		*ct = CountryCodeSR
-	case CountryCodeSS.String():
-		*ct = CountryCodeSS
-	case CountryCodeST.String():
-		*ct = CountryCodeST
-	case CountryCodeSV.String():
-		*ct = CountryCodeSV
-	case CountryCodeSY.String():
-		*ct = CountryCodeSY
-	case CountryCodeSZ.String():
-		*ct = CountryCodeSZ
-	case CountryCodeTC.String():
-		*ct = CountryCodeTC
-	case CountryCodeTD.String():
-		*ct = CountryCodeTD
-	case CountryCodeTF.String():
-		*ct = CountryCodeTF
-	case CountryCodeTG.String():
-		*ct = CountryCodeTG
-	case CountryCodeTH.String():
-		*ct = CountryCodeTH
-	case CountryCodeTJ.String():
-		*ct = CountryCodeTJ
-	case CountryCodeTK.String():
-		*ct = CountryCodeTK
-	case CountryCodeTL.String():
-		*ct = CountryCodeTL
-	case CountryCodeTM.String():
-		*ct = CountryCodeTM
-	case CountryCodeTN.String():
-		*ct = CountryCodeTN
-	case CountryCodeTO.String():
-		*ct = CountryCodeTO
-	case CountryCodeTR.String():
-		*ct = CountryCodeTR
-	case CountryCodeTT.String():
-		*ct = CountryCodeTT
-	case CountryCodeTV.String():
-		*ct = CountryCodeTV
-	case CountryCodeTW.String():
-		*ct = CountryCodeTW
-	case CountryCodeTZ.String():
-		*ct = CountryCodeTZ
-	case CountryCodeUA.String():
-		*ct = CountryCodeUA
-	case CountryCodeUG.String():
-		*ct = CountryCodeUG
-	case CountryCodeUM.String():
-		*ct = CountryCodeUM
-	case CountryCodeUS.String():
-		*ct = CountryCodeUS
-	case CountryCodeUY.String():
-		*ct = CountryCodeUY
-	case CountryCodeUZ.String():
-		*ct = CountryCodeUZ
-	case CountryCodeVA.String():
-		*ct = CountryCodeVA
-	case CountryCodeVC.String():
-		*ct = CountryCodeVC
-	case CountryCodeVE.String():
-		*ct = CountryCodeVE
-	case CountryCodeVG.String():
-		*ct = CountryCodeVG
-	case CountryCodeVI.String():
-		*ct = CountryCodeVI
-	case CountryCodeVN.String():
-		*ct = CountryCodeVN
-	case CountryCodeVU.String():
-		*ct = CountryCodeVU
-	case CountryCodeWF.String():
-		*ct = CountryCodeWF
-	case CountryCodeWS.String():
-		*ct = CountryCodeWS
-	case CountryCodeYE.String():
-		*ct = CountryCodeYE
-	case CountryCodeYT.String():
-		*ct = CountryCodeYT
-	case CountryCodeZA.String():
-		*ct = CountryCodeZA
-	case CountryCodeZM.String():
-		*ct = CountryCodeZM
-	case CountryCodeZW.String():
-		*ct = CountryCodeZW
-	default:
-		return fmt.Errorf("invalid CountryCode value: %q", s)
-	}
+	*v = val
 
 	return nil
-}
-
-func (st CountryCode) Value() (driver.Value, error) {
-	return st.String(), nil
 }
 
 type CountryCodes []CountryCode
@@ -835,7 +595,7 @@ func (s *CountryCodes) scanFromString(str string) error {
 		}
 
 		var ct CountryCode
-		if err := ct.Scan(part); err != nil {
+		if err := ct.UnmarshalText([]byte(part)); err != nil {
 			return fmt.Errorf("invalid country code in array: %s", part)
 		}
 

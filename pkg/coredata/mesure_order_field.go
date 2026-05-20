@@ -14,6 +14,13 @@
 
 package coredata
 
+import (
+	"encoding"
+	"fmt"
+
+	"go.probo.inc/probo/pkg/page"
+)
+
 type (
 	MeasureOrderField string
 )
@@ -23,19 +30,50 @@ const (
 	MeasureOrderFieldName      MeasureOrderField = "NAME"
 )
 
+var (
+	_ page.OrderField          = MeasureOrderField("")
+	_ fmt.Stringer             = MeasureOrderField("")
+	_ encoding.TextMarshaler   = MeasureOrderField("")
+	_ encoding.TextUnmarshaler = (*MeasureOrderField)(nil)
+)
+
+func MeasureOrderFields() []MeasureOrderField {
+	return []MeasureOrderField{
+		MeasureOrderFieldCreatedAt,
+		MeasureOrderFieldName,
+	}
+}
+
+func (v MeasureOrderField) IsValid() bool {
+	switch v {
+	case
+		MeasureOrderFieldCreatedAt,
+		MeasureOrderFieldName:
+		return true
+	}
+
+	return false
+}
+
+func (v MeasureOrderField) String() string {
+	return string(v)
+}
+
+func (v MeasureOrderField) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *MeasureOrderField) UnmarshalText(text []byte) error {
+	val := MeasureOrderField(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid MeasureOrderField value: %q", string(text))
+	}
+
+	*v = val
+
+	return nil
+}
+
 func (p MeasureOrderField) Column() string {
 	return string(p)
-}
-
-func (p MeasureOrderField) String() string {
-	return string(p)
-}
-
-func (p MeasureOrderField) MarshalText() ([]byte, error) {
-	return []byte(p.String()), nil
-}
-
-func (p *MeasureOrderField) UnmarshalText(text []byte) error {
-	*p = MeasureOrderField(text)
-	return nil
 }

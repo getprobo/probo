@@ -15,7 +15,7 @@
 package coredata
 
 import (
-	"database/sql/driver"
+	"encoding"
 	"fmt"
 )
 
@@ -27,36 +27,47 @@ const (
 	ProfileSourceSCIM   ProfileSource = "SCIM"
 )
 
-func (s ProfileSource) String() string {
-	return string(s)
+var (
+	_ fmt.Stringer             = ProfileSource("")
+	_ encoding.TextMarshaler   = ProfileSource("")
+	_ encoding.TextUnmarshaler = (*ProfileSource)(nil)
+)
+
+func ProfileSources() []ProfileSource {
+	return []ProfileSource{
+		ProfileSourceManual,
+		ProfileSourceSAML,
+		ProfileSourceSCIM,
+	}
 }
 
-func (s *ProfileSource) Scan(value any) error {
-	var str string
-
-	switch v := value.(type) {
-	case string:
-		str = v
-	case []byte:
-		str = string(v)
-	default:
-		return fmt.Errorf("unsupported type for ProfileSource: %T", value)
+func (v ProfileSource) IsValid() bool {
+	switch v {
+	case
+		ProfileSourceManual,
+		ProfileSourceSAML,
+		ProfileSourceSCIM:
+		return true
 	}
 
-	switch str {
-	case "MANUAL":
-		*s = ProfileSourceManual
-	case "SAML":
-		*s = ProfileSourceSAML
-	case "SCIM":
-		*s = ProfileSourceSCIM
-	default:
-		return fmt.Errorf("invalid ProfileSource value: %q", str)
+	return false
+}
+
+func (v ProfileSource) String() string {
+	return string(v)
+}
+
+func (v ProfileSource) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *ProfileSource) UnmarshalText(text []byte) error {
+	val := ProfileSource(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid ProfileSource value: %q", string(text))
 	}
+
+	*v = val
 
 	return nil
-}
-
-func (s ProfileSource) Value() (driver.Value, error) {
-	return s.String(), nil
 }

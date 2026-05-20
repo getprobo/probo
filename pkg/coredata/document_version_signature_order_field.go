@@ -14,6 +14,13 @@
 
 package coredata
 
+import (
+	"encoding"
+	"fmt"
+
+	"go.probo.inc/probo/pkg/page"
+)
+
 type (
 	DocumentVersionSignatureOrderField string
 )
@@ -23,19 +30,50 @@ const (
 	DocumentVersionSignatureOrderFieldSignedAt  DocumentVersionSignatureOrderField = "SIGNED_AT"
 )
 
+var (
+	_ page.OrderField          = DocumentVersionSignatureOrderField("")
+	_ fmt.Stringer             = DocumentVersionSignatureOrderField("")
+	_ encoding.TextMarshaler   = DocumentVersionSignatureOrderField("")
+	_ encoding.TextUnmarshaler = (*DocumentVersionSignatureOrderField)(nil)
+)
+
+func DocumentVersionSignatureOrderFields() []DocumentVersionSignatureOrderField {
+	return []DocumentVersionSignatureOrderField{
+		DocumentVersionSignatureOrderFieldCreatedAt,
+		DocumentVersionSignatureOrderFieldSignedAt,
+	}
+}
+
+func (v DocumentVersionSignatureOrderField) IsValid() bool {
+	switch v {
+	case
+		DocumentVersionSignatureOrderFieldCreatedAt,
+		DocumentVersionSignatureOrderFieldSignedAt:
+		return true
+	}
+
+	return false
+}
+
+func (v DocumentVersionSignatureOrderField) String() string {
+	return string(v)
+}
+
+func (v DocumentVersionSignatureOrderField) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *DocumentVersionSignatureOrderField) UnmarshalText(text []byte) error {
+	val := DocumentVersionSignatureOrderField(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid DocumentVersionSignatureOrderField value: %q", string(text))
+	}
+
+	*v = val
+
+	return nil
+}
+
 func (p DocumentVersionSignatureOrderField) Column() string {
 	return string(p)
-}
-
-func (p DocumentVersionSignatureOrderField) String() string {
-	return string(p)
-}
-
-func (p DocumentVersionSignatureOrderField) MarshalText() ([]byte, error) {
-	return []byte(p.String()), nil
-}
-
-func (p *DocumentVersionSignatureOrderField) UnmarshalText(text []byte) error {
-	*p = DocumentVersionSignatureOrderField(text)
-	return nil
 }

@@ -14,6 +14,13 @@
 
 package coredata
 
+import (
+	"encoding"
+	"fmt"
+
+	"go.probo.inc/probo/pkg/page"
+)
+
 type (
 	SCIMEventOrderField string
 )
@@ -22,19 +29,48 @@ const (
 	SCIMEventOrderFieldCreatedAt SCIMEventOrderField = "CREATED_AT"
 )
 
+var (
+	_ page.OrderField          = SCIMEventOrderField("")
+	_ fmt.Stringer             = SCIMEventOrderField("")
+	_ encoding.TextMarshaler   = SCIMEventOrderField("")
+	_ encoding.TextUnmarshaler = (*SCIMEventOrderField)(nil)
+)
+
+func SCIMEventOrderFields() []SCIMEventOrderField {
+	return []SCIMEventOrderField{
+		SCIMEventOrderFieldCreatedAt,
+	}
+}
+
+func (v SCIMEventOrderField) IsValid() bool {
+	switch v {
+	case
+		SCIMEventOrderFieldCreatedAt:
+		return true
+	}
+
+	return false
+}
+
+func (v SCIMEventOrderField) String() string {
+	return string(v)
+}
+
+func (v SCIMEventOrderField) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *SCIMEventOrderField) UnmarshalText(text []byte) error {
+	val := SCIMEventOrderField(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid SCIMEventOrderField value: %q", string(text))
+	}
+
+	*v = val
+
+	return nil
+}
+
 func (p SCIMEventOrderField) Column() string {
 	return string(p)
-}
-
-func (p SCIMEventOrderField) String() string {
-	return string(p)
-}
-
-func (p SCIMEventOrderField) MarshalText() ([]byte, error) {
-	return []byte(p.String()), nil
-}
-
-func (p *SCIMEventOrderField) UnmarshalText(text []byte) error {
-	*p = SCIMEventOrderField(text)
-	return nil
 }

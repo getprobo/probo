@@ -15,7 +15,7 @@
 package coredata
 
 import (
-	"database/sql/driver"
+	"encoding"
 	"fmt"
 )
 
@@ -26,34 +26,45 @@ const (
 	TrustCenterAccessStateInactive TrustCenterAccessState = "INACTIVE"
 )
 
-func (s TrustCenterAccessState) String() string {
-	return string(s)
+var (
+	_ fmt.Stringer             = TrustCenterAccessState("")
+	_ encoding.TextMarshaler   = TrustCenterAccessState("")
+	_ encoding.TextUnmarshaler = (*TrustCenterAccessState)(nil)
+)
+
+func TrustCenterAccessStates() []TrustCenterAccessState {
+	return []TrustCenterAccessState{
+		TrustCenterAccessStateActive,
+		TrustCenterAccessStateInactive,
+	}
 }
 
-func (s *TrustCenterAccessState) Scan(value any) error {
-	var str string
-
-	switch v := value.(type) {
-	case string:
-		str = v
-	case []byte:
-		str = string(v)
-	default:
-		return fmt.Errorf("unsupported type for TrustCenterAccessState: %T", value)
+func (v TrustCenterAccessState) IsValid() bool {
+	switch v {
+	case
+		TrustCenterAccessStateActive,
+		TrustCenterAccessStateInactive:
+		return true
 	}
 
-	switch str {
-	case "ACTIVE":
-		*s = TrustCenterAccessStateActive
-	case "INACTIVE":
-		*s = TrustCenterAccessStateInactive
-	default:
-		return fmt.Errorf("invalid TrustCenterAccessState value: %q", str)
+	return false
+}
+
+func (v TrustCenterAccessState) String() string {
+	return string(v)
+}
+
+func (v TrustCenterAccessState) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *TrustCenterAccessState) UnmarshalText(text []byte) error {
+	val := TrustCenterAccessState(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid TrustCenterAccessState value: %q", string(text))
 	}
+
+	*v = val
 
 	return nil
-}
-
-func (s TrustCenterAccessState) Value() (driver.Value, error) {
-	return s.String(), nil
 }

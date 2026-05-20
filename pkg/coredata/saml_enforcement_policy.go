@@ -15,7 +15,7 @@
 package coredata
 
 import (
-	"database/sql/driver"
+	"encoding"
 	"fmt"
 )
 
@@ -27,36 +27,47 @@ const (
 	SAMLEnforcementPolicyRequired SAMLEnforcementPolicy = "REQUIRED"
 )
 
-func (sep SAMLEnforcementPolicy) String() string {
-	return string(sep)
+var (
+	_ fmt.Stringer             = SAMLEnforcementPolicy("")
+	_ encoding.TextMarshaler   = SAMLEnforcementPolicy("")
+	_ encoding.TextUnmarshaler = (*SAMLEnforcementPolicy)(nil)
+)
+
+func SAMLEnforcementPolicies() []SAMLEnforcementPolicy {
+	return []SAMLEnforcementPolicy{
+		SAMLEnforcementPolicyOff,
+		SAMLEnforcementPolicyOptional,
+		SAMLEnforcementPolicyRequired,
+	}
 }
 
-func (sep *SAMLEnforcementPolicy) Scan(value any) error {
-	var s string
-
-	switch v := value.(type) {
-	case string:
-		s = v
-	case []byte:
-		s = string(v)
-	default:
-		return fmt.Errorf("unsupported type for SAMLEnforcementPolicy: %T", value)
+func (v SAMLEnforcementPolicy) IsValid() bool {
+	switch v {
+	case
+		SAMLEnforcementPolicyOff,
+		SAMLEnforcementPolicyOptional,
+		SAMLEnforcementPolicyRequired:
+		return true
 	}
 
-	switch s {
-	case "OFF":
-		*sep = SAMLEnforcementPolicyOff
-	case "OPTIONAL":
-		*sep = SAMLEnforcementPolicyOptional
-	case "REQUIRED":
-		*sep = SAMLEnforcementPolicyRequired
-	default:
-		return fmt.Errorf("invalid SAMLEnforcementPolicy value: %q", s)
+	return false
+}
+
+func (v SAMLEnforcementPolicy) String() string {
+	return string(v)
+}
+
+func (v SAMLEnforcementPolicy) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *SAMLEnforcementPolicy) UnmarshalText(text []byte) error {
+	val := SAMLEnforcementPolicy(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid SAMLEnforcementPolicy value: %q", string(text))
 	}
+
+	*v = val
 
 	return nil
-}
-
-func (sep SAMLEnforcementPolicy) Value() (driver.Value, error) {
-	return sep.String(), nil
 }

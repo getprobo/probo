@@ -14,6 +14,13 @@
 
 package coredata
 
+import (
+	"encoding"
+	"fmt"
+
+	"go.probo.inc/probo/pkg/page"
+)
+
 type (
 	TrustCenterReferenceOrderField string
 )
@@ -24,6 +31,54 @@ const (
 	TrustCenterReferenceOrderFieldCreatedAt TrustCenterReferenceOrderField = "CREATED_AT"
 	TrustCenterReferenceOrderFieldUpdatedAt TrustCenterReferenceOrderField = "UPDATED_AT"
 )
+
+var (
+	_ page.OrderField          = TrustCenterReferenceOrderField("")
+	_ fmt.Stringer             = TrustCenterReferenceOrderField("")
+	_ encoding.TextMarshaler   = TrustCenterReferenceOrderField("")
+	_ encoding.TextUnmarshaler = (*TrustCenterReferenceOrderField)(nil)
+)
+
+func TrustCenterReferenceOrderFields() []TrustCenterReferenceOrderField {
+	return []TrustCenterReferenceOrderField{
+		TrustCenterReferenceOrderFieldRank,
+		TrustCenterReferenceOrderFieldName,
+		TrustCenterReferenceOrderFieldCreatedAt,
+		TrustCenterReferenceOrderFieldUpdatedAt,
+	}
+}
+
+func (v TrustCenterReferenceOrderField) IsValid() bool {
+	switch v {
+	case
+		TrustCenterReferenceOrderFieldRank,
+		TrustCenterReferenceOrderFieldName,
+		TrustCenterReferenceOrderFieldCreatedAt,
+		TrustCenterReferenceOrderFieldUpdatedAt:
+		return true
+	}
+
+	return false
+}
+
+func (v TrustCenterReferenceOrderField) String() string {
+	return string(v)
+}
+
+func (v TrustCenterReferenceOrderField) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *TrustCenterReferenceOrderField) UnmarshalText(text []byte) error {
+	val := TrustCenterReferenceOrderField(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid TrustCenterReferenceOrderField value: %q", string(text))
+	}
+
+	*v = val
+
+	return nil
+}
 
 func (p TrustCenterReferenceOrderField) Column() string {
 	switch p {
@@ -38,17 +93,4 @@ func (p TrustCenterReferenceOrderField) Column() string {
 	default:
 		return string(p)
 	}
-}
-
-func (p TrustCenterReferenceOrderField) String() string {
-	return string(p)
-}
-
-func (p TrustCenterReferenceOrderField) MarshalText() ([]byte, error) {
-	return []byte(p.String()), nil
-}
-
-func (p *TrustCenterReferenceOrderField) UnmarshalText(text []byte) error {
-	*p = TrustCenterReferenceOrderField(text)
-	return nil
 }

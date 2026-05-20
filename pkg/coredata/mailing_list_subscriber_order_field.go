@@ -14,7 +14,12 @@
 
 package coredata
 
-import "fmt"
+import (
+	"encoding"
+	"fmt"
+
+	"go.probo.inc/probo/pkg/page"
+)
 
 type MailingListSubscriberOrderField string
 
@@ -22,8 +27,46 @@ const (
 	MailingListSubscriberOrderFieldCreatedAt MailingListSubscriberOrderField = "CREATED_AT"
 )
 
-func (f MailingListSubscriberOrderField) String() string {
-	return string(f)
+var (
+	_ page.OrderField          = MailingListSubscriberOrderField("")
+	_ fmt.Stringer             = MailingListSubscriberOrderField("")
+	_ encoding.TextMarshaler   = MailingListSubscriberOrderField("")
+	_ encoding.TextUnmarshaler = (*MailingListSubscriberOrderField)(nil)
+)
+
+func MailingListSubscriberOrderFields() []MailingListSubscriberOrderField {
+	return []MailingListSubscriberOrderField{
+		MailingListSubscriberOrderFieldCreatedAt,
+	}
+}
+
+func (v MailingListSubscriberOrderField) IsValid() bool {
+	switch v {
+	case
+		MailingListSubscriberOrderFieldCreatedAt:
+		return true
+	}
+
+	return false
+}
+
+func (v MailingListSubscriberOrderField) String() string {
+	return string(v)
+}
+
+func (v MailingListSubscriberOrderField) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *MailingListSubscriberOrderField) UnmarshalText(text []byte) error {
+	val := MailingListSubscriberOrderField(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid MailingListSubscriberOrderField value: %q", string(text))
+	}
+
+	*v = val
+
+	return nil
 }
 
 func (f MailingListSubscriberOrderField) Column() string {

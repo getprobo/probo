@@ -15,7 +15,7 @@
 package coredata
 
 import (
-	"database/sql/driver"
+	"encoding"
 	"fmt"
 )
 
@@ -30,6 +30,12 @@ const (
 	ProcessingActivityLawfulBasisPublicTask           ProcessingActivityLawfulBasis = "PUBLIC_TASK"
 )
 
+var (
+	_ fmt.Stringer             = ProcessingActivityLawfulBasis("")
+	_ encoding.TextMarshaler   = ProcessingActivityLawfulBasis("")
+	_ encoding.TextUnmarshaler = (*ProcessingActivityLawfulBasis)(nil)
+)
+
 func ProcessingActivityLawfulBases() []ProcessingActivityLawfulBasis {
 	return []ProcessingActivityLawfulBasis{
 		ProcessingActivityLawfulBasisLegitimateInterest,
@@ -41,42 +47,36 @@ func ProcessingActivityLawfulBases() []ProcessingActivityLawfulBasis {
 	}
 }
 
-func (p ProcessingActivityLawfulBasis) String() string {
-	return string(p)
+func (v ProcessingActivityLawfulBasis) IsValid() bool {
+	switch v {
+	case
+		ProcessingActivityLawfulBasisLegitimateInterest,
+		ProcessingActivityLawfulBasisConsent,
+		ProcessingActivityLawfulBasisContractualNecessity,
+		ProcessingActivityLawfulBasisLegalObligation,
+		ProcessingActivityLawfulBasisVitalInterests,
+		ProcessingActivityLawfulBasisPublicTask:
+		return true
+	}
+
+	return false
 }
 
-func (p *ProcessingActivityLawfulBasis) Scan(value any) error {
-	var s string
+func (v ProcessingActivityLawfulBasis) String() string {
+	return string(v)
+}
 
-	switch v := value.(type) {
-	case string:
-		s = v
-	case []byte:
-		s = string(v)
-	default:
-		return fmt.Errorf("unsupported type for ProcessingActivityLawfulBasis: %T", value)
+func (v ProcessingActivityLawfulBasis) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *ProcessingActivityLawfulBasis) UnmarshalText(text []byte) error {
+	val := ProcessingActivityLawfulBasis(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid ProcessingActivityLawfulBasis value: %q", string(text))
 	}
 
-	switch s {
-	case "LEGITIMATE_INTEREST":
-		*p = ProcessingActivityLawfulBasisLegitimateInterest
-	case "CONSENT":
-		*p = ProcessingActivityLawfulBasisConsent
-	case "CONTRACTUAL_NECESSITY":
-		*p = ProcessingActivityLawfulBasisContractualNecessity
-	case "LEGAL_OBLIGATION":
-		*p = ProcessingActivityLawfulBasisLegalObligation
-	case "VITAL_INTERESTS":
-		*p = ProcessingActivityLawfulBasisVitalInterests
-	case "PUBLIC_TASK":
-		*p = ProcessingActivityLawfulBasisPublicTask
-	default:
-		return fmt.Errorf("invalid ProcessingActivityLawfulBasis value: %q", s)
-	}
+	*v = val
 
 	return nil
-}
-
-func (p ProcessingActivityLawfulBasis) Value() (driver.Value, error) {
-	return p.String(), nil
 }

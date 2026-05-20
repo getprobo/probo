@@ -15,7 +15,10 @@
 package coredata
 
 import (
+	"encoding"
 	"fmt"
+
+	"go.probo.inc/probo/pkg/page"
 )
 
 type TrustCenterDocumentAccessOrderField string
@@ -24,25 +27,48 @@ const (
 	TrustCenterDocumentAccessOrderFieldCreatedAt TrustCenterDocumentAccessOrderField = "CREATED_AT"
 )
 
-func (tcdaof TrustCenterDocumentAccessOrderField) Column() string {
-	return string(tcdaof)
+var (
+	_ page.OrderField          = TrustCenterDocumentAccessOrderField("")
+	_ fmt.Stringer             = TrustCenterDocumentAccessOrderField("")
+	_ encoding.TextMarshaler   = TrustCenterDocumentAccessOrderField("")
+	_ encoding.TextUnmarshaler = (*TrustCenterDocumentAccessOrderField)(nil)
+)
+
+func TrustCenterDocumentAccessOrderFields() []TrustCenterDocumentAccessOrderField {
+	return []TrustCenterDocumentAccessOrderField{
+		TrustCenterDocumentAccessOrderFieldCreatedAt,
+	}
 }
 
-func (tcdaof TrustCenterDocumentAccessOrderField) String() string {
-	return string(tcdaof)
-}
-
-func (tcdaof TrustCenterDocumentAccessOrderField) MarshalText() ([]byte, error) {
-	return []byte(tcdaof.String()), nil
-}
-
-func (tcdaof *TrustCenterDocumentAccessOrderField) UnmarshalText(text []byte) error {
-	val := string(text)
-	switch val {
-	case string(TrustCenterDocumentAccessOrderFieldCreatedAt):
-		*tcdaof = TrustCenterDocumentAccessOrderField(val)
-		return nil
+func (v TrustCenterDocumentAccessOrderField) IsValid() bool {
+	switch v {
+	case
+		TrustCenterDocumentAccessOrderFieldCreatedAt:
+		return true
 	}
 
-	return fmt.Errorf("invalid TrustCenterDocumentAccessOrderField value: %q", val)
+	return false
+}
+
+func (v TrustCenterDocumentAccessOrderField) String() string {
+	return string(v)
+}
+
+func (v TrustCenterDocumentAccessOrderField) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *TrustCenterDocumentAccessOrderField) UnmarshalText(text []byte) error {
+	val := TrustCenterDocumentAccessOrderField(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid TrustCenterDocumentAccessOrderField value: %q", string(text))
+	}
+
+	*v = val
+
+	return nil
+}
+
+func (tcdaof TrustCenterDocumentAccessOrderField) Column() string {
+	return string(tcdaof)
 }

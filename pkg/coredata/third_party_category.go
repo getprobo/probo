@@ -15,8 +15,7 @@
 package coredata
 
 import (
-	"database/sql/driver"
-	"encoding/json"
+	"encoding"
 	"fmt"
 )
 
@@ -47,6 +46,12 @@ const (
 	ThirdPartyCategoryVersionControl           ThirdPartyCategory = "VERSION_CONTROL"
 )
 
+var (
+	_ fmt.Stringer             = ThirdPartyCategory("")
+	_ encoding.TextMarshaler   = ThirdPartyCategory("")
+	_ encoding.TextUnmarshaler = (*ThirdPartyCategory)(nil)
+)
+
 func ThirdPartyCategories() []ThirdPartyCategory {
 	return []ThirdPartyCategory{
 		ThirdPartyCategoryAnalytics,
@@ -74,185 +79,52 @@ func ThirdPartyCategories() []ThirdPartyCategory {
 	}
 }
 
-func (i ThirdPartyCategory) String() string {
-	return string(i)
-}
-
-func (i *ThirdPartyCategory) Scan(value any) error {
-	switch v := value.(type) {
-	case string:
-		switch v {
-		case "ANALYTICS":
-			*i = ThirdPartyCategoryAnalytics
-		case "CLOUD_MONITORING":
-			*i = ThirdPartyCategoryCloudMonitoring
-		case "CLOUD_PROVIDER":
-			*i = ThirdPartyCategoryCloudProvider
-		case "COLLABORATION":
-			*i = ThirdPartyCategoryCollaboration
-		case "CUSTOMER_SUPPORT":
-			*i = ThirdPartyCategoryCustomerSupport
-		case "DATA_STORAGE_AND_PROCESSING":
-			*i = ThirdPartyCategoryDataStorageAndProcessing
-		case "DOCUMENT_MANAGEMENT":
-			*i = ThirdPartyCategoryDocumentManagement
-		case "EMPLOYEE_MANAGEMENT":
-			*i = ThirdPartyCategoryEmployeeManagement
-		case "ENGINEERING":
-			*i = ThirdPartyCategoryEngineering
-		case "FINANCE":
-			*i = ThirdPartyCategoryFinance
-		case "IDENTITY_PROVIDER":
-			*i = ThirdPartyCategoryIdentityProvider
-		case "IT":
-			*i = ThirdPartyCategoryIT
-		case "MARKETING":
-			*i = ThirdPartyCategoryMarketing
-		case "OFFICE_OPERATIONS":
-			*i = ThirdPartyCategoryOfficeOperations
-		case "OTHER":
-			*i = ThirdPartyCategoryOther
-		case "PASSWORD_MANAGEMENT":
-			*i = ThirdPartyCategoryPasswordManagement
-		case "PRODUCT_AND_DESIGN":
-			*i = ThirdPartyCategoryProductAndDesign
-		case "PROFESSIONAL_SERVICES":
-			*i = ThirdPartyCategoryProfessionalServices
-		case "RECRUITING":
-			*i = ThirdPartyCategoryRecruiting
-		case "SALES":
-			*i = ThirdPartyCategorySales
-		case "SECURITY":
-			*i = ThirdPartyCategorySecurity
-		case "VERSION_CONTROL":
-			*i = ThirdPartyCategoryVersionControl
-		default:
-			return fmt.Errorf("invalid ThirdPartyCategory value: %q", v)
-		}
-	default:
-		return fmt.Errorf("unsupported type for ThirdPartyCategory: %T", value)
+func (v ThirdPartyCategory) IsValid() bool {
+	switch v {
+	case
+		ThirdPartyCategoryAnalytics,
+		ThirdPartyCategoryCloudMonitoring,
+		ThirdPartyCategoryCloudProvider,
+		ThirdPartyCategoryCollaboration,
+		ThirdPartyCategoryCustomerSupport,
+		ThirdPartyCategoryDataStorageAndProcessing,
+		ThirdPartyCategoryDocumentManagement,
+		ThirdPartyCategoryEmployeeManagement,
+		ThirdPartyCategoryEngineering,
+		ThirdPartyCategoryFinance,
+		ThirdPartyCategoryIdentityProvider,
+		ThirdPartyCategoryIT,
+		ThirdPartyCategoryMarketing,
+		ThirdPartyCategoryOfficeOperations,
+		ThirdPartyCategoryOther,
+		ThirdPartyCategoryPasswordManagement,
+		ThirdPartyCategoryProductAndDesign,
+		ThirdPartyCategoryProfessionalServices,
+		ThirdPartyCategoryRecruiting,
+		ThirdPartyCategorySales,
+		ThirdPartyCategorySecurity,
+		ThirdPartyCategoryVersionControl:
+		return true
 	}
 
-	return nil
+	return false
 }
 
-func (i ThirdPartyCategory) Value() (driver.Value, error) {
-	return i.String(), nil
+func (v ThirdPartyCategory) String() string {
+	return string(v)
 }
 
-func (i ThirdPartyCategory) MarshalJSON() ([]byte, error) {
-	return json.Marshal(i.String())
+func (v ThirdPartyCategory) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
 }
 
-func (i *ThirdPartyCategory) UnmarshalJSON(data []byte) error {
-	var s string
-	if err := json.Unmarshal(data, &s); err != nil {
-		return err
+func (v *ThirdPartyCategory) UnmarshalText(text []byte) error {
+	val := ThirdPartyCategory(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid ThirdPartyCategory value: %q", string(text))
 	}
 
-	switch s {
-	case "ANALYTICS":
-		*i = ThirdPartyCategoryAnalytics
-	case "CLOUD_MONITORING":
-		*i = ThirdPartyCategoryCloudMonitoring
-	case "CLOUD_PROVIDER":
-		*i = ThirdPartyCategoryCloudProvider
-	case "COLLABORATION":
-		*i = ThirdPartyCategoryCollaboration
-	case "CUSTOMER_SUPPORT":
-		*i = ThirdPartyCategoryCustomerSupport
-	case "DATA_STORAGE_AND_PROCESSING":
-		*i = ThirdPartyCategoryDataStorageAndProcessing
-	case "DOCUMENT_MANAGEMENT":
-		*i = ThirdPartyCategoryDocumentManagement
-	case "EMPLOYEE_MANAGEMENT":
-		*i = ThirdPartyCategoryEmployeeManagement
-	case "ENGINEERING":
-		*i = ThirdPartyCategoryEngineering
-	case "FINANCE":
-		*i = ThirdPartyCategoryFinance
-	case "IDENTITY_PROVIDER":
-		*i = ThirdPartyCategoryIdentityProvider
-	case "IT":
-		*i = ThirdPartyCategoryIT
-	case "MARKETING":
-		*i = ThirdPartyCategoryMarketing
-	case "OFFICE_OPERATIONS":
-		*i = ThirdPartyCategoryOfficeOperations
-	case "OTHER":
-		*i = ThirdPartyCategoryOther
-	case "PASSWORD_MANAGEMENT":
-		*i = ThirdPartyCategoryPasswordManagement
-	case "PRODUCT_AND_DESIGN":
-		*i = ThirdPartyCategoryProductAndDesign
-	case "PROFESSIONAL_SERVICES":
-		*i = ThirdPartyCategoryProfessionalServices
-	case "RECRUITING":
-		*i = ThirdPartyCategoryRecruiting
-	case "SALES":
-		*i = ThirdPartyCategorySales
-	case "SECURITY":
-		*i = ThirdPartyCategorySecurity
-	case "VERSION_CONTROL":
-		*i = ThirdPartyCategoryVersionControl
-	default:
-		return fmt.Errorf("invalid ThirdPartyCategory value: %q", s)
-	}
-
-	return nil
-}
-
-func (i *ThirdPartyCategory) UnmarshalText(text []byte) error {
-	s := string(text)
-
-	switch s {
-	case "ANALYTICS":
-		*i = ThirdPartyCategoryAnalytics
-	case "CLOUD_MONITORING":
-		*i = ThirdPartyCategoryCloudMonitoring
-	case "CLOUD_PROVIDER":
-		*i = ThirdPartyCategoryCloudProvider
-	case "COLLABORATION":
-		*i = ThirdPartyCategoryCollaboration
-	case "CUSTOMER_SUPPORT":
-		*i = ThirdPartyCategoryCustomerSupport
-	case "DATA_STORAGE_AND_PROCESSING":
-		*i = ThirdPartyCategoryDataStorageAndProcessing
-	case "DOCUMENT_MANAGEMENT":
-		*i = ThirdPartyCategoryDocumentManagement
-	case "EMPLOYEE_MANAGEMENT":
-		*i = ThirdPartyCategoryEmployeeManagement
-	case "ENGINEERING":
-		*i = ThirdPartyCategoryEngineering
-	case "FINANCE":
-		*i = ThirdPartyCategoryFinance
-	case "IDENTITY_PROVIDER":
-		*i = ThirdPartyCategoryIdentityProvider
-	case "IT":
-		*i = ThirdPartyCategoryIT
-	case "MARKETING":
-		*i = ThirdPartyCategoryMarketing
-	case "OFFICE_OPERATIONS":
-		*i = ThirdPartyCategoryOfficeOperations
-	case "OTHER":
-		*i = ThirdPartyCategoryOther
-	case "PASSWORD_MANAGEMENT":
-		*i = ThirdPartyCategoryPasswordManagement
-	case "PRODUCT_AND_DESIGN":
-		*i = ThirdPartyCategoryProductAndDesign
-	case "PROFESSIONAL_SERVICES":
-		*i = ThirdPartyCategoryProfessionalServices
-	case "RECRUITING":
-		*i = ThirdPartyCategoryRecruiting
-	case "SALES":
-		*i = ThirdPartyCategorySales
-	case "SECURITY":
-		*i = ThirdPartyCategorySecurity
-	case "VERSION_CONTROL":
-		*i = ThirdPartyCategoryVersionControl
-	default:
-		return fmt.Errorf("invalid ThirdPartyCategory value: %q", s)
-	}
+	*v = val
 
 	return nil
 }

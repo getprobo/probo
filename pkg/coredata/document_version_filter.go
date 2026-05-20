@@ -15,6 +15,9 @@
 package coredata
 
 import (
+	"encoding"
+	"fmt"
+
 	"github.com/jackc/pgx/v5"
 	"go.probo.inc/probo/pkg/gid"
 )
@@ -25,6 +28,49 @@ const (
 	EmployeeFilterModeSignature EmployeeFilterMode = "signature"
 	EmployeeFilterModeApproval  EmployeeFilterMode = "approval"
 )
+
+var (
+	_ fmt.Stringer             = EmployeeFilterMode("")
+	_ encoding.TextMarshaler   = EmployeeFilterMode("")
+	_ encoding.TextUnmarshaler = (*EmployeeFilterMode)(nil)
+)
+
+func EmployeeFilterModes() []EmployeeFilterMode {
+	return []EmployeeFilterMode{
+		EmployeeFilterModeSignature,
+		EmployeeFilterModeApproval,
+	}
+}
+
+func (v EmployeeFilterMode) IsValid() bool {
+	switch v {
+	case
+		EmployeeFilterModeSignature,
+		EmployeeFilterModeApproval:
+		return true
+	}
+
+	return false
+}
+
+func (v EmployeeFilterMode) String() string {
+	return string(v)
+}
+
+func (v EmployeeFilterMode) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *EmployeeFilterMode) UnmarshalText(text []byte) error {
+	val := EmployeeFilterMode(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid EmployeeFilterMode value: %q", string(text))
+	}
+
+	*v = val
+
+	return nil
+}
 
 type (
 	DocumentVersionFilter struct {

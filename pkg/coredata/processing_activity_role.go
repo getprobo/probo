@@ -15,7 +15,7 @@
 package coredata
 
 import (
-	"database/sql/driver"
+	"encoding"
 	"fmt"
 )
 
@@ -26,6 +26,12 @@ const (
 	ProcessingActivityRoleProcessor  ProcessingActivityRole = "PROCESSOR"
 )
 
+var (
+	_ fmt.Stringer             = ProcessingActivityRole("")
+	_ encoding.TextMarshaler   = ProcessingActivityRole("")
+	_ encoding.TextUnmarshaler = (*ProcessingActivityRole)(nil)
+)
+
 func ProcessingActivityRoles() []ProcessingActivityRole {
 	return []ProcessingActivityRole{
 		ProcessingActivityRoleController,
@@ -33,34 +39,32 @@ func ProcessingActivityRoles() []ProcessingActivityRole {
 	}
 }
 
-func (p ProcessingActivityRole) String() string {
-	return string(p)
+func (v ProcessingActivityRole) IsValid() bool {
+	switch v {
+	case
+		ProcessingActivityRoleController,
+		ProcessingActivityRoleProcessor:
+		return true
+	}
+
+	return false
 }
 
-func (p *ProcessingActivityRole) Scan(value any) error {
-	var s string
+func (v ProcessingActivityRole) String() string {
+	return string(v)
+}
 
-	switch v := value.(type) {
-	case string:
-		s = v
-	case []byte:
-		s = string(v)
-	default:
-		return fmt.Errorf("unsupported type for ProcessingActivityRole: %T", value)
+func (v ProcessingActivityRole) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *ProcessingActivityRole) UnmarshalText(text []byte) error {
+	val := ProcessingActivityRole(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid ProcessingActivityRole value: %q", string(text))
 	}
 
-	switch s {
-	case "CONTROLLER":
-		*p = ProcessingActivityRoleController
-	case "PROCESSOR":
-		*p = ProcessingActivityRoleProcessor
-	default:
-		return fmt.Errorf("invalid ProcessingActivityRole value: %q", s)
-	}
+	*v = val
 
 	return nil
-}
-
-func (p ProcessingActivityRole) Value() (driver.Value, error) {
-	return p.String(), nil
 }

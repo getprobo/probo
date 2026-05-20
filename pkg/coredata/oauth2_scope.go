@@ -15,6 +15,7 @@
 package coredata
 
 import (
+	"encoding"
 	"fmt"
 	"iter"
 	"slices"
@@ -33,28 +34,42 @@ const (
 	OAuth2ScopeOfflineAccess OAuth2Scope = "offline_access"
 )
 
-func (s OAuth2Scope) IsValid() bool {
-	switch s {
-	case OAuth2ScopeOpenID, OAuth2ScopeProfile, OAuth2ScopeEmail, OAuth2ScopeOfflineAccess:
+var (
+	_ fmt.Stringer             = OAuth2Scope("")
+	_ encoding.TextMarshaler   = OAuth2Scope("")
+	_ encoding.TextUnmarshaler = (*OAuth2Scope)(nil)
+)
+
+func (v OAuth2Scope) IsValid() bool {
+	switch v {
+	case
+		OAuth2ScopeOpenID,
+		OAuth2ScopeProfile,
+		OAuth2ScopeEmail,
+		OAuth2ScopeOfflineAccess:
 		return true
 	}
 
 	return false
 }
 
-func (s OAuth2Scope) String() string { return string(s) }
-
-func (s *OAuth2Scope) UnmarshalText(text []byte) error {
-	*s = OAuth2Scope(text)
-	if !s.IsValid() {
-		return fmt.Errorf("%s is not a valid OAuth2Scope", string(text))
-	}
-
-	return nil
+func (v OAuth2Scope) String() string {
+	return string(v)
 }
 
-func (s OAuth2Scope) MarshalText() ([]byte, error) {
-	return []byte(s.String()), nil
+func (v OAuth2Scope) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *OAuth2Scope) UnmarshalText(text []byte) error {
+	val := OAuth2Scope(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid OAuth2Scope value: %q", string(text))
+	}
+
+	*v = val
+
+	return nil
 }
 
 func (s OAuth2Scopes) All() iter.Seq2[int, OAuth2Scope] {

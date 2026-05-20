@@ -15,7 +15,7 @@
 package coredata
 
 import (
-	"database/sql/driver"
+	"encoding"
 	"fmt"
 )
 
@@ -28,57 +28,49 @@ const (
 	DocumentVersionApprovalQuorumStatusVoided   DocumentVersionApprovalQuorumStatus = "VOIDED"
 )
 
-func (s DocumentVersionApprovalQuorumStatus) MarshalText() ([]byte, error) {
-	return []byte(s.String()), nil
+var (
+	_ fmt.Stringer             = DocumentVersionApprovalQuorumStatus("")
+	_ encoding.TextMarshaler   = DocumentVersionApprovalQuorumStatus("")
+	_ encoding.TextUnmarshaler = (*DocumentVersionApprovalQuorumStatus)(nil)
+)
+
+func DocumentVersionApprovalQuorumStatuses() []DocumentVersionApprovalQuorumStatus {
+	return []DocumentVersionApprovalQuorumStatus{
+		DocumentVersionApprovalQuorumStatusPending,
+		DocumentVersionApprovalQuorumStatusApproved,
+		DocumentVersionApprovalQuorumStatusRejected,
+		DocumentVersionApprovalQuorumStatusVoided,
+	}
 }
 
-func (s *DocumentVersionApprovalQuorumStatus) UnmarshalText(data []byte) error {
-	val := string(data)
-
-	switch val {
-	case DocumentVersionApprovalQuorumStatusPending.String():
-		*s = DocumentVersionApprovalQuorumStatusPending
-	case DocumentVersionApprovalQuorumStatusApproved.String():
-		*s = DocumentVersionApprovalQuorumStatusApproved
-	case DocumentVersionApprovalQuorumStatusRejected.String():
-		*s = DocumentVersionApprovalQuorumStatusRejected
-	case DocumentVersionApprovalQuorumStatusVoided.String():
-		*s = DocumentVersionApprovalQuorumStatusVoided
-	default:
-		return fmt.Errorf("invalid DocumentVersionApprovalQuorumStatus value: %q", val)
+func (v DocumentVersionApprovalQuorumStatus) IsValid() bool {
+	switch v {
+	case
+		DocumentVersionApprovalQuorumStatusPending,
+		DocumentVersionApprovalQuorumStatusApproved,
+		DocumentVersionApprovalQuorumStatusRejected,
+		DocumentVersionApprovalQuorumStatusVoided:
+		return true
 	}
+
+	return false
+}
+
+func (v DocumentVersionApprovalQuorumStatus) String() string {
+	return string(v)
+}
+
+func (v DocumentVersionApprovalQuorumStatus) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *DocumentVersionApprovalQuorumStatus) UnmarshalText(text []byte) error {
+	val := DocumentVersionApprovalQuorumStatus(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid DocumentVersionApprovalQuorumStatus value: %q", string(text))
+	}
+
+	*v = val
 
 	return nil
-}
-
-func (s DocumentVersionApprovalQuorumStatus) String() string {
-	var val string
-
-	switch s {
-	case DocumentVersionApprovalQuorumStatusPending:
-		val = "PENDING"
-	case DocumentVersionApprovalQuorumStatusApproved:
-		val = "APPROVED"
-	case DocumentVersionApprovalQuorumStatusRejected:
-		val = "REJECTED"
-	case DocumentVersionApprovalQuorumStatusVoided:
-		val = "VOIDED"
-	default:
-		panic(fmt.Errorf("invalid DocumentVersionApprovalQuorumStatus value: %q", string(s)))
-	}
-
-	return val
-}
-
-func (s *DocumentVersionApprovalQuorumStatus) Scan(value any) error {
-	val, ok := value.(string)
-	if !ok {
-		return fmt.Errorf("invalid scan source for DocumentVersionApprovalQuorumStatus, expected string got %T", value)
-	}
-
-	return s.UnmarshalText([]byte(val))
-}
-
-func (s DocumentVersionApprovalQuorumStatus) Value() (driver.Value, error) {
-	return s.String(), nil
 }

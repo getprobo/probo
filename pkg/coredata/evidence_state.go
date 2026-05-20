@@ -15,7 +15,7 @@
 package coredata
 
 import (
-	"database/sql/driver"
+	"encoding"
 	"fmt"
 )
 
@@ -28,36 +28,45 @@ const (
 	EvidenceStateFulfilled EvidenceState = "FULFILLED"
 )
 
-func (es EvidenceState) MarshalText() ([]byte, error) {
-	return []byte(es), nil
+var (
+	_ fmt.Stringer             = EvidenceState("")
+	_ encoding.TextMarshaler   = EvidenceState("")
+	_ encoding.TextUnmarshaler = (*EvidenceState)(nil)
+)
+
+func EvidenceStates() []EvidenceState {
+	return []EvidenceState{
+		EvidenceStateRequested,
+		EvidenceStateFulfilled,
+	}
 }
 
-func (es *EvidenceState) UnmarshalText(data []byte) error {
-	val := EvidenceState(data)
-
-	switch val {
-	case EvidenceStateRequested, EvidenceStateFulfilled:
-		*es = val
-	default:
-		return fmt.Errorf("invalid EvidenceState value: %q", val)
+func (v EvidenceState) IsValid() bool {
+	switch v {
+	case
+		EvidenceStateRequested,
+		EvidenceStateFulfilled:
+		return true
 	}
+
+	return false
+}
+
+func (v EvidenceState) String() string {
+	return string(v)
+}
+
+func (v EvidenceState) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *EvidenceState) UnmarshalText(text []byte) error {
+	val := EvidenceState(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid EvidenceState value: %q", string(text))
+	}
+
+	*v = val
 
 	return nil
-}
-
-func (es EvidenceState) String() string {
-	return string(es)
-}
-
-func (es *EvidenceState) Scan(value any) error {
-	val, ok := value.(string)
-	if !ok {
-		return fmt.Errorf("invalid scan source for EvidenceState, expected string got %T", value)
-	}
-
-	return es.UnmarshalText([]byte(val))
-}
-
-func (es EvidenceState) Value() (driver.Value, error) {
-	return string(es), nil
 }

@@ -15,7 +15,10 @@
 package coredata
 
 import (
+	"encoding"
 	"fmt"
+
+	"go.probo.inc/probo/pkg/page"
 )
 
 type AuditLogEntryOrderField string
@@ -24,6 +27,48 @@ const (
 	AuditLogEntryOrderFieldCreatedAt AuditLogEntryOrderField = "CREATED_AT"
 )
 
+var (
+	_ page.OrderField          = AuditLogEntryOrderField("")
+	_ fmt.Stringer             = AuditLogEntryOrderField("")
+	_ encoding.TextMarshaler   = AuditLogEntryOrderField("")
+	_ encoding.TextUnmarshaler = (*AuditLogEntryOrderField)(nil)
+)
+
+func AuditLogEntryOrderFields() []AuditLogEntryOrderField {
+	return []AuditLogEntryOrderField{
+		AuditLogEntryOrderFieldCreatedAt,
+	}
+}
+
+func (v AuditLogEntryOrderField) IsValid() bool {
+	switch v {
+	case
+		AuditLogEntryOrderFieldCreatedAt:
+		return true
+	}
+
+	return false
+}
+
+func (v AuditLogEntryOrderField) String() string {
+	return string(v)
+}
+
+func (v AuditLogEntryOrderField) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *AuditLogEntryOrderField) UnmarshalText(text []byte) error {
+	val := AuditLogEntryOrderField(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid AuditLogEntryOrderField value: %q", string(text))
+	}
+
+	*v = val
+
+	return nil
+}
+
 func (p AuditLogEntryOrderField) Column() string {
 	switch p {
 	case AuditLogEntryOrderFieldCreatedAt:
@@ -31,30 +76,4 @@ func (p AuditLogEntryOrderField) Column() string {
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", p))
-}
-
-func (p AuditLogEntryOrderField) String() string {
-	return string(p)
-}
-
-func (p AuditLogEntryOrderField) IsValid() bool {
-	switch p {
-	case AuditLogEntryOrderFieldCreatedAt:
-		return true
-	}
-
-	return false
-}
-
-func (p AuditLogEntryOrderField) MarshalText() ([]byte, error) {
-	return []byte(p.String()), nil
-}
-
-func (p *AuditLogEntryOrderField) UnmarshalText(text []byte) error {
-	*p = AuditLogEntryOrderField(text)
-	if !p.IsValid() {
-		return fmt.Errorf("%s is not a valid AuditLogEntryOrderField", string(text))
-	}
-
-	return nil
 }

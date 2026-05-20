@@ -54,7 +54,7 @@ func (s *Service) ImportFromDir(ctx context.Context, dataDir string) error {
 		code := strings.ToUpper(entry.Name())
 
 		var cc coredata.CountryCode
-		if err := cc.Scan(code); err != nil {
+		if err := cc.UnmarshalText([]byte(code)); err != nil {
 			continue
 		}
 

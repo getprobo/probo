@@ -15,7 +15,7 @@
 package coredata
 
 import (
-	"database/sql/driver"
+	"encoding"
 	"fmt"
 )
 
@@ -27,43 +27,47 @@ const (
 	WebhookEventStatusFailed    WebhookEventStatus = "FAILED"
 )
 
-func (s WebhookEventStatus) String() string {
-	return string(s)
+var (
+	_ fmt.Stringer             = WebhookEventStatus("")
+	_ encoding.TextMarshaler   = WebhookEventStatus("")
+	_ encoding.TextUnmarshaler = (*WebhookEventStatus)(nil)
+)
+
+func WebhookEventStatuses() []WebhookEventStatus {
+	return []WebhookEventStatus{
+		WebhookEventStatusPending,
+		WebhookEventStatusSucceeded,
+		WebhookEventStatusFailed,
+	}
 }
 
-func (s WebhookEventStatus) IsValid() bool {
-	switch s {
-	case WebhookEventStatusPending, WebhookEventStatusSucceeded, WebhookEventStatusFailed:
+func (v WebhookEventStatus) IsValid() bool {
+	switch v {
+	case
+		WebhookEventStatusPending,
+		WebhookEventStatusSucceeded,
+		WebhookEventStatusFailed:
 		return true
 	}
 
 	return false
 }
 
-func (s WebhookEventStatus) MarshalText() ([]byte, error) {
-	return []byte(s.String()), nil
+func (v WebhookEventStatus) String() string {
+	return string(v)
 }
 
-func (s *WebhookEventStatus) UnmarshalText(text []byte) error {
-	*s = WebhookEventStatus(text)
-	if !s.IsValid() {
-		return fmt.Errorf("%s is not a valid WebhookEventStatus", string(text))
+func (v WebhookEventStatus) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *WebhookEventStatus) UnmarshalText(text []byte) error {
+	val := WebhookEventStatus(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid WebhookEventStatus value: %q", string(text))
 	}
+
+	*v = val
 
 	return nil
-}
-
-func (s *WebhookEventStatus) Scan(value any) error {
-	switch v := value.(type) {
-	case string:
-		return s.UnmarshalText([]byte(v))
-	case []byte:
-		return s.UnmarshalText(v)
-	default:
-		return fmt.Errorf("unsupported type for WebhookEventStatus: %T", value)
-	}
-}
-
-func (s WebhookEventStatus) Value() (driver.Value, error) {
-	return s.String(), nil
 }

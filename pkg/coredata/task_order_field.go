@@ -14,7 +14,12 @@
 
 package coredata
 
-import "fmt"
+import (
+	"encoding"
+	"fmt"
+
+	"go.probo.inc/probo/pkg/page"
+)
 
 type (
 	TaskOrderField string
@@ -25,6 +30,50 @@ const (
 	TaskOrderFieldCreatedAt    TaskOrderField = "CREATED_AT"
 )
 
+var (
+	_ page.OrderField          = TaskOrderField("")
+	_ fmt.Stringer             = TaskOrderField("")
+	_ encoding.TextMarshaler   = TaskOrderField("")
+	_ encoding.TextUnmarshaler = (*TaskOrderField)(nil)
+)
+
+func TaskOrderFields() []TaskOrderField {
+	return []TaskOrderField{
+		TaskOrderFieldPriorityRank,
+		TaskOrderFieldCreatedAt,
+	}
+}
+
+func (v TaskOrderField) IsValid() bool {
+	switch v {
+	case
+		TaskOrderFieldPriorityRank,
+		TaskOrderFieldCreatedAt:
+		return true
+	}
+
+	return false
+}
+
+func (v TaskOrderField) String() string {
+	return string(v)
+}
+
+func (v TaskOrderField) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *TaskOrderField) UnmarshalText(text []byte) error {
+	val := TaskOrderField(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid TaskOrderField value: %q", string(text))
+	}
+
+	*v = val
+
+	return nil
+}
+
 func (p TaskOrderField) Column() string {
 	switch p {
 	case TaskOrderFieldPriorityRank:
@@ -34,30 +83,4 @@ func (p TaskOrderField) Column() string {
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", p))
-}
-
-func (p TaskOrderField) IsValid() bool {
-	switch p {
-	case TaskOrderFieldPriorityRank, TaskOrderFieldCreatedAt:
-		return true
-	}
-
-	return false
-}
-
-func (p TaskOrderField) String() string {
-	return string(p)
-}
-
-func (p TaskOrderField) MarshalText() ([]byte, error) {
-	return []byte(p.String()), nil
-}
-
-func (p *TaskOrderField) UnmarshalText(text []byte) error {
-	*p = TaskOrderField(text)
-	if !p.IsValid() {
-		return fmt.Errorf("%s is not a valid TaskOrderField", string(text))
-	}
-
-	return nil
 }

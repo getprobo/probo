@@ -15,7 +15,7 @@
 package coredata
 
 import (
-	"database/sql/driver"
+	"encoding"
 	"fmt"
 )
 
@@ -29,40 +29,51 @@ const (
 	SCIMBridgeStateDisabled SCIMBridgeState = "DISABLED"
 )
 
-func (s SCIMBridgeState) String() string {
-	return string(s)
+var (
+	_ fmt.Stringer             = SCIMBridgeState("")
+	_ encoding.TextMarshaler   = SCIMBridgeState("")
+	_ encoding.TextUnmarshaler = (*SCIMBridgeState)(nil)
+)
+
+func SCIMBridgeStates() []SCIMBridgeState {
+	return []SCIMBridgeState{
+		SCIMBridgeStatePending,
+		SCIMBridgeStateActive,
+		SCIMBridgeStateSyncing,
+		SCIMBridgeStateFailed,
+		SCIMBridgeStateDisabled,
+	}
 }
 
-func (s *SCIMBridgeState) Scan(value any) error {
-	var str string
-
-	switch v := value.(type) {
-	case string:
-		str = v
-	case []byte:
-		str = string(v)
-	default:
-		return fmt.Errorf("unsupported type for SCIMBridgeState: %T", value)
+func (v SCIMBridgeState) IsValid() bool {
+	switch v {
+	case
+		SCIMBridgeStatePending,
+		SCIMBridgeStateActive,
+		SCIMBridgeStateSyncing,
+		SCIMBridgeStateFailed,
+		SCIMBridgeStateDisabled:
+		return true
 	}
 
-	switch str {
-	case "PENDING":
-		*s = SCIMBridgeStatePending
-	case "ACTIVE":
-		*s = SCIMBridgeStateActive
-	case "SYNCING":
-		*s = SCIMBridgeStateSyncing
-	case "FAILED":
-		*s = SCIMBridgeStateFailed
-	case "DISABLED":
-		*s = SCIMBridgeStateDisabled
-	default:
-		return fmt.Errorf("invalid SCIMBridgeState value: %q", str)
+	return false
+}
+
+func (v SCIMBridgeState) String() string {
+	return string(v)
+}
+
+func (v SCIMBridgeState) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *SCIMBridgeState) UnmarshalText(text []byte) error {
+	val := SCIMBridgeState(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid SCIMBridgeState value: %q", string(text))
 	}
+
+	*v = val
 
 	return nil
-}
-
-func (s SCIMBridgeState) Value() (driver.Value, error) {
-	return s.String(), nil
 }

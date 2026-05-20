@@ -15,7 +15,7 @@
 package coredata
 
 import (
-	"database/sql/driver"
+	"encoding"
 	"fmt"
 )
 
@@ -26,6 +26,12 @@ const (
 	ProcessingActivityDataProtectionImpactAssessmentNotNeeded ProcessingActivityDataProtectionImpactAssessment = "NOT_NEEDED"
 )
 
+var (
+	_ fmt.Stringer             = ProcessingActivityDataProtectionImpactAssessment("")
+	_ encoding.TextMarshaler   = ProcessingActivityDataProtectionImpactAssessment("")
+	_ encoding.TextUnmarshaler = (*ProcessingActivityDataProtectionImpactAssessment)(nil)
+)
+
 func ProcessingActivityDataProtectionImpactAssessments() []ProcessingActivityDataProtectionImpactAssessment {
 	return []ProcessingActivityDataProtectionImpactAssessment{
 		ProcessingActivityDataProtectionImpactAssessmentNeeded,
@@ -33,34 +39,32 @@ func ProcessingActivityDataProtectionImpactAssessments() []ProcessingActivityDat
 	}
 }
 
-func (p ProcessingActivityDataProtectionImpactAssessment) String() string {
-	return string(p)
+func (v ProcessingActivityDataProtectionImpactAssessment) IsValid() bool {
+	switch v {
+	case
+		ProcessingActivityDataProtectionImpactAssessmentNeeded,
+		ProcessingActivityDataProtectionImpactAssessmentNotNeeded:
+		return true
+	}
+
+	return false
 }
 
-func (p *ProcessingActivityDataProtectionImpactAssessment) Scan(value any) error {
-	var s string
+func (v ProcessingActivityDataProtectionImpactAssessment) String() string {
+	return string(v)
+}
 
-	switch v := value.(type) {
-	case string:
-		s = v
-	case []byte:
-		s = string(v)
-	default:
-		return fmt.Errorf("unsupported type for ProcessingActivityDataProtectionImpactAssessment: %T", value)
+func (v ProcessingActivityDataProtectionImpactAssessment) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *ProcessingActivityDataProtectionImpactAssessment) UnmarshalText(text []byte) error {
+	val := ProcessingActivityDataProtectionImpactAssessment(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid ProcessingActivityDataProtectionImpactAssessment value: %q", string(text))
 	}
 
-	switch s {
-	case "NEEDED":
-		*p = ProcessingActivityDataProtectionImpactAssessmentNeeded
-	case "NOT_NEEDED":
-		*p = ProcessingActivityDataProtectionImpactAssessmentNotNeeded
-	default:
-		return fmt.Errorf("invalid ProcessingActivityDataProtectionImpactAssessment value: %q", s)
-	}
+	*v = val
 
 	return nil
-}
-
-func (p ProcessingActivityDataProtectionImpactAssessment) Value() (driver.Value, error) {
-	return p.String(), nil
 }

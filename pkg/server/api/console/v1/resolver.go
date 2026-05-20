@@ -153,7 +153,7 @@ func handleConnectorComplete(
 		}
 
 		var connectorProvider coredata.ConnectorProvider
-		if err := connectorProvider.Scan(provider); err != nil {
+		if err := connectorProvider.UnmarshalText([]byte(provider)); err != nil {
 			httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("unsupported provider: %q", provider))
 			return
 		}

@@ -14,6 +14,11 @@
 
 package coredata
 
+import (
+	"encoding"
+	"fmt"
+)
+
 type ComplianceFrameworkVisibility string
 
 const (
@@ -21,6 +26,45 @@ const (
 	ComplianceFrameworkVisibilityPublic ComplianceFrameworkVisibility = "PUBLIC"
 )
 
+var (
+	_ fmt.Stringer             = ComplianceFrameworkVisibility("")
+	_ encoding.TextMarshaler   = ComplianceFrameworkVisibility("")
+	_ encoding.TextUnmarshaler = (*ComplianceFrameworkVisibility)(nil)
+)
+
+func ComplianceFrameworkVisibilities() []ComplianceFrameworkVisibility {
+	return []ComplianceFrameworkVisibility{
+		ComplianceFrameworkVisibilityNone,
+		ComplianceFrameworkVisibilityPublic,
+	}
+}
+
+func (v ComplianceFrameworkVisibility) IsValid() bool {
+	switch v {
+	case
+		ComplianceFrameworkVisibilityNone,
+		ComplianceFrameworkVisibilityPublic:
+		return true
+	}
+
+	return false
+}
+
 func (v ComplianceFrameworkVisibility) String() string {
 	return string(v)
+}
+
+func (v ComplianceFrameworkVisibility) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *ComplianceFrameworkVisibility) UnmarshalText(text []byte) error {
+	val := ComplianceFrameworkVisibility(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid ComplianceFrameworkVisibility value: %q", string(text))
+	}
+
+	*v = val
+
+	return nil
 }

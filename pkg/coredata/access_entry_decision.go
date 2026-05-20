@@ -15,7 +15,7 @@
 package coredata
 
 import (
-	"database/sql/driver"
+	"encoding"
 	"fmt"
 )
 
@@ -29,40 +29,51 @@ const (
 	AccessEntryDecisionEscalate AccessEntryDecision = "ESCALATE"
 )
 
-func (d AccessEntryDecision) String() string {
-	return string(d)
+var (
+	_ fmt.Stringer             = AccessEntryDecision("")
+	_ encoding.TextMarshaler   = AccessEntryDecision("")
+	_ encoding.TextUnmarshaler = (*AccessEntryDecision)(nil)
+)
+
+func AccessEntryDecisions() []AccessEntryDecision {
+	return []AccessEntryDecision{
+		AccessEntryDecisionPending,
+		AccessEntryDecisionApproved,
+		AccessEntryDecisionRevoke,
+		AccessEntryDecisionDefer,
+		AccessEntryDecisionEscalate,
+	}
 }
 
-func (d *AccessEntryDecision) Scan(value any) error {
-	var str string
-
-	switch v := value.(type) {
-	case string:
-		str = v
-	case []byte:
-		str = string(v)
-	default:
-		return fmt.Errorf("cannot scan AccessEntryDecision: unsupported type %T", value)
+func (v AccessEntryDecision) IsValid() bool {
+	switch v {
+	case
+		AccessEntryDecisionPending,
+		AccessEntryDecisionApproved,
+		AccessEntryDecisionRevoke,
+		AccessEntryDecisionDefer,
+		AccessEntryDecisionEscalate:
+		return true
 	}
 
-	switch str {
-	case "PENDING":
-		*d = AccessEntryDecisionPending
-	case "APPROVED":
-		*d = AccessEntryDecisionApproved
-	case "REVOKE":
-		*d = AccessEntryDecisionRevoke
-	case "DEFER":
-		*d = AccessEntryDecisionDefer
-	case "ESCALATE":
-		*d = AccessEntryDecisionEscalate
-	default:
-		return fmt.Errorf("cannot parse AccessEntryDecision: invalid value %q", str)
+	return false
+}
+
+func (v AccessEntryDecision) String() string {
+	return string(v)
+}
+
+func (v AccessEntryDecision) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *AccessEntryDecision) UnmarshalText(text []byte) error {
+	val := AccessEntryDecision(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid AccessEntryDecision value: %q", string(text))
 	}
+
+	*v = val
 
 	return nil
-}
-
-func (d AccessEntryDecision) Value() (driver.Value, error) {
-	return d.String(), nil
 }

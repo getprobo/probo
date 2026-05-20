@@ -14,6 +14,13 @@
 
 package coredata
 
+import (
+	"encoding"
+	"fmt"
+
+	"go.probo.inc/probo/pkg/page"
+)
+
 type (
 	ThirdPartyBusinessAssociateAgreementOrderField string
 )
@@ -23,19 +30,50 @@ const (
 	ThirdPartyBusinessAssociateAgreementOrderFieldCreatedAt ThirdPartyBusinessAssociateAgreementOrderField = "CREATED_AT"
 )
 
+var (
+	_ page.OrderField          = ThirdPartyBusinessAssociateAgreementOrderField("")
+	_ fmt.Stringer             = ThirdPartyBusinessAssociateAgreementOrderField("")
+	_ encoding.TextMarshaler   = ThirdPartyBusinessAssociateAgreementOrderField("")
+	_ encoding.TextUnmarshaler = (*ThirdPartyBusinessAssociateAgreementOrderField)(nil)
+)
+
+func ThirdPartyBusinessAssociateAgreementOrderFields() []ThirdPartyBusinessAssociateAgreementOrderField {
+	return []ThirdPartyBusinessAssociateAgreementOrderField{
+		ThirdPartyBusinessAssociateAgreementOrderFieldValidFrom,
+		ThirdPartyBusinessAssociateAgreementOrderFieldCreatedAt,
+	}
+}
+
+func (v ThirdPartyBusinessAssociateAgreementOrderField) IsValid() bool {
+	switch v {
+	case
+		ThirdPartyBusinessAssociateAgreementOrderFieldValidFrom,
+		ThirdPartyBusinessAssociateAgreementOrderFieldCreatedAt:
+		return true
+	}
+
+	return false
+}
+
+func (v ThirdPartyBusinessAssociateAgreementOrderField) String() string {
+	return string(v)
+}
+
+func (v ThirdPartyBusinessAssociateAgreementOrderField) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *ThirdPartyBusinessAssociateAgreementOrderField) UnmarshalText(text []byte) error {
+	val := ThirdPartyBusinessAssociateAgreementOrderField(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid ThirdPartyBusinessAssociateAgreementOrderField value: %q", string(text))
+	}
+
+	*v = val
+
+	return nil
+}
+
 func (p ThirdPartyBusinessAssociateAgreementOrderField) Column() string {
 	return string(p)
-}
-
-func (p ThirdPartyBusinessAssociateAgreementOrderField) String() string {
-	return string(p)
-}
-
-func (p ThirdPartyBusinessAssociateAgreementOrderField) MarshalText() ([]byte, error) {
-	return []byte(p.String()), nil
-}
-
-func (p *ThirdPartyBusinessAssociateAgreementOrderField) UnmarshalText(text []byte) error {
-	*p = ThirdPartyBusinessAssociateAgreementOrderField(text)
-	return nil
 }

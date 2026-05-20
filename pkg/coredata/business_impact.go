@@ -15,8 +15,7 @@
 package coredata
 
 import (
-	"database/sql/driver"
-	"encoding/json"
+	"encoding"
 	"fmt"
 )
 
@@ -29,6 +28,12 @@ const (
 	BusinessImpactCritical BusinessImpact = "CRITICAL"
 )
 
+var (
+	_ fmt.Stringer             = BusinessImpact("")
+	_ encoding.TextMarshaler   = BusinessImpact("")
+	_ encoding.TextUnmarshaler = (*BusinessImpact)(nil)
+)
+
 func BusinessImpacts() []BusinessImpact {
 	return []BusinessImpact{
 		BusinessImpactLow,
@@ -38,76 +43,34 @@ func BusinessImpacts() []BusinessImpact {
 	}
 }
 
-func (i BusinessImpact) String() string {
-	return string(i)
-}
-
-func (i *BusinessImpact) Scan(value any) error {
-	switch v := value.(type) {
-	case string:
-		switch v {
-		case "LOW":
-			*i = BusinessImpactLow
-		case "MEDIUM":
-			*i = BusinessImpactMedium
-		case "HIGH":
-			*i = BusinessImpactHigh
-		case "CRITICAL":
-			*i = BusinessImpactCritical
-		default:
-			return fmt.Errorf("invalid BusinessImpact value: %q", v)
-		}
-	default:
-		return fmt.Errorf("unsupported type for BusinessImpact: %T", value)
+func (v BusinessImpact) IsValid() bool {
+	switch v {
+	case
+		BusinessImpactLow,
+		BusinessImpactMedium,
+		BusinessImpactHigh,
+		BusinessImpactCritical:
+		return true
 	}
 
-	return nil
+	return false
 }
 
-func (i BusinessImpact) Value() (driver.Value, error) {
-	return i.String(), nil
+func (v BusinessImpact) String() string {
+	return string(v)
 }
 
-func (i BusinessImpact) MarshalJSON() ([]byte, error) {
-	return json.Marshal(i.String())
+func (v BusinessImpact) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
 }
 
-func (i *BusinessImpact) UnmarshalJSON(data []byte) error {
-	var s string
-	if err := json.Unmarshal(data, &s); err != nil {
-		return err
+func (v *BusinessImpact) UnmarshalText(text []byte) error {
+	val := BusinessImpact(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid BusinessImpact value: %q", string(text))
 	}
 
-	switch s {
-	case "LOW":
-		*i = BusinessImpactLow
-	case "MEDIUM":
-		*i = BusinessImpactMedium
-	case "HIGH":
-		*i = BusinessImpactHigh
-	case "CRITICAL":
-		*i = BusinessImpactCritical
-	default:
-		return fmt.Errorf("invalid BusinessImpact value: %q", s)
-	}
-
-	return nil
-}
-
-func (i *BusinessImpact) UnmarshalText(text []byte) error {
-	s := string(text)
-	switch s {
-	case "LOW":
-		*i = BusinessImpactLow
-	case "MEDIUM":
-		*i = BusinessImpactMedium
-	case "HIGH":
-		*i = BusinessImpactHigh
-	case "CRITICAL":
-		*i = BusinessImpactCritical
-	default:
-		return fmt.Errorf("invalid BusinessImpact value: %q", s)
-	}
+	*v = val
 
 	return nil
 }

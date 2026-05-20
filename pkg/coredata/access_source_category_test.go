@@ -16,58 +16,63 @@ package coredata
 
 import "testing"
 
-func TestAccessSourceCategoryScan(t *testing.T) {
+func TestAccessSourceCategoryIsValid(t *testing.T) {
 	t.Parallel()
 
-	tests := []struct {
-		name    string
-		input   any
-		want    AccessSourceCategory
-		wantErr bool
-	}{
-		{name: "saas string", input: "SAAS", want: AccessSourceCategorySaaS},
-		{name: "cloud_infra string", input: "CLOUD_INFRA", want: AccessSourceCategoryCloudInfra},
-		{name: "source_code bytes", input: []byte("SOURCE_CODE"), want: AccessSourceCategorySourceCode},
-		{name: "other string", input: "OTHER", want: AccessSourceCategoryOther},
-		{name: "invalid value", input: "BOGUS", wantErr: true},
-		{name: "unsupported type", input: 42, wantErr: true},
+	for _, value := range AccessSourceCategories() {
+		if !value.IsValid() {
+			t.Fatalf("IsValid() = false for %q", value)
+		}
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
-			var got AccessSourceCategory
-
-			err := got.Scan(tt.input)
-			if tt.wantErr {
-				if err == nil {
-					t.Fatalf("Scan(%v) expected error", tt.input)
-				}
-
-				return
-			}
-
-			if err != nil {
-				t.Fatalf("Scan(%v) returned error: %v", tt.input, err)
-			}
-
-			if got != tt.want {
-				t.Fatalf("Scan(%v) = %q, want %q", tt.input, got, tt.want)
-			}
-		})
+	if AccessSourceCategory("BOGUS").IsValid() {
+		t.Fatal("IsValid() = true for invalid value")
 	}
 }
 
-func TestAccessSourceCategoryValue(t *testing.T) {
+func TestAccessSourceCategoryUnmarshalText(t *testing.T) {
 	t.Parallel()
 
-	got, err := AccessSourceCategorySaaS.Value()
-	if err != nil {
-		t.Fatalf("Value() returned error: %v", err)
+	for _, value := range AccessSourceCategories() {
+		t.Run(string(value), func(t *testing.T) {
+			t.Parallel()
+
+			var got AccessSourceCategory
+			if err := got.UnmarshalText([]byte(value)); err != nil {
+				t.Fatalf("UnmarshalText(%q) returned error: %v", value, err)
+			}
+
+			if got != value {
+				t.Fatalf("UnmarshalText(%q) = %q, want %q", value, got, value)
+			}
+		})
 	}
 
-	if got != "SAAS" {
-		t.Fatalf("Value() = %q, want %q", got, "SAAS")
+	t.Run("invalid", func(t *testing.T) {
+		t.Parallel()
+
+		var got AccessSourceCategory
+		if err := got.UnmarshalText([]byte("BOGUS")); err == nil {
+			t.Fatal("UnmarshalText(BOGUS) expected error")
+		}
+	})
+}
+
+func TestAccessSourceCategoryMarshalText(t *testing.T) {
+	t.Parallel()
+
+	for _, value := range AccessSourceCategories() {
+		t.Run(string(value), func(t *testing.T) {
+			t.Parallel()
+
+			got, err := value.MarshalText()
+			if err != nil {
+				t.Fatalf("MarshalText() returned error: %v", err)
+			}
+
+			if string(got) != value.String() {
+				t.Fatalf("MarshalText() = %q, want %q", string(got), value.String())
+			}
+		})
 	}
 }

@@ -15,7 +15,7 @@
 package coredata
 
 import (
-	"database/sql/driver"
+	"encoding"
 	"fmt"
 )
 
@@ -29,6 +29,12 @@ const (
 	TaskStateDone       TaskState = "DONE"
 )
 
+var (
+	_ fmt.Stringer             = TaskState("")
+	_ encoding.TextMarshaler   = TaskState("")
+	_ encoding.TextUnmarshaler = (*TaskState)(nil)
+)
+
 func TaskStates() []TaskState {
 	return []TaskState{
 		TaskStateTodo,
@@ -37,36 +43,33 @@ func TaskStates() []TaskState {
 	}
 }
 
-func (ts TaskState) MarshalText() ([]byte, error) {
-	return []byte(ts.String()), nil
+func (v TaskState) IsValid() bool {
+	switch v {
+	case
+		TaskStateTodo,
+		TaskStateInProgress,
+		TaskStateDone:
+		return true
+	}
+
+	return false
 }
 
-func (ts *TaskState) UnmarshalText(data []byte) error {
-	val := TaskState(data)
+func (v TaskState) String() string {
+	return string(v)
+}
 
-	switch val {
-	case TaskStateTodo, TaskStateInProgress, TaskStateDone:
-		*ts = val
-	default:
-		return fmt.Errorf("invalid TaskState value: %q", val)
+func (v TaskState) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *TaskState) UnmarshalText(text []byte) error {
+	val := TaskState(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid TaskState value: %q", string(text))
 	}
+
+	*v = val
 
 	return nil
-}
-
-func (ts TaskState) String() string {
-	return string(ts)
-}
-
-func (ts *TaskState) Scan(value any) error {
-	val, ok := value.(string)
-	if !ok {
-		return fmt.Errorf("invalid scan source for TaskState, expected string got %T", value)
-	}
-
-	return ts.UnmarshalText([]byte(val))
-}
-
-func (ts TaskState) Value() (driver.Value, error) {
-	return ts.String(), nil
 }

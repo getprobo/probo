@@ -14,7 +14,10 @@
 
 package coredata
 
-import "fmt"
+import (
+	"encoding"
+	"fmt"
+)
 
 type OAuth2SubjectType string
 
@@ -22,26 +25,43 @@ const (
 	OAuth2SubjectTypePublic OAuth2SubjectType = "public"
 )
 
-func (s OAuth2SubjectType) IsValid() bool {
-	switch s {
-	case OAuth2SubjectTypePublic:
+var (
+	_ fmt.Stringer             = OAuth2SubjectType("")
+	_ encoding.TextMarshaler   = OAuth2SubjectType("")
+	_ encoding.TextUnmarshaler = (*OAuth2SubjectType)(nil)
+)
+
+func OAuth2SubjectTypes() []OAuth2SubjectType {
+	return []OAuth2SubjectType{
+		OAuth2SubjectTypePublic,
+	}
+}
+
+func (v OAuth2SubjectType) IsValid() bool {
+	switch v {
+	case
+		OAuth2SubjectTypePublic:
 		return true
 	}
 
 	return false
 }
 
-func (s OAuth2SubjectType) String() string { return string(s) }
-
-func (s *OAuth2SubjectType) UnmarshalText(text []byte) error {
-	*s = OAuth2SubjectType(text)
-	if !s.IsValid() {
-		return fmt.Errorf("%s is not a valid OAuth2SubjectType", string(text))
-	}
-
-	return nil
+func (v OAuth2SubjectType) String() string {
+	return string(v)
 }
 
-func (s OAuth2SubjectType) MarshalText() ([]byte, error) {
-	return []byte(s.String()), nil
+func (v OAuth2SubjectType) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *OAuth2SubjectType) UnmarshalText(text []byte) error {
+	val := OAuth2SubjectType(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid OAuth2SubjectType value: %q", string(text))
+	}
+
+	*v = val
+
+	return nil
 }

@@ -14,13 +14,60 @@
 
 package coredata
 
-import "fmt"
+import (
+	"encoding"
+	"fmt"
+
+	"go.probo.inc/probo/pkg/page"
+)
 
 type OAuth2ClientOrderField string
 
 const (
 	OAuth2ClientOrderFieldCreatedAt OAuth2ClientOrderField = "CREATED_AT"
 )
+
+var (
+	_ page.OrderField          = OAuth2ClientOrderField("")
+	_ fmt.Stringer             = OAuth2ClientOrderField("")
+	_ encoding.TextMarshaler   = OAuth2ClientOrderField("")
+	_ encoding.TextUnmarshaler = (*OAuth2ClientOrderField)(nil)
+)
+
+func OAuth2ClientOrderFields() []OAuth2ClientOrderField {
+	return []OAuth2ClientOrderField{
+		OAuth2ClientOrderFieldCreatedAt,
+	}
+}
+
+func (v OAuth2ClientOrderField) IsValid() bool {
+	switch v {
+	case
+		OAuth2ClientOrderFieldCreatedAt:
+		return true
+	}
+
+	return false
+}
+
+func (v OAuth2ClientOrderField) String() string {
+	return string(v)
+}
+
+func (v OAuth2ClientOrderField) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *OAuth2ClientOrderField) UnmarshalText(text []byte) error {
+	val := OAuth2ClientOrderField(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid OAuth2ClientOrderField value: %q", string(text))
+	}
+
+	*v = val
+
+	return nil
+}
 
 func (f OAuth2ClientOrderField) Column() string {
 	switch f {
@@ -29,30 +76,4 @@ func (f OAuth2ClientOrderField) Column() string {
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", f))
-}
-
-func (f OAuth2ClientOrderField) IsValid() bool {
-	switch f {
-	case OAuth2ClientOrderFieldCreatedAt:
-		return true
-	}
-
-	return false
-}
-
-func (f OAuth2ClientOrderField) String() string {
-	return string(f)
-}
-
-func (f *OAuth2ClientOrderField) UnmarshalText(text []byte) error {
-	*f = OAuth2ClientOrderField(text)
-	if !f.IsValid() {
-		return fmt.Errorf("%s is not a valid OAuth2ClientOrderField", string(text))
-	}
-
-	return nil
-}
-
-func (f OAuth2ClientOrderField) MarshalText() ([]byte, error) {
-	return []byte(f.String()), nil
 }

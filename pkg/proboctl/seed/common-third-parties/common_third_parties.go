@@ -181,7 +181,7 @@ func parseCategory(errOut io.Writer, tp thirdPartyData) coredata.ThirdPartyCateg
 	}
 
 	var c coredata.ThirdPartyCategory
-	if err := c.Scan(*tp.Category); err != nil {
+	if err := c.UnmarshalText([]byte(*tp.Category)); err != nil {
 		_, _ = fmt.Fprintf(errOut, "warning: third party %q has unknown category %q, falling back to OTHER\n", tp.Name, *tp.Category)
 		return coredata.ThirdPartyCategoryOther
 	}

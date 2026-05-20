@@ -15,7 +15,7 @@
 package coredata
 
 import (
-	"database/sql/driver"
+	"encoding"
 	"fmt"
 )
 
@@ -30,6 +30,12 @@ const (
 	FindingStatusFalsePositive FindingStatus = "FALSE_POSITIVE"
 )
 
+var (
+	_ fmt.Stringer             = FindingStatus("")
+	_ encoding.TextMarshaler   = FindingStatus("")
+	_ encoding.TextUnmarshaler = (*FindingStatus)(nil)
+)
+
 func FindingStatuses() []FindingStatus {
 	return []FindingStatus{
 		FindingStatusOpen,
@@ -41,42 +47,36 @@ func FindingStatuses() []FindingStatus {
 	}
 }
 
-func (fs FindingStatus) String() string {
-	return string(fs)
+func (v FindingStatus) IsValid() bool {
+	switch v {
+	case
+		FindingStatusOpen,
+		FindingStatusInProgress,
+		FindingStatusClosed,
+		FindingStatusRiskAccepted,
+		FindingStatusMitigated,
+		FindingStatusFalsePositive:
+		return true
+	}
+
+	return false
 }
 
-func (fs *FindingStatus) Scan(value any) error {
-	var s string
+func (v FindingStatus) String() string {
+	return string(v)
+}
 
-	switch v := value.(type) {
-	case string:
-		s = v
-	case []byte:
-		s = string(v)
-	default:
-		return fmt.Errorf("unsupported type for FindingStatus: %T", value)
+func (v FindingStatus) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *FindingStatus) UnmarshalText(text []byte) error {
+	val := FindingStatus(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid FindingStatus value: %q", string(text))
 	}
 
-	switch s {
-	case "OPEN":
-		*fs = FindingStatusOpen
-	case "IN_PROGRESS":
-		*fs = FindingStatusInProgress
-	case "CLOSED":
-		*fs = FindingStatusClosed
-	case "RISK_ACCEPTED":
-		*fs = FindingStatusRiskAccepted
-	case "MITIGATED":
-		*fs = FindingStatusMitigated
-	case "FALSE_POSITIVE":
-		*fs = FindingStatusFalsePositive
-	default:
-		return fmt.Errorf("invalid FindingStatus value: %q", s)
-	}
+	*v = val
 
 	return nil
-}
-
-func (fs FindingStatus) Value() (driver.Value, error) {
-	return fs.String(), nil
 }

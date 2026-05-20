@@ -15,7 +15,10 @@
 package coredata
 
 import (
+	"encoding"
 	"fmt"
+
+	"go.probo.inc/probo/pkg/page"
 )
 
 type ObligationOrderField string
@@ -27,28 +30,54 @@ const (
 	ObligationOrderFieldStatus         ObligationOrderField = "STATUS"
 )
 
-func (p ObligationOrderField) Column() string {
-	return string(p)
+var (
+	_ page.OrderField          = ObligationOrderField("")
+	_ fmt.Stringer             = ObligationOrderField("")
+	_ encoding.TextMarshaler   = ObligationOrderField("")
+	_ encoding.TextUnmarshaler = (*ObligationOrderField)(nil)
+)
+
+func ObligationOrderFields() []ObligationOrderField {
+	return []ObligationOrderField{
+		ObligationOrderFieldCreatedAt,
+		ObligationOrderFieldLastReviewDate,
+		ObligationOrderFieldDueDate,
+		ObligationOrderFieldStatus,
+	}
 }
 
-func (p ObligationOrderField) String() string {
-	return string(p)
-}
-
-func (p ObligationOrderField) MarshalText() ([]byte, error) {
-	return []byte(p.String()), nil
-}
-
-func (p *ObligationOrderField) UnmarshalText(text []byte) error {
-	val := string(text)
-	switch val {
-	case string(ObligationOrderFieldCreatedAt),
-		string(ObligationOrderFieldLastReviewDate),
-		string(ObligationOrderFieldDueDate),
-		string(ObligationOrderFieldStatus):
-		*p = ObligationOrderField(val)
-		return nil
+func (v ObligationOrderField) IsValid() bool {
+	switch v {
+	case
+		ObligationOrderFieldCreatedAt,
+		ObligationOrderFieldLastReviewDate,
+		ObligationOrderFieldDueDate,
+		ObligationOrderFieldStatus:
+		return true
 	}
 
-	return fmt.Errorf("invalid ObligationOrderField value: %q", val)
+	return false
+}
+
+func (v ObligationOrderField) String() string {
+	return string(v)
+}
+
+func (v ObligationOrderField) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *ObligationOrderField) UnmarshalText(text []byte) error {
+	val := ObligationOrderField(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid ObligationOrderField value: %q", string(text))
+	}
+
+	*v = val
+
+	return nil
+}
+
+func (p ObligationOrderField) Column() string {
+	return string(p)
 }

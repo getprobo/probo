@@ -15,7 +15,7 @@
 package coredata
 
 import (
-	"database/sql/driver"
+	"encoding"
 	"fmt"
 )
 
@@ -29,40 +29,51 @@ const (
 	AccessReviewCampaignStatusCancelled      AccessReviewCampaignStatus = "CANCELLED"
 )
 
-func (s AccessReviewCampaignStatus) String() string {
-	return string(s)
+var (
+	_ fmt.Stringer             = AccessReviewCampaignStatus("")
+	_ encoding.TextMarshaler   = AccessReviewCampaignStatus("")
+	_ encoding.TextUnmarshaler = (*AccessReviewCampaignStatus)(nil)
+)
+
+func AccessReviewCampaignStatuses() []AccessReviewCampaignStatus {
+	return []AccessReviewCampaignStatus{
+		AccessReviewCampaignStatusDraft,
+		AccessReviewCampaignStatusInProgress,
+		AccessReviewCampaignStatusPendingActions,
+		AccessReviewCampaignStatusCompleted,
+		AccessReviewCampaignStatusCancelled,
+	}
 }
 
-func (s *AccessReviewCampaignStatus) Scan(value any) error {
-	var str string
-
-	switch v := value.(type) {
-	case string:
-		str = v
-	case []byte:
-		str = string(v)
-	default:
-		return fmt.Errorf("cannot scan AccessReviewCampaignStatus: unsupported type %T", value)
+func (v AccessReviewCampaignStatus) IsValid() bool {
+	switch v {
+	case
+		AccessReviewCampaignStatusDraft,
+		AccessReviewCampaignStatusInProgress,
+		AccessReviewCampaignStatusPendingActions,
+		AccessReviewCampaignStatusCompleted,
+		AccessReviewCampaignStatusCancelled:
+		return true
 	}
 
-	switch str {
-	case "DRAFT":
-		*s = AccessReviewCampaignStatusDraft
-	case "IN_PROGRESS":
-		*s = AccessReviewCampaignStatusInProgress
-	case "PENDING_ACTIONS":
-		*s = AccessReviewCampaignStatusPendingActions
-	case "COMPLETED":
-		*s = AccessReviewCampaignStatusCompleted
-	case "CANCELLED":
-		*s = AccessReviewCampaignStatusCancelled
-	default:
-		return fmt.Errorf("cannot parse AccessReviewCampaignStatus: invalid value %q", str)
+	return false
+}
+
+func (v AccessReviewCampaignStatus) String() string {
+	return string(v)
+}
+
+func (v AccessReviewCampaignStatus) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *AccessReviewCampaignStatus) UnmarshalText(text []byte) error {
+	val := AccessReviewCampaignStatus(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid AccessReviewCampaignStatus value: %q", string(text))
 	}
+
+	*v = val
 
 	return nil
-}
-
-func (s AccessReviewCampaignStatus) Value() (driver.Value, error) {
-	return s.String(), nil
 }

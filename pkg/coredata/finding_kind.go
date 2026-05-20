@@ -15,7 +15,7 @@
 package coredata
 
 import (
-	"database/sql/driver"
+	"encoding"
 	"fmt"
 )
 
@@ -28,6 +28,12 @@ const (
 	FindingKindException          FindingKind = "EXCEPTION"
 )
 
+var (
+	_ fmt.Stringer             = FindingKind("")
+	_ encoding.TextMarshaler   = FindingKind("")
+	_ encoding.TextUnmarshaler = (*FindingKind)(nil)
+)
+
 func FindingKinds() []FindingKind {
 	return []FindingKind{
 		FindingKindMinorNonconformity,
@@ -37,38 +43,34 @@ func FindingKinds() []FindingKind {
 	}
 }
 
-func (fk FindingKind) String() string {
-	return string(fk)
+func (v FindingKind) IsValid() bool {
+	switch v {
+	case
+		FindingKindMinorNonconformity,
+		FindingKindMajorNonconformity,
+		FindingKindObservation,
+		FindingKindException:
+		return true
+	}
+
+	return false
 }
 
-func (fk *FindingKind) Scan(value any) error {
-	var s string
+func (v FindingKind) String() string {
+	return string(v)
+}
 
-	switch v := value.(type) {
-	case string:
-		s = v
-	case []byte:
-		s = string(v)
-	default:
-		return fmt.Errorf("unsupported type for FindingKind: %T", value)
+func (v FindingKind) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *FindingKind) UnmarshalText(text []byte) error {
+	val := FindingKind(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid FindingKind value: %q", string(text))
 	}
 
-	switch s {
-	case "MINOR_NONCONFORMITY":
-		*fk = FindingKindMinorNonconformity
-	case "MAJOR_NONCONFORMITY":
-		*fk = FindingKindMajorNonconformity
-	case "OBSERVATION":
-		*fk = FindingKindObservation
-	case "EXCEPTION":
-		*fk = FindingKindException
-	default:
-		return fmt.Errorf("invalid FindingKind value: %q", s)
-	}
+	*v = val
 
 	return nil
-}
-
-func (fk FindingKind) Value() (driver.Value, error) {
-	return fk.String(), nil
 }

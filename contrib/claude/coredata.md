@@ -297,17 +297,89 @@ func (f *CookieBannerFilter) SQLArguments() pgx.StrictNamedArgs {
 
 For complex multi-field filters, use `CASE WHEN` in SQL and always declare all argument keys in every code path (use `nil` for inactive ones).
 
-## Order fields
+## Enums
 
-String-based enums with `Column()`, `IsValid()`, `String()`, and `MarshalText`/`UnmarshalText`:
+Coredata enums are always `type X string` with a single validation source of truth (`IsValid`) and text marshalling support for pgx/JSON wiring.
 
 ```go
-type AssetOrderField string
+type XXXType string
 
 const (
-    AssetOrderFieldCreatedAt AssetOrderField = "CREATED_AT"
-    AssetOrderFieldName      AssetOrderField = "NAME"
+    XXXTypeAlpha XXXType = "ALPHA"
+    XXXTypeBeta  XXXType = "BETA"
 )
+
+var (
+    _ fmt.Stringer             = XXXType("")
+    _ encoding.TextMarshaler   = XXXType("")
+    _ encoding.TextUnmarshaler = (*XXXType)(nil)
+)
+
+func XXXTypes() []XXXType {
+    return []XXXType{
+        XXXTypeAlpha,
+        XXXTypeBeta,
+    }
+}
+
+func (v XXXType) IsValid() bool {
+    switch v {
+    case XXXTypeAlpha, XXXTypeBeta:
+        return true
+    }
+
+    return false
+}
+
+func (v XXXType) String() string { return string(v) }
+
+func (v XXXType) MarshalText() ([]byte, error) {
+    return []byte(v.String()), nil
+}
+
+func (v *XXXType) UnmarshalText(text []byte) error {
+    val := XXXType(text)
+    if !val.IsValid() {
+        return fmt.Errorf("invalid XXXType value: %q", string(text))
+    }
+
+    *v = val
+    return nil
+}
+```
+
+Rules:
+
+- Keep enums as string types only (no iota/int enums).
+- `UnmarshalText` must validate via `IsValid`; do not duplicate validation switches in `Scan`/`Value`.
+- Do not implement `database/sql` `Scan`/`Value` on singular enums in coredata; pgx uses `MarshalText` / `UnmarshalText`.
+- Add compile-time interface checks in a `var` block for every enum (`fmt.Stringer`, `encoding.TextMarshaler`, `encoding.TextUnmarshaler`).
+- Keep a `Values()` helper named as the pluralized enum type when there is no naming conflict.
+
+Collection enum wrappers (`OAuth2Scopes`, `CountryCodes`, etc.) may keep custom parsing/encoding methods when wire format differs from a single enum token.
+
+## Order fields
+
+Order-field enums follow the same enum rules and additionally implement `Column()` and `page.OrderField`:
+
+```go
+type XXXOrderField string
+
+const (
+    XXXOrderFieldCreatedAt XXXOrderField = "CREATED_AT"
+    XXXOrderFieldName      XXXOrderField = "NAME"
+)
+
+var (
+    _ page.OrderField          = XXXOrderField("")
+    _ fmt.Stringer             = XXXOrderField("")
+    _ encoding.TextMarshaler   = XXXOrderField("")
+    _ encoding.TextUnmarshaler = (*XXXOrderField)(nil)
+)
+
+func (f XXXOrderField) Column() string {
+    return string(f)
+}
 ```
 
 Each entity implements `CursorKey(field)` returning `page.NewCursorKey(entity.ID, sortValue)`, with a `panic` on unknown fields.

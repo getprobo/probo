@@ -15,7 +15,7 @@
 package coredata
 
 import (
-	"database/sql/driver"
+	"encoding"
 	"fmt"
 )
 
@@ -26,39 +26,45 @@ const (
 	DocumentStatusArchived DocumentStatus = "ARCHIVED"
 )
 
-func (s DocumentStatus) IsValid() bool {
-	switch s {
-	case DocumentStatusActive, DocumentStatusArchived:
+var (
+	_ fmt.Stringer             = DocumentStatus("")
+	_ encoding.TextMarshaler   = DocumentStatus("")
+	_ encoding.TextUnmarshaler = (*DocumentStatus)(nil)
+)
+
+func DocumentStatuses() []DocumentStatus {
+	return []DocumentStatus{
+		DocumentStatusActive,
+		DocumentStatusArchived,
+	}
+}
+
+func (v DocumentStatus) IsValid() bool {
+	switch v {
+	case
+		DocumentStatusActive,
+		DocumentStatusArchived:
 		return true
 	}
 
 	return false
 }
 
-func (s DocumentStatus) String() string { return string(s) }
+func (v DocumentStatus) String() string {
+	return string(v)
+}
 
-func (s *DocumentStatus) UnmarshalText(text []byte) error {
-	*s = DocumentStatus(text)
-	if !s.IsValid() {
-		return fmt.Errorf("%s is not a valid DocumentStatus", string(text))
+func (v DocumentStatus) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *DocumentStatus) UnmarshalText(text []byte) error {
+	val := DocumentStatus(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid DocumentStatus value: %q", string(text))
 	}
+
+	*v = val
 
 	return nil
-}
-
-func (s DocumentStatus) MarshalText() ([]byte, error) {
-	return []byte(s.String()), nil
-}
-
-func (s *DocumentStatus) Scan(value any) error {
-	val, ok := value.(string)
-	if !ok {
-		return fmt.Errorf("invalid scan source for DocumentStatus, expected string got %T", value)
-	}
-
-	return s.UnmarshalText([]byte(val))
-}
-
-func (s DocumentStatus) Value() (driver.Value, error) {
-	return s.String(), nil
 }

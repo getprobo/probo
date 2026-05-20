@@ -15,7 +15,7 @@
 package coredata
 
 import (
-	"database/sql/driver"
+	"encoding"
 	"fmt"
 )
 
@@ -26,34 +26,45 @@ const (
 	ProfileStateInactive ProfileState = "INACTIVE"
 )
 
-func (s ProfileState) String() string {
-	return string(s)
+var (
+	_ fmt.Stringer             = ProfileState("")
+	_ encoding.TextMarshaler   = ProfileState("")
+	_ encoding.TextUnmarshaler = (*ProfileState)(nil)
+)
+
+func ProfileStates() []ProfileState {
+	return []ProfileState{
+		ProfileStateActive,
+		ProfileStateInactive,
+	}
 }
 
-func (s *ProfileState) Scan(value any) error {
-	var str string
-
-	switch v := value.(type) {
-	case string:
-		str = v
-	case []byte:
-		str = string(v)
-	default:
-		return fmt.Errorf("unsupported type for ProfileState: %T", value)
+func (v ProfileState) IsValid() bool {
+	switch v {
+	case
+		ProfileStateActive,
+		ProfileStateInactive:
+		return true
 	}
 
-	switch str {
-	case "ACTIVE":
-		*s = ProfileStateActive
-	case "INACTIVE":
-		*s = ProfileStateInactive
-	default:
-		return fmt.Errorf("invalid ProfileState value: %q", str)
+	return false
+}
+
+func (v ProfileState) String() string {
+	return string(v)
+}
+
+func (v ProfileState) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *ProfileState) UnmarshalText(text []byte) error {
+	val := ProfileState(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid ProfileState value: %q", string(text))
 	}
+
+	*v = val
 
 	return nil
-}
-
-func (s ProfileState) Value() (driver.Value, error) {
-	return s.String(), nil
 }

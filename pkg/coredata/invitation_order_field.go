@@ -14,7 +14,12 @@
 
 package coredata
 
-import "fmt"
+import (
+	"encoding"
+	"fmt"
+
+	"go.probo.inc/probo/pkg/page"
+)
 
 // InvitationOrderField defines the fields that can be used to order invitations
 type InvitationOrderField string
@@ -24,6 +29,48 @@ const (
 	InvitationOrderFieldCreatedAt InvitationOrderField = "CREATED_AT"
 )
 
+var (
+	_ page.OrderField          = InvitationOrderField("")
+	_ fmt.Stringer             = InvitationOrderField("")
+	_ encoding.TextMarshaler   = InvitationOrderField("")
+	_ encoding.TextUnmarshaler = (*InvitationOrderField)(nil)
+)
+
+func InvitationOrderFields() []InvitationOrderField {
+	return []InvitationOrderField{
+		InvitationOrderFieldCreatedAt,
+	}
+}
+
+func (v InvitationOrderField) IsValid() bool {
+	switch v {
+	case
+		InvitationOrderFieldCreatedAt:
+		return true
+	}
+
+	return false
+}
+
+func (v InvitationOrderField) String() string {
+	return string(v)
+}
+
+func (v InvitationOrderField) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *InvitationOrderField) UnmarshalText(text []byte) error {
+	val := InvitationOrderField(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid InvitationOrderField value: %q", string(text))
+	}
+
+	*v = val
+
+	return nil
+}
+
 func (p InvitationOrderField) Column() string {
 	switch p {
 	case InvitationOrderFieldCreatedAt:
@@ -31,30 +78,4 @@ func (p InvitationOrderField) Column() string {
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", p))
-}
-
-func (e InvitationOrderField) IsValid() bool {
-	switch e {
-	case InvitationOrderFieldCreatedAt:
-		return true
-	}
-
-	return false
-}
-
-func (e InvitationOrderField) String() string {
-	return string(e)
-}
-
-func (e *InvitationOrderField) UnmarshalText(text []byte) error {
-	*e = InvitationOrderField(text)
-	if !e.IsValid() {
-		return fmt.Errorf("%s is not a valid InvitationOrderField", string(text))
-	}
-
-	return nil
-}
-
-func (e InvitationOrderField) MarshalText() ([]byte, error) {
-	return []byte(e.String()), nil
 }

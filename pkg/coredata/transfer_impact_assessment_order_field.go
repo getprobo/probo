@@ -14,7 +14,12 @@
 
 package coredata
 
-import "fmt"
+import (
+	"encoding"
+	"fmt"
+
+	"go.probo.inc/probo/pkg/page"
+)
 
 type TransferImpactAssessmentOrderField string
 
@@ -22,25 +27,48 @@ const (
 	TransferImpactAssessmentOrderFieldCreatedAt TransferImpactAssessmentOrderField = "CREATED_AT"
 )
 
-func (p TransferImpactAssessmentOrderField) Column() string {
-	return string(p)
+var (
+	_ page.OrderField          = TransferImpactAssessmentOrderField("")
+	_ fmt.Stringer             = TransferImpactAssessmentOrderField("")
+	_ encoding.TextMarshaler   = TransferImpactAssessmentOrderField("")
+	_ encoding.TextUnmarshaler = (*TransferImpactAssessmentOrderField)(nil)
+)
+
+func TransferImpactAssessmentOrderFields() []TransferImpactAssessmentOrderField {
+	return []TransferImpactAssessmentOrderField{
+		TransferImpactAssessmentOrderFieldCreatedAt,
+	}
 }
 
-func (p TransferImpactAssessmentOrderField) String() string {
-	return string(p)
-}
-
-func (p TransferImpactAssessmentOrderField) MarshalText() ([]byte, error) {
-	return []byte(p.String()), nil
-}
-
-func (p *TransferImpactAssessmentOrderField) UnmarshalText(text []byte) error {
-	val := string(text)
-	switch val {
-	case string(TransferImpactAssessmentOrderFieldCreatedAt):
-		*p = TransferImpactAssessmentOrderFieldCreatedAt
-		return nil
+func (v TransferImpactAssessmentOrderField) IsValid() bool {
+	switch v {
+	case
+		TransferImpactAssessmentOrderFieldCreatedAt:
+		return true
 	}
 
-	return fmt.Errorf("invalid TransferImpactAssessmentOrderField value: %q", val)
+	return false
+}
+
+func (v TransferImpactAssessmentOrderField) String() string {
+	return string(v)
+}
+
+func (v TransferImpactAssessmentOrderField) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *TransferImpactAssessmentOrderField) UnmarshalText(text []byte) error {
+	val := TransferImpactAssessmentOrderField(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid TransferImpactAssessmentOrderField value: %q", string(text))
+	}
+
+	*v = val
+
+	return nil
+}
+
+func (p TransferImpactAssessmentOrderField) Column() string {
+	return string(p)
 }

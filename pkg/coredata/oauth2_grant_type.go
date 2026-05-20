@@ -14,7 +14,10 @@
 
 package coredata
 
-import "fmt"
+import (
+	"encoding"
+	"fmt"
+)
 
 type (
 	OAuth2GrantType  string
@@ -27,9 +30,16 @@ const (
 	OAuth2GrantTypeDeviceCode        OAuth2GrantType = "urn:ietf:params:oauth:grant-type:device_code"
 )
 
-func (g OAuth2GrantType) IsValid() bool {
-	switch g {
-	case OAuth2GrantTypeAuthorizationCode,
+var (
+	_ fmt.Stringer             = OAuth2GrantType("")
+	_ encoding.TextMarshaler   = OAuth2GrantType("")
+	_ encoding.TextUnmarshaler = (*OAuth2GrantType)(nil)
+)
+
+func (v OAuth2GrantType) IsValid() bool {
+	switch v {
+	case
+		OAuth2GrantTypeAuthorizationCode,
 		OAuth2GrantTypeRefreshToken,
 		OAuth2GrantTypeDeviceCode:
 		return true
@@ -38,17 +48,21 @@ func (g OAuth2GrantType) IsValid() bool {
 	return false
 }
 
-func (g OAuth2GrantType) String() string { return string(g) }
-
-func (g *OAuth2GrantType) UnmarshalText(text []byte) error {
-	*g = OAuth2GrantType(text)
-	if !g.IsValid() {
-		return fmt.Errorf("%s is not a valid OAuth2GrantType", string(text))
-	}
-
-	return nil
+func (v OAuth2GrantType) String() string {
+	return string(v)
 }
 
-func (g OAuth2GrantType) MarshalText() ([]byte, error) {
-	return []byte(g.String()), nil
+func (v OAuth2GrantType) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *OAuth2GrantType) UnmarshalText(text []byte) error {
+	val := OAuth2GrantType(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid OAuth2GrantType value: %q", string(text))
+	}
+
+	*v = val
+
+	return nil
 }

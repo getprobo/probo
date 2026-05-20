@@ -15,8 +15,7 @@
 package coredata
 
 import (
-	"database/sql/driver"
-	"encoding/json"
+	"encoding"
 	"fmt"
 )
 
@@ -40,8 +39,15 @@ const (
 	RegulationPDPL    Regulation = "PDPL"
 )
 
+var (
+	_ fmt.Stringer             = Regulation("")
+	_ encoding.TextMarshaler   = Regulation("")
+	_ encoding.TextUnmarshaler = (*Regulation)(nil)
+)
+
 func Regulations() []Regulation {
 	return []Regulation{
+		RegulationNone,
 		RegulationGDPR,
 		RegulationUKGDPR,
 		RegulationFADP,
@@ -57,6 +63,49 @@ func Regulations() []Regulation {
 		RegulationDPDP,
 		RegulationPDPL,
 	}
+}
+
+func (v Regulation) IsValid() bool {
+	switch v {
+	case
+		RegulationNone,
+		RegulationGDPR,
+		RegulationUKGDPR,
+		RegulationFADP,
+		RegulationCCPA,
+		RegulationPIPEDA,
+		RegulationLGPD,
+		RegulationLFPDPPP,
+		RegulationPOPIA,
+		RegulationPDPA,
+		RegulationPIPL,
+		RegulationPIPA,
+		RegulationAPPI,
+		RegulationDPDP,
+		RegulationPDPL:
+		return true
+	}
+
+	return false
+}
+
+func (v Regulation) String() string {
+	return string(v)
+}
+
+func (v Regulation) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *Regulation) UnmarshalText(text []byte) error {
+	val := Regulation(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid Regulation value: %q", string(text))
+	}
+
+	*v = val
+
+	return nil
 }
 
 func ParseRegulation(s string) (Regulation, error) {
@@ -94,62 +143,4 @@ func ParseRegulation(s string) (Regulation, error) {
 	default:
 		return "", fmt.Errorf("invalid Regulation value: %q", s)
 	}
-}
-
-func (r Regulation) String() string {
-	return string(r)
-}
-
-func (r *Regulation) Scan(value any) error {
-	var v string
-
-	switch val := value.(type) {
-	case string:
-		v = val
-	case []byte:
-		v = string(val)
-	default:
-		return fmt.Errorf("unsupported type for Regulation: %T", value)
-	}
-
-	parsed, err := ParseRegulation(v)
-	if err != nil {
-		return err
-	}
-
-	*r = parsed
-
-	return nil
-}
-
-func (r Regulation) Value() (driver.Value, error) {
-	if r == RegulationNone {
-		return "", nil
-	}
-
-	if _, err := ParseRegulation(string(r)); err != nil {
-		return nil, fmt.Errorf("invalid Regulation: %s", r)
-	}
-
-	return string(r), nil
-}
-
-func (r Regulation) MarshalJSON() ([]byte, error) {
-	return json.Marshal(string(r))
-}
-
-func (r *Regulation) UnmarshalJSON(data []byte) error {
-	var s string
-	if err := json.Unmarshal(data, &s); err != nil {
-		return fmt.Errorf("cannot unmarshal Regulation: %w", err)
-	}
-
-	parsed, err := ParseRegulation(s)
-	if err != nil {
-		return err
-	}
-
-	*r = parsed
-
-	return nil
 }

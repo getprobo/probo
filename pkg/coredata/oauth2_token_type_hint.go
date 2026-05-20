@@ -14,7 +14,10 @@
 
 package coredata
 
-import "fmt"
+import (
+	"encoding"
+	"fmt"
+)
 
 type OAuth2TokenTypeHint string
 
@@ -23,9 +26,23 @@ const (
 	OAuth2TokenTypeHintRefreshToken OAuth2TokenTypeHint = "refresh_token"
 )
 
-func (h OAuth2TokenTypeHint) IsValid() bool {
-	switch h {
-	case OAuth2TokenTypeHintAccessToken,
+var (
+	_ fmt.Stringer             = OAuth2TokenTypeHint("")
+	_ encoding.TextMarshaler   = OAuth2TokenTypeHint("")
+	_ encoding.TextUnmarshaler = (*OAuth2TokenTypeHint)(nil)
+)
+
+func OAuth2TokenTypeHints() []OAuth2TokenTypeHint {
+	return []OAuth2TokenTypeHint{
+		OAuth2TokenTypeHintAccessToken,
+		OAuth2TokenTypeHintRefreshToken,
+	}
+}
+
+func (v OAuth2TokenTypeHint) IsValid() bool {
+	switch v {
+	case
+		OAuth2TokenTypeHintAccessToken,
 		OAuth2TokenTypeHintRefreshToken:
 		return true
 	}
@@ -33,17 +50,21 @@ func (h OAuth2TokenTypeHint) IsValid() bool {
 	return false
 }
 
-func (h OAuth2TokenTypeHint) String() string { return string(h) }
-
-func (h *OAuth2TokenTypeHint) UnmarshalText(text []byte) error {
-	*h = OAuth2TokenTypeHint(text)
-	if !h.IsValid() {
-		return fmt.Errorf("%s is not a valid OAuth2TokenTypeHint", string(text))
-	}
-
-	return nil
+func (v OAuth2TokenTypeHint) String() string {
+	return string(v)
 }
 
-func (h OAuth2TokenTypeHint) MarshalText() ([]byte, error) {
-	return []byte(h.String()), nil
+func (v OAuth2TokenTypeHint) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *OAuth2TokenTypeHint) UnmarshalText(text []byte) error {
+	val := OAuth2TokenTypeHint(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid OAuth2TokenTypeHint value: %q", string(text))
+	}
+
+	*v = val
+
+	return nil
 }

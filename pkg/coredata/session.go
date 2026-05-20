@@ -16,6 +16,7 @@ package coredata
 
 import (
 	"context"
+	"encoding"
 	"errors"
 	"fmt"
 	"maps"
@@ -59,6 +60,53 @@ const (
 	AuthMethodSAML      AuthMethod = "SAML"
 	AuthMethodOIDC      AuthMethod = "OIDC"
 )
+
+var (
+	_ fmt.Stringer             = AuthMethod("")
+	_ encoding.TextMarshaler   = AuthMethod("")
+	_ encoding.TextUnmarshaler = (*AuthMethod)(nil)
+)
+
+func AuthMethods() []AuthMethod {
+	return []AuthMethod{
+		AuthMethodMagicLink,
+		AuthMethodPassword,
+		AuthMethodSAML,
+		AuthMethodOIDC,
+	}
+}
+
+func (v AuthMethod) IsValid() bool {
+	switch v {
+	case
+		AuthMethodMagicLink,
+		AuthMethodPassword,
+		AuthMethodSAML,
+		AuthMethodOIDC:
+		return true
+	}
+
+	return false
+}
+
+func (v AuthMethod) String() string {
+	return string(v)
+}
+
+func (v AuthMethod) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *AuthMethod) UnmarshalText(text []byte) error {
+	val := AuthMethod(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid AuthMethod value: %q", string(text))
+	}
+
+	*v = val
+
+	return nil
+}
 
 func NewRootSession(identityID gid.GID, method AuthMethod, duration time.Duration) *Session {
 	now := time.Now()

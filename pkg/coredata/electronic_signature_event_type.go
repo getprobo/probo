@@ -15,7 +15,7 @@
 package coredata
 
 import (
-	"database/sql/driver"
+	"encoding"
 	"fmt"
 )
 
@@ -35,58 +35,59 @@ const (
 	ElectronicSignatureEventTypeProcessingError      ElectronicSignatureEventType = "PROCESSING_ERROR"
 )
 
-func (t ElectronicSignatureEventType) MarshalText() ([]byte, error) {
-	return []byte(t.String()), nil
+var (
+	_ fmt.Stringer             = ElectronicSignatureEventType("")
+	_ encoding.TextMarshaler   = ElectronicSignatureEventType("")
+	_ encoding.TextUnmarshaler = (*ElectronicSignatureEventType)(nil)
+)
+
+func ElectronicSignatureEventTypes() []ElectronicSignatureEventType {
+	return []ElectronicSignatureEventType{
+		ElectronicSignatureEventTypeDocumentViewed,
+		ElectronicSignatureEventTypeConsentGiven,
+		ElectronicSignatureEventTypeFullNameTyped,
+		ElectronicSignatureEventTypeSignatureAccepted,
+		ElectronicSignatureEventTypeSignatureCompleted,
+		ElectronicSignatureEventTypeSealComputed,
+		ElectronicSignatureEventTypeTimestampRequested,
+		ElectronicSignatureEventTypeCertificateGenerated,
+		ElectronicSignatureEventTypeProcessingError,
+	}
 }
 
-func (t *ElectronicSignatureEventType) UnmarshalText(data []byte) error {
-	val := string(data)
-
-	switch val {
-	case ElectronicSignatureEventTypeDocumentViewed.String():
-		*t = ElectronicSignatureEventTypeDocumentViewed
-	case ElectronicSignatureEventTypeConsentGiven.String():
-		*t = ElectronicSignatureEventTypeConsentGiven
-	case ElectronicSignatureEventTypeFullNameTyped.String():
-		*t = ElectronicSignatureEventTypeFullNameTyped
-	case ElectronicSignatureEventTypeSignatureAccepted.String():
-		*t = ElectronicSignatureEventTypeSignatureAccepted
-	case ElectronicSignatureEventTypeSignatureCompleted.String():
-		*t = ElectronicSignatureEventTypeSignatureCompleted
-	case ElectronicSignatureEventTypeSealComputed.String():
-		*t = ElectronicSignatureEventTypeSealComputed
-	case ElectronicSignatureEventTypeTimestampRequested.String():
-		*t = ElectronicSignatureEventTypeTimestampRequested
-	case ElectronicSignatureEventTypeCertificateGenerated.String():
-		*t = ElectronicSignatureEventTypeCertificateGenerated
-	case ElectronicSignatureEventTypeProcessingError.String():
-		*t = ElectronicSignatureEventTypeProcessingError
-	default:
-		return fmt.Errorf("invalid ElectronicSignatureEventType value: %q", val)
+func (v ElectronicSignatureEventType) IsValid() bool {
+	switch v {
+	case
+		ElectronicSignatureEventTypeDocumentViewed,
+		ElectronicSignatureEventTypeConsentGiven,
+		ElectronicSignatureEventTypeFullNameTyped,
+		ElectronicSignatureEventTypeSignatureAccepted,
+		ElectronicSignatureEventTypeSignatureCompleted,
+		ElectronicSignatureEventTypeSealComputed,
+		ElectronicSignatureEventTypeTimestampRequested,
+		ElectronicSignatureEventTypeCertificateGenerated,
+		ElectronicSignatureEventTypeProcessingError:
+		return true
 	}
+
+	return false
+}
+
+func (v ElectronicSignatureEventType) String() string {
+	return string(v)
+}
+
+func (v ElectronicSignatureEventType) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *ElectronicSignatureEventType) UnmarshalText(text []byte) error {
+	val := ElectronicSignatureEventType(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid ElectronicSignatureEventType value: %q", string(text))
+	}
+
+	*v = val
 
 	return nil
-}
-
-func (t ElectronicSignatureEventType) String() string {
-	return string(t)
-}
-
-func (t *ElectronicSignatureEventType) Scan(value any) error {
-	var s string
-
-	switch v := value.(type) {
-	case string:
-		s = v
-	case []byte:
-		s = string(v)
-	default:
-		return fmt.Errorf("invalid scan source for ElectronicSignatureEventType, expected string or []byte got %T", value)
-	}
-
-	return t.UnmarshalText([]byte(s))
-}
-
-func (t ElectronicSignatureEventType) Value() (driver.Value, error) {
-	return t.String(), nil
 }

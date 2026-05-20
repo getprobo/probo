@@ -16,6 +16,7 @@ package coredata
 
 import (
 	"database/sql/driver"
+	"encoding"
 	"fmt"
 	"strings"
 )
@@ -30,51 +31,40 @@ const (
 	DocumentVersionSignatureStateSigned    DocumentVersionSignatureState = "SIGNED"
 )
 
-func (pvs DocumentVersionSignatureState) MarshalText() ([]byte, error) {
-	return []byte(pvs.String()), nil
+var (
+	_ fmt.Stringer             = DocumentVersionSignatureState("")
+	_ encoding.TextMarshaler   = DocumentVersionSignatureState("")
+	_ encoding.TextUnmarshaler = (*DocumentVersionSignatureState)(nil)
+)
+
+func (v DocumentVersionSignatureState) IsValid() bool {
+	switch v {
+	case
+		DocumentVersionSignatureStateRequested,
+		DocumentVersionSignatureStateSigned:
+		return true
+	}
+
+	return false
 }
 
-func (pvs *DocumentVersionSignatureState) UnmarshalText(data []byte) error {
-	val := string(data)
+func (v DocumentVersionSignatureState) String() string {
+	return string(v)
+}
 
-	switch val {
-	case DocumentVersionSignatureStateRequested.String():
-		*pvs = DocumentVersionSignatureStateRequested
-	case DocumentVersionSignatureStateSigned.String():
-		*pvs = DocumentVersionSignatureStateSigned
-	default:
-		return fmt.Errorf("invalid DocumentVersionSignatureState value: %q", val)
+func (v DocumentVersionSignatureState) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *DocumentVersionSignatureState) UnmarshalText(text []byte) error {
+	val := DocumentVersionSignatureState(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid DocumentVersionSignatureState value: %q", string(text))
 	}
+
+	*v = val
 
 	return nil
-}
-
-func (pvs DocumentVersionSignatureState) String() string {
-	var val string
-
-	switch pvs {
-	case DocumentVersionSignatureStateRequested:
-		val = "REQUESTED"
-	case DocumentVersionSignatureStateSigned:
-		val = "SIGNED"
-	default:
-		panic(fmt.Errorf("invalid DocumentVersionSignatureState value: %q", string(pvs)))
-	}
-
-	return val
-}
-
-func (pvs *DocumentVersionSignatureState) Scan(value any) error {
-	val, ok := value.(string)
-	if !ok {
-		return fmt.Errorf("invalid scan source for DocumentVersionSignatureState, expected string got %T", value)
-	}
-
-	return pvs.UnmarshalText([]byte(val))
-}
-
-func (pvs DocumentVersionSignatureState) Value() (driver.Value, error) {
-	return pvs.String(), nil
 }
 
 func (states DocumentVersionSignatureStates) Value() (driver.Value, error) {

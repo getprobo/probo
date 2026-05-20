@@ -14,7 +14,12 @@
 
 package coredata
 
-import "fmt"
+import (
+	"encoding"
+	"fmt"
+
+	"go.probo.inc/probo/pkg/page"
+)
 
 type (
 	DocumentOrderField string
@@ -26,6 +31,54 @@ const (
 	DocumentOrderFieldTitle        DocumentOrderField = "TITLE"
 	DocumentOrderFieldDocumentType DocumentOrderField = "DOCUMENT_TYPE"
 )
+
+var (
+	_ page.OrderField          = DocumentOrderField("")
+	_ fmt.Stringer             = DocumentOrderField("")
+	_ encoding.TextMarshaler   = DocumentOrderField("")
+	_ encoding.TextUnmarshaler = (*DocumentOrderField)(nil)
+)
+
+func DocumentOrderFields() []DocumentOrderField {
+	return []DocumentOrderField{
+		DocumentOrderFieldCreatedAt,
+		DocumentOrderFieldUpdatedAt,
+		DocumentOrderFieldTitle,
+		DocumentOrderFieldDocumentType,
+	}
+}
+
+func (v DocumentOrderField) IsValid() bool {
+	switch v {
+	case
+		DocumentOrderFieldCreatedAt,
+		DocumentOrderFieldUpdatedAt,
+		DocumentOrderFieldTitle,
+		DocumentOrderFieldDocumentType:
+		return true
+	}
+
+	return false
+}
+
+func (v DocumentOrderField) String() string {
+	return string(v)
+}
+
+func (v DocumentOrderField) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *DocumentOrderField) UnmarshalText(text []byte) error {
+	val := DocumentOrderField(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid DocumentOrderField value: %q", string(text))
+	}
+
+	*v = val
+
+	return nil
+}
 
 func (p DocumentOrderField) Column() string {
 	switch p {
@@ -40,33 +93,4 @@ func (p DocumentOrderField) Column() string {
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", p))
-}
-
-func (p DocumentOrderField) IsValid() bool {
-	switch p {
-	case DocumentOrderFieldCreatedAt,
-		DocumentOrderFieldUpdatedAt,
-		DocumentOrderFieldTitle,
-		DocumentOrderFieldDocumentType:
-		return true
-	}
-
-	return false
-}
-
-func (p DocumentOrderField) String() string {
-	return string(p)
-}
-
-func (p DocumentOrderField) MarshalText() ([]byte, error) {
-	return []byte(p.String()), nil
-}
-
-func (p *DocumentOrderField) UnmarshalText(text []byte) error {
-	*p = DocumentOrderField(text)
-	if !p.IsValid() {
-		return fmt.Errorf("%s is not a valid DocumentOrderField", string(text))
-	}
-
-	return nil
 }

@@ -15,7 +15,7 @@
 package coredata
 
 import (
-	"database/sql/driver"
+	"encoding"
 	"fmt"
 )
 
@@ -28,6 +28,12 @@ const (
 	DocumentClassificationSecret       DocumentClassification = "SECRET"
 )
 
+var (
+	_ fmt.Stringer             = DocumentClassification("")
+	_ encoding.TextMarshaler   = DocumentClassification("")
+	_ encoding.TextUnmarshaler = (*DocumentClassification)(nil)
+)
+
 func DocumentClassifications() []DocumentClassification {
 	return []DocumentClassification{
 		DocumentClassificationPublic,
@@ -37,44 +43,37 @@ func DocumentClassifications() []DocumentClassification {
 	}
 }
 
-func (dc DocumentClassification) String() string {
-	switch dc {
-	case DocumentClassificationPublic:
-		return "PUBLIC"
-	case DocumentClassificationInternal:
-		return "INTERNAL"
-	case DocumentClassificationConfidential:
-		return "CONFIDENTIAL"
-	case DocumentClassificationSecret:
-		return "SECRET"
+func (v DocumentClassification) IsValid() bool {
+	switch v {
+	case
+		DocumentClassificationPublic,
+		DocumentClassificationInternal,
+		DocumentClassificationConfidential,
+		DocumentClassificationSecret:
+		return true
 	}
 
-	panic(fmt.Errorf("invalid DocumentClassification value: %s", string(dc)))
+	return false
 }
 
-// Scan implements the sql.Scanner interface for database deserialization.
-func (dc *DocumentClassification) Scan(value any) error {
-	if value == nil {
-		return nil
+func (v DocumentClassification) String() string {
+	return string(v)
+}
+
+func (v DocumentClassification) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *DocumentClassification) UnmarshalText(text []byte) error {
+	val := DocumentClassification(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid DocumentClassification value: %q", string(text))
 	}
 
-	var sv string
-
-	switch v := value.(type) {
-	case string:
-		sv = v
-	case []byte:
-		sv = string(v)
-	default:
-		return fmt.Errorf("cannot scan DocumentClassification: expected string or []byte, got %T", value)
-	}
-
-	*dc = DocumentClassification(sv)
+	*v = val
 
 	return nil
 }
 
+// Scan implements the sql.Scanner interface for database deserialization.
 // Value implements the driver.Valuer interface for database serialization.
-func (dc DocumentClassification) Value() (driver.Value, error) {
-	return string(dc), nil
-}

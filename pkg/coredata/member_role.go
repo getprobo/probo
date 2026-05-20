@@ -15,7 +15,7 @@
 package coredata
 
 import (
-	"database/sql/driver"
+	"encoding"
 	"fmt"
 )
 
@@ -29,40 +29,51 @@ const (
 	MembershipRoleAuditor  MembershipRole = "AUDITOR"
 )
 
-func (r MembershipRole) String() string {
-	return string(r)
+var (
+	_ fmt.Stringer             = MembershipRole("")
+	_ encoding.TextMarshaler   = MembershipRole("")
+	_ encoding.TextUnmarshaler = (*MembershipRole)(nil)
+)
+
+func MembershipRoles() []MembershipRole {
+	return []MembershipRole{
+		MembershipRoleOwner,
+		MembershipRoleAdmin,
+		MembershipRoleEmployee,
+		MembershipRoleViewer,
+		MembershipRoleAuditor,
+	}
 }
 
-func (r *MembershipRole) Scan(value any) error {
-	var s string
-
-	switch v := value.(type) {
-	case string:
-		s = v
-	case []byte:
-		s = string(v)
-	default:
-		return fmt.Errorf("unsupported type for MembershipRole: %T", value)
+func (v MembershipRole) IsValid() bool {
+	switch v {
+	case
+		MembershipRoleOwner,
+		MembershipRoleAdmin,
+		MembershipRoleEmployee,
+		MembershipRoleViewer,
+		MembershipRoleAuditor:
+		return true
 	}
 
-	switch s {
-	case "OWNER":
-		*r = MembershipRoleOwner
-	case "ADMIN":
-		*r = MembershipRoleAdmin
-	case "EMPLOYEE":
-		*r = MembershipRoleEmployee
-	case "VIEWER":
-		*r = MembershipRoleViewer
-	case "AUDITOR":
-		*r = MembershipRoleAuditor
-	default:
-		return fmt.Errorf("invalid MembershipRole value: %q", s)
+	return false
+}
+
+func (v MembershipRole) String() string {
+	return string(v)
+}
+
+func (v MembershipRole) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *MembershipRole) UnmarshalText(text []byte) error {
+	val := MembershipRole(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid MembershipRole value: %q", string(text))
 	}
+
+	*v = val
 
 	return nil
-}
-
-func (r MembershipRole) Value() (driver.Value, error) {
-	return r.String(), nil
 }

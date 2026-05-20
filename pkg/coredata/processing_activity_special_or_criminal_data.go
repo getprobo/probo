@@ -15,7 +15,7 @@
 package coredata
 
 import (
-	"database/sql/driver"
+	"encoding"
 	"fmt"
 )
 
@@ -27,6 +27,12 @@ const (
 	ProcessingActivitySpecialOrCriminalDatumPossible ProcessingActivitySpecialOrCriminalDatum = "POSSIBLE"
 )
 
+var (
+	_ fmt.Stringer             = ProcessingActivitySpecialOrCriminalDatum("")
+	_ encoding.TextMarshaler   = ProcessingActivitySpecialOrCriminalDatum("")
+	_ encoding.TextUnmarshaler = (*ProcessingActivitySpecialOrCriminalDatum)(nil)
+)
+
 func ProcessingActivitySpecialOrCriminalData() []ProcessingActivitySpecialOrCriminalDatum {
 	return []ProcessingActivitySpecialOrCriminalDatum{
 		ProcessingActivitySpecialOrCriminalDatumYes,
@@ -35,36 +41,33 @@ func ProcessingActivitySpecialOrCriminalData() []ProcessingActivitySpecialOrCrim
 	}
 }
 
-func (p ProcessingActivitySpecialOrCriminalDatum) String() string {
-	return string(p)
+func (v ProcessingActivitySpecialOrCriminalDatum) IsValid() bool {
+	switch v {
+	case
+		ProcessingActivitySpecialOrCriminalDatumYes,
+		ProcessingActivitySpecialOrCriminalDatumNo,
+		ProcessingActivitySpecialOrCriminalDatumPossible:
+		return true
+	}
+
+	return false
 }
 
-func (p *ProcessingActivitySpecialOrCriminalDatum) Scan(value any) error {
-	var s string
+func (v ProcessingActivitySpecialOrCriminalDatum) String() string {
+	return string(v)
+}
 
-	switch v := value.(type) {
-	case string:
-		s = v
-	case []byte:
-		s = string(v)
-	default:
-		return fmt.Errorf("unsupported type for ProcessingActivitySpecialOrCriminalDatum: %T", value)
+func (v ProcessingActivitySpecialOrCriminalDatum) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *ProcessingActivitySpecialOrCriminalDatum) UnmarshalText(text []byte) error {
+	val := ProcessingActivitySpecialOrCriminalDatum(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid ProcessingActivitySpecialOrCriminalDatum value: %q", string(text))
 	}
 
-	switch s {
-	case "YES":
-		*p = ProcessingActivitySpecialOrCriminalDatumYes
-	case "NO":
-		*p = ProcessingActivitySpecialOrCriminalDatumNo
-	case "POSSIBLE":
-		*p = ProcessingActivitySpecialOrCriminalDatumPossible
-	default:
-		return fmt.Errorf("invalid ProcessingActivitySpecialOrCriminalDatum value: %q", s)
-	}
+	*v = val
 
 	return nil
-}
-
-func (p ProcessingActivitySpecialOrCriminalDatum) Value() (driver.Value, error) {
-	return p.String(), nil
 }

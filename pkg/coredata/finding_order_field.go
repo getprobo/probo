@@ -15,7 +15,10 @@
 package coredata
 
 import (
+	"encoding"
 	"fmt"
+
+	"go.probo.inc/probo/pkg/page"
 )
 
 type FindingOrderField string
@@ -30,31 +33,60 @@ const (
 	FindingOrderFieldKind         FindingOrderField = "KIND"
 )
 
-func (p FindingOrderField) Column() string {
-	return string(p)
+var (
+	_ page.OrderField          = FindingOrderField("")
+	_ fmt.Stringer             = FindingOrderField("")
+	_ encoding.TextMarshaler   = FindingOrderField("")
+	_ encoding.TextUnmarshaler = (*FindingOrderField)(nil)
+)
+
+func FindingOrderFields() []FindingOrderField {
+	return []FindingOrderField{
+		FindingOrderFieldCreatedAt,
+		FindingOrderFieldIdentifiedOn,
+		FindingOrderFieldDueDate,
+		FindingOrderFieldStatus,
+		FindingOrderFieldPriority,
+		FindingOrderFieldReferenceId,
+		FindingOrderFieldKind,
+	}
 }
 
-func (p FindingOrderField) String() string {
-	return string(p)
-}
-
-func (p FindingOrderField) MarshalText() ([]byte, error) {
-	return []byte(p.String()), nil
-}
-
-func (p *FindingOrderField) UnmarshalText(text []byte) error {
-	val := string(text)
-	switch val {
-	case string(FindingOrderFieldCreatedAt),
-		string(FindingOrderFieldIdentifiedOn),
-		string(FindingOrderFieldDueDate),
-		string(FindingOrderFieldStatus),
-		string(FindingOrderFieldPriority),
-		string(FindingOrderFieldReferenceId),
-		string(FindingOrderFieldKind):
-		*p = FindingOrderField(val)
-		return nil
+func (v FindingOrderField) IsValid() bool {
+	switch v {
+	case
+		FindingOrderFieldCreatedAt,
+		FindingOrderFieldIdentifiedOn,
+		FindingOrderFieldDueDate,
+		FindingOrderFieldStatus,
+		FindingOrderFieldPriority,
+		FindingOrderFieldReferenceId,
+		FindingOrderFieldKind:
+		return true
 	}
 
-	return fmt.Errorf("invalid FindingOrderField value: %q", val)
+	return false
+}
+
+func (v FindingOrderField) String() string {
+	return string(v)
+}
+
+func (v FindingOrderField) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *FindingOrderField) UnmarshalText(text []byte) error {
+	val := FindingOrderField(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid FindingOrderField value: %q", string(text))
+	}
+
+	*v = val
+
+	return nil
+}
+
+func (p FindingOrderField) Column() string {
+	return string(p)
 }

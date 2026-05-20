@@ -16,57 +16,63 @@ package coredata
 
 import "testing"
 
-func TestAccessEntryIncrementalTagScan(t *testing.T) {
+func TestAccessEntryIncrementalTagIsValid(t *testing.T) {
 	t.Parallel()
 
-	tests := []struct {
-		name    string
-		input   any
-		want    AccessEntryIncrementalTag
-		wantErr bool
-	}{
-		{name: "new string", input: "NEW", want: AccessEntryIncrementalTagNew},
-		{name: "removed bytes", input: []byte("REMOVED"), want: AccessEntryIncrementalTagRemoved},
-		{name: "unchanged string", input: "UNCHANGED", want: AccessEntryIncrementalTagUnchanged},
-		{name: "invalid value", input: "BOGUS", wantErr: true},
-		{name: "unsupported type", input: 42, wantErr: true},
+	for _, value := range AccessEntryIncrementalTags() {
+		if !value.IsValid() {
+			t.Fatalf("IsValid() = false for %q", value)
+		}
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
-			var got AccessEntryIncrementalTag
-
-			err := got.Scan(tt.input)
-			if tt.wantErr {
-				if err == nil {
-					t.Fatalf("Scan(%v) expected error", tt.input)
-				}
-
-				return
-			}
-
-			if err != nil {
-				t.Fatalf("Scan(%v) returned error: %v", tt.input, err)
-			}
-
-			if got != tt.want {
-				t.Fatalf("Scan(%v) = %q, want %q", tt.input, got, tt.want)
-			}
-		})
+	if AccessEntryIncrementalTag("BOGUS").IsValid() {
+		t.Fatal("IsValid() = true for invalid value")
 	}
 }
 
-func TestAccessEntryIncrementalTagValue(t *testing.T) {
+func TestAccessEntryIncrementalTagUnmarshalText(t *testing.T) {
 	t.Parallel()
 
-	got, err := AccessEntryIncrementalTagNew.Value()
-	if err != nil {
-		t.Fatalf("Value() returned error: %v", err)
+	for _, value := range AccessEntryIncrementalTags() {
+		t.Run(string(value), func(t *testing.T) {
+			t.Parallel()
+
+			var got AccessEntryIncrementalTag
+			if err := got.UnmarshalText([]byte(value)); err != nil {
+				t.Fatalf("UnmarshalText(%q) returned error: %v", value, err)
+			}
+
+			if got != value {
+				t.Fatalf("UnmarshalText(%q) = %q, want %q", value, got, value)
+			}
+		})
 	}
 
-	if got != "NEW" {
-		t.Fatalf("Value() = %q, want %q", got, "NEW")
+	t.Run("invalid", func(t *testing.T) {
+		t.Parallel()
+
+		var got AccessEntryIncrementalTag
+		if err := got.UnmarshalText([]byte("BOGUS")); err == nil {
+			t.Fatal("UnmarshalText(BOGUS) expected error")
+		}
+	})
+}
+
+func TestAccessEntryIncrementalTagMarshalText(t *testing.T) {
+	t.Parallel()
+
+	for _, value := range AccessEntryIncrementalTags() {
+		t.Run(string(value), func(t *testing.T) {
+			t.Parallel()
+
+			got, err := value.MarshalText()
+			if err != nil {
+				t.Fatalf("MarshalText() returned error: %v", err)
+			}
+
+			if string(got) != value.String() {
+				t.Fatalf("MarshalText() = %q, want %q", string(got), value.String())
+			}
+		})
 	}
 }

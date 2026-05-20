@@ -15,7 +15,7 @@
 package coredata
 
 import (
-	"database/sql/driver"
+	"encoding"
 	"fmt"
 )
 
@@ -28,6 +28,12 @@ const (
 	TaskPriorityLow    TaskPriority = "LOW"
 )
 
+var (
+	_ fmt.Stringer             = TaskPriority("")
+	_ encoding.TextMarshaler   = TaskPriority("")
+	_ encoding.TextUnmarshaler = (*TaskPriority)(nil)
+)
+
 func TaskPriorities() []TaskPriority {
 	return []TaskPriority{
 		TaskPriorityUrgent,
@@ -37,38 +43,34 @@ func TaskPriorities() []TaskPriority {
 	}
 }
 
-func (tp TaskPriority) String() string {
-	return string(tp)
+func (v TaskPriority) IsValid() bool {
+	switch v {
+	case
+		TaskPriorityUrgent,
+		TaskPriorityHigh,
+		TaskPriorityMedium,
+		TaskPriorityLow:
+		return true
+	}
+
+	return false
 }
 
-func (tp *TaskPriority) Scan(value any) error {
-	var s string
+func (v TaskPriority) String() string {
+	return string(v)
+}
 
-	switch v := value.(type) {
-	case string:
-		s = v
-	case []byte:
-		s = string(v)
-	default:
-		return fmt.Errorf("unsupported type for TaskPriority: %T", value)
+func (v TaskPriority) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *TaskPriority) UnmarshalText(text []byte) error {
+	val := TaskPriority(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid TaskPriority value: %q", string(text))
 	}
 
-	switch s {
-	case "URGENT":
-		*tp = TaskPriorityUrgent
-	case "HIGH":
-		*tp = TaskPriorityHigh
-	case "MEDIUM":
-		*tp = TaskPriorityMedium
-	case "LOW":
-		*tp = TaskPriorityLow
-	default:
-		return fmt.Errorf("invalid TaskPriority value: %q", s)
-	}
+	*v = val
 
 	return nil
-}
-
-func (tp TaskPriority) Value() (driver.Value, error) {
-	return tp.String(), nil
 }

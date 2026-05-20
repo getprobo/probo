@@ -14,6 +14,13 @@
 
 package coredata
 
+import (
+	"encoding"
+	"fmt"
+
+	"go.probo.inc/probo/pkg/page"
+)
+
 type (
 	ThirdPartyOrderField string
 )
@@ -24,19 +31,52 @@ const (
 	ThirdPartyOrderFieldName      ThirdPartyOrderField = "NAME"
 )
 
+var (
+	_ page.OrderField          = ThirdPartyOrderField("")
+	_ fmt.Stringer             = ThirdPartyOrderField("")
+	_ encoding.TextMarshaler   = ThirdPartyOrderField("")
+	_ encoding.TextUnmarshaler = (*ThirdPartyOrderField)(nil)
+)
+
+func ThirdPartyOrderFields() []ThirdPartyOrderField {
+	return []ThirdPartyOrderField{
+		ThirdPartyOrderFieldCreatedAt,
+		ThirdPartyOrderFieldUpdatedAt,
+		ThirdPartyOrderFieldName,
+	}
+}
+
+func (v ThirdPartyOrderField) IsValid() bool {
+	switch v {
+	case
+		ThirdPartyOrderFieldCreatedAt,
+		ThirdPartyOrderFieldUpdatedAt,
+		ThirdPartyOrderFieldName:
+		return true
+	}
+
+	return false
+}
+
+func (v ThirdPartyOrderField) String() string {
+	return string(v)
+}
+
+func (v ThirdPartyOrderField) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *ThirdPartyOrderField) UnmarshalText(text []byte) error {
+	val := ThirdPartyOrderField(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid ThirdPartyOrderField value: %q", string(text))
+	}
+
+	*v = val
+
+	return nil
+}
+
 func (p ThirdPartyOrderField) Column() string {
 	return string(p)
-}
-
-func (p ThirdPartyOrderField) String() string {
-	return string(p)
-}
-
-func (p ThirdPartyOrderField) MarshalText() ([]byte, error) {
-	return []byte(p.String()), nil
-}
-
-func (p *ThirdPartyOrderField) UnmarshalText(text []byte) error {
-	*p = ThirdPartyOrderField(text)
-	return nil
 }

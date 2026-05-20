@@ -16,6 +16,7 @@ package coredata
 
 import (
 	"context"
+	"encoding"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -59,6 +60,57 @@ const (
 	AgentRunStatusCompleted        AgentRunStatus = "COMPLETED"
 	AgentRunStatusFailed           AgentRunStatus = "FAILED"
 )
+
+var (
+	_ fmt.Stringer             = AgentRunStatus("")
+	_ encoding.TextMarshaler   = AgentRunStatus("")
+	_ encoding.TextUnmarshaler = (*AgentRunStatus)(nil)
+)
+
+func AgentRunStatuses() []AgentRunStatus {
+	return []AgentRunStatus{
+		AgentRunStatusPending,
+		AgentRunStatusRunning,
+		AgentRunStatusSuspended,
+		AgentRunStatusAwaitingApproval,
+		AgentRunStatusCompleted,
+		AgentRunStatusFailed,
+	}
+}
+
+func (v AgentRunStatus) IsValid() bool {
+	switch v {
+	case
+		AgentRunStatusPending,
+		AgentRunStatusRunning,
+		AgentRunStatusSuspended,
+		AgentRunStatusAwaitingApproval,
+		AgentRunStatusCompleted,
+		AgentRunStatusFailed:
+		return true
+	}
+
+	return false
+}
+
+func (v AgentRunStatus) String() string {
+	return string(v)
+}
+
+func (v AgentRunStatus) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *AgentRunStatus) UnmarshalText(text []byte) error {
+	val := AgentRunStatus(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid AgentRunStatus value: %q", string(text))
+	}
+
+	*v = val
+
+	return nil
+}
 
 func (e AgentRun) CursorKey(orderBy AgentRunOrderField) page.CursorKey {
 	switch orderBy {

@@ -14,7 +14,12 @@
 
 package coredata
 
-import "fmt"
+import (
+	"encoding"
+	"fmt"
+
+	"go.probo.inc/probo/pkg/page"
+)
 
 type (
 	AgentRunOrderField string
@@ -24,6 +29,48 @@ const (
 	AgentRunOrderFieldCreatedAt AgentRunOrderField = "CREATED_AT"
 )
 
+var (
+	_ page.OrderField          = AgentRunOrderField("")
+	_ fmt.Stringer             = AgentRunOrderField("")
+	_ encoding.TextMarshaler   = AgentRunOrderField("")
+	_ encoding.TextUnmarshaler = (*AgentRunOrderField)(nil)
+)
+
+func AgentRunOrderFields() []AgentRunOrderField {
+	return []AgentRunOrderField{
+		AgentRunOrderFieldCreatedAt,
+	}
+}
+
+func (v AgentRunOrderField) IsValid() bool {
+	switch v {
+	case
+		AgentRunOrderFieldCreatedAt:
+		return true
+	}
+
+	return false
+}
+
+func (v AgentRunOrderField) String() string {
+	return string(v)
+}
+
+func (v AgentRunOrderField) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *AgentRunOrderField) UnmarshalText(text []byte) error {
+	val := AgentRunOrderField(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid AgentRunOrderField value: %q", string(text))
+	}
+
+	*v = val
+
+	return nil
+}
+
 func (p AgentRunOrderField) Column() string {
 	switch p {
 	case AgentRunOrderFieldCreatedAt:
@@ -31,30 +78,4 @@ func (p AgentRunOrderField) Column() string {
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", p))
-}
-
-func (p AgentRunOrderField) IsValid() bool {
-	switch p {
-	case AgentRunOrderFieldCreatedAt:
-		return true
-	}
-
-	return false
-}
-
-func (p AgentRunOrderField) String() string {
-	return string(p)
-}
-
-func (p *AgentRunOrderField) UnmarshalText(text []byte) error {
-	*p = AgentRunOrderField(text)
-	if !p.IsValid() {
-		return fmt.Errorf("%s is not a valid AgentRunOrderField", string(text))
-	}
-
-	return nil
-}
-
-func (p AgentRunOrderField) MarshalText() ([]byte, error) {
-	return []byte(p.String()), nil
 }

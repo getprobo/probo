@@ -14,7 +14,12 @@
 
 package coredata
 
-import "fmt"
+import (
+	"encoding"
+	"fmt"
+
+	"go.probo.inc/probo/pkg/page"
+)
 
 type (
 	DocumentVersionApprovalDecisionOrderField string
@@ -24,6 +29,48 @@ const (
 	DocumentVersionApprovalDecisionOrderFieldCreatedAt DocumentVersionApprovalDecisionOrderField = "CREATED_AT"
 )
 
+var (
+	_ page.OrderField          = DocumentVersionApprovalDecisionOrderField("")
+	_ fmt.Stringer             = DocumentVersionApprovalDecisionOrderField("")
+	_ encoding.TextMarshaler   = DocumentVersionApprovalDecisionOrderField("")
+	_ encoding.TextUnmarshaler = (*DocumentVersionApprovalDecisionOrderField)(nil)
+)
+
+func DocumentVersionApprovalDecisionOrderFields() []DocumentVersionApprovalDecisionOrderField {
+	return []DocumentVersionApprovalDecisionOrderField{
+		DocumentVersionApprovalDecisionOrderFieldCreatedAt,
+	}
+}
+
+func (v DocumentVersionApprovalDecisionOrderField) IsValid() bool {
+	switch v {
+	case
+		DocumentVersionApprovalDecisionOrderFieldCreatedAt:
+		return true
+	}
+
+	return false
+}
+
+func (v DocumentVersionApprovalDecisionOrderField) String() string {
+	return string(v)
+}
+
+func (v DocumentVersionApprovalDecisionOrderField) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *DocumentVersionApprovalDecisionOrderField) UnmarshalText(text []byte) error {
+	val := DocumentVersionApprovalDecisionOrderField(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid DocumentVersionApprovalDecisionOrderField value: %q", string(text))
+	}
+
+	*v = val
+
+	return nil
+}
+
 func (e DocumentVersionApprovalDecisionOrderField) Column() string {
 	switch e {
 	case DocumentVersionApprovalDecisionOrderFieldCreatedAt:
@@ -31,28 +78,4 @@ func (e DocumentVersionApprovalDecisionOrderField) Column() string {
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", e))
-}
-
-func (e DocumentVersionApprovalDecisionOrderField) IsValid() bool {
-	switch e {
-	case DocumentVersionApprovalDecisionOrderFieldCreatedAt:
-		return true
-	}
-
-	return false
-}
-
-func (e DocumentVersionApprovalDecisionOrderField) String() string { return string(e) }
-
-func (e *DocumentVersionApprovalDecisionOrderField) UnmarshalText(text []byte) error {
-	*e = DocumentVersionApprovalDecisionOrderField(text)
-	if !e.IsValid() {
-		return fmt.Errorf("%s is not a valid DocumentVersionApprovalDecisionOrderField", string(text))
-	}
-
-	return nil
-}
-
-func (e DocumentVersionApprovalDecisionOrderField) MarshalText() ([]byte, error) {
-	return []byte(e.String()), nil
 }

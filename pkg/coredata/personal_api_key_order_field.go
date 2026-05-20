@@ -14,6 +14,13 @@
 
 package coredata
 
+import (
+	"encoding"
+	"fmt"
+
+	"go.probo.inc/probo/pkg/page"
+)
+
 type (
 	PersonalAPIKeyOrderField string
 )
@@ -22,19 +29,48 @@ const (
 	PersonalAPIKeyOrderFieldCreatedAt PersonalAPIKeyOrderField = "CREATED_AT"
 )
 
+var (
+	_ page.OrderField          = PersonalAPIKeyOrderField("")
+	_ fmt.Stringer             = PersonalAPIKeyOrderField("")
+	_ encoding.TextMarshaler   = PersonalAPIKeyOrderField("")
+	_ encoding.TextUnmarshaler = (*PersonalAPIKeyOrderField)(nil)
+)
+
+func PersonalAPIKeyOrderFields() []PersonalAPIKeyOrderField {
+	return []PersonalAPIKeyOrderField{
+		PersonalAPIKeyOrderFieldCreatedAt,
+	}
+}
+
+func (v PersonalAPIKeyOrderField) IsValid() bool {
+	switch v {
+	case
+		PersonalAPIKeyOrderFieldCreatedAt:
+		return true
+	}
+
+	return false
+}
+
+func (v PersonalAPIKeyOrderField) String() string {
+	return string(v)
+}
+
+func (v PersonalAPIKeyOrderField) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *PersonalAPIKeyOrderField) UnmarshalText(text []byte) error {
+	val := PersonalAPIKeyOrderField(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid PersonalAPIKeyOrderField value: %q", string(text))
+	}
+
+	*v = val
+
+	return nil
+}
+
 func (p PersonalAPIKeyOrderField) Column() string {
 	return string(p)
-}
-
-func (p PersonalAPIKeyOrderField) String() string {
-	return string(p)
-}
-
-func (p PersonalAPIKeyOrderField) MarshalText() ([]byte, error) {
-	return []byte(p.String()), nil
-}
-
-func (p *PersonalAPIKeyOrderField) UnmarshalText(text []byte) error {
-	*p = PersonalAPIKeyOrderField(text)
-	return nil
 }

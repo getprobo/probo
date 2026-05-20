@@ -15,7 +15,7 @@
 package coredata
 
 import (
-	"database/sql/driver"
+	"encoding"
 	"fmt"
 )
 
@@ -29,6 +29,12 @@ const (
 	TrackerTypeCacheStorage   TrackerType = "CACHE_STORAGE"
 )
 
+var (
+	_ fmt.Stringer             = TrackerType("")
+	_ encoding.TextMarshaler   = TrackerType("")
+	_ encoding.TextUnmarshaler = (*TrackerType)(nil)
+)
+
 func TrackerTypes() []TrackerType {
 	return []TrackerType{
 		TrackerTypeCookie,
@@ -39,49 +45,35 @@ func TrackerTypes() []TrackerType {
 	}
 }
 
-func (s TrackerType) String() string {
-	return string(s)
-}
-
-func (s *TrackerType) Scan(value any) error {
-	var v string
-
-	switch val := value.(type) {
-	case string:
-		v = val
-	case []byte:
-		v = string(val)
-	default:
-		return fmt.Errorf("unsupported type for TrackerType: %T", value)
-	}
-
-	switch TrackerType(v) {
-	case TrackerTypeCookie:
-		*s = TrackerTypeCookie
-	case TrackerTypeLocalStorage:
-		*s = TrackerTypeLocalStorage
-	case TrackerTypeSessionStorage:
-		*s = TrackerTypeSessionStorage
-	case TrackerTypeIndexedDB:
-		*s = TrackerTypeIndexedDB
-	case TrackerTypeCacheStorage:
-		*s = TrackerTypeCacheStorage
-	default:
-		return fmt.Errorf("invalid TrackerType value: %q", v)
-	}
-
-	return nil
-}
-
-func (s TrackerType) Value() (driver.Value, error) {
-	switch s {
-	case TrackerTypeCookie,
+func (v TrackerType) IsValid() bool {
+	switch v {
+	case
+		TrackerTypeCookie,
 		TrackerTypeLocalStorage,
 		TrackerTypeSessionStorage,
 		TrackerTypeIndexedDB,
 		TrackerTypeCacheStorage:
-		return string(s), nil
-	default:
-		return nil, fmt.Errorf("invalid TrackerType: %s", s)
+		return true
 	}
+
+	return false
+}
+
+func (v TrackerType) String() string {
+	return string(v)
+}
+
+func (v TrackerType) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *TrackerType) UnmarshalText(text []byte) error {
+	val := TrackerType(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid TrackerType value: %q", string(text))
+	}
+
+	*v = val
+
+	return nil
 }

@@ -15,7 +15,7 @@
 package coredata
 
 import (
-	"database/sql/driver"
+	"encoding"
 	"fmt"
 )
 
@@ -29,6 +29,12 @@ const (
 	AccessEntryAuthMethodUnknown        AccessEntryAuthMethod = "UNKNOWN"
 )
 
+var (
+	_ fmt.Stringer             = AccessEntryAuthMethod("")
+	_ encoding.TextMarshaler   = AccessEntryAuthMethod("")
+	_ encoding.TextUnmarshaler = (*AccessEntryAuthMethod)(nil)
+)
+
 func AccessEntryAuthMethods() []AccessEntryAuthMethod {
 	return []AccessEntryAuthMethod{
 		AccessEntryAuthMethodSSO,
@@ -39,40 +45,35 @@ func AccessEntryAuthMethods() []AccessEntryAuthMethod {
 	}
 }
 
-func (a AccessEntryAuthMethod) String() string {
-	return string(a)
+func (v AccessEntryAuthMethod) IsValid() bool {
+	switch v {
+	case
+		AccessEntryAuthMethodSSO,
+		AccessEntryAuthMethodPassword,
+		AccessEntryAuthMethodAPIKey,
+		AccessEntryAuthMethodServiceAccount,
+		AccessEntryAuthMethodUnknown:
+		return true
+	}
+
+	return false
 }
 
-func (a *AccessEntryAuthMethod) Scan(value any) error {
-	var str string
+func (v AccessEntryAuthMethod) String() string {
+	return string(v)
+}
 
-	switch v := value.(type) {
-	case string:
-		str = v
-	case []byte:
-		str = string(v)
-	default:
-		return fmt.Errorf("cannot scan AccessEntryAuthMethod: unsupported type %T", value)
+func (v AccessEntryAuthMethod) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *AccessEntryAuthMethod) UnmarshalText(text []byte) error {
+	val := AccessEntryAuthMethod(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid AccessEntryAuthMethod value: %q", string(text))
 	}
 
-	switch str {
-	case "SSO":
-		*a = AccessEntryAuthMethodSSO
-	case "PASSWORD":
-		*a = AccessEntryAuthMethodPassword
-	case "API_KEY":
-		*a = AccessEntryAuthMethodAPIKey
-	case "SERVICE_ACCOUNT":
-		*a = AccessEntryAuthMethodServiceAccount
-	case "UNKNOWN":
-		*a = AccessEntryAuthMethodUnknown
-	default:
-		return fmt.Errorf("cannot parse AccessEntryAuthMethod: invalid value %q", str)
-	}
+	*v = val
 
 	return nil
-}
-
-func (a AccessEntryAuthMethod) Value() (driver.Value, error) {
-	return a.String(), nil
 }
