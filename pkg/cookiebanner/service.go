@@ -549,8 +549,10 @@ func (s *Service) ensureDraftVersionForBanner(
 		return nil, fmt.Errorf("cannot load cookie banner: %w", err)
 	}
 
+	consentFilter := coredata.NewCookieCategoryFilter(new(coredata.CookieCategoryKindUncategorised))
+
 	var categories coredata.CookieCategories
-	if err := categories.LoadAllConsentCategoriesByCookieBannerID(ctx, tx, scope, bannerID); err != nil {
+	if err := categories.LoadAllByCookieBannerID(ctx, tx, scope, bannerID, consentFilter); err != nil {
 		return nil, fmt.Errorf("cannot load cookie categories: %w", err)
 	}
 
@@ -1192,18 +1194,19 @@ func (s *Service) GetCookieCategoriesByIDs(
 	return categories, nil
 }
 
-func (s *Service) ListCookieCategoriesForBanner(
+func (s *Service) ListCategoriesForBanner(
 	ctx context.Context,
 	scope coredata.Scoper,
 	bannerID gid.GID,
 	cursor *page.Cursor[coredata.CookieCategoryOrderField],
+	filter *coredata.CookieCategoryFilter,
 ) (coredata.CookieCategories, error) {
 	var categories coredata.CookieCategories
 
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			if err := categories.LoadConsentCategoriesByCookieBannerID(ctx, conn, scope, bannerID, cursor); err != nil {
+			if err := categories.LoadByCookieBannerID(ctx, conn, scope, bannerID, cursor, filter); err != nil {
 				return fmt.Errorf("cannot list cookie categories: %w", err)
 			}
 
@@ -1217,10 +1220,11 @@ func (s *Service) ListCookieCategoriesForBanner(
 	return categories, nil
 }
 
-func (s *Service) CountCookieCategoriesForBanner(
+func (s *Service) CountCategoriesForBanner(
 	ctx context.Context,
 	scope coredata.Scoper,
 	bannerID gid.GID,
+	filter *coredata.CookieCategoryFilter,
 ) (int, error) {
 	var count int
 
@@ -1232,7 +1236,7 @@ func (s *Service) CountCookieCategoriesForBanner(
 				err        error
 			)
 
-			count, err = categories.CountConsentCategoriesByCookieBannerID(ctx, conn, scope, bannerID)
+			count, err = categories.CountByCookieBannerID(ctx, conn, scope, bannerID, filter)
 			if err != nil {
 				return fmt.Errorf("cannot count cookie categories: %w", err)
 			}
@@ -1637,8 +1641,10 @@ func (s *Service) GetActiveBannerConfig(
 				return fmt.Errorf("cannot get version snapshot: %w", err)
 			}
 
+			consentFilter := coredata.NewCookieCategoryFilter(new(coredata.CookieCategoryKindUncategorised))
+
 			var categories coredata.CookieCategories
-			if err := categories.LoadAllConsentCategoriesByCookieBannerID(ctx, conn, scope, banner.ID); err != nil {
+			if err := categories.LoadAllByCookieBannerID(ctx, conn, scope, banner.ID, consentFilter); err != nil {
 				return fmt.Errorf("cannot load cookie categories: %w", err)
 			}
 
@@ -2621,7 +2627,7 @@ func (s *Service) MoveTrackerPatternToCategory(
 	return &result, nil
 }
 
-func (s *Service) ListUncategorisedTrackerPatterns(
+func (s *Service) ListTrackerPatternsForBanner(
 	ctx context.Context,
 	scope coredata.Scoper,
 	bannerID gid.GID,
@@ -2633,8 +2639,8 @@ func (s *Service) ListUncategorisedTrackerPatterns(
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			if err := patterns.LoadUncategorisedByCookieBannerID(ctx, conn, scope, bannerID, cursor, filter); err != nil {
-				return fmt.Errorf("cannot list uncategorised tracker patterns: %w", err)
+			if err := patterns.LoadByCookieBannerID(ctx, conn, scope, bannerID, cursor, filter); err != nil {
+				return fmt.Errorf("cannot list tracker patterns for banner: %w", err)
 			}
 
 			return nil
@@ -2647,7 +2653,7 @@ func (s *Service) ListUncategorisedTrackerPatterns(
 	return patterns, nil
 }
 
-func (s *Service) CountUncategorisedTrackerPatterns(
+func (s *Service) CountTrackerPatternsForBanner(
 	ctx context.Context,
 	scope coredata.Scoper,
 	bannerID gid.GID,
@@ -2663,9 +2669,9 @@ func (s *Service) CountUncategorisedTrackerPatterns(
 				err      error
 			)
 
-			count, err = patterns.CountUncategorisedByCookieBannerID(ctx, conn, scope, bannerID, filter)
+			count, err = patterns.CountByCookieBannerID(ctx, conn, scope, bannerID, filter)
 			if err != nil {
-				return fmt.Errorf("cannot count uncategorised tracker patterns: %w", err)
+				return fmt.Errorf("cannot count tracker patterns for banner: %w", err)
 			}
 
 			return nil

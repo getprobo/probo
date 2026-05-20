@@ -23,6 +23,10 @@ import (
 type (
 	CookieCategoryOrderBy OrderBy[coredata.CookieCategoryOrderField]
 
+	CookieCategoryFilter struct {
+		ExcludeKind *coredata.CookieCategoryKind
+	}
+
 	CookieCategoryConnection struct {
 		TotalCount int
 		Edges      []*CookieCategoryEdge
@@ -30,6 +34,7 @@ type (
 
 		Resolver any
 		ParentID gid.GID
+		Filter   *coredata.CookieCategoryFilter
 	}
 )
 
@@ -51,6 +56,18 @@ func NewCookieCategoryConnection(
 		Resolver: parentType,
 		ParentID: parentID,
 	}
+}
+
+func NewCookieCategoryConnectionWithFilter(
+	p *page.Page[*coredata.CookieCategory, coredata.CookieCategoryOrderField],
+	parentType any,
+	parentID gid.GID,
+	filter *coredata.CookieCategoryFilter,
+) *CookieCategoryConnection {
+	conn := NewCookieCategoryConnection(p, parentType, parentID)
+	conn.Filter = filter
+
+	return conn
 }
 
 func NewCookieCategoryEdge(c *coredata.CookieCategory, orderBy coredata.CookieCategoryOrderField) *CookieCategoryEdge {

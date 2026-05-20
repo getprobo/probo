@@ -45,8 +45,8 @@ func (r *cookieBannerResolver) Organization(ctx context.Context, obj *types.Cook
 	return types.NewOrganization(organization), nil
 }
 
-// ConsentCategories is the resolver for the consentCategories field.
-func (r *cookieBannerResolver) ConsentCategories(ctx context.Context, obj *types.CookieBanner, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.CookieCategoryOrderBy) (*types.CookieCategoryConnection, error) {
+// Categories is the resolver for the categories field.
+func (r *cookieBannerResolver) Categories(ctx context.Context, obj *types.CookieBanner, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.CookieCategoryOrderBy, filter *types.CookieCategoryFilter) (*types.CookieCategoryConnection, error) {
 	if err := r.authorize(ctx, obj.ID, probo.ActionCookieCategoryList); err != nil {
 		return nil, err
 	}
@@ -65,7 +65,12 @@ func (r *cookieBannerResolver) ConsentCategories(ctx context.Context, obj *types
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 	scope := coredata.NewScopeFromObjectID(obj.ID)
 
-	categories, err := r.cookieBanner.ListCookieCategoriesForBanner(ctx, scope, obj.ID, cursor)
+	var cdFilter *coredata.CookieCategoryFilter
+	if filter != nil && filter.ExcludeKind != nil {
+		cdFilter = coredata.NewCookieCategoryFilter(filter.ExcludeKind)
+	}
+
+	categories, err := r.cookieBanner.ListCategoriesForBanner(ctx, scope, obj.ID, cursor, cdFilter)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list cookie categories", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -73,7 +78,7 @@ func (r *cookieBannerResolver) ConsentCategories(ctx context.Context, obj *types
 
 	p := page.NewPage(categories, cursor)
 
-	return types.NewCookieCategoryConnection(p, r, obj.ID), nil
+	return types.NewCookieCategoryConnectionWithFilter(p, r, obj.ID, cdFilter), nil
 }
 
 // Translations is the resolver for the translations field.
@@ -180,8 +185,8 @@ func (r *cookieBannerResolver) ConsentRecords(ctx context.Context, obj *types.Co
 	return types.NewCookieConsentRecordConnection(p, r, obj.ID, coredataFilter), nil
 }
 
-// UncategorisedTrackerPatterns is the resolver for the uncategorisedTrackerPatterns field.
-func (r *cookieBannerResolver) UncategorisedTrackerPatterns(ctx context.Context, obj *types.CookieBanner, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TrackerPatternOrderBy, filter *types.TrackerPatternFilter) (*types.TrackerPatternConnection, error) {
+// TrackerPatterns is the resolver for the trackerPatterns field.
+func (r *cookieBannerResolver) TrackerPatterns(ctx context.Context, obj *types.CookieBanner, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TrackerPatternOrderBy, filter *types.TrackerPatternFilter) (*types.TrackerPatternConnection, error) {
 	if err := r.authorize(ctx, obj.ID, probo.ActionTrackerPatternList); err != nil {
 		return nil, err
 	}
@@ -202,12 +207,13 @@ func (r *cookieBannerResolver) UncategorisedTrackerPatterns(ctx context.Context,
 
 	coredataFilter := coredata.NewTrackerPatternFilter(nil, nil, nil)
 	if filter != nil {
+		coredataFilter = coredata.NewTrackerPatternFilter(nil, filter.CookieCategoryID, nil)
 		coredataFilter = coredataFilter.WithQuery(filter.Query).WithSource(filter.Source).WithTrackerType(filter.TrackerType)
 	}
 
-	patterns, err := r.cookieBanner.ListUncategorisedTrackerPatterns(ctx, scope, obj.ID, cursor, coredataFilter)
+	patterns, err := r.cookieBanner.ListTrackerPatternsForBanner(ctx, scope, obj.ID, cursor, coredataFilter)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list uncategorised tracker patterns", log.Error(err))
+		r.logger.ErrorCtx(ctx, "cannot list tracker patterns", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -418,7 +424,7 @@ func (r *cookieCategoryConnectionResolver) TotalCount(ctx context.Context, obj *
 
 	scope := coredata.NewScopeFromObjectID(obj.ParentID)
 
-	count, err := r.cookieBanner.CountCookieCategoriesForBanner(ctx, scope, obj.ParentID)
+	count, err := r.cookieBanner.CountCategoriesForBanner(ctx, scope, obj.ParentID, obj.Filter)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot count cookie categories", log.Error(err))
 		return 0, gqlutils.Internal(ctx)
@@ -1291,10 +1297,11 @@ func (r *trackerPatternConnectionResolver) TotalCount(ctx context.Context, obj *
 	default:
 		filter := coredata.NewTrackerPatternFilter(nil, nil, nil)
 		if obj.Filter != nil {
+			filter = coredata.NewTrackerPatternFilter(nil, obj.Filter.CookieCategoryID, nil)
 			filter = filter.WithQuery(obj.Filter.Query).WithSource(obj.Filter.Source).WithTrackerType(obj.Filter.TrackerType)
 		}
 
-		count, err = r.cookieBanner.CountUncategorisedTrackerPatterns(ctx, scope, obj.ParentID, filter)
+		count, err = r.cookieBanner.CountTrackerPatternsForBanner(ctx, scope, obj.ParentID, filter)
 	}
 
 	if err != nil {

@@ -202,6 +202,7 @@ func (c *CookieCategories) LoadByCookieBannerID(
 	scope Scoper,
 	cookieBannerID gid.GID,
 	cursor *page.Cursor[CookieCategoryOrderField],
+	filter *CookieCategoryFilter,
 ) error {
 	q := `
 SELECT
@@ -223,12 +224,14 @@ WHERE
 	%s
 	AND cookie_banner_id = @cookie_banner_id
 	AND %s
+	AND %s
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
+	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"cookie_banner_id": cookieBannerID}
 	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
@@ -251,6 +254,7 @@ func (c *CookieCategories) CountByCookieBannerID(
 	conn pg.Querier,
 	scope Scoper,
 	cookieBannerID gid.GID,
+	filter *CookieCategoryFilter,
 ) (int, error) {
 	q := `
 SELECT
@@ -260,101 +264,14 @@ FROM
 WHERE
 	%s
 	AND cookie_banner_id = @cookie_banner_id
-`
-
-	q = fmt.Sprintf(q, scope.SQLFragment())
-
-	args := pgx.StrictNamedArgs{"cookie_banner_id": cookieBannerID}
-	maps.Copy(args, scope.SQLArguments())
-
-	row := conn.QueryRow(ctx, q, args)
-
-	var count int
-	if err := row.Scan(&count); err != nil {
-		return 0, fmt.Errorf("cannot scan count: %w", err)
-	}
-
-	return count, nil
-}
-
-func (c *CookieCategories) LoadConsentCategoriesByCookieBannerID(
-	ctx context.Context,
-	conn pg.Querier,
-	scope Scoper,
-	cookieBannerID gid.GID,
-	cursor *page.Cursor[CookieCategoryOrderField],
-) error {
-	q := `
-SELECT
-	id,
-	organization_id,
-	cookie_banner_id,
-	name,
-	slug,
-	description,
-	kind,
-	rank,
-	gcm_consent_types,
-	posthog_consent,
-	created_at,
-	updated_at
-FROM
-	cookie_categories
-WHERE
-	%s
-	AND cookie_banner_id = @cookie_banner_id
-	AND kind != @excluded_kind
 	AND %s
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
+	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
 
-	args := pgx.StrictNamedArgs{
-		"cookie_banner_id": cookieBannerID,
-		"excluded_kind":    CookieCategoryKindUncategorised,
-	}
+	args := pgx.StrictNamedArgs{"cookie_banner_id": cookieBannerID}
 	maps.Copy(args, scope.SQLArguments())
-	maps.Copy(args, cursor.SQLArguments())
-
-	rows, err := conn.Query(ctx, q, args)
-	if err != nil {
-		return fmt.Errorf("cannot query consent cookie categories: %w", err)
-	}
-
-	categories, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[CookieCategory])
-	if err != nil {
-		return fmt.Errorf("cannot collect consent cookie categories: %w", err)
-	}
-
-	*c = categories
-
-	return nil
-}
-
-func (c *CookieCategories) CountConsentCategoriesByCookieBannerID(
-	ctx context.Context,
-	conn pg.Querier,
-	scope Scoper,
-	cookieBannerID gid.GID,
-) (int, error) {
-	q := `
-SELECT
-	COUNT(id)
-FROM
-	cookie_categories
-WHERE
-	%s
-	AND cookie_banner_id = @cookie_banner_id
-	AND kind != @excluded_kind
-`
-
-	q = fmt.Sprintf(q, scope.SQLFragment())
-
-	args := pgx.StrictNamedArgs{
-		"cookie_banner_id": cookieBannerID,
-		"excluded_kind":    CookieCategoryKindUncategorised,
-	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
 
 	row := conn.QueryRow(ctx, q, args)
 
@@ -371,6 +288,7 @@ func (c *CookieCategories) LoadAllByCookieBannerID(
 	conn pg.Querier,
 	scope Scoper,
 	cookieBannerID gid.GID,
+	filter *CookieCategoryFilter,
 ) error {
 	q := `
 SELECT
@@ -391,14 +309,16 @@ FROM
 WHERE
 	%s
 	AND cookie_banner_id = @cookie_banner_id
+	AND %s
 ORDER BY
 	rank ASC, id ASC;
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"cookie_banner_id": cookieBannerID}
 	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -408,61 +328,6 @@ ORDER BY
 	categories, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[CookieCategory])
 	if err != nil {
 		return fmt.Errorf("cannot collect cookie categories: %w", err)
-	}
-
-	*c = categories
-
-	return nil
-}
-
-// LoadAllConsentCategoriesByCookieBannerID loads all categories except
-// UNCATEGORISED, which is an admin-side inbox never shown to visitors.
-func (c *CookieCategories) LoadAllConsentCategoriesByCookieBannerID(
-	ctx context.Context,
-	conn pg.Querier,
-	scope Scoper,
-	cookieBannerID gid.GID,
-) error {
-	q := `
-SELECT
-	id,
-	organization_id,
-	cookie_banner_id,
-	name,
-	slug,
-	description,
-	kind,
-	rank,
-	gcm_consent_types,
-	posthog_consent,
-	created_at,
-	updated_at
-FROM
-	cookie_categories
-WHERE
-	%s
-	AND cookie_banner_id = @cookie_banner_id
-	AND kind != @excluded_kind
-ORDER BY
-	rank ASC, id ASC;
-`
-
-	q = fmt.Sprintf(q, scope.SQLFragment())
-
-	args := pgx.StrictNamedArgs{
-		"cookie_banner_id": cookieBannerID,
-		"excluded_kind":    CookieCategoryKindUncategorised,
-	}
-	maps.Copy(args, scope.SQLArguments())
-
-	rows, err := conn.Query(ctx, q, args)
-	if err != nil {
-		return fmt.Errorf("cannot query consent cookie categories: %w", err)
-	}
-
-	categories, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[CookieCategory])
-	if err != nil {
-		return fmt.Errorf("cannot collect consent cookie categories: %w", err)
 	}
 
 	*c = categories
