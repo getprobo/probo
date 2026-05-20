@@ -269,10 +269,6 @@ func (s *Service) UnsubscribeByEmail(
 			wasConfirmed := subscriber.Status == coredata.MailingListSubscriberStatusConfirmed
 
 			if err := subscriber.Delete(ctx, tx, scope); err != nil {
-				if errors.Is(err, coredata.ErrResourceNotFound) {
-					return ErrSubscriberNotFound
-				}
-
 				return fmt.Errorf("cannot delete mailing list subscriber: %w", err)
 			}
 
@@ -348,10 +344,6 @@ func (s *Service) DeleteSubscriber(
 			wasConfirmed := subscriber.Status == coredata.MailingListSubscriberStatusConfirmed
 
 			if err := subscriber.Delete(ctx, tx, scope); err != nil {
-				if errors.Is(err, coredata.ErrResourceNotFound) {
-					return ErrSubscriberNotFound
-				}
-
 				return fmt.Errorf("cannot delete mailing list subscriber: %w", err)
 			}
 
@@ -606,10 +598,6 @@ func (s *Service) DeleteMailingListUpdate(
 		func(ctx context.Context, tx pg.Tx) error {
 			mlu := coredata.MailingListUpdate{ID: id}
 			if err := mlu.Delete(ctx, tx, scope); err != nil {
-				if errors.Is(err, coredata.ErrResourceNotFound) {
-					return ErrMailingListUpdateNotFound
-				}
-
 				return fmt.Errorf("cannot delete mailing list update: %w", err)
 			}
 

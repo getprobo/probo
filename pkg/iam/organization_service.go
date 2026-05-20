@@ -1624,7 +1624,7 @@ func (s OrganizationService) DeleteSCIMConfiguration(
 						connector := &coredata.Connector{ID: *bridge.ConnectorID}
 
 						err = connector.Delete(ctx, tx, scope)
-						if err != nil && err != coredata.ErrResourceNotFound {
+						if err != nil {
 							return fmt.Errorf("cannot delete connector: %w", err)
 						}
 					}
