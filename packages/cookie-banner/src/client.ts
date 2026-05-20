@@ -79,6 +79,10 @@ export class CookieBannerClient {
   }
 
   async load(): Promise<void> {
+    for (const integration of this.integrations) {
+      integration.bootstrap();
+    }
+
     const configUrl = new URL(`${this.bannerId}/config`, this.baseUrl);
     if (this.lang) {
       configUrl.searchParams.set("lang", this.lang);
@@ -89,6 +93,8 @@ export class CookieBannerClient {
       config = await fetchJSON<BannerConfig>(configUrl);
     } catch {
       this.startDetector();
+      this.observer = observeAndActivate({}, {});
+      getConsent()._setReady({}, false);
       return;
     }
     this.bannerConfig = config;

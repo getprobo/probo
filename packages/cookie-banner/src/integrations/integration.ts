@@ -15,6 +15,9 @@
 import type { Category } from "../types";
 
 export interface ConsentIntegration {
+  /** Called eagerly before config fetch to deny all tracking by default. */
+  bootstrap(): void;
+
   /** Called once after config is loaded, before any consent is applied. */
   setDefaults(categories: Category[]): void;
 

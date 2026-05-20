@@ -22,14 +22,16 @@ export class GoogleConsentModeIntegration implements ConsentIntegration {
     );
   }
 
-  private getConsentFn(): ((...args: unknown[]) => void) | null {
+  private getConsentFn(): (...args: unknown[]) => void {
     const w = window as unknown as Record<string, unknown>;
 
     if (typeof w.gtag === "function") {
       return w.gtag as (...args: unknown[]) => void;
     }
 
-    if (!Array.isArray(w.dataLayer)) return null;
+    if (!Array.isArray(w.dataLayer)) {
+      w.dataLayer = [];
+    }
 
     const dataLayer = w.dataLayer as unknown[];
     return function () {
@@ -37,11 +39,23 @@ export class GoogleConsentModeIntegration implements ConsentIntegration {
     };
   }
 
+  bootstrap(): void {
+    const consentFn = this.getConsentFn();
+    consentFn("consent", "default", {
+      ad_storage: "denied",
+      ad_user_data: "denied",
+      ad_personalization: "denied",
+      analytics_storage: "denied",
+      functionality_storage: "denied",
+      personalization_storage: "denied",
+      security_storage: "denied",
+    });
+  }
+
   setDefaults(categories: Category[]): void {
     if (!this.hasMapping(categories)) return;
 
     const consentFn = this.getConsentFn();
-    if (!consentFn) return;
 
     const defaults: Record<string, string> = {};
     for (const cat of categories) {
@@ -63,7 +77,6 @@ export class GoogleConsentModeIntegration implements ConsentIntegration {
     if (!this.hasMapping(categories)) return;
 
     const consentFn = this.getConsentFn();
-    if (!consentFn) return;
 
     const update: Record<string, string> = {};
     for (const cat of categories) {
