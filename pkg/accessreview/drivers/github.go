@@ -150,7 +150,7 @@ func (d *GitHubDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error
 func (d *GitHubDriver) fetchAllMembers(ctx context.Context) ([]githubMember, error) {
 	var members []githubMember
 
-	u, err := url.JoinPath("https://api.github.com", "orgs", d.org, "members")
+	u, err := url.JoinPath("https://api.github.com", "orgs", url.PathEscape(d.org), "members")
 	if err != nil {
 		return nil, fmt.Errorf("cannot build github members URL: %w", err)
 	}
@@ -217,7 +217,7 @@ func (d *GitHubDriver) fetchMembersPage(ctx context.Context, url string) ([]gith
 func (d *GitHubDriver) fetchAll2FADisabledLogins(ctx context.Context) (map[string]bool, error) {
 	set := make(map[string]bool)
 
-	u, err := url.JoinPath("https://api.github.com", "orgs", d.org, "members")
+	u, err := url.JoinPath("https://api.github.com", "orgs", url.PathEscape(d.org), "members")
 	if err != nil {
 		return nil, fmt.Errorf("cannot build github 2fa-disabled URL: %w", err)
 	}
@@ -254,7 +254,7 @@ func (d *GitHubDriver) fetchAll2FADisabledLogins(ctx context.Context) (map[strin
 }
 
 func (d *GitHubDriver) fetchMembership(ctx context.Context, login string) (*githubMembership, error) {
-	endpoint, err := url.JoinPath("https://api.github.com", "orgs", d.org, "memberships", login)
+	endpoint, err := url.JoinPath("https://api.github.com", "orgs", url.PathEscape(d.org), "memberships", url.PathEscape(login))
 	if err != nil {
 		return nil, fmt.Errorf("cannot build github membership URL: %w", err)
 	}
@@ -288,7 +288,7 @@ func (d *GitHubDriver) fetchMembership(ctx context.Context, login string) (*gith
 }
 
 func (d *GitHubDriver) fetchUserProfile(ctx context.Context, login string) (*githubUserProfile, error) {
-	endpoint, err := url.JoinPath("https://api.github.com", "users", login)
+	endpoint, err := url.JoinPath("https://api.github.com", "users", url.PathEscape(login))
 	if err != nil {
 		return nil, fmt.Errorf("cannot build github user profile URL: %w", err)
 	}

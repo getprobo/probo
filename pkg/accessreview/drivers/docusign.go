@@ -180,7 +180,7 @@ func (d *DocuSignDriver) discoverAccount(ctx context.Context) (accountID string,
 }
 
 func (d *DocuSignDriver) queryUsers(ctx context.Context, baseURI string, accountID string, startPosition int) (*docusignUsersResponse, error) {
-	u, err := url.JoinPath(baseURI, "restapi", "v2.1", "accounts", accountID, "users")
+	u, err := url.JoinPath(baseURI, "restapi", "v2.1", "accounts", url.PathEscape(accountID), "users")
 	if err != nil {
 		return nil, fmt.Errorf("cannot build docusign users URL: %w", err)
 	}

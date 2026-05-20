@@ -304,7 +304,7 @@ func NewTallyNameResolver(httpClient *http.Client, organizationID string) NameRe
 }
 
 func (r *tallyNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
-	endpoint, err := url.JoinPath("https://api.tally.so", "organizations", r.organizationID)
+	endpoint, err := url.JoinPath("https://api.tally.so", "organizations", url.PathEscape(r.organizationID))
 	if err != nil {
 		return "", fmt.Errorf("cannot build tally organization URL: %w", err)
 	}
@@ -491,7 +491,7 @@ func (r *sentryNameResolver) ResolveInstanceName(ctx context.Context) (string, e
 		return "", nil
 	}
 
-	endpoint, err := url.JoinPath("https://sentry.io", "api", "0", "organizations", r.orgSlug)
+	endpoint, err := url.JoinPath("https://sentry.io", "api", "0", "organizations", url.PathEscape(r.orgSlug))
 	if err != nil {
 		return "", fmt.Errorf("cannot build sentry organization URL: %w", err)
 	}
@@ -535,7 +535,7 @@ func NewGitHubNameResolver(httpClient *http.Client, org string) NameResolver {
 }
 
 func (r *githubNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
-	endpoint, err := url.JoinPath("https://api.github.com", "orgs", r.org)
+	endpoint, err := url.JoinPath("https://api.github.com", "orgs", url.PathEscape(r.org))
 	if err != nil {
 		return "", fmt.Errorf("cannot build github organization URL: %w", err)
 	}

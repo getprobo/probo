@@ -215,7 +215,7 @@ func (d *CloudflareDriver) queryAllMembers(ctx context.Context, accountID string
 }
 
 func (d *CloudflareDriver) queryMembers(ctx context.Context, accountID string, page int) (*cloudflareListMembersResponse, error) {
-	u, err := url.JoinPath("https://api.cloudflare.com", "client", "v4", "accounts", accountID, "members")
+	u, err := url.JoinPath("https://api.cloudflare.com", "client", "v4", "accounts", url.PathEscape(accountID), "members")
 	if err != nil {
 		return nil, fmt.Errorf("cannot build cloudflare members URL: %w", err)
 	}

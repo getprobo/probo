@@ -293,7 +293,7 @@ func (d *Microsoft365Driver) listDirectoryRoles(ctx context.Context) ([]microsof
 }
 
 func (d *Microsoft365Driver) listRoleMembers(ctx context.Context, roleID string) ([]microsoft365RoleMember, error) {
-	endpoint, err := url.JoinPath(microsoft365GraphBaseURL, "directoryRoles", roleID, "members")
+	endpoint, err := url.JoinPath(microsoft365GraphBaseURL, "directoryRoles", url.PathEscape(roleID), "members")
 	if err != nil {
 		return nil, fmt.Errorf("cannot build graph role members URL: %w", err)
 	}

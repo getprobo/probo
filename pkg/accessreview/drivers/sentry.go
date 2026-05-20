@@ -109,7 +109,7 @@ func (d *SentryDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error
 
 	var records []AccountRecord
 
-	nextURL, err := url.JoinPath("https://sentry.io", "api", "0", "organizations", orgSlug, "members")
+	nextURL, err := url.JoinPath("https://sentry.io", "api", "0", "organizations", url.PathEscape(orgSlug), "members")
 	if err != nil {
 		return nil, fmt.Errorf("cannot build sentry members URL: %w", err)
 	}
