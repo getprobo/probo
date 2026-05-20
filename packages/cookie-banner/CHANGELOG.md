@@ -4,6 +4,14 @@ All notable changes to the `@probo/cookie-banner` SDK will be documented in this
 
 ## Unreleased
 
+## [0.5.0] - 2026-05-20
+
+### Added
+
+- Expose a programmatic consent API via a `ConsentManager` singleton (`@probo/cookie-banner/consent` ESM entrypoint and `window.Probo.consent` on the IIFE), so customers can read and react to consent state from their own bundled JavaScript — unblocking third-party SDKs that initialize programmatically and cannot be gated via `data-cookie-consent` attributes
+- `ConsentManager` exposes a `subscribe()` method (unifying `onReady` + `onChange` with immediate replay) and `getAll()` now returns a cached, referentially stable snapshot, making it safe to use with React's `useSyncExternalStore`
+- Share the `ConsentManager` singleton across bundles on `globalThis` so multiple copies of the SDK on the same page see the same state
+
 ## [0.4.1] - 2026-05-13
 
 ### Changed
