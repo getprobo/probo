@@ -16,7 +16,7 @@ interactions:
         headers:
             Accept:
                 - application/json
-        url: https://app.asana.com/api/1.0/workspaces/9999999/users?opt_fields=email,name&limit=100
+        url: https://app.asana.com/api/1.0/workspaces/9999999/users?limit=100&opt_fields=email%2Cname
         method: GET
       response:
         proto: HTTP/2.0
