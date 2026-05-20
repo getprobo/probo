@@ -58,13 +58,16 @@ INSERT INTO risk_assessment_scenario_risks (
 		"risk_id":                     sr.RiskID,
 		"created_at":                  sr.CreatedAt,
 	}
+
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
 		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok && pgErr.Code == "23505" && pgErr.ConstraintName == "risk_assessment_scenario_risks_pkey" {
 			return ErrResourceAlreadyExists
 		}
+
 		return fmt.Errorf("cannot insert risk scenario risk: %w", err)
 	}
+
 	return nil
 }
 
@@ -83,6 +86,7 @@ WHERE
 	}
 	maps.Copy(args, scope.SQLArguments())
 	_, err := conn.Exec(ctx, q, args)
+
 	return err
 }
 
@@ -137,11 +141,14 @@ WHERE
 	if err != nil {
 		return fmt.Errorf("cannot query risk scenario risks: %w", err)
 	}
+
 	results, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Risk])
 	if err != nil {
 		return fmt.Errorf("cannot collect risk scenario risks: %w", err)
 	}
+
 	*rs = results
+
 	return nil
 }
 
@@ -177,5 +184,6 @@ WHERE
 	if err := conn.QueryRow(ctx, q, args).Scan(&count); err != nil {
 		return 0, fmt.Errorf("cannot count risk scenario risks: %w", err)
 	}
+
 	return count, nil
 }

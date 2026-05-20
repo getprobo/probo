@@ -333,6 +333,15 @@ genmodels: ## Refresh LLM model registry from OpenRouter
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
+.PHONY: fix
+fix: fix-go ## Auto-fix Go code
+
+.PHONY: fix-go
+fix-go: generate embed ## Auto-fix Go code (format, go fix, lint --fix)
+	gofmt -w apps cmd packages pkg e2e
+	$(GO_BASE) fix -omitzero=false ./apps/... ./cmd/... ./packages/... ./pkg/... ./e2e/...
+	$(GOLINTCMD) run --fix ./...
+
 .PHONY: fmt
 fmt: fmt-go ## Format Go code
 

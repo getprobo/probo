@@ -59,6 +59,7 @@ func (ra *RiskAssessment) AuthorizationAttributes(ctx context.Context, conn pg.Q
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrResourceNotFound
 		}
+
 		return nil, fmt.Errorf("cannot query risk assessment authorization attributes: %w", err)
 	}
 
@@ -192,6 +193,7 @@ VALUES (@id, @tenant_id, @organization_id, @name, @description, @created_at, @up
 	if err != nil {
 		return fmt.Errorf("cannot insert risk assessment: %w", err)
 	}
+
 	return nil
 }
 
@@ -246,5 +248,6 @@ DELETE FROM risk_assessments WHERE %s AND id = @id
 	maps.Copy(args, scope.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
+
 	return err
 }

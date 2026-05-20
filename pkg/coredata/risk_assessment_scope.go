@@ -47,6 +47,7 @@ func (s *RiskAssessmentScope) CursorKey(orderBy RiskAssessmentScopeOrderField) p
 	case RiskAssessmentScopeOrderFieldName:
 		return page.CursorKey{ID: s.ID, Value: s.Name}
 	}
+
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
@@ -58,6 +59,7 @@ func (s *RiskAssessmentScope) AuthorizationAttributes(ctx context.Context, conn 
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrResourceNotFound
 		}
+
 		return nil, fmt.Errorf("cannot query risk assessment scope authorization attributes: %w", err)
 	}
 
@@ -95,11 +97,14 @@ WHERE
 	if err != nil {
 		return fmt.Errorf("cannot query risk assessment scopes: %w", err)
 	}
+
 	results, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[RiskAssessmentScope])
 	if err != nil {
 		return fmt.Errorf("cannot collect risk assessment scopes: %w", err)
 	}
+
 	*ss = results
+
 	return nil
 }
 
@@ -127,6 +132,7 @@ WHERE
 	if err := conn.QueryRow(ctx, q, args).Scan(&count); err != nil {
 		return 0, fmt.Errorf("cannot count risk assessment scopes: %w", err)
 	}
+
 	return count, nil
 }
 
@@ -149,18 +155,23 @@ LIMIT 1
 	q = fmt.Sprintf(q, scope.SQLFragment())
 	args := pgx.StrictNamedArgs{"id": id}
 	maps.Copy(args, scope.SQLArguments())
+
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
 		return fmt.Errorf("cannot query risk assessment scope: %w", err)
 	}
+
 	result, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[RiskAssessmentScope])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
 		}
+
 		return fmt.Errorf("cannot collect risk assessment scope: %w", err)
 	}
+
 	*s = result
+
 	return nil
 }
 
@@ -193,10 +204,12 @@ INSERT INTO risk_assessment_scopes (
 		"created_at":         s.CreatedAt,
 		"updated_at":         s.UpdatedAt,
 	}
+
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
 		return fmt.Errorf("cannot insert risk assessment scope: %w", err)
 	}
+
 	return nil
 }
 
@@ -213,13 +226,16 @@ WHERE
 	q = fmt.Sprintf(q, scope.SQLFragment())
 	args := pgx.StrictNamedArgs{"id": s.ID, "name": s.Name, "updated_at": s.UpdatedAt}
 	maps.Copy(args, scope.SQLArguments())
+
 	result, err := conn.Exec(ctx, q, args)
 	if err != nil {
 		return fmt.Errorf("cannot update risk assessment scope: %w", err)
 	}
+
 	if result.RowsAffected() == 0 {
 		return ErrResourceNotFound
 	}
+
 	return nil
 }
 
@@ -234,5 +250,6 @@ WHERE
 	args := pgx.StrictNamedArgs{"id": id}
 	maps.Copy(args, scope.SQLArguments())
 	_, err := conn.Exec(ctx, q, args)
+
 	return err
 }

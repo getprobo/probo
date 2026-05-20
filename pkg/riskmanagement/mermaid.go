@@ -35,12 +35,15 @@ func (s *Service) BuildScopeMermaidChart(ctx context.Context, scope coredata.Sco
 		if err := nodes.LoadAllByRiskAssessmentScopeID(ctx, conn, scope, scopeID); err != nil {
 			return fmt.Errorf("cannot load nodes: %w", err)
 		}
+
 		if err := processes.LoadAllByRiskAssessmentScopeID(ctx, conn, scope, scopeID); err != nil {
 			return fmt.Errorf("cannot load processes: %w", err)
 		}
+
 		if err := threats.LoadAllByRiskAssessmentScopeID(ctx, conn, scope, scopeID); err != nil {
 			return fmt.Errorf("cannot load threats: %w", err)
 		}
+
 		return nil
 	})
 	if err != nil {
@@ -75,10 +78,12 @@ func buildScopeMermaidChart(
 
 	for _, p := range processes {
 		src, srcOK := nodeAlias[p.SourceNodeID]
+
 		dst, dstOK := nodeAlias[p.TargetNodeID]
 		if !srcOK || !dstOK {
 			continue
 		}
+
 		fmt.Fprintf(&b, "  %s -- \"%s\" --> %s\n", src, escapeMermaidLabel(p.Name), dst)
 	}
 
@@ -92,10 +97,12 @@ func buildScopeMermaidChart(
 		if !ok {
 			continue
 		}
+
 		targetAlias, ok := nodeAlias[target]
 		if !ok {
 			continue
 		}
+
 		tid := fmt.Sprintf("t%d", i)
 		label := escapeMermaidLabel(fmt.Sprintf("%s (%s)", t.Name, t.Category))
 		fmt.Fprintf(&b, "  %s{{\"%s\"}}\n", tid, label)
@@ -114,6 +121,7 @@ func buildScopeMermaidChart(
 
 func mermaidNodeShape(t coredata.RiskAssessmentNodeType, id, name string) string {
 	label := `"` + escapeMermaidLabel(name) + `"`
+
 	switch t {
 	case coredata.RiskAssessmentNodeTypeEntity:
 		return fmt.Sprintf("%s([%s])", id, label)

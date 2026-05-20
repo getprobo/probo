@@ -50,6 +50,7 @@ func (p *RiskAssessmentProcess) CursorKey(orderBy RiskAssessmentProcessOrderFiel
 	case RiskAssessmentProcessOrderFieldName:
 		return page.CursorKey{ID: p.ID, Value: p.Name}
 	}
+
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
@@ -61,6 +62,7 @@ func (p *RiskAssessmentProcess) AuthorizationAttributes(ctx context.Context, con
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrResourceNotFound
 		}
+
 		return nil, fmt.Errorf("cannot query risk assessment process authorization attributes: %w", err)
 	}
 
@@ -100,11 +102,14 @@ WHERE
 	if err != nil {
 		return fmt.Errorf("cannot query risk assessment processes: %w", err)
 	}
+
 	results, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[RiskAssessmentProcess])
 	if err != nil {
 		return fmt.Errorf("cannot collect risk assessment processes: %w", err)
 	}
+
 	*ps = results
+
 	return nil
 }
 
@@ -140,11 +145,14 @@ ORDER BY
 	if err != nil {
 		return fmt.Errorf("cannot query risk assessment processes: %w", err)
 	}
+
 	results, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[RiskAssessmentProcess])
 	if err != nil {
 		return fmt.Errorf("cannot collect risk assessment processes: %w", err)
 	}
+
 	*ps = results
+
 	return nil
 }
 
@@ -172,6 +180,7 @@ WHERE
 	if err := conn.QueryRow(ctx, q, args).Scan(&count); err != nil {
 		return 0, fmt.Errorf("cannot count risk assessment processes: %w", err)
 	}
+
 	return count, nil
 }
 
@@ -196,18 +205,23 @@ LIMIT 1;
 	q = fmt.Sprintf(q, scope.SQLFragment())
 	args := pgx.StrictNamedArgs{"id": id}
 	maps.Copy(args, scope.SQLArguments())
+
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
 		return fmt.Errorf("cannot query risk assessment process: %w", err)
 	}
+
 	result, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[RiskAssessmentProcess])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
 		}
+
 		return fmt.Errorf("cannot collect risk assessment process: %w", err)
 	}
+
 	*p = result
+
 	return nil
 }
 
@@ -246,13 +260,16 @@ INSERT INTO risk_assessment_processes (
 		"created_at":               p.CreatedAt,
 		"updated_at":               p.UpdatedAt,
 	}
+
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
 		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok && pgErr.Code == "23505" && pgErr.ConstraintName == "risk_assessment_processes_unique_name" {
 			return ErrResourceAlreadyExists
 		}
+
 		return fmt.Errorf("cannot insert risk assessment process: %w", err)
 	}
+
 	return nil
 }
 
@@ -277,13 +294,16 @@ WHERE
 		"updated_at":     p.UpdatedAt,
 	}
 	maps.Copy(args, scope.SQLArguments())
+
 	result, err := conn.Exec(ctx, q, args)
 	if err != nil {
 		return fmt.Errorf("cannot update risk assessment process: %w", err)
 	}
+
 	if result.RowsAffected() == 0 {
 		return ErrResourceNotFound
 	}
+
 	return nil
 }
 
@@ -298,5 +318,6 @@ WHERE
 	args := pgx.StrictNamedArgs{"id": id}
 	maps.Copy(args, scope.SQLArguments())
 	_, err := conn.Exec(ctx, q, args)
+
 	return err
 }

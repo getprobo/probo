@@ -49,6 +49,7 @@ func (n *RiskAssessmentNode) CursorKey(orderBy RiskAssessmentNodeOrderField) pag
 	case RiskAssessmentNodeOrderFieldName:
 		return page.CursorKey{ID: n.ID, Value: n.Name}
 	}
+
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
@@ -60,6 +61,7 @@ func (n *RiskAssessmentNode) AuthorizationAttributes(ctx context.Context, conn p
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrResourceNotFound
 		}
+
 		return nil, fmt.Errorf("cannot query risk assessment node authorization attributes: %w", err)
 	}
 
@@ -98,11 +100,14 @@ WHERE
 	if err != nil {
 		return fmt.Errorf("cannot query risk assessment nodes: %w", err)
 	}
+
 	results, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[RiskAssessmentNode])
 	if err != nil {
 		return fmt.Errorf("cannot collect risk assessment nodes: %w", err)
 	}
+
 	*ns = results
+
 	return nil
 }
 
@@ -137,11 +142,14 @@ ORDER BY
 	if err != nil {
 		return fmt.Errorf("cannot query risk assessment nodes: %w", err)
 	}
+
 	results, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[RiskAssessmentNode])
 	if err != nil {
 		return fmt.Errorf("cannot collect risk assessment nodes: %w", err)
 	}
+
 	*ns = results
+
 	return nil
 }
 
@@ -169,6 +177,7 @@ WHERE
 	if err := conn.QueryRow(ctx, q, args).Scan(&count); err != nil {
 		return 0, fmt.Errorf("cannot count risk assessment nodes: %w", err)
 	}
+
 	return count, nil
 }
 
@@ -197,14 +206,18 @@ LIMIT 1;
 	if err != nil {
 		return fmt.Errorf("cannot query risk assessment node: %w", err)
 	}
+
 	result, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[RiskAssessmentNode])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
 		}
+
 		return fmt.Errorf("cannot collect risk assessment node: %w", err)
 	}
+
 	*n = result
+
 	return nil
 }
 
@@ -240,13 +253,16 @@ INSERT INTO risk_assessment_nodes (
 		"created_at":               n.CreatedAt,
 		"updated_at":               n.UpdatedAt,
 	}
+
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
 		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok && pgErr.Code == "23505" && pgErr.ConstraintName == "risk_assessment_nodes_unique_name" {
 			return ErrResourceAlreadyExists
 		}
+
 		return fmt.Errorf("cannot insert risk assessment node: %w", err)
 	}
+
 	return nil
 }
 
@@ -274,9 +290,11 @@ WHERE
 	if err != nil {
 		return fmt.Errorf("cannot update risk assessment node: %w", err)
 	}
+
 	if result.RowsAffected() == 0 {
 		return ErrResourceNotFound
 	}
+
 	return nil
 }
 
@@ -292,5 +310,6 @@ WHERE
 	maps.Copy(args, scope.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
+
 	return err
 }

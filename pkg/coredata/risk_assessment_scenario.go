@@ -48,6 +48,7 @@ func (s *RiskAssessmentScenario) CursorKey(orderBy RiskAssessmentScenarioOrderFi
 	case RiskAssessmentScenarioOrderFieldName:
 		return page.CursorKey{ID: s.ID, Value: s.Name}
 	}
+
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
@@ -59,6 +60,7 @@ func (s *RiskAssessmentScenario) AuthorizationAttributes(ctx context.Context, co
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrResourceNotFound
 		}
+
 		return nil, fmt.Errorf("cannot query risk scenario authorization attributes: %w", err)
 	}
 
@@ -97,11 +99,14 @@ WHERE
 	if err != nil {
 		return fmt.Errorf("cannot query risk scenarios: %w", err)
 	}
+
 	results, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[RiskAssessmentScenario])
 	if err != nil {
 		return fmt.Errorf("cannot collect risk scenarios: %w", err)
 	}
+
 	*ss = results
+
 	return nil
 }
 
@@ -128,6 +133,7 @@ WHERE
 	if err := conn.QueryRow(ctx, q, args).Scan(&count); err != nil {
 		return 0, fmt.Errorf("cannot count risk scenarios: %w", err)
 	}
+
 	return count, nil
 }
 
@@ -172,11 +178,14 @@ WHERE
 	if err != nil {
 		return fmt.Errorf("cannot query risk scenarios: %w", err)
 	}
+
 	results, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[RiskAssessmentScenario])
 	if err != nil {
 		return fmt.Errorf("cannot collect risk scenarios: %w", err)
 	}
+
 	*ss = results
+
 	return nil
 }
 
@@ -212,6 +221,7 @@ WHERE
 	if err := conn.QueryRow(ctx, q, args).Scan(&count); err != nil {
 		return 0, fmt.Errorf("cannot count risk scenarios: %w", err)
 	}
+
 	return count, nil
 }
 
@@ -247,11 +257,14 @@ WHERE
 	if err != nil {
 		return fmt.Errorf("cannot query risk scenarios: %w", err)
 	}
+
 	results, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[RiskAssessmentScenario])
 	if err != nil {
 		return fmt.Errorf("cannot collect risk scenarios: %w", err)
 	}
+
 	*ss = results
+
 	return nil
 }
 
@@ -278,6 +291,7 @@ WHERE
 	if err := conn.QueryRow(ctx, q, args).Scan(&count); err != nil {
 		return 0, fmt.Errorf("cannot count risk scenarios: %w", err)
 	}
+
 	return count, nil
 }
 
@@ -301,18 +315,23 @@ LIMIT 1
 	q = fmt.Sprintf(q, scope.SQLFragment())
 	args := pgx.StrictNamedArgs{"id": id}
 	maps.Copy(args, scope.SQLArguments())
+
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
 		return fmt.Errorf("cannot query risk scenario: %w", err)
 	}
+
 	result, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[RiskAssessmentScenario])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
 		}
+
 		return fmt.Errorf("cannot collect risk scenario: %w", err)
 	}
+
 	*s = result
+
 	return nil
 }
 
@@ -348,10 +367,12 @@ INSERT INTO risk_assessment_scenarios (
 		"created_at":               s.CreatedAt,
 		"updated_at":               s.UpdatedAt,
 	}
+
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
 		return fmt.Errorf("cannot insert risk scenario: %w", err)
 	}
+
 	return nil
 }
 
@@ -369,13 +390,16 @@ WHERE
 	q = fmt.Sprintf(q, scope.SQLFragment())
 	args := pgx.StrictNamedArgs{"id": s.ID, "name": s.Name, "description": s.Description, "updated_at": s.UpdatedAt}
 	maps.Copy(args, scope.SQLArguments())
+
 	result, err := conn.Exec(ctx, q, args)
 	if err != nil {
 		return fmt.Errorf("cannot update risk scenario: %w", err)
 	}
+
 	if result.RowsAffected() == 0 {
 		return ErrResourceNotFound
 	}
+
 	return nil
 }
 
@@ -390,5 +414,6 @@ WHERE
 	args := pgx.StrictNamedArgs{"id": id}
 	maps.Copy(args, scope.SQLArguments())
 	_, err := conn.Exec(ctx, q, args)
+
 	return err
 }

@@ -76,6 +76,7 @@ func (d *HerokuDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error
 	if err != nil {
 		return nil, fmt.Errorf("cannot build heroku members URL: %w", err)
 	}
+
 	rangeHeader := ""
 
 	for range maxPaginationPages {

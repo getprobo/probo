@@ -40,6 +40,7 @@ func TestRiskAssessment_Create(t *testing.T) {
 				} `json:"riskAssessmentEdge"`
 			} `json:"createRiskAssessment"`
 		}
+
 		err := owner.Execute(`
 			mutation($input: CreateRiskAssessmentInput!) {
 				createRiskAssessment(input: $input) {
@@ -81,6 +82,7 @@ func TestRiskAssessment_Delete(t *testing.T) {
 				ID string `json:"id"`
 			} `json:"node"`
 		}
+
 		err = owner.Execute(`query($id: ID!) { node(id: $id) { ... on RiskAssessmentScope { id } } }`,
 			map[string]any{"id": scopeID}, &result)
 		testutil.AssertNodeNotAccessible(t, err, result.Node == nil, "RiskAssessmentScope")
@@ -111,6 +113,7 @@ func TestRiskAssessmentScope_CRUD(t *testing.T) {
 				} `json:"scopes"`
 			} `json:"node"`
 		}
+
 		err := owner.Execute(`
 			query($id: ID!) {
 				node(id: $id) {
@@ -150,6 +153,7 @@ func TestRiskAssessmentNode_Create(t *testing.T) {
 					} `json:"riskAssessmentNodeEdge"`
 				} `json:"createRiskAssessmentNode"`
 			}
+
 			err := owner.Execute(`
 				mutation($input: CreateRiskAssessmentNodeInput!) {
 					createRiskAssessmentNode(input: $input) {
@@ -191,6 +195,7 @@ func TestRiskAssessmentProcess_Create(t *testing.T) {
 			} `json:"riskAssessmentProcessEdge"`
 		} `json:"createRiskAssessmentProcess"`
 	}
+
 	err := owner.Execute(`
 		mutation($input: CreateRiskAssessmentProcessInput!) {
 			createRiskAssessmentProcess(input: $input) {
@@ -232,6 +237,7 @@ func TestRiskAssessmentThreat_Create(t *testing.T) {
 			} `json:"riskAssessmentThreatEdge"`
 		} `json:"createRiskAssessmentThreat"`
 	}
+
 	err := owner.Execute(`
 		mutation($input: CreateRiskAssessmentThreatInput!) {
 			createRiskAssessmentThreat(input: $input) {
@@ -269,6 +275,7 @@ func TestRiskAssessmentScenario_Create(t *testing.T) {
 			} `json:"riskAssessmentScenarioEdge"`
 		} `json:"createRiskAssessmentScenario"`
 	}
+
 	err := owner.Execute(`
 		mutation($input: CreateRiskAssessmentScenarioInput!) {
 			createRiskAssessmentScenario(input: $input) {
@@ -314,6 +321,7 @@ func TestRiskAssessmentScenario_ListViaRisk(t *testing.T) {
 			} `json:"scenarios"`
 		} `json:"node"`
 	}
+
 	err := owner.Execute(`
 		query($id: ID!) {
 			node(id: $id) {
@@ -355,6 +363,7 @@ func TestRiskAssessmentScenario_ListViaScope(t *testing.T) {
 			} `json:"scenarios"`
 		} `json:"node"`
 	}
+
 	err := owner.Execute(`
 		query($id: ID!) {
 			node(id: $id) {
@@ -388,6 +397,7 @@ func TestRiskAssessment_Update(t *testing.T) {
 			} `json:"riskAssessment"`
 		} `json:"updateRiskAssessment"`
 	}
+
 	err := owner.Execute(`
 		mutation($input: UpdateRiskAssessmentInput!) {
 			updateRiskAssessment(input: $input) {
@@ -423,6 +433,7 @@ func TestRiskAssessmentScope_Update(t *testing.T) {
 			} `json:"riskAssessmentScope"`
 		} `json:"updateRiskAssessmentScope"`
 	}
+
 	err := owner.Execute(`
 		mutation($input: UpdateRiskAssessmentScopeInput!) {
 			updateRiskAssessmentScope(input: $input) {
@@ -457,6 +468,7 @@ func TestRiskAssessmentNode_Update(t *testing.T) {
 			} `json:"riskAssessmentNode"`
 		} `json:"updateRiskAssessmentNode"`
 	}
+
 	err := owner.Execute(`
 		mutation($input: UpdateRiskAssessmentNodeInput!) {
 			updateRiskAssessmentNode(input: $input) {
@@ -494,6 +506,7 @@ func TestRiskAssessmentProcess_Update(t *testing.T) {
 			} `json:"riskAssessmentProcess"`
 		} `json:"updateRiskAssessmentProcess"`
 	}
+
 	err := owner.Execute(`
 		mutation($input: UpdateRiskAssessmentProcessInput!) {
 			updateRiskAssessmentProcess(input: $input) {
@@ -531,6 +544,7 @@ func TestRiskAssessmentThreat_Update(t *testing.T) {
 			} `json:"riskAssessmentThreat"`
 		} `json:"updateRiskAssessmentThreat"`
 	}
+
 	err := owner.Execute(`
 		mutation($input: UpdateRiskAssessmentThreatInput!) {
 			updateRiskAssessmentThreat(input: $input) {
@@ -567,6 +581,7 @@ func TestRiskAssessmentScenario_Update(t *testing.T) {
 			} `json:"riskAssessmentScenario"`
 		} `json:"updateRiskAssessmentScenario"`
 	}
+
 	err := owner.Execute(`
 		mutation($input: UpdateRiskAssessmentScenarioInput!) {
 			updateRiskAssessmentScenario(input: $input) {
@@ -609,6 +624,7 @@ func TestRiskAssessmentScenario_LinkUnlinkThreat(t *testing.T) {
 			} `json:"threats"`
 		} `json:"node"`
 	}
+
 	err := owner.Execute(`
 		query($id: ID!) {
 			node(id: $id) {
@@ -665,6 +681,7 @@ func TestRiskAssessmentScenario_LinkUnlinkRisk(t *testing.T) {
 			} `json:"risks"`
 		} `json:"node"`
 	}
+
 	err := owner.Execute(`
 		query($id: ID!) {
 			node(id: $id) {
@@ -735,6 +752,7 @@ func TestRiskAssessment_RBAC(t *testing.T) {
 				Name string `json:"name"`
 			} `json:"node"`
 		}
+
 		err := viewer.Execute(`
 			query($id: ID!) { node(id: $id) { ... on RiskAssessment { id name } } }
 		`, map[string]any{"id": raID}, &result)
@@ -755,6 +773,7 @@ func TestRiskAssessment_TenantIsolation(t *testing.T) {
 			ID string `json:"id"`
 		} `json:"node"`
 	}
+
 	err := owner2.Execute(`
 		query($id: ID!) { node(id: $id) { ... on RiskAssessment { id } } }
 	`, map[string]any{"id": raID}, &result)

@@ -44,6 +44,7 @@ func NewRiskAssessmentNodeConnection(
 			Node:   NewRiskAssessmentNode(p.Data[i]),
 		}
 	}
+
 	return &RiskAssessmentNodeConnection{
 		Edges:    edges,
 		PageInfo: *NewPageInfo(p),

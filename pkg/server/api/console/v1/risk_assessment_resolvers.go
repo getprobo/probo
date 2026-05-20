@@ -27,7 +27,9 @@ func (r *mutationResolver) CreateRiskAssessment(ctx context.Context, input types
 	if err := r.authorize(ctx, input.OrganizationID, probo.ActionRiskAssessmentCreate); err != nil {
 		return nil, err
 	}
+
 	scope := coredata.NewScopeFromObjectID(input.OrganizationID)
+
 	ra, err := r.riskManagement.Create(
 		ctx,
 		scope,
@@ -41,12 +43,16 @@ func (r *mutationResolver) CreateRiskAssessment(ctx context.Context, input types
 		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
 			return nil, gqlutils.Conflict(ctx, err)
 		}
+
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot create risk assessment", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
+
 	return &types.CreateRiskAssessmentPayload{
 		RiskAssessmentEdge: types.NewRiskAssessmentConnectionEdge(ra, coredata.RiskAssessmentOrderFieldCreatedAt),
 	}, nil
@@ -57,7 +63,9 @@ func (r *mutationResolver) UpdateRiskAssessment(ctx context.Context, input types
 	if err := r.authorize(ctx, input.ID, probo.ActionRiskAssessmentUpdate); err != nil {
 		return nil, err
 	}
+
 	scope := coredata.NewScopeFromObjectID(input.ID)
+
 	ra, err := r.riskManagement.Update(
 		ctx,
 		scope,
@@ -71,9 +79,12 @@ func (r *mutationResolver) UpdateRiskAssessment(ctx context.Context, input types
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot update risk assessment", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
+
 	return &types.UpdateRiskAssessmentPayload{RiskAssessment: types.NewRiskAssessment(ra)}, nil
 }
 
@@ -82,14 +93,18 @@ func (r *mutationResolver) DeleteRiskAssessment(ctx context.Context, input types
 	if err := r.authorize(ctx, input.RiskAssessmentID, probo.ActionRiskAssessmentDelete); err != nil {
 		return nil, err
 	}
+
 	scope := coredata.NewScopeFromObjectID(input.RiskAssessmentID)
 	if err := r.riskManagement.Delete(ctx, scope, input.RiskAssessmentID); err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot delete risk assessment", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
+
 	return &types.DeleteRiskAssessmentPayload{DeletedRiskAssessmentID: input.RiskAssessmentID}, nil
 }
 
@@ -98,7 +113,9 @@ func (r *mutationResolver) CreateRiskAssessmentScope(ctx context.Context, input 
 	if err := r.authorize(ctx, input.RiskAssessmentID, probo.ActionRiskAssessmentScopeCreate); err != nil {
 		return nil, err
 	}
+
 	scope := coredata.NewScopeFromObjectID(input.RiskAssessmentID)
+
 	raScope, err := r.riskManagement.CreateScope(
 		ctx,
 		scope,
@@ -111,12 +128,16 @@ func (r *mutationResolver) CreateRiskAssessmentScope(ctx context.Context, input 
 		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
 			return nil, gqlutils.Conflict(ctx, err)
 		}
+
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot create risk assessment scope", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
+
 	return &types.CreateRiskAssessmentScopePayload{
 		RiskAssessmentScopeEdge: types.NewRiskAssessmentScopeConnectionEdge(raScope, coredata.RiskAssessmentScopeOrderFieldCreatedAt),
 	}, nil
@@ -127,7 +148,9 @@ func (r *mutationResolver) UpdateRiskAssessmentScope(ctx context.Context, input 
 	if err := r.authorize(ctx, input.ID, probo.ActionRiskAssessmentScopeUpdate); err != nil {
 		return nil, err
 	}
+
 	scope := coredata.NewScopeFromObjectID(input.ID)
+
 	raScope, err := r.riskManagement.UpdateScope(
 		ctx,
 		scope,
@@ -140,9 +163,12 @@ func (r *mutationResolver) UpdateRiskAssessmentScope(ctx context.Context, input 
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot update risk assessment scope", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
+
 	return &types.UpdateRiskAssessmentScopePayload{RiskAssessmentScope: types.NewRiskAssessmentScope(raScope)}, nil
 }
 
@@ -151,14 +177,18 @@ func (r *mutationResolver) DeleteRiskAssessmentScope(ctx context.Context, input 
 	if err := r.authorize(ctx, input.RiskAssessmentScopeID, probo.ActionRiskAssessmentScopeDelete); err != nil {
 		return nil, err
 	}
+
 	scope := coredata.NewScopeFromObjectID(input.RiskAssessmentScopeID)
 	if err := r.riskManagement.DeleteScope(ctx, scope, input.RiskAssessmentScopeID); err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot delete risk assessment scope", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
+
 	return &types.DeleteRiskAssessmentScopePayload{DeletedRiskAssessmentScopeID: input.RiskAssessmentScopeID}, nil
 }
 
@@ -167,7 +197,9 @@ func (r *mutationResolver) CreateRiskAssessmentNode(ctx context.Context, input t
 	if err := r.authorize(ctx, input.RiskAssessmentScopeID, probo.ActionRiskAssessmentNodeCreate); err != nil {
 		return nil, err
 	}
+
 	scope := coredata.NewScopeFromObjectID(input.RiskAssessmentScopeID)
+
 	node, err := r.riskManagement.CreateNode(
 		ctx,
 		scope,
@@ -181,12 +213,16 @@ func (r *mutationResolver) CreateRiskAssessmentNode(ctx context.Context, input t
 		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
 			return nil, gqlutils.Conflict(ctx, err)
 		}
+
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot create risk assessment node", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
+
 	return &types.CreateRiskAssessmentNodePayload{
 		RiskAssessmentNodeEdge: &types.RiskAssessmentNodeConnectionEdge{
 			Cursor: node.CursorKey(coredata.RiskAssessmentNodeOrderFieldCreatedAt),
@@ -200,7 +236,9 @@ func (r *mutationResolver) UpdateRiskAssessmentNode(ctx context.Context, input t
 	if err := r.authorize(ctx, input.ID, probo.ActionRiskAssessmentNodeUpdate); err != nil {
 		return nil, err
 	}
+
 	scope := coredata.NewScopeFromObjectID(input.ID)
+
 	node, err := r.riskManagement.UpdateNode(
 		ctx,
 		scope,
@@ -214,9 +252,12 @@ func (r *mutationResolver) UpdateRiskAssessmentNode(ctx context.Context, input t
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot update risk assessment node", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
+
 	return &types.UpdateRiskAssessmentNodePayload{RiskAssessmentNode: types.NewRiskAssessmentNode(node)}, nil
 }
 
@@ -225,14 +266,18 @@ func (r *mutationResolver) DeleteRiskAssessmentNode(ctx context.Context, input t
 	if err := r.authorize(ctx, input.RiskAssessmentNodeID, probo.ActionRiskAssessmentNodeDelete); err != nil {
 		return nil, err
 	}
+
 	scope := coredata.NewScopeFromObjectID(input.RiskAssessmentNodeID)
 	if err := r.riskManagement.DeleteNode(ctx, scope, input.RiskAssessmentNodeID); err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot delete risk assessment node", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
+
 	return &types.DeleteRiskAssessmentNodePayload{DeletedRiskAssessmentNodeID: input.RiskAssessmentNodeID}, nil
 }
 
@@ -241,7 +286,9 @@ func (r *mutationResolver) CreateRiskAssessmentProcess(ctx context.Context, inpu
 	if err := r.authorize(ctx, input.RiskAssessmentScopeID, probo.ActionRiskAssessmentProcessCreate); err != nil {
 		return nil, err
 	}
+
 	scope := coredata.NewScopeFromObjectID(input.RiskAssessmentScopeID)
+
 	process, err := r.riskManagement.CreateProcess(
 		ctx,
 		scope,
@@ -256,12 +303,16 @@ func (r *mutationResolver) CreateRiskAssessmentProcess(ctx context.Context, inpu
 		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
 			return nil, gqlutils.Conflict(ctx, err)
 		}
+
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot create risk assessment process", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
+
 	return &types.CreateRiskAssessmentProcessPayload{
 		RiskAssessmentProcessEdge: &types.RiskAssessmentProcessConnectionEdge{
 			Cursor: process.CursorKey(coredata.RiskAssessmentProcessOrderFieldCreatedAt),
@@ -275,7 +326,9 @@ func (r *mutationResolver) UpdateRiskAssessmentProcess(ctx context.Context, inpu
 	if err := r.authorize(ctx, input.ID, probo.ActionRiskAssessmentProcessUpdate); err != nil {
 		return nil, err
 	}
+
 	scope := coredata.NewScopeFromObjectID(input.ID)
+
 	process, err := r.riskManagement.UpdateProcess(
 		ctx,
 		scope,
@@ -290,9 +343,12 @@ func (r *mutationResolver) UpdateRiskAssessmentProcess(ctx context.Context, inpu
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot update risk assessment process", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
+
 	return &types.UpdateRiskAssessmentProcessPayload{RiskAssessmentProcess: types.NewRiskAssessmentProcess(process)}, nil
 }
 
@@ -301,14 +357,18 @@ func (r *mutationResolver) DeleteRiskAssessmentProcess(ctx context.Context, inpu
 	if err := r.authorize(ctx, input.RiskAssessmentProcessID, probo.ActionRiskAssessmentProcessDelete); err != nil {
 		return nil, err
 	}
+
 	scope := coredata.NewScopeFromObjectID(input.RiskAssessmentProcessID)
 	if err := r.riskManagement.DeleteProcess(ctx, scope, input.RiskAssessmentProcessID); err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot delete risk assessment process", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
+
 	return &types.DeleteRiskAssessmentProcessPayload{DeletedRiskAssessmentProcessID: input.RiskAssessmentProcessID}, nil
 }
 
@@ -317,7 +377,9 @@ func (r *mutationResolver) CreateRiskAssessmentThreat(ctx context.Context, input
 	if err := r.authorize(ctx, input.RiskAssessmentScopeID, probo.ActionRiskAssessmentThreatCreate); err != nil {
 		return nil, err
 	}
+
 	scope := coredata.NewScopeFromObjectID(input.RiskAssessmentScopeID)
+
 	threat, err := r.riskManagement.CreateThreat(
 		ctx,
 		scope,
@@ -332,12 +394,16 @@ func (r *mutationResolver) CreateRiskAssessmentThreat(ctx context.Context, input
 		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
 			return nil, gqlutils.Conflict(ctx, err)
 		}
+
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot create risk threat", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
+
 	return &types.CreateRiskAssessmentThreatPayload{
 		RiskAssessmentThreatEdge: &types.RiskAssessmentThreatConnectionEdge{
 			Cursor: threat.CursorKey(coredata.RiskAssessmentThreatOrderFieldCreatedAt),
@@ -351,7 +417,9 @@ func (r *mutationResolver) UpdateRiskAssessmentThreat(ctx context.Context, input
 	if err := r.authorize(ctx, input.ID, probo.ActionRiskAssessmentThreatUpdate); err != nil {
 		return nil, err
 	}
+
 	scope := coredata.NewScopeFromObjectID(input.ID)
+
 	threat, err := r.riskManagement.UpdateThreat(
 		ctx,
 		scope,
@@ -366,9 +434,12 @@ func (r *mutationResolver) UpdateRiskAssessmentThreat(ctx context.Context, input
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot update risk threat", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
+
 	return &types.UpdateRiskAssessmentThreatPayload{RiskAssessmentThreat: types.NewRiskAssessmentThreat(threat)}, nil
 }
 
@@ -377,14 +448,18 @@ func (r *mutationResolver) DeleteRiskAssessmentThreat(ctx context.Context, input
 	if err := r.authorize(ctx, input.RiskAssessmentThreatID, probo.ActionRiskAssessmentThreatDelete); err != nil {
 		return nil, err
 	}
+
 	scope := coredata.NewScopeFromObjectID(input.RiskAssessmentThreatID)
 	if err := r.riskManagement.DeleteThreat(ctx, scope, input.RiskAssessmentThreatID); err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot delete risk threat", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
+
 	return &types.DeleteRiskAssessmentThreatPayload{DeletedRiskAssessmentThreatID: input.RiskAssessmentThreatID}, nil
 }
 
@@ -393,7 +468,9 @@ func (r *mutationResolver) CreateRiskAssessmentScenario(ctx context.Context, inp
 	if err := r.authorize(ctx, input.RiskAssessmentScopeID, probo.ActionRiskAssessmentScenarioCreate); err != nil {
 		return nil, err
 	}
+
 	scope := coredata.NewScopeFromObjectID(input.RiskAssessmentScopeID)
+
 	scenario, err := r.riskManagement.CreateScenario(
 		ctx,
 		scope,
@@ -407,12 +484,16 @@ func (r *mutationResolver) CreateRiskAssessmentScenario(ctx context.Context, inp
 		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
 			return nil, gqlutils.Conflict(ctx, err)
 		}
+
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot create risk scenario", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
+
 	return &types.CreateRiskAssessmentScenarioPayload{
 		RiskAssessmentScenarioEdge: &types.RiskAssessmentScenarioConnectionEdge{
 			Cursor: scenario.CursorKey(coredata.RiskAssessmentScenarioOrderFieldCreatedAt),
@@ -426,7 +507,9 @@ func (r *mutationResolver) UpdateRiskAssessmentScenario(ctx context.Context, inp
 	if err := r.authorize(ctx, input.ID, probo.ActionRiskAssessmentScenarioUpdate); err != nil {
 		return nil, err
 	}
+
 	scope := coredata.NewScopeFromObjectID(input.ID)
+
 	scenario, err := r.riskManagement.UpdateScenario(
 		ctx,
 		scope,
@@ -440,9 +523,12 @@ func (r *mutationResolver) UpdateRiskAssessmentScenario(ctx context.Context, inp
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot update risk scenario", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
+
 	return &types.UpdateRiskAssessmentScenarioPayload{RiskAssessmentScenario: types.NewRiskAssessmentScenario(scenario)}, nil
 }
 
@@ -451,14 +537,18 @@ func (r *mutationResolver) DeleteRiskAssessmentScenario(ctx context.Context, inp
 	if err := r.authorize(ctx, input.RiskAssessmentScenarioID, probo.ActionRiskAssessmentScenarioDelete); err != nil {
 		return nil, err
 	}
+
 	scope := coredata.NewScopeFromObjectID(input.RiskAssessmentScenarioID)
 	if err := r.riskManagement.DeleteScenario(ctx, scope, input.RiskAssessmentScenarioID); err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot delete risk scenario", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
+
 	return &types.DeleteRiskAssessmentScenarioPayload{DeletedRiskAssessmentScenarioID: input.RiskAssessmentScenarioID}, nil
 }
 
@@ -467,6 +557,7 @@ func (r *mutationResolver) LinkRiskAssessmentScenarioThreat(ctx context.Context,
 	if err := r.authorize(ctx, input.RiskAssessmentScenarioID, probo.ActionRiskAssessmentScenarioThreatLink); err != nil {
 		return nil, err
 	}
+
 	scope := coredata.NewScopeFromObjectID(input.RiskAssessmentScenarioID)
 	if err := r.riskManagement.LinkScenarioThreat(
 		ctx,
@@ -479,17 +570,22 @@ func (r *mutationResolver) LinkRiskAssessmentScenarioThreat(ctx context.Context,
 		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
 			return nil, gqlutils.Conflict(ctx, err)
 		}
+
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot link risk scenario threat", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
+
 	scenario, err := r.riskManagement.GetScenario(ctx, scope, input.RiskAssessmentScenarioID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot load risk scenario", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
+
 	return &types.LinkRiskAssessmentScenarioThreatPayload{RiskAssessmentScenario: types.NewRiskAssessmentScenario(scenario)}, nil
 }
 
@@ -498,6 +594,7 @@ func (r *mutationResolver) UnlinkRiskAssessmentScenarioThreat(ctx context.Contex
 	if err := r.authorize(ctx, input.RiskAssessmentScenarioID, probo.ActionRiskAssessmentScenarioThreatUnlink); err != nil {
 		return nil, err
 	}
+
 	scope := coredata.NewScopeFromObjectID(input.RiskAssessmentScenarioID)
 	if err := r.riskManagement.UnlinkScenarioThreat(
 		ctx,
@@ -510,14 +607,18 @@ func (r *mutationResolver) UnlinkRiskAssessmentScenarioThreat(ctx context.Contex
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot unlink risk scenario threat", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
+
 	scenario, err := r.riskManagement.GetScenario(ctx, scope, input.RiskAssessmentScenarioID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot load risk scenario", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
+
 	return &types.UnlinkRiskAssessmentScenarioThreatPayload{RiskAssessmentScenario: types.NewRiskAssessmentScenario(scenario)}, nil
 }
 
@@ -526,6 +627,7 @@ func (r *mutationResolver) LinkRiskAssessmentScenarioRisk(ctx context.Context, i
 	if err := r.authorize(ctx, input.RiskAssessmentScenarioID, probo.ActionRiskAssessmentScenarioRiskLink); err != nil {
 		return nil, err
 	}
+
 	scope := coredata.NewScopeFromObjectID(input.RiskAssessmentScenarioID)
 	if err := r.riskManagement.LinkScenarioRisk(
 		ctx,
@@ -538,18 +640,24 @@ func (r *mutationResolver) LinkRiskAssessmentScenarioRisk(ctx context.Context, i
 		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
 			return nil, gqlutils.Conflict(ctx, err)
 		}
+
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot link risk scenario risk", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
+
 	scenario, err := r.riskManagement.GetScenario(ctx, scope, input.RiskAssessmentScenarioID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot load risk scenario", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
+
 	s := types.NewRiskAssessmentScenario(scenario)
+
 	return &types.LinkRiskAssessmentScenarioRiskPayload{
 		RiskAssessmentScenario: s,
 		RiskAssessmentScenarioEdge: &types.RiskAssessmentScenarioConnectionEdge{
@@ -564,6 +672,7 @@ func (r *mutationResolver) UnlinkRiskAssessmentScenarioRisk(ctx context.Context,
 	if err := r.authorize(ctx, input.RiskAssessmentScenarioID, probo.ActionRiskAssessmentScenarioRiskUnlink); err != nil {
 		return nil, err
 	}
+
 	scope := coredata.NewScopeFromObjectID(input.RiskAssessmentScenarioID)
 	if err := r.riskManagement.UnlinkScenarioRisk(
 		ctx,
@@ -576,14 +685,18 @@ func (r *mutationResolver) UnlinkRiskAssessmentScenarioRisk(ctx context.Context,
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot unlink risk scenario risk", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
+
 	scenario, err := r.riskManagement.GetScenario(ctx, scope, input.RiskAssessmentScenarioID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot load risk scenario", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
+
 	return &types.UnlinkRiskAssessmentScenarioRiskPayload{
 		RiskAssessmentScenario:          types.NewRiskAssessmentScenario(scenario),
 		DeletedRiskAssessmentScenarioID: input.RiskAssessmentScenarioID,
@@ -595,15 +708,20 @@ func (r *riskAssessmentResolver) Organization(ctx context.Context, obj *types.Ri
 	if err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGet); err != nil {
 		return nil, err
 	}
+
 	loaders := dataloader.FromContext(ctx)
+
 	organization, err := loaders.Organization.Load(ctx, obj.Organization.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot get organization", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
+
 	return types.NewOrganization(organization), nil
 }
 
@@ -612,7 +730,9 @@ func (r *riskAssessmentResolver) Scopes(ctx context.Context, obj *types.RiskAsse
 	if err := r.authorize(ctx, obj.ID, probo.ActionRiskAssessmentScopeList); err != nil {
 		return nil, err
 	}
+
 	scope := coredata.NewScopeFromObjectID(obj.ID)
+
 	pageOrderBy := page.OrderBy[coredata.RiskAssessmentScopeOrderField]{
 		Field:     coredata.RiskAssessmentScopeOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
@@ -620,12 +740,15 @@ func (r *riskAssessmentResolver) Scopes(ctx context.Context, obj *types.RiskAsse
 	if orderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.RiskAssessmentScopeOrderField]{Field: orderBy.Field, Direction: orderBy.Direction}
 	}
+
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
 	p, err := r.riskManagement.ListScopesForRiskAssessmentID(ctx, scope, obj.ID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list risk assessment scopes", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
+
 	return types.NewRiskAssessmentScopeConnection(p, r, obj.ID), nil
 }
 
@@ -639,12 +762,15 @@ func (r *riskAssessmentConnectionResolver) TotalCount(ctx context.Context, obj *
 	if err := r.authorize(ctx, obj.ParentID, probo.ActionRiskAssessmentList); err != nil {
 		return nil, err
 	}
+
 	scope := coredata.NewScopeFromObjectID(obj.ParentID)
+
 	count, err := r.riskManagement.CountForOrganizationID(ctx, scope, obj.ParentID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot count risk assessments", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
+
 	return &count, nil
 }
 
@@ -653,12 +779,15 @@ func (r *riskAssessmentNodeConnectionResolver) TotalCount(ctx context.Context, o
 	if err := r.authorize(ctx, obj.ParentID, probo.ActionRiskAssessmentNodeList); err != nil {
 		return nil, err
 	}
+
 	scope := coredata.NewScopeFromObjectID(obj.ParentID)
+
 	count, err := r.riskManagement.CountNodesForScopeID(ctx, scope, obj.ParentID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot count risk assessment nodes", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
+
 	return &count, nil
 }
 
@@ -667,12 +796,15 @@ func (r *riskAssessmentProcessConnectionResolver) TotalCount(ctx context.Context
 	if err := r.authorize(ctx, obj.ParentID, probo.ActionRiskAssessmentProcessList); err != nil {
 		return nil, err
 	}
+
 	scope := coredata.NewScopeFromObjectID(obj.ParentID)
+
 	count, err := r.riskManagement.CountProcessesForScopeID(ctx, scope, obj.ParentID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot count risk assessment processes", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
+
 	return &count, nil
 }
 
@@ -681,12 +813,15 @@ func (r *riskAssessmentScenarioResolver) Scope(ctx context.Context, obj *types.R
 	if err := r.authorize(ctx, obj.RiskAssessmentScopeID, probo.ActionRiskAssessmentScopeGet); err != nil {
 		return nil, err
 	}
+
 	scope := coredata.NewScopeFromObjectID(obj.RiskAssessmentScopeID)
+
 	raScope, err := r.riskManagement.GetScope(ctx, scope, obj.RiskAssessmentScopeID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot load risk assessment scope", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
+
 	return types.NewRiskAssessmentScope(raScope), nil
 }
 
@@ -695,7 +830,9 @@ func (r *riskAssessmentScenarioResolver) Threats(ctx context.Context, obj *types
 	if err := r.authorize(ctx, obj.ID, probo.ActionRiskAssessmentThreatList); err != nil {
 		return nil, err
 	}
+
 	scope := coredata.NewScopeFromObjectID(obj.ID)
+
 	pageOrderBy := page.OrderBy[coredata.RiskAssessmentThreatOrderField]{
 		Field:     coredata.RiskAssessmentThreatOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
@@ -703,12 +840,15 @@ func (r *riskAssessmentScenarioResolver) Threats(ctx context.Context, obj *types
 	if orderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.RiskAssessmentThreatOrderField]{Field: orderBy.Field, Direction: orderBy.Direction}
 	}
+
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
 	p, err := r.riskManagement.ListThreatsForScenarioID(ctx, scope, obj.ID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list scenario threats", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
+
 	return types.NewRiskAssessmentThreatConnection(p, r, obj.ID), nil
 }
 
@@ -717,7 +857,9 @@ func (r *riskAssessmentScenarioResolver) Risks(ctx context.Context, obj *types.R
 	if err := r.authorize(ctx, obj.ID, probo.ActionRiskList); err != nil {
 		return nil, err
 	}
+
 	scope := coredata.NewScopeFromObjectID(obj.ID)
+
 	pageOrderBy := page.OrderBy[coredata.RiskOrderField]{
 		Field:     coredata.RiskOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
@@ -725,12 +867,15 @@ func (r *riskAssessmentScenarioResolver) Risks(ctx context.Context, obj *types.R
 	if orderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.RiskOrderField]{Field: orderBy.Field, Direction: orderBy.Direction}
 	}
+
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
 	p, err := r.riskManagement.ListRisksForScenarioID(ctx, scope, obj.ID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list scenario risks", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
+
 	return types.NewRiskConnection(p, r, obj.ID, nil), nil
 }
 
@@ -739,6 +884,7 @@ func (r *riskAssessmentScenarioConnectionResolver) TotalCount(ctx context.Contex
 	if err := r.authorize(ctx, obj.ParentID, probo.ActionRiskAssessmentScenarioList); err != nil {
 		return nil, err
 	}
+
 	scope := coredata.NewScopeFromObjectID(obj.ParentID)
 
 	switch obj.Resolver.(type) {
@@ -748,6 +894,7 @@ func (r *riskAssessmentScenarioConnectionResolver) TotalCount(ctx context.Contex
 			r.logger.ErrorCtx(ctx, "cannot count risk scenarios", log.Error(err))
 			return nil, gqlutils.Internal(ctx)
 		}
+
 		return &count, nil
 	case *organizationResolver:
 		count, err := r.riskManagement.CountScenariosForOrganizationID(ctx, scope, obj.ParentID)
@@ -755,6 +902,7 @@ func (r *riskAssessmentScenarioConnectionResolver) TotalCount(ctx context.Contex
 			r.logger.ErrorCtx(ctx, "cannot count risk scenarios", log.Error(err))
 			return nil, gqlutils.Internal(ctx)
 		}
+
 		return &count, nil
 	default:
 		count, err := r.riskManagement.CountScenariosForRiskID(ctx, scope, obj.ParentID)
@@ -762,6 +910,7 @@ func (r *riskAssessmentScenarioConnectionResolver) TotalCount(ctx context.Contex
 			r.logger.ErrorCtx(ctx, "cannot count risk scenarios", log.Error(err))
 			return nil, gqlutils.Internal(ctx)
 		}
+
 		return &count, nil
 	}
 }
@@ -771,7 +920,9 @@ func (r *riskAssessmentScopeResolver) Nodes(ctx context.Context, obj *types.Risk
 	if err := r.authorize(ctx, obj.ID, probo.ActionRiskAssessmentNodeList); err != nil {
 		return nil, err
 	}
+
 	scope := coredata.NewScopeFromObjectID(obj.ID)
+
 	pageOrderBy := page.OrderBy[coredata.RiskAssessmentNodeOrderField]{
 		Field:     coredata.RiskAssessmentNodeOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
@@ -779,12 +930,15 @@ func (r *riskAssessmentScopeResolver) Nodes(ctx context.Context, obj *types.Risk
 	if orderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.RiskAssessmentNodeOrderField]{Field: orderBy.Field, Direction: orderBy.Direction}
 	}
+
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
 	p, err := r.riskManagement.ListNodesForScopeID(ctx, scope, obj.ID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list risk assessment nodes", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
+
 	return types.NewRiskAssessmentNodeConnection(p, r, obj.ID), nil
 }
 
@@ -793,7 +947,9 @@ func (r *riskAssessmentScopeResolver) Processes(ctx context.Context, obj *types.
 	if err := r.authorize(ctx, obj.ID, probo.ActionRiskAssessmentProcessList); err != nil {
 		return nil, err
 	}
+
 	scope := coredata.NewScopeFromObjectID(obj.ID)
+
 	pageOrderBy := page.OrderBy[coredata.RiskAssessmentProcessOrderField]{
 		Field:     coredata.RiskAssessmentProcessOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
@@ -801,12 +957,15 @@ func (r *riskAssessmentScopeResolver) Processes(ctx context.Context, obj *types.
 	if orderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.RiskAssessmentProcessOrderField]{Field: orderBy.Field, Direction: orderBy.Direction}
 	}
+
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
 	p, err := r.riskManagement.ListProcessesForScopeID(ctx, scope, obj.ID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list risk assessment processes", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
+
 	return types.NewRiskAssessmentProcessConnection(p, r, obj.ID), nil
 }
 
@@ -815,7 +974,9 @@ func (r *riskAssessmentScopeResolver) Threats(ctx context.Context, obj *types.Ri
 	if err := r.authorize(ctx, obj.ID, probo.ActionRiskAssessmentThreatList); err != nil {
 		return nil, err
 	}
+
 	scope := coredata.NewScopeFromObjectID(obj.ID)
+
 	pageOrderBy := page.OrderBy[coredata.RiskAssessmentThreatOrderField]{
 		Field:     coredata.RiskAssessmentThreatOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
@@ -823,12 +984,15 @@ func (r *riskAssessmentScopeResolver) Threats(ctx context.Context, obj *types.Ri
 	if orderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.RiskAssessmentThreatOrderField]{Field: orderBy.Field, Direction: orderBy.Direction}
 	}
+
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
 	p, err := r.riskManagement.ListThreatsForScopeID(ctx, scope, obj.ID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list risk threats", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
+
 	return types.NewRiskAssessmentThreatConnection(p, r, obj.ID), nil
 }
 
@@ -837,7 +1001,9 @@ func (r *riskAssessmentScopeResolver) Scenarios(ctx context.Context, obj *types.
 	if err := r.authorize(ctx, obj.ID, probo.ActionRiskAssessmentScenarioList); err != nil {
 		return nil, err
 	}
+
 	scope := coredata.NewScopeFromObjectID(obj.ID)
+
 	pageOrderBy := page.OrderBy[coredata.RiskAssessmentScenarioOrderField]{
 		Field:     coredata.RiskAssessmentScenarioOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
@@ -845,12 +1011,15 @@ func (r *riskAssessmentScopeResolver) Scenarios(ctx context.Context, obj *types.
 	if orderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.RiskAssessmentScenarioOrderField]{Field: orderBy.Field, Direction: orderBy.Direction}
 	}
+
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
 	p, err := r.riskManagement.ListScenariosForScopeID(ctx, scope, obj.ID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list risk scenarios", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
+
 	return types.NewRiskAssessmentScenarioConnection(p, r, obj.ID), nil
 }
 
@@ -859,12 +1028,15 @@ func (r *riskAssessmentScopeResolver) MermaidChart(ctx context.Context, obj *typ
 	if err := r.authorize(ctx, obj.ID, probo.ActionRiskAssessmentScopeGet); err != nil {
 		return "", err
 	}
+
 	scope := coredata.NewScopeFromObjectID(obj.ID)
+
 	chart, err := r.riskManagement.BuildScopeMermaidChart(ctx, scope, obj.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot build risk assessment scope mermaid chart", log.Error(err))
 		return "", gqlutils.Internal(ctx)
 	}
+
 	return chart, nil
 }
 
@@ -873,12 +1045,15 @@ func (r *riskAssessmentScopeConnectionResolver) TotalCount(ctx context.Context, 
 	if err := r.authorize(ctx, obj.ParentID, probo.ActionRiskAssessmentScopeList); err != nil {
 		return nil, err
 	}
+
 	scope := coredata.NewScopeFromObjectID(obj.ParentID)
+
 	count, err := r.riskManagement.CountScopesForRiskAssessmentID(ctx, scope, obj.ParentID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot count risk assessment scopes", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
+
 	return &count, nil
 }
 
@@ -887,6 +1062,7 @@ func (r *riskAssessmentThreatConnectionResolver) TotalCount(ctx context.Context,
 	if err := r.authorize(ctx, obj.ParentID, probo.ActionRiskAssessmentThreatList); err != nil {
 		return nil, err
 	}
+
 	scope := coredata.NewScopeFromObjectID(obj.ParentID)
 
 	switch obj.Resolver.(type) {
@@ -896,6 +1072,7 @@ func (r *riskAssessmentThreatConnectionResolver) TotalCount(ctx context.Context,
 			r.logger.ErrorCtx(ctx, "cannot count scenario threats", log.Error(err))
 			return nil, gqlutils.Internal(ctx)
 		}
+
 		return &count, nil
 	default:
 		count, err := r.riskManagement.CountThreatsForScopeID(ctx, scope, obj.ParentID)
@@ -903,6 +1080,7 @@ func (r *riskAssessmentThreatConnectionResolver) TotalCount(ctx context.Context,
 			r.logger.ErrorCtx(ctx, "cannot count risk threats", log.Error(err))
 			return nil, gqlutils.Internal(ctx)
 		}
+
 		return &count, nil
 	}
 }

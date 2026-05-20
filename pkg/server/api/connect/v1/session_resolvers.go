@@ -402,6 +402,7 @@ func (r *mutationResolver) AssumeOrganizationSession(ctx context.Context, input 
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot assume organization session", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
