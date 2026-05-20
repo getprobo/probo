@@ -20,7 +20,7 @@ require (
 	github.com/digitorus/timestamp v0.0.0-20250524132541-c45532741eea
 	github.com/go-chi/chi/v5 v5.2.5
 	github.com/go-chi/cors v1.2.2
-	github.com/go-git/go-git/v5 v5.19.0
+	github.com/go-git/go-git/v5 v5.19.1
 	github.com/jackc/pgx/v5 v5.9.2
 	github.com/jhillyerd/enmime v1.3.0
 	github.com/microcosm-cc/bluemonday v1.0.27
