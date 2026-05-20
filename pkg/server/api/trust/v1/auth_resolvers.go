@@ -79,13 +79,13 @@ func (r *mutationResolver) VerifyMagicLink(ctx context.Context, input types.Veri
 
 		identity, session, continueURL, err = r.iam.AuthService.OpenSessionWithMagicLink(ctx, input.Token)
 		if err != nil {
-		if _, ok := errors.AsType[*iam.ErrExpiredToken](err); ok {
-			return nil, gqlutils.Invalid(ctx, err)
-		}
+			if _, ok := errors.AsType[*iam.ErrExpiredToken](err); ok {
+				return nil, gqlutils.Invalid(ctx, err)
+			}
 
-		if _, ok := errors.AsType[*iam.ErrInvalidToken](err); ok {
-			return nil, gqlutils.Invalid(ctx, err)
-		}
+			if _, ok := errors.AsType[*iam.ErrInvalidToken](err); ok {
+				return nil, gqlutils.Invalid(ctx, err)
+			}
 
 			r.logger.ErrorCtx(ctx, "cannot open session with magic link", log.Error(err))
 
@@ -101,13 +101,13 @@ func (r *mutationResolver) VerifyMagicLink(ctx context.Context, input types.Veri
 
 		identity, session, continueURL, err = r.iam.AuthService.OpenSessionWithMagicLink(ctx, input.Token)
 		if err != nil {
-		if _, ok := errors.AsType[*iam.ErrExpiredToken](err); ok {
-			return nil, gqlutils.Invalid(ctx, err)
-		}
+			if _, ok := errors.AsType[*iam.ErrExpiredToken](err); ok {
+				return nil, gqlutils.Invalid(ctx, err)
+			}
 
-		if _, ok := errors.AsType[*iam.ErrInvalidToken](err); ok {
-			return nil, gqlutils.Invalid(ctx, err)
-		}
+			if _, ok := errors.AsType[*iam.ErrInvalidToken](err); ok {
+				return nil, gqlutils.Invalid(ctx, err)
+			}
 
 			r.logger.ErrorCtx(ctx, "cannot open session with magic link", log.Error(err))
 

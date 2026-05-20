@@ -1114,9 +1114,9 @@ func (impl *Implm) runTrustCenterServer(
 			cert, err := certSelector.GetCertificate(hello)
 			// Silently reject connections without SNI (load balancers, health checks, scanners)
 			if err != nil {
-			if _, ok := errors.AsType[*certmanager.NoSNIError](err); ok {
-				return nil, nil
-			}
+				if _, ok := errors.AsType[*certmanager.NoSNIError](err); ok {
+					return nil, nil
+				}
 
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return nil, nil

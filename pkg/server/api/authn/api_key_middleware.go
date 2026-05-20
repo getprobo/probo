@@ -62,30 +62,30 @@ func NewAPIKeyMiddleware(svc *iam.Service, tokenSecret string) func(next http.Ha
 					return
 				}
 
-			apiKey, err := svc.APIKeyService.GetAPIKey(ctx, keyID)
-			if err != nil {
-				if _, ok := errors.AsType[*iam.ErrPersonalAPIKeyNotFound](err); ok {
-					next.ServeHTTP(w, r)
-					return
+				apiKey, err := svc.APIKeyService.GetAPIKey(ctx, keyID)
+				if err != nil {
+					if _, ok := errors.AsType[*iam.ErrPersonalAPIKeyNotFound](err); ok {
+						next.ServeHTTP(w, r)
+						return
+					}
+
+					if _, ok := errors.AsType[*iam.ErrPersonalAPIKeyExpired](err); ok {
+						next.ServeHTTP(w, r)
+						return
+					}
+
+					panic(fmt.Errorf("cannot get personal API key: %w", err))
 				}
 
-				if _, ok := errors.AsType[*iam.ErrPersonalAPIKeyExpired](err); ok {
-					next.ServeHTTP(w, r)
-					return
+				identity, err := svc.AccountService.GetIdentity(ctx, apiKey.IdentityID)
+				if err != nil {
+					if _, ok := errors.AsType[*iam.ErrIdentityNotFound](err); ok {
+						next.ServeHTTP(w, r)
+						return
+					}
+
+					panic(fmt.Errorf("cannot get identity: %w", err))
 				}
-
-				panic(fmt.Errorf("cannot get personal API key: %w", err))
-			}
-
-			identity, err := svc.AccountService.GetIdentity(ctx, apiKey.IdentityID)
-			if err != nil {
-				if _, ok := errors.AsType[*iam.ErrIdentityNotFound](err); ok {
-					next.ServeHTTP(w, r)
-					return
-				}
-
-				panic(fmt.Errorf("cannot get identity: %w", err))
-			}
 
 				ctx = ContextWithAPIKey(ctx, apiKey)
 				ctx = ContextWithIdentity(ctx, identity)
