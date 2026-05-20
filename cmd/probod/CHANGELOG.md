@@ -4,6 +4,12 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.190.1] - 2026-05-20
+
+### Fixed
+
+- Fix the snapshot-cleanup migration to delete from `processing_activity_third_parties` (the table was renamed from `processing_activity_vendors` in 0.189.0), so the migration runs on databases upgraded past the rename
+
 ## [0.190.0] - 2026-05-20
 
 ### Added
