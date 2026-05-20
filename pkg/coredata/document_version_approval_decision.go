@@ -305,9 +305,8 @@ INSERT INTO document_version_approval_decisions (
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
-		var pgErr *pgconn.PgError
-		if errors.As(err, &pgErr) {
-			if pgErr.Code == "23505" {
+		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
+			if pgErr.Code == "23505" && pgErr.ConstraintName == "document_version_approval_decisions_quorum_id_approver_id_key" {
 				return ErrResourceAlreadyExists
 			}
 		}

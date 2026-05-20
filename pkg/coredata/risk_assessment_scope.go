@@ -196,7 +196,7 @@ INSERT INTO risk_assessment_scopes (
 	}
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
-		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok && pgErr.Code == "23505" {
+		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok && pgErr.Code == "23505" && pgErr.ConstraintName == "risk_assessment_scopes_pkey" {
 			return ErrResourceAlreadyExists
 		}
 		return fmt.Errorf("cannot insert risk assessment scope: %w", err)

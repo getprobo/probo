@@ -214,7 +214,7 @@ VALUES (
 	}
 
 	if _, err := conn.Exec(ctx, q, args); err != nil {
-		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok && pgErr.Code == "23505" {
+		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok && pgErr.Code == "23505" && pgErr.ConstraintName == "mailing_list_subscribers_mailing_list_id_email_key" {
 			return ErrResourceAlreadyExists
 		}
 
@@ -278,13 +278,9 @@ WHERE
 	args := pgx.StrictNamedArgs{"mailing_list_subscriber_id": cns.ID}
 	maps.Copy(args, scope.SQLArguments())
 
-	tag, err := conn.Exec(ctx, q, args)
+	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
 		return fmt.Errorf("cannot delete mailing list subscriber: %w", err)
-	}
-
-	if tag.RowsAffected() == 0 {
-		return ErrResourceNotFound
 	}
 
 	return nil

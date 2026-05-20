@@ -212,9 +212,8 @@ RETURNING rank;
 
 	err := conn.QueryRow(ctx, q, args).Scan(&c.Rank)
 	if err != nil {
-		var pgErr *pgconn.PgError
-		if errors.As(err, &pgErr) {
-			if pgErr.Code == "23505" {
+		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
+			if pgErr.Code == "23505" && pgErr.ConstraintName == "compliance_frameworks_trust_center_id_framework_id_key" {
 				return ErrResourceAlreadyExists
 			}
 		}

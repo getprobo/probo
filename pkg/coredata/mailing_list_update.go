@@ -158,13 +158,9 @@ WHERE
 	}
 	maps.Copy(args, scope.SQLArguments())
 
-	tag, err := conn.Exec(ctx, q, args)
+	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
 		return fmt.Errorf("cannot delete mailing list update: %w", err)
-	}
-
-	if tag.RowsAffected() == 0 {
-		return ErrResourceNotFound
 	}
 
 	return nil

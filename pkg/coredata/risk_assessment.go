@@ -191,7 +191,7 @@ VALUES (@id, @tenant_id, @organization_id, @name, @description, @created_at, @up
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
-		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok && pgErr.Code == "23505" {
+		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok && pgErr.Code == "23505" && pgErr.ConstraintName == "risk_assessments_pkey" {
 			return ErrResourceAlreadyExists
 		}
 		return fmt.Errorf("cannot insert risk assessment: %w", err)

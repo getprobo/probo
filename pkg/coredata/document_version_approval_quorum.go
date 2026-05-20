@@ -290,9 +290,8 @@ INSERT INTO document_version_approval_quorums (
 
 	_, err := conn.Exec(ctx, query, args)
 	if err != nil {
-		var pgErr *pgconn.PgError
-		if errors.As(err, &pgErr) {
-			if pgErr.Code == "23505" {
+		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
+			if pgErr.Code == "23505" && pgErr.ConstraintName == "document_one_pending_quorum_idx" {
 				return ErrResourceAlreadyExists
 			}
 		}
