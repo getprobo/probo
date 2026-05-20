@@ -87,7 +87,9 @@ func (h *sourceNameHandler) Claim(ctx context.Context) (coredata.AccessSource, e
 }
 
 func (h *sourceNameHandler) Process(ctx context.Context, source coredata.AccessSource) error {
-	h.logger.InfoCtx(ctx, "syncing source name",
+	h.logger.InfoCtx(
+		ctx,
+		"syncing source name",
 		log.String("source_id", source.ID.String()),
 		log.String("current_name", source.Name),
 	)
@@ -134,7 +136,9 @@ func (h *sourceNameHandler) Process(ctx context.Context, source coredata.AccessS
 		},
 	)
 	if err != nil {
-		h.logger.ErrorCtx(ctx, "cannot load connector for source name sync",
+		h.logger.ErrorCtx(
+			ctx,
+			"cannot load connector for source name sync",
 			log.String("source_id", source.ID.String()),
 			log.Error(err),
 		)
@@ -143,7 +147,9 @@ func (h *sourceNameHandler) Process(ctx context.Context, source coredata.AccessS
 	}
 
 	if resolver == nil {
-		h.logger.InfoCtx(ctx, "no name resolver for provider, keeping generic name",
+		h.logger.InfoCtx(
+			ctx,
+			"no name resolver for provider, keeping generic name",
 			log.String("source_id", source.ID.String()),
 			log.String("provider", dbConnector.Provider.String()),
 		)
@@ -156,7 +162,9 @@ func (h *sourceNameHandler) Process(ctx context.Context, source coredata.AccessS
 
 	instanceName, err := resolver.ResolveInstanceName(resolveCtx)
 	if err != nil {
-		h.logger.ErrorCtx(ctx, "cannot resolve instance name",
+		h.logger.ErrorCtx(
+			ctx,
+			"cannot resolve instance name",
 			log.String("source_id", source.ID.String()),
 			log.String("provider", dbConnector.Provider.String()),
 			log.Error(err),
@@ -166,7 +174,9 @@ func (h *sourceNameHandler) Process(ctx context.Context, source coredata.AccessS
 	}
 
 	if instanceName == "" {
-		h.logger.InfoCtx(ctx, "instance name is empty, keeping generic name",
+		h.logger.InfoCtx(
+			ctx,
+			"instance name is empty, keeping generic name",
 			log.String("source_id", source.ID.String()),
 			log.String("provider", dbConnector.Provider.String()),
 		)
@@ -177,7 +187,9 @@ func (h *sourceNameHandler) Process(ctx context.Context, source coredata.AccessS
 	displayName := drivers.ProviderDisplayName(dbConnector.Provider)
 	newName := displayName + " " + instanceName
 
-	h.logger.InfoCtx(ctx, "resolved source name",
+	h.logger.InfoCtx(
+		ctx,
+		"resolved source name",
 		log.String("source_id", source.ID.String()),
 		log.String("old_name", source.Name),
 		log.String("new_name", newName),

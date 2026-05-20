@@ -248,7 +248,12 @@ func (d *Microsoft365Driver) listUsers(ctx context.Context) ([]microsoft365User,
 }
 
 func buildMicrosoft365UsersURL() (string, error) {
-	u, err := url.Parse(microsoft365GraphBaseURL + "/users")
+	endpoint, err := url.JoinPath(microsoft365GraphBaseURL, "users")
+	if err != nil {
+		return "", fmt.Errorf("cannot build graph users URL: %w", err)
+	}
+
+	u, err := url.Parse(endpoint)
 	if err != nil {
 		return "", fmt.Errorf("cannot parse graph users URL: %w", err)
 	}
@@ -263,13 +268,16 @@ func buildMicrosoft365UsersURL() (string, error) {
 }
 
 func (d *Microsoft365Driver) listDirectoryRoles(ctx context.Context) ([]microsoft365DirectoryRole, error) {
-	url := fmt.Sprintf("%s/directoryRoles", microsoft365GraphBaseURL)
+	endpoint, err := url.JoinPath(microsoft365GraphBaseURL, "directoryRoles")
+	if err != nil {
+		return nil, fmt.Errorf("cannot build graph directory roles URL: %w", err)
+	}
 
 	var all []microsoft365DirectoryRole
 
 	for range microsoft365MaxPaginationOK {
 		var page microsoft365RolesPage
-		if err := d.fetchJSON(ctx, url, &page); err != nil {
+		if err := d.fetchJSON(ctx, endpoint, &page); err != nil {
 			return nil, err
 		}
 
@@ -278,20 +286,23 @@ func (d *Microsoft365Driver) listDirectoryRoles(ctx context.Context) ([]microsof
 			return all, nil
 		}
 
-		url = page.NextLink
+		endpoint = page.NextLink
 	}
 
 	return nil, fmt.Errorf("cannot list all microsoft 365 directory roles: %w", ErrPaginationLimitReached)
 }
 
 func (d *Microsoft365Driver) listRoleMembers(ctx context.Context, roleID string) ([]microsoft365RoleMember, error) {
-	url := fmt.Sprintf("%s/directoryRoles/%s/members", microsoft365GraphBaseURL, roleID)
+	endpoint, err := url.JoinPath(microsoft365GraphBaseURL, "directoryRoles", roleID, "members")
+	if err != nil {
+		return nil, fmt.Errorf("cannot build graph role members URL: %w", err)
+	}
 
 	var all []microsoft365RoleMember
 
 	for range microsoft365MaxPaginationOK {
 		var page microsoft365MembersPage
-		if err := d.fetchJSON(ctx, url, &page); err != nil {
+		if err := d.fetchJSON(ctx, endpoint, &page); err != nil {
 			return nil, err
 		}
 
@@ -300,7 +311,7 @@ func (d *Microsoft365Driver) listRoleMembers(ctx context.Context, roleID string)
 			return all, nil
 		}
 
-		url = page.NextLink
+		endpoint = page.NextLink
 	}
 
 	return nil, fmt.Errorf("cannot list all members of role %q: %w", roleID, ErrPaginationLimitReached)

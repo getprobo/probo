@@ -338,10 +338,12 @@ INSERT INTO connectors (
 
 	if c.Provider == ConnectorProviderSlack {
 		if slackConn, ok := c.Connection.(*connector.SlackConnection); ok {
-			_ = c.SetSettings(&SlackConnectorSettings{
-				Channel:   slackConn.Settings.Channel,
-				ChannelID: slackConn.Settings.ChannelID,
-			})
+			_ = c.SetSettings(
+				&SlackConnectorSettings{
+					Channel:   slackConn.Settings.Channel,
+					ChannelID: slackConn.Settings.ChannelID,
+				},
+			)
 		}
 	}
 
@@ -554,10 +556,12 @@ WHERE
 
 	if c.Provider == ConnectorProviderSlack {
 		if slackConn, ok := c.Connection.(*connector.SlackConnection); ok {
-			_ = c.SetSettings(&SlackConnectorSettings{
-				Channel:   slackConn.Settings.Channel,
-				ChannelID: slackConn.Settings.ChannelID,
-			})
+			_ = c.SetSettings(
+				&SlackConnectorSettings{
+					Channel:   slackConn.Settings.Channel,
+					ChannelID: slackConn.Settings.ChannelID,
+				},
+			)
 		}
 	}
 

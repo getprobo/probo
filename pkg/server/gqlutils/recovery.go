@@ -31,8 +31,7 @@ func RecoverFunc(ctx context.Context, err any) error {
 		return gqlErr
 	}
 
-	var errValidations validator.ValidationErrors
-	if errors.As(asError(err), &errValidations) {
+	if errValidations, ok := errors.AsType[validator.ValidationErrors](asError(err)); ok {
 		gqlErrors := gqlerror.List{}
 
 		for _, err := range errValidations {
@@ -48,9 +47,10 @@ func RecoverFunc(ctx context.Context, err any) error {
 		return gqlErrors
 	}
 
-	var permissionDeniedErr *iam.ErrInsufficientPermissions
-	if errTyped, ok := err.(error); ok && errors.As(errTyped, &permissionDeniedErr) {
-		return Forbidden(ctx, permissionDeniedErr)
+	if errTyped, ok := err.(error); ok {
+		if permissionDeniedErr, ok := errors.AsType[*iam.ErrInsufficientPermissions](errTyped); ok {
+			return Forbidden(ctx, permissionDeniedErr)
+		}
 	}
 
 	logger := httpserver.LoggerFromContext(ctx)

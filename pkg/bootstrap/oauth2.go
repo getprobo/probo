@@ -32,10 +32,12 @@ func GenerateOAuth2SigningKey() (string, error) {
 		return "", fmt.Errorf("generate RSA key: %w", err)
 	}
 
-	keyPEM := pem.EncodeToMemory(&pem.Block{
-		Type:  "RSA PRIVATE KEY",
-		Bytes: x509.MarshalPKCS1PrivateKey(privateKey),
-	})
+	keyPEM := pem.EncodeToMemory(
+		&pem.Block{
+			Type:  "RSA PRIVATE KEY",
+			Bytes: x509.MarshalPKCS1PrivateKey(privateKey),
+		},
+	)
 
 	return string(keyPEM), nil
 }

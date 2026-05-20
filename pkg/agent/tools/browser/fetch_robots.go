@@ -19,6 +19,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
@@ -46,37 +47,49 @@ func FetchRobotsTxtTool() agent.Tool {
 		"Fetch and parse the robots.txt file for a domain. Returns sitemap URLs and disallowed paths, which can reveal hidden pages the crawler might miss.",
 		func(ctx context.Context, p robotsParams) (agent.ToolResult, error) {
 			if err := validatePublicDomain(p.Domain); err != nil {
-				return agent.ResultJSON(robotsResult{
-					Found:       false,
-					ErrorDetail: fmt.Sprintf("domain not allowed: %s", err),
-				}), nil
+				return agent.ResultJSON(
+					robotsResult{
+						Found:       false,
+						ErrorDetail: fmt.Sprintf("domain not allowed: %s", err),
+					},
+				), nil
 			}
 
-			u := "https://" + p.Domain + "/robots.txt"
+			u := &url.URL{
+				Scheme: "https",
+				Host:   p.Domain,
+				Path:   "/robots.txt",
+			}
 
-			req, err := http.NewRequestWithContext(ctx, http.MethodGet, u, nil)
+			req, err := http.NewRequestWithContext(ctx, http.MethodGet, u.String(), nil)
 			if err != nil {
-				return agent.ResultJSON(robotsResult{
-					Found:       false,
-					ErrorDetail: fmt.Sprintf("cannot create request: %s", err),
-				}), nil
+				return agent.ResultJSON(
+					robotsResult{
+						Found:       false,
+						ErrorDetail: fmt.Sprintf("cannot create request: %s", err),
+					},
+				), nil
 			}
 
 			resp, err := client.Do(req)
 			if err != nil {
-				return agent.ResultJSON(robotsResult{
-					Found:       false,
-					ErrorDetail: fmt.Sprintf("cannot fetch robots.txt: %s", err),
-				}), nil
+				return agent.ResultJSON(
+					robotsResult{
+						Found:       false,
+						ErrorDetail: fmt.Sprintf("cannot fetch robots.txt: %s", err),
+					},
+				), nil
 			}
 
 			defer func() { _ = resp.Body.Close() }()
 
 			if resp.StatusCode != http.StatusOK {
-				return agent.ResultJSON(robotsResult{
-					Found:       false,
-					ErrorDetail: fmt.Sprintf("robots.txt returned status %d", resp.StatusCode),
-				}), nil
+				return agent.ResultJSON(
+					robotsResult{
+						Found:       false,
+						ErrorDetail: fmt.Sprintf("robots.txt returned status %d", resp.StatusCode),
+					},
+				), nil
 			}
 
 			var result robotsResult

@@ -66,10 +66,12 @@ func CheckSSLCertificateTool() agent.Tool {
 		"Check the SSL/TLS certificate for a domain, returning issuer, expiry, protocol version, and validity.",
 		func(ctx context.Context, p sslParams) (agent.ToolResult, error) {
 			if err := netcheck.ValidatePublicDomain(p.Domain); err != nil {
-				return agent.ResultJSON(sslResult{
-					Valid:       false,
-					ErrorDetail: fmt.Sprintf("domain not allowed: %s", err),
-				}), nil
+				return agent.ResultJSON(
+					sslResult{
+						Valid:       false,
+						ErrorDetail: fmt.Sprintf("domain not allowed: %s", err),
+					},
+				), nil
 			}
 
 			// This is a certificate inspection tool: we intentionally
@@ -96,20 +98,24 @@ func CheckSSLCertificateTool() agent.Tool {
 			}
 
 			if err != nil {
-				return agent.ResultJSON(sslResult{
-					Valid:       false,
-					ErrorDetail: err.Error(),
-				}), nil
+				return agent.ResultJSON(
+					sslResult{
+						Valid:       false,
+						ErrorDetail: err.Error(),
+					},
+				), nil
 			}
 
 			defer func() { _ = conn.Close() }()
 
 			state := conn.ConnectionState()
 			if len(state.PeerCertificates) == 0 {
-				return agent.ResultJSON(sslResult{
-					Valid:       false,
-					ErrorDetail: "no peer certificates",
-				}), nil
+				return agent.ResultJSON(
+					sslResult{
+						Valid:       false,
+						ErrorDetail: "no peer certificates",
+					},
+				), nil
 			}
 
 			cert := state.PeerCertificates[0]

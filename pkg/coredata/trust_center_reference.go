@@ -171,8 +171,7 @@ RETURNING rank;
 
 	err := conn.QueryRow(ctx, q, args).Scan(&t.Rank)
 	if err != nil {
-		var pgErr *pgconn.PgError
-		if errors.As(err, &pgErr) {
+		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
 			if pgErr.Code == "23505" && pgErr.ConstraintName == "trust_center_references_trust_center_id_rank_key" {
 				return ErrResourceAlreadyExists
 			}

@@ -55,13 +55,11 @@ func NewRecoverFunc(logger *log.Logger) mcpgenmcp.RecoverFunc {
 // those. Unknown errors are logged and replaced with a generic internal error
 // to avoid leaking implementation details to the client.
 func sanitizeError(ctx context.Context, logger *log.Logger, err error) error {
-	var permissionDeniedErr *iam.ErrInsufficientPermissions
-	if errors.As(err, &permissionDeniedErr) {
+	if _, ok := errors.AsType[*iam.ErrInsufficientPermissions](err); ok {
 		return fmt.Errorf("permission denied")
 	}
 
-	var assumptionRequiredErr *iam.ErrAssumptionRequired
-	if errors.As(err, &assumptionRequiredErr) {
+	if _, ok := errors.AsType[*iam.ErrAssumptionRequired](err); ok {
 		return fmt.Errorf("assumption required")
 	}
 
@@ -77,13 +75,11 @@ func sanitizeError(ctx context.Context, logger *log.Logger, err error) error {
 		return fmt.Errorf("resource is in use")
 	}
 
-	var validationErrors validator.ValidationErrors
-	if errors.As(err, &validationErrors) {
+	if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 		return validationErrors
 	}
 
-	var validationError *validator.ValidationError
-	if errors.As(err, &validationError) {
+	if validationError, ok := errors.AsType[*validator.ValidationError](err); ok {
 		return validationError
 	}
 

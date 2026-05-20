@@ -170,10 +170,13 @@ func (s *Sender) claimNextWebhookData(ctx context.Context) (*coredata.WebhookDat
 				return fmt.Errorf("cannot insert webhook event: %w", err)
 			}
 
-			deliveries = append(deliveries, pendingDelivery{
-				Event:  event,
-				Config: config,
-			})
+			deliveries = append(
+				deliveries,
+				pendingDelivery{
+					Event:  event,
+					Config: config,
+				},
+			)
 		}
 
 		webhookData.ProcessedAt = &now

@@ -32,8 +32,7 @@ func (r *membershipResolver) LastSession(ctx context.Context, obj *types.Members
 
 	childSession, err := r.iam.SessionService.GetActiveSessionForMembership(ctx, session.ID, obj.ID)
 	if err != nil {
-		var errSessionNotFound *iam.ErrSessionNotFound
-		if errors.As(err, &errSessionNotFound) {
+		if _, ok := errors.AsType[*iam.ErrSessionNotFound](err); ok {
 			return nil, nil
 		}
 

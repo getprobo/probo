@@ -71,7 +71,10 @@ type clickupTeamResponse struct {
 }
 
 func (d *ClickUpDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error) {
-	endpoint := fmt.Sprintf("https://api.clickup.com/api/v2/team/%s", url.PathEscape(d.teamID))
+	endpoint, err := url.JoinPath("https://api.clickup.com", "api", "v2", "team", d.teamID)
+	if err != nil {
+		return nil, fmt.Errorf("cannot build clickup team URL: %w", err)
+	}
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {

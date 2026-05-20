@@ -176,20 +176,23 @@ func (emails Emails) BulkInsert(
 
 	rows := make([][]any, 0, len(emails))
 	for _, e := range emails {
-		rows = append(rows, []any{
-			e.ID,
-			e.RecipientEmail,
-			e.RecipientName,
-			e.SenderName,
-			e.ReplyTo,
-			e.UnsubscribeURL,
-			e.MailingListUpdateID,
-			e.Subject,
-			e.TextBody,
-			e.HtmlBody,
-			e.CreatedAt,
-			e.UpdatedAt,
-		})
+		rows = append(
+			rows,
+			[]any{
+				e.ID,
+				e.RecipientEmail,
+				e.RecipientName,
+				e.SenderName,
+				e.ReplyTo,
+				e.UnsubscribeURL,
+				e.MailingListUpdateID,
+				e.Subject,
+				e.TextBody,
+				e.HtmlBody,
+				e.CreatedAt,
+				e.UpdatedAt,
+			},
+		)
 	}
 
 	_, err := conn.CopyFrom(

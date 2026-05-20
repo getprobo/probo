@@ -2435,8 +2435,7 @@ func (r *Resolver) ListUsersTool(ctx context.Context, req *mcp.CallToolRequest, 
 func (r *Resolver) GetUserTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetUserInput) (*mcp.CallToolResult, types.GetUserOutput, error) {
 	profile, err := r.iamSvc.OrganizationService.GetProfile(ctx, input.ID)
 	if err != nil {
-		var errNotFound *iam.ErrProfileNotFound
-		if errors.As(err, &errNotFound) {
+		if _, ok := errors.AsType[*iam.ErrProfileNotFound](err); ok {
 			return nil, types.GetUserOutput{}, fmt.Errorf("user not found: %w", err)
 		}
 
@@ -2472,8 +2471,7 @@ func (r *Resolver) CreateUserTool(ctx context.Context, req *mcp.CallToolRequest,
 		ContractEndDate:          contractEnd,
 	})
 	if err != nil {
-		var errAlreadyExists *iam.ErrUserAlreadyExists
-		if errors.As(err, &errAlreadyExists) {
+		if _, ok := errors.AsType[*iam.ErrUserAlreadyExists](err); ok {
 			return nil, types.CreateUserOutput{}, fmt.Errorf("user with email already exists: %w", err)
 		}
 
@@ -2491,16 +2489,11 @@ func (r *Resolver) InviteUserTool(ctx context.Context, req *mcp.CallToolRequest,
 		ProfileID:      input.ProfileID,
 	})
 	if err != nil {
-		var (
-			errOrgNotFound *iam.ErrOrganizationNotFound
-			errUserExists  *iam.ErrUserAlreadyExists
-		)
-
-		if errors.As(err, &errOrgNotFound) {
+		if _, ok := errors.AsType[*iam.ErrOrganizationNotFound](err); ok {
 			return nil, types.InviteUserOutput{}, fmt.Errorf("organization not found: %w", err)
 		}
 
-		if errors.As(err, &errUserExists) {
+		if _, ok := errors.AsType[*iam.ErrUserAlreadyExists](err); ok {
 			return nil, types.InviteUserOutput{}, fmt.Errorf("user already in organization: %w", err)
 		}
 
@@ -2574,16 +2567,11 @@ func (r *Resolver) RemoveUserTool(ctx context.Context, req *mcp.CallToolRequest,
 
 	err := r.iamSvc.OrganizationService.RemoveUser(ctx, input.OrganizationID, input.ProfileID)
 	if err != nil {
-		var (
-			errManagedBySCIM *iam.ErrUserManagedBySCIM
-			errLastOwner     *iam.ErrLastActiveOwner
-		)
-
-		if errors.As(err, &errManagedBySCIM) {
+		if _, ok := errors.AsType[*iam.ErrUserManagedBySCIM](err); ok {
 			return nil, types.RemoveUserOutput{}, fmt.Errorf("user is managed by SCIM and cannot be removed: %w", err)
 		}
 
-		if errors.As(err, &errLastOwner) {
+		if _, ok := errors.AsType[*iam.ErrLastActiveOwner](err); ok {
 			return nil, types.RemoveUserOutput{}, fmt.Errorf("cannot remove last active owner: %w", err)
 		}
 
@@ -5189,8 +5177,7 @@ func (r *Resolver) GetSCIMConfigurationTool(ctx context.Context, req *mcp.CallTo
 
 	config, err := r.iamSvc.OrganizationService.GetSCIMConfiguration(ctx, input.OrganizationID)
 	if err != nil {
-		var errNotFound *iam.ErrNoSCIMConfigurationFound
-		if errors.As(err, &errNotFound) {
+		if _, ok := errors.AsType[*iam.ErrNoSCIMConfigurationFound](err); ok {
 			return nil, types.GetSCIMConfigurationOutput{}, fmt.Errorf("SCIM configuration not found")
 		}
 
@@ -5255,8 +5242,7 @@ func (r *Resolver) GetSCIMBridgeTool(ctx context.Context, req *mcp.CallToolReque
 
 	bridge, err := r.iamSvc.OrganizationService.GetSCIMBridgeByID(ctx, input.ID)
 	if err != nil {
-		var errNotFound *iam.ErrSCIMBridgeNotFound
-		if errors.As(err, &errNotFound) {
+		if _, ok := errors.AsType[*iam.ErrSCIMBridgeNotFound](err); ok {
 			return nil, types.GetSCIMBridgeOutput{}, fmt.Errorf("SCIM bridge %s not found", input.ID)
 		}
 

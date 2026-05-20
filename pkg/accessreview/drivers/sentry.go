@@ -19,6 +19,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"time"
 
 	"go.probo.inc/probo/pkg/coredata"
@@ -108,10 +109,10 @@ func (d *SentryDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error
 
 	var records []AccountRecord
 
-	nextURL := fmt.Sprintf(
-		"https://sentry.io/api/0/organizations/%s/members/",
-		orgSlug,
-	)
+	nextURL, err := url.JoinPath("https://sentry.io", "api", "0", "organizations", orgSlug, "members")
+	if err != nil {
+		return nil, fmt.Errorf("cannot build sentry members URL: %w", err)
+	}
 
 	for range maxPaginationPages {
 		members, linkHeader, err := d.queryMembers(ctx, nextURL)

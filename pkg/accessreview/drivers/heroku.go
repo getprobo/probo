@@ -72,7 +72,10 @@ type herokuTeamMember struct {
 func (d *HerokuDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error) {
 	var records []AccountRecord
 
-	endpoint := fmt.Sprintf("https://api.heroku.com/teams/%s/members", url.PathEscape(d.teamID))
+	endpoint, err := url.JoinPath("https://api.heroku.com", "teams", d.teamID, "members")
+	if err != nil {
+		return nil, fmt.Errorf("cannot build heroku members URL: %w", err)
+	}
 	rangeHeader := ""
 
 	for range maxPaginationPages {

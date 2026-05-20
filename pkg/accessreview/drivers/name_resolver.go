@@ -22,11 +22,10 @@ import (
 	"net/http"
 	"net/url"
 
-	admin "google.golang.org/api/admin/directory/v1"
-	"google.golang.org/api/option"
-
 	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/coredata"
+	admin "google.golang.org/api/admin/directory/v1"
+	"google.golang.org/api/option"
 )
 
 // NameResolver fetches the human-readable instance name from a provider
@@ -204,12 +203,17 @@ func NewCloudflareNameResolver(httpClient *http.Client) NameResolver {
 }
 
 func (r *cloudflareNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
-	req, err := http.NewRequestWithContext(
-		ctx,
-		http.MethodGet,
-		"https://api.cloudflare.com/client/v4/accounts?page=1&per_page=1",
-		nil,
-	)
+	cfURL, err := url.Parse("https://api.cloudflare.com/client/v4/accounts")
+	if err != nil {
+		return "", fmt.Errorf("cannot parse cloudflare accounts URL: %w", err)
+	}
+
+	q := cfURL.Query()
+	q.Set("page", "1")
+	q.Set("per_page", "1")
+	cfURL.RawQuery = q.Encode()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, cfURL.String(), nil)
 	if err != nil {
 		return "", fmt.Errorf("cannot create cloudflare accounts request: %w", err)
 	}
@@ -300,9 +304,12 @@ func NewTallyNameResolver(httpClient *http.Client, organizationID string) NameRe
 }
 
 func (r *tallyNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
-	url := fmt.Sprintf("https://api.tally.so/organizations/%s", r.organizationID)
+	endpoint, err := url.JoinPath("https://api.tally.so", "organizations", r.organizationID)
+	if err != nil {
+		return "", fmt.Errorf("cannot build tally organization URL: %w", err)
+	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
 		return "", fmt.Errorf("cannot create tally organization request: %w", err)
 	}
@@ -484,9 +491,12 @@ func (r *sentryNameResolver) ResolveInstanceName(ctx context.Context) (string, e
 		return "", nil
 	}
 
-	url := fmt.Sprintf("https://sentry.io/api/0/organizations/%s/", r.orgSlug)
+	endpoint, err := url.JoinPath("https://sentry.io", "api", "0", "organizations", r.orgSlug)
+	if err != nil {
+		return "", fmt.Errorf("cannot build sentry organization URL: %w", err)
+	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
 		return "", fmt.Errorf("cannot create sentry organization request: %w", err)
 	}
@@ -525,9 +535,12 @@ func NewGitHubNameResolver(httpClient *http.Client, org string) NameResolver {
 }
 
 func (r *githubNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
-	url := fmt.Sprintf("https://api.github.com/orgs/%s", r.org)
+	endpoint, err := url.JoinPath("https://api.github.com", "orgs", r.org)
+	if err != nil {
+		return "", fmt.Errorf("cannot build github organization URL: %w", err)
+	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
 		return "", fmt.Errorf("cannot create github organization request: %w", err)
 	}
@@ -639,7 +652,10 @@ func (r *gitlabNameResolver) ResolveInstanceName(ctx context.Context) (string, e
 		return "", nil
 	}
 
-	endpoint := fmt.Sprintf("https://gitlab.com/api/v4/groups/%s", url.PathEscape(r.groupID))
+	endpoint, err := url.JoinPath("https://gitlab.com", "api", "v4", "groups", r.groupID)
+	if err != nil {
+		return "", fmt.Errorf("cannot build gitlab group URL: %w", err)
+	}
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
@@ -689,7 +705,10 @@ func (r *bitbucketNameResolver) ResolveInstanceName(ctx context.Context) (string
 		return "", nil
 	}
 
-	endpoint := fmt.Sprintf("https://api.bitbucket.org/2.0/workspaces/%s", url.PathEscape(r.workspace))
+	endpoint, err := url.JoinPath("https://api.bitbucket.org", "2.0", "workspaces", r.workspace)
+	if err != nil {
+		return "", fmt.Errorf("cannot build bitbucket workspace URL: %w", err)
+	}
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
@@ -739,7 +758,10 @@ func (r *herokuNameResolver) ResolveInstanceName(ctx context.Context) (string, e
 		return "", nil
 	}
 
-	endpoint := fmt.Sprintf("https://api.heroku.com/teams/%s", url.PathEscape(r.teamID))
+	endpoint, err := url.JoinPath("https://api.heroku.com", "teams", r.teamID)
+	if err != nil {
+		return "", fmt.Errorf("cannot build heroku team URL: %w", err)
+	}
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
@@ -799,7 +821,10 @@ func (r *asanaNameResolver) ResolveInstanceName(ctx context.Context) (string, er
 		return "", nil
 	}
 
-	endpoint := fmt.Sprintf("https://app.asana.com/api/1.0/workspaces/%s", url.PathEscape(r.workspaceGID))
+	endpoint, err := url.JoinPath("https://app.asana.com", "api", "1.0", "workspaces", r.workspaceGID)
+	if err != nil {
+		return "", fmt.Errorf("cannot build asana workspace URL: %w", err)
+	}
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
@@ -846,7 +871,10 @@ func (r *netlifyNameResolver) ResolveInstanceName(ctx context.Context) (string, 
 		return "", nil
 	}
 
-	endpoint := fmt.Sprintf("https://api.netlify.com/api/v1/accounts/%s", url.PathEscape(r.accountSlug))
+	endpoint, err := url.JoinPath("https://api.netlify.com", "api", "v1", "accounts", r.accountSlug)
+	if err != nil {
+		return "", fmt.Errorf("cannot build netlify account URL: %w", err)
+	}
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
@@ -891,7 +919,10 @@ func (r *clickupNameResolver) ResolveInstanceName(ctx context.Context) (string, 
 		return "", nil
 	}
 
-	endpoint := fmt.Sprintf("https://api.clickup.com/api/v2/team/%s", url.PathEscape(r.teamID))
+	endpoint, err := url.JoinPath("https://api.clickup.com", "api", "v2", "team", r.teamID)
+	if err != nil {
+		return "", fmt.Errorf("cannot build clickup team URL: %w", err)
+	}
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
@@ -941,7 +972,10 @@ func (r *vercelNameResolver) ResolveInstanceName(ctx context.Context) (string, e
 		return "", nil
 	}
 
-	teamURL := fmt.Sprintf("https://api.vercel.com/v2/teams/%s", url.PathEscape(r.teamID))
+	teamURL, err := url.JoinPath("https://api.vercel.com", "v2", "teams", r.teamID)
+	if err != nil {
+		return "", fmt.Errorf("cannot build vercel team URL: %w", err)
+	}
 
 	teamReq, err := http.NewRequestWithContext(ctx, http.MethodGet, teamURL, nil)
 	if err != nil {
@@ -1107,12 +1141,16 @@ func NewMicrosoft365NameResolver(httpClient *http.Client) NameResolver {
 }
 
 func (r *microsoft365NameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
-	req, err := http.NewRequestWithContext(
-		ctx,
-		http.MethodGet,
-		"https://graph.microsoft.com/v1.0/organization?$select=displayName,verifiedDomains",
-		nil,
-	)
+	msURL, err := url.Parse("https://graph.microsoft.com/v1.0/organization")
+	if err != nil {
+		return "", fmt.Errorf("cannot parse microsoft 365 organization URL: %w", err)
+	}
+
+	q := msURL.Query()
+	q.Set("$select", "displayName,verifiedDomains")
+	msURL.RawQuery = q.Encode()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, msURL.String(), nil)
 	if err != nil {
 		return "", fmt.Errorf("cannot create microsoft 365 organization request: %w", err)
 	}

@@ -396,8 +396,8 @@ func mapError(err error) error {
 		return &llm.ErrStreamingRequired{Err: err}
 	}
 
-	var apiErr *anthropic.Error
-	if !errors.As(err, &apiErr) {
+	apiErr, ok := errors.AsType[*anthropic.Error](err)
+	if !ok {
 		return err
 	}
 

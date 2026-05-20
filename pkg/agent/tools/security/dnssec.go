@@ -61,10 +61,12 @@ func CheckDNSSECTool() agent.Tool {
 				withDNSSEC(),
 			)
 			if err != nil {
-				return agent.ResultJSON(dnssecResult{
-					Enabled:     false,
-					ErrorDetail: fmt.Sprintf("cannot query DNSKEY records: %s", err),
-				}), nil
+				return agent.ResultJSON(
+					dnssecResult{
+						Enabled:     false,
+						ErrorDetail: fmt.Sprintf("cannot query DNSKEY records: %s", err),
+					},
+				), nil
 			}
 
 			var (

@@ -95,8 +95,7 @@ func blockingCallLLM(ctx context.Context, agent *Agent, req *llm.ChatCompletionR
 	// Some providers (e.g. Anthropic) require streaming for large
 	// max_tokens or when thinking is enabled. Fall back to streaming
 	// transparently when the blocking call returns ErrStreamingRequired.
-	var streamRequired *llm.ErrStreamingRequired
-	if !errors.As(err, &streamRequired) {
+	if _, ok := errors.AsType[*llm.ErrStreamingRequired](err); !ok {
 		return nil, err
 	}
 

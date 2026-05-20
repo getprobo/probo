@@ -25,12 +25,11 @@ import (
 	"go.gearno.de/kit/pg"
 	"go.gearno.de/kit/worker"
 	"go.gearno.de/x/ref"
+	emails "go.probo.inc/probo/packages/emails"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/mail"
-
-	emails "go.probo.inc/probo/packages/emails"
 )
 
 // EmailPresenterConfigFunc resolves the emails.PresenterConfig for the

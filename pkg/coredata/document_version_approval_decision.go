@@ -328,19 +328,22 @@ func (ds DocumentVersionApprovalDecisions) BulkInsert(
 
 	rows := make([][]any, 0, len(ds))
 	for _, d := range ds {
-		rows = append(rows, []any{
-			d.ID,
-			scope.GetTenantID(),
-			d.OrganizationID,
-			d.QuorumID,
-			d.ApproverID,
-			d.State,
-			d.Comment,
-			d.ElectronicSignatureID,
-			d.DecidedAt,
-			d.CreatedAt,
-			d.UpdatedAt,
-		})
+		rows = append(
+			rows,
+			[]any{
+				d.ID,
+				scope.GetTenantID(),
+				d.OrganizationID,
+				d.QuorumID,
+				d.ApproverID,
+				d.State,
+				d.Comment,
+				d.ElectronicSignatureID,
+				d.DecidedAt,
+				d.CreatedAt,
+				d.UpdatedAt,
+			},
+		)
 	}
 
 	_, err := conn.CopyFrom(

@@ -52,35 +52,43 @@ func FetchSitemapTool() agent.Tool {
 		"Fetch and parse a sitemap XML file. Returns discovered URLs which can reveal pages not linked from the main navigation (trust centers, legal docs, status pages).",
 		func(ctx context.Context, p sitemapParams) (agent.ToolResult, error) {
 			if err := validatePublicURL(p.URL); err != nil {
-				return agent.ResultJSON(sitemapResult{
-					Found:       false,
-					ErrorDetail: fmt.Sprintf("URL not allowed: %s", err),
-				}), nil
+				return agent.ResultJSON(
+					sitemapResult{
+						Found:       false,
+						ErrorDetail: fmt.Sprintf("URL not allowed: %s", err),
+					},
+				), nil
 			}
 
 			req, err := http.NewRequestWithContext(ctx, http.MethodGet, p.URL, nil)
 			if err != nil {
-				return agent.ResultJSON(sitemapResult{
-					Found:       false,
-					ErrorDetail: fmt.Sprintf("cannot create request: %s", err),
-				}), nil
+				return agent.ResultJSON(
+					sitemapResult{
+						Found:       false,
+						ErrorDetail: fmt.Sprintf("cannot create request: %s", err),
+					},
+				), nil
 			}
 
 			resp, err := client.Do(req)
 			if err != nil {
-				return agent.ResultJSON(sitemapResult{
-					Found:       false,
-					ErrorDetail: fmt.Sprintf("cannot fetch sitemap: %s", err),
-				}), nil
+				return agent.ResultJSON(
+					sitemapResult{
+						Found:       false,
+						ErrorDetail: fmt.Sprintf("cannot fetch sitemap: %s", err),
+					},
+				), nil
 			}
 
 			defer func() { _ = resp.Body.Close() }()
 
 			if resp.StatusCode != http.StatusOK {
-				return agent.ResultJSON(sitemapResult{
-					Found:       false,
-					ErrorDetail: fmt.Sprintf("sitemap returned status %d", resp.StatusCode),
-				}), nil
+				return agent.ResultJSON(
+					sitemapResult{
+						Found:       false,
+						ErrorDetail: fmt.Sprintf("sitemap returned status %d", resp.StatusCode),
+					},
+				), nil
 			}
 
 			var reader io.Reader = resp.Body
@@ -88,10 +96,12 @@ func FetchSitemapTool() agent.Tool {
 				resp.Header.Get("Content-Encoding") == "gzip" {
 				gz, err := gzip.NewReader(resp.Body)
 				if err != nil {
-					return agent.ResultJSON(sitemapResult{
-						Found:       false,
-						ErrorDetail: fmt.Sprintf("cannot decompress gzipped sitemap: %s", err),
-					}), nil
+					return agent.ResultJSON(
+						sitemapResult{
+							Found:       false,
+							ErrorDetail: fmt.Sprintf("cannot decompress gzipped sitemap: %s", err),
+						},
+					), nil
 				}
 
 				defer func() { _ = gz.Close() }()
@@ -104,10 +114,12 @@ func FetchSitemapTool() agent.Tool {
 
 			urls, err := parseSitemapXML(reader)
 			if err != nil {
-				return agent.ResultJSON(sitemapResult{
-					Found:       false,
-					ErrorDetail: fmt.Sprintf("cannot parse sitemap XML: %s", err),
-				}), nil
+				return agent.ResultJSON(
+					sitemapResult{
+						Found:       false,
+						ErrorDetail: fmt.Sprintf("cannot parse sitemap XML: %s", err),
+					},
+				), nil
 			}
 
 			result := sitemapResult{

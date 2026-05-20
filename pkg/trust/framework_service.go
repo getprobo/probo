@@ -16,9 +16,8 @@ package trust
 
 import (
 	"context"
-	"time"
-
 	"fmt"
+	"time"
 
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"

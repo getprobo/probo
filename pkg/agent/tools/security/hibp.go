@@ -61,34 +61,48 @@ func CheckBreachesTool() agent.Tool {
 		func(ctx context.Context, p hibpParams) (agent.ToolResult, error) {
 			client := &http.Client{Timeout: 10 * time.Second}
 
-			req, err := http.NewRequestWithContext(
-				ctx,
-				http.MethodGet,
-				"https://haveibeenpwned.com/api/v3/breaches?domain="+url.QueryEscape(p.Domain),
-				nil,
-			)
+			hibpURL, err := url.Parse("https://haveibeenpwned.com/api/v3/breaches")
 			if err != nil {
-				return agent.ResultJSON(hibpResult{
-					ErrorDetail: fmt.Sprintf("cannot create request: %s", err),
-				}), nil
+				return agent.ResultJSON(
+					hibpResult{
+						ErrorDetail: fmt.Sprintf("cannot parse HIBP URL: %s", err),
+					},
+				), nil
+			}
+
+			q := hibpURL.Query()
+			q.Set("domain", p.Domain)
+			hibpURL.RawQuery = q.Encode()
+
+			req, err := http.NewRequestWithContext(ctx, http.MethodGet, hibpURL.String(), nil)
+			if err != nil {
+				return agent.ResultJSON(
+					hibpResult{
+						ErrorDetail: fmt.Sprintf("cannot create request: %s", err),
+					},
+				), nil
 			}
 
 			req.Header.Set("User-Agent", "Probo-Vendor-Assessment")
 
 			resp, err := client.Do(req)
 			if err != nil {
-				return agent.ResultJSON(hibpResult{
-					ErrorDetail: fmt.Sprintf("cannot fetch breaches: %s", err),
-				}), nil
+				return agent.ResultJSON(
+					hibpResult{
+						ErrorDetail: fmt.Sprintf("cannot fetch breaches: %s", err),
+					},
+				), nil
 			}
 
 			defer func() { _ = resp.Body.Close() }()
 
 			body, err := io.ReadAll(resp.Body)
 			if err != nil {
-				return agent.ResultJSON(hibpResult{
-					ErrorDetail: fmt.Sprintf("cannot read response: %s", err),
-				}), nil
+				return agent.ResultJSON(
+					hibpResult{
+						ErrorDetail: fmt.Sprintf("cannot read response: %s", err),
+					},
+				), nil
 			}
 
 			if resp.StatusCode == http.StatusNotFound {
@@ -96,23 +110,29 @@ func CheckBreachesTool() agent.Tool {
 			}
 
 			if resp.StatusCode != http.StatusOK {
-				return agent.ResultJSON(hibpResult{
-					ErrorDetail: fmt.Sprintf("HIBP API returned status %d", resp.StatusCode),
-				}), nil
+				return agent.ResultJSON(
+					hibpResult{
+						ErrorDetail: fmt.Sprintf("HIBP API returned status %d", resp.StatusCode),
+					},
+				), nil
 			}
 
 			var breaches []breach
 			if err := json.Unmarshal(body, &breaches); err != nil {
-				return agent.ResultJSON(hibpResult{
-					ErrorDetail: fmt.Sprintf("cannot parse response: %s", err),
-				}), nil
+				return agent.ResultJSON(
+					hibpResult{
+						ErrorDetail: fmt.Sprintf("cannot parse response: %s", err),
+					},
+				), nil
 			}
 
-			return agent.ResultJSON(hibpResult{
-				Found:    len(breaches) > 0,
-				Count:    len(breaches),
-				Breaches: breaches,
-			}), nil
+			return agent.ResultJSON(
+				hibpResult{
+					Found:    len(breaches) > 0,
+					Count:    len(breaches),
+					Breaches: breaches,
+				},
+			), nil
 		},
 	)
 }

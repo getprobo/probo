@@ -18,6 +18,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
@@ -79,9 +80,11 @@ func CheckSecurityHeadersTool() agent.Tool {
 		"Check security-related HTTP headers for a URL (HSTS, CSP, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy, Cross-Origin-*-Policy). Also checks if HTTP redirects to HTTPS.",
 		func(ctx context.Context, p headersParams) (agent.ToolResult, error) {
 			if err := netcheck.ValidatePublicURL(p.URL); err != nil {
-				return agent.ResultJSON(headersResult{
-					ErrorDetail: fmt.Sprintf("URL not allowed: %s", err),
-				}), nil
+				return agent.ResultJSON(
+					headersResult{
+						ErrorDetail: fmt.Sprintf("URL not allowed: %s", err),
+					},
+				), nil
 			}
 
 			client := &http.Client{
@@ -94,10 +97,18 @@ func CheckSecurityHeadersTool() agent.Tool {
 			// First check the HTTP version to detect HTTP→HTTPS redirect.
 			redirectsToHTTPS := false
 
-			httpURL := p.URL
-			if after, ok := strings.CutPrefix(httpURL, "https://"); ok {
-				httpURL = "http://" + after
+			parsedURL, err := url.Parse(p.URL)
+			if err != nil {
+				return agent.ResultJSON(
+					headersResult{
+						ErrorDetail: fmt.Sprintf("cannot parse URL: %s", err),
+					},
+				), nil
 			}
+
+			httpParsed := *parsedURL
+			httpParsed.Scheme = "http"
+			httpURL := httpParsed.String()
 
 			httpReq, err := http.NewRequestWithContext(ctx, http.MethodGet, httpURL, nil)
 			if err == nil {
@@ -114,25 +125,28 @@ func CheckSecurityHeadersTool() agent.Tool {
 			}
 
 			// Now check the HTTPS version for the actual security headers.
-			httpsURL := p.URL
-			if after, ok := strings.CutPrefix(httpsURL, "http://"); ok {
-				httpsURL = "https://" + after
-			}
+			httpsParsed := *parsedURL
+			httpsParsed.Scheme = "https"
+			httpsURL := httpsParsed.String()
 
 			followClient := &http.Client{Timeout: 10 * time.Second}
 
 			httpsReq, err := http.NewRequestWithContext(ctx, http.MethodGet, httpsURL, nil)
 			if err != nil {
-				return agent.ResultJSON(headersResult{
-					ErrorDetail: fmt.Sprintf("cannot create request for %s: %s", httpsURL, err),
-				}), nil
+				return agent.ResultJSON(
+					headersResult{
+						ErrorDetail: fmt.Sprintf("cannot create request for %s: %s", httpsURL, err),
+					},
+				), nil
 			}
 
 			resp, err := followClient.Do(httpsReq)
 			if err != nil {
-				return agent.ResultJSON(headersResult{
-					ErrorDetail: fmt.Sprintf("cannot fetch %s: %s", httpsURL, err),
-				}), nil
+				return agent.ResultJSON(
+					headersResult{
+						ErrorDetail: fmt.Sprintf("cannot fetch %s: %s", httpsURL, err),
+					},
+				), nil
 			}
 
 			defer func() { _ = resp.Body.Close() }()

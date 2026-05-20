@@ -20,26 +20,24 @@ import (
 )
 
 type (
-	EvidenceType uint8
+	EvidenceType string
 )
 
 const (
-	EvidenceTypeFile EvidenceType = iota
-	EvidenceTypeLink
+	EvidenceTypeFile EvidenceType = "FILE"
+	EvidenceTypeLink EvidenceType = "LINK"
 )
 
 func (et EvidenceType) MarshalText() ([]byte, error) {
-	return []byte(et.String()), nil
+	return []byte(et), nil
 }
 
 func (et *EvidenceType) UnmarshalText(data []byte) error {
-	val := string(data)
+	val := EvidenceType(data)
 
 	switch val {
-	case EvidenceTypeFile.String():
-		*et = EvidenceTypeFile
-	case EvidenceTypeLink.String():
-		*et = EvidenceTypeLink
+	case EvidenceTypeFile, EvidenceTypeLink:
+		*et = val
 	default:
 		return fmt.Errorf("invalid EvidenceType value: %q", val)
 	}
@@ -48,16 +46,7 @@ func (et *EvidenceType) UnmarshalText(data []byte) error {
 }
 
 func (et EvidenceType) String() string {
-	var val string
-
-	switch et {
-	case EvidenceTypeFile:
-		val = "FILE"
-	case EvidenceTypeLink:
-		val = "LINK"
-	}
-
-	return val
+	return string(et)
 }
 
 func (et *EvidenceType) Scan(value any) error {
@@ -70,5 +59,5 @@ func (et *EvidenceType) Scan(value any) error {
 }
 
 func (et EvidenceType) Value() (driver.Value, error) {
-	return et.String(), nil
+	return string(et), nil
 }

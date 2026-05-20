@@ -104,7 +104,8 @@ func (s FileService) UploadAndSaveFile(
 	ctx context.Context,
 	fileValidator *filevalidation.FileValidator,
 	s3Metadata map[string]string,
-	req *FileUpload) (*coredata.File, error) {
+	req *FileUpload,
+) (*coredata.File, error) {
 	objectKey, err := uuid.NewV7()
 	if err != nil {
 		return nil, fmt.Errorf("cannot generate object key: %w", err)

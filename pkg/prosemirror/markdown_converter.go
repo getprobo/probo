@@ -635,11 +635,14 @@ func (c *converter) convertTableCells(row ast.Node, cellType NodeType) ([]Node, 
 			return nil, fmt.Errorf("cannot marshal table cell attrs: %w", err)
 		}
 
-		cells = append(cells, Node{
-			Type:    cellType,
-			Attrs:   attrs,
-			Content: content,
-		})
+		cells = append(
+			cells,
+			Node{
+				Type:    cellType,
+				Attrs:   attrs,
+				Content: content,
+			},
+		)
 	}
 
 	return cells, nil

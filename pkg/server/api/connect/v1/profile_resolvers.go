@@ -41,8 +41,7 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input types.CreateUse
 		},
 	)
 	if err != nil {
-		var errAlreadyExists *iam.ErrUserAlreadyExists
-		if errors.As(err, &errAlreadyExists) {
+		if _, ok := errors.AsType[*iam.ErrUserAlreadyExists](err); ok {
 			return nil, gqlutils.Conflict(ctx, err)
 		}
 
@@ -113,16 +112,11 @@ func (r *mutationResolver) RemoveUser(ctx context.Context, input types.RemoveUse
 
 	err := r.iam.OrganizationService.RemoveUser(ctx, input.OrganizationID, input.ProfileID)
 	if err != nil {
-		var (
-			errManagedBySCIM   *iam.ErrUserManagedBySCIM
-			errLastActiveOwner *iam.ErrLastActiveOwner
-		)
-
-		if errors.As(err, &errManagedBySCIM) {
+		if _, ok := errors.AsType[*iam.ErrUserManagedBySCIM](err); ok {
 			return nil, gqlutils.Conflict(ctx, err)
 		}
 
-		if errors.As(err, &errLastActiveOwner) {
+		if _, ok := errors.AsType[*iam.ErrLastActiveOwner](err); ok {
 			return nil, gqlutils.Conflict(ctx, err)
 		}
 
@@ -147,8 +141,7 @@ func (r *profileResolver) Identity(ctx context.Context, obj *types.Profile) (*ty
 
 	identity, err := r.iam.AccountService.GetIdentity(ctx, obj.Identity.ID)
 	if err != nil {
-		var errNotFound *iam.ErrIdentityNotFound
-		if errors.As(err, &errNotFound) {
+		if _, ok := errors.AsType[*iam.ErrIdentityNotFound](err); ok {
 			return nil, gqlutils.NotFound(ctx, err)
 		}
 
@@ -168,8 +161,7 @@ func (r *profileResolver) Organization(ctx context.Context, obj *types.Profile) 
 
 	organization, err := r.iam.OrganizationService.GetOrganization(ctx, obj.Organization.ID)
 	if err != nil {
-		var errNotFound *iam.ErrOrganizationNotFound
-		if errors.As(err, &errNotFound) {
+		if _, ok := errors.AsType[*iam.ErrOrganizationNotFound](err); ok {
 			return nil, gqlutils.NotFound(ctx, err)
 		}
 
@@ -189,8 +181,7 @@ func (r *profileResolver) Membership(ctx context.Context, obj *types.Profile) (*
 
 	membership, err := r.iam.AccountService.GetMembershipForOrganization(ctx, obj.Identity.ID, obj.Organization.ID)
 	if err != nil {
-		var errNotFound *iam.ErrMembershipNotFound
-		if errors.As(err, &errNotFound) {
+		if _, ok := errors.AsType[*iam.ErrMembershipNotFound](err); ok {
 			return nil, gqlutils.NotFound(ctx, err)
 		}
 

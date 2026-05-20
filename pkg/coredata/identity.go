@@ -204,8 +204,7 @@ VALUES (
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
-		var pgErr *pgconn.PgError
-		if errors.As(err, &pgErr) {
+		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
 			if pgErr.Code == "23505" && strings.Contains(pgErr.ConstraintName, "email_address") {
 				return ErrResourceAlreadyExists
 			}

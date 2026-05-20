@@ -206,10 +206,13 @@ func (a *StreamAccumulator) Response() *ChatCompletionResponse {
 
 	var parts []Part
 	if thinking := a.thinking.String(); thinking != "" {
-		parts = append(parts, ThinkingPart{
-			Text:      thinking,
-			Signature: a.thinkingSignature,
-		})
+		parts = append(
+			parts,
+			ThinkingPart{
+				Text:      thinking,
+				Signature: a.thinkingSignature,
+			},
+		)
 	}
 
 	parts = append(parts, TextPart{Text: a.content.String()})

@@ -646,8 +646,7 @@ func (s AuthService) SendMagicLink(ctx context.Context, req *SendMagicLinkReques
 func (s AuthService) GetMagicLinkEmail(ctx context.Context, tokenString string) (mail.Addr, error) {
 	payload, err := statelesstoken.ValidateToken[MagicLinkData](s.tokenSecret, TokenTypeMagicLink, tokenString)
 	if err != nil {
-		var errExpired *statelesstoken.ErrExpiredToken
-		if errors.As(err, &errExpired) {
+		if _, ok := errors.AsType[*statelesstoken.ErrExpiredToken](err); ok {
 			return mail.Nil, NewExpiredTokenError()
 		}
 
@@ -666,8 +665,7 @@ func (s AuthService) OpenSessionWithMagicLink(ctx context.Context, tokenString s
 
 	payload, err := statelesstoken.ValidateToken[MagicLinkData](s.tokenSecret, TokenTypeMagicLink, tokenString)
 	if err != nil {
-		var errExpired *statelesstoken.ErrExpiredToken
-		if errors.As(err, &errExpired) {
+		if _, ok := errors.AsType[*statelesstoken.ErrExpiredToken](err); ok {
 			return nil, nil, nil, NewExpiredTokenError()
 		}
 

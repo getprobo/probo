@@ -143,11 +143,9 @@ func Conflictf(ctx context.Context, format string, a ...any) *gqlerror.Error {
 }
 
 func Invalid(ctx context.Context, err error) *gqlerror.Error {
-	var errValidation *validator.ValidationError
-
 	var details map[string]any
 
-	if errors.As(err, &errValidation) {
+	if errValidation, ok := errors.AsType[*validator.ValidationError](err); ok {
 		details = map[string]any{
 			"cause": errValidation.Code,
 			"field": errValidation.Field,

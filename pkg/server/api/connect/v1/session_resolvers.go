@@ -22,13 +22,11 @@ import (
 func (r *mutationResolver) SignIn(ctx context.Context, input types.SignInInput) (*types.SignInPayload, error) {
 	identity, err := r.iam.AuthService.CheckCredentials(ctx, input.Email, input.Password)
 	if err != nil {
-		var errInvalidPassword *iam.ErrInvalidPassword
-		if errors.As(err, &errInvalidPassword) {
+		if _, ok := errors.AsType[*iam.ErrInvalidPassword](err); ok {
 			return nil, gqlutils.Invalid(ctx, err)
 		}
 
-		var errInvalidCredentials *iam.ErrInvalidCredentials
-		if errors.As(err, &errInvalidCredentials) {
+		if _, ok := errors.AsType[*iam.ErrInvalidCredentials](err); ok {
 			return nil, &gqlerror.Error{
 				Message: err.Error(),
 				Extensions: map[string]any{
@@ -81,12 +79,11 @@ func (r *mutationResolver) SignIn(ctx context.Context, input types.SignInInput) 
 		_, _, err = r.iam.SessionService.OpenPasswordChildSessionForOrganization(ctx, session.ID, *input.OrganizationID)
 		if err != nil {
 			// Here session middleware already took care of expired/nil root session so we only handle membership related errors
-			var (
-				errMembershipNotFound *iam.ErrMembershipNotFound
-				errUserInactive       *iam.ErrUserInactive
-			)
+			if _, ok := errors.AsType[*iam.ErrMembershipNotFound](err); ok {
+				return nil, gqlutils.Forbiddenf(ctx, "forbidden")
+			}
 
-			if errors.As(err, &errMembershipNotFound) || errors.As(err, &errUserInactive) {
+			if _, ok := errors.AsType[*iam.ErrUserInactive](err); ok {
 				return nil, gqlutils.Forbiddenf(ctx, "forbidden")
 			}
 
@@ -113,13 +110,11 @@ func (r *mutationResolver) SignUp(ctx context.Context, input types.SignUpInput) 
 		},
 	)
 	if err != nil {
-		var errIdentityAlreadyExists *iam.ErrIdentityAlreadyExists
-		if errors.As(err, &errIdentityAlreadyExists) {
+		if _, ok := errors.AsType[*iam.ErrIdentityAlreadyExists](err); ok {
 			return nil, gqlutils.Invalid(ctx, err)
 		}
 
-		var errSignupDisabled *iam.ErrSignupDisabled
-		if errors.As(err, &errSignupDisabled) {
+		if _, ok := errors.AsType[*iam.ErrSignupDisabled](err); ok {
 			return nil, gqlutils.Forbidden(ctx, err)
 		}
 
@@ -142,8 +137,7 @@ func (r *mutationResolver) SignOut(ctx context.Context) (*types.SignOutPayload, 
 
 	err := r.iam.SessionService.CloseSession(ctx, session.ID)
 	if err != nil {
-		var ErrSessionNotFound *iam.ErrSessionNotFound
-		if errors.As(err, &ErrSessionNotFound) {
+		if _, ok := errors.AsType[*iam.ErrSessionNotFound](err); ok {
 			return &types.SignOutPayload{}, nil
 		}
 
@@ -166,8 +160,7 @@ func (r *mutationResolver) ActivateAccount(ctx context.Context, input types.Acti
 		// Sign out any other account before activating a new one
 		err := r.iam.SessionService.CloseSession(ctx, session.ID)
 		if err != nil {
-			var ErrSessionNotFound *iam.ErrSessionNotFound
-			if !errors.As(err, &ErrSessionNotFound) {
+			if _, ok := errors.AsType[*iam.ErrSessionNotFound](err); !ok {
 				r.logger.ErrorCtx(ctx, "cannot close session", log.Error(err))
 				return nil, gqlutils.Internal(ctx)
 			}
@@ -184,17 +177,15 @@ func (r *mutationResolver) ActivateAccount(ctx context.Context, input types.Acti
 		},
 	)
 	if err != nil {
-		var (
-			errInvalidToken       *iam.ErrInvalidToken
-			errInvitationNotFound *iam.ErrInvitationNotFound
-			errInvitationExpired  *iam.ErrInvitationExpired
+		if _, ok := errors.AsType[*iam.ErrInvalidToken](err); ok {
+			return nil, gqlutils.Invalid(ctx, err)
+		}
 
-			isInvalidErr = errors.As(err, &errInvalidToken) ||
-				errors.As(err, &errInvitationNotFound) ||
-				errors.As(err, &errInvitationExpired)
-		)
+		if _, ok := errors.AsType[*iam.ErrInvitationNotFound](err); ok {
+			return nil, gqlutils.Invalid(ctx, err)
+		}
 
-		if isInvalidErr {
+		if _, ok := errors.AsType[*iam.ErrInvitationExpired](err); ok {
 			return nil, gqlutils.Invalid(ctx, err)
 		}
 
@@ -276,8 +267,7 @@ func (r *mutationResolver) ResetPassword(ctx context.Context, input types.ResetP
 		},
 	)
 	if err != nil {
-		var errInvalidToken *iam.ErrInvalidToken
-		if errors.As(err, &errInvalidToken) {
+		if _, ok := errors.AsType[*iam.ErrInvalidToken](err); ok {
 			return nil, gqlutils.Invalid(ctx, err)
 		}
 
@@ -295,25 +285,19 @@ func (r *mutationResolver) ResetPassword(ctx context.Context, input types.ResetP
 func (r *mutationResolver) VerifyEmail(ctx context.Context, input types.VerifyEmailInput) (*types.VerifyEmailPayload, error) {
 	err := r.iam.AccountService.VerifyEmail(ctx, input.Token)
 	if err != nil {
-		var (
-			errInvalidToken              *iam.ErrInvalidToken
-			errIdentityNotFound          *iam.ErrIdentityNotFound
-			errEmailAlreadyVerified      *iam.ErrEmailAlreadyVerified
-			errEmailVerificationMismatch *iam.ErrEmailVerificationMismatch
-
-			isInvalidErr = errors.As(err, &errInvalidToken) ||
-				errors.As(err, &errEmailVerificationMismatch)
-		)
-
-		if isInvalidErr {
+		if _, ok := errors.AsType[*iam.ErrInvalidToken](err); ok {
 			return nil, gqlutils.Invalid(ctx, err)
 		}
 
-		if errors.As(err, &errEmailAlreadyVerified) {
+		if _, ok := errors.AsType[*iam.ErrEmailVerificationMismatch](err); ok {
+			return nil, gqlutils.Invalid(ctx, err)
+		}
+
+		if _, ok := errors.AsType[*iam.ErrEmailAlreadyVerified](err); ok {
 			return nil, gqlutils.Conflict(ctx, err)
 		}
 
-		if errors.As(err, &errIdentityNotFound) {
+		if _, ok := errors.AsType[*iam.ErrIdentityNotFound](err); ok {
 			return nil, gqlutils.NotFound(ctx, err)
 		}
 
@@ -342,16 +326,11 @@ func (r *mutationResolver) ChangePassword(ctx context.Context, input types.Chang
 		},
 	)
 	if err != nil {
-		var (
-			errInvalidPassword  *iam.ErrInvalidPassword
-			errIdentityNotFound *iam.ErrIdentityNotFound
-		)
-
-		if errors.As(err, &errInvalidPassword) {
+		if _, ok := errors.AsType[*iam.ErrInvalidPassword](err); ok {
 			return nil, gqlutils.Invalid(ctx, err)
 		}
 
-		if errors.As(err, &errIdentityNotFound) {
+		if _, ok := errors.AsType[*iam.ErrIdentityNotFound](err); ok {
 			return nil, gqlutils.NotFound(ctx, err)
 		}
 
@@ -378,16 +357,11 @@ func (r *mutationResolver) ChangeEmail(ctx context.Context, input types.ChangeEm
 		},
 	)
 	if err != nil {
-		var (
-			errInvalidPassword  *iam.ErrInvalidPassword
-			errIdentityNotFound *iam.ErrIdentityNotFound
-		)
-
-		if errors.As(err, &errInvalidPassword) {
+		if _, ok := errors.AsType[*iam.ErrInvalidPassword](err); ok {
 			return nil, gqlutils.Invalid(ctx, err)
 		}
 
-		if errors.As(err, &errIdentityNotFound) {
+		if _, ok := errors.AsType[*iam.ErrIdentityNotFound](err); ok {
 			return nil, gqlutils.NotFound(ctx, err)
 		}
 
@@ -407,34 +381,28 @@ func (r *mutationResolver) AssumeOrganizationSession(ctx context.Context, input 
 
 	childSession, membership, err := r.iam.SessionService.AssumeOrganizationSession(ctx, rootSession.ID, input.OrganizationID, input.Continue)
 	if err != nil {
-		var (
-			errMembershipNotFound             *iam.ErrMembershipNotFound
-			errPasswordAuthenticationRequired *iam.ErrPasswordAuthenticationRequired
-			errSAMLAuthenticationRequired     *iam.ErrSAMLAuthenticationRequired
-		)
-
-		switch {
-		case errors.As(err, &errMembershipNotFound):
+		if _, ok := errors.AsType[*iam.ErrMembershipNotFound](err); ok {
 			return nil, gqlutils.NotFound(ctx, err)
+		}
 
-		case errors.As(err, &errPasswordAuthenticationRequired):
+		if errPasswordAuthenticationRequired, ok := errors.AsType[*iam.ErrPasswordAuthenticationRequired](err); ok {
 			return &types.AssumeOrganizationSessionPayload{
 				Result: types.PasswordRequired{
 					Reason: types.ReauthenticationReason(errPasswordAuthenticationRequired.Reason),
 				},
 			}, nil
+		}
 
-		case errors.As(err, &errSAMLAuthenticationRequired):
+		if errSAMLAuthenticationRequired, ok := errors.AsType[*iam.ErrSAMLAuthenticationRequired](err); ok {
 			return &types.AssumeOrganizationSessionPayload{
 				Result: types.SAMLAuthenticationRequired{
 					Reason: types.ReauthenticationReason(errSAMLAuthenticationRequired.Reason),
 				},
 			}, nil
-
-		default:
-			r.logger.ErrorCtx(ctx, "cannot assume organization session", log.Error(err))
-			return nil, gqlutils.Internal(ctx)
 		}
+
+		r.logger.ErrorCtx(ctx, "cannot assume organization session", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.AssumeOrganizationSessionPayload{
@@ -455,8 +423,7 @@ func (r *mutationResolver) RevokeSession(ctx context.Context, input types.Revoke
 
 	err := r.iam.SessionService.RevokeSession(ctx, identity.ID, input.SessionID)
 	if err != nil {
-		var ErrSessionExpired *iam.ErrSessionExpired
-		if errors.As(err, &ErrSessionExpired) {
+		if _, ok := errors.AsType[*iam.ErrSessionExpired](err); ok {
 			return &types.RevokeSessionPayload{Success: true}, nil
 		}
 

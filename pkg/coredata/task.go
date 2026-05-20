@@ -23,10 +23,9 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
+	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
-
-	"go.gearno.de/kit/pg"
 )
 
 type (
@@ -252,8 +251,7 @@ RETURNING rank, priority_rank;
 
 	err := conn.QueryRow(ctx, q, args).Scan(&t.Rank, &t.PriorityRank)
 	if err != nil {
-		var pgErr *pgconn.PgError
-		if errors.As(err, &pgErr) {
+		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
 			if pgErr.Code == "23505" && pgErr.ConstraintName == "tasks_reference_id_unique" {
 				return ErrResourceAlreadyExists
 			}

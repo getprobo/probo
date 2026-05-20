@@ -15,9 +15,8 @@
 package mcp_v1
 
 import (
-	"net/http"
-
 	"errors"
+	"net/http"
 
 	"go.gearno.de/kit/httpserver"
 	"go.gearno.de/kit/log"

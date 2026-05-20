@@ -56,10 +56,20 @@ type netlifyMember struct {
 func (d *NetlifyDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error) {
 	var records []AccountRecord
 
-	next := fmt.Sprintf(
-		"https://api.netlify.com/api/v1/%s/members?per_page=100",
-		url.PathEscape(d.accountSlug),
-	)
+	u, err := url.JoinPath("https://api.netlify.com", "api", "v1", d.accountSlug, "members")
+	if err != nil {
+		return nil, fmt.Errorf("cannot build netlify members URL: %w", err)
+	}
+
+	parsed, err := url.Parse(u)
+	if err != nil {
+		return nil, fmt.Errorf("cannot parse netlify members URL: %w", err)
+	}
+
+	q := parsed.Query()
+	q.Set("per_page", "100")
+	parsed.RawQuery = q.Encode()
+	next := parsed.String()
 
 	for range maxPaginationPages {
 		members, linkHeader, err := d.queryMembers(ctx, next)

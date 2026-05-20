@@ -65,35 +65,36 @@ func NewSessionMiddleware(svc *iam.Service, cookieConfig securecookie.Config) fu
 					return
 				}
 
-				session, err := svc.SessionService.GetSession(ctx, sessionID)
-				if err != nil {
-					var (
-						errSessionNotFound *iam.ErrSessionNotFound
-						errSessionExpired  *iam.ErrSessionExpired
-					)
+			session, err := svc.SessionService.GetSession(ctx, sessionID)
+			if err != nil {
+				if _, ok := errors.AsType[*iam.ErrSessionNotFound](err); ok {
+					securecookie.Clear(w, cookieConfig)
+					next.ServeHTTP(w, r)
 
-					if errors.As(err, &errSessionNotFound) || errors.As(err, &errSessionExpired) {
-						securecookie.Clear(w, cookieConfig)
-						next.ServeHTTP(w, r)
-
-						return
-					}
-
-					panic(fmt.Errorf("cannot get session: %w", err))
+					return
 				}
 
-				identity, err := svc.AccountService.GetIdentity(ctx, session.IdentityID)
-				if err != nil {
-					var errIdentityNotFound *iam.ErrIdentityNotFound
-					if errors.As(err, &errIdentityNotFound) {
-						securecookie.Clear(w, cookieConfig)
-						next.ServeHTTP(w, r)
+				if _, ok := errors.AsType[*iam.ErrSessionExpired](err); ok {
+					securecookie.Clear(w, cookieConfig)
+					next.ServeHTTP(w, r)
 
-						return
-					}
-
-					panic(fmt.Errorf("cannot get identity: %w", err))
+					return
 				}
+
+				panic(fmt.Errorf("cannot get session: %w", err))
+			}
+
+			identity, err := svc.AccountService.GetIdentity(ctx, session.IdentityID)
+			if err != nil {
+				if _, ok := errors.AsType[*iam.ErrIdentityNotFound](err); ok {
+					securecookie.Clear(w, cookieConfig)
+					next.ServeHTTP(w, r)
+
+					return
+				}
+
+				panic(fmt.Errorf("cannot get identity: %w", err))
+			}
 
 				userAgent := r.UserAgent()
 				// TODO: will work well when no layer 7 proxy is in front of the server

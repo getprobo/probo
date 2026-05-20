@@ -68,9 +68,11 @@ func CheckCORSTool() agent.Tool {
 		"Send a CORS preflight (OPTIONS) request to a URL with a given Origin and analyze the Access-Control-* response headers, flagging wildcard origins and origin reflection.",
 		func(ctx context.Context, p corsParams) (agent.ToolResult, error) {
 			if err := netcheck.ValidatePublicURL(p.URL); err != nil {
-				return agent.ResultJSON(corsResult{
-					ErrorDetail: fmt.Sprintf("URL not allowed: %s", err),
-				}), nil
+				return agent.ResultJSON(
+					corsResult{
+						ErrorDetail: fmt.Sprintf("URL not allowed: %s", err),
+					},
+				), nil
 			}
 
 			client := &http.Client{
@@ -87,9 +89,11 @@ func CheckCORSTool() agent.Tool {
 				nil,
 			)
 			if err != nil {
-				return agent.ResultJSON(corsResult{
-					ErrorDetail: fmt.Sprintf("cannot build request: %s", err),
-				}), nil
+				return agent.ResultJSON(
+					corsResult{
+						ErrorDetail: fmt.Sprintf("cannot build request: %s", err),
+					},
+				), nil
 			}
 
 			req.Header.Set("Origin", p.Origin)
@@ -97,9 +101,11 @@ func CheckCORSTool() agent.Tool {
 
 			resp, err := client.Do(req)
 			if err != nil {
-				return agent.ResultJSON(corsResult{
-					ErrorDetail: fmt.Sprintf("cannot fetch %s: %s", p.URL, err),
-				}), nil
+				return agent.ResultJSON(
+					corsResult{
+						ErrorDetail: fmt.Sprintf("cannot fetch %s: %s", p.URL, err),
+					},
+				), nil
 			}
 
 			defer func() { _ = resp.Body.Close() }()

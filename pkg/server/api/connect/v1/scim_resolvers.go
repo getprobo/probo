@@ -121,8 +121,7 @@ func (r *sCIMBridgeResolver) ScimConfiguration(ctx context.Context, obj *types.S
 
 	scimConfiguration, err := r.iam.GetSCIMConfiguration(ctx, obj.ScimConfiguration.ID)
 	if err != nil {
-		var errNoSCIMConfigurationFound *iam.ErrNoSCIMConfigurationFound
-		if errors.As(err, &errNoSCIMConfigurationFound) {
+		if _, ok := errors.AsType[*iam.ErrNoSCIMConfigurationFound](err); ok {
 			return nil, nil
 		}
 
@@ -183,8 +182,7 @@ func (r *sCIMConfigurationResolver) Organization(ctx context.Context, obj *types
 
 	organization, err := r.iam.OrganizationService.GetOrganization(ctx, obj.Organization.ID)
 	if err != nil {
-		var errOrganizationNotFound *iam.ErrOrganizationNotFound
-		if errors.As(err, &errOrganizationNotFound) {
+		if _, ok := errors.AsType[*iam.ErrOrganizationNotFound](err); ok {
 			return nil, nil
 		}
 
@@ -208,8 +206,7 @@ func (r *sCIMConfigurationResolver) Bridge(ctx context.Context, obj *types.SCIMC
 
 	bridge, err := r.iam.OrganizationService.GetSCIMBridgeByID(ctx, obj.Bridge.ID)
 	if err != nil {
-		var errSCIMBridgeNotFound *iam.ErrSCIMBridgeNotFound
-		if errors.As(err, &errSCIMBridgeNotFound) {
+		if _, ok := errors.AsType[*iam.ErrSCIMBridgeNotFound](err); ok {
 			return nil, nil
 		}
 

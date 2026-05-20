@@ -64,10 +64,12 @@ func DiffDocumentsTool() agent.Tool {
 			diff := computeDiff(linesA, linesB, labelA, labelB)
 
 			if diff.tooLarge {
-				return agent.ResultJSON(diffResult{
-					HasDifferences: true,
-					ErrorDetail:    diff.output,
-				}), nil
+				return agent.ResultJSON(
+					diffResult{
+						HasDifferences: true,
+						ErrorDetail:    diff.output,
+					},
+				), nil
 			}
 
 			result := diffResult{

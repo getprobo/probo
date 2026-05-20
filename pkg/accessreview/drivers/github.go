@@ -19,6 +19,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strconv"
 	"time"
 
@@ -82,7 +83,9 @@ func (d *GitHubDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error
 	for _, m := range members {
 		membership, err := d.fetchMembership(ctx, m.Login)
 		if err != nil {
-			d.logger.WarnCtx(ctx, "cannot fetch github membership, skipping member",
+			d.logger.WarnCtx(
+				ctx,
+				"cannot fetch github membership, skipping member",
 				log.Error(err),
 			)
 
@@ -91,7 +94,9 @@ func (d *GitHubDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error
 
 		profile, err := d.fetchUserProfile(ctx, m.Login)
 		if err != nil {
-			d.logger.WarnCtx(ctx, "cannot fetch github user profile, skipping member",
+			d.logger.WarnCtx(
+				ctx,
+				"cannot fetch github user profile, skipping member",
 				log.Error(err),
 			)
 
@@ -145,13 +150,23 @@ func (d *GitHubDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error
 func (d *GitHubDriver) fetchAllMembers(ctx context.Context) ([]githubMember, error) {
 	var members []githubMember
 
-	url := fmt.Sprintf(
-		"https://api.github.com/orgs/%s/members?per_page=100",
-		d.org,
-	)
+	u, err := url.JoinPath("https://api.github.com", "orgs", d.org, "members")
+	if err != nil {
+		return nil, fmt.Errorf("cannot build github members URL: %w", err)
+	}
+
+	parsed, err := url.Parse(u)
+	if err != nil {
+		return nil, fmt.Errorf("cannot parse github members URL: %w", err)
+	}
+
+	q := parsed.Query()
+	q.Set("per_page", "100")
+	parsed.RawQuery = q.Encode()
+	endpoint := parsed.String()
 
 	for range maxPaginationPages {
-		page, nextURL, err := d.fetchMembersPage(ctx, url)
+		page, nextURL, err := d.fetchMembersPage(ctx, endpoint)
 		if err != nil {
 			return nil, err
 		}
@@ -162,7 +177,7 @@ func (d *GitHubDriver) fetchAllMembers(ctx context.Context) ([]githubMember, err
 			return members, nil
 		}
 
-		url = nextURL
+		endpoint = nextURL
 	}
 
 	return nil, fmt.Errorf("cannot list all github members: %w", ErrPaginationLimitReached)
@@ -202,13 +217,24 @@ func (d *GitHubDriver) fetchMembersPage(ctx context.Context, url string) ([]gith
 func (d *GitHubDriver) fetchAll2FADisabledLogins(ctx context.Context) (map[string]bool, error) {
 	set := make(map[string]bool)
 
-	url := fmt.Sprintf(
-		"https://api.github.com/orgs/%s/members?filter=2fa_disabled&per_page=100",
-		d.org,
-	)
+	u, err := url.JoinPath("https://api.github.com", "orgs", d.org, "members")
+	if err != nil {
+		return nil, fmt.Errorf("cannot build github 2fa-disabled URL: %w", err)
+	}
+
+	parsed, err := url.Parse(u)
+	if err != nil {
+		return nil, fmt.Errorf("cannot parse github 2fa-disabled URL: %w", err)
+	}
+
+	q := parsed.Query()
+	q.Set("filter", "2fa_disabled")
+	q.Set("per_page", "100")
+	parsed.RawQuery = q.Encode()
+	endpoint := parsed.String()
 
 	for range maxPaginationPages {
-		page, nextURL, err := d.fetchMembersPage(ctx, url)
+		page, nextURL, err := d.fetchMembersPage(ctx, endpoint)
 		if err != nil {
 			return nil, err
 		}
@@ -221,20 +247,19 @@ func (d *GitHubDriver) fetchAll2FADisabledLogins(ctx context.Context) (map[strin
 			return set, nil
 		}
 
-		url = nextURL
+		endpoint = nextURL
 	}
 
 	return nil, fmt.Errorf("cannot list all github 2fa-disabled members: %w", ErrPaginationLimitReached)
 }
 
 func (d *GitHubDriver) fetchMembership(ctx context.Context, login string) (*githubMembership, error) {
-	url := fmt.Sprintf(
-		"https://api.github.com/orgs/%s/memberships/%s",
-		d.org,
-		login,
-	)
+	endpoint, err := url.JoinPath("https://api.github.com", "orgs", d.org, "memberships", login)
+	if err != nil {
+		return nil, fmt.Errorf("cannot build github membership URL: %w", err)
+	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create github membership request: %w", err)
 	}
@@ -263,9 +288,12 @@ func (d *GitHubDriver) fetchMembership(ctx context.Context, login string) (*gith
 }
 
 func (d *GitHubDriver) fetchUserProfile(ctx context.Context, login string) (*githubUserProfile, error) {
-	url := fmt.Sprintf("https://api.github.com/users/%s", login)
+	endpoint, err := url.JoinPath("https://api.github.com", "users", login)
+	if err != nil {
+		return nil, fmt.Errorf("cannot build github user profile URL: %w", err)
+	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create github user profile request: %w", err)
 	}

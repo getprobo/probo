@@ -21,13 +21,12 @@ import (
 	"strings"
 	"time"
 
+	"codeberg.org/miekg/dns"
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/cipher"
 	"go.probo.inc/probo/pkg/gid"
-
-	"codeberg.org/miekg/dns"
 )
 
 type (

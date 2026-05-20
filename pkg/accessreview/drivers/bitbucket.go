@@ -67,10 +67,21 @@ type bitbucketMembersPage struct {
 func (d *BitbucketDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error) {
 	var records []AccountRecord
 
-	next := fmt.Sprintf(
-		"https://api.bitbucket.org/2.0/workspaces/%s/members?fields=%%2Bvalues.user.email&pagelen=100",
-		url.PathEscape(d.workspace),
-	)
+	u, err := url.JoinPath("https://api.bitbucket.org", "2.0", "workspaces", d.workspace, "members")
+	if err != nil {
+		return nil, fmt.Errorf("cannot build bitbucket members URL: %w", err)
+	}
+
+	parsed, err := url.Parse(u)
+	if err != nil {
+		return nil, fmt.Errorf("cannot parse bitbucket members URL: %w", err)
+	}
+
+	q := parsed.Query()
+	q.Set("fields", "+values.user.email")
+	q.Set("pagelen", "100")
+	parsed.RawQuery = q.Encode()
+	next := parsed.String()
 
 	for range maxPaginationPages {
 		page, err := d.queryMembers(ctx, next)

@@ -73,10 +73,12 @@ func CheckDMARCTool() agent.Tool {
 				},
 			)
 			if err != nil {
-				return agent.ResultJSON(dmarcResult{
-					Found:       false,
-					ErrorDetail: fmt.Sprintf("cannot lookup DMARC record: %s", err),
-				}), nil
+				return agent.ResultJSON(
+					dmarcResult{
+						Found:       false,
+						ErrorDetail: fmt.Sprintf("cannot lookup DMARC record: %s", err),
+					},
+				), nil
 			}
 
 			for _, answer := range answers {

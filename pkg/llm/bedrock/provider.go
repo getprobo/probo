@@ -329,9 +329,8 @@ func mapStopReason(reason types.StopReason) llm.FinishReason {
 }
 
 func mapError(err error) error {
-	var respErr *smithyhttp.ResponseError
-	if !errors.As(err, &respErr) {
-		// Check for common error types by message content.
+	respErr, ok := errors.AsType[*smithyhttp.ResponseError](err)
+	if !ok {
 		msg := err.Error()
 		if strings.Contains(msg, "throttling") || strings.Contains(msg, "ThrottlingException") {
 			return &llm.ErrRateLimit{Err: err}

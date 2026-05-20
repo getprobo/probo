@@ -20,26 +20,24 @@ import (
 )
 
 type (
-	EvidenceState uint8
+	EvidenceState string
 )
 
 const (
-	EvidenceStateRequested EvidenceState = iota
-	EvidenceStateFulfilled
+	EvidenceStateRequested EvidenceState = "REQUESTED"
+	EvidenceStateFulfilled EvidenceState = "FULFILLED"
 )
 
 func (es EvidenceState) MarshalText() ([]byte, error) {
-	return []byte(es.String()), nil
+	return []byte(es), nil
 }
 
 func (es *EvidenceState) UnmarshalText(data []byte) error {
-	val := string(data)
+	val := EvidenceState(data)
 
 	switch val {
-	case EvidenceStateRequested.String():
-		*es = EvidenceStateRequested
-	case EvidenceStateFulfilled.String():
-		*es = EvidenceStateFulfilled
+	case EvidenceStateRequested, EvidenceStateFulfilled:
+		*es = val
 	default:
 		return fmt.Errorf("invalid EvidenceState value: %q", val)
 	}
@@ -48,16 +46,7 @@ func (es *EvidenceState) UnmarshalText(data []byte) error {
 }
 
 func (es EvidenceState) String() string {
-	var val string
-
-	switch es {
-	case EvidenceStateRequested:
-		val = "REQUESTED"
-	case EvidenceStateFulfilled:
-		val = "FULFILLED"
-	}
-
-	return val
+	return string(es)
 }
 
 func (es *EvidenceState) Scan(value any) error {
@@ -70,5 +59,5 @@ func (es *EvidenceState) Scan(value any) error {
 }
 
 func (es EvidenceState) Value() (driver.Value, error) {
-	return es.String(), nil
+	return string(es), nil
 }

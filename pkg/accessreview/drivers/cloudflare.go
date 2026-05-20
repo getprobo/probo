@@ -19,6 +19,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
+	"strconv"
 	"strings"
 
 	"go.probo.inc/probo/pkg/coredata"
@@ -114,12 +116,17 @@ func (d *CloudflareDriver) queryAllAccounts(ctx context.Context) ([]cloudflareAc
 }
 
 func (d *CloudflareDriver) queryAccounts(ctx context.Context, page int) (*cloudflareListAccountsResponse, error) {
-	url := fmt.Sprintf(
-		"https://api.cloudflare.com/client/v4/accounts?page=%d&per_page=50",
-		page,
-	)
+	parsed, err := url.Parse("https://api.cloudflare.com/client/v4/accounts")
+	if err != nil {
+		return nil, fmt.Errorf("cannot parse cloudflare accounts URL: %w", err)
+	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	q := parsed.Query()
+	q.Set("page", strconv.Itoa(page))
+	q.Set("per_page", "50")
+	parsed.RawQuery = q.Encode()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, parsed.String(), nil)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create cloudflare accounts request: %w", err)
 	}
@@ -208,13 +215,22 @@ func (d *CloudflareDriver) queryAllMembers(ctx context.Context, accountID string
 }
 
 func (d *CloudflareDriver) queryMembers(ctx context.Context, accountID string, page int) (*cloudflareListMembersResponse, error) {
-	url := fmt.Sprintf(
-		"https://api.cloudflare.com/client/v4/accounts/%s/members?page=%d&per_page=50",
-		accountID,
-		page,
-	)
+	u, err := url.JoinPath("https://api.cloudflare.com", "client", "v4", "accounts", accountID, "members")
+	if err != nil {
+		return nil, fmt.Errorf("cannot build cloudflare members URL: %w", err)
+	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	parsed, err := url.Parse(u)
+	if err != nil {
+		return nil, fmt.Errorf("cannot parse cloudflare members URL: %w", err)
+	}
+
+	q := parsed.Query()
+	q.Set("page", strconv.Itoa(page))
+	q.Set("per_page", "50")
+	parsed.RawQuery = q.Encode()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, parsed.String(), nil)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create cloudflare members request: %w", err)
 	}

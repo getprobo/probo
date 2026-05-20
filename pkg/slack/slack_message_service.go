@@ -333,11 +333,14 @@ func (s *SlackMessageService) loadDocumentsReportsAndFilesFromAccesses(
 				return nil, nil, nil, fmt.Errorf("cannot load document: %w", err)
 			}
 
-			documents = append(documents, SlackMessageDocument{
-				ID:     access.DocumentID.String(),
-				Title:  doc.Title,
-				Status: access.Status.String(),
-			})
+			documents = append(
+				documents,
+				SlackMessageDocument{
+					ID:     access.DocumentID.String(),
+					Title:  doc.Title,
+					Status: access.Status.String(),
+				},
+			)
 		}
 
 		if access.ReportID != nil {
@@ -361,12 +364,15 @@ func (s *SlackMessageService) loadDocumentsReportsAndFilesFromAccesses(
 				label = label + " - " + *audit.Name
 			}
 
-			reports = append(reports, SlackMessageReport{
-				ID:      access.ReportID.String(),
-				Title:   label,
-				AuditID: audit.ID.String(),
-				Status:  access.Status.String(),
-			})
+			reports = append(
+				reports,
+				SlackMessageReport{
+					ID:      access.ReportID.String(),
+					Title:   label,
+					AuditID: audit.ID.String(),
+					Status:  access.Status.String(),
+				},
+			)
 		}
 
 		if access.TrustCenterFileID != nil {
@@ -375,12 +381,15 @@ func (s *SlackMessageService) loadDocumentsReportsAndFilesFromAccesses(
 				return nil, nil, nil, fmt.Errorf("cannot load trust center file: %w", err)
 			}
 
-			files = append(files, SlackMessageFile{
-				ID:       access.TrustCenterFileID.String(),
-				Name:     file.Name,
-				Category: file.Category,
-				Status:   access.Status.String(),
-			})
+			files = append(
+				files,
+				SlackMessageFile{
+					ID:       access.TrustCenterFileID.String(),
+					Name:     file.Name,
+					Category: file.Category,
+					Status:   access.Status.String(),
+				},
+			)
 		}
 	}
 

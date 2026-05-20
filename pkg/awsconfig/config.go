@@ -17,6 +17,7 @@ package awsconfig
 import (
 	"context"
 	"net/http"
+	"net/url"
 	"os"
 	"time"
 
@@ -86,7 +87,9 @@ func NewConfig(logger *log.Logger, httpClient *http.Client, opts Options) aws.Co
 		})
 
 		ecsCredentialsURI := os.Getenv("AWS_CONTAINER_CREDENTIALS_RELATIVE_URI")
-		ecsProvider := endpointcreds.New("http://169.254.170.2"+ecsCredentialsURI,
+		ecsEndpoint, _ := url.JoinPath("http://169.254.170.2", ecsCredentialsURI)
+		ecsProvider := endpointcreds.New(
+			ecsEndpoint,
 			func(options *endpointcreds.Options) {
 				options.HTTPClient = httpClient
 			},

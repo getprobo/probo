@@ -23,11 +23,10 @@ import (
 	"net/http"
 	"strings"
 
-	admin "google.golang.org/api/admin/directory/v1"
-	"google.golang.org/api/option"
-
 	scimclient "go.probo.inc/probo/pkg/iam/scim/bridge/client"
 	"go.probo.inc/probo/pkg/iam/scim/bridge/provider"
+	admin "google.golang.org/api/admin/directory/v1"
+	"google.golang.org/api/option"
 )
 
 var _ provider.Provider = (*Provider)(nil)

@@ -245,10 +245,12 @@ func (c *Client) doUploadRequest(
 	writer := multipart.NewWriter(&buf)
 
 	// Part 1: operations
-	operationsJSON, err := json.Marshal(graphQLRequest{
-		Query:     query,
-		Variables: variables,
-	})
+	operationsJSON, err := json.Marshal(
+		graphQLRequest{
+			Query:     query,
+			Variables: variables,
+		},
+	)
 	if err != nil {
 		return nil, fmt.Errorf("cannot marshal operations: %w", err)
 	}
@@ -258,9 +260,11 @@ func (c *Client) doUploadRequest(
 	}
 
 	// Part 2: map
-	mapJSON, err := json.Marshal(map[string][]string{
-		"0": {varPath},
-	})
+	mapJSON, err := json.Marshal(
+		map[string][]string{
+			"0": {varPath},
+		},
+	)
 	if err != nil {
 		return nil, fmt.Errorf("cannot marshal map: %w", err)
 	}

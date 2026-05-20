@@ -273,8 +273,7 @@ VALUES (
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
-		var pgErr *pgconn.PgError
-		if errors.As(err, &pgErr) {
+		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
 			if pgErr.Code == "23505" {
 				if pgErr.ConstraintName == "document_versions_document_id_major_minor_key" || pgErr.ConstraintName == "document_one_active_version_idx" {
 					return ErrResourceAlreadyExists
@@ -589,9 +588,13 @@ LIMIT 1
 FOR UPDATE OF dv SKIP LOCKED;
 `
 
-	rows, err := conn.Query(ctx, q, pgx.StrictNamedArgs{
-		"max_pdf_attempts": maxAttempts,
-	})
+	rows, err := conn.Query(
+		ctx,
+		q,
+		pgx.StrictNamedArgs{
+			"max_pdf_attempts": maxAttempts,
+		},
+	)
 	if err != nil {
 		return fmt.Errorf("cannot query document versions: %w", err)
 	}

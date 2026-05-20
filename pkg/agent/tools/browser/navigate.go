@@ -80,11 +80,13 @@ func NavigateToURLTool(b *Browser) agent.Tool {
 				return agent.ResultError(b.classifyError(ctx, p.URL, err)), nil
 			}
 
-			return agent.ResultJSON(navigateResult{
-				Title:       title,
-				Description: description,
-				FinalURL:    finalURL,
-			}), nil
+			return agent.ResultJSON(
+				navigateResult{
+					Title:       title,
+					Description: description,
+					FinalURL:    finalURL,
+				},
+			), nil
 		},
 	)
 }

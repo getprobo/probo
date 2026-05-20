@@ -130,13 +130,16 @@ WHEN NOT MATCHED BY SOURCE
 
 	result := make(DocumentDefaultApprovers, 0, len(approverProfileIDs))
 	for _, profileID := range approverProfileIDs {
-		result = append(result, &DocumentDefaultApprover{
-			DocumentID:        documentID,
-			ApproverProfileID: profileID,
-			OrganizationID:    organizationID,
-			CreatedAt:         now,
-			UpdatedAt:         now,
-		})
+		result = append(
+			result,
+			&DocumentDefaultApprover{
+				DocumentID:        documentID,
+				ApproverProfileID: profileID,
+				OrganizationID:    organizationID,
+				CreatedAt:         now,
+				UpdatedAt:         now,
+			},
+		)
 	}
 
 	*das = result

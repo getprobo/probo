@@ -271,8 +271,7 @@ INSERT INTO trust_center_document_accesses (
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
-		var pgErr *pgconn.PgError
-		if errors.As(err, &pgErr) {
+		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
 			if pgErr.Code == "23505" {
 				switch pgErr.ConstraintName {
 				case "trust_center_document_accesse_trust_center_access_id_docume_key",

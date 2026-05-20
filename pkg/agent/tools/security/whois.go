@@ -50,17 +50,21 @@ func CheckWhoisTool() agent.Tool {
 		"Perform a WHOIS lookup on a domain to retrieve registration details including registrar, creation date, expiry date, registrant organization, and name servers.",
 		func(ctx context.Context, p whoisParams) (agent.ToolResult, error) {
 			if err := netcheck.ValidatePublicDomain(p.Domain); err != nil {
-				return agent.ResultJSON(whoisResult{
-					ErrorDetail: fmt.Sprintf("domain not allowed: %s", err),
-				}), nil
+				return agent.ResultJSON(
+					whoisResult{
+						ErrorDetail: fmt.Sprintf("domain not allowed: %s", err),
+					},
+				), nil
 			}
 
 			// Step 1: query IANA to find the referral WHOIS server.
 			referral, err := queryWhois(ctx, "whois.iana.org:43", p.Domain)
 			if err != nil {
-				return agent.ResultJSON(whoisResult{
-					ErrorDetail: fmt.Sprintf("cannot query IANA WHOIS: %s", err),
-				}), nil
+				return agent.ResultJSON(
+					whoisResult{
+						ErrorDetail: fmt.Sprintf("cannot query IANA WHOIS: %s", err),
+					},
+				), nil
 			}
 
 			whoisServer := parseWhoisField(referral, "refer")
@@ -87,17 +91,21 @@ func CheckWhoisTool() agent.Tool {
 			}
 
 			if err := netcheck.ValidatePublicDomain(whoisHost); err != nil {
-				return agent.ResultJSON(whoisResult{
-					ErrorDetail: fmt.Sprintf("WHOIS referral server not allowed: %s", err),
-				}), nil
+				return agent.ResultJSON(
+					whoisResult{
+						ErrorDetail: fmt.Sprintf("WHOIS referral server not allowed: %s", err),
+					},
+				), nil
 			}
 
 			// Step 2: query the registrar's WHOIS server.
 			raw, err := queryWhois(ctx, whoisServer, p.Domain)
 			if err != nil {
-				return agent.ResultJSON(whoisResult{
-					ErrorDetail: fmt.Sprintf("cannot query WHOIS server %s: %s", whoisServer, err),
-				}), nil
+				return agent.ResultJSON(
+					whoisResult{
+						ErrorDetail: fmt.Sprintf("cannot query WHOIS server %s: %s", whoisServer, err),
+					},
+				), nil
 			}
 
 			result := parseWhoisResponse(raw)

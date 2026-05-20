@@ -44,8 +44,7 @@ func (r *mutationResolver) CreateSAMLConfiguration(ctx context.Context, input ty
 		req,
 	)
 	if err != nil {
-		var errSAMLConfigurationEmailDomainAlreadyExists *iam.ErrSAMLConfigurationEmailDomainAlreadyExists
-		if errors.As(err, &errSAMLConfigurationEmailDomainAlreadyExists) {
+		if _, ok := errors.AsType[*iam.ErrSAMLConfigurationEmailDomainAlreadyExists](err); ok {
 			return nil, gqlutils.Conflict(ctx, err)
 		}
 

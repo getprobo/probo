@@ -263,8 +263,7 @@ func (r *organizationResolver) ScimConfiguration(ctx context.Context, obj *types
 
 	config, err := r.iam.OrganizationService.GetSCIMConfiguration(ctx, obj.ID)
 	if err != nil {
-		var notFound *iam.ErrNoSCIMConfigurationFound
-		if errors.As(err, &notFound) {
+		if _, ok := errors.AsType[*iam.ErrNoSCIMConfigurationFound](err); ok {
 			return nil, nil
 		}
 
@@ -348,8 +347,7 @@ func (r *organizationResolver) Viewer(ctx context.Context, obj *types.Organizati
 
 	profile, err := r.iam.OrganizationService.GetProfileForIdentityAndOrganization(ctx, identity.ID, obj.ID)
 	if err != nil {
-		var errNotFound *iam.ErrProfileNotFound
-		if errors.As(err, &errNotFound) {
+		if _, ok := errors.AsType[*iam.ErrProfileNotFound](err); ok {
 			return nil, gqlutils.NotFound(ctx, err)
 		}
 

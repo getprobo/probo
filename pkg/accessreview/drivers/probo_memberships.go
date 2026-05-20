@@ -65,18 +65,21 @@ func (d *ProboMembershipsDriver) ListAccounts(ctx context.Context) ([]AccountRec
 				isAdmin := role == string(coredata.MembershipRoleOwner) || role == string(coredata.MembershipRoleAdmin)
 				createdAt := account.CreatedAt
 
-				records = append(records, AccountRecord{
-					Email:       account.Email,
-					FullName:    account.FullName,
-					Role:        role,
-					Active:      new(account.State == string(coredata.ProfileStateActive)),
-					IsAdmin:     isAdmin,
-					ExternalID:  account.ID.String(),
-					CreatedAt:   &createdAt,
-					MFAStatus:   coredata.MFAStatusUnknown,
-					AuthMethod:  coredata.AccessEntryAuthMethodUnknown,
-					AccountType: coredata.AccessEntryAccountTypeUser,
-				})
+				records = append(
+					records,
+					AccountRecord{
+						Email:       account.Email,
+						FullName:    account.FullName,
+						Role:        role,
+						Active:      new(account.State == string(coredata.ProfileStateActive)),
+						IsAdmin:     isAdmin,
+						ExternalID:  account.ID.String(),
+						CreatedAt:   &createdAt,
+						MFAStatus:   coredata.MFAStatusUnknown,
+						AuthMethod:  coredata.AccessEntryAuthMethodUnknown,
+						AccountType: coredata.AccessEntryAccountTypeUser,
+					},
+				)
 			}
 
 			return nil

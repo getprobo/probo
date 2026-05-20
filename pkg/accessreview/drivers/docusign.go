@@ -19,6 +19,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -179,10 +180,23 @@ func (d *DocuSignDriver) discoverAccount(ctx context.Context) (accountID string,
 }
 
 func (d *DocuSignDriver) queryUsers(ctx context.Context, baseURI string, accountID string, startPosition int) (*docusignUsersResponse, error) {
-	url := fmt.Sprintf("%s/restapi/v2.1/accounts/%s/users?additional_info=true&count=%d&start_position=%d",
-		baseURI, accountID, docusignUsersPageSize, startPosition)
+	u, err := url.JoinPath(baseURI, "restapi", "v2.1", "accounts", accountID, "users")
+	if err != nil {
+		return nil, fmt.Errorf("cannot build docusign users URL: %w", err)
+	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	parsed, err := url.Parse(u)
+	if err != nil {
+		return nil, fmt.Errorf("cannot parse docusign users URL: %w", err)
+	}
+
+	q := parsed.Query()
+	q.Set("additional_info", "true")
+	q.Set("count", strconv.Itoa(docusignUsersPageSize))
+	q.Set("start_position", strconv.Itoa(startPosition))
+	parsed.RawQuery = q.Encode()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, parsed.String(), nil)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create docusign users request: %w", err)
 	}

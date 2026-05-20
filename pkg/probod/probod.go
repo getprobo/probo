@@ -29,9 +29,6 @@ import (
 	"sync"
 	"time"
 
-	"go.probo.inc/probo/packages/emails"
-	pemutil "go.probo.inc/probo/pkg/crypto/pem"
-
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	proxyproto "github.com/pires/go-proxyproto"
 	"github.com/prometheus/client_golang/prometheus"
@@ -43,6 +40,7 @@ import (
 	"go.gearno.de/kit/unit"
 	"go.gearno.de/kit/worker"
 	"go.opentelemetry.io/otel/trace"
+	"go.probo.inc/probo/packages/emails"
 	"go.probo.inc/probo/pkg/accessreview"
 	"go.probo.inc/probo/pkg/awsconfig"
 	"go.probo.inc/probo/pkg/baseurl"
@@ -53,6 +51,7 @@ import (
 	"go.probo.inc/probo/pkg/crypto/cipher"
 	"go.probo.inc/probo/pkg/crypto/keys"
 	"go.probo.inc/probo/pkg/crypto/passwdhash"
+	pemutil "go.probo.inc/probo/pkg/crypto/pem"
 	"go.probo.inc/probo/pkg/esign"
 	"go.probo.inc/probo/pkg/evidencedescriber"
 	"go.probo.inc/probo/pkg/file"
@@ -379,11 +378,14 @@ func (impl *Implm) Run(
 			hasActive = true
 		}
 
-		oauth2SigningKeys = append(oauth2SigningKeys, oauth2server.SigningKey{
-			PrivateKey: rsaKey,
-			KID:        kid,
-			Active:     keyCfg.Active,
-		})
+		oauth2SigningKeys = append(
+			oauth2SigningKeys,
+			oauth2server.SigningKey{
+				PrivateKey: rsaKey,
+				KID:        kid,
+				Active:     keyCfg.Active,
+			},
+		)
 	}
 
 	if !hasActive {
@@ -1112,10 +1114,9 @@ func (impl *Implm) runTrustCenterServer(
 			cert, err := certSelector.GetCertificate(hello)
 			// Silently reject connections without SNI (load balancers, health checks, scanners)
 			if err != nil {
-				var noSNIErr *certmanager.NoSNIError
-				if errors.As(err, &noSNIErr) {
-					return nil, nil
-				}
+			if _, ok := errors.AsType[*certmanager.NoSNIError](err); ok {
+				return nil, nil
+			}
 
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return nil, nil

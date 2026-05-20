@@ -131,8 +131,7 @@ func (h *SCIMHandler) BearerTokenMiddleware(next http.Handler) http.Handler {
 
 		config, err := h.iam.SCIMService.ValidateToken(r.Context(), token)
 		if err != nil {
-			var invalidToken *scimservice.ErrSCIMInvalidToken
-			if errors.As(err, &invalidToken) {
+			if _, ok := errors.AsType[*scimservice.ErrSCIMInvalidToken](err); ok {
 				httpserver.RenderError(w, http.StatusUnauthorized, errors.New("invalid token"))
 				return
 			}
@@ -149,8 +148,7 @@ func (h *SCIMHandler) BearerTokenMiddleware(next http.Handler) http.Handler {
 }
 
 func (rc *scimRequestContext) logAndWrapError(err error, logMsg string) error {
-	var scimErr scimerrors.ScimError
-	if errors.As(err, &scimErr) {
+	if scimErr, ok := errors.AsType[scimerrors.ScimError](err); ok {
 		errMsg := scimErr.Detail
 
 		// Don't reference profileID for 404 errors - the resource doesn't exist

@@ -67,10 +67,21 @@ type asanaUsersPage struct {
 func (d *AsanaDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error) {
 	var records []AccountRecord
 
-	next := fmt.Sprintf(
-		"https://app.asana.com/api/1.0/workspaces/%s/users?opt_fields=email,name&limit=100",
-		url.PathEscape(d.workspaceGID),
-	)
+	u, err := url.JoinPath("https://app.asana.com", "api", "1.0", "workspaces", d.workspaceGID, "users")
+	if err != nil {
+		return nil, fmt.Errorf("cannot build asana users URL: %w", err)
+	}
+
+	parsed, err := url.Parse(u)
+	if err != nil {
+		return nil, fmt.Errorf("cannot parse asana users URL: %w", err)
+	}
+
+	q := parsed.Query()
+	q.Set("opt_fields", "email,name")
+	q.Set("limit", "100")
+	parsed.RawQuery = q.Encode()
+	next := parsed.String()
 
 	for range maxPaginationPages {
 		page, err := d.queryUsers(ctx, next)
@@ -85,14 +96,17 @@ func (d *AsanaDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error)
 			// Active=false from any of those would fabricate state, so
 			// leave Active nil (unknown) and let downstream review surface
 			// the gap honestly.
-			records = append(records, AccountRecord{
-				Email:       u.Email,
-				FullName:    u.Name,
-				ExternalID:  u.GID,
-				MFAStatus:   coredata.MFAStatusUnknown,
-				AuthMethod:  coredata.AccessEntryAuthMethodUnknown,
-				AccountType: coredata.AccessEntryAccountTypeUser,
-			})
+			records = append(
+				records,
+				AccountRecord{
+					Email:       u.Email,
+					FullName:    u.Name,
+					ExternalID:  u.GID,
+					MFAStatus:   coredata.MFAStatusUnknown,
+					AuthMethod:  coredata.AccessEntryAuthMethodUnknown,
+					AccountType: coredata.AccessEntryAccountTypeUser,
+				},
+			)
 		}
 
 		if page.NextPage == nil || page.NextPage.URI == "" {

@@ -101,12 +101,11 @@ func (a *Authorizer) authorize(ctx context.Context, tx pg.Tx, params AuthorizePa
 			*params.Session,
 			membership.ID,
 		); err != nil {
-			var (
-				errSessionNotFound *ErrSessionNotFound
-				errSessionExpired  *ErrSessionExpired
-			)
+			if _, ok := errors.AsType[*ErrSessionNotFound](err); ok {
+				return NewAssumptionRequiredError(params.Principal, membership.ID)
+			}
 
-			if errors.As(err, &errSessionNotFound) || errors.As(err, &errSessionExpired) {
+			if _, ok := errors.AsType[*ErrSessionExpired](err); ok {
 				return NewAssumptionRequiredError(params.Principal, membership.ID)
 			}
 

@@ -22,10 +22,9 @@ import (
 	"net/http"
 	"time"
 
+	"go.probo.inc/probo/pkg/coredata"
 	admin "google.golang.org/api/admin/directory/v1"
 	"google.golang.org/api/option"
-
-	"go.probo.inc/probo/pkg/coredata"
 )
 
 // GoogleWorkspaceDriver fetches user accounts from Google Workspace

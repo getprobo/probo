@@ -213,9 +213,10 @@ func buildMessages(messages []llm.Message) []openai.ChatCompletionMessageParamUn
 				case llm.ImagePart:
 					parts = append(
 						parts,
-						openai.ImageContentPart(openai.ChatCompletionContentPartImageImageURLParam{
-							URL: p.URL,
-						},
+						openai.ImageContentPart(
+							openai.ChatCompletionContentPartImageImageURLParam{
+								URL: p.URL,
+							},
 						),
 					)
 				case llm.FilePart:
@@ -381,8 +382,8 @@ func mapFinishReason(reason string) llm.FinishReason {
 }
 
 func mapError(err error) error {
-	var apiErr *openai.Error
-	if !errors.As(err, &apiErr) {
+	apiErr, ok := errors.AsType[*openai.Error](err)
+	if !ok {
 		return err
 	}
 
@@ -513,9 +514,11 @@ func isReasoningModel(model string) bool {
 func buildFilePart(p llm.FilePart) openai.ChatCompletionContentPartUnionParam {
 	switch {
 	case strings.HasPrefix(p.MimeType, "image/"):
-		return openai.ImageContentPart(openai.ChatCompletionContentPartImageImageURLParam{
-			URL: fmt.Sprintf("data:%s;base64,%s", p.MimeType, p.Data),
-		})
+		return openai.ImageContentPart(
+			openai.ChatCompletionContentPartImageImageURLParam{
+				URL: fmt.Sprintf("data:%s;base64,%s", p.MimeType, p.Data),
+			},
+		)
 	case strings.HasPrefix(p.MimeType, "text/"):
 		decoded, err := base64.StdEncoding.DecodeString(p.Data)
 		if err != nil {
@@ -524,9 +527,11 @@ func buildFilePart(p llm.FilePart) openai.ChatCompletionContentPartUnionParam {
 
 		return openai.TextContentPart(fmt.Sprintf("File: %s\n\n%s", p.Filename, string(decoded)))
 	default:
-		return openai.FileContentPart(openai.ChatCompletionContentPartFileFileParam{
-			FileData: param.NewOpt(fmt.Sprintf("data:%s;base64,%s", p.MimeType, p.Data)),
-			Filename: param.NewOpt(p.Filename),
-		})
+		return openai.FileContentPart(
+			openai.ChatCompletionContentPartFileFileParam{
+				FileData: param.NewOpt(fmt.Sprintf("data:%s;base64,%s", p.MimeType, p.Data)),
+				Filename: param.NewOpt(p.Filename),
+			},
+		)
 	}
 }

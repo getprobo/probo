@@ -247,116 +247,146 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 	}
 
 	if slackClientID := b.getEnv("CONNECTOR_SLACK_CLIENT_ID"); slackClientID != "" {
-		cfg.Probod.Connectors = append(cfg.Probod.Connectors, probodconfig.ConnectorConfig{
-			Provider: "SLACK",
-			Protocol: "oauth2",
-			RawConfig: probodconfig.ConnectorConfigOAuth2{
-				ClientID:     slackClientID,
-				ClientSecret: b.getEnv("CONNECTOR_SLACK_CLIENT_SECRET"),
+		cfg.Probod.Connectors = append(
+			cfg.Probod.Connectors,
+			probodconfig.ConnectorConfig{
+				Provider: "SLACK",
+				Protocol: "oauth2",
+				RawConfig: probodconfig.ConnectorConfigOAuth2{
+					ClientID:     slackClientID,
+					ClientSecret: b.getEnv("CONNECTOR_SLACK_CLIENT_SECRET"),
+				},
+				RawSettings: map[string]any{
+					"signing-secret": b.getEnv("CONNECTOR_SLACK_SIGNING_SECRET"),
+				},
 			},
-			RawSettings: map[string]any{
-				"signing-secret": b.getEnv("CONNECTOR_SLACK_SIGNING_SECRET"),
-			},
-		})
+		)
 	}
 
 	if hubspotClientID := b.getEnv("CONNECTOR_HUBSPOT_CLIENT_ID"); hubspotClientID != "" {
-		cfg.Probod.Connectors = append(cfg.Probod.Connectors, probodconfig.ConnectorConfig{
-			Provider: "HUBSPOT",
-			Protocol: "oauth2",
-			RawConfig: probodconfig.ConnectorConfigOAuth2{
-				ClientID:     hubspotClientID,
-				ClientSecret: b.getEnv("CONNECTOR_HUBSPOT_CLIENT_SECRET"),
+		cfg.Probod.Connectors = append(
+			cfg.Probod.Connectors,
+			probodconfig.ConnectorConfig{
+				Provider: "HUBSPOT",
+				Protocol: "oauth2",
+				RawConfig: probodconfig.ConnectorConfigOAuth2{
+					ClientID:     hubspotClientID,
+					ClientSecret: b.getEnv("CONNECTOR_HUBSPOT_CLIENT_SECRET"),
+				},
 			},
-		})
+		)
 	}
 
 	if docusignClientID := b.getEnv("CONNECTOR_DOCUSIGN_CLIENT_ID"); docusignClientID != "" {
-		cfg.Probod.Connectors = append(cfg.Probod.Connectors, probodconfig.ConnectorConfig{
-			Provider: "DOCUSIGN",
-			Protocol: "oauth2",
-			RawConfig: probodconfig.ConnectorConfigOAuth2{
-				ClientID:     docusignClientID,
-				ClientSecret: b.getEnv("CONNECTOR_DOCUSIGN_CLIENT_SECRET"),
+		cfg.Probod.Connectors = append(
+			cfg.Probod.Connectors,
+			probodconfig.ConnectorConfig{
+				Provider: "DOCUSIGN",
+				Protocol: "oauth2",
+				RawConfig: probodconfig.ConnectorConfigOAuth2{
+					ClientID:     docusignClientID,
+					ClientSecret: b.getEnv("CONNECTOR_DOCUSIGN_CLIENT_SECRET"),
+				},
 			},
-		})
+		)
 	}
 
 	if notionClientID := b.getEnv("CONNECTOR_NOTION_CLIENT_ID"); notionClientID != "" {
-		cfg.Probod.Connectors = append(cfg.Probod.Connectors, probodconfig.ConnectorConfig{
-			Provider: "NOTION",
-			Protocol: "oauth2",
-			RawConfig: probodconfig.ConnectorConfigOAuth2{
-				ClientID:     notionClientID,
-				ClientSecret: b.getEnv("CONNECTOR_NOTION_CLIENT_SECRET"),
+		cfg.Probod.Connectors = append(
+			cfg.Probod.Connectors,
+			probodconfig.ConnectorConfig{
+				Provider: "NOTION",
+				Protocol: "oauth2",
+				RawConfig: probodconfig.ConnectorConfigOAuth2{
+					ClientID:     notionClientID,
+					ClientSecret: b.getEnv("CONNECTOR_NOTION_CLIENT_SECRET"),
+				},
 			},
-		})
+		)
 	}
 
 	if githubClientID := b.getEnv("CONNECTOR_GITHUB_CLIENT_ID"); githubClientID != "" {
-		cfg.Probod.Connectors = append(cfg.Probod.Connectors, probodconfig.ConnectorConfig{
-			Provider: "GITHUB",
-			Protocol: "oauth2",
-			RawConfig: probodconfig.ConnectorConfigOAuth2{
-				ClientID:     githubClientID,
-				ClientSecret: b.getEnv("CONNECTOR_GITHUB_CLIENT_SECRET"),
+		cfg.Probod.Connectors = append(
+			cfg.Probod.Connectors,
+			probodconfig.ConnectorConfig{
+				Provider: "GITHUB",
+				Protocol: "oauth2",
+				RawConfig: probodconfig.ConnectorConfigOAuth2{
+					ClientID:     githubClientID,
+					ClientSecret: b.getEnv("CONNECTOR_GITHUB_CLIENT_SECRET"),
+				},
 			},
-		})
+		)
 	}
 
 	if sentryClientID := b.getEnv("CONNECTOR_SENTRY_CLIENT_ID"); sentryClientID != "" {
-		cfg.Probod.Connectors = append(cfg.Probod.Connectors, probodconfig.ConnectorConfig{
-			Provider: "SENTRY",
-			Protocol: "oauth2",
-			RawConfig: probodconfig.ConnectorConfigOAuth2{
-				ClientID:     sentryClientID,
-				ClientSecret: b.getEnv("CONNECTOR_SENTRY_CLIENT_SECRET"),
+		cfg.Probod.Connectors = append(
+			cfg.Probod.Connectors,
+			probodconfig.ConnectorConfig{
+				Provider: "SENTRY",
+				Protocol: "oauth2",
+				RawConfig: probodconfig.ConnectorConfigOAuth2{
+					ClientID:     sentryClientID,
+					ClientSecret: b.getEnv("CONNECTOR_SENTRY_CLIENT_SECRET"),
+				},
 			},
-		})
+		)
 	}
 
 	if intercomClientID := b.getEnv("CONNECTOR_INTERCOM_CLIENT_ID"); intercomClientID != "" {
-		cfg.Probod.Connectors = append(cfg.Probod.Connectors, probodconfig.ConnectorConfig{
-			Provider: "INTERCOM",
-			Protocol: "oauth2",
-			RawConfig: probodconfig.ConnectorConfigOAuth2{
-				ClientID:     intercomClientID,
-				ClientSecret: b.getEnv("CONNECTOR_INTERCOM_CLIENT_SECRET"),
+		cfg.Probod.Connectors = append(
+			cfg.Probod.Connectors,
+			probodconfig.ConnectorConfig{
+				Provider: "INTERCOM",
+				Protocol: "oauth2",
+				RawConfig: probodconfig.ConnectorConfigOAuth2{
+					ClientID:     intercomClientID,
+					ClientSecret: b.getEnv("CONNECTOR_INTERCOM_CLIENT_SECRET"),
+				},
 			},
-		})
+		)
 	}
 
 	if brexClientID := b.getEnv("CONNECTOR_BREX_CLIENT_ID"); brexClientID != "" {
-		cfg.Probod.Connectors = append(cfg.Probod.Connectors, probodconfig.ConnectorConfig{
-			Provider: "BREX",
-			Protocol: "oauth2",
-			RawConfig: probodconfig.ConnectorConfigOAuth2{
-				ClientID:     brexClientID,
-				ClientSecret: b.getEnv("CONNECTOR_BREX_CLIENT_SECRET"),
+		cfg.Probod.Connectors = append(
+			cfg.Probod.Connectors,
+			probodconfig.ConnectorConfig{
+				Provider: "BREX",
+				Protocol: "oauth2",
+				RawConfig: probodconfig.ConnectorConfigOAuth2{
+					ClientID:     brexClientID,
+					ClientSecret: b.getEnv("CONNECTOR_BREX_CLIENT_SECRET"),
+				},
 			},
-		})
+		)
 	}
 
 	if googleWorkspaceClientID := b.getEnv("CONNECTOR_GOOGLE_WORKSPACE_CLIENT_ID"); googleWorkspaceClientID != "" {
-		cfg.Probod.Connectors = append(cfg.Probod.Connectors, probodconfig.ConnectorConfig{
-			Provider: "GOOGLE_WORKSPACE",
-			Protocol: "oauth2",
-			RawConfig: probodconfig.ConnectorConfigOAuth2{
-				ClientID:     googleWorkspaceClientID,
-				ClientSecret: b.getEnv("CONNECTOR_GOOGLE_WORKSPACE_CLIENT_SECRET"),
+		cfg.Probod.Connectors = append(
+			cfg.Probod.Connectors,
+			probodconfig.ConnectorConfig{
+				Provider: "GOOGLE_WORKSPACE",
+				Protocol: "oauth2",
+				RawConfig: probodconfig.ConnectorConfigOAuth2{
+					ClientID:     googleWorkspaceClientID,
+					ClientSecret: b.getEnv("CONNECTOR_GOOGLE_WORKSPACE_CLIENT_SECRET"),
+				},
 			},
-		})
+		)
 	}
 
 	if microsoft365ClientID := b.getEnv("CONNECTOR_MICROSOFT_365_CLIENT_ID"); microsoft365ClientID != "" {
-		cfg.Probod.Connectors = append(cfg.Probod.Connectors, probodconfig.ConnectorConfig{
-			Provider: "MICROSOFT_365",
-			Protocol: "oauth2",
-			RawConfig: probodconfig.ConnectorConfigOAuth2{
-				ClientID:     microsoft365ClientID,
-				ClientSecret: b.getEnv("CONNECTOR_MICROSOFT_365_CLIENT_SECRET"),
+		cfg.Probod.Connectors = append(
+			cfg.Probod.Connectors,
+			probodconfig.ConnectorConfig{
+				Provider: "MICROSOFT_365",
+				Protocol: "oauth2",
+				RawConfig: probodconfig.ConnectorConfigOAuth2{
+					ClientID:     microsoft365ClientID,
+					ClientSecret: b.getEnv("CONNECTOR_MICROSOFT_365_CLIENT_SECRET"),
+				},
 			},
-		})
+		)
 	}
 
 	for _, provider := range []string{
@@ -374,28 +404,34 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 			continue
 		}
 
-		cfg.Probod.Connectors = append(cfg.Probod.Connectors, probodconfig.ConnectorConfig{
-			Provider: provider,
-			Protocol: "oauth2",
-			RawConfig: probodconfig.ConnectorConfigOAuth2{
-				ClientID:     clientID,
-				ClientSecret: b.getEnv("CONNECTOR_" + provider + "_CLIENT_SECRET"),
+		cfg.Probod.Connectors = append(
+			cfg.Probod.Connectors,
+			probodconfig.ConnectorConfig{
+				Provider: provider,
+				Protocol: "oauth2",
+				RawConfig: probodconfig.ConnectorConfigOAuth2{
+					ClientID:     clientID,
+					ClientSecret: b.getEnv("CONNECTOR_" + provider + "_CLIENT_SECRET"),
+				},
 			},
-		})
+		)
 	}
 
 	// Vercel needs the operator-supplied integration slug to resolve the
 	// templated AuthURL ("https://vercel.com/integrations/{integration_slug}/new").
 	if vercelClientID := b.getEnv("CONNECTOR_VERCEL_CLIENT_ID"); vercelClientID != "" {
-		cfg.Probod.Connectors = append(cfg.Probod.Connectors, probodconfig.ConnectorConfig{
-			Provider: "VERCEL",
-			Protocol: "oauth2",
-			RawConfig: probodconfig.ConnectorConfigOAuth2{
-				ClientID:        vercelClientID,
-				ClientSecret:    b.getEnv("CONNECTOR_VERCEL_CLIENT_SECRET"),
-				IntegrationSlug: b.getEnv("CONNECTOR_VERCEL_INTEGRATION_SLUG"),
+		cfg.Probod.Connectors = append(
+			cfg.Probod.Connectors,
+			probodconfig.ConnectorConfig{
+				Provider: "VERCEL",
+				Protocol: "oauth2",
+				RawConfig: probodconfig.ConnectorConfigOAuth2{
+					ClientID:        vercelClientID,
+					ClientSecret:    b.getEnv("CONNECTOR_VERCEL_CLIENT_SECRET"),
+					IntegrationSlug: b.getEnv("CONNECTOR_VERCEL_INTEGRATION_SLUG"),
+				},
 			},
-		})
+		)
 	}
 
 	return cfg, nil

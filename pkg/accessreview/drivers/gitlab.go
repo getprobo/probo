@@ -67,10 +67,20 @@ type gitlabMember struct {
 func (d *GitLabDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error) {
 	var records []AccountRecord
 
-	next := fmt.Sprintf(
-		"https://gitlab.com/api/v4/groups/%s/members/all?per_page=100",
-		url.PathEscape(d.groupID),
-	)
+	u, err := url.JoinPath("https://gitlab.com", "api", "v4", "groups", d.groupID, "members", "all")
+	if err != nil {
+		return nil, fmt.Errorf("cannot build gitlab members URL: %w", err)
+	}
+
+	parsed, err := url.Parse(u)
+	if err != nil {
+		return nil, fmt.Errorf("cannot parse gitlab members URL: %w", err)
+	}
+
+	q := parsed.Query()
+	q.Set("per_page", "100")
+	parsed.RawQuery = q.Encode()
+	next := parsed.String()
 
 	for range maxPaginationPages {
 		members, linkHeader, err := d.queryMembers(ctx, next)

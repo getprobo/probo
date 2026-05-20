@@ -453,8 +453,7 @@ INSERT INTO processing_activity_data_protection_impact_assessments (
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
-		var pgErr *pgconn.PgError
-		if errors.As(err, &pgErr) {
+		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
 			if pgErr.Code == "23505" && pgErr.ConstraintName == "processing_activity_dpias_processing_activity_id_snapshot_id_uniq" {
 				return ErrResourceAlreadyExists
 			}

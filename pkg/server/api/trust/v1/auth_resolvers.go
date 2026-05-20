@@ -7,8 +7,8 @@ package trust_v1
 
 import (
 	"context"
-	"errors"
 
+	"errors"
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/coredata"
@@ -58,13 +58,11 @@ func (r *mutationResolver) VerifyMagicLink(ctx context.Context, input types.Veri
 
 	email, err := r.iam.AuthService.GetMagicLinkEmail(ctx, input.Token)
 	if err != nil {
-		var errExpiredToken *iam.ErrExpiredToken
-		if errors.As(err, &errExpiredToken) {
+		if _, ok := errors.AsType[*iam.ErrExpiredToken](err); ok {
 			return nil, gqlutils.Invalid(ctx, err)
 		}
 
-		var errInvalidToken *iam.ErrInvalidToken
-		if errors.As(err, &errInvalidToken) {
+		if _, ok := errors.AsType[*iam.ErrInvalidToken](err); ok {
 			return nil, gqlutils.Invalid(ctx, err)
 		}
 
@@ -81,15 +79,13 @@ func (r *mutationResolver) VerifyMagicLink(ctx context.Context, input types.Veri
 
 		identity, session, continueURL, err = r.iam.AuthService.OpenSessionWithMagicLink(ctx, input.Token)
 		if err != nil {
-			var errExpiredToken *iam.ErrExpiredToken
-			if errors.As(err, &errExpiredToken) {
-				return nil, gqlutils.Invalid(ctx, err)
-			}
+		if _, ok := errors.AsType[*iam.ErrExpiredToken](err); ok {
+			return nil, gqlutils.Invalid(ctx, err)
+		}
 
-			var errInvalidToken *iam.ErrInvalidToken
-			if errors.As(err, &errInvalidToken) {
-				return nil, gqlutils.Invalid(ctx, err)
-			}
+		if _, ok := errors.AsType[*iam.ErrInvalidToken](err); ok {
+			return nil, gqlutils.Invalid(ctx, err)
+		}
 
 			r.logger.ErrorCtx(ctx, "cannot open session with magic link", log.Error(err))
 
@@ -105,15 +101,13 @@ func (r *mutationResolver) VerifyMagicLink(ctx context.Context, input types.Veri
 
 		identity, session, continueURL, err = r.iam.AuthService.OpenSessionWithMagicLink(ctx, input.Token)
 		if err != nil {
-			var errExpiredToken *iam.ErrExpiredToken
-			if errors.As(err, &errExpiredToken) {
-				return nil, gqlutils.Invalid(ctx, err)
-			}
+		if _, ok := errors.AsType[*iam.ErrExpiredToken](err); ok {
+			return nil, gqlutils.Invalid(ctx, err)
+		}
 
-			var errInvalidToken *iam.ErrInvalidToken
-			if errors.As(err, &errInvalidToken) {
-				return nil, gqlutils.Invalid(ctx, err)
-			}
+		if _, ok := errors.AsType[*iam.ErrInvalidToken](err); ok {
+			return nil, gqlutils.Invalid(ctx, err)
+		}
 
 			r.logger.ErrorCtx(ctx, "cannot open session with magic link", log.Error(err))
 
