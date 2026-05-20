@@ -4,6 +4,30 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.190.0] - 2026-05-20
+
+### Added
+
+- Add a hierarchical risk assessment system with Risk Assessment, Scope, Node (ENTITY / BOUNDARY / ASSET / DATA), Process, Threat, and Risk Scenario entities, and render a Mermaid data-flow diagram per scope (nodes typed by shape, threats attached as dashed edges)
+- Add 13 access-review connector providers (with PKCE, token-body extras, and `AuthURL` templating support in the OAuth2 driver), and wire them through the review engine, the name worker, and the Helm chart
+- Add a tracker mapping worker that resolves detected trackers to third parties using initiator domain extraction (eTLD+1), pattern-glob analysis, and a Firecrawl-backed LLM agent fallback for unmapped patterns
+- Add a shared `common_third_parties` / `common_third_party_domains` catalog with slug-based deduplication, allow a single domain to be associated with multiple third parties, and auto-create entries from OCD imports
+- Introduce the `proboctl` CLI (replaces the standalone `common-third-parties-import` and `common-tracker-patterns-import` commands as `proboctl seed ...`), with `data.json` embedded in the binary
+
+### Changed
+
+- Move the Firecrawl API key from the top-level config into `Agents.Tools`, hardcode the Firecrawl API endpoint (drop `FIRECRAWL_ENDPOINT`), and replace the SearXNG search backend with Firecrawl
+- Split cookie names on both `_` and `-` separators so cookies like `__Secure-1PSID` no longer collapse into a bogus `___*` heuristic pattern
+
+### Fixed
+
+- Filter SCIM-deactivated (INACTIVE) people from signature request recipient lists in both the multi-select dialog and the document signatures page
+
+### Removed
+
+- Remove the deprecated snapshot system (the register/document model fully replaces it)
+- Remove backend inactive-profile validation that incorrectly rejected newly-created users on first login
+
 ## [0.189.0] - 2026-05-15
 
 ### Changed
