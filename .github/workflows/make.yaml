@@ -274,15 +274,14 @@ jobs:
             exit 1
           fi
       - name: "Run golangci-lint"
+        run: golangci-lint run ./...
+      - name: "Annotate PR with golangci-lint findings"
+        if: failure() && github.event_name == 'pull_request'
         env:
           REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            golangci-lint run --out-format=line-number ./... 2>&1 | \
-              reviewdog -f=golangci-lint -reporter=github-pr-review -filter-mode=nofilter -fail-level=error -name="golangci-lint"
-          else
-            golangci-lint run ./...
-          fi
+          golangci-lint run --out-format=line-number ./... 2>&1 | \
+            reviewdog -f=golangci-lint -reporter=github-pr-review -filter-mode=nofilter -name="golangci-lint" || true
 
   lint-js:
     name: "lint-js"
@@ -302,18 +301,16 @@ jobs:
       - name: "Generate Relay artifacts"
         run: make relay
       - name: "Run eslint"
+        run: npm run lint
+      - name: "Annotate PR with eslint findings"
+        if: failure() && github.event_name == 'pull_request'
         env:
           REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            for dir in apps/console apps/trust packages/ui packages/eslint-config; do
-              (cd "$dir" && npx eslint . --concurrency 4 --format stylish 2>/dev/null) | \
-                reviewdog -f=eslint -reporter=github-pr-review -filter-mode=nofilter -fail-level=error -name="eslint ($dir)"
-            done
-            (cd packages/n8n-node && npx n8n-node lint)
-          else
-            npm run lint
-          fi
+          for dir in apps/console apps/trust packages/ui packages/eslint-config; do
+            (cd "$dir" && npx eslint . --concurrency 4 --format stylish 2>/dev/null) | \
+              reviewdog -f=eslint -reporter=github-pr-review -filter-mode=nofilter -name="eslint ($dir)" || true
+          done
 
   test:
     name: "test"

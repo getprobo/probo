@@ -1421,6 +1421,7 @@ WHERE
 				return ErrResourceInUse
 			}
 		}
+
 		return fmt.Errorf("cannot delete profile: %w", err)
 	}
 
