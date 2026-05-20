@@ -20,6 +20,7 @@ import (
 	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/probo"
+	"go.probo.inc/probo/pkg/riskmanagement"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/mcp/v1/types"
 )
@@ -5590,4 +5591,643 @@ func (r *Resolver) MoveTrackerResourceToCategoryTool(ctx context.Context, req *m
 	}
 
 	return nil, types.MoveTrackerResourceToCategoryOutput{TrackerResource: types.NewTrackerResource(result.TrackerResource)}, nil
+}
+
+func (r *Resolver) ListRiskAssessmentsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListRiskAssessmentsInput) (*mcp.CallToolResult, types.ListRiskAssessmentsOutput, error) {
+	r.MustAuthorize(ctx, input.OrganizationID, probo.ActionRiskAssessmentList)
+
+	scope := coredata.NewScopeFromObjectID(input.OrganizationID)
+
+	pageOrderBy := page.OrderBy[coredata.RiskAssessmentOrderField]{
+		Field:     coredata.RiskAssessmentOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if input.OrderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.RiskAssessmentOrderField]{
+			Field:     input.OrderBy.Field,
+			Direction: input.OrderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
+
+	p, err := r.riskManagement.ListForOrganizationID(ctx, scope, input.OrganizationID, cursor)
+	if err != nil {
+		panic(fmt.Errorf("cannot list risk assessments: %w", err))
+	}
+
+	return nil, types.NewListRiskAssessmentsOutput(p), nil
+}
+
+func (r *Resolver) GetRiskAssessmentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetRiskAssessmentInput) (*mcp.CallToolResult, types.GetRiskAssessmentOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionRiskAssessmentGet)
+
+	scope := coredata.NewScopeFromObjectID(input.ID)
+
+	ra, err := r.riskManagement.Get(ctx, scope, input.ID)
+	if err != nil {
+		return nil, types.GetRiskAssessmentOutput{}, fmt.Errorf("failed to get risk assessment: %w", err)
+	}
+
+	return nil, types.GetRiskAssessmentOutput{
+		RiskAssessment: types.NewRiskAssessment(ra),
+	}, nil
+}
+
+func (r *Resolver) AddRiskAssessmentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddRiskAssessmentInput) (*mcp.CallToolResult, types.AddRiskAssessmentOutput, error) {
+	r.MustAuthorize(ctx, input.OrganizationID, probo.ActionRiskAssessmentCreate)
+
+	scope := coredata.NewScopeFromObjectID(input.OrganizationID)
+
+	ra, err := r.riskManagement.Create(ctx, scope, riskmanagement.CreateRiskAssessmentRequest{
+		OrganizationID: input.OrganizationID,
+		Name:           input.Name,
+		Description:    input.Description,
+	})
+	if err != nil {
+		return nil, types.AddRiskAssessmentOutput{}, fmt.Errorf("failed to create risk assessment: %w", err)
+	}
+
+	return nil, types.AddRiskAssessmentOutput{
+		RiskAssessment: types.NewRiskAssessment(ra),
+	}, nil
+}
+
+func (r *Resolver) UpdateRiskAssessmentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateRiskAssessmentInput) (*mcp.CallToolResult, types.UpdateRiskAssessmentOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionRiskAssessmentUpdate)
+
+	scope := coredata.NewScopeFromObjectID(input.ID)
+
+	ra, err := r.riskManagement.Update(ctx, scope, riskmanagement.UpdateRiskAssessmentRequest{
+		ID:          input.ID,
+		Name:        input.Name,
+		Description: UnwrapOmittable(input.Description),
+	})
+	if err != nil {
+		return nil, types.UpdateRiskAssessmentOutput{}, fmt.Errorf("failed to update risk assessment: %w", err)
+	}
+
+	return nil, types.UpdateRiskAssessmentOutput{
+		RiskAssessment: types.NewRiskAssessment(ra),
+	}, nil
+}
+
+func (r *Resolver) DeleteRiskAssessmentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteRiskAssessmentInput) (*mcp.CallToolResult, types.DeleteRiskAssessmentOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionRiskAssessmentDelete)
+
+	scope := coredata.NewScopeFromObjectID(input.ID)
+
+	err := r.riskManagement.Delete(ctx, scope, input.ID)
+	if err != nil {
+		return nil, types.DeleteRiskAssessmentOutput{}, fmt.Errorf("failed to delete risk assessment: %w", err)
+	}
+
+	return nil, types.DeleteRiskAssessmentOutput{
+		DeletedRiskAssessmentID: input.ID,
+	}, nil
+}
+func (r *Resolver) ListRiskAssessmentScopesTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListRiskAssessmentScopesInput) (*mcp.CallToolResult, types.ListRiskAssessmentScopesOutput, error) {
+	r.MustAuthorize(ctx, input.RiskAssessmentID, probo.ActionRiskAssessmentScopeList)
+
+	scope := coredata.NewScopeFromObjectID(input.RiskAssessmentID)
+
+	pageOrderBy := page.OrderBy[coredata.RiskAssessmentScopeOrderField]{
+		Field:     coredata.RiskAssessmentScopeOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if input.OrderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.RiskAssessmentScopeOrderField]{
+			Field:     input.OrderBy.Field,
+			Direction: input.OrderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
+
+	p, err := r.riskManagement.ListScopesForRiskAssessmentID(ctx, scope, input.RiskAssessmentID, cursor)
+	if err != nil {
+		panic(fmt.Errorf("cannot list risk assessment scopes: %w", err))
+	}
+
+	return nil, types.NewListRiskAssessmentScopesOutput(p), nil
+}
+
+func (r *Resolver) GetRiskAssessmentScopeTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetRiskAssessmentScopeInput) (*mcp.CallToolResult, types.GetRiskAssessmentScopeOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionRiskAssessmentScopeGet)
+
+	scope := coredata.NewScopeFromObjectID(input.ID)
+
+	s, err := r.riskManagement.GetScope(ctx, scope, input.ID)
+	if err != nil {
+		return nil, types.GetRiskAssessmentScopeOutput{}, fmt.Errorf("failed to get risk assessment scope: %w", err)
+	}
+
+	return nil, types.GetRiskAssessmentScopeOutput{
+		RiskAssessmentScope: types.NewRiskAssessmentScope(s),
+	}, nil
+}
+
+func (r *Resolver) AddRiskAssessmentScopeTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddRiskAssessmentScopeInput) (*mcp.CallToolResult, types.AddRiskAssessmentScopeOutput, error) {
+	r.MustAuthorize(ctx, input.RiskAssessmentID, probo.ActionRiskAssessmentScopeCreate)
+
+	scope := coredata.NewScopeFromObjectID(input.RiskAssessmentID)
+
+	s, err := r.riskManagement.CreateScope(ctx, scope, riskmanagement.CreateRiskAssessmentScopeRequest{
+		RiskAssessmentID: input.RiskAssessmentID,
+		Name:             input.Name,
+	})
+	if err != nil {
+		return nil, types.AddRiskAssessmentScopeOutput{}, fmt.Errorf("failed to create risk assessment scope: %w", err)
+	}
+
+	return nil, types.AddRiskAssessmentScopeOutput{
+		RiskAssessmentScope: types.NewRiskAssessmentScope(s),
+	}, nil
+}
+
+func (r *Resolver) UpdateRiskAssessmentScopeTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateRiskAssessmentScopeInput) (*mcp.CallToolResult, types.UpdateRiskAssessmentScopeOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionRiskAssessmentScopeUpdate)
+
+	scope := coredata.NewScopeFromObjectID(input.ID)
+
+	s, err := r.riskManagement.UpdateScope(ctx, scope, riskmanagement.UpdateRiskAssessmentScopeRequest{
+		ID:   input.ID,
+		Name: input.Name,
+	})
+	if err != nil {
+		return nil, types.UpdateRiskAssessmentScopeOutput{}, fmt.Errorf("failed to update risk assessment scope: %w", err)
+	}
+
+	return nil, types.UpdateRiskAssessmentScopeOutput{
+		RiskAssessmentScope: types.NewRiskAssessmentScope(s),
+	}, nil
+}
+
+func (r *Resolver) DeleteRiskAssessmentScopeTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteRiskAssessmentScopeInput) (*mcp.CallToolResult, types.DeleteRiskAssessmentScopeOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionRiskAssessmentScopeDelete)
+
+	scope := coredata.NewScopeFromObjectID(input.ID)
+
+	err := r.riskManagement.DeleteScope(ctx, scope, input.ID)
+	if err != nil {
+		return nil, types.DeleteRiskAssessmentScopeOutput{}, fmt.Errorf("failed to delete risk assessment scope: %w", err)
+	}
+
+	return nil, types.DeleteRiskAssessmentScopeOutput{
+		DeletedRiskAssessmentScopeID: input.ID,
+	}, nil
+}
+func (r *Resolver) ListRiskAssessmentNodesTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListRiskAssessmentNodesInput) (*mcp.CallToolResult, types.ListRiskAssessmentNodesOutput, error) {
+	r.MustAuthorize(ctx, input.RiskAssessmentScopeID, probo.ActionRiskAssessmentNodeList)
+
+	scope := coredata.NewScopeFromObjectID(input.RiskAssessmentScopeID)
+
+	pageOrderBy := page.OrderBy[coredata.RiskAssessmentNodeOrderField]{
+		Field:     coredata.RiskAssessmentNodeOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if input.OrderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.RiskAssessmentNodeOrderField]{
+			Field:     input.OrderBy.Field,
+			Direction: input.OrderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
+
+	p, err := r.riskManagement.ListNodesForScopeID(ctx, scope, input.RiskAssessmentScopeID, cursor)
+	if err != nil {
+		panic(fmt.Errorf("cannot list risk assessment nodes: %w", err))
+	}
+
+	return nil, types.NewListRiskAssessmentNodesOutput(p), nil
+}
+
+func (r *Resolver) GetRiskAssessmentNodeTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetRiskAssessmentNodeInput) (*mcp.CallToolResult, types.GetRiskAssessmentNodeOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionRiskAssessmentNodeGet)
+
+	scope := coredata.NewScopeFromObjectID(input.ID)
+
+	n, err := r.riskManagement.GetNode(ctx, scope, input.ID)
+	if err != nil {
+		return nil, types.GetRiskAssessmentNodeOutput{}, fmt.Errorf("failed to get risk assessment node: %w", err)
+	}
+
+	return nil, types.GetRiskAssessmentNodeOutput{
+		RiskAssessmentNode: types.NewRiskAssessmentNode(n),
+	}, nil
+}
+
+func (r *Resolver) AddRiskAssessmentNodeTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddRiskAssessmentNodeInput) (*mcp.CallToolResult, types.AddRiskAssessmentNodeOutput, error) {
+	r.MustAuthorize(ctx, input.RiskAssessmentScopeID, probo.ActionRiskAssessmentNodeCreate)
+
+	scope := coredata.NewScopeFromObjectID(input.RiskAssessmentScopeID)
+
+	n, err := r.riskManagement.CreateNode(ctx, scope, riskmanagement.CreateRiskAssessmentNodeRequest{
+		RiskAssessmentScopeID: input.RiskAssessmentScopeID,
+		NodeType:              input.NodeType,
+		Name:                  input.Name,
+	})
+	if err != nil {
+		return nil, types.AddRiskAssessmentNodeOutput{}, fmt.Errorf("failed to create risk assessment node: %w", err)
+	}
+
+	return nil, types.AddRiskAssessmentNodeOutput{
+		RiskAssessmentNode: types.NewRiskAssessmentNode(n),
+	}, nil
+}
+
+func (r *Resolver) UpdateRiskAssessmentNodeTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateRiskAssessmentNodeInput) (*mcp.CallToolResult, types.UpdateRiskAssessmentNodeOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionRiskAssessmentNodeUpdate)
+
+	scope := coredata.NewScopeFromObjectID(input.ID)
+
+	n, err := r.riskManagement.UpdateNode(ctx, scope, riskmanagement.UpdateRiskAssessmentNodeRequest{
+		ID:       input.ID,
+		NodeType: input.NodeType,
+		Name:     input.Name,
+	})
+	if err != nil {
+		return nil, types.UpdateRiskAssessmentNodeOutput{}, fmt.Errorf("failed to update risk assessment node: %w", err)
+	}
+
+	return nil, types.UpdateRiskAssessmentNodeOutput{
+		RiskAssessmentNode: types.NewRiskAssessmentNode(n),
+	}, nil
+}
+
+func (r *Resolver) DeleteRiskAssessmentNodeTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteRiskAssessmentNodeInput) (*mcp.CallToolResult, types.DeleteRiskAssessmentNodeOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionRiskAssessmentNodeDelete)
+
+	scope := coredata.NewScopeFromObjectID(input.ID)
+
+	err := r.riskManagement.DeleteNode(ctx, scope, input.ID)
+	if err != nil {
+		return nil, types.DeleteRiskAssessmentNodeOutput{}, fmt.Errorf("failed to delete risk assessment node: %w", err)
+	}
+
+	return nil, types.DeleteRiskAssessmentNodeOutput{
+		DeletedRiskAssessmentNodeID: input.ID,
+	}, nil
+}
+func (r *Resolver) ListRiskAssessmentProcessesTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListRiskAssessmentProcessesInput) (*mcp.CallToolResult, types.ListRiskAssessmentProcessesOutput, error) {
+	r.MustAuthorize(ctx, input.RiskAssessmentScopeID, probo.ActionRiskAssessmentProcessList)
+
+	scope := coredata.NewScopeFromObjectID(input.RiskAssessmentScopeID)
+
+	pageOrderBy := page.OrderBy[coredata.RiskAssessmentProcessOrderField]{
+		Field:     coredata.RiskAssessmentProcessOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if input.OrderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.RiskAssessmentProcessOrderField]{
+			Field:     input.OrderBy.Field,
+			Direction: input.OrderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
+
+	p, err := r.riskManagement.ListProcessesForScopeID(ctx, scope, input.RiskAssessmentScopeID, cursor)
+	if err != nil {
+		panic(fmt.Errorf("cannot list risk assessment processes: %w", err))
+	}
+
+	return nil, types.NewListRiskAssessmentProcessesOutput(p), nil
+}
+
+func (r *Resolver) GetRiskAssessmentProcessTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetRiskAssessmentProcessInput) (*mcp.CallToolResult, types.GetRiskAssessmentProcessOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionRiskAssessmentProcessGet)
+
+	scope := coredata.NewScopeFromObjectID(input.ID)
+
+	p, err := r.riskManagement.GetProcess(ctx, scope, input.ID)
+	if err != nil {
+		return nil, types.GetRiskAssessmentProcessOutput{}, fmt.Errorf("failed to get risk assessment process: %w", err)
+	}
+
+	return nil, types.GetRiskAssessmentProcessOutput{
+		RiskAssessmentProcess: types.NewRiskAssessmentProcess(p),
+	}, nil
+}
+
+func (r *Resolver) AddRiskAssessmentProcessTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddRiskAssessmentProcessInput) (*mcp.CallToolResult, types.AddRiskAssessmentProcessOutput, error) {
+	r.MustAuthorize(ctx, input.RiskAssessmentScopeID, probo.ActionRiskAssessmentProcessCreate)
+
+	scope := coredata.NewScopeFromObjectID(input.RiskAssessmentScopeID)
+
+	p, err := r.riskManagement.CreateProcess(ctx, scope, riskmanagement.CreateRiskAssessmentProcessRequest{
+		RiskAssessmentScopeID: input.RiskAssessmentScopeID,
+		SourceNodeID:          input.SourceNodeID,
+		TargetNodeID:          input.TargetNodeID,
+		Name:                  input.Name,
+	})
+	if err != nil {
+		return nil, types.AddRiskAssessmentProcessOutput{}, fmt.Errorf("failed to create risk assessment process: %w", err)
+	}
+
+	return nil, types.AddRiskAssessmentProcessOutput{
+		RiskAssessmentProcess: types.NewRiskAssessmentProcess(p),
+	}, nil
+}
+
+func (r *Resolver) UpdateRiskAssessmentProcessTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateRiskAssessmentProcessInput) (*mcp.CallToolResult, types.UpdateRiskAssessmentProcessOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionRiskAssessmentProcessUpdate)
+
+	scope := coredata.NewScopeFromObjectID(input.ID)
+
+	p, err := r.riskManagement.UpdateProcess(ctx, scope, riskmanagement.UpdateRiskAssessmentProcessRequest{
+		ID:           input.ID,
+		SourceNodeID: input.SourceNodeID,
+		TargetNodeID: input.TargetNodeID,
+		Name:         input.Name,
+	})
+	if err != nil {
+		return nil, types.UpdateRiskAssessmentProcessOutput{}, fmt.Errorf("failed to update risk assessment process: %w", err)
+	}
+
+	return nil, types.UpdateRiskAssessmentProcessOutput{
+		RiskAssessmentProcess: types.NewRiskAssessmentProcess(p),
+	}, nil
+}
+
+func (r *Resolver) DeleteRiskAssessmentProcessTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteRiskAssessmentProcessInput) (*mcp.CallToolResult, types.DeleteRiskAssessmentProcessOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionRiskAssessmentProcessDelete)
+
+	scope := coredata.NewScopeFromObjectID(input.ID)
+
+	err := r.riskManagement.DeleteProcess(ctx, scope, input.ID)
+	if err != nil {
+		return nil, types.DeleteRiskAssessmentProcessOutput{}, fmt.Errorf("failed to delete risk assessment process: %w", err)
+	}
+
+	return nil, types.DeleteRiskAssessmentProcessOutput{
+		DeletedRiskAssessmentProcessID: input.ID,
+	}, nil
+}
+func (r *Resolver) ListRiskAssessmentThreatsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListRiskAssessmentThreatsInput) (*mcp.CallToolResult, types.ListRiskAssessmentThreatsOutput, error) {
+	r.MustAuthorize(ctx, input.RiskAssessmentScopeID, probo.ActionRiskAssessmentThreatList)
+
+	scope := coredata.NewScopeFromObjectID(input.RiskAssessmentScopeID)
+
+	pageOrderBy := page.OrderBy[coredata.RiskAssessmentThreatOrderField]{
+		Field:     coredata.RiskAssessmentThreatOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if input.OrderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.RiskAssessmentThreatOrderField]{
+			Field:     input.OrderBy.Field,
+			Direction: input.OrderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
+
+	p, err := r.riskManagement.ListThreatsForScopeID(ctx, scope, input.RiskAssessmentScopeID, cursor)
+	if err != nil {
+		panic(fmt.Errorf("cannot list risk assessment threats: %w", err))
+	}
+
+	return nil, types.NewListRiskAssessmentThreatsOutput(p), nil
+}
+
+func (r *Resolver) GetRiskAssessmentThreatTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetRiskAssessmentThreatInput) (*mcp.CallToolResult, types.GetRiskAssessmentThreatOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionRiskAssessmentThreatGet)
+
+	scope := coredata.NewScopeFromObjectID(input.ID)
+
+	t, err := r.riskManagement.GetThreat(ctx, scope, input.ID)
+	if err != nil {
+		return nil, types.GetRiskAssessmentThreatOutput{}, fmt.Errorf("failed to get risk assessment threat: %w", err)
+	}
+
+	return nil, types.GetRiskAssessmentThreatOutput{
+		RiskAssessmentThreat: types.NewRiskAssessmentThreat(t),
+	}, nil
+}
+
+func (r *Resolver) AddRiskAssessmentThreatTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddRiskAssessmentThreatInput) (*mcp.CallToolResult, types.AddRiskAssessmentThreatOutput, error) {
+	r.MustAuthorize(ctx, input.RiskAssessmentScopeID, probo.ActionRiskAssessmentThreatCreate)
+
+	scope := coredata.NewScopeFromObjectID(input.RiskAssessmentScopeID)
+
+	t, err := r.riskManagement.CreateThreat(ctx, scope, riskmanagement.CreateRiskAssessmentThreatRequest{
+		RiskAssessmentScopeID: input.RiskAssessmentScopeID,
+		ProcessID:             input.ProcessID,
+		Name:                  input.Name,
+		Category:              input.Category,
+	})
+	if err != nil {
+		return nil, types.AddRiskAssessmentThreatOutput{}, fmt.Errorf("failed to create risk assessment threat: %w", err)
+	}
+
+	return nil, types.AddRiskAssessmentThreatOutput{
+		RiskAssessmentThreat: types.NewRiskAssessmentThreat(t),
+	}, nil
+}
+
+func (r *Resolver) UpdateRiskAssessmentThreatTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateRiskAssessmentThreatInput) (*mcp.CallToolResult, types.UpdateRiskAssessmentThreatOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionRiskAssessmentThreatUpdate)
+
+	scope := coredata.NewScopeFromObjectID(input.ID)
+
+	t, err := r.riskManagement.UpdateThreat(ctx, scope, riskmanagement.UpdateRiskAssessmentThreatRequest{
+		ID:        input.ID,
+		ProcessID: input.ProcessID,
+		Name:      input.Name,
+		Category:  input.Category,
+	})
+	if err != nil {
+		return nil, types.UpdateRiskAssessmentThreatOutput{}, fmt.Errorf("failed to update risk assessment threat: %w", err)
+	}
+
+	return nil, types.UpdateRiskAssessmentThreatOutput{
+		RiskAssessmentThreat: types.NewRiskAssessmentThreat(t),
+	}, nil
+}
+
+func (r *Resolver) DeleteRiskAssessmentThreatTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteRiskAssessmentThreatInput) (*mcp.CallToolResult, types.DeleteRiskAssessmentThreatOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionRiskAssessmentThreatDelete)
+
+	scope := coredata.NewScopeFromObjectID(input.ID)
+
+	err := r.riskManagement.DeleteThreat(ctx, scope, input.ID)
+	if err != nil {
+		return nil, types.DeleteRiskAssessmentThreatOutput{}, fmt.Errorf("failed to delete risk assessment threat: %w", err)
+	}
+
+	return nil, types.DeleteRiskAssessmentThreatOutput{
+		DeletedRiskAssessmentThreatID: input.ID,
+	}, nil
+}
+func (r *Resolver) ListRiskAssessmentScenariosTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListRiskAssessmentScenariosInput) (*mcp.CallToolResult, types.ListRiskAssessmentScenariosOutput, error) {
+	r.MustAuthorize(ctx, input.RiskAssessmentScopeID, probo.ActionRiskAssessmentScenarioList)
+
+	scope := coredata.NewScopeFromObjectID(input.RiskAssessmentScopeID)
+
+	pageOrderBy := page.OrderBy[coredata.RiskAssessmentScenarioOrderField]{
+		Field:     coredata.RiskAssessmentScenarioOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if input.OrderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.RiskAssessmentScenarioOrderField]{
+			Field:     input.OrderBy.Field,
+			Direction: input.OrderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
+
+	p, err := r.riskManagement.ListScenariosForScopeID(ctx, scope, input.RiskAssessmentScopeID, cursor)
+	if err != nil {
+		panic(fmt.Errorf("cannot list risk assessment scenarios: %w", err))
+	}
+
+	return nil, types.NewListRiskAssessmentScenariosOutput(p), nil
+}
+
+func (r *Resolver) GetRiskAssessmentScenarioTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetRiskAssessmentScenarioInput) (*mcp.CallToolResult, types.GetRiskAssessmentScenarioOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionRiskAssessmentScenarioGet)
+
+	scope := coredata.NewScopeFromObjectID(input.ID)
+
+	s, err := r.riskManagement.GetScenario(ctx, scope, input.ID)
+	if err != nil {
+		return nil, types.GetRiskAssessmentScenarioOutput{}, fmt.Errorf("failed to get risk assessment scenario: %w", err)
+	}
+
+	return nil, types.GetRiskAssessmentScenarioOutput{
+		RiskAssessmentScenario: types.NewRiskAssessmentScenario(s),
+	}, nil
+}
+
+func (r *Resolver) AddRiskAssessmentScenarioTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddRiskAssessmentScenarioInput) (*mcp.CallToolResult, types.AddRiskAssessmentScenarioOutput, error) {
+	r.MustAuthorize(ctx, input.RiskAssessmentScopeID, probo.ActionRiskAssessmentScenarioCreate)
+
+	scope := coredata.NewScopeFromObjectID(input.RiskAssessmentScopeID)
+
+	s, err := r.riskManagement.CreateScenario(ctx, scope, riskmanagement.CreateRiskAssessmentScenarioRequest{
+		RiskAssessmentScopeID: input.RiskAssessmentScopeID,
+		Name:                  input.Name,
+		Description:           input.Description,
+	})
+	if err != nil {
+		return nil, types.AddRiskAssessmentScenarioOutput{}, fmt.Errorf("failed to create risk assessment scenario: %w", err)
+	}
+
+	return nil, types.AddRiskAssessmentScenarioOutput{
+		RiskAssessmentScenario: types.NewRiskAssessmentScenario(s),
+	}, nil
+}
+
+func (r *Resolver) UpdateRiskAssessmentScenarioTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateRiskAssessmentScenarioInput) (*mcp.CallToolResult, types.UpdateRiskAssessmentScenarioOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionRiskAssessmentScenarioUpdate)
+
+	scope := coredata.NewScopeFromObjectID(input.ID)
+
+	s, err := r.riskManagement.UpdateScenario(ctx, scope, riskmanagement.UpdateRiskAssessmentScenarioRequest{
+		ID:          input.ID,
+		Name:        input.Name,
+		Description: UnwrapOmittable(input.Description),
+	})
+	if err != nil {
+		return nil, types.UpdateRiskAssessmentScenarioOutput{}, fmt.Errorf("failed to update risk assessment scenario: %w", err)
+	}
+
+	return nil, types.UpdateRiskAssessmentScenarioOutput{
+		RiskAssessmentScenario: types.NewRiskAssessmentScenario(s),
+	}, nil
+}
+
+func (r *Resolver) DeleteRiskAssessmentScenarioTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteRiskAssessmentScenarioInput) (*mcp.CallToolResult, types.DeleteRiskAssessmentScenarioOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionRiskAssessmentScenarioDelete)
+
+	scope := coredata.NewScopeFromObjectID(input.ID)
+
+	err := r.riskManagement.DeleteScenario(ctx, scope, input.ID)
+	if err != nil {
+		return nil, types.DeleteRiskAssessmentScenarioOutput{}, fmt.Errorf("failed to delete risk assessment scenario: %w", err)
+	}
+
+	return nil, types.DeleteRiskAssessmentScenarioOutput{
+		DeletedRiskAssessmentScenarioID: input.ID,
+	}, nil
+}
+func (r *Resolver) LinkRiskAssessmentScenarioThreatTool(ctx context.Context, req *mcp.CallToolRequest, input *types.LinkRiskAssessmentScenarioThreatInput) (*mcp.CallToolResult, types.LinkRiskAssessmentScenarioThreatOutput, error) {
+	r.MustAuthorize(ctx, input.RiskAssessmentScenarioID, probo.ActionRiskAssessmentScenarioThreatLink)
+
+	scope := coredata.NewScopeFromObjectID(input.RiskAssessmentScenarioID)
+
+	err := r.riskManagement.LinkScenarioThreat(ctx, scope, riskmanagement.LinkRiskAssessmentScenarioThreatRequest{
+		RiskAssessmentScenarioID: input.RiskAssessmentScenarioID,
+		ThreatID:                 input.ThreatID,
+	})
+	if err != nil {
+		return nil, types.LinkRiskAssessmentScenarioThreatOutput{}, fmt.Errorf("failed to link scenario threat: %w", err)
+	}
+
+	return nil, types.LinkRiskAssessmentScenarioThreatOutput{}, nil
+}
+
+func (r *Resolver) UnlinkRiskAssessmentScenarioThreatTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UnlinkRiskAssessmentScenarioThreatInput) (*mcp.CallToolResult, types.UnlinkRiskAssessmentScenarioThreatOutput, error) {
+	r.MustAuthorize(ctx, input.RiskAssessmentScenarioID, probo.ActionRiskAssessmentScenarioThreatUnlink)
+
+	scope := coredata.NewScopeFromObjectID(input.RiskAssessmentScenarioID)
+
+	err := r.riskManagement.UnlinkScenarioThreat(ctx, scope, riskmanagement.UnlinkRiskAssessmentScenarioThreatRequest{
+		RiskAssessmentScenarioID: input.RiskAssessmentScenarioID,
+		ThreatID:                 input.ThreatID,
+	})
+	if err != nil {
+		return nil, types.UnlinkRiskAssessmentScenarioThreatOutput{}, fmt.Errorf("failed to unlink scenario threat: %w", err)
+	}
+
+	return nil, types.UnlinkRiskAssessmentScenarioThreatOutput{}, nil
+}
+
+func (r *Resolver) LinkRiskAssessmentScenarioRiskTool(ctx context.Context, req *mcp.CallToolRequest, input *types.LinkRiskAssessmentScenarioRiskInput) (*mcp.CallToolResult, types.LinkRiskAssessmentScenarioRiskOutput, error) {
+	r.MustAuthorize(ctx, input.RiskAssessmentScenarioID, probo.ActionRiskAssessmentScenarioRiskLink)
+
+	scope := coredata.NewScopeFromObjectID(input.RiskAssessmentScenarioID)
+
+	err := r.riskManagement.LinkScenarioRisk(ctx, scope, riskmanagement.LinkRiskAssessmentScenarioRiskRequest{
+		RiskAssessmentScenarioID: input.RiskAssessmentScenarioID,
+		RiskID:                   input.RiskID,
+	})
+	if err != nil {
+		return nil, types.LinkRiskAssessmentScenarioRiskOutput{}, fmt.Errorf("failed to link scenario risk: %w", err)
+	}
+
+	return nil, types.LinkRiskAssessmentScenarioRiskOutput{}, nil
+}
+
+func (r *Resolver) UnlinkRiskAssessmentScenarioRiskTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UnlinkRiskAssessmentScenarioRiskInput) (*mcp.CallToolResult, types.UnlinkRiskAssessmentScenarioRiskOutput, error) {
+	r.MustAuthorize(ctx, input.RiskAssessmentScenarioID, probo.ActionRiskAssessmentScenarioRiskUnlink)
+
+	scope := coredata.NewScopeFromObjectID(input.RiskAssessmentScenarioID)
+
+	err := r.riskManagement.UnlinkScenarioRisk(ctx, scope, riskmanagement.UnlinkRiskAssessmentScenarioRiskRequest{
+		RiskAssessmentScenarioID: input.RiskAssessmentScenarioID,
+		RiskID:                   input.RiskID,
+	})
+	if err != nil {
+		return nil, types.UnlinkRiskAssessmentScenarioRiskOutput{}, fmt.Errorf("failed to unlink scenario risk: %w", err)
+	}
+
+	return nil, types.UnlinkRiskAssessmentScenarioRiskOutput{}, nil
+}
+
+func (r *Resolver) GetRiskAssessmentScopeMermaidChartTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetRiskAssessmentScopeMermaidChartInput) (*mcp.CallToolResult, types.GetRiskAssessmentScopeMermaidChartOutput, error) {
+	r.MustAuthorize(ctx, input.ID, probo.ActionRiskAssessmentScopeGet)
+
+	scope := coredata.NewScopeFromObjectID(input.ID)
+
+	chart, err := r.riskManagement.BuildScopeMermaidChart(ctx, scope, input.ID)
+	if err != nil {
+		return nil, types.GetRiskAssessmentScopeMermaidChartOutput{}, fmt.Errorf("failed to build mermaid chart: %w", err)
+	}
+
+	return nil, types.GetRiskAssessmentScopeMermaidChartOutput{
+		MermaidChart: chart,
+	}, nil
 }

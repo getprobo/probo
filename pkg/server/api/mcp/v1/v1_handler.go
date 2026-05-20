@@ -25,22 +25,24 @@ import (
 	"go.probo.inc/probo/pkg/cookiebanner"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/probo"
+	"go.probo.inc/probo/pkg/riskmanagement"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/mcp/mcputils"
 	"go.probo.inc/probo/pkg/server/api/mcp/v1/server"
 )
 
-func NewMux(logger *log.Logger, proboSvc *probo.Service, iamSvc *iam.Service, accessReviewSvc *accessreview.Service, cookieBannerSvc *cookiebanner.Service, tokenSecret string) *chi.Mux {
+func NewMux(logger *log.Logger, proboSvc *probo.Service, iamSvc *iam.Service, accessReviewSvc *accessreview.Service, cookieBannerSvc *cookiebanner.Service, riskManagementSvc *riskmanagement.Service, tokenSecret string) *chi.Mux {
 	logger = logger.Named("mcp.v1")
 
 	logger.Info("initializing MCP server")
 
 	resolver := &Resolver{
-		proboSvc:     proboSvc,
-		iamSvc:       iamSvc,
-		accessReview: accessReviewSvc,
-		cookieBanner: cookieBannerSvc,
-		logger:       logger,
+		proboSvc:       proboSvc,
+		iamSvc:         iamSvc,
+		accessReview:   accessReviewSvc,
+		cookieBanner:   cookieBannerSvc,
+		riskManagement: riskManagementSvc,
+		logger:         logger,
 	}
 
 	mcpServer := server.New(resolver, mcpgenmcp.WithRecoverFunc(mcputils.NewRecoverFunc(logger)))

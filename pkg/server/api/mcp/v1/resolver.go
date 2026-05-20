@@ -28,15 +28,17 @@ import (
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/prosemirror"
+	"go.probo.inc/probo/pkg/riskmanagement"
 	"go.probo.inc/probo/pkg/server/api/authn"
 )
 
 type Resolver struct {
-	proboSvc     *probo.Service
-	iamSvc       *iam.Service
-	accessReview *accessreview.Service
-	cookieBanner *cookiebanner.Service
-	logger       *log.Logger
+	proboSvc       *probo.Service
+	iamSvc         *iam.Service
+	accessReview   *accessreview.Service
+	cookieBanner   *cookiebanner.Service
+	riskManagement *riskmanagement.Service
+	logger         *log.Logger
 }
 
 func markdownToProseMirrorJSON(markdown string) (string, error) {
