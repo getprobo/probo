@@ -19,11 +19,13 @@ package mcp_v1
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/accessreview"
 	"go.probo.inc/probo/pkg/cookiebanner"
+	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/probo"
@@ -55,7 +57,7 @@ func markdownToProseMirrorJSON(markdown string) (string, error) {
 	return string(out), nil
 }
 
-func (r *Resolver) MustAuthorize(ctx context.Context, entityID gid.GID, action iam.Action) {
+func (r *Resolver) Authorize(ctx context.Context, entityID gid.GID, action iam.Action) error {
 	identity := authn.IdentityFromContext(ctx)
 
 	err := r.iamSvc.Authorizer.Authorize(
@@ -66,7 +68,23 @@ func (r *Resolver) MustAuthorize(ctx context.Context, entityID gid.GID, action i
 			Action:    action,
 		},
 	)
-	if err != nil {
-		panic(err)
+	if err == nil {
+		return nil
 	}
+
+	if _, ok := errors.AsType[*iam.ErrInsufficientPermissions](err); ok {
+		return fmt.Errorf("permission denied")
+	}
+
+	if _, ok := errors.AsType[*iam.ErrAssumptionRequired](err); ok {
+		return fmt.Errorf("assumption required")
+	}
+
+	if errors.Is(err, coredata.ErrResourceNotFound) {
+		return fmt.Errorf("resource not found")
+	}
+
+	r.logger.ErrorCtx(ctx, "cannot authorize MCP request", log.Error(err))
+
+	return fmt.Errorf("internal server error")
 }

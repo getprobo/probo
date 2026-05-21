@@ -6,7 +6,7 @@ MCP tools are defined in `pkg/server/api/mcp/v1/specification.yaml` and generate
 
 **Hand-written** (edit these):
 - `specification.yaml` — tool definitions, input/output schemas, component schemas
-- `resolver.go` — `Resolver` struct, `MustAuthorize`, service accessors
+- `resolver.go` — `Resolver` struct, `Authorize`, service accessors
 - `helpers.go` — pagination helpers, `UnwrapOmittable`
 - `types/*.go` (except `types/types.go`) — type conversion helpers (`NewThirdParty()`, `NewListThirdPartiesOutput()`, etc.)
 - `schema.resolvers.go` — tool implementation bodies (stubs generated, you edit the bodies)
@@ -58,14 +58,16 @@ func (r *Resolver) ListThirdPartiesTool(
 ) (*mcp.CallToolResult, types.ListThirdPartiesOutput, error)
 ```
 
-First return is always `nil`. Errors are either returned (for recoverable) or panicked (for authorization and unexpected failures).
+First return is always `nil`. Authorization errors are returned and handled like other recoverable tool errors.
 
 ## Authorization
 
-Use `MustAuthorize` which panics on failure (caught by middleware):
+Use `Authorize` with an early return:
 
 ```go
-r.MustAuthorize(ctx, input.OrganizationID, probo.ActionThirdPartyList)
+if err := r.Authorize(ctx, input.OrganizationID, probo.ActionThirdPartyList); err != nil {
+	return nil, types.ListThirdPartiesOutput{}, err
+}
 ```
 
 ## Common resolver patterns
@@ -73,7 +75,9 @@ r.MustAuthorize(ctx, input.OrganizationID, probo.ActionThirdPartyList)
 **List with pagination:**
 ```go
 func (r *Resolver) ListThirdPartiesTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListThirdPartiesInput) (*mcp.CallToolResult, types.ListThirdPartiesOutput, error) {
-	r.MustAuthorize(ctx, input.OrganizationID, probo.ActionThirdPartyList)
+	if err := r.Authorize(ctx, input.OrganizationID, probo.ActionThirdPartyList); err != nil {
+		return nil, types.ListThirdPartiesOutput{}, err
+	}
 
 	prb := r.ProboService(ctx, input.OrganizationID)
 
@@ -102,7 +106,10 @@ func (r *Resolver) ListThirdPartiesTool(ctx context.Context, req *mcp.CallToolRe
 **Get single resource:**
 ```go
 func (r *Resolver) GetRiskTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetRiskInput) (*mcp.CallToolResult, types.GetRiskOutput, error) {
-	r.MustAuthorize(ctx, input.ID, probo.ActionRiskGet)
+	if err := r.Authorize(ctx, input.ID, probo.ActionRiskGet); err != nil {
+		return nil, types.GetRiskOutput{}, err
+	}
+
 	prb := r.ProboService(ctx, input.ID)
 
 	risk, err := prb.Risks.Get(ctx, input.ID)
@@ -117,7 +124,10 @@ func (r *Resolver) GetRiskTool(ctx context.Context, req *mcp.CallToolRequest, in
 **Create:**
 ```go
 func (r *Resolver) AddRiskTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddRiskInput) (*mcp.CallToolResult, types.AddRiskOutput, error) {
-	r.MustAuthorize(ctx, input.OrganizationID, probo.ActionRiskCreate)
+	if err := r.Authorize(ctx, input.OrganizationID, probo.ActionRiskCreate); err != nil {
+		return nil, types.AddRiskOutput{}, err
+	}
+
 	svc := r.ProboService(ctx, input.OrganizationID)
 
 	risk, err := svc.Risks.Create(ctx, probo.CreateRiskRequest{

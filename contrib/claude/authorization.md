@@ -131,9 +131,11 @@ if err := authorize(ctx, thirdPartyID, probo.ActionThirdPartyGet); err != nil {
 }
 ```
 
-**MCP resolvers** use `MustAuthorize` which panics (caught by middleware):
+**MCP resolvers** use `Authorize` and return early on error:
 ```go
-r.MustAuthorize(ctx, input.ID, probo.ActionThirdPartyGet)
+if err := r.Authorize(ctx, input.ID, probo.ActionThirdPartyGet); err != nil {
+	return nil, types.GetThirdPartyOutput{}, err
+}
 ```
 
 ## File locations
@@ -181,7 +183,7 @@ When adding a new entity that needs authorization:
 2. **Role policies** — wire actions into the appropriate role policies in `pkg/probo/policies.go` (`OwnerPolicy`, `AdminPolicy`, `ViewerPolicy`, etc.) with `organization_id` condition
 3. **`AuthorizationAttributes`** — implement on the `coredata` entity struct, returning at minimum `{"organization_id": ...}` (use the denormalized `OrganizationID` field — see coredata doc)
 4. **Entity type registry** — register in `pkg/coredata/entity_type_reg.go` and `NewEntityFromID` so the authorizer can construct the entity from its GID
-5. **Resolver calls** — add `r.authorize(ctx, id, probo.ActionEntityGet)` in GraphQL resolvers and `r.MustAuthorize(ctx, id, probo.ActionEntityGet)` in MCP resolvers
+5. **Resolver calls** — add `r.authorize(ctx, id, probo.ActionEntityGet)` in GraphQL resolvers and `if err := r.Authorize(ctx, id, probo.ActionEntityGet); err != nil { return nil, types.GetEntityOutput{}, err }` in MCP resolvers
 
 ## Key patterns
 
