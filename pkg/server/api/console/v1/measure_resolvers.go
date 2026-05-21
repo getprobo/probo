@@ -27,8 +27,6 @@ func (r *measureResolver) Evidences(ctx context.Context, obj *types.Measure, fir
 		return nil, err
 	}
 
-	prb := r.probo
-
 	pageOrderBy := page.OrderBy[coredata.EvidenceOrderField]{
 		Field:     coredata.EvidenceOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
@@ -42,7 +40,7 @@ func (r *measureResolver) Evidences(ctx context.Context, obj *types.Measure, fir
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	page, err := prb.Evidences.ListForMeasureID(ctx, scope, obj.ID, cursor)
+	page, err := r.probo.Evidences.ListForMeasureID(ctx, scope, obj.ID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list measure evidences", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -58,8 +56,6 @@ func (r *measureResolver) Tasks(ctx context.Context, obj *types.Measure, first *
 		return nil, err
 	}
 
-	prb := r.probo
-
 	pageOrderBy := page.OrderBy[coredata.TaskOrderField]{
 		Field:     coredata.TaskOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
@@ -73,7 +69,7 @@ func (r *measureResolver) Tasks(ctx context.Context, obj *types.Measure, first *
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	page, err := prb.Tasks.ListForMeasureID(ctx, scope, obj.ID, cursor)
+	page, err := r.probo.Tasks.ListForMeasureID(ctx, scope, obj.ID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list measure tasks", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -88,8 +84,6 @@ func (r *measureResolver) Risks(ctx context.Context, obj *types.Measure, first *
 	if err != nil {
 		return nil, err
 	}
-
-	prb := r.probo
 
 	pageOrderBy := page.OrderBy[coredata.RiskOrderField]{
 		Field:     coredata.RiskOrderFieldCreatedAt,
@@ -109,7 +103,7 @@ func (r *measureResolver) Risks(ctx context.Context, obj *types.Measure, first *
 		riskFilter = coredata.NewRiskFilter(filter.Query)
 	}
 
-	page, err := prb.Risks.ListForMeasureID(ctx, scope, obj.ID, cursor, riskFilter)
+	page, err := r.probo.Risks.ListForMeasureID(ctx, scope, obj.ID, cursor, riskFilter)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list measure risks", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -124,8 +118,6 @@ func (r *measureResolver) Controls(ctx context.Context, obj *types.Measure, firs
 	if err != nil {
 		return nil, err
 	}
-
-	prb := r.probo
 
 	pageOrderBy := page.OrderBy[coredata.ControlOrderField]{
 		Field:     coredata.ControlOrderFieldCreatedAt,
@@ -145,7 +137,7 @@ func (r *measureResolver) Controls(ctx context.Context, obj *types.Measure, firs
 		controlFilter = coredata.NewControlFilter(filter.Query)
 	}
 
-	page, err := prb.Controls.ListForMeasureID(ctx, scope, obj.ID, cursor, controlFilter)
+	page, err := r.probo.Controls.ListForMeasureID(ctx, scope, obj.ID, cursor, controlFilter)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list measure controls", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -160,8 +152,6 @@ func (r *measureResolver) Documents(ctx context.Context, obj *types.Measure, fir
 	if err != nil {
 		return nil, err
 	}
-
-	prb := r.probo
 
 	pageOrderBy := page.OrderBy[coredata.DocumentOrderField]{
 		Field:     coredata.DocumentOrderFieldCreatedAt,
@@ -184,7 +174,7 @@ func (r *measureResolver) Documents(ctx context.Context, obj *types.Measure, fir
 			WithClassifications(filter.Classifications)
 	}
 
-	pg, err := prb.Documents.ListForMeasureID(ctx, scope, obj.ID, cursor, documentFilter)
+	pg, err := r.probo.Documents.ListForMeasureID(ctx, scope, obj.ID, cursor, documentFilter)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list documents", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -205,11 +195,9 @@ func (r *measureConnectionResolver) TotalCount(ctx context.Context, obj *types.M
 		return 0, err
 	}
 
-	prb := r.probo
-
 	switch obj.Resolver.(type) {
 	case *organizationResolver:
-		count, err := prb.Measures.CountForOrganizationID(ctx, scope, obj.ParentID, obj.Filters)
+		count, err := r.probo.Measures.CountForOrganizationID(ctx, scope, obj.ParentID, obj.Filters)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count measures", log.Error(err))
 			return 0, gqlutils.Internal(ctx)
@@ -217,7 +205,7 @@ func (r *measureConnectionResolver) TotalCount(ctx context.Context, obj *types.M
 
 		return count, nil
 	case *controlResolver:
-		count, err := prb.Measures.CountForControlID(ctx, scope, obj.ParentID, obj.Filters)
+		count, err := r.probo.Measures.CountForControlID(ctx, scope, obj.ParentID, obj.Filters)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count measures", log.Error(err))
 			return 0, gqlutils.Internal(ctx)
@@ -225,7 +213,7 @@ func (r *measureConnectionResolver) TotalCount(ctx context.Context, obj *types.M
 
 		return count, nil
 	case *riskResolver:
-		count, err := prb.Measures.CountForRiskID(ctx, scope, obj.ParentID, obj.Filters)
+		count, err := r.probo.Measures.CountForRiskID(ctx, scope, obj.ParentID, obj.Filters)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count measures", log.Error(err))
 			return 0, gqlutils.Internal(ctx)
@@ -246,9 +234,7 @@ func (r *mutationResolver) CreateMeasure(ctx context.Context, input types.Create
 		return nil, err
 	}
 
-	prb := r.probo
-
-	measure, err := prb.Measures.Create(
+	measure, err := r.probo.Measures.Create(
 		ctx, scope,
 		probo.CreateMeasureRequest{
 			OrganizationID: input.OrganizationID,
@@ -283,9 +269,7 @@ func (r *mutationResolver) UpdateMeasure(ctx context.Context, input types.Update
 		return nil, err
 	}
 
-	prb := r.probo
-
-	measure, err := prb.Measures.Update(
+	measure, err := r.probo.Measures.Update(
 		ctx, scope,
 		probo.UpdateMeasureRequest{
 			ID:          input.ID,
@@ -317,15 +301,13 @@ func (r *mutationResolver) ImportMeasure(ctx context.Context, input types.Import
 		return nil, err
 	}
 
-	prb := r.probo
-
 	var req probo.ImportMeasureRequest
 	if err := json.NewDecoder(input.File.File).Decode(&req.Measures); err != nil {
 		r.logger.ErrorCtx(ctx, "cannot unmarshal measure", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	measures, err := prb.Measures.Import(ctx, scope, input.OrganizationID, req)
+	measures, err := r.probo.Measures.Import(ctx, scope, input.OrganizationID, req)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot import measure", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -348,9 +330,7 @@ func (r *mutationResolver) DeleteMeasure(ctx context.Context, input types.Delete
 		return nil, err
 	}
 
-	prb := r.probo
-
-	if err := prb.Measures.Delete(ctx, scope, input.MeasureID); err != nil {
+	if err := r.probo.Measures.Delete(ctx, scope, input.MeasureID); err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete measure", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
@@ -367,9 +347,7 @@ func (r *mutationResolver) CreateMeasureDocumentMapping(ctx context.Context, inp
 		return nil, err
 	}
 
-	prb := r.probo
-
-	measure, document, err := prb.Measures.CreateDocumentMapping(ctx, scope, input.MeasureID, input.DocumentID)
+	measure, document, err := r.probo.Measures.CreateDocumentMapping(ctx, scope, input.MeasureID, input.DocumentID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
 			return nil, gqlutils.Conflict(ctx, err)
@@ -393,9 +371,7 @@ func (r *mutationResolver) DeleteMeasureDocumentMapping(ctx context.Context, inp
 		return nil, err
 	}
 
-	prb := r.probo
-
-	measure, document, err := prb.Measures.DeleteDocumentMapping(ctx, scope, input.MeasureID, input.DocumentID)
+	measure, document, err := r.probo.Measures.DeleteDocumentMapping(ctx, scope, input.MeasureID, input.DocumentID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete measure document mapping", log.Error(err))
 		return nil, gqlutils.Internal(ctx)

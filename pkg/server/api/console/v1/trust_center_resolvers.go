@@ -63,9 +63,7 @@ func (r *mutationResolver) UpdateTrustCenter(ctx context.Context, input types.Up
 		return nil, err
 	}
 
-	prb := r.probo
-
-	trustCenter, file, err := prb.TrustCenters.Update(
+	trustCenter, file, err := r.probo.TrustCenters.Update(
 		ctx, scope,
 		&probo.UpdateTrustCenterRequest{
 			ID:                   input.TrustCenterID,
@@ -95,9 +93,7 @@ func (r *mutationResolver) UploadTrustCenterNda(ctx context.Context, input types
 		return nil, err
 	}
 
-	prb := r.probo
-
-	trustCenter, file, err := prb.TrustCenters.UploadNDA(
+	trustCenter, file, err := r.probo.TrustCenters.UploadNDA(
 		ctx, scope,
 		&probo.UploadTrustCenterNDARequest{
 			TrustCenterID: input.TrustCenterID,
@@ -127,9 +123,7 @@ func (r *mutationResolver) DeleteTrustCenterNda(ctx context.Context, input types
 		return nil, err
 	}
 
-	prb := r.probo
-
-	trustCenter, file, err := prb.TrustCenters.DeleteNDA(ctx, scope, input.TrustCenterID)
+	trustCenter, file, err := r.probo.TrustCenters.DeleteNDA(ctx, scope, input.TrustCenterID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete trust center NDA", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -146,8 +140,6 @@ func (r *mutationResolver) UpdateTrustCenterBrand(ctx context.Context, input typ
 	if err != nil {
 		return nil, err
 	}
-
-	prb := r.probo
 
 	req := &probo.UpdateTrustCenterBrandRequest{
 		TrustCenterID: input.TrustCenterID,
@@ -187,7 +179,7 @@ func (r *mutationResolver) UpdateTrustCenterBrand(ctx context.Context, input typ
 		}
 	}
 
-	trustCenter, file, err := prb.TrustCenters.UpdateTrustCenterBrand(ctx, scope, req)
+	trustCenter, file, err := r.probo.TrustCenters.UpdateTrustCenterBrand(ctx, scope, req)
 	if err != nil {
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
@@ -209,8 +201,6 @@ func (r *mutationResolver) UpdateTrustCenterAccess(ctx context.Context, input ty
 	if err != nil {
 		return nil, err
 	}
-
-	prb := r.probo
 
 	var (
 		documentAccesses []probo.UpdateTrustCenterDocumentAccessRequest
@@ -239,7 +229,7 @@ func (r *mutationResolver) UpdateTrustCenterAccess(ctx context.Context, input ty
 		})
 	}
 
-	access, err := prb.TrustCenterAccesses.Update(
+	access, err := r.probo.TrustCenterAccesses.Update(
 		ctx, scope,
 		&probo.UpdateTrustCenterAccessRequest{
 			ID:                      input.ID,
@@ -270,9 +260,7 @@ func (r *mutationResolver) DeleteTrustCenterAccess(ctx context.Context, input ty
 		return nil, err
 	}
 
-	prb := r.probo
-
-	if err := prb.TrustCenterAccesses.Delete(ctx, scope, input.ID); err != nil {
+	if err := r.probo.TrustCenterAccesses.Delete(ctx, scope, input.ID); err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete trust center access", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
@@ -289,9 +277,7 @@ func (r *mutationResolver) CreateTrustCenterReference(ctx context.Context, input
 		return nil, err
 	}
 
-	prb := r.probo
-
-	reference, err := prb.TrustCenterReferences.Create(
+	reference, err := r.probo.TrustCenterReferences.Create(
 		ctx, scope,
 		&probo.CreateTrustCenterReferenceRequest{
 			TrustCenterID: input.TrustCenterID,
@@ -328,8 +314,6 @@ func (r *mutationResolver) UpdateTrustCenterReference(ctx context.Context, input
 		return nil, err
 	}
 
-	prb := r.probo
-
 	req := &probo.UpdateTrustCenterReferenceRequest{
 		ID:          input.ID,
 		Name:        input.Name,
@@ -347,7 +331,7 @@ func (r *mutationResolver) UpdateTrustCenterReference(ctx context.Context, input
 		}
 	}
 
-	reference, err := prb.TrustCenterReferences.Update(ctx, scope, req)
+	reference, err := r.probo.TrustCenterReferences.Update(ctx, scope, req)
 	if err != nil {
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
@@ -370,9 +354,7 @@ func (r *mutationResolver) DeleteTrustCenterReference(ctx context.Context, input
 		return nil, err
 	}
 
-	prb := r.probo
-
-	if err := prb.TrustCenterReferences.Delete(ctx, scope, input.ID); err != nil {
+	if err := r.probo.TrustCenterReferences.Delete(ctx, scope, input.ID); err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete trust center reference", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
@@ -389,9 +371,7 @@ func (r *mutationResolver) CreateComplianceFramework(ctx context.Context, input 
 		return nil, err
 	}
 
-	prb := r.probo
-
-	cf, err := prb.ComplianceFrameworks.Create(
+	cf, err := r.probo.ComplianceFrameworks.Create(
 		ctx, scope,
 		&probo.CreateComplianceFrameworkRequest{
 			TrustCenterID: input.TrustCenterID,
@@ -420,9 +400,7 @@ func (r *mutationResolver) UpdateComplianceFramework(ctx context.Context, input 
 		return nil, err
 	}
 
-	prb := r.probo
-
-	cf, err := prb.ComplianceFrameworks.Update(ctx, scope, &probo.UpdateComplianceFrameworkRequest{
+	cf, err := r.probo.ComplianceFrameworks.Update(ctx, scope, &probo.UpdateComplianceFrameworkRequest{
 		ID:   input.ID,
 		Rank: input.Rank,
 	})
@@ -448,9 +426,7 @@ func (r *mutationResolver) DeleteComplianceFramework(ctx context.Context, input 
 		return nil, err
 	}
 
-	prb := r.probo
-
-	if err := prb.ComplianceFrameworks.Delete(
+	if err := r.probo.ComplianceFrameworks.Delete(
 		ctx, scope,
 		&probo.DeleteComplianceFrameworkRequest{
 			ID: input.ID,
@@ -477,9 +453,7 @@ func (r *mutationResolver) CreateComplianceExternalURL(ctx context.Context, inpu
 		return nil, err
 	}
 
-	prb := r.probo
-
-	item, err := prb.ComplianceExternalURLs.Create(
+	item, err := r.probo.ComplianceExternalURLs.Create(
 		ctx, scope,
 		&probo.CreateComplianceExternalURLRequest{
 			TrustCenterID: input.TrustCenterID,
@@ -509,9 +483,7 @@ func (r *mutationResolver) UpdateComplianceExternalURL(ctx context.Context, inpu
 		return nil, err
 	}
 
-	prb := r.probo
-
-	item, err := prb.ComplianceExternalURLs.Update(ctx, scope, &probo.UpdateComplianceExternalURLRequest{
+	item, err := r.probo.ComplianceExternalURLs.Update(ctx, scope, &probo.UpdateComplianceExternalURLRequest{
 		ID:   input.ID,
 		Name: input.Name,
 		URL:  input.URL,
@@ -539,9 +511,7 @@ func (r *mutationResolver) DeleteComplianceExternalURL(ctx context.Context, inpu
 		return nil, err
 	}
 
-	prb := r.probo
-
-	if err := prb.ComplianceExternalURLs.Delete(ctx, scope, &probo.DeleteComplianceExternalURLRequest{ID: input.ID}); err != nil {
+	if err := r.probo.ComplianceExternalURLs.Delete(ctx, scope, &probo.DeleteComplianceExternalURLRequest{ID: input.ID}); err != nil {
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
 		}
@@ -563,9 +533,7 @@ func (r *mutationResolver) CreateTrustCenterFile(ctx context.Context, input type
 		return nil, err
 	}
 
-	prb := r.probo
-
-	file, err := prb.TrustCenterFiles.Create(
+	file, err := r.probo.TrustCenterFiles.Create(
 		ctx, scope,
 		&probo.CreateTrustCenterFileRequest{
 			OrganizationID: input.OrganizationID,
@@ -602,9 +570,7 @@ func (r *mutationResolver) UpdateTrustCenterFile(ctx context.Context, input type
 		return nil, err
 	}
 
-	prb := r.probo
-
-	file, err := prb.TrustCenterFiles.Update(
+	file, err := r.probo.TrustCenterFiles.Update(
 		ctx, scope,
 		&probo.UpdateTrustCenterFileRequest{
 			ID:                    input.ID,
@@ -635,9 +601,7 @@ func (r *mutationResolver) GetTrustCenterFile(ctx context.Context, input types.G
 		return nil, err
 	}
 
-	prb := r.probo
-
-	file, err := prb.TrustCenterFiles.Get(ctx, scope, input.ID)
+	file, err := r.probo.TrustCenterFiles.Get(ctx, scope, input.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot get trust center file", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -655,9 +619,7 @@ func (r *mutationResolver) DeleteTrustCenterFile(ctx context.Context, input type
 		return nil, err
 	}
 
-	prb := r.probo
-
-	if err := prb.TrustCenterFiles.Delete(ctx, scope, input.ID); err != nil {
+	if err := r.probo.TrustCenterFiles.Delete(ctx, scope, input.ID); err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete trust center file", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
@@ -674,9 +636,7 @@ func (r *mutationResolver) CreateCustomDomain(ctx context.Context, input types.C
 		return nil, err
 	}
 
-	prb := r.probo
-
-	domain, err := prb.CustomDomains.CreateCustomDomain(
+	domain, err := r.probo.CustomDomains.CreateCustomDomain(
 		ctx, scope,
 		probo.CreateCustomDomainRequest{
 			OrganizationID: input.OrganizationID,
@@ -705,11 +665,9 @@ func (r *mutationResolver) DeleteCustomDomain(ctx context.Context, input types.D
 		return nil, err
 	}
 
-	prb := r.probo
-
 	// TODO Drop this wierd logic
 	// Get the current custom domain ID before deleting
-	domain, err := prb.CustomDomains.GetOrganizationCustomDomain(ctx, scope, input.OrganizationID)
+	domain, err := r.probo.CustomDomains.GetOrganizationCustomDomain(ctx, scope, input.OrganizationID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot get custom domain", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -721,7 +679,7 @@ func (r *mutationResolver) DeleteCustomDomain(ctx context.Context, input types.D
 
 	deletedDomainID := domain.ID
 
-	if err := prb.CustomDomains.DeleteCustomDomain(ctx, scope, input.OrganizationID); err != nil {
+	if err := r.probo.CustomDomains.DeleteCustomDomain(ctx, scope, input.OrganizationID); err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete custom domain", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
@@ -738,9 +696,7 @@ func (r *trustCenterResolver) LogoFileURL(ctx context.Context, obj *types.TrustC
 		return nil, err
 	}
 
-	prb := r.probo
-
-	logoURL, err := prb.TrustCenters.GenerateLogoURL(ctx, scope, obj.ID, 1*time.Hour)
+	logoURL, err := r.probo.TrustCenters.GenerateLogoURL(ctx, scope, obj.ID, 1*time.Hour)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot generate logo url", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -756,9 +712,7 @@ func (r *trustCenterResolver) DarkLogoFileURL(ctx context.Context, obj *types.Tr
 		return nil, err
 	}
 
-	prb := r.probo
-
-	logoURL, err := prb.TrustCenters.GenerateDarkLogoURL(ctx, scope, obj.ID, 1*time.Hour)
+	logoURL, err := r.probo.TrustCenters.GenerateDarkLogoURL(ctx, scope, obj.ID, 1*time.Hour)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot generate logo url", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -780,9 +734,7 @@ func (r *trustCenterResolver) NdaFileURL(ctx context.Context, obj *types.TrustCe
 	}
 
 	scope := coredata.NewScopeFromObjectID(obj.ID)
-	prb := r.probo
-
-	fileURL, err := prb.TrustCenters.GenerateNDAFileURL(ctx, scope, obj.ID, 15*time.Minute)
+	fileURL, err := r.probo.TrustCenters.GenerateNDAFileURL(ctx, scope, obj.ID, 15*time.Minute)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot generate NDA file URL", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -798,15 +750,13 @@ func (r *trustCenterResolver) Organization(ctx context.Context, obj *types.Trust
 		return nil, err
 	}
 
-	prb := r.probo
-
-	trustCenter, err := prb.TrustCenters.Get(ctx, scope, obj.ID)
+	trustCenter, err := r.probo.TrustCenters.Get(ctx, scope, obj.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot get trust center", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	organization, err := prb.Organizations.Get(ctx, scope, trustCenter.OrganizationID)
+	organization, err := r.probo.Organizations.Get(ctx, scope, trustCenter.OrganizationID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
@@ -827,8 +777,6 @@ func (r *trustCenterResolver) Accesses(ctx context.Context, obj *types.TrustCent
 		return nil, err
 	}
 
-	prb := r.probo
-
 	pageOrderBy := page.OrderBy[coredata.TrustCenterAccessOrderField]{
 		Field:     coredata.TrustCenterAccessOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
@@ -842,7 +790,7 @@ func (r *trustCenterResolver) Accesses(ctx context.Context, obj *types.TrustCent
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	result, err := prb.TrustCenterAccesses.ListForTrustCenterID(ctx, scope, obj.ID, cursor)
+	result, err := r.probo.TrustCenterAccesses.ListForTrustCenterID(ctx, scope, obj.ID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list trust center accesses", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -858,8 +806,6 @@ func (r *trustCenterResolver) References(ctx context.Context, obj *types.TrustCe
 		return nil, err
 	}
 
-	prb := r.probo
-
 	pageOrderBy := page.OrderBy[coredata.TrustCenterReferenceOrderField]{
 		Field:     coredata.TrustCenterReferenceOrderFieldRank,
 		Direction: page.OrderDirectionAsc,
@@ -873,7 +819,7 @@ func (r *trustCenterResolver) References(ctx context.Context, obj *types.TrustCe
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	result, err := prb.TrustCenterReferences.ListForTrustCenterID(ctx, scope, obj.ID, cursor)
+	result, err := r.probo.TrustCenterReferences.ListForTrustCenterID(ctx, scope, obj.ID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list trust center references", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -889,8 +835,6 @@ func (r *trustCenterResolver) ComplianceFrameworks(ctx context.Context, obj *typ
 		return nil, err
 	}
 
-	prb := r.probo
-
 	pageOrderBy := page.OrderBy[coredata.ComplianceFrameworkOrderField]{
 		Field:     coredata.ComplianceFrameworkOrderFieldRank,
 		Direction: page.OrderDirectionAsc,
@@ -904,7 +848,7 @@ func (r *trustCenterResolver) ComplianceFrameworks(ctx context.Context, obj *typ
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	result, err := prb.ComplianceFrameworks.ListWithHiddenForTrustCenterID(ctx, scope, obj.ID, cursor)
+	result, err := r.probo.ComplianceFrameworks.ListWithHiddenForTrustCenterID(ctx, scope, obj.ID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list compliance frameworks", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -920,8 +864,6 @@ func (r *trustCenterResolver) ExternalUrls(ctx context.Context, obj *types.Trust
 		return nil, err
 	}
 
-	prb := r.probo
-
 	pageOrderBy := page.OrderBy[coredata.ComplianceExternalURLOrderField]{
 		Field:     coredata.ComplianceExternalURLOrderFieldRank,
 		Direction: page.OrderDirectionAsc,
@@ -935,7 +877,7 @@ func (r *trustCenterResolver) ExternalUrls(ctx context.Context, obj *types.Trust
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	result, err := prb.ComplianceExternalURLs.List(ctx, scope, obj.ID, cursor)
+	result, err := r.probo.ComplianceExternalURLs.List(ctx, scope, obj.ID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list compliance external URLs", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -955,9 +897,7 @@ func (r *trustCenterResolver) MailingList(ctx context.Context, obj *types.TrustC
 		return obj.MailingList, nil
 	}
 
-	prb := r.probo
-
-	ml, err := prb.TrustCenters.GetMailingList(ctx, scope, obj.ID)
+	ml, err := r.probo.TrustCenters.GetMailingList(ctx, scope, obj.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot get mailing list for trust center", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -982,9 +922,7 @@ func (r *trustCenterAccessResolver) NdaSignature(ctx context.Context, obj *types
 		return nil, err
 	}
 
-	prb := r.probo
-
-	access, err := prb.TrustCenterAccesses.Get(ctx, scope, obj.ID)
+	access, err := r.probo.TrustCenterAccesses.Get(ctx, scope, obj.ID)
 	if err != nil {
 		return nil, fmt.Errorf("cannot load trust center access: %w", err)
 	}
@@ -1008,9 +946,7 @@ func (r *trustCenterAccessResolver) PendingRequestCount(ctx context.Context, obj
 		return 0, err
 	}
 
-	prb := r.probo
-
-	count, err := prb.TrustCenterAccesses.CountPendingRequestDocumentAccesses(ctx, scope, obj.ID)
+	count, err := r.probo.TrustCenterAccesses.CountPendingRequestDocumentAccesses(ctx, scope, obj.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot count pending request document accesses", log.Error(err))
 		return 0, gqlutils.Internal(ctx)
@@ -1026,9 +962,7 @@ func (r *trustCenterAccessResolver) ActiveCount(ctx context.Context, obj *types.
 		return 0, err
 	}
 
-	prb := r.probo
-
-	count, err := prb.TrustCenterAccesses.CountActiveDocumentAccesses(ctx, scope, obj.ID)
+	count, err := r.probo.TrustCenterAccesses.CountActiveDocumentAccesses(ctx, scope, obj.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot count active document accesses", log.Error(err))
 		return 0, gqlutils.Internal(ctx)
@@ -1064,8 +998,6 @@ func (r *trustCenterAccessResolver) AvailableDocumentAccesses(ctx context.Contex
 		return nil, err
 	}
 
-	prb := r.probo
-
 	pageOrderBy := page.OrderBy[coredata.TrustCenterDocumentAccessOrderField]{
 		Field:     coredata.TrustCenterDocumentAccessOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
@@ -1079,7 +1011,7 @@ func (r *trustCenterAccessResolver) AvailableDocumentAccesses(ctx context.Contex
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	result, err := prb.TrustCenterAccesses.ListAvailableDocumentAccesses(ctx, scope, obj.ID, cursor)
+	result, err := r.probo.TrustCenterAccesses.ListAvailableDocumentAccesses(ctx, scope, obj.ID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list trust center document accesses", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -1104,9 +1036,7 @@ func (r *trustCenterDocumentAccessResolver) Document(ctx context.Context, obj *t
 		return nil, nil
 	}
 
-	prb := r.probo
-
-	document, err := prb.Documents.Get(ctx, scope, *obj.DocumentID)
+	document, err := r.probo.Documents.Get(ctx, scope, *obj.DocumentID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
@@ -1131,9 +1061,7 @@ func (r *trustCenterDocumentAccessResolver) Report(ctx context.Context, obj *typ
 		return nil, nil
 	}
 
-	prb := r.probo
-
-	report, err := prb.Reports.Get(ctx, scope, *obj.ReportID)
+	report, err := r.probo.Reports.Get(ctx, scope, *obj.ReportID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot load report", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -1153,9 +1081,7 @@ func (r *trustCenterDocumentAccessResolver) TrustCenterFile(ctx context.Context,
 		return nil, nil
 	}
 
-	prb := r.probo
-
-	trustCenterFile, err := prb.TrustCenterFiles.Get(ctx, scope, *obj.TrustCenterFileID)
+	trustCenterFile, err := r.probo.TrustCenterFiles.Get(ctx, scope, *obj.TrustCenterFileID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot load trust center file", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -1171,9 +1097,7 @@ func (r *trustCenterDocumentAccessConnectionResolver) TotalCount(ctx context.Con
 		return 0, err
 	}
 
-	prb := r.probo
-
-	count, err := prb.TrustCenterAccesses.CountDocumentAccesses(ctx, scope, obj.ParentID)
+	count, err := r.probo.TrustCenterAccesses.CountDocumentAccesses(ctx, scope, obj.ParentID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot count trust center document accesses", log.Error(err))
 		return 0, gqlutils.Internal(ctx)
@@ -1189,9 +1113,7 @@ func (r *trustCenterFileResolver) FileURL(ctx context.Context, obj *types.TrustC
 		return "", err
 	}
 
-	prb := r.probo
-
-	fileURL, err := prb.TrustCenterFiles.GenerateFileURL(ctx, scope, obj.ID, 1*time.Hour)
+	fileURL, err := r.probo.TrustCenterFiles.GenerateFileURL(ctx, scope, obj.ID, 1*time.Hour)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot generate file URL", log.Error(err))
 		return "", gqlutils.Internal(ctx)
@@ -1207,15 +1129,13 @@ func (r *trustCenterFileResolver) Organization(ctx context.Context, obj *types.T
 		return nil, err
 	}
 
-	prb := r.probo
-
-	trustCenterFile, err := prb.TrustCenterFiles.Get(ctx, scope, obj.ID)
+	trustCenterFile, err := r.probo.TrustCenterFiles.Get(ctx, scope, obj.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot get trust center file", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	organization, err := prb.Organizations.Get(ctx, scope, trustCenterFile.OrganizationID)
+	organization, err := r.probo.Organizations.Get(ctx, scope, trustCenterFile.OrganizationID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
@@ -1241,9 +1161,7 @@ func (r *trustCenterFileConnectionResolver) TotalCount(ctx context.Context, obj 
 		return 0, err
 	}
 
-	prb := r.probo
-
-	count, err := prb.TrustCenterFiles.CountForOrganizationID(ctx, scope, obj.ParentID)
+	count, err := r.probo.TrustCenterFiles.CountForOrganizationID(ctx, scope, obj.ParentID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot count trust center files", log.Error(err))
 		return 0, gqlutils.Internal(ctx)
@@ -1259,9 +1177,7 @@ func (r *trustCenterReferenceResolver) LogoURL(ctx context.Context, obj *types.T
 		return "", err
 	}
 
-	prb := r.probo
-
-	fileURL, err := prb.TrustCenterReferences.GenerateLogoURL(ctx, scope, obj.ID, 1*time.Hour)
+	fileURL, err := r.probo.TrustCenterReferences.GenerateLogoURL(ctx, scope, obj.ID, 1*time.Hour)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot generate logo URL", log.Error(err))
 		return "", gqlutils.Internal(ctx)
@@ -1282,9 +1198,7 @@ func (r *trustCenterReferenceConnectionResolver) TotalCount(ctx context.Context,
 		return 0, err
 	}
 
-	prb := r.probo
-
-	count, err := prb.TrustCenterReferences.CountForTrustCenterID(ctx, scope, obj.ParentID)
+	count, err := r.probo.TrustCenterReferences.CountForTrustCenterID(ctx, scope, obj.ParentID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot count trust center references", log.Error(err))
 		return 0, gqlutils.Internal(ctx)

@@ -52,8 +52,6 @@ func (r *assetResolver) ThirdParties(ctx context.Context, obj *types.Asset, firs
 		return nil, err
 	}
 
-	prb := r.probo
-
 	pageOrderBy := page.OrderBy[coredata.ThirdPartyOrderField]{
 		Field:     coredata.ThirdPartyOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
@@ -67,7 +65,7 @@ func (r *assetResolver) ThirdParties(ctx context.Context, obj *types.Asset, firs
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	page, err := prb.ThirdParties.ListForAssetID(ctx, scope, obj.ID, cursor)
+	page, err := r.probo.ThirdParties.ListForAssetID(ctx, scope, obj.ID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list asset thirdParties", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -83,15 +81,13 @@ func (r *assetResolver) Organization(ctx context.Context, obj *types.Asset) (*ty
 		return nil, err
 	}
 
-	prb := r.probo
-
-	asset, err := prb.Assets.Get(ctx, scope, obj.ID)
+	asset, err := r.probo.Assets.Get(ctx, scope, obj.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot load audit", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	org, err := prb.Organizations.Get(ctx, scope, asset.OrganizationID)
+	org, err := r.probo.Organizations.Get(ctx, scope, asset.OrganizationID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
@@ -117,11 +113,9 @@ func (r *assetConnectionResolver) TotalCount(ctx context.Context, obj *types.Ass
 		return 0, err
 	}
 
-	prb := r.probo
-
 	switch obj.Resolver.(type) {
 	case *organizationResolver:
-		count, err := prb.Assets.CountForOrganizationID(ctx, scope, obj.ParentID)
+		count, err := r.probo.Assets.CountForOrganizationID(ctx, scope, obj.ParentID)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count assets", log.Error(err))
 			return 0, gqlutils.Internal(ctx)
@@ -162,8 +156,6 @@ func (r *datumResolver) ThirdParties(ctx context.Context, obj *types.Datum, firs
 		return nil, err
 	}
 
-	prb := r.probo
-
 	pageOrderBy := page.OrderBy[coredata.ThirdPartyOrderField]{
 		Field:     coredata.ThirdPartyOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
@@ -177,7 +169,7 @@ func (r *datumResolver) ThirdParties(ctx context.Context, obj *types.Datum, firs
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	page, err := prb.Data.ListThirdParties(ctx, scope, obj.ID, cursor)
+	page, err := r.probo.Data.ListThirdParties(ctx, scope, obj.ID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list data thirdParties", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -220,11 +212,9 @@ func (r *datumConnectionResolver) TotalCount(ctx context.Context, obj *types.Dat
 		return 0, err
 	}
 
-	prb := r.probo
-
 	switch obj.Resolver.(type) {
 	case *organizationResolver:
-		count, err := prb.Data.CountForOrganizationID(ctx, scope, obj.ParentID)
+		count, err := r.probo.Data.CountForOrganizationID(ctx, scope, obj.ParentID)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count data", log.Error(err))
 			return 0, gqlutils.Internal(ctx)
@@ -245,9 +235,7 @@ func (r *mutationResolver) CreateAsset(ctx context.Context, input types.CreateAs
 		return nil, err
 	}
 
-	prb := r.probo
-
-	asset, err := prb.Assets.Create(
+	asset, err := r.probo.Assets.Create(
 		ctx, scope,
 		probo.CreateAssetRequest{
 			OrganizationID:  input.OrganizationID,
@@ -281,9 +269,7 @@ func (r *mutationResolver) UpdateAsset(ctx context.Context, input types.UpdateAs
 		return nil, err
 	}
 
-	prb := r.probo
-
-	asset, err := prb.Assets.Update(
+	asset, err := r.probo.Assets.Update(
 		ctx, scope,
 		probo.UpdateAssetRequest{
 			ID:              input.ID,
@@ -317,9 +303,7 @@ func (r *mutationResolver) DeleteAsset(ctx context.Context, input types.DeleteAs
 		return nil, err
 	}
 
-	prb := r.probo
-
-	if err := prb.Assets.Delete(ctx, scope, input.AssetID); err != nil {
+	if err := r.probo.Assets.Delete(ctx, scope, input.AssetID); err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete asset", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
@@ -336,9 +320,7 @@ func (r *mutationResolver) CreateDatum(ctx context.Context, input types.CreateDa
 		return nil, err
 	}
 
-	prb := r.probo
-
-	data, err := prb.Data.Create(
+	data, err := r.probo.Data.Create(
 		ctx, scope,
 		probo.CreateDatumRequest{
 			OrganizationID:     input.OrganizationID,
@@ -370,9 +352,7 @@ func (r *mutationResolver) UpdateDatum(ctx context.Context, input types.UpdateDa
 		return nil, err
 	}
 
-	prb := r.probo
-
-	datum, err := prb.Data.Update(
+	datum, err := r.probo.Data.Update(
 		ctx, scope,
 		probo.UpdateDatumRequest{
 			ID:                 input.ID,
@@ -404,9 +384,7 @@ func (r *mutationResolver) DeleteDatum(ctx context.Context, input types.DeleteDa
 		return nil, err
 	}
 
-	prb := r.probo
-
-	if err := prb.Data.Delete(ctx, scope, input.DatumID); err != nil {
+	if err := r.probo.Data.Delete(ctx, scope, input.DatumID); err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete datum", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
@@ -423,9 +401,7 @@ func (r *mutationResolver) PublishDataList(ctx context.Context, input types.Publ
 		return nil, err
 	}
 
-	prb := r.probo
-
-	document, documentVersion, err := prb.GeneratedDocuments.PublishDataList(ctx, scope, input.OrganizationID, input.ApproverIds, input.Minor)
+	document, documentVersion, err := r.probo.GeneratedDocuments.PublishDataList(ctx, scope, input.OrganizationID, input.ApproverIds, input.Minor)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
 			return nil, gqlutils.Conflict(ctx, err)
@@ -453,9 +429,7 @@ func (r *mutationResolver) PublishAssetList(ctx context.Context, input types.Pub
 		return nil, err
 	}
 
-	prb := r.probo
-
-	document, documentVersion, err := prb.GeneratedDocuments.PublishAssetList(ctx, scope, input.OrganizationID, input.ApproverIds, input.Minor)
+	document, documentVersion, err := r.probo.GeneratedDocuments.PublishAssetList(ctx, scope, input.OrganizationID, input.ApproverIds, input.Minor)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
 			return nil, gqlutils.Conflict(ctx, err)

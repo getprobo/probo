@@ -23,9 +23,7 @@ func (r *fileResolver) DownloadURL(ctx context.Context, obj *types.File) (string
 		return "", err
 	}
 
-	prb := r.probo
-
-	downloadUrl, err := prb.Files.GenerateFileTempURL(ctx, scope, obj.ID, 60*time.Second)
+	downloadUrl, err := r.probo.Files.GenerateFileTempURL(ctx, scope, obj.ID, 60*time.Second)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot generate download URL", log.Error(err))
 		return "", gqlutils.Internal(ctx)

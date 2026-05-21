@@ -107,11 +107,9 @@ func (r *evidenceConnectionResolver) TotalCount(ctx context.Context, obj *types.
 		return 0, err
 	}
 
-	prb := r.probo
-
 	switch obj.Resolver.(type) {
 	case *measureResolver:
-		count, err := prb.Evidences.CountForMeasureID(ctx, scope, obj.ParentID)
+		count, err := r.probo.Evidences.CountForMeasureID(ctx, scope, obj.ParentID)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count measure evidence", log.Error(err))
 			return 0, gqlutils.Internal(ctx)
@@ -119,7 +117,7 @@ func (r *evidenceConnectionResolver) TotalCount(ctx context.Context, obj *types.
 
 		return count, nil
 	case *taskResolver:
-		count, err := prb.Evidences.CountForTaskID(ctx, scope, obj.ParentID)
+		count, err := r.probo.Evidences.CountForTaskID(ctx, scope, obj.ParentID)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count task evidence", log.Error(err))
 			return 0, gqlutils.Internal(ctx)
@@ -140,9 +138,7 @@ func (r *mutationResolver) DeleteEvidence(ctx context.Context, input types.Delet
 		return nil, err
 	}
 
-	prb := r.probo
-
-	if err := prb.Evidences.Delete(ctx, scope, input.EvidenceID); err != nil {
+	if err := r.probo.Evidences.Delete(ctx, scope, input.EvidenceID); err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete evidence", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
@@ -159,9 +155,7 @@ func (r *mutationResolver) UploadMeasureEvidence(ctx context.Context, input type
 		return nil, err
 	}
 
-	prb := r.probo
-
-	evidence, err := prb.Evidences.UploadMeasureEvidence(
+	evidence, err := r.probo.Evidences.UploadMeasureEvidence(
 		ctx, scope,
 		probo.UploadMeasureEvidenceRequest{
 			MeasureID: input.MeasureID,

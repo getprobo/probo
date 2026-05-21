@@ -28,8 +28,6 @@ func (r *mutationResolver) CreateProcessingActivity(ctx context.Context, input t
 		return nil, err
 	}
 
-	prb := r.probo
-
 	req := probo.CreateProcessingActivityRequest{
 		OrganizationID:                       input.OrganizationID,
 		Name:                                 input.Name,
@@ -53,7 +51,7 @@ func (r *mutationResolver) CreateProcessingActivity(ctx context.Context, input t
 		ThirdPartyIDs:                        input.ThirdPartyIds,
 	}
 
-	activity, err := prb.ProcessingActivities.Create(ctx, scope, &req)
+	activity, err := r.probo.ProcessingActivities.Create(ctx, scope, &req)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot create processing activity", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -70,8 +68,6 @@ func (r *mutationResolver) UpdateProcessingActivity(ctx context.Context, input t
 	if err != nil {
 		return nil, err
 	}
-
-	prb := r.probo
 
 	req := probo.UpdateProcessingActivityRequest{
 		ID:                                   input.ID,
@@ -96,7 +92,7 @@ func (r *mutationResolver) UpdateProcessingActivity(ctx context.Context, input t
 		ThirdPartyIDs:                        &input.ThirdPartyIds,
 	}
 
-	activity, err := prb.ProcessingActivities.Update(ctx, scope, &req)
+	activity, err := r.probo.ProcessingActivities.Update(ctx, scope, &req)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot update processing activity", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -114,9 +110,7 @@ func (r *mutationResolver) DeleteProcessingActivity(ctx context.Context, input t
 		return nil, err
 	}
 
-	prb := r.probo
-
-	if err := prb.ProcessingActivities.Delete(ctx, scope, input.ProcessingActivityID); err != nil {
+	if err := r.probo.ProcessingActivities.Delete(ctx, scope, input.ProcessingActivityID); err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete processing activity", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
@@ -133,9 +127,7 @@ func (r *mutationResolver) PublishProcessingActivityList(ctx context.Context, in
 		return nil, err
 	}
 
-	prb := r.probo
-
-	document, documentVersion, err := prb.GeneratedDocuments.PublishProcessingActivityList(ctx, scope, input.OrganizationID, input.ApproverIds, input.Minor)
+	document, documentVersion, err := r.probo.GeneratedDocuments.PublishProcessingActivityList(ctx, scope, input.OrganizationID, input.ApproverIds, input.Minor)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
 			return nil, gqlutils.Conflict(ctx, err)
@@ -211,8 +203,6 @@ func (r *processingActivityResolver) ThirdParties(ctx context.Context, obj *type
 		return nil, err
 	}
 
-	prb := r.probo
-
 	pageOrderBy := page.OrderBy[coredata.ThirdPartyOrderField]{
 		Field:     coredata.ThirdPartyOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
@@ -226,7 +216,7 @@ func (r *processingActivityResolver) ThirdParties(ctx context.Context, obj *type
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	page, err := prb.ThirdParties.ListForProcessingActivityID(ctx, scope, obj.ID, cursor)
+	page, err := r.probo.ThirdParties.ListForProcessingActivityID(ctx, scope, obj.ID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list processing activity thirdParties", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -242,9 +232,7 @@ func (r *processingActivityResolver) DataProtectionImpactAssessment(ctx context.
 		return nil, err
 	}
 
-	prb := r.probo
-
-	dpia, err := prb.DataProtectionImpactAssessments.GetByProcessingActivityID(ctx, scope, obj.ID)
+	dpia, err := r.probo.DataProtectionImpactAssessments.GetByProcessingActivityID(ctx, scope, obj.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, nil
@@ -265,9 +253,7 @@ func (r *processingActivityResolver) TransferImpactAssessment(ctx context.Contex
 		return nil, err
 	}
 
-	prb := r.probo
-
-	tia, err := prb.TransferImpactAssessments.GetByProcessingActivityID(ctx, scope, obj.ID)
+	tia, err := r.probo.TransferImpactAssessments.GetByProcessingActivityID(ctx, scope, obj.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, nil
@@ -293,11 +279,9 @@ func (r *processingActivityConnectionResolver) TotalCount(ctx context.Context, o
 		return 0, err
 	}
 
-	prb := r.probo
-
 	switch obj.Resolver.(type) {
 	case *organizationResolver:
-		count, err := prb.ProcessingActivities.CountForOrganizationID(ctx, scope, obj.ParentID)
+		count, err := r.probo.ProcessingActivities.CountForOrganizationID(ctx, scope, obj.ParentID)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count organization processing activities", log.Error(err))
 			return 0, gqlutils.Internal(ctx)

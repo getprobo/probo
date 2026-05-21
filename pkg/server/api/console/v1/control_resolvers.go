@@ -29,9 +29,7 @@ func (r *applicabilityStatementResolver) StatementOfApplicability(ctx context.Co
 		return nil, err
 	}
 
-	prb := r.probo
-
-	soa, err := prb.StatementsOfApplicability.Get(ctx, scope, obj.StatementOfApplicability.ID)
+	soa, err := r.probo.StatementsOfApplicability.Get(ctx, scope, obj.StatementOfApplicability.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot get statement of applicability", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -74,11 +72,9 @@ func (r *applicabilityStatementConnectionResolver) TotalCount(ctx context.Contex
 		return 0, err
 	}
 
-	prb := r.probo
-
 	switch obj.Resolver.(type) {
 	case *statementOfApplicabilityResolver:
-		count, err := prb.StatementsOfApplicability.CountApplicabilityStatements(ctx, scope, obj.ParentID)
+		count, err := r.probo.StatementsOfApplicability.CountApplicabilityStatements(ctx, scope, obj.ParentID)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count applicability statements", log.Error(err))
 			return 0, gqlutils.Internal(ctx)
@@ -117,9 +113,7 @@ func (r *controlResolver) Organization(ctx context.Context, obj *types.Control) 
 // Regulatory is the resolver for the regulatory field.
 func (r *controlResolver) Regulatory(ctx context.Context, obj *types.Control) (bool, error) {
 	scope := coredata.NewScopeFromObjectID(obj.ID)
-	prb := r.probo
-
-	hasRegulatory, err := prb.Controls.HasRegulatoryObligation(ctx, scope, obj.ID)
+	hasRegulatory, err := r.probo.Controls.HasRegulatoryObligation(ctx, scope, obj.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot check regulatory obligation", log.Error(err))
 		return false, gqlutils.Internal(ctx)
@@ -131,9 +125,7 @@ func (r *controlResolver) Regulatory(ctx context.Context, obj *types.Control) (b
 // Contractual is the resolver for the contractual field.
 func (r *controlResolver) Contractual(ctx context.Context, obj *types.Control) (bool, error) {
 	scope := coredata.NewScopeFromObjectID(obj.ID)
-	prb := r.probo
-
-	hasContractual, err := prb.Controls.HasContractualObligation(ctx, scope, obj.ID)
+	hasContractual, err := r.probo.Controls.HasContractualObligation(ctx, scope, obj.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot check contractual obligation", log.Error(err))
 		return false, gqlutils.Internal(ctx)
@@ -145,9 +137,7 @@ func (r *controlResolver) Contractual(ctx context.Context, obj *types.Control) (
 // RiskAssessment is the resolver for the riskAssessment field.
 func (r *controlResolver) RiskAssessment(ctx context.Context, obj *types.Control) (bool, error) {
 	scope := coredata.NewScopeFromObjectID(obj.ID)
-	prb := r.probo
-
-	hasRisk, err := prb.Controls.HasRiskAssessment(ctx, scope, obj.ID)
+	hasRisk, err := r.probo.Controls.HasRiskAssessment(ctx, scope, obj.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot check risk assessment", log.Error(err))
 		return false, gqlutils.Internal(ctx)
@@ -185,8 +175,6 @@ func (r *controlResolver) Measures(ctx context.Context, obj *types.Control, firs
 		return nil, err
 	}
 
-	prb := r.probo
-
 	pageOrderBy := page.OrderBy[coredata.MeasureOrderField]{
 		Field:     coredata.MeasureOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
@@ -205,7 +193,7 @@ func (r *controlResolver) Measures(ctx context.Context, obj *types.Control, firs
 		measureFilter = coredata.NewMeasureFilter(filter.Query, filter.State, filter.Category)
 	}
 
-	page, err := prb.Measures.ListForControlID(ctx, scope, obj.ID, cursor, measureFilter)
+	page, err := r.probo.Measures.ListForControlID(ctx, scope, obj.ID, cursor, measureFilter)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list measures", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -220,8 +208,6 @@ func (r *controlResolver) Documents(ctx context.Context, obj *types.Control, fir
 	if err != nil {
 		return nil, err
 	}
-
-	prb := r.probo
 
 	pageOrderBy := page.OrderBy[coredata.DocumentOrderField]{
 		Field:     coredata.DocumentOrderFieldCreatedAt,
@@ -244,7 +230,7 @@ func (r *controlResolver) Documents(ctx context.Context, obj *types.Control, fir
 			WithClassifications(filter.Classifications)
 	}
 
-	page, err := prb.Documents.ListForControlID(ctx, scope, obj.ID, cursor, documentFilter)
+	page, err := r.probo.Documents.ListForControlID(ctx, scope, obj.ID, cursor, documentFilter)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list documents", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -260,8 +246,6 @@ func (r *controlResolver) Audits(ctx context.Context, obj *types.Control, first 
 		return nil, err
 	}
 
-	prb := r.probo
-
 	pageOrderBy := page.OrderBy[coredata.AuditOrderField]{
 		Field:     coredata.AuditOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
@@ -275,7 +259,7 @@ func (r *controlResolver) Audits(ctx context.Context, obj *types.Control, first 
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	page, err := prb.Audits.ListForControlID(ctx, scope, obj.ID, cursor)
+	page, err := r.probo.Audits.ListForControlID(ctx, scope, obj.ID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list control audits", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -291,8 +275,6 @@ func (r *controlResolver) Obligations(ctx context.Context, obj *types.Control, f
 		return nil, err
 	}
 
-	prb := r.probo
-
 	pageOrderBy := page.OrderBy[coredata.ObligationOrderField]{
 		Field:     coredata.ObligationOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
@@ -306,7 +288,7 @@ func (r *controlResolver) Obligations(ctx context.Context, obj *types.Control, f
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	page, err := prb.Obligations.ListForControlID(ctx, scope, obj.ID, cursor)
+	page, err := r.probo.Obligations.ListForControlID(ctx, scope, obj.ID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list control obligations", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -327,11 +309,9 @@ func (r *controlConnectionResolver) TotalCount(ctx context.Context, obj *types.C
 		return 0, err
 	}
 
-	prb := r.probo
-
 	switch obj.Resolver.(type) {
 	case *organizationResolver:
-		count, err := prb.Controls.CountForOrganizationID(ctx, scope, obj.ParentID, obj.Filters)
+		count, err := r.probo.Controls.CountForOrganizationID(ctx, scope, obj.ParentID, obj.Filters)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count controls", log.Error(err))
 			return 0, gqlutils.Internal(ctx)
@@ -339,7 +319,7 @@ func (r *controlConnectionResolver) TotalCount(ctx context.Context, obj *types.C
 
 		return count, nil
 	case *frameworkResolver:
-		count, err := prb.Controls.CountForFrameworkID(ctx, scope, obj.ParentID, obj.Filters)
+		count, err := r.probo.Controls.CountForFrameworkID(ctx, scope, obj.ParentID, obj.Filters)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count controls", log.Error(err))
 			return 0, gqlutils.Internal(ctx)
@@ -347,7 +327,7 @@ func (r *controlConnectionResolver) TotalCount(ctx context.Context, obj *types.C
 
 		return count, nil
 	case *documentResolver:
-		count, err := prb.Controls.CountForDocumentID(ctx, scope, obj.ParentID, obj.Filters)
+		count, err := r.probo.Controls.CountForDocumentID(ctx, scope, obj.ParentID, obj.Filters)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count controls", log.Error(err))
 			return 0, gqlutils.Internal(ctx)
@@ -355,7 +335,7 @@ func (r *controlConnectionResolver) TotalCount(ctx context.Context, obj *types.C
 
 		return count, nil
 	case *measureResolver:
-		count, err := prb.Controls.CountForMeasureID(ctx, scope, obj.ParentID, obj.Filters)
+		count, err := r.probo.Controls.CountForMeasureID(ctx, scope, obj.ParentID, obj.Filters)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count controls", log.Error(err))
 			return 0, gqlutils.Internal(ctx)
@@ -363,7 +343,7 @@ func (r *controlConnectionResolver) TotalCount(ctx context.Context, obj *types.C
 
 		return count, nil
 	case *riskResolver:
-		count, err := prb.Controls.CountForRiskID(ctx, scope, obj.ParentID, obj.Filters)
+		count, err := r.probo.Controls.CountForRiskID(ctx, scope, obj.ParentID, obj.Filters)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count controls", log.Error(err))
 			return 0, gqlutils.Internal(ctx)
@@ -371,7 +351,7 @@ func (r *controlConnectionResolver) TotalCount(ctx context.Context, obj *types.C
 
 		return count, nil
 	case *statementOfApplicabilityResolver:
-		count, err := prb.Controls.CountForStatementOfApplicabilityID(ctx, scope, obj.ParentID, obj.Filters)
+		count, err := r.probo.Controls.CountForStatementOfApplicabilityID(ctx, scope, obj.ParentID, obj.Filters)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count controls", log.Error(err))
 			return 0, gqlutils.Internal(ctx)
@@ -392,9 +372,7 @@ func (r *mutationResolver) CreateControl(ctx context.Context, input types.Create
 		return nil, err
 	}
 
-	prb := r.probo
-
-	control, err := prb.Controls.Create(
+	control, err := r.probo.Controls.Create(
 		ctx, scope,
 		probo.CreateControlRequest{
 			FrameworkID:                 input.FrameworkID,
@@ -432,9 +410,7 @@ func (r *mutationResolver) UpdateControl(ctx context.Context, input types.Update
 		return nil, err
 	}
 
-	prb := r.probo
-
-	control, err := prb.Controls.Update(
+	control, err := r.probo.Controls.Update(
 		ctx, scope,
 		probo.UpdateControlRequest{
 			ID:                          input.ID,
@@ -472,9 +448,7 @@ func (r *mutationResolver) DeleteControl(ctx context.Context, input types.Delete
 		return nil, err
 	}
 
-	prb := r.probo
-
-	if err := prb.Controls.Delete(ctx, scope, input.ControlID); err != nil {
+	if err := r.probo.Controls.Delete(ctx, scope, input.ControlID); err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete control", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
@@ -491,9 +465,7 @@ func (r *mutationResolver) CreateControlMeasureMapping(ctx context.Context, inpu
 		return nil, err
 	}
 
-	prb := r.probo
-
-	control, measure, err := prb.Controls.CreateMeasureMapping(ctx, scope, input.ControlID, input.MeasureID)
+	control, measure, err := r.probo.Controls.CreateMeasureMapping(ctx, scope, input.ControlID, input.MeasureID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot create control measure mapping", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -512,9 +484,7 @@ func (r *mutationResolver) CreateControlDocumentMapping(ctx context.Context, inp
 		return nil, err
 	}
 
-	prb := r.probo
-
-	control, document, err := prb.Controls.CreateDocumentMapping(ctx, scope, input.ControlID, input.DocumentID)
+	control, document, err := r.probo.Controls.CreateDocumentMapping(ctx, scope, input.ControlID, input.DocumentID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
 			return nil, gqlutils.Conflict(ctx, err)
@@ -538,9 +508,7 @@ func (r *mutationResolver) DeleteControlMeasureMapping(ctx context.Context, inpu
 		return nil, err
 	}
 
-	prb := r.probo
-
-	control, measure, err := prb.Controls.DeleteMeasureMapping(ctx, scope, input.ControlID, input.MeasureID)
+	control, measure, err := r.probo.Controls.DeleteMeasureMapping(ctx, scope, input.ControlID, input.MeasureID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete control measure mapping", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -559,9 +527,7 @@ func (r *mutationResolver) DeleteControlDocumentMapping(ctx context.Context, inp
 		return nil, err
 	}
 
-	prb := r.probo
-
-	control, document, err := prb.Controls.DeleteDocumentMapping(ctx, scope, input.ControlID, input.DocumentID)
+	control, document, err := r.probo.Controls.DeleteDocumentMapping(ctx, scope, input.ControlID, input.DocumentID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete control document mapping", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -580,9 +546,7 @@ func (r *mutationResolver) CreateApplicabilityStatement(ctx context.Context, inp
 		return nil, err
 	}
 
-	prb := r.probo
-
-	applicabilityStatement, err := prb.StatementsOfApplicability.CreateApplicabilityStatement(ctx, scope, input.StatementOfApplicabilityID, input.ControlID, input.Applicability, input.Justification)
+	applicabilityStatement, err := r.probo.StatementsOfApplicability.CreateApplicabilityStatement(ctx, scope, input.StatementOfApplicabilityID, input.ControlID, input.Applicability, input.Justification)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot create applicability statement", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -600,9 +564,7 @@ func (r *mutationResolver) UpdateApplicabilityStatement(ctx context.Context, inp
 		return nil, err
 	}
 
-	prb := r.probo
-
-	applicabilityStatement, err := prb.StatementsOfApplicability.UpdateApplicabilityStatement(ctx, scope, input.ApplicabilityStatementID, input.Applicability, input.Justification)
+	applicabilityStatement, err := r.probo.StatementsOfApplicability.UpdateApplicabilityStatement(ctx, scope, input.ApplicabilityStatementID, input.Applicability, input.Justification)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot update applicability statement", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -620,9 +582,7 @@ func (r *mutationResolver) DeleteApplicabilityStatement(ctx context.Context, inp
 		return nil, err
 	}
 
-	prb := r.probo
-
-	if err := prb.StatementsOfApplicability.DeleteApplicabilityStatement(ctx, scope, input.ApplicabilityStatementID); err != nil {
+	if err := r.probo.StatementsOfApplicability.DeleteApplicabilityStatement(ctx, scope, input.ApplicabilityStatementID); err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete applicability statement", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
@@ -639,9 +599,7 @@ func (r *mutationResolver) CreateControlAuditMapping(ctx context.Context, input 
 		return nil, err
 	}
 
-	prb := r.probo
-
-	control, audit, err := prb.Controls.CreateAuditMapping(ctx, scope, input.ControlID, input.AuditID)
+	control, audit, err := r.probo.Controls.CreateAuditMapping(ctx, scope, input.ControlID, input.AuditID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot create control audit mapping", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -660,9 +618,7 @@ func (r *mutationResolver) DeleteControlAuditMapping(ctx context.Context, input 
 		return nil, err
 	}
 
-	prb := r.probo
-
-	control, audit, err := prb.Controls.DeleteAuditMapping(ctx, scope, input.ControlID, input.AuditID)
+	control, audit, err := r.probo.Controls.DeleteAuditMapping(ctx, scope, input.ControlID, input.AuditID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete control audit mapping", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -681,9 +637,7 @@ func (r *mutationResolver) CreateControlObligationMapping(ctx context.Context, i
 		return nil, err
 	}
 
-	prb := r.probo
-
-	control, obligation, err := prb.Controls.CreateObligationMapping(ctx, scope, input.ControlID, input.ObligationID)
+	control, obligation, err := r.probo.Controls.CreateObligationMapping(ctx, scope, input.ControlID, input.ObligationID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot create control obligation mapping", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -702,9 +656,7 @@ func (r *mutationResolver) DeleteControlObligationMapping(ctx context.Context, i
 		return nil, err
 	}
 
-	prb := r.probo
-
-	control, obligation, err := prb.Controls.DeleteObligationMapping(ctx, scope, input.ControlID, input.ObligationID)
+	control, obligation, err := r.probo.Controls.DeleteObligationMapping(ctx, scope, input.ControlID, input.ObligationID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete control obligation mapping", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -723,9 +675,7 @@ func (r *mutationResolver) CreateStatementOfApplicability(ctx context.Context, i
 		return nil, err
 	}
 
-	prb := r.probo
-
-	statementOfApplicability, err := prb.StatementsOfApplicability.Create(
+	statementOfApplicability, err := r.probo.StatementsOfApplicability.Create(
 		ctx, scope,
 		probo.CreateStatementOfApplicabilityRequest{
 			OrganizationID: input.OrganizationID,
@@ -758,14 +708,12 @@ func (r *mutationResolver) UpdateStatementOfApplicability(ctx context.Context, i
 		return nil, err
 	}
 
-	prb := r.probo
-
 	var name *string
 	if input.Name != nil {
 		name = input.Name
 	}
 
-	statementOfApplicability, err := prb.StatementsOfApplicability.Update(
+	statementOfApplicability, err := r.probo.StatementsOfApplicability.Update(
 		ctx, scope,
 		probo.UpdateStatementOfApplicabilityRequest{
 			StatementOfApplicabilityID: input.ID,
@@ -798,9 +746,7 @@ func (r *mutationResolver) DeleteStatementOfApplicability(ctx context.Context, i
 		return nil, err
 	}
 
-	prb := r.probo
-
-	if err := prb.StatementsOfApplicability.Delete(ctx, scope, input.StatementOfApplicabilityID); err != nil {
+	if err := r.probo.StatementsOfApplicability.Delete(ctx, scope, input.StatementOfApplicabilityID); err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete statement_of_applicability", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
@@ -817,9 +763,7 @@ func (r *mutationResolver) PublishStatementOfApplicability(ctx context.Context, 
 		return nil, err
 	}
 
-	prb := r.probo
-
-	document, documentVersion, err := prb.GeneratedDocuments.PublishStatementOfApplicability(ctx, scope, input.StatementOfApplicabilityID, input.ApproverIds, input.Minor)
+	document, documentVersion, err := r.probo.GeneratedDocuments.PublishStatementOfApplicability(ctx, scope, input.StatementOfApplicabilityID, input.ApproverIds, input.Minor)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
 			return nil, gqlutils.Conflict(ctx, err)
@@ -851,9 +795,7 @@ func (r *statementOfApplicabilityResolver) Document(ctx context.Context, obj *ty
 		return nil, err
 	}
 
-	prb := r.probo
-
-	document, err := prb.Documents.Get(ctx, scope, obj.Document.ID)
+	document, err := r.probo.Documents.Get(ctx, scope, obj.Document.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, nil
@@ -896,8 +838,6 @@ func (r *statementOfApplicabilityResolver) ApplicabilityStatements(ctx context.C
 		return nil, err
 	}
 
-	prb := r.probo
-
 	pageOrderBy := page.OrderBy[coredata.ApplicabilityStatementOrderField]{
 		Field:     coredata.ApplicabilityStatementOrderFieldCreatedAt,
 		Direction: page.OrderDirectionAsc,
@@ -911,7 +851,7 @@ func (r *statementOfApplicabilityResolver) ApplicabilityStatements(ctx context.C
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	p, err := prb.StatementsOfApplicability.ListApplicabilityStatements(ctx, scope, obj.ID, cursor)
+	p, err := r.probo.StatementsOfApplicability.ListApplicabilityStatements(ctx, scope, obj.ID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list applicability statements", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -928,11 +868,9 @@ func (r *statementOfApplicabilityResolver) Permission(ctx context.Context, obj *
 // TotalCount is the resolver for the totalCount field.
 func (r *statementOfApplicabilityConnectionResolver) TotalCount(ctx context.Context, obj *types.StatementOfApplicabilityConnection) (int, error) {
 	scope := coredata.NewScopeFromObjectID(obj.ParentID)
-	prb := r.probo
-
 	switch obj.Resolver.(type) {
 	case *organizationResolver:
-		count, err := prb.StatementsOfApplicability.CountForOrganizationID(ctx, scope, obj.ParentID)
+		count, err := r.probo.StatementsOfApplicability.CountForOrganizationID(ctx, scope, obj.ParentID)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count statements_of_applicability", log.Error(err))
 			return 0, gqlutils.Internal(ctx)

@@ -37,8 +37,6 @@ func (r *mutationResolver) CreateAPIKeyConnector(ctx context.Context, input type
 		return nil, err
 	}
 
-	prb := r.probo
-
 	req := probo.CreateConnectorRequest{
 		OrganizationID: input.OrganizationID,
 		Provider:       input.Provider,
@@ -76,7 +74,7 @@ func (r *mutationResolver) CreateAPIKeyConnector(ctx context.Context, input type
 		}
 	}
 
-	cnnctr, err := prb.Connectors.Create(ctx, scope, req)
+	cnnctr, err := r.probo.Connectors.Create(ctx, scope, req)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
 			return nil, gqlutils.Conflict(ctx, err)
@@ -96,8 +94,6 @@ func (r *mutationResolver) CreateClientCredentialsConnector(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
-
-	prb := r.probo
 
 	oauth2Conn := &connector.OAuth2Connection{
 		GrantType:    connector.OAuth2GrantTypeClientCredentials,
@@ -123,7 +119,7 @@ func (r *mutationResolver) CreateClientCredentialsConnector(ctx context.Context,
 		}
 	}
 
-	cnnctr, err := prb.Connectors.Create(ctx, scope, req)
+	cnnctr, err := r.probo.Connectors.Create(ctx, scope, req)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
 			return nil, gqlutils.Conflict(ctx, err)
@@ -144,9 +140,7 @@ func (r *mutationResolver) DeleteConnector(ctx context.Context, input types.Dele
 		return nil, err
 	}
 
-	prb := r.probo
-
-	if err := prb.Connectors.Delete(ctx, scope, input.ConnectorID); err != nil {
+	if err := r.probo.Connectors.Delete(ctx, scope, input.ConnectorID); err != nil {
 		panic(fmt.Errorf("cannot delete connector: %w", err))
 	}
 
@@ -162,9 +156,7 @@ func (r *mutationResolver) DeleteSlackConnection(ctx context.Context, input type
 		return nil, err
 	}
 
-	prb := r.probo
-
-	if err := prb.Connectors.Delete(ctx, scope, input.SlackConnectionID); err != nil {
+	if err := r.probo.Connectors.Delete(ctx, scope, input.SlackConnectionID); err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete slack connection", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}

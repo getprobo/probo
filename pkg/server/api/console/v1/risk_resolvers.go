@@ -29,9 +29,7 @@ func (r *mutationResolver) CreateRisk(ctx context.Context, input types.CreateRis
 		return nil, err
 	}
 
-	prb := r.probo
-
-	risk, err := prb.Risks.Create(
+	risk, err := r.probo.Risks.Create(
 		ctx, scope,
 		probo.CreateRiskRequest{
 			OrganizationID:     input.OrganizationID,
@@ -73,9 +71,7 @@ func (r *mutationResolver) UpdateRisk(ctx context.Context, input types.UpdateRis
 		return nil, err
 	}
 
-	prb := r.probo
-
-	risk, err := prb.Risks.Update(
+	risk, err := r.probo.Risks.Update(
 		ctx, scope,
 		probo.UpdateRiskRequest{
 			ID:                 input.ID,
@@ -113,9 +109,7 @@ func (r *mutationResolver) DeleteRisk(ctx context.Context, input types.DeleteRis
 		return nil, err
 	}
 
-	prb := r.probo
-
-	if err := prb.Risks.Delete(ctx, scope, input.RiskID); err != nil {
+	if err := r.probo.Risks.Delete(ctx, scope, input.RiskID); err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete risk", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
@@ -132,9 +126,7 @@ func (r *mutationResolver) CreateRiskMeasureMapping(ctx context.Context, input t
 		return nil, err
 	}
 
-	prb := r.probo
-
-	risk, measure, err := prb.Risks.CreateMeasureMapping(ctx, scope, input.RiskID, input.MeasureID)
+	risk, measure, err := r.probo.Risks.CreateMeasureMapping(ctx, scope, input.RiskID, input.MeasureID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot create risk measure mapping", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -153,9 +145,7 @@ func (r *mutationResolver) DeleteRiskMeasureMapping(ctx context.Context, input t
 		return nil, err
 	}
 
-	prb := r.probo
-
-	risk, measure, err := prb.Risks.DeleteMeasureMapping(ctx, scope, input.RiskID, input.MeasureID)
+	risk, measure, err := r.probo.Risks.DeleteMeasureMapping(ctx, scope, input.RiskID, input.MeasureID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete risk measure mapping", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -174,9 +164,7 @@ func (r *mutationResolver) CreateRiskDocumentMapping(ctx context.Context, input 
 		return nil, err
 	}
 
-	prb := r.probo
-
-	risk, document, err := prb.Risks.CreateDocumentMapping(ctx, scope, input.RiskID, input.DocumentID)
+	risk, document, err := r.probo.Risks.CreateDocumentMapping(ctx, scope, input.RiskID, input.DocumentID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot create risk document mapping", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -195,9 +183,7 @@ func (r *mutationResolver) DeleteRiskDocumentMapping(ctx context.Context, input 
 		return nil, err
 	}
 
-	prb := r.probo
-
-	risk, document, err := prb.Risks.DeleteDocumentMapping(ctx, scope, input.RiskID, input.DocumentID)
+	risk, document, err := r.probo.Risks.DeleteDocumentMapping(ctx, scope, input.RiskID, input.DocumentID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete risk document mapping", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -216,9 +202,7 @@ func (r *mutationResolver) CreateRiskObligationMapping(ctx context.Context, inpu
 		return nil, err
 	}
 
-	prb := r.probo
-
-	risk, obligation, err := prb.Risks.CreateObligationMapping(ctx, scope, input.RiskID, input.ObligationID)
+	risk, obligation, err := r.probo.Risks.CreateObligationMapping(ctx, scope, input.RiskID, input.ObligationID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot create risk obligation mapping", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -237,9 +221,7 @@ func (r *mutationResolver) DeleteRiskObligationMapping(ctx context.Context, inpu
 		return nil, err
 	}
 
-	prb := r.probo
-
-	risk, obligation, err := prb.Risks.DeleteObligationMapping(ctx, scope, input.RiskID, input.ObligationID)
+	risk, obligation, err := r.probo.Risks.DeleteObligationMapping(ctx, scope, input.RiskID, input.ObligationID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete risk obligation mapping", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -258,9 +240,7 @@ func (r *mutationResolver) PublishRiskList(ctx context.Context, input types.Publ
 		return nil, err
 	}
 
-	prb := r.probo
-
-	document, documentVersion, err := prb.GeneratedDocuments.PublishRiskList(ctx, scope, input.OrganizationID, input.ApproverIds, input.Minor)
+	document, documentVersion, err := r.probo.GeneratedDocuments.PublishRiskList(ctx, scope, input.OrganizationID, input.ApproverIds, input.Minor)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
 			return nil, gqlutils.Conflict(ctx, err)
@@ -336,8 +316,6 @@ func (r *riskResolver) Measures(ctx context.Context, obj *types.Risk, first *int
 		return nil, err
 	}
 
-	prb := r.probo
-
 	pageOrderBy := page.OrderBy[coredata.MeasureOrderField]{
 		Field:     coredata.MeasureOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
@@ -356,7 +334,7 @@ func (r *riskResolver) Measures(ctx context.Context, obj *types.Risk, first *int
 		measureFilter = coredata.NewMeasureFilter(filter.Query, filter.State, filter.Category)
 	}
 
-	page, err := prb.Measures.ListForRiskID(ctx, scope, obj.ID, cursor, measureFilter)
+	page, err := r.probo.Measures.ListForRiskID(ctx, scope, obj.ID, cursor, measureFilter)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list risk measures", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -371,8 +349,6 @@ func (r *riskResolver) Documents(ctx context.Context, obj *types.Risk, first *in
 	if err != nil {
 		return nil, err
 	}
-
-	prb := r.probo
 
 	pageOrderBy := page.OrderBy[coredata.DocumentOrderField]{
 		Field:     coredata.DocumentOrderFieldCreatedAt,
@@ -395,7 +371,7 @@ func (r *riskResolver) Documents(ctx context.Context, obj *types.Risk, first *in
 			WithClassifications(filter.Classifications)
 	}
 
-	page, err := prb.Documents.ListForRiskID(ctx, scope, obj.ID, cursor, documentFilter)
+	page, err := r.probo.Documents.ListForRiskID(ctx, scope, obj.ID, cursor, documentFilter)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list risk documents", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -410,8 +386,6 @@ func (r *riskResolver) Controls(ctx context.Context, obj *types.Risk, first *int
 	if err != nil {
 		return nil, err
 	}
-
-	prb := r.probo
 
 	pageOrderBy := page.OrderBy[coredata.ControlOrderField]{
 		Field:     coredata.ControlOrderFieldCreatedAt,
@@ -431,7 +405,7 @@ func (r *riskResolver) Controls(ctx context.Context, obj *types.Risk, first *int
 		filters = coredata.NewControlFilter(filter.Query)
 	}
 
-	page, err := prb.Controls.ListForRiskID(ctx, scope, obj.ID, cursor, filters)
+	page, err := r.probo.Controls.ListForRiskID(ctx, scope, obj.ID, cursor, filters)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list risk controls", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -447,8 +421,6 @@ func (r *riskResolver) Obligations(ctx context.Context, obj *types.Risk, first *
 		return nil, err
 	}
 
-	prb := r.probo
-
 	pageOrderBy := page.OrderBy[coredata.ObligationOrderField]{
 		Field:     coredata.ObligationOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
@@ -462,7 +434,7 @@ func (r *riskResolver) Obligations(ctx context.Context, obj *types.Risk, first *
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	page, err := prb.Obligations.ListForRiskID(ctx, scope, obj.ID, cursor)
+	page, err := r.probo.Obligations.ListForRiskID(ctx, scope, obj.ID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list risk obligations", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -509,11 +481,9 @@ func (r *riskConnectionResolver) TotalCount(ctx context.Context, obj *types.Risk
 		return 0, err
 	}
 
-	prb := r.probo
-
 	switch obj.Resolver.(type) {
 	case *measureResolver:
-		count, err := prb.Risks.CountForMeasureID(ctx, scope, obj.ParentID, obj.Filters)
+		count, err := r.probo.Risks.CountForMeasureID(ctx, scope, obj.ParentID, obj.Filters)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count risks", log.Error(err))
 			return 0, gqlutils.Internal(ctx)
@@ -521,7 +491,7 @@ func (r *riskConnectionResolver) TotalCount(ctx context.Context, obj *types.Risk
 
 		return count, nil
 	case *organizationResolver:
-		count, err := prb.Risks.CountForOrganizationID(ctx, scope, obj.ParentID, obj.Filters)
+		count, err := r.probo.Risks.CountForOrganizationID(ctx, scope, obj.ParentID, obj.Filters)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count risks", log.Error(err))
 			return 0, gqlutils.Internal(ctx)

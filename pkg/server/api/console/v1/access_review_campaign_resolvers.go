@@ -362,9 +362,7 @@ func (r *accessSourceResolver) Connector(ctx context.Context, obj *types.AccessS
 	}
 
 	scope := coredata.NewScopeFromObjectID(obj.ID)
-	prb := r.probo
-
-	connector, err := prb.Connectors.Get(ctx, scope, *obj.ConnectorID)
+	connector, err := r.probo.Connectors.Get(ctx, scope, *obj.ConnectorID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, nil
@@ -430,9 +428,7 @@ func (r *accessSourceResolver) NeedsConfiguration(ctx context.Context, obj *type
 		return false, nil
 	}
 
-	prb := r.probo
-
-	dbConnector, err := prb.Connectors.Get(ctx, scope, *obj.ConnectorID)
+	dbConnector, err := r.probo.Connectors.Get(ctx, scope, *obj.ConnectorID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return false, nil
@@ -492,9 +488,7 @@ func (r *accessSourceResolver) SelectedOrganization(ctx context.Context, obj *ty
 		return nil, nil
 	}
 
-	prb := r.probo
-
-	dbConnector, err := prb.Connectors.Get(ctx, scope, *obj.ConnectorID)
+	dbConnector, err := r.probo.Connectors.Get(ctx, scope, *obj.ConnectorID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, nil
