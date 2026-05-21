@@ -21,11 +21,11 @@ import (
 
 // CreateRightsRequest is the resolver for the createRightsRequest field.
 func (r *mutationResolver) CreateRightsRequest(ctx context.Context, input types.CreateRightsRequestInput) (*types.CreateRightsRequestPayload, error) {
-	if err := r.authorize(ctx, input.OrganizationID, probo.ActionRightsRequestCreate); err != nil {
+	scope, err := r.authorize(ctx, input.OrganizationID, probo.ActionRightsRequestCreate)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(input.OrganizationID)
 	prb := r.probo
 
 	req := probo.CreateRightsRequestRequest{
@@ -57,11 +57,11 @@ func (r *mutationResolver) CreateRightsRequest(ctx context.Context, input types.
 
 // UpdateRightsRequest is the resolver for the updateRightsRequest field.
 func (r *mutationResolver) UpdateRightsRequest(ctx context.Context, input types.UpdateRightsRequestInput) (*types.UpdateRightsRequestPayload, error) {
-	if err := r.authorize(ctx, input.ID, probo.ActionRightsRequestUpdate); err != nil {
+	scope, err := r.authorize(ctx, input.ID, probo.ActionRightsRequestUpdate)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(input.ID)
 	prb := r.probo
 
 	req := probo.UpdateRightsRequestRequest{
@@ -93,15 +93,14 @@ func (r *mutationResolver) UpdateRightsRequest(ctx context.Context, input types.
 
 // DeleteRightsRequest is the resolver for the deleteRightsRequest field.
 func (r *mutationResolver) DeleteRightsRequest(ctx context.Context, input types.DeleteRightsRequestInput) (*types.DeleteRightsRequestPayload, error) {
-	if err := r.authorize(ctx, input.RightsRequestID, probo.ActionRightsRequestDelete); err != nil {
+	scope, err := r.authorize(ctx, input.RightsRequestID, probo.ActionRightsRequestDelete)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(input.RightsRequestID)
 	prb := r.probo
 
-	err := prb.RightsRequests.Delete(ctx, scope, input.RightsRequestID)
-	if err != nil {
+	if err := prb.RightsRequests.Delete(ctx, scope, input.RightsRequestID); err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete rights request", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
@@ -113,11 +112,11 @@ func (r *mutationResolver) DeleteRightsRequest(ctx context.Context, input types.
 
 // Organization is the resolver for the organization field.
 func (r *rightsRequestResolver) Organization(ctx context.Context, obj *types.RightsRequest) (*types.Organization, error) {
-	if err := r.authorize(ctx, obj.ID, iam.ActionOrganizationGet); err != nil {
+	scope, err := r.authorize(ctx, obj.ID, iam.ActionOrganizationGet)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(obj.ID)
 	prb := r.probo
 
 	rightsRequest, err := prb.RightsRequests.Get(ctx, scope, obj.ID)
@@ -147,11 +146,11 @@ func (r *rightsRequestResolver) Permission(ctx context.Context, obj *types.Right
 
 // TotalCount is the resolver for the totalCount field.
 func (r *rightsRequestConnectionResolver) TotalCount(ctx context.Context, obj *types.RightsRequestConnection) (int, error) {
-	if err := r.authorize(ctx, obj.ParentID, probo.ActionRightsRequestList); err != nil {
+	scope, err := r.authorize(ctx, obj.ParentID, probo.ActionRightsRequestList)
+	if err != nil {
 		return 0, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(obj.ParentID)
 	prb := r.probo
 
 	switch obj.Resolver.(type) {

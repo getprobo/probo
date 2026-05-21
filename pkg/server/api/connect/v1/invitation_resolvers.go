@@ -24,7 +24,7 @@ func (r *invitationResolver) Permission(ctx context.Context, obj *types.Invitati
 
 // InviteUser is the resolver for the inviteUser field.
 func (r *mutationResolver) InviteUser(ctx context.Context, input types.InviteUserInput) (*types.InviteUserPayload, error) {
-	if err := r.authorize(ctx, input.ProfileID, iam.ActionInvitationCreate); err != nil {
+	if _, err := r.authorize(ctx, input.ProfileID, iam.ActionInvitationCreate); err != nil {
 		return nil, err
 	}
 

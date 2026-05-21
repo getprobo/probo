@@ -21,7 +21,7 @@ import (
 func (r *mutationResolver) CreatePersonalAPIKey(ctx context.Context, input types.CreatePersonalAPIKeyInput) (*types.CreatePersonalAPIKeyPayload, error) {
 	identity := authn.IdentityFromContext(ctx)
 
-	if err := r.authorize(ctx, identity.ID, iam.ActionPersonalAPIKeyCreate); err != nil {
+	if _, err := r.authorize(ctx, identity.ID, iam.ActionPersonalAPIKeyCreate); err != nil {
 		return nil, err
 	}
 
@@ -44,7 +44,7 @@ func (r *mutationResolver) CreatePersonalAPIKey(ctx context.Context, input types
 
 // RevokePersonalAPIKey is the resolver for the revokePersonalAPIKey field.
 func (r *mutationResolver) RevokePersonalAPIKey(ctx context.Context, input types.RevokePersonalAPIKeyInput) (*types.RevokePersonalAPIKeyPayload, error) {
-	if err := r.authorize(ctx, input.PersonalAPIKeyID, iam.ActionPersonalAPIKeyDelete); err != nil {
+	if _, err := r.authorize(ctx, input.PersonalAPIKeyID, iam.ActionPersonalAPIKeyDelete); err != nil {
 		return nil, err
 	}
 
@@ -61,7 +61,7 @@ func (r *mutationResolver) RevokePersonalAPIKey(ctx context.Context, input types
 
 // Token is the resolver for the token field.
 func (r *personalAPIKeyResolver) Token(ctx context.Context, obj *types.PersonalAPIKey) (*string, error) {
-	if err := r.authorize(ctx, obj.ID, iam.ActionPersonalAPIKeyGet); err != nil {
+	if _, err := r.authorize(ctx, obj.ID, iam.ActionPersonalAPIKeyGet); err != nil {
 		return nil, err
 	}
 
@@ -85,7 +85,7 @@ func (r *personalAPIKeyResolver) Permission(ctx context.Context, obj *types.Pers
 func (r *personalAPIKeyConnectionResolver) TotalCount(ctx context.Context, obj *types.PersonalAPIKeyConnection) (*int, error) {
 	switch obj.Resolver.(type) {
 	case *identityResolver:
-		if err := r.authorize(ctx, obj.ParentID, iam.ActionPersonalAPIKeyList); err != nil {
+		if _, err := r.authorize(ctx, obj.ParentID, iam.ActionPersonalAPIKeyList); err != nil {
 			return nil, err
 		}
 

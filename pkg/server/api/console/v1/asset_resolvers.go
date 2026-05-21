@@ -25,7 +25,7 @@ import (
 
 // Owner is the resolver for the owner field.
 func (r *assetResolver) Owner(ctx context.Context, obj *types.Asset) (*types.Profile, error) {
-	if err := r.authorize(ctx, obj.ID, iam.ActionMembershipProfileGet); err != nil {
+	if _, err := r.authorize(ctx, obj.ID, iam.ActionMembershipProfileGet); err != nil {
 		return nil, err
 	}
 
@@ -47,11 +47,11 @@ func (r *assetResolver) Owner(ctx context.Context, obj *types.Asset) (*types.Pro
 
 // ThirdParties is the resolver for the thirdParties field.
 func (r *assetResolver) ThirdParties(ctx context.Context, obj *types.Asset, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ThirdPartyOrderBy) (*types.ThirdPartyConnection, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionThirdPartyList); err != nil {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionThirdPartyList)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(obj.ID)
 	prb := r.probo
 
 	pageOrderBy := page.OrderBy[coredata.ThirdPartyOrderField]{
@@ -78,11 +78,11 @@ func (r *assetResolver) ThirdParties(ctx context.Context, obj *types.Asset, firs
 
 // Organization is the resolver for the organization field.
 func (r *assetResolver) Organization(ctx context.Context, obj *types.Asset) (*types.Organization, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGet); err != nil {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGet)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(obj.ID)
 	prb := r.probo
 
 	asset, err := prb.Assets.Get(ctx, scope, obj.ID)
@@ -112,11 +112,11 @@ func (r *assetResolver) Permission(ctx context.Context, obj *types.Asset, action
 
 // TotalCount is the resolver for the totalCount field.
 func (r *assetConnectionResolver) TotalCount(ctx context.Context, obj *types.AssetConnection) (int, error) {
-	if err := r.authorize(ctx, obj.ParentID, probo.ActionAssetList); err != nil {
+	scope, err := r.authorize(ctx, obj.ParentID, probo.ActionAssetList)
+	if err != nil {
 		return 0, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(obj.ParentID)
 	prb := r.probo
 
 	switch obj.Resolver.(type) {
@@ -137,7 +137,7 @@ func (r *assetConnectionResolver) TotalCount(ctx context.Context, obj *types.Ass
 
 // Owner is the resolver for the owner field.
 func (r *datumResolver) Owner(ctx context.Context, obj *types.Datum) (*types.Profile, error) {
-	if err := r.authorize(ctx, obj.ID, iam.ActionMembershipProfileGet); err != nil {
+	if _, err := r.authorize(ctx, obj.ID, iam.ActionMembershipProfileGet); err != nil {
 		return nil, err
 	}
 
@@ -157,11 +157,11 @@ func (r *datumResolver) Owner(ctx context.Context, obj *types.Datum) (*types.Pro
 
 // ThirdParties is the resolver for the thirdParties field.
 func (r *datumResolver) ThirdParties(ctx context.Context, obj *types.Datum, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ThirdPartyOrderBy) (*types.ThirdPartyConnection, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionThirdPartyList); err != nil {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionThirdPartyList)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(obj.ID)
 	prb := r.probo
 
 	pageOrderBy := page.OrderBy[coredata.ThirdPartyOrderField]{
@@ -188,7 +188,7 @@ func (r *datumResolver) ThirdParties(ctx context.Context, obj *types.Datum, firs
 
 // Organization is the resolver for the organization field.
 func (r *datumResolver) Organization(ctx context.Context, obj *types.Datum) (*types.Organization, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGet); err != nil {
+	if _, err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGet); err != nil {
 		return nil, err
 	}
 
@@ -215,11 +215,11 @@ func (r *datumResolver) Permission(ctx context.Context, obj *types.Datum, action
 
 // TotalCount is the resolver for the totalCount field.
 func (r *datumConnectionResolver) TotalCount(ctx context.Context, obj *types.DatumConnection) (int, error) {
-	if err := r.authorize(ctx, obj.ParentID, probo.ActionDatumList); err != nil {
+	scope, err := r.authorize(ctx, obj.ParentID, probo.ActionDatumList)
+	if err != nil {
 		return 0, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(obj.ParentID)
 	prb := r.probo
 
 	switch obj.Resolver.(type) {
@@ -240,11 +240,11 @@ func (r *datumConnectionResolver) TotalCount(ctx context.Context, obj *types.Dat
 
 // CreateAsset is the resolver for the createAsset field.
 func (r *mutationResolver) CreateAsset(ctx context.Context, input types.CreateAssetInput) (*types.CreateAssetPayload, error) {
-	if err := r.authorize(ctx, input.OrganizationID, probo.ActionAssetCreate); err != nil {
+	scope, err := r.authorize(ctx, input.OrganizationID, probo.ActionAssetCreate)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(input.OrganizationID)
 	prb := r.probo
 
 	asset, err := prb.Assets.Create(
@@ -276,11 +276,11 @@ func (r *mutationResolver) CreateAsset(ctx context.Context, input types.CreateAs
 
 // UpdateAsset is the resolver for the updateAsset field.
 func (r *mutationResolver) UpdateAsset(ctx context.Context, input types.UpdateAssetInput) (*types.UpdateAssetPayload, error) {
-	if err := r.authorize(ctx, input.ID, probo.ActionAssetUpdate); err != nil {
+	scope, err := r.authorize(ctx, input.ID, probo.ActionAssetUpdate)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(input.ID)
 	prb := r.probo
 
 	asset, err := prb.Assets.Update(
@@ -312,15 +312,14 @@ func (r *mutationResolver) UpdateAsset(ctx context.Context, input types.UpdateAs
 
 // DeleteAsset is the resolver for the deleteAsset field.
 func (r *mutationResolver) DeleteAsset(ctx context.Context, input types.DeleteAssetInput) (*types.DeleteAssetPayload, error) {
-	if err := r.authorize(ctx, input.AssetID, probo.ActionAssetDelete); err != nil {
+	scope, err := r.authorize(ctx, input.AssetID, probo.ActionAssetDelete)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(input.AssetID)
 	prb := r.probo
 
-	err := prb.Assets.Delete(ctx, scope, input.AssetID)
-	if err != nil {
+	if err := prb.Assets.Delete(ctx, scope, input.AssetID); err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete asset", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
@@ -332,11 +331,11 @@ func (r *mutationResolver) DeleteAsset(ctx context.Context, input types.DeleteAs
 
 // CreateDatum is the resolver for the createDatum field.
 func (r *mutationResolver) CreateDatum(ctx context.Context, input types.CreateDatumInput) (*types.CreateDatumPayload, error) {
-	if err := r.authorize(ctx, input.OrganizationID, probo.ActionDatumCreate); err != nil {
+	scope, err := r.authorize(ctx, input.OrganizationID, probo.ActionDatumCreate)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(input.OrganizationID)
 	prb := r.probo
 
 	data, err := prb.Data.Create(
@@ -366,11 +365,11 @@ func (r *mutationResolver) CreateDatum(ctx context.Context, input types.CreateDa
 
 // UpdateDatum is the resolver for the updateDatum field.
 func (r *mutationResolver) UpdateDatum(ctx context.Context, input types.UpdateDatumInput) (*types.UpdateDatumPayload, error) {
-	if err := r.authorize(ctx, input.ID, probo.ActionDatumUpdate); err != nil {
+	scope, err := r.authorize(ctx, input.ID, probo.ActionDatumUpdate)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(input.ID)
 	prb := r.probo
 
 	datum, err := prb.Data.Update(
@@ -400,11 +399,11 @@ func (r *mutationResolver) UpdateDatum(ctx context.Context, input types.UpdateDa
 
 // DeleteDatum is the resolver for the deleteDatum field.
 func (r *mutationResolver) DeleteDatum(ctx context.Context, input types.DeleteDatumInput) (*types.DeleteDatumPayload, error) {
-	if err := r.authorize(ctx, input.DatumID, probo.ActionDatumDelete); err != nil {
+	scope, err := r.authorize(ctx, input.DatumID, probo.ActionDatumDelete)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(input.DatumID)
 	prb := r.probo
 
 	if err := prb.Data.Delete(ctx, scope, input.DatumID); err != nil {
@@ -419,11 +418,11 @@ func (r *mutationResolver) DeleteDatum(ctx context.Context, input types.DeleteDa
 
 // PublishDataList is the resolver for the publishDataList field.
 func (r *mutationResolver) PublishDataList(ctx context.Context, input types.PublishDataListInput) (*types.PublishDataListPayload, error) {
-	if err := r.authorize(ctx, input.OrganizationID, probo.ActionDatumPublish); err != nil {
+	scope, err := r.authorize(ctx, input.OrganizationID, probo.ActionDatumPublish)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(input.OrganizationID)
 	prb := r.probo
 
 	document, documentVersion, err := prb.GeneratedDocuments.PublishDataList(ctx, scope, input.OrganizationID, input.ApproverIds, input.Minor)
@@ -449,11 +448,11 @@ func (r *mutationResolver) PublishDataList(ctx context.Context, input types.Publ
 
 // PublishAssetList is the resolver for the publishAssetList field.
 func (r *mutationResolver) PublishAssetList(ctx context.Context, input types.PublishAssetListInput) (*types.PublishAssetListPayload, error) {
-	if err := r.authorize(ctx, input.OrganizationID, probo.ActionAssetPublish); err != nil {
+	scope, err := r.authorize(ctx, input.OrganizationID, probo.ActionAssetPublish)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(input.OrganizationID)
 	prb := r.probo
 
 	document, documentVersion, err := prb.GeneratedDocuments.PublishAssetList(ctx, scope, input.OrganizationID, input.ApproverIds, input.Minor)

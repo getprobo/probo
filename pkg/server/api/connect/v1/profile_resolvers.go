@@ -22,7 +22,7 @@ import (
 
 // CreateUser is the resolver for the createUser field.
 func (r *mutationResolver) CreateUser(ctx context.Context, input types.CreateUserInput) (*types.CreateUserPayload, error) {
-	if err := r.authorize(ctx, input.OrganizationID, iam.ActionMembershipProfileCreate); err != nil {
+	if _, err := r.authorize(ctx, input.OrganizationID, iam.ActionMembershipProfileCreate); err != nil {
 		return nil, err
 	}
 
@@ -57,7 +57,7 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input types.CreateUse
 
 // DeactivateUser is the resolver for the deactivateUser field.
 func (r *mutationResolver) DeactivateUser(ctx context.Context, input types.DeactivateUserInput) (*types.DeactivateUserPayload, error) {
-	if err := r.authorize(ctx, input.ProfileID, iam.ActionMembershipProfileDeactivate); err != nil {
+	if _, err := r.authorize(ctx, input.ProfileID, iam.ActionMembershipProfileDeactivate); err != nil {
 		return nil, err
 	}
 
@@ -78,7 +78,7 @@ func (r *mutationResolver) DeactivateUser(ctx context.Context, input types.Deact
 
 // UpdateUser is the resolver for the updateUser field.
 func (r *mutationResolver) UpdateUser(ctx context.Context, input types.UpdateUserInput) (*types.UpdateUserPayload, error) {
-	if err := r.authorize(ctx, input.ID, iam.ActionMembershipProfileUpdate); err != nil {
+	if _, err := r.authorize(ctx, input.ID, iam.ActionMembershipProfileUpdate); err != nil {
 		return nil, err
 	}
 
@@ -106,7 +106,7 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, input types.UpdateUse
 
 // RemoveUser is the resolver for the removeUser field.
 func (r *mutationResolver) RemoveUser(ctx context.Context, input types.RemoveUserInput) (*types.RemoveUserPayload, error) {
-	if err := r.authorize(ctx, input.ProfileID, iam.ActionMembershipProfileDelete); err != nil {
+	if _, err := r.authorize(ctx, input.ProfileID, iam.ActionMembershipProfileDelete); err != nil {
 		return nil, err
 	}
 
@@ -134,7 +134,7 @@ func (r *mutationResolver) RemoveUser(ctx context.Context, input types.RemoveUse
 
 // Identity is the resolver for the identity field.
 func (r *profileResolver) Identity(ctx context.Context, obj *types.Profile) (*types.Identity, error) {
-	if err := r.authorize(
+	if _, err := r.authorize(
 		ctx,
 		obj.ID,
 		iam.ActionMembershipProfileGet,
@@ -159,7 +159,7 @@ func (r *profileResolver) Identity(ctx context.Context, obj *types.Profile) (*ty
 
 // Organization is the resolver for the organization field.
 func (r *profileResolver) Organization(ctx context.Context, obj *types.Profile) (*types.Organization, error) {
-	if err := r.authorize(ctx, obj.Organization.ID, iam.ActionOrganizationGet, authz.WithSkipAssumptionCheck()); err != nil {
+	if _, err := r.authorize(ctx, obj.Organization.ID, iam.ActionOrganizationGet, authz.WithSkipAssumptionCheck()); err != nil {
 		return nil, err
 	}
 
@@ -179,7 +179,7 @@ func (r *profileResolver) Organization(ctx context.Context, obj *types.Profile) 
 
 // Membership is the resolver for the membership field.
 func (r *profileResolver) Membership(ctx context.Context, obj *types.Profile) (*types.Membership, error) {
-	if err := r.authorize(ctx, obj.ID, iam.ActionMembershipGet, authz.WithSkipAssumptionCheck()); err != nil {
+	if _, err := r.authorize(ctx, obj.ID, iam.ActionMembershipGet, authz.WithSkipAssumptionCheck()); err != nil {
 		return nil, err
 	}
 
@@ -199,7 +199,7 @@ func (r *profileResolver) Membership(ctx context.Context, obj *types.Profile) (*
 
 // PendingInvitations is the resolver for the pendingInvitations field.
 func (r *profileResolver) PendingInvitations(ctx context.Context, obj *types.Profile, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.InvitationOrderBy) (*types.InvitationConnection, error) {
-	if err := r.authorize(ctx, obj.ID, iam.ActionInvitationList); err != nil {
+	if _, err := r.authorize(ctx, obj.ID, iam.ActionInvitationList); err != nil {
 		return nil, err
 	}
 

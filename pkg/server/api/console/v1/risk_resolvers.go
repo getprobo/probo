@@ -24,11 +24,11 @@ import (
 
 // CreateRisk is the resolver for the createRisk field.
 func (r *mutationResolver) CreateRisk(ctx context.Context, input types.CreateRiskInput) (*types.CreateRiskPayload, error) {
-	if err := r.authorize(ctx, input.OrganizationID, probo.ActionRiskCreate); err != nil {
+	scope, err := r.authorize(ctx, input.OrganizationID, probo.ActionRiskCreate)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(input.OrganizationID)
 	prb := r.probo
 
 	risk, err := prb.Risks.Create(
@@ -68,11 +68,11 @@ func (r *mutationResolver) CreateRisk(ctx context.Context, input types.CreateRis
 
 // UpdateRisk is the resolver for the updateRisk field.
 func (r *mutationResolver) UpdateRisk(ctx context.Context, input types.UpdateRiskInput) (*types.UpdateRiskPayload, error) {
-	if err := r.authorize(ctx, input.ID, probo.ActionRiskUpdate); err != nil {
+	scope, err := r.authorize(ctx, input.ID, probo.ActionRiskUpdate)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(input.ID)
 	prb := r.probo
 
 	risk, err := prb.Risks.Update(
@@ -108,15 +108,14 @@ func (r *mutationResolver) UpdateRisk(ctx context.Context, input types.UpdateRis
 
 // DeleteRisk is the resolver for the deleteRisk field.
 func (r *mutationResolver) DeleteRisk(ctx context.Context, input types.DeleteRiskInput) (*types.DeleteRiskPayload, error) {
-	if err := r.authorize(ctx, input.RiskID, probo.ActionRiskDelete); err != nil {
+	scope, err := r.authorize(ctx, input.RiskID, probo.ActionRiskDelete)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(input.RiskID)
 	prb := r.probo
 
-	err := prb.Risks.Delete(ctx, scope, input.RiskID)
-	if err != nil {
+	if err := prb.Risks.Delete(ctx, scope, input.RiskID); err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete risk", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
@@ -128,11 +127,11 @@ func (r *mutationResolver) DeleteRisk(ctx context.Context, input types.DeleteRis
 
 // CreateRiskMeasureMapping is the resolver for the createRiskMeasureMapping field.
 func (r *mutationResolver) CreateRiskMeasureMapping(ctx context.Context, input types.CreateRiskMeasureMappingInput) (*types.CreateRiskMeasureMappingPayload, error) {
-	if err := r.authorize(ctx, input.RiskID, probo.ActionRiskMeasureMappingCreate); err != nil {
+	scope, err := r.authorize(ctx, input.RiskID, probo.ActionRiskMeasureMappingCreate)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(input.RiskID)
 	prb := r.probo
 
 	risk, measure, err := prb.Risks.CreateMeasureMapping(ctx, scope, input.RiskID, input.MeasureID)
@@ -149,11 +148,11 @@ func (r *mutationResolver) CreateRiskMeasureMapping(ctx context.Context, input t
 
 // DeleteRiskMeasureMapping is the resolver for the deleteRiskMeasureMapping field.
 func (r *mutationResolver) DeleteRiskMeasureMapping(ctx context.Context, input types.DeleteRiskMeasureMappingInput) (*types.DeleteRiskMeasureMappingPayload, error) {
-	if err := r.authorize(ctx, input.RiskID, probo.ActionRiskMeasureMappingDelete); err != nil {
+	scope, err := r.authorize(ctx, input.RiskID, probo.ActionRiskMeasureMappingDelete)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(input.RiskID)
 	prb := r.probo
 
 	risk, measure, err := prb.Risks.DeleteMeasureMapping(ctx, scope, input.RiskID, input.MeasureID)
@@ -170,11 +169,11 @@ func (r *mutationResolver) DeleteRiskMeasureMapping(ctx context.Context, input t
 
 // CreateRiskDocumentMapping is the resolver for the createRiskDocumentMapping field.
 func (r *mutationResolver) CreateRiskDocumentMapping(ctx context.Context, input types.CreateRiskDocumentMappingInput) (*types.CreateRiskDocumentMappingPayload, error) {
-	if err := r.authorize(ctx, input.RiskID, probo.ActionRiskDocumentMappingCreate); err != nil {
+	scope, err := r.authorize(ctx, input.RiskID, probo.ActionRiskDocumentMappingCreate)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(input.RiskID)
 	prb := r.probo
 
 	risk, document, err := prb.Risks.CreateDocumentMapping(ctx, scope, input.RiskID, input.DocumentID)
@@ -191,11 +190,11 @@ func (r *mutationResolver) CreateRiskDocumentMapping(ctx context.Context, input 
 
 // DeleteRiskDocumentMapping is the resolver for the deleteRiskDocumentMapping field.
 func (r *mutationResolver) DeleteRiskDocumentMapping(ctx context.Context, input types.DeleteRiskDocumentMappingInput) (*types.DeleteRiskDocumentMappingPayload, error) {
-	if err := r.authorize(ctx, input.RiskID, probo.ActionRiskDocumentMappingDelete); err != nil {
+	scope, err := r.authorize(ctx, input.RiskID, probo.ActionRiskDocumentMappingDelete)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(input.RiskID)
 	prb := r.probo
 
 	risk, document, err := prb.Risks.DeleteDocumentMapping(ctx, scope, input.RiskID, input.DocumentID)
@@ -212,11 +211,11 @@ func (r *mutationResolver) DeleteRiskDocumentMapping(ctx context.Context, input 
 
 // CreateRiskObligationMapping is the resolver for the createRiskObligationMapping field.
 func (r *mutationResolver) CreateRiskObligationMapping(ctx context.Context, input types.CreateRiskObligationMappingInput) (*types.CreateRiskObligationMappingPayload, error) {
-	if err := r.authorize(ctx, input.RiskID, probo.ActionRiskObligationMappingCreate); err != nil {
+	scope, err := r.authorize(ctx, input.RiskID, probo.ActionRiskObligationMappingCreate)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(input.RiskID)
 	prb := r.probo
 
 	risk, obligation, err := prb.Risks.CreateObligationMapping(ctx, scope, input.RiskID, input.ObligationID)
@@ -233,11 +232,11 @@ func (r *mutationResolver) CreateRiskObligationMapping(ctx context.Context, inpu
 
 // DeleteRiskObligationMapping is the resolver for the deleteRiskObligationMapping field.
 func (r *mutationResolver) DeleteRiskObligationMapping(ctx context.Context, input types.DeleteRiskObligationMappingInput) (*types.DeleteRiskObligationMappingPayload, error) {
-	if err := r.authorize(ctx, input.RiskID, probo.ActionRiskObligationMappingDelete); err != nil {
+	scope, err := r.authorize(ctx, input.RiskID, probo.ActionRiskObligationMappingDelete)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(input.RiskID)
 	prb := r.probo
 
 	risk, obligation, err := prb.Risks.DeleteObligationMapping(ctx, scope, input.RiskID, input.ObligationID)
@@ -254,11 +253,11 @@ func (r *mutationResolver) DeleteRiskObligationMapping(ctx context.Context, inpu
 
 // PublishRiskList is the resolver for the publishRiskList field.
 func (r *mutationResolver) PublishRiskList(ctx context.Context, input types.PublishRiskListInput) (*types.PublishRiskListPayload, error) {
-	if err := r.authorize(ctx, input.OrganizationID, probo.ActionRiskPublish); err != nil {
+	scope, err := r.authorize(ctx, input.OrganizationID, probo.ActionRiskPublish)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(input.OrganizationID)
 	prb := r.probo
 
 	document, documentVersion, err := prb.GeneratedDocuments.PublishRiskList(ctx, scope, input.OrganizationID, input.ApproverIds, input.Minor)
@@ -284,7 +283,7 @@ func (r *mutationResolver) PublishRiskList(ctx context.Context, input types.Publ
 
 // Owner is the resolver for the owner field.
 func (r *riskResolver) Owner(ctx context.Context, obj *types.Risk) (*types.Profile, error) {
-	if err := r.authorize(ctx, obj.ID, iam.ActionMembershipProfileGet); err != nil {
+	if _, err := r.authorize(ctx, obj.ID, iam.ActionMembershipProfileGet); err != nil {
 		return nil, err
 	}
 
@@ -310,7 +309,7 @@ func (r *riskResolver) Owner(ctx context.Context, obj *types.Risk) (*types.Profi
 
 // Organization is the resolver for the organization field.
 func (r *riskResolver) Organization(ctx context.Context, obj *types.Risk) (*types.Organization, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGet); err != nil {
+	if _, err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGet); err != nil {
 		return nil, err
 	}
 
@@ -332,11 +331,11 @@ func (r *riskResolver) Organization(ctx context.Context, obj *types.Risk) (*type
 
 // Measures is the resolver for the measures field.
 func (r *riskResolver) Measures(ctx context.Context, obj *types.Risk, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MeasureOrderBy, filter *types.MeasureFilter) (*types.MeasureConnection, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionMeasureList); err != nil {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionMeasureList)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(obj.ID)
 	prb := r.probo
 
 	pageOrderBy := page.OrderBy[coredata.MeasureOrderField]{
@@ -368,11 +367,11 @@ func (r *riskResolver) Measures(ctx context.Context, obj *types.Risk, first *int
 
 // Documents is the resolver for the documents field.
 func (r *riskResolver) Documents(ctx context.Context, obj *types.Risk, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentOrderBy, filter *types.DocumentFilter) (*types.DocumentConnection, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionDocumentList); err != nil {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionDocumentList)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(obj.ID)
 	prb := r.probo
 
 	pageOrderBy := page.OrderBy[coredata.DocumentOrderField]{
@@ -407,11 +406,11 @@ func (r *riskResolver) Documents(ctx context.Context, obj *types.Risk, first *in
 
 // Controls is the resolver for the controls field.
 func (r *riskResolver) Controls(ctx context.Context, obj *types.Risk, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ControlOrderBy, filter *types.ControlFilter) (*types.ControlConnection, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionControlList); err != nil {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionControlList)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(obj.ID)
 	prb := r.probo
 
 	pageOrderBy := page.OrderBy[coredata.ControlOrderField]{
@@ -443,11 +442,11 @@ func (r *riskResolver) Controls(ctx context.Context, obj *types.Risk, first *int
 
 // Obligations is the resolver for the obligations field.
 func (r *riskResolver) Obligations(ctx context.Context, obj *types.Risk, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ObligationOrderBy) (*types.ObligationConnection, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionObligationList); err != nil {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionObligationList)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(obj.ID)
 	prb := r.probo
 
 	pageOrderBy := page.OrderBy[coredata.ObligationOrderField]{
@@ -474,11 +473,10 @@ func (r *riskResolver) Obligations(ctx context.Context, obj *types.Risk, first *
 
 // Scenarios is the resolver for the scenarios field.
 func (r *riskResolver) Scenarios(ctx context.Context, obj *types.Risk, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.RiskAssessmentScenarioOrderBy) (*types.RiskAssessmentScenarioConnection, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionRiskAssessmentScenarioList); err != nil {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionRiskAssessmentScenarioList)
+	if err != nil {
 		return nil, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(obj.ID)
 
 	pageOrderBy := page.OrderBy[coredata.RiskAssessmentScenarioOrderField]{
 		Field:     coredata.RiskAssessmentScenarioOrderFieldCreatedAt,
@@ -506,11 +504,11 @@ func (r *riskResolver) Permission(ctx context.Context, obj *types.Risk, action s
 
 // TotalCount is the resolver for the totalCount field.
 func (r *riskConnectionResolver) TotalCount(ctx context.Context, obj *types.RiskConnection) (int, error) {
-	if err := r.authorize(ctx, obj.ParentID, probo.ActionRiskList); err != nil {
+	scope, err := r.authorize(ctx, obj.ParentID, probo.ActionRiskList)
+	if err != nil {
 		return 0, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(obj.ParentID)
 	prb := r.probo
 
 	switch obj.Resolver.(type) {

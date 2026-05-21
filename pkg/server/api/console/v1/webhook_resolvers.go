@@ -24,11 +24,11 @@ import (
 
 // CreateWebhookSubscription is the resolver for the createWebhookSubscription field.
 func (r *mutationResolver) CreateWebhookSubscription(ctx context.Context, input types.CreateWebhookSubscriptionInput) (*types.CreateWebhookSubscriptionPayload, error) {
-	if err := r.authorize(ctx, input.OrganizationID, probo.ActionWebhookSubscriptionCreate); err != nil {
+	scope, err := r.authorize(ctx, input.OrganizationID, probo.ActionWebhookSubscriptionCreate)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(input.OrganizationID)
 	prb := r.probo
 
 	wc, err := prb.WebhookSubscriptions.Create(
@@ -56,11 +56,11 @@ func (r *mutationResolver) CreateWebhookSubscription(ctx context.Context, input 
 
 // UpdateWebhookSubscription is the resolver for the updateWebhookSubscription field.
 func (r *mutationResolver) UpdateWebhookSubscription(ctx context.Context, input types.UpdateWebhookSubscriptionInput) (*types.UpdateWebhookSubscriptionPayload, error) {
-	if err := r.authorize(ctx, input.ID, probo.ActionWebhookSubscriptionUpdate); err != nil {
+	scope, err := r.authorize(ctx, input.ID, probo.ActionWebhookSubscriptionUpdate)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(input.ID)
 	prb := r.probo
 
 	wc, err := prb.WebhookSubscriptions.Update(
@@ -88,15 +88,14 @@ func (r *mutationResolver) UpdateWebhookSubscription(ctx context.Context, input 
 
 // DeleteWebhookSubscription is the resolver for the deleteWebhookSubscription field.
 func (r *mutationResolver) DeleteWebhookSubscription(ctx context.Context, input types.DeleteWebhookSubscriptionInput) (*types.DeleteWebhookSubscriptionPayload, error) {
-	if err := r.authorize(ctx, input.WebhookSubscriptionID, probo.ActionWebhookSubscriptionDelete); err != nil {
+	scope, err := r.authorize(ctx, input.WebhookSubscriptionID, probo.ActionWebhookSubscriptionDelete)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(input.WebhookSubscriptionID)
 	prb := r.probo
 
-	err := prb.WebhookSubscriptions.Delete(ctx, scope, input.WebhookSubscriptionID)
-	if err != nil {
+	if err := prb.WebhookSubscriptions.Delete(ctx, scope, input.WebhookSubscriptionID); err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete webhook subscription", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
@@ -108,11 +107,11 @@ func (r *mutationResolver) DeleteWebhookSubscription(ctx context.Context, input 
 
 // TotalCount is the resolver for the totalCount field.
 func (r *webhookEventConnectionResolver) TotalCount(ctx context.Context, obj *types.WebhookEventConnection) (int, error) {
-	if err := r.authorize(ctx, obj.ParentID, probo.ActionWebhookSubscriptionGet); err != nil {
+	scope, err := r.authorize(ctx, obj.ParentID, probo.ActionWebhookSubscriptionGet)
+	if err != nil {
 		return 0, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(obj.ParentID)
 	prb := r.probo
 
 	count, err := prb.WebhookSubscriptions.CountEventsForSubscriptionID(ctx, scope, obj.ParentID)
@@ -126,7 +125,7 @@ func (r *webhookEventConnectionResolver) TotalCount(ctx context.Context, obj *ty
 
 // Organization is the resolver for the organization field.
 func (r *webhookSubscriptionResolver) Organization(ctx context.Context, obj *types.WebhookSubscription) (*types.Organization, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGet); err != nil {
+	if _, err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGet); err != nil {
 		return nil, err
 	}
 
@@ -148,11 +147,11 @@ func (r *webhookSubscriptionResolver) Organization(ctx context.Context, obj *typ
 
 // SigningSecret is the resolver for the signingSecret field.
 func (r *webhookSubscriptionResolver) SigningSecret(ctx context.Context, obj *types.WebhookSubscription) (string, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionWebhookSubscriptionUpdate); err != nil {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionWebhookSubscriptionUpdate)
+	if err != nil {
 		return "", err
 	}
 
-	scope := coredata.NewScopeFromObjectID(obj.ID)
 	prb := r.probo
 
 	signingSecret, err := prb.WebhookSubscriptions.GetSigningSecret(ctx, scope, obj.ID)
@@ -166,11 +165,11 @@ func (r *webhookSubscriptionResolver) SigningSecret(ctx context.Context, obj *ty
 
 // Events is the resolver for the events field.
 func (r *webhookSubscriptionResolver) Events(ctx context.Context, obj *types.WebhookSubscription, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.WebhookEventOrderBy) (*types.WebhookEventConnection, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionWebhookSubscriptionGet); err != nil {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionWebhookSubscriptionGet)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(obj.ID)
 	prb := r.probo
 
 	pageOrderBy := page.OrderBy[coredata.WebhookEventOrderField]{
@@ -202,11 +201,11 @@ func (r *webhookSubscriptionResolver) Permission(ctx context.Context, obj *types
 
 // TotalCount is the resolver for the totalCount field.
 func (r *webhookSubscriptionConnectionResolver) TotalCount(ctx context.Context, obj *types.WebhookSubscriptionConnection) (int, error) {
-	if err := r.authorize(ctx, obj.ParentID, probo.ActionWebhookSubscriptionList); err != nil {
+	scope, err := r.authorize(ctx, obj.ParentID, probo.ActionWebhookSubscriptionList)
+	if err != nil {
 		return 0, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(obj.ParentID)
 	prb := r.probo
 
 	switch obj.Resolver.(type) {

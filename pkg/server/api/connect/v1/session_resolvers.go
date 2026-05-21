@@ -416,7 +416,7 @@ func (r *mutationResolver) AssumeOrganizationSession(ctx context.Context, input 
 
 // RevokeSession is the resolver for the revokeSession field.
 func (r *mutationResolver) RevokeSession(ctx context.Context, input types.RevokeSessionInput) (*types.RevokeSessionPayload, error) {
-	if err := r.authorize(ctx, input.SessionID, iam.ActionSessionRevoke); err != nil {
+	if _, err := r.authorize(ctx, input.SessionID, iam.ActionSessionRevoke); err != nil {
 		return nil, err
 	}
 
@@ -438,7 +438,7 @@ func (r *mutationResolver) RevokeSession(ctx context.Context, input types.Revoke
 
 // RevokeAllSessions is the resolver for the revokeAllSessions field.
 func (r *mutationResolver) RevokeAllSessions(ctx context.Context) (*types.RevokeAllSessionsPayload, error) {
-	if err := r.authorize(ctx, authn.SessionFromContext(ctx).ID, iam.ActionSessionRevokeAll); err != nil {
+	if _, err := r.authorize(ctx, authn.SessionFromContext(ctx).ID, iam.ActionSessionRevokeAll); err != nil {
 		return nil, err
 	}
 

@@ -71,18 +71,32 @@ func (a *Authorizer) RegisterPolicySet(ps *PolicySet) {
 }
 
 // Authorize checks if the principal is allowed to perform the action on the resource.
-func (a *Authorizer) Authorize(ctx context.Context, params AuthorizeParams) error {
+func (a *Authorizer) Authorize(ctx context.Context, params AuthorizeParams) (*coredata.Scope, error) {
 	if params.Principal.EntityType() != coredata.IdentityEntityType {
-		return NewUnsupportedPrincipalTypeError(params.Principal.EntityType())
+		return nil, NewUnsupportedPrincipalTypeError(params.Principal.EntityType())
 	}
 
-	return a.pg.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error { return a.authorize(ctx, tx, params) })
+	var scope *coredata.Scope
+
+	if err := a.pg.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		authorizedScope, err := a.authorize(ctx, tx, params)
+		if err != nil {
+			return err
+		}
+
+		scope = authorizedScope
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+
+	return scope, nil
 }
 
-func (a *Authorizer) authorize(ctx context.Context, tx pg.Tx, params AuthorizeParams) error {
+func (a *Authorizer) authorize(ctx context.Context, tx pg.Tx, params AuthorizeParams) (*coredata.Scope, error) {
 	resourceAttrs, err := a.buildResourceAttributes(ctx, tx, params)
 	if err != nil {
-		return fmt.Errorf("cannot build resource attributes: %w", err)
+		return nil, fmt.Errorf("cannot build resource attributes: %w", err)
 	}
 
 	resourceOrgID := resourceAttrs["organization_id"]
@@ -90,7 +104,7 @@ func (a *Authorizer) authorize(ctx context.Context, tx pg.Tx, params AuthorizePa
 	// Find role for resource's organization
 	membership, err := a.loadMembership(ctx, tx, params.Principal, resourceOrgID)
 	if err != nil {
-		return fmt.Errorf("cannot load memberships for principal: %w", err)
+		return nil, fmt.Errorf("cannot load memberships for principal: %w", err)
 	}
 
 	// Check whether the viewer is currently assuming the org of the accessed resource
@@ -102,14 +116,14 @@ func (a *Authorizer) authorize(ctx context.Context, tx pg.Tx, params AuthorizePa
 			membership.ID,
 		); err != nil {
 			if _, ok := errors.AsType[*ErrSessionNotFound](err); ok {
-				return NewAssumptionRequiredError(params.Principal, membership.ID)
+				return nil, NewAssumptionRequiredError(params.Principal, membership.ID)
 			}
 
 			if _, ok := errors.AsType[*ErrSessionExpired](err); ok {
-				return NewAssumptionRequiredError(params.Principal, membership.ID)
+				return nil, NewAssumptionRequiredError(params.Principal, membership.ID)
 			}
 
-			return fmt.Errorf("cannot get active child session for membership: %w", err)
+			return nil, fmt.Errorf("cannot get active child session for membership: %w", err)
 		}
 	}
 
@@ -129,7 +143,7 @@ func (a *Authorizer) authorize(ctx context.Context, tx pg.Tx, params AuthorizePa
 
 	principalAttrs, err := a.buildPrincipalAttributes(ctx, tx, params.Principal, scopedPrincipalAttrs)
 	if err != nil {
-		return fmt.Errorf("cannot build principal attributes: %w", err)
+		return nil, fmt.Errorf("cannot build principal attributes: %w", err)
 	}
 
 	if params.Session != nil {
@@ -149,11 +163,21 @@ func (a *Authorizer) authorize(ctx context.Context, tx pg.Tx, params AuthorizePa
 	}
 
 	if a.evaluator.Evaluate(req, policies).IsAllowed() {
+		scope := coredata.NewScopeFromObjectID(params.Resource)
+		if resourceOrgID != "" {
+			orgID, err := gid.ParseGID(resourceOrgID)
+			if err != nil {
+				return nil, fmt.Errorf("cannot parse organization id from resource attributes: %w", err)
+			}
+
+			scope = coredata.NewScope(orgID.TenantID())
+		}
+
 		a.recordAuditLog(ctx, tx, params, resourceAttrs)
-		return nil
+		return scope, nil
 	}
 
-	return NewInsufficientPermissionsError(params.Principal, params.Resource, params.Action)
+	return nil, NewInsufficientPermissionsError(params.Principal, params.Resource, params.Action)
 }
 
 func (a *Authorizer) loadMembership(

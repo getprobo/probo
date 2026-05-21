@@ -37,7 +37,7 @@ The evaluator processes all statements against a request:
 `Authorizer` is the main orchestrator in `pkg/iam/authorizer.go`:
 
 ```go
-err := iamService.Authorizer.Authorize(ctx, iam.AuthorizeParams{
+scope, err := iamService.Authorizer.Authorize(ctx, iam.AuthorizeParams{
 	Principal:          identityID,    // who
 	Resource:           thirdPartyID,      // what
 	Action:             probo.ActionThirdPartyGet,  // which action
@@ -51,7 +51,8 @@ The flow:
 3. Load resource attributes via `AuthorizationAttributes()` on the entity
 4. Build policies: identity-scoped + role-specific
 5. Evaluate all policies
-6. Return `ErrInsufficientPermissions` if no allow match
+6. Return an authorization scope (`*coredata.Scope`) for downstream data access
+7. Return `ErrInsufficientPermissions` if no allow match
 
 ## PolicySet
 
@@ -126,14 +127,16 @@ var (
 
 **GraphQL resolvers** use `AuthorizeFunc` from `pkg/server/api/authz/`:
 ```go
-if err := authorize(ctx, thirdPartyID, probo.ActionThirdPartyGet); err != nil {
+scope, err := authorize(ctx, thirdPartyID, probo.ActionThirdPartyGet)
+if err != nil {
 	return nil, err
 }
 ```
 
 **MCP resolvers** use `Authorize` and return early on error:
 ```go
-if err := r.Authorize(ctx, input.ID, probo.ActionThirdPartyGet); err != nil {
+scope, err := r.Authorize(ctx, input.ID, probo.ActionThirdPartyGet)
+if err != nil {
 	return nil, types.GetThirdPartyOutput{}, err
 }
 ```
@@ -183,7 +186,7 @@ When adding a new entity that needs authorization:
 2. **Role policies** — wire actions into the appropriate role policies in `pkg/probo/policies.go` (`OwnerPolicy`, `AdminPolicy`, `ViewerPolicy`, etc.) with `organization_id` condition
 3. **`AuthorizationAttributes`** — implement on the `coredata` entity struct, returning at minimum `{"organization_id": ...}` (use the denormalized `OrganizationID` field — see coredata doc)
 4. **Entity type registry** — register in `pkg/coredata/entity_type_reg.go` and `NewEntityFromID` so the authorizer can construct the entity from its GID
-5. **Resolver calls** — add `r.authorize(ctx, id, probo.ActionEntityGet)` in GraphQL resolvers and `if err := r.Authorize(ctx, id, probo.ActionEntityGet); err != nil { return nil, types.GetEntityOutput{}, err }` in MCP resolvers
+5. **Resolver calls** — add `scope, err := r.authorize(ctx, id, probo.ActionEntityGet)` in GraphQL resolvers and `scope, err := r.Authorize(ctx, id, probo.ActionEntityGet)` in MCP resolvers, then pass `scope` to services
 
 ## Key patterns
 

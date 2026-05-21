@@ -28,7 +28,7 @@ import (
 
 type (
 	AuthorizeFuncOption func(*iam.AuthorizeParams)
-	AuthorizeFunc       func(context.Context, gid.GID, string, ...AuthorizeFuncOption) error
+	AuthorizeFunc       func(context.Context, gid.GID, string, ...AuthorizeFuncOption) (*coredata.Scope, error)
 )
 
 func WithAttr(key, value string) AuthorizeFuncOption {
@@ -60,7 +60,7 @@ func NewAuthorizeFunc(
 		objectID gid.GID,
 		action string,
 		options ...AuthorizeFuncOption,
-	) error {
+	) (*coredata.Scope, error) {
 		identity := authn.IdentityFromContext(ctx)
 		session := authn.SessionFromContext(ctx)
 
@@ -78,24 +78,25 @@ func NewAuthorizeFunc(
 			option(&params)
 		}
 
-		if err := svc.Authorizer.Authorize(ctx, params); err != nil {
+		scope, err := svc.Authorizer.Authorize(ctx, params)
+		if err != nil {
 			if _, ok := errors.AsType[*iam.ErrAssumptionRequired](err); ok {
-				return gqlutils.AssumptionRequired(ctx, err)
+				return nil, gqlutils.AssumptionRequired(ctx, err)
 			}
 
 			if _, ok := errors.AsType[*iam.ErrInsufficientPermissions](err); ok {
-				return gqlutils.Forbidden(ctx, err)
+				return nil, gqlutils.Forbidden(ctx, err)
 			}
 
 			if errors.Is(err, coredata.ErrResourceNotFound) {
-				return gqlutils.NotFoundf(ctx, "resource not found")
+				return nil, gqlutils.NotFoundf(ctx, "resource not found")
 			}
 
 			logger.ErrorCtx(ctx, "cannot authorize", log.Error(err))
 
-			return gqlutils.Internal(ctx)
+			return nil, gqlutils.Internal(ctx)
 		}
 
-		return nil
+		return scope, nil
 	}
 }

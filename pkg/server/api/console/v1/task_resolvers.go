@@ -24,11 +24,11 @@ import (
 
 // CreateTask is the resolver for the createTask field.
 func (r *mutationResolver) CreateTask(ctx context.Context, input types.CreateTaskInput) (*types.CreateTaskPayload, error) {
-	if err := r.authorize(ctx, input.OrganizationID, probo.ActionTaskCreate); err != nil {
+	scope, err := r.authorize(ctx, input.OrganizationID, probo.ActionTaskCreate)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(input.OrganizationID)
 	prb := r.probo
 
 	task, err := prb.Tasks.Create(
@@ -65,11 +65,11 @@ func (r *mutationResolver) CreateTask(ctx context.Context, input types.CreateTas
 
 // UpdateTask is the resolver for the updateTask field.
 func (r *mutationResolver) UpdateTask(ctx context.Context, input types.UpdateTaskInput) (*types.UpdateTaskPayload, error) {
-	if err := r.authorize(ctx, input.TaskID, probo.ActionTaskUpdate); err != nil {
+	scope, err := r.authorize(ctx, input.TaskID, probo.ActionTaskUpdate)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(input.TaskID)
 	prb := r.probo
 
 	task, err := prb.Tasks.Update(
@@ -104,15 +104,14 @@ func (r *mutationResolver) UpdateTask(ctx context.Context, input types.UpdateTas
 
 // DeleteTask is the resolver for the deleteTask field.
 func (r *mutationResolver) DeleteTask(ctx context.Context, input types.DeleteTaskInput) (*types.DeleteTaskPayload, error) {
-	if err := r.authorize(ctx, input.TaskID, probo.ActionTaskDelete); err != nil {
+	scope, err := r.authorize(ctx, input.TaskID, probo.ActionTaskDelete)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(input.TaskID)
 	prb := r.probo
 
-	err := prb.Tasks.Delete(ctx, scope, input.TaskID)
-	if err != nil {
+	if err := prb.Tasks.Delete(ctx, scope, input.TaskID); err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete task", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
@@ -124,7 +123,7 @@ func (r *mutationResolver) DeleteTask(ctx context.Context, input types.DeleteTas
 
 // AssignedTo is the resolver for the assignedTo field.
 func (r *taskResolver) AssignedTo(ctx context.Context, obj *types.Task) (*types.Profile, error) {
-	if err := r.authorize(ctx, obj.ID, iam.ActionMembershipProfileGet); err != nil {
+	if _, err := r.authorize(ctx, obj.ID, iam.ActionMembershipProfileGet); err != nil {
 		return nil, err
 	}
 
@@ -150,7 +149,7 @@ func (r *taskResolver) AssignedTo(ctx context.Context, obj *types.Task) (*types.
 
 // Organization is the resolver for the organization field.
 func (r *taskResolver) Organization(ctx context.Context, obj *types.Task) (*types.Organization, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGet); err != nil {
+	if _, err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGet); err != nil {
 		return nil, err
 	}
 
@@ -172,7 +171,7 @@ func (r *taskResolver) Organization(ctx context.Context, obj *types.Task) (*type
 
 // Measure is the resolver for the measure field.
 func (r *taskResolver) Measure(ctx context.Context, obj *types.Task) (*types.Measure, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionMeasureGet); err != nil {
+	if _, err := r.authorize(ctx, obj.ID, probo.ActionMeasureGet); err != nil {
 		return nil, err
 	}
 
@@ -198,11 +197,11 @@ func (r *taskResolver) Measure(ctx context.Context, obj *types.Task) (*types.Mea
 
 // Evidences is the resolver for the evidences field.
 func (r *taskResolver) Evidences(ctx context.Context, obj *types.Task, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.EvidenceOrderBy) (*types.EvidenceConnection, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionEvidenceList); err != nil {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionEvidenceList)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(obj.ID)
 	prb := r.probo
 
 	pageOrderBy := page.OrderBy[coredata.EvidenceOrderField]{
@@ -234,11 +233,11 @@ func (r *taskResolver) Permission(ctx context.Context, obj *types.Task, action s
 
 // TotalCount is the resolver for the totalCount field.
 func (r *taskConnectionResolver) TotalCount(ctx context.Context, obj *types.TaskConnection) (int, error) {
-	if err := r.authorize(ctx, obj.ParentID, probo.ActionTaskList); err != nil {
+	scope, err := r.authorize(ctx, obj.ParentID, probo.ActionTaskList)
+	if err != nil {
 		return 0, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(obj.ParentID)
 	prb := r.probo
 
 	switch obj.Resolver.(type) {

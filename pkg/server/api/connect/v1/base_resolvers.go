@@ -146,7 +146,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 		return nil, fmt.Errorf("unsupported entity type: %d", id.EntityType())
 	}
 
-	if err := r.authorize(ctx, id, action); err != nil {
+	if _, err := r.authorize(ctx, id, action); err != nil {
 		return nil, err
 	}
 

@@ -24,11 +24,10 @@ import (
 
 // CreateRiskAssessment is the resolver for the createRiskAssessment field.
 func (r *mutationResolver) CreateRiskAssessment(ctx context.Context, input types.CreateRiskAssessmentInput) (*types.CreateRiskAssessmentPayload, error) {
-	if err := r.authorize(ctx, input.OrganizationID, probo.ActionRiskAssessmentCreate); err != nil {
+	scope, err := r.authorize(ctx, input.OrganizationID, probo.ActionRiskAssessmentCreate)
+	if err != nil {
 		return nil, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(input.OrganizationID)
 
 	ra, err := r.riskManagement.Create(
 		ctx,
@@ -60,11 +59,10 @@ func (r *mutationResolver) CreateRiskAssessment(ctx context.Context, input types
 
 // UpdateRiskAssessment is the resolver for the updateRiskAssessment field.
 func (r *mutationResolver) UpdateRiskAssessment(ctx context.Context, input types.UpdateRiskAssessmentInput) (*types.UpdateRiskAssessmentPayload, error) {
-	if err := r.authorize(ctx, input.ID, probo.ActionRiskAssessmentUpdate); err != nil {
+	scope, err := r.authorize(ctx, input.ID, probo.ActionRiskAssessmentUpdate)
+	if err != nil {
 		return nil, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(input.ID)
 
 	ra, err := r.riskManagement.Update(
 		ctx,
@@ -90,11 +88,11 @@ func (r *mutationResolver) UpdateRiskAssessment(ctx context.Context, input types
 
 // DeleteRiskAssessment is the resolver for the deleteRiskAssessment field.
 func (r *mutationResolver) DeleteRiskAssessment(ctx context.Context, input types.DeleteRiskAssessmentInput) (*types.DeleteRiskAssessmentPayload, error) {
-	if err := r.authorize(ctx, input.RiskAssessmentID, probo.ActionRiskAssessmentDelete); err != nil {
+	scope, err := r.authorize(ctx, input.RiskAssessmentID, probo.ActionRiskAssessmentDelete)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(input.RiskAssessmentID)
 	if err := r.riskManagement.Delete(ctx, scope, input.RiskAssessmentID); err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
@@ -110,11 +108,10 @@ func (r *mutationResolver) DeleteRiskAssessment(ctx context.Context, input types
 
 // CreateRiskAssessmentScope is the resolver for the createRiskAssessmentScope field.
 func (r *mutationResolver) CreateRiskAssessmentScope(ctx context.Context, input types.CreateRiskAssessmentScopeInput) (*types.CreateRiskAssessmentScopePayload, error) {
-	if err := r.authorize(ctx, input.RiskAssessmentID, probo.ActionRiskAssessmentScopeCreate); err != nil {
+	scope, err := r.authorize(ctx, input.RiskAssessmentID, probo.ActionRiskAssessmentScopeCreate)
+	if err != nil {
 		return nil, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(input.RiskAssessmentID)
 
 	raScope, err := r.riskManagement.CreateScope(
 		ctx,
@@ -145,11 +142,10 @@ func (r *mutationResolver) CreateRiskAssessmentScope(ctx context.Context, input 
 
 // UpdateRiskAssessmentScope is the resolver for the updateRiskAssessmentScope field.
 func (r *mutationResolver) UpdateRiskAssessmentScope(ctx context.Context, input types.UpdateRiskAssessmentScopeInput) (*types.UpdateRiskAssessmentScopePayload, error) {
-	if err := r.authorize(ctx, input.ID, probo.ActionRiskAssessmentScopeUpdate); err != nil {
+	scope, err := r.authorize(ctx, input.ID, probo.ActionRiskAssessmentScopeUpdate)
+	if err != nil {
 		return nil, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(input.ID)
 
 	raScope, err := r.riskManagement.UpdateScope(
 		ctx,
@@ -174,11 +170,11 @@ func (r *mutationResolver) UpdateRiskAssessmentScope(ctx context.Context, input 
 
 // DeleteRiskAssessmentScope is the resolver for the deleteRiskAssessmentScope field.
 func (r *mutationResolver) DeleteRiskAssessmentScope(ctx context.Context, input types.DeleteRiskAssessmentScopeInput) (*types.DeleteRiskAssessmentScopePayload, error) {
-	if err := r.authorize(ctx, input.RiskAssessmentScopeID, probo.ActionRiskAssessmentScopeDelete); err != nil {
+	scope, err := r.authorize(ctx, input.RiskAssessmentScopeID, probo.ActionRiskAssessmentScopeDelete)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(input.RiskAssessmentScopeID)
 	if err := r.riskManagement.DeleteScope(ctx, scope, input.RiskAssessmentScopeID); err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
@@ -194,11 +190,10 @@ func (r *mutationResolver) DeleteRiskAssessmentScope(ctx context.Context, input 
 
 // CreateRiskAssessmentNode is the resolver for the createRiskAssessmentNode field.
 func (r *mutationResolver) CreateRiskAssessmentNode(ctx context.Context, input types.CreateRiskAssessmentNodeInput) (*types.CreateRiskAssessmentNodePayload, error) {
-	if err := r.authorize(ctx, input.RiskAssessmentScopeID, probo.ActionRiskAssessmentNodeCreate); err != nil {
+	scope, err := r.authorize(ctx, input.RiskAssessmentScopeID, probo.ActionRiskAssessmentNodeCreate)
+	if err != nil {
 		return nil, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(input.RiskAssessmentScopeID)
 
 	node, err := r.riskManagement.CreateNode(
 		ctx,
@@ -233,11 +228,10 @@ func (r *mutationResolver) CreateRiskAssessmentNode(ctx context.Context, input t
 
 // UpdateRiskAssessmentNode is the resolver for the updateRiskAssessmentNode field.
 func (r *mutationResolver) UpdateRiskAssessmentNode(ctx context.Context, input types.UpdateRiskAssessmentNodeInput) (*types.UpdateRiskAssessmentNodePayload, error) {
-	if err := r.authorize(ctx, input.ID, probo.ActionRiskAssessmentNodeUpdate); err != nil {
+	scope, err := r.authorize(ctx, input.ID, probo.ActionRiskAssessmentNodeUpdate)
+	if err != nil {
 		return nil, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(input.ID)
 
 	node, err := r.riskManagement.UpdateNode(
 		ctx,
@@ -263,11 +257,11 @@ func (r *mutationResolver) UpdateRiskAssessmentNode(ctx context.Context, input t
 
 // DeleteRiskAssessmentNode is the resolver for the deleteRiskAssessmentNode field.
 func (r *mutationResolver) DeleteRiskAssessmentNode(ctx context.Context, input types.DeleteRiskAssessmentNodeInput) (*types.DeleteRiskAssessmentNodePayload, error) {
-	if err := r.authorize(ctx, input.RiskAssessmentNodeID, probo.ActionRiskAssessmentNodeDelete); err != nil {
+	scope, err := r.authorize(ctx, input.RiskAssessmentNodeID, probo.ActionRiskAssessmentNodeDelete)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(input.RiskAssessmentNodeID)
 	if err := r.riskManagement.DeleteNode(ctx, scope, input.RiskAssessmentNodeID); err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
@@ -283,11 +277,10 @@ func (r *mutationResolver) DeleteRiskAssessmentNode(ctx context.Context, input t
 
 // CreateRiskAssessmentProcess is the resolver for the createRiskAssessmentProcess field.
 func (r *mutationResolver) CreateRiskAssessmentProcess(ctx context.Context, input types.CreateRiskAssessmentProcessInput) (*types.CreateRiskAssessmentProcessPayload, error) {
-	if err := r.authorize(ctx, input.RiskAssessmentScopeID, probo.ActionRiskAssessmentProcessCreate); err != nil {
+	scope, err := r.authorize(ctx, input.RiskAssessmentScopeID, probo.ActionRiskAssessmentProcessCreate)
+	if err != nil {
 		return nil, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(input.RiskAssessmentScopeID)
 
 	process, err := r.riskManagement.CreateProcess(
 		ctx,
@@ -323,11 +316,10 @@ func (r *mutationResolver) CreateRiskAssessmentProcess(ctx context.Context, inpu
 
 // UpdateRiskAssessmentProcess is the resolver for the updateRiskAssessmentProcess field.
 func (r *mutationResolver) UpdateRiskAssessmentProcess(ctx context.Context, input types.UpdateRiskAssessmentProcessInput) (*types.UpdateRiskAssessmentProcessPayload, error) {
-	if err := r.authorize(ctx, input.ID, probo.ActionRiskAssessmentProcessUpdate); err != nil {
+	scope, err := r.authorize(ctx, input.ID, probo.ActionRiskAssessmentProcessUpdate)
+	if err != nil {
 		return nil, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(input.ID)
 
 	process, err := r.riskManagement.UpdateProcess(
 		ctx,
@@ -354,11 +346,11 @@ func (r *mutationResolver) UpdateRiskAssessmentProcess(ctx context.Context, inpu
 
 // DeleteRiskAssessmentProcess is the resolver for the deleteRiskAssessmentProcess field.
 func (r *mutationResolver) DeleteRiskAssessmentProcess(ctx context.Context, input types.DeleteRiskAssessmentProcessInput) (*types.DeleteRiskAssessmentProcessPayload, error) {
-	if err := r.authorize(ctx, input.RiskAssessmentProcessID, probo.ActionRiskAssessmentProcessDelete); err != nil {
+	scope, err := r.authorize(ctx, input.RiskAssessmentProcessID, probo.ActionRiskAssessmentProcessDelete)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(input.RiskAssessmentProcessID)
 	if err := r.riskManagement.DeleteProcess(ctx, scope, input.RiskAssessmentProcessID); err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
@@ -374,11 +366,10 @@ func (r *mutationResolver) DeleteRiskAssessmentProcess(ctx context.Context, inpu
 
 // CreateRiskAssessmentThreat is the resolver for the createRiskAssessmentThreat field.
 func (r *mutationResolver) CreateRiskAssessmentThreat(ctx context.Context, input types.CreateRiskAssessmentThreatInput) (*types.CreateRiskAssessmentThreatPayload, error) {
-	if err := r.authorize(ctx, input.RiskAssessmentScopeID, probo.ActionRiskAssessmentThreatCreate); err != nil {
+	scope, err := r.authorize(ctx, input.RiskAssessmentScopeID, probo.ActionRiskAssessmentThreatCreate)
+	if err != nil {
 		return nil, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(input.RiskAssessmentScopeID)
 
 	threat, err := r.riskManagement.CreateThreat(
 		ctx,
@@ -414,11 +405,10 @@ func (r *mutationResolver) CreateRiskAssessmentThreat(ctx context.Context, input
 
 // UpdateRiskAssessmentThreat is the resolver for the updateRiskAssessmentThreat field.
 func (r *mutationResolver) UpdateRiskAssessmentThreat(ctx context.Context, input types.UpdateRiskAssessmentThreatInput) (*types.UpdateRiskAssessmentThreatPayload, error) {
-	if err := r.authorize(ctx, input.ID, probo.ActionRiskAssessmentThreatUpdate); err != nil {
+	scope, err := r.authorize(ctx, input.ID, probo.ActionRiskAssessmentThreatUpdate)
+	if err != nil {
 		return nil, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(input.ID)
 
 	threat, err := r.riskManagement.UpdateThreat(
 		ctx,
@@ -445,11 +435,11 @@ func (r *mutationResolver) UpdateRiskAssessmentThreat(ctx context.Context, input
 
 // DeleteRiskAssessmentThreat is the resolver for the deleteRiskAssessmentThreat field.
 func (r *mutationResolver) DeleteRiskAssessmentThreat(ctx context.Context, input types.DeleteRiskAssessmentThreatInput) (*types.DeleteRiskAssessmentThreatPayload, error) {
-	if err := r.authorize(ctx, input.RiskAssessmentThreatID, probo.ActionRiskAssessmentThreatDelete); err != nil {
+	scope, err := r.authorize(ctx, input.RiskAssessmentThreatID, probo.ActionRiskAssessmentThreatDelete)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(input.RiskAssessmentThreatID)
 	if err := r.riskManagement.DeleteThreat(ctx, scope, input.RiskAssessmentThreatID); err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
@@ -465,11 +455,10 @@ func (r *mutationResolver) DeleteRiskAssessmentThreat(ctx context.Context, input
 
 // CreateRiskAssessmentScenario is the resolver for the createRiskAssessmentScenario field.
 func (r *mutationResolver) CreateRiskAssessmentScenario(ctx context.Context, input types.CreateRiskAssessmentScenarioInput) (*types.CreateRiskAssessmentScenarioPayload, error) {
-	if err := r.authorize(ctx, input.RiskAssessmentScopeID, probo.ActionRiskAssessmentScenarioCreate); err != nil {
+	scope, err := r.authorize(ctx, input.RiskAssessmentScopeID, probo.ActionRiskAssessmentScenarioCreate)
+	if err != nil {
 		return nil, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(input.RiskAssessmentScopeID)
 
 	scenario, err := r.riskManagement.CreateScenario(
 		ctx,
@@ -504,11 +493,10 @@ func (r *mutationResolver) CreateRiskAssessmentScenario(ctx context.Context, inp
 
 // UpdateRiskAssessmentScenario is the resolver for the updateRiskAssessmentScenario field.
 func (r *mutationResolver) UpdateRiskAssessmentScenario(ctx context.Context, input types.UpdateRiskAssessmentScenarioInput) (*types.UpdateRiskAssessmentScenarioPayload, error) {
-	if err := r.authorize(ctx, input.ID, probo.ActionRiskAssessmentScenarioUpdate); err != nil {
+	scope, err := r.authorize(ctx, input.ID, probo.ActionRiskAssessmentScenarioUpdate)
+	if err != nil {
 		return nil, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(input.ID)
 
 	scenario, err := r.riskManagement.UpdateScenario(
 		ctx,
@@ -534,11 +522,11 @@ func (r *mutationResolver) UpdateRiskAssessmentScenario(ctx context.Context, inp
 
 // DeleteRiskAssessmentScenario is the resolver for the deleteRiskAssessmentScenario field.
 func (r *mutationResolver) DeleteRiskAssessmentScenario(ctx context.Context, input types.DeleteRiskAssessmentScenarioInput) (*types.DeleteRiskAssessmentScenarioPayload, error) {
-	if err := r.authorize(ctx, input.RiskAssessmentScenarioID, probo.ActionRiskAssessmentScenarioDelete); err != nil {
+	scope, err := r.authorize(ctx, input.RiskAssessmentScenarioID, probo.ActionRiskAssessmentScenarioDelete)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(input.RiskAssessmentScenarioID)
 	if err := r.riskManagement.DeleteScenario(ctx, scope, input.RiskAssessmentScenarioID); err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
@@ -554,11 +542,11 @@ func (r *mutationResolver) DeleteRiskAssessmentScenario(ctx context.Context, inp
 
 // LinkRiskAssessmentScenarioThreat is the resolver for the linkRiskAssessmentScenarioThreat field.
 func (r *mutationResolver) LinkRiskAssessmentScenarioThreat(ctx context.Context, input types.LinkRiskAssessmentScenarioThreatInput) (*types.LinkRiskAssessmentScenarioThreatPayload, error) {
-	if err := r.authorize(ctx, input.RiskAssessmentScenarioID, probo.ActionRiskAssessmentScenarioThreatLink); err != nil {
+	scope, err := r.authorize(ctx, input.RiskAssessmentScenarioID, probo.ActionRiskAssessmentScenarioThreatLink)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(input.RiskAssessmentScenarioID)
 	if err := r.riskManagement.LinkScenarioThreat(
 		ctx,
 		scope,
@@ -591,11 +579,11 @@ func (r *mutationResolver) LinkRiskAssessmentScenarioThreat(ctx context.Context,
 
 // UnlinkRiskAssessmentScenarioThreat is the resolver for the unlinkRiskAssessmentScenarioThreat field.
 func (r *mutationResolver) UnlinkRiskAssessmentScenarioThreat(ctx context.Context, input types.UnlinkRiskAssessmentScenarioThreatInput) (*types.UnlinkRiskAssessmentScenarioThreatPayload, error) {
-	if err := r.authorize(ctx, input.RiskAssessmentScenarioID, probo.ActionRiskAssessmentScenarioThreatUnlink); err != nil {
+	scope, err := r.authorize(ctx, input.RiskAssessmentScenarioID, probo.ActionRiskAssessmentScenarioThreatUnlink)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(input.RiskAssessmentScenarioID)
 	if err := r.riskManagement.UnlinkScenarioThreat(
 		ctx,
 		scope,
@@ -624,11 +612,11 @@ func (r *mutationResolver) UnlinkRiskAssessmentScenarioThreat(ctx context.Contex
 
 // LinkRiskAssessmentScenarioRisk is the resolver for the linkRiskAssessmentScenarioRisk field.
 func (r *mutationResolver) LinkRiskAssessmentScenarioRisk(ctx context.Context, input types.LinkRiskAssessmentScenarioRiskInput) (*types.LinkRiskAssessmentScenarioRiskPayload, error) {
-	if err := r.authorize(ctx, input.RiskAssessmentScenarioID, probo.ActionRiskAssessmentScenarioRiskLink); err != nil {
+	scope, err := r.authorize(ctx, input.RiskAssessmentScenarioID, probo.ActionRiskAssessmentScenarioRiskLink)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(input.RiskAssessmentScenarioID)
 	if err := r.riskManagement.LinkScenarioRisk(
 		ctx,
 		scope,
@@ -669,11 +657,11 @@ func (r *mutationResolver) LinkRiskAssessmentScenarioRisk(ctx context.Context, i
 
 // UnlinkRiskAssessmentScenarioRisk is the resolver for the unlinkRiskAssessmentScenarioRisk field.
 func (r *mutationResolver) UnlinkRiskAssessmentScenarioRisk(ctx context.Context, input types.UnlinkRiskAssessmentScenarioRiskInput) (*types.UnlinkRiskAssessmentScenarioRiskPayload, error) {
-	if err := r.authorize(ctx, input.RiskAssessmentScenarioID, probo.ActionRiskAssessmentScenarioRiskUnlink); err != nil {
+	scope, err := r.authorize(ctx, input.RiskAssessmentScenarioID, probo.ActionRiskAssessmentScenarioRiskUnlink)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(input.RiskAssessmentScenarioID)
 	if err := r.riskManagement.UnlinkScenarioRisk(
 		ctx,
 		scope,
@@ -705,7 +693,7 @@ func (r *mutationResolver) UnlinkRiskAssessmentScenarioRisk(ctx context.Context,
 
 // Organization is the resolver for the organization field.
 func (r *riskAssessmentResolver) Organization(ctx context.Context, obj *types.RiskAssessment) (*types.Organization, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGet); err != nil {
+	if _, err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGet); err != nil {
 		return nil, err
 	}
 
@@ -727,11 +715,10 @@ func (r *riskAssessmentResolver) Organization(ctx context.Context, obj *types.Ri
 
 // Scopes is the resolver for the scopes field.
 func (r *riskAssessmentResolver) Scopes(ctx context.Context, obj *types.RiskAssessment, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.RiskAssessmentScopeOrderBy) (*types.RiskAssessmentScopeConnection, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionRiskAssessmentScopeList); err != nil {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionRiskAssessmentScopeList)
+	if err != nil {
 		return nil, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(obj.ID)
 
 	pageOrderBy := page.OrderBy[coredata.RiskAssessmentScopeOrderField]{
 		Field:     coredata.RiskAssessmentScopeOrderFieldCreatedAt,
@@ -759,11 +746,10 @@ func (r *riskAssessmentResolver) Permission(ctx context.Context, obj *types.Risk
 
 // TotalCount is the resolver for the totalCount field.
 func (r *riskAssessmentConnectionResolver) TotalCount(ctx context.Context, obj *types.RiskAssessmentConnection) (*int, error) {
-	if err := r.authorize(ctx, obj.ParentID, probo.ActionRiskAssessmentList); err != nil {
+	scope, err := r.authorize(ctx, obj.ParentID, probo.ActionRiskAssessmentList)
+	if err != nil {
 		return nil, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(obj.ParentID)
 
 	count, err := r.riskManagement.CountForOrganizationID(ctx, scope, obj.ParentID)
 	if err != nil {
@@ -776,11 +762,10 @@ func (r *riskAssessmentConnectionResolver) TotalCount(ctx context.Context, obj *
 
 // TotalCount is the resolver for the totalCount field.
 func (r *riskAssessmentNodeConnectionResolver) TotalCount(ctx context.Context, obj *types.RiskAssessmentNodeConnection) (*int, error) {
-	if err := r.authorize(ctx, obj.ParentID, probo.ActionRiskAssessmentNodeList); err != nil {
+	scope, err := r.authorize(ctx, obj.ParentID, probo.ActionRiskAssessmentNodeList)
+	if err != nil {
 		return nil, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(obj.ParentID)
 
 	count, err := r.riskManagement.CountNodesForScopeID(ctx, scope, obj.ParentID)
 	if err != nil {
@@ -793,11 +778,10 @@ func (r *riskAssessmentNodeConnectionResolver) TotalCount(ctx context.Context, o
 
 // TotalCount is the resolver for the totalCount field.
 func (r *riskAssessmentProcessConnectionResolver) TotalCount(ctx context.Context, obj *types.RiskAssessmentProcessConnection) (*int, error) {
-	if err := r.authorize(ctx, obj.ParentID, probo.ActionRiskAssessmentProcessList); err != nil {
+	scope, err := r.authorize(ctx, obj.ParentID, probo.ActionRiskAssessmentProcessList)
+	if err != nil {
 		return nil, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(obj.ParentID)
 
 	count, err := r.riskManagement.CountProcessesForScopeID(ctx, scope, obj.ParentID)
 	if err != nil {
@@ -810,11 +794,10 @@ func (r *riskAssessmentProcessConnectionResolver) TotalCount(ctx context.Context
 
 // Scope is the resolver for the scope field.
 func (r *riskAssessmentScenarioResolver) Scope(ctx context.Context, obj *types.RiskAssessmentScenario) (*types.RiskAssessmentScope, error) {
-	if err := r.authorize(ctx, obj.RiskAssessmentScopeID, probo.ActionRiskAssessmentScopeGet); err != nil {
+	scope, err := r.authorize(ctx, obj.RiskAssessmentScopeID, probo.ActionRiskAssessmentScopeGet)
+	if err != nil {
 		return nil, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(obj.RiskAssessmentScopeID)
 
 	raScope, err := r.riskManagement.GetScope(ctx, scope, obj.RiskAssessmentScopeID)
 	if err != nil {
@@ -827,11 +810,10 @@ func (r *riskAssessmentScenarioResolver) Scope(ctx context.Context, obj *types.R
 
 // Threats is the resolver for the threats field.
 func (r *riskAssessmentScenarioResolver) Threats(ctx context.Context, obj *types.RiskAssessmentScenario, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.RiskAssessmentThreatOrderBy) (*types.RiskAssessmentThreatConnection, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionRiskAssessmentThreatList); err != nil {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionRiskAssessmentThreatList)
+	if err != nil {
 		return nil, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(obj.ID)
 
 	pageOrderBy := page.OrderBy[coredata.RiskAssessmentThreatOrderField]{
 		Field:     coredata.RiskAssessmentThreatOrderFieldCreatedAt,
@@ -854,11 +836,10 @@ func (r *riskAssessmentScenarioResolver) Threats(ctx context.Context, obj *types
 
 // Risks is the resolver for the risks field.
 func (r *riskAssessmentScenarioResolver) Risks(ctx context.Context, obj *types.RiskAssessmentScenario, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.RiskOrderBy) (*types.RiskConnection, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionRiskList); err != nil {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionRiskList)
+	if err != nil {
 		return nil, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(obj.ID)
 
 	pageOrderBy := page.OrderBy[coredata.RiskOrderField]{
 		Field:     coredata.RiskOrderFieldCreatedAt,
@@ -881,11 +862,10 @@ func (r *riskAssessmentScenarioResolver) Risks(ctx context.Context, obj *types.R
 
 // TotalCount is the resolver for the totalCount field.
 func (r *riskAssessmentScenarioConnectionResolver) TotalCount(ctx context.Context, obj *types.RiskAssessmentScenarioConnection) (*int, error) {
-	if err := r.authorize(ctx, obj.ParentID, probo.ActionRiskAssessmentScenarioList); err != nil {
+	scope, err := r.authorize(ctx, obj.ParentID, probo.ActionRiskAssessmentScenarioList)
+	if err != nil {
 		return nil, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(obj.ParentID)
 
 	switch obj.Resolver.(type) {
 	case *riskAssessmentScopeResolver:
@@ -917,11 +897,10 @@ func (r *riskAssessmentScenarioConnectionResolver) TotalCount(ctx context.Contex
 
 // Nodes is the resolver for the nodes field.
 func (r *riskAssessmentScopeResolver) Nodes(ctx context.Context, obj *types.RiskAssessmentScope, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.RiskAssessmentNodeOrderBy) (*types.RiskAssessmentNodeConnection, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionRiskAssessmentNodeList); err != nil {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionRiskAssessmentNodeList)
+	if err != nil {
 		return nil, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(obj.ID)
 
 	pageOrderBy := page.OrderBy[coredata.RiskAssessmentNodeOrderField]{
 		Field:     coredata.RiskAssessmentNodeOrderFieldCreatedAt,
@@ -944,11 +923,10 @@ func (r *riskAssessmentScopeResolver) Nodes(ctx context.Context, obj *types.Risk
 
 // Processes is the resolver for the processes field.
 func (r *riskAssessmentScopeResolver) Processes(ctx context.Context, obj *types.RiskAssessmentScope, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.RiskAssessmentProcessOrderBy) (*types.RiskAssessmentProcessConnection, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionRiskAssessmentProcessList); err != nil {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionRiskAssessmentProcessList)
+	if err != nil {
 		return nil, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(obj.ID)
 
 	pageOrderBy := page.OrderBy[coredata.RiskAssessmentProcessOrderField]{
 		Field:     coredata.RiskAssessmentProcessOrderFieldCreatedAt,
@@ -971,11 +949,10 @@ func (r *riskAssessmentScopeResolver) Processes(ctx context.Context, obj *types.
 
 // Threats is the resolver for the threats field.
 func (r *riskAssessmentScopeResolver) Threats(ctx context.Context, obj *types.RiskAssessmentScope, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.RiskAssessmentThreatOrderBy) (*types.RiskAssessmentThreatConnection, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionRiskAssessmentThreatList); err != nil {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionRiskAssessmentThreatList)
+	if err != nil {
 		return nil, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(obj.ID)
 
 	pageOrderBy := page.OrderBy[coredata.RiskAssessmentThreatOrderField]{
 		Field:     coredata.RiskAssessmentThreatOrderFieldCreatedAt,
@@ -998,11 +975,10 @@ func (r *riskAssessmentScopeResolver) Threats(ctx context.Context, obj *types.Ri
 
 // Scenarios is the resolver for the scenarios field.
 func (r *riskAssessmentScopeResolver) Scenarios(ctx context.Context, obj *types.RiskAssessmentScope, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.RiskAssessmentScenarioOrderBy) (*types.RiskAssessmentScenarioConnection, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionRiskAssessmentScenarioList); err != nil {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionRiskAssessmentScenarioList)
+	if err != nil {
 		return nil, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(obj.ID)
 
 	pageOrderBy := page.OrderBy[coredata.RiskAssessmentScenarioOrderField]{
 		Field:     coredata.RiskAssessmentScenarioOrderFieldCreatedAt,
@@ -1025,11 +1001,10 @@ func (r *riskAssessmentScopeResolver) Scenarios(ctx context.Context, obj *types.
 
 // MermaidChart is the resolver for the mermaidChart field.
 func (r *riskAssessmentScopeResolver) MermaidChart(ctx context.Context, obj *types.RiskAssessmentScope) (string, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionRiskAssessmentScopeGet); err != nil {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionRiskAssessmentScopeGet)
+	if err != nil {
 		return "", err
 	}
-
-	scope := coredata.NewScopeFromObjectID(obj.ID)
 
 	chart, err := r.riskManagement.BuildScopeMermaidChart(ctx, scope, obj.ID)
 	if err != nil {
@@ -1042,11 +1017,10 @@ func (r *riskAssessmentScopeResolver) MermaidChart(ctx context.Context, obj *typ
 
 // TotalCount is the resolver for the totalCount field.
 func (r *riskAssessmentScopeConnectionResolver) TotalCount(ctx context.Context, obj *types.RiskAssessmentScopeConnection) (*int, error) {
-	if err := r.authorize(ctx, obj.ParentID, probo.ActionRiskAssessmentScopeList); err != nil {
+	scope, err := r.authorize(ctx, obj.ParentID, probo.ActionRiskAssessmentScopeList)
+	if err != nil {
 		return nil, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(obj.ParentID)
 
 	count, err := r.riskManagement.CountScopesForRiskAssessmentID(ctx, scope, obj.ParentID)
 	if err != nil {
@@ -1059,11 +1033,10 @@ func (r *riskAssessmentScopeConnectionResolver) TotalCount(ctx context.Context, 
 
 // TotalCount is the resolver for the totalCount field.
 func (r *riskAssessmentThreatConnectionResolver) TotalCount(ctx context.Context, obj *types.RiskAssessmentThreatConnection) (*int, error) {
-	if err := r.authorize(ctx, obj.ParentID, probo.ActionRiskAssessmentThreatList); err != nil {
+	scope, err := r.authorize(ctx, obj.ParentID, probo.ActionRiskAssessmentThreatList)
+	if err != nil {
 		return nil, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(obj.ParentID)
 
 	switch obj.Resolver.(type) {
 	case *riskAssessmentScenarioResolver:

@@ -28,11 +28,11 @@ import (
 
 // UpdateOrganizationContext is the resolver for the updateOrganizationContext field.
 func (r *mutationResolver) UpdateOrganizationContext(ctx context.Context, input types.UpdateOrganizationContextInput) (*types.UpdateOrganizationContextPayload, error) {
-	if err := r.authorize(ctx, input.OrganizationID, probo.ActionOrganizationContextUpdate); err != nil {
+	scope, err := r.authorize(ctx, input.OrganizationID, probo.ActionOrganizationContextUpdate)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(input.OrganizationID)
 	prb := r.probo
 
 	req := probo.UpdateOrganizationContextRequest{
@@ -62,11 +62,11 @@ func (r *mutationResolver) UpdateOrganizationContext(ctx context.Context, input 
 
 // LogoURL is the resolver for the logoUrl field.
 func (r *organizationResolver) LogoURL(ctx context.Context, obj *types.Organization) (*string, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGetLogoUrl); err != nil {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGetLogoUrl)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(obj.ID)
 	prb := r.probo
 
 	logoURL, err := prb.Organizations.GenerateLogoURL(ctx, scope, obj.ID, 1*time.Hour)
@@ -80,11 +80,11 @@ func (r *organizationResolver) LogoURL(ctx context.Context, obj *types.Organizat
 
 // HorizontalLogoURL is the resolver for the horizontalLogoUrl field.
 func (r *organizationResolver) HorizontalLogoURL(ctx context.Context, obj *types.Organization) (*string, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGetHorizontalLogoUrl); err != nil {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGetHorizontalLogoUrl)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(obj.ID)
 	prb := r.probo
 
 	horizontalLogoURL, err := prb.Organizations.GenerateHorizontalLogoURL(ctx, scope, obj.ID, 1*time.Hour)
@@ -98,11 +98,11 @@ func (r *organizationResolver) HorizontalLogoURL(ctx context.Context, obj *types
 
 // Context is the resolver for the context field.
 func (r *organizationResolver) Context(ctx context.Context, obj *types.Organization) (*types.OrganizationContext, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionOrganizationContextGet); err != nil {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionOrganizationContextGet)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(obj.ID)
 	prb := r.probo
 
 	orgContext, err := prb.Organizations.GetContext(ctx, scope, obj.ID)
@@ -116,7 +116,7 @@ func (r *organizationResolver) Context(ctx context.Context, obj *types.Organizat
 
 // Profiles is the resolver for the profiles field.
 func (r *organizationResolver) Profiles(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ProfileOrderBy, filter *types.ProfileFilter) (*types.ProfileConnection, error) {
-	if err := r.authorize(ctx, obj.ID, iam.ActionMembershipProfileList); err != nil {
+	if _, err := r.authorize(ctx, obj.ID, iam.ActionMembershipProfileList); err != nil {
 		return nil, err
 	}
 
@@ -157,11 +157,11 @@ func (r *organizationResolver) Profiles(ctx context.Context, obj *types.Organiza
 
 // MeasureCategories is the resolver for the measureCategories field.
 func (r *organizationResolver) MeasureCategories(ctx context.Context, obj *types.Organization) ([]string, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionMeasureList); err != nil {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionMeasureList)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(obj.ID)
 	prb := r.probo
 
 	categories, err := prb.Measures.ListDistinctCategoriesForOrganizationID(ctx, scope, obj.ID)
@@ -175,11 +175,10 @@ func (r *organizationResolver) MeasureCategories(ctx context.Context, obj *types
 
 // AccessSources is the resolver for the accessSources field.
 func (r *organizationResolver) AccessSources(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AccessSourceOrder) (*types.AccessSourceConnection, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionAccessSourceList); err != nil {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionAccessSourceList)
+	if err != nil {
 		return nil, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(obj.ID)
 
 	pageOrderBy := page.OrderBy[coredata.AccessSourceOrderField]{
 		Field:     coredata.AccessSourceOrderFieldCreatedAt,
@@ -204,11 +203,10 @@ func (r *organizationResolver) AccessSources(ctx context.Context, obj *types.Org
 
 // AccessReviewCampaigns is the resolver for the accessReviewCampaigns field.
 func (r *organizationResolver) AccessReviewCampaigns(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AccessReviewCampaignOrder) (*types.AccessReviewCampaignConnection, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionAccessReviewCampaignList); err != nil {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionAccessReviewCampaignList)
+	if err != nil {
 		return nil, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(obj.ID)
 
 	pageOrderBy := page.OrderBy[coredata.AccessReviewCampaignOrderField]{
 		Field:     coredata.AccessReviewCampaignOrderFieldCreatedAt,
@@ -233,11 +231,11 @@ func (r *organizationResolver) AccessReviewCampaigns(ctx context.Context, obj *t
 
 // AssetListDocument is the resolver for the assetListDocument field.
 func (r *organizationResolver) AssetListDocument(ctx context.Context, obj *types.Organization) (*types.Document, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionDocumentGet); err != nil {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionDocumentGet)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(obj.ID)
 	prb := r.probo
 
 	assetDocumentID, err := prb.GeneratedDocuments.GetAssetListDocumentID(ctx, scope, obj.ID)
@@ -259,11 +257,11 @@ func (r *organizationResolver) AssetListDocument(ctx context.Context, obj *types
 
 // Assets is the resolver for the assets field.
 func (r *organizationResolver) Assets(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AssetOrderBy) (*types.AssetConnection, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionAssetList); err != nil {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionAssetList)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(obj.ID)
 	prb := r.probo
 
 	pageOrderBy := page.OrderBy[coredata.AssetOrderField]{
@@ -290,11 +288,11 @@ func (r *organizationResolver) Assets(ctx context.Context, obj *types.Organizati
 
 // DataListDocument is the resolver for the dataListDocument field.
 func (r *organizationResolver) DataListDocument(ctx context.Context, obj *types.Organization) (*types.Document, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionDocumentGet); err != nil {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionDocumentGet)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(obj.ID)
 	prb := r.probo
 
 	dataDocumentID, err := prb.GeneratedDocuments.GetDataListDocumentID(ctx, scope, obj.ID)
@@ -316,11 +314,11 @@ func (r *organizationResolver) DataListDocument(ctx context.Context, obj *types.
 
 // Data is the resolver for the data field.
 func (r *organizationResolver) Data(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DatumOrderBy) (*types.DatumConnection, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionDatumList); err != nil {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionDatumList)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(obj.ID)
 	prb := r.probo
 
 	pageOrderBy := page.OrderBy[coredata.DatumOrderField]{
@@ -347,11 +345,11 @@ func (r *organizationResolver) Data(ctx context.Context, obj *types.Organization
 
 // Audits is the resolver for the audits field.
 func (r *organizationResolver) Audits(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AuditOrderBy) (*types.AuditConnection, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionAuditList); err != nil {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionAuditList)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(obj.ID)
 	prb := r.probo
 
 	pageOrderBy := page.OrderBy[coredata.AuditOrderField]{
@@ -378,11 +376,11 @@ func (r *organizationResolver) Audits(ctx context.Context, obj *types.Organizati
 
 // FindingsDocument is the resolver for the findingsDocument field.
 func (r *organizationResolver) FindingsDocument(ctx context.Context, obj *types.Organization) (*types.Document, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionDocumentGet); err != nil {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionDocumentGet)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(obj.ID)
 	prb := r.probo
 
 	findingDocumentID, err := prb.GeneratedDocuments.GetFindingsDocumentID(ctx, scope, obj.ID)
@@ -404,11 +402,11 @@ func (r *organizationResolver) FindingsDocument(ctx context.Context, obj *types.
 
 // Findings is the resolver for the findings field.
 func (r *organizationResolver) Findings(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.FindingOrder, filter *types.FindingFilter) (*types.FindingConnection, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionFindingList); err != nil {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionFindingList)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(obj.ID)
 	prb := r.probo
 
 	pageOrderBy := page.OrderBy[coredata.FindingOrderField]{
@@ -451,7 +449,7 @@ func (r *organizationResolver) Findings(ctx context.Context, obj *types.Organiza
 
 // AuditLogEntries is the resolver for the auditLogEntries field.
 func (r *organizationResolver) AuditLogEntries(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AuditLogEntryOrderBy, filter *types.AuditLogEntryFilter) (*types.AuditLogEntryConnection, error) {
-	if err := r.authorize(ctx, obj.ID, iam.ActionAuditLogEntryList); err != nil {
+	if _, err := r.authorize(ctx, obj.ID, iam.ActionAuditLogEntryList); err != nil {
 		return nil, err
 	}
 
@@ -499,11 +497,11 @@ func (r *organizationResolver) AuditLogEntries(ctx context.Context, obj *types.O
 
 // SlackConnections is the resolver for the slackConnections field.
 func (r *organizationResolver) SlackConnections(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.SlackConnectionConnection, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionSlackConnectionList); err != nil {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionSlackConnectionList)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(obj.ID)
 	prb := r.probo
 
 	slackProvider := coredata.ConnectorProviderSlack
@@ -532,11 +530,11 @@ func (r *organizationResolver) SlackOAuth2Scopes(ctx context.Context, obj *types
 
 // Connectors is the resolver for the connectors field.
 func (r *organizationResolver) Connectors(ctx context.Context, obj *types.Organization, filter *types.ConnectorFilter) ([]*types.Connector, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionConnectorList); err != nil {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionConnectorList)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(obj.ID)
 	prb := r.probo
 
 	connectors, err := prb.Connectors.ListAllForOrganizationID(ctx, scope, obj.ID)
@@ -565,7 +563,7 @@ func (r *organizationResolver) Connectors(ctx context.Context, obj *types.Organi
 
 // ConnectorProviderInfos is the resolver for the connectorProviderInfos field.
 func (r *organizationResolver) ConnectorProviderInfos(ctx context.Context, obj *types.Organization) ([]*types.ConnectorProviderInfo, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionConnectorList); err != nil {
+	if _, err := r.authorize(ctx, obj.ID, probo.ActionConnectorList); err != nil {
 		return nil, err
 	}
 
@@ -596,11 +594,11 @@ func (r *organizationResolver) ConnectorProviderInfos(ctx context.Context, obj *
 
 // Controls is the resolver for the controls field.
 func (r *organizationResolver) Controls(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ControlOrderBy, filter *types.ControlFilter) (*types.ControlConnection, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionControlList); err != nil {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionControlList)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(obj.ID)
 	prb := r.probo
 
 	pageOrderBy := page.OrderBy[coredata.ControlOrderField]{
@@ -632,11 +630,11 @@ func (r *organizationResolver) Controls(ctx context.Context, obj *types.Organiza
 
 // StatementsOfApplicability is the resolver for the statementsOfApplicability field.
 func (r *organizationResolver) StatementsOfApplicability(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.StatementOfApplicabilityOrderBy) (*types.StatementOfApplicabilityConnection, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionStatementOfApplicabilityList); err != nil {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionStatementOfApplicabilityList)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(obj.ID)
 	prb := r.probo
 
 	pageOrderBy := page.OrderBy[coredata.StatementOfApplicabilityOrderField]{
@@ -663,11 +661,11 @@ func (r *organizationResolver) StatementsOfApplicability(ctx context.Context, ob
 
 // DataProtectionImpactAssessments is the resolver for the dataProtectionImpactAssessments field.
 func (r *organizationResolver) DataProtectionImpactAssessments(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DataProtectionImpactAssessmentOrderBy) (*types.DataProtectionImpactAssessmentConnection, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionDataProtectionImpactAssessmentList); err != nil {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionDataProtectionImpactAssessmentList)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(obj.ID)
 	prb := r.probo
 
 	pageOrderBy := page.OrderBy[coredata.DataProtectionImpactAssessmentOrderField]{
@@ -695,11 +693,11 @@ func (r *organizationResolver) DataProtectionImpactAssessments(ctx context.Conte
 
 // DataProtectionImpactAssessmentsDocument is the resolver for the dataProtectionImpactAssessmentsDocument field.
 func (r *organizationResolver) DataProtectionImpactAssessmentsDocument(ctx context.Context, obj *types.Organization) (*types.Document, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionDocumentGet); err != nil {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionDocumentGet)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(obj.ID)
 	prb := r.probo
 
 	documentID, err := prb.GeneratedDocuments.GetDataProtectionImpactAssessmentsDocumentID(ctx, scope, obj.ID)
@@ -728,11 +726,11 @@ func (r *organizationResolver) DataProtectionImpactAssessmentsDocument(ctx conte
 
 // TransferImpactAssessments is the resolver for the transferImpactAssessments field.
 func (r *organizationResolver) TransferImpactAssessments(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TransferImpactAssessmentOrderBy) (*types.TransferImpactAssessmentConnection, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionTransferImpactAssessmentList); err != nil {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionTransferImpactAssessmentList)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(obj.ID)
 	prb := r.probo
 
 	pageOrderBy := page.OrderBy[coredata.TransferImpactAssessmentOrderField]{
@@ -760,11 +758,11 @@ func (r *organizationResolver) TransferImpactAssessments(ctx context.Context, ob
 
 // TransferImpactAssessmentsDocument is the resolver for the transferImpactAssessmentsDocument field.
 func (r *organizationResolver) TransferImpactAssessmentsDocument(ctx context.Context, obj *types.Organization) (*types.Document, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionDocumentGet); err != nil {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionDocumentGet)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(obj.ID)
 	prb := r.probo
 
 	documentID, err := prb.GeneratedDocuments.GetTransferImpactAssessmentsDocumentID(ctx, scope, obj.ID)
@@ -793,11 +791,11 @@ func (r *organizationResolver) TransferImpactAssessmentsDocument(ctx context.Con
 
 // Documents is the resolver for the documents field.
 func (r *organizationResolver) Documents(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentOrderBy, filter *types.DocumentFilter) (*types.DocumentConnection, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionDocumentList); err != nil {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionDocumentList)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(obj.ID)
 	prb := r.probo
 
 	pageOrderBy := page.OrderBy[coredata.DocumentOrderField]{
@@ -838,11 +836,11 @@ func (r *organizationResolver) Evidences(ctx context.Context, obj *types.Organiz
 
 // Frameworks is the resolver for the frameworks field.
 func (r *organizationResolver) Frameworks(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.FrameworkOrderBy) (*types.FrameworkConnection, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionFrameworkList); err != nil {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionFrameworkList)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(obj.ID)
 	prb := r.probo
 
 	pageOrderBy := page.OrderBy[coredata.FrameworkOrderField]{
@@ -869,11 +867,11 @@ func (r *organizationResolver) Frameworks(ctx context.Context, obj *types.Organi
 
 // Measures is the resolver for the measures field.
 func (r *organizationResolver) Measures(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MeasureOrderBy, filter *types.MeasureFilter) (*types.MeasureConnection, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionMeasureList); err != nil {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionMeasureList)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(obj.ID)
 	prb := r.probo
 
 	pageOrderBy := page.OrderBy[coredata.MeasureOrderField]{
@@ -905,11 +903,11 @@ func (r *organizationResolver) Measures(ctx context.Context, obj *types.Organiza
 
 // ObligationsDocument is the resolver for the obligationsDocument field.
 func (r *organizationResolver) ObligationsDocument(ctx context.Context, obj *types.Organization) (*types.Document, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionDocumentGet); err != nil {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionDocumentGet)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(obj.ID)
 	prb := r.probo
 
 	obligationDocumentID, err := prb.GeneratedDocuments.GetObligationsDocumentID(ctx, scope, obj.ID)
@@ -931,11 +929,11 @@ func (r *organizationResolver) ObligationsDocument(ctx context.Context, obj *typ
 
 // Obligations is the resolver for the obligations field.
 func (r *organizationResolver) Obligations(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ObligationOrderBy) (*types.ObligationConnection, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionObligationList); err != nil {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionObligationList)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(obj.ID)
 	prb := r.probo
 
 	pageOrderBy := page.OrderBy[coredata.ObligationOrderField]{
@@ -963,11 +961,11 @@ func (r *organizationResolver) Obligations(ctx context.Context, obj *types.Organ
 
 // ProcessingActivities is the resolver for the processingActivities field.
 func (r *organizationResolver) ProcessingActivities(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ProcessingActivityOrderBy) (*types.ProcessingActivityConnection, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionProcessingActivityList); err != nil {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionProcessingActivityList)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(obj.ID)
 	prb := r.probo
 
 	pageOrderBy := page.OrderBy[coredata.ProcessingActivityOrderField]{
@@ -995,11 +993,11 @@ func (r *organizationResolver) ProcessingActivities(ctx context.Context, obj *ty
 
 // ProcessingActivitiesDocument is the resolver for the processingActivitiesDocument field.
 func (r *organizationResolver) ProcessingActivitiesDocument(ctx context.Context, obj *types.Organization) (*types.Document, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionDocumentGet); err != nil {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionDocumentGet)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(obj.ID)
 	prb := r.probo
 
 	documentID, err := prb.GeneratedDocuments.GetProcessingActivitiesDocumentID(ctx, scope, obj.ID)
@@ -1028,11 +1026,11 @@ func (r *organizationResolver) ProcessingActivitiesDocument(ctx context.Context,
 
 // RightsRequests is the resolver for the rightsRequests field.
 func (r *organizationResolver) RightsRequests(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.RightsRequestOrderBy) (*types.RightsRequestConnection, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionRightsRequestList); err != nil {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionRightsRequestList)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(obj.ID)
 	prb := r.probo
 
 	pageOrderBy := page.OrderBy[coredata.RightsRequestOrderField]{
@@ -1060,11 +1058,11 @@ func (r *organizationResolver) RightsRequests(ctx context.Context, obj *types.Or
 
 // Risks is the resolver for the risks field.
 func (r *organizationResolver) Risks(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.RiskOrderBy, filter *types.RiskFilter) (*types.RiskConnection, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionRiskList); err != nil {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionRiskList)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(obj.ID)
 	prb := r.probo
 
 	pageOrderBy := page.OrderBy[coredata.RiskOrderField]{
@@ -1096,11 +1094,11 @@ func (r *organizationResolver) Risks(ctx context.Context, obj *types.Organizatio
 
 // RisksDocument is the resolver for the risksDocument field.
 func (r *organizationResolver) RisksDocument(ctx context.Context, obj *types.Organization) (*types.Document, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionDocumentGet); err != nil {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionDocumentGet)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(obj.ID)
 	prb := r.probo
 
 	documentID, err := prb.GeneratedDocuments.GetRisksDocumentID(ctx, scope, obj.ID)
@@ -1129,11 +1127,10 @@ func (r *organizationResolver) RisksDocument(ctx context.Context, obj *types.Org
 
 // RiskAssessments is the resolver for the riskAssessments field.
 func (r *organizationResolver) RiskAssessments(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.RiskAssessmentOrderBy) (*types.RiskAssessmentConnection, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionRiskAssessmentList); err != nil {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionRiskAssessmentList)
+	if err != nil {
 		return nil, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(obj.ID)
 
 	pageOrderBy := page.OrderBy[coredata.RiskAssessmentOrderField]{
 		Field:     coredata.RiskAssessmentOrderFieldCreatedAt,
@@ -1159,11 +1156,10 @@ func (r *organizationResolver) RiskAssessments(ctx context.Context, obj *types.O
 
 // RiskAssessmentScenarios is the resolver for the riskAssessmentScenarios field.
 func (r *organizationResolver) RiskAssessmentScenarios(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.RiskAssessmentScenarioOrderBy) (*types.RiskAssessmentScenarioConnection, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionRiskAssessmentScenarioList); err != nil {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionRiskAssessmentScenarioList)
+	if err != nil {
 		return nil, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(obj.ID)
 
 	pageOrderBy := page.OrderBy[coredata.RiskAssessmentScenarioOrderField]{
 		Field:     coredata.RiskAssessmentScenarioOrderFieldCreatedAt,
@@ -1189,11 +1185,11 @@ func (r *organizationResolver) RiskAssessmentScenarios(ctx context.Context, obj 
 
 // Tasks is the resolver for the tasks field.
 func (r *organizationResolver) Tasks(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TaskOrderBy) (*types.TaskConnection, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionTaskList); err != nil {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionTaskList)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(obj.ID)
 	prb := r.probo
 
 	pageOrderBy := page.OrderBy[coredata.TaskOrderField]{
@@ -1220,11 +1216,11 @@ func (r *organizationResolver) Tasks(ctx context.Context, obj *types.Organizatio
 
 // TrustCenter is the resolver for the trustCenter field.
 func (r *organizationResolver) TrustCenter(ctx context.Context, obj *types.Organization) (*types.TrustCenter, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionTrustCenterGet); err != nil {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionTrustCenterGet)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(obj.ID)
 	prb := r.probo
 
 	trustCenter, err := prb.TrustCenters.GetByOrganizationID(ctx, scope, obj.ID)
@@ -1247,11 +1243,11 @@ func (r *organizationResolver) TrustCenter(ctx context.Context, obj *types.Organ
 
 // CustomDomain is the resolver for the customDomain field.
 func (r *organizationResolver) CustomDomain(ctx context.Context, obj *types.Organization) (*types.CustomDomain, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionCustomDomainGet); err != nil {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionCustomDomainGet)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(obj.ID)
 	prb := r.probo
 
 	domain, err := prb.CustomDomains.GetOrganizationCustomDomain(ctx, scope, obj.ID)
@@ -1269,11 +1265,11 @@ func (r *organizationResolver) CustomDomain(ctx context.Context, obj *types.Orga
 
 // TrustCenterFiles is the resolver for the trustCenterFiles field.
 func (r *organizationResolver) TrustCenterFiles(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.OrderBy[coredata.TrustCenterFileOrderField]) (*types.TrustCenterFileConnection, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionTrustCenterFileList); err != nil {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionTrustCenterFileList)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(obj.ID)
 	prb := r.probo
 
 	pageOrderBy := page.OrderBy[coredata.TrustCenterFileOrderField]{
@@ -1300,7 +1296,8 @@ func (r *organizationResolver) TrustCenterFiles(ctx context.Context, obj *types.
 
 // CookieBanners is the resolver for the cookieBanners field.
 func (r *organizationResolver) CookieBanners(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.CookieBannerOrderBy) (*types.CookieBannerConnection, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionCookieBannerList); err != nil {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionCookieBannerList)
+	if err != nil {
 		return nil, err
 	}
 
@@ -1316,7 +1313,6 @@ func (r *organizationResolver) CookieBanners(ctx context.Context, obj *types.Org
 	}
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
-	scope := coredata.NewScopeFromObjectID(obj.ID)
 
 	banners, err := r.cookieBanner.ListCookieBannersForOrganization(ctx, scope, obj.ID, cursor, coredata.NewCookieBannerFilter(nil))
 	if err != nil {
@@ -1331,11 +1327,11 @@ func (r *organizationResolver) CookieBanners(ctx context.Context, obj *types.Org
 
 // ThirdParties is the resolver for the thirdParties field.
 func (r *organizationResolver) ThirdParties(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ThirdPartyOrderBy) (*types.ThirdPartyConnection, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionThirdPartyList); err != nil {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionThirdPartyList)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(obj.ID)
 	prb := r.probo
 
 	pageOrderBy := page.OrderBy[coredata.ThirdPartyOrderField]{
@@ -1364,11 +1360,11 @@ func (r *organizationResolver) ThirdParties(ctx context.Context, obj *types.Orga
 
 // ThirdPartiesDocument is the resolver for the thirdPartiesDocument field.
 func (r *organizationResolver) ThirdPartiesDocument(ctx context.Context, obj *types.Organization) (*types.Document, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionDocumentGet); err != nil {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionDocumentGet)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(obj.ID)
 	prb := r.probo
 
 	documentID, err := prb.GeneratedDocuments.GetThirdPartiesDocumentID(ctx, scope, obj.ID)
@@ -1397,11 +1393,11 @@ func (r *organizationResolver) ThirdPartiesDocument(ctx context.Context, obj *ty
 
 // WebhookSubscriptions is the resolver for the webhookSubscriptions field.
 func (r *organizationResolver) WebhookSubscriptions(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.WebhookSubscriptionOrderBy) (*types.WebhookSubscriptionConnection, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionWebhookSubscriptionList); err != nil {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionWebhookSubscriptionList)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(obj.ID)
 	prb := r.probo
 
 	pageOrderBy := page.OrderBy[coredata.WebhookSubscriptionOrderField]{
@@ -1438,7 +1434,7 @@ func (r *profileResolver) Permission(ctx context.Context, obj *types.Profile, ac
 
 // TotalCount is the resolver for the totalCount field.
 func (r *profileConnectionResolver) TotalCount(ctx context.Context, obj *types.ProfileConnection) (int, error) {
-	if err := r.authorize(ctx, obj.ParentID, iam.ActionMembershipProfileList); err != nil {
+	if _, err := r.authorize(ctx, obj.ParentID, iam.ActionMembershipProfileList); err != nil {
 		return 0, err
 	}
 

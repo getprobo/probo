@@ -72,18 +72,18 @@ func handleConnectorInitiate(
 			return
 		}
 
-		if err := iamSvc.Authorizer.Authorize(r.Context(), iam.AuthorizeParams{
+		scope, err := iamSvc.Authorizer.Authorize(r.Context(), iam.AuthorizeParams{
 			Principal: identity.ID,
 			Resource:  organizationID,
 			Session:   &session.ID,
 			Action:    probo.ActionConnectorInitiate,
-		}); err != nil {
+		})
+		if err != nil {
 			httpserver.RenderError(w, http.StatusForbidden, err)
 			return
 		}
 
 		requestedScopes := r.URL.Query()["scope"]
-		scope := coredata.NewScopeFromObjectID(organizationID)
 		prb := proboSvc
 
 		// Look up any existing connector so we can union its stored scopes

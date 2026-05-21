@@ -19,7 +19,7 @@ import (
 
 // CreateSAMLConfiguration is the resolver for the createSAMLConfiguration field.
 func (r *mutationResolver) CreateSAMLConfiguration(ctx context.Context, input types.CreateSAMLConfigurationInput) (*types.CreateSAMLConfigurationPayload, error) {
-	if err := r.authorize(ctx, input.OrganizationID, iam.ActionSAMLConfigurationCreate); err != nil {
+	if _, err := r.authorize(ctx, input.OrganizationID, iam.ActionSAMLConfigurationCreate); err != nil {
 		return nil, err
 	}
 
@@ -63,7 +63,7 @@ func (r *mutationResolver) CreateSAMLConfiguration(ctx context.Context, input ty
 
 // UpdateSAMLConfiguration is the resolver for the updateSAMLConfiguration field.
 func (r *mutationResolver) UpdateSAMLConfiguration(ctx context.Context, input types.UpdateSAMLConfigurationInput) (*types.UpdateSAMLConfigurationPayload, error) {
-	if err := r.authorize(ctx, input.SamlConfigurationID, iam.ActionSAMLConfigurationUpdate); err != nil {
+	if _, err := r.authorize(ctx, input.SamlConfigurationID, iam.ActionSAMLConfigurationUpdate); err != nil {
 		return nil, err
 	}
 
@@ -100,7 +100,7 @@ func (r *mutationResolver) UpdateSAMLConfiguration(ctx context.Context, input ty
 
 // DeleteSAMLConfiguration is the resolver for the deleteSAMLConfiguration field.
 func (r *mutationResolver) DeleteSAMLConfiguration(ctx context.Context, input types.DeleteSAMLConfigurationInput) (*types.DeleteSAMLConfigurationPayload, error) {
-	if err := r.authorize(ctx, input.OrganizationID, iam.ActionSAMLConfigurationDelete); err != nil {
+	if _, err := r.authorize(ctx, input.OrganizationID, iam.ActionSAMLConfigurationDelete); err != nil {
 		return nil, err
 	}
 

@@ -26,7 +26,7 @@ import (
 
 // Organization is the resolver for the organization field.
 func (r *auditResolver) Organization(ctx context.Context, obj *types.Audit) (*types.Organization, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGet); err != nil {
+	if _, err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGet); err != nil {
 		return nil, err
 	}
 
@@ -48,7 +48,7 @@ func (r *auditResolver) Organization(ctx context.Context, obj *types.Audit) (*ty
 
 // Framework is the resolver for the framework field.
 func (r *auditResolver) Framework(ctx context.Context, obj *types.Audit) (*types.Framework, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionFrameworkGet); err != nil {
+	if _, err := r.authorize(ctx, obj.ID, probo.ActionFrameworkGet); err != nil {
 		return nil, err
 	}
 
@@ -70,7 +70,7 @@ func (r *auditResolver) Framework(ctx context.Context, obj *types.Audit) (*types
 
 // Report is the resolver for the report field.
 func (r *auditResolver) Report(ctx context.Context, obj *types.Audit) (*types.Report, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionReportGet); err != nil {
+	if _, err := r.authorize(ctx, obj.ID, probo.ActionReportGet); err != nil {
 		return nil, err
 	}
 
@@ -96,7 +96,8 @@ func (r *auditResolver) Report(ctx context.Context, obj *types.Audit) (*types.Re
 
 // ReportURL is the resolver for the reportUrl field.
 func (r *auditResolver) ReportURL(ctx context.Context, obj *types.Audit) (*string, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionReportGetReportUrl); err != nil {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionReportGetReportUrl)
+	if err != nil {
 		return nil, err
 	}
 
@@ -104,7 +105,6 @@ func (r *auditResolver) ReportURL(ctx context.Context, obj *types.Audit) (*strin
 		return nil, nil
 	}
 
-	scope := coredata.NewScopeFromObjectID(obj.ID)
 	prb := r.probo
 
 	url, err := prb.Audits.GenerateReportURL(ctx, scope, obj.ID, 15*time.Minute)
@@ -118,11 +118,11 @@ func (r *auditResolver) ReportURL(ctx context.Context, obj *types.Audit) (*strin
 
 // Controls is the resolver for the controls field.
 func (r *auditResolver) Controls(ctx context.Context, obj *types.Audit, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ControlOrderBy, filter *types.ControlFilter) (*types.ControlConnection, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionControlList); err != nil {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionControlList)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(obj.ID)
 	prb := r.probo
 
 	pageOrderBy := page.OrderBy[coredata.ControlOrderField]{
@@ -154,11 +154,11 @@ func (r *auditResolver) Controls(ctx context.Context, obj *types.Audit, first *i
 
 // Findings is the resolver for the findings field.
 func (r *auditResolver) Findings(ctx context.Context, obj *types.Audit, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.FindingOrder, filter *types.FindingFilter) (*types.FindingConnection, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionFindingList); err != nil {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionFindingList)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(obj.ID)
 	prb := r.probo
 
 	pageOrderBy := page.OrderBy[coredata.FindingOrderField]{
@@ -205,11 +205,11 @@ func (r *auditResolver) Permission(ctx context.Context, obj *types.Audit, action
 
 // TotalCount is the resolver for the totalCount field.
 func (r *auditConnectionResolver) TotalCount(ctx context.Context, obj *types.AuditConnection) (int, error) {
-	if err := r.authorize(ctx, obj.ParentID, probo.ActionAuditList); err != nil {
+	scope, err := r.authorize(ctx, obj.ParentID, probo.ActionAuditList)
+	if err != nil {
 		return 0, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(obj.ParentID)
 	prb := r.probo
 
 	switch obj.Resolver.(type) {
@@ -245,7 +245,7 @@ func (r *auditConnectionResolver) TotalCount(ctx context.Context, obj *types.Aud
 
 // Organization is the resolver for the organization field.
 func (r *findingResolver) Organization(ctx context.Context, obj *types.Finding) (*types.Organization, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGet); err != nil {
+	if _, err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGet); err != nil {
 		return nil, err
 	}
 
@@ -267,11 +267,11 @@ func (r *findingResolver) Organization(ctx context.Context, obj *types.Finding) 
 
 // Audits is the resolver for the audits field.
 func (r *findingResolver) Audits(ctx context.Context, obj *types.Finding, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AuditOrderBy) (*types.AuditConnection, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionAuditList); err != nil {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionAuditList)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(obj.ID)
 	prb := r.probo
 
 	pageOrderBy := page.OrderBy[coredata.AuditOrderField]{
@@ -302,7 +302,7 @@ func (r *findingResolver) Owner(ctx context.Context, obj *types.Finding) (*types
 		return nil, nil
 	}
 
-	if err := r.authorize(ctx, obj.ID, iam.ActionMembershipProfileGet); err != nil {
+	if _, err := r.authorize(ctx, obj.ID, iam.ActionMembershipProfileGet); err != nil {
 		return nil, err
 	}
 
@@ -328,7 +328,7 @@ func (r *findingResolver) Risk(ctx context.Context, obj *types.Finding) (*types.
 		return nil, nil
 	}
 
-	if err := r.authorize(ctx, obj.ID, probo.ActionRiskGet); err != nil {
+	if _, err := r.authorize(ctx, obj.ID, probo.ActionRiskGet); err != nil {
 		return nil, err
 	}
 
@@ -355,11 +355,11 @@ func (r *findingResolver) Permission(ctx context.Context, obj *types.Finding, ac
 
 // TotalCount is the resolver for the totalCount field.
 func (r *findingConnectionResolver) TotalCount(ctx context.Context, obj *types.FindingConnection) (int, error) {
-	if err := r.authorize(ctx, obj.ParentID, probo.ActionFindingList); err != nil {
+	scope, err := r.authorize(ctx, obj.ParentID, probo.ActionFindingList)
+	if err != nil {
 		return 0, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(obj.ParentID)
 	prb := r.probo
 
 	var (
@@ -403,11 +403,11 @@ func (r *findingConnectionResolver) TotalCount(ctx context.Context, obj *types.F
 
 // CreateAudit is the resolver for the createAudit field.
 func (r *mutationResolver) CreateAudit(ctx context.Context, input types.CreateAuditInput) (*types.CreateAuditPayload, error) {
-	if err := r.authorize(ctx, input.OrganizationID, probo.ActionAuditCreate); err != nil {
+	scope, err := r.authorize(ctx, input.OrganizationID, probo.ActionAuditCreate)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(input.OrganizationID)
 	prb := r.probo
 
 	req := probo.CreateAuditRequest{
@@ -461,11 +461,11 @@ func (r *mutationResolver) CreateAudit(ctx context.Context, input types.CreateAu
 
 // UpdateAudit is the resolver for the updateAudit field.
 func (r *mutationResolver) UpdateAudit(ctx context.Context, input types.UpdateAuditInput) (*types.UpdateAuditPayload, error) {
-	if err := r.authorize(ctx, input.ID, probo.ActionAuditUpdate); err != nil {
+	scope, err := r.authorize(ctx, input.ID, probo.ActionAuditUpdate)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(input.ID)
 	prb := r.probo
 
 	req := probo.UpdateAuditRequest{
@@ -495,15 +495,14 @@ func (r *mutationResolver) UpdateAudit(ctx context.Context, input types.UpdateAu
 
 // DeleteAudit is the resolver for the deleteAudit field.
 func (r *mutationResolver) DeleteAudit(ctx context.Context, input types.DeleteAuditInput) (*types.DeleteAuditPayload, error) {
-	if err := r.authorize(ctx, input.AuditID, probo.ActionAuditDelete); err != nil {
+	scope, err := r.authorize(ctx, input.AuditID, probo.ActionAuditDelete)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(input.AuditID)
 	prb := r.probo
 
-	err := prb.Audits.Delete(ctx, scope, input.AuditID)
-	if err != nil {
+	if err := prb.Audits.Delete(ctx, scope, input.AuditID); err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete audit", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
@@ -515,11 +514,11 @@ func (r *mutationResolver) DeleteAudit(ctx context.Context, input types.DeleteAu
 
 // UploadAuditReport is the resolver for the uploadAuditReport field.
 func (r *mutationResolver) UploadAuditReport(ctx context.Context, input types.UploadAuditReportInput) (*types.UploadAuditReportPayload, error) {
-	if err := r.authorize(ctx, input.AuditID, probo.ActionAuditReportUpload); err != nil {
+	scope, err := r.authorize(ctx, input.AuditID, probo.ActionAuditReportUpload)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(input.AuditID)
 	prb := r.probo
 
 	req := probo.UploadAuditReportRequest{
@@ -550,11 +549,11 @@ func (r *mutationResolver) UploadAuditReport(ctx context.Context, input types.Up
 
 // DeleteAuditReport is the resolver for the deleteAuditReport field.
 func (r *mutationResolver) DeleteAuditReport(ctx context.Context, input types.DeleteAuditReportInput) (*types.DeleteAuditReportPayload, error) {
-	if err := r.authorize(ctx, input.AuditID, probo.ActionAuditReportDelete); err != nil {
+	scope, err := r.authorize(ctx, input.AuditID, probo.ActionAuditReportDelete)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(input.AuditID)
 	prb := r.probo
 
 	audit, err := prb.Audits.DeleteReport(ctx, scope, input.AuditID)
@@ -570,11 +569,11 @@ func (r *mutationResolver) DeleteAuditReport(ctx context.Context, input types.De
 
 // CreateFinding is the resolver for the createFinding field.
 func (r *mutationResolver) CreateFinding(ctx context.Context, input types.CreateFindingInput) (*types.CreateFindingPayload, error) {
-	if err := r.authorize(ctx, input.OrganizationID, probo.ActionFindingCreate); err != nil {
+	scope, err := r.authorize(ctx, input.OrganizationID, probo.ActionFindingCreate)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(input.OrganizationID)
 	prb := r.probo
 
 	req := probo.CreateFindingRequest{
@@ -611,11 +610,11 @@ func (r *mutationResolver) CreateFinding(ctx context.Context, input types.Create
 
 // UpdateFinding is the resolver for the updateFinding field.
 func (r *mutationResolver) UpdateFinding(ctx context.Context, input types.UpdateFindingInput) (*types.UpdateFindingPayload, error) {
-	if err := r.authorize(ctx, input.ID, probo.ActionFindingUpdate); err != nil {
+	scope, err := r.authorize(ctx, input.ID, probo.ActionFindingUpdate)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(input.ID)
 	prb := r.probo
 
 	req := probo.UpdateFindingRequest{
@@ -651,15 +650,14 @@ func (r *mutationResolver) UpdateFinding(ctx context.Context, input types.Update
 
 // DeleteFinding is the resolver for the deleteFinding field.
 func (r *mutationResolver) DeleteFinding(ctx context.Context, input types.DeleteFindingInput) (*types.DeleteFindingPayload, error) {
-	if err := r.authorize(ctx, input.FindingID, probo.ActionFindingDelete); err != nil {
+	scope, err := r.authorize(ctx, input.FindingID, probo.ActionFindingDelete)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(input.FindingID)
 	prb := r.probo
 
-	err := prb.Findings.Delete(ctx, scope, input.FindingID)
-	if err != nil {
+	if err := prb.Findings.Delete(ctx, scope, input.FindingID); err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete finding", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
@@ -671,11 +669,11 @@ func (r *mutationResolver) DeleteFinding(ctx context.Context, input types.Delete
 
 // CreateFindingAuditMapping is the resolver for the createFindingAuditMapping field.
 func (r *mutationResolver) CreateFindingAuditMapping(ctx context.Context, input types.CreateFindingAuditMappingInput) (*types.CreateFindingAuditMappingPayload, error) {
-	if err := r.authorize(ctx, input.FindingID, probo.ActionFindingAuditMappingCreate); err != nil {
+	scope, err := r.authorize(ctx, input.FindingID, probo.ActionFindingAuditMappingCreate)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(input.FindingID)
 	prb := r.probo
 
 	finding, audit, err := prb.Findings.CreateAuditMapping(ctx, scope, input.FindingID, input.AuditID, input.ReferenceID)
@@ -692,11 +690,11 @@ func (r *mutationResolver) CreateFindingAuditMapping(ctx context.Context, input 
 
 // DeleteFindingAuditMapping is the resolver for the deleteFindingAuditMapping field.
 func (r *mutationResolver) DeleteFindingAuditMapping(ctx context.Context, input types.DeleteFindingAuditMappingInput) (*types.DeleteFindingAuditMappingPayload, error) {
-	if err := r.authorize(ctx, input.FindingID, probo.ActionFindingAuditMappingDelete); err != nil {
+	scope, err := r.authorize(ctx, input.FindingID, probo.ActionFindingAuditMappingDelete)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(input.FindingID)
 	prb := r.probo
 
 	finding, audit, err := prb.Findings.DeleteAuditMapping(ctx, scope, input.FindingID, input.AuditID)
@@ -713,11 +711,11 @@ func (r *mutationResolver) DeleteFindingAuditMapping(ctx context.Context, input 
 
 // PublishFindingList is the resolver for the publishFindingList field.
 func (r *mutationResolver) PublishFindingList(ctx context.Context, input types.PublishFindingListInput) (*types.PublishFindingListPayload, error) {
-	if err := r.authorize(ctx, input.OrganizationID, probo.ActionFindingPublish); err != nil {
+	scope, err := r.authorize(ctx, input.OrganizationID, probo.ActionFindingPublish)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(input.OrganizationID)
 	prb := r.probo
 
 	document, documentVersion, err := prb.GeneratedDocuments.PublishFindingList(ctx, scope, input.OrganizationID, input.ApproverIds, input.Minor)
@@ -743,11 +741,11 @@ func (r *mutationResolver) PublishFindingList(ctx context.Context, input types.P
 
 // DownloadURL is the resolver for the downloadUrl field.
 func (r *reportResolver) DownloadURL(ctx context.Context, obj *types.Report) (*string, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionReportDownloadUrlGet); err != nil {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionReportDownloadUrlGet)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(obj.ID)
 	prb := r.probo
 
 	url, err := prb.Reports.GenerateDownloadURL(ctx, scope, obj.ID, 15*time.Minute)
@@ -761,11 +759,11 @@ func (r *reportResolver) DownloadURL(ctx context.Context, obj *types.Report) (*s
 
 // Audit is the resolver for the audit field.
 func (r *reportResolver) Audit(ctx context.Context, obj *types.Report) (*types.Audit, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionAuditGet); err != nil {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionAuditGet)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(obj.ID)
 	prb := r.probo
 
 	audit, err := prb.Audits.GetByReportID(ctx, scope, obj.ID)

@@ -498,7 +498,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 	default:
 	}
 
-	if err := r.authorize(ctx, id, action); err != nil {
+	if _, err := r.authorize(ctx, id, action); err != nil {
 		return nil, err
 	}
 

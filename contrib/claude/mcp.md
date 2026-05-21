@@ -65,7 +65,8 @@ First return is always `nil`. Authorization errors are returned and handled like
 Use `Authorize` with an early return:
 
 ```go
-if err := r.Authorize(ctx, input.OrganizationID, probo.ActionThirdPartyList); err != nil {
+scope, err := r.Authorize(ctx, input.OrganizationID, probo.ActionThirdPartyList)
+if err != nil {
 	return nil, types.ListThirdPartiesOutput{}, err
 }
 ```
@@ -75,7 +76,7 @@ if err := r.Authorize(ctx, input.OrganizationID, probo.ActionThirdPartyList); er
 **List with pagination:**
 ```go
 func (r *Resolver) ListThirdPartiesTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListThirdPartiesInput) (*mcp.CallToolResult, types.ListThirdPartiesOutput, error) {
-	if err := r.Authorize(ctx, input.OrganizationID, probo.ActionThirdPartyList); err != nil {
+	if _, err := r.Authorize(ctx, input.OrganizationID, probo.ActionThirdPartyList); err != nil {
 		return nil, types.ListThirdPartiesOutput{}, err
 	}
 
@@ -106,7 +107,7 @@ func (r *Resolver) ListThirdPartiesTool(ctx context.Context, req *mcp.CallToolRe
 **Get single resource:**
 ```go
 func (r *Resolver) GetRiskTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetRiskInput) (*mcp.CallToolResult, types.GetRiskOutput, error) {
-	if err := r.Authorize(ctx, input.ID, probo.ActionRiskGet); err != nil {
+	if _, err := r.Authorize(ctx, input.ID, probo.ActionRiskGet); err != nil {
 		return nil, types.GetRiskOutput{}, err
 	}
 
@@ -124,7 +125,7 @@ func (r *Resolver) GetRiskTool(ctx context.Context, req *mcp.CallToolRequest, in
 **Create:**
 ```go
 func (r *Resolver) AddRiskTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddRiskInput) (*mcp.CallToolResult, types.AddRiskOutput, error) {
-	if err := r.Authorize(ctx, input.OrganizationID, probo.ActionRiskCreate); err != nil {
+	if _, err := r.Authorize(ctx, input.OrganizationID, probo.ActionRiskCreate); err != nil {
 		return nil, types.AddRiskOutput{}, err
 	}
 

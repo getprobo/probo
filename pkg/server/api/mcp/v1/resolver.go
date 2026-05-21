@@ -57,10 +57,10 @@ func markdownToProseMirrorJSON(markdown string) (string, error) {
 	return string(out), nil
 }
 
-func (r *Resolver) Authorize(ctx context.Context, entityID gid.GID, action iam.Action) error {
+func (r *Resolver) Authorize(ctx context.Context, entityID gid.GID, action iam.Action) (*coredata.Scope, error) {
 	identity := authn.IdentityFromContext(ctx)
 
-	err := r.iamSvc.Authorizer.Authorize(
+	scope, err := r.iamSvc.Authorizer.Authorize(
 		ctx,
 		iam.AuthorizeParams{
 			Principal: identity.ID,
@@ -69,22 +69,22 @@ func (r *Resolver) Authorize(ctx context.Context, entityID gid.GID, action iam.A
 		},
 	)
 	if err == nil {
-		return nil
+		return scope, nil
 	}
 
 	if _, ok := errors.AsType[*iam.ErrInsufficientPermissions](err); ok {
-		return fmt.Errorf("permission denied")
+		return nil, fmt.Errorf("permission denied")
 	}
 
 	if _, ok := errors.AsType[*iam.ErrAssumptionRequired](err); ok {
-		return fmt.Errorf("assumption required")
+		return nil, fmt.Errorf("assumption required")
 	}
 
 	if errors.Is(err, coredata.ErrResourceNotFound) {
-		return fmt.Errorf("resource not found")
+		return nil, fmt.Errorf("resource not found")
 	}
 
 	r.logger.ErrorCtx(ctx, "cannot authorize MCP request", log.Error(err))
 
-	return fmt.Errorf("internal server error")
+	return nil, fmt.Errorf("internal server error")
 }

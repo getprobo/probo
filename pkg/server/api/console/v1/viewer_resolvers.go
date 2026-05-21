@@ -22,11 +22,11 @@ import (
 
 // SignableDocuments is the resolver for the signableDocuments field.
 func (r *viewerResolver) SignableDocuments(ctx context.Context, obj *types.Viewer, organizationID gid.GID, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentOrderBy) (*types.EmployeeDocumentConnection, error) {
-	if err := r.authorize(ctx, organizationID, probo.ActionEmployeeDocumentList); err != nil {
+	scope, err := r.authorize(ctx, organizationID, probo.ActionEmployeeDocumentList)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(organizationID)
 	prb := r.probo
 
 	pageOrderBy := page.OrderBy[coredata.DocumentOrderField]{
@@ -71,11 +71,11 @@ func (r *viewerResolver) SignableDocuments(ctx context.Context, obj *types.Viewe
 
 // SignableDocument is the resolver for the signableDocument field.
 func (r *viewerResolver) SignableDocument(ctx context.Context, obj *types.Viewer, id gid.GID) (*types.EmployeeDocument, error) {
-	if err := r.authorize(ctx, id, probo.ActionEmployeeDocumentGet); err != nil {
+	scope, err := r.authorize(ctx, id, probo.ActionEmployeeDocumentGet)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(id)
 	prb := r.probo
 
 	identity := authn.IdentityFromContext(ctx)
@@ -105,11 +105,11 @@ func (r *viewerResolver) SignableDocument(ctx context.Context, obj *types.Viewer
 
 // ApprovableDocuments is the resolver for the approvableDocuments field.
 func (r *viewerResolver) ApprovableDocuments(ctx context.Context, obj *types.Viewer, organizationID gid.GID, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentOrderBy) (*types.EmployeeDocumentConnection, error) {
-	if err := r.authorize(ctx, organizationID, probo.ActionEmployeeDocumentList); err != nil {
+	scope, err := r.authorize(ctx, organizationID, probo.ActionEmployeeDocumentList)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(organizationID)
 	prb := r.probo
 
 	pageOrderBy := page.OrderBy[coredata.DocumentOrderField]{
@@ -154,11 +154,11 @@ func (r *viewerResolver) ApprovableDocuments(ctx context.Context, obj *types.Vie
 
 // ApprovableDocument is the resolver for the approvableDocument field.
 func (r *viewerResolver) ApprovableDocument(ctx context.Context, obj *types.Viewer, id gid.GID) (*types.EmployeeDocument, error) {
-	if err := r.authorize(ctx, id, probo.ActionEmployeeDocumentGet); err != nil {
+	scope, err := r.authorize(ctx, id, probo.ActionEmployeeDocumentGet)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(id)
 	prb := r.probo
 
 	identity := authn.IdentityFromContext(ctx)

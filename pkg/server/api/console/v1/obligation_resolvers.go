@@ -23,11 +23,11 @@ import (
 
 // CreateObligation is the resolver for the createObligation field.
 func (r *mutationResolver) CreateObligation(ctx context.Context, input types.CreateObligationInput) (*types.CreateObligationPayload, error) {
-	if err := r.authorize(ctx, input.OrganizationID, probo.ActionObligationCreate); err != nil {
+	scope, err := r.authorize(ctx, input.OrganizationID, probo.ActionObligationCreate)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(input.OrganizationID)
 	prb := r.probo
 
 	req := probo.CreateObligationRequest{
@@ -62,11 +62,11 @@ func (r *mutationResolver) CreateObligation(ctx context.Context, input types.Cre
 
 // UpdateObligation is the resolver for the updateObligation field.
 func (r *mutationResolver) UpdateObligation(ctx context.Context, input types.UpdateObligationInput) (*types.UpdateObligationPayload, error) {
-	if err := r.authorize(ctx, input.ID, probo.ActionObligationUpdate); err != nil {
+	scope, err := r.authorize(ctx, input.ID, probo.ActionObligationUpdate)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(input.ID)
 	prb := r.probo
 
 	req := probo.UpdateObligationRequest{
@@ -101,15 +101,14 @@ func (r *mutationResolver) UpdateObligation(ctx context.Context, input types.Upd
 
 // DeleteObligation is the resolver for the deleteObligation field.
 func (r *mutationResolver) DeleteObligation(ctx context.Context, input types.DeleteObligationInput) (*types.DeleteObligationPayload, error) {
-	if err := r.authorize(ctx, input.ObligationID, probo.ActionObligationDelete); err != nil {
+	scope, err := r.authorize(ctx, input.ObligationID, probo.ActionObligationDelete)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(input.ObligationID)
 	prb := r.probo
 
-	err := prb.Obligations.Delete(ctx, scope, input.ObligationID)
-	if err != nil {
+	if err := prb.Obligations.Delete(ctx, scope, input.ObligationID); err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete obligation", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
@@ -121,11 +120,11 @@ func (r *mutationResolver) DeleteObligation(ctx context.Context, input types.Del
 
 // PublishObligationList is the resolver for the publishObligationList field.
 func (r *mutationResolver) PublishObligationList(ctx context.Context, input types.PublishObligationListInput) (*types.PublishObligationListPayload, error) {
-	if err := r.authorize(ctx, input.OrganizationID, probo.ActionObligationPublish); err != nil {
+	scope, err := r.authorize(ctx, input.OrganizationID, probo.ActionObligationPublish)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(input.OrganizationID)
 	prb := r.probo
 
 	document, documentVersion, err := prb.GeneratedDocuments.PublishObligationList(ctx, scope, input.OrganizationID, input.ApproverIds, input.Minor)
@@ -151,7 +150,7 @@ func (r *mutationResolver) PublishObligationList(ctx context.Context, input type
 
 // Organization is the resolver for the organization field.
 func (r *obligationResolver) Organization(ctx context.Context, obj *types.Obligation) (*types.Organization, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGet); err != nil {
+	if _, err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGet); err != nil {
 		return nil, err
 	}
 
@@ -173,7 +172,7 @@ func (r *obligationResolver) Organization(ctx context.Context, obj *types.Obliga
 
 // Owner is the resolver for the owner field.
 func (r *obligationResolver) Owner(ctx context.Context, obj *types.Obligation) (*types.Profile, error) {
-	if err := r.authorize(ctx, obj.ID, iam.ActionMembershipProfileGet); err != nil {
+	if _, err := r.authorize(ctx, obj.ID, iam.ActionMembershipProfileGet); err != nil {
 		return nil, err
 	}
 
@@ -200,11 +199,11 @@ func (r *obligationResolver) Permission(ctx context.Context, obj *types.Obligati
 
 // TotalCount is the resolver for the totalCount field.
 func (r *obligationConnectionResolver) TotalCount(ctx context.Context, obj *types.ObligationConnection) (int, error) {
-	if err := r.authorize(ctx, obj.ParentID, probo.ActionObligationList); err != nil {
+	scope, err := r.authorize(ctx, obj.ParentID, probo.ActionObligationList)
+	if err != nil {
 		return 0, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(obj.ParentID)
 	prb := r.probo
 
 	switch obj.Resolver.(type) {

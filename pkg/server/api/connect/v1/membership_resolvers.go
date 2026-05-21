@@ -21,7 +21,7 @@ import (
 
 // LastSession is the resolver for the lastSession field.
 func (r *membershipResolver) LastSession(ctx context.Context, obj *types.Membership) (*types.Session, error) {
-	if err := r.authorize(ctx, obj.ID, iam.ActionMembershipGet, authz.WithSkipAssumptionCheck()); err != nil {
+	if _, err := r.authorize(ctx, obj.ID, iam.ActionMembershipGet, authz.WithSkipAssumptionCheck()); err != nil {
 		return nil, err
 	}
 
@@ -51,12 +51,12 @@ func (r *membershipResolver) Permission(ctx context.Context, obj *types.Membersh
 
 // UpdateMembership is the resolver for the updateMembership field.
 func (r *mutationResolver) UpdateMembership(ctx context.Context, input types.UpdateMembershipInput) (*types.UpdateMembershipPayload, error) {
-	if err := r.authorize(ctx, input.MembershipID, iam.ActionMembershipUpdate); err != nil {
+	if _, err := r.authorize(ctx, input.MembershipID, iam.ActionMembershipUpdate); err != nil {
 		return nil, err
 	}
 
 	if input.Role == coredata.MembershipRoleOwner {
-		if err := r.authorize(ctx, input.MembershipID, iam.ActionMembershipRoleSetOwner); err != nil {
+		if _, err := r.authorize(ctx, input.MembershipID, iam.ActionMembershipRoleSetOwner); err != nil {
 			return nil, err
 		}
 	}

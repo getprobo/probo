@@ -25,7 +25,7 @@ import (
 
 // Organization is the resolver for the organization field.
 func (r *cookieBannerResolver) Organization(ctx context.Context, obj *types.CookieBanner) (*types.Organization, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGet); err != nil {
+	if _, err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGet); err != nil {
 		return nil, err
 	}
 
@@ -47,7 +47,7 @@ func (r *cookieBannerResolver) Organization(ctx context.Context, obj *types.Cook
 
 // Categories is the resolver for the categories field.
 func (r *cookieBannerResolver) Categories(ctx context.Context, obj *types.CookieBanner, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.CookieCategoryOrderBy, filter *types.CookieCategoryFilter) (*types.CookieCategoryConnection, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionCookieCategoryList); err != nil {
+	if _, err := r.authorize(ctx, obj.ID, probo.ActionCookieCategoryList); err != nil {
 		return nil, err
 	}
 
@@ -85,11 +85,10 @@ func (r *cookieBannerResolver) Categories(ctx context.Context, obj *types.Cookie
 
 // Translations is the resolver for the translations field.
 func (r *cookieBannerResolver) Translations(ctx context.Context, obj *types.CookieBanner) ([]*types.CookieBannerTranslation, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionCookieBannerGet); err != nil {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionCookieBannerGet)
+	if err != nil {
 		return nil, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(obj.ID)
 
 	translations, err := r.cookieBanner.ListCookieBannerTranslations(ctx, scope, obj.ID)
 	if err != nil {
@@ -107,11 +106,10 @@ func (r *cookieBannerResolver) Translations(ctx context.Context, obj *types.Cook
 
 // LatestVersion is the resolver for the latestVersion field.
 func (r *cookieBannerResolver) LatestVersion(ctx context.Context, obj *types.CookieBanner) (*types.CookieBannerVersion, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionCookieBannerVersionList); err != nil {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionCookieBannerVersionList)
+	if err != nil {
 		return nil, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(obj.ID)
 
 	cursor := &page.Cursor[coredata.CookieBannerVersionOrderField]{
 		Size:     1,
@@ -145,7 +143,8 @@ func (r *cookieBannerResolver) LatestVersion(ctx context.Context, obj *types.Coo
 
 // ConsentRecords is the resolver for the consentRecords field.
 func (r *cookieBannerResolver) ConsentRecords(ctx context.Context, obj *types.CookieBanner, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.CookieConsentRecordOrderBy, filter *types.CookieConsentRecordFilter) (*types.CookieConsentRecordConnection, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionCookieConsentRecordList); err != nil {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionCookieConsentRecordList)
+	if err != nil {
 		return nil, err
 	}
 
@@ -161,7 +160,6 @@ func (r *cookieBannerResolver) ConsentRecords(ctx context.Context, obj *types.Co
 	}
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
-	scope := coredata.NewScopeFromObjectID(obj.ID)
 
 	var (
 		action    *coredata.CookieConsentAction
@@ -189,7 +187,7 @@ func (r *cookieBannerResolver) ConsentRecords(ctx context.Context, obj *types.Co
 
 // TrackerPatterns is the resolver for the trackerPatterns field.
 func (r *cookieBannerResolver) TrackerPatterns(ctx context.Context, obj *types.CookieBanner, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TrackerPatternOrderBy, filter *types.TrackerPatternFilter) (*types.TrackerPatternConnection, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionTrackerPatternList); err != nil {
+	if _, err := r.authorize(ctx, obj.ID, probo.ActionTrackerPatternList); err != nil {
 		return nil, err
 	}
 
@@ -226,7 +224,7 @@ func (r *cookieBannerResolver) TrackerPatterns(ctx context.Context, obj *types.C
 
 // UncategorisedTrackerResources is the resolver for the uncategorisedTrackerResources field.
 func (r *cookieBannerResolver) UncategorisedTrackerResources(ctx context.Context, obj *types.CookieBanner, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TrackerResourceOrderBy, filter *types.TrackerResourceFilter) (*types.TrackerResourceConnection, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionTrackerResourceList); err != nil {
+	if _, err := r.authorize(ctx, obj.ID, probo.ActionTrackerResourceList); err != nil {
 		return nil, err
 	}
 
@@ -267,11 +265,10 @@ func (r *cookieBannerResolver) Permission(ctx context.Context, obj *types.Cookie
 
 // TotalCount is the resolver for the totalCount field.
 func (r *cookieBannerConnectionResolver) TotalCount(ctx context.Context, obj *types.CookieBannerConnection) (int, error) {
-	if err := r.authorize(ctx, obj.ParentID, probo.ActionCookieBannerList); err != nil {
+	scope, err := r.authorize(ctx, obj.ParentID, probo.ActionCookieBannerList)
+	if err != nil {
 		return 0, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(obj.ParentID)
 
 	count, err := r.cookieBanner.CountCookieBannersForOrganization(ctx, scope, obj.ParentID, coredata.NewCookieBannerFilter(nil))
 	if err != nil {
@@ -284,11 +281,10 @@ func (r *cookieBannerConnectionResolver) TotalCount(ctx context.Context, obj *ty
 
 // Categories is the resolver for the categories field.
 func (r *cookieBannerVersionResolver) Categories(ctx context.Context, obj *types.CookieBannerVersion) ([]*types.CookieBannerVersionCategory, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionCookieBannerVersionGet); err != nil {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionCookieBannerVersionGet)
+	if err != nil {
 		return nil, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(obj.ID)
 
 	version, err := r.cookieBanner.GetCookieBannerVersion(ctx, scope, obj.ID)
 	if err != nil {
@@ -331,7 +327,7 @@ func (r *cookieCategoryResolver) CookieBanner(ctx context.Context, obj *types.Co
 		return nil, nil
 	}
 
-	if err := r.authorize(ctx, obj.CookieBanner.ID, probo.ActionCookieBannerGet); err != nil {
+	if _, err := r.authorize(ctx, obj.CookieBanner.ID, probo.ActionCookieBannerGet); err != nil {
 		return nil, err
 	}
 
@@ -353,7 +349,7 @@ func (r *cookieCategoryResolver) CookieBanner(ctx context.Context, obj *types.Co
 
 // TrackerPatterns is the resolver for the trackerPatterns field.
 func (r *cookieCategoryResolver) TrackerPatterns(ctx context.Context, obj *types.CookieCategory, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TrackerPatternOrderBy) (*types.TrackerPatternConnection, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionTrackerPatternList); err != nil {
+	if _, err := r.authorize(ctx, obj.ID, probo.ActionTrackerPatternList); err != nil {
 		return nil, err
 	}
 
@@ -384,7 +380,7 @@ func (r *cookieCategoryResolver) TrackerPatterns(ctx context.Context, obj *types
 
 // TrackerResources is the resolver for the trackerResources field.
 func (r *cookieCategoryResolver) TrackerResources(ctx context.Context, obj *types.CookieCategory, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TrackerResourceOrderBy) (*types.TrackerResourceConnection, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionTrackerResourceList); err != nil {
+	if _, err := r.authorize(ctx, obj.ID, probo.ActionTrackerResourceList); err != nil {
 		return nil, err
 	}
 
@@ -420,11 +416,10 @@ func (r *cookieCategoryResolver) Permission(ctx context.Context, obj *types.Cook
 
 // TotalCount is the resolver for the totalCount field.
 func (r *cookieCategoryConnectionResolver) TotalCount(ctx context.Context, obj *types.CookieCategoryConnection) (int, error) {
-	if err := r.authorize(ctx, obj.ParentID, probo.ActionCookieCategoryList); err != nil {
+	scope, err := r.authorize(ctx, obj.ParentID, probo.ActionCookieCategoryList)
+	if err != nil {
 		return 0, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(obj.ParentID)
 
 	count, err := r.cookieBanner.CountCategoriesForBanner(ctx, scope, obj.ParentID, obj.Filter)
 	if err != nil {
@@ -450,11 +445,10 @@ func (r *detectedTrackerConnectionResolver) TotalCount(ctx context.Context, obj 
 
 // CreateCookieBanner is the resolver for the createCookieBanner field.
 func (r *mutationResolver) CreateCookieBanner(ctx context.Context, input types.CreateCookieBannerInput) (*types.CreateCookieBannerPayload, error) {
-	if err := r.authorize(ctx, input.OrganizationID, probo.ActionCookieBannerCreate); err != nil {
+	scope, err := r.authorize(ctx, input.OrganizationID, probo.ActionCookieBannerCreate)
+	if err != nil {
 		return nil, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(input.OrganizationID)
 
 	banner, err := r.cookieBanner.CreateCookieBanner(
 		ctx,
@@ -489,11 +483,10 @@ func (r *mutationResolver) CreateCookieBanner(ctx context.Context, input types.C
 
 // UpdateCookieBanner is the resolver for the updateCookieBanner field.
 func (r *mutationResolver) UpdateCookieBanner(ctx context.Context, input types.UpdateCookieBannerInput) (*types.UpdateCookieBannerPayload, error) {
-	if err := r.authorize(ctx, input.CookieBannerID, probo.ActionCookieBannerUpdate); err != nil {
+	scope, err := r.authorize(ctx, input.CookieBannerID, probo.ActionCookieBannerUpdate)
+	if err != nil {
 		return nil, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(input.CookieBannerID)
 
 	banner, err := r.cookieBanner.UpdateCookieBanner(
 		ctx,
@@ -528,14 +521,12 @@ func (r *mutationResolver) UpdateCookieBanner(ctx context.Context, input types.U
 
 // DeleteCookieBanner is the resolver for the deleteCookieBanner field.
 func (r *mutationResolver) DeleteCookieBanner(ctx context.Context, input types.DeleteCookieBannerInput) (*types.DeleteCookieBannerPayload, error) {
-	if err := r.authorize(ctx, input.CookieBannerID, probo.ActionCookieBannerDelete); err != nil {
+	scope, err := r.authorize(ctx, input.CookieBannerID, probo.ActionCookieBannerDelete)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(input.CookieBannerID)
-
-	err := r.cookieBanner.DeleteCookieBanner(ctx, scope, input.CookieBannerID)
-	if err != nil {
+	if err := r.cookieBanner.DeleteCookieBanner(ctx, scope, input.CookieBannerID); err != nil {
 		if errors.Is(err, cookiebanner.ErrBannerNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
 		}
@@ -552,11 +543,10 @@ func (r *mutationResolver) DeleteCookieBanner(ctx context.Context, input types.D
 
 // ActivateCookieBanner is the resolver for the activateCookieBanner field.
 func (r *mutationResolver) ActivateCookieBanner(ctx context.Context, input types.ActivateCookieBannerInput) (*types.ActivateCookieBannerPayload, error) {
-	if err := r.authorize(ctx, input.CookieBannerID, probo.ActionCookieBannerActivate); err != nil {
+	scope, err := r.authorize(ctx, input.CookieBannerID, probo.ActionCookieBannerActivate)
+	if err != nil {
 		return nil, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(input.CookieBannerID)
 
 	banner, err := r.cookieBanner.ActivateCookieBanner(ctx, scope, input.CookieBannerID)
 	if err != nil {
@@ -584,11 +574,10 @@ func (r *mutationResolver) ActivateCookieBanner(ctx context.Context, input types
 
 // DeactivateCookieBanner is the resolver for the deactivateCookieBanner field.
 func (r *mutationResolver) DeactivateCookieBanner(ctx context.Context, input types.DeactivateCookieBannerInput) (*types.DeactivateCookieBannerPayload, error) {
-	if err := r.authorize(ctx, input.CookieBannerID, probo.ActionCookieBannerDeactivate); err != nil {
+	scope, err := r.authorize(ctx, input.CookieBannerID, probo.ActionCookieBannerDeactivate)
+	if err != nil {
 		return nil, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(input.CookieBannerID)
 
 	banner, err := r.cookieBanner.DeactivateCookieBanner(ctx, scope, input.CookieBannerID)
 	if err != nil {
@@ -612,11 +601,10 @@ func (r *mutationResolver) DeactivateCookieBanner(ctx context.Context, input typ
 
 // PublishCookieBannerVersion is the resolver for the publishCookieBannerVersion field.
 func (r *mutationResolver) PublishCookieBannerVersion(ctx context.Context, input types.PublishCookieBannerVersionInput) (*types.PublishCookieBannerVersionPayload, error) {
-	if err := r.authorize(ctx, input.CookieBannerID, probo.ActionCookieBannerVersionPublish); err != nil {
+	scope, err := r.authorize(ctx, input.CookieBannerID, probo.ActionCookieBannerVersionPublish)
+	if err != nil {
 		return nil, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(input.CookieBannerID)
 
 	version, err := r.cookieBanner.PublishCookieBannerVersion(ctx, scope, input.CookieBannerID)
 	if err != nil {
@@ -649,11 +637,10 @@ func (r *mutationResolver) PublishCookieBannerVersion(ctx context.Context, input
 
 // CreateCookieCategory is the resolver for the createCookieCategory field.
 func (r *mutationResolver) CreateCookieCategory(ctx context.Context, input types.CreateCookieCategoryInput) (*types.CreateCookieCategoryPayload, error) {
-	if err := r.authorize(ctx, input.CookieBannerID, probo.ActionCookieCategoryCreate); err != nil {
+	scope, err := r.authorize(ctx, input.CookieBannerID, probo.ActionCookieCategoryCreate)
+	if err != nil {
 		return nil, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(input.CookieBannerID)
 
 	category, err := r.cookieBanner.CreateCookieCategory(
 		ctx,
@@ -698,11 +685,10 @@ func (r *mutationResolver) CreateCookieCategory(ctx context.Context, input types
 
 // UpdateCookieCategory is the resolver for the updateCookieCategory field.
 func (r *mutationResolver) UpdateCookieCategory(ctx context.Context, input types.UpdateCookieCategoryInput) (*types.UpdateCookieCategoryPayload, error) {
-	if err := r.authorize(ctx, input.CookieCategoryID, probo.ActionCookieCategoryUpdate); err != nil {
+	scope, err := r.authorize(ctx, input.CookieCategoryID, probo.ActionCookieCategoryUpdate)
+	if err != nil {
 		return nil, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(input.CookieCategoryID)
 
 	var gcmConsentTypes *[]string
 	if input.GcmConsentTypes != nil {
@@ -759,11 +745,10 @@ func (r *mutationResolver) UpdateCookieCategory(ctx context.Context, input types
 
 // DeleteCookieCategory is the resolver for the deleteCookieCategory field.
 func (r *mutationResolver) DeleteCookieCategory(ctx context.Context, input types.DeleteCookieCategoryInput) (*types.DeleteCookieCategoryPayload, error) {
-	if err := r.authorize(ctx, input.CookieCategoryID, probo.ActionCookieCategoryDelete); err != nil {
+	scope, err := r.authorize(ctx, input.CookieCategoryID, probo.ActionCookieCategoryDelete)
+	if err != nil {
 		return nil, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(input.CookieCategoryID)
 
 	category, err := r.cookieBanner.GetCookieCategory(ctx, scope, input.CookieCategoryID)
 	if err != nil {
@@ -809,11 +794,10 @@ func (r *mutationResolver) DeleteCookieCategory(ctx context.Context, input types
 
 // ReorderCookieCategory is the resolver for the reorderCookieCategory field.
 func (r *mutationResolver) ReorderCookieCategory(ctx context.Context, input types.ReorderCookieCategoryInput) (*types.ReorderCookieCategoryPayload, error) {
-	if err := r.authorize(ctx, input.CookieCategoryID, probo.ActionCookieCategoryUpdate); err != nil {
+	scope, err := r.authorize(ctx, input.CookieCategoryID, probo.ActionCookieCategoryUpdate)
+	if err != nil {
 		return nil, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(input.CookieCategoryID)
 
 	banner, err := r.cookieBanner.ReorderCookieCategory(
 		ctx,
@@ -844,11 +828,10 @@ func (r *mutationResolver) ReorderCookieCategory(ctx context.Context, input type
 
 // UpsertCookieBannerTranslation is the resolver for the upsertCookieBannerTranslation field.
 func (r *mutationResolver) UpsertCookieBannerTranslation(ctx context.Context, input types.UpsertCookieBannerTranslationInput) (*types.UpsertCookieBannerTranslationPayload, error) {
-	if err := r.authorize(ctx, input.CookieBannerID, probo.ActionCookieBannerUpdate); err != nil {
+	scope, err := r.authorize(ctx, input.CookieBannerID, probo.ActionCookieBannerUpdate)
+	if err != nil {
 		return nil, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(input.CookieBannerID)
 
 	translation, err := r.cookieBanner.UpsertCookieBannerTranslation(
 		ctx,
@@ -887,11 +870,10 @@ func (r *mutationResolver) UpsertCookieBannerTranslation(ctx context.Context, in
 
 // CreateTrackerPattern is the resolver for the createTrackerPattern field.
 func (r *mutationResolver) CreateTrackerPattern(ctx context.Context, input types.CreateTrackerPatternInput) (*types.CreateTrackerPatternPayload, error) {
-	if err := r.authorize(ctx, input.CookieCategoryID, probo.ActionTrackerPatternCreate); err != nil {
+	scope, err := r.authorize(ctx, input.CookieCategoryID, probo.ActionTrackerPatternCreate)
+	if err != nil {
 		return nil, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(input.CookieCategoryID)
 
 	trackerType := coredata.TrackerTypeCookie
 	if input.TrackerType != nil {
@@ -946,11 +928,10 @@ func (r *mutationResolver) CreateTrackerPattern(ctx context.Context, input types
 
 // UpdateTrackerPattern is the resolver for the updateTrackerPattern field.
 func (r *mutationResolver) UpdateTrackerPattern(ctx context.Context, input types.UpdateTrackerPatternInput) (*types.UpdateTrackerPatternPayload, error) {
-	if err := r.authorize(ctx, input.TrackerPatternID, probo.ActionTrackerPatternUpdate); err != nil {
+	scope, err := r.authorize(ctx, input.TrackerPatternID, probo.ActionTrackerPatternUpdate)
+	if err != nil {
 		return nil, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(input.TrackerPatternID)
 
 	pattern, err := r.cookieBanner.UpdateTrackerPattern(
 		ctx,
@@ -988,11 +969,10 @@ func (r *mutationResolver) UpdateTrackerPattern(ctx context.Context, input types
 
 // DeleteTrackerPattern is the resolver for the deleteTrackerPattern field.
 func (r *mutationResolver) DeleteTrackerPattern(ctx context.Context, input types.DeleteTrackerPatternInput) (*types.DeleteTrackerPatternPayload, error) {
-	if err := r.authorize(ctx, input.TrackerPatternID, probo.ActionTrackerPatternDelete); err != nil {
+	scope, err := r.authorize(ctx, input.TrackerPatternID, probo.ActionTrackerPatternDelete)
+	if err != nil {
 		return nil, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(input.TrackerPatternID)
 
 	pattern, err := r.cookieBanner.GetTrackerPattern(ctx, scope, input.TrackerPatternID)
 	if err != nil {
@@ -1033,15 +1013,14 @@ func (r *mutationResolver) DeleteTrackerPattern(ctx context.Context, input types
 
 // MoveTrackerPatternToCategory is the resolver for the moveTrackerPatternToCategory field.
 func (r *mutationResolver) MoveTrackerPatternToCategory(ctx context.Context, input types.MoveTrackerPatternToCategoryInput) (*types.MoveTrackerPatternToCategoryPayload, error) {
-	if err := r.authorize(ctx, input.TrackerPatternID, probo.ActionTrackerPatternUpdate); err != nil {
+	scope, err := r.authorize(ctx, input.TrackerPatternID, probo.ActionTrackerPatternUpdate)
+	if err != nil {
 		return nil, err
 	}
 
-	if err := r.authorize(ctx, input.TargetCookieCategoryID, probo.ActionCookieCategoryUpdate); err != nil {
+	if _, err := r.authorize(ctx, input.TargetCookieCategoryID, probo.ActionCookieCategoryUpdate); err != nil {
 		return nil, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(input.TrackerPatternID)
 
 	result, err := r.cookieBanner.MoveTrackerPatternToCategory(
 		ctx,
@@ -1073,11 +1052,10 @@ func (r *mutationResolver) MoveTrackerPatternToCategory(ctx context.Context, inp
 
 // CreateTrackerResource is the resolver for the createTrackerResource field.
 func (r *mutationResolver) CreateTrackerResource(ctx context.Context, input types.CreateTrackerResourceInput) (*types.CreateTrackerResourcePayload, error) {
-	if err := r.authorize(ctx, input.CookieCategoryID, probo.ActionTrackerResourceCreate); err != nil {
+	scope, err := r.authorize(ctx, input.CookieCategoryID, probo.ActionTrackerResourceCreate)
+	if err != nil {
 		return nil, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(input.CookieCategoryID)
 
 	var description string
 	if input.Description != nil {
@@ -1126,11 +1104,10 @@ func (r *mutationResolver) CreateTrackerResource(ctx context.Context, input type
 
 // UpdateTrackerResource is the resolver for the updateTrackerResource field.
 func (r *mutationResolver) UpdateTrackerResource(ctx context.Context, input types.UpdateTrackerResourceInput) (*types.UpdateTrackerResourcePayload, error) {
-	if err := r.authorize(ctx, input.TrackerResourceID, probo.ActionTrackerResourceUpdate); err != nil {
+	scope, err := r.authorize(ctx, input.TrackerResourceID, probo.ActionTrackerResourceUpdate)
+	if err != nil {
 		return nil, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(input.TrackerResourceID)
 
 	resource, err := r.cookieBanner.UpdateTrackerResource(
 		ctx,
@@ -1172,11 +1149,10 @@ func (r *mutationResolver) UpdateTrackerResource(ctx context.Context, input type
 
 // DeleteTrackerResource is the resolver for the deleteTrackerResource field.
 func (r *mutationResolver) DeleteTrackerResource(ctx context.Context, input types.DeleteTrackerResourceInput) (*types.DeleteTrackerResourcePayload, error) {
-	if err := r.authorize(ctx, input.TrackerResourceID, probo.ActionTrackerResourceDelete); err != nil {
+	scope, err := r.authorize(ctx, input.TrackerResourceID, probo.ActionTrackerResourceDelete)
+	if err != nil {
 		return nil, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(input.TrackerResourceID)
 
 	resource, err := r.cookieBanner.GetTrackerResource(ctx, scope, input.TrackerResourceID)
 	if err != nil {
@@ -1217,15 +1193,14 @@ func (r *mutationResolver) DeleteTrackerResource(ctx context.Context, input type
 
 // MoveTrackerResourceToCategory is the resolver for the moveTrackerResourceToCategory field.
 func (r *mutationResolver) MoveTrackerResourceToCategory(ctx context.Context, input types.MoveTrackerResourceToCategoryInput) (*types.MoveTrackerResourceToCategoryPayload, error) {
-	if err := r.authorize(ctx, input.TrackerResourceID, probo.ActionTrackerResourceUpdate); err != nil {
+	scope, err := r.authorize(ctx, input.TrackerResourceID, probo.ActionTrackerResourceUpdate)
+	if err != nil {
 		return nil, err
 	}
 
-	if err := r.authorize(ctx, input.TargetCookieCategoryID, probo.ActionCookieCategoryUpdate); err != nil {
+	if _, err := r.authorize(ctx, input.TargetCookieCategoryID, probo.ActionCookieCategoryUpdate); err != nil {
 		return nil, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(input.TrackerResourceID)
 
 	result, err := r.cookieBanner.MoveTrackerResourceToCategory(
 		ctx,
@@ -1259,7 +1234,7 @@ func (r *mutationResolver) MoveTrackerResourceToCategory(ctx context.Context, in
 
 // CookieCategory is the resolver for the cookieCategory field.
 func (r *trackerPatternResolver) CookieCategory(ctx context.Context, obj *types.TrackerPattern) (*types.CookieCategory, error) {
-	if err := r.authorize(ctx, obj.CookieCategory.ID, probo.ActionCookieCategoryGet); err != nil {
+	if _, err := r.authorize(ctx, obj.CookieCategory.ID, probo.ActionCookieCategoryGet); err != nil {
 		return nil, err
 	}
 
@@ -1360,7 +1335,7 @@ func (r *trackerPatternConnectionResolver) TotalCount(ctx context.Context, obj *
 
 // CookieCategory is the resolver for the cookieCategory field.
 func (r *trackerResourceResolver) CookieCategory(ctx context.Context, obj *types.TrackerResource) (*types.CookieCategory, error) {
-	if err := r.authorize(ctx, obj.CookieCategory.ID, probo.ActionCookieCategoryGet); err != nil {
+	if _, err := r.authorize(ctx, obj.CookieCategory.ID, probo.ActionCookieCategoryGet); err != nil {
 		return nil, err
 	}
 

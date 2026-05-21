@@ -22,11 +22,11 @@ import (
 
 // Evidences is the resolver for the evidences field.
 func (r *measureResolver) Evidences(ctx context.Context, obj *types.Measure, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.EvidenceOrderBy) (*types.EvidenceConnection, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionEvidenceList); err != nil {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionEvidenceList)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(obj.ID)
 	prb := r.probo
 
 	pageOrderBy := page.OrderBy[coredata.EvidenceOrderField]{
@@ -53,11 +53,11 @@ func (r *measureResolver) Evidences(ctx context.Context, obj *types.Measure, fir
 
 // Tasks is the resolver for the tasks field.
 func (r *measureResolver) Tasks(ctx context.Context, obj *types.Measure, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TaskOrderBy) (*types.TaskConnection, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionTaskList); err != nil {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionTaskList)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(obj.ID)
 	prb := r.probo
 
 	pageOrderBy := page.OrderBy[coredata.TaskOrderField]{
@@ -84,11 +84,11 @@ func (r *measureResolver) Tasks(ctx context.Context, obj *types.Measure, first *
 
 // Risks is the resolver for the risks field.
 func (r *measureResolver) Risks(ctx context.Context, obj *types.Measure, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.RiskOrderBy, filter *types.RiskFilter) (*types.RiskConnection, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionRiskList); err != nil {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionRiskList)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(obj.ID)
 	prb := r.probo
 
 	pageOrderBy := page.OrderBy[coredata.RiskOrderField]{
@@ -120,11 +120,11 @@ func (r *measureResolver) Risks(ctx context.Context, obj *types.Measure, first *
 
 // Controls is the resolver for the controls field.
 func (r *measureResolver) Controls(ctx context.Context, obj *types.Measure, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ControlOrderBy, filter *types.ControlFilter) (*types.ControlConnection, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionControlList); err != nil {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionControlList)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(obj.ID)
 	prb := r.probo
 
 	pageOrderBy := page.OrderBy[coredata.ControlOrderField]{
@@ -156,11 +156,11 @@ func (r *measureResolver) Controls(ctx context.Context, obj *types.Measure, firs
 
 // Documents is the resolver for the documents field.
 func (r *measureResolver) Documents(ctx context.Context, obj *types.Measure, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentOrderBy, filter *types.DocumentFilter) (*types.DocumentConnection, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionDocumentList); err != nil {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionDocumentList)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(obj.ID)
 	prb := r.probo
 
 	pageOrderBy := page.OrderBy[coredata.DocumentOrderField]{
@@ -200,11 +200,11 @@ func (r *measureResolver) Permission(ctx context.Context, obj *types.Measure, ac
 
 // TotalCount is the resolver for the totalCount field.
 func (r *measureConnectionResolver) TotalCount(ctx context.Context, obj *types.MeasureConnection) (int, error) {
-	if err := r.authorize(ctx, obj.ParentID, probo.ActionMeasureList); err != nil {
+	scope, err := r.authorize(ctx, obj.ParentID, probo.ActionMeasureList)
+	if err != nil {
 		return 0, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(obj.ParentID)
 	prb := r.probo
 
 	switch obj.Resolver.(type) {
@@ -241,11 +241,11 @@ func (r *measureConnectionResolver) TotalCount(ctx context.Context, obj *types.M
 
 // // CreateMeasure is the resolver for the createMeasure field.
 func (r *mutationResolver) CreateMeasure(ctx context.Context, input types.CreateMeasureInput) (*types.CreateMeasurePayload, error) {
-	if err := r.authorize(ctx, input.OrganizationID, probo.ActionMeasureCreate); err != nil {
+	scope, err := r.authorize(ctx, input.OrganizationID, probo.ActionMeasureCreate)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(input.OrganizationID)
 	prb := r.probo
 
 	measure, err := prb.Measures.Create(
@@ -278,11 +278,11 @@ func (r *mutationResolver) CreateMeasure(ctx context.Context, input types.Create
 
 // UpdateMeasure is the resolver for the updateMeasure field.
 func (r *mutationResolver) UpdateMeasure(ctx context.Context, input types.UpdateMeasureInput) (*types.UpdateMeasurePayload, error) {
-	if err := r.authorize(ctx, input.ID, probo.ActionMeasureUpdate); err != nil {
+	scope, err := r.authorize(ctx, input.ID, probo.ActionMeasureUpdate)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(input.ID)
 	prb := r.probo
 
 	measure, err := prb.Measures.Update(
@@ -312,11 +312,11 @@ func (r *mutationResolver) UpdateMeasure(ctx context.Context, input types.Update
 
 // ImportMeasure is the resolver for the importMeasure field.
 func (r *mutationResolver) ImportMeasure(ctx context.Context, input types.ImportMeasureInput) (*types.ImportMeasurePayload, error) {
-	if err := r.authorize(ctx, input.OrganizationID, probo.ActionMeasureImport); err != nil {
+	scope, err := r.authorize(ctx, input.OrganizationID, probo.ActionMeasureImport)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(input.OrganizationID)
 	prb := r.probo
 
 	var req probo.ImportMeasureRequest
@@ -343,15 +343,14 @@ func (r *mutationResolver) ImportMeasure(ctx context.Context, input types.Import
 
 // DeleteMeasure is the resolver for the deleteMeasure field.
 func (r *mutationResolver) DeleteMeasure(ctx context.Context, input types.DeleteMeasureInput) (*types.DeleteMeasurePayload, error) {
-	if err := r.authorize(ctx, input.MeasureID, probo.ActionMeasureDelete); err != nil {
+	scope, err := r.authorize(ctx, input.MeasureID, probo.ActionMeasureDelete)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(input.MeasureID)
 	prb := r.probo
 
-	err := prb.Measures.Delete(ctx, scope, input.MeasureID)
-	if err != nil {
+	if err := prb.Measures.Delete(ctx, scope, input.MeasureID); err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete measure", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
@@ -363,11 +362,11 @@ func (r *mutationResolver) DeleteMeasure(ctx context.Context, input types.Delete
 
 // CreateMeasureDocumentMapping is the resolver for the createMeasureDocumentMapping field.
 func (r *mutationResolver) CreateMeasureDocumentMapping(ctx context.Context, input types.CreateMeasureDocumentMappingInput) (*types.CreateMeasureDocumentMappingPayload, error) {
-	if err := r.authorize(ctx, input.MeasureID, probo.ActionMeasureDocumentMappingCreate); err != nil {
+	scope, err := r.authorize(ctx, input.MeasureID, probo.ActionMeasureDocumentMappingCreate)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(input.MeasureID)
 	prb := r.probo
 
 	measure, document, err := prb.Measures.CreateDocumentMapping(ctx, scope, input.MeasureID, input.DocumentID)
@@ -389,11 +388,11 @@ func (r *mutationResolver) CreateMeasureDocumentMapping(ctx context.Context, inp
 
 // DeleteMeasureDocumentMapping is the resolver for the deleteMeasureDocumentMapping field.
 func (r *mutationResolver) DeleteMeasureDocumentMapping(ctx context.Context, input types.DeleteMeasureDocumentMappingInput) (*types.DeleteMeasureDocumentMappingPayload, error) {
-	if err := r.authorize(ctx, input.MeasureID, probo.ActionMeasureDocumentMappingDelete); err != nil {
+	scope, err := r.authorize(ctx, input.MeasureID, probo.ActionMeasureDocumentMappingDelete)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(input.MeasureID)
 	prb := r.probo
 
 	measure, document, err := prb.Measures.DeleteDocumentMapping(ctx, scope, input.MeasureID, input.DocumentID)

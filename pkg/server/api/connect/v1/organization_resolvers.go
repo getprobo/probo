@@ -84,7 +84,7 @@ func (r *mutationResolver) CreateOrganization(ctx context.Context, input types.C
 
 // UpdateOrganization is the resolver for the updateOrganization field.
 func (r *mutationResolver) UpdateOrganization(ctx context.Context, input types.UpdateOrganizationInput) (*types.UpdateOrganizationPayload, error) {
-	if err := r.authorize(ctx, input.OrganizationID, iam.ActionOrganizationUpdate); err != nil {
+	if _, err := r.authorize(ctx, input.OrganizationID, iam.ActionOrganizationUpdate); err != nil {
 		return nil, err
 	}
 
@@ -140,7 +140,7 @@ func (r *mutationResolver) UpdateOrganization(ctx context.Context, input types.U
 
 // DeleteOrganization is the resolver for the deleteOrganization field.
 func (r *mutationResolver) DeleteOrganization(ctx context.Context, input types.DeleteOrganizationInput) (*types.DeleteOrganizationPayload, error) {
-	if err := r.authorize(ctx, input.OrganizationID, iam.ActionOrganizationDelete); err != nil {
+	if _, err := r.authorize(ctx, input.OrganizationID, iam.ActionOrganizationDelete); err != nil {
 		return nil, err
 	}
 
@@ -160,7 +160,7 @@ func (r *mutationResolver) DeleteOrganizationHorizontalLogo(ctx context.Context,
 
 // LogoURL is the resolver for the logoUrl field.
 func (r *organizationResolver) LogoURL(ctx context.Context, obj *types.Organization) (*string, error) {
-	if err := r.authorize(ctx, obj.ID, iam.ActionOrganizationGet, authz.WithSkipAssumptionCheck()); err != nil {
+	if _, err := r.authorize(ctx, obj.ID, iam.ActionOrganizationGet, authz.WithSkipAssumptionCheck()); err != nil {
 		return nil, err
 	}
 
@@ -175,7 +175,7 @@ func (r *organizationResolver) LogoURL(ctx context.Context, obj *types.Organizat
 
 // HorizontalLogoURL is the resolver for the horizontalLogoUrl field.
 func (r *organizationResolver) HorizontalLogoURL(ctx context.Context, obj *types.Organization) (*string, error) {
-	if err := r.authorize(ctx, obj.ID, iam.ActionOrganizationGet); err != nil {
+	if _, err := r.authorize(ctx, obj.ID, iam.ActionOrganizationGet); err != nil {
 		return nil, err
 	}
 
@@ -190,7 +190,7 @@ func (r *organizationResolver) HorizontalLogoURL(ctx context.Context, obj *types
 
 // Profiles is the resolver for the profiles field.
 func (r *organizationResolver) Profiles(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ProfileOrderBy) (*types.ProfileConnection, error) {
-	if err := r.authorize(ctx, obj.ID, iam.ActionMembershipProfileList); err != nil {
+	if _, err := r.authorize(ctx, obj.ID, iam.ActionMembershipProfileList); err != nil {
 		return nil, err
 	}
 
@@ -228,7 +228,7 @@ func (r *organizationResolver) Profiles(ctx context.Context, obj *types.Organiza
 
 // SamlConfigurations is the resolver for the samlConfigurations field.
 func (r *organizationResolver) SamlConfigurations(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.SAMLConfigurationConnection, error) {
-	if err := r.authorize(ctx, obj.ID, iam.ActionSAMLConfigurationList); err != nil {
+	if _, err := r.authorize(ctx, obj.ID, iam.ActionSAMLConfigurationList); err != nil {
 		return nil, err
 	}
 
@@ -257,7 +257,7 @@ func (r *organizationResolver) SamlConfigurations(ctx context.Context, obj *type
 
 // ScimConfiguration is the resolver for the scimConfiguration field.
 func (r *organizationResolver) ScimConfiguration(ctx context.Context, obj *types.Organization) (*types.SCIMConfiguration, error) {
-	if err := r.authorize(ctx, obj.ID, iam.ActionSCIMConfigurationGet); err != nil {
+	if _, err := r.authorize(ctx, obj.ID, iam.ActionSCIMConfigurationGet); err != nil {
 		return nil, err
 	}
 
@@ -291,7 +291,7 @@ func (r *organizationResolver) ScimBridgeTypes(ctx context.Context, obj *types.O
 
 // AuditLogEntries is the resolver for the auditLogEntries field.
 func (r *organizationResolver) AuditLogEntries(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AuditLogEntryOrderBy, filter *types.AuditLogEntryFilter) (*types.AuditLogEntryConnection, error) {
-	if err := r.authorize(ctx, obj.ID, iam.ActionAuditLogEntryList); err != nil {
+	if _, err := r.authorize(ctx, obj.ID, iam.ActionAuditLogEntryList); err != nil {
 		return nil, err
 	}
 
@@ -339,7 +339,7 @@ func (r *organizationResolver) AuditLogEntries(ctx context.Context, obj *types.O
 
 // Viewer is the resolver for the viewer field.
 func (r *organizationResolver) Viewer(ctx context.Context, obj *types.Organization) (*types.Profile, error) {
-	if err := r.authorize(ctx, obj.ID, iam.ActionMembershipProfileGet); err != nil {
+	if _, err := r.authorize(ctx, obj.ID, iam.ActionMembershipProfileGet); err != nil {
 		return nil, err
 	}
 

@@ -24,11 +24,11 @@ import (
 
 // StatementOfApplicability is the resolver for the statementOfApplicability field.
 func (r *applicabilityStatementResolver) StatementOfApplicability(ctx context.Context, obj *types.ApplicabilityStatement) (*types.StatementOfApplicability, error) {
-	if err := r.authorize(ctx, obj.StatementOfApplicability.ID, probo.ActionStatementOfApplicabilityGet); err != nil {
+	scope, err := r.authorize(ctx, obj.StatementOfApplicability.ID, probo.ActionStatementOfApplicabilityGet)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(obj.StatementOfApplicability.ID)
 	prb := r.probo
 
 	soa, err := prb.StatementsOfApplicability.Get(ctx, scope, obj.StatementOfApplicability.ID)
@@ -42,7 +42,7 @@ func (r *applicabilityStatementResolver) StatementOfApplicability(ctx context.Co
 
 // Control is the resolver for the control field.
 func (r *applicabilityStatementResolver) Control(ctx context.Context, obj *types.ApplicabilityStatement) (*types.Control, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionControlGet); err != nil {
+	if _, err := r.authorize(ctx, obj.ID, probo.ActionControlGet); err != nil {
 		return nil, err
 	}
 
@@ -69,11 +69,11 @@ func (r *applicabilityStatementResolver) Permission(ctx context.Context, obj *ty
 
 // TotalCount is the resolver for the totalCount field.
 func (r *applicabilityStatementConnectionResolver) TotalCount(ctx context.Context, obj *types.ApplicabilityStatementConnection) (int, error) {
-	if err := r.authorize(ctx, obj.ParentID, probo.ActionApplicabilityStatementList); err != nil {
+	scope, err := r.authorize(ctx, obj.ParentID, probo.ActionApplicabilityStatementList)
+	if err != nil {
 		return 0, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(obj.ParentID)
 	prb := r.probo
 
 	switch obj.Resolver.(type) {
@@ -94,7 +94,7 @@ func (r *applicabilityStatementConnectionResolver) TotalCount(ctx context.Contex
 
 // Organization is the resolver for the organization field.
 func (r *controlResolver) Organization(ctx context.Context, obj *types.Control) (*types.Organization, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGet); err != nil {
+	if _, err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGet); err != nil {
 		return nil, err
 	}
 
@@ -158,7 +158,7 @@ func (r *controlResolver) RiskAssessment(ctx context.Context, obj *types.Control
 
 // Framework is the resolver for the framework field.
 func (r *controlResolver) Framework(ctx context.Context, obj *types.Control) (*types.Framework, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionFrameworkGet); err != nil {
+	if _, err := r.authorize(ctx, obj.ID, probo.ActionFrameworkGet); err != nil {
 		return nil, err
 	}
 
@@ -180,11 +180,11 @@ func (r *controlResolver) Framework(ctx context.Context, obj *types.Control) (*t
 
 // Measures is the resolver for the measures field.
 func (r *controlResolver) Measures(ctx context.Context, obj *types.Control, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MeasureOrderBy, filter *types.MeasureFilter) (*types.MeasureConnection, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionMeasureList); err != nil {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionMeasureList)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(obj.ID)
 	prb := r.probo
 
 	pageOrderBy := page.OrderBy[coredata.MeasureOrderField]{
@@ -216,11 +216,11 @@ func (r *controlResolver) Measures(ctx context.Context, obj *types.Control, firs
 
 // Documents is the resolver for the documents field.
 func (r *controlResolver) Documents(ctx context.Context, obj *types.Control, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentOrderBy, filter *types.DocumentFilter) (*types.DocumentConnection, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionDocumentList); err != nil {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionDocumentList)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(obj.ID)
 	prb := r.probo
 
 	pageOrderBy := page.OrderBy[coredata.DocumentOrderField]{
@@ -255,11 +255,11 @@ func (r *controlResolver) Documents(ctx context.Context, obj *types.Control, fir
 
 // Audits is the resolver for the audits field.
 func (r *controlResolver) Audits(ctx context.Context, obj *types.Control, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AuditOrderBy) (*types.AuditConnection, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionAuditList); err != nil {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionAuditList)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(obj.ID)
 	prb := r.probo
 
 	pageOrderBy := page.OrderBy[coredata.AuditOrderField]{
@@ -286,11 +286,11 @@ func (r *controlResolver) Audits(ctx context.Context, obj *types.Control, first 
 
 // Obligations is the resolver for the obligations field.
 func (r *controlResolver) Obligations(ctx context.Context, obj *types.Control, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ObligationOrderBy) (*types.ObligationConnection, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionObligationList); err != nil {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionObligationList)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(obj.ID)
 	prb := r.probo
 
 	pageOrderBy := page.OrderBy[coredata.ObligationOrderField]{
@@ -322,11 +322,11 @@ func (r *controlResolver) Permission(ctx context.Context, obj *types.Control, ac
 
 // TotalCount is the resolver for the totalCount field.
 func (r *controlConnectionResolver) TotalCount(ctx context.Context, obj *types.ControlConnection) (int, error) {
-	if err := r.authorize(ctx, obj.ParentID, probo.ActionControlList); err != nil {
+	scope, err := r.authorize(ctx, obj.ParentID, probo.ActionControlList)
+	if err != nil {
 		return 0, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(obj.ParentID)
 	prb := r.probo
 
 	switch obj.Resolver.(type) {
@@ -387,11 +387,11 @@ func (r *controlConnectionResolver) TotalCount(ctx context.Context, obj *types.C
 
 // CreateControl is the resolver for the createControl field.
 func (r *mutationResolver) CreateControl(ctx context.Context, input types.CreateControlInput) (*types.CreateControlPayload, error) {
-	if err := r.authorize(ctx, input.FrameworkID, probo.ActionControlCreate); err != nil {
+	scope, err := r.authorize(ctx, input.FrameworkID, probo.ActionControlCreate)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(input.FrameworkID)
 	prb := r.probo
 
 	control, err := prb.Controls.Create(
@@ -427,11 +427,11 @@ func (r *mutationResolver) CreateControl(ctx context.Context, input types.Create
 
 // UpdateControl is the resolver for the updateControl field.
 func (r *mutationResolver) UpdateControl(ctx context.Context, input types.UpdateControlInput) (*types.UpdateControlPayload, error) {
-	if err := r.authorize(ctx, input.ID, probo.ActionControlUpdate); err != nil {
+	scope, err := r.authorize(ctx, input.ID, probo.ActionControlUpdate)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(input.ID)
 	prb := r.probo
 
 	control, err := prb.Controls.Update(
@@ -467,15 +467,14 @@ func (r *mutationResolver) UpdateControl(ctx context.Context, input types.Update
 
 // DeleteControl is the resolver for the deleteControl field.
 func (r *mutationResolver) DeleteControl(ctx context.Context, input types.DeleteControlInput) (*types.DeleteControlPayload, error) {
-	if err := r.authorize(ctx, input.ControlID, probo.ActionControlDelete); err != nil {
+	scope, err := r.authorize(ctx, input.ControlID, probo.ActionControlDelete)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(input.ControlID)
 	prb := r.probo
 
-	err := prb.Controls.Delete(ctx, scope, input.ControlID)
-	if err != nil {
+	if err := prb.Controls.Delete(ctx, scope, input.ControlID); err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete control", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
@@ -487,11 +486,11 @@ func (r *mutationResolver) DeleteControl(ctx context.Context, input types.Delete
 
 // CreateControlMeasureMapping is the resolver for the createControlMeasureMapping field.
 func (r *mutationResolver) CreateControlMeasureMapping(ctx context.Context, input types.CreateControlMeasureMappingInput) (*types.CreateControlMeasureMappingPayload, error) {
-	if err := r.authorize(ctx, input.ControlID, probo.ActionControlMeasureMappingCreate); err != nil {
+	scope, err := r.authorize(ctx, input.ControlID, probo.ActionControlMeasureMappingCreate)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(input.MeasureID)
 	prb := r.probo
 
 	control, measure, err := prb.Controls.CreateMeasureMapping(ctx, scope, input.ControlID, input.MeasureID)
@@ -508,11 +507,11 @@ func (r *mutationResolver) CreateControlMeasureMapping(ctx context.Context, inpu
 
 // CreateControlDocumentMapping is the resolver for the createControlDocumentMapping field.
 func (r *mutationResolver) CreateControlDocumentMapping(ctx context.Context, input types.CreateControlDocumentMappingInput) (*types.CreateControlDocumentMappingPayload, error) {
-	if err := r.authorize(ctx, input.ControlID, probo.ActionControlDocumentMappingCreate); err != nil {
+	scope, err := r.authorize(ctx, input.ControlID, probo.ActionControlDocumentMappingCreate)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(input.DocumentID)
 	prb := r.probo
 
 	control, document, err := prb.Controls.CreateDocumentMapping(ctx, scope, input.ControlID, input.DocumentID)
@@ -534,11 +533,11 @@ func (r *mutationResolver) CreateControlDocumentMapping(ctx context.Context, inp
 
 // DeleteControlMeasureMapping is the resolver for the deleteControlMeasureMapping field.
 func (r *mutationResolver) DeleteControlMeasureMapping(ctx context.Context, input types.DeleteControlMeasureMappingInput) (*types.DeleteControlMeasureMappingPayload, error) {
-	if err := r.authorize(ctx, input.ControlID, probo.ActionControlMeasureMappingDelete); err != nil {
+	scope, err := r.authorize(ctx, input.ControlID, probo.ActionControlMeasureMappingDelete)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(input.MeasureID)
 	prb := r.probo
 
 	control, measure, err := prb.Controls.DeleteMeasureMapping(ctx, scope, input.ControlID, input.MeasureID)
@@ -555,11 +554,11 @@ func (r *mutationResolver) DeleteControlMeasureMapping(ctx context.Context, inpu
 
 // DeleteControlDocumentMapping is the resolver for the deleteControlDocumentMapping field.
 func (r *mutationResolver) DeleteControlDocumentMapping(ctx context.Context, input types.DeleteControlDocumentMappingInput) (*types.DeleteControlDocumentMappingPayload, error) {
-	if err := r.authorize(ctx, input.ControlID, probo.ActionControlDocumentMappingDelete); err != nil {
+	scope, err := r.authorize(ctx, input.ControlID, probo.ActionControlDocumentMappingDelete)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(input.DocumentID)
 	prb := r.probo
 
 	control, document, err := prb.Controls.DeleteDocumentMapping(ctx, scope, input.ControlID, input.DocumentID)
@@ -576,11 +575,11 @@ func (r *mutationResolver) DeleteControlDocumentMapping(ctx context.Context, inp
 
 // CreateApplicabilityStatement is the resolver for the createApplicabilityStatement field.
 func (r *mutationResolver) CreateApplicabilityStatement(ctx context.Context, input types.CreateApplicabilityStatementInput) (*types.CreateApplicabilityStatementPayload, error) {
-	if err := r.authorize(ctx, input.ControlID, probo.ActionApplicabilityStatementCreate); err != nil {
+	scope, err := r.authorize(ctx, input.ControlID, probo.ActionApplicabilityStatementCreate)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(input.StatementOfApplicabilityID)
 	prb := r.probo
 
 	applicabilityStatement, err := prb.StatementsOfApplicability.CreateApplicabilityStatement(ctx, scope, input.StatementOfApplicabilityID, input.ControlID, input.Applicability, input.Justification)
@@ -596,11 +595,11 @@ func (r *mutationResolver) CreateApplicabilityStatement(ctx context.Context, inp
 
 // UpdateApplicabilityStatement is the resolver for the updateApplicabilityStatement field.
 func (r *mutationResolver) UpdateApplicabilityStatement(ctx context.Context, input types.UpdateApplicabilityStatementInput) (*types.UpdateApplicabilityStatementPayload, error) {
-	if err := r.authorize(ctx, input.ApplicabilityStatementID, probo.ActionApplicabilityStatementUpdate); err != nil {
+	scope, err := r.authorize(ctx, input.ApplicabilityStatementID, probo.ActionApplicabilityStatementUpdate)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(input.ApplicabilityStatementID)
 	prb := r.probo
 
 	applicabilityStatement, err := prb.StatementsOfApplicability.UpdateApplicabilityStatement(ctx, scope, input.ApplicabilityStatementID, input.Applicability, input.Justification)
@@ -616,15 +615,14 @@ func (r *mutationResolver) UpdateApplicabilityStatement(ctx context.Context, inp
 
 // DeleteApplicabilityStatement is the resolver for the deleteApplicabilityStatement field.
 func (r *mutationResolver) DeleteApplicabilityStatement(ctx context.Context, input types.DeleteApplicabilityStatementInput) (*types.DeleteApplicabilityStatementPayload, error) {
-	if err := r.authorize(ctx, input.ApplicabilityStatementID, probo.ActionApplicabilityStatementDelete); err != nil {
+	scope, err := r.authorize(ctx, input.ApplicabilityStatementID, probo.ActionApplicabilityStatementDelete)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(input.ApplicabilityStatementID)
 	prb := r.probo
 
-	err := prb.StatementsOfApplicability.DeleteApplicabilityStatement(ctx, scope, input.ApplicabilityStatementID)
-	if err != nil {
+	if err := prb.StatementsOfApplicability.DeleteApplicabilityStatement(ctx, scope, input.ApplicabilityStatementID); err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete applicability statement", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
@@ -636,11 +634,11 @@ func (r *mutationResolver) DeleteApplicabilityStatement(ctx context.Context, inp
 
 // CreateControlAuditMapping is the resolver for the createControlAuditMapping field.
 func (r *mutationResolver) CreateControlAuditMapping(ctx context.Context, input types.CreateControlAuditMappingInput) (*types.CreateControlAuditMappingPayload, error) {
-	if err := r.authorize(ctx, input.ControlID, probo.ActionControlAuditMappingCreate); err != nil {
+	scope, err := r.authorize(ctx, input.ControlID, probo.ActionControlAuditMappingCreate)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(input.AuditID)
 	prb := r.probo
 
 	control, audit, err := prb.Controls.CreateAuditMapping(ctx, scope, input.ControlID, input.AuditID)
@@ -657,11 +655,11 @@ func (r *mutationResolver) CreateControlAuditMapping(ctx context.Context, input 
 
 // DeleteControlAuditMapping is the resolver for the deleteControlAuditMapping field.
 func (r *mutationResolver) DeleteControlAuditMapping(ctx context.Context, input types.DeleteControlAuditMappingInput) (*types.DeleteControlAuditMappingPayload, error) {
-	if err := r.authorize(ctx, input.ControlID, probo.ActionControlAuditMappingDelete); err != nil {
+	scope, err := r.authorize(ctx, input.ControlID, probo.ActionControlAuditMappingDelete)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(input.AuditID)
 	prb := r.probo
 
 	control, audit, err := prb.Controls.DeleteAuditMapping(ctx, scope, input.ControlID, input.AuditID)
@@ -678,11 +676,11 @@ func (r *mutationResolver) DeleteControlAuditMapping(ctx context.Context, input 
 
 // CreateControlObligationMapping is the resolver for the createControlObligationMapping field.
 func (r *mutationResolver) CreateControlObligationMapping(ctx context.Context, input types.CreateControlObligationMappingInput) (*types.CreateControlObligationMappingPayload, error) {
-	if err := r.authorize(ctx, input.ControlID, probo.ActionControlObligationMappingCreate); err != nil {
+	scope, err := r.authorize(ctx, input.ControlID, probo.ActionControlObligationMappingCreate)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(input.ObligationID)
 	prb := r.probo
 
 	control, obligation, err := prb.Controls.CreateObligationMapping(ctx, scope, input.ControlID, input.ObligationID)
@@ -699,11 +697,11 @@ func (r *mutationResolver) CreateControlObligationMapping(ctx context.Context, i
 
 // DeleteControlObligationMapping is the resolver for the deleteControlObligationMapping field.
 func (r *mutationResolver) DeleteControlObligationMapping(ctx context.Context, input types.DeleteControlObligationMappingInput) (*types.DeleteControlObligationMappingPayload, error) {
-	if err := r.authorize(ctx, input.ControlID, probo.ActionControlObligationMappingDelete); err != nil {
+	scope, err := r.authorize(ctx, input.ControlID, probo.ActionControlObligationMappingDelete)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(input.ObligationID)
 	prb := r.probo
 
 	control, obligation, err := prb.Controls.DeleteObligationMapping(ctx, scope, input.ControlID, input.ObligationID)
@@ -720,11 +718,11 @@ func (r *mutationResolver) DeleteControlObligationMapping(ctx context.Context, i
 
 // CreateStatementOfApplicability is the resolver for the createStatementOfApplicability field.
 func (r *mutationResolver) CreateStatementOfApplicability(ctx context.Context, input types.CreateStatementOfApplicabilityInput) (*types.CreateStatementOfApplicabilityPayload, error) {
-	if err := r.authorize(ctx, input.OrganizationID, probo.ActionStatementOfApplicabilityCreate); err != nil {
+	scope, err := r.authorize(ctx, input.OrganizationID, probo.ActionStatementOfApplicabilityCreate)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(input.OrganizationID)
 	prb := r.probo
 
 	statementOfApplicability, err := prb.StatementsOfApplicability.Create(
@@ -755,11 +753,11 @@ func (r *mutationResolver) CreateStatementOfApplicability(ctx context.Context, i
 
 // UpdateStatementOfApplicability is the resolver for the updateStatementOfApplicability field.
 func (r *mutationResolver) UpdateStatementOfApplicability(ctx context.Context, input types.UpdateStatementOfApplicabilityInput) (*types.UpdateStatementOfApplicabilityPayload, error) {
-	if err := r.authorize(ctx, input.ID, probo.ActionStatementOfApplicabilityUpdate); err != nil {
+	scope, err := r.authorize(ctx, input.ID, probo.ActionStatementOfApplicabilityUpdate)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(input.ID)
 	prb := r.probo
 
 	var name *string
@@ -795,15 +793,14 @@ func (r *mutationResolver) UpdateStatementOfApplicability(ctx context.Context, i
 
 // DeleteStatementOfApplicability is the resolver for the deleteStatementOfApplicability field.
 func (r *mutationResolver) DeleteStatementOfApplicability(ctx context.Context, input types.DeleteStatementOfApplicabilityInput) (*types.DeleteStatementOfApplicabilityPayload, error) {
-	if err := r.authorize(ctx, input.StatementOfApplicabilityID, probo.ActionStatementOfApplicabilityDelete); err != nil {
+	scope, err := r.authorize(ctx, input.StatementOfApplicabilityID, probo.ActionStatementOfApplicabilityDelete)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(input.StatementOfApplicabilityID)
 	prb := r.probo
 
-	err := prb.StatementsOfApplicability.Delete(ctx, scope, input.StatementOfApplicabilityID)
-	if err != nil {
+	if err := prb.StatementsOfApplicability.Delete(ctx, scope, input.StatementOfApplicabilityID); err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete statement_of_applicability", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
@@ -815,11 +812,11 @@ func (r *mutationResolver) DeleteStatementOfApplicability(ctx context.Context, i
 
 // PublishStatementOfApplicability is the resolver for the publishStatementOfApplicability field.
 func (r *mutationResolver) PublishStatementOfApplicability(ctx context.Context, input types.PublishStatementOfApplicabilityInput) (*types.PublishStatementOfApplicabilityPayload, error) {
-	if err := r.authorize(ctx, input.StatementOfApplicabilityID, probo.ActionStatementOfApplicabilityPublish); err != nil {
+	scope, err := r.authorize(ctx, input.StatementOfApplicabilityID, probo.ActionStatementOfApplicabilityPublish)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(input.StatementOfApplicabilityID)
 	prb := r.probo
 
 	document, documentVersion, err := prb.GeneratedDocuments.PublishStatementOfApplicability(ctx, scope, input.StatementOfApplicabilityID, input.ApproverIds, input.Minor)
@@ -849,11 +846,11 @@ func (r *statementOfApplicabilityResolver) Document(ctx context.Context, obj *ty
 		return nil, nil
 	}
 
-	if err := r.authorize(ctx, obj.Document.ID, probo.ActionDocumentGet); err != nil {
+	scope, err := r.authorize(ctx, obj.Document.ID, probo.ActionDocumentGet)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(obj.Document.ID)
 	prb := r.probo
 
 	document, err := prb.Documents.Get(ctx, scope, obj.Document.ID)
@@ -872,7 +869,7 @@ func (r *statementOfApplicabilityResolver) Document(ctx context.Context, obj *ty
 
 // Organization is the resolver for the organization field.
 func (r *statementOfApplicabilityResolver) Organization(ctx context.Context, obj *types.StatementOfApplicability) (*types.Organization, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGet); err != nil {
+	if _, err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGet); err != nil {
 		return nil, err
 	}
 
@@ -894,11 +891,11 @@ func (r *statementOfApplicabilityResolver) Organization(ctx context.Context, obj
 
 // ApplicabilityStatements is the resolver for the applicabilityStatements field.
 func (r *statementOfApplicabilityResolver) ApplicabilityStatements(ctx context.Context, obj *types.StatementOfApplicability, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ApplicabilityStatementOrderBy) (*types.ApplicabilityStatementConnection, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionApplicabilityStatementList); err != nil {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionApplicabilityStatementList)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(obj.ID)
 	prb := r.probo
 
 	pageOrderBy := page.OrderBy[coredata.ApplicabilityStatementOrderField]{

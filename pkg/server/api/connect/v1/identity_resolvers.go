@@ -24,7 +24,7 @@ import (
 
 // Profiles is the resolver for the profiles field.
 func (r *identityResolver) Profiles(ctx context.Context, obj *types.Identity, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ProfileOrderBy, filter *types.ProfileFilter) (*types.ProfileConnection, error) {
-	if err := r.authorize(ctx, obj.ID, iam.ActionMembershipProfileList, authz.WithSkipAssumptionCheck()); err != nil {
+	if _, err := r.authorize(ctx, obj.ID, iam.ActionMembershipProfileList, authz.WithSkipAssumptionCheck()); err != nil {
 		return nil, err
 	}
 
@@ -68,7 +68,7 @@ func (r *identityResolver) Profiles(ctx context.Context, obj *types.Identity, fi
 
 // Sessions is the resolver for the sessions field.
 func (r *identityResolver) Sessions(ctx context.Context, obj *types.Identity, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.SessionOrder) (*types.SessionConnection, error) {
-	if err := r.authorize(ctx, obj.ID, iam.ActionSessionList); err != nil {
+	if _, err := r.authorize(ctx, obj.ID, iam.ActionSessionList); err != nil {
 		return nil, err
 	}
 
@@ -103,7 +103,7 @@ func (r *identityResolver) Sessions(ctx context.Context, obj *types.Identity, fi
 
 // PersonalAPIKeys is the resolver for the personalAPIKeys field.
 func (r *identityResolver) PersonalAPIKeys(ctx context.Context, obj *types.Identity, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.PersonalAPIKeyConnection, error) {
-	if err := r.authorize(ctx, obj.ID, iam.ActionPersonalAPIKeyList); err != nil {
+	if _, err := r.authorize(ctx, obj.ID, iam.ActionPersonalAPIKeyList); err != nil {
 		return nil, err
 	}
 
@@ -132,7 +132,7 @@ func (r *identityResolver) PersonalAPIKeys(ctx context.Context, obj *types.Ident
 
 // SsoLoginURL is the resolver for the ssoLoginURL field.
 func (r *identityResolver) SsoLoginURL(ctx context.Context, obj *types.Identity) (*string, error) {
-	if err := r.authorize(ctx, obj.ID, iam.ActionIdentityGet); err != nil {
+	if _, err := r.authorize(ctx, obj.ID, iam.ActionIdentityGet); err != nil {
 		return nil, err
 	}
 

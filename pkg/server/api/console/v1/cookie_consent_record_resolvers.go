@@ -22,7 +22,7 @@ import (
 
 // CookieBanner is the resolver for the cookieBanner field.
 func (r *cookieConsentRecordResolver) CookieBanner(ctx context.Context, obj *types.CookieConsentRecord) (*types.CookieBanner, error) {
-	if err := r.authorize(ctx, obj.CookieBanner.ID, probo.ActionCookieBannerGet); err != nil {
+	if _, err := r.authorize(ctx, obj.CookieBanner.ID, probo.ActionCookieBannerGet); err != nil {
 		return nil, err
 	}
 
@@ -44,11 +44,10 @@ func (r *cookieConsentRecordResolver) CookieBanner(ctx context.Context, obj *typ
 
 // CookieBannerVersion is the resolver for the cookieBannerVersion field.
 func (r *cookieConsentRecordResolver) CookieBannerVersion(ctx context.Context, obj *types.CookieConsentRecord) (*types.CookieBannerVersion, error) {
-	if err := r.authorize(ctx, obj.CookieBannerVersion.ID, probo.ActionCookieBannerVersionGet); err != nil {
+	scope, err := r.authorize(ctx, obj.CookieBannerVersion.ID, probo.ActionCookieBannerVersionGet)
+	if err != nil {
 		return nil, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(obj.CookieBannerVersion.ID)
 
 	version, err := r.cookieBanner.GetCookieBannerVersion(ctx, scope, obj.CookieBannerVersion.ID)
 	if err != nil {
@@ -72,11 +71,10 @@ func (r *cookieConsentRecordResolver) CookieBannerVersion(ctx context.Context, o
 
 // TotalCount is the resolver for the totalCount field.
 func (r *cookieConsentRecordConnectionResolver) TotalCount(ctx context.Context, obj *types.CookieConsentRecordConnection) (int, error) {
-	if err := r.authorize(ctx, obj.ParentID, probo.ActionCookieConsentRecordList); err != nil {
+	scope, err := r.authorize(ctx, obj.ParentID, probo.ActionCookieConsentRecordList)
+	if err != nil {
 		return 0, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(obj.ParentID)
 
 	count, err := r.cookieBanner.CountCookieConsentRecordsForBanner(ctx, scope, obj.ParentID, obj.Filter)
 	if err != nil {

@@ -116,7 +116,8 @@ func NewMux(
 }
 
 func (r *Resolver) Permission(ctx context.Context, obj types.Node, action string) (bool, error) {
-	return r.authorize(ctx, obj.GetID(), action, authz.WithDryRun()) == nil, nil
+	_, err := r.authorize(ctx, obj.GetID(), action, authz.WithDryRun())
+	return err == nil, nil
 }
 
 func (r *Resolver) SSOLoginURL(samlConfigID gid.GID) string {

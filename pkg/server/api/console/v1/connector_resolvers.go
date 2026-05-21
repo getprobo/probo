@@ -32,11 +32,11 @@ func (r *connectorResolver) Oauth2Scopes(ctx context.Context, obj *types.Connect
 
 // CreateAPIKeyConnector is the resolver for the createAPIKeyConnector field.
 func (r *mutationResolver) CreateAPIKeyConnector(ctx context.Context, input types.CreateAPIKeyConnectorInput) (*types.CreateAPIKeyConnectorPayload, error) {
-	if err := r.authorize(ctx, input.OrganizationID, probo.ActionConnectorCreate); err != nil {
+	scope, err := r.authorize(ctx, input.OrganizationID, probo.ActionConnectorCreate)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(input.OrganizationID)
 	prb := r.probo
 
 	req := probo.CreateConnectorRequest{
@@ -92,11 +92,11 @@ func (r *mutationResolver) CreateAPIKeyConnector(ctx context.Context, input type
 
 // CreateClientCredentialsConnector is the resolver for the createClientCredentialsConnector field.
 func (r *mutationResolver) CreateClientCredentialsConnector(ctx context.Context, input types.CreateClientCredentialsConnectorInput) (*types.CreateClientCredentialsConnectorPayload, error) {
-	if err := r.authorize(ctx, input.OrganizationID, probo.ActionConnectorCreate); err != nil {
+	scope, err := r.authorize(ctx, input.OrganizationID, probo.ActionConnectorCreate)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(input.OrganizationID)
 	prb := r.probo
 
 	oauth2Conn := &connector.OAuth2Connection{
@@ -139,11 +139,11 @@ func (r *mutationResolver) CreateClientCredentialsConnector(ctx context.Context,
 
 // DeleteConnector is the resolver for the deleteConnector field.
 func (r *mutationResolver) DeleteConnector(ctx context.Context, input types.DeleteConnectorInput) (*types.DeleteConnectorPayload, error) {
-	if err := r.authorize(ctx, input.ConnectorID, probo.ActionConnectorDelete); err != nil {
+	scope, err := r.authorize(ctx, input.ConnectorID, probo.ActionConnectorDelete)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(input.ConnectorID)
 	prb := r.probo
 
 	if err := prb.Connectors.Delete(ctx, scope, input.ConnectorID); err != nil {
@@ -157,15 +157,14 @@ func (r *mutationResolver) DeleteConnector(ctx context.Context, input types.Dele
 
 // DeleteSlackConnection is the resolver for the deleteSlackConnection field.
 func (r *mutationResolver) DeleteSlackConnection(ctx context.Context, input types.DeleteSlackConnectionInput) (*types.DeleteSlackConnectionPayload, error) {
-	if err := r.authorize(ctx, input.SlackConnectionID, probo.ActionConnectorDelete); err != nil {
+	scope, err := r.authorize(ctx, input.SlackConnectionID, probo.ActionConnectorDelete)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(input.SlackConnectionID)
 	prb := r.probo
 
-	err := prb.Connectors.Delete(ctx, scope, input.SlackConnectionID)
-	if err != nil {
+	if err := prb.Connectors.Delete(ctx, scope, input.SlackConnectionID); err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete slack connection", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}

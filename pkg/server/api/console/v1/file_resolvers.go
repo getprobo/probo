@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"go.gearno.de/kit/log"
-	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
@@ -19,11 +18,11 @@ import (
 
 // DownloadURL is the resolver for the downloadUrl field.
 func (r *fileResolver) DownloadURL(ctx context.Context, obj *types.File) (string, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionFileDownloadUrl); err != nil {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionFileDownloadUrl)
+	if err != nil {
 		return "", err
 	}
 
-	scope := coredata.NewScopeFromObjectID(obj.ID)
 	prb := r.probo
 
 	downloadUrl, err := prb.Files.GenerateFileTempURL(ctx, scope, obj.ID, 60*time.Second)

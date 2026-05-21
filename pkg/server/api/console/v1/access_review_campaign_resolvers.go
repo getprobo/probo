@@ -23,11 +23,10 @@ import (
 
 // Campaign is the resolver for the campaign field.
 func (r *accessEntryResolver) Campaign(ctx context.Context, obj *types.AccessEntry) (*types.AccessReviewCampaign, error) {
-	if err := r.authorize(ctx, obj.Campaign.ID, probo.ActionAccessReviewCampaignGet); err != nil {
+	scope, err := r.authorize(ctx, obj.Campaign.ID, probo.ActionAccessReviewCampaignGet)
+	if err != nil {
 		return nil, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(obj.Campaign.ID)
 
 	campaign, err := r.accessReview.Campaigns(scope).Get(ctx, obj.Campaign.ID)
 	if err != nil {
@@ -43,11 +42,10 @@ func (r *accessEntryResolver) Campaign(ctx context.Context, obj *types.AccessEnt
 
 // AccessSource is the resolver for the accessSource field.
 func (r *accessEntryResolver) AccessSource(ctx context.Context, obj *types.AccessEntry) (*types.AccessSource, error) {
-	if err := r.authorize(ctx, obj.AccessSource.ID, probo.ActionAccessSourceGet); err != nil {
+	scope, err := r.authorize(ctx, obj.AccessSource.ID, probo.ActionAccessSourceGet)
+	if err != nil {
 		return nil, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(obj.AccessSource.ID)
 
 	source, err := r.accessReview.Sources(scope).Get(ctx, obj.AccessSource.ID)
 	if err != nil {
@@ -63,11 +61,10 @@ func (r *accessEntryResolver) AccessSource(ctx context.Context, obj *types.Acces
 
 // DecisionHistory is the resolver for the decisionHistory field.
 func (r *accessEntryResolver) DecisionHistory(ctx context.Context, obj *types.AccessEntry) ([]*types.AccessEntryDecisionHistoryEntry, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionAccessEntryGet); err != nil {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionAccessEntryGet)
+	if err != nil {
 		return nil, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(obj.ID)
 
 	histories, err := r.accessReview.Entries(scope).DecisionHistory(ctx, obj.ID)
 	if err != nil {
@@ -125,11 +122,10 @@ func (r *accessReviewResolver) IdentitySource(ctx context.Context, obj *types.Ac
 
 // AccessSources is the resolver for the accessSources field.
 func (r *accessReviewResolver) AccessSources(ctx context.Context, obj *types.AccessReview, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AccessSourceOrder) (*types.AccessSourceConnection, error) {
-	if err := r.authorize(ctx, obj.Organization.ID, probo.ActionAccessSourceList); err != nil {
+	scope, err := r.authorize(ctx, obj.Organization.ID, probo.ActionAccessSourceList)
+	if err != nil {
 		return nil, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(obj.Organization.ID)
 
 	pageOrderBy := page.OrderBy[coredata.AccessSourceOrderField]{
 		Field:     coredata.AccessSourceOrderFieldCreatedAt,
@@ -154,11 +150,10 @@ func (r *accessReviewResolver) AccessSources(ctx context.Context, obj *types.Acc
 
 // Campaigns is the resolver for the campaigns field.
 func (r *accessReviewResolver) Campaigns(ctx context.Context, obj *types.AccessReview, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AccessReviewCampaignOrder) (*types.AccessReviewCampaignConnection, error) {
-	if err := r.authorize(ctx, obj.Organization.ID, probo.ActionAccessReviewCampaignList); err != nil {
+	scope, err := r.authorize(ctx, obj.Organization.ID, probo.ActionAccessReviewCampaignList)
+	if err != nil {
 		return nil, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(obj.Organization.ID)
 
 	pageOrderBy := page.OrderBy[coredata.AccessReviewCampaignOrderField]{
 		Field:     coredata.AccessReviewCampaignOrderFieldCreatedAt,
@@ -193,11 +188,10 @@ func (r *accessReviewCampaignResolver) Organization(ctx context.Context, obj *ty
 
 // ScopeSources is the resolver for the scopeSources field.
 func (r *accessReviewCampaignResolver) ScopeSources(ctx context.Context, obj *types.AccessReviewCampaign) ([]*types.AccessReviewCampaignScopeSource, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionAccessSourceList); err != nil {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionAccessSourceList)
+	if err != nil {
 		return nil, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(obj.ID)
 
 	sources, err := r.accessReview.Sources(scope).ListScopeSourcesForCampaignID(ctx, obj.ID)
 	if err != nil {
@@ -224,11 +218,10 @@ func (r *accessReviewCampaignResolver) ScopeSources(ctx context.Context, obj *ty
 
 // Entries is the resolver for the entries field.
 func (r *accessReviewCampaignResolver) Entries(ctx context.Context, obj *types.AccessReviewCampaign, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AccessEntryOrder, accessSourceID *gid.GID, filter *coredata.AccessEntryFilter) (*types.AccessEntryConnection, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionAccessEntryList); err != nil {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionAccessEntryList)
+	if err != nil {
 		return nil, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(obj.ID)
 
 	pageOrderBy := page.OrderBy[coredata.AccessEntryOrderField]{
 		Field:     coredata.AccessEntryOrderFieldCreatedAt,
@@ -244,8 +237,7 @@ func (r *accessReviewCampaignResolver) Entries(ctx context.Context, obj *types.A
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
 	var (
-		p   *page.Page[*coredata.AccessEntry, coredata.AccessEntryOrderField]
-		err error
+		p *page.Page[*coredata.AccessEntry, coredata.AccessEntryOrderField]
 	)
 
 	if accessSourceID != nil {
@@ -263,11 +255,10 @@ func (r *accessReviewCampaignResolver) Entries(ctx context.Context, obj *types.A
 
 // PendingEntryCount is the resolver for the pendingEntryCount field.
 func (r *accessReviewCampaignResolver) PendingEntryCount(ctx context.Context, obj *types.AccessReviewCampaign) (int, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionAccessEntryList); err != nil {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionAccessEntryList)
+	if err != nil {
 		return 0, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(obj.ID)
 
 	count, err := r.accessReview.Entries(scope).CountPendingForCampaignID(ctx, obj.ID)
 	if err != nil {
@@ -279,11 +270,10 @@ func (r *accessReviewCampaignResolver) PendingEntryCount(ctx context.Context, ob
 
 // Statistics is the resolver for the statistics field.
 func (r *accessReviewCampaignResolver) Statistics(ctx context.Context, obj *types.AccessReviewCampaign) (*types.AccessReviewCampaignStatistics, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionAccessEntryList); err != nil {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionAccessEntryList)
+	if err != nil {
 		return nil, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(obj.ID)
 
 	stats, err := r.accessReview.Entries(scope).Statistics(ctx, obj.ID)
 	if err != nil {
@@ -317,11 +307,10 @@ func (r *accessReviewCampaignConnectionResolver) TotalCount(ctx context.Context,
 
 // Entries is the resolver for the entries field.
 func (r *accessReviewCampaignScopeSourceResolver) Entries(ctx context.Context, obj *types.AccessReviewCampaignScopeSource, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AccessEntryOrder, filter *coredata.AccessEntryFilter) (*types.AccessEntryConnection, error) {
-	if err := r.authorize(ctx, obj.CampaignID, probo.ActionAccessEntryList); err != nil {
+	scope, err := r.authorize(ctx, obj.CampaignID, probo.ActionAccessEntryList)
+	if err != nil {
 		return nil, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(obj.CampaignID)
 
 	pageOrderBy := page.OrderBy[coredata.AccessEntryOrderField]{
 		Field:     coredata.AccessEntryOrderFieldCreatedAt,
@@ -348,11 +337,10 @@ func (r *accessReviewCampaignScopeSourceResolver) Entries(ctx context.Context, o
 
 // Statistics is the resolver for the statistics field.
 func (r *accessReviewCampaignScopeSourceResolver) Statistics(ctx context.Context, obj *types.AccessReviewCampaignScopeSource) (*types.AccessReviewCampaignStatistics, error) {
-	if err := r.authorize(ctx, obj.CampaignID, probo.ActionAccessEntryList); err != nil {
+	scope, err := r.authorize(ctx, obj.CampaignID, probo.ActionAccessEntryList)
+	if err != nil {
 		return nil, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(obj.CampaignID)
 
 	stats, err := r.accessReview.Entries(scope).StatisticsForSource(ctx, obj.CampaignID, obj.ID)
 	if err != nil {
@@ -390,15 +378,14 @@ func (r *accessSourceResolver) Connector(ctx context.Context, obj *types.AccessS
 
 // ProviderOrganizations is the resolver for the providerOrganizations field.
 func (r *accessSourceResolver) ProviderOrganizations(ctx context.Context, obj *types.AccessSource) ([]*types.ProviderOrganization, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionAccessSourceGet); err != nil {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionAccessSourceGet)
+	if err != nil {
 		return nil, err
 	}
 
 	if obj.ConnectorID == nil {
 		return []*types.ProviderOrganization{}, nil
 	}
-
-	scope := coredata.NewScopeFromObjectID(obj.ID)
 
 	httpClient, dbConnector, err := r.accessReview.Sources(scope).ConnectorHTTPClient(ctx, *obj.ConnectorID)
 	if err != nil {
@@ -434,7 +421,8 @@ func (r *accessSourceResolver) ProviderOrganizations(ctx context.Context, obj *t
 // return false: the identifier is captured during the OAuth callback,
 // not via a follow-up configure mutation.
 func (r *accessSourceResolver) NeedsConfiguration(ctx context.Context, obj *types.AccessSource) (bool, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionAccessSourceGet); err != nil {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionAccessSourceGet)
+	if err != nil {
 		return false, err
 	}
 
@@ -442,7 +430,6 @@ func (r *accessSourceResolver) NeedsConfiguration(ctx context.Context, obj *type
 		return false, nil
 	}
 
-	scope := coredata.NewScopeFromObjectID(obj.ID)
 	prb := r.probo
 
 	dbConnector, err := prb.Connectors.Get(ctx, scope, *obj.ConnectorID)
@@ -496,7 +483,8 @@ func (r *accessSourceResolver) ConnectionStatus(ctx context.Context, obj *types.
 
 // SelectedOrganization is the resolver for the selectedOrganization field.
 func (r *accessSourceResolver) SelectedOrganization(ctx context.Context, obj *types.AccessSource) (*string, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionAccessSourceGet); err != nil {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionAccessSourceGet)
+	if err != nil {
 		return nil, err
 	}
 
@@ -504,7 +492,6 @@ func (r *accessSourceResolver) SelectedOrganization(ctx context.Context, obj *ty
 		return nil, nil
 	}
 
-	scope := coredata.NewScopeFromObjectID(obj.ID)
 	prb := r.probo
 
 	dbConnector, err := prb.Connectors.Get(ctx, scope, *obj.ConnectorID)
@@ -553,11 +540,10 @@ func (r *accessSourceConnectionResolver) TotalCount(ctx context.Context, obj *ty
 
 // CreateAccessSource is the resolver for the createAccessSource field.
 func (r *mutationResolver) CreateAccessSource(ctx context.Context, input types.CreateAccessSourceInput) (*types.CreateAccessSourcePayload, error) {
-	if err := r.authorize(ctx, input.OrganizationID, probo.ActionAccessSourceCreate); err != nil {
+	scope, err := r.authorize(ctx, input.OrganizationID, probo.ActionAccessSourceCreate)
+	if err != nil {
 		return nil, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(input.OrganizationID)
 
 	source, err := r.accessReview.Sources(scope).Create(ctx, accessreview.CreateAccessSourceRequest{
 		OrganizationID: input.OrganizationID,
@@ -577,11 +563,10 @@ func (r *mutationResolver) CreateAccessSource(ctx context.Context, input types.C
 
 // UpdateAccessSource is the resolver for the updateAccessSource field.
 func (r *mutationResolver) UpdateAccessSource(ctx context.Context, input types.UpdateAccessSourceInput) (*types.UpdateAccessSourcePayload, error) {
-	if err := r.authorize(ctx, input.AccessSourceID, probo.ActionAccessSourceUpdate); err != nil {
+	scope, err := r.authorize(ctx, input.AccessSourceID, probo.ActionAccessSourceUpdate)
+	if err != nil {
 		return nil, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(input.AccessSourceID)
 
 	req := accessreview.UpdateAccessSourceRequest{
 		AccessSourceID: input.AccessSourceID,
@@ -614,11 +599,10 @@ func (r *mutationResolver) UpdateAccessSource(ctx context.Context, input types.U
 
 // DeleteAccessSource is the resolver for the deleteAccessSource field.
 func (r *mutationResolver) DeleteAccessSource(ctx context.Context, input types.DeleteAccessSourceInput) (*types.DeleteAccessSourcePayload, error) {
-	if err := r.authorize(ctx, input.AccessSourceID, probo.ActionAccessSourceDelete); err != nil {
+	scope, err := r.authorize(ctx, input.AccessSourceID, probo.ActionAccessSourceDelete)
+	if err != nil {
 		return nil, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(input.AccessSourceID)
 
 	if err := r.accessReview.Sources(scope).Delete(ctx, input.AccessSourceID); err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
@@ -635,11 +619,10 @@ func (r *mutationResolver) DeleteAccessSource(ctx context.Context, input types.D
 
 // ConfigureAccessSource is the resolver for the configureAccessSource field.
 func (r *mutationResolver) ConfigureAccessSource(ctx context.Context, input types.ConfigureAccessSourceInput) (*types.ConfigureAccessSourcePayload, error) {
-	if err := r.authorize(ctx, input.AccessSourceID, probo.ActionAccessSourceUpdate); err != nil {
+	scope, err := r.authorize(ctx, input.AccessSourceID, probo.ActionAccessSourceUpdate)
+	if err != nil {
 		return nil, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(input.AccessSourceID)
 
 	source, err := r.accessReview.Sources(scope).ConfigureAccessSource(
 		ctx,
@@ -663,11 +646,10 @@ func (r *mutationResolver) ConfigureAccessSource(ctx context.Context, input type
 
 // CreateAccessReviewCampaign is the resolver for the createAccessReviewCampaign field.
 func (r *mutationResolver) CreateAccessReviewCampaign(ctx context.Context, input types.CreateAccessReviewCampaignInput) (*types.CreateAccessReviewCampaignPayload, error) {
-	if err := r.authorize(ctx, input.OrganizationID, probo.ActionAccessReviewCampaignCreate); err != nil {
+	scope, err := r.authorize(ctx, input.OrganizationID, probo.ActionAccessReviewCampaignCreate)
+	if err != nil {
 		return nil, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(input.OrganizationID)
 
 	var description string
 	if input.Description != nil {
@@ -692,11 +674,10 @@ func (r *mutationResolver) CreateAccessReviewCampaign(ctx context.Context, input
 
 // UpdateAccessReviewCampaign is the resolver for the updateAccessReviewCampaign field.
 func (r *mutationResolver) UpdateAccessReviewCampaign(ctx context.Context, input types.UpdateAccessReviewCampaignInput) (*types.UpdateAccessReviewCampaignPayload, error) {
-	if err := r.authorize(ctx, input.AccessReviewCampaignID, probo.ActionAccessReviewCampaignUpdate); err != nil {
+	scope, err := r.authorize(ctx, input.AccessReviewCampaignID, probo.ActionAccessReviewCampaignUpdate)
+	if err != nil {
 		return nil, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(input.AccessReviewCampaignID)
 
 	req := accessreview.UpdateAccessReviewCampaignRequest{
 		CampaignID: input.AccessReviewCampaignID,
@@ -730,11 +711,10 @@ func (r *mutationResolver) UpdateAccessReviewCampaign(ctx context.Context, input
 
 // DeleteAccessReviewCampaign is the resolver for the deleteAccessReviewCampaign field.
 func (r *mutationResolver) DeleteAccessReviewCampaign(ctx context.Context, input types.DeleteAccessReviewCampaignInput) (*types.DeleteAccessReviewCampaignPayload, error) {
-	if err := r.authorize(ctx, input.AccessReviewCampaignID, probo.ActionAccessReviewCampaignDelete); err != nil {
+	scope, err := r.authorize(ctx, input.AccessReviewCampaignID, probo.ActionAccessReviewCampaignDelete)
+	if err != nil {
 		return nil, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(input.AccessReviewCampaignID)
 
 	if err := r.accessReview.Campaigns(scope).Delete(ctx, input.AccessReviewCampaignID); err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
@@ -751,11 +731,10 @@ func (r *mutationResolver) DeleteAccessReviewCampaign(ctx context.Context, input
 
 // StartAccessReviewCampaign is the resolver for the startAccessReviewCampaign field.
 func (r *mutationResolver) StartAccessReviewCampaign(ctx context.Context, input types.StartAccessReviewCampaignInput) (*types.StartAccessReviewCampaignPayload, error) {
-	if err := r.authorize(ctx, input.AccessReviewCampaignID, probo.ActionAccessReviewCampaignStart); err != nil {
+	scope, err := r.authorize(ctx, input.AccessReviewCampaignID, probo.ActionAccessReviewCampaignStart)
+	if err != nil {
 		return nil, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(input.AccessReviewCampaignID)
 
 	campaign, err := r.accessReview.Campaigns(scope).Start(ctx, input.AccessReviewCampaignID)
 	if err != nil {
@@ -769,11 +748,10 @@ func (r *mutationResolver) StartAccessReviewCampaign(ctx context.Context, input 
 
 // CloseAccessReviewCampaign is the resolver for the closeAccessReviewCampaign field.
 func (r *mutationResolver) CloseAccessReviewCampaign(ctx context.Context, input types.CloseAccessReviewCampaignInput) (*types.CloseAccessReviewCampaignPayload, error) {
-	if err := r.authorize(ctx, input.AccessReviewCampaignID, probo.ActionAccessReviewCampaignClose); err != nil {
+	scope, err := r.authorize(ctx, input.AccessReviewCampaignID, probo.ActionAccessReviewCampaignClose)
+	if err != nil {
 		return nil, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(input.AccessReviewCampaignID)
 
 	campaign, err := r.accessReview.Campaigns(scope).Close(ctx, input.AccessReviewCampaignID)
 	if err != nil {
@@ -787,11 +765,10 @@ func (r *mutationResolver) CloseAccessReviewCampaign(ctx context.Context, input 
 
 // CancelAccessReviewCampaign is the resolver for the cancelAccessReviewCampaign field.
 func (r *mutationResolver) CancelAccessReviewCampaign(ctx context.Context, input types.CancelAccessReviewCampaignInput) (*types.CancelAccessReviewCampaignPayload, error) {
-	if err := r.authorize(ctx, input.AccessReviewCampaignID, probo.ActionAccessReviewCampaignCancel); err != nil {
+	scope, err := r.authorize(ctx, input.AccessReviewCampaignID, probo.ActionAccessReviewCampaignCancel)
+	if err != nil {
 		return nil, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(input.AccessReviewCampaignID)
 
 	campaign, err := r.accessReview.Campaigns(scope).Cancel(ctx, input.AccessReviewCampaignID)
 	if err != nil {
@@ -805,11 +782,10 @@ func (r *mutationResolver) CancelAccessReviewCampaign(ctx context.Context, input
 
 // AddAccessReviewCampaignScopeSource is the resolver for the addAccessReviewCampaignScopeSource field.
 func (r *mutationResolver) AddAccessReviewCampaignScopeSource(ctx context.Context, input types.AddAccessReviewCampaignScopeSourceInput) (*types.AddAccessReviewCampaignScopeSourcePayload, error) {
-	if err := r.authorize(ctx, input.AccessReviewCampaignID, probo.ActionAccessReviewCampaignAddScopeSource); err != nil {
+	scope, err := r.authorize(ctx, input.AccessReviewCampaignID, probo.ActionAccessReviewCampaignAddScopeSource)
+	if err != nil {
 		return nil, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(input.AccessReviewCampaignID)
 
 	campaign, err := r.accessReview.Campaigns(scope).AddScopeSource(ctx, accessreview.AddCampaignScopeSourceRequest{
 		CampaignID:     input.AccessReviewCampaignID,
@@ -826,11 +802,10 @@ func (r *mutationResolver) AddAccessReviewCampaignScopeSource(ctx context.Contex
 
 // RemoveAccessReviewCampaignScopeSource is the resolver for the removeAccessReviewCampaignScopeSource field.
 func (r *mutationResolver) RemoveAccessReviewCampaignScopeSource(ctx context.Context, input types.RemoveAccessReviewCampaignScopeSourceInput) (*types.RemoveAccessReviewCampaignScopeSourcePayload, error) {
-	if err := r.authorize(ctx, input.AccessReviewCampaignID, probo.ActionAccessReviewCampaignRemoveScopeSource); err != nil {
+	scope, err := r.authorize(ctx, input.AccessReviewCampaignID, probo.ActionAccessReviewCampaignRemoveScopeSource)
+	if err != nil {
 		return nil, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(input.AccessReviewCampaignID)
 
 	campaign, err := r.accessReview.Campaigns(scope).RemoveScopeSource(ctx, accessreview.RemoveCampaignScopeSourceRequest{
 		CampaignID:     input.AccessReviewCampaignID,
@@ -847,11 +822,10 @@ func (r *mutationResolver) RemoveAccessReviewCampaignScopeSource(ctx context.Con
 
 // RecordAccessEntryDecision is the resolver for the recordAccessEntryDecision field.
 func (r *mutationResolver) RecordAccessEntryDecision(ctx context.Context, input types.RecordAccessEntryDecisionInput) (*types.RecordAccessEntryDecisionPayload, error) {
-	if err := r.authorize(ctx, input.AccessEntryID, probo.ActionAccessEntryDecide); err != nil {
+	scope, err := r.authorize(ctx, input.AccessEntryID, probo.ActionAccessEntryDecide)
+	if err != nil {
 		return nil, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(input.AccessEntryID)
 
 	// Resolve the profile ID from the session's identity.
 	// The profile may not exist for every identity, in which
@@ -904,7 +878,8 @@ func (r *mutationResolver) RecordAccessEntryDecisions(ctx context.Context, input
 
 	// Authorize each entry individually to prevent cross-org bypass.
 	for _, d := range input.Decisions {
-		if err := r.authorize(ctx, d.AccessEntryID, probo.ActionAccessEntryDecide); err != nil {
+		_, err := r.authorize(ctx, d.AccessEntryID, probo.ActionAccessEntryDecide)
+		if err != nil {
 			return nil, err
 		}
 	}
@@ -968,11 +943,10 @@ func (r *mutationResolver) RecordAccessEntryDecisions(ctx context.Context, input
 
 // FlagAccessEntry is the resolver for the flagAccessEntry field.
 func (r *mutationResolver) FlagAccessEntry(ctx context.Context, input types.FlagAccessEntryInput) (*types.FlagAccessEntryPayload, error) {
-	if err := r.authorize(ctx, input.AccessEntryID, probo.ActionAccessEntryFlag); err != nil {
+	scope, err := r.authorize(ctx, input.AccessEntryID, probo.ActionAccessEntryFlag)
+	if err != nil {
 		return nil, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(input.AccessEntryID)
 
 	entry, err := r.accessReview.Entries(scope).FlagEntry(ctx, accessreview.FlagAccessEntryRequest{
 		EntryID:     input.AccessEntryID,

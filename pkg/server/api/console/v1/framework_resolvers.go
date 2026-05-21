@@ -26,7 +26,7 @@ import (
 
 // Organization is the resolver for the organization field.
 func (r *frameworkResolver) Organization(ctx context.Context, obj *types.Framework) (*types.Organization, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGet); err != nil {
+	if _, err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGet); err != nil {
 		return nil, err
 	}
 
@@ -48,11 +48,11 @@ func (r *frameworkResolver) Organization(ctx context.Context, obj *types.Framewo
 
 // Controls is the resolver for the controls field.
 func (r *frameworkResolver) Controls(ctx context.Context, obj *types.Framework, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ControlOrderBy, filter *types.ControlFilter) (*types.ControlConnection, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionControlList); err != nil {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionControlList)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(obj.ID)
 	prb := r.probo
 
 	pageOrderBy := page.OrderBy[coredata.ControlOrderField]{
@@ -84,11 +84,11 @@ func (r *frameworkResolver) Controls(ctx context.Context, obj *types.Framework, 
 
 // LightLogoURL is the resolver for the lightLogoURL field.
 func (r *frameworkResolver) LightLogoURL(ctx context.Context, obj *types.Framework) (*string, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionFrameworkGet); err != nil {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionFrameworkGet)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(obj.ID)
 	prb := r.probo
 
 	return prb.Frameworks.GenerateLightLogoURL(ctx, scope, obj.ID, 1*time.Hour)
@@ -96,11 +96,11 @@ func (r *frameworkResolver) LightLogoURL(ctx context.Context, obj *types.Framewo
 
 // DarkLogoURL is the resolver for the darkLogoURL field.
 func (r *frameworkResolver) DarkLogoURL(ctx context.Context, obj *types.Framework) (*string, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionFrameworkGet); err != nil {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionFrameworkGet)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(obj.ID)
 	prb := r.probo
 
 	return prb.Frameworks.GenerateDarkLogoURL(ctx, scope, obj.ID, 1*time.Hour)
@@ -113,13 +113,13 @@ func (r *frameworkResolver) Permission(ctx context.Context, obj *types.Framework
 
 // TotalCount is the resolver for the totalCount field.
 func (r *frameworkConnectionResolver) TotalCount(ctx context.Context, obj *types.FrameworkConnection) (int, error) {
-	if err := r.authorize(ctx, obj.ParentID, probo.ActionFrameworkList); err != nil {
+	scope, err := r.authorize(ctx, obj.ParentID, probo.ActionFrameworkList)
+	if err != nil {
 		return 0, err
 	}
 
 	switch obj.Resolver.(type) {
 	case *organizationResolver:
-		scope := coredata.NewScopeFromObjectID(obj.ParentID)
 		prb := r.probo
 
 		count, err := prb.Frameworks.CountForOrganizationID(ctx, scope, obj.ParentID)
@@ -138,11 +138,11 @@ func (r *frameworkConnectionResolver) TotalCount(ctx context.Context, obj *types
 
 // CreateFramework is the resolver for the createFramework field.
 func (r *mutationResolver) CreateFramework(ctx context.Context, input types.CreateFrameworkInput) (*types.CreateFrameworkPayload, error) {
-	if err := r.authorize(ctx, input.OrganizationID, probo.ActionFrameworkCreate); err != nil {
+	scope, err := r.authorize(ctx, input.OrganizationID, probo.ActionFrameworkCreate)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(input.OrganizationID)
 	prb := r.probo
 
 	framework, err := prb.Frameworks.Create(
@@ -169,11 +169,11 @@ func (r *mutationResolver) CreateFramework(ctx context.Context, input types.Crea
 
 // UpdateFramework is the resolver for the updateFramework field.
 func (r *mutationResolver) UpdateFramework(ctx context.Context, input types.UpdateFrameworkInput) (*types.UpdateFrameworkPayload, error) {
-	if err := r.authorize(ctx, input.ID, probo.ActionFrameworkUpdate); err != nil {
+	scope, err := r.authorize(ctx, input.ID, probo.ActionFrameworkUpdate)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(input.ID)
 	prb := r.probo
 
 	framework, err := prb.Frameworks.Update(
@@ -201,11 +201,11 @@ func (r *mutationResolver) UpdateFramework(ctx context.Context, input types.Upda
 
 // ImportFramework is the resolver for the importFramework field.
 func (r *mutationResolver) ImportFramework(ctx context.Context, input types.ImportFrameworkInput) (*types.ImportFrameworkPayload, error) {
-	if err := r.authorize(ctx, input.OrganizationID, probo.ActionFrameworkImport); err != nil {
+	scope, err := r.authorize(ctx, input.OrganizationID, probo.ActionFrameworkImport)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(input.OrganizationID)
 	prb := r.probo
 
 	req := probo.ImportFrameworkRequest{}
@@ -232,15 +232,14 @@ func (r *mutationResolver) ImportFramework(ctx context.Context, input types.Impo
 
 // DeleteFramework is the resolver for the deleteFramework field.
 func (r *mutationResolver) DeleteFramework(ctx context.Context, input types.DeleteFrameworkInput) (*types.DeleteFrameworkPayload, error) {
-	if err := r.authorize(ctx, input.FrameworkID, probo.ActionFrameworkDelete); err != nil {
+	scope, err := r.authorize(ctx, input.FrameworkID, probo.ActionFrameworkDelete)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(input.FrameworkID)
 	prb := r.probo
 
-	err := prb.Frameworks.Delete(ctx, scope, input.FrameworkID)
-	if err != nil {
+	if err := prb.Frameworks.Delete(ctx, scope, input.FrameworkID); err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete framework", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
@@ -252,11 +251,11 @@ func (r *mutationResolver) DeleteFramework(ctx context.Context, input types.Dele
 
 // ExportFramework is the resolver for the exportFramework field.
 func (r *mutationResolver) ExportFramework(ctx context.Context, input types.ExportFrameworkInput) (*types.ExportFrameworkPayload, error) {
-	if err := r.authorize(ctx, input.FrameworkID, probo.ActionFrameworkExport); err != nil {
+	scope, err := r.authorize(ctx, input.FrameworkID, probo.ActionFrameworkExport)
+	if err != nil {
 		return nil, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(input.FrameworkID)
 	prb := r.probo
 
 	identity := authn.IdentityFromContext(ctx)
