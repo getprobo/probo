@@ -60,6 +60,7 @@ func (r *documentResolver) Versions(ctx context.Context, obj *types.Document, fi
 		Field:     coredata.DocumentVersionOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if orderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.DocumentVersionOrderField]{
 			Field:     orderBy.Field,
@@ -94,6 +95,7 @@ func (r *documentResolver) Controls(ctx context.Context, obj *types.Document, fi
 		Field:     coredata.ControlOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if orderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.ControlOrderField]{
 			Field:     orderBy.Field,
@@ -230,6 +232,7 @@ func (r *documentVersionResolver) Approvers(ctx context.Context, obj *types.Docu
 		Field:     coredata.MembershipProfileOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if orderBy != nil {
 		pageOrderBy.Field = coredata.MembershipProfileOrderField(orderBy.Field)
 		pageOrderBy.Direction = page.OrderDirection(orderBy.Direction)
@@ -257,6 +260,7 @@ func (r *documentVersionResolver) Signatures(ctx context.Context, obj *types.Doc
 		Field:     coredata.DocumentVersionSignatureOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if orderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.DocumentVersionSignatureOrderField]{
 			Field:     orderBy.Field,
@@ -308,6 +312,7 @@ func (r *documentVersionResolver) ApprovalQuorums(ctx context.Context, obj *type
 		Field:     coredata.DocumentVersionApprovalQuorumOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if orderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.DocumentVersionApprovalQuorumOrderField]{
 			Field:     orderBy.Field,
@@ -334,6 +339,7 @@ func (r *documentVersionResolver) Signed(ctx context.Context, obj *types.Documen
 	}
 
 	identity := authn.IdentityFromContext(ctx)
+
 	signed, err := r.probo.Documents.IsVersionSignedByUserEmail(ctx, scope, obj.ID, identity.EmailAddress)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot check if document version is signed", log.Error(err))
@@ -501,6 +507,7 @@ func (r *documentVersionApprovalQuorumResolver) Decisions(ctx context.Context, o
 		Field:     coredata.DocumentVersionApprovalDecisionOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if orderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.DocumentVersionApprovalDecisionOrderField]{
 			Field:     orderBy.Field,
@@ -659,6 +666,7 @@ func (r *employeeDocumentResolver) Signed(ctx context.Context, obj *types.Employ
 	}
 
 	identity := authn.IdentityFromContext(ctx)
+
 	signed, err := r.probo.Documents.IsSigned(ctx, scope, obj.ID, identity.EmailAddress)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
@@ -682,6 +690,7 @@ func (r *employeeDocumentResolver) ApprovalState(ctx context.Context, obj *types
 	identity := authn.IdentityFromContext(ctx)
 
 	scope := coredata.NewScopeFromObjectID(obj.ID)
+
 	state, err := r.probo.Documents.GetViewerApprovalState(ctx, scope, obj.ID, identity.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
@@ -707,6 +716,7 @@ func (r *employeeDocumentResolver) Versions(ctx context.Context, obj *types.Empl
 		Field:     coredata.DocumentVersionOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if orderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.DocumentVersionOrderField]{
 			Field:     orderBy.Field,
@@ -769,6 +779,7 @@ func (r *employeeDocumentVersionResolver) Signed(ctx context.Context, obj *types
 	}
 
 	identity := authn.IdentityFromContext(ctx)
+
 	signed, err := r.probo.Documents.IsVersionSignedByUserEmail(ctx, scope, obj.ID, identity.EmailAddress)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot check if version is signed", log.Error(err))
@@ -786,6 +797,7 @@ func (r *employeeDocumentVersionResolver) ApprovalDecision(ctx context.Context, 
 
 	identity := authn.IdentityFromContext(ctx)
 	scope := coredata.NewScopeFromObjectID(obj.ID)
+
 	decision, err := r.probo.DocumentApprovals.GetViewerDecision(ctx, scope, obj.ID, identity.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
@@ -1054,6 +1066,7 @@ func (r *mutationResolver) PublishDocument(ctx context.Context, input types.Publ
 		Document:        types.NewDocument(result.Document),
 		DocumentVersion: types.NewDocumentVersion(result.Version),
 	}
+
 	if result.Quorum != nil {
 		payload.ApprovalQuorum = types.NewDocumentVersionApprovalQuorum(result.Quorum)
 	}
@@ -1077,6 +1090,7 @@ func (r *mutationResolver) BulkPublishDocuments(ctx context.Context, input types
 	}
 
 	scope := coredata.NewScopeFromObjectID(input.DocumentIds[0])
+
 	versions, documents, err := r.probo.DocumentApprovals.BulkPublishVersions(ctx, scope, probo.BulkPublishVersionsRequest{
 		DocumentIDs: input.DocumentIds,
 		Minor:       input.Minor,
@@ -1336,6 +1350,7 @@ func (r *mutationResolver) BulkRequestSignatures(ctx context.Context, input type
 	}
 
 	scope := coredata.NewScopeFromObjectID(input.DocumentIds[0])
+
 	documentVersionSignatures, err := r.probo.Documents.BulkRequestSignatures(
 		ctx, scope,
 		probo.BulkRequestSignaturesRequest{
@@ -1413,6 +1428,7 @@ func (r *mutationResolver) SignDocument(ctx context.Context, input types.SignDoc
 	}
 
 	identity := authn.IdentityFromContext(ctx)
+
 	documentVersionSignature, err := r.probo.Documents.SignDocumentVersionByIdentity(ctx, scope, input.DocumentVersionID, identity.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
@@ -1488,6 +1504,7 @@ func (r *mutationResolver) RejectDocumentVersion(ctx context.Context, input type
 	}
 
 	identity := authn.IdentityFromContext(ctx)
+
 	decision, err := r.probo.DocumentApprovals.Reject(ctx, scope, probo.RejectDocumentVersionRequest{
 		DocumentVersionID: input.DocumentVersionID,
 		IdentityID:        identity.ID,

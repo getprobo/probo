@@ -131,6 +131,7 @@ func (r *organizationResolver) Profiles(ctx context.Context, obj *types.Organiza
 		Field:     coredata.MembershipProfileOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if orderBy != nil {
 		pageOrderBy.Field = coredata.MembershipProfileOrderField(orderBy.Field)
 		pageOrderBy.Direction = page.OrderDirection(orderBy.Direction)
@@ -174,6 +175,7 @@ func (r *organizationResolver) AccessSources(ctx context.Context, obj *types.Org
 		Field:     coredata.AccessSourceOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if orderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.AccessSourceOrderField]{
 			Field:     orderBy.Field,
@@ -202,6 +204,7 @@ func (r *organizationResolver) AccessReviewCampaigns(ctx context.Context, obj *t
 		Field:     coredata.AccessReviewCampaignOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if orderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.AccessReviewCampaignOrderField]{
 			Field:     orderBy.Field,
@@ -254,6 +257,7 @@ func (r *organizationResolver) Assets(ctx context.Context, obj *types.Organizati
 		Field:     coredata.AssetOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if orderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.AssetOrderField]{
 			Field:     orderBy.Field,
@@ -307,6 +311,7 @@ func (r *organizationResolver) Data(ctx context.Context, obj *types.Organization
 		Field:     coredata.DatumOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if orderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.DatumOrderField]{
 			Field:     orderBy.Field,
@@ -336,6 +341,7 @@ func (r *organizationResolver) Audits(ctx context.Context, obj *types.Organizati
 		Field:     coredata.AuditOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if orderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.AuditOrderField]{
 			Field:     orderBy.Field,
@@ -433,6 +439,7 @@ func (r *organizationResolver) AuditLogEntries(ctx context.Context, obj *types.O
 		Field:     coredata.AuditLogEntryOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if orderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.AuditLogEntryOrderField]{
 			Field:     orderBy.Field,
@@ -575,6 +582,7 @@ func (r *organizationResolver) Controls(ctx context.Context, obj *types.Organiza
 		Field:     coredata.ControlOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if orderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.ControlOrderField]{
 			Field:     orderBy.Field,
@@ -609,6 +617,7 @@ func (r *organizationResolver) StatementsOfApplicability(ctx context.Context, ob
 		Field:     coredata.StatementOfApplicabilityOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if orderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.StatementOfApplicabilityOrderField]{
 			Field:     orderBy.Field,
@@ -760,6 +769,7 @@ func (r *organizationResolver) Documents(ctx context.Context, obj *types.Organiz
 		Field:     coredata.DocumentOrderFieldTitle,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if orderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.DocumentOrderField]{
 			Field:     orderBy.Field,
@@ -803,6 +813,7 @@ func (r *organizationResolver) Frameworks(ctx context.Context, obj *types.Organi
 		Field:     coredata.FrameworkOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if orderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.FrameworkOrderField]{
 			Field:     orderBy.Field,
@@ -832,6 +843,7 @@ func (r *organizationResolver) Measures(ctx context.Context, obj *types.Organiza
 		Field:     coredata.MeasureOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if orderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.MeasureOrderField]{
 			Field:     orderBy.Field,
@@ -1011,6 +1023,7 @@ func (r *organizationResolver) Risks(ctx context.Context, obj *types.Organizatio
 		Field:     coredata.RiskOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if orderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.RiskOrderField]{
 			Field:     orderBy.Field,
@@ -1076,6 +1089,7 @@ func (r *organizationResolver) RiskAssessments(ctx context.Context, obj *types.O
 		Field:     coredata.RiskAssessmentOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if orderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.RiskAssessmentOrderField]{
 			Field:     orderBy.Field,
@@ -1105,6 +1119,7 @@ func (r *organizationResolver) RiskAssessmentScenarios(ctx context.Context, obj 
 		Field:     coredata.RiskAssessmentScenarioOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if orderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.RiskAssessmentScenarioOrderField]{
 			Field:     orderBy.Field,
@@ -1134,6 +1149,7 @@ func (r *organizationResolver) Tasks(ctx context.Context, obj *types.Organizatio
 		Field:     coredata.TaskOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if orderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.TaskOrderField]{
 			Field:     orderBy.Field,
@@ -1208,6 +1224,7 @@ func (r *organizationResolver) TrustCenterFiles(ctx context.Context, obj *types.
 		Field:     coredata.TrustCenterFileOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if orderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.TrustCenterFileOrderField]{
 			Field:     orderBy.Field,
@@ -1237,6 +1254,7 @@ func (r *organizationResolver) CookieBanners(ctx context.Context, obj *types.Org
 		Field:     coredata.CookieBannerOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if orderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.CookieBannerOrderField]{
 			Field:     orderBy.Field,
@@ -1268,6 +1286,7 @@ func (r *organizationResolver) ThirdParties(ctx context.Context, obj *types.Orga
 		Field:     coredata.ThirdPartyOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if orderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.ThirdPartyOrderField]{
 			Field:     orderBy.Field,
@@ -1330,6 +1349,7 @@ func (r *organizationResolver) WebhookSubscriptions(ctx context.Context, obj *ty
 		Field:     coredata.WebhookSubscriptionOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if orderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.WebhookSubscriptionOrderField]{
 			Field:     orderBy.Field,
@@ -1375,6 +1395,7 @@ func (r *profileConnectionResolver) TotalCount(ctx context.Context, obj *types.P
 		return count, nil
 	case *documentVersionResolver:
 		scope := coredata.NewScopeFromObjectID(obj.ParentID)
+
 		count, err := r.probo.Documents.CountVersionApprovers(ctx, scope, obj.ParentID)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count document version approvers", log.Error(err))

@@ -125,6 +125,7 @@ func (r *auditResolver) Controls(ctx context.Context, obj *types.Audit, first *i
 		Field:     coredata.ControlOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if orderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.ControlOrderField]{
 			Field:     orderBy.Field,
@@ -159,6 +160,7 @@ func (r *auditResolver) Findings(ctx context.Context, obj *types.Audit, first *i
 		Field:     coredata.FindingOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if orderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.FindingOrderField]{
 			Field:     orderBy.Field,
@@ -268,6 +270,7 @@ func (r *findingResolver) Audits(ctx context.Context, obj *types.Finding, first 
 		Field:     coredata.AuditOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if orderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.AuditOrderField]{
 			Field:     orderBy.Field,

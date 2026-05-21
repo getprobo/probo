@@ -627,6 +627,7 @@ func (r *thirdPartyResolver) ComplianceReports(ctx context.Context, obj *types.T
 		Field:     coredata.ThirdPartyComplianceReportOrderFieldReportDate,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if orderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.ThirdPartyComplianceReportOrderField]{
 			Field:     orderBy.Field,
@@ -698,6 +699,7 @@ func (r *thirdPartyResolver) Contacts(ctx context.Context, obj *types.ThirdParty
 		Field:     coredata.ThirdPartyContactOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if orderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.ThirdPartyContactOrderField]{
 			Field:     orderBy.Field,
@@ -727,6 +729,7 @@ func (r *thirdPartyResolver) Services(ctx context.Context, obj *types.ThirdParty
 		Field:     coredata.ThirdPartyServiceOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if orderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.ThirdPartyServiceOrderField]{
 			Field:     orderBy.Field,
@@ -756,6 +759,7 @@ func (r *thirdPartyResolver) RiskAssessments(ctx context.Context, obj *types.Thi
 		Field:     coredata.ThirdPartyRiskAssessmentOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if orderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.ThirdPartyRiskAssessmentOrderField]{
 			Field:     orderBy.Field,

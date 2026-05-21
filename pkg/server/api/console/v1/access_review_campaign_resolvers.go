@@ -131,6 +131,7 @@ func (r *accessReviewResolver) AccessSources(ctx context.Context, obj *types.Acc
 		Field:     coredata.AccessSourceOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if orderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.AccessSourceOrderField]{
 			Field:     orderBy.Field,
@@ -159,6 +160,7 @@ func (r *accessReviewResolver) Campaigns(ctx context.Context, obj *types.AccessR
 		Field:     coredata.AccessReviewCampaignOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if orderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.AccessReviewCampaignOrderField]{
 			Field:     orderBy.Field,
@@ -227,6 +229,7 @@ func (r *accessReviewCampaignResolver) Entries(ctx context.Context, obj *types.A
 		Field:     coredata.AccessEntryOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if orderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.AccessEntryOrderField]{
 			Field:     orderBy.Field,
@@ -316,6 +319,7 @@ func (r *accessReviewCampaignScopeSourceResolver) Entries(ctx context.Context, o
 		Field:     coredata.AccessEntryOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if orderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.AccessEntryOrderField]{
 			Field:     orderBy.Field,
@@ -362,6 +366,7 @@ func (r *accessSourceResolver) Connector(ctx context.Context, obj *types.AccessS
 	}
 
 	scope := coredata.NewScopeFromObjectID(obj.ID)
+
 	connector, err := r.probo.Connectors.Get(ctx, scope, *obj.ConnectorID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
@@ -565,6 +570,7 @@ func (r *mutationResolver) UpdateAccessSource(ctx context.Context, input types.U
 	req := accessreview.UpdateAccessSourceRequest{
 		AccessSourceID: input.AccessSourceID,
 	}
+
 	if input.Name.IsSet() {
 		req.Name = input.Name.Value()
 	}
@@ -676,6 +682,7 @@ func (r *mutationResolver) UpdateAccessReviewCampaign(ctx context.Context, input
 	req := accessreview.UpdateAccessReviewCampaignRequest{
 		CampaignID: input.AccessReviewCampaignID,
 	}
+
 	if input.Name.IsSet() {
 		req.Name = input.Name.Value()
 	}

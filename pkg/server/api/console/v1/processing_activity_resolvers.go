@@ -207,6 +207,7 @@ func (r *processingActivityResolver) ThirdParties(ctx context.Context, obj *type
 		Field:     coredata.ThirdPartyOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if orderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.ThirdPartyOrderField]{
 			Field:     orderBy.Field,

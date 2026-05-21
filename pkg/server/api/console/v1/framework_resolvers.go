@@ -57,6 +57,7 @@ func (r *frameworkResolver) Controls(ctx context.Context, obj *types.Framework, 
 		Field:     coredata.ControlOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if orderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.ControlOrderField]{
 			Field:     orderBy.Field,

@@ -200,6 +200,7 @@ func (r *taskResolver) Evidences(ctx context.Context, obj *types.Task, first *in
 		Field:     coredata.EvidenceOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if orderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.EvidenceOrderField]{
 			Field:     orderBy.Field,

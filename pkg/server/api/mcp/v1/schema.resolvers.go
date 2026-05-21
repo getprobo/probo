@@ -53,12 +53,14 @@ func (r *Resolver) ListThirdPartiesTool(ctx context.Context, req *mcp.CallToolRe
 	if err != nil {
 		return nil, types.ListThirdPartiesOutput{}, err
 	}
+
 	prb := r.proboSvc
 
 	pageOrderBy := page.OrderBy[coredata.ThirdPartyOrderField]{
 		Field:     coredata.ThirdPartyOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if input.OrderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.ThirdPartyOrderField]{
 			Field:     input.OrderBy.Field,
@@ -85,6 +87,7 @@ func (r *Resolver) AddThirdPartyTool(ctx context.Context, req *mcp.CallToolReque
 	if err != nil {
 		return nil, types.AddThirdPartyOutput{}, err
 	}
+
 	svc := r.proboSvc
 
 	var category *coredata.ThirdPartyCategory
@@ -141,6 +144,7 @@ func (r *Resolver) UpdateThirdPartyTool(ctx context.Context, req *mcp.CallToolRe
 	if err != nil {
 		return nil, types.UpdateThirdPartyOutput{}, err
 	}
+
 	svc := r.proboSvc
 
 	var description **string
@@ -270,12 +274,14 @@ func (r *Resolver) ListRisksTool(ctx context.Context, req *mcp.CallToolRequest, 
 	if err != nil {
 		return nil, types.ListRisksOutput{}, err
 	}
+
 	prb := r.proboSvc
 
 	pageOrderBy := page.OrderBy[coredata.RiskOrderField]{
 		Field:     coredata.RiskOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if input.OrderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.RiskOrderField]{
 			Field:     input.OrderBy.Field,
@@ -303,6 +309,7 @@ func (r *Resolver) GetRiskTool(ctx context.Context, req *mcp.CallToolRequest, in
 	if err != nil {
 		return nil, types.GetRiskOutput{}, err
 	}
+
 	prb := r.proboSvc
 
 	risk, err := prb.Risks.Get(ctx, scope, input.ID)
@@ -320,6 +327,7 @@ func (r *Resolver) AddRiskTool(ctx context.Context, req *mcp.CallToolRequest, in
 	if err != nil {
 		return nil, types.AddRiskOutput{}, err
 	}
+
 	svc := r.proboSvc
 
 	risk, err := svc.Risks.Create(
@@ -350,6 +358,7 @@ func (r *Resolver) UpdateRiskTool(ctx context.Context, req *mcp.CallToolRequest,
 	if err != nil {
 		return nil, types.UpdateRiskOutput{}, err
 	}
+
 	svc := r.proboSvc
 
 	risk, err := svc.Risks.Update(
@@ -382,12 +391,14 @@ func (r *Resolver) ListMeasuresTool(ctx context.Context, req *mcp.CallToolReques
 	if err != nil {
 		return nil, types.ListMeasuresOutput{}, err
 	}
+
 	prb := r.proboSvc
 
 	pageOrderBy := page.OrderBy[coredata.MeasureOrderField]{
 		Field:     coredata.MeasureOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if input.OrderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.MeasureOrderField]{
 			Field:     input.OrderBy.Field,
@@ -415,6 +426,7 @@ func (r *Resolver) GetMeasureTool(ctx context.Context, req *mcp.CallToolRequest,
 	if err != nil {
 		return nil, types.GetMeasureOutput{}, err
 	}
+
 	prb := r.proboSvc
 
 	measure, err := prb.Measures.Get(ctx, scope, input.ID)
@@ -432,6 +444,7 @@ func (r *Resolver) AddMeasureTool(ctx context.Context, req *mcp.CallToolRequest,
 	if err != nil {
 		return nil, types.AddMeasureOutput{}, err
 	}
+
 	svc := r.proboSvc
 
 	measure, err := svc.Measures.Create(
@@ -457,6 +470,7 @@ func (r *Resolver) UpdateMeasureTool(ctx context.Context, req *mcp.CallToolReque
 	if err != nil {
 		return nil, types.UpdateMeasureOutput{}, err
 	}
+
 	svc := r.proboSvc
 
 	measure, err := svc.Measures.Update(
@@ -483,12 +497,14 @@ func (r *Resolver) ListFrameworksTool(ctx context.Context, req *mcp.CallToolRequ
 	if err != nil {
 		return nil, types.ListFrameworksOutput{}, err
 	}
+
 	prb := r.proboSvc
 
 	pageOrderBy := page.OrderBy[coredata.FrameworkOrderField]{
 		Field:     coredata.FrameworkOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if input.OrderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.FrameworkOrderField]{
 			Field:     input.OrderBy.Field,
@@ -511,6 +527,7 @@ func (r *Resolver) GetFrameworkTool(ctx context.Context, req *mcp.CallToolReques
 	if err != nil {
 		return nil, types.GetFrameworkOutput{}, err
 	}
+
 	prb := r.proboSvc
 
 	framework, err := prb.Frameworks.Get(ctx, scope, input.ID)
@@ -528,6 +545,7 @@ func (r *Resolver) AddFrameworkTool(ctx context.Context, req *mcp.CallToolReques
 	if err != nil {
 		return nil, types.AddFrameworkOutput{}, err
 	}
+
 	svc := r.proboSvc
 
 	framework, err := svc.Frameworks.Create(
@@ -552,6 +570,7 @@ func (r *Resolver) UpdateFrameworkTool(ctx context.Context, req *mcp.CallToolReq
 	if err != nil {
 		return nil, types.UpdateFrameworkOutput{}, err
 	}
+
 	svc := r.proboSvc
 
 	framework, err := svc.Frameworks.Update(
@@ -576,12 +595,14 @@ func (r *Resolver) ListAssetsTool(ctx context.Context, req *mcp.CallToolRequest,
 	if err != nil {
 		return nil, types.ListAssetsOutput{}, err
 	}
+
 	prb := r.proboSvc
 
 	pageOrderBy := page.OrderBy[coredata.AssetOrderField]{
 		Field:     coredata.AssetOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if input.OrderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.AssetOrderField]{
 			Field:     input.OrderBy.Field,
@@ -604,6 +625,7 @@ func (r *Resolver) GetAssetTool(ctx context.Context, req *mcp.CallToolRequest, i
 	if err != nil {
 		return nil, types.GetAssetOutput{}, err
 	}
+
 	prb := r.proboSvc
 
 	asset, err := prb.Assets.Get(ctx, scope, input.ID)
@@ -621,6 +643,7 @@ func (r *Resolver) AddAssetTool(ctx context.Context, req *mcp.CallToolRequest, i
 	if err != nil {
 		return nil, types.AddAssetOutput{}, err
 	}
+
 	svc := r.proboSvc
 
 	asset, err := svc.Assets.Create(
@@ -649,6 +672,7 @@ func (r *Resolver) UpdateAssetTool(ctx context.Context, req *mcp.CallToolRequest
 	if err != nil {
 		return nil, types.UpdateAssetOutput{}, err
 	}
+
 	svc := r.proboSvc
 
 	asset, err := svc.Assets.Update(
@@ -677,12 +701,14 @@ func (r *Resolver) ListDataTool(ctx context.Context, req *mcp.CallToolRequest, i
 	if err != nil {
 		return nil, types.ListDataOutput{}, err
 	}
+
 	prb := r.proboSvc
 
 	pageOrderBy := page.OrderBy[coredata.DatumOrderField]{
 		Field:     coredata.DatumOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if input.OrderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.DatumOrderField]{
 			Field:     input.OrderBy.Field,
@@ -705,6 +731,7 @@ func (r *Resolver) GetDatumTool(ctx context.Context, req *mcp.CallToolRequest, i
 	if err != nil {
 		return nil, types.GetDatumOutput{}, err
 	}
+
 	prb := r.proboSvc
 
 	datum, err := prb.Data.Get(ctx, scope, input.ID)
@@ -722,6 +749,7 @@ func (r *Resolver) AddDatumTool(ctx context.Context, req *mcp.CallToolRequest, i
 	if err != nil {
 		return nil, types.AddDatumOutput{}, err
 	}
+
 	svc := r.proboSvc
 
 	datum, err := svc.Data.Create(
@@ -748,6 +776,7 @@ func (r *Resolver) UpdateDatumTool(ctx context.Context, req *mcp.CallToolRequest
 	if err != nil {
 		return nil, types.UpdateDatumOutput{}, err
 	}
+
 	svc := r.proboSvc
 
 	datum, err := svc.Data.Update(
@@ -774,12 +803,14 @@ func (r *Resolver) ListFindingsTool(ctx context.Context, req *mcp.CallToolReques
 	if err != nil {
 		return nil, types.ListFindingsOutput{}, err
 	}
+
 	prb := r.proboSvc
 
 	pageOrderBy := page.OrderBy[coredata.FindingOrderField]{
 		Field:     coredata.FindingOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if input.OrderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.FindingOrderField]{
 			Field:     input.OrderBy.Field,
@@ -812,6 +843,7 @@ func (r *Resolver) GetFindingTool(ctx context.Context, req *mcp.CallToolRequest,
 	if err != nil {
 		return nil, types.GetFindingOutput{}, err
 	}
+
 	prb := r.proboSvc
 
 	finding, err := prb.Findings.Get(ctx, scope, input.ID)
@@ -829,6 +861,7 @@ func (r *Resolver) AddFindingTool(ctx context.Context, req *mcp.CallToolRequest,
 	if err != nil {
 		return nil, types.AddFindingOutput{}, err
 	}
+
 	svc := r.proboSvc
 
 	finding, err := svc.Findings.Create(
@@ -863,6 +896,7 @@ func (r *Resolver) UpdateFindingTool(ctx context.Context, req *mcp.CallToolReque
 	if err != nil {
 		return nil, types.UpdateFindingOutput{}, err
 	}
+
 	svc := r.proboSvc
 
 	finding, err := svc.Findings.Update(
@@ -896,12 +930,14 @@ func (r *Resolver) ListObligationsTool(ctx context.Context, req *mcp.CallToolReq
 	if err != nil {
 		return nil, types.ListObligationsOutput{}, err
 	}
+
 	prb := r.proboSvc
 
 	pageOrderBy := page.OrderBy[coredata.ObligationOrderField]{
 		Field:     coredata.ObligationOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if input.OrderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.ObligationOrderField]{
 			Field:     input.OrderBy.Field,
@@ -924,6 +960,7 @@ func (r *Resolver) GetObligationTool(ctx context.Context, req *mcp.CallToolReque
 	if err != nil {
 		return nil, types.GetObligationOutput{}, err
 	}
+
 	prb := r.proboSvc
 
 	obligation, err := prb.Obligations.Get(ctx, scope, input.ID)
@@ -941,6 +978,7 @@ func (r *Resolver) AddObligationTool(ctx context.Context, req *mcp.CallToolReque
 	if err != nil {
 		return nil, types.AddObligationOutput{}, err
 	}
+
 	svc := r.proboSvc
 
 	obligation, err := svc.Obligations.Create(
@@ -973,6 +1011,7 @@ func (r *Resolver) UpdateObligationTool(ctx context.Context, req *mcp.CallToolRe
 	if err != nil {
 		return nil, types.UpdateObligationOutput{}, err
 	}
+
 	svc := r.proboSvc
 
 	obligation, err := svc.Obligations.Update(
@@ -1005,12 +1044,14 @@ func (r *Resolver) ListProcessingActivitiesTool(ctx context.Context, req *mcp.Ca
 	if err != nil {
 		return nil, types.ListProcessingActivitiesOutput{}, err
 	}
+
 	prb := r.proboSvc
 
 	pageOrderBy := page.OrderBy[coredata.ProcessingActivityOrderField]{
 		Field:     coredata.ProcessingActivityOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if input.OrderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.ProcessingActivityOrderField]{
 			Field:     input.OrderBy.Field,
@@ -1033,6 +1074,7 @@ func (r *Resolver) GetProcessingActivityTool(ctx context.Context, req *mcp.CallT
 	if err != nil {
 		return nil, types.GetProcessingActivityOutput{}, err
 	}
+
 	prb := r.proboSvc
 
 	processingActivity, err := prb.ProcessingActivities.Get(ctx, scope, input.ID)
@@ -1050,6 +1092,7 @@ func (r *Resolver) AddProcessingActivityTool(ctx context.Context, req *mcp.CallT
 	if err != nil {
 		return nil, types.AddProcessingActivityOutput{}, err
 	}
+
 	svc := r.proboSvc
 
 	processingActivity, err := svc.ProcessingActivities.Create(
@@ -1092,6 +1135,7 @@ func (r *Resolver) UpdateProcessingActivityTool(ctx context.Context, req *mcp.Ca
 	if err != nil {
 		return nil, types.UpdateProcessingActivityOutput{}, err
 	}
+
 	svc := r.proboSvc
 
 	var thirdPartyIDs *[]gid.GID
@@ -1139,6 +1183,7 @@ func (r *Resolver) DeleteProcessingActivityTool(ctx context.Context, req *mcp.Ca
 	if err != nil {
 		return nil, types.DeleteProcessingActivityOutput{}, err
 	}
+
 	svc := r.proboSvc
 
 	err = svc.ProcessingActivities.Delete(ctx, scope, input.ID)
@@ -1156,12 +1201,14 @@ func (r *Resolver) ListDataProtectionImpactAssessmentsTool(ctx context.Context, 
 	if err != nil {
 		return nil, types.ListDataProtectionImpactAssessmentsOutput{}, err
 	}
+
 	prb := r.proboSvc
 
 	pageOrderBy := page.OrderBy[coredata.DataProtectionImpactAssessmentOrderField]{
 		Field:     coredata.DataProtectionImpactAssessmentOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if input.OrderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.DataProtectionImpactAssessmentOrderField]{
 			Field:     input.OrderBy.Field,
@@ -1184,6 +1231,7 @@ func (r *Resolver) GetDataProtectionImpactAssessmentTool(ctx context.Context, re
 	if err != nil {
 		return nil, types.GetDataProtectionImpactAssessmentOutput{}, err
 	}
+
 	prb := r.proboSvc
 
 	dpia, err := prb.DataProtectionImpactAssessments.Get(ctx, scope, input.ID)
@@ -1201,6 +1249,7 @@ func (r *Resolver) AddDataProtectionImpactAssessmentTool(ctx context.Context, re
 	if err != nil {
 		return nil, types.AddDataProtectionImpactAssessmentOutput{}, err
 	}
+
 	svc := r.proboSvc
 
 	dpia, err := svc.DataProtectionImpactAssessments.Create(
@@ -1228,6 +1277,7 @@ func (r *Resolver) UpdateDataProtectionImpactAssessmentTool(ctx context.Context,
 	if err != nil {
 		return nil, types.UpdateDataProtectionImpactAssessmentOutput{}, err
 	}
+
 	svc := r.proboSvc
 
 	dpia, err := svc.DataProtectionImpactAssessments.Update(
@@ -1255,12 +1305,14 @@ func (r *Resolver) ListTransferImpactAssessmentsTool(ctx context.Context, req *m
 	if err != nil {
 		return nil, types.ListTransferImpactAssessmentsOutput{}, err
 	}
+
 	prb := r.proboSvc
 
 	pageOrderBy := page.OrderBy[coredata.TransferImpactAssessmentOrderField]{
 		Field:     coredata.TransferImpactAssessmentOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if input.OrderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.TransferImpactAssessmentOrderField]{
 			Field:     input.OrderBy.Field,
@@ -1283,6 +1335,7 @@ func (r *Resolver) GetTransferImpactAssessmentTool(ctx context.Context, req *mcp
 	if err != nil {
 		return nil, types.GetTransferImpactAssessmentOutput{}, err
 	}
+
 	prb := r.proboSvc
 
 	tia, err := prb.TransferImpactAssessments.Get(ctx, scope, input.ID)
@@ -1300,6 +1353,7 @@ func (r *Resolver) AddTransferImpactAssessmentTool(ctx context.Context, req *mcp
 	if err != nil {
 		return nil, types.AddTransferImpactAssessmentOutput{}, err
 	}
+
 	svc := r.proboSvc
 
 	tia, err := svc.TransferImpactAssessments.Create(
@@ -1327,6 +1381,7 @@ func (r *Resolver) UpdateTransferImpactAssessmentTool(ctx context.Context, req *
 	if err != nil {
 		return nil, types.UpdateTransferImpactAssessmentOutput{}, err
 	}
+
 	svc := r.proboSvc
 
 	tia, err := svc.TransferImpactAssessments.Update(
@@ -1354,6 +1409,7 @@ func (r *Resolver) DeleteTransferImpactAssessmentTool(ctx context.Context, req *
 	if err != nil {
 		return nil, types.DeleteTransferImpactAssessmentOutput{}, err
 	}
+
 	svc := r.proboSvc
 
 	err = svc.TransferImpactAssessments.Delete(ctx, scope, input.ID)
@@ -1371,12 +1427,14 @@ func (r *Resolver) ListAuditsTool(ctx context.Context, req *mcp.CallToolRequest,
 	if err != nil {
 		return nil, types.ListAuditsOutput{}, err
 	}
+
 	prb := r.proboSvc
 
 	pageOrderBy := page.OrderBy[coredata.AuditOrderField]{
 		Field:     coredata.AuditOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if input.OrderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.AuditOrderField]{
 			Field:     input.OrderBy.Field,
@@ -1399,6 +1457,7 @@ func (r *Resolver) GetAuditTool(ctx context.Context, req *mcp.CallToolRequest, i
 	if err != nil {
 		return nil, types.GetAuditOutput{}, err
 	}
+
 	prb := r.proboSvc
 
 	audit, err := prb.Audits.Get(ctx, scope, input.ID)
@@ -1424,6 +1483,7 @@ func (r *Resolver) AddAuditTool(ctx context.Context, req *mcp.CallToolRequest, i
 	if err != nil {
 		return nil, types.AddAuditOutput{}, err
 	}
+
 	svc := r.proboSvc
 
 	audit, err := svc.Audits.Create(
@@ -1451,6 +1511,7 @@ func (r *Resolver) UpdateAuditTool(ctx context.Context, req *mcp.CallToolRequest
 	if err != nil {
 		return nil, types.UpdateAuditOutput{}, err
 	}
+
 	svc := r.proboSvc
 
 	audit, err := svc.Audits.Update(
@@ -1486,12 +1547,14 @@ func (r *Resolver) ListControlsTool(ctx context.Context, req *mcp.CallToolReques
 	if err != nil {
 		return nil, types.ListControlsOutput{}, err
 	}
+
 	prb := r.proboSvc
 
 	pageOrderBy := page.OrderBy[coredata.ControlOrderField]{
 		Field:     coredata.ControlOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if input.OrderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.ControlOrderField]{
 			Field:     input.OrderBy.Field,
@@ -1528,6 +1591,7 @@ func (r *Resolver) GetControlTool(ctx context.Context, req *mcp.CallToolRequest,
 	if err != nil {
 		return nil, types.GetControlOutput{}, err
 	}
+
 	prb := r.proboSvc
 
 	control, err := prb.Controls.Get(ctx, scope, input.ID)
@@ -1545,6 +1609,7 @@ func (r *Resolver) AddControlTool(ctx context.Context, req *mcp.CallToolRequest,
 	if err != nil {
 		return nil, types.AddControlOutput{}, err
 	}
+
 	svc := r.proboSvc
 
 	control, err := svc.Controls.Create(
@@ -1573,6 +1638,7 @@ func (r *Resolver) UpdateControlTool(ctx context.Context, req *mcp.CallToolReque
 	if err != nil {
 		return nil, types.UpdateControlOutput{}, err
 	}
+
 	svc := r.proboSvc
 
 	var maturityLevel *coredata.ControlMaturityLevel
@@ -1696,12 +1762,14 @@ func (r *Resolver) ListControlObligationsTool(ctx context.Context, req *mcp.Call
 	if err != nil {
 		return nil, types.ListControlObligationsOutput{}, err
 	}
+
 	prb := r.proboSvc
 
 	pageOrderBy := page.OrderBy[coredata.ObligationOrderField]{
 		Field:     coredata.ObligationOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if input.OrderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.ObligationOrderField]{
 			Field:     input.OrderBy.Field,
@@ -1724,12 +1792,14 @@ func (r *Resolver) ListControlMeasuresTool(ctx context.Context, req *mcp.CallToo
 	if err != nil {
 		return nil, types.ListControlMeasuresOutput{}, err
 	}
+
 	prb := r.proboSvc
 
 	pageOrderBy := page.OrderBy[coredata.MeasureOrderField]{
 		Field:     coredata.MeasureOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if input.OrderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.MeasureOrderField]{
 			Field:     input.OrderBy.Field,
@@ -1752,12 +1822,14 @@ func (r *Resolver) ListControlDocumentsTool(ctx context.Context, req *mcp.CallTo
 	if err != nil {
 		return nil, types.ListControlDocumentsOutput{}, err
 	}
+
 	prb := r.proboSvc
 
 	pageOrderBy := page.OrderBy[coredata.DocumentOrderField]{
 		Field:     coredata.DocumentOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if input.OrderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.DocumentOrderField]{
 			Field:     input.OrderBy.Field,
@@ -1780,12 +1852,14 @@ func (r *Resolver) ListControlAuditsTool(ctx context.Context, req *mcp.CallToolR
 	if err != nil {
 		return nil, types.ListControlAuditsOutput{}, err
 	}
+
 	prb := r.proboSvc
 
 	pageOrderBy := page.OrderBy[coredata.AuditOrderField]{
 		Field:     coredata.AuditOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if input.OrderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.AuditOrderField]{
 			Field:     input.OrderBy.Field,
@@ -1808,12 +1882,14 @@ func (r *Resolver) ListRiskObligationsTool(ctx context.Context, req *mcp.CallToo
 	if err != nil {
 		return nil, types.ListRiskObligationsOutput{}, err
 	}
+
 	prb := r.proboSvc
 
 	pageOrderBy := page.OrderBy[coredata.ObligationOrderField]{
 		Field:     coredata.ObligationOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if input.OrderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.ObligationOrderField]{
 			Field:     input.OrderBy.Field,
@@ -1908,12 +1984,14 @@ func (r *Resolver) ListTasksTool(ctx context.Context, req *mcp.CallToolRequest, 
 	if err != nil {
 		return nil, types.ListTasksOutput{}, err
 	}
+
 	prb := r.proboSvc
 
 	pageOrderBy := page.OrderBy[coredata.TaskOrderField]{
 		Field:     coredata.TaskOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if input.OrderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.TaskOrderField]{
 			Field:     input.OrderBy.Field,
@@ -1936,6 +2014,7 @@ func (r *Resolver) GetTaskTool(ctx context.Context, req *mcp.CallToolRequest, in
 	if err != nil {
 		return nil, types.GetTaskOutput{}, err
 	}
+
 	prb := r.proboSvc
 
 	task, err := prb.Tasks.Get(ctx, scope, input.ID)
@@ -1953,6 +2032,7 @@ func (r *Resolver) AddTaskTool(ctx context.Context, req *mcp.CallToolRequest, in
 	if err != nil {
 		return nil, types.AddTaskOutput{}, err
 	}
+
 	svc := r.proboSvc
 
 	priority := coredata.TaskPriorityMedium
@@ -1987,6 +2067,7 @@ func (r *Resolver) UpdateTaskTool(ctx context.Context, req *mcp.CallToolRequest,
 	if err != nil {
 		return nil, types.UpdateTaskOutput{}, err
 	}
+
 	svc := r.proboSvc
 
 	task, err := svc.Tasks.Update(
@@ -2018,6 +2099,7 @@ func (r *Resolver) AssignTaskTool(ctx context.Context, req *mcp.CallToolRequest,
 	if err != nil {
 		return nil, types.AssignTaskOutput{}, err
 	}
+
 	svc := r.proboSvc
 
 	task, err := svc.Tasks.Assign(ctx, scope, input.ID, input.AssignedToID)
@@ -2035,6 +2117,7 @@ func (r *Resolver) UnassignTaskTool(ctx context.Context, req *mcp.CallToolReques
 	if err != nil {
 		return nil, types.UnassignTaskOutput{}, err
 	}
+
 	svc := r.proboSvc
 
 	task, err := svc.Tasks.Unassign(ctx, scope, input.ID)
@@ -2052,6 +2135,7 @@ func (r *Resolver) DeleteTaskTool(ctx context.Context, req *mcp.CallToolRequest,
 	if err != nil {
 		return nil, types.DeleteTaskOutput{}, err
 	}
+
 	svc := r.proboSvc
 
 	err = svc.Tasks.Delete(ctx, scope, input.ID)
@@ -2069,12 +2153,14 @@ func (r *Resolver) ListDocumentsTool(ctx context.Context, req *mcp.CallToolReque
 	if err != nil {
 		return nil, types.ListDocumentsOutput{}, err
 	}
+
 	prb := r.proboSvc
 
 	pageOrderBy := page.OrderBy[coredata.DocumentOrderField]{
 		Field:     coredata.DocumentOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if input.OrderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.DocumentOrderField]{
 			Field:     input.OrderBy.Field,
@@ -2117,6 +2203,7 @@ func (r *Resolver) GetDocumentTool(ctx context.Context, req *mcp.CallToolRequest
 	if err != nil {
 		return nil, types.GetDocumentOutput{}, err
 	}
+
 	prb := r.proboSvc
 
 	document, err := prb.Documents.Get(ctx, scope, input.ID)
@@ -2134,6 +2221,7 @@ func (r *Resolver) AddDocumentTool(ctx context.Context, req *mcp.CallToolRequest
 	if err != nil {
 		return nil, types.AddDocumentOutput{}, err
 	}
+
 	svc := r.proboSvc
 
 	var trustCenterVisibility *coredata.TrustCenterVisibility
@@ -2170,6 +2258,7 @@ func (r *Resolver) UpdateDocumentTool(ctx context.Context, req *mcp.CallToolRequ
 	if err != nil {
 		return nil, types.UpdateDocumentOutput{}, err
 	}
+
 	svc := r.proboSvc
 
 	var defaultApproverIDs *[]gid.GID
@@ -2224,6 +2313,7 @@ func (r *Resolver) ListDocumentVersionsTool(ctx context.Context, req *mcp.CallTo
 		Field:     coredata.DocumentVersionOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if input.OrderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.DocumentVersionOrderField]{
 			Field:     input.OrderBy.Field,
@@ -2253,6 +2343,7 @@ func (r *Resolver) GetDocumentVersionTool(ctx context.Context, req *mcp.CallTool
 	if err != nil {
 		return nil, types.GetDocumentVersionOutput{}, err
 	}
+
 	svc := r.proboSvc
 
 	version, err := svc.Documents.GetVersion(ctx, scope, input.ID)
@@ -2270,12 +2361,14 @@ func (r *Resolver) ListDocumentVersionSignaturesTool(ctx context.Context, req *m
 	if err != nil {
 		return nil, types.ListDocumentVersionSignaturesOutput{}, err
 	}
+
 	prb := r.proboSvc
 
 	pageOrderBy := page.OrderBy[coredata.DocumentVersionSignatureOrderField]{
 		Field:     coredata.DocumentVersionSignatureOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if input.OrderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.DocumentVersionSignatureOrderField]{
 			Field:     input.OrderBy.Field,
@@ -2320,6 +2413,7 @@ func (r *Resolver) GetDocumentVersionSignatureTool(ctx context.Context, req *mcp
 	if err != nil {
 		return nil, types.GetDocumentVersionSignatureOutput{}, err
 	}
+
 	prb := r.proboSvc
 
 	signature, err := prb.Documents.GetVersionSignature(ctx, scope, input.ID)
@@ -2337,6 +2431,7 @@ func (r *Resolver) RequestDocumentVersionSignatureTool(ctx context.Context, req 
 	if err != nil {
 		return nil, types.RequestDocumentVersionSignatureOutput{}, err
 	}
+
 	svc := r.proboSvc
 
 	documentVersionSignature, err := svc.Documents.RequestSignature(
@@ -2360,6 +2455,7 @@ func (r *Resolver) DeleteDocumentTool(ctx context.Context, req *mcp.CallToolRequ
 	if err != nil {
 		return nil, types.DeleteDocumentOutput{}, err
 	}
+
 	svc := r.proboSvc
 
 	err = svc.Documents.SoftDelete(ctx, scope, input.DocumentID)
@@ -2377,6 +2473,7 @@ func (r *Resolver) CancelSignatureRequestTool(ctx context.Context, req *mcp.Call
 	if err != nil {
 		return nil, types.CancelSignatureRequestOutput{}, err
 	}
+
 	svc := r.proboSvc
 
 	err = svc.Documents.CancelSignatureRequest(ctx, scope, input.DocumentVersionSignatureID)
@@ -2394,6 +2491,7 @@ func (r *Resolver) DeleteRiskTool(ctx context.Context, req *mcp.CallToolRequest,
 	if err != nil {
 		return nil, types.DeleteRiskOutput{}, err
 	}
+
 	svc := r.proboSvc
 
 	err = svc.Risks.Delete(ctx, scope, input.ID)
@@ -2411,6 +2509,7 @@ func (r *Resolver) DeleteMeasureTool(ctx context.Context, req *mcp.CallToolReque
 	if err != nil {
 		return nil, types.DeleteMeasureOutput{}, err
 	}
+
 	svc := r.proboSvc
 
 	err = svc.Measures.Delete(ctx, scope, input.ID)
@@ -2428,12 +2527,14 @@ func (r *Resolver) ListMeasureRisksTool(ctx context.Context, req *mcp.CallToolRe
 	if err != nil {
 		return nil, types.ListMeasureRisksOutput{}, err
 	}
+
 	prb := r.proboSvc
 
 	pageOrderBy := page.OrderBy[coredata.RiskOrderField]{
 		Field:     coredata.RiskOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if input.OrderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.RiskOrderField]{
 			Field:     input.OrderBy.Field,
@@ -2456,12 +2557,14 @@ func (r *Resolver) ListMeasureControlsTool(ctx context.Context, req *mcp.CallToo
 	if err != nil {
 		return nil, types.ListMeasureControlsOutput{}, err
 	}
+
 	prb := r.proboSvc
 
 	pageOrderBy := page.OrderBy[coredata.ControlOrderField]{
 		Field:     coredata.ControlOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if input.OrderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.ControlOrderField]{
 			Field:     input.OrderBy.Field,
@@ -2484,12 +2587,14 @@ func (r *Resolver) ListMeasureTasksTool(ctx context.Context, req *mcp.CallToolRe
 	if err != nil {
 		return nil, types.ListMeasureTasksOutput{}, err
 	}
+
 	prb := r.proboSvc
 
 	pageOrderBy := page.OrderBy[coredata.TaskOrderField]{
 		Field:     coredata.TaskOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if input.OrderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.TaskOrderField]{
 			Field:     input.OrderBy.Field,
@@ -2512,6 +2617,7 @@ func (r *Resolver) ListMeasureEvidencesTool(ctx context.Context, req *mcp.CallTo
 	if err != nil {
 		return nil, types.ListMeasureEvidencesOutput{}, err
 	}
+
 	prb := r.proboSvc
 
 	pageOrderBy := page.OrderBy[coredata.EvidenceOrderField]{
@@ -2610,6 +2716,7 @@ func (r *Resolver) ListUsersTool(ctx context.Context, req *mcp.CallToolRequest, 
 		Field:     coredata.MembershipProfileOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if input.OrderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.MembershipProfileOrderField]{
 			Field:     input.OrderBy.Field,
@@ -2822,6 +2929,7 @@ func (r *Resolver) DeleteDataProtectionImpactAssessmentTool(ctx context.Context,
 	if err != nil {
 		return nil, types.DeleteDataProtectionImpactAssessmentOutput{}, err
 	}
+
 	svc := r.proboSvc
 
 	err = svc.DataProtectionImpactAssessments.Delete(ctx, scope, input.ID)
@@ -2839,12 +2947,14 @@ func (r *Resolver) ListStatementsOfApplicabilityTool(ctx context.Context, req *m
 	if err != nil {
 		return nil, types.ListStatementsOfApplicabilityOutput{}, err
 	}
+
 	prb := r.proboSvc
 
 	pageOrderBy := page.OrderBy[coredata.StatementOfApplicabilityOrderField]{
 		Field:     coredata.StatementOfApplicabilityOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if input.OrderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.StatementOfApplicabilityOrderField]{
 			Field:     input.OrderBy.Field,
@@ -2867,6 +2977,7 @@ func (r *Resolver) GetStatementOfApplicabilityTool(ctx context.Context, req *mcp
 	if err != nil {
 		return nil, types.GetStatementOfApplicabilityOutput{}, err
 	}
+
 	prb := r.proboSvc
 
 	soa, err := prb.StatementsOfApplicability.Get(ctx, scope, input.ID)
@@ -2884,6 +2995,7 @@ func (r *Resolver) AddStatementOfApplicabilityTool(ctx context.Context, req *mcp
 	if err != nil {
 		return nil, types.AddStatementOfApplicabilityOutput{}, err
 	}
+
 	svc := r.proboSvc
 
 	soa, err := svc.StatementsOfApplicability.Create(ctx, scope, probo.CreateStatementOfApplicabilityRequest{
@@ -2904,6 +3016,7 @@ func (r *Resolver) UpdateStatementOfApplicabilityTool(ctx context.Context, req *
 	if err != nil {
 		return nil, types.UpdateStatementOfApplicabilityOutput{}, err
 	}
+
 	svc := r.proboSvc
 
 	soa, err := svc.StatementsOfApplicability.Update(ctx, scope, probo.UpdateStatementOfApplicabilityRequest{
@@ -2924,6 +3037,7 @@ func (r *Resolver) DeleteStatementOfApplicabilityTool(ctx context.Context, req *
 	if err != nil {
 		return nil, types.DeleteStatementOfApplicabilityOutput{}, err
 	}
+
 	svc := r.proboSvc
 
 	err = svc.StatementsOfApplicability.Delete(ctx, scope, input.ID)
@@ -2941,12 +3055,14 @@ func (r *Resolver) ListApplicabilityStatementsTool(ctx context.Context, req *mcp
 	if err != nil {
 		return nil, types.ListApplicabilityStatementsOutput{}, err
 	}
+
 	prb := r.proboSvc
 
 	pageOrderBy := page.OrderBy[coredata.ApplicabilityStatementOrderField]{
 		Field:     coredata.ApplicabilityStatementOrderFieldControlSectionTitle,
 		Direction: page.OrderDirectionAsc,
 	}
+
 	if input.OrderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.ApplicabilityStatementOrderField]{
 			Field:     input.OrderBy.Field,
@@ -2969,6 +3085,7 @@ func (r *Resolver) GetApplicabilityStatementTool(ctx context.Context, req *mcp.C
 	if err != nil {
 		return nil, types.GetApplicabilityStatementOutput{}, err
 	}
+
 	prb := r.proboSvc
 
 	stmt, err := prb.StatementsOfApplicability.GetApplicabilityStatement(ctx, scope, input.ID)
@@ -2986,6 +3103,7 @@ func (r *Resolver) AddApplicabilityStatementTool(ctx context.Context, req *mcp.C
 	if err != nil {
 		return nil, types.AddApplicabilityStatementOutput{}, err
 	}
+
 	svc := r.proboSvc
 
 	stmt, err := svc.StatementsOfApplicability.CreateApplicabilityStatement(
@@ -3009,6 +3127,7 @@ func (r *Resolver) UpdateApplicabilityStatementTool(ctx context.Context, req *mc
 	if err != nil {
 		return nil, types.UpdateApplicabilityStatementOutput{}, err
 	}
+
 	svc := r.proboSvc
 
 	stmt, err := svc.StatementsOfApplicability.UpdateApplicabilityStatement(
@@ -3031,6 +3150,7 @@ func (r *Resolver) DeleteApplicabilityStatementTool(ctx context.Context, req *mc
 	if err != nil {
 		return nil, types.DeleteApplicabilityStatementOutput{}, err
 	}
+
 	svc := r.proboSvc
 
 	err = svc.StatementsOfApplicability.DeleteApplicabilityStatement(ctx, scope, input.ID)
@@ -3050,12 +3170,14 @@ func (r *Resolver) ListThirdPartyRiskAssessmentsTool(ctx context.Context, req *m
 	if err != nil {
 		return nil, types.ListThirdPartyRiskAssessmentsOutput{}, err
 	}
+
 	prb := r.proboSvc
 
 	pageOrderBy := page.OrderBy[coredata.ThirdPartyRiskAssessmentOrderField]{
 		Field:     coredata.ThirdPartyRiskAssessmentOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if input.OrderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.ThirdPartyRiskAssessmentOrderField]{
 			Field:     input.OrderBy.Field,
@@ -3080,6 +3202,7 @@ func (r *Resolver) AddThirdPartyRiskAssessmentTool(ctx context.Context, req *mcp
 	if err != nil {
 		return nil, types.AddThirdPartyRiskAssessmentOutput{}, err
 	}
+
 	prb := r.proboSvc
 
 	assessment, err := prb.ThirdParties.CreateRiskAssessment(
@@ -3104,6 +3227,7 @@ func (r *Resolver) DeleteThirdPartyTool(ctx context.Context, req *mcp.CallToolRe
 	if err != nil {
 		return nil, types.DeleteThirdPartyOutput{}, err
 	}
+
 	svc := r.proboSvc
 
 	err = svc.ThirdParties.Delete(ctx, scope, input.ID)
@@ -3121,6 +3245,7 @@ func (r *Resolver) DeleteFindingTool(ctx context.Context, req *mcp.CallToolReque
 	if err != nil {
 		return nil, types.DeleteFindingOutput{}, err
 	}
+
 	svc := r.proboSvc
 
 	err = svc.Findings.Delete(ctx, scope, input.ID)
@@ -3138,6 +3263,7 @@ func (r *Resolver) LinkFindingAuditTool(ctx context.Context, req *mcp.CallToolRe
 	if err != nil {
 		return nil, types.LinkFindingAuditOutput{}, err
 	}
+
 	svc := r.proboSvc
 
 	finding, audit, err := svc.Findings.CreateAuditMapping(ctx, scope, input.FindingID, input.AuditID, input.ReferenceID)
@@ -3156,6 +3282,7 @@ func (r *Resolver) UnlinkFindingAuditTool(ctx context.Context, req *mcp.CallTool
 	if err != nil {
 		return nil, types.UnlinkFindingAuditOutput{}, err
 	}
+
 	svc := r.proboSvc
 
 	finding, audit, err := svc.Findings.DeleteAuditMapping(ctx, scope, input.FindingID, input.AuditID)
@@ -3174,12 +3301,14 @@ func (r *Resolver) ListFindingAuditsTool(ctx context.Context, req *mcp.CallToolR
 	if err != nil {
 		return nil, types.ListFindingAuditsOutput{}, err
 	}
+
 	prb := r.proboSvc
 
 	pageOrderBy := page.OrderBy[coredata.AuditOrderField]{
 		Field:     coredata.AuditOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if input.OrderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.AuditOrderField]{
 			Field:     input.OrderBy.Field,
@@ -3209,6 +3338,7 @@ func (r *Resolver) ListAccessReviewCampaignsTool(ctx context.Context, req *mcp.C
 		Field:     coredata.AccessReviewCampaignOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if input.OrderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.AccessReviewCampaignOrderField]{
 			Field:     input.OrderBy.Field,
@@ -3238,6 +3368,7 @@ func (r *Resolver) ListAccessEntriesTool(ctx context.Context, req *mcp.CallToolR
 		Field:     coredata.AccessEntryOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if input.OrderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.AccessEntryOrderField]{
 			Field:     input.OrderBy.Field,
@@ -3443,6 +3574,7 @@ func (r *Resolver) ListAccessSourcesTool(ctx context.Context, req *mcp.CallToolR
 		Field:     coredata.AccessSourceOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if input.OrderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.AccessSourceOrderField]{
 			Field:     input.OrderBy.Field,
@@ -3735,6 +3867,7 @@ func (r *Resolver) GetAuditReportUrlTool(ctx context.Context, req *mcp.CallToolR
 	if err != nil {
 		return nil, types.GetAuditReportUrlOutput{}, err
 	}
+
 	prb := r.proboSvc
 
 	url, err := prb.Audits.GenerateReportURL(ctx, scope, input.ID, 15*time.Minute)
@@ -3752,6 +3885,7 @@ func (r *Resolver) ArchiveDocumentTool(ctx context.Context, req *mcp.CallToolReq
 	if err != nil {
 		return nil, types.ArchiveDocumentOutput{}, err
 	}
+
 	svc := r.proboSvc
 
 	document, err := svc.Documents.Archive(ctx, scope, input.ID)
@@ -3769,6 +3903,7 @@ func (r *Resolver) UnarchiveDocumentTool(ctx context.Context, req *mcp.CallToolR
 	if err != nil {
 		return nil, types.UnarchiveDocumentOutput{}, err
 	}
+
 	svc := r.proboSvc
 
 	document, err := svc.Documents.Unarchive(ctx, scope, input.ID)
@@ -3786,6 +3921,7 @@ func (r *Resolver) GetOrganizationContextTool(ctx context.Context, req *mcp.Call
 	if err != nil {
 		return nil, types.GetOrganizationContextOutput{}, err
 	}
+
 	prb := r.proboSvc
 
 	orgContext, err := prb.Organizations.GetContext(ctx, scope, input.OrganizationID)
@@ -3803,6 +3939,7 @@ func (r *Resolver) UpdateOrganizationContextTool(ctx context.Context, req *mcp.C
 	if err != nil {
 		return nil, types.UpdateOrganizationContextOutput{}, err
 	}
+
 	prb := r.proboSvc
 
 	orgContext, err := prb.Organizations.UpdateContext(
@@ -3885,12 +4022,14 @@ func (r *Resolver) ListMeasureDocumentsTool(ctx context.Context, req *mcp.CallTo
 	if err != nil {
 		return nil, types.ListMeasureDocumentsOutput{}, err
 	}
+
 	prb := r.proboSvc
 
 	pageOrderBy := page.OrderBy[coredata.DocumentOrderField]{
 		Field:     coredata.DocumentOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if input.OrderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.DocumentOrderField]{
 			Field:     input.OrderBy.Field,
@@ -3913,6 +4052,7 @@ func (r *Resolver) VoidDocumentVersionApprovalTool(ctx context.Context, req *mcp
 	if err != nil {
 		return nil, types.VoidDocumentVersionApprovalOutput{}, err
 	}
+
 	svc := r.proboSvc
 
 	_, documentVersion, err := svc.DocumentApprovals.VoidApproval(ctx, scope, input.DocumentVersionID)
@@ -3930,6 +4070,7 @@ func (r *Resolver) SendSigningNotificationsTool(ctx context.Context, req *mcp.Ca
 	if err != nil {
 		return nil, types.SendSigningNotificationsOutput{}, err
 	}
+
 	svc := r.proboSvc
 
 	err = svc.Documents.SendSigningNotifications(ctx, scope, input.OrganizationID)
@@ -3947,6 +4088,7 @@ func (r *Resolver) DeleteDocumentDraftTool(ctx context.Context, req *mcp.CallToo
 	if err != nil {
 		return nil, types.DeleteDocumentDraftOutput{}, err
 	}
+
 	svc := r.proboSvc
 
 	document, err := svc.Documents.DeleteDraft(ctx, scope, input.ID)
@@ -3964,6 +4106,7 @@ func (r *Resolver) PublishStatementOfApplicabilityTool(ctx context.Context, req 
 	if err != nil {
 		return nil, types.PublishStatementOfApplicabilityOutput{}, err
 	}
+
 	svc := r.proboSvc
 
 	document, documentVersion, err := svc.GeneratedDocuments.PublishStatementOfApplicability(ctx, scope, input.ID, input.ApproverIds, input.Minor)
@@ -3982,12 +4125,14 @@ func (r *Resolver) ListWebhookSubscriptionsTool(ctx context.Context, req *mcp.Ca
 	if err != nil {
 		return nil, types.ListWebhookSubscriptionsOutput{}, err
 	}
+
 	prb := r.proboSvc
 
 	pageOrderBy := page.OrderBy[coredata.WebhookSubscriptionOrderField]{
 		Field:     coredata.WebhookSubscriptionOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if input.OrderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.WebhookSubscriptionOrderField]{
 			Field:     input.OrderBy.Field,
@@ -4010,6 +4155,7 @@ func (r *Resolver) GetWebhookSubscriptionTool(ctx context.Context, req *mcp.Call
 	if err != nil {
 		return nil, types.GetWebhookSubscriptionOutput{}, err
 	}
+
 	prb := r.proboSvc
 
 	subscription, err := prb.WebhookSubscriptions.Get(ctx, scope, input.ID)
@@ -4027,6 +4173,7 @@ func (r *Resolver) CreateWebhookSubscriptionTool(ctx context.Context, req *mcp.C
 	if err != nil {
 		return nil, types.CreateWebhookSubscriptionOutput{}, err
 	}
+
 	prb := r.proboSvc
 
 	subscription, err := prb.WebhookSubscriptions.Create(
@@ -4051,6 +4198,7 @@ func (r *Resolver) UpdateWebhookSubscriptionTool(ctx context.Context, req *mcp.C
 	if err != nil {
 		return nil, types.UpdateWebhookSubscriptionOutput{}, err
 	}
+
 	prb := r.proboSvc
 
 	subscription, err := prb.WebhookSubscriptions.Update(
@@ -4075,6 +4223,7 @@ func (r *Resolver) DeleteWebhookSubscriptionTool(ctx context.Context, req *mcp.C
 	if err != nil {
 		return nil, types.DeleteWebhookSubscriptionOutput{}, err
 	}
+
 	prb := r.proboSvc
 
 	err = prb.WebhookSubscriptions.Delete(ctx, scope, input.ID)
@@ -4092,12 +4241,14 @@ func (r *Resolver) ListWebhookEventsTool(ctx context.Context, req *mcp.CallToolR
 	if err != nil {
 		return nil, types.ListWebhookEventsOutput{}, err
 	}
+
 	prb := r.proboSvc
 
 	pageOrderBy := page.OrderBy[coredata.WebhookEventOrderField]{
 		Field:     coredata.WebhookEventOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if input.OrderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.WebhookEventOrderField]{
 			Field:     input.OrderBy.Field,
@@ -4120,12 +4271,14 @@ func (r *Resolver) ListDocumentVersionApprovalQuorumsTool(ctx context.Context, r
 	if err != nil {
 		return nil, types.ListDocumentVersionApprovalQuorumsOutput{}, err
 	}
+
 	svc := r.proboSvc
 
 	pageOrderBy := page.OrderBy[coredata.DocumentVersionApprovalQuorumOrderField]{
 		Field:     coredata.DocumentVersionApprovalQuorumOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if input.OrderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.DocumentVersionApprovalQuorumOrderField]{
 			Field:     input.OrderBy.Field,
@@ -4148,6 +4301,7 @@ func (r *Resolver) GetDocumentVersionApprovalQuorumTool(ctx context.Context, req
 	if err != nil {
 		return nil, types.GetDocumentVersionApprovalQuorumOutput{}, err
 	}
+
 	svc := r.proboSvc
 
 	quorum, err := svc.DocumentApprovals.GetQuorum(ctx, scope, input.ID)
@@ -4165,12 +4319,14 @@ func (r *Resolver) ListDocumentVersionApprovalDecisionsTool(ctx context.Context,
 	if err != nil {
 		return nil, types.ListDocumentVersionApprovalDecisionsOutput{}, err
 	}
+
 	svc := r.proboSvc
 
 	pageOrderBy := page.OrderBy[coredata.DocumentVersionApprovalDecisionOrderField]{
 		Field:     coredata.DocumentVersionApprovalDecisionOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if input.OrderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.DocumentVersionApprovalDecisionOrderField]{
 			Field:     input.OrderBy.Field,
@@ -4200,6 +4356,7 @@ func (r *Resolver) GetDocumentVersionApprovalDecisionTool(ctx context.Context, r
 	if err != nil {
 		return nil, types.GetDocumentVersionApprovalDecisionOutput{}, err
 	}
+
 	svc := r.proboSvc
 
 	decision, err := svc.DocumentApprovals.GetDecision(ctx, scope, input.ID)
@@ -4217,6 +4374,7 @@ func (r *Resolver) PublishDataListTool(ctx context.Context, req *mcp.CallToolReq
 	if err != nil {
 		return nil, types.PublishDataListOutput{}, err
 	}
+
 	svc := r.proboSvc
 
 	document, documentVersion, err := svc.GeneratedDocuments.PublishDataList(ctx, scope, input.OrganizationID, input.ApproverIds, input.Minor)
@@ -4235,6 +4393,7 @@ func (r *Resolver) PublishAssetListTool(ctx context.Context, req *mcp.CallToolRe
 	if err != nil {
 		return nil, types.PublishAssetListOutput{}, err
 	}
+
 	svc := r.proboSvc
 
 	document, documentVersion, err := svc.GeneratedDocuments.PublishAssetList(ctx, scope, input.OrganizationID, input.ApproverIds, input.Minor)
@@ -4255,12 +4414,14 @@ func (r *Resolver) ListThirdPartyContactsTool(ctx context.Context, req *mcp.Call
 	if err != nil {
 		return nil, types.ListThirdPartyContactsOutput{}, err
 	}
+
 	prb := r.proboSvc
 
 	pageOrderBy := page.OrderBy[coredata.ThirdPartyContactOrderField]{
 		Field:     coredata.ThirdPartyContactOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if input.OrderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.ThirdPartyContactOrderField]{
 			Field:     input.OrderBy.Field,
@@ -4285,6 +4446,7 @@ func (r *Resolver) AddThirdPartyContactTool(ctx context.Context, req *mcp.CallTo
 	if err != nil {
 		return nil, types.AddThirdPartyContactOutput{}, err
 	}
+
 	prb := r.proboSvc
 
 	emailAddr, err := mail.ParseAddr(input.Email)
@@ -4315,6 +4477,7 @@ func (r *Resolver) UpdateThirdPartyContactTool(ctx context.Context, req *mcp.Cal
 	if err != nil {
 		return nil, types.UpdateThirdPartyContactOutput{}, err
 	}
+
 	prb := r.proboSvc
 
 	updateReq := probo.UpdateThirdPartyContactRequest{
@@ -4360,6 +4523,7 @@ func (r *Resolver) DeleteThirdPartyContactTool(ctx context.Context, req *mcp.Cal
 	if err != nil {
 		return nil, types.DeleteThirdPartyContactOutput{}, err
 	}
+
 	prb := r.proboSvc
 
 	err = prb.ThirdPartyContacts.Delete(ctx, scope, input.ID)
@@ -4379,12 +4543,14 @@ func (r *Resolver) ListThirdPartyServicesTool(ctx context.Context, req *mcp.Call
 	if err != nil {
 		return nil, types.ListThirdPartyServicesOutput{}, err
 	}
+
 	prb := r.proboSvc
 
 	pageOrderBy := page.OrderBy[coredata.ThirdPartyServiceOrderField]{
 		Field:     coredata.ThirdPartyServiceOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if input.OrderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.ThirdPartyServiceOrderField]{
 			Field:     input.OrderBy.Field,
@@ -4409,6 +4575,7 @@ func (r *Resolver) AddThirdPartyServiceTool(ctx context.Context, req *mcp.CallTo
 	if err != nil {
 		return nil, types.AddThirdPartyServiceOutput{}, err
 	}
+
 	prb := r.proboSvc
 
 	thirdPartyService, err := prb.ThirdPartyServices.Create(ctx, scope, probo.CreateThirdPartyServiceRequest{
@@ -4432,6 +4599,7 @@ func (r *Resolver) UpdateThirdPartyServiceTool(ctx context.Context, req *mcp.Cal
 	if err != nil {
 		return nil, types.UpdateThirdPartyServiceOutput{}, err
 	}
+
 	prb := r.proboSvc
 
 	updateReq := probo.UpdateThirdPartyServiceRequest{
@@ -4463,6 +4631,7 @@ func (r *Resolver) DeleteThirdPartyServiceTool(ctx context.Context, req *mcp.Cal
 	if err != nil {
 		return nil, types.DeleteThirdPartyServiceOutput{}, err
 	}
+
 	prb := r.proboSvc
 
 	err = prb.ThirdPartyServices.Delete(ctx, scope, input.ID)
@@ -4479,6 +4648,7 @@ func (r *Resolver) DeleteAssetTool(ctx context.Context, req *mcp.CallToolRequest
 	if err != nil {
 		return nil, types.DeleteAssetOutput{}, err
 	}
+
 	svc := r.proboSvc
 
 	err = svc.Assets.Delete(ctx, scope, input.ID)
@@ -4495,6 +4665,7 @@ func (r *Resolver) DeleteDatumTool(ctx context.Context, req *mcp.CallToolRequest
 	if err != nil {
 		return nil, types.DeleteDatumOutput{}, err
 	}
+
 	svc := r.proboSvc
 
 	err = svc.Data.Delete(ctx, scope, input.ID)
@@ -4511,6 +4682,7 @@ func (r *Resolver) DeleteObligationTool(ctx context.Context, req *mcp.CallToolRe
 	if err != nil {
 		return nil, types.DeleteObligationOutput{}, err
 	}
+
 	svc := r.proboSvc
 
 	err = svc.Obligations.Delete(ctx, scope, input.ID)
@@ -4527,6 +4699,7 @@ func (r *Resolver) DeleteAuditTool(ctx context.Context, req *mcp.CallToolRequest
 	if err != nil {
 		return nil, types.DeleteAuditOutput{}, err
 	}
+
 	svc := r.proboSvc
 
 	err = svc.Audits.Delete(ctx, scope, input.ID)
@@ -4543,12 +4716,14 @@ func (r *Resolver) ListRightsRequestsTool(ctx context.Context, req *mcp.CallTool
 	if err != nil {
 		return nil, types.ListRightsRequestsOutput{}, err
 	}
+
 	prb := r.proboSvc
 
 	pageOrderBy := page.OrderBy[coredata.RightsRequestOrderField]{
 		Field:     coredata.RightsRequestOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if input.OrderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.RightsRequestOrderField]{
 			Field:     input.OrderBy.Field,
@@ -4570,6 +4745,7 @@ func (r *Resolver) GetRightsRequestTool(ctx context.Context, req *mcp.CallToolRe
 	if err != nil {
 		return nil, types.GetRightsRequestOutput{}, err
 	}
+
 	prb := r.proboSvc
 
 	rightsRequest, err := prb.RightsRequests.Get(ctx, scope, input.ID)
@@ -4586,6 +4762,7 @@ func (r *Resolver) AddRightsRequestTool(ctx context.Context, req *mcp.CallToolRe
 	if err != nil {
 		return nil, types.AddRightsRequestOutput{}, err
 	}
+
 	svc := r.proboSvc
 
 	rightsRequest, err := svc.RightsRequests.Create(
@@ -4614,6 +4791,7 @@ func (r *Resolver) UpdateRightsRequestTool(ctx context.Context, req *mcp.CallToo
 	if err != nil {
 		return nil, types.UpdateRightsRequestOutput{}, err
 	}
+
 	svc := r.proboSvc
 
 	var dataSubject **string
@@ -4647,6 +4825,7 @@ func (r *Resolver) DeleteRightsRequestTool(ctx context.Context, req *mcp.CallToo
 	if err != nil {
 		return nil, types.DeleteRightsRequestOutput{}, err
 	}
+
 	svc := r.proboSvc
 
 	err = svc.RightsRequests.Delete(ctx, scope, input.ID)
@@ -4666,6 +4845,7 @@ func (r *Resolver) GetTrustCenterTool(ctx context.Context, req *mcp.CallToolRequ
 	if err != nil {
 		return nil, types.GetTrustCenterOutput{}, err
 	}
+
 	prb := r.proboSvc
 
 	trustCenter, err := prb.TrustCenters.GetByOrganizationID(ctx, scope, input.OrganizationID)
@@ -4700,11 +4880,13 @@ func (r *Resolver) UpdateTrustCenterTool(ctx context.Context, req *mcp.CallToolR
 	if err != nil {
 		return nil, types.UpdateTrustCenterOutput{}, err
 	}
+
 	prb := r.proboSvc
 
 	updateReq := &probo.UpdateTrustCenterRequest{
 		ID: input.TrustCenterID,
 	}
+
 	if active := UnwrapOmittable(input.Active); active != nil {
 		updateReq.Active = *active
 	}
@@ -4728,12 +4910,14 @@ func (r *Resolver) ListTrustCenterReferencesTool(ctx context.Context, req *mcp.C
 	if err != nil {
 		return nil, types.ListTrustCenterReferencesOutput{}, err
 	}
+
 	prb := r.proboSvc
 
 	pageOrderBy := page.OrderBy[coredata.TrustCenterReferenceOrderField]{
 		Field:     coredata.TrustCenterReferenceOrderFieldRank,
 		Direction: page.OrderDirectionAsc,
 	}
+
 	if input.OrderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.TrustCenterReferenceOrderField]{
 			Field:     input.OrderBy.Field,
@@ -4758,6 +4942,7 @@ func (r *Resolver) AddTrustCenterReferenceTool(ctx context.Context, req *mcp.Cal
 	if err != nil {
 		return nil, types.AddTrustCenterReferenceOutput{}, err
 	}
+
 	prb := r.proboSvc
 
 	var websiteURL string
@@ -4788,12 +4973,14 @@ func (r *Resolver) UpdateTrustCenterReferenceTool(ctx context.Context, req *mcp.
 	if err != nil {
 		return nil, types.UpdateTrustCenterReferenceOutput{}, err
 	}
+
 	prb := r.proboSvc
 
 	updateRefReq := &probo.UpdateTrustCenterReferenceRequest{
 		ID:          input.ID,
 		Description: UnwrapOmittable(input.Description),
 	}
+
 	if name := UnwrapOmittable(input.Name); name != nil {
 		updateRefReq.Name = *name
 	}
@@ -4821,6 +5008,7 @@ func (r *Resolver) DeleteTrustCenterReferenceTool(ctx context.Context, req *mcp.
 	if err != nil {
 		return nil, types.DeleteTrustCenterReferenceOutput{}, err
 	}
+
 	prb := r.proboSvc
 
 	err = prb.TrustCenterReferences.Delete(ctx, scope, input.ID)
@@ -4838,12 +5026,14 @@ func (r *Resolver) ListTrustCenterFilesTool(ctx context.Context, req *mcp.CallTo
 	if err != nil {
 		return nil, types.ListTrustCenterFilesOutput{}, err
 	}
+
 	prb := r.proboSvc
 
 	pageOrderBy := page.OrderBy[coredata.TrustCenterFileOrderField]{
 		Field:     coredata.TrustCenterFileOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if input.OrderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.TrustCenterFileOrderField]{
 			Field:     input.OrderBy.Field,
@@ -4879,6 +5069,7 @@ func (r *Resolver) DeleteTrustCenterFileTool(ctx context.Context, req *mcp.CallT
 	if err != nil {
 		return nil, types.DeleteTrustCenterFileOutput{}, err
 	}
+
 	prb := r.proboSvc
 
 	err = prb.TrustCenterFiles.Delete(ctx, scope, input.ID)
@@ -4896,12 +5087,14 @@ func (r *Resolver) ListComplianceExternalURLsTool(ctx context.Context, req *mcp.
 	if err != nil {
 		return nil, types.ListComplianceExternalURLsOutput{}, err
 	}
+
 	prb := r.proboSvc
 
 	pageOrderBy := page.OrderBy[coredata.ComplianceExternalURLOrderField]{
 		Field:     coredata.ComplianceExternalURLOrderFieldRank,
 		Direction: page.OrderDirectionAsc,
 	}
+
 	if input.OrderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.ComplianceExternalURLOrderField]{
 			Field:     input.OrderBy.Field,
@@ -4926,6 +5119,7 @@ func (r *Resolver) AddComplianceExternalURLTool(ctx context.Context, req *mcp.Ca
 	if err != nil {
 		return nil, types.AddComplianceExternalURLOutput{}, err
 	}
+
 	prb := r.proboSvc
 
 	item, err := prb.ComplianceExternalURLs.Create(
@@ -4950,6 +5144,7 @@ func (r *Resolver) UpdateComplianceExternalURLTool(ctx context.Context, req *mcp
 	if err != nil {
 		return nil, types.UpdateComplianceExternalURLOutput{}, err
 	}
+
 	prb := r.proboSvc
 
 	updateURLReq := &probo.UpdateComplianceExternalURLRequest{
@@ -4983,6 +5178,7 @@ func (r *Resolver) DeleteComplianceExternalURLTool(ctx context.Context, req *mcp
 	if err != nil {
 		return nil, types.DeleteComplianceExternalURLOutput{}, err
 	}
+
 	prb := r.proboSvc
 
 	err = prb.ComplianceExternalURLs.Delete(
@@ -5005,6 +5201,7 @@ func (r *Resolver) CreateCustomDomainTool(ctx context.Context, req *mcp.CallTool
 	if err != nil {
 		return nil, types.CreateCustomDomainOutput{}, err
 	}
+
 	prb := r.proboSvc
 
 	domain, err := prb.CustomDomains.CreateCustomDomain(
@@ -5028,6 +5225,7 @@ func (r *Resolver) DeleteCustomDomainTool(ctx context.Context, req *mcp.CallTool
 	if err != nil {
 		return nil, types.DeleteCustomDomainOutput{}, err
 	}
+
 	prb := r.proboSvc
 
 	domain, err := prb.CustomDomains.GetOrganizationCustomDomain(ctx, scope, input.OrganizationID)
@@ -5053,6 +5251,7 @@ func (r *Resolver) AssessThirdPartyTool(ctx context.Context, req *mcp.CallToolRe
 	if err != nil {
 		return nil, types.AssessThirdPartyOutput{}, err
 	}
+
 	svc := r.proboSvc
 
 	result, err := svc.ThirdParties.Assess(
@@ -5075,6 +5274,7 @@ func (r *Resolver) PublishFindingListTool(ctx context.Context, req *mcp.CallTool
 	if err != nil {
 		return nil, types.PublishFindingListOutput{}, err
 	}
+
 	svc := r.proboSvc
 
 	document, documentVersion, err := svc.GeneratedDocuments.PublishFindingList(ctx, scope, input.OrganizationID, input.ApproverIds, input.Minor)
@@ -5093,6 +5293,7 @@ func (r *Resolver) PublishObligationListTool(ctx context.Context, req *mcp.CallT
 	if err != nil {
 		return nil, types.PublishObligationListOutput{}, err
 	}
+
 	svc := r.proboSvc
 
 	document, documentVersion, err := svc.GeneratedDocuments.PublishObligationList(ctx, scope, input.OrganizationID, input.ApproverIds, input.Minor)
@@ -5111,6 +5312,7 @@ func (r *Resolver) PublishProcessingActivityListTool(ctx context.Context, req *m
 	if err != nil {
 		return nil, types.PublishProcessingActivityListOutput{}, err
 	}
+
 	svc := r.proboSvc
 
 	document, documentVersion, err := svc.GeneratedDocuments.PublishProcessingActivityList(ctx, scope, input.OrganizationID, input.ApproverIds, input.Minor)
@@ -5129,6 +5331,7 @@ func (r *Resolver) PublishDataProtectionImpactAssessmentListTool(ctx context.Con
 	if err != nil {
 		return nil, types.PublishDataProtectionImpactAssessmentListOutput{}, err
 	}
+
 	svc := r.proboSvc
 
 	document, documentVersion, err := svc.GeneratedDocuments.PublishDataProtectionImpactAssessmentList(ctx, scope, input.OrganizationID, input.ApproverIds, input.Minor)
@@ -5147,6 +5350,7 @@ func (r *Resolver) PublishTransferImpactAssessmentListTool(ctx context.Context, 
 	if err != nil {
 		return nil, types.PublishTransferImpactAssessmentListOutput{}, err
 	}
+
 	svc := r.proboSvc
 
 	document, documentVersion, err := svc.GeneratedDocuments.PublishTransferImpactAssessmentList(ctx, scope, input.OrganizationID, input.ApproverIds, input.Minor)
@@ -5165,6 +5369,7 @@ func (r *Resolver) PublishThirdPartyListTool(ctx context.Context, req *mcp.CallT
 	if err != nil {
 		return nil, types.PublishThirdPartyListOutput{}, err
 	}
+
 	svc := r.proboSvc
 
 	document, documentVersion, err := svc.GeneratedDocuments.PublishThirdPartyList(ctx, scope, input.OrganizationID, input.ApproverIds, input.Minor)
@@ -5182,6 +5387,7 @@ func (r *Resolver) ListCookieBannersTool(ctx context.Context, req *mcp.CallToolR
 	if _, err := r.Authorize(ctx, input.OrganizationID, probo.ActionCookieBannerList); err != nil {
 		return nil, types.ListCookieBannersOutput{}, err
 	}
+
 	scope := coredata.NewScopeFromObjectID(input.OrganizationID)
 	cursor := types.NewCursor(input.Size, input.Cursor, page.OrderBy[coredata.CookieBannerOrderField]{Field: coredata.CookieBannerOrderFieldCreatedAt, Direction: page.OrderDirectionDesc})
 
@@ -5199,6 +5405,7 @@ func (r *Resolver) GetCookieBannerTool(ctx context.Context, req *mcp.CallToolReq
 	if _, err := r.Authorize(ctx, input.ID, probo.ActionCookieBannerGet); err != nil {
 		return nil, types.GetCookieBannerOutput{}, err
 	}
+
 	scope := coredata.NewScopeFromObjectID(input.ID)
 
 	banner, err := r.cookieBanner.GetCookieBanner(ctx, scope, input.ID)
@@ -5213,6 +5420,7 @@ func (r *Resolver) AddCookieBannerTool(ctx context.Context, req *mcp.CallToolReq
 	if _, err := r.Authorize(ctx, input.OrganizationID, probo.ActionCookieBannerCreate); err != nil {
 		return nil, types.AddCookieBannerOutput{}, err
 	}
+
 	scope := coredata.NewScopeFromObjectID(input.OrganizationID)
 
 	banner, err := r.cookieBanner.CreateCookieBanner(ctx, scope, cookiebanner.CreateCookieBannerRequest{
@@ -5234,6 +5442,7 @@ func (r *Resolver) UpdateCookieBannerTool(ctx context.Context, req *mcp.CallTool
 	if _, err := r.Authorize(ctx, input.ID, probo.ActionCookieBannerUpdate); err != nil {
 		return nil, types.UpdateCookieBannerOutput{}, err
 	}
+
 	scope := coredata.NewScopeFromObjectID(input.ID)
 
 	updateReq := cookiebanner.UpdateCookieBannerRequest{CookieBannerID: input.ID}
@@ -5270,6 +5479,7 @@ func (r *Resolver) DeleteCookieBannerTool(ctx context.Context, req *mcp.CallTool
 	if err != nil {
 		return nil, types.DeleteCookieBannerOutput{}, err
 	}
+
 	if err := r.cookieBanner.DeleteCookieBanner(ctx, scope, input.ID); err != nil {
 		return nil, types.DeleteCookieBannerOutput{}, fmt.Errorf("cannot delete cookie banner: %w", err)
 	}
@@ -5281,6 +5491,7 @@ func (r *Resolver) ActivateCookieBannerTool(ctx context.Context, req *mcp.CallTo
 	if _, err := r.Authorize(ctx, input.ID, probo.ActionCookieBannerActivate); err != nil {
 		return nil, types.ActivateCookieBannerOutput{}, err
 	}
+
 	scope := coredata.NewScopeFromObjectID(input.ID)
 
 	banner, err := r.cookieBanner.ActivateCookieBanner(ctx, scope, input.ID)
@@ -5295,6 +5506,7 @@ func (r *Resolver) DeactivateCookieBannerTool(ctx context.Context, req *mcp.Call
 	if _, err := r.Authorize(ctx, input.ID, probo.ActionCookieBannerDeactivate); err != nil {
 		return nil, types.DeactivateCookieBannerOutput{}, err
 	}
+
 	scope := coredata.NewScopeFromObjectID(input.ID)
 
 	banner, err := r.cookieBanner.DeactivateCookieBanner(ctx, scope, input.ID)
@@ -5309,6 +5521,7 @@ func (r *Resolver) ListCookieCategoriesTool(ctx context.Context, req *mcp.CallTo
 	if _, err := r.Authorize(ctx, input.CookieBannerID, probo.ActionCookieCategoryList); err != nil {
 		return nil, types.ListCookieCategoriesOutput{}, err
 	}
+
 	scope := coredata.NewScopeFromObjectID(input.CookieBannerID)
 	cursor := types.NewCursor(input.Size, input.Cursor, page.OrderBy[coredata.CookieCategoryOrderField]{Field: coredata.CookieCategoryOrderFieldRank, Direction: page.OrderDirectionAsc})
 
@@ -5326,6 +5539,7 @@ func (r *Resolver) GetCookieCategoryTool(ctx context.Context, req *mcp.CallToolR
 	if _, err := r.Authorize(ctx, input.ID, probo.ActionCookieCategoryGet); err != nil {
 		return nil, types.GetCookieCategoryOutput{}, err
 	}
+
 	scope := coredata.NewScopeFromObjectID(input.ID)
 
 	category, err := r.cookieBanner.GetCookieCategory(ctx, scope, input.ID)
@@ -5340,6 +5554,7 @@ func (r *Resolver) AddCookieCategoryTool(ctx context.Context, req *mcp.CallToolR
 	if _, err := r.Authorize(ctx, input.CookieBannerID, probo.ActionCookieCategoryCreate); err != nil {
 		return nil, types.AddCookieCategoryOutput{}, err
 	}
+
 	scope := coredata.NewScopeFromObjectID(input.CookieBannerID)
 
 	category, err := r.cookieBanner.CreateCookieCategory(ctx, scope, cookiebanner.CreateCookieCategoryRequest{
@@ -5360,6 +5575,7 @@ func (r *Resolver) UpdateCookieCategoryTool(ctx context.Context, req *mcp.CallTo
 	if _, err := r.Authorize(ctx, input.ID, probo.ActionCookieCategoryUpdate); err != nil {
 		return nil, types.UpdateCookieCategoryOutput{}, err
 	}
+
 	scope := coredata.NewScopeFromObjectID(input.ID)
 
 	updateReq := cookiebanner.UpdateCookieCategoryRequest{CookieCategoryID: input.ID}
@@ -5388,6 +5604,7 @@ func (r *Resolver) DeleteCookieCategoryTool(ctx context.Context, req *mcp.CallTo
 	if err != nil {
 		return nil, types.DeleteCookieCategoryOutput{}, err
 	}
+
 	if err := r.cookieBanner.DeleteCookieCategory(ctx, scope, input.ID); err != nil {
 		return nil, types.DeleteCookieCategoryOutput{}, fmt.Errorf("cannot delete cookie category: %w", err)
 	}
@@ -5399,6 +5616,7 @@ func (r *Resolver) ReorderCookieCategoryTool(ctx context.Context, req *mcp.CallT
 	if _, err := r.Authorize(ctx, input.ID, probo.ActionCookieCategoryUpdate); err != nil {
 		return nil, types.ReorderCookieCategoryOutput{}, err
 	}
+
 	scope := coredata.NewScopeFromObjectID(input.ID)
 
 	_, err := r.cookieBanner.ReorderCookieCategory(ctx, scope, cookiebanner.ReorderCookieCategoryRequest{
@@ -5421,6 +5639,7 @@ func (r *Resolver) ListTrackerPatternsTool(ctx context.Context, req *mcp.CallToo
 	if _, err := r.Authorize(ctx, input.CookieCategoryID, probo.ActionTrackerPatternList); err != nil {
 		return nil, types.ListTrackerPatternsOutput{}, err
 	}
+
 	scope := coredata.NewScopeFromObjectID(input.CookieCategoryID)
 	cursor := types.NewCursor(input.Size, input.Cursor, page.OrderBy[coredata.TrackerPatternOrderField]{Field: coredata.TrackerPatternOrderFieldCreatedAt, Direction: page.OrderDirectionAsc})
 
@@ -5438,6 +5657,7 @@ func (r *Resolver) GetTrackerPatternTool(ctx context.Context, req *mcp.CallToolR
 	if _, err := r.Authorize(ctx, input.ID, probo.ActionTrackerPatternGet); err != nil {
 		return nil, types.GetTrackerPatternOutput{}, err
 	}
+
 	scope := coredata.NewScopeFromObjectID(input.ID)
 
 	pattern, err := r.cookieBanner.GetTrackerPattern(ctx, scope, input.ID)
@@ -5452,6 +5672,7 @@ func (r *Resolver) AddTrackerPatternTool(ctx context.Context, req *mcp.CallToolR
 	if _, err := r.Authorize(ctx, input.CookieCategoryID, probo.ActionTrackerPatternCreate); err != nil {
 		return nil, types.AddTrackerPatternOutput{}, err
 	}
+
 	scope := coredata.NewScopeFromObjectID(input.CookieCategoryID)
 
 	pattern, err := r.cookieBanner.CreateTrackerPattern(ctx, scope, cookiebanner.CreateTrackerPatternRequest{
@@ -5474,6 +5695,7 @@ func (r *Resolver) UpdateTrackerPatternTool(ctx context.Context, req *mcp.CallTo
 	if _, err := r.Authorize(ctx, input.ID, probo.ActionTrackerPatternUpdate); err != nil {
 		return nil, types.UpdateTrackerPatternOutput{}, err
 	}
+
 	scope := coredata.NewScopeFromObjectID(input.ID)
 
 	updateReq := cookiebanner.UpdateTrackerPatternRequest{TrackerPatternID: input.ID}
@@ -5503,6 +5725,7 @@ func (r *Resolver) DeleteTrackerPatternTool(ctx context.Context, req *mcp.CallTo
 	if err != nil {
 		return nil, types.DeleteTrackerPatternOutput{}, err
 	}
+
 	if err := r.cookieBanner.DeleteTrackerPattern(ctx, scope, input.ID); err != nil {
 		return nil, types.DeleteTrackerPatternOutput{}, fmt.Errorf("cannot delete tracker pattern: %w", err)
 	}
@@ -5514,6 +5737,7 @@ func (r *Resolver) MoveTrackerPatternToCategoryTool(ctx context.Context, req *mc
 	if _, err := r.Authorize(ctx, input.TrackerPatternID, probo.ActionTrackerPatternUpdate); err != nil {
 		return nil, types.MoveTrackerPatternToCategoryOutput{}, err
 	}
+
 	scope := coredata.NewScopeFromObjectID(input.TrackerPatternID)
 
 	result, err := r.cookieBanner.MoveTrackerPatternToCategory(ctx, scope, cookiebanner.MoveTrackerPatternToCategoryRequest{
@@ -5531,6 +5755,7 @@ func (r *Resolver) PublishCookieBannerVersionTool(ctx context.Context, req *mcp.
 	if _, err := r.Authorize(ctx, input.CookieBannerID, probo.ActionCookieBannerVersionPublish); err != nil {
 		return nil, types.PublishCookieBannerVersionOutput{}, err
 	}
+
 	scope := coredata.NewScopeFromObjectID(input.CookieBannerID)
 
 	version, err := r.cookieBanner.PublishCookieBannerVersion(ctx, scope, input.CookieBannerID)
@@ -5545,6 +5770,7 @@ func (r *Resolver) ListCookieBannerVersionsTool(ctx context.Context, req *mcp.Ca
 	if _, err := r.Authorize(ctx, input.CookieBannerID, probo.ActionCookieBannerVersionList); err != nil {
 		return nil, types.ListCookieBannerVersionsOutput{}, err
 	}
+
 	scope := coredata.NewScopeFromObjectID(input.CookieBannerID)
 	cursor := types.NewCursor(input.Size, input.Cursor, page.OrderBy[coredata.CookieBannerVersionOrderField]{Field: coredata.CookieBannerVersionOrderFieldCreatedAt, Direction: page.OrderDirectionDesc})
 
@@ -5562,6 +5788,7 @@ func (r *Resolver) UpsertCookieBannerTranslationTool(ctx context.Context, req *m
 	if _, err := r.Authorize(ctx, input.CookieBannerID, probo.ActionCookieBannerUpdate); err != nil {
 		return nil, types.UpsertCookieBannerTranslationOutput{}, err
 	}
+
 	scope := coredata.NewScopeFromObjectID(input.CookieBannerID)
 
 	translation, err := r.cookieBanner.UpsertCookieBannerTranslation(ctx, scope, cookiebanner.UpsertCookieBannerTranslationRequest{
@@ -5580,6 +5807,7 @@ func (r *Resolver) ListCookieConsentRecordsTool(ctx context.Context, req *mcp.Ca
 	if _, err := r.Authorize(ctx, input.CookieBannerID, probo.ActionCookieConsentRecordList); err != nil {
 		return nil, types.ListCookieConsentRecordsOutput{}, err
 	}
+
 	scope := coredata.NewScopeFromObjectID(input.CookieBannerID)
 	cursor := types.NewCursor(input.Size, input.Cursor, page.OrderBy[coredata.CookieConsentRecordOrderField]{Field: coredata.CookieConsentRecordOrderFieldCreatedAt, Direction: page.OrderDirectionDesc})
 
@@ -5606,6 +5834,7 @@ func (r *Resolver) GetCookieConsentRecordTool(ctx context.Context, req *mcp.Call
 	if _, err := r.Authorize(ctx, input.ID, probo.ActionCookieConsentRecordList); err != nil {
 		return nil, types.GetCookieConsentRecordOutput{}, err
 	}
+
 	scope := coredata.NewScopeFromObjectID(input.ID)
 
 	record, err := r.cookieBanner.GetCookieConsentRecord(ctx, scope, input.ID)
@@ -5621,6 +5850,7 @@ func (r *Resolver) PublishRiskListTool(ctx context.Context, req *mcp.CallToolReq
 	if err != nil {
 		return nil, types.PublishRiskListOutput{}, err
 	}
+
 	svc := r.proboSvc
 
 	document, documentVersion, err := svc.GeneratedDocuments.PublishRiskList(ctx, scope, input.OrganizationID, input.ApproverIds, input.Minor)
@@ -5746,6 +5976,7 @@ func (r *Resolver) ListSCIMEventsTool(ctx context.Context, req *mcp.CallToolRequ
 		Field:     coredata.SCIMEventOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if input.OrderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.SCIMEventOrderField]{
 			Field:     input.OrderBy.Field,
@@ -5773,6 +6004,7 @@ func (r *Resolver) PublishDocumentTool(ctx context.Context, req *mcp.CallToolReq
 	if err != nil {
 		return nil, types.PublishDocumentOutput{}, err
 	}
+
 	svc := r.proboSvc
 
 	result, err := svc.Documents.PublishVersion(ctx, scope, probo.PublishDocumentRequest{
@@ -5789,6 +6021,7 @@ func (r *Resolver) PublishDocumentTool(ctx context.Context, req *mcp.CallToolReq
 		Document:        types.NewDocument(result.Document),
 		DocumentVersion: types.NewDocumentVersion(result.Version),
 	}
+
 	if result.Quorum != nil {
 		output.ApprovalQuorum = types.NewDocumentVersionApprovalQuorum(result.Quorum)
 	}
@@ -5800,6 +6033,7 @@ func (r *Resolver) ListTrackerResourcesTool(ctx context.Context, req *mcp.CallTo
 	if _, err := r.Authorize(ctx, input.CookieCategoryID, probo.ActionTrackerResourceList); err != nil {
 		return nil, types.ListTrackerResourcesOutput{}, err
 	}
+
 	scope := coredata.NewScopeFromObjectID(input.CookieCategoryID)
 	cursor := types.NewCursor(input.Size, input.Cursor, page.OrderBy[coredata.TrackerResourceOrderField]{Field: coredata.TrackerResourceOrderFieldCreatedAt, Direction: page.OrderDirectionAsc})
 
@@ -5817,6 +6051,7 @@ func (r *Resolver) GetTrackerResourceTool(ctx context.Context, req *mcp.CallTool
 	if _, err := r.Authorize(ctx, input.ID, probo.ActionTrackerResourceGet); err != nil {
 		return nil, types.GetTrackerResourceOutput{}, err
 	}
+
 	scope := coredata.NewScopeFromObjectID(input.ID)
 
 	resource, err := r.cookieBanner.GetTrackerResource(ctx, scope, input.ID)
@@ -5831,6 +6066,7 @@ func (r *Resolver) AddTrackerResourceTool(ctx context.Context, req *mcp.CallTool
 	if _, err := r.Authorize(ctx, input.CookieCategoryID, probo.ActionTrackerResourceCreate); err != nil {
 		return nil, types.AddTrackerResourceOutput{}, err
 	}
+
 	scope := coredata.NewScopeFromObjectID(input.CookieCategoryID)
 
 	description := ""
@@ -5857,6 +6093,7 @@ func (r *Resolver) UpdateTrackerResourceTool(ctx context.Context, req *mcp.CallT
 	if _, err := r.Authorize(ctx, input.ID, probo.ActionTrackerResourceUpdate); err != nil {
 		return nil, types.UpdateTrackerResourceOutput{}, err
 	}
+
 	scope := coredata.NewScopeFromObjectID(input.ID)
 
 	updateReq := cookiebanner.UpdateTrackerResourceRequest{TrackerResourceID: input.ID}
@@ -5885,6 +6122,7 @@ func (r *Resolver) DeleteTrackerResourceTool(ctx context.Context, req *mcp.CallT
 	if err != nil {
 		return nil, types.DeleteTrackerResourceOutput{}, err
 	}
+
 	if err := r.cookieBanner.DeleteTrackerResource(ctx, scope, input.ID); err != nil {
 		return nil, types.DeleteTrackerResourceOutput{}, fmt.Errorf("cannot delete tracker resource: %w", err)
 	}
@@ -5896,6 +6134,7 @@ func (r *Resolver) MoveTrackerResourceToCategoryTool(ctx context.Context, req *m
 	if _, err := r.Authorize(ctx, input.TrackerResourceID, probo.ActionTrackerResourceUpdate); err != nil {
 		return nil, types.MoveTrackerResourceToCategoryOutput{}, err
 	}
+
 	scope := coredata.NewScopeFromObjectID(input.TrackerResourceID)
 
 	result, err := r.cookieBanner.MoveTrackerResourceToCategory(ctx, scope, cookiebanner.MoveTrackerResourceToCategoryRequest{

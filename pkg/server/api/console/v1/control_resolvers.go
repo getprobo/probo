@@ -113,6 +113,7 @@ func (r *controlResolver) Organization(ctx context.Context, obj *types.Control) 
 // Regulatory is the resolver for the regulatory field.
 func (r *controlResolver) Regulatory(ctx context.Context, obj *types.Control) (bool, error) {
 	scope := coredata.NewScopeFromObjectID(obj.ID)
+
 	hasRegulatory, err := r.probo.Controls.HasRegulatoryObligation(ctx, scope, obj.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot check regulatory obligation", log.Error(err))
@@ -125,6 +126,7 @@ func (r *controlResolver) Regulatory(ctx context.Context, obj *types.Control) (b
 // Contractual is the resolver for the contractual field.
 func (r *controlResolver) Contractual(ctx context.Context, obj *types.Control) (bool, error) {
 	scope := coredata.NewScopeFromObjectID(obj.ID)
+
 	hasContractual, err := r.probo.Controls.HasContractualObligation(ctx, scope, obj.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot check contractual obligation", log.Error(err))
@@ -137,6 +139,7 @@ func (r *controlResolver) Contractual(ctx context.Context, obj *types.Control) (
 // RiskAssessment is the resolver for the riskAssessment field.
 func (r *controlResolver) RiskAssessment(ctx context.Context, obj *types.Control) (bool, error) {
 	scope := coredata.NewScopeFromObjectID(obj.ID)
+
 	hasRisk, err := r.probo.Controls.HasRiskAssessment(ctx, scope, obj.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot check risk assessment", log.Error(err))
@@ -179,6 +182,7 @@ func (r *controlResolver) Measures(ctx context.Context, obj *types.Control, firs
 		Field:     coredata.MeasureOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if orderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.MeasureOrderField]{
 			Field:     orderBy.Field,
@@ -213,6 +217,7 @@ func (r *controlResolver) Documents(ctx context.Context, obj *types.Control, fir
 		Field:     coredata.DocumentOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if orderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.DocumentOrderField]{
 			Field:     orderBy.Field,
@@ -250,6 +255,7 @@ func (r *controlResolver) Audits(ctx context.Context, obj *types.Control, first 
 		Field:     coredata.AuditOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if orderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.AuditOrderField]{
 			Field:     orderBy.Field,
@@ -279,6 +285,7 @@ func (r *controlResolver) Obligations(ctx context.Context, obj *types.Control, f
 		Field:     coredata.ObligationOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if orderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.ObligationOrderField]{
 			Field:     orderBy.Field,
@@ -842,6 +849,7 @@ func (r *statementOfApplicabilityResolver) ApplicabilityStatements(ctx context.C
 		Field:     coredata.ApplicabilityStatementOrderFieldCreatedAt,
 		Direction: page.OrderDirectionAsc,
 	}
+
 	if orderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.ApplicabilityStatementOrderField]{
 			Field:     coredata.ApplicabilityStatementOrderField(orderBy.Field),

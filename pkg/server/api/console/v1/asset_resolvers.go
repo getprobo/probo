@@ -56,6 +56,7 @@ func (r *assetResolver) ThirdParties(ctx context.Context, obj *types.Asset, firs
 		Field:     coredata.ThirdPartyOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if orderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.ThirdPartyOrderField]{
 			Field:     orderBy.Field,
@@ -160,6 +161,7 @@ func (r *datumResolver) ThirdParties(ctx context.Context, obj *types.Datum, firs
 		Field:     coredata.ThirdPartyOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if orderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.ThirdPartyOrderField]{
 			Field:     orderBy.Field,

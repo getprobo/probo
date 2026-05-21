@@ -734,6 +734,7 @@ func (r *trustCenterResolver) NdaFileURL(ctx context.Context, obj *types.TrustCe
 	}
 
 	scope := coredata.NewScopeFromObjectID(obj.ID)
+
 	fileURL, err := r.probo.TrustCenters.GenerateNDAFileURL(ctx, scope, obj.ID, 15*time.Minute)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot generate NDA file URL", log.Error(err))
@@ -781,6 +782,7 @@ func (r *trustCenterResolver) Accesses(ctx context.Context, obj *types.TrustCent
 		Field:     coredata.TrustCenterAccessOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if orderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.TrustCenterAccessOrderField]{
 			Field:     orderBy.Field,
@@ -810,6 +812,7 @@ func (r *trustCenterResolver) References(ctx context.Context, obj *types.TrustCe
 		Field:     coredata.TrustCenterReferenceOrderFieldRank,
 		Direction: page.OrderDirectionAsc,
 	}
+
 	if orderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.TrustCenterReferenceOrderField]{
 			Field:     orderBy.Field,
@@ -839,6 +842,7 @@ func (r *trustCenterResolver) ComplianceFrameworks(ctx context.Context, obj *typ
 		Field:     coredata.ComplianceFrameworkOrderFieldRank,
 		Direction: page.OrderDirectionAsc,
 	}
+
 	if orderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.ComplianceFrameworkOrderField]{
 			Field:     orderBy.Field,
@@ -868,6 +872,7 @@ func (r *trustCenterResolver) ExternalUrls(ctx context.Context, obj *types.Trust
 		Field:     coredata.ComplianceExternalURLOrderFieldRank,
 		Direction: page.OrderDirectionAsc,
 	}
+
 	if orderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.ComplianceExternalURLOrderField]{
 			Field:     orderBy.Field,
@@ -1002,6 +1007,7 @@ func (r *trustCenterAccessResolver) AvailableDocumentAccesses(ctx context.Contex
 		Field:     coredata.TrustCenterDocumentAccessOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if orderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.TrustCenterDocumentAccessOrderField]{
 			Field:     orderBy.Field,

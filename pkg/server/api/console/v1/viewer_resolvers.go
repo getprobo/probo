@@ -31,6 +31,7 @@ func (r *viewerResolver) SignableDocuments(ctx context.Context, obj *types.Viewe
 		Field:     coredata.DocumentOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if orderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.DocumentOrderField]{
 			Field:     orderBy.Field,
@@ -110,6 +111,7 @@ func (r *viewerResolver) ApprovableDocuments(ctx context.Context, obj *types.Vie
 		Field:     coredata.DocumentOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if orderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.DocumentOrderField]{
 			Field:     orderBy.Field,

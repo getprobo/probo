@@ -320,6 +320,7 @@ func (r *riskResolver) Measures(ctx context.Context, obj *types.Risk, first *int
 		Field:     coredata.MeasureOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if orderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.MeasureOrderField]{
 			Field:     orderBy.Field,
@@ -354,6 +355,7 @@ func (r *riskResolver) Documents(ctx context.Context, obj *types.Risk, first *in
 		Field:     coredata.DocumentOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if orderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.DocumentOrderField]{
 			Field:     orderBy.Field,
@@ -391,6 +393,7 @@ func (r *riskResolver) Controls(ctx context.Context, obj *types.Risk, first *int
 		Field:     coredata.ControlOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if orderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.ControlOrderField]{
 			Field:     orderBy.Field,
@@ -425,6 +428,7 @@ func (r *riskResolver) Obligations(ctx context.Context, obj *types.Risk, first *
 		Field:     coredata.ObligationOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if orderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.ObligationOrderField]{
 			Field:     orderBy.Field,
@@ -454,6 +458,7 @@ func (r *riskResolver) Scenarios(ctx context.Context, obj *types.Risk, first *in
 		Field:     coredata.RiskAssessmentScenarioOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if orderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.RiskAssessmentScenarioOrderField]{Field: orderBy.Field, Direction: orderBy.Direction}
 	}

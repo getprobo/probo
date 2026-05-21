@@ -31,6 +31,7 @@ func (r *measureResolver) Evidences(ctx context.Context, obj *types.Measure, fir
 		Field:     coredata.EvidenceOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if orderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.EvidenceOrderField]{
 			Field:     orderBy.Field,
@@ -60,6 +61,7 @@ func (r *measureResolver) Tasks(ctx context.Context, obj *types.Measure, first *
 		Field:     coredata.TaskOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if orderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.TaskOrderField]{
 			Field:     orderBy.Field,
@@ -89,6 +91,7 @@ func (r *measureResolver) Risks(ctx context.Context, obj *types.Measure, first *
 		Field:     coredata.RiskOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if orderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.RiskOrderField]{
 			Field:     orderBy.Field,
@@ -123,6 +126,7 @@ func (r *measureResolver) Controls(ctx context.Context, obj *types.Measure, firs
 		Field:     coredata.ControlOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if orderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.ControlOrderField]{
 			Field:     orderBy.Field,
@@ -157,6 +161,7 @@ func (r *measureResolver) Documents(ctx context.Context, obj *types.Measure, fir
 		Field:     coredata.DocumentOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if orderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.DocumentOrderField]{
 			Field:     orderBy.Field,

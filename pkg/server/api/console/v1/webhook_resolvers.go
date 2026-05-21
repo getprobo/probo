@@ -164,6 +164,7 @@ func (r *webhookSubscriptionResolver) Events(ctx context.Context, obj *types.Web
 		Field:     coredata.WebhookEventOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if orderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.WebhookEventOrderField]{
 			Field:     orderBy.Field,

@@ -101,6 +101,7 @@ func (r *mutationResolver) CreateClientCredentialsConnector(ctx context.Context,
 		ClientSecret: input.ClientSecret,
 		TokenURL:     input.TokenURL,
 	}
+
 	if input.Scope != nil {
 		oauth2Conn.Scope = *input.Scope
 	}
