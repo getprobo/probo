@@ -65,10 +65,11 @@ func (r *cookieBannerResolver) Categories(ctx context.Context, obj *types.Cookie
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 	scope := coredata.NewScopeFromObjectID(obj.ID)
 
-	var cdFilter *coredata.CookieCategoryFilter
-	if filter != nil && filter.ExcludeKind != nil {
-		cdFilter = coredata.NewCookieCategoryFilter(filter.ExcludeKind)
+	var excludeKind *coredata.CookieCategoryKind
+	if filter != nil {
+		excludeKind = filter.ExcludeKind
 	}
+	cdFilter := coredata.NewCookieCategoryFilter(excludeKind)
 
 	categories, err := r.cookieBanner.ListCategoriesForBanner(ctx, scope, obj.ID, cursor, cdFilter)
 	if err != nil {
