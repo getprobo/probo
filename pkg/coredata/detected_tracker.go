@@ -23,6 +23,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/page"
 )
 
 type (
@@ -44,6 +45,21 @@ type (
 
 	DetectedTrackers []*DetectedTracker
 )
+
+func (dt *DetectedTracker) CursorKey(field DetectedTrackerOrderField) page.CursorKey {
+	switch field {
+	case DetectedTrackerOrderFieldInitiatorURL:
+		if dt.InitiatorURL == nil {
+			return page.NewCursorKey(dt.ID, "")
+		}
+
+		return page.NewCursorKey(dt.ID, *dt.InitiatorURL)
+	case DetectedTrackerOrderFieldLastDetectedAt:
+		return page.NewCursorKey(dt.ID, dt.LastDetectedAt)
+	}
+
+	panic(fmt.Sprintf("unsupported order by: %s", field))
+}
 
 func (dt *DetectedTracker) Upsert(
 	ctx context.Context,
@@ -181,6 +197,59 @@ LIMIT @limit;
 	}
 
 	return domains, nil
+}
+
+func (dts *DetectedTrackers) LoadByTrackerPatternID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	trackerPatternID gid.GID,
+	cursor *page.Cursor[DetectedTrackerOrderField],
+) error {
+	q := `
+SELECT
+	id,
+	cookie_banner_id,
+	tracker_pattern_id,
+	tracker_type,
+	identifier,
+	max_age_seconds,
+	source,
+	value_size,
+	initiator_url,
+	initiator_domain,
+	last_detected_at,
+	created_at,
+	updated_at
+FROM
+	detected_trackers
+WHERE
+	%s
+	AND tracker_pattern_id = @tracker_pattern_id
+	AND %s
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"tracker_pattern_id": trackerPatternID,
+	}
+	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, cursor.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query detected trackers: %w", err)
+	}
+
+	trackers, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[DetectedTracker])
+	if err != nil {
+		return fmt.Errorf("cannot collect detected trackers: %w", err)
+	}
+
+	*dts = trackers
+
+	return nil
 }
 
 func (dts *DetectedTrackers) RelinkByTrackerPatternID(

@@ -275,6 +275,14 @@ type TrackerPattern implements Node {
     createdAt: Datetime!
     updatedAt: Datetime!
 
+    detectedTrackers(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: DetectedTrackerOrder
+    ): DetectedTrackerConnection @goField(forceResolver: true)
+
     permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
@@ -308,6 +316,52 @@ input TrackerPatternFilter
     source: CookieSource
     trackerType: TrackerType
     cookieCategoryId: ID
+}
+
+type DetectedTracker implements Node {
+    id: ID!
+    identifier: String!
+    initiatorUrl: String
+    maxAgeSeconds: Int
+    source: CookieSource
+    lastDetectedAt: Datetime!
+    createdAt: Datetime!
+}
+
+enum DetectedTrackerOrderField
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.DetectedTrackerOrderField"
+    ) {
+    INITIATOR_URL
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DetectedTrackerOrderFieldInitiatorURL"
+        )
+    LAST_DETECTED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DetectedTrackerOrderFieldLastDetectedAt"
+        )
+}
+
+input DetectedTrackerOrder
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.DetectedTrackerOrderBy"
+    ) {
+    direction: OrderDirection!
+    field: DetectedTrackerOrderField!
+}
+
+type DetectedTrackerConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.DetectedTrackerConnection"
+    ) {
+    totalCount: Int! @goField(forceResolver: true)
+    edges: [DetectedTrackerEdge!]!
+    pageInfo: PageInfo!
+}
+
+type DetectedTrackerEdge {
+    cursor: CursorKey!
+    node: DetectedTracker!
 }
 
 enum TrackerResourceType

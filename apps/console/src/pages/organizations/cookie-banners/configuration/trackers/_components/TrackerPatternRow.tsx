@@ -300,9 +300,9 @@ export function TrackerPatternRow({ patternKey, connectionId }: TrackerPatternRo
   const srcBadge = pattern.source ? sourceBadge(pattern.source, __) : null;
 
   return (
-    <Tr className={pattern.excluded ? "bg-txt-quaternary opacity-80  line-through" : undefined}>
+    <Tr to={pattern.id} className={pattern.excluded ? "bg-txt-quaternary opacity-80  line-through" : undefined}>
       <Td>
-        <div className="flex flex-col min-w-0">
+        <div className="flex flex-col min-w-0 max-w-xs">
           <span className={pattern.excluded ? undefined : "font-medium"}>{pattern.displayName}</span>
           {pattern.description && (
             <span className="text-xs text-txt-tertiary wrap-break-word line-clamp-1">

@@ -2714,6 +2714,31 @@ func (s *Service) CountDetectedTrackersByPatternID(
 	return count, nil
 }
 
+func (s *Service) ListDetectedTrackersForPattern(
+	ctx context.Context,
+	scope coredata.Scoper,
+	trackerPatternID gid.GID,
+	cursor *page.Cursor[coredata.DetectedTrackerOrderField],
+) (coredata.DetectedTrackers, error) {
+	var trackers coredata.DetectedTrackers
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := trackers.LoadByTrackerPatternID(ctx, conn, scope, trackerPatternID, cursor); err != nil {
+				return fmt.Errorf("cannot list detected trackers for pattern: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return trackers, nil
+}
+
 func (s *Service) CreateTrackerResource(
 	ctx context.Context,
 	scope coredata.Scoper,

@@ -434,6 +434,19 @@ func (r *cookieCategoryConnectionResolver) TotalCount(ctx context.Context, obj *
 	return count, nil
 }
 
+// TotalCount is the resolver for the totalCount field.
+func (r *detectedTrackerConnectionResolver) TotalCount(ctx context.Context, obj *types.DetectedTrackerConnection) (int, error) {
+	scope := coredata.NewScopeFromObjectID(obj.ParentID)
+
+	count, err := r.cookieBanner.CountDetectedTrackersByPatternID(ctx, scope, obj.ParentID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot count detected trackers", log.Error(err))
+		return 0, gqlutils.Internal(ctx)
+	}
+
+	return count, nil
+}
+
 // CreateCookieBanner is the resolver for the createCookieBanner field.
 func (r *mutationResolver) CreateCookieBanner(ctx context.Context, input types.CreateCookieBannerInput) (*types.CreateCookieBannerPayload, error) {
 	if err := r.authorize(ctx, input.OrganizationID, probo.ActionCookieBannerCreate); err != nil {
@@ -1278,6 +1291,37 @@ func (r *trackerPatternResolver) DetectedCount(ctx context.Context, obj *types.T
 	return count, nil
 }
 
+// DetectedTrackers is the resolver for the detectedTrackers field.
+func (r *trackerPatternResolver) DetectedTrackers(ctx context.Context, obj *types.TrackerPattern, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DetectedTrackerOrderBy) (*types.DetectedTrackerConnection, error) {
+	if err := r.authorize(ctx, obj.ID, probo.ActionTrackerPatternGet); err != nil {
+		return nil, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.DetectedTrackerOrderField]{
+		Field:     coredata.DetectedTrackerOrderFieldLastDetectedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.DetectedTrackerOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+	scope := coredata.NewScopeFromObjectID(obj.ID)
+
+	trackers, err := r.cookieBanner.ListDetectedTrackersForPattern(ctx, scope, obj.ID, cursor)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list detected trackers", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	p := page.NewPage(trackers, cursor)
+
+	return types.NewDetectedTrackerConnection(p, r, obj.ID), nil
+}
+
 // Permission is the resolver for the permission field.
 func (r *trackerPatternResolver) Permission(ctx context.Context, obj *types.TrackerPattern, action string) (bool, error) {
 	return r.Resolver.Permission(ctx, obj, action)
@@ -1390,6 +1434,11 @@ func (r *Resolver) CookieCategoryConnection() schema.CookieCategoryConnectionRes
 	return &cookieCategoryConnectionResolver{r}
 }
 
+// DetectedTrackerConnection returns schema.DetectedTrackerConnectionResolver implementation.
+func (r *Resolver) DetectedTrackerConnection() schema.DetectedTrackerConnectionResolver {
+	return &detectedTrackerConnectionResolver{r}
+}
+
 // TrackerPattern returns schema.TrackerPatternResolver implementation.
 func (r *Resolver) TrackerPattern() schema.TrackerPatternResolver { return &trackerPatternResolver{r} }
 
@@ -1413,6 +1462,7 @@ type cookieBannerConnectionResolver struct{ *Resolver }
 type cookieBannerVersionResolver struct{ *Resolver }
 type cookieCategoryResolver struct{ *Resolver }
 type cookieCategoryConnectionResolver struct{ *Resolver }
+type detectedTrackerConnectionResolver struct{ *Resolver }
 type trackerPatternResolver struct{ *Resolver }
 type trackerPatternConnectionResolver struct{ *Resolver }
 type trackerResourceResolver struct{ *Resolver }

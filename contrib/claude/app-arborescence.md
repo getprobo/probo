@@ -264,6 +264,51 @@ pages/organizations/third-parties/ThirdPartiesPage.tsx
 pages/organizations/third-parties/ThirdPartiesPageSkeleton.tsx
 ```
 
+## Page sections
+
+When a detail page has visually distinct sections (e.g. a properties card and a paginated list), extract each section into its own component in `_components/`. Each section owns a colocated Relay fragment (or pagination fragment) so that field additions never modify the parent page's query.
+
+The page query spreads the section fragments and passes the fragment key to each section component:
+
+```tsx
+// TrackerPatternDetailPage.tsx (page — spreads section fragments)
+export const trackerPatternDetailPageQuery = graphql`
+  query TrackerPatternDetailPageQuery($trackerPatternId: ID!) {
+    node(id: $trackerPatternId) {
+      ... on TrackerPattern {
+        id
+        displayName
+        ...TrackerPatternPropertiesSection_trackerPattern
+        ...TrackerPatternDetectedTrackersSection_trackerPattern
+      }
+    }
+  }
+`;
+
+// In JSX:
+<TrackerPatternPropertiesSection trackerPatternKey={pattern} />
+<TrackerPatternDetectedTrackersSection trackerPatternKey={pattern} />
+```
+
+```tsx
+// _components/TrackerPatternPropertiesSection.tsx — owns its fragment
+const fragment = graphql`
+  fragment TrackerPatternPropertiesSection_trackerPattern on TrackerPattern {
+    pattern
+    matchType
+    trackerType
+    // ...
+  }
+`;
+
+export function TrackerPatternPropertiesSection({ trackerPatternKey }: Props) {
+  const pattern = useFragment(fragment, trackerPatternKey);
+  return <Card padded>{/* PropertyRows */}</Card>;
+}
+```
+
+Section components follow the same naming and fragment conventions as connection item components (see below), but represent a **logical section** of a page rather than a single list item.
+
 ## `_components` folder
 
 Sub-components that are used **only** by a single page live in a `_components/` folder next to that page. The underscore prefix visually distinguishes them from route-segment folders.

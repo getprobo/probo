@@ -39,3 +39,6 @@ interface EditCookieRowProps {
 
 Callback props (`onSave`, `onCancel`) and configuration props (`isUpdating`,
 `variant`) are fine — only **domain data** must come from fragments.
+
+For connection items (table rows, list entries rendered in `.map()`), see the
+companion rule `relay-connection-item-components.mdc`.

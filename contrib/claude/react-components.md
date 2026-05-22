@@ -400,3 +400,68 @@ export function MoveToCategoryMenu({ queryRef, onMove }: Props) {
 See also the "Interaction-triggered queries" section in [`contrib/claude/relay.md`](relay.md).
 
 (Snippet names and GraphQL types are illustrative; align with real schema and fragment names in the app.)
+
+## Page sections are components
+
+When a detail page has multiple distinct sections (e.g. a properties card and a paginated list), extract each section into its own component in `_components/`. Each section owns a colocated Relay fragment so that field additions never modify the parent page's query.
+
+The page spreads the section fragments on the shared node and passes the fragment key:
+
+```tsx
+// Page query — spreads section fragments
+export const detailPageQuery = graphql`
+  query DetailPageQuery($nodeId: ID!) {
+    node(id: $nodeId) {
+      ... on MyType {
+        id
+        displayName
+        ...MyTypePropertiesSection_myType
+        ...MyTypeListSection_myType
+      }
+    }
+  }
+`;
+
+// Page JSX:
+<MyTypePropertiesSection myTypeKey={node} />
+<MyTypeListSection myTypeKey={node} />
+```
+
+```tsx
+// _components/MyTypePropertiesSection.tsx
+const fragment = graphql`
+  fragment MyTypePropertiesSection_myType on MyType {
+    field1
+    field2
+  }
+`;
+
+interface MyTypePropertiesSectionProps {
+  myTypeKey: MyTypePropertiesSection_myType$key;
+}
+
+export function MyTypePropertiesSection({ myTypeKey }: MyTypePropertiesSectionProps) {
+  const data = useFragment(fragment, myTypeKey);
+  return <Card padded>{/* PropertyRows */}</Card>;
+}
+```
+
+For sections that own a paginated connection, use `usePaginationFragment` with a `@refetchable` fragment — the same pattern as a standalone page, but scoped to a section component.
+
+## Connection items are components
+
+When rendering items from a Relay connection (e.g. table rows via `edges.map(…)`), each item **must** be a dedicated component with its own colocated fragment — never inline the rendering of node fields directly in the parent's `.map()` body.
+
+Place the item component in `_components/` adjacent to the page. Name it after the GraphQL type it renders (e.g. `DetectedTrackerRow.tsx`, `ThirdPartyCard.tsx`). The component receives a single fragment key prop (e.g. `detectedTrackerKey: DetectedTrackerRow_detectedTracker$key`) and calls `useFragment` internally.
+
+```tsx
+// Parent (page) — spreads the child fragment in the connection:
+edges { node { id ...DetectedTrackerRow_detectedTracker } }
+
+// Parent JSX:
+{trackers.map(tracker => (
+  <DetectedTrackerRow key={tracker.id} detectedTrackerKey={tracker} />
+))}
+```
+
+This ensures field additions/removals in the row never modify the parent's fragment, and keeps the item independently testable.

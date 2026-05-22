@@ -81,4 +81,9 @@ export const cookieBannerRoutes = [
     Fallback: PageSkeleton,
     Component: lazy(() => import("#/pages/organizations/cookie-banners/configuration/consent-records/CookieBannerConsentRecordPageLoader")),
   },
+  {
+    path: "cookie-banners/:cookieBannerId/trackers/:trackerPatternId",
+    Fallback: PageSkeleton,
+    Component: lazy(() => import("#/pages/organizations/cookie-banners/configuration/trackers/TrackerPatternDetailPageLoader")),
+  },
 ] satisfies AppRoute[];

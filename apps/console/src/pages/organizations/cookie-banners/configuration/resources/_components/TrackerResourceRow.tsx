@@ -307,7 +307,7 @@ export function TrackerResourceRow({ resourceKey, connectionId }: TrackerResourc
         </div>
       </Td>
       <Td>
-        <span className="font-mono text-sm">{resource.path}</span>
+        <span className="font-mono text-xs break-all max-w-xs inline-block">{resource.path}</span>
       </Td>
       <Td>
         {resource.lastDetectedAt
