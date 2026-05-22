@@ -100,7 +100,8 @@ export class StorageDetector implements Detector {
     const self = this;
 
     caches.open = function (name: string): Promise<Cache> {
-      self.onCacheStorageOpen(name, "script");
+      const { fromExtension } = getInitiatorURL(self.apiOrigin);
+      self.onCacheStorageOpen(name, fromExtension ? "extension" : "script");
       return originalOpen(name);
     };
   }
@@ -112,24 +113,26 @@ export class StorageDetector implements Detector {
   ): void {
     if (key.startsWith(OWN_KEY_PREFIX)) return;
 
-    const initiatorUrl = getInitiatorURL(this.apiOrigin);
+    const { url: initiatorUrl, fromExtension } = getInitiatorURL(this.apiOrigin);
 
     const entry: DetectedStorageEntry = {
       key,
       storage_type: storageType,
       value_size: value.length * 2,
-      source: "script",
+      source: fromExtension ? "extension" : "script",
     };
     if (initiatorUrl) entry.initiator_url = initiatorUrl;
     this.queue.reportStorage(entry);
   }
 
   private onIndexedDBOpen(name: string): void {
+    const { fromExtension } = getInitiatorURL(this.apiOrigin);
+
     this.queue.reportStorage({
       key: name,
       storage_type: "indexed_db",
       value_size: null,
-      source: "script",
+      source: fromExtension ? "extension" : "script",
     });
   }
 

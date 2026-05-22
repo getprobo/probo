@@ -83,12 +83,12 @@ export class CookieDetector implements Detector {
     if (!name || this.knownNames.has(name)) return;
 
     const maxAgeSeconds = parseMaxAgeSeconds(raw);
-    const initiatorUrl = getInitiatorURL(this.apiOrigin);
+    const { url: initiatorUrl, fromExtension } = getInitiatorURL(this.apiOrigin);
 
     const entry: DetectedCookieEntry = {
       name,
       max_age_seconds: maxAgeSeconds,
-      source: "script",
+      source: fromExtension ? "extension" : "script",
     };
     if (initiatorUrl) entry.initiator_url = initiatorUrl;
     this.queue.reportCookie(entry);

@@ -633,11 +633,34 @@ func globMatch(pattern, name string) bool {
 	return true
 }
 
+// bestSource rolls up the source values of a group of exact patterns
+// being merged into a single glob. Precedence is SCRIPT > EXTENSION
+// > PRE_EXISTING, mirroring both the upsert SQL's "page-script wins"
+// rule and the asymmetric signal strength of each bucket: SCRIPT is
+// high-confidence page evidence (a real page tracker), EXTENSION is
+// high-confidence extension evidence, and PRE_EXISTING is the
+// catch-all that may include extension state injected before SDK
+// load. HTTP and nil collapse into PRE_EXISTING here, preserving
+// the original two-value rollup behaviour for non-script values.
 func bestSource(patterns []*coredata.TrackerPattern) *coredata.CookieSource {
+	var hasExtension bool
+
 	for _, p := range patterns {
-		if p.Source != nil && *p.Source == coredata.CookieSourceScript {
-			return p.Source
+		if p.Source == nil {
+			continue
 		}
+
+		switch *p.Source {
+		case coredata.CookieSourceScript:
+			return p.Source
+		case coredata.CookieSourceExtension:
+			hasExtension = true
+		}
+	}
+
+	if hasExtension {
+		src := coredata.CookieSourceExtension
+		return &src
 	}
 
 	src := coredata.CookieSourcePreExisting

@@ -439,6 +439,8 @@ func (h *Handler) handleReportDetectedTrackers(w http.ResponseWriter, r *http.Re
 			source = coredata.CookieSourcePreExisting
 		case "http":
 			source = coredata.CookieSourceHTTP
+		case "extension":
+			source = coredata.CookieSourceExtension
 		default:
 			source = coredata.CookieSourceScript
 		}
@@ -480,6 +482,8 @@ func (h *Handler) handleReportDetectedTrackers(w http.ResponseWriter, r *http.Re
 		switch strings.TrimSpace(s.Source) {
 		case "pre-existing":
 			source = coredata.CookieSourcePreExisting
+		case "extension":
+			source = coredata.CookieSourceExtension
 		default:
 			source = coredata.CookieSourceScript
 		}
