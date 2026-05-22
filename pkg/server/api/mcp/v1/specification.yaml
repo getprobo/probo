@@ -6322,6 +6322,9 @@ components:
             active_contract:
               type: boolean
               description: Signatory contract status
+            state:
+              $ref: "#/components/schemas/ProfileState"
+              description: Signatory profile state
 
     ListDocumentVersionSignaturesOutput:
       type: object

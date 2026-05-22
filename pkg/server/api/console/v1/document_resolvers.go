@@ -279,6 +279,7 @@ func (r *documentVersionResolver) Signatures(ctx context.Context, obj *types.Doc
 	var (
 		signatureStates []coredata.DocumentVersionSignatureState
 		activeContract  *bool
+		profileState    *coredata.ProfileState
 	)
 
 	if filter != nil {
@@ -289,9 +290,13 @@ func (r *documentVersionResolver) Signatures(ctx context.Context, obj *types.Doc
 		if filter.ActiveContract != nil {
 			activeContract = filter.ActiveContract
 		}
+
+		if filter.State != nil {
+			profileState = filter.State
+		}
 	}
 
-	signatureFilter := coredata.NewDocumentVersionSignatureFilter(signatureStates, activeContract)
+	signatureFilter := coredata.NewDocumentVersionSignatureFilter(signatureStates, activeContract, profileState)
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 

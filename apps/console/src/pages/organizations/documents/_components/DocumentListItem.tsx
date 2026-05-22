@@ -54,10 +54,10 @@ const fragment = graphql`
               }
             }
           }
-          signatures(first: 0 filter: { activeContract: true }) {
+          signatures(first: 0 filter: { activeContract: true, state: ACTIVE }) {
             totalCount
           }
-          signedSignatures: signatures(first: 0 filter: { states: [SIGNED], activeContract: true }) {
+          signedSignatures: signatures(first: 0 filter: { states: [SIGNED], activeContract: true, state: ACTIVE }) {
             totalCount
           }
         }
