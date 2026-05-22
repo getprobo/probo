@@ -1291,12 +1291,16 @@ func (r *organizationResolver) ThirdParties(ctx context.Context, obj *types.Orga
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	var firstLevel *bool
+	var (
+		firstLevel *bool
+		query      *string
+	)
 	if filter != nil {
 		firstLevel = filter.FirstLevel
+		query = filter.Query
 	}
 
-	thirdPartyFilter := coredata.NewThirdPartyFilter(nil, firstLevel)
+	thirdPartyFilter := coredata.NewThirdPartyFilter(nil, firstLevel, query)
 
 	page, err := r.probo.ThirdParties.ListForOrganizationID(ctx, scope, obj.ID, cursor, thirdPartyFilter)
 	if err != nil {
@@ -1304,7 +1308,7 @@ func (r *organizationResolver) ThirdParties(ctx context.Context, obj *types.Orga
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return types.NewThirdPartyConnection(page, r, obj.ID), nil
+	return types.NewThirdPartyConnection(page, r, obj.ID, thirdPartyFilter), nil
 }
 
 // ThirdPartiesDocument is the resolver for the thirdPartiesDocument field.

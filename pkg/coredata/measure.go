@@ -720,3 +720,115 @@ WHERE %s
 
 	return err
 }
+
+func (m *Measures) CountByThirdPartyID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	thirdPartyID gid.GID,
+	filter *MeasureFilter,
+) (int, error) {
+	q := `
+WITH mtgtns AS (
+		SELECT
+			m.id,
+			m.tenant_id,
+			m.search_vector,
+			m.state,
+			m.category
+		FROM
+			measures m
+		INNER JOIN
+			measures_third_parties mtp ON m.id = mtp.measure_id
+		WHERE
+			mtp.third_party_id = @third_party_id
+	)
+	SELECT
+		COUNT(id)
+	FROM
+		mtgtns
+	WHERE %s
+		AND %s
+	`
+	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
+
+	args := pgx.NamedArgs{"third_party_id": thirdPartyID}
+	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
+
+	row := conn.QueryRow(ctx, q, args)
+
+	var count int
+	if err := row.Scan(&count); err != nil {
+		return 0, fmt.Errorf("cannot scan count: %w", err)
+	}
+
+	return count, nil
+}
+
+func (m *Measures) LoadByThirdPartyID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	thirdPartyID gid.GID,
+	cursor *page.Cursor[MeasureOrderField],
+	filter *MeasureFilter,
+) error {
+	q := `
+WITH mtgtns AS (
+	SELECT
+		m.id,
+		m.tenant_id,
+		m.organization_id,
+		m.category,
+		m.name,
+		m.description,
+		m.state,
+		m.reference_id,
+		m.search_vector,
+		m.created_at,
+		m.updated_at
+	FROM
+		measures m
+	INNER JOIN
+		measures_third_parties mtp ON m.id = mtp.measure_id
+	WHERE
+		mtp.third_party_id = @third_party_id
+)
+SELECT
+	id,
+	organization_id,
+	category,
+	name,
+	description,
+	state,
+	reference_id,
+	created_at,
+	updated_at
+FROM
+	mtgtns
+WHERE %s
+	AND %s
+	AND %s
+`
+	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
+
+	args := pgx.NamedArgs{"third_party_id": thirdPartyID}
+	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
+	maps.Copy(args, cursor.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query measures: %w", err)
+	}
+
+	measures, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Measure])
+	if err != nil {
+		return fmt.Errorf("cannot collect measures: %w", err)
+	}
+
+	*m = measures
+
+	return nil
+}

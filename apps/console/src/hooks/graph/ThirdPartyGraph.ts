@@ -202,6 +202,9 @@ export const thirdPartyNodeQuery = graphql`
         canUploadDPA: permission(
           action: "core:thirdParty-data-privacy-agreement:upload"
         )
+        measuresInfos: measures(first: 0) {
+          totalCount
+        }
         ...useThirdPartyFormFragment
         ...ThirdPartyComplianceTabFragment
         ...ThirdPartyContactsTabFragment
@@ -209,6 +212,7 @@ export const thirdPartyNodeQuery = graphql`
         ...ThirdPartyRiskAssessmentTabFragment
         ...ThirdPartyOverviewTabBusinessAssociateAgreementFragment
         ...ThirdPartyOverviewTabDataPrivacyAgreementFragment
+        ...ThirdPartyMeasuresPageFragment
       }
     }
     viewer {
@@ -221,7 +225,11 @@ export const thirdPartiesSelectQuery = graphql`
   query ThirdPartyGraphSelectQuery($organizationId: ID!) {
     organization: node(id: $organizationId) {
       ... on Organization {
-        thirdParties(first: 100, orderBy: { direction: ASC, field: NAME }) {
+        thirdParties(
+          first: 100
+          orderBy: { direction: ASC, field: NAME }
+          filter: { firstLevel: true }
+        ) {
           edges {
             node {
               id

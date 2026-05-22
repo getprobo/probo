@@ -22,18 +22,17 @@ import {
   ActionDropdown,
   Breadcrumb,
   Button,
-  Drawer,
   DropdownItem,
   IconCheckmark1,
   IconFrame2,
   IconPageCheck,
   IconPageTextLine,
   IconPencil,
+  IconStore,
   IconTrashCan,
   IconWarning,
   Option,
   PageHeader,
-  PropertyRow,
   Select,
   TabBadge,
   TabLink,
@@ -65,11 +64,13 @@ import { controlsFragment } from "./tabs/MeasureControlsTab";
 import { documentsFragment } from "./tabs/MeasureDocumentsTab";
 import { evidencesFragment } from "./tabs/MeasureEvidencesTab";
 import { risksFragment } from "./tabs/MeasureRisksTab";
+import { thirdPartiesFragment } from "./third-parties/MeasureThirdPartiesPage";
 
 void controlsFragment;
 void documentsFragment;
 void evidencesFragment;
 void risksFragment;
+void thirdPartiesFragment;
 
 export const measureNodeQuery = graphql`
   query MeasureDetailPageNodeQuery($measureId: ID!) {
@@ -94,11 +95,15 @@ export const measureNodeQuery = graphql`
         documentsInfos: documents(first: 0) {
           totalCount
         }
+        thirdPartiesInfos: thirdParties(first: 0) {
+          totalCount
+        }
         ...MeasureRisksTabFragment
         ...MeasureControlsTabFragment
         ...MeasureDocumentsTabFragment
         ...MeasureFormDialogMeasureFragment
         ...MeasureEvidencesTabFragment
+        ...MeasureThirdPartiesPageFragment
       }
     }
   }
@@ -149,6 +154,7 @@ export default function MeasureDetailPage(props: Props) {
   const controlsCount = measure.controlsInfos?.totalCount ?? 0;
   const risksCount = measure.risksInfos?.totalCount ?? 0;
   const documentsCount = measure.documentsInfos?.totalCount ?? 0;
+  const thirdPartiesCount = measure.thirdPartiesInfos?.totalCount ?? 0;
 
   const onDelete = () => {
     const connectionId = ConnectionHandler.getConnectionID(
@@ -215,6 +221,7 @@ export default function MeasureDetailPage(props: Props) {
       />
 
       <PageHeader title={measure.name} description={measure.description}>
+        {!measure.canUpdate && <MeasureBadge state={measure.state!} />}
         {measure.canUpdate && (
           <>
             <MeasureFormDialog measure={measure}>
@@ -291,15 +298,16 @@ export default function MeasureDetailPage(props: Props) {
           {__("Documents")}
           <TabBadge>{documentsCount}</TabBadge>
         </TabLink>
+        <TabLink
+          to={`/organizations/${organizationId}/measures/${measureId}/third-parties`}
+        >
+          <IconStore size={20} />
+          {__("Third parties")}
+          <TabBadge>{thirdPartiesCount}</TabBadge>
+        </TabLink>
       </Tabs>
 
       <Outlet context={{ measure }} />
-
-      <Drawer>
-        <PropertyRow label={__("State")}>
-          <MeasureBadge state={measure.state!} />
-        </PropertyRow>
-      </Drawer>
     </div>
   );
 }

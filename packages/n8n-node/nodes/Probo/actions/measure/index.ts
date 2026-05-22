@@ -19,7 +19,9 @@ import * as deleteOp from './delete.operation';
 import * as getOp from './get.operation';
 import * as getAllOp from './getAll.operation';
 import * as linkDocumentOp from './linkDocument.operation';
+import * as linkThirdPartyOp from './linkThirdParty.operation';
 import * as unlinkDocumentOp from './unlinkDocument.operation';
+import * as unlinkThirdPartyOp from './unlinkThirdParty.operation';
 
 export const description: INodeProperties[] = [
 	{
@@ -64,10 +66,22 @@ export const description: INodeProperties[] = [
 				action: 'Link a document to a measure',
 			},
 			{
+				name: 'Link Third Party',
+				value: 'linkThirdParty',
+				description: 'Link a third party to a measure',
+				action: 'Link a third party to a measure',
+			},
+			{
 				name: 'Unlink Document',
 				value: 'unlinkDocument',
 				description: 'Unlink a document from a measure',
 				action: 'Unlink a document from a measure',
+			},
+			{
+				name: 'Unlink Third Party',
+				value: 'unlinkThirdParty',
+				description: 'Unlink a third party from a measure',
+				action: 'Unlink a third party from a measure',
 			},
 			{
 				name: 'Update',
@@ -85,6 +99,8 @@ export const description: INodeProperties[] = [
 	...getAllOp.description,
 	...linkDocumentOp.description,
 	...unlinkDocumentOp.description,
+	...linkThirdPartyOp.description,
+	...unlinkThirdPartyOp.description,
 ];
 
 export {
@@ -95,4 +111,6 @@ export {
 	getAllOp as getAll,
 	linkDocumentOp as linkDocument,
 	unlinkDocumentOp as unlinkDocument,
+	linkThirdPartyOp as linkThirdParty,
+	unlinkThirdPartyOp as unlinkThirdParty,
 };

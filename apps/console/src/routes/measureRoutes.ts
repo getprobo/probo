@@ -97,6 +97,14 @@ export const measureRoutes = [
             import("#/pages/organizations/measures/tabs/MeasureDocumentsTab"),
         ),
       },
+      {
+        path: "third-parties",
+        Fallback: LinkCardSkeleton,
+        Component: lazy(
+          () =>
+            import("#/pages/organizations/measures/third-parties/MeasureThirdPartiesPage"),
+        ),
+      },
     ],
   },
 ] satisfies AppRoute[];

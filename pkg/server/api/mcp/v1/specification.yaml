@@ -2396,7 +2396,7 @@ components:
           description: Measure ID
         resource_id:
           $ref: "#/components/schemas/GID"
-          description: ID of the resource to link (control, risk, or document)
+          description: ID of the resource to link (control, risk, document, or third party)
 
     LinkMeasureOutput:
       type: object
@@ -2412,7 +2412,7 @@ components:
           description: Measure ID
         resource_id:
           $ref: "#/components/schemas/GID"
-          description: ID of the resource to unlink (control, risk, or document)
+          description: ID of the resource to unlink (control, risk, document, or third party)
 
     UnlinkMeasureOutput:
       type: object
@@ -12182,7 +12182,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/ListMeasureEvidencesOutput"
   - name: linkMeasure
-    description: Link a measure to a resource (control, risk, or document). The resource type is determined from the resource_id GID.
+    description: Link a measure to a resource (control, risk, document, or third party). The resource type is determined from the resource_id GID.
     hints:
       readonly: false
     inputSchema:
@@ -12190,7 +12190,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/LinkMeasureOutput"
   - name: unlinkMeasure
-    description: Unlink a measure from a resource (control, risk, or document). The resource type is determined from the resource_id GID.
+    description: Unlink a measure from a resource (control, risk, document, or third party). The resource type is determined from the resource_id GID.
     hints:
       readonly: false
     inputSchema:

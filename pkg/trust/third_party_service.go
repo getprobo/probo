@@ -65,7 +65,7 @@ func (s ThirdPartyService) ListForOrganizationId(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
 			showOnTrustCenter := true
-			filter := coredata.NewThirdPartyFilter(&showOnTrustCenter, nil)
+			filter := coredata.NewThirdPartyFilter(&showOnTrustCenter, nil, nil)
 
 			err := thirdParties.LoadByOrganizationID(ctx, conn, scope, organizationID, cursor, filter)
 			if err != nil {
@@ -99,7 +99,7 @@ func (s ThirdPartyService) CountForTrustCenterId(
 
 			thirdParties := &coredata.ThirdParties{}
 			showOnTrustCenter := true
-			filter := coredata.NewThirdPartyFilter(&showOnTrustCenter, nil)
+			filter := coredata.NewThirdPartyFilter(&showOnTrustCenter, nil, nil)
 
 			count, err = thirdParties.CountByOrganizationID(ctx, conn, scope, trustCenter.OrganizationID, filter)
 			if err != nil {

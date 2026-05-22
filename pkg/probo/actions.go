@@ -158,15 +158,17 @@ const (
 	ActionControlObligationMappingDelete = "core:control:delete-obligation-mapping"
 
 	// Measure actions
-	ActionMeasureGet                   = "core:measure:get"
-	ActionMeasureList                  = "core:measure:list"
-	ActionMeasureCreate                = "core:measure:create"
-	ActionMeasureUpdate                = "core:measure:update"
-	ActionMeasureDelete                = "core:measure:delete"
-	ActionMeasureEvidenceUpload        = "core:measure:upload-evidence"
-	ActionMeasureImport                = "core:measure:import"
-	ActionMeasureDocumentMappingCreate = "core:measure:create-document-mapping"
-	ActionMeasureDocumentMappingDelete = "core:measure:delete-document-mapping"
+	ActionMeasureGet                     = "core:measure:get"
+	ActionMeasureList                    = "core:measure:list"
+	ActionMeasureCreate                  = "core:measure:create"
+	ActionMeasureUpdate                  = "core:measure:update"
+	ActionMeasureDelete                  = "core:measure:delete"
+	ActionMeasureEvidenceUpload          = "core:measure:upload-evidence"
+	ActionMeasureImport                  = "core:measure:import"
+	ActionMeasureDocumentMappingCreate   = "core:measure:create-document-mapping"
+	ActionMeasureDocumentMappingDelete   = "core:measure:delete-document-mapping"
+	ActionMeasureThirdPartyMappingCreate = "core:measure:create-third-party-mapping"
+	ActionMeasureThirdPartyMappingDelete = "core:measure:delete-third-party-mapping"
 
 	// Task actions
 	ActionTaskGet      = "core:task:get"

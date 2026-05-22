@@ -644,6 +644,138 @@ func (s MeasureService) CreateDocumentMapping(
 	return measure, document, nil
 }
 
+func (s MeasureService) CountForThirdPartyID(
+	ctx context.Context, scope coredata.Scoper,
+	thirdPartyID gid.GID,
+	filter *coredata.MeasureFilter,
+) (int, error) {
+	var count int
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) (err error) {
+			measures := &coredata.Measures{}
+
+			count, err = measures.CountByThirdPartyID(ctx, conn, scope, thirdPartyID, filter)
+			if err != nil {
+				return fmt.Errorf("cannot count measures: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}
+
+func (s MeasureService) ListForThirdPartyID(
+	ctx context.Context, scope coredata.Scoper,
+	thirdPartyID gid.GID,
+	cursor *page.Cursor[coredata.MeasureOrderField],
+	filter *coredata.MeasureFilter,
+) (*page.Page[*coredata.Measure, coredata.MeasureOrderField], error) {
+	var measures coredata.Measures
+
+	thirdParty := &coredata.ThirdParty{}
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := thirdParty.LoadByID(ctx, conn, scope, thirdPartyID); err != nil {
+				return fmt.Errorf("cannot load third party: %w", err)
+			}
+
+			err := measures.LoadByThirdPartyID(ctx, conn, scope, thirdParty.ID, cursor, filter)
+			if err != nil {
+				return fmt.Errorf("cannot load measures: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return page.NewPage(measures, cursor), nil
+}
+
+func (s MeasureService) CreateThirdPartyMapping(
+	ctx context.Context, scope coredata.Scoper,
+	measureID gid.GID,
+	thirdPartyID gid.GID,
+) (*coredata.Measure, *coredata.ThirdParty, error) {
+	measure := &coredata.Measure{}
+	thirdParty := &coredata.ThirdParty{}
+
+	err := s.svc.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			if err := measure.LoadByID(ctx, tx, scope, measureID); err != nil {
+				return fmt.Errorf("cannot load measure: %w", err)
+			}
+
+			if err := thirdParty.LoadByID(ctx, tx, scope, thirdPartyID); err != nil {
+				return fmt.Errorf("cannot load third party: %w", err)
+			}
+
+			measureThirdParty := &coredata.MeasureThirdParty{
+				MeasureID:    measure.ID,
+				ThirdPartyID: thirdParty.ID,
+				CreatedAt:    time.Now(),
+			}
+
+			if err := measureThirdParty.Upsert(ctx, tx, scope); err != nil {
+				return fmt.Errorf("cannot upsert measure third party: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return measure, thirdParty, nil
+}
+
+func (s MeasureService) DeleteThirdPartyMapping(
+	ctx context.Context, scope coredata.Scoper,
+	measureID gid.GID,
+	thirdPartyID gid.GID,
+) (*coredata.Measure, *coredata.ThirdParty, error) {
+	measure := &coredata.Measure{}
+	thirdParty := &coredata.ThirdParty{}
+
+	err := s.svc.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			if err := measure.LoadByID(ctx, tx, scope, measureID); err != nil {
+				return fmt.Errorf("cannot load measure: %w", err)
+			}
+
+			if err := thirdParty.LoadByID(ctx, tx, scope, thirdPartyID); err != nil {
+				return fmt.Errorf("cannot load third party: %w", err)
+			}
+
+			measureThirdParty := &coredata.MeasureThirdParty{}
+			if err := measureThirdParty.Delete(ctx, tx, scope, measure.ID, thirdParty.ID); err != nil {
+				return fmt.Errorf("cannot delete measure third party mapping: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return measure, thirdParty, nil
+}
+
 func (s MeasureService) DeleteDocumentMapping(
 	ctx context.Context, scope coredata.Scoper,
 	measureID gid.GID,

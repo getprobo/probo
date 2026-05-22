@@ -70,7 +70,7 @@ func (r *Resolver) ListThirdPartiesTool(ctx context.Context, req *mcp.CallToolRe
 
 	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
 
-	thirdPartyFilter := coredata.NewThirdPartyFilter(nil, input.FirstLevel)
+	thirdPartyFilter := coredata.NewThirdPartyFilter(nil, input.FirstLevel, nil)
 
 	page, err := prb.ThirdParties.ListForOrganizationID(ctx, scope, input.OrganizationID, cursor, thirdPartyFilter)
 	if err != nil {
@@ -2664,6 +2664,14 @@ func (r *Resolver) LinkMeasureTool(ctx context.Context, req *mcp.CallToolRequest
 		if _, _, err := svc.Measures.CreateDocumentMapping(ctx, scope, input.MeasureID, input.ResourceID); err != nil {
 			return nil, types.LinkMeasureOutput{}, fmt.Errorf("failed to link measure to document: %w", err)
 		}
+	case coredata.ThirdPartyEntityType:
+		if _, err := r.Authorize(ctx, input.MeasureID, probo.ActionMeasureThirdPartyMappingCreate); err != nil {
+			return nil, types.LinkMeasureOutput{}, err
+		}
+
+		if _, _, err := svc.Measures.CreateThirdPartyMapping(ctx, scope, input.MeasureID, input.ResourceID); err != nil {
+			return nil, types.LinkMeasureOutput{}, fmt.Errorf("failed to link measure to third party: %w", err)
+		}
 	default:
 		return nil, types.LinkMeasureOutput{}, fmt.Errorf("unsupported resource type for measure linking: entity type %d", input.ResourceID.EntityType())
 	}
@@ -2699,6 +2707,14 @@ func (r *Resolver) UnlinkMeasureTool(ctx context.Context, req *mcp.CallToolReque
 
 		if _, _, err := svc.Measures.DeleteDocumentMapping(ctx, scope, input.MeasureID, input.ResourceID); err != nil {
 			return nil, types.UnlinkMeasureOutput{}, fmt.Errorf("failed to unlink measure from document: %w", err)
+		}
+	case coredata.ThirdPartyEntityType:
+		if _, err := r.Authorize(ctx, input.MeasureID, probo.ActionMeasureThirdPartyMappingDelete); err != nil {
+			return nil, types.UnlinkMeasureOutput{}, err
+		}
+
+		if _, _, err := svc.Measures.DeleteThirdPartyMapping(ctx, scope, input.MeasureID, input.ResourceID); err != nil {
+			return nil, types.UnlinkMeasureOutput{}, fmt.Errorf("failed to unlink measure from third party: %w", err)
 		}
 	default:
 		return nil, types.UnlinkMeasureOutput{}, fmt.Errorf("unsupported resource type for measure unlinking: entity type %d", input.ResourceID.EntityType())

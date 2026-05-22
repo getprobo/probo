@@ -19,7 +19,9 @@ import (
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
 	"go.probo.inc/probo/pkg/cmd/measure/create"
 	"go.probo.inc/probo/pkg/cmd/measure/delete"
+	linkthirdparty "go.probo.inc/probo/pkg/cmd/measure/link-third-party"
 	"go.probo.inc/probo/pkg/cmd/measure/list"
+	unlinkthirdparty "go.probo.inc/probo/pkg/cmd/measure/unlink-third-party"
 	"go.probo.inc/probo/pkg/cmd/measure/update"
 	"go.probo.inc/probo/pkg/cmd/measure/view"
 )
@@ -35,6 +37,8 @@ func NewCmdMeasure(f *cmdutil.Factory) *cobra.Command {
 	cmd.AddCommand(view.NewCmdView(f))
 	cmd.AddCommand(update.NewCmdUpdate(f))
 	cmd.AddCommand(delete.NewCmdDelete(f))
+	cmd.AddCommand(linkthirdparty.NewCmdLinkThirdParty(f))
+	cmd.AddCommand(unlinkthirdparty.NewCmdUnlinkThirdParty(f))
 
 	return cmd
 }

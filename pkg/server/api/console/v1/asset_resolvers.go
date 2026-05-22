@@ -72,7 +72,7 @@ func (r *assetResolver) ThirdParties(ctx context.Context, obj *types.Asset, firs
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return types.NewThirdPartyConnection(page, r, obj.ID), nil
+	return types.NewThirdPartyConnection(page, r, obj.ID, nil), nil
 }
 
 // Organization is the resolver for the organization field.
@@ -177,7 +177,7 @@ func (r *datumResolver) ThirdParties(ctx context.Context, obj *types.Datum, firs
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return types.NewThirdPartyConnection(page, r, obj.ID), nil
+	return types.NewThirdPartyConnection(page, r, obj.ID, nil), nil
 }
 
 // Organization is the resolver for the organization field.

@@ -179,6 +179,7 @@ input ThirdPartyOrder
 
 input ThirdPartyFilter {
     firstLevel: Boolean
+    query: String
 }
 
 input ThirdPartyComplianceReportOrder
@@ -254,6 +255,15 @@ type ThirdParty implements Node {
         before: CursorKey
         orderBy: ThirdPartyRiskAssessmentOrder
     ): ThirdPartyRiskAssessmentConnection! @goField(forceResolver: true)
+
+    measures(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: MeasureOrder
+        filter: MeasureFilter
+    ): MeasureConnection! @goField(forceResolver: true)
 
     businessOwner: Profile @goField(forceResolver: true)
     securityOwner: Profile @goField(forceResolver: true)

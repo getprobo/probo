@@ -820,6 +820,40 @@ func (r *thirdPartyResolver) RiskAssessments(ctx context.Context, obj *types.Thi
 	return types.NewThirdPartyRiskAssessmentConnection(page), nil
 }
 
+// Measures is the resolver for the measures field.
+func (r *thirdPartyResolver) Measures(ctx context.Context, obj *types.ThirdParty, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MeasureOrderBy, filter *types.MeasureFilter) (*types.MeasureConnection, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionMeasureList)
+	if err != nil {
+		return nil, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.MeasureOrderField]{
+		Field:     coredata.MeasureOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.MeasureOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	var measureFilter = coredata.NewMeasureFilter(nil, nil, nil)
+	if filter != nil {
+		measureFilter = coredata.NewMeasureFilter(filter.Query, filter.State, filter.Category)
+	}
+
+	page, err := r.probo.Measures.ListForThirdPartyID(ctx, scope, obj.ID, cursor, measureFilter)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list third party measures", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewMeasureConnection(page, r, obj.ID, measureFilter), nil
+}
+
 // BusinessOwner is the resolver for the businessOwner field.
 func (r *thirdPartyResolver) BusinessOwner(ctx context.Context, obj *types.ThirdParty) (*types.Profile, error) {
 	if _, err := r.authorize(ctx, obj.ID, iam.ActionMembershipProfileGet); err != nil {
@@ -898,7 +932,7 @@ func (r *thirdPartyResolver) ChildThirdParties(ctx context.Context, obj *types.T
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return types.NewThirdPartyConnection(page, r, obj.ID), nil
+	return types.NewThirdPartyConnection(page, r, obj.ID, nil), nil
 }
 
 // Permission is the resolver for the permission field.
@@ -1012,7 +1046,7 @@ func (r *thirdPartyConnectionResolver) TotalCount(ctx context.Context, obj *type
 
 	switch obj.Resolver.(type) {
 	case *organizationResolver:
-		count, err := r.probo.ThirdParties.CountForOrganizationID(ctx, scope, obj.ParentID)
+		count, err := r.probo.ThirdParties.CountForOrganizationID(ctx, scope, obj.ParentID, obj.Filters)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count thirdParties", log.Error(err))
 			return 0, gqlutils.Internal(ctx)
@@ -1043,7 +1077,14 @@ func (r *thirdPartyConnectionResolver) TotalCount(ctx context.Context, obj *type
 		count, err := r.probo.ThirdParties.CountForParentThirdPartyID(ctx, scope, obj.ParentID)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count child third parties", log.Error(err))
+			return 0, gqlutils.Internal(ctx)
+		}
 
+		return count, nil
+	case *measureResolver:
+		count, err := r.probo.ThirdParties.CountForMeasureID(ctx, scope, obj.ParentID)
+		if err != nil {
+			r.logger.ErrorCtx(ctx, "cannot count thirdParties", log.Error(err))
 			return 0, gqlutils.Internal(ctx)
 		}
 
@@ -1229,15 +1270,3 @@ type thirdPartyContactResolver struct{ *Resolver }
 type thirdPartyDataPrivacyAgreementResolver struct{ *Resolver }
 type thirdPartyRiskAssessmentResolver struct{ *Resolver }
 type thirdPartyServiceResolver struct{ *Resolver }
-
-// !!! WARNING !!!
-// The code below was going to be deleted when updating resolvers. It has been copied here so you have
-// one last chance to move it out of harms way if you want. There are two reasons this happens:
-//  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
-//    it when you're done.
-//  - You have helper methods in this file. Move them out to keep these resolver files clean.
-/*
-	func (r *mutationResolver) UncreateThirdPartyThirdPartyMapping(ctx context.Context, input types.UncreateThirdPartyThirdPartyMappingInput) (*types.UncreateThirdPartyThirdPartyMappingPayload, error) {
-	panic(fmt.Errorf("not implemented: UncreateThirdPartyThirdPartyMapping - uncreateThirdPartyThirdPartyMapping"))
-}
-*/

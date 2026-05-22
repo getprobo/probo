@@ -211,14 +211,18 @@ func (cvrar *CreateThirdPartyRiskAssessmentRequest) Validate() error {
 func (s ThirdPartyService) CountForOrganizationID(
 	ctx context.Context, scope coredata.Scoper,
 	organizationID gid.GID,
+	filter *coredata.ThirdPartyFilter,
 ) (int, error) {
 	var count int
+
+	if filter == nil {
+		filter = coredata.NewThirdPartyFilter(nil, nil, nil)
+	}
 
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			thirdParties := coredata.ThirdParties{}
-			filter := &coredata.ThirdPartyFilter{}
 
 			count, err = thirdParties.CountByOrganizationID(ctx, conn, scope, organizationID, filter)
 			if err != nil {
@@ -260,6 +264,68 @@ func (s ThirdPartyService) ListForOrganizationID(
 				cursor,
 				filter,
 			)
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return page.NewPage(thirdParties, cursor), nil
+}
+
+func (s ThirdPartyService) CountForMeasureID(
+	ctx context.Context, scope coredata.Scoper,
+	measureID gid.GID,
+) (int, error) {
+	var count int
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) (err error) {
+			thirdParties := coredata.ThirdParties{}
+
+			count, err = thirdParties.CountByMeasureID(ctx, conn, scope, measureID)
+			if err != nil {
+				return fmt.Errorf("cannot count thirdParties: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}
+
+func (s ThirdPartyService) ListForMeasureID(
+	ctx context.Context, scope coredata.Scoper,
+	measureID gid.GID,
+	cursor *page.Cursor[coredata.ThirdPartyOrderField],
+) (*page.Page[*coredata.ThirdParty, coredata.ThirdPartyOrderField], error) {
+	var thirdParties coredata.ThirdParties
+
+	measure := &coredata.Measure{}
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := measure.LoadByID(ctx, conn, scope, measureID); err != nil {
+				return fmt.Errorf("cannot load measure: %w", err)
+			}
+
+			if err := thirdParties.LoadByMeasureID(
+				ctx,
+				conn,
+				scope,
+				measure.ID,
+				cursor,
+			); err != nil {
+				return fmt.Errorf("cannot load thirdParties: %w", err)
+			}
+
+			return nil
 		},
 	)
 	if err != nil {

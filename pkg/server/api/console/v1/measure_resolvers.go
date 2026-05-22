@@ -188,6 +188,35 @@ func (r *measureResolver) Documents(ctx context.Context, obj *types.Measure, fir
 	return types.NewDocumentConnection(pg, r, obj.ID, documentFilter), nil
 }
 
+// ThirdParties is the resolver for the thirdParties field.
+func (r *measureResolver) ThirdParties(ctx context.Context, obj *types.Measure, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ThirdPartyOrderBy) (*types.ThirdPartyConnection, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionThirdPartyList)
+	if err != nil {
+		return nil, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.ThirdPartyOrderField]{
+		Field:     coredata.ThirdPartyOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.ThirdPartyOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	page, err := r.probo.ThirdParties.ListForMeasureID(ctx, scope, obj.ID, cursor)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list measure third parties", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewThirdPartyConnection(page, r, obj.ID, nil), nil
+}
+
 // Permission is the resolver for the permission field.
 func (r *measureResolver) Permission(ctx context.Context, obj *types.Measure, action string) (bool, error) {
 	return r.Resolver.Permission(ctx, obj, action)
@@ -219,6 +248,14 @@ func (r *measureConnectionResolver) TotalCount(ctx context.Context, obj *types.M
 		return count, nil
 	case *riskResolver:
 		count, err := r.probo.Measures.CountForRiskID(ctx, scope, obj.ParentID, obj.Filters)
+		if err != nil {
+			r.logger.ErrorCtx(ctx, "cannot count measures", log.Error(err))
+			return 0, gqlutils.Internal(ctx)
+		}
+
+		return count, nil
+	case *thirdPartyResolver:
+		count, err := r.probo.Measures.CountForThirdPartyID(ctx, scope, obj.ParentID, obj.Filters)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count measures", log.Error(err))
 			return 0, gqlutils.Internal(ctx)
@@ -385,6 +422,44 @@ func (r *mutationResolver) DeleteMeasureDocumentMapping(ctx context.Context, inp
 	return &types.DeleteMeasureDocumentMappingPayload{
 		DeletedMeasureID:  measure.ID,
 		DeletedDocumentID: document.ID,
+	}, nil
+}
+
+// CreateMeasureThirdPartyMapping is the resolver for the createMeasureThirdPartyMapping field.
+func (r *mutationResolver) CreateMeasureThirdPartyMapping(ctx context.Context, input types.CreateMeasureThirdPartyMappingInput) (*types.CreateMeasureThirdPartyMappingPayload, error) {
+	scope, err := r.authorize(ctx, input.MeasureID, probo.ActionMeasureThirdPartyMappingCreate)
+	if err != nil {
+		return nil, err
+	}
+
+	measure, thirdParty, err := r.probo.Measures.CreateThirdPartyMapping(ctx, scope, input.MeasureID, input.ThirdPartyID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot create measure third party mapping", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.CreateMeasureThirdPartyMappingPayload{
+		MeasureEdge:    types.NewMeasureEdge(measure, coredata.MeasureOrderFieldCreatedAt),
+		ThirdPartyEdge: types.NewThirdPartyEdge(thirdParty, coredata.ThirdPartyOrderFieldCreatedAt),
+	}, nil
+}
+
+// DeleteMeasureThirdPartyMapping is the resolver for the deleteMeasureThirdPartyMapping field.
+func (r *mutationResolver) DeleteMeasureThirdPartyMapping(ctx context.Context, input types.DeleteMeasureThirdPartyMappingInput) (*types.DeleteMeasureThirdPartyMappingPayload, error) {
+	scope, err := r.authorize(ctx, input.MeasureID, probo.ActionMeasureThirdPartyMappingDelete)
+	if err != nil {
+		return nil, err
+	}
+
+	measure, thirdParty, err := r.probo.Measures.DeleteThirdPartyMapping(ctx, scope, input.MeasureID, input.ThirdPartyID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot delete measure third party mapping", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.DeleteMeasureThirdPartyMappingPayload{
+		DeletedMeasureID:    measure.ID,
+		DeletedThirdPartyID: thirdParty.ID,
 	}, nil
 }
 

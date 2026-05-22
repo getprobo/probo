@@ -22,23 +22,30 @@ type (
 	ThirdPartyFilter struct {
 		showOnTrustCenter *bool
 		firstLevel        *bool
+		query             *string
 	}
 )
 
-func NewThirdPartyFilter(showOnTrustCenter *bool, firstLevel *bool) *ThirdPartyFilter {
+func NewThirdPartyFilter(showOnTrustCenter *bool, firstLevel *bool, query *string) *ThirdPartyFilter {
 	return &ThirdPartyFilter{
 		showOnTrustCenter: showOnTrustCenter,
 		firstLevel:        firstLevel,
+		query:             query,
 	}
 }
 
 func (f *ThirdPartyFilter) SQLArguments() pgx.StrictNamedArgs {
-	args := pgx.StrictNamedArgs{}
+	args := pgx.StrictNamedArgs{
+		"show_on_trust_center": nil,
+		"filter_query":         nil,
+	}
 
 	if f.showOnTrustCenter != nil {
 		args["show_on_trust_center"] = *f.showOnTrustCenter
-	} else {
-		args["show_on_trust_center"] = nil
+	}
+
+	if f.query != nil && *f.query != "" {
+		args["filter_query"] = *f.query
 	}
 
 	if f.firstLevel != nil {
@@ -58,12 +65,14 @@ func (f *ThirdPartyFilter) SQLFragment() string {
 			show_on_trust_center = @show_on_trust_center::boolean
 		ELSE TRUE
 	END
-)
-AND
-(
-	CASE
+	AND CASE
 		WHEN @first_level::boolean IS NOT NULL THEN
 			first_level = @first_level::boolean
+		ELSE TRUE
+	END
+	AND CASE
+		WHEN @filter_query::text IS NOT NULL AND @filter_query::text <> '' THEN
+			name ILIKE '%' || @filter_query || '%'
 		ELSE TRUE
 	END
 )`

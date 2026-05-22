@@ -223,7 +223,7 @@ func (r *processingActivityResolver) ThirdParties(ctx context.Context, obj *type
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return types.NewThirdPartyConnection(page, r, obj.ID), nil
+	return types.NewThirdPartyConnection(page, r, obj.ID, nil), nil
 }
 
 // DataProtectionImpactAssessment is the resolver for the dataProtectionImpactAssessment field.

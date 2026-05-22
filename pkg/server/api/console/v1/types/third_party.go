@@ -31,6 +31,7 @@ type (
 
 		Resolver any
 		ParentID gid.GID
+		Filters  *coredata.ThirdPartyFilter
 	}
 )
 
@@ -38,6 +39,7 @@ func NewThirdPartyConnection(
 	p *page.Page[*coredata.ThirdParty, coredata.ThirdPartyOrderField],
 	parentType any,
 	parentID gid.GID,
+	filters *coredata.ThirdPartyFilter,
 ) *ThirdPartyConnection {
 	var edges = make([]*ThirdPartyEdge, len(p.Data))
 
@@ -51,6 +53,7 @@ func NewThirdPartyConnection(
 
 		Resolver: parentType,
 		ParentID: parentID,
+		Filters:  filters,
 	}
 }
 

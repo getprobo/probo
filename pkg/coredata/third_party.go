@@ -1448,3 +1448,141 @@ LIMIT 1;
 
 	return nil
 }
+
+func (v *ThirdParties) CountByMeasureID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	measureID gid.GID,
+) (int, error) {
+	q := `
+WITH tps AS (
+	SELECT
+		v.id,
+		v.tenant_id
+	FROM
+		third_parties v
+	INNER JOIN
+		measures_third_parties mtp ON v.id = mtp.third_party_id
+	WHERE
+		mtp.measure_id = @measure_id
+)
+SELECT
+	COUNT(id)
+FROM
+	tps
+WHERE %s
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"measure_id": measureID}
+	maps.Copy(args, scope.SQLArguments())
+
+	row := conn.QueryRow(ctx, q, args)
+
+	var count int
+
+	if err := row.Scan(&count); err != nil {
+		return 0, fmt.Errorf("cannot count thirdParties: %w", err)
+	}
+
+	return count, nil
+}
+
+func (v *ThirdParties) LoadByMeasureID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	measureID gid.GID,
+	cursor *page.Cursor[ThirdPartyOrderField],
+) error {
+	q := `
+WITH tps AS (
+	SELECT
+		v.id,
+		v.tenant_id,
+		v.organization_id,
+		v.common_third_party_id,
+		v.name,
+		v.description,
+		v.category,
+		v.headquarter_address,
+		v.legal_name,
+		v.website_url,
+		v.privacy_policy_url,
+		v.service_level_agreement_url,
+		v.data_processing_agreement_url,
+		v.business_associate_agreement_url,
+		v.subprocessors_list_url,
+		v.certifications,
+		v.countries,
+		v.business_owner_profile_id,
+		v.security_owner_profile_id,
+		v.status_page_url,
+		v.terms_of_service_url,
+		v.security_page_url,
+		v.trust_page_url,
+		v.show_on_trust_center,
+		v.first_level,
+		v.created_at,
+		v.updated_at
+	FROM
+		third_parties v
+	INNER JOIN
+		measures_third_parties mtp ON v.id = mtp.third_party_id
+	WHERE
+		mtp.measure_id = @measure_id
+)
+SELECT
+	id,
+	tenant_id,
+	organization_id,
+	common_third_party_id,
+	name,
+	description,
+	category,
+	headquarter_address,
+	legal_name,
+	website_url,
+	privacy_policy_url,
+	service_level_agreement_url,
+	data_processing_agreement_url,
+	business_associate_agreement_url,
+	subprocessors_list_url,
+	certifications,
+	countries,
+	business_owner_profile_id,
+	security_owner_profile_id,
+	status_page_url,
+	terms_of_service_url,
+	security_page_url,
+	trust_page_url,
+	show_on_trust_center,
+	first_level,
+	created_at,
+	updated_at
+FROM
+	tps
+WHERE %s
+	AND %s
+`
+	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"measure_id": measureID}
+	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, cursor.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query thirdParties: %w", err)
+	}
+
+	thirdParties, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[ThirdParty])
+	if err != nil {
+		return fmt.Errorf("cannot collect thirdParties: %w", err)
+	}
+
+	*v = thirdParties
+
+	return nil
+}

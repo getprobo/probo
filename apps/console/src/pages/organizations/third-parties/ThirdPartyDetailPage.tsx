@@ -44,7 +44,10 @@ import {
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 import { ImportAssessmentDialog } from "./dialogs/ImportAssessmentDialog";
+import { measuresFragment } from "./measures/ThirdPartyMeasuresPage";
 import { complianceReportsFragment } from "./tabs/ThirdPartyComplianceTab";
+
+void measuresFragment;
 
 type Props = {
   queryRef: PreloadedQuery<ThirdPartyGraphNodeQuery>;
@@ -64,6 +67,7 @@ export default function ThirdPartyDetailPage(props: Props) {
     complianceReportsFragment,
     thirdParty as ThirdPartyComplianceTabFragment$key,
   ).complianceReports.edges.length;
+  const measuresCount = thirdParty.measuresInfos?.totalCount ?? 0;
 
   const thirdPartiesUrl = `/organizations/${organizationId}/third-parties`;
 
@@ -135,6 +139,10 @@ export default function ThirdPartyDetailPage(props: Props) {
         <TabLink to={`${baseThirdPartyUrl}/services`}>{__("Services")}</TabLink>
         <TabLink to={`${baseThirdPartyUrl}/third-parties`}>
           {__("Third Parties")}
+        </TabLink>
+        <TabLink to={`${baseThirdPartyUrl}/measures`}>
+          {__("Measures")}
+          {measuresCount > 0 && <TabBadge>{measuresCount}</TabBadge>}
         </TabLink>
       </Tabs>
 
