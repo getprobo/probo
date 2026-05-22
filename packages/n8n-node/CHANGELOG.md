@@ -4,6 +4,12 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+## [0.187.0] - 2026-05-22
+
+### Added
+
+- Add a `riskAssessment` resource exposing the full risk assessment hierarchy — assessments, scopes, nodes, processes, threats, and scenarios — with CRUD operations, scenario-to-risk and scenario-to-threat link/unlink, and scope Mermaid chart retrieval
+
 ## [0.186.0] - 2026-05-15
 
 ### Changed
