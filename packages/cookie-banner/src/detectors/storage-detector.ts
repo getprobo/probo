@@ -15,7 +15,7 @@
 import type { Detector } from "./detector";
 import { getInitiatorURL } from "./initiator";
 import type { ReportQueue } from "./report-queue";
-import type { DetectedStorageEntry } from "./types";
+import type { DetectedStorageEntry, StorageSource } from "./types";
 
 const OWN_KEY_PREFIX = "probo_consent:";
 const EXTENSION_URL_RE = /(?:chrome|moz|safari-web)-extension:\/\//;
@@ -104,7 +104,7 @@ export class StorageDetector implements Detector {
     const self = this;
 
     caches.open = function (name: string): Promise<Cache> {
-      self.onCacheStorageOpen(name);
+      self.onCacheStorageOpen(name, "script");
       return originalOpen(name);
     };
   }
@@ -122,6 +122,7 @@ export class StorageDetector implements Detector {
       key,
       storage_type: storageType,
       value_size: value.length * 2,
+      source: "script",
     };
     if (initiatorUrl) entry.initiator_url = initiatorUrl;
     this.queue.reportStorage(entry);
@@ -132,14 +133,16 @@ export class StorageDetector implements Detector {
       key: name,
       storage_type: "indexed_db",
       value_size: null,
+      source: "script",
     });
   }
 
-  private onCacheStorageOpen(name: string): void {
+  private onCacheStorageOpen(name: string, source: StorageSource): void {
     this.queue.reportStorage({
       key: name,
       storage_type: "cache_storage",
       value_size: null,
+      source,
     });
   }
 
@@ -153,7 +156,7 @@ export class StorageDetector implements Detector {
       .keys()
       .then((names) => {
         for (const name of names) {
-          this.onCacheStorageOpen(name);
+          this.onCacheStorageOpen(name, "pre-existing");
         }
       })
       .catch(() => {
@@ -179,6 +182,7 @@ export class StorageDetector implements Detector {
         key,
         storage_type: storageType,
         value_size: value ? value.length * 2 : null,
+        source: "pre-existing",
       });
     }
   }

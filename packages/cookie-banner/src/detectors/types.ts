@@ -19,6 +19,8 @@
 
 export type CookieSource = "script" | "pre-existing" | "http";
 
+export type StorageSource = "script" | "pre-existing";
+
 export type StorageType =
   | "local_storage"
   | "session_storage"
@@ -47,6 +49,7 @@ export interface DetectedStorageEntry {
   key: string;
   storage_type: StorageType;
   value_size: number | null;
+  source: StorageSource;
   initiator_url?: string;
 }
 

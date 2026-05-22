@@ -383,6 +383,7 @@ type detectedStorageEntry struct {
 	Key          string  `json:"key"`
 	StorageType  string  `json:"storage_type"`
 	ValueSize    *int    `json:"value_size"`
+	Source       string  `json:"source"`
 	InitiatorURL *string `json:"initiator_url,omitempty"`
 }
 
@@ -474,12 +475,22 @@ func (h *Handler) handleReportDetectedTrackers(w http.ResponseWriter, r *http.Re
 			continue
 		}
 
+		var source coredata.CookieSource
+
+		switch strings.TrimSpace(s.Source) {
+		case "pre-existing":
+			source = coredata.CookieSourcePreExisting
+		default:
+			source = coredata.CookieSourceScript
+		}
+
 		req.Storage = append(
 			req.Storage,
 			cookiebanner.DetectedStorageItem{
 				Key:          key,
 				StorageType:  storageType,
 				ValueSize:    s.ValueSize,
+				Source:       &source,
 				InitiatorURL: sanitizeInitiatorURL(s.InitiatorURL),
 			},
 		)

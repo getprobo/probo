@@ -123,6 +123,7 @@ type (
 		Key          string
 		StorageType  coredata.TrackerType
 		ValueSize    *int
+		Source       *coredata.CookieSource
 		InitiatorURL *string
 	}
 
@@ -2124,6 +2125,7 @@ func (s *Service) ReportDetectedTrackers(
 						TrackerType:  ds.StorageType,
 						Identifier:   ds.Key,
 						ValueSize:    ds.ValueSize,
+						Source:       ds.Source,
 						InitiatorURL: ds.InitiatorURL,
 					},
 					&inserted,
