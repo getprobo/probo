@@ -523,15 +523,52 @@ export class ResourceDetector implements Detector {
   ): void {
     if (typeof value !== "string" || value === "") return;
 
-    const rt = this.resourceTypeForElement(el, attrName);
-    if (rt === null) return;
-
+    // Extension marking runs before classification because the
+    // current attribute alone is not always enough to know whether a
+    // load will happen. The canonical case is `<link>`: a stylesheet
+    // load is only triggered once both `href` and `rel="stylesheet"`
+    // are set, in any order. If the extension sets `href` first we
+    // would otherwise miss tagging, and the eventual PerformanceObserver
+    // entry -- which has no extension frame on its stack -- would leak
+    // through as a page tracker. The same holds for `<link rel=preload>`
+    // and any future rel value that initiates a load.
     if (isExtensionCaller()) {
-      this.markExtension(el, this.identifierOf(value));
+      if (this.couldLoadResource(el, attrName)) {
+        this.markExtension(el, this.identifierOf(value));
+      }
       return;
     }
 
+    const rt = this.resourceTypeForElement(el, attrName);
+    if (rt === null) return;
+
     this.processResource(value, rt);
+  }
+
+  // couldLoadResource reports whether `el` is an element type that can
+  // ever initiate a network load via `attrName`, regardless of any
+  // other attributes that may or may not be set yet. It is a superset
+  // of resourceTypeForElement: it returns true for `<link href>` even
+  // when `rel` has not been set, because the rel may change later and
+  // turn the href into a real load.
+  private couldLoadResource(el: Element, attrName: string): boolean {
+    if (attrName === "src") {
+      return (
+        el instanceof HTMLScriptElement
+        || el instanceof HTMLIFrameElement
+        || el instanceof HTMLImageElement
+        || (typeof HTMLSourceElement !== "undefined" && el instanceof HTMLSourceElement)
+        || (typeof HTMLEmbedElement !== "undefined" && el instanceof HTMLEmbedElement)
+        || (typeof HTMLMediaElement !== "undefined" && el instanceof HTMLMediaElement)
+      );
+    }
+    if (attrName === "href") {
+      return el instanceof HTMLLinkElement;
+    }
+    if (attrName === "data") {
+      return typeof HTMLObjectElement !== "undefined" && el instanceof HTMLObjectElement;
+    }
+    return false;
   }
 
   private resourceTypeForElement(el: Element, attrName: string): ResourceType | null {
