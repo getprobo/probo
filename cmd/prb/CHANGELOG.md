@@ -4,6 +4,12 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.188.0] - 2026-05-22
+
+### Added
+
+- Add `prb risk-assessment` command group with nested `scope`, `node`, `process`, `threat`, and `scenario` subcommands for managing the hierarchical risk assessment system, including scenario-to-risk and scenario-to-threat link/unlink and Mermaid chart retrieval
+
 ## [0.187.0] - 2026-05-15
 
 ### Changed
