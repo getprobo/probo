@@ -457,6 +457,7 @@ func templateCandidates(name string) []string {
 		for pos := 1; pos < len(tokens)-1; pos++ {
 			left := joinTokens(tokens[:pos], seps[:pos-1])
 			right := joinTokens(tokens[pos+1:], seps[pos+1:])
+
 			tmpl := left + string(seps[pos-1]) + "*" + string(seps[pos]) + right
 			if templateHasFixedAnchor(tmpl) {
 				candidates = append(candidates, tmpl)
