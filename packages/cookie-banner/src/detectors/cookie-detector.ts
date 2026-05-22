@@ -14,7 +14,7 @@
 
 import { isDeletion, parseCookieName, parseMaxAgeSeconds } from "../cookie-utils";
 import type { Detector } from "./detector";
-import { isExtensionCaller, isExtensionContext } from "./extension-context";
+import { isExtensionContext } from "./extension-context";
 import { getInitiatorURL } from "./initiator";
 import type { ReportQueue } from "./report-queue";
 import type { DetectedCookieEntry } from "./types";
@@ -78,7 +78,6 @@ export class CookieDetector implements Detector {
 
   private onCookieSet(raw: string): void {
     if (isDeletion(raw)) return;
-    if (isExtensionCaller()) return;
 
     const name = parseCookieName(raw);
     if (!name || this.knownNames.has(name)) return;

@@ -13,7 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 import type { Detector } from "./detector";
-import { isExtensionCaller, isExtensionContext } from "./extension-context";
+import { isExtensionContext } from "./extension-context";
 import { getInitiatorURL } from "./initiator";
 import type { ReportQueue } from "./report-queue";
 import type { DetectedStorageEntry, StorageSource } from "./types";
@@ -69,8 +69,6 @@ export class StorageDetector implements Detector {
     Storage.prototype.setItem = function (key: string, value: string) {
       originalSetItem.call(this, key, value);
 
-      if (isExtensionCaller()) return;
-
       const storageType: "local_storage" | "session_storage" =
         this === localStorage ? "local_storage" : "session_storage";
 
@@ -88,7 +86,6 @@ export class StorageDetector implements Detector {
 
     IDBFactory.prototype.open = function (name: string, version?: number) {
       const request = originalOpen.call(this, name, version);
-      if (isExtensionCaller()) return request;
       self.onIndexedDBOpen(name);
       return request;
     };
@@ -103,9 +100,7 @@ export class StorageDetector implements Detector {
     const self = this;
 
     caches.open = function (name: string): Promise<Cache> {
-      if (!isExtensionCaller()) {
-        self.onCacheStorageOpen(name, "script");
-      }
+      self.onCacheStorageOpen(name, "script");
       return originalOpen(name);
     };
   }

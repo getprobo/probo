@@ -12,23 +12,13 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-export const EXTENSION_URL_RE = /(?:chrome|moz|safari-web)-extension:\/\//;
+const EXTENSION_URL_RE = /(?:chrome|moz|safari-web)-extension:\/\//;
 
 const EXTENSION_PROTOCOLS = new Set([
   "chrome-extension:",
   "moz-extension:",
   "safari-web-extension:",
 ]);
-
-// isExtensionCaller inspects the synchronous JS call stack for a frame
-// whose URL is a browser extension origin. It is a best-effort check:
-// some hooks (PerformanceObserver, browser internals firing events from
-// their own threads) will not carry the original injector frame, so a
-// `false` result does not guarantee the caller is first-party.
-export function isExtensionCaller(): boolean {
-  const stack = new Error().stack ?? "";
-  return EXTENSION_URL_RE.test(stack);
-}
 
 // extensionContext is evaluated once at module load. We capture
 // `document.currentScript?.src` here because that reference only
