@@ -13,17 +13,12 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 import type { Detector } from "./detector";
+import { isExtensionCaller, isExtensionContext } from "./extension-context";
 import { getInitiatorURL } from "./initiator";
 import type { ReportQueue } from "./report-queue";
 import type { DetectedStorageEntry, StorageSource } from "./types";
 
 const OWN_KEY_PREFIX = "probo_consent:";
-const EXTENSION_URL_RE = /(?:chrome|moz|safari-web)-extension:\/\//;
-
-function isExtensionCaller(): boolean {
-  const stack = new Error().stack ?? "";
-  return EXTENSION_URL_RE.test(stack);
-}
 
 export class StorageDetector implements Detector {
   private readonly queue: ReportQueue;
@@ -43,6 +38,9 @@ export class StorageDetector implements Detector {
     this.wrapStorage();
     this.wrapIndexedDB();
     this.wrapCacheStorage();
+
+    if (isExtensionContext()) return;
+
     this.scanExisting();
     this.scanCacheStorage();
   }
@@ -90,6 +88,7 @@ export class StorageDetector implements Detector {
 
     IDBFactory.prototype.open = function (name: string, version?: number) {
       const request = originalOpen.call(this, name, version);
+      if (isExtensionCaller()) return request;
       self.onIndexedDBOpen(name);
       return request;
     };
@@ -104,7 +103,9 @@ export class StorageDetector implements Detector {
     const self = this;
 
     caches.open = function (name: string): Promise<Cache> {
-      self.onCacheStorageOpen(name, "script");
+      if (!isExtensionCaller()) {
+        self.onCacheStorageOpen(name, "script");
+      }
       return originalOpen(name);
     };
   }

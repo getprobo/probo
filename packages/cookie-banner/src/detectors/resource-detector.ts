@@ -13,10 +13,9 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 import type { Detector } from "./detector";
+import { isExtensionCaller, isExtensionContext } from "./extension-context";
 import type { ReportQueue } from "./report-queue";
 import type { ResourceType } from "./types";
-
-const EXTENSION_URL_RE = /(?:chrome|moz|safari-web)-extension:\/\//;
 
 // Map browser-reported PerformanceResourceTiming.initiatorType to the
 // server-side tracker_resource_type. Anything we cannot classify is
@@ -71,10 +70,13 @@ export class ResourceDetector implements Detector {
   start(): void {
     this.queue.onNotFound(() => this.stop());
 
-    this.scanExisting();
     this.observeMutations();
     this.observePerformance();
     this.wrapServiceWorker();
+
+    if (isExtensionContext()) return;
+
+    this.scanExisting();
     this.scanServiceWorkers();
   }
 
@@ -205,7 +207,7 @@ export class ResourceDetector implements Detector {
   }
 
   private processResource(src: string, resourceType: ResourceType): void {
-    if (EXTENSION_URL_RE.test(src)) return;
+    if (isExtensionCaller()) return;
 
     let parsed: URL;
     try {
