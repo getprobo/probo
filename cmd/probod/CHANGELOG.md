@@ -4,6 +4,19 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.191.0] - 2026-05-22
+
+### Added
+
+- Add a tracker pattern detail page in the console with a properties section and a list of detected tracker resources
+
+### Fixed
+
+- Strip empty ProseMirror text nodes from third-party list documents (and migrate existing `document_versions.content` to drop them) so Tiptap renders them instead of erroring with "Empty text nodes are not allowed"
+- Tailor signature certificate email copy for document approvals — store the per-signature email subject on creation so the certificate worker uses "Your approved <Title> - Certificate of Completion" for approvals and the existing default for other flows
+- Return a CONFLICT error instead of an opaque Internal error when deleting a membership profile that is still referenced as owner, approver, or assignee, by detecting the Postgres foreign-key violation in the coredata Delete path
+- Always instantiate the coredata `CookieCategoryFilter` in the cookie banner queries to avoid nil-pointer risks
+
 ## [0.190.1] - 2026-05-20
 
 ### Fixed
