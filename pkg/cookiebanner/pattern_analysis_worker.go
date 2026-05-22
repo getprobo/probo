@@ -432,7 +432,12 @@ func heuristicTemplate(name string) (string, bool) {
 		return "", false
 	}
 
-	return prefix.String() + joinTokens(resultTokens, resultSeps) + suffix, true
+	tmpl := prefix.String() + joinTokens(resultTokens, resultSeps) + suffix
+	if !templateHasFixedAnchor(tmpl) {
+		return "", false
+	}
+
+	return tmpl, true
 }
 
 func templateCandidates(name string) []string {
@@ -440,7 +445,10 @@ func templateCandidates(name string) []string {
 
 	for i, ch := range name {
 		if ch == '_' || ch == '-' {
-			candidates = append(candidates, name[:i+1]+"*")
+			tmpl := name[:i+1] + "*"
+			if templateHasFixedAnchor(tmpl) {
+				candidates = append(candidates, tmpl)
+			}
 		}
 	}
 
@@ -450,7 +458,9 @@ func templateCandidates(name string) []string {
 			left := joinTokens(tokens[:pos], seps[:pos-1])
 			right := joinTokens(tokens[pos+1:], seps[pos+1:])
 			tmpl := left + string(seps[pos-1]) + "*" + string(seps[pos]) + right
-			candidates = append(candidates, tmpl)
+			if templateHasFixedAnchor(tmpl) {
+				candidates = append(candidates, tmpl)
+			}
 		}
 	}
 
@@ -573,6 +583,22 @@ func joinTokens(tokens []string, seps []byte) string {
 	}
 
 	return b.String()
+}
+
+// templateHasFixedAnchor reports whether tmpl contains at least one
+// character beyond separators and wildcards. Templates like "_*",
+// "__*", "-*", "--*", "__*__" would merge unrelated third parties
+// (e.g. __support__, __darkreader__wasEnabledForHost,
+// __EXT_APP_REFRESH_BLACK_SUB_DOMAINS__) under a single glob, so
+// candidates without any fixed alphanumeric anchor are rejected.
+func templateHasFixedAnchor(tmpl string) bool {
+	for _, ch := range tmpl {
+		if ch != '*' && ch != '_' && ch != '-' {
+			return true
+		}
+	}
+
+	return false
 }
 
 func globMatch(pattern, name string) bool {

@@ -238,6 +238,11 @@ func TestHeuristicTemplate(t *testing.T) {
 			input:   "__Secure-1PSID",
 			changed: false,
 		},
+		{
+			name:    "all variable tokens with leading underscores rejected",
+			input:   "__a1b2c3d4_e5f6g7h8",
+			changed: false,
+		},
 	}
 
 	for _, tt := range tests {
@@ -293,10 +298,9 @@ func TestTemplateCandidates(t *testing.T) {
 			},
 		},
 		{
-			name:  "leading underscore",
+			name:  "leading underscore drops anchor-free prefix",
 			input: "_ga_GB2J3DLBHE",
 			expected: []string{
-				"_*",
 				"_ga_*",
 				"_*_GB2J3DLBHE",
 			},
@@ -322,6 +326,38 @@ func TestTemplateCandidates(t *testing.T) {
 				"auth0_*",
 				"auth0_session_*",
 				"auth0_*_abc123",
+			},
+		},
+		{
+			name:  "double leading underscore drops anchor-free prefixes",
+			input: "__support__",
+			expected: []string{
+				"__support_*",
+				"__support__*",
+				"_*_support__",
+				"__support_*_",
+			},
+		},
+		{
+			name:  "double underscore extension key drops anchor-free prefixes",
+			input: "__darkreader__wasEnabledForHost",
+			expected: []string{
+				"__darkreader_*",
+				"__darkreader__*",
+				"_*_darkreader__wasEnabledForHost",
+				"__*__wasEnabledForHost",
+				"__darkreader_*_wasEnabledForHost",
+			},
+		},
+		{
+			name:  "double leading dash drops anchor-free prefixes",
+			input: "--leading-dash-foo",
+			expected: []string{
+				"--leading-*",
+				"--leading-dash-*",
+				"-*-leading-dash-foo",
+				"--*-dash-foo",
+				"--leading-*-foo",
 			},
 		},
 	}
@@ -909,6 +945,22 @@ func TestFindMergeGroups(t *testing.T) {
 			patterns := coredata.TrackerPatterns{
 				makePattern("__Secure-1PSID", &oneYear),
 				makePattern("__Secure-1PSIDTS", &oneYear),
+			}
+
+			groups := findMergeGroups(patterns, 3)
+			assert.Empty(t, groups)
+		},
+	)
+
+	t.Run(
+		"unrelated double-underscore keys do not merge under anchor-free glob",
+		func(t *testing.T) {
+			t.Parallel()
+
+			patterns := coredata.TrackerPatterns{
+				makePattern("__support__", nil),
+				makePattern("__darkreader__wasEnabledForHost", nil),
+				makePattern("__EXT_APP_REFRESH_BLACK_SUB_DOMAINS__", nil),
 			}
 
 			groups := findMergeGroups(patterns, 3)
