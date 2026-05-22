@@ -69,6 +69,7 @@ func (r *cookieBannerResolver) Categories(ctx context.Context, obj *types.Cookie
 	if filter != nil {
 		excludeKind = filter.ExcludeKind
 	}
+
 	cdFilter := coredata.NewCookieCategoryFilter(excludeKind)
 
 	categories, err := r.cookieBanner.ListCategoriesForBanner(ctx, scope, obj.ID, cursor, cdFilter)
