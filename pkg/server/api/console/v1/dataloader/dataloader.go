@@ -450,6 +450,10 @@ func EncodeAuthorizeKeyAttributes(attrs policy.Attributes) string {
 
 func decodeAuthorizeKeyAttributes(s string) (policy.Attributes, error) {
 	attrs := policy.Attributes{}
+	if s == "" {
+		return attrs, nil
+	}
+
 	if err := json.Unmarshal([]byte(s), &attrs); err != nil {
 		return nil, err
 	}
