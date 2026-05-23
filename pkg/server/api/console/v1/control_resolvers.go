@@ -112,7 +112,10 @@ func (r *controlResolver) Organization(ctx context.Context, obj *types.Control) 
 
 // Regulatory is the resolver for the regulatory field.
 func (r *controlResolver) Regulatory(ctx context.Context, obj *types.Control) (bool, error) {
-	scope := coredata.NewScopeFromObjectID(obj.ID)
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionControlGet)
+	if err != nil {
+		return false, err
+	}
 
 	hasRegulatory, err := r.probo.Controls.HasRegulatoryObligation(ctx, scope, obj.ID)
 	if err != nil {
@@ -125,7 +128,10 @@ func (r *controlResolver) Regulatory(ctx context.Context, obj *types.Control) (b
 
 // Contractual is the resolver for the contractual field.
 func (r *controlResolver) Contractual(ctx context.Context, obj *types.Control) (bool, error) {
-	scope := coredata.NewScopeFromObjectID(obj.ID)
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionControlGet)
+	if err != nil {
+		return false, err
+	}
 
 	hasContractual, err := r.probo.Controls.HasContractualObligation(ctx, scope, obj.ID)
 	if err != nil {
@@ -138,7 +144,10 @@ func (r *controlResolver) Contractual(ctx context.Context, obj *types.Control) (
 
 // RiskAssessment is the resolver for the riskAssessment field.
 func (r *controlResolver) RiskAssessment(ctx context.Context, obj *types.Control) (bool, error) {
-	scope := coredata.NewScopeFromObjectID(obj.ID)
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionControlGet)
+	if err != nil {
+		return false, err
+	}
 
 	hasRisk, err := r.probo.Controls.HasRiskAssessment(ctx, scope, obj.ID)
 	if err != nil {
@@ -875,7 +884,11 @@ func (r *statementOfApplicabilityResolver) Permission(ctx context.Context, obj *
 
 // TotalCount is the resolver for the totalCount field.
 func (r *statementOfApplicabilityConnectionResolver) TotalCount(ctx context.Context, obj *types.StatementOfApplicabilityConnection) (int, error) {
-	scope := coredata.NewScopeFromObjectID(obj.ParentID)
+	scope, err := r.authorize(ctx, obj.ParentID, probo.ActionStatementOfApplicabilityList)
+	if err != nil {
+		return 0, err
+	}
+
 	switch obj.Resolver.(type) {
 	case *organizationResolver:
 		count, err := r.probo.StatementsOfApplicability.CountForOrganizationID(ctx, scope, obj.ParentID)

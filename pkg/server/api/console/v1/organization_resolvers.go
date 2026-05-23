@@ -797,11 +797,6 @@ func (r *organizationResolver) Documents(ctx context.Context, obj *types.Organiz
 	return types.NewDocumentConnection(page, r, obj.ID, documentFilter), nil
 }
 
-// Evidences is the resolver for the evidences field.
-func (r *organizationResolver) Evidences(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.EvidenceOrderBy) (*types.EvidenceConnection, error) {
-	panic(fmt.Errorf("not implemented: Evidences - evidences"))
-}
-
 // Frameworks is the resolver for the frameworks field.
 func (r *organizationResolver) Frameworks(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.FrameworkOrderBy) (*types.FrameworkConnection, error) {
 	scope, err := r.authorize(ctx, obj.ID, probo.ActionFrameworkList)

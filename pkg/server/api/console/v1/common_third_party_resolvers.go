@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlutils"
@@ -17,6 +18,10 @@ import (
 
 // LogoURL is the resolver for the logoUrl field.
 func (r *commonThirdPartyResolver) LogoURL(ctx context.Context, obj *types.CommonThirdParty) (*string, error) {
+	if _, err := r.authorize(ctx, obj.ID, probo.ActionCommonThirdPartyGet); err != nil {
+		return nil, err
+	}
+
 	if obj.LogoFileID == nil {
 		return nil, nil
 	}

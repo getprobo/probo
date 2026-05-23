@@ -7,9 +7,14 @@ package console_v1
 
 import (
 	"context"
+	"errors"
 
+	"github.com/vikstrous/dataloadgen"
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/iam"
+	"go.probo.inc/probo/pkg/probo"
+	"go.probo.inc/probo/pkg/server/api/console/v1/dataloader"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlutils"
@@ -17,7 +22,24 @@ import (
 
 // Organization is the resolver for the organization field.
 func (r *auditLogEntryResolver) Organization(ctx context.Context, obj *types.AuditLogEntry) (*types.Organization, error) {
-	return obj.Organization, nil
+	if _, err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGet); err != nil {
+		return nil, err
+	}
+
+	loaders := dataloader.FromContext(ctx)
+
+	organization, err := loaders.Organization.Load(ctx, obj.Organization.ID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot load organization", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewOrganization(organization), nil
 }
 
 // Permission is the resolver for the permission field.
@@ -27,6 +49,10 @@ func (r *auditLogEntryResolver) Permission(ctx context.Context, obj *types.Audit
 
 // TotalCount is the resolver for the totalCount field.
 func (r *auditLogEntryConnectionResolver) TotalCount(ctx context.Context, obj *types.AuditLogEntryConnection) (int, error) {
+	if _, err := r.authorize(ctx, obj.ParentID, iam.ActionAuditLogEntryList); err != nil {
+		return 0, err
+	}
+
 	filter := coredata.NewAuditLogEntryFilter()
 	if obj.Filter != nil {
 		filter = obj.Filter

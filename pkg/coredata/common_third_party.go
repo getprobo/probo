@@ -24,6 +24,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/iam/policy"
 )
 
 type (
@@ -53,6 +54,18 @@ type (
 
 	CommonThirdParties []*CommonThirdParty
 )
+
+// AuthorizationAttributes is a no-op resource-attribute loader: the
+// common third-party catalog is global (shared across every tenant) and
+// has no organization_id. Authorization for these rows is granted by an
+// identity-scoped policy that has no condition.
+func (t *CommonThirdParty) AuthorizationAttributes(
+	ctx context.Context,
+	conn pg.Querier,
+	resourceIDs []gid.GID,
+) (policy.AttributesByID, error) {
+	return map[gid.GID]policy.Attributes{}, nil
+}
 
 func (t *CommonThirdParty) LoadByID(
 	ctx context.Context,

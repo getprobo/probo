@@ -432,7 +432,10 @@ func (r *cookieCategoryConnectionResolver) TotalCount(ctx context.Context, obj *
 
 // TotalCount is the resolver for the totalCount field.
 func (r *detectedTrackerConnectionResolver) TotalCount(ctx context.Context, obj *types.DetectedTrackerConnection) (int, error) {
-	scope := coredata.NewScopeFromObjectID(obj.ParentID)
+	scope, err := r.authorize(ctx, obj.ParentID, probo.ActionTrackerPatternGet)
+	if err != nil {
+		return 0, err
+	}
 
 	count, err := r.cookieBanner.CountDetectedTrackersByPatternID(ctx, scope, obj.ParentID)
 	if err != nil {
@@ -1256,7 +1259,10 @@ func (r *trackerPatternResolver) CookieCategory(ctx context.Context, obj *types.
 
 // DetectedCount is the resolver for the detectedCount field.
 func (r *trackerPatternResolver) DetectedCount(ctx context.Context, obj *types.TrackerPattern) (int, error) {
-	scope := coredata.NewScopeFromObjectID(obj.ID)
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionTrackerPatternGet)
+	if err != nil {
+		return 0, err
+	}
 
 	count, err := r.cookieBanner.CountDetectedTrackersByPatternID(ctx, scope, obj.ID)
 	if err != nil {
@@ -1269,7 +1275,8 @@ func (r *trackerPatternResolver) DetectedCount(ctx context.Context, obj *types.T
 
 // DetectedTrackers is the resolver for the detectedTrackers field.
 func (r *trackerPatternResolver) DetectedTrackers(ctx context.Context, obj *types.TrackerPattern, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DetectedTrackerOrderBy) (*types.DetectedTrackerConnection, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionTrackerPatternGet); err != nil {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionTrackerPatternGet)
+	if err != nil {
 		return nil, err
 	}
 
@@ -1285,7 +1292,6 @@ func (r *trackerPatternResolver) DetectedTrackers(ctx context.Context, obj *type
 	}
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
-	scope := coredata.NewScopeFromObjectID(obj.ID)
 
 	trackers, err := r.cookieBanner.ListDetectedTrackersForPattern(ctx, scope, obj.ID, cursor)
 	if err != nil {
@@ -1305,12 +1311,12 @@ func (r *trackerPatternResolver) Permission(ctx context.Context, obj *types.Trac
 
 // TotalCount is the resolver for the totalCount field.
 func (r *trackerPatternConnectionResolver) TotalCount(ctx context.Context, obj *types.TrackerPatternConnection) (int, error) {
-	scope := coredata.NewScopeFromObjectID(obj.ParentID)
+	scope, err := r.authorize(ctx, obj.ParentID, probo.ActionTrackerPatternList)
+	if err != nil {
+		return 0, err
+	}
 
-	var (
-		count int
-		err   error
-	)
+	var count int
 
 	switch obj.Resolver.(type) {
 	case *cookieCategoryResolver:
@@ -1362,12 +1368,12 @@ func (r *trackerResourceResolver) Permission(ctx context.Context, obj *types.Tra
 
 // TotalCount is the resolver for the totalCount field.
 func (r *trackerResourceConnectionResolver) TotalCount(ctx context.Context, obj *types.TrackerResourceConnection) (int, error) {
-	scope := coredata.NewScopeFromObjectID(obj.ParentID)
+	scope, err := r.authorize(ctx, obj.ParentID, probo.ActionTrackerResourceList)
+	if err != nil {
+		return 0, err
+	}
 
-	var (
-		count int
-		err   error
-	)
+	var count int
 
 	switch obj.Resolver.(type) {
 	case *cookieCategoryResolver:

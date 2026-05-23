@@ -469,4 +469,12 @@ const (
 
 	// CookieConsentRecord actions
 	ActionCookieConsentRecordList = "core:cookie-consent-record:list"
+
+	// CommonThirdParty actions (global catalog, no organization scope).
+	ActionCommonThirdPartyGet  = "core:common-third-party:get"
+	ActionCommonThirdPartyList = "core:common-third-party:list"
+
+	// ElectronicSignature actions (tenant-scoped via the related document
+	// version signature / trust center access).
+	ActionElectronicSignatureGet = "core:electronic-signature:get"
 )

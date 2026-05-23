@@ -441,9 +441,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 		}
 	case coredata.TrackerPatternEntityType:
 		action = probo.ActionTrackerPatternGet
-		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
-			scope := coredata.NewScopeFromObjectID(id)
-
+		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
 			pattern, err := r.cookieBanner.GetTrackerPattern(ctx, scope, id)
 			if err != nil {
 				return nil, err
@@ -510,6 +508,12 @@ func (r *queryResolver) Viewer(ctx context.Context) (*types.Viewer, error) {
 
 // CommonThirdParties is the resolver for the commonThirdParties field.
 func (r *queryResolver) CommonThirdParties(ctx context.Context, name string) ([]*types.CommonThirdParty, error) {
+	identity := authn.IdentityFromContext(ctx)
+
+	if _, err := r.authorize(ctx, identity.ID, probo.ActionCommonThirdPartyList); err != nil {
+		return nil, err
+	}
+
 	parties, err := r.thirdParty.Search(ctx, name)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot search common third parties", log.Error(err))

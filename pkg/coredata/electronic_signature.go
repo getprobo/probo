@@ -27,6 +27,7 @@ import (
 	"go.gearno.de/x/ref"
 	"go.probo.inc/probo/pkg/crypto/hash"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/iam/policy"
 )
 
 type ElectronicSignature struct {
@@ -57,6 +58,42 @@ type ElectronicSignature struct {
 	ProcessingStartedAt            *time.Time                      `db:"processing_started_at"`
 	CreatedAt                      time.Time                       `db:"created_at"`
 	UpdatedAt                      time.Time                       `db:"updated_at"`
+}
+
+func (es *ElectronicSignature) AuthorizationAttributes(
+	ctx context.Context,
+	conn pg.Querier,
+	resourceIDs []gid.GID,
+) (policy.AttributesByID, error) {
+	q := `SELECT id, organization_id FROM electronic_signatures WHERE id = ANY(@resource_ids::text[])`
+
+	args := pgx.StrictNamedArgs{
+		"resource_ids": resourceIDs,
+	}
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return nil, fmt.Errorf("cannot query electronic signature authorization attributes: %w", err)
+	}
+	defer rows.Close()
+
+	attrsByID := make(policy.AttributesByID)
+	for rows.Next() {
+		var id, organizationID gid.GID
+		if err := rows.Scan(&id, &organizationID); err != nil {
+			return nil, fmt.Errorf("cannot scan electronic signature authorization attributes: %w", err)
+		}
+
+		attrsByID[id] = policy.Attributes{
+			"organization_id": organizationID.String(),
+		}
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("cannot iterate electronic signature authorization attributes: %w", err)
+	}
+
+	return attrsByID, nil
 }
 
 func (es *ElectronicSignature) NewEvent(

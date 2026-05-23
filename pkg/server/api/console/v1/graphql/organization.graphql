@@ -227,14 +227,6 @@ type Organization implements Node {
         filter: DocumentFilter
     ): DocumentConnection! @goField(forceResolver: true)
 
-    evidences(
-        first: Int
-        after: CursorKey
-        last: Int
-        before: CursorKey
-        orderBy: EvidenceOrder
-    ): EvidenceConnection! @goField(forceResolver: true)
-
     frameworks(
         first: Int
         after: CursorKey

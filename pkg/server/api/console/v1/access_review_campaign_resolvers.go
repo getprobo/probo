@@ -10,12 +10,15 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/vikstrous/dataloadgen"
+	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/accessreview"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/server/api/authn"
+	"go.probo.inc/probo/pkg/server/api/console/v1/dataloader"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlutils"
@@ -86,7 +89,10 @@ func (r *accessEntryResolver) Permission(ctx context.Context, obj *types.AccessE
 
 // TotalCount is the resolver for the totalCount field.
 func (r *accessEntryConnectionResolver) TotalCount(ctx context.Context, obj *types.AccessEntryConnection) (int, error) {
-	scope := coredata.NewScopeFromObjectID(obj.ParentID)
+	scope, err := r.authorize(ctx, obj.ParentID, probo.ActionAccessEntryList)
+	if err != nil {
+		return 0, err
+	}
 
 	switch obj.Resolver.(type) {
 	case *accessReviewCampaignResolver:
@@ -111,81 +117,25 @@ func (r *accessEntryConnectionResolver) TotalCount(ctx context.Context, obj *typ
 }
 
 // Organization is the resolver for the organization field.
-func (r *accessReviewResolver) Organization(ctx context.Context, obj *types.AccessReview) (*types.Organization, error) {
-	return obj.Organization, nil
-}
-
-// IdentitySource is the resolver for the identitySource field.
-func (r *accessReviewResolver) IdentitySource(ctx context.Context, obj *types.AccessReview) (*types.AccessSource, error) {
-	return obj.IdentitySource, nil
-}
-
-// AccessSources is the resolver for the accessSources field.
-func (r *accessReviewResolver) AccessSources(ctx context.Context, obj *types.AccessReview, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AccessSourceOrder) (*types.AccessSourceConnection, error) {
-	scope, err := r.authorize(ctx, obj.Organization.ID, probo.ActionAccessSourceList)
-	if err != nil {
-		return nil, err
-	}
-
-	pageOrderBy := page.OrderBy[coredata.AccessSourceOrderField]{
-		Field:     coredata.AccessSourceOrderFieldCreatedAt,
-		Direction: page.OrderDirectionDesc,
-	}
-
-	if orderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.AccessSourceOrderField]{
-			Field:     orderBy.Field,
-			Direction: orderBy.Direction,
-		}
-	}
-
-	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
-
-	p, err := r.accessReview.Sources(scope).ListForOrganizationID(ctx, obj.Organization.ID, cursor)
-	if err != nil {
-		panic(fmt.Errorf("cannot list access sources: %w", err))
-	}
-
-	return types.NewAccessSourceConnection(p, r, obj.Organization.ID), nil
-}
-
-// Campaigns is the resolver for the campaigns field.
-func (r *accessReviewResolver) Campaigns(ctx context.Context, obj *types.AccessReview, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AccessReviewCampaignOrder) (*types.AccessReviewCampaignConnection, error) {
-	scope, err := r.authorize(ctx, obj.Organization.ID, probo.ActionAccessReviewCampaignList)
-	if err != nil {
-		return nil, err
-	}
-
-	pageOrderBy := page.OrderBy[coredata.AccessReviewCampaignOrderField]{
-		Field:     coredata.AccessReviewCampaignOrderFieldCreatedAt,
-		Direction: page.OrderDirectionDesc,
-	}
-
-	if orderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.AccessReviewCampaignOrderField]{
-			Field:     orderBy.Field,
-			Direction: orderBy.Direction,
-		}
-	}
-
-	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
-
-	p, err := r.accessReview.Campaigns(scope).ListForOrganizationID(ctx, obj.Organization.ID, cursor)
-	if err != nil {
-		panic(fmt.Errorf("cannot list access review campaigns: %w", err))
-	}
-
-	return types.NewAccessReviewCampaignConnection(p, r, obj.Organization.ID), nil
-}
-
-// Permission is the resolver for the permission field.
-func (r *accessReviewResolver) Permission(ctx context.Context, obj *types.AccessReview, action string) (bool, error) {
-	return r.Resolver.Permission(ctx, obj, action)
-}
-
-// Organization is the resolver for the organization field.
 func (r *accessReviewCampaignResolver) Organization(ctx context.Context, obj *types.AccessReviewCampaign) (*types.Organization, error) {
-	return obj.Organization, nil
+	if _, err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGet); err != nil {
+		return nil, err
+	}
+
+	loaders := dataloader.FromContext(ctx)
+
+	organization, err := loaders.Organization.Load(ctx, obj.Organization.ID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot load organization", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewOrganization(organization), nil
 }
 
 // ScopeSources is the resolver for the scopeSources field.
@@ -293,7 +243,10 @@ func (r *accessReviewCampaignResolver) Permission(ctx context.Context, obj *type
 
 // TotalCount is the resolver for the totalCount field.
 func (r *accessReviewCampaignConnectionResolver) TotalCount(ctx context.Context, obj *types.AccessReviewCampaignConnection) (int, error) {
-	scope := coredata.NewScopeFromObjectID(obj.ParentID)
+	scope, err := r.authorize(ctx, obj.ParentID, probo.ActionAccessReviewCampaignList)
+	if err != nil {
+		return 0, err
+	}
 
 	switch obj.Resolver.(type) {
 	case *organizationResolver:
@@ -356,7 +309,24 @@ func (r *accessReviewCampaignScopeSourceResolver) Statistics(ctx context.Context
 
 // Organization is the resolver for the organization field.
 func (r *accessSourceResolver) Organization(ctx context.Context, obj *types.AccessSource) (*types.Organization, error) {
-	return obj.Organization, nil
+	if _, err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGet); err != nil {
+		return nil, err
+	}
+
+	loaders := dataloader.FromContext(ctx)
+
+	organization, err := loaders.Organization.Load(ctx, obj.Organization.ID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot load organization", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewOrganization(organization), nil
 }
 
 // Connector is the resolver for the connector field.
@@ -365,7 +335,10 @@ func (r *accessSourceResolver) Connector(ctx context.Context, obj *types.AccessS
 		return nil, nil
 	}
 
-	scope := coredata.NewScopeFromObjectID(obj.ID)
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionAccessSourceGet)
+	if err != nil {
+		return nil, err
+	}
 
 	connector, err := r.probo.Connectors.Get(ctx, scope, *obj.ConnectorID)
 	if err != nil {
@@ -456,7 +429,10 @@ func (r *accessSourceResolver) ConnectionStatus(ctx context.Context, obj *types.
 		return types.AccessSourceConnectionStatusNotApplicable, nil
 	}
 
-	scope := coredata.NewScopeFromObjectID(obj.ID)
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionAccessSourceGet)
+	if err != nil {
+		return types.AccessSourceConnectionStatusNotApplicable, err
+	}
 
 	httpClient, dbConnector, err := r.accessReview.Sources(scope).ConnectorHTTPClient(ctx, *obj.ConnectorID)
 	if err != nil {
@@ -522,7 +498,10 @@ func (r *accessSourceResolver) Permission(ctx context.Context, obj *types.Access
 
 // TotalCount is the resolver for the totalCount field.
 func (r *accessSourceConnectionResolver) TotalCount(ctx context.Context, obj *types.AccessSourceConnection) (int, error) {
-	scope := coredata.NewScopeFromObjectID(obj.ParentID)
+	scope, err := r.authorize(ctx, obj.ParentID, probo.ActionAccessSourceList)
+	if err != nil {
+		return 0, err
+	}
 
 	switch obj.Resolver.(type) {
 	case *organizationResolver:
@@ -975,9 +954,6 @@ func (r *Resolver) AccessEntryConnection() schema.AccessEntryConnectionResolver 
 	return &accessEntryConnectionResolver{r}
 }
 
-// AccessReview returns schema.AccessReviewResolver implementation.
-func (r *Resolver) AccessReview() schema.AccessReviewResolver { return &accessReviewResolver{r} }
-
 // AccessReviewCampaign returns schema.AccessReviewCampaignResolver implementation.
 func (r *Resolver) AccessReviewCampaign() schema.AccessReviewCampaignResolver {
 	return &accessReviewCampaignResolver{r}
@@ -1003,7 +979,6 @@ func (r *Resolver) AccessSourceConnection() schema.AccessSourceConnectionResolve
 
 type accessEntryResolver struct{ *Resolver }
 type accessEntryConnectionResolver struct{ *Resolver }
-type accessReviewResolver struct{ *Resolver }
 type accessReviewCampaignResolver struct{ *Resolver }
 type accessReviewCampaignConnectionResolver struct{ *Resolver }
 type accessReviewCampaignScopeSourceResolver struct{ *Resolver }

@@ -10,12 +10,17 @@ import (
 	"fmt"
 	"time"
 
+	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
 )
 
 // CertificateFileURL is the resolver for the certificateFileUrl field.
 func (r *electronicSignatureResolver) CertificateFileURL(ctx context.Context, obj *types.ElectronicSignature) (*string, error) {
+	if _, err := r.authorize(ctx, obj.ID, probo.ActionElectronicSignatureGet); err != nil {
+		return nil, err
+	}
+
 	signature, err := r.esign.GetSignatureByID(ctx, obj.ID)
 	if err != nil {
 		return nil, fmt.Errorf("cannot load signature: %w", err)
@@ -35,6 +40,10 @@ func (r *electronicSignatureResolver) CertificateFileURL(ctx context.Context, ob
 
 // Events is the resolver for the events field.
 func (r *electronicSignatureResolver) Events(ctx context.Context, obj *types.ElectronicSignature) ([]*types.ElectronicSignatureEvent, error) {
+	if _, err := r.authorize(ctx, obj.ID, probo.ActionElectronicSignatureGet); err != nil {
+		return nil, err
+	}
+
 	events, err := r.esign.GetEventsBySignatureID(ctx, obj.ID)
 	if err != nil {
 		return nil, fmt.Errorf("cannot load signature events: %w", err)
