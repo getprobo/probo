@@ -16,7 +16,92 @@ package policy
 
 import (
 	"testing"
+
+	"go.probo.inc/probo/pkg/gid"
 )
+
+func TestResourcePattern_MatchesResource(t *testing.T) {
+	tenantID := gid.NewTenantID()
+	otherTenantID := gid.NewTenantID()
+	frameworkEntityType := uint16(1001)
+	organizationEntityType := uint16(1002)
+	resource := gid.New(tenantID, frameworkEntityType)
+	otherTenantResource := gid.New(otherTenantID, frameworkEntityType)
+	otherEntityResource := gid.New(tenantID, organizationEntityType)
+
+	tests := []struct {
+		name     string
+		pattern  ResourcePattern
+		resource gid.GID
+		want     bool
+	}{
+		{
+			name:     "empty pattern matches all resources",
+			pattern:  ResourcePattern{},
+			resource: resource,
+			want:     true,
+		},
+		{
+			name: "tenant only pattern matches same tenant",
+			pattern: ResourcePattern{
+				TenantID: &tenantID,
+			},
+			resource: resource,
+			want:     true,
+		},
+		{
+			name: "tenant only pattern does not match different tenant",
+			pattern: ResourcePattern{
+				TenantID: &tenantID,
+			},
+			resource: otherTenantResource,
+			want:     false,
+		},
+		{
+			name: "entity type only pattern matches same type",
+			pattern: ResourcePattern{
+				EntityType: &frameworkEntityType,
+			},
+			resource: resource,
+			want:     true,
+		},
+		{
+			name: "entity type only pattern does not match different type",
+			pattern: ResourcePattern{
+				EntityType: &frameworkEntityType,
+			},
+			resource: otherEntityResource,
+			want:     false,
+		},
+		{
+			name: "tenant and entity type pattern matches when both match",
+			pattern: ResourcePattern{
+				TenantID:   &tenantID,
+				EntityType: &frameworkEntityType,
+			},
+			resource: resource,
+			want:     true,
+		},
+		{
+			name: "tenant and entity type pattern fails when one mismatches",
+			pattern: ResourcePattern{
+				TenantID:   &tenantID,
+				EntityType: &frameworkEntityType,
+			},
+			resource: otherEntityResource,
+			want:     false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := tt.pattern.MatchesResource(tt.resource)
+			if got != tt.want {
+				t.Errorf("MatchesResource() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
 
 func TestCondition_Evaluate_Equals(t *testing.T) {
 	tests := []struct {
@@ -223,6 +308,45 @@ func TestCondition_Evaluate_In(t *testing.T) {
 			},
 			want: false,
 		},
+		{
+			name: "in - matches value inside comma-separated set",
+			condition: Condition{
+				Operator: ConditionIn,
+				Key:      "principal.organization_id",
+				Values:   []string{"resource.organization_ids"},
+			},
+			ctx: ConditionContext{
+				Principal: map[string]string{"organization_id": "org_2"},
+				Resource:  map[string]string{"organization_ids": "org_1, org_2, org_3"},
+			},
+			want: true,
+		},
+		{
+			name: "in - does not match comma-separated set",
+			condition: Condition{
+				Operator: ConditionIn,
+				Key:      "principal.organization_id",
+				Values:   []string{"resource.organization_ids"},
+			},
+			ctx: ConditionContext{
+				Principal: map[string]string{"organization_id": "org_9"},
+				Resource:  map[string]string{"organization_ids": "org_1,org_2"},
+			},
+			want: false,
+		},
+		{
+			name: "in - skips unresolved references",
+			condition: Condition{
+				Operator: ConditionIn,
+				Key:      "principal.organization_id",
+				Values:   []string{"resource.missing_ids"},
+			},
+			ctx: ConditionContext{
+				Principal: map[string]string{"organization_id": "org_2"},
+				Resource:  map[string]string{"organization_ids": "org_1,org_2"},
+			},
+			want: false,
+		},
 	}
 
 	for _, tt := range tests {
@@ -265,6 +389,57 @@ func TestCondition_Evaluate_NotIn(t *testing.T) {
 				Principal: map[string]string{"role": "admin"},
 			},
 			want: false,
+		},
+		{
+			name: "not in - comma-separated set contains value",
+			condition: Condition{
+				Operator: ConditionNotIn,
+				Key:      "principal.organization_id",
+				Values:   []string{"resource.organization_ids"},
+			},
+			ctx: ConditionContext{
+				Principal: map[string]string{"organization_id": "org_2"},
+				Resource:  map[string]string{"organization_ids": "org_1, org_2, org_3"},
+			},
+			want: false,
+		},
+		{
+			name: "not in - comma-separated set does not contain value",
+			condition: Condition{
+				Operator: ConditionNotIn,
+				Key:      "principal.organization_id",
+				Values:   []string{"resource.organization_ids"},
+			},
+			ctx: ConditionContext{
+				Principal: map[string]string{"organization_id": "org_9"},
+				Resource:  map[string]string{"organization_ids": "org_1,org_2"},
+			},
+			want: true,
+		},
+		{
+			name: "unknown operator returns false",
+			condition: Condition{
+				Operator: ConditionOperator("Unknown"),
+				Key:      "principal.role",
+				Values:   []string{"admin"},
+			},
+			ctx: ConditionContext{
+				Principal: map[string]string{"role": "admin"},
+			},
+			want: false,
+		},
+		{
+			name: "not in - skips unresolved references",
+			condition: Condition{
+				Operator: ConditionNotIn,
+				Key:      "principal.organization_id",
+				Values:   []string{"resource.missing_ids"},
+			},
+			ctx: ConditionContext{
+				Principal: map[string]string{"organization_id": "org_9"},
+				Resource:  map[string]string{"organization_ids": "org_1,org_2"},
+			},
+			want: true,
 		},
 	}
 
@@ -311,4 +486,104 @@ func TestConditionHelpers(t *testing.T) {
 			t.Errorf("Expected ConditionNotIn, got %v", c.Operator)
 		}
 	})
+}
+
+func TestResolveKey(t *testing.T) {
+	ctx := ConditionContext{
+		Principal: map[string]string{
+			"id": "principal-id",
+		},
+		Resource: map[string]string{
+			"id": "resource-id",
+		},
+	}
+
+	tests := []struct {
+		name   string
+		key    string
+		want   string
+		wantOK bool
+	}{
+		{
+			name:   "resolves principal key",
+			key:    "principal.id",
+			want:   "principal-id",
+			wantOK: true,
+		},
+		{
+			name:   "resolves resource key",
+			key:    "resource.id",
+			want:   "resource-id",
+			wantOK: true,
+		},
+		{
+			name:   "returns false for unknown namespace",
+			key:    "unknown.id",
+			want:   "",
+			wantOK: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, ok := resolveKey(tt.key, ctx)
+			if ok != tt.wantOK {
+				t.Fatalf("resolveKey() ok = %v, want %v", ok, tt.wantOK)
+			}
+
+			if got != tt.want {
+				t.Fatalf("resolveKey() value = %q, want %q", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestResolveValue(t *testing.T) {
+	ctx := ConditionContext{
+		Principal: map[string]string{
+			"id": "principal-id",
+		},
+		Resource: map[string]string{
+			"id": "resource-id",
+		},
+	}
+
+	tests := []struct {
+		name   string
+		value  string
+		want   string
+		wantOK bool
+	}{
+		{
+			name:   "resolves principal reference",
+			value:  "principal.id",
+			want:   "principal-id",
+			wantOK: true,
+		},
+		{
+			name:   "resolves resource reference",
+			value:  "resource.id",
+			want:   "resource-id",
+			wantOK: true,
+		},
+		{
+			name:   "keeps literal values",
+			value:  "literal",
+			want:   "literal",
+			wantOK: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, ok := resolveValue(tt.value, ctx)
+			if ok != tt.wantOK {
+				t.Fatalf("resolveValue() ok = %v, want %v", ok, tt.wantOK)
+			}
+
+			if got != tt.want {
+				t.Fatalf("resolveValue() value = %q, want %q", got, tt.want)
+			}
+		})
+	}
 }

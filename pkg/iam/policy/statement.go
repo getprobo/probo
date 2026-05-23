@@ -104,18 +104,26 @@ const (
 	ConditionNotIn ConditionOperator = "NotIn"
 )
 
+type (
+	// Attributes is a flat key/value bag consumed by policy condition
+	// evaluation (e.g. "organization_id", "role", "id").
+	Attributes = map[string]string
+
+	// AttributesByID groups Attributes by resource id, as returned by
+	// batch attribute loaders.
+	AttributesByID = map[gid.GID]Attributes
+)
+
 // ConditionContext provides attribute values for condition evaluation.
 type ConditionContext struct {
-	Principal map[string]string
-	Resource  map[string]string
+	Principal Attributes
+	Resource  Attributes
 }
 
 // Evaluate checks if the condition is satisfied given the context.
 func (c Condition) Evaluate(ctx ConditionContext) bool {
-	// Resolve the key value from context
 	value, ok := resolveKey(c.Key, ctx)
 	if !ok {
-		// Key not found - condition fails
 		return false
 	}
 
@@ -198,7 +206,6 @@ func (c Condition) Evaluate(ctx ConditionContext) bool {
 // resolveKey extracts a value from the context based on a key path.
 // Key format: "principal.id", "resource.owner_id", etc.
 func resolveKey(key string, ctx ConditionContext) (string, bool) {
-	// Simple implementation - can be extended for nested paths
 	if len(key) > 10 && key[:10] == "principal." {
 		attrKey := key[10:]
 		val, ok := ctx.Principal[attrKey]
@@ -216,9 +223,9 @@ func resolveKey(key string, ctx ConditionContext) (string, bool) {
 	return "", false
 }
 
-// resolveValue resolves a value, which can be a literal or a reference to context.
+// resolveValue returns either a context reference (e.g. "principal.id")
+// resolved against ctx, or the value itself when it is a literal.
 func resolveValue(value string, ctx ConditionContext) (string, bool) {
-	// Check if value is a reference (e.g., "principal.id")
 	if len(value) > 10 && value[:10] == "principal." {
 		return resolveKey(value, ctx)
 	}
@@ -227,6 +234,5 @@ func resolveValue(value string, ctx ConditionContext) (string, bool) {
 		return resolveKey(value, ctx)
 	}
 
-	// Literal value
 	return value, true
 }
