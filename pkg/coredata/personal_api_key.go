@@ -23,6 +23,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/iam/policy"
 	"go.probo.inc/probo/pkg/page"
 )
 
@@ -93,19 +94,51 @@ LIMIT 1;
 	return nil
 }
 
-func (a *PersonalAPIKey) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
-	q := "SELECT identity_id FROM iam_personal_api_keys WHERE id = $1 LIMIT 1;"
+func (a *PersonalAPIKey) AuthorizationAttributes(
+	ctx context.Context,
+	conn pg.Querier,
+	resourceIDs []gid.GID,
+) (policy.AttributesByID, error) {
+	q := `
+SELECT
+    id,
+    identity_id
+FROM
+    iam_personal_api_keys
+WHERE
+    id = ANY(@resource_ids::text[])
+`
 
-	var identityID gid.GID
-	if err := conn.QueryRow(ctx, q, a.ID).Scan(&identityID); err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, ErrResourceNotFound
-		}
-
-		return nil, fmt.Errorf("cannot query personal api key iam attributes: %w", err)
+	args := pgx.StrictNamedArgs{
+		"resource_ids": resourceIDs,
 	}
 
-	return map[string]string{"identity_id": identityID.String()}, nil
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return nil, fmt.Errorf("cannot query personal api key authorization attributes: %w", err)
+	}
+	defer rows.Close()
+
+	attrsByID := make(policy.AttributesByID, len(resourceIDs))
+	for rows.Next() {
+		var (
+			id         gid.GID
+			identityID gid.GID
+		)
+
+		err = rows.Scan(&id, &identityID)
+		if err != nil {
+			return nil, fmt.Errorf("cannot scan personal api key authorization attributes: %w", err)
+		}
+
+		attrsByID[id] = policy.Attributes{"identity_id": identityID.String()}
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, fmt.Errorf("cannot iterate personal api key authorization attributes: %w", err)
+	}
+
+	return attrsByID, nil
 }
 
 func (a *PersonalAPIKeys) LoadByIdentityID(

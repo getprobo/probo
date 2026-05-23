@@ -23,6 +23,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/iam/policy"
 	"go.probo.inc/probo/pkg/mail"
 )
 
@@ -65,8 +66,46 @@ var (
 
 // AuthorizationAttributes returns the authorization attributes for policy evaluation.
 // Email is identity-scoped (not org-scoped), so it returns an empty map.
-func (e *Email) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
-	return map[string]string{}, nil
+func (e *Email) AuthorizationAttributes(
+	ctx context.Context,
+	conn pg.Querier,
+	resourceIDs []gid.GID,
+) (policy.AttributesByID, error) {
+	q := `
+SELECT
+    id
+FROM
+    emails
+WHERE
+    id = ANY(@resource_ids::text[])
+`
+
+	args := pgx.StrictNamedArgs{
+		"resource_ids": resourceIDs,
+	}
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return nil, fmt.Errorf("cannot query email authorization attributes: %w", err)
+	}
+	defer rows.Close()
+
+	attrsByID := make(policy.AttributesByID, len(resourceIDs))
+	for rows.Next() {
+		var id gid.GID
+		err = rows.Scan(&id)
+		if err != nil {
+			return nil, fmt.Errorf("cannot scan email authorization attributes: %w", err)
+		}
+
+		attrsByID[id] = policy.Attributes{}
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, fmt.Errorf("cannot iterate email authorization attributes: %w", err)
+	}
+
+	return attrsByID, nil
 }
 
 func NewEmail(

@@ -26,6 +26,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/iam/policy"
 	"go.probo.inc/probo/pkg/page"
 )
 
@@ -194,27 +195,51 @@ LIMIT 1;
 
 // AuthorizationAttributes loads the minimal authorization attributes for policy condition evaluation.
 // It is intentionally lightweight and does not populate the Session struct.
-func (s *Session) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
+func (s *Session) AuthorizationAttributes(
+	ctx context.Context,
+	conn pg.Querier,
+	resourceIDs []gid.GID,
+) (policy.AttributesByID, error) {
 	q := `
 SELECT
+    id,
     identity_id
 FROM
     iam_sessions
 WHERE
-    id = $1
-LIMIT 1;
+    id = ANY(@resource_ids::text[])
 `
 
-	var identityID gid.GID
-	if err := conn.QueryRow(ctx, q, s.ID).Scan(&identityID); err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, ErrResourceNotFound
-		}
-
-		return nil, fmt.Errorf("cannot query session iam attributes: %w", err)
+	args := pgx.StrictNamedArgs{
+		"resource_ids": resourceIDs,
 	}
 
-	return map[string]string{"identity_id": identityID.String()}, nil
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return nil, fmt.Errorf("cannot query session authorization attributes: %w", err)
+	}
+	defer rows.Close()
+
+	attrsByID := make(policy.AttributesByID, len(resourceIDs))
+	for rows.Next() {
+		var (
+			id         gid.GID
+			identityID gid.GID
+		)
+
+		err = rows.Scan(&id, &identityID)
+		if err != nil {
+			return nil, fmt.Errorf("cannot scan session authorization attributes: %w", err)
+		}
+
+		attrsByID[id] = policy.Attributes{"identity_id": identityID.String()}
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, fmt.Errorf("cannot iterate session authorization attributes: %w", err)
+	}
+
+	return attrsByID, nil
 }
 
 func (s *Session) Insert(

@@ -25,6 +25,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/iam/policy"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/uri"
 )
@@ -72,32 +73,55 @@ func (c *OAuth2Client) CursorKey(orderBy OAuth2ClientOrderField) page.CursorKey 
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
-func (c *OAuth2Client) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
+func (c *OAuth2Client) AuthorizationAttributes(
+	ctx context.Context,
+	conn pg.Querier,
+	resourceIDs []gid.GID,
+) (policy.AttributesByID, error) {
 	q := `
 SELECT
-	organization_id
+    id,
+    organization_id
 FROM
-	iam_oauth2_clients
+    iam_oauth2_clients
 WHERE
-	id = $1
-LIMIT 1;
+    id = ANY(@resource_ids::text[])
 `
 
-	var organizationID *gid.GID
-	if err := conn.QueryRow(ctx, q, c.ID).Scan(&organizationID); err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, ErrResourceNotFound
-		}
+	args := pgx.StrictNamedArgs{
+		"resource_ids": resourceIDs,
+	}
 
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
 		return nil, fmt.Errorf("cannot query oauth2 client authorization attributes: %w", err)
 	}
+	defer rows.Close()
 
-	attrs := make(map[string]string)
-	if organizationID != nil {
-		attrs["organization_id"] = organizationID.String()
+	attrsByID := make(policy.AttributesByID, len(resourceIDs))
+	for rows.Next() {
+		var (
+			id             gid.GID
+			organizationID *gid.GID
+		)
+
+		err = rows.Scan(&id, &organizationID)
+		if err != nil {
+			return nil, fmt.Errorf("cannot scan oauth2 client authorization attributes: %w", err)
+		}
+
+		attrs := make(map[string]string)
+		if organizationID != nil {
+			attrs["organization_id"] = organizationID.String()
+		}
+		attrsByID[id] = attrs
 	}
 
-	return attrs, nil
+	if err = rows.Err(); err != nil {
+		return nil, fmt.Errorf("cannot iterate oauth2 client authorization attributes: %w", err)
+	}
+
+	return attrsByID, nil
 }
 
 func (c *OAuth2Client) LoadByID(

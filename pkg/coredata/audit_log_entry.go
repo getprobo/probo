@@ -25,6 +25,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/iam/policy"
 	"go.probo.inc/probo/pkg/page"
 )
 
@@ -53,19 +54,42 @@ func (e AuditLogEntry) CursorKey(orderBy AuditLogEntryOrderField) page.CursorKey
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
-func (e *AuditLogEntry) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
-	q := `SELECT organization_id FROM audit_log_entries WHERE id = $1 LIMIT 1;`
+func (e *AuditLogEntry) AuthorizationAttributes(
+	ctx context.Context,
+	conn pg.Querier,
+	resourceIDs []gid.GID,
+) (policy.AttributesByID, error) {
+	q := `SELECT id, organization_id FROM audit_log_entries WHERE id = ANY(@resource_ids::text[])`
 
-	var organizationID gid.GID
-	if err := conn.QueryRow(ctx, q, e.ID).Scan(&organizationID); err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, ErrResourceNotFound
-		}
-
-		return nil, fmt.Errorf("cannot query audit log entry authorization attributes: %w", err)
+	args := pgx.StrictNamedArgs{
+		"resource_ids": resourceIDs,
 	}
 
-	return map[string]string{"organization_id": organizationID.String()}, nil
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return nil, fmt.Errorf("cannot query authorization attributes: %w", err)
+	}
+
+	defer rows.Close()
+
+	attrsByID := make(policy.AttributesByID)
+	for rows.Next() {
+		var id, organizationID gid.GID
+		err := rows.Scan(&id, &organizationID)
+		if err != nil {
+			return nil, fmt.Errorf("cannot scan authorization attributes: %w", err)
+		}
+
+		attrsByID[id] = policy.Attributes{
+			"organization_id": organizationID.String(),
+		}
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("cannot iterate authorization attributes: %w", err)
+	}
+
+	return attrsByID, nil
 }
 
 func (e *AuditLogEntry) Insert(
@@ -116,6 +140,61 @@ VALUES (
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
 		return fmt.Errorf("cannot insert audit log entry: %w", err)
+	}
+
+	return nil
+}
+
+// BulkInsert writes all entries to audit_log_entries in a single PostgreSQL
+// COPY operation. Used by the authorizer's batch path to fold N per-resource
+// INSERTs into a single round trip.
+func (es AuditLogEntries) BulkInsert(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+) error {
+	if len(es) == 0 {
+		return nil
+	}
+
+	rows := make([][]any, 0, len(es))
+	for _, e := range es {
+		rows = append(
+			rows,
+			[]any{
+				e.ID,
+				scope.GetTenantID(),
+				e.OrganizationID,
+				e.ActorID,
+				e.ActorType,
+				e.Action,
+				e.ResourceType,
+				e.ResourceID,
+				e.Metadata,
+				e.CreatedAt,
+			},
+		)
+	}
+
+	_, err := conn.CopyFrom(
+		ctx,
+		pgx.Identifier{"audit_log_entries"},
+		[]string{
+			"id",
+			"tenant_id",
+			"organization_id",
+			"actor_id",
+			"actor_type",
+			"action",
+			"resource_type",
+			"resource_id",
+			"metadata",
+			"created_at",
+		},
+		pgx.CopyFromRows(rows),
+	)
+	if err != nil {
+		return fmt.Errorf("cannot bulk insert audit log entries: %w", err)
 	}
 
 	return nil

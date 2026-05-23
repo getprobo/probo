@@ -27,6 +27,7 @@ import (
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/agent"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/iam/policy"
 	"go.probo.inc/probo/pkg/page"
 )
 
@@ -121,30 +122,42 @@ func (e AgentRun) CursorKey(orderBy AgentRunOrderField) page.CursorKey {
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
-func (e *AgentRun) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
-	q := `SELECT organization_id FROM agent_runs WHERE id = @id LIMIT 1;`
+func (e *AgentRun) AuthorizationAttributes(
+	ctx context.Context,
+	conn pg.Querier,
+	resourceIDs []gid.GID,
+) (policy.AttributesByID, error) {
+	q := `SELECT id, organization_id FROM agent_runs WHERE id = ANY(@resource_ids::text[])`
 
-	args := pgx.StrictNamedArgs{"id": e.ID.String()}
+	args := pgx.StrictNamedArgs{
+		"resource_ids": resourceIDs,
+	}
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
-		return nil, fmt.Errorf("cannot query agent run authorization attributes: %w", err)
+		return nil, fmt.Errorf("cannot query authorization attributes: %w", err)
 	}
 
-	type row struct {
-		OrganizationID gid.GID `db:"organization_id"`
-	}
+	defer rows.Close()
 
-	r, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[row])
-	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, ErrResourceNotFound
+	attrsByID := make(policy.AttributesByID)
+	for rows.Next() {
+		var id, organizationID gid.GID
+		err := rows.Scan(&id, &organizationID)
+		if err != nil {
+			return nil, fmt.Errorf("cannot scan authorization attributes: %w", err)
 		}
 
-		return nil, fmt.Errorf("cannot load agent run authorization attributes: %w", err)
+		attrsByID[id] = policy.Attributes{
+			"organization_id": organizationID.String(),
+		}
 	}
 
-	return map[string]string{"organization_id": r.OrganizationID.String()}, nil
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("cannot iterate authorization attributes: %w", err)
+	}
+
+	return attrsByID, nil
 }
 
 func (e *AgentRun) LoadByID(
