@@ -20,8 +20,6 @@ import (
 	"fmt"
 	"maps"
 	"net/http"
-	"slices"
-	"strings"
 
 	"github.com/vikstrous/dataloadgen"
 	"go.probo.inc/probo/pkg/cookiebanner"
@@ -440,39 +438,17 @@ func (f *batchFetcher) fetchAuthorizesIndividually(
 	return result, nil
 }
 
-// EncodeAuthorizeKeyAttributes returns a canonical (sorted-key) JSON
-// encoding of attrs for use as AuthorizeKey.ResourceAttributes. Maps that
-// compare equal produce identical strings; nil or empty attrs encode to "".
 func EncodeAuthorizeKeyAttributes(attrs policy.Attributes) string {
 	if len(attrs) == 0 {
 		return ""
 	}
 
-	keys := slices.Sorted(maps.Keys(attrs))
+	b, _ := json.Marshal(attrs)
 
-	var sb strings.Builder
-	sb.WriteByte('{')
-	for i, k := range keys {
-		if i > 0 {
-			sb.WriteByte(',')
-		}
-
-		kb, _ := json.Marshal(k)
-		sb.Write(kb)
-		sb.WriteByte(':')
-		vb, _ := json.Marshal(attrs[k])
-		sb.Write(vb)
-	}
-	sb.WriteByte('}')
-
-	return sb.String()
+	return string(b)
 }
 
 func decodeAuthorizeKeyAttributes(s string) (policy.Attributes, error) {
-	if s == "" {
-		return nil, nil
-	}
-
 	attrs := policy.Attributes{}
 	if err := json.Unmarshal([]byte(s), &attrs); err != nil {
 		return nil, err
