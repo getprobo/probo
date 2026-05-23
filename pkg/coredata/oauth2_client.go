@@ -99,6 +99,7 @@ WHERE
 	defer rows.Close()
 
 	attrsByID := make(policy.AttributesByID, len(resourceIDs))
+
 	for rows.Next() {
 		var (
 			id             gid.GID
@@ -114,6 +115,7 @@ WHERE
 		if organizationID != nil {
 			attrs["organization_id"] = organizationID.String()
 		}
+
 		attrsByID[id] = attrs
 	}
 

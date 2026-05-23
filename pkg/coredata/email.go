@@ -91,10 +91,11 @@ WHERE
 	defer rows.Close()
 
 	attrsByID := make(policy.AttributesByID, len(resourceIDs))
+
 	for rows.Next() {
 		var id gid.GID
-		err = rows.Scan(&id)
-		if err != nil {
+
+		if err := rows.Scan(&id); err != nil {
 			return nil, fmt.Errorf("cannot scan email authorization attributes: %w", err)
 		}
 

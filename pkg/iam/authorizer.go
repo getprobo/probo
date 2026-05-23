@@ -387,6 +387,7 @@ func (a *Authorizer) evaluateMultiInTx(
 	// On failure, ErrAssumptionRequired is recorded only against items that
 	// did not opt out.
 	var assumptionErr error
+
 	if requiresAssumptionCheck {
 		err := a.checkAssumption(
 			ctx,
@@ -431,6 +432,7 @@ func (a *Authorizer) evaluateMultiInTx(
 
 	decisions := make([]error, len(params.Items))
 	itemAttrs := make([]policy.Attributes, len(params.Items))
+
 	for i, item := range params.Items {
 		resAttrs := resourceAttrsByResourceID[item.Resource]
 		if len(item.ResourceAttributes) > 0 {
@@ -438,6 +440,7 @@ func (a *Authorizer) evaluateMultiInTx(
 			maps.Copy(merged, item.ResourceAttributes)
 			resAttrs = merged
 		}
+
 		itemAttrs[i] = resAttrs
 
 		if assumptionErr != nil && !item.SkipAssumptionCheck {

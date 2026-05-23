@@ -83,7 +83,6 @@ func TestAuthorizer_ValidateInputs(t *testing.T) {
 		_, ok := errors.AsType[*ErrEmptyResourceBatch](err)
 		require.True(t, ok)
 	})
-
 }
 
 func TestAuthorizer_InternalErrorPaths(t *testing.T) {

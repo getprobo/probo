@@ -170,6 +170,7 @@ WHERE
 	defer rows.Close()
 
 	attrsByID := make(policy.AttributesByID, len(resourceIDs))
+
 	for rows.Next() {
 		var (
 			id             gid.GID

@@ -66,6 +66,7 @@ func (o *Organization) AuthorizationAttributes(
 	defer rows.Close()
 
 	attrsByID := make(policy.AttributesByID)
+
 	for rows.Next() {
 		var id gid.GID
 		if err := rows.Scan(&id); err != nil {

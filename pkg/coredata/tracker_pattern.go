@@ -99,10 +99,11 @@ func (tp *TrackerPattern) AuthorizationAttributes(
 	defer rows.Close()
 
 	attrsByID := make(policy.AttributesByID)
+
 	for rows.Next() {
 		var id, organizationID gid.GID
-		err := rows.Scan(&id, &organizationID)
-		if err != nil {
+
+		if err := rows.Scan(&id, &organizationID); err != nil {
 			return nil, fmt.Errorf("cannot scan authorization attributes: %w", err)
 		}
 

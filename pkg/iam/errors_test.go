@@ -106,6 +106,7 @@ func TestAuthorizeRelatedErrors_Error(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
+
 			if tt.err.Error() != tt.want {
 				t.Errorf("Error() = %q, want %q", tt.err.Error(), tt.want)
 			}

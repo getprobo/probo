@@ -986,6 +986,7 @@ func insertBatchTestChildSession(
 	expiredAt := now.Add(30 * time.Minute)
 
 	var expireReason *coredata.ExpireReason
+
 	if expired {
 		reason := coredata.ExpireReasonRevoked
 		expireReason = &reason
@@ -1039,6 +1040,7 @@ func countAuditLogsForAction(t *testing.T, ctx context.Context, client *pg.Clien
 	t.Helper()
 
 	var count int
+
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		if err := tx.QueryRow(
 			ctx,

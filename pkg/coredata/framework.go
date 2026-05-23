@@ -80,6 +80,7 @@ WHERE
 	defer rows.Close()
 
 	attrsByID := make(policy.AttributesByID)
+
 	for rows.Next() {
 		var (
 			frameworkID    gid.GID
@@ -88,10 +89,12 @@ WHERE
 		if err := rows.Scan(&frameworkID, &organizationID); err != nil {
 			return nil, fmt.Errorf("cannot scan framework authorization attributes batch: %w", err)
 		}
+
 		attrsByID[frameworkID] = policy.Attributes{
 			"organization_id": organizationID.String(),
 		}
 	}
+
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("cannot iterate framework authorization attributes batch: %w", err)
 	}

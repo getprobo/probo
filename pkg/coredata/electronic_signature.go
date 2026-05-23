@@ -78,6 +78,7 @@ func (es *ElectronicSignature) AuthorizationAttributes(
 	defer rows.Close()
 
 	attrsByID := make(policy.AttributesByID)
+
 	for rows.Next() {
 		var id, organizationID gid.GID
 		if err := rows.Scan(&id, &organizationID); err != nil {
