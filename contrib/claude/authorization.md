@@ -54,6 +54,35 @@ The flow:
 6. Return an authorization scope (`*coredata.Scope`) for downstream data access
 7. Return `ErrInsufficientPermissions` if no allow match
 
+## Batch authorization
+
+Use batch authorization when a caller needs all-or-nothing authorization across
+multiple resources for the same action:
+
+```go
+scope, err := iamService.Authorizer.AuthorizeBatch(ctx, iam.AuthorizeBatchParams{
+	Principal: identityID,
+	Action:    probo.ActionTaskDelete,
+	Resources: taskIDs, // all resources must have same entity type + organization
+})
+```
+
+Batch semantics:
+- **All-or-nothing** — the first denied resource returns `ErrInsufficientPermissions`
+- **Single-entity-type batch** — mixed entity types return `ErrMixedEntityTypeBatch`
+- **Single-organization batch** — mixed or missing `organization_id` attributes return `ErrMixedOrganizationBatch`
+- **Empty resource list** returns `ErrEmptyResourceBatch`
+- **Batch attributes are required** — each resource type in `AuthorizeBatch` must implement batch attributes loading or it returns `ErrBatchAuthorizationUnsupportedResourceType`
+- **Shared `ResourceAttributes` map** is applied to every resource in the batch
+- **Audit logs** are written per resource only when all resources are authorized (`DryRun` skips logs)
+
+GraphQL wrappers can use `authz.NewBatchAuthorizeFunc(...)` with
+`authz.WithBatchAttr`, `authz.WithBatchDryRun`, and
+`authz.WithBatchSkipAssumptionCheck`.
+
+MCP resolvers can use `Resolver.AuthorizeBatch(ctx, resourceIDs, action)` for
+the same behavior and error mapping as single-resource authorization.
+
 ## PolicySet
 
 Policies are organized into identity-scoped (applied to all authenticated users) and role-based:
@@ -98,20 +127,42 @@ Key paths use `principal.ATTR` or `resource.ATTR` (e.g., `principal.organization
 Resources that support authorization must implement this interface in `pkg/coredata/`:
 
 ```go
-func (v *ThirdParty) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
-	q := `SELECT organization_id FROM thirdParties WHERE id = $1 LIMIT 1;`
-	var organizationID gid.GID
-	if err := conn.QueryRow(ctx, q, v.ID).Scan(&organizationID); err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, ErrResourceNotFound
-		}
+func (v *ThirdParty) AuthorizationAttributes(
+	ctx context.Context,
+	conn pg.Querier,
+	resourceIDs []gid.GID,
+) (map[gid.GID]map[string]string, error) {
+	q := `SELECT id, organization_id FROM third_parties WHERE id = ANY(@resource_ids::text[])`
+
+	rows, err := conn.Query(ctx, q, pgx.StrictNamedArgs{"resource_ids": resourceIDs})
+	if err != nil {
 		return nil, fmt.Errorf("cannot query third party authorization attributes: %w", err)
 	}
-	return map[string]string{"organization_id": organizationID.String()}, nil
+	defer rows.Close()
+
+	attrsByID := make(map[gid.GID]map[string]string)
+	for rows.Next() {
+		var id, organizationID gid.GID
+		if err := rows.Scan(&id, &organizationID); err != nil {
+			return nil, fmt.Errorf("cannot scan third party authorization attributes: %w", err)
+		}
+		attrsByID[id] = map[string]string{"organization_id": organizationID.String()}
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("cannot iterate third party authorization attributes: %w", err)
+	}
+
+	return attrsByID, nil
 }
 ```
 
 The returned map provides attributes for condition evaluation (e.g., `resource.organization_id`).
+`AuthorizationAttributes` implementers should assume caller-side preconditions:
+- `resourceIDs` is non-empty
+- `resourceIDs` is deduplicated
+- in `AuthorizeBatch`, all resources are the same entity type
+
+Implementers should return only found rows keyed by id. Missing resources are handled by caller-side per-resource existence checks.
 
 ## Error types
 
