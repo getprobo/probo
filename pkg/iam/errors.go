@@ -193,6 +193,64 @@ func (e ErrInsufficientPermissions) Error() string {
 	return fmt.Sprintf("identity %q does not have sufficient permissions to perform action %s on entity %q", e.IdentityID, e.Action, e.EntityID)
 }
 
+type ErrMixedOrganizationBatch struct {
+	Action          Action
+	OrganizationIDs []string
+}
+
+func NewMixedOrganizationBatchError(action Action, organizationIDs []string) error {
+	return &ErrMixedOrganizationBatch{Action: action, OrganizationIDs: organizationIDs}
+}
+
+func (e ErrMixedOrganizationBatch) Error() string {
+	return fmt.Sprintf(
+		"cannot authorize batch action %s across organization ids %q",
+		e.Action,
+		e.OrganizationIDs,
+	)
+}
+
+type ErrMixedEntityTypeBatch struct {
+	Action      Action
+	EntityTypes []uint16
+}
+
+func NewMixedEntityTypeBatchError(action Action, entityTypes []uint16) error {
+	return &ErrMixedEntityTypeBatch{Action: action, EntityTypes: entityTypes}
+}
+
+func (e ErrMixedEntityTypeBatch) Error() string {
+	return fmt.Sprintf(
+		"cannot authorize batch action %s across entity types %v",
+		e.Action,
+		e.EntityTypes,
+	)
+}
+
+type ErrEmptyResourceBatch struct {
+	Action Action
+}
+
+func NewEmptyResourceBatchError(action Action) error {
+	return &ErrEmptyResourceBatch{Action: action}
+}
+
+func (e ErrEmptyResourceBatch) Error() string {
+	return fmt.Sprintf("cannot authorize batch action %s with an empty resource set", e.Action)
+}
+
+type ErrBatchAuthorizationUnsupportedResourceType struct {
+	EntityType uint16
+}
+
+func NewBatchAuthorizationUnsupportedResourceTypeError(entityType uint16) error {
+	return &ErrBatchAuthorizationUnsupportedResourceType{EntityType: entityType}
+}
+
+func (e ErrBatchAuthorizationUnsupportedResourceType) Error() string {
+	return fmt.Sprintf("resource type %d does not support batch authorization attributes", e.EntityType)
+}
+
 type ErrAssumptionRequired struct {
 	IdentityID   gid.GID
 	MembershipID gid.GID
