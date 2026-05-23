@@ -31,11 +31,12 @@ import (
 func NewGraphQLHandler(svc *iam.Service, logger *log.Logger, baseURL *baseurl.BaseURL, cookieConfig securecookie.Config) http.Handler {
 	config := schema.Config{
 		Resolvers: &Resolver{
-			authorize:     authz.NewAuthorizeFunc(svc, logger),
-			logger:        logger,
-			iam:           svc,
-			baseURL:       baseURL,
-			sessionCookie: authn.NewCookie(&cookieConfig),
+			authorize:      authz.NewAuthorizeFunc(svc, logger),
+			batchAuthorize: authz.NewBatchAuthorizeFunc(svc, logger),
+			logger:         logger,
+			iam:            svc,
+			baseURL:        baseURL,
+			sessionCookie:  authn.NewCookie(&cookieConfig),
 		},
 		Directives: schema.DirectiveRoot{
 			Session: session.Directive,

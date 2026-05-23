@@ -88,3 +88,47 @@ func (r *Resolver) Authorize(ctx context.Context, entityID gid.GID, action iam.A
 
 	return nil, fmt.Errorf("internal server error")
 }
+
+func (r *Resolver) AuthorizeBatch(ctx context.Context, entityIDs []gid.GID, action iam.Action) (*coredata.Scope, error) {
+	identity := authn.IdentityFromContext(ctx)
+
+	scope, err := r.iamSvc.Authorizer.AuthorizeBatch(
+		ctx,
+		iam.AuthorizeBatchParams{
+			Principal: identity.ID,
+			Resources: entityIDs,
+			Action:    action,
+		},
+	)
+	if err == nil {
+		return scope, nil
+	}
+
+	if _, ok := errors.AsType[*iam.ErrInsufficientPermissions](err); ok {
+		return nil, fmt.Errorf("permission denied")
+	}
+
+	if _, ok := errors.AsType[*iam.ErrAssumptionRequired](err); ok {
+		return nil, fmt.Errorf("assumption required")
+	}
+
+	if _, ok := errors.AsType[*iam.ErrMixedOrganizationBatch](err); ok {
+		return nil, fmt.Errorf("mixed-organization batch")
+	}
+
+	if _, ok := errors.AsType[*iam.ErrEmptyResourceBatch](err); ok {
+		return nil, fmt.Errorf("empty resource batch")
+	}
+
+	if _, ok := errors.AsType[*iam.ErrBatchAuthorizationUnsupportedResourceType](err); ok {
+		return nil, fmt.Errorf("batch authorization unsupported for resource type")
+	}
+
+	if errors.Is(err, coredata.ErrResourceNotFound) {
+		return nil, fmt.Errorf("resource not found")
+	}
+
+	r.logger.ErrorCtx(ctx, "cannot batch authorize MCP request", log.Error(err))
+
+	return nil, fmt.Errorf("internal server error")
+}

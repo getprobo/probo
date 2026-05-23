@@ -48,11 +48,12 @@ import (
 
 type (
 	Resolver struct {
-		authorize     authz.AuthorizeFunc
-		logger        *log.Logger
-		iam           *iam.Service
-		baseURL       *baseurl.BaseURL
-		sessionCookie *authn.Cookie
+		authorize      authz.AuthorizeFunc
+		batchAuthorize authz.BatchAuthorizeFunc
+		logger         *log.Logger
+		iam            *iam.Service
+		baseURL        *baseurl.BaseURL
+		sessionCookie  *authn.Cookie
 	}
 )
 
