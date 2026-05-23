@@ -16,19 +16,41 @@ package dataloader
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"maps"
 	"net/http"
+	"slices"
+	"strings"
 
 	"github.com/vikstrous/dataloadgen"
 	"go.probo.inc/probo/pkg/cookiebanner"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
+	"go.probo.inc/probo/pkg/iam/policy"
 	"go.probo.inc/probo/pkg/probo"
+	"go.probo.inc/probo/pkg/server/api/authn"
 )
 
 type (
 	ctxKey struct{ name string }
+
+	// AuthorizeKey identifies an authorize call. ResourceAttributes is the
+	// canonical (sorted-key) JSON encoding of the attributes passed via
+	// authz.WithAttr, so calls with the same logical inputs share a key and
+	// batch together.
+	AuthorizeKey struct {
+		ResourceID          gid.GID
+		Action              string
+		ResourceAttributes  string
+		DryRun              bool
+		SkipAssumptionCheck bool
+	}
+
+	AuthorizeResult struct {
+		Scope *coredata.Scope
+	}
 
 	Loaders struct {
 		Organization   *dataloadgen.Loader[gid.GID, *coredata.Organization]
@@ -44,6 +66,7 @@ type (
 		Report         *dataloadgen.Loader[gid.GID, *coredata.Report]
 		CookieBanner   *dataloadgen.Loader[gid.GID, *coredata.CookieBanner]
 		CookieCategory *dataloadgen.Loader[gid.GID, *coredata.CookieCategory]
+		Authorize      *dataloadgen.Loader[AuthorizeKey, AuthorizeResult]
 	}
 
 	batchFetcher struct {
@@ -87,6 +110,10 @@ func (f *batchFetcher) newLoaders() *Loaders {
 		Report:         dataloadgen.NewMappedLoader(f.fetchReports),
 		CookieBanner:   dataloadgen.NewMappedLoader(f.fetchCookieBanners),
 		CookieCategory: dataloadgen.NewMappedLoader(f.fetchCookieCategories),
+		Authorize: dataloadgen.NewMappedLoader(
+			f.fetchAuthorizes,
+			dataloadgen.WithoutCache(),
+		),
 	}
 }
 
@@ -296,4 +323,160 @@ func (f *batchFetcher) fetchCookieCategories(ctx context.Context, keys []gid.GID
 	}
 
 	return result, nil
+}
+
+// fetchAuthorizes evaluates the batch with a single AuthorizeMulti call and
+// surfaces per-key denials via dataloadgen.MappedFetchError. When
+// AuthorizeMulti cannot evaluate the batch as a whole (e.g. mixed
+// organizations), we fall back to per-item Authorize so every key still
+// gets a scope or iam error.
+//
+// The Authorize loader is created with WithoutCache() so repeated calls
+// with the same (resource, action) within a single request still produce
+// one audit log entry per call.
+func (f *batchFetcher) fetchAuthorizes(
+	ctx context.Context,
+	keys []AuthorizeKey,
+) (map[AuthorizeKey]AuthorizeResult, error) {
+	identity := authn.IdentityFromContext(ctx)
+	if identity == nil {
+		return nil, fmt.Errorf("cannot authorize without an identity in context")
+	}
+
+	session := authn.SessionFromContext(ctx)
+
+	items := make([]iam.MultiAuthorizeItem, 0, len(keys))
+	for _, key := range keys {
+		attrs, err := decodeAuthorizeKeyAttributes(key.ResourceAttributes)
+		if err != nil {
+			return nil, fmt.Errorf("cannot decode authorize key attributes: %w", err)
+		}
+
+		items = append(items, iam.MultiAuthorizeItem{
+			Resource:            key.ResourceID,
+			Action:              key.Action,
+			ResourceAttributes:  attrs,
+			DryRun:              key.DryRun,
+			SkipAssumptionCheck: key.SkipAssumptionCheck,
+		})
+	}
+
+	multiParams := iam.AuthorizeMultiParams{
+		Principal: identity.ID,
+		Items:     items,
+	}
+	if session != nil {
+		multiParams.Session = &session.ID
+	}
+
+	scope, decisions, err := f.iam.Authorizer.AuthorizeMulti(ctx, multiParams)
+	if err != nil {
+		return f.fetchAuthorizesIndividually(ctx, keys, identity.ID, session)
+	}
+
+	result := make(map[AuthorizeKey]AuthorizeResult, len(keys))
+	perKeyErrs := make(dataloadgen.MappedFetchError[AuthorizeKey])
+
+	for i, key := range keys {
+		if decisions[i] != nil {
+			perKeyErrs[key] = decisions[i]
+			continue
+		}
+
+		result[key] = AuthorizeResult{Scope: scope}
+	}
+
+	if len(perKeyErrs) > 0 {
+		return result, perKeyErrs
+	}
+
+	return result, nil
+}
+
+// fetchAuthorizesIndividually is the per-item fallback used when
+// AuthorizeMulti cannot evaluate the batch as a whole.
+func (f *batchFetcher) fetchAuthorizesIndividually(
+	ctx context.Context,
+	keys []AuthorizeKey,
+	principalID gid.GID,
+	session *coredata.Session,
+) (map[AuthorizeKey]AuthorizeResult, error) {
+	result := make(map[AuthorizeKey]AuthorizeResult, len(keys))
+	perKeyErrs := make(dataloadgen.MappedFetchError[AuthorizeKey])
+
+	for _, key := range keys {
+		attrs, err := decodeAuthorizeKeyAttributes(key.ResourceAttributes)
+		if err != nil {
+			return nil, fmt.Errorf("cannot decode authorize key attributes: %w", err)
+		}
+
+		params := iam.AuthorizeParams{
+			Principal:           principalID,
+			Resource:            key.ResourceID,
+			Action:              key.Action,
+			ResourceAttributes:  make(map[string]string, len(attrs)),
+			DryRun:              key.DryRun,
+			SkipAssumptionCheck: key.SkipAssumptionCheck,
+		}
+		maps.Copy(params.ResourceAttributes, attrs)
+
+		if session != nil {
+			params.Session = &session.ID
+		}
+
+		scope, err := f.iam.Authorizer.Authorize(ctx, params)
+		if err != nil {
+			perKeyErrs[key] = err
+			continue
+		}
+
+		result[key] = AuthorizeResult{Scope: scope}
+	}
+
+	if len(perKeyErrs) > 0 {
+		return result, perKeyErrs
+	}
+
+	return result, nil
+}
+
+// EncodeAuthorizeKeyAttributes returns a canonical (sorted-key) JSON
+// encoding of attrs for use as AuthorizeKey.ResourceAttributes. Maps that
+// compare equal produce identical strings; nil or empty attrs encode to "".
+func EncodeAuthorizeKeyAttributes(attrs policy.Attributes) string {
+	if len(attrs) == 0 {
+		return ""
+	}
+
+	keys := slices.Sorted(maps.Keys(attrs))
+
+	var sb strings.Builder
+	sb.WriteByte('{')
+	for i, k := range keys {
+		if i > 0 {
+			sb.WriteByte(',')
+		}
+
+		kb, _ := json.Marshal(k)
+		sb.Write(kb)
+		sb.WriteByte(':')
+		vb, _ := json.Marshal(attrs[k])
+		sb.Write(vb)
+	}
+	sb.WriteByte('}')
+
+	return sb.String()
+}
+
+func decodeAuthorizeKeyAttributes(s string) (policy.Attributes, error) {
+	if s == "" {
+		return nil, nil
+	}
+
+	attrs := policy.Attributes{}
+	if err := json.Unmarshal([]byte(s), &attrs); err != nil {
+		return nil, err
+	}
+
+	return attrs, nil
 }

@@ -48,6 +48,7 @@ import (
 type (
 	Resolver struct {
 		authorize         authz.AuthorizeFunc
+		batchAuthorize    authz.BatchAuthorizeFunc
 		probo             *probo.Service
 		iam               *iam.Service
 		esign             *esign.Service

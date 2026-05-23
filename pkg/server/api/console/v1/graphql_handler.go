@@ -27,6 +27,7 @@ import (
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/riskmanagement"
 	"go.probo.inc/probo/pkg/server/api/authz"
+	"go.probo.inc/probo/pkg/server/api/console/v1/dataloader"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
 	"go.probo.inc/probo/pkg/server/gqlutils"
 	"go.probo.inc/probo/pkg/thirdparty"
@@ -47,7 +48,8 @@ func NewGraphQLHandler(
 ) http.Handler {
 	config := schema.Config{
 		Resolvers: &Resolver{
-			authorize:         authz.NewAuthorizeFunc(iamSvc, logger),
+			authorize:         dataloader.NewAuthorizeFunc(logger),
+			batchAuthorize:    authz.NewBatchAuthorizeFunc(iamSvc, logger),
 			probo:             proboSvc,
 			iam:               iamSvc,
 			esign:             esignSvc,
