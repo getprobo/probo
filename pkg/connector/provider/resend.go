@@ -12,7 +12,28 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package connector
+package provider
 
-// CallbackPath is the HTTP path for the OAuth2 callback endpoint.
-const CallbackPath = "/api/console/v1/connectors/complete"
+import (
+	"context"
+	"net/http"
+
+	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/accessreview/drivers"
+	"go.probo.inc/probo/pkg/coredata"
+)
+
+func resendRegistration() *Registration {
+	return &Registration{
+		Provider:       coredata.ConnectorProviderResend,
+		DisplayName:    "Resend",
+		ProbeURL:       "https://api.resend.com/domains",
+		SupportsAPIKey: true,
+		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger) (drivers.Driver, error) {
+			return drivers.NewResendDriver(c), nil
+		},
+		NewNameResolver: func(_ context.Context, _ *http.Client, _ *coredata.Connector, _ *log.Logger) drivers.NameResolver {
+			return drivers.NewResendNameResolver()
+		},
+	}
+}

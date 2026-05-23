@@ -22,6 +22,7 @@ import (
 
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/connector/provider"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/cipher"
 	"go.probo.inc/probo/pkg/gid"
@@ -39,6 +40,7 @@ type (
 		scope             coredata.Scoper
 		encryptionKey     cipher.EncryptionKey
 		connectorRegistry *connector.ConnectorRegistry
+		providerRegistry  *provider.Registry
 	}
 
 	CreateAccessSourceRequest struct {
@@ -383,73 +385,13 @@ func (s AccessSourceService) ConfigureAccessSource(
 				return fmt.Errorf("cannot load connector: %w", err)
 			}
 
-			switch dbConnector.Provider {
-			case coredata.ConnectorProviderGitHub:
-				if err := dbConnector.SetSettings(
-					&coredata.GitHubConnectorSettings{
-						Organization: req.OrganizationSlug,
-					},
-				); err != nil {
-					return fmt.Errorf("cannot set github settings: %w", err)
-				}
-			case coredata.ConnectorProviderSentry:
-				if err := dbConnector.SetSettings(
-					&coredata.SentryConnectorSettings{
-						OrganizationSlug: req.OrganizationSlug,
-					},
-				); err != nil {
-					return fmt.Errorf("cannot set sentry settings: %w", err)
-				}
-			case coredata.ConnectorProviderGitLab:
-				if err := dbConnector.SetSettings(
-					&coredata.GitLabConnectorSettings{
-						GroupID: req.OrganizationSlug,
-					},
-				); err != nil {
-					return fmt.Errorf("cannot set gitlab settings: %w", err)
-				}
-			case coredata.ConnectorProviderBitbucket:
-				if err := dbConnector.SetSettings(
-					&coredata.BitbucketConnectorSettings{
-						Workspace: req.OrganizationSlug,
-					},
-				); err != nil {
-					return fmt.Errorf("cannot set bitbucket settings: %w", err)
-				}
-			case coredata.ConnectorProviderHeroku:
-				if err := dbConnector.SetSettings(
-					&coredata.HerokuConnectorSettings{
-						TeamID: req.OrganizationSlug,
-					},
-				); err != nil {
-					return fmt.Errorf("cannot set heroku settings: %w", err)
-				}
-			case coredata.ConnectorProviderAsana:
-				if err := dbConnector.SetSettings(
-					&coredata.AsanaConnectorSettings{
-						WorkspaceGID: req.OrganizationSlug,
-					},
-				); err != nil {
-					return fmt.Errorf("cannot set asana settings: %w", err)
-				}
-			case coredata.ConnectorProviderNetlify:
-				if err := dbConnector.SetSettings(
-					&coredata.NetlifyConnectorSettings{
-						AccountSlug: req.OrganizationSlug,
-					},
-				); err != nil {
-					return fmt.Errorf("cannot set netlify settings: %w", err)
-				}
-			case coredata.ConnectorProviderClickUp:
-				if err := dbConnector.SetSettings(
-					&coredata.ClickUpConnectorSettings{
-						TeamID: req.OrganizationSlug,
-					},
-				); err != nil {
-					return fmt.Errorf("cannot set clickup settings: %w", err)
-				}
-			default:
+			reg, ok := s.providerRegistry.Get(dbConnector.Provider)
+			if !ok || reg.SetOrganizationSettings == nil {
 				return fmt.Errorf("cannot configure access source: provider %s does not support organization configuration", dbConnector.Provider)
+			}
+
+			if err := reg.SetOrganizationSettings(dbConnector, req.OrganizationSlug); err != nil {
+				return fmt.Errorf("cannot set %s settings: %w", dbConnector.Provider, err)
 			}
 
 			dbConnector.UpdatedAt = time.Now()

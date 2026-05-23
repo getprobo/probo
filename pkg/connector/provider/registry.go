@@ -1,0 +1,134 @@
+// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+// OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
+
+// Package provider holds one Go file per connector provider. Each file
+// exposes a private constructor that returns a *Registration; the
+// builtin set is assembled by NewBuiltinRegistry, which probod calls
+// once at startup and threads as an explicit *Registry into every
+// consumer. The registry carries no package-level state.
+//
+// pkg/connector/provider is a sub-package of pkg/connector. The
+// child may import its parent (it does — for the *OAuth2Connector
+// type in apply.go); the parent must not import this child. Cycles
+// with pkg/coredata are avoided because the back-edge runs:
+// provider -> connector -> coredata -> (no further imports back).
+package provider
+
+import (
+	"fmt"
+	"slices"
+	"sync"
+
+	"go.probo.inc/probo/pkg/coredata"
+)
+
+// Registry holds the per-provider *Registration set used by the rest
+// of the system to look up display names, OAuth2 metadata, driver
+// constructors, and so on. It is safe for concurrent use.
+//
+// All consumers receive a *Registry constructed by NewBuiltinRegistry
+// at probod startup; no package-level singleton exists.
+type Registry struct {
+	mu        sync.RWMutex
+	providers map[coredata.ConnectorProvider]*Registration
+}
+
+// NewRegistry returns an empty *Registry. Production code uses
+// NewBuiltinRegistry; tests and specialised callers can construct an
+// empty Registry and register only the providers they need.
+func NewRegistry() *Registry {
+	return &Registry{
+		providers: make(map[coredata.ConnectorProvider]*Registration),
+	}
+}
+
+// Register adds a Registration to r. It returns an error on nil or
+// incomplete Registration metadata or on duplicate registration so
+// callers (in particular NewBuiltinRegistry) can decide whether the
+// condition is a programmer error worth crashing on or a recoverable
+// state worth surfacing.
+func (r *Registry) Register(reg *Registration) error {
+	if reg == nil {
+		return fmt.Errorf("cannot register connector provider: nil Registration")
+	}
+
+	if reg.Provider == "" {
+		return fmt.Errorf("cannot register connector provider: missing Provider")
+	}
+
+	if reg.DisplayName == "" {
+		return fmt.Errorf("cannot register connector provider %q: missing DisplayName", reg.Provider)
+	}
+
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	if _, dup := r.providers[reg.Provider]; dup {
+		return fmt.Errorf("cannot register connector provider %q: duplicate registration", reg.Provider)
+	}
+
+	r.providers[reg.Provider] = reg
+
+	return nil
+}
+
+// Get returns the Registration for the given provider, or false if
+// no provider is registered under that key.
+func (r *Registry) Get(p coredata.ConnectorProvider) (*Registration, bool) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	reg, ok := r.providers[p]
+
+	return reg, ok
+}
+
+// All returns every Registration currently in r. Order is not stable;
+// callers must sort when determinism matters.
+func (r *Registry) All() []*Registration {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	out := make([]*Registration, 0, len(r.providers))
+	for _, reg := range r.providers {
+		out = append(out, reg)
+	}
+
+	return out
+}
+
+// ProviderDisplayName returns the human-readable label for the
+// provider, falling back to the raw constant string when no display
+// name is registered.
+func (r *Registry) ProviderDisplayName(p coredata.ConnectorProvider) string {
+	if reg, ok := r.Get(p); ok && reg.DisplayName != "" {
+		return reg.DisplayName
+	}
+
+	return string(p)
+}
+
+// ProviderOAuth2Scopes returns the OAuth2 scopes the access review
+// driver for the given provider needs to list user accounts. Returns
+// nil for providers that do not need any scopes (Notion, Intercom)
+// or for non-access-review providers.
+func (r *Registry) ProviderOAuth2Scopes(p coredata.ConnectorProvider) []string {
+	if reg, ok := r.Get(p); ok {
+		// Return a copy so callers cannot mutate the shared, concurrently
+		// read registration slice held by this long-lived registry.
+		return slices.Clone(reg.OAuth2Scopes)
+	}
+
+	return nil
+}

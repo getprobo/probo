@@ -27,6 +27,7 @@ import (
 	"go.probo.inc/probo/pkg/accessreview"
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/connector/provider"
 	"go.probo.inc/probo/pkg/cookiebanner"
 	"go.probo.inc/probo/pkg/esign"
 	"go.probo.inc/probo/pkg/file"
@@ -67,6 +68,7 @@ type Config struct {
 	Cookie            securecookie.Config
 	TokenSecret       string
 	ConnectorRegistry *connector.ConnectorRegistry
+	ProviderRegistry  *provider.Registry
 	CustomDomainCname string
 	Logger            *log.Logger
 }
@@ -104,6 +106,7 @@ func NewServer(cfg Config) (*Server, error) {
 		Cookie:            cfg.Cookie,
 		TokenSecret:       cfg.TokenSecret,
 		ConnectorRegistry: cfg.ConnectorRegistry,
+		ProviderRegistry:  cfg.ProviderRegistry,
 		CustomDomainCname: cfg.CustomDomainCname,
 		Logger:            cfg.Logger.Named("api"),
 	}

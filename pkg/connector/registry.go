@@ -119,48 +119,6 @@ func (r *ConnectorRegistry) CompleteWithState(ctx context.Context, provider stri
 	return oauth2Connector.CompleteWithState(ctx, req)
 }
 
-// providerProbeURLs maps provider names to lightweight API endpoints
-// used to verify OAuth token validity. Each URL must accept a GET
-// request with a Bearer token and return 401/403 for invalid tokens.
-var (
-	providerProbeURLs = map[string]string{
-		"SLACK":            "https://slack.com/api/users.list?limit=1",
-		"GOOGLE_WORKSPACE": "https://admin.googleapis.com/admin/directory/v1/users?customer=my_customer&maxResults=1",
-		"LINEAR":           "https://api.linear.app/graphql",
-		"BREX":             "https://platform.brexapis.com/v2/users/me",
-		"HUBSPOT":          "https://api.hubapi.com/account-info/v3/details",
-		"DOCUSIGN":         "https://account-d.docusign.com/oauth/userinfo",
-		"NOTION":           "https://api.notion.com/v1/users/me",
-		"GITHUB":           "https://api.github.com/user",
-		"SENTRY":           "https://sentry.io/api/0/organizations/",
-		"INTERCOM":         "https://api.intercom.io/me",
-		"CLOUDFLARE":       "https://api.cloudflare.com/client/v4/user/tokens/verify",
-		"OPENAI":           "https://api.openai.com/v1/models",
-		"SUPABASE":         "https://api.supabase.com/v1/organizations",
-		"TALLY":            "https://api.tally.so/me",
-		"RESEND":           "https://api.resend.com/domains",
-		"ONE_PASSWORD":     "https://events.1password.com/api/v1/auditevents",
-		"MICROSOFT_365":    "https://graph.microsoft.com/v1.0/organization?$top=1",
-		"GITLAB":           "https://gitlab.com/api/v4/user",
-		"BITBUCKET":        "https://api.bitbucket.org/2.0/user",
-		"HEROKU":           "https://api.heroku.com/account",
-		"PAGERDUTY":        "https://api.pagerduty.com/users/me",
-		"ASANA":            "https://app.asana.com/api/1.0/users/me",
-		"NETLIFY":          "https://api.netlify.com/api/v1/user",
-		"CLICKUP":          "https://api.clickup.com/api/v2/user",
-		"VERCEL":           "https://api.vercel.com/v2/user",
-		// Monday's primary API is GraphQL POST, and the auth subdomain
-		// does not expose a Bearer-protected GET userinfo endpoint, so
-		// there is no valid probe URL. The probe handler skips empty
-		// entries; an invalid token surfaces at the next /v2 query.
-	}
-)
-
-// GetProbeURL returns the probe URL for a provider.
-func (r *ConnectorRegistry) GetProbeURL(provider string) string {
-	return providerProbeURLs[provider]
-}
-
 // GetOAuth2RefreshConfig returns the OAuth2 refresh configuration for a provider.
 // Returns nil if the provider is not found or is not an OAuth2 connector.
 func (r *ConnectorRegistry) GetOAuth2RefreshConfig(provider string) *OAuth2RefreshConfig {

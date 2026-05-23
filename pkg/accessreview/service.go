@@ -23,6 +23,7 @@ import (
 	"go.gearno.de/kit/pg"
 	"go.gearno.de/kit/worker"
 	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/connector/provider"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/cipher"
 	"go.probo.inc/probo/pkg/gid"
@@ -34,6 +35,7 @@ type (
 		pg                *pg.Client
 		encryptionKey     cipher.EncryptionKey
 		connectorRegistry *connector.ConnectorRegistry
+		providerRegistry  *provider.Registry
 		logger            *log.Logger
 
 		fetchWorker      *worker.Worker[coredata.AccessReviewCampaignSourceFetch]
@@ -57,6 +59,7 @@ func NewService(
 	pgClient *pg.Client,
 	encryptionKey cipher.EncryptionKey,
 	connectorRegistry *connector.ConnectorRegistry,
+	providerRegistry *provider.Registry,
 	logger *log.Logger,
 	opts ...Option,
 ) *Service {
@@ -69,6 +72,7 @@ func NewService(
 		pg:                pgClient,
 		encryptionKey:     encryptionKey,
 		connectorRegistry: connectorRegistry,
+		providerRegistry:  providerRegistry,
 		logger:            logger,
 	}
 
@@ -91,6 +95,7 @@ func NewService(
 		pgClient,
 		encryptionKey,
 		connectorRegistry,
+		providerRegistry,
 		logger.Named("source-name"),
 	)
 
@@ -104,6 +109,7 @@ func (s *Service) Sources(scope coredata.Scoper) *AccessSourceService {
 		scope:             scope,
 		encryptionKey:     s.encryptionKey,
 		connectorRegistry: s.connectorRegistry,
+		providerRegistry:  s.providerRegistry,
 	}
 }
 
@@ -124,6 +130,7 @@ func (s *Service) Engine(scope coredata.Scoper) *ReviewEngine {
 		scope,
 		s.encryptionKey,
 		s.connectorRegistry,
+		s.providerRegistry,
 		s.logger.Named("review_engine"),
 	)
 }

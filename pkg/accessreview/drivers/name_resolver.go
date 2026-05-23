@@ -23,7 +23,6 @@ import (
 	"net/url"
 
 	"go.probo.inc/probo/pkg/connector"
-	"go.probo.inc/probo/pkg/coredata"
 	admin "google.golang.org/api/admin/directory/v1"
 	"google.golang.org/api/option"
 )
@@ -32,44 +31,6 @@ import (
 // (e.g. Slack workspace name, Google Workspace domain).
 type NameResolver interface {
 	ResolveInstanceName(ctx context.Context) (string, error)
-}
-
-var providerDisplayNames = map[coredata.ConnectorProvider]string{
-	coredata.ConnectorProviderSlack:           "Slack",
-	coredata.ConnectorProviderGoogleWorkspace: "Google Workspace",
-	coredata.ConnectorProviderLinear:          "Linear",
-	coredata.ConnectorProviderOnePassword:     "1Password",
-	coredata.ConnectorProviderHubSpot:         "HubSpot",
-	coredata.ConnectorProviderDocuSign:        "DocuSign",
-	coredata.ConnectorProviderNotion:          "Notion",
-	coredata.ConnectorProviderBrex:            "Brex",
-	coredata.ConnectorProviderTally:           "Tally",
-	coredata.ConnectorProviderCloudflare:      "Cloudflare",
-	coredata.ConnectorProviderOpenAI:          "OpenAI",
-	coredata.ConnectorProviderSentry:          "Sentry",
-	coredata.ConnectorProviderSupabase:        "Supabase",
-	coredata.ConnectorProviderGitHub:          "GitHub",
-	coredata.ConnectorProviderIntercom:        "Intercom",
-	coredata.ConnectorProviderResend:          "Resend",
-	coredata.ConnectorProviderMicrosoft365:    "Microsoft 365",
-	coredata.ConnectorProviderGitLab:          "GitLab",
-	coredata.ConnectorProviderBitbucket:       "Bitbucket",
-	coredata.ConnectorProviderHeroku:          "Heroku",
-	coredata.ConnectorProviderPagerDuty:       "PagerDuty",
-	coredata.ConnectorProviderAsana:           "Asana",
-	coredata.ConnectorProviderNetlify:         "Netlify",
-	coredata.ConnectorProviderClickUp:         "ClickUp",
-	coredata.ConnectorProviderVercel:          "Vercel",
-	coredata.ConnectorProviderMonday:          "Monday.com",
-}
-
-// ProviderDisplayName returns the human-readable label for a connector provider.
-func ProviderDisplayName(provider coredata.ConnectorProvider) string {
-	if name, ok := providerDisplayNames[provider]; ok {
-		return name
-	}
-
-	return string(provider)
 }
 
 // slackNameResolver resolves the Slack workspace name via auth.test.

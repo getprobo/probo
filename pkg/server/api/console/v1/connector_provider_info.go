@@ -15,66 +15,44 @@
 package console_v1
 
 import (
-	"go.probo.inc/probo/pkg/accessreview/drivers"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
 )
 
-var apiKeyProviders = map[coredata.ConnectorProvider]bool{
-	coredata.ConnectorProviderHubSpot:     true,
-	coredata.ConnectorProviderDocuSign:    true,
-	coredata.ConnectorProviderNotion:      true,
-	coredata.ConnectorProviderGitHub:      true,
-	coredata.ConnectorProviderSentry:      true,
-	coredata.ConnectorProviderIntercom:    true,
-	coredata.ConnectorProviderBrex:        true,
-	coredata.ConnectorProviderTally:       true,
-	coredata.ConnectorProviderCloudflare:  true,
-	coredata.ConnectorProviderOpenAI:      true,
-	coredata.ConnectorProviderSupabase:    true,
-	coredata.ConnectorProviderResend:      true,
-	coredata.ConnectorProviderOnePassword: true,
+func (r *Resolver) providerDisplayName(p coredata.ConnectorProvider) string {
+	return r.providerRegistry.ProviderDisplayName(p)
 }
 
-var clientCredentialsProviders = map[coredata.ConnectorProvider]bool{
-	coredata.ConnectorProviderOnePassword: true,
-}
-
-var providerExtraSettingsMap = map[coredata.ConnectorProvider][]*types.ConnectorProviderSettingInfo{
-	coredata.ConnectorProviderGitHub: {
-		{Key: "organization", Label: "Organization", Required: true},
-	},
-	coredata.ConnectorProviderSentry: {
-		{Key: "organizationSlug", Label: "Organization Slug", Required: true},
-	},
-	coredata.ConnectorProviderTally: {
-		{Key: "organizationId", Label: "Organization ID", Required: true},
-	},
-	coredata.ConnectorProviderSupabase: {
-		{Key: "organizationSlug", Label: "Organization Slug", Required: true},
-	},
-	coredata.ConnectorProviderOnePassword: {
-		{Key: "accountId", Label: "Account ID", Required: true},
-		{Key: "region", Label: "Region", Required: true},
-	},
-}
-
-func providerDisplayName(provider coredata.ConnectorProvider) string {
-	return drivers.ProviderDisplayName(provider)
-}
-
-func providerSupportsAPIKey(provider coredata.ConnectorProvider) bool {
-	return apiKeyProviders[provider]
-}
-
-func providerSupportsClientCredentials(provider coredata.ConnectorProvider) bool {
-	return clientCredentialsProviders[provider]
-}
-
-func providerExtraSettings(provider coredata.ConnectorProvider) []*types.ConnectorProviderSettingInfo {
-	if settings, ok := providerExtraSettingsMap[provider]; ok {
-		return settings
+func (r *Resolver) providerSupportsAPIKey(p coredata.ConnectorProvider) bool {
+	if reg, ok := r.providerRegistry.Get(p); ok {
+		return reg.SupportsAPIKey
 	}
 
-	return []*types.ConnectorProviderSettingInfo{}
+	return false
+}
+
+func (r *Resolver) providerSupportsClientCredentials(p coredata.ConnectorProvider) bool {
+	if reg, ok := r.providerRegistry.Get(p); ok {
+		return reg.SupportsClientCredentials
+	}
+
+	return false
+}
+
+func (r *Resolver) providerExtraSettings(p coredata.ConnectorProvider) []*types.ConnectorProviderSettingInfo {
+	reg, ok := r.providerRegistry.Get(p)
+	if !ok || len(reg.ExtraSettings) == 0 {
+		return []*types.ConnectorProviderSettingInfo{}
+	}
+
+	out := make([]*types.ConnectorProviderSettingInfo, 0, len(reg.ExtraSettings))
+	for _, s := range reg.ExtraSettings {
+		out = append(out, &types.ConnectorProviderSettingInfo{
+			Key:      s.Key,
+			Label:    s.Label,
+			Required: s.Required,
+		})
+	}
+
+	return out
 }

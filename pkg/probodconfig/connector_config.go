@@ -39,7 +39,7 @@ type ConnectorConfigOAuth2 struct {
 	// providers whose static AuthURL contains a "{integration_slug}"
 	// placeholder (Vercel-style integrations). It is propagated onto
 	// OAuth2Connector.AuthURLParams and resolved by
-	// connector.ApplyProviderDefaults.
+	// (*provider.Registry).ApplyOAuth2Defaults.
 	IntegrationSlug string `json:"integration-slug,omitempty"`
 }
 

@@ -26,6 +26,7 @@ import (
 	"go.gearno.de/kit/worker"
 	"go.probo.inc/probo/pkg/accessreview/drivers"
 	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/connector/provider"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/cipher"
 )
@@ -36,6 +37,7 @@ type sourceNameHandler struct {
 	pg                *pg.Client
 	encryptionKey     cipher.EncryptionKey
 	connectorRegistry *connector.ConnectorRegistry
+	providerRegistry  *provider.Registry
 	logger            *log.Logger
 }
 
@@ -43,6 +45,7 @@ func NewSourceNameWorker(
 	pgClient *pg.Client,
 	encryptionKey cipher.EncryptionKey,
 	connectorRegistry *connector.ConnectorRegistry,
+	providerRegistry *provider.Registry,
 	logger *log.Logger,
 	opts ...worker.Option,
 ) *worker.Worker[coredata.AccessSource] {
@@ -50,6 +53,7 @@ func NewSourceNameWorker(
 		pg:                pgClient,
 		encryptionKey:     encryptionKey,
 		connectorRegistry: connectorRegistry,
+		providerRegistry:  providerRegistry,
 		logger:            logger,
 	}
 
@@ -130,7 +134,7 @@ func (h *sourceNameHandler) Process(ctx context.Context, source coredata.AccessS
 				}
 			}
 
-			resolver = h.buildResolver(&dbConnector, httpClient)
+			resolver = h.buildResolver(ctx, &dbConnector, httpClient)
 
 			return nil
 		},
@@ -184,7 +188,7 @@ func (h *sourceNameHandler) Process(ctx context.Context, source coredata.AccessS
 		return h.markNameSynced(ctx, &source)
 	}
 
-	displayName := drivers.ProviderDisplayName(dbConnector.Provider)
+	displayName := h.providerRegistry.ProviderDisplayName(dbConnector.Provider)
 	newName := displayName + " " + instanceName
 
 	h.logger.InfoCtx(
@@ -246,133 +250,14 @@ func (h *sourceNameHandler) connectorHTTPClient(
 }
 
 func (h *sourceNameHandler) buildResolver(
+	ctx context.Context,
 	dbConnector *coredata.Connector,
 	httpClient *http.Client,
 ) drivers.NameResolver {
-	switch dbConnector.Provider {
-	case coredata.ConnectorProviderSlack:
-		return drivers.NewSlackNameResolver(httpClient)
-	case coredata.ConnectorProviderGoogleWorkspace:
-		return drivers.NewGoogleWorkspaceNameResolver(httpClient)
-	case coredata.ConnectorProviderLinear:
-		return drivers.NewLinearNameResolver(httpClient)
-	case coredata.ConnectorProviderCloudflare:
-		return drivers.NewCloudflareNameResolver(httpClient)
-	case coredata.ConnectorProviderBrex:
-		return drivers.NewBrexNameResolver(httpClient)
-	case coredata.ConnectorProviderTally:
-		tallySettings, err := coredata.ConnectorSettings[coredata.TallyConnectorSettings](dbConnector)
-		if err != nil {
-			h.logger.Error("cannot read tally connector settings", log.Error(err))
-			return nil
-		}
-
-		return drivers.NewTallyNameResolver(httpClient, tallySettings.OrganizationID)
-	case coredata.ConnectorProviderHubSpot:
-		return drivers.NewHubSpotNameResolver(httpClient)
-	case coredata.ConnectorProviderDocuSign:
-		return drivers.NewDocuSignNameResolver(httpClient)
-	case coredata.ConnectorProviderOpenAI:
-		return drivers.NewOpenAINameResolver(httpClient)
-	case coredata.ConnectorProviderSentry:
-		sentrySettings, err := coredata.ConnectorSettings[coredata.SentryConnectorSettings](dbConnector)
-		if err != nil {
-			h.logger.Error("cannot read sentry connector settings", log.Error(err))
-			return nil
-		}
-
-		return drivers.NewSentryNameResolver(httpClient, sentrySettings.OrganizationSlug)
-	case coredata.ConnectorProviderGitHub:
-		githubSettings, err := coredata.ConnectorSettings[coredata.GitHubConnectorSettings](dbConnector)
-		if err != nil {
-			h.logger.Error("cannot read github connector settings", log.Error(err))
-			return nil
-		}
-
-		return drivers.NewGitHubNameResolver(httpClient, githubSettings.Organization)
-	case coredata.ConnectorProviderSupabase:
-		supabaseSettings, err := coredata.ConnectorSettings[coredata.SupabaseConnectorSettings](dbConnector)
-		if err != nil {
-			h.logger.Error("cannot read supabase connector settings", log.Error(err))
-			return nil
-		}
-
-		return drivers.NewSupabaseNameResolver(supabaseSettings.OrganizationSlug)
-	case coredata.ConnectorProviderIntercom:
-		return drivers.NewIntercomNameResolver(httpClient)
-	case coredata.ConnectorProviderNotion:
-		return drivers.NewNotionNameResolver(httpClient)
-	case coredata.ConnectorProviderResend:
-		return drivers.NewResendNameResolver()
-	case coredata.ConnectorProviderMicrosoft365:
-		return drivers.NewMicrosoft365NameResolver(httpClient)
-	case coredata.ConnectorProviderGitLab:
-		gitlabSettings, err := coredata.ConnectorSettings[coredata.GitLabConnectorSettings](dbConnector)
-		if err != nil {
-			h.logger.Error("cannot read gitlab connector settings", log.Error(err))
-			return nil
-		}
-
-		return drivers.NewGitLabNameResolver(httpClient, gitlabSettings.GroupID)
-	case coredata.ConnectorProviderBitbucket:
-		bitbucketSettings, err := coredata.ConnectorSettings[coredata.BitbucketConnectorSettings](dbConnector)
-		if err != nil {
-			h.logger.Error("cannot read bitbucket connector settings", log.Error(err))
-			return nil
-		}
-
-		return drivers.NewBitbucketNameResolver(httpClient, bitbucketSettings.Workspace)
-	case coredata.ConnectorProviderHeroku:
-		herokuSettings, err := coredata.ConnectorSettings[coredata.HerokuConnectorSettings](dbConnector)
-		if err != nil {
-			h.logger.Error("cannot read heroku connector settings", log.Error(err))
-			return nil
-		}
-
-		return drivers.NewHerokuNameResolver(httpClient, herokuSettings.TeamID)
-	case coredata.ConnectorProviderPagerDuty:
-		pdSettings, err := coredata.ConnectorSettings[coredata.PagerDutyConnectorSettings](dbConnector)
-		if err != nil {
-			h.logger.Error("cannot read pagerduty connector settings", log.Error(err))
-			return nil
-		}
-
-		return drivers.NewPagerDutyNameResolver(pdSettings.Subdomain)
-	case coredata.ConnectorProviderAsana:
-		asanaSettings, err := coredata.ConnectorSettings[coredata.AsanaConnectorSettings](dbConnector)
-		if err != nil {
-			h.logger.Error("cannot read asana connector settings", log.Error(err))
-			return nil
-		}
-
-		return drivers.NewAsanaNameResolver(httpClient, asanaSettings.WorkspaceGID)
-	case coredata.ConnectorProviderNetlify:
-		netlifySettings, err := coredata.ConnectorSettings[coredata.NetlifyConnectorSettings](dbConnector)
-		if err != nil {
-			h.logger.Error("cannot read netlify connector settings", log.Error(err))
-			return nil
-		}
-
-		return drivers.NewNetlifyNameResolver(httpClient, netlifySettings.AccountSlug)
-	case coredata.ConnectorProviderClickUp:
-		clickupSettings, err := coredata.ConnectorSettings[coredata.ClickUpConnectorSettings](dbConnector)
-		if err != nil {
-			h.logger.Error("cannot read clickup connector settings", log.Error(err))
-			return nil
-		}
-
-		return drivers.NewClickUpNameResolver(httpClient, clickupSettings.TeamID)
-	case coredata.ConnectorProviderVercel:
-		vercelSettings, err := coredata.ConnectorSettings[coredata.VercelConnectorSettings](dbConnector)
-		if err != nil {
-			h.logger.Error("cannot read vercel connector settings", log.Error(err))
-			return nil
-		}
-
-		return drivers.NewVercelNameResolver(httpClient, vercelSettings.TeamID)
-	case coredata.ConnectorProviderMonday:
-		return drivers.NewMondayNameResolver(httpClient)
-	default:
+	reg, ok := h.providerRegistry.Get(dbConnector.Provider)
+	if !ok || reg.NewNameResolver == nil {
 		return nil
 	}
+
+	return reg.NewNameResolver(ctx, httpClient, dbConnector, h.logger)
 }

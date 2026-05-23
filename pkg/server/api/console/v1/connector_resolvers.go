@@ -11,8 +11,8 @@ import (
 	"fmt"
 
 	"go.gearno.de/kit/log"
-	"go.probo.inc/probo/pkg/accessreview/drivers"
 	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/connector/provider"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
@@ -22,7 +22,7 @@ import (
 
 // Oauth2Scopes is the resolver for the oauth2Scopes field.
 func (r *connectorResolver) Oauth2Scopes(ctx context.Context, obj *types.Connector) ([]string, error) {
-	scopes := drivers.ProviderOAuth2Scopes(obj.Provider)
+	scopes := r.providerRegistry.ProviderOAuth2Scopes(obj.Provider)
 	if scopes == nil {
 		return []string{}, nil
 	}
@@ -44,34 +44,20 @@ func (r *mutationResolver) CreateAPIKeyConnector(ctx context.Context, input type
 		Connection:     &connector.APIKeyConnection{APIKey: input.APIKey},
 	}
 
-	if input.TallyOrganizationID != nil {
-		req.TallySettings = &coredata.TallyConnectorSettings{
-			OrganizationID: *input.TallyOrganizationID,
-		}
+	in := &provider.SettingsInput{
+		TallyOrganizationID:      input.TallyOrganizationID,
+		SentryOrganizationSlug:   input.SentryOrganizationSlug,
+		SupabaseOrganizationSlug: input.SupabaseOrganizationSlug,
+		GitHubOrganization:       input.GithubOrganization,
+		OnePasswordSCIMBridgeURL: input.OnePasswordScimBridgeURL,
 	}
-
-	if input.SentryOrganizationSlug != nil {
-		req.SentrySettings = &coredata.SentryConnectorSettings{
-			OrganizationSlug: *input.SentryOrganizationSlug,
+	if reg, ok := r.providerRegistry.Get(input.Provider); ok && reg.MarshalSettings != nil {
+		raw, err := reg.MarshalSettings(in)
+		if err != nil {
+			return nil, gqlutils.Invalid(ctx, err)
 		}
-	}
 
-	if input.SupabaseOrganizationSlug != nil {
-		req.SupabaseSettings = &coredata.SupabaseConnectorSettings{
-			OrganizationSlug: *input.SupabaseOrganizationSlug,
-		}
-	}
-
-	if input.GithubOrganization != nil {
-		req.GitHubSettings = &coredata.GitHubConnectorSettings{
-			Organization: *input.GithubOrganization,
-		}
-	}
-
-	if input.OnePasswordScimBridgeURL != nil {
-		req.OnePasswordSettings = &coredata.OnePasswordConnectorSettings{
-			SCIMBridgeURL: *input.OnePasswordScimBridgeURL,
-		}
+		req.RawSettings = raw
 	}
 
 	cnnctr, err := r.probo.Connectors.Create(ctx, scope, req)
@@ -80,7 +66,9 @@ func (r *mutationResolver) CreateAPIKeyConnector(ctx context.Context, input type
 			return nil, gqlutils.Conflict(ctx, err)
 		}
 
-		panic(fmt.Errorf("cannot create API key connector: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot create API key connector", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.CreateAPIKeyConnectorPayload{
@@ -113,11 +101,17 @@ func (r *mutationResolver) CreateClientCredentialsConnector(ctx context.Context,
 		Connection:     oauth2Conn,
 	}
 
-	if input.OnePasswordAccountID != nil && input.OnePasswordRegion != nil {
-		req.OnePasswordUsersAPISettings = &coredata.OnePasswordUsersAPISettings{
-			AccountID: *input.OnePasswordAccountID,
-			Region:    *input.OnePasswordRegion,
+	in := &provider.SettingsInput{
+		OnePasswordAccountID: input.OnePasswordAccountID,
+		OnePasswordRegion:    input.OnePasswordRegion,
+	}
+	if reg, ok := r.providerRegistry.Get(input.Provider); ok && reg.MarshalSettings != nil {
+		raw, err := reg.MarshalSettings(in)
+		if err != nil {
+			return nil, gqlutils.Invalid(ctx, err)
 		}
+
+		req.RawSettings = raw
 	}
 
 	cnnctr, err := r.probo.Connectors.Create(ctx, scope, req)
@@ -126,7 +120,9 @@ func (r *mutationResolver) CreateClientCredentialsConnector(ctx context.Context,
 			return nil, gqlutils.Conflict(ctx, err)
 		}
 
-		panic(fmt.Errorf("cannot create client credentials connector: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot create client credentials connector", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.CreateClientCredentialsConnectorPayload{

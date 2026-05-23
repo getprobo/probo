@@ -17,6 +17,7 @@ package coredata
 import (
 	"encoding"
 	"fmt"
+	"slices"
 )
 
 type ConnectorProvider string
@@ -57,35 +58,50 @@ var (
 	_ encoding.TextUnmarshaler = (*ConnectorProvider)(nil)
 )
 
+// providerStringMap is the single source of truth that connects the
+// wire/string form of a ConnectorProvider to its typed constant. Both
+// ConnectorProviders() and Scan() read from it; adding a new provider
+// is one constant + one map entry.
+var providerStringMap = map[string]ConnectorProvider{
+	"SLACK":            ConnectorProviderSlack,
+	"GOOGLE_WORKSPACE": ConnectorProviderGoogleWorkspace,
+	"LINEAR":           ConnectorProviderLinear,
+	"ONE_PASSWORD":     ConnectorProviderOnePassword,
+	"HUBSPOT":          ConnectorProviderHubSpot,
+	"DOCUSIGN":         ConnectorProviderDocuSign,
+	"NOTION":           ConnectorProviderNotion,
+	"BREX":             ConnectorProviderBrex,
+	"TALLY":            ConnectorProviderTally,
+	"CLOUDFLARE":       ConnectorProviderCloudflare,
+	"OPENAI":           ConnectorProviderOpenAI,
+	"SENTRY":           ConnectorProviderSentry,
+	"SUPABASE":         ConnectorProviderSupabase,
+	"GITHUB":           ConnectorProviderGitHub,
+	"INTERCOM":         ConnectorProviderIntercom,
+	"RESEND":           ConnectorProviderResend,
+	"MICROSOFT_365":    ConnectorProviderMicrosoft365,
+	"GITLAB":           ConnectorProviderGitLab,
+	"BITBUCKET":        ConnectorProviderBitbucket,
+	"HEROKU":           ConnectorProviderHeroku,
+	"PAGERDUTY":        ConnectorProviderPagerDuty,
+	"ASANA":            ConnectorProviderAsana,
+	"NETLIFY":          ConnectorProviderNetlify,
+	"CLICKUP":          ConnectorProviderClickUp,
+	"VERCEL":           ConnectorProviderVercel,
+	"MONDAY":           ConnectorProviderMonday,
+}
+
 func ConnectorProviders() []ConnectorProvider {
-	return []ConnectorProvider{
-		ConnectorProviderSlack,
-		ConnectorProviderGoogleWorkspace,
-		ConnectorProviderLinear,
-		ConnectorProviderOnePassword,
-		ConnectorProviderHubSpot,
-		ConnectorProviderDocuSign,
-		ConnectorProviderNotion,
-		ConnectorProviderBrex,
-		ConnectorProviderTally,
-		ConnectorProviderCloudflare,
-		ConnectorProviderOpenAI,
-		ConnectorProviderSentry,
-		ConnectorProviderSupabase,
-		ConnectorProviderGitHub,
-		ConnectorProviderIntercom,
-		ConnectorProviderResend,
-		ConnectorProviderMicrosoft365,
-		ConnectorProviderGitLab,
-		ConnectorProviderBitbucket,
-		ConnectorProviderHeroku,
-		ConnectorProviderPagerDuty,
-		ConnectorProviderAsana,
-		ConnectorProviderNetlify,
-		ConnectorProviderClickUp,
-		ConnectorProviderVercel,
-		ConnectorProviderMonday,
+	out := make([]ConnectorProvider, 0, len(providerStringMap))
+	for _, v := range providerStringMap {
+		out = append(out, v)
 	}
+
+	// Map iteration order is nondeterministic; sort so callers (e.g. the
+	// connectorProviderInfos API/UI listing) get a stable order.
+	slices.Sort(out)
+
+	return out
 }
 
 func (v ConnectorProvider) IsValid() bool {

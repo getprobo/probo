@@ -450,7 +450,7 @@ func (r *accessSourceResolver) ConnectionStatus(ctx context.Context, obj *types.
 	// Creating an HTTP client may succeed even with an expired token
 	// (e.g. no refresh token available). Make a lightweight probe
 	// request to verify the token is actually valid.
-	probeURL := r.connectorRegistry.GetProbeURL(string(dbConnector.Provider))
+	probeURL := r.providerRegistry.ProbeURL(string(dbConnector.Provider))
 	if err := probeConnection(ctx, httpClient, probeURL); err != nil {
 		return types.AccessSourceConnectionStatusDisconnected, nil
 	}

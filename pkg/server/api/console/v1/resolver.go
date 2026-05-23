@@ -18,6 +18,7 @@ package console_v1
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -28,6 +29,7 @@ import (
 	"go.probo.inc/probo/pkg/accessreview"
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/connector/provider"
 	"go.probo.inc/probo/pkg/cookiebanner"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/esign"
@@ -56,6 +58,7 @@ type (
 		mailman           *mailman.Service
 		cookieBanner      *cookiebanner.Service
 		connectorRegistry *connector.ConnectorRegistry
+		providerRegistry  *provider.Registry
 		riskManagement    *riskmanagement.Service
 		thirdParty        *thirdparty.Service
 		logger            *log.Logger
@@ -74,6 +77,7 @@ func NewMux(
 	cookieConfig securecookie.Config,
 	tokenSecret string,
 	connectorRegistry *connector.ConnectorRegistry,
+	providerRegistry *provider.Registry,
 	baseURL *baseurl.BaseURL,
 	customDomainCname string,
 	thirdPartySvc *thirdparty.Service,
@@ -91,6 +95,7 @@ func NewMux(
 		mailmanSvc,
 		cookieBannerSvc,
 		connectorRegistry,
+		providerRegistry,
 		customDomainCname,
 		logger,
 		thirdPartySvc,
@@ -236,9 +241,17 @@ func handleConnectorComplete(
 				}
 
 				if subdomain != "" {
-					createReq.PagerDutySettings = &coredata.PagerDutyConnectorSettings{
+					raw, err := json.Marshal(&coredata.PagerDutyConnectorSettings{
 						Subdomain: subdomain,
+					})
+					if err != nil {
+						logger.ErrorCtx(r.Context(), "cannot marshal pagerduty settings", log.Error(err))
+						httpserver.RenderError(w, http.StatusInternalServerError, fmt.Errorf("internal error"))
+
+						return
 					}
+
+					createReq.RawSettings = raw
 				}
 			}
 
@@ -260,9 +273,17 @@ func handleConnectorComplete(
 				}
 
 				if teamID != "" {
-					createReq.VercelSettings = &coredata.VercelConnectorSettings{
+					raw, err := json.Marshal(&coredata.VercelConnectorSettings{
 						TeamID: teamID,
+					})
+					if err != nil {
+						logger.ErrorCtx(r.Context(), "cannot marshal vercel settings", log.Error(err))
+						httpserver.RenderError(w, http.StatusInternalServerError, fmt.Errorf("internal error"))
+
+						return
 					}
+
+					createReq.RawSettings = raw
 				}
 			}
 

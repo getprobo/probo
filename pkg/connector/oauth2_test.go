@@ -699,66 +699,6 @@ func TestInitiateWithState_PKCE(t *testing.T) {
 	})
 }
 
-// TestApplyProviderDefaults_AuthURLTemplating verifies that operator-supplied
-// AuthURLParams (for example Vercel's "{integration_slug}") are substituted
-// into the static provider AuthURL when the connector is initialized.
-// Providers without placeholders are unaffected.
-func TestApplyProviderDefaults_AuthURLTemplating(t *testing.T) {
-	t.Parallel()
-
-	// Register a fake provider definition for the duration of this
-	// test so we do not have to wait for a real Vercel-style provider
-	// to land. Restore on teardown.
-	const fakeProvider = "TEST_TEMPLATED_AUTH_URL"
-
-	previous, hadPrevious := providerDefinitions[fakeProvider]
-	providerDefinitions[fakeProvider] = providerDefinition{
-		AuthURL:  "https://example.com/integrations/{integration_slug}/new",
-		TokenURL: "https://example.com/oauth/token",
-	}
-
-	t.Cleanup(func() {
-		if hadPrevious {
-			providerDefinitions[fakeProvider] = previous
-		} else {
-			delete(providerDefinitions, fakeProvider)
-		}
-	})
-
-	t.Run("placeholder is substituted when AuthURLParams is supplied", func(t *testing.T) {
-		t.Parallel()
-
-		c := &OAuth2Connector{
-			ClientID:     "id",
-			ClientSecret: "secret",
-			AuthURLParams: map[string]string{
-				"integration_slug": "acme",
-			},
-		}
-
-		ApplyProviderDefaults(fakeProvider, "https://example.com/cb", c)
-
-		assert.Equal(t, "https://example.com/integrations/acme/new", c.AuthURL)
-		assert.Equal(t, "https://example.com/oauth/token", c.TokenURL)
-	})
-
-	t.Run("placeholder remains literal when AuthURLParams is empty", func(t *testing.T) {
-		t.Parallel()
-
-		c := &OAuth2Connector{
-			ClientID:     "id",
-			ClientSecret: "secret",
-		}
-
-		ApplyProviderDefaults(fakeProvider, "https://example.com/cb", c)
-
-		// No substitution requested; the placeholder is preserved
-		// verbatim so a misconfiguration is visible at the
-		// authorization step rather than silently masked.
-		assert.Equal(t, "https://example.com/integrations/{integration_slug}/new", c.AuthURL)
-	})
-}
-
 // TestGeneratePKCEVerifier exercises the verifier generator: each call
 // must return a fresh value, encoded as RFC 4648 §5 base64url-without-
 // padding (RFC 7636 §4.1 mandates 43–128 unreserved chars; 32 bytes
@@ -785,24 +725,6 @@ func TestGeneratePKCEVerifier(t *testing.T) {
 		default:
 			t.Errorf("verifier contains non-base64url character %q", c)
 		}
-	}
-}
-
-// TestApplyProviderDefaults_PKCEDefaults asserts that the registered
-// PAGERDUTY provider defaults flip RequiresPKCE on so the downstream
-// Initiate/Complete flow generates a verifier and replays it.
-func TestApplyProviderDefaults_PKCEDefaults(t *testing.T) {
-	t.Parallel()
-
-	for _, provider := range []string{"PAGERDUTY"} {
-		t.Run(provider, func(t *testing.T) {
-			t.Parallel()
-
-			c := &OAuth2Connector{ClientID: "id", ClientSecret: "secret"}
-			ApplyProviderDefaults(provider, "https://example.com/cb", c)
-			assert.True(t, c.RequiresPKCE,
-				"provider %s must enable PKCE so Initiate generates a verifier", provider)
-		})
 	}
 }
 

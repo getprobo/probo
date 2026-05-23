@@ -49,18 +49,15 @@ type (
 	}
 
 	CreateConnectorRequest struct {
-		OrganizationID              gid.GID
-		Provider                    coredata.ConnectorProvider
-		Protocol                    coredata.ConnectorProtocol
-		Connection                  connector.Connection
-		TallySettings               *coredata.TallyConnectorSettings
-		OnePasswordSettings         *coredata.OnePasswordConnectorSettings
-		SentrySettings              *coredata.SentryConnectorSettings
-		SupabaseSettings            *coredata.SupabaseConnectorSettings
-		GitHubSettings              *coredata.GitHubConnectorSettings
-		OnePasswordUsersAPISettings *coredata.OnePasswordUsersAPISettings
-		PagerDutySettings           *coredata.PagerDutyConnectorSettings
-		VercelSettings              *coredata.VercelConnectorSettings
+		OrganizationID gid.GID
+		Provider       coredata.ConnectorProvider
+		Protocol       coredata.ConnectorProtocol
+		Connection     connector.Connection
+		// RawSettings is the provider-specific settings payload as
+		// already-marshalled JSON. The resolver builds this via the
+		// per-provider MarshalSettings closure from the typed gqlgen
+		// input; the service layer never sees the typed structs.
+		RawSettings json.RawMessage
 	}
 
 	ReconnectConnectorRequest struct {
@@ -77,8 +74,28 @@ func (car *CreateConnectorRequest) Validate() error {
 	v.Check(car.Provider, "provider", validator.Required(), validator.OneOfSlice(coredata.ConnectorProviders()))
 	v.Check(car.Protocol, "protocol", validator.Required(), validator.OneOfSlice(coredata.ConnectorProtocols()))
 	v.Check(car.Connection, "connection", validator.Required())
+	v.Check(car.RawSettings, "raw_settings", validJSONRawMessage)
 
 	return v.Error()
+}
+
+// validJSONRawMessage rejects a non-empty RawSettings that does not
+// parse as JSON. Empty RawSettings is allowed (providers without
+// extra settings).
+func validJSONRawMessage(value any) *validator.ValidationError {
+	raw, ok := value.(json.RawMessage)
+	if !ok || len(raw) == 0 {
+		return nil
+	}
+
+	if !json.Valid(raw) {
+		return &validator.ValidationError{
+			Code:    validator.ErrorCodeInvalidFormat,
+			Message: "must be valid JSON",
+		}
+	}
+
+	return nil
 }
 
 func (rcr *ReconnectConnectorRequest) Validate() error {
@@ -248,39 +265,8 @@ func (s *ConnectorService) Create(
 		UpdatedAt:      now,
 	}
 
-	switch {
-	case req.TallySettings != nil:
-		if err := newConnector.SetSettings(req.TallySettings); err != nil {
-			return nil, fmt.Errorf("cannot set tally settings: %w", err)
-		}
-	case req.OnePasswordSettings != nil:
-		if err := newConnector.SetSettings(req.OnePasswordSettings); err != nil {
-			return nil, fmt.Errorf("cannot set one password settings: %w", err)
-		}
-	case req.SentrySettings != nil:
-		if err := newConnector.SetSettings(req.SentrySettings); err != nil {
-			return nil, fmt.Errorf("cannot set sentry settings: %w", err)
-		}
-	case req.SupabaseSettings != nil:
-		if err := newConnector.SetSettings(req.SupabaseSettings); err != nil {
-			return nil, fmt.Errorf("cannot set supabase settings: %w", err)
-		}
-	case req.GitHubSettings != nil:
-		if err := newConnector.SetSettings(req.GitHubSettings); err != nil {
-			return nil, fmt.Errorf("cannot set github settings: %w", err)
-		}
-	case req.OnePasswordUsersAPISettings != nil:
-		if err := newConnector.SetSettings(req.OnePasswordUsersAPISettings); err != nil {
-			return nil, fmt.Errorf("cannot set one password users api settings: %w", err)
-		}
-	case req.PagerDutySettings != nil:
-		if err := newConnector.SetSettings(req.PagerDutySettings); err != nil {
-			return nil, fmt.Errorf("cannot set pagerduty settings: %w", err)
-		}
-	case req.VercelSettings != nil:
-		if err := newConnector.SetSettings(req.VercelSettings); err != nil {
-			return nil, fmt.Errorf("cannot set vercel settings: %w", err)
-		}
+	if len(req.RawSettings) > 0 {
+		newConnector.RawSettings = []byte(req.RawSettings)
 	}
 
 	err := s.svc.pg.WithTx(

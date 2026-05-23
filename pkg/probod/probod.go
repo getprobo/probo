@@ -46,6 +46,7 @@ import (
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/certmanager"
 	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/connector/provider"
 	"go.probo.inc/probo/pkg/cookiebanner"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/cipher"
@@ -282,11 +283,12 @@ func (impl *Implm) Run(
 	}
 
 	redirectURI := baseURL.WithPath(connector.CallbackPath).MustString()
+	providerRegistry := provider.NewBuiltinRegistry()
 	defaultConnectorRegistry := connector.NewConnectorRegistry()
 
 	for _, connectorCfg := range impl.cfg.Connectors {
 		if oauth2c, ok := connectorCfg.Config.(*connector.OAuth2Connector); ok {
-			connector.ApplyProviderDefaults(connectorCfg.Provider, redirectURI, oauth2c)
+			providerRegistry.ApplyOAuth2Defaults(connectorCfg.Provider, redirectURI, oauth2c)
 		}
 
 		if err := defaultConnectorRegistry.Register(connectorCfg.Provider, connectorCfg.Config); err != nil {
@@ -541,6 +543,7 @@ func (impl *Implm) Run(
 		pgClient,
 		encryptionKey,
 		defaultConnectorRegistry,
+		providerRegistry,
 		l.Named("access-review"),
 	)
 
@@ -564,6 +567,7 @@ func (impl *Implm) Run(
 			RiskManagement:    riskManagementService,
 			Slack:             slackService,
 			ConnectorRegistry: defaultConnectorRegistry,
+			ProviderRegistry:  providerRegistry,
 			BaseURL:           baseURL,
 
 			CustomDomainCname: impl.cfg.CustomDomains.CnameTarget,

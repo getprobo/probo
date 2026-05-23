@@ -26,6 +26,7 @@ import (
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/accessreview/drivers"
 	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/connector/provider"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/cipher"
 	"go.probo.inc/probo/pkg/gid"
@@ -38,6 +39,7 @@ type ReviewEngine struct {
 	scope             coredata.Scoper
 	encryptionKey     cipher.EncryptionKey
 	connectorRegistry *connector.ConnectorRegistry
+	providerRegistry  *provider.Registry
 	logger            *log.Logger
 }
 
@@ -46,6 +48,7 @@ func NewReviewEngine(
 	scope coredata.Scoper,
 	encryptionKey cipher.EncryptionKey,
 	connectorRegistry *connector.ConnectorRegistry,
+	providerRegistry *provider.Registry,
 	logger *log.Logger,
 ) *ReviewEngine {
 	return &ReviewEngine{
@@ -53,6 +56,7 @@ func NewReviewEngine(
 		scope:             scope,
 		encryptionKey:     encryptionKey,
 		connectorRegistry: connectorRegistry,
+		providerRegistry:  providerRegistry,
 		logger:            logger,
 	}
 }
@@ -307,181 +311,10 @@ func (e *ReviewEngine) resolveDriver(
 		}
 	}
 
-	switch dbConnector.Provider {
-	case coredata.ConnectorProviderGoogleWorkspace:
-		return drivers.NewGoogleWorkspaceDriver(httpClient), nil
-	case coredata.ConnectorProviderLinear:
-		return drivers.NewLinearDriver(httpClient), nil
-	case coredata.ConnectorProviderSlack:
-		return drivers.NewSlackDriver(httpClient), nil
-	case coredata.ConnectorProviderOnePassword:
-		// Client credentials grant -> Users API driver (to be created in Phase 5).
-		// Authorization code / SCIM grant -> existing SCIM-based driver.
-		if oauth2Conn, ok := dbConnector.Connection.(*connector.OAuth2Connection); ok && oauth2Conn.GrantType == connector.OAuth2GrantTypeClientCredentials {
-			settings, err := coredata.ConnectorSettings[coredata.OnePasswordUsersAPISettings](dbConnector)
-			if err != nil {
-				return nil, fmt.Errorf("cannot read 1password users api settings: %w", err)
-			}
-
-			return drivers.NewOnePasswordUsersAPIDriver(httpClient, settings.AccountID, settings.Region), nil
-		}
-
-		onePasswordSettings, err := coredata.ConnectorSettings[coredata.OnePasswordConnectorSettings](dbConnector)
-		if err != nil {
-			return nil, fmt.Errorf("cannot read 1password connector settings: %w", err)
-		}
-
-		if onePasswordSettings.SCIMBridgeURL == "" {
-			return nil, fmt.Errorf("1password connector requires scim_bridge_url in settings")
-		}
-
-		return drivers.NewOnePasswordDriver(httpClient, onePasswordSettings.SCIMBridgeURL), nil
-	case coredata.ConnectorProviderHubSpot:
-		return drivers.NewHubSpotDriver(httpClient), nil
-	case coredata.ConnectorProviderDocuSign:
-		return drivers.NewDocuSignDriver(httpClient), nil
-	case coredata.ConnectorProviderNotion:
-		return drivers.NewNotionDriver(httpClient), nil
-	case coredata.ConnectorProviderBrex:
-		return drivers.NewBrexDriver(httpClient), nil
-	case coredata.ConnectorProviderTally:
-		tallySettings, err := coredata.ConnectorSettings[coredata.TallyConnectorSettings](dbConnector)
-		if err != nil {
-			return nil, fmt.Errorf("cannot read tally connector settings: %w", err)
-		}
-
-		if tallySettings.OrganizationID == "" {
-			return nil, fmt.Errorf("tally connector requires organization_id in settings")
-		}
-
-		return drivers.NewTallyDriver(httpClient, tallySettings.OrganizationID), nil
-	case coredata.ConnectorProviderCloudflare:
-		return drivers.NewCloudflareDriver(httpClient), nil
-	case coredata.ConnectorProviderOpenAI:
-		return drivers.NewOpenAIDriver(httpClient), nil
-	case coredata.ConnectorProviderSentry:
-		sentrySettings, err := coredata.ConnectorSettings[coredata.SentryConnectorSettings](dbConnector)
-		if err != nil {
-			return nil, fmt.Errorf("cannot read sentry connector settings: %w", err)
-		}
-
-		// OrganizationSlug may be empty for OAuth connections; the driver auto-discovers it.
-		return drivers.NewSentryDriver(httpClient, sentrySettings.OrganizationSlug), nil
-	case coredata.ConnectorProviderSupabase:
-		supabaseSettings, err := coredata.ConnectorSettings[coredata.SupabaseConnectorSettings](dbConnector)
-		if err != nil {
-			return nil, fmt.Errorf("cannot read supabase connector settings: %w", err)
-		}
-
-		if supabaseSettings.OrganizationSlug == "" {
-			return nil, fmt.Errorf("supabase connector requires organization_slug in settings")
-		}
-
-		return drivers.NewSupabaseDriver(httpClient, supabaseSettings.OrganizationSlug), nil
-	case coredata.ConnectorProviderGitHub:
-		githubSettings, err := coredata.ConnectorSettings[coredata.GitHubConnectorSettings](dbConnector)
-		if err != nil {
-			return nil, fmt.Errorf("cannot read github connector settings: %w", err)
-		}
-
-		if githubSettings.Organization == "" {
-			return nil, fmt.Errorf("github connector requires organization in settings")
-		}
-
-		return drivers.NewGitHubDriver(httpClient, githubSettings.Organization, e.logger.Named("github")), nil
-	case coredata.ConnectorProviderIntercom:
-		return drivers.NewIntercomDriver(httpClient), nil
-	case coredata.ConnectorProviderResend:
-		return drivers.NewResendDriver(httpClient), nil
-	case coredata.ConnectorProviderMicrosoft365:
-		return drivers.NewMicrosoft365Driver(httpClient), nil
-	case coredata.ConnectorProviderGitLab:
-		gitlabSettings, err := coredata.ConnectorSettings[coredata.GitLabConnectorSettings](dbConnector)
-		if err != nil {
-			return nil, fmt.Errorf("cannot read gitlab connector settings: %w", err)
-		}
-
-		if gitlabSettings.GroupID == "" {
-			return nil, fmt.Errorf("gitlab connector requires group_id in settings")
-		}
-
-		return drivers.NewGitLabDriver(httpClient, gitlabSettings.GroupID), nil
-	case coredata.ConnectorProviderBitbucket:
-		bitbucketSettings, err := coredata.ConnectorSettings[coredata.BitbucketConnectorSettings](dbConnector)
-		if err != nil {
-			return nil, fmt.Errorf("cannot read bitbucket connector settings: %w", err)
-		}
-
-		if bitbucketSettings.Workspace == "" {
-			return nil, fmt.Errorf("bitbucket connector requires workspace in settings")
-		}
-
-		return drivers.NewBitbucketDriver(httpClient, bitbucketSettings.Workspace), nil
-	case coredata.ConnectorProviderHeroku:
-		herokuSettings, err := coredata.ConnectorSettings[coredata.HerokuConnectorSettings](dbConnector)
-		if err != nil {
-			return nil, fmt.Errorf("cannot read heroku connector settings: %w", err)
-		}
-
-		if herokuSettings.TeamID == "" {
-			return nil, fmt.Errorf("heroku connector requires team_id in settings")
-		}
-
-		return drivers.NewHerokuDriver(httpClient, herokuSettings.TeamID), nil
-	case coredata.ConnectorProviderPagerDuty:
-		// PagerDuty's REST API uses the regional api.pagerduty.com host;
-		// the driver does not consume the per-tenant subdomain. Subdomain
-		// is read only by the name resolver, which returns empty when
-		// missing — that surfaces as a blank source name but does not
-		// block access review.
-		return drivers.NewPagerDutyDriver(httpClient), nil
-	case coredata.ConnectorProviderAsana:
-		asanaSettings, err := coredata.ConnectorSettings[coredata.AsanaConnectorSettings](dbConnector)
-		if err != nil {
-			return nil, fmt.Errorf("cannot read asana connector settings: %w", err)
-		}
-
-		if asanaSettings.WorkspaceGID == "" {
-			return nil, fmt.Errorf("asana connector requires workspace_gid in settings")
-		}
-
-		return drivers.NewAsanaDriver(httpClient, asanaSettings.WorkspaceGID), nil
-	case coredata.ConnectorProviderNetlify:
-		netlifySettings, err := coredata.ConnectorSettings[coredata.NetlifyConnectorSettings](dbConnector)
-		if err != nil {
-			return nil, fmt.Errorf("cannot read netlify connector settings: %w", err)
-		}
-
-		if netlifySettings.AccountSlug == "" {
-			return nil, fmt.Errorf("netlify connector requires account_slug in settings")
-		}
-
-		return drivers.NewNetlifyDriver(httpClient, netlifySettings.AccountSlug), nil
-	case coredata.ConnectorProviderClickUp:
-		clickupSettings, err := coredata.ConnectorSettings[coredata.ClickUpConnectorSettings](dbConnector)
-		if err != nil {
-			return nil, fmt.Errorf("cannot read clickup connector settings: %w", err)
-		}
-
-		if clickupSettings.TeamID == "" {
-			return nil, fmt.Errorf("clickup connector requires team_id in settings")
-		}
-
-		return drivers.NewClickUpDriver(httpClient, clickupSettings.TeamID), nil
-	case coredata.ConnectorProviderVercel:
-		vercelSettings, err := coredata.ConnectorSettings[coredata.VercelConnectorSettings](dbConnector)
-		if err != nil {
-			return nil, fmt.Errorf("cannot read vercel connector settings: %w", err)
-		}
-
-		if vercelSettings.TeamID == "" {
-			return nil, fmt.Errorf("vercel connector requires team_id in settings")
-		}
-
-		return drivers.NewVercelDriver(httpClient, vercelSettings.TeamID), nil
-	case coredata.ConnectorProviderMonday:
-		return drivers.NewMondayDriver(httpClient), nil
-	default:
-		return nil, fmt.Errorf("unsupported connector provider %q for access source driver", dbConnector.Provider)
+	reg, ok := e.providerRegistry.Get(dbConnector.Provider)
+	if !ok || reg.NewDriver == nil {
+		return nil, fmt.Errorf("cannot resolve driver: unsupported provider %q", dbConnector.Provider)
 	}
+
+	return reg.NewDriver(ctx, httpClient, dbConnector, e.logger)
 }

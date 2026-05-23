@@ -58,15 +58,17 @@ type (
 		// on the token exchange.
 		RequiresPKCE bool
 		// AuthURLParams are operator-supplied placeholders substituted
-		// into the static provider AuthURL by ApplyProviderDefaults
-		// (for example Vercel's "{integration_slug}"). Empty for the
-		// vast majority of providers.
+		// into the static provider AuthURL by
+		// (*provider.Registry).ApplyOAuth2Defaults (for example
+		// Vercel's "{integration_slug}"). Empty for the vast majority
+		// of providers.
 		AuthURLParams map[string]string
 
 		// HTTPClient is used for the OAuth2 token-exchange request
 		// issued from CompleteWithState. It must be set by callers;
-		// ApplyProviderDefaults assigns an SSRF-protected client for
-		// production use. Tests may inject a loopback-friendly one.
+		// (*provider.Registry).ApplyOAuth2Defaults assigns an
+		// SSRF-protected client for production use. Tests may inject a
+		// loopback-friendly one.
 		HTTPClient *http.Client
 	}
 

@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"go.gearno.de/kit/log"
-	"go.probo.inc/probo/pkg/accessreview/drivers"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
@@ -548,22 +547,22 @@ func (r *organizationResolver) ConnectorProviderInfos(ctx context.Context, obj *
 
 	var infos []*types.ConnectorProviderInfo
 
-	for _, provider := range coredata.ConnectorProviders() {
-		_, oauthErr := r.connectorRegistry.Get(string(provider))
+	for _, p := range coredata.ConnectorProviders() {
+		_, oauthErr := r.connectorRegistry.Get(string(p))
 
-		scopes := drivers.ProviderOAuth2Scopes(provider)
+		scopes := r.providerRegistry.ProviderOAuth2Scopes(p)
 		if scopes == nil {
 			scopes = []string{}
 		}
 
 		info := &types.ConnectorProviderInfo{
-			Provider:                   provider,
-			DisplayName:                providerDisplayName(provider),
+			Provider:                   p,
+			DisplayName:                r.providerDisplayName(p),
 			OauthConfigured:            oauthErr == nil,
-			APIKeySupported:            providerSupportsAPIKey(provider),
-			ClientCredentialsSupported: providerSupportsClientCredentials(provider),
+			APIKeySupported:            r.providerSupportsAPIKey(p),
+			ClientCredentialsSupported: r.providerSupportsClientCredentials(p),
 			Oauth2Scopes:               scopes,
-			ExtraSettings:              providerExtraSettings(provider),
+			ExtraSettings:              r.providerExtraSettings(p),
 		}
 		infos = append(infos, info)
 	}

@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -17,6 +17,8 @@ package coredata
 import (
 	"encoding/json"
 	"fmt"
+
+	"go.probo.inc/probo/pkg/connector"
 )
 
 type (
@@ -82,6 +84,18 @@ type (
 		TeamID string `json:"team_id"`
 	}
 )
+
+// GrantType returns the OAuth2 grant type recorded on the connector's
+// Connection, or the empty string when the connector is not an OAuth2
+// connector. Driver factories that dispatch on grant type (1Password)
+// read this instead of inspecting the typed Connection directly.
+func (c *Connector) GrantType() string {
+	if oauth2Conn, ok := c.Connection.(*connector.OAuth2Connection); ok {
+		return string(oauth2Conn.GrantType)
+	}
+
+	return ""
+}
 
 // SetSettings marshals a typed settings struct into the connector's RawSettings.
 func (c *Connector) SetSettings(v any) error {
