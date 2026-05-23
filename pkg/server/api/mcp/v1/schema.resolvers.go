@@ -6149,9 +6149,10 @@ func (r *Resolver) MoveTrackerResourceToCategoryTool(ctx context.Context, req *m
 }
 
 func (r *Resolver) ListRiskAssessmentsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListRiskAssessmentsInput) (*mcp.CallToolResult, types.ListRiskAssessmentsOutput, error) {
-	r.MustAuthorize(ctx, input.OrganizationID, probo.ActionRiskAssessmentList)
-
-	scope := coredata.NewScopeFromObjectID(input.OrganizationID)
+	scope, err := r.Authorize(ctx, input.OrganizationID, probo.ActionRiskAssessmentList)
+	if err != nil {
+		return nil, types.ListRiskAssessmentsOutput{}, err
+	}
 
 	pageOrderBy := page.OrderBy[coredata.RiskAssessmentOrderField]{
 		Field:     coredata.RiskAssessmentOrderFieldCreatedAt,
@@ -6175,9 +6176,10 @@ func (r *Resolver) ListRiskAssessmentsTool(ctx context.Context, req *mcp.CallToo
 }
 
 func (r *Resolver) GetRiskAssessmentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetRiskAssessmentInput) (*mcp.CallToolResult, types.GetRiskAssessmentOutput, error) {
-	r.MustAuthorize(ctx, input.ID, probo.ActionRiskAssessmentGet)
-
-	scope := coredata.NewScopeFromObjectID(input.ID)
+	scope, err := r.Authorize(ctx, input.ID, probo.ActionRiskAssessmentGet)
+	if err != nil {
+		return nil, types.GetRiskAssessmentOutput{}, err
+	}
 
 	ra, err := r.riskManagement.Get(ctx, scope, input.ID)
 	if err != nil {
@@ -6190,9 +6192,10 @@ func (r *Resolver) GetRiskAssessmentTool(ctx context.Context, req *mcp.CallToolR
 }
 
 func (r *Resolver) AddRiskAssessmentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddRiskAssessmentInput) (*mcp.CallToolResult, types.AddRiskAssessmentOutput, error) {
-	r.MustAuthorize(ctx, input.OrganizationID, probo.ActionRiskAssessmentCreate)
-
-	scope := coredata.NewScopeFromObjectID(input.OrganizationID)
+	scope, err := r.Authorize(ctx, input.OrganizationID, probo.ActionRiskAssessmentCreate)
+	if err != nil {
+		return nil, types.AddRiskAssessmentOutput{}, err
+	}
 
 	ra, err := r.riskManagement.Create(ctx, scope, riskmanagement.CreateRiskAssessmentRequest{
 		OrganizationID: input.OrganizationID,
@@ -6209,9 +6212,10 @@ func (r *Resolver) AddRiskAssessmentTool(ctx context.Context, req *mcp.CallToolR
 }
 
 func (r *Resolver) UpdateRiskAssessmentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateRiskAssessmentInput) (*mcp.CallToolResult, types.UpdateRiskAssessmentOutput, error) {
-	r.MustAuthorize(ctx, input.ID, probo.ActionRiskAssessmentUpdate)
-
-	scope := coredata.NewScopeFromObjectID(input.ID)
+	scope, err := r.Authorize(ctx, input.ID, probo.ActionRiskAssessmentUpdate)
+	if err != nil {
+		return nil, types.UpdateRiskAssessmentOutput{}, err
+	}
 
 	ra, err := r.riskManagement.Update(ctx, scope, riskmanagement.UpdateRiskAssessmentRequest{
 		ID:          input.ID,
@@ -6228,12 +6232,12 @@ func (r *Resolver) UpdateRiskAssessmentTool(ctx context.Context, req *mcp.CallTo
 }
 
 func (r *Resolver) DeleteRiskAssessmentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteRiskAssessmentInput) (*mcp.CallToolResult, types.DeleteRiskAssessmentOutput, error) {
-	r.MustAuthorize(ctx, input.ID, probo.ActionRiskAssessmentDelete)
-
-	scope := coredata.NewScopeFromObjectID(input.ID)
-
-	err := r.riskManagement.Delete(ctx, scope, input.ID)
+	scope, err := r.Authorize(ctx, input.ID, probo.ActionRiskAssessmentDelete)
 	if err != nil {
+		return nil, types.DeleteRiskAssessmentOutput{}, err
+	}
+
+	if err := r.riskManagement.Delete(ctx, scope, input.ID); err != nil {
 		return nil, types.DeleteRiskAssessmentOutput{}, fmt.Errorf("failed to delete risk assessment: %w", err)
 	}
 
@@ -6242,9 +6246,10 @@ func (r *Resolver) DeleteRiskAssessmentTool(ctx context.Context, req *mcp.CallTo
 	}, nil
 }
 func (r *Resolver) ListRiskAssessmentScopesTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListRiskAssessmentScopesInput) (*mcp.CallToolResult, types.ListRiskAssessmentScopesOutput, error) {
-	r.MustAuthorize(ctx, input.RiskAssessmentID, probo.ActionRiskAssessmentScopeList)
-
-	scope := coredata.NewScopeFromObjectID(input.RiskAssessmentID)
+	scope, err := r.Authorize(ctx, input.RiskAssessmentID, probo.ActionRiskAssessmentScopeList)
+	if err != nil {
+		return nil, types.ListRiskAssessmentScopesOutput{}, err
+	}
 
 	pageOrderBy := page.OrderBy[coredata.RiskAssessmentScopeOrderField]{
 		Field:     coredata.RiskAssessmentScopeOrderFieldCreatedAt,
@@ -6268,9 +6273,10 @@ func (r *Resolver) ListRiskAssessmentScopesTool(ctx context.Context, req *mcp.Ca
 }
 
 func (r *Resolver) GetRiskAssessmentScopeTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetRiskAssessmentScopeInput) (*mcp.CallToolResult, types.GetRiskAssessmentScopeOutput, error) {
-	r.MustAuthorize(ctx, input.ID, probo.ActionRiskAssessmentScopeGet)
-
-	scope := coredata.NewScopeFromObjectID(input.ID)
+	scope, err := r.Authorize(ctx, input.ID, probo.ActionRiskAssessmentScopeGet)
+	if err != nil {
+		return nil, types.GetRiskAssessmentScopeOutput{}, err
+	}
 
 	s, err := r.riskManagement.GetScope(ctx, scope, input.ID)
 	if err != nil {
@@ -6283,9 +6289,10 @@ func (r *Resolver) GetRiskAssessmentScopeTool(ctx context.Context, req *mcp.Call
 }
 
 func (r *Resolver) AddRiskAssessmentScopeTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddRiskAssessmentScopeInput) (*mcp.CallToolResult, types.AddRiskAssessmentScopeOutput, error) {
-	r.MustAuthorize(ctx, input.RiskAssessmentID, probo.ActionRiskAssessmentScopeCreate)
-
-	scope := coredata.NewScopeFromObjectID(input.RiskAssessmentID)
+	scope, err := r.Authorize(ctx, input.RiskAssessmentID, probo.ActionRiskAssessmentScopeCreate)
+	if err != nil {
+		return nil, types.AddRiskAssessmentScopeOutput{}, err
+	}
 
 	s, err := r.riskManagement.CreateScope(ctx, scope, riskmanagement.CreateRiskAssessmentScopeRequest{
 		RiskAssessmentID: input.RiskAssessmentID,
@@ -6301,9 +6308,10 @@ func (r *Resolver) AddRiskAssessmentScopeTool(ctx context.Context, req *mcp.Call
 }
 
 func (r *Resolver) UpdateRiskAssessmentScopeTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateRiskAssessmentScopeInput) (*mcp.CallToolResult, types.UpdateRiskAssessmentScopeOutput, error) {
-	r.MustAuthorize(ctx, input.ID, probo.ActionRiskAssessmentScopeUpdate)
-
-	scope := coredata.NewScopeFromObjectID(input.ID)
+	scope, err := r.Authorize(ctx, input.ID, probo.ActionRiskAssessmentScopeUpdate)
+	if err != nil {
+		return nil, types.UpdateRiskAssessmentScopeOutput{}, err
+	}
 
 	s, err := r.riskManagement.UpdateScope(ctx, scope, riskmanagement.UpdateRiskAssessmentScopeRequest{
 		ID:   input.ID,
@@ -6319,12 +6327,12 @@ func (r *Resolver) UpdateRiskAssessmentScopeTool(ctx context.Context, req *mcp.C
 }
 
 func (r *Resolver) DeleteRiskAssessmentScopeTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteRiskAssessmentScopeInput) (*mcp.CallToolResult, types.DeleteRiskAssessmentScopeOutput, error) {
-	r.MustAuthorize(ctx, input.ID, probo.ActionRiskAssessmentScopeDelete)
-
-	scope := coredata.NewScopeFromObjectID(input.ID)
-
-	err := r.riskManagement.DeleteScope(ctx, scope, input.ID)
+	scope, err := r.Authorize(ctx, input.ID, probo.ActionRiskAssessmentScopeDelete)
 	if err != nil {
+		return nil, types.DeleteRiskAssessmentScopeOutput{}, err
+	}
+
+	if err := r.riskManagement.DeleteScope(ctx, scope, input.ID); err != nil {
 		return nil, types.DeleteRiskAssessmentScopeOutput{}, fmt.Errorf("failed to delete risk assessment scope: %w", err)
 	}
 
@@ -6333,9 +6341,10 @@ func (r *Resolver) DeleteRiskAssessmentScopeTool(ctx context.Context, req *mcp.C
 	}, nil
 }
 func (r *Resolver) ListRiskAssessmentNodesTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListRiskAssessmentNodesInput) (*mcp.CallToolResult, types.ListRiskAssessmentNodesOutput, error) {
-	r.MustAuthorize(ctx, input.RiskAssessmentScopeID, probo.ActionRiskAssessmentNodeList)
-
-	scope := coredata.NewScopeFromObjectID(input.RiskAssessmentScopeID)
+	scope, err := r.Authorize(ctx, input.RiskAssessmentScopeID, probo.ActionRiskAssessmentNodeList)
+	if err != nil {
+		return nil, types.ListRiskAssessmentNodesOutput{}, err
+	}
 
 	pageOrderBy := page.OrderBy[coredata.RiskAssessmentNodeOrderField]{
 		Field:     coredata.RiskAssessmentNodeOrderFieldCreatedAt,
@@ -6359,9 +6368,10 @@ func (r *Resolver) ListRiskAssessmentNodesTool(ctx context.Context, req *mcp.Cal
 }
 
 func (r *Resolver) GetRiskAssessmentNodeTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetRiskAssessmentNodeInput) (*mcp.CallToolResult, types.GetRiskAssessmentNodeOutput, error) {
-	r.MustAuthorize(ctx, input.ID, probo.ActionRiskAssessmentNodeGet)
-
-	scope := coredata.NewScopeFromObjectID(input.ID)
+	scope, err := r.Authorize(ctx, input.ID, probo.ActionRiskAssessmentNodeGet)
+	if err != nil {
+		return nil, types.GetRiskAssessmentNodeOutput{}, err
+	}
 
 	n, err := r.riskManagement.GetNode(ctx, scope, input.ID)
 	if err != nil {
@@ -6374,9 +6384,10 @@ func (r *Resolver) GetRiskAssessmentNodeTool(ctx context.Context, req *mcp.CallT
 }
 
 func (r *Resolver) AddRiskAssessmentNodeTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddRiskAssessmentNodeInput) (*mcp.CallToolResult, types.AddRiskAssessmentNodeOutput, error) {
-	r.MustAuthorize(ctx, input.RiskAssessmentScopeID, probo.ActionRiskAssessmentNodeCreate)
-
-	scope := coredata.NewScopeFromObjectID(input.RiskAssessmentScopeID)
+	scope, err := r.Authorize(ctx, input.RiskAssessmentScopeID, probo.ActionRiskAssessmentNodeCreate)
+	if err != nil {
+		return nil, types.AddRiskAssessmentNodeOutput{}, err
+	}
 
 	n, err := r.riskManagement.CreateNode(ctx, scope, riskmanagement.CreateRiskAssessmentNodeRequest{
 		RiskAssessmentScopeID: input.RiskAssessmentScopeID,
@@ -6393,9 +6404,10 @@ func (r *Resolver) AddRiskAssessmentNodeTool(ctx context.Context, req *mcp.CallT
 }
 
 func (r *Resolver) UpdateRiskAssessmentNodeTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateRiskAssessmentNodeInput) (*mcp.CallToolResult, types.UpdateRiskAssessmentNodeOutput, error) {
-	r.MustAuthorize(ctx, input.ID, probo.ActionRiskAssessmentNodeUpdate)
-
-	scope := coredata.NewScopeFromObjectID(input.ID)
+	scope, err := r.Authorize(ctx, input.ID, probo.ActionRiskAssessmentNodeUpdate)
+	if err != nil {
+		return nil, types.UpdateRiskAssessmentNodeOutput{}, err
+	}
 
 	n, err := r.riskManagement.UpdateNode(ctx, scope, riskmanagement.UpdateRiskAssessmentNodeRequest{
 		ID:       input.ID,
@@ -6412,12 +6424,12 @@ func (r *Resolver) UpdateRiskAssessmentNodeTool(ctx context.Context, req *mcp.Ca
 }
 
 func (r *Resolver) DeleteRiskAssessmentNodeTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteRiskAssessmentNodeInput) (*mcp.CallToolResult, types.DeleteRiskAssessmentNodeOutput, error) {
-	r.MustAuthorize(ctx, input.ID, probo.ActionRiskAssessmentNodeDelete)
-
-	scope := coredata.NewScopeFromObjectID(input.ID)
-
-	err := r.riskManagement.DeleteNode(ctx, scope, input.ID)
+	scope, err := r.Authorize(ctx, input.ID, probo.ActionRiskAssessmentNodeDelete)
 	if err != nil {
+		return nil, types.DeleteRiskAssessmentNodeOutput{}, err
+	}
+
+	if err := r.riskManagement.DeleteNode(ctx, scope, input.ID); err != nil {
 		return nil, types.DeleteRiskAssessmentNodeOutput{}, fmt.Errorf("failed to delete risk assessment node: %w", err)
 	}
 
@@ -6426,9 +6438,10 @@ func (r *Resolver) DeleteRiskAssessmentNodeTool(ctx context.Context, req *mcp.Ca
 	}, nil
 }
 func (r *Resolver) ListRiskAssessmentProcessesTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListRiskAssessmentProcessesInput) (*mcp.CallToolResult, types.ListRiskAssessmentProcessesOutput, error) {
-	r.MustAuthorize(ctx, input.RiskAssessmentScopeID, probo.ActionRiskAssessmentProcessList)
-
-	scope := coredata.NewScopeFromObjectID(input.RiskAssessmentScopeID)
+	scope, err := r.Authorize(ctx, input.RiskAssessmentScopeID, probo.ActionRiskAssessmentProcessList)
+	if err != nil {
+		return nil, types.ListRiskAssessmentProcessesOutput{}, err
+	}
 
 	pageOrderBy := page.OrderBy[coredata.RiskAssessmentProcessOrderField]{
 		Field:     coredata.RiskAssessmentProcessOrderFieldCreatedAt,
@@ -6452,9 +6465,10 @@ func (r *Resolver) ListRiskAssessmentProcessesTool(ctx context.Context, req *mcp
 }
 
 func (r *Resolver) GetRiskAssessmentProcessTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetRiskAssessmentProcessInput) (*mcp.CallToolResult, types.GetRiskAssessmentProcessOutput, error) {
-	r.MustAuthorize(ctx, input.ID, probo.ActionRiskAssessmentProcessGet)
-
-	scope := coredata.NewScopeFromObjectID(input.ID)
+	scope, err := r.Authorize(ctx, input.ID, probo.ActionRiskAssessmentProcessGet)
+	if err != nil {
+		return nil, types.GetRiskAssessmentProcessOutput{}, err
+	}
 
 	p, err := r.riskManagement.GetProcess(ctx, scope, input.ID)
 	if err != nil {
@@ -6467,9 +6481,10 @@ func (r *Resolver) GetRiskAssessmentProcessTool(ctx context.Context, req *mcp.Ca
 }
 
 func (r *Resolver) AddRiskAssessmentProcessTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddRiskAssessmentProcessInput) (*mcp.CallToolResult, types.AddRiskAssessmentProcessOutput, error) {
-	r.MustAuthorize(ctx, input.RiskAssessmentScopeID, probo.ActionRiskAssessmentProcessCreate)
-
-	scope := coredata.NewScopeFromObjectID(input.RiskAssessmentScopeID)
+	scope, err := r.Authorize(ctx, input.RiskAssessmentScopeID, probo.ActionRiskAssessmentProcessCreate)
+	if err != nil {
+		return nil, types.AddRiskAssessmentProcessOutput{}, err
+	}
 
 	p, err := r.riskManagement.CreateProcess(ctx, scope, riskmanagement.CreateRiskAssessmentProcessRequest{
 		RiskAssessmentScopeID: input.RiskAssessmentScopeID,
@@ -6487,9 +6502,10 @@ func (r *Resolver) AddRiskAssessmentProcessTool(ctx context.Context, req *mcp.Ca
 }
 
 func (r *Resolver) UpdateRiskAssessmentProcessTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateRiskAssessmentProcessInput) (*mcp.CallToolResult, types.UpdateRiskAssessmentProcessOutput, error) {
-	r.MustAuthorize(ctx, input.ID, probo.ActionRiskAssessmentProcessUpdate)
-
-	scope := coredata.NewScopeFromObjectID(input.ID)
+	scope, err := r.Authorize(ctx, input.ID, probo.ActionRiskAssessmentProcessUpdate)
+	if err != nil {
+		return nil, types.UpdateRiskAssessmentProcessOutput{}, err
+	}
 
 	p, err := r.riskManagement.UpdateProcess(ctx, scope, riskmanagement.UpdateRiskAssessmentProcessRequest{
 		ID:           input.ID,
@@ -6507,12 +6523,12 @@ func (r *Resolver) UpdateRiskAssessmentProcessTool(ctx context.Context, req *mcp
 }
 
 func (r *Resolver) DeleteRiskAssessmentProcessTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteRiskAssessmentProcessInput) (*mcp.CallToolResult, types.DeleteRiskAssessmentProcessOutput, error) {
-	r.MustAuthorize(ctx, input.ID, probo.ActionRiskAssessmentProcessDelete)
-
-	scope := coredata.NewScopeFromObjectID(input.ID)
-
-	err := r.riskManagement.DeleteProcess(ctx, scope, input.ID)
+	scope, err := r.Authorize(ctx, input.ID, probo.ActionRiskAssessmentProcessDelete)
 	if err != nil {
+		return nil, types.DeleteRiskAssessmentProcessOutput{}, err
+	}
+
+	if err := r.riskManagement.DeleteProcess(ctx, scope, input.ID); err != nil {
 		return nil, types.DeleteRiskAssessmentProcessOutput{}, fmt.Errorf("failed to delete risk assessment process: %w", err)
 	}
 
@@ -6521,9 +6537,10 @@ func (r *Resolver) DeleteRiskAssessmentProcessTool(ctx context.Context, req *mcp
 	}, nil
 }
 func (r *Resolver) ListRiskAssessmentThreatsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListRiskAssessmentThreatsInput) (*mcp.CallToolResult, types.ListRiskAssessmentThreatsOutput, error) {
-	r.MustAuthorize(ctx, input.RiskAssessmentScopeID, probo.ActionRiskAssessmentThreatList)
-
-	scope := coredata.NewScopeFromObjectID(input.RiskAssessmentScopeID)
+	scope, err := r.Authorize(ctx, input.RiskAssessmentScopeID, probo.ActionRiskAssessmentThreatList)
+	if err != nil {
+		return nil, types.ListRiskAssessmentThreatsOutput{}, err
+	}
 
 	pageOrderBy := page.OrderBy[coredata.RiskAssessmentThreatOrderField]{
 		Field:     coredata.RiskAssessmentThreatOrderFieldCreatedAt,
@@ -6547,9 +6564,10 @@ func (r *Resolver) ListRiskAssessmentThreatsTool(ctx context.Context, req *mcp.C
 }
 
 func (r *Resolver) GetRiskAssessmentThreatTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetRiskAssessmentThreatInput) (*mcp.CallToolResult, types.GetRiskAssessmentThreatOutput, error) {
-	r.MustAuthorize(ctx, input.ID, probo.ActionRiskAssessmentThreatGet)
-
-	scope := coredata.NewScopeFromObjectID(input.ID)
+	scope, err := r.Authorize(ctx, input.ID, probo.ActionRiskAssessmentThreatGet)
+	if err != nil {
+		return nil, types.GetRiskAssessmentThreatOutput{}, err
+	}
 
 	t, err := r.riskManagement.GetThreat(ctx, scope, input.ID)
 	if err != nil {
@@ -6562,9 +6580,10 @@ func (r *Resolver) GetRiskAssessmentThreatTool(ctx context.Context, req *mcp.Cal
 }
 
 func (r *Resolver) AddRiskAssessmentThreatTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddRiskAssessmentThreatInput) (*mcp.CallToolResult, types.AddRiskAssessmentThreatOutput, error) {
-	r.MustAuthorize(ctx, input.RiskAssessmentScopeID, probo.ActionRiskAssessmentThreatCreate)
-
-	scope := coredata.NewScopeFromObjectID(input.RiskAssessmentScopeID)
+	scope, err := r.Authorize(ctx, input.RiskAssessmentScopeID, probo.ActionRiskAssessmentThreatCreate)
+	if err != nil {
+		return nil, types.AddRiskAssessmentThreatOutput{}, err
+	}
 
 	t, err := r.riskManagement.CreateThreat(ctx, scope, riskmanagement.CreateRiskAssessmentThreatRequest{
 		RiskAssessmentScopeID: input.RiskAssessmentScopeID,
@@ -6582,9 +6601,10 @@ func (r *Resolver) AddRiskAssessmentThreatTool(ctx context.Context, req *mcp.Cal
 }
 
 func (r *Resolver) UpdateRiskAssessmentThreatTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateRiskAssessmentThreatInput) (*mcp.CallToolResult, types.UpdateRiskAssessmentThreatOutput, error) {
-	r.MustAuthorize(ctx, input.ID, probo.ActionRiskAssessmentThreatUpdate)
-
-	scope := coredata.NewScopeFromObjectID(input.ID)
+	scope, err := r.Authorize(ctx, input.ID, probo.ActionRiskAssessmentThreatUpdate)
+	if err != nil {
+		return nil, types.UpdateRiskAssessmentThreatOutput{}, err
+	}
 
 	t, err := r.riskManagement.UpdateThreat(ctx, scope, riskmanagement.UpdateRiskAssessmentThreatRequest{
 		ID:        input.ID,
@@ -6602,12 +6622,12 @@ func (r *Resolver) UpdateRiskAssessmentThreatTool(ctx context.Context, req *mcp.
 }
 
 func (r *Resolver) DeleteRiskAssessmentThreatTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteRiskAssessmentThreatInput) (*mcp.CallToolResult, types.DeleteRiskAssessmentThreatOutput, error) {
-	r.MustAuthorize(ctx, input.ID, probo.ActionRiskAssessmentThreatDelete)
-
-	scope := coredata.NewScopeFromObjectID(input.ID)
-
-	err := r.riskManagement.DeleteThreat(ctx, scope, input.ID)
+	scope, err := r.Authorize(ctx, input.ID, probo.ActionRiskAssessmentThreatDelete)
 	if err != nil {
+		return nil, types.DeleteRiskAssessmentThreatOutput{}, err
+	}
+
+	if err := r.riskManagement.DeleteThreat(ctx, scope, input.ID); err != nil {
 		return nil, types.DeleteRiskAssessmentThreatOutput{}, fmt.Errorf("failed to delete risk assessment threat: %w", err)
 	}
 
@@ -6616,9 +6636,10 @@ func (r *Resolver) DeleteRiskAssessmentThreatTool(ctx context.Context, req *mcp.
 	}, nil
 }
 func (r *Resolver) ListRiskAssessmentScenariosTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListRiskAssessmentScenariosInput) (*mcp.CallToolResult, types.ListRiskAssessmentScenariosOutput, error) {
-	r.MustAuthorize(ctx, input.RiskAssessmentScopeID, probo.ActionRiskAssessmentScenarioList)
-
-	scope := coredata.NewScopeFromObjectID(input.RiskAssessmentScopeID)
+	scope, err := r.Authorize(ctx, input.RiskAssessmentScopeID, probo.ActionRiskAssessmentScenarioList)
+	if err != nil {
+		return nil, types.ListRiskAssessmentScenariosOutput{}, err
+	}
 
 	pageOrderBy := page.OrderBy[coredata.RiskAssessmentScenarioOrderField]{
 		Field:     coredata.RiskAssessmentScenarioOrderFieldCreatedAt,
@@ -6642,9 +6663,10 @@ func (r *Resolver) ListRiskAssessmentScenariosTool(ctx context.Context, req *mcp
 }
 
 func (r *Resolver) GetRiskAssessmentScenarioTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetRiskAssessmentScenarioInput) (*mcp.CallToolResult, types.GetRiskAssessmentScenarioOutput, error) {
-	r.MustAuthorize(ctx, input.ID, probo.ActionRiskAssessmentScenarioGet)
-
-	scope := coredata.NewScopeFromObjectID(input.ID)
+	scope, err := r.Authorize(ctx, input.ID, probo.ActionRiskAssessmentScenarioGet)
+	if err != nil {
+		return nil, types.GetRiskAssessmentScenarioOutput{}, err
+	}
 
 	s, err := r.riskManagement.GetScenario(ctx, scope, input.ID)
 	if err != nil {
@@ -6657,9 +6679,10 @@ func (r *Resolver) GetRiskAssessmentScenarioTool(ctx context.Context, req *mcp.C
 }
 
 func (r *Resolver) AddRiskAssessmentScenarioTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddRiskAssessmentScenarioInput) (*mcp.CallToolResult, types.AddRiskAssessmentScenarioOutput, error) {
-	r.MustAuthorize(ctx, input.RiskAssessmentScopeID, probo.ActionRiskAssessmentScenarioCreate)
-
-	scope := coredata.NewScopeFromObjectID(input.RiskAssessmentScopeID)
+	scope, err := r.Authorize(ctx, input.RiskAssessmentScopeID, probo.ActionRiskAssessmentScenarioCreate)
+	if err != nil {
+		return nil, types.AddRiskAssessmentScenarioOutput{}, err
+	}
 
 	s, err := r.riskManagement.CreateScenario(ctx, scope, riskmanagement.CreateRiskAssessmentScenarioRequest{
 		RiskAssessmentScopeID: input.RiskAssessmentScopeID,
@@ -6676,9 +6699,10 @@ func (r *Resolver) AddRiskAssessmentScenarioTool(ctx context.Context, req *mcp.C
 }
 
 func (r *Resolver) UpdateRiskAssessmentScenarioTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateRiskAssessmentScenarioInput) (*mcp.CallToolResult, types.UpdateRiskAssessmentScenarioOutput, error) {
-	r.MustAuthorize(ctx, input.ID, probo.ActionRiskAssessmentScenarioUpdate)
-
-	scope := coredata.NewScopeFromObjectID(input.ID)
+	scope, err := r.Authorize(ctx, input.ID, probo.ActionRiskAssessmentScenarioUpdate)
+	if err != nil {
+		return nil, types.UpdateRiskAssessmentScenarioOutput{}, err
+	}
 
 	s, err := r.riskManagement.UpdateScenario(ctx, scope, riskmanagement.UpdateRiskAssessmentScenarioRequest{
 		ID:          input.ID,
@@ -6695,12 +6719,12 @@ func (r *Resolver) UpdateRiskAssessmentScenarioTool(ctx context.Context, req *mc
 }
 
 func (r *Resolver) DeleteRiskAssessmentScenarioTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteRiskAssessmentScenarioInput) (*mcp.CallToolResult, types.DeleteRiskAssessmentScenarioOutput, error) {
-	r.MustAuthorize(ctx, input.ID, probo.ActionRiskAssessmentScenarioDelete)
-
-	scope := coredata.NewScopeFromObjectID(input.ID)
-
-	err := r.riskManagement.DeleteScenario(ctx, scope, input.ID)
+	scope, err := r.Authorize(ctx, input.ID, probo.ActionRiskAssessmentScenarioDelete)
 	if err != nil {
+		return nil, types.DeleteRiskAssessmentScenarioOutput{}, err
+	}
+
+	if err := r.riskManagement.DeleteScenario(ctx, scope, input.ID); err != nil {
 		return nil, types.DeleteRiskAssessmentScenarioOutput{}, fmt.Errorf("failed to delete risk assessment scenario: %w", err)
 	}
 
@@ -6709,11 +6733,12 @@ func (r *Resolver) DeleteRiskAssessmentScenarioTool(ctx context.Context, req *mc
 	}, nil
 }
 func (r *Resolver) LinkRiskAssessmentScenarioThreatTool(ctx context.Context, req *mcp.CallToolRequest, input *types.LinkRiskAssessmentScenarioThreatInput) (*mcp.CallToolResult, types.LinkRiskAssessmentScenarioThreatOutput, error) {
-	r.MustAuthorize(ctx, input.RiskAssessmentScenarioID, probo.ActionRiskAssessmentScenarioThreatLink)
+	scope, err := r.Authorize(ctx, input.RiskAssessmentScenarioID, probo.ActionRiskAssessmentScenarioThreatLink)
+	if err != nil {
+		return nil, types.LinkRiskAssessmentScenarioThreatOutput{}, err
+	}
 
-	scope := coredata.NewScopeFromObjectID(input.RiskAssessmentScenarioID)
-
-	err := r.riskManagement.LinkScenarioThreat(ctx, scope, riskmanagement.LinkRiskAssessmentScenarioThreatRequest{
+	err = r.riskManagement.LinkScenarioThreat(ctx, scope, riskmanagement.LinkRiskAssessmentScenarioThreatRequest{
 		RiskAssessmentScenarioID: input.RiskAssessmentScenarioID,
 		ThreatID:                 input.ThreatID,
 	})
@@ -6725,15 +6750,19 @@ func (r *Resolver) LinkRiskAssessmentScenarioThreatTool(ctx context.Context, req
 }
 
 func (r *Resolver) UnlinkRiskAssessmentScenarioThreatTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UnlinkRiskAssessmentScenarioThreatInput) (*mcp.CallToolResult, types.UnlinkRiskAssessmentScenarioThreatOutput, error) {
-	r.MustAuthorize(ctx, input.RiskAssessmentScenarioID, probo.ActionRiskAssessmentScenarioThreatUnlink)
-
-	scope := coredata.NewScopeFromObjectID(input.RiskAssessmentScenarioID)
-
-	err := r.riskManagement.UnlinkScenarioThreat(ctx, scope, riskmanagement.UnlinkRiskAssessmentScenarioThreatRequest{
-		RiskAssessmentScenarioID: input.RiskAssessmentScenarioID,
-		ThreatID:                 input.ThreatID,
-	})
+	scope, err := r.Authorize(ctx, input.RiskAssessmentScenarioID, probo.ActionRiskAssessmentScenarioThreatUnlink)
 	if err != nil {
+		return nil, types.UnlinkRiskAssessmentScenarioThreatOutput{}, err
+	}
+
+	if err := r.riskManagement.UnlinkScenarioThreat(
+		ctx,
+		scope,
+		riskmanagement.UnlinkRiskAssessmentScenarioThreatRequest{
+			RiskAssessmentScenarioID: input.RiskAssessmentScenarioID,
+			ThreatID:                 input.ThreatID,
+		},
+	); err != nil {
 		return nil, types.UnlinkRiskAssessmentScenarioThreatOutput{}, fmt.Errorf("failed to unlink scenario threat: %w", err)
 	}
 
@@ -6741,15 +6770,19 @@ func (r *Resolver) UnlinkRiskAssessmentScenarioThreatTool(ctx context.Context, r
 }
 
 func (r *Resolver) LinkRiskAssessmentScenarioRiskTool(ctx context.Context, req *mcp.CallToolRequest, input *types.LinkRiskAssessmentScenarioRiskInput) (*mcp.CallToolResult, types.LinkRiskAssessmentScenarioRiskOutput, error) {
-	r.MustAuthorize(ctx, input.RiskAssessmentScenarioID, probo.ActionRiskAssessmentScenarioRiskLink)
-
-	scope := coredata.NewScopeFromObjectID(input.RiskAssessmentScenarioID)
-
-	err := r.riskManagement.LinkScenarioRisk(ctx, scope, riskmanagement.LinkRiskAssessmentScenarioRiskRequest{
-		RiskAssessmentScenarioID: input.RiskAssessmentScenarioID,
-		RiskID:                   input.RiskID,
-	})
+	scope, err := r.Authorize(ctx, input.RiskAssessmentScenarioID, probo.ActionRiskAssessmentScenarioRiskLink)
 	if err != nil {
+		return nil, types.LinkRiskAssessmentScenarioRiskOutput{}, err
+	}
+
+	if err := r.riskManagement.LinkScenarioRisk(
+		ctx,
+		scope,
+		riskmanagement.LinkRiskAssessmentScenarioRiskRequest{
+			RiskAssessmentScenarioID: input.RiskAssessmentScenarioID,
+			RiskID:                   input.RiskID,
+		},
+	); err != nil {
 		return nil, types.LinkRiskAssessmentScenarioRiskOutput{}, fmt.Errorf("failed to link scenario risk: %w", err)
 	}
 
@@ -6757,15 +6790,19 @@ func (r *Resolver) LinkRiskAssessmentScenarioRiskTool(ctx context.Context, req *
 }
 
 func (r *Resolver) UnlinkRiskAssessmentScenarioRiskTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UnlinkRiskAssessmentScenarioRiskInput) (*mcp.CallToolResult, types.UnlinkRiskAssessmentScenarioRiskOutput, error) {
-	r.MustAuthorize(ctx, input.RiskAssessmentScenarioID, probo.ActionRiskAssessmentScenarioRiskUnlink)
-
-	scope := coredata.NewScopeFromObjectID(input.RiskAssessmentScenarioID)
-
-	err := r.riskManagement.UnlinkScenarioRisk(ctx, scope, riskmanagement.UnlinkRiskAssessmentScenarioRiskRequest{
-		RiskAssessmentScenarioID: input.RiskAssessmentScenarioID,
-		RiskID:                   input.RiskID,
-	})
+	scope, err := r.Authorize(ctx, input.RiskAssessmentScenarioID, probo.ActionRiskAssessmentScenarioRiskUnlink)
 	if err != nil {
+		return nil, types.UnlinkRiskAssessmentScenarioRiskOutput{}, err
+	}
+
+	if err := r.riskManagement.UnlinkScenarioRisk(
+		ctx,
+		scope,
+		riskmanagement.UnlinkRiskAssessmentScenarioRiskRequest{
+			RiskAssessmentScenarioID: input.RiskAssessmentScenarioID,
+			RiskID:                   input.RiskID,
+		},
+	); err != nil {
 		return nil, types.UnlinkRiskAssessmentScenarioRiskOutput{}, fmt.Errorf("failed to unlink scenario risk: %w", err)
 	}
 
@@ -6773,9 +6810,10 @@ func (r *Resolver) UnlinkRiskAssessmentScenarioRiskTool(ctx context.Context, req
 }
 
 func (r *Resolver) GetRiskAssessmentScopeMermaidChartTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetRiskAssessmentScopeMermaidChartInput) (*mcp.CallToolResult, types.GetRiskAssessmentScopeMermaidChartOutput, error) {
-	r.MustAuthorize(ctx, input.ID, probo.ActionRiskAssessmentScopeGet)
-
-	scope := coredata.NewScopeFromObjectID(input.ID)
+	scope, err := r.Authorize(ctx, input.ID, probo.ActionRiskAssessmentScopeGet)
+	if err != nil {
+		return nil, types.GetRiskAssessmentScopeMermaidChartOutput{}, err
+	}
 
 	chart, err := r.riskManagement.BuildScopeMermaidChart(ctx, scope, input.ID)
 	if err != nil {
