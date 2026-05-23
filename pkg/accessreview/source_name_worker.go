@@ -166,7 +166,7 @@ func (h *sourceNameHandler) Process(ctx context.Context, source coredata.AccessS
 
 	instanceName, err := resolver.ResolveInstanceName(resolveCtx)
 	if err != nil {
-		h.logger.ErrorCtx(
+		h.logger.WarnCtx(
 			ctx,
 			"cannot resolve instance name",
 			log.String("source_id", source.ID.String()),
