@@ -552,6 +552,10 @@ func NewGitHubNameResolver(httpClient *http.Client, org string) NameResolver {
 }
 
 func (r *githubNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
+	if r.org == "" {
+		return "", nil
+	}
+
 	endpoint, err := url.JoinPath("https://api.github.com", "orgs", url.PathEscape(r.org))
 	if err != nil {
 		return "", fmt.Errorf("cannot build github organization URL: %w", err)

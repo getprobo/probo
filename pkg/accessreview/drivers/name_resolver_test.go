@@ -284,6 +284,90 @@ func TestHerokuNameResolver(t *testing.T) {
 	})
 }
 
+func TestGitHubNameResolver(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		name      string
+		org       string
+		status    int
+		body      string
+		want      string
+		wantErr   bool
+		wantNoReq bool
+	}{
+		{
+			name:      "empty org returns empty name without HTTP call",
+			org:       "",
+			wantNoReq: true,
+			want:      "",
+		},
+		{
+			name:   "200 with name",
+			org:    "acme",
+			status: http.StatusOK,
+			body:   `{"name":"Acme Inc"}`,
+			want:   "Acme Inc",
+		},
+		{
+			name:   "200 with empty name falls back to org slug",
+			org:    "acme",
+			status: http.StatusOK,
+			body:   `{"name":""}`,
+			want:   "acme",
+		},
+		{
+			name:    "404 errors",
+			org:     "missing",
+			status:  http.StatusNotFound,
+			body:    `{"message":"Not Found"}`,
+			wantErr: true,
+		},
+		{
+			name:    "500 errors",
+			org:     "acme",
+			status:  http.StatusInternalServerError,
+			body:    `{"message":"boom"}`,
+			wantErr: true,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			var called bool
+			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				called = true
+				assert.Equal(t, http.MethodGet, r.Method)
+				assert.Equal(t, "/orgs/"+tc.org, r.URL.Path)
+				assert.Equal(t, "application/vnd.github+json", r.Header.Get("Accept"))
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(tc.status)
+				_, _ = w.Write([]byte(tc.body))
+			}))
+			defer srv.Close()
+
+			client := &http.Client{Transport: &hostRewriter{target: srv.URL}}
+
+			got, err := NewGitHubNameResolver(client, tc.org).ResolveInstanceName(context.Background())
+			if tc.wantErr {
+				require.Error(t, err)
+				return
+			}
+
+			require.NoError(t, err)
+			assert.Equal(t, tc.want, got)
+
+			if tc.wantNoReq {
+				assert.False(t, called, "expected no HTTP call when org is empty")
+			} else {
+				assert.True(t, called, "expected HTTP call when org is non-empty")
+			}
+		})
+	}
+}
+
 // roundTripperFunc adapts a function into an http.RoundTripper, useful for
 // asserting that a resolver short-circuits before making any HTTP call.
 type roundTripperFunc func(*http.Request) (*http.Response, error)
