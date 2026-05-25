@@ -84,8 +84,7 @@ func (h *contractEndedUserHandler) Claim(_ context.Context) (struct{}, error) {
 }
 
 func (h *contractEndedUserHandler) Process(ctx context.Context, _ struct{}) error {
-	now := time.Now()
-	total, err := h.deactivateContractEndedUsers(ctx, now)
+	total, err := h.deactivateContractEndedUsers(ctx, time.Now())
 	if err != nil {
 		return err
 	}
