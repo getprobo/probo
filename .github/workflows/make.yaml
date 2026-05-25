@@ -357,8 +357,6 @@ jobs:
     runs-on: "runs-on=${{ github.run_id }}/runner=4cpu-linux-x64/extras=s3-cache"
     permissions:
       contents: "read"
-    env:
-      HAS_DOCKER_TOKEN: ${{ secrets.DOCKER_HUB_TOKEN != '' }}
     steps:
       - uses: "actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd" # v6
         with:
@@ -367,10 +365,10 @@ jobs:
       - uses: "./.github/actions/setup"
       - uses: "docker/setup-compose-action@8cccb8c14b6500aaffebff1aa49c502c34d2e5e6" # v2.1.0
       - uses: "docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121" # v4.1.0
-        if: env.HAS_DOCKER_TOKEN == 'true'
         with:
-          username: "gearnode"
-          password: ${{ secrets.DOCKER_HUB_TOKEN }}
+          registry: artifact.probo.inc
+          username: ${{ secrets.HARBOR_USERNAME }}
+          password: ${{ secrets.HARBOR_PASSWORD }}
       - name: "Install mkcert"
         run: |
           go install filippo.io/mkcert@latest
