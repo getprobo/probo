@@ -195,6 +195,44 @@ func (s SessionService) RevokeAllSessions(ctx context.Context, currentSessionID 
 	return count, err
 }
 
+func (s SessionService) RevokeRootAndMembershipSessions(
+	ctx context.Context,
+	identityID gid.GID,
+	membershipID *gid.GID,
+) (int64, error) {
+	var count int64
+
+	err := s.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			var err error
+			count, err = s.revokeRootAndMembershipSessions(ctx, tx, identityID, membershipID)
+			return err
+		},
+	)
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}
+
+func (s SessionService) revokeRootAndMembershipSessions(
+	ctx context.Context,
+	conn pg.Querier,
+	identityID gid.GID,
+	membershipID *gid.GID,
+) (int64, error) {
+	sessions := coredata.Sessions{}
+
+	count, err := sessions.ExpireRootAndMembershipSessionsForIdentity(ctx, conn, identityID, membershipID)
+	if err != nil {
+		return 0, fmt.Errorf("cannot expire root and membership sessions: %w", err)
+	}
+
+	return count, nil
+}
+
 func (s SessionService) UpdateSessionInfo(ctx context.Context, sessionID gid.GID, userAgent string, ipAddress net.IP) error {
 	return s.pg.WithTx(
 		ctx,

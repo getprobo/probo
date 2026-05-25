@@ -1087,6 +1087,85 @@ func (s *OrganizationService) UpdateUserState(
 	return profile, nil
 }
 
+func (s *OrganizationService) DeactivateUserForContractEnd(
+	ctx context.Context,
+	userID gid.GID,
+	now time.Time,
+) (bool, error) {
+	var (
+		scope       = coredata.NewScopeFromObjectID(userID)
+		deactivated bool
+	)
+
+	err := s.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			profile := &coredata.MembershipProfile{}
+			if err := profile.LoadByIDForUpdate(ctx, tx, scope, userID); err != nil {
+				return fmt.Errorf("cannot load profile: %w", err)
+			}
+
+			if profile.State != coredata.ProfileStateActive || !contractEndDateHasPassed(profile.ContractEndDate, now) {
+				return nil
+			}
+
+			profile.State = coredata.ProfileStateInactive
+			profile.UpdatedAt = time.Now()
+
+			if err := profile.Update(ctx, tx, scope); err != nil {
+				return fmt.Errorf("cannot update profile: %w", err)
+			}
+
+			invitations := &coredata.Invitations{}
+			onlyPending := coredata.NewInvitationFilter([]coredata.InvitationStatus{coredata.InvitationStatusPending})
+			if err := invitations.ExpireByUserID(ctx, tx, scope, profile.ID, onlyPending); err != nil {
+				return fmt.Errorf("cannot expire pending invitations: %w", err)
+			}
+
+			var webhookPayload *webhooktypes.User
+
+			membership := &coredata.Membership{}
+			if err := membership.LoadByIdentityIDAndOrganizationID(ctx, tx, scope, profile.IdentityID, profile.OrganizationID); err != nil {
+				if !errors.Is(err, coredata.ErrResourceNotFound) {
+					return fmt.Errorf("cannot load membership: %w", err)
+				}
+
+				if _, err := s.SessionService.revokeRootAndMembershipSessions(ctx, tx, profile.IdentityID, nil); err != nil {
+					return fmt.Errorf("cannot revoke sessions: %w", err)
+				}
+
+				webhookPayload = webhooktypes.NewUser(profile, nil)
+			} else {
+				if _, err := s.SessionService.revokeRootAndMembershipSessions(ctx, tx, profile.IdentityID, &membership.ID); err != nil {
+					return fmt.Errorf("cannot revoke sessions: %w", err)
+				}
+
+				webhookPayload = webhooktypes.NewUser(profile, membership)
+			}
+
+			if err := webhook.InsertData(
+				ctx,
+				tx,
+				scope,
+				profile.OrganizationID,
+				coredata.WebhookEventTypeUserUpdated,
+				webhookPayload,
+			); err != nil {
+				return fmt.Errorf("cannot insert webhook event: %w", err)
+			}
+
+			deactivated = true
+
+			return nil
+		},
+	)
+	if err != nil {
+		return false, err
+	}
+
+	return deactivated, nil
+}
+
 func (s *OrganizationService) GetProfile(ctx context.Context, profileID gid.GID) (*coredata.MembershipProfile, error) {
 	profile := &coredata.MembershipProfile{}
 

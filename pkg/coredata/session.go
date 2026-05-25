@@ -445,6 +445,51 @@ WHERE
 	return result.RowsAffected(), nil
 }
 
+func (s *Sessions) ExpireRootAndMembershipSessionsForIdentity(
+	ctx context.Context,
+	conn pg.Querier,
+	identityID gid.GID,
+	membershipID *gid.GID,
+) (int64, error) {
+	var membershipArg any
+	if membershipID != nil {
+		membershipArg = *membershipID
+	}
+
+	q := `
+UPDATE iam_sessions
+SET
+    expired_at = @now,
+    updated_at = @now,
+    expire_reason = @expire_reason
+WHERE
+    identity_id = @identity_id
+    AND expire_reason IS NULL
+    AND expired_at > @now
+    AND (
+        parent_session_id IS NULL
+        OR (
+            @membership_id::text IS NOT NULL
+            AND membership_id = @membership_id
+        )
+    )
+`
+
+	args := pgx.StrictNamedArgs{
+		"identity_id":   identityID,
+		"membership_id": membershipArg,
+		"expire_reason": ExpireReasonRevoked,
+		"now":           time.Now(),
+	}
+
+	result, err := conn.Exec(ctx, q, args)
+	if err != nil {
+		return 0, fmt.Errorf("cannot expire sessions: %w", err)
+	}
+
+	return result.RowsAffected(), nil
+}
+
 func (s *Session) LoadByRootSessionIDAndMembershipID(
 	ctx context.Context,
 	conn pg.Querier,

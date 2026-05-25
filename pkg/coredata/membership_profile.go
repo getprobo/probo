@@ -217,6 +217,83 @@ LIMIT 1;
 	return nil
 }
 
+func (p *MembershipProfile) LoadByIDForUpdate(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	profileID gid.GID,
+) error {
+	q := `
+SELECT
+    p.id,
+    p.identity_id,
+    p.organization_id,
+    i.email_address,
+    p.source,
+    p.state,
+    p.full_name,
+    p.kind,
+    p.additional_email_addresses,
+    p.position,
+    p.contract_start_date,
+    p.contract_end_date,
+    '' AS organization_name,
+    p.user_name,
+    p.external_id,
+    p.nickname,
+    p.locale,
+    p.timezone,
+    p.profile_url,
+    p.preferred_language,
+    p.given_name,
+    p.family_name,
+    p.formatted_name,
+    p.middle_name,
+    p.honorific_prefix,
+    p.honorific_suffix,
+    p.employee_number,
+    p.department,
+    p.cost_center,
+    p.enterprise_organization,
+    p.division,
+    p.manager_value,
+    p.created_at,
+    p.updated_at
+FROM
+    iam_membership_profiles p
+INNER JOIN identities i
+    ON i.id = p.identity_id
+WHERE
+    p.%s
+    AND p.id = @profile_id
+LIMIT 1
+FOR UPDATE;
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"profile_id": profileID}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query profile: %w", err)
+	}
+
+	profile, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[MembershipProfile])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+
+		return fmt.Errorf("cannot collect profile: %w", err)
+	}
+
+	*p = profile
+
+	return nil
+}
+
 func (p *MembershipProfile) LoadByIdentityIDAndOrganizationID(
 	ctx context.Context,
 	conn pg.Querier,
@@ -1093,6 +1170,83 @@ WHERE
 	}
 
 	return count, nil
+}
+
+func (p *MembershipProfiles) LoadContractEndedActive(
+	ctx context.Context,
+	conn pg.Querier,
+	limit int,
+	currentDate time.Time,
+) error {
+	q := `
+SELECT
+    p.id,
+    p.identity_id,
+    p.organization_id,
+    i.email_address,
+    p.source,
+    p.state,
+    p.full_name,
+    p.kind,
+    p.additional_email_addresses,
+    p.position,
+    p.contract_start_date,
+    p.contract_end_date,
+    '' AS organization_name,
+    p.user_name,
+    p.external_id,
+    p.nickname,
+    p.locale,
+    p.timezone,
+    p.profile_url,
+    p.preferred_language,
+    p.given_name,
+    p.family_name,
+    p.formatted_name,
+    p.middle_name,
+    p.honorific_prefix,
+    p.honorific_suffix,
+    p.employee_number,
+    p.department,
+    p.cost_center,
+    p.enterprise_organization,
+    p.division,
+    p.manager_value,
+    p.created_at,
+    p.updated_at
+FROM
+    iam_membership_profiles p
+INNER JOIN identities i
+    ON i.id = p.identity_id
+WHERE
+    p.state = @state
+    AND p.contract_end_date IS NOT NULL
+    AND p.contract_end_date < @current_date::date
+ORDER BY
+    p.contract_end_date ASC,
+    p.id ASC
+LIMIT @limit;
+`
+
+	args := pgx.StrictNamedArgs{
+		"state":        ProfileStateActive,
+		"current_date": currentDate,
+		"limit":        limit,
+	}
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query profiles: %w", err)
+	}
+
+	profiles, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[MembershipProfile])
+	if err != nil {
+		return fmt.Errorf("cannot collect profiles: %w", err)
+	}
+
+	*p = profiles
+
+	return nil
 }
 
 func (p *MembershipProfiles) CountActiveOwnerByOrganizationID(

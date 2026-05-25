@@ -69,7 +69,8 @@ type (
 		OAuth2ServerService   *oauth2server.Service
 		Authorizer            *Authorizer
 
-		samlDomainVerifier *SAMLDomainVerifier
+		samlDomainVerifier      *SAMLDomainVerifier
+		contractEndedUserWorker *ContractEndedUserWorker
 	}
 
 	Config struct {
@@ -199,6 +200,12 @@ func NewService(
 		cfg.DomainVerificationResolverAddr,
 	)
 
+	svc.contractEndedUserWorker = NewContractEndedUserWorker(
+		pgClient,
+		svc.OrganizationService,
+		cfg.Logger,
+	)
+
 	return svc, nil
 }
 
@@ -262,6 +269,16 @@ func (s *Service) Run(ctx context.Context) error {
 		},
 	)
 
+	contractEndedUserCtx, stopContractEndedUser := context.WithCancel(context.WithoutCancel(ctx))
+
+	wg.Go(
+		func() {
+			if err := s.contractEndedUserWorker.Run(contractEndedUserCtx); err != nil {
+				cancel(fmt.Errorf("contract-ended user worker crashed: %w", err))
+			}
+		},
+	)
+
 	<-ctx.Done()
 
 	stopSAML()
@@ -269,6 +286,7 @@ func (s *Service) Run(ctx context.Context) error {
 	stopDomainVerifier()
 	stopSCIM()
 	stopOAuth2Server()
+	stopContractEndedUser()
 
 	wg.Wait()
 
