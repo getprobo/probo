@@ -12,7 +12,25 @@ This Helm chart deploys Probo - an open-source SOC-2 compliance platform - on Ku
 
 ## Installing the Chart
 
-### Generate Required Secrets
+### From OCI Registry
+
+```bash
+helm install probo oci://artifact.probo.inc/probo/probo --version <chart-version> \
+  --set probo.baseUrl="probo.example.com" \
+  --set probo.encryptionKey="$ENCRYPTION_KEY" \
+  --set probo.auth.cookieSecret="$COOKIE_SECRET" \
+  --set probo.auth.passwordPepper="$PASSWORD_PEPPER" \
+  --set probo.trustAuth.tokenSecret="$TRUST_TOKEN_SECRET" \
+  --set postgresql.host="postgres.example.com" \
+  --set postgresql.password="<db-password>" \
+  --set s3.bucket="probo-production" \
+  --set s3.accessKeyId="<aws-access-key-id>" \
+  --set s3.secretAccessKey="<aws-secret-access-key>"
+```
+
+### From Local Chart
+
+#### Generate Required Secrets
 
 ```bash
 # Generate required secrets
@@ -63,7 +81,7 @@ For production, create a `values-production.yaml` file:
 ```yaml
 # values-production.yaml
 image:
-  repository: ghcr.io/getprobo/probo
+  repository: artifact.probo.inc/probo/probo
   tag: "0.74.7"
 
 replicaCount: 3
@@ -147,7 +165,7 @@ The following parameters **must** be configured:
 
 | Parameter              | Description                     | Default |
 |------------------------|---------------------------------|---------|
-| `image.repository`     | Probo image repository          | `ghcr.io/getprobo/probo` |
+| `image.repository`     | Probo image repository          | `artifact.probo.inc/probo/probo` |
 | `image.tag`            | Probo image tag                 | Chart appVersion |
 | `replicaCount`         | Number of Probo replicas        | `1` |
 | `probo.baseUrl`        | Public baseUrl                  | `probo.example.com` |

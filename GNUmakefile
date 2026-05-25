@@ -49,7 +49,12 @@ TEST_FLAGS?=	-race -cover -coverprofile=coverage.out
 E2E_CONFIG ?= $(CURDIR)/e2e/console/testdata/config.yaml
 E2E_COVER_DIR ?= $(CURDIR)/coverage/e2e
 
-DOCKER_IMAGE_NAME=	ghcr.io/getprobo/probo
+DOCKER_REGISTRY=	artifact.probo.inc
+DOCKER_PROXY=		$(DOCKER_REGISTRY)/docker
+DOCKER_BASE_IMAGE=	ubuntu:24.04@sha256:c4a8d5503dfb2a3eb8ab5f807da5bc69a85730fb49b5cfca2330194ebcc41c7b
+DOCKER_PROXY_BASE_IMAGE=	$(DOCKER_PROXY)/library/$(DOCKER_BASE_IMAGE)
+DOCKER_IMAGE_NAME=	$(DOCKER_REGISTRY)/probo/probo
+HELM_CHART_OCI=		oci://$(DOCKER_REGISTRY)/probo
 DOCKER_TAG_NAME?=	latest
 
 GENERATED= pkg/server/api/connect/v1/schema/schema.go \

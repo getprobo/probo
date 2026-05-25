@@ -18,7 +18,20 @@ Before deploying Probo, ensure you have:
 
 ## Install
 
-#### Using Local Chart
+### From OCI Registry
+
+```bash
+helm install my-probo oci://artifact.probo.inc/probo/probo --version <chart-version>
+```
+
+Replace `<chart-version>` with a released chart version (e.g. `0.1.0`). The
+chart defaults to the probod image tag `v<appVersion>` from
+`Chart.yaml`.
+
+Configure secrets and external services with `--set` flags or a values file
+(see [Helm Chart Documentation](charts/probo/README.md)).
+
+### From Local Chart
 
 ##### Generate Secrets
 
@@ -302,7 +315,7 @@ spec:
 | Key                                                     | Type    | Default                                            | Description                                                                                         |
 |---------------------------------------------------------| ------- |----------------------------------------------------|-----------------------------------------------------------------------------------------------------|
 | replicaCount                                            | int     | `1`                                                | Number of Probo application replicas                                                                |
-| image.repository                                        | string  | `"ghcr.io/getprobo/probo"`                         | Container image repository                                                                          |
+| image.repository                                        | string  | `"artifact.probo.inc/probo/probo"`                 | Container image repository                                                                          |
 | image.pullPolicy                                        | string  | `"IfNotPresent"`                                   | Image pull policy                                                                                   |
 | image.tag                                               | string  | `"latest"`                                         | Overrides the image tag whose default is the chart appVersion                                       |
 | imagePullSecrets                                        | list    | `[]`                                               | Image pull secrets for private registries                                                           |

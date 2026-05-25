@@ -1,6 +1,6 @@
 services:
   probo:
-    image: "ghcr.io/getprobo/probo:latest"
+    image: "artifact.probo.inc/probo/probo:latest"
     environment:
       # Required secrets (use secure values in production)
       PROBOD_ENCRYPTION_KEY: ${PROBOD_ENCRYPTION_KEY}

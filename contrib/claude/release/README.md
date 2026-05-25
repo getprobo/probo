@@ -1,6 +1,6 @@
 # Release
 
-The repository ships six independently-versioned tracks. Each has its own
+The repository ships seven independently-versioned tracks. Each has its own
 version source, its own `CHANGELOG.md`, its own tag pattern, and its own
 release workflow. Cutting a release means: bump the version, write a
 changelog entry, commit, tag, push.
@@ -13,6 +13,7 @@ changelog entry, commit, tag, push.
 | `proboctl`              | `proboctl/v*`                  | [proboctl.md](./proboctl.md)     |
 | `@probo/n8n-nodes-probo` | `@probo/n8n-nodes-probo/v*`   | [n8n-nodes-probo.md](./n8n-nodes-probo.md) |
 | `@probo/cookie-banner`  | `@probo/cookie-banner/v*`      | [cookie-banner.md](./cookie-banner.md) |
+| Helm chart (`probo`)    | `helm/v*`                      | [helm.md](./helm.md)                   |
 
 When the user asks for a release **without specifying a track**, follow
 [Step 1](#1-decide-which-tracks-to-release) below to detect which tracks
@@ -69,6 +70,10 @@ git log $(git describe --tags --abbrev=0 --match='@probo/n8n-nodes-probo/v*')..H
 # @probo/cookie-banner
 git log $(git describe --tags --abbrev=0 --match='@probo/cookie-banner/v*')..HEAD --oneline \
   -- packages/cookie-banner
+
+# helm chart
+git log $(git describe --tags --abbrev=0 --match='helm/v*')..HEAD --oneline \
+  -- contrib/helm
 ```
 
 If a track returns no commits, skip it. If all commits for a track are

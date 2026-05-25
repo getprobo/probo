@@ -4,7 +4,7 @@
 
 # Use specific version tag
 image:
-  repository: ghcr.io/getprobo/probo
+  repository: artifact.probo.inc/probo/probo
   tag: "0.74.7"
   pullPolicy: IfNotPresent
 

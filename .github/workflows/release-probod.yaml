@@ -156,13 +156,9 @@ jobs:
       - uses: "docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd" # v4.0.0
       - uses: "docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2" # v4.0.0
         with:
-          username: "gearnode"
-          password: ${{ secrets.DOCKER_HUB_TOKEN }}
-      - uses: "docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2" # v4.0.0
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          registry: artifact.probo.inc
+          username: ${{ secrets.HARBOR_USERNAME }}
+          password: ${{ secrets.HARBOR_PASSWORD }}
       - uses: "actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c" # v8
         with:
           name: "binary-linux-${{ matrix.arch }}"
@@ -173,7 +169,7 @@ jobs:
         id: tag
         run: |
           VERSION="${GITHUB_REF_NAME##*/v}"
-          echo "image_tag=probod-v${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "image_tag=v${VERSION}" >> "$GITHUB_OUTPUT"
       - name: "Build and push Docker image"
         env:
           PLATFORM: ${{ matrix.platform }}
@@ -182,6 +178,7 @@ jobs:
         run: |
           docker buildx build \
             --platform "${PLATFORM}" \
+            --build-arg "BASE_IMAGE=artifact.probo.inc/docker/library/ubuntu:24.04@sha256:c4a8d5503dfb2a3eb8ab5f807da5bc69a85730fb49b5cfca2330194ebcc41c7b" \
             --label "org.opencontainers.image.title=probod" \
             --label "org.opencontainers.image.description=Probo compliance management platform" \
             --label "org.opencontainers.image.url=https://github.com/getprobo/probo" \
@@ -189,7 +186,7 @@ jobs:
             --label "org.opencontainers.image.version=${GITHUB_REF_NAME}" \
             --label "org.opencontainers.image.revision=${GITHUB_SHA}" \
             --label "org.opencontainers.image.licenses=MIT" \
-            --tag "ghcr.io/getprobo/probo:${IMAGE_TAG}-${ARCH}" \
+            --tag "artifact.probo.inc/probo/probo:${IMAGE_TAG}-${ARCH}" \
             --push \
             .
 
@@ -208,35 +205,35 @@ jobs:
       - uses: "docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd" # v4.0.0
       - uses: "docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2" # v4.0.0
         with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          registry: artifact.probo.inc
+          username: ${{ secrets.HARBOR_USERNAME }}
+          password: ${{ secrets.HARBOR_PASSWORD }}
       - uses: "sigstore/cosign-installer@faadad0cce49287aee09b3a48701e75088a2c6ad" # v4.0.0
       - name: "Compute image tag"
         id: tag
         run: |
           VERSION="${GITHUB_REF_NAME##*/v}"
-          echo "image_tag=probod-v${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "image_tag=v${VERSION}" >> "$GITHUB_OUTPUT"
       - name: "Create and push manifest"
         env:
           IMAGE_TAG: ${{ steps.tag.outputs.image_tag }}
         run: |
           docker buildx imagetools create \
-            --tag "ghcr.io/getprobo/probo:${IMAGE_TAG}" \
-            --tag "ghcr.io/getprobo/probo:latest" \
-            "ghcr.io/getprobo/probo:${IMAGE_TAG}-amd64" \
-            "ghcr.io/getprobo/probo:${IMAGE_TAG}-arm64"
+            --tag "artifact.probo.inc/probo/probo:${IMAGE_TAG}" \
+            --tag "artifact.probo.inc/probo/probo:latest" \
+            "artifact.probo.inc/probo/probo:${IMAGE_TAG}-amd64" \
+            "artifact.probo.inc/probo/probo:${IMAGE_TAG}-arm64"
       - name: "Get manifest digest"
         id: digest
         env:
           IMAGE_TAG: ${{ steps.tag.outputs.image_tag }}
         run: |
-          DIGEST=$(docker buildx imagetools inspect "ghcr.io/getprobo/probo:${IMAGE_TAG}" --format '{{json .Manifest.Digest}}' | jq -r)
+          DIGEST=$(docker buildx imagetools inspect "artifact.probo.inc/probo/probo:${IMAGE_TAG}" --format '{{json .Manifest.Digest}}' | jq -r)
           echo "digest=$DIGEST" >> "$GITHUB_OUTPUT"
       - name: "Sign Docker manifest"
         env:
           DIGEST: ${{ steps.digest.outputs.digest }}
-        run: cosign sign "ghcr.io/getprobo/probo@${DIGEST}" --yes
+        run: cosign sign "artifact.probo.inc/probo/probo@${DIGEST}" --yes
 
   github-release:
     name: "github-release"
@@ -288,13 +285,13 @@ jobs:
       - name: "Attest Docker image SBOM"
         uses: "actions/attest@59d89421af93a897026c735860bf21b6eb4f7b26" # v4.1.0
         with:
-          subject-name: "ghcr.io/getprobo/probo"
+          subject-name: "artifact.probo.inc/probo/probo"
           subject-digest: ${{ needs.docker-manifest.outputs.digest }}
           sbom-path: "sbom.json"
       - name: "Trivy scan Docker image"
         uses: "aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25" # 0.36.0
         with:
-          image-ref: "ghcr.io/getprobo/probo:${{ needs.docker-manifest.outputs.image_tag }}"
+          image-ref: "artifact.probo.inc/probo/probo:${{ needs.docker-manifest.outputs.image_tag }}"
           format: "sarif"
           output: "trivy-results.sarif"
           exit-code: 1
@@ -318,8 +315,8 @@ jobs:
           cat >> release-notes.md << EOF
 
           ## Docker Images
-          - \`ghcr.io/getprobo/probo:${IMAGE_TAG}\` (multi-arch: linux/amd64, linux/arm64)
-          - \`ghcr.io/getprobo/probo:latest\` (multi-arch: linux/amd64, linux/arm64)
+          - \`artifact.probo.inc/probo/probo:${IMAGE_TAG}\` (multi-arch: linux/amd64, linux/arm64)
+          - \`artifact.probo.inc/probo/probo:latest\` (multi-arch: linux/amd64, linux/arm64)
           EOF
       - name: "Create GitHub release"
         env:
