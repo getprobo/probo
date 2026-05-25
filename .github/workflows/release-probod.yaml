@@ -178,7 +178,7 @@ jobs:
         run: |
           docker buildx build \
             --platform "${PLATFORM}" \
-            --build-arg "BASE_IMAGE=artifact.probo.inc/docker/library/ubuntu:24.04@sha256:c4a8d5503dfb2a3eb8ab5f807da5bc69a85730fb49b5cfca2330194ebcc41c7b" \
+            --build-arg "BASE_IMAGE=artifact.probo.inc/dockerhub/library/ubuntu:24.04@sha256:c4a8d5503dfb2a3eb8ab5f807da5bc69a85730fb49b5cfca2330194ebcc41c7b" \
             --label "org.opencontainers.image.title=probod" \
             --label "org.opencontainers.image.description=Probo compliance management platform" \
             --label "org.opencontainers.image.url=https://github.com/getprobo/probo" \
