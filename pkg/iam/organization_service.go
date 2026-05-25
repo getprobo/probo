@@ -1118,6 +1118,7 @@ func (s *OrganizationService) DeactivateUserForContractEnd(
 
 			invitations := &coredata.Invitations{}
 			onlyPending := coredata.NewInvitationFilter([]coredata.InvitationStatus{coredata.InvitationStatusPending})
+
 			if err := invitations.ExpireByUserID(ctx, tx, scope, profile.ID, onlyPending); err != nil {
 				return fmt.Errorf("cannot expire pending invitations: %w", err)
 			}

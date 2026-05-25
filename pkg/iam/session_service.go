@@ -206,7 +206,9 @@ func (s SessionService) RevokeRootAndMembershipSessions(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			var err error
+
 			count, err = s.revokeRootAndMembershipSessions(ctx, tx, identityID, membershipID)
+
 			return err
 		},
 	)
