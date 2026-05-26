@@ -93,6 +93,9 @@ export class CookieBannerClient {
       config = await fetchJSON<BannerConfig>(configUrl);
     } catch {
       this.startDetector();
+      if (this.observer) {
+        this.observer.disconnect();
+      }
       this.observer = observeAndActivate({}, {});
       getConsent()._setReady({}, false);
       return;
