@@ -130,7 +130,10 @@ func freebsdMalwareProtection(ctx context.Context) Result {
 		)
 	}
 	out := RunCommand(ctx, "service", "clamav_clamd", "status")
-	ev := map[string]any{"raw": out.Stdout}
+	ev := map[string]any{"raw": out.Stdout, "stderr": out.Stderr}
+	if out.Err != nil {
+		return unknown(ev)
+	}
 	if strings.Contains(strings.ToLower(out.Stdout), "is running") {
 		return pass(ev)
 	}
@@ -139,7 +142,10 @@ func freebsdMalwareProtection(ctx context.Context) Result {
 
 func freebsdRemoteLogin(ctx context.Context) Result {
 	out := RunCommand(ctx, "service", "sshd", "status")
-	ev := map[string]any{"raw": out.Stdout}
+	ev := map[string]any{"raw": out.Stdout, "stderr": out.Stderr}
+	if out.Err != nil {
+		return unknown(ev)
+	}
 	if strings.Contains(strings.ToLower(out.Stdout), "is running") {
 		return fail(ev)
 	}
