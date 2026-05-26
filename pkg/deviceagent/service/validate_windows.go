@@ -18,6 +18,7 @@ import "strings"
 
 func isWindowsServiceMissing(out string) bool {
 	lower := strings.ToLower(out)
+
 	return strings.Contains(lower, "1060") ||
 		strings.Contains(lower, "does not exist as an installed service") ||
 		strings.Contains(lower, "specified service does not exist")

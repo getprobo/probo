@@ -39,6 +39,7 @@ func replaceRegularFile(path string, data []byte, perm os.FileMode) error {
 	if err := os.Rename(tmp, path); err != nil {
 		_ = os.Rename(old, path)
 		_ = os.Remove(tmp)
+
 		return fmt.Errorf("cannot replace file: %w", err)
 	}
 

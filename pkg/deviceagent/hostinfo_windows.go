@@ -33,6 +33,7 @@ func collectOSVersion() string {
 	}
 
 	out, _ = runQuiet(ctx, "uname", "-sr")
+
 	return out
 }
 
@@ -66,5 +67,6 @@ func collectSerialNumber() string {
 		"-Command",
 		"(Get-CimInstance Win32_BIOS).SerialNumber",
 	)
+
 	return out
 }

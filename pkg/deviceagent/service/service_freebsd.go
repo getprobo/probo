@@ -74,6 +74,7 @@ func Install(cfg Config) error {
 	}
 
 	defer func() { _ = sf.Close() }()
+
 	if err := rcTmpl.Execute(sf, cfg); err != nil {
 		return fmt.Errorf("cannot render rc.d script: %w", err)
 	}

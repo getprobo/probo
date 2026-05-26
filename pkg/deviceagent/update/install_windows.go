@@ -55,6 +55,7 @@ func replaceBinary(dst, src string) error {
 		// Try to roll back the running binary swap.
 		_ = os.Rename(oldPath, dst)
 		_ = os.Remove(staging)
+
 		return fmt.Errorf("cannot install new binary at %s: %w", dst, err)
 	}
 
@@ -68,5 +69,6 @@ func CleanupAfterRestart(exePath string) {
 	if exePath == "" {
 		return
 	}
+
 	_ = os.Remove(exePath + oldSuffix)
 }

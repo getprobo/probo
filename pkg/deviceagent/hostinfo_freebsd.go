@@ -33,6 +33,7 @@ func collectOSVersion() string {
 	}
 
 	out, _ = runQuiet(ctx, "uname", "-sr")
+
 	return out
 }
 
@@ -53,5 +54,6 @@ func collectSerialNumber() string {
 	defer cancel()
 
 	out, _ := runQuiet(ctx, "kenv", "smbios.system.serial")
+
 	return out
 }

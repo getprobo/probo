@@ -36,14 +36,18 @@ func freebsdDiskEncryption(ctx context.Context) Result {
 	if !CommandExists("geli") {
 		return unknown(map[string]any{"note": "geli command not found"})
 	}
+
 	out := RunCommand(ctx, "geli", "status")
+
 	ev := map[string]any{"raw": out.Stdout, "stderr": out.Stderr}
 	if out.Err != nil {
 		return unknown(ev)
 	}
+
 	if strings.Contains(out.Stdout, "ACTIVE") {
 		return pass(ev)
 	}
+
 	return fail(ev)
 }
 
@@ -54,6 +58,7 @@ func freebsdScreenLock(ctx context.Context) Result {
 			return pass(map[string]any{"raw": out.Stdout})
 		}
 	}
+
 	return notApplicable(
 		map[string]any{
 			"note": "FreeBSD does not have a unified screen lock policy",
@@ -65,26 +70,33 @@ func freebsdFirewall(ctx context.Context) Result {
 	if !CommandExists("pfctl") {
 		return unknown(map[string]any{"note": "pfctl not found"})
 	}
+
 	out := RunCommand(ctx, "pfctl", "-si")
+
 	ev := map[string]any{"raw": truncate(out.Stdout, 400)}
 	if out.Err != nil {
 		return unknown(ev)
 	}
+
 	if strings.Contains(out.Stdout, "Status: Enabled") {
 		return pass(ev)
 	}
+
 	return fail(ev)
 }
 
 func freebsdTimeSync(ctx context.Context) Result {
 	out := RunCommand(ctx, "service", "ntpd", "status")
+
 	ev := map[string]any{"raw": out.Stdout, "stderr": out.Stderr}
 	if out.Err != nil {
 		return fail(ev)
 	}
+
 	if strings.Contains(strings.ToLower(out.Stdout), "is running") {
 		return pass(ev)
 	}
+
 	return fail(ev)
 }
 
@@ -93,6 +105,7 @@ func freebsdOSVersion(ctx context.Context) Result {
 	if out.Err != nil {
 		return unknown(map[string]any{"error": out.Err.Error()})
 	}
+
 	return pass(map[string]any{"release": out.Stdout})
 }
 
@@ -109,15 +122,18 @@ func freebsdPasswordPolicy(ctx context.Context) Result {
 	if err != nil {
 		return unknown(map[string]any{"error": err.Error()})
 	}
+
 	body := string(data)
 	hasPolicy := strings.Contains(body, "minpasswordlen=") ||
 		strings.Contains(body, "passwordtime=")
+
 	ev := map[string]any{
 		"login_conf_snippet": truncate(body, 400),
 	}
 	if hasPolicy {
 		return pass(ev)
 	}
+
 	return fail(ev)
 }
 
@@ -129,25 +145,32 @@ func freebsdMalwareProtection(ctx context.Context) Result {
 			},
 		)
 	}
+
 	out := RunCommand(ctx, "service", "clamav_clamd", "status")
+
 	ev := map[string]any{"raw": out.Stdout, "stderr": out.Stderr}
 	if out.Err != nil {
 		return unknown(ev)
 	}
+
 	if strings.Contains(strings.ToLower(out.Stdout), "is running") {
 		return pass(ev)
 	}
+
 	return fail(ev)
 }
 
 func freebsdRemoteLogin(ctx context.Context) Result {
 	out := RunCommand(ctx, "service", "sshd", "status")
+
 	ev := map[string]any{"raw": out.Stdout, "stderr": out.Stderr}
 	if out.Err != nil {
 		return unknown(ev)
 	}
+
 	if strings.Contains(strings.ToLower(out.Stdout), "is running") {
 		return fail(ev)
 	}
+
 	return pass(ev)
 }

@@ -25,6 +25,7 @@ func commandCandidates(cmd string) []string {
 	if systemRoot == "" {
 		systemRoot = `C:\Windows`
 	}
+
 	system32 := filepath.Join(systemRoot, "System32")
 
 	switch strings.ToLower(cmd) {

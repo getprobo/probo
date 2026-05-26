@@ -43,6 +43,7 @@ func windowsDiskEncryption(ctx context.Context) Result {
 	}
 
 	out := RunCommand(ctx, "manage-bde", "-status")
+
 	ev := map[string]any{"raw": truncate(out.Stdout, 600)}
 	if out.Err != nil {
 		return unknown(ev)
@@ -77,6 +78,7 @@ func windowsScreenLock(ctx context.Context) Result {
 			if v == "1" {
 				return pass(ev)
 			}
+
 			return fail(ev)
 		}
 	}
@@ -107,6 +109,7 @@ func windowsScreenLock(ctx context.Context) Result {
 		"raw":     truncate(users.Stdout, 400),
 	}
 	users_, anyDisabled, anyEnabled := parseWindowsUserScreenLock(users.Stdout)
+
 	ev["users"] = users_
 	if len(users_) == 0 {
 		ev["note"] = "no interactive user hives loaded"
@@ -125,7 +128,9 @@ func windowsScreenLock(ctx context.Context) Result {
 // saver locking enabled.
 func parseWindowsUserScreenLock(s string) (map[string]string, bool, bool) {
 	users := map[string]string{}
+
 	var anyEnabled, anyDisabled bool
+
 	for line := range strings.SplitSeq(s, "\n") {
 		line = strings.TrimSpace(line)
 		if line == "" {
@@ -139,6 +144,7 @@ func parseWindowsUserScreenLock(s string) (map[string]string, bool, bool) {
 
 		sid := strings.TrimSpace(line[:idx])
 		value := strings.TrimSpace(line[idx+1:])
+
 		if sid == "" {
 			continue
 		}
@@ -168,10 +174,12 @@ func windowsFirewall(ctx context.Context) Result {
 			"raw":     primary.Stdout,
 		}
 		profiles, allEnabled := parseWindowsFirewallProfiles(primary.Stdout)
+
 		ev["profiles"] = profiles
 		if allEnabled {
 			return pass(ev)
 		}
+
 		return fail(ev)
 	}
 
@@ -185,11 +193,13 @@ func windowsFirewall(ctx context.Context) Result {
 			},
 		)
 	}
+
 	ev := map[string]any{
 		"backend": "netsh",
 		"raw":     truncate(fallback.Stdout, 600),
 	}
 	stateLines, anyOff := parseNetshFirewallStates(fallback.Stdout)
+
 	ev["state_lines"] = stateLines
 	if len(stateLines) > 0 && !anyOff {
 		return pass(ev)
@@ -205,22 +215,28 @@ func parseWindowsFirewallProfiles(s string) (map[string]string, bool) {
 	profiles := map[string]string{}
 	allEnabled := true
 	any := false
+
 	for profile := range strings.SplitSeq(s, ";") {
 		parts := strings.SplitN(strings.TrimSpace(profile), "=", 2)
 		if len(parts) != 2 {
 			continue
 		}
+
 		name := strings.TrimSpace(parts[0])
 		value := strings.TrimSpace(parts[1])
+
 		if name == "" {
 			continue
 		}
+
 		profiles[name] = value
 		any = true
+
 		if !strings.EqualFold(value, "true") {
 			allEnabled = false
 		}
 	}
+
 	return profiles, any && allEnabled
 }
 
@@ -229,9 +245,12 @@ func parseWindowsFirewallProfiles(s string) (map[string]string, bool) {
 // case-insensitive.
 func parseNetshFirewallStates(s string) ([]string, bool) {
 	var states []string
+
 	anyOff := false
+
 	for line := range strings.SplitSeq(s, "\n") {
 		trimmed := strings.TrimSpace(line)
+
 		lower := strings.ToLower(trimmed)
 		if !strings.HasPrefix(lower, "state") {
 			continue
@@ -243,6 +262,7 @@ func parseNetshFirewallStates(s string) ([]string, bool) {
 		}
 
 		value := fields[len(fields)-1]
+
 		states = append(states, value)
 		if value != "on" {
 			anyOff = true
@@ -264,6 +284,7 @@ func windowsTimeSync(ctx context.Context) Result {
 	}
 
 	ev := map[string]any{"raw": truncate(out.Stdout, 400)}
+
 	lower := strings.ToLower(out.Stdout)
 	if strings.Contains(lower, "source:") && !strings.Contains(lower, "local cmos clock") {
 		return pass(ev)
@@ -279,6 +300,7 @@ func windowsOSVersion(ctx context.Context) Result {
 	}
 
 	caption := powershell(ctx, `(Get-CimInstance Win32_OperatingSystem).Caption`)
+
 	return pass(
 		map[string]any{
 			"version": out.Stdout,
@@ -294,21 +316,26 @@ func windowsAutoUpdate(ctx context.Context) Result {
 			`-ErrorAction SilentlyContinue; `+
 			`"$($au.NoAutoUpdate);$($au.AUOptions)"`,
 	)
+
 	ev := map[string]any{}
 	if out.Err != nil {
 		ev["error"] = out.Err.Error()
 		ev["stderr"] = out.Stderr
+
 		return unknown(ev)
 	}
 
 	parts := strings.SplitN(strings.TrimSpace(out.Stdout), ";", 2)
+
 	var noAutoUpdate, auOptions string
 	if len(parts) >= 1 {
 		noAutoUpdate = strings.TrimSpace(parts[0])
 	}
+
 	if len(parts) >= 2 {
 		auOptions = strings.TrimSpace(parts[1])
 	}
+
 	ev["no_auto_update"] = noAutoUpdate
 	ev["au_options"] = auOptions
 
@@ -316,6 +343,7 @@ func windowsAutoUpdate(ctx context.Context) Result {
 	if noAutoUpdate == "1" {
 		return fail(ev)
 	}
+
 	// AUOptions semantics:
 	//   2 — notify before download (no auto-install)
 	//   3 — auto download, prompt to install
@@ -340,7 +368,9 @@ func windowsAutoUpdate(ctx context.Context) Result {
 		ev["wuauserv"] = "running"
 		return pass(ev)
 	}
+
 	ev["wuauserv"] = "stopped"
+
 	return fail(ev)
 }
 
@@ -356,6 +386,7 @@ func windowsPasswordPolicy(ctx context.Context) Result {
 	}
 
 	ev := map[string]any{"raw": truncate(out.Stdout, 400)}
+
 	lower := strings.ToLower(out.Stdout)
 	if strings.Contains(lower, "minimum password length") && !strings.Contains(lower, "length:                  0") {
 		return pass(ev)
@@ -381,6 +412,7 @@ func windowsMalwareProtection(ctx context.Context) Result {
 	}
 
 	parts := strings.Split(out.Stdout, ";")
+
 	ev := map[string]any{"raw": out.Stdout}
 	if len(parts) < 3 {
 		return unknown(ev)
@@ -389,8 +421,10 @@ func windowsMalwareProtection(ctx context.Context) Result {
 	antivirusOn := strings.EqualFold(strings.TrimSpace(parts[0]), "True")
 	realtimeOn := strings.EqualFold(strings.TrimSpace(parts[1]), "True")
 	serviceOn := strings.EqualFold(strings.TrimSpace(parts[2]), "True")
+
 	ev["antivirus_enabled"] = antivirusOn
 	ev["real_time_protection"] = realtimeOn
+
 	ev["am_service_enabled"] = serviceOn
 	if len(parts) >= 4 {
 		ev["signatures_last_updated"] = strings.TrimSpace(parts[3])

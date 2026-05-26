@@ -26,9 +26,11 @@ func Install(cfg Config) error {
 	if cfg.ExePath == "" {
 		return errors.New("executable path is required")
 	}
+
 	if cfg.Dir == "" {
 		return errors.New("state directory is required")
 	}
+
 	name := DefaultWindowsName
 
 	bin := fmt.Sprintf(`"%s" run --dir "%s"`, cfg.ExePath, cfg.Dir)
@@ -45,6 +47,7 @@ func Install(cfg Config) error {
 	).CombinedOutput(); err != nil {
 		return fmt.Errorf("cannot run sc.exe create: %w: %s", err, strings.TrimSpace(string(out)))
 	}
+
 	// Restart on failure.
 	if out, err := exec.Command(
 		"sc.exe",
@@ -57,14 +60,17 @@ func Install(cfg Config) error {
 	).CombinedOutput(); err != nil {
 		return fmt.Errorf("cannot run sc.exe failure: %w: %s", err, strings.TrimSpace(string(out)))
 	}
+
 	if out, err := exec.Command("sc.exe", "start", name).CombinedOutput(); err != nil {
 		return fmt.Errorf("cannot run sc.exe start: %w: %s", err, strings.TrimSpace(string(out)))
 	}
+
 	return nil
 }
 
 func Uninstall(cfg Config) error {
 	name := DefaultWindowsName
+
 	_ = exec.Command("sc.exe", "stop", name).Run()
 	if out, err := exec.Command("sc.exe", "delete", name).CombinedOutput(); err != nil {
 		msg := strings.TrimSpace(string(out))
@@ -74,5 +80,6 @@ func Uninstall(cfg Config) error {
 
 		return fmt.Errorf("cannot run sc.exe delete: %w: %s", err, msg)
 	}
+
 	return nil
 }

@@ -70,6 +70,7 @@ func Install(cfg Config) error {
 	}
 
 	defer func() { _ = f.Close() }()
+
 	if err := tmpl.Execute(f, cfg); err != nil {
 		return fmt.Errorf("cannot render systemd unit: %w", err)
 	}
@@ -87,6 +88,7 @@ func Install(cfg Config) error {
 
 func Uninstall(cfg Config) error {
 	_ = exec.Command("systemctl", "disable", "--now", "probo-agent.service").Run()
+
 	if err := os.Remove(systemdUnitPath); err != nil && !errors.Is(err, os.ErrNotExist) {
 		return fmt.Errorf("cannot remove systemd unit: %w", err)
 	}

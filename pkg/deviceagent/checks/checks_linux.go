@@ -39,6 +39,7 @@ func linuxDiskEncryption(ctx context.Context) Result {
 	if data, err := os.ReadFile("/etc/crypttab"); err == nil {
 		body := strings.TrimSpace(string(data))
 		ev["crypttab_present"] = true
+
 		ev["crypttab_lines"] = nonCommentLines(body)
 		if len(nonCommentLines(body)) > 0 {
 			return pass(ev)
@@ -50,12 +51,14 @@ func linuxDiskEncryption(ctx context.Context) Result {
 	lsblk := RunCommand(ctx, "lsblk", "-o", "NAME,TYPE,FSTYPE,MOUNTPOINT", "-r")
 	if lsblk.Err == nil {
 		ev["lsblk"] = truncate(lsblk.Stdout, 800)
+
 		lines := strings.SplitSeq(lsblk.Stdout, "\n")
 		for line := range lines {
 			fields := strings.Fields(line)
 			if len(fields) < 2 {
 				continue
 			}
+
 			if fields[1] == "crypt" {
 				return pass(ev)
 			}
@@ -67,6 +70,7 @@ func linuxDiskEncryption(ctx context.Context) Result {
 	if lsblk.Err != nil {
 		return unknown(ev)
 	}
+
 	return fail(ev)
 }
 
@@ -78,6 +82,7 @@ func linuxScreenLock(ctx context.Context) Result {
 			},
 		)
 	}
+
 	idle := RunCommand(ctx, "gsettings", "get", "org.gnome.desktop.screensaver", "lock-enabled")
 	if idle.Err != nil {
 		return unknown(
@@ -86,11 +91,14 @@ func linuxScreenLock(ctx context.Context) Result {
 			},
 		)
 	}
+
 	on := strings.TrimSpace(idle.Stdout) == "true"
+
 	ev := map[string]any{"lock_enabled": idle.Stdout}
 	if on {
 		return pass(ev)
 	}
+
 	return fail(ev)
 }
 
@@ -99,24 +107,30 @@ func linuxFirewall(ctx context.Context) Result {
 		out := RunCommand(ctx, "ufw", "status")
 		if out.Err == nil {
 			active := strings.Contains(strings.ToLower(out.Stdout), "status: active")
+
 			ev := map[string]any{"backend": "ufw", "raw": out.Stdout}
 			if active {
 				return pass(ev)
 			}
+
 			return fail(ev)
 		}
 	}
+
 	if CommandExists("firewall-cmd") {
 		out := RunCommand(ctx, "firewall-cmd", "--state")
+
 		ev := map[string]any{"backend": "firewalld", "raw": out.Stdout}
 		if out.Err == nil && strings.Contains(strings.ToLower(out.Stdout), "running") {
 			return pass(ev)
 		}
+
 		return fail(ev)
 	}
 
 	if CommandExists("nft") {
 		out := RunCommand(ctx, "nft", "list", "ruleset")
+
 		ev := map[string]any{
 			"backend":       "nftables",
 			"rules_excerpt": truncate(out.Stdout, 400),
@@ -125,21 +139,26 @@ func linuxFirewall(ctx context.Context) Result {
 			ev["error"] = out.Err.Error()
 			return unknown(ev)
 		}
+
 		if strings.Contains(out.Stdout, "chain ") {
 			return pass(ev)
 		}
+
 		return fail(ev)
 	}
 
 	if CommandExists("iptables") {
 		out := RunCommand(ctx, "iptables", "-S", "INPUT")
+
 		ev := map[string]any{"backend": "iptables"}
 		if out.Err != nil {
 			ev["error"] = out.Err.Error()
 			return unknown(ev)
 		}
+
 		policy, rules := parseIptablesInput(out.Stdout)
 		ev["input_policy"] = policy
+
 		ev["input_rules"] = rules
 		if policy == "DROP" || policy == "REJECT" {
 			return pass(ev)
@@ -148,11 +167,13 @@ func linuxFirewall(ctx context.Context) Result {
 		if rules == 0 {
 			return fail(ev)
 		}
+
 		// ACCEPT policy with some rules means the operator is filtering,
 		// but we cannot tell from -S whether the rules are restrictive
 		// or permissive without modelling the chain.
 		return unknown(ev)
 	}
+
 	return unknown(
 		map[string]any{
 			"note": "no known firewall tool found",
@@ -192,14 +213,17 @@ func linuxTimeSync(ctx context.Context) Result {
 			},
 		)
 	}
+
 	out := RunCommand(ctx, "timedatectl", "show")
 	if out.Err != nil {
 		return unknown(map[string]any{"error": out.Err.Error()})
 	}
+
 	ev := map[string]any{"raw": truncate(out.Stdout, 400)}
 	if strings.Contains(out.Stdout, "NTPSynchronized=yes") {
 		return pass(ev)
 	}
+
 	return fail(ev)
 }
 
@@ -208,12 +232,14 @@ func linuxOSVersion(ctx context.Context) Result {
 	if err != nil {
 		return unknown(map[string]any{"error": err.Error()})
 	}
+
 	body := string(data)
 	ev := map[string]any{
 		"pretty_name": kvLookup(body, "PRETTY_NAME"),
 		"version_id":  kvLookup(body, "VERSION_ID"),
 		"id":          kvLookup(body, "ID"),
 	}
+
 	return pass(ev)
 }
 
@@ -221,6 +247,7 @@ func linuxAutoUpdate(ctx context.Context) Result {
 	if _, err := os.Stat("/etc/apt/apt.conf.d/20auto-upgrades"); err == nil {
 		data, _ := os.ReadFile("/etc/apt/apt.conf.d/20auto-upgrades")
 		body := string(data)
+
 		ev := map[string]any{
 			"backend": "unattended-upgrades",
 			"raw":     body,
@@ -228,8 +255,10 @@ func linuxAutoUpdate(ctx context.Context) Result {
 		if strings.Contains(body, `"1"`) {
 			return pass(ev)
 		}
+
 		return fail(ev)
 	}
+
 	if CommandExists("systemctl") {
 		out := RunCommand(ctx, "systemctl", "is-enabled", "dnf-automatic.timer")
 		if out.Err == nil {
@@ -237,9 +266,11 @@ func linuxAutoUpdate(ctx context.Context) Result {
 			if strings.TrimSpace(out.Stdout) == "enabled" {
 				return pass(ev)
 			}
+
 			return fail(ev)
 		}
 	}
+
 	return notApplicable(
 		map[string]any{
 			"note": "no known auto-update mechanism",
@@ -252,9 +283,11 @@ func linuxPasswordPolicy(ctx context.Context) Result {
 	if err != nil {
 		return unknown(map[string]any{"error": err.Error()})
 	}
+
 	body := string(data)
 	minLen := loginDefsLookup(body, "PASS_MIN_LEN")
 	maxDays := loginDefsLookup(body, "PASS_MAX_DAYS")
+
 	ev := map[string]any{
 		"pass_min_len":  minLen,
 		"pass_max_days": maxDays,
@@ -284,12 +317,15 @@ func linuxRemoteLogin(ctx context.Context) Result {
 	if !CommandExists("systemctl") {
 		return unknown(map[string]any{"note": "systemctl unavailable"})
 	}
+
 	state := RunCommand(ctx, "systemctl", "is-active", "ssh.service")
 	stateAlt := RunCommand(ctx, "systemctl", "is-active", "sshd.service")
+
 	merged := strings.TrimSpace(state.Stdout)
 	if merged == "" {
 		merged = strings.TrimSpace(stateAlt.Stdout)
 	}
+
 	ev := map[string]any{"is_active": merged}
 	switch merged {
 	case "active":
@@ -299,6 +335,7 @@ func linuxRemoteLogin(ctx context.Context) Result {
 	case "":
 		return notApplicable(ev)
 	}
+
 	return unknown(ev)
 }
 
@@ -333,6 +370,7 @@ func linuxMalwareProtection(ctx context.Context) Result {
 	}
 
 	var active, installed []string
+
 	for _, c := range candidates {
 		state := strings.TrimSpace(
 			RunCommand(ctx, "systemctl", "is-active", c.unit).Stdout)
@@ -351,21 +389,26 @@ func linuxMalwareProtection(ctx context.Context) Result {
 	if len(active) > 0 {
 		return pass(ev)
 	}
+
 	if len(installed) > 0 {
 		return fail(ev)
 	}
+
 	return unknown(ev)
 }
 
 func nonCommentLines(s string) []string {
 	out := []string{}
+
 	for line := range strings.SplitSeq(s, "\n") {
 		t := strings.TrimSpace(line)
 		if t == "" || strings.HasPrefix(t, "#") {
 			continue
 		}
+
 		out = append(out, t)
 	}
+
 	return out
 }
 
@@ -375,12 +418,15 @@ func kvLookup(body, key string) string {
 		if eq <= 0 {
 			continue
 		}
+
 		if strings.TrimSpace(line[:eq]) == key {
 			v := strings.TrimSpace(line[eq+1:])
 			v = strings.Trim(v, `"`)
+
 			return v
 		}
 	}
+
 	return ""
 }
 
@@ -390,10 +436,12 @@ func loginDefsLookup(body, key string) string {
 		if line == "" || strings.HasPrefix(line, "#") {
 			continue
 		}
+
 		fields := strings.Fields(line)
 		if len(fields) >= 2 && fields[0] == key {
 			return fields[1]
 		}
 	}
+
 	return ""
 }

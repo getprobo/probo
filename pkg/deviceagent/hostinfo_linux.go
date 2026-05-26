@@ -38,6 +38,7 @@ func collectOSVersion() string {
 	defer cancel()
 
 	out, _ := runQuiet(ctx, "uname", "-sr")
+
 	return out
 }
 
