@@ -355,6 +355,9 @@ jobs:
   test-e2e:
     name: "test-e2e"
     runs-on: "runs-on=${{ github.run_id }}/runner=4cpu-linux-x64/extras=s3-cache"
+    env:
+      COMPOSE_FILE: "compose.yaml:compose.github-action.yaml"
+      DOCKER_COMPOSE_FLAGS: "-f compose.github-action.yaml"
     permissions:
       contents: "read"
     steps:
@@ -378,7 +381,7 @@ jobs:
         uses: "runs-on/cache@a5f51d6f3fece787d03b7b4e981c82538a0654ed" # v4
         with:
           path: /tmp/docker-images
-          key: "docker-images-${{ hashFiles('compose.yaml') }}"
+          key: "docker-images-${{ hashFiles('compose.yaml', 'compose.github-action.yaml') }}"
       - name: "Load cached Docker images"
         if: steps.docker-cache.outputs.cache-hit == 'true'
         run: "docker load -i /tmp/docker-images/images.tar"
