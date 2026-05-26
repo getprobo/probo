@@ -5,7 +5,7 @@ documented in this file.
 
 ## Unreleased
 
-## [0.1.0] - 2026-05-17
+## [0.1.0] - 2026-05-26
 
 ### Added
 
@@ -35,3 +35,16 @@ documented in this file.
   `updates_disabled`.
 - `probo-agent status` now reports the configured update interval and
   whether auto-update is enabled.
+- Screen lock detection for additional Linux desktop environments: KDE
+  Plasma, i3, Sway, Hyprland, Xfce, MATE, Cinnamon, UKUI, and LightDM.
+
+### Fixed
+
+- macOS launchd service label corrected to `com.probo.agent`.
+- FreeBSD check command failures are now handled before reading service
+  status.
+- macOS postinstall script no longer uses `eval` to parse configuration.
+- Windows agent key file replacement is now performed atomically.
+- Windows service uninstall is now idempotent.
+- FreeBSD `rc.d` install validates executable and state directory paths
+  to prevent shell injection.
