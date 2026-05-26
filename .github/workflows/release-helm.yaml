@@ -29,10 +29,11 @@ jobs:
             exit 1
           fi
       - name: "Log in to Harbor"
-        run: |
-          helm registry login artifact.probo.inc \
-            --username "${{ secrets.HARBOR_USERNAME }}" \
-            --password "${{ secrets.HARBOR_PASSWORD }}"
+        uses: "docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2" # v4.0.0
+        with:
+          registry: artifact.probo.inc
+          username: ${{ secrets.HARBOR_USERNAME }}
+          password: ${{ secrets.HARBOR_PASSWORD }}
       - name: "Package and push Helm chart"
         run: |
           VERSION="${GITHUB_REF_NAME##*/v}"
