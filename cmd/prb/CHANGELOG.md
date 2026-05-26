@@ -4,6 +4,17 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.189.0] - 2026-05-26
+
+### Added
+
+- Add `prb third-party link`/`unlink` commands for self-referential third-party relations
+- Add `prb measure link-third-party`/`unlink-third-party` commands
+
+### Changed
+
+- Allow initial minor publishing of documents
+
 ## [0.188.0] - 2026-05-22
 
 ### Added
