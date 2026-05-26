@@ -4,6 +4,17 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+## [0.188.0] - 2026-05-26
+
+### Added
+
+- Add `measure linkThirdParty`/`unlinkThirdParty` operations
+- Add `thirdParty linkThirdParty`/`unlinkThirdParty`/`listChildThirdParties` operations for self-referential relations
+
+### Changed
+
+- Allow initial minor publishing of documents
+
 ## [0.187.1] - 2026-05-25
 
 ### Fixed
