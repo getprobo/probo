@@ -4,6 +4,12 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+## [0.187.1] - 2026-05-25
+
+### Fixed
+
+- Fix signature count mismatch in `getAllSignatures` — add a `state` filter to `DocumentVersionSignatureFilter` so results match the console's signatures tab
+
 ## [0.187.0] - 2026-05-22
 
 ### Added
