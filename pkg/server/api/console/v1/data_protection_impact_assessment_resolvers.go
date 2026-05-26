@@ -280,10 +280,6 @@ func (r *mutationResolver) PublishDataProtectionImpactAssessmentList(ctx context
 			return nil, gqlutils.Conflict(ctx, err)
 		}
 
-		if errMinor, ok := errors.AsType[*probo.ErrCannotPublishMinorWithoutMajor](err); ok {
-			return nil, gqlutils.Invalid(ctx, errMinor)
-		}
-
 		r.logger.ErrorCtx(ctx, "cannot publish data protection impact assessment list", log.Error(err))
 
 		return nil, gqlutils.Internal(ctx)
@@ -306,10 +302,6 @@ func (r *mutationResolver) PublishTransferImpactAssessmentList(ctx context.Conte
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
 			return nil, gqlutils.Conflict(ctx, err)
-		}
-
-		if errMinor, ok := errors.AsType[*probo.ErrCannotPublishMinorWithoutMajor](err); ok {
-			return nil, gqlutils.Invalid(ctx, errMinor)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot publish transfer impact assessment list", log.Error(err))

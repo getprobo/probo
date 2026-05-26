@@ -785,10 +785,6 @@ func (r *mutationResolver) PublishStatementOfApplicability(ctx context.Context, 
 			return nil, gqlutils.Conflict(ctx, err)
 		}
 
-		if errMinor, ok := errors.AsType[*probo.ErrCannotPublishMinorWithoutMajor](err); ok {
-			return nil, gqlutils.Invalid(ctx, errMinor)
-		}
-
 		r.logger.ErrorCtx(ctx, "cannot publish statement of applicability", log.Error(err))
 
 		return nil, gqlutils.Internal(ctx)

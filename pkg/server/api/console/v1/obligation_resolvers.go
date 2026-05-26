@@ -125,10 +125,6 @@ func (r *mutationResolver) PublishObligationList(ctx context.Context, input type
 			return nil, gqlutils.Conflict(ctx, err)
 		}
 
-		if errMinor, ok := errors.AsType[*probo.ErrCannotPublishMinorWithoutMajor](err); ok {
-			return nil, gqlutils.Invalid(ctx, errMinor)
-		}
-
 		r.logger.ErrorCtx(ctx, "cannot publish obligation list", log.Error(err))
 
 		return nil, gqlutils.Internal(ctx)

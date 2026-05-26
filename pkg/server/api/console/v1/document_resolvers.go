@@ -1045,10 +1045,6 @@ func (r *mutationResolver) PublishDocument(ctx context.Context, input types.Publ
 			return nil, gqlutils.Conflict(ctx, errPending)
 		}
 
-		if errMinor, ok := errors.AsType[*probo.ErrCannotPublishMinorWithoutMajor](err); ok {
-			return nil, gqlutils.Invalid(ctx, errMinor)
-		}
-
 		if errContractEnded, ok := errors.AsType[*probo.ErrProfileContractEnded](err); ok {
 			return nil, gqlutils.Conflict(ctx, errContractEnded)
 		}

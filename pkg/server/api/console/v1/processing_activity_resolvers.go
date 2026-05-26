@@ -133,10 +133,6 @@ func (r *mutationResolver) PublishProcessingActivityList(ctx context.Context, in
 			return nil, gqlutils.Conflict(ctx, err)
 		}
 
-		if errMinor, ok := errors.AsType[*probo.ErrCannotPublishMinorWithoutMajor](err); ok {
-			return nil, gqlutils.Invalid(ctx, errMinor)
-		}
-
 		r.logger.ErrorCtx(ctx, "cannot publish processing activity list", log.Error(err))
 
 		return nil, gqlutils.Internal(ctx)

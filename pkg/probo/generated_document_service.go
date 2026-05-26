@@ -3028,10 +3028,9 @@ func formatRiskTreatment(t coredata.RiskTreatment) string {
 // version. The version's Major, Minor, Status and PublishedAt fields are
 // computed here based on the document's current published state, the minor
 // flag, and whether approvers were provided. When minor is true the version
-// is always published at currentMajor.(currentMinor+1) and approvers are
-// ignored. When minor is false a non-empty approverIDs triggers an approval
-// request at (currentMajor+1).0; otherwise the version is published at
-// (currentMajor+1).0.
+// is always published as a minor version and approvers are ignored. When
+// minor is false a non-empty approverIDs triggers an approval request at
+// (currentMajor+1).0; otherwise the version is published at (currentMajor+1).0.
 func (s *GeneratedDocumentService) publishOrRequestApproval(
 	ctx context.Context, scope coredata.Scoper,
 	tx pg.Tx,
@@ -3057,12 +3056,14 @@ func (s *GeneratedDocumentService) publishOrRequestApproval(
 	}
 
 	if minor {
-		if document.CurrentPublishedMajor == nil || document.CurrentPublishedMinor == nil {
-			return &ErrCannotPublishMinorWithoutMajor{}
+		if document.CurrentPublishedMajor != nil && document.CurrentPublishedMinor != nil {
+			version.Major = *document.CurrentPublishedMajor
+			version.Minor = *document.CurrentPublishedMinor + 1
+		} else {
+			version.Major = 0
+			version.Minor = 1
 		}
 
-		version.Major = *document.CurrentPublishedMajor
-		version.Minor = *document.CurrentPublishedMinor + 1
 		version.Status = coredata.DocumentVersionStatusPublished
 		version.PublishedAt = &now
 		approverIDs = nil

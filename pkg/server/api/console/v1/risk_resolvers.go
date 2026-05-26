@@ -246,10 +246,6 @@ func (r *mutationResolver) PublishRiskList(ctx context.Context, input types.Publ
 			return nil, gqlutils.Conflict(ctx, err)
 		}
 
-		if errMinor, ok := errors.AsType[*probo.ErrCannotPublishMinorWithoutMajor](err); ok {
-			return nil, gqlutils.Invalid(ctx, errMinor)
-		}
-
 		r.logger.ErrorCtx(ctx, "cannot publish risk list", log.Error(err))
 
 		return nil, gqlutils.Internal(ctx)

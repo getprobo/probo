@@ -75,9 +75,6 @@ type (
 	ErrDocumentArchived struct {
 	}
 
-	ErrCannotPublishMinorWithoutMajor struct {
-	}
-
 	ErrDocumentDraftNotDeletable struct {
 	}
 
@@ -250,10 +247,6 @@ func (e ErrDocumentVersionPendingApproval) Error() string {
 
 func (e ErrDocumentArchived) Error() string {
 	return "cannot modify an archived document"
-}
-
-func (e ErrCannotPublishMinorWithoutMajor) Error() string {
-	return "cannot publish a minor version before a major version exists"
 }
 
 func (e ErrDocumentDraftNotDeletable) Error() string {
