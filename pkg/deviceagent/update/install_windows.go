@@ -19,9 +19,7 @@ package update
 import (
 	"errors"
 	"fmt"
-	"io"
 	"os"
-	"path/filepath"
 )
 
 const oldSuffix = ".old"
@@ -58,42 +56,6 @@ func replaceBinary(dst, src string) error {
 		_ = os.Rename(oldPath, dst)
 		_ = os.Remove(staging)
 		return fmt.Errorf("cannot install new binary at %s: %w", dst, err)
-	}
-
-	return nil
-}
-
-func copyFile(src, dst string) error {
-	in, err := os.Open(src)
-	if err != nil {
-		return fmt.Errorf("cannot open %s: %w", src, err)
-	}
-	defer func() { _ = in.Close() }()
-
-	if err := os.MkdirAll(filepath.Dir(dst), 0o755); err != nil {
-		return fmt.Errorf("cannot ensure %s: %w", filepath.Dir(dst), err)
-	}
-
-	out, err := os.OpenFile(dst, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o755)
-	if err != nil {
-		return fmt.Errorf("cannot create %s: %w", dst, err)
-	}
-
-	if _, err := io.Copy(out, in); err != nil {
-		_ = out.Close()
-		_ = os.Remove(dst)
-		return fmt.Errorf("cannot copy to %s: %w", dst, err)
-	}
-
-	if err := out.Sync(); err != nil {
-		_ = out.Close()
-		_ = os.Remove(dst)
-		return fmt.Errorf("cannot fsync %s: %w", dst, err)
-	}
-
-	if err := out.Close(); err != nil {
-		_ = os.Remove(dst)
-		return fmt.Errorf("cannot close %s: %w", dst, err)
 	}
 
 	return nil
