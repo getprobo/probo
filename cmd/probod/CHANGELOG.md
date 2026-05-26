@@ -4,6 +4,17 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.192.0] - 2026-05-25
+
+### Changed
+
+- Enforce IAM authorization on all console resolvers — every data-bearing field now goes through the policy engine and produces an audit log entry; adds `ActionCommonThirdPartyGet`, `ActionCommonThirdPartyList`, and `ActionElectronicSignatureGet` actions wired into Viewer and Auditor policies
+
+### Fixed
+
+- Fix signature count mismatch between the document version badge and the signatures tab — both now filter by `activeContract: true` and `state: ACTIVE`, so deactivated signers and ended-contract signers are consistently excluded
+- Fix MCP server resolvers after the signature filter and authorization changes
+
 ## [0.191.0] - 2026-05-22
 
 ### Added
