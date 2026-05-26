@@ -135,6 +135,7 @@ func (j *jsonTimestamp) UnmarshalJSON(b []byte) error {
 	}
 
 	*j = jsonTimestamp(t)
+
 	return nil
 }
 
@@ -191,6 +192,7 @@ func (u *Updater) CheckLatest(ctx context.Context) (*Release, error) {
 	current := normalizeSemver(u.CurrentVersion)
 
 	var best *Release
+
 	for i := range releases {
 		rel := &releases[i]
 		if rel.Draft || rel.Prerelease {
@@ -217,10 +219,12 @@ func (u *Updater) CheckLatest(ctx context.Context) (*Release, error) {
 		if !ok {
 			continue
 		}
+
 		checksumURL, ok := findAssetURL(rel.Assets, checksumFileName)
 		if !ok {
 			continue
 		}
+
 		bundleURL, ok := findAssetURL(rel.Assets, checksumBundleFileName)
 		if !ok {
 			// Releases without a Sigstore bundle predate the
@@ -281,6 +285,7 @@ func (u *Updater) Apply(ctx context.Context, rel *Release) error {
 	if err != nil {
 		return fmt.Errorf("cannot create update workdir: %w", err)
 	}
+
 	defer func() { _ = os.RemoveAll(workDir) }()
 
 	archivePath := filepath.Join(workDir, layout.ArchiveName)
@@ -353,6 +358,7 @@ func (u *Updater) resolveVerifier() (Verifier, error) {
 	}
 
 	u.Verifier = v
+
 	return v, nil
 }
 
@@ -381,6 +387,7 @@ func (u *Updater) listReleases(ctx context.Context) ([]githubRelease, error) {
 	if err != nil {
 		return nil, fmt.Errorf("cannot build releases request: %w", err)
 	}
+
 	req.Header.Set("Accept", "application/vnd.github+json")
 	req.Header.Set("User-Agent", u.userAgent())
 
@@ -388,6 +395,7 @@ func (u *Updater) listReleases(ctx context.Context) ([]githubRelease, error) {
 	if err != nil {
 		return nil, fmt.Errorf("cannot fetch releases: %w", err)
 	}
+
 	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode >= 400 {
@@ -408,6 +416,7 @@ func (u *Updater) downloadFile(ctx context.Context, src, dst string) error {
 	if err != nil {
 		return fmt.Errorf("cannot build download request: %w", err)
 	}
+
 	req.Header.Set("Accept", "application/octet-stream")
 	req.Header.Set("User-Agent", u.userAgent())
 
@@ -415,6 +424,7 @@ func (u *Updater) downloadFile(ctx context.Context, src, dst string) error {
 	if err != nil {
 		return fmt.Errorf("cannot fetch %s: %w", src, err)
 	}
+
 	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode >= 400 {
@@ -423,6 +433,7 @@ func (u *Updater) downloadFile(ctx context.Context, src, dst string) error {
 	}
 
 	tmp := dst + ".part"
+
 	f, err := os.OpenFile(tmp, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o600)
 	if err != nil {
 		return fmt.Errorf("cannot create %s: %w", tmp, err)
@@ -432,6 +443,7 @@ func (u *Updater) downloadFile(ctx context.Context, src, dst string) error {
 		_ = f.Close()
 		return fmt.Errorf("cannot stream %s: %w", src, err)
 	}
+
 	if err := f.Close(); err != nil {
 		return fmt.Errorf("cannot close %s: %w", tmp, err)
 	}
@@ -440,6 +452,7 @@ func (u *Updater) downloadFile(ctx context.Context, src, dst string) error {
 	if err != nil {
 		return fmt.Errorf("cannot stat %s: %w", tmp, err)
 	}
+
 	if stat.Size() > defaultDownloadLimit {
 		_ = os.Remove(tmp)
 		return fmt.Errorf("download %s exceeds %d bytes", src, defaultDownloadLimit)
@@ -537,6 +550,7 @@ func verifyChecksum(archivePath, checksumPath, archiveName string) error {
 	if err != nil {
 		return fmt.Errorf("cannot open archive: %w", err)
 	}
+
 	defer func() { _ = f.Close() }()
 
 	h := sha256.New()
@@ -568,6 +582,7 @@ func readChecksum(path, archiveName string) (string, error) {
 		if line == "" {
 			continue
 		}
+
 		// `sha256sum` output is `<hex>  <name>`; the GNU tool also
 		// supports a single-space separator and a leading `*` flag
 		// for binary mode. Handle both.

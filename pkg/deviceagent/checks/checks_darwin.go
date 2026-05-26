@@ -43,11 +43,14 @@ func darwinDiskEncryption(ctx context.Context) Result {
 			},
 		)
 	}
+
 	on := strings.Contains(strings.ToLower(out.Stdout), "filevault is on")
+
 	ev := map[string]any{"raw": out.Stdout}
 	if on {
 		return pass(ev)
 	}
+
 	return fail(ev)
 }
 
@@ -61,40 +64,51 @@ func darwinScreenLock(ctx context.Context) Result {
 			"raw_stdout": status.Stdout,
 			"raw_stderr": status.Stderr,
 		}
+
 		mode, seconds, ok := darwinScreenLockMode(rawCombined)
 		if ok {
 			ev["mode"] = mode
 			if mode == "seconds" && seconds >= 0 {
 				ev["seconds"] = seconds
 			}
+
 			if mode == "immediate" {
 				return pass(ev)
 			}
+
 			return fail(ev)
 		}
+
 		if status.Err != nil {
 			ev["error"] = status.Err.Error()
 		}
 	}
 
 	ask, askSource := darwinReadScreenSaverDefault(ctx, "askForPassword")
+
 	ev := map[string]any{}
 	if askSource != "" {
 		ev["source"] = askSource
 	}
+
 	if ask.Err != nil {
 		if darwinDefaultsMissing(ask) {
 			ev["ask_for_password"] = "0"
 			ev["note"] = "askForPassword is unset or unavailable"
+
 			return fail(ev)
 		}
+
 		ev["error"] = ask.Err.Error()
 		ev["stderr"] = ask.Stderr
+
 		return unknown(ev)
 	}
+
 	enabled := strings.TrimSpace(ask.Stdout) == "1"
 
 	delayCmd, delaySource := darwinReadScreenSaverDefault(ctx, "askForPasswordDelay")
+
 	ev["ask_for_password"] = ask.Stdout
 	if delayCmd.Err == nil {
 		ev["ask_for_password_delay"] = delayCmd.Stdout
@@ -102,9 +116,11 @@ func darwinScreenLock(ctx context.Context) Result {
 			ev["delay_source"] = delaySource
 		}
 	}
+
 	if enabled {
 		return pass(ev)
 	}
+
 	return fail(ev)
 }
 
@@ -113,20 +129,25 @@ func darwinScreenLockMode(raw string) (string, int, bool) {
 	if strings.Contains(lower, "immediate") {
 		return "immediate", 0, true
 	}
+
 	if strings.Contains(lower, "off") {
 		return "off", -1, true
 	}
+
 	if before, _, ok := strings.Cut(lower, "seconds"); ok {
 		prefix := strings.Fields(before)
 		if len(prefix) == 0 {
 			return "seconds", -1, true
 		}
+
 		n, err := strconv.Atoi(prefix[len(prefix)-1])
 		if err != nil {
 			return "seconds", -1, true
 		}
+
 		return "seconds", n, true
 	}
+
 	return "", 0, false
 }
 
@@ -140,14 +161,17 @@ func darwinFirewall(ctx context.Context) Result {
 	)
 	if out.Err == nil {
 		state := strings.TrimSpace(out.Stdout)
+
 		ev := map[string]any{"backend": "defaults", "global_state": state}
 		if state == "1" || state == "2" {
 			return pass(ev)
 		}
+
 		return fail(ev)
 	}
 
 	fallback := RunCommand(ctx, "/usr/libexec/ApplicationFirewall/socketfilterfw", "--getglobalstate")
+
 	ev := map[string]any{
 		"backend":         "socketfilterfw",
 		"raw":             fallback.Stdout,
@@ -157,14 +181,18 @@ func darwinFirewall(ctx context.Context) Result {
 	if fallback.Err != nil {
 		ev["error"] = fallback.Err.Error()
 		ev["stderr"] = fallback.Stderr
+
 		return unknown(ev)
 	}
+
 	if darwinStateIndicatesEnabled(fallback.Stdout) {
 		return pass(ev)
 	}
+
 	if darwinStateIndicatesDisabled(fallback.Stdout) {
 		return fail(ev)
 	}
+
 	return unknown(ev)
 }
 
@@ -173,6 +201,7 @@ func darwinReadScreenSaverDefault(ctx context.Context, key string) (CmdResult, s
 	consoleUser := darwinConsoleUser(ctx)
 	if os.Geteuid() == 0 && consoleUser != "" {
 		var consoleMissing CmdResult
+
 		consoleMissingSource := ""
 
 		if CommandExists("sudo") {
@@ -190,9 +219,11 @@ func darwinReadScreenSaverDefault(ctx context.Context, key string) (CmdResult, s
 			if consoleUserCurrentHost.Err == nil {
 				return consoleUserCurrentHost, "console_user_current_host:" + consoleUser
 			}
+
 			if !darwinDefaultsMissing(consoleUserCurrentHost) {
 				return consoleUserCurrentHost, "console_user_current_host:" + consoleUser
 			}
+
 			if consoleMissingSource == "" {
 				consoleMissing = consoleUserCurrentHost
 				consoleMissingSource = "console_user_current_host:" + consoleUser
@@ -211,9 +242,11 @@ func darwinReadScreenSaverDefault(ctx context.Context, key string) (CmdResult, s
 			if consoleUserDomain.Err == nil {
 				return consoleUserDomain, "console_user:" + consoleUser
 			}
+
 			if !darwinDefaultsMissing(consoleUserDomain) {
 				return consoleUserDomain, "console_user:" + consoleUser
 			}
+
 			if consoleMissingSource == "" {
 				consoleMissing = consoleUserDomain
 				consoleMissingSource = "console_user:" + consoleUser
@@ -221,17 +254,21 @@ func darwinReadScreenSaverDefault(ctx context.Context, key string) (CmdResult, s
 		}
 
 		plistPath := "/Users/" + consoleUser + "/Library/Preferences/com.apple.screensaver.plist"
+
 		consoleUserOut := RunCommand(ctx, "defaults", "read", plistPath, key)
 		if consoleUserOut.Err == nil {
 			return consoleUserOut, "console_user_plist:" + consoleUser
 		}
+
 		if !darwinDefaultsMissing(consoleUserOut) {
 			return consoleUserOut, "console_user_plist:" + consoleUser
 		}
+
 		if consoleMissingSource == "" {
 			consoleMissing = consoleUserOut
 			consoleMissingSource = "console_user_plist:" + consoleUser
 		}
+
 		if consoleMissingSource != "" {
 			return consoleMissing, consoleMissingSource
 		}
@@ -250,14 +287,17 @@ func darwinReadScreenSaverDefault(ctx context.Context, key string) (CmdResult, s
 	if !darwinDefaultsMissing(currentUser) {
 		return currentUser, "current_user"
 	}
+
 	if !darwinDefaultsMissing(currentHost) {
 		return currentHost, "current_user_current_host"
 	}
+
 	return currentUser, "current_user"
 }
 
 func darwinDefaultsMissing(out CmdResult) bool {
 	lower := strings.ToLower(out.Stderr + "\n" + out.Stdout)
+
 	return strings.Contains(lower, "does not exist") ||
 		strings.Contains(lower, "could not find") ||
 		strings.Contains(lower, "does not exist in domain")
@@ -267,19 +307,23 @@ func darwinConsoleUser(ctx context.Context) string {
 	if sudoUser := strings.TrimSpace(os.Getenv("SUDO_USER")); sudoUser != "" && sudoUser != "root" {
 		return sudoUser
 	}
+
 	out := RunCommand(ctx, "stat", "-f", "%Su", "/dev/console")
 	if out.Err != nil {
 		return ""
 	}
+
 	user := strings.TrimSpace(out.Stdout)
 	if user == "" || user == "root" || user == "loginwindow" {
 		return ""
 	}
+
 	return user
 }
 
 func darwinStateIndicatesEnabled(raw string) bool {
 	lower := strings.ToLower(raw)
+
 	return strings.Contains(lower, "enabled") ||
 		strings.Contains(lower, "state = 1") ||
 		strings.Contains(lower, "state = 2")
@@ -300,11 +344,14 @@ func darwinTimeSync(ctx context.Context) Result {
 			},
 		)
 	}
+
 	on := strings.Contains(strings.ToLower(out.Stdout), "on")
+
 	ev := map[string]any{"raw": out.Stdout}
 	if on {
 		return pass(ev)
 	}
+
 	return fail(ev)
 }
 
@@ -313,11 +360,13 @@ func darwinOSVersion(ctx context.Context) Result {
 	if out.Err != nil || out.Stdout == "" {
 		return unknown(map[string]any{"error": "sw_vers failed"})
 	}
+
 	build := RunCommand(ctx, "sw_vers", "-buildVersion")
 	ev := map[string]any{
 		"product_version": out.Stdout,
 		"build_version":   build.Stdout,
 	}
+
 	return pass(ev)
 }
 
@@ -337,10 +386,12 @@ func darwinAutoUpdate(ctx context.Context) Result {
 		if strings.TrimSpace(primary.Stdout) == "1" {
 			return pass(ev)
 		}
+
 		return fail(ev)
 	}
 
 	fallback := RunCommand(ctx, "softwareupdate", "--schedule")
+
 	ev := map[string]any{
 		"backend":         "softwareupdate",
 		"raw":             fallback.Stdout,
@@ -352,6 +403,7 @@ func darwinAutoUpdate(ctx context.Context) Result {
 		needsAdmin(fallback.Stderr) {
 		ev["error"] = errString(fallback.Err)
 		ev["stderr"] = fallback.Stderr
+
 		return unknown(ev)
 	}
 
@@ -378,11 +430,14 @@ func darwinPasswordPolicy(ctx context.Context) Result {
 			},
 		)
 	}
+
 	lower := strings.ToLower(out.Stdout)
+
 	ev := map[string]any{"raw_truncated": truncate(out.Stdout, 400)}
 	if strings.Contains(lower, "no account policies") || lower == "" {
 		return fail(ev)
 	}
+
 	return pass(ev)
 }
 
@@ -396,11 +451,14 @@ func darwinRemoteLogin(ctx context.Context) Result {
 			},
 		)
 	}
+
 	off := strings.Contains(strings.ToLower(out.Stdout), "off")
+
 	ev := map[string]any{"raw": out.Stdout}
 	if off {
 		return pass(ev)
 	}
+
 	return fail(ev)
 }
 
@@ -413,7 +471,9 @@ func darwinMalwareProtection(ctx context.Context) Result {
 		if _, err := os.Stat(path); err != nil {
 			continue
 		}
+
 		ev := map[string]any{"engine": "XProtect", "plist": path}
+
 		version := RunCommand(
 			ctx,
 			"defaults",
@@ -424,8 +484,10 @@ func darwinMalwareProtection(ctx context.Context) Result {
 		if version.Err == nil {
 			ev["version"] = version.Stdout
 		}
+
 		return pass(ev)
 	}
+
 	return fail(
 		map[string]any{
 			"engine": "XProtect",

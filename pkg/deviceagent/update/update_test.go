@@ -163,6 +163,7 @@ func newFakeReleaseServer(t *testing.T, tag, version string, layout AssetLayout,
 	mux := http.NewServeMux()
 	mux.HandleFunc("/repos/getprobo/probo/releases", func(w http.ResponseWriter, r *http.Request) {
 		base := "http://" + r.Host
+
 		assets := []map[string]any{
 			{
 				"name":                 layout.ArchiveName,
@@ -179,6 +180,7 @@ func newFakeReleaseServer(t *testing.T, tag, version string, layout AssetLayout,
 				"browser_download_url": base + "/download/" + checksumBundleFileName,
 			})
 		}
+
 		body := []map[string]any{
 			{
 				"tag_name":   frs.tag,
@@ -187,6 +189,7 @@ func newFakeReleaseServer(t *testing.T, tag, version string, layout AssetLayout,
 				"assets":     assets,
 			},
 		}
+
 		w.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(w).Encode(body)
 		_ = version
@@ -206,6 +209,7 @@ func newFakeReleaseServer(t *testing.T, tag, version string, layout AssetLayout,
 
 	frs.server = httptest.NewServer(mux)
 	t.Cleanup(frs.server.Close)
+
 	return frs
 }
 
@@ -213,9 +217,11 @@ func (f *fakeReleaseServer) URL() string { return f.server.URL }
 
 func buildArchive(t *testing.T, layout AssetLayout, binary []byte) []byte {
 	t.Helper()
+
 	if layout.IsZip {
 		return buildZip(t, layout, binary)
 	}
+
 	return buildTarGz(t, layout, binary)
 }
 
@@ -246,6 +252,7 @@ func buildTarGz(t *testing.T, layout AssetLayout, binary []byte) []byte {
 
 	data, err := os.ReadFile(out)
 	require.NoError(t, err)
+
 	return data
 }
 
@@ -268,6 +275,7 @@ func buildZip(t *testing.T, layout AssetLayout, binary []byte) []byte {
 
 	data, err := os.ReadFile(out)
 	require.NoError(t, err)
+
 	return data
 }
 

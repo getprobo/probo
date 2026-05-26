@@ -51,10 +51,13 @@ func RunCommand(ctx context.Context, name string, args ...string) CmdResult {
 	}
 
 	cmd := exec.CommandContext(cmdCtx, resolved, args...)
+
 	var stdout, stderr bytes.Buffer
+
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	err := cmd.Run()
+
 	return CmdResult{
 		Stdout: strings.TrimSpace(stdout.String()),
 		Stderr: strings.TrimSpace(stderr.String()),
@@ -93,6 +96,7 @@ func isExecutableFile(path string) bool {
 	if err != nil || info.IsDir() {
 		return false
 	}
+
 	if runtime.GOOS == "windows" {
 		return true
 	}

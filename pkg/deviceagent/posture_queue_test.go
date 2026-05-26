@@ -46,10 +46,12 @@ func TestPendingPostureQueue_EnqueueTrimsOldestBatches(t *testing.T) {
 			time.Unix(int64(i), 0),
 		)
 		require.NoError(t, err)
+
 		if i < maxPendingPostureBatches {
 			assert.Equal(t, 0, dropped)
 			continue
 		}
+
 		assert.Equal(t, 1, dropped)
 	}
 
@@ -83,6 +85,7 @@ func TestAgent_flushQueuedPostures(t *testing.T) {
 			require.NoError(t, err)
 
 			var calls atomic.Int32
+
 			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				assert.Equal(t, "/api/agent/v1/postures", r.URL.Path)
 				calls.Add(1)
@@ -121,13 +124,16 @@ func TestAgent_flushQueuedPostures(t *testing.T) {
 			require.NoError(t, err)
 
 			var calls atomic.Int32
+
 			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				assert.Equal(t, "/api/agent/v1/postures", r.URL.Path)
+
 				call := calls.Add(1)
 				if call == 2 {
 					http.Error(w, "temporary error", http.StatusServiceUnavailable)
 					return
 				}
+
 				w.WriteHeader(http.StatusOK)
 			}))
 			defer srv.Close()
@@ -158,6 +164,7 @@ func TestAgent_flushQueuedPostures(t *testing.T) {
 			require.NoError(t, err)
 
 			var calls atomic.Int32
+
 			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				assert.Equal(t, "/api/agent/v1/postures", r.URL.Path)
 				calls.Add(1)
@@ -181,6 +188,7 @@ func TestAgent_flushQueuedPostures(t *testing.T) {
 			assert.Equal(t, int32(1), calls.Load())
 
 			now = firstRetryAt.Add(time.Second)
+
 			a.flushQueuedPostures(context.Background())
 			assert.Equal(t, int32(2), calls.Load())
 			assert.Equal(t, pendingFlushBackoffMin*2, a.pendingFlushBackoff)
@@ -201,13 +209,16 @@ func TestAgent_flushQueuedPostures(t *testing.T) {
 			require.NoError(t, err)
 
 			var calls atomic.Int32
+
 			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				assert.Equal(t, "/api/agent/v1/postures", r.URL.Path)
+
 				call := calls.Add(1)
 				if call == 1 {
 					http.Error(w, "temporary error", http.StatusServiceUnavailable)
 					return
 				}
+
 				w.WriteHeader(http.StatusOK)
 			}))
 			defer srv.Close()
@@ -224,6 +235,7 @@ func TestAgent_flushQueuedPostures(t *testing.T) {
 			require.True(t, retryAt.After(now))
 
 			now = retryAt.Add(time.Second)
+
 			a.flushQueuedPostures(context.Background())
 			assert.Equal(t, int32(2), calls.Load())
 			assert.Zero(t, a.pendingFlushBackoff)

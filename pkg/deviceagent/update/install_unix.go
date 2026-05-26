@@ -46,6 +46,7 @@ func replaceBinary(dst, src string) error {
 	if err := copyFile(src, staging); err != nil {
 		return err
 	}
+
 	if err := os.Chmod(staging, 0o755); err != nil {
 		_ = os.Remove(staging)
 		return fmt.Errorf("cannot chmod staged binary: %w", err)

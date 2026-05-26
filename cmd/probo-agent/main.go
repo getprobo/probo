@@ -56,6 +56,7 @@ func main() {
 		if errors.Is(err, deviceagent.ErrRestartRequired) {
 			os.Exit(restartExitCode)
 		}
+
 		fmt.Fprintf(os.Stderr, "probo-agent: %s\n", err)
 		os.Exit(1)
 	}
@@ -79,6 +80,7 @@ func newRootCmd() *cobra.Command {
 	root.AddCommand(newStatusCmd())
 	root.AddCommand(newCollectCmd())
 	root.AddCommand(newUpdateCmd())
+
 	return root
 }
 
@@ -145,10 +147,12 @@ func newInstallCmd() *cobra.Command {
 			}
 
 			dir := resolveDir(cmd)
+
 			ctx, cancel := context.WithTimeout(cmd.Context(), 60*time.Second)
 			defer cancel()
 
 			agent := deviceagent.New(dir, version, newAgentLogger())
+
 			resp, err := agent.EnrollNewDevice(ctx, strings.TrimRight(serverURL, "/"), enrollmentToken)
 			if err != nil {
 				return fmt.Errorf("enrollment failed: %w", err)
@@ -161,6 +165,7 @@ func newInstallCmd() *cobra.Command {
 				if err := persistAutoUpdate(dir, false); err != nil {
 					return fmt.Errorf("cannot persist auto-update preference: %w", err)
 				}
+
 				fmt.Println("Auto-update disabled.")
 			}
 
@@ -184,6 +189,7 @@ func newInstallCmd() *cobra.Command {
 			}
 
 			fmt.Println("Service installed and started.")
+
 			return nil
 		},
 	}
@@ -205,6 +211,7 @@ func persistAutoUpdate(dir string, enabled bool) error {
 	}
 
 	cfg.UpdatesDisabled = !enabled
+
 	return deviceagent.SaveConfig(dir, cfg)
 }
 
@@ -228,6 +235,7 @@ func newUninstallCmd() *cobra.Command {
 			}
 
 			_ = os.Remove(deviceagent.ConfigPath(dir))
+
 			fmt.Println("Uninstalled.")
 
 			return nil
@@ -248,6 +256,7 @@ func newRunCmd() *cobra.Command {
 			logger := newAgentLogger()
 			agent := deviceagent.New(dir, version, logger)
 			agent.Updater = newUpdater(logger, dir)
+
 			err := agent.Run(ctx)
 			if errors.Is(err, context.Canceled) {
 				return nil
@@ -264,6 +273,7 @@ func newStatusCmd() *cobra.Command {
 		Short: "Print the agent's local state",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			dir := resolveDir(cmd)
+
 			cfg, err := deviceagent.LoadConfig(dir)
 			if err != nil {
 				return err
@@ -294,6 +304,7 @@ func newCollectCmd() *cobra.Command {
 		asJSON   bool
 		printDir bool
 	)
+
 	cmd := &cobra.Command{
 		Use:   "collect",
 		Short: "Run the posture check set once and print results (no server push)",
@@ -329,12 +340,14 @@ func newCollectCmd() *cobra.Command {
 
 func newUpdateCmd() *cobra.Command {
 	var checkOnly bool
+
 	cmd := &cobra.Command{
 		Use:   "update",
 		Short: "Check GitHub for a newer agent release and install it in place",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			dir := resolveDir(cmd)
 			logger := newAgentLogger()
+
 			updater := newUpdater(logger, dir)
 			if updater == nil {
 				return errors.New("cannot resolve current executable path")
@@ -349,10 +362,12 @@ func newUpdateCmd() *cobra.Command {
 					fmt.Printf("probo-agent is up to date (version %s).\n", version)
 					return nil
 				}
+
 				return fmt.Errorf("cannot check for updates: %w", err)
 			}
 
 			fmt.Printf("Update available: %s -> %s\n", version, rel.Version)
+
 			if checkOnly {
 				return nil
 			}
@@ -362,6 +377,7 @@ func newUpdateCmd() *cobra.Command {
 			}
 
 			fmt.Printf("Installed probo-agent %s. Restart the service to use it.\n", rel.Version)
+
 			return nil
 		},
 	}

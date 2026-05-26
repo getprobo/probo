@@ -50,6 +50,7 @@ func CollectHostInfo() HostInfo {
 	}
 
 	info.OSVersion = collectOSVersion()
+
 	info.HardwareUUID = collectHardwareUUID()
 	if sn := collectSerialNumber(); sn != "" {
 		info.SerialNumber = &sn
@@ -66,6 +67,7 @@ func hashFallbackUUID() string {
 	h.Write([]byte(hostname))
 	h.Write([]byte{0})
 	h.Write([]byte(mac))
+
 	return hex.EncodeToString(h.Sum(nil))
 }
 
@@ -94,5 +96,6 @@ func firstStableMAC() string {
 func runQuiet(ctx context.Context, name string, args ...string) (string, error) {
 	cmd := exec.CommandContext(ctx, name, args...)
 	out, err := cmd.Output()
+
 	return strings.TrimSpace(string(out)), err
 }

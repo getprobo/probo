@@ -106,12 +106,15 @@ func NewCosignVerifier(cfg CosignVerifierConfig) (*CosignVerifier, error) {
 	if cfg.Repo == "" {
 		return nil, fmt.Errorf("update: cosign verifier requires Repo")
 	}
+
 	if cfg.WorkflowPath == "" {
 		cfg.WorkflowPath = expectedWorkflowPath
 	}
+
 	if cfg.TagPrefix == "" {
 		cfg.TagPrefix = DefaultTagPrefix
 	}
+
 	if cfg.CacheDir == "" {
 		return nil, fmt.Errorf("update: cosign verifier requires CacheDir")
 	}
@@ -169,6 +172,7 @@ func (v *CosignVerifier) Verify(_ context.Context, artifactPath, bundlePath stri
 	if err != nil {
 		return fmt.Errorf("cannot open artifact for verification: %w", err)
 	}
+
 	defer func() { _ = artifact.Close() }()
 
 	policy := verify.NewPolicy(

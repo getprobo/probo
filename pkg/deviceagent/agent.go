@@ -72,6 +72,7 @@ func New(dir, version string, logger *log.Logger) *Agent {
 	if logger == nil {
 		logger = log.NewLogger(log.WithName("device-agent"))
 	}
+
 	return &Agent{
 		Dir:       dir,
 		Version:   version,
@@ -95,6 +96,7 @@ func (a *Agent) EnrollNewDevice(
 	if serverURL == "" {
 		return nil, errors.New("server URL is required")
 	}
+
 	if enrollmentToken == "" {
 		return nil, errors.New("enrollment token is required")
 	}
@@ -127,15 +129,18 @@ func (a *Agent) EnrollNewDevice(
 	if err := SaveConfig(a.Dir, cfg); err != nil {
 		return nil, fmt.Errorf("cannot save config: %w", err)
 	}
+
 	if err := SaveAPIKey(a.Dir, resp.APIKey); err != nil {
 		return nil, fmt.Errorf("cannot save api key: %w", err)
 	}
+
 	if err := clearPendingPostureBatches(a.Dir); err != nil {
 		a.Logger.Warn("cannot clear pending posture queue after enrollment", log.Error(err))
 	}
 
 	a.cfg = cfg
 	a.client = NewClient(serverURL, resp.APIKey, a.UserAgent)
+
 	return resp, nil
 }
 
@@ -145,15 +150,19 @@ func (a *Agent) LoadLocalState() error {
 	if err != nil {
 		return err
 	}
+
 	key, err := LoadAPIKey(a.Dir)
 	if err != nil {
 		return err
 	}
+
 	if cfg.ServerURL == "" {
 		return errors.New("config has no server URL")
 	}
+
 	a.cfg = cfg
 	a.client = NewClient(cfg.ServerURL, key, a.UserAgent)
+
 	return nil
 }
 
@@ -185,6 +194,7 @@ func (a *Agent) Run(ctx context.Context) error {
 
 	heartbeatTicker := time.NewTicker(a.cfg.HeartbeatInterval)
 	defer heartbeatTicker.Stop()
+
 	postureTicker := time.NewTicker(a.cfg.PostureInterval)
 	defer postureTicker.Stop()
 
@@ -203,6 +213,7 @@ func (a *Agent) Run(ctx context.Context) error {
 			if heartbeatIntervalChanged {
 				heartbeatTicker.Reset(a.cfg.HeartbeatInterval)
 			}
+
 			if postureIntervalChanged {
 				postureTicker.Reset(a.cfg.PostureInterval)
 			}
@@ -223,9 +234,11 @@ func (a *Agent) autoUpdateEnabled() bool {
 	if a.cfg == nil {
 		return false
 	}
+
 	if a.cfg.UpdatesDisabled {
 		return false
 	}
+
 	return a.Updater != nil
 }
 
@@ -238,6 +251,7 @@ func (a *Agent) newUpdateTicker() (*time.Ticker, <-chan time.Time) {
 	}
 
 	t := time.NewTicker(a.cfg.UpdateInterval)
+
 	return t, t.C
 }
 
@@ -258,7 +272,9 @@ func (a *Agent) tryAutoUpdate(parent context.Context) bool {
 			a.Logger.DebugCtx(ctx, "no agent update available")
 			return false
 		}
+
 		a.Logger.WarnCtx(ctx, "agent update check failed", log.Error(err))
+
 		return false
 	}
 
@@ -281,23 +297,30 @@ func (a *Agent) tryAutoUpdate(parent context.Context) bool {
 func (a *Agent) CollectOnce(ctx context.Context) []checks.Result {
 	now := time.Now()
 	results := make([]checks.Result, 0)
+
 	for _, c := range checks.All() {
 		select {
 		case <-ctx.Done():
 			return results
 		default:
 		}
+
 		checkCtx, cancel := context.WithTimeout(ctx, perCheckTimeout)
 		r := c.Run(checkCtx)
+
 		cancel()
+
 		if r.ObservedAt.IsZero() {
 			r.ObservedAt = now
 		}
+
 		if r.CheckKey == "" {
 			r.CheckKey = c.Key()
 		}
+
 		results = append(results, r)
 	}
+
 	return results
 }
 
@@ -308,6 +331,7 @@ func (a *Agent) Unenroll(ctx context.Context) error {
 			return err
 		}
 	}
+
 	if err := a.client.Unenroll(ctx); err != nil {
 		a.Logger.WarnCtx(
 			ctx,
@@ -315,12 +339,15 @@ func (a *Agent) Unenroll(ctx context.Context) error {
 			log.Error(err),
 		)
 	}
+
 	if err := DeleteAPIKey(a.Dir); err != nil {
 		return err
 	}
+
 	if err := clearPendingPostureBatches(a.Dir); err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -333,6 +360,7 @@ func (a *Agent) doHeartbeat(ctx context.Context) (bool, bool) {
 	oldPostureInterval := a.cfg.PostureInterval
 
 	host := a.currentHostInfo(time.Now())
+
 	resp, err := a.client.Heartbeat(
 		ctx,
 		HeartbeatRequest{
@@ -343,9 +371,11 @@ func (a *Agent) doHeartbeat(ctx context.Context) (bool, bool) {
 	)
 	if err != nil {
 		a.Logger.ErrorCtx(ctx, "heartbeat failed", log.Error(err))
+
 		if IsUnauthorized(err) {
 			a.handleUnauthorized()
 		}
+
 		return false, false
 	}
 
@@ -355,15 +385,18 @@ func (a *Agent) doHeartbeat(ctx context.Context) (bool, bool) {
 			a.cfg.HeartbeatInterval = next
 		}
 	}
+
 	if resp.PostureSeconds > 0 {
 		next := normalizePostureInterval(time.Duration(resp.PostureSeconds) * time.Second)
 		if next != a.cfg.PostureInterval {
 			a.cfg.PostureInterval = next
 		}
 	}
+
 	a.flushQueuedPostures(ctx)
 
 	heartbeatChanged := a.cfg.HeartbeatInterval != oldHeartbeatInterval
+
 	postureChanged := a.cfg.PostureInterval != oldPostureInterval
 	if heartbeatChanged || postureChanged {
 		if err := SaveConfig(a.Dir, a.cfg); err != nil {
@@ -384,16 +417,19 @@ func (a *Agent) doPostures(ctx context.Context) {
 	}
 
 	start := time.Now()
+
 	results := a.CollectOnce(ctx)
 	if len(results) == 0 {
 		return
 	}
+
 	var (
 		passCount          int
 		failCount          int
 		unknownCount       int
 		notApplicableCount int
 	)
+
 	for _, r := range results {
 		switch r.Status {
 		case checks.StatusPass:
@@ -406,6 +442,7 @@ func (a *Agent) doPostures(ctx context.Context) {
 			notApplicableCount++
 		}
 	}
+
 	a.Logger.InfoCtx(
 		ctx,
 		"posture checks completed",
@@ -430,21 +467,27 @@ func (a *Agent) doPostures(ctx context.Context) {
 			},
 		)
 	}
+
 	a.flushQueuedPostures(ctx)
+
 	if a.revoked {
 		return
 	}
+
 	if err := a.client.PushPostures(ctx, payload); err != nil {
 		a.Logger.ErrorCtx(ctx, "posture push failed", log.Error(err))
+
 		if IsUnauthorized(err) {
 			a.handleUnauthorized()
 			return
 		}
+
 		dropped, enqueueErr := enqueuePendingPostureBatch(a.Dir, payload, a.currentTime())
 		if enqueueErr != nil {
 			a.Logger.ErrorCtx(ctx, "cannot queue posture batch after failed push", log.Error(enqueueErr))
 			return
 		}
+
 		a.Logger.WarnCtx(
 			ctx,
 			"queued posture batch for retry",
@@ -458,6 +501,7 @@ func (a *Agent) flushQueuedPostures(ctx context.Context) {
 	if a.revoked || a.client == nil {
 		return
 	}
+
 	now := a.currentTime()
 	if !a.pendingFlushRetryAt.IsZero() && now.Before(a.pendingFlushRetryAt) {
 		return
@@ -468,6 +512,7 @@ func (a *Agent) flushQueuedPostures(ctx context.Context) {
 		a.Logger.WarnCtx(ctx, "cannot load pending posture batches", log.Error(err))
 		return
 	}
+
 	if len(batches) == 0 {
 		a.resetPendingFlushRetry()
 		return
@@ -479,9 +524,11 @@ func (a *Agent) flushQueuedPostures(ctx context.Context) {
 				a.handleUnauthorized()
 				return
 			}
+
 			if saveErr := savePendingPostureBatches(a.Dir, batches[i:]); saveErr != nil {
 				a.Logger.ErrorCtx(ctx, "cannot persist pending posture batches", log.Error(saveErr))
 			}
+
 			retryIn := a.schedulePendingFlushRetry(now)
 			a.Logger.WarnCtx(
 				ctx,
@@ -490,6 +537,7 @@ func (a *Agent) flushQueuedPostures(ctx context.Context) {
 				log.Int("remaining_batches", len(batches)-i),
 				log.Duration("retry_in", retryIn),
 			)
+
 			return
 		}
 	}
@@ -498,6 +546,7 @@ func (a *Agent) flushQueuedPostures(ctx context.Context) {
 		a.Logger.ErrorCtx(ctx, "cannot clear pending posture batches", log.Error(err))
 		return
 	}
+
 	a.resetPendingFlushRetry()
 	a.Logger.InfoCtx(ctx, "flushed pending posture batches", log.Int("batches", len(batches)))
 }
@@ -508,9 +557,11 @@ func (a *Agent) currentHostInfo(now time.Time) HostInfo {
 		if collector == nil {
 			collector = CollectHostInfo
 		}
+
 		a.hostInfo = collector()
 		a.hostInfoCollectedAt = now
 	}
+
 	return a.hostInfo
 }
 
@@ -518,6 +569,7 @@ func (a *Agent) currentTime() time.Time {
 	if a.now != nil {
 		return a.now()
 	}
+
 	return time.Now()
 }
 
@@ -525,9 +577,11 @@ func (a *Agent) randomInt63n(n int64) int64 {
 	if n <= 1 {
 		return 0
 	}
+
 	if a.randInt63n != nil {
 		return a.randInt63n(n)
 	}
+
 	return rand.Int63n(n)
 }
 
@@ -541,9 +595,11 @@ func (a *Agent) schedulePendingFlushRetry(now time.Time) time.Duration {
 			nextBase = pendingFlushBackoffMax
 		}
 	}
+
 	a.pendingFlushBackoff = nextBase
 
 	jitterRange := nextBase / 5
+
 	jitter := time.Duration(0)
 	if jitterRange > 0 {
 		jitter = time.Duration(a.randomInt63n(int64(jitterRange)*2+1)) - jitterRange
@@ -551,6 +607,7 @@ func (a *Agent) schedulePendingFlushRetry(now time.Time) time.Duration {
 
 	retryIn := max(nextBase+jitter, time.Second)
 	a.pendingFlushRetryAt = now.Add(retryIn)
+
 	return retryIn
 }
 
@@ -564,17 +621,21 @@ func (a *Agent) handleUnauthorized() {
 	if a.revoked {
 		return
 	}
+
 	a.revoked = true
 	if a.client != nil {
 		a.client.APIKey = ""
 	}
 
 	a.Logger.Warn("agent API returned 401, wiping local key and requiring re-enrollment")
+
 	if err := DeleteAPIKey(a.Dir); err != nil {
 		a.Logger.Error("cannot delete local key after 401", log.Error(err))
 	}
+
 	if err := clearPendingPostureBatches(a.Dir); err != nil {
 		a.Logger.Error("cannot delete pending posture queue after 401", log.Error(err))
 	}
+
 	a.resetPendingFlushRetry()
 }

@@ -61,6 +61,7 @@ func loadPendingPostureBatches(dir string) ([]pendingPostureBatch, error) {
 		if len(batch.Results) == 0 {
 			continue
 		}
+
 		filtered = append(filtered, batch)
 	}
 
@@ -77,6 +78,7 @@ func savePendingPostureBatches(dir string, batches []pendingPostureBatch) error 
 		if err := os.Remove(path); err != nil && !errors.Is(err, os.ErrNotExist) {
 			return fmt.Errorf("cannot delete pending postures: %w", err)
 		}
+
 		return nil
 	}
 

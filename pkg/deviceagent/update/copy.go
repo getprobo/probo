@@ -26,6 +26,7 @@ func copyFile(src, dst string) error {
 	if err != nil {
 		return fmt.Errorf("cannot open %s: %w", src, err)
 	}
+
 	defer func() { _ = in.Close() }()
 
 	if err := os.MkdirAll(filepath.Dir(dst), 0o755); err != nil {
@@ -40,11 +41,14 @@ func copyFile(src, dst string) error {
 	if _, err := io.Copy(out, in); err != nil {
 		_ = out.Close()
 		_ = os.Remove(dst)
+
 		return fmt.Errorf("cannot copy to %s: %w", dst, err)
 	}
+
 	if err := out.Sync(); err != nil {
 		_ = out.Close()
 		_ = os.Remove(dst)
+
 		return fmt.Errorf("cannot fsync %s: %w", dst, err)
 	}
 

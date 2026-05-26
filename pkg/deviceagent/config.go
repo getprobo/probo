@@ -64,6 +64,7 @@ func ConfigPath(dir string) string {
 	if dir == "" {
 		dir = DefaultConfigDir()
 	}
+
 	return filepath.Join(dir, ConfigFileName)
 }
 
@@ -73,11 +74,14 @@ func LoadConfig(dir string) (*Config, error) {
 	if err != nil {
 		return nil, fmt.Errorf("cannot read config: %w", err)
 	}
+
 	cfg := &Config{}
 	if err := json.Unmarshal(data, cfg); err != nil {
 		return nil, fmt.Errorf("cannot decode config: %w", err)
 	}
+
 	cfg.applyDefaults()
+
 	return cfg, nil
 }
 
@@ -96,12 +100,14 @@ func SaveConfig(dir string, cfg *Config) error {
 	}
 
 	cfg.applyDefaults()
+
 	data, err := json.MarshalIndent(cfg, "", "  ")
 	if err != nil {
 		return fmt.Errorf("cannot encode config: %w", err)
 	}
 
 	path := ConfigPath(dir)
+
 	tmp := path + ".tmp"
 	if err := os.WriteFile(tmp, data, 0o600); err != nil {
 		return fmt.Errorf("cannot write config: %w", err)

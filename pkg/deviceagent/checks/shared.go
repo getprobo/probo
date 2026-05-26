@@ -44,9 +44,11 @@ func (c funcCheck) Run(ctx context.Context) Result {
 	if r.CheckKey == "" {
 		r.CheckKey = c.key
 	}
+
 	if r.ObservedAt.IsZero() {
 		r.ObservedAt = time.Now().UTC()
 	}
+
 	return r
 }
 
@@ -71,6 +73,7 @@ func truncate(s string, n int) string {
 	if len(s) <= n {
 		return s
 	}
+
 	return s[:n] + "…"
 }
 

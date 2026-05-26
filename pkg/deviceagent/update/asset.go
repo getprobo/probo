@@ -54,6 +54,7 @@ func LayoutFor(goos, goarch string) (AssetLayout, error) {
 	binary := "probo-agent"
 	isZip := false
 	ext := "tar.gz"
+
 	if goos == "windows" {
 		binary += ".exe"
 		isZip = true

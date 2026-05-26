@@ -29,6 +29,7 @@ var (
 func Register(key string, run func(context.Context) Result) {
 	registryMu.Lock()
 	defer registryMu.Unlock()
+
 	registry = append(
 		registry,
 		funcCheck{
@@ -51,5 +52,6 @@ func All() []Check {
 			return out[i].Key() < out[j].Key()
 		},
 	)
+
 	return out
 }

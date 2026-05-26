@@ -59,12 +59,14 @@ func extractTarGzFile(archivePath, wantPath, dest string) error {
 	if err != nil {
 		return fmt.Errorf("cannot open archive: %w", err)
 	}
+
 	defer func() { _ = f.Close() }()
 
 	gz, err := gzip.NewReader(f)
 	if err != nil {
 		return fmt.Errorf("cannot read gzip: %w", err)
 	}
+
 	defer func() { _ = gz.Close() }()
 
 	tr := tar.NewReader(gz)
@@ -82,7 +84,7 @@ func extractTarGzFile(archivePath, wantPath, dest string) error {
 			continue
 		}
 
-		if hdr.Typeflag != tar.TypeReg && hdr.Typeflag != tar.TypeRegA {
+		if hdr.Typeflag != tar.TypeReg {
 			return fmt.Errorf("update: %s is not a regular file", wantPath)
 		}
 
@@ -97,6 +99,7 @@ func extractZipFile(archivePath, wantPath, dest string) error {
 	if err != nil {
 		return fmt.Errorf("cannot open zip: %w", err)
 	}
+
 	defer func() { _ = r.Close() }()
 
 	for _, f := range r.File {

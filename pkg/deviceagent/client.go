@@ -173,6 +173,7 @@ func IsUnauthorized(err error) bool {
 	if !errors.As(err, &herr) {
 		return false
 	}
+
 	return herr.StatusCode == http.StatusUnauthorized
 }
 
@@ -186,11 +187,13 @@ func (c *Client) do(
 	url := c.ServerURL + path
 
 	var body io.Reader
+
 	if in != nil {
 		buf, err := json.Marshal(in)
 		if err != nil {
 			return fmt.Errorf("cannot marshal request: %w", err)
 		}
+
 		body = bytes.NewReader(buf)
 	}
 
@@ -198,6 +201,7 @@ func (c *Client) do(
 	if err != nil {
 		return fmt.Errorf("cannot build request: %w", err)
 	}
+
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", c.UserAgent)
@@ -214,6 +218,7 @@ func (c *Client) do(
 	if err != nil {
 		return fmt.Errorf("cannot perform request: %w", err)
 	}
+
 	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode >= 400 {

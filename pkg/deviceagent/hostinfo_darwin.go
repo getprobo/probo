@@ -34,6 +34,7 @@ func collectOSVersion() string {
 	}
 
 	out, _ = runQuiet(ctx, "uname", "-sr")
+
 	return out
 }
 
@@ -54,6 +55,7 @@ func collectSerialNumber() string {
 	defer cancel()
 
 	out, _ := runQuiet(ctx, "/usr/sbin/ioreg", "-d2", "-c", "IOPlatformExpertDevice")
+
 	return extractValue(out, "IOPlatformSerialNumber")
 }
 
@@ -65,6 +67,7 @@ func extractValue(s, key string) string {
 	}
 
 	rest := s[idx:]
+
 	eq := strings.Index(rest, "=")
 	if eq < 0 {
 		return ""
@@ -73,8 +76,10 @@ func extractValue(s, key string) string {
 	rest = strings.TrimSpace(rest[eq+1:])
 	rest = strings.TrimPrefix(rest, "<")
 	rest = strings.TrimPrefix(rest, ">")
+
 	if strings.HasPrefix(rest, "\"") {
 		rest = rest[1:]
+
 		before, _, ok := strings.Cut(rest, "\"")
 		if !ok {
 			return ""
