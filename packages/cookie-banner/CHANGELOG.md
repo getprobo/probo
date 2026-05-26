@@ -4,6 +4,26 @@ All notable changes to the `@probo/cookie-banner` SDK will be documented in this
 
 ## Unreleased
 
+## [0.6.0] - 2026-05-26
+
+### Added
+
+- Eagerly bootstrap GCM (deny all consent types before config fetch) to close the gap where gtag could track during async config loading
+- Track source (`script`/`pre-existing`) on detected storage trackers (localStorage, sessionStorage, indexedDB, cacheStorage)
+- Mark page-world extension writes with a new `EXTENSION` source
+
+### Changed
+
+- Overhaul extension-activity detection: add synchronous DOM hooks (IDL setters, `setAttribute`, HTML-parsing entry points, fetch/XHR/sendBeacon) and drop ineffective `isExtensionCaller()` wraps
+
+### Removed
+
+- Remove the PostHog integration (use `data-cookie-consent` script blocking instead)
+
+### Fixed
+
+- Disconnect the previous `MutationObserver` in `load()`'s error path so failing loads no longer leak observers
+
 ## [0.5.0] - 2026-05-20
 
 ### Added
