@@ -243,8 +243,9 @@ jobs:
       - uses: "./.github/actions/setup"
         with:
           node: "false"
-      - uses: golangci/golangci-lint-action@1e7e51e771db61008b38414a730f564565cf7c20 # v9.2.0
+      - uses: golangci/golangci-lint-action@db582008a42febd596419635a5abc9d9815daa9c # v9.2.1
         with:
+          version: v2.12.2
           install-only: true
       - uses: reviewdog/action-setup@d8a7baabd7f3e8544ee4dbde3ee41d0011c3a93f # v1.5.0
       - name: "Create placeholder dist files"
