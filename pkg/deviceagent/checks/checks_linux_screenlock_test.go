@@ -118,6 +118,7 @@ func TestParseI3IdleLock(t *testing.T) {
 
 			idleMins, _, mechanism, ok := parseI3IdleLock(tt.config)
 			require.Equal(t, tt.wantOK, ok)
+
 			if !tt.wantOK {
 				return
 			}

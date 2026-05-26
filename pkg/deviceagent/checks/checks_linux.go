@@ -93,6 +93,7 @@ func linuxScreenLock(ctx context.Context) Result {
 		}
 
 		anyTool = true
+
 		switch result.Status {
 		case StatusPass, StatusFail:
 			return result
@@ -173,6 +174,7 @@ func linuxScreenLockGsettings(ctx context.Context, user string) (Result, bool) {
 		}
 
 		val := strings.TrimSpace(out.Stdout)
+
 		ev := map[string]any{
 			"backend":      schema.backend,
 			"schema":       schema.schema,
@@ -305,6 +307,7 @@ func linuxScreenLockI3(ctx context.Context, user string) (Result, bool) {
 	}
 
 	idleMinutes, locker, mechanism, ok := parseI3IdleLock(body)
+
 	ev := map[string]any{
 		"backend": "i3",
 		"config":  configPath,
@@ -370,11 +373,13 @@ func linuxReadI3Config(ctx context.Context, user, path string, depth int) string
 	}
 
 	body := string(data)
+
 	var merged strings.Builder
 
 	merged.WriteString(body)
 
 	home := linuxUserHome(ctx, user)
+
 	for line := range strings.SplitSeq(body, "\n") {
 		trimmed := strings.TrimSpace(line)
 		if trimmed == "" || strings.HasPrefix(trimmed, "#") {
@@ -388,6 +393,7 @@ func linuxReadI3Config(ctx context.Context, user, path string, depth int) string
 
 		inc := strings.TrimSpace(trimmed[len("include "):])
 		inc = strings.Trim(inc, `"`)
+
 		inc = linuxExpandHome(inc, home)
 		if nested := linuxReadI3Config(ctx, user, inc, depth+1); nested != "" {
 			merged.WriteString("\n")
@@ -468,12 +474,12 @@ func parseXssLockIdleLock(line string) (locker string, ok bool) {
 		return "", false
 	}
 
-	idx := strings.Index(line, "--")
-	if idx < 0 {
+	_, after, ok0 := strings.Cut(line, "--")
+	if !ok0 {
 		return "", false
 	}
 
-	locker = strings.TrimSpace(line[idx+2:])
+	locker = strings.TrimSpace(after)
 	locker = strings.Trim(locker, `"`)
 	if locker == "" || !linuxLooksLikeLockCommand(locker) {
 		return "", false
@@ -508,12 +514,12 @@ func parseXautolockTime(value string) (minutes int, ok bool) {
 }
 
 func linuxParseFlagValue(line, flag string) (string, bool) {
-	idx := strings.Index(line, flag)
-	if idx < 0 {
+	_, after, ok := strings.Cut(line, flag)
+	if !ok {
 		return "", false
 	}
 
-	rest := strings.TrimSpace(line[idx+len(flag):])
+	rest := strings.TrimSpace(after)
 	if rest == "" {
 		return "", false
 	}
@@ -566,6 +572,7 @@ func linuxOrderGsettingsSchemas(desktop string) []struct {
 	seen := make(map[string]struct{}, len(linuxGsettingsLockSchemas))
 
 	preferred := ""
+
 	switch {
 	case strings.Contains(desktop, "cinnamon"):
 		preferred = "cinnamon"
