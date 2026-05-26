@@ -86,9 +86,7 @@ func TestHTTPSUrl(t *testing.T) {
 		err := HTTPSUrl()(&str)
 		if err == nil {
 			t.Fatal("expected validation error for http")
-		}
-
-		if err.Message != "URL must use https scheme" {
+		} else if err.Message != "URL must use https scheme" {
 			t.Errorf("unexpected error message: %s", err.Message)
 		}
 	})
@@ -317,9 +315,7 @@ func TestDomain(t *testing.T) {
 		err := Domain()(&str)
 		if err == nil {
 			t.Fatal("expected validation error for domain too long")
-		}
-
-		if err.Message != "domain name too long (max 253 characters)" {
+		} else if err.Message != "domain name too long (max 253 characters)" {
 			t.Errorf("unexpected error message: %s", err.Message)
 		}
 	})
@@ -373,13 +369,9 @@ func TestGID(t *testing.T) {
 		err := GID(200)(validGID)
 		if err == nil {
 			t.Fatal("expected validation error for wrong entity type")
-		}
-
-		if err.Code != ErrorCodeInvalidGID {
+		} else if err.Code != ErrorCodeInvalidGID {
 			t.Errorf("expected error code %s, got %s", ErrorCodeInvalidGID, err.Code)
-		}
-
-		if err.Message != "GID has invalid entity type" {
+		} else if err.Message != "GID has invalid entity type" {
 			t.Errorf("unexpected error message: %s", err.Message)
 		}
 	})
@@ -425,9 +417,7 @@ func TestGID(t *testing.T) {
 		err := GID()(123)
 		if err == nil {
 			t.Fatal("expected validation error for non-GID type")
-		}
-
-		if err.Message != "value must be a GID" {
+		} else if err.Message != "value must be a GID" {
 			t.Errorf("unexpected error message: %s", err.Message)
 		}
 	})
@@ -436,9 +426,7 @@ func TestGID(t *testing.T) {
 		err := GID()("some-string")
 		if err == nil {
 			t.Fatal("expected validation error for string type")
-		}
-
-		if err.Message != "value must be a GID" {
+		} else if err.Message != "value must be a GID" {
 			t.Errorf("unexpected error message: %s", err.Message)
 		}
 	})
