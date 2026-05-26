@@ -59,6 +59,10 @@ func Install(cfg Config) error {
 		return errors.New("state directory is required")
 	}
 
+	if err := validateServicePaths(cfg); err != nil {
+		return err
+	}
+
 	rcTmpl, err := template.New("rc").Parse(rcScriptTmpl)
 	if err != nil {
 		return fmt.Errorf("cannot parse rc.d template: %w", err)
