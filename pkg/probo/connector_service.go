@@ -54,9 +54,9 @@ type (
 		Protocol       coredata.ConnectorProtocol
 		Connection     connector.Connection
 		// RawSettings is the provider-specific settings payload as
-		// already-marshalled JSON. The resolver builds this via the
-		// per-provider MarshalSettings closure from the typed gqlgen
-		// input; the service layer never sees the typed structs.
+		// already-marshalled JSON. Callers build it from the typed
+		// gqlgen input (or OAuth callback metadata); the service layer
+		// never sees the typed structs.
 		RawSettings json.RawMessage
 	}
 

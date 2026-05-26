@@ -16,7 +16,6 @@ package provider
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -33,13 +32,6 @@ func supabaseRegistration() *Registration {
 		SupportsAPIKey: true,
 		ExtraSettings: []ExtraSetting{
 			{Key: "organizationSlug", Label: "Organization Slug", Required: true},
-		},
-		MarshalSettings: func(in *SettingsInput) (json.RawMessage, error) {
-			if in == nil || in.SupabaseOrganizationSlug == nil || *in.SupabaseOrganizationSlug == "" {
-				return nil, fmt.Errorf("cannot create supabase connector: supabaseOrganizationSlug is required")
-			}
-
-			return json.Marshal(&coredata.SupabaseConnectorSettings{OrganizationSlug: *in.SupabaseOrganizationSlug})
 		},
 		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger) (drivers.Driver, error) {
 			s, err := coredata.ConnectorSettings[coredata.SupabaseConnectorSettings](conn)

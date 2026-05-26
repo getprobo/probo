@@ -16,7 +16,6 @@ package provider
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -33,13 +32,6 @@ func tallyRegistration() *Registration {
 		SupportsAPIKey: true,
 		ExtraSettings: []ExtraSetting{
 			{Key: "organizationId", Label: "Organization ID", Required: true},
-		},
-		MarshalSettings: func(in *SettingsInput) (json.RawMessage, error) {
-			if in == nil || in.TallyOrganizationID == nil || *in.TallyOrganizationID == "" {
-				return nil, fmt.Errorf("cannot create tally connector: tallyOrganizationId is required")
-			}
-
-			return json.Marshal(&coredata.TallyConnectorSettings{OrganizationID: *in.TallyOrganizationID})
 		},
 		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger) (drivers.Driver, error) {
 			s, err := coredata.ConnectorSettings[coredata.TallyConnectorSettings](conn)

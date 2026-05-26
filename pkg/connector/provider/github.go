@@ -16,7 +16,6 @@ package provider
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -36,13 +35,6 @@ func githubRegistration() *Registration {
 		SupportsAPIKey: true,
 		ExtraSettings: []ExtraSetting{
 			{Key: "organization", Label: "Organization", Required: true},
-		},
-		MarshalSettings: func(in *SettingsInput) (json.RawMessage, error) {
-			if in == nil || in.GitHubOrganization == nil || *in.GitHubOrganization == "" {
-				return nil, fmt.Errorf("cannot create github connector: githubOrganization is required")
-			}
-
-			return json.Marshal(&coredata.GitHubConnectorSettings{Organization: *in.GitHubOrganization})
 		},
 		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger) (drivers.Driver, error) {
 			s, err := coredata.ConnectorSettings[coredata.GitHubConnectorSettings](conn)

@@ -18,6 +18,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"net/url"
 
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/accessreview/drivers"
@@ -25,17 +26,25 @@ import (
 )
 
 func vercelRegistration() *Registration {
-	// Vercel uses a templated AuthURL: the operator supplies an
-	// `integration-slug` config field which is resolved into the
-	// "{integration_slug}" placeholder by ApplyOAuth2Defaults.
-	// Vercel does not use OAuth scopes — capabilities are pinned on
-	// the integration registration in the Vercel dashboard.
+	// Vercel's authorization URL embeds the operator's integration slug
+	// as a path segment; the operator supplies it via the
+	// `integration-slug` config field. BuildAuthURL constructs the URL
+	// with net/url so the slug is escaped. Vercel does not use OAuth
+	// scopes — capabilities are pinned on the integration registration
+	// in the Vercel dashboard.
 	return &Registration{
 		Provider:    coredata.ConnectorProviderVercel,
 		DisplayName: "Vercel",
-		AuthURL:     "https://vercel.com/integrations/{integration_slug}/new",
 		TokenURL:    "https://api.vercel.com/v2/oauth/access_token",
 		ProbeURL:    "https://api.vercel.com/v2/user",
+		BuildAuthURL: func(slug string) (string, error) {
+			u, err := url.JoinPath("https://vercel.com/integrations", url.PathEscape(slug), "new")
+			if err != nil {
+				return "", fmt.Errorf("cannot build vercel auth URL: %w", err)
+			}
+
+			return u, nil
+		},
 		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger) (drivers.Driver, error) {
 			s, err := coredata.ConnectorSettings[coredata.VercelConnectorSettings](conn)
 			if err != nil {

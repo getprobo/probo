@@ -288,7 +288,9 @@ func (impl *Implm) Run(
 
 	for _, connectorCfg := range impl.cfg.Connectors {
 		if oauth2c, ok := connectorCfg.Config.(*connector.OAuth2Connector); ok {
-			providerRegistry.ApplyOAuth2Defaults(connectorCfg.Provider, redirectURI, oauth2c)
+			if err := providerRegistry.ApplyOAuth2Defaults(connectorCfg.Provider, redirectURI, oauth2c); err != nil {
+				return fmt.Errorf("cannot apply oauth2 defaults: %w", err)
+			}
 		}
 
 		if err := defaultConnectorRegistry.Register(connectorCfg.Provider, connectorCfg.Config); err != nil {

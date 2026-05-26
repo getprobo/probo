@@ -57,12 +57,13 @@ type (
 		// to the authorize URL; CompleteWithState replays the verifier
 		// on the token exchange.
 		RequiresPKCE bool
-		// AuthURLParams are operator-supplied placeholders substituted
-		// into the static provider AuthURL by
-		// (*provider.Registry).ApplyOAuth2Defaults (for example
-		// Vercel's "{integration_slug}"). Empty for the vast majority
-		// of providers.
-		AuthURLParams map[string]string
+		// IntegrationSlug is an operator-supplied identifier used by
+		// providers whose authorization URL embeds it as a path segment
+		// (Vercel-style integrations). It is consumed by the provider's
+		// Registration.BuildAuthURL in
+		// (*provider.Registry).ApplyOAuth2Defaults. Empty for the vast
+		// majority of providers.
+		IntegrationSlug string
 
 		// HTTPClient is used for the OAuth2 token-exchange request
 		// issued from CompleteWithState. It must be set by callers;

@@ -35,11 +35,10 @@ type ConnectorConfig struct {
 type ConnectorConfigOAuth2 struct {
 	ClientID     string `json:"client-id"`
 	ClientSecret string `json:"client-secret"`
-	// IntegrationSlug is an operator-supplied value substituted into
-	// providers whose static AuthURL contains a "{integration_slug}"
-	// placeholder (Vercel-style integrations). It is propagated onto
-	// OAuth2Connector.AuthURLParams and resolved by
-	// (*provider.Registry).ApplyOAuth2Defaults.
+	// IntegrationSlug is an operator-supplied value used by providers
+	// whose authorization URL embeds it as a path segment (Vercel-style
+	// integrations). It is propagated onto OAuth2Connector.IntegrationSlug
+	// and resolved by (*provider.Registry).ApplyOAuth2Defaults.
 	IntegrationSlug string `json:"integration-slug,omitempty"`
 }
 
@@ -97,11 +96,7 @@ func (c *ConnectorConfig) UnmarshalJSON(data []byte) error {
 			ClientSecret: config.ClientSecret,
 		}
 
-		if config.IntegrationSlug != "" {
-			oauth2Connector.AuthURLParams = map[string]string{
-				"integration_slug": config.IntegrationSlug,
-			}
-		}
+		oauth2Connector.IntegrationSlug = config.IntegrationSlug
 
 		c.Config = &oauth2Connector
 	default:

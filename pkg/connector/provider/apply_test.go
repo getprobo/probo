@@ -18,39 +18,51 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/connector/provider"
 )
 
-// TestApplyOAuth2Defaults_AuthURLTemplating verifies that operator-supplied
-// AuthURLParams (for example Vercel's "{integration_slug}") are substituted
-// into the static provider AuthURL when the connector is initialized.
-// Providers without placeholders are unaffected.
-func TestApplyOAuth2Defaults_AuthURLTemplating(t *testing.T) {
+// TestApplyOAuth2Defaults_AuthURLFromSlug verifies that providers whose
+// authorization URL embeds an operator-supplied slug (Vercel) build it
+// from c.IntegrationSlug via Registration.BuildAuthURL, with the slug
+// percent-escaped. Providers without a BuildAuthURL are unaffected.
+func TestApplyOAuth2Defaults_AuthURLFromSlug(t *testing.T) {
 	t.Parallel()
 
-	t.Run("placeholder is substituted when AuthURLParams is supplied", func(t *testing.T) {
+	t.Run("auth URL is built when an integration slug is supplied", func(t *testing.T) {
 		t.Parallel()
 
 		r := provider.NewBuiltinRegistry()
 		c := &connector.OAuth2Connector{
-			ClientID:     "id",
-			ClientSecret: "secret",
-			AuthURLParams: map[string]string{
-				"integration_slug": "acme",
-			},
+			ClientID:        "id",
+			ClientSecret:    "secret",
+			IntegrationSlug: "acme",
 		}
 
-		// VERCEL uses a templated AuthURL with the
-		// "{integration_slug}" placeholder.
-		r.ApplyOAuth2Defaults("VERCEL", "https://example.com/cb", c)
+		require.NoError(t, r.ApplyOAuth2Defaults("VERCEL", "https://example.com/cb", c))
 
 		assert.Equal(t, "https://vercel.com/integrations/acme/new", c.AuthURL)
 		assert.Equal(t, "https://api.vercel.com/v2/oauth/access_token", c.TokenURL)
 	})
 
-	t.Run("placeholder remains literal when AuthURLParams is empty", func(t *testing.T) {
+	t.Run("slug with reserved characters is percent-escaped", func(t *testing.T) {
+		t.Parallel()
+
+		r := provider.NewBuiltinRegistry()
+		c := &connector.OAuth2Connector{
+			ClientID:        "id",
+			ClientSecret:    "secret",
+			IntegrationSlug: "a/b c",
+		}
+
+		require.NoError(t, r.ApplyOAuth2Defaults("VERCEL", "https://example.com/cb", c))
+
+		assert.Equal(t, "https://vercel.com/integrations/a%2Fb%20c/new", c.AuthURL)
+	})
+
+	t.Run("auth URL is empty when no integration slug is supplied", func(t *testing.T) {
 		t.Parallel()
 
 		r := provider.NewBuiltinRegistry()
@@ -59,12 +71,12 @@ func TestApplyOAuth2Defaults_AuthURLTemplating(t *testing.T) {
 			ClientSecret: "secret",
 		}
 
-		r.ApplyOAuth2Defaults("VERCEL", "https://example.com/cb", c)
+		require.NoError(t, r.ApplyOAuth2Defaults("VERCEL", "https://example.com/cb", c))
 
-		// No substitution requested; the placeholder is preserved
-		// verbatim so a misconfiguration is visible at the
-		// authorization step rather than silently masked.
-		assert.Equal(t, "https://vercel.com/integrations/{integration_slug}/new", c.AuthURL)
+		// Vercel has no static AuthURL; without a slug there is nothing
+		// to build, so the misconfiguration surfaces at the
+		// authorization step rather than being silently masked.
+		assert.Empty(t, c.AuthURL)
 	})
 }
 
@@ -80,7 +92,7 @@ func TestApplyOAuth2Defaults_PKCEDefaults(t *testing.T) {
 
 			r := provider.NewBuiltinRegistry()
 			c := &connector.OAuth2Connector{ClientID: "id", ClientSecret: "secret"}
-			r.ApplyOAuth2Defaults(p, "https://example.com/cb", c)
+			require.NoError(t, r.ApplyOAuth2Defaults(p, "https://example.com/cb", c))
 			assert.True(t, c.RequiresPKCE,
 				"provider %s must enable PKCE so Initiate generates a verifier", p)
 		})

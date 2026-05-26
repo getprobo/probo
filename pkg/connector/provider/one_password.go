@@ -16,10 +16,8 @@ package provider
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
-	"net/url"
 
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/accessreview/drivers"
@@ -41,38 +39,8 @@ func onePasswordRegistration() *Registration {
 		// 1Password has two settings shapes selected by protocol:
 		//  - Client-credentials: AccountID + Region (Users API driver).
 		//  - API key:            SCIMBridgeURL      (SCIM-bridge driver).
-		// MarshalSettings picks the shape based on which input fields
-		// are populated. The resolvers ensure that only one path is
-		// possible for any given request.
-		MarshalSettings: func(in *SettingsInput) (json.RawMessage, error) {
-			if in == nil {
-				return nil, nil
-			}
-
-			if in.OnePasswordAccountID != nil && in.OnePasswordRegion != nil {
-				if *in.OnePasswordAccountID == "" || *in.OnePasswordRegion == "" {
-					return nil, fmt.Errorf("cannot create 1password connector: onePasswordAccountId and onePasswordRegion must be non-empty")
-				}
-
-				return json.Marshal(&coredata.OnePasswordUsersAPISettings{
-					AccountID: *in.OnePasswordAccountID,
-					Region:    *in.OnePasswordRegion,
-				})
-			}
-
-			if in.OnePasswordSCIMBridgeURL != nil && *in.OnePasswordSCIMBridgeURL != "" {
-				u, err := url.Parse(*in.OnePasswordSCIMBridgeURL)
-				if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {
-					return nil, fmt.Errorf("cannot create 1password connector: onePasswordScimBridgeURL must be an http(s) URL")
-				}
-
-				return json.Marshal(&coredata.OnePasswordConnectorSettings{
-					SCIMBridgeURL: *in.OnePasswordSCIMBridgeURL,
-				})
-			}
-
-			return nil, nil
-		},
+		// The create resolvers build the matching settings; only one
+		// path is possible for any given request.
 		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger) (drivers.Driver, error) {
 			// Client credentials grant uses the Users API driver; the
 			// authorization-code grant uses the SCIM-bridge driver.

@@ -16,7 +16,6 @@ package provider
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
 
 	"go.gearno.de/kit/log"
@@ -47,10 +46,11 @@ type Registration struct {
 	// request and replays the verifier on the token exchange. Default
 	// false; non-PKCE providers are unaffected.
 	RequiresPKCE bool
-	// AuthURLParams are operator-supplied placeholders substituted
-	// into the static provider AuthURL (e.g. Vercel's
-	// "{integration_slug}"). Empty for the vast majority of providers.
-	AuthURLParams map[string]string
+	// BuildAuthURL derives the authorization URL from an operator-supplied
+	// integration slug, for providers (e.g. Vercel) whose AuthURL embeds
+	// it as a path segment. It must construct the URL with net/url and
+	// escape the slug. Nil for providers with a fully static AuthURL.
+	BuildAuthURL func(slug string) (string, error)
 
 	// Protocol support / GraphQL surface.
 	SupportsAPIKey            bool
@@ -61,35 +61,6 @@ type Registration struct {
 	NewDriver               func(context.Context, *http.Client, *coredata.Connector, *log.Logger) (drivers.Driver, error)
 	NewNameResolver         func(context.Context, *http.Client, *coredata.Connector, *log.Logger) drivers.NameResolver
 	SetOrganizationSettings func(*coredata.Connector, string) error
-	// MarshalSettings normalises the per-provider extra settings into
-	// the JSON blob persisted on coredata.Connector.RawSettings.
-	//
-	// SECURITY CONTRACT: returned errors are surfaced verbatim to the
-	// client via gqlutils.Invalid. They must contain only field names
-	// and structural information — never user-supplied values,
-	// secrets, or driver-internal details. Use a static string per
-	// validation failure ("sentryOrganizationSlug is required",
-	// "onePasswordRegion must be one of …"), never interpolate input.
-	MarshalSettings func(*SettingsInput) (json.RawMessage, error)
-}
-
-// SettingsInput is the union of every optional per-provider field
-// available on the GraphQL CreateAPIKeyConnectorInput and
-// CreateClientCredentialsConnectorInput types. The resolver populates
-// it once from the gqlgen input; each provider's MarshalSettings
-// reads only the fields it cares about.
-//
-// Adding a new provider with extra settings: add the optional field
-// here + the corresponding optional field on the GraphQL input + the
-// read in the per-provider MarshalSettings closure.
-type SettingsInput struct {
-	TallyOrganizationID      *string
-	SentryOrganizationSlug   *string
-	SupabaseOrganizationSlug *string
-	GitHubOrganization       *string
-	OnePasswordSCIMBridgeURL *string
-	OnePasswordAccountID     *string
-	OnePasswordRegion        *string
 }
 
 // ExtraSetting describes one extra per-provider settings field

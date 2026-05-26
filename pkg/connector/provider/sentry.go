@@ -16,7 +16,6 @@ package provider
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -36,13 +35,6 @@ func sentryRegistration() *Registration {
 		SupportsAPIKey: true,
 		ExtraSettings: []ExtraSetting{
 			{Key: "organizationSlug", Label: "Organization Slug", Required: true},
-		},
-		MarshalSettings: func(in *SettingsInput) (json.RawMessage, error) {
-			if in == nil || in.SentryOrganizationSlug == nil || *in.SentryOrganizationSlug == "" {
-				return nil, fmt.Errorf("cannot create sentry connector: sentryOrganizationSlug is required")
-			}
-
-			return json.Marshal(&coredata.SentryConnectorSettings{OrganizationSlug: *in.SentryOrganizationSlug})
 		},
 		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger) (drivers.Driver, error) {
 			s, err := coredata.ConnectorSettings[coredata.SentryConnectorSettings](conn)

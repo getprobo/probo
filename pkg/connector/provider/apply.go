@@ -15,8 +15,8 @@
 package provider
 
 import (
+	"fmt"
 	"maps"
-	"strings"
 
 	"go.gearno.de/kit/httpclient"
 	"go.probo.inc/probo/pkg/connector"
@@ -30,16 +30,16 @@ import (
 // pulled from r; only ClientID and ClientSecret come from deployment
 // config.
 //
-// Operator-supplied placeholders in the static AuthURL (e.g. Vercel's
-// "{integration_slug}") are substituted from c.AuthURLParams; the
-// substitution is a no-op when no placeholders are configured.
-func (r *Registry) ApplyOAuth2Defaults(p string, redirectURI string, c *connector.OAuth2Connector) {
+// Providers whose authorization URL embeds an operator-supplied slug
+// (e.g. Vercel) derive it via Registration.BuildAuthURL from
+// c.IntegrationSlug; this is a no-op when no slug is configured.
+func (r *Registry) ApplyOAuth2Defaults(p string, redirectURI string, c *connector.OAuth2Connector) error {
 	c.RedirectURI = redirectURI
 	c.HTTPClient = httpclient.DefaultClient(httpclient.WithSSRFProtection())
 
 	reg, ok := r.Get(coredata.ConnectorProvider(p))
 	if !ok {
-		return
+		return nil
 	}
 
 	c.AuthURL = reg.AuthURL
@@ -57,13 +57,16 @@ func (r *Registry) ApplyOAuth2Defaults(p string, redirectURI string, c *connecto
 		c.ExtraAuthParams = extra
 	}
 
-	// Resolve operator-supplied placeholders in the static AuthURL
-	// (for example Vercel's "{integration_slug}"). Providers without
-	// placeholders are unaffected; the loop is a no-op when
-	// AuthURLParams is empty.
-	for k, v := range c.AuthURLParams {
-		c.AuthURL = strings.ReplaceAll(c.AuthURL, "{"+k+"}", v)
+	if reg.BuildAuthURL != nil && c.IntegrationSlug != "" {
+		authURL, err := reg.BuildAuthURL(c.IntegrationSlug)
+		if err != nil {
+			return fmt.Errorf("cannot build %s auth URL: %w", p, err)
+		}
+
+		c.AuthURL = authURL
 	}
+
+	return nil
 }
 
 // ProbeURL returns the registered probe URL for provider p, or the
