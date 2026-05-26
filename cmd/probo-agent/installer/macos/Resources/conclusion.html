@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Installation complete</title>
+    <style>
+        body {
+            font-family: -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif;
+            font-size: 13px;
+            color: #1d1d1f;
+            margin: 24px;
+            line-height: 1.45;
+        }
+        h1 { font-size: 18px; margin-bottom: 6px; }
+        h2 { font-size: 14px; margin-top: 18px; margin-bottom: 4px; }
+        code, pre {
+            font-family: Menlo, Consolas, monospace;
+            background: #f5f5f7;
+            border-radius: 4px;
+        }
+        code { padding: 2px 4px; }
+        pre {
+            padding: 8px 10px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+    </style>
+</head>
+<body>
+    <h1>Installation complete</h1>
+
+    <p>
+        The <code>probo-agent</code> binary is installed and the launchd
+        unit is loaded. If the installer found a pre-staged
+        configuration file at <code>/tmp/probo-agent.conf</code>, the
+        device is already enrolled and the agent is running.
+    </p>
+
+    <h2>Enroll this device manually</h2>
+    <p>
+        If you installed without a pre-staged configuration, finish the
+        setup from a Terminal:
+    </p>
+    <pre>sudo probo-agent install \
+    --server https://app.getprobo.com \
+    --enrollment-token &lt;TOKEN&gt;</pre>
+
+    <h2>Inspect the agent</h2>
+    <pre>sudo probo-agent status
+sudo probo-agent collect</pre>
+
+    <h2>Uninstall</h2>
+    <pre>sudo probo-agent uninstall</pre>
+
+    <p>
+        Logs are written to <code>/var/log/probo-agent.log</code>. The
+        installer's own log lives at
+        <code>/var/log/probo-agent-install.log</code>.
+    </p>
+</body>
+</html>

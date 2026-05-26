@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Productbuild distribution definition for the Probo device posture
+  agent.
+
+  Placeholders are substituted by build.sh:
+
+    @@VERSION@@       agent version, e.g. 0.1.0
+    @@PKG_ARCH@@      payload pkgbuild architecture (x86_64 or arm64)
+    @@HOST_ARCHS@@    host arch filter used by Installer.app
+-->
+<installer-gui-script minSpecVersion="2">
+    <title>Probo Device Posture Agent @@VERSION@@</title>
+
+    <!--
+      Single-pane install. Customization is disabled because the agent
+      is a single component and we do not want users to opt out of the
+      postinstall script.
+    -->
+    <options customize="never"
+             require-scripts="true"
+             rootVolumeOnly="true"
+             hostArchitectures="@@HOST_ARCHS@@"/>
+
+    <!--
+      Refuse installation on macOS older than 11 (Big Sur). The agent
+      relies on launchd bootstrap/bootout semantics and the modern
+      `system_profiler` output that earlier releases do not provide.
+    -->
+    <volume-check>
+        <allowed-os-versions>
+            <os-version min="11.0"/>
+        </allowed-os-versions>
+    </volume-check>
+
+    <welcome    file="welcome.html"    mime-type="text/html"/>
+    <license    file="license.txt"     mime-type="text/plain"/>
+    <conclusion file="conclusion.html" mime-type="text/html"/>
+
+    <pkg-ref id="com.getprobo.agent"
+             version="@@VERSION@@"
+             onConclusion="none">probo-agent-component.pkg</pkg-ref>
+
+    <choices-outline>
+        <line choice="default">
+            <line choice="com.getprobo.agent"/>
+        </line>
+    </choices-outline>
+
+    <choice id="default"/>
+    <choice id="com.getprobo.agent"
+            title="Probo Device Posture Agent"
+            description="Installs probo-agent to /usr/local/bin and the launchd unit to /Library/LaunchDaemons.">
+        <pkg-ref id="com.getprobo.agent"/>
+    </choice>
+</installer-gui-script>
