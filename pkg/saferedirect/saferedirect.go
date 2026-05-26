@@ -18,6 +18,7 @@ import (
 	"context"
 	"net/http"
 	"net/url"
+	"path"
 	"strings"
 )
 
@@ -54,11 +55,12 @@ func (sr *SafeRedirect) Validate(ctx context.Context, redirectURL string) (strin
 	}
 
 	if strings.HasPrefix(redirectURL, "/") {
-		if len(redirectURL) > 1 && (redirectURL[1] == '/' || redirectURL[1] == '\\') {
+		safePath, ok := normalizeRelativePath(redirectURL)
+		if !ok {
 			return "", false
 		}
 
-		return redirectURL, true
+		return safePath, true
 	}
 
 	parsedURL, err := url.Parse(redirectURL)
@@ -92,4 +94,29 @@ func (sr *SafeRedirect) GetSafeRedirectURL(ctx context.Context, redirectURL, fal
 func (sr *SafeRedirect) Redirect(w http.ResponseWriter, r *http.Request, redirectURL, fallbackURL string, statusCode int) {
 	safeURL := sr.GetSafeRedirectURL(r.Context(), redirectURL, fallbackURL)
 	http.Redirect(w, r, safeURL, statusCode)
+}
+
+func normalizeRelativePath(redirectURL string) (string, bool) {
+	if strings.HasPrefix(redirectURL, "//") {
+		return "", false
+	}
+
+	if strings.Contains(redirectURL, `\`) || strings.Contains(strings.ToLower(redirectURL), "%5c") {
+		return "", false
+	}
+
+	cleaned := path.Clean(redirectURL)
+	if !strings.HasPrefix(cleaned, "/") {
+		return "", false
+	}
+
+	if len(cleaned) > 1 && (cleaned[1] == '/' || cleaned[1] == '\\') {
+		return "", false
+	}
+
+	if strings.Contains(cleaned, `\`) {
+		return "", false
+	}
+
+	return cleaned, true
 }

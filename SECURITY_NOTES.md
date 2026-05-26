@@ -3,6 +3,23 @@
 User-facing notes on security-relevant changes to Probo. For the
 vulnerability reporting process, see [SECURITY.md](SECURITY.md).
 
+## Open redirect bypass in saferedirect
+
+_2026-05-26, Auth_
+
+Relative redirect URLs are now normalized before validation. Paths
+containing backslashes (including percent-encoded `%5c`) are rejected,
+and the cleaned path is checked for protocol-relative and backslash
+prefixes.
+
+Previously, `Validate` only inspected the second character of the raw
+input. A path like `/../\evil.com` passed validation because the second
+character is `.`, but Go's `http.Redirect` normalized it to `/\evil.com`,
+which browsers can treat as an external redirect.
+
+Reported by [Fushuling](https://github.com/Fushuling) and
+[RacerZ](https://github.com/RacerZ-fighting).
+
 ## Password changes invalidate existing sessions
 
 _2026-04-29, IAM_

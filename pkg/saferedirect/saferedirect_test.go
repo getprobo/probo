@@ -103,6 +103,34 @@ func TestSafeRedirect_Validate(t *testing.T) {
 			expectedURL:     "",
 			expectedIsValid: false,
 		},
+		{
+			name:            "path traversal backslash bypass",
+			allowedHost:     saferedirect.StaticHosts("example.com"),
+			redirectURL:     "/../\\evil.com/phishing",
+			expectedURL:     "",
+			expectedIsValid: false,
+		},
+		{
+			name:            "embedded backslash",
+			allowedHost:     saferedirect.StaticHosts("example.com"),
+			redirectURL:     "/foo/..\\evil.com/phishing",
+			expectedURL:     "",
+			expectedIsValid: false,
+		},
+		{
+			name:            "percent-encoded backslash",
+			allowedHost:     saferedirect.StaticHosts("example.com"),
+			redirectURL:     "/%5cevil.com/phishing",
+			expectedURL:     "",
+			expectedIsValid: false,
+		},
+		{
+			name:            "path normalization",
+			allowedHost:     saferedirect.StaticHosts("example.com"),
+			redirectURL:     "/foo/../dashboard",
+			expectedURL:     "/dashboard",
+			expectedIsValid: true,
+		},
 	}
 
 	for _, tt := range tests {
@@ -165,6 +193,13 @@ func TestSafeRedirect_GetSafeRedirectURL(t *testing.T) {
 			name:        "slash-backslash attack",
 			allowedHost: saferedirect.StaticHosts("example.com"),
 			redirectURL: "/\\evil.com/phishing",
+			fallbackURL: "/home",
+			expectedURL: "/home",
+		},
+		{
+			name:        "path traversal backslash bypass",
+			allowedHost: saferedirect.StaticHosts("example.com"),
+			redirectURL: "/../\\evil.com/phishing",
 			fallbackURL: "/home",
 			expectedURL: "/home",
 		},
@@ -231,6 +266,14 @@ func TestSafeRedirect_Redirect(t *testing.T) {
 			name:           "slash-backslash attack",
 			allowedHost:    saferedirect.StaticHosts("example.com"),
 			redirectURL:    "/\\evil.com/phishing",
+			fallbackURL:    "/home",
+			expectedStatus: http.StatusFound,
+			expectedURL:    "/home",
+		},
+		{
+			name:           "path traversal backslash bypass",
+			allowedHost:    saferedirect.StaticHosts("example.com"),
+			redirectURL:    "/../\\evil.com/phishing",
 			fallbackURL:    "/home",
 			expectedStatus: http.StatusFound,
 			expectedURL:    "/home",
