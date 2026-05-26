@@ -627,15 +627,19 @@ func linuxDesktopSession() string {
 }
 
 func linuxDesktopPrefersKDE(desktop string) bool {
+	desktop = strings.ToLower(desktop)
+
 	return strings.Contains(desktop, "kde") || strings.Contains(desktop, "plasma")
 }
 
 func linuxDesktopPrefersXFCE(desktop string) bool {
-	return strings.Contains(desktop, "xfce")
+	return strings.Contains(strings.ToLower(desktop), "xfce")
 }
 
 func linuxDesktopPrefersI3(desktop string) bool {
-	return desktop == "i3" || strings.Contains(desktop, "i3")
+	desktop = strings.ToLower(desktop)
+
+	return strings.Contains(desktop, "i3")
 }
 
 func linuxConsoleUser(ctx context.Context) string {
