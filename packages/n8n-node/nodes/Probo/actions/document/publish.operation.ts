@@ -41,7 +41,7 @@ export const description: INodeProperties[] = [
 			},
 		},
 		default: false,
-		description: 'Whether to publish as a minor version. Approvers are ignored when set. The document must already have a published major version.',
+		description: 'Whether to publish as a minor version. Approvers are ignored when set.',
 	},
 	{
 		displayName: 'Approver IDs',

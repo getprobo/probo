@@ -222,6 +222,109 @@ func TestDocumentVersion_PublishVersion(t *testing.T) {
 	assert.Equal(t, 0, result.Node.Versions.Edges[0].Node.Minor)
 }
 
+func TestDocumentVersion_PublishInitialMinorVersion(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+
+	docID, _ := createTestDocument(t, owner)
+
+	publishMutation := `
+		mutation($input: PublishDocumentInput!) {
+			publishDocument(input: $input) {
+				document {
+					currentPublishedMajor
+					currentPublishedMinor
+				}
+				documentVersion {
+					status
+					major
+					minor
+				}
+			}
+		}
+	`
+
+	var publishResult struct {
+		PublishDocument struct {
+			Document struct {
+				CurrentPublishedMajor *int `json:"currentPublishedMajor"`
+				CurrentPublishedMinor *int `json:"currentPublishedMinor"`
+			} `json:"document"`
+			DocumentVersion struct {
+				Status string `json:"status"`
+				Major  int    `json:"major"`
+				Minor  int    `json:"minor"`
+			} `json:"documentVersion"`
+		} `json:"publishDocument"`
+	}
+
+	err := owner.Execute(publishMutation, map[string]any{
+		"input": map[string]any{
+			"minor":      true,
+			"documentId": docID,
+			"changelog":  "Initial minor release",
+		},
+	}, &publishResult)
+	require.NoError(t, err)
+
+	require.NotNil(t, publishResult.PublishDocument.Document.CurrentPublishedMajor)
+	require.NotNil(t, publishResult.PublishDocument.Document.CurrentPublishedMinor)
+	assert.Equal(t, 0, *publishResult.PublishDocument.Document.CurrentPublishedMajor)
+	assert.Equal(t, 1, *publishResult.PublishDocument.Document.CurrentPublishedMinor)
+	assert.Equal(t, "PUBLISHED", publishResult.PublishDocument.DocumentVersion.Status)
+	assert.Equal(t, 0, publishResult.PublishDocument.DocumentVersion.Major)
+	assert.Equal(t, 1, publishResult.PublishDocument.DocumentVersion.Minor)
+
+	var updateResult struct {
+		UpdateDocument struct {
+			DocumentVersion *struct {
+				Status string `json:"status"`
+				Major  int    `json:"major"`
+				Minor  int    `json:"minor"`
+			} `json:"documentVersion"`
+		} `json:"updateDocument"`
+	}
+
+	err = owner.Execute(`
+		mutation($input: UpdateDocumentInput!) {
+			updateDocument(input: $input) {
+				documentVersion {
+					status
+					major
+					minor
+				}
+			}
+		}
+	`, map[string]any{
+		"input": map[string]any{
+			"id":      docID,
+			"content": testutil.ProseMirrorTextDoc("Updated content for 0.2"),
+		},
+	}, &updateResult)
+	require.NoError(t, err)
+	require.NotNil(t, updateResult.UpdateDocument.DocumentVersion)
+	assert.Equal(t, "DRAFT", updateResult.UpdateDocument.DocumentVersion.Status)
+	assert.Equal(t, 0, updateResult.UpdateDocument.DocumentVersion.Major)
+	assert.Equal(t, 2, updateResult.UpdateDocument.DocumentVersion.Minor)
+
+	err = owner.Execute(publishMutation, map[string]any{
+		"input": map[string]any{
+			"minor":      true,
+			"documentId": docID,
+			"changelog":  "Second minor release",
+		},
+	}, &publishResult)
+	require.NoError(t, err)
+
+	require.NotNil(t, publishResult.PublishDocument.Document.CurrentPublishedMajor)
+	require.NotNil(t, publishResult.PublishDocument.Document.CurrentPublishedMinor)
+	assert.Equal(t, 0, *publishResult.PublishDocument.Document.CurrentPublishedMajor)
+	assert.Equal(t, 2, *publishResult.PublishDocument.Document.CurrentPublishedMinor)
+	assert.Equal(t, "PUBLISHED", publishResult.PublishDocument.DocumentVersion.Status)
+	assert.Equal(t, 0, publishResult.PublishDocument.DocumentVersion.Major)
+	assert.Equal(t, 2, publishResult.PublishDocument.DocumentVersion.Minor)
+}
+
 func TestDocumentVersion_AutoCreateDraft(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)

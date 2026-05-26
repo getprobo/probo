@@ -6321,7 +6321,7 @@ components:
           description: Document ID
         minor:
           type: boolean
-          description: When true, publish the draft as a minor version (currentMajor.currentMinor+1) and ignore approver_ids; the document must already have a published major version. When false, publish as a new major version; if approver_ids are provided, an approval is requested instead.
+          description: When true, publish the draft as a minor version and ignore approver_ids. When false, publish as a new major version; if approver_ids are provided, an approval is requested instead.
         approver_ids:
           type: array
           items:

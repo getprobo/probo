@@ -541,10 +541,8 @@ func (s DocumentService) generateChangelog(
 
 // PublishVersion is the single entry point for publishing a document
 // version. The behaviour depends on req.Minor and req.ApproverIDs:
-//   - Minor=true: publish the existing draft as a minor bump (currentMajor.
-//     currentMinor+1). ApproverIDs are ignored. Errors with
-//     ErrCannotPublishMinorWithoutMajor when the document has never been
-//     published.
+//   - Minor=true: publish the existing draft as a minor version. ApproverIDs
+//     are ignored.
 //   - Minor=false with ApproverIDs: open an approval quorum on the draft as
 //     a pending major bump (currentMajor+1.0). Result.Quorum is set.
 //   - Minor=false without ApproverIDs: publish the draft immediately as a
@@ -2824,10 +2822,6 @@ func (s *DocumentService) publishMinorVersionInTx(
 
 	if ignoreExisting && documentVersion.Status == coredata.DocumentVersionStatusPublished {
 		return document, documentVersion, nil
-	}
-
-	if document.CurrentPublishedMajor == nil || document.CurrentPublishedMinor == nil {
-		return nil, nil, &ErrCannotPublishMinorWithoutMajor{}
 	}
 
 	document.CurrentPublishedMajor = &documentVersion.Major

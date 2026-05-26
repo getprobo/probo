@@ -70,7 +70,7 @@ func NewCmdPublish(f *cmdutil.Factory) *cobra.Command {
 		Long: `Publish the latest draft of a document.
 
 By default, the draft is published as a new major version. Pass --minor to
-publish as a minor version (the document must already have a major version).
+publish as a minor version.
 When --approver is set (one or more profile IDs), an approval is requested
 instead of publishing immediately. Approvers are ignored with --minor.`,
 		Args: cobra.ExactArgs(1),
