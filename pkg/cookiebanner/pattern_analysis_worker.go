@@ -776,6 +776,24 @@ func (h *patternAnalysisHandler) adoptUncategorisedPatterns(
 			return false, fmt.Errorf("cannot relink detected trackers from pattern %q: %w", ep.Pattern, err)
 		}
 
+		// Promote the glob's source if this exact carries a
+		// stronger signal. The merge loop already handles
+		// promotion when the glob shares the exact's category,
+		// but adoption is the only path that can lift a glob
+		// the user (or an earlier pass) has placed in a
+		// non-uncategorised category. Without this, a
+		// PRE_EXISTING glob never advances to SCRIPT/EXTENSION
+		// even though new SDK-observed exacts confirm the
+		// stronger signal. PromoteSource mutates match.Source
+		// in place, so subsequent adoptions against the same
+		// glob ratchet correctly (PRE_EXISTING → EXTENSION →
+		// SCRIPT) without redundant writes.
+		if shouldPromoteSource(match.Source, ep.Source) {
+			if err := match.PromoteSource(ctx, tx, scope, *ep.Source, time.Now()); err != nil {
+				return false, fmt.Errorf("cannot promote source on glob pattern %q: %w", match.Pattern, err)
+			}
+		}
+
 		if err := ep.Delete(ctx, tx, scope); err != nil {
 			return false, fmt.Errorf("cannot delete adopted exact pattern %q: %w", ep.Pattern, err)
 		}

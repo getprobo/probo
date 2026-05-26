@@ -2207,6 +2207,26 @@ func (s *Service) reportDetectedTracker(
 	if err == nil {
 		patternID = &matchedPattern.ID
 		*matchedPatternIDs = append(*matchedPatternIDs, matchedPattern.ID)
+
+		// A glob (or exact) pattern already covers this
+		// identifier, so no new exact pattern will be created
+		// and the merge/adoption loops in
+		// patternAnalysisHandler.Process will never see this
+		// detection. Promote the matched pattern's source here
+		// if the incoming detection carries a stronger signal,
+		// otherwise a pattern that started life as PRE_EXISTING
+		// (or EXTENSION) never advances even when subsequent
+		// SCRIPT-source detections confirm it as a real page
+		// tracker — last_matched_at would move forward but
+		// source would stay stale. shouldPromoteSource is a
+		// no-op when info.Source is nil or weaker, so storage
+		// items without a source and weaker re-detections cost
+		// nothing.
+		if shouldPromoteSource(matchedPattern.Source, info.Source) {
+			if err := matchedPattern.PromoteSource(ctx, tx, scope, *info.Source, now); err != nil {
+				return fmt.Errorf("cannot promote source on matched tracker pattern %q: %w", matchedPattern.Pattern, err)
+			}
+		}
 	} else {
 		newPattern := &coredata.TrackerPattern{
 			ID:                 gid.New(scope.GetTenantID(), coredata.TrackerPatternEntityType),

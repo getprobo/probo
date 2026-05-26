@@ -190,6 +190,7 @@ func TestTrackerPattern_PromoteSource_OverwritesSource(t *testing.T) {
 	assert.True(t, tp.UpdatedAt.Equal(bumpedAt), "receiver must reflect the new updated_at")
 
 	loaded := &coredata.TrackerPattern{}
+
 	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
 		return loaded.LoadByID(ctx, conn, fx.scope, tp.ID)
 	}))
@@ -229,6 +230,7 @@ func TestTrackerPattern_PromoteSource_OnlyTouchesSourceAndUpdatedAt(t *testing.T
 	}))
 
 	loaded := &coredata.TrackerPattern{}
+
 	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
 		return loaded.LoadByID(ctx, conn, fx.scope, tp.ID)
 	}))

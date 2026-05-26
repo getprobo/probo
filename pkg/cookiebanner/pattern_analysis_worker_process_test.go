@@ -435,6 +435,156 @@ func TestPatternAnalysisWorker_AdoptionTriggersDraftVersion(t *testing.T) {
 	assert.Equal(t, coredata.CookieBannerVersionStateDraft, latest.State, "adoption must trigger a draft version")
 }
 
+// TestPatternAnalysisWorker_AdoptionPromotesSourceCrossCategory
+// seeds a banner with a PRE_EXISTING `ph_phc_*_posthog` glob already
+// placed in a user-set category (analytics) and a single SCRIPT-source
+// exact `ph_phc_<id>_posthog` in uncategorised. The merge loop hits
+// the cross-category skip branch (the existing slot belongs to a
+// recategorised glob), so promotion can only happen via the
+// adoption path. This guards against the gap where last_matched_at
+// was refreshed on the glob but its source stayed at PRE_EXISTING
+// despite the new SDK-observed signal.
+func TestPatternAnalysisWorker_AdoptionPromotesSourceCrossCategory(t *testing.T) {
+	t.Parallel()
+
+	client := newTestPgClient(t)
+	ctx := context.Background()
+	fx := seedWorkerFixture(t, ctx, client)
+
+	maxAge := 365 * 24 * 3600
+
+	existingGlob := newGlobInCategory(
+		fx,
+		"ph_phc_*_posthog",
+		fx.normalCategoryID,
+		coredata.CookieSourcePreExisting,
+		&maxAge,
+	)
+	uncategorisedExact := newExactPattern(
+		fx,
+		"ph_phc_XBwJ2pHAf0MoYgh3TNZK32Qk7zLlTldhk4p9llGtZMN_posthog",
+		fx.uncategorisedID,
+		coredata.CookieSourceScript,
+		&maxAge,
+	)
+
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		if err := existingGlob.Insert(ctx, tx, fx.scope); err != nil {
+			return err
+		}
+
+		return uncategorisedExact.Insert(ctx, tx, fx.scope)
+	}))
+
+	h := newTestHandler(client)
+	require.NoError(t, h.Process(ctx, fx.banner))
+
+	loaded := &coredata.TrackerPattern{}
+
+	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+		return loaded.LoadByBannerIDTypeAndPattern(
+			ctx,
+			conn,
+			fx.scope,
+			fx.banner.ID,
+			coredata.TrackerTypeCookie,
+			"ph_phc_*_posthog",
+			&maxAge,
+		)
+	}))
+
+	require.NotNil(t, loaded.Source)
+	assert.Equal(t, coredata.CookieSourceScript, *loaded.Source, "adoption must promote PRE_EXISTING glob to SCRIPT when a stronger exact is absorbed")
+	assert.Equal(t, existingGlob.ID, loaded.ID, "the existing glob row must be reused, not replaced")
+	assert.Equal(t, fx.normalCategoryID, loaded.CookieCategoryID, "user-set category must not be overwritten by the worker")
+
+	var remainingExacts coredata.TrackerPatterns
+
+	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+		return remainingExacts.LoadAllByCookieBannerID(
+			ctx,
+			conn,
+			fx.scope,
+			fx.banner.ID,
+			coredata.NewTrackerPatternFilter(new(coredata.TrackerPatternMatchTypeExact), nil, new(false)),
+			nil,
+		)
+	}))
+	assert.Empty(t, remainingExacts, "the uncategorised exact must be adopted into the existing glob")
+}
+
+// TestReportDetectedTrackers_PromotesSourceOnExistingGlob seeds a
+// banner with a PRE_EXISTING `ph_phc_*_posthog` glob in
+// uncategorised, then reports a SCRIPT-source cookie whose name
+// globMatches the existing pattern (e.g. a posthog instance ID).
+// FindMatchingPattern in reportDetectedTracker links the
+// detected_tracker straight to the glob, so no new exact is
+// created and the merge/adoption loops in
+// patternAnalysisHandler.Process never see the new signal. Without
+// the in-line PromoteSource call in reportDetectedTracker, only
+// last_matched_at would advance — source would stay stuck at
+// PRE_EXISTING despite the new SDK-observed evidence. This test
+// pins the same-category promotion path; the cross-category gap
+// is covered by TestPatternAnalysisWorker_AdoptionPromotesSourceCrossCategory.
+func TestReportDetectedTrackers_PromotesSourceOnExistingGlob(t *testing.T) {
+	t.Parallel()
+
+	client := newTestPgClient(t)
+	ctx := context.Background()
+	fx := seedWorkerFixture(t, ctx, client)
+
+	maxAge := 365 * 24 * 3600
+
+	existingGlob := newGlobInCategory(
+		fx,
+		"ph_phc_*_posthog",
+		fx.uncategorisedID,
+		coredata.CookieSourcePreExisting,
+		&maxAge,
+	)
+
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		return existingGlob.Insert(ctx, tx, fx.scope)
+	}))
+
+	svc := NewService(client, false)
+
+	require.NoError(t, svc.ReportDetectedTrackers(ctx, fx.banner.ID, ReportDetectedTrackersRequest{
+		Cookies: []DetectedCookie{
+			{
+				Name:          "ph_phc_XBwJ2pHAf0MoYgh3TNZK32Qk7zLlTldhk4p9llGtZMN_posthog",
+				MaxAgeSeconds: &maxAge,
+				Source:        coredata.CookieSourceScript,
+			},
+		},
+	}))
+
+	loaded := &coredata.TrackerPattern{}
+
+	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+		return loaded.LoadByID(ctx, conn, fx.scope, existingGlob.ID)
+	}))
+
+	require.NotNil(t, loaded.Source)
+	assert.Equal(t, coredata.CookieSourceScript, *loaded.Source, "reportDetectedTracker must promote a PRE_EXISTING glob to SCRIPT when a stronger detection matches it")
+	assert.NotNil(t, loaded.LastMatchedAt, "matched detections must bump last_matched_at")
+	assert.Equal(t, fx.uncategorisedID, loaded.CookieCategoryID, "category must not move")
+
+	var exacts coredata.TrackerPatterns
+
+	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+		return exacts.LoadAllByCookieBannerID(
+			ctx,
+			conn,
+			fx.scope,
+			fx.banner.ID,
+			coredata.NewTrackerPatternFilter(new(coredata.TrackerPatternMatchTypeExact), nil, new(false)),
+			nil,
+		)
+	}))
+	assert.Empty(t, exacts, "the detected cookie globMatches the existing glob; no exact pattern must be created")
+}
+
 // TestPatternAnalysisWorker_MergeWithoutAdoptionSkipsDraftVersion
 // asserts the inverse: when the worker only consolidates exacts into
 // a glob in their own category (no consent transition), no draft
