@@ -35,9 +35,7 @@ func TestAfter(t *testing.T) {
 		err := After(future)(&past)
 		if err == nil {
 			t.Fatal("expected validation error")
-		}
-
-		if err.Code != ErrorCodeOutOfRange {
+		} else if err.Code != ErrorCodeOutOfRange {
 			t.Errorf("expected error code %s, got %s", ErrorCodeOutOfRange, err.Code)
 		}
 	})
@@ -75,9 +73,7 @@ func TestBefore(t *testing.T) {
 		err := Before(past)(&future)
 		if err == nil {
 			t.Fatal("expected validation error")
-		}
-
-		if err.Code != ErrorCodeOutOfRange {
+		} else if err.Code != ErrorCodeOutOfRange {
 			t.Errorf("expected error code %s, got %s", ErrorCodeOutOfRange, err.Code)
 		}
 	})
@@ -136,9 +132,7 @@ func TestRangeDuration(t *testing.T) {
 		err := RangeDuration(minDuration, maxDuration)(&duration)
 		if err == nil {
 			t.Fatal("expected validation error")
-		}
-
-		if err.Code != ErrorCodeOutOfRange {
+		} else if err.Code != ErrorCodeOutOfRange {
 			t.Errorf("expected error code %s, got %s", ErrorCodeOutOfRange, err.Code)
 		}
 	})
@@ -149,9 +143,7 @@ func TestRangeDuration(t *testing.T) {
 		err := RangeDuration(minDuration, maxDuration)(&duration)
 		if err == nil {
 			t.Fatal("expected validation error")
-		}
-
-		if err.Code != ErrorCodeOutOfRange {
+		} else if err.Code != ErrorCodeOutOfRange {
 			t.Errorf("expected error code %s, got %s", ErrorCodeOutOfRange, err.Code)
 		}
 	})

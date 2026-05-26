@@ -716,10 +716,8 @@ func TestPrintableText(t *testing.T) {
 		err := PrintableText()(&str)
 		if err == nil {
 			t.Fatal("expected validation error")
-		}
-
-		// The null byte is at rune position 3 (after 'a', 'b', 'c')
-		if !strings.Contains(err.Message, "position 3") {
+		} else if !strings.Contains(err.Message, "position 3") {
+			// The null byte is at rune position 3 (after 'a', 'b', 'c')
 			t.Errorf("expected position 3 in error message, got: %s", err.Message)
 		}
 	})
