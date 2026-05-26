@@ -45,6 +45,7 @@ type (
 		pg                         *pg.Client
 		fm                         *filemanager.Service
 		hp                         *passwdhash.Profile
+		dummyHash                  []byte
 		baseURL                    string
 		tokenSecret                string
 		disableSignup              bool
@@ -99,6 +100,15 @@ type (
 	}
 )
 
+func mustHashDummy(hp *passwdhash.Profile) []byte {
+	h, err := hp.HashPassword([]byte("dummy"))
+	if err != nil {
+		panic(fmt.Sprintf("cannot hash dummy password: %v", err))
+	}
+
+	return h
+}
+
 func NewService(
 	ctx context.Context,
 	pgClient *pg.Client,
@@ -126,6 +136,7 @@ func NewService(
 		pg:                         pgClient,
 		fm:                         fm,
 		hp:                         hp,
+		dummyHash:                  mustHashDummy(hp),
 		baseURL:                    cfg.BaseURL.String(),
 		tokenSecret:                cfg.TokenSecret,
 		disableSignup:              cfg.DisableSignup,

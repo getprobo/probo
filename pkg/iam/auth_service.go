@@ -505,7 +505,7 @@ func (s AuthService) CheckCredentials(
 			// Perform a password comparison even when the identity does not exist to mitigate timing attacks
 			// and prevent revealing account existence.
 			if identity.ID == gid.Nil {
-				_, _ = s.hp.ComparePasswordAndHash([]byte(password+"qwertyuiop1234567890"), []byte("qwertyuiop1234567890"))
+				_, _ = s.hp.ComparePasswordAndHash([]byte(password), s.dummyHash)
 				return NewInvalidCredentialsError("invalid email or password")
 			}
 
