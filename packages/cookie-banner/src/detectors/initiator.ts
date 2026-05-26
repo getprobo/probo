@@ -13,7 +13,8 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 const EXTENSION_URL_RE = /(?:chrome|moz|safari-web)-extension:\/\//;
-const STACK_URL_RE = /https?:\/\/[^\s)'"`]+/g;
+const STACK_URL_RE =
+  /(?:https?|(?:chrome|moz|safari-web)-extension):\/\/[^\s)'"`]+/g;
 const LINE_COL_SUFFIX_RE = /:\d+(?::\d+)?$/;
 const MAX_INITIATOR_URL_LENGTH = 1024;
 
