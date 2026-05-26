@@ -67,7 +67,12 @@ func Uninstall(cfg Config) error {
 	name := DefaultWindowsName
 	_ = exec.Command("sc.exe", "stop", name).Run()
 	if out, err := exec.Command("sc.exe", "delete", name).CombinedOutput(); err != nil {
-		return fmt.Errorf("cannot run sc.exe delete: %w: %s", err, strings.TrimSpace(string(out)))
+		msg := strings.TrimSpace(string(out))
+		if isWindowsServiceMissing(msg) {
+			return nil
+		}
+
+		return fmt.Errorf("cannot run sc.exe delete: %w: %s", err, msg)
 	}
 	return nil
 }
