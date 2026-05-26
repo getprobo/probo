@@ -323,6 +323,7 @@ func linuxScreenLockI3(ctx context.Context, user string) (Result, bool) {
 
 	ev["mechanism"] = mechanism
 	ev["locker"] = locker
+
 	if idleMinutes >= 0 {
 		ev["idle_minutes"] = idleMinutes
 	}
@@ -481,6 +482,7 @@ func parseXssLockIdleLock(line string) (locker string, ok bool) {
 
 	locker = strings.TrimSpace(after)
 	locker = strings.Trim(locker, `"`)
+
 	if locker == "" || !linuxLooksLikeLockCommand(locker) {
 		return "", false
 	}
@@ -498,6 +500,7 @@ func parseXautolockTime(value string) (minutes int, ok bool) {
 
 		hours, err1 := strconv.Atoi(strings.TrimSpace(parts[0]))
 		mins, err2 := strconv.Atoi(strings.TrimSpace(parts[1]))
+
 		if err1 != nil || err2 != nil {
 			return 0, false
 		}
