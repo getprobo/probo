@@ -318,6 +318,7 @@ func TestPatternAnalysisWorker_PromotesSourceOnExistingGlob(t *testing.T) {
 	require.NoError(t, h.Process(ctx, fx.banner))
 
 	loaded := &coredata.TrackerPattern{}
+
 	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
 		return loaded.LoadByBannerIDTypeAndPattern(
 			ctx,
@@ -336,6 +337,7 @@ func TestPatternAnalysisWorker_PromotesSourceOnExistingGlob(t *testing.T) {
 	assert.Equal(t, fx.normalCategoryID, loaded.CookieCategoryID, "category must not be touched")
 
 	var remainingExacts coredata.TrackerPatterns
+
 	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
 		return remainingExacts.LoadAllByCookieBannerID(
 			ctx,
@@ -396,6 +398,7 @@ func TestPatternAnalysisWorker_AdoptionTriggersDraftVersion(t *testing.T) {
 	require.NoError(t, h.Process(ctx, fx.banner))
 
 	loaded := &coredata.TrackerPattern{}
+
 	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
 		return loaded.LoadByBannerIDTypeAndPattern(
 			ctx,
@@ -411,6 +414,7 @@ func TestPatternAnalysisWorker_AdoptionTriggersDraftVersion(t *testing.T) {
 	assert.Equal(t, existingGlob.ID, loaded.ID, "existing glob row must be reused")
 
 	var remainingExacts coredata.TrackerPatterns
+
 	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
 		return remainingExacts.LoadAllByCookieBannerID(
 			ctx,
@@ -424,6 +428,7 @@ func TestPatternAnalysisWorker_AdoptionTriggersDraftVersion(t *testing.T) {
 	assert.Empty(t, remainingExacts, "adoptUncategorisedPatterns must absorb the uncategorised exacts into the existing glob")
 
 	latest := &coredata.CookieBannerVersion{}
+
 	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
 		return latest.LoadLatestByCookieBannerID(ctx, conn, fx.scope, fx.banner.ID)
 	}))
@@ -465,6 +470,7 @@ func TestPatternAnalysisWorker_MergeWithoutAdoptionSkipsDraftVersion(t *testing.
 	require.NoError(t, h.Process(ctx, fx.banner))
 
 	var globs coredata.TrackerPatterns
+
 	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
 		return globs.LoadAllByCookieBannerID(
 			ctx,
