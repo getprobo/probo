@@ -45,9 +45,9 @@ jobs:
             packages/emails/dist/
           retention-days: 1
 
-  # ── Snapshot: build Go binaries (matrix by GOOS/GOARCH) ────────────
+  # ── Snapshot: build probod group binaries (matrix by GOOS/GOARCH) ──
   build-snapshot-binary:
-    name: "binary (${{ matrix.goos }}/${{ matrix.goarch }})"
+    name: "probod binary (${{ matrix.goos }}/${{ matrix.goarch }})"
     if: github.event_name == 'push'
     needs: [build-apps]
     runs-on: "runs-on=${{ github.run_id }}/runner=4cpu-linux-x64/extras=s3-cache"
@@ -105,6 +105,45 @@ jobs:
           name: "binary-${{ matrix.goos }}-${{ matrix.goarch }}"
           path: "dist/"
           retention-days: 1
+
+  # ── Snapshot: build probo-agent binaries (matrix by GOOS/GOARCH) ───
+  build-snapshot-probo-agent:
+    name: "probo-agent (${{ matrix.goos }}/${{ matrix.goarch }})"
+    if: github.event_name == 'push'
+    runs-on: "runs-on=${{ github.run_id }}/runner=4cpu-linux-x64/extras=s3-cache"
+    permissions:
+      contents: "read"
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { goos: linux, goarch: amd64 }
+          - { goos: linux, goarch: arm64 }
+          - { goos: darwin, goarch: amd64 }
+          - { goos: darwin, goarch: arm64 }
+          - { goos: windows, goarch: amd64 }
+          - { goos: windows, goarch: arm64 }
+          - { goos: freebsd, goarch: amd64 }
+          - { goos: freebsd, goarch: arm64 }
+    steps:
+      - uses: "actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd" # v6
+        with:
+          submodules: recursive
+      - uses: "runs-on/action@742bf56072eb4845a0f94b3394673e4903c90ff0" # v2
+      - uses: "./.github/actions/setup"
+        with:
+          node: "false"
+      - name: "Build probo-agent"
+        env:
+          CGO_ENABLED: "0"
+          GOOS: "${{ matrix.goos }}"
+          GOARCH: "${{ matrix.goarch }}"
+        run: |
+          EXT=""
+          if [ "$GOOS" = "windows" ]; then EXT=".exe"; fi
+
+          go build -ldflags "-s -w -X 'main.version=snapshot'" \
+            -gcflags="-e" -o "dist/probo-agent${EXT}" ./cmd/probo-agent/main.go
 
   # ── Snapshot: build Docker images (matrix by architecture) ─────────
   build-snapshot-docker:
@@ -190,9 +229,9 @@ jobs:
           severity-cutoff: critical
           output-format: table
 
-  # ── Build (PR + push validation) ───────────────────────────────────
+  # ── Build probod group (PR + push validation) ────────────────────────
   build:
-    name: "build"
+    name: "build-probod"
     runs-on: "runs-on=${{ github.run_id }}/runner=8cpu-linux-x64/extras=s3-cache"
     permissions:
       contents: "read"
@@ -216,7 +255,7 @@ jobs:
           go generate ./pkg/server/api/console/v1
           go generate ./pkg/server/api/trust/v1
           go generate ./pkg/server/api/mcp/v1
-      - name: "Build binaries"
+      - name: "Build probod group binaries"
         env:
           CGO_ENABLED: "0"
         run: |
@@ -228,6 +267,26 @@ jobs:
           go build -ldflags "-s -w -X 'main.version=snapshot'" \
             -gcflags="-e" -o bin/prb ./cmd/prb/main.go & pids+=($!)
           for pid in "${pids[@]}"; do wait "$pid"; done
+
+  build-probo-agent:
+    name: "build-probo-agent"
+    runs-on: "runs-on=${{ github.run_id }}/runner=4cpu-linux-x64/extras=s3-cache"
+    permissions:
+      contents: "read"
+    steps:
+      - uses: "actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd" # v6
+        with:
+          submodules: recursive
+      - uses: "runs-on/action@742bf56072eb4845a0f94b3394673e4903c90ff0" # v2
+      - uses: "./.github/actions/setup"
+        with:
+          node: "false"
+      - name: "Build probo-agent"
+        env:
+          CGO_ENABLED: "0"
+        run: |
+          go build -ldflags "-s -w -X 'main.version=snapshot'" \
+            -gcflags="-e" -o bin/probo-agent ./cmd/probo-agent/main.go
 
   lint-go:
     name: "lint-go"

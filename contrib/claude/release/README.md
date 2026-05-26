@@ -1,6 +1,6 @@
 # Release
 
-The repository ships seven independently-versioned tracks. Each has its own
+The repository ships eight independently-versioned tracks. Each has its own
 version source, its own `CHANGELOG.md`, its own tag pattern, and its own
 release workflow. Cutting a release means: bump the version, write a
 changelog entry, commit, tag, push.
@@ -11,6 +11,7 @@ changelog entry, commit, tag, push.
 | Server (`probod` group) | `probod/v*`                    | [probod.md](./probod.md)         |
 | `probod-bootstrap`      | `probod-bootstrap/v*`          | [probod-bootstrap.md](./probod-bootstrap.md) |
 | `proboctl`              | `proboctl/v*`                  | [proboctl.md](./proboctl.md)     |
+| `probo-agent`           | `probo-agent/v*`               | [probo-agent.md](./probo-agent.md) |
 | `@probo/n8n-nodes-probo` | `@probo/n8n-nodes-probo/v*`   | [n8n-nodes-probo.md](./n8n-nodes-probo.md) |
 | `@probo/cookie-banner`  | `@probo/cookie-banner/v*`      | [cookie-banner.md](./cookie-banner.md) |
 | Helm chart (`probo`)    | `helm/v*`                      | [helm.md](./helm.md)                   |
@@ -62,6 +63,10 @@ git log $(git describe --tags --abbrev=0 --match='probod-bootstrap/v*')..HEAD --
 # proboctl
 git log $(git describe --tags --abbrev=0 --match='proboctl/v*')..HEAD --oneline \
   -- cmd/proboctl pkg/proboctl
+
+# probo-agent
+git log $(git describe --tags --abbrev=0 --match='probo-agent/v*')..HEAD --oneline \
+  -- cmd/probo-agent pkg/deviceagent
 
 # @probo/n8n-nodes-probo
 git log $(git describe --tags --abbrev=0 --match='@probo/n8n-nodes-probo/v*')..HEAD --oneline \
