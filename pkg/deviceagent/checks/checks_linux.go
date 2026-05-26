@@ -645,9 +645,11 @@ func linuxConsoleUser(ctx context.Context) string {
 
 	if CommandExists("loginctl") {
 		seat := RunCommand(ctx, "loginctl", "show-seat", "seat0", "-p", "ActiveSession", "--value")
+
 		sessionID := strings.TrimSpace(seat.Stdout)
 		if sessionID != "" {
 			name := RunCommand(ctx, "loginctl", "show-session", sessionID, "-p", "Name", "--value")
+
 			user := strings.TrimSpace(name.Stdout)
 			if user != "" && user != "root" {
 				return user
