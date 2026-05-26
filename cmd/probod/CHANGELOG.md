@@ -4,6 +4,21 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.194.0] - 2026-05-26
+
+### Added
+
+- Add `probo-agent` CLI and device agent library for endpoint compliance checks
+- Add screen lock detection support for i3, KDE, and more Linux desktop environments
+
+### Fixed
+
+- Skip unconnectable providers in provider listing
+- Reject shell-unsafe paths in FreeBSD rc.d service installer
+- Make Windows service uninstall idempotent
+- Use platform-specific atomic key replacement on Windows
+- Handle FreeBSD check command failures before reading status
+
 ## [0.193.1] - 2026-05-26
 
 ### Security
