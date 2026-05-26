@@ -83,7 +83,11 @@ func TestConnectorProviderInfos(t *testing.T) {
 			providerNames[info.Provider] = true
 		}
 
-		assert.True(t, providerNames["SLACK"], "expected SLACK provider to be present")
+		// OAuth-only providers (e.g. SLACK) are hidden when the deployment
+		// has no OAuth credentials configured, as is the case in e2e.
+		// Assert on providers that support API keys, which are connectable
+		// regardless of OAuth configuration.
+		assert.True(t, providerNames["BREX"], "expected BREX provider to be present")
 		assert.True(t, providerNames["HUBSPOT"], "expected HUBSPOT provider to be present")
 	})
 
