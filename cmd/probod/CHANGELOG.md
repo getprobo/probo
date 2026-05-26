@@ -4,6 +4,12 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.193.1] - 2026-05-26
+
+### Security
+
+- Fix open redirect bypass in safe redirect
+
 ## [0.193.0] - 2026-05-26
 
 ### Added
