@@ -116,8 +116,8 @@ func darwinScreenLockMode(raw string) (string, int, bool) {
 	if strings.Contains(lower, "off") {
 		return "off", -1, true
 	}
-	if idx := strings.Index(lower, "seconds"); idx >= 0 {
-		prefix := strings.Fields(lower[:idx])
+	if before, _, ok := strings.Cut(lower, "seconds"); ok {
+		prefix := strings.Fields(before)
 		if len(prefix) == 0 {
 			return "seconds", -1, true
 		}

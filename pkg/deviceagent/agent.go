@@ -549,10 +549,7 @@ func (a *Agent) schedulePendingFlushRetry(now time.Time) time.Duration {
 		jitter = time.Duration(a.randomInt63n(int64(jitterRange)*2+1)) - jitterRange
 	}
 
-	retryIn := nextBase + jitter
-	if retryIn < time.Second {
-		retryIn = time.Second
-	}
+	retryIn := max(nextBase+jitter, time.Second)
 	a.pendingFlushRetryAt = now.Add(retryIn)
 	return retryIn
 }

@@ -563,7 +563,7 @@ func readChecksum(path, archiveName string) (string, error) {
 		return "", fmt.Errorf("cannot read checksums: %w", err)
 	}
 
-	for _, line := range strings.Split(string(data), "\n") {
+	for line := range strings.SplitSeq(string(data), "\n") {
 		line = strings.TrimSpace(line)
 		if line == "" {
 			continue

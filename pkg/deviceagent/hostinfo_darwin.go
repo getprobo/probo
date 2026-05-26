@@ -75,12 +75,12 @@ func extractValue(s, key string) string {
 	rest = strings.TrimPrefix(rest, ">")
 	if strings.HasPrefix(rest, "\"") {
 		rest = rest[1:]
-		end := strings.Index(rest, "\"")
-		if end < 0 {
+		before, _, ok := strings.Cut(rest, "\"")
+		if !ok {
 			return ""
 		}
 
-		return strings.TrimSpace(rest[:end])
+		return strings.TrimSpace(before)
 	}
 
 	end := strings.IndexAny(rest, "\r\n")
