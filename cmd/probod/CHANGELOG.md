@@ -4,6 +4,26 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.193.0] - 2026-05-26
+
+### Added
+
+- Add measure ↔ third-party many-to-many link with tabs on both detail pages
+- Add self-referential third-party relations with a `first_level` filter on the third-party list
+- Track source on detected storage trackers (localStorage, sessionStorage, indexedDB, cacheStorage)
+- Promote tracker pattern source on detection and trigger a draft banner version when adopting uncategorised patterns
+
+### Changed
+
+- Allow initial minor publishing of documents
+- Mark page-world extension writes (MV3 main world, userscripts with `@grant none`) with the new `EXTENSION` cookie source
+- Surface the measure state as a header badge and remove the measure detail right-hand drawer
+
+### Fixed
+
+- Fix timing attack on signin
+- Reject separator-only glob templates (e.g. `__*`) in tracker pattern analysis
+
 ## [0.192.0] - 2026-05-25
 
 ### Changed
