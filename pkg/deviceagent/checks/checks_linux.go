@@ -50,8 +50,8 @@ func linuxDiskEncryption(ctx context.Context) Result {
 	lsblk := RunCommand(ctx, "lsblk", "-o", "NAME,TYPE,FSTYPE,MOUNTPOINT", "-r")
 	if lsblk.Err == nil {
 		ev["lsblk"] = truncate(lsblk.Stdout, 800)
-		lines := strings.Split(lsblk.Stdout, "\n")
-		for _, line := range lines {
+		lines := strings.SplitSeq(lsblk.Stdout, "\n")
+		for line := range lines {
 			fields := strings.Fields(line)
 			if len(fields) < 2 {
 				continue
@@ -168,7 +168,7 @@ func parseIptablesInput(s string) (string, int) {
 		rules  int
 	)
 
-	for _, line := range strings.Split(s, "\n") {
+	for line := range strings.SplitSeq(s, "\n") {
 		line = strings.TrimSpace(line)
 		switch {
 		case strings.HasPrefix(line, "-P INPUT"):
@@ -359,7 +359,7 @@ func linuxMalwareProtection(ctx context.Context) Result {
 
 func nonCommentLines(s string) []string {
 	out := []string{}
-	for _, line := range strings.Split(s, "\n") {
+	for line := range strings.SplitSeq(s, "\n") {
 		t := strings.TrimSpace(line)
 		if t == "" || strings.HasPrefix(t, "#") {
 			continue
@@ -370,7 +370,7 @@ func nonCommentLines(s string) []string {
 }
 
 func kvLookup(body, key string) string {
-	for _, line := range strings.Split(body, "\n") {
+	for line := range strings.SplitSeq(body, "\n") {
 		eq := strings.IndexByte(line, '=')
 		if eq <= 0 {
 			continue
@@ -385,7 +385,7 @@ func kvLookup(body, key string) string {
 }
 
 func loginDefsLookup(body, key string) string {
-	for _, line := range strings.Split(body, "\n") {
+	for line := range strings.SplitSeq(body, "\n") {
 		line = strings.TrimSpace(line)
 		if line == "" || strings.HasPrefix(line, "#") {
 			continue

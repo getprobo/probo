@@ -126,7 +126,7 @@ func windowsScreenLock(ctx context.Context) Result {
 func parseWindowsUserScreenLock(s string) (map[string]string, bool, bool) {
 	users := map[string]string{}
 	var anyEnabled, anyDisabled bool
-	for _, line := range strings.Split(s, "\n") {
+	for line := range strings.SplitSeq(s, "\n") {
 		line = strings.TrimSpace(line)
 		if line == "" {
 			continue
@@ -205,7 +205,7 @@ func parseWindowsFirewallProfiles(s string) (map[string]string, bool) {
 	profiles := map[string]string{}
 	allEnabled := true
 	any := false
-	for _, profile := range strings.Split(s, ";") {
+	for profile := range strings.SplitSeq(s, ";") {
 		parts := strings.SplitN(strings.TrimSpace(profile), "=", 2)
 		if len(parts) != 2 {
 			continue
@@ -230,7 +230,7 @@ func parseWindowsFirewallProfiles(s string) (map[string]string, bool) {
 func parseNetshFirewallStates(s string) ([]string, bool) {
 	var states []string
 	anyOff := false
-	for _, line := range strings.Split(s, "\n") {
+	for line := range strings.SplitSeq(s, "\n") {
 		trimmed := strings.TrimSpace(line)
 		lower := strings.ToLower(trimmed)
 		if !strings.HasPrefix(lower, "state") {
