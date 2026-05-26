@@ -209,6 +209,14 @@ jobs:
           username: ${{ secrets.HARBOR_USERNAME }}
           password: ${{ secrets.HARBOR_PASSWORD }}
       - uses: "sigstore/cosign-installer@faadad0cce49287aee09b3a48701e75088a2c6ad" # v4.0.0
+      - name: "Log in to Harbor with cosign"
+        env:
+          HARBOR_USERNAME: ${{ secrets.HARBOR_USERNAME }}
+          HARBOR_PASSWORD: ${{ secrets.HARBOR_PASSWORD }}
+        run: |
+          echo "${HARBOR_PASSWORD}" | cosign login artifact.probo.inc \
+            --username "${HARBOR_USERNAME}" \
+            --password-stdin
       - name: "Compute image tag"
         id: tag
         run: |
@@ -229,11 +237,28 @@ jobs:
           IMAGE_TAG: ${{ steps.tag.outputs.image_tag }}
         run: |
           DIGEST=$(docker buildx imagetools inspect "artifact.probo.inc/probo/probo:${IMAGE_TAG}" --format '{{json .Manifest.Digest}}' | jq -r)
-          echo "digest=$DIGEST" >> "$GITHUB_OUTPUT"
+          if [ -z "${DIGEST}" ] || [ "${DIGEST}" = "null" ]; then
+            echo "Failed to resolve manifest digest for artifact.probo.inc/probo/probo:${IMAGE_TAG}"
+            exit 1
+          fi
+          echo "digest=${DIGEST}" >> "$GITHUB_OUTPUT"
       - name: "Sign Docker manifest"
         env:
           DIGEST: ${{ steps.digest.outputs.digest }}
-        run: cosign sign "artifact.probo.inc/probo/probo@${DIGEST}" --yes
+          IMAGE_TAG: ${{ steps.tag.outputs.image_tag }}
+        run: |
+          IMAGE="artifact.probo.inc/probo/probo"
+          cosign sign "${IMAGE}@${DIGEST}" --yes
+          cosign sign "${IMAGE}:${IMAGE_TAG}" --yes
+          cosign sign "${IMAGE}:latest" --yes
+      - name: "Verify Docker signature"
+        env:
+          DIGEST: ${{ steps.digest.outputs.digest }}
+        run: |
+          cosign verify \
+            --certificate-identity-regexp '^https://github.com/getprobo/probo/.github/workflows/release-probod.yaml@refs/tags/probod/v' \
+            --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
+            "artifact.probo.inc/probo/probo@${DIGEST}"
 
   github-release:
     name: "github-release"
