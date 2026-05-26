@@ -48,13 +48,8 @@ func SaveAPIKey(dir, key string) error {
 	}
 
 	path := KeyPath(dir)
-	tmp := path + ".tmp"
-	if err := os.WriteFile(tmp, []byte(strings.TrimSpace(key)+"\n"), 0o600); err != nil {
-		return fmt.Errorf("cannot write key: %w", err)
-	}
-
-	if err := os.Rename(tmp, path); err != nil {
-		return fmt.Errorf("cannot atomically replace key: %w", err)
+	if err := replaceRegularFile(path, []byte(strings.TrimSpace(key)+"\n"), 0o600); err != nil {
+		return fmt.Errorf("cannot replace key: %w", err)
 	}
 
 	return nil
