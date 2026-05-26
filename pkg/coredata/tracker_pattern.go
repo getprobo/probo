@@ -491,6 +491,52 @@ ON CONFLICT (cookie_banner_id, tracker_type, pattern, COALESCE(max_age_seconds, 
 	return result.RowsAffected() > 0, nil
 }
 
+// PromoteSource overwrites the row's source column with newSource and
+// refreshes updated_at. The caller is responsible for ranking
+// newSource against the existing value before invoking this method —
+// see shouldPromoteSource in pkg/cookiebanner. Returns ErrResourceNotFound
+// if no row with the receiver's ID exists in scope.
+func (tp *TrackerPattern) PromoteSource(
+	ctx context.Context,
+	tx pg.Tx,
+	scope Scoper,
+	newSource CookieSource,
+	updatedAt time.Time,
+) error {
+	q := `
+UPDATE tracker_patterns
+SET
+	source = @source,
+	updated_at = @updated_at
+WHERE
+	%s
+	AND id = @id
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"id":         tp.ID,
+		"source":     newSource,
+		"updated_at": updatedAt,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	result, err := tx.Exec(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot promote tracker pattern source: %w", err)
+	}
+
+	if result.RowsAffected() == 0 {
+		return ErrResourceNotFound
+	}
+
+	tp.Source = &newSource
+	tp.UpdatedAt = updatedAt
+
+	return nil
+}
+
 func (tp *TrackerPattern) Update(
 	ctx context.Context,
 	tx pg.Tx,

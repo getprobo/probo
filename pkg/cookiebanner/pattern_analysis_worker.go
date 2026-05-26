@@ -137,18 +137,6 @@ func (h *patternAnalysisHandler) Process(ctx context.Context, banner coredata.Co
 		func(ctx context.Context, tx pg.Tx) error {
 			scope := coredata.NewScopeFromObjectID(banner.ID)
 
-			var uncategorised coredata.CookieCategory
-
-			hasUncategorised := true
-
-			if err := uncategorised.LoadUncategorisedByCookieBannerID(ctx, tx, scope, banner.ID); err != nil {
-				if !errors.Is(err, coredata.ErrResourceNotFound) {
-					return fmt.Errorf("cannot load uncategorised category: %w", err)
-				}
-
-				hasUncategorised = false
-			}
-
 			var exactPatterns coredata.TrackerPatterns
 			if err := exactPatterns.LoadAllByCookieBannerID(
 				ctx,
@@ -162,8 +150,6 @@ func (h *patternAnalysisHandler) Process(ctx context.Context, banner coredata.Co
 			}
 
 			mergeGroups := findMergeGroups(exactPatterns, patternMergeThreshold)
-
-			consentChanged := false
 
 			for key, group := range mergeGroups {
 				var maxAge *int
@@ -203,8 +189,22 @@ func (h *patternAnalysisHandler) Process(ctx context.Context, banner coredata.Co
 						return fmt.Errorf("cannot load existing glob pattern %q: %w", key.template, err)
 					}
 
-					if globPattern.CookieCategoryID != key.categoryID || globPattern.MatchType != coredata.TrackerPatternMatchTypeGlob {
+					if globPattern.MatchType != coredata.TrackerPatternMatchTypeGlob || globPattern.CookieCategoryID != key.categoryID {
+						// The slot is occupied by an exact pattern or
+						// a user-recategorised glob. Skip the relink
+						// here so we don't overwrite the user's
+						// categorisation; the exact patterns in
+						// `group` will be picked up below by
+						// adoptUncategorisedPatterns if they live in
+						// the uncategorised category and globMatch
+						// the existing glob.
 						continue
+					}
+
+					if shouldPromoteSource(globPattern.Source, source) {
+						if err := globPattern.PromoteSource(ctx, tx, scope, *source, now); err != nil {
+							return fmt.Errorf("cannot promote source on glob pattern %q: %w", key.template, err)
+						}
 					}
 				}
 
@@ -219,20 +219,18 @@ func (h *patternAnalysisHandler) Process(ctx context.Context, banner coredata.Co
 					}
 				}
 
-				if !hasUncategorised || key.categoryID != uncategorised.ID {
-					consentChanged = true
-				}
-
 				h.logger.InfoCtx(
 					ctx,
 					"merged exact patterns into glob pattern",
 					log.String("template", key.template),
 					log.Int("count", len(group)),
+					log.Bool("inserted", inserted),
 					log.String("banner_id", banner.ID.String()),
 				)
 			}
 
-			if _, err := h.adoptUncategorisedPatterns(ctx, tx, scope, banner); err != nil {
+			adopted, err := h.adoptUncategorisedPatterns(ctx, tx, scope, banner)
+			if err != nil {
 				return fmt.Errorf("cannot adopt uncategorised patterns: %w", err)
 			}
 
@@ -241,7 +239,13 @@ func (h *patternAnalysisHandler) Process(ctx context.Context, banner coredata.Co
 				return fmt.Errorf("cannot refresh last_matched_at: %w", err)
 			}
 
-			if consentChanged {
+			// Merging exact patterns into a glob in the same category
+			// does not change visitor consent for those identifiers
+			// (findMergeGroups keys on category, so every member of a
+			// group is already under key.categoryID). Adoption is the
+			// only operation in this worker that moves trackers
+			// between categories and therefore changes consent.
+			if adopted {
 				if _, err := h.svc.ensureDraftVersionForBanner(ctx, tx, scope, banner.ID); err != nil {
 					return fmt.Errorf("cannot ensure draft version: %w", err)
 				}
@@ -633,15 +637,45 @@ func globMatch(pattern, name string) bool {
 	return true
 }
 
+// sourceRank converts a CookieSource into a comparable rank that
+// reflects signal strength: SCRIPT > EXTENSION > PRE_EXISTING. HTTP
+// and nil collapse into the PRE_EXISTING rank because bestSource
+// already normalises them; if a future caller hands us either, the
+// ranking still produces a sane "no promotion" outcome against
+// PRE_EXISTING/EXTENSION/SCRIPT existing values.
+func sourceRank(s *coredata.CookieSource) int {
+	if s == nil {
+		return 0
+	}
+
+	switch *s {
+	case coredata.CookieSourceScript:
+		return 2
+	case coredata.CookieSourceExtension:
+		return 1
+	default:
+		return 0
+	}
+}
+
+// shouldPromoteSource reports whether candidate represents a stronger
+// signal than existing under the SCRIPT > EXTENSION > PRE_EXISTING
+// precedence used across the cookie-banner pipeline. Equal ranks do
+// not promote so we avoid pointless writes.
+func shouldPromoteSource(existing, candidate *coredata.CookieSource) bool {
+	return sourceRank(candidate) > sourceRank(existing)
+}
+
 // bestSource rolls up the source values of a group of exact patterns
 // being merged into a single glob. Precedence is SCRIPT > EXTENSION
-// > PRE_EXISTING, mirroring both the upsert SQL's "page-script wins"
-// rule and the asymmetric signal strength of each bucket: SCRIPT is
-// high-confidence page evidence (a real page tracker), EXTENSION is
-// high-confidence extension evidence, and PRE_EXISTING is the
-// catch-all that may include extension state injected before SDK
-// load. HTTP and nil collapse into PRE_EXISTING here, preserving
-// the original two-value rollup behaviour for non-script values.
+// > PRE_EXISTING, mirroring both the page-script-wins rule in
+// detected_trackers and the asymmetric signal strength of each
+// bucket: SCRIPT is high-confidence page evidence (a real page
+// tracker), EXTENSION is high-confidence extension evidence, and
+// PRE_EXISTING is the catch-all that may include extension state
+// injected before SDK load. HTTP and nil collapse into PRE_EXISTING
+// here, preserving the original two-value rollup behaviour for
+// non-script values.
 func bestSource(patterns []*coredata.TrackerPattern) *coredata.CookieSource {
 	var hasExtension bool
 

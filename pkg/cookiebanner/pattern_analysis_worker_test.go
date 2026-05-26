@@ -1051,3 +1051,103 @@ func TestDurationBucket(t *testing.T) {
 		)
 	}
 }
+
+func TestShouldPromoteSource(t *testing.T) {
+	t.Parallel()
+
+	script := coredata.CookieSourceScript
+	extension := coredata.CookieSourceExtension
+	preExisting := coredata.CookieSourcePreExisting
+	http := coredata.CookieSourceHTTP
+
+	tests := []struct {
+		name      string
+		existing  *coredata.CookieSource
+		candidate *coredata.CookieSource
+		want      bool
+	}{
+		{
+			name:      "nil existing promotes to SCRIPT",
+			existing:  nil,
+			candidate: &script,
+			want:      true,
+		},
+		{
+			name:      "nil existing promotes to EXTENSION",
+			existing:  nil,
+			candidate: &extension,
+			want:      true,
+		},
+		{
+			name:      "nil existing does not promote to PRE_EXISTING (equal rank)",
+			existing:  nil,
+			candidate: &preExisting,
+			want:      false,
+		},
+		{
+			name:      "PRE_EXISTING promotes to SCRIPT",
+			existing:  &preExisting,
+			candidate: &script,
+			want:      true,
+		},
+		{
+			name:      "PRE_EXISTING promotes to EXTENSION",
+			existing:  &preExisting,
+			candidate: &extension,
+			want:      true,
+		},
+		{
+			name:      "EXTENSION promotes to SCRIPT",
+			existing:  &extension,
+			candidate: &script,
+			want:      true,
+		},
+		{
+			name:      "SCRIPT does not promote to PRE_EXISTING",
+			existing:  &script,
+			candidate: &preExisting,
+			want:      false,
+		},
+		{
+			name:      "SCRIPT does not promote to EXTENSION",
+			existing:  &script,
+			candidate: &extension,
+			want:      false,
+		},
+		{
+			name:      "EXTENSION does not promote to PRE_EXISTING",
+			existing:  &extension,
+			candidate: &preExisting,
+			want:      false,
+		},
+		{
+			name:      "SCRIPT does not promote to SCRIPT (equal rank, no write)",
+			existing:  &script,
+			candidate: &script,
+			want:      false,
+		},
+		{
+			name:      "HTTP collapses to PRE_EXISTING rank: does not promote SCRIPT",
+			existing:  &script,
+			candidate: &http,
+			want:      false,
+		},
+		{
+			name:      "HTTP collapses to PRE_EXISTING rank: equal to nil existing",
+			existing:  nil,
+			candidate: &http,
+			want:      false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(
+			tt.name,
+			func(t *testing.T) {
+				t.Parallel()
+
+				assert.Equal(t, tt.want, shouldPromoteSource(tt.existing, tt.candidate))
+			},
+		)
+	}
+}
