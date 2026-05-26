@@ -25,11 +25,13 @@ DOCKER_COMPOSE=	$(DOCKER) compose -f compose.yaml $(DOCKER_COMPOSE_FLAGS)
 PRB_VERSION=             $(shell cat cmd/prb/VERSION)
 PROBOD_VERSION=          $(shell cat cmd/probod/VERSION)
 PROBOD_BOOTSTRAP_VERSION=$(shell cat cmd/probod-bootstrap/VERSION)
+PROBOCTL_VERSION=        $(shell cat cmd/proboctl/VERSION)
 PROBO_AGENT_VERSION=     $(shell cat cmd/probo-agent/VERSION)
 
 PRB_LDFLAGS=             -ldflags "-X 'main.version=$(PRB_VERSION)'"
 PROBOD_LDFLAGS=          -ldflags "-X 'main.version=$(PROBOD_VERSION)' -X 'main.env=prod'"
 PROBOD_BOOTSTRAP_LDFLAGS=-ldflags "-X 'main.version=$(PROBOD_BOOTSTRAP_VERSION)'"
+PROBOCTL_LDFLAGS=        -ldflags "-X 'main.version=$(PROBOCTL_VERSION)'"
 PROBO_AGENT_LDFLAGS=     -ldflags "-X 'main.version=$(PROBO_AGENT_VERSION)'"
 
 GCFLAGS=	-gcflags="-e"
@@ -49,7 +51,14 @@ TEST_FLAGS?=	-race -cover -coverprofile=coverage.out
 E2E_CONFIG ?= $(CURDIR)/e2e/console/testdata/config.yaml
 E2E_COVER_DIR ?= $(CURDIR)/coverage/e2e
 
-DOCKER_IMAGE_NAME=	ghcr.io/getprobo/probo
+DOCKER_REGISTRY=	artifact.probo.inc
+DOCKER_PROXY=		$(DOCKER_REGISTRY)/dockerhub
+DOCKER_BASE_DIGEST=	sha256:c4a8d5503dfb2a3eb8ab5f807da5bc69a85730fb49b5cfca2330194ebcc41c7b
+DOCKER_BASE_IMAGE=	ubuntu:24.04@$(DOCKER_BASE_DIGEST)
+# Harbor proxy resolves digest refs as library/<name>@sha256:..., not library/<name>:tag@sha256:...
+DOCKER_PROXY_BASE_IMAGE=	$(DOCKER_PROXY)/library/ubuntu@$(DOCKER_BASE_DIGEST)
+DOCKER_IMAGE_NAME=	$(DOCKER_REGISTRY)/probo/probo
+HELM_CHART_OCI=		oci://$(DOCKER_REGISTRY)/probo
 DOCKER_TAG_NAME?=	latest
 
 GENERATED= pkg/server/api/connect/v1/schema/schema.go \
@@ -74,6 +83,9 @@ PRB_SRC=	cmd/prb/main.go
 
 PROBOD_BOOTSTRAP_BIN=	bin/probod-bootstrap
 PROBOD_BOOTSTRAP_SRC=	cmd/probod-bootstrap/main.go
+
+PROBOCTL_BIN=	bin/proboctl
+PROBOCTL_SRC=	cmd/proboctl/main.go
 
 PROBO_AGENT_BIN=	bin/probo-agent
 PROBO_AGENT_SRC=	cmd/probo-agent/main.go
@@ -177,7 +189,7 @@ coverage-combined: coverage-report test-e2e-coverage ## Generate combined covera
 	$(GO) tool cover -html=coverage-combined.out -o=coverage-combined.html
 
 .PHONY: build
-build: $(PROBOD_BIN) bin/prb bin/probod-bootstrap
+build: $(PROBOD_BIN) bin/prb bin/probod-bootstrap bin/proboctl $(PROBO_AGENT_BIN)
 
 CFG_DEV_OAUTH2_KEY = cfg/.dev-oauth2-signing-key.pem
 DEV_ENV            = .env
@@ -257,6 +269,10 @@ bin/prb:
 $(PROBOD_BOOTSTRAP_BIN):
 	$(GO_BUILD) $(PROBOD_BOOTSTRAP_LDFLAGS) -o $(PROBOD_BOOTSTRAP_BIN) $(PROBOD_BOOTSTRAP_SRC)
 
+.PHONY: bin/proboctl
+bin/proboctl:
+	$(GO_BUILD) $(PROBOCTL_LDFLAGS) -o $(PROBOCTL_BIN) $(PROBOCTL_SRC)
+
 .PHONY: $(PROBO_AGENT_BIN)
 $(PROBO_AGENT_BIN):
 	$(GO_BUILD) $(PROBO_AGENT_LDFLAGS) -o $(PROBO_AGENT_BIN) $(PROBO_AGENT_SRC)
@@ -332,6 +348,15 @@ genmodels: ## Refresh LLM model registry from OpenRouter
 .PHONY: help
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
+
+.PHONY: fix
+fix: fix-go ## Auto-fix Go code
+
+.PHONY: fix-go
+fix-go: generate embed ## Auto-fix Go code (format, go fix, lint --fix)
+	gofmt -w apps cmd packages pkg e2e
+	$(GO_BASE) fix -omitzero=false ./apps/... ./cmd/... ./packages/... ./pkg/... ./e2e/...
+	$(GOLINTCMD) run --fix ./...
 
 .PHONY: fmt
 fmt: fmt-go ## Format Go code
