@@ -27,6 +27,20 @@ Not every commit needs a body -- a single line is fine when the change is self-e
 Fix typo in third-party assessment prompt
 ```
 
+## No Conventional Commits
+
+This repository **does not** use Conventional Commits (`type(scope): summary`). The seven-rules style above is the only accepted format. Existing Conventional-Commits-style messages in the history are drift and must not be used as precedent.
+
+```text
+# GOOD
+Disconnect observer in cookie-banner load() error path
+
+# BAD -- Conventional Commits prefix
+fix(cookie-banner): disconnect observer in load() error path
+```
+
+The project does not consume the `type(scope):` prefix for any tooling (no changelog generator, no semantic-release, no commit-lint), so the prefix only adds noise. If a future need for machine-readable commit types arises, raise it in a separate change that updates this document first.
+
 ## Signing and Authorship
 
 All commits **must** be signed (`-s -S`):

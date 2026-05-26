@@ -32,4 +32,4 @@ The same applies to `git commit --amend`: pass `-s -S` (or `--amend --no-edit -s
 
 Verify with `git log -1 --show-signature` after committing; the output should show a valid signature **and** the `Signed-off-by:` trailer.
 
-See [`contrib/claude/commit.md`](../../contrib/claude/commit.md) for full commit conventions.
+See [`contrib/claude/commit.md`](../../contrib/claude/commit.md) for full commit conventions and [`.cursor/rules/git-commit-style.mdc`](git-commit-style.mdc) for message format rules (seven-rules style, no Conventional Commits).
