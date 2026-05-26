@@ -491,52 +491,12 @@ ON CONFLICT (cookie_banner_id, tracker_type, pattern, COALESCE(max_age_seconds, 
 	return result.RowsAffected() > 0, nil
 }
 
-// PromoteSource overwrites the row's source column with newSource and
-// refreshes updated_at. The caller is responsible for ranking
-// newSource against the existing value before invoking this method —
-// see shouldPromoteSource in pkg/cookiebanner. Returns ErrResourceNotFound
-// if no row with the receiver's ID exists in scope.
-func (tp *TrackerPattern) PromoteSource(
-	ctx context.Context,
-	tx pg.Tx,
-	scope Scoper,
-	newSource CookieSource,
-	updatedAt time.Time,
-) error {
-	q := `
-UPDATE tracker_patterns
-SET
-	source = @source,
-	updated_at = @updated_at
-WHERE
-	%s
-	AND id = @id
-`
-
-	q = fmt.Sprintf(q, scope.SQLFragment())
-
-	args := pgx.StrictNamedArgs{
-		"id":         tp.ID,
-		"source":     newSource,
-		"updated_at": updatedAt,
-	}
-	maps.Copy(args, scope.SQLArguments())
-
-	result, err := tx.Exec(ctx, q, args)
-	if err != nil {
-		return fmt.Errorf("cannot promote tracker pattern source: %w", err)
-	}
-
-	if result.RowsAffected() == 0 {
-		return ErrResourceNotFound
-	}
-
-	tp.Source = &newSource
-	tp.UpdatedAt = updatedAt
-
-	return nil
-}
-
+// Update rewrites the editable columns of the receiver's row,
+// including `source`. Callers MUST load the pattern under the same
+// transaction before mutating fields and calling Update, otherwise
+// stale local values will clobber concurrent writes. To advance
+// `source`, gate the assignment behind shouldPromoteSource in
+// pkg/cookiebanner — there is no DB-side ranking.
 func (tp *TrackerPattern) Update(
 	ctx context.Context,
 	tx pg.Tx,
@@ -550,6 +510,7 @@ SET
 	max_age_seconds = @max_age_seconds,
 	description = @description,
 	excluded = @excluded,
+	source = @source,
 	last_matched_at = @last_matched_at,
 	updated_at = @updated_at
 WHERE
@@ -566,6 +527,7 @@ WHERE
 		"max_age_seconds":    tp.MaxAgeSeconds,
 		"description":        tp.Description,
 		"excluded":           tp.Excluded,
+		"source":             tp.Source,
 		"last_matched_at":    tp.LastMatchedAt,
 		"updated_at":         tp.UpdatedAt,
 	}

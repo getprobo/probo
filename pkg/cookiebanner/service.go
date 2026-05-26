@@ -2223,7 +2223,10 @@ func (s *Service) reportDetectedTracker(
 		// items without a source and weaker re-detections cost
 		// nothing.
 		if shouldPromoteSource(matchedPattern.Source, info.Source) {
-			if err := matchedPattern.PromoteSource(ctx, tx, scope, *info.Source, now); err != nil {
+			matchedPattern.Source = info.Source
+			matchedPattern.UpdatedAt = now
+
+			if err := matchedPattern.Update(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot promote source on matched tracker pattern %q: %w", matchedPattern.Pattern, err)
 			}
 		}

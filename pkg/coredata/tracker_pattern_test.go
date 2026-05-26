@@ -50,7 +50,7 @@ func seedTrackerPatternFixture(t *testing.T, ctx context.Context, client *pg.Cli
 		org := &coredata.Organization{
 			ID:        organizationID,
 			TenantID:  tenantID,
-			Name:      "TrackerPattern Promote Test Org",
+			Name:      "TrackerPattern Test Org",
 			CreatedAt: now,
 			UpdatedAt: now,
 		}
@@ -61,10 +61,10 @@ func seedTrackerPatternFixture(t *testing.T, ctx context.Context, client *pg.Cli
 		banner := &coredata.CookieBanner{
 			ID:                cookieBannerID,
 			OrganizationID:    organizationID,
-			Name:              "TrackerPattern Promote Test Banner",
-			Origin:            "https://promote-test.example.com",
+			Name:              "TrackerPattern Test Banner",
+			Origin:            "https://tracker-pattern-test.example.com",
 			State:             coredata.CookieBannerStateActive,
-			CookiePolicyURL:   "https://promote-test.example.com/cookies",
+			CookiePolicyURL:   "https://tracker-pattern-test.example.com/cookies",
 			ConsentExpiryDays: 180,
 			ShowBranding:      false,
 			DefaultLanguage:   "en",
@@ -162,7 +162,15 @@ func seedTrackerPattern(
 	return tp
 }
 
-func TestTrackerPattern_PromoteSource_OverwritesSource(t *testing.T) {
+// TestTrackerPattern_Update_WritesSource pins the source-promotion
+// path now folded into Update: load the row, bump Source, call
+// Update, and verify the new value lands in the DB. This is the
+// invariant the pattern-analysis worker and reportDetectedTracker
+// rely on when promoting PRE_EXISTING → SCRIPT/EXTENSION; if Update
+// stops writing `source`, every "ratchet the signal" call site
+// silently regresses without the wrapping `shouldPromoteSource`
+// gate noticing.
+func TestTrackerPattern_Update_WritesSource(t *testing.T) {
 	t.Parallel()
 
 	client := newTestPgClient(t)
@@ -180,79 +188,63 @@ func TestTrackerPattern_PromoteSource_OverwritesSource(t *testing.T) {
 	)
 
 	bumpedAt := time.Now().UTC().Add(time.Hour).Truncate(time.Microsecond)
+	newSource := coredata.CookieSourceScript
 
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
-		return tp.PromoteSource(ctx, tx, fx.scope, coredata.CookieSourceScript, bumpedAt)
+		var loaded coredata.TrackerPattern
+		if err := loaded.LoadByID(ctx, tx, fx.scope, tp.ID); err != nil {
+			return err
+		}
+
+		loaded.Source = &newSource
+		loaded.UpdatedAt = bumpedAt
+
+		return loaded.Update(ctx, tx, fx.scope)
 	}))
 
-	require.NotNil(t, tp.Source)
-	assert.Equal(t, coredata.CookieSourceScript, *tp.Source, "receiver must reflect the new source")
-	assert.True(t, tp.UpdatedAt.Equal(bumpedAt), "receiver must reflect the new updated_at")
-
-	loaded := &coredata.TrackerPattern{}
+	reloaded := &coredata.TrackerPattern{}
 
 	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
-		return loaded.LoadByID(ctx, conn, fx.scope, tp.ID)
+		return reloaded.LoadByID(ctx, conn, fx.scope, tp.ID)
 	}))
 
-	require.NotNil(t, loaded.Source)
-	assert.Equal(t, coredata.CookieSourceScript, *loaded.Source, "DB row must reflect the promoted source")
-	assert.True(t, loaded.UpdatedAt.Equal(bumpedAt), "DB row must reflect the new updated_at")
+	require.NotNil(t, reloaded.Source)
+	assert.Equal(t, coredata.CookieSourceScript, *reloaded.Source, "DB row must reflect the new source")
+	assert.True(t, reloaded.UpdatedAt.Equal(bumpedAt), "DB row must reflect the new updated_at")
 }
 
-func TestTrackerPattern_PromoteSource_OnlyTouchesSourceAndUpdatedAt(t *testing.T) {
+// TestTrackerPattern_Update_NotFoundForMissingRow pins the
+// ErrResourceNotFound contract: callers like the worker and
+// reportDetectedTracker assume an unmatched UPDATE surfaces as
+// ErrResourceNotFound so they can distinguish "row vanished mid-txn"
+// from arbitrary pg errors.
+func TestTrackerPattern_Update_NotFoundForMissingRow(t *testing.T) {
 	t.Parallel()
 
 	client := newTestPgClient(t)
 	ctx := context.Background()
 	fx := seedTrackerPatternFixture(t, ctx, client)
 
-	tp := seedTrackerPattern(
-		t,
-		ctx,
-		client,
-		fx,
-		"*_token",
-		coredata.TrackerPatternMatchTypeGlob,
-		coredata.CookieSourcePreExisting,
-	)
-
-	originalCategory := tp.CookieCategoryID
-	originalDisplay := tp.DisplayName
-	originalMaxAge := tp.MaxAgeSeconds
-	originalExcluded := tp.Excluded
-	originalDescription := tp.Description
-
-	bumpedAt := time.Now().UTC().Add(2 * time.Hour).Truncate(time.Microsecond)
-
-	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
-		return tp.PromoteSource(ctx, tx, fx.scope, coredata.CookieSourceExtension, bumpedAt)
-	}))
-
-	loaded := &coredata.TrackerPattern{}
-
-	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
-		return loaded.LoadByID(ctx, conn, fx.scope, tp.ID)
-	}))
-
-	assert.Equal(t, originalCategory, loaded.CookieCategoryID, "category must be untouched")
-	assert.Equal(t, originalDisplay, loaded.DisplayName, "display_name must be untouched")
-	assert.Equal(t, originalMaxAge, loaded.MaxAgeSeconds, "max_age_seconds must be untouched")
-	assert.Equal(t, originalExcluded, loaded.Excluded, "excluded must be untouched")
-	assert.Equal(t, originalDescription, loaded.Description, "description must be untouched")
-}
-
-func TestTrackerPattern_PromoteSource_NotFoundForMissingRow(t *testing.T) {
-	t.Parallel()
-
-	client := newTestPgClient(t)
-	ctx := context.Background()
-	fx := seedTrackerPatternFixture(t, ctx, client)
-
-	tp := &coredata.TrackerPattern{ID: gid.New(fx.scope.GetTenantID(), coredata.TrackerPatternEntityType)}
+	maxAge := 3600
+	source := coredata.CookieSourceScript
+	now := time.Now().UTC().Truncate(time.Microsecond)
+	tp := &coredata.TrackerPattern{
+		ID:               gid.New(fx.scope.GetTenantID(), coredata.TrackerPatternEntityType),
+		OrganizationID:   fx.organizationID,
+		CookieBannerID:   fx.cookieBannerID,
+		CookieCategoryID: fx.cookieCategoryID,
+		TrackerType:      coredata.TrackerTypeCookie,
+		Pattern:          "*_ghost",
+		MatchType:        coredata.TrackerPatternMatchTypeGlob,
+		DisplayName:      "*_ghost",
+		MaxAgeSeconds:    &maxAge,
+		Source:           &source,
+		CreatedAt:        now,
+		UpdatedAt:        now,
+	}
 
 	err := client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
-		return tp.PromoteSource(ctx, tx, fx.scope, coredata.CookieSourceScript, time.Now().UTC())
+		return tp.Update(ctx, tx, fx.scope)
 	})
 
 	assert.ErrorIs(t, err, coredata.ErrResourceNotFound)

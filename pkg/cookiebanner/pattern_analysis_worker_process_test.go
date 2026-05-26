@@ -521,7 +521,8 @@ func TestPatternAnalysisWorker_AdoptionPromotesSourceCrossCategory(t *testing.T)
 // detected_tracker straight to the glob, so no new exact is
 // created and the merge/adoption loops in
 // patternAnalysisHandler.Process never see the new signal. Without
-// the in-line PromoteSource call in reportDetectedTracker, only
+// the in-line source promotion in reportDetectedTracker (which
+// mutates matchedPattern.Source and writes via Update), only
 // last_matched_at would advance — source would stay stuck at
 // PRE_EXISTING despite the new SDK-observed evidence. This test
 // pins the same-category promotion path; the cross-category gap

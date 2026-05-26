@@ -202,7 +202,10 @@ func (h *patternAnalysisHandler) Process(ctx context.Context, banner coredata.Co
 					}
 
 					if shouldPromoteSource(globPattern.Source, source) {
-						if err := globPattern.PromoteSource(ctx, tx, scope, *source, now); err != nil {
+						globPattern.Source = source
+						globPattern.UpdatedAt = now
+
+						if err := globPattern.Update(ctx, tx, scope); err != nil {
 							return fmt.Errorf("cannot promote source on glob pattern %q: %w", key.template, err)
 						}
 					}
@@ -784,12 +787,15 @@ func (h *patternAnalysisHandler) adoptUncategorisedPatterns(
 		// non-uncategorised category. Without this, a
 		// PRE_EXISTING glob never advances to SCRIPT/EXTENSION
 		// even though new SDK-observed exacts confirm the
-		// stronger signal. PromoteSource mutates match.Source
-		// in place, so subsequent adoptions against the same
-		// glob ratchet correctly (PRE_EXISTING → EXTENSION →
-		// SCRIPT) without redundant writes.
+		// stronger signal. We mutate match.Source in place
+		// before calling Update so subsequent adoptions against
+		// the same glob ratchet correctly (PRE_EXISTING →
+		// EXTENSION → SCRIPT) without redundant writes.
 		if shouldPromoteSource(match.Source, ep.Source) {
-			if err := match.PromoteSource(ctx, tx, scope, *ep.Source, time.Now()); err != nil {
+			match.Source = ep.Source
+			match.UpdatedAt = time.Now()
+
+			if err := match.Update(ctx, tx, scope); err != nil {
 				return false, fmt.Errorf("cannot promote source on glob pattern %q: %w", match.Pattern, err)
 			}
 		}
