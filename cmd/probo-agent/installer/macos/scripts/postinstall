@@ -46,20 +46,41 @@ chmod 0700 "${STATE_DIR}"
 #   PROBO_ENROLLMENT_TOKEN=<token>
 #   PROBO_NO_AUTO_UPDATE=true
 #
-# We source the file in a subshell so a malformed line can never
-# leak variables into our env, then validate the values we care
-# about.
+# Parse KEY=VALUE lines without sourcing or eval so a crafted conf
+# file cannot execute arbitrary shell as root.
+strip_conf_value() {
+    local v="$1"
+    case "$v" in
+        \"*\") v="${v:1:${#v}-2}" ;;
+        \'*\') v="${v:1:${#v}-2}" ;;
+    esac
+    printf '%s' "$v"
+}
+
 if [ -f "${CONF_FILE}" ]; then
     echo "Found ${CONF_FILE}, attempting unattended enrollment."
 
-    eval "$(
-        set -e
-        # shellcheck source=/dev/null
-        . "${CONF_FILE}"
-        printf 'CONF_SERVER=%q\n'  "${PROBO_SERVER_URL:-}"
-        printf 'CONF_TOKEN=%q\n'   "${PROBO_ENROLLMENT_TOKEN:-}"
-        printf 'CONF_NOUPDATE=%q\n' "${PROBO_NO_AUTO_UPDATE:-}"
-    )"
+    CONF_SERVER=""
+    CONF_TOKEN=""
+    CONF_NOUPDATE=""
+    while IFS= read -r line || [ -n "$line" ]; do
+        line="${line%%#*}"
+        line="${line#"${line%%[![:space:]]*}"}"
+        line="${line%"${line##*[![:space:]]}"}"
+        [ -z "$line" ] && continue
+
+        case "$line" in
+            PROBO_SERVER_URL=*)
+                CONF_SERVER="$(strip_conf_value "${line#PROBO_SERVER_URL=}")"
+                ;;
+            PROBO_ENROLLMENT_TOKEN=*)
+                CONF_TOKEN="$(strip_conf_value "${line#PROBO_ENROLLMENT_TOKEN=}")"
+                ;;
+            PROBO_NO_AUTO_UPDATE=*)
+                CONF_NOUPDATE="$(strip_conf_value "${line#PROBO_NO_AUTO_UPDATE=}")"
+                ;;
+        esac
+    done < "${CONF_FILE}"
 
     if [ -z "${CONF_SERVER}" ] || [ -z "${CONF_TOKEN}" ]; then
         echo "warning: ${CONF_FILE} is missing PROBO_SERVER_URL or PROBO_ENROLLMENT_TOKEN; skipping enrollment."
