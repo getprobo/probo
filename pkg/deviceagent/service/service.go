@@ -27,7 +27,7 @@ type Config struct {
 
 // Default service identifiers by platform.
 const (
-	DefaultLabel       = "com.getprobo.agent"
+	DefaultLabel       = "com.probo.agent"
 	DefaultUnixName    = "probo-agent"
 	DefaultWindowsName = "ProboAgent"
 )
