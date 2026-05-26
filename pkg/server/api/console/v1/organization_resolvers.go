@@ -549,6 +549,17 @@ func (r *organizationResolver) ConnectorProviderInfos(ctx context.Context, obj *
 
 	for _, p := range coredata.ConnectorProviders() {
 		_, oauthErr := r.connectorRegistry.Get(string(p))
+		oauthConfigured := oauthErr == nil
+		apiKeySupported := r.providerSupportsAPIKey(p)
+		clientCredentialsSupported := r.providerSupportsClientCredentials(p)
+
+		// Skip providers that cannot be connected in this deployment: no
+		// OAuth client credentials configured and no key-based fallback
+		// (API key or client credentials) supported. Surfacing them would
+		// render dead entries the operator has no way to use.
+		if !oauthConfigured && !apiKeySupported && !clientCredentialsSupported {
+			continue
+		}
 
 		scopes := r.providerRegistry.ProviderOAuth2Scopes(p)
 		if scopes == nil {
@@ -558,9 +569,9 @@ func (r *organizationResolver) ConnectorProviderInfos(ctx context.Context, obj *
 		info := &types.ConnectorProviderInfo{
 			Provider:                   p,
 			DisplayName:                r.providerDisplayName(p),
-			OauthConfigured:            oauthErr == nil,
-			APIKeySupported:            r.providerSupportsAPIKey(p),
-			ClientCredentialsSupported: r.providerSupportsClientCredentials(p),
+			OauthConfigured:            oauthConfigured,
+			APIKeySupported:            apiKeySupported,
+			ClientCredentialsSupported: clientCredentialsSupported,
 			Oauth2Scopes:               scopes,
 			ExtraSettings:              r.providerExtraSettings(p),
 		}
