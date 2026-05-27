@@ -1,6 +1,15 @@
-import { useCallback, useEffect, useRef } from "react";
-import { registerCookieBanner } from "@probo/cookie-banner";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
+import posthog from "posthog-js";
+import { registerCookieBanner, type BannerConfig } from "@probo/cookie-banner";
 import { useConfig } from "../hooks/useConfig";
+import {
+  configurePosthogFromBanner,
+  getPosthogStatus,
+  initPosthog,
+  subscribePosthogStatus,
+  type PosthogStatus,
+} from "../lib/posthog";
+import { PosthogPanel } from "./_components/PosthogPanel";
 import type { EventEntry } from "../App";
 
 let registered = false;
@@ -13,12 +22,15 @@ interface ThemedBannerTabProps {
 export function ThemedBannerTab({ events, pushEvent }: ThemedBannerTabProps) {
   const [config] = useConfig();
   const elRef = useRef<HTMLElement | null>(null);
+  const posthogStatus = usePosthogStatus();
+  const [manualPing, setManualPing] = useState<string | null>(null);
 
   useEffect(() => {
     if (!registered) {
       registerCookieBanner();
       registered = true;
     }
+    initPosthog();
   }, []);
 
   const attachListeners = useCallback(
@@ -26,15 +38,26 @@ export function ThemedBannerTab({ events, pushEvent }: ThemedBannerTabProps) {
       elRef.current = el;
       if (!el) return;
 
-      el.addEventListener("probo-ready", (e: Event) =>
-        pushEvent("probo-ready", (e as CustomEvent).detail),
-      );
+      el.addEventListener("probo-ready", (e: Event) => {
+        const detail = (e as CustomEvent).detail as {
+          config?: BannerConfig;
+        };
+        if (detail?.config) {
+          configurePosthogFromBanner(detail.config);
+        }
+        pushEvent("probo-ready", (e as CustomEvent).detail);
+      });
       el.addEventListener("probo-consent", (e: Event) =>
         pushEvent("probo-consent", (e as CustomEvent).detail),
       );
     },
     [pushEvent],
   );
+
+  const sendPing = useCallback(() => {
+    posthog.capture("themed_tab_manual_ping", { source: "example" });
+    setManualPing(new Date().toISOString());
+  }, []);
 
   if (!config.bannerId || !config.baseUrl) {
     return (
@@ -55,6 +78,12 @@ export function ThemedBannerTab({ events, pushEvent }: ThemedBannerTabProps) {
         <code>&lt;probo-cookie-banner&gt;</code>. The banner appears in the
         bottom-right corner.
       </p>
+
+      <PosthogPanel
+        status={posthogStatus}
+        manualPing={manualPing}
+        onSendPing={sendPing}
+      />
 
       <probo-cookie-banner
         ref={attachListeners}
@@ -91,4 +120,8 @@ export function ThemedBannerTab({ events, pushEvent }: ThemedBannerTabProps) {
       )}
     </div>
   );
+}
+
+function usePosthogStatus(): PosthogStatus {
+  return useSyncExternalStore(subscribePosthogStatus, getPosthogStatus, getPosthogStatus);
 }

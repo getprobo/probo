@@ -13,3 +13,12 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 export { registerCookieBanner } from "./themed-banner";
+export type {
+  BannerConfig,
+  Category,
+  ConsentAction,
+  ConsentRecord,
+  CookieItem,
+  Regulation,
+  VisitorConsent,
+} from "./types";
