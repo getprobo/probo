@@ -368,11 +368,10 @@ func (s *OrganizationService) RemoveUser(
 
 func (s *OrganizationService) ArchiveUser(
 	ctx context.Context,
+	scope coredata.Scoper,
 	organizationID gid.GID,
 	profileID gid.GID,
 ) error {
-	scope := coredata.NewScopeFromObjectID(organizationID)
-
 	return s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {

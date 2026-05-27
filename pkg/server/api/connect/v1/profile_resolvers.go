@@ -106,11 +106,12 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, input types.UpdateUse
 
 // ArchiveUser is the resolver for the archiveUser field.
 func (r *mutationResolver) ArchiveUser(ctx context.Context, input types.ArchiveUserInput) (*types.ArchiveUserPayload, error) {
-	if _, err := r.authorize(ctx, input.ProfileID, iam.ActionMembershipProfileDelete); err != nil {
+	scope, err := r.authorize(ctx, input.ProfileID, iam.ActionMembershipProfileDelete)
+	if err != nil {
 		return nil, err
 	}
 
-	err := r.iam.OrganizationService.ArchiveUser(ctx, input.OrganizationID, input.ProfileID)
+	err = r.iam.OrganizationService.ArchiveUser(ctx, scope, input.OrganizationID, input.ProfileID)
 	if err != nil {
 		if _, ok := errors.AsType[*iam.ErrUserManagedBySCIM](err); ok {
 			return nil, gqlutils.Conflictf(ctx, "user is managed by SCIM and cannot be archived")

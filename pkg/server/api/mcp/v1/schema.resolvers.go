@@ -2937,11 +2937,12 @@ func (r *Resolver) RemoveUserTool(ctx context.Context, req *mcp.CallToolRequest,
 }
 
 func (r *Resolver) ArchiveUserTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ArchiveUserInput) (*mcp.CallToolResult, types.ArchiveUserOutput, error) {
-	if _, err := r.Authorize(ctx, input.ProfileID, iam.ActionMembershipProfileDelete); err != nil {
+	scope, err := r.Authorize(ctx, input.ProfileID, iam.ActionMembershipProfileDelete)
+	if err != nil {
 		return nil, types.ArchiveUserOutput{}, err
 	}
 
-	err := r.iamSvc.OrganizationService.ArchiveUser(ctx, input.OrganizationID, input.ProfileID)
+	err = r.iamSvc.OrganizationService.ArchiveUser(ctx, scope, input.OrganizationID, input.ProfileID)
 	if err != nil {
 		if _, ok := errors.AsType[*iam.ErrUserManagedBySCIM](err); ok {
 			return nil, types.ArchiveUserOutput{}, fmt.Errorf("user is managed by SCIM and cannot be archived: %w", err)
