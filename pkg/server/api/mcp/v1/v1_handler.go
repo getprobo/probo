@@ -15,6 +15,7 @@
 package mcp_v1
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -22,6 +23,7 @@ import (
 	"go.gearno.de/kit/log"
 	mcpgenmcp "go.probo.inc/mcpgen/mcp"
 	"go.probo.inc/probo/pkg/accessreview"
+	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/cookiebanner"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/probo"
@@ -31,7 +33,16 @@ import (
 	"go.probo.inc/probo/pkg/server/api/mcp/v1/server"
 )
 
-func NewMux(logger *log.Logger, proboSvc *probo.Service, iamSvc *iam.Service, accessReviewSvc *accessreview.Service, cookieBannerSvc *cookiebanner.Service, riskManagementSvc *riskmanagement.Service, tokenSecret string) *chi.Mux {
+func NewMux(
+	logger *log.Logger,
+	proboSvc *probo.Service,
+	iamSvc *iam.Service,
+	accessReviewSvc *accessreview.Service,
+	cookieBannerSvc *cookiebanner.Service,
+	riskManagementSvc *riskmanagement.Service,
+	baseURL *baseurl.BaseURL,
+	tokenSecret string,
+) *chi.Mux {
 	logger = logger.Named("mcp.v1")
 
 	logger.Info("initializing MCP server")
@@ -63,9 +74,15 @@ func NewMux(logger *log.Logger, proboSvc *probo.Service, iamSvc *iam.Service, ac
 	)
 	protectedHandler := http.NewCrossOriginProtection().Handler(handler)
 
+	protectedResource, err := ProtectedResourceConfig(baseURL)
+	if err != nil {
+		panic(fmt.Errorf("cannot configure MCP protected resource: %w", err))
+	}
+
 	r := chi.NewMux()
 	r.Use(authn.NewAPIKeyMiddleware(iamSvc, tokenSecret))
-	r.Handle("/", RequireAPIKeyHandler(logger, protectedHandler))
+	r.Use(authn.NewOAuth2AccessTokenMiddleware(iamSvc))
+	r.Handle("/", RequireIdentityHandler(logger, protectedResource, protectedHandler))
 
 	logger.Info("MCP server initialized successfully")
 

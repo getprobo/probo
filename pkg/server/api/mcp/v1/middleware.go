@@ -16,17 +16,24 @@ package mcp_v1
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 
 	"go.gearno.de/kit/httpserver"
 	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/iam/oauth2server"
 	"go.probo.inc/probo/pkg/server/api/authn"
 )
 
-func RequireAPIKeyHandler(
+func RequireIdentityHandler(
 	logger *log.Logger,
+	protectedResource oauth2server.ProtectedResourceConfig,
 	next http.Handler,
 ) http.Handler {
+	wwwAuthenticate, err := oauth2server.WWWAuthenticateHeader(protectedResource.Resource)
+	if err != nil {
+		panic(fmt.Errorf("cannot build MCP WWW-Authenticate header: %w", err))
+	}
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
@@ -42,23 +49,30 @@ func RequireAPIKeyHandler(
 			log.String("path", r.URL.Path),
 		)
 
-		apiKey := authn.APIKeyFromContext(ctx)
-
 		identity := authn.IdentityFromContext(ctx)
 		if identity == nil {
-			w.Header().Set("WWW-Authenticate", "Bearer")
+			w.Header().Set("WWW-Authenticate", wwwAuthenticate)
 			httpserver.RenderError(w, http.StatusUnauthorized, errors.New("authentication required"))
 
 			return
 		}
 
-		logger.InfoCtx(
-			ctx,
-			"MCP authentication successful",
-			log.String("correlation_id", correlationID),
-			log.String("identity_id", identity.ID.String()),
-			log.String("api_key_id", apiKey.ID.String()),
-		)
+		if apiKey := authn.APIKeyFromContext(ctx); apiKey != nil {
+			logger.InfoCtx(
+				ctx,
+				"MCP authentication successful",
+				log.String("correlation_id", correlationID),
+				log.String("identity_id", identity.ID.String()),
+				log.String("api_key_id", apiKey.ID.String()),
+			)
+		} else {
+			logger.InfoCtx(
+				ctx,
+				"MCP authentication successful",
+				log.String("correlation_id", correlationID),
+				log.String("identity_id", identity.ID.String()),
+			)
+		}
 
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})

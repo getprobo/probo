@@ -16,6 +16,7 @@ package server
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"path"
 	"strings"
@@ -40,6 +41,7 @@ import (
 	"go.probo.inc/probo/pkg/securecookie"
 	"go.probo.inc/probo/pkg/server/api"
 	"go.probo.inc/probo/pkg/server/api/compliancepage"
+	mcp_v1 "go.probo.inc/probo/pkg/server/api/mcp/v1"
 	"go.probo.inc/probo/pkg/server/mailactions"
 	trust_web "go.probo.inc/probo/pkg/server/trust"
 	console_web "go.probo.inc/probo/pkg/server/web"
@@ -80,7 +82,7 @@ type Server struct {
 	trustWebServer     *trust_web.Server
 	router             *chi.Mux
 	extraHeaderFields  map[string]string
-	baseURL            string
+	baseURL            *baseurl.BaseURL
 	proboService       *probo.Service
 	iamService         *iam.Service
 	trustService       *trust.Service
@@ -135,23 +137,34 @@ func NewServer(cfg Config) (*Server, error) {
 		trustWebServer:     trustWebServer,
 		router:             router,
 		extraHeaderFields:  cfg.ExtraHeaderFields,
-		baseURL:            cfg.BaseURL.String(),
+		baseURL:            cfg.BaseURL,
 		proboService:       cfg.Probo,
 		iamService:         cfg.IAM,
 		trustService:       cfg.Trust,
 		logger:             cfg.Logger,
 	}
 
-	server.setupRoutes(cfg.BaseURL.String())
+	if err := server.setupRoutes(cfg.BaseURL.String()); err != nil {
+		return nil, err
+	}
 
 	return server, nil
 }
 
-func (s *Server) setupRoutes(baseURL string) {
+func (s *Server) setupRoutes(baseURL string) error {
 	// OIDC Discovery 1.0 §4 and RFC 8414 §3 both require the metadata
 	// document at the issuer root under well-known paths.
 	s.router.Get("/.well-known/openid-configuration", s.oidcDiscoveryHandler)
 	s.router.Get("/.well-known/oauth-authorization-server", s.oidcDiscoveryHandler)
+	protectedResourceWellKnownPath, err := mcp_v1.ProtectedResourceWellKnownPath()
+	if err != nil {
+		return fmt.Errorf("cannot build MCP protected resource well-known path: %w", err)
+	}
+
+	s.router.Get(
+		protectedResourceWellKnownPath,
+		s.protectedResourceMetadataHandler(mcp_v1.ProtectedResourceConfig),
+	)
 
 	s.router.Mount("/api", http.StripPrefix("/api", s.apiServer))
 	s.router.Mount("/mail-actions", http.StripPrefix("/mail-actions", s.mailActionsHandler))
@@ -163,6 +176,8 @@ func (s *Server) setupRoutes(baseURL string) {
 	})
 
 	s.router.Mount("/", s.consoleWebServer)
+
+	return nil
 }
 
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -177,7 +192,7 @@ func (s *Server) setExtraHeaders(w http.ResponseWriter) {
 }
 
 func (s *Server) oidcDiscoveryHandler(w http.ResponseWriter, r *http.Request) {
-	api := s.baseURL + "/api/connect/v1"
+	api := s.baseURL.String() + "/api/connect/v1"
 
 	endpoints := oauth2server.Endpoints{
 		Authorization:       uri.URI(api + "/oauth2/authorize"),
@@ -194,6 +209,22 @@ func (s *Server) oidcDiscoveryHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Cache-Control", "public, max-age=3600")
 	httpserver.RenderJSON(w, http.StatusOK, metadata)
+}
+
+func (s *Server) protectedResourceMetadataHandler(
+	configFn func(baseURL *baseurl.BaseURL) (oauth2server.ProtectedResourceConfig, error),
+) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		cfg, err := configFn(s.baseURL)
+		if err != nil {
+			panic(fmt.Errorf("cannot load protected resource config: %w", err))
+		}
+
+		metadata := oauth2server.NewProtectedResourceMetadata(cfg)
+
+		w.Header().Set("Cache-Control", "public, max-age=3600")
+		httpserver.RenderJSON(w, http.StatusOK, metadata)
+	}
 }
 
 func (s *Server) handleCustomDomain404(w http.ResponseWriter, r *http.Request) {
