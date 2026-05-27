@@ -4,6 +4,12 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.190.0] - 2026-05-27
+
+### Added
+
+- Add `prb user archive` command to deactivate a user profile while keeping them in the organization
+
 ## [0.189.0] - 2026-05-26
 
 ### Added
