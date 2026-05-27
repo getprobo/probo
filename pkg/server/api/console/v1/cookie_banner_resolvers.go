@@ -16,6 +16,7 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/probo"
+	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/console/v1/dataloader"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
@@ -1271,6 +1272,78 @@ func (r *trackerPatternResolver) DetectedCount(ctx context.Context, obj *types.T
 	}
 
 	return count, nil
+}
+
+// ThirdParty is the resolver for the thirdParty field.
+func (r *trackerPatternResolver) ThirdParty(ctx context.Context, obj *types.TrackerPattern) (*types.ThirdParty, error) {
+	if obj.ThirdPartyID == nil {
+		return nil, nil
+	}
+
+	if _, err := r.authorize(ctx, *obj.ThirdPartyID, probo.ActionThirdPartyGet); err != nil {
+		return nil, err
+	}
+
+	loaders := dataloader.FromContext(ctx)
+
+	tp, err := loaders.ThirdParty.Load(ctx, *obj.ThirdPartyID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
+			return nil, nil
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot get tracker pattern third party", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewThirdParty(tp), nil
+}
+
+// CommonThirdParty is the resolver for the commonThirdParty field.
+//
+// The org-scoped thirdParty takes priority: when ThirdPartyID is set we
+// short-circuit to nil so the chained common-tracker-pattern lookup is
+// never paid for.
+func (r *trackerPatternResolver) CommonThirdParty(ctx context.Context, obj *types.TrackerPattern) (*types.CommonThirdParty, error) {
+	if obj.ThirdPartyID != nil || obj.CommonTrackerPatternID == nil {
+		return nil, nil
+	}
+
+	identity := authn.IdentityFromContext(ctx)
+	if _, err := r.authorize(ctx, identity.ID, probo.ActionCommonThirdPartyGet); err != nil {
+		return nil, err
+	}
+
+	loaders := dataloader.FromContext(ctx)
+
+	pattern, err := loaders.CommonTrackerPattern.Load(ctx, *obj.CommonTrackerPatternID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
+			return nil, nil
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot get common tracker pattern", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	if pattern.CommonThirdPartyID == nil {
+		return nil, nil
+	}
+
+	party, err := loaders.CommonThirdParty.Load(ctx, *pattern.CommonThirdPartyID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
+			return nil, nil
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot get common third party", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewCommonThirdParty(party), nil
 }
 
 // DetectedTrackers is the resolver for the detectedTrackers field.
