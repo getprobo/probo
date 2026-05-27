@@ -266,8 +266,23 @@ probo:
 
   # Agent tools (optional, shared across agents)
   agentTools:
-    # Firecrawl web search API key (used by tracker mapping and third-party assessor agents)
+    # Firecrawl web search API key (used by tracker mapping and third-party vetter agents)
     firecrawlApiKey: ""
+
+  # Third-party vetter agent (optional, requires openai.apiKey or anthropic key)
+  thirdPartyVetter:
+    provider: ""
+    modelName: ""
+    temperature: ""
+    maxTokens: ""
+
+  # Third-party vetting background worker tuning (optional). interval and
+  # staleAfter are in seconds. Keep concurrency modest to stay under LLM
+  # rate limits and the database connection pool.
+  thirdPartyVettingWorker:
+    interval: 10
+    maxConcurrency: 1
+    staleAfter: 1500
 
   # Tracker mapping agent (optional, requires openai.apiKey or anthropic key)
   trackerMapping:

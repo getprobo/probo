@@ -26,14 +26,20 @@ import (
 )
 
 type Service struct {
-	pg   *pg.Client
-	file *file.Service
+	pg             *pg.Client
+	file           *file.Service
+	vetter         Vetter
+	vettingEnabled bool
 }
 
-func NewService(pgClient *pg.Client, fileSvc *file.Service) *Service {
+func NewService(pgClient *pg.Client, fileSvc *file.Service, vetter Vetter) *Service {
+	_, disabled := vetter.(DisabledVetter)
+
 	return &Service{
-		pg:   pgClient,
-		file: fileSvc,
+		pg:             pgClient,
+		file:           fileSvc,
+		vetter:         vetter,
+		vettingEnabled: !disabled,
 	}
 }
 

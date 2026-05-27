@@ -17,7 +17,6 @@ package types
 import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/page"
-	"go.probo.inc/probo/pkg/probo"
 )
 
 func NewThirdPartyRiskAssessment(v *coredata.ThirdPartyRiskAssessment) *ThirdPartyRiskAssessment {
@@ -227,26 +226,5 @@ func NewListThirdPartyServicesOutput(p *page.Page[*coredata.ThirdPartyService, c
 	return ListThirdPartyServicesOutput{
 		NextCursor:         nextCursor,
 		ThirdPartyServices: services,
-	}
-}
-
-func NewThirdPartySubprocessors(sps []probo.Subprocessor) []*ThirdPartySubprocessor {
-	result := make([]*ThirdPartySubprocessor, len(sps))
-	for i, sp := range sps {
-		result[i] = &ThirdPartySubprocessor{
-			Name:    sp.Name,
-			Country: sp.Country,
-			Purpose: sp.Purpose,
-		}
-	}
-
-	return result
-}
-
-func NewAssessThirdPartyOutput(result *probo.AssessThirdPartyResult) AssessThirdPartyOutput {
-	return AssessThirdPartyOutput{
-		ThirdParty:    NewThirdParty(result.ThirdParty),
-		Report:        result.Report,
-		Subprocessors: NewThirdPartySubprocessors(result.Subprocessors),
 	}
 }

@@ -43,6 +43,7 @@ import * as linkThirdPartyOp from './linkThirdParty.operation';
 import * as unlinkThirdPartyOp from './unlinkThirdParty.operation';
 import * as listChildThirdPartiesOp from './listChildThirdParties.operation';
 import * as publishOp from './publish.operation';
+import * as vetOp from './vet.operation';
 
 export const description: INodeProperties[] = [
 	{
@@ -236,6 +237,12 @@ export const description: INodeProperties[] = [
 				description: 'Update an existing third party service',
 				action: 'Update a third party service',
 			},
+			{
+				name: 'Vet',
+				value: 'vet',
+				description: 'Start AI-powered vetting of a third party from its website',
+				action: 'Vet a third party',
+			},
 		],
 		default: 'create',
 	},
@@ -269,6 +276,7 @@ export const description: INodeProperties[] = [
 	...unlinkThirdPartyOp.description,
 	...listChildThirdPartiesOp.description,
 	...publishOp.description,
+	...vetOp.description,
 ];
 
 export {
@@ -302,4 +310,5 @@ export {
 	unlinkThirdPartyOp as unlinkThirdParty,
 	listChildThirdPartiesOp as listChildThirdParties,
 	publishOp as publish,
+	vetOp as vet,
 };

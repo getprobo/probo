@@ -356,7 +356,7 @@ func TestFunctionTool_Execute(t *testing.T) {
 	)
 
 	t.Run(
-		"optional fields can be omitted",
+		"optional fields may be empty but must be present",
 		func(t *testing.T) {
 			t.Parallel()
 
@@ -373,7 +373,7 @@ func TestFunctionTool_Execute(t *testing.T) {
 				},
 			)
 
-			result, err := tool.Execute(context.Background(), `{"city":"Paris"}`)
+			result, err := tool.Execute(context.Background(), `{"city":"Paris","units":""}`)
 			require.NoError(t, err)
 			assert.False(t, result.IsError)
 			assert.Equal(t, "sunny in Paris", result.Content)

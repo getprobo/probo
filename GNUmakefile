@@ -214,6 +214,7 @@ cfg/dev.yaml: bin/probod-bootstrap $(CFG_DEV_OAUTH2_KEY) compose/pebble/certs/ro
 	AWS_SECRET_ACCESS_KEY=thisisnotasecret; \
 	AWS_ENDPOINT=http://127.0.0.1:8333; \
 	OPENAI_API_KEY=thisisnotasecret; \
+	AGENT_THIRD_PARTY_VETTER_PROVIDER=openai; \
 	ACME_DIRECTORY=https://localhost:14000/dir; \
 	ACME_ROOT_CA="$$($(CAT) compose/pebble/certs/rootCA.pem)"; \
 	if [ -f $(DEV_ENV) ]; then . $(DEV_ENV); fi; \

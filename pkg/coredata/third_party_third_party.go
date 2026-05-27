@@ -32,6 +32,7 @@ type (
 		ChildThirdPartyID  gid.GID      `db:"child_third_party_id"`
 		TenantID           gid.TenantID `db:"tenant_id"`
 		CreatedAt          time.Time    `db:"created_at"`
+		Purpose            *string      `db:"purpose"`
 	}
 
 	ThirdPartyThirdParties []*ThirdPartyThirdParty
@@ -43,14 +44,17 @@ INSERT INTO third_party_third_parties (
     parent_third_party_id,
     child_third_party_id,
     tenant_id,
-    created_at
+    created_at,
+    purpose
 ) VALUES (
     @parent_third_party_id,
     @child_third_party_id,
     @tenant_id,
-    @created_at
+    @created_at,
+    @purpose
 )
-ON CONFLICT (parent_third_party_id, child_third_party_id) DO NOTHING
+ON CONFLICT (parent_third_party_id, child_third_party_id) DO UPDATE SET
+    purpose = COALESCE(EXCLUDED.purpose, third_party_third_parties.purpose)
 `
 
 	args := pgx.StrictNamedArgs{
@@ -58,6 +62,7 @@ ON CONFLICT (parent_third_party_id, child_third_party_id) DO NOTHING
 		"child_third_party_id":  r.ChildThirdPartyID,
 		"tenant_id":             scope.GetTenantID(),
 		"created_at":            r.CreatedAt,
+		"purpose":               r.Purpose,
 	}
 
 	_, err := conn.Exec(ctx, q, args)
@@ -162,6 +167,11 @@ WITH children AS (
 		tp.trust_page_url,
 		tp.show_on_trust_center,
 		tp.first_level,
+		tp.vetting_status,
+		tp.vetting_website_url,
+		tp.vetting_procedure,
+		tp.vetting_processing_started_at,
+		tp.vetting_error_message,
 		tp.created_at,
 		tp.updated_at
 	FROM
@@ -173,7 +183,6 @@ WITH children AS (
 )
 SELECT
 	id,
-	tenant_id,
 	organization_id,
 	common_third_party_id,
 	name,
@@ -197,6 +206,11 @@ SELECT
 	trust_page_url,
 	show_on_trust_center,
 	first_level,
+	vetting_status,
+	vetting_website_url,
+	vetting_procedure,
+	vetting_processing_started_at,
+	vetting_error_message,
 	created_at,
 	updated_at
 FROM

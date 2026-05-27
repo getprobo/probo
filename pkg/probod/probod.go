@@ -177,6 +177,11 @@ func New() *Implm {
 				StaleAfter:     300,
 				MaxConcurrency: 10,
 			},
+			ThirdPartyVetting: ThirdPartyVettingWorkerConfig{
+				Interval:       10,
+				StaleAfter:     1500,
+				MaxConcurrency: 1,
+			},
 		},
 	}
 }
@@ -309,7 +314,7 @@ func (impl *Implm) Run(
 		return err
 	}
 
-	thirdPartyAssessor, err := impl.buildThirdPartyAssessor(l, tp, r)
+	thirdPartyVetter, err := impl.buildThirdPartyVetter(l, tp, r)
 	if err != nil {
 		return err
 	}
@@ -522,7 +527,6 @@ func (impl *Implm) Run(
 		esignService,
 		defaultConnectorRegistry,
 		time.Duration(impl.cfg.Auth.InvitationConfirmationTokenValidity)*time.Second,
-		thirdPartyAssessor,
 	)
 	if err != nil {
 		return fmt.Errorf("cannot create probo service: %w", err)
@@ -552,7 +556,7 @@ func (impl *Implm) Run(
 		l.Named("access-review"),
 	)
 
-	thirdPartyService := thirdparty.NewService(pgClient, fileService)
+	thirdPartyService := thirdparty.NewService(pgClient, fileService, thirdPartyVetter)
 	riskManagementService := riskmanagement.NewService(pgClient)
 
 	serverHandler, err := server.NewServer(
@@ -818,6 +822,26 @@ func (impl *Implm) Run(
 		},
 	)
 
+	vettingWorker := thirdparty.NewVettingWorker(
+		pgClient,
+		thirdPartyVetter,
+		l.Named("vetting-worker"),
+		thirdparty.VettingWorkerConfig{
+			StaleAfter: time.Duration(impl.cfg.ThirdPartyVetting.StaleAfter) * time.Second,
+		},
+		worker.WithInterval(time.Duration(impl.cfg.ThirdPartyVetting.Interval)*time.Second),
+		worker.WithMaxConcurrency(impl.cfg.ThirdPartyVetting.MaxConcurrency),
+	)
+	vettingWorkerCtx, stopVettingWorker := context.WithCancel(context.Background())
+
+	wg.Go(
+		func() {
+			if err := vettingWorker.Run(vettingWorkerCtx); err != nil {
+				cancel(fmt.Errorf("vetting worker crashed: %w", err))
+			}
+		},
+	)
+
 	trustCenterServerCtx, stopTrustCenterServer := context.WithCancel(context.Background())
 	defer stopTrustCenterServer()
 
@@ -849,6 +873,7 @@ func (impl *Implm) Run(
 	stopTrackerMappingWorker()
 	stopCommonPatternEnrichmentWorker()
 	stopMailingListWorker()
+	stopVettingWorker()
 	stopEvidenceDescriptionWorker()
 	stopDocumentPDFWorker()
 	stopExportJobExporter()

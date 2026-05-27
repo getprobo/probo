@@ -212,6 +212,7 @@ func NewServer(cfg Config) (*Server, error) {
 		mcpHandler: mcp_v1.NewMux(
 			cfg.Logger.Named("mcp.v1"),
 			cfg.Probo,
+			cfg.ThirdParty,
 			cfg.IAM,
 			cfg.AccessReview,
 			cfg.CookieBanner,

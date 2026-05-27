@@ -84,7 +84,6 @@ type (
 		esign                                 *esign.Service
 		connectorRegistry                     *connector.ConnectorRegistry
 		invitationTokenValidity               time.Duration
-		thirdPartyAssessor                    ThirdPartyAssessor
 		Frameworks                            *FrameworkService
 		Measures                              *MeasureService
 		Tasks                                 *TaskService
@@ -145,7 +144,6 @@ func NewService(
 	esignService *esign.Service,
 	connectorRegistry *connector.ConnectorRegistry,
 	invitationTokenValidity time.Duration,
-	thirdPartyAssessor ThirdPartyAssessor,
 ) (*Service, error) {
 	if bucket == "" {
 		return nil, fmt.Errorf("bucket is required")
@@ -170,7 +168,6 @@ func NewService(
 		esign:                   esignService,
 		connectorRegistry:       connectorRegistry,
 		invitationTokenValidity: invitationTokenValidity,
-		thirdPartyAssessor:      thirdPartyAssessor,
 	}
 
 	svc.Frameworks = &FrameworkService{

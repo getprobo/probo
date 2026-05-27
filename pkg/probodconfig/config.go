@@ -49,17 +49,18 @@ type (
 
 	// Config represents the probod application configuration.
 	Config struct {
-		BaseURL           string                  `json:"base-url"`
-		EncryptionKey     string                  `json:"encryption-key"`
-		Pg                PgConfig                `json:"pg"`
-		Api               APIConfig               `json:"api"`
-		Auth              AuthConfig              `json:"auth"`
-		TrustCenter       TrustCenterConfig       `json:"trust-center"`
-		AWS               AWSConfig               `json:"aws"`
-		Notifications     NotificationsConfig     `json:"notifications"`
-		Connectors        []ConnectorConfig       `json:"connectors"`
-		Agents            AgentsConfig            `json:"llm"`
-		EvidenceDescriber EvidenceDescriberConfig `json:"evidence-describer"`
+		BaseURL           string                        `json:"base-url"`
+		EncryptionKey     string                        `json:"encryption-key"`
+		Pg                PgConfig                      `json:"pg"`
+		Api               APIConfig                     `json:"api"`
+		Auth              AuthConfig                    `json:"auth"`
+		TrustCenter       TrustCenterConfig             `json:"trust-center"`
+		AWS               AWSConfig                     `json:"aws"`
+		Notifications     NotificationsConfig           `json:"notifications"`
+		Connectors        []ConnectorConfig             `json:"connectors"`
+		Agents            AgentsConfig                  `json:"llm"`
+		EvidenceDescriber EvidenceDescriberConfig       `json:"evidence-describer"`
+		ThirdPartyVetting ThirdPartyVettingWorkerConfig `json:"third-party-vetting-worker"`
 
 		TrackerMappingWorker          TrackerMappingWorkerConfig          `json:"tracker-mapping-worker"`
 		CommonPatternEnrichmentWorker CommonPatternEnrichmentWorkerConfig `json:"common-pattern-enrichment-worker"`

@@ -58,7 +58,7 @@ func newSubAgent[T any](
 	tools []agent.Tool,
 	extraOpts ...agent.Option,
 ) (*agent.Agent, error) {
-	outputType, err := agent.NewOutputType[T](spec.outputName)
+	outputType, err := newVettingOutputType[T](spec.outputName)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create output type %q: %w", spec.outputName, err)
 	}

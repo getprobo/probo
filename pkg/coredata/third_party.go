@@ -138,33 +138,37 @@ WHERE
 
 type (
 	ThirdParty struct {
-		ID                            gid.GID            `db:"id"`
-		TenantID                      gid.TenantID       `db:"tenant_id"`
-		OrganizationID                gid.GID            `db:"organization_id"`
-		CommonThirdPartyID            *gid.GID           `db:"common_third_party_id"`
-		Name                          string             `db:"name"`
-		Description                   *string            `db:"description"`
-		Category                      ThirdPartyCategory `db:"category"`
-		HeadquarterAddress            *string            `db:"headquarter_address"`
-		LegalName                     *string            `db:"legal_name"`
-		WebsiteURL                    *string            `db:"website_url"`
-		PrivacyPolicyURL              *string            `db:"privacy_policy_url"`
-		ServiceLevelAgreementURL      *string            `db:"service_level_agreement_url"`
-		DataProcessingAgreementURL    *string            `db:"data_processing_agreement_url"`
-		BusinessAssociateAgreementURL *string            `db:"business_associate_agreement_url"`
-		SubprocessorsListURL          *string            `db:"subprocessors_list_url"`
-		Certifications                []string           `db:"certifications"`
-		Countries                     CountryCodes       `db:"countries"`
-		BusinessOwnerID               *gid.GID           `db:"business_owner_profile_id"`
-		SecurityOwnerID               *gid.GID           `db:"security_owner_profile_id"`
-		StatusPageURL                 *string            `db:"status_page_url"`
-		TermsOfServiceURL             *string            `db:"terms_of_service_url"`
-		SecurityPageURL               *string            `db:"security_page_url"`
-		TrustPageURL                  *string            `db:"trust_page_url"`
-		ShowOnTrustCenter             bool               `db:"show_on_trust_center"`
-		FirstLevel                    bool               `db:"first_level"`
-		CreatedAt                     time.Time          `db:"created_at"`
-		UpdatedAt                     time.Time          `db:"updated_at"`
+		ID                            gid.GID                  `db:"id"`
+		OrganizationID                gid.GID                  `db:"organization_id"`
+		CommonThirdPartyID            *gid.GID                 `db:"common_third_party_id"`
+		Name                          string                   `db:"name"`
+		Description                   *string                  `db:"description"`
+		Category                      ThirdPartyCategory       `db:"category"`
+		HeadquarterAddress            *string                  `db:"headquarter_address"`
+		LegalName                     *string                  `db:"legal_name"`
+		WebsiteURL                    *string                  `db:"website_url"`
+		PrivacyPolicyURL              *string                  `db:"privacy_policy_url"`
+		ServiceLevelAgreementURL      *string                  `db:"service_level_agreement_url"`
+		DataProcessingAgreementURL    *string                  `db:"data_processing_agreement_url"`
+		BusinessAssociateAgreementURL *string                  `db:"business_associate_agreement_url"`
+		SubprocessorsListURL          *string                  `db:"subprocessors_list_url"`
+		Certifications                []string                 `db:"certifications"`
+		Countries                     CountryCodes             `db:"countries"`
+		BusinessOwnerID               *gid.GID                 `db:"business_owner_profile_id"`
+		SecurityOwnerID               *gid.GID                 `db:"security_owner_profile_id"`
+		StatusPageURL                 *string                  `db:"status_page_url"`
+		TermsOfServiceURL             *string                  `db:"terms_of_service_url"`
+		SecurityPageURL               *string                  `db:"security_page_url"`
+		TrustPageURL                  *string                  `db:"trust_page_url"`
+		ShowOnTrustCenter             bool                     `db:"show_on_trust_center"`
+		FirstLevel                    bool                     `db:"first_level"`
+		VettingStatus                 *ThirdPartyVettingStatus `db:"vetting_status"`
+		VettingWebsiteURL             *string                  `db:"vetting_website_url"`
+		VettingProcedure              *string                  `db:"vetting_procedure"`
+		VettingProcessingStartedAt    *time.Time               `db:"vetting_processing_started_at"`
+		VettingErrorMessage           *string                  `db:"vetting_error_message"`
+		CreatedAt                     time.Time                `db:"created_at"`
+		UpdatedAt                     time.Time                `db:"updated_at"`
 	}
 
 	ThirdParties []*ThirdParty
@@ -231,7 +235,6 @@ func (v *ThirdParty) LoadByID(
 	q := `
 SELECT
     id,
-    tenant_id,
     organization_id,
     common_third_party_id,
     name,
@@ -255,6 +258,11 @@ SELECT
     trust_page_url,
     show_on_trust_center,
     first_level,
+    vetting_status,
+    vetting_website_url,
+    vetting_procedure,
+    vetting_processing_started_at,
+    vetting_error_message,
     created_at,
     updated_at
 FROM
@@ -290,16 +298,15 @@ LIMIT 1;
 	return nil
 }
 
-func (v *ThirdParties) LoadByIDs(
+func (v *ThirdParty) LoadByIDForUpdate(
 	ctx context.Context,
-	conn pg.Querier,
+	conn pg.Tx,
 	scope Scoper,
-	thirdPartyIDs []gid.GID,
+	thirdPartyID gid.GID,
 ) error {
 	q := `
 SELECT
     id,
-    tenant_id,
     organization_id,
     common_third_party_id,
     name,
@@ -323,6 +330,161 @@ SELECT
     trust_page_url,
     show_on_trust_center,
     first_level,
+    vetting_status,
+    vetting_website_url,
+    vetting_procedure,
+    vetting_processing_started_at,
+    vetting_error_message,
+    created_at,
+    updated_at
+FROM
+    third_parties
+WHERE
+    %s
+    AND id = @third_party_id
+LIMIT 1
+FOR UPDATE;
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"third_party_id": thirdPartyID}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query thirdParty: %w", err)
+	}
+	defer rows.Close()
+
+	thirdParty, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[ThirdParty])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+
+		return fmt.Errorf("cannot collect thirdParty: %w", err)
+	}
+
+	*v = thirdParty
+
+	return nil
+}
+
+func (v *ThirdParty) LoadByNameAndOrganizationID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	name string,
+	organizationID gid.GID,
+) error {
+	q := `
+SELECT
+    id,
+    organization_id,
+    common_third_party_id,
+    name,
+    description,
+    category,
+    headquarter_address,
+    legal_name,
+    website_url,
+    privacy_policy_url,
+    service_level_agreement_url,
+    data_processing_agreement_url,
+    business_associate_agreement_url,
+    subprocessors_list_url,
+    certifications,
+    countries,
+    business_owner_profile_id,
+    security_owner_profile_id,
+    status_page_url,
+    terms_of_service_url,
+    security_page_url,
+    trust_page_url,
+    show_on_trust_center,
+    first_level,
+    vetting_status,
+    vetting_website_url,
+    vetting_procedure,
+    vetting_processing_started_at,
+    vetting_error_message,
+    created_at,
+    updated_at
+FROM
+    third_parties
+WHERE
+    %s
+    AND organization_id = @organization_id
+    AND name = @name
+LIMIT 1;
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"organization_id": organizationID,
+		"name":            name,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query thirdParty by name: %w", err)
+	}
+	defer rows.Close()
+
+	thirdParty, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[ThirdParty])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+
+		return fmt.Errorf("cannot collect thirdParty: %w", err)
+	}
+
+	*v = thirdParty
+
+	return nil
+}
+
+func (v *ThirdParties) LoadByIDs(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	thirdPartyIDs []gid.GID,
+) error {
+	q := `
+SELECT
+    id,
+    organization_id,
+    common_third_party_id,
+    name,
+    description,
+    category,
+    headquarter_address,
+    legal_name,
+    website_url,
+    privacy_policy_url,
+    service_level_agreement_url,
+    data_processing_agreement_url,
+    business_associate_agreement_url,
+    subprocessors_list_url,
+    certifications,
+    countries,
+    business_owner_profile_id,
+    security_owner_profile_id,
+    status_page_url,
+    terms_of_service_url,
+    security_page_url,
+    trust_page_url,
+    show_on_trust_center,
+    first_level,
+    vetting_status,
+    vetting_website_url,
+    vetting_procedure,
+    vetting_processing_started_at,
+    vetting_error_message,
     created_at,
     updated_at
 FROM
@@ -385,6 +547,11 @@ INSERT INTO
         trust_page_url,
         show_on_trust_center,
         first_level,
+        vetting_status,
+        vetting_website_url,
+        vetting_procedure,
+        vetting_processing_started_at,
+        vetting_error_message,
         created_at,
         updated_at
     )
@@ -414,6 +581,11 @@ VALUES (
     @trust_page_url,
     @show_on_trust_center,
     @first_level,
+    @vetting_status,
+    @vetting_website_url,
+    @vetting_procedure,
+    @vetting_processing_started_at,
+    @vetting_error_message,
     @created_at,
     @updated_at
 )
@@ -445,6 +617,11 @@ VALUES (
 		"trust_page_url":                   v.TrustPageURL,
 		"show_on_trust_center":             v.ShowOnTrustCenter,
 		"first_level":                      v.FirstLevel,
+		"vetting_status":                   v.VettingStatus,
+		"vetting_website_url":              v.VettingWebsiteURL,
+		"vetting_procedure":                v.VettingProcedure,
+		"vetting_processing_started_at":    v.VettingProcessingStartedAt,
+		"vetting_error_message":            v.VettingErrorMessage,
 		"created_at":                       v.CreatedAt,
 		"updated_at":                       v.UpdatedAt,
 	}
@@ -517,7 +694,6 @@ func (v *ThirdParties) LoadAllByOrganizationID(
 	q := `
 SELECT
 	id,
-	tenant_id,
 	organization_id,
 	common_third_party_id,
 	name,
@@ -541,6 +717,11 @@ SELECT
 	trust_page_url,
 	show_on_trust_center,
 	first_level,
+	vetting_status,
+	vetting_website_url,
+	vetting_procedure,
+	vetting_processing_started_at,
+	vetting_error_message,
 	created_at,
 	updated_at
 FROM
@@ -581,7 +762,6 @@ func (v *ThirdParties) LoadByOrganizationID(
 	q := `
 SELECT
 	id,
-	tenant_id,
 	organization_id,
 	common_third_party_id,
 	name,
@@ -605,6 +785,11 @@ SELECT
 	trust_page_url,
 	show_on_trust_center,
 	first_level,
+	vetting_status,
+	vetting_website_url,
+	vetting_procedure,
+	vetting_processing_started_at,
+	vetting_error_message,
 	created_at,
 	updated_at
 FROM
@@ -667,6 +852,11 @@ SET
 	security_owner_profile_id = @security_owner_profile_id,
 	show_on_trust_center = @show_on_trust_center,
 	first_level = @first_level,
+	vetting_status = @vetting_status,
+	vetting_website_url = @vetting_website_url,
+	vetting_procedure = @vetting_procedure,
+	vetting_processing_started_at = @vetting_processing_started_at,
+	vetting_error_message = @vetting_error_message,
 	updated_at = @updated_at
 WHERE %s
     AND id = @third_party_id
@@ -698,13 +888,25 @@ WHERE %s
 		"security_owner_profile_id":        v.SecurityOwnerID,
 		"show_on_trust_center":             v.ShowOnTrustCenter,
 		"first_level":                      v.FirstLevel,
+		"vetting_status":                   v.VettingStatus,
+		"vetting_website_url":              v.VettingWebsiteURL,
+		"vetting_procedure":                v.VettingProcedure,
+		"vetting_processing_started_at":    v.VettingProcessingStartedAt,
+		"vetting_error_message":            v.VettingErrorMessage,
 	}
 
 	maps.Copy(args, scope.SQLArguments())
 
-	_, err := conn.Exec(ctx, q, args)
+	result, err := conn.Exec(ctx, q, args)
+	if err != nil {
+		return err
+	}
 
-	return err
+	if result.RowsAffected() == 0 {
+		return ErrResourceNotFound
+	}
+
+	return nil
 }
 
 func (v ThirdParty) ExpireNonExpiredRiskAssessments(
@@ -816,6 +1018,11 @@ WITH vend AS (
 		v.trust_page_url,
 		v.show_on_trust_center,
 		v.first_level,
+		v.vetting_status,
+		v.vetting_website_url,
+		v.vetting_procedure,
+		v.vetting_processing_started_at,
+		v.vetting_error_message,
 		v.created_at,
 		v.updated_at
 	FROM
@@ -827,7 +1034,6 @@ WITH vend AS (
 )
 SELECT
 	id,
-	tenant_id,
 	organization_id,
 	common_third_party_id,
 	name,
@@ -851,6 +1057,11 @@ SELECT
 	trust_page_url,
 	show_on_trust_center,
 	first_level,
+	vetting_status,
+	vetting_website_url,
+	vetting_procedure,
+	vetting_processing_started_at,
+	vetting_error_message,
 	created_at,
 	updated_at
 FROM
@@ -953,6 +1164,11 @@ WITH vend AS (
 		v.trust_page_url,
 		v.show_on_trust_center,
 		v.first_level,
+		v.vetting_status,
+		v.vetting_website_url,
+		v.vetting_procedure,
+		v.vetting_processing_started_at,
+		v.vetting_error_message,
 		v.created_at,
 		v.updated_at
 	FROM
@@ -964,7 +1180,6 @@ WITH vend AS (
 )
 SELECT
 	id,
-	tenant_id,
 	organization_id,
 	common_third_party_id,
 	name,
@@ -988,6 +1203,11 @@ SELECT
 	trust_page_url,
 	show_on_trust_center,
 	first_level,
+	vetting_status,
+	vetting_website_url,
+	vetting_procedure,
+	vetting_processing_started_at,
+	vetting_error_message,
 	created_at,
 	updated_at
 FROM
@@ -1050,6 +1270,11 @@ WITH vend AS (
 		v.trust_page_url,
 		v.show_on_trust_center,
 		v.first_level,
+		v.vetting_status,
+		v.vetting_website_url,
+		v.vetting_procedure,
+		v.vetting_processing_started_at,
+		v.vetting_error_message,
 		v.created_at,
 		v.updated_at
 	FROM
@@ -1061,7 +1286,6 @@ WITH vend AS (
 )
 SELECT
 	id,
-	tenant_id,
 	organization_id,
 	common_third_party_id,
 	name,
@@ -1085,6 +1309,11 @@ SELECT
 	trust_page_url,
 	show_on_trust_center,
 	first_level,
+	vetting_status,
+	vetting_website_url,
+	vetting_procedure,
+	vetting_processing_started_at,
+	vetting_error_message,
 	created_at,
 	updated_at
 FROM
@@ -1148,6 +1377,11 @@ WITH vend AS (
 		v.trust_page_url,
 		v.show_on_trust_center,
 		v.first_level,
+		v.vetting_status,
+		v.vetting_website_url,
+		v.vetting_procedure,
+		v.vetting_processing_started_at,
+		v.vetting_error_message,
 		v.created_at,
 		v.updated_at
 	FROM
@@ -1159,7 +1393,6 @@ WITH vend AS (
 )
 SELECT
 	id,
-	tenant_id,
 	organization_id,
 	common_third_party_id,
 	name,
@@ -1183,6 +1416,11 @@ SELECT
 	trust_page_url,
 	show_on_trust_center,
 	first_level,
+	vetting_status,
+	vetting_website_url,
+	vetting_procedure,
+	vetting_processing_started_at,
+	vetting_error_message,
 	created_at,
 	updated_at
 FROM
@@ -1314,6 +1552,11 @@ WITH vend AS (
 		v.trust_page_url,
 		v.show_on_trust_center,
 		v.first_level,
+		v.vetting_status,
+		v.vetting_website_url,
+		v.vetting_procedure,
+		v.vetting_processing_started_at,
+		v.vetting_error_message,
 		v.created_at,
 		v.updated_at
 	FROM
@@ -1325,7 +1568,6 @@ WITH vend AS (
 )
 SELECT
 	id,
-	tenant_id,
 	organization_id,
 	common_third_party_id,
 	name,
@@ -1349,6 +1591,11 @@ SELECT
 	trust_page_url,
 	show_on_trust_center,
 	first_level,
+	vetting_status,
+	vetting_website_url,
+	vetting_procedure,
+	vetting_processing_started_at,
+	vetting_error_message,
 	created_at,
 	updated_at
 FROM
@@ -1386,7 +1633,6 @@ func (v *ThirdParty) LoadByOrganizationIDAndCommonThirdPartyID(
 	q := `
 SELECT
 	id,
-	tenant_id,
 	organization_id,
 	common_third_party_id,
 	name,
@@ -1410,6 +1656,11 @@ SELECT
 	trust_page_url,
 	show_on_trust_center,
 	first_level,
+	vetting_status,
+	vetting_website_url,
+	vetting_procedure,
+	vetting_processing_started_at,
+	vetting_error_message,
 	created_at,
 	updated_at
 FROM
@@ -1525,6 +1776,11 @@ WITH tps AS (
 		v.trust_page_url,
 		v.show_on_trust_center,
 		v.first_level,
+		v.vetting_status,
+		v.vetting_website_url,
+		v.vetting_procedure,
+		v.vetting_processing_started_at,
+		v.vetting_error_message,
 		v.created_at,
 		v.updated_at
 	FROM
@@ -1536,7 +1792,6 @@ WITH tps AS (
 )
 SELECT
 	id,
-	tenant_id,
 	organization_id,
 	common_third_party_id,
 	name,
@@ -1560,6 +1815,11 @@ SELECT
 	trust_page_url,
 	show_on_trust_center,
 	first_level,
+	vetting_status,
+	vetting_website_url,
+	vetting_procedure,
+	vetting_processing_started_at,
+	vetting_error_message,
 	created_at,
 	updated_at
 FROM

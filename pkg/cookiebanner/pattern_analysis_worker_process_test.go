@@ -281,7 +281,6 @@ func seedThirdParty(t *testing.T, ctx context.Context, client *pg.Client, fx wor
 
 	party := coredata.ThirdParty{
 		ID:             id,
-		TenantID:       fx.scope.GetTenantID(),
 		OrganizationID: fx.organizationID,
 		Name:           name,
 		Category:       coredata.ThirdPartyCategoryAnalytics,

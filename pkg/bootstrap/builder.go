@@ -206,6 +206,12 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 					Temperature: b.getEnvFloatPtr("AGENT_EVIDENCE_DESCRIBER_TEMPERATURE"),
 					MaxTokens:   b.getEnvIntPtr("AGENT_EVIDENCE_DESCRIBER_MAX_TOKENS"),
 				},
+				ThirdPartyVetter: probodconfig.LLMAgentConfig{
+					Provider:    b.getEnvOrDefault("AGENT_THIRD_PARTY_VETTER_PROVIDER", ""),
+					ModelName:   b.getEnvOrDefault("AGENT_THIRD_PARTY_VETTER_MODEL_NAME", ""),
+					Temperature: b.getEnvFloatPtr("AGENT_THIRD_PARTY_VETTER_TEMPERATURE"),
+					MaxTokens:   b.getEnvIntPtr("AGENT_THIRD_PARTY_VETTER_MAX_TOKENS"),
+				},
 				TrackerMapping: probodconfig.LLMAgentConfig{
 					Provider:  b.getEnvOrDefault("AGENT_TRACKER_MAPPING_PROVIDER", ""),
 					ModelName: b.getEnvOrDefault("AGENT_TRACKER_MAPPING_MODEL_NAME", ""),
@@ -245,6 +251,11 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 				Interval:       b.getEnvIntOrDefault("EVIDENCE_DESCRIBER_INTERVAL", 10),
 				StaleAfter:     b.getEnvIntOrDefault("EVIDENCE_DESCRIBER_STALE_AFTER", 300),
 				MaxConcurrency: b.getEnvIntOrDefault("EVIDENCE_DESCRIBER_MAX_CONCURRENCY", 10),
+			},
+			ThirdPartyVetting: probodconfig.ThirdPartyVettingWorkerConfig{
+				Interval:       b.getEnvIntOrDefault("THIRD_PARTY_VETTING_INTERVAL", 10),
+				StaleAfter:     b.getEnvIntOrDefault("THIRD_PARTY_VETTING_STALE_AFTER", 1500),
+				MaxConcurrency: b.getEnvIntOrDefault("THIRD_PARTY_VETTING_MAX_CONCURRENCY", 1),
 			},
 			TrackerMappingWorker: probodconfig.TrackerMappingWorkerConfig{
 				Interval:       b.getEnvIntOrDefault("TRACKER_MAPPING_INTERVAL", 10),

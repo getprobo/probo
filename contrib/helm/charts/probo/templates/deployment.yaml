@@ -247,6 +247,36 @@ spec:
                   name: {{ include "probo.fullname" . }}
                   key: firecrawl-api-key
             {{- end }}
+            # Third-Party Vetter Agent
+            {{- if .Values.probo.thirdPartyVetter.provider }}
+            - name: AGENT_THIRD_PARTY_VETTER_PROVIDER
+              value: {{ .Values.probo.thirdPartyVetter.provider | quote }}
+            {{- end }}
+            {{- if .Values.probo.thirdPartyVetter.modelName }}
+            - name: AGENT_THIRD_PARTY_VETTER_MODEL_NAME
+              value: {{ .Values.probo.thirdPartyVetter.modelName | quote }}
+            {{- end }}
+            {{- if .Values.probo.thirdPartyVetter.temperature }}
+            - name: AGENT_THIRD_PARTY_VETTER_TEMPERATURE
+              value: {{ .Values.probo.thirdPartyVetter.temperature | quote }}
+            {{- end }}
+            {{- if .Values.probo.thirdPartyVetter.maxTokens }}
+            - name: AGENT_THIRD_PARTY_VETTER_MAX_TOKENS
+              value: {{ .Values.probo.thirdPartyVetter.maxTokens | quote }}
+            {{- end }}
+            # Third-Party Vetting Worker
+            {{- if .Values.probo.thirdPartyVettingWorker.interval }}
+            - name: THIRD_PARTY_VETTING_INTERVAL
+              value: {{ .Values.probo.thirdPartyVettingWorker.interval | quote }}
+            {{- end }}
+            {{- if .Values.probo.thirdPartyVettingWorker.maxConcurrency }}
+            - name: THIRD_PARTY_VETTING_MAX_CONCURRENCY
+              value: {{ .Values.probo.thirdPartyVettingWorker.maxConcurrency | quote }}
+            {{- end }}
+            {{- if .Values.probo.thirdPartyVettingWorker.staleAfter }}
+            - name: THIRD_PARTY_VETTING_STALE_AFTER
+              value: {{ .Values.probo.thirdPartyVettingWorker.staleAfter | quote }}
+            {{- end }}
             # Tracker Mapping Agent
             {{- if .Values.probo.trackerMapping.provider }}
             - name: AGENT_TRACKER_MAPPING_PROVIDER

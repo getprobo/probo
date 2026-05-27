@@ -32,10 +32,12 @@ import (
 	"go.probo.inc/probo/pkg/prosemirror"
 	"go.probo.inc/probo/pkg/riskmanagement"
 	"go.probo.inc/probo/pkg/server/api/authn"
+	"go.probo.inc/probo/pkg/thirdparty"
 )
 
 type Resolver struct {
 	proboSvc       *probo.Service
+	thirdPartySvc  *thirdparty.Service
 	iamSvc         *iam.Service
 	accessReview   *accessreview.Service
 	cookieBanner   *cookiebanner.Service

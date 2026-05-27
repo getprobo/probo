@@ -26,6 +26,13 @@ If `research_third_party_externally` is available, use it for incidents, regulat
 {procedure}
 </assessment_procedure>
 
+<persistence>
+After completing your analysis and writing the report:
+
+1. Call `save_third_party_info` once with all metadata you discovered (name, description, category, URLs, certifications). Use an empty string for fields you could not find.
+2. For each sub-processor or vendor dependency discovered, call `link_sub_third_party` with the name, description, category, website URL, country, and purpose. If a third party with the same name already exists it is linked without duplication; otherwise a new one is created with the info you provide.
+</persistence>
+
 <important>
 - Only report information actually discovered through the tools — never fabricate URLs, certifications, or findings.
 - Note tool failures and inaccessible pages in the report rather than omitting the section.

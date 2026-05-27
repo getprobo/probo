@@ -169,6 +169,19 @@ probo:
   # agentTools:
   #   firecrawlApiKey: "CHANGE_ME_FIRECRAWL_API_KEY"
 
+  # Third-party vetter agent (optional, AI-powered third-party vetting)
+  # thirdPartyVetter:
+  #   provider: "openai"
+  #   modelName: "gpt-4o"
+  #   temperature: "0.3"
+  #   maxTokens: "8192"
+
+  # Third-party vetting worker tuning (optional; seconds for interval/staleAfter).
+  # thirdPartyVettingWorker:
+  #   interval: 10
+  #   maxConcurrency: 1
+  #   staleAfter: 1500
+
   # Tracker mapping agent (optional, auto-links tracker patterns to vendors)
   # trackerMapping:
   #   provider: "openai"

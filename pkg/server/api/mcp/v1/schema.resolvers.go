@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
+	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/accessreview"
 	"go.probo.inc/probo/pkg/cookiebanner"
 	"go.probo.inc/probo/pkg/coredata"
@@ -23,6 +24,8 @@ import (
 	"go.probo.inc/probo/pkg/riskmanagement"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/mcp/v1/types"
+	"go.probo.inc/probo/pkg/thirdparty"
+	"go.probo.inc/probo/pkg/validator"
 )
 
 // ListOrganizationsTool handles the listOrganizations tool
@@ -5296,27 +5299,47 @@ func (r *Resolver) DeleteCustomDomainTool(ctx context.Context, req *mcp.CallTool
 	return nil, types.DeleteCustomDomainOutput{DeletedCustomDomain: deletedDomain}, nil
 }
 
-func (r *Resolver) AssessThirdPartyTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AssessThirdPartyInput) (*mcp.CallToolResult, types.AssessThirdPartyOutput, error) {
-	scope, err := r.Authorize(ctx, input.ID, probo.ActionThirdPartyAssess)
+func (r *Resolver) VetThirdPartyTool(ctx context.Context, req *mcp.CallToolRequest, input *types.VetThirdPartyInput) (*mcp.CallToolResult, types.VetThirdPartyOutput, error) {
+	scope, err := r.Authorize(ctx, input.ID, probo.ActionThirdPartyVet)
 	if err != nil {
-		return nil, types.AssessThirdPartyOutput{}, err
+		return nil, types.VetThirdPartyOutput{}, err
 	}
 
-	svc := r.proboSvc
+	svc := r.thirdPartySvc
 
-	result, err := svc.ThirdParties.Assess(
+	thirdParty, err := svc.Vet(
 		ctx, scope,
-		probo.AssessThirdPartyRequest{
+		thirdparty.VetRequest{
 			ID:         input.ID,
 			WebsiteURL: input.WebsiteURL,
 			Procedure:  input.Procedure,
 		},
 	)
 	if err != nil {
-		return nil, types.AssessThirdPartyOutput{}, fmt.Errorf("cannot assess thirdParty: %w", err)
+		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
+			return nil, types.VetThirdPartyOutput{}, validationErrors
+		}
+
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, types.VetThirdPartyOutput{}, fmt.Errorf("resource not found")
+		}
+
+		if errors.Is(err, thirdparty.ErrVettingDisabled) {
+			return nil, types.VetThirdPartyOutput{}, fmt.Errorf("vetting is not configured")
+		}
+
+		if errors.Is(err, thirdparty.ErrVettingInProgress) {
+			return nil, types.VetThirdPartyOutput{}, fmt.Errorf("vetting is already in progress")
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot vet thirdParty", log.Error(err))
+
+		return nil, types.VetThirdPartyOutput{}, fmt.Errorf("internal server error")
 	}
 
-	return nil, types.NewAssessThirdPartyOutput(result), nil
+	return nil, types.VetThirdPartyOutput{
+		ThirdParty: types.NewThirdParty(thirdParty),
+	}, nil
 }
 
 func (r *Resolver) PublishFindingListTool(ctx context.Context, req *mcp.CallToolRequest, input *types.PublishFindingListInput) (*mcp.CallToolResult, types.PublishFindingListOutput, error) {

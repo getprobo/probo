@@ -18,7 +18,6 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
-	"go.probo.inc/probo/pkg/probo"
 )
 
 type (
@@ -106,17 +105,4 @@ func NewThirdParty(v *coredata.ThirdParty) *ThirdParty {
 	}
 
 	return object
-}
-
-func NewThirdPartySubprocessors(sps []probo.Subprocessor) []*ThirdPartySubprocessor {
-	result := make([]*ThirdPartySubprocessor, len(sps))
-	for i, sp := range sps {
-		result[i] = &ThirdPartySubprocessor{
-			Name:    sp.Name,
-			Country: sp.Country,
-			Purpose: sp.Purpose,
-		}
-	}
-
-	return result
 }

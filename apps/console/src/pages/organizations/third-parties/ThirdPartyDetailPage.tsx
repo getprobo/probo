@@ -26,13 +26,16 @@ import {
   TabLink,
   Tabs,
 } from "@probo/ui";
+import { useEffect, useRef } from "react";
 import {
   ConnectionHandler,
   type PreloadedQuery,
   useFragment,
   usePreloadedQuery,
+  useRelayEnvironment,
 } from "react-relay";
 import { Outlet } from "react-router";
+import { fetchQuery } from "relay-runtime";
 
 import type { ThirdPartyComplianceTabFragment$key } from "#/__generated__/core/ThirdPartyComplianceTabFragment.graphql";
 import type { ThirdPartyGraphNodeQuery } from "#/__generated__/core/ThirdPartyGraphNodeQuery.graphql";
@@ -43,7 +46,7 @@ import {
 } from "#/hooks/graph/ThirdPartyGraph";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
-import { ImportAssessmentDialog } from "./dialogs/ImportAssessmentDialog";
+import { VettingDialog } from "./dialogs/VettingDialog";
 import { measuresFragment } from "./measures/ThirdPartyMeasuresPage";
 import { complianceReportsFragment } from "./tabs/ThirdPartyComplianceTab";
 
@@ -54,9 +57,34 @@ type Props = {
 };
 
 export default function ThirdPartyDetailPage(props: Props) {
+  const environment = useRelayEnvironment();
   const { node: thirdParty } = usePreloadedQuery(thirdPartyNodeQuery, props.queryRef);
   const { __ } = useTranslate();
   const organizationId = useOrganizationId();
+  const thirdPartyIdRef = useRef(thirdParty.id);
+
+  useEffect(() => {
+    thirdPartyIdRef.current = thirdParty.id;
+  }, [thirdParty.id]);
+
+  const isVetting = thirdParty.vettingStatus === "PENDING" || thirdParty.vettingStatus === "PROCESSING";
+
+  useEffect(() => {
+    if (!isVetting) return;
+
+    const interval = setInterval(() => {
+      if (document.hidden) return;
+
+      fetchQuery<ThirdPartyGraphNodeQuery>(
+        environment,
+        thirdPartyNodeQuery,
+        { thirdPartyId: thirdPartyIdRef.current },
+        { fetchPolicy: "network-only" },
+      ).subscribe({});
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [isVetting, environment]);
 
   const deleteThirdParty = useDeleteThirdParty(
     thirdParty,
@@ -74,8 +102,24 @@ export default function ThirdPartyDetailPage(props: Props) {
   const baseThirdPartyUrl
     = `/organizations/${organizationId}/third-parties/${thirdParty.id}`;
 
+  const isVettingFailed = thirdParty.vettingStatus === "FAILED";
+
   return (
     <div className="space-y-6">
+      {isVetting && (
+        <div className="flex items-center gap-3 rounded-lg bg-warning px-4 py-3 text-sm text-txt-warning">
+          <div
+            aria-hidden
+            className="size-4 shrink-0 animate-spin rounded-full border-2 border-border-warning/30 border-t-border-warning"
+          />
+          {__("Vetting is in progress. Results will appear once the analysis is complete.")}
+        </div>
+      )}
+      {isVettingFailed && (
+        <div className="rounded-lg bg-danger px-4 py-3 text-sm text-txt-danger">
+          {__("Vetting failed. You can start vetting again.")}
+        </div>
+      )}
       <Breadcrumb
         items={[
           {
@@ -104,12 +148,15 @@ export default function ThirdPartyDetailPage(props: Props) {
           </div>
         </div>
         <div className="flex gap-2 items-center">
-          {thirdParty.canAssess && (
-            <ImportAssessmentDialog thirdPartyId={thirdParty.id}>
+          {thirdParty.canVet && !isVetting && (
+            <VettingDialog
+              thirdPartyId={thirdParty.id}
+              websiteUrl={thirdParty.websiteUrl}
+            >
               <Button icon={IconPageTextLine} variant="secondary">
-                {__("Assessment From Website")}
+                {__("Start Vetting")}
               </Button>
-            </ImportAssessmentDialog>
+            </VettingDialog>
           )}
           {thirdParty.canDelete && (
             <ActionDropdown variant="secondary">

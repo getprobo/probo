@@ -16,55 +16,17 @@ package probo
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"time"
 
 	"go.gearno.de/kit/pg"
-	"go.gearno.de/x/ref"
-	"go.probo.inc/probo/pkg/agent"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/validator"
-	"go.probo.inc/probo/pkg/vetting"
 	"go.probo.inc/probo/pkg/webhook"
 	webhooktypes "go.probo.inc/probo/pkg/webhook/types"
 )
-
-// ErrThirdPartyAssessmentDisabled is returned by ThirdPartyAssessor.Assess when the
-// deployment has not configured an LLM provider for thirdParty assessment.
-var ErrThirdPartyAssessmentDisabled = errors.New("thirdParty assessment is not configured on this deployment")
-
-// ThirdPartyAssessor produces a thirdParty assessment report from a website URL and
-// an optional procedure description. Implementations that cannot perform
-// assessment (missing LLM credentials, misconfigured provider) must return
-// ErrThirdPartyAssessmentDisabled from Assess so callers can surface a stable
-// "feature unavailable" error instead of a generic internal error.
-type ThirdPartyAssessor interface {
-	Assess(
-		ctx context.Context,
-		websiteURL string,
-		procedure string,
-		reporter agent.ProgressReporter,
-	) (*vetting.Result, error)
-}
-
-// DisabledThirdPartyAssessor is the ThirdPartyAssessor implementation used when no
-// LLM provider is configured for the third-party-assessor agent. Its Assess
-// method always returns ErrThirdPartyAssessmentDisabled.
-type DisabledThirdPartyAssessor struct{}
-
-var _ ThirdPartyAssessor = DisabledThirdPartyAssessor{}
-
-func (DisabledThirdPartyAssessor) Assess(
-	_ context.Context,
-	_ string,
-	_ string,
-	_ agent.ProgressReporter,
-) (*vetting.Result, error) {
-	return nil, ErrThirdPartyAssessmentDisabled
-}
 
 type (
 	ThirdPartyService struct {
@@ -118,24 +80,6 @@ type (
 		SecurityOwnerID               **gid.GID
 		ShowOnTrustCenter             *bool
 		FirstLevel                    *bool
-	}
-
-	AssessThirdPartyRequest struct {
-		ID         gid.GID
-		WebsiteURL string
-		Procedure  *string
-	}
-
-	AssessThirdPartyResult struct {
-		ThirdParty    *coredata.ThirdParty
-		Report        string
-		Subprocessors []Subprocessor
-	}
-
-	Subprocessor struct {
-		Name    string
-		Country string
-		Purpose string
 	}
 
 	CreateThirdPartyRiskAssessmentRequest struct {
@@ -902,127 +846,6 @@ func (s ThirdPartyService) GetByRiskAssessmentID(
 	}
 
 	return thirdParty, nil
-}
-
-func (s ThirdPartyService) Assess(
-	ctx context.Context, scope coredata.Scoper,
-	req AssessThirdPartyRequest,
-) (*AssessThirdPartyResult, error) {
-	result, err := s.svc.thirdPartyAssessor.Assess(ctx, req.WebsiteURL, ref.UnrefOrZero(req.Procedure), nil)
-	if err != nil {
-		return nil, fmt.Errorf("cannot assess thirdParty: %w", err)
-	}
-
-	thirdParty := &coredata.ThirdParty{}
-
-	err = s.svc.pg.WithTx(
-		ctx,
-		func(ctx context.Context, conn pg.Tx) error {
-			if err := thirdParty.LoadByID(ctx, conn, scope, req.ID); err != nil {
-				return fmt.Errorf("cannot load thirdParty %q: %w", req.ID, err)
-			}
-
-			info := result.Info
-
-			if info.Name != "" {
-				thirdParty.Name = info.Name
-			}
-
-			thirdParty.WebsiteURL = &req.WebsiteURL
-			if info.Category != "" {
-				thirdParty.Category = coredata.ThirdPartyCategory(info.Category)
-			}
-
-			thirdParty.UpdatedAt = time.Now()
-
-			if info.Description != "" {
-				thirdParty.Description = &info.Description
-			}
-
-			if info.HeadquarterAddress != "" {
-				thirdParty.HeadquarterAddress = &info.HeadquarterAddress
-			}
-
-			if info.LegalName != "" {
-				thirdParty.LegalName = &info.LegalName
-			}
-
-			if info.PrivacyPolicyURL != "" {
-				thirdParty.PrivacyPolicyURL = &info.PrivacyPolicyURL
-			}
-
-			if info.ServiceLevelAgreementURL != "" {
-				thirdParty.ServiceLevelAgreementURL = &info.ServiceLevelAgreementURL
-			}
-
-			if info.DataProcessingAgreementURL != "" {
-				thirdParty.DataProcessingAgreementURL = &info.DataProcessingAgreementURL
-			}
-
-			if info.BusinessAssociateAgreementURL != "" {
-				thirdParty.BusinessAssociateAgreementURL = &info.BusinessAssociateAgreementURL
-			}
-
-			if info.SubprocessorsListURL != "" {
-				thirdParty.SubprocessorsListURL = &info.SubprocessorsListURL
-			}
-
-			if info.SecurityPageURL != "" {
-				thirdParty.SecurityPageURL = &info.SecurityPageURL
-			}
-
-			if info.TrustPageURL != "" {
-				thirdParty.TrustPageURL = &info.TrustPageURL
-			}
-
-			if info.TermsOfServiceURL != "" {
-				thirdParty.TermsOfServiceURL = &info.TermsOfServiceURL
-			}
-
-			if info.StatusPageURL != "" {
-				thirdParty.StatusPageURL = &info.StatusPageURL
-			}
-
-			if len(info.Certifications) > 0 {
-				thirdParty.Certifications = info.Certifications
-			}
-
-			if err := thirdParty.Update(ctx, conn, scope); err != nil {
-				return fmt.Errorf("cannot update thirdParty: %w", err)
-			}
-
-			if err := webhook.InsertData(
-				ctx,
-				conn,
-				scope,
-				thirdParty.OrganizationID,
-				coredata.WebhookEventTypeThirdPartyUpdated,
-				webhooktypes.NewThirdParty(thirdParty),
-			); err != nil {
-				return fmt.Errorf("cannot insert webhook event: %w", err)
-			}
-
-			return nil
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	subprocessors := make([]Subprocessor, len(result.Info.Subprocessors))
-	for i, sp := range result.Info.Subprocessors {
-		subprocessors[i] = Subprocessor{
-			Name:    sp.Name,
-			Country: sp.Country,
-			Purpose: sp.Purpose,
-		}
-	}
-
-	return &AssessThirdPartyResult{
-		ThirdParty:    thirdParty,
-		Report:        result.Document,
-		Subprocessors: subprocessors,
-	}, nil
 }
 
 func (s ThirdPartyService) CreateThirdPartyMapping(

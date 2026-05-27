@@ -18,26 +18,19 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"go.gearno.de/kit/log"
 	"go.opentelemetry.io/otel/trace"
-	"go.probo.inc/probo/pkg/probo"
+	"go.probo.inc/probo/pkg/thirdparty"
 	"go.probo.inc/probo/pkg/vetting"
 )
 
-// buildThirdPartyAssessor wires the thirdParty assessment agent. It is an opt-in
-// feature: deployments that do not set `llm.third-party-assessor.provider` get a
-// DisabledThirdPartyAssessor that reports the feature as unavailable. The
-// third-party-assessor does not inherit the default provider because its
-// pipeline (LLM + browser + search) is expensive and should not be enabled
-// implicitly.
-func (impl *Implm) buildThirdPartyAssessor(
+// buildThirdPartyVetter wires the third-party vetting agent. Unset
+// third-party-vetter fields inherit from the default agent config
+// (AGENT_DEFAULT_*), same as evidence-describer and probo.
+func (impl *Implm) buildThirdPartyVetter(
 	l *log.Logger,
 	tp trace.TracerProvider,
 	r prometheus.Registerer,
-) (probo.ThirdPartyAssessor, error) {
-	if impl.cfg.Agents.ThirdPartyAssessor.Provider == "" {
-		return probo.DisabledThirdPartyAssessor{}, nil
-	}
-
-	agentCfg, llmClient, err := impl.resolveAgentClient("third-party-assessor", impl.cfg.Agents.ThirdPartyAssessor, l, tp, r)
+) (thirdparty.Vetter, error) {
+	agentCfg, llmClient, err := impl.resolveAgentClient("third-party-vetter", impl.cfg.Agents.ThirdPartyVetter, l, tp, r)
 	if err != nil {
 		return nil, err
 	}
@@ -53,6 +46,6 @@ func (impl *Implm) buildThirdPartyAssessor(
 		MaxTokens:       maxTokens,
 		ChromeAddr:      impl.cfg.ChromeDPAddr,
 		FirecrawlAPIKey: impl.cfg.Agents.Tools.FirecrawlAPIKey,
-		Logger:          l.Named("third-party-assessor"),
+		Logger:          l.Named("third-party-vetter"),
 	}), nil
 }

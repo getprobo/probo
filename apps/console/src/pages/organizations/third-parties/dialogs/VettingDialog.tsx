@@ -12,6 +12,7 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+import { formatError, type GraphQLError } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import {
   Button,
@@ -20,25 +21,28 @@ import {
   DialogFooter,
   Field,
   useDialogRef,
+  useToast,
 } from "@probo/ui";
 import type { ReactNode } from "react";
+import { useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
 import { z } from "zod";
 
+import type { VettingDialogMutation } from "#/__generated__/core/VettingDialogMutation.graphql";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
-import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 
 const schema = z.object({
   url: z.string().url(),
 });
 
-const importAssessmentMutation = graphql`
-  mutation ImportAssessmentDialogMutation($input: AssessThirdPartyInput!) {
-    assessThirdParty(input: $input) {
+const vetMutation = graphql`
+  mutation VettingDialogMutation($input: VetThirdPartyInput!) {
+    vetThirdParty(input: $input) {
       thirdParty {
         id
         name
         websiteUrl
+        vettingStatus
         ...useThirdPartyFormFragment
         ...ThirdPartyComplianceTabFragment
         ...ThirdPartyRiskAssessmentTabFragment
@@ -47,41 +51,63 @@ const importAssessmentMutation = graphql`
   }
 `;
 
-type Props = {
+interface VettingDialogProps {
   thirdPartyId: string;
+  websiteUrl?: string | null;
   children: ReactNode;
-};
+}
 
-export function ImportAssessmentDialog({ thirdPartyId, children }: Props) {
+export function VettingDialog({ thirdPartyId, websiteUrl, children }: VettingDialogProps) {
   const { __ } = useTranslate();
+  const { toast } = useToast();
   const dialogRef = useDialogRef();
   const { register, handleSubmit, reset, formState } = useFormWithSchema(
     schema,
     {
       defaultValues: {
-        url: "",
+        url: websiteUrl ?? "",
       },
     },
   );
-  const [assess, isAssessing] = useMutationWithToasts(
-    importAssessmentMutation,
-    {
-      successMessage: __("Third party assessed successfully."),
-      errorMessage: __("Failed to assess third party"),
-    },
-  );
+  const [vet, isVetting] = useMutation<VettingDialogMutation>(vetMutation);
 
-  const onSubmit = async (data: z.infer<typeof schema>) => {
-    await assess({
+  const onSubmit = (data: z.infer<typeof schema>) => {
+    vet({
       variables: {
         input: {
           id: thirdPartyId,
           websiteUrl: data.url,
         },
       },
-      onSuccess: () => {
+      onCompleted(_, errors) {
+        if (errors?.length) {
+          toast({
+            title: __("Error"),
+            description: formatError(
+              __("Failed to start vetting."),
+              errors as GraphQLError[],
+            ),
+            variant: "error",
+          });
+          return;
+        }
+        toast({
+          title: __("Success"),
+          description: __("The third party is being vetted in the background."),
+          variant: "success",
+        });
         dialogRef.current?.close();
         reset();
+      },
+      onError(error) {
+        toast({
+          title: __("Error"),
+          description: formatError(
+            __("Failed to start vetting."),
+            error as GraphQLError,
+          ),
+          variant: "error",
+        });
       },
     });
   };
@@ -90,22 +116,22 @@ export function ImportAssessmentDialog({ thirdPartyId, children }: Props) {
     <Dialog
       ref={dialogRef}
       trigger={children}
-      title={__("Assessment from website")}
+      title={__("Start Vetting")}
       className="max-w-lg"
     >
       <form onSubmit={e => void handleSubmit(onSubmit)(e)}>
         <DialogContent padded>
           <Field
             required
-            label={__("URL")}
+            label={__("Website URL")}
             type="text"
             {...register("url")}
             error={formState.errors.url?.message}
           />
         </DialogContent>
         <DialogFooter>
-          <Button type="submit" disabled={isAssessing}>
-            {__("Assess")}
+          <Button type="submit" disabled={isVetting}>
+            {__("Start Vetting")}
           </Button>
         </DialogFooter>
       </form>

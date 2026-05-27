@@ -754,7 +754,6 @@ func (s *OrganizationService) CreateOrganization(
 
 			proboData := &coredata.ThirdParty{
 				ID:                   gid.New(scope.GetTenantID(), coredata.ThirdPartyEntityType),
-				TenantID:             organization.TenantID,
 				OrganizationID:       organization.ID,
 				Name:                 proboThirdParty.Name,
 				Description:          &proboThirdParty.Description,
