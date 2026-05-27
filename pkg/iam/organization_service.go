@@ -408,6 +408,7 @@ func (s *OrganizationService) ArchiveUser(
 			}
 
 			invitations := &coredata.Invitations{}
+
 			onlyPending := coredata.NewInvitationFilter([]coredata.InvitationStatus{coredata.InvitationStatusPending})
 
 			if err := invitations.ExpireByUserID(
