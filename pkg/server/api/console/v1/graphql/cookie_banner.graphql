@@ -263,7 +263,10 @@ enum TrackerPatternOrderField
         )
 }
 
-type TrackerPattern implements Node {
+type TrackerPattern implements Node
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.TrackerPattern"
+    ) {
     id: ID!
     cookieCategory: CookieCategory @goField(forceResolver: true)
     trackerType: TrackerType!
@@ -278,6 +281,22 @@ type TrackerPattern implements Node {
     lastMatchedAt: Datetime
     createdAt: Datetime!
     updatedAt: Datetime!
+
+    """
+    The org-scoped third party this pattern is mapped to, if any. Set
+    when the mapping worker promoted the pattern to a tenant-managed
+    ThirdParty record. When this field is non-null, commonThirdParty is
+    always null.
+    """
+    thirdParty: ThirdParty @goField(forceResolver: true)
+
+    """
+    The global third party this pattern is mapped to via the common
+    tracker-pattern catalog. Null when the pattern has its own
+    org-scoped thirdParty, when it has not been mapped, or when the
+    matched common pattern has no common third party.
+    """
+    commonThirdParty: CommonThirdParty @goField(forceResolver: true)
 
     detectedTrackers(
         first: Int

@@ -29,6 +29,7 @@ import (
 	"go.probo.inc/probo/pkg/iam/policy"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/server/api/authn"
+	"go.probo.inc/probo/pkg/thirdparty"
 )
 
 type (
@@ -51,26 +52,29 @@ type (
 	}
 
 	Loaders struct {
-		Organization   *dataloadgen.Loader[gid.GID, *coredata.Organization]
-		Framework      *dataloadgen.Loader[gid.GID, *coredata.Framework]
-		Control        *dataloadgen.Loader[gid.GID, *coredata.Control]
-		ThirdParty     *dataloadgen.Loader[gid.GID, *coredata.ThirdParty]
-		Document       *dataloadgen.Loader[gid.GID, *coredata.Document]
-		Profile        *dataloadgen.Loader[gid.GID, *coredata.MembershipProfile]
-		Risk           *dataloadgen.Loader[gid.GID, *coredata.Risk]
-		Measure        *dataloadgen.Loader[gid.GID, *coredata.Measure]
-		Task           *dataloadgen.Loader[gid.GID, *coredata.Task]
-		File           *dataloadgen.Loader[gid.GID, *coredata.File]
-		Report         *dataloadgen.Loader[gid.GID, *coredata.Report]
-		CookieBanner   *dataloadgen.Loader[gid.GID, *coredata.CookieBanner]
-		CookieCategory *dataloadgen.Loader[gid.GID, *coredata.CookieCategory]
-		Authorize      *dataloadgen.Loader[AuthorizeKey, AuthorizeResult]
+		Organization         *dataloadgen.Loader[gid.GID, *coredata.Organization]
+		Framework            *dataloadgen.Loader[gid.GID, *coredata.Framework]
+		Control              *dataloadgen.Loader[gid.GID, *coredata.Control]
+		ThirdParty           *dataloadgen.Loader[gid.GID, *coredata.ThirdParty]
+		Document             *dataloadgen.Loader[gid.GID, *coredata.Document]
+		Profile              *dataloadgen.Loader[gid.GID, *coredata.MembershipProfile]
+		Risk                 *dataloadgen.Loader[gid.GID, *coredata.Risk]
+		Measure              *dataloadgen.Loader[gid.GID, *coredata.Measure]
+		Task                 *dataloadgen.Loader[gid.GID, *coredata.Task]
+		File                 *dataloadgen.Loader[gid.GID, *coredata.File]
+		Report               *dataloadgen.Loader[gid.GID, *coredata.Report]
+		CookieBanner         *dataloadgen.Loader[gid.GID, *coredata.CookieBanner]
+		CookieCategory       *dataloadgen.Loader[gid.GID, *coredata.CookieCategory]
+		CommonTrackerPattern *dataloadgen.Loader[gid.GID, *coredata.CommonTrackerPattern]
+		CommonThirdParty     *dataloadgen.Loader[gid.GID, *coredata.CommonThirdParty]
+		Authorize            *dataloadgen.Loader[AuthorizeKey, AuthorizeResult]
 	}
 
 	batchFetcher struct {
 		probo        *probo.Service
 		iam          *iam.Service
 		cookieBanner *cookiebanner.Service
+		thirdParty   *thirdparty.Service
 	}
 )
 
@@ -80,11 +84,16 @@ func FromContext(ctx context.Context) *Loaders {
 	return ctx.Value(loadersKey).(*Loaders)
 }
 
-func NewMiddleware(proboSvc *probo.Service, iamSvc *iam.Service, cookieBannerSvc *cookiebanner.Service) func(http.Handler) http.Handler {
+func NewMiddleware(proboSvc *probo.Service, iamSvc *iam.Service, cookieBannerSvc *cookiebanner.Service, thirdPartySvc *thirdparty.Service) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(
 			func(w http.ResponseWriter, r *http.Request) {
-				f := &batchFetcher{probo: proboSvc, iam: iamSvc, cookieBanner: cookieBannerSvc}
+				f := &batchFetcher{
+					probo:        proboSvc,
+					iam:          iamSvc,
+					cookieBanner: cookieBannerSvc,
+					thirdParty:   thirdPartySvc,
+				}
 				loaders := f.newLoaders()
 				ctx := context.WithValue(r.Context(), loadersKey, loaders)
 				next.ServeHTTP(w, r.WithContext(ctx))
@@ -95,19 +104,21 @@ func NewMiddleware(proboSvc *probo.Service, iamSvc *iam.Service, cookieBannerSvc
 
 func (f *batchFetcher) newLoaders() *Loaders {
 	return &Loaders{
-		Organization:   dataloadgen.NewMappedLoader(f.fetchOrganizations),
-		Framework:      dataloadgen.NewMappedLoader(f.fetchFrameworks),
-		Control:        dataloadgen.NewMappedLoader(f.fetchControls),
-		ThirdParty:     dataloadgen.NewMappedLoader(f.fetchThirdParties),
-		Document:       dataloadgen.NewMappedLoader(f.fetchDocuments),
-		Profile:        dataloadgen.NewMappedLoader(f.fetchProfiles),
-		Risk:           dataloadgen.NewMappedLoader(f.fetchRisks),
-		Measure:        dataloadgen.NewMappedLoader(f.fetchMeasures),
-		Task:           dataloadgen.NewMappedLoader(f.fetchTasks),
-		File:           dataloadgen.NewMappedLoader(f.fetchFiles),
-		Report:         dataloadgen.NewMappedLoader(f.fetchReports),
-		CookieBanner:   dataloadgen.NewMappedLoader(f.fetchCookieBanners),
-		CookieCategory: dataloadgen.NewMappedLoader(f.fetchCookieCategories),
+		Organization:         dataloadgen.NewMappedLoader(f.fetchOrganizations),
+		Framework:            dataloadgen.NewMappedLoader(f.fetchFrameworks),
+		Control:              dataloadgen.NewMappedLoader(f.fetchControls),
+		ThirdParty:           dataloadgen.NewMappedLoader(f.fetchThirdParties),
+		Document:             dataloadgen.NewMappedLoader(f.fetchDocuments),
+		Profile:              dataloadgen.NewMappedLoader(f.fetchProfiles),
+		Risk:                 dataloadgen.NewMappedLoader(f.fetchRisks),
+		Measure:              dataloadgen.NewMappedLoader(f.fetchMeasures),
+		Task:                 dataloadgen.NewMappedLoader(f.fetchTasks),
+		File:                 dataloadgen.NewMappedLoader(f.fetchFiles),
+		Report:               dataloadgen.NewMappedLoader(f.fetchReports),
+		CookieBanner:         dataloadgen.NewMappedLoader(f.fetchCookieBanners),
+		CookieCategory:       dataloadgen.NewMappedLoader(f.fetchCookieCategories),
+		CommonTrackerPattern: dataloadgen.NewMappedLoader(f.fetchCommonTrackerPatterns),
+		CommonThirdParty:     dataloadgen.NewMappedLoader(f.fetchCommonThirdParties),
 		Authorize: dataloadgen.NewMappedLoader(
 			f.fetchAuthorizes,
 			dataloadgen.WithoutCache(),
@@ -317,6 +328,34 @@ func (f *batchFetcher) fetchCookieCategories(ctx context.Context, keys []gid.GID
 
 	result := make(map[gid.GID]*coredata.CookieCategory, len(categories))
 	for _, v := range categories {
+		result[v.ID] = v
+	}
+
+	return result, nil
+}
+
+func (f *batchFetcher) fetchCommonTrackerPatterns(ctx context.Context, keys []gid.GID) (map[gid.GID]*coredata.CommonTrackerPattern, error) {
+	patterns, err := f.cookieBanner.GetCommonTrackerPatternsByIDs(ctx, keys...)
+	if err != nil {
+		return nil, fmt.Errorf("cannot batch load common tracker patterns: %w", err)
+	}
+
+	result := make(map[gid.GID]*coredata.CommonTrackerPattern, len(patterns))
+	for _, v := range patterns {
+		result[v.ID] = v
+	}
+
+	return result, nil
+}
+
+func (f *batchFetcher) fetchCommonThirdParties(ctx context.Context, keys []gid.GID) (map[gid.GID]*coredata.CommonThirdParty, error) {
+	parties, err := f.thirdParty.GetCommonThirdPartiesByIDs(ctx, keys...)
+	if err != nil {
+		return nil, fmt.Errorf("cannot batch load common third parties: %w", err)
+	}
+
+	result := make(map[gid.GID]*coredata.CommonThirdParty, len(parties))
+	for _, v := range parties {
 		result[v.ID] = v
 	}
 
