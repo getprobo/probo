@@ -600,6 +600,27 @@ func (s *AccountService) DeletePersonalAPIKey(
 	)
 }
 
+func (s AccountService) ListInvitingOrganizations(ctx context.Context, identityID gid.GID) ([]*coredata.Organization, error) {
+	var organizations coredata.Organizations
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			err := organizations.LoadAllByIdentityIDWithPendingInvitation(ctx, conn, coredata.NewNoScope(), identityID)
+			if err != nil {
+				return fmt.Errorf("cannot load inviting organizations: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return organizations, nil
+}
+
 func (s AccountService) ListOrganizations(ctx context.Context, identityID gid.GID) ([]*coredata.Organization, error) {
 	var organizations coredata.Organizations
 

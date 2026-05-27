@@ -130,6 +130,26 @@ func (r *identityResolver) PersonalAPIKeys(ctx context.Context, obj *types.Ident
 	return types.NewPersonalAPIKeyConnection(page, r, obj.ID), nil
 }
 
+// InvitingOrganizations is the resolver for the invitingOrganizations field.
+func (r *identityResolver) InvitingOrganizations(ctx context.Context, obj *types.Identity) ([]*types.Organization, error) {
+	if _, err := r.authorize(ctx, obj.ID, iam.ActionInvitationList, authz.WithSkipAssumptionCheck()); err != nil {
+		return nil, err
+	}
+
+	organizations, err := r.iam.AccountService.ListInvitingOrganizations(ctx, obj.ID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list inviting organizations", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	result := make([]*types.Organization, len(organizations))
+	for i, organization := range organizations {
+		result[i] = types.NewOrganization(organization)
+	}
+
+	return result, nil
+}
+
 // SsoLoginURL is the resolver for the ssoLoginURL field.
 func (r *identityResolver) SsoLoginURL(ctx context.Context, obj *types.Identity) (*string, error) {
 	if _, err := r.authorize(ctx, obj.ID, iam.ActionIdentityGet); err != nil {

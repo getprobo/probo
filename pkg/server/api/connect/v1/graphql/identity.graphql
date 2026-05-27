@@ -30,6 +30,10 @@ type Identity implements Node {
     before: CursorKey
   ): PersonalAPIKeyConnection @goField(forceResolver: true)
 
+  invitingOrganizations: [Organization!]!
+    @goField(forceResolver: true)
+    @session(required: PRESENT)
+
   ssoLoginURL: String
     @goField(forceResolver: true)
     @session(required: PRESENT)
