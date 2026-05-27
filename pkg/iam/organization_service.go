@@ -21,7 +21,6 @@ import (
 	"io"
 	"time"
 
-	"github.com/jackc/pgx/v5/pgconn"
 	"go.gearno.de/crypto/uuid"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/packages/emails"
@@ -351,18 +350,10 @@ func (s *OrganizationService) RemoveUser(
 			}
 
 			if err := profile.Delete(ctx, tx, scope, profileID); err != nil {
-				if isUserRemovalDependencyError(err) {
-					return NewUserReferencedByRecordsError(profileID)
-				}
-
 				return fmt.Errorf("cannot delete profile: %w", err)
 			}
 
 			if err := membership.Delete(ctx, tx, scope, membership.ID); err != nil {
-				if isUserRemovalDependencyError(err) {
-					return NewUserReferencedByRecordsError(profileID)
-				}
-
 				return fmt.Errorf("cannot delete membership: %w", err)
 			}
 
@@ -440,19 +431,6 @@ func (s *OrganizationService) ArchiveUser(
 			return nil
 		},
 	)
-}
-
-func isUserRemovalDependencyError(err error) bool {
-	if errors.Is(err, coredata.ErrResourceInUse) {
-		return true
-	}
-
-	pgErr, ok := errors.AsType[*pgconn.PgError](err)
-	if !ok {
-		return false
-	}
-
-	return pgErr.Code == "23503"
 }
 
 func (s *OrganizationService) InviteUser(

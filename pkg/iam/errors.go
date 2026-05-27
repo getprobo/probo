@@ -157,18 +157,6 @@ func (e ErrUserManagedBySCIM) Error() string {
 	return fmt.Sprintf("user %q is managed by SCIM and cannot be deleted manually", e.ProfileID)
 }
 
-type ErrUserReferencedByRecords struct {
-	ProfileID gid.GID
-}
-
-func NewUserReferencedByRecordsError(profileID gid.GID) error {
-	return &ErrUserReferencedByRecords{ProfileID: profileID}
-}
-
-func (e ErrUserReferencedByRecords) Error() string {
-	return "cannot remove user because they are referenced by existing records (for example signatures, tasks, assets, or risks)"
-}
-
 type ErrLastActiveOwner struct {
 	MembershipID gid.GID
 }

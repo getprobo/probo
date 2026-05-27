@@ -144,10 +144,6 @@ func (r *mutationResolver) RemoveUser(ctx context.Context, input types.RemoveUse
 			return nil, gqlutils.Conflictf(ctx, "cannot remove last active owner")
 		}
 
-		if _, ok := errors.AsType[*iam.ErrUserReferencedByRecords](err); ok {
-			return nil, gqlutils.Conflictf(ctx, "cannot remove user because they are referenced by existing records (for example signatures, tasks, assets, or risks)")
-		}
-
 		r.logger.ErrorCtx(ctx, "cannot remove user from organization", log.Error(err))
 
 		return nil, gqlutils.Internal(ctx)
