@@ -17,6 +17,7 @@ package awsconfig
 import (
 	"context"
 	"fmt"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
@@ -125,6 +126,9 @@ func buildContainerProvider(httpClient *http.Client) *endpointcreds.Provider {
 	)
 
 	if fullURI := os.Getenv("AWS_CONTAINER_CREDENTIALS_FULL_URI"); fullURI != "" {
+		if err := validateContainerFullURI(fullURI); err != nil {
+			return nil
+		}
 		endpoint = fullURI
 		authToken = buildContainerAuthToken()
 	} else if relativeURI := os.Getenv("AWS_CONTAINER_CREDENTIALS_RELATIVE_URI"); relativeURI != "" {
@@ -164,6 +168,33 @@ func buildContainerAuthToken() endpointcreds.AuthTokenProvider {
 		return endpointcreds.TokenProviderFunc(func() (string, error) {
 			return token, nil
 		})
+	}
+
+	return nil
+}
+
+// validateContainerFullURI rejects AWS_CONTAINER_CREDENTIALS_FULL_URI values
+// that point at arbitrary external hosts. Only HTTPS, loopback, and the ECS
+// link-local address (169.254.170.2) are permitted, matching the AWS SDK's
+// own container-credential host checks.
+func validateContainerFullURI(rawURI string) error {
+	u, err := url.Parse(rawURI)
+	if err != nil {
+		return fmt.Errorf("invalid container credentials URI: %w", err)
+	}
+
+	if u.Scheme == "https" {
+		return nil
+	}
+
+	host := u.Hostname()
+	if host == "169.254.170.2" {
+		return nil
+	}
+
+	ip := net.ParseIP(host)
+	if ip == nil || !ip.IsLoopback() {
+		return fmt.Errorf("container credentials URI host %q is not allowed: must use https or a loopback/link-local address", host)
 	}
 
 	return nil
