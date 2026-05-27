@@ -20,12 +20,14 @@ import (
 )
 
 type TrackerPatternFilter struct {
-	matchType        *TrackerPatternMatchType
-	cookieCategoryID *gid.GID
-	excluded         *bool
-	query            *string
-	source           *CookieSource
-	trackerType      *TrackerType
+	matchType               *TrackerPatternMatchType
+	cookieCategoryID        *gid.GID
+	excluded                *bool
+	query                   *string
+	source                  *CookieSource
+	trackerType             *TrackerType
+	thirdPartyID            *gid.GID
+	commonTrackerPatternIDs []gid.GID
 }
 
 func NewTrackerPatternFilter(
@@ -52,6 +54,22 @@ func (f *TrackerPatternFilter) WithSource(source *CookieSource) *TrackerPatternF
 
 func (f *TrackerPatternFilter) WithTrackerType(trackerType *TrackerType) *TrackerPatternFilter {
 	f.trackerType = trackerType
+	return f
+}
+
+func (f *TrackerPatternFilter) WithThirdPartyID(thirdPartyID *gid.GID) *TrackerPatternFilter {
+	f.thirdPartyID = thirdPartyID
+	return f
+}
+
+// WithCommonTrackerPatternIDs constrains the result to tracker patterns
+// whose `common_tracker_pattern_id` is in the given set. Callers
+// pre-resolve this list (typically via
+// CommonTrackerPatterns.LoadIDsByCommonThirdPartyID) so the filter stays
+// inside the tracker_patterns table. Passing an empty (non-nil) slice
+// yields no rows.
+func (f *TrackerPatternFilter) WithCommonTrackerPatternIDs(ids []gid.GID) *TrackerPatternFilter {
+	f.commonTrackerPatternIDs = ids
 	return f
 }
 
@@ -103,6 +121,20 @@ func (f *TrackerPatternFilter) SQLFragment() string {
 			tracker_type = @filter_tracker_type::tracker_type
 		ELSE TRUE
 	END
+	AND
+	CASE
+		WHEN @has_third_party_id_filter::boolean = false THEN TRUE
+		WHEN @has_third_party_id_filter::boolean = true THEN
+			third_party_id = @filter_third_party_id::text
+		ELSE TRUE
+	END
+	AND
+	CASE
+		WHEN @has_common_tracker_pattern_ids_filter::boolean = false THEN TRUE
+		WHEN @has_common_tracker_pattern_ids_filter::boolean = true THEN
+			common_tracker_pattern_id = ANY(@filter_common_tracker_pattern_ids::text[])
+		ELSE TRUE
+	END
 )`
 }
 
@@ -112,17 +144,21 @@ func (f *TrackerPatternFilter) SQLArguments() pgx.StrictNamedArgs {
 	}
 
 	args := pgx.StrictNamedArgs{
-		"has_match_type_filter":         false,
-		"filter_match_type":             nil,
-		"has_cookie_category_id_filter": false,
-		"filter_cookie_category_id":     nil,
-		"has_excluded_filter":           false,
-		"filter_excluded":               nil,
-		"filter_query":                  nil,
-		"has_source_filter":             false,
-		"filter_source":                 nil,
-		"has_tracker_type_filter":       false,
-		"filter_tracker_type":           nil,
+		"has_match_type_filter":                 false,
+		"filter_match_type":                     nil,
+		"has_cookie_category_id_filter":         false,
+		"filter_cookie_category_id":             nil,
+		"has_excluded_filter":                   false,
+		"filter_excluded":                       nil,
+		"filter_query":                          nil,
+		"has_source_filter":                     false,
+		"filter_source":                         nil,
+		"has_tracker_type_filter":               false,
+		"filter_tracker_type":                   nil,
+		"has_third_party_id_filter":             false,
+		"filter_third_party_id":                 nil,
+		"has_common_tracker_pattern_ids_filter": false,
+		"filter_common_tracker_pattern_ids":     []gid.GID{},
 	}
 
 	if f.matchType != nil {
@@ -152,6 +188,16 @@ func (f *TrackerPatternFilter) SQLArguments() pgx.StrictNamedArgs {
 	if f.trackerType != nil {
 		args["has_tracker_type_filter"] = true
 		args["filter_tracker_type"] = string(*f.trackerType)
+	}
+
+	if f.thirdPartyID != nil {
+		args["has_third_party_id_filter"] = true
+		args["filter_third_party_id"] = *f.thirdPartyID
+	}
+
+	if f.commonTrackerPatternIDs != nil {
+		args["has_common_tracker_pattern_ids_filter"] = true
+		args["filter_common_tracker_pattern_ids"] = f.commonTrackerPatternIDs
 	}
 
 	return args

@@ -864,6 +864,82 @@ WHERE
 	return count, nil
 }
 
+// LoadDistinctThirdPartyIDsByCookieBannerID returns the distinct non-null
+// `third_party_id` values referenced by tracker patterns of the given
+// banner. Callers feed it to ThirdParty.GetByIDs to power per-banner
+// pickers without crossing the entity boundary.
+func (tps *TrackerPatterns) LoadDistinctThirdPartyIDsByCookieBannerID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	cookieBannerID gid.GID,
+) ([]gid.GID, error) {
+	q := `
+SELECT DISTINCT third_party_id
+FROM tracker_patterns
+WHERE
+	%s
+	AND cookie_banner_id = @cookie_banner_id
+	AND third_party_id IS NOT NULL
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"cookie_banner_id": cookieBannerID}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return nil, fmt.Errorf("cannot query distinct third party ids: %w", err)
+	}
+
+	ids, err := pgx.CollectRows(rows, pgx.RowTo[gid.GID])
+	if err != nil {
+		return nil, fmt.Errorf("cannot collect distinct third party ids: %w", err)
+	}
+
+	return ids, nil
+}
+
+// LoadDistinctCommonTrackerPatternIDsByCookieBannerID returns the
+// distinct non-null `common_tracker_pattern_id` values referenced by
+// tracker patterns of the given banner. Callers chain this with
+// CommonTrackerPatterns.LoadByIDs and CommonThirdParties.LoadByIDs to
+// resolve the linked common third parties without JOINs.
+func (tps *TrackerPatterns) LoadDistinctCommonTrackerPatternIDsByCookieBannerID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	cookieBannerID gid.GID,
+) ([]gid.GID, error) {
+	q := `
+SELECT DISTINCT common_tracker_pattern_id
+FROM tracker_patterns
+WHERE
+	%s
+	AND cookie_banner_id = @cookie_banner_id
+	AND common_tracker_pattern_id IS NOT NULL
+	AND third_party_id IS NULL
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"cookie_banner_id": cookieBannerID}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return nil, fmt.Errorf("cannot query distinct common tracker pattern ids: %w", err)
+	}
+
+	ids, err := pgx.CollectRows(rows, pgx.RowTo[gid.GID])
+	if err != nil {
+		return nil, fmt.Errorf("cannot collect distinct common tracker pattern ids: %w", err)
+	}
+
+	return ids, nil
+}
+
 func (tps *TrackerPatterns) UpdateLastMatchedAt(
 	ctx context.Context,
 	tx pg.Tx,
