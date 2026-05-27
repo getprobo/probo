@@ -17,6 +17,7 @@ package user
 import (
 	"github.com/spf13/cobra"
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
+	"go.probo.inc/probo/pkg/cmd/user/archive"
 	"go.probo.inc/probo/pkg/cmd/user/list"
 	"go.probo.inc/probo/pkg/cmd/user/view"
 )
@@ -29,6 +30,7 @@ func NewCmdUser(f *cmdutil.Factory) *cobra.Command {
 
 	cmd.AddCommand(list.NewCmdList(f))
 	cmd.AddCommand(view.NewCmdView(f))
+	cmd.AddCommand(archive.NewCmdArchive(f))
 
 	return cmd
 }

@@ -113,15 +113,15 @@ func (r *mutationResolver) RemoveUser(ctx context.Context, input types.RemoveUse
 	err := r.iam.OrganizationService.RemoveUser(ctx, input.OrganizationID, input.ProfileID)
 	if err != nil {
 		if _, ok := errors.AsType[*iam.ErrUserManagedBySCIM](err); ok {
-			return nil, gqlutils.Conflict(ctx, err)
+			return nil, gqlutils.Conflictf(ctx, "user is managed by SCIM and cannot be archived")
 		}
 
 		if _, ok := errors.AsType[*iam.ErrLastActiveOwner](err); ok {
-			return nil, gqlutils.Conflict(ctx, err)
+			return nil, gqlutils.Conflictf(ctx, "cannot archive last active owner")
 		}
 
 		if errors.Is(err, coredata.ErrResourceInUse) {
-			return nil, gqlutils.Conflict(ctx, err)
+			return nil, gqlutils.Conflictf(ctx, "cannot archive user")
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot remove user from organization", log.Error(err))

@@ -2923,21 +2923,21 @@ func (r *Resolver) RemoveUserTool(ctx context.Context, req *mcp.CallToolRequest,
 	err := r.iamSvc.OrganizationService.RemoveUser(ctx, input.OrganizationID, input.ProfileID)
 	if err != nil {
 		if _, ok := errors.AsType[*iam.ErrUserManagedBySCIM](err); ok {
-			return nil, types.RemoveUserOutput{}, fmt.Errorf("user is managed by SCIM and cannot be removed: %w", err)
+			return nil, types.RemoveUserOutput{}, fmt.Errorf("user is managed by SCIM and cannot be archived: %w", err)
 		}
 
 		if _, ok := errors.AsType[*iam.ErrLastActiveOwner](err); ok {
-			return nil, types.RemoveUserOutput{}, fmt.Errorf("cannot remove last active owner: %w", err)
+			return nil, types.RemoveUserOutput{}, fmt.Errorf("cannot archive last active owner: %w", err)
 		}
 
 		if errors.Is(err, coredata.ErrResourceInUse) {
-			return nil, types.RemoveUserOutput{}, fmt.Errorf("cannot remove user: %w", err)
+			return nil, types.RemoveUserOutput{}, fmt.Errorf("cannot archive user: %w", err)
 		}
 
-		return nil, types.RemoveUserOutput{}, fmt.Errorf("remove user: %w", err)
+		return nil, types.RemoveUserOutput{}, fmt.Errorf("archive user: %w", err)
 	}
 
-	return nil, types.RemoveUserOutput{DeletedUserID: input.ProfileID}, nil
+	return nil, types.RemoveUserOutput{ArchivedUserID: input.ProfileID}, nil
 }
 
 func (r *Resolver) DeleteDataProtectionImpactAssessmentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteDataProtectionImpactAssessmentInput) (*mcp.CallToolResult, types.DeleteDataProtectionImpactAssessmentOutput, error) {

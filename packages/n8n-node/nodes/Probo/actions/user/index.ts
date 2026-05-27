@@ -58,10 +58,10 @@ export const description: INodeProperties[] = [
 				action: 'List users',
 			},
 			{
-				name: 'Remove',
+				name: 'Archive',
 				value: 'removeUser',
-				description: 'Remove a user from the organization',
-				action: 'Remove a user',
+				description: 'Archive a user in the organization',
+				action: 'Archive a user',
 			},
 			{
 				name: 'Update',

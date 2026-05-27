@@ -1709,16 +1709,16 @@ components:
           description: Organization ID
         profile_id:
           $ref: "#/components/schemas/GID"
-          description: User (profile) ID to remove
+          description: User (profile) ID to archive
 
     RemoveUserOutput:
       type: object
       required:
-        - deleted_user_id
+        - archived_user_id
       properties:
-        deleted_user_id:
+        archived_user_id:
           $ref: "#/components/schemas/GID"
-          description: Deleted user (profile) ID
+          description: Archived user (profile) ID
 
     GetProfileInput:
       type: object
@@ -11934,7 +11934,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/UpdateMembershipOutput"
   - name: removeUser
-    description: Remove a user from the organization
+    description: Archive a user in the organization
     hints:
       readonly: false
     inputSchema:

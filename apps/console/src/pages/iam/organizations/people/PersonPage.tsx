@@ -67,8 +67,8 @@ export function PersonPage(props: { queryRef: PreloadedQuery<PersonPageQuery> })
   const [removeUser, isRemoving] = useMutationWithToasts(
     removeUserMutation,
     {
-      successMessage: __("Person removed successfully"),
-      errorMessage: __("Failed to remove person"),
+      successMessage: __("Person archived successfully"),
+      errorMessage: __("Failed to archive person"),
     },
   );
 
@@ -89,12 +89,14 @@ export function PersonPage(props: { queryRef: PreloadedQuery<PersonPageQuery> })
       },
       {
         message: sprintf(
-          __("Are you sure you want to remove %s?"),
+          __("Are you sure you want to archive %s?"),
           person.fullName,
         ),
       },
     );
   };
+
+  const canArchive = person.canDelete && person.source !== "SCIM";
 
   return (
     <div className="space-y-6">
@@ -120,7 +122,7 @@ export function PersonPage(props: { queryRef: PreloadedQuery<PersonPageQuery> })
             <div className="text-lg text-txt-secondary">{person.emailAddress}</div>
           </div>
         </div>
-        {person.canDelete && person.source !== "SCIM" && (
+        {canArchive && (
           <ActionDropdown variant="secondary">
             <DropdownItem
               variant="danger"
@@ -128,7 +130,7 @@ export function PersonPage(props: { queryRef: PreloadedQuery<PersonPageQuery> })
               onClick={handleRemove}
               disabled={isRemoving}
             >
-              {__("Delete")}
+              {__("Archive")}
             </DropdownItem>
           </ActionDropdown>
         )}

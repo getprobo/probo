@@ -112,7 +112,7 @@ export function PeopleListItem(props: {
   fKey: PeopleListItemFragment$key;
   onRefetch: () => void;
 }) {
-  const { fKey, connectionId } = props;
+  const { fKey, connectionId, onRefetch } = props;
 
   const organizationId = useOrganizationId();
   const { __ } = useTranslate();
@@ -127,7 +127,7 @@ export function PeopleListItem(props: {
   const isInactive = profile.state === "INACTIVE";
 
   const canSendActivationMail = isInactive && profile.source !== "SCIM" && profile.canInvite;
-  const canDelete = profile.canDelete && profile.source !== "SCIM";
+  const canArchive = profile.canDelete && profile.source !== "SCIM" && profile.state !== "INACTIVE";
 
   const [inviteUser]
     = useMutationWithToasts<PeopleListItem_inviteMutation>(inviteUserMutation, {
@@ -144,8 +144,8 @@ export function PeopleListItem(props: {
   const [removeUser, isRemoving] = useMutationWithToasts(
     removeUserMutation,
     {
-      successMessage: __("Person removed successfully"),
-      errorMessage: __("Failed to remove person"),
+      successMessage: __("Person archived successfully"),
+      errorMessage: __("Failed to archive person"),
     },
   );
 
@@ -194,11 +194,14 @@ export function PeopleListItem(props: {
             },
             connections: [connectionId],
           },
+          onCompleted: () => {
+            onRefetch();
+          },
         });
       },
       {
         message: sprintf(
-          __("Are you sure you want to remove %s?"),
+          __("Are you sure you want to archive %s?"),
           profile.fullName,
         ),
       },
@@ -267,7 +270,7 @@ export function PeopleListItem(props: {
         {new Date(profile.createdAt).toLocaleDateString()}
       </Td>
       <Td noLink width={160} className="text-end">
-        {(canSendActivationMail || canDelete) && (
+        {(canSendActivationMail || canArchive) && (
           <ActionDropdown>
             {canSendActivationMail && (
               <DropdownItem
@@ -277,13 +280,13 @@ export function PeopleListItem(props: {
                 {lastInvitation ? __("Resend activation mail") : __("Send activation mail")}
               </DropdownItem>
             )}
-            {canDelete && (
+            {canArchive && (
               <DropdownItem
                 onClick={handleRemove}
                 variant="danger"
                 icon={IconTrashCan}
               >
-                {__("Remove person")}
+                {__("Archive person")}
               </DropdownItem>
             )}
           </ActionDropdown>
