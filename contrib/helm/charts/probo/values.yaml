@@ -347,8 +347,8 @@ s3:
   # For AWS S3, leave endpoint empty
   # For S3-compatible storage (SeaweedFS, DigitalOcean Spaces, etc.), set the endpoint
   endpoint: ""
-  accessKeyId: ""  # Optional: leave empty to use the AWS SDK credential chain (IRSA, Pod Identity, instance profile, etc.)
-  secretAccessKey: ""  # Optional: leave empty to use the AWS SDK credential chain (IRSA, Pod Identity, instance profile, etc.)
+  accessKeyId: ""  # REQUIRED when seaweedfs.enabled=false: S3 access key
+  secretAccessKey: ""  # REQUIRED when seaweedfs.enabled=false: S3 secret key
   # Use path-style URLs (required for Azure Blob Storage and some S3-compatible services)
   # When true: https://endpoint/bucket/key
   # When false (default): https://bucket.endpoint/key
