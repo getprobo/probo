@@ -4,6 +4,16 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+## [0.189.0] - 2026-05-27
+
+### Added
+
+- Add `user archiveUser` operation to deactivate a user profile while keeping them in the organization
+
+### Changed
+
+- Sort user operation options alphabetically
+
 ## [0.188.0] - 2026-05-26
 
 ### Added
