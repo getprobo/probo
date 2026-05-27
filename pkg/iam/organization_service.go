@@ -350,6 +350,7 @@ func (s *OrganizationService) RemoveUser(
 			}
 
 			now := time.Now()
+
 			if profile.State != coredata.ProfileStateInactive {
 				profile.State = coredata.ProfileStateInactive
 				profile.UpdatedAt = now
