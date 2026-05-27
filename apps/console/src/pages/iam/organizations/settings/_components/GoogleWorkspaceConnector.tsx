@@ -23,6 +23,7 @@ import {
   DialogFooter,
   Google,
   IconSettingsGear2,
+  IconWarning,
   Input,
   useDialogRef,
   useToast,
@@ -38,9 +39,18 @@ import { useOrganizationId } from "#/hooks/useOrganizationId";
 const googleWorkspaceConnectorFragment = graphql`
   fragment GoogleWorkspaceConnectorFragment on SCIMConfiguration {
     id
+    events(first: 1) {
+      edges {
+        node {
+          id
+          errorMessage
+        }
+      }
+    }
     bridge {
       id
       type
+      state
       excludedUserNames
       connector {
         id
@@ -83,9 +93,26 @@ export function GoogleWorkspaceConnector(props: {
   const connector = bridge?.connector;
   const scimConfigurationId = data?.id;
   const bridgeId = bridge?.id;
-
   const organizationId = useOrganizationId();
   const { __, dateTimeFormat } = useTranslate();
+  const bridgeState = bridge?.state ?? null;
+  const latestBridgeError = data?.events?.edges?.[0]?.node?.errorMessage ?? null;
+  const isBridgeFailed = bridgeState === "FAILED";
+  const isBridgePending = bridgeState === "PENDING";
+  const bridgeStatusBadgeVariant = isBridgeFailed
+    ? "danger"
+    : isBridgePending
+      ? "warning"
+      : "success";
+  const bridgeStatusLabel = isBridgeFailed
+    ? __("Error")
+    : isBridgePending
+      ? __("Syncing")
+      : __("Connected");
+  const bridgeErrorMessage = latestBridgeError
+    ?? __(
+      "The bridge is currently failing to sync. Check the provisioning event history for more details.",
+    );
   const { toast } = useToast();
   const dialogRef = useDialogRef();
   const excludedUserNamesDialogRef = useDialogRef();
@@ -225,118 +252,134 @@ export function GoogleWorkspaceConnector(props: {
 
   // Connected state
   return (
-    <Card padded className="flex items-center gap-3">
-      <div className="w-10 h-10 flex items-center justify-center bg-subtle rounded">
-        <Google className="w-6 h-6" />
-      </div>
-      <div className="mr-auto">
-        <h3 className="font-medium">{__("Google Workspace / Cloud Identity")}</h3>
-        <p className="text-sm text-txt-secondary">
-          {sprintf(__("Connected on %s"), dateTimeFormat(connector.createdAt))}
-        </p>
-      </div>
-      <Badge variant="success" size="md">
-        {__("Connected")}
-      </Badge>
-      <Dialog
-        ref={excludedUserNamesDialogRef}
-        trigger={(
-          <Button variant="secondary">
-            <IconSettingsGear2 size={16} />
-            {__("Settings")}
-          </Button>
-        )}
-        title={__("Google Workspace / Cloud Identity Settings")}
-        className="max-w-lg"
-      >
-        <DialogContent padded className="space-y-6">
-          <div className="space-y-4">
-            <div>
-              <h4 className="text-sm font-medium">{__("Excluded user names")}</h4>
-              <p className="text-sm text-txt-secondary mt-1">
-                {__("Users with these user names will not be synced from Google Workspace / Cloud Identity.")}
-              </p>
-            </div>
-            <div className="flex gap-2">
-              <Input
-                type="text"
-                value={newUser}
-                onChange={e => setNewUser(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    if (isUpdating) return;
-                    handleAddUser();
-                  }
-                }}
-                placeholder="user@example.com"
-                className="flex-1"
-              />
-              <Button onClick={handleAddUser} variant="secondary" disabled={isUpdating}>
-                {__("Add")}
-              </Button>
-            </div>
-
-            {currentExcludedUserNames.length > 0 && (
-              <div className="space-y-2">
-                {currentExcludedUserNames.map((user: string) => (
-                  <div
-                    key={user}
-                    className="flex items-center justify-between p-2 bg-subtle rounded"
-                  >
-                    <span className="text-sm">{user}</span>
-                    <Button
-                      variant="quaternary"
-                      onClick={() => handleRemoveUser(user)}
-                      disabled={isUpdating}
-                    >
-                      {__("Remove")}
-                    </Button>
-                  </div>
-                ))}
+    <Card padded className="space-y-3">
+      <div className="flex items-center gap-3">
+        <div className="w-10 h-10 flex items-center justify-center bg-subtle rounded">
+          <Google className="w-6 h-6" />
+        </div>
+        <div className="mr-auto">
+          <h3 className="font-medium">{__("Google Workspace / Cloud Identity")}</h3>
+          <p className="text-sm text-txt-secondary">
+            {sprintf(__("Connected on %s"), dateTimeFormat(connector.createdAt))}
+          </p>
+        </div>
+        <Badge variant={bridgeStatusBadgeVariant} size="md">
+          {bridgeStatusLabel}
+        </Badge>
+        <Dialog
+          ref={excludedUserNamesDialogRef}
+          trigger={(
+            <Button variant="secondary">
+              <IconSettingsGear2 size={16} />
+              {__("Settings")}
+            </Button>
+          )}
+          title={__("Google Workspace / Cloud Identity Settings")}
+          className="max-w-lg"
+        >
+          <DialogContent padded className="space-y-6">
+            <div className="space-y-4">
+              <div>
+                <h4 className="text-sm font-medium">{__("Excluded user names")}</h4>
+                <p className="text-sm text-txt-secondary mt-1">
+                  {__("Users with these user names will not be synced from Google Workspace / Cloud Identity.")}
+                </p>
               </div>
-            )}
+              <div className="flex gap-2">
+                <Input
+                  type="text"
+                  value={newUser}
+                  onChange={e => setNewUser(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      if (isUpdating) return;
+                      handleAddUser();
+                    }
+                  }}
+                  placeholder="user@example.com"
+                  className="flex-1"
+                />
+                <Button onClick={handleAddUser} variant="secondary" disabled={isUpdating}>
+                  {__("Add")}
+                </Button>
+              </div>
 
-            {currentExcludedUserNames.length === 0 && (
-              <p className="text-sm text-txt-secondary text-center py-4">
-                {__("No excluded user names. All Google Workspace / Cloud Identity users will be synced.")}
-              </p>
-            )}
+              {currentExcludedUserNames.length > 0 && (
+                <div className="space-y-2">
+                  {currentExcludedUserNames.map((user: string) => (
+                    <div
+                      key={user}
+                      className="flex items-center justify-between p-2 bg-subtle rounded"
+                    >
+                      <span className="text-sm">{user}</span>
+                      <Button
+                        variant="quaternary"
+                        onClick={() => handleRemoveUser(user)}
+                        disabled={isUpdating}
+                      >
+                        {__("Remove")}
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {currentExcludedUserNames.length === 0 && (
+                <p className="text-sm text-txt-secondary text-center py-4">
+                  {__("No excluded user names. All Google Workspace / Cloud Identity users will be synced.")}
+                </p>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
+        <Dialog
+          ref={dialogRef}
+          trigger={(
+            <Button variant="danger">
+              {__("Disconnect")}
+            </Button>
+          )}
+          title={__("Disconnect Google Workspace / Cloud Identity")}
+          className="max-w-lg"
+        >
+          <DialogContent padded className="space-y-4">
+            <p className="text-txt-secondary text-sm">
+              {__(
+                "This will disconnect your Google Workspace / Cloud Identity integration. Users will no longer be automatically synced via SCIM.",
+              )}
+            </p>
+            <p className="text-red-600 text-sm font-medium">
+              {__("This action cannot be undone.")}
+            </p>
+          </DialogContent>
+          <DialogFooter>
+            <Button
+              variant="danger"
+              onClick={handleDisconnect}
+              disabled={isDeleting}
+            >
+              {isDeleting
+                ? __("Disconnecting...")
+                : __("Disconnect")}
+            </Button>
+          </DialogFooter>
+        </Dialog>
+      </div>
+
+      {isBridgeFailed && (
+        <div className="flex items-start gap-2 rounded-lg bg-bg-warning/10 border border-border-warning p-3">
+          <IconWarning size={16} className="text-txt-danger shrink-0 mt-0.5" />
+          <div className="space-y-1">
+            <p className="text-sm font-medium text-txt-danger">
+              {__("Bridge is in an error state")}
+            </p>
+            <p className="text-sm text-txt-secondary whitespace-pre-wrap break-all">
+              {bridgeErrorMessage}
+            </p>
           </div>
-        </DialogContent>
-      </Dialog>
-      <Dialog
-        ref={dialogRef}
-        trigger={(
-          <Button variant="danger">
-            {__("Disconnect")}
-          </Button>
-        )}
-        title={__("Disconnect Google Workspace / Cloud Identity")}
-        className="max-w-lg"
-      >
-        <DialogContent padded className="space-y-4">
-          <p className="text-txt-secondary text-sm">
-            {__(
-              "This will disconnect your Google Workspace / Cloud Identity integration. Users will no longer be automatically synced via SCIM.",
-            )}
-          </p>
-          <p className="text-red-600 text-sm font-medium">
-            {__("This action cannot be undone.")}
-          </p>
-        </DialogContent>
-        <DialogFooter>
-          <Button
-            variant="danger"
-            onClick={handleDisconnect}
-            disabled={isDeleting}
-          >
-            {isDeleting
-              ? __("Disconnecting...")
-              : __("Disconnect")}
-          </Button>
-        </DialogFooter>
-      </Dialog>
+        </div>
+      )}
     </Card>
   );
 }
