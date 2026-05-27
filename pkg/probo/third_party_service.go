@@ -16,12 +16,12 @@ package probo
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
 
 	"go.gearno.de/kit/pg"
-	"go.gearno.de/x/ref"
 	"go.probo.inc/probo/pkg/agent"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
@@ -32,38 +32,40 @@ import (
 	webhooktypes "go.probo.inc/probo/pkg/webhook/types"
 )
 
-// ErrThirdPartyAssessmentDisabled is returned by ThirdPartyAssessor.Assess when the
+// ErrThirdPartyVettingDisabled is returned by ThirdPartyVetter.Assess when the
 // deployment has not configured an LLM provider for thirdParty assessment.
-var ErrThirdPartyAssessmentDisabled = errors.New("thirdParty assessment is not configured on this deployment")
+var ErrThirdPartyVettingDisabled = errors.New("thirdParty vetting is not configured on this deployment")
 
-// ThirdPartyAssessor produces a thirdParty assessment report from a website URL and
+// ThirdPartyVetter produces a thirdParty assessment report from a website URL and
 // an optional procedure description. Implementations that cannot perform
 // assessment (missing LLM credentials, misconfigured provider) must return
-// ErrThirdPartyAssessmentDisabled from Assess so callers can surface a stable
+// ErrThirdPartyVettingDisabled from Assess so callers can surface a stable
 // "feature unavailable" error instead of a generic internal error.
-type ThirdPartyAssessor interface {
+type ThirdPartyVetter interface {
 	Assess(
 		ctx context.Context,
 		websiteURL string,
 		procedure string,
 		reporter agent.ProgressReporter,
+		extraTools []agent.Tool,
 	) (*vetting.Result, error)
 }
 
-// DisabledThirdPartyAssessor is the ThirdPartyAssessor implementation used when no
+// DisabledThirdPartyVetter is the ThirdPartyVetter implementation used when no
 // LLM provider is configured for the third-party-assessor agent. Its Assess
-// method always returns ErrThirdPartyAssessmentDisabled.
-type DisabledThirdPartyAssessor struct{}
+// method always returns ErrThirdPartyVettingDisabled.
+type DisabledThirdPartyVetter struct{}
 
-var _ ThirdPartyAssessor = DisabledThirdPartyAssessor{}
+var _ ThirdPartyVetter = DisabledThirdPartyVetter{}
 
-func (DisabledThirdPartyAssessor) Assess(
+func (DisabledThirdPartyVetter) Assess(
 	_ context.Context,
 	_ string,
 	_ string,
 	_ agent.ProgressReporter,
+	_ []agent.Tool,
 ) (*vetting.Result, error) {
-	return nil, ErrThirdPartyAssessmentDisabled
+	return nil, ErrThirdPartyVettingDisabled
 }
 
 type (
@@ -120,22 +122,10 @@ type (
 		FirstLevel                    *bool
 	}
 
-	AssessThirdPartyRequest struct {
+	VetThirdPartyRequest struct {
 		ID         gid.GID
 		WebsiteURL string
 		Procedure  *string
-	}
-
-	AssessThirdPartyResult struct {
-		ThirdParty    *coredata.ThirdParty
-		Report        string
-		Subprocessors []Subprocessor
-	}
-
-	Subprocessor struct {
-		Name    string
-		Country string
-		Purpose string
 	}
 
 	CreateThirdPartyRiskAssessmentRequest struct {
@@ -904,102 +894,46 @@ func (s ThirdPartyService) GetByRiskAssessmentID(
 	return thirdParty, nil
 }
 
-func (s ThirdPartyService) Assess(
+func (s ThirdPartyService) Vet(
 	ctx context.Context, scope coredata.Scoper,
-	req AssessThirdPartyRequest,
-) (*AssessThirdPartyResult, error) {
-	result, err := s.svc.thirdPartyAssessor.Assess(ctx, req.WebsiteURL, ref.UnrefOrZero(req.Procedure), nil)
-	if err != nil {
-		return nil, fmt.Errorf("cannot assess thirdParty: %w", err)
+	req VetThirdPartyRequest,
+) (*coredata.ThirdParty, error) {
+	if _, ok := s.svc.thirdPartyVetter.(DisabledThirdPartyVetter); ok {
+		return nil, ErrThirdPartyVettingDisabled
 	}
 
 	thirdParty := &coredata.ThirdParty{}
 
-	err = s.svc.pg.WithTx(
+	err := s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
 			if err := thirdParty.LoadByID(ctx, conn, scope, req.ID); err != nil {
 				return fmt.Errorf("cannot load thirdParty %q: %w", req.ID, err)
 			}
 
-			info := result.Info
-
-			if info.Name != "" {
-				thirdParty.Name = info.Name
+			metadata, err := json.Marshal(map[string]string{
+				"third_party_id":  thirdParty.ID.String(),
+				"organization_id": thirdParty.OrganizationID.String(),
+				"website_url":     req.WebsiteURL,
+			})
+			if err != nil {
+				return fmt.Errorf("cannot marshal vetting metadata: %w", err)
 			}
 
-			thirdParty.WebsiteURL = &req.WebsiteURL
-			if info.Category != "" {
-				thirdParty.Category = coredata.ThirdPartyCategory(info.Category)
+			now := time.Now()
+			run := coredata.AgentRun{
+				ID:             gid.New(scope.GetTenantID(), coredata.AgentRunEntityType),
+				OrganizationID: thirdParty.OrganizationID,
+				StartAgentName: VettingAgentName,
+				Status:         coredata.AgentRunStatusPending,
+				InputMessages:  []byte("[]"),
+				Metadata:       metadata,
+				CreatedAt:      now,
+				UpdatedAt:      now,
 			}
 
-			thirdParty.UpdatedAt = time.Now()
-
-			if info.Description != "" {
-				thirdParty.Description = &info.Description
-			}
-
-			if info.HeadquarterAddress != "" {
-				thirdParty.HeadquarterAddress = &info.HeadquarterAddress
-			}
-
-			if info.LegalName != "" {
-				thirdParty.LegalName = &info.LegalName
-			}
-
-			if info.PrivacyPolicyURL != "" {
-				thirdParty.PrivacyPolicyURL = &info.PrivacyPolicyURL
-			}
-
-			if info.ServiceLevelAgreementURL != "" {
-				thirdParty.ServiceLevelAgreementURL = &info.ServiceLevelAgreementURL
-			}
-
-			if info.DataProcessingAgreementURL != "" {
-				thirdParty.DataProcessingAgreementURL = &info.DataProcessingAgreementURL
-			}
-
-			if info.BusinessAssociateAgreementURL != "" {
-				thirdParty.BusinessAssociateAgreementURL = &info.BusinessAssociateAgreementURL
-			}
-
-			if info.SubprocessorsListURL != "" {
-				thirdParty.SubprocessorsListURL = &info.SubprocessorsListURL
-			}
-
-			if info.SecurityPageURL != "" {
-				thirdParty.SecurityPageURL = &info.SecurityPageURL
-			}
-
-			if info.TrustPageURL != "" {
-				thirdParty.TrustPageURL = &info.TrustPageURL
-			}
-
-			if info.TermsOfServiceURL != "" {
-				thirdParty.TermsOfServiceURL = &info.TermsOfServiceURL
-			}
-
-			if info.StatusPageURL != "" {
-				thirdParty.StatusPageURL = &info.StatusPageURL
-			}
-
-			if len(info.Certifications) > 0 {
-				thirdParty.Certifications = info.Certifications
-			}
-
-			if err := thirdParty.Update(ctx, conn, scope); err != nil {
-				return fmt.Errorf("cannot update thirdParty: %w", err)
-			}
-
-			if err := webhook.InsertData(
-				ctx,
-				conn,
-				scope,
-				thirdParty.OrganizationID,
-				coredata.WebhookEventTypeThirdPartyUpdated,
-				webhooktypes.NewThirdParty(thirdParty),
-			); err != nil {
-				return fmt.Errorf("cannot insert webhook event: %w", err)
+			if err := run.Insert(ctx, conn, scope); err != nil {
+				return fmt.Errorf("cannot enqueue vetting run: %w", err)
 			}
 
 			return nil
@@ -1009,20 +943,27 @@ func (s ThirdPartyService) Assess(
 		return nil, err
 	}
 
-	subprocessors := make([]Subprocessor, len(result.Info.Subprocessors))
-	for i, sp := range result.Info.Subprocessors {
-		subprocessors[i] = Subprocessor{
-			Name:    sp.Name,
-			Country: sp.Country,
-			Purpose: sp.Purpose,
-		}
+	return thirdParty, nil
+}
+
+func (s ThirdPartyService) VettingStatus(
+	ctx context.Context,
+	thirdPartyID gid.GID,
+) (*coredata.AgentRunStatus, error) {
+	var status *coredata.AgentRunStatus
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) (err error) {
+			status, err = coredata.ActiveAgentRunStatus(ctx, conn, VettingAgentName, "third_party_id", thirdPartyID.String())
+			return err
+		},
+	)
+	if err != nil {
+		return nil, err
 	}
 
-	return &AssessThirdPartyResult{
-		ThirdParty:    thirdParty,
-		Report:        result.Document,
-		Subprocessors: subprocessors,
-	}, nil
+	return status, nil
 }
 
 func (s ThirdPartyService) CreateThirdPartyMapping(

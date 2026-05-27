@@ -185,7 +185,8 @@ export const thirdPartyNodeQuery = graphql`
         name
         websiteUrl
         firstLevel
-        canAssess: permission(action: "core:thirdParty:assess")
+        vettingStatus
+        canVet: permission(action: "core:thirdParty:vet")
         canUpdate: permission(action: "core:thirdParty:update")
         canDelete: permission(action: "core:thirdParty:delete")
         canUploadComplianceReport: permission(

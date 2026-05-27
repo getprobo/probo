@@ -304,7 +304,7 @@ func (impl *Implm) Run(
 		return err
 	}
 
-	thirdPartyAssessor, err := impl.buildThirdPartyAssessor(l, tp, r)
+	thirdPartyVetter, err := impl.buildThirdPartyVetter(l, tp, r)
 	if err != nil {
 		return err
 	}
@@ -515,7 +515,7 @@ func (impl *Implm) Run(
 		esignService,
 		defaultConnectorRegistry,
 		time.Duration(impl.cfg.Auth.InvitationConfirmationTokenValidity)*time.Second,
-		thirdPartyAssessor,
+		thirdPartyVetter,
 	)
 	if err != nil {
 		return fmt.Errorf("cannot create probo service: %w", err)
@@ -770,6 +770,24 @@ func (impl *Implm) Run(
 		},
 	)
 
+	vettingWorker := probo.NewVettingWorker(
+		pgClient,
+		thirdPartyVetter,
+		l.Named("vetting-worker"),
+		probo.VettingWorkerConfig{},
+		worker.WithInterval(10*time.Second),
+		worker.WithMaxConcurrency(1),
+	)
+	vettingWorkerCtx, stopVettingWorker := context.WithCancel(context.Background())
+
+	wg.Go(
+		func() {
+			if err := vettingWorker.Run(vettingWorkerCtx); err != nil {
+				cancel(fmt.Errorf("vetting worker crashed: %w", err))
+			}
+		},
+	)
+
 	trustCenterServerCtx, stopTrustCenterServer := context.WithCancel(context.Background())
 	defer stopTrustCenterServer()
 
@@ -800,6 +818,7 @@ func (impl *Implm) Run(
 	stopTrackerPatternAnalysisWorker()
 	stopTrackerMappingWorker()
 	stopMailingListWorker()
+	stopVettingWorker()
 	stopEvidenceDescriptionWorker()
 	stopDocumentPDFWorker()
 	stopExportJobExporter()

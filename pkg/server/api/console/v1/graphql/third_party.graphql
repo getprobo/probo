@@ -293,6 +293,8 @@ type ThirdParty implements Node {
         orderBy: ThirdPartyOrder
     ): ThirdPartyConnection! @goField(forceResolver: true)
 
+    vettingStatus: String @goField(forceResolver: true)
+
     createdAt: Datetime!
     updatedAt: Datetime!
 
@@ -480,7 +482,7 @@ extend type Mutation {
     createThirdPartyRiskAssessment(
         input: CreateThirdPartyRiskAssessmentInput!
     ): CreateThirdPartyRiskAssessmentPayload!
-    assessThirdParty(input: AssessThirdPartyInput!): AssessThirdPartyPayload!
+    vetThirdParty(input: VetThirdPartyInput!): VetThirdPartyPayload!
     publishThirdPartyList(
         input: PublishThirdPartyListInput!
     ): PublishThirdPartyListPayload!
@@ -652,16 +654,10 @@ input CreateThirdPartyRiskAssessmentInput {
     notes: String
 }
 
-input AssessThirdPartyInput {
+input VetThirdPartyInput {
     id: ID!
     websiteUrl: String!
     procedure: String
-}
-
-type ThirdPartySubprocessor {
-    name: String!
-    country: String!
-    purpose: String!
 }
 
 type CreateThirdPartyPayload {
@@ -736,10 +732,8 @@ type CreateThirdPartyRiskAssessmentPayload {
     thirdPartyRiskAssessmentEdge: ThirdPartyRiskAssessmentEdge!
 }
 
-type AssessThirdPartyPayload {
+type VetThirdPartyPayload {
     thirdParty: ThirdParty!
-    report: String!
-    subprocessors: [ThirdPartySubprocessor!]!
 }
 
 input CreateThirdPartyThirdPartyMappingInput {

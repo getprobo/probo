@@ -22,22 +22,22 @@ import (
 	"go.probo.inc/probo/pkg/vetting"
 )
 
-// buildThirdPartyAssessor wires the thirdParty assessment agent. It is an opt-in
+// buildThirdPartyVetter wires the thirdParty vetting agent. It is an opt-in
 // feature: deployments that do not set `llm.third-party-assessor.provider` get a
-// DisabledThirdPartyAssessor that reports the feature as unavailable. The
+// DisabledThirdPartyVetter that reports the feature as unavailable. The
 // third-party-assessor does not inherit the default provider because its
 // pipeline (LLM + browser + search) is expensive and should not be enabled
 // implicitly.
-func (impl *Implm) buildThirdPartyAssessor(
+func (impl *Implm) buildThirdPartyVetter(
 	l *log.Logger,
 	tp trace.TracerProvider,
 	r prometheus.Registerer,
-) (probo.ThirdPartyAssessor, error) {
-	if impl.cfg.Agents.ThirdPartyAssessor.Provider == "" {
-		return probo.DisabledThirdPartyAssessor{}, nil
+) (probo.ThirdPartyVetter, error) {
+	if impl.cfg.Agents.ThirdPartyVetter.Provider == "" {
+		return probo.DisabledThirdPartyVetter{}, nil
 	}
 
-	agentCfg, llmClient, err := impl.resolveAgentClient("third-party-assessor", impl.cfg.Agents.ThirdPartyAssessor, l, tp, r)
+	agentCfg, llmClient, err := impl.resolveAgentClient("third-party-assessor", impl.cfg.Agents.ThirdPartyVetter, l, tp, r)
 	if err != nil {
 		return nil, err
 	}

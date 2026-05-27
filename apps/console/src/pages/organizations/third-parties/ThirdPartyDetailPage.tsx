@@ -43,7 +43,7 @@ import {
 } from "#/hooks/graph/ThirdPartyGraph";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
-import { ImportAssessmentDialog } from "./dialogs/ImportAssessmentDialog";
+import { VettingDialog } from "./dialogs/VettingDialog";
 import { measuresFragment } from "./measures/ThirdPartyMeasuresPage";
 import { complianceReportsFragment } from "./tabs/ThirdPartyComplianceTab";
 
@@ -74,8 +74,16 @@ export default function ThirdPartyDetailPage(props: Props) {
   const baseThirdPartyUrl
     = `/organizations/${organizationId}/third-parties/${thirdParty.id}`;
 
+  const isVetting = thirdParty.vettingStatus === "PENDING" || thirdParty.vettingStatus === "RUNNING";
+
   return (
     <div className="space-y-6">
+      {isVetting && (
+        <div className="flex items-center gap-3 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
+          <div className="h-4 w-4 animate-spin rounded-full border-2 border-blue-300 border-t-blue-600" />
+          {__("Vetting is in progress. Results will appear once the analysis is complete.")}
+        </div>
+      )}
       <Breadcrumb
         items={[
           {
@@ -104,12 +112,15 @@ export default function ThirdPartyDetailPage(props: Props) {
           </div>
         </div>
         <div className="flex gap-2 items-center">
-          {thirdParty.canAssess && (
-            <ImportAssessmentDialog thirdPartyId={thirdParty.id}>
+          {thirdParty.canVet && (
+            <VettingDialog
+              thirdPartyId={thirdParty.id}
+              websiteUrl={thirdParty.websiteUrl}
+            >
               <Button icon={IconPageTextLine} variant="secondary">
-                {__("Assessment From Website")}
+                {__("Start Vetting")}
               </Button>
-            </ImportAssessmentDialog>
+            </VettingDialog>
           )}
           {thirdParty.canDelete && (
             <ActionDropdown variant="secondary">

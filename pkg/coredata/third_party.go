@@ -290,6 +290,79 @@ LIMIT 1;
 	return nil
 }
 
+func (v *ThirdParty) LoadByNameAndOrganizationID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	name string,
+	organizationID gid.GID,
+) error {
+	q := `
+SELECT
+    id,
+    tenant_id,
+    organization_id,
+    common_third_party_id,
+    name,
+    description,
+    category,
+    headquarter_address,
+    legal_name,
+    website_url,
+    privacy_policy_url,
+    service_level_agreement_url,
+    data_processing_agreement_url,
+    business_associate_agreement_url,
+    subprocessors_list_url,
+    certifications,
+    countries,
+    business_owner_profile_id,
+    security_owner_profile_id,
+    status_page_url,
+    terms_of_service_url,
+    security_page_url,
+    trust_page_url,
+    show_on_trust_center,
+    first_level,
+    created_at,
+    updated_at
+FROM
+    third_parties
+WHERE
+    %s
+    AND organization_id = @organization_id
+    AND name = @name
+LIMIT 1;
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"organization_id": organizationID,
+		"name":            name,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query thirdParty by name: %w", err)
+	}
+	defer rows.Close()
+
+	thirdParty, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[ThirdParty])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+
+		return fmt.Errorf("cannot collect thirdParty: %w", err)
+	}
+
+	*v = thirdParty
+
+	return nil
+}
+
 func (v *ThirdParties) LoadByIDs(
 	ctx context.Context,
 	conn pg.Querier,

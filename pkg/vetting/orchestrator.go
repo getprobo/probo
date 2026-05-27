@@ -67,6 +67,7 @@ func newOrchestratorAgent(
 	researchBrowser *browser.Browser,
 	firecrawlAPIKey string,
 	reporter agent.ProgressReporter,
+	extraTools []agent.Tool,
 ) (*agent.Agent, error) {
 	readOnlyBrowserTools := browser.NewReadOnlyToolset(thirdPartyBrowser).Tools()
 
@@ -228,7 +229,7 @@ func newOrchestratorAgent(
 		)
 	}
 
-	tools := make([]agent.Tool, 0, len(entries))
+	tools := make([]agent.Tool, 0, len(entries)+len(extraTools))
 	for _, e := range entries {
 		ag, err := e.build(client, model, e.tools, subAgentOpts(e.toolName)...)
 		if err != nil {
@@ -237,6 +238,8 @@ func newOrchestratorAgent(
 
 		tools = append(tools, ag.AsTool(e.toolName, e.description))
 	}
+
+	tools = append(tools, extraTools...)
 
 	if procedure == "" {
 		procedure = defaultProcedure

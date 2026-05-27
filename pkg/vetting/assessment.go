@@ -173,7 +173,7 @@ func NewAssessor(cfg Config) *Assessor {
 	return &Assessor{cfg: cfg}
 }
 
-func (a *Assessor) Assess(ctx context.Context, websiteURL string, procedure string, reporter agent.ProgressReporter) (*Result, error) {
+func (a *Assessor) Assess(ctx context.Context, websiteURL string, procedure string, reporter agent.ProgressReporter, extraTools []agent.Tool) (*Result, error) {
 	u, err := url.Parse(websiteURL)
 	if err != nil {
 		return nil, fmt.Errorf("cannot parse website URL %q: %w", websiteURL, err)
@@ -213,6 +213,7 @@ func (a *Assessor) Assess(ctx context.Context, websiteURL string, procedure stri
 		researchBrowser,
 		a.cfg.FirecrawlAPIKey,
 		reporter,
+		extraTools,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create orchestrator agent: %w", err)

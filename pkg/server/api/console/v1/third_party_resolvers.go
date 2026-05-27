@@ -536,35 +536,33 @@ func (r *mutationResolver) CreateThirdPartyRiskAssessment(ctx context.Context, i
 	}, nil
 }
 
-// AssessThirdParty is the resolver for the assessThirdParty field.
-func (r *mutationResolver) AssessThirdParty(ctx context.Context, input types.AssessThirdPartyInput) (*types.AssessThirdPartyPayload, error) {
-	scope, err := r.authorize(ctx, input.ID, probo.ActionThirdPartyAssess)
+// VetThirdParty is the resolver for the vetThirdParty field.
+func (r *mutationResolver) VetThirdParty(ctx context.Context, input types.VetThirdPartyInput) (*types.VetThirdPartyPayload, error) {
+	scope, err := r.authorize(ctx, input.ID, probo.ActionThirdPartyVet)
 	if err != nil {
 		return nil, err
 	}
 
-	result, err := r.probo.ThirdParties.Assess(
+	thirdParty, err := r.probo.ThirdParties.Vet(
 		ctx, scope,
-		probo.AssessThirdPartyRequest{
+		probo.VetThirdPartyRequest{
 			ID:         input.ID,
 			WebsiteURL: input.WebsiteURL,
 			Procedure:  input.Procedure,
 		},
 	)
 	if err != nil {
-		if errors.Is(err, probo.ErrThirdPartyAssessmentDisabled) {
-			return nil, gqlutils.Unavailable(ctx, probo.ErrThirdPartyAssessmentDisabled)
+		if errors.Is(err, probo.ErrThirdPartyVettingDisabled) {
+			return nil, gqlutils.Unavailable(ctx, probo.ErrThirdPartyVettingDisabled)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot assess thirdParty", log.Error(err))
+		r.logger.ErrorCtx(ctx, "cannot vet thirdParty", log.Error(err))
 
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return &types.AssessThirdPartyPayload{
-		ThirdParty:    types.NewThirdParty(result.ThirdParty),
-		Report:        result.Report,
-		Subprocessors: types.NewThirdPartySubprocessors(result.Subprocessors),
+	return &types.VetThirdPartyPayload{
+		ThirdParty: types.NewThirdParty(thirdParty),
 	}, nil
 }
 
@@ -933,6 +931,23 @@ func (r *thirdPartyResolver) ChildThirdParties(ctx context.Context, obj *types.T
 	}
 
 	return types.NewThirdPartyConnection(page, r, obj.ID, nil), nil
+}
+
+// VettingStatus is the resolver for the vettingStatus field.
+func (r *thirdPartyResolver) VettingStatus(ctx context.Context, obj *types.ThirdParty) (*string, error) {
+	status, err := r.probo.ThirdParties.VettingStatus(ctx, obj.ID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot get vetting status", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	if status == nil {
+		return nil, nil
+	}
+
+	s := status.String()
+
+	return &s, nil
 }
 
 // Permission is the resolver for the permission field.

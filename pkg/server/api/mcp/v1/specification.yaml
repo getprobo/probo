@@ -1466,7 +1466,7 @@ components:
           $ref: "#/components/schemas/GID"
           description: Deleted thirdParty service ID
 
-    AssessThirdPartyInput:
+    VetThirdPartyInput:
       type: object
       required:
         - id
@@ -1474,48 +1474,21 @@ components:
       properties:
         id:
           $ref: "#/components/schemas/GID"
-          description: ThirdParty ID to assess
+          description: ThirdParty ID to vet
         website_url:
           type: string
-          description: ThirdParty website URL to crawl and assess
+          description: ThirdParty website URL to crawl and vet
         procedure:
           type: string
-          description: Optional custom assessment procedure (overrides the default)
+          description: Optional custom vetting procedure (overrides the default)
 
-    ThirdPartySubprocessor:
-      type: object
-      required:
-        - name
-        - country
-        - purpose
-      properties:
-        name:
-          type: string
-          description: Sub-processor name
-        country:
-          type: string
-          description: Country where the sub-processor operates
-        purpose:
-          type: string
-          description: Purpose of the sub-processor
-
-    AssessThirdPartyOutput:
+    VetThirdPartyOutput:
       type: object
       required:
         - thirdParty
-        - report
-        - subprocessors
       properties:
         thirdParty:
           $ref: "#/components/schemas/ThirdParty"
-        report:
-          type: string
-          description: Markdown-formatted thirdParty assessment report
-        subprocessors:
-          type: array
-          items:
-            $ref: "#/components/schemas/ThirdPartySubprocessor"
-          description: Sub-processors discovered during the assessment
 
     GetUserInput:
       type: object
@@ -12051,14 +12024,14 @@ tools:
       $ref: "#/components/schemas/DeleteThirdPartyServiceInput"
     outputSchema:
       $ref: "#/components/schemas/DeleteThirdPartyServiceOutput"
-  - name: assessThirdParty
-    description: Run an AI-powered assessment on a thirdParty by crawling its website. Returns a markdown report, the discovered sub-processors, and an enriched thirdParty record. Long-running (up to 20 minutes).
+  - name: vetThirdParty
+    description: Start AI-powered vetting of a third party by crawling its website. Returns immediately; vetting runs in the background.
     hints:
       readonly: false
     inputSchema:
-      $ref: "#/components/schemas/AssessThirdPartyInput"
+      $ref: "#/components/schemas/VetThirdPartyInput"
     outputSchema:
-      $ref: "#/components/schemas/AssessThirdPartyOutput"
+      $ref: "#/components/schemas/VetThirdPartyOutput"
   - name: listRisks
     description: List all risks for the organization
     hints:

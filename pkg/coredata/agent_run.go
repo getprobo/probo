@@ -41,6 +41,7 @@ type (
 		Status         AgentRunStatus  `db:"status"`
 		Checkpoint     json.RawMessage `db:"checkpoint"`
 		InputMessages  json.RawMessage `db:"input_messages"`
+		Metadata       json.RawMessage `db:"metadata"`
 		Result         json.RawMessage `db:"result"`
 		ErrorMessage   *string         `db:"error_message"`
 		StartedAt      *time.Time      `db:"started_at"`
@@ -175,6 +176,7 @@ SELECT
 	status,
 	checkpoint,
 	input_messages,
+	metadata,
 	result,
 	error_message,
 	started_at,
@@ -228,6 +230,7 @@ SELECT
 	status,
 	checkpoint,
 	input_messages,
+	metadata,
 	result,
 	error_message,
 	started_at,
@@ -283,6 +286,7 @@ SELECT
 	status,
 	checkpoint,
 	input_messages,
+	metadata,
 	result,
 	error_message,
 	started_at,
@@ -361,6 +365,7 @@ INSERT INTO agent_runs (
 	start_agent_name,
 	status,
 	input_messages,
+	metadata,
 	created_at,
 	updated_at
 ) VALUES (
@@ -370,6 +375,7 @@ INSERT INTO agent_runs (
 	@start_agent_name,
 	@status,
 	@input_messages,
+	@metadata,
 	@created_at,
 	@updated_at
 )
@@ -380,6 +386,7 @@ RETURNING
 	status,
 	checkpoint,
 	input_messages,
+	metadata,
 	result,
 	error_message,
 	started_at,
@@ -396,6 +403,7 @@ RETURNING
 		"start_agent_name": e.StartAgentName,
 		"status":           e.Status,
 		"input_messages":   e.InputMessages,
+		"metadata":         e.Metadata,
 		"created_at":       e.CreatedAt,
 		"updated_at":       e.UpdatedAt,
 	}
@@ -445,6 +453,7 @@ RETURNING
 	status,
 	checkpoint,
 	input_messages,
+	metadata,
 	result,
 	error_message,
 	started_at,
@@ -528,6 +537,7 @@ SELECT
 	status,
 	checkpoint,
 	input_messages,
+	metadata,
 	result,
 	error_message,
 	started_at,
@@ -771,4 +781,86 @@ func (s *PGCheckpointer) marshalAgentCheckpoint(cp *agent.Checkpoint) ([]byte, e
 	}
 
 	return data, nil
+}
+
+func (e *AgentRun) LoadNextPendingByAgentForUpdateSkipLocked(
+	ctx context.Context,
+	tx pg.Tx,
+	agentName string,
+) error {
+	q := `
+SELECT
+	id,
+	organization_id,
+	start_agent_name,
+	status,
+	checkpoint,
+	input_messages,
+	metadata,
+	result,
+	error_message,
+	started_at,
+	lease_owner,
+	lease_expires_at,
+	created_at,
+	updated_at
+FROM
+	agent_runs
+WHERE
+	status = 'PENDING'
+	AND start_agent_name = @start_agent_name
+ORDER BY created_at ASC
+LIMIT 1
+FOR UPDATE SKIP LOCKED;
+`
+
+	rows, err := tx.Query(ctx, q, pgx.StrictNamedArgs{"start_agent_name": agentName})
+	if err != nil {
+		return fmt.Errorf("cannot query pending agent run: %w", err)
+	}
+
+	run, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[AgentRun])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+
+		return fmt.Errorf("cannot collect agent run: %w", err)
+	}
+
+	*e = run
+
+	return nil
+}
+
+func ActiveAgentRunStatus(
+	ctx context.Context,
+	conn pg.Querier,
+	agentName string,
+	metadataKey string,
+	metadataValue string,
+) (*AgentRunStatus, error) {
+	q := `
+SELECT status
+FROM agent_runs
+WHERE start_agent_name = $1
+    AND metadata->>$2 = $3
+    AND status IN ('PENDING', 'RUNNING')
+ORDER BY created_at DESC
+LIMIT 1;
+`
+
+	var status AgentRunStatus
+
+	err := conn.QueryRow(ctx, q, agentName, metadataKey, metadataValue).Scan(&status)
+
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, nil
+	}
+
+	if err != nil {
+		return nil, fmt.Errorf("cannot query active agent run: %w", err)
+	}
+
+	return &status, nil
 }

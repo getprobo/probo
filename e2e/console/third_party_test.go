@@ -987,18 +987,18 @@ func TestThirdParty_OmittableWebsiteUrl(t *testing.T) {
 	})
 }
 
-// TestThirdParty_Assess exercises the assessThirdParty mutation through authorization
+// TestThirdParty_Vet exercises the vetThirdParty mutation through authorization
 // and tenant-isolation paths without running the real LLM/browser pipeline.
 // The e2e config deliberately omits `llm.third-party-assessor.provider`, so an
-// authorized call reaches DisabledThirdPartyAssessor and surfaces a stable
+// authorized call reaches DisabledThirdPartyVetter and surfaces a stable
 // UNAVAILABLE error. Happy-path payload shape is covered by unit tests in
 // pkg/probo.
-func TestThirdParty_Assess(t *testing.T) {
+func TestThirdParty_Vet(t *testing.T) {
 	t.Parallel()
 
 	const query = `
-		mutation AssessThirdParty($input: AssessThirdPartyInput!) {
-			assessThirdParty(input: $input) {
+		mutation VetThirdParty($input: VetThirdPartyInput!) {
+			vetThirdParty(input: $input) {
 				thirdParty {
 					id
 				}
@@ -1007,18 +1007,18 @@ func TestThirdParty_Assess(t *testing.T) {
 	`
 
 	type resultShape struct {
-		AssessThirdParty struct {
+		VetThirdParty struct {
 			ThirdParty struct {
 				ID string `json:"id"`
 			} `json:"thirdParty"`
-		} `json:"assessThirdParty"`
+		} `json:"vetThirdParty"`
 	}
 
 	t.Run("owner call surfaces the disabled error", func(t *testing.T) {
 		t.Parallel()
 
 		owner := testutil.NewClient(t, testutil.RoleOwner)
-		thirdPartyID := factory.NewThirdParty(owner).WithName("Unconfigured assess").Create()
+		thirdPartyID := factory.NewThirdParty(owner).WithName("Unconfigured vet").Create()
 
 		var result resultShape
 
@@ -1036,7 +1036,7 @@ func TestThirdParty_Assess(t *testing.T) {
 
 		owner := testutil.NewClient(t, testutil.RoleOwner)
 		admin := testutil.NewClientInOrg(t, testutil.RoleAdmin, owner)
-		thirdPartyID := factory.NewThirdParty(owner).WithName("Admin-assessed thirdParty").Create()
+		thirdPartyID := factory.NewThirdParty(owner).WithName("Admin-vetted thirdParty").Create()
 
 		var result resultShape
 
@@ -1049,7 +1049,7 @@ func TestThirdParty_Assess(t *testing.T) {
 		testutil.RequireErrorCode(t, err, "UNAVAILABLE")
 	})
 
-	t.Run("viewer cannot assess a thirdParty", func(t *testing.T) {
+	t.Run("viewer cannot vet a thirdParty", func(t *testing.T) {
 		t.Parallel()
 
 		owner := testutil.NewClient(t, testutil.RoleOwner)
@@ -1067,7 +1067,7 @@ func TestThirdParty_Assess(t *testing.T) {
 		testutil.RequireForbiddenError(t, err)
 	})
 
-	t.Run("cannot assess thirdParty from another organization", func(t *testing.T) {
+	t.Run("cannot vet thirdParty from another organization", func(t *testing.T) {
 		t.Parallel()
 
 		org1Owner := testutil.NewClient(t, testutil.RoleOwner)
@@ -1082,7 +1082,7 @@ func TestThirdParty_Assess(t *testing.T) {
 				"websiteUrl": "https://cross-tenant.example.com",
 			},
 		}, &result)
-		require.Error(t, err, "thirdParty assess must not cross tenant boundaries")
+		require.Error(t, err, "thirdParty vet must not cross tenant boundaries")
 	})
 
 	t.Run("procedure is accepted on the input", func(t *testing.T) {

@@ -25,16 +25,10 @@ import (
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
 )
 
-const assessMutation = `
-mutation($input: AssessThirdPartyInput!) {
-  assessThirdParty(input: $input) {
-    report
-    subprocessors {
-      name
-      country
-      purpose
-    }
-    third_party {
+const vetMutation = `
+mutation($input: VetThirdPartyInput!) {
+  vetThirdParty(input: $input) {
+    thirdParty {
       id
       name
     }
@@ -42,19 +36,13 @@ mutation($input: AssessThirdPartyInput!) {
 }
 `
 
-type assessResponse struct {
-	AssessThirdParty struct {
-		Report        string `json:"report"`
-		Subprocessors []struct {
-			Name    string `json:"name"`
-			Country string `json:"country"`
-			Purpose string `json:"purpose"`
-		} `json:"subprocessors"`
+type vetResponse struct {
+	VetThirdParty struct {
 		ThirdParty struct {
 			ID   string `json:"id"`
 			Name string `json:"name"`
-		} `json:"third_party"`
-	} `json:"assessThirdParty"`
+		} `json:"thirdParty"`
+	} `json:"vetThirdParty"`
 }
 
 func NewCmdAssess(f *cmdutil.Factory) *cobra.Command {
@@ -63,17 +51,17 @@ func NewCmdAssess(f *cmdutil.Factory) *cobra.Command {
 	)
 
 	cmd := &cobra.Command{
-		Use:   "assess <thirdParty-id> --url <website-url>",
-		Short: "Run AI assessment on a thirdParty from its website",
-		Long:  "Analyze a thirdParty's website using AI agents to extract security, compliance, and business information.",
-		Example: `  # Assess a third_party by website URL
-  prb third_party assess VND_123 --url https://example.com
+		Use:   "vet <thirdParty-id> --url <website-url>",
+		Short: "Start AI vetting of a third party from its website",
+		Long:  "Queue a vetting job that crawls a third party's website using AI agents to extract security, compliance, and business information.",
+		Example: `  # Vet a third party by website URL
+  prb third-party vet VND_123 --url https://example.com
 
-  # Assess with a custom procedure file
-  prb third_party assess VND_123 --url https://example.com --procedure-file ./my-procedure.txt
+  # Vet with a custom procedure file
+  prb third-party vet VND_123 --url https://example.com --procedure-file ./my-procedure.txt
 
   # Output as JSON
-  prb third_party assess VND_123 --url https://example.com -o json`,
+  prb third-party vet VND_123 --url https://example.com -o json`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := cmdutil.ValidateOutputFlag(flagOutput); err != nil {
@@ -107,19 +95,17 @@ func NewCmdAssess(f *cmdutil.Factory) *cobra.Command {
 				input["procedure"] = string(data)
 			}
 
-			// The CLI timeout must outlast the server-side assessment
-			// timeout (vetting.AssessmentTimeout = 20m) plus HTTP overhead.
 			client := api.NewClient(
 				host,
 				hc.Token,
 				"/api/console/v1/graphql",
-				22*time.Minute,
+				30*time.Second,
 			)
 
-			_, _ = fmt.Fprintf(f.IOStreams.ErrOut, "Assessing thirdParty from %s (this may take a few minutes)...\n", flagURL)
+			_, _ = fmt.Fprintf(f.IOStreams.ErrOut, "Starting vetting for %s...\n", flagURL)
 
 			data, err := client.Do(
-				assessMutation,
+				vetMutation,
 				map[string]any{
 					"input": input,
 				},
@@ -128,24 +114,24 @@ func NewCmdAssess(f *cmdutil.Factory) *cobra.Command {
 				return err
 			}
 
-			var resp assessResponse
+			var resp vetResponse
 			if err := json.Unmarshal(data, &resp); err != nil {
 				return fmt.Errorf("cannot parse response: %w", err)
 			}
 
 			if *flagOutput == cmdutil.OutputJSON {
-				return cmdutil.PrintJSON(f.IOStreams.Out, resp.AssessThirdParty)
+				return cmdutil.PrintJSON(f.IOStreams.Out, resp.VetThirdParty)
 			}
 
-			_, _ = fmt.Fprintln(f.IOStreams.Out, resp.AssessThirdParty.Report)
+			_, _ = fmt.Fprintf(f.IOStreams.Out, "Vetting started for %s\n", resp.VetThirdParty.ThirdParty.Name)
 
 			return nil
 		},
 	}
 
-	cmd.Flags().String("url", "", "ThirdParty website URL to assess (required)")
+	cmd.Flags().String("url", "", "Third party website URL to vet (required)")
 	_ = cmd.MarkFlagRequired("url")
-	cmd.Flags().String("procedure-file", "", "Path to a custom assessment procedure file")
+	cmd.Flags().String("procedure-file", "", "Path to a custom vetting procedure file")
 	flagOutput = cmdutil.AddOutputFlag(cmd)
 
 	return cmd

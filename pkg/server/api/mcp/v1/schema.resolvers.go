@@ -5262,27 +5262,29 @@ func (r *Resolver) DeleteCustomDomainTool(ctx context.Context, req *mcp.CallTool
 	return nil, types.DeleteCustomDomainOutput{DeletedCustomDomain: deletedDomain}, nil
 }
 
-func (r *Resolver) AssessThirdPartyTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AssessThirdPartyInput) (*mcp.CallToolResult, types.AssessThirdPartyOutput, error) {
-	scope, err := r.Authorize(ctx, input.ID, probo.ActionThirdPartyAssess)
+func (r *Resolver) VetThirdPartyTool(ctx context.Context, req *mcp.CallToolRequest, input *types.VetThirdPartyInput) (*mcp.CallToolResult, types.VetThirdPartyOutput, error) {
+	scope, err := r.Authorize(ctx, input.ID, probo.ActionThirdPartyVet)
 	if err != nil {
-		return nil, types.AssessThirdPartyOutput{}, err
+		return nil, types.VetThirdPartyOutput{}, err
 	}
 
 	svc := r.proboSvc
 
-	result, err := svc.ThirdParties.Assess(
+	thirdParty, err := svc.ThirdParties.Vet(
 		ctx, scope,
-		probo.AssessThirdPartyRequest{
+		probo.VetThirdPartyRequest{
 			ID:         input.ID,
 			WebsiteURL: input.WebsiteURL,
 			Procedure:  input.Procedure,
 		},
 	)
 	if err != nil {
-		return nil, types.AssessThirdPartyOutput{}, fmt.Errorf("cannot assess thirdParty: %w", err)
+		return nil, types.VetThirdPartyOutput{}, fmt.Errorf("cannot vet thirdParty: %w", err)
 	}
 
-	return nil, types.NewAssessThirdPartyOutput(result), nil
+	return nil, types.VetThirdPartyOutput{
+		ThirdParty: types.NewThirdParty(thirdParty),
+	}, nil
 }
 
 func (r *Resolver) PublishFindingListTool(ctx context.Context, req *mcp.CallToolRequest, input *types.PublishFindingListInput) (*mcp.CallToolResult, types.PublishFindingListOutput, error) {
