@@ -21,6 +21,7 @@ import (
 	"io"
 	"time"
 
+	"github.com/jackc/pgx/v5/pgconn"
 	"go.gearno.de/crypto/uuid"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/packages/emails"
@@ -349,6 +350,73 @@ func (s *OrganizationService) RemoveUser(
 				}
 			}
 
+			if err := profile.Delete(ctx, tx, scope, profileID); err != nil {
+				if isUserRemovalDependencyError(err) {
+					return NewUserReferencedByRecordsError(profileID)
+				}
+
+				return fmt.Errorf("cannot delete profile: %w", err)
+			}
+
+			if err := membership.Delete(ctx, tx, scope, membership.ID); err != nil {
+				if isUserRemovalDependencyError(err) {
+					return NewUserReferencedByRecordsError(profileID)
+				}
+
+				return fmt.Errorf("cannot delete membership: %w", err)
+			}
+
+			if err := webhook.InsertData(ctx, tx, scope, organizationID, coredata.WebhookEventTypeUserDeleted, webhooktypes.NewUser(&profile, membership)); err != nil {
+				return fmt.Errorf("cannot insert webhook event: %w", err)
+			}
+
+			return nil
+		},
+	)
+}
+
+func (s *OrganizationService) ArchiveUser(
+	ctx context.Context,
+	organizationID gid.GID,
+	profileID gid.GID,
+) error {
+	scope := coredata.NewScopeFromObjectID(organizationID)
+
+	return s.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			profile := coredata.MembershipProfile{}
+
+			if err := profile.LoadByID(ctx, tx, scope, profileID); err != nil {
+				if err == coredata.ErrResourceNotFound {
+					return NewProfileNotFoundError(profileID)
+				}
+
+				return fmt.Errorf("cannot load profile: %w", err)
+			}
+
+			if profile.Source == coredata.ProfileSourceSCIM {
+				return NewUserManagedBySCIMError(profileID)
+			}
+
+			membership := &coredata.Membership{}
+			if err := membership.LoadByIdentityIDAndOrganizationID(ctx, tx, scope, profile.IdentityID, profile.OrganizationID); err != nil {
+				return fmt.Errorf("cannot load membership: %w", err)
+			}
+
+			if membership.Role == coredata.MembershipRoleOwner && profile.State == coredata.ProfileStateActive {
+				profiles := coredata.MembershipProfiles{}
+
+				count, err := profiles.CountActiveOwnerByOrganizationID(ctx, tx, scope, organizationID)
+				if err != nil {
+					return fmt.Errorf("cannot count active owners: %w", err)
+				}
+
+				if count <= 1 {
+					return NewLastActiveOwnerError(profileID)
+				}
+			}
+
 			now := time.Now()
 
 			if profile.State != coredata.ProfileStateInactive {
@@ -372,6 +440,19 @@ func (s *OrganizationService) RemoveUser(
 			return nil
 		},
 	)
+}
+
+func isUserRemovalDependencyError(err error) bool {
+	if errors.Is(err, coredata.ErrResourceInUse) {
+		return true
+	}
+
+	pgErr, ok := errors.AsType[*pgconn.PgError](err)
+	if !ok {
+		return false
+	}
+
+	return pgErr.Code == "23503"
 }
 
 func (s *OrganizationService) InviteUser(

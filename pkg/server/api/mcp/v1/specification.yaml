@@ -1709,9 +1709,31 @@ components:
           description: Organization ID
         profile_id:
           $ref: "#/components/schemas/GID"
-          description: User (profile) ID to archive
+          description: User (profile) ID to remove
 
     RemoveUserOutput:
+      type: object
+      required:
+        - deleted_user_id
+      properties:
+        deleted_user_id:
+          $ref: "#/components/schemas/GID"
+          description: Deleted user (profile) ID
+
+    ArchiveUserInput:
+      type: object
+      required:
+        - organization_id
+        - profile_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        profile_id:
+          $ref: "#/components/schemas/GID"
+          description: User (profile) ID to archive
+
+    ArchiveUserOutput:
       type: object
       required:
         - archived_user_id
@@ -11934,13 +11956,22 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/UpdateMembershipOutput"
   - name: removeUser
-    description: Archive a user in the organization
+    description: Remove a user from the organization
     hints:
       readonly: false
+      destructive: true
     inputSchema:
       $ref: "#/components/schemas/RemoveUserInput"
     outputSchema:
       $ref: "#/components/schemas/RemoveUserOutput"
+  - name: archiveUser
+    description: Archive a user in the organization
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/ArchiveUserInput"
+    outputSchema:
+      $ref: "#/components/schemas/ArchiveUserOutput"
   - name: addThirdParty
     description: Add a new thirdParty to the organization
     hints:

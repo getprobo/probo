@@ -201,23 +201,124 @@ func TestUser_RemoveUser(t *testing.T) {
 
 	assert.Equal(t, userID, mutationResult.RemoveUser.DeletedProfileID)
 
-	// Remove archives the user instead of hard-deleting them.
+	// Removed user should no longer be returned.
 	err = owner.ExecuteConnect(query, map[string]any{
 		"id": owner.GetOrganizationID().String(),
 	}, &result)
 	require.NoError(t, err)
 
-	var removedUserState string
+	var removedUserFound bool
 
 	for _, edge := range result.Node.Profiles.Edges {
 		if edge.Node.ID == userID {
-			removedUserState = edge.Node.State
+			removedUserFound = true
 			break
 		}
 	}
 
-	require.NotEmpty(t, removedUserState, "Should still find archived user")
-	assert.Equal(t, "INACTIVE", removedUserState)
+	assert.False(t, removedUserFound, "Should not find removed user")
+}
+
+func TestUser_ArchiveUser(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+
+	// Create a user to archive.
+	userToArchive := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
+	_ = userToArchive
+
+	query := `
+		query($id: ID!) {
+			node(id: $id) {
+				... on Organization {
+					profiles(first: 50) {
+						edges {
+							node {
+								id
+								state
+								membership {
+									role
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	`
+
+	var result struct {
+		Node struct {
+			Profiles struct {
+				Edges []struct {
+					Node struct {
+						ID         string `json:"id"`
+						State      string `json:"state"`
+						Membership struct {
+							Role string `json:"role"`
+						} `json:"membership"`
+					} `json:"node"`
+				} `json:"edges"`
+			} `json:"profiles"`
+		} `json:"node"`
+	}
+
+	err := owner.ExecuteConnect(query, map[string]any{
+		"id": owner.GetOrganizationID().String(),
+	}, &result)
+	require.NoError(t, err)
+
+	var userID string
+
+	for _, edge := range result.Node.Profiles.Edges {
+		if edge.Node.Membership.Role == "VIEWER" {
+			userID = edge.Node.ID
+			break
+		}
+	}
+
+	require.NotEmpty(t, userID, "Should find viewer member")
+
+	mutation := `
+		mutation($input: ArchiveUserInput!) {
+			archiveUser(input: $input) {
+				archivedProfileId
+			}
+		}
+	`
+
+	var mutationResult struct {
+		ArchiveUser struct {
+			ArchivedProfileID string `json:"archivedProfileId"`
+		} `json:"archiveUser"`
+	}
+
+	err = owner.ExecuteConnect(mutation, map[string]any{
+		"input": map[string]any{
+			"organizationId": owner.GetOrganizationID().String(),
+			"profileId":      userID,
+		},
+	}, &mutationResult)
+	require.NoError(t, err)
+
+	assert.Equal(t, userID, mutationResult.ArchiveUser.ArchivedProfileID)
+
+	err = owner.ExecuteConnect(query, map[string]any{
+		"id": owner.GetOrganizationID().String(),
+	}, &result)
+	require.NoError(t, err)
+
+	var archivedUserState string
+
+	for _, edge := range result.Node.Profiles.Edges {
+		if edge.Node.ID == userID {
+			archivedUserState = edge.Node.State
+			break
+		}
+	}
+
+	require.NotEmpty(t, archivedUserState, "Should still find archived user")
+	assert.Equal(t, "INACTIVE", archivedUserState)
 }
 
 func TestUser_RemoveOwner(t *testing.T) {

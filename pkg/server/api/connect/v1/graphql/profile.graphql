@@ -96,6 +96,8 @@ extend type Mutation {
     @session(required: PRESENT)
   deactivateUser(input: DeactivateUserInput!): DeactivateUserPayload
   updateUser(input: UpdateUserInput!): UpdateUserPayload!
+  archiveUser(input: ArchiveUserInput!): ArchiveUserPayload
+    @session(required: PRESENT)
   removeUser(input: RemoveUserInput!): RemoveUserPayload
     @session(required: PRESENT)
 }
@@ -137,6 +139,11 @@ input RemoveUserInput {
   profileId: ID!
 }
 
+input ArchiveUserInput {
+  organizationId: ID!
+  profileId: ID!
+}
+
 type CreateUserPayload {
   profileEdge: ProfileEdge!
 }
@@ -151,4 +158,8 @@ type UpdateUserPayload {
 
 type RemoveUserPayload {
   deletedProfileId: ID!
+}
+
+type ArchiveUserPayload {
+  archivedProfileId: ID!
 }

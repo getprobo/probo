@@ -23,7 +23,7 @@ export const description: INodeProperties[] = [
 		displayOptions: {
 			show: {
 				resource: ['user'],
-				operation: ['removeUser'],
+				operation: ['archiveUser'],
 			},
 		},
 		default: '',
@@ -37,11 +37,11 @@ export const description: INodeProperties[] = [
 		displayOptions: {
 			show: {
 				resource: ['user'],
-				operation: ['removeUser'],
+				operation: ['archiveUser'],
 			},
 		},
 		default: '',
-		description: 'The ID of the user (profile) to remove from the organization',
+		description: 'The ID of the user (profile) to archive in the organization',
 		required: true,
 	},
 ];
@@ -54,9 +54,9 @@ export async function execute(
 	const userId = this.getNodeParameter('userId', itemIndex) as string;
 
 	const query = `
-		mutation RemoveUser($input: RemoveUserInput!) {
-			removeUser(input: $input) {
-				deletedProfileId
+		mutation ArchiveUser($input: ArchiveUserInput!) {
+			archiveUser(input: $input) {
+				archivedProfileId
 			}
 		}
 	`;

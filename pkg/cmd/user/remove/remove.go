@@ -12,7 +12,7 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package archive
+package remove
 
 import (
 	"fmt"
@@ -23,34 +23,34 @@ import (
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
 )
 
-const archiveMutation = `
-mutation($input: ArchiveUserInput!) {
-  archiveUser(input: $input) {
-    archivedProfileId
+const removeMutation = `
+mutation($input: RemoveUserInput!) {
+  removeUser(input: $input) {
+    deletedProfileId
   }
 }
 `
 
-func NewCmdArchive(f *cmdutil.Factory) *cobra.Command {
+func NewCmdRemove(f *cmdutil.Factory) *cobra.Command {
 	var (
 		flagOrg string
 		flagYes bool
 	)
 
 	cmd := &cobra.Command{
-		Use:   "archive <id>",
-		Short: "Archive a user",
+		Use:   "remove <id>",
+		Short: "Remove a user",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if !flagYes {
 				if !f.IOStreams.IsInteractive() {
-					return fmt.Errorf("cannot archive user: confirmation required, use --yes to confirm")
+					return fmt.Errorf("cannot remove user: confirmation required, use --yes to confirm")
 				}
 
 				var confirmed bool
 
 				err := huh.NewConfirm().
-					Title(fmt.Sprintf("Archive user %s?", args[0])).
+					Title(fmt.Sprintf("Remove user %s?", args[0])).
 					Value(&confirmed).
 					Run()
 				if err != nil {
@@ -89,7 +89,7 @@ func NewCmdArchive(f *cmdutil.Factory) *cobra.Command {
 			)
 
 			_, err = client.Do(
-				archiveMutation,
+				removeMutation,
 				map[string]any{
 					"input": map[string]any{
 						"organizationId": flagOrg,
@@ -101,7 +101,7 @@ func NewCmdArchive(f *cmdutil.Factory) *cobra.Command {
 				return err
 			}
 
-			_, _ = fmt.Fprintf(f.IOStreams.Out, "Archived user %s\n", args[0])
+			_, _ = fmt.Fprintf(f.IOStreams.Out, "Removed user %s\n", args[0])
 
 			return nil
 		},

@@ -104,13 +104,13 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, input types.UpdateUse
 	}, nil
 }
 
-// RemoveUser is the resolver for the removeUser field.
-func (r *mutationResolver) RemoveUser(ctx context.Context, input types.RemoveUserInput) (*types.RemoveUserPayload, error) {
+// ArchiveUser is the resolver for the archiveUser field.
+func (r *mutationResolver) ArchiveUser(ctx context.Context, input types.ArchiveUserInput) (*types.ArchiveUserPayload, error) {
 	if _, err := r.authorize(ctx, input.ProfileID, iam.ActionMembershipProfileDelete); err != nil {
 		return nil, err
 	}
 
-	err := r.iam.OrganizationService.RemoveUser(ctx, input.OrganizationID, input.ProfileID)
+	err := r.iam.OrganizationService.ArchiveUser(ctx, input.OrganizationID, input.ProfileID)
 	if err != nil {
 		if _, ok := errors.AsType[*iam.ErrUserManagedBySCIM](err); ok {
 			return nil, gqlutils.Conflictf(ctx, "user is managed by SCIM and cannot be archived")
@@ -120,8 +120,32 @@ func (r *mutationResolver) RemoveUser(ctx context.Context, input types.RemoveUse
 			return nil, gqlutils.Conflictf(ctx, "cannot archive last active owner")
 		}
 
-		if errors.Is(err, coredata.ErrResourceInUse) {
-			return nil, gqlutils.Conflictf(ctx, "cannot archive user")
+		r.logger.ErrorCtx(ctx, "cannot archive user from organization", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.ArchiveUserPayload{ArchivedProfileID: input.ProfileID}, nil
+}
+
+// RemoveUser is the resolver for the removeUser field.
+func (r *mutationResolver) RemoveUser(ctx context.Context, input types.RemoveUserInput) (*types.RemoveUserPayload, error) {
+	if _, err := r.authorize(ctx, input.ProfileID, iam.ActionMembershipProfileDelete); err != nil {
+		return nil, err
+	}
+
+	err := r.iam.OrganizationService.RemoveUser(ctx, input.OrganizationID, input.ProfileID)
+	if err != nil {
+		if _, ok := errors.AsType[*iam.ErrUserManagedBySCIM](err); ok {
+			return nil, gqlutils.Conflictf(ctx, "user is managed by SCIM and cannot be removed")
+		}
+
+		if _, ok := errors.AsType[*iam.ErrLastActiveOwner](err); ok {
+			return nil, gqlutils.Conflictf(ctx, "cannot remove last active owner")
+		}
+
+		if _, ok := errors.AsType[*iam.ErrUserReferencedByRecords](err); ok {
+			return nil, gqlutils.Conflictf(ctx, "cannot remove user because they are referenced by existing records (for example signatures, tasks, assets, or risks)")
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot remove user from organization", log.Error(err))
