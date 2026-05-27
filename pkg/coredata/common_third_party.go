@@ -507,6 +507,57 @@ func (t CommonThirdParty) Delete(
 	return nil
 }
 
+func (t *CommonThirdParties) LoadByIDs(
+	ctx context.Context,
+	conn pg.Querier,
+	ids []gid.GID,
+) error {
+	q := `
+SELECT
+    id,
+    name,
+    slug,
+    category,
+    headquarter_address,
+    legal_name,
+    website_url,
+    privacy_policy_url,
+    service_level_agreement_url,
+    service_software_agreement_url,
+    data_processing_agreement_url,
+    business_associate_agreement_url,
+    subprocessors_list_url,
+    certifications,
+    status_page_url,
+    terms_of_service_url,
+    security_page_url,
+    trust_page_url,
+    logo_file_id,
+    created_at,
+    updated_at
+FROM
+    common_third_parties
+WHERE
+    id = ANY(@ids)
+`
+
+	args := pgx.StrictNamedArgs{"ids": ids}
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query common third parties: %w", err)
+	}
+
+	parties, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[CommonThirdParty])
+	if err != nil {
+		return fmt.Errorf("cannot collect common third parties: %w", err)
+	}
+
+	*t = parties
+
+	return nil
+}
+
 func (t *CommonThirdParties) LoadAll(
 	ctx context.Context,
 	conn pg.Querier,

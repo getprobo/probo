@@ -2709,6 +2709,128 @@ func (s *Service) CountTrackerPatternsForBanner(
 	return count, nil
 }
 
+func (s *Service) GetCommonTrackerPatternsByIDs(
+	ctx context.Context,
+	ids ...gid.GID,
+) (coredata.CommonTrackerPatterns, error) {
+	var patterns coredata.CommonTrackerPatterns
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := patterns.LoadByIDs(ctx, conn, ids); err != nil {
+				return fmt.Errorf("cannot load common tracker patterns by ids: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return patterns, nil
+}
+
+// LoadCommonTrackerPatternIDsByCommonThirdPartyID returns the IDs of
+// every common tracker pattern referencing the given common third party.
+// Used by the trackers list filter to translate a CommonThirdParty GID
+// into a `common_tracker_pattern_id = ANY(...)` constraint without
+// JOINing across entity tables in coredata.
+func (s *Service) LoadCommonTrackerPatternIDsByCommonThirdPartyID(
+	ctx context.Context,
+	commonThirdPartyID gid.GID,
+) ([]gid.GID, error) {
+	var ids []gid.GID
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			var (
+				patterns coredata.CommonTrackerPatterns
+				err      error
+			)
+
+			ids, err = patterns.LoadIDsByCommonThirdPartyID(ctx, conn, commonThirdPartyID)
+			if err != nil {
+				return fmt.Errorf("cannot load common tracker pattern ids: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return ids, nil
+}
+
+// LoadDistinctThirdPartyIDsByCookieBannerID returns the distinct
+// org-scoped third-party IDs referenced by tracker patterns of the
+// banner. The companion
+// LoadDistinctCommonTrackerPatternIDsByCookieBannerID covers the
+// indirect mapping through common_tracker_patterns.
+func (s *Service) LoadDistinctThirdPartyIDsByCookieBannerID(
+	ctx context.Context,
+	scope coredata.Scoper,
+	cookieBannerID gid.GID,
+) ([]gid.GID, error) {
+	var ids []gid.GID
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			var (
+				patterns coredata.TrackerPatterns
+				err      error
+			)
+
+			ids, err = patterns.LoadDistinctThirdPartyIDsByCookieBannerID(ctx, conn, scope, cookieBannerID)
+			if err != nil {
+				return fmt.Errorf("cannot load distinct third party ids: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return ids, nil
+}
+
+func (s *Service) LoadDistinctCommonTrackerPatternIDsByCookieBannerID(
+	ctx context.Context,
+	scope coredata.Scoper,
+	cookieBannerID gid.GID,
+) ([]gid.GID, error) {
+	var ids []gid.GID
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			var (
+				patterns coredata.TrackerPatterns
+				err      error
+			)
+
+			ids, err = patterns.LoadDistinctCommonTrackerPatternIDsByCookieBannerID(ctx, conn, scope, cookieBannerID)
+			if err != nil {
+				return fmt.Errorf("cannot load distinct common tracker pattern ids: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return ids, nil
+}
+
 func (s *Service) CountDetectedTrackersByPatternID(
 	ctx context.Context,
 	scope coredata.Scoper,

@@ -50,6 +50,29 @@ func (s *Service) GenerateLogoURL(
 	return &url, nil
 }
 
+func (s *Service) GetCommonThirdPartiesByIDs(
+	ctx context.Context,
+	ids ...gid.GID,
+) (coredata.CommonThirdParties, error) {
+	var parties coredata.CommonThirdParties
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := parties.LoadByIDs(ctx, conn, ids); err != nil {
+				return fmt.Errorf("cannot load common third parties by ids: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return parties, nil
+}
+
 func (s *Service) Search(ctx context.Context, name string) ([]*coredata.CommonThirdParty, error) {
 	var parties coredata.CommonThirdParties
 
