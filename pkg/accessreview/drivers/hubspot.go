@@ -32,29 +32,39 @@ type HubSpotDriver struct {
 
 var _ Driver = (*HubSpotDriver)(nil)
 
-type hubspotRolesResponse struct {
-	Results []struct {
-		ID   string `json:"id"`
-		Name string `json:"name"`
-	} `json:"results"`
-}
+type (
+	hubspotRolesResponse struct {
+		Results []struct {
+			ID   string `json:"id"`
+			Name string `json:"name"`
+		} `json:"results"`
+	}
 
-type hubspotUsersResponse struct {
-	Results []struct {
-		ID            string `json:"id"`
-		Email         string `json:"email"`
-		FirstName     string `json:"firstName"`
-		LastName      string `json:"lastName"`
-		RoleID        string `json:"roleId"`
-		PrimaryTeamID string `json:"primaryTeamId"`
-		SuperAdmin    bool   `json:"superAdmin"`
-	} `json:"results"`
-	Paging *struct {
-		Next *struct {
-			After string `json:"after"`
-		} `json:"next"`
-	} `json:"paging"`
-}
+	hubspotUser struct {
+		ID            string   `json:"id"`
+		Email         string   `json:"email"`
+		FirstName     string   `json:"firstName"`
+		LastName      string   `json:"lastName"`
+		RoleID        string   `json:"roleId"`
+		RoleIDs       []string `json:"roleIds"`
+		PrimaryTeamID string   `json:"primaryTeamId"`
+		SuperAdmin    bool     `json:"superAdmin"`
+		Archived      *bool    `json:"archived"`
+		Deactivated   *bool    `json:"deactivated"`
+		IsActive      *bool    `json:"isActive"`
+		Active        *bool    `json:"active"`
+		HSDeactivated *bool    `json:"hs_deactivated"`
+	}
+
+	hubspotUsersResponse struct {
+		Results []hubspotUser `json:"results"`
+		Paging  *struct {
+			Next *struct {
+				After string `json:"after"`
+			} `json:"next"`
+		} `json:"paging"`
+	}
+)
 
 const (
 	hubspotUsersEndpoint = "https://api.hubapi.com/settings/v3/users"
@@ -83,9 +93,10 @@ func (d *HubSpotDriver) ListAccounts(ctx context.Context) ([]AccountRecord, erro
 
 		for _, u := range resp.Results {
 			role := "User"
+			roleID := hubspotRoleID(u)
 
-			if roleMap != nil && u.RoleID != "" {
-				if name, ok := roleMap[u.RoleID]; ok {
+			if roleMap != nil && roleID != "" {
+				if name, ok := roleMap[roleID]; ok {
 					role = name
 				} else if u.SuperAdmin {
 					role = "Super Admin"
@@ -100,6 +111,7 @@ func (d *HubSpotDriver) ListAccounts(ctx context.Context) ([]AccountRecord, erro
 				Email:       u.Email,
 				FullName:    fullName,
 				Role:        role,
+				Active:      hubspotUserActive(u),
 				IsAdmin:     u.SuperAdmin,
 				ExternalID:  u.ID,
 				MFAStatus:   coredata.MFAStatusUnknown,
@@ -107,7 +119,7 @@ func (d *HubSpotDriver) ListAccounts(ctx context.Context) ([]AccountRecord, erro
 				AccountType: coredata.AccessEntryAccountTypeUser,
 			}
 
-			if record.Email != "" {
+			if record.Email != "" || record.ExternalID != "" {
 				records = append(records, record)
 			}
 		}
@@ -192,4 +204,40 @@ func (d *HubSpotDriver) fetchRoles(ctx context.Context) (map[string]string, erro
 	}
 
 	return roleMap, nil
+}
+
+func hubspotRoleID(user hubspotUser) string {
+	if user.RoleID != "" {
+		return user.RoleID
+	}
+
+	if len(user.RoleIDs) > 0 {
+		return user.RoleIDs[0]
+	}
+
+	return ""
+}
+
+func hubspotUserActive(user hubspotUser) *bool {
+	if user.IsActive != nil {
+		return new(*user.IsActive)
+	}
+
+	if user.Active != nil {
+		return new(*user.Active)
+	}
+
+	if user.Deactivated != nil {
+		return new(!*user.Deactivated)
+	}
+
+	if user.HSDeactivated != nil {
+		return new(!*user.HSDeactivated)
+	}
+
+	if user.Archived != nil {
+		return new(!*user.Archived)
+	}
+
+	return nil
 }
