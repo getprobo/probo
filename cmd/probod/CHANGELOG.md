@@ -4,6 +4,19 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.195.0] - 2026-05-27
+
+### Added
+
+- Add `archiveUser` operation to deactivate a user profile while keeping them in the organization; exposed across the console UI, MCP, CLI, and n8n
+- Expire pending invitations for a user when they are archived
+- Grant owners full `iam:scim-bridge:*` and admins read-only SCIM bridge access in IAM policies
+
+### Fixed
+
+- Preserve archived and deactivated HubSpot users in access reviews instead of dropping them
+- Fix common third-party logo URL returning resource-not-found in the combo box query
+
 ## [0.194.0] - 2026-05-26
 
 ### Added
