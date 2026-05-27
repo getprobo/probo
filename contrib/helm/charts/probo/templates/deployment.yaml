@@ -176,6 +176,7 @@ spec:
               value: {{ .Values.s3.region | quote }}
             - name: AWS_BUCKET
               value: {{ .Values.s3.bucket | quote }}
+            {{- if .Values.s3.accessKeyId }}
             - name: AWS_ACCESS_KEY_ID
               valueFrom:
                 secretKeyRef:
@@ -186,6 +187,7 @@ spec:
                 secretKeyRef:
                   name: {{ include "probo.fullname" . }}
                   key: s3-secret-key
+            {{- end }}
             {{- $s3Endpoint := include "probo.s3.endpoint" . }}
             {{- if $s3Endpoint }}
             - name: AWS_ENDPOINT

@@ -132,7 +132,7 @@ S3 access key
 {{- if .Values.seaweedfs.enabled }}
 {{- .Values.seaweedfs.auth.accessKey | required "seaweedfs.auth.accessKey is required when seaweedfs.enabled=true" }}
 {{- else }}
-{{- .Values.s3.accessKeyId | required "s3.accessKeyId is required when seaweedfs.enabled=false" }}
+{{- .Values.s3.accessKeyId }}
 {{- end }}
 {{- end }}
 
@@ -143,7 +143,7 @@ S3 secret key
 {{- if .Values.seaweedfs.enabled }}
 {{- .Values.seaweedfs.auth.secretKey | required "seaweedfs.auth.secretKey is required when seaweedfs.enabled=true" }}
 {{- else }}
-{{- .Values.s3.secretAccessKey | required "s3.secretAccessKey is required when seaweedfs.enabled=false" }}
+{{- .Values.s3.secretAccessKey }}
 {{- end }}
 {{- end }}
 

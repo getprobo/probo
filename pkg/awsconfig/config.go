@@ -16,9 +16,11 @@ package awsconfig
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"net/url"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -86,20 +88,15 @@ func NewConfig(logger *log.Logger, httpClient *http.Client, opts Options) aws.Co
 			options.Client = imdsClient
 		})
 
-		ecsCredentialsURI := os.Getenv("AWS_CONTAINER_CREDENTIALS_RELATIVE_URI")
-		ecsEndpoint, _ := url.JoinPath("http://169.254.170.2", ecsCredentialsURI)
-		ecsProvider := endpointcreds.New(
-			ecsEndpoint,
-			func(options *endpointcreds.Options) {
-				options.HTTPClient = httpClient
-			},
-		)
+		containerProvider := buildContainerProvider(httpClient)
 
 		cfg.Credentials = aws.NewCredentialsCache(
 			aws.CredentialsProviderFunc(func(ctx context.Context) (aws.Credentials, error) {
-				creds, err := ecsProvider.Retrieve(ctx)
-				if err == nil {
-					return creds, nil
+				if containerProvider != nil {
+					creds, err := containerProvider.Retrieve(ctx)
+					if err == nil {
+						return creds, nil
+					}
 				}
 
 				return ec2Provider.Retrieve(ctx)
@@ -115,4 +112,59 @@ func NewConfig(logger *log.Logger, httpClient *http.Client, opts Options) aws.Co
 	}
 
 	return cfg.Copy()
+}
+
+// buildContainerProvider constructs a credentials provider for container
+// environments. It prefers EKS Pod Identity (AWS_CONTAINER_CREDENTIALS_FULL_URI)
+// over ECS task credentials (AWS_CONTAINER_CREDENTIALS_RELATIVE_URI). Returns nil
+// when neither environment variable is set.
+func buildContainerProvider(httpClient *http.Client) *endpointcreds.Provider {
+	var (
+		endpoint  string
+		authToken endpointcreds.AuthTokenProvider
+	)
+
+	if fullURI := os.Getenv("AWS_CONTAINER_CREDENTIALS_FULL_URI"); fullURI != "" {
+		endpoint = fullURI
+		authToken = buildContainerAuthToken()
+	} else if relativeURI := os.Getenv("AWS_CONTAINER_CREDENTIALS_RELATIVE_URI"); relativeURI != "" {
+		endpoint, _ = url.JoinPath("http://169.254.170.2", relativeURI)
+	}
+
+	if endpoint == "" {
+		return nil
+	}
+
+	return endpointcreds.New(
+		endpoint,
+		func(options *endpointcreds.Options) {
+			options.HTTPClient = httpClient
+			options.AuthorizationTokenProvider = authToken
+		},
+	)
+}
+
+// buildContainerAuthToken returns an auth token provider for container credentials.
+// It first checks AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE (file-based, re-read on
+// each retrieval) then AWS_CONTAINER_AUTHORIZATION_TOKEN (static). Returns nil
+// when neither is set.
+func buildContainerAuthToken() endpointcreds.AuthTokenProvider {
+	if tokenFile := os.Getenv("AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE"); tokenFile != "" {
+		return endpointcreds.TokenProviderFunc(func() (string, error) {
+			data, err := os.ReadFile(tokenFile)
+			if err != nil {
+				return "", fmt.Errorf("cannot read authorization token file: %w", err)
+			}
+
+			return strings.TrimSpace(string(data)), nil
+		})
+	}
+
+	if token := os.Getenv("AWS_CONTAINER_AUTHORIZATION_TOKEN"); token != "" {
+		return endpointcreds.TokenProviderFunc(func() (string, error) {
+			return token, nil
+		})
+	}
+
+	return nil
 }
