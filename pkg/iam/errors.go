@@ -169,18 +169,6 @@ func (e ErrLastActiveOwner) Error() string {
 	return fmt.Sprintf("cannot remove profile %q: last active owner of the organization", e.MembershipID)
 }
 
-type ErrUserReferencedByRecords struct {
-	ProfileID gid.GID
-}
-
-func NewUserReferencedByRecordsError(profileID gid.GID) error {
-	return &ErrUserReferencedByRecords{ProfileID: profileID}
-}
-
-func (e ErrUserReferencedByRecords) Error() string {
-	return "cannot remove user because they are referenced by existing records (for example signatures, tasks, assets, or risks)"
-}
-
 type ErrOrganizationNotFound struct{ OrganizationID gid.GID }
 
 func NewOrganizationNotFoundError(organizationID gid.GID) error {

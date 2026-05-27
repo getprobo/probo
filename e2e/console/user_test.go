@@ -131,6 +131,7 @@ func TestUser_RemoveUser(t *testing.T) {
 						edges {
 							node {
 								id
+								state
 								membership {
 									role
 								}
@@ -148,6 +149,7 @@ func TestUser_RemoveUser(t *testing.T) {
 				Edges []struct {
 					Node struct {
 						ID         string `json:"id"`
+						State      string `json:"state"`
 						Membership struct {
 							Role string `json:"role"`
 						} `json:"membership"`
@@ -198,6 +200,24 @@ func TestUser_RemoveUser(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, userID, mutationResult.RemoveUser.DeletedProfileID)
+
+	// Remove archives the user instead of hard-deleting them.
+	err = owner.ExecuteConnect(query, map[string]any{
+		"id": owner.GetOrganizationID().String(),
+	}, &result)
+	require.NoError(t, err)
+
+	var removedUserState string
+
+	for _, edge := range result.Node.Profiles.Edges {
+		if edge.Node.ID == userID {
+			removedUserState = edge.Node.State
+			break
+		}
+	}
+
+	require.NotEmpty(t, removedUserState, "Should still find archived user")
+	assert.Equal(t, "INACTIVE", removedUserState)
 }
 
 func TestUser_RemoveOwner(t *testing.T) {

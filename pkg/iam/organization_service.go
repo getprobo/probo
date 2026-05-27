@@ -21,7 +21,6 @@ import (
 	"io"
 	"time"
 
-	"github.com/jackc/pgx/v5/pgconn"
 	"go.gearno.de/crypto/uuid"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/packages/emails"
@@ -350,42 +349,28 @@ func (s *OrganizationService) RemoveUser(
 				}
 			}
 
-			if err := webhook.InsertData(ctx, tx, scope, organizationID, coredata.WebhookEventTypeUserDeleted, webhooktypes.NewUser(&profile, membership)); err != nil {
+			now := time.Now()
+			if profile.State != coredata.ProfileStateInactive {
+				profile.State = coredata.ProfileStateInactive
+				profile.UpdatedAt = now
+
+				if err := profile.Update(ctx, tx, scope); err != nil {
+					return fmt.Errorf("cannot update profile state: %w", err)
+				}
+			}
+
+			membership.UpdatedAt = now
+			if err := membership.Update(ctx, tx, scope); err != nil {
+				return fmt.Errorf("cannot update membership: %w", err)
+			}
+
+			if err := webhook.InsertData(ctx, tx, scope, organizationID, coredata.WebhookEventTypeUserUpdated, webhooktypes.NewUser(&profile, membership)); err != nil {
 				return fmt.Errorf("cannot insert webhook event: %w", err)
-			}
-
-			if err := profile.Delete(ctx, tx, scope, profileID); err != nil {
-				if isUserRemovalDependencyError(err) {
-					return NewUserReferencedByRecordsError(profileID)
-				}
-
-				return fmt.Errorf("cannot delete profile: %w", err)
-			}
-
-			if err := membership.Delete(ctx, tx, scope, membership.ID); err != nil {
-				if isUserRemovalDependencyError(err) {
-					return NewUserReferencedByRecordsError(profileID)
-				}
-
-				return fmt.Errorf("cannot delete membership: %w", err)
 			}
 
 			return nil
 		},
 	)
-}
-
-func isUserRemovalDependencyError(err error) bool {
-	if errors.Is(err, coredata.ErrResourceInUse) {
-		return true
-	}
-
-	pgErr, ok := errors.AsType[*pgconn.PgError](err)
-	if !ok {
-		return false
-	}
-
-	return pgErr.Code == "23503"
 }
 
 func (s *OrganizationService) InviteUser(
