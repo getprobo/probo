@@ -55,6 +55,15 @@ export function ThemedBannerTab({ events, pushEvent }: ThemedBannerTabProps) {
   );
 
   const sendPing = useCallback(() => {
+    // Defensive: `PosthogPanel` already disables the button while opted out,
+    // and pure telemetry pings like this one are fine to ship cookielessly
+    // (PostHog's `cookieless_mode` is designed exactly for that). Only gate
+    // manual captures when the event carries user-specific data — e.g. an
+    // identified `distinct_id`, an email, a workspace name — that must not
+    // leave the browser without consent. We keep the guard here purely to
+    // make the example fail closed if the panel is reused without its
+    // disabled-state wiring.
+    if (posthog.has_opted_out_capturing()) return;
     posthog.capture("themed_tab_manual_ping", { source: "example" });
     setManualPing(new Date().toISOString());
   }, []);

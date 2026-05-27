@@ -58,14 +58,14 @@ export function PosthogPanel({ status, manualPing, onSendPing }: PosthogPanelPro
       </table>
       <button
         onClick={onSendPing}
-        disabled={!status.initialized}
+        disabled={!status.initialized || status.optedOut}
         style={{ padding: "6px 12px", fontSize: 13 }}
       >
         Capture test event
       </button>
       {manualPing && (
         <span style={{ marginLeft: 12, color: "#666", fontSize: 13 }}>
-          last sent: {manualPing} (only delivered when opted in)
+          last sent: {manualPing}
         </span>
       )}
     </div>
