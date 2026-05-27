@@ -89,6 +89,7 @@ export function PersonPage(props: { queryRef: PreloadedQuery<PersonPageQuery> })
       errorMessage: __("Failed to remove person"),
     },
   );
+  const isMutating = isArchiving || isRemoving;
 
   const handleArchive = () => {
     confirm(
@@ -171,7 +172,7 @@ export function PersonPage(props: { queryRef: PreloadedQuery<PersonPageQuery> })
               <DropdownItem
                 icon={IconArchive}
                 onClick={handleArchive}
-                disabled={isArchiving}
+                disabled={isMutating}
               >
                 {__("Archive")}
               </DropdownItem>
@@ -181,7 +182,7 @@ export function PersonPage(props: { queryRef: PreloadedQuery<PersonPageQuery> })
                 variant="danger"
                 icon={IconTrashCan}
                 onClick={handleRemove}
-                disabled={isRemoving}
+                disabled={isMutating}
               >
                 {__("Remove")}
               </DropdownItem>

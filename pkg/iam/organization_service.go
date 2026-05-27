@@ -331,6 +331,10 @@ func (s *OrganizationService) RemoveUser(
 				return NewUserManagedBySCIMError(profileID)
 			}
 
+			if profile.OrganizationID != organizationID {
+				return NewProfileNotFoundError(profileID)
+			}
+
 			membership := &coredata.Membership{}
 			if err := membership.LoadByIdentityIDAndOrganizationID(ctx, tx, scope, profile.IdentityID, profile.OrganizationID); err != nil {
 				return fmt.Errorf("cannot load membership: %w", err)
@@ -339,7 +343,7 @@ func (s *OrganizationService) RemoveUser(
 			if membership.Role == coredata.MembershipRoleOwner && profile.State == coredata.ProfileStateActive {
 				profiles := coredata.MembershipProfiles{}
 
-				count, err := profiles.CountActiveOwnerByOrganizationID(ctx, tx, scope, organizationID)
+				count, err := profiles.CountActiveOwnerByOrganizationID(ctx, tx, scope, profile.OrganizationID)
 				if err != nil {
 					return fmt.Errorf("cannot count active owners: %w", err)
 				}
@@ -437,7 +441,7 @@ func (s *OrganizationService) ArchiveUser(
 				return fmt.Errorf("cannot update membership: %w", err)
 			}
 
-			if err := webhook.InsertData(ctx, tx, scope, organizationID, coredata.WebhookEventTypeUserUpdated, webhooktypes.NewUser(&profile, membership)); err != nil {
+			if err := webhook.InsertData(ctx, tx, scope, profile.OrganizationID, coredata.WebhookEventTypeUserUpdated, webhooktypes.NewUser(&profile, membership)); err != nil {
 				return fmt.Errorf("cannot insert webhook event: %w", err)
 			}
 
