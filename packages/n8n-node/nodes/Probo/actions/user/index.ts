@@ -34,6 +34,12 @@ export const description: INodeProperties[] = [
 		},
 		options: [
 			{
+				name: 'Archive',
+				value: 'removeUser',
+				description: 'Archive a user in the organization',
+				action: 'Archive a user',
+			},
+			{
 				name: 'Create',
 				value: 'createUser',
 				description: 'Create a new user in the organization',
@@ -56,12 +62,6 @@ export const description: INodeProperties[] = [
 				value: 'listUsers',
 				description: 'List all users in the organization',
 				action: 'List users',
-			},
-			{
-				name: 'Archive',
-				value: 'removeUser',
-				description: 'Archive a user in the organization',
-				action: 'Archive a user',
 			},
 			{
 				name: 'Update',
