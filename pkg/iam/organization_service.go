@@ -407,6 +407,18 @@ func (s *OrganizationService) ArchiveUser(
 				}
 			}
 
+			invitations := &coredata.Invitations{}
+			onlyPending := coredata.NewInvitationFilter([]coredata.InvitationStatus{coredata.InvitationStatusPending})
+			if err := invitations.ExpireByUserID(
+				ctx,
+				tx,
+				scope,
+				profile.ID,
+				onlyPending,
+			); err != nil {
+				return fmt.Errorf("cannot expire pending invitations: %w", err)
+			}
+
 			now := time.Now()
 
 			if profile.State != coredata.ProfileStateInactive {
