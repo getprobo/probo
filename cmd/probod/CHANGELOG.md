@@ -4,6 +4,27 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.198.0] - 2026-05-28
+
+### Added
+
+- Add Tailscale connector
+- Add Anthropic connector (authenticated via API key)
+- Add personal account support for the Heroku connector
+- Add Global region option to the vendor country picker
+- Allow ordering organization members by email address
+
+### Changed
+
+- Connector deletion is now best-effort: remaining steps proceed even when one cleanup step fails
+
+### Fixed
+
+- Fix role column in the people list rendered as non-sortable to prevent runtime failures
+- Surface an actionable error when a stored Sentry organization slug is no longer accessible to the connected OAuth token
+- Stop the source-name worker from retrying indefinitely on a stale Sentry organization slug
+- Stop the source-name worker from retrying indefinitely on a stale Heroku personal-account slug
+
 ## [0.197.0] - 2026-05-28
 
 ### Added
