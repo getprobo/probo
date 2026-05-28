@@ -4,6 +4,16 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.197.0] - 2026-05-28
+
+### Added
+
+- Add `invitingOrganizations` field on the viewer to expose organizations that have sent a pending invitation to the current user
+
+### Fixed
+
+- Show SCIM error message in the connector UI
+
 ## [0.196.1] - 2026-05-27
 
 ### Fixed
