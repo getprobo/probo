@@ -185,6 +185,69 @@ func TestSentryNameResolver(t *testing.T) {
 	}
 }
 
+func TestTailscaleNameResolver(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		name    string
+		status  int
+		body    string
+		want    string
+		wantErr bool
+	}{
+		{
+			name:   "custom domain tailnet",
+			status: http.StatusOK,
+			body:   `{"users":[{"loginName":"jane@acme.example.com"},{"loginName":"bob@acme.example.com"}]}`,
+			want:   "acme.example.com",
+		},
+		{
+			name:   "most common domain wins",
+			status: http.StatusOK,
+			body:   `{"users":[{"loginName":"a@one.com"},{"loginName":"b@two.com"},{"loginName":"c@two.com"}]}`,
+			want:   "two.com",
+		},
+		{
+			name:   "no usable login names",
+			status: http.StatusOK,
+			body:   `{"users":[{"loginName":""},{"loginName":"tagged-device"}]}`,
+			want:   "",
+		},
+		{
+			name:    "server error",
+			status:  http.StatusInternalServerError,
+			body:    `{"message":"boom"}`,
+			wantErr: true,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				assert.Equal(t, http.MethodGet, r.Method)
+				assert.Equal(t, "/api/v2/tailnet/-/users", r.URL.Path)
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(tc.status)
+				_, _ = w.Write([]byte(tc.body))
+			}))
+			defer srv.Close()
+
+			client := &http.Client{Transport: &hostRewriter{target: srv.URL}}
+
+			got, err := NewTailscaleNameResolver(client).ResolveInstanceName(context.Background())
+			if tc.wantErr {
+				require.Error(t, err)
+				return
+			}
+
+			require.NoError(t, err)
+			assert.Equal(t, tc.want, got)
+		})
+	}
+}
+
 // roundTripperFunc adapts a function into an http.RoundTripper, useful for
 // asserting that a resolver short-circuits before making any HTTP call.
 type roundTripperFunc func(*http.Request) (*http.Response, error)

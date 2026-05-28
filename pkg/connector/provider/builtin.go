@@ -46,6 +46,7 @@ func NewBuiltinRegistry() *Registry {
 		sentryRegistration(),
 		slackRegistration(),
 		supabaseRegistration(),
+		tailscaleRegistration(),
 		tallyRegistration(),
 		vercelRegistration(),
 	} {

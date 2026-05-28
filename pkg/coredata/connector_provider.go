@@ -49,6 +49,7 @@ const (
 	ConnectorProviderClickUp      ConnectorProvider = "CLICKUP"
 	ConnectorProviderVercel       ConnectorProvider = "VERCEL"
 	ConnectorProviderMonday       ConnectorProvider = "MONDAY"
+	ConnectorProviderTailscale    ConnectorProvider = "TAILSCALE"
 )
 
 var (
@@ -85,6 +86,7 @@ func ConnectorProviders() []ConnectorProvider {
 		ConnectorProviderClickUp,
 		ConnectorProviderVercel,
 		ConnectorProviderMonday,
+		ConnectorProviderTailscale,
 	}
 }
 
@@ -116,7 +118,8 @@ func (v ConnectorProvider) IsValid() bool {
 		ConnectorProviderNetlify,
 		ConnectorProviderClickUp,
 		ConnectorProviderVercel,
-		ConnectorProviderMonday:
+		ConnectorProviderMonday,
+		ConnectorProviderTailscale:
 		return true
 	}
 

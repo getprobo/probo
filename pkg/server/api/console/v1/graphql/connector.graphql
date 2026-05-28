@@ -44,6 +44,8 @@ enum ConnectorProvider
         @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderClickUp")
     VERCEL @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderVercel")
     MONDAY @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderMonday")
+    TAILSCALE
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderTailscale")
 }
 
 type ConnectorProviderInfo {

@@ -24,5 +24,6 @@ export { Sentry } from "./Sentry";
 export { Slack } from "./Slack";
 export { Supabase } from "./Supabase";
 export { Tally } from "./Tally";
+export { Tailscale } from "./Tailscale";
 export { ThirdPartyLogo } from "./ThirdPartyLogo";
 export { Vercel } from "./Vercel";

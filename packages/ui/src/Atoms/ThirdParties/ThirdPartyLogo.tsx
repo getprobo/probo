@@ -40,6 +40,7 @@ import { Sentry } from "./Sentry";
 import { Slack } from "./Slack";
 import { Supabase } from "./Supabase";
 import { Tally } from "./Tally";
+import { Tailscale } from "./Tailscale";
 import { Vercel } from "./Vercel";
 
 const thirdParties: Record<string, FC<ComponentProps<"svg">>> = {
@@ -71,6 +72,7 @@ const thirdParties: Record<string, FC<ComponentProps<"svg">>> = {
   SENTRY: Sentry,
   SLACK: Slack,
   SUPABASE: Supabase,
+  TAILSCALE: Tailscale,
   TALLY: Tally,
   VERCEL: Vercel,
 };
