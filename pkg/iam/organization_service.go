@@ -425,6 +425,11 @@ func (s *OrganizationService) ArchiveUser(
 				return fmt.Errorf("cannot expire pending invitations: %w", err)
 			}
 
+			signatures := &coredata.DocumentVersionSignatures{}
+			if err := signatures.DeleteRequestedBySignatory(ctx, tx, scope, profile.ID); err != nil {
+				return fmt.Errorf("cannot delete requested signatures: %w", err)
+			}
+
 			now := time.Now()
 
 			if profile.State != coredata.ProfileStateInactive {
@@ -1159,6 +1164,13 @@ func (s *OrganizationService) UpdateUserState(
 
 			if err := profile.Update(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot update profile: %w", err)
+			}
+
+			if state == coredata.ProfileStateInactive {
+				signatures := &coredata.DocumentVersionSignatures{}
+				if err := signatures.DeleteRequestedBySignatory(ctx, tx, scope, profile.ID); err != nil {
+					return fmt.Errorf("cannot delete requested signatures: %w", err)
+				}
 			}
 
 			return nil

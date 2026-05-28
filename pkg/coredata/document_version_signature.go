@@ -373,6 +373,36 @@ WHERE
 	return nil
 }
 
+func (pvss *DocumentVersionSignatures) DeleteRequestedBySignatory(
+	ctx context.Context,
+	conn pg.Tx,
+	scope Scoper,
+	signatoryID gid.GID,
+) error {
+	q := `
+DELETE FROM document_version_signatures
+WHERE
+	%s
+	AND signed_by_profile_id = @signatory_id
+	AND state = @state
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"signatory_id": signatoryID,
+		"state":        DocumentVersionSignatureStateRequested,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	_, err := conn.Exec(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot delete requested document version signatures: %w", err)
+	}
+
+	return nil
+}
+
 func (pvss *DocumentVersionSignaturesWithPeople) LoadByDocumentVersionIDWithPeople(
 	ctx context.Context,
 	conn pg.Querier,

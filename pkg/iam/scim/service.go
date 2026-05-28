@@ -299,6 +299,11 @@ func (s *Service) CreateUser(
 			); err != nil {
 				return fmt.Errorf("cannot expire pending invitations: %w", err)
 			}
+
+			signatures := &coredata.DocumentVersionSignatures{}
+			if err := signatures.DeleteRequestedBySignatory(ctx, tx, scope, profile.ID); err != nil {
+				return fmt.Errorf("cannot delete requested signatures: %w", err)
+			}
 		}
 
 		membership = &coredata.Membership{}
@@ -728,6 +733,11 @@ func (s *Service) updateUser(
 					onlyPending,
 				); err != nil {
 					return fmt.Errorf("cannot expire pending invitations: %w", err)
+				}
+
+				signatures := &coredata.DocumentVersionSignatures{}
+				if err := signatures.DeleteRequestedBySignatory(ctx, tx, scope, profile.ID); err != nil {
+					return fmt.Errorf("cannot delete requested signatures: %w", err)
 				}
 			}
 
