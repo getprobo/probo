@@ -194,8 +194,9 @@ func stripCorporateSuffixes(lowerName string) string {
 // LinkToCommon writes common_third_party_id onto an org ThirdParty so
 // future matches against the same CommonThirdParty can short-circuit
 // to the exact-link path in O(1). No-op when the field is already set
-// to commonID; otherwise writes the field via ThirdParty.Update and
-// updates the receiver in place.
+// (to any value) — we never overwrite an existing catalog link because
+// a heuristic or agent false-positive must not corrupt a previous,
+// possibly more accurate, association.
 func LinkToCommon(
 	ctx context.Context,
 	tx pg.Tx,
@@ -203,7 +204,7 @@ func LinkToCommon(
 	orgThirdParty *coredata.ThirdParty,
 	commonID gid.GID,
 ) error {
-	if orgThirdParty.CommonThirdPartyID != nil && *orgThirdParty.CommonThirdPartyID == commonID {
+	if orgThirdParty.CommonThirdPartyID != nil {
 		return nil
 	}
 
