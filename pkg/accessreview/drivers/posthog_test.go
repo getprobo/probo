@@ -16,8 +16,7 @@ package drivers
 
 import (
 	"context"
-	"net/http"
-	"net/http/httptest"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -28,71 +27,8 @@ import (
 func TestPostHogDriverListAccounts(t *testing.T) {
 	t.Parallel()
 
-	var srv *httptest.Server
-	srv = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		assert.Equal(t, http.MethodGet, r.Method)
-		assert.Equal(t, "/api/organizations/@current/members/", r.URL.Path)
-		assert.Equal(t, "100", r.URL.Query().Get("limit"))
-		assert.Equal(t, "-joined_at", r.URL.Query().Get("order"))
-		w.Header().Set("Content-Type", "application/json")
-
-		switch r.URL.Query().Get("offset") {
-		case "":
-			_, _ = w.Write([]byte(`{
-  "next": "` + srv.URL + `/api/organizations/@current/members/?limit=100&order=-joined_at&offset=2",
-  "results": [
-    {
-      "id": "membership-1",
-      "user": {
-        "uuid": "user-1",
-        "first_name": "Olivia",
-        "last_name": "Owner",
-        "email": "owner@example.com"
-      },
-      "level": 15,
-      "is_2fa_enabled": true,
-      "joined_at": "2025-01-10T12:00:00Z",
-      "last_login": "2025-05-01T09:00:00Z"
-    },
-    {
-      "id": "membership-2",
-      "user": {
-        "uuid": "user-2",
-        "first_name": "Maya",
-        "last_name": "Member",
-        "email": "member@example.com"
-      },
-      "level": 1,
-      "is_2fa_enabled": false
-    }
-  ]
-}`))
-		case "2":
-			_, _ = w.Write([]byte(`{
-  "next": "",
-  "results": [
-    {
-      "id": "membership-3",
-      "user": {
-        "uuid": "",
-        "first_name": "Ari",
-        "last_name": "Admin",
-        "email": "admin@example.com"
-      },
-      "level": 8,
-      "joined_at": "2024-02-20T00:00:00Z"
-    }
-  ]
-}`))
-		default:
-			t.Fatalf("unexpected offset query value %q", r.URL.Query().Get("offset"))
-		}
-	}))
-	defer srv.Close()
-
-	client := &http.Client{
-		Transport: &hostRewriter{target: srv.URL},
-	}
+	rec := newRecorder(t, "testdata/posthog", "POSTHOG_PERSONAL_API_KEY")
+	client := newVCRClient(rec, bearerAuth(os.Getenv("POSTHOG_PERSONAL_API_KEY")))
 
 	records, err := NewPostHogDriver(client).ListAccounts(context.Background())
 	require.NoError(t, err)
@@ -113,7 +49,7 @@ func TestPostHogDriverListAccounts(t *testing.T) {
 	assert.Equal(t, "Member", member.Role)
 	assert.False(t, member.IsAdmin)
 	assert.Equal(t, coredata.MFAStatusDisabled, member.MFAStatus)
-	assert.Nil(t, member.CreatedAt)
+	require.NotNil(t, member.CreatedAt)
 	assert.Nil(t, member.LastLogin)
 
 	admin := records[2]
