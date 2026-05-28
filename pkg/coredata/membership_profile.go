@@ -77,6 +77,8 @@ func (p MembershipProfile) CursorKey(orderBy MembershipProfileOrderField) page.C
 		return page.NewCursorKey(p.ID, p.CreatedAt)
 	case MembershipProfileOrderFieldFullName:
 		return page.NewCursorKey(p.ID, p.FullName)
+	case MembershipProfileOrderFieldEmailAddress:
+		return page.NewCursorKey(p.ID, p.EmailAddress)
 	case MembershipProfileOrderFieldKind:
 		return page.NewCursorKey(p.ID, p.Kind)
 	case MembershipProfileOrderFieldOrganizationName:
