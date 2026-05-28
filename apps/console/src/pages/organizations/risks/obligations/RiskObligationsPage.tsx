@@ -12,23 +12,32 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { graphql, useFragment } from "react-relay";
-import { useOutletContext } from "react-router";
+import { graphql, type PreloadedQuery, usePreloadedQuery } from "react-relay";
 
-import type { RiskDetailLayoutQuery$data } from "#/__generated__/core/RiskDetailLayoutQuery.graphql";
-import type { RiskObligationsTabFragment$key } from "#/__generated__/core/RiskObligationsTabFragment.graphql";
+import type { RiskObligationsPageQuery } from "#/__generated__/core/RiskObligationsPageQuery.graphql";
 import { LinkedObligationsCard } from "#/components/obligations/LinkedObligationsCard";
 import { useMutationWithIncrement } from "#/hooks/useMutationWithIncrement";
 
-export const obligationsFragment = graphql`
-  fragment RiskObligationsTabFragment on Risk {
-    id
-    obligations(first: 100) @connection(key: "Risk__obligations") {
-      __id
-      edges {
-        node {
-          id
-          ...LinkedObligationsCardFragment
+export const riskObligationsPageQuery = graphql`
+  query RiskObligationsPageQuery($riskId: ID!) {
+    node(id: $riskId) {
+      __typename
+      ... on Risk {
+        id
+        canCreateObligationMapping: permission(
+          action: "core:risk:create-obligation-mapping"
+        )
+        canDeleteObligationMapping: permission(
+          action: "core:risk:delete-obligation-mapping"
+        )
+        obligations(first: 100) @connection(key: "RiskObligationsPage_obligations") {
+          __id
+          edges {
+            node {
+              id
+              ...LinkedObligationsCardFragment
+            }
+          }
         }
       }
     }
@@ -36,7 +45,7 @@ export const obligationsFragment = graphql`
 `;
 
 const attachObligationMutation = graphql`
-  mutation RiskObligationsTabCreateMutation(
+  mutation RiskObligationsPageCreateMutation(
     $input: CreateRiskObligationMappingInput!
     $connections: [ID!]!
   ) {
@@ -51,8 +60,8 @@ const attachObligationMutation = graphql`
   }
 `;
 
-export const detachObligationMutation = graphql`
-  mutation RiskObligationsTabDetachMutation(
+const detachObligationMutation = graphql`
+  mutation RiskObligationsPageDetachMutation(
     $input: DeleteRiskObligationMappingInput!
     $connections: [ID!]!
   ) {
@@ -62,23 +71,24 @@ export const detachObligationMutation = graphql`
   }
 `;
 
-export default function RiskObligationsTab() {
-  const { risk } = useOutletContext<{
-    risk: RiskDetailLayoutQuery$data["node"];
-  }>();
-  const data = useFragment<RiskObligationsTabFragment$key>(
-    obligationsFragment,
-    risk,
-  );
-  const connectionId = data.obligations.__id;
-  const obligations = data.obligations?.edges?.map(edge => edge.node) ?? [];
+interface RiskObligationsPageProps {
+  queryRef: PreloadedQuery<RiskObligationsPageQuery>;
+}
 
-  const canLinkObligation = risk.canCreateObligationMapping;
-  const canUnlinkObligation = risk.canDeleteObligationMapping;
-  const readOnly = !canLinkObligation && !canUnlinkObligation;
+export default function RiskObligationsPage(props: RiskObligationsPageProps) {
+  const data = usePreloadedQuery(riskObligationsPageQuery, props.queryRef);
+  if (data.node?.__typename !== "Risk") {
+    throw new Error("Risk not found");
+  }
+  const risk = data.node;
+  const connectionId = risk.obligations.__id;
+  const obligations = risk.obligations.edges.map(edge => edge.node);
+
+  const readOnly
+    = !risk.canCreateObligationMapping && !risk.canDeleteObligationMapping;
 
   const incrementOptions = {
-    id: data.id,
+    id: risk.id,
     node: "obligations(first:0)",
   };
   const [detachObligation, isDetaching] = useMutationWithIncrement(
@@ -103,7 +113,7 @@ export default function RiskObligationsTab() {
       obligations={obligations}
       onAttach={attachObligation}
       onDetach={detachObligation}
-      params={{ riskId: data.id }}
+      params={{ riskId: risk.id }}
       connectionId={connectionId}
       variant="table"
       readOnly={readOnly}

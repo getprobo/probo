@@ -43,44 +43,32 @@ export const riskRoutes = [
       {
         path: "overview",
         Fallback: LinkCardSkeleton,
-        Component: lazy(
-          () => import("./tabs/RiskOverviewTab"),
-        ),
+        Component: lazy(() => import("./overview/RiskOverviewPageLoader")),
       },
       {
         path: "measures",
         Fallback: LinkCardSkeleton,
-        Component: lazy(
-          () => import("./tabs/RiskMeasuresTab"),
-        ),
+        Component: lazy(() => import("./measures/RiskMeasuresPageLoader")),
       },
       {
         path: "documents",
         Fallback: LinkCardSkeleton,
-        Component: lazy(
-          () => import("./tabs/RiskDocumentsTab"),
-        ),
+        Component: lazy(() => import("./documents/RiskDocumentsPageLoader")),
       },
       {
         path: "controls",
         Fallback: LinkCardSkeleton,
-        Component: lazy(
-          () => import("./tabs/RiskControlsTab"),
-        ),
+        Component: lazy(() => import("./controls/RiskControlsPageLoader")),
       },
       {
         path: "obligations",
         Fallback: LinkCardSkeleton,
-        Component: lazy(
-          () => import("./tabs/RiskObligationsTab"),
-        ),
+        Component: lazy(() => import("./obligations/RiskObligationsPageLoader")),
       },
       {
         path: "scenarios",
         Fallback: LinkCardSkeleton,
-        Component: lazy(
-          () => import("./scenarios/RiskScenariosPage"),
-        ),
+        Component: lazy(() => import("./scenarios/RiskScenariosPageLoader")),
       },
     ],
   },

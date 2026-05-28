@@ -12,50 +12,37 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { getTreatment, sprintf } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
 import { useTranslate } from "@probo/i18n";
 import {
-  ActionDropdown,
   Button,
-  DropdownItem,
   IconPageTextLine,
-  IconPencil,
   IconPlusLarge,
-  IconTrashCan,
   IconUpload,
   PageHeader,
   RisksChart,
-  SeverityBadge,
   Tbody,
-  Td,
   Th,
   Thead,
   Tr,
-  useConfirm,
-  useDialogRef,
 } from "@probo/ui";
 import {
   graphql,
   type PreloadedQuery,
-  useMutation,
   usePaginationFragment,
   usePreloadedQuery,
 } from "react-relay";
 import { useNavigate } from "react-router";
 
-import type { RisksPageDeleteMutation } from "#/__generated__/core/RisksPageDeleteMutation.graphql";
-import type { RisksPageFragment$data, RisksPageFragment$key } from "#/__generated__/core/RisksPageFragment.graphql";
+import type { RisksPageFragment$key } from "#/__generated__/core/RisksPageFragment.graphql";
 import type { RisksPageQuery } from "#/__generated__/core/RisksPageQuery.graphql";
 import type { RisksPageRefetchQuery } from "#/__generated__/core/RisksPageRefetchQuery.graphql";
 import { SortableTable, SortableTh } from "#/components/SortableTable";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
-import type { NodeOf } from "#/types";
 
-import { PublishRiskListDialog } from "./dialogs/PublishRiskListDialog";
-import FormRiskDialog from "./FormRiskDialog";
-
-/* eslint-disable relay/unused-fields, relay/must-colocate-fragment-spreads */
+import { FormRiskDialog } from "./_components/FormRiskDialog";
+import { PublishRiskListDialog } from "./_components/PublishRiskListDialog";
+import { RiskRow } from "./_components/RiskRow";
 
 export const risksPageQuery = graphql`
   query RisksPageQuery($organizationId: ID!) {
@@ -83,8 +70,6 @@ const risksFragment = graphql`
     canPublishRisk: permission(action: "core:risk:publish")
     risksDocument {
       id
-      currentPublishedMajor
-      currentPublishedMinor
       defaultApprovers {
         id
       }
@@ -101,45 +86,26 @@ const risksFragment = graphql`
         node {
           id
           name
-          category
-          treatment
-          owner {
-            id
-            fullName
-          }
           inherentLikelihood
           inherentImpact
           residualLikelihood
           residualImpact
-          inherentRiskScore
-          residualRiskScore
           canUpdate: permission(action: "core:risk:update")
           canDelete: permission(action: "core:risk:delete")
-          ...useRiskFormFragment
+          ...RiskRow_risk
         }
       }
     }
   }
 `;
 
-const deleteRiskMutation = graphql`
-  mutation RisksPageDeleteMutation(
-    $input: DeleteRiskInput!
-    $connections: [ID!]!
-  ) {
-    deleteRisk(input: $input) {
-      deletedRiskId @deleteEdge(connections: $connections)
-    }
-  }
-`;
-
 export const RisksConnectionKey = "RisksPage_risks";
 
-type Props = {
+interface RisksPageProps {
   queryRef: PreloadedQuery<RisksPageQuery>;
-};
+}
 
-export default function RisksPage(props: Props) {
+export default function RisksPage(props: RisksPageProps) {
   const { __ } = useTranslate();
   const organizationId = useOrganizationId();
   const navigate = useNavigate();
@@ -155,6 +121,22 @@ export default function RisksPage(props: Props) {
   const risksDocument = fragmentData.risksDocument;
   const risks = fragmentData.risks?.edges.map(edge => edge.node) ?? [];
   const connectionId = fragmentData.risks.__id;
+
+  const chartRisks = risks.map(({
+    id,
+    name,
+    inherentLikelihood,
+    inherentImpact,
+    residualLikelihood,
+    residualImpact,
+  }) => ({
+    id,
+    name,
+    inherentLikelihood,
+    inherentImpact,
+    residualLikelihood,
+    residualImpact,
+  }));
 
   const refetch = ({
     order,
@@ -181,8 +163,9 @@ export default function RisksPage(props: Props) {
 
   usePageTitle(__("Risks"));
 
-  const hasAnyAction
-    = risks.some(({ canDelete, canUpdate }) => canUpdate || canDelete);
+  const hasAnyAction = risks.some(
+    ({ canDelete, canUpdate }) => canUpdate || canDelete,
+  );
 
   const defaultApproverIds
     = risksDocument?.defaultApprovers?.map(a => a.id) ?? [];
@@ -236,12 +219,12 @@ export default function RisksPage(props: Props) {
         <RisksChart
           organizationId={organizationId}
           type="inherent"
-          risks={risks}
+          risks={chartRisks}
         />
         <RisksChart
           organizationId={organizationId}
           type="residual"
-          risks={risks}
+          risks={chartRisks}
         />
       </div>
       <SortableTable {...pagination} refetch={refetch}>
@@ -261,102 +244,16 @@ export default function RisksPage(props: Props) {
           </Tr>
         </Thead>
         <Tbody>
-          {risks?.map(risk => (
+          {risks.map(risk => (
             <RiskRow
-              risk={risk}
               key={risk.id}
+              riskKey={risk}
               connectionId={connectionId}
-              organizationId={organizationId}
               hasAnyAction={hasAnyAction}
             />
           ))}
         </Tbody>
       </SortableTable>
     </div>
-  );
-}
-
-type RowProps = {
-  risk: NodeOf<RisksPageFragment$data["risks"]>;
-  connectionId: string;
-  organizationId: string;
-  hasAnyAction: boolean;
-};
-
-function RiskRow(props: RowProps) {
-  const { __ } = useTranslate();
-  const { risk, connectionId, organizationId } = props;
-  const [deleteRisk] = useMutation<RisksPageDeleteMutation>(deleteRiskMutation);
-  const confirm = useConfirm();
-  const onDelete = () => {
-    confirm(
-      () =>
-        new Promise<void>((resolve) => {
-          void deleteRisk({
-            variables: {
-              input: { riskId: risk.id },
-              connections: [connectionId],
-            },
-            onCompleted: () => resolve(),
-          });
-        }),
-      {
-        message: sprintf(
-          __(
-            "This will permanently delete the risk \"%s\". This action cannot be undone.",
-          ),
-          risk.name,
-        ),
-      },
-    );
-  };
-  const formDialogRef = useDialogRef();
-
-  const riskUrl = `/organizations/${organizationId}/risks/${risk.id}/overview`;
-
-  return (
-    <>
-      <FormRiskDialog
-        ref={formDialogRef}
-        risk={risk}
-        connection={connectionId}
-      />
-      <Tr to={riskUrl}>
-        <Td>{risk.name}</Td>
-        <Td>{risk.category}</Td>
-        <Td>{getTreatment(__, risk.treatment)}</Td>
-        <Td>
-          <SeverityBadge score={risk.inherentRiskScore} />
-        </Td>
-        <Td>
-          <SeverityBadge score={risk.residualRiskScore} />
-        </Td>
-        <Td>{risk.owner?.fullName || __("Unassigned")}</Td>
-        {props.hasAnyAction && (
-          <Td noLink className="text-end">
-            <ActionDropdown>
-              {risk.canUpdate && (
-                <DropdownItem
-                  icon={IconPencil}
-                  onClick={() => formDialogRef.current?.open()}
-                >
-                  {__("Edit")}
-                </DropdownItem>
-              )}
-
-              {risk.canDelete && (
-                <DropdownItem
-                  variant="danger"
-                  icon={IconTrashCan}
-                  onClick={onDelete}
-                >
-                  {__("Delete")}
-                </DropdownItem>
-              )}
-            </ActionDropdown>
-          </Td>
-        )}
-      </Tr>
-    </>
   );
 }

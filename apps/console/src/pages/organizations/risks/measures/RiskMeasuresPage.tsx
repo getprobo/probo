@@ -12,23 +12,32 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { graphql, useFragment } from "react-relay";
-import { useOutletContext } from "react-router";
+import { graphql, type PreloadedQuery, usePreloadedQuery } from "react-relay";
 
-import type { RiskDetailLayoutQuery$data } from "#/__generated__/core/RiskDetailLayoutQuery.graphql";
-import type { RiskMeasuresTabFragment$key } from "#/__generated__/core/RiskMeasuresTabFragment.graphql";
+import type { RiskMeasuresPageQuery } from "#/__generated__/core/RiskMeasuresPageQuery.graphql";
 import { LinkedMeasuresCard } from "#/components/measures/LinkedMeasuresCard";
 import { useMutationWithIncrement } from "#/hooks/useMutationWithIncrement";
 
-export const measuresFragment = graphql`
-  fragment RiskMeasuresTabFragment on Risk {
-    id
-    measures(first: 100) @connection(key: "Risk__measures") {
-      __id
-      edges {
-        node {
-          id
-          ...LinkedMeasuresCardFragment
+export const riskMeasuresPageQuery = graphql`
+  query RiskMeasuresPageQuery($riskId: ID!) {
+    node(id: $riskId) {
+      __typename
+      ... on Risk {
+        id
+        canCreateMeasureMapping: permission(
+          action: "core:risk:create-measure-mapping"
+        )
+        canDeleteMeasureMapping: permission(
+          action: "core:risk:delete-measure-mapping"
+        )
+        measures(first: 100) @connection(key: "RiskMeasuresPage_measures") {
+          __id
+          edges {
+            node {
+              id
+              ...LinkedMeasuresCardFragment
+            }
+          }
         }
       }
     }
@@ -36,7 +45,7 @@ export const measuresFragment = graphql`
 `;
 
 const attachMeasureMutation = graphql`
-  mutation RiskMeasuresTabCreateMutation(
+  mutation RiskMeasuresPageCreateMutation(
     $input: CreateRiskMeasureMappingInput!
     $connections: [ID!]!
   ) {
@@ -51,8 +60,8 @@ const attachMeasureMutation = graphql`
   }
 `;
 
-export const detachMeasureMutation = graphql`
-  mutation RiskMeasuresTabDetachMutation(
+const detachMeasureMutation = graphql`
+  mutation RiskMeasuresPageDetachMutation(
     $input: DeleteRiskMeasureMappingInput!
     $connections: [ID!]!
   ) {
@@ -62,20 +71,23 @@ export const detachMeasureMutation = graphql`
   }
 `;
 
-export default function RiskMeasuresTab() {
-  const { risk } = useOutletContext<{
-    risk: RiskDetailLayoutQuery$data["node"];
-  }>();
-  const data = useFragment<RiskMeasuresTabFragment$key>(measuresFragment, risk);
-  const connectionId = data.measures.__id;
-  const measures = data.measures?.edges?.map(edge => edge.node) ?? [];
+interface RiskMeasuresPageProps {
+  queryRef: PreloadedQuery<RiskMeasuresPageQuery>;
+}
 
-  const canLinkMeasure = risk.canCreateMeasureMapping;
-  const canUnlinkMeasure = risk.canDeleteMeasureMapping;
-  const readOnly = !canLinkMeasure && !canUnlinkMeasure;
+export default function RiskMeasuresPage(props: RiskMeasuresPageProps) {
+  const data = usePreloadedQuery(riskMeasuresPageQuery, props.queryRef);
+  if (data.node?.__typename !== "Risk") {
+    throw new Error("Risk not found");
+  }
+  const risk = data.node;
+  const connectionId = risk.measures.__id;
+  const measures = risk.measures.edges.map(edge => edge.node);
+
+  const readOnly = !risk.canCreateMeasureMapping && !risk.canDeleteMeasureMapping;
 
   const incrementOptions = {
-    id: data.id,
+    id: risk.id,
     node: "measures(first:0)",
   };
   const [detachMeasure, isDetaching] = useMutationWithIncrement(
@@ -100,7 +112,7 @@ export default function RiskMeasuresTab() {
       measures={measures}
       onAttach={attachMeasure}
       onDetach={detachMeasure}
-      params={{ riskId: data.id }}
+      params={{ riskId: risk.id }}
       connectionId={connectionId}
       readOnly={readOnly}
     />

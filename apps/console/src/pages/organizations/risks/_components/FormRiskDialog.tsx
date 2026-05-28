@@ -12,7 +12,7 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { getRiskImpacts, getRiskLikelihoods } from "@probo/helpers";
+import { formatError, getRiskImpacts, getRiskLikelihoods, type GraphQLError } from "@probo/helpers";
 import { useToggle } from "@probo/hooks";
 import { useTranslate } from "@probo/i18n";
 import {
@@ -30,11 +30,14 @@ import {
   Select,
   Textarea,
   useDialogRef,
+  useToast,
 } from "@probo/ui";
 import { type ReactNode, useMemo } from "react";
 import type { FieldErrors } from "react-hook-form";
+import { useFragment, useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
 
+import type { FormRiskDialog_risk$key } from "#/__generated__/core/FormRiskDialog_risk.graphql";
 import type { FormRiskDialogMutation } from "#/__generated__/core/FormRiskDialogMutation.graphql";
 import type { FormRiskDialogUpdateRiskMutation } from "#/__generated__/core/FormRiskDialogUpdateRiskMutation.graphql";
 import {
@@ -45,26 +48,44 @@ import { PeopleSelectField } from "#/components/form/PeopleSelectField";
 import {
   type RiskData,
   type RiskForm,
-  type RiskKey,
   useRiskForm,
 } from "#/hooks/forms/useRiskForm";
 import { useFetchQuery } from "#/hooks/useFetchQuery";
-import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
-type Props = {
+interface FormRiskDialogProps {
   trigger?: ReactNode;
-  risk?: RiskKey;
+  risk?: FormRiskDialog_risk$key;
   connection?: string;
   ref?: ReturnType<typeof useDialogRef>;
   onSuccess?: () => void;
-};
+}
 
 type RiskTemplate = {
   category: string;
   name: string;
   description: string;
 };
+
+const formRiskFragment = graphql`
+  fragment FormRiskDialog_risk on Risk {
+    id
+    name
+    category
+    description
+    treatment
+    inherentLikelihood
+    inherentImpact
+    residualLikelihood
+    residualImpact
+    inherentRiskScore
+    residualRiskScore
+    note
+    owner {
+      id
+    }
+  }
+`;
 
 const createRiskMutation = graphql`
   mutation FormRiskDialogMutation(
@@ -74,7 +95,7 @@ const createRiskMutation = graphql`
     createRisk(input: $input) {
       riskEdge @prependEdge(connections: $connections) {
         node {
-          ...useRiskFormFragment
+          ...FormRiskDialog_risk
         }
       }
     }
@@ -85,44 +106,60 @@ const updateRiskMutation = graphql`
   mutation FormRiskDialogUpdateRiskMutation($input: UpdateRiskInput!) {
     updateRisk(input: $input) {
       risk {
-        ...useRiskFormFragment
+        ...FormRiskDialog_risk
       }
     }
   }
 `;
 
-/**
- * Dialog to create or update a risk
- */
-export default function FormRiskDialog({
+export function FormRiskDialog({
   trigger,
-  risk,
+  risk: riskKey,
   connection,
   ref: refProps,
   onSuccess,
-}: Props) {
+}: FormRiskDialogProps) {
   const { __ } = useTranslate();
+  const { toast } = useToast();
   const organizationId = useOrganizationId();
   const dialogRef = useDialogRef();
   const ref = refProps ?? dialogRef;
 
+  const risk = useFragment(formRiskFragment, riskKey ?? null);
+  const formDefaults = risk
+    ? {
+        id: risk.id,
+        name: risk.name,
+        category: risk.category,
+        description: risk.description,
+        treatment: risk.treatment,
+        inherentLikelihood: risk.inherentLikelihood,
+        inherentImpact: risk.inherentImpact,
+        residualLikelihood: risk.residualLikelihood,
+        residualImpact: risk.residualImpact,
+        inherentRiskScore: risk.inherentRiskScore,
+        residualRiskScore: risk.residualRiskScore,
+        note: risk.note,
+        owner: risk.owner,
+      }
+    : undefined;
   const { control, handleSubmit, setValue, register, watch, formState, reset }
-    = useRiskForm(risk);
+    = useRiskForm(formDefaults);
   const errors = formState.errors ?? {};
-  const [createRisk, isLoadingCreate]
-    = useMutationWithToasts<FormRiskDialogMutation>(createRiskMutation);
-  const [updateRisk, isLoadingUpdate]
-    = useMutationWithToasts<FormRiskDialogUpdateRiskMutation>(updateRiskMutation);
-  const isLoading = isLoadingCreate || isLoadingUpdate;
+  const [createRisk, isCreating]
+    = useMutation<FormRiskDialogMutation>(createRiskMutation);
+  const [updateRisk, isUpdating]
+    = useMutation<FormRiskDialogUpdateRiskMutation>(updateRiskMutation);
+  const isLoading = isCreating || isUpdating;
 
-  const onTemplateChange = (risk: RiskTemplate) => {
-    setValue("name", risk.name);
-    setValue("description", risk.description);
+  const onTemplateChange = (template: RiskTemplate) => {
+    setValue("name", template.name);
+    setValue("description", template.description);
   };
 
-  const onSubmit = async (data: RiskData) => {
+  const onSubmit = (data: RiskData) => {
     if (risk) {
-      await updateRisk({
+      updateRisk({
         variables: {
           input: {
             id: risk.id,
@@ -130,15 +167,28 @@ export default function FormRiskDialog({
             description: data.description || null,
           },
         },
-        successMessage: __("Risk updated successfully."),
-        errorMessage: __("Failed to update risk"),
-        onSuccess: () => {
+        onCompleted() {
+          toast({
+            title: __("Success"),
+            description: __("Risk updated successfully."),
+            variant: "success",
+          });
           ref?.current?.close();
+        },
+        onError(error) {
+          toast({
+            title: __("Error"),
+            description: formatError(
+              __("Failed to update risk"),
+              error as GraphQLError,
+            ),
+            variant: "error",
+          });
         },
       });
       return;
     }
-    await createRisk({
+    createRisk({
       variables: {
         input: {
           ...data,
@@ -147,12 +197,25 @@ export default function FormRiskDialog({
         },
         connections: [connection!],
       },
-      successMessage: __("Risk created successfully."),
-      errorMessage: __("Failed to create risk"),
-      onSuccess: () => {
+      onCompleted() {
+        toast({
+          title: __("Success"),
+          description: __("Risk created successfully."),
+          variant: "success",
+        });
         ref?.current?.close();
         reset();
         onSuccess?.();
+      },
+      onError(error) {
+        toast({
+          title: __("Error"),
+          description: formatError(
+            __("Failed to create risk"),
+            error as GraphQLError,
+          ),
+          variant: "error",
+        });
       },
     });
   };
@@ -171,7 +234,6 @@ export default function FormRiskDialog({
     >
       <form onSubmit={e => void handleSubmit(onSubmit)(e)}>
         <DialogContent className="grid grid-cols-[1fr_420px]">
-          {/* Main form */}
           <div className="py-8 px-12 space-y-6">
             <TemplateSelector
               onChange={onTemplateChange}
@@ -209,7 +271,6 @@ export default function FormRiskDialog({
             </div>
           </div>
 
-          {/* Properties form */}
           <div className="py-5 px-6 bg-subtle">
             <Label>{__("Properties")}</Label>
 

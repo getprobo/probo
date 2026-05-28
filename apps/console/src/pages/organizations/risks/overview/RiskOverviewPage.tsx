@@ -13,31 +13,42 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 import { RiskOverview } from "@probo/ui";
-import { useFragment } from "react-relay";
-import { useOutletContext } from "react-router";
+import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { graphql } from "relay-runtime";
 
-import type { RiskOverviewTabFragment$key } from "#/__generated__/core/RiskOverviewTabFragment.graphql";
+import type { RiskOverviewPageQuery } from "#/__generated__/core/RiskOverviewPageQuery.graphql";
 
-const overviewFragment = graphql`
-  fragment RiskOverviewTabFragment on Risk {
-    # eslint-disable-next-line relay/unused-fields
-    inherentLikelihood
-    # eslint-disable-next-line relay/unused-fields
-    inherentImpact
-    # eslint-disable-next-line relay/unused-fields
-    residualLikelihood
-    # eslint-disable-next-line relay/unused-fields
-    residualImpact
+export const riskOverviewPageQuery = graphql`
+  query RiskOverviewPageQuery($riskId: ID!) {
+    node(id: $riskId) {
+      __typename
+      ... on Risk {
+        inherentLikelihood
+        inherentImpact
+        residualLikelihood
+        residualImpact
+      }
+    }
   }
 `;
 
-export default function RiskOverviewTab() {
-  const { risk: key } = useOutletContext<{
-    risk: RiskOverviewTabFragment$key;
-  }>();
+interface RiskOverviewPageProps {
+  queryRef: PreloadedQuery<RiskOverviewPageQuery>;
+}
 
-  const risk = useFragment(overviewFragment, key);
+export default function RiskOverviewPage(props: RiskOverviewPageProps) {
+  const data = usePreloadedQuery(riskOverviewPageQuery, props.queryRef);
+  if (data.node?.__typename !== "Risk") {
+    throw new Error("Risk not found");
+  }
+  const { inherentLikelihood, inherentImpact, residualLikelihood, residualImpact }
+    = data.node;
+  const risk = {
+    inherentLikelihood,
+    inherentImpact,
+    residualLikelihood,
+    residualImpact,
+  };
   return (
     <div className="grid grid-cols-2 gap-4">
       <RiskOverview type="inherent" risk={risk} />

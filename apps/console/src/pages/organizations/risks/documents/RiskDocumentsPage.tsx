@@ -12,23 +12,32 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { graphql, useFragment } from "react-relay";
-import { useOutletContext } from "react-router";
+import { graphql, type PreloadedQuery, usePreloadedQuery } from "react-relay";
 
-import type { RiskDetailLayoutQuery$data } from "#/__generated__/core/RiskDetailLayoutQuery.graphql";
-import type { RiskDocumentsTabFragment$key } from "#/__generated__/core/RiskDocumentsTabFragment.graphql";
+import type { RiskDocumentsPageQuery } from "#/__generated__/core/RiskDocumentsPageQuery.graphql";
 import { LinkedDocumentsCard } from "#/components/documents/LinkedDocumentsCard";
 import { useMutationWithIncrement } from "#/hooks/useMutationWithIncrement";
 
-export const documentsFragment = graphql`
-  fragment RiskDocumentsTabFragment on Risk {
-    id
-    documents(first: 100) @connection(key: "Risk__documents") {
-      __id
-      edges {
-        node {
-          id
-          ...LinkedDocumentsCardFragment
+export const riskDocumentsPageQuery = graphql`
+  query RiskDocumentsPageQuery($riskId: ID!) {
+    node(id: $riskId) {
+      __typename
+      ... on Risk {
+        id
+        canCreateDocumentMapping: permission(
+          action: "core:risk:create-document-mapping"
+        )
+        canDeleteDocumentMapping: permission(
+          action: "core:risk:delete-document-mapping"
+        )
+        documents(first: 100) @connection(key: "RiskDocumentsPage_documents") {
+          __id
+          edges {
+            node {
+              id
+              ...LinkedDocumentsCardFragment
+            }
+          }
         }
       }
     }
@@ -36,7 +45,7 @@ export const documentsFragment = graphql`
 `;
 
 const attachDocumentMutation = graphql`
-  mutation RiskDocumentsTabCreateMutation(
+  mutation RiskDocumentsPageCreateMutation(
     $input: CreateRiskDocumentMappingInput!
     $connections: [ID!]!
   ) {
@@ -51,8 +60,8 @@ const attachDocumentMutation = graphql`
   }
 `;
 
-export const detachDocumentMutation = graphql`
-  mutation RiskDocumentsTabDetachMutation(
+const detachDocumentMutation = graphql`
+  mutation RiskDocumentsPageDetachMutation(
     $input: DeleteRiskDocumentMappingInput!
     $connections: [ID!]!
   ) {
@@ -62,23 +71,23 @@ export const detachDocumentMutation = graphql`
   }
 `;
 
-export default function RiskDocumentsTab() {
-  const { risk } = useOutletContext<{
-    risk: RiskDetailLayoutQuery$data["node"];
-  }>();
-  const data = useFragment<RiskDocumentsTabFragment$key>(
-    documentsFragment,
-    risk,
-  );
-  const connectionId = data.documents.__id;
-  const documents = data.documents?.edges?.map(edge => edge.node) ?? [];
+interface RiskDocumentsPageProps {
+  queryRef: PreloadedQuery<RiskDocumentsPageQuery>;
+}
 
-  const canLinkDocument = risk.canCreateDocumentMapping;
-  const canUnlinkDocument = risk.canDeleteDocumentMapping;
-  const readOnly = !canLinkDocument && !canUnlinkDocument;
+export default function RiskDocumentsPage(props: RiskDocumentsPageProps) {
+  const data = usePreloadedQuery(riskDocumentsPageQuery, props.queryRef);
+  if (data.node?.__typename !== "Risk") {
+    throw new Error("Risk not found");
+  }
+  const risk = data.node;
+  const connectionId = risk.documents.__id;
+  const documents = risk.documents.edges.map(edge => edge.node);
+
+  const readOnly = !risk.canCreateDocumentMapping && !risk.canDeleteDocumentMapping;
 
   const incrementOptions = {
-    id: data.id,
+    id: risk.id,
     node: "documents(first:0)",
   };
   const [detachDocument, isDetaching] = useMutationWithIncrement(
@@ -103,7 +112,7 @@ export default function RiskDocumentsTab() {
       documents={documents}
       onAttach={attachDocument}
       onDetach={detachDocument}
-      params={{ riskId: data.id }}
+      params={{ riskId: risk.id }}
       connectionId={connectionId}
       readOnly={readOnly}
     />

@@ -48,19 +48,19 @@ const publishMutation = graphql`
   }
 `;
 
-type Props = {
+interface PublishRiskListDialogProps {
   children: ReactNode;
   organizationId: string;
   defaultApproverIds?: string[];
   onPublished?: (documentId: string) => void;
-};
+}
 
 export function PublishRiskListDialog({
   children,
   organizationId,
   defaultApproverIds,
   onPublished,
-}: Props) {
+}: PublishRiskListDialogProps) {
   const { __ } = useTranslate();
   const { toast } = useToast();
   const dialogRef = useDialogRef();

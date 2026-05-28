@@ -15,16 +15,32 @@
 import { useTranslate } from "@probo/i18n";
 import { Badge, Tbody, Td, Th, Thead, Tr } from "@probo/ui";
 import type { ComponentProps } from "react";
-import { graphql, usePaginationFragment } from "react-relay";
-import { useOutletContext } from "react-router";
+import {
+  graphql,
+  type PreloadedQuery,
+  usePaginationFragment,
+  usePreloadedQuery,
+} from "react-relay";
 
-import type { RiskControlsTabControlsQuery } from "#/__generated__/core/RiskControlsTabControlsQuery.graphql";
-import type { RiskControlsTabFragment$key } from "#/__generated__/core/RiskControlsTabFragment.graphql";
+import type { RiskControlsPage_risk$key } from "#/__generated__/core/RiskControlsPage_risk.graphql";
+import type { RiskControlsPageQuery } from "#/__generated__/core/RiskControlsPageQuery.graphql";
+import type { RiskControlsPageRefetchQuery } from "#/__generated__/core/RiskControlsPageRefetchQuery.graphql";
 import { SortableTable, SortableTh } from "#/components/SortableTable";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
-export const controlsFragment = graphql`
-  fragment RiskControlsTabFragment on Risk
+export const riskControlsPageQuery = graphql`
+  query RiskControlsPageQuery($riskId: ID!) {
+    node(id: $riskId) {
+      __typename
+      ... on Risk {
+        ...RiskControlsPage_risk
+      }
+    }
+  }
+`;
+
+const controlsFragment = graphql`
+  fragment RiskControlsPage_risk on Risk
   @argumentDefinitions(
     first: { type: "Int", defaultValue: 20 }
     after: { type: "CursorKey" }
@@ -33,7 +49,7 @@ export const controlsFragment = graphql`
     order: { type: "ControlOrder", defaultValue: null }
     filter: { type: "ControlFilter", defaultValue: null }
   )
-  @refetchable(queryName: "RiskControlsTabControlsQuery") {
+  @refetchable(queryName: "RiskControlsPageRefetchQuery") {
     id
     controls(
       first: $first
@@ -42,7 +58,7 @@ export const controlsFragment = graphql`
       before: $before
       orderBy: $order
       filter: $filter
-    ) @connection(key: "RiskControlsTab_controls") {
+    ) @connection(key: "RiskControlsPage_controls") {
       edges {
         node {
           id
@@ -57,17 +73,23 @@ export const controlsFragment = graphql`
     }
   }
 `;
-export default function RiskControlsTab() {
-  const { risk } = useOutletContext<{
-    risk: RiskControlsTabFragment$key & { id: string };
-  }>();
+
+interface RiskControlsPageProps {
+  queryRef: PreloadedQuery<RiskControlsPageQuery>;
+}
+
+export default function RiskControlsPage(props: RiskControlsPageProps) {
   const { __ } = useTranslate();
-  const pagination = usePaginationFragment<
-    RiskControlsTabControlsQuery,
-    RiskControlsTabFragment$key
-  >(controlsFragment, risk);
-  const controls = pagination.data.controls.edges.map(edge => edge.node);
   const organizationId = useOrganizationId();
+  const data = usePreloadedQuery(riskControlsPageQuery, props.queryRef);
+  if (data.node?.__typename !== "Risk") {
+    throw new Error("Risk not found");
+  }
+  const pagination = usePaginationFragment<
+    RiskControlsPageRefetchQuery,
+    RiskControlsPage_risk$key
+  >(controlsFragment, data.node);
+  const controls = pagination.data.controls.edges.map(edge => edge.node);
 
   return (
     <SortableTable
