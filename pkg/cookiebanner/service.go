@@ -2628,6 +2628,20 @@ func (s *Service) MoveTrackerPatternToCategory(
 				return fmt.Errorf("cannot update tracker pattern: %w", err)
 			}
 
+			// A manual move is the user's signal that this is a
+			// real tracker. Enqueue the tracker-mapping worker so
+			// it can promote the pattern to an org ThirdParty (or
+			// link an existing one) — never EXTENSION-sourced
+			// patterns, and never patterns we already promoted.
+			// SetMappingRequested is idempotent: it short-circuits
+			// when mapping_requested_at is already non-NULL.
+			if pattern.ThirdPartyID == nil &&
+				(pattern.Source == nil || *pattern.Source != coredata.CookieSourceExtension) {
+				if err := pattern.SetMappingRequested(ctx, tx); err != nil {
+					return fmt.Errorf("cannot enqueue tracker mapping after move: %w", err)
+				}
+			}
+
 			var banner coredata.CookieBanner
 			if err := banner.LoadByID(ctx, tx, scope, pattern.CookieBannerID); err != nil {
 				return fmt.Errorf("cannot load cookie banner: %w", err)

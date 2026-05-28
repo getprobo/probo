@@ -313,7 +313,7 @@ func (impl *Implm) Run(
 		return err
 	}
 
-	trackerMappingCfg, err := impl.buildTrackerMappingConfig(l, tp, r)
+	trackerMappingCfg, thirdPartyDisambiguationCfg, err := impl.buildTrackerMappingConfig(l, tp, r)
 	if err != nil {
 		return err
 	}
@@ -725,7 +725,7 @@ func (impl *Implm) Run(
 		},
 	)
 
-	trackerMappingWorker := cookiebanner.NewTrackerMappingWorker(pgClient, l, trackerMappingCfg)
+	trackerMappingWorker := cookiebanner.NewTrackerMappingWorker(pgClient, l, trackerMappingCfg, thirdPartyDisambiguationCfg)
 	trackerMappingWorkerCtx, stopTrackerMappingWorker := context.WithCancel(context.Background())
 
 	wg.Go(
