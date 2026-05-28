@@ -395,8 +395,7 @@ WHERE
 	}
 	maps.Copy(args, scope.SQLArguments())
 
-	_, err := conn.Exec(ctx, q, args)
-	if err != nil {
+	if _, err := conn.Exec(ctx, q, args); err != nil {
 		return fmt.Errorf("cannot delete requested document version signatures: %w", err)
 	}
 
