@@ -218,6 +218,7 @@ components:
     CountryCode:
       type: string
       enum:
+        - GLOBAL
         - AD
         - AE
         - AF
@@ -828,7 +829,7 @@ components:
           type: array
           items:
             type: string
-          description: Countries (ISO 3166-1 alpha-2 country codes)
+          description: Countries or regions (ISO 3166-1 alpha-2 country codes, EU, or GLOBAL)
         business_owner_id:
           anyOf:
             - $ref: "#/components/schemas/GID"
@@ -1054,7 +1055,7 @@ components:
           type: array
           items:
             type: string
-          description: Countries (ISO 3166-1 alpha-2 country codes)
+          description: Countries or regions (ISO 3166-1 alpha-2 country codes, EU, or GLOBAL)
         business_owner_id:
           $ref: "#/components/schemas/GID"
           description: Business owner ID
@@ -1155,7 +1156,7 @@ components:
           type: array
           items:
             type: string
-          description: Countries (ISO 3166-1 alpha-2 country codes)
+          description: Countries or regions (ISO 3166-1 alpha-2 country codes, EU, or GLOBAL)
         business_owner_id:
           $ref: "#/components/schemas/GID"
           description: Business owner ID

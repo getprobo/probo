@@ -26,6 +26,10 @@ type (
 )
 
 const (
+	CountryCodeGlobal CountryCode = "GLOBAL"
+)
+
+const (
 	CountryCodeAD CountryCode = "AD"
 	CountryCodeAE CountryCode = "AE"
 	CountryCodeAF CountryCode = "AF"
@@ -286,6 +290,7 @@ var (
 func (v CountryCode) IsValid() bool {
 	switch v {
 	case
+		CountryCodeGlobal,
 		CountryCodeAD,
 		CountryCodeAE,
 		CountryCodeAF,
