@@ -46,6 +46,8 @@ enum ConnectorProvider
         @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderClickUp")
     VERCEL @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderVercel")
     MONDAY @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderMonday")
+    METABASE
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderMetabase")
     TAILSCALE
         @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderTailscale")
     ANTHROPIC
@@ -125,6 +127,7 @@ input CreateAPIKeyConnectorInput {
     githubOrganization: String
     grafanaBaseUrl: String
     onePasswordScimBridgeUrl: String
+    metabaseInstanceUrl: String
 }
 
 type CreateAPIKeyConnectorPayload {

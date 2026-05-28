@@ -50,6 +50,7 @@ const (
 	ConnectorProviderClickUp      ConnectorProvider = "CLICKUP"
 	ConnectorProviderVercel       ConnectorProvider = "VERCEL"
 	ConnectorProviderMonday       ConnectorProvider = "MONDAY"
+	ConnectorProviderMetabase     ConnectorProvider = "METABASE"
 	ConnectorProviderTailscale    ConnectorProvider = "TAILSCALE"
 	ConnectorProviderAnthropic    ConnectorProvider = "ANTHROPIC"
 	ConnectorProviderCursor       ConnectorProvider = "CURSOR"
@@ -90,6 +91,7 @@ func ConnectorProviders() []ConnectorProvider {
 		ConnectorProviderClickUp,
 		ConnectorProviderVercel,
 		ConnectorProviderMonday,
+		ConnectorProviderMetabase,
 		ConnectorProviderTailscale,
 		ConnectorProviderAnthropic,
 		ConnectorProviderCursor,
@@ -126,6 +128,7 @@ func (v ConnectorProvider) IsValid() bool {
 		ConnectorProviderClickUp,
 		ConnectorProviderVercel,
 		ConnectorProviderMonday,
+		ConnectorProviderMetabase,
 		ConnectorProviderTailscale,
 		ConnectorProviderAnthropic,
 		ConnectorProviderCursor:

@@ -38,6 +38,7 @@ func NewBuiltinRegistry() *Registry {
 		hubspotRegistration(),
 		intercomRegistration(),
 		linearRegistration(),
+		metabaseRegistration(),
 		microsoft365Registration(),
 		mondayRegistration(),
 		netlifyRegistration(),

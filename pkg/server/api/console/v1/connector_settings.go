@@ -82,6 +82,17 @@ func apiKeyConnectorSettings(input types.CreateAPIKeyConnectorInput) (json.RawMe
 		}
 
 		return json.Marshal(&coredata.OnePasswordConnectorSettings{SCIMBridgeURL: *input.OnePasswordScimBridgeURL})
+	case coredata.ConnectorProviderMetabase:
+		if input.MetabaseInstanceURL == nil || *input.MetabaseInstanceURL == "" {
+			return nil, fmt.Errorf("cannot create metabase connector: metabaseInstanceUrl is required")
+		}
+
+		u, err := url.Parse(*input.MetabaseInstanceURL)
+		if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {
+			return nil, fmt.Errorf("cannot create metabase connector: metabaseInstanceUrl must be an http(s) URL")
+		}
+
+		return json.Marshal(&coredata.MetabaseConnectorSettings{InstanceURL: *input.MetabaseInstanceURL})
 	}
 
 	return nil, nil

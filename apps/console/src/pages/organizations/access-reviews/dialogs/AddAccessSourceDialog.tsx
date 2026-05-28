@@ -119,6 +119,9 @@ function mapAPIKeyExtraSettingToField(
     case "ONE_PASSWORD":
       if (settingKey === "scimBridgeUrl") return "onePasswordScimBridgeUrl";
       break;
+    case "METABASE":
+      if (settingKey === "instanceUrl") return "metabaseInstanceUrl";
+      break;
   }
   return null;
 }

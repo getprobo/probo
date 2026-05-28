@@ -87,6 +87,10 @@ type (
 	VercelConnectorSettings struct {
 		TeamID string `json:"team_id"`
 	}
+
+	MetabaseConnectorSettings struct {
+		InstanceURL string `json:"instance_url"`
+	}
 )
 
 // GrantType returns the OAuth2 grant type recorded on the connector's
