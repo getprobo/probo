@@ -73,6 +73,7 @@ type (
 		Source           *coredata.CookieSource
 		TrackerType      *coredata.TrackerType
 		CookieCategoryID *gid.GID
+		ThirdPartyID     *gid.GID
 	}
 )
 

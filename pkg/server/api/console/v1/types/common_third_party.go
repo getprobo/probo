@@ -37,6 +37,8 @@ type CommonThirdParty struct {
 	LogoFileID                 *gid.GID                    `json:"logoFileId,omitempty"`
 }
 
+func (CommonThirdParty) IsTrackerPatternThirdPartyLink() {}
+
 func NewCommonThirdParty(c *coredata.CommonThirdParty) *CommonThirdParty {
 	return &CommonThirdParty{
 		ID:                         c.ID,
