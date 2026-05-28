@@ -46,6 +46,10 @@ enum ConnectorProvider
     MONDAY @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderMonday")
     TAILSCALE
         @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderTailscale")
+    ANTHROPIC
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderAnthropic"
+        )
 }
 
 type ConnectorProviderInfo {

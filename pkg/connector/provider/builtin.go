@@ -22,6 +22,7 @@ package provider
 func NewBuiltinRegistry() *Registry {
 	r := NewRegistry()
 	for _, reg := range []*Registration{
+		anthropicRegistration(),
 		asanaRegistration(),
 		bitbucketRegistration(),
 		brexRegistration(),
