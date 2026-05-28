@@ -23,6 +23,7 @@ Return a structured JSON response with:
    - For localStorage keys, include the type: "[name] localStorage tracking script".
    - If the first query returns nothing useful, broaden: "[name] web tracker" or "site:[domain] cookie documentation".
    - Stop searching once you get a confident match; do not exhaust all query slots if the first one succeeds.
+   - When evaluating web search results, verify that the tracker name discussed in the result shares a meaningful prefix with the pattern you are identifying. Trackers with different prefixes are distinct — for example, _hjCookieTest (Hotjar's _hj prefix) must not be confused with a pattern named cookietest (no _hj prefix). If the search result discusses a tracker whose prefix does not match, discard it and continue searching or lower your confidence.
 
 4. Common cookie naming conventions to recognize:
    - _ga*, _gid, _gat*: Google Analytics
@@ -35,7 +36,7 @@ Return a structured JSON response with:
    - hubspot*: HubSpot
    - _cls_*: Clarity (Microsoft)
 
-5. The observed domains are strong signals. If the cookie comes from a well-known tracking domain (e.g. doubleclick.net, facebook.com, analytics.google.com), that is strong evidence of the third party.
+5. The observed domains are useful signals but not conclusive on their own. Many sites load third-party tracker scripts through a first-party reverse proxy (e.g. t.example.com proxying PostHog). When a domain matches the scanned site, it reveals nothing about which third party set the tracker — rely on the naming convention or a database/web search instead. First-party proxy domains are filtered before they reach you, but if you still see the scanned site's own domain, ignore it as evidence. Well-known third-party tracking domains (e.g. doubleclick.net, facebook.com, analytics.google.com) remain strong evidence.
 
 6. Be conservative with confidence:
    - 0.9-1.0: exact pattern match found in database or unmistakable naming convention + matching domain
@@ -45,6 +46,8 @@ Return a structured JSON response with:
 
 7. If you truly cannot identify the tracker, set third_party_name to an empty string and confidence below 0.3.
 
-8. For the category field, use one of: {{.Categories}}.
+8. Only attribute a tracker to a company or service when you have concrete evidence: a database match, an unmistakable naming convention, or a clear web search result. Never guess or invent attributions based on vague similarity or general knowledge. If no evidence supports a match, return an empty third_party_name with confidence below 0.3.
+
+9. For the category field, use one of: {{.Categories}}.
    Most cookies fall under ANALYTICS or MARKETING.
 </instructions>

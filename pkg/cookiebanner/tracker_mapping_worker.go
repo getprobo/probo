@@ -29,6 +29,7 @@ import (
 	"go.probo.inc/probo/pkg/llm"
 	"go.probo.inc/probo/pkg/slug"
 	"go.probo.inc/probo/pkg/thirdparty"
+	"go.probo.inc/probo/pkg/uri"
 )
 
 type trackerMappingHandler struct {
@@ -109,20 +110,27 @@ func (h *trackerMappingHandler) Process(ctx context.Context, tp coredata.Tracker
 			if tp.CommonTrackerPatternID != nil {
 				commonPatternID = tp.CommonTrackerPatternID
 			} else {
+				scope := coredata.NewScopeFromObjectID(tp.ID)
+
+				var banner coredata.CookieBanner
+				if err := banner.LoadByID(ctx, tx, scope, tp.CookieBannerID); err != nil {
+					return fmt.Errorf("cannot load cookie banner for domain filtering: %w", err)
+				}
+
 				commonPatternID, err = h.matchByPattern(ctx, tx, tp)
 				if err != nil {
 					return fmt.Errorf("cannot match by pattern: %w", err)
 				}
 
 				if commonPatternID == nil {
-					commonPatternID, err = h.matchByDomain(ctx, tx, tp)
+					commonPatternID, err = h.matchByDomain(ctx, tx, tp, banner.Origin)
 					if err != nil {
 						return fmt.Errorf("cannot match by domain: %w", err)
 					}
 				}
 
 				if commonPatternID == nil && h.mappingAgent != nil {
-					commonPatternID, err = h.identifyWithAgent(ctx, tx, tp)
+					commonPatternID, err = h.identifyWithAgent(ctx, tx, tp, banner.Origin)
 					if err != nil {
 						return fmt.Errorf("cannot identify with agent: %w", err)
 					}
@@ -212,10 +220,16 @@ func (h *trackerMappingHandler) matchByPattern(
 // overlap the pattern's observed initiator domains, and upserts a
 // CommonTrackerPattern linking the two. As with matchByPattern,
 // third-party resolution is deferred to promoteThirdParty.
+//
+// Domains that share the scanned site's eTLD+1 are filtered out before
+// querying. Tracker scripts loaded through a first-party proxy (e.g.
+// t.probo.com proxying PostHog on a probo.com site) would otherwise
+// match the site owner's own CommonThirdParty entry.
 func (h *trackerMappingHandler) matchByDomain(
 	ctx context.Context,
 	tx pg.Tx,
 	tp coredata.TrackerPattern,
+	siteOrigin string,
 ) (*gid.GID, error) {
 	var trackers coredata.DetectedTrackers
 
@@ -223,6 +237,8 @@ func (h *trackerMappingHandler) matchByDomain(
 	if err != nil {
 		return nil, fmt.Errorf("cannot load initiator domains: %w", err)
 	}
+
+	domains = uri.FilterFirstPartyDomains(domains, siteOrigin)
 
 	if len(domains) == 0 {
 		return nil, nil
@@ -266,6 +282,7 @@ func (h *trackerMappingHandler) identifyWithAgent(
 	ctx context.Context,
 	tx pg.Tx,
 	tp coredata.TrackerPattern,
+	siteOrigin string,
 ) (*gid.GID, error) {
 	var trackers coredata.DetectedTrackers
 
@@ -273,6 +290,8 @@ func (h *trackerMappingHandler) identifyWithAgent(
 	if err != nil {
 		h.logger.WarnCtx(ctx, "cannot load initiator domains for agent", log.Error(err))
 	}
+
+	domains = uri.FilterFirstPartyDomains(domains, siteOrigin)
 
 	prompt := buildAgentPrompt(tp, domains)
 

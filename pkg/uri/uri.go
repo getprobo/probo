@@ -102,3 +102,26 @@ func ExtractDomain(rawURL string) string {
 
 	return domain
 }
+
+// FilterFirstPartyDomains removes domains that match the eTLD+1 of
+// siteOrigin. Tracker scripts loaded through a first-party proxy (e.g.
+// t.probo.com proxying PostHog on a probo.com site) share the site's
+// eTLD+1 and carry no signal about the actual third party. siteOrigin
+// is a full URL such as "https://app.probo.com". The input domains are
+// expected to be eTLD+1 strings (as produced by ExtractDomain).
+func FilterFirstPartyDomains(domains []string, siteOrigin string) []string {
+	siteDomain := ExtractDomain(siteOrigin)
+	if siteDomain == "" {
+		return domains
+	}
+
+	filtered := make([]string, 0, len(domains))
+
+	for _, d := range domains {
+		if d != siteDomain {
+			filtered = append(filtered, d)
+		}
+	}
+
+	return filtered
+}
