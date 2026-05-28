@@ -5567,6 +5567,7 @@ func (r *Resolver) ListCookieCategoriesTool(ctx context.Context, req *mcp.CallTo
 	if err != nil {
 		return nil, types.ListCookieCategoriesOutput{}, err
 	}
+
 	cursor := types.NewCursor(input.Size, input.Cursor, page.OrderBy[coredata.CookieCategoryOrderField]{Field: coredata.CookieCategoryOrderFieldRank, Direction: page.OrderDirectionAsc})
 
 	categories, err := r.cookieBanner.ListCategoriesForBanner(ctx, scope, input.CookieBannerID, cursor, coredata.NewCookieCategoryFilter(new(coredata.CookieCategoryKindUncategorised)))
@@ -5680,6 +5681,7 @@ func (r *Resolver) ListTrackerPatternsTool(ctx context.Context, req *mcp.CallToo
 	if err != nil {
 		return nil, types.ListTrackerPatternsOutput{}, err
 	}
+
 	cursor := types.NewCursor(input.Size, input.Cursor, page.OrderBy[coredata.TrackerPatternOrderField]{Field: coredata.TrackerPatternOrderFieldCreatedAt, Direction: page.OrderDirectionAsc})
 
 	patterns, err := r.cookieBanner.ListTrackerPatternsForCategory(ctx, scope, input.CookieCategoryID, cursor)
@@ -5805,6 +5807,7 @@ func (r *Resolver) ListCookieBannerVersionsTool(ctx context.Context, req *mcp.Ca
 	if err != nil {
 		return nil, types.ListCookieBannerVersionsOutput{}, err
 	}
+
 	cursor := types.NewCursor(input.Size, input.Cursor, page.OrderBy[coredata.CookieBannerVersionOrderField]{Field: coredata.CookieBannerVersionOrderFieldCreatedAt, Direction: page.OrderDirectionDesc})
 
 	versions, err := r.cookieBanner.ListCookieBannerVersionsForBanner(ctx, scope, input.CookieBannerID, cursor)
@@ -5840,6 +5843,7 @@ func (r *Resolver) ListCookieConsentRecordsTool(ctx context.Context, req *mcp.Ca
 	if err != nil {
 		return nil, types.ListCookieConsentRecordsOutput{}, err
 	}
+
 	cursor := types.NewCursor(input.Size, input.Cursor, page.OrderBy[coredata.CookieConsentRecordOrderField]{Field: coredata.CookieConsentRecordOrderFieldCreatedAt, Direction: page.OrderDirectionDesc})
 
 	var action *coredata.CookieConsentAction
@@ -6064,6 +6068,7 @@ func (r *Resolver) ListTrackerResourcesTool(ctx context.Context, req *mcp.CallTo
 	if err != nil {
 		return nil, types.ListTrackerResourcesOutput{}, err
 	}
+
 	cursor := types.NewCursor(input.Size, input.Cursor, page.OrderBy[coredata.TrackerResourceOrderField]{Field: coredata.TrackerResourceOrderFieldCreatedAt, Direction: page.OrderDirectionAsc})
 
 	resources, err := r.cookieBanner.ListTrackerResourcesForCategory(ctx, scope, input.CookieCategoryID, cursor)

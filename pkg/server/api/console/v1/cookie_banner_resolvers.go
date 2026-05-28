@@ -222,9 +222,11 @@ func (r *cookieBannerResolver) TrackerPatterns(ctx context.Context, obj *types.C
 					r.logger.ErrorCtx(ctx, "cannot resolve common third party tracker patterns", log.Error(err))
 					return nil, gqlutils.Internal(ctx)
 				}
+
 				if ids == nil {
 					ids = []gid.GID{}
 				}
+
 				coredataFilter = coredataFilter.WithCommonTrackerPatternIDs(ids)
 			default:
 				return nil, gqlutils.Invalidf(ctx, "thirdPartyId must reference a ThirdParty or CommonThirdParty")
@@ -276,19 +278,24 @@ func (r *cookieBannerResolver) LinkedThirdParties(ctx context.Context, obj *type
 
 	if len(thirdPartyIDs) > 0 {
 		tps, loadErr := loaders.ThirdParty.LoadAll(ctx, thirdPartyIDs)
+
 		var loadErrs dataloadgen.ErrorSlice
 		if loadErr != nil && !errors.As(loadErr, &loadErrs) {
 			r.logger.ErrorCtx(ctx, "cannot get third parties", log.Error(loadErr))
 			return nil, gqlutils.Internal(ctx)
 		}
+
 		for i, tp := range tps {
 			if loadErrs != nil && loadErrs[i] != nil {
 				if errors.Is(loadErrs[i], coredata.ErrResourceNotFound) || errors.Is(loadErrs[i], dataloadgen.ErrNotFound) {
 					continue
 				}
+
 				r.logger.ErrorCtx(ctx, "cannot get third party", log.Error(loadErrs[i]))
+
 				return nil, gqlutils.Internal(ctx)
 			}
+
 			out = append(out, types.NewThirdParty(tp))
 		}
 	}
@@ -306,14 +313,17 @@ func (r *cookieBannerResolver) LinkedThirdParties(ctx context.Context, obj *type
 		}
 
 		seen := make(map[gid.GID]struct{}, len(patterns))
+
 		commonThirdPartyIDs := make([]gid.GID, 0, len(patterns))
 		for _, p := range patterns {
 			if p.CommonThirdPartyID == nil {
 				continue
 			}
+
 			if _, ok := seen[*p.CommonThirdPartyID]; ok {
 				continue
 			}
+
 			seen[*p.CommonThirdPartyID] = struct{}{}
 			commonThirdPartyIDs = append(commonThirdPartyIDs, *p.CommonThirdPartyID)
 		}
@@ -324,6 +334,7 @@ func (r *cookieBannerResolver) LinkedThirdParties(ctx context.Context, obj *type
 				r.logger.ErrorCtx(ctx, "cannot get common third parties", log.Error(err))
 				return nil, gqlutils.Internal(ctx)
 			}
+
 			for _, p := range parties {
 				out = append(out, types.NewCommonThirdParty(p))
 			}
