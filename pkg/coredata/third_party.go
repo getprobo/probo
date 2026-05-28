@@ -1418,7 +1418,6 @@ WHERE
 	%s
 	AND organization_id = @organization_id
 	AND common_third_party_id = @common_third_party_id
-	AND snapshot_id IS NULL
 ORDER BY id ASC
 LIMIT 1;
 `
