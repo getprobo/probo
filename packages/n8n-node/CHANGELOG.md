@@ -4,6 +4,12 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+## [0.190.0] - 2026-05-28
+
+### Added
+
+- Add Global region option to the vendor country picker
+
 ## [0.189.0] - 2026-05-27
 
 ### Added
