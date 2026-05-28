@@ -102,3 +102,93 @@ func TestNotionNameResolver(t *testing.T) {
 		})
 	}
 }
+
+func TestSentryNameResolver(t *testing.T) {
+	t.Parallel()
+
+	t.Run("empty slug returns nothing without HTTP call", func(t *testing.T) {
+		t.Parallel()
+
+		client := &http.Client{Transport: roundTripperFunc(func(*http.Request) (*http.Response, error) {
+			t.Fatalf("resolver should not make an HTTP call for an empty slug")
+			return nil, nil
+		})}
+
+		got, err := NewSentryNameResolver(client, "").ResolveInstanceName(context.Background())
+		require.NoError(t, err)
+		assert.Empty(t, got)
+	})
+
+	cases := []struct {
+		name    string
+		status  int
+		body    string
+		want    string
+		wantErr bool
+	}{
+		{
+			name:   "200 returns name",
+			status: http.StatusOK,
+			body:   `{"slug":"acme","name":"Acme Inc"}`,
+			want:   "Acme Inc",
+		},
+		{
+			name:   "404 is terminal (no error, no name)",
+			status: http.StatusNotFound,
+			body:   `{"detail":"The requested resource does not exist"}`,
+			want:   "",
+		},
+		{
+			name:    "401 is retryable",
+			status:  http.StatusUnauthorized,
+			body:    `{"detail":"Authentication credentials were not provided."}`,
+			wantErr: true,
+		},
+		{
+			name:    "403 is retryable",
+			status:  http.StatusForbidden,
+			body:    `{"detail":"You do not have permission to perform this action."}`,
+			wantErr: true,
+		},
+		{
+			name:    "500 is retryable",
+			status:  http.StatusInternalServerError,
+			body:    `{"detail":"Internal Server Error"}`,
+			wantErr: true,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				assert.Equal(t, http.MethodGet, r.Method)
+				assert.Equal(t, "/api/0/organizations/acme", r.URL.Path)
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(tc.status)
+				_, _ = w.Write([]byte(tc.body))
+			}))
+			defer srv.Close()
+
+			client := &http.Client{Transport: &hostRewriter{target: srv.URL}}
+
+			got, err := NewSentryNameResolver(client, "acme").ResolveInstanceName(context.Background())
+			if tc.wantErr {
+				require.Error(t, err)
+				return
+			}
+
+			require.NoError(t, err)
+			assert.Equal(t, tc.want, got)
+		})
+	}
+}
+
+// roundTripperFunc adapts a function into an http.RoundTripper, useful for
+// asserting that a resolver short-circuits before making any HTTP call.
+type roundTripperFunc func(*http.Request) (*http.Response, error)
+
+func (f roundTripperFunc) RoundTrip(r *http.Request) (*http.Response, error) {
+	return f(r)
+}

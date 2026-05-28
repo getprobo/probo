@@ -471,6 +471,13 @@ func (r *sentryNameResolver) ResolveInstanceName(ctx context.Context) (string, e
 
 	defer func() { _ = httpResp.Body.Close() }()
 
+	// 404 means the stored slug is no longer visible to this token.
+	// Treat as terminal so the worker stops looping; other non-2xx
+	// stay retryable for token refresh / transient outages.
+	if httpResp.StatusCode == http.StatusNotFound {
+		return "", nil
+	}
+
 	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
 		return "", fmt.Errorf("cannot fetch sentry organization: unexpected status %d", httpResp.StatusCode)
 	}
