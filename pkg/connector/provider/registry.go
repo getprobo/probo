@@ -119,6 +119,19 @@ func (r *Registry) ProviderDisplayName(p coredata.ConnectorProvider) string {
 	return string(p)
 }
 
+// APIKeyHeader returns the request header an API-key connection for the
+// given provider must use to present its key. Empty means the default
+// `Authorization: Bearer` scheme; a value such as "x-api-key" means the
+// raw key is sent in that header instead. Returns empty for unknown
+// providers and for providers that do not customise the scheme.
+func (r *Registry) APIKeyHeader(p coredata.ConnectorProvider) string {
+	if reg, ok := r.Get(p); ok {
+		return reg.APIKeyHeader
+	}
+
+	return ""
+}
+
 // ProviderOAuth2Scopes returns the OAuth2 scopes the access review
 // driver for the given provider needs to list user accounts. Returns
 // nil for providers that do not need any scopes (Notion, Intercom)

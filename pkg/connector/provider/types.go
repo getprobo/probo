@@ -56,6 +56,13 @@ type Registration struct {
 	SupportsAPIKey            bool
 	SupportsClientCredentials bool
 	ExtraSettings             []ExtraSetting
+	// APIKeyHeader selects how an API-key connection presents its key
+	// on outbound requests. Empty (the default) uses the standard
+	// `Authorization: Bearer <key>` scheme; a value such as "x-api-key"
+	// sends the raw key in that header instead and omits Authorization
+	// (Anthropic). It is consumed when the create-connector resolver
+	// builds the APIKeyConnection.
+	APIKeyHeader string
 
 	// Factory closures — wired by Stages 2 and 3.
 	NewDriver               func(context.Context, *http.Client, *coredata.Connector, *log.Logger) (drivers.Driver, error)

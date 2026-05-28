@@ -40,7 +40,10 @@ func (r *mutationResolver) CreateAPIKeyConnector(ctx context.Context, input type
 		OrganizationID: input.OrganizationID,
 		Provider:       input.Provider,
 		Protocol:       coredata.ConnectorProtocolAPIKey,
-		Connection:     &connector.APIKeyConnection{APIKey: input.APIKey},
+		Connection: &connector.APIKeyConnection{
+			APIKey: input.APIKey,
+			Header: r.providerRegistry.APIKeyHeader(input.Provider),
+		},
 	}
 
 	raw, err := apiKeyConnectorSettings(input)

@@ -24,6 +24,16 @@ import (
 
 type APIKeyConnection struct {
 	APIKey string `json:"api_key"`
+	// Header selects how the API key is presented on outbound requests.
+	// Empty (the default) sends it as `Authorization: Bearer <key>`,
+	// which every OAuth-style and standard API-key connector uses. A
+	// non-empty value (e.g. "x-api-key") sends the raw key in that
+	// request header instead and omits Authorization entirely —
+	// required by providers such as Anthropic that reject Bearer auth
+	// and return 400 when both x-api-key and Authorization are present.
+	// It is populated from the provider Registration at connector
+	// creation time.
+	Header string `json:"header,omitempty"`
 }
 
 var _ Connection = (*APIKeyConnection)(nil)
@@ -37,13 +47,43 @@ func (c *APIKeyConnection) Scopes() []string {
 }
 
 func (c *APIKeyConnection) Client(ctx context.Context) (*http.Client, error) {
-	transport := &oauth2Transport{
-		token:      c.APIKey,
-		tokenType:  "Bearer",
-		underlying: httpclient.DefaultPooledTransport(httpclient.WithSSRFProtection()),
+	underlying := httpclient.DefaultPooledTransport(httpclient.WithSSRFProtection())
+
+	if c.Header != "" {
+		return &http.Client{
+			Transport: &apiKeyHeaderTransport{
+				header:     c.Header,
+				value:      c.APIKey,
+				underlying: underlying,
+			},
+		}, nil
 	}
 
-	return &http.Client{Transport: transport}, nil
+	return &http.Client{
+		Transport: &oauth2Transport{
+			token:      c.APIKey,
+			tokenType:  "Bearer",
+			underlying: underlying,
+		},
+	}, nil
+}
+
+// apiKeyHeaderTransport injects the API key into a custom request header
+// (for example "x-api-key") and, unlike oauth2Transport, never sets
+// Authorization. Providers such as Anthropic require the key in their
+// own header and reject requests that carry both that header and
+// Authorization.
+type apiKeyHeaderTransport struct {
+	header     string
+	value      string
+	underlying http.RoundTripper
+}
+
+func (t *apiKeyHeaderTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	req2 := req.Clone(req.Context())
+	req2.Header.Set(t.header, t.value)
+
+	return t.underlying.RoundTrip(req2)
 }
 
 func (c APIKeyConnection) MarshalJSON() ([]byte, error) {
