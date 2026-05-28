@@ -23,9 +23,6 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 )
 
-//go:fix inline
-func ptr[T any](v T) *T { return new(v) }
-
 func TestStripCorporateSuffixes(t *testing.T) {
 	t.Parallel()
 

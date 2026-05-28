@@ -219,9 +219,10 @@ func LinkToCommon(
 // CreateFromCommon inserts a new org ThirdParty seeded from the catalog
 // row (name, category, addresses, URLs, certifications, …). The new row
 // has common_third_party_id pointed at commonParty, an empty Countries
-// list, and ShowOnTrustCenter / FirstLevel both false — mirroring the
-// front-end CreateThirdPartyDialog's "pick from catalog" seeding shape
-// so the result is indistinguishable from a manual creation.
+// list, ShowOnTrustCenter false, and FirstLevel true — the caller has
+// already confirmed the vendor is actively present on the
+// organization's cookie banner, which makes it a first-level third
+// party by definition.
 //
 // Deliberately bypasses any service-level webhook emission: callers
 // that need a webhook for the implicit creation should emit it
@@ -257,7 +258,7 @@ func CreateFromCommon(
 		SecurityPageURL:               commonParty.SecurityPageURL,
 		TrustPageURL:                  commonParty.TrustPageURL,
 		ShowOnTrustCenter:             false,
-		FirstLevel:                    false,
+		FirstLevel:                    true,
 		CreatedAt:                     now,
 		UpdatedAt:                     now,
 	}

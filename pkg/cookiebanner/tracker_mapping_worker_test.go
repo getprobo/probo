@@ -28,9 +28,6 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 )
 
-//go:fix inline
-func ptr[T any](v T) *T { return new(v) }
-
 // promotionFixture extends workerFixture with a CommonThirdParty and a
 // CommonTrackerPattern linking the catalog to the test pattern. It is
 // the minimum scaffolding promoteThirdParty needs to run end-to-end.
@@ -252,7 +249,7 @@ func TestPromoteThirdParty_FallbackCreate(t *testing.T) {
 	require.NotNil(t, reloaded.CommonThirdPartyID)
 	assert.Equal(t, fx.commonThirdPartyID, *reloaded.CommonThirdPartyID)
 	assert.Equal(t, coredata.ThirdPartyCategoryAnalytics, reloaded.Category)
-	assert.False(t, reloaded.FirstLevel)
+	assert.True(t, reloaded.FirstLevel)
 	assert.False(t, reloaded.ShowOnTrustCenter)
 }
 
