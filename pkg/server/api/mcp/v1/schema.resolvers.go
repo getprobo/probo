@@ -1670,12 +1670,12 @@ func (r *Resolver) UpdateControlTool(ctx context.Context, req *mcp.CallToolReque
 }
 
 func (r *Resolver) LinkControlTool(ctx context.Context, req *mcp.CallToolRequest, input *types.LinkControlInput) (*mcp.CallToolResult, types.LinkControlOutput, error) {
-	scope := coredata.NewScopeFromObjectID(input.ControlID)
 	svc := r.proboSvc
 
 	switch input.ResourceID.EntityType() {
 	case coredata.MeasureEntityType:
-		if _, err := r.Authorize(ctx, input.ControlID, probo.ActionControlMeasureMappingCreate); err != nil {
+		scope, err := r.Authorize(ctx, input.ControlID, probo.ActionControlMeasureMappingCreate)
+		if err != nil {
 			return nil, types.LinkControlOutput{}, err
 		}
 
@@ -1683,7 +1683,8 @@ func (r *Resolver) LinkControlTool(ctx context.Context, req *mcp.CallToolRequest
 			return nil, types.LinkControlOutput{}, fmt.Errorf("failed to link control to measure: %w", err)
 		}
 	case coredata.DocumentEntityType:
-		if _, err := r.Authorize(ctx, input.ControlID, probo.ActionControlDocumentMappingCreate); err != nil {
+		scope, err := r.Authorize(ctx, input.ControlID, probo.ActionControlDocumentMappingCreate)
+		if err != nil {
 			return nil, types.LinkControlOutput{}, err
 		}
 
@@ -1691,7 +1692,8 @@ func (r *Resolver) LinkControlTool(ctx context.Context, req *mcp.CallToolRequest
 			return nil, types.LinkControlOutput{}, fmt.Errorf("failed to link control to document: %w", err)
 		}
 	case coredata.AuditEntityType:
-		if _, err := r.Authorize(ctx, input.ControlID, probo.ActionControlAuditMappingCreate); err != nil {
+		scope, err := r.Authorize(ctx, input.ControlID, probo.ActionControlAuditMappingCreate)
+		if err != nil {
 			return nil, types.LinkControlOutput{}, err
 		}
 
@@ -1699,7 +1701,8 @@ func (r *Resolver) LinkControlTool(ctx context.Context, req *mcp.CallToolRequest
 			return nil, types.LinkControlOutput{}, fmt.Errorf("failed to link control to audit: %w", err)
 		}
 	case coredata.ObligationEntityType:
-		if _, err := r.Authorize(ctx, input.ControlID, probo.ActionControlObligationMappingCreate); err != nil {
+		scope, err := r.Authorize(ctx, input.ControlID, probo.ActionControlObligationMappingCreate)
+		if err != nil {
 			return nil, types.LinkControlOutput{}, err
 		}
 
@@ -1714,12 +1717,12 @@ func (r *Resolver) LinkControlTool(ctx context.Context, req *mcp.CallToolRequest
 }
 
 func (r *Resolver) UnlinkControlTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UnlinkControlInput) (*mcp.CallToolResult, types.UnlinkControlOutput, error) {
-	scope := coredata.NewScopeFromObjectID(input.ControlID)
 	svc := r.proboSvc
 
 	switch input.ResourceID.EntityType() {
 	case coredata.MeasureEntityType:
-		if _, err := r.Authorize(ctx, input.ControlID, probo.ActionControlMeasureMappingDelete); err != nil {
+		scope, err := r.Authorize(ctx, input.ControlID, probo.ActionControlMeasureMappingDelete)
+		if err != nil {
 			return nil, types.UnlinkControlOutput{}, err
 		}
 
@@ -1727,7 +1730,8 @@ func (r *Resolver) UnlinkControlTool(ctx context.Context, req *mcp.CallToolReque
 			return nil, types.UnlinkControlOutput{}, fmt.Errorf("failed to unlink control from measure: %w", err)
 		}
 	case coredata.DocumentEntityType:
-		if _, err := r.Authorize(ctx, input.ControlID, probo.ActionControlDocumentMappingDelete); err != nil {
+		scope, err := r.Authorize(ctx, input.ControlID, probo.ActionControlDocumentMappingDelete)
+		if err != nil {
 			return nil, types.UnlinkControlOutput{}, err
 		}
 
@@ -1735,7 +1739,8 @@ func (r *Resolver) UnlinkControlTool(ctx context.Context, req *mcp.CallToolReque
 			return nil, types.UnlinkControlOutput{}, fmt.Errorf("failed to unlink control from document: %w", err)
 		}
 	case coredata.AuditEntityType:
-		if _, err := r.Authorize(ctx, input.ControlID, probo.ActionControlAuditMappingDelete); err != nil {
+		scope, err := r.Authorize(ctx, input.ControlID, probo.ActionControlAuditMappingDelete)
+		if err != nil {
 			return nil, types.UnlinkControlOutput{}, err
 		}
 
@@ -1743,7 +1748,8 @@ func (r *Resolver) UnlinkControlTool(ctx context.Context, req *mcp.CallToolReque
 			return nil, types.UnlinkControlOutput{}, fmt.Errorf("failed to unlink control from audit: %w", err)
 		}
 	case coredata.ObligationEntityType:
-		if _, err := r.Authorize(ctx, input.ControlID, probo.ActionControlObligationMappingDelete); err != nil {
+		scope, err := r.Authorize(ctx, input.ControlID, probo.ActionControlObligationMappingDelete)
+		if err != nil {
 			return nil, types.UnlinkControlOutput{}, err
 		}
 
@@ -1908,12 +1914,12 @@ func (r *Resolver) ListRiskObligationsTool(ctx context.Context, req *mcp.CallToo
 }
 
 func (r *Resolver) LinkRiskTool(ctx context.Context, req *mcp.CallToolRequest, input *types.LinkRiskInput) (*mcp.CallToolResult, types.LinkRiskOutput, error) {
-	scope := coredata.NewScopeFromObjectID(input.RiskID)
 	svc := r.proboSvc
 
 	switch input.ResourceID.EntityType() {
 	case coredata.DocumentEntityType:
-		if _, err := r.Authorize(ctx, input.RiskID, probo.ActionRiskDocumentMappingCreate); err != nil {
+		scope, err := r.Authorize(ctx, input.RiskID, probo.ActionRiskDocumentMappingCreate)
+		if err != nil {
 			return nil, types.LinkRiskOutput{}, err
 		}
 
@@ -1921,7 +1927,8 @@ func (r *Resolver) LinkRiskTool(ctx context.Context, req *mcp.CallToolRequest, i
 			return nil, types.LinkRiskOutput{}, fmt.Errorf("failed to link risk to document: %w", err)
 		}
 	case coredata.MeasureEntityType:
-		if _, err := r.Authorize(ctx, input.RiskID, probo.ActionRiskMeasureMappingCreate); err != nil {
+		scope, err := r.Authorize(ctx, input.RiskID, probo.ActionRiskMeasureMappingCreate)
+		if err != nil {
 			return nil, types.LinkRiskOutput{}, err
 		}
 
@@ -1929,7 +1936,8 @@ func (r *Resolver) LinkRiskTool(ctx context.Context, req *mcp.CallToolRequest, i
 			return nil, types.LinkRiskOutput{}, fmt.Errorf("failed to link risk to measure: %w", err)
 		}
 	case coredata.ObligationEntityType:
-		if _, err := r.Authorize(ctx, input.RiskID, probo.ActionRiskObligationMappingCreate); err != nil {
+		scope, err := r.Authorize(ctx, input.RiskID, probo.ActionRiskObligationMappingCreate)
+		if err != nil {
 			return nil, types.LinkRiskOutput{}, err
 		}
 
@@ -1944,12 +1952,12 @@ func (r *Resolver) LinkRiskTool(ctx context.Context, req *mcp.CallToolRequest, i
 }
 
 func (r *Resolver) UnlinkRiskTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UnlinkRiskInput) (*mcp.CallToolResult, types.UnlinkRiskOutput, error) {
-	scope := coredata.NewScopeFromObjectID(input.RiskID)
 	svc := r.proboSvc
 
 	switch input.ResourceID.EntityType() {
 	case coredata.DocumentEntityType:
-		if _, err := r.Authorize(ctx, input.RiskID, probo.ActionRiskDocumentMappingDelete); err != nil {
+		scope, err := r.Authorize(ctx, input.RiskID, probo.ActionRiskDocumentMappingDelete)
+		if err != nil {
 			return nil, types.UnlinkRiskOutput{}, err
 		}
 
@@ -1957,7 +1965,8 @@ func (r *Resolver) UnlinkRiskTool(ctx context.Context, req *mcp.CallToolRequest,
 			return nil, types.UnlinkRiskOutput{}, fmt.Errorf("failed to unlink risk from document: %w", err)
 		}
 	case coredata.MeasureEntityType:
-		if _, err := r.Authorize(ctx, input.RiskID, probo.ActionRiskMeasureMappingDelete); err != nil {
+		scope, err := r.Authorize(ctx, input.RiskID, probo.ActionRiskMeasureMappingDelete)
+		if err != nil {
 			return nil, types.UnlinkRiskOutput{}, err
 		}
 
@@ -1965,7 +1974,8 @@ func (r *Resolver) UnlinkRiskTool(ctx context.Context, req *mcp.CallToolRequest,
 			return nil, types.UnlinkRiskOutput{}, fmt.Errorf("failed to unlink risk from measure: %w", err)
 		}
 	case coredata.ObligationEntityType:
-		if _, err := r.Authorize(ctx, input.RiskID, probo.ActionRiskObligationMappingDelete); err != nil {
+		scope, err := r.Authorize(ctx, input.RiskID, probo.ActionRiskObligationMappingDelete)
+		if err != nil {
 			return nil, types.UnlinkRiskOutput{}, err
 		}
 
@@ -2305,7 +2315,8 @@ func (r *Resolver) UpdateDocumentTool(ctx context.Context, req *mcp.CallToolRequ
 }
 
 func (r *Resolver) ListDocumentVersionsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListDocumentVersionsInput) (*mcp.CallToolResult, types.ListDocumentVersionsOutput, error) {
-	if _, err := r.Authorize(ctx, input.DocumentID, probo.ActionDocumentVersionList); err != nil {
+	scope, err := r.Authorize(ctx, input.DocumentID, probo.ActionDocumentVersionList)
+	if err != nil {
 		return nil, types.ListDocumentVersionsOutput{}, err
 	}
 
@@ -2322,7 +2333,6 @@ func (r *Resolver) ListDocumentVersionsTool(ctx context.Context, req *mcp.CallTo
 	}
 
 	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
-	scope := coredata.NewScopeFromObjectID(input.DocumentID)
 	svc := r.proboSvc
 
 	versionFilter := coredata.NewDocumentVersionFilter()
@@ -2636,12 +2646,12 @@ func (r *Resolver) ListMeasureEvidencesTool(ctx context.Context, req *mcp.CallTo
 }
 
 func (r *Resolver) LinkMeasureTool(ctx context.Context, req *mcp.CallToolRequest, input *types.LinkMeasureInput) (*mcp.CallToolResult, types.LinkMeasureOutput, error) {
-	scope := coredata.NewScopeFromObjectID(input.MeasureID)
 	svc := r.proboSvc
 
 	switch input.ResourceID.EntityType() {
 	case coredata.ControlEntityType:
-		if _, err := r.Authorize(ctx, input.MeasureID, probo.ActionControlMeasureMappingCreate); err != nil {
+		scope, err := r.Authorize(ctx, input.MeasureID, probo.ActionControlMeasureMappingCreate)
+		if err != nil {
 			return nil, types.LinkMeasureOutput{}, err
 		}
 
@@ -2649,7 +2659,8 @@ func (r *Resolver) LinkMeasureTool(ctx context.Context, req *mcp.CallToolRequest
 			return nil, types.LinkMeasureOutput{}, fmt.Errorf("failed to link measure to control: %w", err)
 		}
 	case coredata.RiskEntityType:
-		if _, err := r.Authorize(ctx, input.MeasureID, probo.ActionRiskMeasureMappingCreate); err != nil {
+		scope, err := r.Authorize(ctx, input.MeasureID, probo.ActionRiskMeasureMappingCreate)
+		if err != nil {
 			return nil, types.LinkMeasureOutput{}, err
 		}
 
@@ -2657,7 +2668,8 @@ func (r *Resolver) LinkMeasureTool(ctx context.Context, req *mcp.CallToolRequest
 			return nil, types.LinkMeasureOutput{}, fmt.Errorf("failed to link measure to risk: %w", err)
 		}
 	case coredata.DocumentEntityType:
-		if _, err := r.Authorize(ctx, input.MeasureID, probo.ActionMeasureDocumentMappingCreate); err != nil {
+		scope, err := r.Authorize(ctx, input.MeasureID, probo.ActionMeasureDocumentMappingCreate)
+		if err != nil {
 			return nil, types.LinkMeasureOutput{}, err
 		}
 
@@ -2665,7 +2677,8 @@ func (r *Resolver) LinkMeasureTool(ctx context.Context, req *mcp.CallToolRequest
 			return nil, types.LinkMeasureOutput{}, fmt.Errorf("failed to link measure to document: %w", err)
 		}
 	case coredata.ThirdPartyEntityType:
-		if _, err := r.Authorize(ctx, input.MeasureID, probo.ActionMeasureThirdPartyMappingCreate); err != nil {
+		scope, err := r.Authorize(ctx, input.MeasureID, probo.ActionMeasureThirdPartyMappingCreate)
+		if err != nil {
 			return nil, types.LinkMeasureOutput{}, err
 		}
 
@@ -2680,12 +2693,12 @@ func (r *Resolver) LinkMeasureTool(ctx context.Context, req *mcp.CallToolRequest
 }
 
 func (r *Resolver) UnlinkMeasureTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UnlinkMeasureInput) (*mcp.CallToolResult, types.UnlinkMeasureOutput, error) {
-	scope := coredata.NewScopeFromObjectID(input.MeasureID)
 	svc := r.proboSvc
 
 	switch input.ResourceID.EntityType() {
 	case coredata.ControlEntityType:
-		if _, err := r.Authorize(ctx, input.MeasureID, probo.ActionControlMeasureMappingDelete); err != nil {
+		scope, err := r.Authorize(ctx, input.MeasureID, probo.ActionControlMeasureMappingDelete)
+		if err != nil {
 			return nil, types.UnlinkMeasureOutput{}, err
 		}
 
@@ -2693,7 +2706,8 @@ func (r *Resolver) UnlinkMeasureTool(ctx context.Context, req *mcp.CallToolReque
 			return nil, types.UnlinkMeasureOutput{}, fmt.Errorf("failed to unlink measure from control: %w", err)
 		}
 	case coredata.RiskEntityType:
-		if _, err := r.Authorize(ctx, input.MeasureID, probo.ActionRiskMeasureMappingDelete); err != nil {
+		scope, err := r.Authorize(ctx, input.MeasureID, probo.ActionRiskMeasureMappingDelete)
+		if err != nil {
 			return nil, types.UnlinkMeasureOutput{}, err
 		}
 
@@ -2701,7 +2715,8 @@ func (r *Resolver) UnlinkMeasureTool(ctx context.Context, req *mcp.CallToolReque
 			return nil, types.UnlinkMeasureOutput{}, fmt.Errorf("failed to unlink measure from risk: %w", err)
 		}
 	case coredata.DocumentEntityType:
-		if _, err := r.Authorize(ctx, input.MeasureID, probo.ActionMeasureDocumentMappingDelete); err != nil {
+		scope, err := r.Authorize(ctx, input.MeasureID, probo.ActionMeasureDocumentMappingDelete)
+		if err != nil {
 			return nil, types.UnlinkMeasureOutput{}, err
 		}
 
@@ -2709,7 +2724,8 @@ func (r *Resolver) UnlinkMeasureTool(ctx context.Context, req *mcp.CallToolReque
 			return nil, types.UnlinkMeasureOutput{}, fmt.Errorf("failed to unlink measure from document: %w", err)
 		}
 	case coredata.ThirdPartyEntityType:
-		if _, err := r.Authorize(ctx, input.MeasureID, probo.ActionMeasureThirdPartyMappingDelete); err != nil {
+		scope, err := r.Authorize(ctx, input.MeasureID, probo.ActionMeasureThirdPartyMappingDelete)
+		if err != nil {
 			return nil, types.UnlinkMeasureOutput{}, err
 		}
 
@@ -5418,11 +5434,11 @@ func (r *Resolver) PublishThirdPartyListTool(ctx context.Context, req *mcp.CallT
 }
 
 func (r *Resolver) ListCookieBannersTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListCookieBannersInput) (*mcp.CallToolResult, types.ListCookieBannersOutput, error) {
-	if _, err := r.Authorize(ctx, input.OrganizationID, probo.ActionCookieBannerList); err != nil {
+	scope, err := r.Authorize(ctx, input.OrganizationID, probo.ActionCookieBannerList)
+	if err != nil {
 		return nil, types.ListCookieBannersOutput{}, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(input.OrganizationID)
 	cursor := types.NewCursor(input.Size, input.Cursor, page.OrderBy[coredata.CookieBannerOrderField]{Field: coredata.CookieBannerOrderFieldCreatedAt, Direction: page.OrderDirectionDesc})
 
 	banners, err := r.cookieBanner.ListCookieBannersForOrganization(ctx, scope, input.OrganizationID, cursor, coredata.NewCookieBannerFilter(nil))
@@ -5436,11 +5452,10 @@ func (r *Resolver) ListCookieBannersTool(ctx context.Context, req *mcp.CallToolR
 }
 
 func (r *Resolver) GetCookieBannerTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetCookieBannerInput) (*mcp.CallToolResult, types.GetCookieBannerOutput, error) {
-	if _, err := r.Authorize(ctx, input.ID, probo.ActionCookieBannerGet); err != nil {
+	scope, err := r.Authorize(ctx, input.ID, probo.ActionCookieBannerGet)
+	if err != nil {
 		return nil, types.GetCookieBannerOutput{}, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(input.ID)
 
 	banner, err := r.cookieBanner.GetCookieBanner(ctx, scope, input.ID)
 	if err != nil {
@@ -5451,11 +5466,10 @@ func (r *Resolver) GetCookieBannerTool(ctx context.Context, req *mcp.CallToolReq
 }
 
 func (r *Resolver) AddCookieBannerTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddCookieBannerInput) (*mcp.CallToolResult, types.AddCookieBannerOutput, error) {
-	if _, err := r.Authorize(ctx, input.OrganizationID, probo.ActionCookieBannerCreate); err != nil {
+	scope, err := r.Authorize(ctx, input.OrganizationID, probo.ActionCookieBannerCreate)
+	if err != nil {
 		return nil, types.AddCookieBannerOutput{}, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(input.OrganizationID)
 
 	banner, err := r.cookieBanner.CreateCookieBanner(ctx, scope, cookiebanner.CreateCookieBannerRequest{
 		OrganizationID:    input.OrganizationID,
@@ -5473,11 +5487,10 @@ func (r *Resolver) AddCookieBannerTool(ctx context.Context, req *mcp.CallToolReq
 }
 
 func (r *Resolver) UpdateCookieBannerTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateCookieBannerInput) (*mcp.CallToolResult, types.UpdateCookieBannerOutput, error) {
-	if _, err := r.Authorize(ctx, input.ID, probo.ActionCookieBannerUpdate); err != nil {
+	scope, err := r.Authorize(ctx, input.ID, probo.ActionCookieBannerUpdate)
+	if err != nil {
 		return nil, types.UpdateCookieBannerOutput{}, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(input.ID)
 
 	updateReq := cookiebanner.UpdateCookieBannerRequest{CookieBannerID: input.ID}
 	if v := UnwrapOmittable(input.Name); v != nil && *v != nil {
@@ -5522,11 +5535,10 @@ func (r *Resolver) DeleteCookieBannerTool(ctx context.Context, req *mcp.CallTool
 }
 
 func (r *Resolver) ActivateCookieBannerTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ActivateCookieBannerInput) (*mcp.CallToolResult, types.ActivateCookieBannerOutput, error) {
-	if _, err := r.Authorize(ctx, input.ID, probo.ActionCookieBannerActivate); err != nil {
+	scope, err := r.Authorize(ctx, input.ID, probo.ActionCookieBannerActivate)
+	if err != nil {
 		return nil, types.ActivateCookieBannerOutput{}, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(input.ID)
 
 	banner, err := r.cookieBanner.ActivateCookieBanner(ctx, scope, input.ID)
 	if err != nil {
@@ -5537,11 +5549,10 @@ func (r *Resolver) ActivateCookieBannerTool(ctx context.Context, req *mcp.CallTo
 }
 
 func (r *Resolver) DeactivateCookieBannerTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeactivateCookieBannerInput) (*mcp.CallToolResult, types.DeactivateCookieBannerOutput, error) {
-	if _, err := r.Authorize(ctx, input.ID, probo.ActionCookieBannerDeactivate); err != nil {
+	scope, err := r.Authorize(ctx, input.ID, probo.ActionCookieBannerDeactivate)
+	if err != nil {
 		return nil, types.DeactivateCookieBannerOutput{}, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(input.ID)
 
 	banner, err := r.cookieBanner.DeactivateCookieBanner(ctx, scope, input.ID)
 	if err != nil {
@@ -5552,11 +5563,10 @@ func (r *Resolver) DeactivateCookieBannerTool(ctx context.Context, req *mcp.Call
 }
 
 func (r *Resolver) ListCookieCategoriesTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListCookieCategoriesInput) (*mcp.CallToolResult, types.ListCookieCategoriesOutput, error) {
-	if _, err := r.Authorize(ctx, input.CookieBannerID, probo.ActionCookieCategoryList); err != nil {
+	scope, err := r.Authorize(ctx, input.CookieBannerID, probo.ActionCookieCategoryList)
+	if err != nil {
 		return nil, types.ListCookieCategoriesOutput{}, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(input.CookieBannerID)
 	cursor := types.NewCursor(input.Size, input.Cursor, page.OrderBy[coredata.CookieCategoryOrderField]{Field: coredata.CookieCategoryOrderFieldRank, Direction: page.OrderDirectionAsc})
 
 	categories, err := r.cookieBanner.ListCategoriesForBanner(ctx, scope, input.CookieBannerID, cursor, coredata.NewCookieCategoryFilter(new(coredata.CookieCategoryKindUncategorised)))
@@ -5570,11 +5580,10 @@ func (r *Resolver) ListCookieCategoriesTool(ctx context.Context, req *mcp.CallTo
 }
 
 func (r *Resolver) GetCookieCategoryTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetCookieCategoryInput) (*mcp.CallToolResult, types.GetCookieCategoryOutput, error) {
-	if _, err := r.Authorize(ctx, input.ID, probo.ActionCookieCategoryGet); err != nil {
+	scope, err := r.Authorize(ctx, input.ID, probo.ActionCookieCategoryGet)
+	if err != nil {
 		return nil, types.GetCookieCategoryOutput{}, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(input.ID)
 
 	category, err := r.cookieBanner.GetCookieCategory(ctx, scope, input.ID)
 	if err != nil {
@@ -5585,11 +5594,10 @@ func (r *Resolver) GetCookieCategoryTool(ctx context.Context, req *mcp.CallToolR
 }
 
 func (r *Resolver) AddCookieCategoryTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddCookieCategoryInput) (*mcp.CallToolResult, types.AddCookieCategoryOutput, error) {
-	if _, err := r.Authorize(ctx, input.CookieBannerID, probo.ActionCookieCategoryCreate); err != nil {
+	scope, err := r.Authorize(ctx, input.CookieBannerID, probo.ActionCookieCategoryCreate)
+	if err != nil {
 		return nil, types.AddCookieCategoryOutput{}, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(input.CookieBannerID)
 
 	category, err := r.cookieBanner.CreateCookieCategory(ctx, scope, cookiebanner.CreateCookieCategoryRequest{
 		CookieBannerID: input.CookieBannerID,
@@ -5606,11 +5614,10 @@ func (r *Resolver) AddCookieCategoryTool(ctx context.Context, req *mcp.CallToolR
 }
 
 func (r *Resolver) UpdateCookieCategoryTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateCookieCategoryInput) (*mcp.CallToolResult, types.UpdateCookieCategoryOutput, error) {
-	if _, err := r.Authorize(ctx, input.ID, probo.ActionCookieCategoryUpdate); err != nil {
+	scope, err := r.Authorize(ctx, input.ID, probo.ActionCookieCategoryUpdate)
+	if err != nil {
 		return nil, types.UpdateCookieCategoryOutput{}, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(input.ID)
 
 	updateReq := cookiebanner.UpdateCookieCategoryRequest{CookieCategoryID: input.ID}
 	if v := UnwrapOmittable(input.Name); v != nil && *v != nil {
@@ -5647,13 +5654,12 @@ func (r *Resolver) DeleteCookieCategoryTool(ctx context.Context, req *mcp.CallTo
 }
 
 func (r *Resolver) ReorderCookieCategoryTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ReorderCookieCategoryInput) (*mcp.CallToolResult, types.ReorderCookieCategoryOutput, error) {
-	if _, err := r.Authorize(ctx, input.ID, probo.ActionCookieCategoryUpdate); err != nil {
+	scope, err := r.Authorize(ctx, input.ID, probo.ActionCookieCategoryUpdate)
+	if err != nil {
 		return nil, types.ReorderCookieCategoryOutput{}, err
 	}
 
-	scope := coredata.NewScopeFromObjectID(input.ID)
-
-	_, err := r.cookieBanner.ReorderCookieCategory(ctx, scope, cookiebanner.ReorderCookieCategoryRequest{
+	_, err = r.cookieBanner.ReorderCookieCategory(ctx, scope, cookiebanner.ReorderCookieCategoryRequest{
 		CookieCategoryID: input.ID,
 		Rank:             input.Rank,
 	})
@@ -5670,11 +5676,10 @@ func (r *Resolver) ReorderCookieCategoryTool(ctx context.Context, req *mcp.CallT
 }
 
 func (r *Resolver) ListTrackerPatternsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListTrackerPatternsInput) (*mcp.CallToolResult, types.ListTrackerPatternsOutput, error) {
-	if _, err := r.Authorize(ctx, input.CookieCategoryID, probo.ActionTrackerPatternList); err != nil {
+	scope, err := r.Authorize(ctx, input.CookieCategoryID, probo.ActionTrackerPatternList)
+	if err != nil {
 		return nil, types.ListTrackerPatternsOutput{}, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(input.CookieCategoryID)
 	cursor := types.NewCursor(input.Size, input.Cursor, page.OrderBy[coredata.TrackerPatternOrderField]{Field: coredata.TrackerPatternOrderFieldCreatedAt, Direction: page.OrderDirectionAsc})
 
 	patterns, err := r.cookieBanner.ListTrackerPatternsForCategory(ctx, scope, input.CookieCategoryID, cursor)
@@ -5688,11 +5693,10 @@ func (r *Resolver) ListTrackerPatternsTool(ctx context.Context, req *mcp.CallToo
 }
 
 func (r *Resolver) GetTrackerPatternTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetTrackerPatternInput) (*mcp.CallToolResult, types.GetTrackerPatternOutput, error) {
-	if _, err := r.Authorize(ctx, input.ID, probo.ActionTrackerPatternGet); err != nil {
+	scope, err := r.Authorize(ctx, input.ID, probo.ActionTrackerPatternGet)
+	if err != nil {
 		return nil, types.GetTrackerPatternOutput{}, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(input.ID)
 
 	pattern, err := r.cookieBanner.GetTrackerPattern(ctx, scope, input.ID)
 	if err != nil {
@@ -5703,11 +5707,10 @@ func (r *Resolver) GetTrackerPatternTool(ctx context.Context, req *mcp.CallToolR
 }
 
 func (r *Resolver) AddTrackerPatternTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddTrackerPatternInput) (*mcp.CallToolResult, types.AddTrackerPatternOutput, error) {
-	if _, err := r.Authorize(ctx, input.CookieCategoryID, probo.ActionTrackerPatternCreate); err != nil {
+	scope, err := r.Authorize(ctx, input.CookieCategoryID, probo.ActionTrackerPatternCreate)
+	if err != nil {
 		return nil, types.AddTrackerPatternOutput{}, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(input.CookieCategoryID)
 
 	pattern, err := r.cookieBanner.CreateTrackerPattern(ctx, scope, cookiebanner.CreateTrackerPatternRequest{
 		CookieCategoryID: input.CookieCategoryID,
@@ -5726,11 +5729,10 @@ func (r *Resolver) AddTrackerPatternTool(ctx context.Context, req *mcp.CallToolR
 }
 
 func (r *Resolver) UpdateTrackerPatternTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateTrackerPatternInput) (*mcp.CallToolResult, types.UpdateTrackerPatternOutput, error) {
-	if _, err := r.Authorize(ctx, input.ID, probo.ActionTrackerPatternUpdate); err != nil {
+	scope, err := r.Authorize(ctx, input.ID, probo.ActionTrackerPatternUpdate)
+	if err != nil {
 		return nil, types.UpdateTrackerPatternOutput{}, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(input.ID)
 
 	updateReq := cookiebanner.UpdateTrackerPatternRequest{TrackerPatternID: input.ID}
 	if input.MaxAgeSeconds.IsSet() {
@@ -5768,11 +5770,10 @@ func (r *Resolver) DeleteTrackerPatternTool(ctx context.Context, req *mcp.CallTo
 }
 
 func (r *Resolver) MoveTrackerPatternToCategoryTool(ctx context.Context, req *mcp.CallToolRequest, input *types.MoveTrackerPatternToCategoryInput) (*mcp.CallToolResult, types.MoveTrackerPatternToCategoryOutput, error) {
-	if _, err := r.Authorize(ctx, input.TrackerPatternID, probo.ActionTrackerPatternUpdate); err != nil {
+	scope, err := r.Authorize(ctx, input.TrackerPatternID, probo.ActionTrackerPatternUpdate)
+	if err != nil {
 		return nil, types.MoveTrackerPatternToCategoryOutput{}, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(input.TrackerPatternID)
 
 	result, err := r.cookieBanner.MoveTrackerPatternToCategory(ctx, scope, cookiebanner.MoveTrackerPatternToCategoryRequest{
 		TrackerPatternID:       input.TrackerPatternID,
@@ -5786,11 +5787,10 @@ func (r *Resolver) MoveTrackerPatternToCategoryTool(ctx context.Context, req *mc
 }
 
 func (r *Resolver) PublishCookieBannerVersionTool(ctx context.Context, req *mcp.CallToolRequest, input *types.PublishCookieBannerVersionInput) (*mcp.CallToolResult, types.PublishCookieBannerVersionOutput, error) {
-	if _, err := r.Authorize(ctx, input.CookieBannerID, probo.ActionCookieBannerVersionPublish); err != nil {
+	scope, err := r.Authorize(ctx, input.CookieBannerID, probo.ActionCookieBannerVersionPublish)
+	if err != nil {
 		return nil, types.PublishCookieBannerVersionOutput{}, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(input.CookieBannerID)
 
 	version, err := r.cookieBanner.PublishCookieBannerVersion(ctx, scope, input.CookieBannerID)
 	if err != nil {
@@ -5801,11 +5801,10 @@ func (r *Resolver) PublishCookieBannerVersionTool(ctx context.Context, req *mcp.
 }
 
 func (r *Resolver) ListCookieBannerVersionsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListCookieBannerVersionsInput) (*mcp.CallToolResult, types.ListCookieBannerVersionsOutput, error) {
-	if _, err := r.Authorize(ctx, input.CookieBannerID, probo.ActionCookieBannerVersionList); err != nil {
+	scope, err := r.Authorize(ctx, input.CookieBannerID, probo.ActionCookieBannerVersionList)
+	if err != nil {
 		return nil, types.ListCookieBannerVersionsOutput{}, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(input.CookieBannerID)
 	cursor := types.NewCursor(input.Size, input.Cursor, page.OrderBy[coredata.CookieBannerVersionOrderField]{Field: coredata.CookieBannerVersionOrderFieldCreatedAt, Direction: page.OrderDirectionDesc})
 
 	versions, err := r.cookieBanner.ListCookieBannerVersionsForBanner(ctx, scope, input.CookieBannerID, cursor)
@@ -5819,11 +5818,10 @@ func (r *Resolver) ListCookieBannerVersionsTool(ctx context.Context, req *mcp.Ca
 }
 
 func (r *Resolver) UpsertCookieBannerTranslationTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpsertCookieBannerTranslationInput) (*mcp.CallToolResult, types.UpsertCookieBannerTranslationOutput, error) {
-	if _, err := r.Authorize(ctx, input.CookieBannerID, probo.ActionCookieBannerUpdate); err != nil {
+	scope, err := r.Authorize(ctx, input.CookieBannerID, probo.ActionCookieBannerUpdate)
+	if err != nil {
 		return nil, types.UpsertCookieBannerTranslationOutput{}, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(input.CookieBannerID)
 
 	translation, err := r.cookieBanner.UpsertCookieBannerTranslation(ctx, scope, cookiebanner.UpsertCookieBannerTranslationRequest{
 		CookieBannerID: input.CookieBannerID,
@@ -5838,11 +5836,10 @@ func (r *Resolver) UpsertCookieBannerTranslationTool(ctx context.Context, req *m
 }
 
 func (r *Resolver) ListCookieConsentRecordsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListCookieConsentRecordsInput) (*mcp.CallToolResult, types.ListCookieConsentRecordsOutput, error) {
-	if _, err := r.Authorize(ctx, input.CookieBannerID, probo.ActionCookieConsentRecordList); err != nil {
+	scope, err := r.Authorize(ctx, input.CookieBannerID, probo.ActionCookieConsentRecordList)
+	if err != nil {
 		return nil, types.ListCookieConsentRecordsOutput{}, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(input.CookieBannerID)
 	cursor := types.NewCursor(input.Size, input.Cursor, page.OrderBy[coredata.CookieConsentRecordOrderField]{Field: coredata.CookieConsentRecordOrderFieldCreatedAt, Direction: page.OrderDirectionDesc})
 
 	var action *coredata.CookieConsentAction
@@ -5865,11 +5862,10 @@ func (r *Resolver) ListCookieConsentRecordsTool(ctx context.Context, req *mcp.Ca
 }
 
 func (r *Resolver) GetCookieConsentRecordTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetCookieConsentRecordInput) (*mcp.CallToolResult, types.GetCookieConsentRecordOutput, error) {
-	if _, err := r.Authorize(ctx, input.ID, probo.ActionCookieConsentRecordList); err != nil {
+	scope, err := r.Authorize(ctx, input.ID, probo.ActionCookieConsentRecordList)
+	if err != nil {
 		return nil, types.GetCookieConsentRecordOutput{}, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(input.ID)
 
 	record, err := r.cookieBanner.GetCookieConsentRecord(ctx, scope, input.ID)
 	if err != nil {
@@ -6064,11 +6060,10 @@ func (r *Resolver) PublishDocumentTool(ctx context.Context, req *mcp.CallToolReq
 }
 
 func (r *Resolver) ListTrackerResourcesTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListTrackerResourcesInput) (*mcp.CallToolResult, types.ListTrackerResourcesOutput, error) {
-	if _, err := r.Authorize(ctx, input.CookieCategoryID, probo.ActionTrackerResourceList); err != nil {
+	scope, err := r.Authorize(ctx, input.CookieCategoryID, probo.ActionTrackerResourceList)
+	if err != nil {
 		return nil, types.ListTrackerResourcesOutput{}, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(input.CookieCategoryID)
 	cursor := types.NewCursor(input.Size, input.Cursor, page.OrderBy[coredata.TrackerResourceOrderField]{Field: coredata.TrackerResourceOrderFieldCreatedAt, Direction: page.OrderDirectionAsc})
 
 	resources, err := r.cookieBanner.ListTrackerResourcesForCategory(ctx, scope, input.CookieCategoryID, cursor)
@@ -6082,11 +6077,10 @@ func (r *Resolver) ListTrackerResourcesTool(ctx context.Context, req *mcp.CallTo
 }
 
 func (r *Resolver) GetTrackerResourceTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetTrackerResourceInput) (*mcp.CallToolResult, types.GetTrackerResourceOutput, error) {
-	if _, err := r.Authorize(ctx, input.ID, probo.ActionTrackerResourceGet); err != nil {
+	scope, err := r.Authorize(ctx, input.ID, probo.ActionTrackerResourceGet)
+	if err != nil {
 		return nil, types.GetTrackerResourceOutput{}, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(input.ID)
 
 	resource, err := r.cookieBanner.GetTrackerResource(ctx, scope, input.ID)
 	if err != nil {
@@ -6097,11 +6091,10 @@ func (r *Resolver) GetTrackerResourceTool(ctx context.Context, req *mcp.CallTool
 }
 
 func (r *Resolver) AddTrackerResourceTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddTrackerResourceInput) (*mcp.CallToolResult, types.AddTrackerResourceOutput, error) {
-	if _, err := r.Authorize(ctx, input.CookieCategoryID, probo.ActionTrackerResourceCreate); err != nil {
+	scope, err := r.Authorize(ctx, input.CookieCategoryID, probo.ActionTrackerResourceCreate)
+	if err != nil {
 		return nil, types.AddTrackerResourceOutput{}, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(input.CookieCategoryID)
 
 	description := ""
 	if input.Description != nil {
@@ -6124,11 +6117,10 @@ func (r *Resolver) AddTrackerResourceTool(ctx context.Context, req *mcp.CallTool
 }
 
 func (r *Resolver) UpdateTrackerResourceTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateTrackerResourceInput) (*mcp.CallToolResult, types.UpdateTrackerResourceOutput, error) {
-	if _, err := r.Authorize(ctx, input.ID, probo.ActionTrackerResourceUpdate); err != nil {
+	scope, err := r.Authorize(ctx, input.ID, probo.ActionTrackerResourceUpdate)
+	if err != nil {
 		return nil, types.UpdateTrackerResourceOutput{}, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(input.ID)
 
 	updateReq := cookiebanner.UpdateTrackerResourceRequest{TrackerResourceID: input.ID}
 	if v := UnwrapOmittable(input.DisplayName); v != nil && *v != nil {
@@ -6165,11 +6157,10 @@ func (r *Resolver) DeleteTrackerResourceTool(ctx context.Context, req *mcp.CallT
 }
 
 func (r *Resolver) MoveTrackerResourceToCategoryTool(ctx context.Context, req *mcp.CallToolRequest, input *types.MoveTrackerResourceToCategoryInput) (*mcp.CallToolResult, types.MoveTrackerResourceToCategoryOutput, error) {
-	if _, err := r.Authorize(ctx, input.TrackerResourceID, probo.ActionTrackerResourceUpdate); err != nil {
+	scope, err := r.Authorize(ctx, input.TrackerResourceID, probo.ActionTrackerResourceUpdate)
+	if err != nil {
 		return nil, types.MoveTrackerResourceToCategoryOutput{}, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(input.TrackerResourceID)
 
 	result, err := r.cookieBanner.MoveTrackerResourceToCategory(ctx, scope, cookiebanner.MoveTrackerResourceToCategoryRequest{
 		TrackerResourceID:      input.TrackerResourceID,

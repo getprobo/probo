@@ -49,7 +49,8 @@ func (r *cookieBannerResolver) Organization(ctx context.Context, obj *types.Cook
 
 // Categories is the resolver for the categories field.
 func (r *cookieBannerResolver) Categories(ctx context.Context, obj *types.CookieBanner, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.CookieCategoryOrderBy, filter *types.CookieCategoryFilter) (*types.CookieCategoryConnection, error) {
-	if _, err := r.authorize(ctx, obj.ID, probo.ActionCookieCategoryList); err != nil {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionCookieCategoryList)
+	if err != nil {
 		return nil, err
 	}
 
@@ -65,7 +66,6 @@ func (r *cookieBannerResolver) Categories(ctx context.Context, obj *types.Cookie
 	}
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
-	scope := coredata.NewScopeFromObjectID(obj.ID)
 
 	var excludeKind *coredata.CookieCategoryKind
 	if filter != nil {
@@ -189,7 +189,8 @@ func (r *cookieBannerResolver) ConsentRecords(ctx context.Context, obj *types.Co
 
 // TrackerPatterns is the resolver for the trackerPatterns field.
 func (r *cookieBannerResolver) TrackerPatterns(ctx context.Context, obj *types.CookieBanner, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TrackerPatternOrderBy, filter *types.TrackerPatternFilter) (*types.TrackerPatternConnection, error) {
-	if _, err := r.authorize(ctx, obj.ID, probo.ActionTrackerPatternList); err != nil {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionTrackerPatternList)
+	if err != nil {
 		return nil, err
 	}
 
@@ -205,7 +206,6 @@ func (r *cookieBannerResolver) TrackerPatterns(ctx context.Context, obj *types.C
 	}
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
-	scope := coredata.NewScopeFromObjectID(obj.ID)
 
 	coredataFilter := coredata.NewTrackerPatternFilter(nil, nil, nil)
 	if filter != nil {
@@ -254,11 +254,10 @@ func (r *cookieBannerResolver) TrackerPatterns(ctx context.Context, obj *types.C
 // commonThirdParty resolver follows the same priority and we want the
 // banner-level filter to mirror it.
 func (r *cookieBannerResolver) LinkedThirdParties(ctx context.Context, obj *types.CookieBanner) ([]types.TrackerPatternThirdPartyLink, error) {
-	if _, err := r.authorize(ctx, obj.ID, probo.ActionTrackerPatternList); err != nil {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionThirdPartyList)
+	if err != nil {
 		return nil, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(obj.ID)
 
 	thirdPartyIDs, err := r.cookieBanner.LoadDistinctThirdPartyIDsByCookieBannerID(ctx, scope, obj.ID)
 	if err != nil {
@@ -276,10 +275,6 @@ func (r *cookieBannerResolver) LinkedThirdParties(ctx context.Context, obj *type
 	loaders := dataloader.FromContext(ctx)
 
 	if len(thirdPartyIDs) > 0 {
-		if _, err := r.authorize(ctx, obj.ID, probo.ActionThirdPartyGet); err != nil {
-			return nil, err
-		}
-
 		tps, loadErr := loaders.ThirdParty.LoadAll(ctx, thirdPartyIDs)
 		var loadErrs dataloadgen.ErrorSlice
 		if loadErr != nil && !errors.As(loadErr, &loadErrs) {
@@ -300,7 +295,7 @@ func (r *cookieBannerResolver) LinkedThirdParties(ctx context.Context, obj *type
 
 	if len(commonPatternIDs) > 0 {
 		identity := authn.IdentityFromContext(ctx)
-		if _, err := r.authorize(ctx, identity.ID, probo.ActionCommonThirdPartyGet); err != nil {
+		if _, err := r.authorize(ctx, identity.ID, probo.ActionCommonThirdPartyList); err != nil {
 			return nil, err
 		}
 
@@ -340,7 +335,8 @@ func (r *cookieBannerResolver) LinkedThirdParties(ctx context.Context, obj *type
 
 // UncategorisedTrackerResources is the resolver for the uncategorisedTrackerResources field.
 func (r *cookieBannerResolver) UncategorisedTrackerResources(ctx context.Context, obj *types.CookieBanner, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TrackerResourceOrderBy, filter *types.TrackerResourceFilter) (*types.TrackerResourceConnection, error) {
-	if _, err := r.authorize(ctx, obj.ID, probo.ActionTrackerResourceList); err != nil {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionTrackerResourceList)
+	if err != nil {
 		return nil, err
 	}
 
@@ -356,7 +352,6 @@ func (r *cookieBannerResolver) UncategorisedTrackerResources(ctx context.Context
 	}
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
-	scope := coredata.NewScopeFromObjectID(obj.ID)
 
 	coredataFilter := coredata.NewTrackerResourceFilter(nil, nil)
 	if filter != nil {
@@ -465,7 +460,8 @@ func (r *cookieCategoryResolver) CookieBanner(ctx context.Context, obj *types.Co
 
 // TrackerPatterns is the resolver for the trackerPatterns field.
 func (r *cookieCategoryResolver) TrackerPatterns(ctx context.Context, obj *types.CookieCategory, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TrackerPatternOrderBy) (*types.TrackerPatternConnection, error) {
-	if _, err := r.authorize(ctx, obj.ID, probo.ActionTrackerPatternList); err != nil {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionTrackerPatternList)
+	if err != nil {
 		return nil, err
 	}
 
@@ -481,7 +477,6 @@ func (r *cookieCategoryResolver) TrackerPatterns(ctx context.Context, obj *types
 	}
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
-	scope := coredata.NewScopeFromObjectID(obj.ID)
 
 	patterns, err := r.cookieBanner.ListTrackerPatternsForCategory(ctx, scope, obj.ID, cursor)
 	if err != nil {
@@ -496,7 +491,8 @@ func (r *cookieCategoryResolver) TrackerPatterns(ctx context.Context, obj *types
 
 // TrackerResources is the resolver for the trackerResources field.
 func (r *cookieCategoryResolver) TrackerResources(ctx context.Context, obj *types.CookieCategory, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TrackerResourceOrderBy) (*types.TrackerResourceConnection, error) {
-	if _, err := r.authorize(ctx, obj.ID, probo.ActionTrackerResourceList); err != nil {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionTrackerResourceList)
+	if err != nil {
 		return nil, err
 	}
 
@@ -512,7 +508,6 @@ func (r *cookieCategoryResolver) TrackerResources(ctx context.Context, obj *type
 	}
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
-	scope := coredata.NewScopeFromObjectID(obj.ID)
 
 	resources, err := r.cookieBanner.ListTrackerResourcesForCategory(ctx, scope, obj.ID, cursor)
 	if err != nil {

@@ -500,8 +500,6 @@ func (r *riskConnectionResolver) TotalCount(ctx context.Context, obj *types.Risk
 
 		return count, nil
 	case *riskAssessmentScenarioResolver:
-		scope := coredata.NewScopeFromObjectID(obj.ParentID)
-
 		count, err := r.riskManagement.CountRisksForScenarioID(ctx, scope, obj.ParentID)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count scenario risks", log.Error(err))
