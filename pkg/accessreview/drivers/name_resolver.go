@@ -1170,4 +1170,3 @@ func (r *microsoft365NameResolver) ResolveInstanceName(ctx context.Context) (str
 
 	return "", nil
 }
-
