@@ -437,6 +437,55 @@ func (r *openaiNameResolver) ResolveInstanceName(ctx context.Context) (string, e
 	return resp.Name, nil
 }
 
+// anthropicNameResolver resolves the Anthropic organization name via the
+// Admin API /v1/organizations/me endpoint, which returns the org an
+// admin key belongs to.
+type anthropicNameResolver struct {
+	httpClient *http.Client
+}
+
+func NewAnthropicNameResolver(httpClient *http.Client) NameResolver {
+	return &anthropicNameResolver{httpClient: httpClient}
+}
+
+func (r *anthropicNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
+	req, err := http.NewRequestWithContext(
+		ctx,
+		http.MethodGet,
+		"https://api.anthropic.com/v1/organizations/me",
+		nil,
+	)
+	if err != nil {
+		return "", fmt.Errorf("cannot create anthropic organization request: %w", err)
+	}
+
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("anthropic-version", anthropicAPIVersion)
+
+	httpResp, err := r.httpClient.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("cannot execute anthropic organization request: %w", err)
+	}
+
+	defer func() { _ = httpResp.Body.Close() }()
+
+	// Best-effort: a non-2xx (e.g. a revoked admin key) must not make the
+	// source-name worker retry forever. Give up gracefully and keep the
+	// generic source name; a dead key surfaces on the next ListAccounts.
+	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
+		return "", nil
+	}
+
+	var resp struct {
+		Name string `json:"name"`
+	}
+	if err := json.NewDecoder(httpResp.Body).Decode(&resp); err != nil {
+		return "", fmt.Errorf("cannot decode anthropic organization response: %w", err)
+	}
+
+	return resp.Name, nil
+}
+
 // sentryNameResolver resolves the Sentry organization name.
 type sentryNameResolver struct {
 	httpClient *http.Client

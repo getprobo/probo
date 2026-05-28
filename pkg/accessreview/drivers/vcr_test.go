@@ -50,6 +50,11 @@ func newRecorder(t *testing.T, cassettePath string, envVar string) *recorder.Rec
 		)),
 		recorder.WithHook(func(i *cassette.Interaction) error {
 			i.Request.Headers.Del("Authorization")
+			// Providers like Anthropic authenticate via x-api-key rather
+			// than Authorization; strip it too so a re-record never
+			// persists a raw key.
+			i.Request.Headers.Del("X-Api-Key")
+
 			return nil
 		}, recorder.BeforeSaveHook),
 	)
@@ -104,6 +109,40 @@ func newVCRClient(rec *recorder.Recorder, authValue string) *http.Client {
 	if authValue != "" {
 		transport = &authRoundTripper{
 			authValue: authValue,
+			transport: transport,
+		}
+	}
+
+	return &http.Client{Transport: transport}
+}
+
+// headerRoundTripper injects a value into an arbitrary request header.
+// Used for providers (e.g. Anthropic) that authenticate with a custom
+// header instead of Authorization.
+type headerRoundTripper struct {
+	header    string
+	value     string
+	transport http.RoundTripper
+}
+
+func (rt *headerRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
+	if rt.value != "" {
+		req.Header.Set(rt.header, rt.value)
+	}
+
+	return rt.transport.RoundTrip(req)
+}
+
+// newVCRClientWithHeader is like newVCRClient but injects the auth value
+// into a named header (e.g. "x-api-key") instead of Authorization, for
+// providers that do not use Bearer auth. The header is stripped from the
+// cassette by newRecorder's BeforeSave hook.
+func newVCRClientWithHeader(rec *recorder.Recorder, header, value string) *http.Client {
+	transport := rec.GetDefaultClient().Transport
+	if value != "" {
+		transport = &headerRoundTripper{
+			header:    header,
+			value:     value,
 			transport: transport,
 		}
 	}
