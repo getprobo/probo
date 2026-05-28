@@ -683,13 +683,12 @@ func (r *employeeDocumentResolver) Signed(ctx context.Context, obj *types.Employ
 
 // ApprovalState is the resolver for the approvalState field.
 func (r *employeeDocumentResolver) ApprovalState(ctx context.Context, obj *types.EmployeeDocument) (*coredata.DocumentVersionApprovalDecisionState, error) {
-	if _, err := r.authorize(ctx, obj.ID, probo.ActionEmployeeDocumentGet); err != nil {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionEmployeeDocumentGet)
+	if err != nil {
 		return nil, err
 	}
 
 	identity := authn.IdentityFromContext(ctx)
-
-	scope := coredata.NewScopeFromObjectID(obj.ID)
 
 	state, err := r.probo.Documents.GetViewerApprovalState(ctx, scope, obj.ID, identity.ID)
 	if err != nil {
@@ -791,12 +790,12 @@ func (r *employeeDocumentVersionResolver) Signed(ctx context.Context, obj *types
 
 // ApprovalDecision is the resolver for the approvalDecision field.
 func (r *employeeDocumentVersionResolver) ApprovalDecision(ctx context.Context, obj *types.EmployeeDocumentVersion) (*types.DocumentVersionApprovalDecision, error) {
-	if _, err := r.authorize(ctx, obj.DocumentID, probo.ActionEmployeeDocumentGet); err != nil {
+	scope, err := r.authorize(ctx, obj.DocumentID, probo.ActionEmployeeDocumentGet)
+	if err != nil {
 		return nil, err
 	}
 
 	identity := authn.IdentityFromContext(ctx)
-	scope := coredata.NewScopeFromObjectID(obj.ID)
 
 	decision, err := r.probo.DocumentApprovals.GetViewerDecision(ctx, scope, obj.ID, identity.ID)
 	if err != nil {
