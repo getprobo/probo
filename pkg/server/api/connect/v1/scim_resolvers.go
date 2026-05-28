@@ -8,6 +8,7 @@ package connect_v1
 import (
 	"context"
 	"errors"
+	"strings"
 
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
@@ -42,6 +43,10 @@ func (r *mutationResolver) CreateSCIMConfiguration(ctx context.Context, input ty
 		scimBridge, err := r.iam.OrganizationService.CreateSCIMBridge(ctx, input.OrganizationID, config.ID, *input.ConnectorID)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot create scim bridge", log.Error(err))
+			return nil, gqlutils.Internal(ctx)
+		}
+
+		if !r.ensureSCIMBridgeState(ctx, scimBridge) {
 			return nil, gqlutils.Internal(ctx)
 		}
 
@@ -99,6 +104,10 @@ func (r *mutationResolver) UpdateSCIMBridge(ctx context.Context, input types.Upd
 	bridge, err := r.iam.OrganizationService.UpdateSCIMBridge(ctx, input.OrganizationID, input.ScimBridgeID, input.ExcludedUserNames)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot update scim bridge excluded user names", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	if !r.ensureSCIMBridgeState(ctx, bridge) {
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -215,6 +224,10 @@ func (r *sCIMConfigurationResolver) Bridge(ctx context.Context, obj *types.SCIMC
 		return nil, gqlutils.Internal(ctx)
 	}
 
+	if !r.ensureSCIMBridgeState(ctx, bridge) {
+		return nil, gqlutils.Internal(ctx)
+	}
+
 	return types.NewSCIMBridge(bridge), nil
 }
 
@@ -300,3 +313,20 @@ type sCIMBridgeResolver struct{ *Resolver }
 type sCIMConfigurationResolver struct{ *Resolver }
 type sCIMEventResolver struct{ *Resolver }
 type sCIMEventConnectionResolver struct{ *Resolver }
+
+func (r *Resolver) ensureSCIMBridgeState(ctx context.Context, bridge *coredata.SCIMBridge) bool {
+	state := coredata.SCIMBridgeState(strings.TrimSpace(bridge.State.String()))
+	if state.IsValid() {
+		bridge.State = state
+		return true
+	}
+
+	r.logger.ErrorCtx(
+		ctx,
+		"invalid scim bridge state",
+		log.String("bridge_id", bridge.ID.String()),
+		log.String("state", bridge.State.String()),
+	)
+
+	return false
+}
