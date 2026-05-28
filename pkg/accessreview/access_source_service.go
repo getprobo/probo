@@ -261,9 +261,25 @@ func (s AccessSourceService) Delete(
 				return nil
 			}
 
-			cnnctr := &coredata.Connector{ID: *source.ConnectorID}
-			if err := cnnctr.Delete(ctx, conn, s.scope); err != nil {
-				return fmt.Errorf("cannot delete connector: %w", err)
+			// Garbage-collecting the connector is best-effort. A
+			// concurrent transaction may insert a new access source or
+			// SCIM bridge referencing this connector between the counts
+			// above and the DELETE, producing a foreign-key violation.
+			// Run the delete inside a savepoint so such a failure rolls
+			// back only the GC attempt and still commits the access
+			// source deletion instead of aborting the whole transaction.
+			if err := conn.Savepoint(
+				ctx,
+				func(ctx context.Context, conn pg.Tx) error {
+					cnnctr := &coredata.Connector{ID: *source.ConnectorID}
+					if err := cnnctr.Delete(ctx, conn, s.scope); err != nil {
+						return fmt.Errorf("cannot delete connector: %w", err)
+					}
+
+					return nil
+				},
+			); err != nil {
+				return err
 			}
 
 			return nil

@@ -322,6 +322,12 @@ WHERE %s AND id = @id
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
+		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
+			if pgErr.Code == "23503" {
+				return ErrResourceInUse
+			}
+		}
+
 		return fmt.Errorf("cannot delete connector: %w", err)
 	}
 
