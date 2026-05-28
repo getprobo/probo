@@ -217,17 +217,7 @@ func (r *cookieBannerResolver) TrackerPatterns(ctx context.Context, obj *types.C
 			case coredata.ThirdPartyEntityType:
 				coredataFilter = coredataFilter.WithThirdPartyID(filter.ThirdPartyID)
 			case coredata.CommonThirdPartyEntityType:
-				ids, err := r.cookieBanner.LoadCommonTrackerPatternIDsByCommonThirdPartyID(ctx, *filter.ThirdPartyID)
-				if err != nil {
-					r.logger.ErrorCtx(ctx, "cannot resolve common third party tracker patterns", log.Error(err))
-					return nil, gqlutils.Internal(ctx)
-				}
-
-				if ids == nil {
-					ids = []gid.GID{}
-				}
-
-				coredataFilter = coredataFilter.WithCommonTrackerPatternIDs(ids)
+				coredataFilter = coredataFilter.WithCommonThirdPartyID(filter.ThirdPartyID)
 			default:
 				return nil, gqlutils.Invalidf(ctx, "thirdPartyId must reference a ThirdParty or CommonThirdParty")
 			}

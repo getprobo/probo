@@ -483,36 +483,3 @@ WHERE
 
 	return nil
 }
-
-// LoadIDsByCommonThirdPartyID returns just the IDs of the common tracker
-// patterns linked to the given common third party. Callers use it to feed
-// a `common_tracker_pattern_id = ANY(...)` filter on tracker_patterns
-// without crossing the entity boundary.
-func (ps *CommonTrackerPatterns) LoadIDsByCommonThirdPartyID(
-	ctx context.Context,
-	conn pg.Querier,
-	commonThirdPartyID gid.GID,
-) ([]gid.GID, error) {
-	q := `
-SELECT
-    id
-FROM
-    common_tracker_patterns
-WHERE
-    common_third_party_id = @common_third_party_id
-`
-
-	args := pgx.StrictNamedArgs{"common_third_party_id": commonThirdPartyID}
-
-	rows, err := conn.Query(ctx, q, args)
-	if err != nil {
-		return nil, fmt.Errorf("cannot query common tracker pattern ids: %w", err)
-	}
-
-	ids, err := pgx.CollectRows(rows, pgx.RowTo[gid.GID])
-	if err != nil {
-		return nil, fmt.Errorf("cannot collect common tracker pattern ids: %w", err)
-	}
-
-	return ids, nil
-}
