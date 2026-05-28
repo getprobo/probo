@@ -39,8 +39,8 @@ import { Resend } from "./Resend";
 import { Sentry } from "./Sentry";
 import { Slack } from "./Slack";
 import { Supabase } from "./Supabase";
-import { Tally } from "./Tally";
 import { Tailscale } from "./Tailscale";
+import { Tally } from "./Tally";
 import { Vercel } from "./Vercel";
 
 const thirdParties: Record<string, FC<ComponentProps<"svg">>> = {
