@@ -4,6 +4,13 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.196.0] - 2026-05-27
+
+### Added
+
+- Expose bridge sync errors in the SCIM API and on Google Workspace and Microsoft 365 connector cards
+- Expose profile source field on users in the MCP API
+
 ## [0.195.0] - 2026-05-27
 
 ### Added
