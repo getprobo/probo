@@ -115,6 +115,109 @@ func TestUser_UpdateMembership(t *testing.T) {
 	assert.Equal(t, "VIEWER", mutationResult.UpdateMembership.Membership.Role)
 }
 
+func TestUser_UpdateMembershipRejectsLastOwnerDemotion(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+
+	queryMembers := `
+		query($id: ID!) {
+			node(id: $id) {
+				... on Organization {
+					members(first: 10) {
+						edges {
+							node {
+								id
+								identity { id }
+								role
+							}
+						}
+					}
+				}
+			}
+		}
+	`
+
+	var membersResult struct {
+		Node struct {
+			Members struct {
+				Edges []struct {
+					Node struct {
+						ID       string `json:"id"`
+						Identity struct {
+							ID string `json:"id"`
+						} `json:"identity"`
+						Role string `json:"role"`
+					} `json:"node"`
+				} `json:"edges"`
+			} `json:"members"`
+		} `json:"node"`
+	}
+
+	err := owner.ExecuteConnect(queryMembers, map[string]any{
+		"id": owner.GetOrganizationID().String(),
+	}, &membersResult)
+	require.NoError(t, err)
+
+	var ownerMembershipID string
+	for _, edge := range membersResult.Node.Members.Edges {
+		if edge.Node.Identity.ID == owner.GetUserID().String() {
+			ownerMembershipID = edge.Node.ID
+			assert.Equal(t, "OWNER", edge.Node.Role)
+			break
+		}
+	}
+
+	require.NotEmpty(t, ownerMembershipID, "Should find owner member")
+
+	mutation := `
+		mutation($input: UpdateMembershipInput!) {
+			updateMembership(input: $input) {
+				membership {
+					id
+					role
+				}
+			}
+		}
+	`
+
+	err = owner.ExecuteConnect(mutation, map[string]any{
+		"input": map[string]any{
+			"organizationId": owner.GetOrganizationID().String(),
+			"membershipId":   ownerMembershipID,
+			"role":           "VIEWER",
+		},
+	}, nil)
+	testutil.RequireErrorCode(t, err, "CONFLICT")
+
+	var gqlErrors testutil.GraphQLErrors
+	require.ErrorAs(t, err, &gqlErrors)
+	assert.Equal(t, "cannot demote last active owner", gqlErrors[0].Message)
+
+	queryMembership := `
+		query($id: ID!) {
+			node(id: $id) {
+				... on Membership {
+					id
+					role
+				}
+			}
+		}
+	`
+
+	var membershipResult struct {
+		Node struct {
+			ID   string `json:"id"`
+			Role string `json:"role"`
+		} `json:"node"`
+	}
+
+	err = owner.ExecuteConnect(queryMembership, map[string]any{
+		"id": ownerMembershipID,
+	}, &membershipResult)
+	require.NoError(t, err)
+	assert.Equal(t, "OWNER", membershipResult.Node.Role)
+}
+
 func TestUser_RemoveUser(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
