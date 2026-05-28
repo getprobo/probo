@@ -14,7 +14,7 @@
 
 import { humanizeSeconds } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
-import { Avatar, Badge, Card, PropertyRow } from "@probo/ui";
+import { Badge, Card, PropertyRow } from "@probo/ui";
 import { graphql, useFragment } from "react-relay";
 
 import type { TrackerPatternPropertiesSection_trackerPattern$key } from "#/__generated__/core/TrackerPatternPropertiesSection_trackerPattern.graphql";
@@ -106,17 +106,12 @@ export function TrackerPatternPropertiesSection({
         {pattern.thirdParty
           ? (
               <div className="flex items-center gap-2">
-                <Avatar name={pattern.thirdParty.name} />
                 <span className="text-sm">{pattern.thirdParty.name}</span>
               </div>
             )
           : pattern.commonThirdParty
             ? (
                 <div className="flex items-center gap-2">
-                  <Avatar
-                    name={pattern.commonThirdParty.name}
-                    src={pattern.commonThirdParty.logoUrl}
-                  />
                   <span className="text-sm">{pattern.commonThirdParty.name}</span>
                 </div>
               )
