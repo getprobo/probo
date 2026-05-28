@@ -4,6 +4,12 @@ All notable changes to the `@probo/cookie-banner` SDK will be documented in this
 
 ## Unreleased
 
+## [0.7.0] - 2026-05-27
+
+### Added
+
+- Re-export public domain types (`BannerConfig`, `Category`, `Regulation`, `ConsentAction`, `ConsentRecord`, `CookieItem`, `VisitorConsent`) from the package entry point
+
 ## [0.6.0] - 2026-05-26
 
 ### Added
