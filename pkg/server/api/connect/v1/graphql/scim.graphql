@@ -74,8 +74,10 @@ type SCIMBridgeTypeInfo {
 enum SCIMBridgeState
   @goModel(model: "go.probo.inc/probo/pkg/coredata.SCIMBridgeState") {
   PENDING @goEnum(value: "go.probo.inc/probo/pkg/coredata.SCIMBridgeStatePending")
+  SYNCING @goEnum(value: "go.probo.inc/probo/pkg/coredata.SCIMBridgeStateSyncing")
   ACTIVE @goEnum(value: "go.probo.inc/probo/pkg/coredata.SCIMBridgeStateActive")
   FAILED @goEnum(value: "go.probo.inc/probo/pkg/coredata.SCIMBridgeStateFailed")
+  DISABLED @goEnum(value: "go.probo.inc/probo/pkg/coredata.SCIMBridgeStateDisabled")
 }
 
 type SCIMEvent implements Node {
