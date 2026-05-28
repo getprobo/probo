@@ -187,6 +187,14 @@ components:
         - INACTIVE
       go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.ProfileState
 
+    ProfileSource:
+      type: string
+      enum:
+        - MANUAL
+        - SCIM
+        - SAML
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.ProfileSource
+
     Regulation:
       type: string
       enum:
@@ -470,6 +478,7 @@ components:
         - email_address
         - additional_email_addresses
         - kind
+        - source
         - state
         - created_at
         - updated_at
@@ -496,6 +505,9 @@ components:
             - string
             - "null"
           description: Profile kind
+        source:
+          $ref: "#/components/schemas/ProfileSource"
+          description: Profile source (MANUAL, SCIM, or SAML)
         state:
           $ref: "#/components/schemas/ProfileState"
           description: Profile state (ACTIVE or INACTIVE)
