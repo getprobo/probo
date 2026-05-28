@@ -39,18 +39,11 @@ import { useOrganizationId } from "#/hooks/useOrganizationId";
 const microsoft365ConnectorFragment = graphql`
   fragment Microsoft365ConnectorFragment on SCIMConfiguration {
     id
-    eventsLatest: events(first: 1) {
-      edges {
-        node {
-          id
-          errorMessage
-        }
-      }
-    }
     bridge {
       id
       type
       state
+      syncError
       excludedUserNames
       connector {
         id
@@ -96,7 +89,7 @@ export function Microsoft365Connector(props: {
   const organizationId = useOrganizationId();
   const { __, dateTimeFormat } = useTranslate();
   const bridgeState = bridge?.state ?? null;
-  const latestBridgeError = data?.eventsLatest?.edges?.[0]?.node?.errorMessage ?? null;
+  const latestBridgeError = bridge?.syncError ?? null;
   const isBridgeFailed = bridgeState === "FAILED";
   const isBridgePending = bridgeState === "PENDING";
   const bridgeStatusBadgeVariant = isBridgeFailed

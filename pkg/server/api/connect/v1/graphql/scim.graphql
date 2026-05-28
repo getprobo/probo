@@ -23,6 +23,7 @@ type SCIMConfiguration implements Node {
 type SCIMBridge implements Node {
   id: ID!
   state: SCIMBridgeState!
+  syncError: String
   scimConfiguration: SCIMConfiguration @goField(forceResolver: true)
   connector: Connector @goField(forceResolver: true)
   type: SCIMBridgeType!
