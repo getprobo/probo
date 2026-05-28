@@ -159,7 +159,19 @@ func (h *trackerMappingHandler) Process(ctx context.Context, tp coredata.Tracker
 			}
 
 			if commonPatternID != nil || thirdPartyID != nil {
-				if err := tp.UpdateMapping(ctx, tx, commonPatternID, thirdPartyID); err != nil {
+				tp.CommonTrackerPatternID = commonPatternID
+				tp.ThirdPartyID = thirdPartyID
+				tp.UpdatedAt = time.Now()
+
+				if tp.Description == "" && commonPatternID != nil {
+					var commonPattern coredata.CommonTrackerPattern
+					if err := commonPattern.LoadByID(ctx, tx, *commonPatternID); err == nil && commonPattern.Description != "" {
+						tp.Description = commonPattern.Description
+					}
+				}
+
+				scope := coredata.NewScopeFromObjectID(tp.ID)
+				if err := tp.Update(ctx, tx, scope); err != nil {
 					return fmt.Errorf("cannot update tracker pattern mapping: %w", err)
 				}
 

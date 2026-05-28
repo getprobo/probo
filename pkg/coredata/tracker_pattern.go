@@ -505,6 +505,8 @@ func (tp *TrackerPattern) Update(
 	q := `
 UPDATE tracker_patterns
 SET
+	common_tracker_pattern_id = @common_tracker_pattern_id,
+	third_party_id = @third_party_id,
 	cookie_category_id = @cookie_category_id,
 	display_name = @display_name,
 	max_age_seconds = @max_age_seconds,
@@ -521,15 +523,17 @@ WHERE
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"id":                 tp.ID,
-		"cookie_category_id": tp.CookieCategoryID,
-		"display_name":       tp.DisplayName,
-		"max_age_seconds":    tp.MaxAgeSeconds,
-		"description":        tp.Description,
-		"excluded":           tp.Excluded,
-		"source":             tp.Source,
-		"last_matched_at":    tp.LastMatchedAt,
-		"updated_at":         tp.UpdatedAt,
+		"id":                        tp.ID,
+		"common_tracker_pattern_id": tp.CommonTrackerPatternID,
+		"third_party_id":            tp.ThirdPartyID,
+		"cookie_category_id":        tp.CookieCategoryID,
+		"display_name":              tp.DisplayName,
+		"max_age_seconds":           tp.MaxAgeSeconds,
+		"description":               tp.Description,
+		"excluded":                  tp.Excluded,
+		"source":                    tp.Source,
+		"last_matched_at":           tp.LastMatchedAt,
+		"updated_at":                tp.UpdatedAt,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
@@ -1103,43 +1107,6 @@ WHERE id = @id
 	if err != nil {
 		return fmt.Errorf("cannot set mapping requested: %w", err)
 	}
-
-	return nil
-}
-
-func (tp *TrackerPattern) UpdateMapping(
-	ctx context.Context,
-	tx pg.Tx,
-	commonTrackerPatternID *gid.GID,
-	thirdPartyID *gid.GID,
-) error {
-	q := `
-UPDATE tracker_patterns
-SET
-	common_tracker_pattern_id = @common_tracker_pattern_id,
-	third_party_id = @third_party_id,
-	mapping_requested_at = NULL,
-	updated_at = @updated_at
-WHERE id = @id
-`
-
-	now := time.Now()
-	args := pgx.StrictNamedArgs{
-		"id":                        tp.ID,
-		"common_tracker_pattern_id": commonTrackerPatternID,
-		"third_party_id":            thirdPartyID,
-		"updated_at":                now,
-	}
-
-	_, err := tx.Exec(ctx, q, args)
-	if err != nil {
-		return fmt.Errorf("cannot update tracker pattern mapping: %w", err)
-	}
-
-	tp.CommonTrackerPatternID = commonTrackerPatternID
-	tp.ThirdPartyID = thirdPartyID
-	tp.MappingRequestedAt = nil
-	tp.UpdatedAt = now
 
 	return nil
 }
