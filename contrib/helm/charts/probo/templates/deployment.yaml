@@ -11,6 +11,7 @@ spec:
   selector:
     matchLabels:
       {{- include "probo.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: server
   template:
     metadata:
       annotations:
@@ -20,6 +21,7 @@ spec:
         {{- end }}
       labels:
         {{- include "probo.labels" . | nindent 8 }}
+        app.kubernetes.io/component: server
         {{- with .Values.podLabels }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
@@ -75,7 +77,7 @@ spec:
               value: {{ join "," .Values.probo.cors.allowedOrigins | quote }}
             # PostgreSQL Database
             - name: PG_ADDR
-              value: {{ if .Values.postgresql.enabled }}{{ printf "%s-postgresql-demo:5432" .Release.Name | quote }}{{ else }}{{ .Values.probo.pg.addr | required "probo.pg.addr is required when postgresql.enabled=false" | quote }}{{ end }}
+              value: {{ printf "%s:%v" (include "probo.postgresql.host" .) (include "probo.postgresql.port" .) | quote }}
             - name: PG_USERNAME
               value: {{ include "probo.postgresql.username" . | quote }}
             - name: PG_PASSWORD
@@ -128,6 +130,11 @@ spec:
                 secretKeyRef:
                   name: {{ include "probo.fullname" . }}
                   key: password-pepper
+            - name: OAUTH2_SERVER_SIGNING_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "probo.fullname" . }}
+                  key: oauth2-signing-key
             - name: AUTH_PASSWORD_ITERATIONS
               value: {{ .Values.probo.auth.passwordIterations | quote }}
             {{- if .Values.probo.saml.enabled }}
@@ -271,6 +278,13 @@ spec:
               value: {{ .Values.probo.customDomains.acme.email | quote }}
             - name: ACME_KEY_TYPE
               value: {{ .Values.probo.customDomains.acme.keyType | quote }}
+            {{- if .Values.probo.customDomains.acme.accountKey }}
+            - name: ACME_ACCOUNT_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "probo.fullname" . }}
+                  key: acme-account-key
+            {{- end }}
             {{- end }}
             # Connectors (Slack OAuth2)
             {{- range .Values.probo.connectors }}

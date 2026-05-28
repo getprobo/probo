@@ -40,6 +40,8 @@ export ENCRYPTION_KEY=$(openssl rand -base64 32)
 export COOKIE_SECRET=$(openssl rand -base64 32)
 export PASSWORD_PEPPER=$(openssl rand -base64 32)
 export TRUST_TOKEN_SECRET=$(openssl rand -base64 32)
+openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 \
+  -out oauth2_signing_key.pem
 ```
 
 #### Download remote dependencies
@@ -57,6 +59,7 @@ helm install my-probo ./charts/probo \
   --set probo.auth.cookieSecret="$COOKIE_SECRET" \
   --set probo.auth.passwordPepper="$PASSWORD_PEPPER" \
   --set probo.trustAuth.tokenSecret="$TRUST_TOKEN_SECRET" \
+  --set-file probo.oauth2.signingKey="./oauth2_signing_key.pem" \
   --set postgresql.enabled=true \
   --set postgresql.auth.postgresUser="probod" \
   --set postgresql.auth.postgresPassword="your-db-password" \
@@ -76,6 +79,7 @@ helm install my-probo ./charts/probo \
   --set probo.auth.cookieSecret="$COOKIE_SECRET" \
   --set probo.auth.passwordPepper="$PASSWORD_PEPPER" \
   --set probo.trustAuth.tokenSecret="$TRUST_TOKEN_SECRET" \
+  --set-file probo.oauth2.signingKey="./oauth2_signing_key.pem" \
   --set probo.mailer.smtp.password="smtp-password" \
   --set postgresql.enabled=true \
   --set postgresql.auth.postgresPassword="probod" \
@@ -174,6 +178,7 @@ All deployments require:
 - `probo.auth.cookieSecret` - For session management
 - `probo.auth.passwordPepper` - For password hashing
 - `probo.trustAuth.tokenSecret` - For trust center tokens
+- `probo.oauth2.signingKey` - PEM private key used to sign OAuth2 tokens
 - `postgresql.host` - PostgreSQL server hostname
 - `postgresql.password` - Database password
 - `s3.accessKeyId` - S3 access credentials
@@ -200,6 +205,7 @@ helm install my-probo ././charts/probo \
   --set probo.auth.cookieSecret="$COOKIE_SECRET" \
   --set probo.auth.passwordPepper="$PASSWORD_PEPPER" \
   --set probo.trustAuth.tokenSecret="$TRUST_TOKEN_SECRET" \
+  --set-file probo.oauth2.signingKey="./oauth2_signing_key.pem" \
   --set postgresql.host="mydb.abc123.us-east-1.rds.amazonaws.com" \
   --set postgresql.password="<rds-password>" \
   --set s3.region="us-east-1" \
@@ -225,6 +231,7 @@ helm install my-probo ././charts/probo \
   --set probo.auth.cookieSecret="$COOKIE_SECRET" \
   --set probo.auth.passwordPepper="$PASSWORD_PEPPER" \
   --set probo.trustAuth.tokenSecret="$TRUST_TOKEN_SECRET" \
+  --set-file probo.oauth2.signingKey="./oauth2_signing_key.pem" \
   --set postgresql.host="10.0.0.5" \
   --set postgresql.password="<cloudsql-password>" \
   --set s3.endpoint="https://storage.googleapis.com" \
@@ -235,7 +242,8 @@ helm install my-probo ././charts/probo \
 
 ### Azure
 - PostgreSQL: Azure Database for PostgreSQL
-- Storage: Azure Blob Storage (with S3 compatibility)
+- Storage: Prefer native S3-compatible backends (Azure Blob via S3 proxies is
+  currently not officially supported)
 - Kubernetes: Azure Kubernetes Service (AKS)
 
 #### Example
@@ -244,12 +252,13 @@ helm install my-probo ././charts/probo \
 ```bash
 # Prerequisites:
 # - Azure Database for PostgreSQL instance
-# - Azure Blob Storage container with S3 compatibility
+# - Prefer AWS S3/GCS/Spaces (Azure Blob via S3 proxy is not officially supported)
 helm install my-probo ././charts/probo \
   --set probo.encryptionKey="$ENCRYPTION_KEY" \
   --set probo.auth.cookieSecret="$COOKIE_SECRET" \
   --set probo.auth.passwordPepper="$PASSWORD_PEPPER" \
   --set probo.trustAuth.tokenSecret="$TRUST_TOKEN_SECRET" \
+  --set-file probo.oauth2.signingKey="./oauth2_signing_key.pem" \
   --set postgresql.host="mydb.postgres.database.azure.com" \
   --set postgresql.password="<azure-db-password>" \
   --set s3.endpoint="https://<your-storage-account>.blob.core.windows.net" \
@@ -259,7 +268,9 @@ helm install my-probo ././charts/probo \
   --set s3.usePathStyle=true
 ```
 
-> **Note:** Azure Blob Storage requires `s3.usePathStyle=true` to construct URLs correctly (path-style: `https://account.blob.core.windows.net/container/...` instead of virtual-hosted style: `https://bucket.account.blob.core.windows.net/...`).
+> **Note:** `s3.usePathStyle=true` is necessary for some S3-compatible
+> providers, but it does not address known Azure Blob metadata incompatibilities
+> when used behind S3 proxies.
 
 ### DigitalOcean
 - PostgreSQL: Managed PostgreSQL Database
@@ -277,6 +288,7 @@ helm install my-probo ././charts/probo \
   --set probo.auth.cookieSecret="$COOKIE_SECRET" \
   --set probo.auth.passwordPepper="$PASSWORD_PEPPER" \
   --set probo.trustAuth.tokenSecret="$TRUST_TOKEN_SECRET" \
+  --set-file probo.oauth2.signingKey="./oauth2_signing_key.pem" \
   --set postgresql.host="db-postgresql-nyc1-12345.ondigitalocean.com" \
   --set postgresql.password="<db-password>" \
   --set s3.region="nyc3" \
@@ -391,6 +403,7 @@ spec:
 | metrics.serviceMonitor.relabelings                      | list    | `[]`                                               | Relabeling configs for the ServiceMonitor                                                           |
 | probo.baseUrl                                           | string  | `"probo.example.com"`                              | Public hostname where Probo will be accessible                                                      |
 | probo.encryptionKey                                     | string  | `""`                                               | **REQUIRED** Base64-encoded encryption key (generate with: openssl rand -base64 32)                 |
+| probo.oauth2.signingKey                                 | string  | `""`                                               | **REQUIRED** PEM private key for OAuth2 signing (set with --set-file)                                |
 | probo.service.port                                      | int     | `8080`                                             | Probo application service port                                                                      |
 | probo.metrics.port                                      | int     | `8081`                                             | Probo metrics service port                                                                          |
 | probo.tracing.enabled                                   | bool    | `false`                                            | Enable OpenTelemetry tracing                                                                        |
