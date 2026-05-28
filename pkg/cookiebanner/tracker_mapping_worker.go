@@ -117,13 +117,33 @@ func (h *trackerMappingHandler) Process(ctx context.Context, tp coredata.Tracker
 					return fmt.Errorf("cannot load cookie banner for domain filtering: %w", err)
 				}
 
+				banner.Origin = "https://t.probo.com"
+
 				commonPatternID, err = h.matchByPattern(ctx, tx, tp)
 				if err != nil {
 					return fmt.Errorf("cannot match by pattern: %w", err)
 				}
 
+				var domains []string
+
 				if commonPatternID == nil {
-					commonPatternID, err = h.matchByDomain(ctx, tx, tp, banner.Origin)
+					var trackers coredata.DetectedTrackers
+
+					domains, err = trackers.LoadInitiatorDomainsByTrackerPatternID(ctx, tx, tp.ID, 10)
+					if err != nil {
+						return fmt.Errorf("cannot load initiator domains: %w", err)
+					}
+
+					domains = uri.FilterFirstPartyDomains(domains, banner.Origin)
+
+					commonPatternID, err = h.matchBySiblingOrigin(ctx, tx, tp, domains)
+					if err != nil {
+						return fmt.Errorf("cannot match by sibling origin: %w", err)
+					}
+				}
+
+				if commonPatternID == nil {
+					commonPatternID, err = h.matchByDomain(ctx, tx, tp, domains)
 					if err != nil {
 						return fmt.Errorf("cannot match by domain: %w", err)
 					}
@@ -221,25 +241,17 @@ func (h *trackerMappingHandler) matchByPattern(
 // CommonTrackerPattern linking the two. As with matchByPattern,
 // third-party resolution is deferred to promoteThirdParty.
 //
-// Domains that share the scanned site's eTLD+1 are filtered out before
-// querying. Tracker scripts loaded through a first-party proxy (e.g.
-// t.probo.com proxying PostHog on a probo.com site) would otherwise
-// match the site owner's own CommonThirdParty entry.
+// The caller is responsible for loading and filtering the domains
+// (removing first-party domains). Tracker scripts loaded through a
+// first-party proxy (e.g. t.probo.com proxying PostHog on a probo.com
+// site) would otherwise match the site owner's own CommonThirdParty
+// entry.
 func (h *trackerMappingHandler) matchByDomain(
 	ctx context.Context,
 	tx pg.Tx,
 	tp coredata.TrackerPattern,
-	siteOrigin string,
+	domains []string,
 ) (*gid.GID, error) {
-	var trackers coredata.DetectedTrackers
-
-	domains, err := trackers.LoadInitiatorDomainsByTrackerPatternID(ctx, tx, tp.ID, 10)
-	if err != nil {
-		return nil, fmt.Errorf("cannot load initiator domains: %w", err)
-	}
-
-	domains = uri.FilterFirstPartyDomains(domains, siteOrigin)
-
 	if len(domains) == 0 {
 		return nil, nil
 	}
@@ -438,6 +450,151 @@ func (h *trackerMappingHandler) resolveOrCreateCommonThirdParty(
 	)
 
 	return &party.ID, nil
+}
+
+// matchBySiblingOrigin finds other tracker patterns on the same banner
+// that share initiator domains with the current pattern and are already
+// mapped to a common third party. Sharing an origin across multiple
+// detected patterns is a strong indicator of the same third party.
+func (h *trackerMappingHandler) matchBySiblingOrigin(
+	ctx context.Context,
+	tx pg.Tx,
+	tp coredata.TrackerPattern,
+	domains []string,
+) (*gid.GID, error) {
+	if len(domains) == 0 {
+		return nil, nil
+	}
+
+	var trackers coredata.DetectedTrackers
+
+	siblingIDs, err := trackers.LoadSiblingPatternIDsByInitiatorDomains(
+		ctx,
+		tx,
+		tp.CookieBannerID,
+		domains,
+		tp.ID,
+		20,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("cannot load sibling pattern ids: %w", err)
+	}
+
+	if len(siblingIDs) == 0 {
+		return nil, nil
+	}
+
+	scope := coredata.NewScopeFromObjectID(tp.ID)
+
+	commonThirdPartyID, err := h.resolveCommonThirdPartyFromSiblings(ctx, tx, scope, siblingIDs)
+	if err != nil {
+		return nil, fmt.Errorf("cannot resolve common third party from siblings: %w", err)
+	}
+
+	if commonThirdPartyID == nil {
+		return nil, nil
+	}
+
+	now := time.Now()
+	commonPattern := coredata.CommonTrackerPattern{
+		ID:                 gid.New(gid.NilTenant, coredata.CommonTrackerPatternEntityType),
+		CommonThirdPartyID: commonThirdPartyID,
+		TrackerType:        tp.TrackerType,
+		Pattern:            tp.Pattern,
+		MatchType:          tp.MatchType,
+		Description:        tp.Description,
+		MaxAgeSeconds:      tp.MaxAgeSeconds,
+		Confidence:         0.7,
+		CreatedAt:          now,
+		UpdatedAt:          now,
+	}
+
+	if _, err := commonPattern.Upsert(ctx, tx); err != nil {
+		return nil, fmt.Errorf("cannot upsert common tracker pattern from sibling origin: %w", err)
+	}
+
+	h.logger.InfoCtx(
+		ctx,
+		"matched tracker pattern via sibling origin",
+		log.String("pattern", tp.Pattern),
+		log.String("tracker_pattern_id", tp.ID.String()),
+		log.String("common_third_party_id", commonThirdPartyID.String()),
+	)
+
+	return &commonPattern.ID, nil
+}
+
+// resolveCommonThirdPartyFromSiblings extracts a single unambiguous
+// CommonThirdPartyID from sibling patterns. It first checks siblings
+// with a third_party_id (fully promoted), then falls back to siblings
+// with only a common_tracker_pattern_id.
+func (h *trackerMappingHandler) resolveCommonThirdPartyFromSiblings(
+	ctx context.Context,
+	conn pg.Querier,
+	scope coredata.Scoper,
+	siblingIDs []gid.GID,
+) (*gid.GID, error) {
+	var patterns coredata.TrackerPatterns
+
+	thirdPartyIDs, err := patterns.LoadDistinctThirdPartyIDsByIDs(ctx, conn, scope, siblingIDs)
+	if err != nil {
+		return nil, fmt.Errorf("cannot load distinct third party ids from siblings: %w", err)
+	}
+
+	if len(thirdPartyIDs) > 0 {
+		commonIDs := make(map[gid.GID]struct{})
+
+		for _, tpID := range thirdPartyIDs {
+			var tp coredata.ThirdParty
+			if err := tp.LoadByID(ctx, conn, scope, tpID); err != nil {
+				continue
+			}
+
+			if tp.CommonThirdPartyID != nil {
+				commonIDs[*tp.CommonThirdPartyID] = struct{}{}
+			}
+		}
+
+		if len(commonIDs) == 1 {
+			for id := range commonIDs {
+				return &id, nil
+			}
+		}
+
+		if len(commonIDs) > 1 {
+			return nil, nil
+		}
+	}
+
+	commonPatternIDs, err := patterns.LoadDistinctCommonTrackerPatternIDsByIDs(ctx, conn, scope, siblingIDs)
+	if err != nil {
+		return nil, fmt.Errorf("cannot load distinct common tracker pattern ids from siblings: %w", err)
+	}
+
+	if len(commonPatternIDs) == 0 {
+		return nil, nil
+	}
+
+	commonIDs := make(map[gid.GID]struct{})
+
+	for _, cpID := range commonPatternIDs {
+		var cp coredata.CommonTrackerPattern
+		if err := cp.LoadByID(ctx, conn, cpID); err != nil {
+			continue
+		}
+
+		if cp.CommonThirdPartyID != nil {
+			commonIDs[*cp.CommonThirdPartyID] = struct{}{}
+		}
+	}
+
+	if len(commonIDs) == 1 {
+		for id := range commonIDs {
+			return &id, nil
+		}
+	}
+
+	return nil, nil
 }
 
 func (h *trackerMappingHandler) createUnmatchedPattern(

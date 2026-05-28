@@ -490,6 +490,547 @@ func TestProcess_NoOpWhenAlreadyPromoted(t *testing.T) {
 	assert.Equal(t, preExisting.ID, *reloaded.ThirdPartyID, "third_party_id must not be overwritten")
 }
 
+func TestMatchBySiblingOrigin_SiblingWithThirdPartyID(t *testing.T) {
+	t.Parallel()
+
+	client := newTestPgClient(t)
+	ctx := context.Background()
+	fx := seedPromotionFixture(t, ctx, client)
+
+	now := time.Now().UTC().Truncate(time.Microsecond)
+
+	orgThirdParty := coredata.ThirdParty{
+		ID:                 gid.New(fx.scope.GetTenantID(), coredata.ThirdPartyEntityType),
+		OrganizationID:     fx.organizationID,
+		CommonThirdPartyID: &fx.commonThirdPartyID,
+		Name:               "Google LLC",
+		Category:           coredata.ThirdPartyCategoryAnalytics,
+		Certifications:     []string{},
+		Countries:          coredata.CountryCodes{},
+		CreatedAt:          now,
+		UpdatedAt:          now,
+	}
+
+	siblingPattern := coredata.TrackerPattern{
+		ID:                     gid.New(fx.scope.GetTenantID(), coredata.TrackerPatternEntityType),
+		OrganizationID:         fx.organizationID,
+		CookieBannerID:         fx.banner.ID,
+		CookieCategoryID:       fx.normalCategoryID,
+		CommonTrackerPatternID: &fx.commonPatternID,
+		ThirdPartyID:           &orgThirdParty.ID,
+		TrackerType:            coredata.TrackerTypeCookie,
+		Pattern:                "_gid",
+		MatchType:              coredata.TrackerPatternMatchTypeExact,
+		DisplayName:            "_gid",
+		CreatedAt:              now,
+		UpdatedAt:              now,
+	}
+
+	unmappedPattern := coredata.TrackerPattern{
+		ID:               gid.New(fx.scope.GetTenantID(), coredata.TrackerPatternEntityType),
+		OrganizationID:   fx.organizationID,
+		CookieBannerID:   fx.banner.ID,
+		CookieCategoryID: fx.normalCategoryID,
+		TrackerType:      coredata.TrackerTypeCookie,
+		Pattern:          "_ga_unknown",
+		MatchType:        coredata.TrackerPatternMatchTypeExact,
+		DisplayName:      "_ga_unknown",
+		CreatedAt:        now,
+		UpdatedAt:        now,
+	}
+
+	initiatorDomain := "www.googletagmanager.com"
+	siblingDetected := coredata.DetectedTracker{
+		ID:               gid.New(fx.scope.GetTenantID(), coredata.DetectedTrackerEntityType),
+		CookieBannerID:   fx.banner.ID,
+		TrackerPatternID: &siblingPattern.ID,
+		TrackerType:      coredata.TrackerTypeCookie,
+		Identifier:       "_gid",
+		InitiatorDomain:  &initiatorDomain,
+		LastDetectedAt:   now,
+		CreatedAt:        now,
+		UpdatedAt:        now,
+	}
+
+	unmappedDetected := coredata.DetectedTracker{
+		ID:               gid.New(fx.scope.GetTenantID(), coredata.DetectedTrackerEntityType),
+		CookieBannerID:   fx.banner.ID,
+		TrackerPatternID: &unmappedPattern.ID,
+		TrackerType:      coredata.TrackerTypeCookie,
+		Identifier:       "_ga_unknown",
+		InitiatorDomain:  &initiatorDomain,
+		LastDetectedAt:   now,
+		CreatedAt:        now,
+		UpdatedAt:        now,
+	}
+
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		if err := orgThirdParty.Insert(ctx, tx, fx.scope); err != nil {
+			return err
+		}
+
+		if err := siblingPattern.Insert(ctx, tx, fx.scope); err != nil {
+			return err
+		}
+
+		if err := unmappedPattern.Insert(ctx, tx, fx.scope); err != nil {
+			return err
+		}
+
+		if _, err := siblingDetected.Upsert(ctx, tx, fx.scope); err != nil {
+			return err
+		}
+
+		if _, err := unmappedDetected.Upsert(ctx, tx, fx.scope); err != nil {
+			return err
+		}
+
+		return nil
+	}))
+
+	h := newMappingHandler(client)
+
+	var got *gid.GID
+
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		var err error
+
+		got, err = h.matchBySiblingOrigin(ctx, tx, unmappedPattern, []string{"googletagmanager.com"})
+
+		return err
+	}))
+
+	require.NotNil(t, got, "sibling origin match should return a common tracker pattern ID")
+
+	var commonPattern coredata.CommonTrackerPattern
+
+	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+		return commonPattern.LoadByID(ctx, conn, *got)
+	}))
+
+	require.NotNil(t, commonPattern.CommonThirdPartyID)
+	assert.Equal(t, fx.commonThirdPartyID, *commonPattern.CommonThirdPartyID)
+	assert.Equal(t, float32(0.7), commonPattern.Confidence)
+}
+
+func TestMatchBySiblingOrigin_AmbiguousThirdParties(t *testing.T) {
+	t.Parallel()
+
+	client := newTestPgClient(t)
+	ctx := context.Background()
+	fx := seedPromotionFixture(t, ctx, client)
+
+	now := time.Now().UTC().Truncate(time.Microsecond)
+
+	otherCommonThirdPartyID := gid.New(gid.NilTenant, coredata.CommonThirdPartyEntityType)
+	otherCommonThirdParty := coredata.CommonThirdParty{
+		ID:             otherCommonThirdPartyID,
+		Name:           "Facebook",
+		Slug:           "facebook",
+		Category:       coredata.ThirdPartyCategoryMarketing,
+		Certifications: []string{},
+		CreatedAt:      now,
+		UpdatedAt:      now,
+	}
+
+	orgThirdPartyA := coredata.ThirdParty{
+		ID:                 gid.New(fx.scope.GetTenantID(), coredata.ThirdPartyEntityType),
+		OrganizationID:     fx.organizationID,
+		CommonThirdPartyID: &fx.commonThirdPartyID,
+		Name:               "Google",
+		Category:           coredata.ThirdPartyCategoryAnalytics,
+		Certifications:     []string{},
+		Countries:          coredata.CountryCodes{},
+		CreatedAt:          now,
+		UpdatedAt:          now,
+	}
+
+	orgThirdPartyB := coredata.ThirdParty{
+		ID:                 gid.New(fx.scope.GetTenantID(), coredata.ThirdPartyEntityType),
+		OrganizationID:     fx.organizationID,
+		CommonThirdPartyID: &otherCommonThirdPartyID,
+		Name:               "Facebook",
+		Category:           coredata.ThirdPartyCategoryMarketing,
+		Certifications:     []string{},
+		Countries:          coredata.CountryCodes{},
+		CreatedAt:          now,
+		UpdatedAt:          now,
+	}
+
+	siblingA := coredata.TrackerPattern{
+		ID:               gid.New(fx.scope.GetTenantID(), coredata.TrackerPatternEntityType),
+		OrganizationID:   fx.organizationID,
+		CookieBannerID:   fx.banner.ID,
+		CookieCategoryID: fx.normalCategoryID,
+		ThirdPartyID:     &orgThirdPartyA.ID,
+		TrackerType:      coredata.TrackerTypeCookie,
+		Pattern:          "sibling_a",
+		MatchType:        coredata.TrackerPatternMatchTypeExact,
+		DisplayName:      "sibling_a",
+		CreatedAt:        now,
+		UpdatedAt:        now,
+	}
+
+	siblingB := coredata.TrackerPattern{
+		ID:               gid.New(fx.scope.GetTenantID(), coredata.TrackerPatternEntityType),
+		OrganizationID:   fx.organizationID,
+		CookieBannerID:   fx.banner.ID,
+		CookieCategoryID: fx.normalCategoryID,
+		ThirdPartyID:     &orgThirdPartyB.ID,
+		TrackerType:      coredata.TrackerTypeCookie,
+		Pattern:          "sibling_b",
+		MatchType:        coredata.TrackerPatternMatchTypeExact,
+		DisplayName:      "sibling_b",
+		CreatedAt:        now,
+		UpdatedAt:        now,
+	}
+
+	unmappedPattern := coredata.TrackerPattern{
+		ID:               gid.New(fx.scope.GetTenantID(), coredata.TrackerPatternEntityType),
+		OrganizationID:   fx.organizationID,
+		CookieBannerID:   fx.banner.ID,
+		CookieCategoryID: fx.normalCategoryID,
+		TrackerType:      coredata.TrackerTypeCookie,
+		Pattern:          "ambiguous_test",
+		MatchType:        coredata.TrackerPatternMatchTypeExact,
+		DisplayName:      "ambiguous_test",
+		CreatedAt:        now,
+		UpdatedAt:        now,
+	}
+
+	sharedDomain := "cdn.shared-tracker.com"
+
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		if err := otherCommonThirdParty.Insert(ctx, tx); err != nil {
+			return err
+		}
+
+		if err := orgThirdPartyA.Insert(ctx, tx, fx.scope); err != nil {
+			return err
+		}
+
+		if err := orgThirdPartyB.Insert(ctx, tx, fx.scope); err != nil {
+			return err
+		}
+
+		if err := siblingA.Insert(ctx, tx, fx.scope); err != nil {
+			return err
+		}
+
+		if err := siblingB.Insert(ctx, tx, fx.scope); err != nil {
+			return err
+		}
+
+		if err := unmappedPattern.Insert(ctx, tx, fx.scope); err != nil {
+			return err
+		}
+
+		detA := coredata.DetectedTracker{
+			ID:               gid.New(fx.scope.GetTenantID(), coredata.DetectedTrackerEntityType),
+			CookieBannerID:   fx.banner.ID,
+			TrackerPatternID: &siblingA.ID,
+			TrackerType:      coredata.TrackerTypeCookie,
+			Identifier:       "sibling_a",
+			InitiatorDomain:  &sharedDomain,
+			LastDetectedAt:   now,
+			CreatedAt:        now,
+			UpdatedAt:        now,
+		}
+		if _, err := detA.Upsert(ctx, tx, fx.scope); err != nil {
+			return err
+		}
+
+		detB := coredata.DetectedTracker{
+			ID:               gid.New(fx.scope.GetTenantID(), coredata.DetectedTrackerEntityType),
+			CookieBannerID:   fx.banner.ID,
+			TrackerPatternID: &siblingB.ID,
+			TrackerType:      coredata.TrackerTypeCookie,
+			Identifier:       "sibling_b",
+			InitiatorDomain:  &sharedDomain,
+			LastDetectedAt:   now,
+			CreatedAt:        now,
+			UpdatedAt:        now,
+		}
+		if _, err := detB.Upsert(ctx, tx, fx.scope); err != nil {
+			return err
+		}
+
+		detUnmapped := coredata.DetectedTracker{
+			ID:               gid.New(fx.scope.GetTenantID(), coredata.DetectedTrackerEntityType),
+			CookieBannerID:   fx.banner.ID,
+			TrackerPatternID: &unmappedPattern.ID,
+			TrackerType:      coredata.TrackerTypeCookie,
+			Identifier:       "ambiguous_test",
+			InitiatorDomain:  &sharedDomain,
+			LastDetectedAt:   now,
+			CreatedAt:        now,
+			UpdatedAt:        now,
+		}
+		if _, err := detUnmapped.Upsert(ctx, tx, fx.scope); err != nil {
+			return err
+		}
+
+		return nil
+	}))
+
+	t.Cleanup(func() {
+		_ = client.WithTx(context.Background(), func(ctx context.Context, tx pg.Tx) error {
+			_, _ = tx.Exec(ctx, `DELETE FROM common_third_parties WHERE id = $1`, otherCommonThirdPartyID)
+
+			return nil
+		})
+	})
+
+	h := newMappingHandler(client)
+
+	var got *gid.GID
+
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		var err error
+
+		got, err = h.matchBySiblingOrigin(ctx, tx, unmappedPattern, []string{"shared-tracker.com"})
+
+		return err
+	}))
+
+	assert.Nil(t, got, "ambiguous siblings mapping to different third parties should return nil")
+}
+
+func TestMatchBySiblingOrigin_NoSiblings(t *testing.T) {
+	t.Parallel()
+
+	client := newTestPgClient(t)
+	ctx := context.Background()
+	fx := seedWorkerFixture(t, ctx, client)
+
+	now := time.Now().UTC().Truncate(time.Microsecond)
+
+	unmappedPattern := coredata.TrackerPattern{
+		ID:               gid.New(fx.scope.GetTenantID(), coredata.TrackerPatternEntityType),
+		OrganizationID:   fx.organizationID,
+		CookieBannerID:   fx.banner.ID,
+		CookieCategoryID: fx.normalCategoryID,
+		TrackerType:      coredata.TrackerTypeCookie,
+		Pattern:          "lonely_cookie",
+		MatchType:        coredata.TrackerPatternMatchTypeExact,
+		DisplayName:      "lonely_cookie",
+		CreatedAt:        now,
+		UpdatedAt:        now,
+	}
+
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		return unmappedPattern.Insert(ctx, tx, fx.scope)
+	}))
+
+	h := newMappingHandler(client)
+
+	var got *gid.GID
+
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		var err error
+
+		got, err = h.matchBySiblingOrigin(ctx, tx, unmappedPattern, []string{"unique-domain.com"})
+
+		return err
+	}))
+
+	assert.Nil(t, got, "no siblings sharing the domain should return nil")
+}
+
+func TestMatchBySiblingOrigin_EmptyDomains(t *testing.T) {
+	t.Parallel()
+
+	client := newTestPgClient(t)
+	ctx := context.Background()
+	fx := seedWorkerFixture(t, ctx, client)
+
+	now := time.Now().UTC().Truncate(time.Microsecond)
+
+	pattern := coredata.TrackerPattern{
+		ID:               gid.New(fx.scope.GetTenantID(), coredata.TrackerPatternEntityType),
+		OrganizationID:   fx.organizationID,
+		CookieBannerID:   fx.banner.ID,
+		CookieCategoryID: fx.normalCategoryID,
+		TrackerType:      coredata.TrackerTypeCookie,
+		Pattern:          "no_domains",
+		MatchType:        coredata.TrackerPatternMatchTypeExact,
+		DisplayName:      "no_domains",
+		CreatedAt:        now,
+		UpdatedAt:        now,
+	}
+
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		return pattern.Insert(ctx, tx, fx.scope)
+	}))
+
+	h := newMappingHandler(client)
+
+	var got *gid.GID
+
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		var err error
+
+		got, err = h.matchBySiblingOrigin(ctx, tx, pattern, nil)
+
+		return err
+	}))
+
+	assert.Nil(t, got, "nil domains should immediately return nil")
+}
+
+func TestMatchBySiblingOrigin_ConvergentSiblings(t *testing.T) {
+	t.Parallel()
+
+	client := newTestPgClient(t)
+	ctx := context.Background()
+	fx := seedPromotionFixture(t, ctx, client)
+
+	now := time.Now().UTC().Truncate(time.Microsecond)
+
+	orgThirdParty := coredata.ThirdParty{
+		ID:                 gid.New(fx.scope.GetTenantID(), coredata.ThirdPartyEntityType),
+		OrganizationID:     fx.organizationID,
+		CommonThirdPartyID: &fx.commonThirdPartyID,
+		Name:               "Google",
+		Category:           coredata.ThirdPartyCategoryAnalytics,
+		Certifications:     []string{},
+		Countries:          coredata.CountryCodes{},
+		CreatedAt:          now,
+		UpdatedAt:          now,
+	}
+
+	siblingA := coredata.TrackerPattern{
+		ID:               gid.New(fx.scope.GetTenantID(), coredata.TrackerPatternEntityType),
+		OrganizationID:   fx.organizationID,
+		CookieBannerID:   fx.banner.ID,
+		CookieCategoryID: fx.normalCategoryID,
+		ThirdPartyID:     &orgThirdParty.ID,
+		TrackerType:      coredata.TrackerTypeCookie,
+		Pattern:          "converge_a",
+		MatchType:        coredata.TrackerPatternMatchTypeExact,
+		DisplayName:      "converge_a",
+		CreatedAt:        now,
+		UpdatedAt:        now,
+	}
+
+	siblingB := coredata.TrackerPattern{
+		ID:               gid.New(fx.scope.GetTenantID(), coredata.TrackerPatternEntityType),
+		OrganizationID:   fx.organizationID,
+		CookieBannerID:   fx.banner.ID,
+		CookieCategoryID: fx.normalCategoryID,
+		ThirdPartyID:     &orgThirdParty.ID,
+		TrackerType:      coredata.TrackerTypeCookie,
+		Pattern:          "converge_b",
+		MatchType:        coredata.TrackerPatternMatchTypeExact,
+		DisplayName:      "converge_b",
+		CreatedAt:        now,
+		UpdatedAt:        now,
+	}
+
+	unmappedPattern := coredata.TrackerPattern{
+		ID:               gid.New(fx.scope.GetTenantID(), coredata.TrackerPatternEntityType),
+		OrganizationID:   fx.organizationID,
+		CookieBannerID:   fx.banner.ID,
+		CookieCategoryID: fx.normalCategoryID,
+		TrackerType:      coredata.TrackerTypeCookie,
+		Pattern:          "converge_target",
+		MatchType:        coredata.TrackerPatternMatchTypeExact,
+		DisplayName:      "converge_target",
+		CreatedAt:        now,
+		UpdatedAt:        now,
+	}
+
+	sharedDomain := "analytics.google.com"
+
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		if err := orgThirdParty.Insert(ctx, tx, fx.scope); err != nil {
+			return err
+		}
+
+		if err := siblingA.Insert(ctx, tx, fx.scope); err != nil {
+			return err
+		}
+
+		if err := siblingB.Insert(ctx, tx, fx.scope); err != nil {
+			return err
+		}
+
+		if err := unmappedPattern.Insert(ctx, tx, fx.scope); err != nil {
+			return err
+		}
+
+		detA := coredata.DetectedTracker{
+			ID:               gid.New(fx.scope.GetTenantID(), coredata.DetectedTrackerEntityType),
+			CookieBannerID:   fx.banner.ID,
+			TrackerPatternID: &siblingA.ID,
+			TrackerType:      coredata.TrackerTypeCookie,
+			Identifier:       "converge_a",
+			InitiatorDomain:  &sharedDomain,
+			LastDetectedAt:   now,
+			CreatedAt:        now,
+			UpdatedAt:        now,
+		}
+		if _, err := detA.Upsert(ctx, tx, fx.scope); err != nil {
+			return err
+		}
+
+		detB := coredata.DetectedTracker{
+			ID:               gid.New(fx.scope.GetTenantID(), coredata.DetectedTrackerEntityType),
+			CookieBannerID:   fx.banner.ID,
+			TrackerPatternID: &siblingB.ID,
+			TrackerType:      coredata.TrackerTypeCookie,
+			Identifier:       "converge_b",
+			InitiatorDomain:  &sharedDomain,
+			LastDetectedAt:   now,
+			CreatedAt:        now,
+			UpdatedAt:        now,
+		}
+		if _, err := detB.Upsert(ctx, tx, fx.scope); err != nil {
+			return err
+		}
+
+		detUnmapped := coredata.DetectedTracker{
+			ID:               gid.New(fx.scope.GetTenantID(), coredata.DetectedTrackerEntityType),
+			CookieBannerID:   fx.banner.ID,
+			TrackerPatternID: &unmappedPattern.ID,
+			TrackerType:      coredata.TrackerTypeCookie,
+			Identifier:       "converge_target",
+			InitiatorDomain:  &sharedDomain,
+			LastDetectedAt:   now,
+			CreatedAt:        now,
+			UpdatedAt:        now,
+		}
+		if _, err := detUnmapped.Upsert(ctx, tx, fx.scope); err != nil {
+			return err
+		}
+
+		return nil
+	}))
+
+	h := newMappingHandler(client)
+
+	var got *gid.GID
+
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		var err error
+
+		got, err = h.matchBySiblingOrigin(ctx, tx, unmappedPattern, []string{"google.com"})
+
+		return err
+	}))
+
+	require.NotNil(t, got, "multiple siblings converging to same third party should succeed")
+
+	var commonPattern coredata.CommonTrackerPattern
+
+	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+		return commonPattern.LoadByID(ctx, conn, *got)
+	}))
+
+	require.NotNil(t, commonPattern.CommonThirdPartyID)
+	assert.Equal(t, fx.commonThirdPartyID, *commonPattern.CommonThirdPartyID)
+}
+
 func TestPromoteThirdParty_ExactCommonLinkIgnoresSimilarUnlinked(t *testing.T) {
 	t.Parallel()
 

@@ -944,6 +944,80 @@ WHERE
 	return ids, nil
 }
 
+func (tps *TrackerPatterns) LoadDistinctThirdPartyIDsByIDs(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	ids []gid.GID,
+) ([]gid.GID, error) {
+	if len(ids) == 0 {
+		return nil, nil
+	}
+
+	q := `
+SELECT DISTINCT third_party_id
+FROM tracker_patterns
+WHERE
+	%s
+	AND id = ANY(@ids)
+	AND third_party_id IS NOT NULL
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"ids": ids}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return nil, fmt.Errorf("cannot query distinct third party ids by pattern ids: %w", err)
+	}
+
+	thirdPartyIDs, err := pgx.CollectRows(rows, pgx.RowTo[gid.GID])
+	if err != nil {
+		return nil, fmt.Errorf("cannot collect distinct third party ids by pattern ids: %w", err)
+	}
+
+	return thirdPartyIDs, nil
+}
+
+func (tps *TrackerPatterns) LoadDistinctCommonTrackerPatternIDsByIDs(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	ids []gid.GID,
+) ([]gid.GID, error) {
+	if len(ids) == 0 {
+		return nil, nil
+	}
+
+	q := `
+SELECT DISTINCT common_tracker_pattern_id
+FROM tracker_patterns
+WHERE
+	%s
+	AND id = ANY(@ids)
+	AND common_tracker_pattern_id IS NOT NULL
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"ids": ids}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return nil, fmt.Errorf("cannot query distinct common tracker pattern ids by pattern ids: %w", err)
+	}
+
+	commonPatternIDs, err := pgx.CollectRows(rows, pgx.RowTo[gid.GID])
+	if err != nil {
+		return nil, fmt.Errorf("cannot collect distinct common tracker pattern ids by pattern ids: %w", err)
+	}
+
+	return commonPatternIDs, nil
+}
+
 func (tps *TrackerPatterns) UpdateLastMatchedAt(
 	ctx context.Context,
 	tx pg.Tx,

@@ -252,6 +252,48 @@ WHERE
 	return nil
 }
 
+func (dts *DetectedTrackers) LoadSiblingPatternIDsByInitiatorDomains(
+	ctx context.Context,
+	conn pg.Querier,
+	cookieBannerID gid.GID,
+	domains []string,
+	excludePatternID gid.GID,
+	limit int,
+) ([]gid.GID, error) {
+	if len(domains) == 0 {
+		return nil, nil
+	}
+
+	q := `
+SELECT DISTINCT tracker_pattern_id
+FROM detected_trackers
+WHERE cookie_banner_id = @cookie_banner_id
+  AND initiator_domain = ANY(@domains)
+  AND tracker_pattern_id IS NOT NULL
+  AND tracker_pattern_id != @exclude_pattern_id
+LIMIT @limit;
+`
+
+	args := pgx.StrictNamedArgs{
+		"cookie_banner_id":   cookieBannerID,
+		"domains":            domains,
+		"exclude_pattern_id": excludePatternID,
+		"limit":              limit,
+	}
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return nil, fmt.Errorf("cannot load sibling pattern ids: %w", err)
+	}
+
+	ids, err := pgx.CollectRows(rows, pgx.RowTo[gid.GID])
+	if err != nil {
+		return nil, fmt.Errorf("cannot collect sibling pattern ids: %w", err)
+	}
+
+	return ids, nil
+}
+
 func (dts *DetectedTrackers) RelinkByTrackerPatternID(
 	ctx context.Context,
 	tx pg.Tx,
