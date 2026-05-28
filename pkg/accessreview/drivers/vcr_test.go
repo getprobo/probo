@@ -15,6 +15,7 @@
 package drivers
 
 import (
+	"encoding/base64"
 	"net/http"
 	"os"
 	"testing"
@@ -98,6 +99,17 @@ func bearerAuth(token string) string {
 	}
 
 	return "Bearer " + token
+}
+
+// basicAuth returns the HTTP Basic auth header value for a username with
+// an empty password ("Basic base64(<username>:)"), or "" if the username
+// is empty. Cursor presents its admin API key as the Basic auth username.
+func basicAuth(username string) string {
+	if username == "" {
+		return ""
+	}
+
+	return "Basic " + base64.StdEncoding.EncodeToString([]byte(username+":"))
 }
 
 // newVCRClient creates an *http.Client backed by the recorder's transport,
