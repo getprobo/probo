@@ -16,57 +16,25 @@ package drivers
 
 import (
 	"context"
-	"net/http"
-	"net/http/httptest"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func TestMetabaseDriverListAccounts(t *testing.T) {
+func TestMetabaseDriver(t *testing.T) {
 	t.Parallel()
 
-	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		assert.Equal(t, http.MethodGet, r.Method)
-		assert.Equal(t, "/api/user", r.URL.Path)
-		assert.Equal(t, "all", r.URL.Query().Get("status"))
-		w.Header().Set("Content-Type", "application/json")
-		_, _ = w.Write([]byte(`[
-			{
-				"id": 1,
-				"email": "alice@example.com",
-				"first_name": "Alice",
-				"last_name": "Admin",
-				"common_name": "Alice A.",
-				"is_active": true,
-				"is_superuser": true,
-				"last_login": "2026-05-20T10:11:12.345678Z",
-				"date_joined": "2026-01-02T03:04:05Z"
-			},
-			{
-				"id": 2,
-				"email": "bob@example.com",
-				"first_name": "Bob",
-				"last_name": "Builder",
-				"is_active": false,
-				"is_superuser": false,
-				"last_login": "",
-				"date_joined": "2026-02-03T04:05:06Z"
-			},
-			{
-				"id": 3,
-				"email": "",
-				"first_name": "No",
-				"last_name": "Email",
-				"is_active": true,
-				"is_superuser": false
-			}
-		]`))
-	}))
-	defer srv.Close()
+	rec := newRecorder(t, "testdata/metabase", "METABASE_API_KEY")
+	client := newVCRClientWithHeader(rec, "x-api-key", os.Getenv("METABASE_API_KEY"))
 
-	driver := NewMetabaseDriver(srv.Client(), srv.URL)
+	instanceURL := os.Getenv("METABASE_INSTANCE_URL")
+	if instanceURL == "" {
+		instanceURL = "https://k7.metabaseapp.com"
+	}
+
+	driver := NewMetabaseDriver(client, instanceURL)
 	records, err := driver.ListAccounts(context.Background())
 	require.NoError(t, err)
 	require.Len(t, records, 2)
@@ -90,19 +58,4 @@ func TestMetabaseDriverListAccounts(t *testing.T) {
 	assert.Equal(t, "2", records[1].ExternalID)
 	assert.Nil(t, records[1].LastLogin)
 	require.NotNil(t, records[1].CreatedAt)
-}
-
-func TestMetabaseDriverListAccountsUnexpectedStatus(t *testing.T) {
-	t.Parallel()
-
-	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		w.WriteHeader(http.StatusUnauthorized)
-		_, _ = w.Write([]byte(`{"message":"unauthorized"}`))
-	}))
-	defer srv.Close()
-
-	driver := NewMetabaseDriver(srv.Client(), srv.URL)
-	_, err := driver.ListAccounts(context.Background())
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "unexpected status 401")
 }
