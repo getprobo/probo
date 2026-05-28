@@ -645,6 +645,7 @@ func (v *ThirdParty) Update(
 	q := `
 UPDATE third_parties
 SET
+	common_third_party_id = @common_third_party_id,
 	name = @name,
 	description = @description,
 	category = @category,
@@ -675,6 +676,7 @@ WHERE %s
 	args := pgx.StrictNamedArgs{
 		"third_party_id":                   v.ID,
 		"updated_at":                       time.Now(),
+		"common_third_party_id":            v.CommonThirdPartyID,
 		"name":                             v.Name,
 		"description":                      v.Description,
 		"category":                         v.Category,

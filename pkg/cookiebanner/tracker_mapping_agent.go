@@ -48,6 +48,9 @@ type TrackerMappingAgentResult struct {
 	Confidence     float64                     `json:"confidence" jsonschema:"Confidence level from 0.0 to 1.0. Set below 0.5 if unsure."`
 }
 
+// TrackerMappingConfig configures the tracker-mapping agent (catalog
+// identification). The agent uses DB-backed search tools and may also
+// use Firecrawl for web search when an API key is supplied.
 type TrackerMappingConfig struct {
 	LLMClient       *llm.Client
 	Model           string

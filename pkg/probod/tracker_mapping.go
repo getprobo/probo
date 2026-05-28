@@ -21,18 +21,28 @@ import (
 	"go.gearno.de/kit/log"
 	"go.opentelemetry.io/otel/trace"
 	"go.probo.inc/probo/pkg/cookiebanner"
+	"go.probo.inc/probo/pkg/thirdparty"
 )
 
-// buildTrackerMappingConfig wires the tracker-mapping agent. It is opt-in:
-// deployments that do not set `llm.tracker-mapping.provider` get a zero
-// config (nil LLM client) so the worker runs without agent fallback.
+// buildTrackerMappingConfig wires the tracker-mapping agent (catalog
+// identification) and the third-party disambiguation agent that the
+// tracker-mapping worker uses to promote patterns to org ThirdParties.
+// Both are opt-in: deployments that do not set
+// `llm.tracker-mapping.provider` get zero configs (nil LLM client) so
+// the worker runs without agent fallback.
+//
+// Both agents are sourced from the same `tracker-mapping` config slot
+// because they share the LLM client, model, and lifecycle. The
+// disambiguation agent has no Firecrawl/DB tools, so its config
+// surface is narrower and it lives in the cross-domain pkg/thirdparty
+// package.
 func (impl *Implm) buildTrackerMappingConfig(
 	l *log.Logger,
 	tp trace.TracerProvider,
 	r prometheus.Registerer,
-) (cookiebanner.TrackerMappingConfig, error) {
+) (cookiebanner.TrackerMappingConfig, thirdparty.DisambiguationConfig, error) {
 	if impl.cfg.Agents.TrackerMapping.Provider == "" {
-		return cookiebanner.TrackerMappingConfig{}, nil
+		return cookiebanner.TrackerMappingConfig{}, thirdparty.DisambiguationConfig{}, nil
 	}
 
 	agentCfg, llmClient, err := impl.resolveAgentClient(
@@ -43,12 +53,19 @@ func (impl *Implm) buildTrackerMappingConfig(
 		r,
 	)
 	if err != nil {
-		return cookiebanner.TrackerMappingConfig{}, fmt.Errorf("cannot resolve tracker mapping agent client: %w", err)
+		return cookiebanner.TrackerMappingConfig{}, thirdparty.DisambiguationConfig{}, fmt.Errorf("cannot resolve tracker mapping agent client: %w", err)
 	}
 
-	return cookiebanner.TrackerMappingConfig{
+	mappingCfg := cookiebanner.TrackerMappingConfig{
 		LLMClient:       llmClient,
 		Model:           agentCfg.ModelName,
 		FirecrawlAPIKey: impl.cfg.Agents.Tools.FirecrawlAPIKey,
-	}, nil
+	}
+
+	disambiguationCfg := thirdparty.DisambiguationConfig{
+		LLMClient: llmClient,
+		Model:     agentCfg.ModelName,
+	}
+
+	return mappingCfg, disambiguationCfg, nil
 }
