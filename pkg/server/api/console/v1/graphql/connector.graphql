@@ -22,6 +22,7 @@ enum ConnectorProvider
     CLOUDFLARE
         @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderCloudflare")
     OPENAI @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderOpenAI")
+    POSTHOG @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderPostHog")
     SENTRY @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderSentry")
     SUPABASE
         @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderSupabase")

@@ -35,6 +35,7 @@ const (
 	ConnectorProviderCloudflare   ConnectorProvider = "CLOUDFLARE"
 	ConnectorProviderGrafana      ConnectorProvider = "GRAFANA"
 	ConnectorProviderOpenAI       ConnectorProvider = "OPENAI"
+	ConnectorProviderPostHog      ConnectorProvider = "POSTHOG"
 	ConnectorProviderSentry       ConnectorProvider = "SENTRY"
 	ConnectorProviderSupabase     ConnectorProvider = "SUPABASE"
 	ConnectorProviderGitHub       ConnectorProvider = "GITHUB"
@@ -76,6 +77,7 @@ func ConnectorProviders() []ConnectorProvider {
 		ConnectorProviderCloudflare,
 		ConnectorProviderGrafana,
 		ConnectorProviderOpenAI,
+		ConnectorProviderPostHog,
 		ConnectorProviderSentry,
 		ConnectorProviderSupabase,
 		ConnectorProviderGitHub,
@@ -113,6 +115,7 @@ func (v ConnectorProvider) IsValid() bool {
 		ConnectorProviderCloudflare,
 		ConnectorProviderGrafana,
 		ConnectorProviderOpenAI,
+		ConnectorProviderPostHog,
 		ConnectorProviderSentry,
 		ConnectorProviderSupabase,
 		ConnectorProviderGitHub,

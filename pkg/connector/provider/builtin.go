@@ -45,6 +45,7 @@ func NewBuiltinRegistry() *Registry {
 		notionRegistration(),
 		onePasswordRegistration(),
 		openaiRegistration(),
+		posthogRegistration(),
 		pagerdutyRegistration(),
 		resendRegistration(),
 		sentryRegistration(),
