@@ -17,6 +17,7 @@ package drivers
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -25,6 +26,10 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/rfc5988"
 )
+
+// errSentryOrgNotAccessible signals a 404 scoped under an organization
+// slug; Sentry uses 404 (not 403) so this also covers revoked memberships.
+var errSentryOrgNotAccessible = errors.New("sentry organization is not accessible by this connector's token")
 
 // SentryDriver fetches organization members from Sentry via Bearer
 // token-authenticated REST API requests.
@@ -97,6 +102,10 @@ func (d *SentryDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error
 	for range maxPaginationPages {
 		members, linkHeader, err := d.queryMembers(ctx, nextURL)
 		if err != nil {
+			if errors.Is(err, errSentryOrgNotAccessible) {
+				return nil, fmt.Errorf("sentry organization %q is not accessible; reconnect the connector with the correct organization: %w", orgSlug, err)
+			}
+
 			return nil, err
 		}
 
@@ -177,6 +186,10 @@ func (d *SentryDriver) queryMembers(ctx context.Context, url string) ([]sentryMe
 	defer func() {
 		_ = httpResp.Body.Close()
 	}()
+
+	if httpResp.StatusCode == http.StatusNotFound {
+		return nil, "", errSentryOrgNotAccessible
+	}
 
 	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
 		return nil, "", fmt.Errorf("cannot fetch sentry members: unexpected status %d", httpResp.StatusCode)

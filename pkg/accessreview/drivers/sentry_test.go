@@ -48,6 +48,27 @@ func TestSentryDriver(t *testing.T) {
 	assert.NotEmpty(t, r.Role)
 }
 
+func TestSentryDriverListAccountsStaleSlug(t *testing.T) {
+	t.Parallel()
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.Equal(t, http.MethodGet, r.Method)
+		assert.Equal(t, "/api/0/organizations/acme-old/members", r.URL.Path)
+		w.WriteHeader(http.StatusNotFound)
+		_, _ = w.Write([]byte(`{"detail":"The requested resource does not exist"}`))
+	}))
+	defer srv.Close()
+
+	client := &http.Client{Transport: &hostRewriter{target: srv.URL}}
+
+	_, err := NewSentryDriver(client, "acme-old").ListAccounts(context.Background())
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), `"acme-old"`)
+	assert.Contains(t, err.Error(), "not accessible")
+	assert.Contains(t, err.Error(), "reconnect")
+	assert.ErrorIs(t, err, errSentryOrgNotAccessible)
+}
+
 func TestSentryDriverListAccountsAutoDiscoversSlug(t *testing.T) {
 	t.Parallel()
 
