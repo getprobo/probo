@@ -53,6 +53,10 @@ enum ProfileOrderField
     @goEnum(
       value: "go.probo.inc/probo/pkg/coredata.MembershipProfileOrderFieldCreatedAt"
     )
+  EMAIL_ADDRESS
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.MembershipProfileOrderFieldEmailAddress"
+    )
   KIND @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipProfileOrderFieldKind")
   ORGANIZATION_NAME
     @goEnum(

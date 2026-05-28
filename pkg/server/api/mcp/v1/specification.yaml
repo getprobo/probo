@@ -167,6 +167,7 @@ components:
       enum:
         - CREATED_AT
         - FULL_NAME
+        - EMAIL_ADDRESS
         - KIND
       go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.MembershipProfileOrderField
 

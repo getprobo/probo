@@ -28,6 +28,7 @@ type (
 const (
 	MembershipProfileOrderFieldCreatedAt        MembershipProfileOrderField = "CREATED_AT"
 	MembershipProfileOrderFieldFullName         MembershipProfileOrderField = "FULL_NAME"
+	MembershipProfileOrderFieldEmailAddress     MembershipProfileOrderField = "EMAIL_ADDRESS"
 	MembershipProfileOrderFieldKind             MembershipProfileOrderField = "KIND"
 	MembershipProfileOrderFieldOrganizationName MembershipProfileOrderField = "ORGANIZATION_NAME"
 	MembershipProfileOrderFieldState            MembershipProfileOrderField = "STATE"
@@ -44,6 +45,7 @@ func MembershipProfileOrderFields() []MembershipProfileOrderField {
 	return []MembershipProfileOrderField{
 		MembershipProfileOrderFieldCreatedAt,
 		MembershipProfileOrderFieldFullName,
+		MembershipProfileOrderFieldEmailAddress,
 		MembershipProfileOrderFieldKind,
 		MembershipProfileOrderFieldOrganizationName,
 		MembershipProfileOrderFieldState,
@@ -55,6 +57,7 @@ func (v MembershipProfileOrderField) IsValid() bool {
 	case
 		MembershipProfileOrderFieldCreatedAt,
 		MembershipProfileOrderFieldFullName,
+		MembershipProfileOrderFieldEmailAddress,
 		MembershipProfileOrderFieldKind,
 		MembershipProfileOrderFieldOrganizationName,
 		MembershipProfileOrderFieldState:
