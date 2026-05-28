@@ -159,6 +159,7 @@ func TestUser_UpdateMembershipRejectsLastOwnerDemotion(t *testing.T) {
 	require.NoError(t, err)
 
 	var ownerMembershipID string
+
 	for _, edge := range profilesResult.Node.Profiles.Edges {
 		if edge.Node.Membership.Role == "OWNER" {
 			ownerMembershipID = edge.Node.Membership.ID
