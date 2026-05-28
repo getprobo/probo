@@ -87,7 +87,6 @@ const trackersFragment = graphql`
       ... on CommonThirdParty {
         id
         name
-        logoUrl
       }
     }
     trackerPatterns(
@@ -219,6 +218,15 @@ export default function CookieBannerTrackersPage({
           className="w-72"
         />
         <Select
+          value={thirdPartyFilter ?? "ALL"}
+          onValueChange={handleThirdPartyFilterChange}
+        >
+          <Option value="ALL">{__("All third parties")}</Option>
+          {linkedThirdParties.map(party => (
+            <Option key={party.id} value={party.id}>{party.name}</Option>
+          ))}
+        </Select>
+        <Select
           value={trackerTypeFilter ?? "ALL"}
           onValueChange={handleTrackerTypeFilterChange}
         >
@@ -245,15 +253,6 @@ export default function CookieBannerTrackersPage({
           <Option value="ALL">{__("All categories")}</Option>
           {categories.map(category => (
             <Option key={category.id} value={category.id}>{category.name}</Option>
-          ))}
-        </Select>
-        <Select
-          value={thirdPartyFilter ?? "ALL"}
-          onValueChange={handleThirdPartyFilterChange}
-        >
-          <Option value="ALL">{__("All third parties")}</Option>
-          {linkedThirdParties.map(party => (
-            <Option key={party.id} value={party.id}>{party.name}</Option>
           ))}
         </Select>
       </div>
