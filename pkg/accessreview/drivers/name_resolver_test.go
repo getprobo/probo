@@ -248,6 +248,42 @@ func TestTailscaleNameResolver(t *testing.T) {
 	}
 }
 
+func TestHerokuNameResolver(t *testing.T) {
+	t.Parallel()
+
+	t.Run("personal-account slug returns a name without an HTTP call", func(t *testing.T) {
+		t.Parallel()
+
+		client := &http.Client{Transport: roundTripperFunc(func(*http.Request) (*http.Response, error) {
+			t.Fatalf("resolver should not make an HTTP call for a personal account")
+			return nil, nil
+		})}
+
+		got, err := NewHerokuNameResolver(client, herokuPersonalAccountSlug).ResolveInstanceName(context.Background())
+		require.NoError(t, err)
+		assert.Equal(t, "Personal account", got)
+	})
+
+	t.Run("team slug resolves the team name", func(t *testing.T) {
+		t.Parallel()
+
+		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			assert.Equal(t, http.MethodGet, r.Method)
+			assert.Equal(t, "/teams/acme", r.URL.Path)
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			_, _ = w.Write([]byte(`{"name":"Acme Inc"}`))
+		}))
+		defer srv.Close()
+
+		client := &http.Client{Transport: &hostRewriter{target: srv.URL}}
+
+		got, err := NewHerokuNameResolver(client, "acme").ResolveInstanceName(context.Background())
+		require.NoError(t, err)
+		assert.Equal(t, "Acme Inc", got)
+	})
+}
+
 // roundTripperFunc adapts a function into an http.RoundTripper, useful for
 // asserting that a resolver short-circuits before making any HTTP call.
 type roundTripperFunc func(*http.Request) (*http.Response, error)

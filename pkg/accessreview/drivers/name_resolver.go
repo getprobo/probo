@@ -726,6 +726,12 @@ func (r *herokuNameResolver) ResolveInstanceName(ctx context.Context) (string, e
 		return "", nil
 	}
 
+	// A personal account has no Team to name; short-circuit before hitting
+	// GET /teams/@personal, which 404s and would loop the source-name worker.
+	if r.teamID == herokuPersonalAccountSlug {
+		return herokuPersonalAccountDisplayName, nil
+	}
+
 	endpoint, err := url.JoinPath("https://api.heroku.com", "teams", url.PathEscape(r.teamID))
 	if err != nil {
 		return "", fmt.Errorf("cannot build heroku team URL: %w", err)
