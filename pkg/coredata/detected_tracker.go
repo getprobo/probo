@@ -271,6 +271,7 @@ WHERE cookie_banner_id = @cookie_banner_id
   AND initiator_domain = ANY(@domains)
   AND tracker_pattern_id IS NOT NULL
   AND tracker_pattern_id != @exclude_pattern_id
+ORDER BY tracker_pattern_id
 LIMIT @limit;
 `
 

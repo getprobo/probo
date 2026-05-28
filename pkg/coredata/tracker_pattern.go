@@ -555,6 +555,60 @@ WHERE
 	return nil
 }
 
+// UpdateMapping writes only the columns the tracker-mapping worker
+// resolves — common_tracker_pattern_id, third_party_id and an enriched
+// description — leaving the user-editable fields (display_name,
+// excluded, cookie_category_id, max_age_seconds, source, last_matched_at)
+// untouched.
+//
+// The worker loads the pattern in its claim transaction and commits the
+// resolution in a separate, later transaction, so a full-row Update
+// would write back stale values and clobber any concurrent edit made in
+// between. The description is only filled when still empty in the
+// database, so a concurrently set description is never overwritten.
+func (tp *TrackerPattern) UpdateMapping(
+	ctx context.Context,
+	tx pg.Tx,
+	scope Scoper,
+) error {
+	q := `
+UPDATE tracker_patterns
+SET
+	common_tracker_pattern_id = @common_tracker_pattern_id,
+	third_party_id = @third_party_id,
+	description = CASE
+		WHEN description = '' THEN @description
+		ELSE description
+	END,
+	updated_at = @updated_at
+WHERE
+	%s
+	AND id = @id
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"id":                        tp.ID,
+		"common_tracker_pattern_id": tp.CommonTrackerPatternID,
+		"third_party_id":            tp.ThirdPartyID,
+		"description":               tp.Description,
+		"updated_at":                tp.UpdatedAt,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	result, err := tx.Exec(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot update tracker pattern mapping: %w", err)
+	}
+
+	if result.RowsAffected() == 0 {
+		return ErrResourceNotFound
+	}
+
+	return nil
+}
+
 func (tp *TrackerPattern) Delete(
 	ctx context.Context,
 	tx pg.Tx,

@@ -267,7 +267,7 @@ func (h *trackerMappingHandler) Process(ctx context.Context, tp coredata.Tracker
 					}
 				}
 
-				if err := tp.Update(ctx, tx, scope); err != nil {
+				if err := tp.UpdateMapping(ctx, tx, scope); err != nil {
 					return fmt.Errorf("cannot update tracker pattern mapping: %w", err)
 				}
 
