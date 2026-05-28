@@ -167,6 +167,15 @@ type CookieBanner implements Node {
         filter: TrackerPatternFilter
     ): TrackerPatternConnection @goField(forceResolver: true)
 
+    """
+    The deduped union of third parties referenced by the banner's
+    tracker patterns, both org-scoped (ThirdParty) and global
+    (CommonThirdParty). Powers the third-party filter combobox on the
+    trackers list page.
+    """
+    linkedThirdParties: [TrackerPatternThirdPartyLink!]!
+        @goField(forceResolver: true)
+
     uncategorisedTrackerResources(
         first: Int
         after: CursorKey
@@ -318,6 +327,14 @@ type TrackerPatternConnection
     pageInfo: PageInfo!
 }
 
+"""
+A third party associated with a banner's tracker patterns. Either the
+tenant-managed ThirdParty (when a pattern was promoted to the org
+catalog) or the global CommonThirdParty linked through a common
+tracker pattern.
+"""
+union TrackerPatternThirdPartyLink = ThirdParty | CommonThirdParty
+
 type TrackerPatternEdge {
     cursor: CursorKey!
     node: TrackerPattern!
@@ -339,6 +356,14 @@ input TrackerPatternFilter
     source: CookieSource
     trackerType: TrackerType
     cookieCategoryId: ID
+    """
+    Filter to tracker patterns linked to a single third party. Accepts
+    either an org-scoped ThirdParty GID (matched against third_party_id)
+    or a global CommonThirdParty GID (matched against the indirect link
+    through common_tracker_patterns). The dispatch happens at the
+    resolver based on the GID entity-type prefix.
+    """
+    thirdPartyId: ID
 }
 
 type DetectedTracker implements Node {
