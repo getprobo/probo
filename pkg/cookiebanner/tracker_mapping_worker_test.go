@@ -339,6 +339,51 @@ func TestProcess_PreservesCatalogMappingOnReTrigger(t *testing.T) {
 	require.NotNil(t, reloaded.ThirdPartyID, "the worker should have promoted to an org ThirdParty")
 }
 
+// TestProcess_UncategorisedPatternIsNotPromoted asserts that a pattern
+// still in the uncategorised category gets its catalog mapping
+// resolved but is NOT promoted to an org ThirdParty.
+func TestProcess_UncategorisedPatternIsNotPromoted(t *testing.T) {
+	t.Parallel()
+
+	client := newTestPgClient(t)
+	ctx := context.Background()
+	fx := seedPromotionFixture(t, ctx, client)
+
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		_, err := tx.Exec(
+			ctx,
+			`UPDATE tracker_patterns
+			   SET cookie_category_id = $1,
+			       mapping_requested_at = $2
+			 WHERE id = $3`,
+			fx.uncategorisedID,
+			time.Now().UTC().Truncate(time.Microsecond),
+			fx.trackerPattern.ID,
+		)
+
+		return err
+	}))
+
+	var reloadedBefore coredata.TrackerPattern
+
+	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+		return reloadedBefore.LoadByID(ctx, conn, fx.scope, fx.trackerPattern.ID)
+	}))
+
+	h := newMappingHandler(client)
+	require.NoError(t, h.Process(ctx, reloadedBefore))
+
+	var reloaded coredata.TrackerPattern
+
+	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+		return reloaded.LoadByID(ctx, conn, fx.scope, fx.trackerPattern.ID)
+	}))
+
+	require.NotNil(t, reloaded.CommonTrackerPatternID, "catalog mapping must still be resolved")
+	assert.Equal(t, fx.commonPatternID, *reloaded.CommonTrackerPatternID)
+	assert.Nil(t, reloaded.ThirdPartyID, "uncategorised pattern must not be promoted to org ThirdParty")
+}
+
 // TestProcess_ExtensionPatternIsNotPromoted asserts that even when a
 // pattern has a catalog link, a Source=EXTENSION pattern stays
 // un-promoted.

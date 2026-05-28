@@ -34,13 +34,10 @@ const trackerPatternPropertiesSectionFragment = graphql`
       name
     }
     thirdParty {
-      id
       name
     }
     commonThirdParty {
-      id
       name
-      logoUrl
     }
   }
 `;

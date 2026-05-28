@@ -90,11 +90,13 @@ func (h *trackerMappingHandler) Claim(ctx context.Context) (coredata.TrackerPatt
 }
 
 // Process resolves the catalog mapping (when missing) and then promotes
-// the pattern to an org ThirdParty (when eligible). When a pattern is
-// re-triggered by a manual move (it already carries a
-// common_tracker_pattern_id), we MUST NOT re-resolve the catalog: the
-// existing link is preserved and we jump straight to third-party
-// promotion.
+// the pattern to an org ThirdParty (when eligible). Promotion is
+// skipped for patterns still in the uncategorised category — the user
+// must categorize a tracker before it creates or links an org
+// ThirdParty. When a pattern is re-triggered by a manual move (it
+// already carries a common_tracker_pattern_id), we MUST NOT re-resolve
+// the catalog: the existing link is preserved and we jump straight to
+// third-party promotion.
 func (h *trackerMappingHandler) Process(ctx context.Context, tp coredata.TrackerPattern) error {
 	return h.pg.WithTx(
 		ctx,
@@ -139,12 +141,21 @@ func (h *trackerMappingHandler) Process(ctx context.Context, tp coredata.Tracker
 			if thirdPartyID == nil &&
 				commonPatternID != nil &&
 				(tp.Source == nil || *tp.Source != coredata.CookieSourceExtension) {
-				promoted, err := h.promoteThirdParty(ctx, tx, tp, *commonPatternID)
-				if err != nil {
-					return fmt.Errorf("cannot promote third party: %w", err)
+				scope := coredata.NewScopeFromObjectID(tp.ID)
+
+				var category coredata.CookieCategory
+				if err := category.LoadByID(ctx, tx, scope, tp.CookieCategoryID); err != nil {
+					return fmt.Errorf("cannot load cookie category: %w", err)
 				}
 
-				thirdPartyID = promoted
+				if category.Kind != coredata.CookieCategoryKindUncategorised {
+					promoted, err := h.promoteThirdParty(ctx, tx, tp, *commonPatternID)
+					if err != nil {
+						return fmt.Errorf("cannot promote third party: %w", err)
+					}
+
+					thirdPartyID = promoted
+				}
 			}
 
 			if commonPatternID != nil || thirdPartyID != nil {
