@@ -91,17 +91,21 @@ export function Microsoft365Connector(props: {
   const bridgeState = bridge?.state ?? null;
   const latestBridgeError = bridge?.syncError ?? null;
   const isBridgeFailed = bridgeState === "FAILED";
+  const isBridgeDisabled = bridgeState === "DISABLED";
+  const hasBridgeError = isBridgeFailed || isBridgeDisabled;
   const isBridgePending = bridgeState === "PENDING";
-  const bridgeStatusBadgeVariant = isBridgeFailed
+  const bridgeStatusBadgeVariant = hasBridgeError
     ? "danger"
     : isBridgePending
       ? "warning"
       : "success";
-  const bridgeStatusLabel = isBridgeFailed
-    ? __("Error")
-    : isBridgePending
-      ? __("Syncing")
-      : __("Connected");
+  const bridgeStatusLabel = isBridgeDisabled
+    ? __("Disabled")
+    : isBridgeFailed
+      ? __("Error")
+      : isBridgePending
+        ? __("Syncing")
+        : __("Connected");
   const bridgeErrorMessage = latestBridgeError
     ?? __(
       "The bridge is currently failing to sync. Check the provisioning event history for more details.",
@@ -358,12 +362,14 @@ export function Microsoft365Connector(props: {
         </Dialog>
       </div>
 
-      {isBridgeFailed && (
+      {hasBridgeError && (
         <div className="flex items-start gap-2 rounded-lg bg-bg-warning/10 border border-border-warning p-3">
           <IconWarning size={16} className="text-txt-danger shrink-0 mt-0.5" />
           <div className="space-y-1">
             <p className="text-sm font-medium text-txt-danger">
-              {__("Bridge is in an error state")}
+              {isBridgeDisabled
+                ? __("Bridge is disabled")
+                : __("Bridge is in an error state")}
             </p>
             <p className="text-sm text-txt-secondary whitespace-pre-wrap break-all">
               {bridgeErrorMessage}
