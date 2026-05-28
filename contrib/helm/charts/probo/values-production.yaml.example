@@ -126,6 +126,12 @@ probo:
     # REQUIRED: Generate with: openssl rand -base64 32
     passwordPepper: "CHANGE_ME_PASSWORD_PEPPER"
 
+  oauth2:
+    # REQUIRED: PEM-encoded private key (RSA recommended)
+    # Example: openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 > oauth2_signing_key.pem
+    # Then set with --set-file probo.oauth2.signingKey=oauth2_signing_key.pem
+    signingKey: "CHANGE_ME_OAUTH2_SIGNING_KEY_PEM"
+
   # Trust center authentication
   trustAuth:
     cookieName: "TCT"
@@ -190,6 +196,8 @@ probo:
       email: "admin@example.com"
       keyType: "EC256"
       insecureTls: false
+      # Optional persisted account key to avoid creating a new ACME account on restarts
+      accountKey: ""
 
   # External OAuth2 connectors (optional)
   connectors:
@@ -227,7 +235,7 @@ postgresql:
   maxConnIdleTimeSeconds: 1800
   maxConnLifetimeSeconds: 3600
   # Uncomment if using TLS with custom CA
-  # caCertBundle: |
+  # caBundle: |
   #   -----BEGIN CERTIFICATE-----
   #   ...
   #   -----END CERTIFICATE-----
@@ -261,13 +269,8 @@ s3:
   # accessKeyId: "..." # Spaces access key
   # secretAccessKey: "..." # Spaces secret
 
-  # Azure Blob Storage example (uncomment and adjust):
-  # region: "eastus"
-  # bucket: "probo-container"
-  # endpoint: "https://mystorageaccount.blob.core.windows.net"
-  # accessKeyId: "mystorageaccount" # Storage account name
-  # secretAccessKey: "..." # Storage account access key
-  # usePathStyle: true  # Required for Azure Blob Storage
+  # Azure Blob through S3-compat proxies has known metadata compatibility gaps.
+  # Prefer AWS S3 / GCS / Spaces for production until native Azure Blob support lands.
 
 # Chrome for PDF generation
 chrome:

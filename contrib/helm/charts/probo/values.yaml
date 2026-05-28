@@ -167,6 +167,8 @@ probo:
   # Public hostname where Probo will be accessible
   # This should match your ingress host
   baseUrl: probo.example.com
+  # REQUIRED: Generate with openssl rand -base64 32
+  encryptionKey: ""
 
   service:
     port: 8080
@@ -183,12 +185,12 @@ probo:
     batchTimeout: 5
     exportTimeout: 30
     maxQueueSize: 2048
-#  pg:
-#    addr: "probo-postgresql-demo-app:5432"
-#    username: "postgres"
-#    password: "probod"
-#    database: "probod"
-#    pool-size: 100
+
+  # OAuth2 signing key used by bootstrap to sign auth tokens
+  # REQUIRED: PEM-encoded private key (RSA is recommended)
+  # Generate with: openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048
+  oauth2:
+    signingKey: ""
 
   # CORS configuration
   cors:
@@ -208,7 +210,11 @@ probo:
     invitationTokenValidity: 3600
     cookieName: "SSID"
     cookieDomain: "probo.example.com"
+    # REQUIRED: Generate with openssl rand -base64 32
+    cookieSecret: ""
     cookieDuration: 24
+    # REQUIRED: Generate with openssl rand -base64 32
+    passwordPepper: ""
     passwordIterations: 1000000
 
   # SAML authentication (optional)
@@ -232,6 +238,7 @@ probo:
       tlsHttpServer: 443
     # Trust token signing secret (REQUIRED, at least 32 bytes)
     # Generate with: openssl rand -base64 32
+    tokenSecret: ""
     scope: "trust_center_readonly"
     tokenType: "trust_center_access"
 
@@ -280,6 +287,9 @@ probo:
       email: "admin@example.com"
       keyType: "EC256"
       insecureTls: false
+      # Optional persisted ACME account key (PEM-encoded)
+      # If unset, a new account may be created on each restart
+      accountKey: ""
 
   # External OAuth2 connectors (optional)
   connectors: []
@@ -349,7 +359,7 @@ s3:
   endpoint: ""
   accessKeyId: ""  # REQUIRED when seaweedfs.enabled=false: S3 access key
   secretAccessKey: ""  # REQUIRED when seaweedfs.enabled=false: S3 secret key
-  # Use path-style URLs (required for Azure Blob Storage and some S3-compatible services)
+  # Use path-style URLs for selected S3-compatible services
   # When true: https://endpoint/bucket/key
   # When false (default): https://bucket.endpoint/key
   usePathStyle: false
