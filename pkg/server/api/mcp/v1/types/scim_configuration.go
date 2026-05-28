@@ -36,7 +36,7 @@ func NewSCIMBridge(b *coredata.SCIMBridge) *SCIMBridge {
 		ScimConfigurationID: b.ScimConfigurationID,
 		ConnectorID:         b.ConnectorID,
 		Type:                b.Type,
-		State:               coredata.NormalizeSCIMBridgeState(b.State, b.SyncError),
+		State:               b.State,
 		ExcludedUserNames:   b.ExcludedUserNames,
 		LastSyncedAt:        b.LastSyncedAt,
 		CreatedAt:           b.CreatedAt,
