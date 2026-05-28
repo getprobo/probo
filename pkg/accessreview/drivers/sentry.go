@@ -64,29 +64,9 @@ func NewSentryDriver(httpClient *http.Client, orgSlug string) *SentryDriver {
 }
 
 func (d *SentryDriver) resolveOrgSlug(ctx context.Context) (string, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, "https://sentry.io/api/0/organizations/?member=true", nil)
+	orgs, err := ListSentryOrganizations(ctx, d.httpClient)
 	if err != nil {
-		return "", fmt.Errorf("cannot create sentry organizations request: %w", err)
-	}
-
-	req.Header.Set("Accept", "application/json")
-
-	resp, err := d.httpClient.Do(req)
-	if err != nil {
-		return "", fmt.Errorf("cannot fetch sentry organizations: %w", err)
-	}
-
-	defer func() { _ = resp.Body.Close() }()
-
-	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("cannot fetch sentry organizations: status %d", resp.StatusCode)
-	}
-
-	var orgs []struct {
-		Slug string `json:"slug"`
-	}
-	if err := json.NewDecoder(resp.Body).Decode(&orgs); err != nil {
-		return "", fmt.Errorf("cannot decode sentry organizations response: %w", err)
+		return "", fmt.Errorf("cannot resolve sentry organization slug: %w", err)
 	}
 
 	if len(orgs) == 0 {

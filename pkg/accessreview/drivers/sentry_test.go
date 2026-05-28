@@ -16,6 +16,8 @@ package drivers
 
 import (
 	"context"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"testing"
 
@@ -44,4 +46,35 @@ func TestSentryDriver(t *testing.T) {
 	assert.NotEmpty(t, r.FullName)
 	assert.NotEmpty(t, r.ExternalID)
 	assert.NotEmpty(t, r.Role)
+}
+
+func TestSentryDriverListAccountsAutoDiscoversSlug(t *testing.T) {
+	t.Parallel()
+
+	const discoveredSlug = "discovered-org"
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+
+		switch r.URL.Path {
+		case "/api/0/organizations/":
+			assert.Equal(t, "true", r.URL.Query().Get("member"))
+			w.WriteHeader(http.StatusOK)
+			_, _ = w.Write([]byte(`[{"slug":"` + discoveredSlug + `","name":"Discovered Org"}]`))
+		case "/api/0/organizations/" + discoveredSlug + "/members":
+			w.WriteHeader(http.StatusOK)
+			_, _ = w.Write([]byte(`[{"id":"42","email":"alice@example.com","name":"Alice","orgRole":"member"}]`))
+		default:
+			t.Errorf("unexpected request to %s", r.URL.Path)
+			w.WriteHeader(http.StatusNotFound)
+		}
+	}))
+	defer srv.Close()
+
+	client := &http.Client{Transport: &hostRewriter{target: srv.URL}}
+
+	records, err := NewSentryDriver(client, "").ListAccounts(context.Background())
+	require.NoError(t, err)
+	require.Len(t, records, 1)
+	assert.Equal(t, "alice@example.com", records[0].Email)
 }
