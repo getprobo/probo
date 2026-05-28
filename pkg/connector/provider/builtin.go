@@ -28,6 +28,7 @@ func NewBuiltinRegistry() *Registry {
 		brexRegistration(),
 		clickupRegistration(),
 		cloudflareRegistration(),
+		cursorRegistration(),
 		docusignRegistration(),
 		githubRegistration(),
 		gitlabRegistration(),

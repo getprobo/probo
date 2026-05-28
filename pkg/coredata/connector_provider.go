@@ -51,6 +51,7 @@ const (
 	ConnectorProviderMonday       ConnectorProvider = "MONDAY"
 	ConnectorProviderTailscale    ConnectorProvider = "TAILSCALE"
 	ConnectorProviderAnthropic    ConnectorProvider = "ANTHROPIC"
+	ConnectorProviderCursor       ConnectorProvider = "CURSOR"
 )
 
 var (
@@ -89,6 +90,7 @@ func ConnectorProviders() []ConnectorProvider {
 		ConnectorProviderMonday,
 		ConnectorProviderTailscale,
 		ConnectorProviderAnthropic,
+		ConnectorProviderCursor,
 	}
 }
 
@@ -122,7 +124,8 @@ func (v ConnectorProvider) IsValid() bool {
 		ConnectorProviderVercel,
 		ConnectorProviderMonday,
 		ConnectorProviderTailscale,
-		ConnectorProviderAnthropic:
+		ConnectorProviderAnthropic,
+		ConnectorProviderCursor:
 		return true
 	}
 

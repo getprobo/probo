@@ -50,6 +50,7 @@ enum ConnectorProvider
         @goEnum(
             value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderAnthropic"
         )
+    CURSOR @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderCursor")
 }
 
 type ConnectorProviderInfo {
