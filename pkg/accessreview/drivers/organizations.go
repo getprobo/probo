@@ -245,7 +245,11 @@ func ListBitbucketOrganizations(ctx context.Context, httpClient *http.Client) ([
 }
 
 // ListHerokuOrganizations fetches the teams the authenticated Heroku
-// user belongs to.
+// user belongs to, and always appends a synthetic "Personal account"
+// entry. Heroku Teams are an opt-in paid construct, so a solo account has
+// no team to discover; the personal entry lets the picker offer personal
+// mode (app owner + collaborators) instead of dead-ending at a free-text
+// slug the user cannot fill.
 func ListHerokuOrganizations(ctx context.Context, httpClient *http.Client) ([]Organization, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, "https://api.heroku.com/teams", nil)
 	if err != nil {
@@ -273,15 +277,20 @@ func ListHerokuOrganizations(ctx context.Context, httpClient *http.Client) ([]Or
 		return nil, fmt.Errorf("cannot decode heroku organizations response: %w", err)
 	}
 
-	result := make([]Organization, len(teams))
-	for i, t := range teams {
+	result := make([]Organization, 0, len(teams)+1)
+	for _, t := range teams {
 		displayName := t.Name
 		if displayName == "" {
 			displayName = t.ID
 		}
 
-		result[i] = Organization{Slug: t.ID, DisplayName: displayName}
+		result = append(result, Organization{Slug: t.ID, DisplayName: displayName})
 	}
+
+	result = append(result, Organization{
+		Slug:        herokuPersonalAccountSlug,
+		DisplayName: herokuPersonalAccountDisplayName,
+	})
 
 	return result, nil
 }
