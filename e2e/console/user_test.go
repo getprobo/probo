@@ -119,16 +119,17 @@ func TestUser_UpdateMembershipRejectsLastOwnerDemotion(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 
-	queryMembers := `
+	queryProfiles := `
 		query($id: ID!) {
 			node(id: $id) {
 				... on Organization {
-					members(first: 10) {
+					profiles(first: 10) {
 						edges {
 							node {
-								id
-								identity { id }
-								role
+								membership {
+									id
+									role
+								}
 							}
 						}
 					}
@@ -137,32 +138,31 @@ func TestUser_UpdateMembershipRejectsLastOwnerDemotion(t *testing.T) {
 		}
 	`
 
-	var membersResult struct {
+	var profilesResult struct {
 		Node struct {
-			Members struct {
+			Profiles struct {
 				Edges []struct {
 					Node struct {
-						ID       string `json:"id"`
-						Identity struct {
-							ID string `json:"id"`
-						} `json:"identity"`
-						Role string `json:"role"`
+						Membership struct {
+							ID   string `json:"id"`
+							Role string `json:"role"`
+						} `json:"membership"`
 					} `json:"node"`
 				} `json:"edges"`
-			} `json:"members"`
+			} `json:"profiles"`
 		} `json:"node"`
 	}
 
-	err := owner.ExecuteConnect(queryMembers, map[string]any{
+	err := owner.ExecuteConnect(queryProfiles, map[string]any{
 		"id": owner.GetOrganizationID().String(),
-	}, &membersResult)
+	}, &profilesResult)
 	require.NoError(t, err)
 
 	var ownerMembershipID string
-	for _, edge := range membersResult.Node.Members.Edges {
-		if edge.Node.Identity.ID == owner.GetUserID().String() {
-			ownerMembershipID = edge.Node.ID
-			assert.Equal(t, "OWNER", edge.Node.Role)
+	for _, edge := range profilesResult.Node.Profiles.Edges {
+		if edge.Node.Membership.Role == "OWNER" {
+			ownerMembershipID = edge.Node.Membership.ID
+
 			break
 		}
 	}
