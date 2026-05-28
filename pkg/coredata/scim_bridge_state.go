@@ -59,6 +59,18 @@ func (v SCIMBridgeState) IsValid() bool {
 	return false
 }
 
+func NormalizeSCIMBridgeState(v SCIMBridgeState, syncErr *string) SCIMBridgeState {
+	if v.IsValid() {
+		return v
+	}
+
+	if syncErr != nil && *syncErr != "" {
+		return SCIMBridgeStateFailed
+	}
+
+	return SCIMBridgeStatePending
+}
+
 func (v SCIMBridgeState) String() string {
 	return string(v)
 }
