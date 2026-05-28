@@ -131,6 +131,7 @@ func (h *trackerMappingHandler) Process(ctx context.Context, tp coredata.Tracker
 				return fmt.Errorf("cannot load cookie banner for domain filtering: %w", err)
 			}
 
+			// FIXME: remove
 			banner.Origin = "https://t.probo.com"
 
 			var (
@@ -160,11 +161,22 @@ func (h *trackerMappingHandler) Process(ctx context.Context, tp coredata.Tracker
 				}
 			}
 
+			// Whether a catalog third party was already known before the
+			// signal pipeline ran this round. Re-enqueuing siblings is
+			// only useful when this run is the one that resolves the
+			// vendor; a pre-existing link adds no new signal and gating
+			// on it keeps cascades finite.
+			commonThirdPartyPreexisted := commonThirdPartyID != nil
+
+			var domains []string
+
 			if commonThirdPartyID == nil {
-				domains, err := h.loadInitiatorDomains(ctx, tx, tp)
+				loaded, err := h.loadInitiatorDomains(ctx, tx, tp)
 				if err != nil {
 					return err
 				}
+
+				domains = loaded
 
 				// Sibling matching is an org-local co-occurrence signal:
 				// two patterns served from the same origin on the same
@@ -268,11 +280,59 @@ func (h *trackerMappingHandler) Process(ctx context.Context, tp coredata.Tracker
 					log.String("pattern", tp.Pattern),
 					log.String("tracker_pattern_id", tp.ID.String()),
 				)
+
+				// This run newly resolved a catalog third party, so
+				// same-banner siblings that share an initiator domain but
+				// were processed earlier and left unmatched can now match
+				// against it. Re-arm their mapping so the worker revisits
+				// them; the guards keep already-mapped siblings untouched.
+				if commonThirdPartyID != nil && !commonThirdPartyPreexisted {
+					if err := h.reenqueueUnmappedSiblings(ctx, tx, tp, domains); err != nil {
+						return err
+					}
+				}
 			}
 
 			return nil
 		},
 	)
+}
+
+// reenqueueUnmappedSiblings re-arms mapping_requested_at on same-banner
+// siblings sharing an initiator domain with tp that are still unpromoted,
+// so the worker re-evaluates them now that tp resolved a vendor.
+func (h *trackerMappingHandler) reenqueueUnmappedSiblings(
+	ctx context.Context,
+	tx pg.Tx,
+	tp coredata.TrackerPattern,
+	domains []string,
+) error {
+	scope := coredata.NewScopeFromObjectID(tp.ID)
+
+	var patterns coredata.TrackerPatterns
+
+	count, err := patterns.RequestMappingForUnmappedSiblings(
+		ctx,
+		tx,
+		scope,
+		tp.CookieBannerID,
+		tp.ID,
+		domains,
+	)
+	if err != nil {
+		return fmt.Errorf("cannot re-enqueue unmapped siblings: %w", err)
+	}
+
+	if count > 0 {
+		h.logger.InfoCtx(
+			ctx,
+			"re-enqueued unmapped sibling tracker patterns",
+			log.String("tracker_pattern_id", tp.ID.String()),
+			log.Int64("count", count),
+		)
+	}
+
+	return nil
 }
 
 // firstNonNil returns a when it is set, otherwise b. It keeps the first

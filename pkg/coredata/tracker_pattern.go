@@ -1184,3 +1184,68 @@ WHERE id = @id
 
 	return nil
 }
+
+// RequestMappingForUnmappedSiblings re-arms mapping_requested_at on
+// sibling tracker patterns of the same banner that share an initiator
+// domain with the just-mapped pattern but are still unpromoted. It is
+// the backward-propagation counterpart to the mapping worker's
+// sibling-origin matching: when a pattern newly resolves a vendor, its
+// siblings that were processed earlier and left unmatched can now be
+// re-evaluated against it.
+//
+// Only unpromoted (third_party_id IS NULL), not-already-queued
+// (mapping_requested_at IS NULL), non-extension siblings are touched, so
+// a fully mapped banner re-enqueues nothing. detected_trackers is used
+// only as a filtering subquery. Returns the number of siblings
+// re-enqueued.
+func (tps *TrackerPatterns) RequestMappingForUnmappedSiblings(
+	ctx context.Context,
+	tx pg.Tx,
+	scope Scoper,
+	cookieBannerID gid.GID,
+	excludePatternID gid.GID,
+	domains []string,
+) (int64, error) {
+	if len(domains) == 0 {
+		return 0, nil
+	}
+
+	q := `
+UPDATE tracker_patterns
+SET
+	mapping_requested_at = NOW(),
+	updated_at = NOW()
+WHERE
+	%[1]s
+	AND cookie_banner_id = @cookie_banner_id
+	AND id != @exclude_pattern_id
+	AND third_party_id IS NULL
+	AND mapping_requested_at IS NULL
+	AND (source IS NULL OR source != @extension_source)
+	AND id IN (
+		SELECT DISTINCT tracker_pattern_id
+		FROM detected_trackers
+		WHERE %[1]s
+			AND cookie_banner_id = @cookie_banner_id
+			AND initiator_domain = ANY(@domains)
+			AND tracker_pattern_id IS NOT NULL
+	)
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"cookie_banner_id":   cookieBannerID,
+		"exclude_pattern_id": excludePatternID,
+		"extension_source":   CookieSourceExtension,
+		"domains":            domains,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	result, err := tx.Exec(ctx, q, args)
+	if err != nil {
+		return 0, fmt.Errorf("cannot request mapping for unmapped siblings: %w", err)
+	}
+
+	return result.RowsAffected(), nil
+}

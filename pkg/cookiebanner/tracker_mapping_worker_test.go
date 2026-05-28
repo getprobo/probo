@@ -1425,3 +1425,348 @@ func TestProcess_SiblingPromotionOnFirstPartyOrigin(t *testing.T) {
 	require.NotNil(t, reloadedTarget.ThirdPartyID, "target sharing a first-party origin must be promoted via its sibling")
 	assert.Equal(t, orgThirdParty.ID, *reloadedTarget.ThirdPartyID)
 }
+
+// TestProcess_ReenqueuesUnmappedSiblingOnResolve asserts that when a
+// pattern newly resolves a catalog third party, same-banner siblings
+// that share an initiator domain but are still unpromoted get their
+// mapping re-armed (backward propagation), while the already-promoted
+// sibling that supplied the resolution is left untouched.
+func TestProcess_ReenqueuesUnmappedSiblingOnResolve(t *testing.T) {
+	t.Parallel()
+
+	client := newTestPgClient(t)
+	ctx := context.Background()
+	fx := seedPromotionFixture(t, ctx, client)
+
+	now := time.Now().UTC().Truncate(time.Microsecond)
+
+	orgThirdParty := coredata.ThirdParty{
+		ID:                 gid.New(fx.scope.GetTenantID(), coredata.ThirdPartyEntityType),
+		OrganizationID:     fx.organizationID,
+		CommonThirdPartyID: &fx.commonThirdPartyID,
+		Name:               "Google LLC",
+		Category:           coredata.ThirdPartyCategoryAnalytics,
+		Certifications:     []string{},
+		Countries:          coredata.CountryCodes{},
+		CreatedAt:          now,
+		UpdatedAt:          now,
+	}
+
+	mappedSibling := coredata.TrackerPattern{
+		ID:                     gid.New(fx.scope.GetTenantID(), coredata.TrackerPatternEntityType),
+		OrganizationID:         fx.organizationID,
+		CookieBannerID:         fx.banner.ID,
+		CookieCategoryID:       fx.normalCategoryID,
+		CommonTrackerPatternID: &fx.commonPatternID,
+		ThirdPartyID:           &orgThirdParty.ID,
+		TrackerType:            coredata.TrackerTypeCookie,
+		Pattern:                "_gid_reenq",
+		MatchType:              coredata.TrackerPatternMatchTypeExact,
+		DisplayName:            "_gid_reenq",
+		CreatedAt:              now,
+		UpdatedAt:              now,
+	}
+
+	target := coredata.TrackerPattern{
+		ID:               gid.New(fx.scope.GetTenantID(), coredata.TrackerPatternEntityType),
+		OrganizationID:   fx.organizationID,
+		CookieBannerID:   fx.banner.ID,
+		CookieCategoryID: fx.normalCategoryID,
+		TrackerType:      coredata.TrackerTypeCookie,
+		Pattern:          "_ga_reenq_target",
+		MatchType:        coredata.TrackerPatternMatchTypeExact,
+		DisplayName:      "_ga_reenq_target",
+		CreatedAt:        now,
+		UpdatedAt:        now,
+	}
+
+	unmappedSibling := coredata.TrackerPattern{
+		ID:               gid.New(fx.scope.GetTenantID(), coredata.TrackerPatternEntityType),
+		OrganizationID:   fx.organizationID,
+		CookieBannerID:   fx.banner.ID,
+		CookieCategoryID: fx.normalCategoryID,
+		TrackerType:      coredata.TrackerTypeCookie,
+		Pattern:          "_unmapped_reenq",
+		MatchType:        coredata.TrackerPatternMatchTypeExact,
+		DisplayName:      "_unmapped_reenq",
+		CreatedAt:        now,
+		UpdatedAt:        now,
+	}
+
+	sharedDomain := "reenq-tracker.com"
+
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		if err := orgThirdParty.Insert(ctx, tx, fx.scope); err != nil {
+			return err
+		}
+
+		for _, p := range []coredata.TrackerPattern{mappedSibling, target, unmappedSibling} {
+			if err := p.Insert(ctx, tx, fx.scope); err != nil {
+				return err
+			}
+		}
+
+		for id, identifier := range map[gid.GID]string{
+			mappedSibling.ID:   "_gid_reenq",
+			target.ID:          "_ga_reenq_target",
+			unmappedSibling.ID: "_unmapped_reenq",
+		} {
+			patternID := id
+			det := coredata.DetectedTracker{
+				ID:               gid.New(fx.scope.GetTenantID(), coredata.DetectedTrackerEntityType),
+				CookieBannerID:   fx.banner.ID,
+				TrackerPatternID: &patternID,
+				TrackerType:      coredata.TrackerTypeCookie,
+				Identifier:       identifier,
+				InitiatorDomain:  &sharedDomain,
+				LastDetectedAt:   now,
+				CreatedAt:        now,
+				UpdatedAt:        now,
+			}
+
+			if _, err := det.Upsert(ctx, tx, fx.scope); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	}))
+
+	h := newMappingHandler(client)
+	require.NoError(t, h.Process(ctx, target))
+
+	var reloadedTarget coredata.TrackerPattern
+
+	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+		return reloadedTarget.LoadByID(ctx, conn, fx.scope, target.ID)
+	}))
+
+	require.NotNil(t, reloadedTarget.ThirdPartyID, "target must resolve via its promoted sibling")
+
+	var reloadedUnmapped coredata.TrackerPattern
+
+	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+		return reloadedUnmapped.LoadByID(ctx, conn, fx.scope, unmappedSibling.ID)
+	}))
+
+	require.NotNil(t, reloadedUnmapped.MappingRequestedAt, "unmapped sibling sharing the origin must be re-enqueued")
+
+	var reloadedMapped coredata.TrackerPattern
+
+	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+		return reloadedMapped.LoadByID(ctx, conn, fx.scope, mappedSibling.ID)
+	}))
+
+	assert.Nil(t, reloadedMapped.MappingRequestedAt, "already-promoted sibling must not be re-enqueued")
+}
+
+// TestProcess_DoesNotReenqueuePromotedOrExtensionSiblings asserts that
+// the re-enqueue skips siblings that are already promoted or
+// EXTENSION-sourced, while still re-arming a plain unmapped sibling.
+func TestProcess_DoesNotReenqueuePromotedOrExtensionSiblings(t *testing.T) {
+	t.Parallel()
+
+	client := newTestPgClient(t)
+	ctx := context.Background()
+	fx := seedPromotionFixture(t, ctx, client)
+
+	now := time.Now().UTC().Truncate(time.Microsecond)
+
+	orgThirdParty := coredata.ThirdParty{
+		ID:                 gid.New(fx.scope.GetTenantID(), coredata.ThirdPartyEntityType),
+		OrganizationID:     fx.organizationID,
+		CommonThirdPartyID: &fx.commonThirdPartyID,
+		Name:               "Google LLC",
+		Category:           coredata.ThirdPartyCategoryAnalytics,
+		Certifications:     []string{},
+		Countries:          coredata.CountryCodes{},
+		CreatedAt:          now,
+		UpdatedAt:          now,
+	}
+
+	mappedSibling := coredata.TrackerPattern{
+		ID:                     gid.New(fx.scope.GetTenantID(), coredata.TrackerPatternEntityType),
+		OrganizationID:         fx.organizationID,
+		CookieBannerID:         fx.banner.ID,
+		CookieCategoryID:       fx.normalCategoryID,
+		CommonTrackerPatternID: &fx.commonPatternID,
+		ThirdPartyID:           &orgThirdParty.ID,
+		TrackerType:            coredata.TrackerTypeCookie,
+		Pattern:                "_gid_guard",
+		MatchType:              coredata.TrackerPatternMatchTypeExact,
+		DisplayName:            "_gid_guard",
+		CreatedAt:              now,
+		UpdatedAt:              now,
+	}
+
+	target := coredata.TrackerPattern{
+		ID:               gid.New(fx.scope.GetTenantID(), coredata.TrackerPatternEntityType),
+		OrganizationID:   fx.organizationID,
+		CookieBannerID:   fx.banner.ID,
+		CookieCategoryID: fx.normalCategoryID,
+		TrackerType:      coredata.TrackerTypeCookie,
+		Pattern:          "_ga_guard_target",
+		MatchType:        coredata.TrackerPatternMatchTypeExact,
+		DisplayName:      "_ga_guard_target",
+		CreatedAt:        now,
+		UpdatedAt:        now,
+	}
+
+	plainSibling := coredata.TrackerPattern{
+		ID:               gid.New(fx.scope.GetTenantID(), coredata.TrackerPatternEntityType),
+		OrganizationID:   fx.organizationID,
+		CookieBannerID:   fx.banner.ID,
+		CookieCategoryID: fx.normalCategoryID,
+		TrackerType:      coredata.TrackerTypeCookie,
+		Pattern:          "_plain_guard",
+		MatchType:        coredata.TrackerPatternMatchTypeExact,
+		DisplayName:      "_plain_guard",
+		CreatedAt:        now,
+		UpdatedAt:        now,
+	}
+
+	extensionSource := coredata.CookieSourceExtension
+	extensionSibling := coredata.TrackerPattern{
+		ID:               gid.New(fx.scope.GetTenantID(), coredata.TrackerPatternEntityType),
+		OrganizationID:   fx.organizationID,
+		CookieBannerID:   fx.banner.ID,
+		CookieCategoryID: fx.normalCategoryID,
+		TrackerType:      coredata.TrackerTypeCookie,
+		Pattern:          "_ext_guard",
+		MatchType:        coredata.TrackerPatternMatchTypeExact,
+		DisplayName:      "_ext_guard",
+		Source:           &extensionSource,
+		CreatedAt:        now,
+		UpdatedAt:        now,
+	}
+
+	sharedDomain := "guard-tracker.com"
+
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		if err := orgThirdParty.Insert(ctx, tx, fx.scope); err != nil {
+			return err
+		}
+
+		patterns := map[gid.GID]string{
+			mappedSibling.ID:    "_gid_guard",
+			target.ID:           "_ga_guard_target",
+			plainSibling.ID:     "_plain_guard",
+			extensionSibling.ID: "_ext_guard",
+		}
+
+		for _, p := range []coredata.TrackerPattern{mappedSibling, target, plainSibling, extensionSibling} {
+			if err := p.Insert(ctx, tx, fx.scope); err != nil {
+				return err
+			}
+		}
+
+		for id, identifier := range patterns {
+			patternID := id
+			det := coredata.DetectedTracker{
+				ID:               gid.New(fx.scope.GetTenantID(), coredata.DetectedTrackerEntityType),
+				CookieBannerID:   fx.banner.ID,
+				TrackerPatternID: &patternID,
+				TrackerType:      coredata.TrackerTypeCookie,
+				Identifier:       identifier,
+				InitiatorDomain:  &sharedDomain,
+				LastDetectedAt:   now,
+				CreatedAt:        now,
+				UpdatedAt:        now,
+			}
+
+			if _, err := det.Upsert(ctx, tx, fx.scope); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	}))
+
+	h := newMappingHandler(client)
+	require.NoError(t, h.Process(ctx, target))
+
+	reload := func(id gid.GID) coredata.TrackerPattern {
+		var p coredata.TrackerPattern
+
+		require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+			return p.LoadByID(ctx, conn, fx.scope, id)
+		}))
+
+		return p
+	}
+
+	require.NotNil(t, reload(target.ID).ThirdPartyID, "target must resolve via its promoted sibling")
+	require.NotNil(t, reload(plainSibling.ID).MappingRequestedAt, "plain unmapped sibling must be re-enqueued")
+	assert.Nil(t, reload(mappedSibling.ID).MappingRequestedAt, "promoted sibling must not be re-enqueued")
+	assert.Nil(t, reload(extensionSibling.ID).MappingRequestedAt, "EXTENSION-sourced sibling must not be re-enqueued")
+}
+
+// TestProcess_NoReenqueueWhenCommonThirdPartyPreexisted asserts that the
+// re-trigger path, where the pattern's linked catalog row already carries
+// a common third party, adds no new signal and therefore leaves unmapped
+// siblings untouched (the cascade terminator).
+func TestProcess_NoReenqueueWhenCommonThirdPartyPreexisted(t *testing.T) {
+	t.Parallel()
+
+	client := newTestPgClient(t)
+	ctx := context.Background()
+	fx := seedPromotionFixture(t, ctx, client)
+
+	now := time.Now().UTC().Truncate(time.Microsecond)
+
+	unmappedSibling := coredata.TrackerPattern{
+		ID:               gid.New(fx.scope.GetTenantID(), coredata.TrackerPatternEntityType),
+		OrganizationID:   fx.organizationID,
+		CookieBannerID:   fx.banner.ID,
+		CookieCategoryID: fx.normalCategoryID,
+		TrackerType:      coredata.TrackerTypeCookie,
+		Pattern:          "_unmapped_preexist",
+		MatchType:        coredata.TrackerPatternMatchTypeExact,
+		DisplayName:      "_unmapped_preexist",
+		CreatedAt:        now,
+		UpdatedAt:        now,
+	}
+
+	sharedDomain := "preexist-tracker.com"
+
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		if err := unmappedSibling.Insert(ctx, tx, fx.scope); err != nil {
+			return err
+		}
+
+		for id, identifier := range map[gid.GID]string{
+			fx.trackerPattern.ID: fx.trackerPattern.Pattern,
+			unmappedSibling.ID:   "_unmapped_preexist",
+		} {
+			patternID := id
+			det := coredata.DetectedTracker{
+				ID:               gid.New(fx.scope.GetTenantID(), coredata.DetectedTrackerEntityType),
+				CookieBannerID:   fx.banner.ID,
+				TrackerPatternID: &patternID,
+				TrackerType:      coredata.TrackerTypeCookie,
+				Identifier:       identifier,
+				InitiatorDomain:  &sharedDomain,
+				LastDetectedAt:   now,
+				CreatedAt:        now,
+				UpdatedAt:        now,
+			}
+
+			if _, err := det.Upsert(ctx, tx, fx.scope); err != nil {
+				return err
+			}
+		}
+
+		return fx.trackerPattern.SetMappingRequested(ctx, tx)
+	}))
+
+	h := newMappingHandler(client)
+	require.NoError(t, h.Process(ctx, fx.trackerPattern))
+
+	var reloadedUnmapped coredata.TrackerPattern
+
+	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+		return reloadedUnmapped.LoadByID(ctx, conn, fx.scope, unmappedSibling.ID)
+	}))
+
+	assert.Nil(t, reloadedUnmapped.MappingRequestedAt, "re-trigger with a pre-existing common third party must not re-enqueue siblings")
+}
