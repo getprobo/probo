@@ -81,6 +81,20 @@ func TestRegistry_Register(t *testing.T) {
 		assert.Contains(t, err.Error(), "missing DisplayName")
 	})
 
+	t.Run("APIKeyBasicAuth and APIKeyHeader mutually exclusive", func(t *testing.T) {
+		t.Parallel()
+
+		r := provider.NewRegistry()
+		err := r.Register(&provider.Registration{
+			Provider:        coredata.ConnectorProviderSlack,
+			DisplayName:     "Slack",
+			APIKeyBasicAuth: true,
+			APIKeyHeader:    "x-api-key",
+		})
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "mutually exclusive")
+	})
+
 	t.Run("duplicate registration", func(t *testing.T) {
 		t.Parallel()
 

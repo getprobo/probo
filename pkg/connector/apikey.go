@@ -34,6 +34,13 @@ type APIKeyConnection struct {
 	// It is populated from the provider Registration at connector
 	// creation time.
 	Header string `json:"header,omitempty"`
+	// BasicAuth, when true, presents the API key as the username of an
+	// HTTP Basic credential with an empty password (`Authorization:
+	// Basic base64(<key>:)`) — required by providers such as Cursor
+	// whose Admin API documents Basic auth and rejects Bearer tokens.
+	// It is mutually exclusive with Header and is populated from the
+	// provider Registration at connector creation time.
+	BasicAuth bool `json:"basic_auth,omitempty"`
 }
 
 var _ Connection = (*APIKeyConnection)(nil)
@@ -48,6 +55,15 @@ func (c *APIKeyConnection) Scopes() []string {
 
 func (c *APIKeyConnection) Client(ctx context.Context) (*http.Client, error) {
 	underlying := httpclient.DefaultPooledTransport(httpclient.WithSSRFProtection())
+
+	if c.BasicAuth {
+		return &http.Client{
+			Transport: &basicAuthTransport{
+				username:   c.APIKey,
+				underlying: underlying,
+			},
+		}, nil
+	}
 
 	if c.Header != "" {
 		return &http.Client{
@@ -82,6 +98,22 @@ type apiKeyHeaderTransport struct {
 func (t *apiKeyHeaderTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	req2 := req.Clone(req.Context())
 	req2.Header.Set(t.header, t.value)
+
+	return t.underlying.RoundTrip(req2)
+}
+
+// basicAuthTransport presents the API key as the username of an HTTP
+// Basic credential with an empty password. Providers such as Cursor
+// document `-u <key>:` Basic auth for their Admin API and reject Bearer
+// tokens, so neither oauth2Transport nor apiKeyHeaderTransport fits.
+type basicAuthTransport struct {
+	username   string
+	underlying http.RoundTripper
+}
+
+func (t *basicAuthTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	req2 := req.Clone(req.Context())
+	req2.SetBasicAuth(t.username, "")
 
 	return t.underlying.RoundTrip(req2)
 }

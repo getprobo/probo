@@ -63,6 +63,13 @@ type Registration struct {
 	// (Anthropic). It is consumed when the create-connector resolver
 	// builds the APIKeyConnection.
 	APIKeyHeader string
+	// APIKeyBasicAuth, when true, presents the API key as the username
+	// of an HTTP Basic credential with an empty password instead of a
+	// Bearer token — required by providers such as Cursor whose Admin
+	// API documents `-u <key>:` Basic auth. Mutually exclusive with
+	// APIKeyHeader. Consumed when the create-connector resolver builds
+	// the APIKeyConnection.
+	APIKeyBasicAuth bool
 
 	// Factory closures — wired by Stages 2 and 3.
 	NewDriver               func(context.Context, *http.Client, *coredata.Connector, *log.Logger) (drivers.Driver, error)

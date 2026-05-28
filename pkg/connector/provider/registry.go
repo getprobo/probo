@@ -71,6 +71,13 @@ func (r *Registry) Register(reg *Registration) error {
 		return fmt.Errorf("cannot register connector provider %q: missing DisplayName", reg.Provider)
 	}
 
+	// APIKeyBasicAuth and APIKeyHeader select different presentations of
+	// the same key; setting both is a programmer error with a silent
+	// winner (Client checks BasicAuth first). Reject it at startup.
+	if reg.APIKeyBasicAuth && reg.APIKeyHeader != "" {
+		return fmt.Errorf("cannot register connector provider %q: APIKeyBasicAuth and APIKeyHeader are mutually exclusive", reg.Provider)
+	}
+
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -130,6 +137,18 @@ func (r *Registry) APIKeyHeader(p coredata.ConnectorProvider) string {
 	}
 
 	return ""
+}
+
+// APIKeyUsesBasicAuth reports whether an API-key connection for the
+// given provider must present its key as an HTTP Basic auth username
+// (empty password) instead of a Bearer token. Returns false for unknown
+// providers and for providers that use the default Bearer scheme.
+func (r *Registry) APIKeyUsesBasicAuth(p coredata.ConnectorProvider) bool {
+	if reg, ok := r.Get(p); ok {
+		return reg.APIKeyBasicAuth
+	}
+
+	return false
 }
 
 // ProviderOAuth2Scopes returns the OAuth2 scopes the access review
