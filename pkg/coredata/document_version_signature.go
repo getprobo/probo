@@ -433,6 +433,18 @@ signatures_with_people AS (
 	FROM document_version_signatures dvs
 	INNER JOIN major_versions mv ON dvs.document_version_id = mv.id
 	INNER JOIN iam_membership_profiles p ON dvs.signed_by_profile_id = p.id
+	WHERE
+		dvs.state = 'SIGNED'
+		OR (
+			p.state = 'ACTIVE'
+			AND (p.contract_end_date IS NULL OR p.contract_end_date >= CURRENT_DATE)
+			AND EXISTS (
+				SELECT 1
+				FROM iam_memberships m
+				WHERE m.identity_id = p.identity_id
+					AND m.organization_id = p.organization_id
+			)
+		)
 )
 SELECT
 	id,

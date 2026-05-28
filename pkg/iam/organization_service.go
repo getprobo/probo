@@ -1102,10 +1102,18 @@ func (s *OrganizationService) UpdateUser(ctx context.Context, req *UpdateUserReq
 				profile.ContractEndDate = *req.ContractEndDate
 			}
 
-			profile.UpdatedAt = time.Now()
+			now := time.Now()
+			profile.UpdatedAt = now
 
 			if err := profile.Update(ctx, conn, scope); err != nil {
 				return fmt.Errorf("cannot update profile: %w", err)
+			}
+
+			if profile.ContractEndDate != nil && profile.ContractEndDate.Before(now) {
+				signatures := &coredata.DocumentVersionSignatures{}
+				if err := signatures.DeleteRequestedBySignatory(ctx, conn, scope, profile.ID); err != nil {
+					return fmt.Errorf("cannot delete requested signatures: %w", err)
+				}
 			}
 
 			membership := &coredata.Membership{}

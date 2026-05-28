@@ -16,6 +16,7 @@ package console_test
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -394,6 +395,79 @@ func TestUser_DeactivateUserCancelsSignatureRequests(t *testing.T) {
 	}, &deactivateResult)
 	require.NoError(t, err)
 	require.True(t, deactivateResult.DeactivateUser.Success)
+
+	assertRequestedSignatureCount(t, owner, documentVersionID, 0)
+}
+
+func TestUser_EndedContractCancelsSignatureRequests(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	signer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
+
+	docID, _ := createTestDocument(t, owner)
+	approveTestDocument(t, owner, docID)
+
+	var versionResult struct {
+		Node struct {
+			Versions struct {
+				Edges []struct {
+					Node struct {
+						ID string `json:"id"`
+					} `json:"node"`
+				} `json:"edges"`
+			} `json:"versions"`
+		} `json:"node"`
+	}
+
+	err := owner.Execute(`
+		query($id: ID!) {
+			node(id: $id) {
+				... on Document {
+					versions(first: 1, orderBy: { field: CREATED_AT, direction: DESC }) {
+						edges { node { id } }
+					}
+				}
+			}
+		}
+	`, map[string]any{"id": docID}, &versionResult)
+	require.NoError(t, err)
+	require.NotEmpty(t, versionResult.Node.Versions.Edges)
+
+	documentVersionID := versionResult.Node.Versions.Edges[0].Node.ID
+	signerProfileID := signer.GetProfileID().String()
+
+	_, err = owner.Do(`
+		mutation($input: RequestSignatureInput!) {
+			requestSignature(input: $input) {
+				documentVersionSignatureEdge { node { id } }
+			}
+		}
+	`, map[string]any{
+		"input": map[string]any{
+			"documentVersionId": documentVersionID,
+			"signatoryId":       signerProfileID,
+		},
+	})
+	require.NoError(t, err)
+
+	assertRequestedSignatureCount(t, owner, documentVersionID, 1)
+
+	contractEndDate := time.Now().Add(-24 * time.Hour).Format(time.RFC3339)
+	_, err = owner.DoConnect(`
+		mutation($input: UpdateUserInput!) {
+			updateUser(input: $input) {
+				profile { id }
+			}
+		}
+	`, map[string]any{
+		"input": map[string]any{
+			"id":                       signerProfileID,
+			"fullName":                 "Ended Contract Signer",
+			"additionalEmailAddresses": []string{},
+			"contractEndDate":          contractEndDate,
+		},
+	})
+	require.NoError(t, err)
 
 	assertRequestedSignatureCount(t, owner, documentVersionID, 0)
 }
