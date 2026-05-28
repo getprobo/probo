@@ -16,6 +16,7 @@ import { EyeIcon, EyeSlashIcon } from "@phosphor-icons/react";
 import { formatError, type GraphQLError } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import {
+  Avatar,
   Badge,
   Dropdown,
   IconArrowBoxLeft,
@@ -55,6 +56,15 @@ const trackerPatternFragment = graphql`
     lastMatchedAt
     cookieCategory {
       name
+    }
+    thirdParty {
+      id
+      name
+    }
+    commonThirdParty {
+      id
+      name
+      logoUrl
     }
   }
 `;
@@ -313,6 +323,26 @@ export function TrackerPatternRow({ patternKey, connectionId }: TrackerPatternRo
             </span>
           )}
         </div>
+      </Td>
+      <Td>
+        {pattern.thirdParty
+          ? (
+              <div className="flex items-center gap-2 min-w-0">
+                <Avatar name={pattern.thirdParty.name} />
+                <span className="truncate">{pattern.thirdParty.name}</span>
+              </div>
+            )
+          : pattern.commonThirdParty
+            ? (
+                <div className="flex items-center gap-2 min-w-0">
+                  <Avatar
+                    name={pattern.commonThirdParty.name}
+                    src={pattern.commonThirdParty.logoUrl}
+                  />
+                  <span className="truncate">{pattern.commonThirdParty.name}</span>
+                </div>
+              )
+            : <span className="text-txt-tertiary">-</span>}
       </Td>
       <Td>
         {srcBadge
