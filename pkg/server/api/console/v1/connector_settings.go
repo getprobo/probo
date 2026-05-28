@@ -60,6 +60,17 @@ func apiKeyConnectorSettings(input types.CreateAPIKeyConnectorInput) (json.RawMe
 		}
 
 		return json.Marshal(&coredata.GitHubConnectorSettings{Organization: *input.GithubOrganization})
+	case coredata.ConnectorProviderGrafana:
+		if input.GrafanaBaseURL == nil || *input.GrafanaBaseURL == "" {
+			return nil, fmt.Errorf("cannot create grafana connector: grafanaBaseUrl is required")
+		}
+
+		u, err := url.Parse(*input.GrafanaBaseURL)
+		if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {
+			return nil, fmt.Errorf("cannot create grafana connector: grafanaBaseUrl must be an http(s) URL")
+		}
+
+		return json.Marshal(&coredata.GrafanaConnectorSettings{BaseURL: *input.GrafanaBaseURL})
 	case coredata.ConnectorProviderOnePassword:
 		if input.OnePasswordScimBridgeURL == nil || *input.OnePasswordScimBridgeURL == "" {
 			return nil, fmt.Errorf("cannot create 1password connector: onePasswordScimBridgeURL is required")

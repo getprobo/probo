@@ -30,6 +30,7 @@ func NewBuiltinRegistry() *Registry {
 		cloudflareRegistration(),
 		cursorRegistration(),
 		docusignRegistration(),
+		grafanaRegistration(),
 		githubRegistration(),
 		gitlabRegistration(),
 		googleWorkspaceRegistration(),

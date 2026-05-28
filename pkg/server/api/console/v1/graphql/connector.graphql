@@ -14,6 +14,8 @@ enum ConnectorProvider
         @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderHubSpot")
     DOCUSIGN
         @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderDocuSign")
+    GRAFANA
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderGrafana")
     NOTION @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderNotion")
     BREX @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderBrex")
     TALLY @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderTally")
@@ -121,6 +123,7 @@ input CreateAPIKeyConnectorInput {
     sentryOrganizationSlug: String
     supabaseOrganizationSlug: String
     githubOrganization: String
+    grafanaBaseUrl: String
     onePasswordScimBridgeUrl: String
 }
 

@@ -113,6 +113,9 @@ function mapAPIKeyExtraSettingToField(
     case "GITHUB":
       if (settingKey === "organization") return "githubOrganization";
       break;
+    case "GRAFANA":
+      if (settingKey === "baseUrl") return "grafanaBaseUrl";
+      break;
     case "ONE_PASSWORD":
       if (settingKey === "scimBridgeUrl") return "onePasswordScimBridgeUrl";
       break;

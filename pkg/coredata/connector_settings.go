@@ -39,6 +39,10 @@ type (
 		OrganizationSlug string `json:"organization_slug"`
 	}
 
+	GrafanaConnectorSettings struct {
+		BaseURL string `json:"base_url"`
+	}
+
 	SupabaseConnectorSettings struct {
 		OrganizationSlug string `json:"organization_slug"`
 	}
