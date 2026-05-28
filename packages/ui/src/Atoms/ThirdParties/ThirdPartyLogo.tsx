@@ -20,6 +20,7 @@ import { Bitbucket } from "./Bitbucket";
 import { Brex } from "./Brex";
 import { ClickUp } from "./ClickUp";
 import { Cloudflare } from "./Cloudflare";
+import { Cursor } from "./Cursor";
 import { DocuSign } from "./DocuSign";
 import { Figma } from "./Figma";
 import { GitHub } from "./GitHub";
@@ -51,6 +52,7 @@ const thirdParties: Record<string, FC<ComponentProps<"svg">>> = {
   BREX: Brex,
   CLICKUP: ClickUp,
   CLOUDFLARE: Cloudflare,
+  CURSOR: Cursor,
   DOCUSIGN: DocuSign,
   FIGMA: Figma,
   GITHUB: GitHub,
