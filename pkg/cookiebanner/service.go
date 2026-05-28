@@ -2229,6 +2229,15 @@ func (s *Service) reportDetectedTracker(
 			if err := matchedPattern.Update(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot promote source on matched tracker pattern %q: %w", matchedPattern.Pattern, err)
 			}
+
+			// A stronger source can unblock mapping: the detection
+			// upserted below carries a fresh initiator domain that
+			// matchByDomain/matchBySiblingOrigin can now use, and an
+			// EXTENSION->SCRIPT promotion lifts the creationAllowed
+			// gate. Re-arm mapping so the worker revisits the pattern.
+			if err := matchedPattern.SetMappingRequested(ctx, tx); err != nil {
+				return fmt.Errorf("cannot request mapping after source promotion on tracker pattern %q: %w", matchedPattern.Pattern, err)
+			}
 		}
 	} else {
 		newPattern := &coredata.TrackerPattern{

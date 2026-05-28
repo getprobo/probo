@@ -208,6 +208,13 @@ func (h *patternAnalysisHandler) Process(ctx context.Context, banner coredata.Co
 						if err := globPattern.Update(ctx, tx, scope); err != nil {
 							return fmt.Errorf("cannot promote source on glob pattern %q: %w", key.template, err)
 						}
+
+						// A stronger source can unblock mapping (e.g.
+						// EXTENSION->SCRIPT lifts the creationAllowed
+						// gate), so re-arm mapping on the existing glob.
+						if err := globPattern.SetMappingRequested(ctx, tx); err != nil {
+							return fmt.Errorf("cannot request mapping after source promotion on glob pattern %q: %w", key.template, err)
+						}
 					}
 				}
 
@@ -797,6 +804,13 @@ func (h *patternAnalysisHandler) adoptUncategorisedPatterns(
 
 			if err := match.Update(ctx, tx, scope); err != nil {
 				return false, fmt.Errorf("cannot promote source on glob pattern %q: %w", match.Pattern, err)
+			}
+
+			// A stronger source can unblock mapping (e.g.
+			// EXTENSION->SCRIPT lifts the creationAllowed gate), so
+			// re-arm mapping on the adopted glob.
+			if err := match.SetMappingRequested(ctx, tx); err != nil {
+				return false, fmt.Errorf("cannot request mapping after source promotion on glob pattern %q: %w", match.Pattern, err)
 			}
 		}
 

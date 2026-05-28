@@ -131,9 +131,6 @@ func (h *trackerMappingHandler) Process(ctx context.Context, tp coredata.Tracker
 				return fmt.Errorf("cannot load cookie banner for domain filtering: %w", err)
 			}
 
-			// FIXME: remove
-			banner.Origin = "https://t.probo.com"
-
 			var (
 				commonPatternID    *gid.GID
 				commonThirdPartyID *gid.GID
