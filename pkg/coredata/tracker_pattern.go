@@ -1303,3 +1303,40 @@ WHERE
 
 	return result.RowsAffected(), nil
 }
+
+// BackfillDescriptionByCommonTrackerPatternID copies an enriched
+// description onto every tracker pattern linked to the given common
+// pattern that does not yet have one. It is invoked by the common-pattern
+// enrichment worker, a global system process, so it is intentionally not
+// tenant-scoped: a single catalog enrichment fans out to all tenants'
+// linked patterns. The description = ” guard guarantees a pattern that
+// already carries a description is never overwritten. Returns the number
+// of patterns backfilled.
+func (tps *TrackerPatterns) BackfillDescriptionByCommonTrackerPatternID(
+	ctx context.Context,
+	tx pg.Tx,
+	commonTrackerPatternID gid.GID,
+	description string,
+) (int64, error) {
+	q := `
+UPDATE tracker_patterns
+SET
+	description = @description,
+	updated_at = NOW()
+WHERE
+	common_tracker_pattern_id = @common_tracker_pattern_id
+	AND description = ''
+`
+
+	args := pgx.StrictNamedArgs{
+		"common_tracker_pattern_id": commonTrackerPatternID,
+		"description":               description,
+	}
+
+	result, err := tx.Exec(ctx, q, args)
+	if err != nil {
+		return 0, fmt.Errorf("cannot backfill tracker pattern descriptions: %w", err)
+	}
+
+	return result.RowsAffected(), nil
+}

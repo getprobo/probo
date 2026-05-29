@@ -42,7 +42,7 @@ type trackerMappingHandler struct {
 func NewTrackerMappingWorker(
 	pgClient *pg.Client,
 	logger *log.Logger,
-	mappingCfg TrackerMappingConfig,
+	mappingCfg TrackerAgentsConfig,
 	disambiguationCfg thirdparty.DisambiguationConfig,
 	opts ...worker.Option,
 ) *worker.Worker[coredata.TrackerPattern] {
@@ -260,6 +260,11 @@ func (h *trackerMappingHandler) Process(ctx context.Context, tp coredata.Tracker
 				tp.ThirdPartyID = thirdPartyID
 				tp.UpdatedAt = time.Now()
 
+				// Descriptions are owned by the common-pattern enrichment
+				// worker. Here we only propagate: if the linked catalog row
+				// is already enriched, copy its description onto this
+				// pattern. A pattern linked before enrichment is filled
+				// later by the enrichment worker's fan-out instead.
 				if tp.Description == "" && commonPatternID != nil {
 					var commonPattern coredata.CommonTrackerPattern
 					if err := commonPattern.LoadByID(ctx, tx, *commonPatternID); err == nil && commonPattern.Description != "" {
@@ -451,7 +456,6 @@ func (h *trackerMappingHandler) matchByDomain(
 		TrackerType:        tp.TrackerType,
 		Pattern:            tp.Pattern,
 		MatchType:          tp.MatchType,
-		Description:        tp.Description,
 		MaxAgeSeconds:      tp.MaxAgeSeconds,
 		Confidence:         0.7,
 		CreatedAt:          now,
@@ -547,7 +551,6 @@ func (h *trackerMappingHandler) identifyWithAgent(
 		TrackerType:        tp.TrackerType,
 		Pattern:            tp.Pattern,
 		MatchType:          tp.MatchType,
-		Description:        identification.Description,
 		MaxAgeSeconds:      tp.MaxAgeSeconds,
 		Confidence:         confidence,
 		CreatedAt:          now,
@@ -693,7 +696,6 @@ func (h *trackerMappingHandler) matchBySiblingOrigin(
 		TrackerType:        tp.TrackerType,
 		Pattern:            tp.Pattern,
 		MatchType:          tp.MatchType,
-		Description:        tp.Description,
 		MaxAgeSeconds:      tp.MaxAgeSeconds,
 		Confidence:         0.7,
 		CreatedAt:          now,
@@ -822,7 +824,6 @@ func (h *trackerMappingHandler) createUnmatchedPattern(
 		TrackerType:   tp.TrackerType,
 		Pattern:       tp.Pattern,
 		MatchType:     tp.MatchType,
-		Description:   tp.Description,
 		MaxAgeSeconds: tp.MaxAgeSeconds,
 		Confidence:    0.5,
 		CreatedAt:     now,

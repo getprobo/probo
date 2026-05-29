@@ -26,7 +26,6 @@ import (
 	"go.probo.inc/probo/pkg/agent"
 	"go.probo.inc/probo/pkg/agent/tools/search"
 	"go.probo.inc/probo/pkg/coredata"
-	"go.probo.inc/probo/pkg/llm"
 )
 
 const (
@@ -44,21 +43,11 @@ var trackerIdentificationPrompt string
 type TrackerMappingAgentResult struct {
 	ThirdPartyName string                      `json:"third_party_name" jsonschema:"Name of the company or service that sets this tracker (e.g. 'Google Analytics', 'Meta Pixel'). Empty string if truly unknown."`
 	Category       coredata.ThirdPartyCategory `json:"category" jsonschema:"Third party category"`
-	Description    string                      `json:"description" jsonschema:"What this tracker does in one sentence"`
 	Confidence     float64                     `json:"confidence" jsonschema:"Confidence level from 0.0 to 1.0. Set below 0.5 if unsure."`
 }
 
-// TrackerMappingConfig configures the tracker-mapping agent (catalog
-// identification). The agent uses DB-backed search tools and may also
-// use Firecrawl for web search when an API key is supplied.
-type TrackerMappingConfig struct {
-	LLMClient       *llm.Client
-	Model           string
-	FirecrawlAPIKey string
-}
-
 func buildTrackerMappingAgent(
-	cfg TrackerMappingConfig,
+	cfg TrackerAgentsConfig,
 	pgClient *pg.Client,
 	logger *log.Logger,
 ) *agent.Agent {

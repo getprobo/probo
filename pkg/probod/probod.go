@@ -313,7 +313,7 @@ func (impl *Implm) Run(
 		return err
 	}
 
-	trackerMappingCfg, thirdPartyDisambiguationCfg, err := impl.buildTrackerMappingConfig(l, tp, r)
+	trackerAgentsCfg, thirdPartyDisambiguationCfg, err := impl.buildTrackerAgentsConfig(l, tp, r)
 	if err != nil {
 		return err
 	}
@@ -725,7 +725,7 @@ func (impl *Implm) Run(
 		},
 	)
 
-	trackerMappingWorker := cookiebanner.NewTrackerMappingWorker(pgClient, l, trackerMappingCfg, thirdPartyDisambiguationCfg)
+	trackerMappingWorker := cookiebanner.NewTrackerMappingWorker(pgClient, l, trackerAgentsCfg, thirdPartyDisambiguationCfg)
 	trackerMappingWorkerCtx, stopTrackerMappingWorker := context.WithCancel(context.Background())
 
 	wg.Go(
@@ -735,6 +735,26 @@ func (impl *Implm) Run(
 			}
 		},
 	)
+
+	// The common-pattern enrichment worker needs an LLM client (it
+	// researches descriptions via the agent), so it is only started when
+	// the tracker agents are configured.
+	stopCommonPatternEnrichmentWorker := func() {}
+
+	if trackerAgentsCfg.LLMClient != nil {
+		commonPatternEnrichmentWorker := cookiebanner.NewCommonPatternEnrichmentWorker(pgClient, l, trackerAgentsCfg)
+
+		var commonPatternEnrichmentWorkerCtx context.Context
+		commonPatternEnrichmentWorkerCtx, stopCommonPatternEnrichmentWorker = context.WithCancel(context.Background())
+
+		wg.Go(
+			func() {
+				if err := commonPatternEnrichmentWorker.Run(commonPatternEnrichmentWorkerCtx); err != nil {
+					cancel(fmt.Errorf("common pattern enrichment worker crashed: %w", err))
+				}
+			},
+		)
+	}
 
 	mailingListWorker := mailman.NewMailingListWorker(mailmanService, pgClient, l.Named("mailing-list-worker"))
 	mailingListWorkerCtx, stopMailingListWorker := context.WithCancel(context.Background())
@@ -805,6 +825,7 @@ func (impl *Implm) Run(
 	stopESignService()
 	stopTrackerPatternAnalysisWorker()
 	stopTrackerMappingWorker()
+	stopCommonPatternEnrichmentWorker()
 	stopMailingListWorker()
 	stopEvidenceDescriptionWorker()
 	stopDocumentPDFWorker()
