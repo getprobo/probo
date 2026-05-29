@@ -13,12 +13,12 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 import { EyeIcon, EyeSlashIcon } from "@phosphor-icons/react";
-import { formatError, getTrackerSourceBadge, getTrackerTypeBadge, type GraphQLError } from "@probo/helpers";
+import { formatError, getTrackerSourceBadge, getTrackerTypeBadge, type GraphQLError, humanizeSeconds } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import {
+  ActionDropdown,
   Badge,
-  Dropdown,
-  IconArrowBoxLeft,
+  DropdownItem,
   IconPencil,
   IconTrashCan,
   Td,
@@ -26,21 +26,16 @@ import {
   useConfirm,
   useToast,
 } from "@probo/ui";
-import { Suspense, useCallback, useState } from "react";
-import { graphql, useFragment, useMutation, useQueryLoader } from "react-relay";
-import { useParams } from "react-router";
+import { useState } from "react";
+import { graphql, useFragment, useMutation } from "react-relay";
 import { ConnectionHandler } from "relay-runtime";
 
-import type { MoveToCategoryDropdownQuery } from "#/__generated__/core/MoveToCategoryDropdownQuery.graphql";
 import type { TrackerPatternRowDeleteMutation } from "#/__generated__/core/TrackerPatternRowDeleteMutation.graphql";
 import type { TrackerPatternRowFragment$key } from "#/__generated__/core/TrackerPatternRowFragment.graphql";
 import type { TrackerPatternRowMoveMutation } from "#/__generated__/core/TrackerPatternRowMoveMutation.graphql";
 import type { TrackerPatternRowUpdateMutation } from "#/__generated__/core/TrackerPatternRowUpdateMutation.graphql";
 
-import {
-  MoveToCategoryDropdown,
-  moveToCategoryDropdownQuery,
-} from "./MoveToCategoryDropdown";
+import { MoveToCategorySelect } from "./MoveToCategorySelect";
 import { TrackerPatternRowEdit } from "./TrackerPatternRowEdit";
 
 const trackerPatternFragment = graphql`
@@ -54,6 +49,7 @@ const trackerPatternFragment = graphql`
     excluded
     lastMatchedAt
     cookieCategory {
+      id
       name
     }
     thirdParty {
@@ -143,21 +139,9 @@ export function TrackerPatternRow({ patternKey, connectionId }: TrackerPatternRo
   const { __ } = useTranslate();
   const { toast } = useToast();
   const confirm = useConfirm();
-  const { cookieBannerId } = useParams<{ cookieBannerId: string }>();
   const pattern = useFragment(trackerPatternFragment, patternKey);
 
   const [isEditing, setIsEditing] = useState(false);
-  const [categoryQueryRef, loadCategoryQuery]
-    = useQueryLoader<MoveToCategoryDropdownQuery>(moveToCategoryDropdownQuery);
-
-  const handleCategoryDropdownOpen = useCallback(
-    (open: boolean) => {
-      if (open && cookieBannerId) {
-        loadCategoryQuery({ cookieBannerId });
-      }
-    },
-    [loadCategoryQuery, cookieBannerId],
-  );
 
   const [deletePattern]
     = useMutation<TrackerPatternRowDeleteMutation>(deletePatternMutation);
@@ -227,6 +211,22 @@ export function TrackerPatternRow({ patternKey, connectionId }: TrackerPatternRo
         toast({ title: __("Error"), description: formatError(__("Failed to move cookie"), error as GraphQLError), variant: "error" });
       },
     });
+  };
+
+  const handleMoveWithConfirm = (targetCategoryId: string) => {
+    if (targetCategoryId === pattern.cookieCategory?.id) {
+      return;
+    }
+    confirm(
+      () => {
+        handleMove(targetCategoryId);
+      },
+      {
+        message: __("Moving this tracker to a category will create a third party for it (or link an existing one) if it doesn't have one yet. Continue?"),
+        variant: "primary",
+        label: __("Move"),
+      },
+    );
   };
 
   const handleToggleExcluded = () => {
@@ -323,10 +323,15 @@ export function TrackerPatternRow({ patternKey, connectionId }: TrackerPatternRo
           ? <Badge variant={srcBadge.variant}>{srcBadge.label}</Badge>
           : <span className="text-txt-tertiary">-</span>}
       </Td>
+      <Td noLink>
+        <MoveToCategorySelect
+          currentCategoryId={pattern.cookieCategory?.id}
+          currentCategoryName={pattern.cookieCategory?.name}
+          onSelect={handleMoveWithConfirm}
+        />
+      </Td>
       <Td>
-        {pattern.cookieCategory
-          ? <span>{pattern.cookieCategory.name}</span>
-          : <span className="text-txt-tertiary">-</span>}
+        <span>{humanizeSeconds(pattern.maxAgeSeconds ?? null)}</span>
       </Td>
       <Td>
         {pattern.lastMatchedAt
@@ -337,7 +342,7 @@ export function TrackerPatternRow({ patternKey, connectionId }: TrackerPatternRo
             )
           : <span className="text-txt-tertiary">-</span>}
       </Td>
-      <Td>
+      <Td noLink className="w-px whitespace-nowrap">
         <div className="flex items-center gap-1">
           <button
             type="button"
@@ -347,40 +352,21 @@ export function TrackerPatternRow({ patternKey, connectionId }: TrackerPatternRo
           >
             <IconPencil size={14} />
           </button>
-          <Dropdown
-            onOpenChange={handleCategoryDropdownOpen}
-            toggle={(
-              <button
-                type="button"
-                className="p-1 rounded cursor-pointer"
-                title={__("Move to category")}
-              >
-                <IconArrowBoxLeft size={14} />
-              </button>
-            )}
-          >
-            {categoryQueryRef && (
-              <Suspense>
-                <MoveToCategoryDropdown queryRef={categoryQueryRef} onMove={handleMove} />
-              </Suspense>
-            )}
-          </Dropdown>
-          <button
-            type="button"
-            onClick={handleToggleExcluded}
-            className="p-1 rounded cursor-pointer"
-            title={pattern.excluded ? __("Include") : __("Exclude")}
-          >
-            {pattern.excluded ? <EyeIcon size={14} /> : <EyeSlashIcon size={14} />}
-          </button>
-          <button
-            type="button"
-            onClick={handleDelete}
-            className="p-1 rounded cursor-pointer text-danger-dark"
-            title={__("Delete")}
-          >
-            <IconTrashCan size={14} />
-          </button>
+          <ActionDropdown>
+            <DropdownItem
+              icon={pattern.excluded ? EyeIcon : EyeSlashIcon}
+              onSelect={handleToggleExcluded}
+            >
+              {pattern.excluded ? __("Include") : __("Exclude")}
+            </DropdownItem>
+            <DropdownItem
+              variant="danger"
+              icon={IconTrashCan}
+              onSelect={handleDelete}
+            >
+              {__("Delete")}
+            </DropdownItem>
+          </ActionDropdown>
         </div>
       </Td>
     </Tr>

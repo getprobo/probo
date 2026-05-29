@@ -187,8 +187,9 @@ export default function CookieBannerResourcesPage({
                     <Th>{__("Type")}</Th>
                     <SortableTh field="ORIGIN">{__("Origin")}</SortableTh>
                     <Th>{__("Path")}</Th>
+                    <Th>{__("Category")}</Th>
                     <SortableTh field="LAST_DETECTED_AT">{__("Last Detected")}</SortableTh>
-                    <Th className="w-28" />
+                    <Th className="w-px" />
                   </Tr>
                 </Thead>
                 <Tbody>

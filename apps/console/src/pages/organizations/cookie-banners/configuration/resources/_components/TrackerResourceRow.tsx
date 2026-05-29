@@ -16,9 +16,9 @@ import { EyeIcon, EyeSlashIcon } from "@phosphor-icons/react";
 import { formatError, type GraphQLError } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import {
+  ActionDropdown,
   Badge,
-  Dropdown,
-  IconArrowBoxLeft,
+  DropdownItem,
   IconPencil,
   IconTrashCan,
   Td,
@@ -26,21 +26,16 @@ import {
   useConfirm,
   useToast,
 } from "@probo/ui";
-import { Suspense, useCallback, useState } from "react";
-import { graphql, useFragment, useMutation, useQueryLoader } from "react-relay";
-import { useParams } from "react-router";
+import { useState } from "react";
+import { graphql, useFragment, useMutation } from "react-relay";
 import { ConnectionHandler } from "relay-runtime";
 
-import type { MoveToCategoryDropdownQuery } from "#/__generated__/core/MoveToCategoryDropdownQuery.graphql";
 import type { TrackerResourceRowDeleteMutation } from "#/__generated__/core/TrackerResourceRowDeleteMutation.graphql";
 import type { TrackerResourceRowFragment$key } from "#/__generated__/core/TrackerResourceRowFragment.graphql";
 import type { TrackerResourceRowMoveMutation } from "#/__generated__/core/TrackerResourceRowMoveMutation.graphql";
 import type { TrackerResourceRowUpdateMutation } from "#/__generated__/core/TrackerResourceRowUpdateMutation.graphql";
 
-import {
-  MoveToCategoryDropdown,
-  moveToCategoryDropdownQuery,
-} from "../../trackers/_components/MoveToCategoryDropdown";
+import { MoveToCategorySelect } from "../../trackers/_components/MoveToCategorySelect";
 
 import { TrackerResourceRowEdit } from "./TrackerResourceRowEdit";
 
@@ -54,6 +49,10 @@ const trackerResourceFragment = graphql`
     description
     excluded
     lastDetectedAt
+    cookieCategory {
+      id
+      name
+    }
   }
 `;
 
@@ -147,22 +146,10 @@ export function TrackerResourceRow({ resourceKey, connectionId }: TrackerResourc
   const { __ } = useTranslate();
   const { toast } = useToast();
   const confirm = useConfirm();
-  const { cookieBannerId } = useParams<{ cookieBannerId: string }>();
   const resource = useFragment(trackerResourceFragment, resourceKey);
   const typeBadge = resourceTypeBadge(resource.type, __);
 
   const [isEditing, setIsEditing] = useState(false);
-  const [categoryQueryRef, loadCategoryQuery]
-    = useQueryLoader<MoveToCategoryDropdownQuery>(moveToCategoryDropdownQuery);
-
-  const handleCategoryDropdownOpen = useCallback(
-    (open: boolean) => {
-      if (open && cookieBannerId) {
-        loadCategoryQuery({ cookieBannerId });
-      }
-    },
-    [loadCategoryQuery, cookieBannerId],
-  );
 
   const [deleteResource]
     = useMutation<TrackerResourceRowDeleteMutation>(deleteResourceMutation);
@@ -310,6 +297,13 @@ export function TrackerResourceRow({ resourceKey, connectionId }: TrackerResourc
         <span className="font-mono text-xs break-all max-w-xs inline-block">{resource.path}</span>
       </Td>
       <Td>
+        <MoveToCategorySelect
+          currentCategoryId={resource.cookieCategory?.id}
+          currentCategoryName={resource.cookieCategory?.name}
+          onSelect={handleMove}
+        />
+      </Td>
+      <Td>
         {resource.lastDetectedAt
           ? (
               <time dateTime={resource.lastDetectedAt}>
@@ -318,7 +312,7 @@ export function TrackerResourceRow({ resourceKey, connectionId }: TrackerResourc
             )
           : <span className="text-txt-tertiary">-</span>}
       </Td>
-      <Td>
+      <Td className="w-px whitespace-nowrap">
         <div className="flex items-center gap-1">
           <button
             type="button"
@@ -328,40 +322,21 @@ export function TrackerResourceRow({ resourceKey, connectionId }: TrackerResourc
           >
             <IconPencil size={14} />
           </button>
-          <Dropdown
-            onOpenChange={handleCategoryDropdownOpen}
-            toggle={(
-              <button
-                type="button"
-                className="p-1 rounded cursor-pointer"
-                title={__("Move to category")}
-              >
-                <IconArrowBoxLeft size={14} />
-              </button>
-            )}
-          >
-            {categoryQueryRef && (
-              <Suspense>
-                <MoveToCategoryDropdown queryRef={categoryQueryRef} onMove={handleMove} />
-              </Suspense>
-            )}
-          </Dropdown>
-          <button
-            type="button"
-            onClick={handleToggleExcluded}
-            className="p-1 rounded cursor-pointer"
-            title={resource.excluded ? __("Include") : __("Exclude")}
-          >
-            {resource.excluded ? <EyeIcon size={14} /> : <EyeSlashIcon size={14} />}
-          </button>
-          <button
-            type="button"
-            onClick={handleDelete}
-            className="p-1 rounded cursor-pointer text-danger-dark"
-            title={__("Delete")}
-          >
-            <IconTrashCan size={14} />
-          </button>
+          <ActionDropdown>
+            <DropdownItem
+              icon={resource.excluded ? EyeIcon : EyeSlashIcon}
+              onSelect={handleToggleExcluded}
+            >
+              {resource.excluded ? __("Include") : __("Exclude")}
+            </DropdownItem>
+            <DropdownItem
+              variant="danger"
+              icon={IconTrashCan}
+              onSelect={handleDelete}
+            >
+              {__("Delete")}
+            </DropdownItem>
+          </ActionDropdown>
         </div>
       </Td>
     </Tr>

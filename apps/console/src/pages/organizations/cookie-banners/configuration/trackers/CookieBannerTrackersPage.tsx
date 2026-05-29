@@ -272,8 +272,9 @@ export default function CookieBannerTrackersPage({
                     <Th>{__("Third party")}</Th>
                     <SortableTh field="SOURCE">{__("Source")}</SortableTh>
                     <Th>{__("Category")}</Th>
+                    <Th>{__("Max Age")}</Th>
                     <SortableTh field="LAST_MATCHED_AT">{__("Last Matched")}</SortableTh>
-                    <Th className="w-28" />
+                    <Th className="w-px" />
                   </Tr>
                 </Thead>
                 <Tbody>
