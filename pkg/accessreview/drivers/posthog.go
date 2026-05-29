@@ -169,12 +169,12 @@ func (d *PostHogDriver) resolveNextURL(next string) (string, error) {
 		return "", fmt.Errorf("cannot parse posthog next page URL: %w", err)
 	}
 
-	base, err := url.Parse(d.baseURL)
-	if err != nil {
-		return "", fmt.Errorf("cannot parse posthog base URL: %w", err)
-	}
-
 	if nextURL.IsAbs() {
+		base, err := url.Parse(d.baseURL)
+		if err != nil {
+			return "", fmt.Errorf("cannot parse posthog base URL: %w", err)
+		}
+
 		// Pin pagination to the resolved data host. The connection's bearer
 		// token is attached to every request, so an absolute `next` pointing
 		// at a different host (a compromised or spoofed API response) would
@@ -198,6 +198,21 @@ func (d *PostHogDriver) resolveNextURL(next string) (string, error) {
 	}
 
 	return baseURL.ResolveReference(nextURL).String(), nil
+}
+
+// PostHogRegionBaseURL maps a PostHog Cloud region ("US"/"EU",
+// case-insensitive) to its data-API host. It is the single source of truth for
+// the regional hosts, shared with the connector-settings resolver so the two
+// never drift. Self-hosted instances use a full instance URL instead.
+func PostHogRegionBaseURL(region string) (string, bool) {
+	switch strings.ToLower(region) {
+	case "us":
+		return posthogUSBaseURL, true
+	case "eu":
+		return posthogEUBaseURL, true
+	default:
+		return "", false
+	}
 }
 
 // resolvePostHogRegion probes the PostHog Cloud region hosts with the given

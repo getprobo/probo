@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"net/url"
 
+	"go.probo.inc/probo/pkg/accessreview/drivers"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
 )
@@ -98,7 +99,7 @@ func apiKeyConnectorSettings(input types.CreateAPIKeyConnectorInput) (json.RawMe
 			return nil, fmt.Errorf("cannot create posthog connector: posthogRegion is required")
 		}
 
-		baseURL, ok := posthogRegionBaseURL(*input.PosthogRegion)
+		baseURL, ok := drivers.PostHogRegionBaseURL(*input.PosthogRegion)
 		if !ok {
 			return nil, fmt.Errorf("cannot create posthog connector: posthogRegion must be US or EU")
 		}
@@ -118,20 +119,6 @@ func apiKeyConnectorSettings(input types.CreateAPIKeyConnectorInput) (json.RawMe
 	}
 
 	return nil, nil
-}
-
-// posthogRegionBaseURL maps a PostHog Cloud region selector to its data-API
-// base host. Only US and EU clouds exist; self-hosted instances use the
-// dedicated POSTHOG_SELF_HOSTED provider with a full instance URL instead.
-func posthogRegionBaseURL(region string) (string, bool) {
-	switch region {
-	case "US", "us":
-		return "https://us.posthog.com", true
-	case "EU", "eu":
-		return "https://eu.posthog.com", true
-	default:
-		return "", false
-	}
 }
 
 // clientCredentialsConnectorSettings marshals the provider-specific
