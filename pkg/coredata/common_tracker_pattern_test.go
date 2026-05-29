@@ -91,6 +91,7 @@ func loadCommonTrackerPattern(
 	t.Helper()
 
 	var reloaded coredata.CommonTrackerPattern
+
 	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
 		return reloaded.LoadByID(ctx, conn, id)
 	}))

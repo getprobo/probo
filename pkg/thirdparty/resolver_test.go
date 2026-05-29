@@ -137,6 +137,7 @@ func TestResolveOrCreateCommonThirdParty(t *testing.T) {
 		party := seedCatalogThirdParty(t, ctx, client, name, slug.Make(name))
 
 		var got *gid.GID
+
 		require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 			id, err := ResolveOrCreateCommonThirdParty(
 				ctx,
@@ -166,6 +167,7 @@ func TestResolveOrCreateCommonThirdParty(t *testing.T) {
 		require.Equal(t, slug.Make(name), slug.Make(variant))
 
 		var got *gid.GID
+
 		require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 			id, err := ResolveOrCreateCommonThirdParty(
 				ctx,
@@ -189,6 +191,7 @@ func TestResolveOrCreateCommonThirdParty(t *testing.T) {
 		expectedSlug := slug.Make(name)
 
 		var got *gid.GID
+
 		require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 			id, err := ResolveOrCreateCommonThirdParty(
 				ctx,
@@ -213,6 +216,7 @@ func TestResolveOrCreateCommonThirdParty(t *testing.T) {
 		})
 
 		var created coredata.CommonThirdParty
+
 		require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
 			return created.LoadByID(ctx, conn, *got)
 		}))

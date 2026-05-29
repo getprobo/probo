@@ -177,28 +177,34 @@ func sanitizeRequest(ctx context.Context, logger *log.Logger, req *ChatCompletio
 	sanitized := *req
 
 	dropped := make([]string, 0, 5)
+
 	if dropTemperature {
 		sanitized.Temperature = nil
+
 		dropped = append(dropped, "temperature")
 	}
 
 	if dropTopP {
 		sanitized.TopP = nil
+
 		dropped = append(dropped, "top_p")
 	}
 
 	if dropFrequencyPenalty {
 		sanitized.FrequencyPenalty = nil
+
 		dropped = append(dropped, "frequency_penalty")
 	}
 
 	if dropPresencePenalty {
 		sanitized.PresencePenalty = nil
+
 		dropped = append(dropped, "presence_penalty")
 	}
 
 	if dropStop {
 		sanitized.StopSequences = nil
+
 		dropped = append(dropped, "stop")
 	}
 

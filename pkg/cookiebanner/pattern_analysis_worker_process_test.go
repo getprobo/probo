@@ -707,6 +707,7 @@ func TestPatternAnalysisWorker_GlobInheritsUnanimousMapping(t *testing.T) {
 	for _, ep := range exacts {
 		ep.ThirdPartyID = &thirdPartyID
 	}
+
 	exacts[1].Description = "Google Analytics measurement cookie"
 
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
