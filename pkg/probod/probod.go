@@ -365,8 +365,9 @@ func (impl *Implm) Run(
 	}
 
 	var (
-		oauth2SigningKeys oauth2server.SigningKeys
-		hasActive         bool
+		oauth2SigningKeys   oauth2server.SigningKeys
+		hasActive           bool
+		activeSigningKeyPEM string
 	)
 
 	for _, keyCfg := range impl.cfg.Auth.OAuth2Server.SigningKeys {
@@ -387,6 +388,7 @@ func (impl *Implm) Run(
 
 		if keyCfg.Active {
 			hasActive = true
+			activeSigningKeyPEM = keyCfg.PrivateKey
 		}
 
 		oauth2SigningKeys = append(
@@ -401,6 +403,34 @@ func (impl *Implm) Run(
 
 	if !hasActive {
 		return fmt.Errorf("cannot configure OAuth2 server: at least one signing key must be active")
+	}
+
+	// Auto-register public-client (CIMD) connectors, which need no operator
+	// credentials: the client_id is this deployment's hosted CIMD metadata
+	// URL and the OAuth2 state token is signed with a key derived from the
+	// active OAuth2 server signing key. Providers an operator configured
+	// explicitly (already registered from impl.cfg.Connectors above) are
+	// left untouched.
+	connectorStateKey := connector.DeriveConnectorStateKey(activeSigningKeyPEM)
+	cimdClientID := baseURL.WithPath(connector.CIMDMetadataPath).MustString()
+
+	for _, reg := range providerRegistry.PublicClients() {
+		if _, err := defaultConnectorRegistry.Get(string(reg.Provider)); err == nil {
+			continue
+		}
+
+		oauth2c := &connector.OAuth2Connector{
+			ClientID:        cimdClientID,
+			StateSigningKey: connectorStateKey,
+		}
+
+		if err := providerRegistry.ApplyOAuth2Defaults(string(reg.Provider), redirectURI, oauth2c); err != nil {
+			return fmt.Errorf("cannot apply oauth2 defaults for public client %q: %w", reg.Provider, err)
+		}
+
+		if err := defaultConnectorRegistry.Register(string(reg.Provider), oauth2c); err != nil {
+			return fmt.Errorf("cannot register public client connector %q: %w", reg.Provider, err)
+		}
 	}
 
 	if err := emails.UploadStaticAssets(
