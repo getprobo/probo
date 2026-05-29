@@ -46,8 +46,13 @@ func datadogRegistration() *Registration {
 				return nil, fmt.Errorf("cannot read datadog connector settings: %w", err)
 			}
 
-			if s.Domain == "" {
-				return nil, fmt.Errorf("cannot create datadog driver: domain is required")
+			// Re-validate the stored domain against the fixed allow-list at
+			// the construction site (defense-in-depth). The OAuth callback
+			// validates on write, but pinning the SSRF invariant here keeps
+			// the driver safe regardless of how the connector row was
+			// populated. An empty domain also fails this check.
+			if !connector.IsValidDatadogDomain(s.Domain) {
+				return nil, fmt.Errorf("cannot create datadog driver: invalid or missing domain")
 			}
 
 			return drivers.NewDatadogDriver(c, s.Domain), nil
