@@ -427,6 +427,7 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 		"NETLIFY",
 		"CLICKUP",
 		"MONDAY",
+		"DATADOG",
 	} {
 		clientID := b.getEnv("CONNECTOR_" + provider + "_CLIENT_ID")
 		if clientID == "" {
@@ -518,6 +519,7 @@ func (b *Builder) validateRequired() error {
 		{"CONNECTOR_NETLIFY", []string{"CLIENT_SECRET"}},
 		{"CONNECTOR_CLICKUP", []string{"CLIENT_SECRET"}},
 		{"CONNECTOR_MONDAY", []string{"CLIENT_SECRET"}},
+		{"CONNECTOR_DATADOG", []string{"CLIENT_SECRET"}},
 		{"CONNECTOR_VERCEL", []string{"CLIENT_SECRET", "INTEGRATION_SLUG"}},
 	}
 
