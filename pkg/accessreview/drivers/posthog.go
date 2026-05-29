@@ -34,8 +34,9 @@ type PostHogDriver struct {
 var _ Driver = (*PostHogDriver)(nil)
 
 const (
-	posthogMembersEndpoint = "https://app.posthog.com/api/organizations/@current/members/"
-	posthogMembersPageSize = 100
+	posthogMembersEndpoint      = "https://app.posthog.com/api/organizations/@current/members/"
+	posthogOrganizationEndpoint = "https://app.posthog.com/api/organizations/@current/"
+	posthogMembersPageSize      = 100
 
 	posthogMembershipLevelMember = 1
 	posthogMembershipLevelAdmin  = 8
@@ -230,6 +231,55 @@ func posthogMFAStatus(twoFAEnabled *bool) coredata.MFAStatus {
 	}
 
 	return coredata.MFAStatusDisabled
+}
+
+// posthogNameResolver resolves the PostHog organization name from the
+// current organization endpoint, which returns the org an API key belongs to.
+type posthogNameResolver struct {
+	httpClient *http.Client
+}
+
+var _ NameResolver = (*posthogNameResolver)(nil)
+
+func NewPostHogNameResolver(httpClient *http.Client) NameResolver {
+	return &posthogNameResolver{httpClient: httpClient}
+}
+
+func (r *posthogNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
+	req, err := http.NewRequestWithContext(
+		ctx,
+		http.MethodGet,
+		posthogOrganizationEndpoint,
+		nil,
+	)
+	if err != nil {
+		return "", fmt.Errorf("cannot create posthog organization request: %w", err)
+	}
+
+	req.Header.Set("Accept", "application/json")
+
+	httpResp, err := r.httpClient.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("cannot execute posthog organization request: %w", err)
+	}
+
+	defer func() { _ = httpResp.Body.Close() }()
+
+	// Best-effort: a non-2xx (e.g. a revoked key) must not make the
+	// source-name worker retry forever. Give up gracefully and keep the
+	// generic source name; a dead key surfaces on the next ListAccounts.
+	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
+		return "", nil
+	}
+
+	var resp struct {
+		Name string `json:"name"`
+	}
+	if err := json.NewDecoder(httpResp.Body).Decode(&resp); err != nil {
+		return "", fmt.Errorf("cannot decode posthog organization response: %w", err)
+	}
+
+	return resp.Name, nil
 }
 
 func parseRFC3339(value string) (time.Time, bool) {

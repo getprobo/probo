@@ -16,6 +16,8 @@ package drivers
 
 import (
 	"context"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"testing"
 
@@ -59,6 +61,63 @@ func TestPostHogDriverListAccounts(t *testing.T) {
 	assert.Equal(t, coredata.MFAStatusUnknown, admin.MFAStatus)
 	assert.Equal(t, "membership-3", admin.ExternalID)
 	require.NotNil(t, admin.CreatedAt)
+}
+
+func TestPostHogNameResolver(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		name    string
+		status  int
+		body    string
+		want    string
+		wantErr bool
+	}{
+		{
+			name:   "200 returns name",
+			status: http.StatusOK,
+			body:   `{"id":"org-1","name":"Acme Inc","slug":"acme"}`,
+			want:   "Acme Inc",
+		},
+		{
+			name:   "401 is terminal (no error, no name)",
+			status: http.StatusUnauthorized,
+			body:   `{"detail":"Authentication credentials were not provided."}`,
+			want:   "",
+		},
+		{
+			name:   "404 is terminal (no error, no name)",
+			status: http.StatusNotFound,
+			body:   `{"detail":"Not found."}`,
+			want:   "",
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				assert.Equal(t, http.MethodGet, r.Method)
+				assert.Equal(t, "/api/organizations/@current/", r.URL.Path)
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(tc.status)
+				_, _ = w.Write([]byte(tc.body))
+			}))
+			defer srv.Close()
+
+			client := &http.Client{Transport: &hostRewriter{target: srv.URL}}
+
+			got, err := NewPostHogNameResolver(client).ResolveInstanceName(context.Background())
+			if tc.wantErr {
+				require.Error(t, err)
+				return
+			}
+
+			require.NoError(t, err)
+			assert.Equal(t, tc.want, got)
+		})
+	}
 }
 
 func TestPostHogRoleFallback(t *testing.T) {
