@@ -5,6 +5,7 @@ export { Brex } from "./Brex";
 export { ClickUp } from "./ClickUp";
 export { Cloudflare } from "./Cloudflare";
 export { Cursor } from "./Cursor";
+export { Datadog } from "./Datadog";
 export { DocuSign } from "./DocuSign";
 export { Figma } from "./Figma";
 export { GitHub } from "./GitHub";
