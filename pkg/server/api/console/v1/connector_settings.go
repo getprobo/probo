@@ -93,9 +93,45 @@ func apiKeyConnectorSettings(input types.CreateAPIKeyConnectorInput) (json.RawMe
 		}
 
 		return json.Marshal(&coredata.MetabaseConnectorSettings{InstanceURL: *input.MetabaseInstanceURL})
+	case coredata.ConnectorProviderPostHog:
+		if input.PosthogRegion == nil || *input.PosthogRegion == "" {
+			return nil, fmt.Errorf("cannot create posthog connector: posthogRegion is required")
+		}
+
+		baseURL, ok := posthogRegionBaseURL(*input.PosthogRegion)
+		if !ok {
+			return nil, fmt.Errorf("cannot create posthog connector: posthogRegion must be US or EU")
+		}
+
+		return json.Marshal(&coredata.PostHogConnectorSettings{BaseURL: baseURL})
+	case coredata.ConnectorProviderPostHogSelfHosted:
+		if input.PosthogInstanceURL == nil || *input.PosthogInstanceURL == "" {
+			return nil, fmt.Errorf("cannot create posthog self-hosted connector: posthogInstanceUrl is required")
+		}
+
+		u, err := url.Parse(*input.PosthogInstanceURL)
+		if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {
+			return nil, fmt.Errorf("cannot create posthog self-hosted connector: posthogInstanceUrl must be an http(s) URL")
+		}
+
+		return json.Marshal(&coredata.PostHogConnectorSettings{BaseURL: *input.PosthogInstanceURL})
 	}
 
 	return nil, nil
+}
+
+// posthogRegionBaseURL maps a PostHog Cloud region selector to its data-API
+// base host. Only US and EU clouds exist; self-hosted instances use the
+// dedicated POSTHOG_SELF_HOSTED provider with a full instance URL instead.
+func posthogRegionBaseURL(region string) (string, bool) {
+	switch region {
+	case "US", "us":
+		return "https://us.posthog.com", true
+	case "EU", "eu":
+		return "https://eu.posthog.com", true
+	default:
+		return "", false
+	}
 }
 
 // clientCredentialsConnectorSettings marshals the provider-specific

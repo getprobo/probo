@@ -23,6 +23,10 @@ enum ConnectorProvider
         @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderCloudflare")
     OPENAI @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderOpenAI")
     POSTHOG @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderPostHog")
+    POSTHOG_SELF_HOSTED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderPostHogSelfHosted"
+        )
     SENTRY @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderSentry")
     SUPABASE
         @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderSupabase")
@@ -129,6 +133,8 @@ input CreateAPIKeyConnectorInput {
     grafanaBaseUrl: String
     onePasswordScimBridgeUrl: String
     metabaseInstanceUrl: String
+    posthogRegion: String
+    posthogInstanceUrl: String
 }
 
 type CreateAPIKeyConnectorPayload {
