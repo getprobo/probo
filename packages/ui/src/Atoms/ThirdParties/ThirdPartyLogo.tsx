@@ -26,10 +26,12 @@ import { Figma } from "./Figma";
 import { GitHub } from "./GitHub";
 import { GitLab } from "./GitLab";
 import { Google } from "./Google";
+import { Grafana } from "./Grafana";
 import { Heroku } from "./Heroku";
 import { HubSpot } from "./HubSpot";
 import { Intercom } from "./Intercom";
 import { Linear } from "./Linear";
+import { Metabase } from "./Metabase";
 import { Microsoft } from "./Microsoft";
 import { Monday } from "./Monday";
 import { Netlify } from "./Netlify";
@@ -37,6 +39,7 @@ import { Notion } from "./Notion";
 import { OnePassword } from "./OnePassword";
 import { OpenAI } from "./OpenAI";
 import { PagerDuty } from "./PagerDuty";
+import { PostHog } from "./PostHog";
 import { Resend } from "./Resend";
 import { Sentry } from "./Sentry";
 import { Slack } from "./Slack";
@@ -59,10 +62,12 @@ const thirdParties: Record<string, FC<ComponentProps<"svg">>> = {
   GITLAB: GitLab,
   GOOGLE: Google,
   GOOGLE_WORKSPACE: Google,
+  GRAFANA: Grafana,
   HEROKU: Heroku,
   HUBSPOT: HubSpot,
   INTERCOM: Intercom,
   LINEAR: Linear,
+  METABASE: Metabase,
   MICROSOFT: Microsoft,
   MICROSOFT_365: Microsoft,
   MONDAY: Monday,
@@ -72,6 +77,7 @@ const thirdParties: Record<string, FC<ComponentProps<"svg">>> = {
   ONEPASSWORD: OnePassword,
   OPENAI: OpenAI,
   PAGERDUTY: PagerDuty,
+  POSTHOG: PostHog,
   RESEND: Resend,
   SENTRY: Sentry,
   SLACK: Slack,
