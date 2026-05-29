@@ -432,6 +432,28 @@ func basicAuthHeader(clientID, clientSecret string) string {
 	return "Basic " + base64.StdEncoding.EncodeToString([]byte(credentials))
 }
 
+// newFormTokenRequest builds a form-encoded POST request to the token
+// endpoint with the headers shared by the form-body auth methods
+// ("basic-form", "post-form", and the public-client "none"). Callers set any
+// extra auth header (e.g. Basic) on the returned request.
+func (c *OAuth2Connector) newFormTokenRequest(ctx context.Context, form url.Values) (*http.Request, error) {
+	req, err := http.NewRequestWithContext(
+		ctx,
+		http.MethodPost,
+		c.TokenURL,
+		strings.NewReader(form.Encode()),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("cannot create token request: %w", err)
+	}
+
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded; charset=utf-8")
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("User-Agent", "Probo Connector")
+
+	return req, nil
+}
+
 // buildTokenRequest creates the HTTP request for the token exchange, branching
 // on c.TokenEndpointAuth to support different provider requirements. When
 // codeVerifier is non-empty (PKCE-enabled providers), it is replayed as
@@ -482,58 +504,27 @@ func (c *OAuth2Connector) buildTokenRequest(ctx context.Context, code, redirectU
 			formData.Set("code_verifier", codeVerifier)
 		}
 
-		req, err := http.NewRequestWithContext(
-			ctx,
-			http.MethodPost,
-			c.TokenURL,
-			strings.NewReader(formData.Encode()),
-		)
+		req, err := c.newFormTokenRequest(ctx, formData)
 		if err != nil {
-			return nil, fmt.Errorf("cannot create token request: %w", err)
+			return nil, err
 		}
 
-		req.Header.Set("Content-Type", "application/x-www-form-urlencoded; charset=utf-8")
-		req.Header.Set("Accept", "application/json")
-		req.Header.Set("User-Agent", "Probo Connector")
 		req.Header.Set("Authorization", basicAuthHeader(c.ClientID, c.ClientSecret))
 
 		return req, nil
 
-	case "none":
-		// Public client (CIMD): client_id in the body, authenticated by
-		// the PKCE code_verifier. No client_secret is sent — the provider
-		// advertises token_endpoint_auth_method "none".
-		formData := url.Values{}
-		formData.Set("client_id", c.ClientID)
-		formData.Set("code", code)
-		formData.Set("redirect_uri", redirectURI)
-		formData.Set("grant_type", "authorization_code")
-
-		if codeVerifier != "" {
-			formData.Set("code_verifier", codeVerifier)
-		}
-
-		req, err := http.NewRequestWithContext(
-			ctx,
-			http.MethodPost,
-			c.TokenURL,
-			strings.NewReader(formData.Encode()),
-		)
-		if err != nil {
-			return nil, fmt.Errorf("cannot create token request: %w", err)
-		}
-
-		req.Header.Set("Content-Type", "application/x-www-form-urlencoded; charset=utf-8")
-		req.Header.Set("Accept", "application/json")
-		req.Header.Set("User-Agent", "Probo Connector")
-
-		return req, nil
-
 	default:
-		// "post-form" or empty: credentials in form body (Slack, HubSpot, GitHub, etc.).
+		// "post-form", "none", or empty: credentials in the form body
+		// (Slack, HubSpot, GitHub, …). Public clients ("none", CIMD) send
+		// client_id only and authenticate with the PKCE verifier;
+		// confidential clients also send client_secret.
 		formData := url.Values{}
 		formData.Set("client_id", c.ClientID)
-		formData.Set("client_secret", c.ClientSecret)
+
+		if c.TokenEndpointAuth != "none" {
+			formData.Set("client_secret", c.ClientSecret)
+		}
+
 		formData.Set("code", code)
 		formData.Set("redirect_uri", redirectURI)
 		formData.Set("grant_type", "authorization_code")
@@ -542,21 +533,7 @@ func (c *OAuth2Connector) buildTokenRequest(ctx context.Context, code, redirectU
 			formData.Set("code_verifier", codeVerifier)
 		}
 
-		req, err := http.NewRequestWithContext(
-			ctx,
-			http.MethodPost,
-			c.TokenURL,
-			strings.NewReader(formData.Encode()),
-		)
-		if err != nil {
-			return nil, fmt.Errorf("cannot create token request: %w", err)
-		}
-
-		req.Header.Set("Content-Type", "application/x-www-form-urlencoded; charset=utf-8")
-		req.Header.Set("Accept", "application/json")
-		req.Header.Set("User-Agent", "Probo Connector")
-
-		return req, nil
+		return c.newFormTokenRequest(ctx, formData)
 	}
 }
 
