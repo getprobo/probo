@@ -74,6 +74,23 @@ func TestRegistry_Lookup(t *testing.T) {
 	)
 
 	t.Run(
+		"dated snapshot falls back to base model",
+		func(t *testing.T) {
+			t.Parallel()
+
+			r := llm.NewRegistry(map[string]llm.ModelDefinition{
+				"openai/gpt-5-nano": {
+					Name: "OpenAI: GPT-5 Nano",
+				},
+			})
+
+			m, ok := r.Lookup("gpt-5-nano-2025-08-07")
+			require.True(t, ok)
+			assert.Equal(t, "openai/gpt-5-nano", m.ID)
+		},
+	)
+
+	t.Run(
 		"unknown model returns false",
 		func(t *testing.T) {
 			t.Parallel()

@@ -17,6 +17,7 @@ package llm
 import (
 	"context"
 	"io"
+	"strings"
 	"time"
 
 	"go.gearno.de/kit/log"
@@ -72,6 +73,8 @@ func NewClient(provider Provider, system string, opts ...Option) *Client {
 }
 
 func (c *Client) ChatCompletion(ctx context.Context, req *ChatCompletionRequest) (*ChatCompletionResponse, error) {
+	req = sanitizeRequest(ctx, c.logger, req)
+
 	ctx, span := startChatSpan(ctx, c.tracer, c.system, req)
 
 	c.logger.InfoCtx(
@@ -115,6 +118,8 @@ func (c *Client) ChatCompletion(ctx context.Context, req *ChatCompletionRequest)
 }
 
 func (c *Client) ChatCompletionStream(ctx context.Context, req *ChatCompletionRequest) (ChatCompletionStream, error) {
+	req = sanitizeRequest(ctx, c.logger, req)
+
 	ctx, span := startChatSpan(ctx, c.tracer, c.system, req)
 
 	c.logger.InfoCtx(
@@ -139,4 +144,70 @@ func (c *Client) ChatCompletionStream(ctx context.Context, req *ChatCompletionRe
 	}
 
 	return newTracedStream(stream, span), nil
+}
+
+// sanitizeRequest drops sampling parameters the target model does not
+// accept, using the default model registry. Reasoning models (e.g. the
+// GPT-5 family) reject an explicit temperature, top_p, or penalties and
+// fail the whole request with a 400, so the safest behavior is to omit
+// the unsupported knobs rather than propagate a hard error. When the
+// model is unknown to the registry the request is left untouched.
+func sanitizeRequest(ctx context.Context, logger *log.Logger, req *ChatCompletionRequest) *ChatCompletionRequest {
+	if req == nil {
+		return req
+	}
+
+	model, ok := DefaultRegistry().Lookup(req.Model)
+	if !ok {
+		return req
+	}
+
+	supports := model.Supports
+
+	dropTemperature := req.Temperature != nil && !supports.Temperature
+	dropTopP := req.TopP != nil && !supports.TopP
+	dropFrequencyPenalty := req.FrequencyPenalty != nil && !supports.FrequencyPenalty
+	dropPresencePenalty := req.PresencePenalty != nil && !supports.PresencePenalty
+	dropStop := len(req.StopSequences) > 0 && !supports.Stop
+
+	if !dropTemperature && !dropTopP && !dropFrequencyPenalty && !dropPresencePenalty && !dropStop {
+		return req
+	}
+
+	sanitized := *req
+
+	dropped := make([]string, 0, 5)
+	if dropTemperature {
+		sanitized.Temperature = nil
+		dropped = append(dropped, "temperature")
+	}
+
+	if dropTopP {
+		sanitized.TopP = nil
+		dropped = append(dropped, "top_p")
+	}
+
+	if dropFrequencyPenalty {
+		sanitized.FrequencyPenalty = nil
+		dropped = append(dropped, "frequency_penalty")
+	}
+
+	if dropPresencePenalty {
+		sanitized.PresencePenalty = nil
+		dropped = append(dropped, "presence_penalty")
+	}
+
+	if dropStop {
+		sanitized.StopSequences = nil
+		dropped = append(dropped, "stop")
+	}
+
+	logger.WarnCtx(
+		ctx,
+		"dropping unsupported sampling parameters for model",
+		log.String("model", req.Model),
+		log.String("dropped", strings.Join(dropped, ",")),
+	)
+
+	return &sanitized
 }
