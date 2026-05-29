@@ -4,6 +4,26 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.199.0] - 2026-05-28
+
+### Added
+
+- Add PostHog access-review connector
+- Add Metabase access-review connector
+- Add Grafana access-review connector
+- Add Cursor access-review connector
+- Support HTTP Basic auth in API-key connections
+- Cancel pending signature requests when a contract ends or a connector is deactivated
+
+### Changed
+
+- Reject demotion of the last owner of an organization
+- Scope document signatures to the major version
+
+### Fixed
+
+- Fix Microsoft 365 access review returning too many accounts
+
 ## [0.198.0] - 2026-05-28
 
 ### Added
