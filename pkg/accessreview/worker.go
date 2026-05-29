@@ -27,10 +27,6 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 )
 
-const (
-	maxAllowedFailedSourceFetches = 1
-)
-
 type sourceFetchHandler struct {
 	svc        *Service
 	pg         *pg.Client
@@ -157,26 +153,15 @@ func (h *sourceFetchHandler) handle(
 			return fmt.Errorf("cannot finalize campaign after failed source fetch: %w", finalizeErr)
 		}
 
-		failedSourceFetchCount, countErr := h.failedSourceFetchCount(ctx, sourceFetch.TenantID, sourceFetch.AccessReviewCampaignID)
-		if countErr != nil {
-			return fmt.Errorf("cannot count failed source fetches: %w", countErr)
-		}
+		h.logger.WarnCtx(
+			ctx,
+			"source fetch failed but campaign can continue",
+			log.String("campaign_id", sourceFetch.AccessReviewCampaignID.String()),
+			log.String("access_source_id", sourceFetch.AccessSourceID.String()),
+			log.Error(err),
+		)
 
-		if isSourceFetchFailureTolerated(failedSourceFetchCount) {
-			h.logger.WarnCtx(
-				ctx,
-				"source fetch failed but campaign can continue",
-				log.String("campaign_id", sourceFetch.AccessReviewCampaignID.String()),
-				log.String("access_source_id", sourceFetch.AccessSourceID.String()),
-				log.Int("failed_source_fetch_count", failedSourceFetchCount),
-				log.Int("max_allowed_failed_source_fetches", maxAllowedFailedSourceFetches),
-				log.Error(err),
-			)
-
-			return nil
-		}
-
-		return fmt.Errorf("cannot fetch source: %w", err)
+		return nil
 	}
 
 	if err := h.commitSuccessfulSourceFetch(ctx, sourceFetch, count); err != nil {
@@ -282,40 +267,4 @@ func (h *sourceFetchHandler) finalizeCampaignFetchLifecycle(
 			return campaign.Update(ctx, tx, scope)
 		},
 	)
-}
-
-func (h *sourceFetchHandler) failedSourceFetchCount(
-	ctx context.Context,
-	tenantID gid.TenantID,
-	campaignID gid.GID,
-) (int, error) {
-	scope := coredata.NewScope(tenantID)
-	failedSourceFetchCount := 0
-
-	err := h.pg.WithConn(
-		ctx,
-		func(ctx context.Context, conn pg.Querier) error {
-			fetches := coredata.AccessReviewCampaignSourceFetches{}
-			if err := fetches.LoadByCampaignID(ctx, conn, scope, campaignID); err != nil {
-				return fmt.Errorf("cannot load source fetches: %w", err)
-			}
-
-			for _, fetch := range fetches {
-				if fetch.Status == coredata.AccessReviewCampaignSourceFetchStatusFailed {
-					failedSourceFetchCount++
-				}
-			}
-
-			return nil
-		},
-	)
-	if err != nil {
-		return 0, err
-	}
-
-	return failedSourceFetchCount, nil
-}
-
-func isSourceFetchFailureTolerated(failedSourceFetchCount int) bool {
-	return failedSourceFetchCount <= maxAllowedFailedSourceFetches
 }
