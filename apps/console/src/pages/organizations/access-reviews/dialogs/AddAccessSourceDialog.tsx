@@ -66,6 +66,18 @@ export const addAccessSourceDialogConnectorProviderInfoFragment = graphql`
 
 export type ProviderInfo = AddAccessSourceDialogConnectorProviderInfoFragment$data[number];
 
+// DATADOG_SITES labels are technical identifiers (region code + hostname),
+// intentionally not wrapped in __(). The dialog's prose strings are.
+const DATADOG_SITES: { value: string; label: string }[] = [
+  { value: "US1", label: "US1 (app.datadoghq.com)" },
+  { value: "US3", label: "US3 (us3.datadoghq.com)" },
+  { value: "US5", label: "US5 (us5.datadoghq.com)" },
+  { value: "EU1", label: "EU1 (app.datadoghq.eu)" },
+  { value: "AP1", label: "AP1 (ap1.datadoghq.com)" },
+  { value: "AP2", label: "AP2 (ap2.datadoghq.com)" },
+  { value: "US1-FED", label: "US1-FED (app.ddog-gov.com)" },
+];
+
 type Props = {
   children: ReactNode;
   organizationId: string;
@@ -168,9 +180,13 @@ export function AddAccessSourceDialog({
   const dialogRef = useDialogRef();
   const apiKeyDialogRef = useDialogRef();
   const clientCredentialsDialogRef = useDialogRef();
+  const datadogDialogRef = useDialogRef();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [activeProvider, setActiveProvider] = useState<ProviderInfo | null>(null);
+
+  const [datadogSite, setDatadogSite] = useState<string>("US1");
+  const [datadogProvider, setDatadogProvider] = useState<ProviderInfo | null>(null);
 
   const [apiKeyValue, setApiKeyValue] = useState("");
   const [extraSettingValues, setExtraSettingValues] = useState<Record<string, string>>({});
@@ -212,13 +228,21 @@ export function AddAccessSourceDialog({
       createClientCredentialsConnectorMutation,
     );
 
-  const connectOAuthProvider = (info: ProviderInfo) => {
+  const connectOAuthProvider = (
+    info: ProviderInfo,
+    extras?: Record<string, string>,
+  ) => {
     const baseURL = import.meta.env.VITE_API_URL || window.location.origin;
     const url = new URL("/api/console/v1/connectors/initiate", baseURL);
     url.searchParams.append("organization_id", organizationId);
     url.searchParams.append("provider", info.provider);
     for (const scope of info.oauth2Scopes) {
       url.searchParams.append("scope", scope);
+    }
+    if (extras) {
+      for (const [k, v] of Object.entries(extras)) {
+        url.searchParams.append(k, v);
+      }
     }
     url.searchParams.append(
       "continue",
@@ -242,6 +266,12 @@ export function AddAccessSourceDialog({
     setScope("");
     setClientCredentialsExtraValues({});
     clientCredentialsDialogRef.current?.open();
+  };
+
+  const openDatadogDialog = (info: ProviderInfo) => {
+    setDatadogProvider(info);
+    setDatadogSite("US1");
+    datadogDialogRef.current?.open();
   };
 
   const createSourceAfterConnector = (
@@ -437,7 +467,10 @@ export function AddAccessSourceDialog({
         return (
           <Button
             variant="secondary"
-            onClick={() => connectOAuthProvider(info)}
+            onClick={() =>
+              info.provider === "DATADOG"
+                ? openDatadogDialog(info)
+                : connectOAuthProvider(info)}
           >
             {__("Connect")}
           </Button>
@@ -735,6 +768,40 @@ export function AddAccessSourceDialog({
             >
               {isConnectingClientCredentials ? __("Connecting...") : __("Connect")}
             </Button>
+          </DialogFooter>
+        </form>
+      </Dialog>
+
+      <Dialog ref={datadogDialogRef} title={__("Connect Datadog")}>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (datadogProvider) {
+              connectOAuthProvider(datadogProvider, { site: datadogSite });
+            }
+          }}
+        >
+          <DialogContent padded className="space-y-4">
+            <p className="text-txt-secondary text-sm">
+              {__("Select your Datadog site, then continue to authorize access.")}
+            </p>
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium">{__("Datadog site")}</label>
+              <Select
+                value={datadogSite}
+                onValueChange={setDatadogSite}
+                placeholder={__("Select a site")}
+              >
+                {DATADOG_SITES.map(s => (
+                  <Option key={s.value} value={s.value}>
+                    {s.label}
+                  </Option>
+                ))}
+              </Select>
+            </div>
+          </DialogContent>
+          <DialogFooter>
+            <Button type="submit">{__("Continue")}</Button>
           </DialogFooter>
         </form>
       </Dialog>
