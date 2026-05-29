@@ -725,7 +725,14 @@ func (impl *Implm) Run(
 		},
 	)
 
-	trackerMappingWorker := cookiebanner.NewTrackerMappingWorker(pgClient, l, trackerAgentsCfg, thirdPartyDisambiguationCfg)
+	trackerMappingWorker := cookiebanner.NewTrackerMappingWorker(
+		pgClient,
+		l,
+		trackerAgentsCfg,
+		thirdPartyDisambiguationCfg,
+		worker.WithInterval(time.Duration(impl.cfg.TrackerMappingWorker.Interval)*time.Second),
+		worker.WithMaxConcurrency(impl.cfg.TrackerMappingWorker.MaxConcurrency),
+	)
 	trackerMappingWorkerCtx, stopTrackerMappingWorker := context.WithCancel(context.Background())
 
 	wg.Go(
@@ -742,7 +749,17 @@ func (impl *Implm) Run(
 	stopCommonPatternEnrichmentWorker := func() {}
 
 	if trackerAgentsCfg.LLMClient != nil {
-		commonPatternEnrichmentWorker := cookiebanner.NewCommonPatternEnrichmentWorker(pgClient, l, trackerAgentsCfg)
+		enrichmentCfg := trackerAgentsCfg
+		enrichmentCfg.AgentTimeout = time.Duration(impl.cfg.CommonPatternEnrichmentWorker.AgentTimeout) * time.Second
+
+		commonPatternEnrichmentWorker := cookiebanner.NewCommonPatternEnrichmentWorker(
+			pgClient,
+			l,
+			enrichmentCfg,
+			time.Duration(impl.cfg.CommonPatternEnrichmentWorker.StaleAfter)*time.Second,
+			worker.WithInterval(time.Duration(impl.cfg.CommonPatternEnrichmentWorker.Interval)*time.Second),
+			worker.WithMaxConcurrency(impl.cfg.CommonPatternEnrichmentWorker.MaxConcurrency),
+		)
 
 		var commonPatternEnrichmentWorkerCtx context.Context
 

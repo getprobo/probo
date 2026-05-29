@@ -16,6 +16,7 @@ package probod
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"go.gearno.de/kit/log"
@@ -57,15 +58,34 @@ func (impl *Implm) buildTrackerAgentsConfig(
 		return cookiebanner.TrackerAgentsConfig{}, thirdparty.DisambiguationConfig{}, fmt.Errorf("cannot resolve tracker mapping agent client: %w", err)
 	}
 
+	mappingWorkerCfg := impl.cfg.TrackerMappingWorker
+	enrichmentWorkerCfg := impl.cfg.CommonPatternEnrichmentWorker
+
+	// The mapping and enrichment agents share one config slot but run
+	// from separate workers with separate max-turns. AgentTimeout here
+	// carries the mapping worker's value (also reused by the
+	// disambiguation agent); the enrichment worker overrides it on its
+	// own copy at registration.
 	trackerAgentsCfg := cookiebanner.TrackerAgentsConfig{
-		LLMClient:       llmClient,
-		Model:           agentCfg.ModelName,
-		FirecrawlAPIKey: impl.cfg.Agents.Tools.FirecrawlAPIKey,
+		LLMClient:          llmClient,
+		Model:              agentCfg.ModelName,
+		FirecrawlAPIKey:    impl.cfg.Agents.Tools.FirecrawlAPIKey,
+		MaxTokens:          agentCfg.MaxTokens,
+		Temperature:        agentCfg.Temperature,
+		AgentTimeout:       time.Duration(mappingWorkerCfg.AgentTimeout) * time.Second,
+		MappingMaxTurns:    mappingWorkerCfg.AgentMaxTurns,
+		EnrichmentMaxTurns: enrichmentWorkerCfg.AgentMaxTurns,
 	}
 
+	// The disambiguation agent emits a single id plus a short rationale,
+	// so it keeps its own smaller token budget (left unset here) rather
+	// than inheriting the mapping agent's. It shares the mapping worker's
+	// timeout.
 	disambiguationCfg := thirdparty.DisambiguationConfig{
-		LLMClient: llmClient,
-		Model:     agentCfg.ModelName,
+		LLMClient:   llmClient,
+		Model:       agentCfg.ModelName,
+		Temperature: agentCfg.Temperature,
+		Timeout:     time.Duration(mappingWorkerCfg.AgentTimeout) * time.Second,
 	}
 
 	return trackerAgentsCfg, disambiguationCfg, nil

@@ -41,13 +41,17 @@ type (
 	LLMAgentConfig          = probodconfig.LLMAgentConfig
 	EvidenceDescriberConfig = probodconfig.EvidenceDescriberConfig
 	AgentsConfig            = probodconfig.AgentsConfig
-	MailerConfig            = probodconfig.MailerConfig
-	SMTPConfig              = probodconfig.SMTPConfig
-	NotificationsConfig     = probodconfig.NotificationsConfig
-	WebhookConfig           = probodconfig.WebhookConfig
-	OIDCProviderConfig      = probodconfig.OIDCProviderConfig
-	PgConfig                = probodconfig.PgConfig
-	SAMLConfig              = probodconfig.SAMLConfig
-	SCIMBridgeConfig        = probodconfig.SCIMBridgeConfig
-	SlackConfig             = probodconfig.SlackConfig
+
+	TrackerMappingWorkerConfig          = probodconfig.TrackerMappingWorkerConfig
+	CommonPatternEnrichmentWorkerConfig = probodconfig.CommonPatternEnrichmentWorkerConfig
+
+	MailerConfig        = probodconfig.MailerConfig
+	SMTPConfig          = probodconfig.SMTPConfig
+	NotificationsConfig = probodconfig.NotificationsConfig
+	WebhookConfig       = probodconfig.WebhookConfig
+	OIDCProviderConfig  = probodconfig.OIDCProviderConfig
+	PgConfig            = probodconfig.PgConfig
+	SAMLConfig          = probodconfig.SAMLConfig
+	SCIMBridgeConfig    = probodconfig.SCIMBridgeConfig
+	SlackConfig         = probodconfig.SlackConfig
 )

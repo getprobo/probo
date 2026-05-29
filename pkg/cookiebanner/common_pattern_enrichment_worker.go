@@ -29,13 +29,14 @@ import (
 	"go.probo.inc/probo/pkg/llm"
 )
 
-const enrichmentStaleAfter = 10 * time.Minute
+const defaultEnrichmentStaleAfter = 10 * time.Minute
 
 type commonPatternEnrichmentHandler struct {
 	pg              *pg.Client
 	logger          *log.Logger
 	enrichmentAgent *agent.Agent
 	staleAfter      time.Duration
+	agentTimeout    time.Duration
 }
 
 // NewCommonPatternEnrichmentWorker builds the worker that fills
@@ -49,12 +50,23 @@ func NewCommonPatternEnrichmentWorker(
 	pgClient *pg.Client,
 	logger *log.Logger,
 	cfg TrackerAgentsConfig,
+	staleAfter time.Duration,
 	opts ...worker.Option,
 ) *worker.Worker[coredata.CommonTrackerPattern] {
+	if staleAfter <= 0 {
+		staleAfter = defaultEnrichmentStaleAfter
+	}
+
+	agentTimeout := cfg.AgentTimeout
+	if agentTimeout <= 0 {
+		agentTimeout = defaultAgentTimeout
+	}
+
 	h := &commonPatternEnrichmentHandler{
-		pg:         pgClient,
-		logger:     logger,
-		staleAfter: enrichmentStaleAfter,
+		pg:           pgClient,
+		logger:       logger,
+		staleAfter:   staleAfter,
+		agentTimeout: agentTimeout,
 	}
 
 	if cfg.LLMClient != nil {
@@ -187,7 +199,7 @@ func (h *commonPatternEnrichmentHandler) research(
 ) (string, error) {
 	prompt := buildEnrichmentPrompt(cp, thirdPartyName)
 
-	agentCtx, cancel := context.WithTimeout(ctx, agentTimeout)
+	agentCtx, cancel := context.WithTimeout(ctx, h.agentTimeout)
 	defer cancel()
 
 	result, err := agent.RunTyped[CommonPatternEnrichmentResult](

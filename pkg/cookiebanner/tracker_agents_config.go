@@ -14,15 +14,29 @@
 
 package cookiebanner
 
-import "go.probo.inc/probo/pkg/llm"
+import (
+	"time"
+
+	"go.probo.inc/probo/pkg/llm"
+)
 
 // TrackerAgentsConfig configures the tracker agents that share one LLM
 // client, model, and tool surface: the tracker-mapping agent (catalog
 // identification) and the common-pattern enrichment agent (description
 // research). Both use DB-backed search tools and may also use Firecrawl
 // for web search when an API key is supplied.
+//
+// MaxTokens and Temperature bound and steer each LLM call (both
+// outputs are tiny structured JSON). AgentTimeout caps a single agent
+// run, and the per-worker max-turns bound the agent reasoning loop.
+// Zero-valued tuning fields fall back to package defaults.
 type TrackerAgentsConfig struct {
-	LLMClient       *llm.Client
-	Model           string
-	FirecrawlAPIKey string
+	LLMClient          *llm.Client
+	Model              string
+	FirecrawlAPIKey    string
+	MaxTokens          *int
+	Temperature        *float64
+	AgentTimeout       time.Duration
+	MappingMaxTurns    int
+	EnrichmentMaxTurns int
 }

@@ -143,28 +143,20 @@ func newMappingHandler(client *pg.Client) *trackerMappingHandler {
 	}
 }
 
-// promote runs resolveOrgThirdParty inside its own transaction so each
-// test case starts from a clean state.
+// promote runs resolveOrgThirdParty, which manages its own short
+// transactions internally (creation gating is derived from the
+// pattern's category, not passed in).
 func promote(
 	t *testing.T,
 	ctx context.Context,
 	h *trackerMappingHandler,
-	client *pg.Client,
 	tp coredata.TrackerPattern,
 	commonThirdPartyID gid.GID,
-	allowCreate bool,
 ) *gid.GID {
 	t.Helper()
 
-	var got *gid.GID
-
-	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
-		var err error
-
-		got, err = h.resolveOrgThirdParty(ctx, tx, tp, commonThirdPartyID, allowCreate)
-
-		return err
-	}))
+	got, err := h.resolveOrgThirdParty(ctx, tp, commonThirdPartyID)
+	require.NoError(t, err)
 
 	return got
 }
@@ -193,7 +185,7 @@ func TestPromoteThirdParty_ExactCommonLink(t *testing.T) {
 		return existing.Insert(ctx, tx, fx.scope)
 	}))
 
-	got := promote(t, ctx, newMappingHandler(client), client, fx.trackerPattern, fx.commonThirdPartyID, true)
+	got := promote(t, ctx, newMappingHandler(client), fx.trackerPattern, fx.commonThirdPartyID)
 
 	require.NotNil(t, got)
 	assert.Equal(t, existing.ID, *got, "should return the existing org ThirdParty linked by common id")
@@ -225,7 +217,7 @@ func TestPromoteThirdParty_HeuristicMatch(t *testing.T) {
 		return manualEntry.Insert(ctx, tx, fx.scope)
 	}))
 
-	got := promote(t, ctx, newMappingHandler(client), client, fx.trackerPattern, fx.commonThirdPartyID, true)
+	got := promote(t, ctx, newMappingHandler(client), fx.trackerPattern, fx.commonThirdPartyID)
 
 	require.NotNil(t, got)
 	assert.Equal(t, manualEntry.ID, *got, "heuristic match should return the manually-entered ThirdParty")
@@ -247,7 +239,7 @@ func TestPromoteThirdParty_FallbackCreate(t *testing.T) {
 	ctx := context.Background()
 	fx := seedPromotionFixture(t, ctx, client)
 
-	got := promote(t, ctx, newMappingHandler(client), client, fx.trackerPattern, fx.commonThirdPartyID, true)
+	got := promote(t, ctx, newMappingHandler(client), fx.trackerPattern, fx.commonThirdPartyID)
 
 	require.NotNil(t, got, "fallback should create a new ThirdParty")
 
@@ -268,7 +260,8 @@ func TestPromoteThirdParty_FallbackCreate(t *testing.T) {
 
 // TestResolveOrgThirdParty_CreationGated asserts that when no existing
 // org ThirdParty matches the catalog third party, creating a new one is
-// suppressed unless allowCreate is true.
+// suppressed for an uncategorised pattern (creation gating is derived
+// from the pattern's category) and proceeds for a categorised one.
 func TestResolveOrgThirdParty_CreationGated(t *testing.T) {
 	t.Parallel()
 
@@ -276,11 +269,14 @@ func TestResolveOrgThirdParty_CreationGated(t *testing.T) {
 	ctx := context.Background()
 	fx := seedPromotionFixture(t, ctx, client)
 
-	gated := promote(t, ctx, newMappingHandler(client), client, fx.trackerPattern, fx.commonThirdPartyID, false)
-	assert.Nil(t, gated, "creation must be suppressed when allowCreate is false and nothing exists to link")
+	gatedPattern := fx.trackerPattern
+	gatedPattern.CookieCategoryID = fx.uncategorisedID
 
-	allowed := promote(t, ctx, newMappingHandler(client), client, fx.trackerPattern, fx.commonThirdPartyID, true)
-	require.NotNil(t, allowed, "creation must proceed when allowCreate is true")
+	gated := promote(t, ctx, newMappingHandler(client), gatedPattern, fx.commonThirdPartyID)
+	assert.Nil(t, gated, "creation must be suppressed for an uncategorised pattern with nothing to link")
+
+	allowed := promote(t, ctx, newMappingHandler(client), fx.trackerPattern, fx.commonThirdPartyID)
+	require.NotNil(t, allowed, "creation must proceed for a categorised pattern")
 }
 
 // TestProcess_PreservesCatalogMappingOnReTrigger asserts that when
@@ -1054,7 +1050,7 @@ func TestPromoteThirdParty_ExactCommonLinkIgnoresSimilarUnlinked(t *testing.T) {
 		return linked.Insert(ctx, tx, fx.scope)
 	}))
 
-	got := promote(t, ctx, newMappingHandler(client), client, fx.trackerPattern, fx.commonThirdPartyID, true)
+	got := promote(t, ctx, newMappingHandler(client), fx.trackerPattern, fx.commonThirdPartyID)
 
 	require.NotNil(t, got)
 	assert.Equal(t, linked.ID, *got, "exact-link path must short-circuit before the heuristic fires")

@@ -40,6 +40,30 @@ type (
 		MaxConcurrency int `json:"max-concurrency"`
 	}
 
+	// TrackerMappingWorkerConfig holds worker-side tuning for the
+	// tracker-mapping background worker. LLM parameters for the agents
+	// it runs live under AgentsConfig.TrackerMapping. AgentTimeout and
+	// AgentMaxTurns bound a single agent run (the identification and
+	// disambiguation agents).
+	TrackerMappingWorkerConfig struct {
+		Interval       int `json:"interval"` // seconds between polls
+		MaxConcurrency int `json:"max-concurrency"`
+		AgentTimeout   int `json:"agent-timeout"` // seconds, single agent run
+		AgentMaxTurns  int `json:"agent-max-turns"`
+	}
+
+	// CommonPatternEnrichmentWorkerConfig holds worker-side tuning for
+	// the common-pattern enrichment background worker. LLM parameters
+	// for the enrichment agent live under AgentsConfig.TrackerMapping
+	// (the agents share one config slot).
+	CommonPatternEnrichmentWorkerConfig struct {
+		Interval       int `json:"interval"` // seconds between polls
+		MaxConcurrency int `json:"max-concurrency"`
+		StaleAfter     int `json:"stale-after"`   // seconds before a claim is recycled
+		AgentTimeout   int `json:"agent-timeout"` // seconds, single agent run
+		AgentMaxTurns  int `json:"agent-max-turns"`
+	}
+
 	// AgentToolsConfig holds API keys and settings for external tools
 	// that agents can use (web search, scraping, etc.).
 	AgentToolsConfig struct {

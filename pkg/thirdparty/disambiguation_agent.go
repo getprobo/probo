@@ -38,19 +38,32 @@ const (
 	// described in the prompt.
 	disambiguationConfidenceThreshold = 0.6
 
-	// disambiguationTimeout caps a single disambiguation run. The
-	// agent has no tools and a single turn, so this is mostly a
-	// guard against a hung LLM provider, not a real budget.
-	disambiguationTimeout = 60 * time.Second
+	// defaultDisambiguationTimeout caps a single disambiguation run
+	// when the config supplies none. The agent has no tools and a
+	// single turn, so this is mostly a guard against a hung LLM
+	// provider, not a real budget.
+	defaultDisambiguationTimeout = 45 * time.Second
+
+	// defaultDisambiguationMaxTokens caps the agent's structured
+	// output when the config carries no max-tokens budget. The output
+	// is a single id plus a one-sentence rationale.
+	defaultDisambiguationMaxTokens = 512
 )
 
 // DisambiguationConfig configures the third-party disambiguation
 // agent. The agent has no DB tools and no web-search tools: the
 // candidate list is supplied entirely in the prompt and the agent
 // only picks among it.
+//
+// MaxTokens and Temperature bound and steer the single LLM call, and
+// Timeout caps a single run. Zero-valued fields fall back to package
+// defaults.
 type DisambiguationConfig struct {
-	LLMClient *llm.Client
-	Model     string
+	LLMClient   *llm.Client
+	Model       string
+	MaxTokens   *int
+	Temperature *float64
+	Timeout     time.Duration
 }
 
 // DisambiguationResult is the structured output the disambiguation
@@ -75,15 +88,25 @@ func BuildDisambiguationAgent(
 		panic(fmt.Sprintf("thirdparty: cannot build disambiguation output type: %s", err))
 	}
 
-	return agent.New(
-		"third-party-disambiguation",
-		cfg.LLMClient,
+	maxTokens := defaultDisambiguationMaxTokens
+	if cfg.MaxTokens != nil && *cfg.MaxTokens > 0 {
+		maxTokens = *cfg.MaxTokens
+	}
+
+	opts := []agent.Option{
 		agent.WithInstructions(disambiguationPrompt),
 		agent.WithModel(cfg.Model),
 		agent.WithOutputType(outputType),
 		agent.WithMaxTurns(1),
+		agent.WithMaxTokens(maxTokens),
 		agent.WithLogger(logger),
-	)
+	}
+
+	if cfg.Temperature != nil {
+		opts = append(opts, agent.WithTemperature(*cfg.Temperature))
+	}
+
+	return agent.New("third-party-disambiguation", cfg.LLMClient, opts...)
 }
 
 // Disambiguate runs the agent against the given catalog third party
@@ -102,14 +125,19 @@ func Disambiguate(
 	commonParty coredata.CommonThirdParty,
 	commonDomains coredata.CommonThirdPartyDomains,
 	candidates []ScoredCandidate,
+	timeout time.Duration,
 ) (*gid.GID, error) {
 	if a == nil || len(candidates) == 0 {
 		return nil, nil
 	}
 
+	if timeout <= 0 {
+		timeout = defaultDisambiguationTimeout
+	}
+
 	prompt := buildDisambiguationPrompt(commonParty, commonDomains, candidates)
 
-	agentCtx, cancel := context.WithTimeout(ctx, disambiguationTimeout)
+	agentCtx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
 	result, err := agent.RunTyped[DisambiguationResult](

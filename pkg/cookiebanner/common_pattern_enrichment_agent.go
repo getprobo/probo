@@ -53,16 +53,26 @@ func buildCommonPatternEnrichmentAgent(
 		panic(fmt.Sprintf("cookiebanner: cannot build tracker enrichment output type: %s", err))
 	}
 
-	return agent.New(
-		"common-pattern-enrichment",
-		cfg.LLMClient,
+	maxTurns := cfg.EnrichmentMaxTurns
+	if maxTurns < 1 {
+		maxTurns = defaultEnrichmentMaxTurns
+	}
+
+	opts := []agent.Option{
 		agent.WithInstructions(trackerEnrichmentPrompt),
 		agent.WithModel(cfg.Model),
 		agent.WithTools(tools...),
 		agent.WithOutputType(outputType),
-		agent.WithMaxTurns(agentMaxTurns),
+		agent.WithMaxTurns(maxTurns),
+		agent.WithMaxTokens(resolveAgentMaxTokens(cfg.MaxTokens)),
 		agent.WithLogger(logger),
-	)
+	}
+
+	if cfg.Temperature != nil {
+		opts = append(opts, agent.WithTemperature(*cfg.Temperature))
+	}
+
+	return agent.New("common-pattern-enrichment", cfg.LLMClient, opts...)
 }
 
 func buildEnrichmentPrompt(cp coredata.CommonTrackerPattern, thirdPartyName string) string {

@@ -60,11 +60,15 @@ type (
 		Connectors        []ConnectorConfig       `json:"connectors"`
 		Agents            AgentsConfig            `json:"llm"`
 		EvidenceDescriber EvidenceDescriberConfig `json:"evidence-describer"`
-		ChromeDPAddr      string                  `json:"chrome-dp-addr"`
-		CustomDomains     CustomDomainsConfig     `json:"custom-domains"`
-		SCIMBridge        SCIMBridgeConfig        `json:"scim-bridge"`
-		ESign             ESignConfig             `json:"esign"`
-		Branding          bool                    `json:"branding"`
+
+		TrackerMappingWorker          TrackerMappingWorkerConfig          `json:"tracker-mapping-worker"`
+		CommonPatternEnrichmentWorker CommonPatternEnrichmentWorkerConfig `json:"common-pattern-enrichment-worker"`
+
+		ChromeDPAddr  string              `json:"chrome-dp-addr"`
+		CustomDomains CustomDomainsConfig `json:"custom-domains"`
+		SCIMBridge    SCIMBridgeConfig    `json:"scim-bridge"`
+		ESign         ESignConfig         `json:"esign"`
+		Branding      bool                `json:"branding"`
 	}
 
 	// TrustCenterConfig contains trust center server configuration.

@@ -276,6 +276,24 @@ probo:
     temperature: ""
     maxTokens: ""
 
+  # Tracker mapping background worker tuning (optional). interval and
+  # agentTimeout are in seconds. Keep concurrency modest to stay under
+  # OpenAI/Firecrawl rate limits and the database connection pool.
+  trackerMappingWorker:
+    interval: 10
+    maxConcurrency: 3
+    agentTimeout: 45
+    agentMaxTurns: 4
+
+  # Common-pattern enrichment background worker tuning (optional).
+  # interval, staleAfter, and agentTimeout are in seconds.
+  commonPatternEnrichmentWorker:
+    interval: 10
+    maxConcurrency: 2
+    staleAfter: 600
+    agentTimeout: 45
+    agentMaxTurns: 3
+
   # Custom domains configuration (optional)
   customDomains:
     enabled: false

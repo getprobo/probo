@@ -207,10 +207,13 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 					MaxTokens:   b.getEnvIntPtr("AGENT_EVIDENCE_DESCRIBER_MAX_TOKENS"),
 				},
 				TrackerMapping: probodconfig.LLMAgentConfig{
-					Provider:    b.getEnvOrDefault("AGENT_TRACKER_MAPPING_PROVIDER", ""),
-					ModelName:   b.getEnvOrDefault("AGENT_TRACKER_MAPPING_MODEL_NAME", ""),
+					Provider:  b.getEnvOrDefault("AGENT_TRACKER_MAPPING_PROVIDER", ""),
+					ModelName: b.getEnvOrDefault("AGENT_TRACKER_MAPPING_MODEL_NAME", ""),
+					// The tracker agents emit tiny structured JSON, so
+					// they default to a smaller token budget than the
+					// shared default rather than inheriting it.
 					Temperature: b.getEnvFloatPtr("AGENT_TRACKER_MAPPING_TEMPERATURE"),
-					MaxTokens:   b.getEnvIntPtr("AGENT_TRACKER_MAPPING_MAX_TOKENS"),
+					MaxTokens:   new(b.getEnvIntOrDefault("AGENT_TRACKER_MAPPING_MAX_TOKENS", 1024)),
 				},
 				Tools: probodconfig.AgentToolsConfig{
 					FirecrawlAPIKey: b.getEnv("FIRECRAWL_API_KEY"),
@@ -241,6 +244,19 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 				Interval:       b.getEnvIntOrDefault("EVIDENCE_DESCRIBER_INTERVAL", 10),
 				StaleAfter:     b.getEnvIntOrDefault("EVIDENCE_DESCRIBER_STALE_AFTER", 300),
 				MaxConcurrency: b.getEnvIntOrDefault("EVIDENCE_DESCRIBER_MAX_CONCURRENCY", 10),
+			},
+			TrackerMappingWorker: probodconfig.TrackerMappingWorkerConfig{
+				Interval:       b.getEnvIntOrDefault("TRACKER_MAPPING_INTERVAL", 10),
+				MaxConcurrency: b.getEnvIntOrDefault("TRACKER_MAPPING_MAX_CONCURRENCY", 3),
+				AgentTimeout:   b.getEnvIntOrDefault("TRACKER_MAPPING_AGENT_TIMEOUT", 45),
+				AgentMaxTurns:  b.getEnvIntOrDefault("TRACKER_MAPPING_AGENT_MAX_TURNS", 4),
+			},
+			CommonPatternEnrichmentWorker: probodconfig.CommonPatternEnrichmentWorkerConfig{
+				Interval:       b.getEnvIntOrDefault("COMMON_PATTERN_ENRICHMENT_INTERVAL", 10),
+				MaxConcurrency: b.getEnvIntOrDefault("COMMON_PATTERN_ENRICHMENT_MAX_CONCURRENCY", 2),
+				StaleAfter:     b.getEnvIntOrDefault("COMMON_PATTERN_ENRICHMENT_STALE_AFTER", 600),
+				AgentTimeout:   b.getEnvIntOrDefault("COMMON_PATTERN_ENRICHMENT_AGENT_TIMEOUT", 45),
+				AgentMaxTurns:  b.getEnvIntOrDefault("COMMON_PATTERN_ENRICHMENT_AGENT_MAX_TURNS", 3),
 			},
 			Branding: b.getEnvBoolOrDefault("BRANDING", true),
 		},

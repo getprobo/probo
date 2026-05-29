@@ -264,6 +264,44 @@ spec:
             - name: AGENT_TRACKER_MAPPING_MAX_TOKENS
               value: {{ .Values.probo.trackerMapping.maxTokens | quote }}
             {{- end }}
+            # Tracker Mapping Worker
+            {{- if .Values.probo.trackerMappingWorker.interval }}
+            - name: TRACKER_MAPPING_INTERVAL
+              value: {{ .Values.probo.trackerMappingWorker.interval | quote }}
+            {{- end }}
+            {{- if .Values.probo.trackerMappingWorker.maxConcurrency }}
+            - name: TRACKER_MAPPING_MAX_CONCURRENCY
+              value: {{ .Values.probo.trackerMappingWorker.maxConcurrency | quote }}
+            {{- end }}
+            {{- if .Values.probo.trackerMappingWorker.agentTimeout }}
+            - name: TRACKER_MAPPING_AGENT_TIMEOUT
+              value: {{ .Values.probo.trackerMappingWorker.agentTimeout | quote }}
+            {{- end }}
+            {{- if .Values.probo.trackerMappingWorker.agentMaxTurns }}
+            - name: TRACKER_MAPPING_AGENT_MAX_TURNS
+              value: {{ .Values.probo.trackerMappingWorker.agentMaxTurns | quote }}
+            {{- end }}
+            # Common Pattern Enrichment Worker
+            {{- if .Values.probo.commonPatternEnrichmentWorker.interval }}
+            - name: COMMON_PATTERN_ENRICHMENT_INTERVAL
+              value: {{ .Values.probo.commonPatternEnrichmentWorker.interval | quote }}
+            {{- end }}
+            {{- if .Values.probo.commonPatternEnrichmentWorker.maxConcurrency }}
+            - name: COMMON_PATTERN_ENRICHMENT_MAX_CONCURRENCY
+              value: {{ .Values.probo.commonPatternEnrichmentWorker.maxConcurrency | quote }}
+            {{- end }}
+            {{- if .Values.probo.commonPatternEnrichmentWorker.staleAfter }}
+            - name: COMMON_PATTERN_ENRICHMENT_STALE_AFTER
+              value: {{ .Values.probo.commonPatternEnrichmentWorker.staleAfter | quote }}
+            {{- end }}
+            {{- if .Values.probo.commonPatternEnrichmentWorker.agentTimeout }}
+            - name: COMMON_PATTERN_ENRICHMENT_AGENT_TIMEOUT
+              value: {{ .Values.probo.commonPatternEnrichmentWorker.agentTimeout | quote }}
+            {{- end }}
+            {{- if .Values.probo.commonPatternEnrichmentWorker.agentMaxTurns }}
+            - name: COMMON_PATTERN_ENRICHMENT_AGENT_MAX_TURNS
+              value: {{ .Values.probo.commonPatternEnrichmentWorker.agentMaxTurns | quote }}
+            {{- end }}
             # Custom Domains
             {{- if .Values.probo.customDomains.enabled }}
             - name: CUSTOM_DOMAINS_RENEWAL_INTERVAL

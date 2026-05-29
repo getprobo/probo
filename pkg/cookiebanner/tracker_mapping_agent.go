@@ -29,8 +29,22 @@ import (
 )
 
 const (
-	agentTimeout                       = 60 * time.Second
-	agentMaxTurns                      = 5
+	// defaultAgentTimeout caps a single mapping or enrichment agent run
+	// when the worker config does not supply one. It guards against a
+	// hung LLM provider or a slow web search.
+	defaultAgentTimeout = 45 * time.Second
+
+	// defaultMappingMaxTurns and defaultEnrichmentMaxTurns bound the
+	// agent reasoning loop (LLM call + tool round-trips) when the worker
+	// config does not supply a value.
+	defaultMappingMaxTurns    = 4
+	defaultEnrichmentMaxTurns = 3
+
+	// defaultAgentMaxTokens caps the structured output of the mapping
+	// and enrichment agents when the agent config carries no max-tokens
+	// budget. Both outputs are tiny structured JSON.
+	defaultAgentMaxTokens = 1024
+
 	agentThirdPartyConfidenceThreshold = 0.6
 	// agentSourceConfidence is the fixed confidence stored on catalog
 	// rows the agent attributes to a third party. The agent's own
@@ -70,16 +84,37 @@ func buildTrackerMappingAgent(
 		panic(fmt.Sprintf("cookiebanner: cannot build tracker identification output type: %s", err))
 	}
 
-	return agent.New(
-		"tracker-mapping",
-		cfg.LLMClient,
+	maxTurns := cfg.MappingMaxTurns
+	if maxTurns < 1 {
+		maxTurns = defaultMappingMaxTurns
+	}
+
+	opts := []agent.Option{
 		agent.WithInstructionsFunc(trackerMappingInstructions),
 		agent.WithModel(cfg.Model),
 		agent.WithTools(tools...),
 		agent.WithOutputType(outputType),
-		agent.WithMaxTurns(agentMaxTurns),
+		agent.WithMaxTurns(maxTurns),
+		agent.WithMaxTokens(resolveAgentMaxTokens(cfg.MaxTokens)),
 		agent.WithLogger(logger),
-	)
+	}
+
+	if cfg.Temperature != nil {
+		opts = append(opts, agent.WithTemperature(*cfg.Temperature))
+	}
+
+	return agent.New("tracker-mapping", cfg.LLMClient, opts...)
+}
+
+// resolveAgentMaxTokens returns the configured max-tokens budget for the
+// mapping and enrichment agents, falling back to defaultAgentMaxTokens
+// when none is set.
+func resolveAgentMaxTokens(configured *int) int {
+	if configured != nil && *configured > 0 {
+		return *configured
+	}
+
+	return defaultAgentMaxTokens
 }
 
 func trackerMappingInstructions(_ context.Context, _ *agent.Agent) string {
