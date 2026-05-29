@@ -13,7 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 import { EyeIcon, EyeSlashIcon } from "@phosphor-icons/react";
-import { formatError, type GraphQLError } from "@probo/helpers";
+import { formatError, getTrackerSourceBadge, getTrackerTypeBadge, type GraphQLError } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import {
   Badge,
@@ -133,25 +133,6 @@ const updatePatternMutation = graphql`
     }
   }
 `;
-
-function trackerTypeBadge(type: string, __: (s: string) => string) {
-  switch (type) {
-    case "COOKIE": return { label: __("Cookie"), variant: "warning" as const };
-    case "LOCAL_STORAGE": return { label: __("localStorage"), variant: "info" as const };
-    case "SESSION_STORAGE": return { label: __("sessionStorage"), variant: "highlight" as const };
-    case "INDEXED_DB": return { label: __("IndexedDB"), variant: "success" as const };
-    case "CACHE_STORAGE": return { label: __("Cache Storage"), variant: "outline" as const };
-    default: return { label: type, variant: "neutral" as const };
-  }
-}
-
-function sourceBadge(source: string, __: (s: string) => string) {
-  switch (source) {
-    case "SCRIPT": return { label: __("Script"), variant: "info" as const };
-    case "PRE_EXISTING": return { label: __("Pre-existing"), variant: "outline" as const };
-    default: return { label: source, variant: "neutral" as const };
-  }
-}
 
 interface TrackerPatternRowProps {
   patternKey: TrackerPatternRowFragment$key;
@@ -304,8 +285,8 @@ export function TrackerPatternRow({ patternKey, connectionId }: TrackerPatternRo
     );
   }
 
-  const typeBadge = trackerTypeBadge(pattern.trackerType, __);
-  const srcBadge = pattern.source ? sourceBadge(pattern.source, __) : null;
+  const typeBadge = getTrackerTypeBadge(pattern.trackerType, __);
+  const srcBadge = pattern.source ? getTrackerSourceBadge(pattern.source, __) : null;
 
   return (
     <Tr to={pattern.id} className={pattern.excluded ? "bg-txt-quaternary opacity-80  line-through" : undefined}>

@@ -12,6 +12,7 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+import { getTrackerSourceBadge } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import { Badge, Td, Tr } from "@probo/ui";
 import { graphql, useFragment } from "react-relay";
@@ -28,14 +29,6 @@ const detectedTrackerFragment = graphql`
     lastDetectedAt
   }
 `;
-
-function sourceBadge(source: string, __: (s: string) => string) {
-  switch (source) {
-    case "SCRIPT": return { label: __("Script"), variant: "info" as const };
-    case "PRE_EXISTING": return { label: __("Pre-existing"), variant: "outline" as const };
-    default: return { label: source, variant: "neutral" as const };
-  }
-}
 
 interface DetectedTrackerRowProps {
   detectedTrackerKey: DetectedTrackerRow_detectedTracker$key;
@@ -63,8 +56,8 @@ export function DetectedTrackerRow({ detectedTrackerKey }: DetectedTrackerRowPro
       <Td>
         {tracker.source
           ? (
-              <Badge variant={sourceBadge(tracker.source, __).variant}>
-                {sourceBadge(tracker.source, __).label}
+              <Badge variant={getTrackerSourceBadge(tracker.source, __).variant}>
+                {getTrackerSourceBadge(tracker.source, __).label}
               </Badge>
             )
           : <span className="text-txt-tertiary">-</span>}

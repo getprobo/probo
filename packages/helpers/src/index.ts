@@ -109,6 +109,7 @@ export {
   toMaxAgeSeconds,
   fromMaxAgeSeconds,
 } from "./duration";
+export { getTrackerTypeBadge, getTrackerSourceBadge } from "./tracker";
 export { getTrustCenterUrl } from "./trustCenter";
 export { detectSocialName } from "./socialUrl";
 export { formatError, type GraphQLError } from "./error";

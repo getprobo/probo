@@ -32,6 +32,10 @@ enum CookieSource
         @goEnum(
             value: "go.probo.inc/probo/pkg/coredata.CookieSourcePreExisting"
         )
+    HTTP
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CookieSourceHTTP"
+        )
     EXTENSION
         @goEnum(
             value: "go.probo.inc/probo/pkg/coredata.CookieSourceExtension"
