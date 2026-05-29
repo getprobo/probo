@@ -123,4 +123,12 @@ var providerOrgConfigs = map[coredata.ConnectorProvider]providerOrgConfig{
 			return s.TeamID
 		},
 	},
+	// Pattern 2-auto: the API domain is captured during the OAuth
+	// callback from Datadog's `domain` parameter; no picker UI.
+	coredata.ConnectorProviderDatadog: {
+		SelectedSlug: func(c *coredata.Connector) string {
+			s, _ := coredata.ConnectorSettings[coredata.DatadogConnectorSettings](c)
+			return s.Domain
+		},
+	},
 }
