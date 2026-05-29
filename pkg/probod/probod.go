@@ -745,6 +745,7 @@ func (impl *Implm) Run(
 		commonPatternEnrichmentWorker := cookiebanner.NewCommonPatternEnrichmentWorker(pgClient, l, trackerAgentsCfg)
 
 		var commonPatternEnrichmentWorkerCtx context.Context
+
 		commonPatternEnrichmentWorkerCtx, stopCommonPatternEnrichmentWorker = context.WithCancel(context.Background())
 
 		wg.Go(
