@@ -126,13 +126,10 @@ func TestApplyOAuth2Defaults_CopiesSiteClosures(t *testing.T) {
 	t.Parallel()
 
 	r := provider.NewRegistry()
-	// Uses the PagerDuty enum (already exists) so Task 2 builds and commits
-	// independently of Task 3. The closures themselves are Datadog's, from
-	// Task 1 — this only asserts ApplyOAuth2Defaults copies them through.
 	require.NoError(t, r.Register(&provider.Registration{
-		Provider:               coredata.ConnectorProviderPagerDuty,
-		DisplayName:            "PagerDuty",
-		OAuth2Scopes:           []string{"users.read"},
+		Provider:               coredata.ConnectorProviderDatadog,
+		DisplayName:            "Datadog",
+		OAuth2Scopes:           []string{"user_access_read"},
 		RequiresPKCE:           true,
 		BuildAuthURLForSite:    connector.DatadogAuthorizeURL,
 		BuildTokenURLForDomain: connector.DatadogTokenURL,
@@ -142,7 +139,16 @@ func TestApplyOAuth2Defaults_CopiesSiteClosures(t *testing.T) {
 	}))
 
 	var c connector.OAuth2Connector
-	require.NoError(t, r.ApplyOAuth2Defaults("PAGERDUTY", "https://probo.example/cb", &c))
+	require.NoError(t, r.ApplyOAuth2Defaults("DATADOG", "https://probo.example/cb", &c))
 	require.NotNil(t, c.BuildAuthURLForSite)
 	require.NotNil(t, c.BuildTokenURLForDomain)
+
+	// The copied closures resolve to Datadog's per-site / per-domain hosts.
+	authURL, err := c.BuildAuthURLForSite("US3")
+	require.NoError(t, err)
+	assert.Equal(t, "https://us3.datadoghq.com/oauth2/v1/authorize", authURL)
+
+	tokenURL, err := c.BuildTokenURLForDomain("us3.datadoghq.com")
+	require.NoError(t, err)
+	assert.Equal(t, "https://api.us3.datadoghq.com/oauth2/v1/token", tokenURL)
 }

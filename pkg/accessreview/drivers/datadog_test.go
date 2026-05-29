@@ -42,4 +42,13 @@ func TestDatadogDriver(t *testing.T) {
 	assert.True(t, *r.Active)
 	assert.True(t, r.IsAdmin)
 	assert.Equal(t, "Datadog Admin Role", r.Role)
+
+	// Second record exercises the inactive + non-admin branches.
+	r2 := records[1]
+	assert.Equal(t, "bob@example.com", r2.Email)
+	assert.Equal(t, "abc-222", r2.ExternalID)
+	require.NotNil(t, r2.Active)
+	assert.False(t, *r2.Active)
+	assert.False(t, r2.IsAdmin)
+	assert.Equal(t, "Datadog Standard Role", r2.Role)
 }

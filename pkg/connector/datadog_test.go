@@ -25,40 +25,70 @@ import (
 func TestDatadogAuthorizeURL(t *testing.T) {
 	t.Parallel()
 
-	got, err := connector.DatadogAuthorizeURL("US3")
-	require.NoError(t, err)
-	assert.Equal(t, "https://us3.datadoghq.com/oauth2/v1/authorize", got)
+	for _, tc := range []struct {
+		site string
+		want string
+	}{
+		{"US1", "https://app.datadoghq.com/oauth2/v1/authorize"},
+		{"US3", "https://us3.datadoghq.com/oauth2/v1/authorize"},
+		{"US5", "https://us5.datadoghq.com/oauth2/v1/authorize"},
+		{"EU1", "https://app.datadoghq.eu/oauth2/v1/authorize"},
+		{"AP1", "https://ap1.datadoghq.com/oauth2/v1/authorize"},
+		{"AP2", "https://ap2.datadoghq.com/oauth2/v1/authorize"},
+		{"US1-FED", "https://app.ddog-gov.com/oauth2/v1/authorize"},
+	} {
+		got, err := connector.DatadogAuthorizeURL(tc.site)
+		require.NoError(t, err, tc.site)
+		assert.Equal(t, tc.want, got, tc.site)
+	}
 
-	got, err = connector.DatadogAuthorizeURL("US1")
-	require.NoError(t, err)
-	assert.Equal(t, "https://app.datadoghq.com/oauth2/v1/authorize", got)
-
-	_, err = connector.DatadogAuthorizeURL("BOGUS")
+	_, err := connector.DatadogAuthorizeURL("BOGUS")
 	require.Error(t, err)
 }
 
 func TestDatadogTokenURL(t *testing.T) {
 	t.Parallel()
 
-	got, err := connector.DatadogTokenURL("us3.datadoghq.com")
-	require.NoError(t, err)
-	assert.Equal(t, "https://api.us3.datadoghq.com/oauth2/v1/token", got)
+	for _, tc := range []struct {
+		domain string
+		want   string
+	}{
+		{"datadoghq.com", "https://api.datadoghq.com/oauth2/v1/token"},
+		{"us3.datadoghq.com", "https://api.us3.datadoghq.com/oauth2/v1/token"},
+		{"us5.datadoghq.com", "https://api.us5.datadoghq.com/oauth2/v1/token"},
+		{"datadoghq.eu", "https://api.datadoghq.eu/oauth2/v1/token"},
+		{"ap1.datadoghq.com", "https://api.ap1.datadoghq.com/oauth2/v1/token"},
+		{"ap2.datadoghq.com", "https://api.ap2.datadoghq.com/oauth2/v1/token"},
+		{"ddog-gov.com", "https://api.ddog-gov.com/oauth2/v1/token"},
+	} {
+		got, err := connector.DatadogTokenURL(tc.domain)
+		require.NoError(t, err, tc.domain)
+		assert.Equal(t, tc.want, got, tc.domain)
+	}
 
-	got, err = connector.DatadogTokenURL("datadoghq.eu")
-	require.NoError(t, err)
-	assert.Equal(t, "https://api.datadoghq.eu/oauth2/v1/token", got)
-
-	_, err = connector.DatadogTokenURL("evil.example.com")
+	_, err := connector.DatadogTokenURL("evil.example.com")
 	require.Error(t, err)
 }
 
 func TestIsValidDatadogDomain(t *testing.T) {
 	t.Parallel()
 
-	assert.True(t, connector.IsValidDatadogDomain("datadoghq.com"))
-	assert.True(t, connector.IsValidDatadogDomain("ddog-gov.com"))
-	assert.False(t, connector.IsValidDatadogDomain("attacker.datadoghq.com.evil.com"))
-	assert.False(t, connector.IsValidDatadogDomain(""))
+	for _, domain := range []string{
+		"datadoghq.com", "us3.datadoghq.com", "us5.datadoghq.com",
+		"datadoghq.eu", "ap1.datadoghq.com", "ap2.datadoghq.com", "ddog-gov.com",
+	} {
+		assert.True(t, connector.IsValidDatadogDomain(domain), domain)
+	}
+
+	for _, domain := range []string{
+		"",
+		"api.datadoghq.com", // the API host, not an apiDomain — must be rejected
+		"datadoghq.com.evil.com",
+		"attacker.datadoghq.com.evil.com",
+		"evil.example.com",
+	} {
+		assert.False(t, connector.IsValidDatadogDomain(domain), domain)
+	}
 }
 
 func TestDatadogSiteForDomain(t *testing.T) {
