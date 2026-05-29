@@ -128,6 +128,12 @@ func NewMux(
 		)
 	})
 
+	// Public, unauthenticated: the OAuth Client ID Metadata Document (CIMD)
+	// is fetched server-to-server by public-client providers (PostHog)
+	// during authorization, with no Probo credentials. Mounted outside the
+	// auth group above.
+	r.Get("/connectors/oauth-client-metadata", handleConnectorOAuthClientMetadata(baseURL))
+
 	return r
 }
 
