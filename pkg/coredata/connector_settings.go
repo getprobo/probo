@@ -102,6 +102,15 @@ type (
 	PostHogConnectorSettings struct {
 		BaseURL string `json:"base_url"`
 	}
+
+	// DatadogConnectorSettings holds the per-customer Datadog site captured
+	// during the OAuth callback. Region is the site key (e.g. "US3") used for
+	// the AccessSource title; Domain is the API domain (e.g.
+	// "us3.datadoghq.com") the driver and name resolver use to build hosts.
+	DatadogConnectorSettings struct {
+		Region string `json:"region"`
+		Domain string `json:"domain"`
+	}
 )
 
 // GrantType returns the OAuth2 grant type recorded on the connector's
