@@ -1032,6 +1032,7 @@ func (s *DocumentService) createSignatureRequestInTx(
 	if err == nil {
 		return existingSignature, nil
 	}
+
 	if !errors.Is(err, coredata.ErrResourceNotFound) {
 		return nil, fmt.Errorf("cannot load existing signature for signatory: %w", err)
 	}
