@@ -218,7 +218,7 @@ func TestBuilder_Build_Defaults(t *testing.T) {
 	assert.Empty(t, cfg.Probod.Agents.TrackerMapping.Provider)
 	assert.Empty(t, cfg.Probod.Agents.TrackerMapping.ModelName)
 	assert.Nil(t, cfg.Probod.Agents.TrackerMapping.Temperature)
-	assert.Equal(t, new(1024), cfg.Probod.Agents.TrackerMapping.MaxTokens)
+	assert.Equal(t, new(4096), cfg.Probod.Agents.TrackerMapping.MaxTokens)
 
 	// Tracker worker tuning — defaults
 	assert.Equal(t, 10, cfg.Probod.TrackerMappingWorker.Interval)

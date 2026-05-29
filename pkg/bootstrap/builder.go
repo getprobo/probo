@@ -209,11 +209,12 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 				TrackerMapping: probodconfig.LLMAgentConfig{
 					Provider:  b.getEnvOrDefault("AGENT_TRACKER_MAPPING_PROVIDER", ""),
 					ModelName: b.getEnvOrDefault("AGENT_TRACKER_MAPPING_MODEL_NAME", ""),
-					// The tracker agents emit tiny structured JSON, so
-					// they default to a smaller token budget than the
-					// shared default rather than inheriting it.
+					// The tracker agents emit tiny structured JSON, but
+					// the budget must leave headroom for reasoning
+					// models whose reasoning tokens count against
+					// max_tokens; too small a budget truncates the JSON.
 					Temperature: b.getEnvFloatPtr("AGENT_TRACKER_MAPPING_TEMPERATURE"),
-					MaxTokens:   new(b.getEnvIntOrDefault("AGENT_TRACKER_MAPPING_MAX_TOKENS", 1024)),
+					MaxTokens:   new(b.getEnvIntOrDefault("AGENT_TRACKER_MAPPING_MAX_TOKENS", 4096)),
 				},
 				Tools: probodconfig.AgentToolsConfig{
 					FirecrawlAPIKey: b.getEnv("FIRECRAWL_API_KEY"),

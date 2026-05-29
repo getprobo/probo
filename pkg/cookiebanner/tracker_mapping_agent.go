@@ -40,10 +40,14 @@ const (
 	defaultMappingMaxTurns    = 4
 	defaultEnrichmentMaxTurns = 3
 
-	// defaultAgentMaxTokens caps the structured output of the mapping
-	// and enrichment agents when the agent config carries no max-tokens
-	// budget. Both outputs are tiny structured JSON.
-	defaultAgentMaxTokens = 1024
+	// defaultAgentMaxTokens caps the output of the mapping and
+	// enrichment agents when the agent config carries no max-tokens
+	// budget. Both final outputs are tiny structured JSON, but the
+	// budget must leave ample headroom for reasoning models (e.g. the
+	// GPT-5 family): their reasoning tokens count against max_tokens,
+	// so too small a budget gets consumed by reasoning and truncates
+	// the JSON, surfacing as "unexpected end of JSON input".
+	defaultAgentMaxTokens = 4096
 
 	agentThirdPartyConfidenceThreshold = 0.6
 	// agentSourceConfidence is the fixed confidence stored on catalog

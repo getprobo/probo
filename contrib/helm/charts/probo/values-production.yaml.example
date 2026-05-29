@@ -174,7 +174,7 @@ probo:
   #   provider: "openai"
   #   modelName: "gpt-4o-mini"
   #   temperature: "0.1"
-  #   maxTokens: "1024"
+  #   maxTokens: "4096"
 
   # Tracker mapping worker tuning (optional; seconds for interval/agentTimeout).
   # Keep concurrency modest to stay under OpenAI/Firecrawl limits and the DB pool.

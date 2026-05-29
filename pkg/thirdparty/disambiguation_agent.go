@@ -44,10 +44,14 @@ const (
 	// provider, not a real budget.
 	defaultDisambiguationTimeout = 45 * time.Second
 
-	// defaultDisambiguationMaxTokens caps the agent's structured
-	// output when the config carries no max-tokens budget. The output
-	// is a single id plus a one-sentence rationale.
-	defaultDisambiguationMaxTokens = 512
+	// defaultDisambiguationMaxTokens caps the agent's output when the
+	// config carries no max-tokens budget. The final output is tiny (a
+	// single id plus a one-sentence rationale), but the budget must
+	// leave ample headroom for reasoning models (e.g. the GPT-5
+	// family): their reasoning tokens count against max_tokens, so too
+	// small a budget gets consumed by reasoning and truncates the JSON,
+	// surfacing as "unexpected end of JSON input".
+	defaultDisambiguationMaxTokens = 4096
 )
 
 // DisambiguationConfig configures the third-party disambiguation
