@@ -29,6 +29,7 @@ func NewBuiltinRegistry() *Registry {
 		clickupRegistration(),
 		cloudflareRegistration(),
 		cursorRegistration(),
+		datadogRegistration(),
 		docusignRegistration(),
 		grafanaRegistration(),
 		githubRegistration(),
