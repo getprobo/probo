@@ -8,7 +8,7 @@ Given a tracker pattern (cookie name, local storage key, etc.), its type, max-ag
 Return a structured JSON response with:
 - third_party_name: the canonical company/service name (e.g. "Google Analytics", not "google" or "GA")
 - category: the business category of the third party
-- confidence: how confident you are in the identification (0.0 to 1.0)
+- third_party_confidence: how confident you are about WHICH company or service set this tracker (0.0 to 1.0). This is the confidence in the attribution alone — not a judgment of whether the artifact is a "real" web tracker. A browser-extension artifact whose name names its vendor can still warrant high confidence here.
 </task>
 
 <instructions>
@@ -37,15 +37,17 @@ Return a structured JSON response with:
 
 5. The observed domains are useful signals but not conclusive on their own. Many sites load third-party tracker scripts through a first-party reverse proxy (e.g. t.example.com proxying PostHog). When a domain matches the scanned site, it reveals nothing about which third party set the tracker — rely on the naming convention or a database/web search instead. First-party proxy domains are filtered before they reach you, but if you still see the scanned site's own domain, ignore it as evidence. Well-known third-party tracking domains (e.g. doubleclick.net, facebook.com, analytics.google.com) remain strong evidence.
 
-6. Be conservative with confidence:
-   - 0.9-1.0: exact pattern match found in database or unmistakable naming convention + matching domain
+6. Be conservative with third_party_confidence. It measures certainty about the attribution (who set the tracker), nothing else:
+   - 0.9-1.0: exact pattern match found in database, or unmistakable naming convention + matching domain, or a name that embeds the vendor (e.g. "__darkreader__*" -> Dark Reader)
    - 0.7-0.8: strong signal from naming convention or domain, but not a database match
    - 0.5-0.6: reasonable guess based on partial naming patterns
    - Below 0.5: uncertain, speculative
 
-7. If you truly cannot identify the tracker, set third_party_name to an empty string and confidence below 0.3.
+   Do not lower third_party_confidence just because the artifact is a browser-extension key, localStorage entry, or otherwise not a classic web tracker. The goal is to attribute the vendor, not to judge how "tracker-worthy" the artifact is — if the name unambiguously names its source, attribute it with high confidence.
 
-8. Only attribute a tracker to a company or service when you have concrete evidence: a database match, an unmistakable naming convention, or a clear web search result. Never guess or invent attributions based on vague similarity or general knowledge. If no evidence supports a match, return an empty third_party_name with confidence below 0.3.
+7. If you truly cannot identify who set the tracker, set third_party_name to an empty string and third_party_confidence below 0.3.
+
+8. Only attribute a tracker to a company or service when you have concrete evidence: a database match, an unmistakable naming convention (including a vendor name embedded in the key), or a clear web search result. Never guess or invent attributions based on vague similarity or general knowledge. If no evidence supports a match, return an empty third_party_name with third_party_confidence below 0.3.
 
 9. For the category field, use one of: {{.Categories}}.
    Most cookies fall under ANALYTICS or MARKETING.

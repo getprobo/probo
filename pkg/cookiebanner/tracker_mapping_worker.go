@@ -515,33 +515,29 @@ func (h *trackerMappingHandler) identifyWithAgent(
 
 	identification := result.Output
 
-	if identification.Confidence < agentConfidenceThreshold {
+	// The agent's confidence gauges the attribution (who set the
+	// tracker), not whether the artifact is a meaningful tracker. Without
+	// a confident vendor there is nothing to catalog here; the unmatched
+	// fallback records the pattern with no third party instead.
+	if identification.ThirdPartyName == "" || identification.ThirdPartyConfidence < agentThirdPartyConfidenceThreshold {
 		h.logger.InfoCtx(
 			ctx,
-			"agent identification below confidence threshold",
+			"agent third-party attribution below confidence threshold",
 			log.String("pattern", tp.Pattern),
-			log.Float64("confidence", identification.Confidence),
+			log.Float64("third_party_confidence", identification.ThirdPartyConfidence),
 		)
 
 		return nil, nil
 	}
 
-	confidence := float32(identification.Confidence)
-	if confidence > agentMaxPatternConfidence {
-		confidence = agentMaxPatternConfidence
-	}
-
-	var commonThirdPartyID *gid.GID
-	if identification.ThirdPartyName != "" {
-		commonThirdPartyID, err = h.resolveOrCreateCommonThirdParty(
-			ctx,
-			tx,
-			identification,
-			domains,
-		)
-		if err != nil {
-			return nil, fmt.Errorf("cannot resolve or create common third party: %w", err)
-		}
+	commonThirdPartyID, err := h.resolveOrCreateCommonThirdParty(
+		ctx,
+		tx,
+		identification,
+		domains,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("cannot resolve or create common third party: %w", err)
 	}
 
 	now := time.Now()
@@ -552,7 +548,7 @@ func (h *trackerMappingHandler) identifyWithAgent(
 		Pattern:            tp.Pattern,
 		MatchType:          tp.MatchType,
 		MaxAgeSeconds:      tp.MaxAgeSeconds,
-		Confidence:         confidence,
+		Confidence:         agentSourceConfidence,
 		CreatedAt:          now,
 		UpdatedAt:          now,
 	}
@@ -566,7 +562,7 @@ func (h *trackerMappingHandler) identifyWithAgent(
 		"agent identified tracker pattern",
 		log.String("pattern", tp.Pattern),
 		log.String("third_party", identification.ThirdPartyName),
-		log.Float64("confidence", identification.Confidence),
+		log.Float64("third_party_confidence", identification.ThirdPartyConfidence),
 	)
 
 	return &catalogMatch{
