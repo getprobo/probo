@@ -1005,5 +1005,9 @@ func (s *DocumentApprovalService) publishVersion(
 		return fmt.Errorf("cannot finalize publish: %w", err)
 	}
 
+	if err := s.svc.Documents.cancelPreviousMajorSignatureRequestsInTx(ctx, scope, tx, version.DocumentID, version.Major); err != nil {
+		return fmt.Errorf("cannot cancel signature requests from previous major versions: %w", err)
+	}
+
 	return nil
 }

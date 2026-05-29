@@ -985,7 +985,7 @@ func (s *DocumentService) BulkRequestSignatures(
 				}
 
 				for _, signatoryID := range req.SignatoryIDs {
-					signature, err := s.createSignatureRequestInTx(ctx, scope, tx, documentVersion.ID, signatoryID, true)
+					signature, err := s.createSignatureRequestInTx(ctx, scope, tx, documentVersion.ID, signatoryID)
 					if err != nil {
 						return fmt.Errorf("cannot create signature request for document %q and signatory %q: %w", documentID, signatoryID, err)
 					}
@@ -1009,7 +1009,6 @@ func (s *DocumentService) createSignatureRequestInTx(
 	tx pg.Tx,
 	documentVersionID gid.GID,
 	signatoryID gid.GID,
-	ignoreExisting bool,
 ) (*coredata.DocumentVersionSignature, error) {
 	signatory := &coredata.MembershipProfile{}
 	documentVersion := &coredata.DocumentVersion{}
@@ -1022,11 +1021,19 @@ func (s *DocumentService) createSignatureRequestInTx(
 		return nil, fmt.Errorf("cannot load signatory: %w", err)
 	}
 
+	// A signature applies to the whole major version: minor publishes keep it
+	// and the export unions signatures across every minor of the major, so a
+	// signatory must have at most one signature per major. If one already
+	// exists anywhere in this major (requested or signed), reuse it instead of
+	// inserting a duplicate.
 	existingSignature := &coredata.DocumentVersionSignature{}
 
-	err := existingSignature.LoadByDocumentVersionIDAndSignatory(ctx, tx, scope, documentVersionID, signatoryID)
-	if err == nil && ignoreExisting {
+	err := existingSignature.LoadByDocumentMajorAndSignatory(ctx, tx, scope, documentVersionID, signatoryID)
+	if err == nil {
 		return existingSignature, nil
+	}
+	if !errors.Is(err, coredata.ErrResourceNotFound) {
+		return nil, fmt.Errorf("cannot load existing signature for signatory: %w", err)
 	}
 
 	documentVersionSignatureID := gid.New(scope.GetTenantID(), coredata.DocumentVersionSignatureEntityType)
@@ -1088,7 +1095,7 @@ func (s *DocumentService) RequestSignature(
 
 			var err error
 
-			signature, err = s.createSignatureRequestInTx(ctx, scope, tx, req.DocumentVersionID, req.Signatory, false)
+			signature, err = s.createSignatureRequestInTx(ctx, scope, tx, req.DocumentVersionID, req.Signatory)
 			if err != nil {
 				return fmt.Errorf("cannot create signature request: %w", err)
 			}
@@ -2798,7 +2805,30 @@ func (s *DocumentService) publishMajorVersionInTx(
 		return nil, nil, err
 	}
 
+	if err := s.cancelPreviousMajorSignatureRequestsInTx(ctx, scope, tx, documentID, documentVersion.Major); err != nil {
+		return nil, nil, err
+	}
+
 	return document, documentVersion, nil
+}
+
+// cancelPreviousMajorSignatureRequestsInTx cancels every still-pending
+// signature request attached to a prior major version of the document. A new
+// major supersedes the signing obligations of older majors, so their
+// REQUESTED signatures must not linger. SIGNED signatures are left untouched
+// to preserve the audit trail.
+func (s *DocumentService) cancelPreviousMajorSignatureRequestsInTx(
+	ctx context.Context, scope coredata.Scoper,
+	tx pg.Tx,
+	documentID gid.GID,
+	major int,
+) error {
+	signatures := &coredata.DocumentVersionSignatures{}
+	if err := signatures.DeleteRequestedByDocumentIDBelowMajor(ctx, tx, scope, documentID, major); err != nil {
+		return fmt.Errorf("cannot cancel signature requests from previous major versions: %w", err)
+	}
+
+	return nil
 }
 
 func (s *DocumentService) publishMinorVersionInTx(

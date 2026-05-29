@@ -3120,5 +3120,11 @@ func (s *GeneratedDocumentService) publishOrRequestApproval(
 		return fmt.Errorf("cannot update document: %w", err)
 	}
 
+	if !minor {
+		if err := s.svc.Documents.cancelPreviousMajorSignatureRequestsInTx(ctx, scope, tx, document.ID, version.Major); err != nil {
+			return fmt.Errorf("cannot cancel signature requests from previous major versions: %w", err)
+		}
+	}
+
 	return nil
 }
