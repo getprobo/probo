@@ -189,6 +189,40 @@ func handleConnectorComplete(
 
 		var cnnctr *coredata.Connector
 
+		// Datadog returns the customer's API domain as a `domain` query
+		// parameter on every OAuth callback; it drives the driver's API
+		// host, so capture and validate it on both the create and the
+		// reconnect path (a reconnect from a different site must refresh
+		// the stored domain).
+		var datadogRawSettings json.RawMessage
+
+		if connectorProvider == coredata.ConnectorProviderDatadog {
+			domain := query.Get("domain")
+			if !connector.IsValidDatadogDomain(domain) {
+				logger.WarnCtx(r.Context(), "rejecting invalid datadog domain",
+					log.String("provider", string(connectorProvider)),
+				)
+				httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("invalid domain"))
+
+				return
+			}
+
+			region, _ := connector.DatadogSiteForDomain(domain)
+
+			raw, err := json.Marshal(&coredata.DatadogConnectorSettings{
+				Region: region,
+				Domain: domain,
+			})
+			if err != nil {
+				logger.ErrorCtx(r.Context(), "cannot marshal datadog settings", log.Error(err))
+				httpserver.RenderError(w, http.StatusInternalServerError, fmt.Errorf("internal error"))
+
+				return
+			}
+
+			datadogRawSettings = raw
+		}
+
 		// If a connector_id was passed in the state, this is a
 		// reconnection — update the existing connector's token.
 		if state.ConnectorID != "" {
@@ -206,6 +240,7 @@ func handleConnectorComplete(
 					OrganizationID: organizationID,
 					Provider:       connectorProvider,
 					Connection:     connection,
+					RawSettings:    datadogRawSettings,
 				},
 			)
 			if err != nil {
@@ -293,35 +328,11 @@ func handleConnectorComplete(
 				}
 			}
 
-			// Datadog returns the customer's API domain as a `domain`
-			// query parameter on the callback (CompleteWithState has
-			// already validated it by building the token URL from it).
-			// Re-validate defensively, reverse-map to the site key, and
-			// persist both on the connector settings.
-			if connectorProvider == coredata.ConnectorProviderDatadog {
-				domain := query.Get("domain")
-				if !connector.IsValidDatadogDomain(domain) {
-					logger.WarnCtx(r.Context(), "rejecting invalid datadog domain",
-						log.String("provider", string(connectorProvider)),
-					)
-					httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("invalid domain"))
-
-					return
-				}
-
-				region, _ := connector.DatadogSiteForDomain(domain)
-				raw, err := json.Marshal(&coredata.DatadogConnectorSettings{
-					Region: region,
-					Domain: domain,
-				})
-				if err != nil {
-					logger.ErrorCtx(r.Context(), "cannot marshal datadog settings", log.Error(err))
-					httpserver.RenderError(w, http.StatusInternalServerError, fmt.Errorf("internal error"))
-
-					return
-				}
-
-				createReq.RawSettings = raw
+			// Datadog's per-customer settings were captured and validated
+			// above (the same block also feeds the reconnect path); apply
+			// them to the create request.
+			if datadogRawSettings != nil {
+				createReq.RawSettings = datadogRawSettings
 			}
 
 			cnnctr, err = svc.Connectors.Create(r.Context(), scope, createReq)
