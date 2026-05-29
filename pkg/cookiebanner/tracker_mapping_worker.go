@@ -312,6 +312,9 @@ func (h *trackerMappingHandler) resolveDeterministic(
 		return res, fmt.Errorf("cannot load cookie banner for domain filtering: %w", err)
 	}
 
+	// DEBUG: don't commit
+	banner.Origin = "https://t.probo.com"
+
 	res.origin = banner.Origin
 
 	if tp.CommonTrackerPatternID != nil {
@@ -562,11 +565,9 @@ func (h *trackerMappingHandler) matchByDomain(
 }
 
 // agentIdentification carries a confident tracker-mapping agent result
-// and the (first-party-filtered) domains it observed, from the no-tx
-// agent phase to the short transaction that persists it.
+// from the no-tx agent phase to the short transaction that persists it.
 type agentIdentification struct {
-	result  TrackerMappingAgentResult
-	domains []string
+	result TrackerMappingAgentResult
 }
 
 // identifyWithAgent runs the tracker-mapping agent outside any
@@ -596,7 +597,7 @@ func (h *trackerMappingHandler) identifyWithAgent(
 			return nil
 		},
 	); err != nil {
-		h.logger.WarnCtx(ctx, "cannot load initiator domains for agent", log.Error(err))
+		return nil, fmt.Errorf("cannot load initiator domains for agent: %w", err)
 	}
 
 	domains = uri.FilterFirstPartyDomains(domains, siteOrigin)
@@ -645,8 +646,7 @@ func (h *trackerMappingHandler) identifyWithAgent(
 	}
 
 	return &agentIdentification{
-		result:  identification,
-		domains: domains,
+		result: identification,
 	}, nil
 }
 
@@ -666,7 +666,6 @@ func (h *trackerMappingHandler) persistAgentIdentification(
 		h.logger,
 		ident.result.ThirdPartyName,
 		ident.result.Category,
-		ident.domains,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("cannot resolve or create common third party: %w", err)

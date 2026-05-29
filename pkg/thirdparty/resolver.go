@@ -16,9 +16,11 @@ package thirdparty
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
+	"github.com/jackc/pgx/v5/pgconn"
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
@@ -30,19 +32,24 @@ import (
 // catalog, creating a row when none matches. Dedup is deterministic:
 // exact name, then slug, before insert. Callers run inside their own
 // transaction and pass the logger explicitly, so it is shared by the
-// tracker mapping worker (which supplies observed domains) and the
-// common pattern enrichment worker (which has none).
+// tracker mapping worker and the common pattern enrichment worker.
+//
+// It never seeds common_third_party_domains: observed initiator domains
+// are a co-occurrence signal, not verified vendor ownership, and the
+// global catalog's domain set (used for cross-tenant domain matching) is
+// owned by the curated seed instead.
 func ResolveOrCreateCommonThirdParty(
 	ctx context.Context,
 	tx pg.Tx,
 	logger *log.Logger,
 	name string,
 	category coredata.ThirdPartyCategory,
-	domains []string,
 ) (*gid.GID, error) {
 	var party coredata.CommonThirdParty
 	if err := party.LoadByName(ctx, tx, name); err == nil {
 		return &party.ID, nil
+	} else if !errors.Is(err, coredata.ErrResourceNotFound) {
+		return nil, fmt.Errorf("cannot load common third party by name: %w", err)
 	}
 
 	partySlug := slug.Make(name)
@@ -52,6 +59,8 @@ func ResolveOrCreateCommonThirdParty(
 
 	if err := party.LoadBySlug(ctx, tx, partySlug); err == nil {
 		return &party.ID, nil
+	} else if !errors.Is(err, coredata.ErrResourceNotFound) {
+		return nil, fmt.Errorf("cannot load common third party by slug: %w", err)
 	}
 
 	now := time.Now()
@@ -65,22 +74,25 @@ func ResolveOrCreateCommonThirdParty(
 		UpdatedAt:      now,
 	}
 
-	if err := party.Insert(ctx, tx); err != nil {
-		return nil, fmt.Errorf("cannot create common third party: %w", err)
-	}
+	// Insert inside a savepoint so a concurrent transaction that created
+	// the same slug between our lookup and write does not abort the
+	// caller's transaction. On the unique-violation race, reload the
+	// winning row and return it instead of failing.
+	insertErr := tx.Savepoint(ctx, func(ctx context.Context, sp pg.Tx) error {
+		return party.Insert(ctx, sp)
+	})
+	if insertErr != nil {
+		if pgErr, ok := errors.AsType[*pgconn.PgError](insertErr); ok &&
+			pgErr.Code == "23505" &&
+			pgErr.ConstraintName == "common_third_parties_slug_key" {
+			if err := party.LoadBySlug(ctx, tx, partySlug); err != nil {
+				return nil, fmt.Errorf("cannot reload common third party after insert race: %w", err)
+			}
 
-	for _, domain := range domains {
-		domainRecord := coredata.CommonThirdPartyDomain{
-			ID:                 gid.New(gid.NilTenant, coredata.CommonThirdPartyDomainEntityType),
-			CommonThirdPartyID: party.ID,
-			Domain:             domain,
-			CreatedAt:          now,
-			UpdatedAt:          now,
+			return &party.ID, nil
 		}
 
-		if _, err := domainRecord.Upsert(ctx, tx); err != nil {
-			return nil, fmt.Errorf("cannot create common third party domain: %w", err)
-		}
+		return nil, fmt.Errorf("cannot create common third party: %w", insertErr)
 	}
 
 	logger.InfoCtx(

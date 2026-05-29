@@ -137,40 +137,19 @@ func trackerMappingInstructions(_ context.Context, _ *agent.Agent) string {
 	)
 }
 
-func buildAgentPrompt(tp coredata.TrackerPattern, domains []string) string {
+// buildTrackerIdentificationPrompt renders the base mapping-agent input
+// shared by live tracker patterns and global catalog patterns: the four
+// XML signal tags plus the max-age preamble. Callers append any extra
+// signals (e.g. observed domains) to the returned prompt.
+func buildTrackerIdentificationPrompt(
+	pattern string,
+	trackerType coredata.TrackerType,
+	matchType coredata.TrackerPatternMatchType,
+	maxAgeSeconds *int,
+) string {
 	maxAge := "session"
-	if tp.MaxAgeSeconds != nil {
-		maxAge = fmt.Sprintf("%d seconds", *tp.MaxAgeSeconds)
-	}
-
-	prompt := fmt.Sprintf(
-		"Identify the following tracker:\n\n"+
-			"<pattern> %s </pattern>\n"+
-			"<type> %s </type>\n"+
-			"<match_type> %s </match_type>\n"+
-			"<max_age> %s </max_age>\n",
-		tp.Pattern,
-		tp.TrackerType,
-		tp.MatchType,
-		maxAge,
-	)
-
-	if len(domains) > 0 {
-		prompt += fmt.Sprintf("<observed_domains> %s </observed_domains>\n", strings.Join(domains, ", "))
-	}
-
-	return prompt
-}
-
-// buildCommonPatternIdentificationPrompt builds the mapping-agent input
-// for a global catalog pattern. Catalog rows carry no observed domains,
-// so the prompt omits the <observed_domains> signal and relies on the
-// pattern name, type, and naming conventions. It lets the enrichment
-// worker reuse the mapping agent to attribute a vendor before describing.
-func buildCommonPatternIdentificationPrompt(cp coredata.CommonTrackerPattern) string {
-	maxAge := "session"
-	if cp.MaxAgeSeconds != nil {
-		maxAge = fmt.Sprintf("%d seconds", *cp.MaxAgeSeconds)
+	if maxAgeSeconds != nil {
+		maxAge = fmt.Sprintf("%d seconds", *maxAgeSeconds)
 	}
 
 	return fmt.Sprintf(
@@ -179,9 +158,19 @@ func buildCommonPatternIdentificationPrompt(cp coredata.CommonTrackerPattern) st
 			"<type> %s </type>\n"+
 			"<match_type> %s </match_type>\n"+
 			"<max_age> %s </max_age>\n",
-		cp.Pattern,
-		cp.TrackerType,
-		cp.MatchType,
+		pattern,
+		trackerType,
+		matchType,
 		maxAge,
 	)
+}
+
+func buildAgentPrompt(tp coredata.TrackerPattern, domains []string) string {
+	prompt := buildTrackerIdentificationPrompt(tp.Pattern, tp.TrackerType, tp.MatchType, tp.MaxAgeSeconds)
+
+	if len(domains) > 0 {
+		prompt += fmt.Sprintf("<observed_domains> %s </observed_domains>\n", strings.Join(domains, ", "))
+	}
+
+	return prompt
 }

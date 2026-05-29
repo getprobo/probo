@@ -75,6 +75,15 @@ func buildCommonPatternEnrichmentAgent(
 	return agent.New("common-pattern-enrichment", cfg.LLMClient, opts...)
 }
 
+// buildCommonPatternIdentificationPrompt builds the mapping-agent input
+// for a global catalog pattern. Catalog rows carry no observed domains,
+// so the prompt omits the <observed_domains> signal and relies on the
+// pattern name, type, and naming conventions. It lets the enrichment
+// worker reuse the mapping agent to attribute a vendor before describing.
+func buildCommonPatternIdentificationPrompt(cp coredata.CommonTrackerPattern) string {
+	return buildTrackerIdentificationPrompt(cp.Pattern, cp.TrackerType, cp.MatchType, cp.MaxAgeSeconds)
+}
+
 func buildEnrichmentPrompt(cp coredata.CommonTrackerPattern, thirdPartyName string) string {
 	maxAge := "session"
 	if cp.MaxAgeSeconds != nil {

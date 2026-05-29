@@ -145,7 +145,6 @@ func TestResolveOrCreateCommonThirdParty(t *testing.T) {
 				logger,
 				name,
 				coredata.ThirdPartyCategoryAnalytics,
-				nil,
 			)
 			got = id
 
@@ -175,7 +174,6 @@ func TestResolveOrCreateCommonThirdParty(t *testing.T) {
 				logger,
 				variant,
 				coredata.ThirdPartyCategoryAnalytics,
-				nil,
 			)
 			got = id
 
@@ -199,7 +197,6 @@ func TestResolveOrCreateCommonThirdParty(t *testing.T) {
 				logger,
 				name,
 				coredata.ThirdPartyCategoryMarketing,
-				nil,
 			)
 			got = id
 

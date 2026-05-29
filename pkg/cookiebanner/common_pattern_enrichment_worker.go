@@ -151,7 +151,7 @@ func (h *commonPatternEnrichmentHandler) Process(ctx context.Context, cp coredat
 			var thirdPartyID *gid.GID
 
 			if attribution != nil && cp.CommonThirdPartyID == nil {
-				thirdPartyID, err = thirdparty.ResolveOrCreateCommonThirdParty(ctx, tx, h.logger, attribution.ThirdPartyName, attribution.Category, nil)
+				thirdPartyID, err = thirdparty.ResolveOrCreateCommonThirdParty(ctx, tx, h.logger, attribution.ThirdPartyName, attribution.Category)
 				if err != nil {
 					return fmt.Errorf("cannot resolve or create common third party: %w", err)
 				}
