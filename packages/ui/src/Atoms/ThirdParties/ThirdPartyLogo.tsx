@@ -78,6 +78,7 @@ const thirdParties: Record<string, FC<ComponentProps<"svg">>> = {
   OPENAI: OpenAI,
   PAGERDUTY: PagerDuty,
   POSTHOG: PostHog,
+  POSTHOG_SELF_HOSTED: PostHog,
   RESEND: Resend,
   SENTRY: Sentry,
   SLACK: Slack,

@@ -122,6 +122,12 @@ function mapAPIKeyExtraSettingToField(
     case "METABASE":
       if (settingKey === "instanceUrl") return "metabaseInstanceUrl";
       break;
+    case "POSTHOG":
+      if (settingKey === "region") return "posthogRegion";
+      break;
+    case "POSTHOG_SELF_HOSTED":
+      if (settingKey === "instanceUrl") return "posthogInstanceUrl";
+      break;
   }
   return null;
 }
@@ -580,19 +586,39 @@ export function AddAccessSourceDialog({
               required
               autoFocus
             />
-            {activeProvider?.extraSettings.map(setting => (
-              <Field
-                key={setting.key}
-                label={__(setting.label)}
-                value={extraSettingValues[setting.key] ?? ""}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  setExtraSettingValues(prev => ({
-                    ...prev,
-                    [setting.key]: e.target.value,
-                  }))}
-                required={setting.required}
-              />
-            ))}
+            {activeProvider?.extraSettings.map(setting =>
+              setting.key === "region"
+                ? (
+                    <div key={setting.key} className="space-y-1.5">
+                      <label className="text-sm font-medium">{__(setting.label)}</label>
+                      <Select
+                        value={extraSettingValues[setting.key] ?? ""}
+                        onValueChange={(val: string) =>
+                          setExtraSettingValues(prev => ({
+                            ...prev,
+                            [setting.key]: val,
+                          }))}
+                        placeholder={__("Select a region")}
+                      >
+                        <Option value="US">{__("United States (US)")}</Option>
+                        <Option value="EU">{__("Europe (EU)")}</Option>
+                      </Select>
+                    </div>
+                  )
+                : (
+                    <Field
+                      key={setting.key}
+                      label={__(setting.label)}
+                      value={extraSettingValues[setting.key] ?? ""}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                        setExtraSettingValues(prev => ({
+                          ...prev,
+                          [setting.key]: e.target.value,
+                        }))}
+                      required={setting.required}
+                    />
+                  ),
+            )}
           </DialogContent>
           <DialogFooter>
             <Button
