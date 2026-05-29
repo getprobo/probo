@@ -833,6 +833,23 @@ func (r *pagerdutyNameResolver) ResolveInstanceName(_ context.Context) (string, 
 	return r.subdomain, nil
 }
 
+// datadogNameResolver returns the Datadog site/region label stored in
+// connector settings (e.g. "US3"), captured during the OAuth callback. No
+// HTTP call is required; the AccessSource title becomes "Datadog <region>".
+// Org-name resolution is intentionally omitted to keep scopes to
+// user_access_read (the org name endpoint needs org_management).
+type datadogNameResolver struct {
+	region string
+}
+
+func NewDatadogNameResolver(region string) NameResolver {
+	return &datadogNameResolver{region: region}
+}
+
+func (r *datadogNameResolver) ResolveInstanceName(_ context.Context) (string, error) {
+	return r.region, nil
+}
+
 // asanaNameResolver resolves the Asana workspace name.
 type asanaNameResolver struct {
 	httpClient   *http.Client
