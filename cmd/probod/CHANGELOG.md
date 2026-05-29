@@ -4,6 +4,14 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.199.1] - 2026-05-28
+
+### Fixed
+
+- Fix missing icons in the UI
+- Fix Metabase user listing in access reviews
+- Fix PostHog resolver name
+
 ## [0.199.0] - 2026-05-28
 
 ### Added
