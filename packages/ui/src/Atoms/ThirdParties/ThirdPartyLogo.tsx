@@ -44,6 +44,7 @@ import { OnePassword } from "./OnePassword";
 import { OpenAI } from "./OpenAI";
 import { PagerDuty } from "./PagerDuty";
 import { PostHog } from "./PostHog";
+import { Qovery } from "./Qovery";
 import { Resend } from "./Resend";
 import { SendGrid } from "./SendGrid";
 import { Sentry } from "./Sentry";
@@ -89,6 +90,7 @@ const thirdParties: Record<string, FC<ComponentProps<"svg">>> = {
   OPENAI: OpenAI,
   PAGERDUTY: PagerDuty,
   POSTHOG: PostHog,
+  QOVERY: Qovery,
   RESEND: Resend,
   SENDGRID: SendGrid,
   SENTRY: Sentry,

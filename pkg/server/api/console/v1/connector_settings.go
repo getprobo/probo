@@ -160,6 +160,12 @@ func apiKeyConnectorSettings(input types.CreateAPIKeyConnectorInput) (json.RawMe
 		}
 
 		return json.Marshal(&coredata.BetterStackConnectorSettings{TeamName: *input.BetterStackTeamName})
+	case coredata.ConnectorProviderQovery:
+		if input.QoveryOrganizationID == nil || *input.QoveryOrganizationID == "" {
+			return nil, fmt.Errorf("cannot create qovery connector: qoveryOrganizationId is required")
+		}
+
+		return json.Marshal(&coredata.QoveryConnectorSettings{OrganizationID: *input.QoveryOrganizationID})
 	}
 
 	return nil, nil

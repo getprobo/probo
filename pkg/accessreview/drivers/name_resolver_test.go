@@ -185,6 +185,76 @@ func TestSentryNameResolver(t *testing.T) {
 	}
 }
 
+func TestQoveryNameResolver(t *testing.T) {
+	t.Parallel()
+
+	t.Run("empty organization id returns nothing without HTTP call", func(t *testing.T) {
+		t.Parallel()
+
+		client := &http.Client{Transport: roundTripperFunc(func(*http.Request) (*http.Response, error) {
+			t.Fatalf("resolver should not make an HTTP call for an empty organization id")
+			return nil, nil
+		})}
+
+		got, err := NewQoveryNameResolver(client, "").ResolveInstanceName(context.Background())
+		require.NoError(t, err)
+		assert.Empty(t, got)
+	})
+
+	cases := []struct {
+		name   string
+		status int
+		body   string
+		want   string
+	}{
+		{
+			name:   "200 returns name",
+			status: http.StatusOK,
+			body:   `{"id":"26ac87db-ae79-4be4-bd33-7f839f0e1647","name":"Acme Inc"}`,
+			want:   "Acme Inc",
+		},
+		{
+			name:   "401 is terminal (no error, no name)",
+			status: http.StatusUnauthorized,
+			body:   `{"error":"unauthorized"}`,
+			want:   "",
+		},
+		{
+			name:   "404 is terminal (no error, no name)",
+			status: http.StatusNotFound,
+			body:   `{"error":"not found"}`,
+			want:   "",
+		},
+		{
+			name:   "500 is terminal (no error, no name)",
+			status: http.StatusInternalServerError,
+			body:   `{"error":"boom"}`,
+			want:   "",
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				assert.Equal(t, http.MethodGet, r.Method)
+				assert.Equal(t, "/organization/26ac87db-ae79-4be4-bd33-7f839f0e1647", r.URL.Path)
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(tc.status)
+				_, _ = w.Write([]byte(tc.body))
+			}))
+			defer srv.Close()
+
+			client := &http.Client{Transport: &hostRewriter{target: srv.URL}}
+
+			got, err := NewQoveryNameResolver(client, "26ac87db-ae79-4be4-bd33-7f839f0e1647").ResolveInstanceName(context.Background())
+			require.NoError(t, err)
+			assert.Equal(t, tc.want, got)
+		})
+	}
+}
+
 func TestTailscaleNameResolver(t *testing.T) {
 	t.Parallel()
 

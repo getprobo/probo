@@ -1,0 +1,40 @@
+---
+# Anonymized from a real GET /organization/{id}/member recording against a
+# Qovery organization (token stripped by the recorder). Real PII (org ID,
+# member IdP subject IDs, names, emails, avatar URL, role IDs) replaced with
+# synthetic values; two extra members were added to keep coverage (nickname
+# fallback when name is empty, and an emailless member that is dropped). The
+# member object shape (id, created_at/updated_at/last_activity_at, name,
+# nickname, email, role, role_name, role_id, invitation_status) mirrors the
+# live response, including the "google-oauth2|<sub>" IdP-subject id format.
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: api.qovery.com
+        headers:
+            Accept:
+                - application/json
+        url: https://api.qovery.com/organization/11111111-2222-3333-4444-555555555555/member
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"results":[{"id":"google-oauth2|100000000000000000001","created_at":"2025-01-04T12:00:00.000Z","updated_at":"2026-02-18T09:03:11.000Z","last_activity_at":"2026-02-18T09:03:11.000Z","name":"Jane Doe","nickname":"jane","profile_picture_url":"https://example.com/avatar/jane.png","email":"jane.doe@example.com","role":"OWNER","role_name":"Owner","role_id":"22222222-2222-2222-2222-222222222222","invitation_status":"ACCEPTED"},{"id":"google-oauth2|100000000000000000002","created_at":"2025-03-10T08:15:00.000Z","updated_at":"2025-03-10T08:15:00.000Z","name":"","nickname":"john","profile_picture_url":null,"email":"john.smith@example.com","role":"DEVELOPER","role_name":"Developer","role_id":"33333333-3333-3333-3333-333333333333","invitation_status":"ACCEPTED"},{"id":"google-oauth2|100000000000000000003","created_at":"2025-04-01T10:00:00.000Z","updated_at":"2025-04-01T10:00:00.000Z","name":"No Email","nickname":"noemail","profile_picture_url":null,"email":"","role":"VIEWER","role_name":"Viewer","role_id":"44444444-4444-4444-4444-444444444444","invitation_status":"PENDING"}]}'
+        headers:
+            Content-Type:
+                - application/json
+            Strict-Transport-Security:
+                - max-age=31536000; includeSubDomains
+            Vary:
+                - Accept-Encoding
+        status: 200 OK
+        code: 200
+        duration: 563.650542ms

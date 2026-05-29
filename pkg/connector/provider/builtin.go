@@ -51,6 +51,7 @@ func NewBuiltinRegistry() *Registry {
 		openaiRegistration(),
 		posthogRegistration(),
 		pagerdutyRegistration(),
+		qoveryRegistration(),
 		resendRegistration(),
 		sendgridRegistration(),
 		sentryRegistration(),

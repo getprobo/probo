@@ -140,6 +140,10 @@ type (
 	BetterStackConnectorSettings struct {
 		TeamName string `json:"team_name"`
 	}
+
+	QoveryConnectorSettings struct {
+		OrganizationID string `json:"organization_id"`
+	}
 )
 
 // GrantType returns the OAuth2 grant type recorded on the connector's

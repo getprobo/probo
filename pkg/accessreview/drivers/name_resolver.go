@@ -298,6 +298,60 @@ func (r *tallyNameResolver) ResolveInstanceName(ctx context.Context) (string, er
 	return resp.Name, nil
 }
 
+// qoveryNameResolver resolves the Qovery organization name.
+type qoveryNameResolver struct {
+	httpClient     *http.Client
+	organizationID string
+}
+
+func NewQoveryNameResolver(httpClient *http.Client, organizationID string) NameResolver {
+	return &qoveryNameResolver{
+		httpClient:     httpClient,
+		organizationID: organizationID,
+	}
+}
+
+func (r *qoveryNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
+	if r.organizationID == "" {
+		return "", nil
+	}
+
+	endpoint, err := url.JoinPath(qoveryAPIBaseURL, "organization", url.PathEscape(r.organizationID))
+	if err != nil {
+		return "", fmt.Errorf("cannot build qovery organization URL: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
+	if err != nil {
+		return "", fmt.Errorf("cannot create qovery organization request: %w", err)
+	}
+
+	req.Header.Set("Accept", "application/json")
+
+	httpResp, err := r.httpClient.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("cannot execute qovery organization request: %w", err)
+	}
+
+	defer func() { _ = httpResp.Body.Close() }()
+
+	// Best-effort: a non-2xx (revoked token, deleted org, stale ID) must not
+	// make the source-name worker retry forever. Give up gracefully and keep
+	// the generic source name; a dead token surfaces on the next ListAccounts.
+	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
+		return "", nil
+	}
+
+	var resp struct {
+		Name string `json:"name"`
+	}
+	if err := json.NewDecoder(httpResp.Body).Decode(&resp); err != nil {
+		return "", fmt.Errorf("cannot decode qovery organization response: %w", err)
+	}
+
+	return resp.Name, nil
+}
+
 // hubspotNameResolver resolves the HubSpot account name.
 type hubspotNameResolver struct {
 	httpClient *http.Client

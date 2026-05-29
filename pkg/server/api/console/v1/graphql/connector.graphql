@@ -68,6 +68,7 @@ enum ConnectorProvider
     DATADOG @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderDatadog")
     OKTA @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderOkta")
     ZENDESK @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderZendesk")
+    QOVERY @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderQovery")
 }
 
 type ConnectorProviderInfo {
@@ -146,6 +147,7 @@ input CreateAPIKeyConnectorInput {
     posthogInstanceUrl: String
     oktaDomain: String
     betterStackTeamName: String
+    qoveryOrganizationId: String
 }
 
 type CreateAPIKeyConnectorPayload {

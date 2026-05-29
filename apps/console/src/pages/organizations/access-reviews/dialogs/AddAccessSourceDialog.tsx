@@ -151,6 +151,9 @@ function mapAPIKeyExtraSettingToField(
     case "BETTER_STACK":
       if (settingKey === "teamName") return "betterStackTeamName";
       break;
+    case "QOVERY":
+      if (settingKey === "organizationId") return "qoveryOrganizationId";
+      break;
   }
   return null;
 }
