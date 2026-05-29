@@ -16,9 +16,7 @@ package drivers
 
 import (
 	"context"
-	"io"
-	"net/http"
-	"strings"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -29,29 +27,13 @@ import (
 func TestClerkDriver(t *testing.T) {
 	t.Parallel()
 
-	const responseBody = `{"data":[{"id":"usr_000000000000000000000001","primary_email_address_id":"eml_primary_1","username":null,"first_name":"Jane","last_name":"Doe","password_enabled":true,"two_factor_enabled":false,"totp_enabled":false,"backup_code_enabled":false,"banned":false,"locked":false,"last_sign_in_at":1748471521000,"created_at":1748342000000,"email_addresses":[{"id":"eml_secondary_1","email_address":"jane+alt@example.com"},{"id":"eml_primary_1","email_address":"jane@example.com"}]},{"id":"usr_000000000000000000000002","primary_email_address_id":null,"username":"developer-user","first_name":null,"last_name":null,"password_enabled":false,"two_factor_enabled":true,"totp_enabled":false,"backup_code_enabled":false,"banned":false,"locked":false,"last_sign_in_at":null,"created_at":1748343000000,"email_addresses":[{"id":"eml_2","email_address":"developer@example.com"}]},{"id":"usr_000000000000000000000003","primary_email_address_id":"eml_primary_3","username":null,"first_name":null,"last_name":null,"password_enabled":false,"two_factor_enabled":false,"totp_enabled":false,"backup_code_enabled":false,"banned":true,"locked":false,"last_sign_in_at":null,"created_at":1748344000000,"email_addresses":[{"id":"eml_primary_3","email_address":"blocked@example.com"}]}],"total_count":3}`
-
-	requestCount := 0
-	client := &http.Client{Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
-		requestCount++
-		require.Equal(t, http.MethodGet, req.Method)
-		require.Equal(t, "https://api.clerk.com/v1/users?limit=100&offset=0", req.URL.String())
-		require.Equal(t, "application/json", req.Header.Get("Accept"))
-
-		return &http.Response{
-			StatusCode: http.StatusOK,
-			Header: http.Header{
-				"Content-Type": []string{"application/json"},
-			},
-			Body: io.NopCloser(strings.NewReader(responseBody)),
-		}, nil
-	})}
+	rec := newRecorder(t, "testdata/clerk", "CLERK_SECRET_KEY")
+	client := newVCRClient(rec, bearerAuth(os.Getenv("CLERK_SECRET_KEY")))
 
 	driver := NewClerkDriver(client)
 	records, err := driver.ListAccounts(context.Background())
 	require.NoError(t, err)
 	require.Len(t, records, 3)
-	require.Equal(t, 1, requestCount)
 
 	first := records[0]
 	assert.Equal(t, "usr_000000000000000000000001", first.ExternalID)
