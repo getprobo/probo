@@ -75,6 +75,14 @@ type (
 		// wiring, never serialized.
 		StateSigningKey string
 
+		// BuildAuthURLForSite / BuildTokenURLForDomain are copied from
+		// the provider Registration by ApplyOAuth2Defaults. When set,
+		// the authorize URL is built per-site at initiate and the token
+		// URL per-domain at callback (multi-site providers, e.g.
+		// Datadog). Nil for single-site providers.
+		BuildAuthURLForSite    func(site string) (string, error)
+		BuildTokenURLForDomain func(domain string) (string, error)
+
 		// HTTPClient is used for the OAuth2 token-exchange request
 		// issued from CompleteWithState. It must be set by callers;
 		// (*provider.Registry).ApplyOAuth2Defaults assigns an
@@ -236,7 +244,21 @@ func (c *OAuth2Connector) InitiateWithState(
 		authCodeQuery.Set(k, v)
 	}
 
-	u, err := url.Parse(c.AuthURL)
+	authURL := c.AuthURL
+	if c.BuildAuthURLForSite != nil {
+		if opts.Site == "" {
+			return "", fmt.Errorf("cannot initiate connector: site is required for multi-site providers")
+		}
+
+		built, err := c.BuildAuthURLForSite(opts.Site)
+		if err != nil {
+			return "", fmt.Errorf("cannot build auth URL for site: %w", err)
+		}
+
+		authURL = built
+	}
+
+	u, err := url.Parse(authURL)
 	if err != nil {
 		return "", fmt.Errorf("cannot parse auth URL: %w", err)
 	}
@@ -348,7 +370,22 @@ func (c *OAuth2Connector) CompleteWithState(ctx context.Context, r *http.Request
 		codeVerifier = derivePKCEVerifier(c.stateSalt(), payload.Data.PKCENonce)
 	}
 
-	tokenRequest, err := c.buildTokenRequest(ctx, code, c.RedirectURI, codeVerifier)
+	tokenURL := c.TokenURL
+	if c.BuildTokenURLForDomain != nil {
+		domain := r.URL.Query().Get("domain")
+		if domain == "" {
+			return nil, nil, fmt.Errorf("cannot complete oauth2 flow: missing domain parameter")
+		}
+
+		built, err := c.BuildTokenURLForDomain(domain)
+		if err != nil {
+			return nil, nil, fmt.Errorf("cannot build token URL: %w", err)
+		}
+
+		tokenURL = built
+	}
+
+	tokenRequest, err := c.buildTokenRequest(ctx, code, c.RedirectURI, codeVerifier, tokenURL)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -401,6 +438,12 @@ func (c *OAuth2Connector) CompleteWithState(ctx context.Context, r *http.Request
 		oauth2Conn.ExpiresAt = time.Now().Add(time.Duration(rawToken.ExpiresIn) * time.Second)
 	}
 
+	// Persist the per-customer token URL for multi-site providers so
+	// token refresh targets the same regional host (api.<domain>).
+	if c.BuildTokenURLForDomain != nil {
+		oauth2Conn.TokenURL = tokenURL
+	}
+
 	if payload.Data.Provider == SlackProvider {
 		conn, _, err := ParseSlackTokenResponse(body, oauth2Conn, organizationID)
 		return conn, &payload.Data, err
@@ -436,11 +479,11 @@ func basicAuthHeader(clientID, clientSecret string) string {
 // endpoint with the headers shared by the form-body auth methods
 // ("basic-form", "post-form", and the public-client "none"). Callers set any
 // extra auth header (e.g. Basic) on the returned request.
-func (c *OAuth2Connector) newFormTokenRequest(ctx context.Context, form url.Values) (*http.Request, error) {
+func (c *OAuth2Connector) newFormTokenRequest(ctx context.Context, form url.Values, tokenURL string) (*http.Request, error) {
 	req, err := http.NewRequestWithContext(
 		ctx,
 		http.MethodPost,
-		c.TokenURL,
+		tokenURL,
 		strings.NewReader(form.Encode()),
 	)
 	if err != nil {
@@ -458,7 +501,7 @@ func (c *OAuth2Connector) newFormTokenRequest(ctx context.Context, form url.Valu
 // on c.TokenEndpointAuth to support different provider requirements. When
 // codeVerifier is non-empty (PKCE-enabled providers), it is replayed as
 // `code_verifier` in the request body.
-func (c *OAuth2Connector) buildTokenRequest(ctx context.Context, code, redirectURI, codeVerifier string) (*http.Request, error) {
+func (c *OAuth2Connector) buildTokenRequest(ctx context.Context, code, redirectURI, codeVerifier, tokenURL string) (*http.Request, error) {
 	switch c.TokenEndpointAuth {
 	case "basic-json":
 		// JSON body with Basic auth header (Notion).
@@ -479,7 +522,7 @@ func (c *OAuth2Connector) buildTokenRequest(ctx context.Context, code, redirectU
 		req, err := http.NewRequestWithContext(
 			ctx,
 			http.MethodPost,
-			c.TokenURL,
+			tokenURL,
 			bytes.NewReader(jsonBody),
 		)
 		if err != nil {
@@ -504,7 +547,7 @@ func (c *OAuth2Connector) buildTokenRequest(ctx context.Context, code, redirectU
 			formData.Set("code_verifier", codeVerifier)
 		}
 
-		req, err := c.newFormTokenRequest(ctx, formData)
+		req, err := c.newFormTokenRequest(ctx, formData, tokenURL)
 		if err != nil {
 			return nil, err
 		}
@@ -533,7 +576,7 @@ func (c *OAuth2Connector) buildTokenRequest(ctx context.Context, code, redirectU
 			formData.Set("code_verifier", codeVerifier)
 		}
 
-		return c.newFormTokenRequest(ctx, formData)
+		return c.newFormTokenRequest(ctx, formData, tokenURL)
 	}
 }
 
@@ -598,11 +641,19 @@ func (c *OAuth2Connection) RefreshableClient(ctx context.Context, cfg OAuth2Refr
 		authStyle = oauth2.AuthStyleInHeader
 	}
 
+	// Multi-site providers persist a per-customer token URL on the
+	// connection; prefer it over the static registration TokenURL so
+	// refresh targets the correct regional host.
+	tokenURL := cfg.TokenURL
+	if c.TokenURL != "" {
+		tokenURL = c.TokenURL
+	}
+
 	config := &oauth2.Config{
 		ClientID:     cfg.ClientID,
 		ClientSecret: cfg.ClientSecret,
 		Endpoint: oauth2.Endpoint{
-			TokenURL:  cfg.TokenURL,
+			TokenURL:  tokenURL,
 			AuthStyle: authStyle,
 		},
 	}

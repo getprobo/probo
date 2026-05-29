@@ -59,6 +59,15 @@ type Registration struct {
 	// it as a path segment. It must construct the URL with net/url and
 	// escape the slug. Nil for providers with a fully static AuthURL.
 	BuildAuthURL func(slug string) (string, error)
+	// BuildAuthURLForSite builds the authorize URL for a per-customer
+	// site supplied at initiate time (multi-site providers, e.g.
+	// Datadog). It MUST validate site against a fixed allow-list and
+	// construct the URL with net/url. Nil for single-site providers.
+	BuildAuthURLForSite func(site string) (string, error)
+	// BuildTokenURLForDomain builds the token endpoint URL from the API
+	// domain the provider returns on the OAuth callback (multi-site
+	// providers, e.g. Datadog). It MUST validate domain. Nil otherwise.
+	BuildTokenURLForDomain func(domain string) (string, error)
 
 	// Protocol support / GraphQL surface.
 	SupportsAPIKey            bool

@@ -15,13 +15,18 @@
 package provider_test
 
 import (
+	"context"
+	"net/http"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.gearno.de/kit/log"
 
+	"go.probo.inc/probo/pkg/accessreview/drivers"
 	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/connector/provider"
+	"go.probo.inc/probo/pkg/coredata"
 )
 
 // TestApplyOAuth2Defaults_AuthURLFromSlug verifies that providers whose
@@ -112,4 +117,32 @@ func TestApplyOAuth2Defaults_PublicClientTokenAuth(t *testing.T) {
 	assert.Equal(t, "none", c.TokenEndpointAuth,
 		"PostHog must use token_endpoint_auth_method none (public client)")
 	assert.True(t, c.RequiresPKCE, "PostHog public client must require PKCE")
+}
+
+// TestApplyOAuth2Defaults_CopiesSiteClosures verifies the multi-site
+// per-provider closures (BuildAuthURLForSite, BuildTokenURLForDomain) are
+// copied from the Registration onto the OAuth2Connector.
+func TestApplyOAuth2Defaults_CopiesSiteClosures(t *testing.T) {
+	t.Parallel()
+
+	r := provider.NewRegistry()
+	// Uses the PagerDuty enum (already exists) so Task 2 builds and commits
+	// independently of Task 3. The closures themselves are Datadog's, from
+	// Task 1 — this only asserts ApplyOAuth2Defaults copies them through.
+	require.NoError(t, r.Register(&provider.Registration{
+		Provider:               coredata.ConnectorProviderPagerDuty,
+		DisplayName:            "PagerDuty",
+		OAuth2Scopes:           []string{"users.read"},
+		RequiresPKCE:           true,
+		BuildAuthURLForSite:    connector.DatadogAuthorizeURL,
+		BuildTokenURLForDomain: connector.DatadogTokenURL,
+		NewDriver: func(context.Context, *http.Client, *coredata.Connector, *log.Logger) (drivers.Driver, error) {
+			return nil, nil
+		},
+	}))
+
+	var c connector.OAuth2Connector
+	require.NoError(t, r.ApplyOAuth2Defaults("PAGERDUTY", "https://probo.example/cb", &c))
+	require.NotNil(t, c.BuildAuthURLForSite)
+	require.NotNil(t, c.BuildTokenURLForDomain)
 }

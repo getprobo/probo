@@ -18,6 +18,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -50,6 +51,7 @@ func TestBuildTokenRequest_PostForm(t *testing.T) {
 			"test-code",
 			"https://example.com/callback",
 			"",
+			connector.TokenURL,
 		)
 		require.NoError(t, err)
 
@@ -86,6 +88,7 @@ func TestBuildTokenRequest_PostForm(t *testing.T) {
 			"test-code",
 			"https://example.com/callback",
 			"",
+			connector.TokenURL,
 		)
 		require.NoError(t, err)
 
@@ -121,6 +124,7 @@ func TestBuildTokenRequest_BasicForm(t *testing.T) {
 		"test-code",
 		"https://example.com/callback",
 		"",
+		connector.TokenURL,
 	)
 	require.NoError(t, err)
 
@@ -164,6 +168,7 @@ func TestBuildTokenRequest_BasicJSON(t *testing.T) {
 		"test-code",
 		"https://example.com/callback",
 		"",
+		connector.TokenURL,
 	)
 	require.NoError(t, err)
 
@@ -702,6 +707,187 @@ func TestInitiateWithState_PKCE(t *testing.T) {
 		assert.Equal(t, expectedVerifier, capturedVerifier,
 			"token POST body must carry the verifier persisted in the state token")
 	})
+}
+
+func TestInitiateWithState_PerSiteAuthURL(t *testing.T) {
+	t.Parallel()
+
+	c := &OAuth2Connector{
+		ClientID:            "cid",
+		ClientSecret:        "secret",
+		RedirectURI:         "https://probo.example/cb",
+		RequiresPKCE:        true,
+		BuildAuthURLForSite: DatadogAuthorizeURL,
+	}
+
+	got, err := c.InitiateWithState(context.Background(),
+		OAuth2State{OrganizationID: "org", Provider: DatadogProvider},
+		InitiateOptions{Scopes: []string{"user_access_read"}, Site: "US3"},
+	)
+	require.NoError(t, err)
+
+	u, err := url.Parse(got)
+	require.NoError(t, err)
+	assert.Equal(t, "us3.datadoghq.com", u.Host)
+	assert.Equal(t, "/oauth2/v1/authorize", u.Path)
+	assert.NotEmpty(t, u.Query().Get("code_challenge"))
+}
+
+func TestInitiateWithState_MissingSiteForMultiSite(t *testing.T) {
+	t.Parallel()
+
+	c := &OAuth2Connector{
+		ClientID:            "cid",
+		ClientSecret:        "secret",
+		BuildAuthURLForSite: DatadogAuthorizeURL,
+	}
+
+	_, err := c.InitiateWithState(context.Background(),
+		OAuth2State{OrganizationID: "org", Provider: DatadogProvider},
+		InitiateOptions{Site: ""},
+	)
+	require.Error(t, err)
+}
+
+func TestInitiateWithState_InvalidSiteRejected(t *testing.T) {
+	t.Parallel()
+
+	c := &OAuth2Connector{
+		ClientID:            "cid",
+		ClientSecret:        "secret",
+		BuildAuthURLForSite: DatadogAuthorizeURL,
+	}
+
+	_, err := c.InitiateWithState(context.Background(),
+		OAuth2State{OrganizationID: "org", Provider: DatadogProvider},
+		InitiateOptions{Site: "BOGUS"},
+	)
+	require.Error(t, err)
+}
+
+func TestCompleteWithState_PerDomainTokenURL(t *testing.T) {
+	t.Parallel()
+
+	var gotPath string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotPath = r.URL.Path
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"access_token":"at","refresh_token":"rt","expires_in":3600,"token_type":"Bearer"}`))
+	}))
+	defer srv.Close()
+
+	// Build a token-URL closure that targets the httptest server,
+	// mirroring DatadogTokenURL's shape (validate then build).
+	c := &OAuth2Connector{
+		ClientID:     "cid",
+		ClientSecret: "secret",
+		RedirectURI:  "https://probo.example/cb",
+		RequiresPKCE: true,
+		HTTPClient:   httpclient.DefaultClient(httpclient.WithSSRFProtection(), httpclient.WithSSRFAllowLoopback()),
+		BuildTokenURLForDomain: func(domain string) (string, error) {
+			if domain != "us3.datadoghq.com" {
+				return "", fmt.Errorf("unknown domain")
+			}
+			return srv.URL + "/oauth2/v1/token", nil
+		},
+	}
+
+	state, err := statelesstoken.NewToken(c.ClientSecret, OAuth2TokenType, OAuth2TokenTTL,
+		OAuth2State{OrganizationID: validOrgGID(t), Provider: DatadogProvider})
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodGet,
+		"https://probo.example/cb?code=abc&state="+state+"&domain=us3.datadoghq.com", nil)
+
+	conn, _, err := c.CompleteWithState(context.Background(), req)
+	require.NoError(t, err)
+	assert.Equal(t, "/oauth2/v1/token", gotPath)
+
+	oc, ok := conn.(*OAuth2Connection)
+	require.True(t, ok)
+	assert.Equal(t, srv.URL+"/oauth2/v1/token", oc.TokenURL)
+}
+
+func TestCompleteWithState_MissingDomainForMultiSite(t *testing.T) {
+	t.Parallel()
+
+	c := &OAuth2Connector{
+		ClientID:               "cid",
+		ClientSecret:           "secret",
+		RedirectURI:            "https://probo.example/cb",
+		HTTPClient:             httpclient.DefaultClient(httpclient.WithSSRFProtection(), httpclient.WithSSRFAllowLoopback()),
+		BuildTokenURLForDomain: func(string) (string, error) { return "", fmt.Errorf("unused") },
+	}
+
+	state, err := statelesstoken.NewToken(c.ClientSecret, OAuth2TokenType, OAuth2TokenTTL,
+		OAuth2State{OrganizationID: validOrgGID(t), Provider: DatadogProvider})
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodGet,
+		"https://probo.example/cb?code=abc&state="+state, nil)
+
+	_, _, err = c.CompleteWithState(context.Background(), req)
+	require.Error(t, err)
+}
+
+// TestCompleteWithState_InvalidDomainRejected exercises the SSRF guard: a
+// tampered callback `domain` must fail the flow (the closure validates against
+// the fixed allow-list) before credentials are POSTed anywhere.
+func TestCompleteWithState_InvalidDomainRejected(t *testing.T) {
+	t.Parallel()
+
+	c := &OAuth2Connector{
+		ClientID:               "cid",
+		ClientSecret:           "secret",
+		RedirectURI:            "https://probo.example/cb",
+		HTTPClient:             httpclient.DefaultClient(httpclient.WithSSRFProtection(), httpclient.WithSSRFAllowLoopback()),
+		BuildTokenURLForDomain: DatadogTokenURL,
+	}
+
+	state, err := statelesstoken.NewToken(c.ClientSecret, OAuth2TokenType, OAuth2TokenTTL,
+		OAuth2State{OrganizationID: validOrgGID(t), Provider: DatadogProvider})
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodGet,
+		"https://probo.example/cb?code=abc&state="+state+"&domain=evil.example.com", nil)
+
+	_, _, err = c.CompleteWithState(context.Background(), req)
+	require.Error(t, err)
+}
+
+func TestRefreshableClient_PrefersConnectionTokenURL(t *testing.T) {
+	t.Parallel()
+
+	var gotHost string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotHost = r.Host
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"access_token":"new","token_type":"Bearer","expires_in":3600}`))
+	}))
+	defer srv.Close()
+
+	conn := &OAuth2Connection{
+		AccessToken:  "old",
+		RefreshToken: "rt",
+		TokenType:    "Bearer",
+		ExpiresAt:    time.Now().Add(-time.Hour),
+		TokenURL:     srv.URL, // per-connection (Datadog-style)
+	}
+
+	// cfg.TokenURL is empty (multi-site providers carry no static token URL).
+	_, err := conn.RefreshableClient(context.Background(), OAuth2RefreshConfig{
+		ClientID: "cid", ClientSecret: "secret",
+	}, httpclient.WithSSRFAllowLoopback())
+	require.NoError(t, err)
+
+	u, _ := url.Parse(srv.URL)
+	assert.Equal(t, u.Host, gotHost)
+	assert.Equal(t, "new", conn.AccessToken)
+}
+
+func validOrgGID(t *testing.T) string {
+	t.Helper()
+	return gid.New(gid.NewTenantID(), 0).String()
 }
 
 // TestGeneratePKCENonce exercises the nonce generator: each call must

@@ -39,6 +39,11 @@ type (
 		// existing connector: the callback updates the row in place
 		// instead of creating a new one.
 		ConnectorID string
+		// Site selects a per-customer region/site for multi-site
+		// providers (e.g. Datadog). Consumed by the connector's
+		// Registration.BuildAuthURLForSite. Empty for single-site
+		// providers.
+		Site string
 	}
 
 	Connector interface {
