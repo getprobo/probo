@@ -91,6 +91,16 @@ type (
 	MetabaseConnectorSettings struct {
 		InstanceURL string `json:"instance_url"`
 	}
+
+	// PostHogConnectorSettings carries the data-API base host for both the
+	// cloud (POSTHOG) and self-hosted (POSTHOG_SELF_HOSTED) providers. It
+	// is the region-pinned host for API-key connections
+	// (https://us.posthog.com / https://eu.posthog.com / a self-hosted
+	// instance URL). It is empty for cloud OAuth connections — the driver
+	// then defaults to the region-agnostic gateway https://oauth.posthog.com.
+	PostHogConnectorSettings struct {
+		BaseURL string `json:"base_url"`
+	}
 )
 
 // GrantType returns the OAuth2 grant type recorded on the connector's

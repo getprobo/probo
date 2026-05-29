@@ -16,9 +16,11 @@ package drivers
 
 import (
 	"context"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -32,7 +34,7 @@ func TestPostHogDriverListAccounts(t *testing.T) {
 	rec := newRecorder(t, "testdata/posthog", "POSTHOG_PERSONAL_API_KEY")
 	client := newVCRClient(rec, bearerAuth(os.Getenv("POSTHOG_PERSONAL_API_KEY")))
 
-	records, err := NewPostHogDriver(client).ListAccounts(context.Background())
+	records, err := NewPostHogDriver(client, "https://app.posthog.com").ListAccounts(context.Background())
 	require.NoError(t, err)
 	require.Len(t, records, 3)
 
@@ -61,6 +63,61 @@ func TestPostHogDriverListAccounts(t *testing.T) {
 	assert.Equal(t, coredata.MFAStatusUnknown, admin.MFAStatus)
 	assert.Equal(t, "membership-3", admin.ExternalID)
 	require.NotNil(t, admin.CreatedAt)
+}
+
+// TestPostHogDriverResolvesRegionLazily covers the OAuth path: an empty
+// baseURL means the region-agnostic gateway was used for the handshake, so
+// the driver must discover the data region (us/eu) by probing before listing.
+func TestPostHogDriverResolvesRegionLazily(t *testing.T) {
+	t.Parallel()
+
+	resp := func(status int, body string) *http.Response {
+		return &http.Response{
+			StatusCode: status,
+			Body:       io.NopCloser(strings.NewReader(body)),
+			Header:     make(http.Header),
+		}
+	}
+
+	const euMembers = `{"count":1,"next":"","results":[{"id":"m1","user":{"uuid":"u1","first_name":"A","last_name":"B","email":"a@b.com"},"level":1,"joined_at":"2025-01-01T00:00:00Z"}]}`
+
+	t.Run("empty base URL probes US then falls back to EU", func(t *testing.T) {
+		t.Parallel()
+
+		var usHits, euHits int
+
+		client := &http.Client{Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
+			switch req.URL.Host {
+			case "us.posthog.com":
+				usHits++
+				return resp(http.StatusUnauthorized, `{"detail":"unauthorized"}`), nil
+			case "eu.posthog.com":
+				euHits++
+				return resp(http.StatusOK, euMembers), nil
+			default:
+				return resp(http.StatusNotFound, ""), nil
+			}
+		})}
+
+		records, err := NewPostHogDriver(client, "").ListAccounts(context.Background())
+		require.NoError(t, err)
+		require.Len(t, records, 1)
+		assert.Equal(t, "a@b.com", records[0].Email)
+		assert.Positive(t, usHits, "US region must be probed")
+		assert.Positive(t, euHits, "EU region must be used after US refuses")
+	})
+
+	t.Run("no region accepts the token returns an error", func(t *testing.T) {
+		t.Parallel()
+
+		client := &http.Client{Transport: roundTripFunc(func(_ *http.Request) (*http.Response, error) {
+			return resp(http.StatusForbidden, `{"detail":"forbidden"}`), nil
+		})}
+
+		_, err := NewPostHogDriver(client, "").ListAccounts(context.Background())
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "cannot resolve posthog region")
+	})
 }
 
 func TestPostHogNameResolver(t *testing.T) {
@@ -108,7 +165,7 @@ func TestPostHogNameResolver(t *testing.T) {
 
 			client := &http.Client{Transport: &hostRewriter{target: srv.URL}}
 
-			got, err := NewPostHogNameResolver(client).ResolveInstanceName(context.Background())
+			got, err := NewPostHogNameResolver(client, "https://app.posthog.com").ResolveInstanceName(context.Background())
 			if tc.wantErr {
 				require.Error(t, err)
 				return

@@ -86,7 +86,7 @@ func TestApplyOAuth2Defaults_AuthURLFromSlug(t *testing.T) {
 func TestApplyOAuth2Defaults_PKCEDefaults(t *testing.T) {
 	t.Parallel()
 
-	for _, p := range []string{"PAGERDUTY"} {
+	for _, p := range []string{"PAGERDUTY", "POSTHOG"} {
 		t.Run(p, func(t *testing.T) {
 			t.Parallel()
 
@@ -97,4 +97,19 @@ func TestApplyOAuth2Defaults_PKCEDefaults(t *testing.T) {
 				"provider %s must enable PKCE so Initiate generates a verifier", p)
 		})
 	}
+}
+
+// TestApplyOAuth2Defaults_PublicClientTokenAuth verifies that PostHog, a
+// public (CIMD) client, propagates token_endpoint_auth_method "none" so the
+// token exchange omits a client_secret.
+func TestApplyOAuth2Defaults_PublicClientTokenAuth(t *testing.T) {
+	t.Parallel()
+
+	r := provider.NewBuiltinRegistry()
+	c := &connector.OAuth2Connector{}
+	require.NoError(t, r.ApplyOAuth2Defaults("POSTHOG", "https://example.com/cb", c))
+
+	assert.Equal(t, "none", c.TokenEndpointAuth,
+		"PostHog must use token_endpoint_auth_method none (public client)")
+	assert.True(t, c.RequiresPKCE, "PostHog public client must require PKCE")
 }

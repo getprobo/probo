@@ -29,14 +29,24 @@ import (
 
 type PostHogDriver struct {
 	httpClient *http.Client
+	baseURL    string
 }
 
 var _ Driver = (*PostHogDriver)(nil)
 
 const (
-	posthogMembersEndpoint      = "https://app.posthog.com/api/organizations/@current/members/"
-	posthogOrganizationEndpoint = "https://app.posthog.com/api/organizations/@current/"
-	posthogMembersPageSize      = 100
+	posthogMembersPath      = "/api/organizations/@current/members/"
+	posthogOrganizationPath = "/api/organizations/@current/"
+	posthogMembersPageSize  = 100
+
+	// PostHog Cloud regional data hosts. OAuth connections carry no region
+	// (empty baseURL): the region-agnostic oauth.posthog.com gateway used
+	// for the OAuth handshake does NOT serve the data API, so the driver
+	// discovers the region by probing these hosts with the connection's
+	// token. API-key (us/eu) and self-hosted connections always carry an
+	// explicit host instead.
+	posthogUSBaseURL = "https://us.posthog.com"
+	posthogEUBaseURL = "https://eu.posthog.com"
 
 	posthogMembershipLevelMember = 1
 	posthogMembershipLevelAdmin  = 8
@@ -67,12 +77,39 @@ type (
 	}
 )
 
-func NewPostHogDriver(httpClient *http.Client) *PostHogDriver {
-	return &PostHogDriver{httpClient: httpClient}
+// NewPostHogDriver builds a driver against baseURL (e.g. https://us.posthog.com
+// or a self-hosted instance URL). An empty baseURL marks a cloud OAuth
+// connection whose region is discovered lazily on first use (see resolveBaseURL).
+func NewPostHogDriver(httpClient *http.Client, baseURL string) *PostHogDriver {
+	return &PostHogDriver{httpClient: httpClient, baseURL: baseURL}
+}
+
+// resolveBaseURL ensures the driver has a concrete data host. Explicit hosts
+// (API-key region / self-hosted) are used as-is; an empty baseURL (cloud
+// OAuth) is resolved by probing the PostHog Cloud regions with the
+// connection's token, since the oauth.posthog.com gateway does not serve /api.
+// The result is cached on the driver for subsequent pages.
+func (d *PostHogDriver) resolveBaseURL(ctx context.Context) error {
+	if d.baseURL != "" {
+		return nil
+	}
+
+	host, err := resolvePostHogRegion(ctx, d.httpClient)
+	if err != nil {
+		return err
+	}
+
+	d.baseURL = host
+
+	return nil
 }
 
 func (d *PostHogDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error) {
-	nextURL, err := buildPostHogMembersURL()
+	if err := d.resolveBaseURL(ctx); err != nil {
+		return nil, err
+	}
+
+	nextURL, err := d.membersURL()
 	if err != nil {
 		return nil, err
 	}
@@ -98,7 +135,7 @@ func (d *PostHogDriver) ListAccounts(ctx context.Context) ([]AccountRecord, erro
 			return records, nil
 		}
 
-		nextURL, err = resolvePostHogNextURL(resp.Next)
+		nextURL, err = d.resolveNextURL(resp.Next)
 		if err != nil {
 			return nil, err
 		}
@@ -107,8 +144,13 @@ func (d *PostHogDriver) ListAccounts(ctx context.Context) ([]AccountRecord, erro
 	return nil, fmt.Errorf("cannot list all posthog accounts: %w", ErrPaginationLimitReached)
 }
 
-func buildPostHogMembersURL() (string, error) {
-	u, err := url.Parse(posthogMembersEndpoint)
+func (d *PostHogDriver) membersURL() (string, error) {
+	endpoint, err := url.JoinPath(d.baseURL, posthogMembersPath)
+	if err != nil {
+		return "", fmt.Errorf("cannot build posthog members URL: %w", err)
+	}
+
+	u, err := url.Parse(endpoint)
 	if err != nil {
 		return "", fmt.Errorf("cannot parse posthog members URL: %w", err)
 	}
@@ -121,22 +163,82 @@ func buildPostHogMembersURL() (string, error) {
 	return u.String(), nil
 }
 
-func resolvePostHogNextURL(next string) (string, error) {
+func (d *PostHogDriver) resolveNextURL(next string) (string, error) {
 	nextURL, err := url.Parse(next)
 	if err != nil {
 		return "", fmt.Errorf("cannot parse posthog next page URL: %w", err)
 	}
 
+	base, err := url.Parse(d.baseURL)
+	if err != nil {
+		return "", fmt.Errorf("cannot parse posthog base URL: %w", err)
+	}
+
 	if nextURL.IsAbs() {
+		// Pin pagination to the resolved data host. The connection's bearer
+		// token is attached to every request, so an absolute `next` pointing
+		// at a different host (a compromised or spoofed API response) would
+		// forward the token off-host. Refuse cross-host pagination; the
+		// error is static so it never echoes an attacker-controlled host.
+		if !strings.EqualFold(nextURL.Host, base.Host) {
+			return "", fmt.Errorf("cannot follow posthog next page URL: cross-host pagination is not allowed")
+		}
+
 		return nextURL.String(), nil
 	}
 
-	baseURL, err := url.Parse(posthogMembersEndpoint)
+	endpoint, err := url.JoinPath(d.baseURL, posthogMembersPath)
+	if err != nil {
+		return "", fmt.Errorf("cannot build posthog members base URL: %w", err)
+	}
+
+	baseURL, err := url.Parse(endpoint)
 	if err != nil {
 		return "", fmt.Errorf("cannot parse posthog members base URL: %w", err)
 	}
 
 	return baseURL.ResolveReference(nextURL).String(), nil
+}
+
+// resolvePostHogRegion probes the PostHog Cloud region hosts with the given
+// token-bearing client and returns the first that answers 2xx on the @current
+// organization endpoint. OAuth connections authenticate via the region-agnostic
+// oauth.posthog.com gateway, which does not serve /api, so the actual data
+// region (us/eu) must be discovered against the regional hosts directly.
+func resolvePostHogRegion(ctx context.Context, client *http.Client) (string, error) {
+	for _, host := range []string{posthogUSBaseURL, posthogEUBaseURL} {
+		endpoint, err := url.JoinPath(host, posthogOrganizationPath)
+		if err != nil {
+			continue
+		}
+
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
+		if err != nil {
+			continue
+		}
+
+		req.Header.Set("Accept", "application/json")
+
+		resp, err := client.Do(req)
+		if err != nil {
+			// Surface a cancelled/expired context as the real cause rather
+			// than masking it behind "no region accepted the connection".
+			if ctx.Err() != nil {
+				return "", fmt.Errorf("cannot resolve posthog region: %w", ctx.Err())
+			}
+
+			continue
+		}
+
+		status := resp.StatusCode
+		_ = resp.Body.Close()
+
+		if status >= http.StatusOK && status < http.StatusMultipleChoices {
+			return host, nil
+		}
+	}
+
+	return "", fmt.Errorf("cannot resolve posthog region: no region accepted the connection")
 }
 
 func (d *PostHogDriver) fetchMembers(
@@ -159,7 +261,7 @@ func (d *PostHogDriver) fetchMembers(
 		_ = httpResp.Body.Close()
 	}()
 
-	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
+	if httpResp.StatusCode < http.StatusOK || httpResp.StatusCode >= http.StatusMultipleChoices {
 		return nil, fmt.Errorf("cannot fetch posthog members: unexpected status %d", httpResp.StatusCode)
 	}
 
@@ -234,22 +336,44 @@ func posthogMFAStatus(twoFAEnabled *bool) coredata.MFAStatus {
 }
 
 // posthogNameResolver resolves the PostHog organization name from the
-// current organization endpoint, which returns the org an API key belongs to.
+// current organization endpoint, which returns the org the connection
+// belongs to.
 type posthogNameResolver struct {
 	httpClient *http.Client
+	baseURL    string
 }
 
 var _ NameResolver = (*posthogNameResolver)(nil)
 
-func NewPostHogNameResolver(httpClient *http.Client) NameResolver {
-	return &posthogNameResolver{httpClient: httpClient}
+// NewPostHogNameResolver resolves the org name against baseURL. An empty
+// baseURL marks a cloud OAuth connection whose region is discovered lazily.
+func NewPostHogNameResolver(httpClient *http.Client, baseURL string) NameResolver {
+	return &posthogNameResolver{httpClient: httpClient, baseURL: baseURL}
 }
 
 func (r *posthogNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
+	baseURL := r.baseURL
+	if baseURL == "" {
+		host, err := resolvePostHogRegion(ctx, r.httpClient)
+		if err != nil {
+			// Terminal: cannot determine the region (e.g. revoked token).
+			// Keep the generic source name rather than making the
+			// source-name worker retry forever.
+			return "", nil
+		}
+
+		baseURL = host
+	}
+
+	endpoint, err := url.JoinPath(baseURL, posthogOrganizationPath)
+	if err != nil {
+		return "", fmt.Errorf("cannot build posthog organization URL: %w", err)
+	}
+
 	req, err := http.NewRequestWithContext(
 		ctx,
 		http.MethodGet,
-		posthogOrganizationEndpoint,
+		endpoint,
 		nil,
 	)
 	if err != nil {
@@ -268,7 +392,7 @@ func (r *posthogNameResolver) ResolveInstanceName(ctx context.Context) (string, 
 	// Best-effort: a non-2xx (e.g. a revoked key) must not make the
 	// source-name worker retry forever. Give up gracefully and keep the
 	// generic source name; a dead key surfaces on the next ListAccounts.
-	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
+	if httpResp.StatusCode < http.StatusOK || httpResp.StatusCode >= http.StatusMultipleChoices {
 		return "", nil
 	}
 

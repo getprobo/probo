@@ -46,6 +46,7 @@ func NewBuiltinRegistry() *Registry {
 		onePasswordRegistration(),
 		openaiRegistration(),
 		posthogRegistration(),
+		posthogSelfHostedRegistration(),
 		pagerdutyRegistration(),
 		resendRegistration(),
 		sentryRegistration(),

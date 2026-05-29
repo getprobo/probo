@@ -16,6 +16,7 @@ package provider
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 
 	"go.gearno.de/kit/log"
@@ -23,16 +24,61 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 )
 
+// posthogRegistration is PostHog Cloud (US + EU). OAuth is the preferred
+// path: oauth.posthog.com is PostHog's region-agnostic OAuth + API gateway,
+// so one app serves both regions and the driver reaches the customer's data
+// through it without a per-connection host. An API-key fallback is also
+// supported, but personal API keys are region-pinned, so it requires the
+// customer to pick their region (us/eu). Self-hosted instances are a separate
+// provider (POSTHOG_SELF_HOSTED).
 func posthogRegistration() *Registration {
 	return &Registration{
-		Provider:       coredata.ConnectorProviderPostHog,
-		DisplayName:    "PostHog",
+		Provider:    coredata.ConnectorProviderPostHog,
+		DisplayName: "PostHog",
+
+		// PublicClient: PostHog OAuth uses the CIMD flow — no client_secret,
+		// authenticated by PKCE. probod auto-registers this connector with
+		// the deployment's hosted CIMD client_id; no operator OAuth app or
+		// credentials are required.
+		PublicClient:      true,
+		AuthURL:           "https://oauth.posthog.com/oauth/authorize/",
+		TokenURL:          "https://oauth.posthog.com/oauth/token/",
+		TokenEndpointAuth: "none",
+		RequiresPKCE:      true,
+		OAuth2Scopes:      []string{"organization:read", "organization_member:read"},
+		// required_access_level=organization makes consent org-scoped so
+		// organization_member:read applies org-wide and the org endpoints
+		// resolve @current to the granted organization.
+		ExtraAuthParams: map[string]string{"required_access_level": "organization"},
+		// ProbeURL is intentionally empty: the data host varies per
+		// connection (the region-agnostic gateway for OAuth, us/eu for
+		// API-key), so a single static probe URL cannot match it. A dead
+		// token surfaces on the first ListAccounts.
+
 		SupportsAPIKey: true,
-		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger) (drivers.Driver, error) {
-			return drivers.NewPostHogDriver(c), nil
+		ExtraSettings: []ExtraSetting{
+			{Key: "region", Label: "Region", Required: true},
 		},
-		NewNameResolver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger) drivers.NameResolver {
-			return drivers.NewPostHogNameResolver(c)
+
+		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger) (drivers.Driver, error) {
+			s, err := coredata.ConnectorSettings[coredata.PostHogConnectorSettings](conn)
+			if err != nil {
+				return nil, fmt.Errorf("cannot read posthog connector settings: %w", err)
+			}
+
+			// BaseURL is empty for cloud OAuth connections; the driver then
+			// discovers the region (us/eu) lazily by probing, since the
+			// oauth.posthog.com gateway does not serve the data API.
+			return drivers.NewPostHogDriver(c, s.BaseURL), nil
+		},
+		NewNameResolver: func(ctx context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger) drivers.NameResolver {
+			s, err := coredata.ConnectorSettings[coredata.PostHogConnectorSettings](conn)
+			if err != nil {
+				logger.ErrorCtx(ctx, "cannot read posthog connector settings", log.Error(err))
+				return nil
+			}
+
+			return drivers.NewPostHogNameResolver(c, s.BaseURL)
 		},
 	}
 }

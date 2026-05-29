@@ -26,35 +26,41 @@ const (
 	ConnectorProviderGoogleWorkspace ConnectorProvider = "GOOGLE_WORKSPACE"
 	ConnectorProviderLinear          ConnectorProvider = "LINEAR"
 	// _ ConnectorProvider = "FIGMA" — formerly Figma; removed (no driver, no OAuth config, no usage)
-	ConnectorProviderOnePassword  ConnectorProvider = "ONE_PASSWORD"
-	ConnectorProviderHubSpot      ConnectorProvider = "HUBSPOT"
-	ConnectorProviderDocuSign     ConnectorProvider = "DOCUSIGN"
-	ConnectorProviderNotion       ConnectorProvider = "NOTION"
-	ConnectorProviderBrex         ConnectorProvider = "BREX"
-	ConnectorProviderTally        ConnectorProvider = "TALLY"
-	ConnectorProviderCloudflare   ConnectorProvider = "CLOUDFLARE"
-	ConnectorProviderGrafana      ConnectorProvider = "GRAFANA"
-	ConnectorProviderOpenAI       ConnectorProvider = "OPENAI"
-	ConnectorProviderPostHog      ConnectorProvider = "POSTHOG"
-	ConnectorProviderSentry       ConnectorProvider = "SENTRY"
-	ConnectorProviderSupabase     ConnectorProvider = "SUPABASE"
-	ConnectorProviderGitHub       ConnectorProvider = "GITHUB"
-	ConnectorProviderIntercom     ConnectorProvider = "INTERCOM"
-	ConnectorProviderResend       ConnectorProvider = "RESEND"
-	ConnectorProviderMicrosoft365 ConnectorProvider = "MICROSOFT_365"
-	ConnectorProviderGitLab       ConnectorProvider = "GITLAB"
-	ConnectorProviderBitbucket    ConnectorProvider = "BITBUCKET"
-	ConnectorProviderHeroku       ConnectorProvider = "HEROKU"
-	ConnectorProviderPagerDuty    ConnectorProvider = "PAGERDUTY"
-	ConnectorProviderAsana        ConnectorProvider = "ASANA"
-	ConnectorProviderNetlify      ConnectorProvider = "NETLIFY"
-	ConnectorProviderClickUp      ConnectorProvider = "CLICKUP"
-	ConnectorProviderVercel       ConnectorProvider = "VERCEL"
-	ConnectorProviderMonday       ConnectorProvider = "MONDAY"
-	ConnectorProviderMetabase     ConnectorProvider = "METABASE"
-	ConnectorProviderTailscale    ConnectorProvider = "TAILSCALE"
-	ConnectorProviderAnthropic    ConnectorProvider = "ANTHROPIC"
-	ConnectorProviderCursor       ConnectorProvider = "CURSOR"
+	ConnectorProviderOnePassword ConnectorProvider = "ONE_PASSWORD"
+	ConnectorProviderHubSpot     ConnectorProvider = "HUBSPOT"
+	ConnectorProviderDocuSign    ConnectorProvider = "DOCUSIGN"
+	ConnectorProviderNotion      ConnectorProvider = "NOTION"
+	ConnectorProviderBrex        ConnectorProvider = "BREX"
+	ConnectorProviderTally       ConnectorProvider = "TALLY"
+	ConnectorProviderCloudflare  ConnectorProvider = "CLOUDFLARE"
+	ConnectorProviderGrafana     ConnectorProvider = "GRAFANA"
+	ConnectorProviderOpenAI      ConnectorProvider = "OPENAI"
+	ConnectorProviderPostHog     ConnectorProvider = "POSTHOG"
+	// ConnectorProviderPostHogSelfHosted is a distinct provider for
+	// customer-hosted PostHog instances: API-key + operator-supplied
+	// instance URL. Cloud PostHog (POSTHOG) carries the OAuth path; a
+	// separate provider keeps the per-connection instance URL out of the
+	// shared OAuth flow.
+	ConnectorProviderPostHogSelfHosted ConnectorProvider = "POSTHOG_SELF_HOSTED"
+	ConnectorProviderSentry            ConnectorProvider = "SENTRY"
+	ConnectorProviderSupabase          ConnectorProvider = "SUPABASE"
+	ConnectorProviderGitHub            ConnectorProvider = "GITHUB"
+	ConnectorProviderIntercom          ConnectorProvider = "INTERCOM"
+	ConnectorProviderResend            ConnectorProvider = "RESEND"
+	ConnectorProviderMicrosoft365      ConnectorProvider = "MICROSOFT_365"
+	ConnectorProviderGitLab            ConnectorProvider = "GITLAB"
+	ConnectorProviderBitbucket         ConnectorProvider = "BITBUCKET"
+	ConnectorProviderHeroku            ConnectorProvider = "HEROKU"
+	ConnectorProviderPagerDuty         ConnectorProvider = "PAGERDUTY"
+	ConnectorProviderAsana             ConnectorProvider = "ASANA"
+	ConnectorProviderNetlify           ConnectorProvider = "NETLIFY"
+	ConnectorProviderClickUp           ConnectorProvider = "CLICKUP"
+	ConnectorProviderVercel            ConnectorProvider = "VERCEL"
+	ConnectorProviderMonday            ConnectorProvider = "MONDAY"
+	ConnectorProviderMetabase          ConnectorProvider = "METABASE"
+	ConnectorProviderTailscale         ConnectorProvider = "TAILSCALE"
+	ConnectorProviderAnthropic         ConnectorProvider = "ANTHROPIC"
+	ConnectorProviderCursor            ConnectorProvider = "CURSOR"
 )
 
 var (
@@ -78,6 +84,7 @@ func ConnectorProviders() []ConnectorProvider {
 		ConnectorProviderGrafana,
 		ConnectorProviderOpenAI,
 		ConnectorProviderPostHog,
+		ConnectorProviderPostHogSelfHosted,
 		ConnectorProviderSentry,
 		ConnectorProviderSupabase,
 		ConnectorProviderGitHub,
@@ -116,6 +123,7 @@ func (v ConnectorProvider) IsValid() bool {
 		ConnectorProviderGrafana,
 		ConnectorProviderOpenAI,
 		ConnectorProviderPostHog,
+		ConnectorProviderPostHogSelfHosted,
 		ConnectorProviderSentry,
 		ConnectorProviderSupabase,
 		ConnectorProviderGitHub,
