@@ -54,7 +54,7 @@ type (
 		StatusPageURL                 *string
 		BusinessOwnerID               *gid.GID
 		SecurityOwnerID               *gid.GID
-		FirstLevel                    *bool
+		ParentThirdPartyID            *gid.GID
 	}
 
 	UpdateThirdPartyRequest struct {
@@ -79,7 +79,6 @@ type (
 		BusinessOwnerID               **gid.GID
 		SecurityOwnerID               **gid.GID
 		ShowOnTrustCenter             *bool
-		FirstLevel                    *bool
 	}
 
 	CreateThirdPartyRiskAssessmentRequest struct {
@@ -398,10 +397,6 @@ func (s ThirdPartyService) Update(
 				thirdParty.ShowOnTrustCenter = *req.ShowOnTrustCenter
 			}
 
-			if req.FirstLevel != nil {
-				thirdParty.FirstLevel = *req.FirstLevel
-			}
-
 			if req.TrustPageURL != nil {
 				thirdParty.TrustPageURL = *req.TrustPageURL
 			}
@@ -589,11 +584,7 @@ func (s ThirdPartyService) Create(
 		StatusPageURL:                 req.StatusPageURL,
 		TermsOfServiceURL:             req.TermsOfServiceURL,
 		ShowOnTrustCenter:             false,
-		FirstLevel:                    true,
-	}
-
-	if req.FirstLevel != nil {
-		thirdParty.FirstLevel = *req.FirstLevel
+		Level:                         1,
 	}
 
 	err := s.svc.pg.WithTx(
@@ -605,6 +596,29 @@ func (s ThirdPartyService) Create(
 			}
 
 			thirdParty.OrganizationID = organization.ID
+
+			if req.ParentThirdPartyID != nil {
+				parent := &coredata.ThirdParty{}
+				if err := parent.LoadByID(ctx, conn, scope, *req.ParentThirdPartyID); err != nil {
+					return fmt.Errorf("cannot load parent third party: %w", err)
+				}
+
+				if parent.OrganizationID != organization.ID {
+					return fmt.Errorf("parent third party belongs to a different organization: %w", coredata.ErrResourceNotFound)
+				}
+
+				thirdParty.ParentThirdPartyID = &parent.ID
+				// The level always follows the parent chain; ignore any
+				// client-supplied level so it cannot desync from the hierarchy.
+				thirdParty.Level = parent.Level + 1
+			}
+
+			levelValidator := validator.New()
+			levelValidator.Check(thirdParty.Level, "level", validator.Max(coredata.MaxThirdPartyLevel))
+
+			if err := levelValidator.Error(); err != nil {
+				return err
+			}
 
 			if req.BusinessOwnerID != nil {
 				businessOwner := &coredata.MembershipProfile{}
@@ -848,69 +862,24 @@ func (s ThirdPartyService) GetByRiskAssessmentID(
 	return thirdParty, nil
 }
 
-func (s ThirdPartyService) CreateThirdPartyMapping(
+func (s ThirdPartyService) GetAncestors(
 	ctx context.Context,
 	scope coredata.Scoper,
-	parentThirdPartyID gid.GID,
-	childThirdPartyID gid.GID,
-) (*coredata.ThirdParty, error) {
-	childThirdParty := &coredata.ThirdParty{}
+	thirdPartyID gid.GID,
+) (coredata.ThirdParties, error) {
+	var ancestors coredata.ThirdParties
 
-	err := s.svc.pg.WithTx(
+	err := s.svc.pg.WithConn(
 		ctx,
-		func(ctx context.Context, conn pg.Tx) error {
-			parentThirdParty := &coredata.ThirdParty{}
-			if err := parentThirdParty.LoadByID(ctx, conn, scope, parentThirdPartyID); err != nil {
-				return fmt.Errorf("cannot load parent third party: %w", err)
-			}
-
-			if err := childThirdParty.LoadByID(ctx, conn, scope, childThirdPartyID); err != nil {
-				return fmt.Errorf("cannot load child third party: %w", err)
-			}
-
-			if parentThirdParty.OrganizationID != childThirdParty.OrganizationID {
-				return fmt.Errorf("cannot create mapping for third parties from different organizations: %w", coredata.ErrResourceNotFound)
-			}
-
-			relation := &coredata.ThirdPartyThirdParty{
-				ParentThirdPartyID: parentThirdPartyID,
-				ChildThirdPartyID:  childThirdPartyID,
-				CreatedAt:          time.Now(),
-			}
-			if err := relation.Insert(ctx, conn, scope); err != nil {
-				return fmt.Errorf("cannot create third party mapping: %w", err)
-			}
-
-			return nil
+		func(ctx context.Context, conn pg.Querier) error {
+			return ancestors.LoadAllAncestorsByThirdPartyID(ctx, conn, scope, thirdPartyID)
 		},
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	return childThirdParty, nil
-}
-
-func (s ThirdPartyService) DeleteThirdPartyMapping(
-	ctx context.Context,
-	scope coredata.Scoper,
-	parentThirdPartyID gid.GID,
-	childThirdPartyID gid.GID,
-) error {
-	return s.svc.pg.WithTx(
-		ctx,
-		func(ctx context.Context, conn pg.Tx) error {
-			relation := &coredata.ThirdPartyThirdParty{
-				ParentThirdPartyID: parentThirdPartyID,
-				ChildThirdPartyID:  childThirdPartyID,
-			}
-			if err := relation.Delete(ctx, conn, scope); err != nil {
-				return fmt.Errorf("cannot delete third party mapping: %w", err)
-			}
-
-			return nil
-		},
-	)
+	return ancestors, nil
 }
 
 func (s ThirdPartyService) CountForParentThirdPartyID(

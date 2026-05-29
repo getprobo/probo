@@ -55,12 +55,12 @@ type thirdParty struct {
 
 func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 	var (
-		flagOrg        string
-		flagLimit      int
-		flagOrderBy    string
-		flagOrderDir   string
-		flagFirstLevel bool
-		flagOutput     *string
+		flagOrg      string
+		flagLimit    int
+		flagOrderBy  string
+		flagOrderDir string
+		flagLevel    int
+		flagOutput   *string
 	)
 
 	cmd := &cobra.Command{
@@ -108,9 +108,13 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				"id": flagOrg,
 			}
 
-			if cmd.Flags().Changed("first-level") {
+			if cmd.Flags().Changed("level") {
+				if flagLevel < 1 {
+					return fmt.Errorf("invalid --level value %d: must be greater than or equal to 1", flagLevel)
+				}
+
 				variables["filter"] = map[string]any{
-					"first-level": flagFirstLevel,
+					"level": flagLevel,
 				}
 			}
 
@@ -195,7 +199,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().IntVarP(&flagLimit, "limit", "L", 30, "Maximum number of thirdParties to list")
 	cmd.Flags().StringVar(&flagOrderBy, "order-by", "", "Order by field (NAME, CREATED_AT, UPDATED_AT)")
 	cmd.Flags().StringVar(&flagOrderDir, "order-direction", "DESC", "Sort direction (ASC, DESC)")
-	cmd.Flags().BoolVar(&flagFirstLevel, "first-level", false, "Filter by first-level thirdParties only")
+	cmd.Flags().IntVar(&flagLevel, "level", 0, "Filter by third party level (1 = direct, 2+ = indirect)")
 	flagOutput = cmdutil.AddOutputFlag(cmd)
 
 	return cmd

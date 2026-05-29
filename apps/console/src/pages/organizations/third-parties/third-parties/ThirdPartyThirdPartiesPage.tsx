@@ -38,7 +38,7 @@ import {
 } from "react-relay";
 import { graphql } from "relay-runtime";
 
-import type { ThirdPartyThirdPartiesPageDeleteMappingMutation } from "#/__generated__/core/ThirdPartyThirdPartiesPageDeleteMappingMutation.graphql";
+import type { ThirdPartyThirdPartiesPageDeleteMutation } from "#/__generated__/core/ThirdPartyThirdPartiesPageDeleteMutation.graphql";
 import type { ThirdPartyThirdPartiesPageFragment$key } from "#/__generated__/core/ThirdPartyThirdPartiesPageFragment.graphql";
 import type { ThirdPartyThirdPartiesPagePaginationQuery } from "#/__generated__/core/ThirdPartyThirdPartiesPagePaginationQuery.graphql";
 import type { ThirdPartyThirdPartiesPageQuery } from "#/__generated__/core/ThirdPartyThirdPartiesPageQuery.graphql";
@@ -47,6 +47,9 @@ import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 import { AddChildThirdPartyDialog } from "../dialogs/AddChildThirdPartyDialog";
 
+// Keep in sync with coredata.MaxThirdPartyLevel on the backend.
+const MAX_THIRD_PARTY_LEVEL = 4;
+
 export const thirdPartyThirdPartiesPageQuery = graphql`
   query ThirdPartyThirdPartiesPageQuery($thirdPartyId: ID!) {
     node(id: $thirdPartyId) {
@@ -54,6 +57,10 @@ export const thirdPartyThirdPartiesPageQuery = graphql`
       ... on ThirdParty {
         id
         name
+        level
+        ancestors {
+          name
+        }
         canUpdate: permission(action: "core:thirdParty:update")
         ...ThirdPartyThirdPartiesPageFragment
       }
@@ -103,13 +110,13 @@ const paginatedFragment = graphql`
   }
 `;
 
-const deleteMappingMutation = graphql`
-  mutation ThirdPartyThirdPartiesPageDeleteMappingMutation(
-    $input: DeleteThirdPartyThirdPartyMappingInput!
+const deleteChildMutation = graphql`
+  mutation ThirdPartyThirdPartiesPageDeleteMutation(
+    $input: DeleteThirdPartyInput!
     $connections: [ID!]!
   ) {
-    deleteThirdPartyThirdPartyMapping(input: $input) {
-      removedThirdPartyId @deleteEdge(connections: $connections)
+    deleteThirdParty(input: $input) {
+      deletedThirdPartyId @deleteEdge(connections: $connections)
     }
   }
 `;
@@ -129,7 +136,7 @@ export default function ThirdPartyThirdPartiesPage({ queryRef }: Props) {
     ThirdPartyThirdPartiesPagePaginationQuery,
     ThirdPartyThirdPartiesPageFragment$key
   >(paginatedFragment, thirdParty as ThirdPartyThirdPartiesPageFragment$key);
-  const [deleteMapping] = useMutation<ThirdPartyThirdPartiesPageDeleteMappingMutation>(deleteMappingMutation);
+  const [deleteChild] = useMutation<ThirdPartyThirdPartiesPageDeleteMutation>(deleteChildMutation);
 
   usePageTitle((thirdParty?.name ?? "") + " - " + __("Third Parties"));
 
@@ -140,16 +147,22 @@ export default function ThirdPartyThirdPartiesPage({ queryRef }: Props) {
   const connectionId = pagination.data.childThirdParties.__id;
   const childThirdParties = pagination.data.childThirdParties.edges.map(edge => edge.node);
 
-  const handleRemove = (childId: string, childName: string) => {
+  // Strip any existing " (...)" suffix so the chain stays clean even when a
+  // parent's stored name is itself already qualified.
+  const baseName = (name: string) => name.replace(/\s*\([^)]*\)\s*$/, "");
+  const parentAncestors = thirdParty.ancestors ?? [];
+  const parentNamePath = [
+    ...parentAncestors.map(ancestor => baseName(ancestor.name)),
+    baseName(thirdParty.name),
+  ];
+
+  const handleDelete = (childId: string, childName: string) => {
     confirm(
       () =>
         new Promise<void>((resolve, reject) => {
-          deleteMapping({
+          deleteChild({
             variables: {
-              input: {
-                parentThirdPartyId: thirdParty.id,
-                childThirdPartyId: childId,
-              },
+              input: { thirdPartyId: childId },
               connections: [connectionId],
             },
             onCompleted: () => resolve(),
@@ -157,7 +170,7 @@ export default function ThirdPartyThirdPartiesPage({ queryRef }: Props) {
           });
         }),
       {
-        message: `${__("Remove")} "${childName}" ${__("from this third party?")}`,
+        message: `${__("Delete")} "${childName}"?`,
       },
     );
   };
@@ -168,12 +181,12 @@ export default function ThirdPartyThirdPartiesPage({ queryRef }: Props) {
         title={__("Third Parties")}
         description={__("Manage third parties linked to this third party.")}
       >
-        {thirdParty.canUpdate && (
+        {thirdParty.canUpdate && thirdParty.level < MAX_THIRD_PARTY_LEVEL && (
           <AddChildThirdPartyDialog
             parentThirdPartyId={thirdParty.id}
+            parentNamePath={parentNamePath}
             organizationId={organizationId}
             connectionId={connectionId}
-            existingChildIds={childThirdParties.map(c => c.id)}
           >
             <Button icon={IconPlusLarge}>{__("Add third party")}</Button>
           </AddChildThirdPartyDialog>
@@ -223,7 +236,7 @@ export default function ThirdPartyThirdPartiesPage({ queryRef }: Props) {
                     <Button
                       variant="tertiary"
                       icon={IconTrashCan}
-                      onClick={() => handleRemove(child.id, child.name)}
+                      onClick={() => handleDelete(child.id, child.name)}
                     />
                   )}
                 </Td>

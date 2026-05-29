@@ -74,11 +74,11 @@ export const description: INodeProperties[] = [
 		},
 		options: [
 			{
-				displayName: 'Filter by Root',
-				name: 'filterFirstLevel',
-				type: 'boolean',
-				default: false,
-				description: 'Whether to filter by first-level third parties only',
+				displayName: 'Filter by Level',
+				name: 'filterLevel',
+				type: 'number',
+				default: 0,
+				description: 'Filter by third party level (1 = direct, 2+ = indirect, 0 = no filter)',
 			},
 			{
 				displayName: 'Include Organization',
@@ -113,7 +113,7 @@ export async function execute(
 	const returnAll = this.getNodeParameter('returnAll', itemIndex) as boolean;
 	const limit = this.getNodeParameter('limit', itemIndex, 50) as number;
 	const options = this.getNodeParameter('options', itemIndex, {}) as {
-		filterFirstLevel?: boolean;
+		filterLevel?: number;
 		includeOrganization?: boolean;
 		includeBusinessOwner?: boolean;
 		includeSecurityOwner?: boolean;
@@ -142,8 +142,8 @@ export async function execute(
 		}`
 		: '';
 
-	const filterVariable = options.filterFirstLevel !== undefined ? ', $filter: ThirdPartyFilter' : '';
-	const filterArgument = options.filterFirstLevel !== undefined ? ', filter: $filter' : '';
+	const filterVariable = options.filterLevel ? ', $filter: ThirdPartyFilter' : '';
+	const filterArgument = options.filterLevel ? ', filter: $filter' : '';
 
 	const query = `
 		query GetThirdParties($organizationId: ID!, $first: Int, $after: CursorKey${filterVariable}) {
@@ -171,7 +171,11 @@ export async function execute(
 								certifications
 								countries
 								showOnTrustCenter
-								firstLevel
+								level
+								ancestors {
+									id
+									name
+								}
 								${organizationFragment}
 								${businessOwnerFragment}
 								${securityOwnerFragment}
@@ -190,8 +194,8 @@ export async function execute(
 	`;
 
 	const variables: IDataObject = { organizationId };
-	if (options.filterFirstLevel) {
-		variables.filter = { firstLevel: true };
+	if (options.filterLevel) {
+		variables.filter = { level: options.filterLevel };
 	}
 
 	const thirdParties = await proboApiRequestAllItems.call(

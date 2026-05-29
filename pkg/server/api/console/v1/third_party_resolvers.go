@@ -33,6 +33,12 @@ func (r *mutationResolver) CreateThirdParty(ctx context.Context, input types.Cre
 		return nil, err
 	}
 
+	if input.ParentThirdPartyID != nil {
+		if _, err := r.authorize(ctx, *input.ParentThirdPartyID, probo.ActionThirdPartyRelationCreate); err != nil {
+			return nil, err
+		}
+	}
+
 	thirdParty, err := r.probo.ThirdParties.Create(
 		ctx, scope,
 		probo.CreateThirdPartyRequest{
@@ -56,7 +62,7 @@ func (r *mutationResolver) CreateThirdParty(ctx context.Context, input types.Cre
 			BusinessOwnerID:               input.BusinessOwnerID,
 			SecurityOwnerID:               input.SecurityOwnerID,
 			Countries:                     input.Countries,
-			FirstLevel:                    input.FirstLevel,
+			ParentThirdPartyID:            input.ParentThirdPartyID,
 		},
 	)
 	if err != nil {
@@ -108,7 +114,6 @@ func (r *mutationResolver) UpdateThirdParty(ctx context.Context, input types.Upd
 			BusinessOwnerID:               gqlutils.UnwrapOmittable(input.BusinessOwnerID),
 			SecurityOwnerID:               gqlutils.UnwrapOmittable(input.SecurityOwnerID),
 			ShowOnTrustCenter:             input.ShowOnTrustCenter,
-			FirstLevel:                    input.FirstLevel,
 			Countries:                     input.Countries,
 		},
 	)
@@ -603,46 +608,6 @@ func (r *mutationResolver) PublishThirdPartyList(ctx context.Context, input type
 	}, nil
 }
 
-// CreateThirdPartyThirdPartyMapping is the resolver for the linkThirdPartyThirdParty field.
-func (r *mutationResolver) CreateThirdPartyThirdPartyMapping(ctx context.Context, input types.CreateThirdPartyThirdPartyMappingInput) (*types.CreateThirdPartyThirdPartyMappingPayload, error) {
-	scope, err := r.authorize(ctx, input.ParentThirdPartyID, probo.ActionThirdPartyRelationCreate)
-	if err != nil {
-		return nil, err
-	}
-
-	childThirdParty, err := r.probo.ThirdParties.CreateThirdPartyMapping(ctx, scope, input.ParentThirdPartyID, input.ChildThirdPartyID)
-	if err != nil {
-		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
-		}
-
-		r.logger.ErrorCtx(ctx, "cannot create third party mapping", log.Error(err))
-
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	return &types.CreateThirdPartyThirdPartyMappingPayload{
-		ThirdPartyEdge: types.NewThirdPartyEdge(childThirdParty, coredata.ThirdPartyOrderFieldName),
-	}, nil
-}
-
-// DeleteThirdPartyThirdPartyMapping is the resolver for the deleteThirdPartyThirdPartyMapping field.
-func (r *mutationResolver) DeleteThirdPartyThirdPartyMapping(ctx context.Context, input types.DeleteThirdPartyThirdPartyMappingInput) (*types.DeleteThirdPartyThirdPartyMappingPayload, error) {
-	scope, err := r.authorize(ctx, input.ParentThirdPartyID, probo.ActionThirdPartyRelationDelete)
-	if err != nil {
-		return nil, err
-	}
-
-	if err := r.probo.ThirdParties.DeleteThirdPartyMapping(ctx, scope, input.ParentThirdPartyID, input.ChildThirdPartyID); err != nil {
-		r.logger.ErrorCtx(ctx, "cannot delete third party mapping", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	return &types.DeleteThirdPartyThirdPartyMappingPayload{
-		RemovedThirdPartyID: input.ChildThirdPartyID,
-	}, nil
-}
-
 // Organization is the resolver for the organization field.
 func (r *thirdPartyResolver) Organization(ctx context.Context, obj *types.ThirdParty) (*types.Organization, error) {
 	if _, err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGet); err != nil {
@@ -911,6 +876,53 @@ func (r *thirdPartyResolver) SecurityOwner(ctx context.Context, obj *types.Third
 	}
 
 	return types.NewProfile(securityOwner), nil
+}
+
+// ParentThirdParty is the resolver for the parentThirdParty field.
+func (r *thirdPartyResolver) ParentThirdParty(ctx context.Context, obj *types.ThirdParty) (*types.ThirdParty, error) {
+	if obj.ParentThirdParty == nil {
+		return nil, nil
+	}
+
+	if _, err := r.authorize(ctx, obj.ID, probo.ActionThirdPartyGet); err != nil {
+		return nil, err
+	}
+
+	loaders := dataloader.FromContext(ctx)
+
+	parent, err := loaders.ThirdParty.Load(ctx, obj.ParentThirdParty.ID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot load parent third party", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewThirdParty(parent), nil
+}
+
+// Ancestors is the resolver for the ancestors field.
+func (r *thirdPartyResolver) Ancestors(ctx context.Context, obj *types.ThirdParty) ([]*types.ThirdParty, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionThirdPartyGet)
+	if err != nil {
+		return nil, err
+	}
+
+	ancestors, err := r.probo.ThirdParties.GetAncestors(ctx, scope, obj.ID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load ancestors", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	result := make([]*types.ThirdParty, len(ancestors))
+	for i, a := range ancestors {
+		result[i] = types.NewThirdParty(a)
+	}
+
+	return result, nil
 }
 
 // ChildThirdParties is the resolver for the childThirdParties field.

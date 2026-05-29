@@ -89,9 +89,14 @@ func SaveThirdPartyInfoTool(pc *PersistenceContext) agent.Tool {
 						}
 					}
 
+					ancestorBaseNames, err := loadAncestorBaseNames(ctx, conn, scope, thirdParty.ID)
+					if err != nil {
+						return err
+					}
+
 					applySaveParams(thirdParty, pc.WebsiteURL, saveThirdPartyInfoParams{
 						saveThirdPartyInfoToolParams: p,
-					})
+					}, ancestorBaseNames)
 					thirdParty.UpdatedAt = time.Now()
 
 					if err := thirdParty.Update(ctx, conn, scope); err != nil {
@@ -124,7 +129,20 @@ func LinkSubThirdPartyTool(pc *PersistenceContext) agent.Tool {
 			err := pc.PG.WithTx(
 				ctx,
 				func(ctx context.Context, conn pg.Tx) error {
-					return linkSubThirdParty(ctx, conn, scope, pc, p)
+					parent := &coredata.ThirdParty{}
+					if err := parent.LoadByID(ctx, conn, scope, pc.ThirdPartyID); err != nil {
+						return fmt.Errorf("cannot load parent third party: %w", err)
+					}
+
+					ancestorBaseNames, err := loadAncestorBaseNames(ctx, conn, scope, pc.ThirdPartyID)
+					if err != nil {
+						return err
+					}
+
+					// Child suffix path is the parent's ancestors plus the parent itself.
+					childNamePath := append(ancestorBaseNames, baseThirdPartyName(parent.Name))
+
+					return linkSubThirdParty(ctx, conn, scope, pc, parent.Level, childNamePath, p)
 				},
 			)
 			if err != nil {

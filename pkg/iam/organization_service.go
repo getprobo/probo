@@ -767,6 +767,7 @@ func (s *OrganizationService) CreateOrganization(
 				TermsOfServiceURL:    &proboThirdParty.TermsOfServiceURL,
 				SubprocessorsListURL: &proboThirdParty.SubprocessorsListURL,
 				ShowOnTrustCenter:    false,
+				Level:                1,
 				CreatedAt:            now,
 				UpdatedAt:            now,
 			}

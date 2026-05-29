@@ -12,15 +12,14 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { faviconUrl } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import {
-  Avatar,
   Combobox,
   ComboboxItem,
   Dialog,
   DialogContent,
   DialogFooter,
+  IconPlusLarge,
   useDialogRef,
 } from "@probo/ui";
 import { type ReactNode, Suspense, useCallback, useState } from "react";
@@ -28,20 +27,18 @@ import { useMutation, useQueryLoader } from "react-relay";
 import { graphql } from "relay-runtime";
 import { useDebounceCallback } from "usehooks-ts";
 
-import type { AddChildThirdPartyDialogCreateMappingMutation } from "#/__generated__/core/AddChildThirdPartyDialogCreateMappingMutation.graphql";
 import type { AddChildThirdPartyDialogCreateMutation } from "#/__generated__/core/AddChildThirdPartyDialogCreateMutation.graphql";
 import type { CommonThirdPartyComboboxQuery } from "#/__generated__/core/CommonThirdPartyComboboxQuery.graphql";
 import type { CreateThirdPartyInput } from "#/__generated__/core/ThirdPartyGraphCreateMutation.graphql";
-import { useThirdParties } from "#/hooks/graph/ThirdPartyGraph";
 
 import { commonThirdPartiesQuery, CommonThirdPartyCombobox } from "./CommonThirdPartyCombobox";
 
-const createMappingMutation = graphql`
-  mutation AddChildThirdPartyDialogCreateMappingMutation(
-    $input: CreateThirdPartyThirdPartyMappingInput!
+const createChildMutation = graphql`
+  mutation AddChildThirdPartyDialogCreateMutation(
+    $input: CreateThirdPartyInput!
     $connections: [ID!]!
   ) {
-    createThirdPartyThirdPartyMapping(input: $input) {
+    createThirdParty(input: $input) {
       thirdPartyEdge @prependEdge(connections: $connections) {
         node {
           id
@@ -54,40 +51,24 @@ const createMappingMutation = graphql`
   }
 `;
 
-const createThirdPartyMutation = graphql`
-  mutation AddChildThirdPartyDialogCreateMutation(
-    $input: CreateThirdPartyInput!
-  ) {
-    createThirdParty(input: $input) {
-      thirdPartyEdge {
-        node {
-          id
-        }
-      }
-    }
-  }
-`;
-
 type Props = {
   children: ReactNode;
   parentThirdPartyId: string;
+  parentNamePath: string[];
   organizationId: string;
   connectionId: string;
-  existingChildIds: string[];
 };
 
 export function AddChildThirdPartyDialog({
   children,
   parentThirdPartyId,
+  parentNamePath,
   organizationId,
   connectionId,
-  existingChildIds,
 }: Props) {
   const { __ } = useTranslate();
   const dialogRef = useDialogRef();
-  const thirdParties = useThirdParties(organizationId);
-  const [createMapping] = useMutation<AddChildThirdPartyDialogCreateMappingMutation>(createMappingMutation);
-  const [createThirdParty] = useMutation<AddChildThirdPartyDialogCreateMutation>(createThirdPartyMutation);
+  const [createChild] = useMutation<AddChildThirdPartyDialogCreateMutation>(createChildMutation);
   const [searchQuery, setSearchQuery] = useState("");
   const [queryRef, loadQuery] = useQueryLoader<CommonThirdPartyComboboxQuery>(commonThirdPartiesQuery);
 
@@ -109,19 +90,18 @@ export function AddChildThirdPartyDialog({
     }
   };
 
-  const existingThirdParties = thirdParties.filter(
-    tp =>
-      tp.id !== parentThirdPartyId
-      && !existingChildIds.includes(tp.id)
-      && tp.name.toLowerCase().includes(searchQuery.toLowerCase()),
-  );
+  const handleCreate = (input: Omit<CreateThirdPartyInput, "organizationId">) => {
+    const qualifiedName = parentNamePath.length > 0
+      ? `${input.name} (${parentNamePath.join("/")})`
+      : input.name;
 
-  const handleSelectExisting = (childId: string) => {
-    createMapping({
+    void createChild({
       variables: {
         input: {
+          ...input,
+          name: qualifiedName,
+          organizationId,
           parentThirdPartyId,
-          childThirdPartyId: childId,
         },
         connections: [connectionId],
       },
@@ -131,53 +111,31 @@ export function AddChildThirdPartyDialog({
     });
   };
 
-  const handleSelectCommon = (common: Omit<CreateThirdPartyInput, "organizationId">) => {
-    createThirdParty({
-      variables: {
-        input: {
-          ...common,
-          organizationId,
-          firstLevel: false,
-        },
-      },
-      onCompleted: (response) => {
-        const newId = response.createThirdParty.thirdPartyEdge.node.id;
-        createMapping({
-          variables: {
-            input: {
-              parentThirdPartyId,
-              childThirdPartyId: newId,
-            },
-            connections: [connectionId],
-          },
-          onCompleted: () => {
-            dialogRef.current?.close();
-          },
-        });
-      },
-    });
+  const handleCreateNew = (name: string) => {
+    handleCreate({ name, category: null });
   };
-
-  const existingNames = new Set(thirdParties.map(tp => tp.name.toLowerCase()));
 
   return (
     <Dialog ref={dialogRef} trigger={children} title={__("Add a third party")}>
       <DialogContent className="p-6">
         <Combobox onSearch={handleSearch} placeholder={__("Type third party's name")}>
-          {existingThirdParties.map(tp => (
-            <ComboboxItem key={tp.id} onClick={() => handleSelectExisting(tp.id)}>
-              <Avatar name={tp.name} src={faviconUrl(tp.websiteUrl)} size="s" />
-              {tp.name}
-            </ComboboxItem>
-          ))}
           {searchQuery.trim().length >= 2 && queryRef && (
             <Suspense>
               <CommonThirdPartyCombobox
                 queryRef={queryRef}
-                excludeNames={existingNames}
-                onSelect={handleSelectCommon}
+                excludeNames={new Set()}
+                onSelect={handleCreate}
               />
             </Suspense>
+          )}
+          {searchQuery.trim().length >= 2 && (
+            <ComboboxItem onClick={() => handleCreateNew(searchQuery.trim())}>
+              <IconPlusLarge size={20} />
+              {__("Create a new third party")}
+              {" "}
+              :
+              {searchQuery}
+            </ComboboxItem>
           )}
         </Combobox>
       </DialogContent>

@@ -86,7 +86,7 @@ func NewThirdParty(v *coredata.ThirdParty) *ThirdParty {
 		TermsOfServiceURL:             v.TermsOfServiceURL,
 		SecurityPageURL:               v.SecurityPageURL,
 		TrustPageURL:                  v.TrustPageURL,
-		FirstLevel:                    v.FirstLevel,
+		Level:                         v.Level,
 		CreatedAt:                     v.CreatedAt,
 		UpdatedAt:                     v.UpdatedAt,
 	}

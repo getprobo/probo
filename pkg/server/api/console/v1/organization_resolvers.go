@@ -1291,15 +1291,15 @@ func (r *organizationResolver) ThirdParties(ctx context.Context, obj *types.Orga
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
 	var (
-		firstLevel *bool
-		query      *string
+		level *int
+		query *string
 	)
 	if filter != nil {
-		firstLevel = filter.FirstLevel
+		level = filter.Level
 		query = filter.Query
 	}
 
-	thirdPartyFilter := coredata.NewThirdPartyFilter(nil, firstLevel, query)
+	thirdPartyFilter := coredata.NewThirdPartyFilter(nil, level, query)
 
 	page, err := r.probo.ThirdParties.ListForOrganizationID(ctx, scope, obj.ID, cursor, thirdPartyFilter)
 	if err != nil {

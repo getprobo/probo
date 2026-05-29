@@ -26,15 +26,12 @@ import {
   IconUpload,
   PageHeader,
   RiskBadge,
-  TabItem,
-  Tabs,
   Tbody,
   Td,
   Th,
   Thead,
   Tr,
 } from "@probo/ui";
-import { useState, useTransition } from "react";
 import {
   type PreloadedQuery,
   usePaginationFragment,
@@ -61,6 +58,12 @@ import { PublishThirdPartyListDialog } from "./dialogs/PublishThirdPartyListDial
 
 type ThirdParty = NodeOf<ThirdPartyGraphPaginatedFragment$data["thirdParties"]>;
 
+function thirdPartyDisplayName(tp: ThirdParty): string {
+  // Sub-third-parties are persisted with their fully-qualified name
+  // (e.g. "aws (Probo/Level2/Level3)"), so the stored name is shown as-is.
+  return tp.name;
+}
+
 type Props = {
   queryRef: PreloadedQuery<ThirdPartyGraphListQuery>;
 };
@@ -79,20 +82,8 @@ export default function ThirdPartiesPage(props: Props) {
 
   const thirdParties = pagination.data.thirdParties?.edges.map(edge => edge.node);
   const connectionId = pagination.data.thirdParties.__id;
-  const [, startTransition] = useTransition();
-  const [firstLevelFilter, setFirstLevelFilter] = useState<boolean | null>(true);
 
   usePageTitle(__("Third parties"));
-
-  const handleFilterChange = (firstLevel: boolean | null) => {
-    setFirstLevelFilter(firstLevel);
-    startTransition(() => {
-      pagination.refetch(
-        { filter: firstLevel !== null ? { firstLevel } : {} },
-        { fetchPolicy: "store-and-network" },
-      );
-    });
-  };
 
   const hasAnyAction
     = thirdParties.some(({ canUpdate, canDelete }) => canUpdate || canDelete);
@@ -144,20 +135,6 @@ export default function ThirdPartiesPage(props: Props) {
           )}
         </div>
       </PageHeader>
-      <Tabs>
-        <TabItem
-          active={firstLevelFilter === true}
-          onClick={() => handleFilterChange(true)}
-        >
-          {__("First Level")}
-        </TabItem>
-        <TabItem
-          active={firstLevelFilter === null}
-          onClick={() => handleFilterChange(null)}
-        >
-          {__("All")}
-        </TabItem>
-      </Tabs>
       <SortableTable {...pagination}>
         <Thead>
           <Tr>
@@ -198,6 +175,7 @@ function ThirdPartyRow({
   const { __ } = useTranslate();
   const latestAssessment = thirdParty.riskAssessments?.edges[0]?.node;
   const deleteThirdParty = useDeleteThirdParty(thirdParty, connectionId);
+  const displayName = thirdPartyDisplayName(thirdParty);
 
   const thirdPartyUrl = `/organizations/${organizationId}/third-parties/${thirdParty.id}/overview`;
 
@@ -207,7 +185,7 @@ function ThirdPartyRow({
         <Td>
           <div className="flex gap-2 items-center">
             <Avatar name={thirdParty.name} src={faviconUrl(thirdParty.websiteUrl)} />
-            <div>{thirdParty.name}</div>
+            <div>{displayName}</div>
           </div>
         </Td>
         <Td>

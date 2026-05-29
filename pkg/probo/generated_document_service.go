@@ -2357,8 +2357,16 @@ func (s *GeneratedDocumentService) buildThirdPartyListDocumentData(
 	conn pg.Querier,
 	organization *coredata.Organization,
 ) (docgen.ThirdPartyListData, error) {
+	firstLevel := 1
+
 	var thirdParties coredata.ThirdParties
-	if err := thirdParties.LoadAllByOrganizationID(ctx, conn, scope, organization.ID); err != nil {
+	if err := thirdParties.LoadAllByOrganizationID(
+		ctx,
+		conn,
+		scope,
+		organization.ID,
+		coredata.NewThirdPartyFilter(nil, &firstLevel, nil),
+	); err != nil {
 		return docgen.ThirdPartyListData{}, fmt.Errorf("cannot load thirdParties: %w", err)
 	}
 

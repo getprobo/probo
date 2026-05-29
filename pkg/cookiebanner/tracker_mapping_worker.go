@@ -1141,8 +1141,16 @@ func (h *trackerMappingHandler) prepareOrgThirdParty(
 		return prep, fmt.Errorf("cannot load common third party domains: %w", err)
 	}
 
+	firstLevel := 1
+
 	var orgThirdParties coredata.ThirdParties
-	if err := orgThirdParties.LoadAllByOrganizationID(ctx, conn, scope, tp.OrganizationID); err != nil {
+	if err := orgThirdParties.LoadAllByOrganizationID(
+		ctx,
+		conn,
+		scope,
+		tp.OrganizationID,
+		coredata.NewThirdPartyFilter(nil, &firstLevel, nil),
+	); err != nil {
 		return prep, fmt.Errorf("cannot load org third parties: %w", err)
 	}
 

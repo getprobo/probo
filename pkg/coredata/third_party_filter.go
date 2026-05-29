@@ -21,15 +21,15 @@ import (
 type (
 	ThirdPartyFilter struct {
 		showOnTrustCenter *bool
-		firstLevel        *bool
+		level             *int
 		query             *string
 	}
 )
 
-func NewThirdPartyFilter(showOnTrustCenter *bool, firstLevel *bool, query *string) *ThirdPartyFilter {
+func NewThirdPartyFilter(showOnTrustCenter *bool, level *int, query *string) *ThirdPartyFilter {
 	return &ThirdPartyFilter{
 		showOnTrustCenter: showOnTrustCenter,
-		firstLevel:        firstLevel,
+		level:             level,
 		query:             query,
 	}
 }
@@ -38,6 +38,7 @@ func (f *ThirdPartyFilter) SQLArguments() pgx.StrictNamedArgs {
 	args := pgx.StrictNamedArgs{
 		"show_on_trust_center": nil,
 		"filter_query":         nil,
+		"level":                nil,
 	}
 
 	if f.showOnTrustCenter != nil {
@@ -48,10 +49,8 @@ func (f *ThirdPartyFilter) SQLArguments() pgx.StrictNamedArgs {
 		args["filter_query"] = *f.query
 	}
 
-	if f.firstLevel != nil {
-		args["first_level"] = *f.firstLevel
-	} else {
-		args["first_level"] = nil
+	if f.level != nil {
+		args["level"] = *f.level
 	}
 
 	return args
@@ -66,8 +65,8 @@ func (f *ThirdPartyFilter) SQLFragment() string {
 		ELSE TRUE
 	END
 	AND CASE
-		WHEN @first_level::boolean IS NOT NULL THEN
-			first_level = @first_level::boolean
+		WHEN @level::integer IS NOT NULL THEN
+			level = @level::integer
 		ELSE TRUE
 	END
 	AND CASE

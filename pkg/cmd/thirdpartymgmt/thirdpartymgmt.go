@@ -19,10 +19,8 @@ import (
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
 	"go.probo.inc/probo/pkg/cmd/thirdpartymgmt/create"
 	"go.probo.inc/probo/pkg/cmd/thirdpartymgmt/delete"
-	"go.probo.inc/probo/pkg/cmd/thirdpartymgmt/link"
 	"go.probo.inc/probo/pkg/cmd/thirdpartymgmt/list"
 	"go.probo.inc/probo/pkg/cmd/thirdpartymgmt/publish"
-	"go.probo.inc/probo/pkg/cmd/thirdpartymgmt/unlink"
 	"go.probo.inc/probo/pkg/cmd/thirdpartymgmt/update"
 	"go.probo.inc/probo/pkg/cmd/thirdpartymgmt/vet"
 	"go.probo.inc/probo/pkg/cmd/thirdpartymgmt/view"
@@ -41,8 +39,6 @@ func NewCmdThirdParty(f *cmdutil.Factory) *cobra.Command {
 	cmd.AddCommand(delete.NewCmdDelete(f))
 	cmd.AddCommand(vet.NewCmdVet(f))
 	cmd.AddCommand(publish.NewCmdPublish(f))
-	cmd.AddCommand(link.NewCmdLink(f))
-	cmd.AddCommand(unlink.NewCmdUnlink(f))
 
 	return cmd
 }

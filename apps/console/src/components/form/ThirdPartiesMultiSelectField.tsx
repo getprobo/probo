@@ -24,7 +24,7 @@ type ThirdParty = {
   id: string;
   name: string;
   websiteUrl: string | null | undefined;
-  firstLevel?: boolean;
+  level?: number;
 };
 
 type Props<T extends FieldValues = FieldValues> = {

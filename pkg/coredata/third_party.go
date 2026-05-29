@@ -28,6 +28,11 @@ import (
 	"go.probo.inc/probo/pkg/page"
 )
 
+// MaxThirdPartyLevel is the deepest sub-third-party nesting allowed. Level 1 is
+// a direct third party; each descendant adds one level, so the chain may not go
+// beyond level 4.
+const MaxThirdPartyLevel = 4
+
 func (v ThirdParty) GetGeneratedDocumentID(
 	ctx context.Context,
 	conn pg.Querier,
@@ -140,6 +145,7 @@ type (
 	ThirdParty struct {
 		ID                            gid.GID                  `db:"id"`
 		OrganizationID                gid.GID                  `db:"organization_id"`
+		ParentThirdPartyID            *gid.GID                 `db:"parent_third_party_id"`
 		CommonThirdPartyID            *gid.GID                 `db:"common_third_party_id"`
 		Name                          string                   `db:"name"`
 		Description                   *string                  `db:"description"`
@@ -161,7 +167,7 @@ type (
 		SecurityPageURL               *string                  `db:"security_page_url"`
 		TrustPageURL                  *string                  `db:"trust_page_url"`
 		ShowOnTrustCenter             bool                     `db:"show_on_trust_center"`
-		FirstLevel                    bool                     `db:"first_level"`
+		Level                         int                      `db:"level"`
 		VettingStatus                 *ThirdPartyVettingStatus `db:"vetting_status"`
 		VettingWebsiteURL             *string                  `db:"vetting_website_url"`
 		VettingProcedure              *string                  `db:"vetting_procedure"`
@@ -236,6 +242,7 @@ func (v *ThirdParty) LoadByID(
 SELECT
     id,
     organization_id,
+    parent_third_party_id,
     common_third_party_id,
     name,
     description,
@@ -257,7 +264,7 @@ SELECT
     security_page_url,
     trust_page_url,
     show_on_trust_center,
-    first_level,
+    level,
     vetting_status,
     vetting_website_url,
     vetting_procedure,
@@ -308,6 +315,7 @@ func (v *ThirdParty) LoadByIDForUpdate(
 SELECT
     id,
     organization_id,
+    parent_third_party_id,
     common_third_party_id,
     name,
     description,
@@ -329,7 +337,7 @@ SELECT
     security_page_url,
     trust_page_url,
     show_on_trust_center,
-    first_level,
+    level,
     vetting_status,
     vetting_website_url,
     vetting_procedure,
@@ -382,6 +390,7 @@ func (v *ThirdParty) LoadByNameAndOrganizationID(
 SELECT
     id,
     organization_id,
+    parent_third_party_id,
     common_third_party_id,
     name,
     description,
@@ -403,7 +412,7 @@ SELECT
     security_page_url,
     trust_page_url,
     show_on_trust_center,
-    first_level,
+    level,
     vetting_status,
     vetting_website_url,
     vetting_procedure,
@@ -448,16 +457,18 @@ LIMIT 1;
 	return nil
 }
 
-func (v *ThirdParties) LoadByIDs(
+func (v *ThirdParty) LoadByNameAndParentThirdPartyID(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
-	thirdPartyIDs []gid.GID,
+	name string,
+	parentThirdPartyID gid.GID,
 ) error {
 	q := `
 SELECT
     id,
     organization_id,
+    parent_third_party_id,
     common_third_party_id,
     name,
     description,
@@ -479,7 +490,84 @@ SELECT
     security_page_url,
     trust_page_url,
     show_on_trust_center,
-    first_level,
+    level,
+    vetting_status,
+    vetting_website_url,
+    vetting_procedure,
+    vetting_processing_started_at,
+    vetting_error_message,
+    created_at,
+    updated_at
+FROM
+    third_parties
+WHERE
+    %s
+    AND parent_third_party_id = @parent_third_party_id
+    AND name = @name
+LIMIT 1;
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"parent_third_party_id": parentThirdPartyID,
+		"name":                  name,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query thirdParty by name and parent: %w", err)
+	}
+	defer rows.Close()
+
+	thirdParty, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[ThirdParty])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+
+		return fmt.Errorf("cannot collect thirdParty: %w", err)
+	}
+
+	*v = thirdParty
+
+	return nil
+}
+
+func (v *ThirdParties) LoadByIDs(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	thirdPartyIDs []gid.GID,
+) error {
+	q := `
+SELECT
+    id,
+    organization_id,
+    parent_third_party_id,
+    common_third_party_id,
+    name,
+    description,
+    category,
+    headquarter_address,
+    legal_name,
+    website_url,
+    privacy_policy_url,
+    service_level_agreement_url,
+    data_processing_agreement_url,
+    business_associate_agreement_url,
+    subprocessors_list_url,
+    certifications,
+    countries,
+    business_owner_profile_id,
+    security_owner_profile_id,
+    status_page_url,
+    terms_of_service_url,
+    security_page_url,
+    trust_page_url,
+    show_on_trust_center,
+    level,
     vetting_status,
     vetting_website_url,
     vetting_procedure,
@@ -525,6 +613,7 @@ INSERT INTO
         tenant_id,
         id,
         organization_id,
+        parent_third_party_id,
         common_third_party_id,
         name,
         description,
@@ -546,7 +635,7 @@ INSERT INTO
         security_page_url,
         trust_page_url,
         show_on_trust_center,
-        first_level,
+        level,
         vetting_status,
         vetting_website_url,
         vetting_procedure,
@@ -559,6 +648,7 @@ VALUES (
     @tenant_id,
     @third_party_id,
     @organization_id,
+    @parent_third_party_id,
     @common_third_party_id,
     @name,
     @description,
@@ -580,7 +670,7 @@ VALUES (
     @security_page_url,
     @trust_page_url,
     @show_on_trust_center,
-    @first_level,
+    @level,
     @vetting_status,
     @vetting_website_url,
     @vetting_procedure,
@@ -595,6 +685,7 @@ VALUES (
 		"tenant_id":                        scope.GetTenantID(),
 		"third_party_id":                   v.ID,
 		"organization_id":                  v.OrganizationID,
+		"parent_third_party_id":            v.ParentThirdPartyID,
 		"common_third_party_id":            v.CommonThirdPartyID,
 		"name":                             v.Name,
 		"description":                      v.Description,
@@ -616,7 +707,7 @@ VALUES (
 		"security_page_url":                v.SecurityPageURL,
 		"trust_page_url":                   v.TrustPageURL,
 		"show_on_trust_center":             v.ShowOnTrustCenter,
-		"first_level":                      v.FirstLevel,
+		"level":                            v.Level,
 		"vetting_status":                   v.VettingStatus,
 		"vetting_website_url":              v.VettingWebsiteURL,
 		"vetting_procedure":                v.VettingProcedure,
@@ -690,11 +781,13 @@ func (v *ThirdParties) LoadAllByOrganizationID(
 	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
+	filter *ThirdPartyFilter,
 ) error {
 	q := `
 SELECT
 	id,
 	organization_id,
+	parent_third_party_id,
 	common_third_party_id,
 	name,
 	description,
@@ -716,7 +809,7 @@ SELECT
 	security_page_url,
 	trust_page_url,
 	show_on_trust_center,
-	first_level,
+	level,
 	vetting_status,
 	vetting_website_url,
 	vetting_procedure,
@@ -729,12 +822,14 @@ FROM
 WHERE
 	%s
 	AND organization_id = @organization_id
+	AND %s
 ORDER BY name ASC
 `
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"organization_id": organizationID}
 	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -763,6 +858,7 @@ func (v *ThirdParties) LoadByOrganizationID(
 SELECT
 	id,
 	organization_id,
+	parent_third_party_id,
 	common_third_party_id,
 	name,
 	description,
@@ -784,7 +880,7 @@ SELECT
 	security_page_url,
 	trust_page_url,
 	show_on_trust_center,
-	first_level,
+	level,
 	vetting_status,
 	vetting_website_url,
 	vetting_procedure,
@@ -834,6 +930,7 @@ SET
 	name = @name,
 	description = @description,
 	category = @category,
+	parent_third_party_id = @parent_third_party_id,
 	headquarter_address = @headquarter_address,
 	legal_name = @legal_name,
 	website_url = @website_url,
@@ -851,7 +948,7 @@ SET
 	business_owner_profile_id = @business_owner_profile_id,
 	security_owner_profile_id = @security_owner_profile_id,
 	show_on_trust_center = @show_on_trust_center,
-	first_level = @first_level,
+	level = @level,
 	vetting_status = @vetting_status,
 	vetting_website_url = @vetting_website_url,
 	vetting_procedure = @vetting_procedure,
@@ -870,6 +967,7 @@ WHERE %s
 		"name":                             v.Name,
 		"description":                      v.Description,
 		"category":                         v.Category,
+		"parent_third_party_id":            v.ParentThirdPartyID,
 		"headquarter_address":              v.HeadquarterAddress,
 		"legal_name":                       v.LegalName,
 		"website_url":                      v.WebsiteURL,
@@ -887,7 +985,7 @@ WHERE %s
 		"business_owner_profile_id":        v.BusinessOwnerID,
 		"security_owner_profile_id":        v.SecurityOwnerID,
 		"show_on_trust_center":             v.ShowOnTrustCenter,
-		"first_level":                      v.FirstLevel,
+		"level":                            v.Level,
 		"vetting_status":                   v.VettingStatus,
 		"vetting_website_url":              v.VettingWebsiteURL,
 		"vetting_procedure":                v.VettingProcedure,
@@ -996,6 +1094,7 @@ WITH vend AS (
 		v.id,
 		v.tenant_id,
 		v.organization_id,
+		v.parent_third_party_id,
 		v.common_third_party_id,
 		v.name,
 		v.description,
@@ -1017,7 +1116,7 @@ WITH vend AS (
 		v.security_page_url,
 		v.trust_page_url,
 		v.show_on_trust_center,
-		v.first_level,
+		v.level,
 		v.vetting_status,
 		v.vetting_website_url,
 		v.vetting_procedure,
@@ -1035,6 +1134,7 @@ WITH vend AS (
 SELECT
 	id,
 	organization_id,
+	parent_third_party_id,
 	common_third_party_id,
 	name,
 	description,
@@ -1056,7 +1156,7 @@ SELECT
 	security_page_url,
 	trust_page_url,
 	show_on_trust_center,
-	first_level,
+	level,
 	vetting_status,
 	vetting_website_url,
 	vetting_procedure,
@@ -1142,6 +1242,7 @@ WITH vend AS (
 		v.id,
 		v.tenant_id,
 		v.organization_id,
+		v.parent_third_party_id,
 		v.common_third_party_id,
 		v.name,
 		v.description,
@@ -1163,7 +1264,7 @@ WITH vend AS (
 		v.security_page_url,
 		v.trust_page_url,
 		v.show_on_trust_center,
-		v.first_level,
+		v.level,
 		v.vetting_status,
 		v.vetting_website_url,
 		v.vetting_procedure,
@@ -1181,6 +1282,7 @@ WITH vend AS (
 SELECT
 	id,
 	organization_id,
+	parent_third_party_id,
 	common_third_party_id,
 	name,
 	description,
@@ -1202,7 +1304,7 @@ SELECT
 	security_page_url,
 	trust_page_url,
 	show_on_trust_center,
-	first_level,
+	level,
 	vetting_status,
 	vetting_website_url,
 	vetting_procedure,
@@ -1248,6 +1350,7 @@ WITH vend AS (
 		v.id,
 		v.tenant_id,
 		v.organization_id,
+		v.parent_third_party_id,
 		v.common_third_party_id,
 		v.name,
 		v.description,
@@ -1269,7 +1372,7 @@ WITH vend AS (
 		v.security_page_url,
 		v.trust_page_url,
 		v.show_on_trust_center,
-		v.first_level,
+		v.level,
 		v.vetting_status,
 		v.vetting_website_url,
 		v.vetting_procedure,
@@ -1287,6 +1390,7 @@ WITH vend AS (
 SELECT
 	id,
 	organization_id,
+	parent_third_party_id,
 	common_third_party_id,
 	name,
 	description,
@@ -1308,7 +1412,7 @@ SELECT
 	security_page_url,
 	trust_page_url,
 	show_on_trust_center,
-	first_level,
+	level,
 	vetting_status,
 	vetting_website_url,
 	vetting_procedure,
@@ -1355,6 +1459,7 @@ WITH vend AS (
 		v.id,
 		v.tenant_id,
 		v.organization_id,
+		v.parent_third_party_id,
 		v.common_third_party_id,
 		v.name,
 		v.description,
@@ -1376,7 +1481,7 @@ WITH vend AS (
 		v.security_page_url,
 		v.trust_page_url,
 		v.show_on_trust_center,
-		v.first_level,
+		v.level,
 		v.vetting_status,
 		v.vetting_website_url,
 		v.vetting_procedure,
@@ -1394,6 +1499,7 @@ WITH vend AS (
 SELECT
 	id,
 	organization_id,
+	parent_third_party_id,
 	common_third_party_id,
 	name,
 	description,
@@ -1415,7 +1521,7 @@ SELECT
 	security_page_url,
 	trust_page_url,
 	show_on_trust_center,
-	first_level,
+	level,
 	vetting_status,
 	vetting_website_url,
 	vetting_procedure,
@@ -1530,6 +1636,7 @@ WITH vend AS (
 		v.id,
 		v.tenant_id,
 		v.organization_id,
+		v.parent_third_party_id,
 		v.common_third_party_id,
 		v.name,
 		v.description,
@@ -1551,7 +1658,7 @@ WITH vend AS (
 		v.security_page_url,
 		v.trust_page_url,
 		v.show_on_trust_center,
-		v.first_level,
+		v.level,
 		v.vetting_status,
 		v.vetting_website_url,
 		v.vetting_procedure,
@@ -1569,6 +1676,7 @@ WITH vend AS (
 SELECT
 	id,
 	organization_id,
+	parent_third_party_id,
 	common_third_party_id,
 	name,
 	description,
@@ -1590,7 +1698,7 @@ SELECT
 	security_page_url,
 	trust_page_url,
 	show_on_trust_center,
-	first_level,
+	level,
 	vetting_status,
 	vetting_website_url,
 	vetting_procedure,
@@ -1634,6 +1742,7 @@ func (v *ThirdParty) LoadByOrganizationIDAndCommonThirdPartyID(
 SELECT
 	id,
 	organization_id,
+	parent_third_party_id,
 	common_third_party_id,
 	name,
 	description,
@@ -1655,7 +1764,7 @@ SELECT
 	security_page_url,
 	trust_page_url,
 	show_on_trust_center,
-	first_level,
+	level,
 	vetting_status,
 	vetting_website_url,
 	vetting_procedure,
@@ -1754,6 +1863,7 @@ WITH tps AS (
 		v.id,
 		v.tenant_id,
 		v.organization_id,
+		v.parent_third_party_id,
 		v.common_third_party_id,
 		v.name,
 		v.description,
@@ -1775,7 +1885,7 @@ WITH tps AS (
 		v.security_page_url,
 		v.trust_page_url,
 		v.show_on_trust_center,
-		v.first_level,
+		v.level,
 		v.vetting_status,
 		v.vetting_website_url,
 		v.vetting_procedure,
@@ -1793,6 +1903,7 @@ WITH tps AS (
 SELECT
 	id,
 	organization_id,
+	parent_third_party_id,
 	common_third_party_id,
 	name,
 	description,
@@ -1814,7 +1925,7 @@ SELECT
 	security_page_url,
 	trust_page_url,
 	show_on_trust_center,
-	first_level,
+	level,
 	vetting_status,
 	vetting_website_url,
 	vetting_procedure,
@@ -1841,6 +1952,257 @@ WHERE %s
 	thirdParties, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[ThirdParty])
 	if err != nil {
 		return fmt.Errorf("cannot collect thirdParties: %w", err)
+	}
+
+	*v = thirdParties
+
+	return nil
+}
+
+func (v *ThirdParties) CountByParentThirdPartyID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	parentThirdPartyID gid.GID,
+) (int, error) {
+	q := `
+SELECT
+	COUNT(id)
+FROM
+	third_parties
+WHERE
+	%s
+	AND parent_third_party_id = @parent_third_party_id
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"parent_third_party_id": parentThirdPartyID}
+	maps.Copy(args, scope.SQLArguments())
+
+	var count int
+
+	err := conn.QueryRow(ctx, q, args).Scan(&count)
+	if err != nil {
+		return 0, fmt.Errorf("cannot count child third parties: %w", err)
+	}
+
+	return count, nil
+}
+
+func (v *ThirdParties) LoadAllAncestorsByThirdPartyID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	thirdPartyID gid.GID,
+) error {
+	q := `
+WITH RECURSIVE ancestor_chain AS (
+	SELECT
+		tp.id,
+		tp.tenant_id,
+		tp.organization_id,
+		tp.parent_third_party_id,
+		tp.common_third_party_id,
+		tp.name,
+		tp.description,
+		tp.category,
+		tp.headquarter_address,
+		tp.legal_name,
+		tp.website_url,
+		tp.privacy_policy_url,
+		tp.service_level_agreement_url,
+		tp.data_processing_agreement_url,
+		tp.business_associate_agreement_url,
+		tp.subprocessors_list_url,
+		tp.certifications,
+		tp.countries,
+		tp.business_owner_profile_id,
+		tp.security_owner_profile_id,
+		tp.status_page_url,
+		tp.terms_of_service_url,
+		tp.security_page_url,
+		tp.trust_page_url,
+		tp.show_on_trust_center,
+		tp.level,
+		tp.vetting_status,
+		tp.vetting_website_url,
+		tp.vetting_procedure,
+		tp.vetting_processing_started_at,
+		tp.vetting_error_message,
+		tp.created_at,
+		tp.updated_at,
+		1 AS depth
+	FROM third_parties tp
+	WHERE %s
+	  AND tp.id = (
+	      SELECT parent_third_party_id
+	      FROM third_parties
+	      WHERE id = @third_party_id
+	  )
+
+	UNION ALL
+
+	SELECT
+		tp.id,
+		tp.tenant_id,
+		tp.organization_id,
+		tp.parent_third_party_id,
+		tp.common_third_party_id,
+		tp.name,
+		tp.description,
+		tp.category,
+		tp.headquarter_address,
+		tp.legal_name,
+		tp.website_url,
+		tp.privacy_policy_url,
+		tp.service_level_agreement_url,
+		tp.data_processing_agreement_url,
+		tp.business_associate_agreement_url,
+		tp.subprocessors_list_url,
+		tp.certifications,
+		tp.countries,
+		tp.business_owner_profile_id,
+		tp.security_owner_profile_id,
+		tp.status_page_url,
+		tp.terms_of_service_url,
+		tp.security_page_url,
+		tp.trust_page_url,
+		tp.show_on_trust_center,
+		tp.level,
+		tp.vetting_status,
+		tp.vetting_website_url,
+		tp.vetting_procedure,
+		tp.vetting_processing_started_at,
+		tp.vetting_error_message,
+		tp.created_at,
+		tp.updated_at,
+		ac.depth + 1
+	FROM third_parties tp
+	JOIN ancestor_chain ac ON tp.id = ac.parent_third_party_id
+	WHERE ac.depth < @max_depth
+	  AND tp.tenant_id = ac.tenant_id
+)
+SELECT
+	id,
+	organization_id,
+	parent_third_party_id,
+	common_third_party_id,
+	name,
+	description,
+	category,
+	headquarter_address,
+	legal_name,
+	website_url,
+	privacy_policy_url,
+	service_level_agreement_url,
+	data_processing_agreement_url,
+	business_associate_agreement_url,
+	subprocessors_list_url,
+	certifications,
+	countries,
+	business_owner_profile_id,
+	security_owner_profile_id,
+	status_page_url,
+	terms_of_service_url,
+	security_page_url,
+	trust_page_url,
+	show_on_trust_center,
+	level,
+	vetting_status,
+	vetting_website_url,
+	vetting_procedure,
+	vetting_processing_started_at,
+	vetting_error_message,
+	created_at,
+	updated_at
+FROM ancestor_chain
+ORDER BY depth DESC
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"third_party_id": thirdPartyID,
+		"max_depth":      MaxThirdPartyLevel,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query ancestors: %w", err)
+	}
+
+	ancestors, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[ThirdParty])
+	if err != nil {
+		return fmt.Errorf("cannot collect ancestors: %w", err)
+	}
+
+	*v = ancestors
+
+	return nil
+}
+
+func (v *ThirdParties) LoadByParentThirdPartyID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	parentThirdPartyID gid.GID,
+	cursor *page.Cursor[ThirdPartyOrderField],
+) error {
+	q := `
+SELECT
+	id,
+	organization_id,
+	parent_third_party_id,
+	common_third_party_id,
+	name,
+	description,
+	category,
+	headquarter_address,
+	legal_name,
+	website_url,
+	privacy_policy_url,
+	service_level_agreement_url,
+	data_processing_agreement_url,
+	business_associate_agreement_url,
+	subprocessors_list_url,
+	certifications,
+	countries,
+	business_owner_profile_id,
+	security_owner_profile_id,
+	status_page_url,
+	terms_of_service_url,
+	security_page_url,
+	trust_page_url,
+	show_on_trust_center,
+	level,
+	vetting_status,
+	vetting_website_url,
+	vetting_procedure,
+	vetting_processing_started_at,
+	vetting_error_message,
+	created_at,
+	updated_at
+FROM
+	third_parties
+WHERE
+	%s
+	AND parent_third_party_id = @parent_third_party_id
+	AND %s
+`
+	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"parent_third_party_id": parentThirdPartyID}
+	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, cursor.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query child third parties: %w", err)
+	}
+
+	thirdParties, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[ThirdParty])
+	if err != nil {
+		return fmt.Errorf("cannot collect child third parties: %w", err)
 	}
 
 	*v = thirdParties

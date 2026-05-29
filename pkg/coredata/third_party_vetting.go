@@ -32,6 +32,7 @@ func (v *ThirdParty) LoadNextPendingVettingForUpdateSkipLocked(
 SELECT
     id,
     organization_id,
+    parent_third_party_id,
     common_third_party_id,
     name,
     description,
@@ -53,7 +54,7 @@ SELECT
     security_page_url,
     trust_page_url,
     show_on_trust_center,
-    first_level,
+    level,
     vetting_status,
     vetting_website_url,
     vetting_procedure,

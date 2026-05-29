@@ -86,7 +86,7 @@ func NewThirdParty(v *coredata.ThirdParty) *ThirdParty {
 		WebsiteURL:                    v.WebsiteURL,
 		Category:                      v.Category,
 		ShowOnTrustCenter:             v.ShowOnTrustCenter,
-		FirstLevel:                    v.FirstLevel,
+		Level:                         v.Level,
 		Countries:                     v.Countries,
 		UpdatedAt:                     v.UpdatedAt,
 		CreatedAt:                     v.CreatedAt,
@@ -101,6 +101,12 @@ func NewThirdParty(v *coredata.ThirdParty) *ThirdParty {
 	if v.SecurityOwnerID != nil {
 		object.SecurityOwner = &Profile{
 			ID: *v.SecurityOwnerID,
+		}
+	}
+
+	if v.ParentThirdPartyID != nil {
+		object.ParentThirdParty = &ThirdParty{
+			ID: *v.ParentThirdPartyID,
 		}
 	}
 

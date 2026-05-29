@@ -198,7 +198,7 @@ input ThirdPartyOrder
 }
 
 input ThirdPartyFilter {
-    firstLevel: Boolean
+    level: Int
     query: String
 }
 
@@ -303,7 +303,10 @@ type ThirdParty implements Node {
     legalName: String
     websiteUrl: String
     showOnTrustCenter: Boolean!
-    firstLevel: Boolean!
+    level: Int!
+
+    parentThirdParty: ThirdParty @goField(forceResolver: true)
+    ancestors: [ThirdParty!]! @goField(forceResolver: true)
 
     childThirdParties(
         first: Int
@@ -506,12 +509,6 @@ extend type Mutation {
     publishThirdPartyList(
         input: PublishThirdPartyListInput!
     ): PublishThirdPartyListPayload!
-    createThirdPartyThirdPartyMapping(
-        input: CreateThirdPartyThirdPartyMappingInput!
-    ): CreateThirdPartyThirdPartyMappingPayload!
-    deleteThirdPartyThirdPartyMapping(
-        input: DeleteThirdPartyThirdPartyMappingInput!
-    ): DeleteThirdPartyThirdPartyMappingPayload!
 }
 
 input PublishThirdPartyListInput {
@@ -546,7 +543,7 @@ input CreateThirdPartyInput {
     termsOfServiceUrl: String
     businessOwnerId: ID
     securityOwnerId: ID
-    firstLevel: Boolean
+    parentThirdPartyId: ID
 }
 
 input UpdateThirdPartyInput {
@@ -571,7 +568,6 @@ input UpdateThirdPartyInput {
     businessOwnerId: ID @goField(omittable: true)
     securityOwnerId: ID @goField(omittable: true)
     showOnTrustCenter: Boolean
-    firstLevel: Boolean
 }
 
 input DeleteThirdPartyInput {
@@ -754,22 +750,4 @@ type CreateThirdPartyRiskAssessmentPayload {
 
 type VetThirdPartyPayload {
     thirdParty: ThirdParty!
-}
-
-input CreateThirdPartyThirdPartyMappingInput {
-    parentThirdPartyId: ID!
-    childThirdPartyId: ID!
-}
-
-type CreateThirdPartyThirdPartyMappingPayload {
-    thirdPartyEdge: ThirdPartyEdge!
-}
-
-input DeleteThirdPartyThirdPartyMappingInput {
-    parentThirdPartyId: ID!
-    childThirdPartyId: ID!
-}
-
-type DeleteThirdPartyThirdPartyMappingPayload {
-    removedThirdPartyId: ID!
 }

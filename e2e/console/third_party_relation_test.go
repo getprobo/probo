@@ -23,14 +23,12 @@ import (
 	"go.probo.inc/probo/e2e/internal/testutil"
 )
 
-func TestThirdPartyRelation_AddAndList(t *testing.T) {
+func TestThirdPartyRelation_CreateChildAndList(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 
 	parentID := factory.NewThirdParty(owner).WithName("Parent Corp").Create()
-	childID := factory.NewThirdParty(owner).WithName("Child Corp").Create()
-
-	addRelation(t, owner, parentID, childID)
+	childID := createChildThirdParty(t, owner, parentID, "Child Corp")
 
 	t.Run("list child third parties", func(t *testing.T) {
 		t.Parallel()
@@ -74,90 +72,146 @@ func TestThirdPartyRelation_AddAndList(t *testing.T) {
 		require.Len(t, result.Node.ChildThirdParties.Edges, 1)
 		assert.Equal(t, childID, result.Node.ChildThirdParties.Edges[0].Node.ID)
 	})
+
+	t.Run("child has parent reference", func(t *testing.T) {
+		t.Parallel()
+
+		const query = `
+			query($id: ID!) {
+				node(id: $id) {
+					... on ThirdParty {
+						parentThirdParty {
+							id
+						}
+					}
+				}
+			}
+		`
+
+		var result struct {
+			Node struct {
+				ParentThirdParty *struct {
+					ID string `json:"id"`
+				} `json:"parentThirdParty"`
+			} `json:"node"`
+		}
+
+		err := owner.Execute(query, map[string]any{"id": childID}, &result)
+
+		require.NoError(t, err)
+		require.NotNil(t, result.Node.ParentThirdParty)
+		assert.Equal(t, parentID, result.Node.ParentThirdParty.ID)
+	})
 }
 
-func TestThirdPartyRelation_Remove(t *testing.T) {
+func TestThirdPartyRelation_Ancestors(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+
+	rootID := factory.NewThirdParty(owner).WithName("Ancestor Root").Create()
+	midID := createChildThirdParty(t, owner, rootID, "Ancestor Mid")
+	leafID := createChildThirdParty(t, owner, midID, "Ancestor Leaf")
+
+	t.Run("root has no ancestors", func(t *testing.T) {
+		t.Parallel()
+
+		const query = `
+			query($id: ID!) {
+				node(id: $id) {
+					... on ThirdParty {
+						ancestors {
+							id
+							name
+						}
+					}
+				}
+			}
+		`
+
+		var result struct {
+			Node struct {
+				Ancestors []struct {
+					ID   string `json:"id"`
+					Name string `json:"name"`
+				} `json:"ancestors"`
+			} `json:"node"`
+		}
+
+		err := owner.Execute(query, map[string]any{"id": rootID}, &result)
+		require.NoError(t, err)
+		assert.Empty(t, result.Node.Ancestors)
+	})
+
+	t.Run("mid has one ancestor", func(t *testing.T) {
+		t.Parallel()
+
+		const query = `
+			query($id: ID!) {
+				node(id: $id) {
+					... on ThirdParty {
+						ancestors {
+							id
+							name
+						}
+					}
+				}
+			}
+		`
+
+		var result struct {
+			Node struct {
+				Ancestors []struct {
+					ID   string `json:"id"`
+					Name string `json:"name"`
+				} `json:"ancestors"`
+			} `json:"node"`
+		}
+
+		err := owner.Execute(query, map[string]any{"id": midID}, &result)
+		require.NoError(t, err)
+		require.Len(t, result.Node.Ancestors, 1)
+		assert.Equal(t, rootID, result.Node.Ancestors[0].ID)
+	})
+
+	t.Run("leaf returns ancestors root-first", func(t *testing.T) {
+		t.Parallel()
+
+		const query = `
+			query($id: ID!) {
+				node(id: $id) {
+					... on ThirdParty {
+						ancestors {
+							id
+							name
+						}
+					}
+				}
+			}
+		`
+
+		var result struct {
+			Node struct {
+				Ancestors []struct {
+					ID   string `json:"id"`
+					Name string `json:"name"`
+				} `json:"ancestors"`
+			} `json:"node"`
+		}
+
+		err := owner.Execute(query, map[string]any{"id": leafID}, &result)
+		require.NoError(t, err)
+		require.Len(t, result.Node.Ancestors, 2)
+		assert.Equal(t, rootID, result.Node.Ancestors[0].ID, "root should be first")
+		assert.Equal(t, midID, result.Node.Ancestors[1].ID, "mid should be second")
+	})
+}
+
+func TestThirdPartyRelation_DeleteChild(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 
 	parentID := factory.NewThirdParty(owner).WithName("Parent Remove").Create()
-	childID := factory.NewThirdParty(owner).WithName("Child Remove").Create()
-
-	addRelation(t, owner, parentID, childID)
-
-	const removeQuery = `
-		mutation($input: DeleteThirdPartyThirdPartyMappingInput!) {
-			deleteThirdPartyThirdPartyMapping(input: $input) {
-				removedThirdPartyId
-			}
-		}
-	`
-
-	var result struct {
-		DeleteThirdPartyThirdPartyMapping struct {
-			RemovedThirdPartyID string `json:"removedThirdPartyId"`
-		} `json:"deleteThirdPartyThirdPartyMapping"`
-	}
-
-	err := owner.Execute(removeQuery, map[string]any{
-		"input": map[string]any{
-			"parentThirdPartyId": parentID,
-			"childThirdPartyId":  childID,
-		},
-	}, &result)
-
-	require.NoError(t, err)
-	assert.Equal(t, childID, result.DeleteThirdPartyThirdPartyMapping.RemovedThirdPartyID)
-
-	count := countChildThirdParties(t, owner, parentID)
-	assert.Equal(t, 0, count)
-}
-
-func TestThirdPartyRelation_Bidirectional(t *testing.T) {
-	t.Parallel()
-	owner := testutil.NewClient(t, testutil.RoleOwner)
-
-	aID := factory.NewThirdParty(owner).WithName("Company A").Create()
-	bID := factory.NewThirdParty(owner).WithName("Company B").Create()
-
-	addRelation(t, owner, aID, bID)
-	addRelation(t, owner, bID, aID)
-
-	t.Run("A has B as child", func(t *testing.T) {
-		t.Parallel()
-		count := countChildThirdParties(t, owner, aID)
-		assert.Equal(t, 1, count)
-	})
-
-	t.Run("B has A as child", func(t *testing.T) {
-		t.Parallel()
-		count := countChildThirdParties(t, owner, bID)
-		assert.Equal(t, 1, count)
-	})
-}
-
-func TestThirdPartyRelation_Idempotent(t *testing.T) {
-	t.Parallel()
-	owner := testutil.NewClient(t, testutil.RoleOwner)
-
-	parentID := factory.NewThirdParty(owner).WithName("Idempotent Parent").Create()
-	childID := factory.NewThirdParty(owner).WithName("Idempotent Child").Create()
-
-	addRelation(t, owner, parentID, childID)
-	addRelation(t, owner, parentID, childID)
-
-	count := countChildThirdParties(t, owner, parentID)
-	assert.Equal(t, 1, count)
-}
-
-func TestThirdPartyRelation_CascadeOnDelete(t *testing.T) {
-	t.Parallel()
-	owner := testutil.NewClient(t, testutil.RoleOwner)
-
-	parentID := factory.NewThirdParty(owner).WithName("Cascade Parent").Create()
-	childID := factory.NewThirdParty(owner).WithName("Cascade Child").Create()
-
-	addRelation(t, owner, parentID, childID)
+	childID := createChildThirdParty(t, owner, parentID, "Child Remove")
 
 	const deleteQuery = `
 		mutation($input: DeleteThirdPartyInput!) {
@@ -178,7 +232,9 @@ func TestThirdPartyRelation_CascadeOnDelete(t *testing.T) {
 			"thirdPartyId": childID,
 		},
 	}, &result)
+
 	require.NoError(t, err)
+	assert.Equal(t, childID, result.DeleteThirdParty.DeletedThirdPartyID)
 
 	count := countChildThirdParties(t, owner, parentID)
 	assert.Equal(t, 0, count)
@@ -190,51 +246,6 @@ func TestThirdPartyRelation_Authorization(t *testing.T) {
 	viewer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
 
 	parentID := factory.NewThirdParty(owner).WithName("Auth Parent").Create()
-	childID := factory.NewThirdParty(owner).WithName("Auth Child").Create()
-
-	t.Run("viewer cannot add relation", func(t *testing.T) {
-		t.Parallel()
-
-		const query = `
-			mutation($input: CreateThirdPartyThirdPartyMappingInput!) {
-				createThirdPartyThirdPartyMapping(input: $input) {
-					thirdPartyEdge {
-						node { id }
-					}
-				}
-			}
-		`
-
-		_, err := viewer.Do(query, map[string]any{
-			"input": map[string]any{
-				"parentThirdPartyId": parentID,
-				"childThirdPartyId":  childID,
-			},
-		})
-		testutil.RequireForbiddenError(t, err)
-	})
-
-	t.Run("viewer cannot remove relation", func(t *testing.T) {
-		t.Parallel()
-
-		addRelation(t, owner, parentID, childID)
-
-		const query = `
-			mutation($input: DeleteThirdPartyThirdPartyMappingInput!) {
-				deleteThirdPartyThirdPartyMapping(input: $input) {
-					removedThirdPartyId
-				}
-			}
-		`
-
-		_, err := viewer.Do(query, map[string]any{
-			"input": map[string]any{
-				"parentThirdPartyId": parentID,
-				"childThirdPartyId":  childID,
-			},
-		})
-		testutil.RequireForbiddenError(t, err)
-	})
 
 	t.Run("viewer can list child third parties", func(t *testing.T) {
 		t.Parallel()
@@ -251,32 +262,7 @@ func TestThirdPartyRelation_TenantIsolation(t *testing.T) {
 	org2Owner := testutil.NewClient(t, testutil.RoleOwner)
 
 	parentID := factory.NewThirdParty(org1Owner).WithName("Org1 Parent").Create()
-	childID := factory.NewThirdParty(org1Owner).WithName("Org1 Child").Create()
-	org2ChildID := factory.NewThirdParty(org2Owner).WithName("Org2 Child").Create()
-
-	addRelation(t, org1Owner, parentID, childID)
-
-	t.Run("cannot add cross-org relation", func(t *testing.T) {
-		t.Parallel()
-
-		const query = `
-			mutation($input: CreateThirdPartyThirdPartyMappingInput!) {
-				createThirdPartyThirdPartyMapping(input: $input) {
-					thirdPartyEdge {
-						node { id }
-					}
-				}
-			}
-		`
-
-		_, err := org1Owner.Do(query, map[string]any{
-			"input": map[string]any{
-				"parentThirdPartyId": parentID,
-				"childThirdPartyId":  org2ChildID,
-			},
-		})
-		require.Error(t, err)
-	})
+	createChildThirdParty(t, org1Owner, parentID, "Org1 Child")
 
 	t.Run("cannot list children of other org third party", func(t *testing.T) {
 		t.Parallel()
@@ -309,58 +295,73 @@ func TestThirdPartyRelation_TenantIsolation(t *testing.T) {
 	})
 }
 
-func TestThirdParty_DirectFilter(t *testing.T) {
+func TestThirdParty_LevelFilter(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 
 	factory.NewThirdParty(owner).WithName("Direct TP").Create()
 
-	const createNonDirect = `
+	const createThirdParty = `
 		mutation($input: CreateThirdPartyInput!) {
 			createThirdParty(input: $input) {
 				thirdPartyEdge {
 					node {
 						id
-						firstLevel
+						level
 					}
 				}
 			}
 		}
 	`
 
-	var createResult struct {
+	type createThirdPartyResult struct {
 		CreateThirdParty struct {
 			ThirdPartyEdge struct {
 				Node struct {
-					ID         string `json:"id"`
-					FirstLevel bool   `json:"firstLevel"`
+					ID    string `json:"id"`
+					Level int    `json:"level"`
 				} `json:"node"`
 			} `json:"thirdPartyEdge"`
 		} `json:"createThirdParty"`
 	}
 
-	err := owner.Execute(createNonDirect, map[string]any{
+	// A level-2 third party can only exist as the child of a level-1 parent;
+	// the level is derived from the parent rather than supplied by the client.
+	var parentResult createThirdPartyResult
+
+	err := owner.Execute(createThirdParty, map[string]any{
 		"input": map[string]any{
 			"organizationId": owner.GetOrganizationID().String(),
-			"name":           factory.SafeName("NonDirect TP"),
-			"firstLevel":     false,
+			"name":           factory.SafeName("Parent TP"),
+		},
+	}, &parentResult)
+	require.NoError(t, err)
+	require.Equal(t, 1, parentResult.CreateThirdParty.ThirdPartyEdge.Node.Level)
+
+	var createResult createThirdPartyResult
+
+	err = owner.Execute(createThirdParty, map[string]any{
+		"input": map[string]any{
+			"organizationId":     owner.GetOrganizationID().String(),
+			"name":               factory.SafeName("NonDirect TP"),
+			"parentThirdPartyId": parentResult.CreateThirdParty.ThirdPartyEdge.Node.ID,
 		},
 	}, &createResult)
 	require.NoError(t, err)
-	assert.False(t, createResult.CreateThirdParty.ThirdPartyEdge.Node.FirstLevel)
+	assert.Equal(t, 2, createResult.CreateThirdParty.ThirdPartyEdge.Node.Level)
 
-	t.Run("filter firstLevel only", func(t *testing.T) {
+	t.Run("filter level 1 only", func(t *testing.T) {
 		t.Parallel()
 
 		const query = `
 			query($orgId: ID!) {
 				node(id: $orgId) {
 					... on Organization {
-						thirdParties(first: 100, filter: { firstLevel: true }) {
+						thirdParties(first: 100, filter: { level: 1 }) {
 							edges {
 								node {
 									id
-									firstLevel
+									level
 								}
 							}
 						}
@@ -374,8 +375,8 @@ func TestThirdParty_DirectFilter(t *testing.T) {
 				ThirdParties struct {
 					Edges []struct {
 						Node struct {
-							ID         string `json:"id"`
-							FirstLevel bool   `json:"firstLevel"`
+							ID    string `json:"id"`
+							Level int    `json:"level"`
 						} `json:"node"`
 					} `json:"edges"`
 				} `json:"thirdParties"`
@@ -388,7 +389,7 @@ func TestThirdParty_DirectFilter(t *testing.T) {
 		require.NoError(t, err)
 
 		for _, edge := range result.Node.ThirdParties.Edges {
-			assert.True(t, edge.Node.FirstLevel, "expected all third parties to be firstLevel when filtering direct=true")
+			assert.Equal(t, 1, edge.Node.Level, "expected all third parties to be level 1 when filtering level=1")
 		}
 	})
 
@@ -403,7 +404,7 @@ func TestThirdParty_DirectFilter(t *testing.T) {
 							edges {
 								node {
 									id
-									firstLevel
+									level
 								}
 							}
 						}
@@ -417,8 +418,8 @@ func TestThirdParty_DirectFilter(t *testing.T) {
 				ThirdParties struct {
 					Edges []struct {
 						Node struct {
-							ID         string `json:"id"`
-							FirstLevel bool   `json:"firstLevel"`
+							ID    string `json:"id"`
+							Level int    `json:"level"`
 						} `json:"node"`
 					} `json:"edges"`
 				} `json:"thirdParties"`
@@ -430,28 +431,28 @@ func TestThirdParty_DirectFilter(t *testing.T) {
 		}, &result)
 		require.NoError(t, err)
 
-		hasFirstLevel := false
-		hasNonFirstLevel := false
+		hasLevel1 := false
+		hasLevel2 := false
 
 		for _, edge := range result.Node.ThirdParties.Edges {
-			if edge.Node.FirstLevel {
-				hasFirstLevel = true
-			} else {
-				hasNonFirstLevel = true
+			if edge.Node.Level == 1 {
+				hasLevel1 = true
+			} else if edge.Node.Level >= 2 {
+				hasLevel2 = true
 			}
 		}
 
-		assert.True(t, hasFirstLevel, "expected at least one first-level third party")
-		assert.True(t, hasNonFirstLevel, "expected at least one non-first-level third party")
+		assert.True(t, hasLevel1, "expected at least one level-1 third party")
+		assert.True(t, hasLevel2, "expected at least one level-2+ third party")
 	})
 }
 
-func addRelation(t *testing.T, c *testutil.Client, parentID, childID string) {
+func createChildThirdParty(t *testing.T, c *testutil.Client, parentID, name string) string {
 	t.Helper()
 
 	const query = `
-		mutation($input: CreateThirdPartyThirdPartyMappingInput!) {
-			createThirdPartyThirdPartyMapping(input: $input) {
+		mutation($input: CreateThirdPartyInput!) {
+			createThirdParty(input: $input) {
 				thirdPartyEdge {
 					node { id }
 				}
@@ -460,22 +461,25 @@ func addRelation(t *testing.T, c *testutil.Client, parentID, childID string) {
 	`
 
 	var result struct {
-		CreateThirdPartyThirdPartyMapping struct {
+		CreateThirdParty struct {
 			ThirdPartyEdge struct {
 				Node struct {
 					ID string `json:"id"`
 				} `json:"node"`
 			} `json:"thirdPartyEdge"`
-		} `json:"createThirdPartyThirdPartyMapping"`
+		} `json:"createThirdParty"`
 	}
 
 	err := c.Execute(query, map[string]any{
 		"input": map[string]any{
+			"organizationId":     c.GetOrganizationID().String(),
+			"name":               factory.SafeName(name),
 			"parentThirdPartyId": parentID,
-			"childThirdPartyId":  childID,
 		},
 	}, &result)
 	require.NoError(t, err)
+
+	return result.CreateThirdParty.ThirdPartyEdge.Node.ID
 }
 
 func countChildThirdParties(t *testing.T, c *testutil.Client, parentID string) int {

@@ -178,17 +178,17 @@ export const description: INodeProperties[] = [
 				default: '',
 			},
 			{
+				displayName: 'Parent Third Party ID',
+				name: 'parentThirdPartyId',
+				type: 'string',
+				default: '',
+				description: 'The ID of the parent third party (creates a child relationship; level is derived from the parent)',
+			},
+			{
 				displayName: 'Privacy Policy URL',
 				name: 'privacyPolicyUrl',
 				type: 'string',
 				default: '',
-			},
-			{
-				displayName: 'Root',
-				name: 'firstLevel',
-				type: 'boolean',
-				default: false,
-				description: 'Whether this is a first-level third party',
 			},
 			{
 				displayName: 'Security Page URL',
@@ -256,7 +256,7 @@ export async function execute(
 		trustPageUrl?: string;
 		certifications?: string;
 		countries?: string;
-		firstLevel?: boolean;
+		parentThirdPartyId?: string;
 	};
 
 	const query = `
@@ -283,7 +283,7 @@ export async function execute(
 						certifications
 						countries
 						showOnTrustCenter
-						firstLevel
+						level
 						createdAt
 						updatedAt
 					}
@@ -312,7 +312,10 @@ export async function execute(
 	if (additionalFields.subprocessorsListUrl) input.subprocessorsListUrl = additionalFields.subprocessorsListUrl;
 	if (additionalFields.securityPageUrl) input.securityPageUrl = additionalFields.securityPageUrl;
 	if (additionalFields.trustPageUrl) input.trustPageUrl = additionalFields.trustPageUrl;
-	if (additionalFields.firstLevel !== undefined) input.firstLevel = additionalFields.firstLevel;
+	if (additionalFields.parentThirdPartyId) {
+		// The server derives the level from the parent (parent.level + 1).
+		input.parentThirdPartyId = additionalFields.parentThirdPartyId;
+	}
 	if (additionalFields.certifications) {
 		input.certifications = additionalFields.certifications.split(',').map((c) => c.trim()).filter(Boolean);
 	}

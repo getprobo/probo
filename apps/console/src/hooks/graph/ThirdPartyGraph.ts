@@ -22,8 +22,7 @@ import { graphql } from "relay-runtime";
 import type { ThirdPartyGraphCreateMutation } from "#/__generated__/core/ThirdPartyGraphCreateMutation.graphql";
 import type { ThirdPartyGraphDeleteMutation } from "#/__generated__/core/ThirdPartyGraphDeleteMutation.graphql";
 import type { ThirdPartyGraphSelectQuery } from "#/__generated__/core/ThirdPartyGraphSelectQuery.graphql";
-
-import { useMutationWithToasts } from "../useMutationWithToasts";
+import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 
 /* eslint-disable relay/unused-fields, relay/must-colocate-fragment-spreads */
 
@@ -51,14 +50,10 @@ const createThirdPartyMutation = graphql`
 
 export function useCreateThirdPartyMutation() {
   const { __ } = useTranslate();
-
-  return useMutationWithToasts<ThirdPartyGraphCreateMutation>(
-    createThirdPartyMutation,
-    {
-      successMessage: __("Third party created successfully."),
-      errorMessage: __("Failed to create third party"),
-    },
-  );
+  return useMutationWithToasts<ThirdPartyGraphCreateMutation>(createThirdPartyMutation, {
+    successMessage: __("Third party created successfully"),
+    errorMessage: __("Failed to create third party"),
+  });
 }
 
 const deleteThirdPartyMutation = graphql`
@@ -138,7 +133,7 @@ export const paginatedThirdPartiesFragment = graphql`
     after: { type: "CursorKey", defaultValue: null }
     before: { type: "CursorKey", defaultValue: null }
     last: { type: "Int", defaultValue: null }
-    filter: { type: "ThirdPartyFilter", defaultValue: { firstLevel: true } }
+    filter: { type: "ThirdPartyFilter", defaultValue: { level: 1 } }
   ) {
     thirdParties(
       first: $first
@@ -154,6 +149,7 @@ export const paginatedThirdPartiesFragment = graphql`
           id
           name
           websiteUrl
+          level
           updatedAt
           riskAssessments(
             first: 1
@@ -184,7 +180,11 @@ export const thirdPartyNodeQuery = graphql`
       ... on ThirdParty {
         name
         websiteUrl
-        firstLevel
+        level
+        ancestors {
+          id
+          name
+        }
         vettingStatus
         canVet: permission(action: "core:thirdParty:vet")
         canUpdate: permission(action: "core:thirdParty:update")
@@ -229,14 +229,13 @@ export const thirdPartiesSelectQuery = graphql`
         thirdParties(
           first: 100
           orderBy: { direction: ASC, field: NAME }
-          filter: { firstLevel: true }
         ) {
           edges {
             node {
               id
               name
               websiteUrl
-              firstLevel
+              level
             }
           }
         }

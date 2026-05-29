@@ -255,7 +255,7 @@ func TestPromoteThirdParty_FallbackCreate(t *testing.T) {
 	require.NotNil(t, reloaded.CommonThirdPartyID)
 	assert.Equal(t, fx.commonThirdPartyID, *reloaded.CommonThirdPartyID)
 	assert.Equal(t, coredata.ThirdPartyCategoryAnalytics, reloaded.Category)
-	assert.True(t, reloaded.FirstLevel)
+	assert.Equal(t, 1, reloaded.Level)
 	assert.False(t, reloaded.ShowOnTrustCenter)
 }
 

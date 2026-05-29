@@ -65,7 +65,7 @@ const thirdPartiesFragment = graphql`
     last: { type: "Int", defaultValue: null }
     before: { type: "CursorKey", defaultValue: null }
     order: { type: "ThirdPartyOrder", defaultValue: null }
-    filter: { type: "ThirdPartyFilter", defaultValue: { firstLevel: true } }
+    filter: { type: "ThirdPartyFilter", defaultValue: { level: 1 } }
   )
   @refetchable(queryName: "LinkedThirdPartiesDialogRefetchQuery") {
     thirdParties(
@@ -159,7 +159,7 @@ function LinkedThirdPartiesDialogContent({
     refetch({
       first: 20,
       filter: {
-        firstLevel: true,
+        level: 1,
         query: v,
       },
     });

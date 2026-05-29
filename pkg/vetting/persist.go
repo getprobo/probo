@@ -18,6 +18,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"regexp"
 	"strings"
 	"time"
 
@@ -25,6 +26,11 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 )
+
+// nameSuffixPattern matches a trailing " (path)" suffix on a stored third party
+// name. It mirrors the console UI regex so backend and frontend agree on how a
+// hierarchy-qualified name is split back into its bare base.
+var nameSuffixPattern = regexp.MustCompile(`\s*\([^)]*\)\s*$`)
 
 const (
 	vettingRiskAssessmentValidity = 365 * 24 * time.Hour
@@ -51,12 +57,27 @@ func PersistAssessmentResult(
 				return fmt.Errorf("cannot load third party: %w", err)
 			}
 
-			applySaveParams(thirdParty, pc.WebsiteURL, saveParamsFromInfo(result.Info))
+			// Sub third parties store hierarchy-qualified names ("aws (Probo)").
+			// Load the ancestor chain so the vetted third party and any
+			// discovered sub-processors are named consistently with the console.
+			ancestorBaseNames, err := loadAncestorBaseNames(ctx, conn, scope, thirdParty.ID)
+			if err != nil {
+				return err
+			}
+
+			applySaveParams(thirdParty, pc.WebsiteURL, saveParamsFromInfo(result.Info), ancestorBaseNames)
 			thirdParty.UpdatedAt = time.Now()
 
 			if err := thirdParty.Update(ctx, conn, scope); err != nil {
 				return fmt.Errorf("cannot update third party: %w", err)
 			}
+
+			// The suffix for children of this third party is the ancestor path
+			// plus the third party itself (computed after applySaveParams so a
+			// freshly canonicalized name is reflected).
+			childNamePath := make([]string, 0, len(ancestorBaseNames)+1)
+			childNamePath = append(childNamePath, ancestorBaseNames...)
+			childNamePath = append(childNamePath, baseThirdPartyName(thirdParty.Name))
 
 			for _, sub := range result.Info.Subprocessors {
 				if sub.Name == "" {
@@ -68,6 +89,8 @@ func PersistAssessmentResult(
 					conn,
 					scope,
 					pc,
+					thirdParty.Level,
+					childNamePath,
 					linkSubThirdPartyParams{
 						Name:    sub.Name,
 						Country: sub.Country,
@@ -296,9 +319,12 @@ func applySaveParams(
 	thirdParty *coredata.ThirdParty,
 	websiteURL string,
 	p saveThirdPartyInfoParams,
+	nameSuffixPath []string,
 ) {
 	if p.Name != "" {
-		thirdParty.Name = p.Name
+		// Keep the name hierarchy-qualified for sub third parties; a top-level
+		// third party (empty suffix path) keeps the bare name.
+		thirdParty.Name = qualifyThirdPartyName(p.Name, nameSuffixPath)
 	}
 
 	thirdParty.WebsiteURL = &websiteURL
@@ -371,78 +397,122 @@ func linkSubThirdParty(
 	conn pg.Tx,
 	scope coredata.Scoper,
 	pc *PersistenceContext,
+	parentLevel int,
+	parentNamePath []string,
 	p linkSubThirdPartyParams,
 ) error {
 	if p.Name == "" {
 		return nil
 	}
 
-	child := &coredata.ThirdParty{}
-
-	err := child.LoadByNameAndOrganizationID(ctx, conn, scope, p.Name, pc.OrganizationID)
-	if err != nil {
-		if !errors.Is(err, coredata.ErrResourceNotFound) {
-			return fmt.Errorf("cannot find child third party %q: %w", p.Name, err)
-		}
-
-		now := time.Now()
-		child = &coredata.ThirdParty{
-			ID:             gid.New(scope.GetTenantID(), coredata.ThirdPartyEntityType),
-			OrganizationID: pc.OrganizationID,
-			Name:           p.Name,
-			Category:       coredata.ThirdPartyCategoryOther,
-			FirstLevel:     false,
-			CreatedAt:      now,
-			UpdatedAt:      now,
-		}
-
-		if p.Description != "" {
-			child.Description = &p.Description
-		}
-
-		if p.Category != "" {
-			if category, err := parseThirdPartyCategory(p.Category); err == nil {
-				child.Category = category
-			}
-		}
-
-		if p.WebsiteURL != "" {
-			child.WebsiteURL = &p.WebsiteURL
-		}
-
-		if countries := parseOptionalCountryCodes(p.Country); len(countries) > 0 {
-			child.Countries = countries
-		}
-
-		if err := child.Insert(ctx, conn, scope); err != nil {
-			return fmt.Errorf("cannot create child third party %q: %w", p.Name, err)
-		}
-	} else if countries := parseOptionalCountryCodes(p.Country); len(countries) > 0 && len(child.Countries) == 0 {
-		child.Countries = countries
-		child.UpdatedAt = time.Now()
-
-		if err := child.Update(ctx, conn, scope); err != nil {
-			return fmt.Errorf("cannot update child third party %q countries: %w", p.Name, err)
-		}
-	}
-
-	if child.ID == pc.ThirdPartyID {
+	// Auto-discovered subprocessors must not nest beyond the maximum level.
+	// Stop descending here rather than creating an invalid child.
+	if parentLevel+1 > coredata.MaxThirdPartyLevel {
 		return nil
 	}
 
-	relation := &coredata.ThirdPartyThirdParty{
-		ParentThirdPartyID: pc.ThirdPartyID,
-		ChildThirdPartyID:  child.ID,
-		CreatedAt:          time.Now(),
+	// Store and match the child under its hierarchy-qualified name so vetting
+	// agrees with names created from the console (e.g. "aws (Probo)").
+	qualifiedName := qualifyThirdPartyName(p.Name, parentNamePath)
+
+	child := &coredata.ThirdParty{}
+
+	// Sub-third-parties are scoped per parent, so a child is matched by name
+	// within this parent only — a same-named third party under a different
+	// parent is an independent entity and must be created here too.
+	err := child.LoadByNameAndParentThirdPartyID(ctx, conn, scope, qualifiedName, pc.ThirdPartyID)
+	switch {
+	case err == nil:
+		if countries := parseOptionalCountryCodes(p.Country); len(countries) > 0 && len(child.Countries) == 0 {
+			child.Countries = countries
+			child.UpdatedAt = time.Now()
+
+			if err := child.Update(ctx, conn, scope); err != nil {
+				return fmt.Errorf("cannot update child third party %q countries: %w", p.Name, err)
+			}
+		}
+
+		return nil
+	case !errors.Is(err, coredata.ErrResourceNotFound):
+		return fmt.Errorf("cannot find child third party %q: %w", p.Name, err)
 	}
 
-	if p.Purpose != "" {
-		relation.Purpose = &p.Purpose
+	now := time.Now()
+	parentID := pc.ThirdPartyID
+	child = &coredata.ThirdParty{
+		ID:                 gid.New(scope.GetTenantID(), coredata.ThirdPartyEntityType),
+		OrganizationID:     pc.OrganizationID,
+		ParentThirdPartyID: &parentID,
+		Name:               qualifiedName,
+		Category:           coredata.ThirdPartyCategoryOther,
+		Level:              parentLevel + 1,
+		CreatedAt:          now,
+		UpdatedAt:          now,
 	}
 
-	if err := relation.Insert(ctx, conn, scope); err != nil {
-		return fmt.Errorf("cannot insert third party relation: %w", err)
+	if p.Description != "" {
+		child.Description = &p.Description
+	}
+
+	if p.Category != "" {
+		if category, err := parseThirdPartyCategory(p.Category); err == nil {
+			child.Category = category
+		}
+	}
+
+	if p.WebsiteURL != "" {
+		child.WebsiteURL = &p.WebsiteURL
+	}
+
+	if countries := parseOptionalCountryCodes(p.Country); len(countries) > 0 {
+		child.Countries = countries
+	}
+
+	if err := child.Insert(ctx, conn, scope); err != nil {
+		return fmt.Errorf("cannot create child third party %q: %w", p.Name, err)
 	}
 
 	return nil
+}
+
+// baseThirdPartyName strips a trailing " (path)" suffix so a stored,
+// hierarchy-qualified name is reduced to its bare base, mirroring the console
+// UI convention.
+func baseThirdPartyName(name string) string {
+	return strings.TrimSpace(nameSuffixPattern.ReplaceAllString(name, ""))
+}
+
+// qualifyThirdPartyName appends the parent path as a parenthesized suffix, e.g.
+// ("aws", ["Probo", "Acme"]) → "aws (Probo/Acme)". An empty path leaves the
+// name unchanged, so top-level third parties are never suffixed.
+func qualifyThirdPartyName(base string, path []string) string {
+	if len(path) == 0 {
+		return base
+	}
+
+	return fmt.Sprintf("%s (%s)", base, strings.Join(path, "/"))
+}
+
+// loadAncestorBaseNames returns the base names of a third party's ancestors,
+// ordered root → immediate parent. It is the suffix path used to qualify the
+// third party's own name; append the third party's own base name to it to get
+// the suffix path for its children.
+func loadAncestorBaseNames(
+	ctx context.Context,
+	conn pg.Querier,
+	scope coredata.Scoper,
+	thirdPartyID gid.GID,
+) ([]string, error) {
+	var ancestors coredata.ThirdParties
+
+	if err := ancestors.LoadAllAncestorsByThirdPartyID(ctx, conn, scope, thirdPartyID); err != nil {
+		return nil, fmt.Errorf("cannot load ancestors: %w", err)
+	}
+
+	names := make([]string, len(ancestors))
+	for i, ancestor := range ancestors {
+		names[i] = baseThirdPartyName(ancestor.Name)
+	}
+
+	return names, nil
 }

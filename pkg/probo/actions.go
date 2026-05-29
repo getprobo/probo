@@ -94,7 +94,6 @@ const (
 
 	// ThirdPartyRelation actions
 	ActionThirdPartyRelationCreate = "core:thirdParty-relation:create"
-	ActionThirdPartyRelationDelete = "core:thirdParty-relation:delete"
 	ActionThirdPartyRelationList   = "core:thirdParty-relation:list"
 
 	// ThirdPartyContact actions

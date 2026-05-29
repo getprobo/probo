@@ -34,7 +34,7 @@ import {
   usePreloadedQuery,
   useRelayEnvironment,
 } from "react-relay";
-import { Outlet } from "react-router";
+import { Link, Outlet } from "react-router";
 import { fetchQuery } from "relay-runtime";
 
 import type { ThirdPartyComplianceTabFragment$key } from "#/__generated__/core/ThirdPartyComplianceTabFragment.graphql";
@@ -104,6 +104,8 @@ export default function ThirdPartyDetailPage(props: Props) {
 
   const isVettingFailed = thirdParty.vettingStatus === "FAILED";
 
+  const ancestors = thirdParty.ancestors ?? [];
+
   return (
     <div className="space-y-6">
       {isVetting && (
@@ -142,10 +144,26 @@ export default function ThirdPartyDetailPage(props: Props) {
           )}
           <div className="flex items-center gap-3">
             <div className="text-2xl">{thirdParty.name}</div>
-            <Badge variant={thirdParty.firstLevel ? "info" : "neutral"}>
-              {thirdParty.firstLevel ? __("First Level") : __("Indirect")}
+            <Badge variant={thirdParty.level === 1 ? "info" : "neutral"}>
+              {`${__("Level")} ${thirdParty.level}`}
             </Badge>
           </div>
+          {ancestors.length > 0 && (
+            <div className="flex items-center gap-1 text-sm text-txt-secondary">
+              <span className="text-txt-tertiary">{__("From:")}</span>
+              {ancestors.map((ancestor, i) => (
+                <span key={ancestor.id}>
+                  {i > 0 && " / "}
+                  <Link
+                    to={`/organizations/${organizationId}/third-parties/${ancestor.id}/overview`}
+                    className="text-txt-primary underline hover:no-underline"
+                  >
+                    {ancestor.name}
+                  </Link>
+                </span>
+              ))}
+            </div>
+          )}
         </div>
         <div className="flex gap-2 items-center">
           {thirdParty.canVet && !isVetting && (
