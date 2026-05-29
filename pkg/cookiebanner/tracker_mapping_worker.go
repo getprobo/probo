@@ -27,7 +27,6 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/llm"
-	"go.probo.inc/probo/pkg/slug"
 	"go.probo.inc/probo/pkg/thirdparty"
 	"go.probo.inc/probo/pkg/uri"
 )
@@ -661,10 +660,12 @@ func (h *trackerMappingHandler) persistAgentIdentification(
 	tp coredata.TrackerPattern,
 	ident agentIdentification,
 ) (*catalogMatch, error) {
-	commonThirdPartyID, err := h.resolveOrCreateCommonThirdParty(
+	commonThirdPartyID, err := thirdparty.ResolveOrCreateCommonThirdParty(
 		ctx,
 		tx,
-		ident.result,
+		h.logger,
+		ident.result.ThirdPartyName,
+		ident.result.Category,
 		ident.domains,
 	)
 	if err != nil {
@@ -700,67 +701,6 @@ func (h *trackerMappingHandler) persistAgentIdentification(
 		commonPatternID:    &commonPattern.ID,
 		commonThirdPartyID: commonPattern.CommonThirdPartyID,
 	}, nil
-}
-
-func (h *trackerMappingHandler) resolveOrCreateCommonThirdParty(
-	ctx context.Context,
-	tx pg.Tx,
-	identification TrackerMappingAgentResult,
-	domains []string,
-) (*gid.GID, error) {
-	var party coredata.CommonThirdParty
-	if err := party.LoadByName(ctx, tx, identification.ThirdPartyName); err == nil {
-		return &party.ID, nil
-	}
-
-	partySlug := slug.Make(identification.ThirdPartyName)
-	if partySlug == "" {
-		return nil, nil
-	}
-
-	if err := party.LoadBySlug(ctx, tx, partySlug); err == nil {
-		return &party.ID, nil
-	}
-
-	category := identification.Category
-
-	now := time.Now()
-	party = coredata.CommonThirdParty{
-		ID:             gid.New(gid.NilTenant, coredata.CommonThirdPartyEntityType),
-		Name:           identification.ThirdPartyName,
-		Slug:           partySlug,
-		Category:       category,
-		Certifications: []string{},
-		CreatedAt:      now,
-		UpdatedAt:      now,
-	}
-
-	if err := party.Insert(ctx, tx); err != nil {
-		return nil, fmt.Errorf("cannot create common third party: %w", err)
-	}
-
-	for _, domain := range domains {
-		domainRecord := coredata.CommonThirdPartyDomain{
-			ID:                 gid.New(gid.NilTenant, coredata.CommonThirdPartyDomainEntityType),
-			CommonThirdPartyID: party.ID,
-			Domain:             domain,
-			CreatedAt:          now,
-			UpdatedAt:          now,
-		}
-
-		if _, err := domainRecord.Upsert(ctx, tx); err != nil {
-			return nil, fmt.Errorf("cannot create common third party domain: %w", err)
-		}
-	}
-
-	h.logger.InfoCtx(
-		ctx,
-		"created common third party from agent identification",
-		log.String("name", identification.ThirdPartyName),
-		log.String("category", category.String()),
-	)
-
-	return &party.ID, nil
 }
 
 // matchBySiblingOrigin finds other tracker patterns on the same banner
