@@ -108,6 +108,7 @@ func (d *MetabaseDriver) queryUsers(ctx context.Context) ([]metabaseUser, error)
 	}
 
 	var users []metabaseUser
+
 	offset := 0
 
 	for {
