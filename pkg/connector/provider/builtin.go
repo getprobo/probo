@@ -26,6 +26,7 @@ func NewBuiltinRegistry() *Registry {
 		asanaRegistration(),
 		bitbucketRegistration(),
 		brexRegistration(),
+		clerkRegistration(),
 		clickupRegistration(),
 		cloudflareRegistration(),
 		cursorRegistration(),

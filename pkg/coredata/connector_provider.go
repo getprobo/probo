@@ -50,6 +50,7 @@ const (
 	ConnectorProviderAsana        ConnectorProvider = "ASANA"
 	ConnectorProviderNetlify      ConnectorProvider = "NETLIFY"
 	ConnectorProviderClickUp      ConnectorProvider = "CLICKUP"
+	ConnectorProviderClerk        ConnectorProvider = "CLERK"
 	ConnectorProviderVercel       ConnectorProvider = "VERCEL"
 	ConnectorProviderMonday       ConnectorProvider = "MONDAY"
 	ConnectorProviderMetabase     ConnectorProvider = "METABASE"
@@ -94,6 +95,7 @@ func ConnectorProviders() []ConnectorProvider {
 		ConnectorProviderAsana,
 		ConnectorProviderNetlify,
 		ConnectorProviderClickUp,
+		ConnectorProviderClerk,
 		ConnectorProviderVercel,
 		ConnectorProviderMonday,
 		ConnectorProviderMetabase,
@@ -134,6 +136,7 @@ func (v ConnectorProvider) IsValid() bool {
 		ConnectorProviderAsana,
 		ConnectorProviderNetlify,
 		ConnectorProviderClickUp,
+		ConnectorProviderClerk,
 		ConnectorProviderVercel,
 		ConnectorProviderMonday,
 		ConnectorProviderMetabase,
