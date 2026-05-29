@@ -280,10 +280,11 @@ func (h *trackerMappingHandler) Process(ctx context.Context, tp coredata.Tracker
 // deterministicResult carries the outcome of the pure-SQL catalog
 // signals (existing link, pattern, sibling origin, domain overlap) from
 // the read phase to the agent and persist phases. domains holds the
-// unfiltered initiator domains observed for the pattern (used by the
-// sibling re-enqueue cascade); commonThirdPartyPreexisted records
-// whether a catalog third party was already known before this run, so
-// the cascade only fires when this run is the one that resolved it.
+// observed initiator domains for the pattern with shared-infrastructure
+// hosts removed (used by the sibling re-enqueue cascade);
+// commonThirdPartyPreexisted records whether a catalog third party was
+// already known before this run, so the cascade only fires when this run
+// is the one that resolved it.
 type deterministicResult struct {
 	origin                     string
 	commonPatternID            *gid.GID
@@ -311,9 +312,6 @@ func (h *trackerMappingHandler) resolveDeterministic(
 	if err := banner.LoadByID(ctx, tx, scope, tp.CookieBannerID); err != nil {
 		return res, fmt.Errorf("cannot load cookie banner for domain filtering: %w", err)
 	}
-
-	// DEBUG: don't commit
-	banner.Origin = "https://t.probo.com"
 
 	res.origin = banner.Origin
 
@@ -349,16 +347,22 @@ func (h *trackerMappingHandler) resolveDeterministic(
 		return res, err
 	}
 
-	res.domains = loaded
+	// Shared tracker-delivery infrastructure (tag managers, CDPs, generic
+	// CDNs) initiates trackers for many unrelated vendors, so a shared
+	// initiator domain among them is not a same-vendor signal. Strip them
+	// once here so no downstream domain-overlap heuristic (sibling
+	// grouping, catalog domain match, or the sibling re-enqueue cascade)
+	// can group unrelated trackers on, say, a common googletagmanager.com.
+	res.domains = uri.FilterSharedInfrastructureDomains(loaded)
 
 	// Sibling matching is an org-local co-occurrence signal: two
 	// patterns served from the same origin on the same banner are likely
 	// the same vendor, even when that origin is the site's own
 	// (first-party) host — a tracker proxied through first-party still
-	// co-occurs with its siblings. So it intentionally runs on the
-	// unfiltered domains; the ambiguity guard in
-	// resolveThirdPartyFromSiblings prevents grouping unrelated
-	// first-party scripts.
+	// co-occurs with its siblings. So it intentionally keeps first-party
+	// domains (shared infrastructure was already removed above); the
+	// ambiguity guard in resolveThirdPartyFromSiblings prevents grouping
+	// unrelated first-party scripts.
 	siblingMatch, err := h.matchBySiblingOrigin(ctx, tx, tp, res.domains)
 	if err != nil {
 		return res, fmt.Errorf("cannot match by sibling origin: %w", err)

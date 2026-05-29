@@ -512,8 +512,10 @@ func TestMatchBySiblingOrigin_SiblingWithThirdPartyID(t *testing.T) {
 	}
 
 	// Detected trackers store the eTLD+1 (uri.ExtractDomain), so the
-	// sibling lookup matches on that exact value.
-	initiatorDomain := "googletagmanager.com"
+	// sibling lookup matches on that exact value. Use a vendor-specific
+	// domain rather than shared infrastructure (e.g. googletagmanager.com),
+	// which resolveDeterministic strips before sibling grouping.
+	initiatorDomain := "google-analytics.com"
 	siblingDetected := coredata.DetectedTracker{
 		ID:               gid.New(fx.scope.GetTenantID(), coredata.DetectedTrackerEntityType),
 		CookieBannerID:   fx.banner.ID,
@@ -569,7 +571,7 @@ func TestMatchBySiblingOrigin_SiblingWithThirdPartyID(t *testing.T) {
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		var err error
 
-		got, err = h.matchBySiblingOrigin(ctx, tx, unmappedPattern, []string{"googletagmanager.com"})
+		got, err = h.matchBySiblingOrigin(ctx, tx, unmappedPattern, []string{"google-analytics.com"})
 
 		return err
 	}))
@@ -1120,7 +1122,10 @@ func TestProcess_BackfillsCommonThirdPartyFromSibling(t *testing.T) {
 		UpdatedAt:              now,
 	}
 
-	initiatorDomain := "googletagmanager.com"
+	// A vendor-specific initiator domain: resolveDeterministic strips
+	// shared infrastructure (e.g. googletagmanager.com) before sibling
+	// grouping, so the backfill must be driven by a real vendor domain.
+	initiatorDomain := "google-analytics.com"
 
 	siblingDetected := coredata.DetectedTracker{
 		ID:               gid.New(fx.scope.GetTenantID(), coredata.DetectedTrackerEntityType),
