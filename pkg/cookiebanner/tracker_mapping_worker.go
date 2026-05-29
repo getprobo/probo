@@ -236,6 +236,22 @@ func (h *trackerMappingHandler) Process(ctx context.Context, tp coredata.Tracker
 			}
 
 			if err := tp.UpdateMapping(ctx, tx, scope); err != nil {
+				// The pattern can be merged into a glob and deleted by
+				// the pattern-analysis worker while this worker holds no
+				// row lock (the LLM/web-search phases run between short
+				// transactions). A vanished pattern has nothing left to
+				// map, so treat the concurrent delete as a no-op instead
+				// of failing the task.
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					h.logger.InfoCtx(
+						ctx,
+						"tracker pattern deleted before mapping could be persisted, skipping",
+						log.String("tracker_pattern_id", tp.ID.String()),
+					)
+
+					return nil
+				}
+
 				return fmt.Errorf("cannot update tracker pattern mapping: %w", err)
 			}
 
