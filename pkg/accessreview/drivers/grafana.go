@@ -70,6 +70,7 @@ func (d *GrafanaDriver) ListAccounts(ctx context.Context) ([]AccountRecord, erro
 			if email == "" {
 				email = strings.TrimSpace(u.Login)
 			}
+
 			if email == "" {
 				continue
 			}
