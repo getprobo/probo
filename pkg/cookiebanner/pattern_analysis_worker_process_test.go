@@ -271,6 +271,40 @@ func newTestHandler(client *pg.Client) *patternAnalysisHandler {
 	}
 }
 
+// seedThirdParty inserts a minimal org ThirdParty so a tracker pattern's
+// third_party_id (a FK to third_parties) can point at a real row.
+func seedThirdParty(t *testing.T, ctx context.Context, client *pg.Client, fx workerFixture, name string) gid.GID {
+	t.Helper()
+
+	now := time.Now().UTC().Truncate(time.Microsecond)
+	id := gid.New(fx.scope.GetTenantID(), coredata.ThirdPartyEntityType)
+
+	party := coredata.ThirdParty{
+		ID:             id,
+		TenantID:       fx.scope.GetTenantID(),
+		OrganizationID: fx.organizationID,
+		Name:           name,
+		Category:       coredata.ThirdPartyCategoryAnalytics,
+		Certifications: []string{},
+		Countries:      coredata.CountryCodes{},
+		CreatedAt:      now,
+		UpdatedAt:      now,
+	}
+
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		return party.Insert(ctx, tx, fx.scope)
+	}))
+
+	t.Cleanup(func() {
+		_ = client.WithTx(context.Background(), func(ctx context.Context, tx pg.Tx) error {
+			_, err := tx.Exec(ctx, `DELETE FROM third_parties WHERE id = $1`, id)
+			return err
+		})
+	})
+
+	return id
+}
+
 // TestPatternAnalysisWorker_PromotesSourceOnExistingGlob seeds a
 // banner with a PRE_EXISTING `_ga_*` glob in the analytics category,
 // adds three SCRIPT-source exacts that group under the same template,
@@ -646,4 +680,120 @@ func TestPatternAnalysisWorker_MergeWithoutAdoptionSkipsDraftVersion(t *testing.
 	if !errors.Is(err, coredata.ErrResourceNotFound) {
 		t.Fatalf("merge-only run unexpectedly produced a banner version: state=%s", latest.State)
 	}
+}
+
+// TestPatternAnalysisWorker_GlobInheritsUnanimousMapping seeds three
+// exacts that all resolve to the same org ThirdParty (one carrying a
+// description) and asserts the merged glob inherits that third party and
+// description, so the mapping worker can skip the expensive org
+// resolution. Mapping is still re-armed so the glob derives its own
+// catalog row.
+func TestPatternAnalysisWorker_GlobInheritsUnanimousMapping(t *testing.T) {
+	t.Parallel()
+
+	client := newTestPgClient(t)
+	ctx := context.Background()
+	fx := seedWorkerFixture(t, ctx, client)
+
+	thirdPartyID := seedThirdParty(t, ctx, client, fx, "Google Analytics")
+
+	maxAge := 7 * 24 * 3600
+
+	exacts := []*coredata.TrackerPattern{
+		newExactPattern(fx, "_ga_abc123", fx.normalCategoryID, coredata.CookieSourceScript, &maxAge),
+		newExactPattern(fx, "_ga_def456", fx.normalCategoryID, coredata.CookieSourceScript, &maxAge),
+		newExactPattern(fx, "_ga_xyz789", fx.normalCategoryID, coredata.CookieSourceScript, &maxAge),
+	}
+	for _, ep := range exacts {
+		ep.ThirdPartyID = &thirdPartyID
+	}
+	exacts[1].Description = "Google Analytics measurement cookie"
+
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		for _, ep := range exacts {
+			if err := ep.Insert(ctx, tx, fx.scope); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	}))
+
+	h := newTestHandler(client)
+	require.NoError(t, h.Process(ctx, fx.banner))
+
+	loaded := &coredata.TrackerPattern{}
+
+	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+		return loaded.LoadByBannerIDTypeAndPattern(
+			ctx,
+			conn,
+			fx.scope,
+			fx.banner.ID,
+			coredata.TrackerTypeCookie,
+			"_ga_*",
+			&maxAge,
+		)
+	}))
+
+	require.NotNil(t, loaded.ThirdPartyID, "glob must inherit the unanimous org third party from the merged exacts")
+	assert.Equal(t, thirdPartyID, *loaded.ThirdPartyID)
+	assert.Equal(t, "Google Analytics measurement cookie", loaded.Description, "glob must inherit the description tied to the resolved third party")
+	assert.NotNil(t, loaded.MappingRequestedAt, "mapping must still be re-armed so the glob derives its own catalog row")
+}
+
+// TestPatternAnalysisWorker_GlobSkipsConflictingMapping seeds exacts
+// that resolve to two different org ThirdParties and asserts the merged
+// glob is left blank rather than guessing, preserving a fresh mapping
+// pass.
+func TestPatternAnalysisWorker_GlobSkipsConflictingMapping(t *testing.T) {
+	t.Parallel()
+
+	client := newTestPgClient(t)
+	ctx := context.Background()
+	fx := seedWorkerFixture(t, ctx, client)
+
+	thirdPartyA := seedThirdParty(t, ctx, client, fx, "Vendor A")
+	thirdPartyB := seedThirdParty(t, ctx, client, fx, "Vendor B")
+
+	maxAge := 7 * 24 * 3600
+
+	exacts := []*coredata.TrackerPattern{
+		newExactPattern(fx, "_ga_abc123", fx.normalCategoryID, coredata.CookieSourceScript, &maxAge),
+		newExactPattern(fx, "_ga_def456", fx.normalCategoryID, coredata.CookieSourceScript, &maxAge),
+		newExactPattern(fx, "_ga_xyz789", fx.normalCategoryID, coredata.CookieSourceScript, &maxAge),
+	}
+	exacts[0].ThirdPartyID = &thirdPartyA
+	exacts[1].ThirdPartyID = &thirdPartyB
+
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		for _, ep := range exacts {
+			if err := ep.Insert(ctx, tx, fx.scope); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	}))
+
+	h := newTestHandler(client)
+	require.NoError(t, h.Process(ctx, fx.banner))
+
+	loaded := &coredata.TrackerPattern{}
+
+	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+		return loaded.LoadByBannerIDTypeAndPattern(
+			ctx,
+			conn,
+			fx.scope,
+			fx.banner.ID,
+			coredata.TrackerTypeCookie,
+			"_ga_*",
+			&maxAge,
+		)
+	}))
+
+	assert.Nil(t, loaded.ThirdPartyID, "glob must not inherit a third party when the merged exacts disagree")
+	assert.Equal(t, "", loaded.Description, "glob must stay blank when no unanimous mapping exists")
+	assert.NotNil(t, loaded.MappingRequestedAt, "glob must be re-armed for a fresh mapping pass")
 }
