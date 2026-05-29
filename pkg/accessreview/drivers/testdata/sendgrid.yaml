@@ -1,0 +1,37 @@
+---
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: api.sendgrid.com
+        form:
+            limit:
+                - "500"
+            offset:
+                - "0"
+        headers:
+            Accept:
+                - application/json
+        url: https://api.sendgrid.com/v3/teammates?limit=500&offset=0
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"result":[{"username":"owner-user","email":"owner@example.com","first_name":"Olivia","last_name":"Owner","user_type":"owner","is_admin":true},{"username":"admin-user","email":"admin@example.com","first_name":"","last_name":"","user_type":"admin","is_admin":true},{"username":"teammate-user","email":"teammate@example.com","first_name":"Taylor","last_name":"Teammate","user_type":"teammate","is_admin":false},{"username":"missing-email","email":"","first_name":"Missing","last_name":"Email","user_type":"teammate","is_admin":false}]}'
+        headers:
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 29 May 2026 06:52:00 GMT
+            Server:
+                - nginx
+        status: 200 OK
+        code: 200
+        duration: 18ms

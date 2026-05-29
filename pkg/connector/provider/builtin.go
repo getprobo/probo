@@ -49,6 +49,7 @@ func NewBuiltinRegistry() *Registry {
 		posthogRegistration(),
 		pagerdutyRegistration(),
 		resendRegistration(),
+		sendgridRegistration(),
 		sentryRegistration(),
 		slackRegistration(),
 		supabaseRegistration(),

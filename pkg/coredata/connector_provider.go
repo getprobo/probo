@@ -41,6 +41,7 @@ const (
 	ConnectorProviderGitHub       ConnectorProvider = "GITHUB"
 	ConnectorProviderIntercom     ConnectorProvider = "INTERCOM"
 	ConnectorProviderResend       ConnectorProvider = "RESEND"
+	ConnectorProviderSendGrid     ConnectorProvider = "SENDGRID"
 	ConnectorProviderMicrosoft365 ConnectorProvider = "MICROSOFT_365"
 	ConnectorProviderGitLab       ConnectorProvider = "GITLAB"
 	ConnectorProviderBitbucket    ConnectorProvider = "BITBUCKET"
@@ -84,6 +85,7 @@ func ConnectorProviders() []ConnectorProvider {
 		ConnectorProviderGitHub,
 		ConnectorProviderIntercom,
 		ConnectorProviderResend,
+		ConnectorProviderSendGrid,
 		ConnectorProviderMicrosoft365,
 		ConnectorProviderGitLab,
 		ConnectorProviderBitbucket,
@@ -123,6 +125,7 @@ func (v ConnectorProvider) IsValid() bool {
 		ConnectorProviderGitHub,
 		ConnectorProviderIntercom,
 		ConnectorProviderResend,
+		ConnectorProviderSendGrid,
 		ConnectorProviderMicrosoft365,
 		ConnectorProviderGitLab,
 		ConnectorProviderBitbucket,
