@@ -586,39 +586,40 @@ export function AddAccessSourceDialog({
               required
               autoFocus
             />
-            {activeProvider?.extraSettings.map(setting =>
-              setting.key === "region"
-                ? (
-                    <div key={setting.key} className="space-y-1.5">
-                      <label className="text-sm font-medium">{__(setting.label)}</label>
-                      <Select
-                        value={extraSettingValues[setting.key] ?? ""}
-                        onValueChange={(val: string) =>
-                          setExtraSettingValues(prev => ({
-                            ...prev,
-                            [setting.key]: val,
-                          }))}
-                        placeholder={__("Select a region")}
-                      >
-                        <Option value="US">{__("United States (US)")}</Option>
-                        <Option value="EU">{__("Europe (EU)")}</Option>
-                      </Select>
-                    </div>
-                  )
-                : (
-                    <Field
-                      key={setting.key}
-                      label={__(setting.label)}
-                      value={extraSettingValues[setting.key] ?? ""}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                        setExtraSettingValues(prev => ({
-                          ...prev,
-                          [setting.key]: e.target.value,
-                        }))}
-                      required={setting.required}
-                    />
-                  ),
-            )}
+            {activeProvider?.extraSettings.map((setting) => {
+              const value = extraSettingValues[setting.key] ?? "";
+              const setValue = (next: string) =>
+                setExtraSettingValues(prev => ({ ...prev, [setting.key]: next }));
+
+              // The "region" setting is a fixed US/EU choice; every other
+              // extra setting is a free-text field.
+              if (setting.key === "region") {
+                return (
+                  <div key={setting.key} className="space-y-1.5">
+                    <label className="text-sm font-medium">{__(setting.label)}</label>
+                    <Select
+                      value={value}
+                      onValueChange={setValue}
+                      placeholder={__("Select a region")}
+                    >
+                      <Option value="US">{__("United States (US)")}</Option>
+                      <Option value="EU">{__("Europe (EU)")}</Option>
+                    </Select>
+                  </div>
+                );
+              }
+
+              return (
+                <Field
+                  key={setting.key}
+                  label={__(setting.label)}
+                  value={value}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setValue(e.target.value)}
+                  required={setting.required}
+                />
+              );
+            })}
           </DialogContent>
           <DialogFooter>
             <Button
