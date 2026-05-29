@@ -46,6 +46,14 @@ type Registration struct {
 	// request and replays the verifier on the token exchange. Default
 	// false; non-PKCE providers are unaffected.
 	RequiresPKCE bool
+	// PublicClient marks an OAuth2 provider that authenticates as a public
+	// client (no client_secret) via PKCE, using the Client ID Metadata
+	// Document (CIMD) flow. probod auto-registers such providers with no
+	// operator credentials: the client_id is the deployment's hosted CIMD
+	// URL (baseURL + connector.CIMDMetadataPath) and the state token is
+	// signed with a server-derived key. Set TokenEndpointAuth to "none"
+	// alongside this.
+	PublicClient bool
 	// BuildAuthURL derives the authorization URL from an operator-supplied
 	// integration slug, for providers (e.g. Vercel) whose AuthURL embeds
 	// it as a path segment. It must construct the URL with net/url and

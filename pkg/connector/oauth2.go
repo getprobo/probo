@@ -17,6 +17,7 @@ package connector
 import (
 	"bytes"
 	"context"
+	"crypto/hmac"
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/base64"
@@ -34,12 +35,13 @@ import (
 	"golang.org/x/oauth2"
 )
 
-// NOTE: I use client_secret as a salt for the state token, it's an antipattern to
-// avoid having add configuration key for now. In the future, we should use a random
-// string as a salt. It does not compromise security, because the client_secret is
-// private to the connector and not exposed to the client but using the same secret for
-// two different connectors may not expected by other developers and can lead to confusion
-// and bugs.
+// NOTE: the OAuth2 state token (and, for PKCE providers, the code verifier)
+// is keyed by stateSalt(). Public clients (CIMD, no client_secret) set
+// StateSigningKey to a server-side derived key; confidential clients fall
+// back to the client_secret, which is private to the connector and not
+// exposed to the client. Reusing the client_secret as the salt is a legacy
+// path retained for confidential providers; new public clients always carry
+// an explicit StateSigningKey.
 
 type (
 	OAuth2Connector struct {
@@ -65,6 +67,14 @@ type (
 		// majority of providers.
 		IntegrationSlug string
 
+		// StateSigningKey is the HMAC key used to sign the OAuth2 state
+		// token and to derive the PKCE verifier. Public clients (CIMD: no
+		// client_secret, authenticated by PKCE) MUST set it to a
+		// server-side secret; confidential clients leave it empty and fall
+		// back to ClientSecret (see stateSalt). It is set by the probod
+		// wiring, never serialized.
+		StateSigningKey string
+
 		// HTTPClient is used for the OAuth2 token-exchange request
 		// issued from CompleteWithState. It must be set by callers;
 		// (*provider.Registry).ApplyOAuth2Defaults assigns an
@@ -79,10 +89,14 @@ type (
 		ContinueURL     string   `json:"continue,omitempty"`
 		ConnectorID     string   `json:"cid,omitempty"` // Set when reconnecting an existing connector
 		RequestedScopes []string `json:"scopes,omitempty"`
-		// CodeVerifier carries the PKCE verifier between Initiate and
-		// Complete. Set only when the provider requires PKCE
-		// (RequiresPKCE = true on the OAuth2Connector).
-		CodeVerifier string `json:"cv,omitempty"`
+		// PKCENonce carries a random per-flow nonce between Initiate and
+		// Complete for providers that require PKCE. The actual
+		// code_verifier is DERIVED server-side from the state salt and this
+		// nonce (derivePKCEVerifier), so the verifier never appears in the
+		// signed-but-unencrypted state token. The nonce is safe to expose
+		// in the state parameter — it is useless without the server-side
+		// salt. Set only when RequiresPKCE = true.
+		PKCENonce string `json:"pn,omitempty"`
 		// ProviderMetadata surfaces provider-specific extras parsed
 		// from the token-exchange response (e.g. PagerDuty's
 		// `subdomain`). It is populated by CompleteWithState and is
@@ -163,19 +177,29 @@ func (c *OAuth2Connector) InitiateWithState(
 	stateData OAuth2State,
 	opts InitiateOptions,
 ) (string, error) {
-	// PKCE is generated before the state token so the verifier is
-	// embedded in the signed payload and replayed on the token
-	// exchange. Providers that do not require PKCE skip this entirely.
-	if c.RequiresPKCE {
-		verifier, err := generatePKCEVerifier()
-		if err != nil {
-			return "", fmt.Errorf("cannot generate PKCE verifier: %w", err)
-		}
-
-		stateData.CodeVerifier = verifier
+	// An empty salt would HMAC the state token (and derive the PKCE
+	// verifier) with an empty key, making both forgeable. probod always
+	// sets one, but guard at the type level so a misconfigured connector
+	// fails loudly instead of issuing a forgeable state.
+	salt := c.stateSalt()
+	if salt == "" {
+		return "", fmt.Errorf("cannot create state token: connector has no state signing key or client secret")
 	}
 
-	state, err := statelesstoken.NewToken(c.ClientSecret, OAuth2TokenType, OAuth2TokenTTL, stateData)
+	// For PKCE providers a per-flow nonce is generated and stored in the
+	// signed state; the code verifier itself is DERIVED from salt+nonce
+	// (derivePKCEVerifier) and never serialized, so it stays secret even
+	// though the state is signed-not-encrypted. Non-PKCE providers skip this.
+	if c.RequiresPKCE {
+		nonce, err := generatePKCENonce()
+		if err != nil {
+			return "", fmt.Errorf("cannot generate PKCE nonce: %w", err)
+		}
+
+		stateData.PKCENonce = nonce
+	}
+
+	state, err := statelesstoken.NewToken(salt, OAuth2TokenType, OAuth2TokenTTL, stateData)
 	if err != nil {
 		return "", fmt.Errorf("cannot create state token: %w", err)
 	}
@@ -191,7 +215,8 @@ func (c *OAuth2Connector) InitiateWithState(
 	}
 
 	if c.RequiresPKCE {
-		authCodeQuery.Set("code_challenge", pkceChallenge(stateData.CodeVerifier))
+		verifier := derivePKCEVerifier(c.stateSalt(), stateData.PKCENonce)
+		authCodeQuery.Set("code_challenge", pkceChallenge(verifier))
 		authCodeQuery.Set("code_challenge_method", "S256")
 	}
 
@@ -221,15 +246,51 @@ func (c *OAuth2Connector) InitiateWithState(
 	return u.String(), nil
 }
 
-// generatePKCEVerifier produces a 32-byte cryptographically random
-// PKCE verifier encoded as base64url without padding (RFC 7636 §4.1).
-func generatePKCEVerifier() (string, error) {
+// generatePKCENonce produces a 32-byte cryptographically random nonce
+// encoded as base64url without padding. The nonce travels in the (signed)
+// state token and is combined with the server-side state salt by
+// derivePKCEVerifier to produce the actual RFC 7636 code_verifier.
+func generatePKCENonce() (string, error) {
 	b := make([]byte, 32)
 	if _, err := rand.Read(b); err != nil {
 		return "", fmt.Errorf("cannot read random bytes: %w", err)
 	}
 
 	return base64.RawURLEncoding.EncodeToString(b), nil
+}
+
+// stateSalt returns the HMAC key used to sign the OAuth2 state token and to
+// derive the PKCE verifier. Public clients (CIMD: no client_secret,
+// authenticated by PKCE) set StateSigningKey to a server-side secret;
+// confidential clients fall back to ClientSecret. It must never be empty
+// for a connector that issues state tokens.
+func (c *OAuth2Connector) stateSalt() string {
+	if c.StateSigningKey != "" {
+		return c.StateSigningKey
+	}
+
+	return c.ClientSecret
+}
+
+// derivePKCEVerifier deterministically derives the RFC 7636 code_verifier
+// from the server-side state salt and a per-flow nonce. Because the verifier
+// is recomputed server-side at both Initiate and Complete — and never placed
+// in the signed-but-unencrypted state token — it stays secret even though
+// the nonce is exposed in the state parameter. This is what makes PKCE
+// meaningful for public clients, whose only secret is the verifier.
+func derivePKCEVerifier(salt, nonce string) string {
+	return deriveHMACKey(salt, "pkce:"+nonce)
+}
+
+// deriveHMACKey derives a base64url-encoded key from a server-side secret and
+// a domain-separation label via HMAC-SHA256. Distinct labels yield independent
+// keys, so the same secret can safely back several purposes (the PKCE verifier
+// and the connector state-signing key).
+func deriveHMACKey(secret, info string) string {
+	h := hmac.New(sha256.New, []byte(secret))
+	h.Write([]byte(info))
+
+	return base64.RawURLEncoding.EncodeToString(h.Sum(nil))
 }
 
 // pkceChallenge derives the S256 PKCE challenge from a verifier: it is
@@ -267,7 +328,12 @@ func (c *OAuth2Connector) CompleteWithState(ctx context.Context, r *http.Request
 		return nil, nil, fmt.Errorf("no state in request")
 	}
 
-	payload, err := statelesstoken.ValidateToken[OAuth2State](c.ClientSecret, OAuth2TokenType, stateToken)
+	salt := c.stateSalt()
+	if salt == "" {
+		return nil, nil, fmt.Errorf("cannot validate state token: connector has no state signing key or client secret")
+	}
+
+	payload, err := statelesstoken.ValidateToken[OAuth2State](salt, OAuth2TokenType, stateToken)
 	if err != nil {
 		return nil, nil, fmt.Errorf("cannot validate state token: %w", err)
 	}
@@ -277,7 +343,12 @@ func (c *OAuth2Connector) CompleteWithState(ctx context.Context, r *http.Request
 		return nil, nil, fmt.Errorf("cannot parse organization ID: %w", err)
 	}
 
-	tokenRequest, err := c.buildTokenRequest(ctx, code, c.RedirectURI, payload.Data.CodeVerifier)
+	codeVerifier := ""
+	if c.RequiresPKCE {
+		codeVerifier = derivePKCEVerifier(c.stateSalt(), payload.Data.PKCENonce)
+	}
+
+	tokenRequest, err := c.buildTokenRequest(ctx, code, c.RedirectURI, codeVerifier)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -338,6 +409,22 @@ func (c *OAuth2Connector) CompleteWithState(ctx context.Context, r *http.Request
 	AbsorbPagerDutyTokenResponse(&payload.Data, body)
 
 	return &oauth2Conn, &payload.Data, nil
+}
+
+// DeriveConnectorStateKey derives the HMAC key used to sign connector
+// OAuth2 state tokens (and PKCE verifiers) for public clients, from a
+// server-side secret (the active OAuth2 server signing key). The domain
+// separator avoids reusing the raw server key directly for an unrelated
+// purpose. probod calls this once at startup and assigns the result to
+// each public client's StateSigningKey.
+//
+// NOTE: the key is derived from the single ACTIVE OAuth2 server signing key.
+// Rotating that key changes the derived state key, so connector OAuth flows
+// started within the state token's 10-minute TTL window across a rotation
+// will fail validation and must be retried. A dedicated, independently
+// rotated connector-state key (HMAC key set) is a future improvement.
+func DeriveConnectorStateKey(serverSecret string) string {
+	return deriveHMACKey(serverSecret, "probo/connector/oauth2-state-key")
 }
 
 func basicAuthHeader(clientID, clientSecret string) string {
@@ -409,6 +496,36 @@ func (c *OAuth2Connector) buildTokenRequest(ctx context.Context, code, redirectU
 		req.Header.Set("Accept", "application/json")
 		req.Header.Set("User-Agent", "Probo Connector")
 		req.Header.Set("Authorization", basicAuthHeader(c.ClientID, c.ClientSecret))
+
+		return req, nil
+
+	case "none":
+		// Public client (CIMD): client_id in the body, authenticated by
+		// the PKCE code_verifier. No client_secret is sent — the provider
+		// advertises token_endpoint_auth_method "none".
+		formData := url.Values{}
+		formData.Set("client_id", c.ClientID)
+		formData.Set("code", code)
+		formData.Set("redirect_uri", redirectURI)
+		formData.Set("grant_type", "authorization_code")
+
+		if codeVerifier != "" {
+			formData.Set("code_verifier", codeVerifier)
+		}
+
+		req, err := http.NewRequestWithContext(
+			ctx,
+			http.MethodPost,
+			c.TokenURL,
+			strings.NewReader(formData.Encode()),
+		)
+		if err != nil {
+			return nil, fmt.Errorf("cannot create token request: %w", err)
+		}
+
+		req.Header.Set("Content-Type", "application/x-www-form-urlencoded; charset=utf-8")
+		req.Header.Set("Accept", "application/json")
+		req.Header.Set("User-Agent", "Probo Connector")
 
 		return req, nil
 

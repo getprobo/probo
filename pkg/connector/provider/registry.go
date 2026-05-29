@@ -115,6 +115,25 @@ func (r *Registry) All() []*Registration {
 	return out
 }
 
+// PublicClients returns every Registration flagged PublicClient (CIMD,
+// no client_secret). probod uses this to auto-register their OAuth2
+// connectors with a deployment-derived client_id and state-signing key.
+// Order is not stable.
+func (r *Registry) PublicClients() []*Registration {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	var out []*Registration
+
+	for _, reg := range r.providers {
+		if reg.PublicClient {
+			out = append(out, reg)
+		}
+	}
+
+	return out
+}
+
 // ProviderDisplayName returns the human-readable label for the
 // provider, falling back to the raw constant string when no display
 // name is registered.
