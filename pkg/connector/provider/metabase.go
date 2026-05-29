@@ -52,6 +52,26 @@ func metabaseRegistration() *Registration {
 
 			return drivers.NewMetabaseDriver(c, instanceURL), nil
 		},
+		NewNameResolver: func(ctx context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger) drivers.NameResolver {
+			settings, err := coredata.ConnectorSettings[coredata.MetabaseConnectorSettings](conn)
+			if err != nil {
+				logger.ErrorCtx(ctx, "cannot read metabase connector settings", log.Error(err))
+				return nil
+			}
+
+			instanceURL := strings.TrimSpace(settings.InstanceURL)
+			if instanceURL == "" {
+				logger.ErrorCtx(ctx, "missing metabase instance url in connector settings")
+				return nil
+			}
+
+			if err := validateMetabaseInstanceURL(instanceURL); err != nil {
+				logger.ErrorCtx(ctx, "invalid metabase instance url in connector settings", log.Error(err))
+				return nil
+			}
+
+			return drivers.NewMetabaseNameResolver(c, instanceURL)
+		},
 	}
 }
 

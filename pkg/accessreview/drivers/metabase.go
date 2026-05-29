@@ -46,6 +46,15 @@ type metabaseUser struct {
 	DateJoined  string `json:"date_joined"`
 }
 
+type metabaseUsersResponse struct {
+	Data   []metabaseUser `json:"data"`
+	Total  int            `json:"total"`
+	Limit  *int           `json:"limit"`
+	Offset *int           `json:"offset"`
+}
+
+const metabaseUsersPageLimit = 50
+
 func NewMetabaseDriver(httpClient *http.Client, instanceURL string) *MetabaseDriver {
 	return &MetabaseDriver{
 		httpClient:  httpClient,
@@ -98,9 +107,36 @@ func (d *MetabaseDriver) queryUsers(ctx context.Context) ([]metabaseUser, error)
 		return nil, fmt.Errorf("cannot parse metabase instance url: %w", err)
 	}
 
+	var users []metabaseUser
+	offset := 0
+
+	for {
+		page, err := d.queryUsersPage(ctx, baseURL, offset)
+		if err != nil {
+			return nil, err
+		}
+
+		users = append(users, page.Data...)
+
+		offset += len(page.Data)
+		if len(page.Data) == 0 || offset >= page.Total {
+			break
+		}
+	}
+
+	return users, nil
+}
+
+func (d *MetabaseDriver) queryUsersPage(
+	ctx context.Context,
+	baseURL *url.URL,
+	offset int,
+) (*metabaseUsersResponse, error) {
 	endpoint := baseURL.JoinPath("api", "user")
 	q := endpoint.Query()
 	q.Set("status", "all")
+	q.Set("limit", strconv.Itoa(metabaseUsersPageLimit))
+	q.Set("offset", strconv.Itoa(offset))
 	endpoint.RawQuery = q.Encode()
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint.String(), nil)
@@ -123,12 +159,12 @@ func (d *MetabaseDriver) queryUsers(ctx context.Context) ([]metabaseUser, error)
 		return nil, fmt.Errorf("cannot fetch metabase users: unexpected status %d", httpResp.StatusCode)
 	}
 
-	var users []metabaseUser
-	if err := json.NewDecoder(httpResp.Body).Decode(&users); err != nil {
+	var resp metabaseUsersResponse
+	if err := json.NewDecoder(httpResp.Body).Decode(&resp); err != nil {
 		return nil, fmt.Errorf("cannot decode metabase users response: %w", err)
 	}
 
-	return users, nil
+	return &resp, nil
 }
 
 func metabaseFullName(u metabaseUser) string {
@@ -145,6 +181,63 @@ func metabaseRole(isSuperuser bool) string {
 	}
 
 	return "User"
+}
+
+// metabaseNameResolver resolves the Metabase site name by querying
+// /api/session/properties on the configured Metabase instance, which
+// exposes the site-name setting to any authenticated session.
+type metabaseNameResolver struct {
+	httpClient  *http.Client
+	instanceURL string
+}
+
+var _ NameResolver = (*metabaseNameResolver)(nil)
+
+type metabaseSessionProperties struct {
+	SiteName string `json:"site-name"`
+}
+
+func NewMetabaseNameResolver(httpClient *http.Client, instanceURL string) NameResolver {
+	return &metabaseNameResolver{
+		httpClient:  httpClient,
+		instanceURL: instanceURL,
+	}
+}
+
+func (r *metabaseNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
+	baseURL, err := url.Parse(r.instanceURL)
+	if err != nil {
+		return "", fmt.Errorf("cannot parse metabase instance url: %w", err)
+	}
+
+	endpoint := baseURL.JoinPath("api", "session", "properties")
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint.String(), nil)
+	if err != nil {
+		return "", fmt.Errorf("cannot create metabase session properties request: %w", err)
+	}
+
+	req.Header.Set("Accept", "application/json")
+
+	httpResp, err := r.httpClient.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("cannot execute metabase session properties request: %w", err)
+	}
+
+	defer func() {
+		_ = httpResp.Body.Close()
+	}()
+
+	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
+		return "", fmt.Errorf("cannot fetch metabase session properties: unexpected status %d", httpResp.StatusCode)
+	}
+
+	var props metabaseSessionProperties
+	if err := json.NewDecoder(httpResp.Body).Decode(&props); err != nil {
+		return "", fmt.Errorf("cannot decode metabase session properties response: %w", err)
+	}
+
+	return strings.TrimSpace(props.SiteName), nil
 }
 
 func parseMetabaseTimestamp(value string) (time.Time, bool) {
