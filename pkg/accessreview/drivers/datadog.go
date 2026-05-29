@@ -102,13 +102,17 @@ func (d *DatadogDriver) ListAccounts(ctx context.Context) ([]AccountRecord, erro
 		for _, u := range resp.Data {
 			active := !u.Attributes.Disabled
 
-			var role string
-			var isAdmin bool
+			var (
+				role    string
+				isAdmin bool
+			)
+
 			for _, r := range u.Relationships.Roles.Data {
 				name := roleNames[r.ID]
 				if role == "" {
 					role = name
 				}
+
 				if strings.Contains(strings.ToLower(name), "admin") {
 					isAdmin = true
 					role = name
@@ -150,12 +154,14 @@ func (d *DatadogDriver) queryUsers(ctx context.Context, page int) (*datadogUsers
 	if err != nil {
 		return nil, fmt.Errorf("cannot create datadog users request: %w", err)
 	}
+
 	req.Header.Set("Accept", "application/json")
 
 	resp, err := d.httpClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("cannot list datadog users: %w", err)
 	}
+
 	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {

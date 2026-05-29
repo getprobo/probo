@@ -769,8 +769,10 @@ func TestCompleteWithState_PerDomainTokenURL(t *testing.T) {
 	t.Parallel()
 
 	var gotPath string
+
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		gotPath = r.URL.Path
+
 		w.Header().Set("Content-Type", "application/json")
 		_, _ = w.Write([]byte(`{"access_token":"at","refresh_token":"rt","expires_in":3600,"token_type":"Bearer"}`))
 	}))
@@ -788,6 +790,7 @@ func TestCompleteWithState_PerDomainTokenURL(t *testing.T) {
 			if domain != "us3.datadoghq.com" {
 				return "", fmt.Errorf("unknown domain")
 			}
+
 			return srv.URL + "/oauth2/v1/token", nil
 		},
 	}
@@ -859,8 +862,10 @@ func TestRefreshableClient_PrefersConnectionTokenURL(t *testing.T) {
 	t.Parallel()
 
 	var gotHost string
+
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		gotHost = r.Host
+
 		w.Header().Set("Content-Type", "application/json")
 		_, _ = w.Write([]byte(`{"access_token":"new","token_type":"Bearer","expires_in":3600}`))
 	}))
