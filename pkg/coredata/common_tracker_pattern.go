@@ -250,6 +250,25 @@ SET
         ELSE EXCLUDED.description
     END,
     confidence            = EXCLUDED.confidence,
+    -- A blank, unlinked catalog row that now gains a third party is
+    -- re-queued for enrichment: the enrichment agent leaves descriptions
+    -- blank when it cannot substantiate a purpose, and knowing the vendor
+    -- gives it a second, better-informed attempt. enriched_at is cleared
+    -- so the row is no longer terminal.
+    enrichment_requested_at = CASE
+        WHEN common_tracker_patterns.description = ''
+         AND common_tracker_patterns.common_third_party_id IS NULL
+         AND EXCLUDED.common_third_party_id IS NOT NULL
+        THEN NOW()
+        ELSE common_tracker_patterns.enrichment_requested_at
+    END,
+    enriched_at           = CASE
+        WHEN common_tracker_patterns.description = ''
+         AND common_tracker_patterns.common_third_party_id IS NULL
+         AND EXCLUDED.common_third_party_id IS NOT NULL
+        THEN NULL
+        ELSE common_tracker_patterns.enriched_at
+    END,
     updated_at            = EXCLUDED.updated_at
 RETURNING
     id,
@@ -554,16 +573,24 @@ WHERE id = @id
 }
 
 // SetEnriched records the researched description and marks the row
-// terminally enriched so it is never re-queued.
+// enriched so the stale-recovery loop never re-queues it. An empty
+// description is allowed: the enrichment agent leaves it blank when it
+// cannot substantiate a purpose, and a later third-party link re-arms
+// enrichment for a second attempt. When thirdPartyID is non-nil it links
+// the row to that third party, but only when none is set yet
+// (COALESCE) — the enrichment worker links, it never overrides an
+// attribution the mapping pipeline already resolved.
 func (p *CommonTrackerPattern) SetEnriched(
 	ctx context.Context,
 	tx pg.Tx,
 	description string,
+	thirdPartyID *gid.GID,
 ) error {
 	q := `
 UPDATE common_tracker_patterns
 SET
     description = @description,
+    common_third_party_id = COALESCE(common_third_party_id, @third_party_id),
     enriched_at = NOW(),
     enrichment_requested_at = NULL,
     updated_at = NOW()
@@ -571,8 +598,9 @@ WHERE id = @id
 `
 
 	args := pgx.StrictNamedArgs{
-		"id":          p.ID,
-		"description": description,
+		"id":             p.ID,
+		"description":    description,
+		"third_party_id": thirdPartyID,
 	}
 
 	result, err := tx.Exec(ctx, q, args)
@@ -585,6 +613,10 @@ WHERE id = @id
 	}
 
 	p.Description = description
+
+	if p.CommonThirdPartyID == nil {
+		p.CommonThirdPartyID = thirdPartyID
+	}
 
 	return nil
 }

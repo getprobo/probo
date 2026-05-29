@@ -26,6 +26,7 @@ import (
 	"go.gearno.de/kit/worker"
 	"go.probo.inc/probo/pkg/agent"
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/llm"
 )
 
@@ -35,6 +36,7 @@ type commonPatternEnrichmentHandler struct {
 	pg              *pg.Client
 	logger          *log.Logger
 	enrichmentAgent *agent.Agent
+	mappingAgent    *agent.Agent
 	staleAfter      time.Duration
 	agentTimeout    time.Duration
 }
@@ -71,6 +73,7 @@ func NewCommonPatternEnrichmentWorker(
 
 	if cfg.LLMClient != nil {
 		h.enrichmentAgent = buildCommonPatternEnrichmentAgent(cfg, pgClient, logger)
+		h.mappingAgent = buildTrackerMappingAgent(cfg, pgClient, logger)
 	}
 
 	return worker.New(
@@ -114,27 +117,49 @@ func (h *commonPatternEnrichmentHandler) Process(ctx context.Context, cp coredat
 		return err
 	}
 
+	// Map before enriching: an unlinked pattern is run through the
+	// mapping agent first so a resolved vendor both seeds the enrichment
+	// prompt and gets linked. Attribution stays the mapping pipeline's
+	// job; the enricher only reuses it.
+	var thirdPartyID *gid.GID
+
+	if cp.CommonThirdPartyID == nil {
+		id, name, err := h.identifyThirdParty(ctx, cp)
+		if err != nil {
+			return err
+		}
+
+		thirdPartyID = id
+		if name != "" {
+			thirdPartyName = name
+		}
+	}
+
 	description, err := h.research(ctx, cp, thirdPartyName)
 	if err != nil {
 		return fmt.Errorf("cannot research tracker description: %w", err)
 	}
 
-	if description == "" {
-		return fmt.Errorf("enrichment produced empty description for pattern %q", cp.Pattern)
-	}
-
 	return h.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			if err := cp.SetEnriched(ctx, tx, description); err != nil {
+			// A blank description is recorded as a terminal-for-now state:
+			// the row is marked enriched so the stale-recovery loop never
+			// re-queues it, but a later third-party link (mapping worker)
+			// re-arms enrichment for a vendor-informed second attempt.
+			if err := cp.SetEnriched(ctx, tx, description, thirdPartyID); err != nil {
 				return fmt.Errorf("cannot set common tracker pattern enriched: %w", err)
 			}
 
-			var patterns coredata.TrackerPatterns
+			var backfilled int64
 
-			count, err := patterns.BackfillDescriptionByCommonTrackerPatternID(ctx, tx, cp.ID, description)
-			if err != nil {
-				return err
+			if description != "" {
+				var patterns coredata.TrackerPatterns
+
+				backfilled, err = patterns.BackfillDescriptionByCommonTrackerPatternID(ctx, tx, cp.ID, description)
+				if err != nil {
+					return err
+				}
 			}
 
 			h.logger.InfoCtx(
@@ -142,12 +167,53 @@ func (h *commonPatternEnrichmentHandler) Process(ctx context.Context, cp coredat
 				"enriched common tracker pattern",
 				log.String("common_tracker_pattern_id", cp.ID.String()),
 				log.String("pattern", cp.Pattern),
-				log.Int64("backfilled_tracker_patterns", count),
+				log.Bool("described", description != ""),
+				log.Bool("third_party_linked", thirdPartyID != nil),
+				log.Int64("backfilled_tracker_patterns", backfilled),
 			)
 
 			return nil
 		},
 	)
+}
+
+// resolveThirdPartyID maps the agent's returned company name to an
+// existing catalog third party, but only when the pattern has none yet:
+// the enrichment worker links, it never overrides an attribution the
+// mapping pipeline already resolved. A name that matches no catalog row
+// resolves to nil, so the worker never invents a third party.
+func (h *commonPatternEnrichmentHandler) resolveThirdPartyID(
+	ctx context.Context,
+	cp coredata.CommonTrackerPattern,
+	thirdPartyName string,
+) (*gid.GID, error) {
+	if cp.CommonThirdPartyID != nil || thirdPartyName == "" {
+		return nil, nil
+	}
+
+	var id *gid.GID
+
+	if err := h.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			var party coredata.CommonThirdParty
+			if err := party.LoadByName(ctx, conn, thirdPartyName); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return nil
+				}
+
+				return err
+			}
+
+			id = &party.ID
+
+			return nil
+		},
+	); err != nil {
+		return nil, fmt.Errorf("cannot resolve common third party for enrichment: %w", err)
+	}
+
+	return id, nil
 }
 
 func (h *commonPatternEnrichmentHandler) RecoverStale(ctx context.Context) error {
@@ -217,4 +283,62 @@ func (h *commonPatternEnrichmentHandler) research(
 	}
 
 	return strings.TrimSpace(result.Output.Description), nil
+}
+
+// identifyThirdParty reuses the tracker-mapping agent to attribute a
+// vendor to an unlinked catalog pattern. It returns the resolved
+// existing third party id and its name (for the enrichment prompt) only
+// when the agent is confident and the name matches a catalog row;
+// otherwise it returns nils so enrichment proceeds without a vendor. A
+// failed agent run is best-effort and non-fatal, mirroring the mapping
+// worker's identifyWithAgent.
+func (h *commonPatternEnrichmentHandler) identifyThirdParty(
+	ctx context.Context,
+	cp coredata.CommonTrackerPattern,
+) (*gid.GID, string, error) {
+	if h.mappingAgent == nil {
+		return nil, "", nil
+	}
+
+	prompt := buildCommonPatternIdentificationPrompt(cp)
+
+	agentCtx, cancel := context.WithTimeout(ctx, h.agentTimeout)
+	defer cancel()
+
+	result, err := agent.RunTyped[TrackerMappingAgentResult](
+		agentCtx,
+		h.mappingAgent,
+		[]llm.Message{
+			{
+				Role:  llm.RoleUser,
+				Parts: []llm.Part{llm.TextPart{Text: prompt}},
+			},
+		},
+	)
+	if err != nil {
+		h.logger.WarnCtx(
+			ctx,
+			"mapping agent identification failed during enrichment",
+			log.Error(err),
+			log.String("pattern", cp.Pattern),
+		)
+
+		return nil, "", nil
+	}
+
+	name := strings.TrimSpace(result.Output.ThirdPartyName)
+	if name == "" || result.Output.ThirdPartyConfidence < agentThirdPartyConfidenceThreshold {
+		return nil, "", nil
+	}
+
+	id, err := h.resolveThirdPartyID(ctx, cp, name)
+	if err != nil {
+		return nil, "", err
+	}
+
+	if id == nil {
+		return nil, "", nil
+	}
+
+	return id, name, nil
 }

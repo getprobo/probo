@@ -32,7 +32,7 @@ var trackerEnrichmentPrompt string
 // CommonPatternEnrichmentResult is the structured output the
 // common-pattern enrichment agent returns.
 type CommonPatternEnrichmentResult struct {
-	Description string `json:"description" jsonschema:"A concise, factual, compliance-grade description of what this tracker stores or does and its purpose. One or two sentences. Name the operating company when known."`
+	Description string `json:"description" jsonschema:"A concise, factual, compliance-grade description of what this tracker stores or does and its purpose. One or two sentences. Name the operating company when known. Empty when the purpose cannot be substantiated from evidence."`
 }
 
 func buildCommonPatternEnrichmentAgent(

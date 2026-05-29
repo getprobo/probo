@@ -161,3 +161,27 @@ func buildAgentPrompt(tp coredata.TrackerPattern, domains []string) string {
 
 	return prompt
 }
+
+// buildCommonPatternIdentificationPrompt builds the mapping-agent input
+// for a global catalog pattern. Catalog rows carry no observed domains,
+// so the prompt omits the <observed_domains> signal and relies on the
+// pattern name, type, and naming conventions. It lets the enrichment
+// worker reuse the mapping agent to attribute a vendor before describing.
+func buildCommonPatternIdentificationPrompt(cp coredata.CommonTrackerPattern) string {
+	maxAge := "session"
+	if cp.MaxAgeSeconds != nil {
+		maxAge = fmt.Sprintf("%d seconds", *cp.MaxAgeSeconds)
+	}
+
+	return fmt.Sprintf(
+		"Identify the following tracker:\n\n"+
+			"<pattern> %s </pattern>\n"+
+			"<type> %s </type>\n"+
+			"<match_type> %s </match_type>\n"+
+			"<max_age> %s </max_age>\n",
+		cp.Pattern,
+		cp.TrackerType,
+		cp.MatchType,
+		maxAge,
+	)
+}
