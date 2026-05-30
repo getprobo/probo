@@ -15,29 +15,25 @@
 package types
 
 import (
+	"encoding/json"
+	"testing"
+
 	"go.probo.inc/probo/pkg/coredata"
-	"go.probo.inc/probo/pkg/mail"
 )
 
-func NewProfile(p *coredata.MembershipProfile) *Profile {
-	additionalEmailAddresses := p.AdditionalEmailAddresses
-	if additionalEmailAddresses == nil {
-		additionalEmailAddresses = mail.Addrs{}
+func TestNewProfileEncodesEmptyAdditionalEmailAddresses(t *testing.T) {
+	profile := NewProfile(&coredata.MembershipProfile{})
+
+	if profile.AdditionalEmailAddresses == nil {
+		t.Fatal("expected additional email addresses to be non-nil")
 	}
 
-	return &Profile{
-		ID:                       p.ID,
-		OrganizationID:           p.OrganizationID,
-		FullName:                 p.FullName,
-		EmailAddress:             p.EmailAddress,
-		AdditionalEmailAddresses: additionalEmailAddresses,
-		Kind:                     p.Kind,
-		Source:                   p.Source,
-		State:                    p.State,
-		Position:                 p.Position,
-		ContractStartDate:        p.ContractStartDate,
-		ContractEndDate:          p.ContractEndDate,
-		CreatedAt:                p.CreatedAt,
-		UpdatedAt:                p.UpdatedAt,
+	data, err := json.Marshal(profile.AdditionalEmailAddresses)
+	if err != nil {
+		t.Fatalf("cannot marshal additional email addresses: %v", err)
+	}
+
+	if string(data) != "[]" {
+		t.Fatalf("expected empty additional email addresses to marshal as [], got %s", data)
 	}
 }
