@@ -42,18 +42,21 @@ func TestSendGridDriver(t *testing.T) {
 	assert.True(t, owner.IsAdmin)
 	assert.Equal(t, "owner-user", owner.ExternalID)
 	assert.Equal(t, coredata.AccessEntryAccountTypeUser, owner.AccountType)
+	assert.Equal(t, coredata.MFAStatusEnabled, owner.MFAStatus)
 
 	admin := records[1]
 	assert.Equal(t, "admin@example.com", admin.Email)
 	assert.Equal(t, "Admin", admin.Role)
 	assert.True(t, admin.IsAdmin)
 	assert.Equal(t, "admin-user", admin.ExternalID)
+	assert.Equal(t, coredata.MFAStatusEnabled, admin.MFAStatus)
 
 	teammate := records[2]
 	assert.Equal(t, "teammate@example.com", teammate.Email)
 	assert.Equal(t, "Teammate", teammate.Role)
 	assert.False(t, teammate.IsAdmin)
 	assert.Equal(t, "teammate-user", teammate.ExternalID)
+	assert.Equal(t, coredata.MFAStatusDisabled, teammate.MFAStatus)
 }
 
 func TestSendGridRole(t *testing.T) {
@@ -112,4 +115,25 @@ func TestSendGridResponseItems(t *testing.T) {
 		require.Len(t, items, 1)
 		assert.Equal(t, "fallback@example.com", items[0].Email)
 	})
+}
+
+func TestSendGridMFAStatus(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name   string
+		scopes []string
+		want   coredata.MFAStatus
+	}{
+		{name: "required", scopes: []string{"mail.send", "2fa_required"}, want: coredata.MFAStatusEnabled},
+		{name: "exempt", scopes: []string{"mail.send", "2fa_exempt"}, want: coredata.MFAStatusDisabled},
+		{name: "unknown", scopes: []string{"mail.send"}, want: coredata.MFAStatusUnknown},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			assert.Equal(t, tt.want, sendGridMFAStatus(tt.scopes))
+		})
+	}
 }

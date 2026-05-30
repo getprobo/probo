@@ -19,6 +19,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 
@@ -32,17 +33,22 @@ type SendGridDriver struct {
 var _ Driver = (*SendGridDriver)(nil)
 
 type sendGridTeammate struct {
-	Username  string `json:"username"`
-	Email     string `json:"email"`
-	FirstName string `json:"first_name"`
-	LastName  string `json:"last_name"`
-	UserType  string `json:"user_type"`
-	IsAdmin   bool   `json:"is_admin"`
+	Username  string   `json:"username"`
+	Email     string   `json:"email"`
+	FirstName string   `json:"first_name"`
+	LastName  string   `json:"last_name"`
+	UserType  string   `json:"user_type"`
+	IsAdmin   bool     `json:"is_admin"`
+	Scopes    []string `json:"scopes"`
 }
 
 type sendGridTeammatesResponse struct {
 	Result  []sendGridTeammate `json:"result"`
 	Results []sendGridTeammate `json:"results"`
+}
+
+type sendGridTeammateResponse struct {
+	Result sendGridTeammate `json:"result"`
 }
 
 const (
@@ -74,13 +80,21 @@ func (d *SendGridDriver) ListAccounts(ctx context.Context) ([]AccountRecord, err
 				continue
 			}
 
+			mfaStatus := sendGridMFAStatus(teammate.Scopes)
+			if mfaStatus == coredata.MFAStatusUnknown && teammate.Username != "" {
+				detailedTeammate, err := d.fetchTeammate(ctx, teammate.Username)
+				if err == nil {
+					mfaStatus = sendGridMFAStatus(detailedTeammate.Scopes)
+				}
+			}
+
 			records = append(records, AccountRecord{
 				Email:       teammate.Email,
 				FullName:    sendGridFullName(teammate.FirstName, teammate.LastName),
 				Role:        sendGridRole(teammate.UserType, teammate.IsAdmin),
 				IsAdmin:     teammate.IsAdmin,
 				ExternalID:  strings.TrimSpace(teammate.Username),
-				MFAStatus:   coredata.MFAStatusUnknown,
+				MFAStatus:   mfaStatus,
 				AuthMethod:  coredata.AccessEntryAuthMethodUnknown,
 				AccountType: coredata.AccessEntryAccountTypeUser,
 			})
@@ -133,6 +147,40 @@ func (d *SendGridDriver) fetchTeammates(
 	return &resp, nil
 }
 
+func (d *SendGridDriver) fetchTeammate(ctx context.Context, username string) (*sendGridTeammate, error) {
+	endpoint, err := url.JoinPath(sendGridTeammatesEndpoint, url.PathEscape(username))
+	if err != nil {
+		return nil, fmt.Errorf("cannot build sendgrid teammate details url: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
+	if err != nil {
+		return nil, fmt.Errorf("cannot create sendgrid teammate details request: %w", err)
+	}
+
+	req.Header.Set("Accept", "application/json")
+
+	httpResp, err := d.httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("cannot execute sendgrid teammate details request: %w", err)
+	}
+
+	defer func() {
+		_ = httpResp.Body.Close()
+	}()
+
+	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
+		return nil, fmt.Errorf("cannot fetch sendgrid teammate details: unexpected status %d", httpResp.StatusCode)
+	}
+
+	var resp sendGridTeammateResponse
+	if err := json.NewDecoder(httpResp.Body).Decode(&resp); err != nil {
+		return nil, fmt.Errorf("cannot decode sendgrid teammate details response: %w", err)
+	}
+
+	return &resp.Result, nil
+}
+
 func sendGridResponseItems(resp *sendGridTeammatesResponse) []sendGridTeammate {
 	if len(resp.Result) > 0 {
 		return resp.Result
@@ -162,4 +210,17 @@ func sendGridRole(userType string, isAdmin bool) string {
 	default:
 		return userType
 	}
+}
+
+func sendGridMFAStatus(scopes []string) coredata.MFAStatus {
+	for _, scope := range scopes {
+		switch scope {
+		case "2fa_exempt":
+			return coredata.MFAStatusDisabled
+		case "2fa_required":
+			return coredata.MFAStatusEnabled
+		}
+	}
+
+	return coredata.MFAStatusUnknown
 }

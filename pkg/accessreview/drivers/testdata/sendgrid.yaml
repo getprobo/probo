@@ -35,3 +35,90 @@ interactions:
         status: 200 OK
         code: 200
         duration: 18ms
+    - id: 1
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: api.sendgrid.com
+        headers:
+            Accept:
+                - application/json
+        url: https://api.sendgrid.com/v3/teammates/owner-user
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"result":{"username":"owner-user","email":"owner@example.com","first_name":"Olivia","last_name":"Owner","user_type":"owner","is_admin":true,"scopes":["mail.send","2fa_required"]}}'
+        headers:
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 29 May 2026 06:52:01 GMT
+            Server:
+                - nginx
+        status: 200 OK
+        code: 200
+        duration: 16ms
+    - id: 2
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: api.sendgrid.com
+        headers:
+            Accept:
+                - application/json
+        url: https://api.sendgrid.com/v3/teammates/admin-user
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"result":{"username":"admin-user","email":"admin@example.com","first_name":"","last_name":"","user_type":"admin","is_admin":true,"scopes":["mail.send","2fa_required"]}}'
+        headers:
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 29 May 2026 06:52:02 GMT
+            Server:
+                - nginx
+        status: 200 OK
+        code: 200
+        duration: 17ms
+    - id: 3
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: api.sendgrid.com
+        headers:
+            Accept:
+                - application/json
+        url: https://api.sendgrid.com/v3/teammates/teammate-user
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"result":{"username":"teammate-user","email":"teammate@example.com","first_name":"Taylor","last_name":"Teammate","user_type":"teammate","is_admin":false,"scopes":["mail.send","2fa_exempt"]}}'
+        headers:
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 29 May 2026 06:52:03 GMT
+            Server:
+                - nginx
+        status: 200 OK
+        code: 200
+        duration: 17ms
