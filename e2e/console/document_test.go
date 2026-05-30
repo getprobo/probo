@@ -286,6 +286,118 @@ func TestDocument_Create_Validation(t *testing.T) {
 	}
 }
 
+func TestDocument_UnarchivePublishedDocumentCreatesDraft(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+
+	docID, _ := createTestDocument(t, owner)
+
+	var publishResult struct {
+		PublishDocument struct {
+			DocumentVersion struct {
+				Status string `json:"status"`
+			} `json:"documentVersion"`
+		} `json:"publishDocument"`
+	}
+
+	err := owner.Execute(`
+		mutation PublishDocument($input: PublishDocumentInput!) {
+			publishDocument(input: $input) {
+				documentVersion {
+					status
+				}
+			}
+		}
+	`, map[string]any{
+		"input": map[string]any{
+			"documentId": docID,
+			"minor":      false,
+			"changelog":  "Initial publication",
+		},
+	}, &publishResult)
+	require.NoError(t, err)
+	assert.Equal(t, "PUBLISHED", publishResult.PublishDocument.DocumentVersion.Status)
+
+	var archiveResult struct {
+		ArchiveDocument struct {
+			Document struct {
+				Status     string  `json:"status"`
+				ArchivedAt *string `json:"archivedAt"`
+			} `json:"document"`
+		} `json:"archiveDocument"`
+	}
+
+	err = owner.Execute(`
+		mutation ArchiveDocument($input: ArchiveDocumentInput!) {
+			archiveDocument(input: $input) {
+				document {
+					status
+					archivedAt
+				}
+			}
+		}
+	`, map[string]any{
+		"input": map[string]any{
+			"documentId": docID,
+		},
+	}, &archiveResult)
+	require.NoError(t, err)
+	assert.Equal(t, "ARCHIVED", archiveResult.ArchiveDocument.Document.Status)
+	require.NotNil(t, archiveResult.ArchiveDocument.Document.ArchivedAt)
+
+	var unarchiveResult struct {
+		UnarchiveDocument struct {
+			Document struct {
+				Status     string  `json:"status"`
+				ArchivedAt *string `json:"archivedAt"`
+				Versions   struct {
+					Edges []struct {
+						Node struct {
+							Status string `json:"status"`
+							Major  int    `json:"major"`
+							Minor  int    `json:"minor"`
+						} `json:"node"`
+					} `json:"edges"`
+				} `json:"versions"`
+			} `json:"document"`
+		} `json:"unarchiveDocument"`
+	}
+
+	err = owner.Execute(`
+		mutation UnarchiveDocument($input: UnarchiveDocumentInput!) {
+			unarchiveDocument(input: $input) {
+				document {
+					status
+					archivedAt
+					versions(first: 2, orderBy: { field: CREATED_AT, direction: DESC }) {
+						edges {
+							node {
+								status
+								major
+								minor
+							}
+						}
+					}
+				}
+			}
+		}
+	`, map[string]any{
+		"input": map[string]any{
+			"documentId": docID,
+		},
+	}, &unarchiveResult)
+	require.NoError(t, err)
+
+	document := unarchiveResult.UnarchiveDocument.Document
+	assert.Equal(t, "ACTIVE", document.Status)
+	assert.Nil(t, document.ArchivedAt)
+	require.Len(t, document.Versions.Edges, 2)
+	assert.Equal(t, "DRAFT", document.Versions.Edges[0].Node.Status)
+	assert.Equal(t, 1, document.Versions.Edges[0].Node.Major)
+	assert.Equal(t, 1, document.Versions.Edges[0].Node.Minor)
+	assert.Equal(t, "PUBLISHED", document.Versions.Edges[1].Node.Status)
+}
+
 func TestDocument_Update(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
