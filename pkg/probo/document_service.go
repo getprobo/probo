@@ -1310,12 +1310,12 @@ func (s *DocumentService) BulkUnarchive(
 			}
 
 			if err := documents.BulkUnarchive(ctx, tx, scope); err != nil {
-				return err
+				return fmt.Errorf("cannot bulk unarchive documents: %w", err)
 			}
 
 			for _, document := range archivedDocuments {
 				if err := s.ensureLatestDocumentVersionDraftInTx(ctx, scope, tx, document); err != nil {
-					return err
+					return fmt.Errorf("cannot restore unarchived document draft: %w", err)
 				}
 			}
 
