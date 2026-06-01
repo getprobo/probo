@@ -680,3 +680,49 @@ LIMIT 1;
 
 	return nil
 }
+
+func (as *Audits) LoadByReportIDs(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	reportIDs []gid.GID,
+) error {
+	q := `
+SELECT
+	id,
+	name,
+	organization_id,
+	framework_id,
+	report_id,
+	valid_from,
+	valid_until,
+	state,
+	trust_center_visibility,
+	created_at,
+	updated_at
+FROM
+	audits
+WHERE
+	%s
+	AND report_id = ANY(@report_ids)
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"report_ids": reportIDs}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query audits by report IDs: %w", err)
+	}
+
+	audits, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Audit])
+	if err != nil {
+		return fmt.Errorf("cannot collect audits by report IDs: %w", err)
+	}
+
+	*as = audits
+
+	return nil
+}

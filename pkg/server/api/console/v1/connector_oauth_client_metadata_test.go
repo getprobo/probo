@@ -42,6 +42,7 @@ func TestHandleConnectorOAuthClientMetadata(t *testing.T) {
 	)
 
 	res := rec.Result()
+
 	defer func() { _ = res.Body.Close() }()
 
 	assert.Equal(t, http.StatusOK, res.StatusCode)

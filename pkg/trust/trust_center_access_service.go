@@ -579,15 +579,13 @@ func (s *TrustCenterAccessService) sendDocumentAccessRejectedEmail(
 		}
 	}
 
-	var reports coredata.Reports
 	if len(reportIDs) > 0 {
-		if err := reports.LoadByIDs(ctx, tx, scope, reportIDs); err != nil {
-			return fmt.Errorf("cannot load reports by IDs: %w", err)
+		reportLabels, err := reportAccessLabels(ctx, tx, scope, reportIDs)
+		if err != nil {
+			return fmt.Errorf("cannot build report access labels: %w", err)
 		}
 
-		for _, r := range reports {
-			fileNames = append(fileNames, r.Filename)
-		}
+		fileNames = append(fileNames, reportLabels...)
 	}
 
 	var files coredata.TrustCenterFiles
@@ -674,4 +672,90 @@ func filterExistingIDs(allIDs []gid.GID, existingIDs []gid.GID) []gid.GID {
 	}
 
 	return newIDs
+}
+
+func reportAccessLabels(
+	ctx context.Context,
+	conn pg.Querier,
+	scope coredata.Scoper,
+	reportIDs []gid.GID,
+) ([]string, error) {
+	var reports coredata.Reports
+	if err := reports.LoadByIDs(ctx, conn, scope, reportIDs); err != nil {
+		return nil, fmt.Errorf("cannot load reports by IDs: %w", err)
+	}
+
+	reportByID := make(map[gid.GID]*coredata.Report, len(reports))
+	for _, report := range reports {
+		reportByID[report.ID] = report
+	}
+
+	var audits coredata.Audits
+	if err := audits.LoadByReportIDs(ctx, conn, scope, reportIDs); err != nil {
+		return nil, fmt.Errorf("cannot load audits by report IDs: %w", err)
+	}
+
+	auditByReportID := make(map[gid.GID]*coredata.Audit, len(audits))
+	frameworkIDSet := make(map[gid.GID]struct{})
+
+	for _, audit := range audits {
+		if audit.ReportID == nil {
+			continue
+		}
+
+		if _, exists := auditByReportID[*audit.ReportID]; exists {
+			continue
+		}
+
+		auditByReportID[*audit.ReportID] = audit
+		frameworkIDSet[audit.FrameworkID] = struct{}{}
+	}
+
+	frameworkIDs := make([]gid.GID, 0, len(frameworkIDSet))
+	for frameworkID := range frameworkIDSet {
+		frameworkIDs = append(frameworkIDs, frameworkID)
+	}
+
+	frameworkByID := make(map[gid.GID]*coredata.Framework, len(frameworkIDs))
+
+	if len(frameworkIDs) > 0 {
+		var frameworks coredata.Frameworks
+		if err := frameworks.LoadByIDs(ctx, conn, scope, frameworkIDs); err != nil {
+			return nil, fmt.Errorf("cannot load frameworks by IDs: %w", err)
+		}
+
+		for _, framework := range frameworks {
+			frameworkByID[framework.ID] = framework
+		}
+	}
+
+	labels := make([]string, 0, len(reportIDs))
+
+	for _, reportID := range reportIDs {
+		report, ok := reportByID[reportID]
+		if !ok {
+			return nil, fmt.Errorf("cannot load report %q: %w", reportID, coredata.ErrResourceNotFound)
+		}
+
+		audit, ok := auditByReportID[reportID]
+		if !ok {
+			labels = append(labels, report.Filename)
+			continue
+		}
+
+		framework, ok := frameworkByID[audit.FrameworkID]
+		if !ok {
+			labels = append(labels, report.Filename)
+			continue
+		}
+
+		if audit.Name != nil && *audit.Name != "" {
+			labels = append(labels, fmt.Sprintf("%s - %s", framework.Name, *audit.Name))
+			continue
+		}
+
+		labels = append(labels, framework.Name)
+	}
+
+	return labels, nil
 }
