@@ -56,7 +56,7 @@
     "@types/react": "^19.1.2",
     "@types/react-dom": "^19.1.2",
     "@vitejs/plugin-react": "^5.1.4",
-    "@vitest/browser": "^4.0.18",
+    "@vitest/browser": "^4.1.6",
     "@vitest/coverage-v8": "^4.0.18",
     "eslint": "^9.39.2",
     "playwright": "^1.55.1",
