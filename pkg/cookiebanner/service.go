@@ -964,6 +964,11 @@ func (s *Service) PublishCookieBannerVersion(
 				return fmt.Errorf("cannot publish version: %w", err)
 			}
 
+			banner := coredata.CookieBanner{ID: bannerID}
+			if err := banner.SetPolicyGenerationRequested(ctx, tx); err != nil {
+				return fmt.Errorf("cannot request cookie policy generation: %w", err)
+			}
+
 			return nil
 		},
 	)
