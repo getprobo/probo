@@ -225,12 +225,12 @@ func TestBuilder_Build_Defaults(t *testing.T) {
 	assert.Equal(t, 3, cfg.Probod.TrackerMappingWorker.MaxConcurrency)
 	assert.Equal(t, 600, cfg.Probod.TrackerMappingWorker.StaleAfter)
 	assert.Equal(t, 45, cfg.Probod.TrackerMappingWorker.AgentTimeout)
-	assert.Equal(t, 4, cfg.Probod.TrackerMappingWorker.AgentMaxTurns)
+	assert.Equal(t, 10, cfg.Probod.TrackerMappingWorker.AgentMaxTurns)
 	assert.Equal(t, 10, cfg.Probod.CommonPatternEnrichmentWorker.Interval)
 	assert.Equal(t, 2, cfg.Probod.CommonPatternEnrichmentWorker.MaxConcurrency)
 	assert.Equal(t, 600, cfg.Probod.CommonPatternEnrichmentWorker.StaleAfter)
 	assert.Equal(t, 45, cfg.Probod.CommonPatternEnrichmentWorker.AgentTimeout)
-	assert.Equal(t, 3, cfg.Probod.CommonPatternEnrichmentWorker.AgentMaxTurns)
+	assert.Equal(t, 10, cfg.Probod.CommonPatternEnrichmentWorker.AgentMaxTurns)
 
 	// Custom domains config
 	assert.Equal(t, 3600, cfg.Probod.CustomDomains.RenewalInterval)

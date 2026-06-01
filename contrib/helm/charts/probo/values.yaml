@@ -285,7 +285,7 @@ probo:
     maxConcurrency: 3
     staleAfter: 600
     agentTimeout: 45
-    agentMaxTurns: 4
+    agentMaxTurns: 10
 
   # Common-pattern enrichment background worker tuning (optional).
   # interval, staleAfter, and agentTimeout are in seconds.
@@ -294,7 +294,7 @@ probo:
     maxConcurrency: 2
     staleAfter: 600
     agentTimeout: 45
-    agentMaxTurns: 3
+    agentMaxTurns: 10
 
   # Custom domains configuration (optional)
   customDomains:

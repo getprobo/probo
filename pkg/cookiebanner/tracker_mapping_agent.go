@@ -36,9 +36,15 @@ const (
 
 	// defaultMappingMaxTurns and defaultEnrichmentMaxTurns bound the
 	// agent reasoning loop (LLM call + tool round-trips) when the worker
-	// config does not supply a value.
-	defaultMappingMaxTurns    = 4
-	defaultEnrichmentMaxTurns = 3
+	// config does not supply a value. The budget must exceed the number
+	// of tool rounds each prompt authorizes (the mapping prompt allows
+	// two DB searches plus up to three web searches, the enrichment
+	// prompt one DB search plus up to three web searches) and still
+	// leave a turn for the forced structured-output synthesis turn;
+	// otherwise the loop trips MaxTurnsExceededError before emitting
+	// JSON. Ten matches agent.DefaultMaxTurns and gives ample headroom.
+	defaultMappingMaxTurns    = 10
+	defaultEnrichmentMaxTurns = 10
 
 	// defaultAgentMaxTokens caps the output of the mapping and
 	// enrichment agents when the agent config carries no max-tokens

@@ -184,7 +184,7 @@ probo:
   #   maxConcurrency: 3
   #   staleAfter: 600
   #   agentTimeout: 45
-  #   agentMaxTurns: 4
+  #   agentMaxTurns: 10
 
   # Common-pattern enrichment worker tuning (optional; seconds for
   # interval/staleAfter/agentTimeout).
@@ -193,7 +193,7 @@ probo:
   #   maxConcurrency: 2
   #   staleAfter: 600
   #   agentTimeout: 45
-  #   agentMaxTurns: 3
+  #   agentMaxTurns: 10
 
   # OpenTelemetry tracing (optional)
   tracing:
