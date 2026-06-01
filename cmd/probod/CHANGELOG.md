@@ -4,6 +4,12 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.200.1] - 2026-06-01
+
+### Fixed
+
+- Raise tracker mapping and common-pattern enrichment agent max turns to 10 to prevent `MaxTurnsExceededError` when the tool-call budget exceeded the limit
+
 ## [0.200.0] - 2026-06-01
 
 ### Added
