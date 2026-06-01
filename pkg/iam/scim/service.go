@@ -836,19 +836,6 @@ func (s *Service) DeleteUser(
 				return scimerrors.ScimErrorResourceNotFound(profileID.String())
 			}
 
-			invitations := &coredata.Invitations{}
-
-			onlyPending := coredata.NewInvitationFilter([]coredata.InvitationStatus{coredata.InvitationStatusPending})
-			if err := invitations.ExpireByUserID(
-				ctx,
-				tx,
-				scope,
-				profile.ID,
-				onlyPending,
-			); err != nil {
-				return fmt.Errorf("cannot expire pending invitations: %w", err)
-			}
-
 			var membership *coredata.Membership
 
 			m := &coredata.Membership{}
@@ -862,12 +849,39 @@ func (s *Service) DeleteUser(
 				membership = m
 			}
 
-			if err := webhook.InsertData(ctx, tx, scope, config.OrganizationID, coredata.WebhookEventTypeUserDeleted, webhooktypes.NewUser(profile, membership)); err != nil {
-				return fmt.Errorf("cannot insert webhook event: %w", err)
+			if err := profile.Delete(ctx, tx, scope, profile.ID); err != nil {
+				if errors.Is(err, coredata.ErrResourceInUse) {
+					s.logger.WarnCtx(
+						ctx,
+						"SCIM user delete skipped, profile is in use",
+						log.String("profile_id", profileID.String()),
+					)
+
+					if err := s.deactivateProfileInTx(ctx, tx, scope, config, profile, membership); err != nil {
+						return fmt.Errorf("cannot deactivate profile: %w", err)
+					}
+
+					return nil
+				}
+
+				return fmt.Errorf("cannot delete profile: %w", err)
 			}
 
-			if err := profile.Delete(ctx, tx, scope, profile.ID); err != nil {
-				return fmt.Errorf("cannot delete profile: %w", err)
+			invitations := &coredata.Invitations{}
+
+			onlyPending := coredata.NewInvitationFilter([]coredata.InvitationStatus{coredata.InvitationStatusPending})
+			if err := invitations.ExpireByUserID(
+				ctx,
+				tx,
+				scope,
+				profile.ID,
+				onlyPending,
+			); err != nil {
+				return fmt.Errorf("cannot expire pending invitations: %w", err)
+			}
+
+			if err := webhook.InsertData(ctx, tx, scope, config.OrganizationID, coredata.WebhookEventTypeUserDeleted, webhooktypes.NewUser(profile, membership)); err != nil {
+				return fmt.Errorf("cannot insert webhook event: %w", err)
 			}
 
 			if membership != nil {
@@ -879,6 +893,58 @@ func (s *Service) DeleteUser(
 			return nil
 		},
 	)
+}
+
+func (s *Service) deactivateProfileInTx(
+	ctx context.Context,
+	tx pg.Tx,
+	scope coredata.Scoper,
+	config *coredata.SCIMConfiguration,
+	profile *coredata.MembershipProfile,
+	membership *coredata.Membership,
+) error {
+	if profile.State == coredata.ProfileStateInactive {
+		return nil
+	}
+
+	now := time.Now()
+	profile.State = coredata.ProfileStateInactive
+	profile.UpdatedAt = now
+
+	if err := profile.Update(ctx, tx, scope); err != nil {
+		return fmt.Errorf("cannot deactivate profile: %w", err)
+	}
+
+	invitations := &coredata.Invitations{}
+
+	onlyPending := coredata.NewInvitationFilter([]coredata.InvitationStatus{coredata.InvitationStatusPending})
+	if err := invitations.ExpireByUserID(
+		ctx,
+		tx,
+		scope,
+		profile.ID,
+		onlyPending,
+	); err != nil {
+		return fmt.Errorf("cannot expire pending invitations: %w", err)
+	}
+
+	signatures := &coredata.DocumentVersionSignatures{}
+	if err := signatures.DeleteRequestedBySignatory(ctx, tx, scope, profile.ID); err != nil {
+		return fmt.Errorf("cannot delete requested signatures: %w", err)
+	}
+
+	if membership != nil {
+		membership.UpdatedAt = now
+		if err := membership.Update(ctx, tx, scope); err != nil {
+			return fmt.Errorf("cannot update membership: %w", err)
+		}
+	}
+
+	if err := webhook.InsertData(ctx, tx, scope, config.OrganizationID, coredata.WebhookEventTypeUserUpdated, webhooktypes.NewUser(profile, membership)); err != nil {
+		return fmt.Errorf("cannot insert webhook event: %w", err)
+	}
+
+	return nil
 }
 
 func (s *Service) LogEvent(
