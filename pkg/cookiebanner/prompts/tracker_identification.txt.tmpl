@@ -23,6 +23,7 @@ Return a structured JSON response with:
    - If the first query returns nothing useful, broaden: "[name] web tracker" or "site:[domain] cookie documentation".
    - Stop searching once you get a confident match; do not exhaust all query slots if the first one succeeds.
    - When evaluating web search results, verify that the tracker name discussed in the result shares a meaningful prefix with the pattern you are identifying. Trackers with different prefixes are distinct — for example, _hjCookieTest (Hotjar's _hj prefix) must not be confused with a pattern named cookietest (no _hj prefix). If the search result discusses a tracker whose prefix does not match, discard it and continue searching or lower your confidence.
+   - A generic token shared with a vendor's terminology is NOT a match when it appears as a suffix or substring behind a different, meaningful prefix. The leading prefix is what attributes a vendor, not a common word elsewhere in the name. For example, probo_distinct_id carries the custom prefix probo_, so it must NOT be attributed to Mixpanel merely because Mixpanel uses a distinct_id key — the prefix probo_ does not belong to Mixpanel. Likewise, a key ending in _session or _uid is not attributable to a vendor just because that vendor also uses such a word.
 
 4. Common cookie naming conventions to recognize:
    - _ga*, _gid, _gat*: Google Analytics
@@ -47,7 +48,7 @@ Return a structured JSON response with:
 
 7. If you truly cannot identify who set the tracker, set third_party_name to an empty string and third_party_confidence below 0.3.
 
-8. Only attribute a tracker to a company or service when you have concrete evidence: a database match, an unmistakable naming convention (including a vendor name embedded in the key), or a clear web search result. Never guess or invent attributions based on vague similarity or general knowledge. If no evidence supports a match, return an empty third_party_name with third_party_confidence below 0.3.
+8. Only attribute a tracker to a company or service when you have concrete evidence: an exact (perfect) match on the pattern in the database, an unmistakable naming convention where the tracker's meaningful prefix belongs to that vendor (including a vendor name embedded in the key), or a clear web search result whose tracker name shares that meaningful prefix. Absent a shared meaningful prefix or a perfect pattern match, do NOT imagine a vendor — never guess or invent attributions based on vague similarity, a shared generic word, or general knowledge. If no evidence supports a match, return an empty third_party_name with third_party_confidence below 0.3.
 
 9. For the category field, use one of: {{.Categories}}.
    Most cookies fall under ANALYTICS or MARKETING.
