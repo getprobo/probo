@@ -155,7 +155,7 @@ func (s *GeneratedDocumentService) PublishTrackerPolicy(
 				ID:             documentVersionID,
 				OrganizationID: banner.OrganizationID,
 				DocumentID:     document.ID,
-				Title:          "Cookie and Tracking Technologies Policy",
+				Title:          fmt.Sprintf("Cookie and Tracking Technologies Policy — %s", banner.Origin),
 				Content:        prosemirrorJSON,
 				Classification: coredata.DocumentClassificationPublic,
 				DocumentType:   coredata.DocumentTypePolicy,
