@@ -16,7 +16,7 @@ ALTER TABLE cookie_banners
     ADD COLUMN policy_document_id TEXT,
     ADD COLUMN policy_generation_requested_at TIMESTAMP WITH TIME ZONE;
 
--- Backfill: any banner that already has a published version gets its cookie
+-- Backfill: any banner that already has a published version gets its tracker
 -- policy generated on the worker's first pass.
 UPDATE cookie_banners
 SET policy_generation_requested_at = NOW()

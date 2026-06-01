@@ -966,7 +966,7 @@ func (s *Service) PublishCookieBannerVersion(
 
 			banner := coredata.CookieBanner{ID: bannerID}
 			if err := banner.SetPolicyGenerationRequested(ctx, tx); err != nil {
-				return fmt.Errorf("cannot request cookie policy generation: %w", err)
+				return fmt.Errorf("cannot request tracker policy generation: %w", err)
 			}
 
 			return nil

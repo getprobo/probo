@@ -20,6 +20,7 @@ import (
 	"errors"
 	"fmt"
 	"maps"
+	"strings"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -39,6 +40,12 @@ type (
 
 	CookieItems []CookieItem
 
+	cookieDurationUnit struct {
+		secs int
+		name string
+		snap int
+	}
+
 	CookieCategory struct {
 		ID              gid.GID            `db:"id"`
 		OrganizationID  gid.GID            `db:"organization_id"`
@@ -56,6 +63,67 @@ type (
 
 	CookieCategories []*CookieCategory
 )
+
+// cookieDurationUnits mirrors DURATION_UNITS in
+// packages/cookie-banner/src/cookie-utils.ts (and the snap table used by the
+// pattern-analysis worker) so durations rendered server-side match exactly what
+// visitors see in the consent banner. snap is the per-unit buffer: when the
+// remainder is within snap seconds of the next whole unit, round up instead of
+// carrying into smaller units.
+var cookieDurationUnits = [...]cookieDurationUnit{
+	{365 * 24 * 3600, "year", 21 * 24 * 3600},
+	{30 * 24 * 3600, "month", 2 * 24 * 3600},
+	{7 * 24 * 3600, "week", 12 * 3600},
+	{24 * 3600, "day", 2 * 3600},
+	{3600, "hour", 5 * 60},
+	{60, "minute", 5},
+	{1, "second", 0},
+}
+
+// HumanizedDuration renders the cookie's max-age into a human-readable lifetime
+// using the same snapping and composition rules as the banner's
+// humanizeDuration helper. A nil or non-positive max-age denotes a session
+// cookie that is cleared when the browser closes.
+func (c CookieItem) HumanizedDuration() string {
+	if c.MaxAgeSeconds == nil || *c.MaxAgeSeconds <= 0 {
+		return "Session"
+	}
+
+	remaining := *c.MaxAgeSeconds
+
+	var parts []string
+
+	for _, u := range cookieDurationUnits {
+		if remaining < u.secs-u.snap {
+			continue
+		}
+
+		count := remaining / u.secs
+
+		leftover := remaining - count*u.secs
+		switch {
+		case leftover >= u.secs-u.snap:
+			count++
+			remaining = 0
+		case leftover <= u.snap:
+			remaining = 0
+		default:
+			remaining = leftover
+		}
+
+		if count == 1 {
+			parts = append(parts, fmt.Sprintf("1 %s", u.name))
+		} else {
+			parts = append(parts, fmt.Sprintf("%d %ss", count, u.name))
+		}
+	}
+
+	if len(parts) == 0 {
+		return "Session"
+	}
+
+	return strings.Join(parts, ", ")
+}
 
 func (c CookieItems) MarshalJSON() ([]byte, error) {
 	if c == nil {

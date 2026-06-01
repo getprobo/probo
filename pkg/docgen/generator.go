@@ -469,6 +469,35 @@ type (
 		ValidFrom  string
 		ValidUntil string
 	}
+
+	TrackerPolicyData struct {
+		OrganizationName  string
+		WebsiteOrigin     string
+		GeneratedAt       time.Time
+		PrivacyPolicyURL  string
+		ConsentExpiryDays int
+		Categories        []TrackerPolicyCategory
+		ThirdParties      []TrackerPolicyThirdParty
+	}
+
+	TrackerPolicyCategory struct {
+		Name        string
+		Description string
+		Necessary   bool
+		Trackers    []TrackerPolicyTracker
+	}
+
+	TrackerPolicyTracker struct {
+		Name     string
+		Purpose  string
+		Duration string
+	}
+
+	TrackerPolicyThirdParty struct {
+		Name             string
+		Description      string
+		PrivacyPolicyURL string
+	}
 )
 
 func BoolLabel(v bool) string {
