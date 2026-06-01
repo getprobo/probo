@@ -39,6 +39,7 @@ import (
 	"go.gearno.de/kit/pg"
 	"go.gearno.de/kit/unit"
 	"go.gearno.de/kit/worker"
+	"go.gearno.de/x/ref"
 	"go.opentelemetry.io/otel/trace"
 	"go.probo.inc/probo/packages/emails"
 	"go.probo.inc/probo/pkg/accessreview"
@@ -507,9 +508,11 @@ func (impl *Implm) Run(
 		baseURL.String(),
 		impl.cfg.Auth.Cookie.Secret,
 		proboLLMClient,
-		proboAgentCfg.ModelName,
-		*proboAgentCfg.Temperature,
-		*proboAgentCfg.MaxTokens,
+		probo.LLMConfig{
+			Model:       proboAgentCfg.ModelName,
+			Temperature: ref.UnrefOrZero(proboAgentCfg.Temperature),
+			MaxTokens:   ref.UnrefOrZero(proboAgentCfg.MaxTokens),
+		},
 		html2pdfConverter,
 		acmeService,
 		fileManagerService,
@@ -790,8 +793,8 @@ func (impl *Implm) Run(
 		evidenceDescriberLLMClient,
 		evidencedescriber.Config{
 			Model:     evidenceDescriberAgentCfg.ModelName,
-			Temp:      *evidenceDescriberAgentCfg.Temperature,
-			MaxTokens: *evidenceDescriberAgentCfg.MaxTokens,
+			Temp:      ref.UnrefOrZero(evidenceDescriberAgentCfg.Temperature),
+			MaxTokens: ref.UnrefOrZero(evidenceDescriberAgentCfg.MaxTokens),
 		},
 	)
 	evidenceDescriptionWorker := probo.NewEvidenceDescriptionWorker(

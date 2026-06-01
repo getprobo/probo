@@ -506,9 +506,9 @@ func (s DocumentService) generateChangelog(
 		"changelog_generator",
 		s.svc.llmClient,
 		agent.WithInstructions(changelogGeneratorSystemPrompt),
-		agent.WithModel(s.svc.llmModel),
-		agent.WithTemperature(s.svc.llmTemperature),
-		agent.WithMaxTokens(s.svc.llmMaxTokens),
+		agent.WithModel(s.svc.llmConfig.Model),
+		agent.WithTemperature(s.svc.llmConfig.Temperature),
+		agent.WithMaxTokens(s.svc.llmConfig.MaxTokens),
 	)
 
 	result, err := ag.Run(

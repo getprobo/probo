@@ -59,6 +59,14 @@ type ExportService interface {
 }
 
 type (
+	// LLMConfig holds the model parameters used by the agents the probo
+	// service runs.
+	LLMConfig struct {
+		Model       string
+		Temperature float64
+		MaxTokens   int
+	}
+
 	Service struct {
 		pg                                    *pg.Client
 		s3                                    *s3.Client
@@ -67,9 +75,7 @@ type (
 		baseURL                               string
 		tokenSecret                           string
 		llmClient                             *llm.Client
-		llmModel                              string
-		llmTemperature                        float64
-		llmMaxTokens                          int
+		llmConfig                             LLMConfig
 		html2pdfConverter                     *html2pdf.Converter
 		acmeService                           *certmanager.ACMEService
 		fileManager                           *filemanager.Service
@@ -129,9 +135,7 @@ func NewService(
 	baseURL string,
 	tokenSecret string,
 	llmClient *llm.Client,
-	llmModel string,
-	llmTemperature float64,
-	llmMaxTokens int,
+	llmConfig LLMConfig,
 	html2pdfConverter *html2pdf.Converter,
 	acmeService *certmanager.ACMEService,
 	fileManagerService *filemanager.Service,
@@ -157,9 +161,7 @@ func NewService(
 		baseURL:                 baseURL,
 		tokenSecret:             tokenSecret,
 		llmClient:               llmClient,
-		llmModel:                llmModel,
-		llmTemperature:          llmTemperature,
-		llmMaxTokens:            llmMaxTokens,
+		llmConfig:               llmConfig,
 		html2pdfConverter:       html2pdfConverter,
 		acmeService:             acmeService,
 		fileManager:             fileManagerService,
