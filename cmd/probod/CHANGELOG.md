@@ -4,6 +4,40 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.200.0] - 2026-06-01
+
+### Added
+
+- Add tracker description enrichment worker
+- Promote tracker patterns to organization third parties via worker, with first-party origin filtering and sibling-based mapping
+- Surface third-party links on `TrackerPattern` in GraphQL, with batch loaders
+- Filter banner trackers by linked third party and show third parties on the banner trackers page
+- Expose HTTP cookie source through the console API
+- Add document archive row action
+- Add stale recovery to the tracker mapping worker
+- Tune tracker workers: expose worker interval, concurrency, stale-after, agent timeout, and max-turns as config
+
+### Changed
+
+- Deactivate SCIM users when delete is blocked
+- Rework tracker and resource row actions
+- Reuse the mapping agent to attribute trackers in the enricher
+- Raise default agent token budget for reasoning models (1024/512 → 4096)
+- Harden catalog vendor resolution and the tracker mapping agent prompt
+- Skip shared infrastructure in domain matching during tracker mapping
+- Backfill tracker description from the common catalog
+- Run tracker mapping outside the persist transaction to remove cross-network row locks
+
+### Fixed
+
+- Stop tracker agents from inventing vendors
+- Drop sampling params unsupported by the model
+- Tolerate source fetch failures during tracker mapping
+- Skip mapping when a tracker pattern is deleted concurrently
+- Guard `LinkToCommon` against overwriting an existing catalog link
+- Take resolver scope from `Authorize` rather than the GID
+- Copy default LLM pointers when resolving agents
+
 ## [0.199.1] - 2026-05-28
 
 ### Fixed
