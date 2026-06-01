@@ -12,12 +12,13 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { Layout, Skeleton } from "@probo/ui";
+import { Skeleton } from "@probo/ui";
 import { Suspense } from "react";
 import { graphql, type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { Outlet } from "react-router";
 
 import type { ViewerLayoutQuery } from "#/__generated__/iam/ViewerLayoutQuery.graphql";
+import { AppLayout } from "#/components/AppLayout";
 
 import { ViewerDropdown } from "./_components/ViewerDropdown";
 
@@ -41,7 +42,7 @@ export function ViewerLayout(props: {
   );
 
   return (
-    <Layout
+    <AppLayout
       headerTrailing={(
         <div className="ml-auto">
           <Suspense fallback={<Skeleton className="w-32 h-8" />}>
@@ -51,6 +52,6 @@ export function ViewerLayout(props: {
       )}
     >
       <Outlet />
-    </Layout>
+    </AppLayout>
   );
 }

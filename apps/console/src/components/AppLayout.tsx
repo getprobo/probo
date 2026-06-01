@@ -12,21 +12,27 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { Skeleton } from "@probo/ui";
-import { Outlet } from "react-router";
+import { Layout, Logo } from "@probo/ui";
+import type { ComponentProps } from "react";
 
-import { AppLayout } from "#/components/AppLayout";
+type Props = ComponentProps<typeof Layout>;
 
-export function ViewerLayoutLoading() {
+function DevTopbarLogo() {
   return (
-    <AppLayout
-      headerTrailing={(
-        <div className="ml-auto">
-          <Skeleton className="w-32 h-8" />
-        </div>
-      )}
-    >
-      <Outlet />
-    </AppLayout>
+    <span className="flex items-center gap-1.5 text-txt-primary">
+      <Logo className="w-12 h-5 shrink-0" />
+      <span className="rounded-sm border border-border-warning bg-warning px-1.5 py-0.5 text-[10px] font-semibold leading-none text-txt-warning">
+        DEV
+      </span>
+    </span>
+  );
+}
+
+export function AppLayout({ logo, ...props }: Props) {
+  return (
+    <Layout
+      {...props}
+      logo={logo ?? (import.meta.env.DEV ? <DevTopbarLogo /> : undefined)}
+    />
   );
 }

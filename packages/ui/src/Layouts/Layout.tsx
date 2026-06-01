@@ -33,6 +33,7 @@ import { ConfirmDialog } from "../Molecules/Dialog/ConfirmDialog";
 type Props = PropsWithChildren<{
   headerLeading?: ReactNode;
   headerTrailing: ReactNode;
+  logo?: ReactNode;
   sidebar?: ReactNode;
 }>;
 
@@ -43,6 +44,7 @@ const LayoutContext = createContext({
 export function Layout({
   headerLeading,
   headerTrailing,
+  logo,
   sidebar,
   children,
 }: Props) {
@@ -58,7 +60,7 @@ export function Layout({
       <div className="text-txt-primary bg-level-0 min-h-screen">
         <header className="fixed top-0 z-2 left-0 right-0 px-4 flex items-center border-b border-border-solid h-12 bg-level-0">
           <Link to="/">
-            <Logo className="w-12 h-5" />
+            {logo ?? <Logo className="w-12 h-5" />}
           </Link>
           {headerLeading && (
             <>

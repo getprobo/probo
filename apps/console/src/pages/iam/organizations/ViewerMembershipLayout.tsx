@@ -12,12 +12,13 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { Layout, Skeleton } from "@probo/ui";
+import { Skeleton } from "@probo/ui";
 import { Suspense } from "react";
 import { graphql, type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { Outlet } from "react-router";
 
 import type { ViewerMembershipLayoutQuery } from "#/__generated__/iam/ViewerMembershipLayoutQuery.graphql";
+import { AppLayout } from "#/components/AppLayout";
 import { CoreRelayProvider } from "#/providers/CoreRelayProvider";
 import { CurrentUser } from "#/providers/CurrentUser";
 
@@ -66,7 +67,7 @@ export function ViewerMembershipLayout(props: {
   }
 
   return (
-    <Layout
+    <AppLayout
       headerLeading={(
         <MembershipsDropdown organizationFKey={organization} />
       )}
@@ -88,6 +89,6 @@ export function ViewerMembershipLayout(props: {
           <Outlet context={organization.viewer.membership.role} />
         </CurrentUser>
       </CoreRelayProvider>
-    </Layout>
+    </AppLayout>
   );
 }
