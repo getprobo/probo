@@ -313,6 +313,7 @@ func TestResetStaleMappings(t *testing.T) {
 
 	load := func(id gid.GID) coredata.TrackerPattern {
 		var reloaded coredata.TrackerPattern
+
 		require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
 			return reloaded.LoadByID(ctx, conn, fx.scope, id)
 		}))
