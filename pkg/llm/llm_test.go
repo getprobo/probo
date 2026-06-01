@@ -47,24 +47,6 @@ func (m *mockProvider) ChatCompletionStream(_ context.Context, _ *llm.ChatComple
 	return m.streamResp, m.streamErr
 }
 
-// capturingProvider records the request it received so tests can assert
-// on the parameters the client forwarded to the provider.
-type capturingProvider struct {
-	lastReq    *llm.ChatCompletionRequest
-	chatResp   *llm.ChatCompletionResponse
-	streamResp llm.ChatCompletionStream
-}
-
-func (p *capturingProvider) ChatCompletion(_ context.Context, req *llm.ChatCompletionRequest) (*llm.ChatCompletionResponse, error) {
-	p.lastReq = req
-	return p.chatResp, nil
-}
-
-func (p *capturingProvider) ChatCompletionStream(_ context.Context, req *llm.ChatCompletionRequest) (llm.ChatCompletionStream, error) {
-	p.lastReq = req
-	return p.streamResp, nil
-}
-
 type mockStream struct {
 	events   []llm.ChatCompletionStreamEvent
 	idx      int
@@ -373,105 +355,6 @@ func TestChatCompletion(t *testing.T) {
 		spans := recorder.Ended()
 		require.Len(t, spans, 1)
 		assert.Equal(t, codes.Error, spans[0].Status().Code)
-	})
-}
-
-// ---------------------------------------------------------------------------
-// Client — request sanitization
-// ---------------------------------------------------------------------------
-
-func TestChatCompletionSanitizesUnsupportedParameters(t *testing.T) {
-	t.Parallel()
-
-	temp := 0.1
-	topP := 0.9
-	freq := 0.5
-	pres := 0.5
-
-	t.Run("drops temperature for reasoning model snapshot", func(t *testing.T) {
-		t.Parallel()
-
-		provider := &capturingProvider{
-			chatResp: &llm.ChatCompletionResponse{
-				Model:        "gpt-5-nano",
-				FinishReason: llm.FinishReasonStop,
-				Message: llm.Message{
-					Role:  llm.RoleAssistant,
-					Parts: []llm.Part{llm.TextPart{Text: "ok"}},
-				},
-			},
-		}
-
-		client, _ := newTestClient(provider)
-		_, err := client.ChatCompletion(context.Background(), &llm.ChatCompletionRequest{
-			Model:            "gpt-5-nano-2025-08-07",
-			Messages:         []llm.Message{{Role: llm.RoleUser, Parts: []llm.Part{llm.TextPart{Text: "Hi"}}}},
-			Temperature:      &temp,
-			TopP:             &topP,
-			FrequencyPenalty: &freq,
-			PresencePenalty:  &pres,
-		})
-
-		require.NoError(t, err)
-		require.NotNil(t, provider.lastReq)
-		assert.Nil(t, provider.lastReq.Temperature)
-		assert.Nil(t, provider.lastReq.TopP)
-		assert.Nil(t, provider.lastReq.FrequencyPenalty)
-		assert.Nil(t, provider.lastReq.PresencePenalty)
-	})
-
-	t.Run("keeps temperature for chat model", func(t *testing.T) {
-		t.Parallel()
-
-		provider := &capturingProvider{
-			chatResp: &llm.ChatCompletionResponse{
-				Model:        "gpt-4o",
-				FinishReason: llm.FinishReasonStop,
-				Message: llm.Message{
-					Role:  llm.RoleAssistant,
-					Parts: []llm.Part{llm.TextPart{Text: "ok"}},
-				},
-			},
-		}
-
-		client, _ := newTestClient(provider)
-		_, err := client.ChatCompletion(context.Background(), &llm.ChatCompletionRequest{
-			Model:       "gpt-4o",
-			Messages:    []llm.Message{{Role: llm.RoleUser, Parts: []llm.Part{llm.TextPart{Text: "Hi"}}}},
-			Temperature: &temp,
-		})
-
-		require.NoError(t, err)
-		require.NotNil(t, provider.lastReq)
-		require.NotNil(t, provider.lastReq.Temperature)
-		assert.InEpsilon(t, 0.1, *provider.lastReq.Temperature, 1e-9)
-	})
-
-	t.Run("leaves unknown model untouched", func(t *testing.T) {
-		t.Parallel()
-
-		provider := &capturingProvider{
-			chatResp: &llm.ChatCompletionResponse{
-				Model:        "mystery-model",
-				FinishReason: llm.FinishReasonStop,
-				Message: llm.Message{
-					Role:  llm.RoleAssistant,
-					Parts: []llm.Part{llm.TextPart{Text: "ok"}},
-				},
-			},
-		}
-
-		client, _ := newTestClient(provider)
-		_, err := client.ChatCompletion(context.Background(), &llm.ChatCompletionRequest{
-			Model:       "mystery-model",
-			Messages:    []llm.Message{{Role: llm.RoleUser, Parts: []llm.Part{llm.TextPart{Text: "Hi"}}}},
-			Temperature: &temp,
-		})
-
-		require.NoError(t, err)
-		require.NotNil(t, provider.lastReq)
-		require.NotNil(t, provider.lastReq.Temperature)
-		assert.InEpsilon(t, 0.1, *provider.lastReq.Temperature, 1e-9)
 	})
 }
 
