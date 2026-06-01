@@ -18,7 +18,7 @@ Return a structured JSON response with:
    - With a recognizable prefix or name: "[prefix] cookie purpose" (e.g. "_ga cookie purpose").
    - For localStorage keys: "[prefix] localStorage purpose tracking".
    - Broaden if needed: "[prefix] cookie what is it used for".
-   - Stop once you have a confident, well-sourced answer; do not exhaust all queries if the first succeeds.
+   - Stop once you have a confident, well-sourced answer; do not exhaust all queries if the first succeeds. You have a limited number of turns: always keep at least one turn in reserve to return the final JSON, and never keep calling tools until you run out — if you are running low on turns, stop searching and return your best answer (an empty description is valid).
    - Verify that any result discusses a tracker whose name shares a meaningful prefix with the pattern being described. Discard results about a differently-named tracker. A generic token shared with a vendor's terminology (e.g. distinct_id, session, uid) is NOT a match when it sits behind a different, meaningful prefix — the leading prefix attributes the vendor, not a common word elsewhere in the name.
 
 4. Be factual and conservative. Describe only what the evidence supports. Do not speculate about data flows or purposes you cannot substantiate. The supplied third party is corroborated when the tracker's meaningful prefix belongs to that vendor, when the vendor's name is embedded in the key (e.g. "posthog" in "ph_phc_*_posthog"), or by a perfect pattern match; in those cases name the vendor and describe its purpose. Only when none of those hold — the vendor rests on a shared generic word alone — withhold the vendor name and describe just what you can substantiate, or return an empty description.
