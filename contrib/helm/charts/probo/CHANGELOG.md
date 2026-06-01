@@ -4,6 +4,13 @@ All notable changes to the Probo Helm chart will be documented in this file.
 
 ## Unreleased
 
+## [0.2.1] - 2026-06-01
+
+### Changed
+
+- Default `appVersion` to `probod v0.200.1`
+- Raise default tracker mapping and common-pattern enrichment agent `maxTurns` to 10 in `values.yaml` and `values-production.yaml.example`
+
 ## [0.2.0] - 2026-06-01
 
 ### Added
