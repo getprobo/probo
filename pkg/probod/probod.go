@@ -732,6 +732,17 @@ func (impl *Implm) Run(
 		},
 	)
 
+	trackerPolicyWorker := probo.NewTrackerPolicyWorker(proboService.GeneratedDocuments, pgClient, l)
+	trackerPolicyWorkerCtx, stopTrackerPolicyWorker := context.WithCancel(context.Background())
+
+	wg.Go(
+		func() {
+			if err := trackerPolicyWorker.Run(trackerPolicyWorkerCtx); err != nil {
+				cancel(fmt.Errorf("tracker policy worker crashed: %w", err))
+			}
+		},
+	)
+
 	trackerMappingWorker := cookiebanner.NewTrackerMappingWorker(
 		pgClient,
 		l,
@@ -870,6 +881,7 @@ func (impl *Implm) Run(
 	stopWebhookSender()
 	stopESignService()
 	stopTrackerPatternAnalysisWorker()
+	stopTrackerPolicyWorker()
 	stopTrackerMappingWorker()
 	stopCommonPatternEnrichmentWorker()
 	stopMailingListWorker()

@@ -72,13 +72,8 @@ func (s *GeneratedDocumentService) PublishTrackerPolicy(
 	ctx context.Context,
 	scope coredata.Scoper,
 	cookieBannerID gid.GID,
-) (*coredata.Document, *coredata.DocumentVersion, error) {
-	var (
-		document        *coredata.Document
-		documentVersion *coredata.DocumentVersion
-	)
-
-	err := s.svc.pg.WithTx(
+) error {
+	return s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			banner := &coredata.CookieBanner{}
@@ -103,7 +98,10 @@ func (s *GeneratedDocumentService) PublishTrackerPolicy(
 
 			now := time.Now()
 
-			var existingDoc *coredata.Document
+			var (
+				document    *coredata.Document
+				existingDoc *coredata.Document
+			)
 
 			if banner.PolicyDocumentID != nil {
 				doc := &coredata.Document{}
@@ -153,7 +151,7 @@ func (s *GeneratedDocumentService) PublishTrackerPolicy(
 			}
 
 			documentVersionID := gid.New(scope.GetTenantID(), coredata.DocumentVersionEntityType)
-			documentVersion = &coredata.DocumentVersion{
+			documentVersion := &coredata.DocumentVersion{
 				ID:             documentVersionID,
 				OrganizationID: banner.OrganizationID,
 				DocumentID:     document.ID,
@@ -169,11 +167,6 @@ func (s *GeneratedDocumentService) PublishTrackerPolicy(
 			return s.publishOrRequestApproval(ctx, scope, tx, document, documentVersion, banner.OrganizationID, nil, false, now)
 		},
 	)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	return document, documentVersion, nil
 }
 
 func (s *GeneratedDocumentService) buildTrackerPolicyDocumentData(
