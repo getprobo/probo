@@ -730,6 +730,7 @@ func (impl *Implm) Run(
 		l,
 		trackerAgentsCfg,
 		thirdPartyDisambiguationCfg,
+		time.Duration(impl.cfg.TrackerMappingWorker.StaleAfter)*time.Second,
 		worker.WithInterval(time.Duration(impl.cfg.TrackerMappingWorker.Interval)*time.Second),
 		worker.WithMaxConcurrency(impl.cfg.TrackerMappingWorker.MaxConcurrency),
 	)

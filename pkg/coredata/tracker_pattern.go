@@ -1196,13 +1196,19 @@ LIMIT 1;
 	return nil
 }
 
+// ClearMappingRequestedAt removes the row from the mapping queue. It
+// bumps updated_at so the stale-recovery clock starts at claim time,
+// keeping ResetStaleMappings from re-arming a row that is still being
+// processed.
 func (tp *TrackerPattern) ClearMappingRequestedAt(
 	ctx context.Context,
 	tx pg.Tx,
 ) error {
 	q := `
 UPDATE tracker_patterns
-SET mapping_requested_at = NULL
+SET
+    mapping_requested_at = NULL,
+    updated_at = NOW()
 WHERE id = @id
 `
 
@@ -1214,6 +1220,42 @@ WHERE id = @id
 	}
 
 	tp.MappingRequestedAt = nil
+
+	return nil
+}
+
+// ResetStaleMappings re-arms mapping_requested_at on rows whose mapping
+// was claimed but never completed (no common_tracker_pattern_id) and
+// have been idle longer than staleAfter, so a crashed or timed-out
+// mapping run is retried. A successful Process always assigns a catalog
+// row (the unmatched fallback in createUnmatchedPattern), so a missing
+// common_tracker_pattern_id on a dequeued row marks an interrupted run.
+//
+// Like the claim query, this sweep is intentionally cross-tenant: the
+// mapping worker is a system worker that drains the queue regardless of
+// tenant.
+func ResetStaleMappings(
+	ctx context.Context,
+	conn pg.Querier,
+	staleAfter time.Duration,
+) error {
+	q := `
+UPDATE tracker_patterns
+SET
+    mapping_requested_at = NOW(),
+    updated_at = NOW()
+WHERE
+    mapping_requested_at IS NULL
+    AND common_tracker_pattern_id IS NULL
+    AND updated_at < @stale_before
+`
+
+	args := pgx.StrictNamedArgs{"stale_before": time.Now().Add(-staleAfter)}
+
+	_, err := conn.Exec(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot reset stale tracker pattern mappings: %w", err)
+	}
 
 	return nil
 }

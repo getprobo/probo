@@ -223,6 +223,7 @@ func TestBuilder_Build_Defaults(t *testing.T) {
 	// Tracker worker tuning — defaults
 	assert.Equal(t, 10, cfg.Probod.TrackerMappingWorker.Interval)
 	assert.Equal(t, 3, cfg.Probod.TrackerMappingWorker.MaxConcurrency)
+	assert.Equal(t, 600, cfg.Probod.TrackerMappingWorker.StaleAfter)
 	assert.Equal(t, 45, cfg.Probod.TrackerMappingWorker.AgentTimeout)
 	assert.Equal(t, 4, cfg.Probod.TrackerMappingWorker.AgentMaxTurns)
 	assert.Equal(t, 10, cfg.Probod.CommonPatternEnrichmentWorker.Interval)
@@ -327,6 +328,7 @@ func TestBuilder_Build_CustomValues(t *testing.T) {
 	// Tracker worker tuning override
 	env["TRACKER_MAPPING_INTERVAL"] = "20"
 	env["TRACKER_MAPPING_MAX_CONCURRENCY"] = "5"
+	env["TRACKER_MAPPING_STALE_AFTER"] = "1200"
 	env["TRACKER_MAPPING_AGENT_TIMEOUT"] = "30"
 	env["TRACKER_MAPPING_AGENT_MAX_TURNS"] = "6"
 	env["COMMON_PATTERN_ENRICHMENT_INTERVAL"] = "15"
@@ -428,6 +430,7 @@ func TestBuilder_Build_CustomValues(t *testing.T) {
 	// Tracker worker tuning — overrides
 	assert.Equal(t, 20, cfg.Probod.TrackerMappingWorker.Interval)
 	assert.Equal(t, 5, cfg.Probod.TrackerMappingWorker.MaxConcurrency)
+	assert.Equal(t, 1200, cfg.Probod.TrackerMappingWorker.StaleAfter)
 	assert.Equal(t, 30, cfg.Probod.TrackerMappingWorker.AgentTimeout)
 	assert.Equal(t, 6, cfg.Probod.TrackerMappingWorker.AgentMaxTurns)
 	assert.Equal(t, 15, cfg.Probod.CommonPatternEnrichmentWorker.Interval)

@@ -48,6 +48,7 @@ type (
 	TrackerMappingWorkerConfig struct {
 		Interval       int `json:"interval"` // seconds between polls
 		MaxConcurrency int `json:"max-concurrency"`
+		StaleAfter     int `json:"stale-after"`   // seconds before a claim is recycled
 		AgentTimeout   int `json:"agent-timeout"` // seconds, single agent run
 		AgentMaxTurns  int `json:"agent-max-turns"`
 	}

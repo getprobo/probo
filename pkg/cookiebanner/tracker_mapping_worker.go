@@ -31,6 +31,12 @@ import (
 	"go.probo.inc/probo/pkg/uri"
 )
 
+// defaultMappingStaleAfter is the fallback idle window after which a
+// claimed-but-unfinished tracker pattern mapping is re-armed. It is
+// generous relative to a single Process run (deterministic SQL plus up
+// to two bounded agent runs) so an in-flight mapping is never recycled.
+const defaultMappingStaleAfter = 10 * time.Minute
+
 type trackerMappingHandler struct {
 	pg                    *pg.Client
 	logger                *log.Logger
@@ -38,6 +44,7 @@ type trackerMappingHandler struct {
 	disambiguationAgent   *agent.Agent
 	agentTimeout          time.Duration
 	disambiguationTimeout time.Duration
+	staleAfter            time.Duration
 }
 
 func NewTrackerMappingWorker(
@@ -45,6 +52,7 @@ func NewTrackerMappingWorker(
 	logger *log.Logger,
 	mappingCfg TrackerAgentsConfig,
 	disambiguationCfg thirdparty.DisambiguationConfig,
+	staleAfter time.Duration,
 	opts ...worker.Option,
 ) *worker.Worker[coredata.TrackerPattern] {
 	agentTimeout := mappingCfg.AgentTimeout
@@ -52,11 +60,16 @@ func NewTrackerMappingWorker(
 		agentTimeout = defaultAgentTimeout
 	}
 
+	if staleAfter <= 0 {
+		staleAfter = defaultMappingStaleAfter
+	}
+
 	h := &trackerMappingHandler{
 		pg:                    pgClient,
 		logger:                logger,
 		agentTimeout:          agentTimeout,
 		disambiguationTimeout: disambiguationCfg.Timeout,
+		staleAfter:            staleAfter,
 	}
 
 	if mappingCfg.LLMClient != nil {
@@ -96,6 +109,24 @@ func (h *trackerMappingHandler) Claim(ctx context.Context) (coredata.TrackerPatt
 	}
 
 	return tp, nil
+}
+
+// RecoverStale re-arms tracker patterns whose mapping was claimed but
+// never finished. Claim clears mapping_requested_at up front, so a crash
+// or hard failure between phases would otherwise strand the pattern
+// unmapped with nothing to re-trigger it. ResetStaleMappings re-queues
+// those rows once they have been idle past staleAfter.
+func (h *trackerMappingHandler) RecoverStale(ctx context.Context) error {
+	return h.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := coredata.ResetStaleMappings(ctx, conn, h.staleAfter); err != nil {
+				return fmt.Errorf("cannot reset stale tracker pattern mappings: %w", err)
+			}
+
+			return nil
+		},
+	)
 }
 
 // catalogMatch is the result of a single catalog signal. commonPatternID

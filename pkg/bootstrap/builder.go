@@ -249,6 +249,7 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 			TrackerMappingWorker: probodconfig.TrackerMappingWorkerConfig{
 				Interval:       b.getEnvIntOrDefault("TRACKER_MAPPING_INTERVAL", 10),
 				MaxConcurrency: b.getEnvIntOrDefault("TRACKER_MAPPING_MAX_CONCURRENCY", 3),
+				StaleAfter:     b.getEnvIntOrDefault("TRACKER_MAPPING_STALE_AFTER", 600),
 				AgentTimeout:   b.getEnvIntOrDefault("TRACKER_MAPPING_AGENT_TIMEOUT", 45),
 				AgentMaxTurns:  b.getEnvIntOrDefault("TRACKER_MAPPING_AGENT_MAX_TURNS", 4),
 			},

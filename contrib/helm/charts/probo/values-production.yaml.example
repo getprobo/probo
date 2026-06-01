@@ -176,11 +176,13 @@ probo:
   #   temperature: "0.1"
   #   maxTokens: "4096"
 
-  # Tracker mapping worker tuning (optional; seconds for interval/agentTimeout).
+  # Tracker mapping worker tuning (optional; seconds for
+  # interval/staleAfter/agentTimeout).
   # Keep concurrency modest to stay under OpenAI/Firecrawl limits and the DB pool.
   # trackerMappingWorker:
   #   interval: 10
   #   maxConcurrency: 3
+  #   staleAfter: 600
   #   agentTimeout: 45
   #   agentMaxTurns: 4
 

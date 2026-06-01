@@ -273,6 +273,10 @@ spec:
             - name: TRACKER_MAPPING_MAX_CONCURRENCY
               value: {{ .Values.probo.trackerMappingWorker.maxConcurrency | quote }}
             {{- end }}
+            {{- if .Values.probo.trackerMappingWorker.staleAfter }}
+            - name: TRACKER_MAPPING_STALE_AFTER
+              value: {{ .Values.probo.trackerMappingWorker.staleAfter | quote }}
+            {{- end }}
             {{- if .Values.probo.trackerMappingWorker.agentTimeout }}
             - name: TRACKER_MAPPING_AGENT_TIMEOUT
               value: {{ .Values.probo.trackerMappingWorker.agentTimeout | quote }}
