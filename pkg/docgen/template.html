@@ -374,7 +374,7 @@
     <script>{{.MermaidJS}}</script>
     <script>
         window.__mermaidReady = false;
-        mermaid.initialize({ startOnLoad: false, theme: 'neutral' });
+        mermaid.initialize({ startOnLoad: false, theme: 'neutral', suppressErrorRendering: true });
         document.addEventListener('DOMContentLoaded', function () {
             mermaid.run().then(function () {
                 window.__mermaidReady = true;
