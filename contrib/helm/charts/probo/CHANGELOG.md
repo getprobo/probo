@@ -4,6 +4,16 @@ All notable changes to the Probo Helm chart will be documented in this file.
 
 ## Unreleased
 
+## [0.3.0] - 2026-06-02
+
+### Added
+
+- Expose third-party vetting worker tuning (interval, concurrency, stale-after, agent timeout, max-turns) in values
+
+### Changed
+
+- Default `appVersion` to `probod v0.201.0`
+
 ## [0.2.1] - 2026-06-01
 
 ### Changed
