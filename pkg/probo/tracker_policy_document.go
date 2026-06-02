@@ -38,6 +38,9 @@ var trackerPolicyTemplate = template.Must(
 			"formatDate": func(t time.Time) string {
 				return t.Format("January 2, 2006")
 			},
+			"add": func(a, b int) int {
+				return a + b
+			},
 		}).
 		ParseFS(Templates, "templates/tracker_policy.md.tmpl"),
 )
