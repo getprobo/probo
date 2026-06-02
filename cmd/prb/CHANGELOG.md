@@ -4,6 +4,12 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.191.0] - 2026-06-02
+
+### Changed
+
+- Replace `prb third-party assess` with `prb third-party vet` to enqueue async third-party vetting; the command now returns immediately after queuing the job instead of waiting for the report
+
 ## [0.190.0] - 2026-05-27
 
 ### Added
