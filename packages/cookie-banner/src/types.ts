@@ -14,8 +14,16 @@
 
 import type { BannerTexts } from "./i18n";
 
+export type TrackerType =
+  | "COOKIE"
+  | "LOCAL_STORAGE"
+  | "SESSION_STORAGE"
+  | "INDEXED_DB"
+  | "CACHE_STORAGE";
+
 export interface CookieItem {
   name: string;
+  tracker_type: TrackerType;
   max_age_seconds: number | null;
   description: string;
 }

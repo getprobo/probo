@@ -353,6 +353,10 @@ export const THEMED_STYLES = `
     font-family: monospace;
   }
 
+  .cookie-type {
+    font-size: calc(var(--_font-size) - 3px);
+  }
+
   .cookie-detail {
     color: var(--_text);
     font-weight: 500;
