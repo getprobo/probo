@@ -361,6 +361,16 @@ func (e ErrUnsupportedPrincipalType) Error() string {
 	return fmt.Sprintf("unsupported principal type: %d", e.EntityType)
 }
 
+type ErrEmailNotVerified struct{}
+
+func NewEmailNotVerifiedError() error {
+	return &ErrEmailNotVerified{}
+}
+
+func (e ErrEmailNotVerified) Error() string {
+	return "email address has not been verified"
+}
+
 type ErrSignupDisabled struct{}
 
 func NewErrSignupDisabled() error {

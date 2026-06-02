@@ -17,6 +17,9 @@ extend type Mutation {
     @session(required: NONE)
   verifyEmail(input: VerifyEmailInput!): VerifyEmailPayload
     @session(required: OPTIONAL)
+  resendVerificationEmail(
+    input: ResendVerificationEmailInput!
+  ): ResendVerificationEmailPayload @session(required: NONE)
   changePassword(input: ChangePasswordInput!): ChangePasswordPayload
     @session(required: PRESENT)
   changeEmail(input: ChangeEmailInput!): ChangeEmailPayload
@@ -149,6 +152,14 @@ type ResetPasswordPayload {
 }
 
 type VerifyEmailPayload {
+  success: Boolean!
+}
+
+input ResendVerificationEmailInput {
+  email: EmailAddr!
+}
+
+type ResendVerificationEmailPayload {
   success: Boolean!
 }
 
