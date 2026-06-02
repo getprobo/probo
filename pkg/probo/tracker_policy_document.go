@@ -20,6 +20,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 	"text/template"
 	"time"
@@ -73,27 +74,54 @@ func (s *GeneratedDocumentService) PublishTrackerPolicy(
 	scope coredata.Scoper,
 	cookieBannerID gid.GID,
 ) error {
+	// Phase 1: collect data and render the prosemirror document outside any
+	// write transaction. Template rendering, markdown parsing, and JSON
+	// marshaling are CPU work that should not hold a write transaction open.
+	var (
+		organizationID gid.GID
+		bannerOrigin   string
+		documentData   docgen.TrackerPolicyData
+	)
+
+	err := s.svc.pg.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+		banner := &coredata.CookieBanner{}
+		if err := banner.LoadByID(ctx, conn, scope, cookieBannerID); err != nil {
+			return fmt.Errorf("cannot load cookie banner: %w", err)
+		}
+
+		organization := &coredata.Organization{}
+		if err := organization.LoadByID(ctx, conn, scope, banner.OrganizationID); err != nil {
+			return fmt.Errorf("cannot load organization: %w", err)
+		}
+
+		var err error
+
+		documentData, err = s.buildTrackerPolicyDocumentData(ctx, scope, conn, organization, banner)
+		if err != nil {
+			return fmt.Errorf("cannot build document data: %w", err)
+		}
+
+		organizationID = banner.OrganizationID
+		bannerOrigin = banner.Origin
+
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
+	prosemirrorJSON, err := BuildTrackerPolicyDocument(documentData)
+	if err != nil {
+		return fmt.Errorf("cannot build prosemirror document: %w", err)
+	}
+
+	// Phase 2: persist the document and version in a write transaction.
 	return s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			banner := &coredata.CookieBanner{}
 			if err := banner.LoadByID(ctx, tx, scope, cookieBannerID); err != nil {
-				return fmt.Errorf("cannot load cookie banner: %w", err)
-			}
-
-			organization := &coredata.Organization{}
-			if err := organization.LoadByID(ctx, tx, scope, banner.OrganizationID); err != nil {
-				return fmt.Errorf("cannot load organization: %w", err)
-			}
-
-			documentData, err := s.buildTrackerPolicyDocumentData(ctx, scope, tx, organization, banner)
-			if err != nil {
-				return fmt.Errorf("cannot build document data: %w", err)
-			}
-
-			prosemirrorJSON, err := BuildTrackerPolicyDocument(documentData)
-			if err != nil {
-				return fmt.Errorf("cannot build prosemirror document: %w", err)
+				return fmt.Errorf("cannot reload cookie banner: %w", err)
 			}
 
 			now := time.Now()
@@ -128,7 +156,7 @@ func (s *GeneratedDocumentService) PublishTrackerPolicy(
 
 				document = &coredata.Document{
 					ID:                    documentID,
-					OrganizationID:        banner.OrganizationID,
+					OrganizationID:        organizationID,
 					WriteMode:             coredata.DocumentWriteModeGenerated,
 					TrustCenterVisibility: coredata.TrustCenterVisibilityPrivate,
 					Status:                coredata.DocumentStatusActive,
@@ -153,9 +181,9 @@ func (s *GeneratedDocumentService) PublishTrackerPolicy(
 			documentVersionID := gid.New(scope.GetTenantID(), coredata.DocumentVersionEntityType)
 			documentVersion := &coredata.DocumentVersion{
 				ID:             documentVersionID,
-				OrganizationID: banner.OrganizationID,
+				OrganizationID: organizationID,
 				DocumentID:     document.ID,
-				Title:          fmt.Sprintf("Cookie and Tracking Technologies Policy — %s", banner.Origin),
+				Title:          fmt.Sprintf("Cookie and Tracking Technologies Policy — %s", bannerOrigin),
 				Content:        prosemirrorJSON,
 				Classification: coredata.DocumentClassificationPublic,
 				DocumentType:   coredata.DocumentTypePolicy,
@@ -164,7 +192,7 @@ func (s *GeneratedDocumentService) PublishTrackerPolicy(
 				UpdatedAt:      now,
 			}
 
-			return s.publishOrRequestApproval(ctx, scope, tx, document, documentVersion, banner.OrganizationID, nil, false, now)
+			return s.publishOrRequestApproval(ctx, scope, tx, document, documentVersion, organizationID, nil, false, now)
 		},
 	)
 }
@@ -261,6 +289,21 @@ func (s *GeneratedDocumentService) buildTrackerPolicyThirdParties(
 
 		rows = append(rows, row)
 	}
+
+	// LoadByIDs returns rows in an unspecified order (no ORDER BY), so sort
+	// here to keep the generated policy document deterministic across
+	// regenerations.
+	slices.SortFunc(rows, func(a, b docgen.TrackerPolicyThirdParty) int {
+		if c := strings.Compare(a.Name, b.Name); c != 0 {
+			return c
+		}
+
+		if c := strings.Compare(a.Description, b.Description); c != 0 {
+			return c
+		}
+
+		return strings.Compare(a.PrivacyPolicyURL, b.PrivacyPolicyURL)
+	})
 
 	return rows, nil
 }
