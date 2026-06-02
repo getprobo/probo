@@ -4,6 +4,21 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.201.0] - 2026-06-02
+
+### Added
+
+- Add async third-party vetting worker with PENDING/PROCESSING/COMPLETED/FAILED states, exposed through GraphQL and MCP; the third-party detail page polls while vetting runs
+- Tune the third-party vetting worker (interval, concurrency, stale-after, agent timeout, max-turns) via config
+
+### Changed
+
+- Downgrade access-source instance name resolution failures from error to warning
+
+### Fixed
+
+- Guard the GitHub access-source name resolver against empty organization to stop the source-name worker from flooding logs with 404s
+
 ## [0.200.1] - 2026-06-01
 
 ### Fixed
