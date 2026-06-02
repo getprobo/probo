@@ -489,6 +489,7 @@ type (
 
 	TrackerPolicyTracker struct {
 		Name     string
+		Type     string
 		Purpose  string
 		Duration string
 	}

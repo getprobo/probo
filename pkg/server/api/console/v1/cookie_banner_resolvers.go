@@ -416,6 +416,7 @@ func (r *cookieBannerVersionResolver) Categories(ctx context.Context, obj *types
 		for j, c := range cat.Cookies {
 			cookies[j] = &types.CookieBannerVersionCookie{
 				Name:          c.Name,
+				TrackerType:   c.TrackerType,
 				MaxAgeSeconds: c.MaxAgeSeconds,
 				Description:   c.Description,
 			}

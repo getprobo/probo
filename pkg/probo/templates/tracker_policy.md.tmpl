@@ -25,9 +25,9 @@ The tables below describe the categories of trackers we use on the Website, the 
 {{ with .Description }}{{ . }}
 {{ else }}Trackers in this category support the functionality described by its name.
 {{ end }}{{ if .Trackers }}
-| Tracker | Purpose | Duration |
-| --- | --- | --- |
-{{ range .Trackers }}| {{ .Name }} | {{ .Purpose }} | {{ .Duration }} |
+| Tracker | Type | Purpose | Duration |
+| --- | --- | --- | --- |
+{{ range .Trackers }}| {{ .Name }} | {{ .Type }} | {{ .Purpose }} | {{ .Duration }} |
 {{ end }}{{ else }}
 We are not currently using any trackers in this category.
 {{ end }}{{ end }}

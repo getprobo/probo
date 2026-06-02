@@ -43,7 +43,7 @@ func TestSnapshotsEqual(t *testing.T) {
 					Description: "Analytics cookies",
 					Kind:        coredata.CookieCategoryKindNormal,
 					Cookies: coredata.CookieItems{
-						{Name: "_ga", MaxAgeSeconds: &maxAge, Description: "Google Analytics"},
+						{Name: "_ga", TrackerType: coredata.TrackerTypeCookie, MaxAgeSeconds: &maxAge, Description: "Google Analytics"},
 					},
 					GCMConsentTypes: []string{"analytics_storage"},
 					PostHogConsent:  false,

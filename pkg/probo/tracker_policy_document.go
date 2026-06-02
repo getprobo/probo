@@ -191,6 +191,7 @@ func (s *GeneratedDocumentService) buildTrackerPolicyDocumentData(
 		for _, cookie := range c.Cookies {
 			trackers = append(trackers, docgen.TrackerPolicyTracker{
 				Name:     sanitizeTrackerCell(cookie.Name),
+				Type:     cookie.TrackerType.Label(),
 				Purpose:  trackerPurpose(cookie.Description),
 				Duration: cookie.HumanizedDuration(),
 			})

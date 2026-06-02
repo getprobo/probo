@@ -543,6 +543,7 @@ type CookieBannerVersionCategory {
 
 type CookieBannerVersionCookie {
     name: String!
+    trackerType: TrackerType!
     maxAgeSeconds: Int
     description: String!
 }

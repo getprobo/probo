@@ -33,9 +33,10 @@ import (
 
 type (
 	CookieItem struct {
-		Name          string `json:"name"`
-		MaxAgeSeconds *int   `json:"max_age_seconds"`
-		Description   string `json:"description"`
+		Name          string      `json:"name"`
+		TrackerType   TrackerType `json:"tracker_type"`
+		MaxAgeSeconds *int        `json:"max_age_seconds"`
+		Description   string      `json:"description"`
 	}
 
 	CookieItems []CookieItem
@@ -80,13 +81,22 @@ var cookieDurationUnits = [...]cookieDurationUnit{
 	{1, "second", 0},
 }
 
-// HumanizedDuration renders the cookie's max-age into a human-readable lifetime
-// using the same snapping and composition rules as the banner's
-// humanizeDuration helper. A nil or non-positive max-age denotes a session
-// cookie that is cleared when the browser closes.
+// HumanizedDuration renders the tracker's max-age into a human-readable
+// lifetime using the same snapping and composition rules as the banner's
+// humanizeDuration helper. A nil or non-positive max-age has no fixed
+// expiry, so the lifetime is described by the tracker type: session cookies
+// are cleared when the browser closes, session storage is cleared when the
+// tab closes, and the remaining storage technologies persist until cleared.
 func (c CookieItem) HumanizedDuration() string {
 	if c.MaxAgeSeconds == nil || *c.MaxAgeSeconds <= 0 {
-		return "Session"
+		switch c.TrackerType {
+		case TrackerTypeSessionStorage:
+			return "Until the tab is closed"
+		case TrackerTypeLocalStorage, TrackerTypeIndexedDB, TrackerTypeCacheStorage:
+			return "Persistent"
+		default:
+			return "Session"
+		}
 	}
 
 	remaining := *c.MaxAgeSeconds
