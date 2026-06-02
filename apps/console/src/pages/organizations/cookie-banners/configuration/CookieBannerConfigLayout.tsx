@@ -29,7 +29,7 @@ import {
   useToast,
 } from "@probo/ui";
 import { type PreloadedQuery, useMutation, usePreloadedQuery } from "react-relay";
-import { Outlet, useParams } from "react-router";
+import { Link, Outlet, useParams } from "react-router";
 import { graphql } from "relay-runtime";
 
 import type { CookieBannerConfigLayoutActivateMutation } from "#/__generated__/core/CookieBannerConfigLayoutActivateMutation.graphql";
@@ -51,6 +51,9 @@ export const cookieBannerConfigLayoutQuery = graphql`
           id
           version
           state
+        }
+        policyDocument {
+          id
         }
       }
     }
@@ -214,6 +217,17 @@ export default function CookieBannerConfigLayout({ queryRef }: CookieBannerConfi
                 <IconSquareBehindSquare2 size={16} />
               </button>
             </span>
+            {banner.policyDocument && (
+              <>
+                <span className="text-border-primary">·</span>
+                <Link
+                  to={`/organizations/${organizationId}/documents/${banner.policyDocument.id}`}
+                  className="font-medium text-txt-primary underline"
+                >
+                  {__("Cookie Policy")}
+                </Link>
+              </>
+            )}
           </span>
         )}
       >

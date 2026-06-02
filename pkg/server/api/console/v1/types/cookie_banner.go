@@ -61,7 +61,7 @@ func NewCookieBannerEdge(b *coredata.CookieBanner, orderBy coredata.CookieBanner
 }
 
 func NewCookieBanner(b *coredata.CookieBanner) *CookieBanner {
-	return &CookieBanner{
+	banner := &CookieBanner{
 		ID: b.ID,
 		Organization: &Organization{
 			ID: b.OrganizationID,
@@ -77,6 +77,12 @@ func NewCookieBanner(b *coredata.CookieBanner) *CookieBanner {
 		CreatedAt:         b.CreatedAt,
 		UpdatedAt:         b.UpdatedAt,
 	}
+
+	if b.PolicyDocumentID != nil {
+		banner.PolicyDocument = &Document{ID: *b.PolicyDocumentID}
+	}
+
+	return banner
 }
 
 func NewCookieBannerTranslation(t *coredata.CookieBannerTranslation) *CookieBannerTranslation {

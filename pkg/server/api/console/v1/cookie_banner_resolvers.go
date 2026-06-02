@@ -143,6 +143,32 @@ func (r *cookieBannerResolver) LatestVersion(ctx context.Context, obj *types.Coo
 	}, nil
 }
 
+// PolicyDocument is the resolver for the policyDocument field.
+func (r *cookieBannerResolver) PolicyDocument(ctx context.Context, obj *types.CookieBanner) (*types.Document, error) {
+	if obj.PolicyDocument == nil {
+		return nil, nil
+	}
+
+	if _, err := r.authorize(ctx, obj.ID, probo.ActionDocumentGet); err != nil {
+		return nil, err
+	}
+
+	loaders := dataloader.FromContext(ctx)
+
+	document, err := loaders.Document.Load(ctx, obj.PolicyDocument.ID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
+			return nil, nil
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot get policy document", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewDocument(document), nil
+}
+
 // ConsentRecords is the resolver for the consentRecords field.
 func (r *cookieBannerResolver) ConsentRecords(ctx context.Context, obj *types.CookieBanner, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.CookieConsentRecordOrderBy, filter *types.CookieConsentRecordFilter) (*types.CookieConsentRecordConnection, error) {
 	scope, err := r.authorize(ctx, obj.ID, probo.ActionCookieConsentRecordList)

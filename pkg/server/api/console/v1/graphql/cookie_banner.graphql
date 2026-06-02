@@ -153,6 +153,8 @@ type CookieBanner implements Node {
 
     latestVersion: CookieBannerVersion @goField(forceResolver: true)
 
+    policyDocument: Document @goField(forceResolver: true)
+
     consentRecords(
         first: Int
         after: CursorKey

@@ -58,10 +58,16 @@ export function AddCookieRow({
   return (
     <Tr>
       <Td className="pr-3">
-        <Input
-          {...register("name")}
-          placeholder={__("Cookie name")}
-        />
+        <div className="flex flex-col gap-2 min-w-0 max-w-xs">
+          <Input
+            {...register("name")}
+            placeholder={__("Cookie name")}
+          />
+          <Input
+            {...register("description")}
+            placeholder={__("Description")}
+          />
+        </div>
       </Td>
       <Td />
       <Td className="pr-3">
@@ -76,12 +82,6 @@ export function AddCookieRow({
               onUnitChange={u => field.onChange({ ...field.value, unit: u })}
             />
           )}
-        />
-      </Td>
-      <Td className="pr-3">
-        <Input
-          {...register("description")}
-          placeholder={__("Description")}
         />
       </Td>
       <Td>
