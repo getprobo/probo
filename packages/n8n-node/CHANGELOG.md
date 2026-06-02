@@ -4,6 +4,10 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+### Added
+
+- Expose `commonTrackerPatternId` on tracker pattern `get`/`getAll` operations to indicate whether a pattern is linked to the common tracker catalog
+
 ## [0.191.0] - 2026-06-02
 
 ### Added

@@ -31,10 +31,14 @@ type (
 	// (cookieCategory, detectedTrackers, thirdParty, commonThirdParty,
 	// detectedCount, permission) are populated by the resolver.
 	//
-	// ThirdPartyID and CommonTrackerPatternID are not exposed in
-	// GraphQL — they are foreign-key handles the resolver uses to load
-	// the linked third party (org-scoped or via the common catalog)
-	// without re-querying coredata.
+	// ThirdPartyID is not exposed in GraphQL — it is a foreign-key
+	// handle the resolver uses to load the linked org-scoped third
+	// party without re-querying coredata.
+	//
+	// CommonTrackerPatternID is exposed directly as the
+	// commonTrackerPatternId field: a non-null value indicates the
+	// pattern is linked to the common tracker-pattern catalog, which is
+	// used to debug the provenance of agent-generated descriptions.
 	TrackerPattern struct {
 		ID            gid.GID                          `json:"id"`
 		TrackerType   coredata.TrackerType             `json:"trackerType"`
@@ -55,7 +59,7 @@ type (
 		Permission       bool                       `json:"permission"`
 
 		ThirdPartyID           *gid.GID `json:"-"`
-		CommonTrackerPatternID *gid.GID `json:"-"`
+		CommonTrackerPatternID *gid.GID `json:"commonTrackerPatternId,omitempty"`
 	}
 
 	TrackerPatternConnection struct {

@@ -26,21 +26,22 @@ func NewTrackerPattern(p *coredata.TrackerPattern) *TrackerPattern {
 	}
 
 	return &TrackerPattern{
-		ID:               p.ID,
-		OrganizationID:   p.OrganizationID,
-		CookieBannerID:   p.CookieBannerID,
-		CookieCategoryID: p.CookieCategoryID,
-		TrackerType:      TrackerPatternTrackerType(p.TrackerType),
-		Pattern:          p.Pattern,
-		MatchType:        TrackerPatternMatchType(p.MatchType),
-		DisplayName:      p.DisplayName,
-		MaxAgeSeconds:    p.MaxAgeSeconds,
-		Description:      p.Description,
-		Source:           source,
-		Excluded:         p.Excluded,
-		LastMatchedAt:    p.LastMatchedAt,
-		CreatedAt:        p.CreatedAt,
-		UpdatedAt:        p.UpdatedAt,
+		ID:                     p.ID,
+		OrganizationID:         p.OrganizationID,
+		CookieBannerID:         p.CookieBannerID,
+		CookieCategoryID:       p.CookieCategoryID,
+		TrackerType:            TrackerPatternTrackerType(p.TrackerType),
+		Pattern:                p.Pattern,
+		MatchType:              TrackerPatternMatchType(p.MatchType),
+		DisplayName:            p.DisplayName,
+		MaxAgeSeconds:          p.MaxAgeSeconds,
+		Description:            p.Description,
+		Source:                 source,
+		Excluded:               p.Excluded,
+		LastMatchedAt:          p.LastMatchedAt,
+		CommonTrackerPatternID: p.CommonTrackerPatternID,
+		CreatedAt:              p.CreatedAt,
+		UpdatedAt:              p.UpdatedAt,
 	}
 }
 

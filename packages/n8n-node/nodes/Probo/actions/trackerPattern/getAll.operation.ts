@@ -86,6 +86,7 @@ export async function execute(
 								source
 								excluded
 								lastMatchedAt
+								commonTrackerPatternId
 								createdAt
 								updatedAt
 							}

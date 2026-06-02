@@ -313,6 +313,16 @@ type TrackerPattern implements Node
     """
     commonThirdParty: CommonThirdParty @goField(forceResolver: true)
 
+    """
+    The common tracker-pattern catalog entry this pattern is linked to,
+    if any. Non-null means the pattern was matched to the global catalog
+    (so its description may originate from the Open Cookie Database seed
+    or the mapping/enrichment agents); null means no catalog link
+    (description was added manually or inherited). Exposed primarily for
+    debugging agent-generated descriptions.
+    """
+    commonTrackerPatternId: ID
+
     detectedTrackers(
         first: Int
         after: CursorKey

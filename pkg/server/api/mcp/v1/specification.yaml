@@ -9560,6 +9560,11 @@ components:
             - "null"
           format: date-time
           description: Timestamp when a cookie last matched this pattern
+        common_tracker_pattern_id:
+          anyOf:
+            - $ref: "#/components/schemas/GID"
+            - type: "null"
+          description: Linked common tracker-pattern catalog ID, if any. Non-null indicates the pattern was matched to the global catalog (description may originate from the seed or agents); null means no catalog link.
         created_at:
           type: string
           format: date-time

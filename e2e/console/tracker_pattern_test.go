@@ -15,12 +15,16 @@
 package console_test
 
 import (
+	"context"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.probo.inc/probo/e2e/internal/factory"
 	"go.probo.inc/probo/e2e/internal/testutil"
+	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/gid"
 )
 
 func TestTrackerPattern_Create(t *testing.T) {
@@ -45,6 +49,7 @@ func TestTrackerPattern_Create(t *testing.T) {
 							displayName
 							maxAgeSeconds
 							description
+							commonTrackerPatternId
 							createdAt
 							updatedAt
 						}
@@ -60,15 +65,16 @@ func TestTrackerPattern_Create(t *testing.T) {
 			CreateTrackerPattern struct {
 				TrackerPatternEdge struct {
 					Node struct {
-						ID            string `json:"id"`
-						Pattern       string `json:"pattern"`
-						MatchType     string `json:"matchType"`
-						TrackerType   string `json:"trackerType"`
-						DisplayName   string `json:"displayName"`
-						MaxAgeSeconds *int   `json:"maxAgeSeconds"`
-						Description   string `json:"description"`
-						CreatedAt     string `json:"createdAt"`
-						UpdatedAt     string `json:"updatedAt"`
+						ID                     string  `json:"id"`
+						Pattern                string  `json:"pattern"`
+						MatchType              string  `json:"matchType"`
+						TrackerType            string  `json:"trackerType"`
+						DisplayName            string  `json:"displayName"`
+						MaxAgeSeconds          *int    `json:"maxAgeSeconds"`
+						Description            string  `json:"description"`
+						CommonTrackerPatternID *string `json:"commonTrackerPatternId"`
+						CreatedAt              string  `json:"createdAt"`
+						UpdatedAt              string  `json:"updatedAt"`
 					} `json:"node"`
 				} `json:"trackerPatternEdge"`
 				CookieBanner struct {
@@ -101,6 +107,7 @@ func TestTrackerPattern_Create(t *testing.T) {
 		require.NotNil(t, node.MaxAgeSeconds)
 		assert.Equal(t, maxAge, *node.MaxAgeSeconds)
 		assert.Equal(t, "Google Analytics tracking cookie", node.Description)
+		assert.Nil(t, node.CommonTrackerPatternID, "a manually created pattern is not linked to the common catalog")
 		assert.Equal(t, bannerID, result.CreateTrackerPattern.CookieBanner.ID)
 	})
 
@@ -605,6 +612,93 @@ func TestTrackerPattern_List(t *testing.T) {
 		assert.Equal(t, 2, result.Node.TrackerPatterns.TotalCount)
 		assert.Len(t, result.Node.TrackerPatterns.Edges, 2)
 	})
+}
+
+func TestTrackerPattern_CommonTrackerPatternID(t *testing.T) {
+	t.Parallel()
+
+	t.Run("reflects the common catalog link", func(t *testing.T) {
+		t.Parallel()
+		owner := testutil.NewClient(t, testutil.RoleOwner)
+
+		bannerID := factory.CreateCookieBanner(owner)
+		categoryID := factory.CreateCookieCategory(owner, bannerID)
+		patternID := factory.CreateTrackerPattern(owner, categoryID)
+
+		const query = `
+			query($id: ID!) {
+				node(id: $id) {
+					... on TrackerPattern {
+						id
+						commonTrackerPatternId
+					}
+				}
+			}
+		`
+
+		var result struct {
+			Node struct {
+				ID                     string  `json:"id"`
+				CommonTrackerPatternID *string `json:"commonTrackerPatternId"`
+			} `json:"node"`
+		}
+
+		require.NoError(t, owner.Execute(query, map[string]any{"id": patternID}, &result))
+		assert.Nil(t, result.Node.CommonTrackerPatternID, "a freshly created pattern has no catalog link")
+
+		commonID := seedCommonTrackerPattern(t)
+		linkTrackerPatternToCommon(t, patternID, commonID)
+
+		require.NoError(t, owner.Execute(query, map[string]any{"id": patternID}, &result))
+		require.NotNil(t, result.Node.CommonTrackerPatternID, "the catalog link must surface once set")
+		assert.Equal(t, commonID.String(), *result.Node.CommonTrackerPatternID)
+	})
+}
+
+func seedCommonTrackerPattern(t *testing.T) gid.GID {
+	t.Helper()
+
+	ctx := context.Background()
+	conn := dialTestPg(t, ctx)
+	t.Cleanup(func() { _ = conn.Close(ctx) })
+
+	id := gid.New(gid.NilTenant, coredata.CommonTrackerPatternEntityType)
+	now := time.Now().UTC()
+
+	_, err := conn.Exec(ctx, `
+		INSERT INTO common_tracker_patterns (
+			id, tracker_type, pattern, match_type, description, confidence, created_at, updated_at
+		) VALUES (
+			$1, $2, $3, $4, $5, $6, $7, $8
+		)
+	`, id, "COOKIE", "e2e_common_"+id.String(), "EXACT", "Seeded catalog description", 1.0, now, now)
+	require.NoError(t, err)
+
+	t.Cleanup(func() {
+		cleanupCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+
+		cleanupConn := dialTestPg(t, cleanupCtx)
+		defer func() { _ = cleanupConn.Close(cleanupCtx) }()
+
+		_, err := cleanupConn.Exec(cleanupCtx, `DELETE FROM common_tracker_patterns WHERE id = $1`, id)
+		assert.NoError(t, err, "cleanup: cannot delete seeded common tracker pattern %s", id)
+	})
+
+	return id
+}
+
+func linkTrackerPatternToCommon(t *testing.T, patternID string, commonID gid.GID) {
+	t.Helper()
+
+	ctx := context.Background()
+	conn := dialTestPg(t, ctx)
+	t.Cleanup(func() { _ = conn.Close(ctx) })
+
+	_, err := conn.Exec(ctx, `
+		UPDATE tracker_patterns SET common_tracker_pattern_id = $1 WHERE id = $2
+	`, commonID, patternID)
+	require.NoError(t, err)
 }
 
 func TestTrackerPattern_RBAC(t *testing.T) {

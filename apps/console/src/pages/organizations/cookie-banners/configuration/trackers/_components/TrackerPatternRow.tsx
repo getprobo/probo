@@ -48,6 +48,7 @@ const trackerPatternFragment = graphql`
     maxAgeSeconds
     excluded
     lastMatchedAt
+    commonTrackerPatternId
     cookieCategory {
       id
       name
@@ -287,6 +288,7 @@ export function TrackerPatternRow({ patternKey, connectionId }: TrackerPatternRo
 
   const typeBadge = getTrackerTypeBadge(pattern.trackerType, __);
   const srcBadge = pattern.source ? getTrackerSourceBadge(pattern.source, __) : null;
+  const commonTrackerPatternId = pattern.commonTrackerPatternId;
 
   return (
     <Tr to={pattern.id} className={pattern.excluded ? "bg-txt-quaternary opacity-80  line-through" : undefined}>
@@ -294,8 +296,15 @@ export function TrackerPatternRow({ patternKey, connectionId }: TrackerPatternRo
         <Badge variant={typeBadge.variant}>{typeBadge.label}</Badge>
       </Td>
       <Td>
-        <div className="flex flex-col min-w-0 max-w-xs">
+        <div className="flex flex-col min-w-0 max-w-xs gap-1">
           <span className={pattern.excluded ? undefined : "font-medium"}>{pattern.displayName}</span>
+          {commonTrackerPatternId
+            ? (
+                <span className="text-xs font-mono text-txt-tertiary truncate" title={commonTrackerPatternId}>
+                  {commonTrackerPatternId}
+                </span>
+              )
+            : <span className="text-xs text-txt-tertiary">{__("Manual")}</span>}
           {pattern.description && (
             <span className="text-xs text-txt-tertiary wrap-break-word line-clamp-1">
               {pattern.description}

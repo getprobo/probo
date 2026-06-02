@@ -40,6 +40,7 @@ query($id: ID!, $first: Int, $after: CursorKey) {
             source
             excluded
             lastMatchedAt
+            commonTrackerPatternId
           }
         }
         pageInfo {
@@ -53,14 +54,15 @@ query($id: ID!, $first: Int, $after: CursorKey) {
 `
 
 type trackerPattern struct {
-	ID            string  `json:"id"`
-	Pattern       string  `json:"pattern"`
-	MatchType     string  `json:"matchType"`
-	TrackerType   string  `json:"trackerType"`
-	DisplayName   string  `json:"displayName"`
-	Source        *string `json:"source"`
-	Excluded      bool    `json:"excluded"`
-	LastMatchedAt *string `json:"lastMatchedAt"`
+	ID                     string  `json:"id"`
+	Pattern                string  `json:"pattern"`
+	MatchType              string  `json:"matchType"`
+	TrackerType            string  `json:"trackerType"`
+	DisplayName            string  `json:"displayName"`
+	Source                 *string `json:"source"`
+	Excluded               bool    `json:"excluded"`
+	LastMatchedAt          *string `json:"lastMatchedAt"`
+	CommonTrackerPatternID *string `json:"commonTrackerPatternId"`
 }
 
 func NewCmdList(f *cmdutil.Factory) *cobra.Command {
@@ -157,10 +159,15 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 					lastMatched = cmdutil.FormatTime(*p.LastMatchedAt)
 				}
 
-				rows = append(rows, []string{p.ID, p.Pattern, p.MatchType, p.TrackerType, p.DisplayName, source, excluded, lastMatched})
+				commonPatternID := ""
+				if p.CommonTrackerPatternID != nil {
+					commonPatternID = *p.CommonTrackerPatternID
+				}
+
+				rows = append(rows, []string{p.ID, p.Pattern, p.MatchType, p.TrackerType, p.DisplayName, source, excluded, lastMatched, commonPatternID})
 			}
 
-			t := cmdutil.NewTable("ID", "PATTERN", "MATCH TYPE", "TRACKER TYPE", "DISPLAY NAME", "SOURCE", "EXCLUDED", "LAST MATCHED").Rows(rows...)
+			t := cmdutil.NewTable("ID", "PATTERN", "MATCH TYPE", "TRACKER TYPE", "DISPLAY NAME", "SOURCE", "EXCLUDED", "LAST MATCHED", "COMMON PATTERN ID").Rows(rows...)
 			_, _ = fmt.Fprintln(f.IOStreams.Out, t)
 
 			if totalCount > len(patterns) {

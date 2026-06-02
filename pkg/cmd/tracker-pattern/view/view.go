@@ -39,6 +39,7 @@ query($id: ID!) {
       source
       excluded
       lastMatchedAt
+      commonTrackerPatternId
       createdAt
       updatedAt
     }
@@ -48,19 +49,20 @@ query($id: ID!) {
 
 type viewResponse struct {
 	Node *struct {
-		Typename      string  `json:"__typename"`
-		ID            string  `json:"id"`
-		Pattern       string  `json:"pattern"`
-		MatchType     string  `json:"matchType"`
-		TrackerType   string  `json:"trackerType"`
-		DisplayName   string  `json:"displayName"`
-		MaxAgeSeconds *int    `json:"maxAgeSeconds"`
-		Description   *string `json:"description"`
-		Source        string  `json:"source"`
-		Excluded      bool    `json:"excluded"`
-		LastMatchedAt *string `json:"lastMatchedAt"`
-		CreatedAt     string  `json:"createdAt"`
-		UpdatedAt     string  `json:"updatedAt"`
+		Typename               string  `json:"__typename"`
+		ID                     string  `json:"id"`
+		Pattern                string  `json:"pattern"`
+		MatchType              string  `json:"matchType"`
+		TrackerType            string  `json:"trackerType"`
+		DisplayName            string  `json:"displayName"`
+		MaxAgeSeconds          *int    `json:"maxAgeSeconds"`
+		Description            *string `json:"description"`
+		Source                 string  `json:"source"`
+		Excluded               bool    `json:"excluded"`
+		LastMatchedAt          *string `json:"lastMatchedAt"`
+		CommonTrackerPatternID *string `json:"commonTrackerPatternId"`
+		CreatedAt              string  `json:"createdAt"`
+		UpdatedAt              string  `json:"updatedAt"`
 	} `json:"node"`
 }
 
@@ -136,6 +138,12 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 
 			if v.LastMatchedAt != nil {
 				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Last Matched:"), cmdutil.FormatTime(*v.LastMatchedAt))
+			}
+
+			if v.CommonTrackerPatternID != nil && *v.CommonTrackerPatternID != "" {
+				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Common Pattern:"), *v.CommonTrackerPatternID)
+			} else {
+				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Origin:"), "Manual (no catalog link)")
 			}
 
 			_, _ = fmt.Fprintln(out)

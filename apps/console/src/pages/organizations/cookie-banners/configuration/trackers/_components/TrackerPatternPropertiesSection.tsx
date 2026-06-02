@@ -30,6 +30,7 @@ const trackerPatternPropertiesSectionFragment = graphql`
     excluded
     detectedCount
     lastMatchedAt
+    commonTrackerPatternId
     cookieCategory {
       name
     }
@@ -105,6 +106,16 @@ export function TrackerPatternPropertiesSection({
           <span className="text-sm">{pattern.description}</span>
         </PropertyRow>
       )}
+      <PropertyRow label={__("Description source")}>
+        {pattern.commonTrackerPatternId
+          ? (
+              <div className="flex items-center gap-2">
+                <Badge variant="info">{__("Common catalog")}</Badge>
+                <span className="font-mono text-xs text-txt-tertiary">{pattern.commonTrackerPatternId}</span>
+              </div>
+            )
+          : <Badge variant="neutral">{__("Manual")}</Badge>}
+      </PropertyRow>
       <PropertyRow label={__("Excluded")}>
         <span className="text-sm">{pattern.excluded ? __("Yes") : __("No")}</span>
       </PropertyRow>
