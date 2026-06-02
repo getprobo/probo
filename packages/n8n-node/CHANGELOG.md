@@ -4,6 +4,12 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+## [0.191.0] - 2026-06-02
+
+### Added
+
+- Add `thirdParty vet` operation to enqueue async third-party vetting
+
 ## [0.190.0] - 2026-05-28
 
 ### Added
