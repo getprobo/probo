@@ -337,8 +337,10 @@ func TestGitHubNameResolver(t *testing.T) {
 			t.Parallel()
 
 			var called bool
+
 			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				called = true
+
 				assert.Equal(t, http.MethodGet, r.Method)
 				assert.Equal(t, "/orgs/"+tc.org, r.URL.Path)
 				assert.Equal(t, "application/vnd.github+json", r.Header.Get("Accept"))
