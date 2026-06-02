@@ -235,13 +235,13 @@ export default function CookieBannerConfigLayout({ queryRef }: CookieBannerConfi
       </PageHeader>
 
       <Tabs>
-        <TabLink to={`/organizations/${organizationId}/cookie-banners/${cookieBannerId}/settings`}>
-          <IconSettingsGear2 size={20} />
-          {__("Settings")}
-        </TabLink>
         <TabLink to={`/organizations/${organizationId}/cookie-banners/${cookieBannerId}/display`}>
           <IconPageTextLine size={20} />
           {__("Display")}
+        </TabLink>
+        <TabLink to={`/organizations/${organizationId}/cookie-banners/${cookieBannerId}/settings`}>
+          <IconSettingsGear2 size={20} />
+          {__("Settings")}
         </TabLink>
         <TabLink to={`/organizations/${organizationId}/cookie-banners/${cookieBannerId}/translations`}>
           <IconGlobe size={20} />
