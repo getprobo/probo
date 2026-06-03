@@ -18,11 +18,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
 	"time"
 
 	"github.com/jackc/pgx/v5"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/page"
 )
 
 type (
@@ -692,4 +694,177 @@ WHERE
 	*ps = patterns
 
 	return nil
+}
+
+func (p *CommonTrackerPattern) CursorKey(field CommonTrackerPatternOrderField) page.CursorKey {
+	switch field {
+	case CommonTrackerPatternOrderFieldPattern:
+		return page.NewCursorKey(p.ID, p.Pattern)
+	case CommonTrackerPatternOrderFieldConfidence:
+		return page.NewCursorKey(p.ID, p.Confidence)
+	case CommonTrackerPatternOrderFieldCreatedAt:
+		return page.NewCursorKey(p.ID, p.CreatedAt)
+	case CommonTrackerPatternOrderFieldUpdatedAt:
+		return page.NewCursorKey(p.ID, p.UpdatedAt)
+	case CommonTrackerPatternOrderFieldEnrichedAt:
+		if p.EnrichedAt == nil {
+			return page.NewCursorKey(p.ID, time.Time{})
+		}
+
+		return page.NewCursorKey(p.ID, *p.EnrichedAt)
+	}
+
+	panic(fmt.Sprintf("unsupported order by: %s", field))
+}
+
+// Load returns a cursor-paginated, filtered page of common tracker
+// patterns. The catalog is global (no tenant scope). The cursor supplies
+// the limit and ordering; callers wrap the result with page.NewPage.
+func (ps *CommonTrackerPatterns) Load(
+	ctx context.Context,
+	conn pg.Querier,
+	cursor *page.Cursor[CommonTrackerPatternOrderField],
+	filter *CommonTrackerPatternFilter,
+) error {
+	q := `
+SELECT
+    id,
+    common_third_party_id,
+    tracker_type,
+    pattern,
+    match_type,
+    description,
+    max_age_seconds,
+    confidence,
+    enrichment_requested_at,
+    enriched_at,
+    created_at,
+    updated_at
+FROM
+    common_tracker_patterns
+WHERE
+    %s
+    AND %s
+`
+
+	q = fmt.Sprintf(q, filter.SQLFragment(), cursor.SQLFragment())
+
+	args := pgx.StrictNamedArgs{}
+	maps.Copy(args, filter.SQLArguments())
+	maps.Copy(args, cursor.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query common tracker patterns: %w", err)
+	}
+
+	patterns, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[CommonTrackerPattern])
+	if err != nil {
+		return fmt.Errorf("cannot collect common tracker patterns: %w", err)
+	}
+
+	*ps = patterns
+
+	return nil
+}
+
+// CountAll returns the number of common tracker patterns matching the
+// filter, ignoring pagination.
+func (ps *CommonTrackerPatterns) CountAll(
+	ctx context.Context,
+	conn pg.Querier,
+	filter *CommonTrackerPatternFilter,
+) (int, error) {
+	q := `
+SELECT
+    COUNT(id)
+FROM
+    common_tracker_patterns
+WHERE
+    %s
+`
+
+	q = fmt.Sprintf(q, filter.SQLFragment())
+
+	args := pgx.StrictNamedArgs{}
+	maps.Copy(args, filter.SQLArguments())
+
+	row := conn.QueryRow(ctx, q, args)
+
+	var count int
+	if err := row.Scan(&count); err != nil {
+		return 0, fmt.Errorf("cannot count common tracker patterns: %w", err)
+	}
+
+	return count, nil
+}
+
+// LoadAllIDs returns every common tracker pattern id matching the filter,
+// with no pagination. It backs bulk operations (e.g. operator-driven
+// re-enrichment) that act on the entire matching set.
+func (ps *CommonTrackerPatterns) LoadAllIDs(
+	ctx context.Context,
+	conn pg.Querier,
+	filter *CommonTrackerPatternFilter,
+) ([]gid.GID, error) {
+	q := `
+SELECT
+    id
+FROM
+    common_tracker_patterns
+WHERE
+    %s
+ORDER BY pattern ASC
+`
+
+	q = fmt.Sprintf(q, filter.SQLFragment())
+
+	args := pgx.StrictNamedArgs{}
+	maps.Copy(args, filter.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return nil, fmt.Errorf("cannot query common tracker pattern ids: %w", err)
+	}
+
+	ids, err := pgx.CollectRows(rows, pgx.RowTo[gid.GID])
+	if err != nil {
+		return nil, fmt.Errorf("cannot collect common tracker pattern ids: %w", err)
+	}
+
+	return ids, nil
+}
+
+// RequestEnrichmentByIDs arms enrichment on the given common tracker
+// patterns. When resetEnriched is true it also clears enriched_at so rows
+// that previously reached a terminal state are re-processed. Returns the
+// number of rows re-queued. This is the async fallback path; the
+// synchronous enricher service is preferred.
+func (ps *CommonTrackerPatterns) RequestEnrichmentByIDs(
+	ctx context.Context,
+	tx pg.Tx,
+	ids []gid.GID,
+	resetEnriched bool,
+) (int64, error) {
+	q := `
+UPDATE common_tracker_patterns
+SET
+    enrichment_requested_at = NOW(),
+    enriched_at = CASE WHEN @reset_enriched THEN NULL ELSE enriched_at END,
+    updated_at = NOW()
+WHERE
+    id = ANY(@ids)
+`
+
+	args := pgx.StrictNamedArgs{
+		"ids":            ids,
+		"reset_enriched": resetEnriched,
+	}
+
+	result, err := tx.Exec(ctx, q, args)
+	if err != nil {
+		return 0, fmt.Errorf("cannot request common tracker pattern enrichment: %w", err)
+	}
+
+	return result.RowsAffected(), nil
 }

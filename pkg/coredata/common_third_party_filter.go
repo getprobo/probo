@@ -19,11 +19,23 @@ import (
 )
 
 type CommonThirdPartyFilter struct {
-	name *string
+	name     *string
+	category *ThirdPartyCategory
+	keyword  *string
 }
 
 func NewCommonThirdPartyFilter(name *string) *CommonThirdPartyFilter {
 	return &CommonThirdPartyFilter{name: name}
+}
+
+func (f *CommonThirdPartyFilter) WithCategory(category *ThirdPartyCategory) *CommonThirdPartyFilter {
+	f.category = category
+	return f
+}
+
+func (f *CommonThirdPartyFilter) WithKeyword(keyword *string) *CommonThirdPartyFilter {
+	f.keyword = keyword
+	return f
 }
 
 func (f *CommonThirdPartyFilter) SQLFragment() string {
@@ -33,13 +45,39 @@ func (f *CommonThirdPartyFilter) SQLFragment() string {
 			name ILIKE '%' || @filter_name || '%'
 		ELSE TRUE
 	END
+	AND
+	CASE
+		WHEN @filter_category::text IS NOT NULL THEN
+			category = @filter_category::third_party_category
+		ELSE TRUE
+	END
+	AND
+	CASE
+		WHEN @filter_keyword::text IS NOT NULL AND @filter_keyword::text != '' THEN
+			(name ILIKE '%' || @filter_keyword || '%'
+			 OR slug ILIKE '%' || @filter_keyword || '%')
+		ELSE TRUE
+	END
 )`
 }
 
 func (f *CommonThirdPartyFilter) SQLArguments() pgx.StrictNamedArgs {
-	args := pgx.StrictNamedArgs{"filter_name": nil}
+	args := pgx.StrictNamedArgs{
+		"filter_name":     nil,
+		"filter_category": nil,
+		"filter_keyword":  nil,
+	}
+
 	if f.name != nil {
 		args["filter_name"] = *f.name
+	}
+
+	if f.category != nil {
+		args["filter_category"] = string(*f.category)
+	}
+
+	if f.keyword != nil {
+		args["filter_keyword"] = *f.keyword
 	}
 
 	return args

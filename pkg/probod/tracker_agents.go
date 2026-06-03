@@ -15,78 +15,22 @@
 package probod
 
 import (
-	"fmt"
-	"time"
-
 	"github.com/prometheus/client_golang/prometheus"
 	"go.gearno.de/kit/log"
 	"go.opentelemetry.io/otel/trace"
+	"go.probo.inc/probo/pkg/agentsbuild"
 	"go.probo.inc/probo/pkg/cookiebanner"
 	"go.probo.inc/probo/pkg/thirdparty"
 )
 
-// buildTrackerAgentsConfig wires the tracker agents that share one LLM
-// client and model: the tracker-mapping agent (catalog identification),
-// the common-pattern enrichment agent (description research), and the
-// third-party disambiguation agent that the tracker-mapping worker uses
-// to promote patterns to org ThirdParties. All are opt-in: deployments
-// that do not set `llm.tracker-mapping.provider` get zero configs (nil
-// LLM client) so the workers run without agent fallback.
-//
-// The agents are sourced from the same `tracker-mapping` config slot
-// because they share the LLM client, model, and lifecycle. The
-// disambiguation agent has no Firecrawl/DB tools, so its config
-// surface is narrower and it lives in the cross-domain pkg/thirdparty
-// package.
+// buildTrackerAgentsConfig wires the tracker agents (mapping, enrichment,
+// disambiguation) from the probod config. It delegates to pkg/agentsbuild
+// so probod and proboctl build the same agent configuration; see that
+// package for the wiring rationale.
 func (impl *Implm) buildTrackerAgentsConfig(
 	l *log.Logger,
 	tp trace.TracerProvider,
 	r prometheus.Registerer,
 ) (cookiebanner.TrackerAgentsConfig, thirdparty.DisambiguationConfig, error) {
-	if impl.cfg.Agents.TrackerMapping.Provider == "" {
-		return cookiebanner.TrackerAgentsConfig{}, thirdparty.DisambiguationConfig{}, nil
-	}
-
-	agentCfg, llmClient, err := impl.resolveAgentClient(
-		"tracker-mapping",
-		impl.cfg.Agents.TrackerMapping,
-		l,
-		tp,
-		r,
-	)
-	if err != nil {
-		return cookiebanner.TrackerAgentsConfig{}, thirdparty.DisambiguationConfig{}, fmt.Errorf("cannot resolve tracker mapping agent client: %w", err)
-	}
-
-	mappingWorkerCfg := impl.cfg.TrackerMappingWorker
-	enrichmentWorkerCfg := impl.cfg.CommonPatternEnrichmentWorker
-
-	// The mapping and enrichment agents share one config slot but run
-	// from separate workers with separate max-turns. AgentTimeout here
-	// carries the mapping worker's value (also reused by the
-	// disambiguation agent); the enrichment worker overrides it on its
-	// own copy at registration.
-	trackerAgentsCfg := cookiebanner.TrackerAgentsConfig{
-		LLMClient:          llmClient,
-		Model:              agentCfg.ModelName,
-		FirecrawlAPIKey:    impl.cfg.Agents.Tools.FirecrawlAPIKey,
-		MaxTokens:          agentCfg.MaxTokens,
-		Temperature:        agentCfg.Temperature,
-		AgentTimeout:       time.Duration(mappingWorkerCfg.AgentTimeout) * time.Second,
-		MappingMaxTurns:    mappingWorkerCfg.AgentMaxTurns,
-		EnrichmentMaxTurns: enrichmentWorkerCfg.AgentMaxTurns,
-	}
-
-	// The disambiguation agent emits a single id plus a short rationale,
-	// so it keeps its own smaller token budget (left unset here) rather
-	// than inheriting the mapping agent's. It shares the mapping worker's
-	// timeout.
-	disambiguationCfg := thirdparty.DisambiguationConfig{
-		LLMClient:   llmClient,
-		Model:       agentCfg.ModelName,
-		Temperature: agentCfg.Temperature,
-		Timeout:     time.Duration(mappingWorkerCfg.AgentTimeout) * time.Second,
-	}
-
-	return trackerAgentsCfg, disambiguationCfg, nil
+	return agentsbuild.BuildTrackerAgentsConfig(impl.cfg, l, tp, r)
 }

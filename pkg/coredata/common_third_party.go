@@ -25,6 +25,7 @@ import (
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam/policy"
+	"go.probo.inc/probo/pkg/page"
 )
 
 type (
@@ -643,4 +644,109 @@ WHERE
 	}
 
 	return nil
+}
+
+func (t *CommonThirdParty) CursorKey(field CommonThirdPartyOrderField) page.CursorKey {
+	switch field {
+	case CommonThirdPartyOrderFieldName:
+		return page.NewCursorKey(t.ID, t.Name)
+	case CommonThirdPartyOrderFieldCreatedAt:
+		return page.NewCursorKey(t.ID, t.CreatedAt)
+	case CommonThirdPartyOrderFieldUpdatedAt:
+		return page.NewCursorKey(t.ID, t.UpdatedAt)
+	}
+
+	panic(fmt.Sprintf("unsupported order by: %s", field))
+}
+
+// Load returns a cursor-paginated, filtered page of common third
+// parties. The catalog is global (no tenant scope); the cursor supplies
+// the limit and ordering. Unlike LoadAll (capped at 20, name only), this
+// is the listing entry point a future API/CLI consumes.
+func (t *CommonThirdParties) Load(
+	ctx context.Context,
+	conn pg.Querier,
+	cursor *page.Cursor[CommonThirdPartyOrderField],
+	filter *CommonThirdPartyFilter,
+) error {
+	q := `
+SELECT
+    id,
+    name,
+    slug,
+    category,
+    headquarter_address,
+    legal_name,
+    website_url,
+    privacy_policy_url,
+    service_level_agreement_url,
+    service_software_agreement_url,
+    data_processing_agreement_url,
+    business_associate_agreement_url,
+    subprocessors_list_url,
+    certifications,
+    status_page_url,
+    terms_of_service_url,
+    security_page_url,
+    trust_page_url,
+    logo_file_id,
+    created_at,
+    updated_at
+FROM
+    common_third_parties
+WHERE
+    %s
+    AND %s
+`
+
+	q = fmt.Sprintf(q, filter.SQLFragment(), cursor.SQLFragment())
+
+	args := pgx.StrictNamedArgs{}
+	maps.Copy(args, filter.SQLArguments())
+	maps.Copy(args, cursor.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query common third parties: %w", err)
+	}
+
+	parties, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[CommonThirdParty])
+	if err != nil {
+		return fmt.Errorf("cannot collect common third parties: %w", err)
+	}
+
+	*t = parties
+
+	return nil
+}
+
+// CountAll returns the number of common third parties matching the
+// filter, ignoring pagination.
+func (t *CommonThirdParties) CountAll(
+	ctx context.Context,
+	conn pg.Querier,
+	filter *CommonThirdPartyFilter,
+) (int, error) {
+	q := `
+SELECT
+    COUNT(id)
+FROM
+    common_third_parties
+WHERE
+    %s
+`
+
+	q = fmt.Sprintf(q, filter.SQLFragment())
+
+	args := pgx.StrictNamedArgs{}
+	maps.Copy(args, filter.SQLArguments())
+
+	row := conn.QueryRow(ctx, q, args)
+
+	var count int
+	if err := row.Scan(&count); err != nil {
+		return 0, fmt.Errorf("cannot count common third parties: %w", err)
+	}
+
+	return count, nil
 }
