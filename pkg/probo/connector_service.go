@@ -110,6 +110,7 @@ func (rcr *ReconnectConnectorRequest) Validate() error {
 	v.Check(rcr.OrganizationID, "organization_id", validator.Required(), validator.GID(coredata.OrganizationEntityType))
 	v.Check(rcr.Provider, "provider", validator.Required(), validator.OneOfSlice(coredata.ConnectorProviders()))
 	v.Check(rcr.Connection, "connection", validator.Required())
+	v.Check(rcr.RawSettings, "raw_settings", validJSONRawMessage)
 
 	return v.Error()
 }
