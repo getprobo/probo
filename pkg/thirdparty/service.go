@@ -17,7 +17,6 @@ package thirdparty
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
@@ -46,9 +45,8 @@ func NewService(pgClient *pg.Client, fileSvc *file.Service, vetter Vetter) *Serv
 func (s *Service) GenerateLogoURL(
 	ctx context.Context,
 	logoFileID gid.GID,
-	expiresIn time.Duration,
 ) (*string, error) {
-	url, err := s.file.GetPublicFileURL(ctx, logoFileID, expiresIn)
+	url, err := s.file.GenerateFileURL(ctx, logoFileID)
 	if err != nil {
 		return nil, fmt.Errorf("cannot generate logo URL: %w", err)
 	}

@@ -1183,7 +1183,7 @@ func (r *trustCenterReferenceResolver) LogoURL(ctx context.Context, obj *types.T
 		return "", err
 	}
 
-	fileURL, err := r.probo.TrustCenterReferences.GenerateLogoURL(ctx, scope, obj.ID, 1*time.Hour)
+	fileURL, err := r.probo.TrustCenterReferences.GenerateLogoURL(ctx, scope, obj.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot generate logo URL", log.Error(err))
 		return "", gqlutils.Internal(ctx)

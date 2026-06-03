@@ -12,31 +12,40 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package file
+package filesign
 
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"go.gearno.de/kit/pg"
-	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/gid"
 )
 
 type Service struct {
-	pg      *pg.Client
-	baseURL *baseurl.BaseURL
+	pg          *pg.Client
+	fileManager *filemanager.Service
 }
 
-func NewService(pgClient *pg.Client, baseURL *baseurl.BaseURL) *Service {
+func NewService(pgClient *pg.Client, fileManager *filemanager.Service) *Service {
 	return &Service{
-		pg:      pgClient,
-		baseURL: baseURL,
+		pg:          pgClient,
+		fileManager: fileManager,
 	}
 }
 
-func (s *Service) GenerateFileURL(ctx context.Context, fileID gid.GID) (string, error) {
+// GeneratePresignedFileURL returns a short-lived S3 presigned URL for a PUBLIC file.
+// Prefer file.Service.GenerateFileURL in most cases — it returns a stable, cacheable
+// application URL. Only use this when a direct S3 URL with a controlled TTL is required
+// (e.g. the /api/files/v1 HTTP handler that issues the presign-on-redirect).
+func (s *Service) GeneratePresignedFileURL(
+	ctx context.Context,
+	fileID gid.GID,
+	expiresIn time.Duration,
+) (string, error) {
 	file := &coredata.File{}
 
 	err := s.pg.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
@@ -49,10 +58,5 @@ func (s *Service) GenerateFileURL(ctx context.Context, fileID gid.GID) (string, 
 		return "", err
 	}
 
-	url, err := s.baseURL.AppendPath("/api/files/v1/" + fileID.String()).String()
-	if err != nil {
-		return "", fmt.Errorf("cannot build file URL: %w", err)
-	}
-
-	return url, nil
+	return s.fileManager.GenerateFileUrl(ctx, file, expiresIn)
 }

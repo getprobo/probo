@@ -26,6 +26,7 @@ import (
 	"go.probo.inc/probo/packages/emails"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/esign"
+	"go.probo.inc/probo/pkg/file"
 	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/html2pdf"
@@ -46,6 +47,7 @@ type (
 		esign                  *esign.Service
 		html2pdfConverter      *html2pdf.Converter
 		fileManager            *filemanager.Service
+		file                   *file.Service
 		logger                 *log.Logger
 		slack                  *slack.Service
 		TrustCenters           *TrustCenterService
@@ -75,6 +77,7 @@ func NewService(
 	fileManagerService *filemanager.Service,
 	logger *log.Logger,
 	slack *slack.Service,
+	fileService *file.Service,
 ) *Service {
 	svc := &Service{
 		pg:                 pgClient,
@@ -86,6 +89,7 @@ func NewService(
 		esign:              esignSvc,
 		html2pdfConverter:  html2pdfConverter,
 		fileManager:        fileManagerService,
+		file:               fileService,
 		logger:             logger,
 		slack:              slack,
 	}

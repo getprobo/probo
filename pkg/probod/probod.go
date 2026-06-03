@@ -58,6 +58,7 @@ import (
 	"go.probo.inc/probo/pkg/evidencedescriber"
 	"go.probo.inc/probo/pkg/file"
 	"go.probo.inc/probo/pkg/filemanager"
+	"go.probo.inc/probo/pkg/filesign"
 	"go.probo.inc/probo/pkg/geoloc"
 	"go.probo.inc/probo/pkg/html2pdf"
 	"go.probo.inc/probo/pkg/iam"
@@ -504,6 +505,9 @@ func (impl *Implm) Run(
 
 	cookieBannerService := cookiebanner.NewService(pgClient, impl.cfg.Branding)
 
+	fileService     := file.NewService(pgClient, baseURL)
+	filesignService := filesign.NewService(pgClient, fileManagerService)
+
 	proboService, err := probo.NewService(
 		ctx,
 		encryptionKey,
@@ -527,6 +531,7 @@ func (impl *Implm) Run(
 		esignService,
 		defaultConnectorRegistry,
 		time.Duration(impl.cfg.Auth.InvitationConfirmationTokenValidity)*time.Second,
+		fileService,
 	)
 	if err != nil {
 		return fmt.Errorf("cannot create probo service: %w", err)
@@ -544,9 +549,8 @@ func (impl *Implm) Run(
 		fileManagerService,
 		l,
 		slackService,
+		fileService,
 	)
-
-	fileService := file.NewService(pgClient, fileManagerService)
 
 	accessReviewService := accessreview.NewService(
 		pgClient,
@@ -564,7 +568,7 @@ func (impl *Implm) Run(
 			AllowedOrigins:    impl.cfg.Api.Cors.AllowedOrigins,
 			ExtraHeaderFields: impl.cfg.Api.ExtraHeaderFields,
 			Probo:             proboService,
-			File:              fileService,
+			FileSign: filesignService,
 			IAM:               iamService,
 			Trust:             trustService,
 			ESign:             esignService,

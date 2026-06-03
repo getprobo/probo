@@ -27,6 +27,7 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/cipher"
 	"go.probo.inc/probo/pkg/esign"
+	"go.probo.inc/probo/pkg/file"
 	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/filevalidation"
 	"go.probo.inc/probo/pkg/gid"
@@ -79,6 +80,7 @@ type (
 		html2pdfConverter                     *html2pdf.Converter
 		acmeService                           *certmanager.ACMEService
 		fileManager                           *filemanager.Service
+		file                                  *file.Service
 		logger                                *log.Logger
 		slack                                 *slack.Service
 		esign                                 *esign.Service
@@ -144,6 +146,7 @@ func NewService(
 	esignService *esign.Service,
 	connectorRegistry *connector.ConnectorRegistry,
 	invitationTokenValidity time.Duration,
+	fileService *file.Service,
 ) (*Service, error) {
 	if bucket == "" {
 		return nil, fmt.Errorf("bucket is required")
@@ -163,6 +166,7 @@ func NewService(
 		html2pdfConverter:       html2pdfConverter,
 		acmeService:             acmeService,
 		fileManager:             fileManagerService,
+		file:                    fileService,
 		logger:                  logger,
 		slack:                   slackService,
 		esign:                   esignService,

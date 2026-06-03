@@ -22,7 +22,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
-	"go.probo.inc/probo/pkg/file"
+	"go.probo.inc/probo/pkg/filesign"
 	"go.probo.inc/probo/pkg/gid"
 )
 
@@ -30,10 +30,10 @@ const presignedURLExpiry = 1 * time.Hour
 
 type Handler struct {
 	logger  *log.Logger
-	fileSvc *file.Service
+	fileSvc *filesign.Service
 }
 
-func NewMux(logger *log.Logger, fileSvc *file.Service) *chi.Mux {
+func NewMux(logger *log.Logger, fileSvc *filesign.Service) *chi.Mux {
 	h := &Handler{
 		logger:  logger,
 		fileSvc: fileSvc,
@@ -55,7 +55,7 @@ func (h *Handler) handleGetPublicFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	presignedURL, err := h.fileSvc.GetPublicFileURL(r.Context(), fileID, presignedURLExpiry)
+	presignedURL, err := h.fileSvc.GeneratePresignedFileURL(r.Context(), fileID, presignedURLExpiry)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			http.NotFound(w, r)
