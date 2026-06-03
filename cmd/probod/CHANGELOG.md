@@ -4,6 +4,25 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.202.0] - 2026-06-03
+
+### Added
+
+- Trigger tracker-policy document generation on banner publish; a background worker regenerates it on every snapshot
+- Show tracker type in the cookie tracking policy document
+- Include the website origin in the tracker policy title
+
+### Changed
+
+- Restrict queries and mutations to session scope
+- Move the Display tab first on the cookie banner configuration page
+- Link to the generated cookie policy document from tracker rows; revamp tracker row layout
+- Number tracker policy section titles
+
+### Fixed
+
+- Use stable API URLs for vendor logo fields
+
 ## [0.201.0] - 2026-06-02
 
 ### Added
