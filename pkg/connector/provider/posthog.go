@@ -24,13 +24,15 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 )
 
-// posthogRegistration is PostHog Cloud (US + EU). OAuth is the preferred
-// path: oauth.posthog.com is PostHog's region-agnostic OAuth + API gateway,
-// so one app serves both regions and the driver reaches the customer's data
-// through it without a per-connection host. An API-key fallback is also
-// supported, but personal API keys are region-pinned, so it requires the
-// customer to pick their region (us/eu). Self-hosted instances are a separate
-// provider (POSTHOG_SELF_HOSTED).
+// posthogRegistration is PostHog — Cloud (US + EU) and self-hosted, under one
+// provider. OAuth (CIMD public client) is the preferred path for Cloud: the
+// region-agnostic oauth.posthog.com gateway handles the handshake for both
+// regions, after which the driver resolves the data region (us/eu) itself,
+// since that gateway does not serve the data API. An API-key fallback covers
+// both deployments: Cloud personal API keys are region-pinned (the customer
+// picks us/eu) and self-hosted connections carry an instance URL. Both store a
+// single data-host BaseURL; cloud OAuth connections leave it empty for lazy
+// region probing.
 func posthogRegistration() *Registration {
 	return &Registration{
 		Provider:    coredata.ConnectorProviderPostHog,
@@ -56,8 +58,13 @@ func posthogRegistration() *Registration {
 		// token surfaces on the first ListAccounts.
 
 		SupportsAPIKey: true,
+		// API-key connections are either PostHog Cloud (a region, us/eu) or
+		// self-hosted (an instance URL). The two are mutually exclusive, so
+		// neither is individually Required; apiKeyConnectorSettings enforces
+		// that exactly one is supplied.
 		ExtraSettings: []ExtraSetting{
-			{Key: "region", Label: "Region", Required: true},
+			{Key: "region", Label: "Region"},
+			{Key: "instanceUrl", Label: "Instance URL"},
 		},
 
 		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger) (drivers.Driver, error) {

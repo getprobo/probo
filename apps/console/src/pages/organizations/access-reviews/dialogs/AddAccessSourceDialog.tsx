@@ -43,6 +43,10 @@ import type { AddAccessSourceDialogCreateAPIKeyConnectorMutation } from "#/__gen
 import type { AddAccessSourceDialogCreateClientCredentialsConnectorMutation } from "#/__generated__/core/AddAccessSourceDialogCreateClientCredentialsConnectorMutation.graphql";
 
 import { createAccessSourceMutation } from "./accessSourceMutations";
+import {
+  isPostHogDeploymentSelected,
+  PostHogDeploymentField,
+} from "./PostHogDeploymentField";
 
 export const addAccessSourceDialogConnectorProviderInfoFragment = graphql`
   fragment AddAccessSourceDialogConnectorProviderInfoFragment on ConnectorProviderInfo @relay(plural: true) {
@@ -124,8 +128,6 @@ function mapAPIKeyExtraSettingToField(
       break;
     case "POSTHOG":
       if (settingKey === "region") return "posthogRegion";
-      break;
-    case "POSTHOG_SELF_HOSTED":
       if (settingKey === "instanceUrl") return "posthogInstanceUrl";
       break;
   }
@@ -503,6 +505,43 @@ export function AddAccessSourceDialog({
     );
   };
 
+  // PostHog renders a dedicated deployment selector (Cloud region or
+  // self-hosted URL); every other provider falls back to generic fields.
+  const renderAPIKeyExtraSettings = () => {
+    if (!activeProvider) {
+      return null;
+    }
+
+    if (activeProvider.provider === "POSTHOG") {
+      return (
+        <PostHogDeploymentField
+          values={extraSettingValues}
+          onChange={setExtraSettingValues}
+        />
+      );
+    }
+
+    return activeProvider.extraSettings.map((setting) => {
+      const value = extraSettingValues[setting.key] ?? "";
+      return (
+        <Field
+          key={setting.key}
+          label={__(setting.label)}
+          value={value}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+            setExtraSettingValues(prev => ({ ...prev, [setting.key]: e.target.value }))}
+          required={setting.required}
+        />
+      );
+    });
+  };
+
+  // PostHog's extra settings are individually optional (region OR instance
+  // URL), so the generic required-field check can't gate it.
+  const postHogAPIKeyValid
+    = activeProvider?.provider !== "POSTHOG"
+      || isPostHogDeploymentSelected(extraSettingValues);
+
   const apiKeyExtraSettingsValid = activeProvider
     ? hasRequiredExtraSettings(activeProvider.extraSettings, extraSettingValues)
     : true;
@@ -586,40 +625,7 @@ export function AddAccessSourceDialog({
               required
               autoFocus
             />
-            {activeProvider?.extraSettings.map((setting) => {
-              const value = extraSettingValues[setting.key] ?? "";
-              const setValue = (next: string) =>
-                setExtraSettingValues(prev => ({ ...prev, [setting.key]: next }));
-
-              // The "region" setting is a fixed US/EU choice; every other
-              // extra setting is a free-text field.
-              if (setting.key === "region") {
-                return (
-                  <div key={setting.key} className="space-y-1.5">
-                    <label className="text-sm font-medium">{__(setting.label)}</label>
-                    <Select
-                      value={value}
-                      onValueChange={setValue}
-                      placeholder={__("Select a region")}
-                    >
-                      <Option value="US">{__("United States (US)")}</Option>
-                      <Option value="EU">{__("Europe (EU)")}</Option>
-                    </Select>
-                  </div>
-                );
-              }
-
-              return (
-                <Field
-                  key={setting.key}
-                  label={__(setting.label)}
-                  value={value}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                    setValue(e.target.value)}
-                  required={setting.required}
-                />
-              );
-            })}
+            {renderAPIKeyExtraSettings()}
           </DialogContent>
           <DialogFooter>
             <Button
@@ -628,6 +634,7 @@ export function AddAccessSourceDialog({
                 isConnectingAPIKey
                 || !apiKeyValue.trim()
                 || !apiKeyExtraSettingsValid
+                || !postHogAPIKeyValid
               }
             >
               {isConnectingAPIKey ? __("Connecting...") : __("Connect")}

@@ -95,27 +95,38 @@ func apiKeyConnectorSettings(input types.CreateAPIKeyConnectorInput) (json.RawMe
 
 		return json.Marshal(&coredata.MetabaseConnectorSettings{InstanceURL: *input.MetabaseInstanceURL})
 	case coredata.ConnectorProviderPostHog:
-		if input.PosthogRegion == nil || *input.PosthogRegion == "" {
-			return nil, fmt.Errorf("cannot create posthog connector: posthogRegion is required")
+		region := ""
+		if input.PosthogRegion != nil {
+			region = *input.PosthogRegion
 		}
 
-		baseURL, ok := drivers.PostHogRegionBaseURL(*input.PosthogRegion)
-		if !ok {
-			return nil, fmt.Errorf("cannot create posthog connector: posthogRegion must be US or EU")
+		instanceURL := ""
+		if input.PosthogInstanceURL != nil {
+			instanceURL = *input.PosthogInstanceURL
 		}
 
-		return json.Marshal(&coredata.PostHogConnectorSettings{BaseURL: baseURL})
-	case coredata.ConnectorProviderPostHogSelfHosted:
-		if input.PosthogInstanceURL == nil || *input.PosthogInstanceURL == "" {
-			return nil, fmt.Errorf("cannot create posthog self-hosted connector: posthogInstanceUrl is required")
-		}
+		// Cloud (region) and self-hosted (instance URL) are mutually
+		// exclusive; exactly one identifies the connection's data host.
+		switch {
+		case region != "" && instanceURL != "":
+			return nil, fmt.Errorf("cannot create posthog connector: set either posthogRegion or posthogInstanceUrl, not both")
+		case region != "":
+			baseURL, ok := drivers.PostHogRegionBaseURL(region)
+			if !ok {
+				return nil, fmt.Errorf("cannot create posthog connector: posthogRegion must be US or EU")
+			}
 
-		u, err := url.Parse(*input.PosthogInstanceURL)
-		if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {
-			return nil, fmt.Errorf("cannot create posthog self-hosted connector: posthogInstanceUrl must be an http(s) URL")
-		}
+			return json.Marshal(&coredata.PostHogConnectorSettings{BaseURL: baseURL})
+		case instanceURL != "":
+			u, err := url.Parse(instanceURL)
+			if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {
+				return nil, fmt.Errorf("cannot create posthog connector: posthogInstanceUrl must be an http(s) URL")
+			}
 
-		return json.Marshal(&coredata.PostHogConnectorSettings{BaseURL: *input.PosthogInstanceURL})
+			return json.Marshal(&coredata.PostHogConnectorSettings{BaseURL: instanceURL})
+		default:
+			return nil, fmt.Errorf("cannot create posthog connector: posthogRegion or posthogInstanceUrl is required")
+		}
 	}
 
 	return nil, nil

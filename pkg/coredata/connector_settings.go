@@ -92,12 +92,13 @@ type (
 		InstanceURL string `json:"instance_url"`
 	}
 
-	// PostHogConnectorSettings carries the data-API base host for both the
-	// cloud (POSTHOG) and self-hosted (POSTHOG_SELF_HOSTED) providers. It
-	// is the region-pinned host for API-key connections
-	// (https://us.posthog.com / https://eu.posthog.com / a self-hosted
-	// instance URL). It is empty for cloud OAuth connections — the driver
-	// then defaults to the region-agnostic gateway https://oauth.posthog.com.
+	// PostHogConnectorSettings carries the data-API base host for the
+	// PostHog provider, which spans cloud and self-hosted deployments. For
+	// API-key connections it is the region-pinned host
+	// (https://us.posthog.com / https://eu.posthog.com) or a self-hosted
+	// instance URL. It is empty for cloud OAuth connections — the driver
+	// then discovers the region (us/eu) by probing, since the
+	// region-agnostic oauth.posthog.com gateway does not serve the data API.
 	PostHogConnectorSettings struct {
 		BaseURL string `json:"base_url"`
 	}

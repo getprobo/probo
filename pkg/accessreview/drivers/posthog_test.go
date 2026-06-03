@@ -34,7 +34,7 @@ func TestPostHogDriverListAccounts(t *testing.T) {
 	rec := newRecorder(t, "testdata/posthog", "POSTHOG_PERSONAL_API_KEY")
 	client := newVCRClient(rec, bearerAuth(os.Getenv("POSTHOG_PERSONAL_API_KEY")))
 
-	records, err := NewPostHogDriver(client, "https://app.posthog.com").ListAccounts(context.Background())
+	records, err := NewPostHogDriver(client, "https://us.posthog.com").ListAccounts(context.Background())
 	require.NoError(t, err)
 	require.Len(t, records, 3)
 
@@ -165,7 +165,7 @@ func TestPostHogNameResolver(t *testing.T) {
 
 			client := &http.Client{Transport: &hostRewriter{target: srv.URL}}
 
-			got, err := NewPostHogNameResolver(client, "https://app.posthog.com").ResolveInstanceName(context.Background())
+			got, err := NewPostHogNameResolver(client, "https://us.posthog.com").ResolveInstanceName(context.Background())
 			if tc.wantErr {
 				require.Error(t, err)
 				return
