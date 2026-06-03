@@ -4,6 +4,12 @@ All notable changes to the `@probo/cookie-banner` SDK will be documented in this
 
 ## Unreleased
 
+## [0.8.0] - 2026-06-03
+
+### Added
+
+- Expose tracker type on `CookieItem` and render it in the headless cookie list and themed banner
+
 ## [0.7.0] - 2026-05-27
 
 ### Added
