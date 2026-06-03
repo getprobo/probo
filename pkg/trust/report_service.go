@@ -16,6 +16,7 @@ package trust
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"time"
@@ -36,33 +37,43 @@ func (s ReportService) Get(
 	ctx context.Context,
 	scope coredata.Scoper,
 	organizationID gid.GID,
-	reportID gid.GID,
-) (*coredata.Report, error) {
-	report, err := s.loadByID(ctx, scope, reportID)
+	fileID gid.GID,
+) (*coredata.File, error) {
+	file, err := s.loadByID(ctx, scope, fileID)
 	if err != nil {
 		return nil, err
 	}
 
-	if report.OrganizationID != organizationID {
+	if file.OrganizationID != organizationID {
 		return nil, ErrReportNotFound
 	}
 
-	return report, nil
+	// check the given report file ID is linked to an audit in order to avoid
+	// being able to get any file from the report request.
+	_, err = s.svc.Audits.GetByReportFileID(ctx, scope, fileID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, ErrReportNotFound
+		}
+
+		return nil, fmt.Errorf("cannot verify report file: %w", err)
+	}
+
+	return file, nil
 }
 
 func (s ReportService) loadByID(
 	ctx context.Context,
 	scope coredata.Scoper,
-	reportID gid.GID,
-) (*coredata.Report, error) {
-	report := &coredata.Report{}
+	fileID gid.GID,
+) (*coredata.File, error) {
+	file := &coredata.File{}
 
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			err := report.LoadByID(ctx, conn, scope, reportID)
-			if err != nil {
-				return fmt.Errorf("cannot load report: %w", err)
+			if err := file.LoadActiveByID(ctx, conn, scope, fileID); err != nil {
+				return fmt.Errorf("cannot load file: %w", err)
 			}
 
 			return nil
@@ -72,28 +83,28 @@ func (s ReportService) loadByID(
 		return nil, err
 	}
 
-	return report, nil
+	return file, nil
 }
 
 func (s ReportService) GenerateDownloadURL(
 	ctx context.Context,
 	scope coredata.Scoper,
-	reportID gid.GID,
+	fileID gid.GID,
 	expiresIn time.Duration,
 ) (*string, error) {
-	report, err := s.loadByID(ctx, scope, reportID)
+	file, err := s.loadByID(ctx, scope, fileID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot get report: %w", err)
+		return nil, fmt.Errorf("cannot get file: %w", err)
 	}
 
 	presignClient := s3.NewPresignClient(s.svc.s3)
 
 	presignedReq, err := presignClient.PresignGetObject(ctx, &s3.GetObjectInput{
 		Bucket:                     new(s.svc.bucket),
-		Key:                        new(report.ObjectKey),
+		Key:                        new(file.FileKey),
 		ResponseCacheControl:       new("max-age=3600, public"),
-		ResponseContentType:        new(report.MimeType),
-		ResponseContentDisposition: new(fmt.Sprintf("attachment; filename=\"%s\"", report.Filename)),
+		ResponseContentType:        new(file.MimeType),
+		ResponseContentDisposition: new(fmt.Sprintf("attachment; filename=\"%s\"", file.FileName)),
 	}, func(opts *s3.PresignOptions) {
 		opts.Expires = expiresIn
 	})
@@ -134,16 +145,16 @@ func (s ReportService) ExportPDFWithoutWatermark(
 func (s ReportService) exportPDFData(
 	ctx context.Context,
 	scope coredata.Scoper,
-	reportID gid.GID,
+	fileID gid.GID,
 ) ([]byte, error) {
-	report, err := s.loadByID(ctx, scope, reportID)
+	file, err := s.loadByID(ctx, scope, fileID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot get report: %w", err)
+		return nil, fmt.Errorf("cannot get file: %w", err)
 	}
 
 	result, err := s.svc.s3.GetObject(ctx, &s3.GetObjectInput{
 		Bucket: new(s.svc.bucket),
-		Key:    new(report.ObjectKey),
+		Key:    new(file.FileKey),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("cannot download PDF from S3: %w", err)

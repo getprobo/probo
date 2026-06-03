@@ -100,8 +100,8 @@ func (s TrustCenterAccessService) Request(
 				}
 
 				for _, audit := range allAudits {
-					if audit.ReportID != nil {
-						reportIDs = append(reportIDs, *audit.ReportID)
+					if audit.ReportFileID != nil {
+						reportIDs = append(reportIDs, *audit.ReportFileID)
 					}
 				}
 			}
@@ -148,7 +148,7 @@ func (s TrustCenterAccessService) Request(
 				return fmt.Errorf("cannot bulk insert trust center document accesses: %w", err)
 			}
 
-			if err := accesses.BulkInsertReportAccesses(
+			if err := accesses.BulkInsertReportFileAccesses(
 				ctx,
 				tx,
 				scope,
@@ -255,12 +255,12 @@ func (s TrustCenterAccessService) GetDocumentAccess(
 	return documentAccess, nil
 }
 
-func (s TrustCenterAccessService) GetReportAccess(
+func (s TrustCenterAccessService) GetReportFileAccess(
 	ctx context.Context,
 	scope coredata.Scoper,
 	trustCenterID gid.GID,
 	identityID gid.GID,
-	reportID gid.GID,
+	reportFileID gid.GID,
 ) (*coredata.TrustCenterDocumentAccess, error) {
 	var reportAccess *coredata.TrustCenterDocumentAccess
 
@@ -289,7 +289,7 @@ func (s TrustCenterAccessService) GetReportAccess(
 
 		reportAccess = &coredata.TrustCenterDocumentAccess{}
 
-		err = reportAccess.LoadByTrustCenterAccessIDAndReportID(ctx, conn, scope, access.ID, reportID)
+		err = reportAccess.LoadByTrustCenterAccessIDAndReportFileID(ctx, conn, scope, access.ID, reportFileID)
 		if err != nil {
 			if errors.Is(err, coredata.ErrResourceNotFound) {
 				return ErrDocumentAccessNotFound
@@ -405,7 +405,7 @@ func (s *TrustCenterAccessService) GrantByIDs(
 		}
 
 		if len(reportIDs) > 0 {
-			if err := coredata.GrantByReportIDs(ctx, tx, scope, access.ID, reportIDs, now); err != nil {
+			if err := coredata.GrantByReportFileIDs(ctx, tx, scope, access.ID, reportIDs, now); err != nil {
 				return fmt.Errorf("cannot grant report accesses: %w", err)
 			}
 		}
@@ -526,7 +526,7 @@ func (s *TrustCenterAccessService) RejectOrRevokeByIDs(
 		if len(reportIDs) > 0 {
 			shouldSendEmail = true
 
-			if err := coredata.RejectOrRevokeByReportIDs(ctx, tx, scope, access.ID, reportIDs, now); err != nil {
+			if err := coredata.RejectOrRevokeByReportFileIDs(ctx, tx, scope, access.ID, reportIDs, now); err != nil {
 				return fmt.Errorf("cannot reject/revoke report accesses: %w", err)
 			}
 		}
@@ -645,8 +645,8 @@ func extractExistingIDs(accesses coredata.TrustCenterDocumentAccesses) ([]gid.GI
 			documentIDs = append(documentIDs, *access.DocumentID)
 		}
 
-		if access.ReportID != nil {
-			reportIDs = append(reportIDs, *access.ReportID)
+		if access.ReportFileID != nil {
+			reportIDs = append(reportIDs, *access.ReportFileID)
 		}
 
 		if access.TrustCenterFileID != nil {
@@ -678,36 +678,36 @@ func reportAccessLabels(
 	ctx context.Context,
 	conn pg.Querier,
 	scope coredata.Scoper,
-	reportIDs []gid.GID,
+	reportFileIDs []gid.GID,
 ) ([]string, error) {
-	var reports coredata.Reports
-	if err := reports.LoadByIDs(ctx, conn, scope, reportIDs); err != nil {
-		return nil, fmt.Errorf("cannot load reports by IDs: %w", err)
+	var reportFiles coredata.Files
+	if err := reportFiles.LoadByIDs(ctx, conn, scope, reportFileIDs); err != nil {
+		return nil, fmt.Errorf("cannot load report files by IDs: %w", err)
 	}
 
-	reportByID := make(map[gid.GID]*coredata.Report, len(reports))
-	for _, report := range reports {
-		reportByID[report.ID] = report
+	fileByID := make(map[gid.GID]*coredata.File, len(reportFiles))
+	for _, f := range reportFiles {
+		fileByID[f.ID] = f
 	}
 
 	var audits coredata.Audits
-	if err := audits.LoadByReportIDs(ctx, conn, scope, reportIDs); err != nil {
-		return nil, fmt.Errorf("cannot load audits by report IDs: %w", err)
+	if err := audits.LoadByReportFileIDs(ctx, conn, scope, reportFileIDs); err != nil {
+		return nil, fmt.Errorf("cannot load audits by report file IDs: %w", err)
 	}
 
-	auditByReportID := make(map[gid.GID]*coredata.Audit, len(audits))
+	auditByFileID := make(map[gid.GID]*coredata.Audit, len(audits))
 	frameworkIDSet := make(map[gid.GID]struct{})
 
 	for _, audit := range audits {
-		if audit.ReportID == nil {
+		if audit.ReportFileID == nil {
 			continue
 		}
 
-		if _, exists := auditByReportID[*audit.ReportID]; exists {
+		if _, exists := auditByFileID[*audit.ReportFileID]; exists {
 			continue
 		}
 
-		auditByReportID[*audit.ReportID] = audit
+		auditByFileID[*audit.ReportFileID] = audit
 		frameworkIDSet[audit.FrameworkID] = struct{}{}
 	}
 
@@ -729,23 +729,23 @@ func reportAccessLabels(
 		}
 	}
 
-	labels := make([]string, 0, len(reportIDs))
+	labels := make([]string, 0, len(reportFileIDs))
 
-	for _, reportID := range reportIDs {
-		report, ok := reportByID[reportID]
+	for _, fileID := range reportFileIDs {
+		file, ok := fileByID[fileID]
 		if !ok {
-			return nil, fmt.Errorf("cannot load report %q: %w", reportID, coredata.ErrResourceNotFound)
+			return nil, fmt.Errorf("cannot load report file %q: %w", fileID, coredata.ErrResourceNotFound)
 		}
 
-		audit, ok := auditByReportID[reportID]
+		audit, ok := auditByFileID[fileID]
 		if !ok {
-			labels = append(labels, report.Filename)
+			labels = append(labels, file.FileName)
 			continue
 		}
 
 		framework, ok := frameworkByID[audit.FrameworkID]
 		if !ok {
-			labels = append(labels, report.Filename)
+			labels = append(labels, file.FileName)
 			continue
 		}
 

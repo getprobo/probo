@@ -19,7 +19,7 @@ import (
 	"go.probo.inc/probo/pkg/page"
 )
 
-func NewAudit(a *coredata.Audit, report *coredata.Report) *Audit {
+func NewAudit(a *coredata.Audit, file *coredata.File) *Audit {
 	audit := &Audit{
 		ID:                    a.ID,
 		Name:                  a.Name,
@@ -27,16 +27,16 @@ func NewAudit(a *coredata.Audit, report *coredata.Report) *Audit {
 		FrameworkID:           a.FrameworkID,
 		State:                 a.State,
 		TrustCenterVisibility: a.TrustCenterVisibility,
-		HasReport:             a.ReportID != nil,
+		HasReport:             a.ReportFileID != nil,
 		ValidFrom:             a.ValidFrom,
 		ValidUntil:            a.ValidUntil,
 		CreatedAt:             a.CreatedAt,
 		UpdatedAt:             a.UpdatedAt,
 	}
 
-	if report != nil {
-		audit.ReportFilename = &report.Filename
-		audit.ReportMimeType = &report.MimeType
+	if file != nil {
+		audit.ReportFilename = &file.FileName
+		audit.ReportMimeType = &file.MimeType
 	}
 
 	return audit

@@ -279,16 +279,6 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 
 			return types.NewObligation(obligation), nil
 		}
-	case coredata.ReportEntityType:
-		action = probo.ActionReportGet
-		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
-			report, err := r.probo.Reports.Get(ctx, scope, id)
-			if err != nil {
-				return nil, err
-			}
-
-			return types.NewReport(report), nil
-		}
 	case coredata.ProcessingActivityEntityType:
 		action = probo.ActionProcessingActivityList
 		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {

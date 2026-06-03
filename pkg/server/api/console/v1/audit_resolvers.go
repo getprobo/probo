@@ -8,7 +8,6 @@ package console_v1
 import (
 	"context"
 	"errors"
-	"time"
 
 	"github.com/vikstrous/dataloadgen"
 	"go.gearno.de/kit/log"
@@ -68,50 +67,30 @@ func (r *auditResolver) Framework(ctx context.Context, obj *types.Audit) (*types
 	return types.NewFramework(framework), nil
 }
 
-// Report is the resolver for the report field.
-func (r *auditResolver) Report(ctx context.Context, obj *types.Audit) (*types.Report, error) {
+// ReportFile is the resolver for the reportFile field.
+func (r *auditResolver) ReportFile(ctx context.Context, obj *types.Audit) (*types.File, error) {
 	if _, err := r.authorize(ctx, obj.ID, probo.ActionReportGet); err != nil {
 		return nil, err
 	}
 
-	if obj.Report == nil {
+	if obj.ReportFile == nil {
 		return nil, nil
 	}
 
 	loaders := dataloader.FromContext(ctx)
 
-	report, err := loaders.Report.Load(ctx, obj.Report.ID)
+	file, err := loaders.File.Load(ctx, obj.ReportFile.ID)
 	if err != nil {
 		if errors.Is(err, dataloadgen.ErrNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot load report", log.Error(err))
+		r.logger.ErrorCtx(ctx, "cannot load report file", log.Error(err))
 
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return types.NewReport(report), nil
-}
-
-// ReportURL is the resolver for the reportUrl field.
-func (r *auditResolver) ReportURL(ctx context.Context, obj *types.Audit) (*string, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionReportGetReportUrl)
-	if err != nil {
-		return nil, err
-	}
-
-	if obj.Report == nil {
-		return nil, nil
-	}
-
-	url, err := r.probo.Audits.GenerateReportURL(ctx, scope, obj.ID, 15*time.Minute)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot generate report URL", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	return url, nil
+	return types.NewFile(file), nil
 }
 
 // Controls is the resolver for the controls field.
@@ -431,7 +410,7 @@ func (r *mutationResolver) CreateAudit(ctx context.Context, input types.CreateAu
 			},
 		}
 
-		audit, err = r.probo.Audits.UploadReport(ctx, scope, uploadReq)
+		audit, err = r.probo.Audits.UploadReport(ctx, scope, &uploadReq)
 		if err != nil {
 			if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 				return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
@@ -514,7 +493,7 @@ func (r *mutationResolver) UploadAuditReport(ctx context.Context, input types.Up
 		},
 	}
 
-	audit, err := r.probo.Audits.UploadReport(ctx, scope, req)
+	audit, err := r.probo.Audits.UploadReport(ctx, scope, &req)
 	if err != nil {
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
@@ -704,43 +683,6 @@ func (r *mutationResolver) PublishFindingList(ctx context.Context, input types.P
 	}, nil
 }
 
-// DownloadURL is the resolver for the downloadUrl field.
-func (r *reportResolver) DownloadURL(ctx context.Context, obj *types.Report) (*string, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionReportDownloadUrlGet)
-	if err != nil {
-		return nil, err
-	}
-
-	url, err := r.probo.Reports.GenerateDownloadURL(ctx, scope, obj.ID, 15*time.Minute)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot generate download URL", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	return url, nil
-}
-
-// Audit is the resolver for the audit field.
-func (r *reportResolver) Audit(ctx context.Context, obj *types.Report) (*types.Audit, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionAuditGet)
-	if err != nil {
-		return nil, err
-	}
-
-	audit, err := r.probo.Audits.GetByReportID(ctx, scope, obj.ID)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot load audit for report", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	return types.NewAudit(audit), nil
-}
-
-// Permission is the resolver for the permission field.
-func (r *reportResolver) Permission(ctx context.Context, obj *types.Report, action string) (bool, error) {
-	return r.Resolver.Permission(ctx, obj, action)
-}
-
 // Audit returns schema.AuditResolver implementation.
 func (r *Resolver) Audit() schema.AuditResolver { return &auditResolver{r} }
 
@@ -757,11 +699,7 @@ func (r *Resolver) FindingConnection() schema.FindingConnectionResolver {
 	return &findingConnectionResolver{r}
 }
 
-// Report returns schema.ReportResolver implementation.
-func (r *Resolver) Report() schema.ReportResolver { return &reportResolver{r} }
-
 type auditResolver struct{ *Resolver }
 type auditConnectionResolver struct{ *Resolver }
 type findingResolver struct{ *Resolver }
 type findingConnectionResolver struct{ *Resolver }
-type reportResolver struct{ *Resolver }

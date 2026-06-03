@@ -53,18 +53,17 @@ func (s AuditService) Get(
 	return audit, nil
 }
 
-func (s AuditService) GetByReportID(
+func (s AuditService) GetByReportFileID(
 	ctx context.Context,
 	scope coredata.Scoper,
-	reportID gid.GID,
+	fileID gid.GID,
 ) (*coredata.Audit, error) {
 	audit := &coredata.Audit{}
 
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			err := audit.LoadByReportID(ctx, conn, scope, reportID)
-			if err != nil {
+			if err := audit.LoadByReportFileID(ctx, conn, scope, fileID); err != nil {
 				return fmt.Errorf("cannot load audit: %w", err)
 			}
 

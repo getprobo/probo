@@ -349,14 +349,9 @@ func (s *Service) loadDocumentsReportsAndFilesFromAccesses(
 			)
 		}
 
-		if access.ReportID != nil {
-			rep := &coredata.Report{}
-			if err := rep.LoadByID(ctx, conn, scope, *access.ReportID); err != nil {
-				return nil, nil, nil, fmt.Errorf("cannot load report: %w", err)
-			}
-
+		if access.ReportFileID != nil {
 			audit := &coredata.Audit{}
-			if err := audit.LoadByReportID(ctx, conn, scope, *access.ReportID); err != nil {
+			if err := audit.LoadByReportFileID(ctx, conn, scope, *access.ReportFileID); err != nil {
 				return nil, nil, nil, fmt.Errorf("cannot load audit: %w", err)
 			}
 
@@ -373,7 +368,7 @@ func (s *Service) loadDocumentsReportsAndFilesFromAccesses(
 			reports = append(
 				reports,
 				SlackMessageReport{
-					ID:      access.ReportID.String(),
+					ID:      access.ReportFileID.String(),
 					Title:   label,
 					AuditID: audit.ID.String(),
 					Status:  access.Status.String(),

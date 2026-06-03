@@ -77,9 +77,9 @@ func NewAudit(a *coredata.Audit) *Audit {
 		UpdatedAt:             a.UpdatedAt,
 	}
 
-	if a.ReportID != nil {
-		node.Report = &Report{
-			ID: *a.ReportID,
+	if a.ReportFileID != nil {
+		node.ReportFile = &File{
+			ID: *a.ReportFileID,
 		}
 	}
 

@@ -18,14 +18,9 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 )
 
-func NewReport(r *coredata.Report) *Report {
-	return &Report{
-		ID:        r.ID,
-		ObjectKey: r.ObjectKey,
-		MimeType:  r.MimeType,
-		Filename:  r.Filename,
-		Size:      int(r.Size),
-		CreatedAt: r.CreatedAt,
-		UpdatedAt: r.UpdatedAt,
+func NewAuditReport(f *coredata.File) *AuditReport {
+	return &AuditReport{
+		ID:       f.ID,
+		FileName: f.FileName,
 	}
 }

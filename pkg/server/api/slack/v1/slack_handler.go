@@ -227,7 +227,7 @@ func SlackHandler(slackSvc *slack.Service, slackSigningSecret string, logger *lo
 			switch gID.EntityType() {
 			case coredata.DocumentEntityType:
 				documentIDs = []gid.GID{gID}
-			case coredata.ReportEntityType:
+			case coredata.FileEntityType:
 				reportIDs = []gid.GID{gID}
 			case coredata.TrustCenterFileEntityType:
 				fileIDs = []gid.GID{gID}

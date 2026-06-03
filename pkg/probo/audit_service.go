@@ -19,8 +19,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"go.gearno.de/crypto/uuid"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/filevalidation"
@@ -113,7 +111,11 @@ func (s AuditService) Get(
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			return audit.LoadByID(ctx, conn, scope, auditID)
+			if err := audit.LoadByID(ctx, conn, scope, auditID); err != nil {
+				return fmt.Errorf("cannot load audit: %w", err)
+			}
+
+			return nil
 		},
 	)
 	if err != nil {
@@ -123,16 +125,20 @@ func (s AuditService) Get(
 	return audit, nil
 }
 
-func (s AuditService) GetByReportID(
+func (s AuditService) GetByReportFileID(
 	ctx context.Context, scope coredata.Scoper,
-	reportID gid.GID,
+	fileID gid.GID,
 ) (*coredata.Audit, error) {
 	audit := &coredata.Audit{}
 
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			return audit.LoadByReportID(ctx, conn, scope, reportID)
+			if err := audit.LoadByReportFileID(ctx, conn, scope, fileID); err != nil {
+				return fmt.Errorf("cannot load report file: %w", err)
+			}
+
+			return nil
 		},
 	)
 	if err != nil {
@@ -326,7 +332,7 @@ func (s AuditService) CountForOrganizationID(
 
 func (s AuditService) UploadReport(
 	ctx context.Context, scope coredata.Scoper,
-	req UploadAuditReportRequest,
+	req *UploadAuditReportRequest,
 ) (*coredata.Audit, error) {
 	if err := req.Validate(); err != nil {
 		return nil, fmt.Errorf("invalid request: %w", err)
@@ -334,60 +340,52 @@ func (s AuditService) UploadReport(
 
 	audit := &coredata.Audit{}
 
-	err := s.svc.pg.WithTx(
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			err := audit.LoadByID(ctx, conn, scope, req.AuditID)
+			if err != nil {
+				return fmt.Errorf("cannot load audit: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	fv := filevalidation.NewValidator(
+		filevalidation.WithCategories(filevalidation.CategoryDocument),
+		filevalidation.WithMaxFileSize(25*1024*1024),
+	)
+
+	file, err := s.svc.Files.UploadAndSaveFile(
+		ctx, scope,
+		fv,
+		map[string]string{"organization-id": audit.OrganizationID.String()},
+		&FileUpload{
+			Content:     req.File.Content,
+			Filename:    req.File.Filename,
+			Size:        req.File.Size,
+			ContentType: req.File.ContentType,
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("cannot upload file: %w", err)
+	}
+
+	err = s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
 			if err := audit.LoadByID(ctx, conn, scope, req.AuditID); err != nil {
 				return fmt.Errorf("cannot load audit: %w", err)
 			}
 
-			reportID := gid.New(scope.GetTenantID(), coredata.ReportEntityType)
-			now := time.Now()
-
-			objectKey, err := uuid.NewV7()
-			if err != nil {
-				return fmt.Errorf("cannot generate object key: %w", err)
-			}
-
-			_, err = s.svc.s3.PutObject(ctx, &s3.PutObjectInput{
-				Bucket:       new(s.svc.bucket),
-				Key:          new(objectKey.String()),
-				Body:         req.File.Content,
-				ContentType:  new(req.File.ContentType),
-				CacheControl: new("private, max-age=3600"),
-				Metadata: map[string]string{
-					"type":            "report",
-					"report-id":       reportID.String(),
-					"organization-id": audit.OrganizationID.String(),
-				},
-			})
-			if err != nil {
-				return fmt.Errorf("cannot upload report to S3: %w", err)
-			}
-
-			report := &coredata.Report{
-				ID:             reportID,
-				OrganizationID: audit.OrganizationID,
-				ObjectKey:      objectKey.String(),
-				MimeType:       req.File.ContentType,
-				Filename:       req.File.Filename,
-				Size:           req.File.Size,
-				CreatedAt:      now,
-				UpdatedAt:      now,
-			}
-
-			if err := report.Insert(ctx, conn, scope); err != nil {
-				return fmt.Errorf("cannot insert report: %w", err)
-			}
-
-			audit.ReportID = &report.ID
+			audit.ReportFileID = &file.ID
 			audit.UpdatedAt = time.Now()
 
-			if err := audit.Update(ctx, conn, scope); err != nil {
-				return fmt.Errorf("cannot update audit: %w", err)
-			}
-
-			return nil
+			return audit.Update(ctx, conn, scope)
 		},
 	)
 	if err != nil {
@@ -407,16 +405,16 @@ func (s AuditService) GenerateReportURL(
 		return nil, fmt.Errorf("cannot get audit: %w", err)
 	}
 
-	if audit.ReportID == nil {
+	if audit.ReportFileID == nil {
 		return nil, fmt.Errorf("audit has no report")
 	}
 
-	url, err := s.svc.Reports.GenerateDownloadURL(ctx, scope, *audit.ReportID, expiresIn)
+	url, err := s.svc.Files.GenerateFileTempURL(ctx, scope, *audit.ReportFileID, expiresIn)
 	if err != nil {
 		return nil, fmt.Errorf("cannot generate report download URL: %w", err)
 	}
 
-	return url, nil
+	return &url, nil
 }
 
 func (s AuditService) DeleteReport(
@@ -425,21 +423,21 @@ func (s AuditService) DeleteReport(
 ) (*coredata.Audit, error) {
 	audit := &coredata.Audit{}
 
-	err := s.svc.pg.WithTx(
+	return audit, s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
 			if err := audit.LoadByID(ctx, conn, scope, auditID); err != nil {
 				return fmt.Errorf("cannot load audit: %w", err)
 			}
 
-			if audit.ReportID != nil {
-				report := &coredata.Report{ID: *audit.ReportID}
+			if audit.ReportFileID != nil {
+				file := coredata.File{ID: *audit.ReportFileID}
 
-				if err := report.Delete(ctx, conn, scope); err != nil {
-					return fmt.Errorf("cannot delete report: %w", err)
+				if err := file.SoftDelete(ctx, conn, scope); err != nil {
+					return fmt.Errorf("cannot soft-delete report file: %w", err)
 				}
 
-				audit.ReportID = nil
+				audit.ReportFileID = nil
 				audit.UpdatedAt = time.Now()
 
 				if err := audit.Update(ctx, conn, scope); err != nil {
@@ -450,11 +448,6 @@ func (s AuditService) DeleteReport(
 			return nil
 		},
 	)
-	if err != nil {
-		return nil, err
-	}
-
-	return audit, nil
 }
 
 func (s AuditService) ListForControlID(

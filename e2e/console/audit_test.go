@@ -1456,9 +1456,9 @@ func TestAudit_UploadReport(t *testing.T) {
 				uploadAuditReport(input: $input) {
 					audit {
 						id
-						report {
+						reportFile {
 							id
-							filename
+							fileName
 							size
 						}
 					}
@@ -1472,12 +1472,12 @@ func TestAudit_UploadReport(t *testing.T) {
 		var result struct {
 			UploadAuditReport struct {
 				Audit struct {
-					ID     string `json:"id"`
-					Report *struct {
+					ID         string `json:"id"`
+					ReportFile *struct {
 						ID       string `json:"id"`
-						Filename string `json:"filename"`
-						Size     int    `json:"size"`
-					} `json:"report"`
+						FileName string `json:"fileName"`
+						Size     int64  `json:"size"`
+					} `json:"reportFile"`
 				} `json:"audit"`
 			} `json:"uploadAuditReport"`
 		}
@@ -1495,9 +1495,9 @@ func TestAudit_UploadReport(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.Equal(t, auditID, result.UploadAuditReport.Audit.ID)
-		require.NotNil(t, result.UploadAuditReport.Audit.Report)
-		assert.Equal(t, "audit-report.pdf", result.UploadAuditReport.Audit.Report.Filename)
-		assert.Equal(t, len(pdfContent), result.UploadAuditReport.Audit.Report.Size)
+		require.NotNil(t, result.UploadAuditReport.Audit.ReportFile)
+		assert.Equal(t, "audit-report.pdf", result.UploadAuditReport.Audit.ReportFile.FileName)
+		assert.Equal(t, int64(len(pdfContent)), result.UploadAuditReport.Audit.ReportFile.Size)
 	})
 
 	t.Run("upload replaces existing report", func(t *testing.T) {
@@ -1508,9 +1508,9 @@ func TestAudit_UploadReport(t *testing.T) {
 				uploadAuditReport(input: $input) {
 					audit {
 						id
-						report {
+						reportFile {
 							id
-							filename
+							fileName
 						}
 					}
 				}
@@ -1523,11 +1523,11 @@ func TestAudit_UploadReport(t *testing.T) {
 		var result1 struct {
 			UploadAuditReport struct {
 				Audit struct {
-					ID     string `json:"id"`
-					Report *struct {
+					ID         string `json:"id"`
+					ReportFile *struct {
 						ID       string `json:"id"`
-						Filename string `json:"filename"`
-					} `json:"report"`
+						FileName string `json:"fileName"`
+					} `json:"reportFile"`
 				} `json:"audit"`
 			} `json:"uploadAuditReport"`
 		}
@@ -1544,7 +1544,7 @@ func TestAudit_UploadReport(t *testing.T) {
 		}, &result1)
 		require.NoError(t, err)
 
-		firstReportID := result1.UploadAuditReport.Audit.Report.ID
+		firstReportID := result1.UploadAuditReport.Audit.ReportFile.ID
 
 		// Upload second report (should replace)
 		pdfContent2 := []byte("%PDF-1.4\n1 0 obj\n<< /Type /Catalog /Version /1.4 >>\nendobj\ntrailer\n<< /Root 1 0 R >>\n%%EOF")
@@ -1552,11 +1552,11 @@ func TestAudit_UploadReport(t *testing.T) {
 		var result2 struct {
 			UploadAuditReport struct {
 				Audit struct {
-					ID     string `json:"id"`
-					Report *struct {
+					ID         string `json:"id"`
+					ReportFile *struct {
 						ID       string `json:"id"`
-						Filename string `json:"filename"`
-					} `json:"report"`
+						FileName string `json:"fileName"`
+					} `json:"reportFile"`
 				} `json:"audit"`
 			} `json:"uploadAuditReport"`
 		}
@@ -1573,8 +1573,8 @@ func TestAudit_UploadReport(t *testing.T) {
 		}, &result2)
 		require.NoError(t, err)
 
-		assert.Equal(t, "second-report.pdf", result2.UploadAuditReport.Audit.Report.Filename)
-		assert.NotEqual(t, firstReportID, result2.UploadAuditReport.Audit.Report.ID, "Report ID should change when replaced")
+		assert.Equal(t, "second-report.pdf", result2.UploadAuditReport.Audit.ReportFile.FileName)
+		assert.NotEqual(t, firstReportID, result2.UploadAuditReport.Audit.ReportFile.ID, "Report file ID should change when replaced")
 	})
 }
 
@@ -1782,7 +1782,7 @@ func TestAudit_DeleteReport(t *testing.T) {
 				uploadAuditReport(input: $input) {
 					audit {
 						id
-						report {
+						reportFile {
 							id
 						}
 					}
@@ -1810,7 +1810,7 @@ func TestAudit_DeleteReport(t *testing.T) {
 				deleteAuditReport(input: $input) {
 					audit {
 						id
-						report {
+						reportFile {
 							id
 						}
 					}
@@ -1821,10 +1821,10 @@ func TestAudit_DeleteReport(t *testing.T) {
 		var deleteResult struct {
 			DeleteAuditReport struct {
 				Audit struct {
-					ID     string `json:"id"`
-					Report *struct {
+					ID         string `json:"id"`
+					ReportFile *struct {
 						ID string `json:"id"`
-					} `json:"report"`
+					} `json:"reportFile"`
 				} `json:"audit"`
 			} `json:"deleteAuditReport"`
 		}
@@ -1836,7 +1836,7 @@ func TestAudit_DeleteReport(t *testing.T) {
 		}, &deleteResult)
 		require.NoError(t, err)
 		assert.Equal(t, auditID, deleteResult.DeleteAuditReport.Audit.ID)
-		assert.Nil(t, deleteResult.DeleteAuditReport.Audit.Report, "Report should be nil after deletion")
+		assert.Nil(t, deleteResult.DeleteAuditReport.Audit.ReportFile, "Report file should be nil after deletion")
 	})
 }
 

@@ -1056,24 +1056,55 @@ func (r *trustCenterDocumentAccessResolver) Document(ctx context.Context, obj *t
 	return types.NewDocument(document), nil
 }
 
-// Report is the resolver for the report field.
-func (r *trustCenterDocumentAccessResolver) Report(ctx context.Context, obj *types.TrustCenterDocumentAccess) (*types.Report, error) {
-	scope, err := r.authorize(ctx, obj.TrustCenterAccessID, probo.ActionReportGet)
+// ReportFile is the resolver for the reportFile field.
+func (r *trustCenterDocumentAccessResolver) ReportFile(ctx context.Context, obj *types.TrustCenterDocumentAccess) (*types.File, error) {
+	if _, err := r.authorize(ctx, obj.ID, probo.ActionFileGet); err != nil {
+		return nil, err
+	}
+
+	if obj.ReportFile == nil {
+		return nil, nil
+	}
+
+	loaders := dataloader.FromContext(ctx)
+
+	file, err := loaders.File.Load(ctx, obj.ReportFile.ID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot load report file", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewFile(file), nil
+}
+
+// Audit is the resolver for the audit field.
+func (r *trustCenterDocumentAccessResolver) Audit(ctx context.Context, obj *types.TrustCenterDocumentAccess) (*types.Audit, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionAuditGet)
 	if err != nil {
 		return nil, err
 	}
 
-	if obj.ReportID == nil {
+	if obj.ReportFileID == nil {
 		return nil, nil
 	}
 
-	report, err := r.probo.Reports.Get(ctx, scope, *obj.ReportID)
+	audit, err := r.probo.Audits.GetByReportFileID(ctx, scope, *obj.ReportFileID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot load report", log.Error(err))
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, nil
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot load audit for report file", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return types.NewReport(report), nil
+	return types.NewAudit(audit), nil
 }
 
 // TrustCenterFile is the resolver for the trustCenterFile field.

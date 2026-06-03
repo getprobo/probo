@@ -62,7 +62,6 @@ type (
 		Measure              *dataloadgen.Loader[gid.GID, *coredata.Measure]
 		Task                 *dataloadgen.Loader[gid.GID, *coredata.Task]
 		File                 *dataloadgen.Loader[gid.GID, *coredata.File]
-		Report               *dataloadgen.Loader[gid.GID, *coredata.Report]
 		CookieBanner         *dataloadgen.Loader[gid.GID, *coredata.CookieBanner]
 		CookieCategory       *dataloadgen.Loader[gid.GID, *coredata.CookieCategory]
 		CommonTrackerPattern *dataloadgen.Loader[gid.GID, *coredata.CommonTrackerPattern]
@@ -114,7 +113,6 @@ func (f *batchFetcher) newLoaders() *Loaders {
 		Measure:              dataloadgen.NewMappedLoader(f.fetchMeasures),
 		Task:                 dataloadgen.NewMappedLoader(f.fetchTasks),
 		File:                 dataloadgen.NewMappedLoader(f.fetchFiles),
-		Report:               dataloadgen.NewMappedLoader(f.fetchReports),
 		CookieBanner:         dataloadgen.NewMappedLoader(f.fetchCookieBanners),
 		CookieCategory:       dataloadgen.NewMappedLoader(f.fetchCookieCategories),
 		CommonTrackerPattern: dataloadgen.NewMappedLoader(f.fetchCommonTrackerPatterns),
@@ -280,22 +278,6 @@ func (f *batchFetcher) fetchFiles(ctx context.Context, keys []gid.GID) (map[gid.
 
 	result := make(map[gid.GID]*coredata.File, len(files))
 	for _, v := range files {
-		result[v.ID] = v
-	}
-
-	return result, nil
-}
-
-func (f *batchFetcher) fetchReports(ctx context.Context, keys []gid.GID) (map[gid.GID]*coredata.Report, error) {
-	scope := coredata.NewScopeFromObjectID(keys[0])
-
-	reports, err := f.probo.Reports.GetByIDs(ctx, scope, keys...)
-	if err != nil {
-		return nil, fmt.Errorf("cannot batch load reports: %w", err)
-	}
-
-	result := make(map[gid.GID]*coredata.Report, len(reports))
-	for _, v := range reports {
 		result[v.ID] = v
 	}
 

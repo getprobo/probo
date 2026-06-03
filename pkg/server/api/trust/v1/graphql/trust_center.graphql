@@ -114,9 +114,9 @@ type Framework implements Node @nda {
   darkLogoURL: String @goField(forceResolver: true)
 }
 
-type Report implements Node @nda {
+type AuditReport implements Node @nda {
   id: ID!
-  filename: String!
+  fileName: String!
   isUserAuthorized: Boolean! @goField(forceResolver: true)
   access: DocumentAccess @goField(forceResolver: true)
 }
@@ -125,7 +125,7 @@ type Audit implements Node @nda {
   id: ID!
   name: String
   framework: Framework! @goField(forceResolver: true)
-  report: Report @goField(forceResolver: true)
+  reportFile: AuditReport @goField(forceResolver: true)
 }
 
 type AuditConnection @nda {

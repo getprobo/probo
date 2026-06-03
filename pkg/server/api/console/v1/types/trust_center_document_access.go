@@ -42,13 +42,13 @@ type (
 		UpdatedAt         time.Time                                `json:"updatedAt"`
 		TrustCenterAccess *TrustCenterAccess                       `json:"trustCenterAccess"`
 		Document          *Document                                `json:"document,omitempty"`
-		Report            *Report                                  `json:"report,omitempty"`
+		ReportFile        *File                                    `json:"reportFile,omitempty"`
 		TrustCenterFile   *TrustCenterFile                         `json:"trustCenterFile,omitempty"`
 
 		// Internal fields used by resolvers
 		TrustCenterAccessID gid.GID  `json:"-"`
 		DocumentID          *gid.GID `json:"-"`
-		ReportID            *gid.GID `json:"-"`
+		ReportFileID        *gid.GID `json:"-"`
 		TrustCenterFileID   *gid.GID `json:"-"`
 	}
 )
@@ -62,7 +62,7 @@ func NewTrustCenterDocumentAccess(tcda *coredata.TrustCenterDocumentAccess) *Tru
 		UpdatedAt:           tcda.UpdatedAt,
 		TrustCenterAccessID: tcda.TrustCenterAccessID,
 		DocumentID:          tcda.DocumentID,
-		ReportID:            tcda.ReportID,
+		ReportFileID:        tcda.ReportFileID,
 		TrustCenterFileID:   tcda.TrustCenterFileID,
 	}
 
@@ -72,9 +72,9 @@ func NewTrustCenterDocumentAccess(tcda *coredata.TrustCenterDocumentAccess) *Tru
 		}
 	}
 
-	if tcda.ReportID != nil {
-		object.Report = &Report{
-			ID: *tcda.ReportID,
+	if tcda.ReportFileID != nil {
+		object.ReportFile = &File{
+			ID: *tcda.ReportFileID,
 		}
 	}
 

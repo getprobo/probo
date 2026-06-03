@@ -334,7 +334,8 @@ type TrustCenterDocumentAccess
     id: ID!
     status: TrustCenterDocumentAccessStatus!
     document: Document @goField(forceResolver: true)
-    report: Report @goField(forceResolver: true)
+    reportFile: File @goField(forceResolver: true)
+    audit: Audit @goField(forceResolver: true)
     trustCenterFile: TrustCenterFile @goField(forceResolver: true)
 }
 

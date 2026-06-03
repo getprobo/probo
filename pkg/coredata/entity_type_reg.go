@@ -44,7 +44,7 @@ const (
 	AssetEntityType                                uint16 = 18
 	DatumEntityType                                uint16 = 19
 	AuditEntityType                                uint16 = 20
-	ReportEntityType                               uint16 = 21
+	_                                              uint16 = 21 // ReportEntityType - removed
 	TrustCenterEntityType                          uint16 = 22
 	TrustCenterAccessEntityType                    uint16 = 23
 	ThirdPartyBusinessAssociateAgreementEntityType uint16 = 24
@@ -168,8 +168,6 @@ func NewEntityFromID(id gid.GID) (any, bool) {
 		return &Datum{ID: id}, true
 	case AuditEntityType:
 		return &Audit{ID: id}, true
-	case ReportEntityType:
-		return &Report{ID: id}, true
 	case TrustCenterEntityType:
 		return &TrustCenter{ID: id}, true
 	case TrustCenterAccessEntityType:

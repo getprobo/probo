@@ -106,7 +106,6 @@ type (
 		Data                                  *DatumService
 		Audits                                *AuditService
 		WebhookSubscriptions                  *WebhookSubscriptionService
-		Reports                               *ReportService
 		TrustCenters                          *TrustCenterService
 		TrustCenterAccesses                   *TrustCenterAccessService
 		TrustCenterReferences                 *TrustCenterReferenceService
@@ -230,7 +229,6 @@ func NewService(
 	svc.Data = &DatumService{svc: svc}
 	svc.Audits = &AuditService{svc: svc}
 	svc.WebhookSubscriptions = &WebhookSubscriptionService{svc: svc}
-	svc.Reports = &ReportService{svc: svc}
 	svc.TrustCenters = &TrustCenterService{svc: svc}
 	svc.TrustCenterAccesses = &TrustCenterAccessService{svc: svc}
 	svc.TrustCenterReferences = &TrustCenterReferenceService{svc: svc}

@@ -83,21 +83,21 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 
 		return types.NewFramework(framework), nil
 
-	case coredata.ReportEntityType:
+	case coredata.FileEntityType:
 		trustCenter := compliancepage.CompliancePageFromContext(ctx)
 
-		report, err := trustService.Reports.Get(ctx, scope, trustCenter.OrganizationID, id)
+		file, err := trustService.Reports.Get(ctx, scope, trustCenter.OrganizationID, id)
 		if err != nil {
 			if errors.Is(err, trust.ErrReportNotFound) || errors.Is(err, coredata.ErrResourceNotFound) {
 				return nil, gqlutils.NotFoundf(ctx, "node %q not found", id)
 			}
 
-			r.logger.ErrorCtx(ctx, "cannot get report", log.Error(err))
+			r.logger.ErrorCtx(ctx, "cannot get audit report file", log.Error(err))
 
 			return nil, gqlutils.Internal(ctx)
 		}
 
-		return types.NewReport(report), nil
+		return types.NewAuditReport(file), nil
 
 	case coredata.AuditEntityType:
 		audit, err := trustService.Audits.Get(ctx, scope, id)

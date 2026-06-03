@@ -68,7 +68,7 @@ func (utcar *UpdateTrustCenterAccessRequest) Validate() error {
 	}
 
 	for i, reportAccess := range utcar.ReportAccesses {
-		v.Check(reportAccess.ID, fmt.Sprintf("reportAccesses[%d].ID", i), validator.Required(), validator.GID(coredata.ReportEntityType))
+		v.Check(reportAccess.ID, fmt.Sprintf("reportAccesses[%d].ID", i), validator.Required(), validator.GID(coredata.FileEntityType))
 	}
 
 	for i, reportAccess := range utcar.TrustCenterFileAccesses {
@@ -263,7 +263,7 @@ func (s TrustCenterAccessService) Update(
 					})
 				}
 
-				if err := tcdas.MergeReportAccesses(ctx, tx, scope, access.OrganizationID, access.ID, reportData); err != nil {
+				if err := tcdas.MergeReportFileAccesses(ctx, tx, scope, access.OrganizationID, access.ID, reportData); err != nil {
 					return fmt.Errorf("cannot merge report accesses: %w", err)
 				}
 			}

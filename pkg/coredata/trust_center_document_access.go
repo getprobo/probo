@@ -35,7 +35,7 @@ type (
 		OrganizationID      gid.GID                         `db:"organization_id"`
 		TrustCenterAccessID gid.GID                         `db:"trust_center_access_id"`
 		DocumentID          *gid.GID                        `db:"document_id"`
-		ReportID            *gid.GID                        `db:"report_id"`
+		ReportFileID        *gid.GID                        `db:"report_file_id"`
 		TrustCenterFileID   *gid.GID                        `db:"trust_center_file_id"`
 		Status              TrustCenterDocumentAccessStatus `db:"status"`
 		CreatedAt           time.Time                       `db:"created_at"`
@@ -105,7 +105,7 @@ SELECT
     organization_id,
     trust_center_access_id,
     document_id,
-    report_id,
+    report_file_id,
     trust_center_file_id,
     status,
     created_at,
@@ -155,7 +155,7 @@ SELECT
     organization_id,
     trust_center_access_id,
     document_id,
-    report_id,
+    report_file_id,
     trust_center_file_id,
     status,
     created_at,
@@ -196,12 +196,12 @@ LIMIT 1;
 	return nil
 }
 
-func (tcda *TrustCenterDocumentAccess) LoadByTrustCenterAccessIDAndReportID(
+func (tcda *TrustCenterDocumentAccess) LoadByTrustCenterAccessIDAndReportFileID(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
 	trustCenterAccessID gid.GID,
-	reportID gid.GID,
+	reportFileID gid.GID,
 ) error {
 	q := `
 SELECT
@@ -209,7 +209,7 @@ SELECT
     organization_id,
     trust_center_access_id,
     document_id,
-    report_id,
+    report_file_id,
     trust_center_file_id,
     status,
     created_at,
@@ -219,7 +219,7 @@ FROM
 WHERE
     %s
     AND trust_center_access_id = @trust_center_access_id
-    AND report_id = @report_id
+    AND report_file_id = @report_file_id
 LIMIT 1;
 `
 
@@ -227,7 +227,7 @@ LIMIT 1;
 
 	args := pgx.StrictNamedArgs{
 		"trust_center_access_id": trustCenterAccessID,
-		"report_id":              reportID,
+		"report_file_id":         reportFileID,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
@@ -262,7 +262,7 @@ INSERT INTO trust_center_document_accesses (
     organization_id,
     trust_center_access_id,
     document_id,
-    report_id,
+    report_file_id,
     trust_center_file_id,
     status,
     created_at,
@@ -273,7 +273,7 @@ INSERT INTO trust_center_document_accesses (
     @organization_id,
     @trust_center_access_id,
     @document_id,
-    @report_id,
+    @report_file_id,
     @trust_center_file_id,
     @status::trust_center_document_access_status,
     @created_at,
@@ -287,7 +287,7 @@ INSERT INTO trust_center_document_accesses (
 		"organization_id":        tcda.OrganizationID,
 		"trust_center_access_id": tcda.TrustCenterAccessID,
 		"document_id":            tcda.DocumentID,
-		"report_id":              tcda.ReportID,
+		"report_file_id":         tcda.ReportFileID,
 		"trust_center_file_id":   tcda.TrustCenterFileID,
 		"status":                 tcda.Status,
 		"created_at":             tcda.CreatedAt,
@@ -300,7 +300,7 @@ INSERT INTO trust_center_document_accesses (
 			if pgErr.Code == "23505" {
 				switch pgErr.ConstraintName {
 				case "trust_center_document_accesse_trust_center_access_id_docume_key",
-					"trust_center_document_accesse_trust_center_access_id_report_key",
+					"trust_center_document_accesses_trust_center_access_id_report_file_key",
 					"trust_center_document_accesses_trust_center_file_id_key":
 					return ErrResourceAlreadyExists
 				}
@@ -496,7 +496,7 @@ all_items AS (
     SELECT
         d.id AS item_id,
         d.id AS document_id,
-        NULL::text AS report_id,
+        NULL::text AS report_file_id,
         NULL::text AS trust_center_file_id,
         d.created_at AS item_created_at,
         d.updated_at AS item_updated_at
@@ -508,23 +508,23 @@ all_items AS (
     UNION ALL
 
     SELECT
-        r.report_id AS item_id,
+        r.report_file_id AS item_id,
         NULL::text AS document_id,
-        r.report_id AS report_id,
+        r.report_file_id AS report_file_id,
         NULL::text AS trust_center_file_id,
         r.created_at AS item_created_at,
         r.updated_at AS item_updated_at
     FROM audits r, tenant_organization o
     WHERE r.organization_id = o.organization_id
         AND r.trust_center_visibility = 'PRIVATE'::trust_center_visibility
-        AND r.report_id IS NOT NULL
+        AND r.report_file_id IS NOT NULL
 
     UNION ALL
 
     SELECT
         tcf.id AS item_id,
         NULL::text AS document_id,
-        NULL::text AS report_id,
+        NULL::text AS report_file_id,
         tcf.id AS trust_center_file_id,
         tcf.created_at AS item_created_at,
         tcf.updated_at AS item_updated_at
@@ -542,7 +542,7 @@ final_items AS (
       (SELECT organization_id FROM organization) AS organization_id,
       @trust_center_access_id AS trust_center_access_id,
       ai.document_id,
-      ai.report_id,
+      ai.report_file_id,
       ai.trust_center_file_id,
       COALESCE(tcda.status, 'REQUESTED'::trust_center_document_access_status) AS status,
       COALESCE(tcda.created_at, ai.item_created_at) AS created_at,
@@ -552,7 +552,7 @@ final_items AS (
       tcda.trust_center_access_id = @trust_center_access_id
       AND (
           (tcda.document_id = ai.document_id AND ai.document_id IS NOT NULL)
-          OR (tcda.report_id = ai.report_id AND ai.report_id IS NOT NULL)
+          OR (tcda.report_file_id = ai.report_file_id AND ai.report_file_id IS NOT NULL)
           OR (tcda.trust_center_file_id = ai.trust_center_file_id AND ai.trust_center_file_id IS NOT NULL)
       )
   )
@@ -562,7 +562,7 @@ SELECT
     organization_id,
     trust_center_access_id,
     document_id,
-    report_id,
+    report_file_id,
     trust_center_file_id,
     status,
     created_at,
@@ -606,7 +606,7 @@ SELECT
     organization_id,
     trust_center_access_id,
     document_id,
-    report_id,
+    report_file_id,
     trust_center_file_id,
     status,
     created_at,
@@ -714,12 +714,12 @@ WHERE
 	return nil
 }
 
-func GrantByReportIDs(
+func GrantByReportFileIDs(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
 	trustCenterAccessID gid.GID,
-	reportIDs []gid.GID,
+	reportFileIDs []gid.GID,
 	updatedAt time.Time,
 ) error {
 	q := `
@@ -728,32 +728,32 @@ SET status = 'GRANTED'::trust_center_document_access_status, updated_at = @updat
 WHERE
     %s
     AND trust_center_access_id = @trust_center_access_id
-    AND report_id = ANY(@report_ids)
+    AND report_file_id = ANY(@report_file_ids)
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"trust_center_access_id": trustCenterAccessID,
-		"report_ids":             reportIDs,
+		"report_file_ids":        reportFileIDs,
 		"updated_at":             updatedAt,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot grant trust center document accesses by report IDs: %w", err)
+		return fmt.Errorf("cannot grant trust center document accesses by report file IDs: %w", err)
 	}
 
 	return nil
 }
 
-func RejectOrRevokeByReportIDs(
+func RejectOrRevokeByReportFileIDs(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
 	trustCenterAccessID gid.GID,
-	reportIDs []gid.GID,
+	reportFileIDs []gid.GID,
 	updatedAt time.Time,
 ) error {
 	q := `
@@ -767,21 +767,21 @@ SET
 WHERE
     %s
     AND trust_center_access_id = @trust_center_access_id
-    AND report_id = ANY(@report_ids)
+    AND report_file_id = ANY(@report_file_ids)
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"trust_center_access_id": trustCenterAccessID,
-		"report_ids":             reportIDs,
+		"report_file_ids":        reportFileIDs,
 		"updated_at":             updatedAt,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot reject trust center document accesses by report IDs: %w", err)
+		return fmt.Errorf("cannot reject trust center document accesses by report file IDs: %w", err)
 	}
 
 	return nil
@@ -829,7 +829,7 @@ WHEN NOT MATCHED
         organization_id,
         trust_center_access_id,
         document_id,
-        report_id,
+        report_file_id,
         trust_center_file_id,
         status,
         created_at,
@@ -887,7 +887,7 @@ WITH document_access_data AS (
         @organization_id AS organization_id,
         @trust_center_access_id AS trust_center_access_id,
         unnest(@document_ids::text[]) AS document_id,
-        null::text AS report_id,
+        null::text AS report_file_id,
         null::text AS trust_center_file_id,
         @status::trust_center_document_access_status AS status,
         @created_at::timestamptz AS created_at,
@@ -899,7 +899,7 @@ INSERT INTO trust_center_document_accesses (
     organization_id,
     trust_center_access_id,
     document_id,
-    report_id,
+    report_file_id,
     trust_center_file_id,
     status,
     created_at,
@@ -927,7 +927,7 @@ ON CONFLICT DO NOTHING
 	return nil
 }
 
-func (tcdas TrustCenterDocumentAccesses) MergeReportAccesses(
+func (tcdas TrustCenterDocumentAccesses) MergeReportFileAccesses(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
@@ -947,7 +947,7 @@ WITH data AS (
 )
 MERGE INTO trust_center_document_accesses AS tcda
 USING data
-    ON data.id = tcda.report_id
+    ON data.id = tcda.report_file_id
     AND tcda.tenant_id = @tenant_id
     AND tcda.trust_center_access_id = @trust_center_access_id
 WHEN MATCHED
@@ -955,7 +955,7 @@ WHEN MATCHED
 WHEN NOT MATCHED BY SOURCE
     AND tcda.tenant_id = @tenant_id
     AND tcda.trust_center_access_id = @trust_center_access_id
-    AND tcda.report_id IS NOT NULL
+    AND tcda.report_file_id IS NOT NULL
     THEN DELETE
 WHEN NOT MATCHED
     THEN INSERT (
@@ -964,7 +964,7 @@ WHEN NOT MATCHED
         organization_id,
         trust_center_access_id,
         document_id,
-        report_id,
+        report_file_id,
         trust_center_file_id,
         status,
         created_at,
@@ -1000,29 +1000,29 @@ WHEN NOT MATCHED
 	return nil
 }
 
-func (tcdas TrustCenterDocumentAccesses) BulkInsertReportAccesses(
+func (tcdas TrustCenterDocumentAccesses) BulkInsertReportFileAccesses(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
 	trustCenterAccessID gid.GID,
 	organizationID gid.GID,
-	reportIDs []gid.GID,
+	reportFileIDs []gid.GID,
 	status TrustCenterDocumentAccessStatus,
 	createdAt time.Time,
 ) error {
-	if len(reportIDs) == 0 {
+	if len(reportFileIDs) == 0 {
 		return nil
 	}
 
 	q := `
-WITH report_access_data AS (
+WITH report_file_access_data AS (
     SELECT
         generate_gid(decode_base64_unpadded(@tenant_id), @trust_center_document_access_entity_type) AS id,
         @tenant_id AS tenant_id,
         @organization_id AS organization_id,
         @trust_center_access_id AS trust_center_access_id,
         null::text AS document_id,
-        unnest(@report_ids::text[]) AS report_id,
+        unnest(@report_file_ids::text[]) AS report_file_id,
         null::text AS trust_center_file_id,
         @status::trust_center_document_access_status AS status,
         @created_at::timestamptz AS created_at,
@@ -1034,13 +1034,13 @@ INSERT INTO trust_center_document_accesses (
     organization_id,
     trust_center_access_id,
     document_id,
-    report_id,
+    report_file_id,
     trust_center_file_id,
     status,
     created_at,
     updated_at
 )
-SELECT * FROM report_access_data
+SELECT * FROM report_file_access_data
 ON CONFLICT DO NOTHING
 `
 
@@ -1049,14 +1049,14 @@ ON CONFLICT DO NOTHING
 		"organization_id": organizationID,
 		"trust_center_document_access_entity_type": TrustCenterDocumentAccessEntityType,
 		"trust_center_access_id":                   trustCenterAccessID,
-		"report_ids":                               reportIDs,
+		"report_file_ids":                          reportFileIDs,
 		"status":                                   status,
 		"created_at":                               createdAt,
 		"updated_at":                               createdAt,
 	}
 
 	if _, err := conn.Exec(ctx, q, args); err != nil {
-		return fmt.Errorf("cannot bulk insert trust center report accesses: %w", err)
+		return fmt.Errorf("cannot bulk insert trust center report file accesses: %w", err)
 	}
 
 	return nil
@@ -1075,7 +1075,7 @@ SELECT
     organization_id,
     trust_center_access_id,
     document_id,
-    report_id,
+    report_file_id,
     trust_center_file_id,
     status,
     created_at,
@@ -1226,7 +1226,7 @@ WHEN NOT MATCHED
         organization_id,
         trust_center_access_id,
         document_id,
-        report_id,
+        report_file_id,
         trust_center_file_id,
         status,
         created_at,
@@ -1280,7 +1280,7 @@ WITH trust_center_file_access_data AS (
         @organization_id AS organization_id,
         @trust_center_access_id AS trust_center_access_id,
         null::text AS document_id,
-        null::text AS report_id,
+        null::text AS report_file_id,
         unnest(@trust_center_file_ids::text[]) AS trust_center_file_id,
         @status::trust_center_document_access_status AS status,
         @created_at::timestamptz AS created_at,
@@ -1292,7 +1292,7 @@ INSERT INTO trust_center_document_accesses (
     organization_id,
     trust_center_access_id,
     document_id,
-    report_id,
+    report_file_id,
     trust_center_file_id,
     status,
     created_at,

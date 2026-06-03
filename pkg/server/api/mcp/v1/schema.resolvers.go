@@ -1468,16 +1468,16 @@ func (r *Resolver) GetAuditTool(ctx context.Context, req *mcp.CallToolRequest, i
 		return nil, types.GetAuditOutput{}, fmt.Errorf("cannot get audit: %w", err)
 	}
 
-	var report *coredata.Report
-	if audit.ReportID != nil {
-		report, err = prb.Reports.Get(ctx, scope, *audit.ReportID)
+	var file *coredata.File
+	if audit.ReportFileID != nil {
+		file, err = prb.Files.Get(ctx, scope, *audit.ReportFileID)
 		if err != nil {
-			return nil, types.GetAuditOutput{}, fmt.Errorf("cannot get audit report: %w", err)
+			return nil, types.GetAuditOutput{}, fmt.Errorf("cannot get audit report file: %w", err)
 		}
 	}
 
 	return nil, types.GetAuditOutput{
-		Audit: types.NewAudit(audit, report),
+		Audit: types.NewAudit(audit, file),
 	}, nil
 }
 
@@ -1532,16 +1532,16 @@ func (r *Resolver) UpdateAuditTool(ctx context.Context, req *mcp.CallToolRequest
 		return nil, types.UpdateAuditOutput{}, fmt.Errorf("cannot update audit: %w", err)
 	}
 
-	var report *coredata.Report
-	if audit.ReportID != nil {
-		report, err = svc.Reports.Get(ctx, scope, *audit.ReportID)
+	var file *coredata.File
+	if audit.ReportFileID != nil {
+		file, err = svc.Files.Get(ctx, scope, *audit.ReportFileID)
 		if err != nil {
-			return nil, types.UpdateAuditOutput{}, fmt.Errorf("cannot get audit report: %w", err)
+			return nil, types.UpdateAuditOutput{}, fmt.Errorf("cannot get audit report file: %w", err)
 		}
 	}
 
 	return nil, types.UpdateAuditOutput{
-		Audit: types.NewAudit(audit, report),
+		Audit: types.NewAudit(audit, file),
 	}, nil
 }
 

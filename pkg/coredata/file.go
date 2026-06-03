@@ -157,6 +157,10 @@ LIMIT 1;
 	return nil
 }
 
+// LoadByIDs Loads every given files, whether they are active or not. See
+// Files.LoadActiveByIDs for a safer option.
+//
+// DISCLAIMER: use with caution on user-facing features.
 func (f *Files) LoadByIDs(
 	ctx context.Context,
 	conn pg.Querier,
@@ -265,6 +269,59 @@ VALUES (
 
 		return fmt.Errorf("cannot insert file: %w", err)
 	}
+
+	return nil
+}
+
+func (f *File) LoadActiveByID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	fileID gid.GID,
+) error {
+	q := `
+SELECT
+    id,
+    organization_id,
+    bucket_name,
+    mime_type,
+    file_name,
+    file_key,
+    file_size,
+    visibility,
+    created_at,
+    updated_at,
+    deleted_at
+FROM
+    files
+WHERE
+    %s
+    AND id = @file_id
+    AND deleted_at IS NULL
+LIMIT 1;
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"file_id": fileID}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query file: %w", err)
+	}
+	defer rows.Close()
+
+	file, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[File])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+
+		return fmt.Errorf("cannot collect file: %w", err)
+	}
+
+	*f = file
 
 	return nil
 }
