@@ -16,8 +16,8 @@ jobs:
       contents: "read"
     steps:
       - uses: "actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd" # v6
-      - uses: "runs-on/action@742bf56072eb4845a0f94b3394673e4903c90ff0" # v2
-      - uses: "azure/setup-helm@b9e51907a09c216f16ebe8536097933489208112" # v4.3.0
+      - uses: "runs-on/action@d141ef83eb66d096ce8afc767e09115a65c63b60" # v2
+      - uses: "azure/setup-helm@dda3372f752e03dde6b3237bc9431cdc2f7a02a2" # v5.0.0
         with:
           version: "3.17.3"
       - name: "Validate chart version"
@@ -29,7 +29,7 @@ jobs:
             exit 1
           fi
       - name: "Log in to Harbor"
-        uses: "docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2" # v4.0.0
+        uses: "docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee" # v4.2.0
         with:
           registry: artifact.probo.inc
           username: ${{ secrets.HARBOR_USERNAME }}
@@ -42,7 +42,7 @@ jobs:
           helm dependency update "${CHART_DIR}"
           helm package "${CHART_DIR}"
           helm push "probo-${VERSION}.tgz" oci://artifact.probo.inc/probo
-      - uses: "actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f" # v7
+      - uses: "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a" # v7
         with:
           name: "helm-chart"
           path: "probo-*.tgz"
@@ -58,7 +58,7 @@ jobs:
       - uses: "actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd" # v6
         with:
           fetch-depth: 0
-      - uses: "runs-on/action@742bf56072eb4845a0f94b3394673e4903c90ff0" # v2
+      - uses: "runs-on/action@d141ef83eb66d096ce8afc767e09115a65c63b60" # v2
       - uses: "actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c" # v8
         with:
           name: "helm-chart"

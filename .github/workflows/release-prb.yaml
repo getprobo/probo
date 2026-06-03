@@ -31,7 +31,7 @@ jobs:
       - uses: "actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd" # v6
         with:
           submodules: recursive
-      - uses: "runs-on/action@742bf56072eb4845a0f94b3394673e4903c90ff0" # v2
+      - uses: "runs-on/action@d141ef83eb66d096ce8afc767e09115a65c63b60" # v2
       - uses: "./.github/actions/setup"
         with:
           node: "false"
@@ -75,7 +75,7 @@ jobs:
           else
             tar -czf "archives/${PRB_DIR}.tar.gz" -C staging "${PRB_DIR}"
           fi
-      - uses: "actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f" # v7
+      - uses: "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a" # v7
         with:
           name: "archive-${{ matrix.goos }}-${{ matrix.goarch }}"
           path: "archives/"
@@ -93,8 +93,8 @@ jobs:
       - uses: "actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd" # v6
         with:
           fetch-depth: 0
-      - uses: "runs-on/action@742bf56072eb4845a0f94b3394673e4903c90ff0" # v2
-      - uses: "sigstore/cosign-installer@faadad0cce49287aee09b3a48701e75088a2c6ad" # v4.0.0
+      - uses: "runs-on/action@d141ef83eb66d096ce8afc767e09115a65c63b60" # v2
+      - uses: "sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6" # v4.1.2
       - uses: "actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c" # v8
         with:
           pattern: "archive-*"
@@ -149,7 +149,7 @@ jobs:
             --notes-file release-notes.md \
             $PRERELEASE_FLAG \
             archives/* sbom.json
-      - uses: "actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f" # v7
+      - uses: "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a" # v7
         with:
           name: "sbom"
           path: "sbom.json"
@@ -162,7 +162,7 @@ jobs:
     permissions:
       contents: "read"
     steps:
-      - uses: "runs-on/action@742bf56072eb4845a0f94b3394673e4903c90ff0" # v2
+      - uses: "runs-on/action@d141ef83eb66d096ce8afc767e09115a65c63b60" # v2
       - name: "Download checksums from release"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
