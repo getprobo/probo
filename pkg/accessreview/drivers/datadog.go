@@ -23,6 +23,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"go.probo.inc/probo/pkg/coredata"
 )
 
 // DatadogDriver lists Datadog org members via GET /api/v2/users. The API
@@ -57,14 +59,17 @@ type datadogUsersResponse struct {
 	Data []struct {
 		ID         string `json:"id"`
 		Attributes struct {
-			Email      string `json:"email"`
-			Name       string `json:"name"`
-			Handle     string `json:"handle"`
-			Disabled   bool   `json:"disabled"`
-			Status     string `json:"status"`
-			Verified   bool   `json:"verified"`
-			CreatedAt  string `json:"created_at"`
-			ModifiedAt string `json:"modified_at"`
+			Email          string `json:"email"`
+			Name           string `json:"name"`
+			Handle         string `json:"handle"`
+			Title          string `json:"title"`
+			Disabled       bool   `json:"disabled"`
+			Status         string `json:"status"`
+			Verified       bool   `json:"verified"`
+			ServiceAccount bool   `json:"service_account"`
+			MFAEnabled     bool   `json:"mfa_enabled"`
+			CreatedAt      string `json:"created_at"`
+			ModifiedAt     string `json:"modified_at"`
 		} `json:"attributes"`
 		Relationships struct {
 			Roles struct {
@@ -86,7 +91,7 @@ type datadogUsersResponse struct {
 func (d *DatadogDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error) {
 	var records []AccountRecord
 
-	for page := 0; page < maxPaginationPages; page++ {
+	for page := range maxPaginationPages {
 		resp, err := d.queryUsers(ctx, page)
 		if err != nil {
 			return nil, err
@@ -119,14 +124,31 @@ func (d *DatadogDriver) ListAccounts(ctx context.Context) ([]AccountRecord, erro
 				}
 			}
 
+			accountType := coredata.AccessEntryAccountTypeUser
+			if u.Attributes.ServiceAccount {
+				accountType = coredata.AccessEntryAccountTypeServiceAccount
+			}
+
+			mfaStatus := coredata.MFAStatusDisabled
+			if u.Attributes.MFAEnabled {
+				mfaStatus = coredata.MFAStatusEnabled
+			}
+
 			records = append(records, AccountRecord{
-				Email:      u.Attributes.Email,
-				FullName:   u.Attributes.Name,
-				Role:       role,
-				Active:     &active,
-				IsAdmin:    isAdmin,
-				ExternalID: u.ID,
-				CreatedAt:  parseDatadogTime(u.Attributes.CreatedAt),
+				Email:     u.Attributes.Email,
+				FullName:  u.Attributes.Name,
+				Role:      role,
+				JobTitle:  u.Attributes.Title,
+				Active:    &active,
+				IsAdmin:   isAdmin,
+				MFAStatus: mfaStatus,
+				// Datadog's /api/v2/users does not expose the login method
+				// used (no allowed_login_methods in the schema), so the
+				// auth method is unknown.
+				AuthMethod:  coredata.AccessEntryAuthMethodUnknown,
+				AccountType: accountType,
+				ExternalID:  u.ID,
+				CreatedAt:   parseDatadogTime(u.Attributes.CreatedAt),
 			})
 		}
 

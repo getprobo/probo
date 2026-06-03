@@ -41,9 +41,12 @@ interactions:
                     "email": "alice@example.com",
                     "name": "Alice Example",
                     "handle": "alice@example.com",
+                    "title": "Security Engineer",
                     "disabled": false,
                     "status": "Active",
                     "verified": true,
+                    "service_account": false,
+                    "mfa_enabled": true,
                     "created_at": "2025-01-02T03:04:05.000000+00:00"
                   },
                   "relationships": { "roles": { "data": [ { "type": "roles", "id": "role-admin" } ] } }
@@ -58,6 +61,8 @@ interactions:
                     "disabled": true,
                     "status": "Disabled",
                     "verified": true,
+                    "service_account": true,
+                    "mfa_enabled": false,
                     "created_at": "2025-02-02T03:04:05.000000+00:00"
                   },
                   "relationships": { "roles": { "data": [ { "type": "roles", "id": "role-standard" } ] } }

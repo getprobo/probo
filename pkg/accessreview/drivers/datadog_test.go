@@ -21,6 +21,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.probo.inc/probo/pkg/coredata"
 )
 
 func TestDatadogDriver(t *testing.T) {
@@ -42,8 +43,13 @@ func TestDatadogDriver(t *testing.T) {
 	assert.True(t, *r.Active)
 	assert.True(t, r.IsAdmin)
 	assert.Equal(t, "Datadog Admin Role", r.Role)
+	assert.Equal(t, "Security Engineer", r.JobTitle)
+	assert.Equal(t, coredata.AccessEntryAccountTypeUser, r.AccountType)
+	assert.Equal(t, coredata.MFAStatusEnabled, r.MFAStatus)
+	assert.Equal(t, coredata.AccessEntryAuthMethodUnknown, r.AuthMethod)
 
-	// Second record exercises the inactive + non-admin branches.
+	// Second record exercises the inactive, non-admin, and service-account
+	// (MFA-disabled) branches.
 	r2 := records[1]
 	assert.Equal(t, "bob@example.com", r2.Email)
 	assert.Equal(t, "abc-222", r2.ExternalID)
@@ -51,4 +57,6 @@ func TestDatadogDriver(t *testing.T) {
 	assert.False(t, *r2.Active)
 	assert.False(t, r2.IsAdmin)
 	assert.Equal(t, "Datadog Standard Role", r2.Role)
+	assert.Equal(t, coredata.AccessEntryAccountTypeServiceAccount, r2.AccountType)
+	assert.Equal(t, coredata.MFAStatusDisabled, r2.MFAStatus)
 }
