@@ -27,7 +27,7 @@ type Query {
   currentTrustCenter: TrustCenter
   oidcProviders: [OIDCProviderInfo!]!
     @goField(forceResolver: true)
-    @session(required: OPTIONAL)
+    @authentication(required: OPTIONAL)
 }
 
 type OIDCProviderInfo {

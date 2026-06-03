@@ -25,7 +25,7 @@ type Profile implements Node {
 
   permission(action: String!): Boolean!
     @goField(forceResolver: true)
-    @session(required: PRESENT)
+    @authentication(required: PRESENT)
 }
 
 enum ProfileState
@@ -97,13 +97,13 @@ type ProfileEdge {
 
 extend type Mutation {
   createUser(input: CreateUserInput!): CreateUserPayload
-    @session(required: PRESENT)
+    @authentication(required: PRESENT)
   deactivateUser(input: DeactivateUserInput!): DeactivateUserPayload
   updateUser(input: UpdateUserInput!): UpdateUserPayload!
   archiveUser(input: ArchiveUserInput!): ArchiveUserPayload
-    @session(required: PRESENT)
+    @authentication(required: PRESENT)
   removeUser(input: RemoveUserInput!): RemoveUserPayload
-    @session(required: PRESENT)
+    @authentication(required: PRESENT)
 }
 
 input CreateUserInput {

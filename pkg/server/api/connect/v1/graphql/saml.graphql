@@ -15,7 +15,7 @@ type SAMLConfiguration implements Node {
 
   permission(action: String!): Boolean!
     @goField(forceResolver: true)
-    @session(required: PRESENT)
+    @authentication(required: PRESENT)
 }
 
 type SAMLAttributeMappings {
@@ -55,13 +55,13 @@ type SAMLConfigurationEdge {
 extend type Mutation {
   createSAMLConfiguration(
     input: CreateSAMLConfigurationInput!
-  ): CreateSAMLConfigurationPayload @session(required: PRESENT)
+  ): CreateSAMLConfigurationPayload @authentication(required: PRESENT) @sessionOnly
   updateSAMLConfiguration(
     input: UpdateSAMLConfigurationInput!
-  ): UpdateSAMLConfigurationPayload @session(required: PRESENT)
+  ): UpdateSAMLConfigurationPayload @authentication(required: PRESENT) @sessionOnly
   deleteSAMLConfiguration(
     input: DeleteSAMLConfigurationInput!
-  ): DeleteSAMLConfigurationPayload @session(required: PRESENT)
+  ): DeleteSAMLConfigurationPayload @authentication(required: PRESENT) @sessionOnly
 }
 
 input CreateSAMLConfigurationInput {

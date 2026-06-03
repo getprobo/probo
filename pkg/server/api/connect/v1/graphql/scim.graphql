@@ -17,7 +17,7 @@ type SCIMConfiguration implements Node {
 
   permission(action: String!): Boolean!
     @goField(forceResolver: true)
-    @session(required: PRESENT)
+    @authentication(required: PRESENT)
 }
 
 type SCIMBridge implements Node {
@@ -33,7 +33,7 @@ type SCIMBridge implements Node {
 
   permission(action: String!): Boolean!
     @goField(forceResolver: true)
-    @session(required: PRESENT)
+    @authentication(required: PRESENT)
 }
 
 type Connector implements Node {
@@ -44,7 +44,7 @@ type Connector implements Node {
 
   permission(action: String!): Boolean!
     @goField(forceResolver: true)
-    @session(required: PRESENT)
+    @authentication(required: PRESENT)
 }
 
 enum ConnectorProvider
@@ -94,7 +94,7 @@ type SCIMEvent implements Node {
 
   permission(action: String!): Boolean!
     @goField(forceResolver: true)
-    @session(required: PRESENT)
+    @authentication(required: PRESENT)
 }
 
 enum SCIMEventOrderField
@@ -130,16 +130,16 @@ type SCIMEventEdge {
 extend type Mutation {
   createSCIMConfiguration(
     input: CreateSCIMConfigurationInput!
-  ): CreateSCIMConfigurationPayload @session(required: PRESENT)
+  ): CreateSCIMConfigurationPayload @authentication(required: PRESENT) @sessionOnly
   deleteSCIMConfiguration(
     input: DeleteSCIMConfigurationInput!
-  ): DeleteSCIMConfigurationPayload @session(required: PRESENT)
+  ): DeleteSCIMConfigurationPayload @authentication(required: PRESENT) @sessionOnly
   regenerateSCIMToken(
     input: RegenerateSCIMTokenInput!
-  ): RegenerateSCIMTokenPayload @session(required: PRESENT)
+  ): RegenerateSCIMTokenPayload @authentication(required: PRESENT) @sessionOnly
   updateSCIMBridge(
     input: UpdateSCIMBridgeInput!
-  ): UpdateSCIMBridgePayload @session(required: PRESENT)
+  ): UpdateSCIMBridgePayload @authentication(required: PRESENT)
 }
 
 input CreateSCIMConfigurationInput {

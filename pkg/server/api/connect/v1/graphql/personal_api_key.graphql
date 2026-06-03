@@ -5,11 +5,15 @@ type PersonalAPIKey implements Node {
   lastUsedAt: Datetime
   createdAt: Datetime!
 
-  token: String @goField(forceResolver: true)
+  token: String
+    @goField(forceResolver: true)
+    @authentication(required: PRESENT)
+    @sessionOnly
 
   permission(action: String!): Boolean!
     @goField(forceResolver: true)
-    @session(required: PRESENT)
+    @authentication(required: PRESENT)
+    @sessionOnly
 }
 
 type PersonalAPIKeyConnection
@@ -29,10 +33,14 @@ type PersonalAPIKeyEdge {
 extend type Mutation {
   createPersonalAPIKey(
     input: CreatePersonalAPIKeyInput!
-  ): CreatePersonalAPIKeyPayload @session(required: PRESENT)
+  ): CreatePersonalAPIKeyPayload
+    @authentication(required: PRESENT)
+    @sessionOnly
   revokePersonalAPIKey(
     input: RevokePersonalAPIKeyInput!
-  ): RevokePersonalAPIKeyPayload @session(required: PRESENT)
+  ): RevokePersonalAPIKeyPayload
+    @authentication(required: PRESENT)
+    @sessionOnly
 }
 
 input CreatePersonalAPIKeyInput {
