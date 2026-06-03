@@ -5825,6 +5825,20 @@ func (r *Resolver) PublishCookieBannerVersionTool(ctx context.Context, req *mcp.
 	return nil, types.PublishCookieBannerVersionOutput{CookieBannerVersion: types.NewCookieBannerVersion(version)}, nil
 }
 
+func (r *Resolver) RegenerateCookieBannerTrackerPolicyTool(ctx context.Context, req *mcp.CallToolRequest, input *types.RegenerateCookieBannerTrackerPolicyInput) (*mcp.CallToolResult, types.RegenerateCookieBannerTrackerPolicyOutput, error) {
+	scope, err := r.Authorize(ctx, input.CookieBannerID, probo.ActionCookieBannerUpdate)
+	if err != nil {
+		return nil, types.RegenerateCookieBannerTrackerPolicyOutput{}, err
+	}
+
+	banner, err := r.cookieBanner.RegenerateTrackerPolicy(ctx, scope, input.CookieBannerID)
+	if err != nil {
+		return nil, types.RegenerateCookieBannerTrackerPolicyOutput{}, fmt.Errorf("cannot regenerate cookie banner tracker policy: %w", err)
+	}
+
+	return nil, types.RegenerateCookieBannerTrackerPolicyOutput{CookieBanner: types.NewCookieBanner(banner)}, nil
+}
+
 func (r *Resolver) ListCookieBannerVersionsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListCookieBannerVersionsInput) (*mcp.CallToolResult, types.ListCookieBannerVersionsOutput, error) {
 	scope, err := r.Authorize(ctx, input.CookieBannerID, probo.ActionCookieBannerVersionList)
 	if err != nil {

@@ -607,6 +607,9 @@ extend type Mutation {
     publishCookieBannerVersion(
         input: PublishCookieBannerVersionInput!
     ): PublishCookieBannerVersionPayload!
+    regenerateCookieBannerTrackerPolicy(
+        input: RegenerateCookieBannerTrackerPolicyInput!
+    ): RegenerateCookieBannerTrackerPolicyPayload!
     createCookieCategory(
         input: CreateCookieCategoryInput!
     ): CreateCookieCategoryPayload!
@@ -682,6 +685,10 @@ input PublishCookieBannerVersionInput {
     cookieBannerId: ID!
 }
 
+input RegenerateCookieBannerTrackerPolicyInput {
+    cookieBannerId: ID!
+}
+
 input CreateCookieCategoryInput {
     cookieBannerId: ID!
     name: String!
@@ -730,6 +737,10 @@ type DeactivateCookieBannerPayload {
 
 type PublishCookieBannerVersionPayload {
     cookieBannerVersion: CookieBannerVersion!
+    cookieBanner: CookieBanner!
+}
+
+type RegenerateCookieBannerTrackerPolicyPayload {
     cookieBanner: CookieBanner!
 }
 

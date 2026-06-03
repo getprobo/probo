@@ -10358,6 +10358,22 @@ components:
         cookie_banner_version:
           $ref: "#/components/schemas/CookieBannerVersion"
 
+    RegenerateCookieBannerTrackerPolicyInput:
+      type: object
+      required:
+        - cookie_banner_id
+      properties:
+        cookie_banner_id:
+          $ref: "#/components/schemas/GID"
+
+    RegenerateCookieBannerTrackerPolicyOutput:
+      type: object
+      required:
+        - cookie_banner
+      properties:
+        cookie_banner:
+          $ref: "#/components/schemas/CookieBanner"
+
     ListCookieBannerVersionsInput:
       type: object
       required:
@@ -13944,6 +13960,14 @@ tools:
       $ref: "#/components/schemas/PublishCookieBannerVersionInput"
     outputSchema:
       $ref: "#/components/schemas/PublishCookieBannerVersionOutput"
+  - name: regenerateCookieBannerTrackerPolicy
+    description: Re-arm tracker policy generation for a cookie banner that already has a published version. Returns immediately; the policy document is regenerated in the background.
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/RegenerateCookieBannerTrackerPolicyInput"
+    outputSchema:
+      $ref: "#/components/schemas/RegenerateCookieBannerTrackerPolicyOutput"
   - name: listCookieBannerVersions
     description: List all versions for a cookie banner
     hints:

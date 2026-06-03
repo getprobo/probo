@@ -21,6 +21,7 @@ import * as deleteOp from './delete.operation';
 import * as activateOp from './activate.operation';
 import * as deactivateOp from './deactivate.operation';
 import * as publishOp from './publish.operation';
+import * as regeneratePolicyOp from './regeneratePolicy.operation';
 import * as translateOp from './translate.operation';
 
 export const description: INodeProperties[] = [
@@ -78,6 +79,12 @@ export const description: INodeProperties[] = [
 				action: 'Publish a cookie banner version',
 			},
 			{
+				name: 'Regenerate Policy',
+				value: 'regeneratePolicy',
+				description: 'Re-arm tracker policy generation for a published cookie banner',
+				action: 'Regenerate a cookie banner tracker policy',
+			},
+			{
 				name: 'Translate',
 				value: 'translate',
 				description: 'Upsert a cookie banner translation',
@@ -100,6 +107,7 @@ export const description: INodeProperties[] = [
 	...activateOp.description,
 	...deactivateOp.description,
 	...publishOp.description,
+	...regeneratePolicyOp.description,
 	...translateOp.description,
 ];
 
@@ -112,5 +120,6 @@ export {
 	activateOp as activate,
 	deactivateOp as deactivate,
 	publishOp as publish,
+	regeneratePolicyOp as regeneratePolicy,
 	translateOp as translate,
 };

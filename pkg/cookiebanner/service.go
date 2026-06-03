@@ -979,6 +979,51 @@ func (s *Service) PublishCookieBannerVersion(
 	return &version, nil
 }
 
+// RegenerateTrackerPolicy re-arms tracker policy generation for a banner
+// that already has a published version, so the tracker-policy worker
+// regenerates the policy document (e.g. after iterating on the generator).
+// It returns ErrNoPublishedVersion when nothing has been published yet.
+func (s *Service) RegenerateTrackerPolicy(
+	ctx context.Context,
+	scope coredata.Scoper,
+	bannerID gid.GID,
+) (*coredata.CookieBanner, error) {
+	var banner coredata.CookieBanner
+
+	err := s.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			if err := banner.LoadByID(ctx, tx, scope, bannerID); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return ErrBannerNotFound
+				}
+
+				return fmt.Errorf("cannot load cookie banner: %w", err)
+			}
+
+			var version coredata.CookieBannerVersion
+			if err := version.LoadLatestPublishedByCookieBannerID(ctx, tx, scope, bannerID); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return ErrNoPublishedVersion
+				}
+
+				return fmt.Errorf("cannot load latest published version: %w", err)
+			}
+
+			if err := banner.SetPolicyGenerationRequested(ctx, tx); err != nil {
+				return fmt.Errorf("cannot request tracker policy generation: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &banner, nil
+}
+
 func (s *Service) ActivateCookieBanner(
 	ctx context.Context,
 	scope coredata.Scoper,

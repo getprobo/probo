@@ -777,6 +777,33 @@ func (r *mutationResolver) PublishCookieBannerVersion(ctx context.Context, input
 	}, nil
 }
 
+// RegenerateCookieBannerTrackerPolicy is the resolver for the regenerateCookieBannerTrackerPolicy field.
+func (r *mutationResolver) RegenerateCookieBannerTrackerPolicy(ctx context.Context, input types.RegenerateCookieBannerTrackerPolicyInput) (*types.RegenerateCookieBannerTrackerPolicyPayload, error) {
+	scope, err := r.authorize(ctx, input.CookieBannerID, probo.ActionCookieBannerUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	banner, err := r.cookieBanner.RegenerateTrackerPolicy(ctx, scope, input.CookieBannerID)
+	if err != nil {
+		if errors.Is(err, cookiebanner.ErrBannerNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+
+		if errors.Is(err, cookiebanner.ErrNoPublishedVersion) {
+			return nil, gqlutils.Conflict(ctx, err)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot regenerate cookie banner tracker policy", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.RegenerateCookieBannerTrackerPolicyPayload{
+		CookieBanner: types.NewCookieBanner(banner),
+	}, nil
+}
+
 // CreateCookieCategory is the resolver for the createCookieCategory field.
 func (r *mutationResolver) CreateCookieCategory(ctx context.Context, input types.CreateCookieCategoryInput) (*types.CreateCookieCategoryPayload, error) {
 	scope, err := r.authorize(ctx, input.CookieBannerID, probo.ActionCookieCategoryCreate)
