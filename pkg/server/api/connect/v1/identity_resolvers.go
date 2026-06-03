@@ -34,6 +34,7 @@ func (r *identityResolver) Profiles(ctx context.Context, obj *types.Identity, fi
 		if len(filter.States) > 0 {
 			filters.WithStates(filter.States...)
 		}
+
 		if filter.State != nil {
 			filters.WithState(*filter.State)
 		}

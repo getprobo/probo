@@ -418,6 +418,7 @@ func (s *TrustCenterAccessService) GrantByIDs(
 
 		if shouldSendEmail {
 			profile.MarkActive(now)
+
 			if err := profile.Update(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot update profile: %w", err)
 			}

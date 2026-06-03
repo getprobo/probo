@@ -790,6 +790,7 @@ func applyUserAttributes(
 		profile.State = state
 		profile.UpdatedAt = now
 	}
+
 	profile.FullName = attrs.FullName
 	profile.Position = &attrs.Title
 	profile.UserName = &attrs.UserName

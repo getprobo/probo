@@ -500,6 +500,7 @@ func (s *OrganizationService) InviteUser(
 
 			if profile.State == coredata.ProfileStateDeactivated {
 				profile.MarkPending(now)
+
 				if err := profile.Update(ctx, tx, scope); err != nil {
 					return fmt.Errorf("cannot update profile state: %w", err)
 				}
@@ -1174,6 +1175,7 @@ func (s *OrganizationService) UpdateUserState(
 			}
 
 			now := time.Now()
+
 			switch state {
 			case coredata.ProfileStatePending:
 				profile.MarkPending(now)
