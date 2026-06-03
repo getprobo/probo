@@ -1,0 +1,291 @@
+// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+// OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
+
+package commontrackerpattern
+
+import (
+	"context"
+	"fmt"
+	"io"
+
+	"github.com/spf13/cobra"
+	"go.gearno.de/kit/log"
+	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/pkg/cookiebanner"
+	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/proboctl/cmdutil"
+)
+
+func newCmdReenrich(f *cmdutil.Factory) *cobra.Command {
+	var (
+		flagIDs           []string
+		flagThirdParty    string
+		flagTrackerType   string
+		flagKeyword       string
+		flagState         string
+		flagAll           bool
+		flagLinkedBanner  string
+		flagLinkedOrg     string
+		flagConcurrency   int
+		flagResetEnriched bool
+		flagDryRun        bool
+		flagYes           bool
+		flagEnqueue       bool
+	)
+
+	cmd := &cobra.Command{
+		Use:   "reenrich",
+		Short: "Re-describe common tracker patterns by running the enrichment agent",
+		Long: "Re-describe selected common tracker patterns. By default the enrichment " +
+			"agent runs in-process and the command returns only when the work is done " +
+			"(requires --cfg-file with an LLM provider). Use --enqueue to instead arm the " +
+			"async enrichment worker. Re-describe a banner's catalog rows with --linked-banner " +
+			"before running 'cookie-banner reset-trackers' so fresh descriptions copy down.",
+		Args: cobra.NoArgs,
+	}
+
+	cmd.Flags().StringSliceVar(&flagIDs, "id", nil, "Common tracker pattern GID(s) to re-enrich (repeatable)")
+	cmd.Flags().StringVar(&flagThirdParty, "third-party", "", "Select patterns linked to a common third party (slug or GID)")
+	cmd.Flags().StringVar(&flagTrackerType, "tracker-type", "", "Select patterns of a tracker type")
+	cmd.Flags().StringVar(&flagKeyword, "keyword", "", "Select patterns matching a pattern/description substring")
+	cmd.Flags().StringVar(&flagState, "state", "", "Select by enrichment state (queued, enriched, unenriched)")
+	cmd.Flags().BoolVar(&flagAll, "all", false, "Select every common tracker pattern")
+	cmd.Flags().StringVar(&flagLinkedBanner, "linked-banner", "", "Select catalog rows linked to a cookie banner's patterns (GID)")
+	cmd.Flags().StringVar(&flagLinkedOrg, "linked-org", "", "Select catalog rows linked to an organization's patterns (GID)")
+	cmd.Flags().IntVar(&flagConcurrency, "concurrency", 4, "Number of patterns to enrich in parallel (sync mode)")
+	cmd.Flags().BoolVar(&flagResetEnriched, "reset-enriched", true, "Clear enriched_at so terminal rows are re-processed")
+	cmd.Flags().BoolVar(&flagDryRun, "dry-run", false, "Print the selected patterns without enriching")
+	cmd.Flags().BoolVar(&flagYes, "yes", false, "Skip confirmation")
+	cmd.Flags().BoolVar(&flagEnqueue, "enqueue", false, "Arm the async enrichment worker instead of running the agent in-process")
+
+	cmd.RunE = func(cmd *cobra.Command, args []string) error {
+		ctx := cmd.Context()
+
+		pgClient, err := f.PgClient()
+		if err != nil {
+			return err
+		}
+
+		ids, err := resolveReenrichIDs(
+			ctx,
+			pgClient,
+			flagIDs,
+			flagThirdParty,
+			flagTrackerType,
+			flagKeyword,
+			flagState,
+			flagAll,
+			flagLinkedBanner,
+			flagLinkedOrg,
+		)
+		if err != nil {
+			return err
+		}
+
+		out := f.IOStreams.Out
+
+		if len(ids) == 0 {
+			_, _ = fmt.Fprintln(out, "No common tracker patterns matched the selection.")
+			return nil
+		}
+
+		if flagDryRun {
+			_, _ = fmt.Fprintf(out, "Would re-enrich %d common tracker pattern(s).\n", len(ids))
+			printSample(out, ids)
+
+			return nil
+		}
+
+		if !flagYes {
+			return fmt.Errorf("about to re-enrich %d pattern(s); pass --yes to proceed or --dry-run to preview", len(ids))
+		}
+
+		if flagEnqueue {
+			var requeued int64
+
+			if err := pgClient.WithTx(
+				ctx,
+				func(ctx context.Context, tx pg.Tx) error {
+					var ps coredata.CommonTrackerPatterns
+					requeued, err = ps.RequestEnrichmentByIDs(ctx, tx, ids, flagResetEnriched)
+
+					return err
+				},
+			); err != nil {
+				return fmt.Errorf("cannot enqueue enrichment: %w", err)
+			}
+
+			_, _ = fmt.Fprintf(out, "Queued %d common tracker pattern(s) for the enrichment worker.\n", requeued)
+
+			return nil
+		}
+
+		cfg, err := f.TrackerAgentsConfig()
+		if err != nil {
+			return err
+		}
+
+		logger := log.NewLogger(
+			log.WithName("proboctl"),
+			log.WithOutput(f.IOStreams.ErrOut),
+		)
+
+		enricher := cookiebanner.NewCommonPatternEnricher(pgClient, logger, cfg)
+
+		enriched, err := enricher.EnrichByIDs(ctx, ids, flagConcurrency)
+
+		_, _ = fmt.Fprintf(out, "Enriched %d of %d common tracker pattern(s).\n", enriched, len(ids))
+
+		if err != nil {
+			return fmt.Errorf("enrichment did not complete for all patterns: %w", err)
+		}
+
+		return nil
+	}
+
+	return cmd
+}
+
+func resolveReenrichIDs(
+	ctx context.Context,
+	pgClient *pg.Client,
+	rawIDs []string,
+	thirdParty, trackerType, keyword, state string,
+	all bool,
+	linkedBanner, linkedOrg string,
+) ([]gid.GID, error) {
+	if len(rawIDs) > 0 {
+		ids := make([]gid.GID, 0, len(rawIDs))
+
+		for _, raw := range rawIDs {
+			id, err := gid.ParseGID(raw)
+			if err != nil {
+				return nil, fmt.Errorf("invalid --id value %q: %w", raw, err)
+			}
+
+			ids = append(ids, id)
+		}
+
+		return ids, nil
+	}
+
+	var ids []gid.GID
+
+	err := pgClient.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			switch {
+			case linkedBanner != "":
+				bannerID, err := gid.ParseGID(linkedBanner)
+				if err != nil {
+					return fmt.Errorf("invalid --linked-banner GID %q: %w", linkedBanner, err)
+				}
+
+				var tps coredata.TrackerPatterns
+				ids, err = tps.LoadAllLinkedCommonTrackerPatternIDsByCookieBannerID(ctx, conn, coredata.NewScopeFromObjectID(bannerID), bannerID)
+
+				return err
+			case linkedOrg != "":
+				orgID, err := gid.ParseGID(linkedOrg)
+				if err != nil {
+					return fmt.Errorf("invalid --linked-org GID %q: %w", linkedOrg, err)
+				}
+
+				var tps coredata.TrackerPatterns
+				ids, err = tps.LoadAllLinkedCommonTrackerPatternIDsByOrganizationID(ctx, conn, coredata.NewScopeFromObjectID(orgID), orgID)
+
+				return err
+			default:
+				filter, hasSelector, err := buildReenrichFilter(ctx, conn, thirdParty, trackerType, keyword, state)
+				if err != nil {
+					return err
+				}
+
+				if !hasSelector && !all {
+					return fmt.Errorf("specify a selector (--id, --third-party, --tracker-type, --state, --keyword, --linked-banner, --linked-org) or --all")
+				}
+
+				var ps coredata.CommonTrackerPatterns
+				ids, err = ps.LoadAllIDs(ctx, conn, filter)
+
+				return err
+			}
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return ids, nil
+}
+
+func buildReenrichFilter(
+	ctx context.Context,
+	conn pg.Querier,
+	thirdParty, trackerType, keyword, state string,
+) (*coredata.CommonTrackerPatternFilter, bool, error) {
+	filter := coredata.NewCommonTrackerPatternFilter()
+	hasSelector := false
+
+	if thirdParty != "" {
+		id, err := resolveCommonThirdPartyID(ctx, conn, thirdParty)
+		if err != nil {
+			return nil, false, err
+		}
+
+		filter.WithCommonThirdPartyID(&id)
+		hasSelector = true
+	}
+
+	if trackerType != "" {
+		tt := coredata.TrackerType(trackerType)
+		if !tt.IsValid() {
+			return nil, false, fmt.Errorf("invalid --tracker-type value %q", trackerType)
+		}
+
+		filter.WithTrackerType(&tt)
+		hasSelector = true
+	}
+
+	if keyword != "" {
+		filter.WithKeyword(&keyword)
+		hasSelector = true
+	}
+
+	if state != "" {
+		st, err := parseEnrichmentState(state)
+		if err != nil {
+			return nil, false, err
+		}
+
+		filter.WithState(&st)
+		hasSelector = true
+	}
+
+	return filter, hasSelector, nil
+}
+
+func printSample(out io.Writer, ids []gid.GID) {
+	const sampleSize = 10
+
+	for i, id := range ids {
+		if i >= sampleSize {
+			_, _ = fmt.Fprintf(out, "  ... and %d more\n", len(ids)-sampleSize)
+			break
+		}
+
+		_, _ = fmt.Fprintf(out, "  %s\n", id.String())
+	}
+}
