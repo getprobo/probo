@@ -1,0 +1,78 @@
+name: "Trivy scan"
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: "read"
+
+concurrency:
+  group: "trivy-scan-${{ github.ref }}"
+  cancel-in-progress: true
+
+jobs:
+  # Build the probod Docker image locally and scan it with Trivy on every
+  # branch and pull request. Mirrors the release scan settings but prints a
+  # human-readable table so vulnerabilities are visible directly in the logs.
+  scan-docker:
+    name: "scan-docker"
+    runs-on: "runs-on=${{ github.run_id }}/runner=4cpu-linux-x64/extras=s3-cache"
+    permissions:
+      contents: "read"
+    steps:
+      - uses: "actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd" # v6
+        with:
+          submodules: recursive
+      - uses: "runs-on/action@742bf56072eb4845a0f94b3394673e4903c90ff0" # v2
+      - uses: "./.github/actions/setup"
+        with:
+          node: "false"
+      - name: "Create placeholder dist files"
+        run: |
+          mkdir -p apps/console/dist apps/trust/dist packages/emails/dist
+          echo dev-server > apps/console/dist/index.html
+          echo dev-server > apps/trust/dist/index.html
+          echo dev-server > packages/emails/dist/placeholder
+      - name: "Generate Go code"
+        run: |
+          go generate ./pkg/server/api/connect/v1
+          go generate ./pkg/server/api/console/v1
+          go generate ./pkg/server/api/trust/v1
+          go generate ./pkg/server/api/mcp/v1
+      - name: "Build binaries"
+        env:
+          CGO_ENABLED: "0"
+          GOOS: "linux"
+          GOARCH: "amd64"
+        run: |
+          go build -ldflags "-s -w -X 'main.version=scan' -X 'main.env=prod'" \
+            -gcflags="-e" -o "linux/amd64/probod" ./cmd/probod/main.go
+          go build -ldflags "-s -w" \
+            -gcflags="-e" -o "linux/amd64/probod-bootstrap" ./cmd/probod-bootstrap/main.go
+      - name: "Prepare binaries"
+        run: "chmod +x linux/amd64/*"
+      - uses: "docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd" # v4.0.0
+      - name: "Build Docker image"
+        run: |
+          docker buildx build \
+            --platform "linux/amd64" \
+            --tag "probo/probo:scan" \
+            --load \
+            .
+      - name: "Cache Trivy database"
+        uses: "runs-on/cache@a5f51d6f3fece787d03b7b4e981c82538a0654ed" # v4
+        with:
+          path: ~/.cache/trivy
+          key: "trivy-db-scan-${{ github.run_id }}"
+          restore-keys: "trivy-db-scan-"
+      - name: "Trivy scan Docker image"
+        uses: "aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25" # 0.36.0
+        with:
+          image-ref: "probo/probo:scan"
+          format: "table"
+          exit-code: 1
+          ignore-unfixed: true
+          vuln-type: "os,library"
+          severity: "CRITICAL,HIGH"
+          cache-dir: ~/.cache/trivy
