@@ -92,7 +92,7 @@ func NewServer(cfg Config) (*Server, error) {
 		BaseURL:           cfg.BaseURL,
 		AllowedOrigins:    cfg.AllowedOrigins,
 		Probo:             cfg.Probo,
-		FileSign: cfg.FileSign,
+		FileSign:          cfg.FileSign,
 		IAM:               cfg.IAM,
 		Trust:             cfg.Trust,
 		ESign:             cfg.ESign,

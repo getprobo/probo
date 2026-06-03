@@ -505,7 +505,7 @@ func (impl *Implm) Run(
 
 	cookieBannerService := cookiebanner.NewService(pgClient, impl.cfg.Branding)
 
-	fileService     := file.NewService(pgClient, baseURL)
+	fileService := file.NewService(pgClient, baseURL)
 	filesignService := filesign.NewService(pgClient, fileManagerService)
 
 	proboService, err := probo.NewService(
@@ -568,7 +568,7 @@ func (impl *Implm) Run(
 			AllowedOrigins:    impl.cfg.Api.Cors.AllowedOrigins,
 			ExtraHeaderFields: impl.cfg.Api.ExtraHeaderFields,
 			Probo:             proboService,
-			FileSign: filesignService,
+			FileSign:          filesignService,
 			IAM:               iamService,
 			Trust:             trustService,
 			ESign:             esignService,

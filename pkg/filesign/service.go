@@ -52,6 +52,7 @@ func (s *Service) GeneratePresignedFileURL(
 		if err := file.LoadPublicByID(ctx, conn, fileID); err != nil {
 			return fmt.Errorf("cannot load public file: %w", err)
 		}
+
 		return nil
 	})
 	if err != nil {

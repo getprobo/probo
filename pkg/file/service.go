@@ -43,6 +43,7 @@ func (s *Service) GenerateFileURL(ctx context.Context, fileID gid.GID) (string, 
 		if err := file.LoadPublicByID(ctx, conn, fileID); err != nil {
 			return fmt.Errorf("cannot load public file: %w", err)
 		}
+
 		return nil
 	})
 	if err != nil {
