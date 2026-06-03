@@ -141,7 +141,7 @@ export default function AuditDetailsPage(props: Props) {
   });
 
   const handleDeleteReport = () => {
-    if (!auditEntry.report || !auditEntry.id) return;
+    if (!auditEntry.reportFile || !auditEntry.id) return;
 
     confirm(
       async () => {
@@ -152,7 +152,7 @@ export default function AuditDetailsPage(props: Props) {
           __(
             "This will permanently delete the audit report \"%s\". This action cannot be undone.",
           ),
-          auditEntry.report.filename,
+          auditEntry.reportFile.fileName,
         ),
       },
     );
@@ -253,7 +253,7 @@ export default function AuditDetailsPage(props: Props) {
           <div className="space-y-4">
             <h3 className="text-lg font-medium">{__("Audit Report")}</h3>
 
-            {auditEntry.report
+            {auditEntry.reportFile
               ? (
                   <div className="space-y-4">
                     <div className="flex items-center justify-between p-4 bg-success-50 border border-success-200 rounded-lg">
@@ -261,14 +261,14 @@ export default function AuditDetailsPage(props: Props) {
                         <IconArrowInbox className="text-success-600" size={20} />
                         <div className="flex-1">
                           <p className="font-medium text-success-900">
-                            {auditEntry.report.filename}
+                            {auditEntry.reportFile.fileName}
                           </p>
                           <div className="flex items-center gap-4 text-sm text-success-700">
-                            <span>{fileSize(__, auditEntry.report.size)}</span>
+                            <span>{fileSize(__, auditEntry.reportFile.size)}</span>
                             <span>
                               {__("Uploaded")}
                               {" "}
-                              {formatDate(auditEntry.report.createdAt)}
+                              {formatDate(auditEntry.reportFile.createdAt)}
                             </span>
                           </div>
                         </div>
@@ -276,8 +276,8 @@ export default function AuditDetailsPage(props: Props) {
                       <ActionDropdown>
                         <DropdownItem
                           onClick={() => {
-                            if (auditEntry.report?.downloadUrl) {
-                              window.open(auditEntry.report.downloadUrl, "_blank");
+                            if (auditEntry.reportFile?.downloadUrl) {
+                              window.open(auditEntry.reportFile.downloadUrl, "_blank", "noopener,noreferrer");
                             }
                           }}
                           icon={IconArrowInbox}

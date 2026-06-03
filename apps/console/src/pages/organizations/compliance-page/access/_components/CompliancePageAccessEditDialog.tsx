@@ -53,14 +53,13 @@ const documentAccessFragment = graphql`
         }
       }
     }
-    report {
+    reportFile {
       id
-      filename
-      audit {
-        id
-        framework {
-          name
-        }
+      fileName
+    }
+    audit {
+      framework {
+        name
       }
     }
     trustCenterFile {
@@ -95,15 +94,15 @@ function toDocumentAccessInfo(
       status: node.status,
     };
   }
-  if (node.report) {
+  if (node.reportFile) {
     return {
-      persisted: node.id !== node.report.id,
+      persisted: node.id !== node.reportFile.id,
       variant: "success",
-      name: node.report.filename,
+      name: node.reportFile.fileName,
       type: "report",
       typeLabel: __("Report"),
-      category: node.report.audit?.framework?.name ?? "",
-      id: node.report.id,
+      category: node.audit?.framework?.name ?? "",
+      id: node.reportFile.id,
       status: node.status,
     };
   }

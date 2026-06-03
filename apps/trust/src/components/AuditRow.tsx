@@ -41,7 +41,7 @@ const requestAccessMutation = graphql`
   mutation AuditRow_requestAccessMutation($input: RequestReportAccessInput!) {
     requestReportAccess(input: $input) {
       audit {
-        report {
+        reportFile {
           access {
             id
             status
@@ -55,7 +55,7 @@ const requestAccessMutation = graphql`
 const auditRowFragment = graphql`
   fragment AuditRowFragment on Audit {
     name
-    report {
+    reportFile {
       id
       isUserAuthorized
       access {
@@ -80,7 +80,7 @@ export function AuditRow(props: { audit: AuditRowFragment$key }) {
   const navigate = useNavigate();
 
   const audit = useFragment(auditRowFragment, props.audit);
-  const hasRequested = audit.report?.access?.status === "REQUESTED";
+  const hasRequested = audit.reportFile?.access?.status === "REQUESTED";
 
   const [requestAccess, isRequestingAccess]
     = useMutation<AuditRow_requestAccessMutation>(requestAccessMutation);
@@ -89,7 +89,7 @@ export function AuditRow(props: { audit: AuditRowFragment$key }) {
     requestAccess({
       variables: {
         input: {
-          reportId: audit.report?.id ?? "",
+          reportId: audit.reportFile?.id ?? "",
         },
       },
       onCompleted: (_, errors) => {
@@ -110,7 +110,7 @@ export function AuditRow(props: { audit: AuditRowFragment$key }) {
       onError: (error) => {
         if (error instanceof UnAuthenticatedError) {
           const pathPrefix = getPathPrefix();
-          searchParams.set("request-report-id", audit.report?.id ?? "");
+          searchParams.set("request-report-id", audit.reportFile?.id ?? "");
           const urlSearchParams = new URLSearchParams([[
             "continue",
             window.location.origin + pathPrefix + location.pathname + "?" + searchParams.toString(),
@@ -135,14 +135,14 @@ export function AuditRow(props: { audit: AuditRowFragment$key }) {
         <IconMedal size={16} className="flex-none text-txt-tertiary" />
         {audit.name ?? audit.framework.name}
       </div>
-      {audit.report && (
-        audit.report.isUserAuthorized
+      {audit.reportFile && (
+        audit.reportFile.isUserAuthorized
           ? (
               <Button
                 className="w-full md:w-max"
                 variant="secondary"
                 icon={IconArrowLink}
-                to={`/documents/${audit.report.id}`}
+                to={`/documents/${audit.reportFile.id}`}
               >
                 {__("View")}
               </Button>

@@ -41,15 +41,14 @@ export const auditNodeQuery = graphql`
         name
         validFrom
         validUntil
-        report {
+        reportFile {
           id
-          filename
+          fileName
           mimeType
           size
           downloadUrl
           createdAt
         }
-        reportUrl
         state
         framework {
           id
@@ -82,9 +81,9 @@ export const createAuditMutation = graphql`
           name
           validFrom
           validUntil
-          report {
+          reportFile {
             id
-            filename
+            fileName
           }
           state
           framework {
@@ -108,9 +107,9 @@ export const updateAuditMutation = graphql`
         name
         validFrom
         validUntil
-        report {
+        reportFile {
           id
-          filename
+          fileName
         }
         state
         framework {
@@ -241,9 +240,9 @@ export const uploadAuditReportMutation = graphql`
     uploadAuditReport(input: $input) {
       audit {
         id
-        report {
+        reportFile {
           id
-          filename
+          fileName
           downloadUrl
           createdAt
         }
@@ -286,9 +285,9 @@ export const deleteAuditReportMutation = graphql`
     deleteAuditReport(input: $input) {
       audit {
         id
-        report {
+        reportFile {
           id
-          filename
+          fileName
           downloadUrl
           createdAt
         }

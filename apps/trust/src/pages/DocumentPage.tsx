@@ -70,9 +70,9 @@ export const documentPageQuery = graphql`
           status
         }
       }
-      ... on Report {
+      ... on AuditReport {
         id
-        filename
+        fileName
         isUserAuthorized
         access {
           id
@@ -149,7 +149,7 @@ const requestReportAccessMutation = graphql`
   ) {
     requestReportAccess(input: $input) {
       audit {
-        report {
+        reportFile {
           access {
             id
             status
@@ -185,8 +185,8 @@ function getNodeTitle(node: DocumentPageQueryType["response"]["node"]): string |
       return node.title;
     case "TrustCenterFile":
       return node.name;
-    case "Report":
-      return node.filename;
+    case "AuditReport":
+      return node.fileName;
     default:
       return undefined;
   }
@@ -196,7 +196,7 @@ function getNodeId(node: DocumentPageQueryType["response"]["node"]): string | un
   switch (node.__typename) {
     case "Document":
     case "TrustCenterFile":
-    case "Report":
+    case "AuditReport":
       return node.id;
     default:
       return undefined;
@@ -221,7 +221,7 @@ export function DocumentPage({ queryRef }: Props) {
   if (
     node.__typename !== "Document"
     && node.__typename !== "TrustCenterFile"
-    && node.__typename !== "Report"
+    && node.__typename !== "AuditReport"
   ) {
     throw new Error(`Unexpected node type: ${node.__typename}`);
   }
@@ -296,7 +296,7 @@ export function DocumentPage({ queryRef }: Props) {
           onError,
         });
         break;
-      case "Report":
+      case "AuditReport":
         exportReport({
           variables: { input: { reportId: node.id } },
           onCompleted: (response, errors) => {
@@ -358,7 +358,7 @@ export function DocumentPage({ queryRef }: Props) {
           onError,
         });
         break;
-      case "Report":
+      case "AuditReport":
         requestReportAccess({
           variables: { input: { reportId: node.id } },
           onCompleted,
@@ -370,7 +370,7 @@ export function DocumentPage({ queryRef }: Props) {
 
   const isRequesting = isRequestingAccess || isRequestingFileAccess || isRequestingReportAccess;
   const hasRequested = node.access?.status === "REQUESTED";
-  const isPdf = node.__typename === "Document" || node.__typename === "Report" || (node.__typename === "TrustCenterFile" && pdfData !== null);
+  const isPdf = node.__typename === "Document" || node.__typename === "AuditReport" || (node.__typename === "TrustCenterFile" && pdfData !== null);
 
   const handleDownload = () => {
     if (!fileData || !nodeTitle) return;

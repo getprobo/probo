@@ -48,7 +48,7 @@ const reportMutation = graphql`
   ) {
     requestReportAccess(input: $input) {
       audit {
-        report {
+        reportFile {
           access {
             id
             status
