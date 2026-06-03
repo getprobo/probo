@@ -18,7 +18,7 @@ import {
 } from "react-relay";
 import { graphql } from "relay-runtime";
 
-import type { PeopleGraphQuery } from "#/__generated__/core/PeopleGraphQuery.graphql";
+import type { PeopleGraphQuery, ProfileFilter } from "#/__generated__/core/PeopleGraphQuery.graphql";
 
 /* eslint-disable relay/unused-fields */
 
@@ -51,11 +51,15 @@ export function usePeople(
   organizationId: string,
   { contractEnded }: { contractEnded?: boolean } = {},
 ) {
+  const filter: ProfileFilter = contractEnded !== undefined
+    ? { contractEnded, states: ["ACTIVE", "PENDING"] }
+    : { states: ["ACTIVE", "PENDING"] };
+
   const data = useLazyLoadQuery<PeopleGraphQuery>(
     peopleQuery,
     {
       organizationId: organizationId,
-      filter: contractEnded !== undefined ? { contractEnded } : null,
+      filter,
     },
     { fetchPolicy: "network-only" },
   );

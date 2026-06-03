@@ -30,7 +30,7 @@ type (
 		email                 *mail.Addr
 		userName              *string
 		externalID            *string
-		state                 *ProfileState
+		states                ProfileStateValues
 		source                *ProfileSource
 	}
 )
@@ -72,12 +72,17 @@ func (f *MembershipProfileFilter) WithExternalID(externalID string) *MembershipP
 }
 
 func (f *MembershipProfileFilter) WithState(state ProfileState) *MembershipProfileFilter {
-	f.state = &state
+	f.states = ProfileStateValues{state}
 	return f
 }
 
-func (f *MembershipProfileFilter) State() *ProfileState {
-	return f.state
+func (f *MembershipProfileFilter) WithStates(states ...ProfileState) *MembershipProfileFilter {
+	f.states = ProfileStateValues(states)
+	return f
+}
+
+func (f *MembershipProfileFilter) States() []ProfileState {
+	return f.states
 }
 
 func (f *MembershipProfileFilter) WithSource(source ProfileSource) *MembershipProfileFilter {
@@ -98,7 +103,7 @@ func (f *MembershipProfileFilter) SQLArguments() pgx.StrictNamedArgs {
 		"with_trust_center_access": f.withTrustCenterAccess,
 		"contract_ended":           f.contractEnded,
 		"current_date":             f.currentDate,
-		"filter_state":             f.state,
+		"filter_states":            f.states,
 		"filter_source":            f.source,
 	}
 }
@@ -141,8 +146,8 @@ AND (
 )
 AND (
 	CASE
-		WHEN @filter_state::text IS NOT NULL THEN
-			p.state = @filter_state::membership_state
+		WHEN @filter_states::membership_state[] IS NOT NULL THEN
+			p.state = ANY(@filter_states::membership_state[])
 		ELSE TRUE
 	END
 )

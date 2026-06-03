@@ -184,8 +184,9 @@ components:
     ProfileState:
       type: string
       enum:
+        - PENDING
         - ACTIVE
-        - INACTIVE
+        - DEACTIVATED
       go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.ProfileState
 
     ProfileSource:
@@ -512,7 +513,7 @@ components:
           description: Profile source (MANUAL, SCIM, or SAML)
         state:
           $ref: "#/components/schemas/ProfileState"
-          description: Profile state (ACTIVE or INACTIVE)
+          description: Profile state (PENDING, ACTIVE, or DEACTIVATED)
         position:
           type:
             - string
@@ -564,7 +565,12 @@ components:
               description: Filter by contract status. True returns only users with ended contracts, false returns only users with active or no contract.
             state:
               $ref: "#/components/schemas/ProfileState"
-              description: Filter by profile state (ACTIVE or INACTIVE)
+              description: Filter by profile state (PENDING, ACTIVE, or DEACTIVATED)
+            states:
+              type: array
+              items:
+                $ref: "#/components/schemas/ProfileState"
+              description: Filter by profile states (PENDING, ACTIVE, or DEACTIVATED)
 
     ListUsersOutput:
       type: object

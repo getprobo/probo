@@ -64,7 +64,7 @@ func (r *mutationResolver) DeactivateUser(ctx context.Context, input types.Deact
 	_, err := r.iam.OrganizationService.UpdateUserState(
 		ctx,
 		input.ProfileID,
-		coredata.ProfileStateInactive,
+		coredata.ProfileStateDeactivated,
 	)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot deactivate profile", log.Error(err))

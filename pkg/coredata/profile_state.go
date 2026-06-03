@@ -15,15 +15,21 @@
 package coredata
 
 import (
+	"database/sql/driver"
 	"encoding"
 	"fmt"
+	"strings"
 )
 
-type ProfileState string
+type (
+	ProfileState       string
+	ProfileStateValues []ProfileState
+)
 
 const (
-	ProfileStateActive   ProfileState = "ACTIVE"
-	ProfileStateInactive ProfileState = "INACTIVE"
+	ProfileStatePending     ProfileState = "PENDING"
+	ProfileStateActive      ProfileState = "ACTIVE"
+	ProfileStateDeactivated ProfileState = "DEACTIVATED"
 )
 
 var (
@@ -34,16 +40,18 @@ var (
 
 func ProfileStates() []ProfileState {
 	return []ProfileState{
+		ProfileStatePending,
 		ProfileStateActive,
-		ProfileStateInactive,
+		ProfileStateDeactivated,
 	}
 }
 
 func (v ProfileState) IsValid() bool {
 	switch v {
 	case
+		ProfileStatePending,
 		ProfileStateActive,
-		ProfileStateInactive:
+		ProfileStateDeactivated:
 		return true
 	}
 
@@ -67,4 +75,25 @@ func (v *ProfileState) UnmarshalText(text []byte) error {
 	*v = val
 
 	return nil
+}
+
+func (states ProfileStateValues) Value() (driver.Value, error) {
+	if len(states) == 0 {
+		return nil, nil
+	}
+
+	var result strings.Builder
+	result.WriteString("{")
+
+	for i, state := range states {
+		if i > 0 {
+			result.WriteString(",")
+		}
+
+		fmt.Fprintf(&result, "%q", state.String())
+	}
+
+	result.WriteString("}")
+
+	return result.String(), nil
 }

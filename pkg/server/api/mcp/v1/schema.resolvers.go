@@ -2764,6 +2764,9 @@ func (r *Resolver) ListUsersTool(ctx context.Context, req *mcp.CallToolRequest, 
 	filter := coredata.NewMembershipProfileFilter(nil).WithMembership()
 	if input.Filter != nil {
 		filter = coredata.NewMembershipProfileFilter(input.Filter.ContractEnded).WithMembership()
+		if len(input.Filter.States) > 0 {
+			filter.WithStates(input.Filter.States...)
+		}
 		if input.Filter.State != nil {
 			filter.WithState(*input.Filter.State)
 		}

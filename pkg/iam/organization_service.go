@@ -432,9 +432,8 @@ func (s *OrganizationService) ArchiveUser(
 
 			now := time.Now()
 
-			if profile.State != coredata.ProfileStateInactive {
-				profile.State = coredata.ProfileStateInactive
-				profile.UpdatedAt = now
+			if profile.State != coredata.ProfileStateDeactivated {
+				profile.MarkDeactivated(now)
 
 				if err := profile.Update(ctx, tx, scope); err != nil {
 					return fmt.Errorf("cannot update profile state: %w", err)
@@ -497,6 +496,13 @@ func (s *OrganizationService) InviteUser(
 
 			if profile.Source == coredata.ProfileSourceSCIM {
 				return NewUserManagedBySCIMError(profile.ID)
+			}
+
+			if profile.State == coredata.ProfileStateDeactivated {
+				profile.MarkPending(now)
+				if err := profile.Update(ctx, tx, scope); err != nil {
+					return fmt.Errorf("cannot update profile state: %w", err)
+				}
 			}
 
 			err = invitation.Insert(ctx, tx, scope)
@@ -577,6 +583,7 @@ func (s *OrganizationService) CreateOrganization(
 			OrganizationID: organization.ID,
 			Source:         coredata.ProfileSourceManual,
 			State:          coredata.ProfileStateActive,
+			ActivatedAt:    &now,
 			CreatedAt:      now,
 			UpdatedAt:      now,
 		}
@@ -1021,8 +1028,8 @@ func (s *OrganizationService) CreateUser(ctx context.Context, req *CreateUserReq
 				Kind:                     req.Kind,
 				AdditionalEmailAddresses: req.AdditionalEmailAddresses,
 				Position:                 req.Position,
-				// User is created inactive
-				State:     coredata.ProfileStateInactive,
+				// User is pending until they accept an invitation.
+				State:     coredata.ProfileStatePending,
 				CreatedAt: now,
 				UpdatedAt: now,
 			}
@@ -1166,14 +1173,21 @@ func (s *OrganizationService) UpdateUserState(
 				return fmt.Errorf("cannot load profile: %w", err)
 			}
 
-			profile.State = state
-			profile.UpdatedAt = time.Now()
+			now := time.Now()
+			switch state {
+			case coredata.ProfileStatePending:
+				profile.MarkPending(now)
+			case coredata.ProfileStateActive:
+				profile.MarkActive(now)
+			case coredata.ProfileStateDeactivated:
+				profile.MarkDeactivated(now)
+			}
 
 			if err := profile.Update(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot update profile: %w", err)
 			}
 
-			if state == coredata.ProfileStateInactive {
+			if state == coredata.ProfileStateDeactivated {
 				signatures := &coredata.DocumentVersionSignatures{}
 				if err := signatures.DeleteRequestedBySignatory(ctx, tx, scope, profile.ID); err != nil {
 					return fmt.Errorf("cannot delete requested signatures: %w", err)

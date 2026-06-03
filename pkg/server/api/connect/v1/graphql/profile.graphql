@@ -30,9 +30,10 @@ type Profile implements Node {
 
 enum ProfileState
   @goModel(model: "go.probo.inc/probo/pkg/coredata.ProfileState") {
+  PENDING @goEnum(value: "go.probo.inc/probo/pkg/coredata.ProfileStatePending")
   ACTIVE @goEnum(value: "go.probo.inc/probo/pkg/coredata.ProfileStateActive")
-  INACTIVE
-    @goEnum(value: "go.probo.inc/probo/pkg/coredata.ProfileStateInactive")
+  DEACTIVATED
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.ProfileStateDeactivated")
 }
 
 enum ProfileSource
@@ -71,6 +72,7 @@ enum ProfileOrderField
 input ProfileFilter {
   contractEnded: Boolean
   state: ProfileState
+  states: [ProfileState!]
 }
 
 input ProfileOrder

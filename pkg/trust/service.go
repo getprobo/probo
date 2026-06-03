@@ -424,6 +424,7 @@ func (s *Service) ProvisionMember(
 					EmailAddress:   identity.EmailAddress,
 					Source:         coredata.ProfileSourceManual,
 					State:          coredata.ProfileStateActive,
+					ActivatedAt:    &now,
 					FullName:       identity.FullName,
 					CreatedAt:      now,
 					UpdatedAt:      now,

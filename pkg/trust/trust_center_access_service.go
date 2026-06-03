@@ -417,9 +417,7 @@ func (s *TrustCenterAccessService) GrantByIDs(
 		}
 
 		if shouldSendEmail {
-			profile.State = coredata.ProfileStateActive
-
-			profile.UpdatedAt = now
+			profile.MarkActive(now)
 			if err := profile.Update(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot update profile: %w", err)
 			}
