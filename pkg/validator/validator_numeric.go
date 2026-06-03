@@ -25,6 +25,7 @@ func Min(min int) ValidatorFunc {
 		}
 
 		var num int
+
 		switch v := actualValue.(type) {
 		case int:
 			num = v
@@ -56,6 +57,7 @@ func Max(max int) ValidatorFunc {
 		}
 
 		var num int
+
 		switch v := actualValue.(type) {
 		case int:
 			num = v

@@ -40,10 +40,12 @@ var (
 // ParseGID parses a string representation of a GID
 func ParseGID(encoded string) (GID, error) {
 	gid := GID{}
+
 	err := gid.UnmarshalText([]byte(encoded))
 	if err != nil {
 		return Nil, err
 	}
+
 	return gid, nil
 }
 
@@ -64,6 +66,7 @@ func New(tenantID TenantID, entityType uint16) GID {
 		// This should never happen with a valid random source
 		panic(fmt.Sprintf("cannot generate GID: %v", err))
 	}
+
 	return id
 }
 
@@ -104,6 +107,7 @@ func (gid GID) Value() (driver.Value, error) {
 func (gid GID) TenantID() TenantID {
 	var tenantID TenantID
 	copy(tenantID[:], gid[0:8])
+
 	return tenantID
 }
 
@@ -121,6 +125,7 @@ func (gid GID) Timestamp() time.Time {
 // Scan implements the database/sql/driver.Scanner interface
 func (gid *GID) Scan(value any) error {
 	var str string
+
 	switch v := value.(type) {
 	case string:
 		str = v
@@ -131,6 +136,7 @@ func (gid *GID) Scan(value any) error {
 	}
 
 	enc := base64.RawURLEncoding
+
 	id, err := enc.DecodeString(str)
 	if err != nil {
 		return err
@@ -155,6 +161,7 @@ func (gid GID) MarshalText() ([]byte, error) {
 	enc := base64.RawURLEncoding
 	buf := make([]byte, enc.EncodedLen(len(gid)))
 	enc.Encode(buf, gid[:])
+
 	return buf, nil
 }
 
@@ -162,6 +169,7 @@ func (gid GID) MarshalText() ([]byte, error) {
 func (gid *GID) UnmarshalText(encoded []byte) error {
 	enc := base64.RawURLEncoding
 	dst := make([]byte, enc.DecodedLen(len(encoded)))
+
 	n, err := enc.Decode(dst, encoded)
 	if err != nil {
 		return err
@@ -172,5 +180,6 @@ func (gid *GID) UnmarshalText(encoded []byte) error {
 	}
 
 	copy((*gid)[:], dst)
+
 	return nil
 }

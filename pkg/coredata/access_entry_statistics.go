@@ -62,14 +62,19 @@ GROUP BY decision;
 	defer rows.Close()
 
 	for rows.Next() {
-		var decision AccessEntryDecision
-		var count int
+		var (
+			decision AccessEntryDecision
+			count    int
+		)
+
 		if err := rows.Scan(&decision, &count); err != nil {
 			return fmt.Errorf("cannot scan decision count: %w", err)
 		}
+
 		s.DecisionCounts[decision] = count
 		s.TotalCount += count
 	}
+
 	if err := rows.Err(); err != nil {
 		return fmt.Errorf("cannot iterate decision counts: %w", err)
 	}
@@ -91,13 +96,18 @@ GROUP BY f;
 	defer rows.Close()
 
 	for rows.Next() {
-		var flag AccessEntryFlag
-		var count int
+		var (
+			flag  AccessEntryFlag
+			count int
+		)
+
 		if err := rows.Scan(&flag, &count); err != nil {
 			return fmt.Errorf("cannot scan flag count: %w", err)
 		}
+
 		s.FlagCounts[flag] = count
 	}
+
 	if err := rows.Err(); err != nil {
 		return fmt.Errorf("cannot iterate flag counts: %w", err)
 	}
@@ -119,13 +129,18 @@ GROUP BY incremental_tag;
 	defer rows.Close()
 
 	for rows.Next() {
-		var tag AccessEntryIncrementalTag
-		var count int
+		var (
+			tag   AccessEntryIncrementalTag
+			count int
+		)
+
 		if err := rows.Scan(&tag, &count); err != nil {
 			return fmt.Errorf("cannot scan incremental tag count: %w", err)
 		}
+
 		s.IncrementalTagCounts[tag] = count
 	}
+
 	if err := rows.Err(); err != nil {
 		return fmt.Errorf("cannot iterate incremental tag counts: %w", err)
 	}
@@ -169,14 +184,19 @@ GROUP BY decision;
 	defer rows.Close()
 
 	for rows.Next() {
-		var decision AccessEntryDecision
-		var count int
+		var (
+			decision AccessEntryDecision
+			count    int
+		)
+
 		if err := rows.Scan(&decision, &count); err != nil {
 			return fmt.Errorf("cannot scan decision count: %w", err)
 		}
+
 		s.DecisionCounts[decision] = count
 		s.TotalCount += count
 	}
+
 	if err := rows.Err(); err != nil {
 		return fmt.Errorf("cannot iterate decision counts: %w", err)
 	}
@@ -199,13 +219,18 @@ GROUP BY f;
 	defer rows.Close()
 
 	for rows.Next() {
-		var flag AccessEntryFlag
-		var count int
+		var (
+			flag  AccessEntryFlag
+			count int
+		)
+
 		if err := rows.Scan(&flag, &count); err != nil {
 			return fmt.Errorf("cannot scan flag count: %w", err)
 		}
+
 		s.FlagCounts[flag] = count
 	}
+
 	if err := rows.Err(); err != nil {
 		return fmt.Errorf("cannot iterate flag counts: %w", err)
 	}
@@ -228,13 +253,18 @@ GROUP BY incremental_tag;
 	defer rows.Close()
 
 	for rows.Next() {
-		var tag AccessEntryIncrementalTag
-		var count int
+		var (
+			tag   AccessEntryIncrementalTag
+			count int
+		)
+
 		if err := rows.Scan(&tag, &count); err != nil {
 			return fmt.Errorf("cannot scan incremental tag count: %w", err)
 		}
+
 		s.IncrementalTagCounts[tag] = count
 	}
+
 	if err := rows.Err(); err != nil {
 		return fmt.Errorf("cannot iterate incremental tag counts: %w", err)
 	}

@@ -40,6 +40,7 @@ func TestOAuth2UserCode_Format(t *testing.T) {
 			t.Parallel()
 
 			code := coredata.OAuth2UserCode("ABC")
+
 			assert.Panics(t, func() { code.Format() })
 		},
 	)
@@ -50,6 +51,7 @@ func TestOAuth2UserCode_Format(t *testing.T) {
 			t.Parallel()
 
 			code := coredata.OAuth2UserCode("ABCDEFGHIJ")
+
 			assert.Panics(t, func() { code.Format() })
 		},
 	)
@@ -60,6 +62,7 @@ func TestOAuth2UserCode_Format(t *testing.T) {
 			t.Parallel()
 
 			code := coredata.OAuth2UserCode("")
+
 			assert.Panics(t, func() { code.Format() })
 		},
 	)

@@ -151,6 +151,7 @@ FOR UPDATE;
 	}
 
 	*d = code
+
 	return nil
 }
 
@@ -194,6 +195,7 @@ FOR UPDATE;
 	}
 
 	*d = code
+
 	return nil
 }
 
@@ -246,6 +248,7 @@ FOR UPDATE;
 	}
 
 	*d = code
+
 	return nil
 }
 

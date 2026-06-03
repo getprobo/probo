@@ -75,6 +75,7 @@ func TestConnectorProviderInfos(t *testing.T) {
 		assert.NotEmpty(t, infos)
 
 		providerNames := make(map[string]bool)
+
 		for _, info := range infos {
 			assert.NotEmpty(t, info.Provider)
 			assert.NotEmpty(t, info.DisplayName)
@@ -82,7 +83,11 @@ func TestConnectorProviderInfos(t *testing.T) {
 			providerNames[info.Provider] = true
 		}
 
-		assert.True(t, providerNames["SLACK"], "expected SLACK provider to be present")
+		// OAuth-only providers (e.g. SLACK) are hidden when the deployment
+		// has no OAuth credentials configured, as is the case in e2e.
+		// Assert on providers that support API keys, which are connectable
+		// regardless of OAuth configuration.
+		assert.True(t, providerNames["BREX"], "expected BREX provider to be present")
 		assert.True(t, providerNames["HUBSPOT"], "expected HUBSPOT provider to be present")
 	})
 
@@ -197,6 +202,72 @@ func TestCreateAPIKeyConnectorWithSettings(t *testing.T) {
 	connector := result.CreateAPIKeyConnector.Connector
 	assert.NotEmpty(t, connector.ID)
 	assert.Equal(t, "TALLY", connector.Provider)
+}
+
+// TestCreateAPIKeyConnectorSentryMissingSlug asserts that creating a
+// Sentry API-key connector without sentryOrganizationSlug returns a
+// validation error, not a 500. This is the e2e gate on the
+// MarshalSettings validation path introduced by the connector-provider
+// consolidation.
+func TestCreateAPIKeyConnectorSentryMissingSlug(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	orgID := owner.GetOrganizationID().String()
+
+	const query = `
+		mutation($input: CreateAPIKeyConnectorInput!) {
+			createAPIKeyConnector(input: $input) {
+				connector { id }
+			}
+		}
+	`
+
+	_, err := owner.Do(query, map[string]any{
+		"input": map[string]any{
+			"organizationId": orgID,
+			"provider":       "SENTRY",
+			"apiKey":         "test-key",
+		},
+	})
+	testutil.RequireErrorCode(t, err, "INVALID", "missing sentryOrganizationSlug must return INVALID not INTERNAL")
+}
+
+// TestCreateAPIKeyConnectorSentryRoundTrip asserts that supplying
+// sentryOrganizationSlug succeeds and that the connector is created
+// with the slug persisted in RawSettings.
+func TestCreateAPIKeyConnectorSentryRoundTrip(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	orgID := owner.GetOrganizationID().String()
+
+	const query = `
+		mutation($input: CreateAPIKeyConnectorInput!) {
+			createAPIKeyConnector(input: $input) {
+				connector { id provider }
+			}
+		}
+	`
+
+	var result struct {
+		CreateAPIKeyConnector struct {
+			Connector struct {
+				ID       string `json:"id"`
+				Provider string `json:"provider"`
+			} `json:"connector"`
+		} `json:"createAPIKeyConnector"`
+	}
+
+	err := owner.Execute(query, map[string]any{
+		"input": map[string]any{
+			"organizationId":         orgID,
+			"provider":               "SENTRY",
+			"apiKey":                 "test-key",
+			"sentryOrganizationSlug": "my-org",
+		},
+	}, &result)
+	require.NoError(t, err)
+	assert.NotEmpty(t, result.CreateAPIKeyConnector.Connector.ID)
+	assert.Equal(t, "SENTRY", result.CreateAPIKeyConnector.Connector.Provider)
 }
 
 func TestCreateClientCredentialsConnector(t *testing.T) {

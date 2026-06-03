@@ -14,8 +14,9 @@
 
 type Translator = (s: string) => string;
 
-// ISO 3166-1 alpha-2 country codes
+// ISO 3166-1 alpha-2 country codes and supported regions.
 export const countries = [
+    "GLOBAL",
     "AD", "AE", "AF", "AG", "AI", "AL", "AM", "AO", "AQ", "AR",
     "AS", "AT", "AU", "AW", "AX", "AZ", "BA", "BB", "BD", "BE",
     "BF", "BG", "BH", "BI", "BJ", "BL", "BM", "BN", "BO", "BQ",
@@ -46,6 +47,7 @@ export const countries = [
 export type CountryCode = typeof countries[number];
 
 const countryNames: Record<CountryCode, (t: Translator) => string> = {
+    "GLOBAL": (__) => __("Global"),
     "AD": (__) => __("Andorra"),
     "AE": (__) => __("United Arab Emirates"),
     "AF": (__) => __("Afghanistan"),

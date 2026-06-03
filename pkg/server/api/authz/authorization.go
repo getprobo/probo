@@ -27,8 +27,10 @@ import (
 )
 
 type (
-	AuthorizeFuncOption func(*iam.AuthorizeParams)
-	AuthorizeFunc       func(context.Context, gid.GID, string, ...AuthorizeFuncOption) error
+	AuthorizeFuncOption      func(*iam.AuthorizeParams)
+	AuthorizeFunc            func(context.Context, gid.GID, string, ...AuthorizeFuncOption) (*coredata.Scope, error)
+	BatchAuthorizeFuncOption func(*iam.AuthorizeBatchParams)
+	BatchAuthorizeFunc       func(context.Context, string, []gid.GID, ...BatchAuthorizeFuncOption) (*coredata.Scope, error)
 )
 
 func WithAttr(key, value string) AuthorizeFuncOption {
@@ -51,6 +53,24 @@ func WithDryRun() AuthorizeFuncOption {
 	}
 }
 
+func WithBatchAttr(key, value string) BatchAuthorizeFuncOption {
+	return func(params *iam.AuthorizeBatchParams) {
+		params.ResourceAttributes[key] = value
+	}
+}
+
+func WithBatchSkipAssumptionCheck() BatchAuthorizeFuncOption {
+	return func(params *iam.AuthorizeBatchParams) {
+		params.SkipAssumptionCheck = true
+	}
+}
+
+func WithBatchDryRun() BatchAuthorizeFuncOption {
+	return func(params *iam.AuthorizeBatchParams) {
+		params.DryRun = true
+	}
+}
+
 func NewAuthorizeFunc(
 	svc *iam.Service,
 	logger *log.Logger,
@@ -60,7 +80,7 @@ func NewAuthorizeFunc(
 		objectID gid.GID,
 		action string,
 		options ...AuthorizeFuncOption,
-	) error {
+	) (*coredata.Scope, error) {
 		identity := authn.IdentityFromContext(ctx)
 		session := authn.SessionFromContext(ctx)
 
@@ -78,25 +98,87 @@ func NewAuthorizeFunc(
 			option(&params)
 		}
 
-		if err := svc.Authorizer.Authorize(ctx, params); err != nil {
-			var errAssumptionRequired *iam.ErrAssumptionRequired
-			if errors.As(err, &errAssumptionRequired) {
-				return gqlutils.AssumptionRequired(ctx, err)
+		scope, err := svc.Authorizer.Authorize(ctx, params)
+		if err != nil {
+			if _, ok := errors.AsType[*iam.ErrAssumptionRequired](err); ok {
+				return nil, gqlutils.AssumptionRequired(ctx, err)
 			}
 
-			var errInsufficientPermissions *iam.ErrInsufficientPermissions
-			if errors.As(err, &errInsufficientPermissions) {
-				return gqlutils.Forbidden(ctx, err)
+			if _, ok := errors.AsType[*iam.ErrInsufficientPermissions](err); ok {
+				return nil, gqlutils.Forbidden(ctx, err)
 			}
 
 			if errors.Is(err, coredata.ErrResourceNotFound) {
-				return gqlutils.NotFoundf(ctx, "resource not found")
+				return nil, gqlutils.NotFoundf(ctx, "resource not found")
 			}
 
 			logger.ErrorCtx(ctx, "cannot authorize", log.Error(err))
-			return gqlutils.Internal(ctx)
+
+			return nil, gqlutils.Internal(ctx)
 		}
 
-		return nil
+		return scope, nil
+	}
+}
+
+func NewBatchAuthorizeFunc(
+	svc *iam.Service,
+	logger *log.Logger,
+) BatchAuthorizeFunc {
+	return func(
+		ctx context.Context,
+		action string,
+		objectIDs []gid.GID,
+		options ...BatchAuthorizeFuncOption,
+	) (*coredata.Scope, error) {
+		identity := authn.IdentityFromContext(ctx)
+		session := authn.SessionFromContext(ctx)
+
+		params := iam.AuthorizeBatchParams{
+			Principal:          identity.ID,
+			Action:             action,
+			Resources:          objectIDs,
+			ResourceAttributes: make(map[string]string),
+		}
+		if session != nil {
+			params.Session = &session.ID
+		}
+
+		for _, option := range options {
+			option(&params)
+		}
+
+		scope, err := svc.Authorizer.AuthorizeBatch(ctx, params)
+		if err != nil {
+			if _, ok := errors.AsType[*iam.ErrAssumptionRequired](err); ok {
+				return nil, gqlutils.AssumptionRequired(ctx, err)
+			}
+
+			if _, ok := errors.AsType[*iam.ErrInsufficientPermissions](err); ok {
+				return nil, gqlutils.Forbidden(ctx, err)
+			}
+
+			if _, ok := errors.AsType[*iam.ErrMixedOrganizationBatch](err); ok {
+				return nil, gqlutils.Invalid(ctx, err)
+			}
+
+			if _, ok := errors.AsType[*iam.ErrEmptyResourceBatch](err); ok {
+				return nil, gqlutils.Invalid(ctx, err)
+			}
+
+			if _, ok := errors.AsType[*iam.ErrBatchAuthorizationUnsupportedResourceType](err); ok {
+				return nil, gqlutils.Invalid(ctx, err)
+			}
+
+			if errors.Is(err, coredata.ErrResourceNotFound) {
+				return nil, gqlutils.NotFoundf(ctx, "resource not found")
+			}
+
+			logger.ErrorCtx(ctx, "cannot batch authorize", log.Error(err))
+
+			return nil, gqlutils.Internal(ctx)
+		}
+
+		return scope, nil
 	}
 }

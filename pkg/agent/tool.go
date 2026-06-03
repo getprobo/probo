@@ -50,6 +50,7 @@ func ResultJSON(v any) ToolResult {
 			IsError: true,
 		}
 	}
+
 	return ToolResult{Content: string(data)}
 }
 
@@ -128,6 +129,7 @@ func (t *functionTool[P]) Execute(ctx context.Context, arguments string) (ToolRe
 		}
 
 		var missing []string
+
 		for _, f := range t.requiredFields {
 			if _, ok := fields[f]; !ok {
 				missing = append(missing, f)

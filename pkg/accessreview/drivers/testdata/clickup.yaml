@@ -1,0 +1,88 @@
+---
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: api.clickup.com
+        headers:
+            Accept:
+                - application/json
+        url: https://api.clickup.com/api/v2/team/9999999
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: 549
+        body: '{"team":{"id":"9999999","name":"Reki","color":"#40BC86","avatar":null,"members":[{"user":{"id":100000001,"username":"Jane Doe","email":"jane@example.com","color":"#595d66","profilePicture":null,"initials":"JD","role":1,"role_subtype":0,"role_key":"owner","custom_role":null,"last_active":"1700000060000","date_joined":"1700000000000","date_invited":"1700000000000"}}],"roles":[{"id":1,"name":"owner","custom":false},{"id":2,"name":"admin","custom":false},{"id":3,"name":"member","custom":false},{"id":4,"name":"guest","custom":false}]}}'
+        headers:
+            Alt-Svc:
+                - h3=":443"; ma=86400
+            Cache-Control:
+                - no-cache, no-store
+            Content-Length:
+                - "549"
+            Content-Security-Policy:
+                - frame-ancestors 'self';
+            Content-Type:
+                - application/json; charset=utf-8
+            Date:
+                - Fri, 08 May 2026 16:33:55 GMT
+            Expect-Ct:
+                - max-age=0
+            Expires:
+                - "0"
+            Pragma:
+                - no-cache
+            Server:
+                - nginx
+            Server-Timing:
+                - cdn-upstream-layer;desc="EDGE",cdn-upstream-dns;dur=0,cdn-upstream-connect;dur=0,cdn-upstream-fbl;dur=205,cdn-upstream-layer;desc="EDGE",cdn-upstream-dns;dur=0,cdn-upstream-connect;dur=0,cdn-upstream-fbl;dur=165,cdn-cache-miss,cdn-pop;desc="DUB56-P4",cdn-rid;desc="_vOYAAYytilhOYvDSrE7XxrkSOPyI4-jm4JZiwxxs2y8khipIy8Txw==",cdn-downstream-fbl;dur=169,cdn-cache-miss,cdn-pop;desc="CDG50-P3",cdn-rid;desc="G1VQIj-wfz9VcGUnS4RkuUkPjjagQETD2_cAYrq5Oouu7sH00whzbw==",cdn-downstream-fbl;dur=208
+            Strict-Transport-Security:
+                - max-age=31536000; includeSubDomains
+            Timing-Allow-Origin:
+                - '*'
+            Vary:
+                - Origin
+            Via:
+                - 1.1 a56e8b27e07b9923097e70bebf198406.cloudfront.net (CloudFront), 1.1 37910e333059cdffb80ed9de884a6ee0.cloudfront.net (CloudFront)
+            X-Amz-Cf-Id:
+                - G1VQIj-wfz9VcGUnS4RkuUkPjjagQETD2_cAYrq5Oouu7sH00whzbw==
+            X-Amz-Cf-Pop:
+                - DUB56-P4
+                - CDG50-P3
+            X-Cache:
+                - Miss from cloudfront
+            X-Content-Type-Options:
+                - nosniff
+            X-Datadog-Trace-Id:
+                - "1408059438344473666"
+            X-Dns-Prefetch-Control:
+                - "off"
+            X-Download-Options:
+                - noopen
+            X-Krakend:
+                - Version undefined
+                - Version undefined
+            X-Krakend-Completed:
+                - "false"
+                - "false"
+            X-Permitted-Cross-Domain-Policies:
+                - none
+            X-Ratelimit-Limit:
+                - "100"
+            X-Ratelimit-Remaining:
+                - "99"
+            X-Ratelimit-Reset:
+                - "1778258096"
+            X-Received-From:
+                - shard-prod-eu-west-1-2
+            X-Xss-Protection:
+                - "0"
+        status: 200 OK
+        code: 200
+        duration: 242.702334ms

@@ -25,6 +25,7 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/iam/policy"
 	"go.probo.inc/probo/pkg/page"
 )
 
@@ -53,26 +54,43 @@ type (
 )
 
 // AuthorizationAttributes returns the authorization attributes for policy evaluation.
-func (dv *DocumentVersion) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
-	q := `
-SELECT organization_id
-FROM document_versions
-WHERE id = $1
-LIMIT 1;
-`
+func (dv *DocumentVersion) AuthorizationAttributes(
+	ctx context.Context,
+	conn pg.Querier,
+	resourceIDs []gid.GID,
+) (policy.AttributesByID, error) {
+	q := `SELECT id, organization_id FROM document_versions WHERE id = ANY(@resource_ids::text[])`
 
-	var organizationID gid.GID
-
-	if err := conn.QueryRow(ctx, q, dv.ID).Scan(&organizationID); err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, ErrResourceNotFound
-		}
-		return nil, fmt.Errorf("cannot query document version authorization attributes: %w", err)
+	args := pgx.StrictNamedArgs{
+		"resource_ids": resourceIDs,
 	}
 
-	return map[string]string{
-		"organization_id": organizationID.String(),
-	}, nil
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return nil, fmt.Errorf("cannot query authorization attributes: %w", err)
+	}
+
+	defer rows.Close()
+
+	attrsByID := make(policy.AttributesByID)
+
+	for rows.Next() {
+		var id, organizationID gid.GID
+
+		if err := rows.Scan(&id, &organizationID); err != nil {
+			return nil, fmt.Errorf("cannot scan authorization attributes: %w", err)
+		}
+
+		attrsByID[id] = policy.Attributes{
+			"organization_id": organizationID.String(),
+		}
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("cannot iterate authorization attributes: %w", err)
+	}
+
+	return attrsByID, nil
 }
 
 func (dv *DocumentVersions) LoadByDocumentID(
@@ -193,6 +211,7 @@ LIMIT 1;
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
 		}
+
 		return fmt.Errorf("cannot collect document version: %w", err)
 	}
 
@@ -271,14 +290,14 @@ VALUES (
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
-		var pgErr *pgconn.PgError
-		if errors.As(err, &pgErr) {
+		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
 			if pgErr.Code == "23505" {
 				if pgErr.ConstraintName == "document_versions_document_id_major_minor_key" || pgErr.ConstraintName == "document_one_active_version_idx" {
 					return ErrResourceAlreadyExists
 				}
 			}
 		}
+
 		return fmt.Errorf("error creating document version: %w", err)
 	}
 
@@ -341,6 +360,7 @@ LIMIT 1;
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
 		}
+
 		return fmt.Errorf("cannot collect document version: %w", err)
 	}
 
@@ -399,6 +419,7 @@ LIMIT 1;
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
 		}
+
 		return fmt.Errorf("cannot collect document version: %w", err)
 	}
 
@@ -459,6 +480,7 @@ LIMIT 1;
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
 		}
+
 		return fmt.Errorf("cannot collect document version: %w", err)
 	}
 
@@ -583,9 +605,13 @@ LIMIT 1
 FOR UPDATE OF dv SKIP LOCKED;
 `
 
-	rows, err := conn.Query(ctx, q, pgx.StrictNamedArgs{
-		"max_pdf_attempts": maxAttempts,
-	})
+	rows, err := conn.Query(
+		ctx,
+		q,
+		pgx.StrictNamedArgs{
+			"max_pdf_attempts": maxAttempts,
+		},
+	)
 	if err != nil {
 		return fmt.Errorf("cannot query document versions: %w", err)
 	}
@@ -595,6 +621,7 @@ FOR UPDATE OF dv SKIP LOCKED;
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrNoDocumentPDFJobAvailable
 		}
+
 		return fmt.Errorf("cannot collect document version: %w", err)
 	}
 
@@ -651,6 +678,7 @@ WHERE
 	maps.Copy(args, filter.SQLArguments())
 
 	row := conn.QueryRow(ctx, q, args)
+
 	var count int
 	if err := row.Scan(&count); err != nil {
 		return 0, fmt.Errorf("cannot scan count: %w", err)

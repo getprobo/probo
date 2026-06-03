@@ -191,7 +191,7 @@ Fragments colocate data requirements with the component that reads them:
 
 ```tsx
 const contactFragment = graphql`
-  fragment ContactRow_contactFragment on VendorContact {
+  fragment ContactRow_contactFragment on ThirdPartyContact {
     id
     fullName
     email
@@ -199,8 +199,8 @@ const contactFragment = graphql`
     role
     createdAt
     updatedAt
-    canUpdate: permission(action: "core:vendor-contact:update")
-    canDelete: permission(action: "core:vendor-contact:delete")
+    canUpdate: permission(action: "core:thirdParty-contact:update")
+    canDelete: permission(action: "core:thirdParty-contact:delete")
   }
 `;
 
@@ -215,12 +215,12 @@ function ContactRow(props: { contactKey: ContactRow_contactFragment$key }) {
 For lists that support sorting and pagination, use `@refetchable` with `@argumentDefinitions`:
 
 ```tsx
-const vendorContactsFragment = graphql`
-  fragment VendorContactsTabFragment on Vendor
-  @refetchable(queryName: "VendorContactsListQuery")
+const thirdPartyContactsFragment = graphql`
+  fragment ThirdPartyContactsTabFragment on ThirdParty
+  @refetchable(queryName: "ThirdPartyContactsListQuery")
   @argumentDefinitions(
     first: { type: "Int", defaultValue: 50 }
-    order: { type: "VendorContactOrder", defaultValue: null }
+    order: { type: "ThirdPartyContactOrder", defaultValue: null }
     after: { type: "CursorKey", defaultValue: null }
     before: { type: "CursorKey", defaultValue: null }
     last: { type: "Int", defaultValue: null }
@@ -231,18 +231,18 @@ const vendorContactsFragment = graphql`
       last: $last
       before: $before
       orderBy: $order
-    ) @connection(key: "VendorContactsTabFragment_contacts") {
+    ) @connection(key: "ThirdPartyContactsTabFragment_contacts") {
       __id
       edges {
         node {
-          ...VendorContactsTabFragment_contact
+          ...ThirdPartyContactsTabFragment_contact
         }
       }
     }
   }
 `;
 
-const [data, refetch] = useRefetchableFragment(vendorContactsFragment, vendor);
+const [data, refetch] = useRefetchableFragment(thirdPartyContactsFragment, thirdParty);
 const connectionId = data.contacts.__id;
 ```
 
@@ -251,9 +251,9 @@ const connectionId = data.contacts.__id;
 Use `usePaginationFragment` for cursor-based Relay pagination:
 
 ```tsx
-const pagination = usePaginationFragment(paginatedVendorsFragment, data.node);
-const vendors = pagination.data.vendors?.edges.map(edge => edge.node);
-const connectionId = pagination.data.vendors.__id;
+const pagination = usePaginationFragment(paginatedThirdPartiesFragment, data.node);
+const thirdParties = pagination.data.thirdParties?.edges.map(edge => edge.node);
+const connectionId = pagination.data.thirdParties.__id;
 ```
 
 The `@connection(key: "...", filters: [...])` directive on the fragment tells Relay how to manage the paginated list in the store. The `filters` array controls which variables affect the connection identity.
@@ -294,7 +294,7 @@ createCookieBanner({ variables: { ... } });
 #### Examples
 
 ```tsx
-const [deleteVendor] = useMutation<VendorGraphDeleteMutation>(deleteVendorMutation);
+const [deleteThirdParty] = useMutation<ThirdPartyGraphDeleteMutation>(deleteThirdPartyMutation);
 ```
 
 For mutations with user feedback, combine with `useToast` and use `onCompleted`/`onError` callbacks:
@@ -415,9 +415,9 @@ This is useful for dialogs, drawers, or other components rendered outside the su
 ```tsx
 // Add new edge to a connection
 const createMutation = graphql`
-  mutation CreateVendorMutation($input: CreateVendorInput!, $connections: [ID!]!) {
-    createVendor(input: $input) {
-      vendorEdge @prependEdge(connections: $connections) {
+  mutation CreateThirdPartyMutation($input: CreateThirdPartyInput!, $connections: [ID!]!) {
+    createThirdParty(input: $input) {
+      thirdPartyEdge @prependEdge(connections: $connections) {
         node {
           id
           name
@@ -429,19 +429,19 @@ const createMutation = graphql`
 
 // Remove an edge from a connection
 const deleteMutation = graphql`
-  mutation DeleteVendorMutation($input: DeleteVendorInput!, $connections: [ID!]!) {
-    deleteVendor(input: $input) {
-      deletedVendorId @deleteEdge(connections: $connections)
+  mutation DeleteThirdPartyMutation($input: DeleteThirdPartyInput!, $connections: [ID!]!) {
+    deleteThirdParty(input: $input) {
+      deletedThirdPartyId @deleteEdge(connections: $connections)
     }
   }
 `;
 
 // Update in-place (Relay matches by id — no directive needed)
 const updateMutation = graphql`
-  mutation UpdateContactMutation($input: UpdateVendorContactInput!) {
-    updateVendorContact(input: $input) {
-      vendorContact {
-        ...VendorContactsTabFragment_contact
+  mutation UpdateContactMutation($input: UpdateThirdPartyContactInput!) {
+    updateThirdPartyContact(input: $input) {
+      thirdPartyContact {
+        ...ThirdPartyContactsTabFragment_contact
       }
     }
   }
@@ -505,15 +505,15 @@ Destructive mutations (delete) are wrapped with a confirmation dialog:
 
 ```tsx
 const confirm = useConfirm();
-const [deleteVendor] = useMutation<DeleteVendorMutation>(deleteVendorMutation);
+const [deleteThirdParty] = useMutation<DeleteThirdPartyMutation>(deleteThirdPartyMutation);
 
 return () => {
   confirm(
     () =>
       new Promise<void>((resolve) => {
-        deleteVendor({
+        deleteThirdParty({
           variables: {
-            input: { vendorId: vendor.id! },
+            input: { thirdPartyId: thirdParty.id! },
             connections: [connectionId],
           },
           onCompleted() {
@@ -534,14 +534,14 @@ return () => {
 GraphQL operations are colocated with the components that use them. See [`contrib/claude/app-arborescence.md`](app-arborescence.md) for the full folder layout.
 
 ```
-pages/organizations/vendors/
-  VendorsPage.tsx                    # query + pagination fragment
+pages/organizations/third-parties/
+  ThirdPartiesPage.tsx                    # query + pagination fragment
   _components/
     CreateContactDialog.tsx          # create mutation
     EditContactDialog.tsx            # update mutation
   tabs/
-    VendorContactsTab.tsx            # refetchable fragment + item fragment
-    VendorComplianceTab.tsx
+    ThirdPartyContactsTab.tsx            # refetchable fragment + item fragment
+    ThirdPartyComplianceTab.tsx
 ```
 
 Component-specific operations (queries, fragments, mutations) are defined inline in the component file that uses them. Shared sub-components live in `_components/` next to the page (scoped to the nearest common ancestor).

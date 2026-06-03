@@ -68,6 +68,7 @@ VALUES (
 		"created_at":      rp.CreatedAt,
 	}
 	_, err := conn.Exec(ctx, q, args)
+
 	return err
 }
 
@@ -97,6 +98,7 @@ WHERE
 	maps.Copy(args, scope.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
+
 	return err
 }
 

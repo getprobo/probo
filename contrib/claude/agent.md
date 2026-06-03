@@ -24,7 +24,17 @@ result.FinalMessage().Text()  // final output
 result.LastAgent              // agent that produced the result
 ```
 
-Typed output via `RunTyped[T](ctx, agent, messages)` — validates against JSON Schema.
+Prefer `RunTyped[T]` over `Run` + manual unmarshalling when the agent declares a
+structured output type via `WithOutputType`. `RunTyped` validates the response
+against the JSON Schema and returns the typed value directly:
+
+```go
+result, err := agent.RunTyped[TrackerIdentification](ctx, ag, messages)
+identification := result.Output  // already typed, no json.Unmarshal needed
+```
+
+Only fall back to `agent.Run` when the agent produces free-form text with no
+output schema.
 
 ## Tool interface
 
@@ -71,6 +81,27 @@ The supervisor (`pkg/probo/agent_run_handler.go`) maps a SIGTERM-driven
 shutdown broadcast onto a per-run `cancelRun(agent.ErrSuspendForCheckpoint)`,
 so the same contract drives both the public Go API and the worker
 infrastructure path.
+
+## Prompt templates
+
+Prompt files with placeholders use `.txt.tmpl` (see general template naming
+convention in `.cursor/rules/template-files.mdc`).
+
+Use `agent.WithInstructionsFunc` to build prompts dynamically at runtime:
+
+```go
+//go:embed prompts/tracker_identification.txt.tmpl
+var trackerIdentificationPrompt string
+
+func trackerMappingInstructions(_ context.Context, _ *agent.Agent) string {
+    categories := coredata.ThirdPartyCategories()
+    parts := make([]string, len(categories))
+    for i, c := range categories {
+        parts[i] = string(c)
+    }
+    return strings.Replace(trackerIdentificationPrompt, "{{.Categories}}", strings.Join(parts, ", "), 1)
+}
+```
 
 ## Limits
 

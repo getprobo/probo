@@ -81,6 +81,7 @@ func (h *agentRunHandler) Claim(ctx context.Context) (coredata.AgentRun, error) 
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return coredata.AgentRun{}, worker.ErrNoTask
 		}
+
 		return coredata.AgentRun{}, err
 	}
 
@@ -104,6 +105,7 @@ func (h *agentRunHandler) Process(ctx context.Context, run coredata.AgentRun) er
 
 	forwarderDone := make(chan struct{})
 	defer close(forwarderDone)
+
 	go func() {
 		select {
 		case <-h.shutdownCh:
@@ -114,6 +116,7 @@ func (h *agentRunHandler) Process(ctx context.Context, run coredata.AgentRun) er
 
 	heartbeatCtx, cancelHeartbeat := context.WithCancel(ctx)
 	defer cancelHeartbeat()
+
 	go h.heartbeatLease(heartbeatCtx, run.ID.String(), cancelRun)
 
 	return h.executeRun(runCtx, &run)
@@ -130,6 +133,7 @@ func (h *agentRunHandler) RecoverStale(ctx context.Context) error {
 	); err != nil {
 		return fmt.Errorf("cannot reset stale agent runs: %w", err)
 	}
+
 	return nil
 }
 
@@ -172,11 +176,13 @@ func (h *agentRunHandler) heartbeatLease(
 				},
 			); err != nil {
 				h.logger.ErrorCtx(ctx, "cannot heartbeat agent run lease", log.Error(err))
+
 				if errors.Is(err, ErrAgentRunLeaseLost) {
 					cancelRun(ErrAgentRunLeaseLost)
 				} else {
 					cancelRun(fmt.Errorf("%w: %w", ErrAgentRunHeartbeatFailed, err))
 				}
+
 				return
 			}
 		}
@@ -202,6 +208,7 @@ func sanitizeAgentRunError(err error) string {
 	for cut > 0 && !utf8.RuneStart(msg[cut]) {
 		cut--
 	}
+
 	return msg[:cut] + "…"
 }
 
@@ -246,6 +253,7 @@ func (h *agentRunHandler) executeRun(ctx context.Context, run *coredata.AgentRun
 			log.String("run_id", runID),
 			log.Error(cause),
 		)
+
 		return cause
 	}
 
@@ -261,6 +269,7 @@ func (h *agentRunHandler) executeRun(ctx context.Context, run *coredata.AgentRun
 				"agent run suspended by infrastructure; leaving for stale recovery",
 				log.String("run_id", runID),
 			)
+
 			return nil
 		}
 	}
@@ -273,6 +282,7 @@ func (h *agentRunHandler) executeRun(ctx context.Context, run *coredata.AgentRun
 
 	if runErr == nil {
 		run.Status = coredata.AgentRunStatusCompleted
+
 		if result != nil {
 			data, err := json.Marshal(result)
 			if err != nil {
@@ -287,6 +297,7 @@ func (h *agentRunHandler) executeRun(ctx context.Context, run *coredata.AgentRun
 	if runErr != nil {
 		run.Status = coredata.AgentRunStatusFailed
 		run.Result = nil
+
 		h.logger.ErrorCtx(
 			context.WithoutCancel(ctx),
 			"agent run failed",

@@ -97,6 +97,7 @@ INSERT INTO access_review_campaign_source_fetches (
 		"created_at":                f.CreatedAt,
 		"updated_at":                f.UpdatedAt,
 	}
+
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
 		return fmt.Errorf("cannot insert campaign source fetch: %w", err)
@@ -197,6 +198,7 @@ LIMIT 1
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
 		}
+
 		return fmt.Errorf("cannot collect campaign source fetch: %w", err)
 	}
 
@@ -293,6 +295,7 @@ FOR UPDATE SKIP LOCKED
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrNoAccessReviewCampaignSourceFetchAvailable
 		}
+
 		return fmt.Errorf("cannot collect campaign source fetch: %w", err)
 	}
 

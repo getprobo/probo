@@ -14,6 +14,13 @@
 
 package coredata
 
+import (
+	"encoding"
+	"fmt"
+
+	"go.probo.inc/probo/pkg/page"
+)
+
 type (
 	ReportOrderField string
 )
@@ -22,19 +29,48 @@ const (
 	ReportOrderFieldID ReportOrderField = "ID"
 )
 
+var (
+	_ page.OrderField          = ReportOrderField("")
+	_ fmt.Stringer             = ReportOrderField("")
+	_ encoding.TextMarshaler   = ReportOrderField("")
+	_ encoding.TextUnmarshaler = (*ReportOrderField)(nil)
+)
+
+func ReportOrderFields() []ReportOrderField {
+	return []ReportOrderField{
+		ReportOrderFieldID,
+	}
+}
+
+func (v ReportOrderField) IsValid() bool {
+	switch v {
+	case
+		ReportOrderFieldID:
+		return true
+	}
+
+	return false
+}
+
+func (v ReportOrderField) String() string {
+	return string(v)
+}
+
+func (v ReportOrderField) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *ReportOrderField) UnmarshalText(text []byte) error {
+	val := ReportOrderField(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid ReportOrderField value: %q", string(text))
+	}
+
+	*v = val
+
+	return nil
+}
+
 func (p ReportOrderField) Column() string {
 	return string(p)
-}
-
-func (p ReportOrderField) String() string {
-	return string(p)
-}
-
-func (p ReportOrderField) MarshalText() ([]byte, error) {
-	return []byte(p.String()), nil
-}
-
-func (p *ReportOrderField) UnmarshalText(text []byte) error {
-	*p = ReportOrderField(text)
-	return nil
 }

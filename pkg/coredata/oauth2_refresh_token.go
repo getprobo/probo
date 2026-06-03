@@ -125,6 +125,7 @@ LIMIT 1;
 	}
 
 	*t = token
+
 	return nil
 }
 
@@ -175,6 +176,7 @@ LIMIT 1;
 	}
 
 	*t = token
+
 	return nil
 }
 
@@ -225,6 +227,7 @@ FOR UPDATE;
 	}
 
 	*t = token
+
 	return nil
 }
 

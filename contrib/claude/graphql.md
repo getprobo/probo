@@ -7,9 +7,9 @@ Schema-first GraphQL using [gqlgen](https://gqlgen.com/). The schema is hand-wri
 Each API's schema lives in `pkg/server/api/{api}/v1/graphql/` as multiple `.graphql` files, one per coredata model:
 
 - `base.graphql` — directives, scalars, Node interface, PageInfo, OrderDirection, root Query/Mutation/Organization types
-- Entity files (e.g., `vendor.graphql`, `control.graphql`) — use `extend type Mutation` to add their mutations.
+- Entity files (e.g., `thirdParty.graphql`, `control.graphql`) — use `extend type Mutation` to add their mutations.
 
-gqlgen's `follow-schema` layout generates one resolver file per schema file (e.g., `vendor.resolvers.go`). Types that get extended across files (Organization, Mutation, Viewer, TrustCenter) must be defined in `base.graphql`.
+gqlgen's `follow-schema` layout generates one resolver file per schema file (e.g., `thirdParty.resolvers.go`). Types that get extended across files (Organization, Mutation, Viewer, TrustCenter) must be defined in `base.graphql`.
 
 ### `extend type` restrictions
 
@@ -20,18 +20,18 @@ gqlgen's `follow-schema` layout generates one resolver file per schema file (e.g
 **Always define a custom Go type for connection types** using the `@goModel` directive. The model path points to the `types` package for the relevant API. The `totalCount` field must use `@goField(forceResolver: true)`. Edge types do not need `@goModel`.
 
 ```graphql
-type VendorConnection
+type ThirdPartyConnection
     @goModel(
-        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.VendorConnection"
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.ThirdPartyConnection"
     ) {
     totalCount: Int! @goField(forceResolver: true)
-    edges: [VendorEdge!]!
+    edges: [ThirdPartyEdge!]!
     pageInfo: PageInfo!
 }
 
-type VendorEdge {
+type ThirdPartyEdge {
     cursor: CursorKey!
-    node: Vendor!
+    node: ThirdParty!
 }
 ```
 
@@ -42,12 +42,12 @@ Without `@goModel`, gqlgen generates a default struct that lacks the custom fiel
 Map GraphQL enums to existing Go types using `@goModel` on the enum and `@goEnum` on each value:
 
 ```graphql
-enum VendorOrderField
-    @goModel(model: "go.probo.inc/probo/pkg/coredata.VendorOrderField") {
+enum ThirdPartyOrderField
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.ThirdPartyOrderField") {
     CREATED_AT
-        @goEnum(value: "go.probo.inc/probo/pkg/coredata.VendorOrderFieldCreatedAt")
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.ThirdPartyOrderFieldCreatedAt")
     NAME
-        @goEnum(value: "go.probo.inc/probo/pkg/coredata.VendorOrderFieldName")
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.ThirdPartyOrderFieldName")
 }
 ```
 
@@ -88,14 +88,14 @@ Connection fields on parent types use standard Relay arguments:
 
 ```graphql
 type Organization {
-    vendors(
+    thirdParties(
         first: Int
         after: CursorKey
         last: Int
         before: CursorKey
-        orderBy: VendorOrder
-        filter: VendorFilter
-    ): VendorConnection!
+        orderBy: ThirdPartyOrder
+        filter: ThirdPartyFilter
+    ): ThirdPartyConnection!
 }
 ```
 
@@ -105,11 +105,11 @@ Each connection type lives in `types/*_connection.go` and follows this structure
 
 ```go
 type (
-    VendorOrderBy OrderBy[coredata.VendorOrderField]
+    ThirdPartyOrderBy OrderBy[coredata.ThirdPartyOrderField]
 
-    VendorConnection struct {
+    ThirdPartyConnection struct {
         TotalCount int
-        Edges      []*VendorEdge
+        Edges      []*ThirdPartyEdge
         PageInfo   PageInfo
 
         Resolver any
@@ -117,17 +117,17 @@ type (
     }
 )
 
-func NewVendorConnection(
-    p *page.Page[*coredata.Vendor, coredata.VendorOrderField],
+func NewThirdPartyConnection(
+    p *page.Page[*coredata.ThirdParty, coredata.ThirdPartyOrderField],
     parentType any,
     parentID gid.GID,
-) *VendorConnection {
-    edges := make([]*VendorEdge, len(p.Data))
+) *ThirdPartyConnection {
+    edges := make([]*ThirdPartyEdge, len(p.Data))
     for i, v := range p.Data {
-        edges[i] = NewVendorEdge(v, p.Cursor.OrderBy.Field)
+        edges[i] = NewThirdPartyEdge(v, p.Cursor.OrderBy.Field)
     }
 
-    return &VendorConnection{
+    return &ThirdPartyConnection{
         Edges:    edges,
         PageInfo: *NewPageInfo(p),
 
@@ -136,13 +136,13 @@ func NewVendorConnection(
     }
 }
 
-func NewVendorEdge(
-    v *coredata.Vendor,
-    orderBy coredata.VendorOrderField,
-) *VendorEdge {
-    return &VendorEdge{
+func NewThirdPartyEdge(
+    v *coredata.ThirdParty,
+    orderBy coredata.ThirdPartyOrderField,
+) *ThirdPartyEdge {
+    return &ThirdPartyEdge{
         Cursor: v.CursorKey(orderBy),
-        Node:   NewVendor(v),
+        Node:   NewThirdParty(v),
     }
 }
 ```

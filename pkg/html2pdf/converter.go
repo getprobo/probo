@@ -112,6 +112,7 @@ func getPageDimensions(format PageFormat, orientation Orientation) (width, heigh
 	if orientation == OrientationLandscape {
 		return h, w // Swap width and height for landscape
 	}
+
 	return w, h
 }
 
@@ -174,6 +175,7 @@ func (c *Converter) GeneratePDF(ctx context.Context, htmlDocument []byte, cfg Re
 		if cfg.WaitForExpression == "" {
 			return nil
 		}
+
 		deadline := time.Now().Add(waitTimeout)
 		for time.Now().Before(deadline) {
 			var ready bool
@@ -181,11 +183,14 @@ func (c *Converter) GeneratePDF(ctx context.Context, htmlDocument []byte, cfg Re
 				time.Sleep(100 * time.Millisecond)
 				continue
 			}
+
 			if ready {
 				return nil
 			}
+
 			time.Sleep(100 * time.Millisecond)
 		}
+
 		return nil // proceed even on timeout
 	})
 
@@ -198,9 +203,11 @@ func (c *Converter) GeneratePDF(ctx context.Context, htmlDocument []byte, cfg Re
 				if err != nil {
 					return fmt.Errorf("cannot get frame tree: %w", err)
 				}
+
 				if err := page.SetDocumentContent(frameTree.Frame.ID, htmlContent).Do(ctx); err != nil {
 					return fmt.Errorf("cannot set document content: %w", err)
 				}
+
 				return nil
 			}),
 		chromedp.WaitReady("body"),
@@ -224,7 +231,6 @@ func (c *Converter) GeneratePDF(ctx context.Context, htmlDocument []byte, cfg Re
 			},
 		),
 	)
-
 	if err != nil {
 		err2 := fmt.Errorf("cannot run chromedp: %w", err)
 

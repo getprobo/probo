@@ -95,6 +95,14 @@ type Measure implements Node {
         filter: DocumentFilter
     ): DocumentConnection! @goField(forceResolver: true)
 
+    thirdParties(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: ThirdPartyOrder
+    ): ThirdPartyConnection! @goField(forceResolver: true)
+
     createdAt: Datetime!
     updatedAt: Datetime!
 
@@ -126,6 +134,12 @@ extend type Mutation {
     deleteMeasureDocumentMapping(
         input: DeleteMeasureDocumentMappingInput!
     ): DeleteMeasureDocumentMappingPayload!
+    createMeasureThirdPartyMapping(
+        input: CreateMeasureThirdPartyMappingInput!
+    ): CreateMeasureThirdPartyMappingPayload!
+    deleteMeasureThirdPartyMapping(
+        input: DeleteMeasureThirdPartyMappingInput!
+    ): DeleteMeasureThirdPartyMappingPayload!
 }
 
 input CreateMeasureInput {
@@ -186,4 +200,24 @@ type CreateMeasureDocumentMappingPayload {
 type DeleteMeasureDocumentMappingPayload {
     deletedMeasureId: ID!
     deletedDocumentId: ID!
+}
+
+input CreateMeasureThirdPartyMappingInput {
+    measureId: ID!
+    thirdPartyId: ID!
+}
+
+input DeleteMeasureThirdPartyMappingInput {
+    measureId: ID!
+    thirdPartyId: ID!
+}
+
+type CreateMeasureThirdPartyMappingPayload {
+    measureEdge: MeasureEdge!
+    thirdPartyEdge: ThirdPartyEdge!
+}
+
+type DeleteMeasureThirdPartyMappingPayload {
+    deletedMeasureId: ID!
+    deletedThirdPartyId: ID!
 }

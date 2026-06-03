@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -17,6 +17,8 @@ package coredata
 import (
 	"encoding/json"
 	"fmt"
+
+	"go.probo.inc/probo/pkg/connector"
 )
 
 type (
@@ -37,6 +39,10 @@ type (
 		OrganizationSlug string `json:"organization_slug"`
 	}
 
+	GrafanaConnectorSettings struct {
+		BaseURL string `json:"base_url"`
+	}
+
 	SupabaseConnectorSettings struct {
 		OrganizationSlug string `json:"organization_slug"`
 	}
@@ -49,7 +55,55 @@ type (
 		AccountID string `json:"account_id"`
 		Region    string `json:"region"`
 	}
+
+	GitLabConnectorSettings struct {
+		GroupID string `json:"group_id"`
+	}
+
+	BitbucketConnectorSettings struct {
+		Workspace string `json:"workspace"`
+	}
+
+	HerokuConnectorSettings struct {
+		TeamID string `json:"team_id"`
+	}
+
+	PagerDutyConnectorSettings struct {
+		Subdomain string `json:"subdomain"`
+	}
+
+	AsanaConnectorSettings struct {
+		WorkspaceGID string `json:"workspace_gid"`
+	}
+
+	NetlifyConnectorSettings struct {
+		AccountSlug string `json:"account_slug"`
+	}
+
+	ClickUpConnectorSettings struct {
+		TeamID string `json:"team_id"`
+	}
+
+	VercelConnectorSettings struct {
+		TeamID string `json:"team_id"`
+	}
+
+	MetabaseConnectorSettings struct {
+		InstanceURL string `json:"instance_url"`
+	}
 )
+
+// GrantType returns the OAuth2 grant type recorded on the connector's
+// Connection, or the empty string when the connector is not an OAuth2
+// connector. Driver factories that dispatch on grant type (1Password)
+// read this instead of inspecting the typed Connection directly.
+func (c *Connector) GrantType() string {
+	if oauth2Conn, ok := c.Connection.(*connector.OAuth2Connection); ok {
+		return string(oauth2Conn.GrantType)
+	}
+
+	return ""
+}
 
 // SetSettings marshals a typed settings struct into the connector's RawSettings.
 func (c *Connector) SetSettings(v any) error {
@@ -57,79 +111,26 @@ func (c *Connector) SetSettings(v any) error {
 	if err != nil {
 		return fmt.Errorf("cannot marshal connector settings: %w", err)
 	}
+
 	c.RawSettings = data
+
 	return nil
 }
 
-// SlackSettings unmarshals the connector's RawSettings into SlackConnectorSettings.
-func (c *Connector) SlackSettings() (SlackConnectorSettings, error) {
-	var s SlackConnectorSettings
-	if err := c.unmarshalSettings(&s); err != nil {
-		return s, err
-	}
-	return s, nil
-}
-
-// TallySettings unmarshals the connector's RawSettings into TallyConnectorSettings.
-func (c *Connector) TallySettings() (TallyConnectorSettings, error) {
-	var s TallyConnectorSettings
-	if err := c.unmarshalSettings(&s); err != nil {
-		return s, err
-	}
-	return s, nil
-}
-
-// OnePasswordSettings unmarshals the connector's RawSettings into OnePasswordConnectorSettings.
-func (c *Connector) OnePasswordSettings() (OnePasswordConnectorSettings, error) {
-	var s OnePasswordConnectorSettings
-	if err := c.unmarshalSettings(&s); err != nil {
-		return s, err
-	}
-	return s, nil
-}
-
-// SentrySettings unmarshals the connector's RawSettings into SentryConnectorSettings.
-func (c *Connector) SentrySettings() (SentryConnectorSettings, error) {
-	var s SentryConnectorSettings
-	if err := c.unmarshalSettings(&s); err != nil {
-		return s, err
-	}
-	return s, nil
-}
-
-// SupabaseSettings unmarshals the connector's RawSettings into SupabaseConnectorSettings.
-func (c *Connector) SupabaseSettings() (SupabaseConnectorSettings, error) {
-	var s SupabaseConnectorSettings
-	if err := c.unmarshalSettings(&s); err != nil {
-		return s, err
-	}
-	return s, nil
-}
-
-// GitHubSettings unmarshals the connector's RawSettings into GitHubConnectorSettings.
-func (c *Connector) GitHubSettings() (GitHubConnectorSettings, error) {
-	var s GitHubConnectorSettings
-	if err := c.unmarshalSettings(&s); err != nil {
-		return s, err
-	}
-	return s, nil
-}
-
-// OnePasswordUsersAPISettings unmarshals the connector's RawSettings into OnePasswordUsersAPISettings.
-func (c *Connector) OnePasswordUsersAPISettings() (OnePasswordUsersAPISettings, error) {
-	var s OnePasswordUsersAPISettings
-	if err := c.unmarshalSettings(&s); err != nil {
-		return s, err
-	}
-	return s, nil
-}
-
-func (c *Connector) unmarshalSettings(v any) error {
+// ConnectorSettings unmarshals the connector's RawSettings into the
+// requested settings struct. Empty or null RawSettings yields the zero
+// value with no error. Use as:
+//
+//	settings, err := coredata.ConnectorSettings[coredata.GitHubConnectorSettings](dbConnector)
+func ConnectorSettings[T any](c *Connector) (T, error) {
+	var s T
 	if len(c.RawSettings) == 0 || string(c.RawSettings) == "null" {
-		return nil
+		return s, nil
 	}
-	if err := json.Unmarshal(c.RawSettings, v); err != nil {
-		return fmt.Errorf("cannot unmarshal connector settings: %w", err)
+
+	if err := json.Unmarshal(c.RawSettings, &s); err != nil {
+		return s, fmt.Errorf("cannot unmarshal connector settings: %w", err)
 	}
-	return nil
+
+	return s, nil
 }

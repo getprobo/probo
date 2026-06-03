@@ -118,7 +118,6 @@ func TestControl_Update(t *testing.T) {
 		assert.Equal(t, controlID, result.UpdateControl.Control.ID)
 		assert.Equal(t, "Updated Control Name", result.UpdateControl.Control.Name)
 	})
-
 }
 
 func TestControl_Delete(t *testing.T) {
@@ -243,6 +242,7 @@ func TestControl_RequiredFields(t *testing.T) {
 		},
 	}, &frameworkResult)
 	require.NoError(t, err)
+
 	frameworkID := frameworkResult.CreateFramework.FrameworkEdge.Node.ID
 
 	createControlQuery := `
@@ -389,6 +389,7 @@ func TestControl_OmittableDescription(t *testing.T) {
 		},
 	}, &frameworkResult)
 	require.NoError(t, err)
+
 	frameworkID := frameworkResult.CreateFramework.FrameworkEdge.Node.ID
 
 	// Create control with description
@@ -427,6 +428,7 @@ func TestControl_OmittableDescription(t *testing.T) {
 		},
 	}, &createResult)
 	require.NoError(t, err)
+
 	controlID := createResult.CreateControl.ControlEdge.Node.ID
 
 	t.Run("Update with null description should clear it", func(t *testing.T) {
@@ -573,6 +575,7 @@ func TestControl_MaturityLevel(t *testing.T) {
 
 	t.Run("create with INITIAL maturityLevel", func(t *testing.T) {
 		var res createResult
+
 		err := owner.Execute(createControlQuery, map[string]any{
 			"input": map[string]any{
 				"frameworkId":   frameworkID,
@@ -589,6 +592,7 @@ func TestControl_MaturityLevel(t *testing.T) {
 
 	t.Run("create with maturityLevel persists value", func(t *testing.T) {
 		var res createResult
+
 		err := owner.Execute(createControlQuery, map[string]any{
 			"input": map[string]any{
 				"frameworkId":   frameworkID,
@@ -605,6 +609,7 @@ func TestControl_MaturityLevel(t *testing.T) {
 
 	t.Run("update lifecycle: set, change, omit", func(t *testing.T) {
 		var created createResult
+
 		err := owner.Execute(createControlQuery, map[string]any{
 			"input": map[string]any{
 				"frameworkId":   frameworkID,
@@ -616,10 +621,12 @@ func TestControl_MaturityLevel(t *testing.T) {
 			},
 		}, &created)
 		require.NoError(t, err)
+
 		controlID := created.CreateControl.ControlEdge.Node.ID
 
 		// set
 		var setRes updateResult
+
 		err = owner.Execute(updateControlQuery, map[string]any{
 			"input": map[string]any{
 				"id":            controlID,
@@ -631,6 +638,7 @@ func TestControl_MaturityLevel(t *testing.T) {
 
 		// change
 		var changeRes updateResult
+
 		err = owner.Execute(updateControlQuery, map[string]any{
 			"input": map[string]any{
 				"id":            controlID,
@@ -642,6 +650,7 @@ func TestControl_MaturityLevel(t *testing.T) {
 
 		// omit field on next update -> stays unchanged
 		var omitRes updateResult
+
 		err = owner.Execute(updateControlQuery, map[string]any{
 			"input": map[string]any{
 				"id":   controlID,
@@ -654,6 +663,7 @@ func TestControl_MaturityLevel(t *testing.T) {
 
 	t.Run("invalid maturityLevel is rejected", func(t *testing.T) {
 		var res createResult
+
 		err := owner.Execute(createControlQuery, map[string]any{
 			"input": map[string]any{
 				"frameworkId":   frameworkID,
@@ -702,6 +712,7 @@ func TestControl_SubResolvers(t *testing.T) {
 		},
 	}, &frameworkResult)
 	require.NoError(t, err)
+
 	frameworkID := frameworkResult.CreateFramework.FrameworkEdge.Node.ID
 
 	// Create control
@@ -738,6 +749,7 @@ func TestControl_SubResolvers(t *testing.T) {
 		},
 	}, &controlResult)
 	require.NoError(t, err)
+
 	controlID := controlResult.CreateControl.ControlEdge.Node.ID
 
 	// Create a measure and link it
@@ -771,6 +783,7 @@ func TestControl_SubResolvers(t *testing.T) {
 		},
 	}, &measureResult)
 	require.NoError(t, err)
+
 	measureID := measureResult.CreateMeasure.MeasureEdge.Node.ID
 
 	// Create mapping

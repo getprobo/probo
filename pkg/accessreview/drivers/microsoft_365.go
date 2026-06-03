@@ -120,15 +120,18 @@ func (d *Microsoft365Driver) ListAccounts(ctx context.Context) ([]AccountRecord,
 	}
 
 	rolesByUser := make(map[string][]string)
+
 	for _, role := range roles {
 		members, err := d.listRoleMembers(ctx, role.ID)
 		if err != nil {
 			return nil, fmt.Errorf("cannot list members of role %q: %w", role.DisplayName, err)
 		}
+
 		for _, m := range members {
 			if m.ODataType != "" && m.ODataType != "#microsoft.graph.user" {
 				continue
 			}
+
 			rolesByUser[m.ID] = append(rolesByUser[m.ID], role.DisplayName)
 		}
 	}
@@ -145,8 +148,15 @@ func (d *Microsoft365Driver) ListAccounts(ctx context.Context) ([]AccountRecord,
 			email = u.UserPrincipalName
 		}
 
+		// Skip accounts without any usable identifier so the access
+		// review only lists real members, matching the SCIM bridge.
+		if email == "" {
+			continue
+		}
+
 		userRoles := rolesByUser[u.ID]
 		isAdmin := false
+
 		for _, r := range userRoles {
 			if adminRoleDisplayNames[r] {
 				isAdmin = true
@@ -214,6 +224,7 @@ func pickHighestRole(roles []string) string {
 	if len(roles) > 0 {
 		return roles[0]
 	}
+
 	return ""
 }
 
@@ -224,15 +235,18 @@ func (d *Microsoft365Driver) listUsers(ctx context.Context) ([]microsoft365User,
 	}
 
 	var all []microsoft365User
+
 	for range microsoft365MaxPaginationOK {
 		var page microsoft365UsersPage
 		if err := d.fetchJSON(ctx, pageURL, &page); err != nil {
 			return nil, err
 		}
+
 		all = append(all, page.Value...)
 		if page.NextLink == "" {
 			return all, nil
 		}
+
 		pageURL = page.NextLink
 	}
 
@@ -240,7 +254,12 @@ func (d *Microsoft365Driver) listUsers(ctx context.Context) ([]microsoft365User,
 }
 
 func buildMicrosoft365UsersURL() (string, error) {
-	u, err := url.Parse(microsoft365GraphBaseURL + "/users")
+	endpoint, err := url.JoinPath(microsoft365GraphBaseURL, "users")
+	if err != nil {
+		return "", fmt.Errorf("cannot build graph users URL: %w", err)
+	}
+
+	u, err := url.Parse(endpoint)
 	if err != nil {
 		return "", fmt.Errorf("cannot parse graph users URL: %w", err)
 	}
@@ -255,38 +274,50 @@ func buildMicrosoft365UsersURL() (string, error) {
 }
 
 func (d *Microsoft365Driver) listDirectoryRoles(ctx context.Context) ([]microsoft365DirectoryRole, error) {
-	url := fmt.Sprintf("%s/directoryRoles", microsoft365GraphBaseURL)
+	endpoint, err := url.JoinPath(microsoft365GraphBaseURL, "directoryRoles")
+	if err != nil {
+		return nil, fmt.Errorf("cannot build graph directory roles URL: %w", err)
+	}
 
 	var all []microsoft365DirectoryRole
+
 	for range microsoft365MaxPaginationOK {
 		var page microsoft365RolesPage
-		if err := d.fetchJSON(ctx, url, &page); err != nil {
+		if err := d.fetchJSON(ctx, endpoint, &page); err != nil {
 			return nil, err
 		}
+
 		all = append(all, page.Value...)
 		if page.NextLink == "" {
 			return all, nil
 		}
-		url = page.NextLink
+
+		endpoint = page.NextLink
 	}
 
 	return nil, fmt.Errorf("cannot list all microsoft 365 directory roles: %w", ErrPaginationLimitReached)
 }
 
 func (d *Microsoft365Driver) listRoleMembers(ctx context.Context, roleID string) ([]microsoft365RoleMember, error) {
-	url := fmt.Sprintf("%s/directoryRoles/%s/members", microsoft365GraphBaseURL, roleID)
+	endpoint, err := url.JoinPath(microsoft365GraphBaseURL, "directoryRoles", url.PathEscape(roleID), "members")
+	if err != nil {
+		return nil, fmt.Errorf("cannot build graph role members URL: %w", err)
+	}
 
 	var all []microsoft365RoleMember
+
 	for range microsoft365MaxPaginationOK {
 		var page microsoft365MembersPage
-		if err := d.fetchJSON(ctx, url, &page); err != nil {
+		if err := d.fetchJSON(ctx, endpoint, &page); err != nil {
 			return nil, err
 		}
+
 		all = append(all, page.Value...)
 		if page.NextLink == "" {
 			return all, nil
 		}
-		url = page.NextLink
+
+		endpoint = page.NextLink
 	}
 
 	return nil, fmt.Errorf("cannot list all members of role %q: %w", roleID, ErrPaginationLimitReached)
@@ -297,12 +328,14 @@ func (d *Microsoft365Driver) fetchJSON(ctx context.Context, url string, dst any)
 	if err != nil {
 		return fmt.Errorf("cannot create graph request: %w", err)
 	}
+
 	req.Header.Set("Accept", "application/json")
 
 	resp, err := d.httpClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("cannot execute graph request: %w", err)
 	}
+
 	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {

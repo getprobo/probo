@@ -70,6 +70,7 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 			if flagApplicable && flagNotApplicable {
 				return fmt.Errorf("cannot set both --applicable and --not-applicable")
 			}
+
 			if !flagApplicable && !flagNotApplicable && !cmd.Flags().Changed("justification") {
 				return fmt.Errorf("at least one of --applicable, --not-applicable, or --justification is required")
 			}
@@ -118,10 +119,12 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 			}
 
 			s := resp.UpdateApplicabilityStatement.ApplicabilityStatement
+
 			applicable := "not applicable"
 			if s.Applicability {
 				applicable = "applicable"
 			}
+
 			_, _ = fmt.Fprintf(
 				f.IOStreams.Out,
 				"Updated statement %s: control %s (%s) marked as %s\n",

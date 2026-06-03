@@ -24,13 +24,19 @@ export function MermaidDiagram({ chart }: Props) {
   const [svg, setSvg] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const source = (chart ?? "").trim();
+
   useEffect(() => {
+    if (!source) {
+      return;
+    }
+
     let cancelled = false;
 
     mermaid.initialize({ startOnLoad: false, theme: "neutral" });
 
     mermaid
-      .render(`mermaid-${id}`, chart.trim())
+      .render(`mermaid-${id}`, source)
       .then((result) => {
         if (!cancelled) {
           setSvg(result.svg);
@@ -46,7 +52,7 @@ export function MermaidDiagram({ chart }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [chart, id]);
+  }, [source, id]);
 
   if (error) {
     return (

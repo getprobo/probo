@@ -79,6 +79,7 @@ func (p *Provider) isExcluded(email string) bool {
 			return true
 		}
 	}
+
 	return false
 }
 
@@ -115,6 +116,7 @@ func (p *Provider) ListUsers(ctx context.Context) (scimclient.Users, error) {
 	}
 
 	var allUsers scimclient.Users
+
 	for range graphMaxPages {
 		users, next, err := p.fetchPage(ctx, endpoint)
 		if err != nil {
@@ -126,9 +128,11 @@ func (p *Provider) ListUsers(ctx context.Context) (scimclient.Users, error) {
 			if email == "" {
 				email = u.UserPrincipalName
 			}
+
 			if email == "" {
 				continue
 			}
+
 			if p.isExcluded(email) {
 				continue
 			}
@@ -151,6 +155,7 @@ func (p *Provider) ListUsers(ctx context.Context) (scimclient.Users, error) {
 		if next == "" {
 			return allUsers, nil
 		}
+
 		endpoint = next
 	}
 
@@ -177,12 +182,14 @@ func (p *Provider) fetchPage(ctx context.Context, endpoint string) ([]graphUser,
 	if err != nil {
 		return nil, "", fmt.Errorf("cannot create graph users request: %w", err)
 	}
+
 	req.Header.Set("Accept", "application/json")
 
 	resp, err := p.httpClient.Do(req)
 	if err != nil {
 		return nil, "", fmt.Errorf("cannot list graph users: %w", err)
 	}
+
 	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {

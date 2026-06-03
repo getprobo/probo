@@ -28,13 +28,15 @@ import (
 	"go.probo.inc/probo/pkg/accessreview"
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/connector/provider"
 	"go.probo.inc/probo/pkg/cookiebanner"
 	"go.probo.inc/probo/pkg/esign"
-	"go.probo.inc/probo/pkg/file"
+	"go.probo.inc/probo/pkg/filesign"
 	"go.probo.inc/probo/pkg/geoloc"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/mailman"
 	"go.probo.inc/probo/pkg/probo"
+	"go.probo.inc/probo/pkg/riskmanagement"
 	"go.probo.inc/probo/pkg/securecookie"
 	connect_v1 "go.probo.inc/probo/pkg/server/api/connect/v1"
 	console_v1 "go.probo.inc/probo/pkg/server/api/console/v1"
@@ -44,6 +46,7 @@ import (
 	slack_v1 "go.probo.inc/probo/pkg/server/api/slack/v1"
 	trust_v1 "go.probo.inc/probo/pkg/server/api/trust/v1"
 	"go.probo.inc/probo/pkg/slack"
+	"go.probo.inc/probo/pkg/thirdparty"
 	"go.probo.inc/probo/pkg/trust"
 )
 
@@ -52,7 +55,7 @@ type (
 		BaseURL           *baseurl.BaseURL
 		AllowedOrigins    []string
 		Probo             *probo.Service
-		File              *file.Service
+		FileSign          *filesign.Service
 		IAM               *iam.Service
 		Trust             *trust.Service
 		ESign             *esign.Service
@@ -61,9 +64,12 @@ type (
 		Mailman           *mailman.Service
 		CookieBanner      *cookiebanner.Service
 		Geoloc            *geoloc.Service
+		ThirdParty        *thirdparty.Service
+		RiskManagement    *riskmanagement.Service
 		Cookie            securecookie.Config
 		TokenSecret       string
 		ConnectorRegistry *connector.ConnectorRegistry
+		ProviderRegistry  *provider.Registry
 		CustomDomainCname string
 		Logger            *log.Logger
 	}
@@ -188,8 +194,11 @@ func NewServer(cfg Config) (*Server, error) {
 			cfg.Cookie,
 			cfg.TokenSecret,
 			cfg.ConnectorRegistry,
+			cfg.ProviderRegistry,
 			cfg.BaseURL,
 			cfg.CustomDomainCname,
+			cfg.ThirdParty,
+			cfg.RiskManagement,
 		),
 		cookieBannerHandler: cookiebanner_v1.NewMux(
 			cfg.Logger.Named("cookiebanner.v1"),
@@ -198,14 +207,16 @@ func NewServer(cfg Config) (*Server, error) {
 		),
 		filesHandler: files_v1.NewMux(
 			cfg.Logger.Named("files.v1"),
-			cfg.File,
+			cfg.FileSign,
 		),
 		mcpHandler: mcp_v1.NewMux(
 			cfg.Logger.Named("mcp.v1"),
 			cfg.Probo,
+			cfg.ThirdParty,
 			cfg.IAM,
 			cfg.AccessReview,
 			cfg.CookieBanner,
+			cfg.RiskManagement,
 			cfg.TokenSecret,
 		),
 		slackHandler: slack_v1.NewMux(
@@ -225,6 +236,7 @@ func NewServer(cfg Config) (*Server, error) {
 				}
 
 				_, err := cfg.Trust.GetByDomainName(ctx, host)
+
 				return err == nil
 			},
 			func(ctx context.Context, host string) bool {

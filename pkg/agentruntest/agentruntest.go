@@ -115,6 +115,7 @@ func EnsureAgentRunsTable(t *testing.T, client *pg.Client) {
 			).Scan(&exists); err != nil {
 				return fmt.Errorf("cannot check agent_runs existence: %w", err)
 			}
+
 			if exists {
 				return nil
 			}
@@ -127,6 +128,7 @@ func EnsureAgentRunsTable(t *testing.T, client *pg.Client) {
 			if _, err := conn.Exec(ctx, string(ddl)); err != nil {
 				return fmt.Errorf("cannot apply agent_runs migration: %w", err)
 			}
+
 			return nil
 		})
 	})
@@ -185,6 +187,7 @@ func InsertPendingRun(
 			); err != nil {
 				return fmt.Errorf("cannot insert placeholder organization: %w", err)
 			}
+
 			return run.Insert(ctx, tx, coredata.NewScope(tenantID))
 		},
 	)
@@ -214,6 +217,7 @@ func LoadAgentRun(t *testing.T, client *pg.Client, id gid.GID) coredata.AgentRun
 	t.Helper()
 
 	var run coredata.AgentRun
+
 	err := client.WithConn(
 		context.Background(),
 		func(ctx context.Context, conn pg.Querier) error {
@@ -231,11 +235,13 @@ func LoadAgentRun(t *testing.T, client *pg.Client, id gid.GID) coredata.AgentRun
 // require.Eventually callbacks (which recover panics).
 func TryLoadAgentRun(client *pg.Client, id gid.GID) (coredata.AgentRun, error) {
 	var run coredata.AgentRun
+
 	err := client.WithConn(
 		context.Background(),
 		func(ctx context.Context, conn pg.Querier) error {
 			return run.LoadByID(ctx, conn, coredata.NewNoScope(), id)
 		},
 	)
+
 	return run, err
 }

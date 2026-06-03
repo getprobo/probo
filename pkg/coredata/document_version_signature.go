@@ -25,6 +25,7 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/iam/policy"
 	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/page"
 )
@@ -64,18 +65,43 @@ func (pvs DocumentVersionSignature) CursorKey(orderBy DocumentVersionSignatureOr
 }
 
 // AuthorizationAttributes returns the authorization attributes for policy evaluation.
-func (dvs *DocumentVersionSignature) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
-	q := `SELECT organization_id FROM document_version_signatures WHERE id = $1 LIMIT 1;`
+func (dvs *DocumentVersionSignature) AuthorizationAttributes(
+	ctx context.Context,
+	conn pg.Querier,
+	resourceIDs []gid.GID,
+) (policy.AttributesByID, error) {
+	q := `SELECT id, organization_id FROM document_version_signatures WHERE id = ANY(@resource_ids::text[])`
 
-	var organizationID gid.GID
-	if err := conn.QueryRow(ctx, q, dvs.ID).Scan(&organizationID); err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, ErrResourceNotFound
-		}
-		return nil, fmt.Errorf("cannot query document version signature authorization attributes: %w", err)
+	args := pgx.StrictNamedArgs{
+		"resource_ids": resourceIDs,
 	}
 
-	return map[string]string{"organization_id": organizationID.String()}, nil
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return nil, fmt.Errorf("cannot query authorization attributes: %w", err)
+	}
+
+	defer rows.Close()
+
+	attrsByID := make(policy.AttributesByID)
+
+	for rows.Next() {
+		var id, organizationID gid.GID
+
+		if err := rows.Scan(&id, &organizationID); err != nil {
+			return nil, fmt.Errorf("cannot scan authorization attributes: %w", err)
+		}
+
+		attrsByID[id] = policy.Attributes{
+			"organization_id": organizationID.String(),
+		}
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("cannot iterate authorization attributes: %w", err)
+	}
+
+	return attrsByID, nil
 }
 
 func (pvs *DocumentVersionSignature) LoadByDocumentVersionIDAndSignatory(
@@ -118,6 +144,86 @@ LIMIT 1
 	documentVersionSignature, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[DocumentVersionSignature])
 	if err != nil {
 		return fmt.Errorf("cannot collect document version signature: %w", err)
+	}
+
+	*pvs = documentVersionSignature
+
+	return nil
+}
+
+// LoadByDocumentMajorAndSignatory loads the signatory's existing signature for
+// the whole major that owns documentVersionID, scanning across every minor
+// version of that major. A signed signature is preferred over a still pending
+// one, then the most recent. It returns ErrResourceNotFound when the signatory
+// has no signature anywhere in the major.
+func (pvs *DocumentVersionSignature) LoadByDocumentMajorAndSignatory(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	documentVersionID gid.GID,
+	signatory gid.GID,
+) error {
+	q := `
+WITH source_version AS (
+	SELECT document_id, major FROM document_versions WHERE id = @document_version_id
+),
+major_versions AS (
+	SELECT dv.id FROM document_versions dv
+	INNER JOIN source_version sv ON dv.document_id = sv.document_id AND dv.major = sv.major
+),
+major_signatures AS (
+	SELECT
+		dvs.id,
+		dvs.organization_id,
+		dvs.tenant_id,
+		dvs.document_version_id,
+		dvs.state,
+		dvs.signed_by_profile_id,
+		dvs.signed_at,
+		dvs.requested_at,
+		dvs.created_at,
+		dvs.updated_at
+	FROM document_version_signatures dvs
+	INNER JOIN major_versions mv ON dvs.document_version_id = mv.id
+	WHERE dvs.signed_by_profile_id = @signatory
+)
+SELECT
+	id,
+	organization_id,
+	document_version_id,
+	state,
+	signed_by_profile_id,
+	signed_at,
+	requested_at,
+	created_at,
+	updated_at
+FROM
+	major_signatures
+WHERE
+	%s
+ORDER BY
+	CASE state WHEN 'SIGNED' THEN 0 ELSE 1 END,
+	created_at DESC
+LIMIT 1
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"document_version_id": documentVersionID, "signatory": signatory}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query document version signature by major: %w", err)
+	}
+
+	documentVersionSignature, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[DocumentVersionSignature])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+
+		return fmt.Errorf("cannot collect document version signature by major: %w", err)
 	}
 
 	*pvs = documentVersionSignature
@@ -215,12 +321,12 @@ INSERT INTO document_version_signatures (
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
-		var pgErr *pgconn.PgError
-		if errors.As(err, &pgErr) {
+		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
 			if pgErr.Code == "23505" && pgErr.ConstraintName == "policy_version_signatures_policy_version_id_signed_by_key" {
 				return ErrResourceAlreadyExists
 			}
 		}
+
 		return fmt.Errorf("cannot insert document version signature: %w", err)
 	}
 
@@ -347,6 +453,71 @@ WHERE
 	return nil
 }
 
+func (pvss *DocumentVersionSignatures) DeleteRequestedBySignatory(
+	ctx context.Context,
+	conn pg.Tx,
+	scope Scoper,
+	signatoryID gid.GID,
+) error {
+	q := `
+DELETE FROM document_version_signatures
+WHERE
+	%s
+	AND signed_by_profile_id = @signatory_id
+	AND state = @state
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"signatory_id": signatoryID,
+		"state":        DocumentVersionSignatureStateRequested,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	if _, err := conn.Exec(ctx, q, args); err != nil {
+		return fmt.Errorf("cannot delete requested document version signatures: %w", err)
+	}
+
+	return nil
+}
+
+func (pvss *DocumentVersionSignatures) DeleteRequestedByDocumentIDBelowMajor(
+	ctx context.Context,
+	conn pg.Tx,
+	scope Scoper,
+	documentID gid.GID,
+	major int,
+) error {
+	q := `
+DELETE FROM document_version_signatures
+WHERE
+	%s
+	AND state = @state
+	AND document_version_id IN (
+		SELECT id
+		FROM document_versions
+		WHERE document_id = @document_id
+			AND major < @major
+	)
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"document_id": documentID,
+		"major":       major,
+		"state":       DocumentVersionSignatureStateRequested,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	if _, err := conn.Exec(ctx, q, args); err != nil {
+		return fmt.Errorf("cannot delete requested document version signatures from previous major versions: %w", err)
+	}
+
+	return nil
+}
+
 func (pvss *DocumentVersionSignaturesWithPeople) LoadByDocumentVersionIDWithPeople(
 	ctx context.Context,
 	conn pg.Querier,
@@ -378,6 +549,18 @@ signatures_with_people AS (
 	FROM document_version_signatures dvs
 	INNER JOIN major_versions mv ON dvs.document_version_id = mv.id
 	INNER JOIN iam_membership_profiles p ON dvs.signed_by_profile_id = p.id
+	WHERE
+		dvs.state = 'SIGNED'
+		OR (
+			p.state = 'ACTIVE'
+			AND (p.contract_end_date IS NULL OR p.contract_end_date >= CURRENT_DATE)
+			AND EXISTS (
+				SELECT 1
+				FROM iam_memberships m
+				WHERE m.identity_id = p.identity_id
+					AND m.organization_id = p.organization_id
+			)
+		)
 )
 SELECT
 	id,
@@ -506,6 +689,7 @@ WHERE
 	maps.Copy(args, filter.SQLArguments())
 
 	row := conn.QueryRow(ctx, q, args)
+
 	var count int
 	if err := row.Scan(&count); err != nil {
 		return 0, fmt.Errorf("cannot scan count: %w", err)

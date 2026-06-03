@@ -27,14 +27,16 @@ import (
 	"go.probo.inc/probo/pkg/accessreview"
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/connector/provider"
 	"go.probo.inc/probo/pkg/cookiebanner"
 	"go.probo.inc/probo/pkg/esign"
-	"go.probo.inc/probo/pkg/file"
+	"go.probo.inc/probo/pkg/filesign"
 	"go.probo.inc/probo/pkg/geoloc"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/iam/oauth2server"
 	"go.probo.inc/probo/pkg/mailman"
 	"go.probo.inc/probo/pkg/probo"
+	"go.probo.inc/probo/pkg/riskmanagement"
 	"go.probo.inc/probo/pkg/securecookie"
 	"go.probo.inc/probo/pkg/server/api"
 	"go.probo.inc/probo/pkg/server/api/compliancepage"
@@ -42,6 +44,7 @@ import (
 	trust_web "go.probo.inc/probo/pkg/server/trust"
 	console_web "go.probo.inc/probo/pkg/server/web"
 	"go.probo.inc/probo/pkg/slack"
+	"go.probo.inc/probo/pkg/thirdparty"
 	"go.probo.inc/probo/pkg/trust"
 	"go.probo.inc/probo/pkg/uri"
 )
@@ -51,7 +54,7 @@ type Config struct {
 	AllowedOrigins    []string
 	ExtraHeaderFields map[string]string
 	Probo             *probo.Service
-	File              *file.Service
+	FileSign          *filesign.Service
 	IAM               *iam.Service
 	Trust             *trust.Service
 	ESign             *esign.Service
@@ -60,9 +63,12 @@ type Config struct {
 	Mailman           *mailman.Service
 	CookieBanner      *cookiebanner.Service
 	Geoloc            *geoloc.Service
+	ThirdParty        *thirdparty.Service
+	RiskManagement    *riskmanagement.Service
 	Cookie            securecookie.Config
 	TokenSecret       string
 	ConnectorRegistry *connector.ConnectorRegistry
+	ProviderRegistry  *provider.Registry
 	CustomDomainCname string
 	Logger            *log.Logger
 }
@@ -86,7 +92,7 @@ func NewServer(cfg Config) (*Server, error) {
 		BaseURL:           cfg.BaseURL,
 		AllowedOrigins:    cfg.AllowedOrigins,
 		Probo:             cfg.Probo,
-		File:              cfg.File,
+		FileSign:          cfg.FileSign,
 		IAM:               cfg.IAM,
 		Trust:             cfg.Trust,
 		ESign:             cfg.ESign,
@@ -95,9 +101,12 @@ func NewServer(cfg Config) (*Server, error) {
 		Mailman:           cfg.Mailman,
 		CookieBanner:      cfg.CookieBanner,
 		Geoloc:            cfg.Geoloc,
+		ThirdParty:        cfg.ThirdParty,
+		RiskManagement:    cfg.RiskManagement,
 		Cookie:            cfg.Cookie,
 		TokenSecret:       cfg.TokenSecret,
 		ConnectorRegistry: cfg.ConnectorRegistry,
+		ProviderRegistry:  cfg.ProviderRegistry,
 		CustomDomainCname: cfg.CustomDomainCname,
 		Logger:            cfg.Logger.Named("api"),
 	}
@@ -182,6 +191,7 @@ func (s *Server) oidcDiscoveryHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	metadata := s.iamService.OAuth2ServerService.Metadata(endpoints)
+
 	w.Header().Set("Cache-Control", "public, max-age=3600")
 	httpserver.RenderJSON(w, http.StatusOK, metadata)
 }
@@ -198,6 +208,7 @@ func (s *Server) stripTrustPrefix(next http.Handler) http.Handler {
 		if r.URL.Path == prefix {
 			cleanPath := path.Clean(prefix) + "/"
 			http.Redirect(w, r, cleanPath, http.StatusMovedPermanently)
+
 			return
 		}
 

@@ -24,6 +24,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/iam/policy"
 	"go.probo.inc/probo/pkg/page"
 )
 
@@ -52,18 +53,43 @@ func (as AccessSource) CursorKey(orderBy AccessSourceOrderField) page.CursorKey 
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
-func (as *AccessSource) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
-	q := `SELECT organization_id FROM access_sources WHERE id = $1 LIMIT 1;`
+func (as *AccessSource) AuthorizationAttributes(
+	ctx context.Context,
+	conn pg.Querier,
+	resourceIDs []gid.GID,
+) (policy.AttributesByID, error) {
+	q := `SELECT id, organization_id FROM access_sources WHERE id = ANY(@resource_ids::text[])`
 
-	var organizationID gid.GID
-	if err := conn.QueryRow(ctx, q, as.ID).Scan(&organizationID); err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, ErrResourceNotFound
-		}
-		return nil, fmt.Errorf("cannot query access source authorization attributes: %w", err)
+	args := pgx.StrictNamedArgs{
+		"resource_ids": resourceIDs,
 	}
 
-	return map[string]string{"organization_id": organizationID.String()}, nil
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return nil, fmt.Errorf("cannot query authorization attributes: %w", err)
+	}
+
+	defer rows.Close()
+
+	attrsByID := make(policy.AttributesByID)
+
+	for rows.Next() {
+		var id, organizationID gid.GID
+
+		if err := rows.Scan(&id, &organizationID); err != nil {
+			return nil, fmt.Errorf("cannot scan authorization attributes: %w", err)
+		}
+
+		attrsByID[id] = policy.Attributes{
+			"organization_id": organizationID.String(),
+		}
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("cannot iterate authorization attributes: %w", err)
+	}
+
+	return attrsByID, nil
 }
 
 func (as *AccessSource) LoadByID(
@@ -105,6 +131,7 @@ LIMIT 1;
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
 		}
+
 		return fmt.Errorf("cannot collect access source: %w", err)
 	}
 
@@ -158,6 +185,7 @@ VALUES (
 		"created_at":      as.CreatedAt,
 		"updated_at":      as.UpdatedAt,
 	}
+
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
 		return fmt.Errorf("cannot insert access_source: %w", err)
@@ -426,9 +454,11 @@ FOR UPDATE SKIP LOCKED;
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrNoAccessSourceNameSyncAvailable
 		}
+
 		return fmt.Errorf("cannot collect unsynced access source: %w", err)
 	}
 
 	*as = row
+
 	return nil
 }

@@ -14,6 +14,13 @@
 
 package coredata
 
+import (
+	"encoding"
+	"fmt"
+
+	"go.probo.inc/probo/pkg/page"
+)
+
 type (
 	EvidenceOrderField string
 )
@@ -22,19 +29,48 @@ const (
 	EvidenceOrderFieldCreatedAt EvidenceOrderField = "CREATED_AT"
 )
 
+var (
+	_ page.OrderField          = EvidenceOrderField("")
+	_ fmt.Stringer             = EvidenceOrderField("")
+	_ encoding.TextMarshaler   = EvidenceOrderField("")
+	_ encoding.TextUnmarshaler = (*EvidenceOrderField)(nil)
+)
+
+func EvidenceOrderFields() []EvidenceOrderField {
+	return []EvidenceOrderField{
+		EvidenceOrderFieldCreatedAt,
+	}
+}
+
+func (v EvidenceOrderField) IsValid() bool {
+	switch v {
+	case
+		EvidenceOrderFieldCreatedAt:
+		return true
+	}
+
+	return false
+}
+
+func (v EvidenceOrderField) String() string {
+	return string(v)
+}
+
+func (v EvidenceOrderField) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *EvidenceOrderField) UnmarshalText(text []byte) error {
+	val := EvidenceOrderField(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid EvidenceOrderField value: %q", string(text))
+	}
+
+	*v = val
+
+	return nil
+}
+
 func (p EvidenceOrderField) Column() string {
 	return string(p)
-}
-
-func (p EvidenceOrderField) String() string {
-	return string(p)
-}
-
-func (p EvidenceOrderField) MarshalText() ([]byte, error) {
-	return []byte(p.String()), nil
-}
-
-func (p *EvidenceOrderField) UnmarshalText(text []byte) error {
-	*p = EvidenceOrderField(text)
-	return nil
 }

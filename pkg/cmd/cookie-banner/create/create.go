@@ -58,7 +58,6 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 		flagCookiePolicyUrl  string
 		flagPrivacyPolicyUrl string
 		flagConsentExpiry    int
-		flagConsentMode      string
 	)
 
 	cmd := &cobra.Command{
@@ -86,6 +85,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 			if flagOrg == "" {
 				flagOrg = hc.Organization
 			}
+
 			if flagOrg == "" {
 				return fmt.Errorf("organization is required; pass --org or set a default with 'prb auth login'")
 			}
@@ -96,24 +96,15 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 						return err
 					}
 				}
+
 				if flagOrigin == "" {
 					if err := huh.NewInput().Title("Website origin (e.g. https://example.com)").Value(&flagOrigin).Run(); err != nil {
 						return err
 					}
 				}
+
 				if flagCookiePolicyUrl == "" {
 					if err := huh.NewInput().Title("Cookie policy URL").Value(&flagCookiePolicyUrl).Run(); err != nil {
-						return err
-					}
-				}
-				if flagConsentMode == "" {
-					if err := huh.NewSelect[string]().
-						Title("Consent mode").
-						Options(
-							huh.NewOption("Opt-In", "OPT_IN"),
-							huh.NewOption("Opt-Out", "OPT_OUT"),
-						).
-						Value(&flagConsentMode).Run(); err != nil {
 						return err
 					}
 				}
@@ -122,14 +113,13 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 			if flagName == "" {
 				return fmt.Errorf("name is required; pass --name or run interactively")
 			}
+
 			if flagOrigin == "" {
 				return fmt.Errorf("origin is required; pass --origin or run interactively")
 			}
+
 			if flagCookiePolicyUrl == "" {
 				return fmt.Errorf("cookie-policy-url is required; pass --cookie-policy-url or run interactively")
-			}
-			if flagConsentMode == "" {
-				return fmt.Errorf("consent-mode is required; pass --consent-mode or run interactively")
 			}
 
 			input := map[string]any{
@@ -138,7 +128,6 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 				"origin":            flagOrigin,
 				"cookiePolicyUrl":   flagCookiePolicyUrl,
 				"consentExpiryDays": flagConsentExpiry,
-				"consentMode":       flagConsentMode,
 			}
 			if flagPrivacyPolicyUrl != "" {
 				input["privacyPolicyUrl"] = flagPrivacyPolicyUrl
@@ -167,7 +156,6 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&flagCookiePolicyUrl, "cookie-policy-url", "", "Cookie policy URL (required)")
 	cmd.Flags().StringVar(&flagPrivacyPolicyUrl, "privacy-policy-url", "", "Privacy policy URL")
 	cmd.Flags().IntVar(&flagConsentExpiry, "consent-expiry-days", 365, "Days until consent expires")
-	cmd.Flags().StringVar(&flagConsentMode, "consent-mode", "", "Consent mode: OPT_IN or OPT_OUT (required)")
 
 	return cmd
 }

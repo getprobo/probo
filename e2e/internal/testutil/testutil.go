@@ -54,6 +54,7 @@ func (s *switchableWriter) Write(p []byte) (int, error) {
 	s.mu.Lock()
 	w := s.w
 	s.mu.Unlock()
+
 	return w.Write(p)
 }
 
@@ -104,6 +105,7 @@ func Setup() {
 			cmd.Stderr = os.Stderr
 		} else {
 			var buf bytes.Buffer
+
 			testEnv.outputBuf = &buf
 			sw := &switchableWriter{w: &buf}
 			testEnv.outputWriter = sw
@@ -128,14 +130,18 @@ func Setup() {
 
 		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 		defer cancel()
+
 		if err := waitForServer(ctx, testEnv.BaseURL+"/api/console/v1/graphql", 30*time.Second); err != nil {
 			testEnv.dumpOutputOnFailure("API server failed to start", err)
 			_ = testEnv.cmd.Process.Kill()
+
 			os.Exit(1)
 		}
+
 		if err := waitForServer(ctx, testEnv.MailpitBaseURL+"/api/v1/messages", 30*time.Second); err != nil {
 			testEnv.dumpOutputOnFailure("MailPit server failed to start", err)
 			_ = testEnv.cmd.Process.Kill()
+
 			os.Exit(1)
 		}
 
@@ -161,11 +167,13 @@ func (e *TestEnv) dumpOutputOnFailure(context string, err error) {
 
 	if e.outputBuf != nil && e.outputBuf.Len() > 0 {
 		output := e.outputBuf.Bytes()
+
 		const maxTail = 10_000
 		if len(output) > maxTail {
 			fmt.Fprintf(os.Stderr, "e2etest: (showing last %d bytes of output)\n", maxTail)
 			output = output[len(output)-maxTail:]
 		}
+
 		fmt.Fprintf(os.Stderr, "--- probod output start ---\n%s\n--- probod output end ---\n", output)
 	} else {
 		fmt.Fprintf(os.Stderr, "e2etest: no captured output available\n")
@@ -224,6 +232,7 @@ func GetBaseURL() string {
 	if testEnv == nil {
 		return "http://localhost:8080"
 	}
+
 	return testEnv.BaseURL
 }
 
@@ -231,6 +240,7 @@ func GetMailpitBaseURL() string {
 	if testEnv == nil {
 		return "http://localhost:8025"
 	}
+
 	return testEnv.MailpitBaseURL
 }
 
@@ -305,6 +315,7 @@ func generateConfig() (string, error) {
 		if v, ok := env[key]; ok {
 			return v
 		}
+
 		return os.Getenv(key)
 	})
 
@@ -317,6 +328,7 @@ func generateConfig() (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("create temp dir: %w", err)
 	}
+
 	path := filepath.Join(tmpDir, "probod.yml")
 
 	if err := bootstrap.WriteConfig(cfg, path); err != nil {

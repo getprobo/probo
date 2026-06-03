@@ -15,7 +15,7 @@
 package coredata
 
 import (
-	"database/sql/driver"
+	"encoding"
 	"fmt"
 )
 
@@ -30,6 +30,12 @@ const (
 	RiskTreatmentTransferred RiskTreatment = "TRANSFERRED"
 )
 
+var (
+	_ fmt.Stringer             = RiskTreatment("")
+	_ encoding.TextMarshaler   = RiskTreatment("")
+	_ encoding.TextUnmarshaler = (*RiskTreatment)(nil)
+)
+
 func RiskTreatments() []RiskTreatment {
 	return []RiskTreatment{
 		RiskTreatmentMitigated,
@@ -39,55 +45,34 @@ func RiskTreatments() []RiskTreatment {
 	}
 }
 
-func (rt RiskTreatment) MarshalText() ([]byte, error) {
-	return []byte(rt.String()), nil
+func (v RiskTreatment) IsValid() bool {
+	switch v {
+	case
+		RiskTreatmentMitigated,
+		RiskTreatmentAccepted,
+		RiskTreatmentAvoided,
+		RiskTreatmentTransferred:
+		return true
+	}
+
+	return false
 }
 
-func (rt *RiskTreatment) UnmarshalText(data []byte) error {
-	val := string(data)
+func (v RiskTreatment) String() string {
+	return string(v)
+}
 
-	switch val {
-	case RiskTreatmentMitigated.String():
-		*rt = RiskTreatmentMitigated
-	case RiskTreatmentAccepted.String():
-		*rt = RiskTreatmentAccepted
-	case RiskTreatmentAvoided.String():
-		*rt = RiskTreatmentAvoided
-	case RiskTreatmentTransferred.String():
-		*rt = RiskTreatmentTransferred
-	default:
-		return fmt.Errorf("invalid RiskTreatment value: %q", val)
+func (v RiskTreatment) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *RiskTreatment) UnmarshalText(text []byte) error {
+	val := RiskTreatment(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid RiskTreatment value: %q", string(text))
 	}
+
+	*v = val
 
 	return nil
-}
-
-func (rt RiskTreatment) String() string {
-	var val string
-
-	switch rt {
-	case RiskTreatmentMitigated:
-		val = "MITIGATED"
-	case RiskTreatmentAccepted:
-		val = "ACCEPTED"
-	case RiskTreatmentAvoided:
-		val = "AVOIDED"
-	case RiskTreatmentTransferred:
-		val = "TRANSFERRED"
-	}
-
-	return val
-}
-
-func (rt *RiskTreatment) Scan(value any) error {
-	val, ok := value.(string)
-	if !ok {
-		return fmt.Errorf("invalid scan source for RiskTreatment, expected string got %T", value)
-	}
-
-	return rt.UnmarshalText([]byte(val))
-}
-
-func (rt RiskTreatment) Value() (driver.Value, error) {
-	return rt.String(), nil
 }

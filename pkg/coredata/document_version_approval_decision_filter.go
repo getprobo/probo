@@ -28,6 +28,7 @@ func NewDocumentVersionApprovalDecisionFilter(states []DocumentVersionApprovalDe
 	if len(states) == 0 {
 		states = nil
 	}
+
 	return &DocumentVersionApprovalDecisionFilter{
 		states: DocumentVersionApprovalDecisionStates(states),
 	}

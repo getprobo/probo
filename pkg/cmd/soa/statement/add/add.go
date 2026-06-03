@@ -82,12 +82,14 @@ func NewCmdAdd(f *cmdutil.Factory) *cobra.Command {
 			if flagApplicable && flagNotApplicable {
 				return fmt.Errorf("cannot set both --applicable and --not-applicable")
 			}
+
 			if !flagApplicable && !flagNotApplicable {
 				if !f.IOStreams.IsInteractive() {
 					return fmt.Errorf("either --applicable or --not-applicable is required")
 				}
 
 				var choice string
+
 				err := huh.NewSelect[string]().
 					Title("Is this control applicable?").
 					Options(
@@ -99,6 +101,7 @@ func NewCmdAdd(f *cmdutil.Factory) *cobra.Command {
 				if err != nil {
 					return err
 				}
+
 				flagApplicable = choice == "applicable"
 			}
 
@@ -154,10 +157,12 @@ func NewCmdAdd(f *cmdutil.Factory) *cobra.Command {
 			}
 
 			s := resp.CreateApplicabilityStatement.ApplicabilityStatementEdge.Node
+
 			applicable := "not applicable"
 			if s.Applicability {
 				applicable = "applicable"
 			}
+
 			_, _ = fmt.Fprintf(
 				f.IOStreams.Out,
 				"Added statement %s: control %s (%s) marked as %s\n",

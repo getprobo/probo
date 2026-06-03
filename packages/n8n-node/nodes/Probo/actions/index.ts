@@ -35,13 +35,14 @@ import * as organization from './organization';
 import * as organizationContext from './organizationContext';
 import * as processingActivity from './processingActivity';
 import * as rightsRequest from './rightsRequest';
+import * as riskAssessment from './riskAssessment';
 import * as user from './user';
 import * as risk from './risk';
 import * as statementOfApplicability from './statementOfApplicability';
 import * as task from './task';
 import * as tia from './tia';
 import * as trustCenter from './trustCenter';
-import * as vendor from './vendor';
+import * as thirdParty from './thirdParty';
 import * as webhook from './webhook';
 
 export interface ResourceModule {
@@ -77,13 +78,14 @@ export const resources: Record<string, ResourceModule> = {
 	organizationContext: organizationContext as ResourceModule,
 	processingActivity: processingActivity as ResourceModule,
 	rightsRequest: rightsRequest as ResourceModule,
+	riskAssessment: riskAssessment as ResourceModule,
 	user: user as ResourceModule,
 	risk: risk as ResourceModule,
 	statementOfApplicability: statementOfApplicability as ResourceModule,
 	task: task as ResourceModule,
 	tia: tia as ResourceModule,
 	trustCenter: trustCenter as ResourceModule,
-	vendor: vendor as ResourceModule,
+	thirdParty: thirdParty as ResourceModule,
 	webhook: webhook as ResourceModule,
 };
 

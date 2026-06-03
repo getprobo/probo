@@ -51,7 +51,9 @@ func (ps *PolicySet) Merge(other *PolicySet) *PolicySet {
 	for role, policies := range other.RolePolicies {
 		ps.RolePolicies[role] = append(ps.RolePolicies[role], policies...)
 	}
+
 	ps.IdentityScopedPolicies = append(ps.IdentityScopedPolicies, other.IdentityScopedPolicies...)
+
 	return ps
 }
 

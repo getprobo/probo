@@ -15,7 +15,7 @@
 package coredata
 
 import (
-	"database/sql/driver"
+	"encoding"
 	"fmt"
 )
 
@@ -30,44 +30,49 @@ const (
 	EmailStatusFailed     EmailStatus = "FAILED"
 )
 
-func (s EmailStatus) MarshalText() ([]byte, error) {
-	return []byte(s.String()), nil
+var (
+	_ fmt.Stringer             = EmailStatus("")
+	_ encoding.TextMarshaler   = EmailStatus("")
+	_ encoding.TextUnmarshaler = (*EmailStatus)(nil)
+)
+
+func EmailStatuses() []EmailStatus {
+	return []EmailStatus{
+		EmailStatusPending,
+		EmailStatusProcessing,
+		EmailStatusSent,
+		EmailStatusFailed,
+	}
 }
 
-func (s *EmailStatus) UnmarshalText(data []byte) error {
-	val := string(data)
-
-	switch val {
-	case EmailStatusPending.String():
-		*s = EmailStatusPending
-	case EmailStatusProcessing.String():
-		*s = EmailStatusProcessing
-	case EmailStatusSent.String():
-		*s = EmailStatusSent
-	case EmailStatusFailed.String():
-		*s = EmailStatusFailed
-	default:
-		return fmt.Errorf("invalid EmailStatus value: %q", val)
+func (v EmailStatus) IsValid() bool {
+	switch v {
+	case
+		EmailStatusPending,
+		EmailStatusProcessing,
+		EmailStatusSent,
+		EmailStatusFailed:
+		return true
 	}
+
+	return false
+}
+
+func (v EmailStatus) String() string {
+	return string(v)
+}
+
+func (v EmailStatus) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *EmailStatus) UnmarshalText(text []byte) error {
+	val := EmailStatus(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid EmailStatus value: %q", string(text))
+	}
+
+	*v = val
 
 	return nil
-}
-
-func (s EmailStatus) String() string {
-	return string(s)
-}
-
-func (s *EmailStatus) Scan(value any) error {
-	switch v := value.(type) {
-	case string:
-		return s.UnmarshalText([]byte(v))
-	case []byte:
-		return s.UnmarshalText(v)
-	default:
-		return fmt.Errorf("invalid scan source for EmailStatus, expected string or []byte got %T", value)
-	}
-}
-
-func (s EmailStatus) Value() (driver.Value, error) {
-	return s.String(), nil
 }

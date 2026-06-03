@@ -52,6 +52,7 @@ func (k *EncryptionKey) UnmarshalText(text []byte) error {
 	}
 
 	copy(k[:], decoded)
+
 	return nil
 }
 
@@ -94,6 +95,7 @@ func Decrypt(data []byte, key EncryptionKey) ([]byte, error) {
 	if len(data) < 12 {
 		return nil, fmt.Errorf("ciphertext too short")
 	}
+
 	nonce, ciphertext := data[:12], data[12:]
 
 	plaintext, err := aesgcm.Open(nil, nonce, ciphertext, nil)

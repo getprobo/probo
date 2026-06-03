@@ -79,10 +79,10 @@ export function UserCard({ name }: UserCardProps) {
 
 ```tsx
 // Good — destructure in body when parameter-level destructuring would exceed the line-length limit
-export function VendorComplianceOverviewPanel(
-  props: VendorComplianceOverviewPanelProps,
+export function ThirdPartyComplianceOverviewPanel(
+  props: ThirdPartyComplianceOverviewPanelProps,
 ) {
-  const { className, vendorKey, onStatusChange } = props;
+  const { className, thirdPartyKey, onStatusChange } = props;
   // …
 }
 ```
@@ -139,11 +139,11 @@ export function Thing({ label }: ThingProps) {
 
 ```tsx
 // Good — rare exception: route entry default export (names still clear in module)
-type VendorsPageProps = {
-  queryRef: PreloadedQuery<VendorsQuery>;
+type ThirdPartiesPageProps = {
+  queryRef: PreloadedQuery<ThirdPartiesQuery>;
 };
 
-export default function VendorsPage({ queryRef }: VendorsPageProps) {
+export default function ThirdPartiesPage({ queryRef }: ThirdPartiesPageProps) {
   // …
 }
 ```
@@ -204,7 +204,7 @@ Use props for:
 ### Hooks for data and URL-derived identity
 
 - **Fetched data:** Colocate Relay fragments and queries per [`contrib/claude/relay.md`](relay.md) (`useFragment`, `useLazyLoadQuery`, `usePreloadedQuery`, etc.) in the component that needs the data.
-- **Route parameters:** Call `useParams()` (or a small `useOrganizationId()`-style hook) **inside** the component that needs the id — avoid drilling `organizationId` / `vendorId` from a parent that only read the URL to pass them down.
+- **Route parameters:** Call `useParams()` (or a small `useOrganizationId()`-style hook) **inside** the component that needs the id — avoid drilling `organizationId` / `thirdPartyId` from a parent that only read the URL to pass them down.
 
 ### Relay: framework wiring is not “business data props”
 
@@ -214,36 +214,36 @@ Relay sometimes requires **opaque handles** on props: e.g. **`queryRef`** for `u
 
 ```tsx
 // Bad — parent only needed the param to pass it down
-function VendorLayout() {
-  const { vendorId } = useParams();
+function ThirdPartyLayout() {
+  const { thirdPartyId } = useParams();
   return (
     <main>
-      <VendorSummary vendorId={vendorId!} />
+      <ThirdPartySummary thirdPartyId={thirdPartyId!} />
     </main>
   );
 }
 
-function VendorSummary({ vendorId }: { vendorId: string }) {
+function ThirdPartySummary({ thirdPartyId }: { thirdPartyId: string }) {
   return <div>{/* … */}</div>;
 }
 ```
 
 ```tsx
 // Good — component that needs the id reads it (or uses a dedicated hook)
-function VendorLayout() {
+function ThirdPartyLayout() {
   return (
     <main>
-      <VendorSummary />
+      <ThirdPartySummary />
     </main>
   );
 }
 
-function VendorSummary() {
-  const { vendorId } = useParams();
-  if (vendorId == null) {
+function ThirdPartySummary() {
+  const { thirdPartyId } = useParams();
+  if (thirdPartyId == null) {
     return null;
   }
-  return <div>{/* use vendorId in a hook / query … */}</div>;
+  return <div>{/* use thirdPartyId in a hook / query … */}</div>;
 }
 ```
 
@@ -251,13 +251,13 @@ function VendorSummary() {
 
 ```tsx
 // Bad — parent loaded data and passes fields as props
-function VendorPage() {
-  const vendor = useLazyLoadQuery(/* … */);
+function ThirdPartyPage() {
+  const thirdParty = useLazyLoadQuery(/* … */);
   return (
-    <VendorHeader
-      name={vendor.name}
-      riskScore={vendor.riskScore}
-      updatedAt={vendor.updatedAt}
+    <ThirdPartyHeader
+      name={thirdParty.name}
+      riskScore={thirdParty.riskScore}
+      updatedAt={thirdParty.updatedAt}
     />
   );
 }
@@ -265,24 +265,24 @@ function VendorPage() {
 
 ```tsx
 // Good — header colocates its fragment and reads via useFragment
-const vendorHeaderFragment = graphql`
-  fragment VendorHeader_vendor on Vendor {
+const thirdPartyHeaderFragment = graphql`
+  fragment ThirdPartyHeader_thirdParty on ThirdParty {
     name
     riskScore
     updatedAt
   }
 `;
 
-interface VendorHeaderProps {
+interface ThirdPartyHeaderProps {
   className?: string;
-  vendorKey: VendorHeader_vendor$key;
+  thirdPartyKey: ThirdPartyHeader_thirdParty$key;
 }
 
-export function VendorHeader({ className, vendorKey }: VendorHeaderProps) {
-  const vendor = useFragment(vendorHeaderFragment, vendorKey);
+export function ThirdPartyHeader({ className, thirdPartyKey }: ThirdPartyHeaderProps) {
+  const thirdParty = useFragment(thirdPartyHeaderFragment, thirdPartyKey);
   return (
     <header className={className}>
-      {/* render from vendor … */}
+      {/* render from thirdParty … */}
     </header>
   );
 }
@@ -400,3 +400,68 @@ export function MoveToCategoryMenu({ queryRef, onMove }: Props) {
 See also the "Interaction-triggered queries" section in [`contrib/claude/relay.md`](relay.md).
 
 (Snippet names and GraphQL types are illustrative; align with real schema and fragment names in the app.)
+
+## Page sections are components
+
+When a detail page has multiple distinct sections (e.g. a properties card and a paginated list), extract each section into its own component in `_components/`. Each section owns a colocated Relay fragment so that field additions never modify the parent page's query.
+
+The page spreads the section fragments on the shared node and passes the fragment key:
+
+```tsx
+// Page query — spreads section fragments
+export const detailPageQuery = graphql`
+  query DetailPageQuery($nodeId: ID!) {
+    node(id: $nodeId) {
+      ... on MyType {
+        id
+        displayName
+        ...MyTypePropertiesSection_myType
+        ...MyTypeListSection_myType
+      }
+    }
+  }
+`;
+
+// Page JSX:
+<MyTypePropertiesSection myTypeKey={node} />
+<MyTypeListSection myTypeKey={node} />
+```
+
+```tsx
+// _components/MyTypePropertiesSection.tsx
+const fragment = graphql`
+  fragment MyTypePropertiesSection_myType on MyType {
+    field1
+    field2
+  }
+`;
+
+interface MyTypePropertiesSectionProps {
+  myTypeKey: MyTypePropertiesSection_myType$key;
+}
+
+export function MyTypePropertiesSection({ myTypeKey }: MyTypePropertiesSectionProps) {
+  const data = useFragment(fragment, myTypeKey);
+  return <Card padded>{/* PropertyRows */}</Card>;
+}
+```
+
+For sections that own a paginated connection, use `usePaginationFragment` with a `@refetchable` fragment — the same pattern as a standalone page, but scoped to a section component.
+
+## Connection items are components
+
+When rendering items from a Relay connection (e.g. table rows via `edges.map(…)`), each item **must** be a dedicated component with its own colocated fragment — never inline the rendering of node fields directly in the parent's `.map()` body.
+
+Place the item component in `_components/` adjacent to the page. Name it after the GraphQL type it renders (e.g. `DetectedTrackerRow.tsx`, `ThirdPartyCard.tsx`). The component receives a single fragment key prop (e.g. `detectedTrackerKey: DetectedTrackerRow_detectedTracker$key`) and calls `useFragment` internally.
+
+```tsx
+// Parent (page) — spreads the child fragment in the connection:
+edges { node { id ...DetectedTrackerRow_detectedTracker } }
+
+// Parent JSX:
+{trackers.map(tracker => (
+  <DetectedTrackerRow key={tracker.id} detectedTrackerKey={tracker} />
+))}
+```
+
+This ensures field additions/removals in the row never modify the parent's fragment, and keeps the item independently testable.

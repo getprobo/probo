@@ -49,6 +49,7 @@ func TestBuildTokenRequest_PostForm(t *testing.T) {
 			context.Background(),
 			"test-code",
 			"https://example.com/callback",
+			"",
 		)
 		require.NoError(t, err)
 
@@ -84,6 +85,7 @@ func TestBuildTokenRequest_PostForm(t *testing.T) {
 			context.Background(),
 			"test-code",
 			"https://example.com/callback",
+			"",
 		)
 		require.NoError(t, err)
 
@@ -118,6 +120,7 @@ func TestBuildTokenRequest_BasicForm(t *testing.T) {
 		context.Background(),
 		"test-code",
 		"https://example.com/callback",
+		"",
 	)
 	require.NoError(t, err)
 
@@ -160,6 +163,7 @@ func TestBuildTokenRequest_BasicJSON(t *testing.T) {
 		context.Background(),
 		"test-code",
 		"https://example.com/callback",
+		"",
 	)
 	require.NoError(t, err)
 
@@ -179,6 +183,7 @@ func TestBuildTokenRequest_BasicJSON(t *testing.T) {
 	require.NoError(t, err)
 
 	var jsonBody map[string]string
+
 	err = json.Unmarshal(body, &jsonBody)
 	require.NoError(t, err)
 
@@ -189,6 +194,7 @@ func TestBuildTokenRequest_BasicJSON(t *testing.T) {
 	// JSON body must NOT contain client credentials
 	_, hasClientID := jsonBody["client_id"]
 	_, hasClientSecret := jsonBody["client_secret"]
+
 	assert.False(t, hasClientID, "JSON body should not contain client_id")
 	assert.False(t, hasClientSecret, "JSON body should not contain client_secret")
 }
@@ -552,4 +558,217 @@ func TestCompleteWithState_ScopeFallback(t *testing.T) {
 	// a space-separated RFC 6749 §3.3 scope string (sorted).
 	assert.Equal(t, "read:user write:user", oauth2Conn.Scope)
 	assert.Equal(t, []string{"read:user", "write:user"}, returnedState.RequestedScopes)
+}
+
+// TestInitiateWithState_PKCE verifies that connectors with RequiresPKCE=true
+// generate a PKCE verifier, embed the S256 challenge in the authorization
+// URL (RFC 7636 §4.3), and persist the verifier in the signed state token
+// so CompleteWithState can replay it on the token exchange.
+func TestInitiateWithState_PKCE(t *testing.T) {
+	t.Parallel()
+
+	t.Run("authorize URL carries S256 code_challenge when PKCE is required", func(t *testing.T) {
+		t.Parallel()
+
+		c := &OAuth2Connector{
+			ClientID:     "id",
+			ClientSecret: "secret",
+			RedirectURI:  "https://example.com/cb",
+			AuthURL:      "https://provider.example.com/authorize",
+			RequiresPKCE: true,
+		}
+
+		orgID := gid.New(gid.NewTenantID(), 0)
+
+		u, err := c.InitiateWithState(
+			context.Background(),
+			OAuth2State{OrganizationID: orgID.String(), Provider: "TEST"},
+			InitiateOptions{Scopes: []string{"read:user"}},
+		)
+		require.NoError(t, err)
+
+		parsed, err := url.Parse(u)
+		require.NoError(t, err)
+
+		challenge := parsed.Query().Get("code_challenge")
+		require.NotEmpty(t, challenge, "code_challenge must be present when RequiresPKCE=true")
+		assert.Equal(t, "S256", parsed.Query().Get("code_challenge_method"))
+
+		// The verifier is persisted in the signed state token. Decode
+		// the payload (without secret-checking — just inspect) and
+		// verify that re-deriving the challenge from the verifier
+		// reproduces the URL value.
+		stateToken := parsed.Query().Get("state")
+		require.NotEmpty(t, stateToken)
+
+		payload, err := DecodeOAuth2StatePayload(stateToken)
+		require.NoError(t, err)
+		require.NotEmpty(t, payload.Data.CodeVerifier, "verifier must be persisted in state token")
+		assert.Equal(t, challenge, pkceChallenge(payload.Data.CodeVerifier),
+			"code_challenge must equal base64url(sha256(verifier))")
+	})
+
+	t.Run("authorize URL omits PKCE params when PKCE is not required", func(t *testing.T) {
+		t.Parallel()
+
+		c := &OAuth2Connector{
+			ClientID:     "id",
+			ClientSecret: "secret",
+			RedirectURI:  "https://example.com/cb",
+			AuthURL:      "https://provider.example.com/authorize",
+			RequiresPKCE: false,
+		}
+
+		orgID := gid.New(gid.NewTenantID(), 0)
+
+		u, err := c.InitiateWithState(
+			context.Background(),
+			OAuth2State{OrganizationID: orgID.String(), Provider: "TEST"},
+			InitiateOptions{Scopes: []string{"read:user"}},
+		)
+		require.NoError(t, err)
+
+		parsed, err := url.Parse(u)
+		require.NoError(t, err)
+		assert.False(t, parsed.Query().Has("code_challenge"))
+		assert.False(t, parsed.Query().Has("code_challenge_method"))
+	})
+
+	t.Run("token POST replays code_verifier from state on PKCE flow", func(t *testing.T) {
+		t.Parallel()
+
+		var capturedVerifier string
+
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			body, err := io.ReadAll(r.Body)
+			assert.NoError(t, err)
+
+			form, err := url.ParseQuery(string(body))
+			assert.NoError(t, err)
+
+			capturedVerifier = form.Get("code_verifier")
+
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(`{"access_token":"live-token","token_type":"Bearer","expires_in":3600}`))
+		}))
+		defer server.Close()
+
+		c := &OAuth2Connector{
+			ClientID:     "id",
+			ClientSecret: "secret",
+			RedirectURI:  "https://example.com/cb",
+			AuthURL:      "https://provider.example.com/authorize",
+			TokenURL:     server.URL,
+			RequiresPKCE: true,
+			HTTPClient:   httpclient.DefaultClient(httpclient.WithSSRFProtection(), httpclient.WithSSRFAllowLoopback()),
+		}
+
+		// Initiate to mint a state token that embeds a fresh PKCE verifier.
+		orgID := gid.New(gid.NewTenantID(), 0)
+		authURL, err := c.InitiateWithState(
+			context.Background(),
+			OAuth2State{OrganizationID: orgID.String(), Provider: "TEST"},
+			InitiateOptions{Scopes: []string{"read:user"}},
+		)
+		require.NoError(t, err)
+
+		parsed, err := url.Parse(authURL)
+		require.NoError(t, err)
+
+		stateToken := parsed.Query().Get("state")
+		require.NotEmpty(t, stateToken)
+
+		payload, err := DecodeOAuth2StatePayload(stateToken)
+		require.NoError(t, err)
+
+		expectedVerifier := payload.Data.CodeVerifier
+		require.NotEmpty(t, expectedVerifier)
+
+		// Drive Complete with that same state token + an arbitrary code.
+		req := httptest.NewRequest(
+			http.MethodGet,
+			"https://example.com/cb?code=the-code&state="+stateToken,
+			nil,
+		)
+
+		_, _, err = c.CompleteWithState(context.Background(), req)
+		require.NoError(t, err)
+
+		assert.Equal(t, expectedVerifier, capturedVerifier,
+			"token POST body must carry the verifier persisted in the state token")
+	})
+}
+
+// TestGeneratePKCEVerifier exercises the verifier generator: each call
+// must return a fresh value, encoded as RFC 4648 §5 base64url-without-
+// padding (RFC 7636 §4.1 mandates 43–128 unreserved chars; 32 bytes
+// yields 43 chars). Anything outside that contract weakens PKCE.
+func TestGeneratePKCEVerifier(t *testing.T) {
+	t.Parallel()
+
+	v1, err := generatePKCEVerifier()
+	require.NoError(t, err)
+	v2, err := generatePKCEVerifier()
+	require.NoError(t, err)
+
+	assert.GreaterOrEqual(t, len(v1), 43, "verifier must be at least 43 base64url chars")
+	assert.LessOrEqual(t, len(v1), 128, "verifier must be at most 128 chars per RFC 7636")
+	assert.NotEqual(t, v1, v2, "verifier must be unpredictable across calls")
+
+	// Charset: base64url unreserved (RFC 4648 §5) — A-Z a-z 0-9 - _.
+	for _, c := range v1 {
+		switch {
+		case c >= 'A' && c <= 'Z':
+		case c >= 'a' && c <= 'z':
+		case c >= '0' && c <= '9':
+		case c == '-' || c == '_':
+		default:
+			t.Errorf("verifier contains non-base64url character %q", c)
+		}
+	}
+}
+
+// TestCompleteWithState_PKCEMismatch confirms that a token endpoint
+// rejecting a stale or mismatched code_verifier (the standard PKCE
+// failure path) surfaces as an error from CompleteWithState rather
+// than being silently swallowed.
+func TestCompleteWithState_PKCEMismatch(t *testing.T) {
+	t.Parallel()
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// The provider is supposed to validate the verifier; emulate a
+		// reject so we can observe the failure path.
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		_, _ = w.Write([]byte(`{"error":"invalid_grant","error_description":"invalid_grant"}`))
+	}))
+	defer server.Close()
+
+	c := &OAuth2Connector{
+		ClientID:     "id",
+		ClientSecret: "secret",
+		RedirectURI:  "https://example.com/cb",
+		AuthURL:      "https://provider.example.com/authorize",
+		TokenURL:     server.URL,
+		RequiresPKCE: true,
+		HTTPClient:   httpclient.DefaultClient(httpclient.WithSSRFProtection(), httpclient.WithSSRFAllowLoopback()),
+	}
+
+	orgID := gid.New(gid.NewTenantID(), 0)
+	authURL, err := c.InitiateWithState(
+		context.Background(),
+		OAuth2State{OrganizationID: orgID.String(), Provider: "TEST"},
+		InitiateOptions{Scopes: []string{"read"}},
+	)
+	require.NoError(t, err)
+	parsed, err := url.Parse(authURL)
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(
+		http.MethodGet,
+		"https://example.com/cb?code=the-code&state="+parsed.Query().Get("state"),
+		nil,
+	)
+	_, _, err = c.CompleteWithState(context.Background(), req)
+	require.Error(t, err, "PKCE rejection from token endpoint must propagate")
 }

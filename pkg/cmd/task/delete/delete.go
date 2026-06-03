@@ -45,6 +45,7 @@ func NewCmdDelete(f *cmdutil.Factory) *cobra.Command {
 				}
 
 				var confirmed bool
+
 				err := huh.NewConfirm().
 					Title(fmt.Sprintf("Delete task %s?", args[0])).
 					Value(&confirmed).
@@ -52,6 +53,7 @@ func NewCmdDelete(f *cmdutil.Factory) *cobra.Command {
 				if err != nil {
 					return err
 				}
+
 				if !confirmed {
 					return nil
 				}

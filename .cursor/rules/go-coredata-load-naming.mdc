@@ -1,0 +1,98 @@
+---
+description: Coredata Load vs LoadAll naming and no cross-entity JOINs
+globs: "pkg/coredata/**/*.go"
+alwaysApply: false
+---
+
+# Coredata Load vs LoadAll naming
+
+The method name signals whether the result set is bounded:
+
+- **`LoadBy*` with a `cursor` param** — paginated list; the cursor provides limit and ordering.
+- **`Load` / `LoadBy*` with a `limit int` param** — filtered list with explicit limit, when cursor pagination is not needed but the caller controls the result count.
+- **`LoadAllBy*`** — returns all matching rows, no limit or cursor.
+- **`LoadAll`** — same as `LoadAllBy*` but without a parent key; returns all rows matching a filter.
+
+`LoadAll*` methods must **never** accept a cursor or limit parameter — `All` means the entire matching set is returned. The codebase has some legacy `LoadAllBy*` methods that accept a cursor; do not follow that pattern — new code must use `LoadBy*` for paginated queries.
+
+```go
+// GOOD — explicit limit, named Load
+func (ds *Things) Load(
+	ctx context.Context,
+	conn pg.Querier,
+	limit int,
+	filter *ThingFilter,
+) error {
+
+// GOOD — no limit, named LoadAll
+func (ds *Things) LoadAll(
+	ctx context.Context,
+	conn pg.Querier,
+	filter *ThingFilter,
+) error {
+
+// BAD — LoadAll with a limit
+func (ds *Things) LoadAll(
+	ctx context.Context,
+	conn pg.Querier,
+	limit int,
+	filter *ThingFilter,
+) error {
+
+// BAD — LoadAllBy with a cursor (legacy pattern, do not use)
+func (ds *Things) LoadAllByParentID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	parentID gid.GID,
+	cursor *page.Cursor[ThingOrderField],
+) error {
+
+// GOOD — paginated query uses LoadBy, not LoadAll
+func (ds *Things) LoadByParentID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	parentID gid.GID,
+	cursor *page.Cursor[ThingOrderField],
+) error {
+```
+
+# Cross-entity table references
+
+Each entity file in `pkg/coredata` queries its own table. Never JOIN two
+entity tables to **return columns from both** — the caller orchestrates
+separate calls instead.
+
+**Subqueries for filtering are OK.** When the only purpose of the other
+table is to narrow a `WHERE` clause (e.g. `IN (SELECT id FROM ...)`),
+keep it in the query rather than materializing IDs in Go and passing
+them as an `ANY(@ids)` parameter. A subquery keeps the filtering in the
+database and eliminates an extra round trip.
+
+```go
+// BAD — cross-entity JOIN that returns columns from both tables
+q := `
+SELECT ctpd.common_third_party_id
+FROM detected_trackers dt
+JOIN common_third_party_domains ctpd ON ctpd.domain = dt.initiator_domain
+WHERE dt.tracker_pattern_id = @tracker_pattern_id
+`
+
+// GOOD — caller orchestrates two entity calls
+domains, err := trackers.LoadInitiatorDomainsByTrackerPatternID(ctx, conn, patternID, 10)
+filter := coredata.NewCommonThirdPartyDomainFilter(domains)
+var matched coredata.CommonThirdPartyDomains
+err = matched.Load(ctx, conn, 1, filter)
+thirdPartyID := matched[0].CommonThirdPartyID
+
+// GOOD — subquery only used for filtering, no columns returned from it
+q := `
+SELECT id, pattern, tracker_type, ...
+FROM tracker_patterns
+WHERE common_tracker_pattern_id IN (
+    SELECT id FROM common_tracker_patterns
+    WHERE common_third_party_id = @filter_common_third_party_id
+)
+`
+```

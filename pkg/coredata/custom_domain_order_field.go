@@ -14,7 +14,12 @@
 
 package coredata
 
-import "fmt"
+import (
+	"encoding"
+	"fmt"
+
+	"go.probo.inc/probo/pkg/page"
+)
 
 type CustomDomainOrderField string
 
@@ -23,6 +28,52 @@ const (
 	CustomDomainOrderFieldDomain    CustomDomainOrderField = "DOMAIN"
 	CustomDomainOrderFieldUpdatedAt CustomDomainOrderField = "UPDATED_AT"
 )
+
+var (
+	_ page.OrderField          = CustomDomainOrderField("")
+	_ fmt.Stringer             = CustomDomainOrderField("")
+	_ encoding.TextMarshaler   = CustomDomainOrderField("")
+	_ encoding.TextUnmarshaler = (*CustomDomainOrderField)(nil)
+)
+
+func CustomDomainOrderFields() []CustomDomainOrderField {
+	return []CustomDomainOrderField{
+		CustomDomainOrderFieldCreatedAt,
+		CustomDomainOrderFieldDomain,
+		CustomDomainOrderFieldUpdatedAt,
+	}
+}
+
+func (v CustomDomainOrderField) IsValid() bool {
+	switch v {
+	case
+		CustomDomainOrderFieldCreatedAt,
+		CustomDomainOrderFieldDomain,
+		CustomDomainOrderFieldUpdatedAt:
+		return true
+	}
+
+	return false
+}
+
+func (v CustomDomainOrderField) String() string {
+	return string(v)
+}
+
+func (v CustomDomainOrderField) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *CustomDomainOrderField) UnmarshalText(text []byte) error {
+	val := CustomDomainOrderField(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid CustomDomainOrderField value: %q", string(text))
+	}
+
+	*v = val
+
+	return nil
+}
 
 func (f CustomDomainOrderField) Column() string {
 	switch f {
@@ -35,8 +86,4 @@ func (f CustomDomainOrderField) Column() string {
 	default:
 		panic(fmt.Sprintf("unsupported order by: %s", f))
 	}
-}
-
-func (f CustomDomainOrderField) String() string {
-	return string(f)
 }

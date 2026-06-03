@@ -38,6 +38,7 @@ func NewListDataOutput(datumPage *page.Page[*coredata.Datum, coredata.DatumOrder
 	}
 
 	var nextCursor *page.CursorKey
+
 	if len(datumPage.Data) > 0 {
 		cursorKey := datumPage.Data[len(datumPage.Data)-1].CursorKey(datumPage.Cursor.OrderBy.Field)
 		nextCursor = &cursorKey

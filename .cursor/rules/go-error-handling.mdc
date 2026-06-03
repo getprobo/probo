@@ -1,0 +1,46 @@
+---
+description: Go error handling — wrap with fmt.Errorf, always name err, use errors.AsType
+globs: "**/*.go"
+alwaysApply: false
+---
+
+# Go error handling
+
+## Wrapping
+
+- Error variables are always named `err`
+- When a function returns errors from multiple call sites, each must be wrapped
+- Wrap with `fmt.Errorf("cannot ...: %w", err)` — lowercase, starts with `cannot`
+- Each wrap message in a function must be distinct
+
+```go
+// GOOD
+foo, err := s.loadFoo(ctx)
+if err != nil {
+	return fmt.Errorf("cannot load foo: %w", err)
+}
+
+bar, err := s.loadBar(ctx, foo.ID)
+if err != nil {
+	return fmt.Errorf("cannot load bar: %w", err)
+}
+
+// BAD — bare return without wrapping
+foo, err := s.loadFoo(ctx)
+if err != nil {
+	return err
+}
+```
+
+## Type assertions on errors
+
+Use `errors.AsType[T](err)` (generic form), not `errors.As(err, &ptr)`:
+
+```go
+// GOOD
+if e, ok := errors.AsType[*ValidationError](err); ok { ... }
+
+// BAD
+var ve *ValidationError
+if errors.As(err, &ve) { ... }
+```

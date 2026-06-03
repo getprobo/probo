@@ -17,12 +17,13 @@ type SCIMConfiguration implements Node {
 
   permission(action: String!): Boolean!
     @goField(forceResolver: true)
-    @session(required: PRESENT)
+    @authentication(required: PRESENT)
 }
 
 type SCIMBridge implements Node {
   id: ID!
   state: SCIMBridgeState!
+  syncError: String
   scimConfiguration: SCIMConfiguration @goField(forceResolver: true)
   connector: Connector @goField(forceResolver: true)
   type: SCIMBridgeType!
@@ -32,7 +33,7 @@ type SCIMBridge implements Node {
 
   permission(action: String!): Boolean!
     @goField(forceResolver: true)
-    @session(required: PRESENT)
+    @authentication(required: PRESENT)
 }
 
 type Connector implements Node {
@@ -43,7 +44,7 @@ type Connector implements Node {
 
   permission(action: String!): Boolean!
     @goField(forceResolver: true)
-    @session(required: PRESENT)
+    @authentication(required: PRESENT)
 }
 
 enum ConnectorProvider
@@ -73,8 +74,10 @@ type SCIMBridgeTypeInfo {
 enum SCIMBridgeState
   @goModel(model: "go.probo.inc/probo/pkg/coredata.SCIMBridgeState") {
   PENDING @goEnum(value: "go.probo.inc/probo/pkg/coredata.SCIMBridgeStatePending")
+  SYNCING @goEnum(value: "go.probo.inc/probo/pkg/coredata.SCIMBridgeStateSyncing")
   ACTIVE @goEnum(value: "go.probo.inc/probo/pkg/coredata.SCIMBridgeStateActive")
   FAILED @goEnum(value: "go.probo.inc/probo/pkg/coredata.SCIMBridgeStateFailed")
+  DISABLED @goEnum(value: "go.probo.inc/probo/pkg/coredata.SCIMBridgeStateDisabled")
 }
 
 type SCIMEvent implements Node {
@@ -91,7 +94,7 @@ type SCIMEvent implements Node {
 
   permission(action: String!): Boolean!
     @goField(forceResolver: true)
-    @session(required: PRESENT)
+    @authentication(required: PRESENT)
 }
 
 enum SCIMEventOrderField
@@ -127,16 +130,16 @@ type SCIMEventEdge {
 extend type Mutation {
   createSCIMConfiguration(
     input: CreateSCIMConfigurationInput!
-  ): CreateSCIMConfigurationPayload @session(required: PRESENT)
+  ): CreateSCIMConfigurationPayload @authentication(required: PRESENT) @sessionOnly
   deleteSCIMConfiguration(
     input: DeleteSCIMConfigurationInput!
-  ): DeleteSCIMConfigurationPayload @session(required: PRESENT)
+  ): DeleteSCIMConfigurationPayload @authentication(required: PRESENT) @sessionOnly
   regenerateSCIMToken(
     input: RegenerateSCIMTokenInput!
-  ): RegenerateSCIMTokenPayload @session(required: PRESENT)
+  ): RegenerateSCIMTokenPayload @authentication(required: PRESENT) @sessionOnly
   updateSCIMBridge(
     input: UpdateSCIMBridgeInput!
-  ): UpdateSCIMBridgePayload @session(required: PRESENT)
+  ): UpdateSCIMBridgePayload @authentication(required: PRESENT)
 }
 
 input CreateSCIMConfigurationInput {

@@ -25,11 +25,12 @@ import (
 )
 
 type AuditService struct {
-	svc *TenantService
+	svc *Service
 }
 
 func (s AuditService) Get(
 	ctx context.Context,
+	scope coredata.Scoper,
 	auditID gid.GID,
 ) (*coredata.Audit, error) {
 	audit := &coredata.Audit{}
@@ -37,7 +38,7 @@ func (s AuditService) Get(
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			err := audit.LoadByID(ctx, conn, s.svc.scope, auditID)
+			err := audit.LoadByID(ctx, conn, scope, auditID)
 			if err != nil {
 				return fmt.Errorf("cannot load audit: %w", err)
 			}
@@ -45,7 +46,6 @@ func (s AuditService) Get(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -55,6 +55,7 @@ func (s AuditService) Get(
 
 func (s AuditService) GetByReportID(
 	ctx context.Context,
+	scope coredata.Scoper,
 	reportID gid.GID,
 ) (*coredata.Audit, error) {
 	audit := &coredata.Audit{}
@@ -62,7 +63,7 @@ func (s AuditService) GetByReportID(
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			err := audit.LoadByReportID(ctx, conn, s.svc.scope, reportID)
+			err := audit.LoadByReportID(ctx, conn, scope, reportID)
 			if err != nil {
 				return fmt.Errorf("cannot load audit: %w", err)
 			}
@@ -70,7 +71,6 @@ func (s AuditService) GetByReportID(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -80,6 +80,7 @@ func (s AuditService) GetByReportID(
 
 func (s AuditService) ListForOrganizationId(
 	ctx context.Context,
+	scope coredata.Scoper,
 	organizationID gid.GID,
 	cursor *page.Cursor[coredata.AuditOrderField],
 ) (*page.Page[*coredata.Audit, coredata.AuditOrderField], error) {
@@ -89,7 +90,8 @@ func (s AuditService) ListForOrganizationId(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
 			filter := coredata.NewAuditTrustCenterFilter()
-			err := audits.LoadByOrganizationID(ctx, conn, s.svc.scope, organizationID, cursor, filter)
+
+			err := audits.LoadByOrganizationID(ctx, conn, scope, organizationID, cursor, filter)
 			if err != nil {
 				return fmt.Errorf("cannot load audits: %w", err)
 			}
@@ -97,7 +99,6 @@ func (s AuditService) ListForOrganizationId(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}

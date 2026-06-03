@@ -78,6 +78,7 @@ func Set(w http.ResponseWriter, config Config, value string) error {
 	}
 
 	http.SetCookie(w, cookie)
+
 	return nil
 }
 

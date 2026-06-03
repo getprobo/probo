@@ -24,6 +24,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/iam/policy"
 	"go.probo.inc/probo/pkg/page"
 )
 
@@ -49,6 +50,7 @@ WHERE
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, nil
 	}
+
 	if err != nil {
 		return nil, fmt.Errorf("cannot get risk list document ID: %w", err)
 	}
@@ -181,18 +183,43 @@ func (r *Risk) CursorKey(orderBy RiskOrderField) page.CursorKey {
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
-func (r *Risk) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
-	q := `SELECT organization_id FROM risks WHERE id = $1 LIMIT 1;`
+func (r *Risk) AuthorizationAttributes(
+	ctx context.Context,
+	conn pg.Querier,
+	resourceIDs []gid.GID,
+) (policy.AttributesByID, error) {
+	q := `SELECT id, organization_id FROM risks WHERE id = ANY(@resource_ids::text[])`
 
-	var organizationID gid.GID
-	if err := conn.QueryRow(ctx, q, r.ID).Scan(&organizationID); err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, ErrResourceNotFound
-		}
-		return nil, fmt.Errorf("cannot query risk authorization attributes: %w", err)
+	args := pgx.StrictNamedArgs{
+		"resource_ids": resourceIDs,
 	}
 
-	return map[string]string{"organization_id": organizationID.String()}, nil
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return nil, fmt.Errorf("cannot query authorization attributes: %w", err)
+	}
+
+	defer rows.Close()
+
+	attrsByID := make(policy.AttributesByID)
+
+	for rows.Next() {
+		var id, organizationID gid.GID
+
+		if err := rows.Scan(&id, &organizationID); err != nil {
+			return nil, fmt.Errorf("cannot scan authorization attributes: %w", err)
+		}
+
+		attrsByID[id] = policy.Attributes{
+			"organization_id": organizationID.String(),
+		}
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("cannot iterate authorization attributes: %w", err)
+	}
+
+	return attrsByID, nil
 }
 
 func (r *Risks) CountByMeasureID(
@@ -214,7 +241,6 @@ WITH rsks AS (
 		risks_measures rm ON r.id = rm.risk_id
 	WHERE
 		rm.measure_id = @measure_id
-		AND r.snapshot_id IS NULL
 )
 SELECT
 	COUNT(id)
@@ -277,7 +303,6 @@ WITH rsks AS (
 		iam_membership_profiles p ON r.owner_profile_id = p.id
 	WHERE
 		rm.measure_id = @measure_id
-		AND r.snapshot_id IS NULL
 )
 SELECT
 	id,
@@ -338,7 +363,6 @@ SELECT
 FROM risks
 WHERE %s
 	AND organization_id = @organization_id
-	AND snapshot_id IS NULL
 	AND %s
 `
 	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
@@ -393,7 +417,6 @@ WITH rsks AS (
 		iam_membership_profiles p ON r.owner_profile_id = p.id
 	WHERE
 		r.organization_id = @organization_id
-		AND r.snapshot_id IS NULL
 )
 SELECT
 	id,
@@ -470,7 +493,6 @@ FROM
 	risks r
 WHERE %s
 	AND r.organization_id = @organization_id
-	AND r.snapshot_id IS NULL
 ORDER BY r.name ASC, r.id ASC
 `
 	q = fmt.Sprintf(q, scope.SQLFragment())
@@ -625,6 +647,7 @@ VALUES (@id, @tenant_id, @organization_id, @name, @description, @category, @owne
 	}
 
 	_, err := conn.Exec(ctx, q, args)
+
 	return err
 }
 
@@ -649,7 +672,6 @@ SET
 	updated_at = @updated_at
 WHERE %s
 	AND id = @risk_id
-	AND snapshot_id IS NULL
 RETURNING inherent_risk_score, residual_risk_score
 `
 	q = fmt.Sprintf(q, scope.SQLFragment())
@@ -688,7 +710,7 @@ func (r *Risk) Delete(
 	riskID gid.GID,
 ) error {
 	q := `
-DELETE FROM risks WHERE %s AND id = @id AND snapshot_id IS NULL
+DELETE FROM risks WHERE %s AND id = @id
 `
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
@@ -696,6 +718,7 @@ DELETE FROM risks WHERE %s AND id = @id AND snapshot_id IS NULL
 	maps.Copy(args, scope.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
+
 	return err
 }
 
@@ -718,7 +741,6 @@ WITH rsks AS (
 		risks_documents rd ON r.id = rd.risk_id
 	WHERE
 		rd.document_id = @document_id
-		AND r.snapshot_id IS NULL
 )
 SELECT
 	COUNT(id)

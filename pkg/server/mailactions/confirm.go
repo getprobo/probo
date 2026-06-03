@@ -36,6 +36,7 @@ func confirmGetHandler() http.HandlerFunc {
 					Body:    "This confirmation link is missing required information. Please use the link from your email.",
 				},
 			)
+
 			return
 		}
 
@@ -72,6 +73,7 @@ func confirmPostHandler(mailmanSvc *mailman.Service, tokenSecret string) http.Ha
 					Body:    "This confirmation link is missing required information. Please use the link from your email.",
 				},
 			)
+
 			return
 		}
 
@@ -86,6 +88,7 @@ func confirmPostHandler(mailmanSvc *mailman.Service, tokenSecret string) http.Ha
 					Body:    "This confirmation link is invalid or has expired. Confirmation links are valid for 30 days — please re-subscribe to get a new one.",
 				},
 			)
+
 			return
 		}
 
@@ -99,6 +102,7 @@ func confirmPostHandler(mailmanSvc *mailman.Service, tokenSecret string) http.Ha
 						Body:    "We could not find your subscription. It may have already been cancelled or this link was already used.",
 					},
 				)
+
 				return
 			}
 
@@ -111,6 +115,7 @@ func confirmPostHandler(mailmanSvc *mailman.Service, tokenSecret string) http.Ha
 					Body:    "We could not confirm your subscription. Please try again later.",
 				},
 			)
+
 			return
 		}
 

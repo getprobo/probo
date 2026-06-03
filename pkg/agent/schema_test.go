@@ -129,6 +129,7 @@ func TestGenerateSchema_NestedPointerStruct(t *testing.T) {
 	type Inner struct {
 		Value *string `json:"value"`
 	}
+
 	type Params struct {
 		Inner *Inner `json:"inner"`
 	}
@@ -251,12 +252,15 @@ func TestGenerateSchema_DeeplyNestedStructure(t *testing.T) {
 	type Level3 struct {
 		Value *int `json:"value"`
 	}
+
 	type Level2 struct {
 		Items []Level3 `json:"items"`
 	}
+
 	type Level1 struct {
 		Child *Level2 `json:"child"`
 	}
+
 	type Params struct {
 		Root Level1 `json:"root"`
 	}
@@ -299,6 +303,7 @@ func TestGenerateSchema_SliceOfStructs(t *testing.T) {
 		Name  string `json:"name"`
 		Count *int   `json:"count,omitempty"`
 	}
+
 	type Params struct {
 		Items []Item `json:"items"`
 	}

@@ -50,9 +50,11 @@ func (e GraphQLError) Code() string {
 	if e.Extensions == nil {
 		return ""
 	}
+
 	if code, ok := e.Extensions["code"].(string); ok {
 		return code
 	}
+
 	return ""
 }
 
@@ -62,9 +64,11 @@ func (e GraphQLErrors) Error() string {
 	if len(e) == 0 {
 		return ""
 	}
+
 	if len(e) == 1 {
 		return e[0].Message
 	}
+
 	return fmt.Sprintf("%s (and %d more errors)", e[0].Message, len(e)-1)
 }
 
@@ -83,12 +87,14 @@ func (c *Client) doWithEndpoint(endpoint string, query string, variables map[str
 	if err != nil {
 		return nil, fmt.Errorf("cannot create request: %w", err)
 	}
+
 	req.Header.Set("Content-Type", "application/json")
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("request failed: %w", err)
 	}
+
 	defer func() { _ = resp.Body.Close() }()
 
 	respBody, err := io.ReadAll(resp.Body)
@@ -160,6 +166,7 @@ func (c *Client) ExecuteShouldFail(query string, variables map[string]any) error
 	c.T.Helper()
 	_, err := c.Do(query, variables)
 	require.Error(c.T, err, "expected GraphQL request to fail but it succeeded")
+
 	return err
 }
 
@@ -188,6 +195,7 @@ func (c *Client) ExecuteWithFiles(query string, variables map[string]any, files 
 func (c *Client) executeMultipart(query string, variables map[string]any, files map[string]UploadFile, result any) error {
 	// Create multipart writer using standard library
 	var buf bytes.Buffer
+
 	writer := multipart.NewWriter(&buf)
 
 	// Build the operations JSON
@@ -195,6 +203,7 @@ func (c *Client) executeMultipart(query string, variables map[string]any, files 
 		"query":     query,
 		"variables": variables,
 	}
+
 	operationsJSON, err := json.Marshal(operations)
 	if err != nil {
 		return fmt.Errorf("cannot marshal operations: %w", err)
@@ -207,14 +216,17 @@ func (c *Client) executeMultipart(query string, variables map[string]any, files 
 
 	// Build the map for file variables (sorted for deterministic order)
 	fileMap := make(map[string][]string)
+
 	fileOrder := make([]string, 0, len(files))
 	for path := range files {
 		fileOrder = append(fileOrder, path)
 	}
+
 	// Sort for deterministic ordering
 	for i, path := range fileOrder {
 		fileMap[fmt.Sprintf("%d", i)] = []string{"variables." + path}
 	}
+
 	mapJSON, err := json.Marshal(fileMap)
 	if err != nil {
 		return fmt.Errorf("cannot marshal map: %w", err)
@@ -239,6 +251,7 @@ func (c *Client) executeMultipart(query string, variables map[string]any, files 
 		if err != nil {
 			return fmt.Errorf("cannot create file part %s: %w", path, err)
 		}
+
 		if _, err := part.Write(file.Content); err != nil {
 			return fmt.Errorf("cannot write file content %s: %w", path, err)
 		}
@@ -253,6 +266,7 @@ func (c *Client) executeMultipart(query string, variables map[string]any, files 
 	if err != nil {
 		return fmt.Errorf("cannot create request: %w", err)
 	}
+
 	req.Header.Set("Content-Type", writer.FormDataContentType())
 
 	// Execute request
@@ -260,6 +274,7 @@ func (c *Client) executeMultipart(query string, variables map[string]any, files 
 	if err != nil {
 		return fmt.Errorf("request failed: %w", err)
 	}
+
 	defer func() { _ = resp.Body.Close() }()
 
 	respBody, err := io.ReadAll(resp.Body)

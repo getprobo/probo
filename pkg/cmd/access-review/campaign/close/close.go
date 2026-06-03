@@ -60,6 +60,7 @@ func NewCmdClose(f *cmdutil.Factory) *cobra.Command {
 				}
 
 				var confirmed bool
+
 				err := huh.NewConfirm().
 					Title(fmt.Sprintf("Close access review campaign %s?", args[0])).
 					Value(&confirmed).
@@ -67,6 +68,7 @@ func NewCmdClose(f *cmdutil.Factory) *cobra.Command {
 				if err != nil {
 					return err
 				}
+
 				if !confirmed {
 					return nil
 				}

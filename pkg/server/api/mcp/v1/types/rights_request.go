@@ -47,6 +47,7 @@ func NewListRightsRequestsOutput(rightsRequestPage *page.Page[*coredata.RightsRe
 	}
 
 	var nextCursor *page.CursorKey
+
 	if len(rightsRequestPage.Data) > 0 {
 		cursorKey := rightsRequestPage.Data[len(rightsRequestPage.Data)-1].CursorKey(rightsRequestPage.Cursor.OrderBy.Field)
 		nextCursor = &cursorKey

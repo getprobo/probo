@@ -119,6 +119,7 @@ func TestExtract(t *testing.T) {
 				t.Parallel()
 
 				r := httptest.NewRequest("GET", "/", nil)
+
 				r.RemoteAddr = tt.remoteAddr
 				for k, v := range tt.headers {
 					r.Header.Set(k, v)

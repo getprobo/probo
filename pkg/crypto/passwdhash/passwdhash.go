@@ -61,6 +61,7 @@ func NewProfile(pepper []byte, iterations uint32) (*Profile, error) {
 func (hp Profile) applyPepper(input []byte) []byte {
 	mac := hmac.New(sha256.New, hp.pepper)
 	mac.Write(input)
+
 	return mac.Sum(nil)
 }
 

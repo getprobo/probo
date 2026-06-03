@@ -148,12 +148,15 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 			if n.File != nil {
 				_, _ = fmt.Fprintf(out, "%s%s (%s)\n", label.Render("File:"), n.File.Filename, n.File.ContentType)
 			}
+
 			if n.URL != "" {
 				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("URL:"), n.URL)
 			}
+
 			if n.Task != nil {
 				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Task:"), n.Task.ID)
 			}
+
 			if n.Description != nil && *n.Description != "" {
 				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Description:"), *n.Description)
 			}

@@ -36,6 +36,7 @@ func NewBuilder(getEnv EnvGetter) *Builder {
 	if getEnv == nil {
 		getEnv = os.Getenv
 	}
+
 	return &Builder{getEnv: getEnv}
 }
 
@@ -206,6 +207,25 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 					Temperature: b.getEnvFloatPtr("AGENT_EVIDENCE_DESCRIBER_TEMPERATURE"),
 					MaxTokens:   b.getEnvIntPtr("AGENT_EVIDENCE_DESCRIBER_MAX_TOKENS"),
 				},
+				ThirdPartyVetter: probodconfig.LLMAgentConfig{
+					Provider:    b.getEnvOrDefault("AGENT_THIRD_PARTY_VETTER_PROVIDER", ""),
+					ModelName:   b.getEnvOrDefault("AGENT_THIRD_PARTY_VETTER_MODEL_NAME", ""),
+					Temperature: b.getEnvFloatPtr("AGENT_THIRD_PARTY_VETTER_TEMPERATURE"),
+					MaxTokens:   b.getEnvIntPtr("AGENT_THIRD_PARTY_VETTER_MAX_TOKENS"),
+				},
+				TrackerMapping: probodconfig.LLMAgentConfig{
+					Provider:  b.getEnvOrDefault("AGENT_TRACKER_MAPPING_PROVIDER", ""),
+					ModelName: b.getEnvOrDefault("AGENT_TRACKER_MAPPING_MODEL_NAME", ""),
+					// The tracker agents emit tiny structured JSON, but
+					// the budget must leave headroom for reasoning
+					// models whose reasoning tokens count against
+					// max_tokens; too small a budget truncates the JSON.
+					Temperature: b.getEnvFloatPtr("AGENT_TRACKER_MAPPING_TEMPERATURE"),
+					MaxTokens:   new(b.getEnvIntOrDefault("AGENT_TRACKER_MAPPING_MAX_TOKENS", 4096)),
+				},
+				Tools: probodconfig.AgentToolsConfig{
+					FirecrawlAPIKey: b.getEnv("FIRECRAWL_API_KEY"),
+				},
 			},
 			CustomDomains: probodconfig.CustomDomainsConfig{
 				RenewalInterval:   b.getEnvIntOrDefault("CUSTOM_DOMAINS_RENEWAL_INTERVAL", 3600),
@@ -233,121 +253,215 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 				StaleAfter:     b.getEnvIntOrDefault("EVIDENCE_DESCRIBER_STALE_AFTER", 300),
 				MaxConcurrency: b.getEnvIntOrDefault("EVIDENCE_DESCRIBER_MAX_CONCURRENCY", 10),
 			},
+			ThirdPartyVetting: probodconfig.ThirdPartyVettingWorkerConfig{
+				Interval:       b.getEnvIntOrDefault("THIRD_PARTY_VETTING_INTERVAL", 10),
+				StaleAfter:     b.getEnvIntOrDefault("THIRD_PARTY_VETTING_STALE_AFTER", 1500),
+				MaxConcurrency: b.getEnvIntOrDefault("THIRD_PARTY_VETTING_MAX_CONCURRENCY", 1),
+			},
+			TrackerMappingWorker: probodconfig.TrackerMappingWorkerConfig{
+				Interval:       b.getEnvIntOrDefault("TRACKER_MAPPING_INTERVAL", 10),
+				MaxConcurrency: b.getEnvIntOrDefault("TRACKER_MAPPING_MAX_CONCURRENCY", 3),
+				StaleAfter:     b.getEnvIntOrDefault("TRACKER_MAPPING_STALE_AFTER", 600),
+				AgentTimeout:   b.getEnvIntOrDefault("TRACKER_MAPPING_AGENT_TIMEOUT", 45),
+				AgentMaxTurns:  b.getEnvIntOrDefault("TRACKER_MAPPING_AGENT_MAX_TURNS", 10),
+			},
+			CommonPatternEnrichmentWorker: probodconfig.CommonPatternEnrichmentWorkerConfig{
+				Interval:       b.getEnvIntOrDefault("COMMON_PATTERN_ENRICHMENT_INTERVAL", 10),
+				MaxConcurrency: b.getEnvIntOrDefault("COMMON_PATTERN_ENRICHMENT_MAX_CONCURRENCY", 2),
+				StaleAfter:     b.getEnvIntOrDefault("COMMON_PATTERN_ENRICHMENT_STALE_AFTER", 600),
+				AgentTimeout:   b.getEnvIntOrDefault("COMMON_PATTERN_ENRICHMENT_AGENT_TIMEOUT", 45),
+				AgentMaxTurns:  b.getEnvIntOrDefault("COMMON_PATTERN_ENRICHMENT_AGENT_MAX_TURNS", 10),
+			},
 			Branding: b.getEnvBoolOrDefault("BRANDING", true),
 		},
 	}
 
 	if slackClientID := b.getEnv("CONNECTOR_SLACK_CLIENT_ID"); slackClientID != "" {
-		cfg.Probod.Connectors = append(cfg.Probod.Connectors, probodconfig.ConnectorConfig{
-			Provider: "SLACK",
-			Protocol: "oauth2",
-			RawConfig: probodconfig.ConnectorConfigOAuth2{
-				ClientID:     slackClientID,
-				ClientSecret: b.getEnv("CONNECTOR_SLACK_CLIENT_SECRET"),
+		cfg.Probod.Connectors = append(
+			cfg.Probod.Connectors,
+			probodconfig.ConnectorConfig{
+				Provider: "SLACK",
+				Protocol: "oauth2",
+				RawConfig: probodconfig.ConnectorConfigOAuth2{
+					ClientID:     slackClientID,
+					ClientSecret: b.getEnv("CONNECTOR_SLACK_CLIENT_SECRET"),
+				},
+				RawSettings: map[string]any{
+					"signing-secret": b.getEnv("CONNECTOR_SLACK_SIGNING_SECRET"),
+				},
 			},
-			RawSettings: map[string]any{
-				"signing-secret": b.getEnv("CONNECTOR_SLACK_SIGNING_SECRET"),
-			},
-		})
+		)
 	}
 
 	if hubspotClientID := b.getEnv("CONNECTOR_HUBSPOT_CLIENT_ID"); hubspotClientID != "" {
-		cfg.Probod.Connectors = append(cfg.Probod.Connectors, probodconfig.ConnectorConfig{
-			Provider: "HUBSPOT",
-			Protocol: "oauth2",
-			RawConfig: probodconfig.ConnectorConfigOAuth2{
-				ClientID:     hubspotClientID,
-				ClientSecret: b.getEnv("CONNECTOR_HUBSPOT_CLIENT_SECRET"),
+		cfg.Probod.Connectors = append(
+			cfg.Probod.Connectors,
+			probodconfig.ConnectorConfig{
+				Provider: "HUBSPOT",
+				Protocol: "oauth2",
+				RawConfig: probodconfig.ConnectorConfigOAuth2{
+					ClientID:     hubspotClientID,
+					ClientSecret: b.getEnv("CONNECTOR_HUBSPOT_CLIENT_SECRET"),
+				},
 			},
-		})
+		)
 	}
 
 	if docusignClientID := b.getEnv("CONNECTOR_DOCUSIGN_CLIENT_ID"); docusignClientID != "" {
-		cfg.Probod.Connectors = append(cfg.Probod.Connectors, probodconfig.ConnectorConfig{
-			Provider: "DOCUSIGN",
-			Protocol: "oauth2",
-			RawConfig: probodconfig.ConnectorConfigOAuth2{
-				ClientID:     docusignClientID,
-				ClientSecret: b.getEnv("CONNECTOR_DOCUSIGN_CLIENT_SECRET"),
+		cfg.Probod.Connectors = append(
+			cfg.Probod.Connectors,
+			probodconfig.ConnectorConfig{
+				Provider: "DOCUSIGN",
+				Protocol: "oauth2",
+				RawConfig: probodconfig.ConnectorConfigOAuth2{
+					ClientID:     docusignClientID,
+					ClientSecret: b.getEnv("CONNECTOR_DOCUSIGN_CLIENT_SECRET"),
+				},
 			},
-		})
+		)
 	}
 
 	if notionClientID := b.getEnv("CONNECTOR_NOTION_CLIENT_ID"); notionClientID != "" {
-		cfg.Probod.Connectors = append(cfg.Probod.Connectors, probodconfig.ConnectorConfig{
-			Provider: "NOTION",
-			Protocol: "oauth2",
-			RawConfig: probodconfig.ConnectorConfigOAuth2{
-				ClientID:     notionClientID,
-				ClientSecret: b.getEnv("CONNECTOR_NOTION_CLIENT_SECRET"),
+		cfg.Probod.Connectors = append(
+			cfg.Probod.Connectors,
+			probodconfig.ConnectorConfig{
+				Provider: "NOTION",
+				Protocol: "oauth2",
+				RawConfig: probodconfig.ConnectorConfigOAuth2{
+					ClientID:     notionClientID,
+					ClientSecret: b.getEnv("CONNECTOR_NOTION_CLIENT_SECRET"),
+				},
 			},
-		})
+		)
 	}
 
 	if githubClientID := b.getEnv("CONNECTOR_GITHUB_CLIENT_ID"); githubClientID != "" {
-		cfg.Probod.Connectors = append(cfg.Probod.Connectors, probodconfig.ConnectorConfig{
-			Provider: "GITHUB",
-			Protocol: "oauth2",
-			RawConfig: probodconfig.ConnectorConfigOAuth2{
-				ClientID:     githubClientID,
-				ClientSecret: b.getEnv("CONNECTOR_GITHUB_CLIENT_SECRET"),
+		cfg.Probod.Connectors = append(
+			cfg.Probod.Connectors,
+			probodconfig.ConnectorConfig{
+				Provider: "GITHUB",
+				Protocol: "oauth2",
+				RawConfig: probodconfig.ConnectorConfigOAuth2{
+					ClientID:     githubClientID,
+					ClientSecret: b.getEnv("CONNECTOR_GITHUB_CLIENT_SECRET"),
+				},
 			},
-		})
+		)
 	}
 
 	if sentryClientID := b.getEnv("CONNECTOR_SENTRY_CLIENT_ID"); sentryClientID != "" {
-		cfg.Probod.Connectors = append(cfg.Probod.Connectors, probodconfig.ConnectorConfig{
-			Provider: "SENTRY",
-			Protocol: "oauth2",
-			RawConfig: probodconfig.ConnectorConfigOAuth2{
-				ClientID:     sentryClientID,
-				ClientSecret: b.getEnv("CONNECTOR_SENTRY_CLIENT_SECRET"),
+		cfg.Probod.Connectors = append(
+			cfg.Probod.Connectors,
+			probodconfig.ConnectorConfig{
+				Provider: "SENTRY",
+				Protocol: "oauth2",
+				RawConfig: probodconfig.ConnectorConfigOAuth2{
+					ClientID:     sentryClientID,
+					ClientSecret: b.getEnv("CONNECTOR_SENTRY_CLIENT_SECRET"),
+				},
 			},
-		})
+		)
 	}
 
 	if intercomClientID := b.getEnv("CONNECTOR_INTERCOM_CLIENT_ID"); intercomClientID != "" {
-		cfg.Probod.Connectors = append(cfg.Probod.Connectors, probodconfig.ConnectorConfig{
-			Provider: "INTERCOM",
-			Protocol: "oauth2",
-			RawConfig: probodconfig.ConnectorConfigOAuth2{
-				ClientID:     intercomClientID,
-				ClientSecret: b.getEnv("CONNECTOR_INTERCOM_CLIENT_SECRET"),
+		cfg.Probod.Connectors = append(
+			cfg.Probod.Connectors,
+			probodconfig.ConnectorConfig{
+				Provider: "INTERCOM",
+				Protocol: "oauth2",
+				RawConfig: probodconfig.ConnectorConfigOAuth2{
+					ClientID:     intercomClientID,
+					ClientSecret: b.getEnv("CONNECTOR_INTERCOM_CLIENT_SECRET"),
+				},
 			},
-		})
+		)
 	}
 
 	if brexClientID := b.getEnv("CONNECTOR_BREX_CLIENT_ID"); brexClientID != "" {
-		cfg.Probod.Connectors = append(cfg.Probod.Connectors, probodconfig.ConnectorConfig{
-			Provider: "BREX",
-			Protocol: "oauth2",
-			RawConfig: probodconfig.ConnectorConfigOAuth2{
-				ClientID:     brexClientID,
-				ClientSecret: b.getEnv("CONNECTOR_BREX_CLIENT_SECRET"),
+		cfg.Probod.Connectors = append(
+			cfg.Probod.Connectors,
+			probodconfig.ConnectorConfig{
+				Provider: "BREX",
+				Protocol: "oauth2",
+				RawConfig: probodconfig.ConnectorConfigOAuth2{
+					ClientID:     brexClientID,
+					ClientSecret: b.getEnv("CONNECTOR_BREX_CLIENT_SECRET"),
+				},
 			},
-		})
+		)
 	}
 
 	if googleWorkspaceClientID := b.getEnv("CONNECTOR_GOOGLE_WORKSPACE_CLIENT_ID"); googleWorkspaceClientID != "" {
-		cfg.Probod.Connectors = append(cfg.Probod.Connectors, probodconfig.ConnectorConfig{
-			Provider: "GOOGLE_WORKSPACE",
-			Protocol: "oauth2",
-			RawConfig: probodconfig.ConnectorConfigOAuth2{
-				ClientID:     googleWorkspaceClientID,
-				ClientSecret: b.getEnv("CONNECTOR_GOOGLE_WORKSPACE_CLIENT_SECRET"),
+		cfg.Probod.Connectors = append(
+			cfg.Probod.Connectors,
+			probodconfig.ConnectorConfig{
+				Provider: "GOOGLE_WORKSPACE",
+				Protocol: "oauth2",
+				RawConfig: probodconfig.ConnectorConfigOAuth2{
+					ClientID:     googleWorkspaceClientID,
+					ClientSecret: b.getEnv("CONNECTOR_GOOGLE_WORKSPACE_CLIENT_SECRET"),
+				},
 			},
-		})
+		)
 	}
 
 	if microsoft365ClientID := b.getEnv("CONNECTOR_MICROSOFT_365_CLIENT_ID"); microsoft365ClientID != "" {
-		cfg.Probod.Connectors = append(cfg.Probod.Connectors, probodconfig.ConnectorConfig{
-			Provider: "MICROSOFT_365",
-			Protocol: "oauth2",
-			RawConfig: probodconfig.ConnectorConfigOAuth2{
-				ClientID:     microsoft365ClientID,
-				ClientSecret: b.getEnv("CONNECTOR_MICROSOFT_365_CLIENT_SECRET"),
+		cfg.Probod.Connectors = append(
+			cfg.Probod.Connectors,
+			probodconfig.ConnectorConfig{
+				Provider: "MICROSOFT_365",
+				Protocol: "oauth2",
+				RawConfig: probodconfig.ConnectorConfigOAuth2{
+					ClientID:     microsoft365ClientID,
+					ClientSecret: b.getEnv("CONNECTOR_MICROSOFT_365_CLIENT_SECRET"),
+				},
 			},
-		})
+		)
+	}
+
+	for _, provider := range []string{
+		"GITLAB",
+		"BITBUCKET",
+		"HEROKU",
+		"PAGERDUTY",
+		"ASANA",
+		"NETLIFY",
+		"CLICKUP",
+		"MONDAY",
+	} {
+		clientID := b.getEnv("CONNECTOR_" + provider + "_CLIENT_ID")
+		if clientID == "" {
+			continue
+		}
+
+		cfg.Probod.Connectors = append(
+			cfg.Probod.Connectors,
+			probodconfig.ConnectorConfig{
+				Provider: provider,
+				Protocol: "oauth2",
+				RawConfig: probodconfig.ConnectorConfigOAuth2{
+					ClientID:     clientID,
+					ClientSecret: b.getEnv("CONNECTOR_" + provider + "_CLIENT_SECRET"),
+				},
+			},
+		)
+	}
+
+	// Vercel needs the operator-supplied integration slug to resolve the
+	// templated AuthURL ("https://vercel.com/integrations/{integration_slug}/new").
+	if vercelClientID := b.getEnv("CONNECTOR_VERCEL_CLIENT_ID"); vercelClientID != "" {
+		cfg.Probod.Connectors = append(
+			cfg.Probod.Connectors,
+			probodconfig.ConnectorConfig{
+				Provider: "VERCEL",
+				Protocol: "oauth2",
+				RawConfig: probodconfig.ConnectorConfigOAuth2{
+					ClientID:        vercelClientID,
+					ClientSecret:    b.getEnv("CONNECTOR_VERCEL_CLIENT_SECRET"),
+					IntegrationSlug: b.getEnv("CONNECTOR_VERCEL_INTEGRATION_SLUG"),
+				},
+			},
+		)
 	}
 
 	return cfg, nil
@@ -397,6 +511,15 @@ func (b *Builder) validateRequired() error {
 		{"CONNECTOR_BREX", []string{"CLIENT_SECRET"}},
 		{"CONNECTOR_GOOGLE_WORKSPACE", []string{"CLIENT_SECRET"}},
 		{"CONNECTOR_MICROSOFT_365", []string{"CLIENT_SECRET"}},
+		{"CONNECTOR_GITLAB", []string{"CLIENT_SECRET"}},
+		{"CONNECTOR_BITBUCKET", []string{"CLIENT_SECRET"}},
+		{"CONNECTOR_HEROKU", []string{"CLIENT_SECRET"}},
+		{"CONNECTOR_PAGERDUTY", []string{"CLIENT_SECRET"}},
+		{"CONNECTOR_ASANA", []string{"CLIENT_SECRET"}},
+		{"CONNECTOR_NETLIFY", []string{"CLIENT_SECRET"}},
+		{"CONNECTOR_CLICKUP", []string{"CLIENT_SECRET"}},
+		{"CONNECTOR_MONDAY", []string{"CLIENT_SECRET"}},
+		{"CONNECTOR_VERCEL", []string{"CLIENT_SECRET", "INTEGRATION_SLUG"}},
 	}
 
 	for _, p := range oauthProviders {
@@ -425,6 +548,7 @@ func (b *Builder) getSAMLCredentials() (cert, key string, err error) {
 	if cert == "" {
 		cert = b.getEnv("SAML_CERTIFICATE")
 	}
+
 	if key == "" {
 		key = b.getEnv("SAML_PRIVATE_KEY")
 	}
@@ -443,6 +567,7 @@ func (b *Builder) getOAuth2SigningKey() string {
 	if b.oauth2SigningKey != "" {
 		return b.oauth2SigningKey
 	}
+
 	return b.getEnv("OAUTH2_SERVER_SIGNING_KEY")
 }
 
@@ -461,6 +586,7 @@ func (b *Builder) getEnvOrDefault(key, defaultValue string) string {
 	if value := b.getEnv(key); value != "" {
 		return value
 	}
+
 	return defaultValue
 }
 
@@ -470,6 +596,7 @@ func (b *Builder) getEnvIntOrDefault(key string, defaultValue int) int {
 			return int(intValue)
 		}
 	}
+
 	return defaultValue
 }
 
@@ -479,6 +606,7 @@ func (b *Builder) getEnvFloatOrDefault(key string, defaultValue float64) float64
 			return floatValue
 		}
 	}
+
 	return defaultValue
 }
 
@@ -488,6 +616,7 @@ func (b *Builder) getEnvFloatPtr(key string) *float64 {
 			return &floatValue
 		}
 	}
+
 	return nil
 }
 
@@ -498,6 +627,7 @@ func (b *Builder) getEnvIntPtr(key string) *int {
 			return &v
 		}
 	}
+
 	return nil
 }
 
@@ -507,6 +637,7 @@ func (b *Builder) getEnvBoolOrDefault(key string, defaultValue bool) bool {
 			return boolValue
 		}
 	}
+
 	return defaultValue
 }
 
@@ -517,12 +648,15 @@ func (b *Builder) parseOriginsList(s string) []string {
 	}
 
 	var result []string
+
 	for part := range strings.SplitSeq(s, ",") {
 		part = strings.TrimSpace(part)
+
 		part = strings.Trim(part, "\"")
 		if part != "" {
 			result = append(result, part)
 		}
 	}
+
 	return result
 }

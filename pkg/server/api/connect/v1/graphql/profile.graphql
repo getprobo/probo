@@ -25,7 +25,7 @@ type Profile implements Node {
 
   permission(action: String!): Boolean!
     @goField(forceResolver: true)
-    @session(required: PRESENT)
+    @authentication(required: PRESENT)
 }
 
 enum ProfileState
@@ -52,6 +52,10 @@ enum ProfileOrderField
   CREATED_AT
     @goEnum(
       value: "go.probo.inc/probo/pkg/coredata.MembershipProfileOrderFieldCreatedAt"
+    )
+  EMAIL_ADDRESS
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.MembershipProfileOrderFieldEmailAddress"
     )
   KIND @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipProfileOrderFieldKind")
   ORGANIZATION_NAME
@@ -93,11 +97,13 @@ type ProfileEdge {
 
 extend type Mutation {
   createUser(input: CreateUserInput!): CreateUserPayload
-    @session(required: PRESENT)
+    @authentication(required: PRESENT)
   deactivateUser(input: DeactivateUserInput!): DeactivateUserPayload
   updateUser(input: UpdateUserInput!): UpdateUserPayload!
+  archiveUser(input: ArchiveUserInput!): ArchiveUserPayload
+    @authentication(required: PRESENT)
   removeUser(input: RemoveUserInput!): RemoveUserPayload
-    @session(required: PRESENT)
+    @authentication(required: PRESENT)
 }
 
 input CreateUserInput {
@@ -137,6 +143,11 @@ input RemoveUserInput {
   profileId: ID!
 }
 
+input ArchiveUserInput {
+  organizationId: ID!
+  profileId: ID!
+}
+
 type CreateUserPayload {
   profileEdge: ProfileEdge!
 }
@@ -151,4 +162,8 @@ type UpdateUserPayload {
 
 type RemoveUserPayload {
   deletedProfileId: ID!
+}
+
+type ArchiveUserPayload {
+  archivedProfileId: ID!
 }

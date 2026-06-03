@@ -23,6 +23,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/page"
 )
 
 type (
@@ -36,6 +37,7 @@ type (
 		Source           *CookieSource `db:"source"`
 		ValueSize        *int          `db:"value_size"`
 		InitiatorURL     *string       `db:"initiator_url"`
+		InitiatorDomain  *string       `db:"initiator_domain"`
 		LastDetectedAt   time.Time     `db:"last_detected_at"`
 		CreatedAt        time.Time     `db:"created_at"`
 		UpdatedAt        time.Time     `db:"updated_at"`
@@ -43,6 +45,21 @@ type (
 
 	DetectedTrackers []*DetectedTracker
 )
+
+func (dt *DetectedTracker) CursorKey(field DetectedTrackerOrderField) page.CursorKey {
+	switch field {
+	case DetectedTrackerOrderFieldInitiatorURL:
+		if dt.InitiatorURL == nil {
+			return page.NewCursorKey(dt.ID, "")
+		}
+
+		return page.NewCursorKey(dt.ID, *dt.InitiatorURL)
+	case DetectedTrackerOrderFieldLastDetectedAt:
+		return page.NewCursorKey(dt.ID, dt.LastDetectedAt)
+	}
+
+	panic(fmt.Sprintf("unsupported order by: %s", field))
+}
 
 func (dt *DetectedTracker) Upsert(
 	ctx context.Context,
@@ -61,6 +78,7 @@ INSERT INTO detected_trackers (
 	source,
 	value_size,
 	initiator_url,
+	initiator_domain,
 	last_detected_at,
 	created_at,
 	updated_at
@@ -75,6 +93,7 @@ INSERT INTO detected_trackers (
 	@source,
 	@value_size,
 	@initiator_url,
+	@initiator_domain,
 	@last_detected_at,
 	@created_at,
 	@updated_at
@@ -87,6 +106,7 @@ ON CONFLICT (cookie_banner_id, tracker_type, identifier) DO UPDATE
 			ELSE detected_trackers.source
 		END,
 		initiator_url = COALESCE(EXCLUDED.initiator_url, detected_trackers.initiator_url),
+		initiator_domain = COALESCE(EXCLUDED.initiator_domain, detected_trackers.initiator_domain),
 		updated_at = EXCLUDED.updated_at
 `
 
@@ -102,6 +122,7 @@ ON CONFLICT (cookie_banner_id, tracker_type, identifier) DO UPDATE
 		"source_script":      CookieSourceScript,
 		"value_size":         dt.ValueSize,
 		"initiator_url":      dt.InitiatorURL,
+		"initiator_domain":   dt.InitiatorDomain,
 		"last_detected_at":   dt.LastDetectedAt,
 		"created_at":         dt.CreatedAt,
 		"updated_at":         dt.UpdatedAt,
@@ -144,6 +165,134 @@ WHERE
 	}
 
 	return count, nil
+}
+
+func (dts *DetectedTrackers) LoadInitiatorDomainsByTrackerPatternID(
+	ctx context.Context,
+	conn pg.Querier,
+	trackerPatternID gid.GID,
+	limit int,
+) ([]string, error) {
+	q := `
+SELECT DISTINCT initiator_domain
+FROM detected_trackers
+WHERE tracker_pattern_id = @tracker_pattern_id
+  AND initiator_domain IS NOT NULL
+LIMIT @limit;
+`
+
+	args := pgx.StrictNamedArgs{
+		"tracker_pattern_id": trackerPatternID,
+		"limit":              limit,
+	}
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return nil, fmt.Errorf("cannot load initiator domains: %w", err)
+	}
+
+	domains, err := pgx.CollectRows(rows, pgx.RowTo[string])
+	if err != nil {
+		return nil, fmt.Errorf("cannot collect initiator domains: %w", err)
+	}
+
+	return domains, nil
+}
+
+func (dts *DetectedTrackers) LoadByTrackerPatternID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	trackerPatternID gid.GID,
+	cursor *page.Cursor[DetectedTrackerOrderField],
+) error {
+	q := `
+SELECT
+	id,
+	cookie_banner_id,
+	tracker_pattern_id,
+	tracker_type,
+	identifier,
+	max_age_seconds,
+	source,
+	value_size,
+	initiator_url,
+	initiator_domain,
+	last_detected_at,
+	created_at,
+	updated_at
+FROM
+	detected_trackers
+WHERE
+	%s
+	AND tracker_pattern_id = @tracker_pattern_id
+	AND %s
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"tracker_pattern_id": trackerPatternID,
+	}
+	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, cursor.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query detected trackers: %w", err)
+	}
+
+	trackers, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[DetectedTracker])
+	if err != nil {
+		return fmt.Errorf("cannot collect detected trackers: %w", err)
+	}
+
+	*dts = trackers
+
+	return nil
+}
+
+func (dts *DetectedTrackers) LoadSiblingPatternIDsByInitiatorDomains(
+	ctx context.Context,
+	conn pg.Querier,
+	cookieBannerID gid.GID,
+	domains []string,
+	excludePatternID gid.GID,
+	limit int,
+) ([]gid.GID, error) {
+	if len(domains) == 0 {
+		return nil, nil
+	}
+
+	q := `
+SELECT DISTINCT tracker_pattern_id
+FROM detected_trackers
+WHERE cookie_banner_id = @cookie_banner_id
+  AND initiator_domain = ANY(@domains)
+  AND tracker_pattern_id IS NOT NULL
+  AND tracker_pattern_id != @exclude_pattern_id
+ORDER BY tracker_pattern_id
+LIMIT @limit;
+`
+
+	args := pgx.StrictNamedArgs{
+		"cookie_banner_id":   cookieBannerID,
+		"domains":            domains,
+		"exclude_pattern_id": excludePatternID,
+		"limit":              limit,
+	}
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return nil, fmt.Errorf("cannot load sibling pattern ids: %w", err)
+	}
+
+	ids, err := pgx.CollectRows(rows, pgx.RowTo[gid.GID])
+	if err != nil {
+		return nil, fmt.Errorf("cannot collect sibling pattern ids: %w", err)
+	}
+
+	return ids, nil
 }
 
 func (dts *DetectedTrackers) RelinkByTrackerPatternID(

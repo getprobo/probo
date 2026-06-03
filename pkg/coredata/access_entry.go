@@ -24,6 +24,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/iam/policy"
 	"go.probo.inc/probo/pkg/page"
 )
 
@@ -69,18 +70,43 @@ func (e AccessEntry) CursorKey(orderBy AccessEntryOrderField) page.CursorKey {
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
-func (e *AccessEntry) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
-	q := `SELECT organization_id FROM access_entries WHERE id = $1 LIMIT 1;`
+func (e *AccessEntry) AuthorizationAttributes(
+	ctx context.Context,
+	conn pg.Querier,
+	resourceIDs []gid.GID,
+) (policy.AttributesByID, error) {
+	q := `SELECT id, organization_id FROM access_entries WHERE id = ANY(@resource_ids::text[])`
 
-	var organizationID gid.GID
-	if err := conn.QueryRow(ctx, q, e.ID).Scan(&organizationID); err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, ErrResourceNotFound
-		}
-		return nil, fmt.Errorf("cannot query access entry authorization attributes: %w", err)
+	args := pgx.StrictNamedArgs{
+		"resource_ids": resourceIDs,
 	}
 
-	return map[string]string{"organization_id": organizationID.String()}, nil
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return nil, fmt.Errorf("cannot query authorization attributes: %w", err)
+	}
+
+	defer rows.Close()
+
+	attrsByID := make(policy.AttributesByID)
+
+	for rows.Next() {
+		var id, organizationID gid.GID
+
+		if err := rows.Scan(&id, &organizationID); err != nil {
+			return nil, fmt.Errorf("cannot scan authorization attributes: %w", err)
+		}
+
+		attrsByID[id] = policy.Attributes{
+			"organization_id": organizationID.String(),
+		}
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("cannot iterate authorization attributes: %w", err)
+	}
+
+	return attrsByID, nil
 }
 
 func (e *AccessEntry) LoadByID(
@@ -139,6 +165,7 @@ LIMIT 1;
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
 		}
+
 		return fmt.Errorf("cannot collect access entry: %w", err)
 	}
 
@@ -243,6 +270,7 @@ VALUES (
 		"created_at":                e.CreatedAt,
 		"updated_at":                e.UpdatedAt,
 	}
+
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
 		return fmt.Errorf("cannot insert access_entry: %w", err)
@@ -529,6 +557,7 @@ func (e *AccessEntry) LoadOrganizationID(
 		if errors.Is(err, pgx.ErrNoRows) {
 			return gid.GID{}, ErrResourceNotFound
 		}
+
 		return gid.GID{}, fmt.Errorf("cannot load organization id for access entry: %w", err)
 	}
 
@@ -731,13 +760,16 @@ WHERE %s
 	defer rows.Close()
 
 	var result []BaselineAccountEntry
+
 	for rows.Next() {
 		var entry BaselineAccountEntry
 		if err := rows.Scan(&entry.AccountKey, &entry.Email, &entry.FullName); err != nil {
 			return nil, fmt.Errorf("cannot scan baseline entry: %w", err)
 		}
+
 		result = append(result, entry)
 	}
+
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("cannot iterate baseline entries: %w", err)
 	}
@@ -795,13 +827,16 @@ ORDER BY
 	defer rows.Close()
 
 	var result []MembershipAccount
+
 	for rows.Next() {
 		var account MembershipAccount
 		if err := rows.Scan(&account.ID, &account.Email, &account.FullName, &account.State, &account.Role, &account.CreatedAt); err != nil {
 			return nil, fmt.Errorf("cannot scan membership account: %w", err)
 		}
+
 		result = append(result, account)
 	}
+
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("cannot iterate membership accounts: %w", err)
 	}

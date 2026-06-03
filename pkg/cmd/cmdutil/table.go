@@ -32,6 +32,7 @@ func NewTable(headers ...string) *table.Table {
 			if row == table.HeaderRow {
 				return headerStyle
 			}
+
 			return cellStyle
 		})
 }

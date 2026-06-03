@@ -17,51 +17,43 @@ package file
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/coredata"
-	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/gid"
 )
 
 type Service struct {
-	pg          *pg.Client
-	fileManager *filemanager.Service
+	pg      *pg.Client
+	baseURL *baseurl.BaseURL
 }
 
-func NewService(pgClient *pg.Client, fileManager *filemanager.Service) *Service {
+func NewService(pgClient *pg.Client, baseURL *baseurl.BaseURL) *Service {
 	return &Service{
-		pg:          pgClient,
-		fileManager: fileManager,
+		pg:      pgClient,
+		baseURL: baseURL,
 	}
 }
 
-func (s *Service) GetPublicFileURL(
-	ctx context.Context,
-	fileID gid.GID,
-	expiresIn time.Duration,
-) (string, error) {
+func (s *Service) GenerateFileURL(ctx context.Context, fileID gid.GID) (string, error) {
 	file := &coredata.File{}
 
-	err := s.pg.WithConn(
-		ctx,
-		func(ctx context.Context, conn pg.Querier) error {
-			if err := file.LoadPublicByID(ctx, conn, fileID); err != nil {
-				return fmt.Errorf("cannot load public file: %w", err)
-			}
+	err := s.pg.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+		if err := file.LoadPublicByID(ctx, conn, fileID); err != nil {
+			return fmt.Errorf("cannot load public file: %w", err)
+		}
 
-			return nil
-		},
-	)
+		return nil
+	})
 	if err != nil {
 		return "", err
 	}
 
-	presignedURL, err := s.fileManager.GenerateFileUrl(ctx, file, expiresIn)
+	url, err := s.baseURL.AppendPath("/api/files/v1/" + fileID.String()).String()
 	if err != nil {
-		return "", fmt.Errorf("cannot generate file URL: %w", err)
+		return "", fmt.Errorf("cannot build file URL: %w", err)
 	}
 
-	return presignedURL, nil
+	return url, nil
 }

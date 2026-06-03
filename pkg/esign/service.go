@@ -52,6 +52,7 @@ type (
 		FileID         gid.GID
 		SignerEmail    mail.Addr
 		ConsentText    string // optional; required when DocumentType == OTHER
+		EmailSubject   string
 	}
 
 	AcceptSignatureRequest struct {
@@ -72,6 +73,7 @@ type (
 		SignerIPAddr   string
 		SignerUA       string
 		ConsentText    string
+		EmailSubject   string
 	}
 
 	RecordEventRequest struct {
@@ -119,6 +121,7 @@ func (s *Service) Run(ctx context.Context, presenterConfigFunc EmailPresenterCon
 		s.logger.Named("sealing-worker"),
 		nil,
 	)
+
 	g.Go(func() error { return sealingWorker.Run(sealingWorkerCtx) })
 
 	certWorkerCtx, stopCertWorker := context.WithCancel(ctx)
@@ -130,6 +133,7 @@ func (s *Service) Run(ctx context.Context, presenterConfigFunc EmailPresenterCon
 		s.bucket,
 		s.logger.Named("completion-certificate-worker"),
 	)
+
 	g.Go(func() error { return certWorker.Run(certWorkerCtx) })
 
 	<-gctx.Done()
@@ -148,6 +152,7 @@ func (s *Service) CreateSignature(
 	consentText := req.ConsentText
 	if consentText == "" {
 		var err error
+
 		consentText, err = req.DocumentType.ConsentText()
 		if err != nil {
 			return nil, fmt.Errorf("cannot derive consent text: %w", err)
@@ -156,6 +161,16 @@ func (s *Service) CreateSignature(
 		if !strings.HasSuffix(consentText, coredata.ESignProcessConsentText) {
 			consentText = consentText + " " + coredata.ESignProcessConsentText
 		}
+	}
+
+	emailSubject := req.EmailSubject
+	if emailSubject == "" {
+		docName := req.DocumentType.DisplayName()
+		if req.DocumentName != nil && *req.DocumentName != "" {
+			docName = *req.DocumentName
+		}
+
+		emailSubject = fmt.Sprintf("Your signed %s - Certificate of Completion", docName)
 	}
 
 	now := time.Now()
@@ -177,6 +192,7 @@ func (s *Service) CreateSignature(
 		FileID:         stampedFileID,
 		SignerEmail:    req.SignerEmail.String(),
 		ConsentText:    consentText,
+		EmailSubject:   emailSubject,
 		SealVersion:    1,
 		AttemptCount:   0,
 		MaxAttempts:    10,
@@ -206,6 +222,7 @@ func (s *Service) CreateAndAcceptSignature(
 			FileID:         req.FileID,
 			SignerEmail:    req.SignerEmail,
 			ConsentText:    req.ConsentText,
+			EmailSubject:   req.EmailSubject,
 		},
 	)
 	if err != nil {
@@ -500,6 +517,7 @@ func (s *Service) GetEventsBySignatureID(
 		scope  = coredata.NewScopeFromObjectID(signatureID)
 		events = coredata.ElectronicSignatureEvents{}
 	)
+
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
@@ -510,7 +528,6 @@ func (s *Service) GetEventsBySignatureID(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}

@@ -20,23 +20,32 @@ import (
 	"errors"
 	"fmt"
 	"maps"
+	"strings"
 	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/iam/policy"
 	"go.probo.inc/probo/pkg/page"
 )
 
 type (
 	CookieItem struct {
-		Name          string `json:"name"`
-		MaxAgeSeconds *int   `json:"max_age_seconds"`
-		Description   string `json:"description"`
+		Name          string      `json:"name"`
+		TrackerType   TrackerType `json:"tracker_type"`
+		MaxAgeSeconds *int        `json:"max_age_seconds"`
+		Description   string      `json:"description"`
 	}
 
 	CookieItems []CookieItem
+
+	cookieDurationUnit struct {
+		secs int
+		name string
+		snap int
+	}
 
 	CookieCategory struct {
 		ID              gid.GID            `db:"id"`
@@ -56,10 +65,81 @@ type (
 	CookieCategories []*CookieCategory
 )
 
+// cookieDurationUnits mirrors DURATION_UNITS in
+// packages/cookie-banner/src/cookie-utils.ts (and the snap table used by the
+// pattern-analysis worker) so durations rendered server-side match exactly what
+// visitors see in the consent banner. snap is the per-unit buffer: when the
+// remainder is within snap seconds of the next whole unit, round up instead of
+// carrying into smaller units.
+var cookieDurationUnits = [...]cookieDurationUnit{
+	{365 * 24 * 3600, "year", 21 * 24 * 3600},
+	{30 * 24 * 3600, "month", 2 * 24 * 3600},
+	{7 * 24 * 3600, "week", 12 * 3600},
+	{24 * 3600, "day", 2 * 3600},
+	{3600, "hour", 5 * 60},
+	{60, "minute", 5},
+	{1, "second", 0},
+}
+
+// HumanizedDuration renders the tracker's max-age into a human-readable
+// lifetime using the same snapping and composition rules as the banner's
+// humanizeDuration helper. A nil or non-positive max-age has no fixed
+// expiry, so the lifetime is described by the tracker type: session cookies
+// are cleared when the browser closes, session storage is cleared when the
+// tab closes, and the remaining storage technologies persist until cleared.
+func (c CookieItem) HumanizedDuration() string {
+	if c.MaxAgeSeconds == nil || *c.MaxAgeSeconds <= 0 {
+		switch c.TrackerType {
+		case TrackerTypeSessionStorage:
+			return "Until the tab is closed"
+		case TrackerTypeLocalStorage, TrackerTypeIndexedDB, TrackerTypeCacheStorage:
+			return "Persistent"
+		default:
+			return "Session"
+		}
+	}
+
+	remaining := *c.MaxAgeSeconds
+
+	var parts []string
+
+	for _, u := range cookieDurationUnits {
+		if remaining < u.secs-u.snap {
+			continue
+		}
+
+		count := remaining / u.secs
+
+		leftover := remaining - count*u.secs
+		switch {
+		case leftover >= u.secs-u.snap:
+			count++
+			remaining = 0
+		case leftover <= u.snap:
+			remaining = 0
+		default:
+			remaining = leftover
+		}
+
+		if count == 1 {
+			parts = append(parts, fmt.Sprintf("1 %s", u.name))
+		} else {
+			parts = append(parts, fmt.Sprintf("%d %ss", count, u.name))
+		}
+	}
+
+	if len(parts) == 0 {
+		return "Session"
+	}
+
+	return strings.Join(parts, ", ")
+}
+
 func (c CookieItems) MarshalJSON() ([]byte, error) {
 	if c == nil {
 		return []byte("[]"), nil
 	}
+
 	return json.Marshal([]CookieItem(c))
 }
 
@@ -68,6 +148,7 @@ func (c *CookieItems) UnmarshalJSON(data []byte) error {
 		*c = CookieItems{}
 		return nil
 	}
+
 	return json.Unmarshal(data, (*[]CookieItem)(c))
 }
 
@@ -80,19 +161,43 @@ func (c *CookieCategory) CursorKey(field CookieCategoryOrderField) page.CursorKe
 	panic(fmt.Sprintf("unsupported order by: %s", field))
 }
 
-func (c *CookieCategory) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
-	q := `SELECT organization_id FROM cookie_categories WHERE id = $1 LIMIT 1;`
+func (c *CookieCategory) AuthorizationAttributes(
+	ctx context.Context,
+	conn pg.Querier,
+	resourceIDs []gid.GID,
+) (policy.AttributesByID, error) {
+	q := `SELECT id, organization_id FROM cookie_categories WHERE id = ANY(@resource_ids::text[])`
 
-	var organizationID gid.GID
-	if err := conn.QueryRow(ctx, q, c.ID).Scan(&organizationID); err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, ErrResourceNotFound
-		}
-
-		return nil, fmt.Errorf("cannot query cookie category authorization attributes: %w", err)
+	args := pgx.StrictNamedArgs{
+		"resource_ids": resourceIDs,
 	}
 
-	return map[string]string{"organization_id": organizationID.String()}, nil
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return nil, fmt.Errorf("cannot query authorization attributes: %w", err)
+	}
+
+	defer rows.Close()
+
+	attrsByID := make(policy.AttributesByID)
+
+	for rows.Next() {
+		var id, organizationID gid.GID
+
+		if err := rows.Scan(&id, &organizationID); err != nil {
+			return nil, fmt.Errorf("cannot scan authorization attributes: %w", err)
+		}
+
+		attrsByID[id] = policy.Attributes{
+			"organization_id": organizationID.String(),
+		}
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("cannot iterate authorization attributes: %w", err)
+	}
+
+	return attrsByID, nil
 }
 
 func (c *CookieCategory) LoadByID(
@@ -138,6 +243,7 @@ LIMIT 1;
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
 		}
+
 		return fmt.Errorf("cannot collect cookie category: %w", err)
 	}
 
@@ -199,6 +305,7 @@ func (c *CookieCategories) LoadByCookieBannerID(
 	scope Scoper,
 	cookieBannerID gid.GID,
 	cursor *page.Cursor[CookieCategoryOrderField],
+	filter *CookieCategoryFilter,
 ) error {
 	q := `
 SELECT
@@ -220,12 +327,14 @@ WHERE
 	%s
 	AND cookie_banner_id = @cookie_banner_id
 	AND %s
+	AND %s
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
+	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"cookie_banner_id": cookieBannerID}
 	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
@@ -248,6 +357,7 @@ func (c *CookieCategories) CountByCookieBannerID(
 	conn pg.Querier,
 	scope Scoper,
 	cookieBannerID gid.GID,
+	filter *CookieCategoryFilter,
 ) (int, error) {
 	q := `
 SELECT
@@ -257,101 +367,14 @@ FROM
 WHERE
 	%s
 	AND cookie_banner_id = @cookie_banner_id
-`
-
-	q = fmt.Sprintf(q, scope.SQLFragment())
-
-	args := pgx.StrictNamedArgs{"cookie_banner_id": cookieBannerID}
-	maps.Copy(args, scope.SQLArguments())
-
-	row := conn.QueryRow(ctx, q, args)
-
-	var count int
-	if err := row.Scan(&count); err != nil {
-		return 0, fmt.Errorf("cannot scan count: %w", err)
-	}
-
-	return count, nil
-}
-
-func (c *CookieCategories) LoadConsentCategoriesByCookieBannerID(
-	ctx context.Context,
-	conn pg.Querier,
-	scope Scoper,
-	cookieBannerID gid.GID,
-	cursor *page.Cursor[CookieCategoryOrderField],
-) error {
-	q := `
-SELECT
-	id,
-	organization_id,
-	cookie_banner_id,
-	name,
-	slug,
-	description,
-	kind,
-	rank,
-	gcm_consent_types,
-	posthog_consent,
-	created_at,
-	updated_at
-FROM
-	cookie_categories
-WHERE
-	%s
-	AND cookie_banner_id = @cookie_banner_id
-	AND kind != @excluded_kind
 	AND %s
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
+	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
 
-	args := pgx.StrictNamedArgs{
-		"cookie_banner_id": cookieBannerID,
-		"excluded_kind":    CookieCategoryKindUncategorised,
-	}
+	args := pgx.StrictNamedArgs{"cookie_banner_id": cookieBannerID}
 	maps.Copy(args, scope.SQLArguments())
-	maps.Copy(args, cursor.SQLArguments())
-
-	rows, err := conn.Query(ctx, q, args)
-	if err != nil {
-		return fmt.Errorf("cannot query consent cookie categories: %w", err)
-	}
-
-	categories, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[CookieCategory])
-	if err != nil {
-		return fmt.Errorf("cannot collect consent cookie categories: %w", err)
-	}
-
-	*c = categories
-
-	return nil
-}
-
-func (c *CookieCategories) CountConsentCategoriesByCookieBannerID(
-	ctx context.Context,
-	conn pg.Querier,
-	scope Scoper,
-	cookieBannerID gid.GID,
-) (int, error) {
-	q := `
-SELECT
-	COUNT(id)
-FROM
-	cookie_categories
-WHERE
-	%s
-	AND cookie_banner_id = @cookie_banner_id
-	AND kind != @excluded_kind
-`
-
-	q = fmt.Sprintf(q, scope.SQLFragment())
-
-	args := pgx.StrictNamedArgs{
-		"cookie_banner_id": cookieBannerID,
-		"excluded_kind":    CookieCategoryKindUncategorised,
-	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
 
 	row := conn.QueryRow(ctx, q, args)
 
@@ -368,6 +391,7 @@ func (c *CookieCategories) LoadAllByCookieBannerID(
 	conn pg.Querier,
 	scope Scoper,
 	cookieBannerID gid.GID,
+	filter *CookieCategoryFilter,
 ) error {
 	q := `
 SELECT
@@ -388,14 +412,16 @@ FROM
 WHERE
 	%s
 	AND cookie_banner_id = @cookie_banner_id
+	AND %s
 ORDER BY
 	rank ASC, id ASC;
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"cookie_banner_id": cookieBannerID}
 	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -405,61 +431,6 @@ ORDER BY
 	categories, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[CookieCategory])
 	if err != nil {
 		return fmt.Errorf("cannot collect cookie categories: %w", err)
-	}
-
-	*c = categories
-
-	return nil
-}
-
-// LoadAllConsentCategoriesByCookieBannerID loads all categories except
-// UNCATEGORISED, which is an admin-side inbox never shown to visitors.
-func (c *CookieCategories) LoadAllConsentCategoriesByCookieBannerID(
-	ctx context.Context,
-	conn pg.Querier,
-	scope Scoper,
-	cookieBannerID gid.GID,
-) error {
-	q := `
-SELECT
-	id,
-	organization_id,
-	cookie_banner_id,
-	name,
-	slug,
-	description,
-	kind,
-	rank,
-	gcm_consent_types,
-	posthog_consent,
-	created_at,
-	updated_at
-FROM
-	cookie_categories
-WHERE
-	%s
-	AND cookie_banner_id = @cookie_banner_id
-	AND kind != @excluded_kind
-ORDER BY
-	rank ASC, id ASC;
-`
-
-	q = fmt.Sprintf(q, scope.SQLFragment())
-
-	args := pgx.StrictNamedArgs{
-		"cookie_banner_id": cookieBannerID,
-		"excluded_kind":    CookieCategoryKindUncategorised,
-	}
-	maps.Copy(args, scope.SQLArguments())
-
-	rows, err := conn.Query(ctx, q, args)
-	if err != nil {
-		return fmt.Errorf("cannot query consent cookie categories: %w", err)
-	}
-
-	categories, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[CookieCategory])
-	if err != nil {
-		return fmt.Errorf("cannot collect consent cookie categories: %w", err)
 	}
 
 	*c = categories
@@ -527,6 +498,7 @@ INSERT INTO cookie_categories (
 				return ErrResourceAlreadyExists
 			}
 		}
+
 		return fmt.Errorf("cannot insert cookie category: %w", err)
 	}
 
@@ -572,6 +544,7 @@ WHERE
 				return ErrResourceAlreadyExists
 			}
 		}
+
 		return fmt.Errorf("cannot update cookie category: %w", err)
 	}
 
@@ -740,6 +713,7 @@ LIMIT 1;
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
 		}
+
 		return fmt.Errorf("cannot collect uncategorised cookie category: %w", err)
 	}
 

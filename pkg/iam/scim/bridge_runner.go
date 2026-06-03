@@ -77,18 +77,23 @@ func NewBridgeRunner(
 	if cfg.Interval == 0 {
 		cfg.Interval = 15 * time.Minute
 	}
+
 	if cfg.PollInterval == 0 {
 		cfg.PollInterval = 30 * time.Second
 	}
+
 	if cfg.SyncTimeout == 0 {
 		cfg.SyncTimeout = 5 * time.Minute
 	}
+
 	if cfg.MaxBackoff == 0 {
 		cfg.MaxBackoff = DefaultMaxBackoff
 	}
+
 	if cfg.MaxConsecutiveFailures == 0 {
 		cfg.MaxConsecutiveFailures = DefaultMaxConsecutiveFailures
 	}
+
 	if cfg.StaleSyncThreshold == 0 {
 		cfg.StaleSyncThreshold = DefaultStaleSyncThreshold
 	}
@@ -161,6 +166,7 @@ func (r *BridgeRunner) processBridge(ctx context.Context) error {
 	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, "sync failed")
+
 		return r.transitionToFailed(ctx, bridge, scope, err, duration, logger)
 	}
 

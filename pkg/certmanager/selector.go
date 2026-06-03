@@ -71,6 +71,7 @@ func (s *Selector) GetCertificate(hello *tls.ClientHelloInfo) (*tls.Certificate,
 	}
 
 	s.cache.Store(domain, cert)
+
 	return cert, nil
 }
 
@@ -78,6 +79,7 @@ func (s *Selector) loadFromDatabase(domain string) (*tls.Certificate, error) {
 	ctx := context.Background()
 
 	var cert *tls.Certificate
+
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
@@ -103,10 +105,10 @@ func (s *Selector) loadFromDatabase(domain string) (*tls.Certificate, error) {
 			}
 
 			cert = &tlsCert
+
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}

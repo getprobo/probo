@@ -81,17 +81,22 @@ func AnalyzeCSPTool() agent.Tool {
 
 			req, err := http.NewRequestWithContext(ctx, http.MethodGet, p.URL, nil)
 			if err != nil {
-				return agent.ResultJSON(cspResult{
-					ErrorDetail: fmt.Sprintf("cannot create request for %s: %s", p.URL, err),
-				}), nil
+				return agent.ResultJSON(
+					cspResult{
+						ErrorDetail: fmt.Sprintf("cannot create request for %s: %s", p.URL, err),
+					},
+				), nil
 			}
 
 			resp, err := client.Do(req)
 			if err != nil {
-				return agent.ResultJSON(cspResult{
-					ErrorDetail: fmt.Sprintf("cannot fetch %s: %s", p.URL, err),
-				}), nil
+				return agent.ResultJSON(
+					cspResult{
+						ErrorDetail: fmt.Sprintf("cannot fetch %s: %s", p.URL, err),
+					},
+				), nil
 			}
+
 			defer func() { _ = resp.Body.Close() }()
 
 			raw := resp.Header.Get("Content-Security-Policy")
@@ -111,6 +116,7 @@ func AnalyzeCSPTool() agent.Tool {
 			directives := parseCSPDirectives(raw)
 
 			var hasUnsafeEval, hasUnsafeInline, hasWildcard bool
+
 			for _, d := range directives {
 				for _, v := range d.Values {
 					switch v {

@@ -131,14 +131,14 @@ func (h *SCIMHandler) BearerTokenMiddleware(next http.Handler) http.Handler {
 
 		config, err := h.iam.SCIMService.ValidateToken(r.Context(), token)
 		if err != nil {
-			var invalidToken *scimservice.ErrSCIMInvalidToken
-			if errors.As(err, &invalidToken) {
+			if _, ok := errors.AsType[*scimservice.ErrSCIMInvalidToken](err); ok {
 				httpserver.RenderError(w, http.StatusUnauthorized, errors.New("invalid token"))
 				return
 			}
 
 			h.logger.ErrorCtx(r.Context(), "SCIM token validation error", log.Error(err))
 			httpserver.RenderError(w, http.StatusInternalServerError, errors.New("internal server error"))
+
 			return
 		}
 
@@ -148,8 +148,7 @@ func (h *SCIMHandler) BearerTokenMiddleware(next http.Handler) http.Handler {
 }
 
 func (rc *scimRequestContext) logAndWrapError(err error, logMsg string) error {
-	var scimErr scimerrors.ScimError
-	if errors.As(err, &scimErr) {
+	if scimErr, ok := errors.AsType[scimerrors.ScimError](err); ok {
 		errMsg := scimErr.Detail
 
 		// Don't reference profileID for 404 errors - the resource doesn't exist
@@ -157,13 +156,17 @@ func (rc *scimRequestContext) logAndWrapError(err error, logMsg string) error {
 		if scimErr.Status == http.StatusNotFound {
 			userName = ""
 		}
+
 		rc.handler.handler.iam.SCIMService.LogEvent(rc.ctx, rc.config, rc.method, rc.path, userName, rc.ipAddress, scimErr.Status, &errMsg)
+
 		return err
 	}
 
 	rc.handler.handler.logger.ErrorCtx(rc.ctx, logMsg, log.Error(err))
+
 	errMsg := "internal server error"
 	rc.handler.handler.iam.SCIMService.LogEvent(rc.ctx, rc.config, rc.method, rc.path, rc.userName, rc.ipAddress, 500, &errMsg)
+
 	return scimerrors.ScimErrorInternal
 }
 
@@ -236,6 +239,7 @@ func (h *scimResourceHandler) GetAll(r *http.Request, params scim.ListRequestPar
 	}
 
 	var filterExpr scimfilter.Expression
+
 	if params.FilterValidator != nil {
 		if err := params.FilterValidator.Validate(); err != nil {
 			return scim.Page{}, rc.logAndWrapError(scimerrors.ScimErrorBadRequest(err.Error()), "invalid filter")
@@ -250,6 +254,7 @@ func (h *scimResourceHandler) GetAll(r *http.Request, params scim.ListRequestPar
 	}
 
 	rc.logSuccess(200)
+
 	return scim.Page{
 		TotalResults: totalCount,
 		Resources:    resources,

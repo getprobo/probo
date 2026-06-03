@@ -50,6 +50,7 @@ func NewListFindingsOutput(findingPage *page.Page[*coredata.Finding, coredata.Fi
 	}
 
 	var nextCursor *page.CursorKey
+
 	if len(findingPage.Data) > 0 {
 		cursorKey := findingPage.Data[len(findingPage.Data)-1].CursorKey(findingPage.Cursor.OrderBy.Field)
 		nextCursor = &cursorKey

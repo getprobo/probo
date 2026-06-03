@@ -127,6 +127,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 					if err := json.Unmarshal(data, &resp); err != nil {
 						return nil, err
 					}
+
 					return &resp.Viewer.Profiles, nil
 				},
 			)
@@ -147,6 +148,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 			for _, p := range profiles {
 				orgID := ""
 				orgName := ""
+
 				if p.Organization != nil {
 					orgID = p.Organization.ID
 					orgName = p.Organization.Name

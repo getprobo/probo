@@ -25,6 +25,7 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/iam/policy"
 	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/page"
 )
@@ -76,6 +77,8 @@ func (p MembershipProfile) CursorKey(orderBy MembershipProfileOrderField) page.C
 		return page.NewCursorKey(p.ID, p.CreatedAt)
 	case MembershipProfileOrderFieldFullName:
 		return page.NewCursorKey(p.ID, p.FullName)
+	case MembershipProfileOrderFieldEmailAddress:
+		return page.NewCursorKey(p.ID, p.EmailAddress)
 	case MembershipProfileOrderFieldKind:
 		return page.NewCursorKey(p.ID, p.Kind)
 	case MembershipProfileOrderFieldOrganizationName:
@@ -87,22 +90,57 @@ func (p MembershipProfile) CursorKey(orderBy MembershipProfileOrderField) page.C
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
-func (p *MembershipProfile) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
-	q := `SELECT organization_id, identity_id FROM iam_membership_profiles WHERE id = $1 LIMIT 1;`
+func (p *MembershipProfile) AuthorizationAttributes(
+	ctx context.Context,
+	conn pg.Querier,
+	resourceIDs []gid.GID,
+) (policy.AttributesByID, error) {
+	q := `
+SELECT
+    id,
+    organization_id,
+    identity_id
+FROM
+    iam_membership_profiles
+WHERE
+    id = ANY(@resource_ids::text[])
+`
 
-	var organizationID gid.GID
-	var identityID gid.GID
-	if err := conn.QueryRow(ctx, q, p.ID).Scan(&organizationID, &identityID); err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, ErrResourceNotFound
-		}
-		return nil, fmt.Errorf("cannot query profile authorization attributes: %w", err)
+	args := pgx.StrictNamedArgs{
+		"resource_ids": resourceIDs,
 	}
 
-	return map[string]string{
-		"organization_id": organizationID.String(),
-		"identity_id":     identityID.String(),
-	}, nil
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return nil, fmt.Errorf("cannot query profile authorization attributes: %w", err)
+	}
+	defer rows.Close()
+
+	attrsByID := make(policy.AttributesByID, len(resourceIDs))
+
+	for rows.Next() {
+		var (
+			id             gid.GID
+			organizationID gid.GID
+			identityID     gid.GID
+		)
+
+		err = rows.Scan(&id, &organizationID, &identityID)
+		if err != nil {
+			return nil, fmt.Errorf("cannot scan profile authorization attributes: %w", err)
+		}
+
+		attrsByID[id] = policy.Attributes{
+			"organization_id": organizationID.String(),
+			"identity_id":     identityID.String(),
+		}
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, fmt.Errorf("cannot iterate profile authorization attributes: %w", err)
+	}
+
+	return attrsByID, nil
 }
 
 func (p *MembershipProfile) LoadByID(
@@ -903,6 +941,7 @@ WHERE
 	maps.Copy(args, scope.SQLArguments())
 
 	var count int
+
 	err := conn.QueryRow(ctx, q, args).Scan(&count)
 	if err != nil {
 		return 0, fmt.Errorf("cannot query document version approver profiles count: %w", err)
@@ -1012,6 +1051,7 @@ WHERE
 	row := conn.QueryRow(ctx, q, args)
 
 	var count int
+
 	err := row.Scan(&count)
 	if err != nil {
 		return 0, fmt.Errorf("cannot collect count: %w", err)
@@ -1048,6 +1088,7 @@ WHERE
 	row := conn.QueryRow(ctx, q, args)
 
 	var count int
+
 	err := row.Scan(&count)
 	if err != nil {
 		return 0, fmt.Errorf("cannot collect count: %w", err)
@@ -1087,6 +1128,7 @@ WHERE
 	row := conn.QueryRow(ctx, q, args)
 
 	var count int
+
 	err := row.Scan(&count)
 	if err != nil {
 		return 0, fmt.Errorf("cannot collect count: %w", err)
@@ -1212,7 +1254,12 @@ VALUES (
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
 		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok && pgErr.Code == "23505" {
-			return ErrResourceAlreadyExists
+			switch pgErr.ConstraintName {
+			case "idx_profiles_identity_id_organization_id",
+				"idx_profiles_external_id_organization_id",
+				"idx_profiles_user_name_organization_id":
+				return ErrResourceAlreadyExists
+			}
 		}
 
 		return fmt.Errorf("cannot insert profile: %w", err)
@@ -1401,13 +1448,15 @@ WHERE
 	args := pgx.StrictNamedArgs{"profile_id": profileID}
 	maps.Copy(args, scope.SQLArguments())
 
-	result, err := conn.Exec(ctx, q, args)
+	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot delete profile: %w", err)
-	}
+		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
+			if pgErr.Code == "23503" {
+				return ErrResourceInUse
+			}
+		}
 
-	if result.RowsAffected() == 0 {
-		return ErrResourceNotFound
+		return fmt.Errorf("cannot delete profile: %w", err)
 	}
 
 	return nil

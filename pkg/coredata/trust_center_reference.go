@@ -25,6 +25,7 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/iam/policy"
 	"go.probo.inc/probo/pkg/page"
 )
 
@@ -56,21 +57,47 @@ func (t TrustCenterReference) CursorKey(orderBy TrustCenterReferenceOrderField) 
 	case TrustCenterReferenceOrderFieldUpdatedAt:
 		return page.NewCursorKey(t.ID, t.UpdatedAt)
 	}
+
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
-func (t *TrustCenterReference) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
-	q := `SELECT organization_id FROM trust_center_references WHERE id = $1 LIMIT 1;`
+func (t *TrustCenterReference) AuthorizationAttributes(
+	ctx context.Context,
+	conn pg.Querier,
+	resourceIDs []gid.GID,
+) (policy.AttributesByID, error) {
+	q := `SELECT id, organization_id FROM trust_center_references WHERE id = ANY(@resource_ids::text[])`
 
-	var organizationID gid.GID
-	if err := conn.QueryRow(ctx, q, t.ID).Scan(&organizationID); err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, ErrResourceNotFound
-		}
-		return nil, fmt.Errorf("cannot query trust center reference authorization attributes: %w", err)
+	args := pgx.StrictNamedArgs{
+		"resource_ids": resourceIDs,
 	}
 
-	return map[string]string{"organization_id": organizationID.String()}, nil
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return nil, fmt.Errorf("cannot query authorization attributes: %w", err)
+	}
+
+	defer rows.Close()
+
+	attrsByID := make(policy.AttributesByID)
+
+	for rows.Next() {
+		var id, organizationID gid.GID
+
+		if err := rows.Scan(&id, &organizationID); err != nil {
+			return nil, fmt.Errorf("cannot scan authorization attributes: %w", err)
+		}
+
+		attrsByID[id] = policy.Attributes{
+			"organization_id": organizationID.String(),
+		}
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("cannot iterate authorization attributes: %w", err)
+	}
+
+	return attrsByID, nil
 }
 
 func (t *TrustCenterReference) LoadByID(
@@ -169,12 +196,12 @@ RETURNING rank;
 
 	err := conn.QueryRow(ctx, q, args).Scan(&t.Rank)
 	if err != nil {
-		var pgErr *pgconn.PgError
-		if errors.As(err, &pgErr) {
+		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
 			if pgErr.Code == "23505" && pgErr.ConstraintName == "trust_center_references_trust_center_id_rank_key" {
 				return ErrResourceAlreadyExists
 			}
 		}
+
 		return fmt.Errorf("cannot insert trust center reference: %w", err)
 	}
 
@@ -369,6 +396,7 @@ WHERE
 	maps.Copy(args, scope.SQLArguments())
 
 	var count int
+
 	err := conn.QueryRow(ctx, q, args).Scan(&count)
 	if err != nil {
 		return 0, fmt.Errorf("cannot count trust center references: %w", err)

@@ -296,10 +296,12 @@ func TestTask_RequiredFields(t *testing.T) {
 			if !tt.skipOrganization {
 				input["organizationId"] = owner.GetOrganizationID().String()
 			}
+
 			for k, v := range tt.input {
 				if v == "placeholder" {
 					continue // Skip placeholder values
 				}
+
 				input[k] = v
 			}
 

@@ -25,10 +25,7 @@ const require = createRequire(import.meta.url);
 export default defineConfig({
   plugins: [
     react({
-      exclude: [
-        "src/pages/iam/**/*",
-        "src/components/connectors/**/*",
-      ],
+      exclude: ["src/pages/iam/**/*"],
       babel: {
         plugins: [
           [
@@ -42,10 +39,7 @@ export default defineConfig({
       },
     }),
     react({
-      include: [
-        "src/pages/iam/**/*",
-        "src/components/connectors/**/*",
-      ],
+      include: ["src/pages/iam/**/*"],
       babel: {
         plugins: [
           [

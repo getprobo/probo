@@ -1,0 +1,29 @@
+---
+description: Template file naming and conventions
+globs: "**/*.tmpl"
+alwaysApply: false
+---
+
+# Template files
+
+See full guide: `contrib/claude/file-naming.md`
+
+## Naming convention
+
+Template files use the extension pattern `<name>.<output-ext>.tmpl`:
+
+```
+pkg/trust/sitemap.xml.tmpl
+pkg/cookiebanner/prompts/tracker_identification.txt.tmpl
+pkg/probo/templates/risk_list.json.tmpl
+```
+
+## Dynamic values over hardcoded lists
+
+Never hardcode enum values or source-of-truth lists in template text. Use a placeholder and substitute at runtime:
+
+```
+Use one of: {{.Categories}}.
+```
+
+Use `strings.Replace` (single placeholder) or `text/template` (multiple).

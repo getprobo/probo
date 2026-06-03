@@ -45,6 +45,7 @@ func NewListCookieCategoriesOutput(p *page.Page[*coredata.CookieCategory, coreda
 	}
 
 	var nextCursor *page.CursorKey
+
 	if len(p.Data) > 0 {
 		cursorKey := p.Data[len(p.Data)-1].CursorKey(p.Cursor.OrderBy.Field)
 		nextCursor = &cursorKey

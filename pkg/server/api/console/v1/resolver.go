@@ -18,6 +18,7 @@ package console_v1
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -28,6 +29,7 @@ import (
 	"go.probo.inc/probo/pkg/accessreview"
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/connector/provider"
 	"go.probo.inc/probo/pkg/cookiebanner"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/esign"
@@ -35,17 +37,20 @@ import (
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/mailman"
 	"go.probo.inc/probo/pkg/probo"
+	"go.probo.inc/probo/pkg/riskmanagement"
 	"go.probo.inc/probo/pkg/saferedirect"
 	"go.probo.inc/probo/pkg/securecookie"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/authz"
 	"go.probo.inc/probo/pkg/server/api/console/v1/dataloader"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
+	"go.probo.inc/probo/pkg/thirdparty"
 )
 
 type (
 	Resolver struct {
 		authorize         authz.AuthorizeFunc
+		batchAuthorize    authz.BatchAuthorizeFunc
 		probo             *probo.Service
 		iam               *iam.Service
 		esign             *esign.Service
@@ -53,6 +58,9 @@ type (
 		mailman           *mailman.Service
 		cookieBanner      *cookiebanner.Service
 		connectorRegistry *connector.ConnectorRegistry
+		providerRegistry  *provider.Registry
+		riskManagement    *riskmanagement.Service
+		thirdParty        *thirdparty.Service
 		logger            *log.Logger
 		customDomainCname string
 	}
@@ -69,8 +77,11 @@ func NewMux(
 	cookieConfig securecookie.Config,
 	tokenSecret string,
 	connectorRegistry *connector.ConnectorRegistry,
+	providerRegistry *provider.Registry,
 	baseURL *baseurl.BaseURL,
 	customDomainCname string,
+	thirdPartySvc *thirdparty.Service,
+	riskManagementSvc *riskmanagement.Service,
 ) *chi.Mux {
 	r := chi.NewMux()
 
@@ -84,8 +95,11 @@ func NewMux(
 		mailmanSvc,
 		cookieBannerSvc,
 		connectorRegistry,
+		providerRegistry,
 		customDomainCname,
 		logger,
+		thirdPartySvc,
+		riskManagementSvc,
 	)
 
 	r.Group(func(r chi.Router) {
@@ -93,7 +107,7 @@ func NewMux(
 		r.Use(authn.NewAPIKeyMiddleware(iamSvc, tokenSecret))
 		r.Use(authn.NewOAuth2AccessTokenMiddleware(iamSvc))
 		r.Use(authn.NewIdentityPresenceMiddleware())
-		r.Use(dataloader.NewMiddleware(proboSvc, iamSvc, cookieBannerSvc))
+		r.Use(dataloader.NewMiddleware(proboSvc, iamSvc, cookieBannerSvc, thirdPartySvc))
 
 		r.Handle("/graphql", graphqlHandler)
 
@@ -145,7 +159,7 @@ func handleConnectorComplete(
 		}
 
 		var connectorProvider coredata.ConnectorProvider
-		if err := connectorProvider.Scan(provider); err != nil {
+		if err := connectorProvider.UnmarshalText([]byte(provider)); err != nil {
 			httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("unsupported provider: %q", provider))
 			return
 		}
@@ -154,6 +168,7 @@ func handleConnectorComplete(
 		if err != nil {
 			logger.ErrorCtx(r.Context(), "cannot complete connector", log.Error(err))
 			httpserver.RenderError(w, http.StatusInternalServerError, fmt.Errorf("internal error"))
+
 			return
 		}
 
@@ -163,7 +178,8 @@ func handleConnectorComplete(
 			return
 		}
 
-		svc := proboSvc.WithTenant(organizationID.TenantID())
+		scope := coredata.NewScopeFromObjectID(organizationID)
+		svc := proboSvc
 
 		var cnnctr *coredata.Connector
 
@@ -178,6 +194,7 @@ func handleConnectorComplete(
 
 			cnnctr, err = svc.Connectors.Reconnect(
 				r.Context(),
+				scope,
 				probo.ReconnectConnectorRequest{
 					ConnectorID:    connectorID,
 					OrganizationID: organizationID,
@@ -188,21 +205,93 @@ func handleConnectorComplete(
 			if err != nil {
 				logger.ErrorCtx(r.Context(), "cannot reconnect connector", log.Error(err))
 				httpserver.RenderError(w, http.StatusInternalServerError, fmt.Errorf("internal error"))
+
 				return
 			}
 		} else {
-			cnnctr, err = svc.Connectors.Create(
-				r.Context(),
-				probo.CreateConnectorRequest{
-					OrganizationID: organizationID,
-					Provider:       connectorProvider,
-					Protocol:       coredata.ConnectorProtocol(connection.Type()),
-					Connection:     connection,
-				},
-			)
+			createReq := probo.CreateConnectorRequest{
+				OrganizationID: organizationID,
+				Provider:       connectorProvider,
+				Protocol:       coredata.ConnectorProtocol(connection.Type()),
+				Connection:     connection,
+			}
+
+			// PagerDuty Scoped OAuth surfaces the customer's subdomain as
+			// a `subdomain` query parameter on the redirect URL (not in
+			// the token response body). Persist it on the connector
+			// settings so the driver and name resolver can read it.
+			if connectorProvider == coredata.ConnectorProviderPagerDuty {
+				subdomain := query.Get("subdomain")
+				if subdomain == "" {
+					// Fall back to ProviderMetadata for older OAuth flows
+					// that may have surfaced the subdomain through the
+					// token response body.
+					subdomain = state.ProviderMetadata["subdomain"]
+				}
+
+				// The subdomain comes from an attacker-influenceable
+				// callback parameter; refuse anything that isn't a valid
+				// DNS label so it cannot be smuggled into URLs or logs.
+				if subdomain != "" && !isValidPagerDutySubdomain(subdomain) {
+					logger.WarnCtx(r.Context(), "rejecting invalid pagerduty subdomain",
+						log.String("provider", string(connectorProvider)),
+					)
+
+					subdomain = ""
+				}
+
+				if subdomain != "" {
+					raw, err := json.Marshal(&coredata.PagerDutyConnectorSettings{
+						Subdomain: subdomain,
+					})
+					if err != nil {
+						logger.ErrorCtx(r.Context(), "cannot marshal pagerduty settings", log.Error(err))
+						httpserver.RenderError(w, http.StatusInternalServerError, fmt.Errorf("internal error"))
+
+						return
+					}
+
+					createReq.RawSettings = raw
+				}
+			}
+
+			// Vercel surfaces the customer's team_id as an OAuth callback
+			// query parameter (not in the token response body). When the
+			// install targets a personal account no team_id is sent — fall
+			// back to /v2/user.id as a synthetic TeamID; the v3 members
+			// endpoint accepts personal-account UIDs.
+			if connectorProvider == coredata.ConnectorProviderVercel {
+				teamID := query.Get("team_id")
+				if teamID == "" {
+					if oauth2Conn, ok := connection.(*connector.OAuth2Connection); ok && oauth2Conn.AccessToken != "" {
+						if uid, err := connector.FetchVercelUserID(r.Context(), oauth2Conn.AccessToken); err == nil {
+							teamID = uid
+						} else {
+							logger.WarnCtx(r.Context(), "cannot fetch vercel user id for personal-account fallback", log.Error(err))
+						}
+					}
+				}
+
+				if teamID != "" {
+					raw, err := json.Marshal(&coredata.VercelConnectorSettings{
+						TeamID: teamID,
+					})
+					if err != nil {
+						logger.ErrorCtx(r.Context(), "cannot marshal vercel settings", log.Error(err))
+						httpserver.RenderError(w, http.StatusInternalServerError, fmt.Errorf("internal error"))
+
+						return
+					}
+
+					createReq.RawSettings = raw
+				}
+			}
+
+			cnnctr, err = svc.Connectors.Create(r.Context(), scope, createReq)
 			if err != nil {
 				logger.ErrorCtx(r.Context(), "cannot create connector", log.Error(err))
 				httpserver.RenderError(w, http.StatusInternalServerError, fmt.Errorf("internal error"))
+
 				return
 			}
 		}
@@ -215,8 +304,10 @@ func handleConnectorComplete(
 		parsedURL, err := url.Parse(redirectURL)
 		if err != nil {
 			logger.ErrorCtx(r.Context(), "cannot parse redirect URL", log.Error(err))
+
 			parsedURL, _ = url.Parse(baseURL.WithPath("/organizations/" + organizationID.String()).MustString())
 		}
+
 		q := parsedURL.Query()
 		q.Set("connector_id", cnnctr.ID.String())
 		q.Set("provider", string(connectorProvider))
@@ -235,42 +326,62 @@ func handleConnectorOAuth2Error(
 	query url.Values,
 ) {
 	oauthErr := query.Get("error")
-	oauthErrDesc := query.Get("error_description")
 
 	provider := "unknown"
 	redirectURL := baseURL.String()
+
 	if stateToken := query.Get("state"); stateToken != "" {
 		if payload, err := connector.DecodeOAuth2StatePayload(stateToken); err == nil {
 			if payload.Data.Provider != "" {
 				provider = payload.Data.Provider
 			}
+
 			if payload.Data.ContinueURL != "" {
 				redirectURL = payload.Data.ContinueURL
 			}
 		}
 	}
 
+	// Provider error_description fields routinely carry PII (user emails,
+	// account names) and must never reach logs or the client redirect URL.
+	// Forward only the standardized error code.
 	logger.WarnCtx(r.Context(), "OAuth2 callback returned error",
 		log.String("provider", provider),
 		log.String("error", oauthErr),
-		log.String("error_description", oauthErrDesc),
 	)
 
 	parsedURL, _ := url.Parse(redirectURL)
 	q := parsedURL.Query()
 	q.Set("error", oauthErr)
-	if oauthErrDesc != "" {
-		q.Set("error_description", oauthErrDesc)
-	}
 	parsedURL.RawQuery = q.Encode()
 
 	safeRedirect.Redirect(w, r, parsedURL.String(), "/", http.StatusSeeOther)
 }
 
-func (r *Resolver) ProboService(ctx context.Context, tenantID gid.TenantID) *probo.TenantService {
-	return r.probo.WithTenant(tenantID)
+// isValidPagerDutySubdomain reports whether s is a single DNS label
+// (RFC 1035 §2.3.1). PagerDuty subdomains are tenant identifiers that
+// will be embedded in API URLs; the OAuth callback is the only place
+// where a malformed value can enter the system.
+func isValidPagerDutySubdomain(s string) bool {
+	if s == "" || len(s) > 63 {
+		return false
+	}
+
+	for _, c := range s {
+		switch {
+		case c >= 'a' && c <= 'z':
+		case c >= 'A' && c <= 'Z':
+		case c >= '0' && c <= '9':
+		case c == '-':
+		default:
+			return false
+		}
+	}
+
+	return true
 }
 
 func (r *Resolver) Permission(ctx context.Context, obj types.Node, action string) (bool, error) {
-	return r.authorize(ctx, obj.GetID(), action, authz.WithDryRun()) == nil, nil
+	_, err := r.authorize(ctx, obj.GetID(), action, authz.WithDryRun())
+	return err == nil, nil
 }

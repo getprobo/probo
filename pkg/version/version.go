@@ -90,6 +90,7 @@ func UserAgent(component string) string {
 	if info.Commit != "unknown" {
 		metadata = append(metadata, fmt.Sprintf("commit=%s", info.Commit))
 	}
+
 	if info.BuildDate != "unknown" {
 		metadata = append(metadata, fmt.Sprintf("built=%s", info.BuildDate))
 	}

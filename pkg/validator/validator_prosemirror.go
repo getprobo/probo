@@ -30,16 +30,20 @@ func ProseMirrorDocumentContent() ValidatorFunc {
 		if isNil {
 			return nil
 		}
+
 		s, ok := actualValue.(string)
 		if !ok {
 			return newValidationError(ErrorCodeInvalidFormat, "value must be a string")
 		}
+
 		if strings.TrimSpace(s) == "" {
 			return nil
 		}
+
 		if err := prosemirror.ValidateDocumentContentJSON(s); err != nil {
 			return newValidationError(ErrorCodeInvalidFormat, err.Error())
 		}
+
 		return nil
 	}
 }
@@ -55,23 +59,28 @@ func ProseMirrorDocumentMaxTextLength(maxLength int) ValidatorFunc {
 		if isNil {
 			return nil
 		}
+
 		s, ok := actualValue.(string)
 		if !ok {
 			return newValidationError(ErrorCodeInvalidFormat, "value must be a string")
 		}
+
 		if strings.TrimSpace(s) == "" {
 			return nil
 		}
+
 		n, err := prosemirror.Parse(s)
 		if err != nil {
 			return nil
 		}
+
 		if n.TextLength() > maxLength {
 			return newValidationError(
 				ErrorCodeTooLong,
 				fmt.Sprintf("text content must be at most %d characters", maxLength),
 			)
 		}
+
 		return nil
 	}
 }

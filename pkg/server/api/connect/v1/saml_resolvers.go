@@ -19,7 +19,7 @@ import (
 
 // CreateSAMLConfiguration is the resolver for the createSAMLConfiguration field.
 func (r *mutationResolver) CreateSAMLConfiguration(ctx context.Context, input types.CreateSAMLConfigurationInput) (*types.CreateSAMLConfigurationPayload, error) {
-	if err := r.authorize(ctx, input.OrganizationID, iam.ActionSAMLConfigurationCreate); err != nil {
+	if _, err := r.authorize(ctx, input.OrganizationID, iam.ActionSAMLConfigurationCreate); err != nil {
 		return nil, err
 	}
 
@@ -43,14 +43,13 @@ func (r *mutationResolver) CreateSAMLConfiguration(ctx context.Context, input ty
 		input.OrganizationID,
 		req,
 	)
-
 	if err != nil {
-		var errSAMLConfigurationEmailDomainAlreadyExists *iam.ErrSAMLConfigurationEmailDomainAlreadyExists
-		if errors.As(err, &errSAMLConfigurationEmailDomainAlreadyExists) {
+		if _, ok := errors.AsType[*iam.ErrSAMLConfigurationEmailDomainAlreadyExists](err); ok {
 			return nil, gqlutils.Conflict(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot create saml configuration", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -64,7 +63,7 @@ func (r *mutationResolver) CreateSAMLConfiguration(ctx context.Context, input ty
 
 // UpdateSAMLConfiguration is the resolver for the updateSAMLConfiguration field.
 func (r *mutationResolver) UpdateSAMLConfiguration(ctx context.Context, input types.UpdateSAMLConfigurationInput) (*types.UpdateSAMLConfigurationPayload, error) {
-	if err := r.authorize(ctx, input.SamlConfigurationID, iam.ActionSAMLConfigurationUpdate); err != nil {
+	if _, err := r.authorize(ctx, input.SamlConfigurationID, iam.ActionSAMLConfigurationUpdate); err != nil {
 		return nil, err
 	}
 
@@ -101,7 +100,7 @@ func (r *mutationResolver) UpdateSAMLConfiguration(ctx context.Context, input ty
 
 // DeleteSAMLConfiguration is the resolver for the deleteSAMLConfiguration field.
 func (r *mutationResolver) DeleteSAMLConfiguration(ctx context.Context, input types.DeleteSAMLConfigurationInput) (*types.DeleteSAMLConfigurationPayload, error) {
-	if err := r.authorize(ctx, input.OrganizationID, iam.ActionSAMLConfigurationDelete); err != nil {
+	if _, err := r.authorize(ctx, input.OrganizationID, iam.ActionSAMLConfigurationDelete); err != nil {
 		return nil, err
 	}
 
@@ -133,10 +132,12 @@ func (r *sAMLConfigurationConnectionResolver) TotalCount(ctx context.Context, ob
 			r.logger.ErrorCtx(ctx, "cannot count saml configurations", log.Error(err))
 			return nil, gqlutils.Internal(ctx)
 		}
+
 		return &count, nil
 	}
 
 	r.logger.ErrorCtx(ctx, "unsupported resolver", log.Any("resolver", obj.Resolver))
+
 	return nil, gqlutils.Internal(ctx)
 }
 

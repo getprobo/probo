@@ -16,9 +16,8 @@ package trust
 
 import (
 	"context"
-	"time"
-
 	"fmt"
+	"time"
 
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
@@ -26,24 +25,24 @@ import (
 )
 
 type FrameworkService struct {
-	svc *TenantService
+	svc *Service
 }
 
 func (s FrameworkService) Get(
 	ctx context.Context,
+	scope coredata.Scoper,
 	frameworkID gid.GID,
 ) (*coredata.Framework, error) {
 	framework := &coredata.Framework{}
 
 	err := s.svc.pg.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
-		err := framework.LoadByID(ctx, conn, s.svc.scope, frameworkID)
+		err := framework.LoadByID(ctx, conn, scope, frameworkID)
 		if err != nil {
 			return fmt.Errorf("cannot load framework: %w", err)
 		}
 
 		return nil
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -53,6 +52,7 @@ func (s FrameworkService) Get(
 
 func (s FrameworkService) GenerateLightLogoURL(
 	ctx context.Context,
+	scope coredata.Scoper,
 	frameworkID gid.GID,
 	expiresIn time.Duration,
 ) (*string, error) {
@@ -62,7 +62,7 @@ func (s FrameworkService) GenerateLightLogoURL(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
 			framework := &coredata.Framework{}
-			if err := framework.LoadByID(ctx, conn, s.svc.scope, frameworkID); err != nil {
+			if err := framework.LoadByID(ctx, conn, scope, frameworkID); err != nil {
 				return fmt.Errorf("cannot load framework: %w", err)
 			}
 
@@ -70,7 +70,7 @@ func (s FrameworkService) GenerateLightLogoURL(
 				return nil
 			}
 
-			if err := file.LoadByID(ctx, conn, s.svc.scope, *framework.LightLogoFileID); err != nil {
+			if err := file.LoadByID(ctx, conn, scope, *framework.LightLogoFileID); err != nil {
 				return fmt.Errorf("cannot load file: %w", err)
 			}
 
@@ -95,6 +95,7 @@ func (s FrameworkService) GenerateLightLogoURL(
 
 func (s FrameworkService) GenerateDarkLogoURL(
 	ctx context.Context,
+	scope coredata.Scoper,
 	frameworkID gid.GID,
 	expiresIn time.Duration,
 ) (*string, error) {
@@ -104,7 +105,7 @@ func (s FrameworkService) GenerateDarkLogoURL(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
 			framework := &coredata.Framework{}
-			if err := framework.LoadByID(ctx, conn, s.svc.scope, frameworkID); err != nil {
+			if err := framework.LoadByID(ctx, conn, scope, frameworkID); err != nil {
 				return fmt.Errorf("cannot load framework: %w", err)
 			}
 
@@ -112,7 +113,7 @@ func (s FrameworkService) GenerateDarkLogoURL(
 				return nil
 			}
 
-			if err := file.LoadByID(ctx, conn, s.svc.scope, *framework.DarkLogoFileID); err != nil {
+			if err := file.LoadByID(ctx, conn, scope, *framework.DarkLogoFileID); err != nil {
 				return fmt.Errorf("cannot load file: %w", err)
 			}
 

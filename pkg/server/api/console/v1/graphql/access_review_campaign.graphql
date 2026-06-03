@@ -284,32 +284,6 @@ input AccessEntryFilter
     accountType: AccessEntryAccountType
 }
 
-type AccessReview implements Node {
-    id: ID!
-    organization: Organization! @goField(forceResolver: true)
-    identitySource: AccessSource @goField(forceResolver: true)
-    createdAt: Datetime!
-    updatedAt: Datetime!
-
-    accessSources(
-        first: Int
-        after: CursorKey
-        last: Int
-        before: CursorKey
-        orderBy: AccessSourceOrder
-    ): AccessSourceConnection! @goField(forceResolver: true)
-
-    campaigns(
-        first: Int
-        after: CursorKey
-        last: Int
-        before: CursorKey
-        orderBy: AccessReviewCampaignOrder
-    ): AccessReviewCampaignConnection! @goField(forceResolver: true)
-
-    permission(action: String!): Boolean! @goField(forceResolver: true)
-}
-
 type ProviderOrganization {
     slug: String!
     displayName: String!

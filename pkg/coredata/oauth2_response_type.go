@@ -14,7 +14,10 @@
 
 package coredata
 
-import "fmt"
+import (
+	"encoding"
+	"fmt"
+)
 
 type (
 	OAuth2ResponseType  string
@@ -25,26 +28,37 @@ const (
 	OAuth2ResponseTypeCode OAuth2ResponseType = "code"
 )
 
-func (r OAuth2ResponseType) IsValid() bool {
-	switch r {
-	case OAuth2ResponseTypeCode:
+var (
+	_ fmt.Stringer             = OAuth2ResponseType("")
+	_ encoding.TextMarshaler   = OAuth2ResponseType("")
+	_ encoding.TextUnmarshaler = (*OAuth2ResponseType)(nil)
+)
+
+func (v OAuth2ResponseType) IsValid() bool {
+	switch v {
+	case
+		OAuth2ResponseTypeCode:
 		return true
 	}
 
 	return false
 }
 
-func (r OAuth2ResponseType) String() string { return string(r) }
-
-func (r *OAuth2ResponseType) UnmarshalText(text []byte) error {
-	*r = OAuth2ResponseType(text)
-	if !r.IsValid() {
-		return fmt.Errorf("%s is not a valid OAuth2ResponseType", string(text))
-	}
-
-	return nil
+func (v OAuth2ResponseType) String() string {
+	return string(v)
 }
 
-func (r OAuth2ResponseType) MarshalText() ([]byte, error) {
-	return []byte(r.String()), nil
+func (v OAuth2ResponseType) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *OAuth2ResponseType) UnmarshalText(text []byte) error {
+	val := OAuth2ResponseType(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid OAuth2ResponseType value: %q", string(text))
+	}
+
+	*v = val
+
+	return nil
 }

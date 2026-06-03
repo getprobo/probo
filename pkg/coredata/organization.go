@@ -24,6 +24,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/iam/policy"
 	"go.probo.inc/probo/pkg/page"
 )
 
@@ -46,18 +47,42 @@ type (
 	Organizations []*Organization
 )
 
-func (o *Organization) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
-	q := `SELECT id FROM organizations WHERE id = $1 LIMIT 1;`
+func (o *Organization) AuthorizationAttributes(
+	ctx context.Context,
+	conn pg.Querier,
+	resourceIDs []gid.GID,
+) (policy.AttributesByID, error) {
+	q := `SELECT id FROM organizations WHERE id = ANY(@resource_ids::text[])`
 
-	var id gid.GID
-	if err := conn.QueryRow(ctx, q, o.ID).Scan(&id); err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, ErrResourceNotFound
-		}
-		return nil, fmt.Errorf("cannot query organization authorization attributes: %w", err)
+	args := pgx.StrictNamedArgs{
+		"resource_ids": resourceIDs,
 	}
 
-	return map[string]string{"organization_id": o.ID.String()}, nil
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return nil, fmt.Errorf("cannot query authorization attributes: %w", err)
+	}
+
+	defer rows.Close()
+
+	attrsByID := make(policy.AttributesByID)
+
+	for rows.Next() {
+		var id gid.GID
+		if err := rows.Scan(&id); err != nil {
+			return nil, fmt.Errorf("cannot scan authorization attributes: %w", err)
+		}
+
+		attrsByID[id] = policy.Attributes{
+			"organization_id": id.String(),
+		}
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("cannot iterate authorization attributes: %w", err)
+	}
+
+	return attrsByID, nil
 }
 
 func (o Organization) CursorKey(orderBy OrganizationOrderField) page.CursorKey {
@@ -214,6 +239,66 @@ WHERE
 
 	args := pgx.StrictNamedArgs{"identity_id": identityID}
 	maps.Copy(args, cursor.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query organizations: %w", err)
+	}
+
+	organizations, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Organization])
+	if err != nil {
+		return fmt.Errorf("cannot collect organizations: %w", err)
+	}
+
+	*o = organizations
+
+	return nil
+}
+
+func (o *Organizations) LoadAllByIdentityIDWithPendingInvitation(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	identityID gid.GID,
+) error {
+	q := `
+WITH invited_org AS (
+	SELECT DISTINCT
+		p.organization_id
+	FROM
+		iam_membership_profiles p
+	INNER JOIN iam_invitations inv ON inv.user_id = p.id
+	WHERE
+		p.identity_id = @identity_id
+		AND inv.accepted_at IS NULL
+		AND inv.expires_at > NOW()
+)
+SELECT
+	tenant_id,
+	id,
+	name,
+	logo_file_id,
+	horizontal_logo_file_id,
+	description,
+	website_url,
+	email,
+	headquarter_address,
+	custom_domain_id,
+	created_at,
+	updated_at
+FROM
+	organizations
+INNER JOIN
+	invited_org ON organizations.id = invited_org.organization_id
+WHERE
+	%s
+ORDER BY name ASC
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"identity_id": identityID}
+	maps.Copy(args, scope.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {

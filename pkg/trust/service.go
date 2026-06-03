@@ -26,6 +26,7 @@ import (
 	"go.probo.inc/probo/packages/emails"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/esign"
+	"go.probo.inc/probo/pkg/file"
 	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/html2pdf"
@@ -36,36 +37,23 @@ import (
 
 type (
 	Service struct {
-		pg                 *pg.Client
-		s3                 *s3.Client
-		bucket             string
-		proboSvc           *probo.Service
-		slackSigningSecret string
-		baseURL            string
-		iam                *iam.Service
-		esign              *esign.Service
-		html2pdfConverter  *html2pdf.Converter
-		fileManager        *filemanager.Service
-		logger             *log.Logger
-		slack              *slack.Service
-	}
-
-	TenantService struct {
 		pg                     *pg.Client
 		s3                     *s3.Client
 		bucket                 string
-		scope                  coredata.Scoper
 		proboSvc               *probo.Service
+		slackSigningSecret     string
 		baseURL                string
 		iam                    *iam.Service
 		esign                  *esign.Service
 		html2pdfConverter      *html2pdf.Converter
 		fileManager            *filemanager.Service
+		file                   *file.Service
 		logger                 *log.Logger
+		slack                  *slack.Service
 		TrustCenters           *TrustCenterService
 		Documents              *DocumentService
 		Audits                 *AuditService
-		Vendors                *VendorService
+		ThirdParties           *ThirdPartyService
 		Frameworks             *FrameworkService
 		ComplianceFrameworks   *ComplianceFrameworkService
 		TrustCenterAccesses    *TrustCenterAccessService
@@ -74,7 +62,6 @@ type (
 		Reports                *ReportService
 		Organizations          *OrganizationService
 		ComplianceExternalURLs *ComplianceExternalURLService
-		SlackMessages          *slack.SlackMessageService
 	}
 )
 
@@ -90,8 +77,9 @@ func NewService(
 	fileManagerService *filemanager.Service,
 	logger *log.Logger,
 	slack *slack.Service,
+	fileService *file.Service,
 ) *Service {
-	return &Service{
+	svc := &Service{
 		pg:                 pgClient,
 		s3:                 s3Client,
 		bucket:             bucket,
@@ -101,41 +89,24 @@ func NewService(
 		esign:              esignSvc,
 		html2pdfConverter:  html2pdfConverter,
 		fileManager:        fileManagerService,
+		file:               fileService,
 		logger:             logger,
 		slack:              slack,
 	}
-}
+	svc.TrustCenters = &TrustCenterService{svc: svc}
+	svc.Documents = &DocumentService{svc: svc, html2pdfConverter: html2pdfConverter}
+	svc.Audits = &AuditService{svc: svc}
+	svc.ThirdParties = &ThirdPartyService{svc: svc}
+	svc.Frameworks = &FrameworkService{svc: svc}
+	svc.ComplianceFrameworks = &ComplianceFrameworkService{svc: svc}
+	svc.TrustCenterAccesses = &TrustCenterAccessService{svc: svc, iamSvc: iam, logger: logger}
+	svc.TrustCenterReferences = &TrustCenterReferenceService{svc: svc}
+	svc.TrustCenterFiles = &TrustCenterFileService{svc: svc}
+	svc.Reports = &ReportService{svc: svc}
+	svc.Organizations = &OrganizationService{svc: svc}
+	svc.ComplianceExternalURLs = &ComplianceExternalURLService{svc: svc}
 
-func (s *Service) WithTenant(tenantID gid.TenantID) *TenantService {
-	tenantService := &TenantService{
-		pg:                s.pg,
-		s3:                s.s3,
-		bucket:            s.bucket,
-		scope:             coredata.NewScope(tenantID),
-		proboSvc:          s.proboSvc,
-		baseURL:           s.baseURL,
-		iam:               s.iam,
-		esign:             s.esign,
-		html2pdfConverter: s.html2pdfConverter,
-		fileManager:       s.fileManager,
-		logger:            s.logger,
-	}
-
-	tenantService.TrustCenters = &TrustCenterService{svc: tenantService}
-	tenantService.Documents = &DocumentService{svc: tenantService, html2pdfConverter: s.html2pdfConverter}
-	tenantService.Audits = &AuditService{svc: tenantService}
-	tenantService.Vendors = &VendorService{svc: tenantService}
-	tenantService.Frameworks = &FrameworkService{svc: tenantService}
-	tenantService.ComplianceFrameworks = &ComplianceFrameworkService{svc: tenantService}
-	tenantService.TrustCenterAccesses = &TrustCenterAccessService{svc: tenantService, iamSvc: s.iam, logger: s.logger}
-	tenantService.TrustCenterReferences = &TrustCenterReferenceService{svc: tenantService}
-	tenantService.TrustCenterFiles = &TrustCenterFileService{svc: tenantService}
-	tenantService.Reports = &ReportService{svc: tenantService}
-	tenantService.Organizations = &OrganizationService{svc: tenantService}
-	tenantService.ComplianceExternalURLs = &ComplianceExternalURLService{svc: tenantService}
-	tenantService.SlackMessages = s.slack.WithTenant(tenantID).SlackMessages
-
-	return tenantService
+	return svc
 }
 
 func (s *Service) Get(
@@ -152,13 +123,13 @@ func (s *Service) Get(
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return ErrPageNotFound
 				}
+
 				return fmt.Errorf("cannot load trust center: %w", err)
 			}
 
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -180,13 +151,13 @@ func (s *Service) GetBySlug(
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return ErrPageNotFound
 				}
+
 				return fmt.Errorf("cannot load trust center: %w", err)
 			}
 
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -230,7 +201,6 @@ func (s *Service) GetByDomainName(ctx context.Context, domain string) (*coredata
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -263,14 +233,17 @@ func (s *Service) GetCustomDomainByOrganizationID(ctx context.Context, organizat
 // esign certificate worker which needs per-org branding at render time.
 func (s *Service) EmailPresenterConfigByOrganizationID(ctx context.Context, orgID gid.GID) (emails.PresenterConfig, error) {
 	var trustCenter coredata.TrustCenter
+
 	scope := coredata.NewScopeFromObjectID(orgID)
+
 	err := s.pg.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
 		return trustCenter.LoadByOrganizationID(ctx, conn, scope, orgID)
 	})
 	if err != nil {
 		return emails.PresenterConfig{}, fmt.Errorf("cannot load trust center for org %s: %w", orgID, err)
 	}
-	return s.WithTenant(orgID.TenantID()).TrustCenters.EmailPresenterConfig(ctx, trustCenter.ID)
+
+	return s.TrustCenters.EmailPresenterConfig(ctx, scope, trustCenter.ID)
 }
 
 func (s *Service) GetOrganizationByTrustCenterID(
@@ -404,8 +377,10 @@ func (s *Service) ProvisionMember(
 				}
 
 				var sig *coredata.ElectronicSignature
+
 				if compliancePage.NonDisclosureAgreementFileID != nil && s.esign != nil {
 					var err error
+
 					sig, err = s.esign.CreateSignature(
 						ctx,
 						tx,

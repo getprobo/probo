@@ -113,11 +113,13 @@ func OneOfSlice[T any](allowed []T) ValidatorFunc {
 
 		// Dereference all pointer levels
 		actualValue := value
+
 		val := reflect.ValueOf(value)
 		for val.Kind() == reflect.Pointer {
 			if val.IsNil() {
 				return nil
 			}
+
 			val = val.Elem()
 			actualValue = val.Interface()
 		}

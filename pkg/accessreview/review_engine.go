@@ -26,6 +26,7 @@ import (
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/accessreview/drivers"
 	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/connector/provider"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/cipher"
 	"go.probo.inc/probo/pkg/gid"
@@ -38,6 +39,7 @@ type ReviewEngine struct {
 	scope             coredata.Scoper
 	encryptionKey     cipher.EncryptionKey
 	connectorRegistry *connector.ConnectorRegistry
+	providerRegistry  *provider.Registry
 	logger            *log.Logger
 }
 
@@ -46,6 +48,7 @@ func NewReviewEngine(
 	scope coredata.Scoper,
 	encryptionKey cipher.EncryptionKey,
 	connectorRegistry *connector.ConnectorRegistry,
+	providerRegistry *provider.Registry,
 	logger *log.Logger,
 ) *ReviewEngine {
 	return &ReviewEngine{
@@ -53,6 +56,7 @@ func NewReviewEngine(
 		scope:             scope,
 		encryptionKey:     encryptionKey,
 		connectorRegistry: connectorRegistry,
+		providerRegistry:  providerRegistry,
 		logger:            logger,
 	}
 }
@@ -80,11 +84,13 @@ func (e *ReviewEngine) FetchSource(
 			if err := source.LoadByID(ctx, tx, e.scope, sourceID); err != nil {
 				return fmt.Errorf("cannot load access source %s: %w", sourceID, err)
 			}
+
 			if source.OrganizationID != campaign.OrganizationID {
 				return fmt.Errorf("cannot process access source: %s does not belong to campaign organization", sourceID)
 			}
 
 			var err error
+
 			driver, err = e.resolveDriver(ctx, tx, source)
 			if err != nil {
 				return fmt.Errorf("cannot resolve driver for source %s: %w", source.Name, err)
@@ -97,6 +103,7 @@ func (e *ReviewEngine) FetchSource(
 				}
 			} else {
 				entries := &coredata.AccessEntries{}
+
 				baseline, err = entries.LoadBaselineBySourceID(ctx, tx, e.scope, lastCompletedCampaign.ID, sourceID)
 				if err != nil {
 					return fmt.Errorf("cannot load baseline entries by source: %w", err)
@@ -117,10 +124,13 @@ func (e *ReviewEngine) FetchSource(
 
 	sourceCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	accounts, err := driver.ListAccounts(sourceCtx)
+
 	cancel()
+
 	if err != nil {
 		return 0, fmt.Errorf("cannot list accounts from source %s: %w", source.Name, err)
 	}
+
 	fetchedCount = len(accounts)
 
 	err = e.pg.WithTx(
@@ -132,6 +142,7 @@ func (e *ReviewEngine) FetchSource(
 			for _, account := range accounts {
 				accountKey := normalizeAccountKey(account.Email, account.ExternalID)
 				seenAccountKeys[accountKey] = struct{}{}
+
 				incrementalTag := coredata.AccessEntryIncrementalTagNew
 				if _, ok := previousByAccountKey[accountKey]; ok {
 					incrementalTag = coredata.AccessEntryIncrementalTagUnchanged
@@ -210,6 +221,7 @@ func (e *ReviewEngine) FetchSource(
 
 func normalizeAccountKey(email, externalID string) string {
 	emailKey := strings.ToLower(strings.TrimSpace(email))
+
 	externalID = strings.TrimSpace(externalID)
 	if externalID != "" {
 		return emailKey + "|" + externalID
@@ -231,6 +243,7 @@ func (e *ReviewEngine) oauthClient(
 			return conn.RefreshableClient(ctx, *refreshCfg)
 		}
 	}
+
 	return conn.Client(ctx)
 }
 
@@ -245,6 +258,7 @@ func (e *ReviewEngine) connectorHTTPClient(
 	if oauth2Conn, ok := dbConnector.Connection.(*connector.OAuth2Connection); ok {
 		return e.oauthClient(ctx, oauth2Conn, dbConnector.Provider)
 	}
+
 	return dbConnector.Connection.Client(ctx)
 }
 
@@ -297,84 +311,10 @@ func (e *ReviewEngine) resolveDriver(
 		}
 	}
 
-	switch dbConnector.Provider {
-	case coredata.ConnectorProviderGoogleWorkspace:
-		return drivers.NewGoogleWorkspaceDriver(httpClient), nil
-	case coredata.ConnectorProviderLinear:
-		return drivers.NewLinearDriver(httpClient), nil
-	case coredata.ConnectorProviderSlack:
-		return drivers.NewSlackDriver(httpClient), nil
-	case coredata.ConnectorProviderOnePassword:
-		// Client credentials grant -> Users API driver (to be created in Phase 5).
-		// Authorization code / SCIM grant -> existing SCIM-based driver.
-		if oauth2Conn, ok := dbConnector.Connection.(*connector.OAuth2Connection); ok && oauth2Conn.GrantType == connector.OAuth2GrantTypeClientCredentials {
-			settings, err := dbConnector.OnePasswordUsersAPISettings()
-			if err != nil {
-				return nil, fmt.Errorf("cannot read 1password users api settings: %w", err)
-			}
-			return drivers.NewOnePasswordUsersAPIDriver(httpClient, settings.AccountID, settings.Region), nil
-		}
-		onePasswordSettings, err := dbConnector.OnePasswordSettings()
-		if err != nil {
-			return nil, fmt.Errorf("cannot read 1password connector settings: %w", err)
-		}
-		if onePasswordSettings.SCIMBridgeURL == "" {
-			return nil, fmt.Errorf("1password connector requires scim_bridge_url in settings")
-		}
-		return drivers.NewOnePasswordDriver(httpClient, onePasswordSettings.SCIMBridgeURL), nil
-	case coredata.ConnectorProviderHubSpot:
-		return drivers.NewHubSpotDriver(httpClient), nil
-	case coredata.ConnectorProviderDocuSign:
-		return drivers.NewDocuSignDriver(httpClient), nil
-	case coredata.ConnectorProviderNotion:
-		return drivers.NewNotionDriver(httpClient), nil
-	case coredata.ConnectorProviderBrex:
-		return drivers.NewBrexDriver(httpClient), nil
-	case coredata.ConnectorProviderTally:
-		tallySettings, err := dbConnector.TallySettings()
-		if err != nil {
-			return nil, fmt.Errorf("cannot read tally connector settings: %w", err)
-		}
-		if tallySettings.OrganizationID == "" {
-			return nil, fmt.Errorf("tally connector requires organization_id in settings")
-		}
-		return drivers.NewTallyDriver(httpClient, tallySettings.OrganizationID), nil
-	case coredata.ConnectorProviderCloudflare:
-		return drivers.NewCloudflareDriver(httpClient), nil
-	case coredata.ConnectorProviderOpenAI:
-		return drivers.NewOpenAIDriver(httpClient), nil
-	case coredata.ConnectorProviderSentry:
-		sentrySettings, err := dbConnector.SentrySettings()
-		if err != nil {
-			return nil, fmt.Errorf("cannot read sentry connector settings: %w", err)
-		}
-		// OrganizationSlug may be empty for OAuth connections; the driver auto-discovers it.
-		return drivers.NewSentryDriver(httpClient, sentrySettings.OrganizationSlug), nil
-	case coredata.ConnectorProviderSupabase:
-		supabaseSettings, err := dbConnector.SupabaseSettings()
-		if err != nil {
-			return nil, fmt.Errorf("cannot read supabase connector settings: %w", err)
-		}
-		if supabaseSettings.OrganizationSlug == "" {
-			return nil, fmt.Errorf("supabase connector requires organization_slug in settings")
-		}
-		return drivers.NewSupabaseDriver(httpClient, supabaseSettings.OrganizationSlug), nil
-	case coredata.ConnectorProviderGitHub:
-		githubSettings, err := dbConnector.GitHubSettings()
-		if err != nil {
-			return nil, fmt.Errorf("cannot read github connector settings: %w", err)
-		}
-		if githubSettings.Organization == "" {
-			return nil, fmt.Errorf("github connector requires organization in settings")
-		}
-		return drivers.NewGitHubDriver(httpClient, githubSettings.Organization, e.logger.Named("github")), nil
-	case coredata.ConnectorProviderIntercom:
-		return drivers.NewIntercomDriver(httpClient), nil
-	case coredata.ConnectorProviderResend:
-		return drivers.NewResendDriver(httpClient), nil
-	case coredata.ConnectorProviderMicrosoft365:
-		return drivers.NewMicrosoft365Driver(httpClient), nil
-	default:
-		return nil, fmt.Errorf("unsupported connector provider %q for access source driver", dbConnector.Provider)
+	reg, ok := e.providerRegistry.Get(dbConnector.Provider)
+	if !ok || reg.NewDriver == nil {
+		return nil, fmt.Errorf("cannot resolve driver: unsupported provider %q", dbConnector.Provider)
 	}
+
+	return reg.NewDriver(ctx, httpClient, dbConnector, e.logger)
 }

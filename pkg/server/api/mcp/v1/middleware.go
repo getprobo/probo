@@ -15,9 +15,8 @@
 package mcp_v1
 
 import (
-	"net/http"
-
 	"errors"
+	"net/http"
 
 	"go.gearno.de/kit/httpserver"
 	"go.gearno.de/kit/log"
@@ -30,6 +29,7 @@ func RequireAPIKeyHandler(
 ) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
+
 		correlationID := r.Header.Get("X-Request-ID")
 		if correlationID == "" {
 			correlationID = r.Header.Get("X-Correlation-ID")
@@ -43,10 +43,12 @@ func RequireAPIKeyHandler(
 		)
 
 		apiKey := authn.APIKeyFromContext(ctx)
+
 		identity := authn.IdentityFromContext(ctx)
 		if identity == nil {
 			w.Header().Set("WWW-Authenticate", "Bearer")
 			httpserver.RenderError(w, http.StatusUnauthorized, errors.New("authentication required"))
+
 			return
 		}
 

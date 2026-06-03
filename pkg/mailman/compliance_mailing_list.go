@@ -71,26 +71,32 @@ func (s *Service) mailingListEmailConfig(
 			if err := mailingList.LoadByID(ctx, conn, scope, mailingListID); err != nil {
 				return fmt.Errorf("cannot load mailing list: %w", err)
 			}
+
 			if err := compliancePage.LoadByMailingListID(ctx, conn, scope, mailingListID); err != nil {
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return err
 				}
+
 				return fmt.Errorf("cannot load compliance page: %w", err)
 			}
+
 			if compliancePage.LogoFileID != nil {
 				if err := logoFile.LoadByID(ctx, conn, scope, *compliancePage.LogoFileID); err != nil {
 					return fmt.Errorf("cannot load logo file: %w", err)
 				}
 			}
+
 			if err := organization.LoadByID(ctx, conn, scope, compliancePage.OrganizationID); err != nil {
 				return fmt.Errorf("cannot load organization: %w", err)
 			}
+
 			customDomain = &coredata.CustomDomain{}
 			if err := customDomain.LoadByOrganizationID(ctx, conn, scope, organization.ID); err != nil {
 				if !errors.Is(err, coredata.ErrResourceNotFound) {
 					return fmt.Errorf("cannot load custom domain: %w", err)
 				}
 			}
+
 			return nil
 		},
 	)
@@ -131,6 +137,7 @@ func (s *Service) presenterConfigFromTrustCenter(
 		if err != nil {
 			return cfg, "", fmt.Errorf("cannot parse custom domain URL: %w", err)
 		}
+
 		compliancePageBase = customBase.WithPath("")
 	}
 
@@ -148,10 +155,12 @@ func (s *Service) presenterConfigFromTrustCenter(
 			BucketName: logoFile.BucketName,
 			MimeType:   logoFile.MimeType,
 		}
+
 		cfg.SenderCompanyName = organization.Name
 		if organization.WebsiteURL != nil {
 			cfg.SenderCompanyWebsiteURL = *organization.WebsiteURL
 		}
+
 		if organization.HeadquarterAddress != nil {
 			cfg.SenderCompanyHeadquarterAddress = *organization.HeadquarterAddress
 		}

@@ -21,13 +21,12 @@ import (
 	"strings"
 	"time"
 
+	"codeberg.org/miekg/dns"
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/cipher"
 	"go.probo.inc/probo/pkg/gid"
-
-	"codeberg.org/miekg/dns"
 )
 
 type (
@@ -160,6 +159,7 @@ func (p *Provisioner) checkCAARecords(domain string) error {
 	}
 
 	var caaRecords []*dns.CAA
+
 	for _, rr := range resp.Answer {
 		if caa, ok := rr.(*dns.CAA); ok {
 			caaRecords = append(caaRecords, caa)
@@ -235,7 +235,6 @@ func (p *Provisioner) checkPendingDomains(ctx context.Context) error {
 			return nil
 		},
 	)
-
 	if err != nil {
 		return fmt.Errorf("cannot provision domains: %w", err)
 	}
@@ -343,6 +342,7 @@ func (p *Provisioner) provisionDomainCertificate(
 			)
 
 			errMsg := err.Error()
+
 			domain.ProvisioningError = &errMsg
 			if err := domain.Update(ctx, tx, coredata.NewNoScope()); err != nil {
 				return fmt.Errorf("cannot update domain with provisioning error: %w", err)
@@ -360,6 +360,7 @@ func (p *Provisioner) provisionDomainCertificate(
 			)
 
 			errMsg := err.Error()
+
 			domain.ProvisioningError = &errMsg
 			if err := domain.Update(ctx, tx, coredata.NewNoScope()); err != nil {
 				return fmt.Errorf("cannot update domain with provisioning error: %w", err)
@@ -383,6 +384,7 @@ func (p *Provisioner) provisionDomainCertificate(
 				log.String("domain", domain.Domain),
 				log.Error(err),
 			)
+
 			return err
 		}
 
@@ -466,10 +468,12 @@ func (p *Provisioner) provisionDomainCertificate(
 	)
 
 	domain.ProvisioningError = nil
+
 	domain.SSLCertificatePEM = cert.CertPEM
 	if err := domain.EncryptPrivateKey(cert.KeyPEM, p.encryptionKey); err != nil {
 		return fmt.Errorf("cannot encrypt private key: %w", err)
 	}
+
 	chainStr := string(cert.ChainPEM)
 	domain.SSLCertificateChain = &chainStr
 	domain.SSLExpiresAt = &cert.ExpiresAt

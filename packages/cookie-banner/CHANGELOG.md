@@ -4,6 +4,46 @@ All notable changes to the `@probo/cookie-banner` SDK will be documented in this
 
 ## Unreleased
 
+## [0.7.0] - 2026-05-27
+
+### Added
+
+- Re-export public domain types (`BannerConfig`, `Category`, `Regulation`, `ConsentAction`, `ConsentRecord`, `CookieItem`, `VisitorConsent`) from the package entry point
+
+## [0.6.0] - 2026-05-26
+
+### Added
+
+- Eagerly bootstrap GCM (deny all consent types before config fetch) to close the gap where gtag could track during async config loading
+- Track source (`script`/`pre-existing`) on detected storage trackers (localStorage, sessionStorage, indexedDB, cacheStorage)
+- Mark page-world extension writes with a new `EXTENSION` source
+
+### Changed
+
+- Overhaul extension-activity detection: add synchronous DOM hooks (IDL setters, `setAttribute`, HTML-parsing entry points, fetch/XHR/sendBeacon) and drop ineffective `isExtensionCaller()` wraps
+
+### Removed
+
+- Remove the PostHog integration (use `data-cookie-consent` script blocking instead)
+
+### Fixed
+
+- Disconnect the previous `MutationObserver` in `load()`'s error path so failing loads no longer leak observers
+
+## [0.5.0] - 2026-05-20
+
+### Added
+
+- Expose a programmatic consent API via a `ConsentManager` singleton (`@probo/cookie-banner/consent` ESM entrypoint and `window.Probo.consent` on the IIFE), so customers can read and react to consent state from their own bundled JavaScript — unblocking third-party SDKs that initialize programmatically and cannot be gated via `data-cookie-consent` attributes
+- `ConsentManager` exposes a `subscribe()` method (unifying `onReady` + `onChange` with immediate replay) and `getAll()` now returns a cached, referentially stable snapshot, making it safe to use with React's `useSyncExternalStore`
+- Share the `ConsentManager` singleton across bundles on `globalThis` so multiple copies of the SDK on the same page see the same state
+
+## [0.4.1] - 2026-05-13
+
+### Changed
+
+- Skip the `/consents/:id` fetch for first-time visitors (no `visitorId` in localStorage); the visitor ID is now created lazily on the first consent action instead of triggering a guaranteed-404 request on every initial page load
+
 ## [0.4.0] - 2026-05-12
 
 ### Added

@@ -37,14 +37,17 @@ func (impl *Implm) resolveAgentClient(
 	r prometheus.Registerer,
 ) (LLMAgentConfig, *llm.Client, error) {
 	resolved := impl.cfg.Agents.ResolveAgent(agent)
+
 	providerCfg, ok := impl.cfg.Agents.Providers[resolved.Provider]
 	if !ok {
 		return LLMAgentConfig{}, nil, fmt.Errorf("unknown LLM provider %q for %s agent", resolved.Provider, name)
 	}
+
 	client, err := buildLLMClient(providerCfg, l.Named("llm."+name), tp, r)
 	if err != nil {
 		return LLMAgentConfig{}, nil, fmt.Errorf("cannot create %s LLM client: %w", name, err)
 	}
+
 	return resolved, client, nil
 }
 
@@ -66,6 +69,7 @@ func buildLLMClient(cfg LLMProviderConfig, l *log.Logger, tp trace.TracerProvide
 			cfg.APIKey,
 			llmopenai.WithHTTPClient(httpClient),
 		)
+
 		return llm.NewClient(
 			p,
 			"openai",
@@ -77,6 +81,7 @@ func buildLLMClient(cfg LLMProviderConfig, l *log.Logger, tp trace.TracerProvide
 			cfg.APIKey,
 			llmanthropic.WithHTTPClient(httpClient),
 		)
+
 		return llm.NewClient(
 			p,
 			"anthropic",

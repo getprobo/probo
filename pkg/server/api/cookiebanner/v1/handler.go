@@ -54,6 +54,7 @@ func NewMux(
 
 	r := chi.NewMux()
 	r.Route("/{bannerID}", func(r chi.Router) {
+		r.Use(newSDKVersionMiddleware())
 		r.Use(newCORSMiddleware(logger, cookieBannerSvc))
 		r.Get("/config", h.handleGetConfig)
 		r.Get("/consents/{visitorID}", h.handleGetConsent)
@@ -73,7 +74,7 @@ func (h *Handler) handleGetConfig(w http.ResponseWriter, r *http.Request) {
 	}
 
 	lang := r.URL.Query().Get("lang")
-	sdkVersion := r.Header.Get("X-SDK-Version")
+	sdkVersion := sdkVersionFromContext(r.Context())
 	cc := h.resolveCountryCode(r)
 
 	var regulation cookiebanner.Regulation
@@ -87,12 +88,15 @@ func (h *Handler) handleGetConfig(w http.ResponseWriter, r *http.Request) {
 			jsonutil.RenderNotFound(w, fmt.Errorf("banner not found"))
 			return
 		}
+
 		if errors.Is(err, cookiebanner.ErrNoPublishedVersion) {
 			jsonutil.RenderNotFound(w, fmt.Errorf("no published version"))
 			return
 		}
-		h.logger.ErrorCtx(r.Context(), "cannot get banner config", log.Error(err))
+
+		h.logger.ErrorCtx(r.Context(), "cannot get banner config", log.Error(err), log.String("sdk_version", sdkVersion))
 		jsonutil.RenderInternalServerError(w)
+
 		return
 	}
 
@@ -104,7 +108,13 @@ func (h *Handler) resolveCountryCode(r *http.Request) *coredata.CountryCode {
 
 	cc, err := h.geolocSvc.LookupCountry(r.Context(), ip)
 	if err != nil {
-		h.logger.ErrorCtx(r.Context(), "cannot resolve country for IP", log.Error(err))
+		h.logger.ErrorCtx(
+			r.Context(),
+			"cannot resolve country for IP",
+			log.Error(err),
+			log.String("sdk_version", sdkVersionFromContext(r.Context())),
+		)
+
 		return nil
 	}
 
@@ -134,12 +144,20 @@ func (h *Handler) handleGetConsent(w http.ResponseWriter, r *http.Request) {
 			jsonutil.RenderNotFound(w, fmt.Errorf("banner not found"))
 			return
 		}
+
 		if errors.Is(err, cookiebanner.ErrConsentNotFound) {
 			jsonutil.RenderNotFound(w, fmt.Errorf("consent not found"))
 			return
 		}
-		h.logger.ErrorCtx(r.Context(), "cannot get visitor consent", log.Error(err))
+
+		h.logger.ErrorCtx(
+			r.Context(),
+			"cannot get visitor consent",
+			log.Error(err),
+			log.String("sdk_version", sdkVersionFromContext(r.Context())),
+		)
 		jsonutil.RenderInternalServerError(w)
+
 		return
 	}
 
@@ -177,14 +195,19 @@ func (h *Handler) handlePostConsent(w http.ResponseWriter, r *http.Request) {
 
 	ip := clientip.Extract(r)
 	ua := r.UserAgent()
-	sdkVersion := r.Header.Get("X-SDK-Version")
+	sdkVersion := sdkVersionFromContext(r.Context())
 	cc := h.resolveCountryCode(r)
 
-	var regulation *cookiebanner.Regulation
+	var (
+		regulation         *cookiebanner.Regulation
+		resolvedRegulation cookiebanner.Regulation
+	)
 	if cc != nil {
-		r := cookiebanner.RegulationForCountry(*cc)
-		regulation = &r
+		resolvedRegulation = cookiebanner.RegulationForCountry(*cc)
+		regulation = &resolvedRegulation
 	}
+
+	cm := coredata.CookieConsentMode(cookiebanner.ConsentModeForRegulation(resolvedRegulation))
 
 	req := cookiebanner.RecordConsentRequest{
 		Version:     body.Version,
@@ -196,6 +219,7 @@ func (h *Handler) handlePostConsent(w http.ResponseWriter, r *http.Request) {
 		SdkVersion:  sdkVersion,
 		Regulation:  regulation,
 		CountryCode: cc,
+		ConsentMode: &cm,
 	}
 
 	record, err := h.cookieBannerSvc.RecordConsent(r.Context(), bannerID, req)
@@ -204,12 +228,15 @@ func (h *Handler) handlePostConsent(w http.ResponseWriter, r *http.Request) {
 			jsonutil.RenderNotFound(w, fmt.Errorf("banner not found"))
 			return
 		}
+
 		if errors.Is(err, cookiebanner.ErrVersionNotFound) || errors.Is(err, cookiebanner.ErrVersionNotPublished) {
 			jsonutil.RenderBadRequest(w, fmt.Errorf("invalid version"))
 			return
 		}
-		h.logger.ErrorCtx(r.Context(), "cannot record consent", log.Error(err))
+
+		h.logger.ErrorCtx(r.Context(), "cannot record consent", log.Error(err), log.String("sdk_version", sdkVersion))
 		jsonutil.RenderInternalServerError(w)
+
 		return
 	}
 
@@ -249,20 +276,25 @@ func sanitizeInitiatorURL(raw *string) *string {
 	if raw == nil {
 		return nil
 	}
+
 	s := strings.TrimSpace(*raw)
 	if s == "" || len(s) > maxInitiatorURLLength {
 		return nil
 	}
+
 	u, err := url.Parse(s)
 	if err != nil {
 		return nil
 	}
+
 	if u.Scheme != "http" && u.Scheme != "https" {
 		return nil
 	}
+
 	if u.Host == "" {
 		return nil
 	}
+
 	return &s
 }
 
@@ -297,6 +329,7 @@ func (h *Handler) handleReportDetectedCookies(w http.ResponseWriter, r *http.Req
 		}
 
 		var source coredata.CookieSource
+
 		switch strings.TrimSpace(c.Source) {
 		case "pre-existing":
 			source = coredata.CookieSourcePreExisting
@@ -332,8 +365,14 @@ func (h *Handler) handleReportDetectedCookies(w http.ResponseWriter, r *http.Req
 			return
 		}
 
-		h.logger.ErrorCtx(r.Context(), "cannot report detected cookies", log.Error(err))
+		h.logger.ErrorCtx(
+			r.Context(),
+			"cannot report detected cookies",
+			log.Error(err),
+			log.String("sdk_version", sdkVersionFromContext(r.Context())),
+		)
 		jsonutil.RenderInternalServerError(w)
+
 		return
 	}
 
@@ -344,6 +383,7 @@ type detectedStorageEntry struct {
 	Key          string  `json:"key"`
 	StorageType  string  `json:"storage_type"`
 	ValueSize    *int    `json:"value_size"`
+	Source       string  `json:"source"`
 	InitiatorURL *string `json:"initiator_url,omitempty"`
 }
 
@@ -393,11 +433,14 @@ func (h *Handler) handleReportDetectedTrackers(w http.ResponseWriter, r *http.Re
 		}
 
 		var source coredata.CookieSource
+
 		switch strings.TrimSpace(c.Source) {
 		case "pre-existing":
 			source = coredata.CookieSourcePreExisting
 		case "http":
 			source = coredata.CookieSourceHTTP
+		case "extension":
+			source = coredata.CookieSourceExtension
 		default:
 			source = coredata.CookieSourceScript
 		}
@@ -420,6 +463,7 @@ func (h *Handler) handleReportDetectedTrackers(w http.ResponseWriter, r *http.Re
 		}
 
 		var storageType coredata.TrackerType
+
 		switch strings.TrimSpace(s.StorageType) {
 		case "local_storage":
 			storageType = coredata.TrackerTypeLocalStorage
@@ -433,12 +477,24 @@ func (h *Handler) handleReportDetectedTrackers(w http.ResponseWriter, r *http.Re
 			continue
 		}
 
+		var source coredata.CookieSource
+
+		switch strings.TrimSpace(s.Source) {
+		case "pre-existing":
+			source = coredata.CookieSourcePreExisting
+		case "extension":
+			source = coredata.CookieSourceExtension
+		default:
+			source = coredata.CookieSourceScript
+		}
+
 		req.Storage = append(
 			req.Storage,
 			cookiebanner.DetectedStorageItem{
 				Key:          key,
 				StorageType:  storageType,
 				ValueSize:    s.ValueSize,
+				Source:       &source,
 				InitiatorURL: sanitizeInitiatorURL(s.InitiatorURL),
 			},
 		)
@@ -454,6 +510,7 @@ func (h *Handler) handleReportDetectedTrackers(w http.ResponseWriter, r *http.Re
 		}
 
 		var resourceType coredata.TrackerResourceType
+
 		switch strings.TrimSpace(res.ResourceType) {
 		case "script":
 			resourceType = coredata.TrackerResourceTypeScript
@@ -497,8 +554,9 @@ func (h *Handler) handleReportDetectedTrackers(w http.ResponseWriter, r *http.Re
 			return
 		}
 
-		h.logger.ErrorCtx(r.Context(), "cannot report detected trackers", log.Error(err))
+		h.logger.ErrorCtx(r.Context(), "cannot report detected trackers", log.Error(err), log.String("sdk_version", sdkVersionFromContext(r.Context())))
 		jsonutil.RenderInternalServerError(w)
+
 		return
 	}
 

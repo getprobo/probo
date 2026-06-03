@@ -24,19 +24,19 @@ import (
 var (
 	toolMessages = map[string][]string{
 		// Orchestrator tools (top-level steps).
-		"crawl_vendor_website": {
-			"Exploring vendor website for security and compliance pages",
-			"Discovering key pages on the vendor website",
-			"Mapping out the vendor's online presence",
+		"crawl_third_party_website": {
+			"Exploring thirdParty website for security and compliance pages",
+			"Discovering key pages on the thirdParty website",
+			"Mapping out the thirdParty's online presence",
 			"Scanning the website structure for relevant sections",
-			"Browsing the vendor site to locate important resources",
+			"Browsing the thirdParty site to locate important resources",
 		},
 		"assess_security": {
 			"Running technical security checks on the domain",
-			"Evaluating the vendor's security posture",
+			"Evaluating the thirdParty's security posture",
 			"Performing infrastructure security analysis",
 			"Auditing the domain's technical defenses",
-			"Probing the vendor's security configuration",
+			"Probing the thirdParty's security configuration",
 		},
 		"analyze_document": {
 			"Reviewing document for key provisions",
@@ -47,24 +47,24 @@ var (
 		},
 		"assess_compliance": {
 			"Identifying certifications and compliance frameworks",
-			"Reviewing the vendor's compliance posture",
+			"Reviewing the thirdParty's compliance posture",
 			"Checking for recognized security certifications",
-			"Surveying the vendor's regulatory standing",
+			"Surveying the thirdParty's regulatory standing",
 			"Evaluating adherence to industry standards",
 		},
 		"assess_market_presence": {
-			"Investigating the vendor's market presence",
+			"Investigating the thirdParty's market presence",
 			"Looking for notable customers and case studies",
-			"Checking who uses this vendor",
-			"Assessing the vendor's market credibility",
-			"Identifying the vendor's customer base",
+			"Checking who uses this thirdParty",
+			"Assessing the thirdParty's market credibility",
+			"Identifying the thirdParty's customer base",
 		},
 		"extract_subprocessors": {
 			"Extracting sub-processor information",
-			"Reading the vendor's sub-processor list",
+			"Reading the thirdParty's sub-processor list",
 			"Identifying third-party sub-processors",
 			"Parsing sub-processor details",
-			"Cataloging the vendor's sub-processors",
+			"Cataloging the thirdParty's sub-processors",
 		},
 		"assess_data_processing": {
 			"Analyzing data processing practices",
@@ -101,12 +101,12 @@ var (
 			"Assessing automated decision-making safeguards",
 			"Examining AI training data governance",
 		},
-		"research_vendor_externally": {
-			"Researching the vendor across the web",
-			"Searching for external signals about the vendor",
+		"research_third_party_externally": {
+			"Researching the thirdParty across the web",
+			"Searching for external signals about the thirdParty",
 			"Looking for news and breach reports",
-			"Investigating the vendor's external reputation",
-			"Scanning public sources for vendor intelligence",
+			"Investigating the thirdParty's external reputation",
+			"Scanning public sources for thirdParty intelligence",
 		},
 		"assess_regulatory_compliance": {
 			"Performing deep regulatory compliance analysis",
@@ -116,10 +116,10 @@ var (
 			"Evaluating regulatory requirements coverage",
 		},
 		"assess_financial_stability": {
-			"Assessing vendor financial stability",
+			"Assessing thirdParty financial stability",
 			"Investigating company funding and financial health",
 			"Checking business registration and SEC filings",
-			"Evaluating vendor viability and longevity",
+			"Evaluating thirdParty viability and longevity",
 			"Researching company financial standing",
 		},
 		"assess_code_security": {
@@ -129,19 +129,19 @@ var (
 			"Analyzing release cadence and maintenance",
 			"Inspecting code security practices",
 		},
-		"compare_vendor": {
-			"Comparing vendor against alternatives",
-			"Finding competing vendors in the same category",
+		"compare_thirdParty": {
+			"Comparing thirdParty against alternatives",
+			"Finding competing thirdParties in the same category",
 			"Benchmarking security and compliance posture",
-			"Evaluating vendor relative to market alternatives",
+			"Evaluating thirdParty relative to market alternatives",
 			"Assessing competitive landscape",
 		},
-		"extract_vendor_info": {
-			"Extracting vendor information from assessment",
+		"extract_third_party_info": {
+			"Extracting thirdParty information from assessment",
 			"Parsing assessment into structured data",
-			"Building vendor profile from findings",
-			"Distilling key vendor details from report",
-			"Organizing vendor metadata from assessment",
+			"Building thirdParty profile from findings",
+			"Distilling key thirdParty details from report",
+			"Organizing thirdParty metadata from assessment",
 		},
 
 		// Web search sub-agent tools.

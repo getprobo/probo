@@ -64,8 +64,10 @@ func (m *mockProvider) ChatCompletion(_ context.Context, _ *llm.ChatCompletionRe
 	if m.calls >= len(m.responses) {
 		return nil, errors.New("no more mock responses")
 	}
+
 	resp := m.responses[m.calls]
 	m.calls++
+
 	return resp, nil
 }
 
@@ -114,6 +116,7 @@ func (r *simpleRegistry) Agent(name string) (*agent.Agent, error) {
 	if !ok {
 		return nil, fmt.Errorf("agent %q not found", name)
 	}
+
 	return a, nil
 }
 
@@ -206,6 +209,7 @@ func TestAgentRunSupervisor_StopAndResume(t *testing.T) {
 		func(_ context.Context, _ struct{}) (agent.ToolResult, error) {
 			close(toolReady)
 			<-toolRelease
+
 			return agent.ToolResult{Content: "work done"}, nil
 		},
 	)
@@ -332,6 +336,7 @@ func TestAgentRunSupervisor_StopAndResume(t *testing.T) {
 				 WHERE id = $1`,
 				run.ID.String(),
 			)
+
 			return err
 		},
 	)
@@ -524,11 +529,13 @@ func makeBattleTools(progressFile string) []agent.Tool {
 		// Record completion — written AFTER the sleep so the parent's
 		// step count reflects truly-finished work.
 		mu.Lock()
+
 		f, err := os.OpenFile(progressFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 		if err != nil {
 			mu.Unlock()
 			return agent.ToolResult{}, err
 		}
+
 		_, _ = fmt.Fprintln(f, input.Task)
 		_ = f.Close()
 		mu.Unlock()
@@ -584,12 +591,15 @@ func TestAgentRunSupervisor_SIGTERM(t *testing.T) {
 		if err != nil {
 			return 0
 		}
+
 		n := 0
+
 		for _, b := range data {
 			if b == '\n' {
 				n++
 			}
 		}
+
 		return n
 	}
 
@@ -599,6 +609,7 @@ func TestAgentRunSupervisor_SIGTERM(t *testing.T) {
 			"-test.run=^TestAgentRunSupervisor_SIGTERM$",
 			"-test.v",
 		)
+
 		cmd.Env = append(os.Environ(),
 			"TEST_SIGTERM_SUBPROCESS=1",
 			"TEST_SIGTERM_PROGRESS_FILE="+progressFile,
@@ -607,27 +618,33 @@ func TestAgentRunSupervisor_SIGTERM(t *testing.T) {
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
 		require.NoError(t, cmd.Start())
+
 		return cmd
 	}
 
 	killAndWait := func(cmd *exec.Cmd) {
 		require.NoError(t, cmd.Process.Signal(syscall.SIGTERM))
+
 		err := cmd.Wait()
 		if err == nil {
 			return
 		}
+
 		exitErr, ok := errors.AsType[*exec.ExitError](err)
 		if !ok {
 			t.Fatalf("subprocess error: %v", err)
 		}
+
 		ws, ok := exitErr.Sys().(syscall.WaitStatus)
 		if !ok {
 			t.Fatalf("subprocess exited with unexpected wait status: %v", exitErr)
 		}
+
 		if ws.Signaled() && ws.Signal() == syscall.SIGTERM {
 			t.Logf("subprocess terminated by SIGTERM")
 			return
 		}
+
 		t.Fatalf("subprocess exited unexpectedly (signaled=%v signal=%v exit=%d): %v",
 			ws.Signaled(), ws.Signal(), ws.ExitStatus(), exitErr)
 	}
@@ -646,6 +663,7 @@ func TestAgentRunSupervisor_SIGTERM(t *testing.T) {
 					WHERE id = $1`,
 					run.ID.String(),
 				)
+
 				return err
 			},
 		)
@@ -674,6 +692,7 @@ func TestAgentRunSupervisor_SIGTERM(t *testing.T) {
 			"  checkpoint: %d messages, %d turns, usage=%+v",
 			len(cp.Messages), cp.Turns, cp.Usage,
 		)
+
 		return cp
 	}
 
@@ -682,7 +701,9 @@ func TestAgentRunSupervisor_SIGTERM(t *testing.T) {
 	//   Steps so far: turn0=1(scan) + turn1=3(fetch×3) = 4
 	// ============================================================
 	t.Log("=== Phase 1: SIGTERM after scan + parallel fetch (4 steps) ===")
+
 	cmd1 := startSubprocess(0)
+
 	waitForSteps(4)
 	killAndWait(cmd1)
 
@@ -700,7 +721,9 @@ func TestAgentRunSupervisor_SIGTERM(t *testing.T) {
 	//   New steps: turn2=1(analyze) + turn3=3(check×3) = 4
 	// ============================================================
 	t.Log("=== Phase 2: SIGTERM after analyze + parallel checks (4 more steps) ===")
+
 	cmd2 := startSubprocess(cp1.Turns)
+
 	waitForSteps(steps1 + 4)
 	killAndWait(cmd2)
 
@@ -720,7 +743,9 @@ func TestAgentRunSupervisor_SIGTERM(t *testing.T) {
 	//   New steps: turn4=1(deep) + turn5=2(generate×2) = 3
 	// ============================================================
 	t.Log("=== Phase 3: SIGTERM during long-running deep analysis (3 more steps) ===")
+
 	cmd3 := startSubprocess(cp2.Turns)
+
 	waitForSteps(steps2 + 3)
 	killAndWait(cmd3)
 
@@ -811,14 +836,17 @@ func runSIGTERMSubprocess() {
 	if addr == "" {
 		addr = "localhost:5432"
 	}
+
 	user := os.Getenv("PROBO_TEST_PG_USER")
 	if user == "" {
 		user = "probod"
 	}
+
 	password := os.Getenv("PROBO_TEST_PG_PASSWORD")
 	if password == "" {
 		password = "probod"
 	}
+
 	database := os.Getenv("PROBO_TEST_PG_DATABASE")
 	if database == "" {
 		database = "probod_test"

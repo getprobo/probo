@@ -21,7 +21,7 @@ import (
 
 // LastSession is the resolver for the lastSession field.
 func (r *membershipResolver) LastSession(ctx context.Context, obj *types.Membership) (*types.Session, error) {
-	if err := r.authorize(ctx, obj.ID, iam.ActionMembershipGet, authz.WithSkipAssumptionCheck()); err != nil {
+	if _, err := r.authorize(ctx, obj.ID, iam.ActionMembershipGet, authz.WithSkipAssumptionCheck()); err != nil {
 		return nil, err
 	}
 
@@ -32,12 +32,12 @@ func (r *membershipResolver) LastSession(ctx context.Context, obj *types.Members
 
 	childSession, err := r.iam.SessionService.GetActiveSessionForMembership(ctx, session.ID, obj.ID)
 	if err != nil {
-		var errSessionNotFound *iam.ErrSessionNotFound
-		if errors.As(err, &errSessionNotFound) {
+		if _, ok := errors.AsType[*iam.ErrSessionNotFound](err); ok {
 			return nil, nil
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get active session for membership", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -51,19 +51,24 @@ func (r *membershipResolver) Permission(ctx context.Context, obj *types.Membersh
 
 // UpdateMembership is the resolver for the updateMembership field.
 func (r *mutationResolver) UpdateMembership(ctx context.Context, input types.UpdateMembershipInput) (*types.UpdateMembershipPayload, error) {
-	if err := r.authorize(ctx, input.MembershipID, iam.ActionMembershipUpdate); err != nil {
+	if _, err := r.authorize(ctx, input.MembershipID, iam.ActionMembershipUpdate); err != nil {
 		return nil, err
 	}
 
 	if input.Role == coredata.MembershipRoleOwner {
-		if err := r.authorize(ctx, input.MembershipID, iam.ActionMembershipRoleSetOwner); err != nil {
+		if _, err := r.authorize(ctx, input.MembershipID, iam.ActionMembershipRoleSetOwner); err != nil {
 			return nil, err
 		}
 	}
 
-	membership, err := r.iam.OrganizationService.UpdateMempership(ctx, input.OrganizationID, input.MembershipID, input.Role)
+	membership, err := r.iam.OrganizationService.UpdateMembership(ctx, input.OrganizationID, input.MembershipID, input.Role)
 	if err != nil {
+		if _, ok := errors.AsType[*iam.ErrLastActiveOwner](err); ok {
+			return nil, gqlutils.Conflictf(ctx, "cannot demote last active owner")
+		}
+
 		r.logger.ErrorCtx(ctx, "cannot update membership", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 

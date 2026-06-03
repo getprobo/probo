@@ -33,8 +33,10 @@ type SyncStats struct {
 }
 
 func (r *BridgeRunner) acquireNextBridge(ctx context.Context) (*coredata.SCIMBridge, coredata.Scoper, error) {
-	var bridge *coredata.SCIMBridge
-	var scope coredata.Scoper
+	var (
+		bridge *coredata.SCIMBridge
+		scope  coredata.Scoper
+	)
 
 	err := r.pg.WithTx(
 		ctx,
@@ -53,7 +55,6 @@ func (r *BridgeRunner) acquireNextBridge(ctx context.Context) (*coredata.SCIMBri
 			return bridge.Update(ctx, tx, scope)
 		},
 	)
-
 	if err != nil {
 		return nil, nil, err
 	}
@@ -90,6 +91,7 @@ func (r *BridgeRunner) transitionToSuccess(
 					"cannot update bridge after successful sync",
 					log.Error(err),
 				)
+
 				return err
 			}
 
@@ -178,6 +180,7 @@ func (r *BridgeRunner) transitionToFailed(
 					log.String("new_state", string(bridge.State)),
 					log.Error(err),
 				)
+
 				return err
 			}
 

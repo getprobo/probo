@@ -93,24 +93,31 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 			if cmd.Flags().Changed("area") {
 				input["area"] = flagArea
 			}
+
 			if cmd.Flags().Changed("source") {
 				input["source"] = flagSource
 			}
+
 			if cmd.Flags().Changed("status") {
 				input["status"] = flagStatus
 			}
+
 			if cmd.Flags().Changed("type") {
 				input["type"] = flagType
 			}
+
 			if cmd.Flags().Changed("requirement") {
 				input["requirement"] = flagRequirement
 			}
+
 			if cmd.Flags().Changed("actions-to-be-implemented") {
 				input["actionsToBeImplemented"] = flagActionsToBeImplemented
 			}
+
 			if cmd.Flags().Changed("regulator") {
 				input["regulator"] = flagRegulator
 			}
+
 			if cmd.Flags().Changed("owner") {
 				if flagOwner == "" {
 					input["ownerId"] = nil
@@ -118,9 +125,11 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 					input["ownerId"] = flagOwner
 				}
 			}
+
 			if cmd.Flags().Changed("last-review-date") {
 				input["lastReviewDate"] = flagLastReviewDate
 			}
+
 			if cmd.Flags().Changed("due-date") {
 				input["dueDate"] = flagDueDate
 			}

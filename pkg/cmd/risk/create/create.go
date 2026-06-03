@@ -155,9 +155,11 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 			if flagName == "" {
 				return fmt.Errorf("name is required; pass --name or run interactively")
 			}
+
 			if flagCategory == "" {
 				return fmt.Errorf("category is required; pass --category or run interactively")
 			}
+
 			if flagTreatment == "" {
 				return fmt.Errorf("treatment is required; pass --treatment or run interactively")
 			}
@@ -174,15 +176,19 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 			if flagDescription != "" {
 				input["description"] = flagDescription
 			}
+
 			if flagNote != "" {
 				input["note"] = flagNote
 			}
+
 			if flagOwner != "" {
 				input["ownerId"] = flagOwner
 			}
+
 			if cmd.Flags().Changed("residual-likelihood") {
 				input["residualLikelihood"] = flagResidualLikelihood
 			}
+
 			if cmd.Flags().Changed("residual-impact") {
 				input["residualImpact"] = flagResidualImpact
 			}

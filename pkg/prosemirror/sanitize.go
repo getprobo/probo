@@ -26,7 +26,9 @@ func ValidateDocumentContentJSON(s string) error {
 	if strings.TrimSpace(s) == "" {
 		return nil
 	}
+
 	_, err := parseDocRoot(s)
+
 	return err
 }
 
@@ -35,9 +37,11 @@ func parseDocRoot(s string) (Node, error) {
 	if err != nil {
 		return Node{}, fmt.Errorf("cannot parse document content as ProseMirror JSON: %w", err)
 	}
+
 	if n.Type != NodeDoc {
 		return Node{}, fmt.Errorf("document content root must be type %q", NodeDoc)
 	}
+
 	return n, nil
 }
 
@@ -69,9 +73,11 @@ func sanitizeNode(n *Node) {
 	if n.Type == NodeImage {
 		sanitizeImageNode(n)
 	}
+
 	for i := range n.Marks {
 		sanitizeLinkMark(&n.Marks[i])
 	}
+
 	for i := range n.Content {
 		sanitizeNode(&n.Content[i])
 	}
@@ -85,6 +91,7 @@ func sanitizeImageNode(n *Node) {
 	}
 
 	attrs.Src = safeImageSrc(attrs.Src)
+
 	raw, err := json.Marshal(attrs)
 	if err != nil {
 		n.Attrs = []byte(`{"src":""}`)
@@ -106,6 +113,7 @@ func sanitizeLinkMark(m *Mark) {
 	}
 
 	attrs.Href = safeLinkHref(attrs.Href)
+
 	raw, err := json.Marshal(attrs)
 	if err != nil {
 		m.Attrs = []byte(`{"href":"#"}`)

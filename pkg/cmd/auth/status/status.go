@@ -46,6 +46,7 @@ func NewCmdStatus(f *cmdutil.Factory) *cobra.Command {
 				if host == cfg.ActiveHost {
 					label += " (active)"
 				}
+
 				_, _ = fmt.Fprintf(
 					f.IOStreams.Out,
 					"%s\n",
@@ -56,6 +57,7 @@ func NewCmdStatus(f *cmdutil.Factory) *cobra.Command {
 				if hc.Token != "" {
 					tokenStatus = "set"
 				}
+
 				_, _ = fmt.Fprintf(
 					f.IOStreams.Out,
 					"  Token: %s\n",

@@ -90,30 +90,6 @@ export const description: INodeProperties[] = [
 		required: true,
 	},
 	{
-		displayName: 'Consent Mode',
-		name: 'consentMode',
-		type: 'options',
-		displayOptions: {
-			show: {
-				resource: ['cookieBanner'],
-				operation: ['create'],
-			},
-		},
-		options: [
-			{
-				name: 'Opt In',
-				value: 'OPT_IN',
-			},
-			{
-				name: 'Opt Out',
-				value: 'OPT_OUT',
-			},
-		],
-		default: 'OPT_IN',
-		description: 'The consent mode for the cookie banner',
-		required: true,
-	},
-	{
 		displayName: 'Privacy Policy URL',
 		name: 'privacyPolicyUrl',
 		type: 'string',
@@ -137,7 +113,6 @@ export async function execute(
 	const origin = this.getNodeParameter('origin', itemIndex) as string;
 	const cookiePolicyUrl = this.getNodeParameter('cookiePolicyUrl', itemIndex) as string;
 	const consentExpiryDays = this.getNodeParameter('consentExpiryDays', itemIndex) as number;
-	const consentMode = this.getNodeParameter('consentMode', itemIndex) as string;
 	const privacyPolicyUrl = this.getNodeParameter('privacyPolicyUrl', itemIndex, '') as string;
 
 	const query = `
@@ -152,7 +127,6 @@ export async function execute(
 						privacyPolicyUrl
 						cookiePolicyUrl
 						consentExpiryDays
-						consentMode
 						showBranding
 						defaultLanguage
 						createdAt
@@ -169,7 +143,6 @@ export async function execute(
 		origin,
 		cookiePolicyUrl,
 		consentExpiryDays,
-		consentMode,
 	};
 	if (privacyPolicyUrl) input.privacyPolicyUrl = privacyPolicyUrl;
 

@@ -32,7 +32,7 @@ import (
 
 type (
 	OrganizationService struct {
-		svc           *TenantService
+		svc           *Service
 		fileValidator *filevalidation.FileValidator
 	}
 
@@ -86,7 +86,7 @@ func (uocr *UpdateOrganizationContextRequest) Validate() error {
 }
 
 func (s OrganizationService) Get(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	organizationID gid.GID,
 ) (*coredata.Organization, error) {
 	organization := &coredata.Organization{}
@@ -97,12 +97,11 @@ func (s OrganizationService) Get(
 			return organization.LoadByID(
 				ctx,
 				conn,
-				s.svc.scope,
+				scope,
 				organizationID,
 			)
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -111,7 +110,7 @@ func (s OrganizationService) Get(
 }
 
 func (s OrganizationService) GetByIDs(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	organizationIDs ...gid.GID,
 ) (coredata.Organizations, error) {
 	var organizations coredata.Organizations
@@ -122,7 +121,7 @@ func (s OrganizationService) GetByIDs(
 			if err := organizations.LoadByIDs(
 				ctx,
 				conn,
-				s.svc.scope,
+				scope,
 				organizationIDs,
 			); err != nil {
 				return fmt.Errorf("cannot load organizations by ids: %w", err)
@@ -139,7 +138,7 @@ func (s OrganizationService) GetByIDs(
 }
 
 func (s OrganizationService) GetContext(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	organizationID gid.GID,
 ) (*coredata.OrganizationContext, error) {
 	organizationContext := &coredata.OrganizationContext{}
@@ -150,7 +149,7 @@ func (s OrganizationService) GetContext(
 			err := organizationContext.LoadByOrganizationID(
 				ctx,
 				conn,
-				s.svc.scope,
+				scope,
 				organizationID,
 			)
 			if err != nil {
@@ -160,7 +159,6 @@ func (s OrganizationService) GetContext(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -169,7 +167,7 @@ func (s OrganizationService) GetContext(
 }
 
 func (s OrganizationService) UpdateContext(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	req UpdateOrganizationContextRequest,
 ) (*coredata.OrganizationContext, error) {
 	if err := req.Validate(); err != nil {
@@ -182,11 +180,11 @@ func (s OrganizationService) UpdateContext(
 	err := s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			if err := organization.LoadByID(ctx, tx, s.svc.scope, req.OrganizationID); err != nil {
+			if err := organization.LoadByID(ctx, tx, scope, req.OrganizationID); err != nil {
 				return fmt.Errorf("cannot load organization: %w", err)
 			}
 
-			if err := organizationContext.LoadByOrganizationID(ctx, tx, s.svc.scope, req.OrganizationID); err != nil {
+			if err := organizationContext.LoadByOrganizationID(ctx, tx, scope, req.OrganizationID); err != nil {
 				return fmt.Errorf("cannot load organization context: %w", err)
 			}
 
@@ -212,14 +210,13 @@ func (s OrganizationService) UpdateContext(
 
 			organizationContext.UpdatedAt = time.Now()
 
-			if err := organizationContext.Update(ctx, tx, s.svc.scope); err != nil {
+			if err := organizationContext.Update(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot update organization context: %w", err)
 			}
 
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -228,7 +225,7 @@ func (s OrganizationService) UpdateContext(
 }
 
 func (s OrganizationService) Update(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	req UpdateOrganizationRequest,
 ) (*coredata.Organization, error) {
 	if err := req.Validate(); err != nil {
@@ -240,7 +237,7 @@ func (s OrganizationService) Update(
 	err := s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			if err := organization.LoadByID(ctx, tx, s.svc.scope, req.ID); err != nil {
+			if err := organization.LoadByID(ctx, tx, scope, req.ID); err != nil {
 				return fmt.Errorf("cannot load organization: %w", err)
 			}
 
@@ -265,6 +262,7 @@ func (s OrganizationService) Update(
 						return fmt.Errorf("invalid email address: %w", err)
 					}
 				}
+
 				organization.Email = *req.Email
 			}
 
@@ -272,12 +270,13 @@ func (s OrganizationService) Update(
 				organization.HeadquarterAddress = *req.HeadquarterAddress
 			}
 
-			if err := organization.Update(ctx, s.svc.scope, tx); err != nil {
+			if err := organization.Update(ctx, scope, tx); err != nil {
 				return fmt.Errorf("cannot update organization: %w", err)
 			}
 
 			if req.File != nil {
-				fileID := gid.New(s.svc.scope.GetTenantID(), coredata.FileEntityType)
+				fileID := gid.New(scope.GetTenantID(), coredata.FileEntityType)
+
 				objectKey, err := uuid.NewV7()
 				if err != nil {
 					return fmt.Errorf("cannot generate object key: %w", err)
@@ -288,6 +287,7 @@ func (s OrganizationService) Update(
 
 				if contentType == "" {
 					contentType = "application/octet-stream"
+
 					if filename != "" {
 						if detectedType := mime.TypeByExtension(filepath.Ext(filename)); detectedType != "" {
 							contentType = detectedType
@@ -330,7 +330,7 @@ func (s OrganizationService) Update(
 
 				fileRecord.FileSize = fileSize
 
-				if err := fileRecord.Insert(ctx, tx, s.svc.scope); err != nil {
+				if err := fileRecord.Insert(ctx, tx, scope); err != nil {
 					return fmt.Errorf("cannot insert file: %w", err)
 				}
 
@@ -338,7 +338,8 @@ func (s OrganizationService) Update(
 			}
 
 			if req.HorizontalLogoFile != nil {
-				fileID := gid.New(s.svc.scope.GetTenantID(), coredata.FileEntityType)
+				fileID := gid.New(scope.GetTenantID(), coredata.FileEntityType)
+
 				objectKey, err := uuid.NewV7()
 				if err != nil {
 					return fmt.Errorf("cannot generate object key: %w", err)
@@ -349,6 +350,7 @@ func (s OrganizationService) Update(
 
 				if contentType == "" {
 					contentType = "application/octet-stream"
+
 					if filename != "" {
 						if detectedType := mime.TypeByExtension(filepath.Ext(filename)); detectedType != "" {
 							contentType = detectedType
@@ -391,21 +393,20 @@ func (s OrganizationService) Update(
 
 				fileRecord.FileSize = fileSize
 
-				if err := fileRecord.Insert(ctx, tx, s.svc.scope); err != nil {
+				if err := fileRecord.Insert(ctx, tx, scope); err != nil {
 					return fmt.Errorf("cannot insert file: %w", err)
 				}
 
 				organization.HorizontalLogoFileID = &fileID
 			}
 
-			if err := organization.Update(ctx, s.svc.scope, tx); err != nil {
+			if err := organization.Update(ctx, scope, tx); err != nil {
 				return fmt.Errorf("cannot update organization: %w", err)
 			}
 
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -414,7 +415,7 @@ func (s OrganizationService) Update(
 }
 
 func (s OrganizationService) GenerateLogoURL(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	organizationID gid.GID,
 	expiresIn time.Duration,
 ) (*string, error) {
@@ -424,7 +425,7 @@ func (s OrganizationService) GenerateLogoURL(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
 			organization := &coredata.Organization{}
-			if err := organization.LoadByID(ctx, conn, s.svc.scope, organizationID); err != nil {
+			if err := organization.LoadByID(ctx, conn, scope, organizationID); err != nil {
 				return fmt.Errorf("cannot load organization: %w", err)
 			}
 
@@ -432,7 +433,7 @@ func (s OrganizationService) GenerateLogoURL(
 				return nil
 			}
 
-			if err := file.LoadByID(ctx, conn, s.svc.scope, *organization.LogoFileID); err != nil {
+			if err := file.LoadByID(ctx, conn, scope, *organization.LogoFileID); err != nil {
 				return fmt.Errorf("cannot load file: %w", err)
 			}
 
@@ -456,7 +457,7 @@ func (s OrganizationService) GenerateLogoURL(
 }
 
 func (s OrganizationService) GenerateHorizontalLogoURL(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	organizationID gid.GID,
 	expiresIn time.Duration,
 ) (*string, error) {
@@ -466,7 +467,7 @@ func (s OrganizationService) GenerateHorizontalLogoURL(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
 			organization := &coredata.Organization{}
-			if err := organization.LoadByID(ctx, conn, s.svc.scope, organizationID); err != nil {
+			if err := organization.LoadByID(ctx, conn, scope, organizationID); err != nil {
 				return fmt.Errorf("cannot load organization: %w", err)
 			}
 
@@ -474,7 +475,7 @@ func (s OrganizationService) GenerateHorizontalLogoURL(
 				return nil
 			}
 
-			if err := file.LoadByID(ctx, conn, s.svc.scope, *organization.HorizontalLogoFileID); err != nil {
+			if err := file.LoadByID(ctx, conn, scope, *organization.HorizontalLogoFileID); err != nil {
 				return fmt.Errorf("cannot load file: %w", err)
 			}
 
@@ -498,7 +499,7 @@ func (s OrganizationService) GenerateHorizontalLogoURL(
 }
 
 func (s OrganizationService) DeleteHorizontalLogo(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	organizationID gid.GID,
 ) (*coredata.Organization, error) {
 	organization := &coredata.Organization{}
@@ -506,21 +507,20 @@ func (s OrganizationService) DeleteHorizontalLogo(
 	err := s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			if err := organization.LoadByID(ctx, tx, s.svc.scope, organizationID); err != nil {
+			if err := organization.LoadByID(ctx, tx, scope, organizationID); err != nil {
 				return fmt.Errorf("cannot load organization: %w", err)
 			}
 
 			organization.HorizontalLogoFileID = nil
 			organization.UpdatedAt = time.Now()
 
-			if err := organization.Update(ctx, s.svc.scope, tx); err != nil {
+			if err := organization.Update(ctx, scope, tx); err != nil {
 				return fmt.Errorf("cannot update organization: %w", err)
 			}
 
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}

@@ -1,0 +1,58 @@
+---
+description: Go naming and conventions — constructors, configs, receivers, context, interfaces
+globs: "**/*.go"
+alwaysApply: false
+---
+
+# Go naming and conventions
+
+## Naming patterns
+
+- Constructors: `New*` (e.g. `NewService`, `NewServer`, `NewBridge`)
+- Config structs: `*Config` suffix (e.g. `APIConfig`, `PgConfig`)
+- Request structs: `*Request` suffix (e.g. `UpdateTrustCenterRequest`)
+- Unexported internal types: lowercase (e.g. `thirdPartyInfo`, `ctxKey`)
+
+## Receiver names
+
+Short, usually single-letter matching the type:
+- `s` for Service, `c` for Client, `p` for Provider, `w` for Worker
+
+## Context
+
+Always the first parameter. Use private struct keys for context values:
+
+```go
+type ctxKey struct{ name string }
+var trustCenterIDKey = &ctxKey{name: "trust_center_id"}
+```
+
+## Interfaces
+
+- Define in the consumer package, not the provider
+- Keep them small
+- Verify satisfaction at compile time:
+
+```go
+var (
+	_ unit.Configurable = (*Implm)(nil)
+	_ unit.Runnable     = (*Implm)(nil)
+)
+```
+
+## Functional options
+
+Use `Config` structs for required params. Use `With*` functions for optional config:
+
+```go
+type Option func(*Bridge)
+
+func WithDryRun(dryRun bool) Option {
+	return func(s *Bridge) { s.dryRun = dryRun }
+}
+```
+
+## Pointers
+
+Go 1.26: use `new(expr)` for pointer-to-value (e.g. `new(1)`, `new("foo")`, `new(time.Now())`).
+Use `go.gearno.de/x/ref` only for dereference helpers (`ref.UnrefOrZero`).

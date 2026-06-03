@@ -132,6 +132,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				); err != nil {
 					return err
 				}
+
 				if err := cmdutil.ValidateEnum(
 					"order-direction",
 					flagOrderDir,
@@ -139,6 +140,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				); err != nil {
 					return err
 				}
+
 				variables["orderBy"] = map[string]any{
 					"field":     flagOrderBy,
 					"direction": flagOrderDir,
@@ -149,6 +151,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 			if flagQuery != "" {
 				filter["query"] = flagQuery
 			}
+
 			if flagWriteMode != "" {
 				if err := cmdutil.ValidateEnum(
 					"write-mode",
@@ -157,8 +160,10 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				); err != nil {
 					return err
 				}
+
 				filter["writeModes"] = []string{flagWriteMode}
 			}
+
 			if flagDocumentType != "" {
 				if err := cmdutil.ValidateEnum(
 					"document-type",
@@ -167,8 +172,10 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				); err != nil {
 					return err
 				}
+
 				filter["documentTypes"] = []string{flagDocumentType}
 			}
+
 			if flagClassification != "" {
 				if err := cmdutil.ValidateEnum(
 					"classification",
@@ -177,8 +184,10 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				); err != nil {
 					return err
 				}
+
 				filter["classifications"] = []string{flagClassification}
 			}
+
 			if flagStatus != "" {
 				if err := cmdutil.ValidateEnum(
 					"status",
@@ -187,8 +196,10 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				); err != nil {
 					return err
 				}
+
 				filter["status"] = []string{flagStatus}
 			}
+
 			if len(filter) > 0 {
 				variables["filter"] = filter
 			}
@@ -208,12 +219,15 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 					if err := json.Unmarshal(data, &resp); err != nil {
 						return nil, err
 					}
+
 					if resp.Node == nil {
 						return nil, fmt.Errorf("organization %s not found", flagOrg)
 					}
+
 					if resp.Node.Typename != "Organization" {
 						return nil, fmt.Errorf("expected Organization node, got %s", resp.Node.Typename)
 					}
+
 					return &resp.Node.Documents, nil
 				},
 			)
@@ -235,12 +249,14 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				title := ""
 				docType := ""
 				classification := ""
+
 				if len(doc.Versions.Edges) > 0 {
 					v := doc.Versions.Edges[0].Node
 					title = v.Title
 					docType = v.DocumentType
 					classification = v.Classification
 				}
+
 				rows = append(rows, []string{
 					doc.ID,
 					title,

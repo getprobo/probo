@@ -27,7 +27,7 @@ import (
 )
 
 type AssetService struct {
-	svc *TenantService
+	svc *Service
 }
 
 type CreateAssetRequest struct {
@@ -37,7 +37,7 @@ type CreateAssetRequest struct {
 	OwnerID         gid.GID
 	AssetType       coredata.AssetType
 	DataTypesStored string
-	VendorIDs       []gid.GID
+	ThirdPartyIDs   []gid.GID
 }
 
 type UpdateAssetRequest struct {
@@ -47,7 +47,7 @@ type UpdateAssetRequest struct {
 	OwnerID         *gid.GID
 	AssetType       *coredata.AssetType
 	DataTypesStored *string
-	VendorIDs       []gid.GID
+	ThirdPartyIDs   []gid.GID
 }
 
 func (car *CreateAssetRequest) Validate() error {
@@ -59,8 +59,8 @@ func (car *CreateAssetRequest) Validate() error {
 	v.Check(car.OwnerID, "owner_id", validator.Required(), validator.GID(coredata.MembershipProfileEntityType))
 	v.Check(car.AssetType, "asset_type", validator.Required(), validator.OneOfSlice(coredata.AssetTypes()))
 	v.Check(car.DataTypesStored, "data_types_stored", validator.Required(), validator.SafeText(ContentMaxLength))
-	v.CheckEach(car.VendorIDs, "vendor_ids", func(index int, item any) {
-		v.Check(item, fmt.Sprintf("vendor_ids[%d]", index), validator.Required(), validator.GID(coredata.VendorEntityType))
+	v.CheckEach(car.ThirdPartyIDs, "third_party_ids", func(index int, item any) {
+		v.Check(item, fmt.Sprintf("third_party_ids[%d]", index), validator.Required(), validator.GID(coredata.ThirdPartyEntityType))
 	})
 
 	return v.Error()
@@ -75,15 +75,15 @@ func (uar *UpdateAssetRequest) Validate() error {
 	v.Check(uar.OwnerID, "owner_id", validator.GID(coredata.MembershipProfileEntityType))
 	v.Check(uar.AssetType, "asset_type", validator.OneOfSlice(coredata.AssetTypes()))
 	v.Check(uar.DataTypesStored, "data_types_stored", validator.SafeText(ContentMaxLength))
-	v.CheckEach(uar.VendorIDs, "vendor_ids", func(index int, item any) {
-		v.Check(item, fmt.Sprintf("vendor_ids[%d]", index), validator.GID(coredata.VendorEntityType))
+	v.CheckEach(uar.ThirdPartyIDs, "third_party_ids", func(index int, item any) {
+		v.Check(item, fmt.Sprintf("third_party_ids[%d]", index), validator.GID(coredata.ThirdPartyEntityType))
 	})
 
 	return v.Error()
 }
 
 func (s AssetService) Get(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	assetID gid.GID,
 ) (*coredata.Asset, error) {
 	asset := &coredata.Asset{}
@@ -91,10 +91,9 @@ func (s AssetService) Get(
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			return asset.LoadByID(ctx, conn, s.svc.scope, assetID)
+			return asset.LoadByID(ctx, conn, scope, assetID)
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -103,7 +102,7 @@ func (s AssetService) Get(
 }
 
 func (s AssetService) GetByOwnerID(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	ownerID gid.GID,
 ) (*coredata.Asset, error) {
 	asset := &coredata.Asset{OwnerID: ownerID}
@@ -111,10 +110,9 @@ func (s AssetService) GetByOwnerID(
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			return asset.LoadByOwnerID(ctx, conn, s.svc.scope)
+			return asset.LoadByOwnerID(ctx, conn, scope)
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -123,7 +121,7 @@ func (s AssetService) GetByOwnerID(
 }
 
 func (s AssetService) CountForOrganizationID(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	organizationID gid.GID,
 ) (int, error) {
 	var count int
@@ -132,7 +130,8 @@ func (s AssetService) CountForOrganizationID(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			assets := coredata.Assets{}
-			count, err = assets.CountByOrganizationID(ctx, conn, s.svc.scope, organizationID)
+
+			count, err = assets.CountByOrganizationID(ctx, conn, scope, organizationID)
 			if err != nil {
 				return fmt.Errorf("cannot count assets: %w", err)
 			}
@@ -140,7 +139,6 @@ func (s AssetService) CountForOrganizationID(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return 0, err
 	}
@@ -149,7 +147,7 @@ func (s AssetService) CountForOrganizationID(
 }
 
 func (s AssetService) ListForOrganizationID(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	organizationID gid.GID,
 	cursor *page.Cursor[coredata.AssetOrderField],
 ) (*page.Page[*coredata.Asset, coredata.AssetOrderField], error) {
@@ -161,13 +159,12 @@ func (s AssetService) ListForOrganizationID(
 			return assets.LoadByOrganizationID(
 				ctx,
 				conn,
-				s.svc.scope,
+				scope,
 				organizationID,
 				cursor,
 			)
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -176,7 +173,7 @@ func (s AssetService) ListForOrganizationID(
 }
 
 func (s AssetService) Update(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	req UpdateAssetRequest,
 ) (*coredata.Asset, error) {
 	if err := req.Validate(); err != nil {
@@ -185,10 +182,10 @@ func (s AssetService) Update(
 
 	now := time.Now()
 	asset := &coredata.Asset{ID: req.ID}
-	assetVendors := &coredata.AssetVendors{}
+	assetThirdParties := &coredata.AssetThirdParties{}
 
 	err := s.svc.pg.WithTx(ctx, func(ctx context.Context, conn pg.Tx) error {
-		if err := asset.LoadByID(ctx, conn, s.svc.scope, req.ID); err != nil {
+		if err := asset.LoadByID(ctx, conn, scope, req.ID); err != nil {
 			return fmt.Errorf("cannot load asset: %w", err)
 		}
 
@@ -196,36 +193,40 @@ func (s AssetService) Update(
 		if req.Name != nil {
 			asset.Name = *req.Name
 		}
+
 		if req.Amount != nil {
 			asset.Amount = *req.Amount
 		}
+
 		if req.OwnerID != nil {
 			profile := &coredata.MembershipProfile{}
-			if err := profile.LoadByID(ctx, conn, s.svc.scope, *req.OwnerID); err != nil {
+			if err := profile.LoadByID(ctx, conn, scope, *req.OwnerID); err != nil {
 				return fmt.Errorf("cannot load owner profile: %w", err)
 			}
+
 			asset.OwnerID = *req.OwnerID
 		}
+
 		if req.AssetType != nil {
 			asset.AssetType = *req.AssetType
 		}
+
 		if req.DataTypesStored != nil {
 			asset.DataTypesStored = *req.DataTypesStored
 		}
 
-		if err := asset.Update(ctx, conn, s.svc.scope); err != nil {
+		if err := asset.Update(ctx, conn, scope); err != nil {
 			return fmt.Errorf("cannot update asset: %w", err)
 		}
 
-		if req.VendorIDs != nil {
-			if err := assetVendors.Merge(ctx, conn, s.svc.scope, asset.ID, asset.OrganizationID, req.VendorIDs); err != nil {
-				return fmt.Errorf("cannot update asset vendors: %w", err)
+		if req.ThirdPartyIDs != nil {
+			if err := assetThirdParties.Merge(ctx, conn, scope, asset.ID, asset.OrganizationID, req.ThirdPartyIDs); err != nil {
+				return fmt.Errorf("cannot update asset thirdParties: %w", err)
 			}
 		}
 
 		return nil
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -234,7 +235,7 @@ func (s AssetService) Update(
 }
 
 func (s AssetService) Create(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	req CreateAssetRequest,
 ) (*coredata.Asset, error) {
 	if err := req.Validate(); err != nil {
@@ -242,8 +243,8 @@ func (s AssetService) Create(
 	}
 
 	now := time.Now()
-	assetID := gid.New(s.svc.scope.GetTenantID(), coredata.AssetEntityType)
-	assetVendors := &coredata.AssetVendors{}
+	assetID := gid.New(scope.GetTenantID(), coredata.AssetEntityType)
+	assetThirdParties := &coredata.AssetThirdParties{}
 
 	asset := &coredata.Asset{
 		ID:              assetID,
@@ -259,23 +260,22 @@ func (s AssetService) Create(
 
 	err := s.svc.pg.WithTx(ctx, func(ctx context.Context, conn pg.Tx) error {
 		profile := &coredata.MembershipProfile{}
-		if err := profile.LoadByID(ctx, conn, s.svc.scope, req.OwnerID); err != nil {
+		if err := profile.LoadByID(ctx, conn, scope, req.OwnerID); err != nil {
 			return fmt.Errorf("cannot load owner profile: %w", err)
 		}
 
-		if err := asset.Insert(ctx, conn, s.svc.scope); err != nil {
+		if err := asset.Insert(ctx, conn, scope); err != nil {
 			return fmt.Errorf("cannot insert asset: %w", err)
 		}
 
-		if len(req.VendorIDs) > 0 {
-			if err := assetVendors.Insert(ctx, conn, s.svc.scope, asset.ID, asset.OrganizationID, req.VendorIDs); err != nil {
-				return fmt.Errorf("cannot create asset vendors: %w", err)
+		if len(req.ThirdPartyIDs) > 0 {
+			if err := assetThirdParties.Insert(ctx, conn, scope, asset.ID, asset.OrganizationID, req.ThirdPartyIDs); err != nil {
+				return fmt.Errorf("cannot create asset thirdParties: %w", err)
 			}
 		}
 
 		return nil
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -284,7 +284,7 @@ func (s AssetService) Create(
 }
 
 func (s AssetService) Delete(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	assetID gid.GID,
 ) error {
 	asset := &coredata.Asset{ID: assetID}
@@ -292,7 +292,7 @@ func (s AssetService) Delete(
 	return s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			return asset.Delete(ctx, tx, s.svc.scope)
+			return asset.Delete(ctx, tx, scope)
 		},
 	)
 }

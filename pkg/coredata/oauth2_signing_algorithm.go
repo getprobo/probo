@@ -14,7 +14,10 @@
 
 package coredata
 
-import "fmt"
+import (
+	"encoding"
+	"fmt"
+)
 
 type OAuth2SigningAlgorithm string
 
@@ -22,26 +25,43 @@ const (
 	OAuth2SigningAlgorithmRS256 OAuth2SigningAlgorithm = "RS256"
 )
 
-func (a OAuth2SigningAlgorithm) IsValid() bool {
-	switch a {
-	case OAuth2SigningAlgorithmRS256:
+var (
+	_ fmt.Stringer             = OAuth2SigningAlgorithm("")
+	_ encoding.TextMarshaler   = OAuth2SigningAlgorithm("")
+	_ encoding.TextUnmarshaler = (*OAuth2SigningAlgorithm)(nil)
+)
+
+func OAuth2SigningAlgorithms() []OAuth2SigningAlgorithm {
+	return []OAuth2SigningAlgorithm{
+		OAuth2SigningAlgorithmRS256,
+	}
+}
+
+func (v OAuth2SigningAlgorithm) IsValid() bool {
+	switch v {
+	case
+		OAuth2SigningAlgorithmRS256:
 		return true
 	}
 
 	return false
 }
 
-func (a OAuth2SigningAlgorithm) String() string { return string(a) }
-
-func (a *OAuth2SigningAlgorithm) UnmarshalText(text []byte) error {
-	*a = OAuth2SigningAlgorithm(text)
-	if !a.IsValid() {
-		return fmt.Errorf("%s is not a valid OAuth2SigningAlgorithm", string(text))
-	}
-
-	return nil
+func (v OAuth2SigningAlgorithm) String() string {
+	return string(v)
 }
 
-func (a OAuth2SigningAlgorithm) MarshalText() ([]byte, error) {
-	return []byte(a.String()), nil
+func (v OAuth2SigningAlgorithm) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *OAuth2SigningAlgorithm) UnmarshalText(text []byte) error {
+	val := OAuth2SigningAlgorithm(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid OAuth2SigningAlgorithm value: %q", string(text))
+	}
+
+	*v = val
+
+	return nil
 }

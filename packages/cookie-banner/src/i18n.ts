@@ -43,14 +43,28 @@ export function interpolate(
 }
 
 const COOKIE_DETAIL_LABELS: Record<string, Record<string, string>> = {
-  en: { label_description: "Description: {{value}}", label_duration: "Duration: {{value}}" },
-  fr: { label_description: "Description : {{value}}", label_duration: "Durée : {{value}}" },
-  de: { label_description: "Beschreibung: {{value}}", label_duration: "Dauer: {{value}}" },
-  es: { label_description: "Descripción: {{value}}", label_duration: "Duración: {{value}}" },
+  en: { label_type: "Type: {{value}}", label_description: "Description: {{value}}", label_duration: "Duration: {{value}}" },
+  fr: { label_type: "Type : {{value}}", label_description: "Description : {{value}}", label_duration: "Durée : {{value}}" },
+  de: { label_type: "Typ: {{value}}", label_description: "Beschreibung: {{value}}", label_duration: "Dauer: {{value}}" },
+  es: { label_type: "Tipo: {{value}}", label_description: "Descripción: {{value}}", label_duration: "Duración: {{value}}" },
 };
 
 export function getCookieDetailLabels(lang: string): Record<string, string> {
   return COOKIE_DETAIL_LABELS[lang] ?? COOKIE_DETAIL_LABELS.en;
+}
+
+// Tracker type names are Web platform API names (proper nouns), so they are
+// not translated; only the surrounding "Type:" label is localized.
+const TRACKER_TYPE_LABELS: Record<string, string> = {
+  COOKIE: "Cookie",
+  LOCAL_STORAGE: "Local storage",
+  SESSION_STORAGE: "Session storage",
+  INDEXED_DB: "IndexedDB",
+  CACHE_STORAGE: "Cache storage",
+};
+
+export function getTrackerTypeLabel(type: string): string {
+  return TRACKER_TYPE_LABELS[type] ?? type;
 }
 
 const GPC_LABELS: Record<string, string> = {

@@ -30,11 +30,11 @@ func TestSnapshotsEqual(t *testing.T) {
 	baseSnapshot := func() coredata.CookieBannerVersionSnapshot {
 		policy := "https://example.com/privacy"
 		maxAge := 3600
+
 		return coredata.CookieBannerVersionSnapshot{
 			PrivacyPolicyURL:  &policy,
 			CookiePolicyURL:   "https://example.com/cookies",
 			ConsentExpiryDays: 180,
-			ConsentMode:       "OPT_IN",
 			DefaultLanguage:   "en",
 			Categories: []coredata.CookieBannerVersionSnapshotCategory{
 				{
@@ -43,7 +43,7 @@ func TestSnapshotsEqual(t *testing.T) {
 					Description: "Analytics cookies",
 					Kind:        coredata.CookieCategoryKindNormal,
 					Cookies: coredata.CookieItems{
-						{Name: "_ga", MaxAgeSeconds: &maxAge, Description: "Google Analytics"},
+						{Name: "_ga", TrackerType: coredata.TrackerTypeCookie, MaxAgeSeconds: &maxAge, Description: "Google Analytics"},
 					},
 					GCMConsentTypes: []string{"analytics_storage"},
 					PostHogConsent:  false,
@@ -248,7 +248,6 @@ func TestBuildSnapshot_RankInvariant(t *testing.T) {
 		ID:                bannerID,
 		CookiePolicyURL:   "https://example.com/cookies",
 		ConsentExpiryDays: 365,
-		ConsentMode:       coredata.CookieConsentModeOptIn,
 		DefaultLanguage:   "en",
 	}
 
@@ -298,14 +297,15 @@ func TestRemapTextsForConsentMode(t *testing.T) {
 		}
 	}
 
-	t.Run("no regulation clears reject and customize", func(t *testing.T) {
+	t.Run("opt in mode keeps all buttons", func(t *testing.T) {
 		t.Parallel()
 
 		texts := baseTexts()
-		remapTextsForConsentMode(texts, ConsentModeOptIn, RegulationNone)
+		remapTextsForConsentMode(texts, ConsentModeOptIn)
 
-		assert.Empty(t, texts["button_reject_all"])
-		assert.Empty(t, texts["button_customize"])
+		assert.Equal(t, "Accept All", texts["button_accept_all"])
+		assert.Equal(t, "Reject All", texts["button_reject_all"])
+		assert.Equal(t, "Customize", texts["button_customize"])
 	})
 
 	t.Run("opt out mode maps opt out to reject and clears customize", func(t *testing.T) {
@@ -313,7 +313,7 @@ func TestRemapTextsForConsentMode(t *testing.T) {
 
 		texts := baseTexts()
 		texts["button_opt_out"] = "Do Not Sell"
-		remapTextsForConsentMode(texts, ConsentModeOptOut, RegulationCCPA)
+		remapTextsForConsentMode(texts, ConsentModeOptOut)
 
 		assert.Equal(t, "Do Not Sell", texts["button_reject_all"])
 		assert.Empty(t, texts["button_customize"])

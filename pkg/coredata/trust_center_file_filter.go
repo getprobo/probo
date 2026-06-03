@@ -50,6 +50,7 @@ func (f *TrustCenterFileFilter) SQLArguments() pgx.NamedArgs {
 			visibilities[i] = v.String()
 		}
 	}
+
 	return pgx.NamedArgs{
 		"trust_center_visibilities": visibilities,
 	}

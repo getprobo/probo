@@ -37,6 +37,7 @@ func NewListFrameworksOutput(frameworkPage *page.Page[*coredata.Framework, cored
 	}
 
 	var nextCursor *page.CursorKey
+
 	if len(frameworkPage.Data) > 0 {
 		cursorKey := frameworkPage.Data[len(frameworkPage.Data)-1].CursorKey(frameworkPage.Cursor.OrderBy.Field)
 		nextCursor = &cursorKey

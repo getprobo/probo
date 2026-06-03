@@ -49,7 +49,6 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 		flagCookiePolicyUrl  string
 		flagPrivacyPolicyUrl string
 		flagConsentExpiry    int
-		flagConsentMode      string
 		flagDefaultLanguage  string
 	)
 
@@ -81,18 +80,19 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 			if cmd.Flags().Changed("name") {
 				input["name"] = flagName
 			}
+
 			if cmd.Flags().Changed("cookie-policy-url") {
 				input["cookiePolicyUrl"] = flagCookiePolicyUrl
 			}
+
 			if cmd.Flags().Changed("privacy-policy-url") {
 				input["privacyPolicyUrl"] = flagPrivacyPolicyUrl
 			}
+
 			if cmd.Flags().Changed("consent-expiry-days") {
 				input["consentExpiryDays"] = flagConsentExpiry
 			}
-			if cmd.Flags().Changed("consent-mode") {
-				input["consentMode"] = flagConsentMode
-			}
+
 			if cmd.Flags().Changed("default-language") {
 				input["defaultLanguage"] = flagDefaultLanguage
 			}
@@ -122,7 +122,6 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&flagCookiePolicyUrl, "cookie-policy-url", "", "Cookie policy URL")
 	cmd.Flags().StringVar(&flagPrivacyPolicyUrl, "privacy-policy-url", "", "Privacy policy URL")
 	cmd.Flags().IntVar(&flagConsentExpiry, "consent-expiry-days", 0, "Days until consent expires")
-	cmd.Flags().StringVar(&flagConsentMode, "consent-mode", "", "Consent mode: OPT_IN or OPT_OUT")
 	cmd.Flags().StringVar(&flagDefaultLanguage, "default-language", "", "Default language code")
 
 	return cmd

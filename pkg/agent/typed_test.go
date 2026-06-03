@@ -33,8 +33,10 @@ func (m *typedMockProvider) ChatCompletion(_ context.Context, _ *llm.ChatComplet
 	if m.calls >= len(m.responses) {
 		return nil, errors.New("no more mock responses")
 	}
+
 	resp := m.responses[m.calls]
 	m.calls++
+
 	return resp, nil
 }
 

@@ -13,7 +13,6 @@ Every entity uses `gid.GID` for its ID, `db` tags for pgx mapping, and `CreatedA
 type (
 	Asset struct {
 		ID             gid.GID   `db:"id"`
-		SnapshotID     *gid.GID  `db:"snapshot_id"`
 		Name           string    `db:"name"`
 		OrganizationID gid.GID   `db:"organization_id"`
 		AssetType      AssetType `db:"asset_type"`
@@ -101,7 +100,10 @@ This ensures the compiler catches renamed or removed enum values instead of sile
 | -------------------------------------------------------- | ----------- | ---------------------------- | ------------------------------------ |
 | `LoadByID(ctx, conn, scope, id)`                         | `*Entity`   | `error`                      | Single entity by ID                  |
 | `LoadBy*(ctx, conn, scope, key)`                         | `*Entity`   | `error`                      | Single entity by unique key          |
-| `LoadAllBy*(ctx, conn, scope, parentID, cursor, filter)` | `*Entities` | `error`                      | Paginated list                       |
+| `LoadBy*(ctx, conn, scope, parentID, cursor, filter)`    | `*Entities` | `error`                      | Paginated list (cursor provides limit) |
+| `Load(ctx, conn, limit, filter)`                         | `*Entities` | `error`                      | Filtered list with explicit limit    |
+| `LoadAllBy*(ctx, conn, scope, parentID)`                 | `*Entities` | `error`                      | All matching rows (never cursor/limit) |
+| `LoadAll(ctx, conn, filter)`                             | `*Entities` | `error`                      | All matching rows with filter (never cursor/limit) |
 | `CountBy*(ctx, conn, scope, parentID, filter)`           | `*Entities` | `(int, error)`               | Count matching rows                  |
 | `Insert(ctx, conn, scope)`                               | `*Entity`   | `error`                      | Insert, uses `scope.GetTenantID()`   |
 | `Update(ctx, conn, scope)`                               | `*Entity`   | `error`                      | Update via `Exec` (no `RETURNING`)   |
@@ -109,10 +111,26 @@ This ensures the compiler catches renamed or removed enum values instead of sile
 | `CursorKey(orderField)`                                  | `*Entity`   | `page.CursorKey`             | Cursor for pagination                |
 | `AuthorizationAttributes(ctx, conn)`                     | `*Entity`   | `(map[string]string, error)` | Attributes for IAM policy evaluation |
 
+### Load vs LoadAll naming
+
+The method name signals whether the result set is bounded:
+
+- **`LoadBy*` with a `cursor` param** — paginated list tied to a GraphQL connection; the cursor provides the limit and ordering. Example: `Assets.LoadByOrganizationID(ctx, conn, scope, orgID, cursor)`.
+- **`Load` / `LoadBy*` with a `limit int` param** — filtered list with an explicit limit, used when cursor pagination is not needed but the caller controls the result count. Example: `CommonThirdPartyDomains.Load(ctx, conn, 1, filter)`.
+- **`LoadAllBy*`** — returns all matching rows with no limit or cursor. Use only when the full set is needed (e.g. all categories for a banner).
+- **`LoadAll`** — same as `LoadAllBy*` but without a parent key; returns all rows matching a filter. Example: `CommonThirdParties.LoadAll(ctx, conn, filter)`.
+
+`LoadAll*` methods must **never** accept a cursor or limit parameter — the `All` suffix means the entire matching set is returned. If a bounded result is needed, use `Load*` or `LoadBy*` with a `cursor` or `limit int` instead. The codebase has some legacy `LoadAllBy*` methods that accept a cursor; do not follow that pattern — new code must use `LoadBy*` for paginated queries.
+
+## No cross-entity JOINs
+
+Each entity file queries only its own table. When data from multiple entities is needed, the caller orchestrates separate calls. Never write a JOIN between two entity tables inside an entity method, and never return a raw ID belonging to a different entity — return the full entity and let the caller read the foreign key field.
 
 ## Row collection
 
 Use `conn.Query` + `pgx.Collect*` only for `SELECT` and `INSERT … RETURNING` statements that return rows. For `UPDATE` and `DELETE`, use `conn.Exec` — there is no need for `RETURNING` since the caller already owns all the field values.
+
+**Delete must not check `RowsAffected()`.** A DELETE that affects zero rows is not an error — the resource may have already been deleted (idempotent deletes). Only `Update` checks `RowsAffected() == 0` to return `ErrResourceNotFound`.
 
 ```go
 // Single row (SELECT / INSERT … RETURNING)
@@ -128,7 +146,7 @@ rows, err := conn.Query(ctx, q, args)
 assets, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Asset])
 *a = assets
 
-// Update / Delete — no RETURNING
+// Update — no RETURNING, check RowsAffected
 result, err := conn.Exec(ctx, q, args)
 if err != nil {
     return err
@@ -136,6 +154,56 @@ if err != nil {
 if result.RowsAffected() == 0 {
     return ErrResourceNotFound
 }
+
+// Delete — no RETURNING, do NOT check RowsAffected
+_, err := conn.Exec(ctx, q, args)
+if err != nil {
+    return err
+}
+```
+
+## Upsert with insert detection and receiver sync
+
+When an upsert needs to report whether a row was inserted or already existed, `RETURNING` all struct columns and scan the full row back into the receiver. Save the original ID before the query; on a fresh insert the returned ID matches, on a conflict/update the existing row's ID is returned. The receiver is a **pointer** so the caller always sees the actual DB state after the upsert.
+
+Do **not** use `RETURNING (xmax = 0) AS inserted` — `xmax` is a PostgreSQL internal system column and is fragile.
+
+```go
+// Good — RETURNING full row, sync receiver, compare original ID
+func (t *Thing) Upsert(ctx context.Context, conn pg.Tx) (inserted bool, err error) {
+    q := `
+INSERT INTO things (id, name, created_at, updated_at)
+VALUES (@id, @name, @created_at, @updated_at)
+ON CONFLICT (name) DO UPDATE
+SET
+    name       = EXCLUDED.name,
+    updated_at = EXCLUDED.updated_at
+RETURNING
+    id,
+    name,
+    created_at,
+    updated_at
+`
+    originalID := t.ID
+    args := pgx.StrictNamedArgs{...}
+
+    rows, err := conn.Query(ctx, q, args)
+    if err != nil {
+        return false, fmt.Errorf("cannot upsert thing: %w", err)
+    }
+    defer rows.Close()
+
+    row, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[Thing])
+    if err != nil {
+        return false, fmt.Errorf("cannot collect upsert result: %w", err)
+    }
+
+    *t = row
+    return originalID == t.ID, nil
+}
+
+// Bad — xmax trick: relies on PostgreSQL internal column
+RETURNING (xmax = 0) AS inserted
 ```
 
 ## Sentinel errors
@@ -149,6 +217,51 @@ var (
 ```
 
 Map `pgx.ErrNoRows` to `ErrResourceNotFound`. Check unique constraint violations for `ErrResourceAlreadyExists`, foreign key violations for `ErrResourceInUse`.
+
+**Always check both `pgErr.Code` and `pgErr.ConstraintName`** when mapping PostgreSQL errors to sentinel errors. Checking only the error code (e.g. `"23505"`) is not enough — a table may have multiple unique constraints, and a blind code-only check maps unrelated constraint violations to the wrong sentinel error.
+
+```go
+// Good — checks both code and constraint name
+if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
+    if pgErr.Code == "23505" && pgErr.ConstraintName == "controls_framework_ref_unique" {
+        return ErrResourceAlreadyExists
+    }
+}
+
+// Good — multiple constraints on the same table
+if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
+    if pgErr.Code == "23505" {
+        switch pgErr.ConstraintName {
+        case "document_versions_document_id_major_minor_key",
+            "document_one_active_version_idx":
+            return ErrResourceAlreadyExists
+        }
+    }
+}
+
+// Bad — code-only check; any unique violation silently becomes ErrResourceAlreadyExists
+if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
+    if pgErr.Code == "23505" {
+        return ErrResourceAlreadyExists
+    }
+}
+```
+
+The same applies to foreign key violations (`"23503"`) mapped to `ErrResourceInUse` — always verify the constraint name.
+
+**Primary key handling:** Do not add a 23505 check for a single-column GID primary key (`id TEXT PRIMARY KEY`). GIDs are generated and cannot realistically collide — such a check is dead code. Only check the primary key constraint on **composite-PK junction tables** where the PK represents a business uniqueness constraint (e.g. linking a scenario to a threat).
+
+```go
+// Good — composite PK on junction table (real business constraint)
+if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok && pgErr.Code == "23505" && pgErr.ConstraintName == "risk_assessment_scenario_threats_pkey" {
+    return ErrResourceAlreadyExists
+}
+
+// Bad — single GID PK (cannot collide, dead code)
+if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok && pgErr.Code == "23505" && pgErr.ConstraintName == "risk_assessments_pkey" {
+    return ErrResourceAlreadyExists
+}
+```
 
 ## Filters
 
@@ -184,17 +297,89 @@ func (f *CookieBannerFilter) SQLArguments() pgx.StrictNamedArgs {
 
 For complex multi-field filters, use `CASE WHEN` in SQL and always declare all argument keys in every code path (use `nil` for inactive ones).
 
-## Order fields
+## Enums
 
-String-based enums with `Column()`, `IsValid()`, `String()`, and `MarshalText`/`UnmarshalText`:
+Coredata enums are always `type X string` with a single validation source of truth (`IsValid`) and text marshalling support for pgx/JSON wiring.
 
 ```go
-type AssetOrderField string
+type XXXType string
 
 const (
-    AssetOrderFieldCreatedAt AssetOrderField = "CREATED_AT"
-    AssetOrderFieldName      AssetOrderField = "NAME"
+    XXXTypeAlpha XXXType = "ALPHA"
+    XXXTypeBeta  XXXType = "BETA"
 )
+
+var (
+    _ fmt.Stringer             = XXXType("")
+    _ encoding.TextMarshaler   = XXXType("")
+    _ encoding.TextUnmarshaler = (*XXXType)(nil)
+)
+
+func XXXTypes() []XXXType {
+    return []XXXType{
+        XXXTypeAlpha,
+        XXXTypeBeta,
+    }
+}
+
+func (v XXXType) IsValid() bool {
+    switch v {
+    case XXXTypeAlpha, XXXTypeBeta:
+        return true
+    }
+
+    return false
+}
+
+func (v XXXType) String() string { return string(v) }
+
+func (v XXXType) MarshalText() ([]byte, error) {
+    return []byte(v.String()), nil
+}
+
+func (v *XXXType) UnmarshalText(text []byte) error {
+    val := XXXType(text)
+    if !val.IsValid() {
+        return fmt.Errorf("invalid XXXType value: %q", string(text))
+    }
+
+    *v = val
+    return nil
+}
+```
+
+Rules:
+
+- Keep enums as string types only (no iota/int enums).
+- `UnmarshalText` must validate via `IsValid`; do not duplicate validation switches in `Scan`/`Value`.
+- Do not implement `database/sql` `Scan`/`Value` on singular enums in coredata; pgx uses `MarshalText` / `UnmarshalText`.
+- Add compile-time interface checks in a `var` block for every enum (`fmt.Stringer`, `encoding.TextMarshaler`, `encoding.TextUnmarshaler`).
+- Keep a `Values()` helper named as the pluralized enum type when there is no naming conflict.
+
+Collection enum wrappers (`OAuth2Scopes`, `CountryCodes`, etc.) may keep custom parsing/encoding methods when wire format differs from a single enum token.
+
+## Order fields
+
+Order-field enums follow the same enum rules and additionally implement `Column()` and `page.OrderField`:
+
+```go
+type XXXOrderField string
+
+const (
+    XXXOrderFieldCreatedAt XXXOrderField = "CREATED_AT"
+    XXXOrderFieldName      XXXOrderField = "NAME"
+)
+
+var (
+    _ page.OrderField          = XXXOrderField("")
+    _ fmt.Stringer             = XXXOrderField("")
+    _ encoding.TextMarshaler   = XXXOrderField("")
+    _ encoding.TextUnmarshaler = (*XXXOrderField)(nil)
+)
+
+func (f XXXOrderField) Column() string {
+    return string(f)
+}
 ```
 
 Each entity implements `CursorKey(field)` returning `page.NewCursorKey(entity.ID, sortValue)`, with a `panic` on unknown fields.

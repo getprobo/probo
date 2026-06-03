@@ -1,5 +1,6 @@
 schema:
   - "graphql/*.graphql"
+  - "../../../gqlutils/directives/authentication/schema.graphql"
   - "../../../gqlutils/directives/session/schema.graphql"
 
 exec:

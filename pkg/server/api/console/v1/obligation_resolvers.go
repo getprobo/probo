@@ -23,11 +23,10 @@ import (
 
 // CreateObligation is the resolver for the createObligation field.
 func (r *mutationResolver) CreateObligation(ctx context.Context, input types.CreateObligationInput) (*types.CreateObligationPayload, error) {
-	if err := r.authorize(ctx, input.OrganizationID, probo.ActionObligationCreate); err != nil {
+	scope, err := r.authorize(ctx, input.OrganizationID, probo.ActionObligationCreate)
+	if err != nil {
 		return nil, err
 	}
-
-	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
 
 	req := probo.CreateObligationRequest{
 		OrganizationID:         input.OrganizationID,
@@ -43,12 +42,14 @@ func (r *mutationResolver) CreateObligation(ctx context.Context, input types.Cre
 		Type:                   input.Type,
 	}
 
-	obligation, err := prb.Obligations.Create(ctx, &req)
+	obligation, err := r.probo.Obligations.Create(ctx, scope, &req)
 	if err != nil {
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot create obligation", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -59,11 +60,10 @@ func (r *mutationResolver) CreateObligation(ctx context.Context, input types.Cre
 
 // UpdateObligation is the resolver for the updateObligation field.
 func (r *mutationResolver) UpdateObligation(ctx context.Context, input types.UpdateObligationInput) (*types.UpdateObligationPayload, error) {
-	if err := r.authorize(ctx, input.ID, probo.ActionObligationUpdate); err != nil {
+	scope, err := r.authorize(ctx, input.ID, probo.ActionObligationUpdate)
+	if err != nil {
 		return nil, err
 	}
-
-	prb := r.ProboService(ctx, input.ID.TenantID())
 
 	req := probo.UpdateObligationRequest{
 		ID:                     input.ID,
@@ -79,12 +79,14 @@ func (r *mutationResolver) UpdateObligation(ctx context.Context, input types.Upd
 		Type:                   input.Type,
 	}
 
-	obligation, err := prb.Obligations.Update(ctx, &req)
+	obligation, err := r.probo.Obligations.Update(ctx, scope, &req)
 	if err != nil {
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot update obligation", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -95,14 +97,12 @@ func (r *mutationResolver) UpdateObligation(ctx context.Context, input types.Upd
 
 // DeleteObligation is the resolver for the deleteObligation field.
 func (r *mutationResolver) DeleteObligation(ctx context.Context, input types.DeleteObligationInput) (*types.DeleteObligationPayload, error) {
-	if err := r.authorize(ctx, input.ObligationID, probo.ActionObligationDelete); err != nil {
+	scope, err := r.authorize(ctx, input.ObligationID, probo.ActionObligationDelete)
+	if err != nil {
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, input.ObligationID.TenantID())
-
-	err := prb.Obligations.Delete(ctx, input.ObligationID)
-	if err != nil {
+	if err := r.probo.Obligations.Delete(ctx, scope, input.ObligationID); err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete obligation", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
@@ -114,21 +114,19 @@ func (r *mutationResolver) DeleteObligation(ctx context.Context, input types.Del
 
 // PublishObligationList is the resolver for the publishObligationList field.
 func (r *mutationResolver) PublishObligationList(ctx context.Context, input types.PublishObligationListInput) (*types.PublishObligationListPayload, error) {
-	if err := r.authorize(ctx, input.OrganizationID, probo.ActionObligationPublish); err != nil {
+	scope, err := r.authorize(ctx, input.OrganizationID, probo.ActionObligationPublish)
+	if err != nil {
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
-
-	document, documentVersion, err := prb.GeneratedDocuments.PublishObligationList(ctx, input.OrganizationID, input.ApproverIds, input.Minor)
+	document, documentVersion, err := r.probo.GeneratedDocuments.PublishObligationList(ctx, scope, input.OrganizationID, input.ApproverIds, input.Minor)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
 			return nil, gqlutils.Conflict(ctx, err)
 		}
-		if errMinor, ok := errors.AsType[*probo.ErrCannotPublishMinorWithoutMajor](err); ok {
-			return nil, gqlutils.Invalid(ctx, errMinor)
-		}
+
 		r.logger.ErrorCtx(ctx, "cannot publish obligation list", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -140,7 +138,7 @@ func (r *mutationResolver) PublishObligationList(ctx context.Context, input type
 
 // Organization is the resolver for the organization field.
 func (r *obligationResolver) Organization(ctx context.Context, obj *types.Obligation) (*types.Organization, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGet); err != nil {
+	if _, err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGet); err != nil {
 		return nil, err
 	}
 
@@ -153,6 +151,7 @@ func (r *obligationResolver) Organization(ctx context.Context, obj *types.Obliga
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get obligation organization", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -161,7 +160,7 @@ func (r *obligationResolver) Organization(ctx context.Context, obj *types.Obliga
 
 // Owner is the resolver for the owner field.
 func (r *obligationResolver) Owner(ctx context.Context, obj *types.Obligation) (*types.Profile, error) {
-	if err := r.authorize(ctx, obj.ID, iam.ActionMembershipProfileGet); err != nil {
+	if _, err := r.authorize(ctx, obj.ID, iam.ActionMembershipProfileGet); err != nil {
 		return nil, err
 	}
 
@@ -174,6 +173,7 @@ func (r *obligationResolver) Owner(ctx context.Context, obj *types.Obligation) (
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get obligation owner", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -187,30 +187,32 @@ func (r *obligationResolver) Permission(ctx context.Context, obj *types.Obligati
 
 // TotalCount is the resolver for the totalCount field.
 func (r *obligationConnectionResolver) TotalCount(ctx context.Context, obj *types.ObligationConnection) (int, error) {
-	if err := r.authorize(ctx, obj.ParentID, probo.ActionObligationList); err != nil {
+	scope, err := r.authorize(ctx, obj.ParentID, probo.ActionObligationList)
+	if err != nil {
 		return 0, err
 	}
 
-	prb := r.ProboService(ctx, obj.ParentID.TenantID())
-
 	switch obj.Resolver.(type) {
 	case *organizationResolver:
-		count, err := prb.Obligations.CountForOrganizationID(ctx, obj.ParentID)
+		count, err := r.probo.Obligations.CountForOrganizationID(ctx, scope, obj.ParentID)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count obligations", log.Error(err))
 			return 0, gqlutils.Internal(ctx)
 		}
+
 		return count, nil
 	case *riskResolver:
-		count, err := prb.Obligations.CountForRiskID(ctx, obj.ParentID)
+		count, err := r.probo.Obligations.CountForRiskID(ctx, scope, obj.ParentID)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count risk obligations", log.Error(err))
 			return 0, gqlutils.Internal(ctx)
 		}
+
 		return count, nil
 	}
 
 	r.logger.ErrorCtx(ctx, "unsupported resolver")
+
 	return 0, gqlutils.Internal(ctx)
 }
 

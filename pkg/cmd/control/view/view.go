@@ -143,7 +143,9 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 			if c.BestPractice {
 				bp = "Yes"
 			}
+
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Best Practice:"), bp)
+
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Maturity:"), docgen.MaturityLabel(coredata.ControlMaturityLevel(c.MaturityLevel)))
 			if c.MaturityLevel == "NONE" && c.NotImplementedJustification != nil && *c.NotImplementedJustification != "" {
 				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Justification:"), *c.NotImplementedJustification)

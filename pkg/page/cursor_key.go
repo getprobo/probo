@@ -92,6 +92,7 @@ func (ck CursorKey) String() string {
 	if err != nil {
 		return ""
 	}
+
 	return base64.RawURLEncoding.EncodeToString(data)
 }
 
@@ -108,7 +109,9 @@ func (ck *CursorKey) UnmarshalText(data []byte) error {
 	if err != nil {
 		return err
 	}
+
 	*ck = newCk
+
 	return nil
 }
 
@@ -145,6 +148,7 @@ func (ck *CursorKey) UnmarshalBinary(data []byte) error {
 
 	ck.ID = id
 	ck.Value = value
+
 	return nil
 }
 

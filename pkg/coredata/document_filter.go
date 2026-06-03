@@ -41,6 +41,7 @@ func NewDocumentFilter(query *string) *DocumentFilter {
 
 func NewDocumentTrustCenterFilter() *DocumentFilter {
 	published := true
+
 	return &DocumentFilter{
 		trustCenterVisibilities: []TrustCenterVisibility{
 			TrustCenterVisibilityPrivate,
@@ -59,6 +60,7 @@ func (f *DocumentFilter) WithPublished(published *bool) *DocumentFilter {
 func (f *DocumentFilter) WithEmployeeIdentityID(identityID *gid.GID, modes ...EmployeeFilterMode) *DocumentFilter {
 	f.employeeIdentityID = identityID
 	f.employeeFilterModes = modes
+
 	return f
 }
 

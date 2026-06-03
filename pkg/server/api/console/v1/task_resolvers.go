@@ -24,14 +24,13 @@ import (
 
 // CreateTask is the resolver for the createTask field.
 func (r *mutationResolver) CreateTask(ctx context.Context, input types.CreateTaskInput) (*types.CreateTaskPayload, error) {
-	if err := r.authorize(ctx, input.OrganizationID, probo.ActionTaskCreate); err != nil {
+	scope, err := r.authorize(ctx, input.OrganizationID, probo.ActionTaskCreate)
+	if err != nil {
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
-
-	task, err := prb.Tasks.Create(
-		ctx,
+	task, err := r.probo.Tasks.Create(
+		ctx, scope,
 		probo.CreateTaskRequest{
 			MeasureID:      input.MeasureID,
 			OrganizationID: input.OrganizationID,
@@ -51,7 +50,9 @@ func (r *mutationResolver) CreateTask(ctx context.Context, input types.CreateTas
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot create task", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -62,14 +63,13 @@ func (r *mutationResolver) CreateTask(ctx context.Context, input types.CreateTas
 
 // UpdateTask is the resolver for the updateTask field.
 func (r *mutationResolver) UpdateTask(ctx context.Context, input types.UpdateTaskInput) (*types.UpdateTaskPayload, error) {
-	if err := r.authorize(ctx, input.TaskID, probo.ActionTaskUpdate); err != nil {
+	scope, err := r.authorize(ctx, input.TaskID, probo.ActionTaskUpdate)
+	if err != nil {
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, input.TaskID.TenantID())
-
-	task, err := prb.Tasks.Update(
-		ctx,
+	task, err := r.probo.Tasks.Update(
+		ctx, scope,
 		probo.UpdateTaskRequest{
 			TaskID:       input.TaskID,
 			Name:         input.Name,
@@ -87,7 +87,9 @@ func (r *mutationResolver) UpdateTask(ctx context.Context, input types.UpdateTas
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot update task", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -98,14 +100,12 @@ func (r *mutationResolver) UpdateTask(ctx context.Context, input types.UpdateTas
 
 // DeleteTask is the resolver for the deleteTask field.
 func (r *mutationResolver) DeleteTask(ctx context.Context, input types.DeleteTaskInput) (*types.DeleteTaskPayload, error) {
-	if err := r.authorize(ctx, input.TaskID, probo.ActionTaskDelete); err != nil {
+	scope, err := r.authorize(ctx, input.TaskID, probo.ActionTaskDelete)
+	if err != nil {
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, input.TaskID.TenantID())
-
-	err := prb.Tasks.Delete(ctx, input.TaskID)
-	if err != nil {
+	if err := r.probo.Tasks.Delete(ctx, scope, input.TaskID); err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete task", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
@@ -117,7 +117,7 @@ func (r *mutationResolver) DeleteTask(ctx context.Context, input types.DeleteTas
 
 // AssignedTo is the resolver for the assignedTo field.
 func (r *taskResolver) AssignedTo(ctx context.Context, obj *types.Task) (*types.Profile, error) {
-	if err := r.authorize(ctx, obj.ID, iam.ActionMembershipProfileGet); err != nil {
+	if _, err := r.authorize(ctx, obj.ID, iam.ActionMembershipProfileGet); err != nil {
 		return nil, err
 	}
 
@@ -134,6 +134,7 @@ func (r *taskResolver) AssignedTo(ctx context.Context, obj *types.Task) (*types.
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get assigned to", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -142,7 +143,7 @@ func (r *taskResolver) AssignedTo(ctx context.Context, obj *types.Task) (*types.
 
 // Organization is the resolver for the organization field.
 func (r *taskResolver) Organization(ctx context.Context, obj *types.Task) (*types.Organization, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGet); err != nil {
+	if _, err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGet); err != nil {
 		return nil, err
 	}
 
@@ -155,6 +156,7 @@ func (r *taskResolver) Organization(ctx context.Context, obj *types.Task) (*type
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get organization", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -163,7 +165,7 @@ func (r *taskResolver) Organization(ctx context.Context, obj *types.Task) (*type
 
 // Measure is the resolver for the measure field.
 func (r *taskResolver) Measure(ctx context.Context, obj *types.Task) (*types.Measure, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionMeasureGet); err != nil {
+	if _, err := r.authorize(ctx, obj.ID, probo.ActionMeasureGet); err != nil {
 		return nil, err
 	}
 
@@ -180,6 +182,7 @@ func (r *taskResolver) Measure(ctx context.Context, obj *types.Task) (*types.Mea
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get measure", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -188,16 +191,16 @@ func (r *taskResolver) Measure(ctx context.Context, obj *types.Task) (*types.Mea
 
 // Evidences is the resolver for the evidences field.
 func (r *taskResolver) Evidences(ctx context.Context, obj *types.Task, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.EvidenceOrderBy) (*types.EvidenceConnection, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionEvidenceList); err != nil {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionEvidenceList)
+	if err != nil {
 		return nil, err
 	}
-
-	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	pageOrderBy := page.OrderBy[coredata.EvidenceOrderField]{
 		Field:     coredata.EvidenceOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if orderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.EvidenceOrderField]{
 			Field:     orderBy.Field,
@@ -206,7 +209,8 @@ func (r *taskResolver) Evidences(ctx context.Context, obj *types.Task, first *in
 	}
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
-	page, err := prb.Evidences.ListForTaskID(ctx, obj.ID, cursor)
+
+	page, err := r.probo.Evidences.ListForTaskID(ctx, scope, obj.ID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list task evidences", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -222,30 +226,32 @@ func (r *taskResolver) Permission(ctx context.Context, obj *types.Task, action s
 
 // TotalCount is the resolver for the totalCount field.
 func (r *taskConnectionResolver) TotalCount(ctx context.Context, obj *types.TaskConnection) (int, error) {
-	if err := r.authorize(ctx, obj.ParentID, probo.ActionTaskList); err != nil {
+	scope, err := r.authorize(ctx, obj.ParentID, probo.ActionTaskList)
+	if err != nil {
 		return 0, err
 	}
 
-	prb := r.ProboService(ctx, obj.ParentID.TenantID())
-
 	switch obj.Resolver.(type) {
 	case *measureResolver:
-		count, err := prb.Tasks.CountForMeasureID(ctx, obj.ParentID)
+		count, err := r.probo.Tasks.CountForMeasureID(ctx, scope, obj.ParentID)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count tasks", log.Error(err))
 			return 0, gqlutils.Internal(ctx)
 		}
+
 		return count, nil
 	case *organizationResolver:
-		count, err := prb.Tasks.CountForOrganizationID(ctx, obj.ParentID)
+		count, err := r.probo.Tasks.CountForOrganizationID(ctx, scope, obj.ParentID)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count tasks", log.Error(err))
 			return 0, gqlutils.Internal(ctx)
 		}
+
 		return count, nil
 	}
 
 	r.logger.ErrorCtx(ctx, "unsupported resolver")
+
 	return 0, gqlutils.Internal(ctx)
 }
 

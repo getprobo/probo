@@ -38,6 +38,7 @@ func NewListControlMeasuresOutput(measurePage *page.Page[*coredata.Measure, core
 	}
 
 	var nextCursor *page.CursorKey
+
 	if len(measurePage.Data) > 0 {
 		cursorKey := measurePage.Data[len(measurePage.Data)-1].CursorKey(measurePage.Cursor.OrderBy.Field)
 		nextCursor = &cursorKey
@@ -56,6 +57,7 @@ func NewListMeasuresOutput(measurePage *page.Page[*coredata.Measure, coredata.Me
 	}
 
 	var nextCursor *page.CursorKey
+
 	if len(measurePage.Data) > 0 {
 		cursorKey := measurePage.Data[len(measurePage.Data)-1].CursorKey(measurePage.Cursor.OrderBy.Field)
 		nextCursor = &cursorKey

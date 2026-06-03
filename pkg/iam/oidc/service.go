@@ -126,6 +126,7 @@ func (c *idTokenClaims) hasAudience(clientID string) bool {
 			}
 		}
 	}
+
 	return false
 }
 
@@ -136,6 +137,7 @@ func (c *idTokenClaims) isEmailVerified() bool {
 	case string:
 		return strings.EqualFold(v, "true")
 	}
+
 	return false
 }
 
@@ -228,11 +230,13 @@ func NewService(
 
 func (s *Service) Run(ctx context.Context) error {
 	wg := sync.WaitGroup{}
+
 	ctx, cancel := context.WithCancelCause(ctx)
 	defer cancel(context.Canceled)
 
 	gcCtx, stopGC := context.WithCancel(context.WithoutCancel(ctx))
 	gc := NewGarbageCollector(s.pg, s.logger)
+
 	wg.Go(
 		func() {
 			if err := gc.Run(gcCtx); err != nil {
@@ -260,7 +264,9 @@ func (s *Service) EnabledProviders() []coredata.OIDCProvider {
 	for p := range s.providers {
 		providers = append(providers, p)
 	}
+
 	slices.Sort(providers)
+
 	return providers
 }
 
@@ -306,6 +312,7 @@ func (s *Service) InitiateLogin(
 			if err := oidcState.Insert(ctx, tx); err != nil {
 				return fmt.Errorf("cannot store oidc state: %w", err)
 			}
+
 			return nil
 		},
 	)
@@ -337,6 +344,7 @@ func (s *Service) HandleCallback(
 	}
 
 	var oidcState coredata.OIDCState
+
 	err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
@@ -344,6 +352,7 @@ func (s *Service) HandleCallback(
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return NewInvalidStateError()
 				}
+
 				return fmt.Errorf("cannot load oidc state: %w", err)
 			}
 
@@ -403,12 +412,14 @@ func (s *Service) HandleCallback(
 	}
 
 	var identity *coredata.Identity
+
 	now := time.Now()
 
 	err = s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			identity = &coredata.Identity{}
+
 			err := identity.LoadByEmail(ctx, tx, email)
 			if err != nil {
 				if !errors.Is(err, coredata.ErrResourceNotFound) {
@@ -475,6 +486,7 @@ func (s *Service) verifyAndParseIDToken(ctx context.Context, info *providerInfo,
 	}
 
 	signedContent := parts[0] + "." + parts[1]
+
 	signature, err := base64.RawURLEncoding.DecodeString(parts[2])
 	if err != nil {
 		return nil, fmt.Errorf("cannot decode signature: %w", err)
@@ -525,6 +537,7 @@ func (s *Service) getSigningKey(ctx context.Context, jwksURL string, kid string)
 		}
 
 		entry = &jwksEntry{keys: keys, fetchedAt: time.Now()}
+
 		s.jwksMu.Lock()
 		s.jwksCache[jwksURL] = entry
 		s.jwksMu.Unlock()
@@ -543,6 +556,7 @@ func (s *Service) getSigningKey(ctx context.Context, jwksURL string, kid string)
 	}
 
 	entry = &jwksEntry{keys: keys, fetchedAt: time.Now()}
+
 	s.jwksMu.Lock()
 	s.jwksCache[jwksURL] = entry
 	s.jwksMu.Unlock()
@@ -566,6 +580,7 @@ func fetchJWKS(ctx context.Context, httpClient *http.Client, jwksURL string) ([]
 	if err != nil {
 		return nil, fmt.Errorf("cannot fetch jwks: %w", err)
 	}
+
 	defer func() { _ = resp.Body.Close() }()
 
 	body, err := io.ReadAll(io.LimitReader(resp.Body, 1<<20))
@@ -592,12 +607,14 @@ func parseJWK(k jwk) (crypto.PublicKey, error) {
 		if err != nil {
 			return nil, fmt.Errorf("cannot decode RSA modulus: %w", err)
 		}
+
 		eBytes, err := base64.RawURLEncoding.DecodeString(k.E)
 		if err != nil {
 			return nil, fmt.Errorf("cannot decode RSA exponent: %w", err)
 		}
 
 		n := new(big.Int).SetBytes(nBytes)
+
 		e := 0
 		for _, b := range eBytes {
 			e = e<<8 + int(b)
@@ -607,6 +624,7 @@ func parseJWK(k jwk) (crypto.PublicKey, error) {
 
 	case "EC":
 		var curve elliptic.Curve
+
 		switch k.Crv {
 		case "P-256":
 			curve = elliptic.P256()
@@ -622,6 +640,7 @@ func parseJWK(k jwk) (crypto.PublicKey, error) {
 		if err != nil {
 			return nil, fmt.Errorf("cannot decode EC X: %w", err)
 		}
+
 		yBytes, err := base64.RawURLEncoding.DecodeString(k.Y)
 		if err != nil {
 			return nil, fmt.Errorf("cannot decode EC Y: %w", err)
@@ -647,6 +666,7 @@ func verifySignature(alg string, key crypto.PublicKey, signedContent []byte, sig
 		if !ok {
 			return fmt.Errorf("cannot verify RS256 signature: expected RSA public key")
 		}
+
 		return rsa.VerifyPKCS1v15(rsaKey, crypto.SHA256, hash[:], signature)
 
 	case "ES256":
@@ -676,6 +696,7 @@ func verifySignature(alg string, key crypto.PublicKey, signedContent []byte, sig
 		if !ecdsa.VerifyASN1(ecKey, hash[:], derSig) {
 			return fmt.Errorf("cannot verify ECDSA signature")
 		}
+
 		return nil
 
 	default:
@@ -693,5 +714,6 @@ func generateRandomString(length int) (string, error) {
 	if _, err := io.ReadFull(cryptoRandReader, b); err != nil {
 		return "", fmt.Errorf("cannot generate random bytes: %w", err)
 	}
+
 	return base64.RawURLEncoding.EncodeToString(b), nil
 }

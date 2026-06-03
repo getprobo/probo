@@ -25,6 +25,7 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/iam/policy"
 	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/page"
 )
@@ -143,7 +144,11 @@ LIMIT 1;
 
 // AuthorizationAttributes loads the minimal authorization attributes for policy condition evaluation.
 // It is intentionally lightweight and does not populate the Identity struct.
-func (i *Identity) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
+func (i *Identity) AuthorizationAttributes(
+	ctx context.Context,
+	conn pg.Querier,
+	resourceIDs []gid.GID,
+) (policy.AttributesByID, error) {
 	q := `
 SELECT
     id,
@@ -151,24 +156,42 @@ SELECT
 FROM
     identities
 WHERE
-    id = $1
+    id = ANY(@resource_ids::text[])
 `
 
-	var (
-		id           gid.GID
-		emailAddress string
-	)
-	if err := conn.QueryRow(ctx, q, i.ID).Scan(&id, &emailAddress); err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, ErrResourceNotFound
-		}
-		return nil, fmt.Errorf("cannot query identity iam attributes: %w", err)
+	args := pgx.StrictNamedArgs{
+		"resource_ids": resourceIDs,
 	}
 
-	return map[string]string{
-		"identity_id": id.String(),
-		"email":       emailAddress,
-	}, nil
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return nil, fmt.Errorf("cannot query identity authorization attributes: %w", err)
+	}
+	defer rows.Close()
+
+	attrsByID := make(policy.AttributesByID, len(resourceIDs))
+
+	for rows.Next() {
+		var (
+			id           gid.GID
+			emailAddress string
+		)
+
+		if err := rows.Scan(&id, &emailAddress); err != nil {
+			return nil, fmt.Errorf("cannot scan identity authorization attributes: %w", err)
+		}
+
+		attrsByID[id] = policy.Attributes{
+			"identity_id": id.String(),
+			"email":       emailAddress,
+		}
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("cannot iterate identity authorization attributes: %w", err)
+	}
+
+	return attrsByID, nil
 }
 
 func (i *Identity) Insert(
@@ -202,10 +225,8 @@ VALUES (
 	}
 
 	_, err := conn.Exec(ctx, q, args)
-
 	if err != nil {
-		var pgErr *pgconn.PgError
-		if errors.As(err, &pgErr) {
+		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
 			if pgErr.Code == "23505" && strings.Contains(pgErr.ConstraintName, "email_address") {
 				return ErrResourceAlreadyExists
 			}
@@ -314,6 +335,7 @@ WHERE
 	args := pgx.StrictNamedArgs{"identity_id": i.ID}
 
 	var count int
+
 	err := conn.QueryRow(ctx, q, args).Scan(&count)
 	if err != nil {
 		return 0, fmt.Errorf("cannot count identity memberships: %w", err)

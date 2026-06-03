@@ -95,6 +95,7 @@ func (c *Client) ChatCompletion(ctx context.Context, req *ChatCompletionRequest)
 			log.Error(err),
 		)
 		endChatSpan(span, nil, err)
+
 		return nil, err
 	}
 
@@ -109,6 +110,7 @@ func (c *Client) ChatCompletion(ctx context.Context, req *ChatCompletionRequest)
 	)
 
 	endChatSpan(span, resp, nil)
+
 	return resp, nil
 }
 
@@ -132,6 +134,7 @@ func (c *Client) ChatCompletionStream(ctx context.Context, req *ChatCompletionRe
 			log.Error(err),
 		)
 		endChatSpan(span, nil, err)
+
 		return nil, err
 	}
 

@@ -78,6 +78,7 @@ func (h *mailingListHandler) Claim(ctx context.Context) (coredata.MailingListUpd
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return coredata.MailingListUpdate{}, worker.ErrNoTask
 		}
+
 		return coredata.MailingListUpdate{}, err
 	}
 
@@ -115,6 +116,7 @@ func (h *mailingListHandler) RecoverStale(ctx context.Context) error {
 			if err := coredata.ResetStaleProcessingMailingListUpdates(ctx, tx, h.staleAfter); err != nil {
 				return fmt.Errorf("cannot reset stale processing mailing list updates: %w", err)
 			}
+
 			return nil
 		},
 	)

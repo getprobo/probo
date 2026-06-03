@@ -87,10 +87,12 @@ func NewCmdAPI(f *cmdutil.Factory) *cobra.Command {
 				if len(args) == 0 && f.IOStreams.IsStdinTTY() {
 					return fmt.Errorf("query argument is required when not reading from stdin")
 				}
+
 				data, err := io.ReadAll(f.IOStreams.In)
 				if err != nil {
 					return fmt.Errorf("cannot read query from stdin: %w", err)
 				}
+
 				query = string(data)
 			}
 
@@ -154,6 +156,7 @@ func parseFields(fields []string) (map[string]any, error) {
 		if err := json.Unmarshal([]byte(value), &parsed); err != nil {
 			parsed = value
 		}
+
 		vars[key] = parsed
 	}
 

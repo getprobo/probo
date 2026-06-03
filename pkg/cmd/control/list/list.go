@@ -112,6 +112,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				if err := cmdutil.ValidateEnum("order-by", flagOrderBy, []string{"CREATED_AT", "SECTION_TITLE"}); err != nil {
 					return err
 				}
+
 				variables["orderBy"] = map[string]any{
 					"field":     flagOrderBy,
 					"direction": flagOrderDir,
@@ -139,12 +140,15 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 					if err := json.Unmarshal(data, &resp); err != nil {
 						return nil, err
 					}
+
 					if resp.Node == nil {
 						return nil, fmt.Errorf("framework %s not found", flagFramework)
 					}
+
 					if resp.Node.Typename != "Framework" {
 						return nil, fmt.Errorf("expected Framework node, got %s", resp.Node.Typename)
 					}
+
 					return &resp.Node.Controls, nil
 				},
 			)
@@ -167,6 +171,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				if c.BestPractice {
 					bp = "Yes"
 				}
+
 				rows = append(rows, []string{
 					c.ID,
 					c.SectionTitle,

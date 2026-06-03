@@ -44,6 +44,7 @@ func NewComplianceExternalURLConnection(
 	for i := range edges {
 		edges[i] = NewComplianceExternalURLEdge(p.Data[i], p.Cursor.OrderBy.Field)
 	}
+
 	return &ComplianceExternalURLConnection{
 		Edges:    edges,
 		PageInfo: NewPageInfo(p),

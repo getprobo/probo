@@ -187,6 +187,11 @@ export class Probo implements INodeType {
 						description: 'Manage risks',
 					},
 					{
+						name: 'Risk Assessment',
+						value: 'riskAssessment',
+						description: 'Manage risk assessments',
+					},
+					{
 						name: 'Statement of Applicability',
 						value: 'statementOfApplicability',
 						description: 'Manage statements of applicability',
@@ -195,6 +200,11 @@ export class Probo implements INodeType {
 						name: 'Task',
 						value: 'task',
 						description: 'Manage tasks',
+					},
+					{
+						name: 'Third Party',
+						value: 'thirdParty',
+						description: 'Manage third parties',
 					},
 					{
 						name: 'TIA',
@@ -215,11 +225,6 @@ export class Probo implements INodeType {
 						name: 'User',
 						value: 'user',
 						description: 'Manage organization users (profiles)',
-					},
-					{
-						name: 'Vendor',
-						value: 'vendor',
-						description: 'Manage vendors',
 					},
 					{
 						name: 'Webhook',

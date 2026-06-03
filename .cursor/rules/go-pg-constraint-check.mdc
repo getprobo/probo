@@ -1,0 +1,58 @@
+---
+description: PostgreSQL constraint error handling — always check both error code and constraint name
+globs: "pkg/coredata/**/*.go"
+alwaysApply: false
+---
+
+# PostgreSQL constraint error mapping
+
+When mapping `*pgconn.PgError` to sentinel errors, always check **both** `pgErr.Code` and `pgErr.ConstraintName`. A table may have multiple unique constraints; a code-only check silently maps unrelated violations to the wrong sentinel.
+
+```go
+// GOOD — checks both code and constraint name
+if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
+	if pgErr.Code == "23505" && pgErr.ConstraintName == "controls_framework_ref_unique" {
+		return ErrResourceAlreadyExists
+	}
+}
+
+// GOOD — multiple constraints on the same table
+if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
+	if pgErr.Code == "23505" {
+		switch pgErr.ConstraintName {
+		case "document_versions_document_id_major_minor_key",
+			"document_one_active_version_idx":
+			return ErrResourceAlreadyExists
+		}
+	}
+}
+
+// BAD — code-only check
+if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
+	if pgErr.Code == "23505" {
+		return ErrResourceAlreadyExists
+	}
+}
+```
+
+This applies to all PostgreSQL error codes mapped to sentinel errors:
+- `"23505"` (unique violation) → `ErrResourceAlreadyExists`
+- `"23503"` (foreign key violation) → `ErrResourceInUse`
+
+# Primary key constraint handling
+
+**Do not** add a 23505 check for a single-column GID primary key (`id TEXT PRIMARY KEY`). GIDs are generated and cannot realistically collide; such a check is dead code.
+
+**Do** check the composite primary key on junction tables where the PK represents a business uniqueness constraint (e.g. a link between two entities).
+
+```go
+// GOOD — composite PK on a junction table (real business constraint)
+if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok && pgErr.Code == "23505" && pgErr.ConstraintName == "risk_assessment_scenario_threats_pkey" {
+	return ErrResourceAlreadyExists
+}
+
+// BAD — single GID PK (can never collide, dead code)
+if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok && pgErr.Code == "23505" && pgErr.ConstraintName == "risk_assessments_pkey" {
+	return ErrResourceAlreadyExists
+}
+```

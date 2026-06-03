@@ -1,0 +1,52 @@
+---
+description: Upsert must RETURNING full row into pointer receiver, not use xmax
+globs: "pkg/coredata/**/*.go"
+alwaysApply: false
+---
+
+# Upsert: RETURNING full row into receiver
+
+Upsert methods use a **pointer receiver** and `RETURNING` all struct columns to sync the receiver with the actual DB state. Save the original ID before the query; compare it with the returned ID to detect insert vs update.
+
+Do **not** use `RETURNING (xmax = 0) AS inserted` — `xmax` is a PostgreSQL internal system column and is fragile.
+
+```go
+// GOOD — RETURNING full row, sync receiver
+func (t *Thing) Upsert(ctx context.Context, conn pg.Tx) (inserted bool, err error) {
+	q := `
+INSERT INTO things (id, name, created_at, updated_at)
+VALUES (@id, @name, @created_at, @updated_at)
+ON CONFLICT (name) DO UPDATE
+SET
+	name       = EXCLUDED.name,
+	updated_at = EXCLUDED.updated_at
+RETURNING
+	id,
+	name,
+	created_at,
+	updated_at
+`
+	originalID := t.ID
+	// ...args...
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return false, fmt.Errorf("cannot upsert thing: %w", err)
+	}
+	defer rows.Close()
+
+	row, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[Thing])
+	if err != nil {
+		return false, fmt.Errorf("cannot collect upsert result: %w", err)
+	}
+
+	*t = row
+	return originalID == t.ID, nil
+}
+
+// BAD — xmax trick
+RETURNING (xmax = 0) AS inserted
+
+// BAD — RETURNING only id without syncing receiver
+RETURNING id
+```

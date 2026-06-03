@@ -17,6 +17,7 @@ package bootstrap
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -113,6 +114,7 @@ func TestBuilder_Build_MissingRequiredEnvVars(t *testing.T) {
 			_, err := b.Build()
 
 			require.Error(t, err)
+
 			for _, missing := range tt.wantMissing {
 				assert.Contains(t, err.Error(), missing)
 			}
@@ -197,6 +199,9 @@ func TestBuilder_Build_Defaults(t *testing.T) {
 	assert.Equal(t, 5, cfg.Probod.Notifications.Webhook.SenderInterval)
 	assert.Equal(t, 86400, cfg.Probod.Notifications.Webhook.CacheTTL)
 
+	// Agents tools — Firecrawl empty by default
+	assert.Empty(t, cfg.Probod.Agents.Tools.FirecrawlAPIKey)
+
 	// Agents config — default
 	assert.Equal(t, "openai", cfg.Probod.Agents.Default.Provider)
 	assert.Equal(t, "gpt-4o", cfg.Probod.Agents.Default.ModelName)
@@ -211,6 +216,29 @@ func TestBuilder_Build_Defaults(t *testing.T) {
 	assert.Empty(t, cfg.Probod.Agents.EvidenceDescriber.ModelName)
 	assert.Nil(t, cfg.Probod.Agents.EvidenceDescriber.Temperature)
 	assert.Nil(t, cfg.Probod.Agents.EvidenceDescriber.MaxTokens)
+	assert.Empty(t, cfg.Probod.Agents.ThirdPartyVetter.Provider)
+	assert.Empty(t, cfg.Probod.Agents.ThirdPartyVetter.ModelName)
+	assert.Nil(t, cfg.Probod.Agents.ThirdPartyVetter.Temperature)
+	assert.Nil(t, cfg.Probod.Agents.ThirdPartyVetter.MaxTokens)
+	assert.Empty(t, cfg.Probod.Agents.TrackerMapping.Provider)
+	assert.Empty(t, cfg.Probod.Agents.TrackerMapping.ModelName)
+	assert.Nil(t, cfg.Probod.Agents.TrackerMapping.Temperature)
+	assert.Equal(t, new(4096), cfg.Probod.Agents.TrackerMapping.MaxTokens)
+
+	// Tracker worker tuning — defaults
+	assert.Equal(t, 10, cfg.Probod.TrackerMappingWorker.Interval)
+	assert.Equal(t, 3, cfg.Probod.TrackerMappingWorker.MaxConcurrency)
+	assert.Equal(t, 600, cfg.Probod.TrackerMappingWorker.StaleAfter)
+	assert.Equal(t, 45, cfg.Probod.TrackerMappingWorker.AgentTimeout)
+	assert.Equal(t, 10, cfg.Probod.TrackerMappingWorker.AgentMaxTurns)
+	assert.Equal(t, 10, cfg.Probod.CommonPatternEnrichmentWorker.Interval)
+	assert.Equal(t, 2, cfg.Probod.CommonPatternEnrichmentWorker.MaxConcurrency)
+	assert.Equal(t, 600, cfg.Probod.CommonPatternEnrichmentWorker.StaleAfter)
+	assert.Equal(t, 45, cfg.Probod.CommonPatternEnrichmentWorker.AgentTimeout)
+	assert.Equal(t, 10, cfg.Probod.CommonPatternEnrichmentWorker.AgentMaxTurns)
+	assert.Equal(t, 10, cfg.Probod.ThirdPartyVetting.Interval)
+	assert.Equal(t, 1500, cfg.Probod.ThirdPartyVetting.StaleAfter)
+	assert.Equal(t, 1, cfg.Probod.ThirdPartyVetting.MaxConcurrency)
 
 	// Custom domains config
 	assert.Equal(t, 3600, cfg.Probod.CustomDomains.RenewalInterval)
@@ -285,6 +313,8 @@ func TestBuilder_Build_CustomValues(t *testing.T) {
 	env["WEBHOOK_SENDER_INTERVAL"] = "10"
 	env["WEBHOOK_CACHE_TTL"] = "3600"
 	env["CONNECTOR_SLACK_SIGNING_SECRET"] = "slack-signing-secret"
+	// Firecrawl
+	env["FIRECRAWL_API_KEY"] = "fc-test-key"
 	// Agents — providers
 	env["OPENAI_API_KEY"] = "sk-test-key"
 	env["ANTHROPIC_API_KEY"] = "sk-ant-test-key"
@@ -298,6 +328,30 @@ func TestBuilder_Build_CustomValues(t *testing.T) {
 	env["AGENT_EVIDENCE_DESCRIBER_MODEL_NAME"] = "claude-sonnet-4-20250514"
 	env["AGENT_EVIDENCE_DESCRIBER_TEMPERATURE"] = "0.2"
 	env["AGENT_EVIDENCE_DESCRIBER_MAX_TOKENS"] = "4096"
+	// Agents — third-party-vetter override
+	env["AGENT_THIRD_PARTY_VETTER_PROVIDER"] = "openai"
+	env["AGENT_THIRD_PARTY_VETTER_MODEL_NAME"] = "gpt-4o"
+	env["AGENT_THIRD_PARTY_VETTER_TEMPERATURE"] = "0.3"
+	env["AGENT_THIRD_PARTY_VETTER_MAX_TOKENS"] = "8192"
+	// Agents — tracker-mapping override
+	env["AGENT_TRACKER_MAPPING_PROVIDER"] = "openai"
+	env["AGENT_TRACKER_MAPPING_MODEL_NAME"] = "gpt-4o-mini"
+	env["AGENT_TRACKER_MAPPING_TEMPERATURE"] = "0.1"
+	env["AGENT_TRACKER_MAPPING_MAX_TOKENS"] = "1024"
+	// Tracker worker tuning override
+	env["TRACKER_MAPPING_INTERVAL"] = "20"
+	env["TRACKER_MAPPING_MAX_CONCURRENCY"] = "5"
+	env["TRACKER_MAPPING_STALE_AFTER"] = "1200"
+	env["TRACKER_MAPPING_AGENT_TIMEOUT"] = "30"
+	env["TRACKER_MAPPING_AGENT_MAX_TURNS"] = "6"
+	env["COMMON_PATTERN_ENRICHMENT_INTERVAL"] = "15"
+	env["COMMON_PATTERN_ENRICHMENT_MAX_CONCURRENCY"] = "4"
+	env["COMMON_PATTERN_ENRICHMENT_STALE_AFTER"] = "900"
+	env["COMMON_PATTERN_ENRICHMENT_AGENT_TIMEOUT"] = "50"
+	env["COMMON_PATTERN_ENRICHMENT_AGENT_MAX_TURNS"] = "5"
+	env["THIRD_PARTY_VETTING_INTERVAL"] = "15"
+	env["THIRD_PARTY_VETTING_STALE_AFTER"] = "1800"
+	env["THIRD_PARTY_VETTING_MAX_CONCURRENCY"] = "2"
 	// Custom domains
 	env["CUSTOM_DOMAINS_RESOLVER_ADDR"] = "1.1.1.1:53"
 	env["ACME_ACCOUNT_KEY"] = "-----BEGIN EC PRIVATE KEY-----\ntest\n-----END EC PRIVATE KEY-----"
@@ -364,6 +418,8 @@ func TestBuilder_Build_CustomValues(t *testing.T) {
 	assert.Equal(t, "slack-signing-secret", cfg.Probod.Notifications.Slack.SigningSecret)
 	assert.Equal(t, 10, cfg.Probod.Notifications.Webhook.SenderInterval)
 	assert.Equal(t, 3600, cfg.Probod.Notifications.Webhook.CacheTTL)
+	// Agents tools — Firecrawl
+	assert.Equal(t, "fc-test-key", cfg.Probod.Agents.Tools.FirecrawlAPIKey)
 	// Agents — providers
 	assert.Equal(t, "openai", cfg.Probod.Agents.Providers["openai"].Type)
 	assert.Equal(t, "sk-test-key", cfg.Probod.Agents.Providers["openai"].APIKey)
@@ -382,6 +438,30 @@ func TestBuilder_Build_CustomValues(t *testing.T) {
 	assert.Equal(t, "claude-sonnet-4-20250514", cfg.Probod.Agents.EvidenceDescriber.ModelName)
 	assert.Equal(t, new(0.2), cfg.Probod.Agents.EvidenceDescriber.Temperature)
 	assert.Equal(t, new(4096), cfg.Probod.Agents.EvidenceDescriber.MaxTokens)
+	// Agents — third-party-vetter overrides
+	assert.Equal(t, "openai", cfg.Probod.Agents.ThirdPartyVetter.Provider)
+	assert.Equal(t, "gpt-4o", cfg.Probod.Agents.ThirdPartyVetter.ModelName)
+	assert.Equal(t, new(0.3), cfg.Probod.Agents.ThirdPartyVetter.Temperature)
+	assert.Equal(t, new(8192), cfg.Probod.Agents.ThirdPartyVetter.MaxTokens)
+	// Agents — tracker-mapping overrides
+	assert.Equal(t, "openai", cfg.Probod.Agents.TrackerMapping.Provider)
+	assert.Equal(t, "gpt-4o-mini", cfg.Probod.Agents.TrackerMapping.ModelName)
+	assert.Equal(t, new(0.1), cfg.Probod.Agents.TrackerMapping.Temperature)
+	assert.Equal(t, new(1024), cfg.Probod.Agents.TrackerMapping.MaxTokens)
+	// Tracker worker tuning — overrides
+	assert.Equal(t, 20, cfg.Probod.TrackerMappingWorker.Interval)
+	assert.Equal(t, 5, cfg.Probod.TrackerMappingWorker.MaxConcurrency)
+	assert.Equal(t, 1200, cfg.Probod.TrackerMappingWorker.StaleAfter)
+	assert.Equal(t, 30, cfg.Probod.TrackerMappingWorker.AgentTimeout)
+	assert.Equal(t, 6, cfg.Probod.TrackerMappingWorker.AgentMaxTurns)
+	assert.Equal(t, 15, cfg.Probod.CommonPatternEnrichmentWorker.Interval)
+	assert.Equal(t, 4, cfg.Probod.CommonPatternEnrichmentWorker.MaxConcurrency)
+	assert.Equal(t, 900, cfg.Probod.CommonPatternEnrichmentWorker.StaleAfter)
+	assert.Equal(t, 50, cfg.Probod.CommonPatternEnrichmentWorker.AgentTimeout)
+	assert.Equal(t, 5, cfg.Probod.CommonPatternEnrichmentWorker.AgentMaxTurns)
+	assert.Equal(t, 15, cfg.Probod.ThirdPartyVetting.Interval)
+	assert.Equal(t, 1800, cfg.Probod.ThirdPartyVetting.StaleAfter)
+	assert.Equal(t, 2, cfg.Probod.ThirdPartyVetting.MaxConcurrency)
 	// Custom domains
 	assert.Equal(t, "1.1.1.1:53", cfg.Probod.CustomDomains.ResolverAddr)
 	assert.Equal(t, "-----BEGIN EC PRIVATE KEY-----\ntest\n-----END EC PRIVATE KEY-----", cfg.Probod.CustomDomains.ACME.AccountKey)
@@ -436,6 +516,69 @@ func TestBuilder_Build_Microsoft365Connector(t *testing.T) {
 	assert.Equal(t, "ms365-client-secret", rawConfig.ClientSecret)
 }
 
+func TestBuilder_Build_AccessReviewConnectors(t *testing.T) {
+	// All non-Vercel access-review providers added by this PR. Vercel
+	// has its own dedicated test because it carries an additional
+	// CONNECTOR_VERCEL_INTEGRATION_SLUG env var.
+	providers := []string{
+		"GITLAB", "BITBUCKET", "HEROKU", "PAGERDUTY",
+		"ASANA", "NETLIFY", "CLICKUP", "MONDAY",
+	}
+
+	env := requiredEnv()
+	for _, provider := range providers {
+		env["CONNECTOR_"+provider+"_CLIENT_ID"] = strings.ToLower(provider) + "-id"
+		env["CONNECTOR_"+provider+"_CLIENT_SECRET"] = strings.ToLower(provider) + "-secret"
+	}
+
+	b := NewBuilder(mockEnv(env))
+	b.samlCertificate = "test-cert"
+	b.samlPrivateKey = "test-key"
+
+	cfg, err := b.Build()
+	require.NoError(t, err)
+
+	require.Len(t, cfg.Probod.Connectors, len(providers))
+
+	byProvider := make(map[string]probodconfig.ConnectorConfig, len(cfg.Probod.Connectors))
+	for _, c := range cfg.Probod.Connectors {
+		byProvider[c.Provider] = c
+	}
+
+	for _, provider := range providers {
+		c, ok := byProvider[provider]
+		require.True(t, ok, "missing %s connector", provider)
+		assert.Equal(t, "oauth2", string(c.Protocol))
+		raw := c.RawConfig.(probodconfig.ConnectorConfigOAuth2)
+		assert.NotEmpty(t, raw.ClientID, "%s client-id", provider)
+		assert.NotEmpty(t, raw.ClientSecret, "%s client-secret", provider)
+		assert.Empty(t, raw.IntegrationSlug, "%s should not carry integration-slug", provider)
+	}
+}
+
+func TestBuilder_Build_VercelConnector(t *testing.T) {
+	env := requiredEnv()
+	env["CONNECTOR_VERCEL_CLIENT_ID"] = "vercel-id"
+	env["CONNECTOR_VERCEL_CLIENT_SECRET"] = "vercel-secret"
+	env["CONNECTOR_VERCEL_INTEGRATION_SLUG"] = "probo-app"
+
+	b := NewBuilder(mockEnv(env))
+	b.samlCertificate = "test-cert"
+	b.samlPrivateKey = "test-key"
+
+	cfg, err := b.Build()
+	require.NoError(t, err)
+
+	require.Len(t, cfg.Probod.Connectors, 1)
+	c := cfg.Probod.Connectors[0]
+	assert.Equal(t, "VERCEL", c.Provider)
+	assert.Equal(t, "oauth2", string(c.Protocol))
+	raw := c.RawConfig.(probodconfig.ConnectorConfigOAuth2)
+	assert.Equal(t, "vercel-id", raw.ClientID)
+	assert.Equal(t, "vercel-secret", raw.ClientSecret)
+	assert.Equal(t, "probo-app", raw.IntegrationSlug)
+}
+
 func TestBuilder_Build_SlackConnector(t *testing.T) {
 	env := requiredEnv()
 	env["CONNECTOR_SLACK_CLIENT_ID"] = "slack-client-id"
@@ -456,6 +599,7 @@ func TestBuilder_Build_SlackConnector(t *testing.T) {
 	rawConfig := connector.RawConfig.(probodconfig.ConnectorConfigOAuth2)
 	assert.Equal(t, "slack-client-id", rawConfig.ClientID)
 	assert.Equal(t, "slack-client-secret", rawConfig.ClientSecret)
+
 	rawSettings := connector.RawSettings.(map[string]any)
 	assert.Equal(t, "slack-signing-secret", rawSettings["signing-secret"])
 }

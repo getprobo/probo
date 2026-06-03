@@ -49,7 +49,6 @@ export async function execute(
 					privacyPolicyUrl
 					cookiePolicyUrl
 					consentExpiryDays
-					consentMode
 					showBranding
 					defaultLanguage
 					createdAt

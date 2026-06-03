@@ -58,6 +58,7 @@ func Paginate[T any](
 		if remaining <= 0 {
 			break
 		}
+
 		vars["first"] = remaining
 
 		data, err := client.Do(query, vars)

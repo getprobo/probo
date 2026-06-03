@@ -14,7 +14,10 @@
 
 package coredata
 
-import "fmt"
+import (
+	"encoding"
+	"fmt"
+)
 
 type OAuth2CodeChallengeMethod string
 
@@ -22,26 +25,43 @@ const (
 	OAuth2CodeChallengeMethodS256 OAuth2CodeChallengeMethod = "S256"
 )
 
-func (m OAuth2CodeChallengeMethod) IsValid() bool {
-	switch m {
-	case OAuth2CodeChallengeMethodS256:
+var (
+	_ fmt.Stringer             = OAuth2CodeChallengeMethod("")
+	_ encoding.TextMarshaler   = OAuth2CodeChallengeMethod("")
+	_ encoding.TextUnmarshaler = (*OAuth2CodeChallengeMethod)(nil)
+)
+
+func OAuth2CodeChallengeMethods() []OAuth2CodeChallengeMethod {
+	return []OAuth2CodeChallengeMethod{
+		OAuth2CodeChallengeMethodS256,
+	}
+}
+
+func (v OAuth2CodeChallengeMethod) IsValid() bool {
+	switch v {
+	case
+		OAuth2CodeChallengeMethodS256:
 		return true
 	}
 
 	return false
 }
 
-func (m OAuth2CodeChallengeMethod) String() string { return string(m) }
-
-func (m *OAuth2CodeChallengeMethod) UnmarshalText(text []byte) error {
-	*m = OAuth2CodeChallengeMethod(text)
-	if !m.IsValid() {
-		return fmt.Errorf("%s is not a valid OAuth2CodeChallengeMethod", string(text))
-	}
-
-	return nil
+func (v OAuth2CodeChallengeMethod) String() string {
+	return string(v)
 }
 
-func (m OAuth2CodeChallengeMethod) MarshalText() ([]byte, error) {
-	return []byte(m.String()), nil
+func (v OAuth2CodeChallengeMethod) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *OAuth2CodeChallengeMethod) UnmarshalText(text []byte) error {
+	val := OAuth2CodeChallengeMethod(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid OAuth2CodeChallengeMethod value: %q", string(text))
+	}
+
+	*v = val
+
+	return nil
 }

@@ -13,17 +13,12 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 import type { Detector } from "./detector";
+import { isExtensionContext } from "./extension-context";
 import { getInitiatorURL } from "./initiator";
 import type { ReportQueue } from "./report-queue";
-import type { DetectedStorageEntry } from "./types";
+import type { DetectedStorageEntry, StorageSource } from "./types";
 
 const OWN_KEY_PREFIX = "probo_consent:";
-const EXTENSION_URL_RE = /(?:chrome|moz|safari-web)-extension:\/\//;
-
-function isExtensionCaller(): boolean {
-  const stack = new Error().stack ?? "";
-  return EXTENSION_URL_RE.test(stack);
-}
 
 export class StorageDetector implements Detector {
   private readonly queue: ReportQueue;
@@ -43,6 +38,9 @@ export class StorageDetector implements Detector {
     this.wrapStorage();
     this.wrapIndexedDB();
     this.wrapCacheStorage();
+
+    if (isExtensionContext()) return;
+
     this.scanExisting();
     this.scanCacheStorage();
   }
@@ -70,8 +68,6 @@ export class StorageDetector implements Detector {
 
     Storage.prototype.setItem = function (key: string, value: string) {
       originalSetItem.call(this, key, value);
-
-      if (isExtensionCaller()) return;
 
       const storageType: "local_storage" | "session_storage" =
         this === localStorage ? "local_storage" : "session_storage";
@@ -104,7 +100,8 @@ export class StorageDetector implements Detector {
     const self = this;
 
     caches.open = function (name: string): Promise<Cache> {
-      self.onCacheStorageOpen(name);
+      const { fromExtension } = getInitiatorURL(self.apiOrigin);
+      self.onCacheStorageOpen(name, fromExtension ? "extension" : "script");
       return originalOpen(name);
     };
   }
@@ -116,30 +113,35 @@ export class StorageDetector implements Detector {
   ): void {
     if (key.startsWith(OWN_KEY_PREFIX)) return;
 
-    const initiatorUrl = getInitiatorURL(this.apiOrigin);
+    const { url: initiatorUrl, fromExtension } = getInitiatorURL(this.apiOrigin);
 
     const entry: DetectedStorageEntry = {
       key,
       storage_type: storageType,
       value_size: value.length * 2,
+      source: fromExtension ? "extension" : "script",
     };
     if (initiatorUrl) entry.initiator_url = initiatorUrl;
     this.queue.reportStorage(entry);
   }
 
   private onIndexedDBOpen(name: string): void {
+    const { fromExtension } = getInitiatorURL(this.apiOrigin);
+
     this.queue.reportStorage({
       key: name,
       storage_type: "indexed_db",
       value_size: null,
+      source: fromExtension ? "extension" : "script",
     });
   }
 
-  private onCacheStorageOpen(name: string): void {
+  private onCacheStorageOpen(name: string, source: StorageSource): void {
     this.queue.reportStorage({
       key: name,
       storage_type: "cache_storage",
       value_size: null,
+      source,
     });
   }
 
@@ -153,7 +155,7 @@ export class StorageDetector implements Detector {
       .keys()
       .then((names) => {
         for (const name of names) {
-          this.onCacheStorageOpen(name);
+          this.onCacheStorageOpen(name, "pre-existing");
         }
       })
       .catch(() => {
@@ -179,6 +181,7 @@ export class StorageDetector implements Detector {
         key,
         storage_type: storageType,
         value_size: value ? value.length * 2 : null,
+        source: "pre-existing",
       });
     }
   }

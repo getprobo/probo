@@ -154,15 +154,19 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 			if flagPurpose != "" {
 				input["purpose"] = flagPurpose
 			}
+
 			if flagRole != "" {
 				input["role"] = flagRole
 			}
+
 			if flagLawfulBasis != "" {
 				input["lawfulBasis"] = flagLawfulBasis
 			}
+
 			if flagDataSubjectCategory != "" {
 				input["dataSubjectCategory"] = flagDataSubjectCategory
 			}
+
 			if flagPersonalDataCategory != "" {
 				input["personalDataCategory"] = flagPersonalDataCategory
 			}

@@ -12,9 +12,16 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+import { getConsent } from "../consent";
 import { registerCookieBanner } from "./index";
 
 registerCookieBanner();
+
+const w = window as unknown as Record<string, unknown>;
+if (!w.Probo) {
+  w.Probo = {};
+}
+(w.Probo as Record<string, unknown>).consent = getConsent();
 
 const script = document.currentScript as HTMLScriptElement | null;
 

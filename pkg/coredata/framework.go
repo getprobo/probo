@@ -25,6 +25,7 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/iam/policy"
 	"go.probo.inc/probo/pkg/page"
 )
 
@@ -53,19 +54,52 @@ func (f *Framework) CursorKey(orderBy FrameworkOrderField) page.CursorKey {
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
-// AuthorizationAttributes returns the authorization attributes for policy evaluation.
-func (f *Framework) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
-	q := `SELECT organization_id FROM frameworks WHERE id = $1 LIMIT 1;`
+func (f *Framework) AuthorizationAttributes(
+	ctx context.Context,
+	conn pg.Querier,
+	frameworkIDs []gid.GID,
+) (policy.AttributesByID, error) {
+	q := `
+SELECT
+    id,
+    organization_id
+FROM
+    frameworks
+WHERE
+    id = ANY(@framework_ids::text[])
+`
 
-	var organizationID gid.GID
-	if err := conn.QueryRow(ctx, q, f.ID).Scan(&organizationID); err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, ErrResourceNotFound
-		}
-		return nil, fmt.Errorf("cannot query framework authorization attributes: %w", err)
+	args := pgx.StrictNamedArgs{
+		"framework_ids": frameworkIDs,
 	}
 
-	return map[string]string{"organization_id": organizationID.String()}, nil
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return nil, fmt.Errorf("cannot query framework authorization attributes batch: %w", err)
+	}
+	defer rows.Close()
+
+	attrsByID := make(policy.AttributesByID)
+
+	for rows.Next() {
+		var (
+			frameworkID    gid.GID
+			organizationID gid.GID
+		)
+		if err := rows.Scan(&frameworkID, &organizationID); err != nil {
+			return nil, fmt.Errorf("cannot scan framework authorization attributes batch: %w", err)
+		}
+
+		attrsByID[frameworkID] = policy.Attributes{
+			"organization_id": organizationID.String(),
+		}
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("cannot iterate framework authorization attributes batch: %w", err)
+	}
+
+	return attrsByID, nil
 }
 
 func (f *Frameworks) CountByOrganizationID(
@@ -97,6 +131,22 @@ WHERE
 	}
 
 	return count, nil
+}
+
+func uniqueGIDs(values []gid.GID) []gid.GID {
+	set := make(map[gid.GID]struct{}, len(values))
+	unique := make([]gid.GID, 0, len(values))
+
+	for _, value := range values {
+		if _, ok := set[value]; ok {
+			continue
+		}
+
+		set[value] = struct{}{}
+		unique = append(unique, value)
+	}
+
+	return unique
 }
 
 func (f *Frameworks) LoadByOrganizationID(
@@ -174,6 +224,7 @@ LIMIT 1;
 
 	args := pgx.StrictNamedArgs{"reference_id": referenceID}
 	maps.Copy(args, scope.SQLArguments())
+
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
 		return fmt.Errorf("cannot query frameworks: %w", err)
@@ -222,6 +273,7 @@ LIMIT 1;
 
 	args := pgx.StrictNamedArgs{"framework_id": frameworkID}
 	maps.Copy(args, scope.SQLArguments())
+
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
 		return fmt.Errorf("cannot query frameworks: %w", err)
@@ -330,11 +382,10 @@ VALUES (
 		"created_at":         f.CreatedAt,
 		"updated_at":         f.UpdatedAt,
 	}
-	_, err := conn.Exec(ctx, q, args)
 
+	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
-		var pgErr *pgconn.PgError
-		if errors.As(err, &pgErr) {
+		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
 			if pgErr.Code == "23505" && pgErr.ConstraintName == "frameworks_org_ref_unique" {
 				return ErrResourceAlreadyExists
 			}
@@ -366,6 +417,7 @@ WHERE
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	_, err := conn.Exec(ctx, q, args)
+
 	return err
 }
 
@@ -396,5 +448,6 @@ WHERE
 	maps.Copy(args, scope.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
+
 	return err
 }

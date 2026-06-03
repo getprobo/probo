@@ -30,7 +30,6 @@ const bannerSettingsFormFragment = graphql`
     cookiePolicyUrl
     privacyPolicyUrl
     consentExpiryDays
-    consentMode
     defaultLanguage
   }
 `;
@@ -44,7 +43,6 @@ const updateBannerMutation = graphql`
         cookiePolicyUrl
         privacyPolicyUrl
         consentExpiryDays
-        consentMode
         defaultLanguage
         latestVersion {
           id
@@ -61,7 +59,6 @@ interface BannerSettingsFormValues {
   cookiePolicyUrl: string;
   privacyPolicyUrl: string;
   consentExpiryDays: string;
-  consentMode: "OPT_IN" | "OPT_OUT";
   defaultLanguage: string;
 }
 
@@ -83,7 +80,6 @@ export function BannerSettingsForm({ cookieBannerKey }: BannerSettingsFormProps)
       cookiePolicyUrl: banner.cookiePolicyUrl,
       privacyPolicyUrl: banner.privacyPolicyUrl ?? "",
       consentExpiryDays: String(banner.consentExpiryDays),
-      consentMode: banner.consentMode,
       defaultLanguage: banner.defaultLanguage,
     },
   });
@@ -97,7 +93,6 @@ export function BannerSettingsForm({ cookieBannerKey }: BannerSettingsFormProps)
           cookiePolicyUrl: data.cookiePolicyUrl,
           privacyPolicyUrl: data.privacyPolicyUrl || undefined,
           consentExpiryDays: parseInt(data.consentExpiryDays, 10),
-          consentMode: data.consentMode,
           defaultLanguage: data.defaultLanguage,
         },
       },
@@ -131,7 +126,7 @@ export function BannerSettingsForm({ cookieBannerKey }: BannerSettingsFormProps)
             <Input {...register("privacyPolicyUrl")} />
           </Field>
 
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>{__("Consent Expiry (days)")}</Label>
               <Input
@@ -139,19 +134,6 @@ export function BannerSettingsForm({ cookieBannerKey }: BannerSettingsFormProps)
                 {...register("consentExpiryDays")}
                 min="1"
                 required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>{__("Consent Mode")}</Label>
-              <Controller
-                name="consentMode"
-                control={control}
-                render={({ field }) => (
-                  <Select value={field.value} onValueChange={field.onChange}>
-                    <Option value="OPT_IN">{__("Opt-in")}</Option>
-                    <Option value="OPT_OUT">{__("Opt-out")}</Option>
-                  </Select>
-                )}
               />
             </div>
             <div className="space-y-2">

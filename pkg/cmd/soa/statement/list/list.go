@@ -107,6 +107,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				if err := cmdutil.ValidateEnum("order-by", flagOrderBy, []string{"CREATED_AT", "CONTROL_SECTION_TITLE"}); err != nil {
 					return err
 				}
+
 				variables["orderBy"] = map[string]any{
 					"field":     flagOrderBy,
 					"direction": flagOrderDir,
@@ -128,12 +129,15 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 					if err := json.Unmarshal(data, &resp); err != nil {
 						return nil, err
 					}
+
 					if resp.Node == nil {
 						return nil, fmt.Errorf("statement of applicability %s not found", args[0])
 					}
+
 					if resp.Node.Typename != "StatementOfApplicability" {
 						return nil, fmt.Errorf("expected StatementOfApplicability node, got %s", resp.Node.Typename)
 					}
+
 					return &resp.Node.ApplicabilityStatements, nil
 				},
 			)
@@ -156,6 +160,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				if s.Applicability {
 					applicable = "Yes"
 				}
+
 				rows = append(rows, []string{
 					s.ID,
 					s.Control.SectionTitle,

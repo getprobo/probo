@@ -56,6 +56,7 @@ func (m *ActionMatcher) Matches(pattern, target string) bool {
 		if patternParts[1] == "*" {
 			return patternParts[0] == targetParts[0] || patternParts[0] == "*"
 		}
+
 		return false
 
 	case 3:
@@ -74,6 +75,7 @@ func (m *ActionMatcher) matchPart(pattern, target string) bool {
 	if pattern == "*" {
 		return true
 	}
+
 	return pattern == target
 }
 
@@ -84,5 +86,6 @@ func (m *ActionMatcher) MatchesAny(patterns []string, target string) bool {
 			return true
 		}
 	}
+
 	return false
 }

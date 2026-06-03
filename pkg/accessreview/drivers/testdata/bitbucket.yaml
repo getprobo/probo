@@ -1,0 +1,100 @@
+---
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: api.bitbucket.org
+        form:
+            fields:
+                - +values.user.email
+            pagelen:
+                - "100"
+        headers:
+            Accept:
+                - application/json
+        url: https://api.bitbucket.org/2.0/workspaces/acme/members?fields=%2Bvalues.user.email&pagelen=100
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: 1167
+        body: '{"values": [{"type": "workspace_membership", "user": {"display_name": "Jane Doe", "links": {"self": {"href": "https://api.bitbucket.org/2.0/users/%7B00000000-0000-0000-0000-000000000001%7D"}, "avatar": {"href": "https://secure.gravatar.com/avatar/00000000000000000000000000000000?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FAS-2.png"}, "html": {"href": "https://bitbucket.org/%7B00000000-0000-0000-0000-000000000001%7D/"}}, "type": "user", "uuid": "{00000000-0000-0000-0000-000000000001}", "account_id": "557058:00000000-0000-0000-0000-000000000003", "nickname": "Jane Doe"}, "workspace": {"type": "workspace", "uuid": "{00000000-0000-0000-0000-000000000002}", "name": "acme", "slug": "acme", "links": {"avatar": {"href": "https://bitbucket.org/workspaces/acme/avatar/?ts=1700000000"}, "html": {"href": "https://bitbucket.org/acme/"}, "self": {"href": "https://api.bitbucket.org/2.0/workspaces/acme"}}}, "links": {"self": {"href": "https://api.bitbucket.org/2.0/workspaces/acme/members/%7B00000000-0000-0000-0000-000000000001%7D"}}}], "pagelen": 100, "size": 1, "page": 1}'
+        headers:
+            Atl-Request-Id:
+                - 559d0e8f-fb0d-48ca-82f6-7abe3ac08181
+            Atl-Traceid:
+                - 559d0e8ffb0d48ca82f67abe3ac08181
+            Cache-Control:
+                - private
+            Content-Length:
+                - "1167"
+            Content-Type:
+                - application/json; charset=utf-8
+            Date:
+                - Fri, 08 May 2026 16:48:49 GMT
+            Etag:
+                - '"895c498e82257d41eca02934d81c7d99"'
+            Nel:
+                - '{"failure_fraction": 0.01, "include_subdomains": true, "max_age": 600, "report_to": "endpoint-1"}'
+            Report-To:
+                - '{"endpoints": [{"url": "https://dz8aopenkvv6s.cloudfront.net"}], "group": "endpoint-1", "include_subdomains": true, "max_age": 600}'
+            Server:
+                - AtlassianEdge
+            Server-Timing:
+                - atl-edge;dur=310,atl-edge-internal;dur=19,atl-edge-upstream;dur=292,atl-edge-pop;desc="aws-eu-central-1"
+            Strict-Transport-Security:
+                - max-age=63072000; includeSubDomains; preload
+            Vary:
+                - Authorization, origin, cookie, user-context
+            X-Accepted-Oauth-Scopes:
+                - account
+            X-B3-Spanid:
+                - 7bb0ba2483b71d27
+            X-B3-Traceid:
+                - 559d0e8ffb0d48ca82f67abe3ac08181
+            X-Consumer-Client-Id:
+                - XgnpvuhrnWXn7EbHwv
+            X-Content-Type-Options:
+                - nosniff
+            X-Credential-Type:
+                - oauth2
+            X-Dc-Location:
+                - Micros-3
+            X-Frame-Options:
+                - SAMEORIGIN
+            X-Oauth-Scopes:
+                - team, account
+            X-Render-Time:
+                - "0.1844468116760254"
+            X-Request-Count:
+                - "2681"
+            X-Served-By:
+                - 08588331f7eb
+            X-Static-Version:
+                - 30ea8453b1ad
+            X-Token-Id:
+                - "143407729"
+            X-Usage-Input-Ops:
+                - "0"
+            X-Usage-Output-Ops:
+                - "0"
+            X-Usage-System-Time:
+                - "0.005158"
+            X-Usage-User-Time:
+                - "0.073080"
+            X-Used-Mesh:
+                - "False"
+            X-Version:
+                - 30ea8453b1ad
+            X-View-Name:
+                - bitbucket.apps.workspaces.api.v20.handlers.WorkspaceMembersListHandler
+            X-Xss-Protection:
+                - 1; mode=block
+        status: 200 OK
+        code: 200
+        duration: 384.293042ms

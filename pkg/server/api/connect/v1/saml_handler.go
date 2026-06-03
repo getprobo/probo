@@ -100,9 +100,9 @@ func (h *SAMLHandler) ConsumeHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	continueURL := "/organizations/" + membership.OrganizationID.String()
+
 	if len(relayState) > gid.EncodedGIDSize {
 		unescapedContinueURL, err := url.QueryUnescape(relayState[gid.EncodedGIDSize:])
-
 		if err != nil {
 			h.logger.WarnCtx(ctx, "cannot unescape continue URL from RelayState", log.Error(err))
 		} else {
@@ -118,6 +118,7 @@ func (h *SAMLHandler) ConsumeHandler(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			h.logger.ErrorCtx(ctx, "cannot open root session", log.Error(err))
 			h.renderInternalServerError(w)
+
 			return
 		}
 	case rootSession.IdentityID != user.ID:
@@ -125,6 +126,7 @@ func (h *SAMLHandler) ConsumeHandler(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			h.logger.ErrorCtx(ctx, "cannot close session", log.Error(err))
 			h.renderInternalServerError(w)
+
 			return
 		}
 
@@ -132,6 +134,7 @@ func (h *SAMLHandler) ConsumeHandler(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			h.logger.ErrorCtx(ctx, "cannot open root session", log.Error(err))
 			h.renderInternalServerError(w)
+
 			return
 		}
 	}
@@ -140,6 +143,7 @@ func (h *SAMLHandler) ConsumeHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		h.logger.ErrorCtx(ctx, "cannot open SAML child session", log.Error(err))
 		h.renderInternalServerError(w)
+
 		return
 	}
 

@@ -37,6 +37,7 @@ func TestControlMeasureMapping_CreateDelete(t *testing.T) {
 			} `json:"frameworkEdge"`
 		} `json:"createFramework"`
 	}
+
 	err := owner.Execute(`
 		mutation($input: CreateFrameworkInput!) {
 			createFramework(input: $input) {
@@ -54,6 +55,7 @@ func TestControlMeasureMapping_CreateDelete(t *testing.T) {
 		},
 	}, &createFrameworkResult)
 	require.NoError(t, err)
+
 	frameworkID := createFrameworkResult.CreateFramework.FrameworkEdge.Node.ID
 
 	// Create a control
@@ -66,6 +68,7 @@ func TestControlMeasureMapping_CreateDelete(t *testing.T) {
 			} `json:"controlEdge"`
 		} `json:"createControl"`
 	}
+
 	err = owner.Execute(`
 		mutation($input: CreateControlInput!) {
 			createControl(input: $input) {
@@ -87,6 +90,7 @@ func TestControlMeasureMapping_CreateDelete(t *testing.T) {
 		},
 	}, &createControlResult)
 	require.NoError(t, err)
+
 	controlID := createControlResult.CreateControl.ControlEdge.Node.ID
 
 	// Create a measure
@@ -99,6 +103,7 @@ func TestControlMeasureMapping_CreateDelete(t *testing.T) {
 			} `json:"measureEdge"`
 		} `json:"createMeasure"`
 	}
+
 	err = owner.Execute(`
 		mutation($input: CreateMeasureInput!) {
 			createMeasure(input: $input) {
@@ -117,6 +122,7 @@ func TestControlMeasureMapping_CreateDelete(t *testing.T) {
 		},
 	}, &createMeasureResult)
 	require.NoError(t, err)
+
 	measureID := createMeasureResult.CreateMeasure.MeasureEdge.Node.ID
 
 	t.Run("create mapping", func(t *testing.T) {
@@ -134,6 +140,7 @@ func TestControlMeasureMapping_CreateDelete(t *testing.T) {
 				} `json:"measureEdge"`
 			} `json:"createControlMeasureMapping"`
 		}
+
 		err := owner.Execute(`
 			mutation($input: CreateControlMeasureMappingInput!) {
 				createControlMeasureMapping(input: $input) {
@@ -192,6 +199,7 @@ func TestRiskMeasureMapping_CreateDelete(t *testing.T) {
 			} `json:"riskEdge"`
 		} `json:"createRisk"`
 	}
+
 	err := owner.Execute(`
 		mutation($input: CreateRiskInput!) {
 			createRisk(input: $input) {
@@ -213,6 +221,7 @@ func TestRiskMeasureMapping_CreateDelete(t *testing.T) {
 		},
 	}, &createRiskResult)
 	require.NoError(t, err)
+
 	riskID := createRiskResult.CreateRisk.RiskEdge.Node.ID
 
 	// Create a measure
@@ -225,6 +234,7 @@ func TestRiskMeasureMapping_CreateDelete(t *testing.T) {
 			} `json:"measureEdge"`
 		} `json:"createMeasure"`
 	}
+
 	err = owner.Execute(`
 		mutation($input: CreateMeasureInput!) {
 			createMeasure(input: $input) {
@@ -243,6 +253,7 @@ func TestRiskMeasureMapping_CreateDelete(t *testing.T) {
 		},
 	}, &createMeasureResult)
 	require.NoError(t, err)
+
 	measureID := createMeasureResult.CreateMeasure.MeasureEdge.Node.ID
 
 	t.Run("create mapping", func(t *testing.T) {
@@ -260,6 +271,7 @@ func TestRiskMeasureMapping_CreateDelete(t *testing.T) {
 				} `json:"measureEdge"`
 			} `json:"createRiskMeasureMapping"`
 		}
+
 		err := owner.Execute(`
 			mutation($input: CreateRiskMeasureMappingInput!) {
 				createRiskMeasureMapping(input: $input) {
@@ -318,6 +330,7 @@ func TestControlDocumentMapping_CreateDelete(t *testing.T) {
 			} `json:"frameworkEdge"`
 		} `json:"createFramework"`
 	}
+
 	err := owner.Execute(`
 		mutation($input: CreateFrameworkInput!) {
 			createFramework(input: $input) {
@@ -335,6 +348,7 @@ func TestControlDocumentMapping_CreateDelete(t *testing.T) {
 		},
 	}, &createFrameworkResult)
 	require.NoError(t, err)
+
 	frameworkID := createFrameworkResult.CreateFramework.FrameworkEdge.Node.ID
 
 	var createControlResult struct {
@@ -346,6 +360,7 @@ func TestControlDocumentMapping_CreateDelete(t *testing.T) {
 			} `json:"controlEdge"`
 		} `json:"createControl"`
 	}
+
 	err = owner.Execute(`
 		mutation($input: CreateControlInput!) {
 			createControl(input: $input) {
@@ -367,6 +382,7 @@ func TestControlDocumentMapping_CreateDelete(t *testing.T) {
 		},
 	}, &createControlResult)
 	require.NoError(t, err)
+
 	controlID := createControlResult.CreateControl.ControlEdge.Node.ID
 
 	// Create a document
@@ -379,6 +395,7 @@ func TestControlDocumentMapping_CreateDelete(t *testing.T) {
 			} `json:"documentEdge"`
 		} `json:"createDocument"`
 	}
+
 	err = owner.Execute(`
 		mutation($input: CreateDocumentInput!) {
 			createDocument(input: $input) {
@@ -399,6 +416,7 @@ func TestControlDocumentMapping_CreateDelete(t *testing.T) {
 		},
 	}, &createDocumentResult)
 	require.NoError(t, err)
+
 	documentID := createDocumentResult.CreateDocument.DocumentEdge.Node.ID
 
 	t.Run("create mapping", func(t *testing.T) {
@@ -458,6 +476,7 @@ func TestControlAuditMapping_CreateDelete(t *testing.T) {
 			} `json:"frameworkEdge"`
 		} `json:"createFramework"`
 	}
+
 	err := owner.Execute(`
 		mutation($input: CreateFrameworkInput!) {
 			createFramework(input: $input) {
@@ -475,6 +494,7 @@ func TestControlAuditMapping_CreateDelete(t *testing.T) {
 		},
 	}, &createFrameworkResult)
 	require.NoError(t, err)
+
 	frameworkID := createFrameworkResult.CreateFramework.FrameworkEdge.Node.ID
 
 	var createControlResult struct {
@@ -486,6 +506,7 @@ func TestControlAuditMapping_CreateDelete(t *testing.T) {
 			} `json:"controlEdge"`
 		} `json:"createControl"`
 	}
+
 	err = owner.Execute(`
 		mutation($input: CreateControlInput!) {
 			createControl(input: $input) {
@@ -507,6 +528,7 @@ func TestControlAuditMapping_CreateDelete(t *testing.T) {
 		},
 	}, &createControlResult)
 	require.NoError(t, err)
+
 	controlID := createControlResult.CreateControl.ControlEdge.Node.ID
 
 	// Create an audit
@@ -519,6 +541,7 @@ func TestControlAuditMapping_CreateDelete(t *testing.T) {
 			} `json:"auditEdge"`
 		} `json:"createAudit"`
 	}
+
 	err = owner.Execute(`
 		mutation($input: CreateAuditInput!) {
 			createAudit(input: $input) {
@@ -537,6 +560,7 @@ func TestControlAuditMapping_CreateDelete(t *testing.T) {
 		},
 	}, &createAuditResult)
 	require.NoError(t, err)
+
 	auditID := createAuditResult.CreateAudit.AuditEdge.Node.ID
 
 	t.Run("create mapping", func(t *testing.T) {
@@ -596,6 +620,7 @@ func TestRiskDocumentMapping_CreateDelete(t *testing.T) {
 			} `json:"riskEdge"`
 		} `json:"createRisk"`
 	}
+
 	err := owner.Execute(`
 		mutation($input: CreateRiskInput!) {
 			createRisk(input: $input) {
@@ -617,6 +642,7 @@ func TestRiskDocumentMapping_CreateDelete(t *testing.T) {
 		},
 	}, &createRiskResult)
 	require.NoError(t, err)
+
 	riskID := createRiskResult.CreateRisk.RiskEdge.Node.ID
 
 	// Create a document
@@ -629,6 +655,7 @@ func TestRiskDocumentMapping_CreateDelete(t *testing.T) {
 			} `json:"documentEdge"`
 		} `json:"createDocument"`
 	}
+
 	err = owner.Execute(`
 		mutation($input: CreateDocumentInput!) {
 			createDocument(input: $input) {
@@ -649,6 +676,7 @@ func TestRiskDocumentMapping_CreateDelete(t *testing.T) {
 		},
 	}, &createDocumentResult)
 	require.NoError(t, err)
+
 	documentID := createDocumentResult.CreateDocument.DocumentEdge.Node.ID
 
 	t.Run("create mapping", func(t *testing.T) {
@@ -708,6 +736,7 @@ func TestRiskObligationMapping_CreateDelete(t *testing.T) {
 			} `json:"riskEdge"`
 		} `json:"createRisk"`
 	}
+
 	err := owner.Execute(`
 		mutation($input: CreateRiskInput!) {
 			createRisk(input: $input) {
@@ -729,10 +758,12 @@ func TestRiskObligationMapping_CreateDelete(t *testing.T) {
 		},
 	}, &createRiskResult)
 	require.NoError(t, err)
+
 	riskID := createRiskResult.CreateRisk.RiskEdge.Node.ID
 
 	// Create an obligation
 	profileID := factory.CreateUser(owner)
+
 	var createObligationResult struct {
 		CreateObligation struct {
 			ObligationEdge struct {
@@ -742,6 +773,7 @@ func TestRiskObligationMapping_CreateDelete(t *testing.T) {
 			} `json:"obligationEdge"`
 		} `json:"createObligation"`
 	}
+
 	err = owner.Execute(`
 		mutation($input: CreateObligationInput!) {
 			createObligation(input: $input) {
@@ -763,6 +795,7 @@ func TestRiskObligationMapping_CreateDelete(t *testing.T) {
 		},
 	}, &createObligationResult)
 	require.NoError(t, err)
+
 	obligationID := createObligationResult.CreateObligation.ObligationEdge.Node.ID
 
 	t.Run("create mapping", func(t *testing.T) {
@@ -815,6 +848,7 @@ func TestMeasureDocumentMapping_CreateDelete(t *testing.T) {
 
 	t.Run("create mapping", func(t *testing.T) {
 		t.Parallel()
+
 		documentID := factory.NewDocument(owner).Create()
 
 		var result struct {
@@ -831,6 +865,7 @@ func TestMeasureDocumentMapping_CreateDelete(t *testing.T) {
 				} `json:"documentEdge"`
 			} `json:"createMeasureDocumentMapping"`
 		}
+
 		err := owner.Execute(`
 			mutation($input: CreateMeasureDocumentMappingInput!) {
 				createMeasureDocumentMapping(input: $input) {
@@ -859,6 +894,7 @@ func TestMeasureDocumentMapping_CreateDelete(t *testing.T) {
 
 	t.Run("delete mapping", func(t *testing.T) {
 		t.Parallel()
+
 		documentID := factory.NewDocument(owner).Create()
 
 		// Create the mapping first

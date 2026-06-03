@@ -35,6 +35,11 @@ type ConnectorConfig struct {
 type ConnectorConfigOAuth2 struct {
 	ClientID     string `json:"client-id"`
 	ClientSecret string `json:"client-secret"`
+	// IntegrationSlug is an operator-supplied value used by providers
+	// whose authorization URL embeds it as a path segment (Vercel-style
+	// integrations). It is propagated onto OAuth2Connector.IntegrationSlug
+	// and resolved by (*provider.Registry).ApplyOAuth2Defaults.
+	IntegrationSlug string `json:"integration-slug,omitempty"`
 }
 
 func (c *Config) GetSlackSigningSecret() string {
@@ -51,6 +56,7 @@ func (c *Config) GetSlackSigningSecret() string {
 			}
 		}
 	}
+
 	return ""
 }
 
@@ -74,6 +80,7 @@ func (c *ConnectorConfig) UnmarshalJSON(data []byte) error {
 		if err := json.NewDecoder(bytes.NewReader(tmp.Settings)).Decode(&settings); err != nil {
 			return fmt.Errorf("cannot unmarshal settings: %w", err)
 		}
+
 		c.Settings = settings
 	}
 
@@ -88,6 +95,8 @@ func (c *ConnectorConfig) UnmarshalJSON(data []byte) error {
 			ClientID:     config.ClientID,
 			ClientSecret: config.ClientSecret,
 		}
+
+		oauth2Connector.IntegrationSlug = config.IntegrationSlug
 
 		c.Config = &oauth2Connector
 	default:

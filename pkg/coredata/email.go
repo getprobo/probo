@@ -23,6 +23,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/iam/policy"
 	"go.probo.inc/probo/pkg/mail"
 )
 
@@ -65,8 +66,47 @@ var (
 
 // AuthorizationAttributes returns the authorization attributes for policy evaluation.
 // Email is identity-scoped (not org-scoped), so it returns an empty map.
-func (e *Email) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
-	return map[string]string{}, nil
+func (e *Email) AuthorizationAttributes(
+	ctx context.Context,
+	conn pg.Querier,
+	resourceIDs []gid.GID,
+) (policy.AttributesByID, error) {
+	q := `
+SELECT
+    id
+FROM
+    emails
+WHERE
+    id = ANY(@resource_ids::text[])
+`
+
+	args := pgx.StrictNamedArgs{
+		"resource_ids": resourceIDs,
+	}
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return nil, fmt.Errorf("cannot query email authorization attributes: %w", err)
+	}
+	defer rows.Close()
+
+	attrsByID := make(policy.AttributesByID, len(resourceIDs))
+
+	for rows.Next() {
+		var id gid.GID
+
+		if err := rows.Scan(&id); err != nil {
+			return nil, fmt.Errorf("cannot scan email authorization attributes: %w", err)
+		}
+
+		attrsByID[id] = policy.Attributes{}
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, fmt.Errorf("cannot iterate email authorization attributes: %w", err)
+	}
+
+	return attrsByID, nil
 }
 
 func NewEmail(
@@ -162,6 +202,7 @@ VALUES (
 	}
 
 	_, err := conn.Exec(ctx, q, args)
+
 	return err
 }
 
@@ -175,20 +216,23 @@ func (emails Emails) BulkInsert(
 
 	rows := make([][]any, 0, len(emails))
 	for _, e := range emails {
-		rows = append(rows, []any{
-			e.ID,
-			e.RecipientEmail,
-			e.RecipientName,
-			e.SenderName,
-			e.ReplyTo,
-			e.UnsubscribeURL,
-			e.MailingListUpdateID,
-			e.Subject,
-			e.TextBody,
-			e.HtmlBody,
-			e.CreatedAt,
-			e.UpdatedAt,
-		})
+		rows = append(
+			rows,
+			[]any{
+				e.ID,
+				e.RecipientEmail,
+				e.RecipientName,
+				e.SenderName,
+				e.ReplyTo,
+				e.UnsubscribeURL,
+				e.MailingListUpdateID,
+				e.Subject,
+				e.TextBody,
+				e.HtmlBody,
+				e.CreatedAt,
+				e.UpdatedAt,
+			},
+		)
 	}
 
 	_, err := conn.CopyFrom(
@@ -197,6 +241,7 @@ func (emails Emails) BulkInsert(
 		[]string{"id", "recipient_email", "recipient_name", "sender_name", "reply_to", "unsubscribe_url", "mailing_list_update_id", "subject", "text_body", "html_body", "created_at", "updated_at"},
 		pgx.CopyFromRows(rows),
 	)
+
 	return err
 }
 
@@ -264,6 +309,7 @@ WHERE id = @id
 	}
 
 	_, err := conn.Exec(ctx, q, args)
+
 	return err
 }
 
@@ -278,6 +324,7 @@ SET status = 'PENDING', processing_started_at = NULL, updated_at = NOW()
 WHERE status = 'PROCESSING'
 	AND processing_started_at < NOW() - $1::interval
 `
+
 	_, err := conn.Exec(ctx, q, staleAfter)
 	if err != nil {
 		return fmt.Errorf("cannot reset stale processing emails: %w", err)

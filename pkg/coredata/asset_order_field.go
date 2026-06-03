@@ -14,6 +14,13 @@
 
 package coredata
 
+import (
+	"encoding"
+	"fmt"
+
+	"go.probo.inc/probo/pkg/page"
+)
+
 type AssetOrderField string
 
 const (
@@ -22,10 +29,52 @@ const (
 	AssetOrderFieldName      AssetOrderField = "NAME"
 )
 
-func (p AssetOrderField) Column() string {
-	return string(p)
+var (
+	_ page.OrderField          = AssetOrderField("")
+	_ fmt.Stringer             = AssetOrderField("")
+	_ encoding.TextMarshaler   = AssetOrderField("")
+	_ encoding.TextUnmarshaler = (*AssetOrderField)(nil)
+)
+
+func AssetOrderFields() []AssetOrderField {
+	return []AssetOrderField{
+		AssetOrderFieldCreatedAt,
+		AssetOrderFieldAmount,
+		AssetOrderFieldName,
+	}
 }
 
-func (p AssetOrderField) String() string {
+func (v AssetOrderField) IsValid() bool {
+	switch v {
+	case
+		AssetOrderFieldCreatedAt,
+		AssetOrderFieldAmount,
+		AssetOrderFieldName:
+		return true
+	}
+
+	return false
+}
+
+func (v AssetOrderField) String() string {
+	return string(v)
+}
+
+func (v AssetOrderField) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *AssetOrderField) UnmarshalText(text []byte) error {
+	val := AssetOrderField(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid AssetOrderField value: %q", string(text))
+	}
+
+	*v = val
+
+	return nil
+}
+
+func (p AssetOrderField) Column() string {
 	return string(p)
 }

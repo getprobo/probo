@@ -15,7 +15,7 @@
 package coredata
 
 import (
-	"database/sql/driver"
+	"encoding"
 	"fmt"
 )
 
@@ -26,6 +26,12 @@ const (
 	CookieBannerStateInactive CookieBannerState = "INACTIVE"
 )
 
+var (
+	_ fmt.Stringer             = CookieBannerState("")
+	_ encoding.TextMarshaler   = CookieBannerState("")
+	_ encoding.TextUnmarshaler = (*CookieBannerState)(nil)
+)
+
 func CookieBannerStates() []CookieBannerState {
 	return []CookieBannerState{
 		CookieBannerStateActive,
@@ -33,38 +39,32 @@ func CookieBannerStates() []CookieBannerState {
 	}
 }
 
-func (s CookieBannerState) String() string {
-	return string(s)
-}
-
-func (s *CookieBannerState) Scan(value any) error {
-	var v string
-	switch val := value.(type) {
-	case string:
-		v = val
-	case []byte:
-		v = string(val)
-	default:
-		return fmt.Errorf("unsupported type for CookieBannerState: %T", value)
-	}
-
-	switch CookieBannerState(v) {
-	case CookieBannerStateActive:
-		*s = CookieBannerStateActive
-	case CookieBannerStateInactive:
-		*s = CookieBannerStateInactive
-	default:
-		return fmt.Errorf("invalid CookieBannerState value: %q", v)
-	}
-	return nil
-}
-
-func (s CookieBannerState) Value() (driver.Value, error) {
-	switch s {
-	case CookieBannerStateActive,
+func (v CookieBannerState) IsValid() bool {
+	switch v {
+	case
+		CookieBannerStateActive,
 		CookieBannerStateInactive:
-		return string(s), nil
-	default:
-		return nil, fmt.Errorf("invalid CookieBannerState: %s", s)
+		return true
 	}
+
+	return false
+}
+
+func (v CookieBannerState) String() string {
+	return string(v)
+}
+
+func (v CookieBannerState) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *CookieBannerState) UnmarshalText(text []byte) error {
+	val := CookieBannerState(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid CookieBannerState value: %q", string(text))
+	}
+
+	*v = val
+
+	return nil
 }

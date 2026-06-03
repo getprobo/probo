@@ -45,6 +45,7 @@ type (
 		pg                         *pg.Client
 		fm                         *filemanager.Service
 		hp                         *passwdhash.Profile
+		dummyHash                  []byte
 		baseURL                    string
 		tokenSecret                string
 		disableSignup              bool
@@ -99,6 +100,15 @@ type (
 	}
 )
 
+func mustHashDummy(hp *passwdhash.Profile) []byte {
+	h, err := hp.HashPassword([]byte("dummy"))
+	if err != nil {
+		panic(fmt.Sprintf("cannot hash dummy password: %v", err))
+	}
+
+	return h
+}
+
 func NewService(
 	ctx context.Context,
 	pgClient *pg.Client,
@@ -126,6 +136,7 @@ func NewService(
 		pg:                         pgClient,
 		fm:                         fm,
 		hp:                         hp,
+		dummyHash:                  mustHashDummy(hp),
 		baseURL:                    cfg.BaseURL.String(),
 		tokenSecret:                cfg.TokenSecret,
 		disableSignup:              cfg.DisableSignup,
@@ -156,6 +167,7 @@ func NewService(
 	if err != nil {
 		return nil, fmt.Errorf("cannot create SAML service: %w", err)
 	}
+
 	svc.SAMLService = samlService
 
 	svc.OIDCService = oidc.NewService(
@@ -207,10 +219,12 @@ func (s *Service) IsSignUpEnabled() bool {
 
 func (s *Service) Run(ctx context.Context) error {
 	wg := sync.WaitGroup{}
+
 	ctx, cancel := context.WithCancelCause(ctx)
 	defer cancel(context.Canceled)
 
 	samlCtx, stopSAML := context.WithCancel(context.WithoutCancel(ctx))
+
 	wg.Go(
 		func() {
 			if err := s.SAMLService.Run(samlCtx); err != nil {
@@ -220,6 +234,7 @@ func (s *Service) Run(ctx context.Context) error {
 	)
 
 	oidcCtx, stopOIDC := context.WithCancel(context.WithoutCancel(ctx))
+
 	wg.Go(
 		func() {
 			if err := s.OIDCService.Run(oidcCtx); err != nil {
@@ -229,6 +244,7 @@ func (s *Service) Run(ctx context.Context) error {
 	)
 
 	domainVerifierCtx, stopDomainVerifier := context.WithCancel(context.WithoutCancel(ctx))
+
 	wg.Go(
 		func() {
 			if err := s.samlDomainVerifier.Run(domainVerifierCtx); err != nil {
@@ -238,6 +254,7 @@ func (s *Service) Run(ctx context.Context) error {
 	)
 
 	scimCtx, stopSCIM := context.WithCancel(context.WithoutCancel(ctx))
+
 	wg.Go(
 		func() {
 			if err := s.SCIMService.Run(scimCtx); err != nil {
@@ -247,6 +264,7 @@ func (s *Service) Run(ctx context.Context) error {
 	)
 
 	oauth2Ctx, stopOAuth2Server := context.WithCancel(context.WithoutCancel(ctx))
+
 	wg.Go(
 		func() {
 			if err := s.OAuth2ServerService.Run(oauth2Ctx); err != nil {

@@ -4,6 +4,47 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.191.0] - 2026-06-02
+
+### Changed
+
+- Replace `prb third-party assess` with `prb third-party vet` to enqueue async third-party vetting; the command now returns immediately after queuing the job instead of waiting for the report
+
+## [0.190.0] - 2026-05-27
+
+### Added
+
+- Add `prb user archive` command to deactivate a user profile while keeping them in the organization
+
+## [0.189.0] - 2026-05-26
+
+### Added
+
+- Add `prb third-party link`/`unlink` commands for self-referential third-party relations
+- Add `prb measure link-third-party`/`unlink-third-party` commands
+
+### Changed
+
+- Allow initial minor publishing of documents
+
+## [0.188.0] - 2026-05-22
+
+### Added
+
+- Add `prb risk-assessment` command group with nested `scope`, `node`, `process`, `threat`, and `scenario` subcommands for managing the hierarchical risk assessment system, including scenario-to-risk and scenario-to-threat link/unlink and Mermaid chart retrieval
+
+## [0.187.0] - 2026-05-15
+
+### Changed
+
+- Rename `prb vendor*` command group to `prb third-party*` (breaking)
+
+## [0.186.0] - 2026-05-13
+
+### Changed
+
+- Drop `--consent-mode` flag from `prb cookie-banner create`/`update` and remove the `consent_mode` column from `cookie-banner` outputs — consent mode is now derived from the visitor's geolocation at consent time (breaking)
+
 ## [0.185.0] - 2026-05-12
 
 ### Changed

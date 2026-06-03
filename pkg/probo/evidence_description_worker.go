@@ -84,6 +84,7 @@ func (h *evidenceDescriptionHandler) Claim(ctx context.Context) (coredata.Eviden
 			now := time.Now()
 			evidence.DescriptionStatus = coredata.EvidenceDescriptionStatusProcessing
 			evidence.DescriptionProcessingStartedAt = &now
+
 			evidence.UpdatedAt = now
 			if err := evidence.Update(ctx, tx, coredata.NewNoScope()); err != nil {
 				return fmt.Errorf("cannot update evidence: %w", err)
@@ -95,6 +96,7 @@ func (h *evidenceDescriptionHandler) Claim(ctx context.Context) (coredata.Eviden
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return coredata.Evidence{}, worker.ErrNoTask
 		}
+
 		return coredata.Evidence{}, err
 	}
 
@@ -127,6 +129,7 @@ func (h *evidenceDescriptionHandler) RecoverStale(ctx context.Context) error {
 			if err := coredata.ResetStaleDescriptionProcessing(ctx, conn, h.staleAfter); err != nil {
 				return fmt.Errorf("cannot reset stale description processing: %w", err)
 			}
+
 			return nil
 		},
 	)
@@ -143,12 +146,14 @@ func (h *evidenceDescriptionHandler) describeAndCommit(
 	scope := coredata.NewScopeFromObjectID(evidence.ID)
 
 	var file coredata.File
+
 	if err := h.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
 			if err := file.LoadByID(ctx, conn, scope, *evidence.EvidenceFileId); err != nil {
 				return fmt.Errorf("cannot load file: %w", err)
 			}
+
 			return nil
 		},
 	); err != nil {
@@ -171,6 +176,7 @@ func (h *evidenceDescriptionHandler) describeAndCommit(
 			evidence.Description = description
 			evidence.DescriptionStatus = coredata.EvidenceDescriptionStatusCompleted
 			evidence.DescriptionProcessingStartedAt = nil
+
 			evidence.UpdatedAt = time.Now()
 			if err := evidence.Update(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot update evidence: %w", err)
@@ -192,6 +198,7 @@ func (h *evidenceDescriptionHandler) failEvidence(
 		func(ctx context.Context, tx pg.Tx) error {
 			evidence.DescriptionStatus = coredata.EvidenceDescriptionStatusFailed
 			evidence.DescriptionProcessingStartedAt = nil
+
 			evidence.UpdatedAt = time.Now()
 			if err := evidence.Update(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot update evidence: %w", err)

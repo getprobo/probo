@@ -41,22 +41,22 @@ type Organization implements Node {
 
   permission(action: String!): Boolean!
     @goField(forceResolver: true)
-    @session(required: PRESENT)
+    @authentication(required: PRESENT)
 }
 
 extend type Mutation {
   createOrganization(
     input: CreateOrganizationInput!
-  ): CreateOrganizationPayload @session(required: PRESENT)
+  ): CreateOrganizationPayload @authentication(required: PRESENT)
   updateOrganization(
     input: UpdateOrganizationInput!
-  ): UpdateOrganizationPayload @session(required: PRESENT)
+  ): UpdateOrganizationPayload @authentication(required: PRESENT)
   deleteOrganization(
     input: DeleteOrganizationInput!
-  ): DeleteOrganizationPayload @session(required: PRESENT)
+  ): DeleteOrganizationPayload @authentication(required: PRESENT)
   deleteOrganizationHorizontalLogo(
     input: DeleteOrganizationHorizontalLogoInput!
-  ): DeleteOrganizationHorizontalLogoPayload @session(required: PRESENT)
+  ): DeleteOrganizationHorizontalLogoPayload @authentication(required: PRESENT)
 }
 
 input CreateOrganizationInput {

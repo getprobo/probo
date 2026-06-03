@@ -1,0 +1,99 @@
+name: "Release helm"
+
+on:
+  push:
+    tags:
+      - "helm/v*"
+
+permissions:
+  contents: "read"
+
+jobs:
+  publish-helm:
+    name: "publish-helm"
+    runs-on: "runs-on=${{ github.run_id }}/runner=2cpu-linux-x64/extras=s3-cache"
+    permissions:
+      contents: "read"
+    steps:
+      - uses: "actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd" # v6
+      - uses: "runs-on/action@742bf56072eb4845a0f94b3394673e4903c90ff0" # v2
+      - uses: "azure/setup-helm@b9e51907a09c216f16ebe8536097933489208112" # v4.3.0
+        with:
+          version: "3.17.3"
+      - name: "Validate chart version"
+        run: |
+          VERSION="${GITHUB_REF_NAME##*/v}"
+          CHART_VERSION="$(awk '/^version:/ { print $2 }' contrib/helm/charts/probo/Chart.yaml)"
+          if [ "${CHART_VERSION}" != "${VERSION}" ]; then
+            echo "Chart.yaml version (${CHART_VERSION}) does not match tag (${VERSION})"
+            exit 1
+          fi
+      - name: "Log in to Harbor"
+        uses: "docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2" # v4.0.0
+        with:
+          registry: artifact.probo.inc
+          username: ${{ secrets.HARBOR_USERNAME }}
+          password: ${{ secrets.HARBOR_PASSWORD }}
+      - name: "Package and push Helm chart"
+        run: |
+          VERSION="${GITHUB_REF_NAME##*/v}"
+          CHART_DIR="contrib/helm/charts/probo"
+
+          helm dependency update "${CHART_DIR}"
+          helm package "${CHART_DIR}"
+          helm push "probo-${VERSION}.tgz" oci://artifact.probo.inc/probo
+      - uses: "actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f" # v7
+        with:
+          name: "helm-chart"
+          path: "probo-*.tgz"
+          retention-days: 1
+
+  github-release:
+    name: "github-release"
+    needs: [publish-helm]
+    runs-on: "runs-on=${{ github.run_id }}/runner=2cpu-linux-x64/extras=s3-cache"
+    permissions:
+      contents: "write"
+    steps:
+      - uses: "actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd" # v6
+        with:
+          fetch-depth: 0
+      - uses: "runs-on/action@742bf56072eb4845a0f94b3394673e4903c90ff0" # v2
+      - uses: "actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c" # v8
+        with:
+          name: "helm-chart"
+          path: "."
+      - name: "Extract release notes"
+        run: |
+          VERSION="${GITHUB_REF_NAME##*/v}"
+          APP_VERSION="$(awk '/^appVersion:/ { gsub(/"/, "", $2); print $2 }' contrib/helm/charts/probo/Chart.yaml)"
+          awk -v ver="$VERSION" '
+            /^## \[/ { if (found) exit; if ($0 ~ "\\[" ver "\\]") found=1 }
+            found
+          ' contrib/helm/charts/probo/CHANGELOG.md > release-notes.md
+          cat >> release-notes.md << EOF
+
+          ## Install
+
+          \`\`\`bash
+          helm install my-probo oci://artifact.probo.inc/probo/probo --version ${VERSION}
+          \`\`\`
+
+          Defaults to probod image tag \`v${APP_VERSION}\`.
+          EOF
+      - name: "Create GitHub release"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PRERELEASE_FLAG=""
+          if echo "${GITHUB_REF_NAME}" | grep -qE '(alpha|beta|rc)'; then
+            PRERELEASE_FLAG="--prerelease"
+          fi
+
+          gh release delete "${GITHUB_REF_NAME}" --yes 2>/dev/null || true
+
+          gh release create "${GITHUB_REF_NAME}" \
+            --title "${GITHUB_REF_NAME}" \
+            --notes-file release-notes.md \
+            $PRERELEASE_FLAG \
+            probo-*.tgz

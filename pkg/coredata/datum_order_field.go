@@ -15,7 +15,10 @@
 package coredata
 
 import (
+	"encoding"
 	"fmt"
+
+	"go.probo.inc/probo/pkg/page"
 )
 
 type DatumOrderField string
@@ -26,26 +29,52 @@ const (
 	DatumOrderFieldDataClassification DatumOrderField = "DATA_CLASSIFICATION"
 )
 
+var (
+	_ page.OrderField          = DatumOrderField("")
+	_ fmt.Stringer             = DatumOrderField("")
+	_ encoding.TextMarshaler   = DatumOrderField("")
+	_ encoding.TextUnmarshaler = (*DatumOrderField)(nil)
+)
+
+func DatumOrderFields() []DatumOrderField {
+	return []DatumOrderField{
+		DatumOrderFieldCreatedAt,
+		DatumOrderFieldName,
+		DatumOrderFieldDataClassification,
+	}
+}
+
+func (v DatumOrderField) IsValid() bool {
+	switch v {
+	case
+		DatumOrderFieldCreatedAt,
+		DatumOrderFieldName,
+		DatumOrderFieldDataClassification:
+		return true
+	}
+
+	return false
+}
+
+func (v DatumOrderField) String() string {
+	return string(v)
+}
+
+func (v DatumOrderField) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *DatumOrderField) UnmarshalText(text []byte) error {
+	val := DatumOrderField(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid DatumOrderField value: %q", string(text))
+	}
+
+	*v = val
+
+	return nil
+}
+
 func (p DatumOrderField) Column() string {
 	return string(p)
-}
-
-func (p DatumOrderField) String() string {
-	return string(p)
-}
-
-func (p DatumOrderField) MarshalText() ([]byte, error) {
-	return []byte(p.String()), nil
-}
-
-func (p *DatumOrderField) UnmarshalText(text []byte) error {
-	val := string(text)
-	switch val {
-	case string(DatumOrderFieldCreatedAt),
-		string(DatumOrderFieldName),
-		string(DatumOrderFieldDataClassification):
-		*p = DatumOrderField(val)
-		return nil
-	}
-	return fmt.Errorf("invalid DatumOrderField value: %q", val)
 }

@@ -156,24 +156,31 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 			if n.Description != nil && *n.Description != "" {
 				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Description:"), *n.Description)
 			}
+
 			if n.Source != nil && *n.Source != "" {
 				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Source:"), *n.Source)
 			}
+
 			if n.IdentifiedOn != nil && *n.IdentifiedOn != "" {
 				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Identified On:"), cmdutil.FormatTime(*n.IdentifiedOn))
 			}
+
 			if n.DueDate != nil && *n.DueDate != "" {
 				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Due Date:"), cmdutil.FormatTime(*n.DueDate))
 			}
+
 			if n.RootCause != nil && *n.RootCause != "" {
 				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Root Cause:"), *n.RootCause)
 			}
+
 			if n.CorrectiveAction != nil && *n.CorrectiveAction != "" {
 				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Corrective Action:"), *n.CorrectiveAction)
 			}
+
 			if n.Risk != nil {
 				_, _ = fmt.Fprintf(out, "%s%s (%s)\n", label.Render("Risk:"), n.Risk.Name, n.Risk.ID)
 			}
+
 			if n.EffectivenessCheck != nil && *n.EffectivenessCheck != "" {
 				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Effectiveness Check:"), *n.EffectivenessCheck)
 			}

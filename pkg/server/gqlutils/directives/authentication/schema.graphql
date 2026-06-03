@@ -1,0 +1,39 @@
+# Authentication directive for GraphQL APIs
+# Include this schema in your gqlgen configuration to enable identity-based
+# access control (session OR API key).
+#
+# Usage in your schema.graphql:
+#   type Query {
+#     viewer: User @authentication(required: PRESENT)
+#     publicData: Data @authentication(required: OPTIONAL)
+#     signup(input: SignUpInput!): SignUpPayload @authentication(required: NONE)
+#   }
+
+directive @authentication(required: AuthenticationRequirement!) on FIELD_DEFINITION
+
+enum AuthenticationRequirement
+  @goModel(
+    model: "go.probo.inc/probo/pkg/server/gqlutils/directives/authentication.AuthenticationRequirement"
+  ) {
+  """
+  Requires an authenticated identity (session or API key).
+  """
+  PRESENT
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/server/gqlutils/directives/authentication.AuthenticationRequirementPresent"
+    )
+  """
+  Forbids authenticated access (e.g., for login/signup endpoints).
+  """
+  NONE
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/server/gqlutils/directives/authentication.AuthenticationRequirementNone"
+    )
+  """
+  Allows both authenticated and unauthenticated access.
+  """
+  OPTIONAL
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/server/gqlutils/directives/authentication.AuthenticationRequirementOptional"
+    )
+}

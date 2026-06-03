@@ -16,6 +16,7 @@ package coredata
 
 import (
 	"database/sql/driver"
+	"encoding"
 	"fmt"
 	"strings"
 )
@@ -23,9 +24,9 @@ import (
 type WebhookEventType string
 
 const (
-	WebhookEventTypeVendorCreated     WebhookEventType = "vendor:created"
-	WebhookEventTypeVendorUpdated     WebhookEventType = "vendor:updated"
-	WebhookEventTypeVendorDeleted     WebhookEventType = "vendor:deleted"
+	WebhookEventTypeThirdPartyCreated WebhookEventType = "third-party:created"
+	WebhookEventTypeThirdPartyUpdated WebhookEventType = "third-party:updated"
+	WebhookEventTypeThirdPartyDeleted WebhookEventType = "third-party:deleted"
 	WebhookEventTypeUserCreated       WebhookEventType = "user:created"
 	WebhookEventTypeUserUpdated       WebhookEventType = "user:updated"
 	WebhookEventTypeUserDeleted       WebhookEventType = "user:deleted"
@@ -34,48 +35,47 @@ const (
 	WebhookEventTypeObligationDeleted WebhookEventType = "obligation:deleted"
 )
 
-func (w WebhookEventType) String() string {
-	return string(w)
-}
+var (
+	_ fmt.Stringer             = WebhookEventType("")
+	_ encoding.TextMarshaler   = WebhookEventType("")
+	_ encoding.TextUnmarshaler = (*WebhookEventType)(nil)
+)
 
-func (w WebhookEventType) IsValid() bool {
-	switch w {
-	case WebhookEventTypeVendorCreated, WebhookEventTypeVendorUpdated, WebhookEventTypeVendorDeleted,
-		WebhookEventTypeUserCreated, WebhookEventTypeUserUpdated, WebhookEventTypeUserDeleted,
-		WebhookEventTypeObligationCreated, WebhookEventTypeObligationUpdated, WebhookEventTypeObligationDeleted:
+func (v WebhookEventType) IsValid() bool {
+	switch v {
+	case
+		WebhookEventTypeThirdPartyCreated,
+		WebhookEventTypeThirdPartyUpdated,
+		WebhookEventTypeThirdPartyDeleted,
+		WebhookEventTypeUserCreated,
+		WebhookEventTypeUserUpdated,
+		WebhookEventTypeUserDeleted,
+		WebhookEventTypeObligationCreated,
+		WebhookEventTypeObligationUpdated,
+		WebhookEventTypeObligationDeleted:
 		return true
 	}
+
 	return false
 }
 
-func (w WebhookEventType) MarshalText() ([]byte, error) {
-	return []byte(w.String()), nil
+func (v WebhookEventType) String() string {
+	return string(v)
 }
 
-func (w *WebhookEventType) UnmarshalText(text []byte) error {
-	*w = WebhookEventType(text)
-	if !w.IsValid() {
-		return fmt.Errorf("%s is not a valid WebhookEventType", string(text))
+func (v WebhookEventType) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *WebhookEventType) UnmarshalText(text []byte) error {
+	val := WebhookEventType(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid WebhookEventType value: %q", string(text))
 	}
+
+	*v = val
+
 	return nil
-}
-
-func (w *WebhookEventType) Scan(value any) error {
-	var s string
-	switch v := value.(type) {
-	case string:
-		s = v
-	case []byte:
-		s = string(v)
-	default:
-		return fmt.Errorf("unsupported type for WebhookEventType: %T", value)
-	}
-
-	return w.UnmarshalText([]byte(s))
-}
-
-func (w WebhookEventType) Value() (driver.Value, error) {
-	return w.String(), nil
 }
 
 type WebhookEventTypes []WebhookEventType
@@ -113,13 +113,15 @@ func (s *WebhookEventTypes) scanFromString(str string) error {
 		}
 
 		var et WebhookEventType
-		if err := et.Scan(part); err != nil {
+		if err := et.UnmarshalText([]byte(part)); err != nil {
 			return fmt.Errorf("invalid webhook event type in array: %s", part)
 		}
+
 		result[i] = et
 	}
 
 	*s = result
+
 	return nil
 }
 

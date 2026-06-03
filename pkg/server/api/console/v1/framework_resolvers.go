@@ -26,7 +26,7 @@ import (
 
 // Organization is the resolver for the organization field.
 func (r *frameworkResolver) Organization(ctx context.Context, obj *types.Framework) (*types.Organization, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGet); err != nil {
+	if _, err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGet); err != nil {
 		return nil, err
 	}
 
@@ -39,6 +39,7 @@ func (r *frameworkResolver) Organization(ctx context.Context, obj *types.Framewo
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot load organization", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -47,16 +48,16 @@ func (r *frameworkResolver) Organization(ctx context.Context, obj *types.Framewo
 
 // Controls is the resolver for the controls field.
 func (r *frameworkResolver) Controls(ctx context.Context, obj *types.Framework, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ControlOrderBy, filter *types.ControlFilter) (*types.ControlConnection, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionControlList); err != nil {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionControlList)
+	if err != nil {
 		return nil, err
 	}
-
-	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	pageOrderBy := page.OrderBy[coredata.ControlOrderField]{
 		Field:     coredata.ControlOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if orderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.ControlOrderField]{
 			Field:     orderBy.Field,
@@ -71,7 +72,7 @@ func (r *frameworkResolver) Controls(ctx context.Context, obj *types.Framework, 
 		controlFilter = coredata.NewControlFilter(filter.Query)
 	}
 
-	page, err := prb.Controls.ListForFrameworkID(ctx, obj.ID, cursor, controlFilter)
+	page, err := r.probo.Controls.ListForFrameworkID(ctx, scope, obj.ID, cursor, controlFilter)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list controls", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -82,24 +83,22 @@ func (r *frameworkResolver) Controls(ctx context.Context, obj *types.Framework, 
 
 // LightLogoURL is the resolver for the lightLogoURL field.
 func (r *frameworkResolver) LightLogoURL(ctx context.Context, obj *types.Framework) (*string, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionFrameworkGet); err != nil {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionFrameworkGet)
+	if err != nil {
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, obj.ID.TenantID())
-
-	return prb.Frameworks.GenerateLightLogoURL(ctx, obj.ID, 1*time.Hour)
+	return r.probo.Frameworks.GenerateLightLogoURL(ctx, scope, obj.ID, 1*time.Hour)
 }
 
 // DarkLogoURL is the resolver for the darkLogoURL field.
 func (r *frameworkResolver) DarkLogoURL(ctx context.Context, obj *types.Framework) (*string, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionFrameworkGet); err != nil {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionFrameworkGet)
+	if err != nil {
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, obj.ID.TenantID())
-
-	return prb.Frameworks.GenerateDarkLogoURL(ctx, obj.ID, 1*time.Hour)
+	return r.probo.Frameworks.GenerateDarkLogoURL(ctx, scope, obj.ID, 1*time.Hour)
 }
 
 // Permission is the resolver for the permission field.
@@ -109,36 +108,36 @@ func (r *frameworkResolver) Permission(ctx context.Context, obj *types.Framework
 
 // TotalCount is the resolver for the totalCount field.
 func (r *frameworkConnectionResolver) TotalCount(ctx context.Context, obj *types.FrameworkConnection) (int, error) {
-	if err := r.authorize(ctx, obj.ParentID, probo.ActionFrameworkList); err != nil {
+	scope, err := r.authorize(ctx, obj.ParentID, probo.ActionFrameworkList)
+	if err != nil {
 		return 0, err
 	}
 
 	switch obj.Resolver.(type) {
 	case *organizationResolver:
-		prb := r.ProboService(ctx, obj.ParentID.TenantID())
-
-		count, err := prb.Frameworks.CountForOrganizationID(ctx, obj.ParentID)
+		count, err := r.probo.Frameworks.CountForOrganizationID(ctx, scope, obj.ParentID)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count frameworks", log.Error(err))
 			return 0, gqlutils.Internal(ctx)
 		}
+
 		return count, nil
 	}
 
 	r.logger.ErrorCtx(ctx, "unsupported resolver")
+
 	return 0, gqlutils.Internal(ctx)
 }
 
 // CreateFramework is the resolver for the createFramework field.
 func (r *mutationResolver) CreateFramework(ctx context.Context, input types.CreateFrameworkInput) (*types.CreateFrameworkPayload, error) {
-	if err := r.authorize(ctx, input.OrganizationID, probo.ActionFrameworkCreate); err != nil {
+	scope, err := r.authorize(ctx, input.OrganizationID, probo.ActionFrameworkCreate)
+	if err != nil {
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
-
-	framework, err := prb.Frameworks.Create(
-		ctx,
+	framework, err := r.probo.Frameworks.Create(
+		ctx, scope,
 		probo.CreateFrameworkRequest{
 			OrganizationID: input.OrganizationID,
 			Name:           input.Name,
@@ -148,7 +147,9 @@ func (r *mutationResolver) CreateFramework(ctx context.Context, input types.Crea
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot create framework", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -159,14 +160,13 @@ func (r *mutationResolver) CreateFramework(ctx context.Context, input types.Crea
 
 // UpdateFramework is the resolver for the updateFramework field.
 func (r *mutationResolver) UpdateFramework(ctx context.Context, input types.UpdateFrameworkInput) (*types.UpdateFrameworkPayload, error) {
-	if err := r.authorize(ctx, input.ID, probo.ActionFrameworkUpdate); err != nil {
+	scope, err := r.authorize(ctx, input.ID, probo.ActionFrameworkUpdate)
+	if err != nil {
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, input.ID.TenantID())
-
-	framework, err := prb.Frameworks.Update(
-		ctx,
+	framework, err := r.probo.Frameworks.Update(
+		ctx, scope,
 		probo.UpdateFrameworkRequest{
 			ID:          input.ID,
 			Name:        input.Name,
@@ -177,7 +177,9 @@ func (r *mutationResolver) UpdateFramework(ctx context.Context, input types.Upda
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot update framework", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -188,11 +190,10 @@ func (r *mutationResolver) UpdateFramework(ctx context.Context, input types.Upda
 
 // ImportFramework is the resolver for the importFramework field.
 func (r *mutationResolver) ImportFramework(ctx context.Context, input types.ImportFrameworkInput) (*types.ImportFrameworkPayload, error) {
-	if err := r.authorize(ctx, input.OrganizationID, probo.ActionFrameworkImport); err != nil {
+	scope, err := r.authorize(ctx, input.OrganizationID, probo.ActionFrameworkImport)
+	if err != nil {
 		return nil, err
 	}
-
-	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
 
 	req := probo.ImportFrameworkRequest{}
 	if err := json.NewDecoder(input.File.File).Decode(&req.Framework); err != nil {
@@ -200,13 +201,14 @@ func (r *mutationResolver) ImportFramework(ctx context.Context, input types.Impo
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	framework, err := prb.Frameworks.Import(ctx, input.OrganizationID, req)
+	framework, err := r.probo.Frameworks.Import(ctx, scope, input.OrganizationID, req)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
 			return nil, gqlutils.Conflict(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot import framework", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -217,14 +219,12 @@ func (r *mutationResolver) ImportFramework(ctx context.Context, input types.Impo
 
 // DeleteFramework is the resolver for the deleteFramework field.
 func (r *mutationResolver) DeleteFramework(ctx context.Context, input types.DeleteFrameworkInput) (*types.DeleteFrameworkPayload, error) {
-	if err := r.authorize(ctx, input.FrameworkID, probo.ActionFrameworkDelete); err != nil {
+	scope, err := r.authorize(ctx, input.FrameworkID, probo.ActionFrameworkDelete)
+	if err != nil {
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, input.FrameworkID.TenantID())
-
-	err := prb.Frameworks.Delete(ctx, input.FrameworkID)
-	if err != nil {
+	if err := r.probo.Frameworks.Delete(ctx, scope, input.FrameworkID); err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete framework", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
@@ -236,15 +236,15 @@ func (r *mutationResolver) DeleteFramework(ctx context.Context, input types.Dele
 
 // ExportFramework is the resolver for the exportFramework field.
 func (r *mutationResolver) ExportFramework(ctx context.Context, input types.ExportFrameworkInput) (*types.ExportFrameworkPayload, error) {
-	if err := r.authorize(ctx, input.FrameworkID, probo.ActionFrameworkExport); err != nil {
+	scope, err := r.authorize(ctx, input.FrameworkID, probo.ActionFrameworkExport)
+	if err != nil {
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, input.FrameworkID.TenantID())
 	identity := authn.IdentityFromContext(ctx)
 
-	exportJob, exportErr := prb.Frameworks.RequestExport(
-		ctx,
+	exportJob, exportErr := r.probo.Frameworks.RequestExport(
+		ctx, scope,
 		input.FrameworkID,
 		identity.EmailAddress,
 		identity.FullName,

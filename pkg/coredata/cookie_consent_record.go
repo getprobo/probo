@@ -25,6 +25,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/iam/policy"
 	"go.probo.inc/probo/pkg/page"
 )
 
@@ -42,6 +43,7 @@ type (
 		SdkVersion            string              `db:"sdk_version"`
 		Regulation            *Regulation         `db:"regulation"`
 		CountryCode           *CountryCode        `db:"country_code"`
+		ConsentMode           *CookieConsentMode  `db:"consent_mode"`
 		CreatedAt             time.Time           `db:"created_at"`
 	}
 
@@ -57,19 +59,43 @@ func (r *CookieConsentRecord) CursorKey(field CookieConsentRecordOrderField) pag
 	panic(fmt.Sprintf("unsupported order by: %s", field))
 }
 
-func (r *CookieConsentRecord) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
-	q := `SELECT organization_id FROM cookie_consent_records WHERE id = $1 LIMIT 1;`
+func (r *CookieConsentRecord) AuthorizationAttributes(
+	ctx context.Context,
+	conn pg.Querier,
+	resourceIDs []gid.GID,
+) (policy.AttributesByID, error) {
+	q := `SELECT id, organization_id FROM cookie_consent_records WHERE id = ANY(@resource_ids::text[])`
 
-	var organizationID gid.GID
-	if err := conn.QueryRow(ctx, q, r.ID).Scan(&organizationID); err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, ErrResourceNotFound
-		}
-
-		return nil, fmt.Errorf("cannot query consent record authorization attributes: %w", err)
+	args := pgx.StrictNamedArgs{
+		"resource_ids": resourceIDs,
 	}
 
-	return map[string]string{"organization_id": organizationID.String()}, nil
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return nil, fmt.Errorf("cannot query authorization attributes: %w", err)
+	}
+
+	defer rows.Close()
+
+	attrsByID := make(policy.AttributesByID)
+
+	for rows.Next() {
+		var id, organizationID gid.GID
+
+		if err := rows.Scan(&id, &organizationID); err != nil {
+			return nil, fmt.Errorf("cannot scan authorization attributes: %w", err)
+		}
+
+		attrsByID[id] = policy.Attributes{
+			"organization_id": organizationID.String(),
+		}
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("cannot iterate authorization attributes: %w", err)
+	}
+
+	return attrsByID, nil
 }
 
 func (r *CookieConsentRecords) LoadByCookieBannerID(
@@ -94,6 +120,7 @@ SELECT
 	sdk_version,
 	regulation,
 	country_code,
+	consent_mode,
 	created_at
 FROM
 	cookie_consent_records
@@ -180,6 +207,7 @@ INSERT INTO cookie_consent_records (
 	sdk_version,
 	regulation,
 	country_code,
+	consent_mode,
 	created_at
 ) VALUES (
 	@id,
@@ -195,6 +223,7 @@ INSERT INTO cookie_consent_records (
 	@sdk_version,
 	@regulation,
 	@country_code,
+	@consent_mode,
 	@created_at
 )
 `
@@ -213,6 +242,7 @@ INSERT INTO cookie_consent_records (
 		"sdk_version":              r.SdkVersion,
 		"regulation":               r.Regulation,
 		"country_code":             r.CountryCode,
+		"consent_mode":             r.ConsentMode,
 		"created_at":               r.CreatedAt,
 	}
 
@@ -244,6 +274,7 @@ SELECT
 	sdk_version,
 	regulation,
 	country_code,
+	consent_mode,
 	created_at
 FROM
 	cookie_consent_records
@@ -297,6 +328,7 @@ SELECT
 	sdk_version,
 	regulation,
 	country_code,
+	consent_mode,
 	created_at
 FROM
 	cookie_consent_records
@@ -326,6 +358,7 @@ LIMIT 1;
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
 		}
+
 		return fmt.Errorf("cannot collect consent record: %w", err)
 	}
 

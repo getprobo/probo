@@ -54,7 +54,7 @@ type AuditLogEntry implements Node {
 
   permission(action: String!): Boolean!
     @goField(forceResolver: true)
-    @session(required: PRESENT)
+    @authentication(required: PRESENT)
 }
 
 type AuditLogEntryConnection

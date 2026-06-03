@@ -54,7 +54,6 @@ func LoggingMiddleware(logger *log.Logger) func(mcp.MethodHandler) mcp.MethodHan
 					log.Error(err),
 				)
 			} else {
-
 				logger.InfoCtx(
 					ctx,
 					fmt.Sprintf("mcp %q method completed", method),

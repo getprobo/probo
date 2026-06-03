@@ -49,6 +49,7 @@ export { PropertyRow } from "./Atoms/PropertyRow/PropertyRow";
 export { Table, Tbody, Td, Th, Thead, Tr, TrButton } from "./Atoms/Table/Table";
 export { TabBadge, TabItem, TabLink, Tabs } from "./Atoms/Tabs/Tabs";
 export { Markdown } from "./Atoms/Markdown/Markdown";
+export { MermaidDiagram } from "./Atoms/Markdown/MermaidDiagram";
 export { Dropzone } from "./Atoms/Dropzone/Dropzone";
 export { ControlItem } from "./Atoms/ControlItem/ControlItem";
 export { InfiniteScrollTrigger } from "./Atoms/InfiniteScrollTrigger/InfiniteScrollTrigger";
@@ -63,7 +64,7 @@ export {
   Row,
   RowButton,
 } from "./Atoms/DataTable/DataTable";
-export * from "./Atoms/Vendors";
+export * from "./Atoms/ThirdParties";
 
 // Molecules
 export {

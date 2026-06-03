@@ -40,6 +40,46 @@ type (
 		MaxConcurrency int `json:"max-concurrency"`
 	}
 
+	// ThirdPartyVettingWorkerConfig holds worker-side tuning for the
+	// third-party vetting background worker. LLM parameters for the
+	// vetter live under AgentsConfig.ThirdPartyVetter.
+	ThirdPartyVettingWorkerConfig struct {
+		Interval       int `json:"interval"`    // seconds between polls
+		StaleAfter     int `json:"stale-after"` // seconds before a claim is recycled
+		MaxConcurrency int `json:"max-concurrency"`
+	}
+
+	// TrackerMappingWorkerConfig holds worker-side tuning for the
+	// tracker-mapping background worker. LLM parameters for the agents
+	// it runs live under AgentsConfig.TrackerMapping. AgentTimeout and
+	// AgentMaxTurns bound a single agent run (the identification and
+	// disambiguation agents).
+	TrackerMappingWorkerConfig struct {
+		Interval       int `json:"interval"` // seconds between polls
+		MaxConcurrency int `json:"max-concurrency"`
+		StaleAfter     int `json:"stale-after"`   // seconds before a claim is recycled
+		AgentTimeout   int `json:"agent-timeout"` // seconds, single agent run
+		AgentMaxTurns  int `json:"agent-max-turns"`
+	}
+
+	// CommonPatternEnrichmentWorkerConfig holds worker-side tuning for
+	// the common-pattern enrichment background worker. LLM parameters
+	// for the enrichment agent live under AgentsConfig.TrackerMapping
+	// (the agents share one config slot).
+	CommonPatternEnrichmentWorkerConfig struct {
+		Interval       int `json:"interval"` // seconds between polls
+		MaxConcurrency int `json:"max-concurrency"`
+		StaleAfter     int `json:"stale-after"`   // seconds before a claim is recycled
+		AgentTimeout   int `json:"agent-timeout"` // seconds, single agent run
+		AgentMaxTurns  int `json:"agent-max-turns"`
+	}
+
+	// AgentToolsConfig holds API keys and settings for external tools
+	// that agents can use (web search, scraping, etc.).
+	AgentToolsConfig struct {
+		FirecrawlAPIKey string `json:"firecrawl-api-key"`
+	}
+
 	// AgentsConfig groups LLM provider credentials and per-agent model
 	// settings. Default is used as a fallback when an agent-specific field
 	// is zero-valued.
@@ -48,7 +88,9 @@ type (
 		Default           LLMAgentConfig               `json:"defaults"`
 		Probo             LLMAgentConfig               `json:"probo"`
 		EvidenceDescriber LLMAgentConfig               `json:"evidence-describer"`
-		VendorAssessor    LLMAgentConfig               `json:"vendor-assessor"`
+		ThirdPartyVetter  LLMAgentConfig               `json:"third-party-vetter"`
+		TrackerMapping    LLMAgentConfig               `json:"tracker-mapping"`
+		Tools             AgentToolsConfig             `json:"tools"`
 	}
 )
 
@@ -58,14 +100,14 @@ func (c *AgentsConfig) ResolveAgent(agent LLMAgentConfig) LLMAgentConfig {
 	if agent.Provider == "" {
 		agent.Provider = c.Default.Provider
 	}
+
 	if agent.ModelName == "" {
 		agent.ModelName = c.Default.ModelName
 	}
-	if agent.Temperature == nil {
-		agent.Temperature = c.Default.Temperature
+
+	if agent.MaxTokens == nil && c.Default.MaxTokens != nil {
+		agent.MaxTokens = new(*c.Default.MaxTokens)
 	}
-	if agent.MaxTokens == nil {
-		agent.MaxTokens = c.Default.MaxTokens
-	}
+
 	return agent
 }

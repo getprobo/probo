@@ -24,6 +24,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/iam/policy"
 	"go.probo.inc/probo/pkg/page"
 )
 
@@ -31,8 +32,6 @@ type (
 	Finding struct {
 		ID                 gid.GID         `db:"id"`
 		OrganizationID     gid.GID         `db:"organization_id"`
-		SnapshotID         *gid.GID        `db:"snapshot_id"`
-		SourceID           *gid.GID        `db:"source_id"`
 		Kind               FindingKind     `db:"kind"`
 		ReferenceID        string          `db:"reference_id"`
 		Description        *string         `db:"description"`
@@ -74,18 +73,43 @@ func (f *Finding) CursorKey(field FindingOrderField) page.CursorKey {
 	panic(fmt.Sprintf("unsupported order by: %s", field))
 }
 
-func (f *Finding) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
-	q := `SELECT organization_id FROM findings WHERE id = $1 LIMIT 1;`
+func (f *Finding) AuthorizationAttributes(
+	ctx context.Context,
+	conn pg.Querier,
+	resourceIDs []gid.GID,
+) (policy.AttributesByID, error) {
+	q := `SELECT id, organization_id FROM findings WHERE id = ANY(@resource_ids::text[])`
 
-	var organizationID gid.GID
-	if err := conn.QueryRow(ctx, q, f.ID).Scan(&organizationID); err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, ErrResourceNotFound
-		}
-		return nil, fmt.Errorf("cannot query finding authorization attributes: %w", err)
+	args := pgx.StrictNamedArgs{
+		"resource_ids": resourceIDs,
 	}
 
-	return map[string]string{"organization_id": organizationID.String()}, nil
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return nil, fmt.Errorf("cannot query authorization attributes: %w", err)
+	}
+
+	defer rows.Close()
+
+	attrsByID := make(policy.AttributesByID)
+
+	for rows.Next() {
+		var id, organizationID gid.GID
+
+		if err := rows.Scan(&id, &organizationID); err != nil {
+			return nil, fmt.Errorf("cannot scan authorization attributes: %w", err)
+		}
+
+		attrsByID[id] = policy.Attributes{
+			"organization_id": organizationID.String(),
+		}
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("cannot iterate authorization attributes: %w", err)
+	}
+
+	return attrsByID, nil
 }
 
 func (f *Finding) LoadByID(
@@ -98,8 +122,6 @@ func (f *Finding) LoadByID(
 SELECT
 	id,
 	organization_id,
-	snapshot_id,
-	source_id,
 	kind,
 	reference_id,
 	description,
@@ -120,7 +142,6 @@ FROM
 WHERE
 	%s
 	AND id = @finding_id
-	AND snapshot_id IS NULL
 LIMIT 1;
 `
 
@@ -159,7 +180,6 @@ FROM
 WHERE
 	%s
 	AND organization_id = @organization_id
-	AND snapshot_id IS NULL
 	AND %s
 `
 
@@ -172,6 +192,7 @@ WHERE
 	row := conn.QueryRow(ctx, q, args)
 
 	var count int
+
 	err := row.Scan(&count)
 	if err != nil {
 		return 0, fmt.Errorf("cannot count findings: %w", err)
@@ -192,8 +213,6 @@ func (fs *Findings) LoadByOrganizationID(
 SELECT
 	id,
 	organization_id,
-	snapshot_id,
-	source_id,
 	kind,
 	reference_id,
 	description,
@@ -214,7 +233,6 @@ FROM
 WHERE
 	%s
 	AND organization_id = @organization_id
-	AND snapshot_id IS NULL
 	AND %s
 	AND %s
 `
@@ -264,7 +282,7 @@ WITH next_ref AS (
 			0
 		) + 1 AS next_num
 	FROM findings
-	WHERE organization_id = @organization_id AND snapshot_id IS NULL
+	WHERE organization_id = @organization_id
 )
 INSERT INTO findings (
 	id,
@@ -360,7 +378,6 @@ SET
 WHERE
 	%s
 	AND id = @id
-	AND snapshot_id IS NULL
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
@@ -399,7 +416,7 @@ func (f *Finding) Delete(
 DELETE FROM findings
 WHERE
 	%s
-	AND id = @id AND snapshot_id IS NULL
+	AND id = @id
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
@@ -429,8 +446,6 @@ WITH f AS (
 		fi.id,
 		fi.tenant_id,
 		fi.organization_id,
-		fi.snapshot_id,
-		fi.source_id,
 		fi.kind,
 		fi.reference_id,
 		fi.description,
@@ -452,13 +467,10 @@ WITH f AS (
 		findings_audits fa ON fi.id = fa.finding_id
 	WHERE
 		fa.audit_id = @audit_id
-		AND fi.snapshot_id IS NULL
 )
 SELECT
 	id,
 	organization_id,
-	snapshot_id,
-	source_id,
 	kind,
 	reference_id,
 	description,
@@ -520,7 +532,6 @@ WITH f AS (
 		findings_audits fa ON fi.id = fa.finding_id
 	WHERE
 		fa.audit_id = @audit_id
-		AND fi.snapshot_id IS NULL
 )
 SELECT
 	COUNT(id)
@@ -540,6 +551,7 @@ WHERE
 	row := conn.QueryRow(ctx, q, args)
 
 	var count int
+
 	err := row.Scan(&count)
 	if err != nil {
 		return 0, fmt.Errorf("cannot count findings: %w", err)
@@ -558,8 +570,6 @@ func (fs *Findings) LoadAllByOrganizationID(
 SELECT
 	id,
 	organization_id,
-	snapshot_id,
-	source_id,
 	kind,
 	reference_id,
 	description,
@@ -580,7 +590,6 @@ FROM
 WHERE
 	%s
 	AND organization_id = @organization_id
-	AND snapshot_id IS NULL
 ORDER BY
 	reference_id ASC
 `
@@ -627,6 +636,7 @@ WHERE
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, nil
 	}
+
 	if err != nil {
 		return nil, fmt.Errorf("cannot get finding list document ID: %w", err)
 	}

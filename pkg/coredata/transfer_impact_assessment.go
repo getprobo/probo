@@ -25,6 +25,7 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/iam/policy"
 	"go.probo.inc/probo/pkg/page"
 )
 
@@ -50,6 +51,7 @@ WHERE
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, nil
 	}
+
 	if err != nil {
 		return nil, fmt.Errorf("cannot get TIA list document ID: %w", err)
 	}
@@ -138,8 +140,6 @@ WHERE
 type (
 	TransferImpactAssessment struct {
 		ID                    gid.GID   `db:"id"`
-		SnapshotID            *gid.GID  `db:"snapshot_id"`
-		SourceID              *gid.GID  `db:"source_id"`
 		OrganizationID        gid.GID   `db:"organization_id"`
 		ProcessingActivityID  gid.GID   `db:"processing_activity_id"`
 		DataSubjects          *string   `db:"data_subjects"`
@@ -163,19 +163,43 @@ func (tia *TransferImpactAssessment) CursorKey(field TransferImpactAssessmentOrd
 	panic(fmt.Sprintf("unsupported order by: %s", field))
 }
 
-func (tia *TransferImpactAssessment) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
-	q := `SELECT organization_id FROM processing_activity_transfer_impact_assessments WHERE id = $1 LIMIT 1;`
+func (tia *TransferImpactAssessment) AuthorizationAttributes(
+	ctx context.Context,
+	conn pg.Querier,
+	resourceIDs []gid.GID,
+) (policy.AttributesByID, error) {
+	q := `SELECT id, organization_id FROM processing_activity_transfer_impact_assessments WHERE id = ANY(@resource_ids::text[])`
 
-	var organizationID gid.GID
-	if err := conn.QueryRow(ctx, q, tia.ID).Scan(&organizationID); err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, ErrResourceNotFound
-		}
-
-		return nil, fmt.Errorf("cannot query transfer impact assessment authorization attributes: %w", err)
+	args := pgx.StrictNamedArgs{
+		"resource_ids": resourceIDs,
 	}
 
-	return map[string]string{"organization_id": organizationID.String()}, nil
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return nil, fmt.Errorf("cannot query authorization attributes: %w", err)
+	}
+
+	defer rows.Close()
+
+	attrsByID := make(policy.AttributesByID)
+
+	for rows.Next() {
+		var id, organizationID gid.GID
+
+		if err := rows.Scan(&id, &organizationID); err != nil {
+			return nil, fmt.Errorf("cannot scan authorization attributes: %w", err)
+		}
+
+		attrsByID[id] = policy.Attributes{
+			"organization_id": organizationID.String(),
+		}
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("cannot iterate authorization attributes: %w", err)
+	}
+
+	return attrsByID, nil
 }
 
 func (tias *TransferImpactAssessments) CountByOrganizationID(
@@ -192,7 +216,6 @@ FROM
 WHERE
 	%s
 	AND organization_id = @organization_id
-	AND snapshot_id IS NULL
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
@@ -203,6 +226,7 @@ WHERE
 	row := conn.QueryRow(ctx, q, args)
 
 	var count int
+
 	err := row.Scan(&count)
 	if err != nil {
 		return 0, fmt.Errorf("cannot count transfer impact assessments: %w", err)
@@ -221,8 +245,6 @@ func (tias *TransferImpactAssessments) LoadByOrganizationID(
 	q := `
 SELECT
 	id,
-	snapshot_id,
-	source_id,
 	organization_id,
 	processing_activity_id,
 	data_subjects,
@@ -237,7 +259,6 @@ FROM
 WHERE
 	%s
 	AND organization_id = @organization_id
-	AND snapshot_id IS NULL
 	AND %s
 `
 
@@ -271,8 +292,6 @@ func (tias *TransferImpactAssessments) LoadAllByOrganizationID(
 	q := `
 SELECT
 	id,
-	snapshot_id,
-	source_id,
 	organization_id,
 	processing_activity_id,
 	data_subjects,
@@ -287,7 +306,6 @@ FROM
 WHERE
 	%s
 	AND organization_id = @organization_id
-	AND snapshot_id IS NULL
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
@@ -319,8 +337,6 @@ func (tia *TransferImpactAssessment) LoadByID(
 	q := `
 SELECT
 	id,
-	snapshot_id,
-	source_id,
 	organization_id,
 	processing_activity_id,
 	data_subjects,
@@ -353,6 +369,7 @@ LIMIT 1;
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
 		}
+
 		return fmt.Errorf("cannot collect transfer impact assessment: %w", err)
 	}
 
@@ -370,8 +387,6 @@ func (tia *TransferImpactAssessment) LoadByProcessingActivityID(
 	q := `
 SELECT
 	id,
-	snapshot_id,
-	source_id,
 	organization_id,
 	processing_activity_id,
 	data_subjects,
@@ -404,6 +419,7 @@ LIMIT 1;
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
 		}
+
 		return fmt.Errorf("cannot collect transfer impact assessment: %w", err)
 	}
 
@@ -461,9 +477,8 @@ INSERT INTO processing_activity_transfer_impact_assessments (
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
-		var pgErr *pgconn.PgError
-		if errors.As(err, &pgErr) {
-			if pgErr.Code == "23505" && pgErr.ConstraintName == "processing_activity_tias_processing_activity_id_snapshot_id_uniq" {
+		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
+			if pgErr.Code == "23505" && pgErr.ConstraintName == "processing_activity_tias_processing_activity_id_uniq" {
 				return ErrResourceAlreadyExists
 			}
 		}

@@ -50,6 +50,7 @@ func (e *ErrRateLimit) Error() string {
 	if e.RetryAfter > 0 {
 		return fmt.Sprintf("rate limited (retry after %s): %v", e.RetryAfter, e.Err)
 	}
+
 	return fmt.Sprintf("rate limited: %v", e.Err)
 }
 
@@ -59,6 +60,7 @@ func (e *ErrContextLength) Error() string {
 	if e.MaxTokens > 0 {
 		return fmt.Sprintf("context length exceeded (max %d tokens): %v", e.MaxTokens, e.Err)
 	}
+
 	return fmt.Sprintf("context length exceeded: %v", e.Err)
 }
 

@@ -15,7 +15,7 @@
 package coredata
 
 import (
-	"database/sql/driver"
+	"encoding"
 	"fmt"
 )
 
@@ -28,38 +28,45 @@ const (
 	ElectronicSignatureEventSourceServer ElectronicSignatureEventSource = "SERVER"
 )
 
-func (s ElectronicSignatureEventSource) MarshalText() ([]byte, error) {
-	return []byte(s.String()), nil
+var (
+	_ fmt.Stringer             = ElectronicSignatureEventSource("")
+	_ encoding.TextMarshaler   = ElectronicSignatureEventSource("")
+	_ encoding.TextUnmarshaler = (*ElectronicSignatureEventSource)(nil)
+)
+
+func ElectronicSignatureEventSources() []ElectronicSignatureEventSource {
+	return []ElectronicSignatureEventSource{
+		ElectronicSignatureEventSourceClient,
+		ElectronicSignatureEventSourceServer,
+	}
 }
 
-func (s *ElectronicSignatureEventSource) UnmarshalText(data []byte) error {
-	val := string(data)
-
-	switch val {
-	case ElectronicSignatureEventSourceClient.String():
-		*s = ElectronicSignatureEventSourceClient
-	case ElectronicSignatureEventSourceServer.String():
-		*s = ElectronicSignatureEventSourceServer
-	default:
-		return fmt.Errorf("invalid ElectronicSignatureEventSource value: %q", val)
+func (v ElectronicSignatureEventSource) IsValid() bool {
+	switch v {
+	case
+		ElectronicSignatureEventSourceClient,
+		ElectronicSignatureEventSourceServer:
+		return true
 	}
+
+	return false
+}
+
+func (v ElectronicSignatureEventSource) String() string {
+	return string(v)
+}
+
+func (v ElectronicSignatureEventSource) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *ElectronicSignatureEventSource) UnmarshalText(text []byte) error {
+	val := ElectronicSignatureEventSource(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid ElectronicSignatureEventSource value: %q", string(text))
+	}
+
+	*v = val
 
 	return nil
-}
-
-func (s ElectronicSignatureEventSource) String() string {
-	return string(s)
-}
-
-func (s *ElectronicSignatureEventSource) Scan(value any) error {
-	val, ok := value.(string)
-	if !ok {
-		return fmt.Errorf("invalid scan source for ElectronicSignatureEventSource, expected string got %T", value)
-	}
-
-	return s.UnmarshalText([]byte(val))
-}
-
-func (s ElectronicSignatureEventSource) Value() (driver.Value, error) {
-	return s.String(), nil
 }

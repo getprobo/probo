@@ -402,6 +402,7 @@ func TestMultipleExtensionsPerMimeType(t *testing.T) {
 func TestExtensionsWithMultipleMimeTypes(t *testing.T) {
 	// Create a map of extensions to MIME types
 	extToMimes := make(map[string][]string)
+
 	for _, fileType := range FileTypes {
 		for _, ext := range fileType.Extensions {
 			extToMimes[ext] = append(extToMimes[ext], fileType.MimeType)
@@ -438,6 +439,7 @@ func TestExtensionsWithMultipleMimeTypes(t *testing.T) {
 // BenchmarkValidate benchmarks the Validate function
 func BenchmarkValidate(b *testing.B) {
 	v := NewValidator(WithCategories(CategoryDocument))
+
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
@@ -494,6 +496,7 @@ func TestValidateCustomAllowedExtensions(t *testing.T) {
 	if err == nil {
 		t.Error("Expected error for unregistered extension, got none")
 	}
+
 	if !contains(err.Error(), "file extension \".jpg\" is not allowed") {
 		t.Errorf("Unexpected error message: %s", err.Error())
 	}
@@ -514,6 +517,7 @@ func TestValidateCustomAllowedExtensions(t *testing.T) {
 	if err == nil {
 		t.Error("Expected error for content type not matching extension, got none")
 	}
+
 	if !contains(err.Error(), "content type \"image/png\" does not match extension \".jpg\"") {
 		t.Errorf("Unexpected error message: %s", err.Error())
 	}

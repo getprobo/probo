@@ -28,11 +28,12 @@ import (
 )
 
 type TrustCenterService struct {
-	svc *TenantService
+	svc *Service
 }
 
 func (s TrustCenterService) Get(
 	ctx context.Context,
+	scope coredata.Scoper,
 	trustCenterID gid.GID,
 ) (*coredata.TrustCenter, error) {
 	var trustCenter *coredata.TrustCenter
@@ -41,14 +42,13 @@ func (s TrustCenterService) Get(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
 			trustCenter = &coredata.TrustCenter{}
-			if err := trustCenter.LoadByID(ctx, conn, s.svc.scope, trustCenterID); err != nil {
+			if err := trustCenter.LoadByID(ctx, conn, scope, trustCenterID); err != nil {
 				return fmt.Errorf("cannot load trust center: %w", err)
 			}
 
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, fmt.Errorf("cannot load trust center: %w", err)
 	}
@@ -58,6 +58,7 @@ func (s TrustCenterService) Get(
 
 func (s TrustCenterService) GetByOrganizationID(
 	ctx context.Context,
+	scope coredata.Scoper,
 	organizationID gid.GID,
 ) (*coredata.TrustCenter, error) {
 	trustCenter := &coredata.TrustCenter{}
@@ -65,7 +66,7 @@ func (s TrustCenterService) GetByOrganizationID(
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			err := trustCenter.LoadByOrganizationID(ctx, conn, s.svc.scope, organizationID)
+			err := trustCenter.LoadByOrganizationID(ctx, conn, scope, organizationID)
 			if err != nil {
 				return fmt.Errorf("cannot load trust center: %w", err)
 			}
@@ -73,7 +74,6 @@ func (s TrustCenterService) GetByOrganizationID(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -83,6 +83,7 @@ func (s TrustCenterService) GetByOrganizationID(
 
 func (s TrustCenterService) GetNDAFile(
 	ctx context.Context,
+	scope coredata.Scoper,
 	trustCenterID gid.GID,
 ) (*coredata.File, error) {
 	var file *coredata.File
@@ -91,7 +92,7 @@ func (s TrustCenterService) GetNDAFile(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
 			trustCenter := &coredata.TrustCenter{}
-			if err := trustCenter.LoadByID(ctx, conn, s.svc.scope, trustCenterID); err != nil {
+			if err := trustCenter.LoadByID(ctx, conn, scope, trustCenterID); err != nil {
 				return fmt.Errorf("cannot load trust center: %w", err)
 			}
 
@@ -100,7 +101,7 @@ func (s TrustCenterService) GetNDAFile(
 			}
 
 			file = &coredata.File{}
-			if err := file.LoadByID(ctx, conn, s.svc.scope, *trustCenter.NonDisclosureAgreementFileID); err != nil {
+			if err := file.LoadByID(ctx, conn, scope, *trustCenter.NonDisclosureAgreementFileID); err != nil {
 				return fmt.Errorf("cannot load file: %w", err)
 			}
 
@@ -116,6 +117,7 @@ func (s TrustCenterService) GetNDAFile(
 
 func (s TrustCenterService) GenerateNDAFileURL(
 	ctx context.Context,
+	scope coredata.Scoper,
 	trustCenterID gid.GID,
 	expiresIn time.Duration,
 ) (string, error) {
@@ -125,7 +127,7 @@ func (s TrustCenterService) GenerateNDAFileURL(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
 			trustCenter := &coredata.TrustCenter{}
-			if err := trustCenter.LoadByID(ctx, conn, s.svc.scope, trustCenterID); err != nil {
+			if err := trustCenter.LoadByID(ctx, conn, scope, trustCenterID); err != nil {
 				return fmt.Errorf("cannot load trust center: %w", err)
 			}
 
@@ -134,7 +136,7 @@ func (s TrustCenterService) GenerateNDAFileURL(
 			}
 
 			file = &coredata.File{}
-			if err := file.LoadByID(ctx, conn, s.svc.scope, *trustCenter.NonDisclosureAgreementFileID); err != nil {
+			if err := file.LoadByID(ctx, conn, scope, *trustCenter.NonDisclosureAgreementFileID); err != nil {
 				return fmt.Errorf("cannot load file: %w", err)
 			}
 
@@ -155,6 +157,7 @@ func (s TrustCenterService) GenerateNDAFileURL(
 
 func (s TrustCenterService) GenerateLogoURL(
 	ctx context.Context,
+	scope coredata.Scoper,
 	compliancePageID gid.GID,
 	expiresIn time.Duration,
 ) (*string, error) {
@@ -164,7 +167,7 @@ func (s TrustCenterService) GenerateLogoURL(
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			if err := compliancePage.LoadByID(ctx, conn, s.svc.scope, compliancePageID); err != nil {
+			if err := compliancePage.LoadByID(ctx, conn, scope, compliancePageID); err != nil {
 				return fmt.Errorf("cannot load compliance page: %w", err)
 			}
 
@@ -172,7 +175,7 @@ func (s TrustCenterService) GenerateLogoURL(
 				return nil
 			}
 
-			if err := file.LoadByID(ctx, conn, s.svc.scope, *compliancePage.LogoFileID); err != nil {
+			if err := file.LoadByID(ctx, conn, scope, *compliancePage.LogoFileID); err != nil {
 				return fmt.Errorf("cannot load file: %w", err)
 			}
 
@@ -201,6 +204,7 @@ func (s TrustCenterService) GenerateLogoURL(
 
 func (s TrustCenterService) GenerateDarkLogoURL(
 	ctx context.Context,
+	scope coredata.Scoper,
 	compliancePageID gid.GID,
 	expiresIn time.Duration,
 ) (*string, error) {
@@ -210,7 +214,7 @@ func (s TrustCenterService) GenerateDarkLogoURL(
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			if err := compliancePage.LoadByID(ctx, conn, s.svc.scope, compliancePageID); err != nil {
+			if err := compliancePage.LoadByID(ctx, conn, scope, compliancePageID); err != nil {
 				return fmt.Errorf("cannot load compliance page: %w", err)
 			}
 
@@ -218,7 +222,7 @@ func (s TrustCenterService) GenerateDarkLogoURL(
 				return nil
 			}
 
-			if err := file.LoadByID(ctx, conn, s.svc.scope, *compliancePage.DarkLogoFileID); err != nil {
+			if err := file.LoadByID(ctx, conn, scope, *compliancePage.DarkLogoFileID); err != nil {
 				return fmt.Errorf("cannot load file: %w", err)
 			}
 
@@ -245,7 +249,11 @@ func (s TrustCenterService) GenerateDarkLogoURL(
 	return &presignedURL, nil
 }
 
-func (s *TrustCenterService) EmailPresenterConfig(ctx context.Context, compliancePageID gid.GID) (emails.PresenterConfig, error) {
+func (s *TrustCenterService) EmailPresenterConfig(
+	ctx context.Context,
+	scope coredata.Scoper,
+	compliancePageID gid.GID,
+) (emails.PresenterConfig, error) {
 	var (
 		compliancePage    = &coredata.TrustCenter{}
 		organization      = &coredata.Organization{}
@@ -253,8 +261,6 @@ func (s *TrustCenterService) EmailPresenterConfig(ctx context.Context, complianc
 		logoFile          = &coredata.File{}
 		emailPresenterCfg = emails.DefaultPresenterConfig(s.svc.bucket, s.svc.baseURL)
 	)
-
-	scope := coredata.NewScopeFromObjectID(compliancePageID)
 
 	err := s.svc.pg.WithConn(
 		ctx,
@@ -336,6 +342,7 @@ func (s *TrustCenterService) EmailPresenterConfig(ctx context.Context, complianc
 
 func (s *TrustCenterService) GetMailingList(
 	ctx context.Context,
+	scope coredata.Scoper,
 	trustCenterID gid.GID,
 ) (*coredata.MailingList, error) {
 	var mailingList *coredata.MailingList
@@ -344,7 +351,7 @@ func (s *TrustCenterService) GetMailingList(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
 			trustCenter := &coredata.TrustCenter{}
-			if err := trustCenter.LoadByID(ctx, conn, s.svc.scope, trustCenterID); err != nil {
+			if err := trustCenter.LoadByID(ctx, conn, scope, trustCenterID); err != nil {
 				return fmt.Errorf("cannot load trust center: %w", err)
 			}
 
@@ -353,7 +360,7 @@ func (s *TrustCenterService) GetMailingList(
 			}
 
 			mailingList = &coredata.MailingList{}
-			if err := mailingList.LoadByID(ctx, conn, s.svc.scope, *trustCenter.MailingListID); err != nil {
+			if err := mailingList.LoadByID(ctx, conn, scope, *trustCenter.MailingListID); err != nil {
 				return fmt.Errorf("cannot load mailing list: %w", err)
 			}
 

@@ -131,6 +131,7 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 			if c.StartedAt != nil {
 				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Started:"), cmdutil.FormatTime(*c.StartedAt))
 			}
+
 			if c.CompletedAt != nil {
 				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Completed:"), cmdutil.FormatTime(*c.CompletedAt))
 			}

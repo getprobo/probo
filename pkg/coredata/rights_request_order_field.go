@@ -14,6 +14,13 @@
 
 package coredata
 
+import (
+	"encoding"
+	"fmt"
+
+	"go.probo.inc/probo/pkg/page"
+)
+
 type RightsRequestOrderField string
 
 const (
@@ -23,19 +30,54 @@ const (
 	RightsRequestOrderFieldType      RightsRequestOrderField = "TYPE"
 )
 
+var (
+	_ page.OrderField          = RightsRequestOrderField("")
+	_ fmt.Stringer             = RightsRequestOrderField("")
+	_ encoding.TextMarshaler   = RightsRequestOrderField("")
+	_ encoding.TextUnmarshaler = (*RightsRequestOrderField)(nil)
+)
+
+func RightsRequestOrderFields() []RightsRequestOrderField {
+	return []RightsRequestOrderField{
+		RightsRequestOrderFieldCreatedAt,
+		RightsRequestOrderFieldDeadline,
+		RightsRequestOrderFieldState,
+		RightsRequestOrderFieldType,
+	}
+}
+
+func (v RightsRequestOrderField) IsValid() bool {
+	switch v {
+	case
+		RightsRequestOrderFieldCreatedAt,
+		RightsRequestOrderFieldDeadline,
+		RightsRequestOrderFieldState,
+		RightsRequestOrderFieldType:
+		return true
+	}
+
+	return false
+}
+
+func (v RightsRequestOrderField) String() string {
+	return string(v)
+}
+
+func (v RightsRequestOrderField) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *RightsRequestOrderField) UnmarshalText(text []byte) error {
+	val := RightsRequestOrderField(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid RightsRequestOrderField value: %q", string(text))
+	}
+
+	*v = val
+
+	return nil
+}
+
 func (p RightsRequestOrderField) Column() string {
 	return string(p)
-}
-
-func (p RightsRequestOrderField) String() string {
-	return string(p)
-}
-
-func (p RightsRequestOrderField) MarshalText() ([]byte, error) {
-	return []byte(p.String()), nil
-}
-
-func (p *RightsRequestOrderField) UnmarshalText(text []byte) error {
-	*p = RightsRequestOrderField(text)
-	return nil
 }

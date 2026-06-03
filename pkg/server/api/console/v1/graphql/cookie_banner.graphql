@@ -32,6 +32,14 @@ enum CookieSource
         @goEnum(
             value: "go.probo.inc/probo/pkg/coredata.CookieSourcePreExisting"
         )
+    HTTP
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CookieSourceHTTP"
+        )
+    EXTENSION
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CookieSourceExtension"
+        )
 }
 
 enum TrackerType
@@ -112,6 +120,13 @@ input CookieCategoryOrder
     field: CookieCategoryOrderField!
 }
 
+input CookieCategoryFilter
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.CookieCategoryFilter"
+    ) {
+    excludeKind: CookieCategoryKind
+}
+
 type CookieBanner implements Node {
     id: ID!
     name: String!
@@ -120,23 +135,25 @@ type CookieBanner implements Node {
     privacyPolicyUrl: String
     cookiePolicyUrl: String!
     consentExpiryDays: Int!
-    consentMode: CookieConsentMode!
     showBranding: Boolean!
     defaultLanguage: String!
 
     organization: Organization @goField(forceResolver: true)
 
-    consentCategories(
+    categories(
         first: Int
         after: CursorKey
         last: Int
         before: CursorKey
         orderBy: CookieCategoryOrder
+        filter: CookieCategoryFilter
     ): CookieCategoryConnection @goField(forceResolver: true)
 
     translations: [CookieBannerTranslation!]! @goField(forceResolver: true)
 
     latestVersion: CookieBannerVersion @goField(forceResolver: true)
+
+    policyDocument: Document @goField(forceResolver: true)
 
     consentRecords(
         first: Int
@@ -147,7 +164,7 @@ type CookieBanner implements Node {
         filter: CookieConsentRecordFilter
     ): CookieConsentRecordConnection @goField(forceResolver: true)
 
-    uncategorisedTrackerPatterns(
+    trackerPatterns(
         first: Int
         after: CursorKey
         last: Int
@@ -155,6 +172,15 @@ type CookieBanner implements Node {
         orderBy: TrackerPatternOrder
         filter: TrackerPatternFilter
     ): TrackerPatternConnection @goField(forceResolver: true)
+
+    """
+    The deduped union of third parties referenced by the banner's
+    tracker patterns, both org-scoped (ThirdParty) and global
+    (CommonThirdParty). Powers the third-party filter combobox on the
+    trackers list page.
+    """
+    linkedThirdParties: [TrackerPatternThirdPartyLink!]!
+        @goField(forceResolver: true)
 
     uncategorisedTrackerResources(
         first: Int
@@ -252,7 +278,10 @@ enum TrackerPatternOrderField
         )
 }
 
-type TrackerPattern implements Node {
+type TrackerPattern implements Node
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.TrackerPattern"
+    ) {
     id: ID!
     cookieCategory: CookieCategory @goField(forceResolver: true)
     trackerType: TrackerType!
@@ -268,6 +297,30 @@ type TrackerPattern implements Node {
     createdAt: Datetime!
     updatedAt: Datetime!
 
+    """
+    The org-scoped third party this pattern is mapped to, if any. Set
+    when the mapping worker promoted the pattern to a tenant-managed
+    ThirdParty record. When this field is non-null, commonThirdParty is
+    always null.
+    """
+    thirdParty: ThirdParty @goField(forceResolver: true)
+
+    """
+    The global third party this pattern is mapped to via the common
+    tracker-pattern catalog. Null when the pattern has its own
+    org-scoped thirdParty, when it has not been mapped, or when the
+    matched common pattern has no common third party.
+    """
+    commonThirdParty: CommonThirdParty @goField(forceResolver: true)
+
+    detectedTrackers(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: DetectedTrackerOrder
+    ): DetectedTrackerConnection @goField(forceResolver: true)
+
     permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
@@ -279,6 +332,14 @@ type TrackerPatternConnection
     edges: [TrackerPatternEdge!]!
     pageInfo: PageInfo!
 }
+
+"""
+A third party associated with a banner's tracker patterns. Either the
+tenant-managed ThirdParty (when a pattern was promoted to the org
+catalog) or the global CommonThirdParty linked through a common
+tracker pattern.
+"""
+union TrackerPatternThirdPartyLink = ThirdParty | CommonThirdParty
 
 type TrackerPatternEdge {
     cursor: CursorKey!
@@ -300,6 +361,61 @@ input TrackerPatternFilter
     query: String
     source: CookieSource
     trackerType: TrackerType
+    cookieCategoryId: ID
+    """
+    Filter to tracker patterns linked to a single third party. Accepts
+    either an org-scoped ThirdParty GID (matched against third_party_id)
+    or a global CommonThirdParty GID (matched against the indirect link
+    through common_tracker_patterns). The dispatch happens at the
+    resolver based on the GID entity-type prefix.
+    """
+    thirdPartyId: ID
+}
+
+type DetectedTracker implements Node {
+    id: ID!
+    identifier: String!
+    initiatorUrl: String
+    maxAgeSeconds: Int
+    source: CookieSource
+    lastDetectedAt: Datetime!
+    createdAt: Datetime!
+}
+
+enum DetectedTrackerOrderField
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.DetectedTrackerOrderField"
+    ) {
+    INITIATOR_URL
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DetectedTrackerOrderFieldInitiatorURL"
+        )
+    LAST_DETECTED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DetectedTrackerOrderFieldLastDetectedAt"
+        )
+}
+
+input DetectedTrackerOrder
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.DetectedTrackerOrderBy"
+    ) {
+    direction: OrderDirection!
+    field: DetectedTrackerOrderField!
+}
+
+type DetectedTrackerConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.DetectedTrackerConnection"
+    ) {
+    totalCount: Int! @goField(forceResolver: true)
+    edges: [DetectedTrackerEdge!]!
+    pageInfo: PageInfo!
+}
+
+type DetectedTrackerEdge {
+    cursor: CursorKey!
+    node: DetectedTracker!
 }
 
 enum TrackerResourceType
@@ -429,6 +545,7 @@ type CookieBannerVersionCategory {
 
 type CookieBannerVersionCookie {
     name: String!
+    trackerType: TrackerType!
     maxAgeSeconds: Int
     description: String!
 }
@@ -528,7 +645,6 @@ input CreateCookieBannerInput {
     privacyPolicyUrl: String
     cookiePolicyUrl: String!
     consentExpiryDays: Int!
-    consentMode: CookieConsentMode!
 }
 
 input UpdateCookieBannerInput {
@@ -537,7 +653,6 @@ input UpdateCookieBannerInput {
     privacyPolicyUrl: String
     cookiePolicyUrl: String
     consentExpiryDays: Int
-    consentMode: CookieConsentMode
     defaultLanguage: String
 }
 

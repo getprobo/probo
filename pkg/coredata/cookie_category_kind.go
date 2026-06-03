@@ -14,6 +14,11 @@
 
 package coredata
 
+import (
+	"encoding"
+	"fmt"
+)
+
 type CookieCategoryKind string
 
 const (
@@ -21,6 +26,51 @@ const (
 	CookieCategoryKindNecessary     CookieCategoryKind = "NECESSARY"
 	CookieCategoryKindUncategorised CookieCategoryKind = "UNCATEGORISED"
 )
+
+var (
+	_ fmt.Stringer             = CookieCategoryKind("")
+	_ encoding.TextMarshaler   = CookieCategoryKind("")
+	_ encoding.TextUnmarshaler = (*CookieCategoryKind)(nil)
+)
+
+func CookieCategoryKinds() []CookieCategoryKind {
+	return []CookieCategoryKind{
+		CookieCategoryKindNormal,
+		CookieCategoryKindNecessary,
+		CookieCategoryKindUncategorised,
+	}
+}
+
+func (v CookieCategoryKind) IsValid() bool {
+	switch v {
+	case
+		CookieCategoryKindNormal,
+		CookieCategoryKindNecessary,
+		CookieCategoryKindUncategorised:
+		return true
+	}
+
+	return false
+}
+
+func (v CookieCategoryKind) String() string {
+	return string(v)
+}
+
+func (v CookieCategoryKind) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *CookieCategoryKind) UnmarshalText(text []byte) error {
+	val := CookieCategoryKind(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid CookieCategoryKind value: %q", string(text))
+	}
+
+	*v = val
+
+	return nil
+}
 
 func (k CookieCategoryKind) IsRequired() bool {
 	return k == CookieCategoryKindNecessary

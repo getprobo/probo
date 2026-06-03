@@ -124,11 +124,11 @@ type ElectronicSignature implements Node {
 extend type Mutation {
   acceptElectronicSignature(
     input: AcceptElectronicSignatureInput!
-  ): AcceptElectronicSignaturePayload @session(required: PRESENT)
+  ): AcceptElectronicSignaturePayload @authentication(required: PRESENT) @sessionOnly
 
   recordSigningEvent(
     input: RecordSigningEventInput!
-  ): RecordSigningEventPayload @session(required: PRESENT)
+  ): RecordSigningEventPayload @authentication(required: PRESENT) @sessionOnly
 }
 
 input AcceptElectronicSignatureInput {

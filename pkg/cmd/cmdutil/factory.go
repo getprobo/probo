@@ -46,6 +46,7 @@ func TokenRefreshOption(
 			hc.Token = accessToken
 			hc.RefreshToken = refreshToken
 			cfg.Hosts[host] = hc
+
 			return cfg.Save()
 		},
 	})

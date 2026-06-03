@@ -17,37 +17,42 @@ package probod
 import "go.probo.inc/probo/pkg/probodconfig"
 
 type (
-	FullConfig              = probodconfig.FullConfig
-	Config                  = probodconfig.Config
-	UnitConfig              = probodconfig.UnitConfig
-	MetricsConfig           = probodconfig.MetricsConfig
-	TracingConfig           = probodconfig.TracingConfig
-	ESignConfig             = probodconfig.ESignConfig
-	TrustCenterConfig       = probodconfig.TrustCenterConfig
-	APIConfig               = probodconfig.APIConfig
-	CorsConfig              = probodconfig.CorsConfig
-	ProxyProtocolConfig     = probodconfig.ProxyProtocolConfig
-	AuthConfig              = probodconfig.AuthConfig
-	OAuth2ServerConfig      = probodconfig.OAuth2ServerConfig
-	OAuth2SigningKeyConfig  = probodconfig.OAuth2SigningKeyConfig
-	CookieConfig            = probodconfig.CookieConfig
-	PasswordConfig          = probodconfig.PasswordConfig
-	AWSConfig               = probodconfig.AWSConfig
-	ConnectorConfig         = probodconfig.ConnectorConfig
-	ConnectorConfigOAuth2   = probodconfig.ConnectorConfigOAuth2
-	CustomDomainsConfig     = probodconfig.CustomDomainsConfig
-	ACMEConfig              = probodconfig.ACMEConfig
-	LLMProviderConfig       = probodconfig.LLMProviderConfig
-	LLMAgentConfig          = probodconfig.LLMAgentConfig
-	EvidenceDescriberConfig = probodconfig.EvidenceDescriberConfig
-	AgentsConfig            = probodconfig.AgentsConfig
-	MailerConfig            = probodconfig.MailerConfig
-	SMTPConfig              = probodconfig.SMTPConfig
-	NotificationsConfig     = probodconfig.NotificationsConfig
-	WebhookConfig           = probodconfig.WebhookConfig
-	OIDCProviderConfig      = probodconfig.OIDCProviderConfig
-	PgConfig                = probodconfig.PgConfig
-	SAMLConfig              = probodconfig.SAMLConfig
-	SCIMBridgeConfig        = probodconfig.SCIMBridgeConfig
-	SlackConfig             = probodconfig.SlackConfig
+	FullConfig                    = probodconfig.FullConfig
+	Config                        = probodconfig.Config
+	UnitConfig                    = probodconfig.UnitConfig
+	MetricsConfig                 = probodconfig.MetricsConfig
+	TracingConfig                 = probodconfig.TracingConfig
+	ESignConfig                   = probodconfig.ESignConfig
+	TrustCenterConfig             = probodconfig.TrustCenterConfig
+	APIConfig                     = probodconfig.APIConfig
+	CorsConfig                    = probodconfig.CorsConfig
+	ProxyProtocolConfig           = probodconfig.ProxyProtocolConfig
+	AuthConfig                    = probodconfig.AuthConfig
+	OAuth2ServerConfig            = probodconfig.OAuth2ServerConfig
+	OAuth2SigningKeyConfig        = probodconfig.OAuth2SigningKeyConfig
+	CookieConfig                  = probodconfig.CookieConfig
+	PasswordConfig                = probodconfig.PasswordConfig
+	AWSConfig                     = probodconfig.AWSConfig
+	ConnectorConfig               = probodconfig.ConnectorConfig
+	ConnectorConfigOAuth2         = probodconfig.ConnectorConfigOAuth2
+	CustomDomainsConfig           = probodconfig.CustomDomainsConfig
+	ACMEConfig                    = probodconfig.ACMEConfig
+	LLMProviderConfig             = probodconfig.LLMProviderConfig
+	LLMAgentConfig                = probodconfig.LLMAgentConfig
+	EvidenceDescriberConfig       = probodconfig.EvidenceDescriberConfig
+	ThirdPartyVettingWorkerConfig = probodconfig.ThirdPartyVettingWorkerConfig
+	AgentsConfig                  = probodconfig.AgentsConfig
+
+	TrackerMappingWorkerConfig          = probodconfig.TrackerMappingWorkerConfig
+	CommonPatternEnrichmentWorkerConfig = probodconfig.CommonPatternEnrichmentWorkerConfig
+
+	MailerConfig        = probodconfig.MailerConfig
+	SMTPConfig          = probodconfig.SMTPConfig
+	NotificationsConfig = probodconfig.NotificationsConfig
+	WebhookConfig       = probodconfig.WebhookConfig
+	OIDCProviderConfig  = probodconfig.OIDCProviderConfig
+	PgConfig            = probodconfig.PgConfig
+	SAMLConfig          = probodconfig.SAMLConfig
+	SCIMBridgeConfig    = probodconfig.SCIMBridgeConfig
+	SlackConfig         = probodconfig.SlackConfig
 )

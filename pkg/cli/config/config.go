@@ -93,15 +93,18 @@ func (c *Config) Set(key, value string) error {
 		if value != "enabled" && value != "disabled" {
 			return fmt.Errorf("valid values for prompt are 'enabled' or 'disabled'")
 		}
+
 		c.Prompt = value
 	case "http_timeout":
 		if _, err := time.ParseDuration(value); err != nil {
 			return fmt.Errorf("invalid duration for http_timeout: %w", err)
 		}
+
 		c.HTTPTimeout = value
 	default:
 		return fmt.Errorf("unknown configuration key: %s", key)
 	}
+
 	return nil
 }
 
@@ -123,6 +126,7 @@ func configDir() (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("cannot determine config directory: %w", err)
 	}
+
 	return filepath.Join(dir, "prb"), nil
 }
 
@@ -131,6 +135,7 @@ func configPath() (string, error) {
 	if err != nil {
 		return "", err
 	}
+
 	return filepath.Join(dir, "config.yaml"), nil
 }
 
@@ -145,6 +150,7 @@ func Load() (*Config, error) {
 		if os.IsNotExist(err) {
 			return &Config{Hosts: make(map[string]*HostConfig)}, nil
 		}
+
 		return nil, fmt.Errorf("cannot read config file: %w", err)
 	}
 
@@ -161,6 +167,7 @@ func Load() (*Config, error) {
 	for host, hc := range cfg.Hosts {
 		normalized[normalizeHost(host)] = hc
 	}
+
 	cfg.Hosts = normalized
 
 	if cfg.ActiveHost != "" {
@@ -206,13 +213,16 @@ func normalizeHost(host string) string {
 func (c *Config) DefaultHost() (string, *HostConfig, error) {
 	if host := os.Getenv("PROBO_HOST"); host != "" {
 		host = normalizeHost(host)
+
 		hc := &HostConfig{}
 		if saved, ok := c.Hosts[host]; ok {
 			*hc = *saved
 		}
+
 		if token := os.Getenv("PROBO_TOKEN"); token != "" {
 			hc.Token = token
 		}
+
 		return host, hc, nil
 	}
 
@@ -224,6 +234,7 @@ func (c *Config) DefaultHost() (string, *HostConfig, error) {
 		}
 
 		host := hosts[0]
+
 		if c.ActiveHost != "" {
 			if _, ok := c.Hosts[c.ActiveHost]; ok {
 				host = c.ActiveHost

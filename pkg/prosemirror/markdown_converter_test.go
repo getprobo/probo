@@ -240,6 +240,7 @@ func TestParseMarkdown_LinkSanitizesDangerousHrefs(t *testing.T) {
 
 			doc, err := ParseMarkdown(tt.markdown)
 			require.NoError(t, err)
+
 			txt := doc.Content[0].Content[0]
 			linkAttrs, err := txt.Marks[0].LinkAttrs()
 			require.NoError(t, err)
@@ -378,11 +379,13 @@ func TestParseMarkdown_HardBreak(t *testing.T) {
 
 	// Should contain: text("line one"), hardBreak, text("line two")
 	var hasHardBreak bool
+
 	for _, child := range p.Content {
 		if child.Type == NodeHardBreak {
 			hasHardBreak = true
 		}
 	}
+
 	assert.True(t, hasHardBreak, "expected hard break node")
 }
 
@@ -397,11 +400,13 @@ func TestParseMarkdown_SoftLineBreak(t *testing.T) {
 	require.Equal(t, NodeParagraph, p.Type)
 
 	var joined strings.Builder
+
 	for _, child := range p.Content {
 		if child.Type == NodeText && child.Text != nil {
 			joined.WriteString(*child.Text)
 		}
 	}
+
 	assert.Equal(t, "line one and line two", joined.String())
 }
 
@@ -423,6 +428,7 @@ func TestParseMarkdown_NestedMarks(t *testing.T) {
 	for _, m := range txt.Marks {
 		markTypes[m.Type] = true
 	}
+
 	assert.True(t, markTypes[MarkStrong])
 	assert.True(t, markTypes[MarkEm])
 }

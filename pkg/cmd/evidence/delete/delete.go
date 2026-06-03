@@ -50,11 +50,14 @@ func NewCmdDelete(f *cmdutil.Factory) *cobra.Command {
 				if !f.IOStreams.IsInteractive() {
 					return fmt.Errorf("cannot delete evidence: confirmation required, use --yes to confirm")
 				}
+
 				var confirmed bool
+
 				err := huh.NewConfirm().Title(fmt.Sprintf("Delete evidence %s?", args[0])).Value(&confirmed).Run()
 				if err != nil {
 					return err
 				}
+
 				if !confirmed {
 					return nil
 				}

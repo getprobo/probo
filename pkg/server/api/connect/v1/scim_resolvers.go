@@ -26,7 +26,7 @@ func (r *connectorResolver) Permission(ctx context.Context, obj *types.Connector
 
 // CreateSCIMConfiguration is the resolver for the createSCIMConfiguration field.
 func (r *mutationResolver) CreateSCIMConfiguration(ctx context.Context, input types.CreateSCIMConfigurationInput) (*types.CreateSCIMConfigurationPayload, error) {
-	if err := r.authorize(ctx, input.OrganizationID, iam.ActionSCIMConfigurationCreate); err != nil {
+	if _, err := r.authorize(ctx, input.OrganizationID, iam.ActionSCIMConfigurationCreate); err != nil {
 		return nil, err
 	}
 
@@ -44,6 +44,7 @@ func (r *mutationResolver) CreateSCIMConfiguration(ctx context.Context, input ty
 			r.logger.ErrorCtx(ctx, "cannot create scim bridge", log.Error(err))
 			return nil, gqlutils.Internal(ctx)
 		}
+
 		bridge = types.NewSCIMBridge(scimBridge)
 	}
 
@@ -58,7 +59,7 @@ func (r *mutationResolver) CreateSCIMConfiguration(ctx context.Context, input ty
 
 // DeleteSCIMConfiguration is the resolver for the deleteSCIMConfiguration field.
 func (r *mutationResolver) DeleteSCIMConfiguration(ctx context.Context, input types.DeleteSCIMConfigurationInput) (*types.DeleteSCIMConfigurationPayload, error) {
-	if err := r.authorize(ctx, input.OrganizationID, iam.ActionSCIMConfigurationDelete); err != nil {
+	if _, err := r.authorize(ctx, input.OrganizationID, iam.ActionSCIMConfigurationDelete); err != nil {
 		return nil, err
 	}
 
@@ -73,7 +74,7 @@ func (r *mutationResolver) DeleteSCIMConfiguration(ctx context.Context, input ty
 
 // RegenerateSCIMToken is the resolver for the regenerateSCIMToken field.
 func (r *mutationResolver) RegenerateSCIMToken(ctx context.Context, input types.RegenerateSCIMTokenInput) (*types.RegenerateSCIMTokenPayload, error) {
-	if err := r.authorize(ctx, input.ScimConfigurationID, iam.ActionSCIMConfigurationUpdate); err != nil {
+	if _, err := r.authorize(ctx, input.ScimConfigurationID, iam.ActionSCIMConfigurationUpdate); err != nil {
 		return nil, err
 	}
 
@@ -91,7 +92,7 @@ func (r *mutationResolver) RegenerateSCIMToken(ctx context.Context, input types.
 
 // UpdateSCIMBridge is the resolver for the updateSCIMBridge field.
 func (r *mutationResolver) UpdateSCIMBridge(ctx context.Context, input types.UpdateSCIMBridgeInput) (*types.UpdateSCIMBridgePayload, error) {
-	if err := r.authorize(ctx, input.ScimBridgeID, iam.ActionSCIMBridgeUpdate); err != nil {
+	if _, err := r.authorize(ctx, input.ScimBridgeID, iam.ActionSCIMBridgeUpdate); err != nil {
 		return nil, err
 	}
 
@@ -108,7 +109,7 @@ func (r *mutationResolver) UpdateSCIMBridge(ctx context.Context, input types.Upd
 
 // ScimConfiguration is the resolver for the scimConfiguration field.
 func (r *sCIMBridgeResolver) ScimConfiguration(ctx context.Context, obj *types.SCIMBridge) (*types.SCIMConfiguration, error) {
-	if err := r.authorize(ctx, obj.ScimConfiguration.ID, iam.ActionSCIMConfigurationGet); err != nil {
+	if _, err := r.authorize(ctx, obj.ScimConfiguration.ID, iam.ActionSCIMConfigurationGet); err != nil {
 		return nil, err
 	}
 
@@ -120,8 +121,7 @@ func (r *sCIMBridgeResolver) ScimConfiguration(ctx context.Context, obj *types.S
 
 	scimConfiguration, err := r.iam.GetSCIMConfiguration(ctx, obj.ScimConfiguration.ID)
 	if err != nil {
-		var errNoSCIMConfigurationFound *iam.ErrNoSCIMConfigurationFound
-		if errors.As(err, &errNoSCIMConfigurationFound) {
+		if _, ok := errors.AsType[*iam.ErrNoSCIMConfigurationFound](err); ok {
 			return nil, nil
 		}
 
@@ -138,7 +138,7 @@ func (r *sCIMBridgeResolver) Connector(ctx context.Context, obj *types.SCIMBridg
 	}
 
 	// Authorize based on the SCIM configuration (connector accessed via bridge is a sub-resource)
-	if err := r.authorize(ctx, obj.ScimConfiguration.ID, iam.ActionSCIMConfigurationGet); err != nil {
+	if _, err := r.authorize(ctx, obj.ScimConfiguration.ID, iam.ActionSCIMConfigurationGet); err != nil {
 		return nil, err
 	}
 
@@ -170,7 +170,7 @@ func (r *sCIMConfigurationResolver) EndpointURL(ctx context.Context, obj *types.
 
 // Organization is the resolver for the organization field.
 func (r *sCIMConfigurationResolver) Organization(ctx context.Context, obj *types.SCIMConfiguration) (*types.Organization, error) {
-	if err := r.authorize(ctx, obj.Organization.ID, iam.ActionOrganizationGet); err != nil {
+	if _, err := r.authorize(ctx, obj.Organization.ID, iam.ActionOrganizationGet); err != nil {
 		return nil, err
 	}
 
@@ -182,12 +182,12 @@ func (r *sCIMConfigurationResolver) Organization(ctx context.Context, obj *types
 
 	organization, err := r.iam.OrganizationService.GetOrganization(ctx, obj.Organization.ID)
 	if err != nil {
-		var errOrganizationNotFound *iam.ErrOrganizationNotFound
-		if errors.As(err, &errOrganizationNotFound) {
+		if _, ok := errors.AsType[*iam.ErrOrganizationNotFound](err); ok {
 			return nil, nil
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get organization for scim configuration", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -200,18 +200,18 @@ func (r *sCIMConfigurationResolver) Bridge(ctx context.Context, obj *types.SCIMC
 		return nil, nil
 	}
 
-	if err := r.authorize(ctx, obj.ID, iam.ActionSCIMConfigurationGet); err != nil {
+	if _, err := r.authorize(ctx, obj.ID, iam.ActionSCIMConfigurationGet); err != nil {
 		return nil, err
 	}
 
 	bridge, err := r.iam.OrganizationService.GetSCIMBridgeByID(ctx, obj.Bridge.ID)
 	if err != nil {
-		var errSCIMBridgeNotFound *iam.ErrSCIMBridgeNotFound
-		if errors.As(err, &errSCIMBridgeNotFound) {
+		if _, ok := errors.AsType[*iam.ErrSCIMBridgeNotFound](err); ok {
 			return nil, nil
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get scim bridge", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -220,7 +220,7 @@ func (r *sCIMConfigurationResolver) Bridge(ctx context.Context, obj *types.SCIMC
 
 // Events is the resolver for the events field.
 func (r *sCIMConfigurationResolver) Events(ctx context.Context, obj *types.SCIMConfiguration, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.SCIMEventOrderBy) (*types.SCIMEventConnection, error) {
-	if err := r.authorize(ctx, obj.ID, iam.ActionSCIMEventList); err != nil {
+	if _, err := r.authorize(ctx, obj.ID, iam.ActionSCIMEventList); err != nil {
 		return nil, err
 	}
 
@@ -256,7 +256,7 @@ func (r *sCIMEventResolver) Permission(ctx context.Context, obj *types.SCIMEvent
 
 // TotalCount is the resolver for the totalCount field.
 func (r *sCIMEventConnectionResolver) TotalCount(ctx context.Context, obj *types.SCIMEventConnection) (*int, error) {
-	if err := r.authorize(ctx, obj.ParentID, iam.ActionSCIMEventList); err != nil {
+	if _, err := r.authorize(ctx, obj.ParentID, iam.ActionSCIMEventList); err != nil {
 		return nil, err
 	}
 
@@ -267,10 +267,12 @@ func (r *sCIMEventConnectionResolver) TotalCount(ctx context.Context, obj *types
 			r.logger.ErrorCtx(ctx, "cannot count scim events", log.Error(err))
 			return nil, gqlutils.Internal(ctx)
 		}
+
 		return &count, nil
 	}
 
 	r.logger.ErrorCtx(ctx, "unsupported resolver", log.Any("resolver", obj.Resolver))
+
 	return nil, gqlutils.Internal(ctx)
 }
 

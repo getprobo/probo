@@ -45,6 +45,7 @@ func (f *AuditFilter) SQLArguments() pgx.NamedArgs {
 		for i, v := range f.trustCenterVisibilities {
 			visibilities[i] = v.String()
 		}
+
 		args["trust_center_visibilities"] = visibilities
 	}
 

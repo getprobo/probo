@@ -84,6 +84,7 @@ func createTestDocument(t *testing.T, owner *testutil.Client) (docID string, doc
 	if len(result.CreateDocument.DocumentEdge.Node.Versions.Edges) > 0 {
 		docVersionID = result.CreateDocument.DocumentEdge.Node.Versions.Edges[0].Node.ID
 	}
+
 	return docID, docVersionID
 }
 
@@ -91,59 +92,15 @@ func createTestDocument(t *testing.T, owner *testutil.Client) (docID string, doc
 func approveTestDocument(t *testing.T, owner *testutil.Client, docID string) {
 	t.Helper()
 
-	requestQuery := `
-		mutation RequestApproval($input: PublishDocumentInput!) {
-			publishDocument(input: $input) {
-				approvalQuorum {
-					id
-				}
-			}
-		}
-	`
+	requestDocumentApproval(t, owner, docID, []string{getOwnerProfileID(t, owner)})
+	approveLatestDocumentVersion(t, owner, docID)
+}
 
-	// Use the owner's profile as the approver
-	approverID := getOwnerProfileID(t, owner)
+// latestDocumentVersionID returns the ID of the document's most recently created version.
+func latestDocumentVersionID(t *testing.T, owner *testutil.Client, docID string) string {
+	t.Helper()
 
-	_, err := owner.Do(requestQuery, map[string]any{
-		"input": map[string]any{
-			"minor":       false,
-			"documentId":  docID,
-			"approverIds": []string{approverID},
-			"changelog":   "Test changelog",
-		},
-	})
-	require.NoError(t, err)
-
-	// Approve for each approver
-	approveQuery := `
-		mutation ApproveDocumentVersion($input: ApproveDocumentVersionInput!) {
-			approveDocumentVersion(input: $input) {
-				approvalDecision {
-					id
-					state
-				}
-			}
-		}
-	`
-
-	// Get the latest version ID
-	versionQuery := `
-		query GetVersions($id: ID!) {
-			node(id: $id) {
-				... on Document {
-					versions(first: 1, orderBy: { field: CREATED_AT, direction: DESC }) {
-						edges {
-							node {
-								id
-							}
-						}
-					}
-				}
-			}
-		}
-	`
-
-	var versionResult struct {
+	var result struct {
 		Node struct {
 			Versions struct {
 				Edges []struct {
@@ -155,15 +112,161 @@ func approveTestDocument(t *testing.T, owner *testutil.Client, docID string) {
 		} `json:"node"`
 	}
 
-	err = owner.Execute(versionQuery, map[string]any{"id": docID}, &versionResult)
+	err := owner.Execute(`
+		query($id: ID!) {
+			node(id: $id) {
+				... on Document {
+					versions(first: 1, orderBy: { field: CREATED_AT, direction: DESC }) {
+						edges { node { id } }
+					}
+				}
+			}
+		}
+	`, map[string]any{"id": docID}, &result)
 	require.NoError(t, err)
-	require.NotEmpty(t, versionResult.Node.Versions.Edges)
+	require.NotEmpty(t, result.Node.Versions.Edges)
 
-	versionID := versionResult.Node.Versions.Edges[0].Node.ID
+	return result.Node.Versions.Edges[0].Node.ID
+}
 
-	_, err = owner.Do(approveQuery, map[string]any{
+// requestDocumentApproval opens a major approval quorum on the document's draft.
+func requestDocumentApproval(t *testing.T, owner *testutil.Client, docID string, approverIDs []string) {
+	t.Helper()
+
+	_, err := owner.Do(`
+		mutation($input: PublishDocumentInput!) {
+			publishDocument(input: $input) {
+				approvalQuorum { id }
+			}
+		}
+	`, map[string]any{
+		"input": map[string]any{
+			"minor":       false,
+			"documentId":  docID,
+			"approverIds": approverIDs,
+			"changelog":   "Test changelog",
+		},
+	})
+	require.NoError(t, err)
+}
+
+// approveLatestDocumentVersion approves the document's most recent version.
+func approveLatestDocumentVersion(t *testing.T, owner *testutil.Client, docID string) {
+	t.Helper()
+
+	_, err := owner.Do(`
+		mutation($input: ApproveDocumentVersionInput!) {
+			approveDocumentVersion(input: $input) {
+				approvalDecision { id state }
+			}
+		}
+	`, map[string]any{
+		"input": map[string]any{
+			"documentVersionId": latestDocumentVersionID(t, owner, docID),
+		},
+	})
+	require.NoError(t, err)
+}
+
+// publishMajorDocumentVersion publishes the document's draft as a major version
+// without approvers and returns the published version ID.
+func publishMajorDocumentVersion(t *testing.T, owner *testutil.Client, docID string) string {
+	t.Helper()
+
+	var result struct {
+		PublishDocument struct {
+			DocumentVersion struct {
+				ID     string `json:"id"`
+				Status string `json:"status"`
+			} `json:"documentVersion"`
+		} `json:"publishDocument"`
+	}
+
+	err := owner.Execute(`
+		mutation($input: PublishDocumentInput!) {
+			publishDocument(input: $input) {
+				documentVersion { id status }
+			}
+		}
+	`, map[string]any{
+		"input": map[string]any{
+			"minor":      false,
+			"documentId": docID,
+			"changelog":  "Major release",
+		},
+	}, &result)
+	require.NoError(t, err)
+	require.Equal(t, "PUBLISHED", result.PublishDocument.DocumentVersion.Status)
+
+	return result.PublishDocument.DocumentVersion.ID
+}
+
+// publishMinorDocumentVersion publishes the document's draft as a minor version
+// and returns the published version ID.
+func publishMinorDocumentVersion(t *testing.T, owner *testutil.Client, docID string) string {
+	t.Helper()
+
+	var result struct {
+		PublishDocument struct {
+			DocumentVersion struct {
+				ID     string `json:"id"`
+				Status string `json:"status"`
+			} `json:"documentVersion"`
+		} `json:"publishDocument"`
+	}
+
+	err := owner.Execute(`
+		mutation($input: PublishDocumentInput!) {
+			publishDocument(input: $input) {
+				documentVersion { id status }
+			}
+		}
+	`, map[string]any{
+		"input": map[string]any{
+			"minor":      true,
+			"documentId": docID,
+			"changelog":  "Minor release",
+		},
+	}, &result)
+	require.NoError(t, err)
+	require.Equal(t, "PUBLISHED", result.PublishDocument.DocumentVersion.Status)
+
+	return result.PublishDocument.DocumentVersion.ID
+}
+
+// updateDocumentContent edits the document so a fresh draft is created.
+func updateDocumentContent(t *testing.T, owner *testutil.Client, docID, content string) {
+	t.Helper()
+
+	_, err := owner.Do(`
+		mutation($input: UpdateDocumentInput!) {
+			updateDocument(input: $input) {
+				documentVersion { id }
+			}
+		}
+	`, map[string]any{
+		"input": map[string]any{
+			"id":      docID,
+			"content": testutil.ProseMirrorTextDoc(content),
+		},
+	})
+	require.NoError(t, err)
+}
+
+// requestDocumentSignature requests a signature on the version from the signatory.
+func requestDocumentSignature(t *testing.T, owner *testutil.Client, versionID, signatoryID string) {
+	t.Helper()
+
+	_, err := owner.Do(`
+		mutation($input: RequestSignatureInput!) {
+			requestSignature(input: $input) {
+				documentVersionSignatureEdge { node { id } }
+			}
+		}
+	`, map[string]any{
 		"input": map[string]any{
 			"documentVersionId": versionID,
+			"signatoryId":       signatoryID,
 		},
 	})
 	require.NoError(t, err)
@@ -219,6 +322,109 @@ func TestDocumentVersion_PublishVersion(t *testing.T) {
 	assert.Equal(t, "PUBLISHED", result.Node.Versions.Edges[0].Node.Status)
 	assert.Equal(t, 1, result.Node.Versions.Edges[0].Node.Major)
 	assert.Equal(t, 0, result.Node.Versions.Edges[0].Node.Minor)
+}
+
+func TestDocumentVersion_PublishInitialMinorVersion(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+
+	docID, _ := createTestDocument(t, owner)
+
+	publishMutation := `
+		mutation($input: PublishDocumentInput!) {
+			publishDocument(input: $input) {
+				document {
+					currentPublishedMajor
+					currentPublishedMinor
+				}
+				documentVersion {
+					status
+					major
+					minor
+				}
+			}
+		}
+	`
+
+	var publishResult struct {
+		PublishDocument struct {
+			Document struct {
+				CurrentPublishedMajor *int `json:"currentPublishedMajor"`
+				CurrentPublishedMinor *int `json:"currentPublishedMinor"`
+			} `json:"document"`
+			DocumentVersion struct {
+				Status string `json:"status"`
+				Major  int    `json:"major"`
+				Minor  int    `json:"minor"`
+			} `json:"documentVersion"`
+		} `json:"publishDocument"`
+	}
+
+	err := owner.Execute(publishMutation, map[string]any{
+		"input": map[string]any{
+			"minor":      true,
+			"documentId": docID,
+			"changelog":  "Initial minor release",
+		},
+	}, &publishResult)
+	require.NoError(t, err)
+
+	require.NotNil(t, publishResult.PublishDocument.Document.CurrentPublishedMajor)
+	require.NotNil(t, publishResult.PublishDocument.Document.CurrentPublishedMinor)
+	assert.Equal(t, 0, *publishResult.PublishDocument.Document.CurrentPublishedMajor)
+	assert.Equal(t, 1, *publishResult.PublishDocument.Document.CurrentPublishedMinor)
+	assert.Equal(t, "PUBLISHED", publishResult.PublishDocument.DocumentVersion.Status)
+	assert.Equal(t, 0, publishResult.PublishDocument.DocumentVersion.Major)
+	assert.Equal(t, 1, publishResult.PublishDocument.DocumentVersion.Minor)
+
+	var updateResult struct {
+		UpdateDocument struct {
+			DocumentVersion *struct {
+				Status string `json:"status"`
+				Major  int    `json:"major"`
+				Minor  int    `json:"minor"`
+			} `json:"documentVersion"`
+		} `json:"updateDocument"`
+	}
+
+	err = owner.Execute(`
+		mutation($input: UpdateDocumentInput!) {
+			updateDocument(input: $input) {
+				documentVersion {
+					status
+					major
+					minor
+				}
+			}
+		}
+	`, map[string]any{
+		"input": map[string]any{
+			"id":      docID,
+			"content": testutil.ProseMirrorTextDoc("Updated content for 0.2"),
+		},
+	}, &updateResult)
+	require.NoError(t, err)
+	require.NotNil(t, updateResult.UpdateDocument.DocumentVersion)
+	assert.Equal(t, "DRAFT", updateResult.UpdateDocument.DocumentVersion.Status)
+	assert.Equal(t, 0, updateResult.UpdateDocument.DocumentVersion.Major)
+	assert.Equal(t, 2, updateResult.UpdateDocument.DocumentVersion.Minor)
+
+	err = owner.Execute(publishMutation, map[string]any{
+		"input": map[string]any{
+			"minor":      true,
+			"documentId": docID,
+			"changelog":  "Second minor release",
+		},
+	}, &publishResult)
+	require.NoError(t, err)
+
+	require.NotNil(t, publishResult.PublishDocument.Document.CurrentPublishedMajor)
+	require.NotNil(t, publishResult.PublishDocument.Document.CurrentPublishedMinor)
+	assert.Equal(t, 0, *publishResult.PublishDocument.Document.CurrentPublishedMajor)
+	assert.Equal(t, 2, *publishResult.PublishDocument.Document.CurrentPublishedMinor)
+	assert.Equal(t, "PUBLISHED", publishResult.PublishDocument.DocumentVersion.Status)
+	assert.Equal(t, 0, publishResult.PublishDocument.DocumentVersion.Major)
+	assert.Equal(t, 2, publishResult.PublishDocument.DocumentVersion.Minor)
 }
 
 func TestDocumentVersion_AutoCreateDraft(t *testing.T) {
@@ -502,6 +708,7 @@ func TestDocumentVersion_BulkPublish(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, 2, len(result.BulkPublishDocuments.DocumentVersions))
+
 	for _, dv := range result.BulkPublishDocuments.DocumentVersions {
 		assert.Equal(t, "PUBLISHED", dv.Status)
 	}
@@ -720,6 +927,7 @@ func TestDocumentVersion_BulkRequestSignatures(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, 2, len(result.BulkRequestSignatures.DocumentVersionSignatureEdges))
+
 	for _, edge := range result.BulkRequestSignatures.DocumentVersionSignatureEdges {
 		assert.Equal(t, "REQUESTED", edge.Node.State)
 	}
@@ -1028,6 +1236,7 @@ func TestDocumentVersion_VoidApproval(t *testing.T) {
 	require.NotEmpty(t, quorumResult.Node.Versions.Edges[0].Node.ApprovalQuorums.Edges)
 	decisions := quorumResult.Node.Versions.Edges[0].Node.ApprovalQuorums.Edges[0].Node.Decisions.Edges
 	require.NotEmpty(t, decisions)
+
 	for _, d := range decisions {
 		assert.Equal(t, "VOIDED", d.Node.State, "decisions should be VOIDED after voiding")
 	}
@@ -1382,6 +1591,7 @@ func TestDocumentVersion_DeleteDraft(t *testing.T) {
 					}
 				}
 			`
+
 			var updateResult struct {
 				UpdateDocument struct {
 					Document struct {
@@ -1393,6 +1603,7 @@ func TestDocumentVersion_DeleteDraft(t *testing.T) {
 					} `json:"documentVersion"`
 				} `json:"updateDocument"`
 			}
+
 			err := owner.Execute(updateQuery, map[string]any{
 				"input": map[string]any{
 					"id":      docID,
@@ -1411,6 +1622,7 @@ func TestDocumentVersion_DeleteDraft(t *testing.T) {
 					} `json:"document"`
 				} `json:"deleteDocumentDraft"`
 			}
+
 			err = owner.Execute(query, map[string]any{
 				"input": map[string]any{"documentId": docID},
 			}, &result)
@@ -1427,6 +1639,7 @@ func TestDocumentVersion_DeleteDraft(t *testing.T) {
 			docID, _ := createTestDocument(t, owner)
 
 			var result struct{}
+
 			err := owner.Execute(query, map[string]any{
 				"input": map[string]any{"documentId": docID},
 			}, &result)
@@ -1443,6 +1656,7 @@ func TestDocumentVersion_DeleteDraft(t *testing.T) {
 			approveTestDocument(t, owner, docID)
 
 			var result struct{}
+
 			err := owner.Execute(query, map[string]any{
 				"input": map[string]any{"documentId": docID},
 			}, &result)
@@ -1469,6 +1683,7 @@ func TestDocumentVersion_DeleteDraft(t *testing.T) {
 					}
 				}
 			`
+
 			var updateResult struct {
 				UpdateDocument struct {
 					Document struct {
@@ -1479,6 +1694,7 @@ func TestDocumentVersion_DeleteDraft(t *testing.T) {
 					} `json:"documentVersion"`
 				} `json:"updateDocument"`
 			}
+
 			err := owner.Execute(updateQuery, map[string]any{
 				"input": map[string]any{
 					"id":      docID,
@@ -1488,6 +1704,7 @@ func TestDocumentVersion_DeleteDraft(t *testing.T) {
 			require.NoError(t, err)
 
 			var result struct{}
+
 			err = viewer.Execute(query, map[string]any{
 				"input": map[string]any{"documentId": docID},
 			}, &result)
@@ -1591,4 +1808,122 @@ func TestDocumentVersion_ExportPDFSignatures(t *testing.T) {
 			assert.NotEmpty(t, result.ExportDocumentVersionPDF.Data)
 		},
 	)
+}
+
+// TestDocumentVersion_MajorPublishCancelsSignatureRequests verifies that
+// publishing a new major version directly (no approvers) cancels the still
+// pending signature requests attached to the previous major version.
+func TestDocumentVersion_MajorPublishCancelsSignatureRequests(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	signer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
+
+	docID, _ := createTestDocument(t, owner)
+
+	v1ID := publishMajorDocumentVersion(t, owner, docID)
+	requestDocumentSignature(t, owner, v1ID, signer.GetProfileID().String())
+	assertRequestedSignatureCount(t, owner, v1ID, 1)
+
+	// A new major supersedes the previous one, so its pending request is cancelled.
+	updateDocumentContent(t, owner, docID, "Updated content for v2")
+	v2ID := publishMajorDocumentVersion(t, owner, docID)
+
+	assertRequestedSignatureCount(t, owner, v1ID, 0)
+	assertRequestedSignatureCount(t, owner, v2ID, 0)
+}
+
+// TestDocumentVersion_MinorPublishKeepsSignatureRequests verifies that
+// publishing a minor version stays within the same major and therefore keeps
+// pending signature requests intact.
+func TestDocumentVersion_MinorPublishKeepsSignatureRequests(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	signer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
+
+	docID, _ := createTestDocument(t, owner)
+
+	v1ID := publishMajorDocumentVersion(t, owner, docID)
+	requestDocumentSignature(t, owner, v1ID, signer.GetProfileID().String())
+	assertRequestedSignatureCount(t, owner, v1ID, 1)
+
+	// A minor bump keeps the same major; the request must survive.
+	updateDocumentContent(t, owner, docID, "Updated content for 1.1")
+	publishMinorDocumentVersion(t, owner, docID)
+
+	assertRequestedSignatureCount(t, owner, v1ID, 1)
+}
+
+// TestDocumentVersion_MajorApprovalPublishCancelsSignatureRequests verifies
+// that on the approval path the pending signature requests from the previous
+// major are cancelled only once the quorum succeeds and the new major is
+// actually published, not while the approval is still pending.
+func TestDocumentVersion_MajorApprovalPublishCancelsSignatureRequests(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	signer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
+
+	docID, _ := createTestDocument(t, owner)
+	approveTestDocument(t, owner, docID)
+
+	v1ID := latestDocumentVersionID(t, owner, docID)
+	requestDocumentSignature(t, owner, v1ID, signer.GetProfileID().String())
+	assertRequestedSignatureCount(t, owner, v1ID, 1)
+
+	// Open a major approval for v2. While the quorum is pending the request
+	// from the previous major must remain untouched.
+	updateDocumentContent(t, owner, docID, "Updated content for v2")
+	requestDocumentApproval(t, owner, docID, []string{getOwnerProfileID(t, owner)})
+	assertRequestedSignatureCount(t, owner, v1ID, 1)
+
+	// Once the quorum succeeds and v2.0 is published, the request is cancelled.
+	approveLatestDocumentVersion(t, owner, docID)
+	assertRequestedSignatureCount(t, owner, v1ID, 0)
+}
+
+// TestDocumentVersion_RequestSignatureIsIdempotentWithinVersion verifies that
+// requesting a signature twice for the same signatory on the same version does
+// not create a duplicate signature row.
+func TestDocumentVersion_RequestSignatureIsIdempotentWithinVersion(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	signer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
+
+	docID, _ := createTestDocument(t, owner)
+	signerID := signer.GetProfileID().String()
+
+	v1ID := publishMajorDocumentVersion(t, owner, docID)
+	requestDocumentSignature(t, owner, v1ID, signerID)
+	requestDocumentSignature(t, owner, v1ID, signerID)
+
+	assertRequestedSignatureCount(t, owner, v1ID, 1)
+}
+
+// TestDocumentVersion_RequestSignatureDeduplicatesAcrossMinors verifies that
+// re-requesting a signature on a newer minor of the same major reuses the
+// signatory's existing signature instead of creating a second one, so the
+// person is not listed twice in the major's export.
+func TestDocumentVersion_RequestSignatureDeduplicatesAcrossMinors(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	signer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
+
+	docID, _ := createTestDocument(t, owner)
+	signerID := signer.GetProfileID().String()
+
+	v10ID := publishMajorDocumentVersion(t, owner, docID)
+	requestDocumentSignature(t, owner, v10ID, signerID)
+	assertRequestedSignatureCount(t, owner, v10ID, 1)
+
+	// A minor bump stays in the same major; the request stays on v1.0.
+	updateDocumentContent(t, owner, docID, "Updated content for 1.1")
+	v11ID := publishMinorDocumentVersion(t, owner, docID)
+
+	// Re-requesting on the newer minor must reuse the existing signature
+	// instead of inserting a duplicate within the same major. The signature
+	// query aggregates across every minor of the major, so a duplicate would
+	// surface as a major-wide REQUESTED count of 2; the fix keeps it at 1.
+	requestDocumentSignature(t, owner, v11ID, signerID)
+
+	assertRequestedSignatureCount(t, owner, v10ID, 1)
+	assertRequestedSignatureCount(t, owner, v11ID, 1)
 }

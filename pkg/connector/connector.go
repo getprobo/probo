@@ -70,6 +70,7 @@ func UnmarshalConnection(protocol string, provider string, data []byte) (Connect
 			if err := json.Unmarshal(data, &slackConn); err != nil {
 				return nil, fmt.Errorf("cannot unmarshal slack connection: %w", err)
 			}
+
 			return &slackConn, nil
 
 		default:
@@ -77,6 +78,7 @@ func UnmarshalConnection(protocol string, provider string, data []byte) (Connect
 			if err := json.Unmarshal(data, &conn); err != nil {
 				return nil, fmt.Errorf("cannot unmarshal oauth2 connection: %w", err)
 			}
+
 			return &conn, nil
 		}
 
@@ -85,6 +87,7 @@ func UnmarshalConnection(protocol string, provider string, data []byte) (Connect
 		if err := json.Unmarshal(data, &conn); err != nil {
 			return nil, fmt.Errorf("cannot unmarshal api key connection: %w", err)
 		}
+
 		return &conn, nil
 	}
 

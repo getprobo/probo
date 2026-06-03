@@ -25,6 +25,7 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/iam/policy"
 	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/page"
 )
@@ -44,18 +45,43 @@ type (
 	MailingListSubscribers []*MailingListSubscriber
 )
 
-func (cns *MailingListSubscriber) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
-	q := `SELECT organization_id FROM mailing_list_subscribers WHERE id = $1 LIMIT 1;`
+func (cns *MailingListSubscriber) AuthorizationAttributes(
+	ctx context.Context,
+	conn pg.Querier,
+	resourceIDs []gid.GID,
+) (policy.AttributesByID, error) {
+	q := `SELECT id, organization_id FROM mailing_list_subscribers WHERE id = ANY(@resource_ids::text[])`
 
-	var organizationID gid.GID
-	if err := conn.QueryRow(ctx, q, cns.ID).Scan(&organizationID); err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, ErrResourceNotFound
-		}
-		return nil, fmt.Errorf("cannot query mailing list subscriber authorization attributes: %w", err)
+	args := pgx.StrictNamedArgs{
+		"resource_ids": resourceIDs,
 	}
 
-	return map[string]string{"organization_id": organizationID.String()}, nil
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return nil, fmt.Errorf("cannot query authorization attributes: %w", err)
+	}
+
+	defer rows.Close()
+
+	attrsByID := make(policy.AttributesByID)
+
+	for rows.Next() {
+		var id, organizationID gid.GID
+
+		if err := rows.Scan(&id, &organizationID); err != nil {
+			return nil, fmt.Errorf("cannot scan authorization attributes: %w", err)
+		}
+
+		attrsByID[id] = policy.Attributes{
+			"organization_id": organizationID.String(),
+		}
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("cannot iterate authorization attributes: %w", err)
+	}
+
+	return attrsByID, nil
 }
 
 func (cns *MailingListSubscriber) CursorKey(orderBy MailingListSubscriberOrderField) page.CursorKey {
@@ -213,7 +239,7 @@ VALUES (
 	}
 
 	if _, err := conn.Exec(ctx, q, args); err != nil {
-		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok && pgErr.Code == "23505" {
+		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok && pgErr.Code == "23505" && pgErr.ConstraintName == "mailing_list_subscribers_mailing_list_id_email_key" {
 			return ErrResourceAlreadyExists
 		}
 
@@ -277,13 +303,9 @@ WHERE
 	args := pgx.StrictNamedArgs{"mailing_list_subscriber_id": cns.ID}
 	maps.Copy(args, scope.SQLArguments())
 
-	tag, err := conn.Exec(ctx, q, args)
+	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
 		return fmt.Errorf("cannot delete mailing list subscriber: %w", err)
-	}
-
-	if tag.RowsAffected() == 0 {
-		return ErrResourceNotFound
 	}
 
 	return nil
@@ -313,6 +335,7 @@ WHERE
 	row := conn.QueryRow(ctx, q, args)
 
 	var count int
+
 	err := row.Scan(&count)
 	if err != nil {
 		return 0, fmt.Errorf("cannot count mailing list subscribers: %w", err)

@@ -14,6 +14,13 @@
 
 package coredata
 
+import (
+	"encoding"
+	"fmt"
+
+	"go.probo.inc/probo/pkg/page"
+)
+
 type (
 	IdentityOrderField string
 )
@@ -22,19 +29,48 @@ const (
 	IdentityOrderFieldCreatedAt IdentityOrderField = "CREATED_AT"
 )
 
+var (
+	_ page.OrderField          = IdentityOrderField("")
+	_ fmt.Stringer             = IdentityOrderField("")
+	_ encoding.TextMarshaler   = IdentityOrderField("")
+	_ encoding.TextUnmarshaler = (*IdentityOrderField)(nil)
+)
+
+func IdentityOrderFields() []IdentityOrderField {
+	return []IdentityOrderField{
+		IdentityOrderFieldCreatedAt,
+	}
+}
+
+func (v IdentityOrderField) IsValid() bool {
+	switch v {
+	case
+		IdentityOrderFieldCreatedAt:
+		return true
+	}
+
+	return false
+}
+
+func (v IdentityOrderField) String() string {
+	return string(v)
+}
+
+func (v IdentityOrderField) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *IdentityOrderField) UnmarshalText(text []byte) error {
+	val := IdentityOrderField(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid IdentityOrderField value: %q", string(text))
+	}
+
+	*v = val
+
+	return nil
+}
+
 func (p IdentityOrderField) Column() string {
 	return string(p)
-}
-
-func (p IdentityOrderField) String() string {
-	return string(p)
-}
-
-func (p IdentityOrderField) MarshalText() ([]byte, error) {
-	return []byte(p.String()), nil
-}
-
-func (p *IdentityOrderField) UnmarshalText(text []byte) error {
-	*p = IdentityOrderField(text)
-	return nil
 }

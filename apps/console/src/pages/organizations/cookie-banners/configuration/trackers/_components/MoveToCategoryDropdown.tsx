@@ -23,7 +23,7 @@ export const moveToCategoryDropdownQuery = graphql`
     node(id: $cookieBannerId) @required(action: THROW) {
       __typename
       ... on CookieBanner {
-        consentCategories(first: 50, orderBy: { field: RANK, direction: ASC })
+        categories(first: 50, orderBy: { field: RANK, direction: ASC })
           @required(action: THROW) {
           edges {
             node {
@@ -53,7 +53,7 @@ export function MoveToCategoryDropdown({
     return null;
   }
 
-  const categories = data.node.consentCategories.edges.map(e => e.node);
+  const categories = data.node.categories.edges.map(e => e.node);
 
   if (categories.length === 0) {
     return (

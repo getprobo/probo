@@ -21,17 +21,17 @@ interface Node {
 }
 
 type Query {
-  node(id: ID!): Node @session(required: PRESENT)
-  viewer: Identity @session(required: PRESENT)
+  node(id: ID!): Node @authentication(required: PRESENT)
+  viewer: Identity @authentication(required: PRESENT)
   ssoLoginURL(email: EmailAddr!): String
     @goField(forceResolver: true)
-    @session(required: OPTIONAL)
+    @authentication(required: OPTIONAL)
   oidcProviders: [OIDCProviderInfo!]!
     @goField(forceResolver: true)
-    @session(required: OPTIONAL)
+    @authentication(required: OPTIONAL)
   signUpEnabled: Boolean!
     @goField(forceResolver: true)
-    @session(required: OPTIONAL)
+    @authentication(required: OPTIONAL)
 }
 
 type OIDCProviderInfo {

@@ -24,6 +24,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/iam/policy"
 	"go.probo.inc/probo/pkg/page"
 )
 
@@ -53,18 +54,43 @@ func (mlu *MailingListUpdate) CursorKey(orderBy MailingListUpdateOrderField) pag
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
-func (mlu *MailingListUpdate) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
-	q := `SELECT organization_id FROM mailing_list_updates WHERE id = $1 LIMIT 1;`
+func (mlu *MailingListUpdate) AuthorizationAttributes(
+	ctx context.Context,
+	conn pg.Querier,
+	resourceIDs []gid.GID,
+) (policy.AttributesByID, error) {
+	q := `SELECT id, organization_id FROM mailing_list_updates WHERE id = ANY(@resource_ids::text[])`
 
-	var organizationID gid.GID
-	if err := conn.QueryRow(ctx, q, mlu.ID).Scan(&organizationID); err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, ErrResourceNotFound
-		}
-		return nil, fmt.Errorf("cannot query mailing list update authorization attributes: %w", err)
+	args := pgx.StrictNamedArgs{
+		"resource_ids": resourceIDs,
 	}
 
-	return map[string]string{"organization_id": organizationID.String()}, nil
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return nil, fmt.Errorf("cannot query authorization attributes: %w", err)
+	}
+
+	defer rows.Close()
+
+	attrsByID := make(policy.AttributesByID)
+
+	for rows.Next() {
+		var id, organizationID gid.GID
+
+		if err := rows.Scan(&id, &organizationID); err != nil {
+			return nil, fmt.Errorf("cannot scan authorization attributes: %w", err)
+		}
+
+		attrsByID[id] = policy.Attributes{
+			"organization_id": organizationID.String(),
+		}
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("cannot iterate authorization attributes: %w", err)
+	}
+
+	return attrsByID, nil
 }
 
 func (mlu *MailingListUpdate) Insert(ctx context.Context, conn pg.Tx, scope Scoper) error {
@@ -104,6 +130,7 @@ INSERT INTO mailing_list_updates (
 	maps.Copy(args, scope.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
+
 	return err
 }
 
@@ -134,9 +161,11 @@ WHERE
 	if err != nil {
 		return fmt.Errorf("cannot update mailing list update: %w", err)
 	}
+
 	if tag.RowsAffected() == 0 {
 		return ErrResourceNotFound
 	}
+
 	return nil
 }
 
@@ -154,13 +183,11 @@ WHERE
 	}
 	maps.Copy(args, scope.SQLArguments())
 
-	tag, err := conn.Exec(ctx, q, args)
+	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
 		return fmt.Errorf("cannot delete mailing list update: %w", err)
 	}
-	if tag.RowsAffected() == 0 {
-		return ErrResourceNotFound
-	}
+
 	return nil
 }
 
@@ -198,10 +225,12 @@ LIMIT 1;
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
 		}
+
 		return fmt.Errorf("cannot collect mailing list update: %w", err)
 	}
 
 	*mlu = result
+
 	return nil
 }
 
@@ -249,6 +278,7 @@ WHERE
 	}
 
 	*mlul = results
+
 	return nil
 }
 
@@ -295,6 +325,7 @@ WHERE
 	}
 
 	*mlul = results
+
 	return nil
 }
 
@@ -358,10 +389,12 @@ FOR UPDATE SKIP LOCKED
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
 		}
+
 		return fmt.Errorf("cannot collect enqueued mailing list update: %w", err)
 	}
 
 	*mlu = result
+
 	return nil
 }
 
@@ -376,6 +409,7 @@ SET status = 'ENQUEUED', updated_at = NOW()
 WHERE status = 'PROCESSING'
 	AND updated_at < NOW() - @stale_after::interval
 `
+
 	_, err := conn.Exec(ctx, q, pgx.StrictNamedArgs{"stale_after": staleAfter})
 	if err != nil {
 		return fmt.Errorf("cannot reset stale processing mailing list updates: %w", err)

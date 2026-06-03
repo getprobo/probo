@@ -53,6 +53,7 @@ func (d *SupabaseDriver) ListAccounts(ctx context.Context) ([]AccountRecord, err
 	}
 
 	var records []AccountRecord
+
 	for _, m := range members {
 		mfaStatus := coredata.MFAStatusDisabled
 		if m.MFAEnabled {
@@ -96,6 +97,7 @@ func (d *SupabaseDriver) queryMembers(ctx context.Context) ([]supabaseMember, er
 	if err != nil {
 		return nil, fmt.Errorf("cannot execute supabase members request: %w", err)
 	}
+
 	defer func() {
 		_ = httpResp.Body.Close()
 	}()

@@ -86,10 +86,12 @@ func NewServer(staticFiles fs.FS, distPath string, gzipOptions GzipOptions, opts
 			}
 
 			content := make([]byte, info.Size())
+
 			file, err := subFS.Open(path)
 			if err != nil {
 				return err
 			}
+
 			defer func() { _ = file.Close() }()
 
 			_, err = file.Read(content)
@@ -104,7 +106,6 @@ func NewServer(staticFiles fs.FS, distPath string, gzipOptions GzipOptions, opts
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, fmt.Errorf("cannot generate etags: %w", err)
 	}
@@ -153,6 +154,7 @@ func (s *Server) serveIndex(w http.ResponseWriter, r *http.Request) {
 
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write(buf.Bytes())
+
 		return
 	}
 
@@ -200,6 +202,7 @@ func (s *Server) ServeSPA(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write(buf.Bytes())
+
 		return
 	}
 
@@ -262,10 +265,12 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if s.shouldCompressWithGzip(r) {
 		w.Header().Set("Content-Encoding", "gzip")
 		gz := gzip.NewWriter(w)
+
 		defer func() { _ = gz.Close() }()
 
 		gzw := gzipResponseWriter{Writer: gz, ResponseWriter: w}
 		s.ServeSPA(gzw, r)
+
 		return
 	}
 

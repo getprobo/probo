@@ -36,6 +36,7 @@ func EncodeCertificate(der []byte) []byte {
 		Type:  BlockTypeCertificate,
 		Bytes: der,
 	}
+
 	return pem.EncodeToMemory(block)
 }
 
@@ -44,12 +45,15 @@ func EncodeCertificateChain(derCerts [][]byte) []byte {
 	for _, der := range derCerts {
 		chain = append(chain, EncodeCertificate(der)...)
 	}
+
 	return chain
 }
 
 func EncodePrivateKey(key crypto.Signer) ([]byte, error) {
-	var keyDER []byte
-	var keyType string
+	var (
+		keyDER  []byte
+		keyType string
+	)
 
 	switch k := key.(type) {
 	case *ecdsa.PrivateKey:
@@ -57,6 +61,7 @@ func EncodePrivateKey(key crypto.Signer) ([]byte, error) {
 		if err != nil {
 			return nil, fmt.Errorf("cannot marshal EC private key: %w", err)
 		}
+
 		keyDER = der
 		keyType = BlockTypeECPrivateKey
 	case *rsa.PrivateKey:
@@ -67,6 +72,7 @@ func EncodePrivateKey(key crypto.Signer) ([]byte, error) {
 		if err != nil {
 			return nil, fmt.Errorf("cannot marshal ED25519 private key: %w", err)
 		}
+
 		keyDER = der
 		keyType = BlockTypePKCS8PrivateKey
 	default:
@@ -97,10 +103,12 @@ func DecodePrivateKey(pemData []byte) (crypto.Signer, error) {
 		if err != nil {
 			return nil, fmt.Errorf("cannot parse PKCS8 private key: %w", err)
 		}
+
 		signer, ok := key.(crypto.Signer)
 		if !ok {
 			return nil, fmt.Errorf("key is not a crypto.Signer")
 		}
+
 		return signer, nil
 	default:
 		return nil, fmt.Errorf("unsupported PEM block type: %s", block.Type)

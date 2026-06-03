@@ -65,6 +65,7 @@ func sortConsentCategories(categories coredata.CookieCategories) {
 		if d := snapshotCategoryKindOrder(a.Kind) - snapshotCategoryKindOrder(b.Kind); d != 0 {
 			return d
 		}
+
 		return bytes.Compare(a.ID[:], b.ID[:])
 	})
 }
@@ -77,14 +78,13 @@ func buildSnapshot(
 	sortConsentCategories(categories)
 
 	cookiesByCategory := make(map[gid.GID]coredata.CookieItems)
+
 	for _, p := range allPatterns {
-		if p.TrackerType != coredata.TrackerTypeCookie {
-			continue
-		}
 		cookiesByCategory[p.CookieCategoryID] = append(
 			cookiesByCategory[p.CookieCategoryID],
 			coredata.CookieItem{
 				Name:          p.DisplayName,
+				TrackerType:   p.TrackerType,
 				MaxAgeSeconds: p.MaxAgeSeconds,
 				Description:   p.Description,
 			},
@@ -97,10 +97,12 @@ func buildSnapshot(
 		if cookies == nil {
 			cookies = coredata.CookieItems{}
 		}
+
 		gcmConsentTypes := c.GCMConsentTypes
 		if gcmConsentTypes == nil {
 			gcmConsentTypes = []string{}
 		}
+
 		snapshotCategories[i] = coredata.CookieBannerVersionSnapshotCategory{
 			Name:            c.Name,
 			Slug:            c.Slug,
@@ -116,7 +118,6 @@ func buildSnapshot(
 		PrivacyPolicyURL:  banner.PrivacyPolicyURL,
 		CookiePolicyURL:   banner.CookiePolicyURL,
 		ConsentExpiryDays: banner.ConsentExpiryDays,
-		ConsentMode:       string(banner.ConsentMode),
 		DefaultLanguage:   banner.DefaultLanguage,
 		Categories:        snapshotCategories,
 	}
@@ -139,15 +140,19 @@ func buildSnapshotTranslations(
 				Description string `json:"description"`
 			} `json:"categories"`
 		}
+
 		_ = json.Unmarshal(t.Translations, &raw)
 
 		ui := make(map[string]string)
+
 		var flat map[string]json.RawMessage
+
 		_ = json.Unmarshal(t.Translations, &flat)
 		for k, v := range flat {
 			if k == "categories" || k == "cookies" {
 				continue
 			}
+
 			var s string
 			if json.Unmarshal(v, &s) == nil {
 				ui[k] = s
@@ -162,9 +167,11 @@ func buildSnapshotTranslations(
 						Name:        ct.Name,
 						Description: ct.Description,
 					}
+
 					continue
 				}
 			}
+
 			catTranslations[i] = coredata.CookieBannerVersionSnapshotCategoryTranslation{
 				Name:        c.Name,
 				Description: c.Description,

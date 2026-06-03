@@ -27,7 +27,7 @@ type Query {
   currentTrustCenter: TrustCenter
   oidcProviders: [OIDCProviderInfo!]!
     @goField(forceResolver: true)
-    @session(required: OPTIONAL)
+    @authentication(required: OPTIONAL)
 }
 
 type OIDCProviderInfo {
@@ -55,6 +55,7 @@ type PageInfo {
 
 enum CountryCode
   @goModel(model: "go.probo.inc/probo/pkg/coredata.CountryCode") {
+  GLOBAL @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeGlobal")
   AD @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeAD")
   AE @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeAE")
   AF @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeAF")

@@ -24,6 +24,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/iam/policy"
 	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/page"
 )
@@ -65,25 +66,43 @@ func (p Document) CursorKey(orderBy DocumentOrderField) page.CursorKey {
 }
 
 // AuthorizationAttributes returns the authorization attributes for policy evaluation.
-func (d *Document) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
-	q := `
-SELECT organization_id
-FROM documents
-WHERE id = $1
-LIMIT 1;
-`
+func (d *Document) AuthorizationAttributes(
+	ctx context.Context,
+	conn pg.Querier,
+	resourceIDs []gid.GID,
+) (policy.AttributesByID, error) {
+	q := `SELECT id, organization_id FROM documents WHERE id = ANY(@resource_ids::text[])`
 
-	var organizationID gid.GID
-	if err := conn.QueryRow(ctx, q, d.ID).Scan(&organizationID); err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, ErrResourceNotFound
-		}
-		return nil, fmt.Errorf("cannot query document authorization attributes: %w", err)
+	args := pgx.StrictNamedArgs{
+		"resource_ids": resourceIDs,
 	}
 
-	return map[string]string{
-		"organization_id": organizationID.String(),
-	}, nil
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return nil, fmt.Errorf("cannot query authorization attributes: %w", err)
+	}
+
+	defer rows.Close()
+
+	attrsByID := make(policy.AttributesByID)
+
+	for rows.Next() {
+		var id, organizationID gid.GID
+
+		if err := rows.Scan(&id, &organizationID); err != nil {
+			return nil, fmt.Errorf("cannot scan authorization attributes: %w", err)
+		}
+
+		attrsByID[id] = policy.Attributes{
+			"organization_id": organizationID.String(),
+		}
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("cannot iterate authorization attributes: %w", err)
+	}
+
+	return attrsByID, nil
 }
 
 func (p *Document) LoadByID(
@@ -287,6 +306,7 @@ WHERE
 	maps.Copy(args, filter.SQLArguments())
 
 	row := conn.QueryRow(ctx, q, args)
+
 	var count int
 	if err := row.Scan(&count); err != nil {
 		return 0, fmt.Errorf("cannot scan count: %w", err)
@@ -540,6 +560,7 @@ VALUES (
 		"updated_at":              p.UpdatedAt,
 	}
 	_, err := conn.Exec(ctx, q, args)
+
 	return err
 }
 
@@ -558,6 +579,7 @@ UPDATE documents SET deleted_at = @deleted_at WHERE %s AND id = @document_id
 	maps.Copy(args, scope.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
+
 	return err
 }
 
@@ -577,6 +599,7 @@ DELETE FROM documents WHERE %s AND organization_id = @organization_id
 	maps.Copy(args, scope.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
+
 	return err
 }
 
@@ -649,6 +672,7 @@ WHERE cp.control_id = @control_id
 	maps.Copy(args, filter.SQLArguments())
 
 	row := conn.QueryRow(ctx, q, args)
+
 	var count int
 	if err := row.Scan(&count); err != nil {
 		return 0, fmt.Errorf("cannot scan count: %w", err)
@@ -749,6 +773,7 @@ WHERE rp.risk_id = @risk_id
 	maps.Copy(args, filter.SQLArguments())
 
 	row := conn.QueryRow(ctx, q, args)
+
 	var count int
 	if err := row.Scan(&count); err != nil {
 		return 0, fmt.Errorf("cannot scan count: %w", err)
@@ -849,6 +874,7 @@ WHERE md.measure_id = @measure_id
 	maps.Copy(args, filter.SQLArguments())
 
 	row := conn.QueryRow(ctx, q, args)
+
 	var count int
 	if err := row.Scan(&count); err != nil {
 		return 0, fmt.Errorf("cannot scan count: %w", err)
@@ -942,6 +968,7 @@ UPDATE documents SET deleted_at = @deleted_at WHERE %s AND id = ANY(@document_id
 	maps.Copy(args, scope.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
+
 	return err
 }
 
@@ -969,6 +996,7 @@ UPDATE documents SET status = 'ARCHIVED', archived_at = @archived_at, trust_cent
 	if _, err := conn.Exec(ctx, q, args); err != nil {
 		return fmt.Errorf("cannot bulk archive documents: %w", err)
 	}
+
 	return nil
 }
 
@@ -995,6 +1023,7 @@ UPDATE documents SET status = 'ACTIVE', archived_at = NULL WHERE %s AND id = ANY
 	if _, err := conn.Exec(ctx, q, args); err != nil {
 		return fmt.Errorf("cannot bulk unarchive documents: %w", err)
 	}
+
 	return nil
 }
 
@@ -1106,6 +1135,7 @@ LIMIT 1
 		if errors.Is(err, pgx.ErrNoRows) {
 			return "", nil
 		}
+
 		return "", fmt.Errorf("cannot collect approval state: %w", err)
 	}
 

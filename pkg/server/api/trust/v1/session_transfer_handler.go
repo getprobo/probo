@@ -63,6 +63,7 @@ func (h *SessionTransferHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	if err != nil {
 		h.logger.WarnCtx(ctx, "invalid session transfer token", log.Error(err))
 		httpserver.RenderError(w, http.StatusBadRequest, errors.New("invalid or expired token"))
+
 		return
 	}
 
@@ -81,6 +82,7 @@ func (h *SessionTransferHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	if err != nil {
 		h.logger.ErrorCtx(ctx, "cannot get session for transfer", log.Error(err))
 		httpserver.RenderError(w, http.StatusBadRequest, errors.New("invalid or expired token"))
+
 		return
 	}
 

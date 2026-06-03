@@ -24,7 +24,7 @@ import (
 
 // Profiles is the resolver for the profiles field.
 func (r *identityResolver) Profiles(ctx context.Context, obj *types.Identity, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ProfileOrderBy, filter *types.ProfileFilter) (*types.ProfileConnection, error) {
-	if err := r.authorize(ctx, obj.ID, iam.ActionMembershipProfileList, authz.WithSkipAssumptionCheck()); err != nil {
+	if _, err := r.authorize(ctx, obj.ID, iam.ActionMembershipProfileList, authz.WithSkipAssumptionCheck()); err != nil {
 		return nil, err
 	}
 
@@ -68,7 +68,7 @@ func (r *identityResolver) Profiles(ctx context.Context, obj *types.Identity, fi
 
 // Sessions is the resolver for the sessions field.
 func (r *identityResolver) Sessions(ctx context.Context, obj *types.Identity, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.SessionOrder) (*types.SessionConnection, error) {
-	if err := r.authorize(ctx, obj.ID, iam.ActionSessionList); err != nil {
+	if _, err := r.authorize(ctx, obj.ID, iam.ActionSessionList); err != nil {
 		return nil, err
 	}
 
@@ -103,7 +103,7 @@ func (r *identityResolver) Sessions(ctx context.Context, obj *types.Identity, fi
 
 // PersonalAPIKeys is the resolver for the personalAPIKeys field.
 func (r *identityResolver) PersonalAPIKeys(ctx context.Context, obj *types.Identity, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.PersonalAPIKeyConnection, error) {
-	if err := r.authorize(ctx, obj.ID, iam.ActionPersonalAPIKeyList); err != nil {
+	if _, err := r.authorize(ctx, obj.ID, iam.ActionPersonalAPIKeyList); err != nil {
 		return nil, err
 	}
 
@@ -130,9 +130,29 @@ func (r *identityResolver) PersonalAPIKeys(ctx context.Context, obj *types.Ident
 	return types.NewPersonalAPIKeyConnection(page, r, obj.ID), nil
 }
 
+// InvitingOrganizations is the resolver for the invitingOrganizations field.
+func (r *identityResolver) InvitingOrganizations(ctx context.Context, obj *types.Identity) ([]*types.Organization, error) {
+	if _, err := r.authorize(ctx, obj.ID, iam.ActionInvitationList, authz.WithSkipAssumptionCheck()); err != nil {
+		return nil, err
+	}
+
+	organizations, err := r.iam.AccountService.ListInvitingOrganizations(ctx, obj.ID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list inviting organizations", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	result := make([]*types.Organization, len(organizations))
+	for i, organization := range organizations {
+		result[i] = types.NewOrganization(organization)
+	}
+
+	return result, nil
+}
+
 // SsoLoginURL is the resolver for the ssoLoginURL field.
 func (r *identityResolver) SsoLoginURL(ctx context.Context, obj *types.Identity) (*string, error) {
-	if err := r.authorize(ctx, obj.ID, iam.ActionIdentityGet); err != nil {
+	if _, err := r.authorize(ctx, obj.ID, iam.ActionIdentityGet); err != nil {
 		return nil, err
 	}
 
@@ -168,9 +188,11 @@ func (r *identityResolver) SsoLoginURL(ctx context.Context, obj *types.Identity)
 		r.logger.ErrorCtx(ctx, "cannot find SAML config")
 		return nil, gqlutils.NotFoundf(ctx, "cannot find SAML config")
 	}
+
 	samlConfig := samlConfigs[0]
 
 	loginURL := r.SSOLoginURL(samlConfig.ID)
+
 	return &loginURL, nil
 }
 

@@ -141,15 +141,19 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 			if flagFramework != "" {
 				input["frameworkId"] = flagFramework
 			}
+
 			if flagState != "" {
 				input["state"] = flagState
 			}
+
 			if flagValidFrom != "" {
 				input["validFrom"] = flagValidFrom
 			}
+
 			if flagValidUntil != "" {
 				input["validUntil"] = flagValidUntil
 			}
+
 			if flagTrustCenterVisibility != "" {
 				input["trustCenterVisibility"] = flagTrustCenterVisibility
 			}

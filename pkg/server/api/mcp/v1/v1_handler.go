@@ -15,7 +15,6 @@
 package mcp_v1
 
 import (
-	"context"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -24,37 +23,42 @@ import (
 	mcpgenmcp "go.probo.inc/mcpgen/mcp"
 	"go.probo.inc/probo/pkg/accessreview"
 	"go.probo.inc/probo/pkg/cookiebanner"
-	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/probo"
+	"go.probo.inc/probo/pkg/riskmanagement"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/mcp/mcputils"
 	"go.probo.inc/probo/pkg/server/api/mcp/v1/server"
+	"go.probo.inc/probo/pkg/thirdparty"
 )
 
-func (r *Resolver) ProboService(ctx context.Context, objectID gid.GID) *probo.TenantService {
-	return r.proboSvc.WithTenant(objectID.TenantID())
-}
-
-func NewMux(logger *log.Logger, proboSvc *probo.Service, iamSvc *iam.Service, accessReviewSvc *accessreview.Service, cookieBannerSvc *cookiebanner.Service, tokenSecret string) *chi.Mux {
+func NewMux(
+	logger *log.Logger,
+	proboSvc *probo.Service,
+	thirdPartySvc *thirdparty.Service,
+	iamSvc *iam.Service,
+	accessReviewSvc *accessreview.Service,
+	cookieBannerSvc *cookiebanner.Service,
+	riskManagementSvc *riskmanagement.Service,
+	tokenSecret string,
+) *chi.Mux {
 	logger = logger.Named("mcp.v1")
 
 	logger.Info("initializing MCP server")
-	// server.AddReceivingMiddleware(mcputils.LoggingMiddleware(logger))
 
 	resolver := &Resolver{
-		proboSvc:     proboSvc,
-		iamSvc:       iamSvc,
-		accessReview: accessReviewSvc,
-		cookieBanner: cookieBannerSvc,
-		logger:       logger,
+		proboSvc:       proboSvc,
+		thirdPartySvc:  thirdPartySvc,
+		iamSvc:         iamSvc,
+		accessReview:   accessReviewSvc,
+		cookieBanner:   cookieBannerSvc,
+		riskManagement: riskManagementSvc,
+		logger:         logger,
 	}
 
-	mcpServer := server.New(resolver)
+	mcpServer := server.New(resolver, mcpgenmcp.WithRecoverFunc(mcputils.NewRecoverFunc(logger)))
 
-	// Add panic recovery middleware to handle panics in goroutines spawned by MCP SDK
 	mcpServer.AddReceivingMiddleware(mcputils.LoggingMiddleware(logger))
-	mcpServer.AddReceivingMiddleware(mcputils.RecoveryMiddleware(logger))
 
 	getServer := func(r *http.Request) *mcp.Server { return mcpServer }
 	eventStore := mcp.NewMemoryEventStore(nil)
@@ -83,6 +87,8 @@ func UnwrapOmittable[T any](field mcpgenmcp.Omittable[T]) *T {
 	if !field.IsSet() {
 		return nil
 	}
+
 	value, _ := field.Value()
+
 	return &value
 }

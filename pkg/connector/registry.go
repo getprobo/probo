@@ -39,21 +39,25 @@ func NewConnectorRegistry() *ConnectorRegistry {
 func (r *ConnectorRegistry) Register(provider string, c Connector) error {
 	r.Lock()
 	defer r.Unlock()
+
 	if _, ok := r.connectors[provider]; ok {
 		return fmt.Errorf("cannot register connector %q: already registered", provider)
 	}
 
 	r.connectors[provider] = c
+
 	return nil
 }
 
 func (r *ConnectorRegistry) Get(provider string) (Connector, error) {
 	r.RLock()
 	defer r.RUnlock()
+
 	c, ok := r.connectors[provider]
 	if !ok {
 		return nil, fmt.Errorf("cannot find connector %q", provider)
 	}
+
 	return c, nil
 }
 
@@ -113,36 +117,6 @@ func (r *ConnectorRegistry) CompleteWithState(ctx context.Context, provider stri
 	}
 
 	return oauth2Connector.CompleteWithState(ctx, req)
-}
-
-// providerProbeURLs maps provider names to lightweight API endpoints
-// used to verify OAuth token validity. Each URL must accept a GET
-// request with a Bearer token and return 401/403 for invalid tokens.
-var (
-	providerProbeURLs = map[string]string{
-		"SLACK":            "https://slack.com/api/users.list?limit=1",
-		"GOOGLE_WORKSPACE": "https://admin.googleapis.com/admin/directory/v1/users?customer=my_customer&maxResults=1",
-		"LINEAR":           "https://api.linear.app/graphql",
-		"BREX":             "https://platform.brexapis.com/v2/users/me",
-		"HUBSPOT":          "https://api.hubapi.com/account-info/v3/details",
-		"DOCUSIGN":         "https://account-d.docusign.com/oauth/userinfo",
-		"NOTION":           "https://api.notion.com/v1/users/me",
-		"GITHUB":           "https://api.github.com/user",
-		"SENTRY":           "https://sentry.io/api/0/organizations/",
-		"INTERCOM":         "https://api.intercom.io/me",
-		"CLOUDFLARE":       "https://api.cloudflare.com/client/v4/user/tokens/verify",
-		"OPENAI":           "https://api.openai.com/v1/models",
-		"SUPABASE":         "https://api.supabase.com/v1/organizations",
-		"TALLY":            "https://api.tally.so/me",
-		"RESEND":           "https://api.resend.com/domains",
-		"ONE_PASSWORD":     "https://events.1password.com/api/v1/auditevents",
-		"MICROSOFT_365":    "https://graph.microsoft.com/v1.0/organization?$top=1",
-	}
-)
-
-// GetProbeURL returns the probe URL for a provider.
-func (r *ConnectorRegistry) GetProbeURL(provider string) string {
-	return providerProbeURLs[provider]
 }
 
 // GetOAuth2RefreshConfig returns the OAuth2 refresh configuration for a provider.

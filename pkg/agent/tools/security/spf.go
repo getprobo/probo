@@ -65,6 +65,7 @@ func CheckSPFTool() agent.Tool {
 			}
 
 			client := dns.NewClient()
+
 			answers, err := queryDNS(
 				ctx,
 				client,
@@ -76,13 +77,16 @@ func CheckSPFTool() agent.Tool {
 				},
 			)
 			if err != nil {
-				return agent.ResultJSON(spfResult{
-					Found:       false,
-					ErrorDetail: fmt.Sprintf("cannot lookup SPF record: %s", err),
-				}), nil
+				return agent.ResultJSON(
+					spfResult{
+						Found:       false,
+						ErrorDetail: fmt.Sprintf("cannot lookup SPF record: %s", err),
+					},
+				), nil
 			}
 
 			var spfRecords []string
+
 			for _, answer := range answers {
 				txt, ok := answer.(*dns.TXT)
 				if !ok {
@@ -98,20 +102,25 @@ func CheckSPFTool() agent.Tool {
 			}
 
 			if len(spfRecords) > 1 {
-				return agent.ResultJSON(spfResult{
-					Found:       true,
-					ErrorDetail: fmt.Sprintf("multiple SPF records found (%d); this is an invalid configuration per RFC 7208", len(spfRecords)),
-				}), nil
+				return agent.ResultJSON(
+					spfResult{
+						Found:       true,
+						ErrorDetail: fmt.Sprintf("multiple SPF records found (%d); this is an invalid configuration per RFC 7208", len(spfRecords)),
+					},
+				), nil
 			}
 
 			if len(spfRecords) == 1 {
 				record := spfRecords[0]
-				return agent.ResultJSON(spfResult{
-					Found:      true,
-					RawRecord:  record,
-					Policy:     parseSPFPolicy(record),
-					Mechanisms: record,
-				}), nil
+
+				return agent.ResultJSON(
+					spfResult{
+						Found:      true,
+						RawRecord:  record,
+						Policy:     parseSPFPolicy(record),
+						Mechanisms: record,
+					},
+				), nil
 			}
 
 			return agent.ResultJSON(spfResult{Found: false}), nil

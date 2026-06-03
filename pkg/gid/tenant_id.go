@@ -114,6 +114,7 @@ func (id *TenantID) Scan(value any) error {
 		}
 
 		copy((*id)[:], decoded)
+
 		return nil
 	default:
 		return fmt.Errorf("invalid type for TenantID: expected string, got %T", value)
@@ -143,6 +144,7 @@ func (id *TenantID) UnmarshalText(text []byte) error {
 	}
 
 	copy((*id)[:], decoded)
+
 	return nil
 }
 

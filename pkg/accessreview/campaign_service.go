@@ -105,6 +105,7 @@ func (s *CampaignService) Get(
 			if err := campaign.LoadByID(ctx, conn, s.scope, campaignID); err != nil {
 				return fmt.Errorf("cannot load campaign: %w", err)
 			}
+
 			return nil
 		},
 	)
@@ -192,6 +193,7 @@ func (s *CampaignService) Delete(
 			if err := campaign.Delete(ctx, conn, s.scope); err != nil {
 				return fmt.Errorf("cannot delete campaign: %w", err)
 			}
+
 			return nil
 		},
 	)
@@ -359,6 +361,7 @@ func (s *CampaignService) Close(
 			}
 
 			entries := coredata.AccessEntries{}
+
 			pendingCount, err := entries.CountPendingByCampaignID(ctx, conn, s.scope, campaignID)
 			if err != nil {
 				return fmt.Errorf("cannot count pending entries: %w", err)
@@ -392,6 +395,7 @@ func lockCampaignForUpdate(ctx context.Context, tx pg.Tx, scope coredata.Scoper,
 	if err := c.LockForUpdate(ctx, tx, scope); err != nil {
 		return fmt.Errorf("cannot lock campaign for update: %w", err)
 	}
+
 	return nil
 }
 
@@ -402,6 +406,7 @@ func (s *CampaignService) enqueueSourceFetches(
 	sources coredata.AccessSources,
 ) error {
 	now := time.Now()
+
 	for _, source := range sources {
 		fetch := &coredata.AccessReviewCampaignSourceFetch{
 			AccessReviewCampaignID: campaignID,
@@ -469,6 +474,7 @@ func (s *CampaignService) ListForOrganizationID(
 			if err := campaigns.LoadByOrganizationID(ctx, conn, s.scope, organizationID, cursor); err != nil {
 				return fmt.Errorf("cannot load campaigns by organization: %w", err)
 			}
+
 			return nil
 		},
 	)
@@ -491,6 +497,7 @@ func (s *CampaignService) ListSourceFetches(
 			if err := fetches.LoadByCampaignID(ctx, conn, s.scope, campaignID); err != nil {
 				return fmt.Errorf("cannot load source fetches by campaign: %w", err)
 			}
+
 			return nil
 		},
 	)
@@ -511,6 +518,7 @@ func (s *CampaignService) CountForOrganizationID(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			campaigns := coredata.AccessReviewCampaigns{}
+
 			count, err = campaigns.CountByOrganizationID(ctx, conn, s.scope, organizationID)
 			if err != nil {
 				return fmt.Errorf("cannot count campaigns by organization: %w", err)

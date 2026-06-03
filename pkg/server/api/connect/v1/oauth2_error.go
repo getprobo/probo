@@ -89,6 +89,7 @@ func toOAuth2Error(err error) *oauth2server.OAuth2Error {
 		if oauthErr, ok := errors.AsType[*oauth2server.OAuth2Error](err); ok {
 			return oauthErr
 		}
+
 		return oauth2server.NewError(oauth2server.ErrServerError, oauth2server.WithDescription("internal error"))
 	}
 }
@@ -108,12 +109,15 @@ func redirectWithError(w http.ResponseWriter, r *http.Request, redirectURI, stat
 
 	q := u.Query()
 	q.Set("error", oauthErr.ErrorCode())
+
 	if desc := oauthErr.Description(); desc != "" {
 		q.Set("error_description", desc)
 	}
+
 	if state != "" {
 		q.Set("state", state)
 	}
+
 	u.RawQuery = q.Encode()
 
 	http.Redirect(w, r, u.String(), http.StatusFound)

@@ -86,6 +86,7 @@ func NewCmdGet(f *cmdutil.Factory) *cobra.Command {
 			if orgID == "" {
 				orgID = hc.Organization
 			}
+
 			if orgID == "" {
 				return fmt.Errorf("organization ID is required: pass --org or run `prb auth login`")
 			}

@@ -25,6 +25,7 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/iam/policy"
 	"go.probo.inc/probo/pkg/page"
 )
 
@@ -52,18 +53,43 @@ func (s StatementOfApplicability) CursorKey(orderBy StatementOfApplicabilityOrde
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
-func (s *StatementOfApplicability) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
-	q := `SELECT organization_id FROM statements_of_applicability WHERE id = $1 LIMIT 1;`
+func (s *StatementOfApplicability) AuthorizationAttributes(
+	ctx context.Context,
+	conn pg.Querier,
+	resourceIDs []gid.GID,
+) (policy.AttributesByID, error) {
+	q := `SELECT id, organization_id FROM statements_of_applicability WHERE id = ANY(@resource_ids::text[])`
 
-	var organizationID gid.GID
-	if err := conn.QueryRow(ctx, q, s.ID).Scan(&organizationID); err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, ErrResourceNotFound
-		}
-		return nil, fmt.Errorf("cannot query statement of applicability authorization attributes: %w", err)
+	args := pgx.StrictNamedArgs{
+		"resource_ids": resourceIDs,
 	}
 
-	return map[string]string{"organization_id": organizationID.String()}, nil
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return nil, fmt.Errorf("cannot query authorization attributes: %w", err)
+	}
+
+	defer rows.Close()
+
+	attrsByID := make(policy.AttributesByID)
+
+	for rows.Next() {
+		var id, organizationID gid.GID
+
+		if err := rows.Scan(&id, &organizationID); err != nil {
+			return nil, fmt.Errorf("cannot scan authorization attributes: %w", err)
+		}
+
+		attrsByID[id] = policy.Attributes{
+			"organization_id": organizationID.String(),
+		}
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("cannot iterate authorization attributes: %w", err)
+	}
+
+	return attrsByID, nil
 }
 
 func (s *StatementOfApplicability) LoadByID(
@@ -85,7 +111,6 @@ FROM
 WHERE
     %s
     AND id = @statement_of_applicability_id
-    AND snapshot_id IS NULL
 LIMIT 1;
 `
 
@@ -109,6 +134,7 @@ LIMIT 1;
 	}
 
 	*s = statementOfApplicability
+
 	return nil
 }
 
@@ -132,7 +158,6 @@ FROM
 WHERE
     %s
     AND organization_id = @organization_id
-    AND snapshot_id IS NULL
     AND %s
 `
 	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
@@ -152,6 +177,7 @@ WHERE
 	}
 
 	*s = statementsOfApplicability
+
 	return nil
 }
 
@@ -169,7 +195,6 @@ FROM
 WHERE
     %s
     AND organization_id = @organization_id
-    AND snapshot_id IS NULL
 `
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
@@ -179,6 +204,7 @@ WHERE
 	maps.Copy(args, scope.SQLArguments())
 
 	row := conn.QueryRow(ctx, q, args)
+
 	var count int
 	if err := row.Scan(&count); err != nil {
 		return 0, fmt.Errorf("cannot count statements_of_applicability: %w", err)
@@ -223,15 +249,17 @@ VALUES (
 		"created_at":                    s.CreatedAt,
 		"updated_at":                    s.UpdatedAt,
 	}
-	_, err := conn.Exec(ctx, q, args)
 
+	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
-		var pgErr *pgconn.PgError
-		if errors.As(err, &pgErr) {
-			if pgErr.Code == "23505" {
+		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok && pgErr.Code == "23505" {
+			switch pgErr.ConstraintName {
+			case "statements_of_applicability_document_id_key",
+				"states_of_applicability_name_organization_id_uniq":
 				return ErrResourceAlreadyExists
 			}
 		}
+
 		return fmt.Errorf("cannot insert statement_of_applicability: %w", err)
 	}
 
@@ -252,7 +280,6 @@ SET
 WHERE
     %s
     AND id = @statement_of_applicability_id
-    AND snapshot_id IS NULL
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
@@ -267,12 +294,14 @@ WHERE
 
 	result, err := conn.Exec(ctx, q, args)
 	if err != nil {
-		var pgErr *pgconn.PgError
-		if errors.As(err, &pgErr) {
-			if pgErr.Code == "23505" {
+		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok && pgErr.Code == "23505" {
+			switch pgErr.ConstraintName {
+			case "statements_of_applicability_document_id_key",
+				"states_of_applicability_name_organization_id_uniq":
 				return ErrResourceAlreadyExists
 			}
 		}
+
 		return fmt.Errorf("cannot update statement_of_applicability: %w", err)
 	}
 
@@ -293,7 +322,6 @@ DELETE FROM statements_of_applicability
 WHERE
     %s
     AND id = @statement_of_applicability_id
-    AND snapshot_id IS NULL
 `
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
@@ -302,13 +330,9 @@ WHERE
 	}
 	maps.Copy(args, scope.SQLArguments())
 
-	result, err := conn.Exec(ctx, q, args)
+	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
 		return fmt.Errorf("cannot delete statement_of_applicability: %w", err)
-	}
-
-	if result.RowsAffected() == 0 {
-		return ErrResourceNotFound
 	}
 
 	return nil

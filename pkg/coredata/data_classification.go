@@ -14,6 +14,11 @@
 
 package coredata
 
+import (
+	"encoding"
+	"fmt"
+)
+
 type DataClassification string
 
 const (
@@ -23,6 +28,12 @@ const (
 	DataClassificationSecret       DataClassification = "SECRET"
 )
 
+var (
+	_ fmt.Stringer             = DataClassification("")
+	_ encoding.TextMarshaler   = DataClassification("")
+	_ encoding.TextUnmarshaler = (*DataClassification)(nil)
+)
+
 func DataClassifications() []DataClassification {
 	return []DataClassification{
 		DataClassificationPublic,
@@ -30,4 +41,36 @@ func DataClassifications() []DataClassification {
 		DataClassificationConfidential,
 		DataClassificationSecret,
 	}
+}
+
+func (v DataClassification) IsValid() bool {
+	switch v {
+	case
+		DataClassificationPublic,
+		DataClassificationInternal,
+		DataClassificationConfidential,
+		DataClassificationSecret:
+		return true
+	}
+
+	return false
+}
+
+func (v DataClassification) String() string {
+	return string(v)
+}
+
+func (v DataClassification) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *DataClassification) UnmarshalText(text []byte) error {
+	val := DataClassification(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid DataClassification value: %q", string(text))
+	}
+
+	*v = val
+
+	return nil
 }

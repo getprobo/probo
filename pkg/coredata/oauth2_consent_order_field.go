@@ -14,13 +14,60 @@
 
 package coredata
 
-import "fmt"
+import (
+	"encoding"
+	"fmt"
+
+	"go.probo.inc/probo/pkg/page"
+)
 
 type OAuth2ConsentOrderField string
 
 const (
 	OAuth2ConsentOrderFieldCreatedAt OAuth2ConsentOrderField = "CREATED_AT"
 )
+
+var (
+	_ page.OrderField          = OAuth2ConsentOrderField("")
+	_ fmt.Stringer             = OAuth2ConsentOrderField("")
+	_ encoding.TextMarshaler   = OAuth2ConsentOrderField("")
+	_ encoding.TextUnmarshaler = (*OAuth2ConsentOrderField)(nil)
+)
+
+func OAuth2ConsentOrderFields() []OAuth2ConsentOrderField {
+	return []OAuth2ConsentOrderField{
+		OAuth2ConsentOrderFieldCreatedAt,
+	}
+}
+
+func (v OAuth2ConsentOrderField) IsValid() bool {
+	switch v {
+	case
+		OAuth2ConsentOrderFieldCreatedAt:
+		return true
+	}
+
+	return false
+}
+
+func (v OAuth2ConsentOrderField) String() string {
+	return string(v)
+}
+
+func (v OAuth2ConsentOrderField) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *OAuth2ConsentOrderField) UnmarshalText(text []byte) error {
+	val := OAuth2ConsentOrderField(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid OAuth2ConsentOrderField value: %q", string(text))
+	}
+
+	*v = val
+
+	return nil
+}
 
 func (f OAuth2ConsentOrderField) Column() string {
 	switch f {
@@ -29,28 +76,4 @@ func (f OAuth2ConsentOrderField) Column() string {
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", f))
-}
-
-func (f OAuth2ConsentOrderField) IsValid() bool {
-	switch f {
-	case OAuth2ConsentOrderFieldCreatedAt:
-		return true
-	}
-
-	return false
-}
-
-func (f OAuth2ConsentOrderField) String() string { return string(f) }
-
-func (f *OAuth2ConsentOrderField) UnmarshalText(text []byte) error {
-	*f = OAuth2ConsentOrderField(text)
-	if !f.IsValid() {
-		return fmt.Errorf("%s is not a valid OAuth2ConsentOrderField", string(text))
-	}
-
-	return nil
-}
-
-func (f OAuth2ConsentOrderField) MarshalText() ([]byte, error) {
-	return []byte(f.String()), nil
 }

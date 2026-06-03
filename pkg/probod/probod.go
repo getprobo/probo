@@ -29,9 +29,6 @@ import (
 	"sync"
 	"time"
 
-	"go.probo.inc/probo/packages/emails"
-	pemutil "go.probo.inc/probo/pkg/crypto/pem"
-
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	proxyproto "github.com/pires/go-proxyproto"
 	"github.com/prometheus/client_golang/prometheus"
@@ -42,21 +39,26 @@ import (
 	"go.gearno.de/kit/pg"
 	"go.gearno.de/kit/unit"
 	"go.gearno.de/kit/worker"
+	"go.gearno.de/x/ref"
 	"go.opentelemetry.io/otel/trace"
+	"go.probo.inc/probo/packages/emails"
 	"go.probo.inc/probo/pkg/accessreview"
 	"go.probo.inc/probo/pkg/awsconfig"
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/certmanager"
 	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/connector/provider"
 	"go.probo.inc/probo/pkg/cookiebanner"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/cipher"
 	"go.probo.inc/probo/pkg/crypto/keys"
 	"go.probo.inc/probo/pkg/crypto/passwdhash"
+	pemutil "go.probo.inc/probo/pkg/crypto/pem"
 	"go.probo.inc/probo/pkg/esign"
 	"go.probo.inc/probo/pkg/evidencedescriber"
 	"go.probo.inc/probo/pkg/file"
 	"go.probo.inc/probo/pkg/filemanager"
+	"go.probo.inc/probo/pkg/filesign"
 	"go.probo.inc/probo/pkg/geoloc"
 	"go.probo.inc/probo/pkg/html2pdf"
 	"go.probo.inc/probo/pkg/iam"
@@ -65,10 +67,12 @@ import (
 	"go.probo.inc/probo/pkg/mailer"
 	"go.probo.inc/probo/pkg/mailman"
 	"go.probo.inc/probo/pkg/probo"
+	"go.probo.inc/probo/pkg/riskmanagement"
 	"go.probo.inc/probo/pkg/securecookie"
 	"go.probo.inc/probo/pkg/server"
 	"go.probo.inc/probo/pkg/server/trustedproxy"
 	"go.probo.inc/probo/pkg/slack"
+	"go.probo.inc/probo/pkg/thirdparty"
 	"go.probo.inc/probo/pkg/trust"
 	"go.probo.inc/probo/pkg/webhook"
 	"golang.org/x/sync/errgroup"
@@ -174,6 +178,11 @@ func New() *Implm {
 				StaleAfter:     300,
 				MaxConcurrency: 10,
 			},
+			ThirdPartyVetting: ThirdPartyVettingWorkerConfig{
+				Interval:       10,
+				StaleAfter:     1500,
+				MaxConcurrency: 1,
+			},
 		},
 	}
 }
@@ -189,6 +198,7 @@ func (impl *Implm) Run(
 	tp trace.TracerProvider,
 ) error {
 	tracer := tp.Tracer("probod")
+
 	ctx, rootSpan := tracer.Start(parentCtx, "probod.Run")
 	defer rootSpan.End()
 
@@ -206,6 +216,7 @@ func (impl *Implm) Run(
 	}
 
 	wg := sync.WaitGroup{}
+
 	ctx, cancel := context.WithCancelCause(ctx)
 	defer cancel(context.Canceled)
 
@@ -265,6 +276,7 @@ func (impl *Implm) Run(
 	}
 
 	geolocService := geoloc.NewService(pgClient)
+
 	populated, err := geolocService.IsPopulated(ctx)
 	if err != nil {
 		l.ErrorCtx(ctx, "cannot check geoloc table", log.Error(err))
@@ -278,11 +290,16 @@ func (impl *Implm) Run(
 	}
 
 	redirectURI := baseURL.WithPath(connector.CallbackPath).MustString()
+	providerRegistry := provider.NewBuiltinRegistry()
 	defaultConnectorRegistry := connector.NewConnectorRegistry()
+
 	for _, connectorCfg := range impl.cfg.Connectors {
 		if oauth2c, ok := connectorCfg.Config.(*connector.OAuth2Connector); ok {
-			connector.ApplyProviderDefaults(connectorCfg.Provider, redirectURI, oauth2c)
+			if err := providerRegistry.ApplyOAuth2Defaults(connectorCfg.Provider, redirectURI, oauth2c); err != nil {
+				return fmt.Errorf("cannot apply oauth2 defaults: %w", err)
+			}
 		}
+
 		if err := defaultConnectorRegistry.Register(connectorCfg.Provider, connectorCfg.Config); err != nil {
 			return fmt.Errorf("cannot register connector: %w", err)
 		}
@@ -298,22 +315,32 @@ func (impl *Implm) Run(
 		return err
 	}
 
-	vendorAssessor, err := impl.buildVendorAssessor(l, tp, r)
+	thirdPartyVetter, err := impl.buildThirdPartyVetter(l, tp, r)
+	if err != nil {
+		return err
+	}
+
+	trackerAgentsCfg, thirdPartyDisambiguationCfg, err := impl.buildTrackerAgentsConfig(l, tp, r)
 	if err != nil {
 		return err
 	}
 
 	fileManagerService := filemanager.NewService(s3Client)
 
-	var samlCert *x509.Certificate
-	var samlKey *rsa.PrivateKey
+	var (
+		samlCert *x509.Certificate
+		samlKey  *rsa.PrivateKey
+	)
+
 	if impl.cfg.Auth.SAML.Certificate != "" && impl.cfg.Auth.SAML.PrivateKey != "" {
 		// Decode certificate
 		certBlock, _ := pem.Decode([]byte(impl.cfg.Auth.SAML.Certificate))
 		if certBlock == nil {
 			return fmt.Errorf("cannot decode SAML certificate PEM block")
 		}
+
 		var err error
+
 		samlCert, err = x509.ParseCertificate(certBlock.Bytes)
 		if err != nil {
 			return fmt.Errorf("cannot parse SAML certificate: %w", err)
@@ -324,7 +351,9 @@ func (impl *Implm) Run(
 		if err != nil {
 			return fmt.Errorf("cannot decode SAML private key: %w", err)
 		}
+
 		var ok bool
+
 		samlKey, ok = signer.(*rsa.PrivateKey)
 		if !ok {
 			return fmt.Errorf("SAML private key is not an RSA key")
@@ -335,8 +364,11 @@ func (impl *Implm) Run(
 		return fmt.Errorf("cannot configure OAuth2 server: at least one signing key is required")
 	}
 
-	var oauth2SigningKeys oauth2server.SigningKeys
-	var hasActive bool
+	var (
+		oauth2SigningKeys oauth2server.SigningKeys
+		hasActive         bool
+	)
+
 	for _, keyCfg := range impl.cfg.Auth.OAuth2Server.SigningKeys {
 		signer, err := pemutil.DecodePrivateKey([]byte(keyCfg.PrivateKey))
 		if err != nil {
@@ -357,11 +389,14 @@ func (impl *Implm) Run(
 			hasActive = true
 		}
 
-		oauth2SigningKeys = append(oauth2SigningKeys, oauth2server.SigningKey{
-			PrivateKey: rsaKey,
-			KID:        kid,
-			Active:     keyCfg.Active,
-		})
+		oauth2SigningKeys = append(
+			oauth2SigningKeys,
+			oauth2server.SigningKey{
+				PrivateKey: rsaKey,
+				KID:        kid,
+				Active:     keyCfg.Active,
+			},
+		)
 	}
 
 	if !hasActive {
@@ -425,6 +460,7 @@ func (impl *Implm) Run(
 		if err != nil {
 			return fmt.Errorf("cannot decode ACME account key: %w", err)
 		}
+
 		l.Info("using configured ACME account key")
 	}
 
@@ -469,6 +505,9 @@ func (impl *Implm) Run(
 
 	cookieBannerService := cookiebanner.NewService(pgClient, impl.cfg.Branding)
 
+	fileService := file.NewService(pgClient, baseURL)
+	filesignService := filesign.NewService(pgClient, fileManagerService)
+
 	proboService, err := probo.NewService(
 		ctx,
 		encryptionKey,
@@ -478,9 +517,11 @@ func (impl *Implm) Run(
 		baseURL.String(),
 		impl.cfg.Auth.Cookie.Secret,
 		proboLLMClient,
-		proboAgentCfg.ModelName,
-		*proboAgentCfg.Temperature,
-		*proboAgentCfg.MaxTokens,
+		probo.LLMConfig{
+			Model:       proboAgentCfg.ModelName,
+			Temperature: ref.UnrefOrZero(proboAgentCfg.Temperature),
+			MaxTokens:   ref.UnrefOrZero(proboAgentCfg.MaxTokens),
+		},
 		html2pdfConverter,
 		acmeService,
 		fileManagerService,
@@ -490,7 +531,7 @@ func (impl *Implm) Run(
 		esignService,
 		defaultConnectorRegistry,
 		time.Duration(impl.cfg.Auth.InvitationConfirmationTokenValidity)*time.Second,
-		vendorAssessor,
+		fileService,
 	)
 	if err != nil {
 		return fmt.Errorf("cannot create probo service: %w", err)
@@ -508,23 +549,26 @@ func (impl *Implm) Run(
 		fileManagerService,
 		l,
 		slackService,
+		fileService,
 	)
-
-	fileService := file.NewService(pgClient, fileManagerService)
 
 	accessReviewService := accessreview.NewService(
 		pgClient,
 		encryptionKey,
 		defaultConnectorRegistry,
+		providerRegistry,
 		l.Named("access-review"),
 	)
+
+	thirdPartyService := thirdparty.NewService(pgClient, fileService, thirdPartyVetter)
+	riskManagementService := riskmanagement.NewService(pgClient)
 
 	serverHandler, err := server.NewServer(
 		server.Config{
 			AllowedOrigins:    impl.cfg.Api.Cors.AllowedOrigins,
 			ExtraHeaderFields: impl.cfg.Api.ExtraHeaderFields,
 			Probo:             proboService,
-			File:              fileService,
+			FileSign:          filesignService,
 			IAM:               iamService,
 			Trust:             trustService,
 			ESign:             esignService,
@@ -532,8 +576,11 @@ func (impl *Implm) Run(
 			Mailman:           mailmanService,
 			CookieBanner:      cookieBannerService,
 			Geoloc:            geolocService,
+			ThirdParty:        thirdPartyService,
+			RiskManagement:    riskManagementService,
 			Slack:             slackService,
 			ConnectorRegistry: defaultConnectorRegistry,
+			ProviderRegistry:  providerRegistry,
 			BaseURL:           baseURL,
 
 			CustomDomainCname: impl.cfg.CustomDomains.CnameTarget,
@@ -557,6 +604,7 @@ func (impl *Implm) Run(
 
 	apiServerCtx, stopApiServer := context.WithCancel(context.Background())
 	defer stopApiServer()
+
 	wg.Go(
 		func() {
 			if err := impl.runApiServer(apiServerCtx, l, r, tp, serverHandler); err != nil {
@@ -584,6 +632,7 @@ func (impl *Implm) Run(
 		worker.WithInterval(time.Duration(impl.cfg.Notifications.Mailer.MailerInterval)*time.Second),
 		worker.WithMaxConcurrency(20),
 	)
+
 	wg.Go(
 		func() {
 			if err := sendingWorker.Run(mailerCtx); err != nil {
@@ -596,6 +645,7 @@ func (impl *Implm) Run(
 	slackSender := slack.NewSender(pgClient, l.Named("slack-sender"), encryptionKey, slack.Config{
 		Interval: time.Duration(impl.cfg.Notifications.Slack.SenderInterval) * time.Second,
 	})
+
 	wg.Go(
 		func() {
 			if err := slackSender.Run(slackSenderCtx); err != nil {
@@ -611,6 +661,7 @@ func (impl *Implm) Run(
 		EncryptionKey: encryptionKey,
 		Host:          baseURL.String(),
 	})
+
 	wg.Go(
 		func() {
 			if err := webhookSender.Run(webhookSenderCtx); err != nil {
@@ -620,6 +671,7 @@ func (impl *Implm) Run(
 	)
 
 	exportJobExporterCtx, stopExportJobExporter := context.WithCancel(context.Background())
+
 	wg.Go(
 		func() {
 			if err := impl.runExportJob(exportJobExporterCtx, proboService, l.Named("export-job-exporter")); err != nil {
@@ -634,6 +686,7 @@ func (impl *Implm) Run(
 		worker.WithInterval(30*time.Second),
 	)
 	documentPDFWorkerCtx, stopDocumentPDFWorker := context.WithCancel(context.Background())
+
 	wg.Go(
 		func() {
 			if err := documentPDFWorker.Run(documentPDFWorkerCtx); err != nil {
@@ -643,6 +696,7 @@ func (impl *Implm) Run(
 	)
 
 	accessReviewWorkerCtx, stopAccessReviewWorker := context.WithCancel(context.Background())
+
 	wg.Go(
 		func() {
 			if err := accessReviewService.Run(accessReviewWorkerCtx); err != nil {
@@ -652,6 +706,7 @@ func (impl *Implm) Run(
 	)
 
 	iamServiceCtx, stopIAMService := context.WithCancel(context.Background())
+
 	wg.Go(
 		func() {
 			if err := iamService.Run(iamServiceCtx); err != nil {
@@ -661,6 +716,7 @@ func (impl *Implm) Run(
 	)
 
 	esignServiceCtx, stopESignService := context.WithCancel(context.Background())
+
 	wg.Go(
 		func() {
 			if err := esignService.Run(esignServiceCtx, trustService.EmailPresenterConfigByOrganizationID); err != nil {
@@ -669,8 +725,9 @@ func (impl *Implm) Run(
 		},
 	)
 
-	trackerPatternAnalysisWorker := cookiebanner.NewPatternAnalysisWorker(cookieBannerService, pgClient, l.Named("tracker-pattern-analysis-worker"))
+	trackerPatternAnalysisWorker := cookiebanner.NewPatternAnalysisWorker(cookieBannerService, pgClient, l)
 	trackerPatternAnalysisWorkerCtx, stopTrackerPatternAnalysisWorker := context.WithCancel(context.Background())
+
 	wg.Go(
 		func() {
 			if err := trackerPatternAnalysisWorker.Run(trackerPatternAnalysisWorkerCtx); err != nil {
@@ -679,8 +736,70 @@ func (impl *Implm) Run(
 		},
 	)
 
+	trackerPolicyWorker := probo.NewTrackerPolicyWorker(proboService.GeneratedDocuments, pgClient, l)
+	trackerPolicyWorkerCtx, stopTrackerPolicyWorker := context.WithCancel(context.Background())
+
+	wg.Go(
+		func() {
+			if err := trackerPolicyWorker.Run(trackerPolicyWorkerCtx); err != nil {
+				cancel(fmt.Errorf("tracker policy worker crashed: %w", err))
+			}
+		},
+	)
+
+	trackerMappingWorker := cookiebanner.NewTrackerMappingWorker(
+		pgClient,
+		l,
+		trackerAgentsCfg,
+		thirdPartyDisambiguationCfg,
+		time.Duration(impl.cfg.TrackerMappingWorker.StaleAfter)*time.Second,
+		worker.WithInterval(time.Duration(impl.cfg.TrackerMappingWorker.Interval)*time.Second),
+		worker.WithMaxConcurrency(impl.cfg.TrackerMappingWorker.MaxConcurrency),
+	)
+	trackerMappingWorkerCtx, stopTrackerMappingWorker := context.WithCancel(context.Background())
+
+	wg.Go(
+		func() {
+			if err := trackerMappingWorker.Run(trackerMappingWorkerCtx); err != nil {
+				cancel(fmt.Errorf("tracker mapping worker crashed: %w", err))
+			}
+		},
+	)
+
+	// The common-pattern enrichment worker needs an LLM client (it
+	// researches descriptions via the agent), so it is only started when
+	// the tracker agents are configured.
+	stopCommonPatternEnrichmentWorker := func() {}
+
+	if trackerAgentsCfg.LLMClient != nil {
+		enrichmentCfg := trackerAgentsCfg
+		enrichmentCfg.AgentTimeout = time.Duration(impl.cfg.CommonPatternEnrichmentWorker.AgentTimeout) * time.Second
+
+		commonPatternEnrichmentWorker := cookiebanner.NewCommonPatternEnrichmentWorker(
+			pgClient,
+			l,
+			enrichmentCfg,
+			time.Duration(impl.cfg.CommonPatternEnrichmentWorker.StaleAfter)*time.Second,
+			worker.WithInterval(time.Duration(impl.cfg.CommonPatternEnrichmentWorker.Interval)*time.Second),
+			worker.WithMaxConcurrency(impl.cfg.CommonPatternEnrichmentWorker.MaxConcurrency),
+		)
+
+		var commonPatternEnrichmentWorkerCtx context.Context
+
+		commonPatternEnrichmentWorkerCtx, stopCommonPatternEnrichmentWorker = context.WithCancel(context.Background())
+
+		wg.Go(
+			func() {
+				if err := commonPatternEnrichmentWorker.Run(commonPatternEnrichmentWorkerCtx); err != nil {
+					cancel(fmt.Errorf("common pattern enrichment worker crashed: %w", err))
+				}
+			},
+		)
+	}
+
 	mailingListWorker := mailman.NewMailingListWorker(mailmanService, pgClient, l.Named("mailing-list-worker"))
 	mailingListWorkerCtx, stopMailingListWorker := context.WithCancel(context.Background())
+
 	wg.Go(
 		func() {
 			if err := mailingListWorker.Run(mailingListWorkerCtx); err != nil {
@@ -693,8 +812,8 @@ func (impl *Implm) Run(
 		evidenceDescriberLLMClient,
 		evidencedescriber.Config{
 			Model:     evidenceDescriberAgentCfg.ModelName,
-			Temp:      *evidenceDescriberAgentCfg.Temperature,
-			MaxTokens: *evidenceDescriberAgentCfg.MaxTokens,
+			Temp:      ref.UnrefOrZero(evidenceDescriberAgentCfg.Temperature),
+			MaxTokens: ref.UnrefOrZero(evidenceDescriberAgentCfg.MaxTokens),
 		},
 	)
 	evidenceDescriptionWorker := probo.NewEvidenceDescriptionWorker(
@@ -709,6 +828,7 @@ func (impl *Implm) Run(
 		worker.WithMaxConcurrency(impl.cfg.EvidenceDescriber.MaxConcurrency),
 	)
 	evidenceDescriptionWorkerCtx, stopEvidenceDescriptionWorker := context.WithCancel(context.Background())
+
 	wg.Go(
 		func() {
 			if err := evidenceDescriptionWorker.Run(evidenceDescriptionWorkerCtx); err != nil {
@@ -717,8 +837,29 @@ func (impl *Implm) Run(
 		},
 	)
 
+	vettingWorker := thirdparty.NewVettingWorker(
+		pgClient,
+		thirdPartyVetter,
+		l.Named("vetting-worker"),
+		thirdparty.VettingWorkerConfig{
+			StaleAfter: time.Duration(impl.cfg.ThirdPartyVetting.StaleAfter) * time.Second,
+		},
+		worker.WithInterval(time.Duration(impl.cfg.ThirdPartyVetting.Interval)*time.Second),
+		worker.WithMaxConcurrency(impl.cfg.ThirdPartyVetting.MaxConcurrency),
+	)
+	vettingWorkerCtx, stopVettingWorker := context.WithCancel(context.Background())
+
+	wg.Go(
+		func() {
+			if err := vettingWorker.Run(vettingWorkerCtx); err != nil {
+				cancel(fmt.Errorf("vetting worker crashed: %w", err))
+			}
+		},
+	)
+
 	trustCenterServerCtx, stopTrustCenterServer := context.WithCancel(context.Background())
 	defer stopTrustCenterServer()
+
 	wg.Go(
 		func() {
 			if err := impl.runTrustCenterServer(
@@ -744,7 +885,11 @@ func (impl *Implm) Run(
 	stopWebhookSender()
 	stopESignService()
 	stopTrackerPatternAnalysisWorker()
+	stopTrackerPolicyWorker()
+	stopTrackerMappingWorker()
+	stopCommonPatternEnrichmentWorker()
 	stopMailingListWorker()
+	stopVettingWorker()
 	stopEvidenceDescriptionWorker()
 	stopDocumentPDFWorker()
 	stopExportJobExporter()
@@ -788,6 +933,7 @@ func (impl *Implm) runApiServer(
 	handler http.Handler,
 ) error {
 	tracer := tp.Tracer("go.probo.inc/probo/pkg/probod")
+
 	ctx, span := tracer.Start(ctx, "probod.runApiServer")
 	defer span.End()
 
@@ -796,6 +942,7 @@ func (impl *Implm) runApiServer(
 		span.RecordError(err)
 		return fmt.Errorf("cannot build trusted proxy middleware: %w", err)
 	}
+
 	handler = trustedProxyMiddleware(handler)
 
 	apiServer := httpserver.NewServer(
@@ -830,14 +977,17 @@ func (impl *Implm) runApiServer(
 
 		l.Info("using proxy protocol", log.Any("trusted-proxies", impl.cfg.Api.ProxyProtocol.TrustedProxies))
 	}
+
 	defer func() { _ = listener.Close() }()
 
 	serverErrCh := make(chan error, 1)
+
 	go func() {
 		err := apiServer.Serve(listener)
 		if err != nil && !errors.Is(err, http.ErrServerClosed) {
 			serverErrCh <- fmt.Errorf("cannot server http request: %w", err)
 		}
+
 		close(serverErrCh)
 	}()
 
@@ -849,6 +999,7 @@ func (impl *Implm) runApiServer(
 		if err != nil {
 			span.RecordError(err)
 		}
+
 		return err
 	case <-ctx.Done():
 	}
@@ -865,6 +1016,7 @@ func (impl *Implm) runApiServer(
 	}
 
 	span.AddEvent("API server shutdown complete")
+
 	return ctx.Err()
 }
 
@@ -923,6 +1075,7 @@ func (impl *Implm) runTrustCenterServer(
 	encryptionKey cipher.EncryptionKey,
 ) error {
 	tracer := tp.Tracer("go.probo.inc/probo/pkg/probod")
+
 	ctx, span := tracer.Start(ctx, "probod.runTrustCenterServer")
 	defer span.End()
 
@@ -945,6 +1098,7 @@ func (impl *Implm) runTrustCenterServer(
 	if certProvisioningInterval == 0 {
 		certProvisioningInterval = 30 * time.Second
 	}
+
 	certProvisioner := certmanager.NewProvisioner(pgClient, acmeService, encryptionKey, impl.cfg.CustomDomains.CnameTarget, impl.cfg.CustomDomains.CAAIssuerDomain, certProvisioningInterval, impl.cfg.CustomDomains.ResolverAddr, l)
 
 	g, ctx := errgroup.WithContext(ctx)
@@ -990,6 +1144,7 @@ func (impl *Implm) runTrustCenterServer(
 			if err != nil {
 				return fmt.Errorf("cannot listen on %q: %w", httpServer.Addr, err)
 			}
+
 			defer func() { _ = listener.Close() }()
 
 			if len(impl.cfg.TrustCenter.ProxyProtocol.TrustedProxies) > 0 {
@@ -1010,6 +1165,7 @@ func (impl *Implm) runTrustCenterServer(
 			if err := httpServer.Serve(listener); err != nil && err != http.ErrServerClosed {
 				return fmt.Errorf("cannot serve http requests: %w", err)
 			}
+
 			return nil
 		},
 	)
@@ -1048,14 +1204,15 @@ func (impl *Implm) runTrustCenterServer(
 			cert, err := certSelector.GetCertificate(hello)
 			// Silently reject connections without SNI (load balancers, health checks, scanners)
 			if err != nil {
-				var noSNIErr *certmanager.NoSNIError
-				if errors.As(err, &noSNIErr) {
+				if _, ok := errors.AsType[*certmanager.NoSNIError](err); ok {
 					return nil, nil
 				}
+
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return nil, nil
 				}
 			}
+
 			return cert, err
 		},
 		MinVersion: tls.VersionTLS12,
@@ -1078,6 +1235,7 @@ func (impl *Implm) runTrustCenterServer(
 			if err != nil {
 				return fmt.Errorf("cannot listen on %q: %w", httpsServer.Addr, err)
 			}
+
 			defer func() { _ = listener.Close() }()
 
 			if len(impl.cfg.TrustCenter.ProxyProtocol.TrustedProxies) > 0 {

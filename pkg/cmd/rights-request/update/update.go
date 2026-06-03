@@ -88,21 +88,27 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 			if cmd.Flags().Changed("type") {
 				input["requestType"] = flagType
 			}
+
 			if cmd.Flags().Changed("state") {
 				input["requestState"] = flagState
 			}
+
 			if cmd.Flags().Changed("data-subject") {
 				input["dataSubject"] = flagDataSubject
 			}
+
 			if cmd.Flags().Changed("contact") {
 				input["contact"] = flagContact
 			}
+
 			if cmd.Flags().Changed("details") {
 				input["details"] = flagDetails
 			}
+
 			if cmd.Flags().Changed("deadline") {
 				input["deadline"] = flagDeadline
 			}
+
 			if cmd.Flags().Changed("action-taken") {
 				input["actionTaken"] = flagActionTaken
 			}

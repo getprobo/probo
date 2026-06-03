@@ -15,60 +15,58 @@
 package coredata
 
 import (
-	"database/sql/driver"
+	"encoding"
 	"fmt"
 )
 
 type (
-	EvidenceState uint8
+	EvidenceState string
 )
 
 const (
-	EvidenceStateRequested EvidenceState = iota
-	EvidenceStateFulfilled
+	EvidenceStateRequested EvidenceState = "REQUESTED"
+	EvidenceStateFulfilled EvidenceState = "FULFILLED"
 )
 
-func (es EvidenceState) MarshalText() ([]byte, error) {
-	return []byte(es.String()), nil
+var (
+	_ fmt.Stringer             = EvidenceState("")
+	_ encoding.TextMarshaler   = EvidenceState("")
+	_ encoding.TextUnmarshaler = (*EvidenceState)(nil)
+)
+
+func EvidenceStates() []EvidenceState {
+	return []EvidenceState{
+		EvidenceStateRequested,
+		EvidenceStateFulfilled,
+	}
 }
 
-func (es *EvidenceState) UnmarshalText(data []byte) error {
-	val := string(data)
-
-	switch val {
-	case EvidenceStateRequested.String():
-		*es = EvidenceStateRequested
-	case EvidenceStateFulfilled.String():
-		*es = EvidenceStateFulfilled
-	default:
-		return fmt.Errorf("invalid EvidenceState value: %q", val)
+func (v EvidenceState) IsValid() bool {
+	switch v {
+	case
+		EvidenceStateRequested,
+		EvidenceStateFulfilled:
+		return true
 	}
+
+	return false
+}
+
+func (v EvidenceState) String() string {
+	return string(v)
+}
+
+func (v EvidenceState) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *EvidenceState) UnmarshalText(text []byte) error {
+	val := EvidenceState(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid EvidenceState value: %q", string(text))
+	}
+
+	*v = val
 
 	return nil
-}
-
-func (es EvidenceState) String() string {
-	var val string
-
-	switch es {
-	case EvidenceStateRequested:
-		val = "REQUESTED"
-	case EvidenceStateFulfilled:
-		val = "FULFILLED"
-	}
-
-	return val
-}
-
-func (es *EvidenceState) Scan(value any) error {
-	val, ok := value.(string)
-	if !ok {
-		return fmt.Errorf("invalid scan source for EvidenceState, expected string got %T", value)
-	}
-
-	return es.UnmarshalText([]byte(val))
-}
-
-func (es EvidenceState) Value() (driver.Value, error) {
-	return es.String(), nil
 }

@@ -67,6 +67,7 @@ func NewTrackerResourceConnectionWithFilter(
 ) *TrackerResourceConnection {
 	conn := NewTrackerResourceConnection(p, parentType, parentID)
 	conn.Filter = filter
+
 	return conn
 }
 

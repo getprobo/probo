@@ -141,6 +141,7 @@ func NewCmdViewVersion(f *cmdutil.Factory) *cobra.Command {
 			if v.PublishedAt != nil {
 				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Published:"), cmdutil.FormatTime(*v.PublishedAt))
 			}
+
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Created:"), cmdutil.FormatTime(v.CreatedAt))
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Updated:"), cmdutil.FormatTime(v.UpdatedAt))
 

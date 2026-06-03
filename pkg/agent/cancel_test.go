@@ -52,6 +52,7 @@ func (p *blockingProvider) ChatCompletion(ctx context.Context, _ *llm.ChatComple
 		p.ctxAtEnd = ctx.Err()
 		p.mu.Unlock()
 	}
+
 	return p.response, nil
 }
 
@@ -214,6 +215,7 @@ func TestRun_CtxCancelGracefulSuspend(t *testing.T) {
 			defer cancel()
 
 			done := make(chan error, 1)
+
 			go func() {
 				_, err := ag.Run(
 					ctx,
@@ -230,6 +232,7 @@ func TestRun_CtxCancelGracefulSuspend(t *testing.T) {
 			case <-time.After(2 * time.Second):
 				t.Fatal("LLM call never started")
 			}
+
 			cancel()
 			close(provider.release)
 

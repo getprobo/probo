@@ -15,7 +15,7 @@
 package coredata
 
 import (
-	"database/sql/driver"
+	"encoding"
 	"fmt"
 )
 
@@ -33,13 +33,34 @@ const (
 	ConnectorProviderBrex         ConnectorProvider = "BREX"
 	ConnectorProviderTally        ConnectorProvider = "TALLY"
 	ConnectorProviderCloudflare   ConnectorProvider = "CLOUDFLARE"
+	ConnectorProviderGrafana      ConnectorProvider = "GRAFANA"
 	ConnectorProviderOpenAI       ConnectorProvider = "OPENAI"
+	ConnectorProviderPostHog      ConnectorProvider = "POSTHOG"
 	ConnectorProviderSentry       ConnectorProvider = "SENTRY"
 	ConnectorProviderSupabase     ConnectorProvider = "SUPABASE"
 	ConnectorProviderGitHub       ConnectorProvider = "GITHUB"
 	ConnectorProviderIntercom     ConnectorProvider = "INTERCOM"
 	ConnectorProviderResend       ConnectorProvider = "RESEND"
 	ConnectorProviderMicrosoft365 ConnectorProvider = "MICROSOFT_365"
+	ConnectorProviderGitLab       ConnectorProvider = "GITLAB"
+	ConnectorProviderBitbucket    ConnectorProvider = "BITBUCKET"
+	ConnectorProviderHeroku       ConnectorProvider = "HEROKU"
+	ConnectorProviderPagerDuty    ConnectorProvider = "PAGERDUTY"
+	ConnectorProviderAsana        ConnectorProvider = "ASANA"
+	ConnectorProviderNetlify      ConnectorProvider = "NETLIFY"
+	ConnectorProviderClickUp      ConnectorProvider = "CLICKUP"
+	ConnectorProviderVercel       ConnectorProvider = "VERCEL"
+	ConnectorProviderMonday       ConnectorProvider = "MONDAY"
+	ConnectorProviderMetabase     ConnectorProvider = "METABASE"
+	ConnectorProviderTailscale    ConnectorProvider = "TAILSCALE"
+	ConnectorProviderAnthropic    ConnectorProvider = "ANTHROPIC"
+	ConnectorProviderCursor       ConnectorProvider = "CURSOR"
+)
+
+var (
+	_ fmt.Stringer             = ConnectorProvider("")
+	_ encoding.TextMarshaler   = ConnectorProvider("")
+	_ encoding.TextUnmarshaler = (*ConnectorProvider)(nil)
 )
 
 func ConnectorProviders() []ConnectorProvider {
@@ -54,72 +75,87 @@ func ConnectorProviders() []ConnectorProvider {
 		ConnectorProviderBrex,
 		ConnectorProviderTally,
 		ConnectorProviderCloudflare,
+		ConnectorProviderGrafana,
 		ConnectorProviderOpenAI,
+		ConnectorProviderPostHog,
 		ConnectorProviderSentry,
 		ConnectorProviderSupabase,
 		ConnectorProviderGitHub,
 		ConnectorProviderIntercom,
 		ConnectorProviderResend,
 		ConnectorProviderMicrosoft365,
+		ConnectorProviderGitLab,
+		ConnectorProviderBitbucket,
+		ConnectorProviderHeroku,
+		ConnectorProviderPagerDuty,
+		ConnectorProviderAsana,
+		ConnectorProviderNetlify,
+		ConnectorProviderClickUp,
+		ConnectorProviderVercel,
+		ConnectorProviderMonday,
+		ConnectorProviderMetabase,
+		ConnectorProviderTailscale,
+		ConnectorProviderAnthropic,
+		ConnectorProviderCursor,
 	}
 }
 
-func (cp ConnectorProvider) String() string {
-	return string(cp)
+func (v ConnectorProvider) IsValid() bool {
+	switch v {
+	case
+		ConnectorProviderSlack,
+		ConnectorProviderGoogleWorkspace,
+		ConnectorProviderLinear,
+		ConnectorProviderOnePassword,
+		ConnectorProviderHubSpot,
+		ConnectorProviderDocuSign,
+		ConnectorProviderNotion,
+		ConnectorProviderBrex,
+		ConnectorProviderTally,
+		ConnectorProviderCloudflare,
+		ConnectorProviderGrafana,
+		ConnectorProviderOpenAI,
+		ConnectorProviderPostHog,
+		ConnectorProviderSentry,
+		ConnectorProviderSupabase,
+		ConnectorProviderGitHub,
+		ConnectorProviderIntercom,
+		ConnectorProviderResend,
+		ConnectorProviderMicrosoft365,
+		ConnectorProviderGitLab,
+		ConnectorProviderBitbucket,
+		ConnectorProviderHeroku,
+		ConnectorProviderPagerDuty,
+		ConnectorProviderAsana,
+		ConnectorProviderNetlify,
+		ConnectorProviderClickUp,
+		ConnectorProviderVercel,
+		ConnectorProviderMonday,
+		ConnectorProviderMetabase,
+		ConnectorProviderTailscale,
+		ConnectorProviderAnthropic,
+		ConnectorProviderCursor:
+		return true
+	}
+
+	return false
 }
 
-func (cp *ConnectorProvider) Scan(value any) error {
-	var s string
-	switch v := value.(type) {
-	case string:
-		s = v
-	case []byte:
-		s = string(v)
-	default:
-		return fmt.Errorf("unsupported type for ConnectorProvider: %T", value)
+func (v ConnectorProvider) String() string {
+	return string(v)
+}
+
+func (v ConnectorProvider) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *ConnectorProvider) UnmarshalText(text []byte) error {
+	val := ConnectorProvider(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid ConnectorProvider value: %q", string(text))
 	}
 
-	switch s {
-	case "SLACK":
-		*cp = ConnectorProviderSlack
-	case "GOOGLE_WORKSPACE":
-		*cp = ConnectorProviderGoogleWorkspace
-	case "LINEAR":
-		*cp = ConnectorProviderLinear
-	case "ONE_PASSWORD":
-		*cp = ConnectorProviderOnePassword
-	case "HUBSPOT":
-		*cp = ConnectorProviderHubSpot
-	case "DOCUSIGN":
-		*cp = ConnectorProviderDocuSign
-	case "NOTION":
-		*cp = ConnectorProviderNotion
-	case "BREX":
-		*cp = ConnectorProviderBrex
-	case "TALLY":
-		*cp = ConnectorProviderTally
-	case "CLOUDFLARE":
-		*cp = ConnectorProviderCloudflare
-	case "OPENAI":
-		*cp = ConnectorProviderOpenAI
-	case "SENTRY":
-		*cp = ConnectorProviderSentry
-	case "SUPABASE":
-		*cp = ConnectorProviderSupabase
-	case "GITHUB":
-		*cp = ConnectorProviderGitHub
-	case "INTERCOM":
-		*cp = ConnectorProviderIntercom
-	case "RESEND":
-		*cp = ConnectorProviderResend
-	case "MICROSOFT_365":
-		*cp = ConnectorProviderMicrosoft365
-	default:
-		return fmt.Errorf("invalid ConnectorProvider value: %q", s)
-	}
+	*v = val
+
 	return nil
-}
-
-func (cp ConnectorProvider) Value() (driver.Value, error) {
-	return cp.String(), nil
 }

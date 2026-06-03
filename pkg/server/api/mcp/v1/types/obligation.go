@@ -47,6 +47,7 @@ func NewListObligationsOutput(obligationPage *page.Page[*coredata.Obligation, co
 	}
 
 	var nextCursor *page.CursorKey
+
 	if len(obligationPage.Data) > 0 {
 		cursorKey := obligationPage.Data[len(obligationPage.Data)-1].CursorKey(obligationPage.Cursor.OrderBy.Field)
 		nextCursor = &cursorKey
@@ -65,6 +66,7 @@ func NewListControlObligationsOutput(obligationPage *page.Page[*coredata.Obligat
 	}
 
 	var nextCursor *page.CursorKey
+
 	if len(obligationPage.Data) > 0 {
 		cursorKey := obligationPage.Data[len(obligationPage.Data)-1].CursorKey(obligationPage.Cursor.OrderBy.Field)
 		nextCursor = &cursorKey
@@ -83,6 +85,7 @@ func NewListRiskObligationsOutput(obligationPage *page.Page[*coredata.Obligation
 	}
 
 	var nextCursor *page.CursorKey
+
 	if len(obligationPage.Data) > 0 {
 		cursorKey := obligationPage.Data[len(obligationPage.Data)-1].CursorKey(obligationPage.Cursor.OrderBy.Field)
 		nextCursor = &cursorKey

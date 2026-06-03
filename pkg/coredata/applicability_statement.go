@@ -25,6 +25,7 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/iam/policy"
 	"go.probo.inc/probo/pkg/page"
 )
 
@@ -34,7 +35,6 @@ type (
 		StatementOfApplicabilityID gid.GID   `db:"statement_of_applicability_id"`
 		ControlID                  gid.GID   `db:"control_id"`
 		OrganizationID             gid.GID   `db:"organization_id"`
-		SnapshotID                 *gid.GID  `db:"snapshot_id"`
 		Applicability              bool      `db:"applicability"`
 		Justification              *string   `db:"justification"`
 		CreatedAt                  time.Time `db:"created_at"`
@@ -58,18 +58,43 @@ func (s ApplicabilityStatement) CursorKey(orderBy ApplicabilityStatementOrderFie
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
-func (s *ApplicabilityStatement) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
-	q := `SELECT organization_id FROM applicability_statements WHERE id = $1 LIMIT 1;`
+func (s *ApplicabilityStatement) AuthorizationAttributes(
+	ctx context.Context,
+	conn pg.Querier,
+	resourceIDs []gid.GID,
+) (policy.AttributesByID, error) {
+	q := `SELECT id, organization_id FROM applicability_statements WHERE id = ANY(@resource_ids::text[])`
 
-	var organizationID gid.GID
-	if err := conn.QueryRow(ctx, q, s.ID).Scan(&organizationID); err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, ErrResourceNotFound
-		}
-		return nil, fmt.Errorf("cannot query applicability statement authorization attributes: %w", err)
+	args := pgx.StrictNamedArgs{
+		"resource_ids": resourceIDs,
 	}
 
-	return map[string]string{"organization_id": organizationID.String()}, nil
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return nil, fmt.Errorf("cannot query authorization attributes: %w", err)
+	}
+
+	defer rows.Close()
+
+	attrsByID := make(policy.AttributesByID)
+
+	for rows.Next() {
+		var id, organizationID gid.GID
+
+		if err := rows.Scan(&id, &organizationID); err != nil {
+			return nil, fmt.Errorf("cannot scan authorization attributes: %w", err)
+		}
+
+		attrsByID[id] = policy.Attributes{
+			"organization_id": organizationID.String(),
+		}
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("cannot iterate authorization attributes: %w", err)
+	}
+
+	return attrsByID, nil
 }
 
 func (sac *ApplicabilityStatement) LoadByID(
@@ -85,7 +110,6 @@ WITH stmt AS (
         a.statement_of_applicability_id,
         a.control_id,
         a.organization_id,
-        a.snapshot_id,
         a.applicability,
         a.justification,
         a.created_at,
@@ -107,7 +131,6 @@ SELECT
     statement_of_applicability_id,
     control_id,
     organization_id,
-    snapshot_id,
     applicability,
     justification,
     created_at,
@@ -134,6 +157,7 @@ LIMIT 1;
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
 		}
+
 		return fmt.Errorf("cannot collect applicability statement: %w", err)
 	}
 
@@ -162,7 +186,6 @@ SELECT
     soac.statement_of_applicability_id,
     soac.control_id,
     soac.organization_id,
-    soac.snapshot_id,
     soac.applicability,
     soac.justification,
     soac.created_at,
@@ -198,10 +221,12 @@ LIMIT 1;
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
 		}
+
 		return fmt.Errorf("cannot collect applicability statement: %w", err)
 	}
 
 	*sac = control
+
 	return nil
 }
 
@@ -218,7 +243,6 @@ INSERT INTO
         control_id,
         organization_id,
         tenant_id,
-        snapshot_id,
         applicability,
         justification,
         created_at,
@@ -230,7 +254,6 @@ VALUES (
     @control_id,
     @organization_id,
     @tenant_id,
-    @snapshot_id,
     @applicability,
     @justification,
     @created_at,
@@ -244,18 +267,16 @@ VALUES (
 		"control_id":                    sac.ControlID,
 		"organization_id":               sac.OrganizationID,
 		"tenant_id":                     scope.GetTenantID(),
-		"snapshot_id":                   sac.SnapshotID,
 		"applicability":                 sac.Applicability,
 		"justification":                 sac.Justification,
 		"created_at":                    sac.CreatedAt,
 		"updated_at":                    sac.UpdatedAt,
 	}
-	_, err := conn.Exec(ctx, q, args)
 
+	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
-		var pgErr *pgconn.PgError
-		if errors.As(err, &pgErr) {
-			if pgErr.Code == "23505" {
+		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
+			if pgErr.Code == "23505" && pgErr.ConstraintName == "states_of_applicability_contr_state_of_applicability_id_con_key" {
 				return ErrResourceAlreadyExists
 			}
 		}
@@ -364,6 +385,7 @@ WHERE statement_of_applicability_id IN (SELECT id FROM current_soa)
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	_, err := conn.Exec(ctx, q, args)
+
 	return err
 }
 
@@ -384,13 +406,9 @@ WHERE
 	args := pgx.StrictNamedArgs{"id": applicabilityStatementID}
 	maps.Copy(args, scope.SQLArguments())
 
-	result, err := conn.Exec(ctx, q, args)
+	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
 		return fmt.Errorf("cannot delete applicability statement: %w", err)
-	}
-
-	if result.RowsAffected() == 0 {
-		return ErrResourceNotFound
 	}
 
 	return nil
@@ -410,7 +428,6 @@ WITH stmt AS (
         a.statement_of_applicability_id,
         a.control_id,
         a.organization_id,
-        a.snapshot_id,
         a.applicability,
         a.justification,
         a.created_at,
@@ -432,7 +449,6 @@ SELECT
     statement_of_applicability_id,
     control_id,
     organization_id,
-    snapshot_id,
     applicability,
     justification,
     created_at,
@@ -462,6 +478,7 @@ WHERE
 	}
 
 	*sacs = controls
+
 	return nil
 }
 
@@ -477,7 +494,6 @@ SELECT
     a.statement_of_applicability_id,
     a.control_id,
     a.organization_id,
-    a.snapshot_id,
     a.applicability,
     a.justification,
     a.created_at,
@@ -513,6 +529,7 @@ ORDER BY
 	}
 
 	*sacs = controls
+
 	return nil
 }
 
@@ -558,7 +575,6 @@ WITH soac_ctrl AS (
         soac.statement_of_applicability_id,
         soac.control_id,
         soac.organization_id,
-        soac.snapshot_id,
         soac.applicability,
         soac.justification,
         soac.created_at,
@@ -576,14 +592,12 @@ WITH soac_ctrl AS (
     WHERE
         soac.%[1]s
         AND soac.control_id = @control_id
-        AND soa.snapshot_id IS NULL
 )
 SELECT
     id,
     statement_of_applicability_id,
     control_id,
     organization_id,
-    snapshot_id,
     applicability,
     justification,
     created_at,
@@ -612,5 +626,6 @@ WHERE
 	}
 
 	*sacs = controls
+
 	return nil
 }

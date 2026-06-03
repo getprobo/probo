@@ -54,7 +54,7 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 		flagAmount          int
 		flagOwner           string
 		flagDataTypesStored string
-		flagVendorIDs       []string
+		flagThirdPartyIDs   []string
 	)
 
 	cmd := &cobra.Command{
@@ -87,12 +87,15 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 			if cmd.Flags().Changed("name") {
 				input["name"] = flagName
 			}
+
 			if cmd.Flags().Changed("asset-type") {
 				input["assetType"] = flagAssetType
 			}
+
 			if cmd.Flags().Changed("amount") {
 				input["amount"] = flagAmount
 			}
+
 			if cmd.Flags().Changed("owner") {
 				if flagOwner == "" {
 					input["ownerId"] = nil
@@ -100,11 +103,13 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 					input["ownerId"] = flagOwner
 				}
 			}
+
 			if cmd.Flags().Changed("data-types-stored") {
 				input["dataTypesStored"] = flagDataTypesStored
 			}
-			if cmd.Flags().Changed("vendor-ids") {
-				input["vendorIds"] = flagVendorIDs
+
+			if cmd.Flags().Changed("thirdParty-ids") {
+				input["thirdPartyIds"] = flagThirdPartyIDs
 			}
 
 			if len(input) == 1 {
@@ -141,7 +146,7 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().IntVar(&flagAmount, "amount", 0, "Asset amount")
 	cmd.Flags().StringVar(&flagOwner, "owner", "", "Owner profile ID")
 	cmd.Flags().StringVar(&flagDataTypesStored, "data-types-stored", "", "Data types stored")
-	cmd.Flags().StringSliceVar(&flagVendorIDs, "vendor-ids", nil, "Vendor IDs (comma-separated)")
+	cmd.Flags().StringSliceVar(&flagThirdPartyIDs, "thirdParty-ids", nil, "ThirdParty IDs (comma-separated)")
 
 	return cmd
 }

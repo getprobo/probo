@@ -83,50 +83,55 @@ const (
 	ActionTrustCenterFileDelete     = "core:trust-center-file:delete"
 	ActionTrustCenterFileCreate     = "core:trust-center-file:create"
 
-	// Vendor actions
-	ActionVendorList    = "core:vendor:list"
-	ActionVendorGet     = "core:vendor:get"
-	ActionVendorCreate  = "core:vendor:create"
-	ActionVendorUpdate  = "core:vendor:update"
-	ActionVendorDelete  = "core:vendor:delete"
-	ActionVendorAssess  = "core:vendor:assess"
-	ActionVendorPublish = "core:vendor:publish"
+	// ThirdParty actions
+	ActionThirdPartyList    = "core:thirdParty:list"
+	ActionThirdPartyGet     = "core:thirdParty:get"
+	ActionThirdPartyCreate  = "core:thirdParty:create"
+	ActionThirdPartyUpdate  = "core:thirdParty:update"
+	ActionThirdPartyDelete  = "core:thirdParty:delete"
+	ActionThirdPartyVet     = "core:thirdParty:vet"
+	ActionThirdPartyPublish = "core:thirdParty:publish"
 
-	// VendorContact actions
-	ActionVendorContactGet    = "core:vendor-contact:get"
-	ActionVendorContactList   = "core:vendor-contact:list"
-	ActionVendorContactCreate = "core:vendor-contact:create"
-	ActionVendorContactUpdate = "core:vendor-contact:update"
-	ActionVendorContactDelete = "core:vendor-contact:delete"
+	// ThirdPartyRelation actions
+	ActionThirdPartyRelationCreate = "core:thirdParty-relation:create"
+	ActionThirdPartyRelationDelete = "core:thirdParty-relation:delete"
+	ActionThirdPartyRelationList   = "core:thirdParty-relation:list"
 
-	// VendorService actions
-	ActionVendorServiceGet    = "core:vendor-service:get"
-	ActionVendorServiceList   = "core:vendor-service:list"
-	ActionVendorServiceCreate = "core:vendor-service:create"
-	ActionVendorServiceUpdate = "core:vendor-service:update"
-	ActionVendorServiceDelete = "core:vendor-service:delete"
+	// ThirdPartyContact actions
+	ActionThirdPartyContactGet    = "core:thirdParty-contact:get"
+	ActionThirdPartyContactList   = "core:thirdParty-contact:list"
+	ActionThirdPartyContactCreate = "core:thirdParty-contact:create"
+	ActionThirdPartyContactUpdate = "core:thirdParty-contact:update"
+	ActionThirdPartyContactDelete = "core:thirdParty-contact:delete"
 
-	// VendorComplianceReport actions
-	ActionVendorComplianceReportGet    = "core:vendor-compliance-report:get"
-	ActionVendorComplianceReportList   = "core:vendor-compliance-report:list"
-	ActionVendorComplianceReportUpload = "core:vendor-compliance-report:upload"
-	ActionVendorComplianceReportDelete = "core:vendor-compliance-report:delete"
+	// ThirdPartyService actions
+	ActionThirdPartyServiceGet    = "core:thirdParty-service:get"
+	ActionThirdPartyServiceList   = "core:thirdParty-service:list"
+	ActionThirdPartyServiceCreate = "core:thirdParty-service:create"
+	ActionThirdPartyServiceUpdate = "core:thirdParty-service:update"
+	ActionThirdPartyServiceDelete = "core:thirdParty-service:delete"
 
-	// VendorBusinessAssociateAgreement actions
-	ActionVendorBusinessAssociateAgreementGet    = "core:vendor-business-associate-agreement:get"
-	ActionVendorBusinessAssociateAgreementUpload = "core:vendor-business-associate-agreement:upload"
-	ActionVendorBusinessAssociateAgreementUpdate = "core:vendor-business-associate-agreement:update"
-	ActionVendorBusinessAssociateAgreementDelete = "core:vendor-business-associate-agreement:delete"
+	// ThirdPartyComplianceReport actions
+	ActionThirdPartyComplianceReportGet    = "core:thirdParty-compliance-report:get"
+	ActionThirdPartyComplianceReportList   = "core:thirdParty-compliance-report:list"
+	ActionThirdPartyComplianceReportUpload = "core:thirdParty-compliance-report:upload"
+	ActionThirdPartyComplianceReportDelete = "core:thirdParty-compliance-report:delete"
 
-	// VendorDataPrivacyAgreement actions
-	ActionVendorDataPrivacyAgreementGet    = "core:vendor-data-privacy-agreement:get"
-	ActionVendorDataPrivacyAgreementUpload = "core:vendor-data-privacy-agreement:upload"
-	ActionVendorDataPrivacyAgreementUpdate = "core:vendor-data-privacy-agreement:update"
-	ActionVendorDataPrivacyAgreementDelete = "core:vendor-data-privacy-agreement:delete"
+	// ThirdPartyBusinessAssociateAgreement actions
+	ActionThirdPartyBusinessAssociateAgreementGet    = "core:thirdParty-business-associate-agreement:get"
+	ActionThirdPartyBusinessAssociateAgreementUpload = "core:thirdParty-business-associate-agreement:upload"
+	ActionThirdPartyBusinessAssociateAgreementUpdate = "core:thirdParty-business-associate-agreement:update"
+	ActionThirdPartyBusinessAssociateAgreementDelete = "core:thirdParty-business-associate-agreement:delete"
 
-	// VendorRiskAssessment actions
-	ActionVendorRiskAssessmentCreate = "core:vendor-risk-assessment:create"
-	ActionVendorRiskAssessmentList   = "core:vendor-risk-assessment:list"
+	// ThirdPartyDataPrivacyAgreement actions
+	ActionThirdPartyDataPrivacyAgreementGet    = "core:thirdParty-data-privacy-agreement:get"
+	ActionThirdPartyDataPrivacyAgreementUpload = "core:thirdParty-data-privacy-agreement:upload"
+	ActionThirdPartyDataPrivacyAgreementUpdate = "core:thirdParty-data-privacy-agreement:update"
+	ActionThirdPartyDataPrivacyAgreementDelete = "core:thirdParty-data-privacy-agreement:delete"
+
+	// ThirdPartyRiskAssessment actions
+	ActionThirdPartyRiskAssessmentCreate = "core:thirdParty-risk-assessment:create"
+	ActionThirdPartyRiskAssessmentList   = "core:thirdParty-risk-assessment:list"
 
 	// Framework actions
 	ActionFrameworkGet    = "core:framework:get"
@@ -153,15 +158,17 @@ const (
 	ActionControlObligationMappingDelete = "core:control:delete-obligation-mapping"
 
 	// Measure actions
-	ActionMeasureGet                   = "core:measure:get"
-	ActionMeasureList                  = "core:measure:list"
-	ActionMeasureCreate                = "core:measure:create"
-	ActionMeasureUpdate                = "core:measure:update"
-	ActionMeasureDelete                = "core:measure:delete"
-	ActionMeasureEvidenceUpload        = "core:measure:upload-evidence"
-	ActionMeasureImport                = "core:measure:import"
-	ActionMeasureDocumentMappingCreate = "core:measure:create-document-mapping"
-	ActionMeasureDocumentMappingDelete = "core:measure:delete-document-mapping"
+	ActionMeasureGet                     = "core:measure:get"
+	ActionMeasureList                    = "core:measure:list"
+	ActionMeasureCreate                  = "core:measure:create"
+	ActionMeasureUpdate                  = "core:measure:update"
+	ActionMeasureDelete                  = "core:measure:delete"
+	ActionMeasureEvidenceUpload          = "core:measure:upload-evidence"
+	ActionMeasureImport                  = "core:measure:import"
+	ActionMeasureDocumentMappingCreate   = "core:measure:create-document-mapping"
+	ActionMeasureDocumentMappingDelete   = "core:measure:delete-document-mapping"
+	ActionMeasureThirdPartyMappingCreate = "core:measure:create-third-party-mapping"
+	ActionMeasureThirdPartyMappingDelete = "core:measure:delete-third-party-mapping"
 
 	// Task actions
 	ActionTaskGet      = "core:task:get"
@@ -396,6 +403,56 @@ const (
 	ActionCookieCategoryUpdate = "core:cookie-category:update"
 	ActionCookieCategoryDelete = "core:cookie-category:delete"
 
+	// RiskAssessment actions
+	ActionRiskAssessmentGet    = "core:risk-assessment:get"
+	ActionRiskAssessmentList   = "core:risk-assessment:list"
+	ActionRiskAssessmentCreate = "core:risk-assessment:create"
+	ActionRiskAssessmentUpdate = "core:risk-assessment:update"
+	ActionRiskAssessmentDelete = "core:risk-assessment:delete"
+
+	// RiskAssessmentScope actions
+	ActionRiskAssessmentScopeGet    = "core:risk-assessment-scope:get"
+	ActionRiskAssessmentScopeList   = "core:risk-assessment-scope:list"
+	ActionRiskAssessmentScopeCreate = "core:risk-assessment-scope:create"
+	ActionRiskAssessmentScopeUpdate = "core:risk-assessment-scope:update"
+	ActionRiskAssessmentScopeDelete = "core:risk-assessment-scope:delete"
+
+	// RiskAssessmentNode actions
+	ActionRiskAssessmentNodeGet    = "core:risk-assessment-node:get"
+	ActionRiskAssessmentNodeList   = "core:risk-assessment-node:list"
+	ActionRiskAssessmentNodeCreate = "core:risk-assessment-node:create"
+	ActionRiskAssessmentNodeUpdate = "core:risk-assessment-node:update"
+	ActionRiskAssessmentNodeDelete = "core:risk-assessment-node:delete"
+
+	// RiskAssessmentProcess actions
+	ActionRiskAssessmentProcessGet    = "core:risk-assessment-process:get"
+	ActionRiskAssessmentProcessList   = "core:risk-assessment-process:list"
+	ActionRiskAssessmentProcessCreate = "core:risk-assessment-process:create"
+	ActionRiskAssessmentProcessUpdate = "core:risk-assessment-process:update"
+	ActionRiskAssessmentProcessDelete = "core:risk-assessment-process:delete"
+
+	// RiskAssessmentThreat actions
+	ActionRiskAssessmentThreatGet    = "core:risk-assessment-threat:get"
+	ActionRiskAssessmentThreatList   = "core:risk-assessment-threat:list"
+	ActionRiskAssessmentThreatCreate = "core:risk-assessment-threat:create"
+	ActionRiskAssessmentThreatUpdate = "core:risk-assessment-threat:update"
+	ActionRiskAssessmentThreatDelete = "core:risk-assessment-threat:delete"
+
+	// RiskAssessmentScenario actions
+	ActionRiskAssessmentScenarioGet    = "core:risk-assessment-scenario:get"
+	ActionRiskAssessmentScenarioList   = "core:risk-assessment-scenario:list"
+	ActionRiskAssessmentScenarioCreate = "core:risk-assessment-scenario:create"
+	ActionRiskAssessmentScenarioUpdate = "core:risk-assessment-scenario:update"
+	ActionRiskAssessmentScenarioDelete = "core:risk-assessment-scenario:delete"
+
+	// RiskAssessmentScenarioThreat actions
+	ActionRiskAssessmentScenarioThreatLink   = "core:risk-assessment-scenario-threat:create"
+	ActionRiskAssessmentScenarioThreatUnlink = "core:risk-assessment-scenario-threat:delete"
+
+	// RiskAssessmentScenarioRisk actions
+	ActionRiskAssessmentScenarioRiskLink   = "core:risk-assessment-scenario-risk:create"
+	ActionRiskAssessmentScenarioRiskUnlink = "core:risk-assessment-scenario-risk:delete"
+
 	// Cookie actions
 	ActionCookieGet    = "core:cookie:get"
 	ActionCookieList   = "core:cookie:list"
@@ -419,4 +476,12 @@ const (
 
 	// CookieConsentRecord actions
 	ActionCookieConsentRecordList = "core:cookie-consent-record:list"
+
+	// CommonThirdParty actions (global catalog, no organization scope).
+	ActionCommonThirdPartyGet  = "core:common-third-party:get"
+	ActionCommonThirdPartyList = "core:common-third-party:list"
+
+	// ElectronicSignature actions (tenant-scoped via the related document
+	// version signature / trust center access).
+	ActionElectronicSignatureGet = "core:electronic-signature:get"
 )

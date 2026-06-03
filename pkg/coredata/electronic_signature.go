@@ -27,6 +27,7 @@ import (
 	"go.gearno.de/x/ref"
 	"go.probo.inc/probo/pkg/crypto/hash"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/iam/policy"
 )
 
 type ElectronicSignature struct {
@@ -39,6 +40,7 @@ type ElectronicSignature struct {
 	FileID                         gid.GID                         `db:"file_id"`
 	SignerEmail                    string                          `db:"signer_email"`
 	ConsentText                    string                          `db:"consent_text"`
+	EmailSubject                   string                          `db:"email_subject"`
 	SignerFullName                 *string                         `db:"signer_full_name"`
 	SignerIPAddress                *string                         `db:"signer_ip_address"`
 	SignerUserAgent                *string                         `db:"signer_user_agent"`
@@ -56,6 +58,43 @@ type ElectronicSignature struct {
 	ProcessingStartedAt            *time.Time                      `db:"processing_started_at"`
 	CreatedAt                      time.Time                       `db:"created_at"`
 	UpdatedAt                      time.Time                       `db:"updated_at"`
+}
+
+func (es *ElectronicSignature) AuthorizationAttributes(
+	ctx context.Context,
+	conn pg.Querier,
+	resourceIDs []gid.GID,
+) (policy.AttributesByID, error) {
+	q := `SELECT id, organization_id FROM electronic_signatures WHERE id = ANY(@resource_ids::text[])`
+
+	args := pgx.StrictNamedArgs{
+		"resource_ids": resourceIDs,
+	}
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return nil, fmt.Errorf("cannot query electronic signature authorization attributes: %w", err)
+	}
+	defer rows.Close()
+
+	attrsByID := make(policy.AttributesByID)
+
+	for rows.Next() {
+		var id, organizationID gid.GID
+		if err := rows.Scan(&id, &organizationID); err != nil {
+			return nil, fmt.Errorf("cannot scan electronic signature authorization attributes: %w", err)
+		}
+
+		attrsByID[id] = policy.Attributes{
+			"organization_id": organizationID.String(),
+		}
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("cannot iterate electronic signature authorization attributes: %w", err)
+	}
+
+	return attrsByID, nil
 }
 
 func (es *ElectronicSignature) NewEvent(
@@ -85,11 +124,11 @@ func (es *ElectronicSignature) Insert(
 	q := `
 INSERT INTO electronic_signatures (
 	id, tenant_id, organization_id, status, document_type, document_name, file_id,
-	signer_email, consent_text, seal_version, attempt_count, max_attempts,
+	signer_email, consent_text, email_subject, seal_version, attempt_count, max_attempts,
 	created_at, updated_at
 ) VALUES (
 	@id, @tenant_id, @organization_id, @status, @document_type, @document_name, @file_id,
-	@signer_email, @consent_text, @seal_version, @attempt_count, @max_attempts,
+	@signer_email, @consent_text, @email_subject, @seal_version, @attempt_count, @max_attempts,
 	@created_at, @updated_at
 )
 `
@@ -103,6 +142,7 @@ INSERT INTO electronic_signatures (
 		"file_id":         es.FileID,
 		"signer_email":    es.SignerEmail,
 		"consent_text":    es.ConsentText,
+		"email_subject":   es.EmailSubject,
 		"seal_version":    es.SealVersion,
 		"attempt_count":   es.AttemptCount,
 		"max_attempts":    es.MaxAttempts,
@@ -187,7 +227,7 @@ func (es *ElectronicSignature) LoadByID(
 	q := `
 SELECT
 	id, tenant_id, organization_id, status, document_type, document_name, file_id,
-	signer_email, consent_text, signer_full_name, signer_ip_address,
+	signer_email, consent_text, email_subject, signer_full_name, signer_ip_address,
 	signer_user_agent, file_hash, seal, seal_version, tsa_token, signed_at,
 	certificate_file_id, certificate_processing_started_at,
 	attempt_count, max_attempts, last_attempted_at, last_error,
@@ -211,10 +251,12 @@ LIMIT 1
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
 		}
+
 		return fmt.Errorf("cannot collect electronic signature: %w", err)
 	}
 
 	*es = sig
+
 	return nil
 }
 
@@ -225,7 +267,7 @@ func (es *ElectronicSignature) LoadNextAcceptedForUpdateSkipLocked(
 	q := `
 SELECT
 	id, tenant_id, organization_id, status, document_type, document_name, file_id,
-	signer_email, consent_text, signer_full_name, signer_ip_address,
+	signer_email, consent_text, email_subject, signer_full_name, signer_ip_address,
 	signer_user_agent, file_hash, seal, seal_version, tsa_token, signed_at,
 	certificate_file_id, certificate_processing_started_at,
 	attempt_count, max_attempts, last_attempted_at, last_error,
@@ -247,10 +289,12 @@ FOR UPDATE SKIP LOCKED
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
 		}
+
 		return fmt.Errorf("cannot collect electronic signature: %w", err)
 	}
 
 	*es = sig
+
 	return nil
 }
 
@@ -261,7 +305,7 @@ func (es *ElectronicSignature) LoadNextCompletedWithoutCertificateForUpdate(
 	q := `
 SELECT
 	id, tenant_id, organization_id, status, document_type, document_name, file_id,
-	signer_email, consent_text, signer_full_name, signer_ip_address,
+	signer_email, consent_text, email_subject, signer_full_name, signer_ip_address,
 	signer_user_agent, file_hash, seal, seal_version, tsa_token, signed_at,
 	certificate_file_id, certificate_processing_started_at,
 	attempt_count, max_attempts, last_attempted_at, last_error,
@@ -286,10 +330,12 @@ FOR UPDATE SKIP LOCKED
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
 		}
+
 		return fmt.Errorf("cannot collect electronic signature: %w", err)
 	}
 
 	*es = sig
+
 	return nil
 }
 
@@ -304,6 +350,7 @@ SET status = 'ACCEPTED', processing_started_at = NULL, updated_at = NOW()
 WHERE status = 'PROCESSING'
 	AND processing_started_at < NOW() - $1::interval
 `
+
 	_, err := conn.Exec(ctx, q, staleAfter)
 	if err != nil {
 		return fmt.Errorf("cannot reset stale processing signatures: %w", err)
@@ -344,12 +391,14 @@ func (es *ElectronicSignature) computeSealV1() (string, error) {
 		if f == "" {
 			return "", fmt.Errorf("seal field %d must not be empty", i)
 		}
+
 		if strings.Contains(f, "\n") {
 			return "", fmt.Errorf("seal field %d must not contain newline", i)
 		}
 	}
 
 	input := strings.Join(fields, "\n")
+
 	return hash.SHA256HexString(input), nil
 }
 
@@ -367,6 +416,7 @@ WHERE status = 'COMPLETED'
 	AND certificate_processing_started_at < NOW() - $1::interval
 	AND attempt_count < max_attempts
 `
+
 	_, err := conn.Exec(ctx, q, staleAfter)
 	if err != nil {
 		return fmt.Errorf("cannot reset stale certificate processing: %w", err)

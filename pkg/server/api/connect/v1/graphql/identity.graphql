@@ -28,13 +28,22 @@ type Identity implements Node {
     after: CursorKey
     last: Int
     before: CursorKey
-  ): PersonalAPIKeyConnection @goField(forceResolver: true)
+  ): PersonalAPIKeyConnection
+    @goField(forceResolver: true)
+    @authentication(required: PRESENT)
+    @sessionOnly
+
+  invitingOrganizations: [Organization!]!
+    @goField(forceResolver: true)
+    @authentication(required: PRESENT)
+    @sessionOnly
 
   ssoLoginURL: String
     @goField(forceResolver: true)
-    @session(required: PRESENT)
+    @authentication(required: PRESENT)
+    @sessionOnly
 
   permission(action: String!): Boolean!
     @goField(forceResolver: true)
-    @session(required: PRESENT)
+    @authentication(required: PRESENT)
 }

@@ -166,8 +166,26 @@ func TestActionMatcher_Matches(t *testing.T) {
 			target:  "documents:document:read",
 			want:    false,
 		},
+		{
+			name:    "two-part pattern without wildcard is invalid",
+			pattern: "iam:identity",
+			target:  "iam:identity:get",
+			want:    false,
+		},
 
 		// Invalid targets
+		{
+			name:    "single-part non-wildcard pattern is invalid",
+			pattern: "iam",
+			target:  "iam:identity:get",
+			want:    false,
+		},
+		{
+			name:    "pattern with too many parts is invalid",
+			pattern: "iam:identity:get:extra",
+			target:  "iam:identity:get",
+			want:    false,
+		},
 		{
 			name:    "invalid target - too few parts",
 			pattern: "iam:identity:get",

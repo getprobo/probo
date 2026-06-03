@@ -32,6 +32,7 @@ func StampSignatureID(pdfData []byte, signatureID string) ([]byte, error) {
 	}
 
 	reader := bytes.NewReader(pdfData)
+
 	var buf bytes.Buffer
 
 	if err := api.AddWatermarks(reader, &buf, nil, wm, nil); err != nil {

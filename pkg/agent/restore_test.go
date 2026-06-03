@@ -43,6 +43,7 @@ func (s *memoryCheckpointer) Save(_ context.Context, runID string, cp *agent.Che
 
 	clone := *cp
 	s.checkpoints[runID] = &clone
+
 	return nil
 }
 
@@ -56,6 +57,7 @@ func (s *memoryCheckpointer) Load(_ context.Context, runID string) (*agent.Check
 	}
 
 	clone := *cp
+
 	return &clone, nil
 }
 
@@ -68,6 +70,7 @@ func (r *simpleRegistry) Agent(name string) (*agent.Agent, error) {
 	if !ok {
 		return nil, fmt.Errorf("agent %q not found", name)
 	}
+
 	return a, nil
 }
 
@@ -220,6 +223,7 @@ func TestRestore(t *testing.T) {
 			)
 
 			require.Error(t, err)
+
 			var interrupted *agent.InterruptedError
 			require.ErrorAs(t, err, &interrupted)
 			assert.Len(t, interrupted.PendingApprovals, 1)

@@ -98,6 +98,7 @@ func (h *OAuth2Handler) BearerTokenMiddleware(next http.Handler) http.Handler {
 		if err != nil {
 			w.Header().Set("WWW-Authenticate", `Bearer error="invalid_token"`)
 			http.Error(w, "unauthorized", http.StatusUnauthorized)
+
 			return
 		}
 
@@ -105,6 +106,7 @@ func (h *OAuth2Handler) BearerTokenMiddleware(next http.Handler) http.Handler {
 		if err != nil {
 			w.Header().Set("WWW-Authenticate", `Bearer error="invalid_token"`)
 			http.Error(w, "unauthorized", http.StatusUnauthorized)
+
 			return
 		}
 
@@ -160,6 +162,7 @@ func (h *OAuth2Handler) AuthorizeHandler(w http.ResponseWriter, r *http.Request)
 			WithQuery("continue", continueURL).
 			MustString()
 		http.Redirect(w, r, loginURL, http.StatusFound)
+
 		return
 	}
 
@@ -170,6 +173,7 @@ func (h *OAuth2Handler) AuthorizeHandler(w http.ResponseWriter, r *http.Request)
 	}
 
 	session := authn.SessionFromContext(r.Context())
+
 	authTime := time.Now()
 	if session != nil {
 		authTime = session.CreatedAt
@@ -197,12 +201,14 @@ func (h *OAuth2Handler) AuthorizeHandler(w http.ResponseWriter, r *http.Request)
 			WithQuery("consent_id", consentErr.ConsentID.String()).
 			MustString()
 		http.Redirect(w, r, consentURL, http.StatusFound)
+
 		return
 	}
 
 	if err != nil {
 		oauthErr := toOAuth2Error(err)
 		h.handleAuthorizeError(w, r, oauthErr, in.RedirectURI, in.State)
+
 		return
 	}
 
@@ -282,6 +288,7 @@ func (h *OAuth2Handler) RevokeHandler(w http.ResponseWriter, r *http.Request) {
 		h.logger.ErrorCtx(r.Context(), "cannot revoke token", log.Error(err))
 		w.Header().Set("Retry-After", "30")
 		w.WriteHeader(http.StatusServiceUnavailable)
+
 		return
 	}
 
@@ -340,21 +347,26 @@ func (h *OAuth2Handler) RegisterHandler(w http.ResponseWriter, r *http.Request) 
 			r,
 			oauth2server.NewError(oauth2server.ErrInvalidRequest, oauth2server.WithDescription("invalid JSON body")),
 		)
+
 		return
 	}
 
 	if len(in.GrantTypes) == 0 {
 		in.GrantTypes = []coredata.OAuth2GrantType{coredata.OAuth2GrantTypeAuthorizationCode}
 	}
+
 	if len(in.ResponseTypes) == 0 {
 		in.ResponseTypes = []coredata.OAuth2ResponseType{coredata.OAuth2ResponseTypeCode}
 	}
+
 	if in.TokenEndpointAuthMethod == "" {
 		in.TokenEndpointAuthMethod = coredata.OAuth2ClientTokenEndpointAuthMethodClientSecretBasic
 	}
+
 	if in.Visibility == "" {
 		in.Visibility = coredata.OAuth2ClientVisibilityPrivate
 	}
+
 	if len(in.Scopes) == 0 {
 		in.Scopes = coredata.OAuth2Scopes{
 			coredata.OAuth2ScopeOpenID,
@@ -539,9 +551,11 @@ func redirectWithCode(w http.ResponseWriter, r *http.Request, redirectURI, code,
 	u, _ := url.Parse(redirectURI)
 	q := u.Query()
 	q.Set("code", code)
+
 	if state != "" {
 		q.Set("state", state)
 	}
+
 	u.RawQuery = q.Encode()
 
 	http.Redirect(w, r, u.String(), http.StatusFound)

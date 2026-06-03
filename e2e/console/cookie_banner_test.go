@@ -41,7 +41,6 @@ func TestCookieBanner_Create(t *testing.T) {
 							state
 							cookiePolicyUrl
 							consentExpiryDays
-							consentMode
 							showBranding
 							defaultLanguage
 							createdAt
@@ -65,7 +64,6 @@ func TestCookieBanner_Create(t *testing.T) {
 						State             string `json:"state"`
 						CookiePolicyUrl   string `json:"cookiePolicyUrl"`
 						ConsentExpiryDays int    `json:"consentExpiryDays"`
-						ConsentMode       string `json:"consentMode"`
 						ShowBranding      bool   `json:"showBranding"`
 						DefaultLanguage   string `json:"defaultLanguage"`
 						CreatedAt         string `json:"createdAt"`
@@ -82,18 +80,17 @@ func TestCookieBanner_Create(t *testing.T) {
 				"origin":            origin,
 				"cookiePolicyUrl":   "https://example.com/cookies",
 				"consentExpiryDays": 365,
-				"consentMode":       "OPT_IN",
 			},
 		}, &result)
 
 		require.NoError(t, err)
+
 		node := result.CreateCookieBanner.CookieBannerEdge.Node
 		assert.NotEmpty(t, node.ID)
 		assert.Equal(t, name, node.Name)
 		assert.Equal(t, "ACTIVE", node.State)
 		assert.Equal(t, "https://example.com/cookies", node.CookiePolicyUrl)
 		assert.Equal(t, 365, node.ConsentExpiryDays)
-		assert.Equal(t, "OPT_IN", node.ConsentMode)
 		assert.Equal(t, "en", node.DefaultLanguage)
 		assert.NotEmpty(t, node.CreatedAt)
 		assert.NotEmpty(t, node.UpdatedAt)
@@ -110,7 +107,6 @@ func TestCookieBanner_Create(t *testing.T) {
 						node {
 							id
 							privacyPolicyUrl
-							consentMode
 						}
 					}
 				}
@@ -123,7 +119,6 @@ func TestCookieBanner_Create(t *testing.T) {
 					Node struct {
 						ID               string  `json:"id"`
 						PrivacyPolicyUrl *string `json:"privacyPolicyUrl"`
-						ConsentMode      string  `json:"consentMode"`
 					} `json:"node"`
 				} `json:"cookieBannerEdge"`
 			} `json:"createCookieBanner"`
@@ -137,16 +132,15 @@ func TestCookieBanner_Create(t *testing.T) {
 				"cookiePolicyUrl":   "https://example.com/cookies",
 				"privacyPolicyUrl":  "https://example.com/privacy",
 				"consentExpiryDays": 180,
-				"consentMode":       "OPT_OUT",
 			},
 		}, &result)
 
 		require.NoError(t, err)
+
 		node := result.CreateCookieBanner.CookieBannerEdge.Node
 		assert.NotEmpty(t, node.ID)
 		require.NotNil(t, node.PrivacyPolicyUrl)
 		assert.Equal(t, "https://example.com/privacy", *node.PrivacyPolicyUrl)
-		assert.Equal(t, "OPT_OUT", node.ConsentMode)
 	})
 
 	t.Run("creates default categories", func(t *testing.T) {
@@ -159,7 +153,7 @@ func TestCookieBanner_Create(t *testing.T) {
 			query($id: ID!) {
 				node(id: $id) {
 					... on CookieBanner {
-						consentCategories(first: 10) {
+						categories(first: 10) {
 							totalCount
 							edges {
 								node {
@@ -176,7 +170,7 @@ func TestCookieBanner_Create(t *testing.T) {
 
 		var result struct {
 			Node struct {
-				ConsentCategories struct {
+				Categories struct {
 					TotalCount int `json:"totalCount"`
 					Edges      []struct {
 						Node struct {
@@ -185,18 +179,19 @@ func TestCookieBanner_Create(t *testing.T) {
 							Kind string `json:"kind"`
 						} `json:"node"`
 					} `json:"edges"`
-				} `json:"consentCategories"`
+				} `json:"categories"`
 			} `json:"node"`
 		}
 
 		err := owner.Execute(query, map[string]any{"id": bannerID}, &result)
 		require.NoError(t, err)
-		assert.Greater(t, result.Node.ConsentCategories.TotalCount, 0)
+		assert.Greater(t, result.Node.Categories.TotalCount, 0)
 
 		kinds := make(map[string]bool)
-		for _, e := range result.Node.ConsentCategories.Edges {
+		for _, e := range result.Node.Categories.Edges {
 			kinds[e.Node.Kind] = true
 		}
+
 		assert.True(t, kinds["NECESSARY"], "should have a NECESSARY category")
 	})
 
@@ -220,7 +215,6 @@ func TestCookieBanner_Create(t *testing.T) {
 				"origin":            origin,
 				"cookiePolicyUrl":   "https://example.com/cookies",
 				"consentExpiryDays": 365,
-				"consentMode":       "OPT_IN",
 			},
 		})
 		require.Error(t, err)
@@ -243,7 +237,6 @@ func TestCookieBanner_Create(t *testing.T) {
 				"origin":            factory.SafeOrigin(),
 				"cookiePolicyUrl":   "https://example.com/cookies",
 				"consentExpiryDays": 365,
-				"consentMode":       "OPT_IN",
 			},
 		})
 		require.Error(t, err)
@@ -272,6 +265,7 @@ func TestCookieBanner_Update(t *testing.T) {
 		`
 
 		newName := factory.SafeName("Updated")
+
 		var result struct {
 			UpdateCookieBanner struct {
 				CookieBanner struct {
@@ -306,7 +300,6 @@ func TestCookieBanner_Update(t *testing.T) {
 				updateCookieBanner(input: $input) {
 					cookieBanner {
 						consentExpiryDays
-						consentMode
 						defaultLanguage
 					}
 				}
@@ -317,7 +310,6 @@ func TestCookieBanner_Update(t *testing.T) {
 			UpdateCookieBanner struct {
 				CookieBanner struct {
 					ConsentExpiryDays int    `json:"consentExpiryDays"`
-					ConsentMode       string `json:"consentMode"`
 					DefaultLanguage   string `json:"defaultLanguage"`
 				} `json:"cookieBanner"`
 			} `json:"updateCookieBanner"`
@@ -327,14 +319,12 @@ func TestCookieBanner_Update(t *testing.T) {
 			"input": map[string]any{
 				"cookieBannerId":    bannerID,
 				"consentExpiryDays": 90,
-				"consentMode":       "OPT_OUT",
 				"defaultLanguage":   "fr",
 			},
 		}, &result)
 
 		require.NoError(t, err)
 		assert.Equal(t, 90, result.UpdateCookieBanner.CookieBanner.ConsentExpiryDays)
-		assert.Equal(t, "OPT_OUT", result.UpdateCookieBanner.CookieBanner.ConsentMode)
 		assert.Equal(t, "fr", result.UpdateCookieBanner.CookieBanner.DefaultLanguage)
 	})
 }
@@ -424,6 +414,7 @@ func TestCookieBanner_ActivateDeactivate(t *testing.T) {
 				} `json:"cookieBanner"`
 			} `json:"deactivateCookieBanner"`
 		}
+
 		err := owner.Execute(`
 			mutation($input: DeactivateCookieBannerInput!) {
 				deactivateCookieBanner(input: $input) {
@@ -574,7 +565,6 @@ func TestCookieBanner_Node(t *testing.T) {
 						name
 						origin
 						state
-						consentMode
 					}
 				}
 			}
@@ -582,11 +572,10 @@ func TestCookieBanner_Node(t *testing.T) {
 
 		var result struct {
 			Node struct {
-				ID          string `json:"id"`
-				Name        string `json:"name"`
-				Origin      string `json:"origin"`
-				State       string `json:"state"`
-				ConsentMode string `json:"consentMode"`
+				ID     string `json:"id"`
+				Name   string `json:"name"`
+				Origin string `json:"origin"`
+				State  string `json:"state"`
 			} `json:"node"`
 		}
 
@@ -767,8 +756,10 @@ func TestCookieBanner_UpsertTranslation(t *testing.T) {
 				} `json:"cookieBannerTranslation"`
 			} `json:"upsertCookieBannerTranslation"`
 		}
+
 		err := owner.Execute(query, input, &result1)
 		require.NoError(t, err)
+
 		firstID := result1.UpsertCookieBannerTranslation.CookieBannerTranslation.ID
 
 		input["input"].(map[string]any)["translations"] = `{"title":"Ajustes de cookies"}`
@@ -781,6 +772,7 @@ func TestCookieBanner_UpsertTranslation(t *testing.T) {
 				} `json:"cookieBannerTranslation"`
 			} `json:"upsertCookieBannerTranslation"`
 		}
+
 		err = owner.Execute(query, input, &result2)
 		require.NoError(t, err)
 		assert.Equal(t, firstID, result2.UpsertCookieBannerTranslation.CookieBannerTranslation.ID)
@@ -842,7 +834,6 @@ func TestCookieBanner_RBAC(t *testing.T) {
 				"origin":            factory.SafeOrigin(),
 				"cookiePolicyUrl":   "https://example.com/cookies",
 				"consentExpiryDays": 365,
-				"consentMode":       "OPT_IN",
 			},
 		})
 		testutil.RequireForbiddenError(t, err, "viewer should not be able to create cookie banner")

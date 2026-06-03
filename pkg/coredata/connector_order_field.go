@@ -14,6 +14,13 @@
 
 package coredata
 
+import (
+	"encoding"
+	"fmt"
+
+	"go.probo.inc/probo/pkg/page"
+)
+
 type (
 	ConnectorOrderField string
 )
@@ -23,19 +30,50 @@ const (
 	ConnectorOrderFieldProvider  ConnectorOrderField = "PROVIDER"
 )
 
+var (
+	_ page.OrderField          = ConnectorOrderField("")
+	_ fmt.Stringer             = ConnectorOrderField("")
+	_ encoding.TextMarshaler   = ConnectorOrderField("")
+	_ encoding.TextUnmarshaler = (*ConnectorOrderField)(nil)
+)
+
+func ConnectorOrderFields() []ConnectorOrderField {
+	return []ConnectorOrderField{
+		ConnectorOrderFieldCreatedAt,
+		ConnectorOrderFieldProvider,
+	}
+}
+
+func (v ConnectorOrderField) IsValid() bool {
+	switch v {
+	case
+		ConnectorOrderFieldCreatedAt,
+		ConnectorOrderFieldProvider:
+		return true
+	}
+
+	return false
+}
+
+func (v ConnectorOrderField) String() string {
+	return string(v)
+}
+
+func (v ConnectorOrderField) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *ConnectorOrderField) UnmarshalText(text []byte) error {
+	val := ConnectorOrderField(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid ConnectorOrderField value: %q", string(text))
+	}
+
+	*v = val
+
+	return nil
+}
+
 func (p ConnectorOrderField) Column() string {
 	return string(p)
-}
-
-func (p ConnectorOrderField) String() string {
-	return string(p)
-}
-
-func (p ConnectorOrderField) MarshalText() ([]byte, error) {
-	return []byte(p.String()), nil
-}
-
-func (p *ConnectorOrderField) UnmarshalText(text []byte) error {
-	*p = ConnectorOrderField(text)
-	return nil
 }

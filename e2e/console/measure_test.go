@@ -300,6 +300,7 @@ func TestMeasure_Create_Validation(t *testing.T) {
 			if !tt.skipOrganization {
 				input["organizationId"] = owner.GetOrganizationID().String()
 			}
+
 			maps.Copy(input, tt.input)
 
 			_, err := owner.Do(query, map[string]any{"input": input})
@@ -403,6 +404,7 @@ func TestMeasure_Update(t *testing.T) {
 			require.NoError(t, err)
 
 			measure := result.UpdateMeasure.Measure
+
 			switch tt.assertField {
 			case "name":
 				assert.Equal(t, tt.assertValue, measure.Name)
@@ -1349,6 +1351,7 @@ func TestMeasure_SubResolvers_WithData(t *testing.T) {
 		for i, edge := range result.Node.Tasks.Edges {
 			taskIDs[i] = edge.Node.ID
 		}
+
 		assert.Contains(t, taskIDs, task1ID)
 		assert.Contains(t, taskIDs, task2ID)
 	})
@@ -1543,6 +1546,7 @@ func TestMeasure_Pagination(t *testing.T) {
 
 		// Get next page using cursor
 		testutil.AssertHasMorePages(t, result.Node.Measures.PageInfo)
+
 		queryAfter := `
 			query($id: ID!, $after: CursorKey) {
 				node(id: $id) {
@@ -1698,12 +1702,14 @@ func TestMeasure_Filtering(t *testing.T) {
 
 		// Should contain our implemented measure
 		found := false
+
 		for _, edge := range result.Node.Measures.Edges {
 			if edge.Node.ID == measure1ID {
 				found = true
 				break
 			}
 		}
+
 		assert.True(t, found, "Expected to find implemented measure in filtered results")
 	})
 
@@ -1749,6 +1755,7 @@ func TestMeasure_Filtering(t *testing.T) {
 		for i, edge := range result.Node.Measures.Edges {
 			foundIDs[i] = edge.Node.ID
 		}
+
 		assert.Contains(t, foundIDs, measure1ID)
 		assert.Contains(t, foundIDs, measure2ID)
 	})
@@ -1804,17 +1811,20 @@ func TestMeasure_FilterByCategory(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.GreaterOrEqual(t, result.Node.Measures.TotalCount, 1)
+
 		for _, edge := range result.Node.Measures.Edges {
 			assert.Equal(t, "POLICY", edge.Node.Category)
 		}
 
 		found := false
+
 		for _, edge := range result.Node.Measures.Edges {
 			if edge.Node.ID == policyID {
 				found = true
 				break
 			}
 		}
+
 		assert.True(t, found, "Expected to find POLICY measure in filtered results")
 	})
 
@@ -2127,6 +2137,7 @@ func TestMeasure_Ordering(t *testing.T) {
 		for i, edge := range result.Node.Measures.Edges {
 			names[i] = edge.Node.Name
 		}
+
 		testutil.AssertOrderedAscending(t, names, "name")
 	})
 
@@ -2175,6 +2186,7 @@ func TestMeasure_Ordering(t *testing.T) {
 		for i, edge := range result.Node.Measures.Edges {
 			names[i] = edge.Node.Name
 		}
+
 		testutil.AssertOrderedDescending(t, names, "name")
 	})
 
@@ -2223,6 +2235,244 @@ func TestMeasure_Ordering(t *testing.T) {
 		for i, edge := range result.Node.Measures.Edges {
 			times[i] = edge.Node.CreatedAt
 		}
+
 		testutil.AssertTimesOrderedDescending(t, times, "createdAt")
+	})
+}
+
+func TestMeasure_ThirdPartyMapping(t *testing.T) {
+	t.Parallel()
+
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+
+	const createMutation = `
+		mutation($input: CreateMeasureThirdPartyMappingInput!) {
+			createMeasureThirdPartyMapping(input: $input) {
+				measureEdge { node { id } }
+				thirdPartyEdge { node { id } }
+			}
+		}
+	`
+
+	const deleteMutation = `
+		mutation($input: DeleteMeasureThirdPartyMappingInput!) {
+			deleteMeasureThirdPartyMapping(input: $input) {
+				deletedMeasureId
+				deletedThirdPartyId
+			}
+		}
+	`
+
+	t.Run("create mapping links measure to third party on both sides", func(t *testing.T) {
+		t.Parallel()
+
+		measureID := factory.NewMeasure(owner).WithName("Mapping Measure").Create()
+		thirdPartyID := factory.NewThirdParty(owner).WithName("Mapping Third Party").Create()
+
+		_, err := owner.Do(createMutation, map[string]any{
+			"input": map[string]any{
+				"measureId":    measureID,
+				"thirdPartyId": thirdPartyID,
+			},
+		})
+		require.NoError(t, err)
+
+		const measureQuery = `
+			query($id: ID!) {
+				node(id: $id) {
+					... on Measure {
+						thirdParties(first: 10) {
+							edges { node { id } }
+							totalCount
+						}
+					}
+				}
+			}
+		`
+
+		var measureResult struct {
+			Node struct {
+				ThirdParties struct {
+					Edges []struct {
+						Node struct {
+							ID string `json:"id"`
+						} `json:"node"`
+					} `json:"edges"`
+					TotalCount int `json:"totalCount"`
+				} `json:"thirdParties"`
+			} `json:"node"`
+		}
+
+		err = owner.Execute(measureQuery, map[string]any{"id": measureID}, &measureResult)
+		require.NoError(t, err)
+		assert.Equal(t, 1, measureResult.Node.ThirdParties.TotalCount)
+		assert.Equal(t, thirdPartyID, measureResult.Node.ThirdParties.Edges[0].Node.ID)
+
+		const thirdPartyQuery = `
+			query($id: ID!) {
+				node(id: $id) {
+					... on ThirdParty {
+						measures(first: 10) {
+							edges { node { id } }
+							totalCount
+						}
+					}
+				}
+			}
+		`
+
+		var tpResult struct {
+			Node struct {
+				Measures struct {
+					Edges []struct {
+						Node struct {
+							ID string `json:"id"`
+						} `json:"node"`
+					} `json:"edges"`
+					TotalCount int `json:"totalCount"`
+				} `json:"measures"`
+			} `json:"node"`
+		}
+
+		err = owner.Execute(thirdPartyQuery, map[string]any{"id": thirdPartyID}, &tpResult)
+		require.NoError(t, err)
+		assert.Equal(t, 1, tpResult.Node.Measures.TotalCount)
+		assert.Equal(t, measureID, tpResult.Node.Measures.Edges[0].Node.ID)
+	})
+
+	t.Run("create mapping is idempotent", func(t *testing.T) {
+		t.Parallel()
+
+		measureID := factory.NewMeasure(owner).WithName("Idempotent Measure").Create()
+		thirdPartyID := factory.NewThirdParty(owner).WithName("Idempotent Third Party").Create()
+
+		input := map[string]any{
+			"measureId":    measureID,
+			"thirdPartyId": thirdPartyID,
+		}
+
+		_, err := owner.Do(createMutation, map[string]any{"input": input})
+		require.NoError(t, err)
+
+		_, err = owner.Do(createMutation, map[string]any{"input": input})
+		require.NoError(t, err, "second mapping creation should be idempotent")
+
+		const countQuery = `
+			query($id: ID!) {
+				node(id: $id) {
+					... on Measure {
+						thirdParties(first: 10) { totalCount }
+					}
+				}
+			}
+		`
+
+		var result struct {
+			Node struct {
+				ThirdParties struct {
+					TotalCount int `json:"totalCount"`
+				} `json:"thirdParties"`
+			} `json:"node"`
+		}
+
+		err = owner.Execute(countQuery, map[string]any{"id": measureID}, &result)
+		require.NoError(t, err)
+		assert.Equal(t, 1, result.Node.ThirdParties.TotalCount, "duplicate create must not produce a second row")
+	})
+
+	t.Run("delete mapping removes link from both sides", func(t *testing.T) {
+		t.Parallel()
+
+		measureID := factory.NewMeasure(owner).WithName("Unlink Measure").Create()
+		thirdPartyID := factory.NewThirdParty(owner).WithName("Unlink Third Party").Create()
+
+		input := map[string]any{
+			"measureId":    measureID,
+			"thirdPartyId": thirdPartyID,
+		}
+
+		_, err := owner.Do(createMutation, map[string]any{"input": input})
+		require.NoError(t, err)
+
+		_, err = owner.Do(deleteMutation, map[string]any{"input": input})
+		require.NoError(t, err)
+
+		const measureCountQuery = `
+			query($id: ID!) {
+				node(id: $id) {
+					... on Measure {
+						thirdParties(first: 10) { totalCount }
+					}
+				}
+			}
+		`
+
+		var measureResult struct {
+			Node struct {
+				ThirdParties struct {
+					TotalCount int `json:"totalCount"`
+				} `json:"thirdParties"`
+			} `json:"node"`
+		}
+
+		err = owner.Execute(measureCountQuery, map[string]any{"id": measureID}, &measureResult)
+		require.NoError(t, err)
+		assert.Equal(t, 0, measureResult.Node.ThirdParties.TotalCount, "measure side should have no linked third parties")
+
+		const thirdPartyCountQuery = `
+			query($id: ID!) {
+				node(id: $id) {
+					... on ThirdParty {
+						measures(first: 10) { totalCount }
+					}
+				}
+			}
+		`
+
+		var thirdPartyResult struct {
+			Node struct {
+				Measures struct {
+					TotalCount int `json:"totalCount"`
+				} `json:"measures"`
+			} `json:"node"`
+		}
+
+		err = owner.Execute(thirdPartyCountQuery, map[string]any{"id": thirdPartyID}, &thirdPartyResult)
+		require.NoError(t, err)
+		assert.Equal(t, 0, thirdPartyResult.Node.Measures.TotalCount, "third-party side should have no linked measures")
+	})
+
+	t.Run("viewer cannot create mapping", func(t *testing.T) {
+		t.Parallel()
+
+		viewer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
+
+		measureID := factory.NewMeasure(owner).WithName("RBAC Measure").Create()
+		thirdPartyID := factory.NewThirdParty(owner).WithName("RBAC Third Party").Create()
+
+		_, err := viewer.Do(createMutation, map[string]any{
+			"input": map[string]any{
+				"measureId":    measureID,
+				"thirdPartyId": thirdPartyID,
+			},
+		})
+		require.Error(t, err)
+	})
+
+	t.Run("tenant isolation on mapping creation", func(t *testing.T) {
+		t.Parallel()
+
+		otherOwner := testutil.NewClient(t, testutil.RoleOwner)
+
+		measureID := factory.NewMeasure(owner).WithName("Tenant Measure").Create()
+		otherThirdPartyID := factory.NewThirdParty(otherOwner).WithName("Other Tenant Third Party").Create()
+
+		_, err := owner.Do(createMutation, map[string]any{
+			"input": map[string]any{
+				"measureId":    measureID,
+				"thirdPartyId": otherThirdPartyID,
+			},
+		})
+		require.Error(t, err, "should not link a third party from another tenant")
 	})
 }

@@ -61,6 +61,7 @@ func (d *IntercomDriver) ListAccounts(ctx context.Context) ([]AccountRecord, err
 	}
 
 	var records []AccountRecord
+
 	for _, a := range resp.Admins {
 		record := AccountRecord{
 			Email:       a.Email,
@@ -95,6 +96,7 @@ func (d *IntercomDriver) fetchAdmins(ctx context.Context) (*intercomAdminsRespon
 	if err != nil {
 		return nil, fmt.Errorf("cannot execute intercom admins request: %w", err)
 	}
+
 	defer func() {
 		_ = httpResp.Body.Close()
 	}()
@@ -119,5 +121,6 @@ func intercomRole(hasInboxSeat bool) string {
 	if hasInboxSeat {
 		return "Agent"
 	}
+
 	return "Viewer"
 }

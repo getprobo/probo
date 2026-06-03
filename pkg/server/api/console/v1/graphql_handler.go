@@ -20,20 +20,38 @@ import (
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/accessreview"
 	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/connector/provider"
 	"go.probo.inc/probo/pkg/cookiebanner"
 	"go.probo.inc/probo/pkg/esign"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/mailman"
 	"go.probo.inc/probo/pkg/probo"
+	"go.probo.inc/probo/pkg/riskmanagement"
 	"go.probo.inc/probo/pkg/server/api/authz"
+	"go.probo.inc/probo/pkg/server/api/console/v1/dataloader"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
 	"go.probo.inc/probo/pkg/server/gqlutils"
+	"go.probo.inc/probo/pkg/thirdparty"
 )
 
-func NewGraphQLHandler(iamSvc *iam.Service, proboSvc *probo.Service, esignSvc *esign.Service, accessReviewSvc *accessreview.Service, mailmanSvc *mailman.Service, cookieBannerSvc *cookiebanner.Service, connectorRegistry *connector.ConnectorRegistry, customDomainCname string, logger *log.Logger) http.Handler {
+func NewGraphQLHandler(
+	iamSvc *iam.Service,
+	proboSvc *probo.Service,
+	esignSvc *esign.Service,
+	accessReviewSvc *accessreview.Service,
+	mailmanSvc *mailman.Service,
+	cookieBannerSvc *cookiebanner.Service,
+	connectorRegistry *connector.ConnectorRegistry,
+	providerRegistry *provider.Registry,
+	customDomainCname string,
+	logger *log.Logger,
+	thirdPartySvc *thirdparty.Service,
+	riskManagementSvc *riskmanagement.Service,
+) http.Handler {
 	config := schema.Config{
 		Resolvers: &Resolver{
-			authorize:         authz.NewAuthorizeFunc(iamSvc, logger),
+			authorize:         dataloader.NewAuthorizeFunc(logger),
+			batchAuthorize:    authz.NewBatchAuthorizeFunc(iamSvc, logger),
 			probo:             proboSvc,
 			iam:               iamSvc,
 			esign:             esignSvc,
@@ -41,6 +59,9 @@ func NewGraphQLHandler(iamSvc *iam.Service, proboSvc *probo.Service, esignSvc *e
 			mailman:           mailmanSvc,
 			cookieBanner:      cookieBannerSvc,
 			connectorRegistry: connectorRegistry,
+			providerRegistry:  providerRegistry,
+			riskManagement:    riskManagementSvc,
+			thirdParty:        thirdPartySvc,
 			customDomainCname: customDomainCname,
 			logger:            logger,
 		},
@@ -48,5 +69,6 @@ func NewGraphQLHandler(iamSvc *iam.Service, proboSvc *probo.Service, esignSvc *e
 
 	es := schema.NewExecutableSchema(config)
 	gqlh := gqlutils.NewHandler(es, logger)
+
 	return gqlh
 }

@@ -115,6 +115,7 @@ FOR UPDATE SKIP LOCKED
 	}
 
 	*w = data
+
 	return nil
 }
 

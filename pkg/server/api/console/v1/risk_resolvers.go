@@ -24,14 +24,13 @@ import (
 
 // CreateRisk is the resolver for the createRisk field.
 func (r *mutationResolver) CreateRisk(ctx context.Context, input types.CreateRiskInput) (*types.CreateRiskPayload, error) {
-	if err := r.authorize(ctx, input.OrganizationID, probo.ActionRiskCreate); err != nil {
+	scope, err := r.authorize(ctx, input.OrganizationID, probo.ActionRiskCreate)
+	if err != nil {
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
-
-	risk, err := prb.Risks.Create(
-		ctx,
+	risk, err := r.probo.Risks.Create(
+		ctx, scope,
 		probo.CreateRiskRequest{
 			OrganizationID:     input.OrganizationID,
 			Name:               input.Name,
@@ -54,7 +53,9 @@ func (r *mutationResolver) CreateRisk(ctx context.Context, input types.CreateRis
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot create risk", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -65,14 +66,13 @@ func (r *mutationResolver) CreateRisk(ctx context.Context, input types.CreateRis
 
 // UpdateRisk is the resolver for the updateRisk field.
 func (r *mutationResolver) UpdateRisk(ctx context.Context, input types.UpdateRiskInput) (*types.UpdateRiskPayload, error) {
-	if err := r.authorize(ctx, input.ID, probo.ActionRiskUpdate); err != nil {
+	scope, err := r.authorize(ctx, input.ID, probo.ActionRiskUpdate)
+	if err != nil {
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, input.ID.TenantID())
-
-	risk, err := prb.Risks.Update(
-		ctx,
+	risk, err := r.probo.Risks.Update(
+		ctx, scope,
 		probo.UpdateRiskRequest{
 			ID:                 input.ID,
 			Name:               input.Name,
@@ -91,7 +91,9 @@ func (r *mutationResolver) UpdateRisk(ctx context.Context, input types.UpdateRis
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot update risk", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -102,14 +104,12 @@ func (r *mutationResolver) UpdateRisk(ctx context.Context, input types.UpdateRis
 
 // DeleteRisk is the resolver for the deleteRisk field.
 func (r *mutationResolver) DeleteRisk(ctx context.Context, input types.DeleteRiskInput) (*types.DeleteRiskPayload, error) {
-	if err := r.authorize(ctx, input.RiskID, probo.ActionRiskDelete); err != nil {
+	scope, err := r.authorize(ctx, input.RiskID, probo.ActionRiskDelete)
+	if err != nil {
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, input.RiskID.TenantID())
-
-	err := prb.Risks.Delete(ctx, input.RiskID)
-	if err != nil {
+	if err := r.probo.Risks.Delete(ctx, scope, input.RiskID); err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete risk", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
@@ -121,13 +121,12 @@ func (r *mutationResolver) DeleteRisk(ctx context.Context, input types.DeleteRis
 
 // CreateRiskMeasureMapping is the resolver for the createRiskMeasureMapping field.
 func (r *mutationResolver) CreateRiskMeasureMapping(ctx context.Context, input types.CreateRiskMeasureMappingInput) (*types.CreateRiskMeasureMappingPayload, error) {
-	if err := r.authorize(ctx, input.RiskID, probo.ActionRiskMeasureMappingCreate); err != nil {
+	scope, err := r.authorize(ctx, input.RiskID, probo.ActionRiskMeasureMappingCreate)
+	if err != nil {
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, input.RiskID.TenantID())
-
-	risk, measure, err := prb.Risks.CreateMeasureMapping(ctx, input.RiskID, input.MeasureID)
+	risk, measure, err := r.probo.Risks.CreateMeasureMapping(ctx, scope, input.RiskID, input.MeasureID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot create risk measure mapping", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -141,13 +140,12 @@ func (r *mutationResolver) CreateRiskMeasureMapping(ctx context.Context, input t
 
 // DeleteRiskMeasureMapping is the resolver for the deleteRiskMeasureMapping field.
 func (r *mutationResolver) DeleteRiskMeasureMapping(ctx context.Context, input types.DeleteRiskMeasureMappingInput) (*types.DeleteRiskMeasureMappingPayload, error) {
-	if err := r.authorize(ctx, input.RiskID, probo.ActionRiskMeasureMappingDelete); err != nil {
+	scope, err := r.authorize(ctx, input.RiskID, probo.ActionRiskMeasureMappingDelete)
+	if err != nil {
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, input.RiskID.TenantID())
-
-	risk, measure, err := prb.Risks.DeleteMeasureMapping(ctx, input.RiskID, input.MeasureID)
+	risk, measure, err := r.probo.Risks.DeleteMeasureMapping(ctx, scope, input.RiskID, input.MeasureID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete risk measure mapping", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -161,13 +159,12 @@ func (r *mutationResolver) DeleteRiskMeasureMapping(ctx context.Context, input t
 
 // CreateRiskDocumentMapping is the resolver for the createRiskDocumentMapping field.
 func (r *mutationResolver) CreateRiskDocumentMapping(ctx context.Context, input types.CreateRiskDocumentMappingInput) (*types.CreateRiskDocumentMappingPayload, error) {
-	if err := r.authorize(ctx, input.RiskID, probo.ActionRiskDocumentMappingCreate); err != nil {
+	scope, err := r.authorize(ctx, input.RiskID, probo.ActionRiskDocumentMappingCreate)
+	if err != nil {
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, input.RiskID.TenantID())
-
-	risk, document, err := prb.Risks.CreateDocumentMapping(ctx, input.RiskID, input.DocumentID)
+	risk, document, err := r.probo.Risks.CreateDocumentMapping(ctx, scope, input.RiskID, input.DocumentID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot create risk document mapping", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -181,13 +178,12 @@ func (r *mutationResolver) CreateRiskDocumentMapping(ctx context.Context, input 
 
 // DeleteRiskDocumentMapping is the resolver for the deleteRiskDocumentMapping field.
 func (r *mutationResolver) DeleteRiskDocumentMapping(ctx context.Context, input types.DeleteRiskDocumentMappingInput) (*types.DeleteRiskDocumentMappingPayload, error) {
-	if err := r.authorize(ctx, input.RiskID, probo.ActionRiskDocumentMappingDelete); err != nil {
+	scope, err := r.authorize(ctx, input.RiskID, probo.ActionRiskDocumentMappingDelete)
+	if err != nil {
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, input.RiskID.TenantID())
-
-	risk, document, err := prb.Risks.DeleteDocumentMapping(ctx, input.RiskID, input.DocumentID)
+	risk, document, err := r.probo.Risks.DeleteDocumentMapping(ctx, scope, input.RiskID, input.DocumentID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete risk document mapping", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -201,13 +197,12 @@ func (r *mutationResolver) DeleteRiskDocumentMapping(ctx context.Context, input 
 
 // CreateRiskObligationMapping is the resolver for the createRiskObligationMapping field.
 func (r *mutationResolver) CreateRiskObligationMapping(ctx context.Context, input types.CreateRiskObligationMappingInput) (*types.CreateRiskObligationMappingPayload, error) {
-	if err := r.authorize(ctx, input.RiskID, probo.ActionRiskObligationMappingCreate); err != nil {
+	scope, err := r.authorize(ctx, input.RiskID, probo.ActionRiskObligationMappingCreate)
+	if err != nil {
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, input.RiskID.TenantID())
-
-	risk, obligation, err := prb.Risks.CreateObligationMapping(ctx, input.RiskID, input.ObligationID)
+	risk, obligation, err := r.probo.Risks.CreateObligationMapping(ctx, scope, input.RiskID, input.ObligationID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot create risk obligation mapping", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -221,13 +216,12 @@ func (r *mutationResolver) CreateRiskObligationMapping(ctx context.Context, inpu
 
 // DeleteRiskObligationMapping is the resolver for the deleteRiskObligationMapping field.
 func (r *mutationResolver) DeleteRiskObligationMapping(ctx context.Context, input types.DeleteRiskObligationMappingInput) (*types.DeleteRiskObligationMappingPayload, error) {
-	if err := r.authorize(ctx, input.RiskID, probo.ActionRiskObligationMappingDelete); err != nil {
+	scope, err := r.authorize(ctx, input.RiskID, probo.ActionRiskObligationMappingDelete)
+	if err != nil {
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, input.RiskID.TenantID())
-
-	risk, obligation, err := prb.Risks.DeleteObligationMapping(ctx, input.RiskID, input.ObligationID)
+	risk, obligation, err := r.probo.Risks.DeleteObligationMapping(ctx, scope, input.RiskID, input.ObligationID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete risk obligation mapping", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -241,21 +235,19 @@ func (r *mutationResolver) DeleteRiskObligationMapping(ctx context.Context, inpu
 
 // PublishRiskList is the resolver for the publishRiskList field.
 func (r *mutationResolver) PublishRiskList(ctx context.Context, input types.PublishRiskListInput) (*types.PublishRiskListPayload, error) {
-	if err := r.authorize(ctx, input.OrganizationID, probo.ActionRiskPublish); err != nil {
+	scope, err := r.authorize(ctx, input.OrganizationID, probo.ActionRiskPublish)
+	if err != nil {
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
-
-	document, documentVersion, err := prb.GeneratedDocuments.PublishRiskList(ctx, input.OrganizationID, input.ApproverIds, input.Minor)
+	document, documentVersion, err := r.probo.GeneratedDocuments.PublishRiskList(ctx, scope, input.OrganizationID, input.ApproverIds, input.Minor)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
 			return nil, gqlutils.Conflict(ctx, err)
 		}
-		if errMinor, ok := errors.AsType[*probo.ErrCannotPublishMinorWithoutMajor](err); ok {
-			return nil, gqlutils.Invalid(ctx, errMinor)
-		}
+
 		r.logger.ErrorCtx(ctx, "cannot publish risk list", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -267,7 +259,7 @@ func (r *mutationResolver) PublishRiskList(ctx context.Context, input types.Publ
 
 // Owner is the resolver for the owner field.
 func (r *riskResolver) Owner(ctx context.Context, obj *types.Risk) (*types.Profile, error) {
-	if err := r.authorize(ctx, obj.ID, iam.ActionMembershipProfileGet); err != nil {
+	if _, err := r.authorize(ctx, obj.ID, iam.ActionMembershipProfileGet); err != nil {
 		return nil, err
 	}
 
@@ -284,6 +276,7 @@ func (r *riskResolver) Owner(ctx context.Context, obj *types.Risk) (*types.Profi
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get owner", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -292,7 +285,7 @@ func (r *riskResolver) Owner(ctx context.Context, obj *types.Risk) (*types.Profi
 
 // Organization is the resolver for the organization field.
 func (r *riskResolver) Organization(ctx context.Context, obj *types.Risk) (*types.Organization, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGet); err != nil {
+	if _, err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGet); err != nil {
 		return nil, err
 	}
 
@@ -305,6 +298,7 @@ func (r *riskResolver) Organization(ctx context.Context, obj *types.Risk) (*type
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get organization", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -313,16 +307,16 @@ func (r *riskResolver) Organization(ctx context.Context, obj *types.Risk) (*type
 
 // Measures is the resolver for the measures field.
 func (r *riskResolver) Measures(ctx context.Context, obj *types.Risk, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MeasureOrderBy, filter *types.MeasureFilter) (*types.MeasureConnection, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionMeasureList); err != nil {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionMeasureList)
+	if err != nil {
 		return nil, err
 	}
-
-	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	pageOrderBy := page.OrderBy[coredata.MeasureOrderField]{
 		Field:     coredata.MeasureOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if orderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.MeasureOrderField]{
 			Field:     orderBy.Field,
@@ -337,7 +331,7 @@ func (r *riskResolver) Measures(ctx context.Context, obj *types.Risk, first *int
 		measureFilter = coredata.NewMeasureFilter(filter.Query, filter.State, filter.Category)
 	}
 
-	page, err := prb.Measures.ListForRiskID(ctx, obj.ID, cursor, measureFilter)
+	page, err := r.probo.Measures.ListForRiskID(ctx, scope, obj.ID, cursor, measureFilter)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list risk measures", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -348,16 +342,16 @@ func (r *riskResolver) Measures(ctx context.Context, obj *types.Risk, first *int
 
 // Documents is the resolver for the documents field.
 func (r *riskResolver) Documents(ctx context.Context, obj *types.Risk, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentOrderBy, filter *types.DocumentFilter) (*types.DocumentConnection, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionDocumentList); err != nil {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionDocumentList)
+	if err != nil {
 		return nil, err
 	}
-
-	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	pageOrderBy := page.OrderBy[coredata.DocumentOrderField]{
 		Field:     coredata.DocumentOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if orderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.DocumentOrderField]{
 			Field:     orderBy.Field,
@@ -375,7 +369,7 @@ func (r *riskResolver) Documents(ctx context.Context, obj *types.Risk, first *in
 			WithClassifications(filter.Classifications)
 	}
 
-	page, err := prb.Documents.ListForRiskID(ctx, obj.ID, cursor, documentFilter)
+	page, err := r.probo.Documents.ListForRiskID(ctx, scope, obj.ID, cursor, documentFilter)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list risk documents", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -386,16 +380,16 @@ func (r *riskResolver) Documents(ctx context.Context, obj *types.Risk, first *in
 
 // Controls is the resolver for the controls field.
 func (r *riskResolver) Controls(ctx context.Context, obj *types.Risk, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ControlOrderBy, filter *types.ControlFilter) (*types.ControlConnection, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionControlList); err != nil {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionControlList)
+	if err != nil {
 		return nil, err
 	}
-
-	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	pageOrderBy := page.OrderBy[coredata.ControlOrderField]{
 		Field:     coredata.ControlOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if orderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.ControlOrderField]{
 			Field:     orderBy.Field,
@@ -404,12 +398,13 @@ func (r *riskResolver) Controls(ctx context.Context, obj *types.Risk, first *int
 	}
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
 	var filters = coredata.NewControlFilter(nil)
 	if filter != nil {
 		filters = coredata.NewControlFilter(filter.Query)
 	}
 
-	page, err := prb.Controls.ListForRiskID(ctx, obj.ID, cursor, filters)
+	page, err := r.probo.Controls.ListForRiskID(ctx, scope, obj.ID, cursor, filters)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list risk controls", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -420,16 +415,16 @@ func (r *riskResolver) Controls(ctx context.Context, obj *types.Risk, first *int
 
 // Obligations is the resolver for the obligations field.
 func (r *riskResolver) Obligations(ctx context.Context, obj *types.Risk, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ObligationOrderBy) (*types.ObligationConnection, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionObligationList); err != nil {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionObligationList)
+	if err != nil {
 		return nil, err
 	}
-
-	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	pageOrderBy := page.OrderBy[coredata.ObligationOrderField]{
 		Field:     coredata.ObligationOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if orderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.ObligationOrderField]{
 			Field:     orderBy.Field,
@@ -439,13 +434,40 @@ func (r *riskResolver) Obligations(ctx context.Context, obj *types.Risk, first *
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	page, err := prb.Obligations.ListForRiskID(ctx, obj.ID, cursor)
+	page, err := r.probo.Obligations.ListForRiskID(ctx, scope, obj.ID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list risk obligations", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
 	return types.NewObligationConnection(page, r, obj.ID), nil
+}
+
+// Scenarios is the resolver for the scenarios field.
+func (r *riskResolver) Scenarios(ctx context.Context, obj *types.Risk, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.RiskAssessmentScenarioOrderBy) (*types.RiskAssessmentScenarioConnection, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionRiskAssessmentScenarioList)
+	if err != nil {
+		return nil, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.RiskAssessmentScenarioOrderField]{
+		Field:     coredata.RiskAssessmentScenarioOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.RiskAssessmentScenarioOrderField]{Field: orderBy.Field, Direction: orderBy.Direction}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	p, err := r.riskManagement.ListScenariosForRiskID(ctx, scope, obj.ID, cursor)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list risk scenarios", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewRiskAssessmentScenarioConnection(p, r, obj.ID), nil
 }
 
 // Permission is the resolver for the permission field.
@@ -455,30 +477,40 @@ func (r *riskResolver) Permission(ctx context.Context, obj *types.Risk, action s
 
 // TotalCount is the resolver for the totalCount field.
 func (r *riskConnectionResolver) TotalCount(ctx context.Context, obj *types.RiskConnection) (int, error) {
-	if err := r.authorize(ctx, obj.ParentID, probo.ActionRiskList); err != nil {
+	scope, err := r.authorize(ctx, obj.ParentID, probo.ActionRiskList)
+	if err != nil {
 		return 0, err
 	}
 
-	prb := r.ProboService(ctx, obj.ParentID.TenantID())
-
 	switch obj.Resolver.(type) {
 	case *measureResolver:
-		count, err := prb.Risks.CountForMeasureID(ctx, obj.ParentID, obj.Filters)
+		count, err := r.probo.Risks.CountForMeasureID(ctx, scope, obj.ParentID, obj.Filters)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count risks", log.Error(err))
 			return 0, gqlutils.Internal(ctx)
 		}
+
 		return count, nil
 	case *organizationResolver:
-		count, err := prb.Risks.CountForOrganizationID(ctx, obj.ParentID, obj.Filters)
+		count, err := r.probo.Risks.CountForOrganizationID(ctx, scope, obj.ParentID, obj.Filters)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count risks", log.Error(err))
 			return 0, gqlutils.Internal(ctx)
 		}
+
+		return count, nil
+	case *riskAssessmentScenarioResolver:
+		count, err := r.riskManagement.CountRisksForScenarioID(ctx, scope, obj.ParentID)
+		if err != nil {
+			r.logger.ErrorCtx(ctx, "cannot count scenario risks", log.Error(err))
+			return 0, gqlutils.Internal(ctx)
+		}
+
 		return count, nil
 	}
 
 	r.logger.ErrorCtx(ctx, "unsupported resolver")
+
 	return 0, gqlutils.Internal(ctx)
 }
 

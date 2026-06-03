@@ -102,16 +102,19 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 						return err
 					}
 				}
+
 				if flagOrigin == "" {
 					if err := huh.NewInput().Title("Origin").Value(&flagOrigin).Run(); err != nil {
 						return err
 					}
 				}
+
 				if flagPath == "" {
 					if err := huh.NewInput().Title("Path").Value(&flagPath).Run(); err != nil {
 						return err
 					}
 				}
+
 				if flagDisplayName == "" {
 					if err := huh.NewInput().Title("Display name").Value(&flagDisplayName).Run(); err != nil {
 						return err
@@ -122,12 +125,15 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 			if flagResourceType == "" {
 				return fmt.Errorf("resource-type is required; pass --resource-type or run interactively")
 			}
+
 			if flagOrigin == "" {
 				return fmt.Errorf("origin is required; pass --origin or run interactively")
 			}
+
 			if flagPath == "" {
 				return fmt.Errorf("path is required; pass --path or run interactively")
 			}
+
 			if flagDisplayName == "" {
 				return fmt.Errorf("display-name is required; pass --display-name or run interactively")
 			}

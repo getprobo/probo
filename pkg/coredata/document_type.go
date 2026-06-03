@@ -15,7 +15,7 @@
 package coredata
 
 import (
-	"database/sql/driver"
+	"encoding"
 	"fmt"
 )
 
@@ -36,6 +36,12 @@ const (
 	DocumentTypeStatementOfApplicability DocumentType = "STATEMENT_OF_APPLICABILITY"
 )
 
+var (
+	_ fmt.Stringer             = DocumentType("")
+	_ encoding.TextMarshaler   = DocumentType("")
+	_ encoding.TextUnmarshaler = (*DocumentType)(nil)
+)
+
 func DocumentTypes() []DocumentType {
 	return []DocumentType{
 		DocumentTypeOther,
@@ -51,54 +57,40 @@ func DocumentTypes() []DocumentType {
 	}
 }
 
-func (dt DocumentType) MarshalText() ([]byte, error) {
-	return []byte(dt.String()), nil
+func (v DocumentType) IsValid() bool {
+	switch v {
+	case
+		DocumentTypeOther,
+		DocumentTypeGovernance,
+		DocumentTypePolicy,
+		DocumentTypeProcedure,
+		DocumentTypePlan,
+		DocumentTypeRegister,
+		DocumentTypeRecord,
+		DocumentTypeReport,
+		DocumentTypeTemplate,
+		DocumentTypeStatementOfApplicability:
+		return true
+	}
+
+	return false
 }
 
-func (dt *DocumentType) UnmarshalText(data []byte) error {
-	val := string(data)
+func (v DocumentType) String() string {
+	return string(v)
+}
 
-	switch val {
-	case DocumentTypeOther.String():
-		*dt = DocumentTypeOther
-	case DocumentTypeGovernance.String():
-		*dt = DocumentTypeGovernance
-	case DocumentTypePolicy.String():
-		*dt = DocumentTypePolicy
-	case DocumentTypeProcedure.String():
-		*dt = DocumentTypeProcedure
-	case DocumentTypePlan.String():
-		*dt = DocumentTypePlan
-	case DocumentTypeRegister.String():
-		*dt = DocumentTypeRegister
-	case DocumentTypeRecord.String():
-		*dt = DocumentTypeRecord
-	case DocumentTypeReport.String():
-		*dt = DocumentTypeReport
-	case DocumentTypeTemplate.String():
-		*dt = DocumentTypeTemplate
-	case DocumentTypeStatementOfApplicability.String():
-		*dt = DocumentTypeStatementOfApplicability
-	default:
-		return fmt.Errorf("invalid DocumentType value: %q", val)
+func (v DocumentType) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *DocumentType) UnmarshalText(text []byte) error {
+	val := DocumentType(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid DocumentType value: %q", string(text))
 	}
+
+	*v = val
 
 	return nil
-}
-
-func (dt DocumentType) String() string {
-	return string(dt)
-}
-
-func (dt *DocumentType) Scan(value any) error {
-	val, ok := value.(string)
-	if !ok {
-		return fmt.Errorf("invalid scan source for DocumentType, expected string got %T", value)
-	}
-
-	return dt.UnmarshalText([]byte(val))
-}
-
-func (dt DocumentType) Value() (driver.Value, error) {
-	return dt.String(), nil
 }

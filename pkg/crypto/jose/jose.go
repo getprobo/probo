@@ -87,6 +87,7 @@ func SignJWT(privateKey *rsa.PrivateKey, kid string, claims any) (string, error)
 	signingInput := headerB64 + "." + claimsB64
 
 	h := sha256.Sum256([]byte(signingInput))
+
 	signature, err := rsa.SignPKCS1v15(rand.Reader, privateKey, crypto.SHA256, h[:])
 	if err != nil {
 		return "", fmt.Errorf("cannot sign jwt: %w", err)

@@ -157,3 +157,34 @@ Chrome DevTools Protocol address
 {{- .Values.chrome.external.addr | required "chrome.external.addr is required when chrome.enabled=false" }}
 {{- end }}
 {{- end }}
+
+{{/*
+Validate a required 32-byte base64 secret.
+*/}}
+{{- define "probo.requireBase64Key32" -}}
+{{- $name := .name -}}
+{{- $value := .value | required (printf "%s is required" $name) -}}
+{{- if not (regexMatch "^[A-Za-z0-9+/]{43}=$" $value) -}}
+{{- fail (printf "%s must be a base64-encoded 32-byte secret (example: openssl rand -base64 32)" $name) -}}
+{{- end -}}
+{{- $decoded := b64dec $value -}}
+{{- if ne (len $decoded) 32 -}}
+{{- fail (printf "%s must decode to exactly 32 bytes" $name) -}}
+{{- end -}}
+{{- $value -}}
+{{- end }}
+
+{{/*
+Validate a required PEM private key.
+*/}}
+{{- define "probo.requirePEMPrivateKey" -}}
+{{- $name := .name -}}
+{{- $value := .value | required (printf "%s is required" $name) -}}
+{{- if not (contains "-----BEGIN" $value) -}}
+{{- fail (printf "%s must be a PEM-encoded private key" $name) -}}
+{{- end -}}
+{{- if not (contains "PRIVATE KEY-----" $value) -}}
+{{- fail (printf "%s must be a PEM-encoded private key" $name) -}}
+{{- end -}}
+{{- $value -}}
+{{- end }}

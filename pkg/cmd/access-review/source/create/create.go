@@ -106,6 +106,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 				if err != nil {
 					return fmt.Errorf("cannot read CSV file: %w", err)
 				}
+
 				input["csvData"] = string(csvData)
 			}
 

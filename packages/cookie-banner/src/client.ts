@@ -16,6 +16,7 @@ import {
   deactivateElements,
   observeAndActivate,
 } from "./activation";
+import { getConsent } from "./consent";
 import { COOKIE_NAME, getConsentCookie, setConsentCookie } from "./cookie";
 import type { Detector } from "./detectors";
 import { CookieDetector, ReportQueue, ResourceDetector, StorageDetector } from "./detectors";
@@ -33,7 +34,7 @@ import type {
   Regulation,
   VisitorConsent,
 } from "./types";
-import { getOrCreateVisitorId } from "./visitor";
+import { getOrCreateVisitorId, getVisitorId } from "./visitor";
 
 export type {
   BannerConfig,
@@ -49,7 +50,7 @@ export type {
 export class CookieBannerClient {
   private readonly baseUrl: URL;
   private readonly bannerId: string;
-  private readonly visitorId: string;
+  private visitorId: string | null;
   private readonly lang: string;
 
   private readonly integrations: ConsentIntegration[];
@@ -68,7 +69,7 @@ export class CookieBannerClient {
     }
     this.baseUrl = new URL(base);
     this.bannerId = config.bannerId;
-    this.visitorId = getOrCreateVisitorId(config.bannerId);
+    this.visitorId = getVisitorId(config.bannerId);
     this.lang = detectLanguage(config.lang);
     this.integrations = createDefaultIntegrations();
   }
@@ -78,6 +79,10 @@ export class CookieBannerClient {
   }
 
   async load(): Promise<void> {
+    for (const integration of this.integrations) {
+      integration.bootstrap();
+    }
+
     const configUrl = new URL(`${this.bannerId}/config`, this.baseUrl);
     if (this.lang) {
       configUrl.searchParams.set("lang", this.lang);
@@ -88,6 +93,11 @@ export class CookieBannerClient {
       config = await fetchJSON<BannerConfig>(configUrl);
     } catch {
       this.startDetector();
+      if (this.observer) {
+        this.observer.disconnect();
+      }
+      this.observer = observeAndActivate({}, {});
+      getConsent()._setReady({}, false);
       return;
     }
     this.bannerConfig = config;
@@ -97,57 +107,68 @@ export class CookieBannerClient {
     }
     this.startDetector(config);
 
-    const cookie = getConsentCookie();
-    if (cookie && cookie.bid === this.bannerId && cookie.v === config.version && cookie.vid === this.visitorId) {
-      this.consent = {
-        visitor_id: cookie.vid,
-        version: cookie.v,
-        action: cookie.action,
-        consent_data: cookie.data,
-        created_at: "",
-      };
-      this._gpcApplied = cookie.action === "GPC";
-      this.activate(cookie.data);
-      void flush(this.bannerId);
-      return;
-    }
+    if (this.visitorId) {
+      const cookie = getConsentCookie();
+      if (cookie && cookie.bid === this.bannerId && cookie.v === config.version && cookie.vid === this.visitorId) {
+        this.consent = {
+          visitor_id: cookie.vid,
+          version: cookie.v,
+          action: cookie.action,
+          consent_data: cookie.data,
+          created_at: "",
+        };
+        this._gpcApplied = cookie.action === "GPC";
+        this.activate(cookie.data);
+        getConsent()._setReady(cookie.data, true);
+        void flush(this.bannerId);
+        return;
+      }
 
-    const consentUrl = new URL(
-      `${this.bannerId}/consents/${this.visitorId}`,
-      this.baseUrl,
-    );
-    const apiConsent = await fetchJSON<VisitorConsent>(consentUrl).catch(
-      (err) => {
-        if (err instanceof NotFoundError) {
-          return null;
-        }
-        throw err;
-      },
-    );
-
-    if (apiConsent && apiConsent.version === config.version) {
-      this.consent = apiConsent;
-      this._gpcApplied = apiConsent.action === "GPC";
-      setConsentCookie(
-        {
-          bid: this.bannerId,
-          v: apiConsent.version,
-          vid: apiConsent.visitor_id,
-          action: apiConsent.action,
-          data: apiConsent.consent_data,
-        },
-        config.consent_expiry_days,
+      const consentUrl = new URL(
+        `${this.bannerId}/consents/${this.visitorId}`,
+        this.baseUrl,
       );
-      this.activate(apiConsent.consent_data);
-    } else {
-      this.consent = null;
+      const apiConsent = await fetchJSON<VisitorConsent>(consentUrl).catch(
+        (err) => {
+          if (err instanceof NotFoundError) {
+            return null;
+          }
+          throw err;
+        },
+      );
+
+      if (apiConsent && apiConsent.version === config.version) {
+        this.consent = apiConsent;
+        this._gpcApplied = apiConsent.action === "GPC";
+        setConsentCookie(
+          {
+            bid: this.bannerId,
+            v: apiConsent.version,
+            vid: apiConsent.visitor_id,
+            action: apiConsent.action,
+            data: apiConsent.consent_data,
+          },
+          config.consent_expiry_days,
+        );
+        this.activate(apiConsent.consent_data);
+        getConsent()._setReady(apiConsent.consent_data, true);
+      } else {
+        this.consent = null;
+      }
     }
 
     if (!this.consent && this.gpcDetected) {
+      const gpcData: Record<string, boolean> = {};
+      for (const cat of config.categories) {
+        gpcData[cat.slug] = cat.kind === "NECESSARY";
+      }
+      getConsent()._setReady(gpcData, false);
       this.gpc();
       this._gpcApplied = true;
     } else if (!this.consent) {
-      this.activate(this.buildDefaultConsentData());
+      const defaults = this.buildDefaultConsentData();
+      this.activate(defaults);
+      getConsent()._setReady(defaults, false);
     }
 
     void flush(this.bannerId);
@@ -225,6 +246,13 @@ export class CookieBannerClient {
     this.recordConsent("CUSTOMIZE", consentData);
   }
 
+  private ensureVisitorId(): string {
+    if (!this.visitorId) {
+      this.visitorId = getOrCreateVisitorId(this.bannerId);
+    }
+    return this.visitorId;
+  }
+
   private recordConsent(
     action: ConsentAction,
     consentData: Record<string, boolean>,
@@ -232,9 +260,10 @@ export class CookieBannerClient {
     this._gpcApplied = action === "GPC";
 
     const cfg = this.config;
+    const visitorId = this.ensureVisitorId();
 
     this.consent = {
-      visitor_id: this.visitorId,
+      visitor_id: visitorId,
       version: cfg.version,
       action,
       consent_data: consentData,
@@ -245,7 +274,7 @@ export class CookieBannerClient {
       {
         bid: this.bannerId,
         v: cfg.version,
-        vid: this.visitorId,
+        vid: visitorId,
         action,
         data: consentData,
       },
@@ -253,10 +282,11 @@ export class CookieBannerClient {
     );
 
     this.activate(consentData);
+    getConsent()._notify(consentData);
 
     const url = new URL(`${this.bannerId}/consents`, this.baseUrl);
     const body = {
-      visitor_id: this.visitorId,
+      visitor_id: visitorId,
       version: cfg.version,
       action,
       consent_data: consentData,

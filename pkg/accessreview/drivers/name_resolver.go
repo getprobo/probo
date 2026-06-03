@@ -20,45 +20,17 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 
+	"go.probo.inc/probo/pkg/connector"
 	admin "google.golang.org/api/admin/directory/v1"
 	"google.golang.org/api/option"
-
-	"go.probo.inc/probo/pkg/coredata"
 )
 
 // NameResolver fetches the human-readable instance name from a provider
 // (e.g. Slack workspace name, Google Workspace domain).
 type NameResolver interface {
 	ResolveInstanceName(ctx context.Context) (string, error)
-}
-
-var providerDisplayNames = map[coredata.ConnectorProvider]string{
-	coredata.ConnectorProviderSlack:           "Slack",
-	coredata.ConnectorProviderGoogleWorkspace: "Google Workspace",
-	coredata.ConnectorProviderLinear:          "Linear",
-	coredata.ConnectorProviderOnePassword:     "1Password",
-	coredata.ConnectorProviderHubSpot:         "HubSpot",
-	coredata.ConnectorProviderDocuSign:        "DocuSign",
-	coredata.ConnectorProviderNotion:          "Notion",
-	coredata.ConnectorProviderBrex:            "Brex",
-	coredata.ConnectorProviderTally:           "Tally",
-	coredata.ConnectorProviderCloudflare:      "Cloudflare",
-	coredata.ConnectorProviderOpenAI:          "OpenAI",
-	coredata.ConnectorProviderSentry:          "Sentry",
-	coredata.ConnectorProviderSupabase:        "Supabase",
-	coredata.ConnectorProviderGitHub:          "GitHub",
-	coredata.ConnectorProviderIntercom:        "Intercom",
-	coredata.ConnectorProviderResend:          "Resend",
-	coredata.ConnectorProviderMicrosoft365:    "Microsoft 365",
-}
-
-// ProviderDisplayName returns the human-readable label for a connector provider.
-func ProviderDisplayName(provider coredata.ConnectorProvider) string {
-	if name, ok := providerDisplayNames[provider]; ok {
-		return name
-	}
-	return string(provider)
 }
 
 // slackNameResolver resolves the Slack workspace name via auth.test.
@@ -80,6 +52,7 @@ func (r *slackNameResolver) ResolveInstanceName(ctx context.Context) (string, er
 	if err != nil {
 		return "", fmt.Errorf("cannot execute slack auth.test request: %w", err)
 	}
+
 	defer func() { _ = httpResp.Body.Close() }()
 
 	var resp struct {
@@ -145,6 +118,7 @@ func (r *linearNameResolver) ResolveInstanceName(ctx context.Context) (string, e
 	if err != nil {
 		return "", fmt.Errorf("cannot create linear organization request: %w", err)
 	}
+
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/json")
 
@@ -152,6 +126,7 @@ func (r *linearNameResolver) ResolveInstanceName(ctx context.Context) (string, e
 	if err != nil {
 		return "", fmt.Errorf("cannot execute linear organization request: %w", err)
 	}
+
 	defer func() { _ = httpResp.Body.Close() }()
 
 	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
@@ -171,6 +146,7 @@ func (r *linearNameResolver) ResolveInstanceName(ctx context.Context) (string, e
 	if err := json.NewDecoder(httpResp.Body).Decode(&resp); err != nil {
 		return "", fmt.Errorf("cannot decode linear organization response: %w", err)
 	}
+
 	if len(resp.Errors) > 0 {
 		return "", fmt.Errorf("linear graphql error: %s", resp.Errors[0].Message)
 	}
@@ -188,21 +164,28 @@ func NewCloudflareNameResolver(httpClient *http.Client) NameResolver {
 }
 
 func (r *cloudflareNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
-	req, err := http.NewRequestWithContext(
-		ctx,
-		http.MethodGet,
-		"https://api.cloudflare.com/client/v4/accounts?page=1&per_page=1",
-		nil,
-	)
+	cfURL, err := url.Parse("https://api.cloudflare.com/client/v4/accounts")
+	if err != nil {
+		return "", fmt.Errorf("cannot parse cloudflare accounts URL: %w", err)
+	}
+
+	q := cfURL.Query()
+	q.Set("page", "1")
+	q.Set("per_page", "1")
+	cfURL.RawQuery = q.Encode()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, cfURL.String(), nil)
 	if err != nil {
 		return "", fmt.Errorf("cannot create cloudflare accounts request: %w", err)
 	}
+
 	req.Header.Set("Accept", "application/json")
 
 	httpResp, err := r.httpClient.Do(req)
 	if err != nil {
 		return "", fmt.Errorf("cannot execute cloudflare accounts request: %w", err)
 	}
+
 	defer func() { _ = httpResp.Body.Close() }()
 
 	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
@@ -244,12 +227,14 @@ func (r *brexNameResolver) ResolveInstanceName(ctx context.Context) (string, err
 	if err != nil {
 		return "", fmt.Errorf("cannot create brex company request: %w", err)
 	}
+
 	req.Header.Set("Accept", "application/json")
 
 	httpResp, err := r.httpClient.Do(req)
 	if err != nil {
 		return "", fmt.Errorf("cannot execute brex company request: %w", err)
 	}
+
 	defer func() { _ = httpResp.Body.Close() }()
 
 	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
@@ -280,18 +265,23 @@ func NewTallyNameResolver(httpClient *http.Client, organizationID string) NameRe
 }
 
 func (r *tallyNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
-	url := fmt.Sprintf("https://api.tally.so/organizations/%s", r.organizationID)
+	endpoint, err := url.JoinPath("https://api.tally.so", "organizations", url.PathEscape(r.organizationID))
+	if err != nil {
+		return "", fmt.Errorf("cannot build tally organization URL: %w", err)
+	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
 		return "", fmt.Errorf("cannot create tally organization request: %w", err)
 	}
+
 	req.Header.Set("Accept", "application/json")
 
 	httpResp, err := r.httpClient.Do(req)
 	if err != nil {
 		return "", fmt.Errorf("cannot execute tally organization request: %w", err)
 	}
+
 	defer func() { _ = httpResp.Body.Close() }()
 
 	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
@@ -327,12 +317,14 @@ func (r *hubspotNameResolver) ResolveInstanceName(ctx context.Context) (string, 
 	if err != nil {
 		return "", fmt.Errorf("cannot create hubspot account-info request: %w", err)
 	}
+
 	req.Header.Set("Accept", "application/json")
 
 	httpResp, err := r.httpClient.Do(req)
 	if err != nil {
 		return "", fmt.Errorf("cannot execute hubspot account-info request: %w", err)
 	}
+
 	defer func() { _ = httpResp.Body.Close() }()
 
 	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
@@ -364,12 +356,14 @@ func (r *docusignNameResolver) ResolveInstanceName(ctx context.Context) (string,
 	if err != nil {
 		return "", fmt.Errorf("cannot create docusign userinfo request: %w", err)
 	}
+
 	req.Header.Set("Accept", "application/json")
 
 	httpResp, err := r.httpClient.Do(req)
 	if err != nil {
 		return "", fmt.Errorf("cannot execute docusign userinfo request: %w", err)
 	}
+
 	defer func() { _ = httpResp.Body.Close() }()
 
 	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
@@ -418,12 +412,14 @@ func (r *openaiNameResolver) ResolveInstanceName(ctx context.Context) (string, e
 	if err != nil {
 		return "", fmt.Errorf("cannot create openai organization request: %w", err)
 	}
+
 	req.Header.Set("Accept", "application/json")
 
 	httpResp, err := r.httpClient.Do(req)
 	if err != nil {
 		return "", fmt.Errorf("cannot execute openai organization request: %w", err)
 	}
+
 	defer func() { _ = httpResp.Body.Close() }()
 
 	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
@@ -436,6 +432,55 @@ func (r *openaiNameResolver) ResolveInstanceName(ctx context.Context) (string, e
 	}
 	if err := json.NewDecoder(httpResp.Body).Decode(&resp); err != nil {
 		return "", fmt.Errorf("cannot decode openai organization response: %w", err)
+	}
+
+	return resp.Name, nil
+}
+
+// anthropicNameResolver resolves the Anthropic organization name via the
+// Admin API /v1/organizations/me endpoint, which returns the org an
+// admin key belongs to.
+type anthropicNameResolver struct {
+	httpClient *http.Client
+}
+
+func NewAnthropicNameResolver(httpClient *http.Client) NameResolver {
+	return &anthropicNameResolver{httpClient: httpClient}
+}
+
+func (r *anthropicNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
+	req, err := http.NewRequestWithContext(
+		ctx,
+		http.MethodGet,
+		"https://api.anthropic.com/v1/organizations/me",
+		nil,
+	)
+	if err != nil {
+		return "", fmt.Errorf("cannot create anthropic organization request: %w", err)
+	}
+
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("anthropic-version", anthropicAPIVersion)
+
+	httpResp, err := r.httpClient.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("cannot execute anthropic organization request: %w", err)
+	}
+
+	defer func() { _ = httpResp.Body.Close() }()
+
+	// Best-effort: a non-2xx (e.g. a revoked admin key) must not make the
+	// source-name worker retry forever. Give up gracefully and keep the
+	// generic source name; a dead key surfaces on the next ListAccounts.
+	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
+		return "", nil
+	}
+
+	var resp struct {
+		Name string `json:"name"`
+	}
+	if err := json.NewDecoder(httpResp.Body).Decode(&resp); err != nil {
+		return "", fmt.Errorf("cannot decode anthropic organization response: %w", err)
 	}
 
 	return resp.Name, nil
@@ -456,19 +501,31 @@ func (r *sentryNameResolver) ResolveInstanceName(ctx context.Context) (string, e
 		return "", nil
 	}
 
-	url := fmt.Sprintf("https://sentry.io/api/0/organizations/%s/", r.orgSlug)
+	endpoint, err := url.JoinPath("https://sentry.io", "api", "0", "organizations", url.PathEscape(r.orgSlug))
+	if err != nil {
+		return "", fmt.Errorf("cannot build sentry organization URL: %w", err)
+	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
 		return "", fmt.Errorf("cannot create sentry organization request: %w", err)
 	}
+
 	req.Header.Set("Accept", "application/json")
 
 	httpResp, err := r.httpClient.Do(req)
 	if err != nil {
 		return "", fmt.Errorf("cannot execute sentry organization request: %w", err)
 	}
+
 	defer func() { _ = httpResp.Body.Close() }()
+
+	// 404 means the stored slug is no longer visible to this token.
+	// Treat as terminal so the worker stops looping; other non-2xx
+	// stay retryable for token refresh / transient outages.
+	if httpResp.StatusCode == http.StatusNotFound {
+		return "", nil
+	}
 
 	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
 		return "", fmt.Errorf("cannot fetch sentry organization: unexpected status %d", httpResp.StatusCode)
@@ -495,18 +552,27 @@ func NewGitHubNameResolver(httpClient *http.Client, org string) NameResolver {
 }
 
 func (r *githubNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
-	url := fmt.Sprintf("https://api.github.com/orgs/%s", r.org)
+	if r.org == "" {
+		return "", nil
+	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	endpoint, err := url.JoinPath("https://api.github.com", "orgs", url.PathEscape(r.org))
+	if err != nil {
+		return "", fmt.Errorf("cannot build github organization URL: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
 		return "", fmt.Errorf("cannot create github organization request: %w", err)
 	}
+
 	req.Header.Set("Accept", "application/vnd.github+json")
 
 	httpResp, err := r.httpClient.Do(req)
 	if err != nil {
 		return "", fmt.Errorf("cannot execute github organization request: %w", err)
 	}
+
 	defer func() { _ = httpResp.Body.Close() }()
 
 	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
@@ -554,6 +620,7 @@ func (r *intercomNameResolver) ResolveInstanceName(ctx context.Context) (string,
 	if err != nil {
 		return "", fmt.Errorf("cannot create intercom me request: %w", err)
 	}
+
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("Intercom-Version", "2.11")
 
@@ -561,6 +628,7 @@ func (r *intercomNameResolver) ResolveInstanceName(ctx context.Context) (string,
 	if err != nil {
 		return "", fmt.Errorf("cannot execute intercom me request: %w", err)
 	}
+
 	defer func() { _ = httpResp.Body.Close() }()
 
 	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
@@ -590,6 +658,464 @@ func (r *resendNameResolver) ResolveInstanceName(_ context.Context) (string, err
 	return "Resend", nil
 }
 
+// gitlabNameResolver resolves the GitLab group name.
+type gitlabNameResolver struct {
+	httpClient *http.Client
+	groupID    string
+}
+
+func NewGitLabNameResolver(httpClient *http.Client, groupID string) NameResolver {
+	return &gitlabNameResolver{httpClient: httpClient, groupID: groupID}
+}
+
+func (r *gitlabNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
+	if r.groupID == "" {
+		return "", nil
+	}
+
+	endpoint, err := url.JoinPath("https://gitlab.com", "api", "v4", "groups", url.PathEscape(r.groupID))
+	if err != nil {
+		return "", fmt.Errorf("cannot build gitlab group URL: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
+	if err != nil {
+		return "", fmt.Errorf("cannot create gitlab group request: %w", err)
+	}
+
+	req.Header.Set("Accept", "application/json")
+
+	httpResp, err := r.httpClient.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("cannot execute gitlab group request: %w", err)
+	}
+
+	defer func() { _ = httpResp.Body.Close() }()
+
+	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
+		return "", fmt.Errorf("cannot fetch gitlab group: unexpected status %d", httpResp.StatusCode)
+	}
+
+	var resp struct {
+		Name     string `json:"name"`
+		FullPath string `json:"full_path"`
+	}
+	if err := json.NewDecoder(httpResp.Body).Decode(&resp); err != nil {
+		return "", fmt.Errorf("cannot decode gitlab group response: %w", err)
+	}
+
+	if resp.Name != "" {
+		return resp.Name, nil
+	}
+
+	return resp.FullPath, nil
+}
+
+// bitbucketNameResolver resolves the Bitbucket workspace name.
+type bitbucketNameResolver struct {
+	httpClient *http.Client
+	workspace  string
+}
+
+func NewBitbucketNameResolver(httpClient *http.Client, workspace string) NameResolver {
+	return &bitbucketNameResolver{httpClient: httpClient, workspace: workspace}
+}
+
+func (r *bitbucketNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
+	if r.workspace == "" {
+		return "", nil
+	}
+
+	endpoint, err := url.JoinPath("https://api.bitbucket.org", "2.0", "workspaces", url.PathEscape(r.workspace))
+	if err != nil {
+		return "", fmt.Errorf("cannot build bitbucket workspace URL: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
+	if err != nil {
+		return "", fmt.Errorf("cannot create bitbucket workspace request: %w", err)
+	}
+
+	req.Header.Set("Accept", "application/json")
+
+	httpResp, err := r.httpClient.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("cannot execute bitbucket workspace request: %w", err)
+	}
+
+	defer func() { _ = httpResp.Body.Close() }()
+
+	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
+		return "", fmt.Errorf("cannot fetch bitbucket workspace: unexpected status %d", httpResp.StatusCode)
+	}
+
+	var resp struct {
+		Name string `json:"name"`
+		Slug string `json:"slug"`
+	}
+	if err := json.NewDecoder(httpResp.Body).Decode(&resp); err != nil {
+		return "", fmt.Errorf("cannot decode bitbucket workspace response: %w", err)
+	}
+
+	if resp.Name != "" {
+		return resp.Name, nil
+	}
+
+	return resp.Slug, nil
+}
+
+// herokuNameResolver resolves the Heroku team name.
+type herokuNameResolver struct {
+	httpClient *http.Client
+	teamID     string
+}
+
+func NewHerokuNameResolver(httpClient *http.Client, teamID string) NameResolver {
+	return &herokuNameResolver{httpClient: httpClient, teamID: teamID}
+}
+
+func (r *herokuNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
+	if r.teamID == "" {
+		return "", nil
+	}
+
+	// A personal account has no Team to name; short-circuit before hitting
+	// GET /teams/@personal, which 404s and would loop the source-name worker.
+	if r.teamID == herokuPersonalAccountSlug {
+		return herokuPersonalAccountDisplayName, nil
+	}
+
+	endpoint, err := url.JoinPath("https://api.heroku.com", "teams", url.PathEscape(r.teamID))
+	if err != nil {
+		return "", fmt.Errorf("cannot build heroku team URL: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
+	if err != nil {
+		return "", fmt.Errorf("cannot create heroku team request: %w", err)
+	}
+
+	req.Header.Set("Accept", "application/vnd.heroku+json; version=3")
+
+	httpResp, err := r.httpClient.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("cannot execute heroku team request: %w", err)
+	}
+
+	defer func() { _ = httpResp.Body.Close() }()
+
+	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
+		return "", fmt.Errorf("cannot fetch heroku team: unexpected status %d", httpResp.StatusCode)
+	}
+
+	var resp struct {
+		Name string `json:"name"`
+	}
+	if err := json.NewDecoder(httpResp.Body).Decode(&resp); err != nil {
+		return "", fmt.Errorf("cannot decode heroku team response: %w", err)
+	}
+
+	return resp.Name, nil
+}
+
+// pagerdutyNameResolver returns the PagerDuty subdomain stored in connector
+// settings. The subdomain is captured during the OAuth callback (see
+// handleConnectorComplete) so no HTTP call is required.
+type pagerdutyNameResolver struct {
+	subdomain string
+}
+
+func NewPagerDutyNameResolver(subdomain string) NameResolver {
+	return &pagerdutyNameResolver{subdomain: subdomain}
+}
+
+func (r *pagerdutyNameResolver) ResolveInstanceName(_ context.Context) (string, error) {
+	return r.subdomain, nil
+}
+
+// asanaNameResolver resolves the Asana workspace name.
+type asanaNameResolver struct {
+	httpClient   *http.Client
+	workspaceGID string
+}
+
+func NewAsanaNameResolver(httpClient *http.Client, workspaceGID string) NameResolver {
+	return &asanaNameResolver{httpClient: httpClient, workspaceGID: workspaceGID}
+}
+
+func (r *asanaNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
+	if r.workspaceGID == "" {
+		return "", nil
+	}
+
+	endpoint, err := url.JoinPath("https://app.asana.com", "api", "1.0", "workspaces", url.PathEscape(r.workspaceGID))
+	if err != nil {
+		return "", fmt.Errorf("cannot build asana workspace URL: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
+	if err != nil {
+		return "", fmt.Errorf("cannot create asana workspace request: %w", err)
+	}
+
+	req.Header.Set("Accept", "application/json")
+
+	httpResp, err := r.httpClient.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("cannot execute asana workspace request: %w", err)
+	}
+
+	defer func() { _ = httpResp.Body.Close() }()
+
+	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
+		return "", fmt.Errorf("cannot fetch asana workspace: unexpected status %d", httpResp.StatusCode)
+	}
+
+	var resp struct {
+		Data struct {
+			Name string `json:"name"`
+		} `json:"data"`
+	}
+	if err := json.NewDecoder(httpResp.Body).Decode(&resp); err != nil {
+		return "", fmt.Errorf("cannot decode asana workspace response: %w", err)
+	}
+
+	return resp.Data.Name, nil
+}
+
+// netlifyNameResolver resolves the Netlify account name.
+type netlifyNameResolver struct {
+	httpClient  *http.Client
+	accountSlug string
+}
+
+func NewNetlifyNameResolver(httpClient *http.Client, accountSlug string) NameResolver {
+	return &netlifyNameResolver{httpClient: httpClient, accountSlug: accountSlug}
+}
+
+func (r *netlifyNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
+	if r.accountSlug == "" {
+		return "", nil
+	}
+
+	endpoint, err := url.JoinPath("https://api.netlify.com", "api", "v1", "accounts", url.PathEscape(r.accountSlug))
+	if err != nil {
+		return "", fmt.Errorf("cannot build netlify account URL: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
+	if err != nil {
+		return "", fmt.Errorf("cannot create netlify account request: %w", err)
+	}
+
+	req.Header.Set("Accept", "application/json")
+
+	httpResp, err := r.httpClient.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("cannot execute netlify account request: %w", err)
+	}
+
+	defer func() { _ = httpResp.Body.Close() }()
+
+	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
+		return "", fmt.Errorf("cannot fetch netlify account: unexpected status %d", httpResp.StatusCode)
+	}
+
+	var resp struct {
+		Name string `json:"name"`
+	}
+	if err := json.NewDecoder(httpResp.Body).Decode(&resp); err != nil {
+		return "", fmt.Errorf("cannot decode netlify account response: %w", err)
+	}
+
+	return resp.Name, nil
+}
+
+// clickupNameResolver resolves the ClickUp team name.
+type clickupNameResolver struct {
+	httpClient *http.Client
+	teamID     string
+}
+
+func NewClickUpNameResolver(httpClient *http.Client, teamID string) NameResolver {
+	return &clickupNameResolver{httpClient: httpClient, teamID: teamID}
+}
+
+func (r *clickupNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
+	if r.teamID == "" {
+		return "", nil
+	}
+
+	endpoint, err := url.JoinPath("https://api.clickup.com", "api", "v2", "team", url.PathEscape(r.teamID))
+	if err != nil {
+		return "", fmt.Errorf("cannot build clickup team URL: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
+	if err != nil {
+		return "", fmt.Errorf("cannot create clickup team request: %w", err)
+	}
+
+	req.Header.Set("Accept", "application/json")
+
+	httpResp, err := r.httpClient.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("cannot execute clickup team request: %w", err)
+	}
+
+	defer func() { _ = httpResp.Body.Close() }()
+
+	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
+		return "", fmt.Errorf("cannot fetch clickup team: unexpected status %d", httpResp.StatusCode)
+	}
+
+	var resp struct {
+		Team struct {
+			Name string `json:"name"`
+		} `json:"team"`
+	}
+	if err := json.NewDecoder(httpResp.Body).Decode(&resp); err != nil {
+		return "", fmt.Errorf("cannot decode clickup team response: %w", err)
+	}
+
+	return resp.Team.Name, nil
+}
+
+// vercelNameResolver resolves the Vercel team name. When the captured
+// TeamID is a personal-account UID, the v2 teams endpoint returns 404;
+// the resolver falls back to /v2/user and uses `username` (or `name`)
+// as the display name.
+type vercelNameResolver struct {
+	httpClient *http.Client
+	teamID     string
+}
+
+func NewVercelNameResolver(httpClient *http.Client, teamID string) NameResolver {
+	return &vercelNameResolver{httpClient: httpClient, teamID: teamID}
+}
+
+func (r *vercelNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
+	if r.teamID == "" {
+		return "", nil
+	}
+
+	teamURL, err := url.JoinPath("https://api.vercel.com", "v2", "teams", url.PathEscape(r.teamID))
+	if err != nil {
+		return "", fmt.Errorf("cannot build vercel team URL: %w", err)
+	}
+
+	teamReq, err := http.NewRequestWithContext(ctx, http.MethodGet, teamURL, nil)
+	if err != nil {
+		return "", fmt.Errorf("cannot create vercel team request: %w", err)
+	}
+
+	teamReq.Header.Set("Accept", "application/json")
+
+	teamResp, err := r.httpClient.Do(teamReq)
+	if err != nil {
+		return "", fmt.Errorf("cannot execute vercel team request: %w", err)
+	}
+
+	defer func() { _ = teamResp.Body.Close() }()
+
+	if teamResp.StatusCode == http.StatusOK {
+		var body struct {
+			Name string `json:"name"`
+			Slug string `json:"slug"`
+		}
+		if err := json.NewDecoder(teamResp.Body).Decode(&body); err != nil {
+			return "", fmt.Errorf("cannot decode vercel team response: %w", err)
+		}
+
+		if body.Name != "" {
+			return body.Name, nil
+		}
+
+		return body.Slug, nil
+	}
+
+	if teamResp.StatusCode != http.StatusNotFound {
+		return "", fmt.Errorf("cannot fetch vercel team: unexpected status %d", teamResp.StatusCode)
+	}
+
+	// Personal-account fallback: /v2/teams/<uid> returns 404, but
+	// /v2/user works with the same Bearer token.
+	user, err := connector.FetchVercelUser(ctx, r.httpClient)
+	if err != nil {
+		return "", err
+	}
+
+	if user.Username != "" {
+		return user.Username, nil
+	}
+
+	return user.Name, nil
+}
+
+// mondayNameResolver resolves the Monday.com account name via GraphQL.
+type mondayNameResolver struct {
+	httpClient *http.Client
+}
+
+func NewMondayNameResolver(httpClient *http.Client) NameResolver {
+	return &mondayNameResolver{httpClient: httpClient}
+}
+
+func (r *mondayNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
+	body := struct {
+		Query string `json:"query"`
+	}{
+		Query: `query { account { id name slug tier } }`,
+	}
+
+	payload, err := json.Marshal(body)
+	if err != nil {
+		return "", fmt.Errorf("cannot marshal monday account query: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, mondayGraphQLEndpoint, bytes.NewReader(payload))
+	if err != nil {
+		return "", fmt.Errorf("cannot create monday account request: %w", err)
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json")
+
+	httpResp, err := r.httpClient.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("cannot execute monday account request: %w", err)
+	}
+
+	defer func() { _ = httpResp.Body.Close() }()
+
+	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
+		return "", fmt.Errorf("cannot fetch monday account: unexpected status %d", httpResp.StatusCode)
+	}
+
+	var resp struct {
+		Data struct {
+			Account struct {
+				Name string `json:"name"`
+			} `json:"account"`
+		} `json:"data"`
+		Errors []struct {
+			Message string `json:"message"`
+		} `json:"errors"`
+	}
+	if err := json.NewDecoder(httpResp.Body).Decode(&resp); err != nil {
+		return "", fmt.Errorf("cannot decode monday account response: %w", err)
+	}
+
+	if len(resp.Errors) > 0 {
+		// Provider-supplied messages may carry tenant identifiers or
+		// query fragments — never embed them. Driver scrubs the same
+		// field; keep both call sites aligned.
+		return "", fmt.Errorf("cannot fetch monday account: graphql error")
+	}
+
+	return resp.Data.Account.Name, nil
+}
+
 // notionNameResolver resolves the Notion workspace name via /v1/users/me.
 type notionNameResolver struct {
 	httpClient *http.Client
@@ -604,6 +1130,7 @@ func (r *notionNameResolver) ResolveInstanceName(ctx context.Context) (string, e
 	if err != nil {
 		return "", fmt.Errorf("cannot create notion users/me request: %w", err)
 	}
+
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("Notion-Version", notionAPIVersion)
 
@@ -611,6 +1138,7 @@ func (r *notionNameResolver) ResolveInstanceName(ctx context.Context) (string, e
 	if err != nil {
 		return "", fmt.Errorf("cannot execute notion users/me request: %w", err)
 	}
+
 	defer func() { _ = httpResp.Body.Close() }()
 
 	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
@@ -640,21 +1168,27 @@ func NewMicrosoft365NameResolver(httpClient *http.Client) NameResolver {
 }
 
 func (r *microsoft365NameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
-	req, err := http.NewRequestWithContext(
-		ctx,
-		http.MethodGet,
-		"https://graph.microsoft.com/v1.0/organization?$select=displayName,verifiedDomains",
-		nil,
-	)
+	msURL, err := url.Parse("https://graph.microsoft.com/v1.0/organization")
+	if err != nil {
+		return "", fmt.Errorf("cannot parse microsoft 365 organization URL: %w", err)
+	}
+
+	q := msURL.Query()
+	q.Set("$select", "displayName,verifiedDomains")
+	msURL.RawQuery = q.Encode()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, msURL.String(), nil)
 	if err != nil {
 		return "", fmt.Errorf("cannot create microsoft 365 organization request: %w", err)
 	}
+
 	req.Header.Set("Accept", "application/json")
 
 	httpResp, err := r.httpClient.Do(req)
 	if err != nil {
 		return "", fmt.Errorf("cannot execute microsoft 365 organization request: %w", err)
 	}
+
 	defer func() { _ = httpResp.Body.Close() }()
 
 	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
@@ -682,13 +1216,16 @@ func (r *microsoft365NameResolver) ResolveInstanceName(ctx context.Context) (str
 	if org.DisplayName != "" {
 		return org.DisplayName, nil
 	}
+
 	for _, d := range org.VerifiedDomains {
 		if d.IsDefault {
 			return d.Name, nil
 		}
 	}
+
 	if len(org.VerifiedDomains) > 0 {
 		return org.VerifiedDomains[0].Name, nil
 	}
+
 	return "", nil
 }

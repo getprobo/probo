@@ -140,6 +140,7 @@ func TestSignJWT(t *testing.T) {
 			require.NoError(t, err)
 
 			var header jose.JWTHeader
+
 			err = json.Unmarshal(headerJSON, &header)
 			require.NoError(t, err)
 
@@ -168,6 +169,7 @@ func TestSignJWT(t *testing.T) {
 			require.NoError(t, err)
 
 			var decoded map[string]any
+
 			err = json.Unmarshal(claimsJSON, &decoded)
 			require.NoError(t, err)
 
@@ -215,6 +217,7 @@ func TestJWK_JSON(t *testing.T) {
 			require.NoError(t, err)
 
 			var raw map[string]string
+
 			err = json.Unmarshal(data, &raw)
 			require.NoError(t, err)
 
@@ -251,6 +254,7 @@ func TestJWKS_JSON(t *testing.T) {
 			var raw struct {
 				Keys []json.RawMessage `json:"keys"`
 			}
+
 			err = json.Unmarshal(data, &raw)
 			require.NoError(t, err)
 
@@ -277,6 +281,7 @@ func TestJWTHeader_JSON(t *testing.T) {
 			require.NoError(t, err)
 
 			var raw map[string]string
+
 			err = json.Unmarshal(data, &raw)
 			require.NoError(t, err)
 

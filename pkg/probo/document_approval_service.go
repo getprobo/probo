@@ -38,7 +38,7 @@ import (
 
 type (
 	DocumentApprovalService struct {
-		svc                     *TenantService
+		svc                     *Service
 		html2pdfConverter       *html2pdf.Converter
 		invitationTokenValidity time.Duration
 		tokenSecret             string
@@ -73,7 +73,7 @@ func (e ErrApprovalDecisionAlreadyMade) Error() string {
 }
 
 func (s *DocumentApprovalService) RequestApprovalInTx(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	tx pg.Tx,
 	document *coredata.Document,
 	documentVersion *coredata.DocumentVersion,
@@ -81,12 +81,12 @@ func (s *DocumentApprovalService) RequestApprovalInTx(
 	changelog *string,
 ) (*coredata.DocumentVersionApprovalQuorum, error) {
 	organization := &coredata.Organization{}
-	if err := organization.LoadByID(ctx, tx, s.svc.scope, document.OrganizationID); err != nil {
+	if err := organization.LoadByID(ctx, tx, scope, document.OrganizationID); err != nil {
 		return nil, fmt.Errorf("cannot load organization: %w", err)
 	}
 
 	approverProfiles := &coredata.MembershipProfiles{}
-	if err := approverProfiles.LoadByIDs(ctx, tx, s.svc.scope, approverIDs); err != nil {
+	if err := approverProfiles.LoadByIDs(ctx, tx, scope, approverIDs); err != nil {
 		return nil, fmt.Errorf("cannot load approver profiles: %w", err)
 	}
 
@@ -102,15 +102,16 @@ func (s *DocumentApprovalService) RequestApprovalInTx(
 	} else {
 		documentVersion.Major = 1
 	}
+
 	documentVersion.Minor = 0
 
 	documentVersion.UpdatedAt = now
-	if err := documentVersion.Update(ctx, tx, s.svc.scope); err != nil {
+	if err := documentVersion.Update(ctx, tx, scope); err != nil {
 		return nil, fmt.Errorf("cannot update document version: %w", err)
 	}
 
 	quorum := &coredata.DocumentVersionApprovalQuorum{
-		ID:             gid.New(s.svc.scope.GetTenantID(), coredata.DocumentVersionApprovalQuorumEntityType),
+		ID:             gid.New(scope.GetTenantID(), coredata.DocumentVersionApprovalQuorumEntityType),
 		OrganizationID: document.OrganizationID,
 		VersionID:      documentVersion.ID,
 		Status:         coredata.DocumentVersionApprovalQuorumStatusPending,
@@ -118,15 +119,15 @@ func (s *DocumentApprovalService) RequestApprovalInTx(
 		UpdatedAt:      now,
 	}
 
-	if err := quorum.Insert(ctx, tx, s.svc.scope); err != nil {
+	if err := quorum.Insert(ctx, tx, scope); err != nil {
 		return nil, fmt.Errorf("cannot insert approval quorum: %w", err)
 	}
 
-	if err := s.createDecisions(ctx, tx, quorum, document.OrganizationID, approverIDs, now); err != nil {
+	if err := s.createDecisions(ctx, scope, tx, quorum, document.OrganizationID, approverIDs, now); err != nil {
 		return nil, fmt.Errorf("cannot create approval decisions: %w", err)
 	}
 
-	if err := s.sendApprovalEmails(ctx, tx, *approverProfiles, document, organization, documentVersion.ID); err != nil {
+	if err := s.sendApprovalEmails(ctx, scope, tx, *approverProfiles, document, organization, documentVersion.ID); err != nil {
 		return nil, fmt.Errorf("cannot send approval emails: %w", err)
 	}
 
@@ -140,18 +141,20 @@ func (s *DocumentApprovalService) RequestApprovalInTx(
 // an approval is requested for it; otherwise it is published as a major
 // bump. Documents with no draft (or already pending approval) are skipped.
 func (s *DocumentApprovalService) BulkPublishVersions(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	req BulkPublishVersionsRequest,
 ) ([]*coredata.DocumentVersion, []*coredata.Document, error) {
-	var publishedVersions []*coredata.DocumentVersion
-	var updatedDocuments []*coredata.Document
+	var (
+		publishedVersions []*coredata.DocumentVersion
+		updatedDocuments  []*coredata.Document
+	)
 
 	err := s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			for _, documentID := range req.DocumentIDs {
 				dv := &coredata.DocumentVersion{}
-				if err := dv.LoadLatestVersion(ctx, tx, s.svc.scope, documentID); err != nil {
+				if err := dv.LoadLatestVersion(ctx, tx, scope, documentID); err != nil {
 					return fmt.Errorf("cannot load latest version for %q: %w", documentID, err)
 				}
 
@@ -160,7 +163,7 @@ func (s *DocumentApprovalService) BulkPublishVersions(
 				}
 
 				document := &coredata.Document{}
-				if err := document.LoadByID(ctx, tx, s.svc.scope, documentID); err != nil {
+				if err := document.LoadByID(ctx, tx, scope, documentID); err != nil {
 					return fmt.Errorf("cannot load document %q: %w", documentID, err)
 				}
 
@@ -174,6 +177,7 @@ func (s *DocumentApprovalService) BulkPublishVersions(
 				if req.Minor && dv.Status == coredata.DocumentVersionStatusPublished {
 					publishedVersions = append(publishedVersions, dv)
 					updatedDocuments = append(updatedDocuments, document)
+
 					continue
 				}
 
@@ -183,13 +187,14 @@ func (s *DocumentApprovalService) BulkPublishVersions(
 
 				if req.Minor {
 					var err error
-					document, dv, err = s.svc.Documents.publishMinorVersionInTx(ctx, tx, documentID, &req.Changelog, true)
+
+					document, dv, err = s.svc.Documents.publishMinorVersionInTx(ctx, scope, tx, documentID, &req.Changelog, true)
 					if err != nil {
 						return fmt.Errorf("cannot publish document %q: %w", documentID, err)
 					}
 				} else {
 					defaultApprovers := &coredata.DocumentDefaultApprovers{}
-					if err := defaultApprovers.LoadByDocumentID(ctx, tx, s.svc.scope, documentID); err != nil {
+					if err := defaultApprovers.LoadByDocumentID(ctx, tx, scope, documentID); err != nil {
 						return fmt.Errorf("cannot load default approvers for %q: %w", documentID, err)
 					}
 
@@ -199,12 +204,13 @@ func (s *DocumentApprovalService) BulkPublishVersions(
 							approverIDs[i] = a.ApproverProfileID
 						}
 
-						if _, err := s.RequestApprovalInTx(ctx, tx, document, dv, approverIDs, &req.Changelog); err != nil {
+						if _, err := s.RequestApprovalInTx(ctx, scope, tx, document, dv, approverIDs, &req.Changelog); err != nil {
 							return fmt.Errorf("cannot request approval for %q: %w", documentID, err)
 						}
 					} else {
 						var err error
-						document, dv, err = s.svc.Documents.publishMajorVersionInTx(ctx, tx, documentID, &req.Changelog, true)
+
+						document, dv, err = s.svc.Documents.publishMajorVersionInTx(ctx, scope, tx, documentID, &req.Changelog, true)
 						if err != nil {
 							return fmt.Errorf("cannot publish document %q: %w", documentID, err)
 						}
@@ -218,7 +224,6 @@ func (s *DocumentApprovalService) BulkPublishVersions(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, nil, err
 	}
@@ -227,7 +232,7 @@ func (s *DocumentApprovalService) BulkPublishVersions(
 }
 
 func (s *DocumentApprovalService) Approve(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	req ApproveDocumentVersionRequest,
 ) (*coredata.DocumentVersionApprovalDecision, error) {
 	var (
@@ -241,12 +246,12 @@ func (s *DocumentApprovalService) Approve(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
 			documentVersion = &coredata.DocumentVersion{}
-			if err := documentVersion.LoadByID(ctx, conn, s.svc.scope, req.DocumentVersionID); err != nil {
+			if err := documentVersion.LoadByID(ctx, conn, scope, req.DocumentVersionID); err != nil {
 				return fmt.Errorf("cannot load document version: %w", err)
 			}
 
 			document = &coredata.Document{}
-			if err := document.LoadByID(ctx, conn, s.svc.scope, documentVersion.DocumentID); err != nil {
+			if err := document.LoadByID(ctx, conn, scope, documentVersion.DocumentID); err != nil {
 				return fmt.Errorf("cannot load document: %w", err)
 			}
 
@@ -254,9 +259,12 @@ func (s *DocumentApprovalService) Approve(
 				return &ErrDocumentArchived{}
 			}
 
-			var profile *coredata.MembershipProfile
-			var err error
-			quorum, profile, err = s.loadQuorumAndProfile(ctx, conn, req.DocumentVersionID, req.IdentityID, documentVersion.OrganizationID)
+			var (
+				profile *coredata.MembershipProfile
+				err     error
+			)
+
+			quorum, profile, err = s.loadQuorumAndProfile(ctx, scope, conn, req.DocumentVersionID, req.IdentityID, documentVersion.OrganizationID)
 			if err != nil {
 				return fmt.Errorf("cannot load quorum and profile: %w", err)
 			}
@@ -266,7 +274,7 @@ func (s *DocumentApprovalService) Approve(
 			}
 
 			decision = &coredata.DocumentVersionApprovalDecision{}
-			if err := decision.LoadByQuorumIDAndApproverID(ctx, conn, s.svc.scope, quorum.ID, profile.ID); err != nil {
+			if err := decision.LoadByQuorumIDAndApproverID(ctx, conn, scope, quorum.ID, profile.ID); err != nil {
 				return fmt.Errorf("cannot load approval decision: %w", err)
 			}
 
@@ -277,20 +285,19 @@ func (s *DocumentApprovalService) Approve(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
 
 	now := time.Now()
 
-	pdfData, err := s.generateApprovalPDF(ctx, req.DocumentVersionID)
+	pdfData, err := s.generateApprovalPDF(ctx, scope, req.DocumentVersionID)
 	if err != nil {
 		return nil, fmt.Errorf("cannot export document PDF: %w", err)
 	}
 
 	fileRecord := &coredata.File{
-		ID:             gid.New(s.svc.scope.GetTenantID(), coredata.FileEntityType),
+		ID:             gid.New(scope.GetTenantID(), coredata.FileEntityType),
 		OrganizationID: documentVersion.OrganizationID,
 		BucketName:     s.svc.bucket,
 		MimeType:       "application/pdf",
@@ -324,7 +331,7 @@ func (s *DocumentApprovalService) Approve(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			quorum = &coredata.DocumentVersionApprovalQuorum{}
-			if err := quorum.LoadByID(ctx, tx, s.svc.scope, quorumID); err != nil {
+			if err := quorum.LoadByID(ctx, tx, scope, quorumID); err != nil {
 				return fmt.Errorf("cannot load quorum: %w", err)
 			}
 
@@ -333,7 +340,7 @@ func (s *DocumentApprovalService) Approve(
 			}
 
 			decision = &coredata.DocumentVersionApprovalDecision{}
-			if err := decision.LoadByQuorumIDAndApproverID(ctx, tx, s.svc.scope, quorum.ID, approverID); err != nil {
+			if err := decision.LoadByQuorumIDAndApproverID(ctx, tx, scope, quorum.ID, approverID); err != nil {
 				return fmt.Errorf("cannot load approval decision: %w", err)
 			}
 
@@ -341,7 +348,7 @@ func (s *DocumentApprovalService) Approve(
 				return &ErrApprovalDecisionAlreadyMade{}
 			}
 
-			if err := fileRecord.Insert(ctx, tx, s.svc.scope); err != nil {
+			if err := fileRecord.Insert(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot insert approval file record: %w", err)
 			}
 
@@ -358,6 +365,7 @@ func (s *DocumentApprovalService) Approve(
 					SignerIPAddr:   req.SignerIPAddr,
 					SignerUA:       req.SignerUA,
 					ConsentText:    "By clicking Approve, I consent to approve this document electronically and agree that my electronic signature has the same legal validity as a handwritten signature.",
+					EmailSubject:   fmt.Sprintf("Your approved %s - Certificate of Completion", document.Title),
 				},
 			)
 			if err != nil {
@@ -370,18 +378,17 @@ func (s *DocumentApprovalService) Approve(
 			decision.DecidedAt = &now
 			decision.UpdatedAt = now
 
-			if err := decision.Update(ctx, tx, s.svc.scope); err != nil {
+			if err := decision.Update(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot update approval decision: %w", err)
 			}
 
-			if err := s.maybeApproveQuorum(ctx, tx, quorum.ID); err != nil {
+			if err := s.maybeApproveQuorum(ctx, scope, tx, quorum.ID); err != nil {
 				return fmt.Errorf("cannot check quorum approval: %w", err)
 			}
 
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -390,7 +397,7 @@ func (s *DocumentApprovalService) Approve(
 }
 
 func (s *DocumentApprovalService) Reject(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	req RejectDocumentVersionRequest,
 ) (*coredata.DocumentVersionApprovalDecision, error) {
 	var decision *coredata.DocumentVersionApprovalDecision
@@ -399,12 +406,12 @@ func (s *DocumentApprovalService) Reject(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			documentVersion := &coredata.DocumentVersion{}
-			if err := documentVersion.LoadByID(ctx, tx, s.svc.scope, req.DocumentVersionID); err != nil {
+			if err := documentVersion.LoadByID(ctx, tx, scope, req.DocumentVersionID); err != nil {
 				return fmt.Errorf("cannot load document version: %w", err)
 			}
 
 			document := &coredata.Document{}
-			if err := document.LoadByID(ctx, tx, s.svc.scope, documentVersion.DocumentID); err != nil {
+			if err := document.LoadByID(ctx, tx, scope, documentVersion.DocumentID); err != nil {
 				return fmt.Errorf("cannot load document: %w", err)
 			}
 
@@ -412,13 +419,13 @@ func (s *DocumentApprovalService) Reject(
 				return &ErrDocumentArchived{}
 			}
 
-			quorum, profile, err := s.loadQuorumAndProfile(ctx, tx, req.DocumentVersionID, req.IdentityID, documentVersion.OrganizationID)
+			quorum, profile, err := s.loadQuorumAndProfile(ctx, scope, tx, req.DocumentVersionID, req.IdentityID, documentVersion.OrganizationID)
 			if err != nil {
 				return fmt.Errorf("cannot load quorum and profile: %w", err)
 			}
 
 			decision = &coredata.DocumentVersionApprovalDecision{}
-			if err := decision.LoadByQuorumIDAndApproverID(ctx, tx, s.svc.scope, quorum.ID, profile.ID); err != nil {
+			if err := decision.LoadByQuorumIDAndApproverID(ctx, tx, scope, quorum.ID, profile.ID); err != nil {
 				return fmt.Errorf("cannot load approval decision: %w", err)
 			}
 
@@ -433,19 +440,19 @@ func (s *DocumentApprovalService) Reject(
 			decision.DecidedAt = &now
 			decision.UpdatedAt = now
 
-			if err := decision.Update(ctx, tx, s.svc.scope); err != nil {
+			if err := decision.Update(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot update approval decision: %w", err)
 			}
 
 			quorum.Status = coredata.DocumentVersionApprovalQuorumStatusRejected
 			quorum.UpdatedAt = now
 
-			if err := quorum.Update(ctx, tx, s.svc.scope); err != nil {
+			if err := quorum.Update(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot update approval quorum: %w", err)
 			}
 
 			decisions := &coredata.DocumentVersionApprovalDecisions{}
-			if err := decisions.VoidPendingByQuorumID(ctx, tx, s.svc.scope, quorum.ID, now); err != nil {
+			if err := decisions.VoidPendingByQuorumID(ctx, tx, scope, quorum.ID, now); err != nil {
 				return fmt.Errorf("cannot void pending decisions: %w", err)
 			}
 
@@ -457,16 +464,16 @@ func (s *DocumentApprovalService) Reject(
 				documentVersion.Major = 0
 				documentVersion.Minor = 1
 			}
+
 			documentVersion.UpdatedAt = now
 
-			if err := documentVersion.Update(ctx, tx, s.svc.scope); err != nil {
+			if err := documentVersion.Update(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot update document version status: %w", err)
 			}
 
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -475,7 +482,7 @@ func (s *DocumentApprovalService) Reject(
 }
 
 func (s *DocumentApprovalService) VoidApproval(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	documentVersionID gid.GID,
 ) (*coredata.DocumentVersionApprovalQuorum, *coredata.DocumentVersion, error) {
 	var (
@@ -487,12 +494,12 @@ func (s *DocumentApprovalService) VoidApproval(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			documentVersion = &coredata.DocumentVersion{}
-			if err := documentVersion.LoadByID(ctx, tx, s.svc.scope, documentVersionID); err != nil {
+			if err := documentVersion.LoadByID(ctx, tx, scope, documentVersionID); err != nil {
 				return fmt.Errorf("cannot load document version: %w", err)
 			}
 
 			document := &coredata.Document{}
-			if err := document.LoadByID(ctx, tx, s.svc.scope, documentVersion.DocumentID); err != nil {
+			if err := document.LoadByID(ctx, tx, scope, documentVersion.DocumentID); err != nil {
 				return fmt.Errorf("cannot load document: %w", err)
 			}
 
@@ -505,7 +512,7 @@ func (s *DocumentApprovalService) VoidApproval(
 			}
 
 			quorum = &coredata.DocumentVersionApprovalQuorum{}
-			if err := quorum.LoadLastByDocumentVersionID(ctx, tx, s.svc.scope, documentVersionID); err != nil {
+			if err := quorum.LoadLastByDocumentVersionID(ctx, tx, scope, documentVersionID); err != nil {
 				return fmt.Errorf("cannot load approval quorum: %w", err)
 			}
 
@@ -518,12 +525,12 @@ func (s *DocumentApprovalService) VoidApproval(
 			quorum.Status = coredata.DocumentVersionApprovalQuorumStatusVoided
 			quorum.UpdatedAt = now
 
-			if err := quorum.Update(ctx, tx, s.svc.scope); err != nil {
+			if err := quorum.Update(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot update approval quorum: %w", err)
 			}
 
 			decisions := &coredata.DocumentVersionApprovalDecisions{}
-			if err := decisions.VoidPendingByQuorumID(ctx, tx, s.svc.scope, quorum.ID, now); err != nil {
+			if err := decisions.VoidPendingByQuorumID(ctx, tx, scope, quorum.ID, now); err != nil {
 				return fmt.Errorf("cannot void pending decisions: %w", err)
 			}
 
@@ -535,16 +542,16 @@ func (s *DocumentApprovalService) VoidApproval(
 				documentVersion.Major = 0
 				documentVersion.Minor = 1
 			}
+
 			documentVersion.UpdatedAt = now
 
-			if err := documentVersion.Update(ctx, tx, s.svc.scope); err != nil {
+			if err := documentVersion.Update(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot update document version status: %w", err)
 			}
 
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, nil, err
 	}
@@ -553,7 +560,7 @@ func (s *DocumentApprovalService) VoidApproval(
 }
 
 func (s *DocumentApprovalService) GetQuorum(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	quorumID gid.GID,
 ) (*coredata.DocumentVersionApprovalQuorum, error) {
 	quorum := &coredata.DocumentVersionApprovalQuorum{}
@@ -561,13 +568,13 @@ func (s *DocumentApprovalService) GetQuorum(
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			if err := quorum.LoadByID(ctx, conn, s.svc.scope, quorumID); err != nil {
+			if err := quorum.LoadByID(ctx, conn, scope, quorumID); err != nil {
 				return fmt.Errorf("cannot load approval quorum: %w", err)
 			}
+
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -576,7 +583,7 @@ func (s *DocumentApprovalService) GetQuorum(
 }
 
 func (s *DocumentApprovalService) ListQuorums(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	documentVersionID gid.GID,
 	cursor *page.Cursor[coredata.DocumentVersionApprovalQuorumOrderField],
 ) (*page.Page[*coredata.DocumentVersionApprovalQuorum, coredata.DocumentVersionApprovalQuorumOrderField], error) {
@@ -585,13 +592,13 @@ func (s *DocumentApprovalService) ListQuorums(
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			if err := quorums.LoadAllByDocumentVersionID(ctx, conn, s.svc.scope, documentVersionID, cursor); err != nil {
+			if err := quorums.LoadAllByDocumentVersionID(ctx, conn, scope, documentVersionID, cursor); err != nil {
 				return fmt.Errorf("cannot list approval quorums: %w", err)
 			}
+
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -600,7 +607,7 @@ func (s *DocumentApprovalService) ListQuorums(
 }
 
 func (s *DocumentApprovalService) CountQuorums(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	documentVersionID gid.GID,
 ) (int, error) {
 	var count int
@@ -609,14 +616,15 @@ func (s *DocumentApprovalService) CountQuorums(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			quorums := &coredata.DocumentVersionApprovalQuorums{}
-			count, err = quorums.CountByDocumentVersionID(ctx, conn, s.svc.scope, documentVersionID)
+
+			count, err = quorums.CountByDocumentVersionID(ctx, conn, scope, documentVersionID)
 			if err != nil {
 				return fmt.Errorf("cannot count approval quorums: %w", err)
 			}
+
 			return nil
 		},
 	)
-
 	if err != nil {
 		return 0, err
 	}
@@ -625,7 +633,7 @@ func (s *DocumentApprovalService) CountQuorums(
 }
 
 func (s *DocumentApprovalService) ListDecisions(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	quorumID gid.GID,
 	cursor *page.Cursor[coredata.DocumentVersionApprovalDecisionOrderField],
 	filter *coredata.DocumentVersionApprovalDecisionFilter,
@@ -635,13 +643,13 @@ func (s *DocumentApprovalService) ListDecisions(
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			if err := decisions.LoadByQuorumID(ctx, conn, s.svc.scope, quorumID, cursor, filter); err != nil {
+			if err := decisions.LoadByQuorumID(ctx, conn, scope, quorumID, cursor, filter); err != nil {
 				return fmt.Errorf("cannot list approval decisions: %w", err)
 			}
+
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -650,7 +658,7 @@ func (s *DocumentApprovalService) ListDecisions(
 }
 
 func (s *DocumentApprovalService) CountDecisions(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	quorumID gid.GID,
 	filter *coredata.DocumentVersionApprovalDecisionFilter,
 ) (int, error) {
@@ -660,14 +668,15 @@ func (s *DocumentApprovalService) CountDecisions(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			decisions := &coredata.DocumentVersionApprovalDecisions{}
-			count, err = decisions.CountByQuorumID(ctx, conn, s.svc.scope, quorumID, filter)
+
+			count, err = decisions.CountByQuorumID(ctx, conn, scope, quorumID, filter)
 			if err != nil {
 				return fmt.Errorf("cannot count approval decisions: %w", err)
 			}
+
 			return nil
 		},
 	)
-
 	if err != nil {
 		return 0, err
 	}
@@ -676,7 +685,7 @@ func (s *DocumentApprovalService) CountDecisions(
 }
 
 func (s *DocumentApprovalService) GetDecision(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	decisionID gid.GID,
 ) (*coredata.DocumentVersionApprovalDecision, error) {
 	decision := &coredata.DocumentVersionApprovalDecision{}
@@ -684,13 +693,13 @@ func (s *DocumentApprovalService) GetDecision(
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			if err := decision.LoadByID(ctx, conn, s.svc.scope, decisionID); err != nil {
+			if err := decision.LoadByID(ctx, conn, scope, decisionID); err != nil {
 				return fmt.Errorf("cannot load approval decision: %w", err)
 			}
+
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -699,7 +708,7 @@ func (s *DocumentApprovalService) GetDecision(
 }
 
 func (s *DocumentApprovalService) GetViewerDecision(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	documentVersionID gid.GID,
 	identityID gid.GID,
 ) (*coredata.DocumentVersionApprovalDecision, error) {
@@ -709,7 +718,7 @@ func (s *DocumentApprovalService) GetViewerDecision(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
 			documentVersion := &coredata.DocumentVersion{}
-			if err := documentVersion.LoadByID(ctx, conn, s.svc.scope, documentVersionID); err != nil {
+			if err := documentVersion.LoadByID(ctx, conn, scope, documentVersionID); err != nil {
 				return fmt.Errorf("cannot load document version: %w", err)
 			}
 
@@ -717,7 +726,7 @@ func (s *DocumentApprovalService) GetViewerDecision(
 			if err := profile.LoadByIdentityIDAndOrganizationID(
 				ctx,
 				conn,
-				s.svc.scope,
+				scope,
 				identityID,
 				documentVersion.OrganizationID,
 			); err != nil {
@@ -725,20 +734,20 @@ func (s *DocumentApprovalService) GetViewerDecision(
 			}
 
 			quorum := &coredata.DocumentVersionApprovalQuorum{}
-			if err := quorum.LoadLastByDocumentVersionID(ctx, conn, s.svc.scope, documentVersionID); err != nil {
+			if err := quorum.LoadLastByDocumentVersionID(ctx, conn, scope, documentVersionID); err != nil {
 				return fmt.Errorf("cannot load last approval quorum: %w", err)
 			}
 
 			d := &coredata.DocumentVersionApprovalDecision{}
-			if err := d.LoadByQuorumIDAndApproverID(ctx, conn, s.svc.scope, quorum.ID, profile.ID); err != nil {
+			if err := d.LoadByQuorumIDAndApproverID(ctx, conn, scope, quorum.ID, profile.ID); err != nil {
 				return fmt.Errorf("cannot load viewer approval decision: %w", err)
 			}
 
 			decision = d
+
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -747,22 +756,23 @@ func (s *DocumentApprovalService) GetViewerDecision(
 }
 
 func (s *DocumentApprovalService) loadQuorumAndProfile(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	conn pg.Querier,
 	documentVersionID gid.GID,
 	identityID gid.GID,
 	organizationID gid.GID,
 ) (*coredata.DocumentVersionApprovalQuorum, *coredata.MembershipProfile, error) {
 	quorum := &coredata.DocumentVersionApprovalQuorum{}
-	if err := quorum.LoadLastByDocumentVersionID(ctx, conn, s.svc.scope, documentVersionID); err != nil {
+	if err := quorum.LoadLastByDocumentVersionID(ctx, conn, scope, documentVersionID); err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, nil, &ErrDocumentVersionNotPendingApproval{}
 		}
+
 		return nil, nil, fmt.Errorf("cannot load last approval quorum: %w", err)
 	}
 
 	profile := &coredata.MembershipProfile{}
-	if err := profile.LoadByIdentityIDAndOrganizationID(ctx, conn, s.svc.scope, identityID, organizationID); err != nil {
+	if err := profile.LoadByIdentityIDAndOrganizationID(ctx, conn, scope, identityID, organizationID); err != nil {
 		return nil, nil, fmt.Errorf("cannot find profile for identity: %w", err)
 	}
 
@@ -770,7 +780,7 @@ func (s *DocumentApprovalService) loadQuorumAndProfile(
 }
 
 func (s *DocumentApprovalService) createDecisions(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	tx pg.Tx,
 	quorum *coredata.DocumentVersionApprovalQuorum,
 	organizationID gid.GID,
@@ -780,7 +790,7 @@ func (s *DocumentApprovalService) createDecisions(
 	decisions := make(coredata.DocumentVersionApprovalDecisions, 0, len(approverIDs))
 	for _, approverID := range approverIDs {
 		decisions = append(decisions, &coredata.DocumentVersionApprovalDecision{
-			ID:             gid.New(s.svc.scope.GetTenantID(), coredata.DocumentVersionApprovalDecisionEntityType),
+			ID:             gid.New(scope.GetTenantID(), coredata.DocumentVersionApprovalDecisionEntityType),
 			OrganizationID: organizationID,
 			QuorumID:       quorum.ID,
 			ApproverID:     approverID,
@@ -790,7 +800,7 @@ func (s *DocumentApprovalService) createDecisions(
 		})
 	}
 
-	if err := decisions.BulkInsert(ctx, tx, s.svc.scope); err != nil {
+	if err := decisions.BulkInsert(ctx, tx, scope); err != nil {
 		return fmt.Errorf("cannot insert approval decisions: %w", err)
 	}
 
@@ -798,7 +808,7 @@ func (s *DocumentApprovalService) createDecisions(
 }
 
 func (s *DocumentApprovalService) sendApprovalEmails(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	tx pg.Tx,
 	profiles coredata.MembershipProfiles,
 	document *coredata.Document,
@@ -816,6 +826,7 @@ func (s *DocumentApprovalService) sendApprovalEmails(
 			emailLinkURLPath = approvalURLPath
 			query            = make(url.Values)
 		)
+
 		if profile.State != coredata.ProfileStateActive {
 			if profile.Source != coredata.ProfileSourceSCIM {
 				invitation := &coredata.Invitation{
@@ -842,6 +853,7 @@ func (s *DocumentApprovalService) sendApprovalEmails(
 
 				emailLinkURLPath = "/auth/activate-account"
 				continueURL := baseurl.MustParse(s.svc.baseURL).AppendPath(approvalURLPath).MustString()
+
 				query.Add("token", invitationToken)
 				query.Add("continue", continueURL)
 			}
@@ -878,7 +890,7 @@ func (s *DocumentApprovalService) sendApprovalEmails(
 }
 
 func (s *DocumentApprovalService) generateApprovalPDF(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	documentVersionID gid.GID,
 ) ([]byte, error) {
 	var pdfData []byte
@@ -887,15 +899,17 @@ func (s *DocumentApprovalService) generateApprovalPDF(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
 			var err error
+
 			pdfData, err = exportDocumentPDF(
 				ctx,
 				s.svc,
 				s.html2pdfConverter,
 				conn,
-				s.svc.scope,
+				scope,
 				documentVersionID,
 				ExportPDFOptions{},
 			)
+
 			return err
 		},
 	)
@@ -904,15 +918,16 @@ func (s *DocumentApprovalService) generateApprovalPDF(
 }
 
 func (s *DocumentApprovalService) countDecisions(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	conn pg.Querier,
 	quorumID gid.GID,
 ) (int, error) {
 	decisions := &coredata.DocumentVersionApprovalDecisions{}
+
 	count, err := decisions.CountByQuorumID(
 		ctx,
 		conn,
-		s.svc.scope,
+		scope,
 		quorumID,
 		coredata.NewDocumentVersionApprovalDecisionFilter(nil),
 	)
@@ -924,11 +939,11 @@ func (s *DocumentApprovalService) countDecisions(
 }
 
 func (s *DocumentApprovalService) maybeApproveQuorum(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	tx pg.Tx,
 	quorumID gid.GID,
 ) error {
-	totalCount, err := s.countDecisions(ctx, tx, quorumID)
+	totalCount, err := s.countDecisions(ctx, scope, tx, quorumID)
 	if err != nil {
 		return fmt.Errorf("cannot count total decisions: %w", err)
 	}
@@ -938,7 +953,8 @@ func (s *DocumentApprovalService) maybeApproveQuorum(
 	}
 
 	decisions := &coredata.DocumentVersionApprovalDecisions{}
-	approvedCount, err := decisions.CountApprovedByQuorumID(ctx, tx, s.svc.scope, quorumID)
+
+	approvedCount, err := decisions.CountApprovedByQuorumID(ctx, tx, scope, quorumID)
 	if err != nil {
 		return fmt.Errorf("cannot count approved decisions: %w", err)
 	}
@@ -948,7 +964,7 @@ func (s *DocumentApprovalService) maybeApproveQuorum(
 	}
 
 	quorum := &coredata.DocumentVersionApprovalQuorum{}
-	if err := quorum.LoadByID(ctx, tx, s.svc.scope, quorumID); err != nil {
+	if err := quorum.LoadByID(ctx, tx, scope, quorumID); err != nil {
 		return fmt.Errorf("cannot load quorum: %w", err)
 	}
 
@@ -956,11 +972,11 @@ func (s *DocumentApprovalService) maybeApproveQuorum(
 	quorum.Status = coredata.DocumentVersionApprovalQuorumStatusApproved
 	quorum.UpdatedAt = now
 
-	if err := quorum.Update(ctx, tx, s.svc.scope); err != nil {
+	if err := quorum.Update(ctx, tx, scope); err != nil {
 		return fmt.Errorf("cannot update quorum: %w", err)
 	}
 
-	if err := s.publishVersion(ctx, tx, quorum.VersionID); err != nil {
+	if err := s.publishVersion(ctx, scope, tx, quorum.VersionID); err != nil {
 		return fmt.Errorf("cannot publish version: %w", err)
 	}
 
@@ -968,25 +984,29 @@ func (s *DocumentApprovalService) maybeApproveQuorum(
 }
 
 func (s *DocumentApprovalService) publishVersion(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	tx pg.Tx,
 	versionID gid.GID,
 ) error {
 	version := &coredata.DocumentVersion{}
-	if err := version.LoadByID(ctx, tx, s.svc.scope, versionID); err != nil {
+	if err := version.LoadByID(ctx, tx, scope, versionID); err != nil {
 		return fmt.Errorf("cannot load document version: %w", err)
 	}
 
 	document := &coredata.Document{}
-	if err := document.LoadByID(ctx, tx, s.svc.scope, version.DocumentID); err != nil {
+	if err := document.LoadByID(ctx, tx, scope, version.DocumentID); err != nil {
 		return fmt.Errorf("cannot load document: %w", err)
 	}
 
 	document.CurrentPublishedMajor = &version.Major
 	document.CurrentPublishedMinor = &version.Minor
 
-	if err := s.svc.Documents.finalizePublish(ctx, tx, document, version, nil); err != nil {
+	if err := s.svc.Documents.finalizePublish(ctx, scope, tx, document, version, nil); err != nil {
 		return fmt.Errorf("cannot finalize publish: %w", err)
+	}
+
+	if err := s.svc.Documents.cancelPreviousMajorSignatureRequestsInTx(ctx, scope, tx, version.DocumentID, version.Major); err != nil {
+		return fmt.Errorf("cannot cancel signature requests from previous major versions: %w", err)
 	}
 
 	return nil

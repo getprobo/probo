@@ -52,6 +52,7 @@ func DiffDocumentsTool() agent.Tool {
 			if labelA == "" {
 				labelA = "document_a"
 			}
+
 			labelB := p.LabelB
 			if labelB == "" {
 				labelB = "document_b"
@@ -63,10 +64,12 @@ func DiffDocumentsTool() agent.Tool {
 			diff := computeDiff(linesA, linesB, labelA, labelB)
 
 			if diff.tooLarge {
-				return agent.ResultJSON(diffResult{
-					HasDifferences: true,
-					ErrorDetail:    diff.output,
-				}), nil
+				return agent.ResultJSON(
+					diffResult{
+						HasDifferences: true,
+						ErrorDetail:    diff.output,
+					},
+				), nil
 			}
 
 			result := diffResult{
@@ -80,6 +83,7 @@ func DiffDocumentsTool() agent.Tool {
 				if len(output) > maxDiffOutput {
 					output = output[:maxDiffOutput] + "\n[... diff truncated]"
 				}
+
 				result.UnifiedDiff = output
 			}
 
@@ -114,6 +118,7 @@ func computeDiff(linesA, linesB []string, labelA, labelB string) diffOutput {
 	for i := range dp {
 		dp[i] = make([]int, n+1)
 	}
+
 	for i := m - 1; i >= 0; i-- {
 		for j := n - 1; j >= 0; j-- {
 			if linesA[i] == linesB[j] {
@@ -131,6 +136,7 @@ func computeDiff(linesA, linesB []string, labelA, labelB string) diffOutput {
 	fmt.Fprintf(&sb, "--- %s\n+++ %s\n", labelA, labelB)
 
 	var added, removed int
+
 	i, j := 0, 0
 	for i < m || j < n {
 		if i < m && j < n && linesA[i] == linesB[j] {
@@ -139,10 +145,12 @@ func computeDiff(linesA, linesB []string, labelA, labelB string) diffOutput {
 			j++
 		} else if j < n && (i >= m || dp[i][j+1] >= dp[i+1][j]) {
 			sb.WriteString("+ " + linesB[j] + "\n")
+
 			added++
 			j++
 		} else if i < m {
 			sb.WriteString("- " + linesA[i] + "\n")
+
 			removed++
 			i++
 		}

@@ -22,7 +22,7 @@ import (
 
 // File is the resolver for the file field.
 func (r *evidenceResolver) File(ctx context.Context, obj *types.Evidence) (*types.File, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionFileGet); err != nil {
+	if _, err := r.authorize(ctx, obj.ID, probo.ActionFileGet); err != nil {
 		return nil, err
 	}
 
@@ -39,6 +39,7 @@ func (r *evidenceResolver) File(ctx context.Context, obj *types.Evidence) (*type
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot load evidence file", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -47,7 +48,7 @@ func (r *evidenceResolver) File(ctx context.Context, obj *types.Evidence) (*type
 
 // Task is the resolver for the task field.
 func (r *evidenceResolver) Task(ctx context.Context, obj *types.Evidence) (*types.Task, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionTaskGet); err != nil {
+	if _, err := r.authorize(ctx, obj.ID, probo.ActionTaskGet); err != nil {
 		return nil, err
 	}
 
@@ -65,6 +66,7 @@ func (r *evidenceResolver) Task(ctx context.Context, obj *types.Evidence) (*type
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot load task", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -73,7 +75,7 @@ func (r *evidenceResolver) Task(ctx context.Context, obj *types.Evidence) (*type
 
 // Measure is the resolver for the measure field.
 func (r *evidenceResolver) Measure(ctx context.Context, obj *types.Evidence) (*types.Measure, error) {
-	if err := r.authorize(ctx, obj.ID, probo.ActionMeasureGet); err != nil {
+	if _, err := r.authorize(ctx, obj.ID, probo.ActionMeasureGet); err != nil {
 		return nil, err
 	}
 
@@ -86,6 +88,7 @@ func (r *evidenceResolver) Measure(ctx context.Context, obj *types.Evidence) (*t
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot load measure", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -99,43 +102,43 @@ func (r *evidenceResolver) Permission(ctx context.Context, obj *types.Evidence, 
 
 // TotalCount is the resolver for the totalCount field.
 func (r *evidenceConnectionResolver) TotalCount(ctx context.Context, obj *types.EvidenceConnection) (int, error) {
-	if err := r.authorize(ctx, obj.ParentID, probo.ActionEvidenceList); err != nil {
+	scope, err := r.authorize(ctx, obj.ParentID, probo.ActionEvidenceList)
+	if err != nil {
 		return 0, err
 	}
 
-	prb := r.ProboService(ctx, obj.ParentID.TenantID())
-
 	switch obj.Resolver.(type) {
 	case *measureResolver:
-		count, err := prb.Evidences.CountForMeasureID(ctx, obj.ParentID)
+		count, err := r.probo.Evidences.CountForMeasureID(ctx, scope, obj.ParentID)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count measure evidence", log.Error(err))
 			return 0, gqlutils.Internal(ctx)
 		}
+
 		return count, nil
 	case *taskResolver:
-		count, err := prb.Evidences.CountForTaskID(ctx, obj.ParentID)
+		count, err := r.probo.Evidences.CountForTaskID(ctx, scope, obj.ParentID)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count task evidence", log.Error(err))
 			return 0, gqlutils.Internal(ctx)
 		}
+
 		return count, nil
 	}
 
 	r.logger.ErrorCtx(ctx, "unsupported resolver")
+
 	return 0, gqlutils.Internal(ctx)
 }
 
 // DeleteEvidence is the resolver for the deleteEvidence field.
 func (r *mutationResolver) DeleteEvidence(ctx context.Context, input types.DeleteEvidenceInput) (*types.DeleteEvidencePayload, error) {
-	if err := r.authorize(ctx, input.EvidenceID, probo.ActionEvidenceDelete); err != nil {
+	scope, err := r.authorize(ctx, input.EvidenceID, probo.ActionEvidenceDelete)
+	if err != nil {
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, input.EvidenceID.TenantID())
-
-	err := prb.Evidences.Delete(ctx, input.EvidenceID)
-	if err != nil {
+	if err := r.probo.Evidences.Delete(ctx, scope, input.EvidenceID); err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete evidence", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
@@ -147,14 +150,13 @@ func (r *mutationResolver) DeleteEvidence(ctx context.Context, input types.Delet
 
 // UploadMeasureEvidence is the resolver for the uploadMeasureEvidence field.
 func (r *mutationResolver) UploadMeasureEvidence(ctx context.Context, input types.UploadMeasureEvidenceInput) (*types.UploadMeasureEvidencePayload, error) {
-	if err := r.authorize(ctx, input.MeasureID, probo.ActionMeasureEvidenceUpload); err != nil {
+	scope, err := r.authorize(ctx, input.MeasureID, probo.ActionMeasureEvidenceUpload)
+	if err != nil {
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, input.MeasureID.TenantID())
-
-	evidence, err := prb.Evidences.UploadMeasureEvidence(
-		ctx,
+	evidence, err := r.probo.Evidences.UploadMeasureEvidence(
+		ctx, scope,
 		probo.UploadMeasureEvidenceRequest{
 			MeasureID: input.MeasureID,
 			File: probo.FileUpload{
@@ -169,7 +171,9 @@ func (r *mutationResolver) UploadMeasureEvidence(ctx context.Context, input type
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot upload measure evidence", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 

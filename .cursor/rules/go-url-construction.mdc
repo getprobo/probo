@@ -1,0 +1,43 @@
+---
+description: Go URL construction — never use fmt.Sprintf or concatenation for URLs
+globs: "**/*.go"
+alwaysApply: false
+---
+
+# Go URL and query parameter construction
+
+**Never** build URLs with `fmt.Sprintf`, string concatenation, or any string formatting.
+
+Use `net/url` package or `pkg/baseurl.URLBuilder`.
+
+**Always** wrap user-supplied path segments with `url.PathEscape` before passing them to `url.JoinPath`. `url.JoinPath` does **not** percent-encode slashes or reserved characters in its arguments — a value like `parent/child` silently adds an extra path segment.
+
+```go
+// BAD
+endpoint := fmt.Sprintf("https://api.example.com/users/%s?active=%t", userID, active)
+endpoint := "https://api.example.com/orgs/" + orgID + "/members"
+raw := baseEndpoint + "?domain=" + domain + "&limit=100"
+
+// BAD — user-supplied value without PathEscape
+u, err := url.JoinPath("https://api.example.com", "groups", groupID, "members")
+
+// GOOD — url.JoinPath with PathEscape + url.Values
+u, err := url.JoinPath("https://api.example.com", "groups", url.PathEscape(groupID), "members")
+if err != nil {
+	return fmt.Errorf("cannot build URL: %w", err)
+}
+
+parsed, err := url.Parse(u)
+if err != nil {
+	return fmt.Errorf("cannot parse URL: %w", err)
+}
+
+q := parsed.Query()
+q.Set("active", strconv.FormatBool(active))
+parsed.RawQuery = q.Encode()
+
+// GOOD — URLBuilder from pkg/baseurl
+u, err := baseURL.URL("/users", userID).
+	Query("active", strconv.FormatBool(active)).
+	Build()
+```

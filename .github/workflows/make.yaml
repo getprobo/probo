@@ -45,9 +45,9 @@ jobs:
             packages/emails/dist/
           retention-days: 1
 
-  # ── Snapshot: build Go binaries (matrix by GOOS/GOARCH) ────────────
+  # ── Snapshot: build probod group binaries (matrix by GOOS/GOARCH) ──
   build-snapshot-binary:
-    name: "binary (${{ matrix.goos }}/${{ matrix.goarch }})"
+    name: "probod binary (${{ matrix.goos }}/${{ matrix.goarch }})"
     if: github.event_name == 'push'
     needs: [build-apps]
     runs-on: "runs-on=${{ github.run_id }}/runner=4cpu-linux-x64/extras=s3-cache"
@@ -106,6 +106,45 @@ jobs:
           path: "dist/"
           retention-days: 1
 
+  # ── Snapshot: build probo-agent binaries (matrix by GOOS/GOARCH) ───
+  build-snapshot-probo-agent:
+    name: "probo-agent (${{ matrix.goos }}/${{ matrix.goarch }})"
+    if: github.event_name == 'push'
+    runs-on: "runs-on=${{ github.run_id }}/runner=4cpu-linux-x64/extras=s3-cache"
+    permissions:
+      contents: "read"
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { goos: linux, goarch: amd64 }
+          - { goos: linux, goarch: arm64 }
+          - { goos: darwin, goarch: amd64 }
+          - { goos: darwin, goarch: arm64 }
+          - { goos: windows, goarch: amd64 }
+          - { goos: windows, goarch: arm64 }
+          - { goos: freebsd, goarch: amd64 }
+          - { goos: freebsd, goarch: arm64 }
+    steps:
+      - uses: "actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd" # v6
+        with:
+          submodules: recursive
+      - uses: "runs-on/action@742bf56072eb4845a0f94b3394673e4903c90ff0" # v2
+      - uses: "./.github/actions/setup"
+        with:
+          node: "false"
+      - name: "Build probo-agent"
+        env:
+          CGO_ENABLED: "0"
+          GOOS: "${{ matrix.goos }}"
+          GOARCH: "${{ matrix.goarch }}"
+        run: |
+          EXT=""
+          if [ "$GOOS" = "windows" ]; then EXT=".exe"; fi
+
+          go build -ldflags "-s -w -X 'main.version=snapshot'" \
+            -gcflags="-e" -o "dist/probo-agent${EXT}" ./cmd/probo-agent/main.go
+
   # ── Snapshot: build Docker images (matrix by architecture) ─────────
   build-snapshot-docker:
     name: "docker (${{ matrix.arch }})"
@@ -131,8 +170,9 @@ jobs:
       - uses: "docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd" # v4.0.0
       - uses: "docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121" # v4.1.0
         with:
-          username: "gearnode"
-          password: ${{ secrets.DOCKER_HUB_TOKEN }}
+          registry: artifact.probo.inc
+          username: ${{ secrets.HARBOR_USERNAME }}
+          password: ${{ secrets.HARBOR_PASSWORD }}
       - uses: "actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c" # v8
         with:
           name: "binary-linux-${{ matrix.arch }}"
@@ -143,7 +183,8 @@ jobs:
         run: |
           docker buildx build \
             --platform "${{ matrix.platform }}" \
-            --tag "ghcr.io/getprobo/probo:snapshot-${{ matrix.arch }}" \
+            --build-arg "BASE_IMAGE=artifact.probo.inc/dockerhub/library/ubuntu@sha256:c4a8d5503dfb2a3eb8ab5f807da5bc69a85730fb49b5cfca2330194ebcc41c7b" \
+            --tag "artifact.probo.inc/probo/probo:snapshot-${{ matrix.arch }}" \
             --load \
             .
       - name: "Cache Trivy database"
@@ -155,7 +196,7 @@ jobs:
       - name: "Scan Docker image with Trivy"
         uses: "aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25" # 0.36.0
         with:
-          image-ref: "ghcr.io/getprobo/probo:snapshot-${{ matrix.arch }}"
+          image-ref: "artifact.probo.inc/probo/probo:snapshot-${{ matrix.arch }}"
           format: "table"
           exit-code: 1
           ignore-unfixed: true
@@ -188,9 +229,9 @@ jobs:
           severity-cutoff: critical
           output-format: table
 
-  # ── Build (PR + push validation) ───────────────────────────────────
+  # ── Build probod group (PR + push validation) ────────────────────────
   build:
-    name: "build"
+    name: "build-probod"
     runs-on: "runs-on=${{ github.run_id }}/runner=8cpu-linux-x64/extras=s3-cache"
     permissions:
       contents: "read"
@@ -214,7 +255,7 @@ jobs:
           go generate ./pkg/server/api/console/v1
           go generate ./pkg/server/api/trust/v1
           go generate ./pkg/server/api/mcp/v1
-      - name: "Build binaries"
+      - name: "Build probod group binaries"
         env:
           CGO_ENABLED: "0"
         run: |
@@ -226,6 +267,26 @@ jobs:
           go build -ldflags "-s -w -X 'main.version=snapshot'" \
             -gcflags="-e" -o bin/prb ./cmd/prb/main.go & pids+=($!)
           for pid in "${pids[@]}"; do wait "$pid"; done
+
+  build-probo-agent:
+    name: "build-probo-agent"
+    runs-on: "runs-on=${{ github.run_id }}/runner=4cpu-linux-x64/extras=s3-cache"
+    permissions:
+      contents: "read"
+    steps:
+      - uses: "actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd" # v6
+        with:
+          submodules: recursive
+      - uses: "runs-on/action@742bf56072eb4845a0f94b3394673e4903c90ff0" # v2
+      - uses: "./.github/actions/setup"
+        with:
+          node: "false"
+      - name: "Build probo-agent"
+        env:
+          CGO_ENABLED: "0"
+        run: |
+          go build -ldflags "-s -w -X 'main.version=snapshot'" \
+            -gcflags="-e" -o bin/probo-agent ./cmd/probo-agent/main.go
 
   lint-go:
     name: "lint-go"
@@ -241,8 +302,9 @@ jobs:
       - uses: "./.github/actions/setup"
         with:
           node: "false"
-      - uses: golangci/golangci-lint-action@1e7e51e771db61008b38414a730f564565cf7c20 # v9.2.0
+      - uses: golangci/golangci-lint-action@db582008a42febd596419635a5abc9d9815daa9c # v9.2.1
         with:
+          version: v2.12.2
           install-only: true
       - uses: reviewdog/action-setup@d8a7baabd7f3e8544ee4dbde3ee41d0011c3a93f # v1.5.0
       - name: "Create placeholder dist files"
@@ -274,15 +336,14 @@ jobs:
             exit 1
           fi
       - name: "Run golangci-lint"
+        run: golangci-lint run ./...
+      - name: "Annotate PR with golangci-lint findings"
+        if: failure() && github.event_name == 'pull_request'
         env:
           REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            golangci-lint run --out-format=line-number ./... 2>&1 | \
-              reviewdog -f=golangci-lint -reporter=github-pr-review -filter-mode=nofilter -fail-level=error -name="golangci-lint"
-          else
-            golangci-lint run ./...
-          fi
+          golangci-lint run --out-format=line-number ./... 2>&1 | \
+            reviewdog -f=golangci-lint -reporter=github-pr-review -filter-mode=nofilter -name="golangci-lint" || true
 
   lint-js:
     name: "lint-js"
@@ -302,18 +363,16 @@ jobs:
       - name: "Generate Relay artifacts"
         run: make relay
       - name: "Run eslint"
+        run: npm run lint
+      - name: "Annotate PR with eslint findings"
+        if: failure() && github.event_name == 'pull_request'
         env:
           REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            for dir in apps/console apps/trust packages/ui packages/eslint-config; do
-              (cd "$dir" && npx eslint . --concurrency 4 --format stylish 2>/dev/null) | \
-                reviewdog -f=eslint -reporter=github-pr-review -filter-mode=nofilter -fail-level=error -name="eslint ($dir)"
-            done
-            (cd packages/n8n-node && npx n8n-node lint)
-          else
-            npm run lint
-          fi
+          for dir in apps/console apps/trust packages/ui packages/eslint-config; do
+            (cd "$dir" && npx eslint . --concurrency 4 --format stylish 2>/dev/null) | \
+              reviewdog -f=eslint -reporter=github-pr-review -filter-mode=nofilter -name="eslint ($dir)" || true
+          done
 
   test:
     name: "test"
@@ -356,10 +415,11 @@ jobs:
   test-e2e:
     name: "test-e2e"
     runs-on: "runs-on=${{ github.run_id }}/runner=4cpu-linux-x64/extras=s3-cache"
+    env:
+      COMPOSE_FILE: "compose.yaml:compose.github-action.yaml"
+      DOCKER_COMPOSE_FLAGS: "-f compose.github-action.yaml"
     permissions:
       contents: "read"
-    env:
-      HAS_DOCKER_TOKEN: ${{ secrets.DOCKER_HUB_TOKEN != '' }}
     steps:
       - uses: "actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd" # v6
         with:
@@ -368,10 +428,10 @@ jobs:
       - uses: "./.github/actions/setup"
       - uses: "docker/setup-compose-action@8cccb8c14b6500aaffebff1aa49c502c34d2e5e6" # v2.1.0
       - uses: "docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121" # v4.1.0
-        if: env.HAS_DOCKER_TOKEN == 'true'
         with:
-          username: "gearnode"
-          password: ${{ secrets.DOCKER_HUB_TOKEN }}
+          registry: artifact.probo.inc
+          username: ${{ secrets.HARBOR_USERNAME }}
+          password: ${{ secrets.HARBOR_PASSWORD }}
       - name: "Install mkcert"
         run: |
           go install filippo.io/mkcert@latest
@@ -381,7 +441,7 @@ jobs:
         uses: "runs-on/cache@a5f51d6f3fece787d03b7b4e981c82538a0654ed" # v4
         with:
           path: /tmp/docker-images
-          key: "docker-images-${{ hashFiles('compose.yaml') }}"
+          key: "docker-images-${{ hashFiles('compose.yaml', 'compose.github-action.yaml') }}"
       - name: "Load cached Docker images"
         if: steps.docker-cache.outputs.cache-hit == 'true'
         run: "docker load -i /tmp/docker-images/images.tar"

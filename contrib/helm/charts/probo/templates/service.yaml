@@ -4,6 +4,7 @@ metadata:
   name: {{ include "probo.fullname" . }}
   labels:
     {{- include "probo.labels" . | nindent 4 }}
+    app.kubernetes.io/component: server
   {{- with .Values.service.annotations }}
   annotations:
     {{- toYaml . | nindent 4 }}
@@ -42,3 +43,4 @@ spec:
       name: metrics
   selector:
     {{- include "probo.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: server

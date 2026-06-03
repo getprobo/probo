@@ -12,6 +12,7 @@ spec:
   selector:
     matchLabels:
       {{- include "probo.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: server
   endpoints:
     - port: metrics
       path: /metrics

@@ -48,13 +48,14 @@ var ViewerPolicy = policy.NewPolicy(
 	).WithSID("org-read-access").When(organizationCondition),
 
 	policy.Allow(
-		ActionVendorGet, ActionVendorList,
-		ActionVendorContactGet, ActionVendorContactList,
-		ActionVendorServiceGet, ActionVendorServiceList,
-		ActionVendorComplianceReportGet, ActionVendorComplianceReportList,
-		ActionVendorBusinessAssociateAgreementGet,
-		ActionVendorDataPrivacyAgreementGet,
-		ActionVendorRiskAssessmentList,
+		ActionThirdPartyGet, ActionThirdPartyList,
+		ActionThirdPartyContactGet, ActionThirdPartyContactList,
+		ActionThirdPartyServiceGet, ActionThirdPartyServiceList,
+		ActionThirdPartyComplianceReportGet, ActionThirdPartyComplianceReportList,
+		ActionThirdPartyBusinessAssociateAgreementGet,
+		ActionThirdPartyDataPrivacyAgreementGet,
+		ActionThirdPartyRiskAssessmentList,
+		ActionThirdPartyRelationList,
 		ActionFrameworkGet, ActionFrameworkList,
 		ActionControlGet, ActionControlList,
 		ActionMeasureGet, ActionMeasureList,
@@ -64,6 +65,7 @@ var ViewerPolicy = policy.NewPolicy(
 		ActionDocumentVersionGet, ActionDocumentVersionList,
 		ActionDocumentVersionSignatureGet, ActionDocumentVersionSignatureList,
 		ActionDocumentVersionApprovalList,
+		ActionElectronicSignatureGet,
 		ActionRiskGet, ActionRiskList,
 		ActionAssetGet, ActionAssetList,
 		ActionDatumGet, ActionDatumList,
@@ -88,6 +90,12 @@ var ViewerPolicy = policy.NewPolicy(
 		ActionCookieCategoryGet, ActionCookieCategoryList,
 		ActionCookieGet, ActionCookieList,
 		ActionCookieConsentRecordList,
+		ActionRiskAssessmentGet, ActionRiskAssessmentList,
+		ActionRiskAssessmentScopeGet, ActionRiskAssessmentScopeList,
+		ActionRiskAssessmentNodeGet, ActionRiskAssessmentNodeList,
+		ActionRiskAssessmentProcessGet, ActionRiskAssessmentProcessList,
+		ActionRiskAssessmentThreatGet, ActionRiskAssessmentThreatList,
+		ActionRiskAssessmentScenarioGet, ActionRiskAssessmentScenarioList,
 	).WithSID("entity-read-access").When(organizationCondition),
 
 	policy.Allow(
@@ -126,13 +134,14 @@ var AuditorPolicy = policy.NewPolicy(
 	).WithSID("org-read-access").When(organizationCondition),
 
 	policy.Allow(
-		ActionVendorGet, ActionVendorList,
-		ActionVendorContactGet, ActionVendorContactList,
-		ActionVendorServiceGet, ActionVendorServiceList,
-		ActionVendorComplianceReportGet, ActionVendorComplianceReportList,
-		ActionVendorBusinessAssociateAgreementGet,
-		ActionVendorDataPrivacyAgreementGet,
-		ActionVendorRiskAssessmentList,
+		ActionThirdPartyGet, ActionThirdPartyList,
+		ActionThirdPartyContactGet, ActionThirdPartyContactList,
+		ActionThirdPartyServiceGet, ActionThirdPartyServiceList,
+		ActionThirdPartyComplianceReportGet, ActionThirdPartyComplianceReportList,
+		ActionThirdPartyBusinessAssociateAgreementGet,
+		ActionThirdPartyDataPrivacyAgreementGet,
+		ActionThirdPartyRiskAssessmentList,
+		ActionThirdPartyRelationList,
 		ActionFrameworkGet, ActionFrameworkList,
 		ActionControlGet, ActionControlList,
 		ActionMeasureGet, ActionMeasureList,
@@ -141,6 +150,7 @@ var AuditorPolicy = policy.NewPolicy(
 		ActionDocumentVersionGet, ActionDocumentVersionList,
 		ActionDocumentVersionSignatureGet, ActionDocumentVersionSignatureList,
 		ActionDocumentVersionApprovalList,
+		ActionElectronicSignatureGet,
 		ActionRiskGet, ActionRiskList,
 		ActionAssetGet, ActionAssetList,
 		ActionDatumGet, ActionDatumList,
@@ -154,6 +164,12 @@ var AuditorPolicy = policy.NewPolicy(
 		ActionFileGet, ActionFileDownloadUrl,
 		ActionStatementOfApplicabilityGet, ActionStatementOfApplicabilityList,
 		ActionApplicabilityStatementGet, ActionApplicabilityStatementList,
+		ActionRiskAssessmentGet, ActionRiskAssessmentList,
+		ActionRiskAssessmentScopeGet, ActionRiskAssessmentScopeList,
+		ActionRiskAssessmentNodeGet, ActionRiskAssessmentNodeList,
+		ActionRiskAssessmentProcessGet, ActionRiskAssessmentProcessList,
+		ActionRiskAssessmentThreatGet, ActionRiskAssessmentThreatList,
+		ActionRiskAssessmentScenarioGet, ActionRiskAssessmentScenarioList,
 	).WithSID("entity-read-access").When(organizationCondition),
 
 	policy.Allow(
@@ -165,6 +181,19 @@ var AuditorPolicy = policy.NewPolicy(
 		ActionEmployeeDocumentVersionExportPDF,
 	).WithSID("employee-document-access").When(organizationCondition),
 ).WithDescription("Read-only probo access for auditors (excludes internal/employee content)")
+
+// CommonThirdPartyCatalogPolicy grants every authenticated identity
+// read access to the global common third-party catalog. The catalog is
+// shared across all tenants and has no organization scoping, so the
+// allow has no condition.
+var CommonThirdPartyCatalogPolicy = policy.NewPolicy(
+	"probo:common-third-party-catalog",
+	"Probo Common Third-Party Catalog",
+	policy.Allow(
+		ActionCommonThirdPartyGet,
+		ActionCommonThirdPartyList,
+	).WithSID("read-common-third-party-catalog"),
+).WithDescription("Allows every authenticated user to read the global common third-party catalog")
 
 // EmployeePolicy defines permissions for employee role.
 var EmployeePolicy = policy.NewPolicy(
@@ -198,5 +227,6 @@ func ProboPolicySet() *iam.PolicySet {
 		AddRolePolicy("ADMIN", AdminPolicy).
 		AddRolePolicy("VIEWER", ViewerPolicy).
 		AddRolePolicy("AUDITOR", AuditorPolicy).
-		AddRolePolicy("EMPLOYEE", EmployeePolicy)
+		AddRolePolicy("EMPLOYEE", EmployeePolicy).
+		AddIdentityScopedPolicy(CommonThirdPartyCatalogPolicy)
 }

@@ -1,0 +1,30 @@
+# CI-only compose override: pull Docker Hub images through the Harbor proxy
+# cache (artifact.probo.inc/dockerhub). Used with compose.yaml in GitHub Actions.
+#
+# Harbor resolves digest refs as <repo>@sha256:..., not <repo>:tag@sha256:...
+# Images from other registries (ghcr.io, quay.io) are unchanged in compose.yaml.
+
+services:
+  postgres:
+    image: "artifact.probo.inc/dockerhub/library/postgres@sha256:52e6ffd11fddd081ae63880b635b2a61c14008c17fc98cdc7ce5472265516dd0"
+
+  seaweedfs:
+    image: "artifact.probo.inc/dockerhub/chrislusf/seaweedfs@sha256:cea8339d21dad1b200adce581dd7434d254b8f5975f142c3b4c930ba78647eef"
+
+  grafana:
+    image: "artifact.probo.inc/dockerhub/grafana/grafana@sha256:a03d9e604e4dba58c5e64458a879701f46ef64af1f596058aacfad9aacdcab34"
+
+  prometheus:
+    image: "artifact.probo.inc/dockerhub/prom/prometheus@sha256:5550dc63da361dc30f6fe02ac0e4dfc736ededfef3c8d12a634db04a67824d78"
+
+  loki:
+    image: "artifact.probo.inc/dockerhub/grafana/loki@sha256:73e905b51a7f917f7a1075e4be68759df30226e03dcb3cd2213b989cc0dc8eb4"
+
+  tempo:
+    image: "artifact.probo.inc/dockerhub/grafana/tempo@sha256:a6616c9d224770c883a67b50e4941e99c5df81b076ef05f516bb7cce5a96cec0"
+
+  mailpit:
+    image: "artifact.probo.inc/dockerhub/axllent/mailpit@sha256:0b5c5f7ffd3c93474baa7fd3869c1462e5a3d03256ed0933dfc0e7d81d794036"
+
+  chrome:
+    image: "artifact.probo.inc/dockerhub/chromedp/headless-shell@sha256:b24482ae166e2c67135f5a8ba9575c257efdd8e2fd6b2e931f9d88ede3d72f3b"

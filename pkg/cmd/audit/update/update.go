@@ -88,15 +88,19 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 			if cmd.Flags().Changed("name") {
 				input["name"] = flagName
 			}
+
 			if cmd.Flags().Changed("state") {
 				input["state"] = flagState
 			}
+
 			if cmd.Flags().Changed("valid-from") {
 				input["validFrom"] = flagValidFrom
 			}
+
 			if cmd.Flags().Changed("valid-until") {
 				input["validUntil"] = flagValidUntil
 			}
+
 			if cmd.Flags().Changed("trust-center-visibility") {
 				input["trustCenterVisibility"] = flagTrustCenterVisibility
 			}

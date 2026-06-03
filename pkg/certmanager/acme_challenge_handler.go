@@ -62,6 +62,7 @@ func (h *ACMEChallengeHandler) Handle(next http.Handler) http.Handler {
 			)
 
 			http.NotFound(w, r)
+
 			return
 		}
 

@@ -64,6 +64,7 @@ func TestBuildToolNameSet(t *testing.T) {
 			set := buildToolNameSet([]string{"delete", "update", "create"})
 
 			assert.Len(t, set, 3)
+
 			for _, name := range []string{"delete", "update", "create"} {
 				_, ok := set[name]
 				assert.True(t, ok, "expected set to contain %q", name)
@@ -165,15 +166,19 @@ func TestApprovalConfig_RequiresApproval(t *testing.T) {
 			t.Parallel()
 
 			type ctxKey struct{}
+
 			ctx := context.WithValue(context.Background(), ctxKey{}, "marker")
 
-			var capturedCtx context.Context
-			var capturedTC llm.ToolCall
+			var (
+				capturedCtx context.Context
+				capturedTC  llm.ToolCall
+			)
 
 			c := &ApprovalConfig{
 				ShouldApprove: func(ctx context.Context, tc llm.ToolCall) bool {
 					capturedCtx = ctx
 					capturedTC = tc
+
 					return true
 				},
 			}

@@ -118,6 +118,7 @@ func Parse(s string) (Node, error) {
 	if err := json.Unmarshal([]byte(s), &n); err != nil {
 		return Node{}, fmt.Errorf("cannot parse prosemirror node: %w", err)
 	}
+
 	return n, nil
 }
 
@@ -127,6 +128,7 @@ func (n Node) HeadingAttrs() (HeadingAttrs, error) {
 	if err := json.Unmarshal(n.Attrs, &a); err != nil {
 		return a, fmt.Errorf("cannot parse heading attrs: %w", err)
 	}
+
 	return a, nil
 }
 
@@ -135,10 +137,12 @@ func (n Node) CodeBlockAttrs() (CodeBlockAttrs, error) {
 	if len(n.Attrs) == 0 {
 		return CodeBlockAttrs{}, nil
 	}
+
 	var a CodeBlockAttrs
 	if err := json.Unmarshal(n.Attrs, &a); err != nil {
 		return a, fmt.Errorf("cannot parse code block attrs: %w", err)
 	}
+
 	return a, nil
 }
 
@@ -148,6 +152,7 @@ func (n Node) OrderedListAttrs() (OrderedListAttrs, error) {
 	if err := json.Unmarshal(n.Attrs, &a); err != nil {
 		return a, fmt.Errorf("cannot parse ordered list attrs: %w", err)
 	}
+
 	return a, nil
 }
 
@@ -157,6 +162,7 @@ func (n Node) ImageAttrs() (ImageAttrs, error) {
 	if err := json.Unmarshal(n.Attrs, &a); err != nil {
 		return a, fmt.Errorf("cannot parse image attrs: %w", err)
 	}
+
 	return a, nil
 }
 
@@ -166,6 +172,7 @@ func (n Node) TableCellAttrs() (TableCellAttrs, error) {
 	if err := json.Unmarshal(n.Attrs, &a); err != nil {
 		return a, fmt.Errorf("cannot parse table cell attrs: %w", err)
 	}
+
 	return a, nil
 }
 
@@ -176,9 +183,11 @@ func (n Node) TextLength() int {
 	if n.Text != nil {
 		length += utf8.RuneCountInString(*n.Text)
 	}
+
 	for _, child := range n.Content {
 		length += child.TextLength()
 	}
+
 	return length
 }
 
@@ -188,5 +197,6 @@ func (m Mark) LinkAttrs() (LinkAttrs, error) {
 	if err := json.Unmarshal(m.Attrs, &a); err != nil {
 		return a, fmt.Errorf("cannot parse link attrs: %w", err)
 	}
+
 	return a, nil
 }

@@ -22,16 +22,16 @@ import (
 
 // SignableDocuments is the resolver for the signableDocuments field.
 func (r *viewerResolver) SignableDocuments(ctx context.Context, obj *types.Viewer, organizationID gid.GID, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentOrderBy) (*types.EmployeeDocumentConnection, error) {
-	if err := r.authorize(ctx, organizationID, probo.ActionEmployeeDocumentList); err != nil {
+	scope, err := r.authorize(ctx, organizationID, probo.ActionEmployeeDocumentList)
+	if err != nil {
 		return nil, err
 	}
-
-	prb := r.ProboService(ctx, organizationID.TenantID())
 
 	pageOrderBy := page.OrderBy[coredata.DocumentOrderField]{
 		Field:     coredata.DocumentOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if orderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.DocumentOrderField]{
 			Field:     orderBy.Field,
@@ -45,7 +45,7 @@ func (r *viewerResolver) SignableDocuments(ctx context.Context, obj *types.Viewe
 
 	documentFilter := coredata.NewDocumentFilter(nil).WithEmployeeIdentityID(&identity.ID, coredata.EmployeeFilterModeSignature)
 
-	documentsPage, err := prb.Documents.ListByOrganizationID(ctx, organizationID, cursor, documentFilter)
+	documentsPage, err := r.probo.Documents.ListByOrganizationID(ctx, scope, organizationID, cursor, documentFilter)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list organization signable documents", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -70,22 +70,23 @@ func (r *viewerResolver) SignableDocuments(ctx context.Context, obj *types.Viewe
 
 // SignableDocument is the resolver for the signableDocument field.
 func (r *viewerResolver) SignableDocument(ctx context.Context, obj *types.Viewer, id gid.GID) (*types.EmployeeDocument, error) {
-	if err := r.authorize(ctx, id, probo.ActionEmployeeDocumentGet); err != nil {
+	scope, err := r.authorize(ctx, id, probo.ActionEmployeeDocumentGet)
+	if err != nil {
 		return nil, err
 	}
-
-	prb := r.ProboService(ctx, id.TenantID())
 
 	identity := authn.IdentityFromContext(ctx)
 
 	documentFilter := coredata.NewDocumentFilter(nil).WithEmployeeIdentityID(&identity.ID, coredata.EmployeeFilterModeSignature)
-	document, err := prb.Documents.GetWithFilter(ctx, id, documentFilter)
+
+	document, err := r.probo.Documents.GetWithFilter(ctx, scope, id, documentFilter)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get signable document", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -101,16 +102,16 @@ func (r *viewerResolver) SignableDocument(ctx context.Context, obj *types.Viewer
 
 // ApprovableDocuments is the resolver for the approvableDocuments field.
 func (r *viewerResolver) ApprovableDocuments(ctx context.Context, obj *types.Viewer, organizationID gid.GID, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentOrderBy) (*types.EmployeeDocumentConnection, error) {
-	if err := r.authorize(ctx, organizationID, probo.ActionEmployeeDocumentList); err != nil {
+	scope, err := r.authorize(ctx, organizationID, probo.ActionEmployeeDocumentList)
+	if err != nil {
 		return nil, err
 	}
-
-	prb := r.ProboService(ctx, organizationID.TenantID())
 
 	pageOrderBy := page.OrderBy[coredata.DocumentOrderField]{
 		Field:     coredata.DocumentOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if orderBy != nil {
 		pageOrderBy = page.OrderBy[coredata.DocumentOrderField]{
 			Field:     orderBy.Field,
@@ -124,7 +125,7 @@ func (r *viewerResolver) ApprovableDocuments(ctx context.Context, obj *types.Vie
 
 	documentFilter := coredata.NewDocumentFilter(nil).WithEmployeeIdentityID(&identity.ID, coredata.EmployeeFilterModeApproval)
 
-	documentsPage, err := prb.Documents.ListByOrganizationID(ctx, organizationID, cursor, documentFilter)
+	documentsPage, err := r.probo.Documents.ListByOrganizationID(ctx, scope, organizationID, cursor, documentFilter)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list organization approvable documents", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -149,22 +150,23 @@ func (r *viewerResolver) ApprovableDocuments(ctx context.Context, obj *types.Vie
 
 // ApprovableDocument is the resolver for the approvableDocument field.
 func (r *viewerResolver) ApprovableDocument(ctx context.Context, obj *types.Viewer, id gid.GID) (*types.EmployeeDocument, error) {
-	if err := r.authorize(ctx, id, probo.ActionEmployeeDocumentGet); err != nil {
+	scope, err := r.authorize(ctx, id, probo.ActionEmployeeDocumentGet)
+	if err != nil {
 		return nil, err
 	}
-
-	prb := r.ProboService(ctx, id.TenantID())
 
 	identity := authn.IdentityFromContext(ctx)
 
 	documentFilter := coredata.NewDocumentFilter(nil).WithEmployeeIdentityID(&identity.ID, coredata.EmployeeFilterModeApproval)
-	document, err := prb.Documents.GetWithFilter(ctx, id, documentFilter)
+
+	document, err := r.probo.Documents.GetWithFilter(ctx, scope, id, documentFilter)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get approvable document", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 

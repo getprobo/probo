@@ -25,6 +25,7 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/iam/policy"
 	"go.probo.inc/probo/pkg/page"
 )
 
@@ -50,18 +51,43 @@ func (q DocumentVersionApprovalQuorum) CursorKey(orderBy DocumentVersionApproval
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
-func (q *DocumentVersionApprovalQuorum) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
-	query := `SELECT organization_id FROM document_version_approval_quorums WHERE id = $1 LIMIT 1;`
+func (q *DocumentVersionApprovalQuorum) AuthorizationAttributes(
+	ctx context.Context,
+	conn pg.Querier,
+	resourceIDs []gid.GID,
+) (policy.AttributesByID, error) {
+	query := `SELECT id, organization_id FROM document_version_approval_quorums WHERE id = ANY(@resource_ids::text[])`
 
-	var organizationID gid.GID
-	if err := conn.QueryRow(ctx, query, q.ID).Scan(&organizationID); err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, ErrResourceNotFound
-		}
-		return nil, fmt.Errorf("cannot query approval quorum authorization attributes: %w", err)
+	args := pgx.StrictNamedArgs{
+		"resource_ids": resourceIDs,
 	}
 
-	return map[string]string{"organization_id": organizationID.String()}, nil
+	rows, err := conn.Query(ctx, query, args)
+	if err != nil {
+		return nil, fmt.Errorf("cannot query authorization attributes: %w", err)
+	}
+
+	defer rows.Close()
+
+	attrsByID := make(policy.AttributesByID)
+
+	for rows.Next() {
+		var id, organizationID gid.GID
+
+		if err := rows.Scan(&id, &organizationID); err != nil {
+			return nil, fmt.Errorf("cannot scan authorization attributes: %w", err)
+		}
+
+		attrsByID[id] = policy.Attributes{
+			"organization_id": organizationID.String(),
+		}
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("cannot iterate authorization attributes: %w", err)
+	}
+
+	return attrsByID, nil
 }
 
 func (q *DocumentVersionApprovalQuorum) LoadByID(
@@ -100,6 +126,7 @@ WHERE
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
 		}
+
 		return fmt.Errorf("cannot collect approval quorum: %w", err)
 	}
 
@@ -153,6 +180,7 @@ LIMIT 1
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
 		}
+
 		return fmt.Errorf("cannot collect last approval quorum: %w", err)
 	}
 
@@ -241,6 +269,7 @@ WHERE
 	maps.Copy(args, scope.SQLArguments())
 
 	row := conn.QueryRow(ctx, query, args)
+
 	var count int
 	if err := row.Scan(&count); err != nil {
 		return 0, fmt.Errorf("cannot scan count: %w", err)
@@ -286,12 +315,12 @@ INSERT INTO document_version_approval_quorums (
 
 	_, err := conn.Exec(ctx, query, args)
 	if err != nil {
-		var pgErr *pgconn.PgError
-		if errors.As(err, &pgErr) {
-			if pgErr.Code == "23505" {
+		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
+			if pgErr.Code == "23505" && pgErr.ConstraintName == "document_one_pending_quorum_idx" {
 				return ErrResourceAlreadyExists
 			}
 		}
+
 		return fmt.Errorf("cannot insert approval quorum: %w", err)
 	}
 

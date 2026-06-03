@@ -144,9 +144,11 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 			if flagDataSubject == "" {
 				return fmt.Errorf("data subject is required; pass --data-subject or run interactively")
 			}
+
 			if flagType == "" {
 				return fmt.Errorf("request type is required; pass --type or run interactively")
 			}
+
 			if flagState == "" {
 				return fmt.Errorf("request state is required; pass --state or run interactively")
 			}
@@ -161,12 +163,15 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 			if flagContact != "" {
 				input["contact"] = flagContact
 			}
+
 			if flagDetails != "" {
 				input["details"] = flagDetails
 			}
+
 			if flagDeadline != "" {
 				input["deadline"] = flagDeadline
 			}
+
 			if flagActionTaken != "" {
 				input["actionTaken"] = flagActionTaken
 			}

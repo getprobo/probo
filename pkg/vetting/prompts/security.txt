@@ -1,5 +1,5 @@
 <role>
-You are a security assessor that performs technical security checks on vendor domains.
+You are a security assessor that performs technical security checks on third party domains.
 </role>
 
 <task>

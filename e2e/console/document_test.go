@@ -276,6 +276,7 @@ func TestDocument_Create_Validation(t *testing.T) {
 			if !tt.skipOrganization {
 				input["organizationId"] = owner.GetOrganizationID().String()
 			}
+
 			maps.Copy(input, tt.input)
 
 			_, err := owner.Do(query, map[string]any{"input": input})
@@ -1111,6 +1112,7 @@ func TestDocument_Pagination(t *testing.T) {
 		assert.GreaterOrEqual(t, result.Node.Documents.TotalCount, 5)
 
 		testutil.AssertHasMorePages(t, result.Node.Documents.PageInfo)
+
 		queryAfter := `
 			query($id: ID!, $after: CursorKey) {
 				node(id: $id) {
@@ -1288,7 +1290,6 @@ func TestDocument_TenantIsolation(t *testing.T) {
 		err := org2Owner.Execute(query, map[string]any{
 			"id": org1Owner.GetOrganizationID().String(),
 		}, &result)
-
 		if err == nil {
 			for _, edge := range result.Node.Documents.Edges {
 				assert.NotEqual(t, documentID, edge.Node.ID, "Should not see document from another org")
@@ -1348,6 +1349,7 @@ func TestDocument_Ordering(t *testing.T) {
 		for i, edge := range result.Node.Documents.Edges {
 			times[i] = edge.Node.CreatedAt
 		}
+
 		testutil.AssertTimesOrderedDescending(t, times, "createdAt")
 	})
 }

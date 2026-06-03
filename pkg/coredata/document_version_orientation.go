@@ -15,7 +15,7 @@
 package coredata
 
 import (
-	"database/sql/driver"
+	"encoding"
 	"fmt"
 )
 
@@ -28,6 +28,12 @@ const (
 	DocumentVersionOrientationLandscape DocumentVersionOrientation = "LANDSCAPE"
 )
 
+var (
+	_ fmt.Stringer             = DocumentVersionOrientation("")
+	_ encoding.TextMarshaler   = DocumentVersionOrientation("")
+	_ encoding.TextUnmarshaler = (*DocumentVersionOrientation)(nil)
+)
+
 func DocumentVersionOrientations() []DocumentVersionOrientation {
 	return []DocumentVersionOrientation{
 		DocumentVersionOrientationPortrait,
@@ -35,38 +41,32 @@ func DocumentVersionOrientations() []DocumentVersionOrientation {
 	}
 }
 
-func (o DocumentVersionOrientation) MarshalText() ([]byte, error) {
-	return []byte(o.String()), nil
+func (v DocumentVersionOrientation) IsValid() bool {
+	switch v {
+	case
+		DocumentVersionOrientationPortrait,
+		DocumentVersionOrientationLandscape:
+		return true
+	}
+
+	return false
 }
 
-func (o *DocumentVersionOrientation) UnmarshalText(data []byte) error {
-	val := string(data)
+func (v DocumentVersionOrientation) String() string {
+	return string(v)
+}
 
-	switch val {
-	case DocumentVersionOrientationPortrait.String():
-		*o = DocumentVersionOrientationPortrait
-	case DocumentVersionOrientationLandscape.String():
-		*o = DocumentVersionOrientationLandscape
-	default:
-		return fmt.Errorf("invalid DocumentVersionOrientation value: %q", val)
+func (v DocumentVersionOrientation) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *DocumentVersionOrientation) UnmarshalText(text []byte) error {
+	val := DocumentVersionOrientation(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid DocumentVersionOrientation value: %q", string(text))
 	}
+
+	*v = val
 
 	return nil
-}
-
-func (o DocumentVersionOrientation) String() string {
-	return string(o)
-}
-
-func (o *DocumentVersionOrientation) Scan(value any) error {
-	val, ok := value.(string)
-	if !ok {
-		return fmt.Errorf("invalid scan source for DocumentVersionOrientation, expected string got %T", value)
-	}
-
-	return o.UnmarshalText([]byte(val))
-}
-
-func (o DocumentVersionOrientation) Value() (driver.Value, error) {
-	return o.String(), nil
 }

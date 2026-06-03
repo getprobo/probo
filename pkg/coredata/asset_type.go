@@ -15,7 +15,7 @@
 package coredata
 
 import (
-	"database/sql/driver"
+	"encoding"
 	"fmt"
 )
 
@@ -28,6 +28,12 @@ const (
 	AssetTypeVirtual  AssetType = "VIRTUAL"
 )
 
+var (
+	_ fmt.Stringer             = AssetType("")
+	_ encoding.TextMarshaler   = AssetType("")
+	_ encoding.TextUnmarshaler = (*AssetType)(nil)
+)
+
 func AssetTypes() []AssetType {
 	return []AssetType{
 		AssetTypePhysical,
@@ -35,38 +41,32 @@ func AssetTypes() []AssetType {
 	}
 }
 
-func (at AssetType) MarshalText() ([]byte, error) {
-	return []byte(at.String()), nil
+func (v AssetType) IsValid() bool {
+	switch v {
+	case
+		AssetTypePhysical,
+		AssetTypeVirtual:
+		return true
+	}
+
+	return false
 }
 
-func (at *AssetType) UnmarshalText(data []byte) error {
-	val := string(data)
+func (v AssetType) String() string {
+	return string(v)
+}
 
-	switch val {
-	case AssetTypePhysical.String():
-		*at = AssetTypePhysical
-	case AssetTypeVirtual.String():
-		*at = AssetTypeVirtual
-	default:
-		return fmt.Errorf("invalid AssetType value: %q", val)
+func (v AssetType) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *AssetType) UnmarshalText(text []byte) error {
+	val := AssetType(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid AssetType value: %q", string(text))
 	}
+
+	*v = val
 
 	return nil
-}
-
-func (at AssetType) String() string {
-	return string(at)
-}
-
-func (at *AssetType) Scan(value any) error {
-	val, ok := value.(string)
-	if !ok {
-		return fmt.Errorf("invalid scan source for AssetType, expected string got %T", value)
-	}
-
-	return at.UnmarshalText([]byte(val))
-}
-
-func (at AssetType) Value() (driver.Value, error) {
-	return at.String(), nil
 }

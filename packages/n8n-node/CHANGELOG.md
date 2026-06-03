@@ -4,6 +4,63 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+## [0.191.0] - 2026-06-02
+
+### Added
+
+- Add `thirdParty vet` operation to enqueue async third-party vetting
+
+## [0.190.0] - 2026-05-28
+
+### Added
+
+- Add Global region option to the vendor country picker
+
+## [0.189.0] - 2026-05-27
+
+### Added
+
+- Add `user archiveUser` operation to deactivate a user profile while keeping them in the organization
+
+### Changed
+
+- Sort user operation options alphabetically
+
+## [0.188.0] - 2026-05-26
+
+### Added
+
+- Add `measure linkThirdParty`/`unlinkThirdParty` operations
+- Add `thirdParty linkThirdParty`/`unlinkThirdParty`/`listChildThirdParties` operations for self-referential relations
+
+### Changed
+
+- Allow initial minor publishing of documents
+
+## [0.187.1] - 2026-05-25
+
+### Fixed
+
+- Fix signature count mismatch in `getAllSignatures` — add a `state` filter to `DocumentVersionSignatureFilter` so results match the console's signatures tab
+
+## [0.187.0] - 2026-05-22
+
+### Added
+
+- Add a `riskAssessment` resource exposing the full risk assessment hierarchy — assessments, scopes, nodes, processes, threats, and scenarios — with CRUD operations, scenario-to-risk and scenario-to-threat link/unlink, and scope Mermaid chart retrieval
+
+## [0.186.0] - 2026-05-15
+
+### Changed
+
+- Rename the `vendor` resource and its operations to `thirdParty` across all node actions (breaking)
+
+## [0.185.0] - 2026-05-13
+
+### Changed
+
+- Drop the `consentMode` field from cookie banner create/update operations and remove `consent_mode` from cookie banner outputs — consent mode is now derived from the visitor's geolocation at consent time (breaking)
+
 ## [0.184.0] - 2026-05-12
 
 ### Changed

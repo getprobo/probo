@@ -1,0 +1,23 @@
+---
+description: Configuration propagation — update all config consumers when changing probod config
+globs: pkg/probod/*.go,pkg/bootstrap/builder.go,cfg/dev.yaml,e2e/console/testdata/config.yaml,contrib/lima/provision.sh,contrib/helm/charts/probo/values.yaml,contrib/helm/charts/probo/values-production.yaml.example,contrib/helm/charts/probo/templates/deployment.yaml,contrib/helm/charts/probo/templates/secret.yaml
+alwaysApply: false
+---
+
+# Config Propagation
+
+When adding, renaming, or removing a config field, update **all** of these:
+
+1. `pkg/probod/*.go` — struct definition (source of truth)
+2. `pkg/probod/probod.go` `New()` — default value
+3. `pkg/bootstrap/builder.go` — env-var mapping + validation
+4. `pkg/bootstrap/builder_test.go` — test coverage for new env var
+5. `cfg/dev.yaml` — local dev config
+6. `e2e/console/testdata/config.yaml` — e2e test config
+7. `contrib/lima/provision.sh` — sandbox env vars (only if default is wrong for sandbox)
+8. `contrib/helm/charts/probo/values.yaml` — Helm defaults
+9. `contrib/helm/charts/probo/values-production.yaml.example` — production template
+10. `contrib/helm/charts/probo/templates/deployment.yaml` — values → env vars
+11. `contrib/helm/charts/probo/templates/secret.yaml` — sensitive values via secretKeyRef
+
+See `contrib/claude/config.md` for full details and conventions.

@@ -15,60 +15,58 @@
 package coredata
 
 import (
-	"database/sql/driver"
+	"encoding"
 	"fmt"
 )
 
 type (
-	EvidenceType uint8
+	EvidenceType string
 )
 
 const (
-	EvidenceTypeFile EvidenceType = iota
-	EvidenceTypeLink
+	EvidenceTypeFile EvidenceType = "FILE"
+	EvidenceTypeLink EvidenceType = "LINK"
 )
 
-func (et EvidenceType) MarshalText() ([]byte, error) {
-	return []byte(et.String()), nil
+var (
+	_ fmt.Stringer             = EvidenceType("")
+	_ encoding.TextMarshaler   = EvidenceType("")
+	_ encoding.TextUnmarshaler = (*EvidenceType)(nil)
+)
+
+func EvidenceTypes() []EvidenceType {
+	return []EvidenceType{
+		EvidenceTypeFile,
+		EvidenceTypeLink,
+	}
 }
 
-func (et *EvidenceType) UnmarshalText(data []byte) error {
-	val := string(data)
-
-	switch val {
-	case EvidenceTypeFile.String():
-		*et = EvidenceTypeFile
-	case EvidenceTypeLink.String():
-		*et = EvidenceTypeLink
-	default:
-		return fmt.Errorf("invalid EvidenceType value: %q", val)
+func (v EvidenceType) IsValid() bool {
+	switch v {
+	case
+		EvidenceTypeFile,
+		EvidenceTypeLink:
+		return true
 	}
+
+	return false
+}
+
+func (v EvidenceType) String() string {
+	return string(v)
+}
+
+func (v EvidenceType) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *EvidenceType) UnmarshalText(text []byte) error {
+	val := EvidenceType(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid EvidenceType value: %q", string(text))
+	}
+
+	*v = val
 
 	return nil
-}
-
-func (et EvidenceType) String() string {
-	var val string
-
-	switch et {
-	case EvidenceTypeFile:
-		val = "FILE"
-	case EvidenceTypeLink:
-		val = "LINK"
-	}
-
-	return val
-}
-
-func (et *EvidenceType) Scan(value any) error {
-	val, ok := value.(string)
-	if !ok {
-		return fmt.Errorf("invalid scan source for EvidenceType, expected string got %T", value)
-	}
-
-	return et.UnmarshalText([]byte(val))
-}
-
-func (et EvidenceType) Value() (driver.Value, error) {
-	return et.String(), nil
 }

@@ -17,6 +17,8 @@ package connector
 import (
 	"bytes"
 	"context"
+	"crypto/rand"
+	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -49,11 +51,25 @@ type (
 		ExtraAuthParams         map[string]string // Optional: extra params for auth URL (e.g., access_type=offline for Google)
 		TokenEndpointAuth       string            // "post-form" (default), "basic-form", or "basic-json"
 		SupportsIncrementalAuth bool
+		// RequiresPKCE enables RFC 7636 PKCE (S256). When true,
+		// InitiateWithState generates a verifier, persists it in the
+		// OAuth2State, and adds code_challenge / code_challenge_method
+		// to the authorize URL; CompleteWithState replays the verifier
+		// on the token exchange.
+		RequiresPKCE bool
+		// IntegrationSlug is an operator-supplied identifier used by
+		// providers whose authorization URL embeds it as a path segment
+		// (Vercel-style integrations). It is consumed by the provider's
+		// Registration.BuildAuthURL in
+		// (*provider.Registry).ApplyOAuth2Defaults. Empty for the vast
+		// majority of providers.
+		IntegrationSlug string
 
 		// HTTPClient is used for the OAuth2 token-exchange request
 		// issued from CompleteWithState. It must be set by callers;
-		// ApplyProviderDefaults assigns an SSRF-protected client for
-		// production use. Tests may inject a loopback-friendly one.
+		// (*provider.Registry).ApplyOAuth2Defaults assigns an
+		// SSRF-protected client for production use. Tests may inject a
+		// loopback-friendly one.
 		HTTPClient *http.Client
 	}
 
@@ -63,6 +79,18 @@ type (
 		ContinueURL     string   `json:"continue,omitempty"`
 		ConnectorID     string   `json:"cid,omitempty"` // Set when reconnecting an existing connector
 		RequestedScopes []string `json:"scopes,omitempty"`
+		// CodeVerifier carries the PKCE verifier between Initiate and
+		// Complete. Set only when the provider requires PKCE
+		// (RequiresPKCE = true on the OAuth2Connector).
+		CodeVerifier string `json:"cv,omitempty"`
+		// ProviderMetadata surfaces provider-specific extras parsed
+		// from the token-exchange response (e.g. PagerDuty's
+		// `subdomain`). It is populated by CompleteWithState and is
+		// NEVER serialized into the state token (the field is for
+		// in-process plumbing only). Consumers that need to persist
+		// these values (typically the OAuth callback handler) read
+		// them off the returned *OAuth2State.
+		ProviderMetadata map[string]string `json:"-"`
 	}
 
 	OAuth2Connection struct {
@@ -118,11 +146,13 @@ func (c *OAuth2Connector) Initiate(
 		ConnectorID:     opts.ConnectorID,
 		RequestedScopes: opts.Scopes,
 	}
+
 	if r != nil {
 		if continueURL := r.URL.Query().Get("continue"); continueURL != "" {
 			stateData.ContinueURL = continueURL
 		}
 	}
+
 	return c.InitiateWithState(ctx, stateData, opts)
 }
 
@@ -133,6 +163,18 @@ func (c *OAuth2Connector) InitiateWithState(
 	stateData OAuth2State,
 	opts InitiateOptions,
 ) (string, error) {
+	// PKCE is generated before the state token so the verifier is
+	// embedded in the signed payload and replayed on the token
+	// exchange. Providers that do not require PKCE skip this entirely.
+	if c.RequiresPKCE {
+		verifier, err := generatePKCEVerifier()
+		if err != nil {
+			return "", fmt.Errorf("cannot generate PKCE verifier: %w", err)
+		}
+
+		stateData.CodeVerifier = verifier
+	}
+
 	state, err := statelesstoken.NewToken(c.ClientSecret, OAuth2TokenType, OAuth2TokenTTL, stateData)
 	if err != nil {
 		return "", fmt.Errorf("cannot create state token: %w", err)
@@ -143,8 +185,14 @@ func (c *OAuth2Connector) InitiateWithState(
 	authCodeQuery.Set("client_id", c.ClientID)
 	authCodeQuery.Set("redirect_uri", c.RedirectURI)
 	authCodeQuery.Set("response_type", "code")
+
 	if len(opts.Scopes) > 0 {
 		authCodeQuery.Set("scope", strings.Join(opts.Scopes, " "))
+	}
+
+	if c.RequiresPKCE {
+		authCodeQuery.Set("code_challenge", pkceChallenge(stateData.CodeVerifier))
+		authCodeQuery.Set("code_challenge_method", "S256")
 	}
 
 	incrementalAuth := c.SupportsIncrementalAuth && opts.IncludeGrantedScopes
@@ -159,6 +207,7 @@ func (c *OAuth2Connector) InitiateWithState(
 		if incrementalAuth && k == "prompt" && v == "consent" {
 			continue
 		}
+
 		authCodeQuery.Set(k, v)
 	}
 
@@ -170,6 +219,25 @@ func (c *OAuth2Connector) InitiateWithState(
 	u.RawQuery = authCodeQuery.Encode()
 
 	return u.String(), nil
+}
+
+// generatePKCEVerifier produces a 32-byte cryptographically random
+// PKCE verifier encoded as base64url without padding (RFC 7636 §4.1).
+func generatePKCEVerifier() (string, error) {
+	b := make([]byte, 32)
+	if _, err := rand.Read(b); err != nil {
+		return "", fmt.Errorf("cannot read random bytes: %w", err)
+	}
+
+	return base64.RawURLEncoding.EncodeToString(b), nil
+}
+
+// pkceChallenge derives the S256 PKCE challenge from a verifier: it is
+// the base64url-without-padding encoding of SHA-256(verifier) (RFC 7636
+// §4.2).
+func pkceChallenge(verifier string) string {
+	sum := sha256.Sum256([]byte(verifier))
+	return base64.RawURLEncoding.EncodeToString(sum[:])
 }
 
 func (c *OAuth2Connector) Complete(ctx context.Context, r *http.Request) (Connection, *gid.GID, string, error) {
@@ -209,7 +277,7 @@ func (c *OAuth2Connector) CompleteWithState(ctx context.Context, r *http.Request
 		return nil, nil, fmt.Errorf("cannot parse organization ID: %w", err)
 	}
 
-	tokenRequest, err := c.buildTokenRequest(ctx, code, c.RedirectURI)
+	tokenRequest, err := c.buildTokenRequest(ctx, code, c.RedirectURI, payload.Data.CodeVerifier)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -218,6 +286,7 @@ func (c *OAuth2Connector) CompleteWithState(ctx context.Context, r *http.Request
 	if err != nil {
 		return nil, nil, fmt.Errorf("cannot post token URL: %w", err)
 	}
+
 	defer func() { _ = tokenResp.Body.Close() }()
 
 	if tokenResp.StatusCode != http.StatusOK {
@@ -266,6 +335,8 @@ func (c *OAuth2Connector) CompleteWithState(ctx context.Context, r *http.Request
 		return conn, &payload.Data, err
 	}
 
+	AbsorbPagerDutyTokenResponse(&payload.Data, body)
+
 	return &oauth2Conn, &payload.Data, nil
 }
 
@@ -275,8 +346,10 @@ func basicAuthHeader(clientID, clientSecret string) string {
 }
 
 // buildTokenRequest creates the HTTP request for the token exchange, branching
-// on c.TokenEndpointAuth to support different provider requirements.
-func (c *OAuth2Connector) buildTokenRequest(ctx context.Context, code, redirectURI string) (*http.Request, error) {
+// on c.TokenEndpointAuth to support different provider requirements. When
+// codeVerifier is non-empty (PKCE-enabled providers), it is replayed as
+// `code_verifier` in the request body.
+func (c *OAuth2Connector) buildTokenRequest(ctx context.Context, code, redirectURI, codeVerifier string) (*http.Request, error) {
 	switch c.TokenEndpointAuth {
 	case "basic-json":
 		// JSON body with Basic auth header (Notion).
@@ -285,6 +358,10 @@ func (c *OAuth2Connector) buildTokenRequest(ctx context.Context, code, redirectU
 			"redirect_uri": redirectURI,
 			"grant_type":   "authorization_code",
 		}
+		if codeVerifier != "" {
+			body["code_verifier"] = codeVerifier
+		}
+
 		jsonBody, err := json.Marshal(body)
 		if err != nil {
 			return nil, fmt.Errorf("cannot marshal token request body: %w", err)
@@ -304,6 +381,7 @@ func (c *OAuth2Connector) buildTokenRequest(ctx context.Context, code, redirectU
 		req.Header.Set("Accept", "application/json")
 		req.Header.Set("User-Agent", "Probo Connector")
 		req.Header.Set("Authorization", basicAuthHeader(c.ClientID, c.ClientSecret))
+
 		return req, nil
 
 	case "basic-form":
@@ -312,6 +390,10 @@ func (c *OAuth2Connector) buildTokenRequest(ctx context.Context, code, redirectU
 		formData.Set("code", code)
 		formData.Set("redirect_uri", redirectURI)
 		formData.Set("grant_type", "authorization_code")
+
+		if codeVerifier != "" {
+			formData.Set("code_verifier", codeVerifier)
+		}
 
 		req, err := http.NewRequestWithContext(
 			ctx,
@@ -327,6 +409,7 @@ func (c *OAuth2Connector) buildTokenRequest(ctx context.Context, code, redirectU
 		req.Header.Set("Accept", "application/json")
 		req.Header.Set("User-Agent", "Probo Connector")
 		req.Header.Set("Authorization", basicAuthHeader(c.ClientID, c.ClientSecret))
+
 		return req, nil
 
 	default:
@@ -337,6 +420,10 @@ func (c *OAuth2Connector) buildTokenRequest(ctx context.Context, code, redirectU
 		formData.Set("code", code)
 		formData.Set("redirect_uri", redirectURI)
 		formData.Set("grant_type", "authorization_code")
+
+		if codeVerifier != "" {
+			formData.Set("code_verifier", codeVerifier)
+		}
 
 		req, err := http.NewRequestWithContext(
 			ctx,
@@ -351,6 +438,7 @@ func (c *OAuth2Connector) buildTokenRequest(ctx context.Context, code, redirectU
 		req.Header.Set("Content-Type", "application/x-www-form-urlencoded; charset=utf-8")
 		req.Header.Set("Accept", "application/json")
 		req.Header.Set("User-Agent", "Probo Connector")
+
 		return req, nil
 	}
 }
@@ -385,6 +473,7 @@ func (c *OAuth2Connection) ClientWithOptions(ctx context.Context, opts ...httpcl
 	client := &http.Client{
 		Transport: transport,
 	}
+
 	return client, nil
 }
 
@@ -409,6 +498,7 @@ func (c *OAuth2Connection) RefreshableClient(ctx context.Context, cfg OAuth2Refr
 
 	// Determine auth style based on TokenEndpointAuth
 	authStyle := oauth2.AuthStyleInParams
+
 	switch cfg.TokenEndpointAuth {
 	case "basic-form", "basic-json":
 		authStyle = oauth2.AuthStyleInHeader
@@ -457,6 +547,7 @@ func (c *OAuth2Connection) RefreshableClient(ctx context.Context, cfg OAuth2Refr
 	// Update the connection with the potentially refreshed token
 	c.AccessToken = newToken.AccessToken
 	c.ExpiresAt = newToken.Expiry
+
 	c.TokenType = newToken.TokenType
 	if newToken.RefreshToken != "" {
 		c.RefreshToken = newToken.RefreshToken
@@ -486,6 +577,7 @@ func (c *OAuth2Connection) clientCredentialsClient(ctx context.Context, opts ...
 
 	formData := url.Values{}
 	formData.Set("grant_type", "client_credentials")
+
 	if c.Scope != "" {
 		formData.Set("scope", c.Scope)
 	}
@@ -513,6 +605,7 @@ func (c *OAuth2Connection) clientCredentialsClient(ctx context.Context, opts ...
 	if err != nil {
 		return nil, fmt.Errorf("cannot post client credentials token URL: %w", err)
 	}
+
 	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
@@ -537,9 +630,11 @@ func (c *OAuth2Connection) clientCredentialsClient(ctx context.Context, opts ...
 	if rawToken.TokenType != "" {
 		c.TokenType = rawToken.TokenType
 	}
+
 	if c.TokenType == "" {
 		c.TokenType = "Bearer"
 	}
+
 	if rawToken.ExpiresIn > 0 {
 		c.ExpiresAt = time.Now().Add(time.Duration(rawToken.ExpiresIn) * time.Second)
 	}
@@ -555,6 +650,7 @@ func (c *OAuth2Connection) clientCredentialsClient(ctx context.Context, opts ...
 
 func (c OAuth2Connection) MarshalJSON() ([]byte, error) {
 	type Alias OAuth2Connection
+
 	return json.Marshal(&struct {
 		Type string `json:"type"`
 		Alias
@@ -566,11 +662,13 @@ func (c OAuth2Connection) MarshalJSON() ([]byte, error) {
 
 func (c *OAuth2Connection) UnmarshalJSON(data []byte) error {
 	type Alias OAuth2Connection
+
 	aux := &struct {
 		*Alias
 	}{
 		Alias: (*Alias)(c),
 	}
+
 	return json.Unmarshal(data, &aux)
 }
 
@@ -588,5 +686,6 @@ func (t *oauth2Transport) RoundTrip(req *http.Request) (*http.Response, error) {
 	// string), so we always send "Bearer" -- the only scheme any connector in
 	// this codebase actually needs.
 	req2.Header.Set("Authorization", "Bearer "+t.token)
+
 	return t.underlying.RoundTrip(req2)
 }

@@ -15,7 +15,7 @@
 package coredata
 
 import (
-	"database/sql/driver"
+	"encoding"
 	"fmt"
 )
 
@@ -31,44 +31,51 @@ const (
 	ElectronicSignatureStatusFailed     ElectronicSignatureStatus = "FAILED"
 )
 
-func (s ElectronicSignatureStatus) MarshalText() ([]byte, error) {
-	return []byte(s.String()), nil
+var (
+	_ fmt.Stringer             = ElectronicSignatureStatus("")
+	_ encoding.TextMarshaler   = ElectronicSignatureStatus("")
+	_ encoding.TextUnmarshaler = (*ElectronicSignatureStatus)(nil)
+)
+
+func ElectronicSignatureStatuses() []ElectronicSignatureStatus {
+	return []ElectronicSignatureStatus{
+		ElectronicSignatureStatusPending,
+		ElectronicSignatureStatusAccepted,
+		ElectronicSignatureStatusProcessing,
+		ElectronicSignatureStatusCompleted,
+		ElectronicSignatureStatusFailed,
+	}
 }
 
-func (s *ElectronicSignatureStatus) UnmarshalText(data []byte) error {
-	val := string(data)
-
-	switch val {
-	case ElectronicSignatureStatusPending.String():
-		*s = ElectronicSignatureStatusPending
-	case ElectronicSignatureStatusAccepted.String():
-		*s = ElectronicSignatureStatusAccepted
-	case ElectronicSignatureStatusProcessing.String():
-		*s = ElectronicSignatureStatusProcessing
-	case ElectronicSignatureStatusCompleted.String():
-		*s = ElectronicSignatureStatusCompleted
-	case ElectronicSignatureStatusFailed.String():
-		*s = ElectronicSignatureStatusFailed
-	default:
-		return fmt.Errorf("invalid ElectronicSignatureStatus value: %q", val)
+func (v ElectronicSignatureStatus) IsValid() bool {
+	switch v {
+	case
+		ElectronicSignatureStatusPending,
+		ElectronicSignatureStatusAccepted,
+		ElectronicSignatureStatusProcessing,
+		ElectronicSignatureStatusCompleted,
+		ElectronicSignatureStatusFailed:
+		return true
 	}
+
+	return false
+}
+
+func (v ElectronicSignatureStatus) String() string {
+	return string(v)
+}
+
+func (v ElectronicSignatureStatus) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *ElectronicSignatureStatus) UnmarshalText(text []byte) error {
+	val := ElectronicSignatureStatus(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid ElectronicSignatureStatus value: %q", string(text))
+	}
+
+	*v = val
 
 	return nil
-}
-
-func (s ElectronicSignatureStatus) String() string {
-	return string(s)
-}
-
-func (s *ElectronicSignatureStatus) Scan(value any) error {
-	val, ok := value.(string)
-	if !ok {
-		return fmt.Errorf("invalid scan source for ElectronicSignatureStatus, expected string got %T", value)
-	}
-
-	return s.UnmarshalText([]byte(val))
-}
-
-func (s ElectronicSignatureStatus) Value() (driver.Value, error) {
-	return s.String(), nil
 }

@@ -25,6 +25,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/iam/policy"
 	"go.probo.inc/probo/pkg/page"
 )
 
@@ -33,7 +34,6 @@ type (
 		PrivacyPolicyURL  *string                               `json:"privacy_policy_url,omitempty"`
 		CookiePolicyURL   string                                `json:"cookie_policy_url"`
 		ConsentExpiryDays int                                   `json:"consent_expiry_days"`
-		ConsentMode       string                                `json:"consent_mode"`
 		DefaultLanguage   string                                `json:"default_language"`
 		Categories        []CookieBannerVersionSnapshotCategory `json:"categories"`
 	}
@@ -81,19 +81,43 @@ func (v *CookieBannerVersion) CursorKey(field CookieBannerVersionOrderField) pag
 	panic(fmt.Sprintf("unsupported order by: %s", field))
 }
 
-func (v *CookieBannerVersion) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
-	q := `SELECT organization_id FROM cookie_banner_versions WHERE id = $1 LIMIT 1;`
+func (v *CookieBannerVersion) AuthorizationAttributes(
+	ctx context.Context,
+	conn pg.Querier,
+	resourceIDs []gid.GID,
+) (policy.AttributesByID, error) {
+	q := `SELECT id, organization_id FROM cookie_banner_versions WHERE id = ANY(@resource_ids::text[])`
 
-	var organizationID gid.GID
-	if err := conn.QueryRow(ctx, q, v.ID).Scan(&organizationID); err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, ErrResourceNotFound
-		}
-
-		return nil, fmt.Errorf("cannot query cookie banner version authorization attributes: %w", err)
+	args := pgx.StrictNamedArgs{
+		"resource_ids": resourceIDs,
 	}
 
-	return map[string]string{"organization_id": organizationID.String()}, nil
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return nil, fmt.Errorf("cannot query authorization attributes: %w", err)
+	}
+
+	defer rows.Close()
+
+	attrsByID := make(policy.AttributesByID)
+
+	for rows.Next() {
+		var id, organizationID gid.GID
+
+		if err := rows.Scan(&id, &organizationID); err != nil {
+			return nil, fmt.Errorf("cannot scan authorization attributes: %w", err)
+		}
+
+		attrsByID[id] = policy.Attributes{
+			"organization_id": organizationID.String(),
+		}
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("cannot iterate authorization attributes: %w", err)
+	}
+
+	return attrsByID, nil
 }
 
 func (v *CookieBannerVersion) GetSnapshot() (CookieBannerVersionSnapshot, error) {
@@ -101,6 +125,19 @@ func (v *CookieBannerVersion) GetSnapshot() (CookieBannerVersionSnapshot, error)
 	if err := json.Unmarshal(v.Snapshot, &snapshot); err != nil {
 		return snapshot, fmt.Errorf("cannot unmarshal cookie banner version snapshot: %w", err)
 	}
+
+	// Snapshots created before tracker types were captured only ever held
+	// cookie-type trackers, so their cookie items carry an empty tracker
+	// type. Backfill them as cookies so downstream consumers (policy
+	// generation, GraphQL, served banner config) see a valid type.
+	for i := range snapshot.Categories {
+		for j := range snapshot.Categories[i].Cookies {
+			if snapshot.Categories[i].Cookies[j].TrackerType == "" {
+				snapshot.Categories[i].Cookies[j].TrackerType = TrackerTypeCookie
+			}
+		}
+	}
+
 	return snapshot, nil
 }
 
@@ -109,7 +146,9 @@ func (v *CookieBannerVersion) SetSnapshot(snapshot CookieBannerVersionSnapshot) 
 	if err != nil {
 		return fmt.Errorf("cannot marshal cookie banner version snapshot: %w", err)
 	}
+
 	v.Snapshot = data
+
 	return nil
 }
 
@@ -152,6 +191,7 @@ LIMIT 1;
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
 		}
+
 		return fmt.Errorf("cannot collect cookie banner version: %w", err)
 	}
 
@@ -281,6 +321,7 @@ LIMIT 1;
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
 		}
+
 		return fmt.Errorf("cannot collect cookie banner version: %w", err)
 	}
 
@@ -329,6 +370,7 @@ LIMIT 1;
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
 		}
+
 		return fmt.Errorf("cannot collect cookie banner version: %w", err)
 	}
 
@@ -499,6 +541,7 @@ LIMIT 1;
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
 		}
+
 		return fmt.Errorf("cannot collect cookie banner version: %w", err)
 	}
 

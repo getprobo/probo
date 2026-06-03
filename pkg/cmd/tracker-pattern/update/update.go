@@ -81,9 +81,11 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 			if cmd.Flags().Changed("description") {
 				input["description"] = flagDescription
 			}
+
 			if cmd.Flags().Changed("max-age-seconds") {
 				input["maxAgeSeconds"] = flagMaxAge
 			}
+
 			if cmd.Flags().Changed("excluded") {
 				input["excluded"] = flagExcluded
 			}

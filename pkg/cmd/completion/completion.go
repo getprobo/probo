@@ -56,6 +56,7 @@ PowerShell:
 		DisableFlagsInUseLine: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			out := f.IOStreams.Out
+
 			switch args[0] {
 			case "bash":
 				return cmd.Root().GenBashCompletionV2(out, true)

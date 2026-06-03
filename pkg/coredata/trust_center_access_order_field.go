@@ -14,7 +14,12 @@
 
 package coredata
 
-import "fmt"
+import (
+	"encoding"
+	"fmt"
+
+	"go.probo.inc/probo/pkg/page"
+)
 
 type TrustCenterAccessOrderField string
 
@@ -22,8 +27,46 @@ const (
 	TrustCenterAccessOrderFieldCreatedAt TrustCenterAccessOrderField = "CREATED_AT"
 )
 
-func (tcaof TrustCenterAccessOrderField) String() string {
-	return string(tcaof)
+var (
+	_ page.OrderField          = TrustCenterAccessOrderField("")
+	_ fmt.Stringer             = TrustCenterAccessOrderField("")
+	_ encoding.TextMarshaler   = TrustCenterAccessOrderField("")
+	_ encoding.TextUnmarshaler = (*TrustCenterAccessOrderField)(nil)
+)
+
+func TrustCenterAccessOrderFields() []TrustCenterAccessOrderField {
+	return []TrustCenterAccessOrderField{
+		TrustCenterAccessOrderFieldCreatedAt,
+	}
+}
+
+func (v TrustCenterAccessOrderField) IsValid() bool {
+	switch v {
+	case
+		TrustCenterAccessOrderFieldCreatedAt:
+		return true
+	}
+
+	return false
+}
+
+func (v TrustCenterAccessOrderField) String() string {
+	return string(v)
+}
+
+func (v TrustCenterAccessOrderField) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *TrustCenterAccessOrderField) UnmarshalText(text []byte) error {
+	val := TrustCenterAccessOrderField(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid TrustCenterAccessOrderField value: %q", string(text))
+	}
+
+	*v = val
+
+	return nil
 }
 
 func (tcaof TrustCenterAccessOrderField) Column() string {

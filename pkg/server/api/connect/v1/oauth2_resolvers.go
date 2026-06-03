@@ -50,6 +50,7 @@ func (r *mutationResolver) AuthorizeDevice(ctx context.Context, input types.Auth
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot authorize device", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -89,12 +90,15 @@ func (r *mutationResolver) ApproveConsent(ctx context.Context, input types.Appro
 		q := u.Query()
 		q.Set("error", "access_denied")
 		q.Set("error_description", "user denied the request")
+
 		if result.State != "" {
 			q.Set("state", result.State)
 		}
+
 		u.RawQuery = q.Encode()
 
 		redirectURL := u.String()
+
 		return &types.ApproveConsentPayload{
 			RedirectURL: &redirectURL,
 		}, nil
@@ -109,12 +113,15 @@ func (r *mutationResolver) ApproveConsent(ctx context.Context, input types.Appro
 	u, _ := url.Parse(result.RedirectURI)
 	q := u.Query()
 	q.Set("code", result.Code)
+
 	if result.State != "" {
 		q.Set("state", result.State)
 	}
+
 	u.RawQuery = q.Encode()
 
 	redirectURL := u.String()
+
 	return &types.ApproveConsentPayload{
 		RedirectURL: &redirectURL,
 	}, nil

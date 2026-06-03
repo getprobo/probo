@@ -13,12 +13,12 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 import { EyeIcon, EyeSlashIcon } from "@phosphor-icons/react";
-import { formatError, type GraphQLError } from "@probo/helpers";
+import { formatError, getTrackerSourceBadge, getTrackerTypeBadge, type GraphQLError, humanizeSeconds } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import {
+  ActionDropdown,
   Badge,
-  Dropdown,
-  IconArrowBoxLeft,
+  DropdownItem,
   IconPencil,
   IconTrashCan,
   Td,
@@ -26,21 +26,16 @@ import {
   useConfirm,
   useToast,
 } from "@probo/ui";
-import { Suspense, useCallback, useState } from "react";
-import { graphql, useFragment, useMutation, useQueryLoader } from "react-relay";
-import { useParams } from "react-router";
+import { useState } from "react";
+import { graphql, useFragment, useMutation } from "react-relay";
 import { ConnectionHandler } from "relay-runtime";
 
-import type { MoveToCategoryDropdownQuery } from "#/__generated__/core/MoveToCategoryDropdownQuery.graphql";
 import type { TrackerPatternRowDeleteMutation } from "#/__generated__/core/TrackerPatternRowDeleteMutation.graphql";
 import type { TrackerPatternRowFragment$key } from "#/__generated__/core/TrackerPatternRowFragment.graphql";
 import type { TrackerPatternRowMoveMutation } from "#/__generated__/core/TrackerPatternRowMoveMutation.graphql";
 import type { TrackerPatternRowUpdateMutation } from "#/__generated__/core/TrackerPatternRowUpdateMutation.graphql";
 
-import {
-  MoveToCategoryDropdown,
-  moveToCategoryDropdownQuery,
-} from "./MoveToCategoryDropdown";
+import { MoveToCategorySelect } from "./MoveToCategorySelect";
 import { TrackerPatternRowEdit } from "./TrackerPatternRowEdit";
 
 const trackerPatternFragment = graphql`
@@ -53,6 +48,18 @@ const trackerPatternFragment = graphql`
     maxAgeSeconds
     excluded
     lastMatchedAt
+    cookieCategory {
+      id
+      name
+    }
+    thirdParty {
+      id
+      name
+    }
+    commonThirdParty {
+      id
+      name
+    }
   }
 `;
 
@@ -123,27 +130,6 @@ const updatePatternMutation = graphql`
   }
 `;
 
-type BadgeVariant = "success" | "warning" | "danger" | "info" | "neutral" | "outline" | "highlight";
-
-function trackerTypeBadge(type: string, __: (s: string) => string): { label: string; variant: BadgeVariant } {
-  switch (type) {
-    case "COOKIE": return { label: __("Cookie"), variant: "warning" };
-    case "LOCAL_STORAGE": return { label: __("localStorage"), variant: "info" };
-    case "SESSION_STORAGE": return { label: __("sessionStorage"), variant: "highlight" };
-    case "INDEXED_DB": return { label: __("IndexedDB"), variant: "success" };
-    case "CACHE_STORAGE": return { label: __("Cache Storage"), variant: "outline" };
-    default: return { label: type, variant: "neutral" };
-  }
-}
-
-function sourceBadge(source: string, __: (s: string) => string): { label: string; variant: BadgeVariant } {
-  switch (source) {
-    case "SCRIPT": return { label: __("Script"), variant: "info" };
-    case "PRE_EXISTING": return { label: __("Pre-existing"), variant: "outline" };
-    default: return { label: source, variant: "neutral" };
-  }
-}
-
 interface TrackerPatternRowProps {
   patternKey: TrackerPatternRowFragment$key;
   connectionId: string;
@@ -153,21 +139,9 @@ export function TrackerPatternRow({ patternKey, connectionId }: TrackerPatternRo
   const { __ } = useTranslate();
   const { toast } = useToast();
   const confirm = useConfirm();
-  const { cookieBannerId } = useParams<{ cookieBannerId: string }>();
   const pattern = useFragment(trackerPatternFragment, patternKey);
 
   const [isEditing, setIsEditing] = useState(false);
-  const [categoryQueryRef, loadCategoryQuery]
-    = useQueryLoader<MoveToCategoryDropdownQuery>(moveToCategoryDropdownQuery);
-
-  const handleCategoryDropdownOpen = useCallback(
-    (open: boolean) => {
-      if (open && cookieBannerId) {
-        loadCategoryQuery({ cookieBannerId });
-      }
-    },
-    [loadCategoryQuery, cookieBannerId],
-  );
 
   const [deletePattern]
     = useMutation<TrackerPatternRowDeleteMutation>(deletePatternMutation);
@@ -239,6 +213,22 @@ export function TrackerPatternRow({ patternKey, connectionId }: TrackerPatternRo
     });
   };
 
+  const handleMoveWithConfirm = (targetCategoryId: string) => {
+    if (targetCategoryId === pattern.cookieCategory?.id) {
+      return;
+    }
+    confirm(
+      () => {
+        handleMove(targetCategoryId);
+      },
+      {
+        message: __("Moving this tracker to a category will create a third party for it (or link an existing one) if it doesn't have one yet. Continue?"),
+        variant: "primary",
+        label: __("Move"),
+      },
+    );
+  };
+
   const handleToggleExcluded = () => {
     updatePattern({
       variables: {
@@ -295,13 +285,16 @@ export function TrackerPatternRow({ patternKey, connectionId }: TrackerPatternRo
     );
   }
 
-  const typeBadge = trackerTypeBadge(pattern.trackerType, __);
-  const srcBadge = pattern.source ? sourceBadge(pattern.source, __) : null;
+  const typeBadge = getTrackerTypeBadge(pattern.trackerType, __);
+  const srcBadge = pattern.source ? getTrackerSourceBadge(pattern.source, __) : null;
 
   return (
-    <Tr className={pattern.excluded ? "bg-txt-quaternary opacity-80  line-through" : undefined}>
+    <Tr to={pattern.id} className={pattern.excluded ? "bg-txt-quaternary opacity-80  line-through" : undefined}>
       <Td>
-        <div className="flex flex-col min-w-0">
+        <Badge variant={typeBadge.variant}>{typeBadge.label}</Badge>
+      </Td>
+      <Td>
+        <div className="flex flex-col min-w-0 max-w-xs">
           <span className={pattern.excluded ? undefined : "font-medium"}>{pattern.displayName}</span>
           {pattern.description && (
             <span className="text-xs text-txt-tertiary wrap-break-word line-clamp-1">
@@ -311,12 +304,34 @@ export function TrackerPatternRow({ patternKey, connectionId }: TrackerPatternRo
         </div>
       </Td>
       <Td>
-        <Badge variant={typeBadge.variant}>{typeBadge.label}</Badge>
+        {pattern.thirdParty
+          ? (
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="truncate">{pattern.thirdParty.name}</span>
+              </div>
+            )
+          : pattern.commonThirdParty
+            ? (
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="truncate">{pattern.commonThirdParty.name}</span>
+                </div>
+              )
+            : <span className="text-txt-tertiary">-</span>}
       </Td>
       <Td>
         {srcBadge
           ? <Badge variant={srcBadge.variant}>{srcBadge.label}</Badge>
           : <span className="text-txt-tertiary">-</span>}
+      </Td>
+      <Td noLink>
+        <MoveToCategorySelect
+          currentCategoryId={pattern.cookieCategory?.id}
+          currentCategoryName={pattern.cookieCategory?.name}
+          onSelect={handleMoveWithConfirm}
+        />
+      </Td>
+      <Td>
+        <span>{humanizeSeconds(pattern.maxAgeSeconds ?? null)}</span>
       </Td>
       <Td>
         {pattern.lastMatchedAt
@@ -327,7 +342,7 @@ export function TrackerPatternRow({ patternKey, connectionId }: TrackerPatternRo
             )
           : <span className="text-txt-tertiary">-</span>}
       </Td>
-      <Td>
+      <Td noLink className="w-px whitespace-nowrap">
         <div className="flex items-center gap-1">
           <button
             type="button"
@@ -337,40 +352,21 @@ export function TrackerPatternRow({ patternKey, connectionId }: TrackerPatternRo
           >
             <IconPencil size={14} />
           </button>
-          <Dropdown
-            onOpenChange={handleCategoryDropdownOpen}
-            toggle={(
-              <button
-                type="button"
-                className="p-1 rounded cursor-pointer"
-                title={__("Move to category")}
-              >
-                <IconArrowBoxLeft size={14} />
-              </button>
-            )}
-          >
-            {categoryQueryRef && (
-              <Suspense>
-                <MoveToCategoryDropdown queryRef={categoryQueryRef} onMove={handleMove} />
-              </Suspense>
-            )}
-          </Dropdown>
-          <button
-            type="button"
-            onClick={handleToggleExcluded}
-            className="p-1 rounded cursor-pointer"
-            title={pattern.excluded ? __("Include") : __("Exclude")}
-          >
-            {pattern.excluded ? <EyeIcon size={14} /> : <EyeSlashIcon size={14} />}
-          </button>
-          <button
-            type="button"
-            onClick={handleDelete}
-            className="p-1 rounded cursor-pointer text-danger-dark"
-            title={__("Delete")}
-          >
-            <IconTrashCan size={14} />
-          </button>
+          <ActionDropdown>
+            <DropdownItem
+              icon={pattern.excluded ? EyeIcon : EyeSlashIcon}
+              onSelect={handleToggleExcluded}
+            >
+              {pattern.excluded ? __("Include") : __("Exclude")}
+            </DropdownItem>
+            <DropdownItem
+              variant="danger"
+              icon={IconTrashCan}
+              onSelect={handleDelete}
+            >
+              {__("Delete")}
+            </DropdownItem>
+          </ActionDropdown>
         </div>
       </Td>
     </Tr>

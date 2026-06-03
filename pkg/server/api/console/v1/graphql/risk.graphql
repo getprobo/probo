@@ -107,6 +107,14 @@ type Risk implements Node {
         orderBy: ObligationOrder
     ): ObligationConnection! @goField(forceResolver: true)
 
+    scenarios(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: RiskAssessmentScenarioOrder
+    ): RiskAssessmentScenarioConnection! @goField(forceResolver: true)
+
     createdAt: Datetime!
     updatedAt: Datetime!
 

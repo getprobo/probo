@@ -27,11 +27,12 @@ import (
 )
 
 type OrganizationService struct {
-	svc *TenantService
+	svc *Service
 }
 
 func (s OrganizationService) Get(
 	ctx context.Context,
+	scope coredata.Scoper,
 	organizationID gid.GID,
 ) (*coredata.Organization, error) {
 	organization := &coredata.Organization{}
@@ -42,7 +43,7 @@ func (s OrganizationService) Get(
 			err := organization.LoadByID(
 				ctx,
 				conn,
-				s.svc.scope,
+				scope,
 				organizationID,
 			)
 			if err != nil {
@@ -52,7 +53,6 @@ func (s OrganizationService) Get(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -62,6 +62,7 @@ func (s OrganizationService) Get(
 
 func (s OrganizationService) GetOrganizationCustomDomain(
 	ctx context.Context,
+	scope coredata.Scoper,
 	organizationID gid.GID,
 ) (*coredata.CustomDomain, error) {
 	var domain *coredata.CustomDomain
@@ -70,7 +71,7 @@ func (s OrganizationService) GetOrganizationCustomDomain(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
 			var org coredata.Organization
-			if err := org.LoadByID(ctx, conn, s.svc.scope, organizationID); err != nil {
+			if err := org.LoadByID(ctx, conn, scope, organizationID); err != nil {
 				return fmt.Errorf("cannot load organization: %w", err)
 			}
 
@@ -79,14 +80,13 @@ func (s OrganizationService) GetOrganizationCustomDomain(
 			}
 
 			domain = &coredata.CustomDomain{}
-			if err := domain.LoadByID(ctx, conn, s.svc.scope, *org.CustomDomainID); err != nil {
+			if err := domain.LoadByID(ctx, conn, scope, *org.CustomDomainID); err != nil {
 				return fmt.Errorf("cannot load custom domain: %w", err)
 			}
 
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -96,10 +96,11 @@ func (s OrganizationService) GetOrganizationCustomDomain(
 
 func (s OrganizationService) GenerateLogoURL(
 	ctx context.Context,
+	scope coredata.Scoper,
 	organizationID gid.GID,
 	expiresIn time.Duration,
 ) (*string, error) {
-	organization, err := s.Get(ctx, organizationID)
+	organization, err := s.Get(ctx, scope, organizationID)
 	if err != nil {
 		return nil, fmt.Errorf("cannot get organization: %w", err)
 	}
@@ -109,10 +110,11 @@ func (s OrganizationService) GenerateLogoURL(
 	}
 
 	file := &coredata.File{}
+
 	err = s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			return file.LoadByID(ctx, conn, s.svc.scope, *organization.LogoFileID)
+			return file.LoadByID(ctx, conn, scope, *organization.LogoFileID)
 		},
 	)
 	if err != nil {

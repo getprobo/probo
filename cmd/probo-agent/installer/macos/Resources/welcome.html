@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Probo Device Posture Agent</title>
+    <style>
+        body {
+            font-family: -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif;
+            font-size: 13px;
+            color: #1d1d1f;
+            margin: 24px;
+            line-height: 1.45;
+        }
+        h1 { font-size: 18px; margin-bottom: 6px; }
+        h2 { font-size: 14px; margin-top: 18px; margin-bottom: 4px; }
+        code, pre {
+            font-family: Menlo, Consolas, monospace;
+            background: #f5f5f7;
+            border-radius: 4px;
+            padding: 2px 4px;
+        }
+        pre { padding: 8px 10px; overflow-x: auto; }
+        ul { margin: 4px 0 8px 18px; padding: 0; }
+        li { margin: 2px 0; }
+    </style>
+</head>
+<body>
+    <h1>Welcome to the Probo Device Posture Agent</h1>
+    <p>
+        This installer adds <code>probo-agent</code> to your Mac and starts it
+        as a system service. The agent reports device posture &mdash; disk
+        encryption, screen lock, firewall, OS version, and similar
+        signals &mdash; back to your Probo workspace over HTTPS.
+    </p>
+
+    <h2>What the installer does</h2>
+    <ul>
+        <li>Installs the <code>probo-agent</code> binary to
+            <code>/usr/local/bin/probo-agent</code>.</li>
+        <li>Registers the launchd unit
+            <code>com.probo.agent</code> in
+            <code>/Library/LaunchDaemons</code>.</li>
+        <li>Creates the persistent state directory
+            <code>/var/lib/probo-agent</code> (root-owned, mode 0700).</li>
+        <li>Enrolls the device automatically when an admin has pre-staged
+            <code>/tmp/probo-agent.conf</code> (typically via an MDM).</li>
+    </ul>
+
+    <h2>What you will need</h2>
+    <ul>
+        <li>Administrator privileges on this Mac.</li>
+        <li>The Probo server URL (e.g.
+            <code>https://app.getprobo.com</code>).</li>
+        <li>A device enrollment token issued by a workspace administrator.</li>
+    </ul>
+
+    <p>
+        Click <strong>Continue</strong> to review the license, then
+        <strong>Install</strong> to proceed.
+    </p>
+</body>
+</html>

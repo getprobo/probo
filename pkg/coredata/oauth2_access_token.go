@@ -112,6 +112,7 @@ LIMIT 1;
 	}
 
 	*t = token
+
 	return nil
 }
 
@@ -158,6 +159,7 @@ LIMIT 1;
 	}
 
 	*t = token
+
 	return nil
 }
 

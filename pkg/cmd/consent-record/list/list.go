@@ -105,12 +105,15 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 			if cmd.Flags().Changed("action") {
 				filter["action"] = flagAction
 			}
+
 			if cmd.Flags().Changed("visitor-id") {
 				filter["visitorId"] = flagVisitorID
 			}
+
 			if cmd.Flags().Changed("version") {
 				filter["version"] = flagVersion
 			}
+
 			if len(filter) > 0 {
 				variables["filter"] = filter
 			}
@@ -130,12 +133,15 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 					if err := json.Unmarshal(data, &resp); err != nil {
 						return nil, err
 					}
+
 					if resp.Node == nil {
 						return nil, fmt.Errorf("cookie banner %s not found", flagBannerID)
 					}
+
 					if resp.Node.Typename != "CookieBanner" {
 						return nil, fmt.Errorf("expected CookieBanner node, got %s", resp.Node.Typename)
 					}
+
 					return &resp.Node.ConsentRecords, nil
 				},
 			)
@@ -158,10 +164,12 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				if r.Regulation != nil {
 					regulation = *r.Regulation
 				}
+
 				countryCode := "-"
 				if r.CountryCode != nil {
 					countryCode = *r.CountryCode
 				}
+
 				rows = append(rows, []string{r.ID, r.VisitorID, r.Action, r.SDKVersion, regulation, countryCode, r.CreatedAt})
 			}
 

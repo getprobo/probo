@@ -14,6 +14,13 @@
 
 package coredata
 
+import (
+	"encoding"
+	"fmt"
+
+	"go.probo.inc/probo/pkg/page"
+)
+
 type (
 	ControlOrderField string
 )
@@ -22,6 +29,50 @@ const (
 	ControlOrderFieldCreatedAt    ControlOrderField = "CREATED_AT"
 	ControlOrderFieldSectionTitle ControlOrderField = "SECTION_TITLE"
 )
+
+var (
+	_ page.OrderField          = ControlOrderField("")
+	_ fmt.Stringer             = ControlOrderField("")
+	_ encoding.TextMarshaler   = ControlOrderField("")
+	_ encoding.TextUnmarshaler = (*ControlOrderField)(nil)
+)
+
+func ControlOrderFields() []ControlOrderField {
+	return []ControlOrderField{
+		ControlOrderFieldCreatedAt,
+		ControlOrderFieldSectionTitle,
+	}
+}
+
+func (v ControlOrderField) IsValid() bool {
+	switch v {
+	case
+		ControlOrderFieldCreatedAt,
+		ControlOrderFieldSectionTitle:
+		return true
+	}
+
+	return false
+}
+
+func (v ControlOrderField) String() string {
+	return string(v)
+}
+
+func (v ControlOrderField) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *ControlOrderField) UnmarshalText(text []byte) error {
+	val := ControlOrderField(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid ControlOrderField value: %q", string(text))
+	}
+
+	*v = val
+
+	return nil
+}
 
 func (p ControlOrderField) Column() string {
 	switch p {
@@ -32,17 +83,4 @@ func (p ControlOrderField) Column() string {
 	default:
 		return string(p)
 	}
-}
-
-func (p ControlOrderField) String() string {
-	return string(p)
-}
-
-func (p ControlOrderField) MarshalText() ([]byte, error) {
-	return []byte(p.String()), nil
-}
-
-func (p *ControlOrderField) UnmarshalText(text []byte) error {
-	*p = ControlOrderField(text)
-	return nil
 }

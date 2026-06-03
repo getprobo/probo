@@ -22,9 +22,9 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgconn"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/iam/policy"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/uri"
 )
@@ -59,31 +59,57 @@ func (c *OAuth2Consent) CursorKey(orderBy OAuth2ConsentOrderField) page.CursorKe
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
-func (c *OAuth2Consent) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
+func (c *OAuth2Consent) AuthorizationAttributes(
+	ctx context.Context,
+	conn pg.Querier,
+	resourceIDs []gid.GID,
+) (policy.AttributesByID, error) {
 	q := `
 SELECT
-	identity_id,
-	session_id
+    id,
+    identity_id,
+    session_id
 FROM
-	iam_oauth2_consents
+    iam_oauth2_consents
 WHERE
-	id = $1
-LIMIT 1;
+    id = ANY(@resource_ids::text[])
 `
 
-	var identityID, sessionID gid.GID
-	if err := conn.QueryRow(ctx, q, c.ID).Scan(&identityID, &sessionID); err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, ErrResourceNotFound
-		}
-
-		return nil, fmt.Errorf("cannot query oauth2_consent authorization attributes: %w", err)
+	args := pgx.StrictNamedArgs{
+		"resource_ids": resourceIDs,
 	}
 
-	return map[string]string{
-		"identity_id": identityID.String(),
-		"session_id":  sessionID.String(),
-	}, nil
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return nil, fmt.Errorf("cannot query oauth2 consent authorization attributes: %w", err)
+	}
+	defer rows.Close()
+
+	attrsByID := make(policy.AttributesByID, len(resourceIDs))
+
+	for rows.Next() {
+		var (
+			id         gid.GID
+			identityID gid.GID
+			sessionID  gid.GID
+		)
+
+		err = rows.Scan(&id, &identityID, &sessionID)
+		if err != nil {
+			return nil, fmt.Errorf("cannot scan oauth2 consent authorization attributes: %w", err)
+		}
+
+		attrsByID[id] = policy.Attributes{
+			"identity_id": identityID.String(),
+			"session_id":  sessionID.String(),
+		}
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, fmt.Errorf("cannot iterate oauth2 consent authorization attributes: %w", err)
+	}
+
+	return attrsByID, nil
 }
 
 func (c *OAuth2Consent) LoadByID(
@@ -129,6 +155,7 @@ LIMIT 1;
 	}
 
 	*c = consent
+
 	return nil
 }
 
@@ -187,6 +214,7 @@ LIMIT 1;
 	}
 
 	*c = consent
+
 	return nil
 }
 
@@ -246,6 +274,7 @@ FOR UPDATE;
 	}
 
 	*c = consent
+
 	return nil
 }
 
@@ -306,6 +335,7 @@ LIMIT 1;
 	}
 
 	*c = consent
+
 	return nil
 }
 
@@ -363,10 +393,6 @@ INSERT INTO iam_oauth2_consents (
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
-		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok && pgErr.Code == "23505" {
-			return ErrResourceAlreadyExists
-		}
-
 		return fmt.Errorf("cannot insert oauth2_consent: %w", err)
 	}
 
@@ -465,6 +491,7 @@ WHERE
 	}
 
 	*c = consents
+
 	return nil
 }
 
@@ -484,6 +511,7 @@ WHERE
 `
 
 	var count int
+
 	err := conn.QueryRow(
 		ctx,
 		q,

@@ -119,6 +119,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			if err != nil {
 				return nil, err
 			}
+
 			return types.NewPersonalAPIKey(personalAPIKey), nil
 		}
 	case coredata.SCIMConfigurationEntityType:
@@ -128,6 +129,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			if err != nil {
 				return nil, err
 			}
+
 			return types.NewSCIMConfiguration(scimConfiguration), nil
 		}
 	case coredata.SCIMEventEntityType:
@@ -137,35 +139,40 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			if err != nil {
 				return nil, err
 			}
+
 			return types.NewSCIMEvent(scimEvent), nil
 		}
 	default:
 		return nil, fmt.Errorf("unsupported entity type: %d", id.EntityType())
 	}
 
-	if err := r.authorize(ctx, id, action); err != nil {
+	if _, err := r.authorize(ctx, id, action); err != nil {
 		return nil, err
 	}
 
 	node, err := loadNode(ctx, id)
 	if err != nil {
-		var (
-			errOrganizationNotFound *iam.ErrOrganizationNotFound
-			errIdentityNotFound     *iam.ErrIdentityNotFound
-			errSessionNotFound      *iam.ErrSessionNotFound
-			errProfileNotFound      *iam.ErrProfileNotFound
-			errMembershipNotFound   *iam.ErrMembershipNotFound
-			errInvitationNotFound   *iam.ErrInvitationNotFound
+		if _, ok := errors.AsType[*iam.ErrOrganizationNotFound](err); ok {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
 
-			isNotFoundErr = errors.As(err, &errOrganizationNotFound) ||
-				errors.As(err, &errIdentityNotFound) ||
-				errors.As(err, &errSessionNotFound) ||
-				errors.As(err, &errProfileNotFound) ||
-				errors.As(err, &errMembershipNotFound) ||
-				errors.As(err, &errInvitationNotFound)
-		)
+		if _, ok := errors.AsType[*iam.ErrIdentityNotFound](err); ok {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
 
-		if isNotFoundErr {
+		if _, ok := errors.AsType[*iam.ErrSessionNotFound](err); ok {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+
+		if _, ok := errors.AsType[*iam.ErrProfileNotFound](err); ok {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+
+		if _, ok := errors.AsType[*iam.ErrMembershipNotFound](err); ok {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+
+		if _, ok := errors.AsType[*iam.ErrInvitationNotFound](err); ok {
 			return nil, gqlutils.NotFound(ctx, err)
 		}
 
@@ -174,6 +181,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot load node", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 

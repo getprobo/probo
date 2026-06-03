@@ -84,9 +84,11 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 			if cmd.Flags().Changed("name") {
 				input["name"] = flagName
 			}
+
 			if cmd.Flags().Changed("slug") {
 				input["slug"] = flagSlug
 			}
+
 			if cmd.Flags().Changed("description") {
 				input["description"] = flagDescription
 			}

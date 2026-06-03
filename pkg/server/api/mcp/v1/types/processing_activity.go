@@ -51,11 +51,14 @@ func NewListProcessingActivitiesOutput(pg *page.Page[*coredata.ProcessingActivit
 	for _, v := range pg.Data {
 		items = append(items, NewProcessingActivity(v))
 	}
+
 	var nextCursor *page.CursorKey
+
 	if len(pg.Data) > 0 {
 		cursorKey := pg.Data[len(pg.Data)-1].CursorKey(pg.Cursor.OrderBy.Field)
 		nextCursor = &cursorKey
 	}
+
 	return ListProcessingActivitiesOutput{
 		NextCursor:           nextCursor,
 		ProcessingActivities: items,

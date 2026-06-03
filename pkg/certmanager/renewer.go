@@ -78,6 +78,7 @@ func (r *Renewer) checkAndRenew(ctx context.Context) error {
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			var caches coredata.CachedCertificates
+
 			cacheCount, err := caches.CountAll(ctx, tx)
 			if err != nil {
 				r.logger.ErrorCtx(ctx, "cannot count certificate cache", log.Error(err))
@@ -97,6 +98,7 @@ func (r *Renewer) checkAndRenew(ctx context.Context) error {
 			}
 
 			domains := coredata.CustomDomains{}
+
 			scope := coredata.NewNoScope()
 			if err := domains.ListDomainsForRenewal(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot list domains for renewal: %w", err)
@@ -116,6 +118,7 @@ func (r *Renewer) checkAndRenew(ctx context.Context) error {
 				}
 
 				r.logger.InfoCtx(ctx, "renewing certificate for domain", log.String("domain", domain.Domain))
+
 				if err := r.renewDomain(ctx, tx, domain.ID); err != nil {
 					r.logger.ErrorCtx(ctx, "cannot renew certificate", log.String("domain", domain.Domain), log.Error(err))
 				} else {

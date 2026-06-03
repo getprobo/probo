@@ -22,6 +22,7 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/vektah/gqlparser/v2/gqlerror"
 	"go.gearno.de/kit/httpserver"
+	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/securetoken"
@@ -57,15 +58,18 @@ func NewAPIKeyMiddleware(svc *iam.Service, tokenSecret string) func(next http.Ha
 							},
 						},
 					)
+
 					return
 				}
 
 				apiKey, err := svc.APIKeyService.GetAPIKey(ctx, keyID)
 				if err != nil {
-					var errPersonalAPIKeyNotFound *iam.ErrPersonalAPIKeyNotFound
-					var errPersonalAPIKeyExpired *iam.ErrPersonalAPIKeyExpired
+					if _, ok := errors.AsType[*iam.ErrPersonalAPIKeyNotFound](err); ok {
+						next.ServeHTTP(w, r)
+						return
+					}
 
-					if errors.As(err, &errPersonalAPIKeyNotFound) || errors.As(err, &errPersonalAPIKeyExpired) {
+					if _, ok := errors.AsType[*iam.ErrPersonalAPIKeyExpired](err); ok {
 						next.ServeHTTP(w, r)
 						return
 					}
@@ -75,8 +79,7 @@ func NewAPIKeyMiddleware(svc *iam.Service, tokenSecret string) func(next http.Ha
 
 				identity, err := svc.AccountService.GetIdentity(ctx, apiKey.IdentityID)
 				if err != nil {
-					var errIdentityNotFound *iam.ErrIdentityNotFound
-					if errors.As(err, &errIdentityNotFound) {
+					if _, ok := errors.AsType[*iam.ErrIdentityNotFound](err); ok {
 						next.ServeHTTP(w, r)
 						return
 					}
@@ -86,6 +89,13 @@ func NewAPIKeyMiddleware(svc *iam.Service, tokenSecret string) func(next http.Ha
 
 				ctx = ContextWithAPIKey(ctx, apiKey)
 				ctx = ContextWithIdentity(ctx, identity)
+
+				httpserver.LoggerFromContext(ctx).InfoCtx(
+					ctx,
+					"api key authenticated",
+					log.String("identity_id", identity.ID.String()),
+					log.String("api_key_id", apiKey.ID.String()),
+				)
 
 				next.ServeHTTP(w, r.WithContext(ctx))
 			},

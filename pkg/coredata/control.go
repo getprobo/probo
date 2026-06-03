@@ -25,6 +25,7 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/iam/policy"
 	"go.probo.inc/probo/pkg/page"
 )
 
@@ -58,18 +59,43 @@ func (c Control) CursorKey(orderBy ControlOrderField) page.CursorKey {
 }
 
 // AuthorizationAttributes returns the authorization attributes for policy evaluation.
-func (c *Control) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
-	q := `SELECT organization_id FROM controls WHERE id = $1 LIMIT 1;`
+func (c *Control) AuthorizationAttributes(
+	ctx context.Context,
+	conn pg.Querier,
+	resourceIDs []gid.GID,
+) (policy.AttributesByID, error) {
+	q := `SELECT id, organization_id FROM controls WHERE id = ANY(@resource_ids::text[])`
 
-	var organizationID gid.GID
-	if err := conn.QueryRow(ctx, q, c.ID).Scan(&organizationID); err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, ErrResourceNotFound
-		}
-		return nil, fmt.Errorf("cannot query control authorization attributes: %w", err)
+	args := pgx.StrictNamedArgs{
+		"resource_ids": resourceIDs,
 	}
 
-	return map[string]string{"organization_id": organizationID.String()}, nil
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return nil, fmt.Errorf("cannot query authorization attributes: %w", err)
+	}
+
+	defer rows.Close()
+
+	attrsByID := make(policy.AttributesByID)
+
+	for rows.Next() {
+		var id, organizationID gid.GID
+
+		if err := rows.Scan(&id, &organizationID); err != nil {
+			return nil, fmt.Errorf("cannot scan authorization attributes: %w", err)
+		}
+
+		attrsByID[id] = policy.Attributes{
+			"organization_id": organizationID.String(),
+		}
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("cannot iterate authorization attributes: %w", err)
+	}
+
+	return attrsByID, nil
 }
 
 func (c *Controls) CountByDocumentID(
@@ -652,6 +678,7 @@ LIMIT 1;
 
 	args := pgx.StrictNamedArgs{"framework_id": frameworkID, "section_title": sectionTitle}
 	maps.Copy(args, scope.SQLArguments())
+
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
 		return fmt.Errorf("cannot query controls: %w", err)
@@ -701,6 +728,7 @@ LIMIT 1;
 
 	args := pgx.StrictNamedArgs{"control_id": controlID}
 	maps.Copy(args, scope.SQLArguments())
+
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
 		return fmt.Errorf("cannot query controls: %w", err)
@@ -816,15 +844,15 @@ VALUES (
 		"created_at":                    c.CreatedAt,
 		"updated_at":                    c.UpdatedAt,
 	}
-	_, err := conn.Exec(ctx, q, args)
 
+	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
-		var pgErr *pgconn.PgError
-		if errors.As(err, &pgErr) {
+		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
 			if pgErr.Code == "23505" && pgErr.ConstraintName == "controls_framework_ref_unique" {
 				return ErrResourceAlreadyExists
 			}
 		}
+
 		return fmt.Errorf("cannot insert control: %w", err)
 	}
 
@@ -850,6 +878,7 @@ WHERE
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	_, err := conn.Exec(ctx, q, args)
+
 	return err
 }
 
@@ -887,12 +916,12 @@ WHERE %s
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
-		var pgErr *pgconn.PgError
-		if errors.As(err, &pgErr) {
+		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
 			if pgErr.Code == "23505" && pgErr.ConstraintName == "controls_framework_ref_unique" {
 				return ErrResourceAlreadyExists
 			}
 		}
+
 		return fmt.Errorf("cannot update control: %w", err)
 	}
 

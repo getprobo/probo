@@ -24,232 +24,314 @@ import (
 // Node is the resolver for the node field.
 func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error) {
 	var (
-		loadNode func(ctx context.Context, id gid.GID) (types.Node, error)
+		loadNode func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error)
 		action   string
-		prb      = r.ProboService(ctx, id.TenantID())
 	)
 
 	switch id.EntityType() {
 	case coredata.OrganizationEntityType:
 		action = iam.ActionOrganizationGet
-		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
-			organization, err := prb.Organizations.Get(ctx, id)
+		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
+			organization, err := r.probo.Organizations.Get(ctx, scope, id)
 			if err != nil {
 				return nil, err
 			}
+
 			return types.NewOrganization(organization), nil
 		}
-	case coredata.VendorEntityType:
-		action = probo.ActionVendorGet
-		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
-			vendor, err := prb.Vendors.Get(ctx, id)
+	case coredata.ThirdPartyEntityType:
+		action = probo.ActionThirdPartyGet
+		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
+			thirdParty, err := r.probo.ThirdParties.Get(ctx, scope, id)
 			if err != nil {
 				return nil, err
 			}
-			return types.NewVendor(vendor), nil
+
+			return types.NewThirdParty(thirdParty), nil
 		}
 	case coredata.FrameworkEntityType:
 		action = probo.ActionFrameworkGet
-		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
-			framework, err := prb.Frameworks.Get(ctx, id)
+		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
+			framework, err := r.probo.Frameworks.Get(ctx, scope, id)
 			if err != nil {
 				return nil, err
 			}
+
 			return types.NewFramework(framework), nil
 		}
 	case coredata.MeasureEntityType:
 		action = probo.ActionMeasureGet
-		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
-			measure, err := prb.Measures.Get(ctx, id)
+		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
+			measure, err := r.probo.Measures.Get(ctx, scope, id)
 			if err != nil {
 				return nil, err
 			}
+
 			return types.NewMeasure(measure), nil
 		}
 	case coredata.TaskEntityType:
 		action = probo.ActionTaskGet
-		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
-			task, err := prb.Tasks.Get(ctx, id)
+		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
+			task, err := r.probo.Tasks.Get(ctx, scope, id)
 			if err != nil {
 				return nil, err
 			}
+
 			return types.NewTask(task), nil
 		}
 	case coredata.EvidenceEntityType:
 		action = probo.ActionEvidenceList
-		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
-			evidence, err := prb.Evidences.Get(ctx, id)
+		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
+			evidence, err := r.probo.Evidences.Get(ctx, scope, id)
 			if err != nil {
 				return nil, err
 			}
+
 			return types.NewEvidence(evidence), nil
 		}
 	case coredata.DocumentEntityType:
 		action = probo.ActionDocumentGet
-		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
-			document, err := prb.Documents.Get(ctx, id)
+		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
+			document, err := r.probo.Documents.Get(ctx, scope, id)
 			if err != nil {
 				return nil, err
 			}
+
 			return types.NewDocument(document), nil
 		}
 	case coredata.ControlEntityType:
 		action = probo.ActionControlList
-		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
-			control, err := prb.Controls.Get(ctx, id)
+		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
+			control, err := r.probo.Controls.Get(ctx, scope, id)
 			if err != nil {
 				return nil, err
 			}
+
 			return types.NewControl(control), nil
 		}
 	case coredata.RiskEntityType:
 		action = probo.ActionRiskGet
-		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
-			risk, err := prb.Risks.Get(ctx, id)
+		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
+			risk, err := r.probo.Risks.Get(ctx, scope, id)
 			if err != nil {
 				return nil, err
 			}
+
 			return types.NewRisk(risk), nil
 		}
-	case coredata.VendorComplianceReportEntityType:
-		action = probo.ActionVendorComplianceReportGet
-		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
-			vendorComplianceReport, err := prb.VendorComplianceReports.Get(ctx, id)
+	case coredata.RiskAssessmentEntityType:
+		action = probo.ActionRiskAssessmentGet
+		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
+			ra, err := r.riskManagement.Get(ctx, scope, id)
 			if err != nil {
 				return nil, err
 			}
-			return types.NewVendorComplianceReport(vendorComplianceReport), nil
+
+			return types.NewRiskAssessment(ra), nil
 		}
-	case coredata.VendorContactEntityType:
-		action = probo.ActionVendorContactGet
-		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
-			vendorContact, err := prb.VendorContacts.Get(ctx, id)
+	case coredata.RiskAssessmentNodeEntityType:
+		action = probo.ActionRiskAssessmentNodeGet
+		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
+			n, err := r.riskManagement.GetNode(ctx, scope, id)
 			if err != nil {
 				return nil, err
 			}
-			return types.NewVendorContact(vendorContact), nil
+
+			return types.NewRiskAssessmentNode(n), nil
 		}
-	case coredata.VendorServiceEntityType:
-		action = probo.ActionVendorServiceGet
-		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
-			vendorService, err := prb.VendorServices.Get(ctx, id)
+	case coredata.RiskAssessmentProcessEntityType:
+		action = probo.ActionRiskAssessmentProcessGet
+		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
+			p, err := r.riskManagement.GetProcess(ctx, scope, id)
 			if err != nil {
 				return nil, err
 			}
-			return types.NewVendorService(vendorService), nil
+
+			return types.NewRiskAssessmentProcess(p), nil
+		}
+	case coredata.RiskAssessmentThreatEntityType:
+		action = probo.ActionRiskAssessmentThreatGet
+		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
+			t, err := r.riskManagement.GetThreat(ctx, scope, id)
+			if err != nil {
+				return nil, err
+			}
+
+			return types.NewRiskAssessmentThreat(t), nil
+		}
+	case coredata.RiskAssessmentScopeEntityType:
+		action = probo.ActionRiskAssessmentScopeGet
+		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
+			s, err := r.riskManagement.GetScope(ctx, scope, id)
+			if err != nil {
+				return nil, err
+			}
+
+			return types.NewRiskAssessmentScope(s), nil
+		}
+	case coredata.RiskAssessmentScenarioEntityType:
+		action = probo.ActionRiskAssessmentScenarioGet
+		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
+			s, err := r.riskManagement.GetScenario(ctx, scope, id)
+			if err != nil {
+				return nil, err
+			}
+
+			return types.NewRiskAssessmentScenario(s), nil
+		}
+	case coredata.ThirdPartyComplianceReportEntityType:
+		action = probo.ActionThirdPartyComplianceReportGet
+		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
+			thirdPartyComplianceReport, err := r.probo.ThirdPartyComplianceReports.Get(ctx, scope, id)
+			if err != nil {
+				return nil, err
+			}
+
+			return types.NewThirdPartyComplianceReport(thirdPartyComplianceReport), nil
+		}
+	case coredata.ThirdPartyContactEntityType:
+		action = probo.ActionThirdPartyContactGet
+		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
+			thirdPartyContact, err := r.probo.ThirdPartyContacts.Get(ctx, scope, id)
+			if err != nil {
+				return nil, err
+			}
+
+			return types.NewThirdPartyContact(thirdPartyContact), nil
+		}
+	case coredata.ThirdPartyServiceEntityType:
+		action = probo.ActionThirdPartyServiceGet
+		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
+			thirdPartyService, err := r.probo.ThirdPartyServices.Get(ctx, scope, id)
+			if err != nil {
+				return nil, err
+			}
+
+			return types.NewThirdPartyService(thirdPartyService), nil
 		}
 	case coredata.DocumentVersionEntityType:
 		action = probo.ActionDocumentVersionList
-		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
-			documentVersion, err := prb.Documents.GetVersion(ctx, id)
+		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
+			documentVersion, err := r.probo.Documents.GetVersion(ctx, scope, id)
 			if err != nil {
 				return nil, err
 			}
+
 			return types.NewDocumentVersion(documentVersion), nil
 		}
 	case coredata.DocumentVersionSignatureEntityType:
 		action = probo.ActionDocumentVersionSignatureList
-		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
-			documentVersionSignature, err := prb.Documents.GetVersionSignature(ctx, id)
+		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
+			documentVersionSignature, err := r.probo.Documents.GetVersionSignature(ctx, scope, id)
 			if err != nil {
 				return nil, err
 			}
+
 			return types.NewDocumentVersionSignature(documentVersionSignature), nil
 		}
 	case coredata.AssetEntityType:
 		action = probo.ActionAssetList
-		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
-			asset, err := prb.Assets.Get(ctx, id)
+		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
+			asset, err := r.probo.Assets.Get(ctx, scope, id)
 			if err != nil {
 				return nil, err
 			}
+
 			return types.NewAsset(asset), nil
 		}
 	case coredata.DatumEntityType:
 		action = probo.ActionDatumList
-		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
-			datum, err := prb.Data.Get(ctx, id)
+		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
+			datum, err := r.probo.Data.Get(ctx, scope, id)
 			if err != nil {
 				return nil, err
 			}
+
 			return types.NewDatum(datum), nil
 		}
 	case coredata.AuditEntityType:
 		action = probo.ActionAuditList
-		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
-			audit, err := prb.Audits.Get(ctx, id)
+		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
+			audit, err := r.probo.Audits.Get(ctx, scope, id)
 			if err != nil {
 				return nil, err
 			}
+
 			return types.NewAudit(audit), nil
 		}
 	case coredata.FindingEntityType:
 		action = probo.ActionFindingList
-		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
-			finding, err := prb.Findings.Get(ctx, id)
+		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
+			finding, err := r.probo.Findings.Get(ctx, scope, id)
 			if err != nil {
 				return nil, err
 			}
+
 			return types.NewFinding(finding), nil
 		}
 	case coredata.ObligationEntityType:
 		action = probo.ActionObligationList
-		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
-			obligation, err := prb.Obligations.Get(ctx, id)
+		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
+			obligation, err := r.probo.Obligations.Get(ctx, scope, id)
 			if err != nil {
 				return nil, err
 			}
+
 			return types.NewObligation(obligation), nil
 		}
 	case coredata.ReportEntityType:
 		action = probo.ActionReportGet
-		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
-			report, err := prb.Reports.Get(ctx, id)
+		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
+			report, err := r.probo.Reports.Get(ctx, scope, id)
 			if err != nil {
 				return nil, err
 			}
+
 			return types.NewReport(report), nil
 		}
 	case coredata.ProcessingActivityEntityType:
 		action = probo.ActionProcessingActivityList
-		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
-			processingActivity, err := prb.ProcessingActivities.Get(ctx, id)
+		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
+			processingActivity, err := r.probo.ProcessingActivities.Get(ctx, scope, id)
 			if err != nil {
 				return nil, err
 			}
+
 			return types.NewProcessingActivity(processingActivity), nil
 		}
 	case coredata.DataProtectionImpactAssessmentEntityType:
 		// TODO: add action
 		// action = probo.ActionDataProtectionImpactAssessmentGet
-		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
-			dpia, err := prb.DataProtectionImpactAssessments.Get(ctx, id)
+		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
+			dpia, err := r.probo.DataProtectionImpactAssessments.Get(ctx, scope, id)
 			if err != nil {
 				return nil, err
 			}
+
 			return types.NewDataProtectionImpactAssessment(dpia), nil
 		}
 	case coredata.TransferImpactAssessmentEntityType:
 		// TODO: add action
 		//action = probo.ActionTransferImpactAssessmentGet
-		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
-			tia, err := prb.TransferImpactAssessments.Get(ctx, id)
+		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
+			tia, err := r.probo.TransferImpactAssessments.Get(ctx, scope, id)
 			if err != nil {
 				return nil, err
 			}
+
 			return types.NewTransferImpactAssessment(tia), nil
 		}
 	case coredata.TrustCenterEntityType:
 		action = probo.ActionTrustCenterGet
-		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
-			trustCenter, err := prb.TrustCenters.Get(ctx, id)
+		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
+			trustCenter, err := r.probo.TrustCenters.Get(ctx, scope, id)
 			if err != nil {
 				return nil, err
 			}
 
 			var file *coredata.File
 			if trustCenter.NonDisclosureAgreementFileID != nil {
-				file, err = prb.Files.Get(ctx, *trustCenter.NonDisclosureAgreementFileID)
+				file, err = r.probo.Files.Get(ctx, scope, *trustCenter.NonDisclosureAgreementFileID)
 				if err != nil {
 					return nil, fmt.Errorf("cannot get NDA file: %w", err)
 				}
@@ -259,108 +341,122 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 		}
 	case coredata.TrustCenterAccessEntityType:
 		action = probo.ActionTrustCenterAccessGet
-		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
-			trustCenterAccess, err := prb.TrustCenterAccesses.Get(ctx, id)
+		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
+			trustCenterAccess, err := r.probo.TrustCenterAccesses.Get(ctx, scope, id)
 			if err != nil {
 				return nil, err
 			}
+
 			return types.NewTrustCenterAccess(trustCenterAccess), nil
 		}
 	case coredata.RightsRequestEntityType:
 		action = probo.ActionRightsRequestGet
-		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
-			rightsRequest, err := prb.RightsRequests.Get(ctx, id)
+		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
+			rightsRequest, err := r.probo.RightsRequests.Get(ctx, scope, id)
 			if err != nil {
 				return nil, err
 			}
+
 			return types.NewRightsRequest(rightsRequest), nil
 		}
 	case coredata.StatementOfApplicabilityEntityType:
 		action = probo.ActionStatementOfApplicabilityGet
-		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
-			statementOfApplicability, err := prb.StatementsOfApplicability.Get(ctx, id)
+		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
+			statementOfApplicability, err := r.probo.StatementsOfApplicability.Get(ctx, scope, id)
 			if err != nil {
 				return nil, err
 			}
+
 			return types.NewStatementOfApplicability(statementOfApplicability), nil
 		}
 	case coredata.WebhookSubscriptionEntityType:
 		action = probo.ActionWebhookSubscriptionGet
-		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
-			wc, err := prb.WebhookSubscriptions.Get(ctx, id)
+		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
+			wc, err := r.probo.WebhookSubscriptions.Get(ctx, scope, id)
 			if err != nil {
 				return nil, err
 			}
+
 			return types.NewWebhookSubscription(wc), nil
 		}
 	case coredata.AccessReviewCampaignEntityType:
 		action = probo.ActionAccessReviewCampaignGet
-		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
-			scope := coredata.NewScopeFromObjectID(id)
+		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
 			campaign, err := r.accessReview.Campaigns(scope).Get(ctx, id)
 			if err != nil {
 				return nil, err
 			}
+
 			return types.NewAccessReviewCampaign(campaign), nil
 		}
 	case coredata.AccessSourceEntityType:
 		action = probo.ActionAccessSourceGet
-		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
-			scope := coredata.NewScopeFromObjectID(id)
+		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
 			source, err := r.accessReview.Sources(scope).Get(ctx, id)
 			if err != nil {
 				return nil, err
 			}
+
 			return types.NewAccessSource(source), nil
 		}
 	case coredata.AccessEntryEntityType:
 		action = probo.ActionAccessEntryGet
-		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
-			scope := coredata.NewScopeFromObjectID(id)
+		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
 			entry, err := r.accessReview.Entries(scope).Get(ctx, id)
 			if err != nil {
 				return nil, err
 			}
+
 			return types.NewAccessEntry(entry), nil
 		}
 	case coredata.CookieBannerEntityType:
 		action = probo.ActionCookieBannerGet
-		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
-			scope := coredata.NewScopeFromObjectID(id)
+		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
 			banner, err := r.cookieBanner.GetCookieBanner(ctx, scope, id)
 			if err != nil {
 				return nil, err
 			}
+
 			return types.NewCookieBanner(banner), nil
 		}
 	case coredata.CookieCategoryEntityType:
 		action = probo.ActionCookieCategoryGet
-		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
-			scope := coredata.NewScopeFromObjectID(id)
+		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
 			category, err := r.cookieBanner.GetCookieCategory(ctx, scope, id)
 			if err != nil {
 				return nil, err
 			}
+
 			return types.NewCookieCategory(category), nil
 		}
 	case coredata.CookieConsentRecordEntityType:
 		action = probo.ActionCookieConsentRecordList
-		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
-			scope := coredata.NewScopeFromObjectID(id)
+		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
 			record, err := r.cookieBanner.GetCookieConsentRecord(ctx, scope, id)
 			if err != nil {
 				return nil, err
 			}
+
 			return types.NewCookieConsentRecord(record), nil
+		}
+	case coredata.TrackerPatternEntityType:
+		action = probo.ActionTrackerPatternGet
+		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
+			pattern, err := r.cookieBanner.GetTrackerPattern(ctx, scope, id)
+			if err != nil {
+				return nil, err
+			}
+
+			return types.NewTrackerPatternNode(pattern), nil
 		}
 	case coredata.CookieBannerVersionEntityType:
 		action = probo.ActionCookieBannerVersionGet
-		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
-			scope := coredata.NewScopeFromObjectID(id)
+		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
 			version, err := r.cookieBanner.GetCookieBannerVersion(ctx, scope, id)
 			if err != nil {
 				return nil, err
 			}
+
 			return &types.CookieBannerVersion{
 				ID:        version.ID,
 				Version:   version.Version,
@@ -372,17 +468,19 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 	default:
 	}
 
-	if err := r.authorize(ctx, id, action); err != nil {
+	scope, err := r.authorize(ctx, id, action)
+	if err != nil {
 		return nil, err
 	}
 
-	node, err := loadNode(ctx, id)
+	node, err := loadNode(ctx, scope, id)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot load node", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -406,6 +504,28 @@ func (r *queryResolver) Viewer(ctx context.Context) (*types.Viewer, error) {
 	}
 
 	return &types.Viewer{ID: viewerID}, nil
+}
+
+// CommonThirdParties is the resolver for the commonThirdParties field.
+func (r *queryResolver) CommonThirdParties(ctx context.Context, name string) ([]*types.CommonThirdParty, error) {
+	identity := authn.IdentityFromContext(ctx)
+
+	if _, err := r.authorize(ctx, identity.ID, probo.ActionCommonThirdPartyList); err != nil {
+		return nil, err
+	}
+
+	parties, err := r.thirdParty.Search(ctx, name)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot search common third parties", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	result := make([]*types.CommonThirdParty, len(parties))
+	for i, p := range parties {
+		result[i] = types.NewCommonThirdParty(p)
+	}
+
+	return result, nil
 }
 
 // Mutation returns schema.MutationResolver implementation.

@@ -1,0 +1,75 @@
+---
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: api.pagerduty.com
+        form:
+            limit:
+                - "100"
+            offset:
+                - "0"
+        headers:
+            Accept:
+                - application/vnd.pagerduty+json;version=2
+        url: https://api.pagerduty.com/users?limit=100&offset=0
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding:
+            - chunked
+        content_length: -1
+        uncompressed: true
+        body: '{"users":[{"name":"Jane Doe","email":"jane@example.com","time_zone":"Europe/Paris","color":"purple","avatar_url":"https://secure.gravatar.com/avatar/00000000000000000000000000000000.png?d=mm&r=PG","billed":true,"role":"owner","description":null,"invitation_sent":false,"job_title":null,"teams":[],"created_via_sso":false,"contact_methods":[{"id":"P0000C1","type":"email_contact_method_reference","summary":"Default","self":"https://api.pagerduty.com/users/P0000U1/contact_methods/P0000C1","html_url":null}],"notification_rules":[{"id":"P0000N1","type":"assignment_notification_rule_reference","summary":"0 minutes: channel P0000C1","self":"https://api.pagerduty.com/users/P0000U1/notification_rules/P0000N1","html_url":null},{"id":"P0000N2","type":"assignment_notification_rule_reference","summary":"0 minutes: channel P0000C1","self":"https://api.pagerduty.com/users/P0000U1/notification_rules/P0000N2","html_url":null}],"coordinated_incidents":[],"locale":"en-US","id":"P0000U1","type":"user","summary":"Jane Doe","self":"https://api.pagerduty.com/users/P0000U1","html_url":"https://dev-acme.pagerduty.com/users/P0000U1"}],"limit":100,"offset":0,"total":null,"more":false}'
+        headers:
+            Cache-Control:
+                - max-age=0, private, must-revalidate
+            Connection:
+                - keep-alive
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 08 May 2026 16:44:06 GMT
+            Etag:
+                - W/"09ba436771761ce6a844d74ec51ac6d9"
+            Feature-Policy:
+                - accelerometer 'none'; camera 'none'; geolocation 'none'; gyroscope 'none'; magnetometer 'none'; microphone 'none'; payment 'none'; usb 'none'
+            Ratelimit-Limit:
+                - "960"
+            Ratelimit-Remaining:
+                - "959"
+            Ratelimit-Reset:
+                - "54"
+            Referrer-Policy:
+                - strict-origin-when-cross-origin
+                - strict-origin-when-cross-origin
+            Server:
+                - nginx
+            Strict-Transport-Security:
+                - max-age=31536000; includeSubDomains
+            Vary:
+                - Accept-Encoding
+                - Accept
+            X-Content-Type-Options:
+                - nosniff
+                - nosniff
+            X-Download-Options:
+                - noopen
+            X-Frame-Options:
+                - SAMEORIGIN
+            X-Permitted-Cross-Domain-Policies:
+                - none
+            X-Request-Id:
+                - b8b861f39aab4604474035816eabea46
+            X-Xss-Protection:
+                - 1; mode=block
+                - 1; mode=block
+        status: 200 OK
+        code: 200
+        duration: 814.680625ms

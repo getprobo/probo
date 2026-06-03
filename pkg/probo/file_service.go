@@ -31,7 +31,7 @@ import (
 
 type (
 	FileService struct {
-		svc *TenantService
+		svc *Service
 	}
 
 	File struct {
@@ -50,7 +50,7 @@ type (
 )
 
 func (s FileService) Get(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	fileID gid.GID,
 ) (*coredata.File, error) {
 	file := &coredata.File{}
@@ -58,14 +58,13 @@ func (s FileService) Get(
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			if err := file.LoadByID(ctx, conn, s.svc.scope, fileID); err != nil {
+			if err := file.LoadByID(ctx, conn, scope, fileID); err != nil {
 				return fmt.Errorf("cannot load file %w", err)
 			}
 
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, fmt.Errorf("cannot load file: %w", err)
 	}
@@ -74,7 +73,7 @@ func (s FileService) Get(
 }
 
 func (s FileService) GetByIDs(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	fileIDs ...gid.GID,
 ) (coredata.Files, error) {
 	var files coredata.Files
@@ -85,7 +84,7 @@ func (s FileService) GetByIDs(
 			if err := files.LoadByIDs(
 				ctx,
 				conn,
-				s.svc.scope,
+				scope,
 				fileIDs,
 			); err != nil {
 				return fmt.Errorf("cannot load files by ids: %w", err)
@@ -102,10 +101,11 @@ func (s FileService) GetByIDs(
 }
 
 func (s FileService) UploadAndSaveFile(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	fileValidator *filevalidation.FileValidator,
 	s3Metadata map[string]string,
-	req *FileUpload) (*coredata.File, error) {
+	req *FileUpload,
+) (*coredata.File, error) {
 	objectKey, err := uuid.NewV7()
 	if err != nil {
 		return nil, fmt.Errorf("cannot generate object key: %w", err)
@@ -145,14 +145,18 @@ func (s FileService) UploadAndSaveFile(
 
 	now := time.Now()
 
-	fileID := gid.New(s.svc.scope.GetTenantID(), coredata.FileEntityType)
+	fileID := gid.New(scope.GetTenantID(), coredata.FileEntityType)
+
 	var file *coredata.File
 
 	// Extract organization ID from S3 metadata
 	organizationIDStr, hasOrgID := s3Metadata["organization-id"]
+
 	var organizationID gid.GID
+
 	if hasOrgID {
 		var err error
+
 		organizationID, err = gid.ParseGID(organizationIDStr)
 		if err != nil {
 			return nil, fmt.Errorf("invalid organization-id in metadata: %w", err)
@@ -175,14 +179,13 @@ func (s FileService) UploadAndSaveFile(
 				UpdatedAt:      now,
 			}
 
-			if err := file.Insert(ctx, conn, s.svc.scope); err != nil {
+			if err := file.Insert(ctx, conn, scope); err != nil {
 				return fmt.Errorf("cannot insert file: %w", err)
 			}
 
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -191,11 +194,11 @@ func (s FileService) UploadAndSaveFile(
 }
 
 func (s FileService) GenerateFileTempURL(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	fileID gid.GID,
 	expiresIn time.Duration,
 ) (string, error) {
-	file, err := s.Get(ctx, fileID)
+	file, err := s.Get(ctx, scope, fileID)
 	if err != nil {
 		return "", fmt.Errorf("cannot get file: %w", err)
 	}

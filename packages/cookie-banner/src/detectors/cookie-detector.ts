@@ -14,16 +14,10 @@
 
 import { isDeletion, parseCookieName, parseMaxAgeSeconds } from "../cookie-utils";
 import type { Detector } from "./detector";
+import { isExtensionContext } from "./extension-context";
 import { getInitiatorURL } from "./initiator";
 import type { ReportQueue } from "./report-queue";
 import type { DetectedCookieEntry } from "./types";
-
-const EXTENSION_URL_RE = /(?:chrome|moz|safari-web)-extension:\/\//;
-
-function isExtensionCaller(): boolean {
-  const stack = new Error().stack ?? "";
-  return EXTENSION_URL_RE.test(stack);
-}
 
 export class CookieDetector implements Detector {
   private readonly queue: ReportQueue;
@@ -40,6 +34,8 @@ export class CookieDetector implements Detector {
 
   start(): void {
     this.queue.onNotFound(() => this.stop());
+
+    if (isExtensionContext()) return;
 
     const desc =
       Object.getOwnPropertyDescriptor(Document.prototype, "cookie") ??
@@ -82,18 +78,17 @@ export class CookieDetector implements Detector {
 
   private onCookieSet(raw: string): void {
     if (isDeletion(raw)) return;
-    if (isExtensionCaller()) return;
 
     const name = parseCookieName(raw);
     if (!name || this.knownNames.has(name)) return;
 
     const maxAgeSeconds = parseMaxAgeSeconds(raw);
-    const initiatorUrl = getInitiatorURL(this.apiOrigin);
+    const { url: initiatorUrl, fromExtension } = getInitiatorURL(this.apiOrigin);
 
     const entry: DetectedCookieEntry = {
       name,
       max_age_seconds: maxAgeSeconds,
-      source: "script",
+      source: fromExtension ? "extension" : "script",
     };
     if (initiatorUrl) entry.initiator_url = initiatorUrl;
     this.queue.reportCookie(entry);

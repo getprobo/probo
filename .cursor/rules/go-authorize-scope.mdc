@@ -1,0 +1,59 @@
+---
+description: Go authorize — always take scope from authorize, never reconstruct it
+globs: "pkg/server/api/**/*.go"
+alwaysApply: false
+---
+
+# Authorize returns the scope — use it
+
+`r.authorize` (GraphQL) and `r.Authorize` (MCP) return a `*coredata.Scope`
+resolved from the resource's `organization_id` attribute. **Always** pass that
+scope to the downstream service or coredata call. **Never** discard it and
+rebuild a scope with `coredata.NewScopeFromObjectID(...)`.
+
+The two are not identical: `NewScopeFromObjectID(id)` only reads the tenant
+encoded in the GID, while the authorizer derives the scope from the loaded
+resource attributes. Reconstructing the scope from the GID silently drifts
+when the resource lookup changes.
+
+```go
+// GOOD — scope comes from authorize, fed straight to the service
+scope, err := r.authorize(ctx, obj.ID, probo.ActionThirdPartyList)
+if err != nil {
+	return nil, err
+}
+
+thirdPartyIDs, err := r.cookieBanner.LoadDistinctThirdPartyIDsByCookieBannerID(ctx, scope, obj.ID)
+
+// BAD — authorize discards scope, then we rebuild it from the same GID
+if _, err := r.authorize(ctx, obj.ID, probo.ActionThirdPartyList); err != nil {
+	return nil, err
+}
+
+scope := coredata.NewScopeFromObjectID(obj.ID)
+thirdPartyIDs, err := r.cookieBanner.LoadDistinctThirdPartyIDsByCookieBannerID(ctx, scope, obj.ID)
+```
+
+## When discarding `scope` with `_` is acceptable
+
+Only when **no downstream call needs a scope** — typically authorize calls
+against the caller's `identity.ID` for global / cross-tenant catalogs (e.g.
+`ActionCommonThirdPartyList`, `ActionCommonThirdPartyGet`) whose service
+methods are unscoped. The returned scope would be derived from the identity
+(a nil-tenant principal) and is useless to the caller:
+
+```go
+// GOOD — global catalog, downstream is unscoped
+identity := authn.IdentityFromContext(ctx)
+if _, err := r.authorize(ctx, identity.ID, probo.ActionCommonThirdPartyList); err != nil {
+	return nil, err
+}
+
+parties, err := r.thirdParty.Search(ctx, name) // no scope argument
+```
+
+The same rule applies to `r.batchAuthorize` (GraphQL) and `r.AuthorizeBatch`
+(MCP).
+
+See [`contrib/claude/authorization.md`](../../contrib/claude/authorization.md)
+for the full authorization guide.

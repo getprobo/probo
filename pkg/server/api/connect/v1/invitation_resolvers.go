@@ -24,7 +24,7 @@ func (r *invitationResolver) Permission(ctx context.Context, obj *types.Invitati
 
 // InviteUser is the resolver for the inviteUser field.
 func (r *mutationResolver) InviteUser(ctx context.Context, input types.InviteUserInput) (*types.InviteUserPayload, error) {
-	if err := r.authorize(ctx, input.ProfileID, iam.ActionInvitationCreate); err != nil {
+	if _, err := r.authorize(ctx, input.ProfileID, iam.ActionInvitationCreate); err != nil {
 		return nil, err
 	}
 
@@ -36,18 +36,16 @@ func (r *mutationResolver) InviteUser(ctx context.Context, input types.InviteUse
 		},
 	)
 	if err != nil {
-		var errOrganizationNotFound *iam.ErrOrganizationNotFound
-		var errUserAlreadyExists *iam.ErrUserAlreadyExists
-
-		if errors.As(err, &errOrganizationNotFound) {
+		if _, ok := errors.AsType[*iam.ErrOrganizationNotFound](err); ok {
 			return nil, gqlutils.NotFound(ctx, err)
 		}
 
-		if errors.As(err, &errUserAlreadyExists) {
+		if _, ok := errors.AsType[*iam.ErrUserAlreadyExists](err); ok {
 			return nil, gqlutils.Conflict(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot invite user", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 

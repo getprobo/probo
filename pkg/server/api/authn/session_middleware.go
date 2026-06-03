@@ -23,6 +23,7 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/vektah/gqlparser/v2/gqlerror"
 	"go.gearno.de/kit/httpserver"
+	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/securecookie"
@@ -45,6 +46,7 @@ func NewSessionMiddleware(svc *iam.Service, cookieConfig securecookie.Config) fu
 				if err != nil {
 					securecookie.Clear(w, cookieConfig)
 					next.ServeHTTP(w, r)
+
 					return
 				}
 
@@ -59,17 +61,23 @@ func NewSessionMiddleware(svc *iam.Service, cookieConfig securecookie.Config) fu
 							},
 						},
 					)
+
 					return
 				}
 
 				session, err := svc.SessionService.GetSession(ctx, sessionID)
 				if err != nil {
-					var errSessionNotFound *iam.ErrSessionNotFound
-					var errSessionExpired *iam.ErrSessionExpired
-
-					if errors.As(err, &errSessionNotFound) || errors.As(err, &errSessionExpired) {
+					if _, ok := errors.AsType[*iam.ErrSessionNotFound](err); ok {
 						securecookie.Clear(w, cookieConfig)
 						next.ServeHTTP(w, r)
+
+						return
+					}
+
+					if _, ok := errors.AsType[*iam.ErrSessionExpired](err); ok {
+						securecookie.Clear(w, cookieConfig)
+						next.ServeHTTP(w, r)
+
 						return
 					}
 
@@ -78,10 +86,10 @@ func NewSessionMiddleware(svc *iam.Service, cookieConfig securecookie.Config) fu
 
 				identity, err := svc.AccountService.GetIdentity(ctx, session.IdentityID)
 				if err != nil {
-					var errIdentityNotFound *iam.ErrIdentityNotFound
-					if errors.As(err, &errIdentityNotFound) {
+					if _, ok := errors.AsType[*iam.ErrIdentityNotFound](err); ok {
 						securecookie.Clear(w, cookieConfig)
 						next.ServeHTTP(w, r)
+
 						return
 					}
 
@@ -104,6 +112,13 @@ func NewSessionMiddleware(svc *iam.Service, cookieConfig securecookie.Config) fu
 
 				ctx = ContextWithSession(ctx, session)
 				ctx = ContextWithIdentity(ctx, identity)
+
+				httpserver.LoggerFromContext(ctx).InfoCtx(
+					ctx,
+					"session authenticated",
+					log.String("identity_id", identity.ID.String()),
+					log.String("session_id", session.ID.String()),
+				)
 
 				next.ServeHTTP(w, r.WithContext(ctx))
 

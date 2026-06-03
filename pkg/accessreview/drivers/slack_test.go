@@ -36,12 +36,14 @@ func TestSlackDriver(t *testing.T) {
 
 	// Find the first human user (bots may not have email).
 	var r AccountRecord
+
 	for _, rec := range records {
 		if rec.Email != "" {
 			r = rec
 			break
 		}
 	}
+
 	require.NotEmpty(t, r.Email, "expected at least one record with an email")
 	assert.NotEmpty(t, r.ExternalID)
 	assert.NotEmpty(t, r.Role)

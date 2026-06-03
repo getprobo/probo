@@ -25,6 +25,7 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/iam/policy"
 	"go.probo.inc/probo/pkg/page"
 )
 
@@ -99,6 +100,7 @@ WHERE
 	}
 
 	*m = membership
+
 	return nil
 }
 
@@ -137,8 +139,7 @@ VALUES (
 
 	result, err := conn.Exec(ctx, query, args)
 	if err != nil {
-		var pgErr *pgconn.PgError
-		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok && pgErr.Code == "23505" && pgErr.ConstraintName == "authz_memberships_user_id_organization_id_key" {
 			return ErrResourceAlreadyExists
 		}
 
@@ -195,41 +196,69 @@ WHERE
 	}
 
 	*m = membership
+
 	return nil
 }
 
-func (m *Membership) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
+func (m *Membership) AuthorizationAttributes(
+	ctx context.Context,
+	conn pg.Querier,
+	resourceIDs []gid.GID,
+) (policy.AttributesByID, error) {
 	q := `
 SELECT
+    id,
     identity_id,
     organization_id,
     role
 FROM
     iam_memberships
 WHERE
-    id = $1
-LIMIT 1;
+    id = ANY(@resource_ids::text[])
 `
 
-	var identityID gid.GID
-	var organizationID gid.GID
-	var role MembershipRole
-	if err := conn.QueryRow(ctx, q, m.ID).Scan(
-		&identityID,
-		&organizationID,
-		&role,
-	); err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, ErrResourceNotFound
-		}
-		return nil, fmt.Errorf("cannot query membership iam attributes: %w", err)
+	args := pgx.StrictNamedArgs{
+		"resource_ids": resourceIDs,
 	}
 
-	return map[string]string{
-		"identity_id":     identityID.String(),
-		"organization_id": organizationID.String(),
-		"role":            role.String(),
-	}, nil
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return nil, fmt.Errorf("cannot query membership authorization attributes: %w", err)
+	}
+	defer rows.Close()
+
+	attrsByID := make(policy.AttributesByID, len(resourceIDs))
+
+	for rows.Next() {
+		var (
+			id             gid.GID
+			identityID     gid.GID
+			organizationID gid.GID
+			role           MembershipRole
+		)
+
+		err = rows.Scan(
+			&id,
+			&identityID,
+			&organizationID,
+			&role,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("cannot scan membership authorization attributes: %w", err)
+		}
+
+		attrsByID[id] = policy.Attributes{
+			"identity_id":     identityID.String(),
+			"organization_id": organizationID.String(),
+			"role":            role.String(),
+		}
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, fmt.Errorf("cannot iterate membership authorization attributes: %w", err)
+	}
+
+	return attrsByID, nil
 }
 
 func (m *Membership) LoadByIdentityAndOrg(
@@ -278,6 +307,7 @@ WHERE
 	}
 
 	*m = membership
+
 	return nil
 }
 
@@ -332,13 +362,9 @@ WHERE
 	}
 	maps.Copy(args, scope.SQLArguments())
 
-	result, err := conn.Exec(ctx, query, args)
+	_, err := conn.Exec(ctx, query, args)
 	if err != nil {
 		return fmt.Errorf("cannot delete membership: %w", err)
-	}
-
-	if result.RowsAffected() == 0 {
-		return ErrResourceNotFound
 	}
 
 	return nil
@@ -390,5 +416,6 @@ LIMIT 1
 	}
 
 	*m = *membership
+
 	return nil
 }

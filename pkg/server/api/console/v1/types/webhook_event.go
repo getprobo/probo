@@ -62,6 +62,7 @@ func NewWebhookEventEdge(we *coredata.WebhookEvent, orderBy coredata.WebhookEven
 
 func NewWebhookEvent(we *coredata.WebhookEvent) *WebhookEvent {
 	var response *string
+
 	if len(we.Response) > 0 {
 		s := string(we.Response)
 		response = &s

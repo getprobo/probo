@@ -135,12 +135,14 @@ func (e *Evaluator) statementMatches(stmt *Statement, req AuthorizationRequest) 
 	// Check resource match (if resources are specified)
 	if len(stmt.Resources) > 0 {
 		resourceMatched := false
+
 		for _, pattern := range stmt.Resources {
 			if pattern.MatchesResource(req.Resource) {
 				resourceMatched = true
 				break
 			}
 		}
+
 		if !resourceMatched {
 			return false
 		}

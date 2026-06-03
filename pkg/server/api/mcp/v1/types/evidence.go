@@ -42,6 +42,7 @@ func NewListMeasureEvidencesOutput(evidencePage *page.Page[*coredata.Evidence, c
 	}
 
 	var nextCursor *page.CursorKey
+
 	if len(evidencePage.Data) > 0 {
 		cursorKey := evidencePage.Data[len(evidencePage.Data)-1].CursorKey(evidencePage.Cursor.OrderBy.Field)
 		nextCursor = &cursorKey

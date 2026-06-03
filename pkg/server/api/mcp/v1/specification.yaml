@@ -22,74 +22,74 @@ components:
         - DESC
       go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/page.OrderDirection
 
-    VendorOrderField:
+    ThirdPartyOrderField:
       type: string
       enum:
         - CREATED_AT
         - UPDATED_AT
         - NAME
-      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.VendorOrderField
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.ThirdPartyOrderField
 
-    VendorContactOrderField:
+    ThirdPartyContactOrderField:
       type: string
       enum:
         - CREATED_AT
         - FULL_NAME
         - EMAIL
-      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.VendorContactOrderField
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.ThirdPartyContactOrderField
 
-    VendorContactOrderBy:
+    ThirdPartyContactOrderBy:
       type: object
       required:
         - field
         - direction
       properties:
         field:
-          $ref: "#/components/schemas/VendorContactOrderField"
-          description: Vendor contact order field
+          $ref: "#/components/schemas/ThirdPartyContactOrderField"
+          description: ThirdParty contact order field
         direction:
           $ref: "#/components/schemas/OrderDirection"
-          description: Vendor contact order direction
+          description: ThirdParty contact order direction
 
-    VendorServiceOrderField:
+    ThirdPartyServiceOrderField:
       type: string
       enum:
         - CREATED_AT
         - NAME
-      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.VendorServiceOrderField
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.ThirdPartyServiceOrderField
 
-    VendorServiceOrderBy:
+    ThirdPartyServiceOrderBy:
       type: object
       required:
         - field
         - direction
       properties:
         field:
-          $ref: "#/components/schemas/VendorServiceOrderField"
-          description: Vendor service order field
+          $ref: "#/components/schemas/ThirdPartyServiceOrderField"
+          description: ThirdParty service order field
         direction:
           $ref: "#/components/schemas/OrderDirection"
-          description: Vendor service order direction
+          description: ThirdParty service order direction
 
-    VendorRiskAssessmentOrderField:
+    ThirdPartyRiskAssessmentOrderField:
       type: string
       enum:
         - CREATED_AT
         - EXPIRES_AT
-      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.VendorRiskAssessmentOrderField
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.ThirdPartyRiskAssessmentOrderField
 
-    VendorRiskAssessmentOrderBy:
+    ThirdPartyRiskAssessmentOrderBy:
       type: object
       required:
         - field
         - direction
       properties:
         field:
-          $ref: "#/components/schemas/VendorRiskAssessmentOrderField"
-          description: Vendor risk assessment order field
+          $ref: "#/components/schemas/ThirdPartyRiskAssessmentOrderField"
+          description: ThirdParty risk assessment order field
         direction:
           $ref: "#/components/schemas/OrderDirection"
-          description: Vendor risk assessment order direction
+          description: ThirdParty risk assessment order direction
 
     DataSensitivity:
       type: string
@@ -110,18 +110,18 @@ components:
         - CRITICAL
       go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.BusinessImpact
 
-    VendorOrderBy:
+    ThirdPartyOrderBy:
       type: object
       required:
         - field
         - direction
       properties:
         field:
-          $ref: "#/components/schemas/VendorOrderField"
-          description: Vendor order field
+          $ref: "#/components/schemas/ThirdPartyOrderField"
+          description: ThirdParty order field
         direction:
           $ref: "#/components/schemas/OrderDirection"
-          description: Vendor order direction
+          description: ThirdParty order direction
 
     DocumentVersionApprovalQuorumOrderBy:
       type: object
@@ -167,6 +167,7 @@ components:
       enum:
         - CREATED_AT
         - FULL_NAME
+        - EMAIL_ADDRESS
         - KIND
       go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.MembershipProfileOrderField
 
@@ -186,6 +187,14 @@ components:
         - ACTIVE
         - INACTIVE
       go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.ProfileState
+
+    ProfileSource:
+      type: string
+      enum:
+        - MANUAL
+        - SCIM
+        - SAML
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.ProfileSource
 
     Regulation:
       type: string
@@ -210,6 +219,7 @@ components:
     CountryCode:
       type: string
       enum:
+        - GLOBAL
         - AD
         - AE
         - AF
@@ -470,6 +480,7 @@ components:
         - email_address
         - additional_email_addresses
         - kind
+        - source
         - state
         - created_at
         - updated_at
@@ -496,6 +507,9 @@ components:
             - string
             - "null"
           description: Profile kind
+        source:
+          $ref: "#/components/schemas/ProfileSource"
+          description: Profile source (MANUAL, SCIM, or SAML)
         state:
           $ref: "#/components/schemas/ProfileState"
           description: Profile state (ACTIVE or INACTIVE)
@@ -619,7 +633,7 @@ components:
           format: date-time
           description: Update timestamp
 
-    ListVendorsInput:
+    ListThirdPartiesInput:
       type: object
       required:
         - organization_id
@@ -627,9 +641,12 @@ components:
         organization_id:
           $ref: "#/components/schemas/GID"
           description: Organization ID
+        first_level:
+          type: boolean
+          description: Filter by first-level status
         order_by:
-          $ref: "#/components/schemas/VendorOrderBy"
-          description: Vendor order by
+          $ref: "#/components/schemas/ThirdPartyOrderBy"
+          description: ThirdParty order by
         size:
           type: integer
           description: Page size
@@ -637,43 +654,107 @@ components:
           $ref: "#/components/schemas/CursorKey"
           description: Page cursor
 
-    ListVendorsOutput:
+    ListThirdPartiesOutput:
       type: object
       required:
-        - vendors
+        - thirdParties
       properties:
         next_cursor:
           $ref: "#/components/schemas/CursorKey"
           description: Next cursor
-        vendors:
+        thirdParties:
           type: array
           items:
-            $ref: "#/components/schemas/Vendor"
+            $ref: "#/components/schemas/ThirdParty"
 
-    Vendor:
+    CreateThirdPartyThirdPartyMappingInput:
+      type: object
+      required:
+        - parent_third_party_id
+        - child_third_party_id
+      properties:
+        parent_third_party_id:
+          $ref: "#/components/schemas/GID"
+          description: Parent third party ID
+        child_third_party_id:
+          $ref: "#/components/schemas/GID"
+          description: Child third party ID
+
+    CreateThirdPartyThirdPartyMappingOutput:
+      type: object
+
+    DeleteThirdPartyThirdPartyMappingInput:
+      type: object
+      required:
+        - parent_third_party_id
+        - child_third_party_id
+      properties:
+        parent_third_party_id:
+          $ref: "#/components/schemas/GID"
+          description: Parent third party ID
+        child_third_party_id:
+          $ref: "#/components/schemas/GID"
+          description: Child third party ID
+
+    DeleteThirdPartyThirdPartyMappingOutput:
+      type: object
+
+    ListChildThirdPartiesInput:
+      type: object
+      required:
+        - parent_third_party_id
+      properties:
+        parent_third_party_id:
+          $ref: "#/components/schemas/GID"
+          description: Parent third party ID
+        order_by:
+          $ref: "#/components/schemas/ThirdPartyOrderBy"
+          description: ThirdParty order by
+        size:
+          type: integer
+          description: Page size
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Page cursor
+
+    ListChildThirdPartiesOutput:
+      type: object
+      required:
+        - thirdParties
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Next cursor
+        thirdParties:
+          type: array
+          items:
+            $ref: "#/components/schemas/ThirdParty"
+
+    ThirdParty:
       type: object
       required:
         - id
         - name
         - organization_id
         - category
+        - first_level
         - created_at
         - updated_at
       properties:
         id:
           $ref: "#/components/schemas/GID"
-          description: Vendor ID
+          description: ThirdParty ID
         organization_id:
           $ref: "#/components/schemas/GID"
           description: Organization ID
         name:
           type: string
-          description: Vendor name
+          description: ThirdParty name
         description:
           type:
             - string
             - "null"
-          description: Vendor description
+          description: ThirdParty description
         category:
           type: string
           enum:
@@ -699,7 +780,7 @@ components:
             - SALES
             - SECURITY
             - VERSION_CONTROL
-          description: Vendor category
+          description: ThirdParty category
         headquarter_address:
           type:
             - string
@@ -749,7 +830,7 @@ components:
           type: array
           items:
             type: string
-          description: Countries (ISO 3166-1 alpha-2 country codes)
+          description: Countries or regions (ISO 3166-1 alpha-2 country codes, EU, or GLOBAL)
         business_owner_id:
           anyOf:
             - $ref: "#/components/schemas/GID"
@@ -780,6 +861,9 @@ components:
             - string
             - "null"
           description: Trust page URL
+        first_level:
+          type: boolean
+          description: Whether this is a first-level third party
         created_at:
           type: string
           format: date-time
@@ -789,12 +873,12 @@ components:
           format: date-time
           description: Update timestamp
 
-    VendorRiskAssessment:
+    ThirdPartyRiskAssessment:
       type: object
       required:
         - id
         - organization_id
-        - vendor_id
+        - third_party_id
         - expires_at
         - data_sensitivity
         - business_impact
@@ -803,13 +887,13 @@ components:
       properties:
         id:
           $ref: "#/components/schemas/GID"
-          description: Vendor risk assessment ID
+          description: ThirdParty risk assessment ID
         organization_id:
           $ref: "#/components/schemas/GID"
           description: Organization ID
-        vendor_id:
+        third_party_id:
           $ref: "#/components/schemas/GID"
-          description: Vendor ID
+          description: ThirdParty ID
         expires_at:
           type: string
           format: date-time
@@ -834,17 +918,17 @@ components:
           format: date-time
           description: Update timestamp
 
-    ListVendorRiskAssessmentsInput:
+    ListThirdPartyRiskAssessmentsInput:
       type: object
       required:
-        - vendor_id
+        - third_party_id
       properties:
-        vendor_id:
+        third_party_id:
           $ref: "#/components/schemas/GID"
-          description: Vendor ID
+          description: ThirdParty ID
         order_by:
-          $ref: "#/components/schemas/VendorRiskAssessmentOrderBy"
-          description: Vendor risk assessment order by
+          $ref: "#/components/schemas/ThirdPartyRiskAssessmentOrderBy"
+          description: ThirdParty risk assessment order by
         size:
           type: integer
           description: Page size
@@ -852,30 +936,30 @@ components:
           $ref: "#/components/schemas/CursorKey"
           description: Page cursor
 
-    ListVendorRiskAssessmentsOutput:
+    ListThirdPartyRiskAssessmentsOutput:
       type: object
       required:
-        - vendor_risk_assessments
+        - third_party_risk_assessments
       properties:
         next_cursor:
           $ref: "#/components/schemas/CursorKey"
           description: Next cursor
-        vendor_risk_assessments:
+        third_party_risk_assessments:
           type: array
           items:
-            $ref: "#/components/schemas/VendorRiskAssessment"
+            $ref: "#/components/schemas/ThirdPartyRiskAssessment"
 
-    AddVendorRiskAssessmentInput:
+    AddThirdPartyRiskAssessmentInput:
       type: object
       required:
-        - vendor_id
+        - third_party_id
         - expires_at
         - data_sensitivity
         - business_impact
       properties:
-        vendor_id:
+        third_party_id:
           $ref: "#/components/schemas/GID"
-          description: Vendor ID
+          description: ThirdParty ID
         expires_at:
           type: string
           format: date-time
@@ -890,15 +974,15 @@ components:
           type: string
           description: Notes
 
-    AddVendorRiskAssessmentOutput:
+    AddThirdPartyRiskAssessmentOutput:
       type: object
       required:
-        - vendor_risk_assessment
+        - third_party_risk_assessment
       properties:
-        vendor_risk_assessment:
-          $ref: "#/components/schemas/VendorRiskAssessment"
+        third_party_risk_assessment:
+          $ref: "#/components/schemas/ThirdPartyRiskAssessment"
 
-    AddVendorInput:
+    AddThirdPartyInput:
       type: object
       required:
         - organization_id
@@ -909,10 +993,10 @@ components:
           description: Organization ID
         name:
           type: string
-          description: Vendor name
+          description: ThirdParty name
         description:
           type: string
-          description: Vendor description
+          description: ThirdParty description
         category:
           type: string
           enum:
@@ -938,7 +1022,7 @@ components:
             - SALES
             - SECURITY
             - VERSION_CONTROL
-          description: Vendor category
+          description: ThirdParty category
         headquarter_address:
           type: string
           description: Headquarter address
@@ -972,7 +1056,7 @@ components:
           type: array
           items:
             type: string
-          description: Countries (ISO 3166-1 alpha-2 country codes)
+          description: Countries or regions (ISO 3166-1 alpha-2 country codes, EU, or GLOBAL)
         business_owner_id:
           $ref: "#/components/schemas/GID"
           description: Business owner ID
@@ -992,28 +1076,28 @@ components:
           type: string
           description: Trust page URL
 
-    AddVendorOutput:
+    AddThirdPartyOutput:
       type: object
       required:
-        - vendor
+        - thirdParty
       properties:
-        vendor:
-          $ref: "#/components/schemas/Vendor"
+        thirdParty:
+          $ref: "#/components/schemas/ThirdParty"
 
-    UpdateVendorInput:
+    UpdateThirdPartyInput:
       type: object
       required:
         - id
       properties:
         id:
           $ref: "#/components/schemas/GID"
-          description: Vendor ID
+          description: ThirdParty ID
         name:
           type: string
-          description: Vendor name
+          description: ThirdParty name
         description:
           type: string
-          description: Vendor description
+          description: ThirdParty description
         category:
           type: string
           enum:
@@ -1039,7 +1123,7 @@ components:
             - SALES
             - SECURITY
             - VERSION_CONTROL
-          description: Vendor category
+          description: ThirdParty category
         headquarter_address:
           type: string
           description: Headquarter address
@@ -1073,7 +1157,7 @@ components:
           type: array
           items:
             type: string
-          description: Countries (ISO 3166-1 alpha-2 country codes)
+          description: Countries or regions (ISO 3166-1 alpha-2 country codes, EU, or GLOBAL)
         business_owner_id:
           $ref: "#/components/schemas/GID"
           description: Business owner ID
@@ -1093,37 +1177,37 @@ components:
           type: string
           description: Trust page URL
 
-    UpdateVendorOutput:
+    UpdateThirdPartyOutput:
       type: object
       required:
-        - vendor
+        - thirdParty
       properties:
-        vendor:
-          $ref: "#/components/schemas/Vendor"
+        thirdParty:
+          $ref: "#/components/schemas/ThirdParty"
 
-    DeleteVendorInput:
+    DeleteThirdPartyInput:
       type: object
       required:
         - id
       properties:
         id:
           $ref: "#/components/schemas/GID"
-          description: Vendor ID
+          description: ThirdParty ID
 
-    DeleteVendorOutput:
+    DeleteThirdPartyOutput:
       type: object
       required:
-        - deleted_vendor_id
+        - deleted_third_party_id
       properties:
-        deleted_vendor_id:
+        deleted_third_party_id:
           $ref: "#/components/schemas/GID"
-          description: Deleted vendor ID
+          description: Deleted thirdParty ID
 
-    VendorContact:
+    ThirdPartyContact:
       type: object
       required:
         - id
-        - vendor_id
+        - third_party_id
         - full_name
         - email
         - phone
@@ -1133,10 +1217,10 @@ components:
       properties:
         id:
           $ref: "#/components/schemas/GID"
-          description: Vendor contact ID
-        vendor_id:
+          description: ThirdParty contact ID
+        third_party_id:
           $ref: "#/components/schemas/GID"
-          description: Vendor ID
+          description: ThirdParty ID
         full_name:
           type: string
           description: Full name
@@ -1158,17 +1242,17 @@ components:
           format: date-time
           description: Update timestamp
 
-    ListVendorContactsInput:
+    ListThirdPartyContactsInput:
       type: object
       required:
-        - vendor_id
+        - third_party_id
       properties:
-        vendor_id:
+        third_party_id:
           $ref: "#/components/schemas/GID"
-          description: Vendor ID
+          description: ThirdParty ID
         order_by:
-          $ref: "#/components/schemas/VendorContactOrderBy"
-          description: Vendor contact order by
+          $ref: "#/components/schemas/ThirdPartyContactOrderBy"
+          description: ThirdParty contact order by
         size:
           type: integer
           description: Page size
@@ -1176,31 +1260,31 @@ components:
           $ref: "#/components/schemas/CursorKey"
           description: Page cursor
 
-    ListVendorContactsOutput:
+    ListThirdPartyContactsOutput:
       type: object
       required:
-        - vendor_contacts
+        - third_party_contacts
       properties:
         next_cursor:
           $ref: "#/components/schemas/CursorKey"
           description: Next cursor
-        vendor_contacts:
+        third_party_contacts:
           type: array
           items:
-            $ref: "#/components/schemas/VendorContact"
+            $ref: "#/components/schemas/ThirdPartyContact"
 
-    AddVendorContactInput:
+    AddThirdPartyContactInput:
       type: object
       required:
-        - vendor_id
+        - third_party_id
         - full_name
         - email
         - phone
         - role
       properties:
-        vendor_id:
+        third_party_id:
           $ref: "#/components/schemas/GID"
-          description: Vendor ID
+          description: ThirdParty ID
         full_name:
           type: string
           description: Full name
@@ -1214,22 +1298,22 @@ components:
           type: string
           description: Role
 
-    AddVendorContactOutput:
+    AddThirdPartyContactOutput:
       type: object
       required:
-        - vendor_contact
+        - third_party_contact
       properties:
-        vendor_contact:
-          $ref: "#/components/schemas/VendorContact"
+        third_party_contact:
+          $ref: "#/components/schemas/ThirdPartyContact"
 
-    UpdateVendorContactInput:
+    UpdateThirdPartyContactInput:
       type: object
       required:
         - id
       properties:
         id:
           $ref: "#/components/schemas/GID"
-          description: Vendor contact ID
+          description: ThirdParty contact ID
         full_name:
           type: string
           description: Full name
@@ -1243,37 +1327,37 @@ components:
           type: string
           description: Role
 
-    UpdateVendorContactOutput:
+    UpdateThirdPartyContactOutput:
       type: object
       required:
-        - vendor_contact
+        - third_party_contact
       properties:
-        vendor_contact:
-          $ref: "#/components/schemas/VendorContact"
+        third_party_contact:
+          $ref: "#/components/schemas/ThirdPartyContact"
 
-    DeleteVendorContactInput:
+    DeleteThirdPartyContactInput:
       type: object
       required:
         - id
       properties:
         id:
           $ref: "#/components/schemas/GID"
-          description: Vendor contact ID
+          description: ThirdParty contact ID
 
-    DeleteVendorContactOutput:
+    DeleteThirdPartyContactOutput:
       type: object
       required:
-        - deleted_vendor_contact_id
+        - deleted_third_party_contact_id
       properties:
-        deleted_vendor_contact_id:
+        deleted_third_party_contact_id:
           $ref: "#/components/schemas/GID"
-          description: Deleted vendor contact ID
+          description: Deleted thirdParty contact ID
 
-    VendorService:
+    ThirdPartyService:
       type: object
       required:
         - id
-        - vendor_id
+        - third_party_id
         - name
         - description
         - created_at
@@ -1281,10 +1365,10 @@ components:
       properties:
         id:
           $ref: "#/components/schemas/GID"
-          description: Vendor service ID
-        vendor_id:
+          description: ThirdParty service ID
+        third_party_id:
           $ref: "#/components/schemas/GID"
-          description: Vendor ID
+          description: ThirdParty ID
         name:
           type: string
           description: Service name
@@ -1300,17 +1384,17 @@ components:
           format: date-time
           description: Update timestamp
 
-    ListVendorServicesInput:
+    ListThirdPartyServicesInput:
       type: object
       required:
-        - vendor_id
+        - third_party_id
       properties:
-        vendor_id:
+        third_party_id:
           $ref: "#/components/schemas/GID"
-          description: Vendor ID
+          description: ThirdParty ID
         order_by:
-          $ref: "#/components/schemas/VendorServiceOrderBy"
-          description: Vendor service order by
+          $ref: "#/components/schemas/ThirdPartyServiceOrderBy"
+          description: ThirdParty service order by
         size:
           type: integer
           description: Page size
@@ -1318,28 +1402,28 @@ components:
           $ref: "#/components/schemas/CursorKey"
           description: Page cursor
 
-    ListVendorServicesOutput:
+    ListThirdPartyServicesOutput:
       type: object
       required:
-        - vendor_services
+        - third_party_services
       properties:
         next_cursor:
           $ref: "#/components/schemas/CursorKey"
           description: Next cursor
-        vendor_services:
+        third_party_services:
           type: array
           items:
-            $ref: "#/components/schemas/VendorService"
+            $ref: "#/components/schemas/ThirdPartyService"
 
-    AddVendorServiceInput:
+    AddThirdPartyServiceInput:
       type: object
       required:
-        - vendor_id
+        - third_party_id
         - name
       properties:
-        vendor_id:
+        third_party_id:
           $ref: "#/components/schemas/GID"
-          description: Vendor ID
+          description: ThirdParty ID
         name:
           type: string
           description: Service name
@@ -1347,22 +1431,22 @@ components:
           type: string
           description: Service description
 
-    AddVendorServiceOutput:
+    AddThirdPartyServiceOutput:
       type: object
       required:
-        - vendor_service
+        - third_party_service
       properties:
-        vendor_service:
-          $ref: "#/components/schemas/VendorService"
+        third_party_service:
+          $ref: "#/components/schemas/ThirdPartyService"
 
-    UpdateVendorServiceInput:
+    UpdateThirdPartyServiceInput:
       type: object
       required:
         - id
       properties:
         id:
           $ref: "#/components/schemas/GID"
-          description: Vendor service ID
+          description: ThirdParty service ID
         name:
           type: string
           description: Service name
@@ -1370,33 +1454,33 @@ components:
           type: string
           description: Service description
 
-    UpdateVendorServiceOutput:
+    UpdateThirdPartyServiceOutput:
       type: object
       required:
-        - vendor_service
+        - third_party_service
       properties:
-        vendor_service:
-          $ref: "#/components/schemas/VendorService"
+        third_party_service:
+          $ref: "#/components/schemas/ThirdPartyService"
 
-    DeleteVendorServiceInput:
+    DeleteThirdPartyServiceInput:
       type: object
       required:
         - id
       properties:
         id:
           $ref: "#/components/schemas/GID"
-          description: Vendor service ID
+          description: ThirdParty service ID
 
-    DeleteVendorServiceOutput:
+    DeleteThirdPartyServiceOutput:
       type: object
       required:
-        - deleted_vendor_service_id
+        - deleted_third_party_service_id
       properties:
-        deleted_vendor_service_id:
+        deleted_third_party_service_id:
           $ref: "#/components/schemas/GID"
-          description: Deleted vendor service ID
+          description: Deleted thirdParty service ID
 
-    AssessVendorInput:
+    VetThirdPartyInput:
       type: object
       required:
         - id
@@ -1404,48 +1488,21 @@ components:
       properties:
         id:
           $ref: "#/components/schemas/GID"
-          description: Vendor ID to assess
+          description: ThirdParty ID to vet
         website_url:
           type: string
-          description: Vendor website URL to crawl and assess
+          description: ThirdParty website URL to crawl and vet
         procedure:
           type: string
-          description: Optional custom assessment procedure (overrides the default)
+          description: Optional custom vetting procedure (overrides the default)
 
-    VendorSubprocessor:
+    VetThirdPartyOutput:
       type: object
       required:
-        - name
-        - country
-        - purpose
+        - thirdParty
       properties:
-        name:
-          type: string
-          description: Sub-processor name
-        country:
-          type: string
-          description: Country where the sub-processor operates
-        purpose:
-          type: string
-          description: Purpose of the sub-processor
-
-    AssessVendorOutput:
-      type: object
-      required:
-        - vendor
-        - report
-        - subprocessors
-      properties:
-        vendor:
-          $ref: "#/components/schemas/Vendor"
-        report:
-          type: string
-          description: Markdown-formatted vendor assessment report
-        subprocessors:
-          type: array
-          items:
-            $ref: "#/components/schemas/VendorSubprocessor"
-          description: Sub-processors discovered during the assessment
+        thirdParty:
+          $ref: "#/components/schemas/ThirdParty"
 
     GetUserInput:
       type: object
@@ -1649,6 +1706,28 @@ components:
         deleted_user_id:
           $ref: "#/components/schemas/GID"
           description: Deleted user (profile) ID
+
+    ArchiveUserInput:
+      type: object
+      required:
+        - organization_id
+        - profile_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        profile_id:
+          $ref: "#/components/schemas/GID"
+          description: User (profile) ID to archive
+
+    ArchiveUserOutput:
+      type: object
+      required:
+        - archived_user_id
+      properties:
+        archived_user_id:
+          $ref: "#/components/schemas/GID"
+          description: Archived user (profile) ID
 
     GetProfileInput:
       type: object
@@ -2326,7 +2405,7 @@ components:
           description: Measure ID
         resource_id:
           $ref: "#/components/schemas/GID"
-          description: ID of the resource to link (control, risk, or document)
+          description: ID of the resource to link (control, risk, document, or third party)
 
     LinkMeasureOutput:
       type: object
@@ -2342,7 +2421,7 @@ components:
           description: Measure ID
         resource_id:
           $ref: "#/components/schemas/GID"
-          description: ID of the resource to unlink (control, risk, or document)
+          description: ID of the resource to unlink (control, risk, document, or third party)
 
     UnlinkMeasureOutput:
       type: object
@@ -2733,11 +2812,11 @@ components:
         data_types_stored:
           type: string
           description: Data types stored
-        vendor_ids:
+        third_party_ids:
           type: array
           items:
             $ref: "#/components/schemas/GID"
-          description: Vendor IDs
+          description: ThirdParty IDs
 
     AddAssetOutput:
       type: object
@@ -2773,11 +2852,11 @@ components:
         data_types_stored:
           type: string
           description: Data types stored
-        vendor_ids:
+        third_party_ids:
           type: array
           items:
             $ref: "#/components/schemas/GID"
-          description: Vendor IDs
+          description: ThirdParty IDs
 
     UpdateAssetOutput:
       type: object
@@ -2937,11 +3016,11 @@ components:
         owner_id:
           $ref: "#/components/schemas/GID"
           description: Owner ID
-        vendor_ids:
+        third_party_ids:
           type: array
           items:
             $ref: "#/components/schemas/GID"
-          description: Vendor IDs
+          description: ThirdParty IDs
 
     AddDatumOutput:
       type: object
@@ -2971,11 +3050,11 @@ components:
               $ref: "#/components/schemas/GID"
             - type: "null"
           description: Owner ID
-        vendor_ids:
+        third_party_ids:
           type: array
           items:
             $ref: "#/components/schemas/GID"
-          description: Vendor IDs
+          description: ThirdParty IDs
 
     UpdateDatumOutput:
       type: object
@@ -4065,11 +4144,11 @@ components:
             - $ref: "#/components/schemas/GID"
             - type: "null"
           description: Data protection officer profile ID
-        vendor_ids:
+        third_party_ids:
           type: array
           items:
             $ref: "#/components/schemas/GID"
-          description: Vendor IDs
+          description: ThirdParty IDs
 
     AddProcessingActivityOutput:
       type: object
@@ -4143,7 +4222,7 @@ components:
             - $ref: "#/components/schemas/GID"
             - type: "null"
           go.probo.inc/mcpgen/omittable: true
-        vendor_ids:
+        third_party_ids:
           type: array
           items:
             $ref: "#/components/schemas/GID"
@@ -6251,7 +6330,7 @@ components:
           description: Document ID
         minor:
           type: boolean
-          description: When true, publish the draft as a minor version (currentMajor.currentMinor+1) and ignore approver_ids; the document must already have a published major version. When false, publish as a new major version; if approver_ids are provided, an approval is requested instead.
+          description: When true, publish the draft as a minor version and ignore approver_ids. When false, publish as a new major version; if approver_ids are provided, an approval is requested instead.
         approver_ids:
           type: array
           items:
@@ -6322,6 +6401,9 @@ components:
             active_contract:
               type: boolean
               description: Signatory contract status
+            state:
+              $ref: "#/components/schemas/ProfileState"
+              description: Signatory profile state
 
     ListDocumentVersionSignaturesOutput:
       type: object
@@ -6534,9 +6616,9 @@ components:
     WebhookEventType:
       type: string
       enum:
-        - "vendor:created"
-        - "vendor:updated"
-        - "vendor:deleted"
+        - "third-party:created"
+        - "third-party:updated"
+        - "third-party:deleted"
         - "user:created"
         - "user:updated"
         - "user:deleted"
@@ -7182,7 +7264,7 @@ components:
           $ref: "#/components/schemas/GID"
           description: Created document version ID
 
-    PublishVendorListInput:
+    PublishThirdPartyListInput:
       type: object
       required:
         - organization_id
@@ -7200,7 +7282,7 @@ components:
           type: boolean
           description: When true, publish as a minor version (currentMajor.currentMinor+1) and ignore approver_ids; the document must already have a published major version. When false, publish as a new major version; if approver_ids are provided, an approval is requested instead.
 
-    PublishVendorListOutput:
+    PublishThirdPartyListOutput:
       type: object
       required:
         - document_id
@@ -8402,13 +8484,13 @@ components:
           properties:
             action:
               type: string
-              description: Filter by action (e.g. "core:vendor:create")
+              description: Filter by action (e.g. "core:thirdParty:create")
             actor_id:
               $ref: "#/components/schemas/GID"
               description: Filter by actor ID
             resource_type:
               type: string
-              description: Filter by resource type (e.g. "Vendor")
+              description: Filter by resource type (e.g. "ThirdParty")
             resource_id:
               $ref: "#/components/schemas/GID"
               description: Filter by resource ID
@@ -8454,10 +8536,10 @@ components:
           description: Type of actor
         action:
           type: string
-          description: Action performed (e.g. "core:vendor:create")
+          description: Action performed (e.g. "core:thirdParty:create")
         resource_type:
           type: string
-          description: Type of resource affected (e.g. "Vendor")
+          description: Type of resource affected (e.g. "ThirdParty")
         resource_id:
           $ref: "#/components/schemas/GID"
           description: ID of the affected resource
@@ -9311,7 +9393,6 @@ components:
         - state
         - cookie_policy_url
         - consent_expiry_days
-        - consent_mode
         - show_branding
         - default_language
         - created_at
@@ -9344,10 +9425,6 @@ components:
         consent_expiry_days:
           type: integer
           description: Days until consent expires
-        consent_mode:
-          type: string
-          enum: [OPT_IN, OPT_OUT]
-          description: Consent mode
         show_branding:
           type: boolean
           description: Whether to show Probo branding
@@ -9472,7 +9549,7 @@ components:
           description: Pattern description
         source:
           type: string
-          enum: [SCRIPT, PRE_EXISTING]
+          enum: [SCRIPT, PRE_EXISTING, EXTENSION]
           description: How the pattern was discovered
         excluded:
           type: boolean
@@ -9726,7 +9803,6 @@ components:
         - origin
         - cookie_policy_url
         - consent_expiry_days
-        - consent_mode
       properties:
         organization_id:
           $ref: "#/components/schemas/GID"
@@ -9746,10 +9822,6 @@ components:
         consent_expiry_days:
           type: integer
           description: Days until consent expires
-        consent_mode:
-          type: string
-          enum: [OPT_IN, OPT_OUT]
-          description: Consent mode
 
     AddCookieBannerOutput:
       type: object
@@ -9785,11 +9857,6 @@ components:
         consent_expiry_days:
           type:
             - integer
-            - "null"
-          go.probo.inc/mcpgen/omittable: true
-        consent_mode:
-          type:
-            - string
             - "null"
           go.probo.inc/mcpgen/omittable: true
         default_language:
@@ -10721,6 +10788,1066 @@ components:
           items:
             $ref: "#/components/schemas/SCIMEvent"
 
+    RiskAssessmentNodeType:
+      type: string
+      enum:
+        - ENTITY
+        - BOUNDARY
+        - ASSET
+        - DATA
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.RiskAssessmentNodeType
+
+    RiskAssessmentOrderField:
+      type: string
+      enum:
+        - CREATED_AT
+        - NAME
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.RiskAssessmentOrderField
+
+    RiskAssessmentOrderBy:
+      type: object
+      required:
+        - field
+        - direction
+      properties:
+        field:
+          $ref: "#/components/schemas/RiskAssessmentOrderField"
+        direction:
+          $ref: "#/components/schemas/OrderDirection"
+
+    RiskAssessmentScopeOrderField:
+      type: string
+      enum:
+        - CREATED_AT
+        - NAME
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.RiskAssessmentScopeOrderField
+
+    RiskAssessmentScopeOrderBy:
+      type: object
+      required:
+        - field
+        - direction
+      properties:
+        field:
+          $ref: "#/components/schemas/RiskAssessmentScopeOrderField"
+        direction:
+          $ref: "#/components/schemas/OrderDirection"
+
+    RiskAssessmentNodeOrderField:
+      type: string
+      enum:
+        - CREATED_AT
+        - NAME
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.RiskAssessmentNodeOrderField
+
+    RiskAssessmentNodeOrderBy:
+      type: object
+      required:
+        - field
+        - direction
+      properties:
+        field:
+          $ref: "#/components/schemas/RiskAssessmentNodeOrderField"
+        direction:
+          $ref: "#/components/schemas/OrderDirection"
+
+    RiskAssessmentProcessOrderField:
+      type: string
+      enum:
+        - CREATED_AT
+        - NAME
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.RiskAssessmentProcessOrderField
+
+    RiskAssessmentProcessOrderBy:
+      type: object
+      required:
+        - field
+        - direction
+      properties:
+        field:
+          $ref: "#/components/schemas/RiskAssessmentProcessOrderField"
+        direction:
+          $ref: "#/components/schemas/OrderDirection"
+
+    RiskAssessmentThreatOrderField:
+      type: string
+      enum:
+        - CREATED_AT
+        - NAME
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.RiskAssessmentThreatOrderField
+
+    RiskAssessmentThreatOrderBy:
+      type: object
+      required:
+        - field
+        - direction
+      properties:
+        field:
+          $ref: "#/components/schemas/RiskAssessmentThreatOrderField"
+        direction:
+          $ref: "#/components/schemas/OrderDirection"
+
+    RiskAssessmentScenarioOrderField:
+      type: string
+      enum:
+        - CREATED_AT
+        - NAME
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.RiskAssessmentScenarioOrderField
+
+    RiskAssessmentScenarioOrderBy:
+      type: object
+      required:
+        - field
+        - direction
+      properties:
+        field:
+          $ref: "#/components/schemas/RiskAssessmentScenarioOrderField"
+        direction:
+          $ref: "#/components/schemas/OrderDirection"
+
+    RiskAssessment:
+      type: object
+      required:
+        - id
+        - organization_id
+        - name
+        - created_at
+        - updated_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+        organization_id:
+          $ref: "#/components/schemas/GID"
+        name:
+          type: string
+        description:
+          type:
+            - string
+            - "null"
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    RiskAssessmentScope:
+      type: object
+      required:
+        - id
+        - organization_id
+        - risk_assessment_id
+        - name
+        - created_at
+        - updated_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+        organization_id:
+          $ref: "#/components/schemas/GID"
+        risk_assessment_id:
+          $ref: "#/components/schemas/GID"
+        name:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    RiskAssessmentNode:
+      type: object
+      required:
+        - id
+        - organization_id
+        - risk_assessment_scope_id
+        - node_type
+        - name
+        - created_at
+        - updated_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+        organization_id:
+          $ref: "#/components/schemas/GID"
+        risk_assessment_scope_id:
+          $ref: "#/components/schemas/GID"
+        node_type:
+          $ref: "#/components/schemas/RiskAssessmentNodeType"
+        name:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    RiskAssessmentProcess:
+      type: object
+      required:
+        - id
+        - organization_id
+        - risk_assessment_scope_id
+        - source_node_id
+        - target_node_id
+        - name
+        - created_at
+        - updated_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+        organization_id:
+          $ref: "#/components/schemas/GID"
+        risk_assessment_scope_id:
+          $ref: "#/components/schemas/GID"
+        source_node_id:
+          $ref: "#/components/schemas/GID"
+        target_node_id:
+          $ref: "#/components/schemas/GID"
+        name:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    RiskAssessmentThreat:
+      type: object
+      required:
+        - id
+        - organization_id
+        - risk_assessment_scope_id
+        - process_id
+        - name
+        - category
+        - created_at
+        - updated_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+        organization_id:
+          $ref: "#/components/schemas/GID"
+        risk_assessment_scope_id:
+          $ref: "#/components/schemas/GID"
+        process_id:
+          $ref: "#/components/schemas/GID"
+        name:
+          type: string
+        category:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    RiskAssessmentScenario:
+      type: object
+      required:
+        - id
+        - organization_id
+        - risk_assessment_scope_id
+        - name
+        - created_at
+        - updated_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+        organization_id:
+          $ref: "#/components/schemas/GID"
+        risk_assessment_scope_id:
+          $ref: "#/components/schemas/GID"
+        name:
+          type: string
+        description:
+          type:
+            - string
+            - "null"
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    ListRiskAssessmentsInput:
+      type: object
+      required:
+        - organization_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        order_by:
+          $ref: "#/components/schemas/RiskAssessmentOrderBy"
+          description: Order by
+        size:
+          type: integer
+          description: Page size
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Page cursor
+
+    ListRiskAssessmentsOutput:
+      type: object
+      required:
+        - risk_assessments
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Next cursor
+        risk_assessments:
+          type: array
+          items:
+            $ref: "#/components/schemas/RiskAssessment"
+
+    GetRiskAssessmentInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Risk assessment ID
+
+    GetRiskAssessmentOutput:
+      type: object
+      required:
+        - risk_assessment
+      properties:
+        risk_assessment:
+          $ref: "#/components/schemas/RiskAssessment"
+
+    AddRiskAssessmentInput:
+      type: object
+      required:
+        - organization_id
+        - name
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        name:
+          type: string
+          description: Risk assessment name
+        description:
+          type: string
+          description: Risk assessment description
+
+    AddRiskAssessmentOutput:
+      type: object
+      required:
+        - risk_assessment
+      properties:
+        risk_assessment:
+          $ref: "#/components/schemas/RiskAssessment"
+
+    UpdateRiskAssessmentInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Risk assessment ID
+        name:
+          type: string
+          description: Risk assessment name
+        description:
+          type: ["string", "null"]
+          description: Risk assessment description
+          go.probo.inc/mcpgen/omittable: true
+
+    UpdateRiskAssessmentOutput:
+      type: object
+      required:
+        - risk_assessment
+      properties:
+        risk_assessment:
+          $ref: "#/components/schemas/RiskAssessment"
+
+    DeleteRiskAssessmentInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Risk assessment ID
+
+    DeleteRiskAssessmentOutput:
+      type: object
+      required:
+        - deleted_risk_assessment_id
+      properties:
+        deleted_risk_assessment_id:
+          $ref: "#/components/schemas/GID"
+          description: Deleted risk assessment ID
+
+    ListRiskAssessmentScopesInput:
+      type: object
+      required:
+        - risk_assessment_id
+      properties:
+        risk_assessment_id:
+          $ref: "#/components/schemas/GID"
+          description: Risk assessment ID
+        order_by:
+          $ref: "#/components/schemas/RiskAssessmentScopeOrderBy"
+          description: Order by
+        size:
+          type: integer
+          description: Page size
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Page cursor
+
+    ListRiskAssessmentScopesOutput:
+      type: object
+      required:
+        - risk_assessment_scopes
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Next cursor
+        risk_assessment_scopes:
+          type: array
+          items:
+            $ref: "#/components/schemas/RiskAssessmentScope"
+
+    GetRiskAssessmentScopeInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Risk assessment scope ID
+
+    GetRiskAssessmentScopeOutput:
+      type: object
+      required:
+        - risk_assessment_scope
+      properties:
+        risk_assessment_scope:
+          $ref: "#/components/schemas/RiskAssessmentScope"
+
+    GetRiskAssessmentScopeMermaidChartInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Risk assessment scope ID
+
+    GetRiskAssessmentScopeMermaidChartOutput:
+      type: object
+      required:
+        - mermaid_chart
+      properties:
+        mermaid_chart:
+          type: string
+          description: Mermaid chart of the scope
+
+    AddRiskAssessmentScopeInput:
+      type: object
+      required:
+        - risk_assessment_id
+        - name
+      properties:
+        risk_assessment_id:
+          $ref: "#/components/schemas/GID"
+          description: Risk assessment ID
+        name:
+          type: string
+          description: Risk assessment scope name
+
+    AddRiskAssessmentScopeOutput:
+      type: object
+      required:
+        - risk_assessment_scope
+      properties:
+        risk_assessment_scope:
+          $ref: "#/components/schemas/RiskAssessmentScope"
+
+    UpdateRiskAssessmentScopeInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Risk assessment scope ID
+        name:
+          type: string
+          description: Risk assessment scope name
+
+    UpdateRiskAssessmentScopeOutput:
+      type: object
+      required:
+        - risk_assessment_scope
+      properties:
+        risk_assessment_scope:
+          $ref: "#/components/schemas/RiskAssessmentScope"
+
+    DeleteRiskAssessmentScopeInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Risk assessment scope ID
+
+    DeleteRiskAssessmentScopeOutput:
+      type: object
+      required:
+        - deleted_risk_assessment_scope_id
+      properties:
+        deleted_risk_assessment_scope_id:
+          $ref: "#/components/schemas/GID"
+          description: Deleted risk assessment scope ID
+
+    ListRiskAssessmentNodesInput:
+      type: object
+      required:
+        - risk_assessment_scope_id
+      properties:
+        risk_assessment_scope_id:
+          $ref: "#/components/schemas/GID"
+          description: Risk assessment scope ID
+        order_by:
+          $ref: "#/components/schemas/RiskAssessmentNodeOrderBy"
+          description: Order by
+        size:
+          type: integer
+          description: Page size
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Page cursor
+
+    ListRiskAssessmentNodesOutput:
+      type: object
+      required:
+        - risk_assessment_nodes
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Next cursor
+        risk_assessment_nodes:
+          type: array
+          items:
+            $ref: "#/components/schemas/RiskAssessmentNode"
+
+    GetRiskAssessmentNodeInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Risk assessment node ID
+
+    GetRiskAssessmentNodeOutput:
+      type: object
+      required:
+        - risk_assessment_node
+      properties:
+        risk_assessment_node:
+          $ref: "#/components/schemas/RiskAssessmentNode"
+
+    AddRiskAssessmentNodeInput:
+      type: object
+      required:
+        - risk_assessment_scope_id
+        - node_type
+        - name
+      properties:
+        risk_assessment_scope_id:
+          $ref: "#/components/schemas/GID"
+          description: Risk assessment scope ID
+        node_type:
+          $ref: "#/components/schemas/RiskAssessmentNodeType"
+          description: Node type
+        name:
+          type: string
+          description: Risk assessment node name
+
+    AddRiskAssessmentNodeOutput:
+      type: object
+      required:
+        - risk_assessment_node
+      properties:
+        risk_assessment_node:
+          $ref: "#/components/schemas/RiskAssessmentNode"
+
+    UpdateRiskAssessmentNodeInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Risk assessment node ID
+        node_type:
+          $ref: "#/components/schemas/RiskAssessmentNodeType"
+          description: Node type
+        name:
+          type: string
+          description: Risk assessment node name
+
+    UpdateRiskAssessmentNodeOutput:
+      type: object
+      required:
+        - risk_assessment_node
+      properties:
+        risk_assessment_node:
+          $ref: "#/components/schemas/RiskAssessmentNode"
+
+    DeleteRiskAssessmentNodeInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Risk assessment node ID
+
+    DeleteRiskAssessmentNodeOutput:
+      type: object
+      required:
+        - deleted_risk_assessment_node_id
+      properties:
+        deleted_risk_assessment_node_id:
+          $ref: "#/components/schemas/GID"
+          description: Deleted risk assessment node ID
+
+    ListRiskAssessmentProcessesInput:
+      type: object
+      required:
+        - risk_assessment_scope_id
+      properties:
+        risk_assessment_scope_id:
+          $ref: "#/components/schemas/GID"
+          description: Risk assessment scope ID
+        order_by:
+          $ref: "#/components/schemas/RiskAssessmentProcessOrderBy"
+          description: Order by
+        size:
+          type: integer
+          description: Page size
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Page cursor
+
+    ListRiskAssessmentProcessesOutput:
+      type: object
+      required:
+        - risk_assessment_processes
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Next cursor
+        risk_assessment_processes:
+          type: array
+          items:
+            $ref: "#/components/schemas/RiskAssessmentProcess"
+
+    GetRiskAssessmentProcessInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Risk assessment process ID
+
+    GetRiskAssessmentProcessOutput:
+      type: object
+      required:
+        - risk_assessment_process
+      properties:
+        risk_assessment_process:
+          $ref: "#/components/schemas/RiskAssessmentProcess"
+
+    AddRiskAssessmentProcessInput:
+      type: object
+      required:
+        - risk_assessment_scope_id
+        - source_node_id
+        - target_node_id
+        - name
+      properties:
+        risk_assessment_scope_id:
+          $ref: "#/components/schemas/GID"
+          description: Risk assessment scope ID
+        source_node_id:
+          $ref: "#/components/schemas/GID"
+          description: Source node ID
+        target_node_id:
+          $ref: "#/components/schemas/GID"
+          description: Target node ID
+        name:
+          type: string
+          description: Risk assessment process name
+
+    AddRiskAssessmentProcessOutput:
+      type: object
+      required:
+        - risk_assessment_process
+      properties:
+        risk_assessment_process:
+          $ref: "#/components/schemas/RiskAssessmentProcess"
+
+    UpdateRiskAssessmentProcessInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Risk assessment process ID
+        source_node_id:
+          $ref: "#/components/schemas/GID"
+          description: Source node ID
+        target_node_id:
+          $ref: "#/components/schemas/GID"
+          description: Target node ID
+        name:
+          type: string
+          description: Risk assessment process name
+
+    UpdateRiskAssessmentProcessOutput:
+      type: object
+      required:
+        - risk_assessment_process
+      properties:
+        risk_assessment_process:
+          $ref: "#/components/schemas/RiskAssessmentProcess"
+
+    DeleteRiskAssessmentProcessInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Risk assessment process ID
+
+    DeleteRiskAssessmentProcessOutput:
+      type: object
+      required:
+        - deleted_risk_assessment_process_id
+      properties:
+        deleted_risk_assessment_process_id:
+          $ref: "#/components/schemas/GID"
+          description: Deleted risk assessment process ID
+
+    ListRiskAssessmentThreatsInput:
+      type: object
+      required:
+        - risk_assessment_scope_id
+      properties:
+        risk_assessment_scope_id:
+          $ref: "#/components/schemas/GID"
+          description: Risk assessment scope ID
+        order_by:
+          $ref: "#/components/schemas/RiskAssessmentThreatOrderBy"
+          description: Order by
+        size:
+          type: integer
+          description: Page size
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Page cursor
+
+    ListRiskAssessmentThreatsOutput:
+      type: object
+      required:
+        - risk_assessment_threats
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Next cursor
+        risk_assessment_threats:
+          type: array
+          items:
+            $ref: "#/components/schemas/RiskAssessmentThreat"
+
+    GetRiskAssessmentThreatInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Risk assessment threat ID
+
+    GetRiskAssessmentThreatOutput:
+      type: object
+      required:
+        - risk_assessment_threat
+      properties:
+        risk_assessment_threat:
+          $ref: "#/components/schemas/RiskAssessmentThreat"
+
+    AddRiskAssessmentThreatInput:
+      type: object
+      required:
+        - risk_assessment_scope_id
+        - process_id
+        - name
+        - category
+      properties:
+        risk_assessment_scope_id:
+          $ref: "#/components/schemas/GID"
+          description: Risk assessment scope ID
+        process_id:
+          $ref: "#/components/schemas/GID"
+          description: Process ID
+        name:
+          type: string
+          description: Risk assessment threat name
+        category:
+          type: string
+          description: Risk assessment threat category
+
+    AddRiskAssessmentThreatOutput:
+      type: object
+      required:
+        - risk_assessment_threat
+      properties:
+        risk_assessment_threat:
+          $ref: "#/components/schemas/RiskAssessmentThreat"
+
+    UpdateRiskAssessmentThreatInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Risk assessment threat ID
+        process_id:
+          $ref: "#/components/schemas/GID"
+          description: Process ID
+        name:
+          type: string
+          description: Risk assessment threat name
+        category:
+          type: string
+          description: Risk assessment threat category
+
+    UpdateRiskAssessmentThreatOutput:
+      type: object
+      required:
+        - risk_assessment_threat
+      properties:
+        risk_assessment_threat:
+          $ref: "#/components/schemas/RiskAssessmentThreat"
+
+    DeleteRiskAssessmentThreatInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Risk assessment threat ID
+
+    DeleteRiskAssessmentThreatOutput:
+      type: object
+      required:
+        - deleted_risk_assessment_threat_id
+      properties:
+        deleted_risk_assessment_threat_id:
+          $ref: "#/components/schemas/GID"
+          description: Deleted risk assessment threat ID
+
+    ListRiskAssessmentScenariosInput:
+      type: object
+      required:
+        - risk_assessment_scope_id
+      properties:
+        risk_assessment_scope_id:
+          $ref: "#/components/schemas/GID"
+          description: Risk assessment scope ID
+        order_by:
+          $ref: "#/components/schemas/RiskAssessmentScenarioOrderBy"
+          description: Order by
+        size:
+          type: integer
+          description: Page size
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Page cursor
+
+    ListRiskAssessmentScenariosOutput:
+      type: object
+      required:
+        - risk_assessment_scenarios
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Next cursor
+        risk_assessment_scenarios:
+          type: array
+          items:
+            $ref: "#/components/schemas/RiskAssessmentScenario"
+
+    GetRiskAssessmentScenarioInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Risk assessment scenario ID
+
+    GetRiskAssessmentScenarioOutput:
+      type: object
+      required:
+        - risk_assessment_scenario
+      properties:
+        risk_assessment_scenario:
+          $ref: "#/components/schemas/RiskAssessmentScenario"
+
+    AddRiskAssessmentScenarioInput:
+      type: object
+      required:
+        - risk_assessment_scope_id
+        - name
+      properties:
+        risk_assessment_scope_id:
+          $ref: "#/components/schemas/GID"
+          description: Risk assessment scope ID
+        name:
+          type: string
+          description: Risk assessment scenario name
+        description:
+          type: string
+          description: Risk assessment scenario description
+
+    AddRiskAssessmentScenarioOutput:
+      type: object
+      required:
+        - risk_assessment_scenario
+      properties:
+        risk_assessment_scenario:
+          $ref: "#/components/schemas/RiskAssessmentScenario"
+
+    UpdateRiskAssessmentScenarioInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Risk assessment scenario ID
+        name:
+          type: string
+          description: Risk assessment scenario name
+        description:
+          type: ["string", "null"]
+          description: Risk assessment scenario description
+          go.probo.inc/mcpgen/omittable: true
+
+    UpdateRiskAssessmentScenarioOutput:
+      type: object
+      required:
+        - risk_assessment_scenario
+      properties:
+        risk_assessment_scenario:
+          $ref: "#/components/schemas/RiskAssessmentScenario"
+
+    DeleteRiskAssessmentScenarioInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Risk assessment scenario ID
+
+    DeleteRiskAssessmentScenarioOutput:
+      type: object
+      required:
+        - deleted_risk_assessment_scenario_id
+      properties:
+        deleted_risk_assessment_scenario_id:
+          $ref: "#/components/schemas/GID"
+          description: Deleted risk assessment scenario ID
+
+    LinkRiskAssessmentScenarioThreatInput:
+      type: object
+      required:
+        - risk_assessment_scenario_id
+        - threat_id
+      properties:
+        risk_assessment_scenario_id:
+          $ref: "#/components/schemas/GID"
+          description: Risk assessment scenario ID
+        threat_id:
+          $ref: "#/components/schemas/GID"
+          description: Threat ID
+
+    LinkRiskAssessmentScenarioThreatOutput:
+      type: object
+
+    UnlinkRiskAssessmentScenarioThreatInput:
+      type: object
+      required:
+        - risk_assessment_scenario_id
+        - threat_id
+      properties:
+        risk_assessment_scenario_id:
+          $ref: "#/components/schemas/GID"
+          description: Risk assessment scenario ID
+        threat_id:
+          $ref: "#/components/schemas/GID"
+          description: Threat ID
+
+    UnlinkRiskAssessmentScenarioThreatOutput:
+      type: object
+
+    LinkRiskAssessmentScenarioRiskInput:
+      type: object
+      required:
+        - risk_assessment_scenario_id
+        - risk_id
+      properties:
+        risk_assessment_scenario_id:
+          $ref: "#/components/schemas/GID"
+          description: Risk assessment scenario ID
+        risk_id:
+          $ref: "#/components/schemas/GID"
+          description: Risk ID
+
+    LinkRiskAssessmentScenarioRiskOutput:
+      type: object
+
+    UnlinkRiskAssessmentScenarioRiskInput:
+      type: object
+      required:
+        - risk_assessment_scenario_id
+        - risk_id
+      properties:
+        risk_assessment_scenario_id:
+          $ref: "#/components/schemas/GID"
+          description: Risk assessment scenario ID
+        risk_id:
+          $ref: "#/components/schemas/GID"
+          description: Risk ID
+
+    UnlinkRiskAssessmentScenarioRiskOutput:
+      type: object
+
 tools:
   - name: listOrganizations
     description: List all organizations the user has access to
@@ -10731,15 +11858,40 @@ tools:
       $ref: "#/components/schemas/ListOrganizationsInput"
     outputSchema:
       $ref: "#/components/schemas/ListOrganizationsOutput"
-  - name: listVendors
-    description: List all vendors for the organization
+  - name: listThirdParties
+    description: List all thirdParties for the organization
     hints:
       readonly: true
       idempotent: true
     inputSchema:
-      $ref: "#/components/schemas/ListVendorsInput"
+      $ref: "#/components/schemas/ListThirdPartiesInput"
     outputSchema:
-      $ref: "#/components/schemas/ListVendorsOutput"
+      $ref: "#/components/schemas/ListThirdPartiesOutput"
+  - name: createThirdPartyThirdPartyMapping
+    description: Link a child third party to a parent third party
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/CreateThirdPartyThirdPartyMappingInput"
+    outputSchema:
+      $ref: "#/components/schemas/CreateThirdPartyThirdPartyMappingOutput"
+  - name: deleteThirdPartyThirdPartyMapping
+    description: Unlink a child third party from a parent third party
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/DeleteThirdPartyThirdPartyMappingInput"
+    outputSchema:
+      $ref: "#/components/schemas/DeleteThirdPartyThirdPartyMappingOutput"
+  - name: listChildThirdParties
+    description: List child third parties linked to a parent third party
+    hints:
+      readonly: true
+      idempotent: true
+    inputSchema:
+      $ref: "#/components/schemas/ListChildThirdPartiesInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListChildThirdPartiesOutput"
   - name: listUsers
     description: List all users for the organization
     hints:
@@ -10794,128 +11946,137 @@ tools:
     description: Remove a user from the organization
     hints:
       readonly: false
+      destructive: true
     inputSchema:
       $ref: "#/components/schemas/RemoveUserInput"
     outputSchema:
       $ref: "#/components/schemas/RemoveUserOutput"
-  - name: addVendor
-    description: Add a new vendor to the organization
+  - name: archiveUser
+    description: Archive a user in the organization
     hints:
       readonly: false
     inputSchema:
-      $ref: "#/components/schemas/AddVendorInput"
+      $ref: "#/components/schemas/ArchiveUserInput"
     outputSchema:
-      $ref: "#/components/schemas/AddVendorOutput"
-  - name: updateVendor
-    description: Update an existing vendor
+      $ref: "#/components/schemas/ArchiveUserOutput"
+  - name: addThirdParty
+    description: Add a new thirdParty to the organization
     hints:
       readonly: false
     inputSchema:
-      $ref: "#/components/schemas/UpdateVendorInput"
+      $ref: "#/components/schemas/AddThirdPartyInput"
     outputSchema:
-      $ref: "#/components/schemas/UpdateVendorOutput"
-  - name: listVendorRiskAssessments
-    description: List all risk assessments for a vendor
+      $ref: "#/components/schemas/AddThirdPartyOutput"
+  - name: updateThirdParty
+    description: Update an existing thirdParty
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/UpdateThirdPartyInput"
+    outputSchema:
+      $ref: "#/components/schemas/UpdateThirdPartyOutput"
+  - name: listThirdPartyRiskAssessments
+    description: List all risk assessments for a thirdParty
     hints:
       readonly: true
       idempotent: true
     inputSchema:
-      $ref: "#/components/schemas/ListVendorRiskAssessmentsInput"
+      $ref: "#/components/schemas/ListThirdPartyRiskAssessmentsInput"
     outputSchema:
-      $ref: "#/components/schemas/ListVendorRiskAssessmentsOutput"
-  - name: addVendorRiskAssessment
-    description: Add a new risk assessment for a vendor
+      $ref: "#/components/schemas/ListThirdPartyRiskAssessmentsOutput"
+  - name: addThirdPartyRiskAssessment
+    description: Add a new risk assessment for a thirdParty
     hints:
       readonly: false
     inputSchema:
-      $ref: "#/components/schemas/AddVendorRiskAssessmentInput"
+      $ref: "#/components/schemas/AddThirdPartyRiskAssessmentInput"
     outputSchema:
-      $ref: "#/components/schemas/AddVendorRiskAssessmentOutput"
-  - name: deleteVendor
-    description: Delete a vendor
+      $ref: "#/components/schemas/AddThirdPartyRiskAssessmentOutput"
+  - name: deleteThirdParty
+    description: Delete a thirdParty
     hints:
       readonly: false
       destructive: true
     inputSchema:
-      $ref: "#/components/schemas/DeleteVendorInput"
+      $ref: "#/components/schemas/DeleteThirdPartyInput"
     outputSchema:
-      $ref: "#/components/schemas/DeleteVendorOutput"
-  - name: listVendorContacts
-    description: List all contacts for a vendor
+      $ref: "#/components/schemas/DeleteThirdPartyOutput"
+  - name: listThirdPartyContacts
+    description: List all contacts for a thirdParty
     hints:
       readonly: true
       idempotent: true
     inputSchema:
-      $ref: "#/components/schemas/ListVendorContactsInput"
+      $ref: "#/components/schemas/ListThirdPartyContactsInput"
     outputSchema:
-      $ref: "#/components/schemas/ListVendorContactsOutput"
-  - name: addVendorContact
-    description: Add a new contact to a vendor
+      $ref: "#/components/schemas/ListThirdPartyContactsOutput"
+  - name: addThirdPartyContact
+    description: Add a new contact to a thirdParty
     hints:
       readonly: false
     inputSchema:
-      $ref: "#/components/schemas/AddVendorContactInput"
+      $ref: "#/components/schemas/AddThirdPartyContactInput"
     outputSchema:
-      $ref: "#/components/schemas/AddVendorContactOutput"
-  - name: updateVendorContact
-    description: Update an existing vendor contact
+      $ref: "#/components/schemas/AddThirdPartyContactOutput"
+  - name: updateThirdPartyContact
+    description: Update an existing thirdParty contact
     hints:
       readonly: false
     inputSchema:
-      $ref: "#/components/schemas/UpdateVendorContactInput"
+      $ref: "#/components/schemas/UpdateThirdPartyContactInput"
     outputSchema:
-      $ref: "#/components/schemas/UpdateVendorContactOutput"
-  - name: deleteVendorContact
-    description: Delete a vendor contact
+      $ref: "#/components/schemas/UpdateThirdPartyContactOutput"
+  - name: deleteThirdPartyContact
+    description: Delete a thirdParty contact
     hints:
       readonly: false
       destructive: true
     inputSchema:
-      $ref: "#/components/schemas/DeleteVendorContactInput"
+      $ref: "#/components/schemas/DeleteThirdPartyContactInput"
     outputSchema:
-      $ref: "#/components/schemas/DeleteVendorContactOutput"
-  - name: listVendorServices
-    description: List all services for a vendor
+      $ref: "#/components/schemas/DeleteThirdPartyContactOutput"
+  - name: listThirdPartyServices
+    description: List all services for a thirdParty
     hints:
       readonly: true
       idempotent: true
     inputSchema:
-      $ref: "#/components/schemas/ListVendorServicesInput"
+      $ref: "#/components/schemas/ListThirdPartyServicesInput"
     outputSchema:
-      $ref: "#/components/schemas/ListVendorServicesOutput"
-  - name: addVendorService
-    description: Add a new service to a vendor
+      $ref: "#/components/schemas/ListThirdPartyServicesOutput"
+  - name: addThirdPartyService
+    description: Add a new service to a thirdParty
     hints:
       readonly: false
     inputSchema:
-      $ref: "#/components/schemas/AddVendorServiceInput"
+      $ref: "#/components/schemas/AddThirdPartyServiceInput"
     outputSchema:
-      $ref: "#/components/schemas/AddVendorServiceOutput"
-  - name: updateVendorService
-    description: Update an existing vendor service
+      $ref: "#/components/schemas/AddThirdPartyServiceOutput"
+  - name: updateThirdPartyService
+    description: Update an existing thirdParty service
     hints:
       readonly: false
     inputSchema:
-      $ref: "#/components/schemas/UpdateVendorServiceInput"
+      $ref: "#/components/schemas/UpdateThirdPartyServiceInput"
     outputSchema:
-      $ref: "#/components/schemas/UpdateVendorServiceOutput"
-  - name: deleteVendorService
-    description: Delete a vendor service
+      $ref: "#/components/schemas/UpdateThirdPartyServiceOutput"
+  - name: deleteThirdPartyService
+    description: Delete a thirdParty service
     hints:
       readonly: false
       destructive: true
     inputSchema:
-      $ref: "#/components/schemas/DeleteVendorServiceInput"
+      $ref: "#/components/schemas/DeleteThirdPartyServiceInput"
     outputSchema:
-      $ref: "#/components/schemas/DeleteVendorServiceOutput"
-  - name: assessVendor
-    description: Run an AI-powered assessment on a vendor by crawling its website. Returns a markdown report, the discovered sub-processors, and an enriched vendor record. Long-running (up to 20 minutes).
+      $ref: "#/components/schemas/DeleteThirdPartyServiceOutput"
+  - name: vetThirdParty
+    description: Start AI-powered vetting of a third party by crawling its website. Returns immediately; vetting runs in the background.
     hints:
       readonly: false
     inputSchema:
-      $ref: "#/components/schemas/AssessVendorInput"
+      $ref: "#/components/schemas/VetThirdPartyInput"
     outputSchema:
-      $ref: "#/components/schemas/AssessVendorOutput"
+      $ref: "#/components/schemas/VetThirdPartyOutput"
   - name: listRisks
     description: List all risks for the organization
     hints:
@@ -11039,7 +12200,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/ListMeasureEvidencesOutput"
   - name: linkMeasure
-    description: Link a measure to a resource (control, risk, or document). The resource type is determined from the resource_id GID.
+    description: Link a measure to a resource (control, risk, document, or third party). The resource type is determined from the resource_id GID.
     hints:
       readonly: false
     inputSchema:
@@ -11047,7 +12208,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/LinkMeasureOutput"
   - name: unlinkMeasure
-    description: Unlink a measure from a resource (control, risk, or document). The resource type is determined from the resource_id GID.
+    description: Unlink a measure from a resource (control, risk, document, or third party). The resource type is determined from the resource_id GID.
     hints:
       readonly: false
     inputSchema:
@@ -11888,14 +13049,14 @@ tools:
       $ref: "#/components/schemas/PublishTransferImpactAssessmentListInput"
     outputSchema:
       $ref: "#/components/schemas/PublishTransferImpactAssessmentListOutput"
-  - name: publishVendorList
-    description: Publish the vendor register for an organization as a document. If a document already exists, a new version is created.
+  - name: publishThirdPartyList
+    description: Publish the thirdParty register for an organization as a document. If a document already exists, a new version is created.
     hints:
       readonly: false
     inputSchema:
-      $ref: "#/components/schemas/PublishVendorListInput"
+      $ref: "#/components/schemas/PublishThirdPartyListInput"
     outputSchema:
-      $ref: "#/components/schemas/PublishVendorListOutput"
+      $ref: "#/components/schemas/PublishThirdPartyListOutput"
   - name: publishRiskList
     description: Publish the risk register for an organization as a document. If a document already exists, a new version is created.
     hints:
@@ -12706,3 +13867,302 @@ tools:
       $ref: "#/components/schemas/ListSCIMEventsInput"
     outputSchema:
       $ref: "#/components/schemas/ListSCIMEventsOutput"
+  - name: listRiskAssessments
+    description: List all risk assessments for an organization
+    hints:
+      readonly: true
+      idempotent: true
+    inputSchema:
+      $ref: "#/components/schemas/ListRiskAssessmentsInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListRiskAssessmentsOutput"
+  - name: getRiskAssessment
+    description: Get a risk assessment by ID
+    hints:
+      readonly: true
+      idempotent: true
+    inputSchema:
+      $ref: "#/components/schemas/GetRiskAssessmentInput"
+    outputSchema:
+      $ref: "#/components/schemas/GetRiskAssessmentOutput"
+  - name: addRiskAssessment
+    description: Create a new risk assessment
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/AddRiskAssessmentInput"
+    outputSchema:
+      $ref: "#/components/schemas/AddRiskAssessmentOutput"
+  - name: updateRiskAssessment
+    description: Update an existing risk assessment
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/UpdateRiskAssessmentInput"
+    outputSchema:
+      $ref: "#/components/schemas/UpdateRiskAssessmentOutput"
+  - name: deleteRiskAssessment
+    description: Delete a risk assessment
+    hints:
+      readonly: false
+      destructive: true
+    inputSchema:
+      $ref: "#/components/schemas/DeleteRiskAssessmentInput"
+    outputSchema:
+      $ref: "#/components/schemas/DeleteRiskAssessmentOutput"
+  - name: listRiskAssessmentScopes
+    description: List all scopes for a risk assessment
+    hints:
+      readonly: true
+      idempotent: true
+    inputSchema:
+      $ref: "#/components/schemas/ListRiskAssessmentScopesInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListRiskAssessmentScopesOutput"
+  - name: getRiskAssessmentScope
+    description: Get a risk assessment scope by ID
+    hints:
+      readonly: true
+      idempotent: true
+    inputSchema:
+      $ref: "#/components/schemas/GetRiskAssessmentScopeInput"
+    outputSchema:
+      $ref: "#/components/schemas/GetRiskAssessmentScopeOutput"
+  - name: getRiskAssessmentScopeMermaidChart
+    description: Get the Mermaid chart for a risk assessment scope
+    hints:
+      readonly: true
+      idempotent: true
+    inputSchema:
+      $ref: "#/components/schemas/GetRiskAssessmentScopeMermaidChartInput"
+    outputSchema:
+      $ref: "#/components/schemas/GetRiskAssessmentScopeMermaidChartOutput"
+  - name: addRiskAssessmentScope
+    description: Create a new risk assessment scope
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/AddRiskAssessmentScopeInput"
+    outputSchema:
+      $ref: "#/components/schemas/AddRiskAssessmentScopeOutput"
+  - name: updateRiskAssessmentScope
+    description: Update an existing risk assessment scope
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/UpdateRiskAssessmentScopeInput"
+    outputSchema:
+      $ref: "#/components/schemas/UpdateRiskAssessmentScopeOutput"
+  - name: deleteRiskAssessmentScope
+    description: Delete a risk assessment scope
+    hints:
+      readonly: false
+      destructive: true
+    inputSchema:
+      $ref: "#/components/schemas/DeleteRiskAssessmentScopeInput"
+    outputSchema:
+      $ref: "#/components/schemas/DeleteRiskAssessmentScopeOutput"
+  - name: listRiskAssessmentNodes
+    description: List all nodes for a risk assessment scope
+    hints:
+      readonly: true
+      idempotent: true
+    inputSchema:
+      $ref: "#/components/schemas/ListRiskAssessmentNodesInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListRiskAssessmentNodesOutput"
+  - name: getRiskAssessmentNode
+    description: Get a risk assessment node by ID
+    hints:
+      readonly: true
+      idempotent: true
+    inputSchema:
+      $ref: "#/components/schemas/GetRiskAssessmentNodeInput"
+    outputSchema:
+      $ref: "#/components/schemas/GetRiskAssessmentNodeOutput"
+  - name: addRiskAssessmentNode
+    description: Create a new risk assessment node
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/AddRiskAssessmentNodeInput"
+    outputSchema:
+      $ref: "#/components/schemas/AddRiskAssessmentNodeOutput"
+  - name: updateRiskAssessmentNode
+    description: Update an existing risk assessment node
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/UpdateRiskAssessmentNodeInput"
+    outputSchema:
+      $ref: "#/components/schemas/UpdateRiskAssessmentNodeOutput"
+  - name: deleteRiskAssessmentNode
+    description: Delete a risk assessment node
+    hints:
+      readonly: false
+      destructive: true
+    inputSchema:
+      $ref: "#/components/schemas/DeleteRiskAssessmentNodeInput"
+    outputSchema:
+      $ref: "#/components/schemas/DeleteRiskAssessmentNodeOutput"
+  - name: listRiskAssessmentProcesses
+    description: List all processes for a risk assessment scope
+    hints:
+      readonly: true
+      idempotent: true
+    inputSchema:
+      $ref: "#/components/schemas/ListRiskAssessmentProcessesInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListRiskAssessmentProcessesOutput"
+  - name: getRiskAssessmentProcess
+    description: Get a risk assessment process by ID
+    hints:
+      readonly: true
+      idempotent: true
+    inputSchema:
+      $ref: "#/components/schemas/GetRiskAssessmentProcessInput"
+    outputSchema:
+      $ref: "#/components/schemas/GetRiskAssessmentProcessOutput"
+  - name: addRiskAssessmentProcess
+    description: Create a new risk assessment process
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/AddRiskAssessmentProcessInput"
+    outputSchema:
+      $ref: "#/components/schemas/AddRiskAssessmentProcessOutput"
+  - name: updateRiskAssessmentProcess
+    description: Update an existing risk assessment process
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/UpdateRiskAssessmentProcessInput"
+    outputSchema:
+      $ref: "#/components/schemas/UpdateRiskAssessmentProcessOutput"
+  - name: deleteRiskAssessmentProcess
+    description: Delete a risk assessment process
+    hints:
+      readonly: false
+      destructive: true
+    inputSchema:
+      $ref: "#/components/schemas/DeleteRiskAssessmentProcessInput"
+    outputSchema:
+      $ref: "#/components/schemas/DeleteRiskAssessmentProcessOutput"
+  - name: listRiskAssessmentThreats
+    description: List all threats for a risk assessment scope
+    hints:
+      readonly: true
+      idempotent: true
+    inputSchema:
+      $ref: "#/components/schemas/ListRiskAssessmentThreatsInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListRiskAssessmentThreatsOutput"
+  - name: getRiskAssessmentThreat
+    description: Get a risk assessment threat by ID
+    hints:
+      readonly: true
+      idempotent: true
+    inputSchema:
+      $ref: "#/components/schemas/GetRiskAssessmentThreatInput"
+    outputSchema:
+      $ref: "#/components/schemas/GetRiskAssessmentThreatOutput"
+  - name: addRiskAssessmentThreat
+    description: Create a new risk assessment threat
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/AddRiskAssessmentThreatInput"
+    outputSchema:
+      $ref: "#/components/schemas/AddRiskAssessmentThreatOutput"
+  - name: updateRiskAssessmentThreat
+    description: Update an existing risk assessment threat
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/UpdateRiskAssessmentThreatInput"
+    outputSchema:
+      $ref: "#/components/schemas/UpdateRiskAssessmentThreatOutput"
+  - name: deleteRiskAssessmentThreat
+    description: Delete a risk assessment threat
+    hints:
+      readonly: false
+      destructive: true
+    inputSchema:
+      $ref: "#/components/schemas/DeleteRiskAssessmentThreatInput"
+    outputSchema:
+      $ref: "#/components/schemas/DeleteRiskAssessmentThreatOutput"
+  - name: listRiskAssessmentScenarios
+    description: List all scenarios for a risk assessment scope
+    hints:
+      readonly: true
+      idempotent: true
+    inputSchema:
+      $ref: "#/components/schemas/ListRiskAssessmentScenariosInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListRiskAssessmentScenariosOutput"
+  - name: getRiskAssessmentScenario
+    description: Get a risk assessment scenario by ID
+    hints:
+      readonly: true
+      idempotent: true
+    inputSchema:
+      $ref: "#/components/schemas/GetRiskAssessmentScenarioInput"
+    outputSchema:
+      $ref: "#/components/schemas/GetRiskAssessmentScenarioOutput"
+  - name: addRiskAssessmentScenario
+    description: Create a new risk assessment scenario
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/AddRiskAssessmentScenarioInput"
+    outputSchema:
+      $ref: "#/components/schemas/AddRiskAssessmentScenarioOutput"
+  - name: updateRiskAssessmentScenario
+    description: Update an existing risk assessment scenario
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/UpdateRiskAssessmentScenarioInput"
+    outputSchema:
+      $ref: "#/components/schemas/UpdateRiskAssessmentScenarioOutput"
+  - name: deleteRiskAssessmentScenario
+    description: Delete a risk assessment scenario
+    hints:
+      readonly: false
+      destructive: true
+    inputSchema:
+      $ref: "#/components/schemas/DeleteRiskAssessmentScenarioInput"
+    outputSchema:
+      $ref: "#/components/schemas/DeleteRiskAssessmentScenarioOutput"
+  - name: linkRiskAssessmentScenarioThreat
+    description: Link a threat to a risk assessment scenario
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/LinkRiskAssessmentScenarioThreatInput"
+    outputSchema:
+      $ref: "#/components/schemas/LinkRiskAssessmentScenarioThreatOutput"
+  - name: unlinkRiskAssessmentScenarioThreat
+    description: Unlink a threat from a risk assessment scenario
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/UnlinkRiskAssessmentScenarioThreatInput"
+    outputSchema:
+      $ref: "#/components/schemas/UnlinkRiskAssessmentScenarioThreatOutput"
+  - name: linkRiskAssessmentScenarioRisk
+    description: Link a risk to a risk assessment scenario
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/LinkRiskAssessmentScenarioRiskInput"
+    outputSchema:
+      $ref: "#/components/schemas/LinkRiskAssessmentScenarioRiskOutput"
+  - name: unlinkRiskAssessmentScenarioRisk
+    description: Unlink a risk from a risk assessment scenario
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/UnlinkRiskAssessmentScenarioRiskInput"
+    outputSchema:
+      $ref: "#/components/schemas/UnlinkRiskAssessmentScenarioRiskOutput"

@@ -75,6 +75,7 @@ func TestOutputType_responseFormat(t *testing.T) {
 
 	ot, err := NewOutputType[Verdict]("verdict")
 	require.NoError(t, err)
+
 	rf := ot.responseFormat()
 
 	require.NotNil(t, rf)
@@ -96,6 +97,7 @@ func TestOutputType_responseFormat_SchemaMatchesOutputType(t *testing.T) {
 
 	ot, err := NewOutputType[Analysis]("analysis")
 	require.NoError(t, err)
+
 	rf := ot.responseFormat()
 
 	var schema map[string]any

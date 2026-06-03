@@ -63,17 +63,16 @@ func newOrchestratorAgent(
 	maxTokens int,
 	procedure string,
 	logger *log.Logger,
-	vendorBrowser *browser.Browser,
-	researchBrowser *browser.Browser,
-	searchEndpoint string,
+	webBrowser *browser.Browser,
+	firecrawlAPIKey string,
 	reporter agent.ProgressReporter,
+	extraTools []agent.Tool,
 ) (*agent.Agent, error) {
-	readOnlyBrowserTools := browser.NewReadOnlyToolset(vendorBrowser).Tools()
+	readOnlyBrowserTools := browser.NewReadOnlyToolset(webBrowser).Tools()
 
-	// Unrestricted browser tools for sub-agents that need to follow links
-	// to external sites (subprocessor lists hosted on OneTrust/Transcend,
-	// research, vendor comparison).
-	unrestrictedBrowserTools := browser.NewInteractiveToolset(researchBrowser).Tools()
+	// Interactive browser tools for sub-agents that follow links off the
+	// vendor site (subprocessor lists on OneTrust/Transcend, research).
+	unrestrictedBrowserTools := browser.NewInteractiveToolset(webBrowser).Tools()
 
 	securityTools := security.NewToolset().Tools()
 
@@ -85,27 +84,30 @@ func newOrchestratorAgent(
 		if reporter != nil {
 			opts = append(opts, agent.WithHooks(newSubProgressHooks(reporter, step)))
 		}
+
 		return opts
 	}
+
+	hasFirecrawl := firecrawlAPIKey != ""
 
 	// Subprocessor agent benefits from web search when available so it can
 	// find subprocessor pages hosted on third-party platforms.
 	subprocessorTools := unrestrictedBrowserTools
-	if searchEndpoint != "" {
-		subprocessorTools = append(subprocessorTools, search.WebSearchTool(searchEndpoint))
+	if hasFirecrawl {
+		subprocessorTools = append(subprocessorTools, search.FirecrawlSearchTool(firecrawlAPIKey))
 	}
 
 	// Core sub-agents that always run.
 	entries := []subAgentEntry{
 		{
-			toolName:    "crawl_vendor_website",
-			description: "Crawl a vendor website to discover security, compliance, privacy, and legal pages. Returns structured JSON with categorized URLs (vendor_name, vendor_domain, discovered_urls, notes). Input: the vendor's main website URL.",
+			toolName:    "crawl_third_party_website",
+			description: "Crawl a thirdParty website to discover security, compliance, privacy, and legal pages. Returns structured JSON with categorized URLs (third_party_name, third_party_domain, discovered_urls, notes). Input: the thirdParty's main website URL.",
 			tools:       readOnlyBrowserTools,
 			build:       buildCrawlerAgent,
 		},
 		{
 			toolName:    "assess_security",
-			description: "Perform technical security checks on a domain. Returns structured JSON with per-check results (ssl, headers, dmarc, spf, breaches, dnssec, csp, cors, dns, whois) each with status (pass/warning/fail/error) and details. Input: the vendor's domain name (e.g. example.com).",
+			description: "Perform technical security checks on a domain. Returns structured JSON with per-check results (ssl, headers, dmarc, spf, breaches, dnssec, csp, cors, dns, whois) each with status (pass/warning/fail/error) and details. Input: the thirdParty's domain name (e.g. example.com).",
 			tools:       securityTools,
 			build:       buildSecurityAgent,
 		},
@@ -123,13 +125,13 @@ func newOrchestratorAgent(
 		},
 		{
 			toolName:    "assess_market_presence",
-			description: "Analyze a vendor's market presence. Returns structured JSON with notable_customers, case_studies, partnerships, company_size_signals, funding_info, and market_position. Input: the vendor's main website URL.",
+			description: "Analyze a thirdParty's market presence. Returns structured JSON with notable_customers, case_studies, partnerships, company_size_signals, funding_info, and market_position. Input: the thirdParty's main website URL.",
 			tools:       readOnlyBrowserTools,
 			build:       buildMarketAgent,
 		},
 		{
 			toolName:    "extract_subprocessors",
-			description: "Find and extract the list of sub-processors from a vendor's website. Returns structured JSON with subprocessors (name, country, purpose), total_count, and source. Input: the vendor's main website URL or a known subprocessors page URL.",
+			description: "Find and extract the list of sub-processors from a thirdParty's website. Returns structured JSON with subprocessors (name, country, purpose), total_count, and source. Input: the thirdParty's main website URL or a known subprocessors page URL.",
 			tools:       subprocessorTools,
 			build:       buildSubprocessorAgent,
 		},
@@ -171,12 +173,12 @@ func newOrchestratorAgent(
 		},
 	}
 
-	// Optional sub-agents: only added when a search endpoint is configured.
-	if searchEndpoint != "" {
-		researchBrowserTools := browser.NewInteractiveToolset(researchBrowser).Tools()
+	// Optional sub-agents: only added when Firecrawl is configured.
+	if hasFirecrawl {
+		researchBrowserTools := browser.NewInteractiveToolset(webBrowser).Tools()
 
-		searchTool := search.WebSearchTool(searchEndpoint)
-		govDBTool := search.CheckGovernmentDBTool(searchEndpoint)
+		searchTool := search.FirecrawlSearchTool(firecrawlAPIKey)
+		govDBTool := search.CheckGovernmentDBTool(firecrawlAPIKey)
 		waybackTool := search.CheckWaybackTool()
 		diffTool := search.DiffDocumentsTool()
 
@@ -188,6 +190,7 @@ func newOrchestratorAgent(
 			out := make([]agent.Tool, 0, len(extra)+len(researchBrowserTools))
 			out = append(out, extra...)
 			out = append(out, researchBrowserTools...)
+
 			return out
 		}
 
@@ -198,44 +201,48 @@ func newOrchestratorAgent(
 
 		entries = append(entries,
 			subAgentEntry{
-				toolName:    "research_vendor_externally",
-				description: "Search the open web for external signals about the vendor. Returns structured JSON with security_incidents, regulatory_actions, customer_sentiment, recent_news, red_flags, and positive_signals. Input: the vendor's name and domain.",
+				toolName:    "research_third_party_externally",
+				description: "Search the open web for external signals about the thirdParty. Returns structured JSON with security_incidents, regulatory_actions, customer_sentiment, recent_news, red_flags, and positive_signals. Input: the thirdParty's name and domain.",
 				tools:       websearchTools,
 				build:       buildWebsearchAgent,
 			},
 			subAgentEntry{
 				toolName:    "assess_financial_stability",
-				description: "Evaluate vendor financial stability. Returns structured JSON with company_age, funding, employee_count, legal_standing, ownership, risk_signals, overall_assessment, and confidence. Input: vendor name and website URL.",
+				description: "Evaluate thirdParty financial stability. Returns structured JSON with company_age, funding, employee_count, legal_standing, ownership, risk_signals, overall_assessment, and confidence. Input: thirdParty name and website URL.",
 				tools:       financialTools,
 				build:       buildFinancialStabilityAgent,
 			},
 			subAgentEntry{
 				toolName:    "assess_code_security",
-				description: "Evaluate open-source code security posture. Returns structured JSON with has_public_repos, security_advisories, dependency_management, release_cadence, security_policy, overall_assessment, and risk_signals. Input: vendor name and website URL.",
+				description: "Evaluate open-source code security posture. Returns structured JSON with has_public_repos, security_advisories, dependency_management, release_cadence, security_policy, overall_assessment, and risk_signals. Input: thirdParty name and website URL.",
 				tools:       codeSecurityTools,
 				build:       buildCodeSecurityAgent,
 			},
 			subAgentEntry{
-				toolName:    "compare_vendor",
-				description: "Find and compare alternative vendors. Returns structured JSON with alternatives (name, certifications, security_score), comparison_summary, vendor_strengths, vendor_weaknesses, and overall_position. Input: vendor name, category, and website URL.",
+				toolName:    "compare_thirdParty",
+				description: "Find and compare alternative thirdParties. Returns structured JSON with alternatives (name, certifications, security_score), comparison_summary, third_party_strengths, third_party_weaknesses, and overall_position. Input: thirdParty name, category, and website URL.",
 				tools:       comparisonTools,
-				build:       buildVendorComparisonAgent,
+				build:       buildThirdPartyComparisonAgent,
 			},
 		)
 	}
 
-	tools := make([]agent.Tool, 0, len(entries))
+	tools := make([]agent.Tool, 0, len(entries)+len(extraTools))
 	for _, e := range entries {
 		ag, err := e.build(client, model, e.tools, subAgentOpts(e.toolName)...)
 		if err != nil {
 			return nil, fmt.Errorf("cannot create %s sub-agent: %w", e.toolName, err)
 		}
+
 		tools = append(tools, ag.AsTool(e.toolName, e.description))
 	}
+
+	tools = append(tools, extraTools...)
 
 	if procedure == "" {
 		procedure = defaultProcedure
 	}
+
 	systemPrompt := strings.Replace(orchestratorBasePrompt, "{procedure}", procedure, 1)
 
 	opts := []agent.Option{
@@ -254,7 +261,7 @@ func newOrchestratorAgent(
 	}
 
 	return agent.New(
-		"vendor_assessment_orchestrator",
+		"third_party_assessment_orchestrator",
 		client,
 		opts...,
 	), nil

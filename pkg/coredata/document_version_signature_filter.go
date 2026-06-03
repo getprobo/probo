@@ -22,13 +22,15 @@ type (
 	DocumentVersionSignatureFilter struct {
 		states         DocumentVersionSignatureStates
 		activeContract *bool
+		state          *ProfileState
 	}
 )
 
-func NewDocumentVersionSignatureFilter(states []DocumentVersionSignatureState, activeContract *bool) *DocumentVersionSignatureFilter {
+func NewDocumentVersionSignatureFilter(states []DocumentVersionSignatureState, activeContract *bool, state *ProfileState) *DocumentVersionSignatureFilter {
 	return &DocumentVersionSignatureFilter{
 		states:         DocumentVersionSignatureStates(states),
 		activeContract: activeContract,
+		state:          state,
 	}
 }
 
@@ -36,6 +38,7 @@ func (f *DocumentVersionSignatureFilter) SQLArguments() pgx.StrictNamedArgs {
 	return pgx.StrictNamedArgs{
 		"states":          f.states,
 		"active_contract": f.activeContract,
+		"profile_state":   f.state,
 	}
 }
 
@@ -59,15 +62,26 @@ func (f *DocumentVersionSignatureFilter) SQLFragment() string {
             (
                 @active_contract::boolean = TRUE
                 AND (
-                    p.contract_end_date IS NULL OR p.contract_end_date > NOW()
+                    p.contract_end_date IS NULL OR p.contract_end_date >= CURRENT_DATE
                 )
             ) OR (
                 @active_contract::boolean = FALSE
                 AND (
-                    p.contract_end_date IS NOT NULL AND p.contract_end_date <= NOW()
+                    p.contract_end_date IS NOT NULL AND p.contract_end_date < CURRENT_DATE
                 )
             )
         )
+    )
+    END
+    AND
+    CASE
+    WHEN @profile_state::text IS NULL
+        THEN TRUE
+    ELSE EXISTS (
+        SELECT 1
+        FROM iam_membership_profiles p
+        WHERE p.id = signed_by_profile_id
+        AND p.state = @profile_state::membership_state
     )
     END
 )`

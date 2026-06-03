@@ -1,6 +1,6 @@
 {
   "name": "@probo/cookie-banner",
-  "version": "0.4.0",
+  "version": "0.7.0",
   "description": "Probo cookie consent banner SDK",
   "type": "module",
   "main": "dist/cookie-banner.mjs",
@@ -16,6 +16,11 @@
       "types": "./dist/headless/index.d.ts",
       "import": "./dist/cookie-banner-headless.mjs",
       "default": "./dist/cookie-banner-headless.mjs"
+    },
+    "./consent": {
+      "types": "./dist/consent.d.ts",
+      "import": "./dist/cookie-banner-consent.mjs",
+      "default": "./dist/cookie-banner-consent.mjs"
     }
   },
   "scripts": {

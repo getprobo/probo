@@ -22,6 +22,7 @@ import (
 
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/connector/provider"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/cipher"
 	"go.probo.inc/probo/pkg/gid"
@@ -39,6 +40,7 @@ type (
 		scope             coredata.Scoper
 		encryptionKey     cipher.EncryptionKey
 		connectorRegistry *connector.ConnectorRegistry
+		providerRegistry  *provider.Registry
 	}
 
 	CreateAccessSourceRequest struct {
@@ -188,6 +190,7 @@ func (s AccessSourceService) Update(
 						return fmt.Errorf("cannot load connector: %w", err)
 					}
 				}
+
 				source.ConnectorID = *req.ConnectorID
 			}
 
@@ -215,12 +218,71 @@ func (s AccessSourceService) Delete(
 	ctx context.Context,
 	accessSourceID gid.GID,
 ) error {
-	source := &coredata.AccessSource{ID: accessSourceID}
+	source := &coredata.AccessSource{}
 
 	return s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
-			return source.Delete(ctx, conn, s.scope)
+			if err := source.LoadByID(ctx, conn, s.scope, accessSourceID); err != nil {
+				return fmt.Errorf("cannot load access source: %w", err)
+			}
+
+			if err := source.Delete(ctx, conn, s.scope); err != nil {
+				return fmt.Errorf("cannot delete access source: %w", err)
+			}
+
+			// Garbage-collect the underlying connector once nothing else
+			// references it. The connectors table is unique per
+			// (organization_id, provider), so leaving an orphaned connector
+			// behind would block re-adding a source for the same provider.
+			if source.ConnectorID == nil {
+				return nil
+			}
+
+			accessSources := &coredata.AccessSources{}
+
+			sourceCount, err := accessSources.CountByConnectorID(ctx, conn, s.scope, *source.ConnectorID)
+			if err != nil {
+				return fmt.Errorf("cannot count access sources for connector: %w", err)
+			}
+
+			if sourceCount > 0 {
+				return nil
+			}
+
+			bridges := &coredata.SCIMBridges{}
+
+			bridgeCount, err := bridges.CountByConnectorID(ctx, conn, s.scope, *source.ConnectorID)
+			if err != nil {
+				return fmt.Errorf("cannot count scim bridges for connector: %w", err)
+			}
+
+			if bridgeCount > 0 {
+				return nil
+			}
+
+			// Garbage-collecting the connector is best-effort. A
+			// concurrent transaction may insert a new access source or
+			// SCIM bridge referencing this connector between the counts
+			// above and the DELETE, producing a foreign-key violation.
+			// Run the delete inside a savepoint so such a failure rolls
+			// back only the GC attempt and still commits the access
+			// source deletion instead of aborting the whole transaction.
+			if err := conn.Savepoint(
+				ctx,
+				func(ctx context.Context, conn pg.Tx) error {
+					cnnctr := &coredata.Connector{ID: *source.ConnectorID}
+					if err := cnnctr.Delete(ctx, conn, s.scope); err != nil {
+						return fmt.Errorf("cannot delete connector: %w", err)
+					}
+
+					return nil
+				},
+			); err != nil {
+				return err
+			}
+
+			return nil
 		},
 	)
 }
@@ -256,6 +318,7 @@ func (s AccessSourceService) CountForOrganizationID(
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			sources := coredata.AccessSources{}
 			count, err = sources.CountByOrganizationID(ctx, conn, s.scope, organizationID)
+
 			return err
 		},
 	)
@@ -300,6 +363,7 @@ func (s AccessSourceService) ConnectorHTTPClient(
 			if err := dbConnector.LoadByID(ctx, conn, s.scope, connectorID, s.encryptionKey); err != nil {
 				return fmt.Errorf("cannot load connector: %w", err)
 			}
+
 			return nil
 		},
 	)
@@ -308,16 +372,19 @@ func (s AccessSourceService) ConnectorHTTPClient(
 	}
 
 	var tokenBefore string
+
 	oauth2Conn, isOAuth2 := dbConnector.Connection.(*connector.OAuth2Connection)
 	if isOAuth2 {
 		tokenBefore = oauth2Conn.AccessToken
 	}
 
 	var httpClient *http.Client
+
 	if isOAuth2 && s.connectorRegistry != nil {
 		refreshCfg := s.connectorRegistry.GetOAuth2RefreshConfig(string(dbConnector.Provider))
 		if refreshCfg != nil {
 			var err error
+
 			httpClient, err = oauth2Conn.RefreshableClient(ctx, *refreshCfg)
 			if err != nil {
 				return nil, nil, fmt.Errorf("cannot create refreshable HTTP client: %w", err)
@@ -327,6 +394,7 @@ func (s AccessSourceService) ConnectorHTTPClient(
 
 	if httpClient == nil {
 		var err error
+
 		httpClient, err = dbConnector.Connection.Client(ctx)
 		if err != nil {
 			return nil, nil, fmt.Errorf("cannot create HTTP client: %w", err)
@@ -336,6 +404,7 @@ func (s AccessSourceService) ConnectorHTTPClient(
 	// Persist refreshed token if it changed.
 	if isOAuth2 && oauth2Conn.AccessToken != tokenBefore {
 		dbConnector.UpdatedAt = time.Now()
+
 		if err := s.pg.WithTx(
 			ctx,
 			func(ctx context.Context, tx pg.Tx) error {
@@ -375,21 +444,13 @@ func (s AccessSourceService) ConfigureAccessSource(
 				return fmt.Errorf("cannot load connector: %w", err)
 			}
 
-			switch dbConnector.Provider {
-			case coredata.ConnectorProviderGitHub:
-				if err := dbConnector.SetSettings(&coredata.GitHubConnectorSettings{
-					Organization: req.OrganizationSlug,
-				}); err != nil {
-					return fmt.Errorf("cannot set github settings: %w", err)
-				}
-			case coredata.ConnectorProviderSentry:
-				if err := dbConnector.SetSettings(&coredata.SentryConnectorSettings{
-					OrganizationSlug: req.OrganizationSlug,
-				}); err != nil {
-					return fmt.Errorf("cannot set sentry settings: %w", err)
-				}
-			default:
+			reg, ok := s.providerRegistry.Get(dbConnector.Provider)
+			if !ok || reg.SetOrganizationSettings == nil {
 				return fmt.Errorf("cannot configure access source: provider %s does not support organization configuration", dbConnector.Provider)
+			}
+
+			if err := reg.SetOrganizationSettings(dbConnector, req.OrganizationSlug); err != nil {
+				return fmt.Errorf("cannot set %s settings: %w", dbConnector.Provider, err)
 			}
 
 			dbConnector.UpdatedAt = time.Now()

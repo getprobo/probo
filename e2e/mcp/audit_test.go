@@ -95,7 +95,7 @@ func TestMCP_AuditLog(t *testing.T) {
 	orgID := owner.GetOrganizationID().String()
 
 	// Creating something generates audit log entries
-	factory.CreateVendor(owner)
+	factory.CreateThirdParty(owner)
 
 	var listResult struct {
 		AuditLogEntries []struct {

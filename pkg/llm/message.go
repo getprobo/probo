@@ -165,20 +165,24 @@ func (m *Message) UnmarshalJSON(data []byte) error {
 
 func (m Message) Text() string {
 	var s strings.Builder
+
 	for _, p := range m.Parts {
 		if tp, ok := p.(TextPart); ok {
 			s.WriteString(tp.Text)
 		}
 	}
+
 	return s.String()
 }
 
 func (m Message) Thinking() string {
 	var s strings.Builder
+
 	for _, p := range m.Parts {
 		if tp, ok := p.(ThinkingPart); ok {
 			s.WriteString(tp.Text)
 		}
 	}
+
 	return s.String()
 }

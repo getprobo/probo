@@ -35,8 +35,7 @@ func TestAfter(t *testing.T) {
 		err := After(future)(&past)
 		if err == nil {
 			t.Fatal("expected validation error")
-		}
-		if err.Code != ErrorCodeOutOfRange {
+		} else if err.Code != ErrorCodeOutOfRange {
 			t.Errorf("expected error code %s, got %s", ErrorCodeOutOfRange, err.Code)
 		}
 	})
@@ -50,6 +49,7 @@ func TestAfter(t *testing.T) {
 
 	t.Run("nil pointer", func(t *testing.T) {
 		var timeVal *time.Time
+
 		err := After(now)(timeVal)
 		if err != nil {
 			t.Errorf("expected no error for nil, got: %v", err)
@@ -73,8 +73,7 @@ func TestBefore(t *testing.T) {
 		err := Before(past)(&future)
 		if err == nil {
 			t.Fatal("expected validation error")
-		}
-		if err.Code != ErrorCodeOutOfRange {
+		} else if err.Code != ErrorCodeOutOfRange {
 			t.Errorf("expected error code %s, got %s", ErrorCodeOutOfRange, err.Code)
 		}
 	})
@@ -88,6 +87,7 @@ func TestBefore(t *testing.T) {
 
 	t.Run("nil pointer", func(t *testing.T) {
 		var timeVal *time.Time
+
 		err := Before(now)(timeVal)
 		if err != nil {
 			t.Errorf("expected no error for nil, got: %v", err)
@@ -101,6 +101,7 @@ func TestRangeDuration(t *testing.T) {
 
 	t.Run("duration within range", func(t *testing.T) {
 		duration := 30 * time.Minute
+
 		err := RangeDuration(minDuration, maxDuration)(&duration)
 		if err != nil {
 			t.Errorf("expected no error, got: %v", err)
@@ -109,6 +110,7 @@ func TestRangeDuration(t *testing.T) {
 
 	t.Run("duration at minimum", func(t *testing.T) {
 		duration := 10 * time.Minute
+
 		err := RangeDuration(minDuration, maxDuration)(&duration)
 		if err != nil {
 			t.Errorf("expected no error, got: %v", err)
@@ -117,6 +119,7 @@ func TestRangeDuration(t *testing.T) {
 
 	t.Run("duration at maximum", func(t *testing.T) {
 		duration := 1 * time.Hour
+
 		err := RangeDuration(minDuration, maxDuration)(&duration)
 		if err != nil {
 			t.Errorf("expected no error, got: %v", err)
@@ -125,28 +128,29 @@ func TestRangeDuration(t *testing.T) {
 
 	t.Run("duration below minimum", func(t *testing.T) {
 		duration := 5 * time.Minute
+
 		err := RangeDuration(minDuration, maxDuration)(&duration)
 		if err == nil {
 			t.Fatal("expected validation error")
-		}
-		if err.Code != ErrorCodeOutOfRange {
+		} else if err.Code != ErrorCodeOutOfRange {
 			t.Errorf("expected error code %s, got %s", ErrorCodeOutOfRange, err.Code)
 		}
 	})
 
 	t.Run("duration above maximum", func(t *testing.T) {
 		duration := 2 * time.Hour
+
 		err := RangeDuration(minDuration, maxDuration)(&duration)
 		if err == nil {
 			t.Fatal("expected validation error")
-		}
-		if err.Code != ErrorCodeOutOfRange {
+		} else if err.Code != ErrorCodeOutOfRange {
 			t.Errorf("expected error code %s, got %s", ErrorCodeOutOfRange, err.Code)
 		}
 	})
 
 	t.Run("nil pointer", func(t *testing.T) {
 		var duration *time.Duration
+
 		err := RangeDuration(minDuration, maxDuration)(duration)
 		if err != nil {
 			t.Errorf("expected no error for nil, got: %v", err)

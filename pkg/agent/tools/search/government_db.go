@@ -16,12 +16,7 @@ package search
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"io"
-	"net/http"
-	"net/url"
-	"time"
 
 	"go.probo.inc/probo/pkg/agent"
 )
@@ -48,8 +43,8 @@ type (
 	}
 )
 
-func CheckGovernmentDBTool(searchEndpoint string) agent.Tool {
-	client := &http.Client{Timeout: 15 * time.Second}
+func CheckGovernmentDBTool(apiKey string) agent.Tool {
+	client := newHTTPClient()
 
 	return agent.FunctionTool(
 		"check_government_databases",
@@ -92,73 +87,25 @@ func CheckGovernmentDBTool(searchEndpoint string) agent.Tool {
 			}
 
 			for _, s := range searches {
-				entries, err := searxngSearch(ctx, client, searchEndpoint, s.query, 3)
+				entries, err := firecrawlSearch(ctx, client, apiKey, s.query, 3)
 				if err != nil {
 					continue
 				}
+
 				for _, e := range entries {
-					*s.target = append(*s.target, govDBEntry{
-						Source:  s.source,
-						Title:   e.Title,
-						URL:     e.URL,
-						Snippet: e.Snippet,
-					})
+					*s.target = append(
+						*s.target,
+						govDBEntry{
+							Source:  s.source,
+							Title:   e.Title,
+							URL:     e.URL,
+							Snippet: e.Snippet,
+						},
+					)
 				}
 			}
 
 			return agent.ResultJSON(result), nil
 		},
 	)
-}
-
-func searxngSearch(ctx context.Context, client *http.Client, endpoint, query string, maxResults int) ([]searchResult, error) {
-	u, err := url.Parse(endpoint + "/search")
-	if err != nil {
-		return nil, err
-	}
-
-	q := u.Query()
-	q.Set("q", query)
-	q.Set("format", "json")
-	q.Set("categories", "general")
-	u.RawQuery = q.Encode()
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-
-	resp, err := client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer func() { _ = resp.Body.Close() }()
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("search returned status %d", resp.StatusCode)
-	}
-
-	var searxResp searxngResponse
-	if err := json.Unmarshal(body, &searxResp); err != nil {
-		return nil, err
-	}
-
-	results := make([]searchResult, 0, maxResults)
-	for i, r := range searxResp.Results {
-		if i >= maxResults {
-			break
-		}
-		results = append(results, searchResult{
-			Title:   r.Title,
-			URL:     r.URL,
-			Snippet: r.Content,
-		})
-	}
-
-	return results, nil
 }

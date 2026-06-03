@@ -40,6 +40,10 @@ enum ProfileOrderField
         @goEnum(
             value: "go.probo.inc/probo/pkg/coredata.MembershipProfileOrderFieldCreatedAt"
         )
+    EMAIL_ADDRESS
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.MembershipProfileOrderFieldEmailAddress"
+        )
     KIND @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipProfileOrderFieldKind")
 }
 
@@ -227,14 +231,6 @@ type Organization implements Node {
         filter: DocumentFilter
     ): DocumentConnection! @goField(forceResolver: true)
 
-    evidences(
-        first: Int
-        after: CursorKey
-        last: Int
-        before: CursorKey
-        orderBy: EvidenceOrder
-    ): EvidenceConnection! @goField(forceResolver: true)
-
     frameworks(
         first: Int
         after: CursorKey
@@ -291,6 +287,22 @@ type Organization implements Node {
 
     risksDocument: Document @goField(forceResolver: true)
 
+    riskAssessments(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: RiskAssessmentOrder
+    ): RiskAssessmentConnection! @goField(forceResolver: true)
+
+    riskAssessmentScenarios(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: RiskAssessmentScenarioOrder
+    ): RiskAssessmentScenarioConnection @goField(forceResolver: true)
+
     tasks(
         first: Int
         after: CursorKey
@@ -317,15 +329,16 @@ type Organization implements Node {
         orderBy: CookieBannerOrder
     ): CookieBannerConnection @goField(forceResolver: true)
 
-    vendors(
+    thirdParties(
         first: Int
         after: CursorKey
         last: Int
         before: CursorKey
-        orderBy: VendorOrder
-    ): VendorConnection! @goField(forceResolver: true)
+        orderBy: ThirdPartyOrder
+        filter: ThirdPartyFilter
+    ): ThirdPartyConnection! @goField(forceResolver: true)
 
-    vendorsDocument: Document @goField(forceResolver: true)
+    thirdPartiesDocument: Document @goField(forceResolver: true)
 
     webhookSubscriptions(
         first: Int

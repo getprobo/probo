@@ -215,6 +215,7 @@ func TestFramework_Create_Validation(t *testing.T) {
 			if !tt.skipOrganization {
 				input["organizationId"] = owner.GetOrganizationID().String()
 			}
+
 			maps.Copy(input, tt.input)
 
 			_, err := owner.Do(query, map[string]any{"input": input})
@@ -301,6 +302,7 @@ func TestFramework_Update(t *testing.T) {
 			require.NoError(t, err)
 
 			framework := result.UpdateFramework.Framework
+
 			switch tt.assertField {
 			case "name":
 				assert.Equal(t, tt.assertValue, framework.Name)
@@ -637,6 +639,7 @@ func TestFramework_Timestamps(t *testing.T) {
 
 	t.Run("updatedAt changes on update", func(t *testing.T) {
 		t.Skip("Skipped: server may not update timestamp immediately or has caching")
+
 		frameworkID := factory.NewFramework(owner).WithName("Timestamp Update Test").Create()
 
 		getQuery := `
@@ -1216,6 +1219,7 @@ func TestFramework_SubResolvers_WithData(t *testing.T) {
 		for i, edge := range result.Node.Controls.Edges {
 			controlIDs[i] = edge.Node.ID
 		}
+
 		assert.Contains(t, controlIDs, control1ID)
 		assert.Contains(t, controlIDs, control2ID)
 	})
@@ -1281,6 +1285,7 @@ func TestFramework_Pagination(t *testing.T) {
 		assert.GreaterOrEqual(t, result.Node.Frameworks.TotalCount, 5)
 
 		testutil.AssertHasMorePages(t, result.Node.Frameworks.PageInfo)
+
 		queryAfter := `
 			query($id: ID!, $after: CursorKey) {
 				node(id: $id) {
@@ -1464,7 +1469,6 @@ func TestFramework_TenantIsolation(t *testing.T) {
 		err := org2Owner.Execute(query, map[string]any{
 			"id": org1Owner.GetOrganizationID().String(),
 		}, &result)
-
 		if err == nil {
 			for _, edge := range result.Node.Frameworks.Edges {
 				assert.NotEqual(t, frameworkID, edge.Node.ID, "Should not see framework from another org")
@@ -1524,6 +1528,7 @@ func TestFramework_Ordering(t *testing.T) {
 		for i, edge := range result.Node.Frameworks.Edges {
 			times[i] = edge.Node.CreatedAt
 		}
+
 		testutil.AssertTimesOrderedDescending(t, times, "createdAt")
 	})
 }

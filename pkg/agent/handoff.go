@@ -53,6 +53,7 @@ func HandoffTo(agent *Agent, opts ...HandoffOption) *Handoff {
 	for _, opt := range opts {
 		opt(h)
 	}
+
 	return h
 }
 
@@ -84,6 +85,7 @@ func (h *Handoff) toolName() string {
 	if h.ToolName != "" {
 		return h.ToolName
 	}
+
 	return "transfer_to_" + sanitizeToolName(h.Agent.name)
 }
 

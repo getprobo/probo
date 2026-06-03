@@ -61,7 +61,7 @@ export function TrackerResourceRowEdit({
           placeholder={__("Display name")}
         />
       </Td>
-      <Td className="pr-3" colSpan={3}>
+      <Td className="pr-3" colSpan={4}>
         <div className="flex items-center gap-2">
           <Input
             {...register("description")}

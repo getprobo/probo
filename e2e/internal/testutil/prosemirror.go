@@ -32,9 +32,11 @@ func ProseMirrorTextDoc(text string) string {
 			},
 		},
 	}
+
 	b, err := json.Marshal(doc)
 	if err != nil {
 		panic(err)
 	}
+
 	return string(b)
 }

@@ -101,6 +101,7 @@ func NewCmdListApprovalQuorums(f *cmdutil.Factory) *cobra.Command {
 				); err != nil {
 					return err
 				}
+
 				if err := cmdutil.ValidateEnum(
 					"order-direction",
 					flagOrderDir,
@@ -108,6 +109,7 @@ func NewCmdListApprovalQuorums(f *cmdutil.Factory) *cobra.Command {
 				); err != nil {
 					return err
 				}
+
 				variables["orderBy"] = map[string]any{
 					"field":     flagOrderBy,
 					"direction": flagOrderDir,
@@ -129,12 +131,15 @@ func NewCmdListApprovalQuorums(f *cmdutil.Factory) *cobra.Command {
 					if err := json.Unmarshal(data, &resp); err != nil {
 						return nil, err
 					}
+
 					if resp.Node == nil {
 						return nil, fmt.Errorf("document version %s not found", args[0])
 					}
+
 					if resp.Node.Typename != "DocumentVersion" {
 						return nil, fmt.Errorf("expected DocumentVersion node, got %s", resp.Node.Typename)
 					}
+
 					return &resp.Node.ApprovalQuorums, nil
 				},
 			)

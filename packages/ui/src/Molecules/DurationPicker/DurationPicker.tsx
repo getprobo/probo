@@ -26,7 +26,7 @@ type Props = {
 } & HTMLAttributes<HTMLInputElement>;
 
 const stringify = (value: number | null, unit: string): string | null => {
-  if (value === null || value <= 0) return null;
+  if (value === null || !Number.isFinite(value) || value <= 0) return null;
 
   switch (unit) {
     case "M":
@@ -42,11 +42,11 @@ const stringify = (value: number | null, unit: string): string | null => {
   }
 };
 
-const parse = (value: string): { amount: number; unit: string } | null => {
-  const match = value.match(/PT?(\d+)([MDWH])/);
+const parse = (value: string): { amount: number; unit: string } => {
+  const match = value.match(/^P(?:T(\d+)([MH])|(\d+)([DW]))$/);
   if (!match) return { amount: 0, unit: "D" };
-  const amount = parseInt(match[1], 10) || 0;
-  const unit = match[2];
+  const amount = parseInt(match[1] ?? match[3] ?? "0", 10) || 0;
+  const unit = match[2] ?? match[4] ?? "D";
   if (amount % 7 === 0 && unit === "D") {
     return { amount: amount / 7, unit: "W" };
   }
@@ -67,7 +67,7 @@ export function DurationPicker({ value, onValueChange, ...props }: Props) {
     );
   }
 
-  const { amount, unit } = parse(value || "") || { amount: 0, unit: "D" };
+  const { amount, unit } = parse(value);
 
   return (
     <div className="flex gap-2 w-max">

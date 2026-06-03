@@ -34,11 +34,14 @@ func NewListStatementsOfApplicabilityOutput(pg *page.Page[*coredata.StatementOfA
 	for _, v := range pg.Data {
 		items = append(items, NewStatementOfApplicability(v))
 	}
+
 	var nextCursor *page.CursorKey
+
 	if len(pg.Data) > 0 {
 		cursorKey := pg.Data[len(pg.Data)-1].CursorKey(pg.Cursor.OrderBy.Field)
 		nextCursor = &cursorKey
 	}
+
 	return ListStatementsOfApplicabilityOutput{
 		NextCursor:                nextCursor,
 		StatementsOfApplicability: items,
@@ -63,11 +66,14 @@ func NewListApplicabilityStatementsOutput(pg *page.Page[*coredata.ApplicabilityS
 	for _, v := range pg.Data {
 		items = append(items, NewApplicabilityStatement(v))
 	}
+
 	var nextCursor *page.CursorKey
+
 	if len(pg.Data) > 0 {
 		cursorKey := pg.Data[len(pg.Data)-1].CursorKey(pg.Cursor.OrderBy.Field)
 		nextCursor = &cursorKey
 	}
+
 	return ListApplicabilityStatementsOutput{
 		NextCursor:              nextCursor,
 		ApplicabilityStatements: items,

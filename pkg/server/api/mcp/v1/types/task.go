@@ -44,6 +44,7 @@ func NewListMeasureTasksOutput(taskPage *page.Page[*coredata.Task, coredata.Task
 	}
 
 	var nextCursor *page.CursorKey
+
 	if len(taskPage.Data) > 0 {
 		cursorKey := taskPage.Data[len(taskPage.Data)-1].CursorKey(taskPage.Cursor.OrderBy.Field)
 		nextCursor = &cursorKey
@@ -62,6 +63,7 @@ func NewListTasksOutput(taskPage *page.Page[*coredata.Task, coredata.TaskOrderFi
 	}
 
 	var nextCursor *page.CursorKey
+
 	if len(taskPage.Data) > 0 {
 		cursorKey := taskPage.Data[len(taskPage.Data)-1].CursorKey(taskPage.Cursor.OrderBy.Field)
 		nextCursor = &cursorKey

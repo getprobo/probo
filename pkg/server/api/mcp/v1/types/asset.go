@@ -40,6 +40,7 @@ func NewListAssetsOutput(assetPage *page.Page[*coredata.Asset, coredata.AssetOrd
 	}
 
 	var nextCursor *page.CursorKey
+
 	if len(assetPage.Data) > 0 {
 		cursorKey := assetPage.Data[len(assetPage.Data)-1].CursorKey(assetPage.Cursor.OrderBy.Field)
 		nextCursor = &cursorKey

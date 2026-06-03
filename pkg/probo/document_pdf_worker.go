@@ -61,6 +61,7 @@ func (h *documentPDFHandler) Claim(ctx context.Context) (coredata.DocumentVersio
 		if errors.Is(err, coredata.ErrNoDocumentPDFJobAvailable) {
 			return coredata.DocumentVersion{}, worker.ErrNoTask
 		}
+
 		return coredata.DocumentVersion{}, err
 	}
 
@@ -68,9 +69,9 @@ func (h *documentPDFHandler) Claim(ctx context.Context) (coredata.DocumentVersio
 }
 
 func (h *documentPDFHandler) Process(ctx context.Context, version coredata.DocumentVersion) error {
-	tenantService := h.service.WithTenant(version.ID.TenantID())
+	scope := coredata.NewScope(version.ID.TenantID())
 
-	if err := tenantService.Documents.generateAndUploadPublicationPDF(ctx, &version); err != nil {
+	if err := h.service.Documents.generateAndUploadPublicationPDF(ctx, scope, &version); err != nil {
 		h.logger.ErrorCtx(
 			ctx,
 			"document pdf worker failure",
@@ -78,6 +79,7 @@ func (h *documentPDFHandler) Process(ctx context.Context, version coredata.Docum
 			log.String("document_version_id", version.ID.String()),
 			log.Int("attempt", version.PdfAttemptCount),
 		)
+
 		return err
 	}
 

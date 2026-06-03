@@ -53,8 +53,10 @@ func newCORSMiddleware(logger *log.Logger, cookieBannerSvc *cookiebanner.Service
 						jsonutil.RenderForbidden(w)
 						return
 					}
+
 					logger.ErrorCtx(r.Context(), "cannot load cookie banner for CORS check", log.Error(err))
 					jsonutil.RenderInternalServerError(w)
+
 					return
 				}
 

@@ -1,6 +1,6 @@
 # Release
 
-The repository ships five independently-versioned tracks. Each has its own
+The repository ships eight independently-versioned tracks. Each has its own
 version source, its own `CHANGELOG.md`, its own tag pattern, and its own
 release workflow. Cutting a release means: bump the version, write a
 changelog entry, commit, tag, push.
@@ -10,8 +10,11 @@ changelog entry, commit, tag, push.
 | CLI (`prb`)             | `prb/v*`                       | [prb.md](./prb.md)               |
 | Server (`probod` group) | `probod/v*`                    | [probod.md](./probod.md)         |
 | `probod-bootstrap`      | `probod-bootstrap/v*`          | [probod-bootstrap.md](./probod-bootstrap.md) |
+| `proboctl`              | `proboctl/v*`                  | [proboctl.md](./proboctl.md)     |
+| `probo-agent`           | `probo-agent/v*`               | [probo-agent.md](./probo-agent.md) |
 | `@probo/n8n-nodes-probo` | `@probo/n8n-nodes-probo/v*`   | [n8n-nodes-probo.md](./n8n-nodes-probo.md) |
 | `@probo/cookie-banner`  | `@probo/cookie-banner/v*`      | [cookie-banner.md](./cookie-banner.md) |
+| Helm chart (`probo`)    | `helm/v*`                      | [helm.md](./helm.md)                   |
 
 When the user asks for a release **without specifying a track**, follow
 [Step 1](#1-decide-which-tracks-to-release) below to detect which tracks
@@ -57,6 +60,14 @@ git log $(git describe --tags --abbrev=0 --match='probod/v*')..HEAD --oneline \
 git log $(git describe --tags --abbrev=0 --match='probod-bootstrap/v*')..HEAD --oneline \
   -- cmd/probod-bootstrap
 
+# proboctl
+git log $(git describe --tags --abbrev=0 --match='proboctl/v*')..HEAD --oneline \
+  -- cmd/proboctl pkg/proboctl
+
+# probo-agent
+git log $(git describe --tags --abbrev=0 --match='probo-agent/v*')..HEAD --oneline \
+  -- cmd/probo-agent pkg/deviceagent
+
 # @probo/n8n-nodes-probo
 git log $(git describe --tags --abbrev=0 --match='@probo/n8n-nodes-probo/v*')..HEAD --oneline \
   -- packages/n8n-node
@@ -64,6 +75,10 @@ git log $(git describe --tags --abbrev=0 --match='@probo/n8n-nodes-probo/v*')..H
 # @probo/cookie-banner
 git log $(git describe --tags --abbrev=0 --match='@probo/cookie-banner/v*')..HEAD --oneline \
   -- packages/cookie-banner
+
+# helm chart
+git log $(git describe --tags --abbrev=0 --match='helm/v*')..HEAD --oneline \
+  -- contrib/helm
 ```
 
 If a track returns no commits, skip it. If all commits for a track are

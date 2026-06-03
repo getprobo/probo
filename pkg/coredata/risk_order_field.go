@@ -14,6 +14,13 @@
 
 package coredata
 
+import (
+	"encoding"
+	"fmt"
+
+	"go.probo.inc/probo/pkg/page"
+)
+
 type (
 	RiskOrderField string
 )
@@ -29,19 +36,62 @@ const (
 	RiskOrderFieldOwnerFullName     RiskOrderField = "OWNER_FULL_NAME"
 )
 
+var (
+	_ page.OrderField          = RiskOrderField("")
+	_ fmt.Stringer             = RiskOrderField("")
+	_ encoding.TextMarshaler   = RiskOrderField("")
+	_ encoding.TextUnmarshaler = (*RiskOrderField)(nil)
+)
+
+func RiskOrderFields() []RiskOrderField {
+	return []RiskOrderField{
+		RiskOrderFieldCreatedAt,
+		RiskOrderFieldUpdatedAt,
+		RiskOrderFieldName,
+		RiskOrderFieldCategory,
+		RiskOrderFieldTreatment,
+		RiskOrderFieldInherentRiskScore,
+		RiskOrderFieldResidualRiskScore,
+		RiskOrderFieldOwnerFullName,
+	}
+}
+
+func (v RiskOrderField) IsValid() bool {
+	switch v {
+	case
+		RiskOrderFieldCreatedAt,
+		RiskOrderFieldUpdatedAt,
+		RiskOrderFieldName,
+		RiskOrderFieldCategory,
+		RiskOrderFieldTreatment,
+		RiskOrderFieldInherentRiskScore,
+		RiskOrderFieldResidualRiskScore,
+		RiskOrderFieldOwnerFullName:
+		return true
+	}
+
+	return false
+}
+
+func (v RiskOrderField) String() string {
+	return string(v)
+}
+
+func (v RiskOrderField) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *RiskOrderField) UnmarshalText(text []byte) error {
+	val := RiskOrderField(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid RiskOrderField value: %q", string(text))
+	}
+
+	*v = val
+
+	return nil
+}
+
 func (p RiskOrderField) Column() string {
 	return string(p)
-}
-
-func (p RiskOrderField) String() string {
-	return string(p)
-}
-
-func (p RiskOrderField) MarshalText() ([]byte, error) {
-	return []byte(p.String()), nil
-}
-
-func (p *RiskOrderField) UnmarshalText(text []byte) error {
-	*p = RiskOrderField(text)
-	return nil
 }

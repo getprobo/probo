@@ -48,11 +48,12 @@ import (
 
 type (
 	Resolver struct {
-		authorize     authz.AuthorizeFunc
-		logger        *log.Logger
-		iam           *iam.Service
-		baseURL       *baseurl.BaseURL
-		sessionCookie *authn.Cookie
+		authorize      authz.AuthorizeFunc
+		batchAuthorize authz.BatchAuthorizeFunc
+		logger         *log.Logger
+		iam            *iam.Service
+		baseURL        *baseurl.BaseURL
+		sessionCookie  *authn.Cookie
 	}
 )
 
@@ -116,7 +117,8 @@ func NewMux(
 }
 
 func (r *Resolver) Permission(ctx context.Context, obj types.Node, action string) (bool, error) {
-	return r.authorize(ctx, obj.GetID(), action, authz.WithDryRun()) == nil, nil
+	_, err := r.authorize(ctx, obj.GetID(), action, authz.WithDryRun())
+	return err == nil, nil
 }
 
 func (r *Resolver) SSOLoginURL(samlConfigID gid.GID) string {

@@ -21,10 +21,7 @@ import {
   Card,
   Field,
   Input,
-  Label,
-  Option,
   PageHeader,
-  Select,
   useToast,
 } from "@probo/ui";
 import { type FormEvent, useState } from "react";
@@ -63,7 +60,6 @@ export default function NewCookieBannerPage() {
   const [cookiePolicyUrl, setCookiePolicyUrl] = useState("");
   const [privacyPolicyUrl, setPrivacyPolicyUrl] = useState("");
   const [consentExpiryDays, setConsentExpiryDays] = useState("365");
-  const [consentMode, setConsentMode] = useState("OPT_IN");
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -77,7 +73,6 @@ export default function NewCookieBannerPage() {
           cookiePolicyUrl,
           privacyPolicyUrl: privacyPolicyUrl || undefined,
           consentExpiryDays: parseInt(consentExpiryDays, 10),
-          consentMode: consentMode as "OPT_IN" | "OPT_OUT",
         },
       },
       onCompleted(data) {
@@ -155,26 +150,15 @@ export default function NewCookieBannerPage() {
             />
           </Field>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>{__("Consent Expiry (days)")}</Label>
-              <Input
-                type="number"
-                value={consentExpiryDays}
-                onChange={e => setConsentExpiryDays(e.target.value)}
-                min="1"
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>{__("Consent Mode")}</Label>
-              <Select value={consentMode} onValueChange={setConsentMode}>
-                <Option value="OPT_IN">{__("Opt-in")}</Option>
-                <Option value="OPT_OUT">{__("Opt-out")}</Option>
-              </Select>
-            </div>
-          </div>
+          <Field label={__("Consent Expiry (days)")}>
+            <Input
+              type="number"
+              value={consentExpiryDays}
+              onChange={e => setConsentExpiryDays(e.target.value)}
+              min="1"
+              required
+            />
+          </Field>
 
           <Button type="submit" disabled={isCreating}>
             {isCreating ? __("Creating...") : __("Create Banner")}

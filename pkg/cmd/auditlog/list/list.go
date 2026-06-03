@@ -79,8 +79,8 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 		Short:   "List audit log entries",
 		Aliases: []string{"ls"},
 		Example: `  prb audit-log list
-  prb audit-log list --action core:vendor:create
-  prb audit-log list --resource-type Vendor --limit 50`,
+  prb audit-log list --action core:thirdParty:create
+  prb audit-log list --resource-type ThirdParty --limit 50`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := cmdutil.ValidateOutputFlag(flagOutput); err != nil {
@@ -121,6 +121,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				if err := cmdutil.ValidateEnum("order-by", flagOrderBy, []string{"CREATED_AT"}); err != nil {
 					return err
 				}
+
 				variables["orderBy"] = map[string]any{
 					"field":     flagOrderBy,
 					"direction": flagOrderDir,
@@ -131,15 +132,19 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 			if flagAction != "" {
 				filter["action"] = flagAction
 			}
+
 			if flagActorID != "" {
 				filter["actorId"] = flagActorID
 			}
+
 			if flagResourceType != "" {
 				filter["resourceType"] = flagResourceType
 			}
+
 			if flagResourceID != "" {
 				filter["resourceId"] = flagResourceID
 			}
+
 			if len(filter) > 0 {
 				variables["filter"] = filter
 			}
@@ -159,12 +164,15 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 					if err := json.Unmarshal(data, &resp); err != nil {
 						return nil, err
 					}
+
 					if resp.Node == nil {
 						return nil, fmt.Errorf("organization %s not found", flagOrg)
 					}
+
 					if resp.Node.Typename != "Organization" {
 						return nil, fmt.Errorf("expected Organization node, got %s", resp.Node.Typename)
 					}
+
 					return &resp.Node.AuditLogEntries, nil
 				},
 			)
@@ -176,6 +184,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				if entries == nil {
 					entries = []auditLogEntry{}
 				}
+
 				return cmdutil.PrintJSON(f.IOStreams.Out, entries)
 			}
 
@@ -218,9 +227,9 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().IntVarP(&flagLimit, "limit", "L", 30, "Maximum number of entries to list")
 	cmd.Flags().StringVar(&flagOrderBy, "order-by", "", "Order by field (CREATED_AT)")
 	cmd.Flags().StringVar(&flagOrderDir, "order-direction", "DESC", "Sort direction (ASC, DESC)")
-	cmd.Flags().StringVar(&flagAction, "action", "", "Filter by action (e.g. core:vendor:create)")
+	cmd.Flags().StringVar(&flagAction, "action", "", "Filter by action (e.g. core:thirdParty:create)")
 	cmd.Flags().StringVar(&flagActorID, "actor-id", "", "Filter by actor ID")
-	cmd.Flags().StringVar(&flagResourceType, "resource-type", "", "Filter by resource type (e.g. Vendor)")
+	cmd.Flags().StringVar(&flagResourceType, "resource-type", "", "Filter by resource type (e.g. ThirdParty)")
 	cmd.Flags().StringVar(&flagResourceID, "resource-id", "", "Filter by resource ID")
 	flagOutput = cmdutil.AddOutputFlag(cmd)
 

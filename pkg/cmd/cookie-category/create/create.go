@@ -94,11 +94,13 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 						return err
 					}
 				}
+
 				if flagSlug == "" {
 					if err := huh.NewInput().Title("Category slug").Value(&flagSlug).Run(); err != nil {
 						return err
 					}
 				}
+
 				if flagDescription == "" {
 					if err := huh.NewText().Title("Description").Value(&flagDescription).Run(); err != nil {
 						return err
@@ -109,6 +111,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 			if flagName == "" {
 				return fmt.Errorf("name is required; pass --name or run interactively")
 			}
+
 			if flagSlug == "" {
 				return fmt.Errorf("slug is required; pass --slug or run interactively")
 			}

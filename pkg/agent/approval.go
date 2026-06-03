@@ -47,6 +47,7 @@ func buildToolNameSet(names []string) map[string]struct{} {
 	for _, name := range names {
 		set[name] = struct{}{}
 	}
+
 	return set
 }
 
@@ -60,5 +61,6 @@ func (c *ApprovalConfig) requiresApproval(ctx context.Context, tc llm.ToolCall) 
 	}
 
 	_, ok := c.toolNameSet[tc.Function.Name]
+
 	return ok
 }

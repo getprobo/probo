@@ -109,6 +109,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				if err := cmdutil.ValidateEnum("order-by", flagOrderBy, []string{"CREATED_AT"}); err != nil {
 					return err
 				}
+
 				variables["orderBy"] = map[string]any{
 					"field":     flagOrderBy,
 					"direction": flagOrderDir,
@@ -130,12 +131,15 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 					if err := json.Unmarshal(data, &resp); err != nil {
 						return nil, err
 					}
+
 					if resp.Node == nil {
 						return nil, fmt.Errorf("measure %s not found", flagMeasure)
 					}
+
 					if resp.Node.Typename != "Measure" {
 						return nil, fmt.Errorf("expected Measure node, got %s", resp.Node.Typename)
 					}
+
 					return &resp.Node.Evidences, nil
 				},
 			)
@@ -155,13 +159,16 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 			rows := make([][]string, 0, len(evidences))
 			for _, e := range evidences {
 				desc := "-"
+
 				if e.Description != nil && *e.Description != "" {
 					d := *e.Description
 					if len(d) > 60 {
 						d = d[:57] + "..."
 					}
+
 					desc = d
 				}
+
 				rows = append(rows, []string{
 					e.ID,
 					e.Type,

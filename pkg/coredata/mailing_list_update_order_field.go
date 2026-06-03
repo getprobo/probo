@@ -14,7 +14,12 @@
 
 package coredata
 
-import "fmt"
+import (
+	"encoding"
+	"fmt"
+
+	"go.probo.inc/probo/pkg/page"
+)
 
 type MailingListUpdateOrderField string
 
@@ -23,8 +28,48 @@ const (
 	MailingListUpdateOrderFieldUpdatedAt MailingListUpdateOrderField = "UPDATED_AT"
 )
 
-func (f MailingListUpdateOrderField) String() string {
-	return string(f)
+var (
+	_ page.OrderField          = MailingListUpdateOrderField("")
+	_ fmt.Stringer             = MailingListUpdateOrderField("")
+	_ encoding.TextMarshaler   = MailingListUpdateOrderField("")
+	_ encoding.TextUnmarshaler = (*MailingListUpdateOrderField)(nil)
+)
+
+func MailingListUpdateOrderFields() []MailingListUpdateOrderField {
+	return []MailingListUpdateOrderField{
+		MailingListUpdateOrderFieldCreatedAt,
+		MailingListUpdateOrderFieldUpdatedAt,
+	}
+}
+
+func (v MailingListUpdateOrderField) IsValid() bool {
+	switch v {
+	case
+		MailingListUpdateOrderFieldCreatedAt,
+		MailingListUpdateOrderFieldUpdatedAt:
+		return true
+	}
+
+	return false
+}
+
+func (v MailingListUpdateOrderField) String() string {
+	return string(v)
+}
+
+func (v MailingListUpdateOrderField) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *MailingListUpdateOrderField) UnmarshalText(text []byte) error {
+	val := MailingListUpdateOrderField(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid MailingListUpdateOrderField value: %q", string(text))
+	}
+
+	*v = val
+
+	return nil
 }
 
 func (f MailingListUpdateOrderField) Column() string {

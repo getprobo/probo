@@ -56,7 +56,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 		flagName           string
 		flagClassification string
 		flagOwner          string
-		flagVendorIDs      []string
+		flagThirdPartyIDs  []string
 	)
 
 	cmd := &cobra.Command{
@@ -125,6 +125,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 			if flagName == "" {
 				return fmt.Errorf("name is required; pass --name or run interactively")
 			}
+
 			if flagClassification == "" {
 				return fmt.Errorf("data classification is required; pass --data-classification or run interactively")
 			}
@@ -138,8 +139,9 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 			if flagOwner != "" {
 				input["ownerId"] = flagOwner
 			}
-			if len(flagVendorIDs) > 0 {
-				input["vendorIds"] = flagVendorIDs
+
+			if len(flagThirdPartyIDs) > 0 {
+				input["thirdPartyIds"] = flagThirdPartyIDs
 			}
 
 			data, err := client.Do(
@@ -171,7 +173,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&flagName, "name", "", "Datum name (required)")
 	cmd.Flags().StringVar(&flagClassification, "data-classification", "", "Data classification: PUBLIC, INTERNAL, CONFIDENTIAL, SECRET (required)")
 	cmd.Flags().StringVar(&flagOwner, "owner", "", "Owner profile ID")
-	cmd.Flags().StringSliceVar(&flagVendorIDs, "vendor-ids", nil, "Vendor IDs (comma-separated)")
+	cmd.Flags().StringSliceVar(&flagThirdPartyIDs, "thirdParty-ids", nil, "ThirdParty IDs (comma-separated)")
 
 	return cmd
 }

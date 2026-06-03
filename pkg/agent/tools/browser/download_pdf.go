@@ -54,91 +54,117 @@ func DownloadPDFTool() agent.Tool {
 		"Download a PDF document from a URL and extract its text content. Use this for DPAs, SOC 2 reports, privacy policies, and other documents hosted as PDFs.",
 		func(ctx context.Context, p downloadPDFParams) (agent.ToolResult, error) {
 			if err := validatePublicURL(p.URL); err != nil {
-				return agent.ResultJSON(downloadPDFResult{
-					ErrorDetail: fmt.Sprintf("URL not allowed: %s", err),
-				}), nil
+				return agent.ResultJSON(
+					downloadPDFResult{
+						ErrorDetail: fmt.Sprintf("URL not allowed: %s", err),
+					},
+				), nil
 			}
 
 			req, err := http.NewRequestWithContext(ctx, http.MethodGet, p.URL, nil)
 			if err != nil {
-				return agent.ResultJSON(downloadPDFResult{
-					ErrorDetail: fmt.Sprintf("cannot create request: %s", err),
-				}), nil
+				return agent.ResultJSON(
+					downloadPDFResult{
+						ErrorDetail: fmt.Sprintf("cannot create request: %s", err),
+					},
+				), nil
 			}
 
 			resp, err := client.Do(req)
 			if err != nil {
-				return agent.ResultJSON(downloadPDFResult{
-					ErrorDetail: fmt.Sprintf("cannot download PDF: %s", err),
-				}), nil
+				return agent.ResultJSON(
+					downloadPDFResult{
+						ErrorDetail: fmt.Sprintf("cannot download PDF: %s", err),
+					},
+				), nil
 			}
+
 			defer func() { _ = resp.Body.Close() }()
 
 			if resp.StatusCode != http.StatusOK {
-				return agent.ResultJSON(downloadPDFResult{
-					ErrorDetail: fmt.Sprintf("PDF download returned status %d", resp.StatusCode),
-				}), nil
+				return agent.ResultJSON(
+					downloadPDFResult{
+						ErrorDetail: fmt.Sprintf("PDF download returned status %d", resp.StatusCode),
+					},
+				), nil
 			}
 
 			// Read PDF into memory (max 20MB).
 			body, err := io.ReadAll(io.LimitReader(resp.Body, 20*1024*1024))
 			if err != nil {
-				return agent.ResultJSON(downloadPDFResult{
-					ErrorDetail: fmt.Sprintf("cannot read PDF body: %s", err),
-				}), nil
+				return agent.ResultJSON(
+					downloadPDFResult{
+						ErrorDetail: fmt.Sprintf("cannot read PDF body: %s", err),
+					},
+				), nil
 			}
 
 			// Write to temp file for pdfcpu.
 			tmpDir, err := os.MkdirTemp("", "pdf-extract-*")
 			if err != nil {
-				return agent.ResultJSON(downloadPDFResult{
-					ErrorDetail: fmt.Sprintf("cannot create temp dir: %s", err),
-				}), nil
+				return agent.ResultJSON(
+					downloadPDFResult{
+						ErrorDetail: fmt.Sprintf("cannot create temp dir: %s", err),
+					},
+				), nil
 			}
+
 			defer func() { _ = os.RemoveAll(tmpDir) }()
 
 			tmpFile := filepath.Join(tmpDir, "input.pdf")
 			if err := os.WriteFile(tmpFile, body, 0o600); err != nil {
-				return agent.ResultJSON(downloadPDFResult{
-					ErrorDetail: fmt.Sprintf("cannot write temp file: %s", err),
-				}), nil
+				return agent.ResultJSON(
+					downloadPDFResult{
+						ErrorDetail: fmt.Sprintf("cannot write temp file: %s", err),
+					},
+				), nil
 			}
 
 			// Get page count.
 			conf := model.NewDefaultConfiguration()
+
 			pageCount, err := api.PageCountFile(tmpFile)
 			if err != nil {
-				return agent.ResultJSON(downloadPDFResult{
-					ErrorDetail: fmt.Sprintf("cannot read PDF: %s", err),
-				}), nil
+				return agent.ResultJSON(
+					downloadPDFResult{
+						ErrorDetail: fmt.Sprintf("cannot read PDF: %s", err),
+					},
+				), nil
 			}
 
 			// Extract content to output dir.
 			outDir := filepath.Join(tmpDir, "out")
 			if err := os.MkdirAll(outDir, 0o700); err != nil {
-				return agent.ResultJSON(downloadPDFResult{
-					ErrorDetail: fmt.Sprintf("cannot create output dir: %s", err),
-				}), nil
+				return agent.ResultJSON(
+					downloadPDFResult{
+						ErrorDetail: fmt.Sprintf("cannot create output dir: %s", err),
+					},
+				), nil
 			}
 
 			reader := bytes.NewReader(body)
 			if err := api.ExtractContent(reader, outDir, "content", nil, conf); err != nil {
-				return agent.ResultJSON(downloadPDFResult{
-					ErrorDetail: fmt.Sprintf("cannot extract PDF content: %s", err),
-				}), nil
+				return agent.ResultJSON(
+					downloadPDFResult{
+						ErrorDetail: fmt.Sprintf("cannot extract PDF content: %s", err),
+					},
+				), nil
 			}
 
 			// Read all extracted content files.
 			var sb strings.Builder
+
 			entries, _ := os.ReadDir(outDir)
 			for _, entry := range entries {
 				if entry.IsDir() {
 					continue
 				}
+
 				content, err := os.ReadFile(filepath.Join(outDir, entry.Name()))
 				if err != nil {
 					continue
 				}
+
 				sb.Write(content)
 				sb.WriteString("\n")
 			}
@@ -148,10 +174,12 @@ func DownloadPDFTool() agent.Tool {
 				text = text[:maxTextLength] + "\n[... truncated]"
 			}
 
-			return agent.ResultJSON(downloadPDFResult{
-				Text:      text,
-				PageCount: pageCount,
-			}), nil
+			return agent.ResultJSON(
+				downloadPDFResult{
+					Text:      text,
+					PageCount: pageCount,
+				},
+			), nil
 		},
 	)
 }

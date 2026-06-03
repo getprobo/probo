@@ -99,6 +99,7 @@ export class ProboThemedBanner extends HTMLElement {
                     <template>
                       <div class="cookie-item">
                         <span class="cookie-name" data-slot="name"></span>
+                        <span class="cookie-detail cookie-type" data-label="label_type"><span data-slot="type"></span></span>
                         <span class="cookie-detail" data-label="label_description"><span data-slot="description"></span></span>
                         <span class="cookie-detail" data-label="label_duration"><span data-slot="duration"></span></span>
                       </div>

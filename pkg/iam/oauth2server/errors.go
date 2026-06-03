@@ -32,6 +32,7 @@ func (e *OAuth2Error) Error() string {
 	if e.description != "" {
 		return e.code + ": " + e.description
 	}
+
 	return e.code
 }
 
@@ -43,6 +44,7 @@ func (e *OAuth2Error) Is(target error) bool {
 	if !ok {
 		return false
 	}
+
 	return e.code == t.code
 }
 
@@ -66,6 +68,7 @@ func NewError(code *OAuth2Error, opts ...ErrorOption) *OAuth2Error {
 	for _, opt := range opts {
 		opt(e)
 	}
+
 	return e
 }
 

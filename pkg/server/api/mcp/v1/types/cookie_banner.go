@@ -29,7 +29,6 @@ func NewCookieBanner(b *coredata.CookieBanner) *CookieBanner {
 		PrivacyPolicyURL:  b.PrivacyPolicyURL,
 		CookiePolicyURL:   b.CookiePolicyURL,
 		ConsentExpiryDays: b.ConsentExpiryDays,
-		ConsentMode:       CookieBannerConsentMode(b.ConsentMode),
 		ShowBranding:      b.ShowBranding,
 		DefaultLanguage:   b.DefaultLanguage,
 		CreatedAt:         b.CreatedAt,
@@ -44,6 +43,7 @@ func NewListCookieBannersOutput(p *page.Page[*coredata.CookieBanner, coredata.Co
 	}
 
 	var nextCursor *page.CursorKey
+
 	if len(p.Data) > 0 {
 		cursorKey := p.Data[len(p.Data)-1].CursorKey(p.Cursor.OrderBy.Field)
 		nextCursor = &cursorKey

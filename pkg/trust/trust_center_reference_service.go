@@ -17,10 +17,7 @@ package trust
 import (
 	"context"
 	"fmt"
-	"net/url"
-	"time"
 
-	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
@@ -28,25 +25,25 @@ import (
 )
 
 type TrustCenterReferenceService struct {
-	svc *TenantService
+	svc *Service
 }
 
 func (s TrustCenterReferenceService) ListForTrustCenterID(
 	ctx context.Context,
+	scope coredata.Scoper,
 	trustCenterID gid.GID,
 	cursor *page.Cursor[coredata.TrustCenterReferenceOrderField],
 ) (*page.Page[*coredata.TrustCenterReference, coredata.TrustCenterReferenceOrderField], error) {
 	var references coredata.TrustCenterReferences
 
 	err := s.svc.pg.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
-		err := references.LoadByTrustCenterID(ctx, conn, s.svc.scope, trustCenterID, cursor)
+		err := references.LoadByTrustCenterID(ctx, conn, scope, trustCenterID, cursor)
 		if err != nil {
 			return fmt.Errorf("cannot load trust center references: %w", err)
 		}
 
 		return nil
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -56,52 +53,24 @@ func (s TrustCenterReferenceService) ListForTrustCenterID(
 
 func (s TrustCenterReferenceService) GenerateLogoURL(
 	ctx context.Context,
+	scope coredata.Scoper,
 	referenceID gid.GID,
-	duration time.Duration,
 ) (string, error) {
 	reference := &coredata.TrustCenterReference{}
-	file := &coredata.File{}
+
 	err := s.svc.pg.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
-		err := reference.LoadByID(ctx, tx, s.svc.scope, referenceID)
-		if err != nil {
-			return fmt.Errorf("cannot load trust center reference: %w", err)
-		}
-
-		err = file.LoadByID(ctx, tx, s.svc.scope, reference.LogoFileID)
-		if err != nil {
-			return fmt.Errorf("cannot load logo file: %w", err)
-		}
-
-		return nil
-	})
-
-	if err != nil {
-		return "", nil
-	}
-
-	presignClient := s3.NewPresignClient(s.svc.s3)
-
-	encodedFilename := url.PathEscape(file.FileName)
-	contentDisposition := fmt.Sprintf("inline; filename=\"%s\"; filename*=UTF-8''%s",
-		encodedFilename, encodedFilename)
-
-	presignedReq, err := presignClient.PresignGetObject(ctx, &s3.GetObjectInput{
-		Bucket:                     new(s.svc.bucket),
-		Key:                        new(file.FileKey),
-		ResponseCacheControl:       new("max-age=3600, public"),
-		ResponseContentDisposition: new(contentDisposition),
-	}, func(opts *s3.PresignOptions) {
-		opts.Expires = duration
+		return reference.LoadByID(ctx, tx, scope, referenceID)
 	})
 	if err != nil {
-		return "", fmt.Errorf("cannot presign GetObject request: %w", err)
+		return "", fmt.Errorf("cannot load trust center reference: %w", err)
 	}
 
-	return presignedReq.URL, nil
+	return s.svc.file.GenerateFileURL(ctx, reference.LogoFileID)
 }
 
 func (s TrustCenterReferenceService) Get(
 	ctx context.Context,
+	scope coredata.Scoper,
 	referenceID gid.GID,
 ) (*coredata.TrustCenterReference, error) {
 	reference := &coredata.TrustCenterReference{}
@@ -109,7 +78,7 @@ func (s TrustCenterReferenceService) Get(
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			err := reference.LoadByID(ctx, conn, s.svc.scope, referenceID)
+			err := reference.LoadByID(ctx, conn, scope, referenceID)
 			if err != nil {
 				return fmt.Errorf("cannot load trust center reference: %w", err)
 			}
@@ -117,7 +86,6 @@ func (s TrustCenterReferenceService) Get(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}

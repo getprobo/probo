@@ -390,12 +390,15 @@ func TestEvaluator_Evaluate_MatchedStatementAndPolicy(t *testing.T) {
 		if result.MatchedStatement == nil {
 			t.Fatal("Expected matched statement")
 		}
+
 		if result.MatchedStatement.SID != "allow-get" {
 			t.Errorf("Expected SID 'allow-get', got %q", result.MatchedStatement.SID)
 		}
+
 		if result.MatchedPolicy == nil {
 			t.Fatal("Expected matched policy")
 		}
+
 		if result.MatchedPolicy.ID != "test-policy" {
 			t.Errorf("Expected policy ID 'test-policy', got %q", result.MatchedPolicy.ID)
 		}
@@ -414,6 +417,7 @@ func TestEvaluator_Evaluate_MatchedStatementAndPolicy(t *testing.T) {
 		if result.MatchedStatement == nil {
 			t.Fatal("Expected matched statement")
 		}
+
 		if result.MatchedStatement.SID != "deny-delete" {
 			t.Errorf("Expected SID 'deny-delete', got %q", result.MatchedStatement.SID)
 		}
@@ -432,6 +436,7 @@ func TestEvaluator_Evaluate_MatchedStatementAndPolicy(t *testing.T) {
 		if result.MatchedStatement != nil {
 			t.Error("Expected no matched statement")
 		}
+
 		if result.MatchedPolicy != nil {
 			t.Error("Expected no matched policy")
 		}

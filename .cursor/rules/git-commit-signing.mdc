@@ -1,0 +1,35 @@
+---
+description: Always sign commits with -s -S (DCO trailer + GPG/SSH signature)
+alwaysApply: true
+---
+
+# Git Commit Signing
+
+All commits in this repository **must** be signed with both `-s` and `-S`:
+
+- `-s` adds a `Signed-off-by` trailer (DCO).
+- `-S` creates a GPG/SSH signature.
+
+Pass both flags every time, even when the user's `git` config already sets `format.signoff` or `commit.gpgsign` — relying on local config silently fails on machines where it isn't set.
+
+```bash
+# GOOD
+git commit -s -S -m "$(cat <<'EOF'
+Subject line in imperative mood
+
+Body explaining what and why, wrapped at 72 chars.
+EOF
+)"
+
+# BAD — missing -S, signature absent even if Signed-off-by trailer is present
+git commit -s -m "..."
+
+# BAD — neither flag
+git commit -m "..."
+```
+
+The same applies to `git commit --amend`: pass `-s -S` (or `--amend --no-edit -s -S` when keeping the message). The commit author must remain the human responsible for the change — do not add `Co-Authored-By` trailers crediting bots.
+
+Verify with `git log -1 --show-signature` after committing; the output should show a valid signature **and** the `Signed-off-by:` trailer.
+
+See [`contrib/claude/commit.md`](../../contrib/claude/commit.md) for full commit conventions and [`.cursor/rules/git-commit-style.mdc`](git-commit-style.mdc) for message format rules (seven-rules style, no Conventional Commits).

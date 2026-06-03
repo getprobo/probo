@@ -23,6 +23,7 @@ func BenchmarkValidate_SingleField(b *testing.B) {
 	email := "test@example.com"
 
 	b.ResetTimer()
+
 	for i := 0; i < b.N; i++ {
 		v := New()
 		v.Check(&email, "email", Required(), NotEmpty())
@@ -35,6 +36,7 @@ func BenchmarkValidate_MultipleFields(b *testing.B) {
 	age := 25
 
 	b.ResetTimer()
+
 	for i := 0; i < b.N; i++ {
 		v := New()
 		v.Check(&email, "email", Required(), NotEmpty())
@@ -47,6 +49,7 @@ func BenchmarkValidate_OptionalField(b *testing.B) {
 	var website *string
 
 	b.ResetTimer()
+
 	for i := 0; i < b.N; i++ {
 		v := New()
 		v.Check(website, "website", URL())
@@ -58,6 +61,7 @@ func BenchmarkURL(b *testing.B) {
 	validator := URL()
 
 	b.ResetTimer()
+
 	for i := 0; i < b.N; i++ {
 		_ = validator(&urlStr)
 	}
@@ -68,6 +72,7 @@ func BenchmarkMinLen(b *testing.B) {
 	validator := MinLen(5)
 
 	b.ResetTimer()
+
 	for i := 0; i < b.N; i++ {
 		_ = validator(&str)
 	}
@@ -78,6 +83,7 @@ func BenchmarkMin(b *testing.B) {
 	validator := Min(18)
 
 	b.ResetTimer()
+
 	for i := 0; i < b.N; i++ {
 		_ = validator(&num)
 	}
@@ -88,6 +94,7 @@ func BenchmarkNotEmpty(b *testing.B) {
 	validator := NotEmpty()
 
 	b.ResetTimer()
+
 	for i := 0; i < b.N; i++ {
 		_ = validator(&str)
 	}
@@ -97,9 +104,11 @@ func BenchmarkValidate_WithErrors(b *testing.B) {
 	email := ""
 
 	b.ResetTimer()
+
 	for i := 0; i < b.N; i++ {
 		v := New()
 		v.Check(&email, "email", Required(), NotEmpty())
+
 		if v.Error() == nil {
 			b.Fatal("expected validation error")
 		}
@@ -139,6 +148,7 @@ func BenchmarkValidate_ComplexForm(b *testing.B) {
 	}
 
 	b.ResetTimer()
+
 	for i := 0; i < b.N; i++ {
 		v := New()
 		v.Check(&user.Email, "email", Required(), NotEmpty())
@@ -155,6 +165,7 @@ func BenchmarkAfter(b *testing.B) {
 	validator := After(now)
 
 	b.ResetTimer()
+
 	for i := 0; i < b.N; i++ {
 		_ = validator(&future)
 	}
@@ -166,6 +177,7 @@ func BenchmarkBefore(b *testing.B) {
 	validator := Before(now)
 
 	b.ResetTimer()
+
 	for i := 0; i < b.N; i++ {
 		_ = validator(&past)
 	}
@@ -176,6 +188,7 @@ func BenchmarkDomain(b *testing.B) {
 	validator := Domain()
 
 	b.ResetTimer()
+
 	for i := 0; i < b.N; i++ {
 		_ = validator(&str)
 	}
@@ -186,6 +199,7 @@ func BenchmarkHTTPSUrl(b *testing.B) {
 	validator := HTTPSUrl()
 
 	b.ResetTimer()
+
 	for i := 0; i < b.N; i++ {
 		_ = validator(&str)
 	}

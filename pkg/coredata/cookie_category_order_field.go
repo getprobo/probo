@@ -14,7 +14,12 @@
 
 package coredata
 
-import "fmt"
+import (
+	"encoding"
+	"fmt"
+
+	"go.probo.inc/probo/pkg/page"
+)
 
 type CookieCategoryOrderField string
 
@@ -22,34 +27,53 @@ const (
 	CookieCategoryOrderFieldRank CookieCategoryOrderField = "RANK"
 )
 
+var (
+	_ page.OrderField          = CookieCategoryOrderField("")
+	_ fmt.Stringer             = CookieCategoryOrderField("")
+	_ encoding.TextMarshaler   = CookieCategoryOrderField("")
+	_ encoding.TextUnmarshaler = (*CookieCategoryOrderField)(nil)
+)
+
+func CookieCategoryOrderFields() []CookieCategoryOrderField {
+	return []CookieCategoryOrderField{
+		CookieCategoryOrderFieldRank,
+	}
+}
+
+func (v CookieCategoryOrderField) IsValid() bool {
+	switch v {
+	case
+		CookieCategoryOrderFieldRank:
+		return true
+	}
+
+	return false
+}
+
+func (v CookieCategoryOrderField) String() string {
+	return string(v)
+}
+
+func (v CookieCategoryOrderField) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *CookieCategoryOrderField) UnmarshalText(text []byte) error {
+	val := CookieCategoryOrderField(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid CookieCategoryOrderField value: %q", string(text))
+	}
+
+	*v = val
+
+	return nil
+}
+
 func (p CookieCategoryOrderField) Column() string {
 	switch p {
 	case CookieCategoryOrderFieldRank:
 		return "rank"
 	}
+
 	panic(fmt.Sprintf("unsupported order by: %s", p))
-}
-
-func (p CookieCategoryOrderField) IsValid() bool {
-	switch p {
-	case CookieCategoryOrderFieldRank:
-		return true
-	}
-	return false
-}
-
-func (p CookieCategoryOrderField) String() string {
-	return string(p)
-}
-
-func (p *CookieCategoryOrderField) UnmarshalText(text []byte) error {
-	*p = CookieCategoryOrderField(text)
-	if !p.IsValid() {
-		return fmt.Errorf("%s is not a valid CookieCategoryOrderField", string(text))
-	}
-	return nil
-}
-
-func (p CookieCategoryOrderField) MarshalText() ([]byte, error) {
-	return []byte(p.String()), nil
 }

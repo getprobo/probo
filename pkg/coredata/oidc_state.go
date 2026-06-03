@@ -76,10 +76,12 @@ FOR UPDATE
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
 		}
+
 		return fmt.Errorf("cannot collect oidc_state: %w", err)
 	}
 
 	*s = state
+
 	return nil
 }
 

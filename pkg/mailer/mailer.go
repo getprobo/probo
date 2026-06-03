@@ -122,6 +122,7 @@ func (h *sendingHandler) Claim(ctx context.Context) (coredata.Email, error) {
 		if errors.Is(err, coredata.ErrNoUnsentEmail) {
 			return coredata.Email{}, worker.ErrNoTask
 		}
+
 		return coredata.Email{}, err
 	}
 
@@ -133,8 +134,10 @@ func (h *sendingHandler) Process(ctx context.Context, email coredata.Email) erro
 		if failErr := h.failEmail(ctx, &email, sendErr); failErr != nil {
 			h.logger.ErrorCtx(ctx, "cannot fail email", log.Error(failErr))
 		}
+
 		return sendErr
 	}
+
 	return nil
 }
 
@@ -222,6 +225,7 @@ func (h *sendingHandler) sendAndCommit(
 		if errors.Is(err, context.DeadlineExceeded) {
 			return fmt.Errorf("email sending timed out after %s: %w", h.smtpTimeout, err)
 		}
+
 		return fmt.Errorf("cannot send email: %w", err)
 	}
 
@@ -299,6 +303,7 @@ func (h *sendingHandler) sendMail(ctx context.Context, to []string, msg []byte) 
 	if err != nil {
 		return fmt.Errorf("connection error: %w", err)
 	}
+
 	defer func() { _ = conn.Close() }()
 
 	if deadline, ok := ctx.Deadline(); ok {
@@ -311,6 +316,7 @@ func (h *sendingHandler) sendMail(ctx context.Context, to []string, msg []byte) 
 	if err != nil {
 		return fmt.Errorf("SMTP client creation error: %w", err)
 	}
+
 	defer func() { _ = c.Quit() }()
 
 	if h.smtp.TLSRequired {

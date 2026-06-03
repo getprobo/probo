@@ -58,6 +58,7 @@ func (s *Service) GetFileBase64(
 	if err != nil {
 		return "", "", fmt.Errorf("cannot get file from S3: %w", err)
 	}
+
 	defer func() { _ = result.Body.Close() }()
 
 	fileData, err := io.ReadAll(result.Body)
@@ -86,6 +87,7 @@ func (s *Service) GetFileBytes(
 	if err != nil {
 		return nil, fmt.Errorf("cannot get file from S3: %w", err)
 	}
+
 	defer func() { _ = result.Body.Close() }()
 
 	data, err := io.ReadAll(result.Body)

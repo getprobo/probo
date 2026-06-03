@@ -53,10 +53,14 @@ func CheckDNSRecordsTool() agent.Tool {
 
 			hdr := dns.Header{Name: fqdn, Class: dns.ClassINET}
 			client := dns.NewClient()
-			var result dnsRecordsResult
-			var errs []string
+
+			var (
+				result dnsRecordsResult
+				errs   []string
+			)
 
 			// A records.
+
 			if answers, err := queryDNS(ctx, client, &dns.A{Hdr: hdr}); err != nil {
 				errs = append(errs, fmt.Sprintf("A query failed: %s", err))
 			} else {
@@ -148,12 +152,14 @@ func queryDNS(ctx context.Context, client *dns.Client, question dns.RR, opts ...
 	for _, opt := range opts {
 		opt(&msg.MsgHeader)
 	}
+
 	msg.Question = []dns.RR{question}
 
 	resp, _, err := client.Exchange(ctx, msg, "udp", defaultResolverAddr)
 	if err == nil && resp.Truncated {
 		resp, _, err = client.Exchange(ctx, msg, "tcp", defaultResolverAddr)
 	}
+
 	if err != nil {
 		return nil, err
 	}

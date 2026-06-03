@@ -14,15 +14,12 @@
 
 export type { ConsentIntegration } from "./integration";
 export { GoogleConsentModeIntegration } from "./gcm";
-export { PostHogIntegration } from "./posthog";
 
 import type { ConsentIntegration } from "./integration";
 import { GoogleConsentModeIntegration } from "./gcm";
-import { PostHogIntegration } from "./posthog";
 
 export function createDefaultIntegrations(): ConsentIntegration[] {
   return [
     new GoogleConsentModeIntegration(),
-    new PostHogIntegration(),
   ];
 }

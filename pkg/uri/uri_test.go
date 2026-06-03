@@ -116,6 +116,7 @@ func TestURIUnmarshalText(t *testing.T) {
 			t.Parallel()
 
 			var u URI
+
 			err := u.UnmarshalText([]byte("https://example.com/callback"))
 			require.NoError(t, err)
 			assert.Equal(t, URI("https://example.com/callback"), u)
@@ -128,6 +129,7 @@ func TestURIUnmarshalText(t *testing.T) {
 			t.Parallel()
 
 			var u URI
+
 			err := u.UnmarshalText([]byte("not-a-url"))
 			require.Error(t, err)
 		},
@@ -200,6 +202,7 @@ func TestURIScan(t *testing.T) {
 			t.Parallel()
 
 			var u URI
+
 			err := u.Scan("https://example.com")
 			require.NoError(t, err)
 			assert.Equal(t, URI("https://example.com"), u)
@@ -212,6 +215,7 @@ func TestURIScan(t *testing.T) {
 			t.Parallel()
 
 			var u URI
+
 			err := u.Scan([]byte("https://example.com"))
 			require.NoError(t, err)
 			assert.Equal(t, URI("https://example.com"), u)
@@ -224,6 +228,7 @@ func TestURIScan(t *testing.T) {
 			t.Parallel()
 
 			var u URI
+
 			err := u.Scan("not-a-url")
 			require.Error(t, err)
 		},
@@ -235,6 +240,7 @@ func TestURIScan(t *testing.T) {
 			t.Parallel()
 
 			var u URI
+
 			err := u.Scan(123)
 			require.Error(t, err)
 		},
@@ -248,4 +254,166 @@ func TestURIValue(t *testing.T) {
 	v, err := u.Value()
 	require.NoError(t, err)
 	assert.Equal(t, "https://example.com", v)
+}
+
+func TestExtractDomain(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name   string
+		rawURL string
+		want   string
+	}{
+		{"google tag manager", "https://www.googletagmanager.com/gtag/js?id=G-ABC123", "googletagmanager.com"},
+		{"google analytics", "https://www.google-analytics.com/analytics.js", "google-analytics.com"},
+		{"facebook pixel", "https://connect.facebook.net/en_US/fbevents.js", "facebook.net"},
+		{"segment cdn", "https://cdn.segment.io/v1/projects/abc/settings", "segment.io"},
+		{"hubspot", "https://js.hs-analytics.net/analytics/1234/abc.js", "hs-analytics.net"},
+		{"subdomain stripped", "https://static.ads.example.com/pixel.js", "example.com"},
+		{"co.uk tld", "https://tracker.example.co.uk/script.js", "example.co.uk"},
+		{"bare domain no path", "https://doubleclick.net", "doubleclick.net"},
+		{"case insensitive", "https://WWW.GoogleTagManager.COM/gtag/js", "googletagmanager.com"},
+		{"empty string", "", ""},
+		{"invalid url", "not a url at all", ""},
+		{"data uri", "data:text/html,<h1>Hello</h1>", ""},
+		{"ip address", "https://192.168.1.1/script.js", ""},
+		{"port number", "https://tracker.example.com:8443/pixel.js", "example.com"},
+		{"http scheme", "http://cdn.jsdelivr.net/npm/cookieconsent", "jsdelivr.net"},
+	}
+
+	for _, tt := range tests {
+		t.Run(
+			tt.name,
+			func(t *testing.T) {
+				t.Parallel()
+				assert.Equal(t, tt.want, ExtractDomain(tt.rawURL))
+			},
+		)
+	}
+}
+
+func TestFilterFirstPartyDomains(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name       string
+		domains    []string
+		siteOrigin string
+		want       []string
+	}{
+		{
+			name:       "removes site domain from proxy",
+			domains:    []string{"probo.com", "posthog.com"},
+			siteOrigin: "https://app.probo.com",
+			want:       []string{"posthog.com"},
+		},
+		{
+			name:       "keeps all third-party domains",
+			domains:    []string{"stripe.com", "google.com"},
+			siteOrigin: "https://app.probo.com",
+			want:       []string{"stripe.com", "google.com"},
+		},
+		{
+			name:       "removes only matching domain",
+			domains:    []string{"example.com", "googletagmanager.com", "example.com"},
+			siteOrigin: "https://www.example.com",
+			want:       []string{"googletagmanager.com"},
+		},
+		{
+			name:       "all domains are first party",
+			domains:    []string{"probo.com"},
+			siteOrigin: "https://t.probo.com",
+			want:       []string{},
+		},
+		{
+			name:       "empty domains list",
+			domains:    []string{},
+			siteOrigin: "https://probo.com",
+			want:       []string{},
+		},
+		{
+			name:       "nil domains list",
+			domains:    nil,
+			siteOrigin: "https://probo.com",
+			want:       []string{},
+		},
+		{
+			name:       "invalid site origin preserves all",
+			domains:    []string{"probo.com", "stripe.com"},
+			siteOrigin: "not-a-url",
+			want:       []string{"probo.com", "stripe.com"},
+		},
+		{
+			name:       "empty site origin preserves all",
+			domains:    []string{"probo.com", "stripe.com"},
+			siteOrigin: "",
+			want:       []string{"probo.com", "stripe.com"},
+		},
+		{
+			name:       "co.uk site origin",
+			domains:    []string{"example.co.uk", "analytics.google.com"},
+			siteOrigin: "https://shop.example.co.uk",
+			want:       []string{"analytics.google.com"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			assert.Equal(t, tt.want, FilterFirstPartyDomains(tt.domains, tt.siteOrigin))
+		})
+	}
+}
+
+func TestFilterSharedInfrastructureDomains(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name    string
+		domains []string
+		want    []string
+	}{
+		{
+			name:    "removes tag manager domain",
+			domains: []string{"googletagmanager.com", "posthog.com"},
+			want:    []string{"posthog.com"},
+		},
+		{
+			name:    "removes generic cdn domain",
+			domains: []string{"cloudfront.net", "hotjar.com"},
+			want:    []string{"hotjar.com"},
+		},
+		{
+			name:    "keeps vendor-specific domains",
+			domains: []string{"google-analytics.com", "stripe.com"},
+			want:    []string{"google-analytics.com", "stripe.com"},
+		},
+		{
+			name:    "case insensitive match",
+			domains: []string{"GoogleTagManager.com", "Segment.IO"},
+			want:    []string{},
+		},
+		{
+			name:    "mixed infra and vendor",
+			domains: []string{"gstatic.com", "doubleclick.net", "jsdelivr.net"},
+			want:    []string{"doubleclick.net"},
+		},
+		{
+			name:    "empty domains list",
+			domains: []string{},
+			want:    []string{},
+		},
+		{
+			name:    "nil domains list",
+			domains: nil,
+			want:    []string{},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			assert.Equal(t, tt.want, FilterSharedInfrastructureDomains(tt.domains))
+		})
+	}
 }

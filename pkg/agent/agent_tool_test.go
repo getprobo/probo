@@ -273,12 +273,14 @@ func TestAgentTool_Execute(t *testing.T) {
 			var captured string
 
 			type Params struct{}
+
 			tenantTool := agent.FunctionTool[Params](
 				"get_tenant",
 				"Get tenant",
 				func(ctx context.Context, _ Params) (agent.ToolResult, error) {
 					rc := agent.RunContextFrom[*AppCtx](ctx)
 					captured = rc.TenantID
+
 					return agent.ToolResult{Content: rc.TenantID}, nil
 				},
 			)
@@ -483,6 +485,7 @@ func TestAgentTool_Execute_NestedApproval(t *testing.T) {
 			)
 
 			require.Error(t, err)
+
 			var interrupted *agent.InterruptedError
 			require.ErrorAs(t, err, &interrupted)
 			assert.Len(t, interrupted.PendingApprovals, 1)
@@ -605,6 +608,7 @@ func TestAgentTool_Execute_NestedApproval(t *testing.T) {
 			var siblingCalled bool
 
 			type Params struct{}
+
 			siblingTool := agent.FunctionTool[Params](
 				"list_files",
 				"List files",
@@ -740,6 +744,7 @@ func TestAgentTool_Execute_NestedApproval(t *testing.T) {
 			)
 
 			require.Error(t, err)
+
 			var interrupted *agent.InterruptedError
 			require.ErrorAs(t, err, &interrupted)
 			assert.Equal(t, "agent_c", interrupted.Agent.Name())

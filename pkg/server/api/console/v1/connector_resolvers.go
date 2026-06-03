@@ -11,7 +11,6 @@ import (
 	"fmt"
 
 	"go.gearno.de/kit/log"
-	"go.probo.inc/probo/pkg/accessreview/drivers"
 	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/probo"
@@ -22,60 +21,48 @@ import (
 
 // Oauth2Scopes is the resolver for the oauth2Scopes field.
 func (r *connectorResolver) Oauth2Scopes(ctx context.Context, obj *types.Connector) ([]string, error) {
-	scopes := drivers.ProviderOAuth2Scopes(obj.Provider)
+	scopes := r.providerRegistry.ProviderOAuth2Scopes(obj.Provider)
 	if scopes == nil {
 		return []string{}, nil
 	}
+
 	return scopes, nil
 }
 
 // CreateAPIKeyConnector is the resolver for the createAPIKeyConnector field.
 func (r *mutationResolver) CreateAPIKeyConnector(ctx context.Context, input types.CreateAPIKeyConnectorInput) (*types.CreateAPIKeyConnectorPayload, error) {
-	if err := r.authorize(ctx, input.OrganizationID, probo.ActionConnectorCreate); err != nil {
+	scope, err := r.authorize(ctx, input.OrganizationID, probo.ActionConnectorCreate)
+	if err != nil {
 		return nil, err
 	}
-
-	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
 
 	req := probo.CreateConnectorRequest{
 		OrganizationID: input.OrganizationID,
 		Provider:       input.Provider,
 		Protocol:       coredata.ConnectorProtocolAPIKey,
-		Connection:     &connector.APIKeyConnection{APIKey: input.APIKey},
+		Connection: &connector.APIKeyConnection{
+			APIKey:    input.APIKey,
+			Header:    r.providerRegistry.APIKeyHeader(input.Provider),
+			BasicAuth: r.providerRegistry.APIKeyUsesBasicAuth(input.Provider),
+		},
 	}
 
-	if input.TallyOrganizationID != nil {
-		req.TallySettings = &coredata.TallyConnectorSettings{
-			OrganizationID: *input.TallyOrganizationID,
-		}
+	raw, err := apiKeyConnectorSettings(input)
+	if err != nil {
+		return nil, gqlutils.Invalid(ctx, err)
 	}
-	if input.SentryOrganizationSlug != nil {
-		req.SentrySettings = &coredata.SentryConnectorSettings{
-			OrganizationSlug: *input.SentryOrganizationSlug,
-		}
-	}
-	if input.SupabaseOrganizationSlug != nil {
-		req.SupabaseSettings = &coredata.SupabaseConnectorSettings{
-			OrganizationSlug: *input.SupabaseOrganizationSlug,
-		}
-	}
-	if input.GithubOrganization != nil {
-		req.GitHubSettings = &coredata.GitHubConnectorSettings{
-			Organization: *input.GithubOrganization,
-		}
-	}
-	if input.OnePasswordScimBridgeURL != nil {
-		req.OnePasswordSettings = &coredata.OnePasswordConnectorSettings{
-			SCIMBridgeURL: *input.OnePasswordScimBridgeURL,
-		}
-	}
-	cnnctr, err := prb.Connectors.Create(ctx, req)
+
+	req.RawSettings = raw
+
+	cnnctr, err := r.probo.Connectors.Create(ctx, scope, req)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
 			return nil, gqlutils.Conflict(ctx, err)
 		}
 
-		panic(fmt.Errorf("cannot create API key connector: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot create API key connector", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.CreateAPIKeyConnectorPayload{
@@ -85,11 +72,10 @@ func (r *mutationResolver) CreateAPIKeyConnector(ctx context.Context, input type
 
 // CreateClientCredentialsConnector is the resolver for the createClientCredentialsConnector field.
 func (r *mutationResolver) CreateClientCredentialsConnector(ctx context.Context, input types.CreateClientCredentialsConnectorInput) (*types.CreateClientCredentialsConnectorPayload, error) {
-	if err := r.authorize(ctx, input.OrganizationID, probo.ActionConnectorCreate); err != nil {
+	scope, err := r.authorize(ctx, input.OrganizationID, probo.ActionConnectorCreate)
+	if err != nil {
 		return nil, err
 	}
-
-	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
 
 	oauth2Conn := &connector.OAuth2Connection{
 		GrantType:    connector.OAuth2GrantTypeClientCredentials,
@@ -97,6 +83,7 @@ func (r *mutationResolver) CreateClientCredentialsConnector(ctx context.Context,
 		ClientSecret: input.ClientSecret,
 		TokenURL:     input.TokenURL,
 	}
+
 	if input.Scope != nil {
 		oauth2Conn.Scope = *input.Scope
 	}
@@ -108,20 +95,22 @@ func (r *mutationResolver) CreateClientCredentialsConnector(ctx context.Context,
 		Connection:     oauth2Conn,
 	}
 
-	if input.OnePasswordAccountID != nil && input.OnePasswordRegion != nil {
-		req.OnePasswordUsersAPISettings = &coredata.OnePasswordUsersAPISettings{
-			AccountID: *input.OnePasswordAccountID,
-			Region:    *input.OnePasswordRegion,
-		}
+	raw, err := clientCredentialsConnectorSettings(input)
+	if err != nil {
+		return nil, gqlutils.Invalid(ctx, err)
 	}
 
-	cnnctr, err := prb.Connectors.Create(ctx, req)
+	req.RawSettings = raw
+
+	cnnctr, err := r.probo.Connectors.Create(ctx, scope, req)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
 			return nil, gqlutils.Conflict(ctx, err)
 		}
 
-		panic(fmt.Errorf("cannot create client credentials connector: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot create client credentials connector", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.CreateClientCredentialsConnectorPayload{
@@ -131,13 +120,12 @@ func (r *mutationResolver) CreateClientCredentialsConnector(ctx context.Context,
 
 // DeleteConnector is the resolver for the deleteConnector field.
 func (r *mutationResolver) DeleteConnector(ctx context.Context, input types.DeleteConnectorInput) (*types.DeleteConnectorPayload, error) {
-	if err := r.authorize(ctx, input.ConnectorID, probo.ActionConnectorDelete); err != nil {
+	scope, err := r.authorize(ctx, input.ConnectorID, probo.ActionConnectorDelete)
+	if err != nil {
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, input.ConnectorID.TenantID())
-
-	if err := prb.Connectors.Delete(ctx, input.ConnectorID); err != nil {
+	if err := r.probo.Connectors.Delete(ctx, scope, input.ConnectorID); err != nil {
 		panic(fmt.Errorf("cannot delete connector: %w", err))
 	}
 
@@ -148,14 +136,12 @@ func (r *mutationResolver) DeleteConnector(ctx context.Context, input types.Dele
 
 // DeleteSlackConnection is the resolver for the deleteSlackConnection field.
 func (r *mutationResolver) DeleteSlackConnection(ctx context.Context, input types.DeleteSlackConnectionInput) (*types.DeleteSlackConnectionPayload, error) {
-	if err := r.authorize(ctx, input.SlackConnectionID, probo.ActionConnectorDelete); err != nil {
+	scope, err := r.authorize(ctx, input.SlackConnectionID, probo.ActionConnectorDelete)
+	if err != nil {
 		return nil, err
 	}
 
-	prb := r.ProboService(ctx, input.SlackConnectionID.TenantID())
-
-	err := prb.Connectors.Delete(ctx, input.SlackConnectionID)
-	if err != nil {
+	if err := r.probo.Connectors.Delete(ctx, scope, input.SlackConnectionID); err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete slack connection", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}

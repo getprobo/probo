@@ -61,6 +61,7 @@ func (s *memorySession) Save(_ context.Context, sessionID string, messages []llm
 	}
 
 	s.sessions[sessionID] = cp
+
 	return nil
 }
 

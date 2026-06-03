@@ -7,7 +7,7 @@ type Invitation implements Node {
 
   permission(action: String!): Boolean!
     @goField(forceResolver: true)
-    @session(required: PRESENT)
+    @authentication(required: PRESENT)
 }
 
 enum InvitationStatus
@@ -51,7 +51,7 @@ type InvitationEdge {
 
 extend type Mutation {
   inviteUser(input: InviteUserInput!): InviteUserPayload
-    @session(required: PRESENT)
+    @authentication(required: PRESENT)
 }
 
 input InviteUserInput {

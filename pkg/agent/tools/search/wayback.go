@@ -21,7 +21,6 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"time"
 
 	"go.probo.inc/probo/pkg/agent"
 )
@@ -57,7 +56,7 @@ type (
 )
 
 func CheckWaybackTool() agent.Tool {
-	client := &http.Client{Timeout: 15 * time.Second}
+	client := newHTTPClient()
 
 	return agent.FunctionTool(
 		"check_wayback",
@@ -66,8 +65,17 @@ func CheckWaybackTool() agent.Tool {
 			var result waybackResult
 
 			// Check availability.
-			availURL := "https://archive.org/wayback/available?url=" + url.QueryEscape(p.URL)
-			body, err := httpGet(ctx, client, availURL)
+			availURL, err := url.Parse("https://archive.org/wayback/available")
+			if err != nil {
+				result.ErrorDetail = fmt.Sprintf("cannot parse Wayback Machine URL: %s", err)
+				return agent.ResultJSON(result), nil
+			}
+
+			q := availURL.Query()
+			q.Set("url", p.URL)
+			availURL.RawQuery = q.Encode()
+
+			body, err := httpGet(ctx, client, availURL.String())
 			if err != nil {
 				result.ErrorDetail = fmt.Sprintf("cannot check Wayback Machine availability: %s", err)
 				return agent.ResultJSON(result), nil
@@ -119,6 +127,7 @@ func httpGet(ctx context.Context, client *http.Client, rawURL string) ([]byte, e
 	if err != nil {
 		return nil, err
 	}
+
 	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {

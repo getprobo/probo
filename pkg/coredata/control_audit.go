@@ -68,6 +68,7 @@ ON CONFLICT (control_id, audit_id) DO NOTHING;
 		"created_at":      ca.CreatedAt,
 	}
 	_, err := conn.Exec(ctx, q, args)
+
 	return err
 }
 
@@ -96,5 +97,6 @@ WHERE
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	_, err := conn.Exec(ctx, q, args)
+
 	return err
 }

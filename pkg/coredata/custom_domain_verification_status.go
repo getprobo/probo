@@ -14,6 +14,11 @@
 
 package coredata
 
+import (
+	"encoding"
+	"fmt"
+)
+
 type CustomDomainVerificationStatus string
 
 const (
@@ -21,3 +26,48 @@ const (
 	CustomDomainVerificationStatusVerified CustomDomainVerificationStatus = "VERIFIED"
 	CustomDomainVerificationStatusFailed   CustomDomainVerificationStatus = "FAILED"
 )
+
+var (
+	_ fmt.Stringer             = CustomDomainVerificationStatus("")
+	_ encoding.TextMarshaler   = CustomDomainVerificationStatus("")
+	_ encoding.TextUnmarshaler = (*CustomDomainVerificationStatus)(nil)
+)
+
+func CustomDomainVerificationStatuses() []CustomDomainVerificationStatus {
+	return []CustomDomainVerificationStatus{
+		CustomDomainVerificationStatusPending,
+		CustomDomainVerificationStatusVerified,
+		CustomDomainVerificationStatusFailed,
+	}
+}
+
+func (v CustomDomainVerificationStatus) IsValid() bool {
+	switch v {
+	case
+		CustomDomainVerificationStatusPending,
+		CustomDomainVerificationStatusVerified,
+		CustomDomainVerificationStatusFailed:
+		return true
+	}
+
+	return false
+}
+
+func (v CustomDomainVerificationStatus) String() string {
+	return string(v)
+}
+
+func (v CustomDomainVerificationStatus) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *CustomDomainVerificationStatus) UnmarshalText(text []byte) error {
+	val := CustomDomainVerificationStatus(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid CustomDomainVerificationStatus value: %q", string(text))
+	}
+
+	*v = val
+
+	return nil
+}

@@ -42,6 +42,7 @@ func NewListWebhookSubscriptionsOutput(p *page.Page[*coredata.WebhookSubscriptio
 	}
 
 	var nextCursor *page.CursorKey
+
 	if len(p.Data) > 0 {
 		cursorKey := p.Data[len(p.Data)-1].CursorKey(p.Cursor.OrderBy.Field)
 		nextCursor = &cursorKey
@@ -55,6 +56,7 @@ func NewListWebhookSubscriptionsOutput(p *page.Page[*coredata.WebhookSubscriptio
 
 func NewWebhookEvent(e *coredata.WebhookEvent) *WebhookEvent {
 	var response *string
+
 	if len(e.Response) > 0 && string(e.Response) != "null" {
 		s := string(json.RawMessage(e.Response))
 		response = &s
@@ -76,6 +78,7 @@ func NewListWebhookEventsOutput(p *page.Page[*coredata.WebhookEvent, coredata.We
 	}
 
 	var nextCursor *page.CursorKey
+
 	if len(p.Data) > 0 {
 		cursorKey := p.Data[len(p.Data)-1].CursorKey(p.Cursor.OrderBy.Field)
 		nextCursor = &cursorKey

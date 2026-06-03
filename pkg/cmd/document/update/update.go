@@ -99,9 +99,11 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 			if cmd.Flags().Changed("title") {
 				input["title"] = flagTitle
 			}
+
 			if cmd.Flags().Changed("content") {
 				input["content"] = flagContent
 			}
+
 			if cmd.Flags().Changed("document-type") {
 				if err := cmdutil.ValidateEnum(
 					"document-type",
@@ -110,8 +112,10 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 				); err != nil {
 					return err
 				}
+
 				input["documentType"] = flagDocumentType
 			}
+
 			if cmd.Flags().Changed("classification") {
 				if err := cmdutil.ValidateEnum(
 					"classification",
@@ -120,8 +124,10 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 				); err != nil {
 					return err
 				}
+
 				input["classification"] = flagClassification
 			}
+
 			if cmd.Flags().Changed("trust-center-visibility") {
 				if err := cmdutil.ValidateEnum(
 					"trust-center-visibility",
@@ -130,6 +136,7 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 				); err != nil {
 					return err
 				}
+
 				input["trustCenterVisibility"] = flagTrustCenterVisibility
 			}
 

@@ -55,7 +55,7 @@ Individual codegen is driven by `go generate`:
 
 | Target              | Purpose                                           |
 | ------------------- | ------------------------------------------------- |
-| `make docker-build` | Build the Docker image (`ghcr.io/getprobo/probo`) |
+| `make docker-build` | Build the Docker image (`artifact.probo.inc/probo/probo`) |
 | `make sbom`         | Source SBOM (CycloneDX)                           |
 | `make sbom-docker`  | Docker image SBOM                                 |
 | `make scan`         | Vulnerability scan (Grype) on source + Docker     |

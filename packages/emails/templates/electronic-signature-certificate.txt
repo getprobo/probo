@@ -2,7 +2,7 @@
 
 Hi {{.RecipientFullName}},
 
-Your {{.DocumentName}} has been signed electronically. A Certificate of Completion is attached to this email as a PDF document.
+A Certificate of Completion for {{.DocumentName}} is attached to this email as a PDF document.
 
 The certificate contains a complete record of the signing event, including the integrity seal, timestamp, and audit trail.
 

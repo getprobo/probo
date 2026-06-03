@@ -1,0 +1,44 @@
+---
+description: Enforce Relay fragments instead of passing fetched data as props
+globs: "**/*.tsx"
+alwaysApply: false
+---
+
+# Never pass fetched data as props — use Relay fragments
+
+When a child component needs data from a GraphQL node, it MUST define its own
+colocated fragment and receive a **fragment key** (`SomeFragment$key`), never
+a plain object or individual fields extracted from the parent's query/fragment.
+
+This applies even when the child only uses the data to seed local state (e.g.
+an edit form that copies fields into `useState`).
+
+```tsx
+// BAD — parent extracts fields and passes a plain object
+<EditCookieRow
+  cookie={{ name: cookie.name, duration: cookie.duration }}
+  onSave={handleSave}
+/>
+
+// GOOD — child owns its fragment, parent spreads it and passes the key
+// In EditCookieRow.tsx:
+export const editCookieRowFragment = graphql`
+  fragment EditCookieRowFragment on Cookie { name duration description }
+`;
+interface EditCookieRowProps {
+  cookieKey: EditCookieRowFragment$key;
+  onSave: (cookie: CookieEntry) => void;
+}
+
+// In parent fragment:
+// ...EditCookieRowFragment   (spread on the Cookie node)
+
+// In parent JSX:
+<EditCookieRow cookieKey={cookie} onSave={handleSave} />
+```
+
+Callback props (`onSave`, `onCancel`) and configuration props (`isUpdating`,
+`variant`) are fine — only **domain data** must come from fragments.
+
+For connection items (table rows, list entries rendered in `.map()`), see the
+companion rule `relay-connection-item-components.mdc`.

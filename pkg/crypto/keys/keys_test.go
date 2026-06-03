@@ -57,6 +57,7 @@ func TestGenerate(t *testing.T) {
 			checkFunc: func(t *testing.T, key any) {
 				rsaKey, ok := key.(*rsa.PrivateKey)
 				require.True(t, ok, "expected *rsa.PrivateKey, got %T", key)
+
 				bitSize := rsaKey.N.BitLen()
 				assert.GreaterOrEqual(t, bitSize, 2047, "RSA key too small")
 				assert.LessOrEqual(t, bitSize, 2048, "RSA key too large")
@@ -68,6 +69,7 @@ func TestGenerate(t *testing.T) {
 			checkFunc: func(t *testing.T, key any) {
 				rsaKey, ok := key.(*rsa.PrivateKey)
 				require.True(t, ok, "expected *rsa.PrivateKey, got %T", key)
+
 				bitSize := rsaKey.N.BitLen()
 				assert.GreaterOrEqual(t, bitSize, 4095, "RSA key too small")
 				assert.LessOrEqual(t, bitSize, 4096, "RSA key too large")
@@ -116,6 +118,7 @@ func TestGenerateConcurrency(t *testing.T) {
 			t.Parallel()
 
 			const numGoroutines = 10
+
 			errorsChan := make(chan error, numGoroutines)
 
 			for range numGoroutines {
@@ -125,10 +128,12 @@ func TestGenerateConcurrency(t *testing.T) {
 						errorsChan <- err
 						return
 					}
+
 					if key == nil {
 						errorsChan <- errors.New("generated key is nil")
 						return
 					}
+
 					errorsChan <- nil
 				}()
 			}

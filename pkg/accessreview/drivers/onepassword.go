@@ -71,6 +71,7 @@ func NewOnePasswordDriver(httpClient *http.Client, baseURL string) *OnePasswordD
 
 func (d *OnePasswordDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error) {
 	var records []AccountRecord
+
 	startIndex := 1
 
 	for range maxPaginationPages {
@@ -103,6 +104,7 @@ func (d *OnePasswordDriver) ListAccounts(ctx context.Context) ([]AccountRecord, 
 			if record.FullName == "" && u.Name.Formatted != "" {
 				record.FullName = u.Name.Formatted
 			}
+
 			if record.FullName == "" && (u.Name.GivenName != "" || u.Name.FamilyName != "") {
 				record.FullName = u.Name.GivenName + " " + u.Name.FamilyName
 			}
@@ -128,6 +130,7 @@ func (d *OnePasswordDriver) ListAccounts(ctx context.Context) ([]AccountRecord, 
 		if len(resp.Resources) == 0 || resp.ItemsPerPage <= 0 || startIndex+resp.ItemsPerPage > resp.TotalResults {
 			return records, nil
 		}
+
 		startIndex += resp.ItemsPerPage
 	}
 
@@ -139,6 +142,7 @@ func (d *OnePasswordDriver) queryUsers(ctx context.Context, startIndex int) (*on
 	if err != nil {
 		return nil, fmt.Errorf("cannot parse 1password base url: %w", err)
 	}
+
 	u = u.JoinPath("scim", "v2", "Users")
 	q := u.Query()
 	q.Set("startIndex", strconv.Itoa(startIndex))
@@ -149,12 +153,14 @@ func (d *OnePasswordDriver) queryUsers(ctx context.Context, startIndex int) (*on
 	if err != nil {
 		return nil, fmt.Errorf("cannot create 1password users request: %w", err)
 	}
+
 	req.Header.Set("Accept", "application/scim+json")
 
 	httpResp, err := d.httpClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("cannot execute 1password users request: %w", err)
 	}
+
 	defer func() {
 		_ = httpResp.Body.Close()
 	}()

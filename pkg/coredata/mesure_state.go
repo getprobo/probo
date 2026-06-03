@@ -15,21 +15,27 @@
 package coredata
 
 import (
-	"database/sql/driver"
+	"encoding"
 	"fmt"
 )
 
 type (
-	MeasureState uint8
+	MeasureState string
 )
 
 const (
-	MeasureStateNotStarted MeasureState = iota
-	MeasureStateInProgress
-	MeasureStateNotApplicable
-	MeasureStateImplemented
-	MeasureStateUnknown
-	MeasureStateNotImplemented
+	MeasureStateNotStarted     MeasureState = "NOT_STARTED"
+	MeasureStateInProgress     MeasureState = "IN_PROGRESS"
+	MeasureStateNotApplicable  MeasureState = "NOT_APPLICABLE"
+	MeasureStateImplemented    MeasureState = "IMPLEMENTED"
+	MeasureStateUnknown        MeasureState = "UNKNOWN"
+	MeasureStateNotImplemented MeasureState = "NOT_IMPLEMENTED"
+)
+
+var (
+	_ fmt.Stringer             = MeasureState("")
+	_ encoding.TextMarshaler   = MeasureState("")
+	_ encoding.TextUnmarshaler = (*MeasureState)(nil)
 )
 
 func MeasureStates() []MeasureState {
@@ -43,63 +49,36 @@ func MeasureStates() []MeasureState {
 	}
 }
 
-func (ms MeasureState) MarshalText() ([]byte, error) {
-	return []byte(ms.String()), nil
+func (v MeasureState) IsValid() bool {
+	switch v {
+	case
+		MeasureStateNotStarted,
+		MeasureStateInProgress,
+		MeasureStateNotApplicable,
+		MeasureStateImplemented,
+		MeasureStateUnknown,
+		MeasureStateNotImplemented:
+		return true
+	}
+
+	return false
 }
 
-func (ms *MeasureState) UnmarshalText(data []byte) error {
-	val := string(data)
+func (v MeasureState) String() string {
+	return string(v)
+}
 
-	switch val {
-	case MeasureStateNotStarted.String():
-		*ms = MeasureStateNotStarted
-	case MeasureStateInProgress.String():
-		*ms = MeasureStateInProgress
-	case MeasureStateNotApplicable.String():
-		*ms = MeasureStateNotApplicable
-	case MeasureStateImplemented.String():
-		*ms = MeasureStateImplemented
-	case MeasureStateUnknown.String():
-		*ms = MeasureStateUnknown
-	case MeasureStateNotImplemented.String():
-		*ms = MeasureStateNotImplemented
-	default:
-		return fmt.Errorf("invalid MeasureState value: %q", val)
+func (v MeasureState) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *MeasureState) UnmarshalText(text []byte) error {
+	val := MeasureState(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid MeasureState value: %q", string(text))
 	}
+
+	*v = val
 
 	return nil
-}
-
-func (ms MeasureState) String() string {
-	var val string
-
-	switch ms {
-	case MeasureStateNotStarted:
-		val = "NOT_STARTED"
-	case MeasureStateInProgress:
-		val = "IN_PROGRESS"
-	case MeasureStateNotApplicable:
-		val = "NOT_APPLICABLE"
-	case MeasureStateImplemented:
-		val = "IMPLEMENTED"
-	case MeasureStateUnknown:
-		val = "UNKNOWN"
-	case MeasureStateNotImplemented:
-		val = "NOT_IMPLEMENTED"
-	}
-
-	return val
-}
-
-func (ms *MeasureState) Scan(value any) error {
-	val, ok := value.(string)
-	if !ok {
-		return fmt.Errorf("invalid scan source for MeasureState, expected string got %T", value)
-	}
-
-	return ms.UnmarshalText([]byte(val))
-}
-
-func (ms MeasureState) Value() (driver.Value, error) {
-	return ms.String(), nil
 }

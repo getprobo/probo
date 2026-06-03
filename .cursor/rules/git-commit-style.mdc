@@ -1,0 +1,60 @@
+---
+description: Git commit message style — seven rules, no Conventional Commits
+alwaysApply: true
+---
+
+# Git commit message style
+
+This repository follows the [seven rules of a great Git commit message](https://cbea.ms/git-commit/) (see [`contrib/claude/commit.md`](../../contrib/claude/commit.md)). **Do not use Conventional Commits** (`type(scope): summary`); the contrib guide explicitly prescribes the seven-rules format, and Conventional-Commits-style messages in the history are drift, not precedent.
+
+## The seven rules
+
+1. Separate subject from body with a blank line
+2. Limit the subject line to 50 characters
+3. Capitalize the subject line
+4. Do not end the subject line with a period
+5. Use the imperative mood in the subject line
+6. Wrap the body at 72 characters
+7. Use the body to explain *what* and *why* vs. *how*
+
+The subject must complete the sentence "If applied, this commit will …".
+
+## Good vs bad
+
+```text
+# GOOD — capitalized imperative subject, no type prefix, body explains why
+Promote glob source and trigger draft on adoption
+
+The pattern-analysis worker dropped two signals on every run. ...
+
+# GOOD — single-line is fine when the change is self-explanatory
+Fix typo in third-party assessment prompt
+
+# BAD — Conventional Commits prefix
+fix(cookie-banner): disconnect observer in load() error path
+
+# BAD — Conventional Commits prefix without scope
+feat: add detection for browser-extension frames
+
+# BAD — lowercased subject
+promote glob source and trigger draft on adoption
+
+# BAD — subject ends with a period
+Promote glob source and trigger draft on adoption.
+
+# BAD — past tense / non-imperative subject
+Promoted glob source and triggered draft on adoption
+```
+
+## Why no Conventional Commits
+
+- The project does not consume the `type(scope):` prefix for tooling (no changelog generator, no semantic-release, no commit-lint).
+- Mixing the two styles in `git log` hurts readability for humans skimming history.
+- The seven-rules style carries strictly more information when written well, because the subject is a real sentence rather than a typed token.
+
+If a future need for machine-readable commit types arises, raise it in a separate change that updates [`contrib/claude/commit.md`](../../contrib/claude/commit.md) first, then this rule. Do not start drifting unilaterally.
+
+## Related
+
+- [`.cursor/rules/git-commit-signing.mdc`](git-commit-signing.mdc) — every commit must be signed with `-s -S`.
+- [`contrib/claude/commit.md`](../../contrib/claude/commit.md) — full commit conventions.

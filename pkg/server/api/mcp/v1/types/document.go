@@ -63,6 +63,7 @@ func NewListControlDocumentsOutput(documentPage *page.Page[*coredata.Document, c
 	}
 
 	var nextCursor *page.CursorKey
+
 	if len(documentPage.Data) > 0 {
 		cursorKey := documentPage.Data[len(documentPage.Data)-1].CursorKey(documentPage.Cursor.OrderBy.Field)
 		nextCursor = &cursorKey
@@ -81,6 +82,7 @@ func NewListMeasureDocumentsOutput(documentPage *page.Page[*coredata.Document, c
 	}
 
 	var nextCursor *page.CursorKey
+
 	if len(documentPage.Data) > 0 {
 		cursorKey := documentPage.Data[len(documentPage.Data)-1].CursorKey(documentPage.Cursor.OrderBy.Field)
 		nextCursor = &cursorKey
@@ -99,6 +101,7 @@ func NewListDocumentsOutput(documentPage *page.Page[*coredata.Document, coredata
 	}
 
 	var nextCursor *page.CursorKey
+
 	if len(documentPage.Data) > 0 {
 		cursorKey := documentPage.Data[len(documentPage.Data)-1].CursorKey(documentPage.Cursor.OrderBy.Field)
 		nextCursor = &cursorKey
@@ -148,6 +151,7 @@ func NewListDocumentVersionsOutput(versionPage *page.Page[*coredata.DocumentVers
 	}
 
 	var nextCursor *page.CursorKey
+
 	if len(versionPage.Data) > 0 {
 		cursorKey := versionPage.Data[len(versionPage.Data)-1].CursorKey(versionPage.Cursor.OrderBy.Field)
 		nextCursor = &cursorKey
@@ -180,6 +184,7 @@ func NewListDocumentVersionSignaturesOutput(signaturePage *page.Page[*coredata.D
 	}
 
 	var nextCursor *page.CursorKey
+
 	if len(signaturePage.Data) > 0 {
 		cursorKey := signaturePage.Data[len(signaturePage.Data)-1].CursorKey(signaturePage.Cursor.OrderBy.Field)
 		nextCursor = &cursorKey
@@ -209,6 +214,7 @@ func NewListDocumentVersionApprovalQuorumsOutput(quorumPage *page.Page[*coredata
 	}
 
 	var nextCursor *page.CursorKey
+
 	if len(quorumPage.Data) > 0 {
 		cursorKey := quorumPage.Data[len(quorumPage.Data)-1].CursorKey(quorumPage.Cursor.OrderBy.Field)
 		nextCursor = &cursorKey
@@ -241,6 +247,7 @@ func NewListDocumentVersionApprovalDecisionsOutput(decisionPage *page.Page[*core
 	}
 
 	var nextCursor *page.CursorKey
+
 	if len(decisionPage.Data) > 0 {
 		cursorKey := decisionPage.Data[len(decisionPage.Data)-1].CursorKey(decisionPage.Cursor.OrderBy.Field)
 		nextCursor = &cursorKey

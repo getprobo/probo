@@ -22,7 +22,7 @@ import (
 
 // CreateUser is the resolver for the createUser field.
 func (r *mutationResolver) CreateUser(ctx context.Context, input types.CreateUserInput) (*types.CreateUserPayload, error) {
-	if err := r.authorize(ctx, input.OrganizationID, iam.ActionMembershipProfileCreate); err != nil {
+	if _, err := r.authorize(ctx, input.OrganizationID, iam.ActionMembershipProfileCreate); err != nil {
 		return nil, err
 	}
 
@@ -41,12 +41,12 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input types.CreateUse
 		},
 	)
 	if err != nil {
-		var errAlreadyExists *iam.ErrUserAlreadyExists
-		if errors.As(err, &errAlreadyExists) {
+		if _, ok := errors.AsType[*iam.ErrUserAlreadyExists](err); ok {
 			return nil, gqlutils.Conflict(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot create user", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -57,7 +57,7 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input types.CreateUse
 
 // DeactivateUser is the resolver for the deactivateUser field.
 func (r *mutationResolver) DeactivateUser(ctx context.Context, input types.DeactivateUserInput) (*types.DeactivateUserPayload, error) {
-	if err := r.authorize(ctx, input.ProfileID, iam.ActionMembershipProfileDeactivate); err != nil {
+	if _, err := r.authorize(ctx, input.ProfileID, iam.ActionMembershipProfileDeactivate); err != nil {
 		return nil, err
 	}
 
@@ -66,7 +66,6 @@ func (r *mutationResolver) DeactivateUser(ctx context.Context, input types.Deact
 		input.ProfileID,
 		coredata.ProfileStateInactive,
 	)
-
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot deactivate profile", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -79,7 +78,7 @@ func (r *mutationResolver) DeactivateUser(ctx context.Context, input types.Deact
 
 // UpdateUser is the resolver for the updateUser field.
 func (r *mutationResolver) UpdateUser(ctx context.Context, input types.UpdateUserInput) (*types.UpdateUserPayload, error) {
-	if err := r.authorize(ctx, input.ID, iam.ActionMembershipProfileUpdate); err != nil {
+	if _, err := r.authorize(ctx, input.ID, iam.ActionMembershipProfileUpdate); err != nil {
 		return nil, err
 	}
 
@@ -105,26 +104,49 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, input types.UpdateUse
 	}, nil
 }
 
+// ArchiveUser is the resolver for the archiveUser field.
+func (r *mutationResolver) ArchiveUser(ctx context.Context, input types.ArchiveUserInput) (*types.ArchiveUserPayload, error) {
+	scope, err := r.authorize(ctx, input.ProfileID, iam.ActionMembershipProfileDelete)
+	if err != nil {
+		return nil, err
+	}
+
+	err = r.iam.OrganizationService.ArchiveUser(ctx, scope, input.OrganizationID, input.ProfileID)
+	if err != nil {
+		if _, ok := errors.AsType[*iam.ErrUserManagedBySCIM](err); ok {
+			return nil, gqlutils.Conflictf(ctx, "user is managed by SCIM and cannot be archived")
+		}
+
+		if _, ok := errors.AsType[*iam.ErrLastActiveOwner](err); ok {
+			return nil, gqlutils.Conflictf(ctx, "cannot archive last active owner")
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot archive user from organization", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.ArchiveUserPayload{ArchivedProfileID: input.ProfileID}, nil
+}
+
 // RemoveUser is the resolver for the removeUser field.
 func (r *mutationResolver) RemoveUser(ctx context.Context, input types.RemoveUserInput) (*types.RemoveUserPayload, error) {
-	if err := r.authorize(ctx, input.ProfileID, iam.ActionMembershipProfileDelete); err != nil {
+	if _, err := r.authorize(ctx, input.ProfileID, iam.ActionMembershipProfileDelete); err != nil {
 		return nil, err
 	}
 
 	err := r.iam.OrganizationService.RemoveUser(ctx, input.OrganizationID, input.ProfileID)
 	if err != nil {
-		var errManagedBySCIM *iam.ErrUserManagedBySCIM
-		var errLastActiveOwner *iam.ErrLastActiveOwner
-
-		if errors.As(err, &errManagedBySCIM) {
-			return nil, gqlutils.Conflict(ctx, err)
+		if _, ok := errors.AsType[*iam.ErrUserManagedBySCIM](err); ok {
+			return nil, gqlutils.Conflictf(ctx, "user is managed by SCIM and cannot be removed")
 		}
 
-		if errors.As(err, &errLastActiveOwner) {
-			return nil, gqlutils.Conflict(ctx, err)
+		if _, ok := errors.AsType[*iam.ErrLastActiveOwner](err); ok {
+			return nil, gqlutils.Conflictf(ctx, "cannot remove last active owner")
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot remove user from organization", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -133,7 +155,7 @@ func (r *mutationResolver) RemoveUser(ctx context.Context, input types.RemoveUse
 
 // Identity is the resolver for the identity field.
 func (r *profileResolver) Identity(ctx context.Context, obj *types.Profile) (*types.Identity, error) {
-	if err := r.authorize(
+	if _, err := r.authorize(
 		ctx,
 		obj.ID,
 		iam.ActionMembershipProfileGet,
@@ -144,12 +166,12 @@ func (r *profileResolver) Identity(ctx context.Context, obj *types.Profile) (*ty
 
 	identity, err := r.iam.AccountService.GetIdentity(ctx, obj.Identity.ID)
 	if err != nil {
-		var errNotFound *iam.ErrIdentityNotFound
-		if errors.As(err, &errNotFound) {
+		if _, ok := errors.AsType[*iam.ErrIdentityNotFound](err); ok {
 			return nil, gqlutils.NotFound(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get identity", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -158,18 +180,18 @@ func (r *profileResolver) Identity(ctx context.Context, obj *types.Profile) (*ty
 
 // Organization is the resolver for the organization field.
 func (r *profileResolver) Organization(ctx context.Context, obj *types.Profile) (*types.Organization, error) {
-	if err := r.authorize(ctx, obj.Organization.ID, iam.ActionOrganizationGet, authz.WithSkipAssumptionCheck()); err != nil {
+	if _, err := r.authorize(ctx, obj.Organization.ID, iam.ActionOrganizationGet, authz.WithSkipAssumptionCheck()); err != nil {
 		return nil, err
 	}
 
 	organization, err := r.iam.OrganizationService.GetOrganization(ctx, obj.Organization.ID)
 	if err != nil {
-		var errNotFound *iam.ErrOrganizationNotFound
-		if errors.As(err, &errNotFound) {
+		if _, ok := errors.AsType[*iam.ErrOrganizationNotFound](err); ok {
 			return nil, gqlutils.NotFound(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get organization", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -178,18 +200,18 @@ func (r *profileResolver) Organization(ctx context.Context, obj *types.Profile) 
 
 // Membership is the resolver for the membership field.
 func (r *profileResolver) Membership(ctx context.Context, obj *types.Profile) (*types.Membership, error) {
-	if err := r.authorize(ctx, obj.ID, iam.ActionMembershipGet, authz.WithSkipAssumptionCheck()); err != nil {
+	if _, err := r.authorize(ctx, obj.ID, iam.ActionMembershipGet, authz.WithSkipAssumptionCheck()); err != nil {
 		return nil, err
 	}
 
 	membership, err := r.iam.AccountService.GetMembershipForOrganization(ctx, obj.Identity.ID, obj.Organization.ID)
 	if err != nil {
-		var errNotFound *iam.ErrMembershipNotFound
-		if errors.As(err, &errNotFound) {
+		if _, ok := errors.AsType[*iam.ErrMembershipNotFound](err); ok {
 			return nil, gqlutils.NotFound(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get membership", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -198,7 +220,7 @@ func (r *profileResolver) Membership(ctx context.Context, obj *types.Profile) (*
 
 // PendingInvitations is the resolver for the pendingInvitations field.
 func (r *profileResolver) PendingInvitations(ctx context.Context, obj *types.Profile, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.InvitationOrderBy) (*types.InvitationConnection, error) {
-	if err := r.authorize(ctx, obj.ID, iam.ActionInvitationList); err != nil {
+	if _, err := r.authorize(ctx, obj.ID, iam.ActionInvitationList); err != nil {
 		return nil, err
 	}
 
@@ -232,6 +254,7 @@ func (r *profileConnectionResolver) TotalCount(ctx context.Context, obj *types.P
 			r.logger.ErrorCtx(ctx, "cannot count profiles", log.Error(err))
 			return nil, gqlutils.Internal(ctx)
 		}
+
 		return &count, nil
 	case *organizationResolver:
 		count, err := r.iam.OrganizationService.CountProfiles(ctx, obj.ParentID, obj.Filters)
@@ -239,10 +262,12 @@ func (r *profileConnectionResolver) TotalCount(ctx context.Context, obj *types.P
 			r.logger.ErrorCtx(ctx, "cannot count profiles", log.Error(err))
 			return nil, gqlutils.Internal(ctx)
 		}
+
 		return &count, nil
 	}
 
 	r.logger.ErrorCtx(ctx, "unsupported resolver", log.Any("resolver", obj.Resolver))
+
 	return nil, gqlutils.Internal(ctx)
 }
 

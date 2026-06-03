@@ -106,12 +106,13 @@ func (s *Service) ValidateToken(ctx context.Context, token string) (*coredata.SC
 				if err == coredata.ErrResourceNotFound {
 					return NewSCIMInvalidTokenError()
 				}
+
 				return fmt.Errorf("cannot load SCIM configuration: %w", err)
 			}
+
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -128,6 +129,7 @@ func (s *Service) CreateUser(
 	if attrs.UserName == "" {
 		return scim.Resource{}, scimerrors.ScimErrorBadRequest("userName is required")
 	}
+
 	if attrs.Email == "" {
 		return scim.Resource{}, scimerrors.ScimErrorBadRequest("a valid email is required (via emails array or userName)")
 	}
@@ -136,6 +138,7 @@ func (s *Service) CreateUser(
 	if err != nil {
 		return scim.Resource{}, scimerrors.ScimErrorBadRequest("invalid email format")
 	}
+
 	now := time.Now()
 
 	profileState := coredata.ProfileStateActive
@@ -148,8 +151,10 @@ func (s *Service) CreateUser(
 		externalIdPtr = &attrs.ExternalID
 	}
 
-	var membership *coredata.Membership
-	var profile *coredata.MembershipProfile
+	var (
+		membership *coredata.Membership
+		profile    *coredata.MembershipProfile
+	)
 
 	scope := coredata.NewScopeFromObjectID(config.OrganizationID)
 
@@ -205,6 +210,7 @@ func (s *Service) CreateUser(
 					// Migrate the existing membership to the new identity
 					// so the user's role is preserved.
 					oldIdentityID := profile.IdentityID
+
 					existingMembership := &coredata.Membership{}
 					if err := existingMembership.LoadByIdentityIDAndOrganizationID(
 						ctx,
@@ -214,6 +220,7 @@ func (s *Service) CreateUser(
 						config.OrganizationID,
 					); err == nil {
 						existingMembership.IdentityID = identity.ID
+
 						existingMembership.UpdatedAt = now
 						if err := existingMembership.Update(ctx, tx, scope); err != nil {
 							return fmt.Errorf("cannot update membership identity: %w", err)
@@ -225,6 +232,7 @@ func (s *Service) CreateUser(
 					profile.IdentityID = identity.ID
 					profile.EmailAddress = emailAddr
 					applyUserAttributes(profile, attrs, externalIdPtr, profileState, now)
+
 					if err := profile.Update(ctx, tx, scope); err != nil {
 						return fmt.Errorf("cannot update profile: %w", err)
 					}
@@ -248,8 +256,10 @@ func (s *Service) CreateUser(
 					if errors.Is(err, coredata.ErrResourceAlreadyExists) {
 						return scimerrors.ScimErrorUniqueness
 					}
+
 					return fmt.Errorf("cannot insert profile: %w", err)
 				}
+
 				eventType = coredata.WebhookEventTypeUserCreated
 			}
 		} else {
@@ -270,6 +280,7 @@ func (s *Service) CreateUser(
 			}
 
 			applyUserAttributes(profile, attrs, externalIdPtr, profileState, now)
+
 			if err := profile.Update(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot update profile: %w", err)
 			}
@@ -277,6 +288,7 @@ func (s *Service) CreateUser(
 
 		if !attrs.Active {
 			invitations := &coredata.Invitations{}
+
 			onlyPending := coredata.NewInvitationFilter([]coredata.InvitationStatus{coredata.InvitationStatusPending})
 			if err := invitations.ExpireByUserID(
 				ctx,
@@ -286,6 +298,11 @@ func (s *Service) CreateUser(
 				onlyPending,
 			); err != nil {
 				return fmt.Errorf("cannot expire pending invitations: %w", err)
+			}
+
+			signatures := &coredata.DocumentVersionSignatures{}
+			if err := signatures.DeleteRequestedBySignatory(ctx, tx, scope, profile.ID); err != nil {
+				return fmt.Errorf("cannot delete requested signatures: %w", err)
 			}
 		}
 
@@ -322,7 +339,6 @@ func (s *Service) CreateUser(
 
 		return nil
 	})
-
 	if err != nil {
 		return scim.Resource{}, err
 	}
@@ -347,6 +363,7 @@ func (s *Service) GetUser(
 				if err == coredata.ErrResourceNotFound {
 					return scimerrors.ScimErrorResourceNotFound(profileID.String())
 				}
+
 				return fmt.Errorf("cannot load profile: %w", err)
 			}
 
@@ -357,7 +374,6 @@ func (s *Service) GetUser(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return scim.Resource{}, err
 	}
@@ -398,7 +414,6 @@ func (s *Service) ListUsers(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, 0, err
 	}
@@ -418,6 +433,7 @@ func (s *Service) ReplaceUser(
 	attributes scim.ResourceAttributes,
 ) (scim.Resource, error) {
 	attrs := ParseUserFromReplaceAttributes(attributes)
+
 	profile, err := s.updateUser(ctx, config, profileID, attrs)
 	if err != nil {
 		return scim.Resource{}, err
@@ -504,6 +520,7 @@ func (s *Service) updateUser(
 				} else {
 					profile.ExternalID = attrs.ExternalID
 				}
+
 				profile.UpdatedAt = now
 			}
 
@@ -513,6 +530,7 @@ func (s *Service) updateUser(
 				} else {
 					profile.Kind = attrs.UserType
 				}
+
 				profile.UpdatedAt = now
 			}
 
@@ -522,6 +540,7 @@ func (s *Service) updateUser(
 				} else {
 					profile.Nickname = attrs.Nickname
 				}
+
 				profile.UpdatedAt = now
 			}
 
@@ -531,6 +550,7 @@ func (s *Service) updateUser(
 				} else {
 					profile.Locale = attrs.Locale
 				}
+
 				profile.UpdatedAt = now
 			}
 
@@ -540,6 +560,7 @@ func (s *Service) updateUser(
 				} else {
 					profile.Timezone = attrs.Timezone
 				}
+
 				profile.UpdatedAt = now
 			}
 
@@ -549,6 +570,7 @@ func (s *Service) updateUser(
 				} else {
 					profile.ProfileUrl = attrs.ProfileUrl
 				}
+
 				profile.UpdatedAt = now
 			}
 
@@ -558,6 +580,7 @@ func (s *Service) updateUser(
 				} else {
 					profile.PreferredLanguage = attrs.PreferredLanguage
 				}
+
 				profile.UpdatedAt = now
 			}
 
@@ -567,6 +590,7 @@ func (s *Service) updateUser(
 				} else {
 					profile.GivenName = attrs.GivenName
 				}
+
 				profile.UpdatedAt = now
 			}
 
@@ -576,6 +600,7 @@ func (s *Service) updateUser(
 				} else {
 					profile.FamilyName = attrs.FamilyName
 				}
+
 				profile.UpdatedAt = now
 			}
 
@@ -585,6 +610,7 @@ func (s *Service) updateUser(
 				} else {
 					profile.FormattedName = attrs.FormattedName
 				}
+
 				profile.UpdatedAt = now
 			}
 
@@ -594,6 +620,7 @@ func (s *Service) updateUser(
 				} else {
 					profile.MiddleName = attrs.MiddleName
 				}
+
 				profile.UpdatedAt = now
 			}
 
@@ -603,6 +630,7 @@ func (s *Service) updateUser(
 				} else {
 					profile.HonorificPrefix = attrs.HonorificPrefix
 				}
+
 				profile.UpdatedAt = now
 			}
 
@@ -612,6 +640,7 @@ func (s *Service) updateUser(
 				} else {
 					profile.HonorificSuffix = attrs.HonorificSuffix
 				}
+
 				profile.UpdatedAt = now
 			}
 
@@ -621,6 +650,7 @@ func (s *Service) updateUser(
 				} else {
 					profile.EmployeeNumber = attrs.EmployeeNumber
 				}
+
 				profile.UpdatedAt = now
 			}
 
@@ -630,6 +660,7 @@ func (s *Service) updateUser(
 				} else {
 					profile.Department = attrs.Department
 				}
+
 				profile.UpdatedAt = now
 			}
 
@@ -639,6 +670,7 @@ func (s *Service) updateUser(
 				} else {
 					profile.CostCenter = attrs.CostCenter
 				}
+
 				profile.UpdatedAt = now
 			}
 
@@ -648,6 +680,7 @@ func (s *Service) updateUser(
 				} else {
 					profile.EnterpriseOrganization = attrs.EnterpriseOrganization
 				}
+
 				profile.UpdatedAt = now
 			}
 
@@ -657,6 +690,7 @@ func (s *Service) updateUser(
 				} else {
 					profile.Division = attrs.Division
 				}
+
 				profile.UpdatedAt = now
 			}
 
@@ -666,6 +700,7 @@ func (s *Service) updateUser(
 				} else {
 					profile.ManagerValue = attrs.ManagerValue
 				}
+
 				profile.UpdatedAt = now
 			}
 
@@ -688,6 +723,7 @@ func (s *Service) updateUser(
 
 			if shouldDeactivate {
 				invitations := &coredata.Invitations{}
+
 				onlyPending := coredata.NewInvitationFilter([]coredata.InvitationStatus{coredata.InvitationStatusPending})
 				if err := invitations.ExpireByUserID(
 					ctx,
@@ -697,6 +733,11 @@ func (s *Service) updateUser(
 					onlyPending,
 				); err != nil {
 					return fmt.Errorf("cannot expire pending invitations: %w", err)
+				}
+
+				signatures := &coredata.DocumentVersionSignatures{}
+				if err := signatures.DeleteRequestedBySignatory(ctx, tx, scope, profile.ID); err != nil {
+					return fmt.Errorf("cannot delete requested signatures: %w", err)
 				}
 			}
 
@@ -727,7 +768,6 @@ func (s *Service) updateUser(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -788,6 +828,7 @@ func (s *Service) DeleteUser(
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return scimerrors.ScimErrorResourceNotFound(profileID.String())
 				}
+
 				return fmt.Errorf("cannot load profile: %w", err)
 			}
 
@@ -795,19 +836,8 @@ func (s *Service) DeleteUser(
 				return scimerrors.ScimErrorResourceNotFound(profileID.String())
 			}
 
-			invitations := &coredata.Invitations{}
-			onlyPending := coredata.NewInvitationFilter([]coredata.InvitationStatus{coredata.InvitationStatusPending})
-			if err := invitations.ExpireByUserID(
-				ctx,
-				tx,
-				scope,
-				profile.ID,
-				onlyPending,
-			); err != nil {
-				return fmt.Errorf("cannot expire pending invitations: %w", err)
-			}
-
 			var membership *coredata.Membership
+
 			m := &coredata.Membership{}
 			if err := m.LoadByIdentityIDAndOrganizationID(
 				ctx, tx, scope, profile.IdentityID, config.OrganizationID,
@@ -819,12 +849,39 @@ func (s *Service) DeleteUser(
 				membership = m
 			}
 
-			if err := webhook.InsertData(ctx, tx, scope, config.OrganizationID, coredata.WebhookEventTypeUserDeleted, webhooktypes.NewUser(profile, membership)); err != nil {
-				return fmt.Errorf("cannot insert webhook event: %w", err)
+			if err := profile.Delete(ctx, tx, scope, profile.ID); err != nil {
+				if errors.Is(err, coredata.ErrResourceInUse) {
+					s.logger.WarnCtx(
+						ctx,
+						"SCIM user delete skipped, profile is in use",
+						log.String("profile_id", profileID.String()),
+					)
+
+					if err := s.deactivateProfileInTx(ctx, tx, scope, config, profile, membership); err != nil {
+						return fmt.Errorf("cannot deactivate profile: %w", err)
+					}
+
+					return nil
+				}
+
+				return fmt.Errorf("cannot delete profile: %w", err)
 			}
 
-			if err := profile.Delete(ctx, tx, scope, profile.ID); err != nil {
-				return fmt.Errorf("cannot delete profile: %w", err)
+			invitations := &coredata.Invitations{}
+
+			onlyPending := coredata.NewInvitationFilter([]coredata.InvitationStatus{coredata.InvitationStatusPending})
+			if err := invitations.ExpireByUserID(
+				ctx,
+				tx,
+				scope,
+				profile.ID,
+				onlyPending,
+			); err != nil {
+				return fmt.Errorf("cannot expire pending invitations: %w", err)
+			}
+
+			if err := webhook.InsertData(ctx, tx, scope, config.OrganizationID, coredata.WebhookEventTypeUserDeleted, webhooktypes.NewUser(profile, membership)); err != nil {
+				return fmt.Errorf("cannot insert webhook event: %w", err)
 			}
 
 			if membership != nil {
@@ -836,6 +893,58 @@ func (s *Service) DeleteUser(
 			return nil
 		},
 	)
+}
+
+func (s *Service) deactivateProfileInTx(
+	ctx context.Context,
+	tx pg.Tx,
+	scope coredata.Scoper,
+	config *coredata.SCIMConfiguration,
+	profile *coredata.MembershipProfile,
+	membership *coredata.Membership,
+) error {
+	if profile.State == coredata.ProfileStateInactive {
+		return nil
+	}
+
+	now := time.Now()
+	profile.State = coredata.ProfileStateInactive
+	profile.UpdatedAt = now
+
+	if err := profile.Update(ctx, tx, scope); err != nil {
+		return fmt.Errorf("cannot deactivate profile: %w", err)
+	}
+
+	invitations := &coredata.Invitations{}
+
+	onlyPending := coredata.NewInvitationFilter([]coredata.InvitationStatus{coredata.InvitationStatusPending})
+	if err := invitations.ExpireByUserID(
+		ctx,
+		tx,
+		scope,
+		profile.ID,
+		onlyPending,
+	); err != nil {
+		return fmt.Errorf("cannot expire pending invitations: %w", err)
+	}
+
+	signatures := &coredata.DocumentVersionSignatures{}
+	if err := signatures.DeleteRequestedBySignatory(ctx, tx, scope, profile.ID); err != nil {
+		return fmt.Errorf("cannot delete requested signatures: %w", err)
+	}
+
+	if membership != nil {
+		membership.UpdatedAt = now
+		if err := membership.Update(ctx, tx, scope); err != nil {
+			return fmt.Errorf("cannot update membership: %w", err)
+		}
+	}
+
+	if err := webhook.InsertData(ctx, tx, scope, config.OrganizationID, coredata.WebhookEventTypeUserUpdated, webhooktypes.NewUser(profile, membership)); err != nil {
+		return fmt.Errorf("cannot insert webhook event: %w", err)
+	}
+
+	return nil
 }
 
 func (s *Service) LogEvent(
@@ -859,10 +968,10 @@ func (s *Service) LogEvent(
 			if err != nil {
 				return fmt.Errorf("cannot insert SCIM event: %w", err)
 			}
+
 			return nil
 		},
 	)
-
 	if err != nil {
 		s.logger.ErrorCtx(ctx, "cannot log SCIM event", log.Error(err))
 	}
@@ -941,6 +1050,7 @@ func ParseUserFromAttributes(attributes scim.ResourceAttributes) scimUserAttribu
 		attrs.HonorificPrefix, _ = name["honorificPrefix"].(string)
 		attrs.HonorificSuffix, _ = name["honorificSuffix"].(string)
 	}
+
 	attrs.GivenName = givenName
 	attrs.FamilyName = familyName
 
@@ -955,6 +1065,7 @@ func ParseUserFromAttributes(attributes scim.ResourceAttributes) scimUserAttribu
 				}
 			}
 		}
+
 		if attrs.Email == "" {
 			if emailMap, ok := emails[0].(map[string]any); ok {
 				if value, ok := emailMap["value"].(string); ok {
@@ -974,6 +1085,7 @@ func ParseUserFromAttributes(attributes scim.ResourceAttributes) scimUserAttribu
 	if attrs.FullName == "" {
 		attrs.FullName = strings.TrimSpace(givenName + " " + familyName)
 	}
+
 	if attrs.FullName == "" {
 		attrs.FullName = attrs.UserName
 	}
@@ -991,6 +1103,7 @@ func ParseUserFromAttributes(attributes scim.ResourceAttributes) scimUserAttribu
 		attrs.Department, _ = enterprise["department"].(string)
 		attrs.CostCenter, _ = enterprise["costCenter"].(string)
 		attrs.EnterpriseOrganization, _ = enterprise["organization"].(string)
+
 		attrs.Division, _ = enterprise["division"].(string)
 		if manager, ok := enterprise["manager"].(map[string]any); ok {
 			attrs.ManagerValue, _ = manager["value"].(string)
@@ -1028,25 +1141,31 @@ type scimReplaceAttributes struct {
 
 func ParseUserFromReplaceAttributes(attributes scim.ResourceAttributes) scimReplaceAttributes {
 	var attrs scimReplaceAttributes
+
 	displayName, _ := attributes["displayName"].(string)
 
 	var givenName, familyName string
 	if name, ok := attributes["name"].(map[string]any); ok {
 		givenName, _ = name["givenName"].(string)
+
 		familyName, _ = name["familyName"].(string)
 		if fn, ok := name["formatted"].(string); ok {
 			attrs.FormattedName = &fn
 		}
+
 		if mn, ok := name["middleName"].(string); ok {
 			attrs.MiddleName = &mn
 		}
+
 		if hp, ok := name["honorificPrefix"].(string); ok {
 			attrs.HonorificPrefix = &hp
 		}
+
 		if hs, ok := name["honorificSuffix"].(string); ok {
 			attrs.HonorificSuffix = &hs
 		}
 	}
+
 	attrs.GivenName = &givenName
 	attrs.FamilyName = &familyName
 
@@ -1059,6 +1178,7 @@ func ParseUserFromReplaceAttributes(attributes scim.ResourceAttributes) scimRepl
 	if a, ok := attributes["active"].(bool); ok {
 		activeVal = a
 	}
+
 	attrs.Active = &activeVal
 
 	t, _ := attributes["title"].(string)
@@ -1075,18 +1195,23 @@ func ParseUserFromReplaceAttributes(attributes scim.ResourceAttributes) scimRepl
 	if ut, ok := attributes["userType"].(string); ok {
 		attrs.UserType = &ut
 	}
+
 	if nn, ok := attributes["nickName"].(string); ok {
 		attrs.Nickname = &nn
 	}
+
 	if l, ok := attributes["locale"].(string); ok {
 		attrs.Locale = &l
 	}
+
 	if tz, ok := attributes["timezone"].(string); ok {
 		attrs.Timezone = &tz
 	}
+
 	if pu, ok := attributes["profileUrl"].(string); ok {
 		attrs.ProfileUrl = &pu
 	}
+
 	if pl, ok := attributes["preferredLanguage"].(string); ok {
 		attrs.PreferredLanguage = &pl
 	}
@@ -1095,18 +1220,23 @@ func ParseUserFromReplaceAttributes(attributes scim.ResourceAttributes) scimRepl
 		if en, ok := enterprise["employeeNumber"].(string); ok {
 			attrs.EmployeeNumber = &en
 		}
+
 		if dept, ok := enterprise["department"].(string); ok {
 			attrs.Department = &dept
 		}
+
 		if cc, ok := enterprise["costCenter"].(string); ok {
 			attrs.CostCenter = &cc
 		}
+
 		if org, ok := enterprise["organization"].(string); ok {
 			attrs.EnterpriseOrganization = &org
 		}
+
 		if div, ok := enterprise["division"].(string); ok {
 			attrs.Division = &div
 		}
+
 		if manager, ok := enterprise["manager"].(map[string]any); ok {
 			if mv, ok := manager["value"].(string); ok {
 				attrs.ManagerValue = &mv
@@ -1118,8 +1248,11 @@ func ParseUserFromReplaceAttributes(attributes scim.ResourceAttributes) scimRepl
 }
 
 func ParseUserFromPatchOperations(operations []scim.PatchOperation) scimReplaceAttributes {
-	var attrs scimReplaceAttributes
-	var givenName, familyName string
+	var (
+		attrs                 scimReplaceAttributes
+		givenName, familyName string
+	)
+
 	empty := ""
 
 	for _, op := range operations {
@@ -1186,6 +1319,7 @@ func ParseUserFromPatchOperations(operations []scim.PatchOperation) scimReplaceA
 				"urn:ietf:params:scim:schemas:extension:enterprise:2.0:user:manager.value":
 				attrs.ManagerValue = &empty
 			}
+
 			continue
 		}
 
@@ -1200,72 +1334,94 @@ func ParseUserFromPatchOperations(operations []scim.PatchOperation) scimReplaceA
 					if a, ok := valueMap["active"].(bool); ok {
 						attrs.Active = &a
 					}
+
 					if name, ok := valueMap["displayName"].(string); ok {
 						attrs.FullName = name
 					}
+
 					if nameMap, ok := valueMap["name"].(map[string]any); ok {
 						if gn, ok := nameMap["givenName"].(string); ok {
 							givenName = gn
 						}
+
 						if fn, ok := nameMap["familyName"].(string); ok {
 							familyName = fn
 						}
+
 						if fm, ok := nameMap["formatted"].(string); ok {
 							attrs.FormattedName = &fm
 						}
+
 						if mn, ok := nameMap["middleName"].(string); ok {
 							attrs.MiddleName = &mn
 						}
+
 						if hp, ok := nameMap["honorificPrefix"].(string); ok {
 							attrs.HonorificPrefix = &hp
 						}
+
 						if hs, ok := nameMap["honorificSuffix"].(string); ok {
 							attrs.HonorificSuffix = &hs
 						}
 					}
+
 					if un, ok := valueMap["userName"].(string); ok && un != "" {
 						attrs.UserName = &un
 					}
+
 					if eid, ok := valueMap["externalId"].(string); ok && eid != "" {
 						attrs.ExternalID = &eid
 					}
+
 					if t, ok := valueMap["title"].(string); ok {
 						attrs.Title = &t
 					}
+
 					if ut, ok := valueMap["userType"].(string); ok {
 						attrs.UserType = &ut
 					}
+
 					if nn, ok := valueMap["nickName"].(string); ok {
 						attrs.Nickname = &nn
 					}
+
 					if l, ok := valueMap["locale"].(string); ok {
 						attrs.Locale = &l
 					}
+
 					if tz, ok := valueMap["timezone"].(string); ok {
 						attrs.Timezone = &tz
 					}
+
 					if pu, ok := valueMap["profileUrl"].(string); ok {
 						attrs.ProfileUrl = &pu
 					}
+
 					if pl, ok := valueMap["preferredLanguage"].(string); ok {
 						attrs.PreferredLanguage = &pl
 					}
+
 					if enterprise, ok := valueMap["urn:ietf:params:scim:schemas:extension:enterprise:2.0:User"].(map[string]any); ok {
 						if en, ok := enterprise["employeeNumber"].(string); ok {
 							attrs.EmployeeNumber = &en
 						}
+
 						if dept, ok := enterprise["department"].(string); ok {
 							attrs.Department = &dept
 						}
+
 						if cc, ok := enterprise["costCenter"].(string); ok {
 							attrs.CostCenter = &cc
 						}
+
 						if org, ok := enterprise["organization"].(string); ok {
 							attrs.EnterpriseOrganization = &org
 						}
+
 						if div, ok := enterprise["division"].(string); ok {
 							attrs.Division = &div
 						}
+
 						if manager, ok := enterprise["manager"].(map[string]any); ok {
 							if mv, ok := manager["value"].(string); ok {
 								attrs.ManagerValue = &mv
@@ -1328,6 +1484,7 @@ func ParseUserFromPatchOperations(operations []scim.PatchOperation) scimReplaceA
 						}
 					}
 				}
+
 				continue
 			}
 
@@ -1346,19 +1503,24 @@ func ParseUserFromPatchOperations(operations []scim.PatchOperation) scimReplaceA
 						givenName = gn
 						attrs.GivenName = &givenName
 					}
+
 					if fn, ok := nameMap["familyName"].(string); ok {
 						familyName = fn
 						attrs.FamilyName = &familyName
 					}
+
 					if fm, ok := nameMap["formatted"].(string); ok {
 						attrs.FormattedName = &fm
 					}
+
 					if mn, ok := nameMap["middleName"].(string); ok {
 						attrs.MiddleName = &mn
 					}
+
 					if hp, ok := nameMap["honorificPrefix"].(string); ok {
 						attrs.HonorificPrefix = &hp
 					}
+
 					if hs, ok := nameMap["honorificSuffix"].(string); ok {
 						attrs.HonorificSuffix = &hs
 					}
@@ -1430,18 +1592,23 @@ func ParseUserFromPatchOperations(operations []scim.PatchOperation) scimReplaceA
 					if en, ok := enterprise["employeeNumber"].(string); ok {
 						attrs.EmployeeNumber = &en
 					}
+
 					if dept, ok := enterprise["department"].(string); ok {
 						attrs.Department = &dept
 					}
+
 					if cc, ok := enterprise["costCenter"].(string); ok {
 						attrs.CostCenter = &cc
 					}
+
 					if org, ok := enterprise["organization"].(string); ok {
 						attrs.EnterpriseOrganization = &org
 					}
+
 					if div, ok := enterprise["division"].(string); ok {
 						attrs.Division = &div
 					}
+
 					if manager, ok := enterprise["manager"].(map[string]any); ok {
 						if mv, ok := manager["value"].(string); ok {
 							attrs.ManagerValue = &mv
@@ -1491,6 +1658,7 @@ func ParseUserFromPatchOperations(operations []scim.PatchOperation) scimReplaceA
 	if givenName != "" && attrs.GivenName == nil {
 		attrs.GivenName = &givenName
 	}
+
 	if familyName != "" && attrs.FamilyName == nil {
 		attrs.FamilyName = &familyName
 	}

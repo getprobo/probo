@@ -59,7 +59,6 @@ func (t TracingExtension) InterceptField(ctx context.Context, next graphql.Resol
 		)
 
 		result, err := next(ctx)
-
 		if err != nil {
 			span.RecordError(err)
 		}
@@ -76,10 +75,12 @@ func (t TracingExtension) InterceptOperation(ctx context.Context, next graphql.O
 
 	rootSpan := trace.SpanFromContext(ctx)
 	spanCtx := ctx
+
 	var operationSpan trace.Span
 
 	if rootSpan.IsRecording() {
 		tracer := otel.Tracer("graphql-operation")
+
 		operationName := "GraphQL Operation"
 		if requestContext.OperationName != "" {
 			operationName = "GraphQL " + requestContext.OperationName
@@ -108,6 +109,7 @@ func (t TracingExtension) InterceptOperation(ctx context.Context, next graphql.O
 		duration := time.Since(startTime)
 
 		operationType := string(requestContext.Operation.Operation)
+
 		operationName := requestContext.OperationName
 		if operationName == "" {
 			operationName = "unnamed"

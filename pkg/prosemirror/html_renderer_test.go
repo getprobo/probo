@@ -64,7 +64,9 @@ func TestRenderHTML_HeadingLevels(t *testing.T) {
 			"level "+string(rune('0'+tc.level)),
 			func(t *testing.T) {
 				t.Parallel()
+
 				raw := `{"type":"heading","attrs":{"level":` + string(rune('0'+tc.level)) + `},"content":[{"type":"text","text":"X"}]}`
+
 				var n Node
 				require.NoError(t, json.Unmarshal([]byte(raw), &n))
 
@@ -80,6 +82,7 @@ func TestRenderHTML_HeadingInvalidLevel(t *testing.T) {
 	t.Parallel()
 
 	raw := `{"type":"heading","attrs":{"level":7},"content":[{"type":"text","text":"X"}]}`
+
 	var n Node
 	require.NoError(t, json.Unmarshal([]byte(raw), &n))
 
@@ -92,6 +95,7 @@ func TestRenderHTML_CodeBlockWithLanguage(t *testing.T) {
 	t.Parallel()
 
 	raw := `{"type":"codeBlock","attrs":{"language":"go"},"content":[{"type":"text","text":"fmt.Println()"}]}`
+
 	var n Node
 	require.NoError(t, json.Unmarshal([]byte(raw), &n))
 
@@ -104,6 +108,7 @@ func TestRenderHTML_CodeBlockMermaid(t *testing.T) {
 	t.Parallel()
 
 	raw := `{"type":"codeBlock","attrs":{"language":"mermaid"},"content":[{"type":"text","text":"graph TD\n  A-->B"}]}`
+
 	var n Node
 	require.NoError(t, json.Unmarshal([]byte(raw), &n))
 
@@ -116,6 +121,7 @@ func TestRenderHTML_CodeBlockWithoutLanguage(t *testing.T) {
 	t.Parallel()
 
 	raw := `{"type":"codeBlock","attrs":{"language":null},"content":[{"type":"text","text":"hello"}]}`
+
 	var n Node
 	require.NoError(t, json.Unmarshal([]byte(raw), &n))
 
@@ -128,6 +134,7 @@ func TestRenderHTML_OrderedListWithStart(t *testing.T) {
 	t.Parallel()
 
 	raw := `{"type":"orderedList","attrs":{"start":5,"type":null},"content":[{"type":"listItem","content":[{"type":"paragraph","content":[{"type":"text","text":"item"}]}]}]}`
+
 	var n Node
 	require.NoError(t, json.Unmarshal([]byte(raw), &n))
 
@@ -140,6 +147,7 @@ func TestRenderHTML_TableCellColspan(t *testing.T) {
 	t.Parallel()
 
 	raw := `{"type":"tableCell","attrs":{"colspan":2,"rowspan":1,"colwidth":null},"content":[{"type":"paragraph","content":[{"type":"text","text":"wide"}]}]}`
+
 	var n Node
 	require.NoError(t, json.Unmarshal([]byte(raw), &n))
 
@@ -152,6 +160,7 @@ func TestRenderHTML_TableCellColwidth(t *testing.T) {
 	t.Parallel()
 
 	raw := `{"type":"tableCell","attrs":{"colspan":1,"rowspan":1,"colwidth":[100]},"content":[{"type":"paragraph","content":[{"type":"text","text":"X"}]}]}`
+
 	var n Node
 	require.NoError(t, json.Unmarshal([]byte(raw), &n))
 
@@ -179,6 +188,7 @@ func TestRenderHTML_LinkAllAttrs(t *testing.T) {
 	t.Parallel()
 
 	raw := `{"type":"text","marks":[{"type":"link","attrs":{"href":"https://example.com","target":"_blank","rel":"noopener","class":"btn","title":"Click"}}],"text":"hi"}`
+
 	var n Node
 	require.NoError(t, json.Unmarshal([]byte(raw), &n))
 
@@ -191,6 +201,7 @@ func TestRenderHTML_LinkMinimalAttrs(t *testing.T) {
 	t.Parallel()
 
 	raw := `{"type":"text","marks":[{"type":"link","attrs":{"href":"https://example.com","target":null,"rel":null,"class":null,"title":null}}],"text":"hi"}`
+
 	var n Node
 	require.NoError(t, json.Unmarshal([]byte(raw), &n))
 
@@ -247,6 +258,7 @@ func TestRenderHTML_LinkBlankTargetDefaultRel(t *testing.T) {
 			tc.name,
 			func(t *testing.T) {
 				t.Parallel()
+
 				var n Node
 				require.NoError(t, json.Unmarshal([]byte(tc.raw), &n))
 
@@ -283,17 +295,21 @@ func TestRenderHTML_LinkSanitizesDangerousHrefs(t *testing.T) {
 			tc.name,
 			func(t *testing.T) {
 				t.Parallel()
+
 				hrefJSON, err := json.Marshal(tc.href)
 				require.NoError(t, err)
+
 				raw := fmt.Sprintf(
 					`{"type":"text","marks":[{"type":"link","attrs":{"href":%s,"target":null,"rel":null,"class":null,"title":null}}],"text":"x"}`,
 					string(hrefJSON),
 				)
+
 				var n Node
 				require.NoError(t, json.Unmarshal([]byte(raw), &n))
 
 				got, err := RenderHTML(n)
 				require.NoError(t, err)
+
 				want := fmt.Sprintf(`<a href="%s">x</a>`, html.EscapeString(tc.wantHref))
 				assert.Equal(t, want, got)
 			},
@@ -305,6 +321,7 @@ func TestRenderHTML_Image(t *testing.T) {
 	t.Parallel()
 
 	raw := `{"type":"image","attrs":{"src":"https://example.com/img.png","alt":"A photo","title":"My image"}}`
+
 	var n Node
 	require.NoError(t, json.Unmarshal([]byte(raw), &n))
 
@@ -336,17 +353,21 @@ func TestRenderHTML_ImageSanitizesDangerousSrc(t *testing.T) {
 			tc.name,
 			func(t *testing.T) {
 				t.Parallel()
+
 				srcJSON, err := json.Marshal(tc.src)
 				require.NoError(t, err)
+
 				raw := fmt.Sprintf(
 					`{"type":"image","attrs":{"src":%s}}`,
 					string(srcJSON),
 				)
+
 				var n Node
 				require.NoError(t, json.Unmarshal([]byte(raw), &n))
 
 				got, err := RenderHTML(n)
 				require.NoError(t, err)
+
 				want := fmt.Sprintf(`<img src="%s">`, html.EscapeString(tc.wantSrc))
 				assert.Equal(t, want, got)
 			},
@@ -358,6 +379,7 @@ func TestRenderHTML_MultipleMarks(t *testing.T) {
 	t.Parallel()
 
 	raw := `{"type":"text","marks":[{"type":"bold"},{"type":"italic"}],"text":"hello"}`
+
 	var n Node
 	require.NoError(t, json.Unmarshal([]byte(raw), &n))
 

@@ -27,6 +27,7 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/iam/policy"
 	"go.probo.inc/probo/pkg/page"
 )
 
@@ -63,18 +64,43 @@ func (s *SAMLConfiguration) CursorKey(orderBy SAMLConfigurationOrderField) page.
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
-func (s *SAMLConfiguration) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
-	q := `SELECT organization_id FROM iam_saml_configurations WHERE id = $1 LIMIT 1;`
+func (s *SAMLConfiguration) AuthorizationAttributes(
+	ctx context.Context,
+	conn pg.Querier,
+	resourceIDs []gid.GID,
+) (policy.AttributesByID, error) {
+	q := `SELECT id, organization_id FROM iam_saml_configurations WHERE id = ANY(@resource_ids::text[])`
 
-	var organizationID gid.GID
-	if err := conn.QueryRow(ctx, q, s.ID).Scan(&organizationID); err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, ErrResourceNotFound
-		}
-		return nil, fmt.Errorf("cannot query saml configuration authorization attributes: %w", err)
+	args := pgx.StrictNamedArgs{
+		"resource_ids": resourceIDs,
 	}
 
-	return map[string]string{"organization_id": organizationID.String()}, nil
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return nil, fmt.Errorf("cannot query authorization attributes: %w", err)
+	}
+
+	defer rows.Close()
+
+	attrsByID := make(policy.AttributesByID)
+
+	for rows.Next() {
+		var id, organizationID gid.GID
+
+		if err := rows.Scan(&id, &organizationID); err != nil {
+			return nil, fmt.Errorf("cannot scan authorization attributes: %w", err)
+		}
+
+		attrsByID[id] = policy.Attributes{
+			"organization_id": organizationID.String(),
+		}
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("cannot iterate authorization attributes: %w", err)
+	}
+
+	return attrsByID, nil
 }
 
 func (s *SAMLConfiguration) GetIdPCertificate() (*x509.Certificate, error) {
@@ -332,8 +358,7 @@ INSERT INTO iam_saml_configurations (
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
-		var pgErr *pgconn.PgError
-		if errors.As(err, &pgErr) {
+		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
 			if pgErr.Code == "23505" && pgErr.ConstraintName == "idx_saml_config_domain_org_unique" {
 				return ErrResourceAlreadyExists
 			}
@@ -505,6 +530,7 @@ WHERE
 	}
 
 	var count int
+
 	err = rows.Scan(&count)
 	if err != nil {
 		return 0, fmt.Errorf("cannot collect count: %w", err)
@@ -572,6 +598,7 @@ WHERE
 `
 
 	row := conn.QueryRow(ctx, q, pgx.StrictNamedArgs{"email_domain": emailDomain})
+
 	var count int
 	if err := row.Scan(&count); err != nil {
 		return 0, fmt.Errorf("cannot count SAML configurations: %w", err)

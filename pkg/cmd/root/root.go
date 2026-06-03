@@ -43,15 +43,16 @@ import (
 	processingactivity "go.probo.inc/probo/pkg/cmd/processing-activity"
 	rightsrequest "go.probo.inc/probo/pkg/cmd/rights-request"
 	"go.probo.inc/probo/pkg/cmd/risk"
+	riskassessment "go.probo.inc/probo/pkg/cmd/risk-assessment"
 	"go.probo.inc/probo/pkg/cmd/scim"
 	"go.probo.inc/probo/pkg/cmd/soa"
 	"go.probo.inc/probo/pkg/cmd/task"
+	"go.probo.inc/probo/pkg/cmd/thirdpartymgmt"
 	"go.probo.inc/probo/pkg/cmd/tia"
 	trackerpattern "go.probo.inc/probo/pkg/cmd/tracker-pattern"
 	trackerresource "go.probo.inc/probo/pkg/cmd/tracker-resource"
 	trustcenter "go.probo.inc/probo/pkg/cmd/trust-center"
 	"go.probo.inc/probo/pkg/cmd/user"
-	"go.probo.inc/probo/pkg/cmd/vendormgmt"
 	"go.probo.inc/probo/pkg/cmd/version"
 	"go.probo.inc/probo/pkg/cmd/webhook"
 )
@@ -67,9 +68,11 @@ func NewCmdRoot(f *cmdutil.Factory) *cobra.Command {
 			if noInteractive, _ := cmd.Flags().GetBool("no-interactive"); noInteractive {
 				f.IOStreams.ForceNonInteractive = true
 			}
+
 			if noColor, _ := cmd.Flags().GetBool("no-color"); noColor {
 				f.IOStreams.ForceNoColor = true
 			}
+
 			f.IOStreams.ApplyColorProfile()
 		},
 	}
@@ -114,13 +117,14 @@ func NewCmdRoot(f *cmdutil.Factory) *cobra.Command {
 	cmd.AddCommand(processingactivity.NewCmdProcessingActivity(f))
 	cmd.AddCommand(rightsrequest.NewCmdRightsRequest(f))
 	cmd.AddCommand(risk.NewCmdRisk(f))
+	cmd.AddCommand(riskassessment.NewCmdRiskAssessment(f))
 	cmd.AddCommand(scim.NewCmdScim(f))
 	cmd.AddCommand(soa.NewCmdSoa(f))
 	cmd.AddCommand(task.NewCmdTask(f))
 	cmd.AddCommand(tia.NewCmdTIA(f))
 	cmd.AddCommand(trustcenter.NewCmdTrustCenter(f))
 	cmd.AddCommand(user.NewCmdUser(f))
-	cmd.AddCommand(vendormgmt.NewCmdVendor(f))
+	cmd.AddCommand(thirdpartymgmt.NewCmdThirdParty(f))
 	cmd.AddCommand(version.NewCmdVersion(f))
 	cmd.AddCommand(webhook.NewCmdWebhook(f))
 

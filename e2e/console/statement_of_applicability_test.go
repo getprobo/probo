@@ -75,12 +75,12 @@ func TestStatementOfApplicability_Create(t *testing.T) {
 			)
 
 			require.NoError(t, err)
+
 			node := result.CreateStatementOfApplicability.StatementOfApplicabilityEdge.Node
 			assert.NotEmpty(t, node.ID)
 			assert.Equal(t, name, node.Name)
 		},
 	)
-
 }
 
 func TestStatementOfApplicability_CreateDocument(t *testing.T) {
@@ -310,6 +310,7 @@ func TestStatementOfApplicability_CreateDocument(t *testing.T) {
 
 			ver1Major := result1.PublishStatementOfApplicability.DocumentVersionEdge.Node.Major
 			ver2Major := result2.PublishStatementOfApplicability.DocumentVersionEdge.Node.Major
+
 			assert.Equal(t, 1, ver1Major)
 			assert.Equal(t, 2, ver2Major)
 		},
@@ -533,6 +534,7 @@ func TestStatementOfApplicability_UpdateDocumentMetadata(t *testing.T) {
 			documentID, publishedVersionID := publishSOADocument(t)
 
 			var result updateResult
+
 			err := owner.Execute(
 				updateQuery,
 				map[string]any{
@@ -620,6 +622,7 @@ func TestStatementOfApplicability_UpdateDocumentMetadata(t *testing.T) {
 			}
 
 			var firstPublish publishSOAResult
+
 			err := owner.Execute(
 				publishSOAQuery,
 				map[string]any{
@@ -631,11 +634,13 @@ func TestStatementOfApplicability_UpdateDocumentMetadata(t *testing.T) {
 				&firstPublish,
 			)
 			require.NoError(t, err)
+
 			documentID := firstPublish.PublishStatementOfApplicability.DocumentEdge.Node.ID
 			require.Equal(t, "STATEMENT_OF_APPLICABILITY", firstPublish.PublishStatementOfApplicability.DocumentVersionEdge.Node.DocumentType)
 			require.Equal(t, "CONFIDENTIAL", firstPublish.PublishStatementOfApplicability.DocumentVersionEdge.Node.Classification)
 
 			var editResult updateResult
+
 			err = owner.Execute(
 				updateQuery,
 				map[string]any{
@@ -659,6 +664,7 @@ func TestStatementOfApplicability_UpdateDocumentMetadata(t *testing.T) {
 					}
 				}
 			`
+
 			var publishDraft struct {
 				PublishDocument struct {
 					DocumentVersion struct {
@@ -672,6 +678,7 @@ func TestStatementOfApplicability_UpdateDocumentMetadata(t *testing.T) {
 					} `json:"documentVersion"`
 				} `json:"publishDocument"`
 			}
+
 			err = owner.Execute(
 				publishDraftQuery,
 				map[string]any{
@@ -690,6 +697,7 @@ func TestStatementOfApplicability_UpdateDocumentMetadata(t *testing.T) {
 			require.Equal(t, "INTERNAL", publishDraft.PublishDocument.DocumentVersion.Classification)
 
 			var rePublish publishSOAResult
+
 			err = owner.Execute(
 				publishSOAQuery,
 				map[string]any{
@@ -701,6 +709,7 @@ func TestStatementOfApplicability_UpdateDocumentMetadata(t *testing.T) {
 				&rePublish,
 			)
 			require.NoError(t, err)
+
 			node := rePublish.PublishStatementOfApplicability.DocumentVersionEdge.Node
 			assert.Equal(t, "Custom SOA Name", node.Title, "re-publish should preserve edited title")
 			assert.Equal(t, "POLICY", node.DocumentType, "re-publish should preserve edited type")

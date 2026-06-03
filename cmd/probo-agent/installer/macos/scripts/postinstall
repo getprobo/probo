@@ -1,0 +1,113 @@
+#!/bin/bash
+#
+# probo-agent macOS PKG postinstall script.
+#
+# Runs as root inside the macOS Installer.app sandbox after the
+# payload has been laid down. Standard pkgbuild positional args:
+#
+#   $1 = full path to the component package
+#   $2 = full path to the install location (selected target)
+#   $3 = mountpoint of the destination volume
+#   $4 = root directory ("/" for the target volume)
+#
+# We intentionally do not abort the install if enrollment fails:
+# the binary is laid down regardless, and the operator can finish
+# enrollment with `sudo probo-agent install ...` from Terminal.
+
+set -u
+
+LOG_FILE="/var/log/probo-agent-install.log"
+BINARY="/usr/local/bin/probo-agent"
+STATE_DIR="/var/lib/probo-agent"
+CONF_FILE="/tmp/probo-agent.conf"
+
+# Mirror everything to the install log. We keep stdout/stderr open
+# too so failures still surface in macOS Installer.app's log pane.
+mkdir -p "$(dirname "${LOG_FILE}")"
+exec > >(tee -a "${LOG_FILE}") 2>&1
+
+echo
+echo "=== probo-agent postinstall $(date -u +%Y-%m-%dT%H:%M:%SZ) ==="
+echo "pkg=$1 target=$2 mount=$3 root=$4"
+
+if [ ! -x "${BINARY}" ]; then
+    echo "error: expected binary not found at ${BINARY}"
+    exit 1
+fi
+
+mkdir -p "${STATE_DIR}"
+chown root:wheel "${STATE_DIR}"
+chmod 0700 "${STATE_DIR}"
+
+# An admin (or MDM) may stage /tmp/probo-agent.conf to drive an
+# unattended enrollment. Recognized keys (shell-style):
+#
+#   PROBO_SERVER_URL=https://app.getprobo.com
+#   PROBO_ENROLLMENT_TOKEN=<token>
+#   PROBO_NO_AUTO_UPDATE=true
+#
+# Parse KEY=VALUE lines without sourcing or eval so a crafted conf
+# file cannot execute arbitrary shell as root.
+strip_conf_value() {
+    local v="$1"
+    case "$v" in
+        \"*\") v="${v:1:${#v}-2}" ;;
+        \'*\') v="${v:1:${#v}-2}" ;;
+    esac
+    printf '%s' "$v"
+}
+
+if [ -f "${CONF_FILE}" ]; then
+    echo "Found ${CONF_FILE}, attempting unattended enrollment."
+
+    CONF_SERVER=""
+    CONF_TOKEN=""
+    CONF_NOUPDATE=""
+    while IFS= read -r line || [ -n "$line" ]; do
+        line="${line%%#*}"
+        line="${line#"${line%%[![:space:]]*}"}"
+        line="${line%"${line##*[![:space:]]}"}"
+        [ -z "$line" ] && continue
+
+        case "$line" in
+            PROBO_SERVER_URL=*)
+                CONF_SERVER="$(strip_conf_value "${line#PROBO_SERVER_URL=}")"
+                ;;
+            PROBO_ENROLLMENT_TOKEN=*)
+                CONF_TOKEN="$(strip_conf_value "${line#PROBO_ENROLLMENT_TOKEN=}")"
+                ;;
+            PROBO_NO_AUTO_UPDATE=*)
+                CONF_NOUPDATE="$(strip_conf_value "${line#PROBO_NO_AUTO_UPDATE=}")"
+                ;;
+        esac
+    done < "${CONF_FILE}"
+
+    if [ -z "${CONF_SERVER}" ] || [ -z "${CONF_TOKEN}" ]; then
+        echo "warning: ${CONF_FILE} is missing PROBO_SERVER_URL or PROBO_ENROLLMENT_TOKEN; skipping enrollment."
+    else
+        EXTRA_FLAGS=()
+        case "${CONF_NOUPDATE}" in
+            1|true|TRUE|yes|YES) EXTRA_FLAGS+=("--no-auto-update") ;;
+        esac
+
+        if "${BINARY}" install \
+                --server "${CONF_SERVER}" \
+                --enrollment-token "${CONF_TOKEN}" \
+                "${EXTRA_FLAGS[@]}"; then
+            echo "Device enrolled and service installed."
+        else
+            echo "warning: probo-agent install failed; the binary is in place and can be re-run by an admin."
+        fi
+    fi
+
+    # The token in the conf file is sensitive; clear it whatever
+    # the outcome so a successful install does not leave secrets
+    # in /tmp.
+    rm -f "${CONF_FILE}"
+else
+    echo "No ${CONF_FILE} found; skipping automatic enrollment."
+    echo "Finish setup with: sudo ${BINARY} install --server <URL> --enrollment-token <TOKEN>"
+fi
+
+echo "=== postinstall done ==="
+exit 0

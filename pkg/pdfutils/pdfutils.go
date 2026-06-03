@@ -89,12 +89,14 @@ func AddConfidentialWithTimestamp(pdfData []byte, email mail.Addr) ([]byte, erro
 		watermarkOpacity,
 		watermarkScaleFactor,
 	)
+
 	watermarkConf, err := api.ImageWatermarkForReader(imageReader, desc, true, false, types.POINTS)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create watermark from reader: %w", err)
 	}
 
 	var buf bytes.Buffer
+
 	err = api.AddWatermarks(reader, &buf, nil, watermarkConf, nil)
 	if err != nil {
 		return nil, fmt.Errorf("cannot add watermark: %w", err)

@@ -23,6 +23,7 @@ import { graphql, type PreloadedQuery, usePreloadedQuery } from "react-relay";
 
 import type { MembershipsPageQuery } from "#/__generated__/iam/MembershipsPageQuery.graphql";
 
+import { InvitingOrganizationCard } from "./_components/InvitingOrganizationCard";
 import { MembershipCard } from "./_components/MembershipCard";
 
 export const membershipsPageQuery = graphql`
@@ -46,6 +47,10 @@ export const membershipsPageQuery = graphql`
           }
         }
       }
+      invitingOrganizations {
+        id
+        ...InvitingOrganizationCardFragment
+      }
     }
   }
 `;
@@ -62,6 +67,7 @@ export function MembershipsPage(props: {
   const {
     viewer: {
       profiles: { edges: initialProfiles },
+      invitingOrganizations,
     },
   } = usePreloadedQuery<MembershipsPageQuery>(membershipsPageQuery, queryRef);
 
@@ -81,6 +87,16 @@ export function MembershipsPage(props: {
           {__("Select an organization")}
         </h1>
         <div className="space-y-4 w-full">
+          {invitingOrganizations.length > 0 && (
+            <div className="space-y-3">
+              <h2 className="text-xl font-semibold">
+                {__("Pending invitations")}
+              </h2>
+              {invitingOrganizations.map(organization => (
+                <InvitingOrganizationCard key={organization.id} fKey={organization} />
+              ))}
+            </div>
+          )}
           {initialProfiles.length > 0 && (
             <div className="space-y-3">
               <h2 className="text-xl font-semibold">

@@ -1,0 +1,66 @@
+---
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: api.netlify.com
+        form:
+            per_page:
+                - "100"
+        headers:
+            Accept:
+                - application/json
+        url: https://api.netlify.com/api/v1/acme/members?per_page=100
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: 1847
+        body: '[{"full_name":"Jane Doe","email":"jane@example.com","avatar":"https://avatars3.githubusercontent.com/u/100001?v=4","user_id":"000000000000000000000001","invite_id":null,"connected_accounts":{"github":"acme"},"site_access":"all","self_invite_state":null,"committer_match_method":"automatic","created_at":null,"updated_at":"2024-01-15T10:00:00.000Z","id":"000000000000000000000002","role":"Owner","capabilities":{"account_firewall":{"c":true,"r":true,"u":true,"d":true},"account_traffic_rules":{"c":true,"r":true,"u":true,"d":true},"account_waf":{"c":true,"r":true,"u":true,"d":true},"account_trusted_proxies":{"c":true,"r":true,"u":true,"d":true},"account_usage":{"c":true,"r":true,"u":true,"d":true},"accounts":{"c":true,"r":true,"u":true,"d":true},"agent_runners":{"c":true,"r":true,"u":true,"d":true},"agent_context":{"c":true,"r":true,"u":true,"d":true},"billing":{"c":true,"r":true,"u":true,"d":true},"builds":{"c":true,"r":true,"u":true,"d":true},"connect":{"c":true,"r":true,"u":true,"d":true},"create":{"c":true,"r":true,"u":true,"d":true},"deploys":{"c":true,"r":true,"u":true,"d":true},"domains":{"c":true,"r":true,"u":true,"d":true},"members":{"c":true,"r":true,"u":true,"d":true},"reviewers":{"c":true,"r":true,"u":true,"d":true},"security_kpis":{"c":true,"r":true,"u":true,"d":true},"shared_environment_variables":{"c":true,"r":true,"u":true,"d":true},"site_firewall":{"c":true,"r":true,"u":true,"d":true},"site_traffic_rules":{"c":true,"r":true,"u":true,"d":true},"site_waf":{"c":true,"r":true,"u":true,"d":true},"site_trusted_proxies":{"c":true,"r":true,"u":true,"d":true},"sites":{"c":true,"r":true,"u":true,"d":true},"dev_servers":{"c":true,"r":true,"u":true,"d":true}},"pending":false,"managed_by_directory_sync":false,"mfa_enabled":false,"last_activity_date":"2024-06-01","site_memberships":[],"site_roles":{}}]'
+        headers:
+            Cache-Control:
+                - max-age=0, private, must-revalidate
+            Content-Length:
+                - "1847"
+            Content-Type:
+                - application/json; charset=utf-8
+            Date:
+                - Fri, 08 May 2026 16:47:28 GMT
+            Etag:
+                - W/"4535cda94a7324bedce14de55574da83"
+            Link:
+                - <https://api.netlify.com/api/v1/acme/members?per_page=100&page=1>; rel="last"
+            Retry-After:
+                - 2026-05-08 16:48:28 UTC
+            Strict-Transport-Security:
+                - max-age=31536000; includeSubDomains; preload
+            Timing-Allow-Origin:
+                - https://app.netlify.com, https://www.netlify.com
+            Total:
+                - "1"
+            Vary:
+                - Accept, Origin
+            X-Content-Type-Options:
+                - nosniff
+            X-Frame-Options:
+                - ALLOWALL
+            X-Nf-Srv-Version:
+                - 5b4e57d
+            X-Ratelimit-Limit:
+                - "500"
+            X-Ratelimit-Remaining:
+                - "497"
+            X-Ratelimit-Reset:
+                - 2026-05-08 16:48:28 UTC
+            X-Request-Id:
+                - da0a2e39-ef44-4ba5-bbf7-f53a70f9bc05
+            X-Runtime:
+                - "0.042882"
+        status: 200 OK
+        code: 200
+        duration: 453.503291ms

@@ -173,7 +173,7 @@ export function DocumentList(props: {
   const canSendAnySignatureNotifications = documents.some(
     ({ canSendSigningNotifications }) => canSendSigningNotifications,
   );
-  const hasAnyAction = tab === "ARCHIVED" ? canUnarchiveAny || canDeleteAny : canDeleteAny || canUpdateAny;
+  const hasAnyAction = tab === "ARCHIVED" ? canUnarchiveAny || canDeleteAny : canArchiveAny || canDeleteAny || canUpdateAny;
 
   useEffect(() => {
     onConnectionIdChange(connectionId);

@@ -127,6 +127,7 @@ FOR UPDATE
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
 		}
+
 		return fmt.Errorf("cannot lock campaign: %w", err)
 	}
 

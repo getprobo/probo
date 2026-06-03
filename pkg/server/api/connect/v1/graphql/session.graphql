@@ -5,29 +5,29 @@ enum ReauthenticationReason {
 }
 
 extend type Mutation {
-  signIn(input: SignInInput!): SignInPayload @session(required: OPTIONAL)
-  signUp(input: SignUpInput!): SignUpPayload @session(required: NONE)
-  signOut: SignOutPayload @session(required: PRESENT)
+  signIn(input: SignInInput!): SignInPayload @authentication(required: OPTIONAL)
+  signUp(input: SignUpInput!): SignUpPayload @authentication(required: NONE)
+  signOut: SignOutPayload @authentication(required: PRESENT) @sessionOnly
   activateAccount(
     input: ActivateAccountInput!
-  ): ActivateAccountPayload @session(required: OPTIONAL)
+  ): ActivateAccountPayload @authentication(required: OPTIONAL)
   forgotPassword(input: ForgotPasswordInput!): ForgotPasswordPayload
-    @session(required: NONE)
+    @authentication(required: NONE)
   resetPassword(input: ResetPasswordInput!): ResetPasswordPayload
-    @session(required: NONE)
+    @authentication(required: NONE)
   verifyEmail(input: VerifyEmailInput!): VerifyEmailPayload
-    @session(required: OPTIONAL)
+    @authentication(required: OPTIONAL)
   changePassword(input: ChangePasswordInput!): ChangePasswordPayload
-    @session(required: PRESENT)
+    @authentication(required: PRESENT) @sessionOnly
   changeEmail(input: ChangeEmailInput!): ChangeEmailPayload
-    @session(required: PRESENT)
+    @authentication(required: PRESENT) @sessionOnly
   assumeOrganizationSession(
     input: AssumeOrganizationSessionInput!
-  ): AssumeOrganizationSessionPayload @session(required: PRESENT)
+  ): AssumeOrganizationSessionPayload @authentication(required: PRESENT) @sessionOnly
 
   revokeSession(input: RevokeSessionInput!): RevokeSessionPayload!
-    @session(required: PRESENT)
-  revokeAllSessions: RevokeAllSessionsPayload @session(required: PRESENT)
+    @authentication(required: PRESENT) @sessionOnly
+  revokeAllSessions: RevokeAllSessionsPayload @authentication(required: PRESENT) @sessionOnly
 }
 
 enum SessionOrderField
@@ -56,7 +56,7 @@ type Session implements Node {
 
   permission(action: String!): Boolean!
     @goField(forceResolver: true)
-    @session(required: PRESENT)
+    @authentication(required: PRESENT)
 }
 
 type SessionConnection

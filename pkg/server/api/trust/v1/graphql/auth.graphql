@@ -1,10 +1,10 @@
 extend type Mutation {
   sendMagicLink(input: SendMagicLinkInput!): SendMagicLinkPayload
-    @session(required: OPTIONAL)
+    @authentication(required: OPTIONAL)
   verifyMagicLink(input: VerifyMagicLinkInput!): VerifyMagicLinkPayload
-    @session(required: OPTIONAL)
+    @authentication(required: OPTIONAL)
   updateFullName(input: UpdateFullNameInput!): UpdateFullNamePayload
-    @session(required: PRESENT)
+    @authentication(required: PRESENT) @sessionOnly
 }
 
 input SendMagicLinkInput {

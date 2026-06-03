@@ -45,6 +45,7 @@ func mustJSONSchemaFor[T any]() json.RawMessage {
 	if err != nil {
 		panic(err)
 	}
+
 	return schema
 }
 
@@ -63,6 +64,7 @@ func stripNullTypes(s *jsonschema.Schema) {
 				filtered = append(filtered, t)
 			}
 		}
+
 		if len(filtered) == 1 {
 			s.Type = filtered[0]
 			s.Types = nil

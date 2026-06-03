@@ -15,7 +15,7 @@
 package coredata
 
 import (
-	"database/sql/driver"
+	"encoding"
 	"fmt"
 )
 
@@ -29,49 +29,47 @@ const (
 	DocumentVersionStatusPublished       DocumentVersionStatus = "PUBLISHED"
 )
 
-func (ps DocumentVersionStatus) MarshalText() ([]byte, error) {
-	return []byte(ps.String()), nil
+var (
+	_ fmt.Stringer             = DocumentVersionStatus("")
+	_ encoding.TextMarshaler   = DocumentVersionStatus("")
+	_ encoding.TextUnmarshaler = (*DocumentVersionStatus)(nil)
+)
+
+func DocumentVersionStatuses() []DocumentVersionStatus {
+	return []DocumentVersionStatus{
+		DocumentVersionStatusDraft,
+		DocumentVersionStatusPendingApproval,
+		DocumentVersionStatusPublished,
+	}
 }
 
-func (ps *DocumentVersionStatus) UnmarshalText(data []byte) error {
-	val := string(data)
-
-	switch val {
-	case DocumentVersionStatusDraft.String():
-		*ps = DocumentVersionStatusDraft
-	case DocumentVersionStatusPendingApproval.String():
-		*ps = DocumentVersionStatusPendingApproval
-	case DocumentVersionStatusPublished.String():
-		*ps = DocumentVersionStatusPublished
-	default:
-		return fmt.Errorf("invalid DocumentVersionStatus value: %q", val)
+func (v DocumentVersionStatus) IsValid() bool {
+	switch v {
+	case
+		DocumentVersionStatusDraft,
+		DocumentVersionStatusPendingApproval,
+		DocumentVersionStatusPublished:
+		return true
 	}
+
+	return false
+}
+
+func (v DocumentVersionStatus) String() string {
+	return string(v)
+}
+
+func (v DocumentVersionStatus) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *DocumentVersionStatus) UnmarshalText(text []byte) error {
+	val := DocumentVersionStatus(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid DocumentVersionStatus value: %q", string(text))
+	}
+
+	*v = val
 
 	return nil
-}
-
-func (ps DocumentVersionStatus) String() string {
-	switch ps {
-	case DocumentVersionStatusDraft:
-		return "DRAFT"
-	case DocumentVersionStatusPendingApproval:
-		return "PENDING_APPROVAL"
-	case DocumentVersionStatusPublished:
-		return "PUBLISHED"
-	default:
-		panic(fmt.Errorf("invalid DocumentVersionStatus value: %q", string(ps)))
-	}
-}
-
-func (ps *DocumentVersionStatus) Scan(value any) error {
-	val, ok := value.(string)
-	if !ok {
-		return fmt.Errorf("invalid scan source for DocumentVersionStatus, expected string got %T", value)
-	}
-
-	return ps.UnmarshalText([]byte(val))
-}
-
-func (ps DocumentVersionStatus) Value() (driver.Value, error) {
-	return ps.String(), nil
 }

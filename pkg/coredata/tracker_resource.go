@@ -25,6 +25,7 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/iam/policy"
 	"go.probo.inc/probo/pkg/page"
 )
 
@@ -56,6 +57,7 @@ func (tr *TrackerResource) CursorKey(field TrackerResourceOrderField) page.Curso
 		if tr.LastDetectedAt == nil {
 			return page.NewCursorKey(tr.ID, time.Time{})
 		}
+
 		return page.NewCursorKey(tr.ID, *tr.LastDetectedAt)
 	case TrackerResourceOrderFieldOrigin:
 		return page.NewCursorKey(tr.ID, tr.Origin)
@@ -66,19 +68,43 @@ func (tr *TrackerResource) CursorKey(field TrackerResourceOrderField) page.Curso
 	panic(fmt.Sprintf("unsupported order by: %s", field))
 }
 
-func (tr *TrackerResource) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
-	q := `SELECT organization_id FROM tracker_resources WHERE id = $1 LIMIT 1;`
+func (tr *TrackerResource) AuthorizationAttributes(
+	ctx context.Context,
+	conn pg.Querier,
+	resourceIDs []gid.GID,
+) (policy.AttributesByID, error) {
+	q := `SELECT id, organization_id FROM tracker_resources WHERE id = ANY(@resource_ids::text[])`
 
-	var organizationID gid.GID
-	if err := conn.QueryRow(ctx, q, tr.ID).Scan(&organizationID); err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, ErrResourceNotFound
-		}
-
-		return nil, fmt.Errorf("cannot query tracker resource authorization attributes: %w", err)
+	args := pgx.StrictNamedArgs{
+		"resource_ids": resourceIDs,
 	}
 
-	return map[string]string{"organization_id": organizationID.String()}, nil
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return nil, fmt.Errorf("cannot query authorization attributes: %w", err)
+	}
+
+	defer rows.Close()
+
+	attrsByID := make(policy.AttributesByID)
+
+	for rows.Next() {
+		var id, organizationID gid.GID
+
+		if err := rows.Scan(&id, &organizationID); err != nil {
+			return nil, fmt.Errorf("cannot scan authorization attributes: %w", err)
+		}
+
+		attrsByID[id] = policy.Attributes{
+			"organization_id": organizationID.String(),
+		}
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("cannot iterate authorization attributes: %w", err)
+	}
+
+	return attrsByID, nil
 }
 
 func (tr *TrackerResource) LoadByID(
@@ -125,6 +151,7 @@ LIMIT 1;
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
 		}
+
 		return fmt.Errorf("cannot collect tracker resource: %w", err)
 	}
 
@@ -188,6 +215,7 @@ LIMIT 1;
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
 		}
+
 		return fmt.Errorf("cannot collect tracker resource: %w", err)
 	}
 
@@ -259,6 +287,7 @@ INSERT INTO tracker_resources (
 				return ErrResourceAlreadyExists
 			}
 		}
+
 		return fmt.Errorf("cannot insert tracker resource: %w", err)
 	}
 
@@ -308,8 +337,23 @@ INSERT INTO tracker_resources (
 ON CONFLICT (cookie_banner_id, resource_type, origin, path) DO UPDATE SET
 	last_detected_at = GREATEST(tracker_resources.last_detected_at, EXCLUDED.last_detected_at),
 	updated_at = EXCLUDED.updated_at
-RETURNING (xmax = 0) AS inserted
+RETURNING
+	id,
+	organization_id,
+	cookie_banner_id,
+	cookie_category_id,
+	resource_type,
+	origin,
+	path,
+	display_name,
+	description,
+	excluded,
+	last_detected_at,
+	created_at,
+	updated_at
 `
+
+	originalID := tr.ID
 
 	args := pgx.StrictNamedArgs{
 		"id":                 tr.ID,
@@ -328,12 +372,20 @@ RETURNING (xmax = 0) AS inserted
 		"updated_at":         tr.UpdatedAt,
 	}
 
-	var inserted bool
-	if err := tx.QueryRow(ctx, q, args).Scan(&inserted); err != nil {
+	rows, err := tx.Query(ctx, q, args)
+	if err != nil {
 		return false, fmt.Errorf("cannot upsert tracker resource: %w", err)
 	}
+	defer rows.Close()
 
-	return inserted, nil
+	row, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[TrackerResource])
+	if err != nil {
+		return false, fmt.Errorf("cannot collect upsert result: %w", err)
+	}
+
+	*tr = row
+
+	return originalID == tr.ID, nil
 }
 
 func (tr *TrackerResource) Update(

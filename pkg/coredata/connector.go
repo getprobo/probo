@@ -24,10 +24,12 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/crypto/cipher"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/iam/policy"
 	"go.probo.inc/probo/pkg/page"
 )
 
@@ -41,11 +43,13 @@ func (j *jsonRawMessageOrNull) Scan(src any) error {
 		*j = nil
 		return nil
 	}
+
 	switch v := src.(type) {
 	case []byte:
 		cp := make(jsonRawMessageOrNull, len(v))
 		copy(cp, v)
 		*j = cp
+
 		return nil
 	case string:
 		*j = jsonRawMessageOrNull(v)
@@ -83,18 +87,43 @@ func (c *Connector) CursorKey(orderBy ConnectorOrderField) page.CursorKey {
 }
 
 // AuthorizationAttributes returns the authorization attributes for policy evaluation.
-func (c *Connector) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
-	q := `SELECT organization_id FROM connectors WHERE id = $1 LIMIT 1;`
+func (c *Connector) AuthorizationAttributes(
+	ctx context.Context,
+	conn pg.Querier,
+	resourceIDs []gid.GID,
+) (policy.AttributesByID, error) {
+	q := `SELECT id, organization_id FROM connectors WHERE id = ANY(@resource_ids::text[])`
 
-	var organizationID gid.GID
-	if err := conn.QueryRow(ctx, q, c.ID).Scan(&organizationID); err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, ErrResourceNotFound
-		}
-		return nil, fmt.Errorf("cannot query connector authorization attributes: %w", err)
+	args := pgx.StrictNamedArgs{
+		"resource_ids": resourceIDs,
 	}
 
-	return map[string]string{"organization_id": organizationID.String()}, nil
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return nil, fmt.Errorf("cannot query authorization attributes: %w", err)
+	}
+
+	defer rows.Close()
+
+	attrsByID := make(policy.AttributesByID)
+
+	for rows.Next() {
+		var id, organizationID gid.GID
+
+		if err := rows.Scan(&id, &organizationID); err != nil {
+			return nil, fmt.Errorf("cannot scan authorization attributes: %w", err)
+		}
+
+		attrsByID[id] = policy.Attributes{
+			"organization_id": organizationID.String(),
+		}
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("cannot iterate authorization attributes: %w", err)
+	}
+
+	return attrsByID, nil
 }
 
 func (c *Connectors) LoadAllByOrganizationIDProtocolAndProvider(
@@ -152,10 +181,12 @@ func (c *Connector) LoadOneByOrganizationIDAndProvider(
 		if ci != cj {
 			return ci > cj
 		}
+
 		return connectors[i].UpdatedAt.After(connectors[j].UpdatedAt)
 	})
 
 	*c = *connectors[0]
+
 	return nil
 }
 
@@ -166,6 +197,7 @@ func connectorScopeCount(c *Connector) int {
 	if c == nil || c.Connection == nil {
 		return 0
 	}
+
 	return len(c.Connection.Scopes())
 }
 
@@ -214,7 +246,7 @@ func (c *Connector) LoadByID(
 
 		if c.Provider == ConnectorProviderSlack {
 			if slackConn, ok := c.Connection.(*connector.SlackConnection); ok {
-				settings, _ := c.SlackSettings()
+				settings, _ := ConnectorSettings[SlackConnectorSettings](c)
 				slackConn.Settings.Channel = settings.Channel
 				slackConn.Settings.ChannelID = settings.ChannelID
 			}
@@ -265,6 +297,7 @@ LIMIT 1;
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
 		}
+
 		return fmt.Errorf("cannot collect connector row: %w", err)
 	}
 
@@ -287,13 +320,15 @@ WHERE %s AND id = @id
 	args := pgx.StrictNamedArgs{"id": c.ID}
 	maps.Copy(args, scope.SQLArguments())
 
-	result, err := conn.Exec(ctx, q, args)
+	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot delete connector: %w", err)
-	}
+		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
+			if pgErr.Code == "23503" {
+				return ErrResourceInUse
+			}
+		}
 
-	if result.RowsAffected() == 0 {
-		return ErrResourceNotFound
+		return fmt.Errorf("cannot delete connector: %w", err)
 	}
 
 	return nil
@@ -335,10 +370,12 @@ INSERT INTO connectors (
 
 	if c.Provider == ConnectorProviderSlack {
 		if slackConn, ok := c.Connection.(*connector.SlackConnection); ok {
-			_ = c.SetSettings(&SlackConnectorSettings{
-				Channel:   slackConn.Settings.Channel,
-				ChannelID: slackConn.Settings.ChannelID,
-			})
+			_ = c.SetSettings(
+				&SlackConnectorSettings{
+					Channel:   slackConn.Settings.Channel,
+					ChannelID: slackConn.Settings.ChannelID,
+				},
+			)
 		}
 	}
 
@@ -371,6 +408,12 @@ INSERT INTO connectors (
 
 	_, err = conn.Exec(ctx, q, args)
 	if err != nil {
+		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
+			if pgErr.Code == "23505" && pgErr.ConstraintName == "idx_connectors_organization_id_provider" {
+				return ErrResourceAlreadyExists
+			}
+		}
+
 		return fmt.Errorf("cannot insert connector: %w", err)
 	}
 
@@ -551,10 +594,12 @@ WHERE
 
 	if c.Provider == ConnectorProviderSlack {
 		if slackConn, ok := c.Connection.(*connector.SlackConnection); ok {
-			_ = c.SetSettings(&SlackConnectorSettings{
-				Channel:   slackConn.Settings.Channel,
-				ChannelID: slackConn.Settings.ChannelID,
-			})
+			_ = c.SetSettings(
+				&SlackConnectorSettings{
+					Channel:   slackConn.Settings.Channel,
+					ChannelID: slackConn.Settings.ChannelID,
+				},
+			)
 		}
 	}
 
@@ -613,7 +658,7 @@ func (c *Connectors) decryptConnections(encryptionKey cipher.EncryptionKey) erro
 
 		if cnnctr.Provider == ConnectorProviderSlack {
 			if slackConn, ok := cnnctr.Connection.(*connector.SlackConnection); ok {
-				settings, _ := cnnctr.SlackSettings()
+				settings, _ := ConnectorSettings[SlackConnectorSettings](cnnctr)
 				slackConn.Settings.Channel = settings.Channel
 				slackConn.Settings.ChannelID = settings.ChannelID
 			}

@@ -32,6 +32,6 @@ The changelog covers changes across all four components (`probod`,
 `@probo/console`, `@probo/trust`, `@probo/ui`).
 
 CI builds the frontends and Go binaries, builds and pushes the
-multi-arch image to `ghcr.io/getprobo/probo:probod-v<version>` (and
+multi-arch image to `artifact.probo.inc/probo/probo:v<version>` (and
 `:latest`), runs Trivy + cosign + attestations, and publishes the GitHub
 Release.

@@ -29,5 +29,6 @@ func (r *Result) FinalMessage() llm.Message {
 	if len(r.Messages) == 0 {
 		return llm.Message{}
 	}
+
 	return r.Messages[len(r.Messages)-1]
 }

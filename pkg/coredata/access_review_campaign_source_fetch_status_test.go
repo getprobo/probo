@@ -22,61 +22,76 @@ func TestAccessReviewCampaignSourceFetchStatusIsTerminal(t *testing.T) {
 	if AccessReviewCampaignSourceFetchStatusQueued.IsTerminal() {
 		t.Fatalf("QUEUED should not be terminal")
 	}
+
 	if AccessReviewCampaignSourceFetchStatusFetching.IsTerminal() {
 		t.Fatalf("FETCHING should not be terminal")
 	}
+
 	if !AccessReviewCampaignSourceFetchStatusSuccess.IsTerminal() {
 		t.Fatalf("SUCCESS should be terminal")
 	}
+
 	if !AccessReviewCampaignSourceFetchStatusFailed.IsTerminal() {
 		t.Fatalf("FAILED should be terminal")
 	}
 }
 
-func TestAccessReviewCampaignSourceFetchStatusScan(t *testing.T) {
+func TestAccessReviewCampaignSourceFetchStatusIsValid(t *testing.T) {
 	t.Parallel()
 
-	tests := []struct {
-		name    string
-		input   any
-		want    AccessReviewCampaignSourceFetchStatus
-		wantErr bool
-	}{
-		{
-			name:  "queued string",
-			input: "QUEUED",
-			want:  AccessReviewCampaignSourceFetchStatusQueued,
-		},
-		{
-			name:  "fetching bytes",
-			input: []byte("FETCHING"),
-			want:  AccessReviewCampaignSourceFetchStatusFetching,
-		},
-		{
-			name:    "invalid value",
-			input:   "BOGUS",
-			wantErr: true,
-		},
+	for _, value := range AccessReviewCampaignSourceFetchStatuses() {
+		if !value.IsValid() {
+			t.Fatalf("IsValid() = false for %q", value)
+		}
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+	if AccessReviewCampaignSourceFetchStatus("BOGUS").IsValid() {
+		t.Fatal("IsValid() = true for invalid value")
+	}
+}
+
+func TestAccessReviewCampaignSourceFetchStatusUnmarshalText(t *testing.T) {
+	t.Parallel()
+
+	for _, value := range AccessReviewCampaignSourceFetchStatuses() {
+		t.Run(string(value), func(t *testing.T) {
 			t.Parallel()
 
 			var got AccessReviewCampaignSourceFetchStatus
-			err := got.Scan(tt.input)
-			if tt.wantErr {
-				if err == nil {
-					t.Fatalf("Scan(%v) expected error", tt.input)
-				}
-				return
+			if err := got.UnmarshalText([]byte(value)); err != nil {
+				t.Fatalf("UnmarshalText(%q) returned error: %v", value, err)
 			}
 
-			if err != nil {
-				t.Fatalf("Scan(%v) returned error: %v", tt.input, err)
+			if got != value {
+				t.Fatalf("UnmarshalText(%q) = %q, want %q", value, got, value)
 			}
-			if got != tt.want {
-				t.Fatalf("Scan(%v) = %q, want %q", tt.input, got, tt.want)
+		})
+	}
+
+	t.Run("invalid", func(t *testing.T) {
+		t.Parallel()
+
+		var got AccessReviewCampaignSourceFetchStatus
+		if err := got.UnmarshalText([]byte("BOGUS")); err == nil {
+			t.Fatal("UnmarshalText(BOGUS) expected error")
+		}
+	})
+}
+
+func TestAccessReviewCampaignSourceFetchStatusMarshalText(t *testing.T) {
+	t.Parallel()
+
+	for _, value := range AccessReviewCampaignSourceFetchStatuses() {
+		t.Run(string(value), func(t *testing.T) {
+			t.Parallel()
+
+			got, err := value.MarshalText()
+			if err != nil {
+				t.Fatalf("MarshalText() returned error: %v", err)
+			}
+
+			if string(got) != value.String() {
+				t.Fatalf("MarshalText() = %q, want %q", string(got), value.String())
 			}
 		})
 	}

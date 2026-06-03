@@ -39,6 +39,7 @@ func extractUserAttributes(assertion *saml.Assertion, config *coredata.SAMLConfi
 
 			fullname = email.String()
 			role = nil
+
 			return email, fullname, role, nil
 		}
 

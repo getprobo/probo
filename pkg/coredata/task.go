@@ -23,10 +23,10 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
-	"go.probo.inc/probo/pkg/gid"
-	"go.probo.inc/probo/pkg/page"
-
 	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/iam/policy"
+	"go.probo.inc/probo/pkg/page"
 )
 
 type (
@@ -64,18 +64,43 @@ func (t Task) CursorKey(orderBy TaskOrderField) page.CursorKey {
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
-func (t *Task) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
-	q := `SELECT organization_id FROM tasks WHERE id = $1 LIMIT 1;`
+func (t *Task) AuthorizationAttributes(
+	ctx context.Context,
+	conn pg.Querier,
+	resourceIDs []gid.GID,
+) (policy.AttributesByID, error) {
+	q := `SELECT id, organization_id FROM tasks WHERE id = ANY(@resource_ids::text[])`
 
-	var organizationID gid.GID
-	if err := conn.QueryRow(ctx, q, t.ID).Scan(&organizationID); err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, ErrResourceNotFound
-		}
-		return nil, fmt.Errorf("cannot query task authorization attributes: %w", err)
+	args := pgx.StrictNamedArgs{
+		"resource_ids": resourceIDs,
 	}
 
-	return map[string]string{"organization_id": organizationID.String()}, nil
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return nil, fmt.Errorf("cannot query authorization attributes: %w", err)
+	}
+
+	defer rows.Close()
+
+	attrsByID := make(policy.AttributesByID)
+
+	for rows.Next() {
+		var id, organizationID gid.GID
+
+		if err := rows.Scan(&id, &organizationID); err != nil {
+			return nil, fmt.Errorf("cannot scan authorization attributes: %w", err)
+		}
+
+		attrsByID[id] = policy.Attributes{
+			"organization_id": organizationID.String(),
+		}
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("cannot iterate authorization attributes: %w", err)
+	}
+
+	return attrsByID, nil
 }
 
 func (t *Task) LoadByID(
@@ -251,12 +276,12 @@ RETURNING rank, priority_rank;
 
 	err := conn.QueryRow(ctx, q, args).Scan(&t.Rank, &t.PriorityRank)
 	if err != nil {
-		var pgErr *pgconn.PgError
-		if errors.As(err, &pgErr) {
+		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
 			if pgErr.Code == "23505" && pgErr.ConstraintName == "tasks_reference_id_unique" {
 				return ErrResourceAlreadyExists
 			}
 		}
+
 		return fmt.Errorf("cannot insert task: %w", err)
 	}
 
@@ -348,6 +373,7 @@ RETURNING
 		"created_at":             t.CreatedAt,
 		"updated_at":             t.UpdatedAt,
 	}
+
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
 		return fmt.Errorf("cannot upsert task: %w", err)
@@ -387,6 +413,7 @@ func (t *Tasks) CountByOrganizationID(
 	row := conn.QueryRow(ctx, q, args)
 
 	var count int
+
 	err := row.Scan(&count)
 	if err != nil {
 		return 0, fmt.Errorf("cannot collect tasks: %w", err)
@@ -471,6 +498,7 @@ WHERE
 	row := conn.QueryRow(ctx, q, args)
 
 	var count int
+
 	err := row.Scan(&count)
 	if err != nil {
 		return 0, fmt.Errorf("cannot collect tasks: %w", err)
@@ -569,6 +597,7 @@ WHERE %s
 	maps.Copy(args, scope.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
+
 	return err
 }
 
@@ -608,6 +637,7 @@ WHERE
 	}
 
 	t.Rank = rank
+
 	return nil
 }
 

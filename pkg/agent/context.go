@@ -49,5 +49,6 @@ func TryRunContextFrom[C any](ctx context.Context) (C, bool) {
 	}
 
 	typed, ok := val.(C)
+
 	return typed, ok
 }

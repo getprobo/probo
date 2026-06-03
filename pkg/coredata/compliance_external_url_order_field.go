@@ -14,6 +14,13 @@
 
 package coredata
 
+import (
+	"encoding"
+	"fmt"
+
+	"go.probo.inc/probo/pkg/page"
+)
+
 type (
 	ComplianceExternalURLOrderField string
 )
@@ -22,6 +29,50 @@ const (
 	ComplianceExternalURLOrderFieldCreatedAt ComplianceExternalURLOrderField = "CREATED_AT"
 	ComplianceExternalURLOrderFieldRank      ComplianceExternalURLOrderField = "RANK"
 )
+
+var (
+	_ page.OrderField          = ComplianceExternalURLOrderField("")
+	_ fmt.Stringer             = ComplianceExternalURLOrderField("")
+	_ encoding.TextMarshaler   = ComplianceExternalURLOrderField("")
+	_ encoding.TextUnmarshaler = (*ComplianceExternalURLOrderField)(nil)
+)
+
+func ComplianceExternalURLOrderFields() []ComplianceExternalURLOrderField {
+	return []ComplianceExternalURLOrderField{
+		ComplianceExternalURLOrderFieldCreatedAt,
+		ComplianceExternalURLOrderFieldRank,
+	}
+}
+
+func (v ComplianceExternalURLOrderField) IsValid() bool {
+	switch v {
+	case
+		ComplianceExternalURLOrderFieldCreatedAt,
+		ComplianceExternalURLOrderFieldRank:
+		return true
+	}
+
+	return false
+}
+
+func (v ComplianceExternalURLOrderField) String() string {
+	return string(v)
+}
+
+func (v ComplianceExternalURLOrderField) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *ComplianceExternalURLOrderField) UnmarshalText(text []byte) error {
+	val := ComplianceExternalURLOrderField(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid ComplianceExternalURLOrderField value: %q", string(text))
+	}
+
+	*v = val
+
+	return nil
+}
 
 func (p ComplianceExternalURLOrderField) Column() string {
 	switch p {
@@ -32,17 +83,4 @@ func (p ComplianceExternalURLOrderField) Column() string {
 	default:
 		return string(p)
 	}
-}
-
-func (p ComplianceExternalURLOrderField) String() string {
-	return string(p)
-}
-
-func (p ComplianceExternalURLOrderField) MarshalText() ([]byte, error) {
-	return []byte(p.String()), nil
-}
-
-func (p *ComplianceExternalURLOrderField) UnmarshalText(text []byte) error {
-	*p = ComplianceExternalURLOrderField(text)
-	return nil
 }

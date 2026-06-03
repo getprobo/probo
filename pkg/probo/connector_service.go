@@ -45,20 +45,19 @@ var (
 
 type (
 	ConnectorService struct {
-		svc *TenantService
+		svc *Service
 	}
 
 	CreateConnectorRequest struct {
-		OrganizationID              gid.GID
-		Provider                    coredata.ConnectorProvider
-		Protocol                    coredata.ConnectorProtocol
-		Connection                  connector.Connection
-		TallySettings               *coredata.TallyConnectorSettings
-		OnePasswordSettings         *coredata.OnePasswordConnectorSettings
-		SentrySettings              *coredata.SentryConnectorSettings
-		SupabaseSettings            *coredata.SupabaseConnectorSettings
-		GitHubSettings              *coredata.GitHubConnectorSettings
-		OnePasswordUsersAPISettings *coredata.OnePasswordUsersAPISettings
+		OrganizationID gid.GID
+		Provider       coredata.ConnectorProvider
+		Protocol       coredata.ConnectorProtocol
+		Connection     connector.Connection
+		// RawSettings is the provider-specific settings payload as
+		// already-marshalled JSON. Callers build it from the typed
+		// gqlgen input (or OAuth callback metadata); the service layer
+		// never sees the typed structs.
+		RawSettings json.RawMessage
 	}
 
 	ReconnectConnectorRequest struct {
@@ -75,7 +74,28 @@ func (car *CreateConnectorRequest) Validate() error {
 	v.Check(car.Provider, "provider", validator.Required(), validator.OneOfSlice(coredata.ConnectorProviders()))
 	v.Check(car.Protocol, "protocol", validator.Required(), validator.OneOfSlice(coredata.ConnectorProtocols()))
 	v.Check(car.Connection, "connection", validator.Required())
+	v.Check(car.RawSettings, "raw_settings", validJSONRawMessage)
+
 	return v.Error()
+}
+
+// validJSONRawMessage rejects a non-empty RawSettings that does not
+// parse as JSON. Empty RawSettings is allowed (providers without
+// extra settings).
+func validJSONRawMessage(value any) *validator.ValidationError {
+	raw, ok := value.(json.RawMessage)
+	if !ok || len(raw) == 0 {
+		return nil
+	}
+
+	if !json.Valid(raw) {
+		return &validator.ValidationError{
+			Code:    validator.ErrorCodeInvalidFormat,
+			Message: "must be valid JSON",
+		}
+	}
+
+	return nil
 }
 
 func (rcr *ReconnectConnectorRequest) Validate() error {
@@ -84,11 +104,12 @@ func (rcr *ReconnectConnectorRequest) Validate() error {
 	v.Check(rcr.OrganizationID, "organization_id", validator.Required(), validator.GID(coredata.OrganizationEntityType))
 	v.Check(rcr.Provider, "provider", validator.Required(), validator.OneOfSlice(coredata.ConnectorProviders()))
 	v.Check(rcr.Connection, "connection", validator.Required())
+
 	return v.Error()
 }
 
 func (s *ConnectorService) ListForOrganizationID(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	organizationID gid.GID,
 	cursor *page.Cursor[coredata.ConnectorOrderField],
 	filter *coredata.ConnectorFilter,
@@ -101,14 +122,13 @@ func (s *ConnectorService) ListForOrganizationID(
 			return connectors.LoadByOrganizationIDWithoutDecryptedConnection(
 				ctx,
 				conn,
-				s.svc.scope,
+				scope,
 				organizationID,
 				cursor,
 				filter,
 			)
 		},
 	)
-
 	if err != nil {
 		return nil, fmt.Errorf("cannot list connectors: %w", err)
 	}
@@ -117,7 +137,7 @@ func (s *ConnectorService) ListForOrganizationID(
 }
 
 func (s *ConnectorService) ListAllForOrganizationID(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	organizationID gid.GID,
 ) (coredata.Connectors, error) {
 	var connectors coredata.Connectors
@@ -128,7 +148,7 @@ func (s *ConnectorService) ListAllForOrganizationID(
 			return connectors.LoadAllByOrganizationIDWithoutDecryptedConnection(
 				ctx,
 				conn,
-				s.svc.scope,
+				scope,
 				organizationID,
 			)
 		},
@@ -141,7 +161,7 @@ func (s *ConnectorService) ListAllForOrganizationID(
 }
 
 func (s *ConnectorService) GetByOrganizationIDAndProvider(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	organizationID gid.GID,
 	provider coredata.ConnectorProvider,
 ) (*coredata.Connector, error) {
@@ -153,7 +173,7 @@ func (s *ConnectorService) GetByOrganizationIDAndProvider(
 			return cnnctr.LoadOneByOrganizationIDAndProvider(
 				ctx,
 				conn,
-				s.svc.scope,
+				scope,
 				s.svc.encryptionKey,
 				organizationID,
 				provider,
@@ -174,7 +194,7 @@ func (s *ConnectorService) GetByOrganizationIDAndProvider(
 // Contrast with Get, which uses LoadMetadataByID and returns a
 // connector with Connection == nil.
 func (s *ConnectorService) GetWithConnection(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	connectorID gid.GID,
 ) (*coredata.Connector, error) {
 	cnnctr := &coredata.Connector{}
@@ -182,7 +202,7 @@ func (s *ConnectorService) GetWithConnection(
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			return cnnctr.LoadByID(ctx, conn, s.svc.scope, connectorID, s.svc.encryptionKey)
+			return cnnctr.LoadByID(ctx, conn, scope, connectorID, s.svc.encryptionKey)
 		},
 	)
 	if err != nil {
@@ -193,7 +213,7 @@ func (s *ConnectorService) GetWithConnection(
 }
 
 func (s *ConnectorService) Get(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	connectorID gid.GID,
 ) (*coredata.Connector, error) {
 	connector := &coredata.Connector{}
@@ -201,7 +221,7 @@ func (s *ConnectorService) Get(
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			return connector.LoadMetadataByID(ctx, conn, s.svc.scope, connectorID)
+			return connector.LoadMetadataByID(ctx, conn, scope, connectorID)
 		},
 	)
 	if err != nil {
@@ -212,27 +232,27 @@ func (s *ConnectorService) Get(
 }
 
 func (s *ConnectorService) Delete(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	connectorID gid.GID,
 ) error {
 	return s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			cnnctr := &coredata.Connector{ID: connectorID}
-			return cnnctr.Delete(ctx, tx, s.svc.scope)
+			return cnnctr.Delete(ctx, tx, scope)
 		},
 	)
 }
 
 func (s *ConnectorService) Create(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	req CreateConnectorRequest,
 ) (*coredata.Connector, error) {
 	if err := req.Validate(); err != nil {
 		return nil, fmt.Errorf("invalid request: %w", err)
 	}
 
-	id := gid.New(s.svc.scope.GetTenantID(), coredata.ConnectorEntityType)
+	id := gid.New(scope.GetTenantID(), coredata.ConnectorEntityType)
 	now := time.Now()
 
 	newConnector := &coredata.Connector{
@@ -245,37 +265,14 @@ func (s *ConnectorService) Create(
 		UpdatedAt:      now,
 	}
 
-	switch {
-	case req.TallySettings != nil:
-		if err := newConnector.SetSettings(req.TallySettings); err != nil {
-			return nil, fmt.Errorf("cannot set tally settings: %w", err)
-		}
-	case req.OnePasswordSettings != nil:
-		if err := newConnector.SetSettings(req.OnePasswordSettings); err != nil {
-			return nil, fmt.Errorf("cannot set one password settings: %w", err)
-		}
-	case req.SentrySettings != nil:
-		if err := newConnector.SetSettings(req.SentrySettings); err != nil {
-			return nil, fmt.Errorf("cannot set sentry settings: %w", err)
-		}
-	case req.SupabaseSettings != nil:
-		if err := newConnector.SetSettings(req.SupabaseSettings); err != nil {
-			return nil, fmt.Errorf("cannot set supabase settings: %w", err)
-		}
-	case req.GitHubSettings != nil:
-		if err := newConnector.SetSettings(req.GitHubSettings); err != nil {
-			return nil, fmt.Errorf("cannot set github settings: %w", err)
-		}
-	case req.OnePasswordUsersAPISettings != nil:
-		if err := newConnector.SetSettings(req.OnePasswordUsersAPISettings); err != nil {
-			return nil, fmt.Errorf("cannot set one password users api settings: %w", err)
-		}
+	if len(req.RawSettings) > 0 {
+		newConnector.RawSettings = []byte(req.RawSettings)
 	}
 
 	err := s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			if err := newConnector.Insert(ctx, tx, s.svc.scope, s.svc.encryptionKey); err != nil {
+			if err := newConnector.Insert(ctx, tx, scope, s.svc.encryptionKey); err != nil {
 				return fmt.Errorf("cannot create connector: %w", err)
 			}
 
@@ -283,7 +280,7 @@ func (s *ConnectorService) Create(
 				slackConn, ok := req.Connection.(*connector.SlackConnection)
 				if ok && slackConn.Settings.Channel != "" {
 					var organization coredata.Organization
-					if err := organization.LoadByID(ctx, tx, s.svc.scope, req.OrganizationID); err != nil {
+					if err := organization.LoadByID(ctx, tx, scope, req.OrganizationID); err != nil {
 						return fmt.Errorf("cannot load organization: %w", err)
 					}
 
@@ -305,8 +302,8 @@ func (s *ConnectorService) Create(
 						return fmt.Errorf("cannot parse template JSON: %w", err)
 					}
 
-					slackMessage := coredata.NewSlackMessage(s.svc.scope, req.OrganizationID, coredata.SlackMessageTypeWelcome, body)
-					if err := slackMessage.Insert(ctx, tx, s.svc.scope); err != nil {
+					slackMessage := coredata.NewSlackMessage(scope, req.OrganizationID, coredata.SlackMessageTypeWelcome, body)
+					if err := slackMessage.Insert(ctx, tx, scope); err != nil {
 						return fmt.Errorf("cannot insert slack message: %w", err)
 					}
 				}
@@ -315,7 +312,6 @@ func (s *ConnectorService) Create(
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -330,7 +326,7 @@ func (s *ConnectorService) Create(
 // in the initiate URL. Refresh tokens and Slack webhook settings are
 // preserved from the existing connection when the new one omits them.
 func (s *ConnectorService) Reconnect(
-	ctx context.Context,
+	ctx context.Context, scope coredata.Scoper,
 	req ReconnectConnectorRequest,
 ) (*coredata.Connector, error) {
 	if err := req.Validate(); err != nil {
@@ -342,16 +338,18 @@ func (s *ConnectorService) Reconnect(
 	err := s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
-			if err := cnnctr.LoadByID(ctx, conn, s.svc.scope, req.ConnectorID, s.svc.encryptionKey); err != nil {
+			if err := cnnctr.LoadByID(ctx, conn, scope, req.ConnectorID, s.svc.encryptionKey); err != nil {
 				return fmt.Errorf("cannot load connector: %w", err)
 			}
 
 			if cnnctr.OrganizationID != req.OrganizationID {
 				return fmt.Errorf("cannot reconnect connector: organization mismatch")
 			}
+
 			if cnnctr.Provider != req.Provider {
 				return fmt.Errorf("cannot reconnect connector: provider mismatch")
 			}
+
 			if cnnctr.Protocol != coredata.ConnectorProtocolOAuth2 {
 				return fmt.Errorf("cannot reconnect connector: not an OAuth2 connector")
 			}
@@ -360,7 +358,7 @@ func (s *ConnectorService) Reconnect(
 			cnnctr.Connection = req.Connection
 			cnnctr.UpdatedAt = time.Now()
 
-			return cnnctr.Update(ctx, conn, s.svc.scope, s.svc.encryptionKey)
+			return cnnctr.Update(ctx, conn, scope, s.svc.encryptionKey)
 		},
 	)
 	if err != nil {
@@ -387,6 +385,7 @@ func preserveConnectionFields(newConn, oldConn connector.Connection) {
 			if n.RefreshToken == "" {
 				n.RefreshToken = o.RefreshToken
 			}
+
 			if n.Settings.WebhookURL == "" {
 				n.Settings.WebhookURL = o.Settings.WebhookURL
 				n.Settings.Channel = o.Settings.Channel

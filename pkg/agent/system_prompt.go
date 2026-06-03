@@ -45,6 +45,7 @@ You can transfer the conversation to a more specialized agent when appropriate:
 
 func buildSystemPrompt(data systemPromptData) string {
 	var buf bytes.Buffer
+
 	_ = systemPromptTmpl.Execute(&buf, data)
 
 	return buf.String()

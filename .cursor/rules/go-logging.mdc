@@ -1,0 +1,33 @@
+---
+description: Go logging — structured, PII-free, use go.gearno.de/kit/log
+globs: "**/*.go"
+alwaysApply: false
+---
+
+# Go logging
+
+Use `go.gearno.de/kit/log` — named, context-aware structured logging with typed fields.
+
+## Rules
+
+- **Never log PII, PHI, or sensitive data** (emails, names, passwords, tokens, health records)
+- Log opaque identifiers instead (IDs, request IDs)
+- Use typed field helpers: `log.String`, `log.Int`, `log.Error`, etc.
+- Use `*Ctx` variants for context-aware logging
+
+```go
+// GOOD
+l.InfoCtx(
+	ctx,
+	"HTTP request to trust center custom domain, redirecting to HTTPS",
+	log.String("domain", domain),
+	log.String("path", r.URL.Path),
+	log.String("request_id", reqID),
+)
+
+// BAD — logs PII
+l.InfoCtx(ctx, "user login", log.String("email", user.Email))
+
+// BAD — unstructured
+log.Printf("processing request for %s", userID)
+```

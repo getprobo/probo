@@ -42,6 +42,7 @@ func StopOnFirstTool() ToolUseBehavior {
 		if len(results) == 0 {
 			return "", false, nil
 		}
+
 		return results[0].Result.Content, true, nil
 	}
 }
@@ -53,12 +54,14 @@ func StopAtTools(names ...string) ToolUseBehavior {
 	for _, n := range names {
 		stopSet[n] = struct{}{}
 	}
+
 	return func(_ context.Context, results []ToolCallResult) (string, bool, error) {
 		for _, r := range results {
 			if _, ok := stopSet[r.ToolName]; ok {
 				return r.Result.Content, true, nil
 			}
 		}
+
 		return "", false, nil
 	}
 }

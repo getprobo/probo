@@ -31,5 +31,6 @@ func AnonymizeIP(raw string) string {
 	}
 
 	mask := net.CIDRMask(48, 128)
+
 	return ip.Mask(mask).String()
 }

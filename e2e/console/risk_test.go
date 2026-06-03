@@ -402,6 +402,7 @@ func TestRisk_RequiredFields(t *testing.T) {
 			if !tt.skipOrganization {
 				input["organizationId"] = owner.GetOrganizationID().String()
 			}
+
 			maps.Copy(input, tt.input)
 
 			_, err := owner.Do(query, map[string]any{"input": input})

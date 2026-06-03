@@ -97,15 +97,19 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 			if flagDataSubjects != "" {
 				input["dataSubjects"] = flagDataSubjects
 			}
+
 			if flagLegalMechanism != "" {
 				input["legalMechanism"] = flagLegalMechanism
 			}
+
 			if flagTransfer != "" {
 				input["transfer"] = flagTransfer
 			}
+
 			if flagLocalLawRisk != "" {
 				input["localLawRisk"] = flagLocalLawRisk
 			}
+
 			if flagSupplementaryMeasures != "" {
 				input["supplementaryMeasures"] = flagSupplementaryMeasures
 			}

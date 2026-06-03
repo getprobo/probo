@@ -39,10 +39,13 @@ func (r *mutationResolver) SubscribeToMailingList(ctx context.Context) (*types.S
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
 		}
+
 		if errors.Is(err, mailman.ErrSubscriberAlreadyExist) {
 			return nil, gqlutils.Conflictf(ctx, "already subscribed to this mailing list")
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot subscribe to mailing list", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -65,6 +68,7 @@ func (r *mutationResolver) UnsubscribeFromMailingList(ctx context.Context) (*typ
 		r.logger.ErrorCtx(ctx, "cannot get mailing list subscription", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
+
 	if subscriber == nil {
 		return nil, gqlutils.NotFoundf(ctx, "not subscribed to this mailing list")
 	}
@@ -73,7 +77,9 @@ func (r *mutationResolver) UnsubscribeFromMailingList(ctx context.Context) (*typ
 		if errors.Is(err, mailman.ErrSubscriberNotFound) {
 			return nil, gqlutils.NotFoundf(ctx, "not subscribed to this mailing list")
 		}
+
 		r.logger.ErrorCtx(ctx, "cannot unsubscribe from mailing list", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 

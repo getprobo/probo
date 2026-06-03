@@ -8,18 +8,18 @@ Policy-based authorization in `pkg/iam/` using an evaluation model similar to AW
 
 **Policy** — a named collection of statements:
 ```go
-policy.NewPolicy("vendor-crud", "Vendor CRUD",
-	policy.Allow(ActionVendorGet, ActionVendorList).WithSID("read-vendors"),
-	policy.Deny(ActionVendorDelete).WithSID("deny-vendor-delete"),
-).WithDescription("Standard vendor access")
+policy.NewPolicy("thirdParty-crud", "ThirdParty CRUD",
+	policy.Allow(ActionThirdPartyGet, ActionThirdPartyList).WithSID("read-thirdParties"),
+	policy.Deny(ActionThirdPartyDelete).WithSID("deny-thirdParty-delete"),
+).WithDescription("Standard third party access")
 ```
 
 **Statement** — a single permission rule with effect (allow/deny), actions, optional resources, and optional conditions.
 
 **Action format** — `SERVICE:RESOURCE:OPERATION` with wildcard support:
 ```
-core:vendor:create      # specific action
-core:vendor:*           # all vendor actions
+core:thirdParty:create      # specific action
+core:thirdParty:*           # all third party actions
 core:*                  # all core actions
 *                       # everything
 ```
@@ -37,10 +37,10 @@ The evaluator processes all statements against a request:
 `Authorizer` is the main orchestrator in `pkg/iam/authorizer.go`:
 
 ```go
-err := iamService.Authorizer.Authorize(ctx, iam.AuthorizeParams{
+scope, err := iamService.Authorizer.Authorize(ctx, iam.AuthorizeParams{
 	Principal:          identityID,    // who
-	Resource:           vendorID,      // what
-	Action:             probo.ActionVendorGet,  // which action
+	Resource:           thirdPartyID,      // what
+	Action:             probo.ActionThirdPartyGet,  // which action
 	ResourceAttributes: map[string]string{},    // optional extra attributes
 })
 ```
@@ -51,7 +51,37 @@ The flow:
 3. Load resource attributes via `AuthorizationAttributes()` on the entity
 4. Build policies: identity-scoped + role-specific
 5. Evaluate all policies
-6. Return `ErrInsufficientPermissions` if no allow match
+6. Return an authorization scope (`*coredata.Scope`) for downstream data access
+7. Return `ErrInsufficientPermissions` if no allow match
+
+## Batch authorization
+
+Use batch authorization when a caller needs all-or-nothing authorization across
+multiple resources for the same action:
+
+```go
+scope, err := iamService.Authorizer.AuthorizeBatch(ctx, iam.AuthorizeBatchParams{
+	Principal: identityID,
+	Action:    probo.ActionTaskDelete,
+	Resources: taskIDs, // all resources must have same entity type + organization
+})
+```
+
+Batch semantics:
+- **All-or-nothing** — the first denied resource returns `ErrInsufficientPermissions`
+- **Single-entity-type batch** — mixed entity types return `ErrMixedEntityTypeBatch`
+- **Single-organization batch** — mixed or missing `organization_id` attributes return `ErrMixedOrganizationBatch`
+- **Empty resource list** returns `ErrEmptyResourceBatch`
+- **Batch attributes are required** — each resource type in `AuthorizeBatch` must implement batch attributes loading or it returns `ErrBatchAuthorizationUnsupportedResourceType`
+- **Shared `ResourceAttributes` map** is applied to every resource in the batch
+- **Audit logs** are written per resource only when all resources are authorized (`DryRun` skips logs)
+
+GraphQL wrappers can use `authz.NewBatchAuthorizeFunc(...)` with
+`authz.WithBatchAttr`, `authz.WithBatchDryRun`, and
+`authz.WithBatchSkipAssumptionCheck`.
+
+MCP resolvers can use `Resolver.AuthorizeBatch(ctx, resourceIDs, action)` for
+the same behavior and error mapping as single-resource authorization.
 
 ## PolicySet
 
@@ -78,8 +108,8 @@ Conditions constrain when a statement applies. All conditions must be satisfied.
 // Users can only access resources in their organization
 organizationCondition := policy.Equals("principal.organization_id", "resource.organization_id")
 
-policy.Allow(ActionVendorGet).
-	WithSID("view-vendor").
+policy.Allow(ActionThirdPartyGet).
+	WithSID("view-thirdParty").
 	When(organizationCondition)
 ```
 
@@ -97,20 +127,42 @@ Key paths use `principal.ATTR` or `resource.ATTR` (e.g., `principal.organization
 Resources that support authorization must implement this interface in `pkg/coredata/`:
 
 ```go
-func (v *Vendor) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
-	q := `SELECT organization_id FROM vendors WHERE id = $1 LIMIT 1;`
-	var organizationID gid.GID
-	if err := conn.QueryRow(ctx, q, v.ID).Scan(&organizationID); err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, ErrResourceNotFound
-		}
-		return nil, fmt.Errorf("cannot query vendor authorization attributes: %w", err)
+func (v *ThirdParty) AuthorizationAttributes(
+	ctx context.Context,
+	conn pg.Querier,
+	resourceIDs []gid.GID,
+) (map[gid.GID]map[string]string, error) {
+	q := `SELECT id, organization_id FROM third_parties WHERE id = ANY(@resource_ids::text[])`
+
+	rows, err := conn.Query(ctx, q, pgx.StrictNamedArgs{"resource_ids": resourceIDs})
+	if err != nil {
+		return nil, fmt.Errorf("cannot query third party authorization attributes: %w", err)
 	}
-	return map[string]string{"organization_id": organizationID.String()}, nil
+	defer rows.Close()
+
+	attrsByID := make(map[gid.GID]map[string]string)
+	for rows.Next() {
+		var id, organizationID gid.GID
+		if err := rows.Scan(&id, &organizationID); err != nil {
+			return nil, fmt.Errorf("cannot scan third party authorization attributes: %w", err)
+		}
+		attrsByID[id] = map[string]string{"organization_id": organizationID.String()}
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("cannot iterate third party authorization attributes: %w", err)
+	}
+
+	return attrsByID, nil
 }
 ```
 
 The returned map provides attributes for condition evaluation (e.g., `resource.organization_id`).
+`AuthorizationAttributes` implementers should assume caller-side preconditions:
+- `resourceIDs` is non-empty
+- `resourceIDs` is deduplicated
+- in `AuthorizeBatch`, all resources are the same entity type
+
+Implementers should return only found rows keyed by id. Missing resources are handled by caller-side per-resource existence checks.
 
 ## Error types
 
@@ -126,15 +178,71 @@ var (
 
 **GraphQL resolvers** use `AuthorizeFunc` from `pkg/server/api/authz/`:
 ```go
-if err := authorize(ctx, vendorID, probo.ActionVendorGet); err != nil {
+scope, err := r.authorize(ctx, thirdPartyID, probo.ActionThirdPartyGet)
+if err != nil {
 	return nil, err
 }
 ```
 
-**MCP resolvers** use `MustAuthorize` which panics (caught by middleware):
+**MCP resolvers** use `Authorize` and return early on error:
 ```go
-r.MustAuthorize(ctx, input.ID, probo.ActionVendorGet)
+scope, err := r.Authorize(ctx, input.ID, probo.ActionThirdPartyGet)
+if err != nil {
+	return nil, types.GetThirdPartyOutput{}, err
+}
 ```
+
+### Always take `scope` from `authorize` — never reconstruct it
+
+`authorize` (and `Authorize` in MCP) returns a `*coredata.Scope` that has been
+resolved from the resource's `organization_id` attribute. Pass that scope
+straight to the service/coredata layer instead of building a new one with
+`coredata.NewScopeFromObjectID(...)` after the authorize call.
+
+The two are not strictly identical: `NewScopeFromObjectID(id)` only reads the
+tenant component of the GID, while the authorizer derives the scope from the
+loaded resource attributes (and may be extended to compute it differently in
+the future). Reconstructing the scope from the GID bypasses that and silently
+drifts when the resource lookup changes.
+
+```go
+// GOOD — scope comes from authorize, fed straight to the service
+scope, err := r.authorize(ctx, obj.ID, probo.ActionThirdPartyList)
+if err != nil {
+	return nil, err
+}
+
+thirdPartyIDs, err := r.cookieBanner.LoadDistinctThirdPartyIDsByCookieBannerID(ctx, scope, obj.ID)
+
+// BAD — authorize discards scope, then we rebuild it from the same GID
+if _, err := r.authorize(ctx, obj.ID, probo.ActionThirdPartyList); err != nil {
+	return nil, err
+}
+
+scope := coredata.NewScopeFromObjectID(obj.ID)
+thirdPartyIDs, err := r.cookieBanner.LoadDistinctThirdPartyIDsByCookieBannerID(ctx, scope, obj.ID)
+```
+
+The only time it is acceptable to write `if _, err := r.authorize(...)` is when
+**no downstream call needs a scope** — typically authorize calls against the
+caller's `identity.ID` for global / cross-tenant catalogs (e.g.
+`ActionCommonThirdPartyList`, `ActionCommonThirdPartyGet`) whose service
+methods are unscoped. In that case the returned scope would be derived from
+the identity (a nil-tenant principal) and is useless to the caller, so
+discarding it with `_` is correct:
+
+```go
+// GOOD — global catalog, downstream is unscoped
+identity := authn.IdentityFromContext(ctx)
+if _, err := r.authorize(ctx, identity.ID, probo.ActionCommonThirdPartyList); err != nil {
+	return nil, err
+}
+
+parties, err := r.thirdParty.Search(ctx, name) // no scope argument
+```
+
+For batch authorization, the same rule applies to `r.batchAuthorize` (GraphQL)
+and `r.AuthorizeBatch` (MCP) — keep the returned scope and pass it down.
 
 ## File locations
 
@@ -155,11 +263,11 @@ IAM actions live in `pkg/iam/iam_actions.go`, probo actions in `pkg/probo/action
 
 ```go
 const (
-	ActionVendorGet    = "core:vendor:get"
-	ActionVendorList   = "core:vendor:list"
-	ActionVendorCreate = "core:vendor:create"
-	ActionVendorUpdate = "core:vendor:update"
-	ActionVendorDelete = "core:vendor:delete"
+	ActionThirdPartyGet    = "core:thirdParty:get"
+	ActionThirdPartyList   = "core:thirdParty:list"
+	ActionThirdPartyCreate = "core:thirdParty:create"
+	ActionThirdPartyUpdate = "core:thirdParty:update"
+	ActionThirdPartyDelete = "core:thirdParty:delete"
 )
 ```
 
@@ -181,7 +289,7 @@ When adding a new entity that needs authorization:
 2. **Role policies** — wire actions into the appropriate role policies in `pkg/probo/policies.go` (`OwnerPolicy`, `AdminPolicy`, `ViewerPolicy`, etc.) with `organization_id` condition
 3. **`AuthorizationAttributes`** — implement on the `coredata` entity struct, returning at minimum `{"organization_id": ...}` (use the denormalized `OrganizationID` field — see coredata doc)
 4. **Entity type registry** — register in `pkg/coredata/entity_type_reg.go` and `NewEntityFromID` so the authorizer can construct the entity from its GID
-5. **Resolver calls** — add `r.authorize(ctx, id, probo.ActionEntityGet)` in GraphQL resolvers and `r.MustAuthorize(ctx, id, probo.ActionEntityGet)` in MCP resolvers
+5. **Resolver calls** — add `scope, err := r.authorize(ctx, id, probo.ActionEntityGet)` in GraphQL resolvers and `scope, err := r.Authorize(ctx, id, probo.ActionEntityGet)` in MCP resolvers, then pass `scope` to services
 
 ## Key patterns
 

@@ -58,7 +58,7 @@ func newSubAgent[T any](
 	tools []agent.Tool,
 	extraOpts ...agent.Option,
 ) (*agent.Agent, error) {
-	outputType, err := agent.NewOutputType[T](spec.outputName)
+	outputType, err := newVettingOutputType[T](spec.outputName)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create output type %q: %w", spec.outputName, err)
 	}
@@ -73,9 +73,11 @@ func newSubAgent[T any](
 	if spec.thinkingBudget > 0 {
 		opts = append(opts, agent.WithThinking(spec.thinkingBudget))
 	}
+
 	if spec.parallelTools {
 		opts = append(opts, agent.WithParallelToolCalls(true))
 	}
+
 	opts = append(opts, extraOpts...)
 
 	return agent.New(spec.name, client, opts...), nil

@@ -2,6 +2,8 @@ bin/
 node_modules/
 .turbo
 .vscode
+.cursor/*
+!.cursor/rules/
 dist/
 .env
 .env.*
@@ -15,6 +17,7 @@ sbom-docker.json
 !rds-ca-bundle.pem
 *.crt
 *.key
+*.tsbuildinfo
 compose/keycloak/probo-realm.json
 .sandbox.env
 
@@ -25,3 +28,4 @@ pkg/server/api/*/v1/schema.graphql
 cfg/dev_local.yaml
 cfg/dev.yaml
 .env
+.oauth-credentials.txt

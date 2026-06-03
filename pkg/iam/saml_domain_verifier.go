@@ -204,6 +204,7 @@ func (v *SAMLDomainVerifier) checkDNSTXTRecord(emailDomain string, expectedValue
 	msg.Question = []dns.RR{&dns.TXT{Hdr: dns.Header{Name: fqdn, Class: dns.ClassINET}}}
 
 	client := dns.NewClient()
+
 	resp, _, err := client.Exchange(context.Background(), msg, "udp", v.resolverAddr)
 	if err != nil {
 		return fmt.Errorf("cannot query TXT record for %q: %w", emailDomain, err)

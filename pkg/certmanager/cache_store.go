@@ -47,6 +47,7 @@ func NewCacheStore(
 
 func (w *CacheStore) WarmCache(ctx context.Context) error {
 	w.logger.InfoCtx(ctx, "warming certificate cache")
+
 	startTime := time.Now()
 
 	err := w.pg.WithConn(
@@ -65,6 +66,7 @@ func (w *CacheStore) WarmCache(ctx context.Context) error {
 			w.logger.InfoCtx(ctx, "found active certificates to cache", log.Int("count", len(domains)))
 
 			successCount := 0
+
 			for _, domain := range domains {
 				select {
 				case <-ctx.Done():
@@ -80,10 +82,10 @@ func (w *CacheStore) WarmCache(ctx context.Context) error {
 			}
 
 			w.logger.InfoCtx(ctx, "successfully warmed cache", log.Int("success_count", successCount), log.Int("total_count", len(domains)))
+
 			return nil
 		},
 	)
-
 	if err != nil {
 		return fmt.Errorf("cannot warm certificate cache: %w", err)
 	}

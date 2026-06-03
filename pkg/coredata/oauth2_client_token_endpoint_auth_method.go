@@ -14,7 +14,10 @@
 
 package coredata
 
-import "fmt"
+import (
+	"encoding"
+	"fmt"
+)
 
 type OAuth2ClientTokenEndpointAuthMethod string
 
@@ -24,9 +27,24 @@ const (
 	OAuth2ClientTokenEndpointAuthMethodNone              OAuth2ClientTokenEndpointAuthMethod = "none"
 )
 
-func (m OAuth2ClientTokenEndpointAuthMethod) IsValid() bool {
-	switch m {
-	case OAuth2ClientTokenEndpointAuthMethodClientSecretBasic,
+var (
+	_ fmt.Stringer             = OAuth2ClientTokenEndpointAuthMethod("")
+	_ encoding.TextMarshaler   = OAuth2ClientTokenEndpointAuthMethod("")
+	_ encoding.TextUnmarshaler = (*OAuth2ClientTokenEndpointAuthMethod)(nil)
+)
+
+func OAuth2ClientTokenEndpointAuthMethods() []OAuth2ClientTokenEndpointAuthMethod {
+	return []OAuth2ClientTokenEndpointAuthMethod{
+		OAuth2ClientTokenEndpointAuthMethodClientSecretBasic,
+		OAuth2ClientTokenEndpointAuthMethodClientSecretPost,
+		OAuth2ClientTokenEndpointAuthMethodNone,
+	}
+}
+
+func (v OAuth2ClientTokenEndpointAuthMethod) IsValid() bool {
+	switch v {
+	case
+		OAuth2ClientTokenEndpointAuthMethodClientSecretBasic,
 		OAuth2ClientTokenEndpointAuthMethodClientSecretPost,
 		OAuth2ClientTokenEndpointAuthMethodNone:
 		return true
@@ -35,17 +53,21 @@ func (m OAuth2ClientTokenEndpointAuthMethod) IsValid() bool {
 	return false
 }
 
-func (m OAuth2ClientTokenEndpointAuthMethod) String() string { return string(m) }
-
-func (m *OAuth2ClientTokenEndpointAuthMethod) UnmarshalText(text []byte) error {
-	*m = OAuth2ClientTokenEndpointAuthMethod(text)
-	if !m.IsValid() {
-		return fmt.Errorf("%s is not a valid OAuth2ClientTokenEndpointAuthMethod", string(text))
-	}
-
-	return nil
+func (v OAuth2ClientTokenEndpointAuthMethod) String() string {
+	return string(v)
 }
 
-func (m OAuth2ClientTokenEndpointAuthMethod) MarshalText() ([]byte, error) {
-	return []byte(m.String()), nil
+func (v OAuth2ClientTokenEndpointAuthMethod) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *OAuth2ClientTokenEndpointAuthMethod) UnmarshalText(text []byte) error {
+	val := OAuth2ClientTokenEndpointAuthMethod(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid OAuth2ClientTokenEndpointAuthMethod value: %q", string(text))
+	}
+
+	*v = val
+
+	return nil
 }

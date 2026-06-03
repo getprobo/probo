@@ -4,6 +4,281 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.201.0] - 2026-06-02
+
+### Added
+
+- Add async third-party vetting worker with PENDING/PROCESSING/COMPLETED/FAILED states, exposed through GraphQL and MCP; the third-party detail page polls while vetting runs
+- Tune the third-party vetting worker (interval, concurrency, stale-after, agent timeout, max-turns) via config
+
+### Changed
+
+- Downgrade access-source instance name resolution failures from error to warning
+
+### Fixed
+
+- Guard the GitHub access-source name resolver against empty organization to stop the source-name worker from flooding logs with 404s
+
+## [0.200.1] - 2026-06-01
+
+### Fixed
+
+- Raise tracker mapping and common-pattern enrichment agent max turns to 10 to prevent `MaxTurnsExceededError` when the tool-call budget exceeded the limit
+
+## [0.200.0] - 2026-06-01
+
+### Added
+
+- Add tracker description enrichment worker
+- Promote tracker patterns to organization third parties via worker, with first-party origin filtering and sibling-based mapping
+- Surface third-party links on `TrackerPattern` in GraphQL, with batch loaders
+- Filter banner trackers by linked third party and show third parties on the banner trackers page
+- Expose HTTP cookie source through the console API
+- Add document archive row action
+- Add stale recovery to the tracker mapping worker
+- Tune tracker workers: expose worker interval, concurrency, stale-after, agent timeout, and max-turns as config
+
+### Changed
+
+- Deactivate SCIM users when delete is blocked
+- Rework tracker and resource row actions
+- Reuse the mapping agent to attribute trackers in the enricher
+- Raise default agent token budget for reasoning models (1024/512 → 4096)
+- Harden catalog vendor resolution and the tracker mapping agent prompt
+- Skip shared infrastructure in domain matching during tracker mapping
+- Backfill tracker description from the common catalog
+- Run tracker mapping outside the persist transaction to remove cross-network row locks
+
+### Fixed
+
+- Stop tracker agents from inventing vendors
+- Drop sampling params unsupported by the model
+- Tolerate source fetch failures during tracker mapping
+- Skip mapping when a tracker pattern is deleted concurrently
+- Guard `LinkToCommon` against overwriting an existing catalog link
+- Take resolver scope from `Authorize` rather than the GID
+- Copy default LLM pointers when resolving agents
+
+## [0.199.1] - 2026-05-28
+
+### Fixed
+
+- Fix missing icons in the UI
+- Fix Metabase user listing in access reviews
+- Fix PostHog resolver name
+
+## [0.199.0] - 2026-05-28
+
+### Added
+
+- Add PostHog access-review connector
+- Add Metabase access-review connector
+- Add Grafana access-review connector
+- Add Cursor access-review connector
+- Support HTTP Basic auth in API-key connections
+- Cancel pending signature requests when a contract ends or a connector is deactivated
+
+### Changed
+
+- Reject demotion of the last owner of an organization
+- Scope document signatures to the major version
+
+### Fixed
+
+- Fix Microsoft 365 access review returning too many accounts
+
+## [0.198.0] - 2026-05-28
+
+### Added
+
+- Add Tailscale connector
+- Add Anthropic connector (authenticated via API key)
+- Add personal account support for the Heroku connector
+- Add Global region option to the vendor country picker
+- Allow ordering organization members by email address
+
+### Changed
+
+- Connector deletion is now best-effort: remaining steps proceed even when one cleanup step fails
+
+### Fixed
+
+- Fix role column in the people list rendered as non-sortable to prevent runtime failures
+- Surface an actionable error when a stored Sentry organization slug is no longer accessible to the connected OAuth token
+- Stop the source-name worker from retrying indefinitely on a stale Sentry organization slug
+- Stop the source-name worker from retrying indefinitely on a stale Heroku personal-account slug
+
+## [0.197.0] - 2026-05-28
+
+### Added
+
+- Add `invitingOrganizations` field on the viewer to expose organizations that have sent a pending invitation to the current user
+
+### Fixed
+
+- Show SCIM error message in the connector UI
+
+## [0.196.1] - 2026-05-27
+
+### Fixed
+
+- Fix serialization of SCIM bridge `SYNCING` and `DISABLED` states in the GraphQL API
+
+## [0.196.0] - 2026-05-27
+
+### Added
+
+- Expose bridge sync errors in the SCIM API and on Google Workspace and Microsoft 365 connector cards
+- Expose profile source field on users in the MCP API
+
+## [0.195.0] - 2026-05-27
+
+### Added
+
+- Add `archiveUser` operation to deactivate a user profile while keeping them in the organization; exposed across the console UI, MCP, CLI, and n8n
+- Expire pending invitations for a user when they are archived
+- Grant owners full `iam:scim-bridge:*` and admins read-only SCIM bridge access in IAM policies
+
+### Fixed
+
+- Preserve archived and deactivated HubSpot users in access reviews instead of dropping them
+- Fix common third-party logo URL returning resource-not-found in the combo box query
+
+## [0.194.0] - 2026-05-26
+
+### Added
+
+- Add `probo-agent` CLI and device agent library for endpoint compliance checks
+- Add screen lock detection support for i3, KDE, and more Linux desktop environments
+
+### Fixed
+
+- Skip unconnectable providers in provider listing
+- Reject shell-unsafe paths in FreeBSD rc.d service installer
+- Make Windows service uninstall idempotent
+- Use platform-specific atomic key replacement on Windows
+- Handle FreeBSD check command failures before reading status
+
+## [0.193.1] - 2026-05-26
+
+### Security
+
+- Fix open redirect bypass in safe redirect
+
+## [0.193.0] - 2026-05-26
+
+### Added
+
+- Add measure ↔ third-party many-to-many link with tabs on both detail pages
+- Add self-referential third-party relations with a `first_level` filter on the third-party list
+- Track source on detected storage trackers (localStorage, sessionStorage, indexedDB, cacheStorage)
+- Promote tracker pattern source on detection and trigger a draft banner version when adopting uncategorised patterns
+
+### Changed
+
+- Allow initial minor publishing of documents
+- Mark page-world extension writes (MV3 main world, userscripts with `@grant none`) with the new `EXTENSION` cookie source
+- Surface the measure state as a header badge and remove the measure detail right-hand drawer
+
+### Fixed
+
+- Fix timing attack on signin
+- Reject separator-only glob templates (e.g. `__*`) in tracker pattern analysis
+
+## [0.192.0] - 2026-05-25
+
+### Changed
+
+- Enforce IAM authorization on all console resolvers — every data-bearing field now goes through the policy engine and produces an audit log entry; adds `ActionCommonThirdPartyGet`, `ActionCommonThirdPartyList`, and `ActionElectronicSignatureGet` actions wired into Viewer and Auditor policies
+
+### Fixed
+
+- Fix signature count mismatch between the document version badge and the signatures tab — both now filter by `activeContract: true` and `state: ACTIVE`, so deactivated signers and ended-contract signers are consistently excluded
+- Fix MCP server resolvers after the signature filter and authorization changes
+
+## [0.191.0] - 2026-05-22
+
+### Added
+
+- Add a tracker pattern detail page in the console with a properties section and a list of detected tracker resources
+
+### Fixed
+
+- Strip empty ProseMirror text nodes from third-party list documents (and migrate existing `document_versions.content` to drop them) so Tiptap renders them instead of erroring with "Empty text nodes are not allowed"
+- Tailor signature certificate email copy for document approvals — store the per-signature email subject on creation so the certificate worker uses "Your approved <Title> - Certificate of Completion" for approvals and the existing default for other flows
+- Return a CONFLICT error instead of an opaque Internal error when deleting a membership profile that is still referenced as owner, approver, or assignee, by detecting the Postgres foreign-key violation in the coredata Delete path
+- Always instantiate the coredata `CookieCategoryFilter` in the cookie banner queries to avoid nil-pointer risks
+
+## [0.190.1] - 2026-05-20
+
+### Fixed
+
+- Fix the snapshot-cleanup migration to delete from `processing_activity_third_parties` (the table was renamed from `processing_activity_vendors` in 0.189.0), so the migration runs on databases upgraded past the rename
+
+## [0.190.0] - 2026-05-20
+
+### Added
+
+- Add a hierarchical risk assessment system with Risk Assessment, Scope, Node (ENTITY / BOUNDARY / ASSET / DATA), Process, Threat, and Risk Scenario entities, and render a Mermaid data-flow diagram per scope (nodes typed by shape, threats attached as dashed edges)
+- Add 13 access-review connector providers (with PKCE, token-body extras, and `AuthURL` templating support in the OAuth2 driver), and wire them through the review engine, the name worker, and the Helm chart
+- Add a tracker mapping worker that resolves detected trackers to third parties using initiator domain extraction (eTLD+1), pattern-glob analysis, and a Firecrawl-backed LLM agent fallback for unmapped patterns
+- Add a shared `common_third_parties` / `common_third_party_domains` catalog with slug-based deduplication, allow a single domain to be associated with multiple third parties, and auto-create entries from OCD imports
+- Introduce the `proboctl` CLI (replaces the standalone `common-third-parties-import` and `common-tracker-patterns-import` commands as `proboctl seed ...`), with `data.json` embedded in the binary
+
+### Changed
+
+- Move the Firecrawl API key from the top-level config into `Agents.Tools`, hardcode the Firecrawl API endpoint (drop `FIRECRAWL_ENDPOINT`), and replace the SearXNG search backend with Firecrawl
+- Split cookie names on both `_` and `-` separators so cookies like `__Secure-1PSID` no longer collapse into a bogus `___*` heuristic pattern
+
+### Fixed
+
+- Filter SCIM-deactivated (INACTIVE) people from signature request recipient lists in both the multi-select dialog and the document signatures page
+
+### Removed
+
+- Remove the deprecated snapshot system (the register/document model fully replaces it)
+- Remove backend inactive-profile validation that incorrectly rejected newly-created users on first login
+
+## [0.189.0] - 2026-05-15
+
+### Changed
+
+- Rename `vendor` to `third party` across the API surface (GraphQL, MCP), database schema (migration), webhook event types (`vendor:*` → `third_party:*`), snapshot type (`VENDORS` → `THIRD_PARTIES`), and console / trust URL paths (breaking)
+- Log `identity_id` on every authenticated request (cookie session, API key, OAuth2 access token) so operators can correlate a request back to its user and credential
+
+## [0.188.0] - 2026-05-13
+
+### Changed
+
+- Derive cookie consent mode dynamically from the visitor's country and applicable regulation at consent-recording time; the `consent_mode` column is dropped from `cookie_banners` and persisted on `cookie_consent_records` instead, defaulting to `OPT_OUT` when no regulation matches (breaking)
+- Capture `X-SDK-Version` via middleware and include it as `sdk_version` on all cookie banner request logs
+- Use distinct badge colors per resource type and tracker type instead of only highlighting scripts
+
+### Fixed
+
+- Eliminate deadlocks when concurrent `ReportDetectedTrackers` calls update `tracker_patterns.last_matched_at` by replacing per-row updates with a single bulk update
+- Stop generating bare `*` tracker patterns from separator-less cookie names; such names are kept as individual exact-match patterns for triage
+
+### Removed
+
+- Drop the legacy `cookies` and `cookie_patterns` tables (superseded by `tracker_patterns` and `detected_trackers`)
+
+## [0.187.0] - 2026-05-12
+
+### Added
+
+- Add a shared `common_third_parties` reference catalog, seeded from `packages/vendors/data.json` via a one-shot `common-third-parties-import` CLI, and back the `CreateVendorDialog` autocomplete with a new `commonThirdParties(name)` GraphQL query (server-side `ILIKE` search) instead of shipping the full vendor JSON bundle to the browser
+- Self-host vendor logos in S3: at import time, fetch each site's HTML and pick the best icon (SVG, `apple-touch-icon`, large PNG, `msapplication-TileImage`) via the new `pkg/webinspect` package, then serve through the existing `/api/files/v1/{id}` endpoint instead of calling Google's favicon service per page load
+
+### Changed
+
+- Sanitize MCP error responses so internal details (stack traces, wrapped errors) are no longer leaked to clients
+
+### Fixed
+
+- Return a clean not-found error instead of a 500 when a membership lookup misses
+- Upgrade `mermaid` to 11.15.0 to address GHSA-6m6c-36f7-fhxh (Gantt infinite-loop DoS), GHSA-xcj9-5m2h-648r and GHSA-87f9-hvmw-gh4p (CSS injection via `classDef`/configuration), and GHSA-ghcm-xqfw-q4vr (HTML injection via `classDef` in state diagrams)
+
 ## [0.186.1] - 2026-05-12
 
 ### Fixed

@@ -45,17 +45,22 @@ func TestParseMarkdown_BlockHTMLDivPreservesInlineMarks(t *testing.T) {
 	require.Equal(t, NodeParagraph, p.Type)
 
 	var foundStrong bool
+
 	for _, ch := range p.Content {
 		if ch.Type != NodeText || ch.Text == nil {
 			continue
 		}
+
 		if *ch.Text != "world" {
 			continue
 		}
+
 		require.Len(t, ch.Marks, 1)
 		assert.Equal(t, MarkStrong, ch.Marks[0].Type)
+
 		foundStrong = true
 	}
+
 	assert.True(t, foundStrong, "expected bold mark on 'world' inside a single paragraph")
 }
 
@@ -230,11 +235,13 @@ func TestParseMarkdown_InlineRawHTML(t *testing.T) {
 	require.Equal(t, NodeParagraph, p.Type)
 
 	var joined strings.Builder
+
 	for _, ch := range p.Content {
 		require.Equal(t, NodeText, ch.Type)
 		require.NotNil(t, ch.Text)
 		joined.WriteString(*ch.Text)
 	}
+
 	// Sanitized HTML: span is unwrapped to plain text content.
 	assert.Equal(t, "before x after", joined.String())
 }
@@ -261,12 +268,15 @@ func TestParseMarkdown_InlineRawHTMLScriptStripped(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, doc.Content, 1)
 	p := doc.Content[0]
+
 	var joined strings.Builder
+
 	for _, ch := range p.Content {
 		if ch.Type == NodeText && ch.Text != nil {
 			joined.WriteString(*ch.Text)
 		}
 	}
+
 	assert.NotContains(t, joined.String(), "script")
 	assert.NotContains(t, joined.String(), "evil")
 	assert.Contains(t, joined.String(), "hi")
@@ -283,20 +293,24 @@ func TestParseMarkdown_InlineRawHTMLWithOuterBold(t *testing.T) {
 	require.GreaterOrEqual(t, len(p.Content), 3)
 
 	var joined strings.Builder
+
 	for _, ch := range p.Content {
 		require.Equal(t, NodeText, ch.Type)
 		require.NotNil(t, ch.Text)
 		joined.WriteString(*ch.Text)
 	}
+
 	assert.Equal(t, "a b c", joined.String())
 
 	var mid *Node
+
 	for i := range p.Content {
 		if p.Content[i].Text != nil && *p.Content[i].Text == "b" {
 			mid = &p.Content[i]
 			break
 		}
 	}
+
 	require.NotNil(t, mid, "expected inner <em> as text node b")
 	require.GreaterOrEqual(t, len(mid.Marks), 2)
 	assert.Equal(t, MarkStrong, mid.Marks[0].Type)

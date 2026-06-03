@@ -26,6 +26,7 @@ import (
 	"go.gearno.de/kit/worker"
 	"go.probo.inc/probo/pkg/accessreview/drivers"
 	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/connector/provider"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/cipher"
 )
@@ -36,6 +37,7 @@ type sourceNameHandler struct {
 	pg                *pg.Client
 	encryptionKey     cipher.EncryptionKey
 	connectorRegistry *connector.ConnectorRegistry
+	providerRegistry  *provider.Registry
 	logger            *log.Logger
 }
 
@@ -43,6 +45,7 @@ func NewSourceNameWorker(
 	pgClient *pg.Client,
 	encryptionKey cipher.EncryptionKey,
 	connectorRegistry *connector.ConnectorRegistry,
+	providerRegistry *provider.Registry,
 	logger *log.Logger,
 	opts ...worker.Option,
 ) *worker.Worker[coredata.AccessSource] {
@@ -50,6 +53,7 @@ func NewSourceNameWorker(
 		pg:                pgClient,
 		encryptionKey:     encryptionKey,
 		connectorRegistry: connectorRegistry,
+		providerRegistry:  providerRegistry,
 		logger:            logger,
 	}
 
@@ -79,6 +83,7 @@ func (h *sourceNameHandler) Claim(ctx context.Context) (coredata.AccessSource, e
 		if errors.Is(err, coredata.ErrNoAccessSourceNameSyncAvailable) {
 			return coredata.AccessSource{}, worker.ErrNoTask
 		}
+
 		return coredata.AccessSource{}, err
 	}
 
@@ -86,7 +91,9 @@ func (h *sourceNameHandler) Claim(ctx context.Context) (coredata.AccessSource, e
 }
 
 func (h *sourceNameHandler) Process(ctx context.Context, source coredata.AccessSource) error {
-	h.logger.InfoCtx(ctx, "syncing source name",
+	h.logger.InfoCtx(
+		ctx,
+		"syncing source name",
 		log.String("source_id", source.ID.String()),
 		log.String("current_name", source.Name),
 	)
@@ -127,23 +134,30 @@ func (h *sourceNameHandler) Process(ctx context.Context, source coredata.AccessS
 				}
 			}
 
-			resolver = h.buildResolver(&dbConnector, httpClient)
+			resolver = h.buildResolver(ctx, &dbConnector, httpClient)
+
 			return nil
 		},
 	)
 	if err != nil {
-		h.logger.ErrorCtx(ctx, "cannot load connector for source name sync",
+		h.logger.ErrorCtx(
+			ctx,
+			"cannot load connector for source name sync",
 			log.String("source_id", source.ID.String()),
 			log.Error(err),
 		)
+
 		return nil
 	}
 
 	if resolver == nil {
-		h.logger.InfoCtx(ctx, "no name resolver for provider, keeping generic name",
+		h.logger.InfoCtx(
+			ctx,
+			"no name resolver for provider, keeping generic name",
 			log.String("source_id", source.ID.String()),
 			log.String("provider", dbConnector.Provider.String()),
 		)
+
 		return h.markNameSynced(ctx, &source)
 	}
 
@@ -152,32 +166,41 @@ func (h *sourceNameHandler) Process(ctx context.Context, source coredata.AccessS
 
 	instanceName, err := resolver.ResolveInstanceName(resolveCtx)
 	if err != nil {
-		h.logger.ErrorCtx(ctx, "cannot resolve instance name",
+		h.logger.WarnCtx(
+			ctx,
+			"cannot resolve instance name",
 			log.String("source_id", source.ID.String()),
 			log.String("provider", dbConnector.Provider.String()),
 			log.Error(err),
 		)
+
 		return fmt.Errorf("cannot resolve instance name for source %s: %w", source.ID, err)
 	}
 
 	if instanceName == "" {
-		h.logger.InfoCtx(ctx, "instance name is empty, keeping generic name",
+		h.logger.InfoCtx(
+			ctx,
+			"instance name is empty, keeping generic name",
 			log.String("source_id", source.ID.String()),
 			log.String("provider", dbConnector.Provider.String()),
 		)
+
 		return h.markNameSynced(ctx, &source)
 	}
 
-	displayName := drivers.ProviderDisplayName(dbConnector.Provider)
+	displayName := h.providerRegistry.ProviderDisplayName(dbConnector.Provider)
 	newName := displayName + " " + instanceName
 
-	h.logger.InfoCtx(ctx, "resolved source name",
+	h.logger.InfoCtx(
+		ctx,
+		"resolved source name",
 		log.String("source_id", source.ID.String()),
 		log.String("old_name", source.Name),
 		log.String("new_name", newName),
 	)
 
 	source.Name = newName
+
 	return h.markNameSynced(ctx, &source)
 }
 
@@ -227,63 +250,14 @@ func (h *sourceNameHandler) connectorHTTPClient(
 }
 
 func (h *sourceNameHandler) buildResolver(
+	ctx context.Context,
 	dbConnector *coredata.Connector,
 	httpClient *http.Client,
 ) drivers.NameResolver {
-	switch dbConnector.Provider {
-	case coredata.ConnectorProviderSlack:
-		return drivers.NewSlackNameResolver(httpClient)
-	case coredata.ConnectorProviderGoogleWorkspace:
-		return drivers.NewGoogleWorkspaceNameResolver(httpClient)
-	case coredata.ConnectorProviderLinear:
-		return drivers.NewLinearNameResolver(httpClient)
-	case coredata.ConnectorProviderCloudflare:
-		return drivers.NewCloudflareNameResolver(httpClient)
-	case coredata.ConnectorProviderBrex:
-		return drivers.NewBrexNameResolver(httpClient)
-	case coredata.ConnectorProviderTally:
-		tallySettings, err := dbConnector.TallySettings()
-		if err != nil {
-			h.logger.Error("cannot read tally connector settings", log.Error(err))
-			return nil
-		}
-		return drivers.NewTallyNameResolver(httpClient, tallySettings.OrganizationID)
-	case coredata.ConnectorProviderHubSpot:
-		return drivers.NewHubSpotNameResolver(httpClient)
-	case coredata.ConnectorProviderDocuSign:
-		return drivers.NewDocuSignNameResolver(httpClient)
-	case coredata.ConnectorProviderOpenAI:
-		return drivers.NewOpenAINameResolver(httpClient)
-	case coredata.ConnectorProviderSentry:
-		sentrySettings, err := dbConnector.SentrySettings()
-		if err != nil {
-			h.logger.Error("cannot read sentry connector settings", log.Error(err))
-			return nil
-		}
-		return drivers.NewSentryNameResolver(httpClient, sentrySettings.OrganizationSlug)
-	case coredata.ConnectorProviderGitHub:
-		githubSettings, err := dbConnector.GitHubSettings()
-		if err != nil {
-			h.logger.Error("cannot read github connector settings", log.Error(err))
-			return nil
-		}
-		return drivers.NewGitHubNameResolver(httpClient, githubSettings.Organization)
-	case coredata.ConnectorProviderSupabase:
-		supabaseSettings, err := dbConnector.SupabaseSettings()
-		if err != nil {
-			h.logger.Error("cannot read supabase connector settings", log.Error(err))
-			return nil
-		}
-		return drivers.NewSupabaseNameResolver(supabaseSettings.OrganizationSlug)
-	case coredata.ConnectorProviderIntercom:
-		return drivers.NewIntercomNameResolver(httpClient)
-	case coredata.ConnectorProviderNotion:
-		return drivers.NewNotionNameResolver(httpClient)
-	case coredata.ConnectorProviderResend:
-		return drivers.NewResendNameResolver()
-	case coredata.ConnectorProviderMicrosoft365:
-		return drivers.NewMicrosoft365NameResolver(httpClient)
-	default:
+	reg, ok := h.providerRegistry.Get(dbConnector.Provider)
+	if !ok || reg.NewNameResolver == nil {
 		return nil
 	}
+
+	return reg.NewNameResolver(ctx, httpClient, dbConnector, h.logger)
 }

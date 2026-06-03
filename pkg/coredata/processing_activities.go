@@ -24,6 +24,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/iam/policy"
 	"go.probo.inc/probo/pkg/page"
 )
 
@@ -49,6 +50,7 @@ WHERE
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, nil
 	}
+
 	if err != nil {
 		return nil, fmt.Errorf("cannot get processing activity list document ID: %w", err)
 	}
@@ -137,8 +139,6 @@ WHERE
 type (
 	ProcessingActivity struct {
 		ID                                   gid.GID                                          `db:"id"`
-		SnapshotID                           *gid.GID                                         `db:"snapshot_id"`
-		SourceID                             *gid.GID                                         `db:"source_id"`
 		OrganizationID                       gid.GID                                          `db:"organization_id"`
 		Name                                 string                                           `db:"name"`
 		Purpose                              *string                                          `db:"purpose"`
@@ -177,18 +177,43 @@ func (p *ProcessingActivity) CursorKey(field ProcessingActivityOrderField) page.
 	panic(fmt.Sprintf("unsupported order by: %s", field))
 }
 
-func (p *ProcessingActivity) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
-	q := `SELECT organization_id FROM processing_activities WHERE id = $1 LIMIT 1;`
+func (p *ProcessingActivity) AuthorizationAttributes(
+	ctx context.Context,
+	conn pg.Querier,
+	resourceIDs []gid.GID,
+) (policy.AttributesByID, error) {
+	q := `SELECT id, organization_id FROM processing_activities WHERE id = ANY(@resource_ids::text[])`
 
-	var organizationID gid.GID
-	if err := conn.QueryRow(ctx, q, p.ID).Scan(&organizationID); err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, ErrResourceNotFound
-		}
-		return nil, fmt.Errorf("cannot query processing activity authorization attributes: %w", err)
+	args := pgx.StrictNamedArgs{
+		"resource_ids": resourceIDs,
 	}
 
-	return map[string]string{"organization_id": organizationID.String()}, nil
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return nil, fmt.Errorf("cannot query authorization attributes: %w", err)
+	}
+
+	defer rows.Close()
+
+	attrsByID := make(policy.AttributesByID)
+
+	for rows.Next() {
+		var id, organizationID gid.GID
+
+		if err := rows.Scan(&id, &organizationID); err != nil {
+			return nil, fmt.Errorf("cannot scan authorization attributes: %w", err)
+		}
+
+		attrsByID[id] = policy.Attributes{
+			"organization_id": organizationID.String(),
+		}
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("cannot iterate authorization attributes: %w", err)
+	}
+
+	return attrsByID, nil
 }
 
 func (p *ProcessingActivity) LoadByID(
@@ -200,8 +225,6 @@ func (p *ProcessingActivity) LoadByID(
 	q := `
 SELECT
 	id,
-	snapshot_id,
-	source_id,
 	organization_id,
 	name,
 	purpose,
@@ -266,7 +289,6 @@ FROM
 WHERE
 	%s
 	AND organization_id = @organization_id
-	AND snapshot_id IS NULL
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
@@ -277,6 +299,7 @@ WHERE
 	row := conn.QueryRow(ctx, q, args)
 
 	var count int
+
 	err := row.Scan(&count)
 	if err != nil {
 		return 0, fmt.Errorf("cannot count processing activities: %w", err)
@@ -299,8 +322,6 @@ func (p *ProcessingActivities) LoadByIDs(
 	q := `
 SELECT
 	id,
-	snapshot_id,
-	source_id,
 	organization_id,
 	name,
 	purpose,
@@ -365,8 +386,6 @@ func (p *ProcessingActivities) LoadByOrganizationID(
 	q := `
 SELECT
 	id,
-	snapshot_id,
-	source_id,
 	organization_id,
 	name,
 	purpose,
@@ -394,7 +413,6 @@ FROM
 WHERE
 	%s
 	AND organization_id = @organization_id
-	AND snapshot_id IS NULL
 	AND %s
 `
 
@@ -428,8 +446,6 @@ func (p *ProcessingActivities) LoadAllByOrganizationID(
 	q := `
 SELECT
 	id,
-	snapshot_id,
-	source_id,
 	organization_id,
 	name,
 	purpose,
@@ -457,7 +473,6 @@ FROM
 WHERE
 	%s
 	AND organization_id = @organization_id
-	AND snapshot_id IS NULL
 ORDER BY created_at DESC
 `
 
@@ -490,8 +505,6 @@ func (p *ProcessingActivity) Insert(
 INSERT INTO processing_activities (
 	id,
 	tenant_id,
-	snapshot_id,
-	source_id,
 	organization_id,
 	name,
 	purpose,
@@ -517,8 +530,6 @@ INSERT INTO processing_activities (
 ) VALUES (
 	@id,
 	@tenant_id,
-	@snapshot_id,
-	@source_id,
 	@organization_id,
 	@name,
 	@purpose,
@@ -547,8 +558,6 @@ INSERT INTO processing_activities (
 	args := pgx.StrictNamedArgs{
 		"id":                       p.ID,
 		"tenant_id":                scope.GetTenantID(),
-		"snapshot_id":              p.SnapshotID,
-		"source_id":                p.SourceID,
 		"organization_id":          p.OrganizationID,
 		"name":                     p.Name,
 		"purpose":                  p.Purpose,
@@ -612,7 +621,6 @@ SET
 WHERE
 	%s
 	AND id = @id
-	AND snapshot_id IS NULL
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
@@ -660,7 +668,6 @@ DELETE FROM processing_activities
 WHERE
 	%s
 	AND id = @id
-	AND snapshot_id IS NULL
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())

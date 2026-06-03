@@ -51,6 +51,7 @@ func (d *CSVDriver) ListAccounts(_ context.Context) ([]AccountRecord, error) {
 	for i, col := range header {
 		colIndex[strings.TrimSpace(strings.ToLower(col))] = i
 	}
+
 	if _, ok := colIndex["email"]; !ok {
 		return nil, fmt.Errorf("cannot parse CSV: missing required column email")
 	}
@@ -62,6 +63,7 @@ func (d *CSVDriver) ListAccounts(_ context.Context) ([]AccountRecord, error) {
 		if err == io.EOF {
 			break
 		}
+
 		if err != nil {
 			return nil, fmt.Errorf("cannot read CSV row: %w", err)
 		}
@@ -75,24 +77,31 @@ func (d *CSVDriver) ListAccounts(_ context.Context) ([]AccountRecord, error) {
 		if idx, ok := colIndex["email"]; ok && idx < len(row) {
 			record.Email = strings.TrimSpace(row[idx])
 		}
+
 		if idx, ok := colIndex["full_name"]; ok && idx < len(row) {
 			record.FullName = strings.TrimSpace(row[idx])
 		}
+
 		if idx, ok := colIndex["role"]; ok && idx < len(row) {
 			record.Role = strings.TrimSpace(row[idx])
 		}
+
 		if idx, ok := colIndex["job_title"]; ok && idx < len(row) {
 			record.JobTitle = strings.TrimSpace(row[idx])
 		}
+
 		if idx, ok := colIndex["is_admin"]; ok && idx < len(row) {
 			record.IsAdmin = strings.TrimSpace(strings.ToLower(row[idx])) == "true"
 		}
+
 		if idx, ok := colIndex["active"]; ok && idx < len(row) {
 			record.Active = new(strings.TrimSpace(strings.ToLower(row[idx])) == "true")
 		}
+
 		if idx, ok := colIndex["external_id"]; ok && idx < len(row) {
 			record.ExternalID = strings.TrimSpace(row[idx])
 		}
+
 		if idx, ok := colIndex["account_type"]; ok && idx < len(row) {
 			if strings.TrimSpace(strings.ToUpper(row[idx])) == "SERVICE_ACCOUNT" {
 				record.AccountType = coredata.AccessEntryAccountTypeServiceAccount

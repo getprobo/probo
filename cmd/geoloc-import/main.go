@@ -68,6 +68,7 @@ func run() error {
 	}
 
 	fmt.Println("done")
+
 	return nil
 }
 
@@ -79,11 +80,23 @@ func newPgClientFromDSN(dsn string) (*pg.Client, error) {
 
 	var opts []pg.Option
 
+	switch u.Query().Get("sslmode") {
+	case "", "disable":
+		// plain connection, no TLS
+	case "require":
+		opts = append(opts, pg.WithUnsecureTLS())
+	case "prefer":
+		return nil, fmt.Errorf("unsupported sslmode %q (prefer fallback semantics are not supported)", u.Query().Get("sslmode"))
+	default:
+		return nil, fmt.Errorf("unsupported sslmode %q", u.Query().Get("sslmode"))
+	}
+
 	if u.Host != "" {
 		host := u.Host
 		if u.Port() == "" {
 			host = net.JoinHostPort(u.Hostname(), "5432")
 		}
+
 		opts = append(opts, pg.WithAddr(host))
 	}
 

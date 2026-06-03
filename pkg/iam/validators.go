@@ -31,6 +31,7 @@ func PasswordValidator() validator.ValidatorFunc {
 				return err
 			}
 		}
+
 		return nil
 	}
 }

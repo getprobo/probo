@@ -70,6 +70,7 @@ func NoDuplicates() ValidatorFunc {
 			if _, ok := seen[elem]; ok {
 				return newValidationError(ErrorCodeInvalidFormat, "must not contain duplicates")
 			}
+
 			seen[elem] = struct{}{}
 		}
 

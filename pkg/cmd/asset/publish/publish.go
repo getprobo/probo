@@ -96,6 +96,7 @@ func NewCmdPublish(f *cmdutil.Factory) *cobra.Command {
 			if flagOrg == "" {
 				flagOrg = hc.Organization
 			}
+
 			if flagOrg == "" {
 				return fmt.Errorf("organization is required: pass --org or run `prb auth login`")
 			}
