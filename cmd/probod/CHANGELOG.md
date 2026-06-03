@@ -4,6 +4,10 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.202.1] - 2026-06-03
+
+No user-facing changes; tag-only release.
+
 ## [0.202.0] - 2026-06-03
 
 ### Added
