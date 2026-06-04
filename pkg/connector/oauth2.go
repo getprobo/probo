@@ -75,13 +75,18 @@ type (
 		// wiring, never serialized.
 		StateSigningKey string
 
-		// BuildAuthURLForSite / BuildTokenURLForDomain are copied from
-		// the provider Registration by ApplyOAuth2Defaults. When set,
-		// the authorize URL is built per-site at initiate and the token
-		// URL per-domain at callback (multi-site providers, e.g.
-		// Datadog). Nil for single-site providers.
+		// BuildAuthURLForSite / BuildTokenURLForDomain / BuildTokenURLForSite
+		// are copied from the provider Registration by ApplyOAuth2Defaults.
+		// When set, the authorize URL is built per-site at initiate.
+		// BuildTokenURLForDomain builds the token URL from a host the provider
+		// echoes back on the callback (Datadog's `domain`);
+		// BuildTokenURLForSite builds it from the site carried in the signed
+		// state (Zendesk's subdomain), for providers that do not echo the host
+		// back. A provider sets at most one of the two. Nil for single-site
+		// providers.
 		BuildAuthURLForSite    func(site string) (string, error)
 		BuildTokenURLForDomain func(domain string) (string, error)
+		BuildTokenURLForSite   func(site string) (string, error)
 
 		// HTTPClient is used for the OAuth2 token-exchange request
 		// issued from CompleteWithState. It must be set by callers;
@@ -97,6 +102,16 @@ type (
 		ContinueURL     string   `json:"continue,omitempty"`
 		ConnectorID     string   `json:"cid,omitempty"` // Set when reconnecting an existing connector
 		RequestedScopes []string `json:"scopes,omitempty"`
+		// Site carries the per-customer site/subdomain chosen at initiate
+		// (opts.Site) to the callback for multi-site providers whose token
+		// host is NOT echoed back by the provider (e.g. Zendesk, whose
+		// token endpoint lives at <subdomain>.zendesk.com). It is signed
+		// into the state token, so a tampered value is rejected by the HMAC
+		// check; the callback still re-validates the format before using it
+		// to build a URL host. Empty for single-site providers and for
+		// multi-site providers that recover the host from a callback param
+		// (e.g. Datadog's `domain`).
+		Site string `json:"site,omitempty"`
 		// PKCENonce carries a random per-flow nonce between Initiate and
 		// Complete for providers that require PKCE. The actual
 		// code_verifier is DERIVED server-side from the state salt and this
@@ -193,6 +208,12 @@ func (c *OAuth2Connector) InitiateWithState(
 	if salt == "" {
 		return "", fmt.Errorf("cannot create state token: connector has no state signing key or client secret")
 	}
+
+	// Carry the per-customer site/subdomain (if any) into the signed state so
+	// it survives the round-trip to the callback. Multi-site providers whose
+	// token host the provider does not echo back (e.g. Zendesk) read it from
+	// the state at CompleteWithState. No-op (omitempty) when unset.
+	stateData.Site = opts.Site
 
 	// For PKCE providers a per-flow nonce is generated and stored in the
 	// signed state; the code verifier itself is DERIVED from salt+nonce
@@ -371,13 +392,29 @@ func (c *OAuth2Connector) CompleteWithState(ctx context.Context, r *http.Request
 	}
 
 	tokenURL := c.TokenURL
-	if c.BuildTokenURLForDomain != nil {
+	switch {
+	case c.BuildTokenURLForDomain != nil:
 		domain := r.URL.Query().Get("domain")
 		if domain == "" {
 			return nil, nil, fmt.Errorf("cannot complete oauth2 flow: missing domain parameter")
 		}
 
 		built, err := c.BuildTokenURLForDomain(domain)
+		if err != nil {
+			return nil, nil, fmt.Errorf("cannot build token URL: %w", err)
+		}
+
+		tokenURL = built
+	case c.BuildTokenURLForSite != nil:
+		// The site/subdomain was carried in the signed state from initiate
+		// (the provider does not echo it back on the callback). The HMAC
+		// signature already authenticated the value; the closure re-validates
+		// the format before using it as a URL host.
+		if payload.Data.Site == "" {
+			return nil, nil, fmt.Errorf("cannot complete oauth2 flow: missing site in state")
+		}
+
+		built, err := c.BuildTokenURLForSite(payload.Data.Site)
 		if err != nil {
 			return nil, nil, fmt.Errorf("cannot build token URL: %w", err)
 		}
@@ -439,8 +476,8 @@ func (c *OAuth2Connector) CompleteWithState(ctx context.Context, r *http.Request
 	}
 
 	// Persist the per-customer token URL for multi-site providers so
-	// token refresh targets the same regional host (api.<domain>).
-	if c.BuildTokenURLForDomain != nil {
+	// token refresh targets the same regional/subdomain host.
+	if c.BuildTokenURLForDomain != nil || c.BuildTokenURLForSite != nil {
 		oauth2Conn.TokenURL = tokenURL
 	}
 

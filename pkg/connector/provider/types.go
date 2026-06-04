@@ -68,6 +68,13 @@ type Registration struct {
 	// domain the provider returns on the OAuth callback (multi-site
 	// providers, e.g. Datadog). It MUST validate domain. Nil otherwise.
 	BuildTokenURLForDomain func(domain string) (string, error)
+	// BuildTokenURLForSite builds the token endpoint URL from the
+	// per-customer site/subdomain carried in the signed OAuth state, for
+	// multi-site providers whose token host the provider does NOT echo back
+	// on the callback (e.g. Zendesk's <subdomain>.zendesk.com). It MUST
+	// validate site. A provider sets at most one of BuildTokenURLForDomain /
+	// BuildTokenURLForSite. Nil otherwise.
+	BuildTokenURLForSite func(site string) (string, error)
 
 	// Protocol support / GraphQL surface.
 	SupportsAPIKey            bool
