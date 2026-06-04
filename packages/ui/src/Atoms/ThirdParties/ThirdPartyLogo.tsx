@@ -18,6 +18,7 @@ import { Anthropic } from "./Anthropic";
 import { Asana } from "./Asana";
 import { Bitbucket } from "./Bitbucket";
 import { Brex } from "./Brex";
+import { Clerk } from "./Clerk";
 import { ClickUp } from "./ClickUp";
 import { Cloudflare } from "./Cloudflare";
 import { Cursor } from "./Cursor";
@@ -55,6 +56,7 @@ const thirdParties: Record<string, FC<ComponentProps<"svg">>> = {
   ASANA: Asana,
   BITBUCKET: Bitbucket,
   BREX: Brex,
+  CLERK: Clerk,
   CLICKUP: ClickUp,
   CLOUDFLARE: Cloudflare,
   CURSOR: Cursor,

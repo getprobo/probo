@@ -35,29 +35,32 @@ func TestClerkDriver(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, records, 3)
 
+	// Clerk returns users newest-first (default order_by=-created_at).
 	first := records[0]
-	assert.Equal(t, "usr_000000000000000000000001", first.ExternalID)
-	assert.Equal(t, "jane@example.com", first.Email)
-	assert.Equal(t, "Jane Doe", first.FullName)
+	assert.Equal(t, "user_3EfkCEWmtIsoMD3rRxIpDsBOPzv", first.ExternalID)
+	assert.Equal(t, "c@example.com", first.Email)
+	assert.Equal(t, "c c", first.FullName)
+	assert.Equal(t, coredata.AccessEntryAccountTypeUser, first.AccountType)
 	require.NotNil(t, first.Active)
 	assert.True(t, *first.Active)
 	assert.Equal(t, coredata.MFAStatusDisabled, first.MFAStatus)
 	assert.Equal(t, coredata.AccessEntryAuthMethodPassword, first.AuthMethod)
 	assert.NotNil(t, first.CreatedAt)
-	assert.NotNil(t, first.LastLogin)
+	assert.Nil(t, first.LastLogin)
 
 	second := records[1]
-	assert.Equal(t, "developer-user", second.FullName)
+	assert.Equal(t, "b@example.com", second.Email)
+	assert.Equal(t, "b b", second.FullName)
 	require.NotNil(t, second.Active)
 	assert.True(t, *second.Active)
-	assert.Equal(t, coredata.MFAStatusEnabled, second.MFAStatus)
-	assert.Equal(t, coredata.AccessEntryAuthMethodUnknown, second.AuthMethod)
 
+	// a@example.com is locked, so it must be reported inactive.
 	third := records[2]
-	assert.Equal(t, "blocked@example.com", third.FullName)
+	assert.Equal(t, "a@example.com", third.Email)
+	assert.Equal(t, "a a", third.FullName)
 	require.NotNil(t, third.Active)
 	assert.False(t, *third.Active)
-	assert.Equal(t, coredata.MFAStatusDisabled, third.MFAStatus)
+	assert.Equal(t, coredata.AccessEntryAuthMethodPassword, third.AuthMethod)
 }
 
 func TestClerkPrimaryEmail(t *testing.T) {

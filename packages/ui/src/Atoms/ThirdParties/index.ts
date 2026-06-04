@@ -2,6 +2,7 @@ export { Anthropic } from "./Anthropic";
 export { Asana } from "./Asana";
 export { Bitbucket } from "./Bitbucket";
 export { Brex } from "./Brex";
+export { Clerk } from "./Clerk";
 export { ClickUp } from "./ClickUp";
 export { Cloudflare } from "./Cloudflare";
 export { Cursor } from "./Cursor";

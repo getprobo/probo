@@ -18,8 +18,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -49,16 +49,13 @@ type clerkUser struct {
 	BackupCodeEnabled     bool    `json:"backup_code_enabled"`
 	Banned                bool    `json:"banned"`
 	Locked                bool    `json:"locked"`
+	Deprovisioned         bool    `json:"deprovisioned"`
 	LastSignInAt          *int64  `json:"last_sign_in_at"`
 	CreatedAt             int64   `json:"created_at"`
 	EmailAddresses        []struct {
 		ID           string `json:"id"`
 		EmailAddress string `json:"email_address"`
 	} `json:"email_addresses"`
-}
-
-type clerkUsersEnvelope struct {
-	Data []clerkUser `json:"data"`
 }
 
 func NewClerkDriver(httpClient *http.Client) *ClerkDriver {
@@ -84,10 +81,6 @@ func (d *ClerkDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error)
 			return nil, err
 		}
 
-		if len(users) == 0 {
-			return records, nil
-		}
-
 		for _, u := range users {
 			email := clerkPrimaryEmail(u)
 			if email == "" {
@@ -97,7 +90,7 @@ func (d *ClerkDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error)
 			record := AccountRecord{
 				Email:       email,
 				FullName:    clerkFullName(u, email),
-				Active:      new(!u.Banned && !u.Locked),
+				Active:      new(!u.Banned && !u.Locked && !u.Deprovisioned),
 				IsAdmin:     false,
 				MFAStatus:   clerkMFAStatus(u),
 				AuthMethod:  clerkAuthMethod(u),
@@ -133,8 +126,8 @@ func (d *ClerkDriver) fetchUsersPage(ctx context.Context, offset int) ([]clerkUs
 	}
 
 	q := req.URL.Query()
-	q.Set("limit", fmt.Sprintf("%d", clerkUsersPageSize))
-	q.Set("offset", fmt.Sprintf("%d", offset))
+	q.Set("limit", strconv.Itoa(clerkUsersPageSize))
+	q.Set("offset", strconv.Itoa(offset))
 	req.URL.RawQuery = q.Encode()
 
 	req.Header.Set("Accept", "application/json")
@@ -152,23 +145,12 @@ func (d *ClerkDriver) fetchUsersPage(ctx context.Context, offset int) ([]clerkUs
 		return nil, fmt.Errorf("cannot fetch clerk users: unexpected status %d", httpResp.StatusCode)
 	}
 
-	body, err := io.ReadAll(httpResp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("cannot read clerk users response: %w", err)
-	}
-
-	var paged clerkUsersEnvelope
-	if err := json.Unmarshal(body, &paged); err != nil {
-		return nil, fmt.Errorf("cannot decode clerk users response: %w", err)
-	}
-
-	if paged.Data != nil {
-		return paged.Data, nil
-	}
-
+	// GET /v1/users returns a bare JSON array of user objects; the total
+	// count is exposed separately via /v1/users/count. Decode directly
+	// into a slice.
 	var users []clerkUser
-	if err := json.Unmarshal(body, &users); err != nil {
-		return nil, fmt.Errorf("cannot decode clerk users list response: %w", err)
+	if err := json.NewDecoder(httpResp.Body).Decode(&users); err != nil {
+		return nil, fmt.Errorf("cannot decode clerk users response: %w", err)
 	}
 
 	return users, nil

@@ -28,9 +28,22 @@ func clerkRegistration() *Registration {
 		Provider:       coredata.ConnectorProviderClerk,
 		DisplayName:    "Clerk",
 		SupportsAPIKey: true,
-		// Clerk's Backend API is authenticated with a server-side secret key
-		// via Authorization: Bearer <sk_...>; there is no third-party OAuth2
-		// flow for account-listing access reviews.
+		// Clerk's Backend API authenticates with a server-side secret key
+		// (sk_...) presented as Authorization: Bearer, the default
+		// APIKeyConnection scheme. There is no third-party OAuth2 flow for
+		// account-listing: Clerk's OAuth is an end-user IdP (scoped consent
+		// to a single user's profile), not a partner grant over the Backend
+		// API. The secret key is bound to one Clerk instance, so there is
+		// nothing to pick (Pattern 3): no settings struct, no picker, no
+		// SetOrganizationSettings.
+		//
+		// ProbeURL is intentionally empty: the connection probe runs only
+		// for OAuth2 connections, so it would be dead config for an API-key
+		// provider; a dead key surfaces on the first ListAccounts instead.
+		//
+		// No NewNameResolver: the Backend API exposes no instance/application
+		// name endpoint reachable with a secret key, so the source keeps its
+		// generic name (the source-name worker degrades gracefully).
 		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger) (drivers.Driver, error) {
 			return drivers.NewClerkDriver(c), nil
 		},
