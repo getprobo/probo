@@ -42,6 +42,7 @@ import { OpenAI } from "./OpenAI";
 import { PagerDuty } from "./PagerDuty";
 import { PostHog } from "./PostHog";
 import { Resend } from "./Resend";
+import { SendGrid } from "./SendGrid";
 import { Sentry } from "./Sentry";
 import { Slack } from "./Slack";
 import { Supabase } from "./Supabase";
@@ -81,6 +82,7 @@ const thirdParties: Record<string, FC<ComponentProps<"svg">>> = {
   PAGERDUTY: PagerDuty,
   POSTHOG: PostHog,
   RESEND: Resend,
+  SENDGRID: SendGrid,
   SENTRY: Sentry,
   SLACK: Slack,
   SUPABASE: Supabase,

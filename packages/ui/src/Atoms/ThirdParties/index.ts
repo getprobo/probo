@@ -26,6 +26,7 @@ export { OpenAI } from "./OpenAI";
 export { PagerDuty } from "./PagerDuty";
 export { PostHog } from "./PostHog";
 export { Resend } from "./Resend";
+export { SendGrid } from "./SendGrid";
 export { Sentry } from "./Sentry";
 export { Slack } from "./Slack";
 export { Supabase } from "./Supabase";

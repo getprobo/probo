@@ -486,6 +486,54 @@ func (r *anthropicNameResolver) ResolveInstanceName(ctx context.Context) (string
 	return resp.Name, nil
 }
 
+// sendGridNameResolver resolves the SendGrid account's company name from
+// the user profile endpoint, used as the AccessSource instance label.
+type sendGridNameResolver struct {
+	httpClient *http.Client
+}
+
+func NewSendGridNameResolver(httpClient *http.Client) NameResolver {
+	return &sendGridNameResolver{httpClient: httpClient}
+}
+
+func (r *sendGridNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
+	req, err := http.NewRequestWithContext(
+		ctx,
+		http.MethodGet,
+		"https://api.sendgrid.com/v3/user/profile",
+		nil,
+	)
+	if err != nil {
+		return "", fmt.Errorf("cannot create sendgrid profile request: %w", err)
+	}
+
+	req.Header.Set("Accept", "application/json")
+
+	httpResp, err := r.httpClient.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("cannot execute sendgrid profile request: %w", err)
+	}
+
+	defer func() { _ = httpResp.Body.Close() }()
+
+	// Best-effort: a non-2xx (revoked key, or a key without the
+	// user.profile.read scope) must not make the source-name worker retry
+	// forever. Give up gracefully and keep the generic source name; a dead
+	// key surfaces on the next ListAccounts.
+	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
+		return "", nil
+	}
+
+	var resp struct {
+		Company string `json:"company"`
+	}
+	if err := json.NewDecoder(httpResp.Body).Decode(&resp); err != nil {
+		return "", fmt.Errorf("cannot decode sendgrid profile response: %w", err)
+	}
+
+	return resp.Company, nil
+}
+
 // sentryNameResolver resolves the Sentry organization name.
 type sentryNameResolver struct {
 	httpClient *http.Client

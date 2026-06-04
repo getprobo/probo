@@ -33,30 +33,22 @@ func TestSendGridDriver(t *testing.T) {
 
 	records, err := driver.ListAccounts(context.Background())
 	require.NoError(t, err)
-	require.Len(t, records, 3)
+	require.Len(t, records, 1)
 
+	// Recorded against a live SendGrid account that has only the owner. The
+	// list endpoint carries no scopes, so the driver fetches the teammate
+	// detail to read them.
 	owner := records[0]
 	assert.Equal(t, "owner@example.com", owner.Email)
-	assert.Equal(t, "Olivia Owner", owner.FullName)
+	assert.Empty(t, owner.FullName)
 	assert.Equal(t, "Owner", owner.Role)
 	assert.True(t, owner.IsAdmin)
-	assert.Equal(t, "owner-user", owner.ExternalID)
+	assert.Equal(t, "owner@example.com", owner.ExternalID)
 	assert.Equal(t, coredata.AccessEntryAccountTypeUser, owner.AccountType)
-	assert.Equal(t, coredata.MFAStatusEnabled, owner.MFAStatus)
-
-	admin := records[1]
-	assert.Equal(t, "admin@example.com", admin.Email)
-	assert.Equal(t, "Admin", admin.Role)
-	assert.True(t, admin.IsAdmin)
-	assert.Equal(t, "admin-user", admin.ExternalID)
-	assert.Equal(t, coredata.MFAStatusEnabled, admin.MFAStatus)
-
-	teammate := records[2]
-	assert.Equal(t, "teammate@example.com", teammate.Email)
-	assert.Equal(t, "Teammate", teammate.Role)
-	assert.False(t, teammate.IsAdmin)
-	assert.Equal(t, "teammate-user", teammate.ExternalID)
-	assert.Equal(t, coredata.MFAStatusDisabled, teammate.MFAStatus)
+	// The owner is a full-access user whose scope catalog contains BOTH
+	// 2fa_exempt and 2fa_required, so the MFA signal is ambiguous and the
+	// driver reports Unknown rather than guessing from scope ordering.
+	assert.Equal(t, coredata.MFAStatusUnknown, owner.MFAStatus)
 }
 
 func TestSendGridRole(t *testing.T) {
@@ -127,7 +119,8 @@ func TestSendGridMFAStatus(t *testing.T) {
 	}{
 		{name: "required", scopes: []string{"mail.send", "2fa_required"}, want: coredata.MFAStatusEnabled},
 		{name: "exempt", scopes: []string{"mail.send", "2fa_exempt"}, want: coredata.MFAStatusDisabled},
-		{name: "unknown", scopes: []string{"mail.send"}, want: coredata.MFAStatusUnknown},
+		{name: "both is ambiguous", scopes: []string{"2fa_exempt", "2fa_required", "mail.send"}, want: coredata.MFAStatusUnknown},
+		{name: "neither", scopes: []string{"mail.send"}, want: coredata.MFAStatusUnknown},
 	}
 
 	for _, tt := range tests {

@@ -212,15 +212,31 @@ func sendGridRole(userType string, isAdmin bool) string {
 	}
 }
 
+// sendGridMFAStatus derives a teammate's MFA status from the auto-set 2fa
+// scopes SendGrid attaches to the teammate detail. A restricted teammate
+// carries exactly one of them to reflect their real status. Full-access
+// users (the account owner and full-access teammates) are the exception:
+// their scope list is the entire catalog and therefore contains BOTH
+// 2fa_exempt and 2fa_required, which says nothing about their actual MFA.
+// Only report a definitive status when exactly one scope is present;
+// both-or-neither is ambiguous, so report Unknown rather than guessing.
 func sendGridMFAStatus(scopes []string) coredata.MFAStatus {
+	var exempt, required bool
 	for _, scope := range scopes {
 		switch scope {
 		case "2fa_exempt":
-			return coredata.MFAStatusDisabled
+			exempt = true
 		case "2fa_required":
-			return coredata.MFAStatusEnabled
+			required = true
 		}
 	}
 
-	return coredata.MFAStatusUnknown
+	switch {
+	case required && !exempt:
+		return coredata.MFAStatusEnabled
+	case exempt && !required:
+		return coredata.MFAStatusDisabled
+	default:
+		return coredata.MFAStatusUnknown
+	}
 }

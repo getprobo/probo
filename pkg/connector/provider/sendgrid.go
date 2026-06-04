@@ -32,5 +32,8 @@ func sendgridRegistration() *Registration {
 		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger) (drivers.Driver, error) {
 			return drivers.NewSendGridDriver(c), nil
 		},
+		NewNameResolver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger) drivers.NameResolver {
+			return drivers.NewSendGridNameResolver(c)
+		},
 	}
 }
