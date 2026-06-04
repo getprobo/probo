@@ -1,0 +1,66 @@
+---
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: acme.okta.com
+        form:
+            limit:
+                - "200"
+        headers:
+            Accept:
+                - application/json
+        url: https://acme.okta.com/api/v1/users?limit=200
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '[{"id":"00u1aaaaaaaaaaaaa0h7","status":"ACTIVE","created":"2024-01-15T10:00:00.000Z","lastLogin":"2026-05-20T08:30:00.000Z","profile":{"firstName":"Alice","lastName":"Active","displayName":"Alice Active","email":"alice@example.com","login":"alice@example.com","title":"Security Engineer"}},{"id":"00u2bbbbbbbbbbbbb1h7","status":"SUSPENDED","created":"2024-02-20T11:00:00.000Z","lastLogin":null,"profile":{"firstName":"Bob","lastName":"Suspended","email":"bob@example.com","login":"bob@example.com"}},{"id":"00u3ccccccccccccc2h7","status":"ACTIVE","created":"2024-03-01T12:00:00.000Z","profile":{"firstName":"No","lastName":"Email","email":"","login":""}}]'
+        headers:
+            Content-Type:
+                - application/json
+            Link:
+                - <https://acme.okta.com/api/v1/users?limit=200>; rel="self"
+                - <https://acme.okta.com/api/v1/users?after=00ucursor0000000003h7&limit=200>; rel="next"
+        status: 200 OK
+        code: 200
+        duration: 18ms
+    - id: 1
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: acme.okta.com
+        form:
+            after:
+                - 00ucursor0000000003h7
+            limit:
+                - "200"
+        headers:
+            Accept:
+                - application/json
+        url: https://acme.okta.com/api/v1/users?after=00ucursor0000000003h7&limit=200
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '[{"id":"00u4ddddddddddddd4h7","status":"DEPROVISIONED","created":"2024-04-10T09:00:00.000Z","lastLogin":"2025-12-01T07:00:00.000Z","profile":{"firstName":"Carol","lastName":"Gone","email":"carol@example.com","login":"carol@example.com","title":"Contractor"}}]'
+        headers:
+            Content-Type:
+                - application/json
+            Link:
+                - <https://acme.okta.com/api/v1/users?limit=200>; rel="self"
+        status: 200 OK
+        code: 200
+        duration: 15ms

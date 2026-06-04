@@ -898,6 +898,59 @@ func (r *datadogNameResolver) ResolveInstanceName(_ context.Context) (string, er
 	return r.region, nil
 }
 
+// oktaNameResolver resolves the Okta org name via GET /api/v1/org on the
+// configured org host. A non-2xx is terminal — a read-only API token may
+// lack org-settings read, so it returns ("", nil) to keep the generic
+// source name rather than make the source-name worker retry forever.
+type oktaNameResolver struct {
+	httpClient *http.Client
+	domain     string
+}
+
+func NewOktaNameResolver(httpClient *http.Client, domain string) NameResolver {
+	return &oktaNameResolver{httpClient: httpClient, domain: domain}
+}
+
+func (r *oktaNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
+	if r.domain == "" {
+		return "", nil
+	}
+
+	endpoint := url.URL{Scheme: "https", Host: r.domain, Path: "/api/v1/org"}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint.String(), nil)
+	if err != nil {
+		return "", fmt.Errorf("cannot create okta org request: %w", err)
+	}
+
+	req.Header.Set("Accept", "application/json")
+
+	httpResp, err := r.httpClient.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("cannot execute okta org request: %w", err)
+	}
+
+	defer func() { _ = httpResp.Body.Close() }()
+
+	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
+		return "", nil
+	}
+
+	var resp struct {
+		CompanyName string `json:"companyName"`
+		Subdomain   string `json:"subdomain"`
+	}
+	if err := json.NewDecoder(httpResp.Body).Decode(&resp); err != nil {
+		return "", fmt.Errorf("cannot decode okta org response: %w", err)
+	}
+
+	if resp.CompanyName != "" {
+		return resp.CompanyName, nil
+	}
+
+	return resp.Subdomain, nil
+}
+
 // asanaNameResolver resolves the Asana workspace name.
 type asanaNameResolver struct {
 	httpClient   *http.Client
