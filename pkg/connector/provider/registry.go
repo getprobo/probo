@@ -93,6 +93,14 @@ func (r *Registry) Register(reg *Registration) error {
 		return fmt.Errorf("cannot register connector provider %q: APIKeyBasicAuth, APIKeyHeader, and APIKeyAuthScheme are mutually exclusive", reg.Provider)
 	}
 
+	// BuildTokenURLForDomain and BuildTokenURLForSite both build the token
+	// endpoint host, but from different sources (a callback param vs. the
+	// signed state). CompleteWithState checks them in order, so setting both
+	// is a programmer error with a silent winner. Reject it at startup.
+	if reg.BuildTokenURLForDomain != nil && reg.BuildTokenURLForSite != nil {
+		return fmt.Errorf("cannot register connector provider %q: BuildTokenURLForDomain and BuildTokenURLForSite are mutually exclusive", reg.Provider)
+	}
+
 	r.mu.Lock()
 	defer r.mu.Unlock()
 

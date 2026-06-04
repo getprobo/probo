@@ -109,6 +109,20 @@ func TestRegistry_Register(t *testing.T) {
 		assert.Contains(t, err.Error(), "mutually exclusive")
 	})
 
+	t.Run("BuildTokenURLForDomain and BuildTokenURLForSite mutually exclusive", func(t *testing.T) {
+		t.Parallel()
+
+		r := provider.NewRegistry()
+		err := r.Register(&provider.Registration{
+			Provider:               coredata.ConnectorProviderSlack,
+			DisplayName:            "Slack",
+			BuildTokenURLForDomain: func(string) (string, error) { return "", nil },
+			BuildTokenURLForSite:   func(string) (string, error) { return "", nil },
+		})
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "mutually exclusive")
+	})
+
 	t.Run("duplicate registration", func(t *testing.T) {
 		t.Parallel()
 
