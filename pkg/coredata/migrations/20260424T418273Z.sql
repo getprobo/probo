@@ -12,5 +12,11 @@
 -- OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 -- PERFORMANCE OF THIS SOFTWARE.
 
+-- Nullable with no default: the assessor writes structured output here on
+-- completion. Evidences that were already COMPLETED before this column
+-- existed keep a NULL assessment and are not re-enqueued (the worker claims
+-- only PENDING rows); this is intentional. GetAssessment is a no-op on NULL,
+-- so readers must treat a NULL assessment as "not assessed", independent of
+-- assessment_status.
 ALTER TABLE evidences
     ADD COLUMN assessment JSONB NULL;

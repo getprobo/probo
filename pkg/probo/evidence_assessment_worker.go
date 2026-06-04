@@ -153,14 +153,10 @@ func (h *evidenceAssessmentHandler) assessAndCommit(
 	if err := h.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			if err := file.LoadByID(ctx, conn, scope, *evidence.EvidenceFileID); err != nil {
-				return fmt.Errorf("cannot load file: %w", err)
-			}
-
-			return nil
+			return file.LoadByID(ctx, conn, scope, *evidence.EvidenceFileID)
 		},
 	); err != nil {
-		return fmt.Errorf("cannot load file: %w", err)
+		return fmt.Errorf("cannot load evidence file: %w", err)
 	}
 
 	base64Data, mimeType, err := h.fileManager.GetFileBase64(ctx, &file)
@@ -181,12 +177,19 @@ func (h *evidenceAssessmentHandler) assessAndCommit(
 			}
 			summary := assessment.Summary
 			evidence.Description = &summary
-			evidence.AssessmentStatus = coredata.EvidenceAssessmentStatusCompleted
-			evidence.AssessmentProcessingStartedAt = nil
 
-			evidence.UpdatedAt = time.Now()
-			if err := evidence.Update(ctx, tx, scope); err != nil {
-				return fmt.Errorf("cannot update evidence: %w", err)
+			updated, err := evidence.SetAssessmentCompleted(ctx, tx, scope)
+			if err != nil {
+				return err
+			}
+			if !updated {
+				// The claim was recycled by stale recovery and finished by
+				// another worker; drop this result rather than clobber it.
+				h.logger.WarnCtx(
+					ctx,
+					"evidence assessment claim superseded, dropping result",
+					log.String("evidence_id", evidence.ID.String()),
+				)
 			}
 
 			return nil
@@ -198,7 +201,24 @@ func (h *evidenceAssessmentHandler) failEvidence(ctx context.Context, evidence c
 	return h.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			return evidence.SetAssessmentFailed(ctx, tx, coredata.NewScopeFromObjectID(evidence.ID))
+			updated, err := evidence.SetAssessmentFailed(ctx, tx, coredata.NewScopeFromObjectID(evidence.ID))
+			if err != nil {
+				return err
+			}
+
+			if !updated {
+				// The claim was recycled by stale recovery and re-claimed (or
+				// already finished) by another worker; the claim-scoped guard
+				// matched no row, so we leave the status to the current owner
+				// rather than forcing FAILED over its in-flight claim.
+				h.logger.WarnCtx(
+					ctx,
+					"evidence assessment failure superseded, leaving status to current owner",
+					log.String("evidence_id", evidence.ID.String()),
+				)
+			}
+
+			return nil
 		},
 	)
 }

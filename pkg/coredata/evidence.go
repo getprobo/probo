@@ -521,15 +521,32 @@ WHERE
 	return nil
 }
 
-// SetAssessmentFailed transitions the row to FAILED, touching only
-// the three status columns. Avoids clobbering concurrent edits to
-// description/assessment/url/etc. with a snapshot held across the
-// preceding LLM call.
+// SetAssessmentFailed transitions the row to FAILED, touching only the
+// two status columns so it never clobbers concurrent edits to
+// description/assessment/url/etc. made while the LLM call was running.
+//
+// It guards on BOTH the PROCESSING status AND the claim's
+// assessment_processing_started_at. The started_at predicate is what makes
+// a late failure safe: if stale-recovery recycled this claim and another
+// worker has since re-claimed the row with a fresh timestamp, the receiver
+// still carries the original timestamp, so the UPDATE matches no row and is
+// a no-op rather than flipping the new owner's in-flight claim to FAILED.
+// It returns whether a row was transitioned so the caller can distinguish a
+// real failure from a superseded one. The terminal status guard
+// additionally prevents resurrecting an already COMPLETED/FAILED row.
+//
+// Note FAILED is terminal: no path re-queues it (the worker claims only
+// PENDING and stale-recovery resets only PROCESSING), so a transient error
+// permanently parks the evidence until it is re-triggered externally. This
+// matches the prior describer behaviour and is intentional.
+//
+// Callers must carry the claim's AssessmentProcessingStartedAt on the
+// receiver (Claim sets it).
 func (e Evidence) SetAssessmentFailed(
 	ctx context.Context,
 	conn pg.Tx,
 	scope Scoper,
-) error {
+) (bool, error) {
 	q := `
 UPDATE
     evidences
@@ -540,21 +557,82 @@ SET
 WHERE
     %s
     AND id = @evidence_id
+    AND assessment_status = @expected_status
+    AND assessment_processing_started_at = @expected_started_at
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"evidence_id":       e.ID,
-		"assessment_status": EvidenceAssessmentStatusFailed,
-		"updated_at":        time.Now(),
+		"evidence_id":         e.ID,
+		"assessment_status":   EvidenceAssessmentStatusFailed,
+		"expected_status":     EvidenceAssessmentStatusProcessing,
+		"expected_started_at": e.AssessmentProcessingStartedAt,
+		"updated_at":          time.Now(),
 	}
 	maps.Copy(args, scope.SQLArguments())
 
-	if _, err := conn.Exec(ctx, q, args); err != nil {
-		return fmt.Errorf("cannot mark evidence assessment failed: %w", err)
+	tag, err := conn.Exec(ctx, q, args)
+	if err != nil {
+		return false, fmt.Errorf("cannot mark evidence assessment failed: %w", err)
 	}
-	return nil
+
+	return tag.RowsAffected() > 0, nil
+}
+
+// SetAssessmentCompleted records a successful assessment, writing only
+// the assessment-owned columns (assessment, description) and
+// transitioning PROCESSING -> COMPLETED. Like SetAssessmentFailed it
+// leaves user-editable columns (type/state/url/...) untouched so an edit
+// made while the assessment was running is preserved, and it guards on
+// both the PROCESSING status and the claim's
+// assessment_processing_started_at. The guard makes the write idempotent
+// and claim-scoped: if stale-recovery recycled the claim and another
+// worker re-claimed (fresh started_at) or already finished it, no row
+// matches and the method reports updated=false so the caller can drop the
+// superseded result instead of clobbering the fresh one. Callers must
+// populate Assessment and Description and carry the claim's
+// AssessmentProcessingStartedAt on the receiver before calling.
+func (e Evidence) SetAssessmentCompleted(
+	ctx context.Context,
+	conn pg.Tx,
+	scope Scoper,
+) (bool, error) {
+	q := `
+UPDATE
+    evidences
+SET
+    assessment = @assessment,
+    description = @description,
+    assessment_status = @assessment_status,
+    assessment_processing_started_at = NULL,
+    updated_at = @updated_at
+WHERE
+    %s
+    AND id = @evidence_id
+    AND assessment_status = @expected_status
+    AND assessment_processing_started_at = @expected_started_at
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"evidence_id":         e.ID,
+		"assessment":          e.Assessment,
+		"description":         e.Description,
+		"assessment_status":   EvidenceAssessmentStatusCompleted,
+		"expected_status":     EvidenceAssessmentStatusProcessing,
+		"expected_started_at": e.AssessmentProcessingStartedAt,
+		"updated_at":          time.Now(),
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	tag, err := conn.Exec(ctx, q, args)
+	if err != nil {
+		return false, fmt.Errorf("cannot mark evidence assessment completed: %w", err)
+	}
+
+	return tag.RowsAffected() > 0, nil
 }
 
 func (e Evidence) Delete(

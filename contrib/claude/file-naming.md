@@ -76,7 +76,7 @@ auth). In that case the file keeps its service name and the agent is built
 inline:
 
 ```
-pkg/evidencedescriber/evidencedescriber.go   -- single-file describer service
+pkg/evidenceassessor/assessment.go            -- single-file evidence assessment service
 pkg/vetting/assessment.go                     -- third-party assessment service
 ```
 

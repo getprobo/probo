@@ -34,8 +34,13 @@ type strictFunctionTool[P any] struct {
 }
 
 // jsonSchemaForTool builds an OpenAI strict-mode JSON schema for vetting tools
-// and structured outputs. OpenAI requires every property in required and
-// additionalProperties=false; the shared agent schema generator does not.
+// and structured outputs. The shared agent schema generator already emits
+// additionalProperties=false and a complete required list on every struct and
+// array-of-struct object, so enforceStrictJSONSchema only adds the remaining
+// strict-mode normalisation the generator skips: it sorts required and locks
+// down map[string]T fields (which serialise to a non-false additionalProperties).
+// Output types that are flat or map-free (e.g. evidenceassessor.EvidenceAssessment)
+// are already strict-valid straight from agent.NewOutputType and do not need this.
 func jsonSchemaForTool[T any]() (json.RawMessage, error) {
 	outputType, err := agent.NewOutputType[T]("_")
 	if err != nil {
