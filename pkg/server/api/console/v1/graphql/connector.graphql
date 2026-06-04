@@ -60,6 +60,7 @@ enum ConnectorProvider
         )
     CURSOR @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderCursor")
     DATADOG @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderDatadog")
+    OKTA @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderOkta")
 }
 
 type ConnectorProviderInfo {
@@ -135,6 +136,7 @@ input CreateAPIKeyConnectorInput {
     metabaseInstanceUrl: String
     posthogRegion: String
     posthogInstanceUrl: String
+    oktaDomain: String
 }
 
 type CreateAPIKeyConnectorPayload {

@@ -111,6 +111,17 @@ type (
 		Region string `json:"region"`
 		Domain string `json:"domain"`
 	}
+
+	// OktaConnectorSettings holds the customer's Okta org domain (the bare
+	// host, e.g. "acme.okta.com") supplied with the API token. It is the
+	// single-tenant identifier the driver and name resolver use to build
+	// the per-org API host (https://<domain>/api/v1/...). Okta has no
+	// central API gateway — every org authenticates against its own
+	// domain — so the host is operator-supplied and validated (see
+	// connector.NormalizeOktaDomain) before it reaches URL construction.
+	OktaConnectorSettings struct {
+		Domain string `json:"domain"`
+	}
 )
 
 // GrantType returns the OAuth2 grant type recorded on the connector's
