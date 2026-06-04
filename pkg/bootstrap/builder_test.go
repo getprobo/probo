@@ -212,9 +212,10 @@ func TestBuilder_Build_Defaults(t *testing.T) {
 	assert.Nil(t, cfg.Probod.Agents.Probo.Temperature)
 	assert.Nil(t, cfg.Probod.Agents.Probo.MaxTokens)
 	assert.Empty(t, cfg.Probod.Agents.EvidenceAssessor.Provider)
-	assert.Empty(t, cfg.Probod.Agents.EvidenceAssessor.ModelName)
+	assert.Equal(t, "gpt-5.4-mini", cfg.Probod.Agents.EvidenceAssessor.ModelName)
 	assert.Nil(t, cfg.Probod.Agents.EvidenceAssessor.Temperature)
 	assert.Nil(t, cfg.Probod.Agents.EvidenceAssessor.MaxTokens)
+	assert.Nil(t, cfg.Probod.Agents.EvidenceAssessor.Thinking)
 	assert.Empty(t, cfg.Probod.Agents.ThirdPartyVetter.Provider)
 	assert.Empty(t, cfg.Probod.Agents.ThirdPartyVetter.ModelName)
 	assert.Nil(t, cfg.Probod.Agents.ThirdPartyVetter.Temperature)
@@ -238,6 +239,9 @@ func TestBuilder_Build_Defaults(t *testing.T) {
 	assert.Equal(t, 10, cfg.Probod.ThirdPartyVetting.Interval)
 	assert.Equal(t, 1500, cfg.Probod.ThirdPartyVetting.StaleAfter)
 	assert.Equal(t, 1, cfg.Probod.ThirdPartyVetting.MaxConcurrency)
+	assert.Equal(t, 10, cfg.Probod.EvidenceAssessor.Interval)
+	assert.Equal(t, 300, cfg.Probod.EvidenceAssessor.StaleAfter)
+	assert.Equal(t, 10, cfg.Probod.EvidenceAssessor.MaxConcurrency)
 
 	// Custom domains config
 	assert.Equal(t, 3600, cfg.Probod.CustomDomains.RenewalInterval)
@@ -322,11 +326,12 @@ func TestBuilder_Build_CustomValues(t *testing.T) {
 	env["AGENT_DEFAULT_MODEL_NAME"] = "gpt-4-turbo"
 	env["AGENT_DEFAULT_TEMPERATURE"] = "0.5"
 	env["AGENT_DEFAULT_MAX_TOKENS"] = "8192"
-	// Agents — evidence-describer override
-	env["AGENT_EVIDENCE_DESCRIBER_PROVIDER"] = "anthropic"
-	env["AGENT_EVIDENCE_DESCRIBER_MODEL_NAME"] = "claude-sonnet-4-20250514"
-	env["AGENT_EVIDENCE_DESCRIBER_TEMPERATURE"] = "0.2"
-	env["AGENT_EVIDENCE_DESCRIBER_MAX_TOKENS"] = "4096"
+	// Agents — evidence-assessor override
+	env["AGENT_EVIDENCE_ASSESSOR_PROVIDER"] = "anthropic"
+	env["AGENT_EVIDENCE_ASSESSOR_MODEL_NAME"] = "claude-sonnet-4-6"
+	env["AGENT_EVIDENCE_ASSESSOR_TEMPERATURE"] = "0.2"
+	env["AGENT_EVIDENCE_ASSESSOR_MAX_TOKENS"] = "4096"
+	env["AGENT_EVIDENCE_ASSESSOR_THINKING"] = "2048"
 	// Agents — third-party-vetter override
 	env["AGENT_THIRD_PARTY_VETTER_PROVIDER"] = "openai"
 	env["AGENT_THIRD_PARTY_VETTER_MODEL_NAME"] = "gpt-4o"
@@ -351,6 +356,9 @@ func TestBuilder_Build_CustomValues(t *testing.T) {
 	env["THIRD_PARTY_VETTING_INTERVAL"] = "15"
 	env["THIRD_PARTY_VETTING_STALE_AFTER"] = "1800"
 	env["THIRD_PARTY_VETTING_MAX_CONCURRENCY"] = "2"
+	env["EVIDENCE_ASSESSOR_INTERVAL"] = "20"
+	env["EVIDENCE_ASSESSOR_STALE_AFTER"] = "600"
+	env["EVIDENCE_ASSESSOR_MAX_CONCURRENCY"] = "5"
 	// Custom domains
 	env["CUSTOM_DOMAINS_RESOLVER_ADDR"] = "1.1.1.1:53"
 	env["ACME_ACCOUNT_KEY"] = "-----BEGIN EC PRIVATE KEY-----\ntest\n-----END EC PRIVATE KEY-----"
@@ -432,11 +440,12 @@ func TestBuilder_Build_CustomValues(t *testing.T) {
 	// Agents — probo inherits default (no overrides set)
 	assert.Empty(t, cfg.Probod.Agents.Probo.Provider)
 	assert.Empty(t, cfg.Probod.Agents.Probo.ModelName)
-	// Agents — evidence-describer overrides
+	// Agents — evidence-assessor overrides
 	assert.Equal(t, "anthropic", cfg.Probod.Agents.EvidenceAssessor.Provider)
-	assert.Equal(t, "claude-sonnet-4-20250514", cfg.Probod.Agents.EvidenceAssessor.ModelName)
+	assert.Equal(t, "claude-sonnet-4-6", cfg.Probod.Agents.EvidenceAssessor.ModelName)
 	assert.Equal(t, new(0.2), cfg.Probod.Agents.EvidenceAssessor.Temperature)
 	assert.Equal(t, new(4096), cfg.Probod.Agents.EvidenceAssessor.MaxTokens)
+	assert.Equal(t, new(2048), cfg.Probod.Agents.EvidenceAssessor.Thinking)
 	// Agents — third-party-vetter overrides
 	assert.Equal(t, "openai", cfg.Probod.Agents.ThirdPartyVetter.Provider)
 	assert.Equal(t, "gpt-4o", cfg.Probod.Agents.ThirdPartyVetter.ModelName)
@@ -461,6 +470,9 @@ func TestBuilder_Build_CustomValues(t *testing.T) {
 	assert.Equal(t, 15, cfg.Probod.ThirdPartyVetting.Interval)
 	assert.Equal(t, 1800, cfg.Probod.ThirdPartyVetting.StaleAfter)
 	assert.Equal(t, 2, cfg.Probod.ThirdPartyVetting.MaxConcurrency)
+	assert.Equal(t, 20, cfg.Probod.EvidenceAssessor.Interval)
+	assert.Equal(t, 600, cfg.Probod.EvidenceAssessor.StaleAfter)
+	assert.Equal(t, 5, cfg.Probod.EvidenceAssessor.MaxConcurrency)
 	// Custom domains
 	assert.Equal(t, "1.1.1.1:53", cfg.Probod.CustomDomains.ResolverAddr)
 	assert.Equal(t, "-----BEGIN EC PRIVATE KEY-----\ntest\n-----END EC PRIVATE KEY-----", cfg.Probod.CustomDomains.ACME.AccountKey)

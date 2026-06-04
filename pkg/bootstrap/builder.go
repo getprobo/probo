@@ -193,6 +193,7 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 					ModelName:   b.getEnvOrDefault("AGENT_DEFAULT_MODEL_NAME", "gpt-4o"),
 					Temperature: new(b.getEnvFloatOrDefault("AGENT_DEFAULT_TEMPERATURE", 0.1)),
 					MaxTokens:   new(b.getEnvIntOrDefault("AGENT_DEFAULT_MAX_TOKENS", 4096)),
+					Thinking:    b.getEnvIntPtr("AGENT_DEFAULT_THINKING"),
 				},
 				Probo: probodconfig.LLMAgentConfig{
 					Provider:    b.getEnvOrDefault("AGENT_PROBO_PROVIDER", ""),
@@ -201,10 +202,14 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 					MaxTokens:   b.getEnvIntPtr("AGENT_PROBO_MAX_TOKENS"),
 				},
 				EvidenceAssessor: probodconfig.LLMAgentConfig{
-					Provider:    b.getEnvOrDefault("AGENT_EVIDENCE_DESCRIBER_PROVIDER", ""),
-					ModelName:   b.getEnvOrDefault("AGENT_EVIDENCE_DESCRIBER_MODEL_NAME", ""),
-					Temperature: b.getEnvFloatPtr("AGENT_EVIDENCE_DESCRIBER_TEMPERATURE"),
-					MaxTokens:   b.getEnvIntPtr("AGENT_EVIDENCE_DESCRIBER_MAX_TOKENS"),
+					Provider: b.getEnvOrDefault("AGENT_EVIDENCE_ASSESSOR_PROVIDER", ""),
+					// Evidence assessment is vision-first (it reads screenshots /
+					// PDFs / console exports), so it pins a current vision-capable
+					// model rather than inheriting the generic AGENT_DEFAULT model.
+					ModelName:   b.getEnvOrDefault("AGENT_EVIDENCE_ASSESSOR_MODEL_NAME", "gpt-5.4-mini"),
+					Temperature: b.getEnvFloatPtr("AGENT_EVIDENCE_ASSESSOR_TEMPERATURE"),
+					MaxTokens:   b.getEnvIntPtr("AGENT_EVIDENCE_ASSESSOR_MAX_TOKENS"),
+					Thinking:    b.getEnvIntPtr("AGENT_EVIDENCE_ASSESSOR_THINKING"),
 				},
 				ThirdPartyVetter: probodconfig.LLMAgentConfig{
 					Provider:    b.getEnvOrDefault("AGENT_THIRD_PARTY_VETTER_PROVIDER", ""),
@@ -248,9 +253,9 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 				TSAURL: b.getEnvOrDefault("ESIGN_TSA_URL", "http://timestamp.digicert.com"),
 			},
 			EvidenceAssessor: probodconfig.EvidenceAssessmentConfig{
-				Interval:       b.getEnvIntOrDefault("EVIDENCE_DESCRIBER_INTERVAL", 10),
-				StaleAfter:     b.getEnvIntOrDefault("EVIDENCE_DESCRIBER_STALE_AFTER", 300),
-				MaxConcurrency: b.getEnvIntOrDefault("EVIDENCE_DESCRIBER_MAX_CONCURRENCY", 10),
+				Interval:       b.getEnvIntOrDefault("EVIDENCE_ASSESSOR_INTERVAL", 10),
+				StaleAfter:     b.getEnvIntOrDefault("EVIDENCE_ASSESSOR_STALE_AFTER", 300),
+				MaxConcurrency: b.getEnvIntOrDefault("EVIDENCE_ASSESSOR_MAX_CONCURRENCY", 10),
 			},
 			ThirdPartyVetting: probodconfig.ThirdPartyVettingWorkerConfig{
 				Interval:       b.getEnvIntOrDefault("THIRD_PARTY_VETTING_INTERVAL", 10),

@@ -24,7 +24,7 @@ import (
 
 // buildThirdPartyVetter wires the third-party vetting agent. Unset
 // third-party-vetter fields inherit from the default agent config
-// (AGENT_DEFAULT_*), same as evidence-describer and probo.
+// (AGENT_DEFAULT_*), same as evidence-assessor and probo.
 func (impl *Implm) buildThirdPartyVetter(
 	l *log.Logger,
 	tp trace.TracerProvider,
