@@ -175,7 +175,7 @@ func (d *OktaDriver) nextPageURL(linkHeader string) (string, error) {
 
 	u, err := url.Parse(raw)
 	if err != nil {
-		return "", fmt.Errorf("cannot parse okta next-page link")
+		return "", fmt.Errorf("cannot parse okta next-page link: %w", err)
 	}
 
 	// Pin the next page to the same https origin: reject a scheme downgrade

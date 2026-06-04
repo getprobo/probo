@@ -22,8 +22,6 @@ import (
 	"strings"
 )
 
-const OktaProvider = "OKTA"
-
 // oktaDomainRe matches a dotted DNS hostname (at least two labels; each
 // label 1-63 chars of [a-z0-9-], not starting or ending with a hyphen).
 // Okta supports both *.okta.com / *.oktapreview.com orgs and fully custom
