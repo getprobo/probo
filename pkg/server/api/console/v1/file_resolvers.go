@@ -7,7 +7,6 @@ package console_v1
 
 import (
 	"context"
-	"time"
 
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/probo"
@@ -18,18 +17,18 @@ import (
 
 // DownloadURL is the resolver for the downloadUrl field.
 func (r *fileResolver) DownloadURL(ctx context.Context, obj *types.File) (string, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionFileDownloadUrl)
+	_, err := r.authorize(ctx, obj.ID, probo.ActionFileDownloadUrl)
 	if err != nil {
 		return "", err
 	}
 
-	downloadUrl, err := r.probo.Files.GenerateFileTempURL(ctx, scope, obj.ID, 60*time.Second)
+	downloadURL, err := r.file.GenerateFileURLForID(obj.ID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot generate download URL", log.Error(err))
+		r.logger.ErrorCtx(ctx, "cannot generate file URL", log.Error(err))
 		return "", gqlutils.Internal(ctx)
 	}
 
-	return downloadUrl, nil
+	return downloadURL, nil
 }
 
 // File returns schema.FileResolver implementation.

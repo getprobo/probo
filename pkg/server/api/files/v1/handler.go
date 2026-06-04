@@ -24,29 +24,46 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/filesign"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/iam"
+	"go.probo.inc/probo/pkg/probo"
+	"go.probo.inc/probo/pkg/securecookie"
+	"go.probo.inc/probo/pkg/server/api/authn"
+	"go.probo.inc/probo/pkg/server/api/authz"
 )
 
 const presignedURLExpiry = 1 * time.Hour
 
 type Handler struct {
-	logger  *log.Logger
-	fileSvc *filesign.Service
+	logger    *log.Logger
+	fileSvc   *filesign.Service
+	authorize authz.HTTPAuthorizeFunc
 }
 
-func NewMux(logger *log.Logger, fileSvc *filesign.Service) *chi.Mux {
+func NewMux(
+	logger *log.Logger,
+	fileSvc *filesign.Service,
+	iamSvc *iam.Service,
+	cookieConfig securecookie.Config,
+	tokenSecret string,
+) *chi.Mux {
 	h := &Handler{
-		logger:  logger,
-		fileSvc: fileSvc,
+		logger:    logger,
+		fileSvc:   fileSvc,
+		authorize: authz.NewHTTPAuthorizeFunc(iamSvc, logger),
 	}
 
 	r := chi.NewRouter()
 
-	r.Get("/{fileID}", h.handleGetPublicFile)
+	r.Use(authn.NewAPIKeyMiddleware(iamSvc, tokenSecret))
+	r.Use(authn.NewSessionMiddleware(iamSvc, cookieConfig))
+	r.Use(authn.NewOAuth2AccessTokenMiddleware(iamSvc))
+
+	r.Get("/{fileID}", h.handleGetFile)
 
 	return r
 }
 
-func (h *Handler) handleGetPublicFile(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) handleGetFile(w http.ResponseWriter, r *http.Request) {
 	fileIDStr := chi.URLParam(r, "fileID")
 
 	fileID, err := gid.ParseGID(fileIDStr)
@@ -55,7 +72,7 @@ func (h *Handler) handleGetPublicFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	presignedURL, err := h.fileSvc.GeneratePresignedFileURL(r.Context(), fileID, presignedURLExpiry)
+	file, err := h.fileSvc.LoadAnyActiveFile(r.Context(), fileID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			http.NotFound(w, r)
@@ -64,7 +81,48 @@ func (h *Handler) handleGetPublicFile(w http.ResponseWriter, r *http.Request) {
 
 		h.logger.ErrorCtx(
 			r.Context(),
-			"cannot get public file URL",
+			"cannot load file",
+			log.Error(err),
+			log.String("file_id", fileIDStr),
+		)
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+
+		return
+	}
+
+	if file.Visibility == coredata.FileVisibilityPrivate {
+		// Return 404 on any auth failure — 401/403 would confirm the file
+		// exists to an unauthorized caller, leaking private file existence.
+		if authn.IdentityFromContext(r.Context()) == nil {
+			http.NotFound(w, r)
+			return
+		}
+
+		_, statusCode, err := h.authorize(r.Context(), fileID, probo.ActionFileDownloadUrl)
+		if err != nil {
+			if statusCode == http.StatusInternalServerError {
+				h.logger.ErrorCtx(
+					r.Context(),
+					"cannot authorize file access",
+					log.Error(err),
+					log.String("file_id", fileIDStr),
+				)
+				http.Error(w, "internal server error", http.StatusInternalServerError)
+
+				return
+			}
+
+			http.NotFound(w, r)
+
+			return
+		}
+	}
+
+	presignedURL, err := h.fileSvc.GeneratePresignedURLForFile(r.Context(), file, presignedURLExpiry)
+	if err != nil {
+		h.logger.ErrorCtx(
+			r.Context(),
+			"cannot generate presigned URL",
 			log.Error(err),
 			log.String("file_id", fileIDStr),
 		)

@@ -607,6 +607,7 @@ func (impl *Implm) Run(
 			ExtraHeaderFields: impl.cfg.Api.ExtraHeaderFields,
 			Probo:             proboService,
 			FileSign:          filesignService,
+			File:              fileService,
 			IAM:               iamService,
 			Trust:             trustService,
 			ESign:             esignService,

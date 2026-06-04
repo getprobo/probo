@@ -57,3 +57,15 @@ func (s *Service) GenerateFileURL(ctx context.Context, fileID gid.GID) (string, 
 
 	return url, nil
 }
+
+// GenerateFileURLForID returns the stable application URL for a file by ID.
+// Unlike GenerateFileURL, it skips the database load — use this when the
+// caller has already verified the file exists and is authorized to access it.
+func (s *Service) GenerateFileURLForID(fileID gid.GID) (string, error) {
+	url, err := s.baseURL.AppendPath("/api/files/v1/" + fileID.String()).String()
+	if err != nil {
+		return "", fmt.Errorf("cannot build file URL: %w", err)
+	}
+
+	return url, nil
+}

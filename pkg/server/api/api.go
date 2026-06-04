@@ -32,6 +32,7 @@ import (
 	"go.probo.inc/probo/pkg/connector/provider"
 	"go.probo.inc/probo/pkg/cookiebanner"
 	"go.probo.inc/probo/pkg/esign"
+	"go.probo.inc/probo/pkg/file"
 	"go.probo.inc/probo/pkg/filesign"
 	"go.probo.inc/probo/pkg/geoloc"
 	"go.probo.inc/probo/pkg/iam"
@@ -57,6 +58,7 @@ type (
 		AllowedOrigins    []string
 		Probo             *probo.Service
 		FileSign          *filesign.Service
+		File              *file.Service
 		IAM               *iam.Service
 		Trust             *trust.Service
 		ESign             *esign.Service
@@ -188,6 +190,7 @@ func NewServer(cfg Config) (*Server, error) {
 		consoleHandler: console_v1.NewMux(
 			cfg.Logger.Named("console.v1"),
 			cfg.Probo,
+			cfg.File,
 			cfg.IAM,
 			cfg.ESign,
 			cfg.AccessReview,
@@ -211,6 +214,9 @@ func NewServer(cfg Config) (*Server, error) {
 		filesHandler: files_v1.NewMux(
 			cfg.Logger.Named("files.v1"),
 			cfg.FileSign,
+			cfg.IAM,
+			cfg.Cookie,
+			cfg.TokenSecret,
 		),
 		mcpHandler: mcp_v1.NewMux(
 			cfg.Logger.Named("mcp.v1"),

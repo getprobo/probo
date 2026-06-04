@@ -24,6 +24,7 @@ import (
 	"go.probo.inc/probo/pkg/connector/provider"
 	"go.probo.inc/probo/pkg/cookiebanner"
 	"go.probo.inc/probo/pkg/esign"
+	"go.probo.inc/probo/pkg/file"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/mailman"
 	"go.probo.inc/probo/pkg/probo"
@@ -38,6 +39,7 @@ import (
 func NewGraphQLHandler(
 	iamSvc *iam.Service,
 	proboSvc *probo.Service,
+	fileSvc *file.Service,
 	esignSvc *esign.Service,
 	accessReviewSvc *accessreview.Service,
 	agentRunSvc *agentrun.Service,
@@ -56,6 +58,7 @@ func NewGraphQLHandler(
 			batchAuthorize:    authz.NewBatchAuthorizeFunc(iamSvc, logger),
 			probo:             proboSvc,
 			iam:               iamSvc,
+			file:              fileSvc,
 			esign:             esignSvc,
 			accessReview:      accessReviewSvc,
 			agentRun:          agentRunSvc,

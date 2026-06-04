@@ -398,7 +398,6 @@ func (s AuditService) UploadReport(
 func (s AuditService) GenerateReportURL(
 	ctx context.Context, scope coredata.Scoper,
 	auditID gid.GID,
-	expiresIn time.Duration,
 ) (*string, error) {
 	audit, err := s.Get(ctx, scope, auditID)
 	if err != nil {
@@ -409,7 +408,7 @@ func (s AuditService) GenerateReportURL(
 		return nil, fmt.Errorf("audit has no report")
 	}
 
-	url, err := s.svc.Files.GenerateFileTempURL(ctx, scope, *audit.ReportFileID, expiresIn)
+	url, err := s.svc.file.GenerateFileURLForID(*audit.ReportFileID)
 	if err != nil {
 		return nil, fmt.Errorf("cannot generate report download URL: %w", err)
 	}

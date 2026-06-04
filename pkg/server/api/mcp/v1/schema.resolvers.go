@@ -3923,7 +3923,7 @@ func (r *Resolver) GetAuditReportUrlTool(ctx context.Context, req *mcp.CallToolR
 
 	prb := r.proboSvc
 
-	url, err := prb.Audits.GenerateReportURL(ctx, scope, input.ID, 15*time.Minute)
+	url, err := prb.Audits.GenerateReportURL(ctx, scope, input.ID)
 	if err != nil {
 		return nil, types.GetAuditReportUrlOutput{}, fmt.Errorf("cannot generate audit report URL: %w", err)
 	}

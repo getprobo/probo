@@ -17,6 +17,7 @@ package authz
 import (
 	"context"
 	"errors"
+	"net/http"
 
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
@@ -118,6 +119,63 @@ func NewAuthorizeFunc(
 		}
 
 		return scope, nil
+	}
+}
+
+type HTTPAuthorizeFunc func(
+	context.Context,
+	gid.GID,
+	string,
+	...AuthorizeFuncOption,
+) (*coredata.Scope, int, error)
+
+func NewHTTPAuthorizeFunc(
+	svc *iam.Service,
+	logger *log.Logger,
+) HTTPAuthorizeFunc {
+	return func(
+		ctx context.Context,
+		objectID gid.GID,
+		action string,
+		options ...AuthorizeFuncOption,
+	) (*coredata.Scope, int, error) {
+		identity := authn.IdentityFromContext(ctx)
+		session := authn.SessionFromContext(ctx)
+
+		params := iam.AuthorizeParams{
+			Principal:          identity.ID,
+			Resource:           objectID,
+			Action:             action,
+			ResourceAttributes: make(map[string]string),
+		}
+		if session != nil {
+			params.Session = &session.ID
+		}
+
+		for _, option := range options {
+			option(&params)
+		}
+
+		scope, err := svc.Authorizer.Authorize(ctx, params)
+		if err != nil {
+			if _, ok := errors.AsType[*iam.ErrAssumptionRequired](err); ok {
+				return nil, http.StatusForbidden, err
+			}
+
+			if _, ok := errors.AsType[*iam.ErrInsufficientPermissions](err); ok {
+				return nil, http.StatusForbidden, err
+			}
+
+			if errors.Is(err, coredata.ErrResourceNotFound) {
+				return nil, http.StatusNotFound, err
+			}
+
+			logger.ErrorCtx(ctx, "cannot authorize", log.Error(err))
+
+			return nil, http.StatusInternalServerError, err
+		}
+
+		return scope, 0, nil
 	}
 }
 

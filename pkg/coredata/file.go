@@ -375,6 +375,56 @@ LIMIT 1;
 	return nil
 }
 
+// LoadNonDeletedByID loads a non-deleted file by ID regardless of visibility.
+// Use only at the HTTP layer where visibility is checked explicitly by the caller.
+func (f *File) LoadNonDeletedByID(
+	ctx context.Context,
+	conn pg.Querier,
+	fileID gid.GID,
+) error {
+	q := `
+SELECT
+    id,
+    organization_id,
+    bucket_name,
+    mime_type,
+    file_name,
+    file_key,
+    file_size,
+    visibility,
+    created_at,
+    updated_at,
+    deleted_at
+FROM
+    files
+WHERE
+    id = @file_id
+    AND deleted_at IS NULL
+LIMIT 1;
+`
+
+	args := pgx.StrictNamedArgs{"file_id": fileID}
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query file: %w", err)
+	}
+	defer rows.Close()
+
+	file, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[File])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+
+		return fmt.Errorf("cannot collect file: %w", err)
+	}
+
+	*f = file
+
+	return nil
+}
+
 func (f File) SoftDelete(ctx context.Context, conn pg.Tx, scope Scoper) error {
 	q := `
 UPDATE files

@@ -61,3 +61,36 @@ func (s *Service) GeneratePresignedFileURL(
 
 	return s.fileManager.GenerateFileUrl(ctx, file, expiresIn)
 }
+
+// LoadAnyActiveFile loads a non-deleted file by ID regardless of visibility.
+// Use only at the HTTP layer where visibility is checked explicitly by the caller.
+func (s *Service) LoadAnyActiveFile(
+	ctx context.Context,
+	fileID gid.GID,
+) (*coredata.File, error) {
+	file := &coredata.File{}
+
+	err := s.pg.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+		if err := file.LoadNonDeletedByID(ctx, conn, fileID); err != nil {
+			return fmt.Errorf("cannot load file: %w", err)
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return file, nil
+}
+
+// GeneratePresignedURLForFile returns a short-lived S3 presigned URL for an
+// already-loaded file. The caller is responsible for any visibility or
+// authorization checks before calling this method.
+func (s *Service) GeneratePresignedURLForFile(
+	ctx context.Context,
+	file *coredata.File,
+	expiresIn time.Duration,
+) (string, error) {
+	return s.fileManager.GenerateFileUrl(ctx, file, expiresIn)
+}

@@ -34,6 +34,7 @@ import (
 	"go.probo.inc/probo/pkg/cookiebanner"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/esign"
+	"go.probo.inc/probo/pkg/file"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/mailman"
@@ -54,6 +55,7 @@ type (
 		batchAuthorize    authz.BatchAuthorizeFunc
 		probo             *probo.Service
 		iam               *iam.Service
+		file              *file.Service
 		esign             *esign.Service
 		accessReview      *accessreview.Service
 		agentRun          *agentrun.Service
@@ -71,6 +73,7 @@ type (
 func NewMux(
 	logger *log.Logger,
 	proboSvc *probo.Service,
+	fileSvc *file.Service,
 	iamSvc *iam.Service,
 	esignSvc *esign.Service,
 	accessReviewSvc *accessreview.Service,
@@ -93,6 +96,7 @@ func NewMux(
 	graphqlHandler := NewGraphQLHandler(
 		iamSvc,
 		proboSvc,
+		fileSvc,
 		esignSvc,
 		accessReviewSvc,
 		agentRunSvc,

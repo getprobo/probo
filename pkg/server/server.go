@@ -31,6 +31,7 @@ import (
 	"go.probo.inc/probo/pkg/connector/provider"
 	"go.probo.inc/probo/pkg/cookiebanner"
 	"go.probo.inc/probo/pkg/esign"
+	"go.probo.inc/probo/pkg/file"
 	"go.probo.inc/probo/pkg/filesign"
 	"go.probo.inc/probo/pkg/geoloc"
 	"go.probo.inc/probo/pkg/iam"
@@ -56,6 +57,7 @@ type Config struct {
 	ExtraHeaderFields map[string]string
 	Probo             *probo.Service
 	FileSign          *filesign.Service
+	File              *file.Service
 	IAM               *iam.Service
 	Trust             *trust.Service
 	ESign             *esign.Service
@@ -95,6 +97,7 @@ func NewServer(cfg Config) (*Server, error) {
 		AllowedOrigins:    cfg.AllowedOrigins,
 		Probo:             cfg.Probo,
 		FileSign:          cfg.FileSign,
+		File:              cfg.File,
 		IAM:               cfg.IAM,
 		Trust:             cfg.Trust,
 		ESign:             cfg.ESign,
