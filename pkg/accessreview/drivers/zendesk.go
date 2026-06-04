@@ -21,7 +21,6 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
-	"time"
 
 	"go.probo.inc/probo/pkg/coredata"
 )
@@ -133,7 +132,7 @@ func zendeskRecord(u zendeskUser) AccountRecord {
 	return AccountRecord{
 		Email:     u.Email,
 		FullName:  u.Name,
-		Role:      zendeskRole(u.Role),
+		Role:      u.Role,
 		Active:    &active,
 		IsAdmin:   isAdmin,
 		MFAStatus: mfaStatus,
@@ -142,21 +141,8 @@ func zendeskRecord(u zendeskUser) AccountRecord {
 		AuthMethod:  coredata.AccessEntryAuthMethodUnknown,
 		AccountType: coredata.AccessEntryAccountTypeUser,
 		ExternalID:  strconv.FormatInt(u.ID, 10),
-		LastLogin:   parseZendeskTime(lastLogin),
-		CreatedAt:   parseZendeskTime(u.CreatedAt),
-	}
-}
-
-// zendeskRole title-cases the two staff roles for display; any other value
-// (custom role names) passes through unchanged.
-func zendeskRole(role string) string {
-	switch role {
-	case "admin":
-		return "Admin"
-	case "agent":
-		return "Agent"
-	default:
-		return role
+		LastLogin:   parseRFC3339Ptr(lastLogin),
+		CreatedAt:   parseRFC3339Ptr(u.CreatedAt),
 	}
 }
 
@@ -202,17 +188,4 @@ func (d *ZendeskDriver) queryUsers(ctx context.Context, afterCursor string) (*ze
 	}
 
 	return &out, nil
-}
-
-func parseZendeskTime(s string) *time.Time {
-	if s == "" {
-		return nil
-	}
-
-	t, err := time.Parse(time.RFC3339, s)
-	if err != nil {
-		return nil
-	}
-
-	return &t
 }

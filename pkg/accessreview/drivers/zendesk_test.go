@@ -44,7 +44,7 @@ func TestZendeskDriver(t *testing.T) {
 	require.NotNil(t, r.Active)
 	assert.True(t, *r.Active)
 	assert.True(t, r.IsAdmin)
-	assert.Equal(t, "Admin", r.Role)
+	assert.Equal(t, "admin", r.Role)
 	assert.Equal(t, coredata.AccessEntryAccountTypeUser, r.AccountType)
 	assert.Equal(t, coredata.MFAStatusEnabled, r.MFAStatus)
 	assert.Equal(t, coredata.AccessEntryAuthMethodUnknown, r.AuthMethod)
@@ -59,7 +59,7 @@ func TestZendeskDriver(t *testing.T) {
 	require.NotNil(t, r2.Active)
 	assert.True(t, *r2.Active)
 	assert.False(t, r2.IsAdmin)
-	assert.Equal(t, "Agent", r2.Role)
+	assert.Equal(t, "agent", r2.Role)
 	assert.Equal(t, coredata.MFAStatusDisabled, r2.MFAStatus)
 	assert.Nil(t, r2.LastLogin)
 }

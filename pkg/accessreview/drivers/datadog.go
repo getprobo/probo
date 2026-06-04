@@ -22,7 +22,6 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
-	"time"
 
 	"go.probo.inc/probo/pkg/coredata"
 )
@@ -148,7 +147,7 @@ func (d *DatadogDriver) ListAccounts(ctx context.Context) ([]AccountRecord, erro
 				AuthMethod:  coredata.AccessEntryAuthMethodUnknown,
 				AccountType: accountType,
 				ExternalID:  u.ID,
-				CreatedAt:   parseDatadogTime(u.Attributes.CreatedAt),
+				CreatedAt:   parseRFC3339Ptr(u.Attributes.CreatedAt),
 			})
 		}
 
@@ -196,17 +195,4 @@ func (d *DatadogDriver) queryUsers(ctx context.Context, page int) (*datadogUsers
 	}
 
 	return &out, nil
-}
-
-func parseDatadogTime(s string) *time.Time {
-	if s == "" {
-		return nil
-	}
-
-	t, err := time.Parse(time.RFC3339, s)
-	if err != nil {
-		return nil
-	}
-
-	return &t
 }
