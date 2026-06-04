@@ -177,7 +177,9 @@ function hasRequiredExtraSettings(
 function cleanZendeskSubdomain(raw: string): string {
   let value = raw.trim();
   value = value.replace(/^https?:\/\//i, "");
-  value = value.replace(/\/+$/, "");
+  // Drop any path, query, or fragment from a pasted URL/host so only the
+  // host label survives (e.g. "acme.zendesk.com/agent?x=1" -> "acme").
+  value = value.replace(/[/?#].*$/, "");
   value = value.replace(/\.zendesk\.com$/i, "");
   return value.trim();
 }
