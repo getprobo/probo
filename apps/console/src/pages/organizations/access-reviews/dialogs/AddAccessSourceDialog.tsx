@@ -142,6 +142,9 @@ function mapAPIKeyExtraSettingToField(
       if (settingKey === "region") return "posthogRegion";
       if (settingKey === "instanceUrl") return "posthogInstanceUrl";
       break;
+    case "OKTA":
+      if (settingKey === "domain") return "oktaDomain";
+      break;
   }
   return null;
 }

@@ -38,6 +38,7 @@ import { Microsoft } from "./Microsoft";
 import { Monday } from "./Monday";
 import { Netlify } from "./Netlify";
 import { Notion } from "./Notion";
+import { Okta } from "./Okta";
 import { OnePassword } from "./OnePassword";
 import { OpenAI } from "./OpenAI";
 import { PagerDuty } from "./PagerDuty";
@@ -78,6 +79,7 @@ const thirdParties: Record<string, FC<ComponentProps<"svg">>> = {
   MONDAY: Monday,
   NETLIFY: Netlify,
   NOTION: Notion,
+  OKTA: Okta,
   ONE_PASSWORD: OnePassword,
   ONEPASSWORD: OnePassword,
   OPENAI: OpenAI,

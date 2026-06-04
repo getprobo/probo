@@ -22,6 +22,7 @@ export { Microsoft } from "./Microsoft";
 export { Monday } from "./Monday";
 export { Netlify } from "./Netlify";
 export { Notion } from "./Notion";
+export { Okta } from "./Okta";
 export { OnePassword } from "./OnePassword";
 export { OpenAI } from "./OpenAI";
 export { PagerDuty } from "./PagerDuty";
