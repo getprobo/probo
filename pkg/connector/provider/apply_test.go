@@ -152,3 +152,37 @@ func TestApplyOAuth2Defaults_CopiesSiteClosures(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "https://api.us3.datadoghq.com/oauth2/v1/token", tokenURL)
 }
+
+// TestApplyOAuth2Defaults_CopiesTokenURLForSiteClosure verifies the
+// site-carried-in-state token-URL closure (BuildTokenURLForSite) is copied
+// from the Registration onto the OAuth2Connector — the Zendesk shape, where
+// both the authorize and token hosts are the customer subdomain.
+func TestApplyOAuth2Defaults_CopiesTokenURLForSiteClosure(t *testing.T) {
+	t.Parallel()
+
+	r := provider.NewRegistry()
+	require.NoError(t, r.Register(&provider.Registration{
+		Provider:             coredata.ConnectorProviderZendesk,
+		DisplayName:          "Zendesk",
+		OAuth2Scopes:         []string{"users:read"},
+		BuildAuthURLForSite:  connector.ZendeskAuthorizeURL,
+		BuildTokenURLForSite: connector.ZendeskTokenURL,
+		NewDriver: func(context.Context, *http.Client, *coredata.Connector, *log.Logger) (drivers.Driver, error) {
+			return nil, nil
+		},
+	}))
+
+	var c connector.OAuth2Connector
+	require.NoError(t, r.ApplyOAuth2Defaults("ZENDESK", "https://probo.example/cb", &c))
+	require.NotNil(t, c.BuildAuthURLForSite)
+	require.NotNil(t, c.BuildTokenURLForSite)
+	require.Nil(t, c.BuildTokenURLForDomain)
+
+	authURL, err := c.BuildAuthURLForSite("acme")
+	require.NoError(t, err)
+	assert.Equal(t, "https://acme.zendesk.com/oauth/authorizations/new", authURL)
+
+	tokenURL, err := c.BuildTokenURLForSite("acme")
+	require.NoError(t, err)
+	assert.Equal(t, "https://acme.zendesk.com/oauth/tokens", tokenURL)
+}

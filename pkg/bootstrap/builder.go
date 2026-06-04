@@ -428,6 +428,7 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 		"CLICKUP",
 		"MONDAY",
 		"DATADOG",
+		"ZENDESK",
 	} {
 		clientID := b.getEnv("CONNECTOR_" + provider + "_CLIENT_ID")
 		if clientID == "" {
@@ -520,6 +521,7 @@ func (b *Builder) validateRequired() error {
 		{"CONNECTOR_CLICKUP", []string{"CLIENT_SECRET"}},
 		{"CONNECTOR_MONDAY", []string{"CLIENT_SECRET"}},
 		{"CONNECTOR_DATADOG", []string{"CLIENT_SECRET"}},
+		{"CONNECTOR_ZENDESK", []string{"CLIENT_SECRET"}},
 		{"CONNECTOR_VERCEL", []string{"CLIENT_SECRET", "INTEGRATION_SLUG"}},
 	}
 

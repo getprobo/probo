@@ -189,12 +189,13 @@ func handleConnectorComplete(
 
 		var cnnctr *coredata.Connector
 
-		// Datadog returns the customer's API domain as a `domain` query
-		// parameter on every OAuth callback; it drives the driver's API
-		// host, so capture and validate it on both the create and the
-		// reconnect path (a reconnect from a different site must refresh
-		// the stored domain).
-		var datadogRawSettings json.RawMessage
+		// Some providers persist per-customer settings on the connector,
+		// captured here for both the create and the reconnect path: Datadog
+		// echoes its API domain as a `domain` callback param; Zendesk's
+		// subdomain rode the signed OAuth state from initiate (it is not
+		// echoed back). Both become a URL host, so each is re-validated
+		// before use. At most one block applies per callback.
+		var rawSettings json.RawMessage
 
 		if connectorProvider == coredata.ConnectorProviderDatadog {
 			domain := query.Get("domain")
@@ -220,7 +221,33 @@ func handleConnectorComplete(
 				return
 			}
 
-			datadogRawSettings = raw
+			rawSettings = raw
+		}
+
+		if connectorProvider == coredata.ConnectorProviderZendesk {
+			// The subdomain is HMAC-signed in the state (untamperable) and was
+			// validated at initiate, but re-validate it here too — it becomes
+			// a URL host on every API call (defense-in-depth).
+			if !connector.IsValidZendeskSubdomain(state.Site) {
+				logger.WarnCtx(r.Context(), "rejecting invalid zendesk subdomain",
+					log.String("provider", string(connectorProvider)),
+				)
+				httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("invalid subdomain"))
+
+				return
+			}
+
+			raw, err := json.Marshal(&coredata.ZendeskConnectorSettings{
+				Subdomain: state.Site,
+			})
+			if err != nil {
+				logger.ErrorCtx(r.Context(), "cannot marshal zendesk settings", log.Error(err))
+				httpserver.RenderError(w, http.StatusInternalServerError, fmt.Errorf("internal error"))
+
+				return
+			}
+
+			rawSettings = raw
 		}
 
 		// If a connector_id was passed in the state, this is a
@@ -240,7 +267,7 @@ func handleConnectorComplete(
 					OrganizationID: organizationID,
 					Provider:       connectorProvider,
 					Connection:     connection,
-					RawSettings:    datadogRawSettings,
+					RawSettings:    rawSettings,
 				},
 			)
 			if err != nil {
@@ -328,11 +355,11 @@ func handleConnectorComplete(
 				}
 			}
 
-			// Datadog's per-customer settings were captured and validated
-			// above (the same block also feeds the reconnect path); apply
-			// them to the create request.
-			if datadogRawSettings != nil {
-				createReq.RawSettings = datadogRawSettings
+			// Per-customer settings captured above (Datadog's callback domain
+			// or Zendesk's state subdomain) apply to the create request; at
+			// most one provider populates them per callback.
+			if rawSettings != nil {
+				createReq.RawSettings = rawSettings
 			}
 
 			cnnctr, err = svc.Connectors.Create(r.Context(), scope, createReq)

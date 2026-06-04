@@ -131,4 +131,12 @@ var providerOrgConfigs = map[coredata.ConnectorProvider]providerOrgConfig{
 			return s.Domain
 		},
 	},
+	// Pattern 2-auto: the subdomain is collected at initiate and persisted
+	// from the signed OAuth state on the callback; no picker UI.
+	coredata.ConnectorProviderZendesk: {
+		SelectedSlug: func(c *coredata.Connector) string {
+			s, _ := coredata.ConnectorSettings[coredata.ZendeskConnectorSettings](c)
+			return s.Subdomain
+		},
+	},
 }

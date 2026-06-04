@@ -858,6 +858,133 @@ func TestCompleteWithState_InvalidDomainRejected(t *testing.T) {
 	require.Error(t, err)
 }
 
+// TestInitiateWithState_PersistsSiteInState verifies that opts.Site is signed
+// into the state token so it survives the round-trip to the callback — the
+// mechanism multi-site providers (e.g. Zendesk) rely on when the provider does
+// not echo the host back.
+func TestInitiateWithState_PersistsSiteInState(t *testing.T) {
+	t.Parallel()
+
+	c := &OAuth2Connector{
+		ClientID:     "cid",
+		ClientSecret: "secret",
+		RedirectURI:  "https://probo.example/cb",
+		BuildAuthURLForSite: func(site string) (string, error) {
+			return "https://" + site + ".zendesk.com/oauth/authorizations/new", nil
+		},
+	}
+
+	authURL, err := c.InitiateWithState(context.Background(),
+		OAuth2State{OrganizationID: "org", Provider: ZendeskProvider},
+		InitiateOptions{Site: "acme"},
+	)
+	require.NoError(t, err)
+
+	u, err := url.Parse(authURL)
+	require.NoError(t, err)
+	assert.Equal(t, "acme.zendesk.com", u.Host)
+
+	payload, err := DecodeOAuth2StatePayload(u.Query().Get("state"))
+	require.NoError(t, err)
+	assert.Equal(t, "acme", payload.Data.Site)
+}
+
+// TestCompleteWithState_PerSiteTokenURL exercises the site-carried-in-state
+// token-URL path: the subdomain comes from the signed state (no callback
+// param), and the per-connection token URL is persisted for refresh.
+func TestCompleteWithState_PerSiteTokenURL(t *testing.T) {
+	t.Parallel()
+
+	var gotPath string
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotPath = r.URL.Path
+
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"access_token":"at","token_type":"Bearer"}`))
+	}))
+	defer srv.Close()
+
+	c := &OAuth2Connector{
+		ClientID:     "cid",
+		ClientSecret: "secret",
+		RedirectURI:  "https://probo.example/cb",
+		HTTPClient:   httpclient.DefaultClient(httpclient.WithSSRFProtection(), httpclient.WithSSRFAllowLoopback()),
+		BuildTokenURLForSite: func(site string) (string, error) {
+			if site != "acme" {
+				return "", fmt.Errorf("unknown site")
+			}
+
+			return srv.URL + "/oauth/tokens", nil
+		},
+	}
+
+	state, err := statelesstoken.NewToken(c.ClientSecret, OAuth2TokenType, OAuth2TokenTTL,
+		OAuth2State{OrganizationID: validOrgGID(t), Provider: ZendeskProvider, Site: "acme"})
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodGet,
+		"https://probo.example/cb?code=abc&state="+state, nil)
+
+	conn, _, err := c.CompleteWithState(context.Background(), req)
+	require.NoError(t, err)
+	assert.Equal(t, "/oauth/tokens", gotPath)
+
+	oc, ok := conn.(*OAuth2Connection)
+	require.True(t, ok)
+	assert.Equal(t, srv.URL+"/oauth/tokens", oc.TokenURL)
+}
+
+// TestCompleteWithState_MissingSiteForSiteTokenURL ensures a multi-site
+// provider whose state carries no site fails before any credential POST.
+func TestCompleteWithState_MissingSiteForSiteTokenURL(t *testing.T) {
+	t.Parallel()
+
+	c := &OAuth2Connector{
+		ClientID:             "cid",
+		ClientSecret:         "secret",
+		RedirectURI:          "https://probo.example/cb",
+		HTTPClient:           httpclient.DefaultClient(httpclient.WithSSRFProtection(), httpclient.WithSSRFAllowLoopback()),
+		BuildTokenURLForSite: func(string) (string, error) { return "", fmt.Errorf("unused") },
+	}
+
+	state, err := statelesstoken.NewToken(c.ClientSecret, OAuth2TokenType, OAuth2TokenTTL,
+		OAuth2State{OrganizationID: validOrgGID(t), Provider: ZendeskProvider})
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodGet,
+		"https://probo.example/cb?code=abc&state="+state, nil)
+
+	_, _, err = c.CompleteWithState(context.Background(), req)
+	require.Error(t, err)
+}
+
+// TestCompleteWithState_InvalidSiteRejected exercises the SSRF guard on the
+// site-in-state path: a signed state carrying a malformed subdomain must fail
+// (ZendeskTokenURL rejects it) before any credential POST. Mirrors
+// TestCompleteWithState_InvalidDomainRejected for Datadog.
+func TestCompleteWithState_InvalidSiteRejected(t *testing.T) {
+	t.Parallel()
+
+	c := &OAuth2Connector{
+		ClientID:             "cid",
+		ClientSecret:         "secret",
+		RedirectURI:          "https://probo.example/cb",
+		HTTPClient:           httpclient.DefaultClient(httpclient.WithSSRFProtection(), httpclient.WithSSRFAllowLoopback()),
+		BuildTokenURLForSite: ZendeskTokenURL,
+	}
+
+	state, err := statelesstoken.NewToken(c.ClientSecret, OAuth2TokenType, OAuth2TokenTTL,
+		OAuth2State{OrganizationID: validOrgGID(t), Provider: ZendeskProvider, Site: "evil.example"})
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodGet,
+		"https://probo.example/cb?code=abc&state="+state, nil)
+
+	_, _, err = c.CompleteWithState(context.Background(), req)
+	require.Error(t, err)
+}
+
 func TestRefreshableClient_PrefersConnectionTokenURL(t *testing.T) {
 	t.Parallel()
 

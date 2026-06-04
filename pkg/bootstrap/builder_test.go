@@ -522,6 +522,7 @@ func TestBuilder_Build_AccessReviewConnectors(t *testing.T) {
 	providers := []string{
 		"GITLAB", "BITBUCKET", "HEROKU", "PAGERDUTY",
 		"ASANA", "NETLIFY", "CLICKUP", "MONDAY", "DATADOG",
+		"ZENDESK",
 	}
 
 	env := requiredEnv()

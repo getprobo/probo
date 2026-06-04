@@ -951,6 +951,23 @@ func (r *oktaNameResolver) ResolveInstanceName(ctx context.Context) (string, err
 	return resp.Subdomain, nil
 }
 
+// zendeskNameResolver returns the Zendesk subdomain stored in connector
+// settings (e.g. "acme" for acme.zendesk.com), captured at connect time. No
+// HTTP call is required; the AccessSource title becomes "Zendesk <subdomain>".
+// Account-name resolution is intentionally omitted to keep the scope to
+// users:read (Zendesk exposes no human account name on that scope).
+type zendeskNameResolver struct {
+	subdomain string
+}
+
+func NewZendeskNameResolver(subdomain string) NameResolver {
+	return &zendeskNameResolver{subdomain: subdomain}
+}
+
+func (r *zendeskNameResolver) ResolveInstanceName(_ context.Context) (string, error) {
+	return r.subdomain, nil
+}
+
 // asanaNameResolver resolves the Asana workspace name.
 type asanaNameResolver struct {
 	httpClient   *http.Client

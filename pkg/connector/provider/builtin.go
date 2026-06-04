@@ -58,6 +58,7 @@ func NewBuiltinRegistry() *Registry {
 		tailscaleRegistration(),
 		tallyRegistration(),
 		vercelRegistration(),
+		zendeskRegistration(),
 	} {
 		if err := r.Register(reg); err != nil {
 			panic(err)

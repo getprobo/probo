@@ -122,6 +122,16 @@ type (
 	OktaConnectorSettings struct {
 		Domain string `json:"domain"`
 	}
+
+	// ZendeskConnectorSettings holds the per-customer Zendesk subdomain
+	// captured at connect time (the customer types it before the OAuth
+	// redirect, and it rides the signed state token to the callback —
+	// Zendesk does not echo it back). Subdomain is the <subdomain> part of
+	// <subdomain>.zendesk.com, used by the driver to build the API host and
+	// by the name resolver for the AccessSource title.
+	ZendeskConnectorSettings struct {
+		Subdomain string `json:"subdomain"`
+	}
 )
 
 // GrantType returns the OAuth2 grant type recorded on the connector's
