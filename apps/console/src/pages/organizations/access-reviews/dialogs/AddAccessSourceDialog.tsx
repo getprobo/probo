@@ -857,8 +857,7 @@ export function AddAccessSourceDialog({
               label={__("Zendesk subdomain")}
               placeholder={__("acme")}
               value={zendeskSubdomain}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                setZendeskSubdomain(e.target.value)}
+              onValueChange={setZendeskSubdomain}
               help={__("The <subdomain> part of <subdomain>.zendesk.com")}
               required
               autoFocus
