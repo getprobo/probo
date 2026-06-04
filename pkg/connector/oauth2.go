@@ -391,6 +391,14 @@ func (c *OAuth2Connector) CompleteWithState(ctx context.Context, r *http.Request
 		codeVerifier = derivePKCEVerifier(c.stateSalt(), payload.Data.PKCENonce)
 	}
 
+	// Multi-site providers build the token host from a per-customer value that
+	// reaches the callback by one of two mutually exclusive routes (Register
+	// rejects setting both): a host the provider echoes back as a query param
+	// (BuildTokenURLForDomain — Datadog's ?domain=), or the site carried in the
+	// signed state when the provider echoes nothing (BuildTokenURLForSite —
+	// Zendesk's subdomain). They cannot share one closure: a provider's state
+	// Site (e.g. Datadog's region key "US3") is not necessarily the string its
+	// token host needs (Datadog's API domain "us3.datadoghq.com").
 	tokenURL := c.TokenURL
 	switch {
 	case c.BuildTokenURLForDomain != nil:
