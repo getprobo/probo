@@ -87,6 +87,15 @@ type Registration struct {
 	// APIKeyHeader. Consumed when the create-connector resolver builds
 	// the APIKeyConnection.
 	APIKeyBasicAuth bool
+	// APIKeyAuthScheme selects a non-Bearer Authorization scheme for an
+	// API-key connection: the key is sent as `Authorization: <scheme>
+	// <key>` instead of `Authorization: Bearer <key>`. Required by
+	// providers such as Okta whose API tokens use the `SSWS` scheme and
+	// reject Bearer. Empty (the default) keeps the standard Bearer
+	// scheme. Mutually exclusive with APIKeyHeader and APIKeyBasicAuth.
+	// Consumed when the create-connector resolver builds the
+	// APIKeyConnection.
+	APIKeyAuthScheme string
 
 	// Factory closures — wired by Stages 2 and 3.
 	NewDriver               func(context.Context, *http.Client, *coredata.Connector, *log.Logger) (drivers.Driver, error)

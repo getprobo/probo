@@ -71,11 +71,26 @@ func (r *Registry) Register(reg *Registration) error {
 		return fmt.Errorf("cannot register connector provider %q: missing DisplayName", reg.Provider)
 	}
 
-	// APIKeyBasicAuth and APIKeyHeader select different presentations of
-	// the same key; setting both is a programmer error with a silent
-	// winner (Client checks BasicAuth first). Reject it at startup.
-	if reg.APIKeyBasicAuth && reg.APIKeyHeader != "" {
-		return fmt.Errorf("cannot register connector provider %q: APIKeyBasicAuth and APIKeyHeader are mutually exclusive", reg.Provider)
+	// APIKeyBasicAuth, APIKeyHeader, and APIKeyAuthScheme select different
+	// presentations of the same key; setting more than one is a programmer
+	// error with a silent winner (Client checks BasicAuth, then Header,
+	// then Scheme). Reject it at startup.
+	apiKeyModes := 0
+
+	if reg.APIKeyBasicAuth {
+		apiKeyModes++
+	}
+
+	if reg.APIKeyHeader != "" {
+		apiKeyModes++
+	}
+
+	if reg.APIKeyAuthScheme != "" {
+		apiKeyModes++
+	}
+
+	if apiKeyModes > 1 {
+		return fmt.Errorf("cannot register connector provider %q: APIKeyBasicAuth, APIKeyHeader, and APIKeyAuthScheme are mutually exclusive", reg.Provider)
 	}
 
 	r.mu.Lock()
@@ -168,6 +183,19 @@ func (r *Registry) APIKeyUsesBasicAuth(p coredata.ConnectorProvider) bool {
 	}
 
 	return false
+}
+
+// APIKeyAuthScheme returns the non-Bearer Authorization scheme an API-key
+// connection for the given provider must use to present its key (e.g.
+// "SSWS" for Okta). Empty means the default `Authorization: Bearer`
+// scheme. Returns empty for unknown providers and for providers that do
+// not customise the scheme.
+func (r *Registry) APIKeyAuthScheme(p coredata.ConnectorProvider) string {
+	if reg, ok := r.Get(p); ok {
+		return reg.APIKeyAuthScheme
+	}
+
+	return ""
 }
 
 // ProviderOAuth2Scopes returns the OAuth2 scopes the access review

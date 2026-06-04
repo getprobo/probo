@@ -41,6 +41,13 @@ type APIKeyConnection struct {
 	// It is mutually exclusive with Header and is populated from the
 	// provider Registration at connector creation time.
 	BasicAuth bool `json:"basic_auth,omitempty"`
+	// Scheme selects a non-Bearer Authorization scheme: when non-empty
+	// the key is sent as `Authorization: <Scheme> <key>` instead of
+	// `Authorization: Bearer <key>` — required by providers such as Okta
+	// whose API tokens use the `SSWS` scheme. It is mutually exclusive
+	// with Header and BasicAuth and is populated from the provider
+	// Registration at connector creation time.
+	Scheme string `json:"scheme,omitempty"`
 }
 
 var _ Connection = (*APIKeyConnection)(nil)
@@ -75,6 +82,16 @@ func (c *APIKeyConnection) Client(ctx context.Context) (*http.Client, error) {
 		}, nil
 	}
 
+	if c.Scheme != "" {
+		return &http.Client{
+			Transport: &schemeAuthTransport{
+				scheme:     c.Scheme,
+				token:      c.APIKey,
+				underlying: underlying,
+			},
+		}, nil
+	}
+
 	return &http.Client{
 		Transport: &oauth2Transport{
 			token:      c.APIKey,
@@ -82,6 +99,24 @@ func (c *APIKeyConnection) Client(ctx context.Context) (*http.Client, error) {
 			underlying: underlying,
 		},
 	}, nil
+}
+
+// schemeAuthTransport presents the API key in the Authorization header
+// under a non-Bearer scheme (`Authorization: <scheme> <token>`).
+// Providers such as Okta document the `SSWS` scheme for their API tokens
+// and reject Bearer, so neither oauth2Transport (which hardcodes Bearer)
+// nor apiKeyHeaderTransport (which sets a non-Authorization header) fits.
+type schemeAuthTransport struct {
+	scheme     string
+	token      string
+	underlying http.RoundTripper
+}
+
+func (t *schemeAuthTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	req2 := req.Clone(req.Context())
+	req2.Header.Set("Authorization", t.scheme+" "+t.token)
+
+	return t.underlying.RoundTrip(req2)
 }
 
 // apiKeyHeaderTransport injects the API key into a custom request header

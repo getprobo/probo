@@ -102,3 +102,34 @@ func TestAPIKeyConnection_Client_BearerDefault(t *testing.T) {
 	require.Truef(t, ok, "expected *oauth2Transport, got %T", client.Transport)
 	assert.Equal(t, "token", transport.token)
 }
+
+func TestSchemeAuthTransport_RoundTrip(t *testing.T) {
+	t.Parallel()
+
+	rec := &recordingRoundTripper{}
+	transport := &schemeAuthTransport{scheme: "SSWS", token: "00aBcDeF", underlying: rec}
+
+	req := httptest.NewRequest(http.MethodGet, "https://acme.okta.com/api/v1/users", nil)
+	_, err := transport.RoundTrip(req)
+	require.NoError(t, err)
+
+	require.NotNil(t, rec.lastRequest)
+	assert.Equal(t, "SSWS 00aBcDeF", rec.lastRequest.Header.Get("Authorization"))
+
+	// The original request must be left untouched (RoundTrip clones it).
+	assert.Empty(t, req.Header.Get("Authorization"), "original request must not be mutated")
+}
+
+func TestAPIKeyConnection_Client_Scheme(t *testing.T) {
+	t.Parallel()
+
+	conn := &APIKeyConnection{APIKey: "00aBcDeF", Scheme: "SSWS"}
+
+	client, err := conn.Client(context.Background())
+	require.NoError(t, err)
+
+	transport, ok := client.Transport.(*schemeAuthTransport)
+	require.Truef(t, ok, "expected *schemeAuthTransport, got %T", client.Transport)
+	assert.Equal(t, "SSWS", transport.scheme)
+	assert.Equal(t, "00aBcDeF", transport.token)
+}
