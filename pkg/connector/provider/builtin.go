@@ -45,6 +45,7 @@ func NewBuiltinRegistry() *Registry {
 		mondayRegistration(),
 		netlifyRegistration(),
 		notionRegistration(),
+		oktaRegistration(),
 		onePasswordRegistration(),
 		openaiRegistration(),
 		posthogRegistration(),

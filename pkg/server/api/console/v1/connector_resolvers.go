@@ -44,6 +44,7 @@ func (r *mutationResolver) CreateAPIKeyConnector(ctx context.Context, input type
 			APIKey:    input.APIKey,
 			Header:    r.providerRegistry.APIKeyHeader(input.Provider),
 			BasicAuth: r.providerRegistry.APIKeyUsesBasicAuth(input.Provider),
+			Scheme:    r.providerRegistry.APIKeyAuthScheme(input.Provider),
 		},
 	}
 

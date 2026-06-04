@@ -20,6 +20,7 @@ import (
 	"net/url"
 
 	"go.probo.inc/probo/pkg/accessreview/drivers"
+	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
 )
@@ -127,6 +128,21 @@ func apiKeyConnectorSettings(input types.CreateAPIKeyConnectorInput) (json.RawMe
 		default:
 			return nil, fmt.Errorf("cannot create posthog connector: posthogRegion or posthogInstanceUrl is required")
 		}
+	case coredata.ConnectorProviderOkta:
+		if input.OktaDomain == nil || *input.OktaDomain == "" {
+			return nil, fmt.Errorf("cannot create okta connector: oktaDomain is required")
+		}
+
+		// NormalizeOktaDomain strips scheme/path and validates the host; the
+		// stored value is the bare org domain (e.g. "acme.okta.com"). Use a
+		// static error message — this string is surfaced verbatim to the
+		// client and must never echo the operator-supplied input.
+		domain, err := connector.NormalizeOktaDomain(*input.OktaDomain)
+		if err != nil {
+			return nil, fmt.Errorf("cannot create okta connector: oktaDomain must be a valid Okta domain (e.g. acme.okta.com)")
+		}
+
+		return json.Marshal(&coredata.OktaConnectorSettings{Domain: domain})
 	}
 
 	return nil, nil
