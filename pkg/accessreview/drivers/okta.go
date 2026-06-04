@@ -178,8 +178,11 @@ func (d *OktaDriver) nextPageURL(linkHeader string) (string, error) {
 		return "", fmt.Errorf("cannot parse okta next-page link")
 	}
 
-	if !strings.EqualFold(u.Hostname(), d.domain) {
-		return "", fmt.Errorf("cannot follow okta next-page link: host mismatch")
+	// Pin the next page to the same https origin: reject a scheme downgrade
+	// (http), an explicit port, or a different host so a provider response
+	// cannot redirect the crawl off-TLS, to another port, or off-tenant.
+	if !strings.EqualFold(u.Scheme, "https") || u.Port() != "" || !strings.EqualFold(u.Hostname(), d.domain) {
+		return "", fmt.Errorf("cannot follow okta next-page link: invalid target")
 	}
 
 	return u.String(), nil
