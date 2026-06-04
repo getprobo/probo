@@ -321,6 +321,7 @@ func thirdPartyInfoOutputType() (*agent.OutputType, error) {
 	if err := outputType.DecorateEnum("third_party_type", thirdPartyTypeEnum); err != nil {
 		return nil, fmt.Errorf("cannot decorate thirdParty info schema: %w", err)
 	}
+
 	strict, err := enforceStrictJSONSchema(outputType.Schema)
 	if err != nil {
 		return nil, fmt.Errorf("cannot enforce strict thirdParty info schema: %w", err)

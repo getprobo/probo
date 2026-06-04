@@ -70,12 +70,15 @@ func (o *OutputType) DecorateEnum(field string, values []string) error {
 	if !ok {
 		return fmt.Errorf("output type schema has no %q property", field)
 	}
+
 	prop["enum"] = values
 
 	decorated, err := json.Marshal(schema)
 	if err != nil {
 		return fmt.Errorf("cannot marshal decorated output type schema: %w", err)
 	}
+
 	o.Schema = decorated
+
 	return nil
 }

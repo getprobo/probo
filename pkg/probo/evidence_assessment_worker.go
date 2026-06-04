@@ -175,6 +175,7 @@ func (h *evidenceAssessmentHandler) assessAndCommit(
 			if err := evidence.SetAssessment(assessment); err != nil {
 				return err
 			}
+
 			summary := assessment.Summary
 			evidence.Description = &summary
 
@@ -182,6 +183,7 @@ func (h *evidenceAssessmentHandler) assessAndCommit(
 			if err != nil {
 				return err
 			}
+
 			if !updated {
 				// The claim was recycled by stale recovery and finished by
 				// another worker; drop this result rather than clobber it.

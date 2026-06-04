@@ -67,6 +67,7 @@ func (j jsonRawMessageOrNull) Value() (driver.Value, error) {
 	if len(j) == 0 {
 		return nil, nil
 	}
+
 	return []byte(j), nil
 }
 

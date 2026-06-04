@@ -632,6 +632,25 @@ func (impl *Implm) Run(
 		return fmt.Errorf("cannot create server: %w", err)
 	}
 
+	// Build the evidence assessor before any worker cancel func is created
+	// so its fallible construction can return early without tripping govet's
+	// lostcancel on the context cancels defined further below.
+	evidenceAssessorCfg := evidenceassessor.Config{
+		Client:    evidenceAssessorLLMClient,
+		Model:     evidenceAssessorAgentCfg.ModelName,
+		Temp:      ref.UnrefOrZero(evidenceAssessorAgentCfg.Temperature),
+		MaxTokens: ref.UnrefOrZero(evidenceAssessorAgentCfg.MaxTokens),
+		Logger:    l.Named("evidence-assessor"),
+	}
+	if evidenceAssessorAgentCfg.Thinking != nil {
+		evidenceAssessorCfg.Thinking = *evidenceAssessorAgentCfg.Thinking
+	}
+
+	evidenceAssessor, err := evidenceassessor.New(evidenceAssessorCfg)
+	if err != nil {
+		return fmt.Errorf("cannot build evidence assessor: %w", err)
+	}
+
 	apiServerCtx, stopApiServer := context.WithCancel(context.Background())
 	defer stopApiServer()
 
@@ -838,20 +857,6 @@ func (impl *Implm) Run(
 		},
 	)
 
-	evidenceAssessorCfg := evidenceassessor.Config{
-		Client:    evidenceAssessorLLMClient,
-		Model:     evidenceAssessorAgentCfg.ModelName,
-		Temp:      ref.UnrefOrZero(evidenceAssessorAgentCfg.Temperature),
-		MaxTokens: ref.UnrefOrZero(evidenceAssessorAgentCfg.MaxTokens),
-		Logger:    l.Named("evidence-assessor"),
-	}
-	if evidenceAssessorAgentCfg.Thinking != nil {
-		evidenceAssessorCfg.Thinking = *evidenceAssessorAgentCfg.Thinking
-	}
-	evidenceAssessor, err := evidenceassessor.New(evidenceAssessorCfg)
-	if err != nil {
-		return fmt.Errorf("cannot build evidence assessor: %w", err)
-	}
 	evidenceAssessmentWorker := probo.NewEvidenceAssessmentWorker(
 		pgClient,
 		fileManagerService,

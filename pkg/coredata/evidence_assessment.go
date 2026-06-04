@@ -31,15 +31,19 @@ func (e *Evidence) SetAssessment(v any) error {
 		e.Assessment = nil
 		return nil
 	}
+
 	data, err := json.Marshal(v)
 	if err != nil {
 		return fmt.Errorf("cannot marshal evidence assessment: %w", err)
 	}
+
 	if string(data) == "null" {
 		e.Assessment = nil
 		return nil
 	}
+
 	e.Assessment = data
+
 	return nil
 }
 
@@ -49,8 +53,10 @@ func (e *Evidence) GetAssessment(dst any) error {
 	if len(e.Assessment) == 0 {
 		return nil
 	}
+
 	if err := json.Unmarshal(e.Assessment, dst); err != nil {
 		return fmt.Errorf("cannot unmarshal evidence assessment: %w", err)
 	}
+
 	return nil
 }

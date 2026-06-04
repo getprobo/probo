@@ -89,9 +89,11 @@ func seedAssessmentFixture(t *testing.T, ctx context.Context, client *pg.Client)
 			if _, err := tx.Exec(ctx, `DELETE FROM evidences WHERE measure_id = $1`, measureID); err != nil {
 				return err
 			}
+
 			if _, err := tx.Exec(ctx, `DELETE FROM measures WHERE id = $1`, measureID); err != nil {
 				return err
 			}
+
 			if _, err := tx.Exec(ctx, `DELETE FROM organizations WHERE id = $1`, organizationID); err != nil {
 				return err
 			}
@@ -151,6 +153,7 @@ func loadEvidence(
 	t.Helper()
 
 	var e coredata.Evidence
+
 	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
 		return e.LoadByID(ctx, conn, scope, id)
 	}))
@@ -208,9 +211,12 @@ func TestEvidence_SetAssessmentCompleted_TransitionsAndPreservesUserColumns(t *t
 	require.NoError(t, claimed.SetAssessment(map[string]any{"summary": summary, "confidence": "HIGH"}))
 
 	var updated bool
+
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		var err error
+
 		updated, err = claimed.SetAssessmentCompleted(ctx, tx, fx.scope)
+
 		return err
 	}))
 	assert.True(t, updated, "completing a PROCESSING row owned by this claim must update it")
@@ -248,9 +254,12 @@ func TestEvidence_SetAssessmentCompleted_NoOpOnSupersededClaim(t *testing.T) {
 	require.NoError(t, firstClaim.SetAssessment(map[string]any{"summary": summary}))
 
 	var updated bool
+
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		var err error
+
 		updated, err = firstClaim.SetAssessmentCompleted(ctx, tx, fx.scope)
+
 		return err
 	}))
 	assert.False(t, updated, "a superseded claim must not overwrite the re-claimed row")
@@ -275,9 +284,12 @@ func TestEvidence_SetAssessmentFailed_TransitionsOwningClaim(t *testing.T) {
 	claimed := claimEvidence(t, ctx, client, fx.scope, id, t0.Add(time.Minute))
 
 	var updated bool
+
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		var err error
+
 		updated, err = claimed.SetAssessmentFailed(ctx, tx, fx.scope)
+
 		return err
 	}))
 	assert.True(t, updated, "failing a PROCESSING row owned by this claim must update it")
@@ -304,9 +316,12 @@ func TestEvidence_SetAssessmentFailed_NoOpOnSupersededClaim(t *testing.T) {
 
 	// Worker A's late failure must not flip B's live claim to FAILED.
 	var updated bool
+
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		var err error
+
 		updated, err = firstClaim.SetAssessmentFailed(ctx, tx, fx.scope)
+
 		return err
 	}))
 	assert.False(t, updated, "a stale worker's failure must not clobber the re-claimed row")

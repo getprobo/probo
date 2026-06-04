@@ -74,6 +74,7 @@ func TestEvidence_GetAssessment_EmptyIsNoOp(t *testing.T) {
 	t.Parallel()
 
 	var e Evidence
+
 	out := testAssessmentPayload{Summary: "unchanged"}
 	require.NoError(t, e.GetAssessment(&out))
 	assert.Equal(t, "unchanged", out.Summary, "empty column should leave dst untouched")

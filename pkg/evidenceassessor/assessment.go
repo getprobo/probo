@@ -97,6 +97,7 @@ func New(cfg Config) (*Assessor, error) {
 	if err != nil {
 		return nil, fmt.Errorf("cannot create evidence assessment output type: %w", err)
 	}
+
 	if err := outputType.DecorateEnum("confidence", confidenceEnum); err != nil {
 		return nil, fmt.Errorf("cannot decorate evidence assessment schema: %w", err)
 	}
@@ -136,6 +137,7 @@ func (a *Assessor) Assess(
 	} else {
 		opts = append(opts, agent.WithTemperature(a.cfg.Temp))
 	}
+
 	if a.cfg.Logger != nil {
 		opts = append(opts, agent.WithLogger(a.cfg.Logger))
 	}

@@ -165,6 +165,7 @@ WHERE evidences.state = 'REQUESTED';
 		"assessment_status":                e.AssessmentStatus,
 		"assessment_processing_started_at": e.AssessmentProcessingStartedAt,
 	}
+
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
 		return fmt.Errorf("cannot upsert evidence: %w", err)
