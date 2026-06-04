@@ -36,3 +36,4 @@ export { Tally } from "./Tally";
 export { Tailscale } from "./Tailscale";
 export { ThirdPartyLogo } from "./ThirdPartyLogo";
 export { Vercel } from "./Vercel";
+export { Zendesk } from "./Zendesk";

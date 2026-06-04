@@ -51,6 +51,7 @@ import { Supabase } from "./Supabase";
 import { Tailscale } from "./Tailscale";
 import { Tally } from "./Tally";
 import { Vercel } from "./Vercel";
+import { Zendesk } from "./Zendesk";
 
 const thirdParties: Record<string, FC<ComponentProps<"svg">>> = {
   ANTHROPIC: Anthropic,
@@ -93,6 +94,7 @@ const thirdParties: Record<string, FC<ComponentProps<"svg">>> = {
   TAILSCALE: Tailscale,
   TALLY: Tally,
   VERCEL: Vercel,
+  ZENDESK: Zendesk,
 };
 
 type ThirdPartyLogoProps = ComponentProps<"svg"> & {

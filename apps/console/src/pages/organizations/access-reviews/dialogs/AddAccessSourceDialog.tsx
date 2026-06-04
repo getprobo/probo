@@ -171,6 +171,17 @@ function hasRequiredExtraSettings(
     .every(s => values[s.key]?.trim());
 }
 
+// Accepts either a bare subdomain ("acme") or a pasted host
+// ("https://acme.zendesk.com/") and reduces it to the bare subdomain the
+// backend expects as the `site` query param.
+function cleanZendeskSubdomain(raw: string): string {
+  let value = raw.trim();
+  value = value.replace(/^https?:\/\//i, "");
+  value = value.replace(/\/+$/, "");
+  value = value.replace(/\.zendesk\.com$/i, "");
+  return value.trim();
+}
+
 export function AddAccessSourceDialog({
   children,
   organizationId,
@@ -184,12 +195,16 @@ export function AddAccessSourceDialog({
   const apiKeyDialogRef = useDialogRef();
   const clientCredentialsDialogRef = useDialogRef();
   const datadogDialogRef = useDialogRef();
+  const zendeskDialogRef = useDialogRef();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [activeProvider, setActiveProvider] = useState<ProviderInfo | null>(null);
 
   const [datadogSite, setDatadogSite] = useState<string>("US1");
   const [datadogProvider, setDatadogProvider] = useState<ProviderInfo | null>(null);
+
+  const [zendeskSubdomain, setZendeskSubdomain] = useState<string>("");
+  const [zendeskProvider, setZendeskProvider] = useState<ProviderInfo | null>(null);
 
   const [apiKeyValue, setApiKeyValue] = useState("");
   const [extraSettingValues, setExtraSettingValues] = useState<Record<string, string>>({});
@@ -275,6 +290,12 @@ export function AddAccessSourceDialog({
     setDatadogProvider(info);
     setDatadogSite("US1");
     datadogDialogRef.current?.open();
+  };
+
+  const openZendeskDialog = (info: ProviderInfo) => {
+    setZendeskProvider(info);
+    setZendeskSubdomain("");
+    zendeskDialogRef.current?.open();
   };
 
   const createSourceAfterConnector = (
@@ -470,10 +491,15 @@ export function AddAccessSourceDialog({
         return (
           <Button
             variant="secondary"
-            onClick={() =>
-              info.provider === "DATADOG"
-                ? openDatadogDialog(info)
-                : connectOAuthProvider(info)}
+            onClick={() => {
+              if (info.provider === "DATADOG") {
+                openDatadogDialog(info);
+              } else if (info.provider === "ZENDESK") {
+                openZendeskDialog(info);
+              } else {
+                connectOAuthProvider(info);
+              }
+            }}
           >
             {__("Connect")}
           </Button>
@@ -805,6 +831,44 @@ export function AddAccessSourceDialog({
           </DialogContent>
           <DialogFooter>
             <Button type="submit">{__("Continue")}</Button>
+          </DialogFooter>
+        </form>
+      </Dialog>
+
+      <Dialog ref={zendeskDialogRef} title={__("Connect Zendesk")}>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (zendeskProvider) {
+              const site = cleanZendeskSubdomain(zendeskSubdomain);
+              if (site) {
+                connectOAuthProvider(zendeskProvider, { site });
+              }
+            }
+          }}
+        >
+          <DialogContent padded className="space-y-4">
+            <p className="text-txt-secondary text-sm">
+              {__("Enter your Zendesk subdomain, then continue to authorize access.")}
+            </p>
+            <Field
+              label={__("Zendesk subdomain")}
+              placeholder={__("acme")}
+              value={zendeskSubdomain}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setZendeskSubdomain(e.target.value)}
+              help={__("The <subdomain> part of <subdomain>.zendesk.com")}
+              required
+              autoFocus
+            />
+          </DialogContent>
+          <DialogFooter>
+            <Button
+              type="submit"
+              disabled={!cleanZendeskSubdomain(zendeskSubdomain)}
+            >
+              {__("Continue")}
+            </Button>
           </DialogFooter>
         </form>
       </Dialog>
