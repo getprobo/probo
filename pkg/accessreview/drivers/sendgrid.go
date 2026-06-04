@@ -23,23 +23,27 @@ import (
 	"strconv"
 	"strings"
 
+	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
 )
 
 type SendGridDriver struct {
 	httpClient *http.Client
+	logger     *log.Logger
 }
 
 var _ Driver = (*SendGridDriver)(nil)
 
 type sendGridTeammate struct {
-	Username  string   `json:"username"`
-	Email     string   `json:"email"`
-	FirstName string   `json:"first_name"`
-	LastName  string   `json:"last_name"`
-	UserType  string   `json:"user_type"`
-	IsAdmin   bool     `json:"is_admin"`
-	Scopes    []string `json:"scopes"`
+	Username     string   `json:"username"`
+	Email        string   `json:"email"`
+	FirstName    string   `json:"first_name"`
+	LastName     string   `json:"last_name"`
+	UserType     string   `json:"user_type"`
+	IsAdmin      bool     `json:"is_admin"`
+	IsSSO        bool     `json:"is_sso"`
+	IsPartnerSSO bool     `json:"is_partner_sso"`
+	Scopes       []string `json:"scopes"`
 }
 
 type sendGridTeammatesResponse struct {
@@ -47,18 +51,15 @@ type sendGridTeammatesResponse struct {
 	Results []sendGridTeammate `json:"results"`
 }
 
-type sendGridTeammateResponse struct {
-	Result sendGridTeammate `json:"result"`
-}
-
 const (
 	sendGridTeammatesEndpoint  = "https://api.sendgrid.com/v3/teammates"
 	sendGridTeammatesPageLimit = 500
 )
 
-func NewSendGridDriver(httpClient *http.Client) *SendGridDriver {
+func NewSendGridDriver(httpClient *http.Client, logger *log.Logger) *SendGridDriver {
 	return &SendGridDriver{
 		httpClient: httpClient,
+		logger:     logger,
 	}
 }
 
@@ -80,22 +81,35 @@ func (d *SendGridDriver) ListAccounts(ctx context.Context) ([]AccountRecord, err
 				continue
 			}
 
+			// The teammate list carries no scopes, so MFA must be read from
+			// the per-teammate detail endpoint (N+1).
 			mfaStatus := sendGridMFAStatus(teammate.Scopes)
 			if mfaStatus == coredata.MFAStatusUnknown && teammate.Username != "" {
 				detailedTeammate, err := d.fetchTeammate(ctx, teammate.Username)
-				if err == nil {
+				if err != nil {
+					// Best-effort: a failed detail fetch leaves MFA Unknown
+					// rather than dropping the account. Log it (PII-free) so a
+					// wholesale detail-endpoint outage is observable.
+					d.logger.WarnCtx(
+						ctx,
+						"cannot fetch sendgrid teammate details, reporting MFA unknown",
+						log.Error(err),
+					)
+				} else {
 					mfaStatus = sendGridMFAStatus(detailedTeammate.Scopes)
 				}
 			}
 
 			records = append(records, AccountRecord{
-				Email:       teammate.Email,
-				FullName:    sendGridFullName(teammate.FirstName, teammate.LastName),
-				Role:        sendGridRole(teammate.UserType, teammate.IsAdmin),
-				IsAdmin:     teammate.IsAdmin,
+				Email:    teammate.Email,
+				FullName: sendGridFullName(teammate.FirstName, teammate.LastName),
+				Role:     sendGridRole(teammate.UserType, teammate.IsAdmin),
+				IsAdmin:  teammate.IsAdmin,
+				// SendGrid exposes no UUID for teammates; the username is the
+				// only stable handle. For unified accounts it equals the email.
 				ExternalID:  strings.TrimSpace(teammate.Username),
 				MFAStatus:   mfaStatus,
-				AuthMethod:  coredata.AccessEntryAuthMethodUnknown,
+				AuthMethod:  sendGridAuthMethod(teammate),
 				AccountType: coredata.AccessEntryAccountTypeUser,
 			})
 		}
@@ -173,12 +187,14 @@ func (d *SendGridDriver) fetchTeammate(ctx context.Context, username string) (*s
 		return nil, fmt.Errorf("cannot fetch sendgrid teammate details: unexpected status %d", httpResp.StatusCode)
 	}
 
-	var resp sendGridTeammateResponse
+	// The teammate detail endpoint returns a bare teammate object, NOT a
+	// {"result": {...}} envelope (the list endpoint is the wrapped one).
+	var resp sendGridTeammate
 	if err := json.NewDecoder(httpResp.Body).Decode(&resp); err != nil {
 		return nil, fmt.Errorf("cannot decode sendgrid teammate details response: %w", err)
 	}
 
-	return &resp.Result, nil
+	return &resp, nil
 }
 
 func sendGridResponseItems(resp *sendGridTeammatesResponse) []sendGridTeammate {
@@ -212,6 +228,18 @@ func sendGridRole(userType string, isAdmin bool) string {
 	}
 }
 
+// sendGridAuthMethod maps SendGrid's SSO flags to an auth method. A teammate
+// authenticated through SSO (native or partner) is SSO; otherwise they sign in
+// with SendGrid's own credentials. Both flags are always present on the
+// teammate payload, so this is a definitive signal.
+func sendGridAuthMethod(t sendGridTeammate) coredata.AccessEntryAuthMethod {
+	if t.IsSSO || t.IsPartnerSSO {
+		return coredata.AccessEntryAuthMethodSSO
+	}
+
+	return coredata.AccessEntryAuthMethodPassword
+}
+
 // sendGridMFAStatus derives a teammate's MFA status from the auto-set 2fa
 // scopes SendGrid attaches to the teammate detail. A restricted teammate
 // carries exactly one of them to reflect their real status. Full-access
@@ -222,6 +250,7 @@ func sendGridRole(userType string, isAdmin bool) string {
 // both-or-neither is ambiguous, so report Unknown rather than guessing.
 func sendGridMFAStatus(scopes []string) coredata.MFAStatus {
 	var exempt, required bool
+
 	for _, scope := range scopes {
 		switch scope {
 		case "2fa_exempt":

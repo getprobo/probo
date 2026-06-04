@@ -21,6 +21,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
 )
 
@@ -29,15 +30,16 @@ func TestSendGridDriver(t *testing.T) {
 
 	rec := newRecorder(t, "testdata/sendgrid", "SENDGRID_API_KEY")
 	client := newVCRClient(rec, bearerAuth(os.Getenv("SENDGRID_API_KEY")))
-	driver := NewSendGridDriver(client)
+	driver := NewSendGridDriver(client, log.NewLogger(log.WithName("test")))
 
 	records, err := driver.ListAccounts(context.Background())
 	require.NoError(t, err)
-	require.Len(t, records, 1)
+	// Two records: the owner + a restricted teammate. A third list row with an
+	// empty email is skipped.
+	require.Len(t, records, 2)
 
-	// Recorded against a live SendGrid account that has only the owner. The
-	// list endpoint carries no scopes, so the driver fetches the teammate
-	// detail to read them.
+	// The owner record is the real recording. The list endpoint carries no
+	// scopes, so the driver fetches the teammate detail to read them.
 	owner := records[0]
 	assert.Equal(t, "owner@example.com", owner.Email)
 	assert.Empty(t, owner.FullName)
@@ -45,10 +47,27 @@ func TestSendGridDriver(t *testing.T) {
 	assert.True(t, owner.IsAdmin)
 	assert.Equal(t, "owner@example.com", owner.ExternalID)
 	assert.Equal(t, coredata.AccessEntryAccountTypeUser, owner.AccountType)
+	// is_sso=false on the owner -> authenticates with SendGrid credentials.
+	assert.Equal(t, coredata.AccessEntryAuthMethodPassword, owner.AuthMethod)
 	// The owner is a full-access user whose scope catalog contains BOTH
 	// 2fa_exempt and 2fa_required, so the MFA signal is ambiguous and the
 	// driver reports Unknown rather than guessing from scope ordering.
 	assert.Equal(t, coredata.MFAStatusUnknown, owner.MFAStatus)
+
+	// A restricted teammate, synthetic (the trial account has only the owner)
+	// but modelled on the real detail shape: a BARE object whose scopes carry
+	// a single 2fa flag. This makes the N+1 detail fetch load-bearing — an
+	// Enabled MFA here is reachable ONLY by correctly decoding the detail
+	// response, so it guards against the {"result":...}-envelope regression.
+	teammate := records[1]
+	assert.Equal(t, "taylor@example.com", teammate.Email)
+	assert.Equal(t, "Taylor Teammate", teammate.FullName)
+	assert.Equal(t, "Teammate", teammate.Role)
+	assert.False(t, teammate.IsAdmin)
+	// Non-unified teammate: username is a handle distinct from the email.
+	assert.Equal(t, "taylor-teammate", teammate.ExternalID)
+	assert.Equal(t, coredata.AccessEntryAuthMethodSSO, teammate.AuthMethod)
+	assert.Equal(t, coredata.MFAStatusEnabled, teammate.MFAStatus)
 }
 
 func TestSendGridRole(t *testing.T) {

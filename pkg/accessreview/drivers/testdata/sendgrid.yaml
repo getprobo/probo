@@ -24,7 +24,7 @@ interactions:
         proto_minor: 1
         content_length: -1
         body: |
-            {"result":[{"username":"owner@example.com","email":"owner@example.com","first_name":"","last_name":"","address":"","address2":"","city":"","state":"","zip":"","country":"","company":"","website":"","phone":"","is_admin":true,"is_sso":false,"user_type":"owner","is_unified":true,"is_partner_sso":false}]}
+            {"result":[{"username":"owner@example.com","email":"owner@example.com","first_name":"","last_name":"","address":"","address2":"","city":"","state":"","zip":"","country":"","company":"","website":"","phone":"","is_admin":true,"is_sso":false,"user_type":"owner","is_unified":true,"is_partner_sso":false},{"username":"taylor-teammate","email":"taylor@example.com","first_name":"Taylor","last_name":"Teammate","is_admin":false,"is_sso":true,"user_type":"teammate","is_unified":false,"is_partner_sso":false},{"username":"pending-invite","email":"","first_name":"","last_name":"","is_admin":false,"is_sso":false,"user_type":"teammate","is_unified":false,"is_partner_sso":false}]}
         headers:
             Access-Control-Allow-Headers:
                 - AUTHORIZATION, Content-Type, On-behalf-of, x-sg-elas-acl, X-Recaptcha, X-Request-Source, Browser-Fingerprint
@@ -40,8 +40,6 @@ interactions:
                 - no-cache
             Connection:
                 - keep-alive
-            Content-Length:
-                - "334"
             Content-Security-Policy:
                 - default-src https://api.sendgrid.com; frame-src 'none'; object-src 'none'
             Content-Type:
@@ -143,3 +141,35 @@ interactions:
         status: 200 OK
         code: 200
         duration: 283.823083ms
+    - id: 2
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: api.sendgrid.com
+        headers:
+            Accept:
+                - application/json
+        url: https://api.sendgrid.com/v3/teammates/taylor-teammate
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding:
+            - chunked
+        content_length: -1
+        uncompressed: true
+        body: |
+            {"username":"taylor-teammate","email":"taylor@example.com","first_name":"Taylor","last_name":"Teammate","is_admin":false,"is_sso":true,"user_type":"teammate","is_unified":false,"is_partner_sso":false,"scopes":["mail.send","2fa_required"]}
+        headers:
+            Content-Type:
+                - application/json; charset=utf8
+            Date:
+                - Thu, 04 Jun 2026 12:30:34 GMT
+            Server:
+                - nginx
+        status: 200 OK
+        code: 200
+        duration: 18ms
