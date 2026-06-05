@@ -26,4 +26,5 @@ type SMTPConfig struct {
 	User        string `json:"user"`
 	Password    string `json:"password"`
 	TLSRequired bool   `json:"tls-required"`
+	HelloName   string `json:"hello-name"`
 }

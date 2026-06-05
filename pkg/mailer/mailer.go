@@ -49,6 +49,7 @@ type (
 		User        string
 		Password    string
 		TLSRequired bool
+		HelloName   string
 	}
 
 	SendingWorkerOption func(*sendingHandler)
@@ -318,6 +319,12 @@ func (h *sendingHandler) sendMail(ctx context.Context, to []string, msg []byte) 
 	}
 
 	defer func() { _ = c.Quit() }()
+
+	if h.smtp.HelloName != "" {
+		if err := c.Hello(h.smtp.HelloName); err != nil {
+			return fmt.Errorf("SMTP EHLO error: %w", err)
+		}
+	}
 
 	if h.smtp.TLSRequired {
 		if err := c.StartTLS(&tls.Config{ServerName: host}); err != nil {

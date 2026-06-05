@@ -166,6 +166,7 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 						User:        b.getEnv("SMTP_USER"),
 						Password:    b.getEnv("SMTP_PASSWORD"),
 						TLSRequired: b.getEnvBoolOrDefault("SMTP_TLS_REQUIRED", false),
+						HelloName:   b.getEnv("SMTP_HELLO_NAME"),
 					},
 				},
 				Slack: probodconfig.SlackConfig{
