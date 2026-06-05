@@ -4,6 +4,16 @@ All notable changes to the Probo Helm chart will be documented in this file.
 
 ## Unreleased
 
+## [0.4.0] - 2026-06-05
+
+### Added
+
+- `SMTP_HELLO_NAME` environment variable to configure the EHLO/HELO hostname
+
+### Changed
+
+- Default `appVersion` to `probod v0.203.0`
+
 ## [0.3.0] - 2026-06-02
 
 ### Added
