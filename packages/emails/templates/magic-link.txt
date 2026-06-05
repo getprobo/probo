@@ -6,7 +6,7 @@ Please use this link to connect to {{.OrganizationName}}'s Compliance Page:
 
 {{.MagicLinkURL}}
 
-This link will expire in {{.DurationInMinutes}} minutes.
+IMPORTANT: This link expires in {{.DurationInMinutes}} minutes. Use it promptly after receiving this email.
 
 {{.SenderCompanyHeadquarterAddress}}
 Powered By Prob
