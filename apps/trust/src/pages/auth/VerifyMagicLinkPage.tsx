@@ -65,6 +65,11 @@ export default function VerifyMagicLinkPagePageMutation() {
               void navigate("/magic-link-expired");
               return;
             }
+
+            if (err.extensions?.code === "TOKEN_ALREADY_USED") {
+              void navigate("/magic-link-already-used");
+              return;
+            }
           }
 
           toast({

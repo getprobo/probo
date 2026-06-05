@@ -680,7 +680,7 @@ func (s AuthService) OpenSessionWithMagicLink(ctx context.Context, tokenString s
 
 			if err := token.LoadByHashedValueForUpdate(ctx, tx, hashedValue); err != nil {
 				if errors.Is(err, coredata.ErrResourceNotFound) {
-					return NewInvalidTokenError()
+					return NewTokenAlreadyUsedError()
 				}
 
 				return fmt.Errorf("cannot load token by hashed value: %w", err)

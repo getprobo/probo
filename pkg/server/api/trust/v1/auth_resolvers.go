@@ -83,6 +83,10 @@ func (r *mutationResolver) VerifyMagicLink(ctx context.Context, input types.Veri
 				return nil, gqlutils.TokenExpired(ctx, err)
 			}
 
+			if _, ok := errors.AsType[*iam.ErrTokenAlreadyUsed](err); ok {
+				return nil, gqlutils.TokenAlreadyUsed(ctx, err)
+			}
+
 			if _, ok := errors.AsType[*iam.ErrInvalidToken](err); ok {
 				return nil, gqlutils.Invalid(ctx, err)
 			}
@@ -103,6 +107,10 @@ func (r *mutationResolver) VerifyMagicLink(ctx context.Context, input types.Veri
 		if err != nil {
 			if _, ok := errors.AsType[*iam.ErrExpiredToken](err); ok {
 				return nil, gqlutils.TokenExpired(ctx, err)
+			}
+
+			if _, ok := errors.AsType[*iam.ErrTokenAlreadyUsed](err); ok {
+				return nil, gqlutils.TokenAlreadyUsed(ctx, err)
 			}
 
 			if _, ok := errors.AsType[*iam.ErrInvalidToken](err); ok {

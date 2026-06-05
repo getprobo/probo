@@ -150,6 +150,14 @@ func TokenExpired(ctx context.Context, err error) *gqlerror.Error {
 	}
 }
 
+func TokenAlreadyUsed(ctx context.Context, err error) *gqlerror.Error {
+	return &gqlerror.Error{
+		Message:    err.Error(),
+		Path:       graphql.GetPath(ctx),
+		Extensions: map[string]any{"code": "TOKEN_ALREADY_USED"},
+	}
+}
+
 func Invalid(ctx context.Context, err error) *gqlerror.Error {
 	var details map[string]any
 

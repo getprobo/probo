@@ -31,6 +31,16 @@ func (e ErrInvalidToken) Error() string {
 	return e.message
 }
 
+type ErrTokenAlreadyUsed struct{ message string }
+
+func NewTokenAlreadyUsedError() error {
+	return &ErrTokenAlreadyUsed{"this magic link has already been used"}
+}
+
+func (e ErrTokenAlreadyUsed) Error() string {
+	return e.message
+}
+
 type ErrExpiredToken struct{ message string }
 
 func NewExpiredTokenError() error {
