@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"net"
 	"net/smtp"
+	"os"
 	"time"
 
 	"github.com/jhillyerd/enmime"
@@ -320,10 +321,15 @@ func (h *sendingHandler) sendMail(ctx context.Context, to []string, msg []byte) 
 
 	defer func() { _ = c.Quit() }()
 
-	if h.smtp.HelloName != "" {
-		if err := c.Hello(h.smtp.HelloName); err != nil {
-			return fmt.Errorf("SMTP EHLO error: %w", err)
+	helloName := h.smtp.HelloName
+	if helloName == "" {
+		if helloName, err = os.Hostname(); err != nil {
+			helloName = "localhost"
 		}
+	}
+
+	if err := c.Hello(helloName); err != nil {
+		return fmt.Errorf("SMTP EHLO error: %w", err)
 	}
 
 	if h.smtp.TLSRequired {
