@@ -133,6 +133,8 @@ var AuditorPolicy = policy.NewPolicy(
 		ActionOrganizationGetHorizontalLogoUrl,
 	).WithSID("org-read-access").When(organizationCondition),
 
+	policy.Allow(ActionOrganizationContextGet).WithSID("organization-context-read").When(organizationCondition),
+
 	policy.Allow(
 		ActionThirdPartyGet, ActionThirdPartyList,
 		ActionThirdPartyContactGet, ActionThirdPartyContactList,
