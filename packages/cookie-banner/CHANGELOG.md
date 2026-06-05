@@ -4,6 +4,12 @@ All notable changes to the `@probo/cookie-banner` SDK will be documented in this
 
 ## Unreleased
 
+## [0.9.0] - 2026-06-05
+
+### Added
+
+- Support Indonesian, Italian, Japanese, Korean, Polish, Portuguese, Turkish, Ukrainian, and Chinese
+
 ## [0.8.0] - 2026-06-03
 
 ### Added

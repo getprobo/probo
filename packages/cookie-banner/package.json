@@ -1,6 +1,6 @@
 {
   "name": "@probo/cookie-banner",
-  "version": "0.8.0",
+  "version": "0.9.0",
   "description": "Probo cookie consent banner SDK",
   "type": "module",
   "main": "dist/cookie-banner.mjs",
