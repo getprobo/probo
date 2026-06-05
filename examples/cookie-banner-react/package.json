@@ -9,15 +9,15 @@
   },
   "dependencies": {
     "@probo/cookie-banner": "*",
-    "posthog-js": "^1.376.2",
+    "posthog-js": "^1.380.1",
     "react": "^19.2.1",
-    "react-dom": "^19.2.1"
+    "react-dom": "^19.2.7"
   },
   "devDependencies": {
-    "@types/react": "^19.2.1",
+    "@types/react": "^19.2.16",
     "@types/react-dom": "^19.2.1",
-    "@vitejs/plugin-react": "^4.5.2",
-    "typescript": "~5.8.3",
-    "vite": "^6.3.5"
+    "@vitejs/plugin-react": "^6.0.2",
+    "typescript": "~6.0.3",
+    "vite": "^8.0.16"
   }
 }

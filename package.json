@@ -20,8 +20,8 @@
     "relay": "npm run relay-clean && npm run relay-compile"
   },
   "devDependencies": {
-    "relay-compiler": "^20.1.1",
-    "turbo": "^2.9.14"
+    "relay-compiler": "^21.0.1",
+    "turbo": "^2.9.16"
   },
   "graphql": {
     "schema": "./pkg/server/api/console/v1/graphql/"
@@ -44,6 +44,6 @@
   "license": "MIT",
   "packageManager": "npm@11.8.0",
   "dependencies": {
-    "react-dom": "^19.2.1"
+    "react-dom": "^19.2.7"
   }
 }
