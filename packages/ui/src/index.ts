@@ -14,7 +14,11 @@
 
 // Layouts
 export { Drawer, Layout } from "./Layouts/Layout";
-export { ErrorLayout } from "./Layouts/ErrorLayout";
+export {
+  ErrorDetailMessage,
+  ErrorDetails,
+  ErrorLayout,
+} from "./Layouts/ErrorLayout";
 export {
   CenteredLayout,
   CenteredLayoutSkeleton,

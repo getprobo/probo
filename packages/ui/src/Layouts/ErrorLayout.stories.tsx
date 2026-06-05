@@ -14,7 +14,12 @@
 
 import type { Meta, StoryObj } from "@storybook/react";
 
-import { ErrorLayout } from "./ErrorLayout";
+import { Button } from "../Atoms/Button/Button";
+import {
+  ErrorDetailMessage,
+  ErrorDetails,
+  ErrorLayout,
+} from "./ErrorLayout";
 
 export default {
   title: "Layouts/ErrorLayout",
@@ -26,7 +31,25 @@ type Story = StoryObj<typeof ErrorLayout>;
 
 export const Default: Story = {
   args: {
+    showLogo: true,
     title: "Something went wrong",
-    description: "An unexpected error occurred",
+    description: "We hit an unexpected error. Head back home to continue.",
+    actions: <Button>Go home</Button>,
+    children: (
+      <ErrorDetails summary="Technical details">
+        <ErrorDetailMessage>
+          Relay: Missing @required value at path &apos;organization&apos; in
+          &apos;ViewerMembershipLayoutQuery&apos;.
+        </ErrorDetailMessage>
+      </ErrorDetails>
+    ),
+  },
+};
+
+export const NotFound: Story = {
+  args: {
+    title: "Page not found",
+    description: "The page you are looking for does not exist.",
+    actions: <Button>Go home</Button>,
   },
 };
