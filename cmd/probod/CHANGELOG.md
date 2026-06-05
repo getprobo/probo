@@ -4,6 +4,30 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.203.0] - 2026-06-05
+
+### Added
+
+- Zendesk access-review connector with subdomain URL normalization
+- Okta access-review connector with API-key (SSWS) authentication
+- Clerk access-review connector
+- SendGrid access-review connector with 2FA enforcement checks
+- Datadog access-review connector with region selector and OAuth support
+- PostHog access-review connector with Cloud OAuth, self-hosted OAuth, and API-key support
+- Public-client (CIMD) OAuth support with auto-registration and client metadata document
+- `SMTP_HELLO_NAME` environment variable to configure the EHLO/HELO hostname
+- Dedicated expired magic link error page
+- Audit reports are now stored as files
+
+### Changed
+
+- Clarify trust center access rejection emails
+- Cookie banner now supports Indonesian, Italian, Japanese, Korean, Polish, Portuguese, Turkish, Ukrainian, and Chinese
+
+### Fixed
+
+- Fix login redirect for password-only authentication flows
+
 ## [0.202.2] - 2026-06-03
 
 No user-facing changes; tag-only release.
