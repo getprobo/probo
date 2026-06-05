@@ -43,6 +43,10 @@ import type { AddAccessSourceDialogCreateAPIKeyConnectorMutation } from "#/__gen
 import type { AddAccessSourceDialogCreateClientCredentialsConnectorMutation } from "#/__generated__/core/AddAccessSourceDialogCreateClientCredentialsConnectorMutation.graphql";
 
 import { createAccessSourceMutation } from "./accessSourceMutations";
+import {
+  isPostHogDeploymentSelected,
+  PostHogDeploymentField,
+} from "./PostHogDeploymentField";
 
 export const addAccessSourceDialogConnectorProviderInfoFragment = graphql`
   fragment AddAccessSourceDialogConnectorProviderInfoFragment on ConnectorProviderInfo @relay(plural: true) {
@@ -61,6 +65,18 @@ export const addAccessSourceDialogConnectorProviderInfoFragment = graphql`
 `;
 
 export type ProviderInfo = AddAccessSourceDialogConnectorProviderInfoFragment$data[number];
+
+// DATADOG_SITES labels are technical identifiers (region code + hostname),
+// intentionally not wrapped in __(). The dialog's prose strings are.
+const DATADOG_SITES: { value: string; label: string }[] = [
+  { value: "US1", label: "US1 (app.datadoghq.com)" },
+  { value: "US3", label: "US3 (us3.datadoghq.com)" },
+  { value: "US5", label: "US5 (us5.datadoghq.com)" },
+  { value: "EU1", label: "EU1 (app.datadoghq.eu)" },
+  { value: "AP1", label: "AP1 (ap1.datadoghq.com)" },
+  { value: "AP2", label: "AP2 (ap2.datadoghq.com)" },
+  { value: "US1-FED", label: "US1-FED (app.ddog-gov.com)" },
+];
 
 type Props = {
   children: ReactNode;
@@ -113,8 +129,21 @@ function mapAPIKeyExtraSettingToField(
     case "GITHUB":
       if (settingKey === "organization") return "githubOrganization";
       break;
+    case "GRAFANA":
+      if (settingKey === "baseUrl") return "grafanaBaseUrl";
+      break;
     case "ONE_PASSWORD":
       if (settingKey === "scimBridgeUrl") return "onePasswordScimBridgeUrl";
+      break;
+    case "METABASE":
+      if (settingKey === "instanceUrl") return "metabaseInstanceUrl";
+      break;
+    case "POSTHOG":
+      if (settingKey === "region") return "posthogRegion";
+      if (settingKey === "instanceUrl") return "posthogInstanceUrl";
+      break;
+    case "OKTA":
+      if (settingKey === "domain") return "oktaDomain";
       break;
   }
   return null;
@@ -142,6 +171,19 @@ function hasRequiredExtraSettings(
     .every(s => values[s.key]?.trim());
 }
 
+// Accepts either a bare subdomain ("acme") or a pasted host
+// ("https://acme.zendesk.com/") and reduces it to the bare subdomain the
+// backend expects as the `site` query param.
+function cleanZendeskSubdomain(raw: string): string {
+  let value = raw.trim();
+  value = value.replace(/^https?:\/\//i, "");
+  // Drop any path, query, or fragment from a pasted URL/host so only the
+  // host label survives (e.g. "acme.zendesk.com/agent?x=1" -> "acme").
+  value = value.replace(/[/?#].*$/, "");
+  value = value.replace(/\.zendesk\.com$/i, "");
+  return value.trim();
+}
+
 export function AddAccessSourceDialog({
   children,
   organizationId,
@@ -154,9 +196,17 @@ export function AddAccessSourceDialog({
   const dialogRef = useDialogRef();
   const apiKeyDialogRef = useDialogRef();
   const clientCredentialsDialogRef = useDialogRef();
+  const datadogDialogRef = useDialogRef();
+  const zendeskDialogRef = useDialogRef();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [activeProvider, setActiveProvider] = useState<ProviderInfo | null>(null);
+
+  const [datadogSite, setDatadogSite] = useState<string>("US1");
+  const [datadogProvider, setDatadogProvider] = useState<ProviderInfo | null>(null);
+
+  const [zendeskSubdomain, setZendeskSubdomain] = useState<string>("");
+  const [zendeskProvider, setZendeskProvider] = useState<ProviderInfo | null>(null);
 
   const [apiKeyValue, setApiKeyValue] = useState("");
   const [extraSettingValues, setExtraSettingValues] = useState<Record<string, string>>({});
@@ -198,13 +248,21 @@ export function AddAccessSourceDialog({
       createClientCredentialsConnectorMutation,
     );
 
-  const connectOAuthProvider = (info: ProviderInfo) => {
+  const connectOAuthProvider = (
+    info: ProviderInfo,
+    extras?: Record<string, string>,
+  ) => {
     const baseURL = import.meta.env.VITE_API_URL || window.location.origin;
     const url = new URL("/api/console/v1/connectors/initiate", baseURL);
     url.searchParams.append("organization_id", organizationId);
     url.searchParams.append("provider", info.provider);
     for (const scope of info.oauth2Scopes) {
       url.searchParams.append("scope", scope);
+    }
+    if (extras) {
+      for (const [k, v] of Object.entries(extras)) {
+        url.searchParams.append(k, v);
+      }
     }
     url.searchParams.append(
       "continue",
@@ -228,6 +286,18 @@ export function AddAccessSourceDialog({
     setScope("");
     setClientCredentialsExtraValues({});
     clientCredentialsDialogRef.current?.open();
+  };
+
+  const openDatadogDialog = (info: ProviderInfo) => {
+    setDatadogProvider(info);
+    setDatadogSite("US1");
+    datadogDialogRef.current?.open();
+  };
+
+  const openZendeskDialog = (info: ProviderInfo) => {
+    setZendeskProvider(info);
+    setZendeskSubdomain("");
+    zendeskDialogRef.current?.open();
   };
 
   const createSourceAfterConnector = (
@@ -423,7 +493,15 @@ export function AddAccessSourceDialog({
         return (
           <Button
             variant="secondary"
-            onClick={() => connectOAuthProvider(info)}
+            onClick={() => {
+              if (info.provider === "DATADOG") {
+                openDatadogDialog(info);
+              } else if (info.provider === "ZENDESK") {
+                openZendeskDialog(info);
+              } else {
+                connectOAuthProvider(info);
+              }
+            }}
           >
             {__("Connect")}
           </Button>
@@ -490,6 +568,43 @@ export function AddAccessSourceDialog({
       </Card>
     );
   };
+
+  // PostHog renders a dedicated deployment selector (Cloud region or
+  // self-hosted URL); every other provider falls back to generic fields.
+  const renderAPIKeyExtraSettings = () => {
+    if (!activeProvider) {
+      return null;
+    }
+
+    if (activeProvider.provider === "POSTHOG") {
+      return (
+        <PostHogDeploymentField
+          values={extraSettingValues}
+          onChange={setExtraSettingValues}
+        />
+      );
+    }
+
+    return activeProvider.extraSettings.map((setting) => {
+      const value = extraSettingValues[setting.key] ?? "";
+      return (
+        <Field
+          key={setting.key}
+          label={__(setting.label)}
+          value={value}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+            setExtraSettingValues(prev => ({ ...prev, [setting.key]: e.target.value }))}
+          required={setting.required}
+        />
+      );
+    });
+  };
+
+  // PostHog's extra settings are individually optional (region OR instance
+  // URL), so the generic required-field check can't gate it.
+  const postHogAPIKeyValid
+    = activeProvider?.provider !== "POSTHOG"
+      || isPostHogDeploymentSelected(extraSettingValues);
 
   const apiKeyExtraSettingsValid = activeProvider
     ? hasRequiredExtraSettings(activeProvider.extraSettings, extraSettingValues)
@@ -574,19 +689,7 @@ export function AddAccessSourceDialog({
               required
               autoFocus
             />
-            {activeProvider?.extraSettings.map(setting => (
-              <Field
-                key={setting.key}
-                label={__(setting.label)}
-                value={extraSettingValues[setting.key] ?? ""}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  setExtraSettingValues(prev => ({
-                    ...prev,
-                    [setting.key]: e.target.value,
-                  }))}
-                required={setting.required}
-              />
-            ))}
+            {renderAPIKeyExtraSettings()}
           </DialogContent>
           <DialogFooter>
             <Button
@@ -595,6 +698,7 @@ export function AddAccessSourceDialog({
                 isConnectingAPIKey
                 || !apiKeyValue.trim()
                 || !apiKeyExtraSettingsValid
+                || !postHogAPIKeyValid
               }
             >
               {isConnectingAPIKey ? __("Connecting...") : __("Connect")}
@@ -694,6 +798,77 @@ export function AddAccessSourceDialog({
               }
             >
               {isConnectingClientCredentials ? __("Connecting...") : __("Connect")}
+            </Button>
+          </DialogFooter>
+        </form>
+      </Dialog>
+
+      <Dialog ref={datadogDialogRef} title={__("Connect Datadog")}>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (datadogProvider) {
+              connectOAuthProvider(datadogProvider, { site: datadogSite });
+            }
+          }}
+        >
+          <DialogContent padded className="space-y-4">
+            <p className="text-txt-secondary text-sm">
+              {__("Select your Datadog site, then continue to authorize access.")}
+            </p>
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium">{__("Datadog site")}</label>
+              <Select
+                value={datadogSite}
+                onValueChange={setDatadogSite}
+                placeholder={__("Select a site")}
+              >
+                {DATADOG_SITES.map(s => (
+                  <Option key={s.value} value={s.value}>
+                    {s.label}
+                  </Option>
+                ))}
+              </Select>
+            </div>
+          </DialogContent>
+          <DialogFooter>
+            <Button type="submit">{__("Continue")}</Button>
+          </DialogFooter>
+        </form>
+      </Dialog>
+
+      <Dialog ref={zendeskDialogRef} title={__("Connect Zendesk")}>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (zendeskProvider) {
+              const site = cleanZendeskSubdomain(zendeskSubdomain);
+              if (site) {
+                connectOAuthProvider(zendeskProvider, { site });
+              }
+            }
+          }}
+        >
+          <DialogContent padded className="space-y-4">
+            <p className="text-txt-secondary text-sm">
+              {__("Enter your Zendesk subdomain, then continue to authorize access.")}
+            </p>
+            <Field
+              label={__("Zendesk subdomain")}
+              placeholder={__("acme")}
+              value={zendeskSubdomain}
+              onValueChange={setZendeskSubdomain}
+              help={__("The <subdomain> part of <subdomain>.zendesk.com")}
+              required
+              autoFocus
+            />
+          </DialogContent>
+          <DialogFooter>
+            <Button
+              type="submit"
+              disabled={!cleanZendeskSubdomain(zendeskSubdomain)}
+            >
+              {__("Continue")}
             </Button>
           </DialogFooter>
         </form>

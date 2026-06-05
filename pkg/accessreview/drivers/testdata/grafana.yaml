@@ -1,0 +1,58 @@
+---
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: grafana.example.com
+        form:
+            page:
+                - "1"
+            perpage:
+                - "100"
+        headers:
+            Accept:
+                - application/json
+        url: https://grafana.example.com/api/org/users?page=1&perpage=100
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '[{"userId":1,"email":"admin@example.com","login":"admin@example.com","name":"Admin User","role":"Admin","lastSeenAt":"2026-05-20T10:00:00Z","isDisabled":false},{"userId":2,"email":"","login":"viewer@example.com","name":"Viewer User","role":"Viewer","lastSeenAt":"","isDisabled":true}]'
+        headers:
+            Content-Type:
+                - application/json
+        status: 200 OK
+        code: 200
+        duration: 100ms
+    - id: 1
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: grafana.example.com
+        headers:
+            Accept:
+                - application/json
+        url: https://grafana.example.com/api/org
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"id":1,"name":"Acme Grafana"}'
+        headers:
+            Content-Type:
+                - application/json
+        status: 200 OK
+        code: 200
+        duration: 100ms

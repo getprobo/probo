@@ -12,9 +12,9 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { fromMaxAgeSeconds, toMaxAgeSeconds } from "@probo/helpers";
+import { fromMaxAgeSeconds, getTrackerTypeBadge, toMaxAgeSeconds } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
-import { Button, DurationInput, Input, Td, Toggle, Tr } from "@probo/ui";
+import { Badge, Button, DurationInput, Input, Td, Toggle, Tr } from "@probo/ui";
 import { Controller, useForm } from "react-hook-form";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
@@ -26,6 +26,7 @@ import type { CookieEntry } from "./CategorySection";
 export const editCookieRowFragment = graphql`
   fragment EditCookieRowFragment on TrackerPattern {
     displayName
+    trackerType
     maxAgeSeconds
     description
     excluded
@@ -72,26 +73,36 @@ export function EditCookieRow({
     });
   };
 
+  const typeBadge = getTrackerTypeBadge(cookie.trackerType, __);
+
   return (
     <Tr>
       <Td className="pr-3">
-        <div className="flex items-center gap-2">
-          <Controller
-            name="excluded"
-            control={control}
-            render={({ field }) => (
-              <Toggle
-                size="sm"
-                checked={!field.value}
-                onChange={checked => field.onChange(!checked)}
-                title={__("Include this cookie in the banner")}
-              />
-            )}
+        <div className="flex flex-col gap-2 min-w-0 max-w-xs">
+          <div className="flex items-center gap-2">
+            <Controller
+              name="excluded"
+              control={control}
+              render={({ field }) => (
+                <Toggle
+                  size="sm"
+                  checked={!field.value}
+                  onChange={checked => field.onChange(!checked)}
+                  title={__("Include this cookie in the banner")}
+                />
+              )}
+            />
+            <code className="text-sm font-mono">{cookie.displayName}</code>
+          </div>
+          <Input
+            {...register("description")}
+            placeholder={__("Description")}
           />
-          <code className="text-sm font-mono">{cookie.displayName}</code>
         </div>
       </Td>
-      <Td />
+      <Td>
+        <Badge variant={typeBadge.variant}>{typeBadge.label}</Badge>
+      </Td>
       <Td className="pr-3">
         <Controller
           name="duration"
@@ -104,12 +115,6 @@ export function EditCookieRow({
               onUnitChange={u => field.onChange({ ...field.value, unit: u })}
             />
           )}
-        />
-      </Td>
-      <Td className="pr-3">
-        <Input
-          {...register("description")}
-          placeholder={__("Description")}
         />
       </Td>
       <Td>

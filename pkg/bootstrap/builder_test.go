@@ -192,6 +192,7 @@ func TestBuilder_Build_Defaults(t *testing.T) {
 	assert.Equal(t, "no-reply@notification.getprobo.com", cfg.Probod.Notifications.Mailer.SenderEmail)
 	assert.Equal(t, "localhost:1025", cfg.Probod.Notifications.Mailer.SMTP.Addr)
 	assert.False(t, cfg.Probod.Notifications.Mailer.SMTP.TLSRequired)
+	assert.Empty(t, cfg.Probod.Notifications.Mailer.SMTP.HelloName)
 	assert.Equal(t, 60, cfg.Probod.Notifications.Mailer.MailerInterval)
 	assert.Equal(t, 60, cfg.Probod.Notifications.Slack.SenderInterval)
 	assert.Empty(t, cfg.Probod.Notifications.Slack.SigningSecret)
@@ -215,10 +216,29 @@ func TestBuilder_Build_Defaults(t *testing.T) {
 	assert.Empty(t, cfg.Probod.Agents.EvidenceDescriber.ModelName)
 	assert.Nil(t, cfg.Probod.Agents.EvidenceDescriber.Temperature)
 	assert.Nil(t, cfg.Probod.Agents.EvidenceDescriber.MaxTokens)
+	assert.Empty(t, cfg.Probod.Agents.ThirdPartyVetter.Provider)
+	assert.Empty(t, cfg.Probod.Agents.ThirdPartyVetter.ModelName)
+	assert.Nil(t, cfg.Probod.Agents.ThirdPartyVetter.Temperature)
+	assert.Nil(t, cfg.Probod.Agents.ThirdPartyVetter.MaxTokens)
 	assert.Empty(t, cfg.Probod.Agents.TrackerMapping.Provider)
 	assert.Empty(t, cfg.Probod.Agents.TrackerMapping.ModelName)
 	assert.Nil(t, cfg.Probod.Agents.TrackerMapping.Temperature)
-	assert.Nil(t, cfg.Probod.Agents.TrackerMapping.MaxTokens)
+	assert.Equal(t, new(4096), cfg.Probod.Agents.TrackerMapping.MaxTokens)
+
+	// Tracker worker tuning — defaults
+	assert.Equal(t, 10, cfg.Probod.TrackerMappingWorker.Interval)
+	assert.Equal(t, 3, cfg.Probod.TrackerMappingWorker.MaxConcurrency)
+	assert.Equal(t, 600, cfg.Probod.TrackerMappingWorker.StaleAfter)
+	assert.Equal(t, 45, cfg.Probod.TrackerMappingWorker.AgentTimeout)
+	assert.Equal(t, 10, cfg.Probod.TrackerMappingWorker.AgentMaxTurns)
+	assert.Equal(t, 10, cfg.Probod.CommonPatternEnrichmentWorker.Interval)
+	assert.Equal(t, 2, cfg.Probod.CommonPatternEnrichmentWorker.MaxConcurrency)
+	assert.Equal(t, 600, cfg.Probod.CommonPatternEnrichmentWorker.StaleAfter)
+	assert.Equal(t, 45, cfg.Probod.CommonPatternEnrichmentWorker.AgentTimeout)
+	assert.Equal(t, 10, cfg.Probod.CommonPatternEnrichmentWorker.AgentMaxTurns)
+	assert.Equal(t, 10, cfg.Probod.ThirdPartyVetting.Interval)
+	assert.Equal(t, 1500, cfg.Probod.ThirdPartyVetting.StaleAfter)
+	assert.Equal(t, 1, cfg.Probod.ThirdPartyVetting.MaxConcurrency)
 
 	// Custom domains config
 	assert.Equal(t, 3600, cfg.Probod.CustomDomains.RenewalInterval)
@@ -308,11 +328,30 @@ func TestBuilder_Build_CustomValues(t *testing.T) {
 	env["AGENT_EVIDENCE_DESCRIBER_MODEL_NAME"] = "claude-sonnet-4-20250514"
 	env["AGENT_EVIDENCE_DESCRIBER_TEMPERATURE"] = "0.2"
 	env["AGENT_EVIDENCE_DESCRIBER_MAX_TOKENS"] = "4096"
+	// Agents — third-party-vetter override
+	env["AGENT_THIRD_PARTY_VETTER_PROVIDER"] = "openai"
+	env["AGENT_THIRD_PARTY_VETTER_MODEL_NAME"] = "gpt-4o"
+	env["AGENT_THIRD_PARTY_VETTER_TEMPERATURE"] = "0.3"
+	env["AGENT_THIRD_PARTY_VETTER_MAX_TOKENS"] = "8192"
 	// Agents — tracker-mapping override
 	env["AGENT_TRACKER_MAPPING_PROVIDER"] = "openai"
 	env["AGENT_TRACKER_MAPPING_MODEL_NAME"] = "gpt-4o-mini"
 	env["AGENT_TRACKER_MAPPING_TEMPERATURE"] = "0.1"
 	env["AGENT_TRACKER_MAPPING_MAX_TOKENS"] = "1024"
+	// Tracker worker tuning override
+	env["TRACKER_MAPPING_INTERVAL"] = "20"
+	env["TRACKER_MAPPING_MAX_CONCURRENCY"] = "5"
+	env["TRACKER_MAPPING_STALE_AFTER"] = "1200"
+	env["TRACKER_MAPPING_AGENT_TIMEOUT"] = "30"
+	env["TRACKER_MAPPING_AGENT_MAX_TURNS"] = "6"
+	env["COMMON_PATTERN_ENRICHMENT_INTERVAL"] = "15"
+	env["COMMON_PATTERN_ENRICHMENT_MAX_CONCURRENCY"] = "4"
+	env["COMMON_PATTERN_ENRICHMENT_STALE_AFTER"] = "900"
+	env["COMMON_PATTERN_ENRICHMENT_AGENT_TIMEOUT"] = "50"
+	env["COMMON_PATTERN_ENRICHMENT_AGENT_MAX_TURNS"] = "5"
+	env["THIRD_PARTY_VETTING_INTERVAL"] = "15"
+	env["THIRD_PARTY_VETTING_STALE_AFTER"] = "1800"
+	env["THIRD_PARTY_VETTING_MAX_CONCURRENCY"] = "2"
 	// Custom domains
 	env["CUSTOM_DOMAINS_RESOLVER_ADDR"] = "1.1.1.1:53"
 	env["ACME_ACCOUNT_KEY"] = "-----BEGIN EC PRIVATE KEY-----\ntest\n-----END EC PRIVATE KEY-----"
@@ -399,11 +438,30 @@ func TestBuilder_Build_CustomValues(t *testing.T) {
 	assert.Equal(t, "claude-sonnet-4-20250514", cfg.Probod.Agents.EvidenceDescriber.ModelName)
 	assert.Equal(t, new(0.2), cfg.Probod.Agents.EvidenceDescriber.Temperature)
 	assert.Equal(t, new(4096), cfg.Probod.Agents.EvidenceDescriber.MaxTokens)
+	// Agents — third-party-vetter overrides
+	assert.Equal(t, "openai", cfg.Probod.Agents.ThirdPartyVetter.Provider)
+	assert.Equal(t, "gpt-4o", cfg.Probod.Agents.ThirdPartyVetter.ModelName)
+	assert.Equal(t, new(0.3), cfg.Probod.Agents.ThirdPartyVetter.Temperature)
+	assert.Equal(t, new(8192), cfg.Probod.Agents.ThirdPartyVetter.MaxTokens)
 	// Agents — tracker-mapping overrides
 	assert.Equal(t, "openai", cfg.Probod.Agents.TrackerMapping.Provider)
 	assert.Equal(t, "gpt-4o-mini", cfg.Probod.Agents.TrackerMapping.ModelName)
 	assert.Equal(t, new(0.1), cfg.Probod.Agents.TrackerMapping.Temperature)
 	assert.Equal(t, new(1024), cfg.Probod.Agents.TrackerMapping.MaxTokens)
+	// Tracker worker tuning — overrides
+	assert.Equal(t, 20, cfg.Probod.TrackerMappingWorker.Interval)
+	assert.Equal(t, 5, cfg.Probod.TrackerMappingWorker.MaxConcurrency)
+	assert.Equal(t, 1200, cfg.Probod.TrackerMappingWorker.StaleAfter)
+	assert.Equal(t, 30, cfg.Probod.TrackerMappingWorker.AgentTimeout)
+	assert.Equal(t, 6, cfg.Probod.TrackerMappingWorker.AgentMaxTurns)
+	assert.Equal(t, 15, cfg.Probod.CommonPatternEnrichmentWorker.Interval)
+	assert.Equal(t, 4, cfg.Probod.CommonPatternEnrichmentWorker.MaxConcurrency)
+	assert.Equal(t, 900, cfg.Probod.CommonPatternEnrichmentWorker.StaleAfter)
+	assert.Equal(t, 50, cfg.Probod.CommonPatternEnrichmentWorker.AgentTimeout)
+	assert.Equal(t, 5, cfg.Probod.CommonPatternEnrichmentWorker.AgentMaxTurns)
+	assert.Equal(t, 15, cfg.Probod.ThirdPartyVetting.Interval)
+	assert.Equal(t, 1800, cfg.Probod.ThirdPartyVetting.StaleAfter)
+	assert.Equal(t, 2, cfg.Probod.ThirdPartyVetting.MaxConcurrency)
 	// Custom domains
 	assert.Equal(t, "1.1.1.1:53", cfg.Probod.CustomDomains.ResolverAddr)
 	assert.Equal(t, "-----BEGIN EC PRIVATE KEY-----\ntest\n-----END EC PRIVATE KEY-----", cfg.Probod.CustomDomains.ACME.AccountKey)
@@ -464,7 +522,8 @@ func TestBuilder_Build_AccessReviewConnectors(t *testing.T) {
 	// CONNECTOR_VERCEL_INTEGRATION_SLUG env var.
 	providers := []string{
 		"GITLAB", "BITBUCKET", "HEROKU", "PAGERDUTY",
-		"ASANA", "NETLIFY", "CLICKUP", "MONDAY",
+		"ASANA", "NETLIFY", "CLICKUP", "MONDAY", "DATADOG",
+		"ZENDESK",
 	}
 
 	env := requiredEnv()

@@ -102,3 +102,278 @@ func TestNotionNameResolver(t *testing.T) {
 		})
 	}
 }
+
+func TestSentryNameResolver(t *testing.T) {
+	t.Parallel()
+
+	t.Run("empty slug returns nothing without HTTP call", func(t *testing.T) {
+		t.Parallel()
+
+		client := &http.Client{Transport: roundTripperFunc(func(*http.Request) (*http.Response, error) {
+			t.Fatalf("resolver should not make an HTTP call for an empty slug")
+			return nil, nil
+		})}
+
+		got, err := NewSentryNameResolver(client, "").ResolveInstanceName(context.Background())
+		require.NoError(t, err)
+		assert.Empty(t, got)
+	})
+
+	cases := []struct {
+		name    string
+		status  int
+		body    string
+		want    string
+		wantErr bool
+	}{
+		{
+			name:   "200 returns name",
+			status: http.StatusOK,
+			body:   `{"slug":"acme","name":"Acme Inc"}`,
+			want:   "Acme Inc",
+		},
+		{
+			name:   "404 is terminal (no error, no name)",
+			status: http.StatusNotFound,
+			body:   `{"detail":"The requested resource does not exist"}`,
+			want:   "",
+		},
+		{
+			name:    "401 is retryable",
+			status:  http.StatusUnauthorized,
+			body:    `{"detail":"Authentication credentials were not provided."}`,
+			wantErr: true,
+		},
+		{
+			name:    "403 is retryable",
+			status:  http.StatusForbidden,
+			body:    `{"detail":"You do not have permission to perform this action."}`,
+			wantErr: true,
+		},
+		{
+			name:    "500 is retryable",
+			status:  http.StatusInternalServerError,
+			body:    `{"detail":"Internal Server Error"}`,
+			wantErr: true,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				assert.Equal(t, http.MethodGet, r.Method)
+				assert.Equal(t, "/api/0/organizations/acme", r.URL.Path)
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(tc.status)
+				_, _ = w.Write([]byte(tc.body))
+			}))
+			defer srv.Close()
+
+			client := &http.Client{Transport: &hostRewriter{target: srv.URL}}
+
+			got, err := NewSentryNameResolver(client, "acme").ResolveInstanceName(context.Background())
+			if tc.wantErr {
+				require.Error(t, err)
+				return
+			}
+
+			require.NoError(t, err)
+			assert.Equal(t, tc.want, got)
+		})
+	}
+}
+
+func TestTailscaleNameResolver(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		name    string
+		status  int
+		body    string
+		want    string
+		wantErr bool
+	}{
+		{
+			name:   "custom domain tailnet",
+			status: http.StatusOK,
+			body:   `{"users":[{"loginName":"jane@acme.example.com"},{"loginName":"bob@acme.example.com"}]}`,
+			want:   "acme.example.com",
+		},
+		{
+			name:   "most common domain wins",
+			status: http.StatusOK,
+			body:   `{"users":[{"loginName":"a@one.com"},{"loginName":"b@two.com"},{"loginName":"c@two.com"}]}`,
+			want:   "two.com",
+		},
+		{
+			name:   "no usable login names",
+			status: http.StatusOK,
+			body:   `{"users":[{"loginName":""},{"loginName":"tagged-device"}]}`,
+			want:   "",
+		},
+		{
+			name:    "server error",
+			status:  http.StatusInternalServerError,
+			body:    `{"message":"boom"}`,
+			wantErr: true,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				assert.Equal(t, http.MethodGet, r.Method)
+				assert.Equal(t, "/api/v2/tailnet/-/users", r.URL.Path)
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(tc.status)
+				_, _ = w.Write([]byte(tc.body))
+			}))
+			defer srv.Close()
+
+			client := &http.Client{Transport: &hostRewriter{target: srv.URL}}
+
+			got, err := NewTailscaleNameResolver(client).ResolveInstanceName(context.Background())
+			if tc.wantErr {
+				require.Error(t, err)
+				return
+			}
+
+			require.NoError(t, err)
+			assert.Equal(t, tc.want, got)
+		})
+	}
+}
+
+func TestHerokuNameResolver(t *testing.T) {
+	t.Parallel()
+
+	t.Run("personal-account slug returns a name without an HTTP call", func(t *testing.T) {
+		t.Parallel()
+
+		client := &http.Client{Transport: roundTripperFunc(func(*http.Request) (*http.Response, error) {
+			t.Fatalf("resolver should not make an HTTP call for a personal account")
+			return nil, nil
+		})}
+
+		got, err := NewHerokuNameResolver(client, herokuPersonalAccountSlug).ResolveInstanceName(context.Background())
+		require.NoError(t, err)
+		assert.Equal(t, "Personal account", got)
+	})
+
+	t.Run("team slug resolves the team name", func(t *testing.T) {
+		t.Parallel()
+
+		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			assert.Equal(t, http.MethodGet, r.Method)
+			assert.Equal(t, "/teams/acme", r.URL.Path)
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			_, _ = w.Write([]byte(`{"name":"Acme Inc"}`))
+		}))
+		defer srv.Close()
+
+		client := &http.Client{Transport: &hostRewriter{target: srv.URL}}
+
+		got, err := NewHerokuNameResolver(client, "acme").ResolveInstanceName(context.Background())
+		require.NoError(t, err)
+		assert.Equal(t, "Acme Inc", got)
+	})
+}
+
+func TestGitHubNameResolver(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		name      string
+		org       string
+		status    int
+		body      string
+		want      string
+		wantErr   bool
+		wantNoReq bool
+	}{
+		{
+			name:      "empty org returns empty name without HTTP call",
+			org:       "",
+			wantNoReq: true,
+			want:      "",
+		},
+		{
+			name:   "200 with name",
+			org:    "acme",
+			status: http.StatusOK,
+			body:   `{"name":"Acme Inc"}`,
+			want:   "Acme Inc",
+		},
+		{
+			name:   "200 with empty name falls back to org slug",
+			org:    "acme",
+			status: http.StatusOK,
+			body:   `{"name":""}`,
+			want:   "acme",
+		},
+		{
+			name:    "404 errors",
+			org:     "missing",
+			status:  http.StatusNotFound,
+			body:    `{"message":"Not Found"}`,
+			wantErr: true,
+		},
+		{
+			name:    "500 errors",
+			org:     "acme",
+			status:  http.StatusInternalServerError,
+			body:    `{"message":"boom"}`,
+			wantErr: true,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			var called bool
+
+			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				called = true
+
+				assert.Equal(t, http.MethodGet, r.Method)
+				assert.Equal(t, "/orgs/"+tc.org, r.URL.Path)
+				assert.Equal(t, "application/vnd.github+json", r.Header.Get("Accept"))
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(tc.status)
+				_, _ = w.Write([]byte(tc.body))
+			}))
+			defer srv.Close()
+
+			client := &http.Client{Transport: &hostRewriter{target: srv.URL}}
+
+			got, err := NewGitHubNameResolver(client, tc.org).ResolveInstanceName(context.Background())
+			if tc.wantErr {
+				require.Error(t, err)
+				return
+			}
+
+			require.NoError(t, err)
+			assert.Equal(t, tc.want, got)
+
+			if tc.wantNoReq {
+				assert.False(t, called, "expected no HTTP call when org is empty")
+			} else {
+				assert.True(t, called, "expected HTTP call when org is non-empty")
+			}
+		})
+	}
+}
+
+// roundTripperFunc adapts a function into an http.RoundTripper, useful for
+// asserting that a resolver short-circuits before making any HTTP call.
+type roundTripperFunc func(*http.Request) (*http.Response, error)
+
+func (f roundTripperFunc) RoundTrip(r *http.Request) (*http.Response, error) {
+	return f(r)
+}

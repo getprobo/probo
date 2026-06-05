@@ -18,6 +18,7 @@ import {
   ActionDropdown,
   Badge,
   DropdownItem,
+  IconArchive,
   IconMail,
   IconTrashCan,
   Option,
@@ -107,12 +108,20 @@ const removeUserMutation = graphql`
   }
 `;
 
+const archiveUserMutation = graphql`
+  mutation PeopleListItem_archiveMutation($input: ArchiveUserInput!) {
+    archiveUser(input: $input) {
+      archivedProfileId
+    }
+  }
+`;
+
 export function PeopleListItem(props: {
   connectionId: DataID;
   fKey: PeopleListItemFragment$key;
   onRefetch: () => void;
 }) {
-  const { fKey, connectionId } = props;
+  const { fKey, connectionId, onRefetch } = props;
 
   const organizationId = useOrganizationId();
   const { __ } = useTranslate();
@@ -127,7 +136,8 @@ export function PeopleListItem(props: {
   const isInactive = profile.state === "INACTIVE";
 
   const canSendActivationMail = isInactive && profile.source !== "SCIM" && profile.canInvite;
-  const canDelete = profile.canDelete && profile.source !== "SCIM";
+  const canArchive = profile.canDelete && profile.source !== "SCIM" && profile.state !== "INACTIVE";
+  const canRemove = profile.canDelete && profile.source !== "SCIM";
 
   const [inviteUser]
     = useMutationWithToasts<PeopleListItem_inviteMutation>(inviteUserMutation, {
@@ -141,6 +151,13 @@ export function PeopleListItem(props: {
       errorMessage: __("Failed to update role"),
     },
   );
+  const [archiveUser, isArchiving] = useMutationWithToasts(
+    archiveUserMutation,
+    {
+      successMessage: __("Person archived successfully"),
+      errorMessage: __("Failed to archive person"),
+    },
+  );
   const [removeUser, isRemoving] = useMutationWithToasts(
     removeUserMutation,
     {
@@ -148,6 +165,7 @@ export function PeopleListItem(props: {
       errorMessage: __("Failed to remove person"),
     },
   );
+  const isMutating = isArchiving || isRemoving;
 
   const handleInvite = () => {
     confirm(
@@ -183,6 +201,29 @@ export function PeopleListItem(props: {
       },
     });
   };
+  const handleArchive = () => {
+    confirm(
+      () => {
+        return archiveUser({
+          variables: {
+            input: {
+              profileId: profile.id,
+              organizationId: organizationId,
+            },
+          },
+          onCompleted: () => {
+            onRefetch();
+          },
+        });
+      },
+      {
+        message: sprintf(
+          __("Are you sure you want to archive %s?"),
+          profile.fullName,
+        ),
+      },
+    );
+  };
   const handleRemove = () => {
     confirm(
       () => {
@@ -193,6 +234,9 @@ export function PeopleListItem(props: {
               organizationId: organizationId,
             },
             connections: [connectionId],
+          },
+          onCompleted: () => {
+            onRefetch();
           },
         });
       },
@@ -208,7 +252,7 @@ export function PeopleListItem(props: {
   return (
     <Tr to={`/organizations/${organizationId}/people/${profile.id}`}>
       <Td className={clsx(
-        isRemoving && "opacity-60 pointer-events-none",
+        isMutating && "opacity-60 pointer-events-none",
         isInactive && "opacity-50",
       )}
       >
@@ -218,7 +262,7 @@ export function PeopleListItem(props: {
         <Badge variant={profile.state === "INACTIVE" ? "neutral" : "success"}>{profile.state}</Badge>
       </Td>
       <Td className={clsx(
-        isRemoving && "opacity-60 pointer-events-none",
+        isMutating && "opacity-60 pointer-events-none",
         isInactive && "opacity-50",
       )}
       >
@@ -232,7 +276,7 @@ export function PeopleListItem(props: {
           noLink
           className={clsx(
             "pr-4",
-            isRemoving && "opacity-60 pointer-events-none",
+            isMutating && "opacity-60 pointer-events-none",
             isInactive && "opacity-50",
           )}
         >
@@ -260,14 +304,14 @@ export function PeopleListItem(props: {
         </Td>
       )}
       <Td className={clsx(
-        isRemoving && "opacity-60 pointer-events-none",
+        isMutating && "opacity-60 pointer-events-none",
         isInactive && "opacity-50",
       )}
       >
         {new Date(profile.createdAt).toLocaleDateString()}
       </Td>
       <Td noLink width={160} className="text-end">
-        {(canSendActivationMail || canDelete) && (
+        {(canSendActivationMail || canArchive || canRemove) && (
           <ActionDropdown>
             {canSendActivationMail && (
               <DropdownItem
@@ -277,7 +321,15 @@ export function PeopleListItem(props: {
                 {lastInvitation ? __("Resend activation mail") : __("Send activation mail")}
               </DropdownItem>
             )}
-            {canDelete && (
+            {canArchive && (
+              <DropdownItem
+                onClick={handleArchive}
+                icon={IconArchive}
+              >
+                {__("Archive person")}
+              </DropdownItem>
+            )}
+            {canRemove && (
               <DropdownItem
                 onClick={handleRemove}
                 variant="danger"

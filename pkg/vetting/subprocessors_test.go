@@ -1,0 +1,178 @@
+// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+// OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
+
+package vetting
+
+import (
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"go.probo.inc/probo/pkg/llm"
+)
+
+func TestSubprocessorsFromOrchestratorMessages(t *testing.T) {
+	t.Parallel()
+
+	toolJSON := `{"subprocessors":[{"name":"Amazon Web Services","country":"US","purpose":"Cloud hosting"}],"total_count":1,"source":"https://example.com/subprocessors","is_complete":true}`
+
+	messages := []llm.Message{
+		{
+			Role: llm.RoleAssistant,
+			ToolCalls: []llm.ToolCall{{
+				ID: "call-1",
+				Function: llm.FunctionCall{
+					Name: extractSubprocessorsToolName,
+				},
+			}},
+		},
+		{
+			Role:       llm.RoleTool,
+			ToolCallID: "call-1",
+			Parts:      []llm.Part{llm.TextPart{Text: toolJSON}},
+		},
+	}
+
+	subs := subprocessorsFromOrchestratorMessages(messages)
+
+	assert.Equal(
+		t,
+		[]Subprocessor{{
+			Name:    "Amazon Web Services",
+			Country: "US",
+			Purpose: "Cloud hosting",
+		}},
+		subs,
+	)
+}
+
+func TestSubprocessorsFromOrchestratorMessages_LatestCallWins(t *testing.T) {
+	t.Parallel()
+
+	messages := []llm.Message{
+		{
+			Role: llm.RoleAssistant,
+			ToolCalls: []llm.ToolCall{
+				{
+					ID: "call-1",
+					Function: llm.FunctionCall{
+						Name: extractSubprocessorsToolName,
+					},
+				},
+				{
+					ID: "call-2",
+					Function: llm.FunctionCall{
+						Name: extractSubprocessorsToolName,
+					},
+				},
+			},
+		},
+		{
+			Role:       llm.RoleTool,
+			ToolCallID: "call-1",
+			Parts:      []llm.Part{llm.TextPart{Text: `{"subprocessors":[{"name":"Stripe","country":"US","purpose":"Payments"}]}`}},
+		},
+		{
+			Role:       llm.RoleTool,
+			ToolCallID: "call-2",
+			Parts:      []llm.Part{llm.TextPart{Text: `{"subprocessors":[{"name":"Stripe","country":"IE","purpose":"Payment processing"}]}`}},
+		},
+	}
+
+	subs := subprocessorsFromOrchestratorMessages(messages)
+
+	assert.Equal(
+		t,
+		[]Subprocessor{{
+			Name:    "Stripe",
+			Country: "IE",
+			Purpose: "Payment processing",
+		}},
+		subs,
+	)
+}
+
+func TestSubprocessorsFromOrchestratorMessages_IgnoresOtherTools(t *testing.T) {
+	t.Parallel()
+
+	messages := []llm.Message{
+		{
+			Role: llm.RoleAssistant,
+			ToolCalls: []llm.ToolCall{{
+				ID: "call-1",
+				Function: llm.FunctionCall{
+					Name: "assess_security",
+				},
+			}},
+		},
+		{
+			Role:       llm.RoleTool,
+			ToolCallID: "call-1",
+			Parts:      []llm.Part{llm.TextPart{Text: `{"subprocessors":[{"name":"Ignored"}]}`}},
+		},
+	}
+
+	assert.Nil(t, subprocessorsFromOrchestratorMessages(messages))
+}
+
+func TestMergeSubprocessors(t *testing.T) {
+	t.Parallel()
+
+	toolSubs := []Subprocessor{{
+		Name:    "AWS",
+		Country: "US",
+		Purpose: "Hosting",
+	}}
+	extractedSubs := []Subprocessor{
+		{Name: "AWS", Country: "DE", Purpose: "Wrong"},
+		{Name: "SendGrid", Country: "US", Purpose: "Email"},
+	}
+
+	merged := mergeSubprocessors(toolSubs, extractedSubs)
+
+	assert.Equal(
+		t,
+		[]Subprocessor{
+			{Name: "AWS", Country: "US", Purpose: "Hosting"},
+			{Name: "SendGrid", Country: "US", Purpose: "Email"},
+		},
+		merged,
+	)
+}
+
+func TestSubprocessorListURLFromOrchestratorMessages(t *testing.T) {
+	t.Parallel()
+
+	messages := []llm.Message{
+		{
+			Role: llm.RoleAssistant,
+			ToolCalls: []llm.ToolCall{{
+				ID: "call-1",
+				Function: llm.FunctionCall{
+					Name: extractSubprocessorsToolName,
+				},
+			}},
+		},
+		{
+			Role:       llm.RoleTool,
+			ToolCallID: "call-1",
+			Parts:      []llm.Part{llm.TextPart{Text: `{"subprocessors":[],"source":"https://example.com/legal/subprocessors"}`}},
+		},
+	}
+
+	assert.Equal(
+		t,
+		"https://example.com/legal/subprocessors",
+		subprocessorListURLFromOrchestratorMessages(messages),
+	)
+}

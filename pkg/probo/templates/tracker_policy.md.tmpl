@@ -1,0 +1,58 @@
+# Cookie and Tracking Technologies Policy for {{ .WebsiteOrigin }}
+
+_Last updated: {{ formatDate .GeneratedAt }}_
+
+This Cookie and Tracking Technologies Policy explains how {{ .OrganizationName }} ("we", "us", or "our") uses cookies and other tracking technologies to recognise you when you visit {{ .WebsiteOrigin }} (the "Website"). It explains what these technologies are and why we use them, as well as the rights and choices you have to control them.
+{{ if .PrivacyPolicyURL }}
+This policy is part of, and should be read together with, our [Privacy Policy]({{ .PrivacyPolicyURL }}).
+{{ end }}
+{{ $section := 0 }}{{ $section = add $section 1 }}## {{ $section }}. What are cookies and tracking technologies?
+
+Cookies are small data files that are placed on your device when you visit a website. We also use other technologies that store or retrieve information on your device in a similar way, including browser local storage and session storage, IndexedDB, cache storage, pixels, and software development kits. In this policy we refer to all of these collectively as "trackers".
+
+Trackers set by the website owner are called "first-party" trackers. Trackers set by parties other than the website owner are called "third-party" trackers, and they enable features or functionality provided on or through the Website, such as analytics and content from external services.
+
+{{ $section = add $section 1 }}## {{ $section }}. Why we use trackers
+
+We use trackers for several reasons. Some are strictly necessary for technical reasons in order for the Website to operate. Others help us understand how the Website is used and improve your experience. We only place non-essential trackers on your device with your consent, and you can withdraw that consent at any time.
+
+{{ $section = add $section 1 }}## {{ $section }}. The trackers we use
+
+The tables below describe the categories of trackers we use on the Website, the purpose of the trackers within each category, and how long each one remains on your device. This list reflects the trackers in our current banner configuration and is updated automatically whenever that configuration changes.
+{{ range .Categories }}
+### {{ .Name }}{{ if .Necessary }} (always active){{ end }}
+
+{{ with .Description }}{{ . }}
+{{ else }}Trackers in this category support the functionality described by its name.
+{{ end }}{{ if .Trackers }}
+| Tracker | Type | Purpose | Duration |
+| --- | --- | --- | --- |
+{{ range .Trackers }}| {{ .Name }} | {{ .Type }} | {{ .Purpose }} | {{ .Duration }} |
+{{ end }}{{ else }}
+We are not currently using any trackers in this category.
+{{ end }}{{ end }}
+{{ if .ThirdParties }}{{ $section = add $section 1 }}## {{ $section }}. Third parties that set trackers
+
+Some trackers described above are placed by third-party services that we rely on to operate and improve the Website. These third parties may use trackers to collect information about your activity across different websites. We encourage you to review their privacy notices to understand how they process your data.
+{{ range .ThirdParties }}
+- **{{ .Name }}**{{ with .Description }} — {{ . }}{{ end }}{{ with .PrivacyPolicyURL }} ([Privacy Policy]({{ . }})){{ end }}
+{{ end }}{{ end }}
+{{ $section = add $section 1 }}## {{ $section }}. How to control trackers
+
+You can decide whether to accept or reject non-essential trackers at any time through the consent banner displayed on the Website. You can also set or update your preferences by reopening the banner from the Website. Strictly necessary trackers cannot be disabled because the Website cannot function properly without them.
+
+Most web browsers additionally allow you to control cookies and clear locally stored data through their settings. If you choose to reject or delete trackers through your browser, some parts of the Website may no longer function as intended. Your consent choices are remembered for up to {{ .ConsentExpiryDays }} days, after which we will ask for your preferences again.
+
+{{ $section = add $section 1 }}## {{ $section }}. Your privacy rights
+
+Depending on where you live, data protection and privacy laws give you rights over how trackers are used. Under the EU and UK General Data Protection Regulation (GDPR and UK GDPR) and the Swiss Federal Act on Data Protection (FADP), we ask for your consent before setting any non-essential tracker, and you may withdraw that consent at any time without affecting the lawfulness of processing carried out beforehand.
+
+Under the California Consumer Privacy Act, as amended by the California Privacy Rights Act (CCPA/CPRA), and comparable laws in other jurisdictions, certain uses of trackers may be considered a "sale" or "sharing" of personal information. Where that is the case, you have the right to opt out, and you can exercise that right through the consent banner on the Website. We aim to honor recognised browser-based opt-out signals where required by applicable law.
+
+{{ $section = add $section 1 }}## {{ $section }}. Changes to this policy
+
+We may update this policy from time to time to reflect changes to the trackers we use or for other operational, legal, or regulatory reasons. This policy is regenerated automatically when our tracker configuration changes, so please revisit it periodically. The date at the top indicates when it was last updated.
+
+{{ $section = add $section 1 }}## {{ $section }}. Contact us
+
+If you have any questions about our use of cookies or other tracking technologies, please contact us using the details available on the Website.

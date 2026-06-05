@@ -167,6 +167,7 @@ components:
       enum:
         - CREATED_AT
         - FULL_NAME
+        - EMAIL_ADDRESS
         - KIND
       go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.MembershipProfileOrderField
 
@@ -186,6 +187,14 @@ components:
         - ACTIVE
         - INACTIVE
       go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.ProfileState
+
+    ProfileSource:
+      type: string
+      enum:
+        - MANUAL
+        - SCIM
+        - SAML
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.ProfileSource
 
     Regulation:
       type: string
@@ -210,6 +219,7 @@ components:
     CountryCode:
       type: string
       enum:
+        - GLOBAL
         - AD
         - AE
         - AF
@@ -470,6 +480,7 @@ components:
         - email_address
         - additional_email_addresses
         - kind
+        - source
         - state
         - created_at
         - updated_at
@@ -496,6 +507,9 @@ components:
             - string
             - "null"
           description: Profile kind
+        source:
+          $ref: "#/components/schemas/ProfileSource"
+          description: Profile source (MANUAL, SCIM, or SAML)
         state:
           $ref: "#/components/schemas/ProfileState"
           description: Profile state (ACTIVE or INACTIVE)
@@ -816,7 +830,7 @@ components:
           type: array
           items:
             type: string
-          description: Countries (ISO 3166-1 alpha-2 country codes)
+          description: Countries or regions (ISO 3166-1 alpha-2 country codes, EU, or GLOBAL)
         business_owner_id:
           anyOf:
             - $ref: "#/components/schemas/GID"
@@ -1042,7 +1056,7 @@ components:
           type: array
           items:
             type: string
-          description: Countries (ISO 3166-1 alpha-2 country codes)
+          description: Countries or regions (ISO 3166-1 alpha-2 country codes, EU, or GLOBAL)
         business_owner_id:
           $ref: "#/components/schemas/GID"
           description: Business owner ID
@@ -1143,7 +1157,7 @@ components:
           type: array
           items:
             type: string
-          description: Countries (ISO 3166-1 alpha-2 country codes)
+          description: Countries or regions (ISO 3166-1 alpha-2 country codes, EU, or GLOBAL)
         business_owner_id:
           $ref: "#/components/schemas/GID"
           description: Business owner ID
@@ -1466,7 +1480,7 @@ components:
           $ref: "#/components/schemas/GID"
           description: Deleted thirdParty service ID
 
-    AssessThirdPartyInput:
+    VetThirdPartyInput:
       type: object
       required:
         - id
@@ -1474,48 +1488,21 @@ components:
       properties:
         id:
           $ref: "#/components/schemas/GID"
-          description: ThirdParty ID to assess
+          description: ThirdParty ID to vet
         website_url:
           type: string
-          description: ThirdParty website URL to crawl and assess
+          description: ThirdParty website URL to crawl and vet
         procedure:
           type: string
-          description: Optional custom assessment procedure (overrides the default)
+          description: Optional custom vetting procedure (overrides the default)
 
-    ThirdPartySubprocessor:
-      type: object
-      required:
-        - name
-        - country
-        - purpose
-      properties:
-        name:
-          type: string
-          description: Sub-processor name
-        country:
-          type: string
-          description: Country where the sub-processor operates
-        purpose:
-          type: string
-          description: Purpose of the sub-processor
-
-    AssessThirdPartyOutput:
+    VetThirdPartyOutput:
       type: object
       required:
         - thirdParty
-        - report
-        - subprocessors
       properties:
         thirdParty:
           $ref: "#/components/schemas/ThirdParty"
-        report:
-          type: string
-          description: Markdown-formatted thirdParty assessment report
-        subprocessors:
-          type: array
-          items:
-            $ref: "#/components/schemas/ThirdPartySubprocessor"
-          description: Sub-processors discovered during the assessment
 
     GetUserInput:
       type: object
@@ -1719,6 +1706,28 @@ components:
         deleted_user_id:
           $ref: "#/components/schemas/GID"
           description: Deleted user (profile) ID
+
+    ArchiveUserInput:
+      type: object
+      required:
+        - organization_id
+        - profile_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        profile_id:
+          $ref: "#/components/schemas/GID"
+          description: User (profile) ID to archive
+
+    ArchiveUserOutput:
+      type: object
+      required:
+        - archived_user_id
+      properties:
+        archived_user_id:
+          $ref: "#/components/schemas/GID"
+          description: Archived user (profile) ID
 
     GetProfileInput:
       type: object
@@ -11937,10 +11946,19 @@ tools:
     description: Remove a user from the organization
     hints:
       readonly: false
+      destructive: true
     inputSchema:
       $ref: "#/components/schemas/RemoveUserInput"
     outputSchema:
       $ref: "#/components/schemas/RemoveUserOutput"
+  - name: archiveUser
+    description: Archive a user in the organization
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/ArchiveUserInput"
+    outputSchema:
+      $ref: "#/components/schemas/ArchiveUserOutput"
   - name: addThirdParty
     description: Add a new thirdParty to the organization
     hints:
@@ -12051,14 +12069,14 @@ tools:
       $ref: "#/components/schemas/DeleteThirdPartyServiceInput"
     outputSchema:
       $ref: "#/components/schemas/DeleteThirdPartyServiceOutput"
-  - name: assessThirdParty
-    description: Run an AI-powered assessment on a thirdParty by crawling its website. Returns a markdown report, the discovered sub-processors, and an enriched thirdParty record. Long-running (up to 20 minutes).
+  - name: vetThirdParty
+    description: Start AI-powered vetting of a third party by crawling its website. Returns immediately; vetting runs in the background.
     hints:
       readonly: false
     inputSchema:
-      $ref: "#/components/schemas/AssessThirdPartyInput"
+      $ref: "#/components/schemas/VetThirdPartyInput"
     outputSchema:
-      $ref: "#/components/schemas/AssessThirdPartyOutput"
+      $ref: "#/components/schemas/VetThirdPartyOutput"
   - name: listRisks
     description: List all risks for the organization
     hints:

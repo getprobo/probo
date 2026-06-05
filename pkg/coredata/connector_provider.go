@@ -33,12 +33,15 @@ const (
 	ConnectorProviderBrex         ConnectorProvider = "BREX"
 	ConnectorProviderTally        ConnectorProvider = "TALLY"
 	ConnectorProviderCloudflare   ConnectorProvider = "CLOUDFLARE"
+	ConnectorProviderGrafana      ConnectorProvider = "GRAFANA"
 	ConnectorProviderOpenAI       ConnectorProvider = "OPENAI"
+	ConnectorProviderPostHog      ConnectorProvider = "POSTHOG"
 	ConnectorProviderSentry       ConnectorProvider = "SENTRY"
 	ConnectorProviderSupabase     ConnectorProvider = "SUPABASE"
 	ConnectorProviderGitHub       ConnectorProvider = "GITHUB"
 	ConnectorProviderIntercom     ConnectorProvider = "INTERCOM"
 	ConnectorProviderResend       ConnectorProvider = "RESEND"
+	ConnectorProviderSendGrid     ConnectorProvider = "SENDGRID"
 	ConnectorProviderMicrosoft365 ConnectorProvider = "MICROSOFT_365"
 	ConnectorProviderGitLab       ConnectorProvider = "GITLAB"
 	ConnectorProviderBitbucket    ConnectorProvider = "BITBUCKET"
@@ -47,8 +50,16 @@ const (
 	ConnectorProviderAsana        ConnectorProvider = "ASANA"
 	ConnectorProviderNetlify      ConnectorProvider = "NETLIFY"
 	ConnectorProviderClickUp      ConnectorProvider = "CLICKUP"
+	ConnectorProviderClerk        ConnectorProvider = "CLERK"
 	ConnectorProviderVercel       ConnectorProvider = "VERCEL"
 	ConnectorProviderMonday       ConnectorProvider = "MONDAY"
+	ConnectorProviderMetabase     ConnectorProvider = "METABASE"
+	ConnectorProviderTailscale    ConnectorProvider = "TAILSCALE"
+	ConnectorProviderAnthropic    ConnectorProvider = "ANTHROPIC"
+	ConnectorProviderCursor       ConnectorProvider = "CURSOR"
+	ConnectorProviderDatadog      ConnectorProvider = "DATADOG"
+	ConnectorProviderOkta         ConnectorProvider = "OKTA"
+	ConnectorProviderZendesk      ConnectorProvider = "ZENDESK"
 )
 
 var (
@@ -69,12 +80,15 @@ func ConnectorProviders() []ConnectorProvider {
 		ConnectorProviderBrex,
 		ConnectorProviderTally,
 		ConnectorProviderCloudflare,
+		ConnectorProviderGrafana,
 		ConnectorProviderOpenAI,
+		ConnectorProviderPostHog,
 		ConnectorProviderSentry,
 		ConnectorProviderSupabase,
 		ConnectorProviderGitHub,
 		ConnectorProviderIntercom,
 		ConnectorProviderResend,
+		ConnectorProviderSendGrid,
 		ConnectorProviderMicrosoft365,
 		ConnectorProviderGitLab,
 		ConnectorProviderBitbucket,
@@ -83,8 +97,16 @@ func ConnectorProviders() []ConnectorProvider {
 		ConnectorProviderAsana,
 		ConnectorProviderNetlify,
 		ConnectorProviderClickUp,
+		ConnectorProviderClerk,
 		ConnectorProviderVercel,
 		ConnectorProviderMonday,
+		ConnectorProviderMetabase,
+		ConnectorProviderTailscale,
+		ConnectorProviderAnthropic,
+		ConnectorProviderCursor,
+		ConnectorProviderDatadog,
+		ConnectorProviderOkta,
+		ConnectorProviderZendesk,
 	}
 }
 
@@ -101,12 +123,15 @@ func (v ConnectorProvider) IsValid() bool {
 		ConnectorProviderBrex,
 		ConnectorProviderTally,
 		ConnectorProviderCloudflare,
+		ConnectorProviderGrafana,
 		ConnectorProviderOpenAI,
+		ConnectorProviderPostHog,
 		ConnectorProviderSentry,
 		ConnectorProviderSupabase,
 		ConnectorProviderGitHub,
 		ConnectorProviderIntercom,
 		ConnectorProviderResend,
+		ConnectorProviderSendGrid,
 		ConnectorProviderMicrosoft365,
 		ConnectorProviderGitLab,
 		ConnectorProviderBitbucket,
@@ -115,8 +140,16 @@ func (v ConnectorProvider) IsValid() bool {
 		ConnectorProviderAsana,
 		ConnectorProviderNetlify,
 		ConnectorProviderClickUp,
+		ConnectorProviderClerk,
 		ConnectorProviderVercel,
-		ConnectorProviderMonday:
+		ConnectorProviderMonday,
+		ConnectorProviderMetabase,
+		ConnectorProviderTailscale,
+		ConnectorProviderAnthropic,
+		ConnectorProviderCursor,
+		ConnectorProviderDatadog,
+		ConnectorProviderOkta,
+		ConnectorProviderZendesk:
 		return true
 	}
 

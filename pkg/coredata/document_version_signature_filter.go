@@ -62,12 +62,12 @@ func (f *DocumentVersionSignatureFilter) SQLFragment() string {
             (
                 @active_contract::boolean = TRUE
                 AND (
-                    p.contract_end_date IS NULL OR p.contract_end_date > NOW()
+                    p.contract_end_date IS NULL OR p.contract_end_date >= CURRENT_DATE
                 )
             ) OR (
                 @active_contract::boolean = FALSE
                 AND (
-                    p.contract_end_date IS NOT NULL AND p.contract_end_date <= NOW()
+                    p.contract_end_date IS NOT NULL AND p.contract_end_date < CURRENT_DATE
                 )
             )
         )

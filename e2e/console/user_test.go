@@ -16,6 +16,7 @@ package console_test
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -114,6 +115,110 @@ func TestUser_UpdateMembership(t *testing.T) {
 	assert.Equal(t, "VIEWER", mutationResult.UpdateMembership.Membership.Role)
 }
 
+func TestUser_UpdateMembershipRejectsLastOwnerDemotion(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+
+	queryProfiles := `
+		query($id: ID!) {
+			node(id: $id) {
+				... on Organization {
+					profiles(first: 10) {
+						edges {
+							node {
+								membership {
+									id
+									role
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	`
+
+	var profilesResult struct {
+		Node struct {
+			Profiles struct {
+				Edges []struct {
+					Node struct {
+						Membership struct {
+							ID   string `json:"id"`
+							Role string `json:"role"`
+						} `json:"membership"`
+					} `json:"node"`
+				} `json:"edges"`
+			} `json:"profiles"`
+		} `json:"node"`
+	}
+
+	err := owner.ExecuteConnect(queryProfiles, map[string]any{
+		"id": owner.GetOrganizationID().String(),
+	}, &profilesResult)
+	require.NoError(t, err)
+
+	var ownerMembershipID string
+
+	for _, edge := range profilesResult.Node.Profiles.Edges {
+		if edge.Node.Membership.Role == "OWNER" {
+			ownerMembershipID = edge.Node.Membership.ID
+
+			break
+		}
+	}
+
+	require.NotEmpty(t, ownerMembershipID, "Should find owner member")
+
+	mutation := `
+		mutation($input: UpdateMembershipInput!) {
+			updateMembership(input: $input) {
+				membership {
+					id
+					role
+				}
+			}
+		}
+	`
+
+	err = owner.ExecuteConnect(mutation, map[string]any{
+		"input": map[string]any{
+			"organizationId": owner.GetOrganizationID().String(),
+			"membershipId":   ownerMembershipID,
+			"role":           "VIEWER",
+		},
+	}, nil)
+	testutil.RequireErrorCode(t, err, "CONFLICT")
+
+	var gqlErrors testutil.GraphQLErrors
+	require.ErrorAs(t, err, &gqlErrors)
+	assert.Equal(t, "cannot demote last active owner", gqlErrors[0].Message)
+
+	queryMembership := `
+		query($id: ID!) {
+			node(id: $id) {
+				... on Membership {
+					id
+					role
+				}
+			}
+		}
+	`
+
+	var membershipResult struct {
+		Node struct {
+			ID   string `json:"id"`
+			Role string `json:"role"`
+		} `json:"node"`
+	}
+
+	err = owner.ExecuteConnect(queryMembership, map[string]any{
+		"id": ownerMembershipID,
+	}, &membershipResult)
+	require.NoError(t, err)
+	assert.Equal(t, "OWNER", membershipResult.Node.Role)
+}
+
 func TestUser_RemoveUser(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
@@ -131,6 +236,7 @@ func TestUser_RemoveUser(t *testing.T) {
 						edges {
 							node {
 								id
+								state
 								membership {
 									role
 								}
@@ -148,6 +254,7 @@ func TestUser_RemoveUser(t *testing.T) {
 				Edges []struct {
 					Node struct {
 						ID         string `json:"id"`
+						State      string `json:"state"`
 						Membership struct {
 							Role string `json:"role"`
 						} `json:"membership"`
@@ -198,6 +305,306 @@ func TestUser_RemoveUser(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, userID, mutationResult.RemoveUser.DeletedProfileID)
+
+	// Removed user should no longer be returned.
+	err = owner.ExecuteConnect(query, map[string]any{
+		"id": owner.GetOrganizationID().String(),
+	}, &result)
+	require.NoError(t, err)
+
+	var removedUserFound bool
+
+	for _, edge := range result.Node.Profiles.Edges {
+		if edge.Node.ID == userID {
+			removedUserFound = true
+			break
+		}
+	}
+
+	assert.False(t, removedUserFound, "Should not find removed user")
+}
+
+func TestUser_ArchiveUser(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+
+	// Create a user to archive.
+	userToArchive := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
+	_ = userToArchive
+
+	query := `
+		query($id: ID!) {
+			node(id: $id) {
+				... on Organization {
+					profiles(first: 50) {
+						edges {
+							node {
+								id
+								state
+								membership {
+									role
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	`
+
+	var result struct {
+		Node struct {
+			Profiles struct {
+				Edges []struct {
+					Node struct {
+						ID         string `json:"id"`
+						State      string `json:"state"`
+						Membership struct {
+							Role string `json:"role"`
+						} `json:"membership"`
+					} `json:"node"`
+				} `json:"edges"`
+			} `json:"profiles"`
+		} `json:"node"`
+	}
+
+	err := owner.ExecuteConnect(query, map[string]any{
+		"id": owner.GetOrganizationID().String(),
+	}, &result)
+	require.NoError(t, err)
+
+	var userID string
+
+	for _, edge := range result.Node.Profiles.Edges {
+		if edge.Node.Membership.Role == "VIEWER" {
+			userID = edge.Node.ID
+			break
+		}
+	}
+
+	require.NotEmpty(t, userID, "Should find viewer member")
+
+	mutation := `
+		mutation($input: ArchiveUserInput!) {
+			archiveUser(input: $input) {
+				archivedProfileId
+			}
+		}
+	`
+
+	var mutationResult struct {
+		ArchiveUser struct {
+			ArchivedProfileID string `json:"archivedProfileId"`
+		} `json:"archiveUser"`
+	}
+
+	err = owner.ExecuteConnect(mutation, map[string]any{
+		"input": map[string]any{
+			"organizationId": owner.GetOrganizationID().String(),
+			"profileId":      userID,
+		},
+	}, &mutationResult)
+	require.NoError(t, err)
+
+	assert.Equal(t, userID, mutationResult.ArchiveUser.ArchivedProfileID)
+
+	err = owner.ExecuteConnect(query, map[string]any{
+		"id": owner.GetOrganizationID().String(),
+	}, &result)
+	require.NoError(t, err)
+
+	var archivedUserState string
+
+	for _, edge := range result.Node.Profiles.Edges {
+		if edge.Node.ID == userID {
+			archivedUserState = edge.Node.State
+			break
+		}
+	}
+
+	require.NotEmpty(t, archivedUserState, "Should still find archived user")
+	assert.Equal(t, "INACTIVE", archivedUserState)
+}
+
+func TestUser_DeactivateUserCancelsSignatureRequests(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	signer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
+
+	docID, _ := createTestDocument(t, owner)
+	approveTestDocument(t, owner, docID)
+
+	var versionResult struct {
+		Node struct {
+			Versions struct {
+				Edges []struct {
+					Node struct {
+						ID string `json:"id"`
+					} `json:"node"`
+				} `json:"edges"`
+			} `json:"versions"`
+		} `json:"node"`
+	}
+
+	err := owner.Execute(`
+		query($id: ID!) {
+			node(id: $id) {
+				... on Document {
+					versions(first: 1, orderBy: { field: CREATED_AT, direction: DESC }) {
+						edges { node { id } }
+					}
+				}
+			}
+		}
+	`, map[string]any{"id": docID}, &versionResult)
+	require.NoError(t, err)
+	require.NotEmpty(t, versionResult.Node.Versions.Edges)
+
+	documentVersionID := versionResult.Node.Versions.Edges[0].Node.ID
+	signerProfileID := signer.GetProfileID().String()
+
+	_, err = owner.Do(`
+		mutation($input: RequestSignatureInput!) {
+			requestSignature(input: $input) {
+				documentVersionSignatureEdge { node { id } }
+			}
+		}
+	`, map[string]any{
+		"input": map[string]any{
+			"documentVersionId": documentVersionID,
+			"signatoryId":       signerProfileID,
+		},
+	})
+	require.NoError(t, err)
+
+	assertRequestedSignatureCount(t, owner, documentVersionID, 1)
+
+	var deactivateResult struct {
+		DeactivateUser struct {
+			Success bool `json:"success"`
+		} `json:"deactivateUser"`
+	}
+
+	err = owner.ExecuteConnect(`
+		mutation($input: DeactivateUserInput!) {
+			deactivateUser(input: $input) {
+				success
+			}
+		}
+	`, map[string]any{
+		"input": map[string]any{
+			"organizationId": owner.GetOrganizationID().String(),
+			"profileId":      signerProfileID,
+		},
+	}, &deactivateResult)
+	require.NoError(t, err)
+	require.True(t, deactivateResult.DeactivateUser.Success)
+
+	assertRequestedSignatureCount(t, owner, documentVersionID, 0)
+}
+
+func TestUser_EndedContractCancelsSignatureRequests(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	signer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
+
+	docID, _ := createTestDocument(t, owner)
+	approveTestDocument(t, owner, docID)
+
+	var versionResult struct {
+		Node struct {
+			Versions struct {
+				Edges []struct {
+					Node struct {
+						ID string `json:"id"`
+					} `json:"node"`
+				} `json:"edges"`
+			} `json:"versions"`
+		} `json:"node"`
+	}
+
+	err := owner.Execute(`
+		query($id: ID!) {
+			node(id: $id) {
+				... on Document {
+					versions(first: 1, orderBy: { field: CREATED_AT, direction: DESC }) {
+						edges { node { id } }
+					}
+				}
+			}
+		}
+	`, map[string]any{"id": docID}, &versionResult)
+	require.NoError(t, err)
+	require.NotEmpty(t, versionResult.Node.Versions.Edges)
+
+	documentVersionID := versionResult.Node.Versions.Edges[0].Node.ID
+	signerProfileID := signer.GetProfileID().String()
+
+	_, err = owner.Do(`
+		mutation($input: RequestSignatureInput!) {
+			requestSignature(input: $input) {
+				documentVersionSignatureEdge { node { id } }
+			}
+		}
+	`, map[string]any{
+		"input": map[string]any{
+			"documentVersionId": documentVersionID,
+			"signatoryId":       signerProfileID,
+		},
+	})
+	require.NoError(t, err)
+
+	assertRequestedSignatureCount(t, owner, documentVersionID, 1)
+
+	contractEndDate := time.Now().Add(-24 * time.Hour).Format(time.RFC3339)
+	_, err = owner.DoConnect(`
+		mutation($input: UpdateUserInput!) {
+			updateUser(input: $input) {
+				profile { id }
+			}
+		}
+	`, map[string]any{
+		"input": map[string]any{
+			"id":                       signerProfileID,
+			"fullName":                 "Ended Contract Signer",
+			"additionalEmailAddresses": []string{},
+			"contractEndDate":          contractEndDate,
+		},
+	})
+	require.NoError(t, err)
+
+	assertRequestedSignatureCount(t, owner, documentVersionID, 0)
+}
+
+func assertRequestedSignatureCount(
+	t *testing.T,
+	owner *testutil.Client,
+	documentVersionID string,
+	expected int,
+) {
+	t.Helper()
+
+	var result struct {
+		Node struct {
+			Signatures struct {
+				TotalCount int `json:"totalCount"`
+			} `json:"signatures"`
+		} `json:"node"`
+	}
+
+	err := owner.Execute(`
+		query($id: ID!) {
+			node(id: $id) {
+				... on DocumentVersion {
+					signatures(first: 10, filter: { states: [REQUESTED] }) {
+						totalCount
+					}
+				}
+			}
+		}
+	`, map[string]any{"id": documentVersionID}, &result)
+	require.NoError(t, err)
+	assert.Equal(t, expected, result.Node.Signatures.TotalCount)
 }
 
 func TestUser_RemoveOwner(t *testing.T) {

@@ -13,6 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 import type { INodeProperties } from 'n8n-workflow';
+import * as archiveUserOp from './archiveUser.operation';
 import * as listUsersOp from './listUsers.operation';
 import * as getUserOp from './getUser.operation';
 import * as createUserOp from './createUser.operation';
@@ -33,6 +34,12 @@ export const description: INodeProperties[] = [
 			},
 		},
 		options: [
+			{
+				name: 'Archive',
+				value: 'archiveUser',
+				description: 'Archive a user in the organization',
+				action: 'Archive a user',
+			},
 			{
 				name: 'Create',
 				value: 'createUser',
@@ -78,6 +85,7 @@ export const description: INodeProperties[] = [
 		],
 		default: 'listUsers',
 	},
+	...archiveUserOp.description,
 	...listUsersOp.description,
 	...getUserOp.description,
 	...createUserOp.description,
@@ -88,6 +96,7 @@ export const description: INodeProperties[] = [
 ];
 
 export {
+	archiveUserOp as archiveUser,
 	listUsersOp as listUsers,
 	getUserOp as getUser,
 	createUserOp as createUser,

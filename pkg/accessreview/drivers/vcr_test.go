@@ -15,6 +15,7 @@
 package drivers
 
 import (
+	"encoding/base64"
 	"net/http"
 	"os"
 	"testing"
@@ -50,6 +51,11 @@ func newRecorder(t *testing.T, cassettePath string, envVar string) *recorder.Rec
 		)),
 		recorder.WithHook(func(i *cassette.Interaction) error {
 			i.Request.Headers.Del("Authorization")
+			// Providers like Anthropic authenticate via x-api-key rather
+			// than Authorization; strip it too so a re-record never
+			// persists a raw key.
+			i.Request.Headers.Del("X-Api-Key")
+
 			return nil
 		}, recorder.BeforeSaveHook),
 	)
@@ -95,6 +101,17 @@ func bearerAuth(token string) string {
 	return "Bearer " + token
 }
 
+// basicAuth returns the HTTP Basic auth header value for a username with
+// an empty password ("Basic base64(<username>:)"), or "" if the username
+// is empty. Cursor presents its admin API key as the Basic auth username.
+func basicAuth(username string) string {
+	if username == "" {
+		return ""
+	}
+
+	return "Basic " + base64.StdEncoding.EncodeToString([]byte(username+":"))
+}
+
 // newVCRClient creates an *http.Client backed by the recorder's transport,
 // with an optional Authorization header injected into requests (for recording
 // mode). The authValue should be the complete header value, e.g.
@@ -104,6 +121,40 @@ func newVCRClient(rec *recorder.Recorder, authValue string) *http.Client {
 	if authValue != "" {
 		transport = &authRoundTripper{
 			authValue: authValue,
+			transport: transport,
+		}
+	}
+
+	return &http.Client{Transport: transport}
+}
+
+// headerRoundTripper injects a value into an arbitrary request header.
+// Used for providers (e.g. Anthropic) that authenticate with a custom
+// header instead of Authorization.
+type headerRoundTripper struct {
+	header    string
+	value     string
+	transport http.RoundTripper
+}
+
+func (rt *headerRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
+	if rt.value != "" {
+		req.Header.Set(rt.header, rt.value)
+	}
+
+	return rt.transport.RoundTrip(req)
+}
+
+// newVCRClientWithHeader is like newVCRClient but injects the auth value
+// into a named header (e.g. "x-api-key") instead of Authorization, for
+// providers that do not use Bearer auth. The header is stripped from the
+// cassette by newRecorder's BeforeSave hook.
+func newVCRClientWithHeader(rec *recorder.Recorder, header, value string) *http.Client {
+	transport := rec.GetDefaultClient().Transport
+	if value != "" {
+		transport = &headerRoundTripper{
+			header:    header,
+			value:     value,
 			transport: transport,
 		}
 	}

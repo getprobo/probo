@@ -20,7 +20,6 @@ import (
 	"fmt"
 	"io"
 	"mime"
-	"net/url"
 	"path/filepath"
 	"time"
 
@@ -293,49 +292,20 @@ func (s TrustCenterReferenceService) Delete(
 }
 
 func (s TrustCenterReferenceService) GenerateLogoURL(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context,
+	scope coredata.Scoper,
 	referenceID gid.GID,
-	duration time.Duration,
 ) (string, error) {
 	reference := &coredata.TrustCenterReference{}
-	file := &coredata.File{}
 
 	err := s.svc.pg.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
-		err := reference.LoadByID(ctx, tx, scope, referenceID)
-		if err != nil {
-			return fmt.Errorf("cannot load trust center reference: %w", err)
-		}
-
-		err = file.LoadByID(ctx, tx, scope, reference.LogoFileID)
-		if err != nil {
-			return fmt.Errorf("cannot load logo file: %w", err)
-		}
-
-		return nil
+		return reference.LoadByID(ctx, tx, scope, referenceID)
 	})
 	if err != nil {
-		return "", nil
+		return "", fmt.Errorf("cannot load trust center reference: %w", err)
 	}
 
-	presignClient := s3.NewPresignClient(s.svc.s3)
-
-	encodedFilename := url.PathEscape(file.FileName)
-	contentDisposition := fmt.Sprintf("inline; filename=\"%s\"; filename*=UTF-8''%s",
-		encodedFilename, encodedFilename)
-
-	presignedReq, err := presignClient.PresignGetObject(ctx, &s3.GetObjectInput{
-		Bucket:                     new(s.svc.bucket),
-		Key:                        new(file.FileKey),
-		ResponseCacheControl:       new("max-age=3600, public"),
-		ResponseContentDisposition: new(contentDisposition),
-	}, func(opts *s3.PresignOptions) {
-		opts.Expires = duration
-	})
-	if err != nil {
-		return "", fmt.Errorf("cannot presign GetObject request: %w", err)
-	}
-
-	return presignedReq.URL, nil
+	return s.svc.file.GenerateFileURL(ctx, reference.LogoFileID)
 }
 
 func (s TrustCenterReferenceService) uploadLogoFile(

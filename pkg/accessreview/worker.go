@@ -153,7 +153,15 @@ func (h *sourceFetchHandler) handle(
 			return fmt.Errorf("cannot finalize campaign after failed source fetch: %w", finalizeErr)
 		}
 
-		return fmt.Errorf("cannot fetch source: %w", err)
+		h.logger.WarnCtx(
+			ctx,
+			"source fetch failed but campaign can continue",
+			log.String("campaign_id", sourceFetch.AccessReviewCampaignID.String()),
+			log.String("access_source_id", sourceFetch.AccessSourceID.String()),
+			log.Error(err),
+		)
+
+		return nil
 	}
 
 	if err := h.commitSuccessfulSourceFetch(ctx, sourceFetch, count); err != nil {

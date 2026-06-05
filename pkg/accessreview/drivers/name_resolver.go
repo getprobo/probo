@@ -437,6 +437,103 @@ func (r *openaiNameResolver) ResolveInstanceName(ctx context.Context) (string, e
 	return resp.Name, nil
 }
 
+// anthropicNameResolver resolves the Anthropic organization name via the
+// Admin API /v1/organizations/me endpoint, which returns the org an
+// admin key belongs to.
+type anthropicNameResolver struct {
+	httpClient *http.Client
+}
+
+func NewAnthropicNameResolver(httpClient *http.Client) NameResolver {
+	return &anthropicNameResolver{httpClient: httpClient}
+}
+
+func (r *anthropicNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
+	req, err := http.NewRequestWithContext(
+		ctx,
+		http.MethodGet,
+		"https://api.anthropic.com/v1/organizations/me",
+		nil,
+	)
+	if err != nil {
+		return "", fmt.Errorf("cannot create anthropic organization request: %w", err)
+	}
+
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("anthropic-version", anthropicAPIVersion)
+
+	httpResp, err := r.httpClient.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("cannot execute anthropic organization request: %w", err)
+	}
+
+	defer func() { _ = httpResp.Body.Close() }()
+
+	// Best-effort: a non-2xx (e.g. a revoked admin key) must not make the
+	// source-name worker retry forever. Give up gracefully and keep the
+	// generic source name; a dead key surfaces on the next ListAccounts.
+	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
+		return "", nil
+	}
+
+	var resp struct {
+		Name string `json:"name"`
+	}
+	if err := json.NewDecoder(httpResp.Body).Decode(&resp); err != nil {
+		return "", fmt.Errorf("cannot decode anthropic organization response: %w", err)
+	}
+
+	return resp.Name, nil
+}
+
+// sendGridNameResolver resolves the SendGrid account's company name from
+// the user profile endpoint, used as the AccessSource instance label.
+type sendGridNameResolver struct {
+	httpClient *http.Client
+}
+
+func NewSendGridNameResolver(httpClient *http.Client) NameResolver {
+	return &sendGridNameResolver{httpClient: httpClient}
+}
+
+func (r *sendGridNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
+	req, err := http.NewRequestWithContext(
+		ctx,
+		http.MethodGet,
+		"https://api.sendgrid.com/v3/user/profile",
+		nil,
+	)
+	if err != nil {
+		return "", fmt.Errorf("cannot create sendgrid profile request: %w", err)
+	}
+
+	req.Header.Set("Accept", "application/json")
+
+	httpResp, err := r.httpClient.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("cannot execute sendgrid profile request: %w", err)
+	}
+
+	defer func() { _ = httpResp.Body.Close() }()
+
+	// Best-effort: a non-2xx (revoked key, or a key without the
+	// user.profile.read scope) must not make the source-name worker retry
+	// forever. Give up gracefully and keep the generic source name; a dead
+	// key surfaces on the next ListAccounts.
+	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
+		return "", nil
+	}
+
+	var resp struct {
+		Company string `json:"company"`
+	}
+	if err := json.NewDecoder(httpResp.Body).Decode(&resp); err != nil {
+		return "", fmt.Errorf("cannot decode sendgrid profile response: %w", err)
+	}
+
+	return resp.Company, nil
+}
+
 // sentryNameResolver resolves the Sentry organization name.
 type sentryNameResolver struct {
 	httpClient *http.Client
@@ -471,6 +568,13 @@ func (r *sentryNameResolver) ResolveInstanceName(ctx context.Context) (string, e
 
 	defer func() { _ = httpResp.Body.Close() }()
 
+	// 404 means the stored slug is no longer visible to this token.
+	// Treat as terminal so the worker stops looping; other non-2xx
+	// stay retryable for token refresh / transient outages.
+	if httpResp.StatusCode == http.StatusNotFound {
+		return "", nil
+	}
+
 	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
 		return "", fmt.Errorf("cannot fetch sentry organization: unexpected status %d", httpResp.StatusCode)
 	}
@@ -496,6 +600,10 @@ func NewGitHubNameResolver(httpClient *http.Client, org string) NameResolver {
 }
 
 func (r *githubNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
+	if r.org == "" {
+		return "", nil
+	}
+
 	endpoint, err := url.JoinPath("https://api.github.com", "orgs", url.PathEscape(r.org))
 	if err != nil {
 		return "", fmt.Errorf("cannot build github organization URL: %w", err)
@@ -719,6 +827,12 @@ func (r *herokuNameResolver) ResolveInstanceName(ctx context.Context) (string, e
 		return "", nil
 	}
 
+	// A personal account has no Team to name; short-circuit before hitting
+	// GET /teams/@personal, which 404s and would loop the source-name worker.
+	if r.teamID == herokuPersonalAccountSlug {
+		return herokuPersonalAccountDisplayName, nil
+	}
+
 	endpoint, err := url.JoinPath("https://api.heroku.com", "teams", url.PathEscape(r.teamID))
 	if err != nil {
 		return "", fmt.Errorf("cannot build heroku team URL: %w", err)
@@ -764,6 +878,93 @@ func NewPagerDutyNameResolver(subdomain string) NameResolver {
 }
 
 func (r *pagerdutyNameResolver) ResolveInstanceName(_ context.Context) (string, error) {
+	return r.subdomain, nil
+}
+
+// datadogNameResolver returns the Datadog site/region label stored in
+// connector settings (e.g. "US3"), captured during the OAuth callback. No
+// HTTP call is required; the AccessSource title becomes "Datadog <region>".
+// Org-name resolution is intentionally omitted to keep scopes to
+// user_access_read (the org name endpoint needs org_management).
+type datadogNameResolver struct {
+	region string
+}
+
+func NewDatadogNameResolver(region string) NameResolver {
+	return &datadogNameResolver{region: region}
+}
+
+func (r *datadogNameResolver) ResolveInstanceName(_ context.Context) (string, error) {
+	return r.region, nil
+}
+
+// oktaNameResolver resolves the Okta org name via GET /api/v1/org on the
+// configured org host. A non-2xx is terminal — a read-only API token may
+// lack org-settings read, so it returns ("", nil) to keep the generic
+// source name rather than make the source-name worker retry forever.
+type oktaNameResolver struct {
+	httpClient *http.Client
+	domain     string
+}
+
+func NewOktaNameResolver(httpClient *http.Client, domain string) NameResolver {
+	return &oktaNameResolver{httpClient: httpClient, domain: domain}
+}
+
+func (r *oktaNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
+	if r.domain == "" {
+		return "", nil
+	}
+
+	endpoint := url.URL{Scheme: "https", Host: r.domain, Path: "/api/v1/org"}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint.String(), nil)
+	if err != nil {
+		return "", fmt.Errorf("cannot create okta org request: %w", err)
+	}
+
+	req.Header.Set("Accept", "application/json")
+
+	httpResp, err := r.httpClient.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("cannot execute okta org request: %w", err)
+	}
+
+	defer func() { _ = httpResp.Body.Close() }()
+
+	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
+		return "", nil
+	}
+
+	var resp struct {
+		CompanyName string `json:"companyName"`
+		Subdomain   string `json:"subdomain"`
+	}
+	if err := json.NewDecoder(httpResp.Body).Decode(&resp); err != nil {
+		return "", fmt.Errorf("cannot decode okta org response: %w", err)
+	}
+
+	if resp.CompanyName != "" {
+		return resp.CompanyName, nil
+	}
+
+	return resp.Subdomain, nil
+}
+
+// zendeskNameResolver returns the Zendesk subdomain stored in connector
+// settings (e.g. "acme" for acme.zendesk.com), captured at connect time. No
+// HTTP call is required; the AccessSource title becomes "Zendesk <subdomain>".
+// Account-name resolution is intentionally omitted to keep the scope to
+// users:read (Zendesk exposes no human account name on that scope).
+type zendeskNameResolver struct {
+	subdomain string
+}
+
+func NewZendeskNameResolver(subdomain string) NameResolver {
+	return &zendeskNameResolver{subdomain: subdomain}
+}
+
+func (r *zendeskNameResolver) ResolveInstanceName(_ context.Context) (string, error) {
 	return r.subdomain, nil
 }
 

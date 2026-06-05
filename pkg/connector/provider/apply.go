@@ -47,6 +47,9 @@ func (r *Registry) ApplyOAuth2Defaults(p string, redirectURI string, c *connecto
 	c.TokenEndpointAuth = reg.TokenEndpointAuth
 	c.SupportsIncrementalAuth = reg.SupportsIncrementalAuth
 	c.RequiresPKCE = reg.RequiresPKCE
+	c.BuildAuthURLForSite = reg.BuildAuthURLForSite
+	c.BuildTokenURLForDomain = reg.BuildTokenURLForDomain
+	c.BuildTokenURLForSite = reg.BuildTokenURLForSite
 
 	// Deep copy ExtraAuthParams so per-connector mutations (e.g.
 	// incremental auth, scope overrides) cannot alias back into the

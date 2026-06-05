@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"net"
 	"net/smtp"
+	"os"
 	"time"
 
 	"github.com/jhillyerd/enmime"
@@ -49,6 +50,7 @@ type (
 		User        string
 		Password    string
 		TLSRequired bool
+		HelloName   string
 	}
 
 	SendingWorkerOption func(*sendingHandler)
@@ -318,6 +320,17 @@ func (h *sendingHandler) sendMail(ctx context.Context, to []string, msg []byte) 
 	}
 
 	defer func() { _ = c.Quit() }()
+
+	helloName := h.smtp.HelloName
+	if helloName == "" {
+		if helloName, err = os.Hostname(); err != nil {
+			helloName = "localhost"
+		}
+	}
+
+	if err := c.Hello(helloName); err != nil {
+		return fmt.Errorf("SMTP EHLO error: %w", err)
+	}
 
 	if h.smtp.TLSRequired {
 		if err := c.StartTLS(&tls.Config{ServerName: host}); err != nil {

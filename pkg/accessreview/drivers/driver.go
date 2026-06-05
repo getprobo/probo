@@ -67,3 +67,19 @@ type Driver interface {
 	// ListAccounts returns all accounts from the source system.
 	ListAccounts(ctx context.Context) ([]AccountRecord, error)
 }
+
+// parseRFC3339Ptr parses an RFC 3339 timestamp into a *time.Time, returning
+// nil for an empty or unparseable value. Drivers use it for best-effort
+// timestamp fields (created_at, last_login_at) that an API may omit.
+func parseRFC3339Ptr(s string) *time.Time {
+	if s == "" {
+		return nil
+	}
+
+	t, err := time.Parse(time.RFC3339, s)
+	if err != nil {
+		return nil
+	}
+
+	return &t
+}

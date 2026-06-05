@@ -126,6 +126,18 @@ func (v *CookieBannerVersion) GetSnapshot() (CookieBannerVersionSnapshot, error)
 		return snapshot, fmt.Errorf("cannot unmarshal cookie banner version snapshot: %w", err)
 	}
 
+	// Snapshots created before tracker types were captured only ever held
+	// cookie-type trackers, so their cookie items carry an empty tracker
+	// type. Backfill them as cookies so downstream consumers (policy
+	// generation, GraphQL, served banner config) see a valid type.
+	for i := range snapshot.Categories {
+		for j := range snapshot.Categories[i].Cookies {
+			if snapshot.Categories[i].Cookies[j].TrackerType == "" {
+				snapshot.Categories[i].Cookies[j].TrackerType = TrackerTypeCookie
+			}
+		}
+	}
+
 	return snapshot, nil
 }
 

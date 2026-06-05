@@ -126,6 +126,12 @@ probo:
     # REQUIRED: Generate with: openssl rand -base64 32
     passwordPepper: "CHANGE_ME_PASSWORD_PEPPER"
 
+  oauth2:
+    # REQUIRED: PEM-encoded private key (RSA recommended)
+    # Example: openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 > oauth2_signing_key.pem
+    # Then set with --set-file probo.oauth2.signingKey=oauth2_signing_key.pem
+    signingKey: "CHANGE_ME_OAUTH2_SIGNING_KEY_PEM"
+
   # Trust center authentication
   trustAuth:
     cookieName: "TCT"
@@ -151,6 +157,9 @@ probo:
       user: "apikey"
       password: "CHANGE_ME_SMTP_PASSWORD"
       tlsRequired: true
+      # Set to your server's hostname when the relay requires a specific EHLO/HELO
+      # identity (e.g. Google Workspace smtp-relay.gmail.com rejects "localhost").
+      # helloName: "mail.example.com"
 
   # OpenAI integration for AI features (optional)
   openai:
@@ -163,12 +172,44 @@ probo:
   # agentTools:
   #   firecrawlApiKey: "CHANGE_ME_FIRECRAWL_API_KEY"
 
+  # Third-party vetter agent (optional, AI-powered third-party vetting)
+  # thirdPartyVetter:
+  #   provider: "openai"
+  #   modelName: "gpt-4o"
+  #   temperature: "0.3"
+  #   maxTokens: "8192"
+
+  # Third-party vetting worker tuning (optional; seconds for interval/staleAfter).
+  # thirdPartyVettingWorker:
+  #   interval: 10
+  #   maxConcurrency: 1
+  #   staleAfter: 1500
+
   # Tracker mapping agent (optional, auto-links tracker patterns to vendors)
   # trackerMapping:
   #   provider: "openai"
   #   modelName: "gpt-4o-mini"
   #   temperature: "0.1"
-  #   maxTokens: "1024"
+  #   maxTokens: "4096"
+
+  # Tracker mapping worker tuning (optional; seconds for
+  # interval/staleAfter/agentTimeout).
+  # Keep concurrency modest to stay under OpenAI/Firecrawl limits and the DB pool.
+  # trackerMappingWorker:
+  #   interval: 10
+  #   maxConcurrency: 3
+  #   staleAfter: 600
+  #   agentTimeout: 45
+  #   agentMaxTurns: 10
+
+  # Common-pattern enrichment worker tuning (optional; seconds for
+  # interval/staleAfter/agentTimeout).
+  # commonPatternEnrichmentWorker:
+  #   interval: 10
+  #   maxConcurrency: 2
+  #   staleAfter: 600
+  #   agentTimeout: 45
+  #   agentMaxTurns: 10
 
   # OpenTelemetry tracing (optional)
   tracing:
@@ -190,6 +231,8 @@ probo:
       email: "admin@example.com"
       keyType: "EC256"
       insecureTls: false
+      # Optional persisted account key to avoid creating a new ACME account on restarts
+      accountKey: ""
 
   # External OAuth2 connectors (optional)
   connectors:
@@ -227,7 +270,7 @@ postgresql:
   maxConnIdleTimeSeconds: 1800
   maxConnLifetimeSeconds: 3600
   # Uncomment if using TLS with custom CA
-  # caCertBundle: |
+  # caBundle: |
   #   -----BEGIN CERTIFICATE-----
   #   ...
   #   -----END CERTIFICATE-----
@@ -261,13 +304,8 @@ s3:
   # accessKeyId: "..." # Spaces access key
   # secretAccessKey: "..." # Spaces secret
 
-  # Azure Blob Storage example (uncomment and adjust):
-  # region: "eastus"
-  # bucket: "probo-container"
-  # endpoint: "https://mystorageaccount.blob.core.windows.net"
-  # accessKeyId: "mystorageaccount" # Storage account name
-  # secretAccessKey: "..." # Storage account access key
-  # usePathStyle: true  # Required for Azure Blob Storage
+  # Azure Blob through S3-compat proxies has known metadata compatibility gaps.
+  # Prefer AWS S3 / GCS / Spaces for production until native Azure Blob support lands.
 
 # Chrome for PDF generation
 chrome:

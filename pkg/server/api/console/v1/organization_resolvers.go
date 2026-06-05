@@ -1394,7 +1394,8 @@ func (r *profileResolver) Permission(ctx context.Context, obj *types.Profile, ac
 
 // TotalCount is the resolver for the totalCount field.
 func (r *profileConnectionResolver) TotalCount(ctx context.Context, obj *types.ProfileConnection) (int, error) {
-	if _, err := r.authorize(ctx, obj.ParentID, iam.ActionMembershipProfileList); err != nil {
+	scope, err := r.authorize(ctx, obj.ParentID, iam.ActionMembershipProfileList)
+	if err != nil {
 		return 0, err
 	}
 
@@ -1408,8 +1409,6 @@ func (r *profileConnectionResolver) TotalCount(ctx context.Context, obj *types.P
 
 		return count, nil
 	case *documentVersionResolver:
-		scope := coredata.NewScopeFromObjectID(obj.ParentID)
-
 		count, err := r.probo.Documents.CountVersionApprovers(ctx, scope, obj.ParentID)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count document version approvers", log.Error(err))

@@ -265,6 +265,32 @@ LIMIT 1;
 	return nil
 }
 
+func (s *SCIMBridges) CountByConnectorID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	connectorID gid.GID,
+) (int, error) {
+	q := `
+SELECT COUNT(id)
+FROM iam_scim_bridges
+WHERE
+    %s
+    AND connector_id = @connector_id;
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"connector_id": connectorID}
+	maps.Copy(args, scope.SQLArguments())
+
+	var count int
+	if err := conn.QueryRow(ctx, q, args).Scan(&count); err != nil {
+		return 0, fmt.Errorf("cannot count iam_scim_bridges by connector ID: %w", err)
+	}
+
+	return count, nil
+}
+
 func (s *SCIMBridge) Insert(
 	ctx context.Context,
 	conn pg.Tx,

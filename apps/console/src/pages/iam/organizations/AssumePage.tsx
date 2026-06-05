@@ -98,7 +98,7 @@ export function AssumePage(props: { queryRef: PreloadedQuery<AssumePageQuery> })
             search.set("organization-id", organizationId);
             search.set("continue", safeContinueUrl.toString());
 
-            void navigate({ pathname: "/auth/password-login", search: "?" + search.toString() });
+            void navigate({ pathname: "/auth/login", search: "?" + search.toString() });
             break;
           case "SAMLAuthenticationRequired":
             if (!viewer.ssoLoginURL) {

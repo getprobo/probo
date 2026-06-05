@@ -89,7 +89,7 @@ const (
 	ActionThirdPartyCreate  = "core:thirdParty:create"
 	ActionThirdPartyUpdate  = "core:thirdParty:update"
 	ActionThirdPartyDelete  = "core:thirdParty:delete"
-	ActionThirdPartyAssess  = "core:thirdParty:assess"
+	ActionThirdPartyVet     = "core:thirdParty:vet"
 	ActionThirdPartyPublish = "core:thirdParty:publish"
 
 	// ThirdPartyRelation actions

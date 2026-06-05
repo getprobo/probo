@@ -32,6 +32,10 @@ enum CookieSource
         @goEnum(
             value: "go.probo.inc/probo/pkg/coredata.CookieSourcePreExisting"
         )
+    HTTP
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CookieSourceHTTP"
+        )
     EXTENSION
         @goEnum(
             value: "go.probo.inc/probo/pkg/coredata.CookieSourceExtension"
@@ -149,6 +153,8 @@ type CookieBanner implements Node {
 
     latestVersion: CookieBannerVersion @goField(forceResolver: true)
 
+    policyDocument: Document @goField(forceResolver: true)
+
     consentRecords(
         first: Int
         after: CursorKey
@@ -166,6 +172,15 @@ type CookieBanner implements Node {
         orderBy: TrackerPatternOrder
         filter: TrackerPatternFilter
     ): TrackerPatternConnection @goField(forceResolver: true)
+
+    """
+    The deduped union of third parties referenced by the banner's
+    tracker patterns, both org-scoped (ThirdParty) and global
+    (CommonThirdParty). Powers the third-party filter combobox on the
+    trackers list page.
+    """
+    linkedThirdParties: [TrackerPatternThirdPartyLink!]!
+        @goField(forceResolver: true)
 
     uncategorisedTrackerResources(
         first: Int
@@ -263,7 +278,10 @@ enum TrackerPatternOrderField
         )
 }
 
-type TrackerPattern implements Node {
+type TrackerPattern implements Node
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.TrackerPattern"
+    ) {
     id: ID!
     cookieCategory: CookieCategory @goField(forceResolver: true)
     trackerType: TrackerType!
@@ -278,6 +296,22 @@ type TrackerPattern implements Node {
     lastMatchedAt: Datetime
     createdAt: Datetime!
     updatedAt: Datetime!
+
+    """
+    The org-scoped third party this pattern is mapped to, if any. Set
+    when the mapping worker promoted the pattern to a tenant-managed
+    ThirdParty record. When this field is non-null, commonThirdParty is
+    always null.
+    """
+    thirdParty: ThirdParty @goField(forceResolver: true)
+
+    """
+    The global third party this pattern is mapped to via the common
+    tracker-pattern catalog. Null when the pattern has its own
+    org-scoped thirdParty, when it has not been mapped, or when the
+    matched common pattern has no common third party.
+    """
+    commonThirdParty: CommonThirdParty @goField(forceResolver: true)
 
     detectedTrackers(
         first: Int
@@ -298,6 +332,14 @@ type TrackerPatternConnection
     edges: [TrackerPatternEdge!]!
     pageInfo: PageInfo!
 }
+
+"""
+A third party associated with a banner's tracker patterns. Either the
+tenant-managed ThirdParty (when a pattern was promoted to the org
+catalog) or the global CommonThirdParty linked through a common
+tracker pattern.
+"""
+union TrackerPatternThirdPartyLink = ThirdParty | CommonThirdParty
 
 type TrackerPatternEdge {
     cursor: CursorKey!
@@ -320,6 +362,14 @@ input TrackerPatternFilter
     source: CookieSource
     trackerType: TrackerType
     cookieCategoryId: ID
+    """
+    Filter to tracker patterns linked to a single third party. Accepts
+    either an org-scoped ThirdParty GID (matched against third_party_id)
+    or a global CommonThirdParty GID (matched against the indirect link
+    through common_tracker_patterns). The dispatch happens at the
+    resolver based on the GID entity-type prefix.
+    """
+    thirdPartyId: ID
 }
 
 type DetectedTracker implements Node {
@@ -495,6 +545,7 @@ type CookieBannerVersionCategory {
 
 type CookieBannerVersionCookie {
     name: String!
+    trackerType: TrackerType!
     maxAgeSeconds: Int
     description: String!
 }

@@ -15,97 +15,23 @@
 package session
 
 import (
-	"bytes"
 	"context"
-	"fmt"
-	"io"
-	"strconv"
 
 	"github.com/99designs/gqlgen/graphql"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/gqlutils"
 )
 
-type SessionRequirement string
-
-const (
-	SessionRequirementPresent  SessionRequirement = "PRESENT"
-	SessionRequirementNone     SessionRequirement = "NONE"
-	SessionRequirementOptional SessionRequirement = "OPTIONAL"
-)
-
-var AllSessionRequirement = []SessionRequirement{
-	SessionRequirementPresent,
-	SessionRequirementNone,
-	SessionRequirementOptional,
-}
-
-func (e SessionRequirement) IsValid() bool {
-	switch e {
-	case SessionRequirementPresent, SessionRequirementNone, SessionRequirementOptional:
-		return true
-	}
-
-	return false
-}
-
-func (e SessionRequirement) String() string {
-	return string(e)
-}
-
-func (e *SessionRequirement) UnmarshalGQL(v any) error {
-	str, ok := v.(string)
-	if !ok {
-		return fmt.Errorf("enums must be strings")
-	}
-
-	*e = SessionRequirement(str)
-	if !e.IsValid() {
-		return fmt.Errorf("%s is not a valid SessionRequirement", str)
-	}
-
-	return nil
-}
-
-func (e SessionRequirement) MarshalGQL(w io.Writer) {
-	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
-}
-
-func (e *SessionRequirement) UnmarshalJSON(b []byte) error {
-	s, err := strconv.Unquote(string(b))
-	if err != nil {
-		return err
-	}
-
-	return e.UnmarshalGQL(s)
-}
-
-func (e SessionRequirement) MarshalJSON() ([]byte, error) {
-	var buf bytes.Buffer
-	e.MarshalGQL(&buf)
-
-	return buf.Bytes(), nil
-}
-
-func Directive(ctx context.Context, obj any, next graphql.Resolver, required SessionRequirement) (any, error) {
-	identity := authn.IdentityFromContext(ctx)
-
-	switch required {
-	case SessionRequirementOptional:
-	case SessionRequirementPresent:
-		if identity == nil {
-			return nil, gqlutils.Unauthenticatedf(
-				ctx,
-				"authentication is required to access this resource",
-			)
-		}
-	case SessionRequirementNone:
-		if identity != nil {
-			return nil, gqlutils.AlreadyAuthenticatedf(
-				ctx,
-				"authentication not allowed for this resource/action",
-			)
-		}
+// Directive enforces that the request carries a real session. It is meant to
+// be combined with @authentication(required: PRESENT): @authentication handles
+// the "must be authenticated" check, while @sessionOnly additionally rejects
+// API key authentication, which also carries an identity but no session.
+func Directive(ctx context.Context, obj any, next graphql.Resolver) (any, error) {
+	if authn.SessionFromContext(ctx) == nil {
+		return nil, gqlutils.Forbiddenf(
+			ctx,
+			"this resource can only be accessed with session authentication, not API key authentication",
+		)
 	}
 
 	return next(ctx)

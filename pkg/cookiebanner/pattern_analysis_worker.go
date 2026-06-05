@@ -161,6 +161,16 @@ func (h *patternAnalysisHandler) Process(ctx context.Context, banner coredata.Co
 
 				source := bestSource(group)
 
+				// Carry over the resolved org ThirdParty (and its
+				// description) from the merged exacts when they agree,
+				// so the glob is seeded rather than re-mapped from
+				// scratch. Mapping is still re-armed below so the glob
+				// derives its own catalog row; the pre-set third party
+				// lets the mapping worker skip the expensive org
+				// resolution. Only the insert path consumes these: an
+				// existing glob is reloaded and keeps its own mapping.
+				inheritedThirdPartyID, inheritedDescription := inheritedMapping(group)
+
 				now := time.Now()
 				globPattern := &coredata.TrackerPattern{
 					ID:                 gid.New(banner.ID.TenantID(), coredata.TrackerPatternEntityType),
@@ -172,7 +182,8 @@ func (h *patternAnalysisHandler) Process(ctx context.Context, banner coredata.Co
 					MatchType:          coredata.TrackerPatternMatchTypeGlob,
 					DisplayName:        key.template,
 					MaxAgeSeconds:      maxAge,
-					Description:        "",
+					ThirdPartyID:       inheritedThirdPartyID,
+					Description:        inheritedDescription,
 					Source:             source,
 					MappingRequestedAt: &now,
 					CreatedAt:          now,
@@ -207,6 +218,13 @@ func (h *patternAnalysisHandler) Process(ctx context.Context, banner coredata.Co
 
 						if err := globPattern.Update(ctx, tx, scope); err != nil {
 							return fmt.Errorf("cannot promote source on glob pattern %q: %w", key.template, err)
+						}
+
+						// A stronger source can unblock mapping (e.g.
+						// EXTENSION->SCRIPT lifts the creationAllowed
+						// gate), so re-arm mapping on the existing glob.
+						if err := globPattern.SetMappingRequested(ctx, tx); err != nil {
+							return fmt.Errorf("cannot request mapping after source promotion on glob pattern %q: %w", key.template, err)
 						}
 					}
 				}
@@ -705,6 +723,47 @@ func bestSource(patterns []*coredata.TrackerPattern) *coredata.CookieSource {
 	return &src
 }
 
+// inheritedMapping rolls up the resolved org ThirdParty of a group of
+// exact patterns being merged into a glob, so the glob can be seeded
+// instead of re-mapped from scratch. It returns a third party only when
+// every resolved member agrees on a single id: a conflicting group (or
+// one with no resolved member) returns nil, leaving the glob blank for a
+// fresh mapping pass. When a third party is chosen, the description of
+// the first member carrying that same id with non-empty text is returned
+// too; the catalog link (common_tracker_pattern_id) is deliberately not
+// inherited, since it is keyed on the exact pattern string rather than
+// the glob template and the mapping worker derives the right row itself.
+func inheritedMapping(patterns []*coredata.TrackerPattern) (*gid.GID, string) {
+	var thirdPartyID *gid.GID
+
+	for _, p := range patterns {
+		if p.ThirdPartyID == nil {
+			continue
+		}
+
+		if thirdPartyID == nil {
+			thirdPartyID = p.ThirdPartyID
+			continue
+		}
+
+		if *thirdPartyID != *p.ThirdPartyID {
+			return nil, ""
+		}
+	}
+
+	if thirdPartyID == nil {
+		return nil, ""
+	}
+
+	for _, p := range patterns {
+		if p.ThirdPartyID != nil && *p.ThirdPartyID == *thirdPartyID && p.Description != "" {
+			return thirdPartyID, p.Description
+		}
+	}
+
+	return thirdPartyID, ""
+}
+
 func (h *patternAnalysisHandler) adoptUncategorisedPatterns(
 	ctx context.Context,
 	tx pg.Tx,
@@ -797,6 +856,13 @@ func (h *patternAnalysisHandler) adoptUncategorisedPatterns(
 
 			if err := match.Update(ctx, tx, scope); err != nil {
 				return false, fmt.Errorf("cannot promote source on glob pattern %q: %w", match.Pattern, err)
+			}
+
+			// A stronger source can unblock mapping (e.g.
+			// EXTENSION->SCRIPT lifts the creationAllowed gate), so
+			// re-arm mapping on the adopted glob.
+			if err := match.SetMappingRequested(ctx, tx); err != nil {
+				return false, fmt.Errorf("cannot request mapping after source promotion on glob pattern %q: %w", match.Pattern, err)
 			}
 		}
 

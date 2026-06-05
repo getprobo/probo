@@ -181,7 +181,7 @@ export const description: INodeProperties[] = [
 				name: 'countries',
 				type: 'string',
 				default: '',
-				description: 'Comma-separated list of country codes',
+				description: 'Comma-separated list of country or region codes',
 			},
 			{
 				displayName: 'Data Processing Agreement URL',

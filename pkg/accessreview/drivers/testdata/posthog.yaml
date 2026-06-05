@@ -1,0 +1,37 @@
+---
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: us.posthog.com
+        form:
+            limit:
+                - "100"
+            order:
+                - -joined_at
+        headers:
+            Accept:
+                - application/json
+        url: https://us.posthog.com/api/organizations/@current/members/?limit=100&order=-joined_at
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"count":3,"next":"","previous":null,"results":[{"id":"membership-1","user":{"id":42,"uuid":"user-1","first_name":"Olivia","last_name":"Owner","email":"owner@example.com","is_email_verified":true},"level":15,"joined_at":"2025-01-10T12:00:00Z","updated_at":"2025-05-10T12:00:00Z","is_2fa_enabled":true,"last_login":"2025-05-01T09:00:00Z"},{"id":"membership-2","user":{"id":43,"uuid":"user-2","first_name":"Maya","last_name":"Member","email":"member@example.com","is_email_verified":true},"level":1,"joined_at":"2025-02-20T08:30:00Z","updated_at":"2025-05-08T10:00:00Z","is_2fa_enabled":false,"last_login":""},{"id":"membership-3","user":{"id":44,"uuid":"","first_name":"Ari","last_name":"Admin","email":"admin@example.com","is_email_verified":true},"level":8,"joined_at":"2024-02-20T00:00:00Z","updated_at":"2025-05-09T12:00:00Z","last_login":"2025-04-11T10:00:00Z"}]}'
+        headers:
+            Content-Type:
+                - application/json
+            Date:
+                - Thu, 28 May 2026 22:40:00 GMT
+            Server:
+                - cloudflare
+        status: 200 OK
+        code: 200
+        duration: 182.114ms

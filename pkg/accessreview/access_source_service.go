@@ -218,12 +218,71 @@ func (s AccessSourceService) Delete(
 	ctx context.Context,
 	accessSourceID gid.GID,
 ) error {
-	source := &coredata.AccessSource{ID: accessSourceID}
+	source := &coredata.AccessSource{}
 
 	return s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
-			return source.Delete(ctx, conn, s.scope)
+			if err := source.LoadByID(ctx, conn, s.scope, accessSourceID); err != nil {
+				return fmt.Errorf("cannot load access source: %w", err)
+			}
+
+			if err := source.Delete(ctx, conn, s.scope); err != nil {
+				return fmt.Errorf("cannot delete access source: %w", err)
+			}
+
+			// Garbage-collect the underlying connector once nothing else
+			// references it. The connectors table is unique per
+			// (organization_id, provider), so leaving an orphaned connector
+			// behind would block re-adding a source for the same provider.
+			if source.ConnectorID == nil {
+				return nil
+			}
+
+			accessSources := &coredata.AccessSources{}
+
+			sourceCount, err := accessSources.CountByConnectorID(ctx, conn, s.scope, *source.ConnectorID)
+			if err != nil {
+				return fmt.Errorf("cannot count access sources for connector: %w", err)
+			}
+
+			if sourceCount > 0 {
+				return nil
+			}
+
+			bridges := &coredata.SCIMBridges{}
+
+			bridgeCount, err := bridges.CountByConnectorID(ctx, conn, s.scope, *source.ConnectorID)
+			if err != nil {
+				return fmt.Errorf("cannot count scim bridges for connector: %w", err)
+			}
+
+			if bridgeCount > 0 {
+				return nil
+			}
+
+			// Garbage-collecting the connector is best-effort. A
+			// concurrent transaction may insert a new access source or
+			// SCIM bridge referencing this connector between the counts
+			// above and the DELETE, producing a foreign-key violation.
+			// Run the delete inside a savepoint so such a failure rolls
+			// back only the GC attempt and still commits the access
+			// source deletion instead of aborting the whole transaction.
+			if err := conn.Savepoint(
+				ctx,
+				func(ctx context.Context, conn pg.Tx) error {
+					cnnctr := &coredata.Connector{ID: *source.ConnectorID}
+					if err := cnnctr.Delete(ctx, conn, s.scope); err != nil {
+						return fmt.Errorf("cannot delete connector: %w", err)
+					}
+
+					return nil
+				},
+			); err != nil {
+				return err
+			}
+
+			return nil
 		},
 	)
 }

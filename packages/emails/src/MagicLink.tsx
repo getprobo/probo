@@ -18,7 +18,6 @@ import EmailLayout, {
   bodyText,
   button,
   buttonContainer,
-  footerText,
 } from "./components/EmailLayout";
 
 export const MagicLink = () => {
@@ -32,11 +31,29 @@ export const MagicLink = () => {
         </Button>
       </Section>
 
-      <Text style={footerText}>
-        This link will expire in {"{{.DurationInMinutes}}"} minutes.
-      </Text>
+      <Section style={expiryBox}>
+        <Text style={expiryText}>
+          {"⚠️ This link expires in {{.DurationInMinutes}} minutes. Use it promptly after receiving this email."}
+        </Text>
+      </Section>
     </EmailLayout>
   );
+};
+
+const expiryBox: React.CSSProperties = {
+  backgroundColor: "#fff8e1",
+  border: "1px solid #f9a825",
+  borderRadius: "6px",
+  padding: "12px 16px",
+  marginTop: "8px",
+};
+
+const expiryText: React.CSSProperties = {
+  margin: "0",
+  color: "#7a5900",
+  fontSize: "14px",
+  fontWeight: "600",
+  lineHeight: "20px",
 };
 
 export default MagicLink;

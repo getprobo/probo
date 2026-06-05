@@ -328,6 +328,9 @@ jobs:
         if: always()
         with:
           sarif_file: "trivy-results.sarif"
+          ref: "refs/heads/main"
+          sha: ${{ github.sha }}
+          category: "trivy-docker-image"
       - name: "Compose release notes"
         env:
           IMAGE_TAG: ${{ needs.docker-manifest.outputs.image_tag }}

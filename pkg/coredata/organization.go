@@ -255,6 +255,66 @@ WHERE
 	return nil
 }
 
+func (o *Organizations) LoadAllByIdentityIDWithPendingInvitation(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	identityID gid.GID,
+) error {
+	q := `
+WITH invited_org AS (
+	SELECT DISTINCT
+		p.organization_id
+	FROM
+		iam_membership_profiles p
+	INNER JOIN iam_invitations inv ON inv.user_id = p.id
+	WHERE
+		p.identity_id = @identity_id
+		AND inv.accepted_at IS NULL
+		AND inv.expires_at > NOW()
+)
+SELECT
+	tenant_id,
+	id,
+	name,
+	logo_file_id,
+	horizontal_logo_file_id,
+	description,
+	website_url,
+	email,
+	headquarter_address,
+	custom_domain_id,
+	created_at,
+	updated_at
+FROM
+	organizations
+INNER JOIN
+	invited_org ON organizations.id = invited_org.organization_id
+WHERE
+	%s
+ORDER BY name ASC
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"identity_id": identityID}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query organizations: %w", err)
+	}
+
+	organizations, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Organization])
+	if err != nil {
+		return fmt.Errorf("cannot collect organizations: %w", err)
+	}
+
+	*o = organizations
+
+	return nil
+}
+
 func (o *Organization) Insert(
 	ctx context.Context,
 	conn pg.Tx,

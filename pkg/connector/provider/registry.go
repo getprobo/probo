@@ -71,6 +71,36 @@ func (r *Registry) Register(reg *Registration) error {
 		return fmt.Errorf("cannot register connector provider %q: missing DisplayName", reg.Provider)
 	}
 
+	// APIKeyBasicAuth, APIKeyHeader, and APIKeyAuthScheme select different
+	// presentations of the same key; setting more than one is a programmer
+	// error with a silent winner (Client checks BasicAuth, then Header,
+	// then Scheme). Reject it at startup.
+	apiKeyModes := 0
+
+	if reg.APIKeyBasicAuth {
+		apiKeyModes++
+	}
+
+	if reg.APIKeyHeader != "" {
+		apiKeyModes++
+	}
+
+	if reg.APIKeyAuthScheme != "" {
+		apiKeyModes++
+	}
+
+	if apiKeyModes > 1 {
+		return fmt.Errorf("cannot register connector provider %q: APIKeyBasicAuth, APIKeyHeader, and APIKeyAuthScheme are mutually exclusive", reg.Provider)
+	}
+
+	// BuildTokenURLForDomain and BuildTokenURLForSite both build the token
+	// endpoint host, but from different sources (a callback param vs. the
+	// signed state). CompleteWithState checks them in order, so setting both
+	// is a programmer error with a silent winner. Reject it at startup.
+	if reg.BuildTokenURLForDomain != nil && reg.BuildTokenURLForSite != nil {
+		return fmt.Errorf("cannot register connector provider %q: BuildTokenURLForDomain and BuildTokenURLForSite are mutually exclusive", reg.Provider)
+	}
+
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -108,6 +138,25 @@ func (r *Registry) All() []*Registration {
 	return out
 }
 
+// PublicClients returns every Registration flagged PublicClient (CIMD,
+// no client_secret). probod uses this to auto-register their OAuth2
+// connectors with a deployment-derived client_id and state-signing key.
+// Order is not stable.
+func (r *Registry) PublicClients() []*Registration {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	var out []*Registration
+
+	for _, reg := range r.providers {
+		if reg.PublicClient {
+			out = append(out, reg)
+		}
+	}
+
+	return out
+}
+
 // ProviderDisplayName returns the human-readable label for the
 // provider, falling back to the raw constant string when no display
 // name is registered.
@@ -117,6 +166,44 @@ func (r *Registry) ProviderDisplayName(p coredata.ConnectorProvider) string {
 	}
 
 	return string(p)
+}
+
+// APIKeyHeader returns the request header an API-key connection for the
+// given provider must use to present its key. Empty means the default
+// `Authorization: Bearer` scheme; a value such as "x-api-key" means the
+// raw key is sent in that header instead. Returns empty for unknown
+// providers and for providers that do not customise the scheme.
+func (r *Registry) APIKeyHeader(p coredata.ConnectorProvider) string {
+	if reg, ok := r.Get(p); ok {
+		return reg.APIKeyHeader
+	}
+
+	return ""
+}
+
+// APIKeyUsesBasicAuth reports whether an API-key connection for the
+// given provider must present its key as an HTTP Basic auth username
+// (empty password) instead of a Bearer token. Returns false for unknown
+// providers and for providers that use the default Bearer scheme.
+func (r *Registry) APIKeyUsesBasicAuth(p coredata.ConnectorProvider) bool {
+	if reg, ok := r.Get(p); ok {
+		return reg.APIKeyBasicAuth
+	}
+
+	return false
+}
+
+// APIKeyAuthScheme returns the non-Bearer Authorization scheme an API-key
+// connection for the given provider must use to present its key (e.g.
+// "SSWS" for Okta). Empty means the default `Authorization: Bearer`
+// scheme. Returns empty for unknown providers and for providers that do
+// not customise the scheme.
+func (r *Registry) APIKeyAuthScheme(p coredata.ConnectorProvider) string {
+	if reg, ok := r.Get(p); ok {
+		return reg.APIKeyAuthScheme
+	}
+
+	return ""
 }
 
 // ProviderOAuth2Scopes returns the OAuth2 scopes the access review

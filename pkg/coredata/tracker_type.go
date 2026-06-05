@@ -63,6 +63,26 @@ func (v TrackerType) String() string {
 	return string(v)
 }
 
+// Label returns a human-readable name for the tracker type, suitable for
+// display in visitor-facing documents such as the cookie and tracking
+// technologies policy.
+func (v TrackerType) Label() string {
+	switch v {
+	case TrackerTypeCookie:
+		return "Cookie"
+	case TrackerTypeLocalStorage:
+		return "Local storage"
+	case TrackerTypeSessionStorage:
+		return "Session storage"
+	case TrackerTypeIndexedDB:
+		return "IndexedDB"
+	case TrackerTypeCacheStorage:
+		return "Cache storage"
+	default:
+		return string(v)
+	}
+}
+
 func (v TrackerType) MarshalText() ([]byte, error) {
 	return []byte(v.String()), nil
 }

@@ -14,7 +14,7 @@
 
 import type { CookieItem } from "../types";
 import { humanizeDuration } from "../cookie-utils";
-import { getCookieDetailLabels } from "../i18n";
+import { getCookieDetailLabels, getTrackerTypeLabel, interpolate } from "../i18n";
 import { ProboElement } from "./base";
 import type { ProboCategory } from "./category";
 import type { ProboCookieBannerRoot } from "./cookie-banner-root";
@@ -55,18 +55,27 @@ export class ProboCookieList extends ProboElement {
       ? humanizeDuration(cookie.max_age_seconds, lang)
       : humanizeDuration(0, lang);
 
+    const type = getTrackerTypeLabel(cookie.tracker_type);
+
     const wrapper = document.createElement("probo-cookie");
     wrapper.setAttribute("name", cookie.name);
     const clone = this.template.content.cloneNode(true) as DocumentFragment;
     this.fillSlots(clone, {
       name: cookie.name,
+      type,
       duration,
       description: cookie.description,
     });
     this.fillLabels(clone, labels, {
+      type,
       description: cookie.description,
       duration,
     });
+
+    const typeEl = clone.querySelector<HTMLElement>(".cookie-type");
+    if (typeEl && labels.label_type) {
+      typeEl.setAttribute("aria-label", interpolate(labels.label_type, { value: type }));
+    }
 
     wrapper.appendChild(clone);
     this.appendChild(wrapper);

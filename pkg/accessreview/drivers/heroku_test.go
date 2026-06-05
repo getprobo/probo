@@ -16,6 +16,8 @@ package drivers
 
 import (
 	"context"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"testing"
 
@@ -48,4 +50,135 @@ func TestHerokuDriver(t *testing.T) {
 	assert.Equal(t, coredata.MFAStatusEnabled, r.MFAStatus)
 	assert.True(t, r.IsAdmin)
 	require.NotNil(t, r.CreatedAt)
+}
+
+// TestHerokuDriverPersonalAccount exercises personal mode (empty teamID): a
+// solo account with no Team is reviewed via its apps' owner + collaborators.
+// It verifies the owner is always included, collaborators are deduped across
+// apps, and team-owned apps are skipped.
+func TestHerokuDriverPersonalAccount(t *testing.T) {
+	t.Parallel()
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.Equal(t, http.MethodGet, r.Method)
+		w.Header().Set("Content-Type", "application/json")
+
+		switch r.URL.Path {
+		case "/apps":
+			w.WriteHeader(http.StatusOK)
+			_, _ = w.Write([]byte(`[
+				{"id":"app-1","name":"one","owner":{"id":"u-alice","email":"alice@example.com"},"team":null},
+				{"id":"app-2","name":"two","owner":{"id":"u-alice","email":"alice@example.com"},"team":null},
+				{"id":"app-3","name":"teamed","owner":{"id":"u-x","email":"x@example.com"},"team":{"id":"team-1"}}
+			]`))
+		case "/apps/app-1/collaborators":
+			w.WriteHeader(http.StatusOK)
+			_, _ = w.Write([]byte(`[
+				{"id":"c-1","role":"owner","user":{"id":"u-alice","email":"alice@example.com"}},
+				{"id":"c-2","role":"member","user":{"id":"u-bob","email":"bob@example.com"}}
+			]`))
+		case "/apps/app-2/collaborators":
+			w.WriteHeader(http.StatusOK)
+			_, _ = w.Write([]byte(`[
+				{"id":"c-3","role":"member","user":{"id":"u-bob","email":"bob@example.com"}},
+				{"id":"c-4","role":"member","user":{"id":"u-carol","email":"carol@example.com"}}
+			]`))
+		default:
+			t.Errorf("unexpected request to %s", r.URL.Path)
+			w.WriteHeader(http.StatusNotFound)
+		}
+	}))
+	defer srv.Close()
+
+	client := &http.Client{Transport: &hostRewriter{target: srv.URL}}
+
+	records, err := NewHerokuDriver(client, "").ListAccounts(context.Background())
+	require.NoError(t, err)
+
+	byEmail := make(map[string]AccountRecord, len(records))
+	for _, r := range records {
+		byEmail[r.Email] = r
+	}
+
+	require.Len(t, records, 3)
+	assert.Contains(t, byEmail, "alice@example.com")
+	assert.Contains(t, byEmail, "bob@example.com")
+	assert.Contains(t, byEmail, "carol@example.com")
+
+	assert.True(t, byEmail["alice@example.com"].IsAdmin)
+	assert.Equal(t, "owner", byEmail["alice@example.com"].Role)
+	assert.False(t, byEmail["bob@example.com"].IsAdmin)
+}
+
+// TestHerokuDriverPersonalAccountSlug verifies the reserved personal-account
+// slug routes to personal mode just like an empty teamID.
+func TestHerokuDriverPersonalAccountSlug(t *testing.T) {
+	t.Parallel()
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+
+		switch r.URL.Path {
+		case "/apps":
+			w.WriteHeader(http.StatusOK)
+			_, _ = w.Write([]byte(`[{"id":"app-1","name":"one","owner":{"id":"u-alice","email":"alice@example.com"},"team":null}]`))
+		case "/apps/app-1/collaborators":
+			w.WriteHeader(http.StatusOK)
+			_, _ = w.Write([]byte(`[]`))
+		default:
+			t.Errorf("unexpected request to %s", r.URL.Path)
+			w.WriteHeader(http.StatusNotFound)
+		}
+	}))
+	defer srv.Close()
+
+	client := &http.Client{Transport: &hostRewriter{target: srv.URL}}
+
+	records, err := NewHerokuDriver(client, herokuPersonalAccountSlug).ListAccounts(context.Background())
+	require.NoError(t, err)
+	require.Len(t, records, 1)
+	assert.Equal(t, "alice@example.com", records[0].Email)
+}
+
+// TestHerokuDriverPersonalAccountErrors verifies non-2xx responses on the
+// personal-mode endpoints propagate as errors rather than empty results.
+func TestHerokuDriverPersonalAccountErrors(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		name      string
+		appsCode  int
+		collabFor string
+	}{
+		{name: "apps list fails", appsCode: http.StatusInternalServerError},
+		{name: "collaborators fail", appsCode: http.StatusOK, collabFor: "app-1"},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+
+				switch r.URL.Path {
+				case "/apps":
+					w.WriteHeader(tc.appsCode)
+					_, _ = w.Write([]byte(`[{"id":"app-1","name":"one","owner":{"id":"u-alice","email":"alice@example.com"},"team":null}]`))
+				case "/apps/app-1/collaborators":
+					w.WriteHeader(http.StatusForbidden)
+					_, _ = w.Write([]byte(`{"id":"forbidden"}`))
+				default:
+					t.Errorf("unexpected request to %s", r.URL.Path)
+					w.WriteHeader(http.StatusNotFound)
+				}
+			}))
+			defer srv.Close()
+
+			client := &http.Client{Transport: &hostRewriter{target: srv.URL}}
+
+			_, err := NewHerokuDriver(client, "").ListAccounts(context.Background())
+			require.Error(t, err)
+		})
+	}
 }

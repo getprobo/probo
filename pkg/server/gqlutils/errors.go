@@ -142,6 +142,14 @@ func Conflictf(ctx context.Context, format string, a ...any) *gqlerror.Error {
 	return Conflict(ctx, fmt.Errorf(format, a...))
 }
 
+func TokenExpired(ctx context.Context, err error) *gqlerror.Error {
+	return &gqlerror.Error{
+		Message:    err.Error(),
+		Path:       graphql.GetPath(ctx),
+		Extensions: map[string]any{"code": "TOKEN_EXPIRED"},
+	}
+}
+
 func Invalid(ctx context.Context, err error) *gqlerror.Error {
 	var details map[string]any
 

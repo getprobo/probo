@@ -216,9 +216,9 @@ var IAMOwnerPolicy = policy.NewPolicy(
 		WithSID("full-scim-event-access").
 		When(policy.Equals("principal.organization_id", "resource.organization_id")),
 
-	// Allow updating SCIM bridge settings (scoped to own organization)
-	policy.Allow(ActionSCIMBridgeUpdate).
-		WithSID("scim-bridge-update-access").
+	// Full access to SCIM bridge management (scoped to own organization)
+	policy.Allow("iam:scim-bridge:*").
+		WithSID("full-scim-bridge-access").
 		When(policy.Equals("principal.organization_id", "resource.organization_id")),
 
 	// Full access to audit log entries (scoped to own organization)
@@ -310,20 +310,24 @@ var IAMAdminPolicy = policy.NewPolicy(
 	).
 		WithSID("deny-saml-management"),
 
-	// Can view SCIM configuration and events (scoped to own organization)
+	// Can view SCIM configuration, bridge, and events (scoped to own organization)
 	policy.Allow(
 		ActionSCIMConfigurationGet,
+		ActionSCIMBridgeGet,
 		ActionSCIMEventList,
 		ActionSCIMEventGet,
 	).
 		WithSID("scim-admin-view-access").
 		When(policy.Equals("principal.organization_id", "resource.organization_id")),
 
-	// Cannot manage SCIM configurations (only owner can)
+	// Cannot manage SCIM configurations or bridges (only owner can)
 	policy.Deny(
 		ActionSCIMConfigurationCreate,
 		ActionSCIMConfigurationUpdate,
 		ActionSCIMConfigurationDelete,
+		ActionSCIMBridgeCreate,
+		ActionSCIMBridgeUpdate,
+		ActionSCIMBridgeDelete,
 	).
 		WithSID("deny-scim-management"),
 

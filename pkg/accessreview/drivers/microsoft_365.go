@@ -148,6 +148,12 @@ func (d *Microsoft365Driver) ListAccounts(ctx context.Context) ([]AccountRecord,
 			email = u.UserPrincipalName
 		}
 
+		// Skip accounts without any usable identifier so the access
+		// review only lists real members, matching the SCIM bridge.
+		if email == "" {
+			continue
+		}
+
 		userRoles := rolesByUser[u.ID]
 		isAdmin := false
 

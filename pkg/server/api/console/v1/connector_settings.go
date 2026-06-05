@@ -19,6 +19,8 @@ import (
 	"fmt"
 	"net/url"
 
+	"go.probo.inc/probo/pkg/accessreview/drivers"
+	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
 )
@@ -60,6 +62,17 @@ func apiKeyConnectorSettings(input types.CreateAPIKeyConnectorInput) (json.RawMe
 		}
 
 		return json.Marshal(&coredata.GitHubConnectorSettings{Organization: *input.GithubOrganization})
+	case coredata.ConnectorProviderGrafana:
+		if input.GrafanaBaseURL == nil || *input.GrafanaBaseURL == "" {
+			return nil, fmt.Errorf("cannot create grafana connector: grafanaBaseUrl is required")
+		}
+
+		u, err := url.Parse(*input.GrafanaBaseURL)
+		if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {
+			return nil, fmt.Errorf("cannot create grafana connector: grafanaBaseUrl must be an http(s) URL")
+		}
+
+		return json.Marshal(&coredata.GrafanaConnectorSettings{BaseURL: *input.GrafanaBaseURL})
 	case coredata.ConnectorProviderOnePassword:
 		if input.OnePasswordScimBridgeURL == nil || *input.OnePasswordScimBridgeURL == "" {
 			return nil, fmt.Errorf("cannot create 1password connector: onePasswordScimBridgeURL is required")
@@ -71,6 +84,65 @@ func apiKeyConnectorSettings(input types.CreateAPIKeyConnectorInput) (json.RawMe
 		}
 
 		return json.Marshal(&coredata.OnePasswordConnectorSettings{SCIMBridgeURL: *input.OnePasswordScimBridgeURL})
+	case coredata.ConnectorProviderMetabase:
+		if input.MetabaseInstanceURL == nil || *input.MetabaseInstanceURL == "" {
+			return nil, fmt.Errorf("cannot create metabase connector: metabaseInstanceUrl is required")
+		}
+
+		u, err := url.Parse(*input.MetabaseInstanceURL)
+		if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {
+			return nil, fmt.Errorf("cannot create metabase connector: metabaseInstanceUrl must be an http(s) URL")
+		}
+
+		return json.Marshal(&coredata.MetabaseConnectorSettings{InstanceURL: *input.MetabaseInstanceURL})
+	case coredata.ConnectorProviderPostHog:
+		region := ""
+		if input.PosthogRegion != nil {
+			region = *input.PosthogRegion
+		}
+
+		instanceURL := ""
+		if input.PosthogInstanceURL != nil {
+			instanceURL = *input.PosthogInstanceURL
+		}
+
+		// Cloud (region) and self-hosted (instance URL) are mutually
+		// exclusive; exactly one identifies the connection's data host.
+		switch {
+		case region != "" && instanceURL != "":
+			return nil, fmt.Errorf("cannot create posthog connector: set either posthogRegion or posthogInstanceUrl, not both")
+		case region != "":
+			baseURL, ok := drivers.PostHogRegionBaseURL(region)
+			if !ok {
+				return nil, fmt.Errorf("cannot create posthog connector: posthogRegion must be US or EU")
+			}
+
+			return json.Marshal(&coredata.PostHogConnectorSettings{BaseURL: baseURL})
+		case instanceURL != "":
+			u, err := url.Parse(instanceURL)
+			if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {
+				return nil, fmt.Errorf("cannot create posthog connector: posthogInstanceUrl must be an http(s) URL")
+			}
+
+			return json.Marshal(&coredata.PostHogConnectorSettings{BaseURL: instanceURL})
+		default:
+			return nil, fmt.Errorf("cannot create posthog connector: posthogRegion or posthogInstanceUrl is required")
+		}
+	case coredata.ConnectorProviderOkta:
+		if input.OktaDomain == nil || *input.OktaDomain == "" {
+			return nil, fmt.Errorf("cannot create okta connector: oktaDomain is required")
+		}
+
+		// NormalizeOktaDomain strips scheme/path and validates the host; the
+		// stored value is the bare org domain (e.g. "acme.okta.com"). Use a
+		// static error message — this string is surfaced verbatim to the
+		// client and must never echo the operator-supplied input.
+		domain, err := connector.NormalizeOktaDomain(*input.OktaDomain)
+		if err != nil {
+			return nil, fmt.Errorf("cannot create okta connector: oktaDomain must be a valid Okta domain (e.g. acme.okta.com)")
+		}
+
+		return json.Marshal(&coredata.OktaConnectorSettings{Domain: domain})
 	}
 
 	return nil, nil

@@ -249,3 +249,79 @@ func TestTrackerPattern_Update_NotFoundForMissingRow(t *testing.T) {
 
 	assert.ErrorIs(t, err, coredata.ErrResourceNotFound)
 }
+
+// TestResetStaleMappings pins the mapping stale-recovery contract: a row
+// dequeued (mapping_requested_at IS NULL) but never finished (no
+// common_tracker_pattern_id) and idle past the window is re-armed, while
+// a recently claimed row (clock not yet elapsed) and a completed row
+// (catalog row assigned) are left untouched. Without this sweep a crash
+// between Process phases would strand the pattern unmapped forever.
+func TestResetStaleMappings(t *testing.T) {
+	t.Parallel()
+
+	client := newTestPgClient(t)
+	ctx := context.Background()
+	fx := seedTrackerPatternFixture(t, ctx, client)
+
+	now := time.Now().UTC().Truncate(time.Microsecond)
+	old := now.Add(-time.Hour)
+	maxAge := 3600
+	source := coredata.CookieSourceScript
+
+	newPattern := func(pattern string, updatedAt time.Time, commonID *gid.GID) *coredata.TrackerPattern {
+		tp := &coredata.TrackerPattern{
+			ID:                     gid.New(fx.scope.GetTenantID(), coredata.TrackerPatternEntityType),
+			OrganizationID:         fx.organizationID,
+			CookieBannerID:         fx.cookieBannerID,
+			CookieCategoryID:       fx.cookieCategoryID,
+			CommonTrackerPatternID: commonID,
+			TrackerType:            coredata.TrackerTypeCookie,
+			Pattern:                pattern,
+			MatchType:              coredata.TrackerPatternMatchTypeExact,
+			DisplayName:            pattern,
+			MaxAgeSeconds:          &maxAge,
+			Source:                 &source,
+			CreatedAt:              old,
+			UpdatedAt:              updatedAt,
+		}
+
+		require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+			return tp.Insert(ctx, tx, fx.scope)
+		}))
+
+		return tp
+	}
+
+	commonPattern := coredata.CommonTrackerPattern{
+		ID:          gid.New(gid.NilTenant, coredata.CommonTrackerPatternEntityType),
+		TrackerType: coredata.TrackerTypeCookie,
+		Pattern:     "mapped_catalog_" + gid.New(gid.NilTenant, coredata.CommonTrackerPatternEntityType).String(),
+		MatchType:   coredata.TrackerPatternMatchTypeExact,
+		Confidence:  0.5,
+		CreatedAt:   old,
+		UpdatedAt:   old,
+	}
+	insertCommonTrackerPattern(t, ctx, client, commonPattern)
+
+	stale := newPattern("stale_unfinished", old, nil)
+	fresh := newPattern("fresh_unfinished", now, nil)
+	completed := newPattern("completed_mapping", old, &commonPattern.ID)
+
+	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+		return coredata.ResetStaleMappings(ctx, conn, 10*time.Minute)
+	}))
+
+	load := func(id gid.GID) coredata.TrackerPattern {
+		var reloaded coredata.TrackerPattern
+
+		require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+			return reloaded.LoadByID(ctx, conn, fx.scope, id)
+		}))
+
+		return reloaded
+	}
+
+	assert.NotNil(t, load(stale.ID).MappingRequestedAt, "claimed-but-unfinished idle row must be re-armed")
+	assert.Nil(t, load(fresh.ID).MappingRequestedAt, "recently claimed row must not be re-armed before the window elapses")
+	assert.Nil(t, load(completed.ID).MappingRequestedAt, "completed mapping (catalog row assigned) must never be re-armed")
+}

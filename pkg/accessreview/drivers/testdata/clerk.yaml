@@ -1,0 +1,43 @@
+---
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: api.clerk.com
+        form:
+            limit:
+                - "100"
+            offset:
+                - "0"
+        headers:
+            Accept:
+                - application/json
+        url: https://api.clerk.com/v1/users?limit=100&offset=0
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '[{"id":"user_3EfkCEWmtIsoMD3rRxIpDsBOPzv","object":"user","username":null,"first_name":"c","last_name":"c","locale":null,"image_url":"https://img.clerk.com/anonymized","has_image":false,"primary_email_address_id":"idn_3EfkCCq17KQsZzWLhtKnhAlguva","primary_phone_number_id":null,"primary_web3_wallet_id":null,"password_enabled":true,"two_factor_enabled":false,"totp_enabled":false,"backup_code_enabled":false,"email_addresses":[{"id":"idn_3EfkCCq17KQsZzWLhtKnhAlguva","object":"email_address","email_address":"c@example.com","reserved":false,"verification":{"object":"verification_admin","status":"verified","strategy":"admin","attempts":null,"expire_at":null},"linked_to":[],"matches_sso_connection":false,"created_at":1780576881106,"updated_at":1780576881106}],"phone_numbers":[],"web3_wallets":[],"passkeys":[],"external_accounts":[],"saml_accounts":[],"enterprise_accounts":[],"password_last_updated_at":1780576881104,"public_metadata":{},"private_metadata":{},"unsafe_metadata":{},"external_id":null,"last_sign_in_at":null,"banned":false,"locked":false,"lockout_expires_in_seconds":null,"verification_attempts_remaining":100,"created_at":1780576881104,"updated_at":1780576881109,"delete_self_enabled":true,"bypass_client_trust":false,"create_organization_enabled":true,"last_active_at":null,"mfa_enabled_at":null,"mfa_disabled_at":null,"legal_accepted_at":null,"requires_password_reset":false,"deprovisioned":false,"profile_image_url":"https://www.gravatar.com/avatar?d=mp"},{"id":"user_3EfkAUnJSm40lEsbkAuF9xUs5p2","object":"user","username":null,"first_name":"b","last_name":"b","locale":null,"image_url":"https://img.clerk.com/anonymized","has_image":false,"primary_email_address_id":"idn_3EfkAT1dfG5X3qrNnhntuaNC85w","primary_phone_number_id":null,"primary_web3_wallet_id":null,"password_enabled":true,"two_factor_enabled":false,"totp_enabled":false,"backup_code_enabled":false,"email_addresses":[{"id":"idn_3EfkAT1dfG5X3qrNnhntuaNC85w","object":"email_address","email_address":"b@example.com","reserved":false,"verification":{"object":"verification_admin","status":"verified","strategy":"admin","attempts":null,"expire_at":null},"linked_to":[],"matches_sso_connection":false,"created_at":1780576867751,"updated_at":1780576867751}],"phone_numbers":[],"web3_wallets":[],"passkeys":[],"external_accounts":[],"saml_accounts":[],"enterprise_accounts":[],"password_last_updated_at":1780576867746,"public_metadata":{},"private_metadata":{},"unsafe_metadata":{},"external_id":null,"last_sign_in_at":null,"banned":false,"locked":false,"lockout_expires_in_seconds":null,"verification_attempts_remaining":100,"created_at":1780576867746,"updated_at":1780576960608,"delete_self_enabled":true,"bypass_client_trust":false,"create_organization_enabled":true,"last_active_at":null,"mfa_enabled_at":null,"mfa_disabled_at":null,"legal_accepted_at":null,"requires_password_reset":true,"deprovisioned":false,"profile_image_url":"https://www.gravatar.com/avatar?d=mp"},{"id":"user_3Efk88E4dBmhk95VtBSXcOJ9vCx","object":"user","username":null,"first_name":"a","last_name":"a","locale":null,"image_url":"https://img.clerk.com/anonymized","has_image":false,"primary_email_address_id":"idn_3Efk87Z8o0h9gP86FnA8lUC2Alz","primary_phone_number_id":null,"primary_web3_wallet_id":null,"password_enabled":true,"two_factor_enabled":false,"totp_enabled":false,"backup_code_enabled":false,"email_addresses":[{"id":"idn_3Efk87Z8o0h9gP86FnA8lUC2Alz","object":"email_address","email_address":"a@example.com","reserved":false,"verification":{"object":"verification_admin","status":"verified","strategy":"admin","attempts":null,"expire_at":null},"linked_to":[],"matches_sso_connection":false,"created_at":1780576848230,"updated_at":1780576848230}],"phone_numbers":[],"web3_wallets":[],"passkeys":[],"external_accounts":[],"saml_accounts":[],"enterprise_accounts":[],"password_last_updated_at":1780576848227,"public_metadata":{},"private_metadata":{},"unsafe_metadata":{},"external_id":null,"last_sign_in_at":null,"banned":false,"locked":true,"lockout_expires_in_seconds":3554,"verification_attempts_remaining":100,"created_at":1780576848227,"updated_at":1780576947260,"delete_self_enabled":true,"bypass_client_trust":false,"create_organization_enabled":true,"last_active_at":null,"mfa_enabled_at":null,"mfa_disabled_at":null,"legal_accepted_at":null,"requires_password_reset":false,"deprovisioned":false,"profile_image_url":"https://www.gravatar.com/avatar?d=mp"}]'
+        headers:
+            Cf-Cache-Status:
+                - DYNAMIC
+            Clerk-Api-Version:
+                - "2025-11-10"
+            Content-Type:
+                - application/json
+            Date:
+                - Thu, 04 Jun 2026 12:43:12 GMT
+            Server:
+                - cloudflare
+            X-Cfworker:
+                - "1"
+        status: 200 OK
+        code: 200
+        duration: 221.280708ms

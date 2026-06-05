@@ -17,6 +17,7 @@ package llm
 //go:generate go run go.probo.inc/probo/internal/cmd/genmodels
 
 import (
+	"regexp"
 	"strings"
 	"sync"
 )
@@ -81,7 +82,9 @@ func DefaultRegistry() *Registry {
 
 // Lookup finds a model by ID. It accepts both provider-prefixed IDs
 // ("anthropic/claude-opus-4.6") and bare provider IDs ("claude-opus-4-6",
-// "gpt-5.4"). Returns false if the model is not in the registry.
+// "gpt-5.4"). Dated provider snapshots ("gpt-5-nano-2025-08-07") fall
+// back to their undated base model ("gpt-5-nano"). Returns false if the
+// model is not in the registry.
 func (r *Registry) Lookup(modelID string) (ModelDefinition, bool) {
 	if m, ok := r.byID[modelID]; ok {
 		return *m, true
@@ -89,6 +92,16 @@ func (r *Registry) Lookup(modelID string) (ModelDefinition, bool) {
 
 	if m, ok := r.byID[normalizeModelID(modelID)]; ok {
 		return *m, true
+	}
+
+	if base := stripModelDateSuffix(modelID); base != modelID {
+		if m, ok := r.byID[base]; ok {
+			return *m, true
+		}
+
+		if m, ok := r.byID[normalizeModelID(base)]; ok {
+			return *m, true
+		}
 	}
 
 	return ModelDefinition{}, false
@@ -120,4 +133,14 @@ func normalizeModelID(id string) string {
 	}
 
 	return strings.ReplaceAll(id, ".", "-")
+}
+
+// modelDateSuffix matches a trailing provider snapshot date such as the
+// "-2025-08-07" in "gpt-5-nano-2025-08-07".
+var modelDateSuffix = regexp.MustCompile(`-\d{4}-\d{2}-\d{2}$`)
+
+// stripModelDateSuffix removes a trailing dated-snapshot suffix from a
+// model ID, leaving the base model ID unchanged when none is present.
+func stripModelDateSuffix(id string) string {
+	return modelDateSuffix.ReplaceAllString(id, "")
 }

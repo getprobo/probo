@@ -80,14 +80,11 @@ func buildSnapshot(
 	cookiesByCategory := make(map[gid.GID]coredata.CookieItems)
 
 	for _, p := range allPatterns {
-		if p.TrackerType != coredata.TrackerTypeCookie {
-			continue
-		}
-
 		cookiesByCategory[p.CookieCategoryID] = append(
 			cookiesByCategory[p.CookieCategoryID],
 			coredata.CookieItem{
 				Name:          p.DisplayName,
+				TrackerType:   p.TrackerType,
 				MaxAgeSeconds: p.MaxAgeSeconds,
 				Description:   p.Description,
 			},

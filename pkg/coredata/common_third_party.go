@@ -55,16 +55,46 @@ type (
 	CommonThirdParties []*CommonThirdParty
 )
 
-// AuthorizationAttributes is a no-op resource-attribute loader: the
-// common third-party catalog is global (shared across every tenant) and
-// has no organization_id. Authorization for these rows is granted by an
-// identity-scoped policy that has no condition.
+// AuthorizationAttributes loads existence-only attributes for the global
+// common third-party catalog: rows have no organization_id, and the
+// identity-scoped policy that grants access has no condition. The
+// authorizer still requires an entry per requested ID (missing entries are
+// treated as ErrResourceNotFound), so this verifies existence and returns
+// empty attribute maps for every row that exists.
 func (t *CommonThirdParty) AuthorizationAttributes(
 	ctx context.Context,
 	conn pg.Querier,
 	resourceIDs []gid.GID,
 ) (policy.AttributesByID, error) {
-	return map[gid.GID]policy.Attributes{}, nil
+	q := `SELECT id FROM common_third_parties WHERE id = ANY(@resource_ids::text[])`
+
+	args := pgx.StrictNamedArgs{
+		"resource_ids": resourceIDs,
+	}
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return nil, fmt.Errorf("cannot query common third party authorization attributes: %w", err)
+	}
+	defer rows.Close()
+
+	attrsByID := make(policy.AttributesByID)
+
+	for rows.Next() {
+		var id gid.GID
+
+		if err := rows.Scan(&id); err != nil {
+			return nil, fmt.Errorf("cannot scan common third party authorization attributes: %w", err)
+		}
+
+		attrsByID[id] = policy.Attributes{}
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("cannot iterate common third party authorization attributes: %w", err)
+	}
+
+	return attrsByID, nil
 }
 
 func (t *CommonThirdParty) LoadByID(
@@ -473,6 +503,57 @@ func (t CommonThirdParty) Delete(
 	if err != nil {
 		return fmt.Errorf("cannot delete common third party: %w", err)
 	}
+
+	return nil
+}
+
+func (t *CommonThirdParties) LoadByIDs(
+	ctx context.Context,
+	conn pg.Querier,
+	ids []gid.GID,
+) error {
+	q := `
+SELECT
+    id,
+    name,
+    slug,
+    category,
+    headquarter_address,
+    legal_name,
+    website_url,
+    privacy_policy_url,
+    service_level_agreement_url,
+    service_software_agreement_url,
+    data_processing_agreement_url,
+    business_associate_agreement_url,
+    subprocessors_list_url,
+    certifications,
+    status_page_url,
+    terms_of_service_url,
+    security_page_url,
+    trust_page_url,
+    logo_file_id,
+    created_at,
+    updated_at
+FROM
+    common_third_parties
+WHERE
+    id = ANY(@ids)
+`
+
+	args := pgx.StrictNamedArgs{"ids": ids}
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query common third parties: %w", err)
+	}
+
+	parties, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[CommonThirdParty])
+	if err != nil {
+		return fmt.Errorf("cannot collect common third parties: %w", err)
+	}
+
+	*t = parties
 
 	return nil
 }

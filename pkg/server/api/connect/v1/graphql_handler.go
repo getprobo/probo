@@ -25,6 +25,7 @@ import (
 	"go.probo.inc/probo/pkg/server/api/authz"
 	"go.probo.inc/probo/pkg/server/api/connect/v1/schema"
 	"go.probo.inc/probo/pkg/server/gqlutils"
+	"go.probo.inc/probo/pkg/server/gqlutils/directives/authentication"
 	"go.probo.inc/probo/pkg/server/gqlutils/directives/session"
 )
 
@@ -39,7 +40,8 @@ func NewGraphQLHandler(svc *iam.Service, logger *log.Logger, baseURL *baseurl.Ba
 			sessionCookie:  authn.NewCookie(&cookieConfig),
 		},
 		Directives: schema.DirectiveRoot{
-			Session: session.Directive,
+			Authentication: authentication.Directive,
+			SessionOnly:    session.Directive,
 		},
 	}
 

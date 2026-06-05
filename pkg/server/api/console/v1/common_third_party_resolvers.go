@@ -7,7 +7,6 @@ package console_v1
 
 import (
 	"context"
-	"time"
 
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/probo"
@@ -26,7 +25,7 @@ func (r *commonThirdPartyResolver) LogoURL(ctx context.Context, obj *types.Commo
 		return nil, nil
 	}
 
-	logoURL, err := r.thirdParty.GenerateLogoURL(ctx, *obj.LogoFileID, 1*time.Hour)
+	logoURL, err := r.thirdParty.GenerateLogoURL(ctx, *obj.LogoFileID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot generate common third party logo URL", log.Error(err))
 		return nil, gqlutils.Internal(ctx)

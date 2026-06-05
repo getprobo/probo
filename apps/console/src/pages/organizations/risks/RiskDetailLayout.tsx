@@ -41,20 +41,17 @@ import type { RiskDetailLayoutQuery } from "#/__generated__/core/RiskDetailLayou
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { RisksConnectionKey } from "#/pages/organizations/risks/RisksPage";
 
-import FormRiskDialog from "./FormRiskDialog";
-
-/* eslint-disable relay/unused-fields, relay/must-colocate-fragment-spreads */
+import { FormRiskDialog } from "./_components/FormRiskDialog";
 
 export const riskDetailLayoutQuery = graphql`
   query RiskDetailLayoutQuery($riskId: ID!) {
     node(id: $riskId) {
+      __typename
       ... on Risk {
-        id
         name
         description
         treatment
         owner {
-          id
           fullName
         }
         note
@@ -77,31 +74,7 @@ export const riskDetailLayoutQuery = graphql`
         }
         canUpdate: permission(action: "core:risk:update")
         canDelete: permission(action: "core:risk:delete")
-        canCreateDocumentMapping: permission(
-          action: "core:risk:create-document-mapping"
-        )
-        canDeleteDocumentMapping: permission(
-          action: "core:risk:delete-document-mapping"
-        )
-        canCreateMeasureMapping: permission(
-          action: "core:risk:create-measure-mapping"
-        )
-        canDeleteMeasureMapping: permission(
-          action: "core:risk:delete-measure-mapping"
-        )
-        canCreateObligationMapping: permission(
-          action: "core:risk:create-obligation-mapping"
-        )
-        canDeleteObligationMapping: permission(
-          action: "core:risk:delete-obligation-mapping"
-        )
-        ...useRiskFormFragment
-        ...RiskOverviewTabFragment
-        ...RiskMeasuresTabFragment
-        ...RiskDocumentsTabFragment
-        ...RiskControlsTabFragment
-        ...RiskObligationsTabFragment
-        ...RiskScenariosPageFragment
+        ...FormRiskDialog_risk
       }
     }
   }
@@ -118,11 +91,11 @@ const deleteRiskMutation = graphql`
   }
 `;
 
-type Props = {
+interface RiskDetailLayoutProps {
   queryRef: PreloadedQuery<RiskDetailLayoutQuery>;
-};
+}
 
-export default function RiskDetailLayout(props: Props) {
+export default function RiskDetailLayout(props: RiskDetailLayoutProps) {
   const { riskId } = useParams<{
     riskId: string;
   }>();
@@ -134,14 +107,15 @@ export default function RiskDetailLayout(props: Props) {
   }
 
   const { __ } = useTranslate();
-  const { node: risk } = usePreloadedQuery(
-    riskDetailLayoutQuery,
-    props.queryRef,
-  );
+  const data = usePreloadedQuery(riskDetailLayoutQuery, props.queryRef);
+  if (data.node?.__typename !== "Risk") {
+    throw new Error("Risk not found");
+  }
+  const risk = data.node;
 
   const [deleteRisk] = useMutation<RiskDetailLayoutDeleteMutation>(deleteRiskMutation);
 
-  usePageTitle(risk.name ?? "Risk detail");
+  usePageTitle(risk.name);
   const confirm = useConfirm();
 
   const onDelete = () => {
@@ -188,7 +162,6 @@ export default function RiskDetailLayout(props: Props) {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex justify-between items-center mb-4">
         <Breadcrumb
           items={[
@@ -209,7 +182,7 @@ export default function RiskDetailLayout(props: Props) {
                   {__("Edit")}
                 </Button>
               )}
-              risk={{ id: riskId, ...risk }}
+              risk={risk}
             />
           )}
           {risk.canDelete && (
@@ -251,7 +224,7 @@ export default function RiskDetailLayout(props: Props) {
         </TabLink>
       </Tabs>
 
-      <Outlet context={{ risk }} />
+      <Outlet />
 
       <Drawer>
         <PropertyRow label={__("Owner")}>

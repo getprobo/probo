@@ -30,7 +30,7 @@ import (
 
 const (
 	// DefaultMaxTokens is the fallback max-tokens budget used when the
-	// third-party-assessor agent config does not specify a value. Sized to
+	// third-party-vetter agent config does not specify a value. Sized to
 	// leave headroom above the orchestrator's thinking budget on
 	// Anthropic models.
 	DefaultMaxTokens = 16384
@@ -173,7 +173,7 @@ func NewAssessor(cfg Config) *Assessor {
 	return &Assessor{cfg: cfg}
 }
 
-func (a *Assessor) Assess(ctx context.Context, websiteURL string, procedure string, reporter agent.ProgressReporter) (*Result, error) {
+func (a *Assessor) Assess(ctx context.Context, websiteURL string, procedure string, reporter agent.ProgressReporter, extraTools []agent.Tool) (*Result, error) {
 	u, err := url.Parse(websiteURL)
 	if err != nil {
 		return nil, fmt.Errorf("cannot parse website URL %q: %w", websiteURL, err)
@@ -193,15 +193,12 @@ func (a *Assessor) Assess(ctx context.Context, websiteURL string, procedure stri
 	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), AssessmentTimeout)
 	defer cancel()
 
-	thirdPartyBrowser := browser.NewBrowser(ctx, a.cfg.ChromeAddr)
-	defer thirdPartyBrowser.Close()
-
-	thirdPartyBrowser.SetAllowedDomain(u.Hostname())
-
-	// Create an unrestricted browser for web search agents that need to
-	// follow links to external sites (news, reviews, etc.).
-	researchBrowser := browser.NewBrowser(ctx, a.cfg.ChromeAddr)
-	defer researchBrowser.Close()
+	// One shared remote Chrome allocator for all sub-agents. Sub-agents
+	// that need external links (subprocessor hosts, research) share it
+	// with vendor-site crawlers. Navigation is still gated by public-IP
+	// checks; we do not pin an allowed domain so external follows work.
+	webBrowser := browser.NewBrowser(ctx, a.cfg.ChromeAddr)
+	defer webBrowser.Close()
 
 	orchestrator, err := newOrchestratorAgent(
 		a.cfg.Client,
@@ -209,16 +206,16 @@ func (a *Assessor) Assess(ctx context.Context, websiteURL string, procedure stri
 		a.cfg.MaxTokens,
 		procedure,
 		a.cfg.Logger,
-		thirdPartyBrowser,
-		researchBrowser,
+		webBrowser,
 		a.cfg.FirecrawlAPIKey,
 		reporter,
+		extraTools,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create orchestrator agent: %w", err)
 	}
 
-	result, err := orchestrator.Run(
+	orchestratorResult, err := orchestrator.Run(
 		ctx,
 		[]llm.Message{
 			{
@@ -231,7 +228,10 @@ func (a *Assessor) Assess(ctx context.Context, websiteURL string, procedure stri
 		return nil, fmt.Errorf("cannot assess thirdParty: %w", err)
 	}
 
-	document := result.FinalMessage().Text()
+	document := orchestratorResult.FinalMessage().Text()
+
+	// Extraction is LLM-only; release Chrome before it runs.
+	webBrowser.Close()
 
 	reportProgress(ctx, reporter, "extract_third_party_info", agent.ProgressEventStepStarted)
 
@@ -239,6 +239,13 @@ func (a *Assessor) Assess(ctx context.Context, websiteURL string, procedure stri
 	if err != nil {
 		reportProgress(ctx, reporter, "extract_third_party_info", agent.ProgressEventStepFailed)
 		return nil, fmt.Errorf("cannot extract thirdParty info: %w", err)
+	}
+
+	toolSubprocessors := subprocessorsFromOrchestratorMessages(orchestratorResult.Messages)
+	info.Subprocessors = mergeSubprocessors(toolSubprocessors, info.Subprocessors)
+
+	if info.SubprocessorsListURL == "" {
+		info.SubprocessorsListURL = subprocessorListURLFromOrchestratorMessages(orchestratorResult.Messages)
 	}
 
 	reportProgress(ctx, reporter, "extract_third_party_info", agent.ProgressEventStepCompleted)
@@ -335,7 +342,12 @@ func thirdPartyInfoOutputType() (*agent.OutputType, error) {
 		return nil, fmt.Errorf("cannot marshal decorated thirdParty info schema: %w", err)
 	}
 
-	outputType.Schema = decorated
+	strict, err := enforceStrictJSONSchema(decorated)
+	if err != nil {
+		return nil, fmt.Errorf("cannot enforce strict thirdParty info schema: %w", err)
+	}
+
+	outputType.Schema = strict
 
 	return outputType, nil
 }

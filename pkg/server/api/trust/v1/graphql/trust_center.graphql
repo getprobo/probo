@@ -346,29 +346,29 @@ type DocumentAccess implements Node {
 }
 
 extend type Mutation {
-  requestAllAccesses: RequestAccessesPayload! @session(required: PRESENT) @nda
+  requestAllAccesses: RequestAccessesPayload! @authentication(required: PRESENT) @nda
 
   exportDocumentPDF(input: ExportDocumentPDFInput!): ExportDocumentPDFPayload!
-    @session(required: OPTIONAL) @nda
+    @authentication(required: OPTIONAL) @nda
 
   exportReportPDF(input: ExportReportPDFInput!): ExportReportPDFPayload!
-    @session(required: OPTIONAL) @nda
+    @authentication(required: OPTIONAL) @nda
 
   exportTrustCenterFile(
     input: ExportTrustCenterFileInput!
-  ): ExportTrustCenterFilePayload! @session(required: OPTIONAL) @nda
+  ): ExportTrustCenterFilePayload! @authentication(required: OPTIONAL) @nda
 
   requestDocumentAccess(
     input: RequestDocumentAccessInput!
-  ): RequestDocumentAccessPayload! @session(required: PRESENT) @nda
+  ): RequestDocumentAccessPayload! @authentication(required: PRESENT) @nda
 
   requestReportAccess(
     input: RequestReportAccessInput!
-  ): RequestReportAccessPayload! @session(required: PRESENT) @nda
+  ): RequestReportAccessPayload! @authentication(required: PRESENT) @nda
 
   requestTrustCenterFileAccess(
     input: RequestTrustCenterFileAccessInput!
-  ): RequestFileAccessPayload! @session(required: PRESENT) @nda
+  ): RequestFileAccessPayload! @authentication(required: PRESENT) @nda
 }
 
 type RequestDocumentAccessPayload {

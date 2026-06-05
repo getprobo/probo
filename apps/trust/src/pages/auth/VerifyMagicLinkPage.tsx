@@ -18,7 +18,7 @@ import { useTranslate } from "@probo/i18n";
 import { useToast } from "@probo/ui";
 import { useCallback, useEffect, useRef } from "react";
 import { useMutation } from "react-relay";
-import { Link, useSearchParams } from "react-router";
+import { Link, useNavigate, useSearchParams } from "react-router";
 import { graphql } from "relay-runtime";
 
 import { getPathPrefix } from "#/utils/pathPrefix";
@@ -36,6 +36,7 @@ const verifyMagicLinkMutation = graphql`
 export default function VerifyMagicLinkPagePageMutation() {
   const { __ } = useTranslate();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const submittedRef = useRef<boolean>(false);
 
@@ -59,17 +60,16 @@ export default function VerifyMagicLinkPagePageMutation() {
               window.location.href = window.location.origin + getPathPrefix();
               return;
             }
-          }
 
-          const hasExpiredToken = errors.some(
-            err => err.message === "token has expired",
-          );
+            if (err.extensions?.code === "TOKEN_EXPIRED") {
+              void navigate("/magic-link-expired");
+              return;
+            }
+          }
 
           toast({
             title: __("Error"),
-            description: hasExpiredToken
-              ? __("This magic link has expired. Please request a new one.")
-              : formatError(__("Failed to connect"), errors),
+            description: formatError(__("Failed to connect"), errors),
             variant: "error",
           });
           return;
@@ -102,7 +102,7 @@ export default function VerifyMagicLinkPagePageMutation() {
         });
       },
     });
-  }, [__, toast, verifyMagicLink]);
+  }, [__, navigate, toast, verifyMagicLink]);
 
   useEffect(() => {
     const token = searchParams.get("token");

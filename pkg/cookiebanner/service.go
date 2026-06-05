@@ -964,6 +964,11 @@ func (s *Service) PublishCookieBannerVersion(
 				return fmt.Errorf("cannot publish version: %w", err)
 			}
 
+			banner := coredata.CookieBanner{ID: bannerID}
+			if err := banner.SetPolicyGenerationRequested(ctx, tx); err != nil {
+				return fmt.Errorf("cannot request tracker policy generation: %w", err)
+			}
+
 			return nil
 		},
 	)
@@ -2229,6 +2234,15 @@ func (s *Service) reportDetectedTracker(
 			if err := matchedPattern.Update(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot promote source on matched tracker pattern %q: %w", matchedPattern.Pattern, err)
 			}
+
+			// A stronger source can unblock mapping: the detection
+			// upserted below carries a fresh initiator domain that
+			// matchByDomain/matchBySiblingOrigin can now use, and an
+			// EXTENSION->SCRIPT promotion lifts the creationAllowed
+			// gate. Re-arm mapping so the worker revisits the pattern.
+			if err := matchedPattern.SetMappingRequested(ctx, tx); err != nil {
+				return fmt.Errorf("cannot request mapping after source promotion on tracker pattern %q: %w", matchedPattern.Pattern, err)
+			}
 		}
 	} else {
 		newPattern := &coredata.TrackerPattern{
@@ -2628,6 +2642,20 @@ func (s *Service) MoveTrackerPatternToCategory(
 				return fmt.Errorf("cannot update tracker pattern: %w", err)
 			}
 
+			// A manual move is the user's signal that this is a
+			// real tracker. Enqueue the tracker-mapping worker so
+			// it can promote the pattern to an org ThirdParty (or
+			// link an existing one) — never EXTENSION-sourced
+			// patterns, and never patterns we already promoted.
+			// SetMappingRequested is idempotent: it short-circuits
+			// when mapping_requested_at is already non-NULL.
+			if pattern.ThirdPartyID == nil &&
+				(pattern.Source == nil || *pattern.Source != coredata.CookieSourceExtension) {
+				if err := pattern.SetMappingRequested(ctx, tx); err != nil {
+					return fmt.Errorf("cannot enqueue tracker mapping after move: %w", err)
+				}
+			}
+
 			var banner coredata.CookieBanner
 			if err := banner.LoadByID(ctx, tx, scope, pattern.CookieBannerID); err != nil {
 				return fmt.Errorf("cannot load cookie banner: %w", err)
@@ -2707,6 +2735,94 @@ func (s *Service) CountTrackerPatternsForBanner(
 	}
 
 	return count, nil
+}
+
+func (s *Service) GetCommonTrackerPatternsByIDs(
+	ctx context.Context,
+	ids ...gid.GID,
+) (coredata.CommonTrackerPatterns, error) {
+	var patterns coredata.CommonTrackerPatterns
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := patterns.LoadByIDs(ctx, conn, ids); err != nil {
+				return fmt.Errorf("cannot load common tracker patterns by ids: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return patterns, nil
+}
+
+// LoadDistinctThirdPartyIDsByCookieBannerID returns the distinct
+// org-scoped third-party IDs referenced by tracker patterns of the
+// banner. The companion
+// LoadDistinctCommonTrackerPatternIDsByCookieBannerID covers the
+// indirect mapping through common_tracker_patterns.
+func (s *Service) LoadDistinctThirdPartyIDsByCookieBannerID(
+	ctx context.Context,
+	scope coredata.Scoper,
+	cookieBannerID gid.GID,
+) ([]gid.GID, error) {
+	var ids []gid.GID
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			var (
+				patterns coredata.TrackerPatterns
+				err      error
+			)
+
+			ids, err = patterns.LoadDistinctThirdPartyIDsByCookieBannerID(ctx, conn, scope, cookieBannerID)
+			if err != nil {
+				return fmt.Errorf("cannot load distinct third party ids: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return ids, nil
+}
+
+func (s *Service) LoadDistinctCommonTrackerPatternIDsByCookieBannerID(
+	ctx context.Context,
+	scope coredata.Scoper,
+	cookieBannerID gid.GID,
+) ([]gid.GID, error) {
+	var ids []gid.GID
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			var (
+				patterns coredata.TrackerPatterns
+				err      error
+			)
+
+			ids, err = patterns.LoadDistinctCommonTrackerPatternIDsByCookieBannerID(ctx, conn, scope, cookieBannerID)
+			if err != nil {
+				return fmt.Errorf("cannot load distinct common tracker pattern ids: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return ids, nil
 }
 
 func (s *Service) CountDetectedTrackersByPatternID(

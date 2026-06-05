@@ -107,7 +107,7 @@ func NewMux(
 		r.Use(authn.NewAPIKeyMiddleware(iamSvc, tokenSecret))
 		r.Use(authn.NewOAuth2AccessTokenMiddleware(iamSvc))
 		r.Use(authn.NewIdentityPresenceMiddleware())
-		r.Use(dataloader.NewMiddleware(proboSvc, iamSvc, cookieBannerSvc))
+		r.Use(dataloader.NewMiddleware(proboSvc, iamSvc, cookieBannerSvc, thirdPartySvc))
 
 		r.Handle("/graphql", graphqlHandler)
 
@@ -127,6 +127,12 @@ func NewMux(
 			),
 		)
 	})
+
+	// Public, unauthenticated: the OAuth Client ID Metadata Document (CIMD)
+	// is fetched server-to-server by public-client providers (PostHog)
+	// during authorization, with no Probo credentials. Mounted outside the
+	// auth group above.
+	r.Get("/connectors/oauth-client-metadata", handleConnectorOAuthClientMetadata(baseURL))
 
 	return r
 }
@@ -183,6 +189,67 @@ func handleConnectorComplete(
 
 		var cnnctr *coredata.Connector
 
+		// Some providers persist per-customer settings on the connector,
+		// captured here for both the create and the reconnect path: Datadog
+		// echoes its API domain as a `domain` callback param; Zendesk's
+		// subdomain rode the signed OAuth state from initiate (it is not
+		// echoed back). Both become a URL host, so each is re-validated
+		// before use. At most one block applies per callback.
+		var rawSettings json.RawMessage
+
+		if connectorProvider == coredata.ConnectorProviderDatadog {
+			domain := query.Get("domain")
+			if !connector.IsValidDatadogDomain(domain) {
+				logger.WarnCtx(r.Context(), "rejecting invalid datadog domain",
+					log.String("provider", string(connectorProvider)),
+				)
+				httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("invalid domain"))
+
+				return
+			}
+
+			region, _ := connector.DatadogSiteForDomain(domain)
+
+			raw, err := json.Marshal(&coredata.DatadogConnectorSettings{
+				Region: region,
+				Domain: domain,
+			})
+			if err != nil {
+				logger.ErrorCtx(r.Context(), "cannot marshal datadog settings", log.Error(err))
+				httpserver.RenderError(w, http.StatusInternalServerError, fmt.Errorf("internal error"))
+
+				return
+			}
+
+			rawSettings = raw
+		}
+
+		if connectorProvider == coredata.ConnectorProviderZendesk {
+			// The subdomain is HMAC-signed in the state (untamperable) and was
+			// validated at initiate, but re-validate it here too — it becomes
+			// a URL host on every API call (defense-in-depth).
+			if !connector.IsValidZendeskSubdomain(state.Site) {
+				logger.WarnCtx(r.Context(), "rejecting invalid zendesk subdomain",
+					log.String("provider", string(connectorProvider)),
+				)
+				httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("invalid subdomain"))
+
+				return
+			}
+
+			raw, err := json.Marshal(&coredata.ZendeskConnectorSettings{
+				Subdomain: state.Site,
+			})
+			if err != nil {
+				logger.ErrorCtx(r.Context(), "cannot marshal zendesk settings", log.Error(err))
+				httpserver.RenderError(w, http.StatusInternalServerError, fmt.Errorf("internal error"))
+
+				return
+			}
+
+			rawSettings = raw
+		}
+
 		// If a connector_id was passed in the state, this is a
 		// reconnection — update the existing connector's token.
 		if state.ConnectorID != "" {
@@ -200,6 +267,7 @@ func handleConnectorComplete(
 					OrganizationID: organizationID,
 					Provider:       connectorProvider,
 					Connection:     connection,
+					RawSettings:    rawSettings,
 				},
 			)
 			if err != nil {
@@ -285,6 +353,13 @@ func handleConnectorComplete(
 
 					createReq.RawSettings = raw
 				}
+			}
+
+			// Per-customer settings captured above (Datadog's callback domain
+			// or Zendesk's state subdomain) apply to the create request; at
+			// most one provider populates them per callback.
+			if rawSettings != nil {
+				createReq.RawSettings = rawSettings
 			}
 
 			cnnctr, err = svc.Connectors.Create(r.Context(), scope, createReq)

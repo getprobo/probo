@@ -17,6 +17,7 @@ package drivers
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -25,6 +26,10 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/rfc5988"
 )
+
+// errSentryOrgNotAccessible signals a 404 scoped under an organization
+// slug; Sentry uses 404 (not 403) so this also covers revoked memberships.
+var errSentryOrgNotAccessible = errors.New("sentry organization is not accessible by this connector's token")
 
 // SentryDriver fetches organization members from Sentry via Bearer
 // token-authenticated REST API requests.
@@ -64,29 +69,9 @@ func NewSentryDriver(httpClient *http.Client, orgSlug string) *SentryDriver {
 }
 
 func (d *SentryDriver) resolveOrgSlug(ctx context.Context) (string, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, "https://sentry.io/api/0/organizations/?member=true", nil)
+	orgs, err := ListSentryOrganizations(ctx, d.httpClient)
 	if err != nil {
-		return "", fmt.Errorf("cannot create sentry organizations request: %w", err)
-	}
-
-	req.Header.Set("Accept", "application/json")
-
-	resp, err := d.httpClient.Do(req)
-	if err != nil {
-		return "", fmt.Errorf("cannot fetch sentry organizations: %w", err)
-	}
-
-	defer func() { _ = resp.Body.Close() }()
-
-	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("cannot fetch sentry organizations: status %d", resp.StatusCode)
-	}
-
-	var orgs []struct {
-		Slug string `json:"slug"`
-	}
-	if err := json.NewDecoder(resp.Body).Decode(&orgs); err != nil {
-		return "", fmt.Errorf("cannot decode sentry organizations response: %w", err)
+		return "", fmt.Errorf("cannot resolve sentry organization slug: %w", err)
 	}
 
 	if len(orgs) == 0 {
@@ -117,6 +102,10 @@ func (d *SentryDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error
 	for range maxPaginationPages {
 		members, linkHeader, err := d.queryMembers(ctx, nextURL)
 		if err != nil {
+			if errors.Is(err, errSentryOrgNotAccessible) {
+				return nil, fmt.Errorf("sentry organization %q is not accessible; reconnect the connector with the correct organization: %w", orgSlug, err)
+			}
+
 			return nil, err
 		}
 
@@ -197,6 +186,10 @@ func (d *SentryDriver) queryMembers(ctx context.Context, url string) ([]sentryMe
 	defer func() {
 		_ = httpResp.Body.Close()
 	}()
+
+	if httpResp.StatusCode == http.StatusNotFound {
+		return nil, "", errSentryOrgNotAccessible
+	}
 
 	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
 		return nil, "", fmt.Errorf("cannot fetch sentry members: unexpected status %d", httpResp.StatusCode)

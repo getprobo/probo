@@ -104,6 +104,31 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, input types.UpdateUse
 	}, nil
 }
 
+// ArchiveUser is the resolver for the archiveUser field.
+func (r *mutationResolver) ArchiveUser(ctx context.Context, input types.ArchiveUserInput) (*types.ArchiveUserPayload, error) {
+	scope, err := r.authorize(ctx, input.ProfileID, iam.ActionMembershipProfileDelete)
+	if err != nil {
+		return nil, err
+	}
+
+	err = r.iam.OrganizationService.ArchiveUser(ctx, scope, input.OrganizationID, input.ProfileID)
+	if err != nil {
+		if _, ok := errors.AsType[*iam.ErrUserManagedBySCIM](err); ok {
+			return nil, gqlutils.Conflictf(ctx, "user is managed by SCIM and cannot be archived")
+		}
+
+		if _, ok := errors.AsType[*iam.ErrLastActiveOwner](err); ok {
+			return nil, gqlutils.Conflictf(ctx, "cannot archive last active owner")
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot archive user from organization", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.ArchiveUserPayload{ArchivedProfileID: input.ProfileID}, nil
+}
+
 // RemoveUser is the resolver for the removeUser field.
 func (r *mutationResolver) RemoveUser(ctx context.Context, input types.RemoveUserInput) (*types.RemoveUserPayload, error) {
 	if _, err := r.authorize(ctx, input.ProfileID, iam.ActionMembershipProfileDelete); err != nil {
@@ -113,15 +138,11 @@ func (r *mutationResolver) RemoveUser(ctx context.Context, input types.RemoveUse
 	err := r.iam.OrganizationService.RemoveUser(ctx, input.OrganizationID, input.ProfileID)
 	if err != nil {
 		if _, ok := errors.AsType[*iam.ErrUserManagedBySCIM](err); ok {
-			return nil, gqlutils.Conflict(ctx, err)
+			return nil, gqlutils.Conflictf(ctx, "user is managed by SCIM and cannot be removed")
 		}
 
 		if _, ok := errors.AsType[*iam.ErrLastActiveOwner](err); ok {
-			return nil, gqlutils.Conflict(ctx, err)
-		}
-
-		if errors.Is(err, coredata.ErrResourceInUse) {
-			return nil, gqlutils.Conflict(ctx, err)
+			return nil, gqlutils.Conflictf(ctx, "cannot remove last active owner")
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot remove user from organization", log.Error(err))

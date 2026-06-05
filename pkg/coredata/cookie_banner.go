@@ -31,19 +31,21 @@ import (
 
 type (
 	CookieBanner struct {
-		ID                         gid.GID           `db:"id"`
-		OrganizationID             gid.GID           `db:"organization_id"`
-		Name                       string            `db:"name"`
-		Origin                     string            `db:"origin"`
-		State                      CookieBannerState `db:"state"`
-		PrivacyPolicyURL           *string           `db:"privacy_policy_url"`
-		CookiePolicyURL            string            `db:"cookie_policy_url"`
-		ConsentExpiryDays          int               `db:"consent_expiry_days"`
-		ShowBranding               bool              `db:"show_branding"`
-		DefaultLanguage            string            `db:"default_language"`
-		PatternAnalysisRequestedAt *time.Time        `db:"pattern_analysis_requested_at"`
-		CreatedAt                  time.Time         `db:"created_at"`
-		UpdatedAt                  time.Time         `db:"updated_at"`
+		ID                          gid.GID           `db:"id"`
+		OrganizationID              gid.GID           `db:"organization_id"`
+		Name                        string            `db:"name"`
+		Origin                      string            `db:"origin"`
+		State                       CookieBannerState `db:"state"`
+		PrivacyPolicyURL            *string           `db:"privacy_policy_url"`
+		CookiePolicyURL             string            `db:"cookie_policy_url"`
+		ConsentExpiryDays           int               `db:"consent_expiry_days"`
+		ShowBranding                bool              `db:"show_branding"`
+		DefaultLanguage             string            `db:"default_language"`
+		PatternAnalysisRequestedAt  *time.Time        `db:"pattern_analysis_requested_at"`
+		PolicyDocumentID            *gid.GID          `db:"policy_document_id"`
+		PolicyGenerationRequestedAt *time.Time        `db:"policy_generation_requested_at"`
+		CreatedAt                   time.Time         `db:"created_at"`
+		UpdatedAt                   time.Time         `db:"updated_at"`
 	}
 
 	CookieBanners []*CookieBanner
@@ -116,6 +118,8 @@ SELECT
 	show_branding,
 	default_language,
 	pattern_analysis_requested_at,
+	policy_document_id,
+	policy_generation_requested_at,
 	created_at,
 	updated_at
 FROM
@@ -168,6 +172,8 @@ SELECT
 	show_branding,
 	default_language,
 	pattern_analysis_requested_at,
+	policy_document_id,
+	policy_generation_requested_at,
 	created_at,
 	updated_at
 FROM
@@ -221,6 +227,8 @@ SELECT
 	show_branding,
 	default_language,
 	pattern_analysis_requested_at,
+	policy_document_id,
+	policy_generation_requested_at,
 	created_at,
 	updated_at
 FROM
@@ -278,6 +286,8 @@ SELECT
 	show_branding,
 	default_language,
 	pattern_analysis_requested_at,
+	policy_document_id,
+	policy_generation_requested_at,
 	created_at,
 	updated_at
 FROM
@@ -328,6 +338,8 @@ SELECT
 	show_branding,
 	default_language,
 	pattern_analysis_requested_at,
+	policy_document_id,
+	policy_generation_requested_at,
 	created_at,
 	updated_at
 FROM
@@ -414,6 +426,8 @@ INSERT INTO cookie_banners (
 	show_branding,
 	default_language,
 	pattern_analysis_requested_at,
+	policy_document_id,
+	policy_generation_requested_at,
 	created_at,
 	updated_at
 ) VALUES (
@@ -429,26 +443,30 @@ INSERT INTO cookie_banners (
 	@show_branding,
 	@default_language,
 	@pattern_analysis_requested_at,
+	@policy_document_id,
+	@policy_generation_requested_at,
 	@created_at,
 	@updated_at
 )
 `
 
 	args := pgx.StrictNamedArgs{
-		"id":                            b.ID,
-		"tenant_id":                     scope.GetTenantID(),
-		"organization_id":               b.OrganizationID,
-		"name":                          b.Name,
-		"origin":                        b.Origin,
-		"state":                         b.State,
-		"privacy_policy_url":            b.PrivacyPolicyURL,
-		"cookie_policy_url":             b.CookiePolicyURL,
-		"consent_expiry_days":           b.ConsentExpiryDays,
-		"show_branding":                 b.ShowBranding,
-		"default_language":              b.DefaultLanguage,
-		"pattern_analysis_requested_at": b.PatternAnalysisRequestedAt,
-		"created_at":                    b.CreatedAt,
-		"updated_at":                    b.UpdatedAt,
+		"id":                             b.ID,
+		"tenant_id":                      scope.GetTenantID(),
+		"organization_id":                b.OrganizationID,
+		"name":                           b.Name,
+		"origin":                         b.Origin,
+		"state":                          b.State,
+		"privacy_policy_url":             b.PrivacyPolicyURL,
+		"cookie_policy_url":              b.CookiePolicyURL,
+		"consent_expiry_days":            b.ConsentExpiryDays,
+		"show_branding":                  b.ShowBranding,
+		"default_language":               b.DefaultLanguage,
+		"pattern_analysis_requested_at":  b.PatternAnalysisRequestedAt,
+		"policy_document_id":             b.PolicyDocumentID,
+		"policy_generation_requested_at": b.PolicyGenerationRequestedAt,
+		"created_at":                     b.CreatedAt,
+		"updated_at":                     b.UpdatedAt,
 	}
 
 	_, err := tx.Exec(ctx, q, args)
@@ -480,6 +498,7 @@ SET
 	consent_expiry_days = @consent_expiry_days,
 	show_branding = @show_branding,
 	default_language = @default_language,
+	policy_document_id = @policy_document_id,
 	updated_at = @updated_at
 WHERE
 	%s
@@ -497,6 +516,7 @@ WHERE
 		"consent_expiry_days": b.ConsentExpiryDays,
 		"show_branding":       b.ShowBranding,
 		"default_language":    b.DefaultLanguage,
+		"policy_document_id":  b.PolicyDocumentID,
 		"updated_at":          b.UpdatedAt,
 	}
 	maps.Copy(args, scope.SQLArguments())
@@ -600,6 +620,8 @@ SELECT
 	show_branding,
 	default_language,
 	pattern_analysis_requested_at,
+	policy_document_id,
+	policy_generation_requested_at,
 	created_at,
 	updated_at
 FROM
@@ -669,6 +691,99 @@ WHERE id = @id
 	_, err := tx.Exec(ctx, q, args)
 	if err != nil {
 		return fmt.Errorf("cannot set pattern analysis requested: %w", err)
+	}
+
+	return nil
+}
+
+func (b *CookieBanner) LoadNextForPolicyGenerationForUpdateSkipLocked(
+	ctx context.Context,
+	tx pg.Tx,
+) error {
+	q := `
+SELECT
+	id,
+	organization_id,
+	name,
+	origin,
+	state,
+	privacy_policy_url,
+	cookie_policy_url,
+	consent_expiry_days,
+	show_branding,
+	default_language,
+	pattern_analysis_requested_at,
+	policy_document_id,
+	policy_generation_requested_at,
+	created_at,
+	updated_at
+FROM
+	cookie_banners
+WHERE
+	policy_generation_requested_at IS NOT NULL
+ORDER BY
+	policy_generation_requested_at ASC
+FOR UPDATE SKIP LOCKED
+LIMIT 1;
+`
+
+	rows, err := tx.Query(ctx, q)
+	if err != nil {
+		return fmt.Errorf("cannot query cookie banners for policy generation: %w", err)
+	}
+
+	banner, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[CookieBanner])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+
+		return fmt.Errorf("cannot collect cookie banner: %w", err)
+	}
+
+	*b = banner
+
+	return nil
+}
+
+func (b *CookieBanner) ClearPolicyGenerationRequestedAt(
+	ctx context.Context,
+	tx pg.Tx,
+) error {
+	q := `
+UPDATE cookie_banners
+SET policy_generation_requested_at = NULL
+WHERE id = @id
+`
+
+	args := pgx.StrictNamedArgs{"id": b.ID}
+
+	_, err := tx.Exec(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot clear policy generation requested at: %w", err)
+	}
+
+	b.PolicyGenerationRequestedAt = nil
+
+	return nil
+}
+
+func (b *CookieBanner) SetPolicyGenerationRequested(
+	ctx context.Context,
+	tx pg.Tx,
+) error {
+	q := `
+UPDATE cookie_banners
+SET policy_generation_requested_at = NOW()
+WHERE id = @id
+  AND policy_generation_requested_at IS NULL
+`
+
+	args := pgx.StrictNamedArgs{"id": b.ID}
+
+	_, err := tx.Exec(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot set policy generation requested: %w", err)
 	}
 
 	return nil

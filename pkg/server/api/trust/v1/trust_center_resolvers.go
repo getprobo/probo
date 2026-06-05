@@ -975,7 +975,7 @@ func (r *trustCenterReferenceResolver) LogoURL(ctx context.Context, obj *types.T
 	scope := coredata.NewScopeFromObjectID(obj.ID)
 	trustService := r.trust
 
-	logoURL, err := trustService.TrustCenterReferences.GenerateLogoURL(ctx, scope, obj.ID, 1*time.Hour)
+	logoURL, err := trustService.TrustCenterReferences.GenerateLogoURL(ctx, scope, obj.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot generate logo URL", log.Error(err))
 		return "", gqlutils.Internal(ctx)

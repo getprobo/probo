@@ -151,6 +151,40 @@ func CreateUser(c *testutil.Client, attrs ...Attrs) string {
 	return result.CreateUser.ProfileEdge.Node.ID
 }
 
+func InviteUser(c *testutil.Client, profileID string) string {
+	c.T.Helper()
+
+	const query = `
+		mutation($input: InviteUserInput!) {
+			inviteUser(input: $input) {
+				invitationEdge {
+					node { id }
+				}
+			}
+		}
+	`
+
+	var result struct {
+		InviteUser struct {
+			InvitationEdge struct {
+				Node struct {
+					ID string `json:"id"`
+				} `json:"node"`
+			} `json:"invitationEdge"`
+		} `json:"inviteUser"`
+	}
+
+	err := c.ExecuteConnect(query, map[string]any{
+		"input": map[string]any{
+			"organizationId": c.GetOrganizationID().String(),
+			"profileId":      profileID,
+		},
+	}, &result)
+	require.NoError(c.T, err, "inviteUser mutation failed")
+
+	return result.InviteUser.InvitationEdge.Node.ID
+}
+
 func CreateThirdParty(c *testutil.Client, attrs ...Attrs) string {
 	c.T.Helper()
 

@@ -14,7 +14,7 @@
 
 import { sprintf } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
-import { ActionDropdown, Avatar, Badge, Breadcrumb, Card, DropdownItem, IconTrashCan, useConfirm } from "@probo/ui";
+import { ActionDropdown, Avatar, Badge, Breadcrumb, Card, DropdownItem, IconArchive, IconTrashCan, useConfirm } from "@probo/ui";
 import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { useNavigate } from "react-router";
 import { graphql } from "relay-runtime";
@@ -34,6 +34,7 @@ export const personPageQuery = graphql`
         fullName
         emailAddress
         source
+        state
         canDelete: permission(action: "iam:membership-profile:delete")
         ...PersonFormFragment
       }
@@ -51,6 +52,16 @@ const removeUserMutation = graphql`
   }
 `;
 
+const archiveUserMutation = graphql`
+  mutation PersonPage_archiveMutation(
+    $input: ArchiveUserInput!
+  ) {
+    archiveUser(input: $input) {
+      archivedProfileId
+    }
+  }
+`;
+
 export function PersonPage(props: { queryRef: PreloadedQuery<PersonPageQuery> }) {
   const { queryRef } = props;
 
@@ -64,6 +75,13 @@ export function PersonPage(props: { queryRef: PreloadedQuery<PersonPageQuery> })
     throw new Error("invalid type for node");
   }
 
+  const [archiveUser, isArchiving] = useMutationWithToasts(
+    archiveUserMutation,
+    {
+      successMessage: __("Person archived successfully"),
+      errorMessage: __("Failed to archive person"),
+    },
+  );
   const [removeUser, isRemoving] = useMutationWithToasts(
     removeUserMutation,
     {
@@ -71,6 +89,31 @@ export function PersonPage(props: { queryRef: PreloadedQuery<PersonPageQuery> })
       errorMessage: __("Failed to remove person"),
     },
   );
+  const isMutating = isArchiving || isRemoving;
+
+  const handleArchive = () => {
+    confirm(
+      () => {
+        return archiveUser({
+          variables: {
+            input: {
+              profileId: person.id,
+              organizationId: organizationId,
+            },
+          },
+          onCompleted: () => {
+            void navigate(`/organizations/${organizationId}/people`);
+          },
+        });
+      },
+      {
+        message: sprintf(
+          __("Are you sure you want to archive %s?"),
+          person.fullName,
+        ),
+      },
+    );
+  };
 
   const handleRemove = () => {
     confirm(
@@ -96,6 +139,9 @@ export function PersonPage(props: { queryRef: PreloadedQuery<PersonPageQuery> })
     );
   };
 
+  const canArchive = person.canDelete && person.source !== "SCIM" && person.state !== "INACTIVE";
+  const canRemove = person.canDelete && person.source !== "SCIM";
+
   return (
     <div className="space-y-6">
       <Breadcrumb
@@ -120,16 +166,27 @@ export function PersonPage(props: { queryRef: PreloadedQuery<PersonPageQuery> })
             <div className="text-lg text-txt-secondary">{person.emailAddress}</div>
           </div>
         </div>
-        {person.canDelete && person.source !== "SCIM" && (
+        {(canArchive || canRemove) && (
           <ActionDropdown variant="secondary">
-            <DropdownItem
-              variant="danger"
-              icon={IconTrashCan}
-              onClick={handleRemove}
-              disabled={isRemoving}
-            >
-              {__("Delete")}
-            </DropdownItem>
+            {canArchive && (
+              <DropdownItem
+                icon={IconArchive}
+                onClick={handleArchive}
+                disabled={isMutating}
+              >
+                {__("Archive")}
+              </DropdownItem>
+            )}
+            {canRemove && (
+              <DropdownItem
+                variant="danger"
+                icon={IconTrashCan}
+                onClick={handleRemove}
+                disabled={isMutating}
+              >
+                {__("Remove")}
+              </DropdownItem>
+            )}
           </ActionDropdown>
         )}
       </div>

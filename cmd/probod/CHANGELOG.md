@@ -4,6 +4,173 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.202.2] - 2026-06-03
+
+No user-facing changes; tag-only release.
+
+## [0.202.1] - 2026-06-03
+
+No user-facing changes; tag-only release.
+
+## [0.202.0] - 2026-06-03
+
+### Added
+
+- Trigger tracker-policy document generation on banner publish; a background worker regenerates it on every snapshot
+- Show tracker type in the cookie tracking policy document
+- Include the website origin in the tracker policy title
+
+### Changed
+
+- Restrict queries and mutations to session scope
+- Move the Display tab first on the cookie banner configuration page
+- Link to the generated cookie policy document from tracker rows; revamp tracker row layout
+- Number tracker policy section titles
+
+### Fixed
+
+- Use stable API URLs for vendor logo fields
+
+## [0.201.0] - 2026-06-02
+
+### Added
+
+- Add async third-party vetting worker with PENDING/PROCESSING/COMPLETED/FAILED states, exposed through GraphQL and MCP; the third-party detail page polls while vetting runs
+- Tune the third-party vetting worker (interval, concurrency, stale-after, agent timeout, max-turns) via config
+
+### Changed
+
+- Downgrade access-source instance name resolution failures from error to warning
+
+### Fixed
+
+- Guard the GitHub access-source name resolver against empty organization to stop the source-name worker from flooding logs with 404s
+
+## [0.200.1] - 2026-06-01
+
+### Fixed
+
+- Raise tracker mapping and common-pattern enrichment agent max turns to 10 to prevent `MaxTurnsExceededError` when the tool-call budget exceeded the limit
+
+## [0.200.0] - 2026-06-01
+
+### Added
+
+- Add tracker description enrichment worker
+- Promote tracker patterns to organization third parties via worker, with first-party origin filtering and sibling-based mapping
+- Surface third-party links on `TrackerPattern` in GraphQL, with batch loaders
+- Filter banner trackers by linked third party and show third parties on the banner trackers page
+- Expose HTTP cookie source through the console API
+- Add document archive row action
+- Add stale recovery to the tracker mapping worker
+- Tune tracker workers: expose worker interval, concurrency, stale-after, agent timeout, and max-turns as config
+
+### Changed
+
+- Deactivate SCIM users when delete is blocked
+- Rework tracker and resource row actions
+- Reuse the mapping agent to attribute trackers in the enricher
+- Raise default agent token budget for reasoning models (1024/512 → 4096)
+- Harden catalog vendor resolution and the tracker mapping agent prompt
+- Skip shared infrastructure in domain matching during tracker mapping
+- Backfill tracker description from the common catalog
+- Run tracker mapping outside the persist transaction to remove cross-network row locks
+
+### Fixed
+
+- Stop tracker agents from inventing vendors
+- Drop sampling params unsupported by the model
+- Tolerate source fetch failures during tracker mapping
+- Skip mapping when a tracker pattern is deleted concurrently
+- Guard `LinkToCommon` against overwriting an existing catalog link
+- Take resolver scope from `Authorize` rather than the GID
+- Copy default LLM pointers when resolving agents
+
+## [0.199.1] - 2026-05-28
+
+### Fixed
+
+- Fix missing icons in the UI
+- Fix Metabase user listing in access reviews
+- Fix PostHog resolver name
+
+## [0.199.0] - 2026-05-28
+
+### Added
+
+- Add PostHog access-review connector
+- Add Metabase access-review connector
+- Add Grafana access-review connector
+- Add Cursor access-review connector
+- Support HTTP Basic auth in API-key connections
+- Cancel pending signature requests when a contract ends or a connector is deactivated
+
+### Changed
+
+- Reject demotion of the last owner of an organization
+- Scope document signatures to the major version
+
+### Fixed
+
+- Fix Microsoft 365 access review returning too many accounts
+
+## [0.198.0] - 2026-05-28
+
+### Added
+
+- Add Tailscale connector
+- Add Anthropic connector (authenticated via API key)
+- Add personal account support for the Heroku connector
+- Add Global region option to the vendor country picker
+- Allow ordering organization members by email address
+
+### Changed
+
+- Connector deletion is now best-effort: remaining steps proceed even when one cleanup step fails
+
+### Fixed
+
+- Fix role column in the people list rendered as non-sortable to prevent runtime failures
+- Surface an actionable error when a stored Sentry organization slug is no longer accessible to the connected OAuth token
+- Stop the source-name worker from retrying indefinitely on a stale Sentry organization slug
+- Stop the source-name worker from retrying indefinitely on a stale Heroku personal-account slug
+
+## [0.197.0] - 2026-05-28
+
+### Added
+
+- Add `invitingOrganizations` field on the viewer to expose organizations that have sent a pending invitation to the current user
+
+### Fixed
+
+- Show SCIM error message in the connector UI
+
+## [0.196.1] - 2026-05-27
+
+### Fixed
+
+- Fix serialization of SCIM bridge `SYNCING` and `DISABLED` states in the GraphQL API
+
+## [0.196.0] - 2026-05-27
+
+### Added
+
+- Expose bridge sync errors in the SCIM API and on Google Workspace and Microsoft 365 connector cards
+- Expose profile source field on users in the MCP API
+
+## [0.195.0] - 2026-05-27
+
+### Added
+
+- Add `archiveUser` operation to deactivate a user profile while keeping them in the organization; exposed across the console UI, MCP, CLI, and n8n
+- Expire pending invitations for a user when they are archived
+- Grant owners full `iam:scim-bridge:*` and admins read-only SCIM bridge access in IAM policies
+
+### Fixed
+
+- Preserve archived and deactivated HubSpot users in access reviews instead of dropping them
+- Fix common third-party logo URL returning resource-not-found in the combo box query
+
 ## [0.194.0] - 2026-05-26
 
 ### Added

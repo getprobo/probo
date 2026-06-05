@@ -331,6 +331,68 @@ func (s *OrganizationService) RemoveUser(
 				return NewUserManagedBySCIMError(profileID)
 			}
 
+			if profile.OrganizationID != organizationID {
+				return NewProfileNotFoundError(profileID)
+			}
+
+			membership := &coredata.Membership{}
+			if err := membership.LoadByIdentityIDAndOrganizationID(ctx, tx, scope, profile.IdentityID, profile.OrganizationID); err != nil {
+				return fmt.Errorf("cannot load membership: %w", err)
+			}
+
+			if membership.Role == coredata.MembershipRoleOwner && profile.State == coredata.ProfileStateActive {
+				profiles := coredata.MembershipProfiles{}
+
+				count, err := profiles.CountActiveOwnerByOrganizationID(ctx, tx, scope, profile.OrganizationID)
+				if err != nil {
+					return fmt.Errorf("cannot count active owners: %w", err)
+				}
+
+				if count <= 1 {
+					return NewLastActiveOwnerError(profileID)
+				}
+			}
+
+			if err := profile.Delete(ctx, tx, scope, profileID); err != nil {
+				return fmt.Errorf("cannot delete profile: %w", err)
+			}
+
+			if err := membership.Delete(ctx, tx, scope, membership.ID); err != nil {
+				return fmt.Errorf("cannot delete membership: %w", err)
+			}
+
+			if err := webhook.InsertData(ctx, tx, scope, organizationID, coredata.WebhookEventTypeUserDeleted, webhooktypes.NewUser(&profile, membership)); err != nil {
+				return fmt.Errorf("cannot insert webhook event: %w", err)
+			}
+
+			return nil
+		},
+	)
+}
+
+func (s *OrganizationService) ArchiveUser(
+	ctx context.Context,
+	scope coredata.Scoper,
+	organizationID gid.GID,
+	profileID gid.GID,
+) error {
+	return s.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			profile := coredata.MembershipProfile{}
+
+			if err := profile.LoadByID(ctx, tx, scope, profileID); err != nil {
+				if err == coredata.ErrResourceNotFound {
+					return NewProfileNotFoundError(profileID)
+				}
+
+				return fmt.Errorf("cannot load profile: %w", err)
+			}
+
+			if profile.Source == coredata.ProfileSourceSCIM {
+				return NewUserManagedBySCIMError(profileID)
+			}
+
 			membership := &coredata.Membership{}
 			if err := membership.LoadByIdentityIDAndOrganizationID(ctx, tx, scope, profile.IdentityID, profile.OrganizationID); err != nil {
 				return fmt.Errorf("cannot load membership: %w", err)
@@ -349,16 +411,43 @@ func (s *OrganizationService) RemoveUser(
 				}
 			}
 
-			if err := webhook.InsertData(ctx, tx, scope, organizationID, coredata.WebhookEventTypeUserDeleted, webhooktypes.NewUser(&profile, membership)); err != nil {
+			invitations := &coredata.Invitations{}
+
+			onlyPending := coredata.NewInvitationFilter([]coredata.InvitationStatus{coredata.InvitationStatusPending})
+
+			if err := invitations.ExpireByUserID(
+				ctx,
+				tx,
+				scope,
+				profile.ID,
+				onlyPending,
+			); err != nil {
+				return fmt.Errorf("cannot expire pending invitations: %w", err)
+			}
+
+			signatures := &coredata.DocumentVersionSignatures{}
+			if err := signatures.DeleteRequestedBySignatory(ctx, tx, scope, profile.ID); err != nil {
+				return fmt.Errorf("cannot delete requested signatures: %w", err)
+			}
+
+			now := time.Now()
+
+			if profile.State != coredata.ProfileStateInactive {
+				profile.State = coredata.ProfileStateInactive
+				profile.UpdatedAt = now
+
+				if err := profile.Update(ctx, tx, scope); err != nil {
+					return fmt.Errorf("cannot update profile state: %w", err)
+				}
+			}
+
+			membership.UpdatedAt = now
+			if err := membership.Update(ctx, tx, scope); err != nil {
+				return fmt.Errorf("cannot update membership: %w", err)
+			}
+
+			if err := webhook.InsertData(ctx, tx, scope, profile.OrganizationID, coredata.WebhookEventTypeUserUpdated, webhooktypes.NewUser(&profile, membership)); err != nil {
 				return fmt.Errorf("cannot insert webhook event: %w", err)
-			}
-
-			if err := profile.Delete(ctx, tx, scope, profileID); err != nil {
-				return fmt.Errorf("cannot delete profile: %w", err)
-			}
-
-			if err := membership.Delete(ctx, tx, scope, membership.ID); err != nil {
-				return fmt.Errorf("cannot delete membership: %w", err)
 			}
 
 			return nil
@@ -665,7 +754,6 @@ func (s *OrganizationService) CreateOrganization(
 
 			proboData := &coredata.ThirdParty{
 				ID:                   gid.New(scope.GetTenantID(), coredata.ThirdPartyEntityType),
-				TenantID:             organization.TenantID,
 				OrganizationID:       organization.ID,
 				Name:                 proboThirdParty.Name,
 				Description:          &proboThirdParty.Description,
@@ -1013,10 +1101,18 @@ func (s *OrganizationService) UpdateUser(ctx context.Context, req *UpdateUserReq
 				profile.ContractEndDate = *req.ContractEndDate
 			}
 
-			profile.UpdatedAt = time.Now()
+			now := time.Now()
+			profile.UpdatedAt = now
 
 			if err := profile.Update(ctx, conn, scope); err != nil {
 				return fmt.Errorf("cannot update profile: %w", err)
+			}
+
+			if profile.ContractEndDate != nil && profile.ContractEndDate.Before(now) {
+				signatures := &coredata.DocumentVersionSignatures{}
+				if err := signatures.DeleteRequestedBySignatory(ctx, conn, scope, profile.ID); err != nil {
+					return fmt.Errorf("cannot delete requested signatures: %w", err)
+				}
 			}
 
 			membership := &coredata.Membership{}
@@ -1075,6 +1171,13 @@ func (s *OrganizationService) UpdateUserState(
 
 			if err := profile.Update(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot update profile: %w", err)
+			}
+
+			if state == coredata.ProfileStateInactive {
+				signatures := &coredata.DocumentVersionSignatures{}
+				if err := signatures.DeleteRequestedBySignatory(ctx, tx, scope, profile.ID); err != nil {
+					return fmt.Errorf("cannot delete requested signatures: %w", err)
+				}
 			}
 
 			return nil

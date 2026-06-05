@@ -76,14 +76,26 @@ const trackersFragment = graphql`
     source: { type: "CookieSource", defaultValue: null }
     trackerType: { type: "TrackerType", defaultValue: null }
     cookieCategoryId: { type: "ID", defaultValue: null }
+    thirdPartyId: { type: "ID", defaultValue: null }
   ) {
+    linkedThirdParties {
+      __typename
+      ... on ThirdParty {
+        id
+        name
+      }
+      ... on CommonThirdParty {
+        id
+        name
+      }
+    }
     trackerPatterns(
       first: $first
       after: $after
       last: $last
       before: $before
       orderBy: $order
-      filter: { query: $query, source: $source, trackerType: $trackerType, cookieCategoryId: $cookieCategoryId }
+      filter: { query: $query, source: $source, trackerType: $trackerType, cookieCategoryId: $cookieCategoryId, thirdPartyId: $thirdPartyId }
     )
       @connection(
         key: "CookieBannerTrackersPage_trackerPatterns"
@@ -120,6 +132,7 @@ export default function CookieBannerTrackersPage({
   const [sourceFilter, setSourceFilter] = useState<CookieSource | null>(null);
   const [trackerTypeFilter, setTrackerTypeFilter] = useState<TrackerType | null>(null);
   const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
+  const [thirdPartyFilter, setThirdPartyFilter] = useState<string | null>(null);
 
   const { data: fragmentData, ...pagination } = usePaginationFragment<
     CookieBannerTrackersPageRefetchQuery,
@@ -128,6 +141,11 @@ export default function CookieBannerTrackersPage({
 
   const connectionId = fragmentData.trackerPatterns.__id;
   const patterns = fragmentData.trackerPatterns.edges.map(edge => edge.node) ?? [];
+  const linkedThirdParties = (fragmentData.linkedThirdParties ?? []).filter(
+    (party): party is Extract<typeof party, { id: string; name: string }> =>
+      party.__typename === "ThirdParty"
+      || party.__typename === "CommonThirdParty",
+  );
 
   const categories = data.node.__typename === "CookieBanner"
     ? data.node.categories.edges.map(edge => edge.node)
@@ -141,6 +159,7 @@ export default function CookieBannerTrackersPage({
           source: sourceFilter,
           trackerType: trackerTypeFilter,
           cookieCategoryId: categoryFilter,
+          thirdPartyId: thirdPartyFilter,
           ...overrides,
         },
         { fetchPolicy: "network-only" },
@@ -170,6 +189,12 @@ export default function CookieBannerTrackersPage({
     refetchFilters({ cookieCategoryId: newCategory });
   };
 
+  const handleThirdPartyFilterChange = (value: string) => {
+    const newThirdParty = value === "ALL" ? null : value;
+    setThirdPartyFilter(newThirdParty);
+    refetchFilters({ thirdPartyId: newThirdParty });
+  };
+
   const refetchWithFilters: ComponentProps<typeof SortableTable>["refetch"] = ({ order }) => {
     pagination.refetch({
       order: { direction: order.direction, field: order.field as TrackerPatternOrderField },
@@ -177,6 +202,7 @@ export default function CookieBannerTrackersPage({
       source: sourceFilter,
       trackerType: trackerTypeFilter,
       cookieCategoryId: categoryFilter,
+      thirdPartyId: thirdPartyFilter,
     });
   };
 
@@ -191,6 +217,15 @@ export default function CookieBannerTrackersPage({
           onBlur={handleQuerySubmit}
           className="w-72"
         />
+        <Select
+          value={thirdPartyFilter ?? "ALL"}
+          onValueChange={handleThirdPartyFilterChange}
+        >
+          <Option value="ALL">{__("All third parties")}</Option>
+          {linkedThirdParties.map(party => (
+            <Option key={party.id} value={party.id}>{party.name}</Option>
+          ))}
+        </Select>
         <Select
           value={trackerTypeFilter ?? "ALL"}
           onValueChange={handleTrackerTypeFilterChange}
@@ -234,10 +269,12 @@ export default function CookieBannerTrackersPage({
                   <Tr>
                     <Th>{__("Type")}</Th>
                     <SortableTh field="NAME">{__("Name")}</SortableTh>
+                    <Th>{__("Third party")}</Th>
                     <SortableTh field="SOURCE">{__("Source")}</SortableTh>
                     <Th>{__("Category")}</Th>
+                    <Th>{__("Max Age")}</Th>
                     <SortableTh field="LAST_MATCHED_AT">{__("Last Matched")}</SortableTh>
-                    <Th className="w-28" />
+                    <Th className="w-px" />
                   </Tr>
                 </Thead>
                 <Tbody>

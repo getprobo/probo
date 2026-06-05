@@ -530,6 +530,10 @@ func NewClientWithNewSession(t testing.TB, from *Client) *Client {
 	return client
 }
 
+func (c *Client) GetEmail() string {
+	return c.email
+}
+
 func (c *Client) GetUserID() gid.GID {
 	return c.userID
 }

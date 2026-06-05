@@ -18,6 +18,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -50,6 +51,7 @@ func TestBuildTokenRequest_PostForm(t *testing.T) {
 			"test-code",
 			"https://example.com/callback",
 			"",
+			connector.TokenURL,
 		)
 		require.NoError(t, err)
 
@@ -86,6 +88,7 @@ func TestBuildTokenRequest_PostForm(t *testing.T) {
 			"test-code",
 			"https://example.com/callback",
 			"",
+			connector.TokenURL,
 		)
 		require.NoError(t, err)
 
@@ -121,6 +124,7 @@ func TestBuildTokenRequest_BasicForm(t *testing.T) {
 		"test-code",
 		"https://example.com/callback",
 		"",
+		connector.TokenURL,
 	)
 	require.NoError(t, err)
 
@@ -164,6 +168,7 @@ func TestBuildTokenRequest_BasicJSON(t *testing.T) {
 		"test-code",
 		"https://example.com/callback",
 		"",
+		connector.TokenURL,
 	)
 	require.NoError(t, err)
 
@@ -561,9 +566,10 @@ func TestCompleteWithState_ScopeFallback(t *testing.T) {
 }
 
 // TestInitiateWithState_PKCE verifies that connectors with RequiresPKCE=true
-// generate a PKCE verifier, embed the S256 challenge in the authorization
-// URL (RFC 7636 §4.3), and persist the verifier in the signed state token
-// so CompleteWithState can replay it on the token exchange.
+// embed the S256 challenge in the authorization URL (RFC 7636 §4.3) and
+// persist a random nonce (not the verifier) in the signed state token, so
+// CompleteWithState can re-derive the verifier and replay it on the token
+// exchange without ever exposing it in the state parameter.
 func TestInitiateWithState_PKCE(t *testing.T) {
 	t.Parallel()
 
@@ -594,18 +600,22 @@ func TestInitiateWithState_PKCE(t *testing.T) {
 		require.NotEmpty(t, challenge, "code_challenge must be present when RequiresPKCE=true")
 		assert.Equal(t, "S256", parsed.Query().Get("code_challenge_method"))
 
-		// The verifier is persisted in the signed state token. Decode
-		// the payload (without secret-checking — just inspect) and
-		// verify that re-deriving the challenge from the verifier
-		// reproduces the URL value.
+		// Only a nonce is persisted in the state token; the verifier is
+		// derived server-side from the state salt + nonce and must never
+		// appear in the (signed-but-unencrypted) state. Re-deriving it
+		// must reproduce the published challenge.
 		stateToken := parsed.Query().Get("state")
 		require.NotEmpty(t, stateToken)
 
 		payload, err := DecodeOAuth2StatePayload(stateToken)
 		require.NoError(t, err)
-		require.NotEmpty(t, payload.Data.CodeVerifier, "verifier must be persisted in state token")
-		assert.Equal(t, challenge, pkceChallenge(payload.Data.CodeVerifier),
-			"code_challenge must equal base64url(sha256(verifier))")
+		require.NotEmpty(t, payload.Data.PKCENonce, "nonce must be persisted in state token")
+
+		verifier := derivePKCEVerifier("secret", payload.Data.PKCENonce)
+		require.NotContains(t, stateToken, verifier,
+			"the derived verifier must never appear in the state token")
+		assert.Equal(t, challenge, pkceChallenge(verifier),
+			"code_challenge must equal base64url(sha256(derived verifier))")
 	})
 
 	t.Run("authorize URL omits PKCE params when PKCE is not required", func(t *testing.T) {
@@ -681,8 +691,8 @@ func TestInitiateWithState_PKCE(t *testing.T) {
 		payload, err := DecodeOAuth2StatePayload(stateToken)
 		require.NoError(t, err)
 
-		expectedVerifier := payload.Data.CodeVerifier
-		require.NotEmpty(t, expectedVerifier)
+		require.NotEmpty(t, payload.Data.PKCENonce)
+		expectedVerifier := derivePKCEVerifier("secret", payload.Data.PKCENonce)
 
 		// Drive Complete with that same state token + an arbitrary code.
 		req := httptest.NewRequest(
@@ -699,21 +709,334 @@ func TestInitiateWithState_PKCE(t *testing.T) {
 	})
 }
 
-// TestGeneratePKCEVerifier exercises the verifier generator: each call
-// must return a fresh value, encoded as RFC 4648 §5 base64url-without-
-// padding (RFC 7636 §4.1 mandates 43–128 unreserved chars; 32 bytes
-// yields 43 chars). Anything outside that contract weakens PKCE.
-func TestGeneratePKCEVerifier(t *testing.T) {
+func TestInitiateWithState_PerSiteAuthURL(t *testing.T) {
 	t.Parallel()
 
-	v1, err := generatePKCEVerifier()
-	require.NoError(t, err)
-	v2, err := generatePKCEVerifier()
+	c := &OAuth2Connector{
+		ClientID:            "cid",
+		ClientSecret:        "secret",
+		RedirectURI:         "https://probo.example/cb",
+		RequiresPKCE:        true,
+		BuildAuthURLForSite: DatadogAuthorizeURL,
+	}
+
+	got, err := c.InitiateWithState(context.Background(),
+		OAuth2State{OrganizationID: "org", Provider: DatadogProvider},
+		InitiateOptions{Scopes: []string{"user_access_read"}, Site: "US3"},
+	)
 	require.NoError(t, err)
 
-	assert.GreaterOrEqual(t, len(v1), 43, "verifier must be at least 43 base64url chars")
-	assert.LessOrEqual(t, len(v1), 128, "verifier must be at most 128 chars per RFC 7636")
-	assert.NotEqual(t, v1, v2, "verifier must be unpredictable across calls")
+	u, err := url.Parse(got)
+	require.NoError(t, err)
+	assert.Equal(t, "us3.datadoghq.com", u.Host)
+	assert.Equal(t, "/oauth2/v1/authorize", u.Path)
+	assert.NotEmpty(t, u.Query().Get("code_challenge"))
+}
+
+func TestInitiateWithState_MissingSiteForMultiSite(t *testing.T) {
+	t.Parallel()
+
+	c := &OAuth2Connector{
+		ClientID:            "cid",
+		ClientSecret:        "secret",
+		BuildAuthURLForSite: DatadogAuthorizeURL,
+	}
+
+	_, err := c.InitiateWithState(context.Background(),
+		OAuth2State{OrganizationID: "org", Provider: DatadogProvider},
+		InitiateOptions{Site: ""},
+	)
+	require.Error(t, err)
+}
+
+func TestInitiateWithState_InvalidSiteRejected(t *testing.T) {
+	t.Parallel()
+
+	c := &OAuth2Connector{
+		ClientID:            "cid",
+		ClientSecret:        "secret",
+		BuildAuthURLForSite: DatadogAuthorizeURL,
+	}
+
+	_, err := c.InitiateWithState(context.Background(),
+		OAuth2State{OrganizationID: "org", Provider: DatadogProvider},
+		InitiateOptions{Site: "BOGUS"},
+	)
+	require.Error(t, err)
+}
+
+func TestCompleteWithState_PerDomainTokenURL(t *testing.T) {
+	t.Parallel()
+
+	var gotPath string
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotPath = r.URL.Path
+
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"access_token":"at","refresh_token":"rt","expires_in":3600,"token_type":"Bearer"}`))
+	}))
+	defer srv.Close()
+
+	// Build a token-URL closure that targets the httptest server,
+	// mirroring DatadogTokenURL's shape (validate then build).
+	c := &OAuth2Connector{
+		ClientID:     "cid",
+		ClientSecret: "secret",
+		RedirectURI:  "https://probo.example/cb",
+		RequiresPKCE: true,
+		HTTPClient:   httpclient.DefaultClient(httpclient.WithSSRFProtection(), httpclient.WithSSRFAllowLoopback()),
+		BuildTokenURLForDomain: func(domain string) (string, error) {
+			if domain != "us3.datadoghq.com" {
+				return "", fmt.Errorf("unknown domain")
+			}
+
+			return srv.URL + "/oauth2/v1/token", nil
+		},
+	}
+
+	state, err := statelesstoken.NewToken(c.ClientSecret, OAuth2TokenType, OAuth2TokenTTL,
+		OAuth2State{OrganizationID: validOrgGID(t), Provider: DatadogProvider})
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodGet,
+		"https://probo.example/cb?code=abc&state="+state+"&domain=us3.datadoghq.com", nil)
+
+	conn, _, err := c.CompleteWithState(context.Background(), req)
+	require.NoError(t, err)
+	assert.Equal(t, "/oauth2/v1/token", gotPath)
+
+	oc, ok := conn.(*OAuth2Connection)
+	require.True(t, ok)
+	assert.Equal(t, srv.URL+"/oauth2/v1/token", oc.TokenURL)
+}
+
+func TestCompleteWithState_MissingDomainForMultiSite(t *testing.T) {
+	t.Parallel()
+
+	c := &OAuth2Connector{
+		ClientID:               "cid",
+		ClientSecret:           "secret",
+		RedirectURI:            "https://probo.example/cb",
+		HTTPClient:             httpclient.DefaultClient(httpclient.WithSSRFProtection(), httpclient.WithSSRFAllowLoopback()),
+		BuildTokenURLForDomain: func(string) (string, error) { return "", fmt.Errorf("unused") },
+	}
+
+	state, err := statelesstoken.NewToken(c.ClientSecret, OAuth2TokenType, OAuth2TokenTTL,
+		OAuth2State{OrganizationID: validOrgGID(t), Provider: DatadogProvider})
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodGet,
+		"https://probo.example/cb?code=abc&state="+state, nil)
+
+	_, _, err = c.CompleteWithState(context.Background(), req)
+	require.Error(t, err)
+}
+
+// TestCompleteWithState_InvalidDomainRejected exercises the SSRF guard: a
+// tampered callback `domain` must fail the flow (the closure validates against
+// the fixed allow-list) before credentials are POSTed anywhere.
+func TestCompleteWithState_InvalidDomainRejected(t *testing.T) {
+	t.Parallel()
+
+	c := &OAuth2Connector{
+		ClientID:               "cid",
+		ClientSecret:           "secret",
+		RedirectURI:            "https://probo.example/cb",
+		HTTPClient:             httpclient.DefaultClient(httpclient.WithSSRFProtection(), httpclient.WithSSRFAllowLoopback()),
+		BuildTokenURLForDomain: DatadogTokenURL,
+	}
+
+	state, err := statelesstoken.NewToken(c.ClientSecret, OAuth2TokenType, OAuth2TokenTTL,
+		OAuth2State{OrganizationID: validOrgGID(t), Provider: DatadogProvider})
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodGet,
+		"https://probo.example/cb?code=abc&state="+state+"&domain=evil.example.com", nil)
+
+	_, _, err = c.CompleteWithState(context.Background(), req)
+	require.Error(t, err)
+}
+
+// TestInitiateWithState_PersistsSiteInState verifies that opts.Site is signed
+// into the state token so it survives the round-trip to the callback — the
+// mechanism multi-site providers (e.g. Zendesk) rely on when the provider does
+// not echo the host back.
+func TestInitiateWithState_PersistsSiteInState(t *testing.T) {
+	t.Parallel()
+
+	c := &OAuth2Connector{
+		ClientID:     "cid",
+		ClientSecret: "secret",
+		RedirectURI:  "https://probo.example/cb",
+		BuildAuthURLForSite: func(site string) (string, error) {
+			return "https://" + site + ".zendesk.com/oauth/authorizations/new", nil
+		},
+	}
+
+	authURL, err := c.InitiateWithState(context.Background(),
+		OAuth2State{OrganizationID: "org", Provider: ZendeskProvider},
+		InitiateOptions{Site: "acme"},
+	)
+	require.NoError(t, err)
+
+	u, err := url.Parse(authURL)
+	require.NoError(t, err)
+	assert.Equal(t, "acme.zendesk.com", u.Host)
+
+	payload, err := DecodeOAuth2StatePayload(u.Query().Get("state"))
+	require.NoError(t, err)
+	assert.Equal(t, "acme", payload.Data.Site)
+}
+
+// TestCompleteWithState_PerSiteTokenURL exercises the site-carried-in-state
+// token-URL path: the subdomain comes from the signed state (no callback
+// param), and the per-connection token URL is persisted for refresh.
+func TestCompleteWithState_PerSiteTokenURL(t *testing.T) {
+	t.Parallel()
+
+	var gotPath string
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotPath = r.URL.Path
+
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"access_token":"at","token_type":"Bearer"}`))
+	}))
+	defer srv.Close()
+
+	c := &OAuth2Connector{
+		ClientID:     "cid",
+		ClientSecret: "secret",
+		RedirectURI:  "https://probo.example/cb",
+		HTTPClient:   httpclient.DefaultClient(httpclient.WithSSRFProtection(), httpclient.WithSSRFAllowLoopback()),
+		BuildTokenURLForSite: func(site string) (string, error) {
+			if site != "acme" {
+				return "", fmt.Errorf("unknown site")
+			}
+
+			return srv.URL + "/oauth/tokens", nil
+		},
+	}
+
+	state, err := statelesstoken.NewToken(c.ClientSecret, OAuth2TokenType, OAuth2TokenTTL,
+		OAuth2State{OrganizationID: validOrgGID(t), Provider: ZendeskProvider, Site: "acme"})
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodGet,
+		"https://probo.example/cb?code=abc&state="+state, nil)
+
+	conn, _, err := c.CompleteWithState(context.Background(), req)
+	require.NoError(t, err)
+	assert.Equal(t, "/oauth/tokens", gotPath)
+
+	oc, ok := conn.(*OAuth2Connection)
+	require.True(t, ok)
+	assert.Equal(t, srv.URL+"/oauth/tokens", oc.TokenURL)
+}
+
+// TestCompleteWithState_MissingSiteForSiteTokenURL ensures a multi-site
+// provider whose state carries no site fails before any credential POST.
+func TestCompleteWithState_MissingSiteForSiteTokenURL(t *testing.T) {
+	t.Parallel()
+
+	c := &OAuth2Connector{
+		ClientID:             "cid",
+		ClientSecret:         "secret",
+		RedirectURI:          "https://probo.example/cb",
+		HTTPClient:           httpclient.DefaultClient(httpclient.WithSSRFProtection(), httpclient.WithSSRFAllowLoopback()),
+		BuildTokenURLForSite: func(string) (string, error) { return "", fmt.Errorf("unused") },
+	}
+
+	state, err := statelesstoken.NewToken(c.ClientSecret, OAuth2TokenType, OAuth2TokenTTL,
+		OAuth2State{OrganizationID: validOrgGID(t), Provider: ZendeskProvider})
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodGet,
+		"https://probo.example/cb?code=abc&state="+state, nil)
+
+	_, _, err = c.CompleteWithState(context.Background(), req)
+	require.Error(t, err)
+}
+
+// TestCompleteWithState_InvalidSiteRejected exercises the SSRF guard on the
+// site-in-state path: a signed state carrying a malformed subdomain must fail
+// (ZendeskTokenURL rejects it) before any credential POST. Mirrors
+// TestCompleteWithState_InvalidDomainRejected for Datadog.
+func TestCompleteWithState_InvalidSiteRejected(t *testing.T) {
+	t.Parallel()
+
+	c := &OAuth2Connector{
+		ClientID:             "cid",
+		ClientSecret:         "secret",
+		RedirectURI:          "https://probo.example/cb",
+		HTTPClient:           httpclient.DefaultClient(httpclient.WithSSRFProtection(), httpclient.WithSSRFAllowLoopback()),
+		BuildTokenURLForSite: ZendeskTokenURL,
+	}
+
+	state, err := statelesstoken.NewToken(c.ClientSecret, OAuth2TokenType, OAuth2TokenTTL,
+		OAuth2State{OrganizationID: validOrgGID(t), Provider: ZendeskProvider, Site: "evil.example"})
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodGet,
+		"https://probo.example/cb?code=abc&state="+state, nil)
+
+	_, _, err = c.CompleteWithState(context.Background(), req)
+	require.Error(t, err)
+}
+
+func TestRefreshableClient_PrefersConnectionTokenURL(t *testing.T) {
+	t.Parallel()
+
+	var gotHost string
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotHost = r.Host
+
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"access_token":"new","token_type":"Bearer","expires_in":3600}`))
+	}))
+	defer srv.Close()
+
+	conn := &OAuth2Connection{
+		AccessToken:  "old",
+		RefreshToken: "rt",
+		TokenType:    "Bearer",
+		ExpiresAt:    time.Now().Add(-time.Hour),
+		TokenURL:     srv.URL, // per-connection (Datadog-style)
+	}
+
+	// cfg.TokenURL is empty (multi-site providers carry no static token URL).
+	_, err := conn.RefreshableClient(context.Background(), OAuth2RefreshConfig{
+		ClientID: "cid", ClientSecret: "secret",
+	}, httpclient.WithSSRFAllowLoopback())
+	require.NoError(t, err)
+
+	u, _ := url.Parse(srv.URL)
+	assert.Equal(t, u.Host, gotHost)
+	assert.Equal(t, "new", conn.AccessToken)
+}
+
+func validOrgGID(t *testing.T) string {
+	t.Helper()
+	return gid.New(gid.NewTenantID(), 0).String()
+}
+
+// TestGeneratePKCENonce exercises the nonce generator: each call must
+// return a fresh value, encoded as RFC 4648 §5 base64url-without-padding
+// (32 bytes yields 43 chars). The nonce seeds derivePKCEVerifier, so a
+// predictable or short nonce would weaken PKCE.
+func TestGeneratePKCENonce(t *testing.T) {
+	t.Parallel()
+
+	v1, err := generatePKCENonce()
+	require.NoError(t, err)
+	v2, err := generatePKCENonce()
+	require.NoError(t, err)
+
+	assert.GreaterOrEqual(t, len(v1), 43, "nonce must be at least 43 base64url chars")
+	assert.LessOrEqual(t, len(v1), 128, "nonce must be at most 128 chars")
+	assert.NotEqual(t, v1, v2, "nonce must be unpredictable across calls")
 
 	// Charset: base64url unreserved (RFC 4648 §5) — A-Z a-z 0-9 - _.
 	for _, c := range v1 {
@@ -723,9 +1046,181 @@ func TestGeneratePKCEVerifier(t *testing.T) {
 		case c >= '0' && c <= '9':
 		case c == '-' || c == '_':
 		default:
-			t.Errorf("verifier contains non-base64url character %q", c)
+			t.Errorf("nonce contains non-base64url character %q", c)
 		}
 	}
+}
+
+// TestStateSalt verifies the OAuth2 state / PKCE salt selection: a public
+// client's StateSigningKey takes precedence, and a confidential client
+// falls back to its ClientSecret.
+func TestStateSalt(t *testing.T) {
+	t.Parallel()
+
+	assert.Equal(t, "secret", (&OAuth2Connector{ClientSecret: "secret"}).stateSalt())
+	assert.Equal(t, "server-key", (&OAuth2Connector{StateSigningKey: "server-key"}).stateSalt())
+	assert.Equal(t, "server-key",
+		(&OAuth2Connector{ClientSecret: "secret", StateSigningKey: "server-key"}).stateSalt(),
+		"StateSigningKey must win when both are present")
+	assert.Empty(t, (&OAuth2Connector{}).stateSalt(),
+		"both empty yields empty salt (InitiateWithState/CompleteWithState reject this)")
+}
+
+// TestDeriveConnectorStateKey verifies the connector state-key derivation is
+// deterministic, hides the raw secret, is sensitive to the secret, and is
+// domain-separated from the PKCE verifier derived from the same secret.
+func TestDeriveConnectorStateKey(t *testing.T) {
+	t.Parallel()
+
+	k1 := DeriveConnectorStateKey("server-secret")
+
+	assert.NotEmpty(t, k1)
+	assert.Equal(t, k1, DeriveConnectorStateKey("server-secret"), "derivation must be deterministic")
+	assert.NotEqual(t, "server-secret", k1, "must not echo the raw secret")
+	assert.NotEqual(t, k1, DeriveConnectorStateKey("other-secret"), "different secrets must yield different keys")
+	assert.NotEqual(t, k1, derivePKCEVerifier("server-secret", "nonce"),
+		"state key must be domain-separated from the PKCE verifier")
+}
+
+// TestInitiateWithState_RejectsEmptySalt confirms a connector with neither a
+// StateSigningKey nor a ClientSecret cannot mint a state token (an empty HMAC
+// key would make the token forgeable).
+func TestInitiateWithState_RejectsEmptySalt(t *testing.T) {
+	t.Parallel()
+
+	c := &OAuth2Connector{
+		RedirectURI: "https://example.com/cb",
+		AuthURL:     "https://provider.example.com/authorize",
+	}
+
+	orgID := gid.New(gid.NewTenantID(), 0)
+
+	_, err := c.InitiateWithState(
+		context.Background(),
+		OAuth2State{OrganizationID: orgID.String(), Provider: "TEST"},
+		InitiateOptions{Scopes: []string{"read:user"}},
+	)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "no state signing key or client secret")
+}
+
+// TestCompleteWithState_PublicClientCIMD exercises the public-client (CIMD)
+// flow end to end: there is no client_secret, the state token is signed with
+// the server-side StateSigningKey (so validation still succeeds), and the
+// token POST carries client_id + the PKCE code_verifier but NEVER a
+// client_secret.
+func TestCompleteWithState_PublicClientCIMD(t *testing.T) {
+	t.Parallel()
+
+	var (
+		hadSecretField   bool
+		capturedClientID string
+		capturedVerifier string
+	)
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		body, err := io.ReadAll(r.Body)
+		assert.NoError(t, err)
+
+		form, err := url.ParseQuery(string(body))
+		assert.NoError(t, err)
+
+		_, hadSecretField = form["client_secret"]
+		capturedClientID = form.Get("client_id")
+		capturedVerifier = form.Get("code_verifier")
+
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"access_token":"live-token","token_type":"Bearer","expires_in":3600}`))
+	}))
+	defer server.Close()
+
+	c := &OAuth2Connector{
+		ClientID:          "https://probo.example.com/api/console/v1/connectors/oauth-client-metadata",
+		ClientSecret:      "", // public client: no secret
+		StateSigningKey:   "server-side-signing-key",
+		RedirectURI:       "https://example.com/cb",
+		AuthURL:           "https://provider.example.com/authorize",
+		TokenURL:          server.URL,
+		TokenEndpointAuth: "none",
+		RequiresPKCE:      true,
+		HTTPClient:        httpclient.DefaultClient(httpclient.WithSSRFProtection(), httpclient.WithSSRFAllowLoopback()),
+	}
+
+	orgID := gid.New(gid.NewTenantID(), 0)
+	authURL, err := c.InitiateWithState(
+		context.Background(),
+		OAuth2State{OrganizationID: orgID.String(), Provider: "TEST"},
+		InitiateOptions{Scopes: []string{"organization_member:read"}},
+	)
+	require.NoError(t, err)
+
+	parsed, err := url.Parse(authURL)
+	require.NoError(t, err)
+	require.NotEmpty(t, parsed.Query().Get("code_challenge"), "public client must use PKCE")
+
+	stateToken := parsed.Query().Get("state")
+	require.NotEmpty(t, stateToken)
+
+	req := httptest.NewRequest(
+		http.MethodGet,
+		"https://example.com/cb?code=the-code&state="+stateToken,
+		nil,
+	)
+
+	_, _, err = c.CompleteWithState(context.Background(), req)
+	require.NoError(t, err, "state signed with StateSigningKey must validate")
+
+	assert.False(t, hadSecretField, "public-client token POST must NOT include client_secret")
+	assert.Equal(t, c.ClientID, capturedClientID)
+	assert.NotEmpty(t, capturedVerifier, "public-client token POST must carry the PKCE code_verifier")
+}
+
+// TestRefreshableClient_PublicClientOmitsSecret confirms that refreshing a
+// public-client (CIMD) token sends client_id but NO client_secret — the
+// provider advertises token_endpoint_auth_method "none" and would reject an
+// (empty) secret. This guards the token-refresh path used when an access
+// token expires mid-campaign.
+func TestRefreshableClient_PublicClientOmitsSecret(t *testing.T) {
+	t.Parallel()
+
+	var (
+		hadSecret        bool
+		capturedClientID string
+		capturedGrant    string
+	)
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		require.NoError(t, r.ParseForm())
+		_, hadSecret = r.Form["client_secret"]
+		capturedClientID = r.Form.Get("client_id")
+		capturedGrant = r.Form.Get("grant_type")
+
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"access_token":"refreshed","token_type":"Bearer","expires_in":3600}`))
+	}))
+	defer server.Close()
+
+	conn := &OAuth2Connection{
+		AccessToken:  "stale",
+		RefreshToken: "refresh-tok",
+		ExpiresAt:    time.Now().Add(-time.Hour), // expired → force a refresh
+		TokenType:    "Bearer",
+	}
+
+	cfg := OAuth2RefreshConfig{
+		ClientID:          "https://probo.example.com/api/console/v1/connectors/oauth-client-metadata",
+		ClientSecret:      "", // public client
+		TokenURL:          server.URL,
+		TokenEndpointAuth: "none",
+	}
+
+	_, err := conn.RefreshableClient(context.Background(), cfg, httpclient.WithSSRFAllowLoopback())
+	require.NoError(t, err)
+
+	assert.Equal(t, "refreshed", conn.AccessToken, "refresh must update the access token")
+	assert.Equal(t, "refresh_token", capturedGrant)
+	assert.Equal(t, cfg.ClientID, capturedClientID)
+	assert.False(t, hadSecret, "public-client refresh must NOT send client_secret")
 }
 
 // TestCompleteWithState_PKCEMismatch confirms that a token endpoint

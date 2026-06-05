@@ -11,6 +11,7 @@ spec:
   selector:
     matchLabels:
       {{- include "probo.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: server
   template:
     metadata:
       annotations:
@@ -20,6 +21,7 @@ spec:
         {{- end }}
       labels:
         {{- include "probo.labels" . | nindent 8 }}
+        app.kubernetes.io/component: server
         {{- with .Values.podLabels }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
@@ -75,7 +77,7 @@ spec:
               value: {{ join "," .Values.probo.cors.allowedOrigins | quote }}
             # PostgreSQL Database
             - name: PG_ADDR
-              value: {{ if .Values.postgresql.enabled }}{{ printf "%s-postgresql-demo:5432" .Release.Name | quote }}{{ else }}{{ .Values.probo.pg.addr | required "probo.pg.addr is required when postgresql.enabled=false" | quote }}{{ end }}
+              value: {{ printf "%s:%v" (include "probo.postgresql.host" .) (include "probo.postgresql.port" .) | quote }}
             - name: PG_USERNAME
               value: {{ include "probo.postgresql.username" . | quote }}
             - name: PG_PASSWORD
@@ -128,6 +130,11 @@ spec:
                 secretKeyRef:
                   name: {{ include "probo.fullname" . }}
                   key: password-pepper
+            - name: OAUTH2_SERVER_SIGNING_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "probo.fullname" . }}
+                  key: oauth2-signing-key
             - name: AUTH_PASSWORD_ITERATIONS
               value: {{ .Values.probo.auth.passwordIterations | quote }}
             {{- if .Values.probo.saml.enabled }}
@@ -218,6 +225,10 @@ spec:
             {{- end }}
             - name: SMTP_TLS_REQUIRED
               value: {{ .Values.probo.mailer.smtp.tlsRequired | quote }}
+            {{- if .Values.probo.mailer.smtp.helloName }}
+            - name: SMTP_HELLO_NAME
+              value: {{ .Values.probo.mailer.smtp.helloName | quote }}
+            {{- end }}
             # OpenAI Integration
             {{- if .Values.probo.openai.apiKey }}
             - name: OPENAI_API_KEY
@@ -240,6 +251,36 @@ spec:
                   name: {{ include "probo.fullname" . }}
                   key: firecrawl-api-key
             {{- end }}
+            # Third-Party Vetter Agent
+            {{- if .Values.probo.thirdPartyVetter.provider }}
+            - name: AGENT_THIRD_PARTY_VETTER_PROVIDER
+              value: {{ .Values.probo.thirdPartyVetter.provider | quote }}
+            {{- end }}
+            {{- if .Values.probo.thirdPartyVetter.modelName }}
+            - name: AGENT_THIRD_PARTY_VETTER_MODEL_NAME
+              value: {{ .Values.probo.thirdPartyVetter.modelName | quote }}
+            {{- end }}
+            {{- if .Values.probo.thirdPartyVetter.temperature }}
+            - name: AGENT_THIRD_PARTY_VETTER_TEMPERATURE
+              value: {{ .Values.probo.thirdPartyVetter.temperature | quote }}
+            {{- end }}
+            {{- if .Values.probo.thirdPartyVetter.maxTokens }}
+            - name: AGENT_THIRD_PARTY_VETTER_MAX_TOKENS
+              value: {{ .Values.probo.thirdPartyVetter.maxTokens | quote }}
+            {{- end }}
+            # Third-Party Vetting Worker
+            {{- if .Values.probo.thirdPartyVettingWorker.interval }}
+            - name: THIRD_PARTY_VETTING_INTERVAL
+              value: {{ .Values.probo.thirdPartyVettingWorker.interval | quote }}
+            {{- end }}
+            {{- if .Values.probo.thirdPartyVettingWorker.maxConcurrency }}
+            - name: THIRD_PARTY_VETTING_MAX_CONCURRENCY
+              value: {{ .Values.probo.thirdPartyVettingWorker.maxConcurrency | quote }}
+            {{- end }}
+            {{- if .Values.probo.thirdPartyVettingWorker.staleAfter }}
+            - name: THIRD_PARTY_VETTING_STALE_AFTER
+              value: {{ .Values.probo.thirdPartyVettingWorker.staleAfter | quote }}
+            {{- end }}
             # Tracker Mapping Agent
             {{- if .Values.probo.trackerMapping.provider }}
             - name: AGENT_TRACKER_MAPPING_PROVIDER
@@ -257,6 +298,48 @@ spec:
             - name: AGENT_TRACKER_MAPPING_MAX_TOKENS
               value: {{ .Values.probo.trackerMapping.maxTokens | quote }}
             {{- end }}
+            # Tracker Mapping Worker
+            {{- if .Values.probo.trackerMappingWorker.interval }}
+            - name: TRACKER_MAPPING_INTERVAL
+              value: {{ .Values.probo.trackerMappingWorker.interval | quote }}
+            {{- end }}
+            {{- if .Values.probo.trackerMappingWorker.maxConcurrency }}
+            - name: TRACKER_MAPPING_MAX_CONCURRENCY
+              value: {{ .Values.probo.trackerMappingWorker.maxConcurrency | quote }}
+            {{- end }}
+            {{- if .Values.probo.trackerMappingWorker.staleAfter }}
+            - name: TRACKER_MAPPING_STALE_AFTER
+              value: {{ .Values.probo.trackerMappingWorker.staleAfter | quote }}
+            {{- end }}
+            {{- if .Values.probo.trackerMappingWorker.agentTimeout }}
+            - name: TRACKER_MAPPING_AGENT_TIMEOUT
+              value: {{ .Values.probo.trackerMappingWorker.agentTimeout | quote }}
+            {{- end }}
+            {{- if .Values.probo.trackerMappingWorker.agentMaxTurns }}
+            - name: TRACKER_MAPPING_AGENT_MAX_TURNS
+              value: {{ .Values.probo.trackerMappingWorker.agentMaxTurns | quote }}
+            {{- end }}
+            # Common Pattern Enrichment Worker
+            {{- if .Values.probo.commonPatternEnrichmentWorker.interval }}
+            - name: COMMON_PATTERN_ENRICHMENT_INTERVAL
+              value: {{ .Values.probo.commonPatternEnrichmentWorker.interval | quote }}
+            {{- end }}
+            {{- if .Values.probo.commonPatternEnrichmentWorker.maxConcurrency }}
+            - name: COMMON_PATTERN_ENRICHMENT_MAX_CONCURRENCY
+              value: {{ .Values.probo.commonPatternEnrichmentWorker.maxConcurrency | quote }}
+            {{- end }}
+            {{- if .Values.probo.commonPatternEnrichmentWorker.staleAfter }}
+            - name: COMMON_PATTERN_ENRICHMENT_STALE_AFTER
+              value: {{ .Values.probo.commonPatternEnrichmentWorker.staleAfter | quote }}
+            {{- end }}
+            {{- if .Values.probo.commonPatternEnrichmentWorker.agentTimeout }}
+            - name: COMMON_PATTERN_ENRICHMENT_AGENT_TIMEOUT
+              value: {{ .Values.probo.commonPatternEnrichmentWorker.agentTimeout | quote }}
+            {{- end }}
+            {{- if .Values.probo.commonPatternEnrichmentWorker.agentMaxTurns }}
+            - name: COMMON_PATTERN_ENRICHMENT_AGENT_MAX_TURNS
+              value: {{ .Values.probo.commonPatternEnrichmentWorker.agentMaxTurns | quote }}
+            {{- end }}
             # Custom Domains
             {{- if .Values.probo.customDomains.enabled }}
             - name: CUSTOM_DOMAINS_RENEWAL_INTERVAL
@@ -271,6 +354,13 @@ spec:
               value: {{ .Values.probo.customDomains.acme.email | quote }}
             - name: ACME_KEY_TYPE
               value: {{ .Values.probo.customDomains.acme.keyType | quote }}
+            {{- if .Values.probo.customDomains.acme.accountKey }}
+            - name: ACME_ACCOUNT_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "probo.fullname" . }}
+                  key: acme-account-key
+            {{- end }}
             {{- end }}
             # Connectors (Slack OAuth2)
             {{- range .Values.probo.connectors }}

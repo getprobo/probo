@@ -16,7 +16,10 @@ package drivers
 
 import (
 	"context"
+	"io"
+	"net/http"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -38,4 +41,58 @@ func TestHubSpotDriver(t *testing.T) {
 	assert.NotEmpty(t, r.Email)
 	assert.NotEmpty(t, r.FullName)
 	assert.NotEmpty(t, r.ExternalID)
+}
+
+func TestHubSpotDriverArchivedUsers(t *testing.T) {
+	t.Parallel()
+
+	client := &http.Client{
+		Transport: roundTripFunc(
+			func(req *http.Request) (*http.Response, error) {
+				switch req.URL.Path {
+				case "/settings/v3/users/roles":
+					return hubspotResponse(
+						http.StatusOK,
+						`{"results":[{"id":"role-1","name":"Sales Admin"}]}`,
+					), nil
+				case "/settings/v3/users":
+					return hubspotResponse(
+						http.StatusOK,
+						`{"results":[{"id":"user-1","email":"active@example.com","firstName":"Active","lastName":"User","roleIds":["role-1"],"superAdmin":false,"isActive":true},{"id":"user-2","email":"","firstName":"Archived","lastName":"User","superAdmin":false,"archived":true}]}`,
+					), nil
+				default:
+					return hubspotResponse(http.StatusNotFound, `{"message":"not found"}`), nil
+				}
+			},
+		),
+	}
+
+	driver := NewHubSpotDriver(client)
+
+	records, err := driver.ListAccounts(context.Background())
+	require.NoError(t, err)
+	require.Len(t, records, 2)
+
+	assert.Equal(t, "Sales Admin", records[0].Role)
+	require.NotNil(t, records[0].Active)
+	assert.True(t, *records[0].Active)
+
+	assert.Equal(t, "user-2", records[1].ExternalID)
+	assert.Empty(t, records[1].Email)
+	require.NotNil(t, records[1].Active)
+	assert.False(t, *records[1].Active)
+}
+
+type roundTripFunc func(req *http.Request) (*http.Response, error)
+
+func (f roundTripFunc) RoundTrip(req *http.Request) (*http.Response, error) {
+	return f(req)
+}
+
+func hubspotResponse(statusCode int, body string) *http.Response {
+	return &http.Response{
+		StatusCode: statusCode,
+		Body:       io.NopCloser(strings.NewReader(body)),
+		Header:     make(http.Header),
+	}
 }

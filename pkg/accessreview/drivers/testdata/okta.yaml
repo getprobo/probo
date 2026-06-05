@@ -1,0 +1,80 @@
+---
+# Anonymized from a real GET /api/v1/users recording against an Okta org
+# (token stripped by the recorder). Real PII (domain, names, emails, user
+# IDs, session cookie, request-id) replaced with synthetic values; a second
+# page + rel="next" Link header were added to keep pagination coverage. The
+# user object shape (id, status, created/activated/lastLogin, type, profile.*)
+# mirrors the live response.
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: acme.okta.com
+        form:
+            limit:
+                - "200"
+        headers:
+            Accept:
+                - application/json
+        url: https://acme.okta.com/api/v1/users?limit=200
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '[{"id":"00u1aaaaaaaaaaaaa0h7","status":"ACTIVE","created":"2024-01-15T10:00:00.000Z","activated":"2024-01-15T10:00:00.000Z","statusChanged":"2024-01-15T10:05:00.000Z","lastLogin":"2026-05-20T08:30:00.000Z","lastUpdated":"2024-01-15T10:05:00.000Z","type":{"id":"otyexampletype000000"},"profile":{"firstName":"Alice","lastName":"Active","mobilePhone":null,"secondEmail":null,"login":"alice@example.com","email":"alice@example.com","displayName":"Alice Active","title":"Security Engineer"}},{"id":"00u2bbbbbbbbbbbbb1h7","status":"SUSPENDED","created":"2024-02-20T11:00:00.000Z","activated":"2024-02-20T11:00:00.000Z","statusChanged":"2025-09-01T08:00:00.000Z","lastLogin":null,"lastUpdated":"2025-09-01T08:00:00.000Z","type":{"id":"otyexampletype000000"},"profile":{"firstName":"Bob","lastName":"Suspended","mobilePhone":null,"secondEmail":null,"login":"bob@example.com","email":"bob@example.com"}},{"id":"00u3ccccccccccccc2h7","status":"STAGED","created":"2024-03-01T12:00:00.000Z","activated":null,"lastLogin":null,"type":{"id":"otyexampletype000000"},"profile":{"firstName":"No","lastName":"Email","login":"","email":""}}]'
+        headers:
+            Cache-Control:
+                - no-cache, no-store
+            Content-Type:
+                - application/json
+            Link:
+                - <https://acme.okta.com/api/v1/users?limit=200>; rel="self"
+                - <https://acme.okta.com/api/v1/users?after=00ucursorpage2example&limit=200>; rel="next"
+            X-Rate-Limit-Remaining:
+                - "299"
+        status: 200 OK
+        code: 200
+        duration: 120ms
+    - id: 1
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: acme.okta.com
+        form:
+            after:
+                - 00ucursorpage2example
+            limit:
+                - "200"
+        headers:
+            Accept:
+                - application/json
+        url: https://acme.okta.com/api/v1/users?after=00ucursorpage2example&limit=200
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '[{"id":"00u4ddddddddddddd4h7","status":"DEPROVISIONED","created":"2024-04-10T09:00:00.000Z","activated":"2024-04-10T09:00:00.000Z","statusChanged":"2026-01-15T16:00:00.000Z","lastLogin":"2025-12-01T07:00:00.000Z","lastUpdated":"2026-01-15T16:00:00.000Z","type":{"id":"otyexampletype000000"},"profile":{"firstName":"Carol","lastName":"Gone","mobilePhone":null,"secondEmail":null,"login":"carol@example.com","email":"carol@example.com","title":"Contractor"}}]'
+        headers:
+            Cache-Control:
+                - no-cache, no-store
+            Content-Type:
+                - application/json
+            Link:
+                - <https://acme.okta.com/api/v1/users?after=00ucursorpage2example&limit=200>; rel="self"
+            X-Rate-Limit-Remaining:
+                - "298"
+        status: 200 OK
+        code: 200
+        duration: 110ms

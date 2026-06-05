@@ -24,6 +24,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/crypto/cipher"
@@ -321,6 +322,12 @@ WHERE %s AND id = @id
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
+		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
+			if pgErr.Code == "23503" {
+				return ErrResourceInUse
+			}
+		}
+
 		return fmt.Errorf("cannot delete connector: %w", err)
 	}
 
@@ -401,6 +408,12 @@ INSERT INTO connectors (
 
 	_, err = conn.Exec(ctx, q, args)
 	if err != nil {
+		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
+			if pgErr.Code == "23505" && pgErr.ConstraintName == "idx_connectors_organization_id_provider" {
+				return ErrResourceAlreadyExists
+			}
+		}
+
 		return fmt.Errorf("cannot insert connector: %w", err)
 	}
 

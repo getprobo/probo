@@ -1,5 +1,6 @@
 schema:
   - "graphql/*.graphql"
+  - "../../../gqlutils/directives/authentication/schema.graphql"
   - "../../../gqlutils/directives/session/schema.graphql"
 
 exec:
@@ -22,7 +23,9 @@ call_argument_directives_with_null: true
 directives:
   mustBeAuthorized:
     skip_runtime: false
-  session:
+  authentication:
+    skip_runtime: false
+  sessionOnly:
     skip_runtime: false
 
 models:

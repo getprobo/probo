@@ -39,6 +39,7 @@ import (
 	"go.gearno.de/kit/pg"
 	"go.gearno.de/kit/unit"
 	"go.gearno.de/kit/worker"
+	"go.gearno.de/x/ref"
 	"go.opentelemetry.io/otel/trace"
 	"go.probo.inc/probo/packages/emails"
 	"go.probo.inc/probo/pkg/accessreview"
@@ -57,6 +58,7 @@ import (
 	"go.probo.inc/probo/pkg/evidencedescriber"
 	"go.probo.inc/probo/pkg/file"
 	"go.probo.inc/probo/pkg/filemanager"
+	"go.probo.inc/probo/pkg/filesign"
 	"go.probo.inc/probo/pkg/geoloc"
 	"go.probo.inc/probo/pkg/html2pdf"
 	"go.probo.inc/probo/pkg/iam"
@@ -175,6 +177,11 @@ func New() *Implm {
 				Interval:       10,
 				StaleAfter:     300,
 				MaxConcurrency: 10,
+			},
+			ThirdPartyVetting: ThirdPartyVettingWorkerConfig{
+				Interval:       10,
+				StaleAfter:     1500,
+				MaxConcurrency: 1,
 			},
 		},
 	}
@@ -311,12 +318,12 @@ func (impl *Implm) Run(
 		return err
 	}
 
-	thirdPartyAssessor, err := impl.buildThirdPartyAssessor(l, tp, r)
+	thirdPartyVetter, err := impl.buildThirdPartyVetter(l, tp, r)
 	if err != nil {
 		return err
 	}
 
-	trackerMappingCfg, err := impl.buildTrackerMappingConfig(l, tp, r)
+	trackerAgentsCfg, thirdPartyDisambiguationCfg, err := impl.buildTrackerAgentsConfig(l, tp, r)
 	if err != nil {
 		return err
 	}
@@ -361,8 +368,9 @@ func (impl *Implm) Run(
 	}
 
 	var (
-		oauth2SigningKeys oauth2server.SigningKeys
-		hasActive         bool
+		oauth2SigningKeys   oauth2server.SigningKeys
+		hasActive           bool
+		activeSigningKeyPEM string
 	)
 
 	for _, keyCfg := range impl.cfg.Auth.OAuth2Server.SigningKeys {
@@ -383,6 +391,7 @@ func (impl *Implm) Run(
 
 		if keyCfg.Active {
 			hasActive = true
+			activeSigningKeyPEM = keyCfg.PrivateKey
 		}
 
 		oauth2SigningKeys = append(
@@ -397,6 +406,34 @@ func (impl *Implm) Run(
 
 	if !hasActive {
 		return fmt.Errorf("cannot configure OAuth2 server: at least one signing key must be active")
+	}
+
+	// Auto-register public-client (CIMD) connectors, which need no operator
+	// credentials: the client_id is this deployment's hosted CIMD metadata
+	// URL and the OAuth2 state token is signed with a key derived from the
+	// active OAuth2 server signing key. Providers an operator configured
+	// explicitly (already registered from impl.cfg.Connectors above) are
+	// left untouched.
+	connectorStateKey := connector.DeriveConnectorStateKey(activeSigningKeyPEM)
+	cimdClientID := baseURL.WithPath(connector.CIMDMetadataPath).MustString()
+
+	for _, reg := range providerRegistry.PublicClients() {
+		if _, err := defaultConnectorRegistry.Get(string(reg.Provider)); err == nil {
+			continue
+		}
+
+		oauth2c := &connector.OAuth2Connector{
+			ClientID:        cimdClientID,
+			StateSigningKey: connectorStateKey,
+		}
+
+		if err := providerRegistry.ApplyOAuth2Defaults(string(reg.Provider), redirectURI, oauth2c); err != nil {
+			return fmt.Errorf("cannot apply oauth2 defaults for public client %q: %w", reg.Provider, err)
+		}
+
+		if err := defaultConnectorRegistry.Register(string(reg.Provider), oauth2c); err != nil {
+			return fmt.Errorf("cannot register public client connector %q: %w", reg.Provider, err)
+		}
 	}
 
 	if err := emails.UploadStaticAssets(
@@ -501,6 +538,9 @@ func (impl *Implm) Run(
 
 	cookieBannerService := cookiebanner.NewService(pgClient, impl.cfg.Branding)
 
+	fileService := file.NewService(pgClient, baseURL)
+	filesignService := filesign.NewService(pgClient, fileManagerService)
+
 	proboService, err := probo.NewService(
 		ctx,
 		encryptionKey,
@@ -510,9 +550,11 @@ func (impl *Implm) Run(
 		baseURL.String(),
 		impl.cfg.Auth.Cookie.Secret,
 		proboLLMClient,
-		proboAgentCfg.ModelName,
-		*proboAgentCfg.Temperature,
-		*proboAgentCfg.MaxTokens,
+		probo.LLMConfig{
+			Model:       proboAgentCfg.ModelName,
+			Temperature: ref.UnrefOrZero(proboAgentCfg.Temperature),
+			MaxTokens:   ref.UnrefOrZero(proboAgentCfg.MaxTokens),
+		},
 		html2pdfConverter,
 		acmeService,
 		fileManagerService,
@@ -522,7 +564,7 @@ func (impl *Implm) Run(
 		esignService,
 		defaultConnectorRegistry,
 		time.Duration(impl.cfg.Auth.InvitationConfirmationTokenValidity)*time.Second,
-		thirdPartyAssessor,
+		fileService,
 	)
 	if err != nil {
 		return fmt.Errorf("cannot create probo service: %w", err)
@@ -540,9 +582,8 @@ func (impl *Implm) Run(
 		fileManagerService,
 		l,
 		slackService,
+		fileService,
 	)
-
-	fileService := file.NewService(pgClient, fileManagerService)
 
 	accessReviewService := accessreview.NewService(
 		pgClient,
@@ -552,7 +593,7 @@ func (impl *Implm) Run(
 		l.Named("access-review"),
 	)
 
-	thirdPartyService := thirdparty.NewService(pgClient, fileService)
+	thirdPartyService := thirdparty.NewService(pgClient, fileService, thirdPartyVetter)
 	riskManagementService := riskmanagement.NewService(pgClient)
 
 	serverHandler, err := server.NewServer(
@@ -560,7 +601,7 @@ func (impl *Implm) Run(
 			AllowedOrigins:    impl.cfg.Api.Cors.AllowedOrigins,
 			ExtraHeaderFields: impl.cfg.Api.ExtraHeaderFields,
 			Probo:             proboService,
-			File:              fileService,
+			FileSign:          filesignService,
 			IAM:               iamService,
 			Trust:             trustService,
 			ESign:             esignService,
@@ -616,6 +657,7 @@ func (impl *Implm) Run(
 			User:        impl.cfg.Notifications.Mailer.SMTP.User,
 			Password:    impl.cfg.Notifications.Mailer.SMTP.Password,
 			TLSRequired: impl.cfg.Notifications.Mailer.SMTP.TLSRequired,
+			HelloName:   impl.cfg.Notifications.Mailer.SMTP.HelloName,
 		},
 		l.Named("sending-worker"),
 		[]mailer.SendingWorkerOption{
@@ -728,7 +770,26 @@ func (impl *Implm) Run(
 		},
 	)
 
-	trackerMappingWorker := cookiebanner.NewTrackerMappingWorker(pgClient, l, trackerMappingCfg)
+	trackerPolicyWorker := probo.NewTrackerPolicyWorker(proboService.GeneratedDocuments, pgClient, l)
+	trackerPolicyWorkerCtx, stopTrackerPolicyWorker := context.WithCancel(context.Background())
+
+	wg.Go(
+		func() {
+			if err := trackerPolicyWorker.Run(trackerPolicyWorkerCtx); err != nil {
+				cancel(fmt.Errorf("tracker policy worker crashed: %w", err))
+			}
+		},
+	)
+
+	trackerMappingWorker := cookiebanner.NewTrackerMappingWorker(
+		pgClient,
+		l,
+		trackerAgentsCfg,
+		thirdPartyDisambiguationCfg,
+		time.Duration(impl.cfg.TrackerMappingWorker.StaleAfter)*time.Second,
+		worker.WithInterval(time.Duration(impl.cfg.TrackerMappingWorker.Interval)*time.Second),
+		worker.WithMaxConcurrency(impl.cfg.TrackerMappingWorker.MaxConcurrency),
+	)
 	trackerMappingWorkerCtx, stopTrackerMappingWorker := context.WithCancel(context.Background())
 
 	wg.Go(
@@ -738,6 +799,37 @@ func (impl *Implm) Run(
 			}
 		},
 	)
+
+	// The common-pattern enrichment worker needs an LLM client (it
+	// researches descriptions via the agent), so it is only started when
+	// the tracker agents are configured.
+	stopCommonPatternEnrichmentWorker := func() {}
+
+	if trackerAgentsCfg.LLMClient != nil {
+		enrichmentCfg := trackerAgentsCfg
+		enrichmentCfg.AgentTimeout = time.Duration(impl.cfg.CommonPatternEnrichmentWorker.AgentTimeout) * time.Second
+
+		commonPatternEnrichmentWorker := cookiebanner.NewCommonPatternEnrichmentWorker(
+			pgClient,
+			l,
+			enrichmentCfg,
+			time.Duration(impl.cfg.CommonPatternEnrichmentWorker.StaleAfter)*time.Second,
+			worker.WithInterval(time.Duration(impl.cfg.CommonPatternEnrichmentWorker.Interval)*time.Second),
+			worker.WithMaxConcurrency(impl.cfg.CommonPatternEnrichmentWorker.MaxConcurrency),
+		)
+
+		var commonPatternEnrichmentWorkerCtx context.Context
+
+		commonPatternEnrichmentWorkerCtx, stopCommonPatternEnrichmentWorker = context.WithCancel(context.Background())
+
+		wg.Go(
+			func() {
+				if err := commonPatternEnrichmentWorker.Run(commonPatternEnrichmentWorkerCtx); err != nil {
+					cancel(fmt.Errorf("common pattern enrichment worker crashed: %w", err))
+				}
+			},
+		)
+	}
 
 	mailingListWorker := mailman.NewMailingListWorker(mailmanService, pgClient, l.Named("mailing-list-worker"))
 	mailingListWorkerCtx, stopMailingListWorker := context.WithCancel(context.Background())
@@ -754,8 +846,8 @@ func (impl *Implm) Run(
 		evidenceDescriberLLMClient,
 		evidencedescriber.Config{
 			Model:     evidenceDescriberAgentCfg.ModelName,
-			Temp:      *evidenceDescriberAgentCfg.Temperature,
-			MaxTokens: *evidenceDescriberAgentCfg.MaxTokens,
+			Temp:      ref.UnrefOrZero(evidenceDescriberAgentCfg.Temperature),
+			MaxTokens: ref.UnrefOrZero(evidenceDescriberAgentCfg.MaxTokens),
 		},
 	)
 	evidenceDescriptionWorker := probo.NewEvidenceDescriptionWorker(
@@ -775,6 +867,26 @@ func (impl *Implm) Run(
 		func() {
 			if err := evidenceDescriptionWorker.Run(evidenceDescriptionWorkerCtx); err != nil {
 				cancel(fmt.Errorf("evidence description worker crashed: %w", err))
+			}
+		},
+	)
+
+	vettingWorker := thirdparty.NewVettingWorker(
+		pgClient,
+		thirdPartyVetter,
+		l.Named("vetting-worker"),
+		thirdparty.VettingWorkerConfig{
+			StaleAfter: time.Duration(impl.cfg.ThirdPartyVetting.StaleAfter) * time.Second,
+		},
+		worker.WithInterval(time.Duration(impl.cfg.ThirdPartyVetting.Interval)*time.Second),
+		worker.WithMaxConcurrency(impl.cfg.ThirdPartyVetting.MaxConcurrency),
+	)
+	vettingWorkerCtx, stopVettingWorker := context.WithCancel(context.Background())
+
+	wg.Go(
+		func() {
+			if err := vettingWorker.Run(vettingWorkerCtx); err != nil {
+				cancel(fmt.Errorf("vetting worker crashed: %w", err))
 			}
 		},
 	)
@@ -807,8 +919,11 @@ func (impl *Implm) Run(
 	stopWebhookSender()
 	stopESignService()
 	stopTrackerPatternAnalysisWorker()
+	stopTrackerPolicyWorker()
 	stopTrackerMappingWorker()
+	stopCommonPatternEnrichmentWorker()
 	stopMailingListWorker()
+	stopVettingWorker()
 	stopEvidenceDescriptionWorker()
 	stopDocumentPDFWorker()
 	stopExportJobExporter()

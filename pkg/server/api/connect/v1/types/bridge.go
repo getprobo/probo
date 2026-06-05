@@ -25,8 +25,9 @@ func NewSCIMBridge(bridge *coredata.SCIMBridge) *SCIMBridge {
 	}
 
 	return &SCIMBridge{
-		ID:    bridge.ID,
-		State: bridge.State,
+		ID:        bridge.ID,
+		State:     bridge.State,
+		SyncError: bridge.SyncError,
 		ScimConfiguration: &SCIMConfiguration{
 			ID: bridge.ScimConfigurationID,
 		},

@@ -25,30 +25,33 @@ import {
   Tr,
   TrButton,
 } from "@probo/ui";
-import { graphql, useFragment } from "react-relay";
-import { useOutletContext } from "react-router";
+import { graphql, type PreloadedQuery, usePreloadedQuery } from "react-relay";
 
-import type { RiskDetailLayoutQuery$data } from "#/__generated__/core/RiskDetailLayoutQuery.graphql";
-import type { RiskScenariosPageFragment$key } from "#/__generated__/core/RiskScenariosPageFragment.graphql";
 import type { RiskScenariosPageLinkMutation } from "#/__generated__/core/RiskScenariosPageLinkMutation.graphql";
+import type { RiskScenariosPageQuery } from "#/__generated__/core/RiskScenariosPageQuery.graphql";
 import type { RiskScenariosPageUnlinkMutation } from "#/__generated__/core/RiskScenariosPageUnlinkMutation.graphql";
 import { useMutationWithIncrement } from "#/hooks/useMutationWithIncrement";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 import { LinkScenarioDialog } from "../_components/LinkScenarioDialog";
 
-const fragment = graphql`
-  fragment RiskScenariosPageFragment on Risk {
-    id
-    scenarios(first: 100)
-      @connection(key: "RiskScenariosPage_scenarios", filters: []) {
-      __id
-      edges {
-        node {
-          id
-          name
-          description
-          scope { riskAssessmentId }
+export const riskScenariosPageQuery = graphql`
+  query RiskScenariosPageQuery($riskId: ID!) {
+    node(id: $riskId) {
+      __typename
+      ... on Risk {
+        id
+        scenarios(first: 100)
+          @connection(key: "RiskScenariosPage_scenarios", filters: []) {
+          __id
+          edges {
+            node {
+              id
+              name
+              description
+              scope { riskAssessmentId }
+            }
+          }
         }
       }
     }
@@ -84,16 +87,21 @@ const unlinkMutation = graphql`
   }
 `;
 
-export default function RiskScenariosPage() {
+interface RiskScenariosPageProps {
+  queryRef: PreloadedQuery<RiskScenariosPageQuery>;
+}
+
+export default function RiskScenariosPage(props: RiskScenariosPageProps) {
   const { __ } = useTranslate();
   const organizationId = useOrganizationId();
-  const { risk } = useOutletContext<{
-    risk: RiskDetailLayoutQuery$data["node"];
-  }>();
-  const data = useFragment<RiskScenariosPageFragment$key>(fragment, risk);
-  const scenarios = data.scenarios.edges.map(e => e.node);
-  const connectionId = data.scenarios.__id;
-  const riskId = data.id;
+  const data = usePreloadedQuery(riskScenariosPageQuery, props.queryRef);
+  if (data.node?.__typename !== "Risk") {
+    throw new Error("Risk not found");
+  }
+  const risk = data.node;
+  const scenarios = risk.scenarios.edges.map(e => e.node);
+  const connectionId = risk.scenarios.__id;
+  const riskId = risk.id;
 
   const incrementOptions = {
     id: riskId,

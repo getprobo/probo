@@ -12,7 +12,7 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { humanizeSeconds } from "@probo/helpers";
+import { getTrackerSourceBadge, getTrackerTypeBadge, humanizeSeconds } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import { Badge, Card, PropertyRow } from "@probo/ui";
 import { graphql, useFragment } from "react-relay";
@@ -33,27 +33,14 @@ const trackerPatternPropertiesSectionFragment = graphql`
     cookieCategory {
       name
     }
+    thirdParty {
+      name
+    }
+    commonThirdParty {
+      name
+    }
   }
 `;
-
-function trackerTypeBadge(type: string, __: (s: string) => string) {
-  switch (type) {
-    case "COOKIE": return { label: __("Cookie"), variant: "warning" as const };
-    case "LOCAL_STORAGE": return { label: __("localStorage"), variant: "info" as const };
-    case "SESSION_STORAGE": return { label: __("sessionStorage"), variant: "highlight" as const };
-    case "INDEXED_DB": return { label: __("IndexedDB"), variant: "success" as const };
-    case "CACHE_STORAGE": return { label: __("Cache Storage"), variant: "outline" as const };
-    default: return { label: type, variant: "neutral" as const };
-  }
-}
-
-function sourceBadge(source: string, __: (s: string) => string) {
-  switch (source) {
-    case "SCRIPT": return { label: __("Script"), variant: "info" as const };
-    case "PRE_EXISTING": return { label: __("Pre-existing"), variant: "outline" as const };
-    default: return { label: source, variant: "neutral" as const };
-  }
-}
 
 interface TrackerPatternPropertiesSectionProps {
   trackerPatternKey: TrackerPatternPropertiesSection_trackerPattern$key;
@@ -68,7 +55,7 @@ export function TrackerPatternPropertiesSection({
     trackerPatternKey,
   );
 
-  const typeBadge = trackerTypeBadge(pattern.trackerType, __);
+  const typeBadge = getTrackerTypeBadge(pattern.trackerType, __);
 
   return (
     <Card padded>
@@ -83,8 +70,8 @@ export function TrackerPatternPropertiesSection({
       </PropertyRow>
       {pattern.source && (
         <PropertyRow label={__("Source")}>
-          <Badge variant={sourceBadge(pattern.source, __).variant}>
-            {sourceBadge(pattern.source, __).label}
+          <Badge variant={getTrackerSourceBadge(pattern.source, __).variant}>
+            {getTrackerSourceBadge(pattern.source, __).label}
           </Badge>
         </PropertyRow>
       )}
@@ -92,6 +79,21 @@ export function TrackerPatternPropertiesSection({
         <span className="text-sm">
           {pattern.cookieCategory?.name ?? "-"}
         </span>
+      </PropertyRow>
+      <PropertyRow label={__("Third party")}>
+        {pattern.thirdParty
+          ? (
+              <div className="flex items-center gap-2">
+                <span className="text-sm">{pattern.thirdParty.name}</span>
+              </div>
+            )
+          : pattern.commonThirdParty
+            ? (
+                <div className="flex items-center gap-2">
+                  <span className="text-sm">{pattern.commonThirdParty.name}</span>
+                </div>
+              )
+            : <span className="text-txt-tertiary text-sm">-</span>}
       </PropertyRow>
       <PropertyRow label={__("Max Age")}>
         <span className="text-sm">

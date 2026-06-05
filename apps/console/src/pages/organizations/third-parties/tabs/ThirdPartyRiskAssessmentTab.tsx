@@ -214,7 +214,9 @@ function AssessmentRow(props: AssessmentRowProps) {
                 {__("Notes")}
                 :
               </div>
-              <p className="text-txt-secondary">{assessment.notes}</p>
+              <p className="text-sm text-txt-secondary whitespace-pre-wrap">
+                {assessment.notes}
+              </p>
             </div>
           </Td>
         </Tr>

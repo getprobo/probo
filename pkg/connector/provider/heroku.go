@@ -38,10 +38,9 @@ func herokuRegistration() *Registration {
 				return nil, fmt.Errorf("cannot read heroku connector settings: %w", err)
 			}
 
-			if s.TeamID == "" {
-				return nil, fmt.Errorf("cannot create heroku driver: team_id is required")
-			}
-
+			// TeamID may be empty or the personal-account slug for a solo
+			// Heroku account (no Team); the driver runs in personal mode
+			// (app owner + collaborators) in that case.
 			return drivers.NewHerokuDriver(c, s.TeamID), nil
 		},
 		NewNameResolver: func(ctx context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger) drivers.NameResolver {

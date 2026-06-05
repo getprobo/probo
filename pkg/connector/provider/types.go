@@ -46,16 +46,63 @@ type Registration struct {
 	// request and replays the verifier on the token exchange. Default
 	// false; non-PKCE providers are unaffected.
 	RequiresPKCE bool
+	// PublicClient marks an OAuth2 provider that authenticates as a public
+	// client (no client_secret) via PKCE, using the Client ID Metadata
+	// Document (CIMD) flow. probod auto-registers such providers with no
+	// operator credentials: the client_id is the deployment's hosted CIMD
+	// URL (baseURL + connector.CIMDMetadataPath) and the state token is
+	// signed with a server-derived key. Set TokenEndpointAuth to "none"
+	// alongside this.
+	PublicClient bool
 	// BuildAuthURL derives the authorization URL from an operator-supplied
 	// integration slug, for providers (e.g. Vercel) whose AuthURL embeds
 	// it as a path segment. It must construct the URL with net/url and
 	// escape the slug. Nil for providers with a fully static AuthURL.
 	BuildAuthURL func(slug string) (string, error)
+	// BuildAuthURLForSite builds the authorize URL for a per-customer
+	// site supplied at initiate time (multi-site providers, e.g.
+	// Datadog). It MUST validate site against a fixed allow-list and
+	// construct the URL with net/url. Nil for single-site providers.
+	BuildAuthURLForSite func(site string) (string, error)
+	// BuildTokenURLForDomain builds the token endpoint URL from the API
+	// domain the provider returns on the OAuth callback (multi-site
+	// providers, e.g. Datadog). It MUST validate domain. Nil otherwise.
+	BuildTokenURLForDomain func(domain string) (string, error)
+	// BuildTokenURLForSite builds the token endpoint URL from the
+	// per-customer site/subdomain carried in the signed OAuth state, for
+	// multi-site providers whose token host the provider does NOT echo back
+	// on the callback (e.g. Zendesk's <subdomain>.zendesk.com). It MUST
+	// validate site. A provider sets at most one of BuildTokenURLForDomain /
+	// BuildTokenURLForSite. Nil otherwise.
+	BuildTokenURLForSite func(site string) (string, error)
 
 	// Protocol support / GraphQL surface.
 	SupportsAPIKey            bool
 	SupportsClientCredentials bool
 	ExtraSettings             []ExtraSetting
+	// APIKeyHeader selects how an API-key connection presents its key
+	// on outbound requests. Empty (the default) uses the standard
+	// `Authorization: Bearer <key>` scheme; a value such as "x-api-key"
+	// sends the raw key in that header instead and omits Authorization
+	// (Anthropic). It is consumed when the create-connector resolver
+	// builds the APIKeyConnection.
+	APIKeyHeader string
+	// APIKeyBasicAuth, when true, presents the API key as the username
+	// of an HTTP Basic credential with an empty password instead of a
+	// Bearer token — required by providers such as Cursor whose Admin
+	// API documents `-u <key>:` Basic auth. Mutually exclusive with
+	// APIKeyHeader. Consumed when the create-connector resolver builds
+	// the APIKeyConnection.
+	APIKeyBasicAuth bool
+	// APIKeyAuthScheme selects a non-Bearer Authorization scheme for an
+	// API-key connection: the key is sent as `Authorization: <scheme>
+	// <key>` instead of `Authorization: Bearer <key>`. Required by
+	// providers such as Okta whose API tokens use the `SSWS` scheme and
+	// reject Bearer. Empty (the default) keeps the standard Bearer
+	// scheme. Mutually exclusive with APIKeyHeader and APIKeyBasicAuth.
+	// Consumed when the create-connector resolver builds the
+	// APIKeyConnection.
+	APIKeyAuthScheme string
 
 	// Factory closures — wired by Stages 2 and 3.
 	NewDriver               func(context.Context, *http.Client, *coredata.Connector, *log.Logger) (drivers.Driver, error)

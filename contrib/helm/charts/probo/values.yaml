@@ -167,6 +167,8 @@ probo:
   # Public hostname where Probo will be accessible
   # This should match your ingress host
   baseUrl: probo.example.com
+  # REQUIRED: Generate with openssl rand -base64 32
+  encryptionKey: ""
 
   service:
     port: 8080
@@ -183,12 +185,12 @@ probo:
     batchTimeout: 5
     exportTimeout: 30
     maxQueueSize: 2048
-#  pg:
-#    addr: "probo-postgresql-demo-app:5432"
-#    username: "postgres"
-#    password: "probod"
-#    database: "probod"
-#    pool-size: 100
+
+  # OAuth2 signing key used by bootstrap to sign auth tokens
+  # REQUIRED: PEM-encoded private key (RSA is recommended)
+  # Generate with: openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048
+  oauth2:
+    signingKey: ""
 
   # CORS configuration
   cors:
@@ -208,7 +210,11 @@ probo:
     invitationTokenValidity: 3600
     cookieName: "SSID"
     cookieDomain: "probo.example.com"
+    # REQUIRED: Generate with openssl rand -base64 32
+    cookieSecret: ""
     cookieDuration: 24
+    # REQUIRED: Generate with openssl rand -base64 32
+    passwordPepper: ""
     passwordIterations: 1000000
 
   # SAML authentication (optional)
@@ -232,6 +238,7 @@ probo:
       tlsHttpServer: 443
     # Trust token signing secret (REQUIRED, at least 32 bytes)
     # Generate with: openssl rand -base64 32
+    tokenSecret: ""
     scope: "trust_center_readonly"
     tokenType: "trust_center_access"
 
@@ -244,11 +251,13 @@ probo:
       user: ""
       password: ""
       tlsRequired: true
+      helloName: ""
 #    smtp:
 #      addr: "localhost:1025"
 #      user: ""
 #      password: ""
 #      tlsRequired: false
+#      helloName: ""
 
   # OpenAI integration (optional)
   openai:
@@ -259,8 +268,23 @@ probo:
 
   # Agent tools (optional, shared across agents)
   agentTools:
-    # Firecrawl web search API key (used by tracker mapping and third-party assessor agents)
+    # Firecrawl web search API key (used by tracker mapping and third-party vetter agents)
     firecrawlApiKey: ""
+
+  # Third-party vetter agent (optional, requires openai.apiKey or anthropic key)
+  thirdPartyVetter:
+    provider: ""
+    modelName: ""
+    temperature: ""
+    maxTokens: ""
+
+  # Third-party vetting background worker tuning (optional). interval and
+  # staleAfter are in seconds. Keep concurrency modest to stay under LLM
+  # rate limits and the database connection pool.
+  thirdPartyVettingWorker:
+    interval: 10
+    maxConcurrency: 1
+    staleAfter: 1500
 
   # Tracker mapping agent (optional, requires openai.apiKey or anthropic key)
   trackerMapping:
@@ -268,6 +292,26 @@ probo:
     modelName: ""
     temperature: ""
     maxTokens: ""
+
+  # Tracker mapping background worker tuning (optional). interval,
+  # staleAfter, and agentTimeout are in seconds. Keep concurrency modest
+  # to stay under OpenAI/Firecrawl rate limits and the database
+  # connection pool.
+  trackerMappingWorker:
+    interval: 10
+    maxConcurrency: 3
+    staleAfter: 600
+    agentTimeout: 45
+    agentMaxTurns: 10
+
+  # Common-pattern enrichment background worker tuning (optional).
+  # interval, staleAfter, and agentTimeout are in seconds.
+  commonPatternEnrichmentWorker:
+    interval: 10
+    maxConcurrency: 2
+    staleAfter: 600
+    agentTimeout: 45
+    agentMaxTurns: 10
 
   # Custom domains configuration (optional)
   customDomains:
@@ -280,6 +324,9 @@ probo:
       email: "admin@example.com"
       keyType: "EC256"
       insecureTls: false
+      # Optional persisted ACME account key (PEM-encoded)
+      # If unset, a new account may be created on each restart
+      accountKey: ""
 
   # External OAuth2 connectors (optional)
   connectors: []
@@ -349,7 +396,7 @@ s3:
   endpoint: ""
   accessKeyId: ""  # REQUIRED when seaweedfs.enabled=false: S3 access key
   secretAccessKey: ""  # REQUIRED when seaweedfs.enabled=false: S3 secret key
-  # Use path-style URLs (required for Azure Blob Storage and some S3-compatible services)
+  # Use path-style URLs for selected S3-compatible services
   # When true: https://endpoint/bucket/key
   # When false (default): https://bucket.endpoint/key
   usePathStyle: false

@@ -22,12 +22,17 @@ package provider
 func NewBuiltinRegistry() *Registry {
 	r := NewRegistry()
 	for _, reg := range []*Registration{
+		anthropicRegistration(),
 		asanaRegistration(),
 		bitbucketRegistration(),
 		brexRegistration(),
+		clerkRegistration(),
 		clickupRegistration(),
 		cloudflareRegistration(),
+		cursorRegistration(),
+		datadogRegistration(),
 		docusignRegistration(),
+		grafanaRegistration(),
 		githubRegistration(),
 		gitlabRegistration(),
 		googleWorkspaceRegistration(),
@@ -35,19 +40,25 @@ func NewBuiltinRegistry() *Registry {
 		hubspotRegistration(),
 		intercomRegistration(),
 		linearRegistration(),
+		metabaseRegistration(),
 		microsoft365Registration(),
 		mondayRegistration(),
 		netlifyRegistration(),
 		notionRegistration(),
+		oktaRegistration(),
 		onePasswordRegistration(),
 		openaiRegistration(),
+		posthogRegistration(),
 		pagerdutyRegistration(),
 		resendRegistration(),
+		sendgridRegistration(),
 		sentryRegistration(),
 		slackRegistration(),
 		supabaseRegistration(),
+		tailscaleRegistration(),
 		tallyRegistration(),
 		vercelRegistration(),
+		zendeskRegistration(),
 	} {
 		if err := r.Register(reg); err != nil {
 			panic(err)

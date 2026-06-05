@@ -65,6 +65,12 @@ type (
 		OrganizationID gid.GID
 		Provider       coredata.ConnectorProvider
 		Connection     connector.Connection
+		// RawSettings, when non-empty, replaces the connector's
+		// provider-specific settings on reconnect. Datadog captures its
+		// per-customer API domain on every OAuth callback (the domain
+		// drives the driver's API host), so a reconnect must refresh it;
+		// empty leaves the existing settings intact.
+		RawSettings json.RawMessage
 	}
 )
 
@@ -104,6 +110,7 @@ func (rcr *ReconnectConnectorRequest) Validate() error {
 	v.Check(rcr.OrganizationID, "organization_id", validator.Required(), validator.GID(coredata.OrganizationEntityType))
 	v.Check(rcr.Provider, "provider", validator.Required(), validator.OneOfSlice(coredata.ConnectorProviders()))
 	v.Check(rcr.Connection, "connection", validator.Required())
+	v.Check(rcr.RawSettings, "raw_settings", validJSONRawMessage)
 
 	return v.Error()
 }
@@ -356,6 +363,11 @@ func (s *ConnectorService) Reconnect(
 
 			preserveConnectionFields(req.Connection, cnnctr.Connection)
 			cnnctr.Connection = req.Connection
+
+			if len(req.RawSettings) > 0 {
+				cnnctr.RawSettings = []byte(req.RawSettings)
+			}
+
 			cnnctr.UpdatedAt = time.Now()
 
 			return cnnctr.Update(ctx, conn, scope, s.svc.encryptionKey)

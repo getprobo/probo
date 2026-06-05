@@ -29,15 +29,26 @@ import (
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/mcp/mcputils"
 	"go.probo.inc/probo/pkg/server/api/mcp/v1/server"
+	"go.probo.inc/probo/pkg/thirdparty"
 )
 
-func NewMux(logger *log.Logger, proboSvc *probo.Service, iamSvc *iam.Service, accessReviewSvc *accessreview.Service, cookieBannerSvc *cookiebanner.Service, riskManagementSvc *riskmanagement.Service, tokenSecret string) *chi.Mux {
+func NewMux(
+	logger *log.Logger,
+	proboSvc *probo.Service,
+	thirdPartySvc *thirdparty.Service,
+	iamSvc *iam.Service,
+	accessReviewSvc *accessreview.Service,
+	cookieBannerSvc *cookiebanner.Service,
+	riskManagementSvc *riskmanagement.Service,
+	tokenSecret string,
+) *chi.Mux {
 	logger = logger.Named("mcp.v1")
 
 	logger.Info("initializing MCP server")
 
 	resolver := &Resolver{
 		proboSvc:       proboSvc,
+		thirdPartySvc:  thirdPartySvc,
 		iamSvc:         iamSvc,
 		accessReview:   accessReviewSvc,
 		cookieBanner:   cookieBannerSvc,

@@ -39,6 +39,10 @@ type (
 		OrganizationSlug string `json:"organization_slug"`
 	}
 
+	GrafanaConnectorSettings struct {
+		BaseURL string `json:"base_url"`
+	}
+
 	SupabaseConnectorSettings struct {
 		OrganizationSlug string `json:"organization_slug"`
 	}
@@ -82,6 +86,51 @@ type (
 
 	VercelConnectorSettings struct {
 		TeamID string `json:"team_id"`
+	}
+
+	MetabaseConnectorSettings struct {
+		InstanceURL string `json:"instance_url"`
+	}
+
+	// PostHogConnectorSettings carries the data-API base host for the
+	// PostHog provider, which spans cloud and self-hosted deployments. For
+	// API-key connections it is the region-pinned host
+	// (https://us.posthog.com / https://eu.posthog.com) or a self-hosted
+	// instance URL. It is empty for cloud OAuth connections — the driver
+	// then discovers the region (us/eu) by probing, since the
+	// region-agnostic oauth.posthog.com gateway does not serve the data API.
+	PostHogConnectorSettings struct {
+		BaseURL string `json:"base_url"`
+	}
+
+	// DatadogConnectorSettings holds the per-customer Datadog site captured
+	// during the OAuth callback. Region is the site key (e.g. "US3") used for
+	// the AccessSource title; Domain is the API domain (e.g.
+	// "us3.datadoghq.com") the driver and name resolver use to build hosts.
+	DatadogConnectorSettings struct {
+		Region string `json:"region"`
+		Domain string `json:"domain"`
+	}
+
+	// OktaConnectorSettings holds the customer's Okta org domain (the bare
+	// host, e.g. "acme.okta.com") supplied with the API token. It is the
+	// single-tenant identifier the driver and name resolver use to build
+	// the per-org API host (https://<domain>/api/v1/...). Okta has no
+	// central API gateway — every org authenticates against its own
+	// domain — so the host is operator-supplied and validated (see
+	// connector.NormalizeOktaDomain) before it reaches URL construction.
+	OktaConnectorSettings struct {
+		Domain string `json:"domain"`
+	}
+
+	// ZendeskConnectorSettings holds the per-customer Zendesk subdomain
+	// captured at connect time (the customer types it before the OAuth
+	// redirect, and it rides the signed state token to the callback —
+	// Zendesk does not echo it back). Subdomain is the <subdomain> part of
+	// <subdomain>.zendesk.com, used by the driver to build the API host and
+	// by the name resolver for the AccessSource title.
+	ZendeskConnectorSettings struct {
+		Subdomain string `json:"subdomain"`
 	}
 )
 

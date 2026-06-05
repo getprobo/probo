@@ -505,6 +505,8 @@ func (tp *TrackerPattern) Update(
 	q := `
 UPDATE tracker_patterns
 SET
+	common_tracker_pattern_id = @common_tracker_pattern_id,
+	third_party_id = @third_party_id,
 	cookie_category_id = @cookie_category_id,
 	display_name = @display_name,
 	max_age_seconds = @max_age_seconds,
@@ -521,15 +523,17 @@ WHERE
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"id":                 tp.ID,
-		"cookie_category_id": tp.CookieCategoryID,
-		"display_name":       tp.DisplayName,
-		"max_age_seconds":    tp.MaxAgeSeconds,
-		"description":        tp.Description,
-		"excluded":           tp.Excluded,
-		"source":             tp.Source,
-		"last_matched_at":    tp.LastMatchedAt,
-		"updated_at":         tp.UpdatedAt,
+		"id":                        tp.ID,
+		"common_tracker_pattern_id": tp.CommonTrackerPatternID,
+		"third_party_id":            tp.ThirdPartyID,
+		"cookie_category_id":        tp.CookieCategoryID,
+		"display_name":              tp.DisplayName,
+		"max_age_seconds":           tp.MaxAgeSeconds,
+		"description":               tp.Description,
+		"excluded":                  tp.Excluded,
+		"source":                    tp.Source,
+		"last_matched_at":           tp.LastMatchedAt,
+		"updated_at":                tp.UpdatedAt,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
@@ -542,6 +546,60 @@ WHERE
 		}
 
 		return fmt.Errorf("cannot update tracker pattern: %w", err)
+	}
+
+	if result.RowsAffected() == 0 {
+		return ErrResourceNotFound
+	}
+
+	return nil
+}
+
+// UpdateMapping writes only the columns the tracker-mapping worker
+// resolves — common_tracker_pattern_id, third_party_id and an enriched
+// description — leaving the user-editable fields (display_name,
+// excluded, cookie_category_id, max_age_seconds, source, last_matched_at)
+// untouched.
+//
+// The worker loads the pattern in its claim transaction and commits the
+// resolution in a separate, later transaction, so a full-row Update
+// would write back stale values and clobber any concurrent edit made in
+// between. The description is only filled when still empty in the
+// database, so a concurrently set description is never overwritten.
+func (tp *TrackerPattern) UpdateMapping(
+	ctx context.Context,
+	tx pg.Tx,
+	scope Scoper,
+) error {
+	q := `
+UPDATE tracker_patterns
+SET
+	common_tracker_pattern_id = @common_tracker_pattern_id,
+	third_party_id = @third_party_id,
+	description = CASE
+		WHEN description = '' THEN @description
+		ELSE description
+	END,
+	updated_at = @updated_at
+WHERE
+	%s
+	AND id = @id
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"id":                        tp.ID,
+		"common_tracker_pattern_id": tp.CommonTrackerPatternID,
+		"third_party_id":            tp.ThirdPartyID,
+		"description":               tp.Description,
+		"updated_at":                tp.UpdatedAt,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	result, err := tx.Exec(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot update tracker pattern mapping: %w", err)
 	}
 
 	if result.RowsAffected() == 0 {
@@ -864,6 +922,156 @@ WHERE
 	return count, nil
 }
 
+// LoadDistinctThirdPartyIDsByCookieBannerID returns the distinct non-null
+// `third_party_id` values referenced by tracker patterns of the given
+// banner. Callers feed it to ThirdParty.GetByIDs to power per-banner
+// pickers without crossing the entity boundary.
+func (tps *TrackerPatterns) LoadDistinctThirdPartyIDsByCookieBannerID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	cookieBannerID gid.GID,
+) ([]gid.GID, error) {
+	q := `
+SELECT DISTINCT third_party_id
+FROM tracker_patterns
+WHERE
+	%s
+	AND cookie_banner_id = @cookie_banner_id
+	AND third_party_id IS NOT NULL
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"cookie_banner_id": cookieBannerID}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return nil, fmt.Errorf("cannot query distinct third party ids: %w", err)
+	}
+
+	ids, err := pgx.CollectRows(rows, pgx.RowTo[gid.GID])
+	if err != nil {
+		return nil, fmt.Errorf("cannot collect distinct third party ids: %w", err)
+	}
+
+	return ids, nil
+}
+
+// LoadDistinctCommonTrackerPatternIDsByCookieBannerID returns the
+// distinct non-null `common_tracker_pattern_id` values referenced by
+// tracker patterns of the given banner. Callers chain this with
+// CommonTrackerPatterns.LoadByIDs and CommonThirdParties.LoadByIDs to
+// resolve the linked common third parties without JOINs.
+func (tps *TrackerPatterns) LoadDistinctCommonTrackerPatternIDsByCookieBannerID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	cookieBannerID gid.GID,
+) ([]gid.GID, error) {
+	q := `
+SELECT DISTINCT common_tracker_pattern_id
+FROM tracker_patterns
+WHERE
+	%s
+	AND cookie_banner_id = @cookie_banner_id
+	AND common_tracker_pattern_id IS NOT NULL
+	AND third_party_id IS NULL
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"cookie_banner_id": cookieBannerID}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return nil, fmt.Errorf("cannot query distinct common tracker pattern ids: %w", err)
+	}
+
+	ids, err := pgx.CollectRows(rows, pgx.RowTo[gid.GID])
+	if err != nil {
+		return nil, fmt.Errorf("cannot collect distinct common tracker pattern ids: %w", err)
+	}
+
+	return ids, nil
+}
+
+func (tps *TrackerPatterns) LoadDistinctThirdPartyIDsByIDs(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	ids []gid.GID,
+) ([]gid.GID, error) {
+	if len(ids) == 0 {
+		return nil, nil
+	}
+
+	q := `
+SELECT DISTINCT third_party_id
+FROM tracker_patterns
+WHERE
+	%s
+	AND id = ANY(@ids)
+	AND third_party_id IS NOT NULL
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"ids": ids}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return nil, fmt.Errorf("cannot query distinct third party ids by pattern ids: %w", err)
+	}
+
+	thirdPartyIDs, err := pgx.CollectRows(rows, pgx.RowTo[gid.GID])
+	if err != nil {
+		return nil, fmt.Errorf("cannot collect distinct third party ids by pattern ids: %w", err)
+	}
+
+	return thirdPartyIDs, nil
+}
+
+func (tps *TrackerPatterns) LoadDistinctCommonTrackerPatternIDsByIDs(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	ids []gid.GID,
+) ([]gid.GID, error) {
+	if len(ids) == 0 {
+		return nil, nil
+	}
+
+	q := `
+SELECT DISTINCT common_tracker_pattern_id
+FROM tracker_patterns
+WHERE
+	%s
+	AND id = ANY(@ids)
+	AND common_tracker_pattern_id IS NOT NULL
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"ids": ids}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return nil, fmt.Errorf("cannot query distinct common tracker pattern ids by pattern ids: %w", err)
+	}
+
+	commonPatternIDs, err := pgx.CollectRows(rows, pgx.RowTo[gid.GID])
+	if err != nil {
+		return nil, fmt.Errorf("cannot collect distinct common tracker pattern ids by pattern ids: %w", err)
+	}
+
+	return commonPatternIDs, nil
+}
+
 func (tps *TrackerPatterns) UpdateLastMatchedAt(
 	ctx context.Context,
 	tx pg.Tx,
@@ -988,13 +1196,19 @@ LIMIT 1;
 	return nil
 }
 
+// ClearMappingRequestedAt removes the row from the mapping queue. It
+// bumps updated_at so the stale-recovery clock starts at claim time,
+// keeping ResetStaleMappings from re-arming a row that is still being
+// processed.
 func (tp *TrackerPattern) ClearMappingRequestedAt(
 	ctx context.Context,
 	tx pg.Tx,
 ) error {
 	q := `
 UPDATE tracker_patterns
-SET mapping_requested_at = NULL
+SET
+    mapping_requested_at = NULL,
+    updated_at = NOW()
 WHERE id = @id
 `
 
@@ -1006,6 +1220,42 @@ WHERE id = @id
 	}
 
 	tp.MappingRequestedAt = nil
+
+	return nil
+}
+
+// ResetStaleMappings re-arms mapping_requested_at on rows whose mapping
+// was claimed but never completed (no common_tracker_pattern_id) and
+// have been idle longer than staleAfter, so a crashed or timed-out
+// mapping run is retried. A successful Process always assigns a catalog
+// row (the unmatched fallback in createUnmatchedPattern), so a missing
+// common_tracker_pattern_id on a dequeued row marks an interrupted run.
+//
+// Like the claim query, this sweep is intentionally cross-tenant: the
+// mapping worker is a system worker that drains the queue regardless of
+// tenant.
+func ResetStaleMappings(
+	ctx context.Context,
+	conn pg.Querier,
+	staleAfter time.Duration,
+) error {
+	q := `
+UPDATE tracker_patterns
+SET
+    mapping_requested_at = NOW(),
+    updated_at = NOW()
+WHERE
+    mapping_requested_at IS NULL
+    AND common_tracker_pattern_id IS NULL
+    AND updated_at < @stale_before
+`
+
+	args := pgx.StrictNamedArgs{"stale_before": time.Now().Add(-staleAfter)}
+
+	_, err := conn.Exec(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot reset stale tracker pattern mappings: %w", err)
+	}
 
 	return nil
 }
@@ -1031,39 +1281,104 @@ WHERE id = @id
 	return nil
 }
 
-func (tp *TrackerPattern) UpdateMapping(
+// RequestMappingForUnmappedSiblings re-arms mapping_requested_at on
+// sibling tracker patterns of the same banner that share an initiator
+// domain with the just-mapped pattern but are still unpromoted. It is
+// the backward-propagation counterpart to the mapping worker's
+// sibling-origin matching: when a pattern newly resolves a vendor, its
+// siblings that were processed earlier and left unmatched can now be
+// re-evaluated against it.
+//
+// Only unpromoted (third_party_id IS NULL), not-already-queued
+// (mapping_requested_at IS NULL), non-extension siblings are touched, so
+// a fully mapped banner re-enqueues nothing. detected_trackers is used
+// only as a filtering subquery. Returns the number of siblings
+// re-enqueued.
+func (tps *TrackerPatterns) RequestMappingForUnmappedSiblings(
 	ctx context.Context,
 	tx pg.Tx,
-	commonTrackerPatternID *gid.GID,
-	thirdPartyID *gid.GID,
-) error {
+	scope Scoper,
+	cookieBannerID gid.GID,
+	excludePatternID gid.GID,
+	domains []string,
+) (int64, error) {
+	if len(domains) == 0 {
+		return 0, nil
+	}
+
 	q := `
 UPDATE tracker_patterns
 SET
-	common_tracker_pattern_id = @common_tracker_pattern_id,
-	third_party_id = @third_party_id,
-	mapping_requested_at = NULL,
-	updated_at = @updated_at
-WHERE id = @id
+	mapping_requested_at = NOW(),
+	updated_at = NOW()
+WHERE
+	%[1]s
+	AND cookie_banner_id = @cookie_banner_id
+	AND id != @exclude_pattern_id
+	AND third_party_id IS NULL
+	AND mapping_requested_at IS NULL
+	AND (source IS NULL OR source != @extension_source)
+	AND id IN (
+		SELECT DISTINCT tracker_pattern_id
+		FROM detected_trackers
+		WHERE %[1]s
+			AND cookie_banner_id = @cookie_banner_id
+			AND initiator_domain = ANY(@domains)
+			AND tracker_pattern_id IS NOT NULL
+	)
 `
 
-	now := time.Now()
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
 	args := pgx.StrictNamedArgs{
-		"id":                        tp.ID,
-		"common_tracker_pattern_id": commonTrackerPatternID,
-		"third_party_id":            thirdPartyID,
-		"updated_at":                now,
+		"cookie_banner_id":   cookieBannerID,
+		"exclude_pattern_id": excludePatternID,
+		"extension_source":   CookieSourceExtension,
+		"domains":            domains,
 	}
+	maps.Copy(args, scope.SQLArguments())
 
-	_, err := tx.Exec(ctx, q, args)
+	result, err := tx.Exec(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot update tracker pattern mapping: %w", err)
+		return 0, fmt.Errorf("cannot request mapping for unmapped siblings: %w", err)
 	}
 
-	tp.CommonTrackerPatternID = commonTrackerPatternID
-	tp.ThirdPartyID = thirdPartyID
-	tp.MappingRequestedAt = nil
-	tp.UpdatedAt = now
+	return result.RowsAffected(), nil
+}
 
-	return nil
+// BackfillDescriptionByCommonTrackerPatternID copies an enriched
+// description onto every tracker pattern linked to the given common
+// pattern that does not yet have one. It is invoked by the common-pattern
+// enrichment worker, a global system process, so it is intentionally not
+// tenant-scoped: a single catalog enrichment fans out to all tenants'
+// linked patterns. The description = ” guard guarantees a pattern that
+// already carries a description is never overwritten. Returns the number
+// of patterns backfilled.
+func (tps *TrackerPatterns) BackfillDescriptionByCommonTrackerPatternID(
+	ctx context.Context,
+	tx pg.Tx,
+	commonTrackerPatternID gid.GID,
+	description string,
+) (int64, error) {
+	q := `
+UPDATE tracker_patterns
+SET
+	description = @description,
+	updated_at = NOW()
+WHERE
+	common_tracker_pattern_id = @common_tracker_pattern_id
+	AND description = ''
+`
+
+	args := pgx.StrictNamedArgs{
+		"common_tracker_pattern_id": commonTrackerPatternID,
+		"description":               description,
+	}
+
+	result, err := tx.Exec(ctx, q, args)
+	if err != nil {
+		return 0, fmt.Errorf("cannot backfill tracker pattern descriptions: %w", err)
+	}
+
+	return result.RowsAffected(), nil
 }

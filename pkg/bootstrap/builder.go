@@ -166,6 +166,7 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 						User:        b.getEnv("SMTP_USER"),
 						Password:    b.getEnv("SMTP_PASSWORD"),
 						TLSRequired: b.getEnvBoolOrDefault("SMTP_TLS_REQUIRED", false),
+						HelloName:   b.getEnv("SMTP_HELLO_NAME"),
 					},
 				},
 				Slack: probodconfig.SlackConfig{
@@ -206,11 +207,21 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 					Temperature: b.getEnvFloatPtr("AGENT_EVIDENCE_DESCRIBER_TEMPERATURE"),
 					MaxTokens:   b.getEnvIntPtr("AGENT_EVIDENCE_DESCRIBER_MAX_TOKENS"),
 				},
+				ThirdPartyVetter: probodconfig.LLMAgentConfig{
+					Provider:    b.getEnvOrDefault("AGENT_THIRD_PARTY_VETTER_PROVIDER", ""),
+					ModelName:   b.getEnvOrDefault("AGENT_THIRD_PARTY_VETTER_MODEL_NAME", ""),
+					Temperature: b.getEnvFloatPtr("AGENT_THIRD_PARTY_VETTER_TEMPERATURE"),
+					MaxTokens:   b.getEnvIntPtr("AGENT_THIRD_PARTY_VETTER_MAX_TOKENS"),
+				},
 				TrackerMapping: probodconfig.LLMAgentConfig{
-					Provider:    b.getEnvOrDefault("AGENT_TRACKER_MAPPING_PROVIDER", ""),
-					ModelName:   b.getEnvOrDefault("AGENT_TRACKER_MAPPING_MODEL_NAME", ""),
+					Provider:  b.getEnvOrDefault("AGENT_TRACKER_MAPPING_PROVIDER", ""),
+					ModelName: b.getEnvOrDefault("AGENT_TRACKER_MAPPING_MODEL_NAME", ""),
+					// The tracker agents emit tiny structured JSON, but
+					// the budget must leave headroom for reasoning
+					// models whose reasoning tokens count against
+					// max_tokens; too small a budget truncates the JSON.
 					Temperature: b.getEnvFloatPtr("AGENT_TRACKER_MAPPING_TEMPERATURE"),
-					MaxTokens:   b.getEnvIntPtr("AGENT_TRACKER_MAPPING_MAX_TOKENS"),
+					MaxTokens:   new(b.getEnvIntOrDefault("AGENT_TRACKER_MAPPING_MAX_TOKENS", 4096)),
 				},
 				Tools: probodconfig.AgentToolsConfig{
 					FirecrawlAPIKey: b.getEnv("FIRECRAWL_API_KEY"),
@@ -241,6 +252,25 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 				Interval:       b.getEnvIntOrDefault("EVIDENCE_DESCRIBER_INTERVAL", 10),
 				StaleAfter:     b.getEnvIntOrDefault("EVIDENCE_DESCRIBER_STALE_AFTER", 300),
 				MaxConcurrency: b.getEnvIntOrDefault("EVIDENCE_DESCRIBER_MAX_CONCURRENCY", 10),
+			},
+			ThirdPartyVetting: probodconfig.ThirdPartyVettingWorkerConfig{
+				Interval:       b.getEnvIntOrDefault("THIRD_PARTY_VETTING_INTERVAL", 10),
+				StaleAfter:     b.getEnvIntOrDefault("THIRD_PARTY_VETTING_STALE_AFTER", 1500),
+				MaxConcurrency: b.getEnvIntOrDefault("THIRD_PARTY_VETTING_MAX_CONCURRENCY", 1),
+			},
+			TrackerMappingWorker: probodconfig.TrackerMappingWorkerConfig{
+				Interval:       b.getEnvIntOrDefault("TRACKER_MAPPING_INTERVAL", 10),
+				MaxConcurrency: b.getEnvIntOrDefault("TRACKER_MAPPING_MAX_CONCURRENCY", 3),
+				StaleAfter:     b.getEnvIntOrDefault("TRACKER_MAPPING_STALE_AFTER", 600),
+				AgentTimeout:   b.getEnvIntOrDefault("TRACKER_MAPPING_AGENT_TIMEOUT", 45),
+				AgentMaxTurns:  b.getEnvIntOrDefault("TRACKER_MAPPING_AGENT_MAX_TURNS", 10),
+			},
+			CommonPatternEnrichmentWorker: probodconfig.CommonPatternEnrichmentWorkerConfig{
+				Interval:       b.getEnvIntOrDefault("COMMON_PATTERN_ENRICHMENT_INTERVAL", 10),
+				MaxConcurrency: b.getEnvIntOrDefault("COMMON_PATTERN_ENRICHMENT_MAX_CONCURRENCY", 2),
+				StaleAfter:     b.getEnvIntOrDefault("COMMON_PATTERN_ENRICHMENT_STALE_AFTER", 600),
+				AgentTimeout:   b.getEnvIntOrDefault("COMMON_PATTERN_ENRICHMENT_AGENT_TIMEOUT", 45),
+				AgentMaxTurns:  b.getEnvIntOrDefault("COMMON_PATTERN_ENRICHMENT_AGENT_MAX_TURNS", 10),
 			},
 			Branding: b.getEnvBoolOrDefault("BRANDING", true),
 		},
@@ -398,6 +428,8 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 		"NETLIFY",
 		"CLICKUP",
 		"MONDAY",
+		"DATADOG",
+		"ZENDESK",
 	} {
 		clientID := b.getEnv("CONNECTOR_" + provider + "_CLIENT_ID")
 		if clientID == "" {
@@ -489,6 +521,8 @@ func (b *Builder) validateRequired() error {
 		{"CONNECTOR_NETLIFY", []string{"CLIENT_SECRET"}},
 		{"CONNECTOR_CLICKUP", []string{"CLIENT_SECRET"}},
 		{"CONNECTOR_MONDAY", []string{"CLIENT_SECRET"}},
+		{"CONNECTOR_DATADOG", []string{"CLIENT_SECRET"}},
+		{"CONNECTOR_ZENDESK", []string{"CLIENT_SECRET"}},
 		{"CONNECTOR_VERCEL", []string{"CLIENT_SECRET", "INTEGRATION_SLUG"}},
 	}
 

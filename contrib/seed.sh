@@ -26,7 +26,6 @@ FULL_NAME="Seed Admin"
 ORG_NAME="Acme Corp"
 
 # Helpers
-
 gql_connect() {
   local query="$1"
   local variables="${2:-"{}"}"
@@ -59,6 +58,9 @@ prb_api() {
   check_error "$resp" "$context"
   echo "$resp"
 }
+
+curl -sf -o /dev/null "$BASE_URL/healthz" \
+  || { echo "ERROR: API at $BASE_URL is not available" >&2; exit 1; }
 
 echo "==> Bootstrapping user and organization..."
 vars=$(jo input="$(jo \
@@ -144,7 +146,7 @@ create_person() {
     fullName="$full_name" \
     role=EMPLOYEE \
     kind=EMPLOYEE \
-    additionalEmailAddresses="$(jo -a)" \
+    additionalEmailAddresses="$(jo -a < /dev/null)" \
     position="$position" \
   )")
   resp=$(gql_connect '

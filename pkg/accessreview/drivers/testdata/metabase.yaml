@@ -1,0 +1,39 @@
+---
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: k7.metabaseapp.com
+        form:
+            limit:
+                - "50"
+            offset:
+                - "0"
+            status:
+                - all
+        headers:
+            Accept:
+                - application/json
+        url: https://k7.metabaseapp.com/api/user?limit=50&offset=0&status=all
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"data":[{"id":1,"email":"alice@example.com","first_name":"Alice","last_name":"Admin","common_name":"Alice A.","is_active":true,"is_superuser":true,"last_login":"2026-05-20T10:11:12.345678Z","date_joined":"2026-01-02T03:04:05Z"},{"id":2,"email":"bob@example.com","first_name":"Bob","last_name":"Builder","is_active":false,"is_superuser":false,"last_login":"","date_joined":"2026-02-03T04:05:06Z"},{"id":3,"email":"","first_name":"No","last_name":"Email","is_active":true,"is_superuser":false}],"total":3,"limit":50,"offset":0}'
+        headers:
+            Content-Type:
+                - application/json; charset=utf-8
+            Date:
+                - Thu, 28 May 2026 22:10:00 GMT
+            Server:
+                - nginx
+        status: 200 OK
+        code: 200
+        duration: 22ms

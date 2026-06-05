@@ -15,6 +15,8 @@
 package types
 
 import (
+	"time"
+
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
@@ -22,6 +24,39 @@ import (
 
 type (
 	TrackerPatternOrderBy OrderBy[coredata.TrackerPatternOrderField]
+
+	// TrackerPattern is the Go model bound to the GraphQL TrackerPattern
+	// type via @goModel. The first block contains the fields gqlgen
+	// fulfills directly from the model; resolver-only fields
+	// (cookieCategory, detectedTrackers, thirdParty, commonThirdParty,
+	// detectedCount, permission) are populated by the resolver.
+	//
+	// ThirdPartyID and CommonTrackerPatternID are not exposed in
+	// GraphQL — they are foreign-key handles the resolver uses to load
+	// the linked third party (org-scoped or via the common catalog)
+	// without re-querying coredata.
+	TrackerPattern struct {
+		ID            gid.GID                          `json:"id"`
+		TrackerType   coredata.TrackerType             `json:"trackerType"`
+		Pattern       string                           `json:"pattern"`
+		MatchType     coredata.TrackerPatternMatchType `json:"matchType"`
+		DisplayName   string                           `json:"displayName"`
+		MaxAgeSeconds *int                             `json:"maxAgeSeconds,omitempty"`
+		Description   string                           `json:"description"`
+		Source        *coredata.CookieSource           `json:"source,omitempty"`
+		Excluded      bool                             `json:"excluded"`
+		LastMatchedAt *time.Time                       `json:"lastMatchedAt,omitempty"`
+		CreatedAt     time.Time                        `json:"createdAt"`
+		UpdatedAt     time.Time                        `json:"updatedAt"`
+
+		CookieCategory   *CookieCategory            `json:"cookieCategory,omitempty"`
+		DetectedTrackers *DetectedTrackerConnection `json:"detectedTrackers,omitempty"`
+		DetectedCount    int                        `json:"detectedCount"`
+		Permission       bool                       `json:"permission"`
+
+		ThirdPartyID           *gid.GID `json:"-"`
+		CommonTrackerPatternID *gid.GID `json:"-"`
+	}
 
 	TrackerPatternConnection struct {
 		TotalCount int
@@ -38,8 +73,12 @@ type (
 		Source           *coredata.CookieSource
 		TrackerType      *coredata.TrackerType
 		CookieCategoryID *gid.GID
+		ThirdPartyID     *gid.GID
 	}
 )
+
+func (TrackerPattern) IsNode()          {}
+func (t TrackerPattern) GetID() gid.GID { return t.ID }
 
 func NewTrackerPatternConnection(
 	p *page.Page[*coredata.TrackerPattern, coredata.TrackerPatternOrderField],
@@ -89,16 +128,18 @@ func NewTrackerPatternNode(tp *coredata.TrackerPattern) *TrackerPattern {
 				ID: tp.CookieBannerID,
 			},
 		},
-		TrackerType:   tp.TrackerType,
-		Pattern:       tp.Pattern,
-		MatchType:     tp.MatchType,
-		DisplayName:   tp.DisplayName,
-		MaxAgeSeconds: tp.MaxAgeSeconds,
-		Description:   tp.Description,
-		Source:        tp.Source,
-		Excluded:      tp.Excluded,
-		LastMatchedAt: tp.LastMatchedAt,
-		CreatedAt:     tp.CreatedAt,
-		UpdatedAt:     tp.UpdatedAt,
+		TrackerType:            tp.TrackerType,
+		Pattern:                tp.Pattern,
+		MatchType:              tp.MatchType,
+		DisplayName:            tp.DisplayName,
+		MaxAgeSeconds:          tp.MaxAgeSeconds,
+		Description:            tp.Description,
+		Source:                 tp.Source,
+		Excluded:               tp.Excluded,
+		LastMatchedAt:          tp.LastMatchedAt,
+		CreatedAt:              tp.CreatedAt,
+		UpdatedAt:              tp.UpdatedAt,
+		ThirdPartyID:           tp.ThirdPartyID,
+		CommonTrackerPatternID: tp.CommonTrackerPatternID,
 	}
 }

@@ -13,7 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 import { EyeIcon, EyeSlashIcon } from "@phosphor-icons/react";
-import { formatError, type GraphQLError, humanizeSeconds } from "@probo/helpers";
+import { formatError, getTrackerTypeBadge, type GraphQLError, humanizeSeconds } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import {
   Badge,
@@ -76,10 +76,10 @@ export const categorySectionFragment = graphql`
         node {
           id
           displayName
+          trackerType
           maxAgeSeconds
           description
           excluded
-          source
           ...EditCookieRowFragment
         }
       }
@@ -136,10 +136,10 @@ const createPatternMutation = graphql`
         node {
           id
           displayName
+          trackerType
           maxAgeSeconds
           description
           excluded
-          source
           ...EditCookieRowFragment
         }
       }
@@ -759,9 +759,8 @@ export function CategorySection({ categoryKey, connectionId }: CategorySectionPr
         <Thead>
           <Tr>
             <Th>{__("Name")}</Th>
-            <Th>{__("Source")}</Th>
+            <Th>{__("Type")}</Th>
             <Th>{__("Duration")}</Th>
-            <Th>{__("Description")}</Th>
             <Th className="w-20" />
           </Tr>
         </Thead>
@@ -780,25 +779,23 @@ export function CategorySection({ categoryKey, connectionId }: CategorySectionPr
               : (
                   <Tr key={pattern.id} className={pattern.excluded ? "opacity-80" : undefined}>
                     <Td>
-                      <code className="text-sm font-mono">{pattern.displayName}</code>
+                      <div className="flex flex-col min-w-0 max-w-xs">
+                        <code className="text-sm font-mono">{pattern.displayName}</code>
+                        {pattern.description && (
+                          <span className="text-xs text-txt-tertiary wrap-break-word line-clamp-1">
+                            {pattern.description}
+                          </span>
+                        )}
+                      </div>
                     </Td>
                     <Td>
-                      <Badge
-                        variant={pattern.source === "SCRIPT" ? "info" : "neutral"}
-                        title={
-                          pattern.source === "SCRIPT"
-                            ? __("Set by a script at runtime")
-                            : __("Already present when the page was loaded")
-                        }
-                      >
-                        {pattern.source === "SCRIPT" ? __("Script") : __("Pre-existing")}
-                      </Badge>
+                      {(() => {
+                        const typeBadge = getTrackerTypeBadge(pattern.trackerType, __);
+                        return <Badge variant={typeBadge.variant}>{typeBadge.label}</Badge>;
+                      })()}
                     </Td>
                     <Td className="text-sm text-muted-foreground">
                       {humanizeSeconds(pattern.maxAgeSeconds ?? null)}
-                    </Td>
-                    <Td className="text-sm text-muted-foreground">
-                      {pattern.description}
                     </Td>
                     <Td>
                       <div className="flex items-center gap-1">

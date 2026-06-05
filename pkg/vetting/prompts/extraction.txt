@@ -10,4 +10,6 @@ Given a third party assessment markdown report, extract the third party informat
 - Extract only information explicitly present in the report.
 - Use empty strings for fields not mentioned, empty arrays for missing lists, false for missing booleans.
 - Never infer or fabricate; if the report does not state something, leave the field empty.
+- Populate data_locations with countries or regions where data is processed or stored. Prefer ISO 3166-1 alpha-2 codes (US, DE, EU, GLOBAL) when the report states them; otherwise use the country or region names from the report.
+- Include the headquarters country in data_locations when it is stated in the report.
 </important>

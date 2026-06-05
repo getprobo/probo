@@ -25,8 +25,13 @@ import {
   Input,
   Spinner,
 } from "@probo/ui";
-import { type ReactNode, Suspense, useMemo, useState } from "react";
-import { useLazyLoadQuery, usePaginationFragment } from "react-relay";
+import { cloneElement, isValidElement, type MouseEvent, type ReactElement, type ReactNode, Suspense, useMemo, useState } from "react";
+import {
+  type PreloadedQuery,
+  usePaginationFragment,
+  usePreloadedQuery,
+  useQueryLoader,
+} from "react-relay";
 import { graphql } from "relay-runtime";
 
 import type {
@@ -71,39 +76,54 @@ const scenariosFragment = graphql`
   }
 `;
 
-type Props = {
+interface LinkScenarioDialogProps {
   children: ReactNode;
   connectionId: string;
   disabled?: boolean;
   linkedScenarios?: { id: string }[];
   onLink: (scenarioId: string) => void;
   onUnlink: (scenarioId: string) => void;
-};
+}
 
-export function LinkScenarioDialog({ children, ...props }: Props) {
+export function LinkScenarioDialog({ children, ...props }: LinkScenarioDialogProps) {
   const { __ } = useTranslate();
+  const organizationId = useOrganizationId();
+  const [queryRef, loadQuery]
+    = useQueryLoader<LinkScenarioDialogQuery>(scenariosQuery);
+
+  const trigger = isValidElement(children)
+    ? cloneElement(children as ReactElement<{ onClick?: (e: MouseEvent) => void }>, {
+        onClick: (e: MouseEvent) => {
+          (children as ReactElement<{ onClick?: (e: MouseEvent) => void }>).props.onClick?.(e);
+          loadQuery({ organizationId }, { fetchPolicy: "network-only" });
+        },
+      })
+    : children;
 
   return (
-    <Dialog trigger={children} title={__("Link scenarios")}>
+    <Dialog trigger={trigger} title={__("Link scenarios")}>
       <DialogContent>
-        <Suspense fallback={<Spinner centered />}>
-          <LinkScenarioDialogContent {...props} />
-        </Suspense>
+        {queryRef
+          ? (
+              <Suspense fallback={<Spinner centered />}>
+                <LinkScenarioDialogContent queryRef={queryRef} {...props} />
+              </Suspense>
+            )
+          : (
+              <Spinner centered />
+            )}
       </DialogContent>
       <DialogFooter exitLabel={__("Close")} />
     </Dialog>
   );
 }
 
-function LinkScenarioDialogContent(props: Omit<Props, "children">) {
-  const organizationId = useOrganizationId();
-  const query = useLazyLoadQuery<LinkScenarioDialogQuery>(
-    scenariosQuery,
-    {
-      organizationId,
-    },
-    { fetchPolicy: "network-only" },
-  );
+type ContentProps = Omit<LinkScenarioDialogProps, "children"> & {
+  queryRef: PreloadedQuery<LinkScenarioDialogQuery>;
+};
+
+function LinkScenarioDialogContent(props: ContentProps) {
+  const query = usePreloadedQuery(scenariosQuery, props.queryRef);
   const { data, loadNext, hasNext, isLoadingNext }
     = usePaginationFragment<LinkScenarioDialogQuery_fragment, LinkScenarioDialogFragment$key>(
       scenariosFragment,

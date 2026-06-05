@@ -15,13 +15,18 @@
 package provider_test
 
 import (
+	"context"
+	"net/http"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.gearno.de/kit/log"
 
+	"go.probo.inc/probo/pkg/accessreview/drivers"
 	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/connector/provider"
+	"go.probo.inc/probo/pkg/coredata"
 )
 
 // TestApplyOAuth2Defaults_AuthURLFromSlug verifies that providers whose
@@ -86,7 +91,7 @@ func TestApplyOAuth2Defaults_AuthURLFromSlug(t *testing.T) {
 func TestApplyOAuth2Defaults_PKCEDefaults(t *testing.T) {
 	t.Parallel()
 
-	for _, p := range []string{"PAGERDUTY"} {
+	for _, p := range []string{"PAGERDUTY", "POSTHOG"} {
 		t.Run(p, func(t *testing.T) {
 			t.Parallel()
 
@@ -97,4 +102,87 @@ func TestApplyOAuth2Defaults_PKCEDefaults(t *testing.T) {
 				"provider %s must enable PKCE so Initiate generates a verifier", p)
 		})
 	}
+}
+
+// TestApplyOAuth2Defaults_PublicClientTokenAuth verifies that PostHog, a
+// public (CIMD) client, propagates token_endpoint_auth_method "none" so the
+// token exchange omits a client_secret.
+func TestApplyOAuth2Defaults_PublicClientTokenAuth(t *testing.T) {
+	t.Parallel()
+
+	r := provider.NewBuiltinRegistry()
+	c := &connector.OAuth2Connector{}
+	require.NoError(t, r.ApplyOAuth2Defaults("POSTHOG", "https://example.com/cb", c))
+
+	assert.Equal(t, "none", c.TokenEndpointAuth,
+		"PostHog must use token_endpoint_auth_method none (public client)")
+	assert.True(t, c.RequiresPKCE, "PostHog public client must require PKCE")
+}
+
+// TestApplyOAuth2Defaults_CopiesSiteClosures verifies the multi-site
+// per-provider closures (BuildAuthURLForSite, BuildTokenURLForDomain) are
+// copied from the Registration onto the OAuth2Connector.
+func TestApplyOAuth2Defaults_CopiesSiteClosures(t *testing.T) {
+	t.Parallel()
+
+	r := provider.NewRegistry()
+	require.NoError(t, r.Register(&provider.Registration{
+		Provider:               coredata.ConnectorProviderDatadog,
+		DisplayName:            "Datadog",
+		OAuth2Scopes:           []string{"user_access_read"},
+		RequiresPKCE:           true,
+		BuildAuthURLForSite:    connector.DatadogAuthorizeURL,
+		BuildTokenURLForDomain: connector.DatadogTokenURL,
+		NewDriver: func(context.Context, *http.Client, *coredata.Connector, *log.Logger) (drivers.Driver, error) {
+			return nil, nil
+		},
+	}))
+
+	var c connector.OAuth2Connector
+	require.NoError(t, r.ApplyOAuth2Defaults("DATADOG", "https://probo.example/cb", &c))
+	require.NotNil(t, c.BuildAuthURLForSite)
+	require.NotNil(t, c.BuildTokenURLForDomain)
+
+	// The copied closures resolve to Datadog's per-site / per-domain hosts.
+	authURL, err := c.BuildAuthURLForSite("US3")
+	require.NoError(t, err)
+	assert.Equal(t, "https://us3.datadoghq.com/oauth2/v1/authorize", authURL)
+
+	tokenURL, err := c.BuildTokenURLForDomain("us3.datadoghq.com")
+	require.NoError(t, err)
+	assert.Equal(t, "https://api.us3.datadoghq.com/oauth2/v1/token", tokenURL)
+}
+
+// TestApplyOAuth2Defaults_CopiesTokenURLForSiteClosure verifies the
+// site-carried-in-state token-URL closure (BuildTokenURLForSite) is copied
+// from the Registration onto the OAuth2Connector — the Zendesk shape, where
+// both the authorize and token hosts are the customer subdomain.
+func TestApplyOAuth2Defaults_CopiesTokenURLForSiteClosure(t *testing.T) {
+	t.Parallel()
+
+	r := provider.NewRegistry()
+	require.NoError(t, r.Register(&provider.Registration{
+		Provider:             coredata.ConnectorProviderZendesk,
+		DisplayName:          "Zendesk",
+		OAuth2Scopes:         []string{"users:read"},
+		BuildAuthURLForSite:  connector.ZendeskAuthorizeURL,
+		BuildTokenURLForSite: connector.ZendeskTokenURL,
+		NewDriver: func(context.Context, *http.Client, *coredata.Connector, *log.Logger) (drivers.Driver, error) {
+			return nil, nil
+		},
+	}))
+
+	var c connector.OAuth2Connector
+	require.NoError(t, r.ApplyOAuth2Defaults("ZENDESK", "https://probo.example/cb", &c))
+	require.NotNil(t, c.BuildAuthURLForSite)
+	require.NotNil(t, c.BuildTokenURLForSite)
+	require.Nil(t, c.BuildTokenURLForDomain)
+
+	authURL, err := c.BuildAuthURLForSite("acme")
+	require.NoError(t, err)
+	assert.Equal(t, "https://acme.zendesk.com/oauth/authorizations/new", authURL)
+
+	tokenURL, err := c.BuildTokenURLForSite("acme")
+	require.NoError(t, err)
+	assert.Equal(t, "https://acme.zendesk.com/oauth/tokens", tokenURL)
 }

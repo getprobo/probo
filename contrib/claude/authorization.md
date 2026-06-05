@@ -178,7 +178,7 @@ var (
 
 **GraphQL resolvers** use `AuthorizeFunc` from `pkg/server/api/authz/`:
 ```go
-scope, err := authorize(ctx, thirdPartyID, probo.ActionThirdPartyGet)
+scope, err := r.authorize(ctx, thirdPartyID, probo.ActionThirdPartyGet)
 if err != nil {
 	return nil, err
 }
@@ -191,6 +191,58 @@ if err != nil {
 	return nil, types.GetThirdPartyOutput{}, err
 }
 ```
+
+### Always take `scope` from `authorize` — never reconstruct it
+
+`authorize` (and `Authorize` in MCP) returns a `*coredata.Scope` that has been
+resolved from the resource's `organization_id` attribute. Pass that scope
+straight to the service/coredata layer instead of building a new one with
+`coredata.NewScopeFromObjectID(...)` after the authorize call.
+
+The two are not strictly identical: `NewScopeFromObjectID(id)` only reads the
+tenant component of the GID, while the authorizer derives the scope from the
+loaded resource attributes (and may be extended to compute it differently in
+the future). Reconstructing the scope from the GID bypasses that and silently
+drifts when the resource lookup changes.
+
+```go
+// GOOD — scope comes from authorize, fed straight to the service
+scope, err := r.authorize(ctx, obj.ID, probo.ActionThirdPartyList)
+if err != nil {
+	return nil, err
+}
+
+thirdPartyIDs, err := r.cookieBanner.LoadDistinctThirdPartyIDsByCookieBannerID(ctx, scope, obj.ID)
+
+// BAD — authorize discards scope, then we rebuild it from the same GID
+if _, err := r.authorize(ctx, obj.ID, probo.ActionThirdPartyList); err != nil {
+	return nil, err
+}
+
+scope := coredata.NewScopeFromObjectID(obj.ID)
+thirdPartyIDs, err := r.cookieBanner.LoadDistinctThirdPartyIDsByCookieBannerID(ctx, scope, obj.ID)
+```
+
+The only time it is acceptable to write `if _, err := r.authorize(...)` is when
+**no downstream call needs a scope** — typically authorize calls against the
+caller's `identity.ID` for global / cross-tenant catalogs (e.g.
+`ActionCommonThirdPartyList`, `ActionCommonThirdPartyGet`) whose service
+methods are unscoped. In that case the returned scope would be derived from
+the identity (a nil-tenant principal) and is useless to the caller, so
+discarding it with `_` is correct:
+
+```go
+// GOOD — global catalog, downstream is unscoped
+identity := authn.IdentityFromContext(ctx)
+if _, err := r.authorize(ctx, identity.ID, probo.ActionCommonThirdPartyList); err != nil {
+	return nil, err
+}
+
+parties, err := r.thirdParty.Search(ctx, name) // no scope argument
+```
+
+For batch authorization, the same rule applies to `r.batchAuthorize` (GraphQL)
+and `r.AuthorizeBatch` (MCP) — keep the returned scope and pass it down.
 
 ## File locations
 

@@ -151,6 +151,86 @@ LIMIT 1
 	return nil
 }
 
+// LoadByDocumentMajorAndSignatory loads the signatory's existing signature for
+// the whole major that owns documentVersionID, scanning across every minor
+// version of that major. A signed signature is preferred over a still pending
+// one, then the most recent. It returns ErrResourceNotFound when the signatory
+// has no signature anywhere in the major.
+func (pvs *DocumentVersionSignature) LoadByDocumentMajorAndSignatory(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	documentVersionID gid.GID,
+	signatory gid.GID,
+) error {
+	q := `
+WITH source_version AS (
+	SELECT document_id, major FROM document_versions WHERE id = @document_version_id
+),
+major_versions AS (
+	SELECT dv.id FROM document_versions dv
+	INNER JOIN source_version sv ON dv.document_id = sv.document_id AND dv.major = sv.major
+),
+major_signatures AS (
+	SELECT
+		dvs.id,
+		dvs.organization_id,
+		dvs.tenant_id,
+		dvs.document_version_id,
+		dvs.state,
+		dvs.signed_by_profile_id,
+		dvs.signed_at,
+		dvs.requested_at,
+		dvs.created_at,
+		dvs.updated_at
+	FROM document_version_signatures dvs
+	INNER JOIN major_versions mv ON dvs.document_version_id = mv.id
+	WHERE dvs.signed_by_profile_id = @signatory
+)
+SELECT
+	id,
+	organization_id,
+	document_version_id,
+	state,
+	signed_by_profile_id,
+	signed_at,
+	requested_at,
+	created_at,
+	updated_at
+FROM
+	major_signatures
+WHERE
+	%s
+ORDER BY
+	CASE state WHEN 'SIGNED' THEN 0 ELSE 1 END,
+	created_at DESC
+LIMIT 1
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"document_version_id": documentVersionID, "signatory": signatory}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query document version signature by major: %w", err)
+	}
+
+	documentVersionSignature, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[DocumentVersionSignature])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+
+		return fmt.Errorf("cannot collect document version signature by major: %w", err)
+	}
+
+	*pvs = documentVersionSignature
+
+	return nil
+}
+
 func (pvs *DocumentVersionSignature) LoadByID(
 	ctx context.Context,
 	conn pg.Querier,
@@ -373,6 +453,71 @@ WHERE
 	return nil
 }
 
+func (pvss *DocumentVersionSignatures) DeleteRequestedBySignatory(
+	ctx context.Context,
+	conn pg.Tx,
+	scope Scoper,
+	signatoryID gid.GID,
+) error {
+	q := `
+DELETE FROM document_version_signatures
+WHERE
+	%s
+	AND signed_by_profile_id = @signatory_id
+	AND state = @state
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"signatory_id": signatoryID,
+		"state":        DocumentVersionSignatureStateRequested,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	if _, err := conn.Exec(ctx, q, args); err != nil {
+		return fmt.Errorf("cannot delete requested document version signatures: %w", err)
+	}
+
+	return nil
+}
+
+func (pvss *DocumentVersionSignatures) DeleteRequestedByDocumentIDBelowMajor(
+	ctx context.Context,
+	conn pg.Tx,
+	scope Scoper,
+	documentID gid.GID,
+	major int,
+) error {
+	q := `
+DELETE FROM document_version_signatures
+WHERE
+	%s
+	AND state = @state
+	AND document_version_id IN (
+		SELECT id
+		FROM document_versions
+		WHERE document_id = @document_id
+			AND major < @major
+	)
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"document_id": documentID,
+		"major":       major,
+		"state":       DocumentVersionSignatureStateRequested,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	if _, err := conn.Exec(ctx, q, args); err != nil {
+		return fmt.Errorf("cannot delete requested document version signatures from previous major versions: %w", err)
+	}
+
+	return nil
+}
+
 func (pvss *DocumentVersionSignaturesWithPeople) LoadByDocumentVersionIDWithPeople(
 	ctx context.Context,
 	conn pg.Querier,
@@ -404,6 +549,18 @@ signatures_with_people AS (
 	FROM document_version_signatures dvs
 	INNER JOIN major_versions mv ON dvs.document_version_id = mv.id
 	INNER JOIN iam_membership_profiles p ON dvs.signed_by_profile_id = p.id
+	WHERE
+		dvs.state = 'SIGNED'
+		OR (
+			p.state = 'ACTIVE'
+			AND (p.contract_end_date IS NULL OR p.contract_end_date >= CURRENT_DATE)
+			AND EXISTS (
+				SELECT 1
+				FROM iam_memberships m
+				WHERE m.identity_id = p.identity_id
+					AND m.organization_id = p.organization_id
+			)
+		)
 )
 SELECT
 	id,

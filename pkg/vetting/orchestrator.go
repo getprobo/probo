@@ -63,17 +63,16 @@ func newOrchestratorAgent(
 	maxTokens int,
 	procedure string,
 	logger *log.Logger,
-	thirdPartyBrowser *browser.Browser,
-	researchBrowser *browser.Browser,
+	webBrowser *browser.Browser,
 	firecrawlAPIKey string,
 	reporter agent.ProgressReporter,
+	extraTools []agent.Tool,
 ) (*agent.Agent, error) {
-	readOnlyBrowserTools := browser.NewReadOnlyToolset(thirdPartyBrowser).Tools()
+	readOnlyBrowserTools := browser.NewReadOnlyToolset(webBrowser).Tools()
 
-	// Unrestricted browser tools for sub-agents that need to follow links
-	// to external sites (subprocessor lists hosted on OneTrust/Transcend,
-	// research, thirdParty comparison).
-	unrestrictedBrowserTools := browser.NewInteractiveToolset(researchBrowser).Tools()
+	// Interactive browser tools for sub-agents that follow links off the
+	// vendor site (subprocessor lists on OneTrust/Transcend, research).
+	unrestrictedBrowserTools := browser.NewInteractiveToolset(webBrowser).Tools()
 
 	securityTools := security.NewToolset().Tools()
 
@@ -176,7 +175,7 @@ func newOrchestratorAgent(
 
 	// Optional sub-agents: only added when Firecrawl is configured.
 	if hasFirecrawl {
-		researchBrowserTools := browser.NewInteractiveToolset(researchBrowser).Tools()
+		researchBrowserTools := browser.NewInteractiveToolset(webBrowser).Tools()
 
 		searchTool := search.FirecrawlSearchTool(firecrawlAPIKey)
 		govDBTool := search.CheckGovernmentDBTool(firecrawlAPIKey)
@@ -228,7 +227,7 @@ func newOrchestratorAgent(
 		)
 	}
 
-	tools := make([]agent.Tool, 0, len(entries))
+	tools := make([]agent.Tool, 0, len(entries)+len(extraTools))
 	for _, e := range entries {
 		ag, err := e.build(client, model, e.tools, subAgentOpts(e.toolName)...)
 		if err != nil {
@@ -237,6 +236,8 @@ func newOrchestratorAgent(
 
 		tools = append(tools, ag.AsTool(e.toolName, e.description))
 	}
+
+	tools = append(tools, extraTools...)
 
 	if procedure == "" {
 		procedure = defaultProcedure

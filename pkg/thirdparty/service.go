@@ -17,7 +17,6 @@ package thirdparty
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
@@ -26,28 +25,56 @@ import (
 )
 
 type Service struct {
-	pg   *pg.Client
-	file *file.Service
+	pg             *pg.Client
+	file           *file.Service
+	vetter         Vetter
+	vettingEnabled bool
 }
 
-func NewService(pgClient *pg.Client, fileSvc *file.Service) *Service {
+func NewService(pgClient *pg.Client, fileSvc *file.Service, vetter Vetter) *Service {
+	_, disabled := vetter.(DisabledVetter)
+
 	return &Service{
-		pg:   pgClient,
-		file: fileSvc,
+		pg:             pgClient,
+		file:           fileSvc,
+		vetter:         vetter,
+		vettingEnabled: !disabled,
 	}
 }
 
 func (s *Service) GenerateLogoURL(
 	ctx context.Context,
 	logoFileID gid.GID,
-	expiresIn time.Duration,
 ) (*string, error) {
-	url, err := s.file.GetPublicFileURL(ctx, logoFileID, expiresIn)
+	url, err := s.file.GenerateFileURL(ctx, logoFileID)
 	if err != nil {
 		return nil, fmt.Errorf("cannot generate logo URL: %w", err)
 	}
 
 	return &url, nil
+}
+
+func (s *Service) GetCommonThirdPartiesByIDs(
+	ctx context.Context,
+	ids ...gid.GID,
+) (coredata.CommonThirdParties, error) {
+	var parties coredata.CommonThirdParties
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := parties.LoadByIDs(ctx, conn, ids); err != nil {
+				return fmt.Errorf("cannot load common third parties by ids: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return parties, nil
 }
 
 func (s *Service) Search(ctx context.Context, name string) ([]*coredata.CommonThirdParty, error) {

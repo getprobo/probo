@@ -58,15 +58,20 @@ func (ds *Things) LoadByParentID(
 ) error {
 ```
 
-# No cross-entity JOINs
+# Cross-entity table references
 
-Each entity file in `pkg/coredata` queries only its own table. When data from multiple entities is needed, the caller orchestrates separate calls.
+Each entity file in `pkg/coredata` queries its own table. Never JOIN two
+entity tables to **return columns from both** — the caller orchestrates
+separate calls instead.
 
-- Never JOIN two entity tables inside an entity method.
-- Never return a raw ID belonging to a different entity — return the full entity and let the caller read the foreign key field.
+**Subqueries for filtering are OK.** When the only purpose of the other
+table is to narrow a `WHERE` clause (e.g. `IN (SELECT id FROM ...)`),
+keep it in the query rather than materializing IDs in Go and passing
+them as an `ANY(@ids)` parameter. A subquery keeps the filtering in the
+database and eliminates an extra round trip.
 
 ```go
-// BAD — cross-entity JOIN inside DetectedTrackers
+// BAD — cross-entity JOIN that returns columns from both tables
 q := `
 SELECT ctpd.common_third_party_id
 FROM detected_trackers dt
@@ -80,4 +85,14 @@ filter := coredata.NewCommonThirdPartyDomainFilter(domains)
 var matched coredata.CommonThirdPartyDomains
 err = matched.Load(ctx, conn, 1, filter)
 thirdPartyID := matched[0].CommonThirdPartyID
+
+// GOOD — subquery only used for filtering, no columns returned from it
+q := `
+SELECT id, pattern, tracker_type, ...
+FROM tracker_patterns
+WHERE common_tracker_pattern_id IN (
+    SELECT id FROM common_tracker_patterns
+    WHERE common_third_party_id = @filter_common_third_party_id
+)
+`
 ```

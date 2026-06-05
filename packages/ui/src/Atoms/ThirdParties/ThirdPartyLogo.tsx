@@ -14,65 +14,87 @@
 
 import type { ComponentProps, FC } from "react";
 
+import { Anthropic } from "./Anthropic";
 import { Asana } from "./Asana";
 import { Bitbucket } from "./Bitbucket";
 import { Brex } from "./Brex";
+import { Clerk } from "./Clerk";
 import { ClickUp } from "./ClickUp";
 import { Cloudflare } from "./Cloudflare";
+import { Cursor } from "./Cursor";
+import { Datadog } from "./Datadog";
 import { DocuSign } from "./DocuSign";
 import { Figma } from "./Figma";
 import { GitHub } from "./GitHub";
 import { GitLab } from "./GitLab";
 import { Google } from "./Google";
+import { Grafana } from "./Grafana";
 import { Heroku } from "./Heroku";
 import { HubSpot } from "./HubSpot";
 import { Intercom } from "./Intercom";
 import { Linear } from "./Linear";
+import { Metabase } from "./Metabase";
 import { Microsoft } from "./Microsoft";
 import { Monday } from "./Monday";
 import { Netlify } from "./Netlify";
 import { Notion } from "./Notion";
+import { Okta } from "./Okta";
 import { OnePassword } from "./OnePassword";
 import { OpenAI } from "./OpenAI";
 import { PagerDuty } from "./PagerDuty";
+import { PostHog } from "./PostHog";
 import { Resend } from "./Resend";
+import { SendGrid } from "./SendGrid";
 import { Sentry } from "./Sentry";
 import { Slack } from "./Slack";
 import { Supabase } from "./Supabase";
+import { Tailscale } from "./Tailscale";
 import { Tally } from "./Tally";
 import { Vercel } from "./Vercel";
+import { Zendesk } from "./Zendesk";
 
 const thirdParties: Record<string, FC<ComponentProps<"svg">>> = {
+  ANTHROPIC: Anthropic,
   ASANA: Asana,
   BITBUCKET: Bitbucket,
   BREX: Brex,
+  CLERK: Clerk,
   CLICKUP: ClickUp,
   CLOUDFLARE: Cloudflare,
+  CURSOR: Cursor,
+  DATADOG: Datadog,
   DOCUSIGN: DocuSign,
   FIGMA: Figma,
   GITHUB: GitHub,
   GITLAB: GitLab,
   GOOGLE: Google,
   GOOGLE_WORKSPACE: Google,
+  GRAFANA: Grafana,
   HEROKU: Heroku,
   HUBSPOT: HubSpot,
   INTERCOM: Intercom,
   LINEAR: Linear,
+  METABASE: Metabase,
   MICROSOFT: Microsoft,
   MICROSOFT_365: Microsoft,
   MONDAY: Monday,
   NETLIFY: Netlify,
   NOTION: Notion,
+  OKTA: Okta,
   ONE_PASSWORD: OnePassword,
   ONEPASSWORD: OnePassword,
   OPENAI: OpenAI,
   PAGERDUTY: PagerDuty,
+  POSTHOG: PostHog,
   RESEND: Resend,
+  SENDGRID: SendGrid,
   SENTRY: Sentry,
   SLACK: Slack,
   SUPABASE: Supabase,
+  TAILSCALE: Tailscale,
   TALLY: Tally,
   VERCEL: Vercel,
+  ZENDESK: Zendesk,
 };
 
 type ThirdPartyLogoProps = ComponentProps<"svg"> & {

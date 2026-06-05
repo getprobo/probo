@@ -10,6 +10,9 @@ This Helm chart deploys Probo - an open-source SOC-2 compliance platform - on Ku
 - S3 or S3-compatible object storage (AWS S3, GCS, DigitalOcean Spaces, SeaweedFS, etc.)
 - OpenSSL installed (for generating secrets)
 
+> Azure Blob behind S3 compatibility proxies currently has known metadata
+> compatibility issues. Prefer native S3-compatible backends for production.
+
 ## Installing the Chart
 
 ### From OCI Registry
@@ -21,6 +24,7 @@ helm install probo oci://artifact.probo.inc/probo/probo --version <chart-version
   --set probo.auth.cookieSecret="$COOKIE_SECRET" \
   --set probo.auth.passwordPepper="$PASSWORD_PEPPER" \
   --set probo.trustAuth.tokenSecret="$TRUST_TOKEN_SECRET" \
+  --set-file probo.oauth2.signingKey="./oauth2_signing_key.pem" \
   --set postgresql.host="postgres.example.com" \
   --set postgresql.password="<db-password>" \
   --set s3.bucket="probo-production" \
@@ -38,6 +42,10 @@ export ENCRYPTION_KEY=$(openssl rand -base64 32)
 export COOKIE_SECRET=$(openssl rand -base64 32)
 export PASSWORD_PEPPER=$(openssl rand -base64 32)
 export TRUST_TOKEN_SECRET=$(openssl rand -base64 32)
+
+# Generate OAuth2 signing key (PEM)
+openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 \
+  -out oauth2_signing_key.pem
 
 # Generate private key and certificate valid for 10 years
 TEMP_KEY=$(mktemp)
@@ -65,6 +73,7 @@ helm install probo . \
   --set probo.auth.cookieSecret="$COOKIE_SECRET" \
   --set probo.auth.passwordPepper="$PASSWORD_PEPPER" \
   --set probo.trustAuth.tokenSecret="$TRUST_TOKEN_SECRET" \
+  --set-file probo.oauth2.signingKey="./oauth2_signing_key.pem" \
   --set probo.saml.privateKey="$SAML_PRIVATE_KEY" \
   --set probo.saml.certificate="$SAML_CERTIFICATE" \
   --set postgresql.host="postgres.example.com" \
@@ -111,6 +120,8 @@ probo:
     cookieDomain: "example.com"
     cookieSecret: "<secret>"
     passwordPepper: "<secret>"
+  oauth2:
+    signingKey: "<PEM private key>"
   trustAuth:
     cookieDomain: "example.com"
     tokenSecret: "<secret>"
@@ -156,10 +167,19 @@ The following parameters **must** be configured:
 | `probo.auth.cookieSecret` | Cookie signing secret (32+ bytes) |
 | `probo.auth.passwordPepper` | Password hashing pepper (32+ bytes) |
 | `probo.trustAuth.tokenSecret` | Trust token secret (32+ bytes) |
+| `probo.oauth2.signingKey` | PEM-encoded OAuth2 private signing key |
 | `postgresql.host` | PostgreSQL hostname |
 | `postgresql.password` | PostgreSQL password |
 | `s3.accessKeyId` | S3 access key ID |
 | `s3.secretAccessKey` | S3 secret access key |
+
+### Secret Format Quick Reference
+
+- `probo.encryptionKey`, `probo.auth.cookieSecret`,
+  `probo.auth.passwordPepper`, `probo.trustAuth.tokenSecret`:
+  base64-encoded 32-byte secrets (for example: `openssl rand -base64 32`)
+- `probo.oauth2.signingKey`: PEM-encoded private key (`--set-file` strongly
+  recommended)
 
 ### Key Configuration Parameters
 
@@ -169,6 +189,7 @@ The following parameters **must** be configured:
 | `image.tag`            | Probo image tag                 | Chart appVersion |
 | `replicaCount`         | Number of Probo replicas        | `1` |
 | `probo.baseUrl`        | Public baseUrl                  | `probo.example.com` |
+| `probo.oauth2.signingKey` | OAuth2 signing key (PEM private key) | `""` (required) |
 | `postgresql.host`      | PostgreSQL host                 | `""` (required) |
 | `postgresql.port`      | PostgreSQL port                 | `5432` |
 | `postgresql.database`  | Database name                   | `probod` |
@@ -178,7 +199,7 @@ The following parameters **must** be configured:
 | `s3.bucket`            | S3 bucket name                  | `probod` |
 | `s3.region`            | AWS region                      | `us-east-1` |
 | `s3.endpoint`          | S3 endpoint (for S3-compatible) | `""` |
-| `s3.usePathStyle`      | Use path-style URLs (required for Azure Blob Storage) | `false` |
+| `s3.usePathStyle`      | Use path-style URLs for selected S3-compatible backends | `false` |
 | `chrome.enabled`       | Deploy Chrome                   | `true` |
 | `chrome.external.addr` | External Chrome (if disabled)   | `""` |
 | `ingress.enabled`      | Enable ingress                  | `false` |
@@ -204,9 +225,25 @@ The chart deploys the following:
 
 Database migrations run automatically when Probo starts. No manual intervention is required.
 
+For managed PostgreSQL providers (notably PostgreSQL >= 15), ensure the
+Probo role can own and modify the `public` schema before first startup:
+
+```sql
+ALTER SCHEMA public OWNER TO probod;
+GRANT ALL ON SCHEMA public TO probod;
+```
+
+Probo migrations also require these extensions to be installable:
+
+- `citext`
+- `pgcrypto`
+- `unaccent`
+- `pg_stat_statements`
+
 ### TLS/SSL Configuration
 
-For secure PostgreSQL connections, you can provide a CA certificate bundle in two ways:
+For secure PostgreSQL connections, you can provide a CA certificate bundle in
+two ways:
 
 1. **Inline CA Bundle** (`postgresql.caBundle`): Provide the certificate content directly in values.yaml
    ```yaml
@@ -234,7 +271,8 @@ For secure PostgreSQL connections, you can provide a CA certificate bundle in tw
        readOnly: true
    ```
 
-**Note:** Using `caBundlePath` is recommended for large CA bundles (e.g., system CA bundles) as it avoids environment variable size limitations.
+**Note:** Using `caBundlePath` is recommended for large CA bundles (for
+example system CA bundles) as it avoids environment variable size limitations.
 
 ### Backup
 
@@ -276,6 +314,15 @@ Check the Probo logs for database connection errors. The application will fail t
 ### Test S3 Connection
 
 Check the Probo logs for S3 connection errors when uploading files.
+
+### `IP geolocation table is empty` warning
+
+If startup logs show:
+
+`IP geolocation table is empty; run geoloc-import to populate it`
+
+the instance is running correctly, but geolocation data is missing. Populate
+it by running the `geoloc-import` command in your operational workflow.
 
 ## Examples
 

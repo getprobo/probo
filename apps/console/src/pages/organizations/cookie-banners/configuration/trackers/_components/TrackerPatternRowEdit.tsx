@@ -58,44 +58,45 @@ export function TrackerPatternRowEdit({
 
   return (
     <Tr>
-      <Td className="pr-3">
-        <span className="font-medium">{pattern}</span>
-      </Td>
-      <Td />
-      <Td />
-      <Td className="pr-3">
-        <Controller
-          name="duration"
-          control={control}
-          render={({ field }) => (
-            <DurationInput
-              value={field.value.value}
-              unit={field.value.unit}
-              onValueChange={v => field.onChange({ ...field.value, value: v })}
-              onUnitChange={u => field.onChange({ ...field.value, unit: u })}
-            />
-          )}
-        />
-      </Td>
-      <Td className="pr-3" colSpan={2}>
-        <div className="flex items-center gap-2">
-          <Input
-            {...register("description")}
-            placeholder={__("Description")}
-            className="flex-1"
-          />
-          <Button
-            onClick={() => void handleSubmit(onSubmit)()}
-            disabled={isUpdating}
-          >
-            {__("Save")}
-          </Button>
-          <Button
-            variant="secondary"
-            onClick={onCancel}
-          >
-            {__("Cancel")}
-          </Button>
+      <Td colSpan={8}>
+        <div className="flex flex-col gap-3">
+          <span className="font-medium wrap-break-word">{pattern}</span>
+          <div className="flex items-end gap-2">
+            <div className="flex flex-col gap-1 flex-1">
+              <label className="text-xs text-txt-tertiary">{__("Description")}</label>
+              <Input
+                {...register("description")}
+                placeholder={__("Description")}
+              />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-xs text-txt-tertiary">{__("Max Age")}</label>
+              <Controller
+                name="duration"
+                control={control}
+                render={({ field }) => (
+                  <DurationInput
+                    value={field.value.value}
+                    unit={field.value.unit}
+                    onValueChange={v => field.onChange({ ...field.value, value: v })}
+                    onUnitChange={u => field.onChange({ ...field.value, unit: u })}
+                  />
+                )}
+              />
+            </div>
+            <Button
+              onClick={() => void handleSubmit(onSubmit)()}
+              disabled={isUpdating}
+            >
+              {__("Save")}
+            </Button>
+            <Button
+              variant="secondary"
+              onClick={onCancel}
+            >
+              {__("Cancel")}
+            </Button>
+          </div>
         </div>
       </Td>
     </Tr>

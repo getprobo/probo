@@ -12,11 +12,14 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+import { useTranslate } from "@probo/i18n";
+import { DropdownSeparator } from "@probo/ui";
 import { useMemo } from "react";
 import { graphql, type PreloadedQuery, usePreloadedQuery } from "react-relay";
 
 import type { MembershipsDropdownMenuQuery } from "#/__generated__/iam/MembershipsDropdownMenuQuery.graphql";
 
+import { MembershipsDropdownInvitingItem } from "./MembershipsDropdownInvitingItem";
 import { MembershipsDropdownMenuItem } from "./MembershipsDropdownMenuItem";
 
 export const membershipsDropdownMenuQuery = graphql`
@@ -40,6 +43,11 @@ export const membershipsDropdownMenuQuery = graphql`
           }
         }
       }
+      invitingOrganizations {
+        id
+        name
+        ...MembershipsDropdownInvitingItemFragment
+      }
     }
   }
 `;
@@ -51,10 +59,12 @@ interface MembershipsDropdownMenuProps {
 
 export function MembershipsDropdownMenu(props: MembershipsDropdownMenuProps) {
   const { queryRef, search } = props;
+  const { __ } = useTranslate();
 
   const {
     viewer: {
       profiles: { edges: initialProfiles },
+      invitingOrganizations: initialInvitingOrganizations,
     },
   } = usePreloadedQuery<MembershipsDropdownMenuQuery>(
     membershipsDropdownMenuQuery,
@@ -71,8 +81,29 @@ export function MembershipsDropdownMenu(props: MembershipsDropdownMenuProps) {
     );
   }, [initialProfiles, search]);
 
+  const invitingOrganizations = useMemo(() => {
+    if (!search) {
+      return initialInvitingOrganizations;
+    }
+
+    return initialInvitingOrganizations.filter(organization =>
+      organization.name.toLowerCase().includes(search.toLowerCase()),
+    );
+  }, [initialInvitingOrganizations, search]);
+
   return (
     <>
+      {invitingOrganizations.length > 0 && (
+        <>
+          <div className="px-3 py-1 text-xs text-txt-tertiary uppercase">
+            {__("Pending invitations")}
+          </div>
+          {invitingOrganizations.map(organization => (
+            <MembershipsDropdownInvitingItem key={organization.id} fKey={organization} />
+          ))}
+          <DropdownSeparator />
+        </>
+      )}
       {profiles.map(({ node }) => (
         <MembershipsDropdownMenuItem fKey={node.membership} organizationFragmentRef={node.organization} key={node.id} />
       ))}
