@@ -4,6 +4,16 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.204.0] - 2026-06-05
+
+### Added
+
+- Dedicated error page when a magic link has already been used
+
+### Changed
+
+- Improved error page layout and messaging
+
 ## [0.203.0] - 2026-06-05
 
 ### Added
