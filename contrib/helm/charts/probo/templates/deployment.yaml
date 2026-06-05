@@ -225,6 +225,10 @@ spec:
             {{- end }}
             - name: SMTP_TLS_REQUIRED
               value: {{ .Values.probo.mailer.smtp.tlsRequired | quote }}
+            {{- if .Values.probo.mailer.smtp.helloName }}
+            - name: SMTP_HELLO_NAME
+              value: {{ .Values.probo.mailer.smtp.helloName | quote }}
+            {{- end }}
             # OpenAI Integration
             {{- if .Values.probo.openai.apiKey }}
             - name: OPENAI_API_KEY

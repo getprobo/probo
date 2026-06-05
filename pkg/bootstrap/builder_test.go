@@ -192,6 +192,7 @@ func TestBuilder_Build_Defaults(t *testing.T) {
 	assert.Equal(t, "no-reply@notification.getprobo.com", cfg.Probod.Notifications.Mailer.SenderEmail)
 	assert.Equal(t, "localhost:1025", cfg.Probod.Notifications.Mailer.SMTP.Addr)
 	assert.False(t, cfg.Probod.Notifications.Mailer.SMTP.TLSRequired)
+	assert.Empty(t, cfg.Probod.Notifications.Mailer.SMTP.HelloName)
 	assert.Equal(t, 60, cfg.Probod.Notifications.Mailer.MailerInterval)
 	assert.Equal(t, 60, cfg.Probod.Notifications.Slack.SenderInterval)
 	assert.Empty(t, cfg.Probod.Notifications.Slack.SigningSecret)

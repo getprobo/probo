@@ -251,11 +251,13 @@ probo:
       user: ""
       password: ""
       tlsRequired: true
+      helloName: ""
 #    smtp:
 #      addr: "localhost:1025"
 #      user: ""
 #      password: ""
 #      tlsRequired: false
+#      helloName: ""
 
   # OpenAI integration (optional)
   openai:

@@ -654,6 +654,7 @@ func (impl *Implm) Run(
 			User:        impl.cfg.Notifications.Mailer.SMTP.User,
 			Password:    impl.cfg.Notifications.Mailer.SMTP.Password,
 			TLSRequired: impl.cfg.Notifications.Mailer.SMTP.TLSRequired,
+			HelloName:   impl.cfg.Notifications.Mailer.SMTP.HelloName,
 		},
 		l.Named("sending-worker"),
 		[]mailer.SendingWorkerOption{

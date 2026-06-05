@@ -157,6 +157,9 @@ probo:
       user: "apikey"
       password: "CHANGE_ME_SMTP_PASSWORD"
       tlsRequired: true
+      # Set to your server's hostname when the relay requires a specific EHLO/HELO
+      # identity (e.g. Google Workspace smtp-relay.gmail.com rejects "localhost").
+      # helloName: "mail.example.com"
 
   # OpenAI integration for AI features (optional)
   openai:
