@@ -245,7 +245,7 @@ func (impl *Implm) Run(
 		return fmt.Errorf("cannot get cookie secret bytes: %w", err)
 	}
 
-	awsConfig := awsconfig.NewConfig(
+	awsConfig, err := awsconfig.NewConfig(
 		l,
 		httpclient.DefaultPooledClient(
 			httpclient.WithLogger(l),
@@ -259,6 +259,9 @@ func (impl *Implm) Run(
 			Endpoint:        impl.cfg.AWS.Endpoint,
 		},
 	)
+	if err != nil {
+		return fmt.Errorf("cannot initialize AWS config: %w", err)
+	}
 
 	html2pdfConverter := html2pdf.NewConverter(
 		impl.cfg.ChromeDPAddr,

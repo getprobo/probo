@@ -16,16 +16,12 @@ package awsconfig
 
 import (
 	"context"
+	"fmt"
 	"net/http"
-	"net/url"
-	"os"
-	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
-	"github.com/aws/aws-sdk-go-v2/credentials/ec2rolecreds"
-	"github.com/aws/aws-sdk-go-v2/credentials/endpointcreds"
-	"github.com/aws/aws-sdk-go-v2/feature/ec2/imds"
 	"go.gearno.de/kit/httpclient"
 	"go.gearno.de/kit/log"
 )
@@ -45,13 +41,9 @@ const (
 	DefaultSessionName = "go.probo.inc/probo"
 )
 
-func NewConfig(logger *log.Logger, httpClient *http.Client, opts Options) aws.Config {
+func NewConfig(logger *log.Logger, httpClient *http.Client, opts Options) (aws.Config, error) {
 	if opts.Region == "" {
 		opts.Region = DefaultRegion
-	}
-
-	if opts.SessionName == "" {
-		opts.SessionName = ""
 	}
 
 	logger = logger.Named(
@@ -67,52 +59,29 @@ func NewConfig(logger *log.Logger, httpClient *http.Client, opts Options) aws.Co
 		httpClient = httpclient.DefaultPooledClient(httpclient.WithLogger(logger))
 	}
 
-	cfg := aws.NewConfig()
-	cfg.HTTPClient = httpClient
-	cfg.Region = opts.Region
-	// cfg.Logger = logger TODO: add logger interface for aws
+	loadOpts := []func(*config.LoadOptions) error{
+		config.WithRegion(opts.Region),
+		config.WithHTTPClient(httpClient),
+	}
 
 	if opts.AccessKeyID != "" && opts.SecretAccessKey != "" {
-		// Use static credentials if provided
-		cfg.Credentials = credentials.NewStaticCredentialsProvider(
-			opts.AccessKeyID,
-			opts.SecretAccessKey,
-			opts.SessionName,
-		)
-	} else {
-		imdsClient := imds.New(imds.Options{HTTPClient: httpClient})
+		loadOpts = append(loadOpts, config.WithCredentialsProvider(
+			credentials.NewStaticCredentialsProvider(
+				opts.AccessKeyID,
+				opts.SecretAccessKey,
+				opts.SessionName,
+			),
+		))
+	}
 
-		ec2Provider := ec2rolecreds.New(func(options *ec2rolecreds.Options) {
-			options.Client = imdsClient
-		})
-
-		ecsCredentialsURI := os.Getenv("AWS_CONTAINER_CREDENTIALS_RELATIVE_URI")
-		ecsEndpoint, _ := url.JoinPath("http://169.254.170.2", ecsCredentialsURI)
-		ecsProvider := endpointcreds.New(
-			ecsEndpoint,
-			func(options *endpointcreds.Options) {
-				options.HTTPClient = httpClient
-			},
-		)
-
-		cfg.Credentials = aws.NewCredentialsCache(
-			aws.CredentialsProviderFunc(func(ctx context.Context) (aws.Credentials, error) {
-				creds, err := ecsProvider.Retrieve(ctx)
-				if err == nil {
-					return creds, nil
-				}
-
-				return ec2Provider.Retrieve(ctx)
-			}),
-			func(o *aws.CredentialsCacheOptions) {
-				o.ExpiryWindow = 10 * time.Minute
-			},
-		)
+	cfg, err := config.LoadDefaultConfig(context.Background(), loadOpts...)
+	if err != nil {
+		return aws.Config{}, fmt.Errorf("cannot load AWS config: %w", err)
 	}
 
 	if opts.Endpoint != "" {
 		cfg.BaseEndpoint = new(opts.Endpoint)
 	}
 
-	return cfg.Copy()
+	return cfg, nil
 }
