@@ -39,6 +39,17 @@ type (
 		ToolDescriptor
 		Execute(ctx context.Context, arguments string) (ToolResult, error)
 	}
+
+	// SuspendableTool marks tools that can safely receive the run's
+	// graceful-suspend signal and checkpoint their own progress.
+	//
+	// Leaf tools should generally not implement this interface: they are
+	// expected to run on a detached context so in-flight side effects are
+	// not aborted during shutdown.
+	SuspendableTool interface {
+		Tool
+		Suspendable()
+	}
 )
 
 // ResultJSON marshals v to JSON and returns a successful ToolResult.

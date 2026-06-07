@@ -41,6 +41,8 @@ type (
 
 var (
 	agentToolParamsSchema = mustJSONSchemaFor[agentToolParams]()
+
+	_ SuspendableTool = (*agentTool)(nil)
 )
 
 func agentToolDepth(ctx context.Context) int {
@@ -61,6 +63,8 @@ func newAgentTool(agent *Agent, name, description string) *agentTool {
 }
 
 func (t *agentTool) Name() string { return t.toolName }
+
+func (t *agentTool) Suspendable() {}
 
 func (t *agentTool) Definition() llm.Tool {
 	return llm.Tool{

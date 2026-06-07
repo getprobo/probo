@@ -75,6 +75,8 @@ type (
 		result ToolResult
 		err    error
 	}
+
+	suspendSignalKey struct{}
 )
 
 func WithCheckpointer(cp Checkpointer, runID string) RunOption {
@@ -85,6 +87,37 @@ func WithCheckpointer(cp Checkpointer, runID string) RunOption {
 }
 
 func noopEvent(_ context.Context, _ StreamEvent) {}
+
+func withSuspendSignal(ctx context.Context, signal context.Context) context.Context {
+	return context.WithValue(ctx, suspendSignalKey{}, signal)
+}
+
+func suspendSignalFrom(ctx context.Context) context.Context {
+	signal, _ := ctx.Value(suspendSignalKey{}).(context.Context)
+
+	return signal
+}
+
+func withSuspendableToolContext(ctx context.Context, tool Tool) (context.Context, func()) {
+	if _, ok := tool.(SuspendableTool); !ok {
+		return ctx, func() {}
+	}
+
+	signal := suspendSignalFrom(ctx)
+	if signal == nil {
+		return ctx, func() {}
+	}
+
+	execCtx, cancel := context.WithCancelCause(ctx)
+	stop := context.AfterFunc(signal, func() {
+		cancel(context.Cause(signal))
+	})
+
+	return execCtx, func() {
+		stop()
+		cancel(nil)
+	}
+}
 
 func blockingCallLLM(ctx context.Context, agent *Agent, req *llm.ChatCompletionRequest) (*llm.ChatCompletionResponse, error) {
 	resp, err := agent.client.ChatCompletion(ctx, req)
@@ -287,6 +320,7 @@ func coreLoop(ctx context.Context, startAgent *Agent, inputMessages []llm.Messag
 	// hooks, save) carries through to completion once a checkpoint is
 	// requested.
 	outerCtx, ctx := ctx, context.WithoutCancel(ctx)
+	ctx = withSuspendSignal(ctx, outerCtx)
 
 	s := &loopState{
 		agent:         startAgent,
@@ -1151,7 +1185,10 @@ func executeSingleTool(
 		log.String("tool", tool.Name()),
 	)
 
-	result, err := tool.Execute(toolCtx, tc.Function.Arguments)
+	execCtx, cleanupExecCtx := withSuspendableToolContext(toolCtx, tool)
+	defer cleanupExecCtx()
+
+	result, err := tool.Execute(execCtx, tc.Function.Arguments)
 	if err != nil {
 		if _, ok := errors.AsType[*InterruptedError](err); ok {
 			toolSpan.SetAttributes(attribute.Bool("tool.interrupted", true))
@@ -1306,6 +1343,7 @@ func Resume(ctx context.Context, interrupted *InterruptedError, input ResumeInpu
 
 func resumeWithOpts(ctx context.Context, interrupted *InterruptedError, input ResumeInput, ro runOpts) (*Result, error) {
 	outerCtx, ctx := ctx, context.WithoutCancel(ctx)
+	ctx = withSuspendSignal(ctx, outerCtx)
 
 	if interrupted.outerState != nil {
 		return resumeNested(outerCtx, interrupted, input, ro)
@@ -1470,6 +1508,7 @@ func resumeWithOpts(ctx context.Context, interrupted *InterruptedError, input Re
 
 func resumeNested(ctx context.Context, interrupted *InterruptedError, input ResumeInput, ro runOpts) (*Result, error) {
 	outerCtx, ctx := ctx, context.WithoutCancel(ctx)
+	ctx = withSuspendSignal(ctx, outerCtx)
 
 	outer := interrupted.outerState
 	logger := outer.agent.logger

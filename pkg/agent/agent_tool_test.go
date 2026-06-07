@@ -17,7 +17,10 @@ package agent_test
 import (
 	"context"
 	"encoding/json"
+	"sync"
+	"sync/atomic"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -915,6 +918,362 @@ func TestAgentTool_Execute_DepthLimit(t *testing.T) {
 	)
 }
 
+func TestAgentTool_Execute_SuspendAndRestoreSingleLevel(t *testing.T) {
+	t.Parallel()
+
+	store := newMemoryCheckpointer()
+
+	toolReady := make(chan struct{})
+	toolRelease := make(chan struct{})
+
+	var readyOnce sync.Once
+
+	slowTool := agent.FunctionTool[struct{}](
+		"slow_inner_work",
+		"Slow inner work",
+		func(_ context.Context, _ struct{}) (agent.ToolResult, error) {
+			readyOnce.Do(func() { close(toolReady) })
+			<-toolRelease
+
+			return agent.ToolResult{Content: "inner tool done"}, nil
+		},
+	)
+
+	innerProvider := &mockProvider{
+		responses: []*llm.ChatCompletionResponse{
+			toolCallResponse(
+				llm.ToolCall{
+					ID:       "tc_inner",
+					Function: llm.FunctionCall{Name: "slow_inner_work", Arguments: `{}`},
+				},
+			),
+			stopResponse("inner completed"),
+		},
+	}
+
+	innerAgent := agent.New(
+		"inner-agent",
+		newTestClient(innerProvider),
+		agent.WithModel("test-model"),
+		agent.WithTools(slowTool),
+	)
+
+	outerProvider := &mockProvider{
+		responses: []*llm.ChatCompletionResponse{
+			toolCallResponse(
+				llm.ToolCall{
+					ID:       "tc_outer",
+					Function: llm.FunctionCall{Name: "call_inner", Arguments: `{"input":"delegate"}`},
+				},
+			),
+			stopResponse("outer completed"),
+		},
+	}
+
+	outerAgent := agent.New(
+		"outer-agent",
+		newTestClient(outerProvider),
+		agent.WithModel("test-model"),
+		agent.WithTools(innerAgent.AsTool("call_inner", "Call inner")),
+	)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	errCh := make(chan error, 1)
+
+	go func() {
+		_, err := outerAgent.Run(
+			ctx,
+			[]llm.Message{userMessage("go")},
+			agent.WithCheckpointer(store, "run-single-level"),
+		)
+		errCh <- err
+	}()
+
+	select {
+	case <-toolReady:
+	case <-time.After(5 * time.Second):
+		t.Fatal("timed out waiting for inner leaf tool to start")
+	}
+
+	cancel()
+	time.Sleep(50 * time.Millisecond)
+	close(toolRelease)
+
+	select {
+	case err := <-errCh:
+		var se *agent.SuspendedError
+		require.ErrorAs(t, err, &se)
+	case <-time.After(10 * time.Second):
+		t.Fatal("timed out waiting for run to suspend")
+	}
+
+	cp, err := store.Load(context.Background(), "run-single-level")
+	require.NoError(t, err)
+	require.NotNil(t, cp)
+	assert.Equal(t, agent.AgentStatusSuspended, cp.Status)
+	assert.Equal(t, "outer-agent", cp.AgentName)
+
+	innerCP, ok := cp.InnerCheckpoints["tc_outer"]
+	require.True(t, ok, "expected nested checkpoint keyed by outer tool call")
+	require.NotNil(t, innerCP)
+	assert.Equal(t, "inner-agent", innerCP.AgentName)
+	assert.Equal(t, agent.AgentStatusSuspended, innerCP.Status)
+
+	registry := &simpleRegistry{
+		agents: map[string]*agent.Agent{
+			"outer-agent": outerAgent,
+			"inner-agent": innerAgent,
+		},
+	}
+
+	result, err := agent.Restore(
+		context.Background(),
+		store,
+		"run-single-level",
+		registry,
+	)
+	require.NoError(t, err)
+	assert.Equal(t, "outer completed", result.FinalMessage().Text())
+	assert.Equal(t, "outer-agent", result.LastAgent.Name())
+}
+
+func TestAgentTool_Execute_SuspendAndRestoreMultiLevel(t *testing.T) {
+	t.Parallel()
+
+	store := newMemoryCheckpointer()
+
+	toolReady := make(chan struct{})
+	toolRelease := make(chan struct{})
+
+	var readyOnce sync.Once
+
+	slowTool := agent.FunctionTool[struct{}](
+		"slow_grandchild_work",
+		"Slow grandchild work",
+		func(_ context.Context, _ struct{}) (agent.ToolResult, error) {
+			readyOnce.Do(func() { close(toolReady) })
+			<-toolRelease
+
+			return agent.ToolResult{Content: "grandchild tool done"}, nil
+		},
+	)
+
+	grandchildProvider := &mockProvider{
+		responses: []*llm.ChatCompletionResponse{
+			toolCallResponse(
+				llm.ToolCall{
+					ID:       "tc_grandchild",
+					Function: llm.FunctionCall{Name: "slow_grandchild_work", Arguments: `{}`},
+				},
+			),
+			stopResponse("grandchild completed"),
+		},
+	}
+
+	grandchildAgent := agent.New(
+		"grandchild-agent",
+		newTestClient(grandchildProvider),
+		agent.WithModel("test-model"),
+		agent.WithTools(slowTool),
+	)
+
+	childProvider := &mockProvider{
+		responses: []*llm.ChatCompletionResponse{
+			toolCallResponse(
+				llm.ToolCall{
+					ID:       "tc_child",
+					Function: llm.FunctionCall{Name: "call_grandchild", Arguments: `{"input":"delegate deeper"}`},
+				},
+			),
+			stopResponse("child completed"),
+		},
+	}
+
+	childAgent := agent.New(
+		"child-agent",
+		newTestClient(childProvider),
+		agent.WithModel("test-model"),
+		agent.WithTools(grandchildAgent.AsTool("call_grandchild", "Call grandchild")),
+	)
+
+	outerProvider := &mockProvider{
+		responses: []*llm.ChatCompletionResponse{
+			toolCallResponse(
+				llm.ToolCall{
+					ID:       "tc_outer",
+					Function: llm.FunctionCall{Name: "call_child", Arguments: `{"input":"delegate"}`},
+				},
+			),
+			stopResponse("outer completed"),
+		},
+	}
+
+	outerAgent := agent.New(
+		"outer-agent",
+		newTestClient(outerProvider),
+		agent.WithModel("test-model"),
+		agent.WithTools(childAgent.AsTool("call_child", "Call child")),
+	)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	errCh := make(chan error, 1)
+
+	go func() {
+		_, err := outerAgent.Run(
+			ctx,
+			[]llm.Message{userMessage("go")},
+			agent.WithCheckpointer(store, "run-multi-level"),
+		)
+		errCh <- err
+	}()
+
+	select {
+	case <-toolReady:
+	case <-time.After(5 * time.Second):
+		t.Fatal("timed out waiting for grandchild leaf tool to start")
+	}
+
+	cancel()
+	time.Sleep(50 * time.Millisecond)
+	close(toolRelease)
+
+	select {
+	case err := <-errCh:
+		var se *agent.SuspendedError
+		require.ErrorAs(t, err, &se)
+	case <-time.After(10 * time.Second):
+		t.Fatal("timed out waiting for multi-level run to suspend")
+	}
+
+	cp, err := store.Load(context.Background(), "run-multi-level")
+	require.NoError(t, err)
+	require.NotNil(t, cp)
+	assert.Equal(t, "outer-agent", cp.AgentName)
+
+	childCP, ok := cp.InnerCheckpoints["tc_outer"]
+	require.True(t, ok)
+	require.NotNil(t, childCP)
+	assert.Equal(t, "child-agent", childCP.AgentName)
+
+	grandchildCP, ok := childCP.InnerCheckpoints["tc_child"]
+	require.True(t, ok, "child checkpoint keys: %v", childCP.InnerCheckpoints)
+	require.NotNil(t, grandchildCP)
+	assert.Equal(t, "grandchild-agent", grandchildCP.AgentName)
+	assert.Equal(t, agent.AgentStatusSuspended, grandchildCP.Status)
+
+	registry := &simpleRegistry{
+		agents: map[string]*agent.Agent{
+			"outer-agent":      outerAgent,
+			"child-agent":      childAgent,
+			"grandchild-agent": grandchildAgent,
+		},
+	}
+
+	result, err := agent.Restore(
+		context.Background(),
+		store,
+		"run-multi-level",
+		registry,
+	)
+	require.NoError(t, err)
+	assert.Equal(t, "outer completed", result.FinalMessage().Text())
+	assert.Equal(t, "outer-agent", result.LastAgent.Name())
+}
+
+func TestAgentTool_Execute_LeafToolsRemainDetachedOnSuspend(t *testing.T) {
+	t.Parallel()
+
+	var leafCtxCanceled atomic.Bool
+
+	leafStarted := make(chan struct{})
+	leafRelease := make(chan struct{})
+
+	leafTool := agent.FunctionTool[struct{}](
+		"slow_leaf",
+		"Slow leaf tool",
+		func(ctx context.Context, _ struct{}) (agent.ToolResult, error) {
+			close(leafStarted)
+
+			select {
+			case <-ctx.Done():
+				leafCtxCanceled.Store(true)
+				return agent.ToolResult{Content: "leaf cancelled", IsError: true}, nil
+			case <-leafRelease:
+				if ctx.Err() != nil {
+					leafCtxCanceled.Store(true)
+				}
+				return agent.ToolResult{Content: "leaf completed"}, nil
+			}
+		},
+	)
+
+	provider := &mockProvider{
+		responses: []*llm.ChatCompletionResponse{
+			toolCallResponse(
+				llm.ToolCall{
+					ID:       "tc_leaf",
+					Function: llm.FunctionCall{Name: "slow_leaf", Arguments: `{}`},
+				},
+			),
+			stopResponse("done"),
+		},
+	}
+
+	ag := agent.New(
+		"leaf-agent",
+		newTestClient(provider),
+		agent.WithModel("test-model"),
+		agent.WithTools(leafTool),
+	)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	type runResult struct {
+		result *agent.Result
+		err    error
+	}
+	runDone := make(chan runResult, 1)
+
+	go func() {
+		result, err := ag.Run(ctx, []llm.Message{userMessage("go")})
+		runDone <- runResult{result: result, err: err}
+	}()
+
+	select {
+	case <-leafStarted:
+	case <-time.After(5 * time.Second):
+		t.Fatal("timed out waiting for leaf tool to start")
+	}
+
+	cancel()
+
+	select {
+	case outcome := <-runDone:
+		t.Fatalf(
+			"run returned before leaf tool release: err=%v result=%v",
+			outcome.err,
+			outcome.result,
+		)
+	case <-time.After(250 * time.Millisecond):
+	}
+
+	close(leafRelease)
+
+	select {
+	case outcome := <-runDone:
+		var se *agent.SuspendedError
+		require.ErrorAs(t, outcome.err, &se)
+		assert.Nil(t, outcome.result)
+	case <-time.After(10 * time.Second):
+		t.Fatal("timed out waiting for run completion after leaf release")
+	}
+
+	assert.False(
+		t,
+		leafCtxCanceled.Load(),
+		"leaf tool ctx should remain detached from suspend cancellation",
+	)
+}
+
 func TestAgentTool_InterfaceSatisfaction(t *testing.T) {
 	t.Parallel()
 
@@ -928,4 +1287,5 @@ func TestAgentTool_InterfaceSatisfaction(t *testing.T) {
 
 	assert.Implements(t, (*agent.Tool)(nil), tool)
 	assert.Implements(t, (*agent.ToolDescriptor)(nil), tool)
+	assert.Implements(t, (*agent.SuspendableTool)(nil), tool)
 }
