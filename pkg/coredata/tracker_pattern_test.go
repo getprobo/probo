@@ -22,6 +22,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/internal/test"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 )
@@ -173,7 +174,7 @@ func seedTrackerPattern(
 func TestTrackerPattern_Update_WritesSource(t *testing.T) {
 	t.Parallel()
 
-	client := newTestPgClient(t)
+	client := test.PGClient(t)
 	ctx := context.Background()
 	fx := seedTrackerPatternFixture(t, ctx, client)
 
@@ -221,7 +222,7 @@ func TestTrackerPattern_Update_WritesSource(t *testing.T) {
 func TestTrackerPattern_Update_NotFoundForMissingRow(t *testing.T) {
 	t.Parallel()
 
-	client := newTestPgClient(t)
+	client := test.PGClient(t)
 	ctx := context.Background()
 	fx := seedTrackerPatternFixture(t, ctx, client)
 
@@ -259,7 +260,7 @@ func TestTrackerPattern_Update_NotFoundForMissingRow(t *testing.T) {
 func TestResetStaleMappings(t *testing.T) {
 	t.Parallel()
 
-	client := newTestPgClient(t)
+	client := test.PGClient(t)
 	ctx := context.Background()
 	fx := seedTrackerPatternFixture(t, ctx, client)
 

@@ -30,6 +30,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.probo.inc/probo/internal/test"
 	"go.probo.inc/probo/pkg/agent"
 	"go.probo.inc/probo/pkg/agentrun"
 	"go.probo.inc/probo/pkg/coredata"
@@ -37,7 +38,7 @@ import (
 )
 
 func TestWorker_PicksUpAndCompletes(t *testing.T) {
-	client := pgClient(t)
+	client := test.PGClient(t)
 	ag := newDummyAgent(
 		"echo-agent",
 		[]*llm.ChatCompletionResponse{
@@ -79,7 +80,7 @@ func TestWorker_PicksUpAndCompletes(t *testing.T) {
 }
 
 func TestWorker_StopAndResume(t *testing.T) {
-	client := pgClient(t)
+	client := test.PGClient(t)
 	store := coredata.NewPGCheckpointer(client)
 
 	toolReady := make(chan struct{})
@@ -187,7 +188,7 @@ func TestWorker_StopAndResume(t *testing.T) {
 // child as active, and restore must resolve it from the registry so the
 // resumed run continues in that branch and completes.
 func TestWorker_StopAndResumeAcrossHandoff(t *testing.T) {
-	client := pgClient(t)
+	client := test.PGClient(t)
 	store := coredata.NewPGCheckpointer(client)
 
 	toolReady := make(chan struct{})
@@ -314,7 +315,7 @@ func TestWorker_StopAndResumeAcrossHandoff(t *testing.T) {
 }
 
 func TestWorker_StopAndResumeNestedSubAgent(t *testing.T) {
-	client := pgClient(t)
+	client := test.PGClient(t)
 	store := coredata.NewPGCheckpointer(client)
 
 	toolReady := make(chan struct{})
@@ -444,7 +445,7 @@ func TestWorker_StopAndResumeNestedSubAgent(t *testing.T) {
 }
 
 func TestWorker_StopAndResumeNestedSubAgentMultiLevel(t *testing.T) {
-	client := pgClient(t)
+	client := test.PGClient(t)
 	store := coredata.NewPGCheckpointer(client)
 
 	toolReady := make(chan struct{})
@@ -593,7 +594,7 @@ func TestWorker_StopAndResumeNestedSubAgentMultiLevel(t *testing.T) {
 }
 
 func TestWorker_HeartbeatLeaseLostLeavesRunForRecovery(t *testing.T) {
-	client := pgClient(t)
+	client := test.PGClient(t)
 
 	toolReady := make(chan struct{})
 	toolRelease := make(chan struct{})
@@ -685,7 +686,7 @@ func TestWorker_HeartbeatLeaseLostLeavesRunForRecovery(t *testing.T) {
 }
 
 func TestWorker_ReclaimedRunDoesNotClobberWinner(t *testing.T) {
-	client := pgClient(t)
+	client := test.PGClient(t)
 
 	toolReady := make(chan struct{})
 	toolRelease := make(chan struct{})
@@ -798,7 +799,7 @@ func TestWorker_ReclaimedRunDoesNotClobberWinner(t *testing.T) {
 }
 
 func TestWorker_UnknownAgentFails(t *testing.T) {
-	client := pgClient(t)
+	client := test.PGClient(t)
 
 	run := insertPendingRun(
 		t,
@@ -833,7 +834,7 @@ func TestWorker_UnknownAgentFails(t *testing.T) {
 }
 
 func TestWorker_InvalidInputMessagesFails(t *testing.T) {
-	client := pgClient(t)
+	client := test.PGClient(t)
 	ag := newDummyAgent(
 		"worker-agent",
 		[]*llm.ChatCompletionResponse{
@@ -929,7 +930,7 @@ func TestWorker_SIGTERM(t *testing.T) {
 }
 
 func runSIGTERMSubprocess(t *testing.T) {
-	client := pgClient(t)
+	client := test.PGClient(t)
 
 	workStarted := make(chan struct{})
 

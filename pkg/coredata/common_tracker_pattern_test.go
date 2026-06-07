@@ -22,6 +22,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/internal/test"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 )
@@ -107,7 +108,7 @@ func loadCommonTrackerPattern(
 func TestCommonTrackerPattern_SetEnriched_AllowsEmptyDescription(t *testing.T) {
 	t.Parallel()
 
-	client := newTestPgClient(t)
+	client := test.PGClient(t)
 	ctx := context.Background()
 
 	now := time.Now().UTC().Truncate(time.Microsecond)
@@ -151,7 +152,7 @@ func TestCommonTrackerPattern_SetEnriched_AllowsEmptyDescription(t *testing.T) {
 func TestCommonTrackerPattern_SetEnriched_LinksThirdPartyWithoutOverride(t *testing.T) {
 	t.Parallel()
 
-	client := newTestPgClient(t)
+	client := test.PGClient(t)
 	ctx := context.Background()
 
 	party := seedCommonThirdParty(t, ctx, client)
@@ -211,7 +212,7 @@ func TestCommonTrackerPattern_SetEnriched_LinksThirdPartyWithoutOverride(t *test
 func TestCommonTrackerPattern_Upsert_RequeuesBlankRowOnThirdPartyLink(t *testing.T) {
 	t.Parallel()
 
-	client := newTestPgClient(t)
+	client := test.PGClient(t)
 	ctx := context.Background()
 
 	party := seedCommonThirdParty(t, ctx, client)
@@ -272,7 +273,7 @@ func TestCommonTrackerPattern_Upsert_RequeuesBlankRowOnThirdPartyLink(t *testing
 func TestCommonTrackerPattern_Upsert_KeepsDescribedRowTerminal(t *testing.T) {
 	t.Parallel()
 
-	client := newTestPgClient(t)
+	client := test.PGClient(t)
 	ctx := context.Background()
 
 	party := seedCommonThirdParty(t, ctx, client)

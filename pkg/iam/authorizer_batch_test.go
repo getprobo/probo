@@ -20,24 +20,20 @@ import (
 	"fmt"
 	"io"
 	"net"
-	"net/url"
-	"os"
 	"testing"
 	"time"
 
-	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/internal/test"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/iam/policy"
 	"go.probo.inc/probo/pkg/mail"
 )
-
-const testPgDSNEnvVar = "PROBO_TEST_PG_URL"
 
 type batchAuthorizeFixture struct {
 	tenantID        gid.TenantID
@@ -56,7 +52,7 @@ func TestAuthorizer_AuthorizeBatch(t *testing.T) {
 	t.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 
-		client := newTestPgClient(t)
+		client := test.PGClient(t)
 		fixture := seedBatchAuthorizeFixture(t, context.Background(), client)
 		action := newBatchTestAction()
 		authorizer := newTestAuthorizer(client, action, nil)
@@ -81,7 +77,7 @@ func TestAuthorizer_AuthorizeBatch(t *testing.T) {
 	t.Run("mixed organization batch", func(t *testing.T) {
 		t.Parallel()
 
-		client := newTestPgClient(t)
+		client := test.PGClient(t)
 		fixture := seedBatchAuthorizeFixture(t, context.Background(), client)
 		action := newBatchTestAction()
 		authorizer := newTestAuthorizer(client, action, nil)
@@ -114,7 +110,7 @@ func TestAuthorizer_AuthorizeBatch(t *testing.T) {
 	t.Run("mixed entity type batch", func(t *testing.T) {
 		t.Parallel()
 
-		client := newTestPgClient(t)
+		client := test.PGClient(t)
 		fixture := seedBatchAuthorizeFixture(t, context.Background(), client)
 		action := newBatchTestAction()
 		authorizer := newTestAuthorizer(client, action, nil)
@@ -144,7 +140,7 @@ func TestAuthorizer_AuthorizeBatch(t *testing.T) {
 	t.Run("unsupported resource type for batch attributes", func(t *testing.T) {
 		t.Parallel()
 
-		client := newTestPgClient(t)
+		client := test.PGClient(t)
 		fixture := seedBatchAuthorizeFixture(t, context.Background(), client)
 		action := newBatchTestAction()
 		authorizer := newTestAuthorizer(client, action, nil)
@@ -169,7 +165,7 @@ func TestAuthorizer_AuthorizeBatch(t *testing.T) {
 	t.Run("single deny rolls back entire batch", func(t *testing.T) {
 		t.Parallel()
 
-		client := newTestPgClient(t)
+		client := test.PGClient(t)
 		fixture := seedBatchAuthorizeFixture(t, context.Background(), client)
 		action := newBatchTestAction()
 		authorizer := newTestAuthorizer(client, action, &fixture.frameworkID1)
@@ -195,7 +191,7 @@ func TestAuthorizer_AuthorizeBatch(t *testing.T) {
 	t.Run("duplicate resources in batch", func(t *testing.T) {
 		t.Parallel()
 
-		client := newTestPgClient(t)
+		client := test.PGClient(t)
 		fixture := seedBatchAuthorizeFixture(t, context.Background(), client)
 		action := newBatchTestAction()
 		authorizer := newTestAuthorizer(client, action, nil)
@@ -238,7 +234,7 @@ func TestAuthorizer_AuthorizeBatch(t *testing.T) {
 	t.Run("dry-run does not write audit logs", func(t *testing.T) {
 		t.Parallel()
 
-		client := newTestPgClient(t)
+		client := test.PGClient(t)
 		fixture := seedBatchAuthorizeFixture(t, context.Background(), client)
 		action := newBatchTestAction()
 		authorizer := newTestAuthorizer(client, action, nil)
@@ -264,7 +260,7 @@ func TestAuthorizer_AuthorizeBatch(t *testing.T) {
 	t.Run("missing principal identity returns wrapped principal attributes error", func(t *testing.T) {
 		t.Parallel()
 
-		client := newTestPgClient(t)
+		client := test.PGClient(t)
 		fixture := seedBatchAuthorizeFixture(t, context.Background(), client)
 		action := newBatchTestAction()
 		authorizer := newTestAuthorizer(client, action, nil)
@@ -288,7 +284,7 @@ func TestAuthorizer_AuthorizeBatch(t *testing.T) {
 	t.Run("bulk insert failure aborts transaction", func(t *testing.T) {
 		t.Parallel()
 
-		client := newTestPgClient(t)
+		client := test.PGClient(t)
 		fixture := seedBatchAuthorizeFixture(t, context.Background(), client)
 		action := newBatchTestAction()
 		authorizer := newTestAuthorizerWithIdentityScopedStatements(
@@ -320,7 +316,7 @@ func TestAuthorizer_AuthorizeBatch(t *testing.T) {
 	t.Run("assumption required", func(t *testing.T) {
 		t.Parallel()
 
-		client := newTestPgClient(t)
+		client := test.PGClient(t)
 		fixture := seedBatchAuthorizeFixture(t, context.Background(), client)
 		action := newBatchTestAction()
 		authorizer := newTestAuthorizer(client, action, nil)
@@ -348,7 +344,7 @@ func TestAuthorizer_AuthorizeBatch(t *testing.T) {
 	t.Run("assumption succeeds with active child session", func(t *testing.T) {
 		t.Parallel()
 
-		client := newTestPgClient(t)
+		client := test.PGClient(t)
 		fixture := seedBatchAuthorizeFixture(t, context.Background(), client)
 		action := newBatchTestAction()
 		authorizer := newTestAuthorizer(client, action, nil)
@@ -384,7 +380,7 @@ func TestAuthorizer_AuthorizeBatch(t *testing.T) {
 	t.Run("assumption fails when child session is expired", func(t *testing.T) {
 		t.Parallel()
 
-		client := newTestPgClient(t)
+		client := test.PGClient(t)
 		fixture := seedBatchAuthorizeFixture(t, context.Background(), client)
 		action := newBatchTestAction()
 		authorizer := newTestAuthorizer(client, action, nil)
@@ -421,7 +417,7 @@ func TestAuthorizer_AuthorizeBatch(t *testing.T) {
 	t.Run("no membership ignores assumption check", func(t *testing.T) {
 		t.Parallel()
 
-		client := newTestPgClient(t)
+		client := test.PGClient(t)
 		fixture := seedBatchAuthorizeFixture(t, context.Background(), client)
 		action := newBatchTestAction()
 		authorizer := newTestAuthorizer(client, action, nil)
@@ -462,7 +458,7 @@ func TestAuthorizer_AuthorizeMulti(t *testing.T) {
 	t.Run("returns nil decisions when every item is allowed", func(t *testing.T) {
 		t.Parallel()
 
-		client := newTestPgClient(t)
+		client := test.PGClient(t)
 		fixture := seedBatchAuthorizeFixture(t, context.Background(), client)
 		action := newBatchTestAction()
 		authorizer := newTestAuthorizerWithStatements(
@@ -498,7 +494,7 @@ func TestAuthorizer_AuthorizeMulti(t *testing.T) {
 	t.Run("returns per-item decisions on partial denial without aborting", func(t *testing.T) {
 		t.Parallel()
 
-		client := newTestPgClient(t)
+		client := test.PGClient(t)
 		fixture := seedBatchAuthorizeFixture(t, context.Background(), client)
 		action := newBatchTestAction()
 		authorizer := newTestAuthorizerWithStatements(
@@ -541,7 +537,7 @@ func TestAuthorizer_AuthorizeMulti(t *testing.T) {
 	t.Run("writes no audit logs when every item is denied", func(t *testing.T) {
 		t.Parallel()
 
-		client := newTestPgClient(t)
+		client := test.PGClient(t)
 		fixture := seedBatchAuthorizeFixture(t, context.Background(), client)
 		action := newBatchTestAction()
 		authorizer := newTestAuthorizerWithStatements(
@@ -578,7 +574,7 @@ func TestAuthorizer_AuthorizeMulti(t *testing.T) {
 	t.Run("skips audit log entries for dry-run allowed items", func(t *testing.T) {
 		t.Parallel()
 
-		client := newTestPgClient(t)
+		client := test.PGClient(t)
 		fixture := seedBatchAuthorizeFixture(t, context.Background(), client)
 		action := newBatchTestAction()
 		authorizer := newTestAuthorizerWithStatements(
@@ -613,7 +609,7 @@ func TestAuthorizer_AuthorizeMulti(t *testing.T) {
 	t.Run("rejects mixed organization batch", func(t *testing.T) {
 		t.Parallel()
 
-		client := newTestPgClient(t)
+		client := test.PGClient(t)
 		fixture := seedBatchAuthorizeFixture(t, context.Background(), client)
 		action := newBatchTestAction()
 		authorizer := newTestAuthorizerWithStatements(
@@ -692,7 +688,7 @@ func TestAuthorizer_AuthorizeMulti(t *testing.T) {
 	t.Run("assumption error is recorded only on items that require the check", func(t *testing.T) {
 		t.Parallel()
 
-		client := newTestPgClient(t)
+		client := test.PGClient(t)
 		fixture := seedBatchAuthorizeFixture(t, context.Background(), client)
 		action := newBatchTestAction()
 		authorizer := newTestAuthorizerWithStatements(
@@ -734,7 +730,7 @@ func TestAuthorizer_AuthorizeMulti(t *testing.T) {
 	t.Run("per-item resource attributes are honoured by the policy", func(t *testing.T) {
 		t.Parallel()
 
-		client := newTestPgClient(t)
+		client := test.PGClient(t)
 		fixture := seedBatchAuthorizeFixture(t, context.Background(), client)
 		action := newBatchTestAction()
 		authorizer := newTestAuthorizerWithStatements(
@@ -1058,49 +1054,4 @@ func countAuditLogsForAction(t *testing.T, ctx context.Context, client *pg.Clien
 
 func newBatchTestAction() string {
 	return fmt.Sprintf("test:framework-%d:get", time.Now().UnixNano())
-}
-
-func newTestPgClient(t *testing.T) *pg.Client {
-	t.Helper()
-
-	dsn := os.Getenv(testPgDSNEnvVar)
-	if dsn == "" {
-		t.Skipf("skipping: %s not set (requires a migrated test database)", testPgDSNEnvVar)
-	}
-
-	u, err := url.Parse(dsn)
-	require.NoError(t, err, "invalid %s value", testPgDSNEnvVar)
-
-	opts := []pg.Option{
-		pg.WithRegisterer(prometheus.NewRegistry()),
-	}
-
-	if u.Host != "" {
-		host := u.Host
-		if u.Port() == "" {
-			host = net.JoinHostPort(u.Hostname(), "5432")
-		}
-
-		opts = append(opts, pg.WithAddr(host))
-	}
-
-	if u.User != nil {
-		opts = append(opts, pg.WithUser(u.User.Username()))
-		if password, ok := u.User.Password(); ok {
-			opts = append(opts, pg.WithPassword(password))
-		}
-	}
-
-	if len(u.Path) > 1 {
-		opts = append(opts, pg.WithDatabase(u.Path[1:]))
-	}
-
-	client, err := pg.NewClient(opts...)
-	require.NoError(t, err)
-
-	t.Cleanup(func() {
-		client.Close()
-	})
-
-	return client
 }

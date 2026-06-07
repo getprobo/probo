@@ -16,72 +16,16 @@ package coredata_test
 
 import (
 	"context"
-	"net"
-	"net/url"
-	"os"
 	"testing"
 	"time"
 
-	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/internal/test"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 )
-
-// testPgDSNEnvVar is the environment variable that points the integration
-// tests at a migrated test database. When unset, the tests are skipped so
-// `make test` stays a pure unit-test run.
-const testPgDSNEnvVar = "PROBO_TEST_PG_URL"
-
-// newTestPgClient returns a pg.Client connected to the test database, or
-// skips the test if no DSN is configured.
-func newTestPgClient(t *testing.T) *pg.Client {
-	t.Helper()
-
-	dsn := os.Getenv(testPgDSNEnvVar)
-	if dsn == "" {
-		t.Skipf("skipping: %s not set (requires a migrated test database)", testPgDSNEnvVar)
-	}
-
-	u, err := url.Parse(dsn)
-	require.NoError(t, err, "invalid %s value", testPgDSNEnvVar)
-
-	// Each test builds its own pg.Client, so we provide a fresh Prometheus
-	// registry every time to avoid "duplicate collector" panics when tests
-	// run in parallel.
-	opts := []pg.Option{pg.WithRegisterer(prometheus.NewRegistry())}
-
-	if u.Host != "" {
-		host := u.Host
-		if u.Port() == "" {
-			host = net.JoinHostPort(u.Hostname(), "5432")
-		}
-
-		opts = append(opts, pg.WithAddr(host))
-	}
-
-	if u.User != nil {
-		opts = append(opts, pg.WithUser(u.User.Username()))
-		if password, ok := u.User.Password(); ok {
-			opts = append(opts, pg.WithPassword(password))
-		}
-	}
-
-	if len(u.Path) > 1 {
-		opts = append(opts, pg.WithDatabase(u.Path[1:]))
-	}
-
-	client, err := pg.NewClient(opts...)
-	require.NoError(t, err)
-
-	t.Cleanup(func() {
-		client.Close()
-	})
-
-	return client
-}
 
 // accessEntryFixture bootstraps the parent rows (organization, campaign,
 // source) that the access_entries FKs require.
@@ -179,7 +123,7 @@ func seedAccessEntryFixture(t *testing.T, ctx context.Context, client *pg.Client
 func TestAccessEntry_Upsert_FreezesDecidedFields(t *testing.T) {
 	t.Parallel()
 
-	client := newTestPgClient(t)
+	client := test.PGClient(t)
 	ctx := context.Background()
 	fx := seedAccessEntryFixture(t, ctx, client)
 
@@ -324,7 +268,7 @@ func TestAccessEntry_Upsert_FreezesDecidedFields(t *testing.T) {
 func TestAccessEntry_Upsert_RefreshesSourceTrackingFields(t *testing.T) {
 	t.Parallel()
 
-	client := newTestPgClient(t)
+	client := test.PGClient(t)
 	ctx := context.Background()
 	fx := seedAccessEntryFixture(t, ctx, client)
 
@@ -414,7 +358,7 @@ func TestAccessEntry_Upsert_RefreshesSourceTrackingFields(t *testing.T) {
 func TestAccessEntry_Upsert_InsertsActiveAccount(t *testing.T) {
 	t.Parallel()
 
-	client := newTestPgClient(t)
+	client := test.PGClient(t)
 	ctx := context.Background()
 	fx := seedAccessEntryFixture(t, ctx, client)
 

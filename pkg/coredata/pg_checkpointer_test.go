@@ -20,6 +20,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.probo.inc/probo/internal/test"
 	"go.probo.inc/probo/pkg/agent"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
@@ -29,7 +30,7 @@ import (
 func TestPGCheckpointer(t *testing.T) {
 	t.Parallel()
 
-	client := pgClient(t)
+	client := test.PGClient(t)
 	store := coredata.NewPGCheckpointer(client)
 
 	t.Run(

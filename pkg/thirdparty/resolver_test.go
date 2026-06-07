@@ -17,66 +17,18 @@ package thirdparty
 import (
 	"context"
 	"io"
-	"net"
-	"net/url"
-	"os"
 	"testing"
 	"time"
 
-	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/internal/test"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/slug"
 )
-
-const testPgDSNEnvVar = "PROBO_TEST_PG_URL"
-
-func newTestPgClient(t *testing.T) *pg.Client {
-	t.Helper()
-
-	dsn := os.Getenv(testPgDSNEnvVar)
-	if dsn == "" {
-		t.Skipf("skipping: %s not set (requires a migrated test database)", testPgDSNEnvVar)
-	}
-
-	u, err := url.Parse(dsn)
-	require.NoError(t, err, "invalid %s value", testPgDSNEnvVar)
-
-	opts := []pg.Option{pg.WithRegisterer(prometheus.NewRegistry())}
-
-	if u.Host != "" {
-		host := u.Host
-		if u.Port() == "" {
-			host = net.JoinHostPort(u.Hostname(), "5432")
-		}
-
-		opts = append(opts, pg.WithAddr(host))
-	}
-
-	if u.User != nil {
-		opts = append(opts, pg.WithUser(u.User.Username()))
-		if password, ok := u.User.Password(); ok {
-			opts = append(opts, pg.WithPassword(password))
-		}
-	}
-
-	if len(u.Path) > 1 {
-		opts = append(opts, pg.WithDatabase(u.Path[1:]))
-	}
-
-	client, err := pg.NewClient(opts...)
-	require.NoError(t, err)
-
-	t.Cleanup(func() {
-		client.Close()
-	})
-
-	return client
-}
 
 func discardLogger() *log.Logger {
 	return log.NewLogger(log.WithOutput(io.Discard))
@@ -126,7 +78,7 @@ func seedCatalogThirdParty(
 func TestResolveOrCreateCommonThirdParty(t *testing.T) {
 	t.Parallel()
 
-	client := newTestPgClient(t)
+	client := test.PGClient(t)
 	ctx := context.Background()
 	logger := discardLogger()
 

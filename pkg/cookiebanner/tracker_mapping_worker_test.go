@@ -24,6 +24,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/internal/test"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 )
@@ -164,7 +165,7 @@ func promote(
 func TestPromoteThirdParty_ExactCommonLink(t *testing.T) {
 	t.Parallel()
 
-	client := newTestPgClient(t)
+	client := test.PGClient(t)
 	ctx := context.Background()
 	fx := seedPromotionFixture(t, ctx, client)
 
@@ -194,7 +195,7 @@ func TestPromoteThirdParty_ExactCommonLink(t *testing.T) {
 func TestPromoteThirdParty_HeuristicMatch(t *testing.T) {
 	t.Parallel()
 
-	client := newTestPgClient(t)
+	client := test.PGClient(t)
 	ctx := context.Background()
 	fx := seedPromotionFixture(t, ctx, client)
 
@@ -235,7 +236,7 @@ func TestPromoteThirdParty_HeuristicMatch(t *testing.T) {
 func TestPromoteThirdParty_FallbackCreate(t *testing.T) {
 	t.Parallel()
 
-	client := newTestPgClient(t)
+	client := test.PGClient(t)
 	ctx := context.Background()
 	fx := seedPromotionFixture(t, ctx, client)
 
@@ -265,7 +266,7 @@ func TestPromoteThirdParty_FallbackCreate(t *testing.T) {
 func TestResolveOrgThirdParty_CreationGated(t *testing.T) {
 	t.Parallel()
 
-	client := newTestPgClient(t)
+	client := test.PGClient(t)
 	ctx := context.Background()
 	fx := seedPromotionFixture(t, ctx, client)
 
@@ -286,7 +287,7 @@ func TestResolveOrgThirdParty_CreationGated(t *testing.T) {
 func TestProcess_PreservesCatalogMappingOnReTrigger(t *testing.T) {
 	t.Parallel()
 
-	client := newTestPgClient(t)
+	client := test.PGClient(t)
 	ctx := context.Background()
 	fx := seedPromotionFixture(t, ctx, client)
 
@@ -314,7 +315,7 @@ func TestProcess_PreservesCatalogMappingOnReTrigger(t *testing.T) {
 func TestProcess_UncategorisedPatternIsNotPromoted(t *testing.T) {
 	t.Parallel()
 
-	client := newTestPgClient(t)
+	client := test.PGClient(t)
 	ctx := context.Background()
 	fx := seedPromotionFixture(t, ctx, client)
 
@@ -359,7 +360,7 @@ func TestProcess_UncategorisedPatternIsNotPromoted(t *testing.T) {
 func TestProcess_ExtensionPatternIsNotPromoted(t *testing.T) {
 	t.Parallel()
 
-	client := newTestPgClient(t)
+	client := test.PGClient(t)
 	ctx := context.Background()
 	fx := seedPromotionFixture(t, ctx, client)
 
@@ -405,7 +406,7 @@ func TestProcess_ExtensionPatternIsNotPromoted(t *testing.T) {
 func TestProcess_NoOpWhenAlreadyPromoted(t *testing.T) {
 	t.Parallel()
 
-	client := newTestPgClient(t)
+	client := test.PGClient(t)
 	ctx := context.Background()
 	fx := seedPromotionFixture(t, ctx, client)
 
@@ -465,7 +466,7 @@ func TestProcess_NoOpWhenAlreadyPromoted(t *testing.T) {
 func TestMatchBySiblingOrigin_SiblingWithThirdPartyID(t *testing.T) {
 	t.Parallel()
 
-	client := newTestPgClient(t)
+	client := test.PGClient(t)
 	ctx := context.Background()
 	fx := seedPromotionFixture(t, ctx, client)
 
@@ -595,7 +596,7 @@ func TestMatchBySiblingOrigin_SiblingWithThirdPartyID(t *testing.T) {
 func TestMatchBySiblingOrigin_AmbiguousThirdParties(t *testing.T) {
 	t.Parallel()
 
-	client := newTestPgClient(t)
+	client := test.PGClient(t)
 	ctx := context.Background()
 	fx := seedPromotionFixture(t, ctx, client)
 
@@ -779,7 +780,7 @@ func TestMatchBySiblingOrigin_AmbiguousThirdParties(t *testing.T) {
 func TestMatchBySiblingOrigin_NoSiblings(t *testing.T) {
 	t.Parallel()
 
-	client := newTestPgClient(t)
+	client := test.PGClient(t)
 	ctx := context.Background()
 	fx := seedWorkerFixture(t, ctx, client)
 
@@ -820,7 +821,7 @@ func TestMatchBySiblingOrigin_NoSiblings(t *testing.T) {
 func TestMatchBySiblingOrigin_EmptyDomains(t *testing.T) {
 	t.Parallel()
 
-	client := newTestPgClient(t)
+	client := test.PGClient(t)
 	ctx := context.Background()
 	fx := seedWorkerFixture(t, ctx, client)
 
@@ -861,7 +862,7 @@ func TestMatchBySiblingOrigin_EmptyDomains(t *testing.T) {
 func TestMatchBySiblingOrigin_ConvergentSiblings(t *testing.T) {
 	t.Parallel()
 
-	client := newTestPgClient(t)
+	client := test.PGClient(t)
 	ctx := context.Background()
 	fx := seedPromotionFixture(t, ctx, client)
 
@@ -1015,7 +1016,7 @@ func TestMatchBySiblingOrigin_ConvergentSiblings(t *testing.T) {
 func TestPromoteThirdParty_ExactCommonLinkIgnoresSimilarUnlinked(t *testing.T) {
 	t.Parallel()
 
-	client := newTestPgClient(t)
+	client := test.PGClient(t)
 	ctx := context.Background()
 	fx := seedPromotionFixture(t, ctx, client)
 
@@ -1065,7 +1066,7 @@ func TestPromoteThirdParty_ExactCommonLinkIgnoresSimilarUnlinked(t *testing.T) {
 func TestProcess_BackfillsCommonThirdPartyFromSibling(t *testing.T) {
 	t.Parallel()
 
-	client := newTestPgClient(t)
+	client := test.PGClient(t)
 	ctx := context.Background()
 	fx := seedPromotionFixture(t, ctx, client)
 
@@ -1219,7 +1220,7 @@ func TestProcess_BackfillsCommonThirdPartyFromSibling(t *testing.T) {
 func TestProcess_UncategorisedLinksExistingThirdParty(t *testing.T) {
 	t.Parallel()
 
-	client := newTestPgClient(t)
+	client := test.PGClient(t)
 	ctx := context.Background()
 	fx := seedPromotionFixture(t, ctx, client)
 
@@ -1282,7 +1283,7 @@ func TestProcess_UncategorisedLinksExistingThirdParty(t *testing.T) {
 func TestProcess_SiblingPromotionOnFirstPartyOrigin(t *testing.T) {
 	t.Parallel()
 
-	client := newTestPgClient(t)
+	client := test.PGClient(t)
 	ctx := context.Background()
 	fx := seedPromotionFixture(t, ctx, client)
 
@@ -1435,7 +1436,7 @@ func TestProcess_SiblingPromotionOnFirstPartyOrigin(t *testing.T) {
 func TestProcess_ReenqueuesUnmappedSiblingOnResolve(t *testing.T) {
 	t.Parallel()
 
-	client := newTestPgClient(t)
+	client := test.PGClient(t)
 	ctx := context.Background()
 	fx := seedPromotionFixture(t, ctx, client)
 
@@ -1567,7 +1568,7 @@ func TestProcess_ReenqueuesUnmappedSiblingOnResolve(t *testing.T) {
 func TestProcess_DoesNotReenqueuePromotedOrExtensionSiblings(t *testing.T) {
 	t.Parallel()
 
-	client := newTestPgClient(t)
+	client := test.PGClient(t)
 	ctx := context.Background()
 	fx := seedPromotionFixture(t, ctx, client)
 
@@ -1709,7 +1710,7 @@ func TestProcess_DoesNotReenqueuePromotedOrExtensionSiblings(t *testing.T) {
 func TestProcess_NoReenqueueWhenCommonThirdPartyPreexisted(t *testing.T) {
 	t.Parallel()
 
-	client := newTestPgClient(t)
+	client := test.PGClient(t)
 	ctx := context.Background()
 	fx := seedPromotionFixture(t, ctx, client)
 

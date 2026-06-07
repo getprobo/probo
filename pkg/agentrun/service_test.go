@@ -20,6 +20,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.probo.inc/probo/internal/test"
 	"go.probo.inc/probo/pkg/agentrun"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
@@ -27,7 +28,7 @@ import (
 )
 
 func TestService_Get(t *testing.T) {
-	client := pgClient(t)
+	client := test.PGClient(t)
 	svc := agentrun.NewService(client)
 
 	run := insertPendingRun(
@@ -49,7 +50,7 @@ func TestService_Get(t *testing.T) {
 }
 
 func TestService_ListForOrganizationID(t *testing.T) {
-	client := pgClient(t)
+	client := test.PGClient(t)
 	svc := agentrun.NewService(client)
 
 	orgID := insertTestOrganization(t, client)
@@ -81,7 +82,7 @@ func TestService_ListForOrganizationID(t *testing.T) {
 }
 
 func TestService_CountForOrganizationID(t *testing.T) {
-	client := pgClient(t)
+	client := test.PGClient(t)
 	svc := agentrun.NewService(client)
 
 	orgID := insertTestOrganization(t, client)

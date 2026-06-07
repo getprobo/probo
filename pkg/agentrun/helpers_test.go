@@ -19,7 +19,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"os"
 	"sync"
 	"testing"
 	"time"
@@ -32,14 +31,6 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/llm"
-)
-
-var (
-	sharedPGClient  *pg.Client
-	pgOnce          sync.Once
-	pgInitErr       error
-	ensureTableOnce sync.Once
-	ensureTableErr  error
 )
 
 func testLogger() *log.Logger {
@@ -151,114 +142,6 @@ func (r *simpleRegistry) Agent(name string) (*agent.Agent, error) {
 	}
 
 	return a, nil
-}
-
-func pgClient(t *testing.T) *pg.Client {
-	t.Helper()
-
-	pgOnce.Do(func() {
-		addr := os.Getenv("PROBO_TEST_PG_ADDR")
-		if addr == "" {
-			addr = "localhost:5432"
-		}
-
-		user := os.Getenv("PROBO_TEST_PG_USER")
-		if user == "" {
-			user = "probod"
-		}
-
-		password := os.Getenv("PROBO_TEST_PG_PASSWORD")
-		if password == "" {
-			password = "probod"
-		}
-
-		database := os.Getenv("PROBO_TEST_PG_DATABASE")
-		if database == "" {
-			database = "probod_test"
-		}
-
-		sharedPGClient, pgInitErr = pg.NewClient(
-			pg.WithAddr(addr),
-			pg.WithUser(user),
-			pg.WithPassword(password),
-			pg.WithDatabase(database),
-			pg.WithPoolSize(5),
-		)
-		if pgInitErr != nil {
-			return
-		}
-
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		defer cancel()
-
-		pgInitErr = sharedPGClient.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
-			_, err := conn.Exec(ctx, "SELECT 1")
-			return err
-		})
-	})
-
-	if pgInitErr != nil {
-		t.Skipf("cannot connect to test database: %v", pgInitErr)
-	}
-
-	ensureAgentRunsTable(t, sharedPGClient)
-
-	return sharedPGClient
-}
-
-func ensureAgentRunsTable(t *testing.T, client *pg.Client) {
-	t.Helper()
-
-	ensureTableOnce.Do(func() {
-		ctx := context.Background()
-		ensureTableErr = client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
-			var exists bool
-			if err := conn.QueryRow(
-				ctx,
-				`SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'agent_runs')`,
-			).Scan(&exists); err != nil {
-				return fmt.Errorf("cannot check agent_runs existence: %w", err)
-			}
-
-			if !exists {
-				ddl, err := coredata.Migrations.ReadFile("migrations/20260424T173529Z.sql")
-				if err != nil {
-					return fmt.Errorf("cannot read agent_runs base migration: %w", err)
-				}
-
-				if _, err := conn.Exec(ctx, string(ddl)); err != nil {
-					return fmt.Errorf("cannot apply agent_runs base migration: %w", err)
-				}
-			}
-
-			var hasLeaseGeneration bool
-			if err := conn.QueryRow(
-				ctx,
-				`SELECT EXISTS (
-					SELECT 1
-					FROM information_schema.columns
-					WHERE table_name = 'agent_runs'
-						AND column_name = 'lease_generation'
-				)`,
-			).Scan(&hasLeaseGeneration); err != nil {
-				return fmt.Errorf("cannot check lease_generation column: %w", err)
-			}
-
-			if !hasLeaseGeneration {
-				ddl, err := coredata.Migrations.ReadFile("migrations/20260607T060000Z.sql")
-				if err != nil {
-					return fmt.Errorf("cannot read agent_runs lease generation migration: %w", err)
-				}
-
-				if _, err := conn.Exec(ctx, string(ddl)); err != nil {
-					return fmt.Errorf("cannot apply agent_runs lease generation migration: %w", err)
-				}
-			}
-
-			return nil
-		})
-	})
-	require.NoError(t, ensureTableErr, "cannot ensure agent_runs table")
 }
 
 func insertTestOrganization(t *testing.T, client *pg.Client) gid.GID {
