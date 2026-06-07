@@ -924,16 +924,22 @@ func TestAgentTool_Execute_SuspendAndRestoreSingleLevel(t *testing.T) {
 	store := newMemoryCheckpointer()
 
 	toolReady := make(chan struct{})
-	toolRelease := make(chan struct{})
 
 	var readyOnce sync.Once
 
 	slowTool := agent.FunctionTool[struct{}](
 		"slow_inner_work",
 		"Slow inner work",
-		func(_ context.Context, _ struct{}) (agent.ToolResult, error) {
+		func(ctx context.Context, _ struct{}) (agent.ToolResult, error) {
 			readyOnce.Do(func() { close(toolReady) })
-			<-toolRelease
+
+			// Release only once the graceful-suspend signal has
+			// reached this inner agent, so the post-tool turn
+			// boundary deterministically observes cancellation and
+			// checkpoints instead of completing the run.
+			if sig := agent.SuspendSignalFrom(ctx); sig != nil {
+				<-sig.Done()
+			}
 
 			return agent.ToolResult{Content: "inner tool done"}, nil
 		},
@@ -996,8 +1002,6 @@ func TestAgentTool_Execute_SuspendAndRestoreSingleLevel(t *testing.T) {
 	}
 
 	cancel()
-	time.Sleep(50 * time.Millisecond)
-	close(toolRelease)
 
 	select {
 	case err := <-errCh:
@@ -1043,16 +1047,22 @@ func TestAgentTool_Execute_SuspendAndRestoreMultiLevel(t *testing.T) {
 	store := newMemoryCheckpointer()
 
 	toolReady := make(chan struct{})
-	toolRelease := make(chan struct{})
 
 	var readyOnce sync.Once
 
 	slowTool := agent.FunctionTool[struct{}](
 		"slow_grandchild_work",
 		"Slow grandchild work",
-		func(_ context.Context, _ struct{}) (agent.ToolResult, error) {
+		func(ctx context.Context, _ struct{}) (agent.ToolResult, error) {
 			readyOnce.Do(func() { close(toolReady) })
-			<-toolRelease
+
+			// Release only once the graceful-suspend signal has
+			// propagated down to this grandchild agent, so the
+			// post-tool turn boundary deterministically observes
+			// cancellation and checkpoints instead of completing.
+			if sig := agent.SuspendSignalFrom(ctx); sig != nil {
+				<-sig.Done()
+			}
 
 			return agent.ToolResult{Content: "grandchild tool done"}, nil
 		},
@@ -1134,8 +1144,6 @@ func TestAgentTool_Execute_SuspendAndRestoreMultiLevel(t *testing.T) {
 	}
 
 	cancel()
-	time.Sleep(50 * time.Millisecond)
-	close(toolRelease)
 
 	select {
 	case err := <-errCh:

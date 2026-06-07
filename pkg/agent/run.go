@@ -109,9 +109,12 @@ func withSuspendableToolContext(ctx context.Context, tool Tool) (context.Context
 	}
 
 	execCtx, cancel := context.WithCancelCause(ctx)
-	stop := context.AfterFunc(signal, func() {
-		cancel(context.Cause(signal))
-	})
+	stop := context.AfterFunc(
+		signal,
+		func() {
+			cancel(context.Cause(signal))
+		},
+	)
 
 	return execCtx, func() {
 		stop()
