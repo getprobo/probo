@@ -43,6 +43,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 	"go.probo.inc/probo/packages/emails"
 	"go.probo.inc/probo/pkg/accessreview"
+	"go.probo.inc/probo/pkg/agentrun"
 	"go.probo.inc/probo/pkg/awsconfig"
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/certmanager"
@@ -593,6 +594,8 @@ func (impl *Implm) Run(
 		l.Named("access-review"),
 	)
 
+	agentRunService := agentrun.NewService(pgClient)
+
 	thirdPartyService := thirdparty.NewService(pgClient, fileService, thirdPartyVetter)
 	riskManagementService := riskmanagement.NewService(pgClient)
 
@@ -606,6 +609,7 @@ func (impl *Implm) Run(
 			Trust:             trustService,
 			ESign:             esignService,
 			AccessReview:      accessReviewService,
+			AgentRun:          agentRunService,
 			Mailman:           mailmanService,
 			CookieBanner:      cookieBannerService,
 			Geoloc:            geolocService,

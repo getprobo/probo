@@ -12,7 +12,7 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package probo
+package agentrun
 
 import (
 	"context"
@@ -31,30 +31,28 @@ import (
 	"go.probo.inc/probo/pkg/llm"
 )
 
-type agentRunHandler struct {
+type handler struct {
 	pg            *pg.Client
 	store         *coredata.PGCheckpointer
 	registry      agent.AgentRegistry
 	logger        *log.Logger
 	leaseDuration time.Duration
-	workerID      string
 	shutdownCh    chan struct{}
 	shutdownOnce  sync.Once
 }
 
 var (
-	_ worker.Handler[coredata.AgentRun] = (*agentRunHandler)(nil)
-	_ worker.StaleRecoverer             = (*agentRunHandler)(nil)
+	_ worker.Handler[coredata.AgentRun] = (*handler)(nil)
+	_ worker.StaleRecoverer             = (*handler)(nil)
 )
 
 // Claim loads the next pending agent run, marks it RUNNING with a lease
 // owned by this worker, and returns the row. When no work is available it
 // returns worker.ErrNoTask so the kit can back off until the next tick.
-func (h *agentRunHandler) Claim(ctx context.Context) (coredata.AgentRun, error) {
+func (h *handler) Claim(ctx context.Context) (coredata.AgentRun, error) {
 	var (
 		run            = coredata.AgentRun{}
 		now            = time.Now()
-		leaseOwner     = h.workerID
 		leaseExpiresAt = now.Add(h.leaseDuration)
 	)
 
@@ -67,8 +65,8 @@ func (h *agentRunHandler) Claim(ctx context.Context) (coredata.AgentRun, error) 
 
 			run.Status = coredata.AgentRunStatusRunning
 			run.StartedAt = &now
-			run.LeaseOwner = &leaseOwner
 			run.LeaseExpiresAt = &leaseExpiresAt
+			run.LeaseGeneration++
 			run.UpdatedAt = now
 
 			if err := run.Update(ctx, tx, coredata.NewNoScope()); err != nil {
@@ -99,9 +97,10 @@ func (h *agentRunHandler) Claim(ctx context.Context) (coredata.AgentRun, error) 
 // nil is returned for both successful runs and graceful exits
 // (lease loss, infrastructure suspension) where the row state is
 // already consistent.
-func (h *agentRunHandler) Process(ctx context.Context, run coredata.AgentRun) error {
+func (h *handler) Process(ctx context.Context, run coredata.AgentRun) error {
 	runCtx, cancelRun := context.WithCancelCause(ctx)
 	defer cancelRun(nil)
+	leaseGeneration := run.LeaseGeneration
 
 	forwarderDone := make(chan struct{})
 	defer close(forwarderDone)
@@ -117,14 +116,14 @@ func (h *agentRunHandler) Process(ctx context.Context, run coredata.AgentRun) er
 	heartbeatCtx, cancelHeartbeat := context.WithCancel(ctx)
 	defer cancelHeartbeat()
 
-	go h.heartbeatLease(heartbeatCtx, run.ID.String(), cancelRun)
+	go h.heartbeatLease(heartbeatCtx, run.ID.String(), leaseGeneration, cancelRun)
 
-	return h.executeRun(runCtx, &run)
+	return h.executeRun(runCtx, &run, leaseGeneration)
 }
 
 // RecoverStale resets agent runs whose worker lease has expired back to
-// PENDING so a fresh supervisor can pick them up on the next cycle.
-func (h *agentRunHandler) RecoverStale(ctx context.Context) error {
+// PENDING so a fresh worker can pick them up on the next cycle.
+func (h *handler) RecoverStale(ctx context.Context) error {
 	if err := h.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
@@ -141,13 +140,14 @@ func (h *agentRunHandler) RecoverStale(ctx context.Context) error {
 // in-flight Process forwarder goroutines observe the close and propagate
 // it to their per-run agent stop channels, letting agents checkpoint at
 // the next turn boundary before Process returns.
-func (h *agentRunHandler) signalShutdown() {
+func (h *handler) signalShutdown() {
 	h.shutdownOnce.Do(func() { close(h.shutdownCh) })
 }
 
-func (h *agentRunHandler) heartbeatLease(
+func (h *handler) heartbeatLease(
 	ctx context.Context,
 	runID string,
+	leaseGeneration int64,
 	cancelRun context.CancelCauseFunc,
 ) {
 	ticker := time.NewTicker(h.leaseDuration / 3)
@@ -163,13 +163,19 @@ func (h *agentRunHandler) heartbeatLease(
 			if err := h.pg.WithConn(
 				ctx,
 				func(ctx context.Context, conn pg.Querier) error {
-					rowsAffected, err := coredata.HeartbeatAgentRunLease(ctx, conn, runID, h.workerID, expiresAt)
+					rowsAffected, err := coredata.HeartbeatAgentRunLease(
+						ctx,
+						conn,
+						runID,
+						leaseGeneration,
+						expiresAt,
+					)
 					if err != nil {
 						return err
 					}
 
 					if rowsAffected == 0 {
-						return ErrAgentRunLeaseLost
+						return ErrLeaseLost
 					}
 
 					return nil
@@ -177,10 +183,10 @@ func (h *agentRunHandler) heartbeatLease(
 			); err != nil {
 				h.logger.ErrorCtx(ctx, "cannot heartbeat agent run lease", log.Error(err))
 
-				if errors.Is(err, ErrAgentRunLeaseLost) {
-					cancelRun(ErrAgentRunLeaseLost)
+				if errors.Is(err, ErrLeaseLost) {
+					cancelRun(ErrLeaseLost)
 				} else {
-					cancelRun(fmt.Errorf("%w: %w", ErrAgentRunHeartbeatFailed, err))
+					cancelRun(fmt.Errorf("%w: %w", ErrHeartbeatFailed, err))
 				}
 
 				return
@@ -190,21 +196,21 @@ func (h *agentRunHandler) heartbeatLease(
 }
 
 const (
-	// agentRunErrorMessageMaxLen caps the error string persisted to the
+	// errorMessageMaxLen caps the error string persisted to the
 	// agent_runs.error_message column. Raw tool or LLM errors can embed
 	// URLs with credentials, response snippets containing PII, or partial
 	// records from failed DB lookups; the full context is logged while
 	// only a truncated summary is stored for caller-visible state.
-	agentRunErrorMessageMaxLen = 512
+	errorMessageMaxLen = 512
 )
 
-func sanitizeAgentRunError(err error) string {
+func sanitizeError(err error) string {
 	msg := err.Error()
-	if len(msg) <= agentRunErrorMessageMaxLen {
+	if len(msg) <= errorMessageMaxLen {
 		return msg
 	}
 
-	cut := agentRunErrorMessageMaxLen
+	cut := errorMessageMaxLen
 	for cut > 0 && !utf8.RuneStart(msg[cut]) {
 		cut--
 	}
@@ -212,8 +218,29 @@ func sanitizeAgentRunError(err error) string {
 	return msg[:cut] + "…"
 }
 
-func (h *agentRunHandler) executeRun(ctx context.Context, run *coredata.AgentRun) error {
+type leasedCheckpointer struct {
+	store           *coredata.PGCheckpointer
+	leaseGeneration int64
+}
+
+func (s leasedCheckpointer) Save(ctx context.Context, runID string, cp *agent.Checkpoint) error {
+	return s.store.SaveForLease(ctx, runID, cp, s.leaseGeneration)
+}
+
+func (s leasedCheckpointer) Load(ctx context.Context, runID string) (*agent.Checkpoint, error) {
+	return s.store.Load(ctx, runID)
+}
+
+func (h *handler) executeRun(
+	ctx context.Context,
+	run *coredata.AgentRun,
+	leaseGeneration int64,
+) error {
 	runID := run.ID.String()
+	checkpointer := leasedCheckpointer{
+		store:           h.store,
+		leaseGeneration: leaseGeneration,
+	}
 
 	var (
 		result *agent.Result
@@ -222,7 +249,7 @@ func (h *agentRunHandler) executeRun(ctx context.Context, run *coredata.AgentRun
 
 	if run.Checkpoint != nil {
 		h.logger.InfoCtx(ctx, "resuming agent run", log.String("run_id", runID))
-		result, runErr = agent.Restore(ctx, h.store, runID, h.registry)
+		result, runErr = agent.Restore(ctx, checkpointer, runID, h.registry)
 	} else {
 		h.logger.InfoCtx(ctx, "starting agent run", log.String("run_id", runID))
 
@@ -237,7 +264,7 @@ func (h *agentRunHandler) executeRun(ctx context.Context, run *coredata.AgentRun
 				result, runErr = a.Run(
 					ctx,
 					inputMsgs,
-					agent.WithCheckpointer(h.store, runID),
+					agent.WithCheckpointer(checkpointer, runID),
 				)
 			}
 		}
@@ -246,7 +273,7 @@ func (h *agentRunHandler) executeRun(ctx context.Context, run *coredata.AgentRun
 	// Heartbeat loss: another worker may have taken over. Do not commit
 	// any status — stale recovery will handle the row. Surface the cause
 	// so the worker kit logs and traces a failure for this attempt.
-	if cause := context.Cause(ctx); errors.Is(cause, ErrAgentRunLeaseLost) || errors.Is(cause, ErrAgentRunHeartbeatFailed) {
+	if cause := context.Cause(ctx); errors.Is(cause, ErrLeaseLost) || errors.Is(cause, ErrHeartbeatFailed) {
 		h.logger.WarnCtx(
 			context.WithoutCancel(ctx),
 			"agent run stopped after heartbeat failure; leaving status for stale recovery",
@@ -277,7 +304,6 @@ func (h *agentRunHandler) executeRun(ctx context.Context, run *coredata.AgentRun
 	now := time.Now()
 	run.UpdatedAt = now
 	run.StartedAt = nil
-	run.LeaseOwner = nil
 	run.LeaseExpiresAt = nil
 
 	if runErr == nil {
@@ -304,7 +330,7 @@ func (h *agentRunHandler) executeRun(ctx context.Context, run *coredata.AgentRun
 			log.String("run_id", runID),
 			log.Error(runErr),
 		)
-		msg := sanitizeAgentRunError(runErr)
+		msg := sanitizeError(runErr)
 		run.ErrorMessage = &msg
 	}
 
@@ -313,8 +339,13 @@ func (h *agentRunHandler) executeRun(ctx context.Context, run *coredata.AgentRun
 	if err := h.pg.WithTx(
 		commitCtx,
 		func(ctx context.Context, tx pg.Tx) error {
-			if err := run.Update(ctx, tx, coredata.NewNoScope()); err != nil {
+			rowsAffected, err := coredata.CommitAgentRunResult(ctx, tx, run, leaseGeneration)
+			if err != nil {
 				return err
+			}
+
+			if rowsAffected == 0 {
+				return ErrLeaseLost
 			}
 
 			if run.Status == coredata.AgentRunStatusCompleted {
@@ -326,6 +357,16 @@ func (h *agentRunHandler) executeRun(ctx context.Context, run *coredata.AgentRun
 			return nil
 		},
 	); err != nil {
+		if errors.Is(err, ErrLeaseLost) {
+			h.logger.WarnCtx(
+				commitCtx,
+				"agent run lost lease before commit; discarding stale completion",
+				log.String("run_id", runID),
+			)
+
+			return nil
+		}
+
 		h.logger.ErrorCtx(commitCtx, "cannot commit agent run status", log.Error(err))
 		return fmt.Errorf("cannot commit agent run status: %w", err)
 	}

@@ -133,6 +133,10 @@ const (
 	ActionThirdPartyRiskAssessmentCreate = "core:thirdParty-risk-assessment:create"
 	ActionThirdPartyRiskAssessmentList   = "core:thirdParty-risk-assessment:list"
 
+	// AgentRun actions
+	ActionAgentRunGet  = "core:agent-run:get"
+	ActionAgentRunList = "core:agent-run:list"
+
 	// Framework actions
 	ActionFrameworkGet    = "core:framework:get"
 	ActionFrameworkList   = "core:framework:list"

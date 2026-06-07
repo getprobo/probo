@@ -26,6 +26,7 @@ import (
 	"go.gearno.de/kit/httpserver"
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/accessreview"
+	"go.probo.inc/probo/pkg/agentrun"
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/connector/provider"
@@ -60,6 +61,7 @@ type (
 		Trust             *trust.Service
 		ESign             *esign.Service
 		AccessReview      *accessreview.Service
+		AgentRun          *agentrun.Service
 		Slack             *slack.Service
 		Mailman           *mailman.Service
 		CookieBanner      *cookiebanner.Service
@@ -189,6 +191,7 @@ func NewServer(cfg Config) (*Server, error) {
 			cfg.IAM,
 			cfg.ESign,
 			cfg.AccessReview,
+			cfg.AgentRun,
 			cfg.Mailman,
 			cfg.CookieBanner,
 			cfg.Cookie,

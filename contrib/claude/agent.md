@@ -62,7 +62,7 @@ the cancellation so they complete naturally; the cancel is only
 observed at the next safe boundary.
 
 Use `agent.ErrSuspendForCheckpoint` as the cancel cause when the
-intent is graceful suspend — supervisors that distinguish a
+intent is graceful suspend — workers that distinguish a
 graceful-stop request from infrastructure-level causes (lease loss,
 heartbeat failure) inspect `context.Cause(ctx)` to dispatch.
 
@@ -77,7 +77,7 @@ Implications:
   it must derive its own with `context.WithTimeout(ctx, ...)` inside
   the tool body.
 
-The supervisor (`pkg/probo/agent_run_handler.go`) maps a SIGTERM-driven
+The agent run worker (`pkg/agentrun/handler.go`) maps a SIGTERM-driven
 shutdown broadcast onto a per-run `cancelRun(agent.ErrSuspendForCheckpoint)`,
 so the same contract drives both the public Go API and the worker
 infrastructure path.

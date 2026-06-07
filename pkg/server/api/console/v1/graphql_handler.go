@@ -19,6 +19,7 @@ import (
 
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/accessreview"
+	"go.probo.inc/probo/pkg/agentrun"
 	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/connector/provider"
 	"go.probo.inc/probo/pkg/cookiebanner"
@@ -39,6 +40,7 @@ func NewGraphQLHandler(
 	proboSvc *probo.Service,
 	esignSvc *esign.Service,
 	accessReviewSvc *accessreview.Service,
+	agentRunSvc *agentrun.Service,
 	mailmanSvc *mailman.Service,
 	cookieBannerSvc *cookiebanner.Service,
 	connectorRegistry *connector.ConnectorRegistry,
@@ -56,6 +58,7 @@ func NewGraphQLHandler(
 			iam:               iamSvc,
 			esign:             esignSvc,
 			accessReview:      accessReviewSvc,
+			agentRun:          agentRunSvc,
 			mailman:           mailmanSvc,
 			cookieBanner:      cookieBannerSvc,
 			connectorRegistry: connectorRegistry,

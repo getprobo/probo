@@ -63,9 +63,9 @@ type (
 		Result     ToolResult
 	}
 
-	// Checkpointer is supervisor-internal. Implementations may use raw
+	// Checkpointer is worker-internal. Implementations may use raw
 	// run IDs because public API/service methods perform tenant scoping and
-	// authorization before a run reaches the supervisor.
+	// authorization before a run reaches the worker.
 	Checkpointer interface {
 		Save(ctx context.Context, runID string, cp *Checkpoint) error
 		Load(ctx context.Context, runID string) (*Checkpoint, error)
@@ -76,7 +76,7 @@ type (
 	}
 
 	SuspendedError struct {
-		RunID      string      // Set when the outer loop has a store+runID (supervisor-managed).
+		RunID      string      // Set when the outer loop has a store+runID (worker-managed).
 		Checkpoint *Checkpoint // Set when returning from an inner agent-as-tool (no store).
 	}
 )

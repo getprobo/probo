@@ -369,6 +369,16 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 
 			return types.NewWebhookSubscription(wc), nil
 		}
+	case coredata.AgentRunEntityType:
+		action = probo.ActionAgentRunGet
+		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
+			run, err := r.agentRun.Get(ctx, scope, id)
+			if err != nil {
+				return nil, err
+			}
+
+			return types.NewAgentRun(run), nil
+		}
 	case coredata.AccessReviewCampaignEntityType:
 		action = probo.ActionAccessReviewCampaignGet
 		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {

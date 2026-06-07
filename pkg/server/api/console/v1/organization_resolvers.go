@@ -1173,6 +1173,36 @@ func (r *organizationResolver) Tasks(ctx context.Context, obj *types.Organizatio
 	return types.NewTaskConnection(page, r, obj.ID), nil
 }
 
+// AgentRuns is the resolver for the agentRuns field.
+func (r *organizationResolver) AgentRuns(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AgentRunOrderBy) (*types.AgentRunConnection, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionAgentRunList)
+	if err != nil {
+		return nil, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.AgentRunOrderField]{
+		Field:     coredata.AgentRunOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.AgentRunOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	page, err := r.agentRun.ListForOrganizationID(ctx, scope, obj.ID, cursor)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list organization agent runs", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewAgentRunConnection(page, r, obj.ID), nil
+}
+
 // TrustCenter is the resolver for the trustCenter field.
 func (r *organizationResolver) TrustCenter(ctx context.Context, obj *types.Organization) (*types.TrustCenter, error) {
 	scope, err := r.authorize(ctx, obj.ID, probo.ActionTrustCenterGet)

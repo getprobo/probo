@@ -27,6 +27,7 @@ import (
 	"go.gearno.de/kit/httpserver"
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/accessreview"
+	"go.probo.inc/probo/pkg/agentrun"
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/connector/provider"
@@ -55,6 +56,7 @@ type (
 		iam               *iam.Service
 		esign             *esign.Service
 		accessReview      *accessreview.Service
+		agentRun          *agentrun.Service
 		mailman           *mailman.Service
 		cookieBanner      *cookiebanner.Service
 		connectorRegistry *connector.ConnectorRegistry
@@ -72,6 +74,7 @@ func NewMux(
 	iamSvc *iam.Service,
 	esignSvc *esign.Service,
 	accessReviewSvc *accessreview.Service,
+	agentRunSvc *agentrun.Service,
 	mailmanSvc *mailman.Service,
 	cookieBannerSvc *cookiebanner.Service,
 	cookieConfig securecookie.Config,
@@ -92,6 +95,7 @@ func NewMux(
 		proboSvc,
 		esignSvc,
 		accessReviewSvc,
+		agentRunSvc,
 		mailmanSvc,
 		cookieBannerSvc,
 		connectorRegistry,

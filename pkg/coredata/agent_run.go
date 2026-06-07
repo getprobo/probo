@@ -35,19 +35,19 @@ type (
 	AgentRunStatus string
 
 	AgentRun struct {
-		ID             gid.GID         `db:"id"`
-		OrganizationID gid.GID         `db:"organization_id"`
-		StartAgentName string          `db:"start_agent_name"`
-		Status         AgentRunStatus  `db:"status"`
-		Checkpoint     json.RawMessage `db:"checkpoint"`
-		InputMessages  json.RawMessage `db:"input_messages"`
-		Result         json.RawMessage `db:"result"`
-		ErrorMessage   *string         `db:"error_message"`
-		StartedAt      *time.Time      `db:"started_at"`
-		LeaseOwner     *string         `db:"lease_owner"`
-		LeaseExpiresAt *time.Time      `db:"lease_expires_at"`
-		CreatedAt      time.Time       `db:"created_at"`
-		UpdatedAt      time.Time       `db:"updated_at"`
+		ID              gid.GID         `db:"id"`
+		OrganizationID  gid.GID         `db:"organization_id"`
+		StartAgentName  string          `db:"start_agent_name"`
+		Status          AgentRunStatus  `db:"status"`
+		Checkpoint      json.RawMessage `db:"checkpoint"`
+		InputMessages   json.RawMessage `db:"input_messages"`
+		Result          json.RawMessage `db:"result"`
+		ErrorMessage    *string         `db:"error_message"`
+		StartedAt       *time.Time      `db:"started_at"`
+		LeaseExpiresAt  *time.Time      `db:"lease_expires_at"`
+		LeaseGeneration int64           `db:"lease_generation"`
+		CreatedAt       time.Time       `db:"created_at"`
+		UpdatedAt       time.Time       `db:"updated_at"`
 	}
 
 	AgentRuns []*AgentRun
@@ -178,8 +178,8 @@ SELECT
 	result,
 	error_message,
 	started_at,
-	lease_owner,
 	lease_expires_at,
+	lease_generation,
 	created_at,
 	updated_at
 FROM
@@ -231,8 +231,8 @@ SELECT
 	result,
 	error_message,
 	started_at,
-	lease_owner,
 	lease_expires_at,
+	lease_generation,
 	created_at,
 	updated_at
 FROM
@@ -286,8 +286,8 @@ SELECT
 	result,
 	error_message,
 	started_at,
-	lease_owner,
 	lease_expires_at,
+	lease_generation,
 	created_at,
 	updated_at
 FROM
@@ -383,8 +383,8 @@ RETURNING
 	result,
 	error_message,
 	started_at,
-	lease_owner,
 	lease_expires_at,
+	lease_generation,
 	created_at,
 	updated_at;
 `
@@ -432,8 +432,8 @@ SET
 	result = @result,
 	error_message = @error_message,
 	started_at = @started_at,
-	lease_owner = @lease_owner,
 	lease_expires_at = @lease_expires_at,
+	lease_generation = @lease_generation,
 	updated_at = @updated_at
 WHERE
 	%s
@@ -448,8 +448,8 @@ RETURNING
 	result,
 	error_message,
 	started_at,
-	lease_owner,
 	lease_expires_at,
+	lease_generation,
 	created_at,
 	updated_at;
 `
@@ -462,8 +462,8 @@ RETURNING
 		"result":           e.Result,
 		"error_message":    e.ErrorMessage,
 		"started_at":       e.StartedAt,
-		"lease_owner":      e.LeaseOwner,
 		"lease_expires_at": e.LeaseExpiresAt,
+		"lease_generation": e.LeaseGeneration,
 		"updated_at":       e.UpdatedAt,
 	}
 	maps.Copy(args, scope.SQLArguments())
@@ -516,6 +516,46 @@ WHERE
 	return nil
 }
 
+func CommitAgentRunResult(
+	ctx context.Context,
+	tx pg.Tx,
+	e *AgentRun,
+	leaseGeneration int64,
+) (int64, error) {
+	q := `
+UPDATE agent_runs
+SET
+	status = @status,
+	result = @result,
+	error_message = @error_message,
+	started_at = @started_at,
+	lease_expires_at = @lease_expires_at,
+	updated_at = @updated_at
+WHERE
+	id = @id
+	AND status = 'RUNNING'
+	AND lease_generation = @lease_generation;
+`
+
+	args := pgx.StrictNamedArgs{
+		"id":               e.ID.String(),
+		"status":           e.Status,
+		"result":           e.Result,
+		"error_message":    e.ErrorMessage,
+		"started_at":       e.StartedAt,
+		"lease_expires_at": e.LeaseExpiresAt,
+		"updated_at":       e.UpdatedAt,
+		"lease_generation": leaseGeneration,
+	}
+
+	tag, err := tx.Exec(ctx, q, args)
+	if err != nil {
+		return 0, fmt.Errorf("cannot commit agent run result: %w", err)
+	}
+
+	return tag.RowsAffected(), nil
+}
+
 func (e *AgentRun) LoadNextPendingForUpdateSkipLocked(
 	ctx context.Context,
 	tx pg.Tx,
@@ -531,8 +571,8 @@ SELECT
 	result,
 	error_message,
 	started_at,
-	lease_owner,
 	lease_expires_at,
+	lease_generation,
 	created_at,
 	updated_at
 FROM
@@ -566,7 +606,7 @@ FOR UPDATE SKIP LOCKED;
 // ResetStaleAgentRuns resets agent runs whose worker lease has expired.
 // The worker refreshes lease_expires_at from a separate heartbeat goroutine,
 // so a long LLM or tool call is not considered stale while the process is alive.
-// Stale recovery returns rows to PENDING so the supervisor auto-resumes
+// Stale recovery returns rows to PENDING so the worker auto-resumes
 // from checkpoint when one exists.
 func ResetStaleAgentRuns(ctx context.Context, conn pg.Querier) error {
 	q := `
@@ -574,7 +614,6 @@ UPDATE agent_runs
 SET
 	status = 'PENDING',
 	started_at = NULL,
-	lease_owner = NULL,
 	lease_expires_at = NULL,
 	updated_at = now()
 WHERE
@@ -597,7 +636,7 @@ func HeartbeatAgentRunLease(
 	ctx context.Context,
 	conn pg.Querier,
 	runID string,
-	leaseOwner string,
+	leaseGeneration int64,
 	expiresAt time.Time,
 ) (int64, error) {
 	q := `
@@ -608,13 +647,13 @@ SET
 WHERE
 	id = @id
 	AND status = 'RUNNING'
-	AND lease_owner = @lease_owner;
+	AND lease_generation = @lease_generation;
 `
 
 	args := pgx.StrictNamedArgs{
 		"id":               runID,
-		"lease_owner":      leaseOwner,
 		"lease_expires_at": expiresAt,
+		"lease_generation": leaseGeneration,
 	}
 
 	tag, err := conn.Exec(ctx, q, args)
@@ -692,6 +731,55 @@ WHERE
 
 			if tag.RowsAffected() == 0 {
 				return fmt.Errorf("cannot save checkpoint: agent run %s not found", runID)
+			}
+
+			return nil
+		},
+	)
+}
+
+func (s *PGCheckpointer) SaveForLease(
+	ctx context.Context,
+	runID string,
+	cp *agent.Checkpoint,
+	leaseGeneration int64,
+) error {
+	if _, err := gid.ParseGID(runID); err != nil {
+		return fmt.Errorf("cannot parse agent run id: %w", err)
+	}
+
+	data, err := s.marshalAgentCheckpoint(cp)
+	if err != nil {
+		return err
+	}
+
+	return s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			q := `
+UPDATE agent_runs
+SET
+	checkpoint = @checkpoint,
+	updated_at = now()
+WHERE
+	id = @id
+	AND status = 'RUNNING'
+	AND lease_generation = @lease_generation;
+`
+
+			args := pgx.StrictNamedArgs{
+				"id":               runID,
+				"checkpoint":       json.RawMessage(data),
+				"lease_generation": leaseGeneration,
+			}
+
+			tag, err := conn.Exec(ctx, q, args)
+			if err != nil {
+				return fmt.Errorf("cannot save checkpoint: %w", err)
+			}
+
+			if tag.RowsAffected() == 0 {
+				return fmt.Errorf("cannot save checkpoint: lease lost")
 			}
 
 			return nil

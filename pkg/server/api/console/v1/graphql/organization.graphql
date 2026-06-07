@@ -311,6 +311,14 @@ type Organization implements Node {
         orderBy: TaskOrder
     ): TaskConnection! @goField(forceResolver: true)
 
+    agentRuns(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: AgentRunOrder
+    ): AgentRunConnection! @goField(forceResolver: true)
+
     trustCenter: TrustCenter @goField(forceResolver: true)
     customDomain: CustomDomain @goField(forceResolver: true)
     trustCenterFiles(

@@ -12,14 +12,13 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package probo
+package agentrun
 
 import (
 	"context"
 	"errors"
 	"time"
 
-	"go.gearno.de/crypto/uuid"
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
 	"go.gearno.de/kit/worker"
@@ -28,14 +27,14 @@ import (
 )
 
 type (
-	AgentRunSupervisor struct {
-		handler *agentRunHandler
-		worker  *worker.Worker[coredata.AgentRun]
+	Worker struct {
+		handler   *handler
+		kitWorker *worker.Worker[coredata.AgentRun]
 	}
 
-	AgentRunSupervisorOption func(*agentRunSupervisorConfig)
+	WorkerOption func(*workerConfig)
 
-	agentRunSupervisorConfig struct {
+	workerConfig struct {
 		interval       time.Duration
 		leaseDuration  time.Duration
 		maxConcurrency int
@@ -43,42 +42,42 @@ type (
 )
 
 var (
-	ErrAgentRunHeartbeatFailed = errors.New("agent run heartbeat failed")
-	ErrAgentRunLeaseLost       = errors.New("agent run lease lost")
+	ErrHeartbeatFailed = errors.New("agent run heartbeat failed")
+	ErrLeaseLost       = errors.New("agent run lease lost")
 )
 
-func WithAgentRunSupervisorInterval(d time.Duration) AgentRunSupervisorOption {
-	return func(c *agentRunSupervisorConfig) {
+func WithWorkerInterval(d time.Duration) WorkerOption {
+	return func(c *workerConfig) {
 		if d > 0 {
 			c.interval = d
 		}
 	}
 }
 
-func WithAgentRunSupervisorLeaseDuration(d time.Duration) AgentRunSupervisorOption {
-	return func(c *agentRunSupervisorConfig) {
+func WithWorkerLeaseDuration(d time.Duration) WorkerOption {
+	return func(c *workerConfig) {
 		if d > 0 {
 			c.leaseDuration = d
 		}
 	}
 }
 
-func WithAgentRunSupervisorMaxConcurrency(n int) AgentRunSupervisorOption {
-	return func(c *agentRunSupervisorConfig) {
+func WithWorkerMaxConcurrency(n int) WorkerOption {
+	return func(c *workerConfig) {
 		if n > 0 {
 			c.maxConcurrency = n
 		}
 	}
 }
 
-func NewAgentRunSupervisor(
+func NewWorker(
 	pgClient *pg.Client,
 	store *coredata.PGCheckpointer,
 	registry agent.AgentRegistry,
 	logger *log.Logger,
-	opts ...AgentRunSupervisorOption,
-) *AgentRunSupervisor {
-	cfg := agentRunSupervisorConfig{
+	opts ...WorkerOption,
+) *Worker {
+	cfg := workerConfig{
 		interval:       10 * time.Second,
 		leaseDuration:  5 * time.Minute,
 		maxConcurrency: 5,
@@ -88,45 +87,35 @@ func NewAgentRunSupervisor(
 		opt(&cfg)
 	}
 
-	h := &agentRunHandler{
+	h := &handler{
 		pg:            pgClient,
 		store:         store,
 		registry:      registry,
 		logger:        logger,
 		leaseDuration: cfg.leaseDuration,
-		workerID:      uuid.MustNewV4().String(),
 		shutdownCh:    make(chan struct{}),
 	}
 
 	w := worker.New(
-		"agent-run-supervisor",
+		"agent-run-worker",
 		h,
 		logger,
 		worker.WithInterval(cfg.interval),
 		worker.WithMaxConcurrency(cfg.maxConcurrency),
 	)
 
-	return &AgentRunSupervisor{handler: h, worker: w}
+	return &Worker{handler: h, kitWorker: w}
 }
 
-// Run starts the supervisor loop. It blocks until ctx is cancelled, then
+// Run starts the worker loop. It blocks until ctx is cancelled, then
 // closes the shutdown broadcast channel so in-flight Process calls can
 // checkpoint and exit, and waits for all of them to drain before
 // returning.
 //
 // signalShutdown is registered without a stop hook because it is
 // idempotent (sync.Once) and we want it to fire on every ctx
-// cancellation, even one that races with worker.Run returning.
-func (s *AgentRunSupervisor) Run(ctx context.Context) error {
-	context.AfterFunc(ctx, s.handler.signalShutdown)
-	return s.worker.Run(ctx)
-}
-
-// ShutdownBroadcastForTests returns a channel that closes once the
-// supervisor has broadcast graceful shutdown to all in-flight runs.
-// Exposed for tests that need to synchronize tool release with shutdown
-// propagation; not a stable API and not part of the supervisor's public
-// operational contract.
-func (s *AgentRunSupervisor) ShutdownBroadcastForTests() <-chan struct{} {
-	return s.handler.shutdownCh
+// cancellation, even one that races with kitWorker.Run returning.
+func (w *Worker) Run(ctx context.Context) error {
+	context.AfterFunc(ctx, w.handler.signalShutdown)
+	return w.kitWorker.Run(ctx)
 }
