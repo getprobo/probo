@@ -1210,6 +1210,7 @@ func TestAgentTool_Execute_LeafToolsRemainDetachedOnSuspend(t *testing.T) {
 				if ctx.Err() != nil {
 					leafCtxCanceled.Store(true)
 				}
+
 				return agent.ToolResult{Content: "leaf completed"}, nil
 			}
 		},
@@ -1235,10 +1236,12 @@ func TestAgentTool_Execute_LeafToolsRemainDetachedOnSuspend(t *testing.T) {
 	)
 
 	ctx, cancel := context.WithCancel(context.Background())
+
 	type runResult struct {
 		result *agent.Result
 		err    error
 	}
+
 	runDone := make(chan runResult, 1)
 
 	go func() {

@@ -281,6 +281,7 @@ func resetRunToPending(t *testing.T, client *pg.Client, runID gid.GID) {
 				 WHERE id = $1`,
 				runID.String(),
 			)
+
 			return err
 		},
 	)
@@ -328,6 +329,7 @@ func bumpRunLeaseGeneration(t *testing.T, client *pg.Client, runID gid.GID) {
 				 WHERE id = $1`,
 				runID.String(),
 			)
+
 			return err
 		},
 	)

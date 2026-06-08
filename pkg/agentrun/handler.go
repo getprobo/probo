@@ -100,6 +100,7 @@ func (h *handler) Claim(ctx context.Context) (coredata.AgentRun, error) {
 func (h *handler) Process(ctx context.Context, run coredata.AgentRun) error {
 	runCtx, cancelRun := context.WithCancelCause(ctx)
 	defer cancelRun(nil)
+
 	leaseGeneration := run.LeaseGeneration
 
 	forwarderDone := make(chan struct{})
@@ -368,6 +369,7 @@ func (h *handler) executeRun(
 		}
 
 		h.logger.ErrorCtx(commitCtx, "cannot commit agent run status", log.Error(err))
+
 		return fmt.Errorf("cannot commit agent run status: %w", err)
 	}
 

@@ -60,6 +60,7 @@ func TestWorker_PicksUpAndCompletes(t *testing.T) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
+
 	go func() { _ = runWorker.Run(ctx) }()
 
 	require.Eventually(
@@ -92,6 +93,7 @@ func TestWorker_StopAndResume(t *testing.T) {
 		func(_ context.Context, _ struct{}) (agent.ToolResult, error) {
 			close(toolReady)
 			<-toolRelease
+
 			return agent.ToolResult{Content: "work done"}, nil
 		},
 	)
@@ -122,6 +124,7 @@ func TestWorker_StopAndResume(t *testing.T) {
 
 	ctx1, cancel1 := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel1()
+
 	go func() { _ = runWorker.Run(ctx1) }()
 
 	select {
@@ -164,6 +167,7 @@ func TestWorker_StopAndResume(t *testing.T) {
 
 	ctx2, cancel2 := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel2()
+
 	go func() { _ = runWorker2.Run(ctx2) }()
 
 	require.Eventually(
@@ -200,6 +204,7 @@ func TestWorker_StopAndResumeAcrossHandoff(t *testing.T) {
 		func(_ context.Context, _ struct{}) (agent.ToolResult, error) {
 			close(toolReady)
 			<-toolRelease
+
 			return agent.ToolResult{Content: "child work done"}, nil
 		},
 	)
@@ -250,6 +255,7 @@ func TestWorker_StopAndResumeAcrossHandoff(t *testing.T) {
 
 	ctx1, cancel1 := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel1()
+
 	go func() { _ = runWorker.Run(ctx1) }()
 
 	select {
@@ -295,6 +301,7 @@ func TestWorker_StopAndResumeAcrossHandoff(t *testing.T) {
 
 	ctx2, cancel2 := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel2()
+
 	go func() { _ = runWorker2.Run(ctx2) }()
 
 	require.Eventually(
@@ -329,6 +336,7 @@ func TestWorker_StopAndResumeNestedSubAgent(t *testing.T) {
 		func(_ context.Context, _ struct{}) (agent.ToolResult, error) {
 			readyOnce.Do(func() { close(toolReady) })
 			<-toolRelease
+
 			return agent.ToolResult{Content: "inner work done"}, nil
 		},
 	)
@@ -379,6 +387,7 @@ func TestWorker_StopAndResumeNestedSubAgent(t *testing.T) {
 
 	ctx1, cancel1 := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel1()
+
 	go func() { _ = runWorker.Run(ctx1) }()
 
 	select {
@@ -425,6 +434,7 @@ func TestWorker_StopAndResumeNestedSubAgent(t *testing.T) {
 
 	ctx2, cancel2 := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel2()
+
 	go func() { _ = runWorker2.Run(ctx2) }()
 
 	require.Eventually(
@@ -459,6 +469,7 @@ func TestWorker_StopAndResumeNestedSubAgentMultiLevel(t *testing.T) {
 		func(_ context.Context, _ struct{}) (agent.ToolResult, error) {
 			readyOnce.Do(func() { close(toolReady) })
 			<-toolRelease
+
 			return agent.ToolResult{Content: "grandchild work done"}, nil
 		},
 	)
@@ -524,6 +535,7 @@ func TestWorker_StopAndResumeNestedSubAgentMultiLevel(t *testing.T) {
 
 	ctx1, cancel1 := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel1()
+
 	go func() { _ = runWorker.Run(ctx1) }()
 
 	select {
@@ -574,6 +586,7 @@ func TestWorker_StopAndResumeNestedSubAgentMultiLevel(t *testing.T) {
 
 	ctx2, cancel2 := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel2()
+
 	go func() { _ = runWorker2.Run(ctx2) }()
 
 	require.Eventually(
@@ -697,6 +710,7 @@ func TestWorker_ReclaimedRunDoesNotClobberWinner(t *testing.T) {
 		func(_ context.Context, _ struct{}) (agent.ToolResult, error) {
 			close(toolReady)
 			<-toolRelease
+
 			return agent.ToolResult{Content: "work done"}, nil
 		},
 	)
@@ -735,6 +749,7 @@ func TestWorker_ReclaimedRunDoesNotClobberWinner(t *testing.T) {
 
 	ctxA, cancelA := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancelA()
+
 	go func() { _ = runWorkerA.Run(ctxA) }()
 
 	select {
@@ -754,6 +769,7 @@ func TestWorker_ReclaimedRunDoesNotClobberWinner(t *testing.T) {
 
 	ctxB, cancelB := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancelB()
+
 	go func() { _ = runWorkerB.Run(ctxB) }()
 
 	require.Eventually(
@@ -777,6 +793,7 @@ func TestWorker_ReclaimedRunDoesNotClobberWinner(t *testing.T) {
 		func() bool {
 			provider.mu.Lock()
 			defer provider.mu.Unlock()
+
 			return provider.calls >= 3
 		},
 		15*time.Second,
@@ -815,6 +832,7 @@ func TestWorker_UnknownAgentFails(t *testing.T) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
+
 	go func() { _ = runWorker.Run(ctx) }()
 
 	require.Eventually(
@@ -858,6 +876,7 @@ func TestWorker_InvalidInputMessagesFails(t *testing.T) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
+
 	go func() { _ = runWorker.Run(ctx) }()
 
 	require.Eventually(
@@ -882,33 +901,49 @@ func TestWorker_SIGTERM(t *testing.T) {
 		return
 	}
 
+	// Skip when the test database is unreachable so the parent does not
+	// wait on a subprocess that skips itself for the same reason and never
+	// prints READY.
+	test.PGClient(t)
+
 	cmd := exec.Command(os.Args[0], "-test.run=^TestWorker_SIGTERM$")
+
 	cmd.Env = append(os.Environ(), "TEST_SIGTERM_SUBPROCESS=1")
 
 	stdout, err := cmd.StdoutPipe()
 	require.NoError(t, err)
+
 	cmd.Stderr = cmd.Stdout
 
 	require.NoError(t, cmd.Start())
 
 	ready := make(chan struct{})
 	scanDone := make(chan struct{})
-	var linesMu sync.Mutex
-	var lines []string
+
+	var (
+		linesMu sync.Mutex
+		lines   []string
+	)
+
 	snapshotLines := func() string {
 		linesMu.Lock()
 		defer linesMu.Unlock()
+
 		return strings.Join(lines, "\n")
 	}
+
 	go func() {
 		defer close(scanDone)
 
 		scanner := bufio.NewScanner(stdout)
 		for scanner.Scan() {
 			line := scanner.Text()
+
 			linesMu.Lock()
+
 			lines = append(lines, line)
 			linesMu.Unlock()
+
 			if line == "READY" {
 				close(ready)
 			}
@@ -919,13 +954,16 @@ func TestWorker_SIGTERM(t *testing.T) {
 	case <-ready:
 	case <-time.After(20 * time.Second):
 		_ = cmd.Process.Kill()
+
 		t.Fatalf("subprocess did not become ready for SIGTERM\n%s", snapshotLines())
 	}
 
 	require.NoError(t, cmd.Process.Signal(syscall.SIGTERM))
+
 	if err := cmd.Wait(); err != nil {
 		t.Fatalf("subprocess failed: %v\n%s", err, snapshotLines())
 	}
+
 	<-scanDone
 }
 
@@ -967,7 +1005,7 @@ func runSIGTERMSubprocess(t *testing.T) {
 		t.Fatal("tool did not start before SIGTERM")
 	}
 
-	fmt.Fprintln(os.Stdout, "READY")
+	_, _ = fmt.Fprintln(os.Stdout, "READY")
 
 	select {
 	case <-runWorker.ShutdownBroadcast():
@@ -995,6 +1033,7 @@ func makeBattleTools(workStarted chan<- struct{}) []agent.Tool {
 			func(ctx context.Context, _ workInput) (agent.ToolResult, error) {
 				close(workStarted)
 				<-ctx.Done()
+
 				return agent.ToolResult{Content: "interrupted"}, ctx.Err()
 			},
 		),
