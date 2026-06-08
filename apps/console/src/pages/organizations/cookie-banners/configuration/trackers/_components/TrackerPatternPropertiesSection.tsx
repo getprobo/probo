@@ -14,7 +14,7 @@
 
 import { getTrackerSourceBadge, getTrackerTypeBadge, humanizeSeconds } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
-import { Badge, Card, PropertyRow } from "@probo/ui";
+import { Badge, Card, IconSquareBehindSquare2, PropertyRow, useToast } from "@probo/ui";
 import { graphql, useFragment } from "react-relay";
 
 import type { TrackerPatternPropertiesSection_trackerPattern$key } from "#/__generated__/core/TrackerPatternPropertiesSection_trackerPattern.graphql";
@@ -50,6 +50,7 @@ interface TrackerPatternPropertiesSectionProps {
 export function TrackerPatternPropertiesSection({
   trackerPatternKey,
 }: TrackerPatternPropertiesSectionProps) {
+  const { toast } = useToast();
   const { __ } = useTranslate();
   const pattern = useFragment(
     trackerPatternPropertiesSectionFragment,
@@ -91,6 +92,7 @@ export function TrackerPatternPropertiesSection({
           : pattern.commonThirdParty
             ? (
                 <div className="flex items-center gap-2">
+                  <Badge variant="info">{__("Common catalog")}</Badge>
                   <span className="text-sm">{pattern.commonThirdParty.name}</span>
                 </div>
               )
@@ -102,20 +104,32 @@ export function TrackerPatternPropertiesSection({
         </span>
       </PropertyRow>
       {pattern.description && (
-        <PropertyRow label={__("Description")}>
-          <span className="text-sm">{pattern.description}</span>
-        </PropertyRow>
+        <>
+          <PropertyRow label={__("Description")}>
+            <span className="text-sm">{pattern.description}</span>
+          </PropertyRow>
+          <PropertyRow label={__("Description source")}>
+            {pattern.commonTrackerPatternId
+              ? (
+                  <div className="flex items-center gap-2">
+                    <Badge variant="info">{__("Common catalog")}</Badge>
+                    <span className="font-mono text-xs text-txt-tertiary">{pattern.commonTrackerPatternId}</span>
+                    <button
+                      type="button"
+                      className="p-1 rounded hover:bg-bg-hover transition-colors cursor-pointer"
+                      onClick={() => {
+                        void navigator.clipboard.writeText(pattern.commonTrackerPatternId);
+                        toast({ title: __("Copied"), description: __("Common Tracker ID copied to clipboard"), variant: "success" });
+                      }}
+                    >
+                      <IconSquareBehindSquare2 size={16} />
+                    </button>
+                  </div>
+                )
+              : <Badge variant="neutral">{__("Manual")}</Badge>}
+          </PropertyRow>
+        </>
       )}
-      <PropertyRow label={__("Description source")}>
-        {pattern.commonTrackerPatternId
-          ? (
-              <div className="flex items-center gap-2">
-                <Badge variant="info">{__("Common catalog")}</Badge>
-                <span className="font-mono text-xs text-txt-tertiary">{pattern.commonTrackerPatternId}</span>
-              </div>
-            )
-          : <Badge variant="neutral">{__("Manual")}</Badge>}
-      </PropertyRow>
       <PropertyRow label={__("Excluded")}>
         <span className="text-sm">{pattern.excluded ? __("Yes") : __("No")}</span>
       </PropertyRow>
