@@ -21,5 +21,6 @@
 DROP INDEX IF EXISTS idx_agent_runs_running_lease;
 
 ALTER TABLE agent_runs
-	DROP COLUMN lease_expires_at,
-	DROP COLUMN lease_generation;
+	DROP COLUMN IF EXISTS lease_owner,
+	DROP COLUMN IF EXISTS lease_expires_at,
+	DROP COLUMN IF EXISTS lease_generation;
