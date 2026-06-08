@@ -17,6 +17,7 @@ package drivers
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -28,20 +29,64 @@ import (
 )
 
 // DocuSignDriver fetches account users from DocuSign via OAuth2-authenticated
-// REST API requests. It auto-discovers the account ID and base URI from the
-// OAuth2 userinfo endpoint, then paginates through the eSignature Users API.
+// REST API requests. It resolves the data-center base URI for the configured
+// account from the OAuth2 userinfo endpoint, then paginates through the
+// eSignature Users API. The account is the one the user picked after OAuth
+// (a DocuSign user may have access to several).
 type DocuSignDriver struct {
 	httpClient *http.Client
+	accountID  string
 }
 
 var _ Driver = (*DocuSignDriver)(nil)
 
-type docusignUserInfoResponse struct {
-	Accounts []struct {
-		AccountID string `json:"account_id"`
-		IsDefault bool   `json:"is_default"`
-		BaseURI   string `json:"base_uri"`
-	} `json:"accounts"`
+// errDocuSignUserInfoStatus marks a non-2xx userinfo response (typically a
+// revoked or expired token). Callers that treat a dead token as terminal —
+// the name resolver — branch on it via errors.Is; the driver and picker
+// surface it as an ordinary failure.
+var errDocuSignUserInfoStatus = errors.New("docusign userinfo returned a non-success status")
+
+// docusignAccount is one entry of the /oauth/userinfo accounts list, carrying
+// every field the driver, name resolver and picker key off.
+type docusignAccount struct {
+	AccountID   string `json:"account_id"`
+	AccountName string `json:"account_name"`
+	BaseURI     string `json:"base_uri"`
+}
+
+// fetchDocuSignAccounts returns the DocuSign accounts the access token can
+// reach, from the OAuth2 userinfo endpoint. A non-2xx response yields
+// errDocuSignUserInfoStatus; request and decode failures surface as ordinary
+// errors so transient conditions stay distinguishable from a dead token.
+func fetchDocuSignAccounts(ctx context.Context, httpClient *http.Client) ([]docusignAccount, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, docusignUserInfoEndpoint, nil)
+	if err != nil {
+		return nil, fmt.Errorf("cannot create docusign userinfo request: %w", err)
+	}
+
+	req.Header.Set("Accept", "application/json")
+
+	httpResp, err := httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("cannot execute docusign userinfo request: %w", err)
+	}
+
+	defer func() {
+		_ = httpResp.Body.Close()
+	}()
+
+	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
+		return nil, fmt.Errorf("%w: status %d", errDocuSignUserInfoStatus, httpResp.StatusCode)
+	}
+
+	var resp struct {
+		Accounts []docusignAccount `json:"accounts"`
+	}
+	if err := json.NewDecoder(httpResp.Body).Decode(&resp); err != nil {
+		return nil, fmt.Errorf("cannot decode docusign userinfo response: %w", err)
+	}
+
+	return resp.Accounts, nil
 }
 
 type docusignUsersResponse struct {
@@ -67,14 +112,15 @@ const (
 	docusignUsersPageSize    = 100
 )
 
-func NewDocuSignDriver(httpClient *http.Client) *DocuSignDriver {
+func NewDocuSignDriver(httpClient *http.Client, accountID string) *DocuSignDriver {
 	return &DocuSignDriver{
 		httpClient: httpClient,
+		accountID:  accountID,
 	}
 }
 
 func (d *DocuSignDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error) {
-	accountID, baseURI, err := d.discoverAccount(ctx)
+	baseURI, err := d.discoverBaseURI(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("cannot discover docusign account: %w", err)
 	}
@@ -84,7 +130,7 @@ func (d *DocuSignDriver) ListAccounts(ctx context.Context) ([]AccountRecord, err
 	startPosition := 0
 
 	for range maxPaginationPages {
-		resp, err := d.queryUsers(ctx, baseURI, accountID, startPosition)
+		resp, err := d.queryUsers(ctx, baseURI, d.accountID, startPosition)
 		if err != nil {
 			return nil, err
 		}
@@ -147,43 +193,23 @@ func (d *DocuSignDriver) ListAccounts(ctx context.Context) ([]AccountRecord, err
 	return nil, fmt.Errorf("cannot list all docusign accounts: %w", ErrPaginationLimitReached)
 }
 
-func (d *DocuSignDriver) discoverAccount(ctx context.Context) (accountID string, baseURI string, err error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, docusignUserInfoEndpoint, nil)
+// discoverBaseURI resolves the data-center base URI (e.g.
+// https://na3.docusign.net) for the configured account from the OAuth2
+// userinfo endpoint. DocuSign issues account-specific base URIs, so the
+// eSignature REST host cannot be hardcoded.
+func (d *DocuSignDriver) discoverBaseURI(ctx context.Context) (string, error) {
+	accounts, err := fetchDocuSignAccounts(ctx, d.httpClient)
 	if err != nil {
-		return "", "", fmt.Errorf("cannot create docusign userinfo request: %w", err)
+		return "", err
 	}
 
-	req.Header.Set("Accept", "application/json")
-
-	httpResp, err := d.httpClient.Do(req)
-	if err != nil {
-		return "", "", fmt.Errorf("cannot execute docusign userinfo request: %w", err)
-	}
-
-	defer func() {
-		_ = httpResp.Body.Close()
-	}()
-
-	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
-		return "", "", fmt.Errorf("cannot fetch docusign userinfo: unexpected status %d", httpResp.StatusCode)
-	}
-
-	var resp docusignUserInfoResponse
-	if err := json.NewDecoder(httpResp.Body).Decode(&resp); err != nil {
-		return "", "", fmt.Errorf("cannot decode docusign userinfo response: %w", err)
-	}
-
-	for _, account := range resp.Accounts {
-		if account.IsDefault {
-			return account.AccountID, account.BaseURI, nil
+	for _, account := range accounts {
+		if account.AccountID == d.accountID {
+			return account.BaseURI, nil
 		}
 	}
 
-	if len(resp.Accounts) > 0 {
-		return resp.Accounts[0].AccountID, resp.Accounts[0].BaseURI, nil
-	}
-
-	return "", "", fmt.Errorf("no docusign accounts found in userinfo response")
+	return "", fmt.Errorf("docusign account not found in userinfo")
 }
 
 func (d *DocuSignDriver) queryUsers(ctx context.Context, baseURI string, accountID string, startPosition int) (*docusignUsersResponse, error) {

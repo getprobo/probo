@@ -513,52 +513,34 @@ func (r *hubspotNameResolver) ResolveInstanceName(ctx context.Context) (string, 
 	return resp.AccountName, nil
 }
 
-// docusignNameResolver resolves the DocuSign account name from userinfo.
+// docusignNameResolver resolves the configured DocuSign account's name from
+// the OAuth2 userinfo endpoint, for the AccessReviewSource title.
 type docusignNameResolver struct {
 	httpClient *http.Client
+	accountID  string
 }
 
-func NewDocuSignNameResolver(httpClient *http.Client) NameResolver {
-	return &docusignNameResolver{httpClient: httpClient}
+func NewDocuSignNameResolver(httpClient *http.Client, accountID string) NameResolver {
+	return &docusignNameResolver{httpClient: httpClient, accountID: accountID}
 }
 
 func (r *docusignNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, docusignUserInfoEndpoint, nil)
+	accounts, err := fetchDocuSignAccounts(ctx, r.httpClient)
 	if err != nil {
-		return "", fmt.Errorf("cannot create docusign userinfo request: %w", err)
+		// A dead token (non-2xx) is terminal: the source-name worker marks
+		// the source synced on ("", nil), so it stops retrying. Transient and
+		// decode failures stay errors so the worker retries.
+		if errors.Is(err, errDocuSignUserInfoStatus) {
+			return "", nil
+		}
+
+		return "", err
 	}
 
-	req.Header.Set("Accept", "application/json")
-
-	httpResp, err := r.httpClient.Do(req)
-	if err != nil {
-		return "", fmt.Errorf("cannot execute docusign userinfo request: %w", err)
-	}
-
-	defer func() { _ = httpResp.Body.Close() }()
-
-	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
-		return "", fmt.Errorf("cannot fetch docusign userinfo: unexpected status %d", httpResp.StatusCode)
-	}
-
-	var resp struct {
-		Accounts []struct {
-			AccountName string `json:"account_name"`
-			IsDefault   bool   `json:"is_default"`
-		} `json:"accounts"`
-	}
-	if err := json.NewDecoder(httpResp.Body).Decode(&resp); err != nil {
-		return "", fmt.Errorf("cannot decode docusign userinfo response: %w", err)
-	}
-
-	for _, account := range resp.Accounts {
-		if account.IsDefault {
+	for _, account := range accounts {
+		if account.AccountID == r.accountID {
 			return account.AccountName, nil
 		}
-	}
-
-	if len(resp.Accounts) > 0 {
-		return resp.Accounts[0].AccountName, nil
 	}
 
 	return "", nil

@@ -26,17 +26,27 @@ import (
 func TestDocuSignDriver(t *testing.T) {
 	t.Parallel()
 
+	// Account UUID matches the userinfo cassette: the driver resolves the
+	// selected account's data-center base URI before listing its users.
+	const accountID = "a1a1a1a1-1111-4111-8111-111111111111"
+
 	rec := newRecorder(t, "testdata/docusign", "DOCUSIGN_TOKEN")
 	client := newVCRClient(rec, bearerAuth(os.Getenv("DOCUSIGN_TOKEN")))
-	driver := NewDocuSignDriver(client)
+	driver := NewDocuSignDriver(client, accountID)
 
 	records, err := driver.ListAccounts(context.Background())
 	require.NoError(t, err)
-	require.NotEmpty(t, records)
+	assert.Len(t, records, 2)
 
 	r := records[0]
-	assert.NotEmpty(t, r.Email)
-	assert.NotEmpty(t, r.FullName)
-	assert.NotEmpty(t, r.ExternalID)
-	assert.NotEmpty(t, r.Roles)
+	assert.Equal(t, "jane.doe@example.com", r.Email)
+	assert.Equal(t, "Jane Doe", r.FullName)
+	assert.Equal(t, "11111111-1111-4111-8111-111111111111", r.ExternalID)
+	assert.Equal(t, []string{"Account Administrator"}, r.Roles)
+	assert.Equal(t, "CTO", r.JobTitle)
+	assert.True(t, r.IsAdmin)
+	require.NotNil(t, r.Active)
+	assert.True(t, *r.Active)
+
+	assert.False(t, records[1].IsAdmin)
 }

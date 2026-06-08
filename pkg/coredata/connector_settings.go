@@ -88,6 +88,15 @@ type (
 		TeamID string `json:"team_id"`
 	}
 
+	// DocuSignConnectorSettings holds the DocuSign account the user picked
+	// after OAuth. A DocuSign user can have access to multiple accounts, so
+	// the post-OAuth picker scopes the access source to one; AccountID is the
+	// selected account's UUID. The driver and name resolver re-resolve the
+	// account's data-center base URI from /oauth/userinfo at fetch time.
+	DocuSignConnectorSettings struct {
+		AccountID string `json:"account_id"`
+	}
+
 	VercelConnectorSettings struct {
 		TeamID string `json:"team_id"`
 	}

@@ -1,0 +1,60 @@
+---
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: account.docusign.com
+        headers:
+            Accept:
+                - application/json
+        url: https://account.docusign.com/oauth/userinfo
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"sub":"a1a1a1a1-1111-4111-8111-111111111111","name":"Jane Doe","accounts":[{"account_id":"a1a1a1a1-1111-4111-8111-111111111111","account_name":"Acme Corp","is_default":true,"base_uri":"https://na3.docusign.net"},{"account_id":"b2b2b2b2-2222-4222-8222-222222222222","account_name":"Acme Sandbox","is_default":false,"base_uri":"https://na3.docusign.net"}]}'
+        headers:
+            Content-Type:
+                - application/json
+        status: 200 OK
+        code: 200
+        duration: 1ms
+    - id: 1
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: na3.docusign.net
+        form:
+            additional_info:
+                - "true"
+            count:
+                - "100"
+            start_position:
+                - "0"
+        headers:
+            Accept:
+                - application/json
+        url: https://na3.docusign.net/restapi/v2.1/accounts/a1a1a1a1-1111-4111-8111-111111111111/users?additional_info=true&count=100&start_position=0
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"users":[{"userId":"11111111-1111-4111-8111-111111111111","userName":"Jane Doe","email":"jane.doe@example.com","userStatus":"Active","isAdmin":"True","createdDateTime":"2024-01-15T10:00:00.0000000Z","lastLogin":"2026-05-01T09:30:00.0000000Z","permissionProfileName":"Account Administrator","jobTitle":"CTO"},{"userId":"22222222-2222-4222-8222-222222222222","userName":"John Smith","email":"john.smith@example.com","userStatus":"Active","isAdmin":"false","createdDateTime":"2025-03-20T14:00:00.0000000Z","lastLogin":"2026-04-28T16:45:00.0000000Z","permissionProfileName":"DocuSign Sender","jobTitle":"Account Executive"}],"resultSetSize":"2","totalSetSize":"2","startPosition":"0","endPosition":"1"}'
+        headers:
+            Content-Type:
+                - application/json
+        status: 200 OK
+        code: 200
+        duration: 1ms

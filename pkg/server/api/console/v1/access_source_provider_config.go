@@ -108,6 +108,14 @@ var providerOrgConfigs = map[coredata.ConnectorProvider]providerOrgConfig{
 		},
 		NeedsPicker: true,
 	},
+	coredata.ConnectorProviderDocuSign: {
+		ListOrgs: drivers.ListDocuSignOrganizations,
+		SelectedSlug: func(c *coredata.Connector) string {
+			s, _ := coredata.ConnectorSettings[coredata.DocuSignConnectorSettings](c)
+			return s.AccountID
+		},
+		NeedsPicker: true,
+	},
 	// Pattern 2-auto: identifier is captured during the OAuth callback
 	// (subdomain for PagerDuty, team_id or fallback /v2/user.id for
 	// Vercel). No picker UI; NeedsPicker = false.
