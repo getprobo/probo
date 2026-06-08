@@ -21,6 +21,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/internal/test"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 )
@@ -35,7 +36,7 @@ import (
 func TestResetBannerTrackers_FullRebuild(t *testing.T) {
 	t.Parallel()
 
-	client := newTestPgClient(t)
+	client := test.PGClient(t)
 	ctx := context.Background()
 	fx := seedWorkerFixture(t, ctx, client)
 
