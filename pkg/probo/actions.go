@@ -295,8 +295,7 @@ const (
 	ActionCustomDomainDelete = "core:custom-domain:delete"
 
 	// File actions
-	ActionFileGet         = "core:file:get"
-	ActionFileDownloadUrl = "core:file:download-url"
+	ActionFileGet = "core:file:get"
 
 	// Connector actions
 	ActionConnectorInitiate = "core:connector:initiate"

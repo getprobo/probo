@@ -984,7 +984,7 @@ func (r *thirdPartyBusinessAssociateAgreementResolver) ThirdParty(ctx context.Co
 
 // FileURL is the resolver for the fileUrl field.
 func (r *thirdPartyBusinessAssociateAgreementResolver) FileURL(ctx context.Context, obj *types.ThirdPartyBusinessAssociateAgreement) (string, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionFileDownloadUrl)
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionFileGet)
 	if err != nil {
 		return "", err
 	}
@@ -1175,7 +1175,7 @@ func (r *thirdPartyDataPrivacyAgreementResolver) ThirdParty(ctx context.Context,
 
 // FileURL is the resolver for the fileUrl field.
 func (r *thirdPartyDataPrivacyAgreementResolver) FileURL(ctx context.Context, obj *types.ThirdPartyDataPrivacyAgreement) (string, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionFileDownloadUrl)
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionFileGet)
 	if err != nil {
 		return "", err
 	}
