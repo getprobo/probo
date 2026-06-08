@@ -264,15 +264,16 @@ func (s TrustCenterService) UploadNDA(
 			fileID := gid.New(scope.GetTenantID(), coredata.FileEntityType)
 
 			file = &coredata.File{
-				ID:         fileID,
-				BucketName: s.svc.bucket,
-				MimeType:   mimeType,
-				FileName:   req.FileName,
-				FileKey:    objectKey.String(),
-				FileSize:   *headOutput.ContentLength,
-				Visibility: coredata.FileVisibilityPrivate,
-				CreatedAt:  now,
-				UpdatedAt:  now,
+				ID:             fileID,
+				OrganizationID: trustCenter.OrganizationID,
+				BucketName:     s.svc.bucket,
+				MimeType:       mimeType,
+				FileName:       req.FileName,
+				FileKey:        objectKey.String(),
+				FileSize:       *headOutput.ContentLength,
+				Visibility:     coredata.FileVisibilityPrivate,
+				CreatedAt:      now,
+				UpdatedAt:      now,
 			}
 
 			if err := file.Insert(ctx, conn, scope); err != nil {
