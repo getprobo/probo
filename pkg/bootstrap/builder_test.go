@@ -220,10 +220,18 @@ func TestBuilder_Build_Defaults(t *testing.T) {
 	assert.Empty(t, cfg.Probod.Agents.ThirdPartyVetter.ModelName)
 	assert.Nil(t, cfg.Probod.Agents.ThirdPartyVetter.Temperature)
 	assert.Nil(t, cfg.Probod.Agents.ThirdPartyVetter.MaxTokens)
+	assert.Empty(t, cfg.Probod.Agents.ThirdPartyDisambiguation.Provider)
+	assert.Empty(t, cfg.Probod.Agents.ThirdPartyDisambiguation.ModelName)
+	assert.Nil(t, cfg.Probod.Agents.ThirdPartyDisambiguation.Temperature)
+	assert.Equal(t, new(4096), cfg.Probod.Agents.ThirdPartyDisambiguation.MaxTokens)
 	assert.Empty(t, cfg.Probod.Agents.TrackerMapping.Provider)
 	assert.Empty(t, cfg.Probod.Agents.TrackerMapping.ModelName)
 	assert.Nil(t, cfg.Probod.Agents.TrackerMapping.Temperature)
 	assert.Equal(t, new(4096), cfg.Probod.Agents.TrackerMapping.MaxTokens)
+	assert.Empty(t, cfg.Probod.Agents.TrackerEnrichment.Provider)
+	assert.Empty(t, cfg.Probod.Agents.TrackerEnrichment.ModelName)
+	assert.Nil(t, cfg.Probod.Agents.TrackerEnrichment.Temperature)
+	assert.Equal(t, new(4096), cfg.Probod.Agents.TrackerEnrichment.MaxTokens)
 
 	// Tracker worker tuning — defaults
 	assert.Equal(t, 10, cfg.Probod.TrackerMappingWorker.Interval)
@@ -231,6 +239,7 @@ func TestBuilder_Build_Defaults(t *testing.T) {
 	assert.Equal(t, 600, cfg.Probod.TrackerMappingWorker.StaleAfter)
 	assert.Equal(t, 45, cfg.Probod.TrackerMappingWorker.AgentTimeout)
 	assert.Equal(t, 10, cfg.Probod.TrackerMappingWorker.AgentMaxTurns)
+	assert.Equal(t, 45, cfg.Probod.TrackerMappingWorker.DisambiguationAgentTimeout)
 	assert.Equal(t, 10, cfg.Probod.CommonPatternEnrichmentWorker.Interval)
 	assert.Equal(t, 2, cfg.Probod.CommonPatternEnrichmentWorker.MaxConcurrency)
 	assert.Equal(t, 600, cfg.Probod.CommonPatternEnrichmentWorker.StaleAfter)
@@ -333,17 +342,28 @@ func TestBuilder_Build_CustomValues(t *testing.T) {
 	env["AGENT_THIRD_PARTY_VETTER_MODEL_NAME"] = "gpt-4o"
 	env["AGENT_THIRD_PARTY_VETTER_TEMPERATURE"] = "0.3"
 	env["AGENT_THIRD_PARTY_VETTER_MAX_TOKENS"] = "8192"
+	// Agents — third-party-disambiguation override
+	env["AGENT_THIRD_PARTY_DISAMBIGUATION_PROVIDER"] = "anthropic"
+	env["AGENT_THIRD_PARTY_DISAMBIGUATION_MODEL_NAME"] = "claude-sonnet-4-20250514"
+	env["AGENT_THIRD_PARTY_DISAMBIGUATION_TEMPERATURE"] = "0.4"
+	env["AGENT_THIRD_PARTY_DISAMBIGUATION_MAX_TOKENS"] = "2048"
 	// Agents — tracker-mapping override
 	env["AGENT_TRACKER_MAPPING_PROVIDER"] = "openai"
 	env["AGENT_TRACKER_MAPPING_MODEL_NAME"] = "gpt-4o-mini"
 	env["AGENT_TRACKER_MAPPING_TEMPERATURE"] = "0.1"
 	env["AGENT_TRACKER_MAPPING_MAX_TOKENS"] = "1024"
+	// Agents — tracker-enrichment override
+	env["AGENT_TRACKER_ENRICHMENT_PROVIDER"] = "openai"
+	env["AGENT_TRACKER_ENRICHMENT_MODEL_NAME"] = "gpt-4o"
+	env["AGENT_TRACKER_ENRICHMENT_TEMPERATURE"] = "0.2"
+	env["AGENT_TRACKER_ENRICHMENT_MAX_TOKENS"] = "2048"
 	// Tracker worker tuning override
 	env["TRACKER_MAPPING_INTERVAL"] = "20"
 	env["TRACKER_MAPPING_MAX_CONCURRENCY"] = "5"
 	env["TRACKER_MAPPING_STALE_AFTER"] = "1200"
 	env["TRACKER_MAPPING_AGENT_TIMEOUT"] = "30"
 	env["TRACKER_MAPPING_AGENT_MAX_TURNS"] = "6"
+	env["TRACKER_MAPPING_DISAMBIGUATION_AGENT_TIMEOUT"] = "35"
 	env["COMMON_PATTERN_ENRICHMENT_INTERVAL"] = "15"
 	env["COMMON_PATTERN_ENRICHMENT_MAX_CONCURRENCY"] = "4"
 	env["COMMON_PATTERN_ENRICHMENT_STALE_AFTER"] = "900"
@@ -443,17 +463,28 @@ func TestBuilder_Build_CustomValues(t *testing.T) {
 	assert.Equal(t, "gpt-4o", cfg.Probod.Agents.ThirdPartyVetter.ModelName)
 	assert.Equal(t, new(0.3), cfg.Probod.Agents.ThirdPartyVetter.Temperature)
 	assert.Equal(t, new(8192), cfg.Probod.Agents.ThirdPartyVetter.MaxTokens)
+	// Agents — third-party-disambiguation overrides
+	assert.Equal(t, "anthropic", cfg.Probod.Agents.ThirdPartyDisambiguation.Provider)
+	assert.Equal(t, "claude-sonnet-4-20250514", cfg.Probod.Agents.ThirdPartyDisambiguation.ModelName)
+	assert.Equal(t, new(0.4), cfg.Probod.Agents.ThirdPartyDisambiguation.Temperature)
+	assert.Equal(t, new(2048), cfg.Probod.Agents.ThirdPartyDisambiguation.MaxTokens)
 	// Agents — tracker-mapping overrides
 	assert.Equal(t, "openai", cfg.Probod.Agents.TrackerMapping.Provider)
 	assert.Equal(t, "gpt-4o-mini", cfg.Probod.Agents.TrackerMapping.ModelName)
 	assert.Equal(t, new(0.1), cfg.Probod.Agents.TrackerMapping.Temperature)
 	assert.Equal(t, new(1024), cfg.Probod.Agents.TrackerMapping.MaxTokens)
+	// Agents — tracker-enrichment overrides
+	assert.Equal(t, "openai", cfg.Probod.Agents.TrackerEnrichment.Provider)
+	assert.Equal(t, "gpt-4o", cfg.Probod.Agents.TrackerEnrichment.ModelName)
+	assert.Equal(t, new(0.2), cfg.Probod.Agents.TrackerEnrichment.Temperature)
+	assert.Equal(t, new(2048), cfg.Probod.Agents.TrackerEnrichment.MaxTokens)
 	// Tracker worker tuning — overrides
 	assert.Equal(t, 20, cfg.Probod.TrackerMappingWorker.Interval)
 	assert.Equal(t, 5, cfg.Probod.TrackerMappingWorker.MaxConcurrency)
 	assert.Equal(t, 1200, cfg.Probod.TrackerMappingWorker.StaleAfter)
 	assert.Equal(t, 30, cfg.Probod.TrackerMappingWorker.AgentTimeout)
 	assert.Equal(t, 6, cfg.Probod.TrackerMappingWorker.AgentMaxTurns)
+	assert.Equal(t, 35, cfg.Probod.TrackerMappingWorker.DisambiguationAgentTimeout)
 	assert.Equal(t, 15, cfg.Probod.CommonPatternEnrichmentWorker.Interval)
 	assert.Equal(t, 4, cfg.Probod.CommonPatternEnrichmentWorker.MaxConcurrency)
 	assert.Equal(t, 900, cfg.Probod.CommonPatternEnrichmentWorker.StaleAfter)

@@ -54,7 +54,7 @@ const (
 	defaultDisambiguationMaxTokens = 4096
 )
 
-// DisambiguationConfig configures the third-party disambiguation
+// DisambiguationAgentConfig configures the third-party disambiguation
 // agent. The agent has no DB tools and no web-search tools: the
 // candidate list is supplied entirely in the prompt and the agent
 // only picks among it.
@@ -62,7 +62,7 @@ const (
 // MaxTokens and Temperature bound and steer the single LLM call, and
 // Timeout caps a single run. Zero-valued fields fall back to package
 // defaults.
-type DisambiguationConfig struct {
+type DisambiguationAgentConfig struct {
 	LLMClient   *llm.Client
 	Model       string
 	MaxTokens   *int
@@ -84,7 +84,7 @@ type DisambiguationResult struct {
 // no tools: the candidate list is supplied in the prompt and the
 // agent must only choose among it.
 func BuildDisambiguationAgent(
-	cfg DisambiguationConfig,
+	cfg DisambiguationAgentConfig,
 	logger *log.Logger,
 ) *agent.Agent {
 	outputType, err := agent.NewOutputType[DisambiguationResult]("third_party_disambiguation")

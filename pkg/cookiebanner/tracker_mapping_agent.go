@@ -76,7 +76,7 @@ type TrackerMappingAgentResult struct {
 }
 
 func buildTrackerMappingAgent(
-	cfg TrackerAgentsConfig,
+	cfg TrackerMappingAgentConfig,
 	pgClient *pg.Client,
 	logger *log.Logger,
 ) *agent.Agent {
@@ -94,7 +94,7 @@ func buildTrackerMappingAgent(
 		panic(fmt.Sprintf("cookiebanner: cannot build tracker identification output type: %s", err))
 	}
 
-	maxTurns := cfg.MappingMaxTurns
+	maxTurns := cfg.MaxTurns
 	if maxTurns < 1 {
 		maxTurns = defaultMappingMaxTurns
 	}

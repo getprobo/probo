@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@probo.com>.
+// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,7 +12,7 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package probod
+package cmdutil
 
 import (
 	"fmt"
@@ -20,19 +20,41 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"go.gearno.de/kit/httpclient"
 	"go.gearno.de/kit/log"
-	"go.opentelemetry.io/otel/trace"
+	"go.opentelemetry.io/otel/trace/noop"
 	"go.probo.inc/probo/pkg/llm"
 	llmanthropic "go.probo.inc/probo/pkg/llm/anthropic"
 	llmopenai "go.probo.inc/probo/pkg/llm/openai"
+	"go.probo.inc/probo/pkg/probodconfig"
 )
 
-// buildLLMClient creates an LLM client for the given provider config.
-func (impl *Implm) buildLLMClient(
-	cfg LLMProviderConfig,
+// resolveAgentClient resolves an agent's effective config from defaults
+// and builds an LLM client for it. The name is used in the logger name
+// and error messages. proboctl runs synchronously with no tracing or
+// metrics, so it duplicates probod's wiring with a no-op tracer and a
+// throwaway registry rather than sharing a package.
+func resolveAgentClient(
+	agents probodconfig.AgentsConfig,
+	name string,
+	agent probodconfig.LLMAgentConfig,
 	l *log.Logger,
-	tp trace.TracerProvider,
-	r prometheus.Registerer,
-) (*llm.Client, error) {
+) (probodconfig.LLMAgentConfig, *llm.Client, error) {
+	resolved := agents.ResolveAgent(agent)
+
+	providerCfg, ok := agents.Providers[resolved.Provider]
+	if !ok {
+		return probodconfig.LLMAgentConfig{}, nil, fmt.Errorf("unknown LLM provider %q for %s agent", resolved.Provider, name)
+	}
+
+	client, err := buildLLMClient(providerCfg, l.Named("llm."+name))
+	if err != nil {
+		return probodconfig.LLMAgentConfig{}, nil, fmt.Errorf("cannot create %s LLM client: %w", name, err)
+	}
+
+	return resolved, client, nil
+}
+
+// buildLLMClient creates an LLM client for the given provider config.
+func buildLLMClient(cfg probodconfig.LLMProviderConfig, l *log.Logger) (*llm.Client, error) {
 	providerType := cfg.Type
 	if providerType == "" {
 		providerType = "openai"
@@ -40,8 +62,8 @@ func (impl *Implm) buildLLMClient(
 
 	httpClient := httpclient.DefaultPooledClient(
 		httpclient.WithLogger(l),
-		httpclient.WithTracerProvider(tp),
-		httpclient.WithRegisterer(r),
+		httpclient.WithTracerProvider(noop.NewTracerProvider()),
+		httpclient.WithRegisterer(prometheus.NewRegistry()),
 	)
 
 	switch providerType {
@@ -55,7 +77,6 @@ func (impl *Implm) buildLLMClient(
 			p,
 			"openai",
 			llm.WithLogger(l),
-			llm.WithTracerProvider(tp),
 		), nil
 	case "anthropic":
 		p := llmanthropic.NewProvider(
@@ -67,36 +88,10 @@ func (impl *Implm) buildLLMClient(
 			p,
 			"anthropic",
 			llm.WithLogger(l),
-			llm.WithTracerProvider(tp),
 		), nil
 	case "bedrock":
 		return nil, fmt.Errorf("bedrock provider not yet wired; requires aws.Config")
 	default:
 		return nil, fmt.Errorf("unsupported LLM provider type: %q", providerType)
 	}
-}
-
-// resolveAgentClient resolves the agent's effective config from defaults and
-// builds an LLM client for it. The name parameter is used in the logger and
-// in error messages.
-func (impl *Implm) resolveAgentClient(
-	name string,
-	agent LLMAgentConfig,
-	l *log.Logger,
-	tp trace.TracerProvider,
-	r prometheus.Registerer,
-) (LLMAgentConfig, *llm.Client, error) {
-	resolved := impl.cfg.Agents.ResolveAgent(agent)
-
-	providerCfg, ok := impl.cfg.Agents.Providers[resolved.Provider]
-	if !ok {
-		return LLMAgentConfig{}, nil, fmt.Errorf("unknown LLM provider %q for %s agent", resolved.Provider, name)
-	}
-
-	client, err := impl.buildLLMClient(providerCfg, l.Named("llm."+name), tp, r)
-	if err != nil {
-		return LLMAgentConfig{}, nil, fmt.Errorf("cannot create %s LLM client: %w", name, err)
-	}
-
-	return resolved, client, nil
 }

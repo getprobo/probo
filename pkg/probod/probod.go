@@ -324,7 +324,7 @@ func (impl *Implm) Run(
 		return err
 	}
 
-	trackerAgentsCfg, thirdPartyDisambiguationCfg, err := impl.buildTrackerAgentsConfig(l, tp, r)
+	trackerMappingCfg, trackerEnrichmentCfg, thirdPartyDisambiguationCfg, err := impl.buildTrackerAgents(l, tp, r)
 	if err != nil {
 		return err
 	}
@@ -790,7 +790,7 @@ func (impl *Implm) Run(
 	trackerMappingWorker := cookiebanner.NewTrackerMappingWorker(
 		pgClient,
 		l,
-		trackerAgentsCfg,
+		trackerMappingCfg,
 		thirdPartyDisambiguationCfg,
 		time.Duration(impl.cfg.TrackerMappingWorker.StaleAfter)*time.Second,
 		worker.WithInterval(time.Duration(impl.cfg.TrackerMappingWorker.Interval)*time.Second),
@@ -811,14 +811,12 @@ func (impl *Implm) Run(
 	// the tracker agents are configured.
 	stopCommonPatternEnrichmentWorker := func() {}
 
-	if trackerAgentsCfg.LLMClient != nil {
-		enrichmentCfg := trackerAgentsCfg
-		enrichmentCfg.AgentTimeout = time.Duration(impl.cfg.CommonPatternEnrichmentWorker.AgentTimeout) * time.Second
-
+	if trackerEnrichmentCfg.LLMClient != nil {
 		commonPatternEnrichmentWorker := cookiebanner.NewCommonPatternEnrichmentWorker(
 			pgClient,
 			l,
-			enrichmentCfg,
+			trackerEnrichmentCfg,
+			trackerMappingCfg,
 			time.Duration(impl.cfg.CommonPatternEnrichmentWorker.StaleAfter)*time.Second,
 			worker.WithInterval(time.Duration(impl.cfg.CommonPatternEnrichmentWorker.Interval)*time.Second),
 			worker.WithMaxConcurrency(impl.cfg.CommonPatternEnrichmentWorker.MaxConcurrency),

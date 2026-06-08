@@ -39,35 +39,49 @@ import (
 // known set of ids (e.g. proboctl). It is enrichment's single source of
 // truth - the worker is a thin queue poller that delegates here.
 type CommonPatternEnricher struct {
-	pg              *pg.Client
-	logger          *log.Logger
-	enrichmentAgent *agent.Agent
-	mappingAgent    *agent.Agent
-	agentTimeout    time.Duration
+	pg                *pg.Client
+	logger            *log.Logger
+	enrichmentAgent   *agent.Agent
+	mappingAgent      *agent.Agent
+	enrichmentTimeout time.Duration
+	mappingTimeout    time.Duration
 }
 
-// NewCommonPatternEnricher builds the enricher from the shared tracker
-// agents config. When no LLM client is configured the agents are left nil
-// and Enabled reports false; callers must gate on Enabled before running.
+// NewCommonPatternEnricher builds the enricher from the enrichment and
+// mapping agent configs. It runs the enrichment agent to research a
+// description and reuses the mapping agent to attribute a vendor first,
+// so it needs both configs. When the enrichment config has no LLM client
+// the agents are left nil and Enabled reports false; callers must gate on
+// Enabled before running.
 func NewCommonPatternEnricher(
 	pgClient *pg.Client,
 	logger *log.Logger,
-	cfg TrackerAgentsConfig,
+	enrichmentCfg TrackerEnrichmentAgentConfig,
+	mappingCfg TrackerMappingAgentConfig,
 ) *CommonPatternEnricher {
-	agentTimeout := cfg.AgentTimeout
-	if agentTimeout <= 0 {
-		agentTimeout = defaultAgentTimeout
+	enrichmentTimeout := enrichmentCfg.Timeout
+	if enrichmentTimeout <= 0 {
+		enrichmentTimeout = defaultAgentTimeout
+	}
+
+	mappingTimeout := mappingCfg.Timeout
+	if mappingTimeout <= 0 {
+		mappingTimeout = defaultAgentTimeout
 	}
 
 	e := &CommonPatternEnricher{
-		pg:           pgClient,
-		logger:       logger,
-		agentTimeout: agentTimeout,
+		pg:                pgClient,
+		logger:            logger,
+		enrichmentTimeout: enrichmentTimeout,
+		mappingTimeout:    mappingTimeout,
 	}
 
-	if cfg.LLMClient != nil {
-		e.enrichmentAgent = buildCommonPatternEnrichmentAgent(cfg, pgClient, logger)
-		e.mappingAgent = buildTrackerMappingAgent(cfg, pgClient, logger)
+	if enrichmentCfg.LLMClient != nil {
+		e.enrichmentAgent = buildCommonPatternEnrichmentAgent(enrichmentCfg, pgClient, logger)
+	}
+
+	if mappingCfg.LLMClient != nil {
+		e.mappingAgent = buildTrackerMappingAgent(mappingCfg, pgClient, logger)
 	}
 
 	return e
@@ -251,7 +265,7 @@ func (e *CommonPatternEnricher) research(
 ) (string, error) {
 	prompt := buildEnrichmentPrompt(cp, thirdPartyName)
 
-	agentCtx, cancel := context.WithTimeout(ctx, e.agentTimeout)
+	agentCtx, cancel := context.WithTimeout(ctx, e.enrichmentTimeout)
 	defer cancel()
 
 	result, err := agent.RunTyped[CommonPatternEnrichmentResult](
@@ -287,7 +301,7 @@ func (e *CommonPatternEnricher) identifyThirdParty(
 
 	prompt := buildCommonPatternIdentificationPrompt(cp)
 
-	agentCtx, cancel := context.WithTimeout(ctx, e.agentTimeout)
+	agentCtx, cancel := context.WithTimeout(ctx, e.mappingTimeout)
 	defer cancel()
 
 	result, err := agent.RunTyped[TrackerMappingAgentResult](

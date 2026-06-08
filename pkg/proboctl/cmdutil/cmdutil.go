@@ -17,12 +17,10 @@ package cmdutil
 import (
 	"fmt"
 	"os"
+	"time"
 
-	"github.com/prometheus/client_golang/prometheus"
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
-	"go.opentelemetry.io/otel/trace/noop"
-	"go.probo.inc/probo/pkg/agentsbuild"
 	"go.probo.inc/probo/pkg/cmd/iostreams"
 	"go.probo.inc/probo/pkg/cookiebanner"
 	"go.probo.inc/probo/pkg/proboctl/pgconn"
@@ -66,14 +64,23 @@ func (f *Factory) ProbodConfig() (probodconfig.Config, error) {
 	return full.Probod, nil
 }
 
-// TrackerAgentsConfig builds the tracker-agents config (LLM client +
-// Firecrawl key) from the shared probod config for in-process agent
-// execution, e.g. synchronous common-pattern re-enrichment. It errors
-// when no LLM provider is configured.
-func (f *Factory) TrackerAgentsConfig() (cookiebanner.TrackerAgentsConfig, error) {
+// TrackerAgentsConfig builds the enrichment and mapping agent configs
+// (LLM clients + Firecrawl key) from the shared probod config for
+// in-process agent execution, e.g. synchronous common-pattern
+// re-enrichment. The enricher runs the enrichment agent and reuses the
+// mapping agent to attribute a vendor first, so both configs are
+// returned. It errors when no LLM provider is configured.
+//
+// This duplicates the small wiring probod does in buildTrackerAgents
+// rather than sharing a package, keeping the two executables decoupled.
+func (f *Factory) TrackerAgentsConfig() (cookiebanner.TrackerEnrichmentAgentConfig, cookiebanner.TrackerMappingAgentConfig, error) {
 	cfg, err := f.ProbodConfig()
 	if err != nil {
-		return cookiebanner.TrackerAgentsConfig{}, err
+		return cookiebanner.TrackerEnrichmentAgentConfig{}, cookiebanner.TrackerMappingAgentConfig{}, err
+	}
+
+	if cfg.Agents.TrackerMapping.Provider == "" {
+		return cookiebanner.TrackerEnrichmentAgentConfig{}, cookiebanner.TrackerMappingAgentConfig{}, fmt.Errorf("no LLM provider configured; set llm.tracker-mapping.provider in %q", f.CfgFile)
 	}
 
 	logger := log.NewLogger(
@@ -81,19 +88,42 @@ func (f *Factory) TrackerAgentsConfig() (cookiebanner.TrackerAgentsConfig, error
 		log.WithOutput(f.IOStreams.ErrOut),
 	)
 
-	trackerCfg, _, err := agentsbuild.BuildTrackerAgentsConfig(
-		cfg,
-		logger,
-		noop.NewTracerProvider(),
-		prometheus.NewRegistry(),
-	)
+	firecrawlAPIKey := cfg.Agents.Tools.FirecrawlAPIKey
+
+	mappingAgentCfg, mappingClient, err := resolveAgentClient(cfg.Agents, "tracker-mapping", cfg.Agents.TrackerMapping, logger)
 	if err != nil {
-		return cookiebanner.TrackerAgentsConfig{}, fmt.Errorf("cannot build tracker agents config: %w", err)
+		return cookiebanner.TrackerEnrichmentAgentConfig{}, cookiebanner.TrackerMappingAgentConfig{}, fmt.Errorf("cannot build tracker mapping agent: %w", err)
 	}
 
-	if trackerCfg.LLMClient == nil {
-		return cookiebanner.TrackerAgentsConfig{}, fmt.Errorf("no LLM provider configured; set llm.tracker-mapping.provider in %q", f.CfgFile)
+	mappingCfg := cookiebanner.TrackerMappingAgentConfig{
+		LLMClient:       mappingClient,
+		Model:           mappingAgentCfg.ModelName,
+		FirecrawlAPIKey: firecrawlAPIKey,
+		MaxTokens:       mappingAgentCfg.MaxTokens,
+		Temperature:     mappingAgentCfg.Temperature,
+		Timeout:         time.Duration(cfg.TrackerMappingWorker.AgentTimeout) * time.Second,
+		MaxTurns:        cfg.TrackerMappingWorker.AgentMaxTurns,
 	}
 
-	return trackerCfg, nil
+	enrichmentSlot := cfg.Agents.TrackerEnrichment
+	if enrichmentSlot.Provider == "" {
+		enrichmentSlot = cfg.Agents.TrackerMapping
+	}
+
+	enrichmentAgentCfg, enrichmentClient, err := resolveAgentClient(cfg.Agents, "tracker-enrichment", enrichmentSlot, logger)
+	if err != nil {
+		return cookiebanner.TrackerEnrichmentAgentConfig{}, cookiebanner.TrackerMappingAgentConfig{}, fmt.Errorf("cannot build tracker enrichment agent: %w", err)
+	}
+
+	enrichmentCfg := cookiebanner.TrackerEnrichmentAgentConfig{
+		LLMClient:       enrichmentClient,
+		Model:           enrichmentAgentCfg.ModelName,
+		FirecrawlAPIKey: firecrawlAPIKey,
+		MaxTokens:       enrichmentAgentCfg.MaxTokens,
+		Temperature:     enrichmentAgentCfg.Temperature,
+		Timeout:         time.Duration(cfg.CommonPatternEnrichmentWorker.AgentTimeout) * time.Second,
+		MaxTurns:        cfg.CommonPatternEnrichmentWorker.AgentMaxTurns,
+	}
+
+	return enrichmentCfg, mappingCfg, nil
 }

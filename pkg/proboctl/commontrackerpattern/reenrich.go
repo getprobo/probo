@@ -132,7 +132,7 @@ func newCmdReenrich(f *cmdutil.Factory) *cobra.Command {
 			return nil
 		}
 
-		cfg, err := f.TrackerAgentsConfig()
+		enrichmentCfg, mappingCfg, err := f.TrackerAgentsConfig()
 		if err != nil {
 			return err
 		}
@@ -142,7 +142,7 @@ func newCmdReenrich(f *cmdutil.Factory) *cobra.Command {
 			log.WithOutput(f.IOStreams.ErrOut),
 		)
 
-		enricher := cookiebanner.NewCommonPatternEnricher(pgClient, logger, cfg)
+		enricher := cookiebanner.NewCommonPatternEnricher(pgClient, logger, enrichmentCfg, mappingCfg)
 
 		enriched, err := enricher.EnrichByIDs(ctx, ids, flagConcurrency)
 

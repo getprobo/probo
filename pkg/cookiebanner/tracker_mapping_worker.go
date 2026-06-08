@@ -50,12 +50,12 @@ type trackerMappingHandler struct {
 func NewTrackerMappingWorker(
 	pgClient *pg.Client,
 	logger *log.Logger,
-	mappingCfg TrackerAgentsConfig,
-	disambiguationCfg thirdparty.DisambiguationConfig,
+	mappingCfg TrackerMappingAgentConfig,
+	disambiguationCfg thirdparty.DisambiguationAgentConfig,
 	staleAfter time.Duration,
 	opts ...worker.Option,
 ) *worker.Worker[coredata.TrackerPattern] {
-	agentTimeout := mappingCfg.AgentTimeout
+	agentTimeout := mappingCfg.Timeout
 	if agentTimeout <= 0 {
 		agentTimeout = defaultAgentTimeout
 	}

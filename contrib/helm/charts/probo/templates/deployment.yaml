@@ -281,6 +281,23 @@ spec:
             - name: THIRD_PARTY_VETTING_STALE_AFTER
               value: {{ .Values.probo.thirdPartyVettingWorker.staleAfter | quote }}
             {{- end }}
+            # Third-party Disambiguation Agent
+            {{- if .Values.probo.thirdPartyDisambiguation.provider }}
+            - name: AGENT_THIRD_PARTY_DISAMBIGUATION_PROVIDER
+              value: {{ .Values.probo.thirdPartyDisambiguation.provider | quote }}
+            {{- end }}
+            {{- if .Values.probo.thirdPartyDisambiguation.modelName }}
+            - name: AGENT_THIRD_PARTY_DISAMBIGUATION_MODEL_NAME
+              value: {{ .Values.probo.thirdPartyDisambiguation.modelName | quote }}
+            {{- end }}
+            {{- if .Values.probo.thirdPartyDisambiguation.temperature }}
+            - name: AGENT_THIRD_PARTY_DISAMBIGUATION_TEMPERATURE
+              value: {{ .Values.probo.thirdPartyDisambiguation.temperature | quote }}
+            {{- end }}
+            {{- if .Values.probo.thirdPartyDisambiguation.maxTokens }}
+            - name: AGENT_THIRD_PARTY_DISAMBIGUATION_MAX_TOKENS
+              value: {{ .Values.probo.thirdPartyDisambiguation.maxTokens | quote }}
+            {{- end }}
             # Tracker Mapping Agent
             {{- if .Values.probo.trackerMapping.provider }}
             - name: AGENT_TRACKER_MAPPING_PROVIDER
@@ -297,6 +314,23 @@ spec:
             {{- if .Values.probo.trackerMapping.maxTokens }}
             - name: AGENT_TRACKER_MAPPING_MAX_TOKENS
               value: {{ .Values.probo.trackerMapping.maxTokens | quote }}
+            {{- end }}
+            # Tracker Enrichment Agent
+            {{- if .Values.probo.trackerEnrichment.provider }}
+            - name: AGENT_TRACKER_ENRICHMENT_PROVIDER
+              value: {{ .Values.probo.trackerEnrichment.provider | quote }}
+            {{- end }}
+            {{- if .Values.probo.trackerEnrichment.modelName }}
+            - name: AGENT_TRACKER_ENRICHMENT_MODEL_NAME
+              value: {{ .Values.probo.trackerEnrichment.modelName | quote }}
+            {{- end }}
+            {{- if .Values.probo.trackerEnrichment.temperature }}
+            - name: AGENT_TRACKER_ENRICHMENT_TEMPERATURE
+              value: {{ .Values.probo.trackerEnrichment.temperature | quote }}
+            {{- end }}
+            {{- if .Values.probo.trackerEnrichment.maxTokens }}
+            - name: AGENT_TRACKER_ENRICHMENT_MAX_TOKENS
+              value: {{ .Values.probo.trackerEnrichment.maxTokens | quote }}
             {{- end }}
             # Tracker Mapping Worker
             {{- if .Values.probo.trackerMappingWorker.interval }}
@@ -318,6 +352,10 @@ spec:
             {{- if .Values.probo.trackerMappingWorker.agentMaxTurns }}
             - name: TRACKER_MAPPING_AGENT_MAX_TURNS
               value: {{ .Values.probo.trackerMappingWorker.agentMaxTurns | quote }}
+            {{- end }}
+            {{- if .Values.probo.trackerMappingWorker.disambiguationAgentTimeout }}
+            - name: TRACKER_MAPPING_DISAMBIGUATION_AGENT_TIMEOUT
+              value: {{ .Values.probo.trackerMappingWorker.disambiguationAgentTimeout | quote }}
             {{- end }}
             # Common Pattern Enrichment Worker
             {{- if .Values.probo.commonPatternEnrichmentWorker.interval }}

@@ -213,6 +213,17 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 					Temperature: b.getEnvFloatPtr("AGENT_THIRD_PARTY_VETTER_TEMPERATURE"),
 					MaxTokens:   b.getEnvIntPtr("AGENT_THIRD_PARTY_VETTER_MAX_TOKENS"),
 				},
+				ThirdPartyDisambiguation: probodconfig.LLMAgentConfig{
+					Provider:  b.getEnvOrDefault("AGENT_THIRD_PARTY_DISAMBIGUATION_PROVIDER", ""),
+					ModelName: b.getEnvOrDefault("AGENT_THIRD_PARTY_DISAMBIGUATION_MODEL_NAME", ""),
+					// The disambiguation agent emits a single id plus a
+					// short rationale, but the budget must leave headroom
+					// for reasoning models whose reasoning tokens count
+					// against max_tokens; too small a budget truncates the
+					// JSON.
+					Temperature: b.getEnvFloatPtr("AGENT_THIRD_PARTY_DISAMBIGUATION_TEMPERATURE"),
+					MaxTokens:   new(b.getEnvIntOrDefault("AGENT_THIRD_PARTY_DISAMBIGUATION_MAX_TOKENS", 4096)),
+				},
 				TrackerMapping: probodconfig.LLMAgentConfig{
 					Provider:  b.getEnvOrDefault("AGENT_TRACKER_MAPPING_PROVIDER", ""),
 					ModelName: b.getEnvOrDefault("AGENT_TRACKER_MAPPING_MODEL_NAME", ""),
@@ -222,6 +233,14 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 					// max_tokens; too small a budget truncates the JSON.
 					Temperature: b.getEnvFloatPtr("AGENT_TRACKER_MAPPING_TEMPERATURE"),
 					MaxTokens:   new(b.getEnvIntOrDefault("AGENT_TRACKER_MAPPING_MAX_TOKENS", 4096)),
+				},
+				TrackerEnrichment: probodconfig.LLMAgentConfig{
+					Provider:  b.getEnvOrDefault("AGENT_TRACKER_ENRICHMENT_PROVIDER", ""),
+					ModelName: b.getEnvOrDefault("AGENT_TRACKER_ENRICHMENT_MODEL_NAME", ""),
+					// See the tracker-mapping note: keep ample headroom so
+					// reasoning models do not truncate the structured JSON.
+					Temperature: b.getEnvFloatPtr("AGENT_TRACKER_ENRICHMENT_TEMPERATURE"),
+					MaxTokens:   new(b.getEnvIntOrDefault("AGENT_TRACKER_ENRICHMENT_MAX_TOKENS", 4096)),
 				},
 				Tools: probodconfig.AgentToolsConfig{
 					FirecrawlAPIKey: b.getEnv("FIRECRAWL_API_KEY"),
@@ -259,11 +278,12 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 				MaxConcurrency: b.getEnvIntOrDefault("THIRD_PARTY_VETTING_MAX_CONCURRENCY", 1),
 			},
 			TrackerMappingWorker: probodconfig.TrackerMappingWorkerConfig{
-				Interval:       b.getEnvIntOrDefault("TRACKER_MAPPING_INTERVAL", 10),
-				MaxConcurrency: b.getEnvIntOrDefault("TRACKER_MAPPING_MAX_CONCURRENCY", 3),
-				StaleAfter:     b.getEnvIntOrDefault("TRACKER_MAPPING_STALE_AFTER", 600),
-				AgentTimeout:   b.getEnvIntOrDefault("TRACKER_MAPPING_AGENT_TIMEOUT", 45),
-				AgentMaxTurns:  b.getEnvIntOrDefault("TRACKER_MAPPING_AGENT_MAX_TURNS", 10),
+				Interval:                   b.getEnvIntOrDefault("TRACKER_MAPPING_INTERVAL", 10),
+				MaxConcurrency:             b.getEnvIntOrDefault("TRACKER_MAPPING_MAX_CONCURRENCY", 3),
+				StaleAfter:                 b.getEnvIntOrDefault("TRACKER_MAPPING_STALE_AFTER", 600),
+				AgentTimeout:               b.getEnvIntOrDefault("TRACKER_MAPPING_AGENT_TIMEOUT", 45),
+				AgentMaxTurns:              b.getEnvIntOrDefault("TRACKER_MAPPING_AGENT_MAX_TURNS", 10),
+				DisambiguationAgentTimeout: b.getEnvIntOrDefault("TRACKER_MAPPING_DISAMBIGUATION_AGENT_TIMEOUT", 45),
 			},
 			CommonPatternEnrichmentWorker: probodconfig.CommonPatternEnrichmentWorkerConfig{
 				Interval:       b.getEnvIntOrDefault("COMMON_PATTERN_ENRICHMENT_INTERVAL", 10),

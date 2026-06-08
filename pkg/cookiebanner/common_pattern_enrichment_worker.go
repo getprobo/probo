@@ -49,7 +49,8 @@ type commonPatternEnrichmentHandler struct {
 func NewCommonPatternEnrichmentWorker(
 	pgClient *pg.Client,
 	logger *log.Logger,
-	cfg TrackerAgentsConfig,
+	enrichmentCfg TrackerEnrichmentAgentConfig,
+	mappingCfg TrackerMappingAgentConfig,
 	staleAfter time.Duration,
 	opts ...worker.Option,
 ) *worker.Worker[coredata.CommonTrackerPattern] {
@@ -60,7 +61,7 @@ func NewCommonPatternEnrichmentWorker(
 	h := &commonPatternEnrichmentHandler{
 		pg:         pgClient,
 		logger:     logger,
-		enricher:   NewCommonPatternEnricher(pgClient, logger, cfg),
+		enricher:   NewCommonPatternEnricher(pgClient, logger, enrichmentCfg, mappingCfg),
 		staleAfter: staleAfter,
 	}
 

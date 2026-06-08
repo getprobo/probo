@@ -36,7 +36,7 @@ type CommonPatternEnrichmentResult struct {
 }
 
 func buildCommonPatternEnrichmentAgent(
-	cfg TrackerAgentsConfig,
+	cfg TrackerEnrichmentAgentConfig,
 	pgClient *pg.Client,
 	logger *log.Logger,
 ) *agent.Agent {
@@ -53,7 +53,7 @@ func buildCommonPatternEnrichmentAgent(
 		panic(fmt.Sprintf("cookiebanner: cannot build tracker enrichment output type: %s", err))
 	}
 
-	maxTurns := cfg.EnrichmentMaxTurns
+	maxTurns := cfg.MaxTurns
 	if maxTurns < 1 {
 		maxTurns = defaultEnrichmentMaxTurns
 	}
