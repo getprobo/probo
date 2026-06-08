@@ -64,7 +64,7 @@ func seedAgentRun(t *testing.T, organizationID gid.GID, seed agentRunSeed) gid.G
 			id, tenant_id, organization_id, start_agent_name, status,
 			input_messages, error_message, started_at, created_at, updated_at
 		) VALUES (
-			$1, $2, $3, $4, $5, $6, $7, $8, $9, $9
+			$1, $2, $3, $4, $5, $6::jsonb, $7, $8, $9, $9
 		)
 	`,
 		id,
@@ -72,7 +72,7 @@ func seedAgentRun(t *testing.T, organizationID gid.GID, seed agentRunSeed) gid.G
 		organizationID,
 		seed.agentName,
 		seed.status,
-		[]byte(`[]`),
+		"[]",
 		seed.errorMessage,
 		seed.startedAt,
 		seed.createdAt,
@@ -135,7 +135,7 @@ type agentRunNode struct {
 }
 
 type agentRunConnectionResult struct {
-	Node struct {
+	Node *struct {
 		AgentRuns struct {
 			TotalCount int `json:"totalCount"`
 			Edges      []struct {
@@ -172,6 +172,7 @@ func TestAgentRun_List(t *testing.T) {
 		"orgId": owner.GetOrganizationID().String(),
 	}, &result)
 	require.NoError(t, err)
+	require.NotNil(t, result.Node, "organization node should resolve")
 
 	assert.Equal(t, 2, result.Node.AgentRuns.TotalCount)
 	require.Len(t, result.Node.AgentRuns.Edges, 2)
@@ -210,6 +211,7 @@ func TestAgentRun_ListEmpty(t *testing.T) {
 		"orgId": owner.GetOrganizationID().String(),
 	}, &result)
 	require.NoError(t, err)
+	require.NotNil(t, result.Node, "organization node should resolve")
 
 	assert.Equal(t, 0, result.Node.AgentRuns.TotalCount)
 	assert.Empty(t, result.Node.AgentRuns.Edges)
@@ -236,6 +238,7 @@ func TestAgentRun_Ordering(t *testing.T) {
 			"orderBy": map[string]any{"direction": "ASC", "field": "CREATED_AT"},
 		}, &result)
 		require.NoError(t, err)
+		require.NotNil(t, result.Node, "organization node should resolve")
 		require.Len(t, result.Node.AgentRuns.Edges, 3)
 
 		assert.Equal(t, oldestID.String(), result.Node.AgentRuns.Edges[0].Node.ID)
@@ -253,6 +256,7 @@ func TestAgentRun_Ordering(t *testing.T) {
 			"orderBy": map[string]any{"direction": "DESC", "field": "CREATED_AT"},
 		}, &result)
 		require.NoError(t, err)
+		require.NotNil(t, result.Node, "organization node should resolve")
 		require.Len(t, result.Node.AgentRuns.Edges, 3)
 
 		assert.Equal(t, newestID.String(), result.Node.AgentRuns.Edges[0].Node.ID)
@@ -301,6 +305,7 @@ func TestAgentRun_Pagination(t *testing.T) {
 		"first": 2,
 	}, &firstPage)
 	require.NoError(t, err)
+	require.NotNil(t, firstPage.Node, "organization node should resolve")
 
 	assert.Equal(t, 3, firstPage.Node.AgentRuns.TotalCount)
 	testutil.AssertFirstPage(t, len(firstPage.Node.AgentRuns.Edges), firstPage.Node.AgentRuns.PageInfo, 2, true)
@@ -314,6 +319,7 @@ func TestAgentRun_Pagination(t *testing.T) {
 		"after": *firstPage.Node.AgentRuns.PageInfo.EndCursor,
 	}, &secondPage)
 	require.NoError(t, err)
+	require.NotNil(t, secondPage.Node, "organization node should resolve")
 
 	testutil.AssertLastPage(t, len(secondPage.Node.AgentRuns.Edges), secondPage.Node.AgentRuns.PageInfo, 1, true)
 
@@ -415,6 +421,7 @@ func TestAgentRun_RBAC(t *testing.T) {
 				"orgId": member.GetOrganizationID().String(),
 			}, &listResult)
 			require.NoError(t, err)
+			require.NotNil(t, listResult.Node, "organization node should resolve")
 			assert.Equal(t, 1, listResult.Node.AgentRuns.TotalCount)
 
 			var getResult struct {
@@ -473,6 +480,7 @@ func TestAgentRun_TenantIsolation(t *testing.T) {
 			"orgId": org2Owner.GetOrganizationID().String(),
 		}, &result)
 		require.NoError(t, err)
+		require.NotNil(t, result.Node, "organization node should resolve")
 
 		assert.Equal(t, 0, result.Node.AgentRuns.TotalCount)
 		assert.Empty(t, result.Node.AgentRuns.Edges)
