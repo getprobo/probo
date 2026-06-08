@@ -21,6 +21,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.probo.inc/probo/internal/test"
+	"go.probo.inc/probo/pkg/agent"
 	"go.probo.inc/probo/pkg/agentrun"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
@@ -79,6 +80,23 @@ func TestService_ListForOrganizationID(t *testing.T) {
 
 	assert.True(t, ids[runA.ID])
 	assert.True(t, ids[runB.ID])
+}
+
+func TestService_SubmitApproval_NotAwaitingApproval(t *testing.T) {
+	client := test.PGClient(t)
+	svc := agentrun.NewService(client)
+
+	// A freshly inserted run is PENDING, not AWAITING_APPROVAL.
+	run := insertPendingRun(t, client, "service-approval-agent", nil)
+
+	_, err := svc.SubmitApproval(
+		context.Background(),
+		coredata.NewNoScope(),
+		run.ID,
+		map[string]agent.ApprovalResult{"tc_x": {Approved: true}},
+	)
+	require.Error(t, err)
+	assert.ErrorIs(t, err, agentrun.ErrNotAwaitingApproval)
 }
 
 func TestService_CountForOrganizationID(t *testing.T) {

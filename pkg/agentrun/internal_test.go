@@ -80,21 +80,6 @@ func TestWorkerOptions(t *testing.T) {
 	)
 
 	t.Run(
-		"lease duration updates only when positive",
-		func(t *testing.T) {
-			t.Parallel()
-
-			cfg := workerConfig{leaseDuration: 5 * time.Second}
-
-			WithWorkerLeaseDuration(-1)(&cfg)
-			assert.Equal(t, 5*time.Second, cfg.leaseDuration)
-
-			WithWorkerLeaseDuration(12 * time.Second)(&cfg)
-			assert.Equal(t, 12*time.Second, cfg.leaseDuration)
-		},
-	)
-
-	t.Run(
 		"max concurrency updates only when positive",
 		func(t *testing.T) {
 			t.Parallel()

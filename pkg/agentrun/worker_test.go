@@ -24,6 +24,7 @@ import (
 	"os/signal"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"syscall"
 	"testing"
 	"time"
@@ -143,23 +144,38 @@ func TestWorker_StopAndResume(t *testing.T) {
 
 	close(toolRelease)
 
+	// Graceful shutdown must commit the run back to PENDING (with its
+	// checkpoint intact) so another worker resumes it. Nothing relies on
+	// a lease timeout to requeue it.
 	require.Eventually(
 		t,
 		func() bool {
 			r, err := tryLoadAgentRun(client, run.ID)
-			return err == nil && r.Checkpoint != nil
+			return err == nil &&
+				r.Status == coredata.AgentRunStatusPending &&
+				r.Checkpoint != nil
 		},
 		10*time.Second,
 		200*time.Millisecond,
 	)
+
+	suspended := loadAgentRun(t, client, run.ID)
+	assert.Equal(
+		t,
+		coredata.AgentRunStatusPending,
+		suspended.Status,
+		"graceful shutdown must requeue the run as PENDING without manual recovery",
+	)
+	assert.Nil(t, suspended.Result)
+	assert.Nil(t, suspended.ErrorMessage)
 
 	cp, err := store.Load(context.Background(), run.ID.String())
 	require.NoError(t, err)
 	require.NotNil(t, cp)
 	assert.Equal(t, agent.AgentStatusSuspended, cp.Status)
 
-	resetRunToPending(t, client, run.ID)
-
+	// No manual reset: the run is already PENDING from the graceful
+	// shutdown, so a fresh worker must pick it up and resume on its own.
 	runWorker2 := newTestWorker(
 		client,
 		&simpleRegistry{agents: map[string]*agent.Agent{"worker-agent": ag}},
@@ -185,6 +201,270 @@ func TestWorker_StopAndResume(t *testing.T) {
 	assert.NotNil(t, completed.Result)
 	assert.Nil(t, completed.Checkpoint)
 	assert.Nil(t, completed.ErrorMessage)
+}
+
+// TestWorker_AwaitsApprovalDoesNotFail covers the regression where a tool
+// call requiring approval surfaced as InterruptedError and was committed
+// as FAILED. The run must instead park in AWAITING_APPROVAL with its
+// checkpoint (and the pending approvals) preserved, and must not be
+// re-claimed while it rests.
+func TestWorker_AwaitsApprovalDoesNotFail(t *testing.T) {
+	client := test.PGClient(t)
+	store := coredata.NewPGCheckpointer(client)
+
+	dangerTool := agent.FunctionTool[struct{}](
+		"danger",
+		"Performs a dangerous action",
+		func(_ context.Context, _ struct{}) (agent.ToolResult, error) {
+			return agent.ToolResult{Content: "must not run before approval"}, nil
+		},
+	)
+
+	provider := &mockProvider{
+		responses: []*llm.ChatCompletionResponse{
+			toolCallResponse(llm.ToolCall{
+				ID:       "tc_danger",
+				Function: llm.FunctionCall{Name: "danger", Arguments: `{}`},
+			}),
+		},
+	}
+
+	ag := agent.New(
+		"approval-agent",
+		newTestClient(provider),
+		agent.WithModel("test-model"),
+		agent.WithTools(dangerTool),
+		agent.WithApproval(agent.ApprovalConfig{ToolNames: []string{"danger"}}),
+	)
+
+	run := insertPendingRun(
+		t,
+		client,
+		"approval-agent",
+		[]llm.Message{{Role: llm.RoleUser, Parts: []llm.Part{llm.TextPart{Text: "do the dangerous thing"}}}},
+	)
+
+	runWorker := newTestWorker(
+		client,
+		&simpleRegistry{agents: map[string]*agent.Agent{"approval-agent": ag}},
+	)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+
+	go func() { _ = runWorker.Run(ctx) }()
+
+	require.Eventually(
+		t,
+		func() bool {
+			r, err := tryLoadAgentRun(client, run.ID)
+			return err == nil && r.Status == coredata.AgentRunStatusAwaitingApproval
+		},
+		10*time.Second,
+		200*time.Millisecond,
+	)
+
+	awaiting := loadAgentRun(t, client, run.ID)
+	assert.Equal(t, coredata.AgentRunStatusAwaitingApproval, awaiting.Status)
+	assert.Nil(t, awaiting.Result)
+	assert.Nil(t, awaiting.ErrorMessage)
+	assert.NotNil(t, awaiting.Checkpoint)
+
+	cp, err := store.Load(context.Background(), run.ID.String())
+	require.NoError(t, err)
+	require.NotNil(t, cp)
+	assert.Equal(t, agent.AgentStatusAwaitingApproval, cp.Status)
+	require.Len(t, cp.PendingApprovals, 1)
+	assert.Equal(t, "danger", cp.PendingApprovals[0].Function.Name)
+
+	// The run must stay parked: only one mock response exists, so a
+	// re-claim would error with "no more mock responses" and flip it to
+	// FAILED. Confirm it holds AWAITING_APPROVAL.
+	time.Sleep(time.Second)
+
+	stillAwaiting := loadAgentRun(t, client, run.ID)
+	assert.Equal(t, coredata.AgentRunStatusAwaitingApproval, stillAwaiting.Status)
+}
+
+// TestWorker_ApprovalApprovedResumesAndCompletes is the full happy-path
+// approval cycle: the run parks in AWAITING_APPROVAL, a decision approves
+// the pending tool call via the service, and the same worker resumes from
+// the checkpoint, executes the approved tool, and completes.
+func TestWorker_ApprovalApprovedResumesAndCompletes(t *testing.T) {
+	client := test.PGClient(t)
+
+	var executed atomic.Bool
+
+	dangerTool := agent.FunctionTool[struct{}](
+		"danger",
+		"Performs a dangerous action",
+		func(_ context.Context, _ struct{}) (agent.ToolResult, error) {
+			executed.Store(true)
+
+			return agent.ToolResult{Content: "danger executed"}, nil
+		},
+	)
+
+	provider := &mockProvider{
+		responses: []*llm.ChatCompletionResponse{
+			toolCallResponse(llm.ToolCall{
+				ID:       "tc_danger",
+				Function: llm.FunctionCall{Name: "danger", Arguments: `{}`},
+			}),
+			stopResponse("all done"),
+		},
+	}
+
+	ag := agent.New(
+		"approval-agent",
+		newTestClient(provider),
+		agent.WithModel("test-model"),
+		agent.WithTools(dangerTool),
+		agent.WithApproval(agent.ApprovalConfig{ToolNames: []string{"danger"}}),
+	)
+
+	run := insertPendingRun(
+		t,
+		client,
+		"approval-agent",
+		[]llm.Message{{Role: llm.RoleUser, Parts: []llm.Part{llm.TextPart{Text: "go"}}}},
+	)
+
+	runWorker := newTestWorker(
+		client,
+		&simpleRegistry{agents: map[string]*agent.Agent{"approval-agent": ag}},
+	)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+
+	go func() { _ = runWorker.Run(ctx) }()
+
+	require.Eventually(
+		t,
+		func() bool {
+			r, err := tryLoadAgentRun(client, run.ID)
+			return err == nil && r.Status == coredata.AgentRunStatusAwaitingApproval
+		},
+		10*time.Second,
+		200*time.Millisecond,
+	)
+
+	svc := agentrun.NewService(client)
+	_, err := svc.SubmitApproval(
+		context.Background(),
+		coredata.NewNoScope(),
+		run.ID,
+		map[string]agent.ApprovalResult{"tc_danger": {Approved: true}},
+	)
+	require.NoError(t, err)
+
+	require.Eventually(
+		t,
+		func() bool {
+			r, err := tryLoadAgentRun(client, run.ID)
+			return err == nil && r.Status == coredata.AgentRunStatusCompleted
+		},
+		10*time.Second,
+		200*time.Millisecond,
+	)
+
+	completed := loadAgentRun(t, client, run.ID)
+	assert.Equal(t, coredata.AgentRunStatusCompleted, completed.Status)
+	assert.NotNil(t, completed.Result)
+	assert.Nil(t, completed.Checkpoint)
+	assert.Nil(t, completed.ErrorMessage)
+	assert.True(t, executed.Load(), "approved tool must execute on resume")
+}
+
+// TestWorker_ApprovalDeniedResumesAndCompletes covers the denial path: the
+// run resumes without executing the gated tool and completes, with the
+// denial fed back to the model as the tool result.
+func TestWorker_ApprovalDeniedResumesAndCompletes(t *testing.T) {
+	client := test.PGClient(t)
+
+	var executed atomic.Bool
+
+	dangerTool := agent.FunctionTool[struct{}](
+		"danger",
+		"Performs a dangerous action",
+		func(_ context.Context, _ struct{}) (agent.ToolResult, error) {
+			executed.Store(true)
+
+			return agent.ToolResult{Content: "danger executed"}, nil
+		},
+	)
+
+	provider := &mockProvider{
+		responses: []*llm.ChatCompletionResponse{
+			toolCallResponse(llm.ToolCall{
+				ID:       "tc_danger",
+				Function: llm.FunctionCall{Name: "danger", Arguments: `{}`},
+			}),
+			stopResponse("acknowledged the denial"),
+		},
+	}
+
+	ag := agent.New(
+		"approval-agent",
+		newTestClient(provider),
+		agent.WithModel("test-model"),
+		agent.WithTools(dangerTool),
+		agent.WithApproval(agent.ApprovalConfig{ToolNames: []string{"danger"}}),
+	)
+
+	run := insertPendingRun(
+		t,
+		client,
+		"approval-agent",
+		[]llm.Message{{Role: llm.RoleUser, Parts: []llm.Part{llm.TextPart{Text: "go"}}}},
+	)
+
+	runWorker := newTestWorker(
+		client,
+		&simpleRegistry{agents: map[string]*agent.Agent{"approval-agent": ag}},
+	)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+
+	go func() { _ = runWorker.Run(ctx) }()
+
+	require.Eventually(
+		t,
+		func() bool {
+			r, err := tryLoadAgentRun(client, run.ID)
+			return err == nil && r.Status == coredata.AgentRunStatusAwaitingApproval
+		},
+		10*time.Second,
+		200*time.Millisecond,
+	)
+
+	svc := agentrun.NewService(client)
+	_, err := svc.SubmitApproval(
+		context.Background(),
+		coredata.NewNoScope(),
+		run.ID,
+		map[string]agent.ApprovalResult{"tc_danger": {Approved: false, Message: "denied by reviewer"}},
+	)
+	require.NoError(t, err)
+
+	require.Eventually(
+		t,
+		func() bool {
+			r, err := tryLoadAgentRun(client, run.ID)
+			return err == nil && r.Status == coredata.AgentRunStatusCompleted
+		},
+		10*time.Second,
+		200*time.Millisecond,
+	)
+
+	completed := loadAgentRun(t, client, run.ID)
+	assert.Equal(t, coredata.AgentRunStatusCompleted, completed.Status)
+	assert.NotNil(t, completed.Result)
+	assert.Nil(t, completed.Checkpoint)
+	assert.Nil(t, completed.ErrorMessage)
+	assert.False(t, executed.Load(), "denied tool must not execute on resume")
 }
 
 // TestWorker_StopAndResumeAcrossHandoff exercises tree suspension where the
@@ -278,7 +558,9 @@ func TestWorker_StopAndResumeAcrossHandoff(t *testing.T) {
 		t,
 		func() bool {
 			r, err := tryLoadAgentRun(client, run.ID)
-			return err == nil && r.Checkpoint != nil
+			return err == nil &&
+				r.Status == coredata.AgentRunStatusPending &&
+				r.Checkpoint != nil
 		},
 		10*time.Second,
 		200*time.Millisecond,
@@ -294,8 +576,6 @@ func TestWorker_StopAndResumeAcrossHandoff(t *testing.T) {
 		cp.AgentName,
 		"checkpoint must record the handed-off child as the active agent",
 	)
-
-	resetRunToPending(t, client, run.ID)
 
 	runWorker2 := newTestWorker(client, registry)
 
@@ -410,7 +690,9 @@ func TestWorker_StopAndResumeNestedSubAgent(t *testing.T) {
 		t,
 		func() bool {
 			r, err := tryLoadAgentRun(client, run.ID)
-			return err == nil && r.Checkpoint != nil
+			return err == nil &&
+				r.Status == coredata.AgentRunStatusPending &&
+				r.Checkpoint != nil
 		},
 		10*time.Second,
 		200*time.Millisecond,
@@ -427,8 +709,6 @@ func TestWorker_StopAndResumeNestedSubAgent(t *testing.T) {
 	require.NotNil(t, innerCP)
 	assert.Equal(t, "inner-agent", innerCP.AgentName)
 	assert.Equal(t, agent.AgentStatusSuspended, innerCP.Status)
-
-	resetRunToPending(t, client, run.ID)
 
 	runWorker2 := newTestWorker(client, registry)
 
@@ -558,7 +838,9 @@ func TestWorker_StopAndResumeNestedSubAgentMultiLevel(t *testing.T) {
 		t,
 		func() bool {
 			r, err := tryLoadAgentRun(client, run.ID)
-			return err == nil && r.Checkpoint != nil
+			return err == nil &&
+				r.Status == coredata.AgentRunStatusPending &&
+				r.Checkpoint != nil
 		},
 		10*time.Second,
 		200*time.Millisecond,
@@ -579,8 +861,6 @@ func TestWorker_StopAndResumeNestedSubAgentMultiLevel(t *testing.T) {
 	require.NotNil(t, grandchildCP)
 	assert.Equal(t, "grandchild-agent", grandchildCP.AgentName)
 	assert.Equal(t, agent.AgentStatusSuspended, grandchildCP.Status)
-
-	resetRunToPending(t, client, run.ID)
 
 	runWorker2 := newTestWorker(client, registry)
 
@@ -606,98 +886,13 @@ func TestWorker_StopAndResumeNestedSubAgentMultiLevel(t *testing.T) {
 	assert.Nil(t, completed.ErrorMessage)
 }
 
-func TestWorker_HeartbeatLeaseLostLeavesRunForRecovery(t *testing.T) {
-	client := test.PGClient(t)
-
-	toolReady := make(chan struct{})
-	toolRelease := make(chan struct{})
-
-	var readyOnce sync.Once
-
-	slowTool := agent.FunctionTool[struct{}](
-		"slow_work",
-		"Does slow work",
-		func(_ context.Context, _ struct{}) (agent.ToolResult, error) {
-			readyOnce.Do(func() { close(toolReady) })
-			<-toolRelease
-
-			return agent.ToolResult{Content: "work done"}, nil
-		},
-	)
-
-	ag := newDummyAgent(
-		"worker-agent",
-		[]*llm.ChatCompletionResponse{
-			toolCallResponse(
-				llm.ToolCall{
-					ID:       "tc_heartbeat",
-					Function: llm.FunctionCall{Name: "slow_work", Arguments: `{}`},
-				},
-			),
-			stopResponse("done"),
-		},
-		slowTool,
-	)
-
-	run := insertPendingRun(
-		t,
-		client,
-		"worker-agent",
-		[]llm.Message{{Role: llm.RoleUser, Parts: []llm.Part{llm.TextPart{Text: "do work"}}}},
-	)
-
-	leaseDuration := 300 * time.Millisecond
-	runWorker := newTestWorker(
-		client,
-		&simpleRegistry{agents: map[string]*agent.Agent{"worker-agent": ag}},
-		agentrun.WithWorkerInterval(100*time.Millisecond),
-		agentrun.WithWorkerLeaseDuration(leaseDuration),
-		agentrun.WithWorkerMaxConcurrency(1),
-	)
-
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
-
-	go func() {
-		_ = runWorker.Run(ctx)
-	}()
-
-	select {
-	case <-toolReady:
-	case <-ctx.Done():
-		t.Fatal("timed out waiting for tool to start")
-	}
-
-	// Simulate another worker takeover by changing the lease generation.
-	bumpRunLeaseGeneration(t, client, run.ID)
-
-	// Keep the tool blocked long enough for the heartbeat goroutine to
-	// observe rowsAffected=0 and cancel this run with ErrLeaseLost.
-	time.Sleep(2 * leaseDuration)
-	close(toolRelease)
-
-	require.Eventually(
-		t,
-		func() bool {
-			r, err := tryLoadAgentRun(client, run.ID)
-			if err != nil {
-				return false
-			}
-
-			return r.Status == coredata.AgentRunStatusRunning
-		},
-		10*time.Second,
-		100*time.Millisecond,
-	)
-
-	current := loadAgentRun(t, client, run.ID)
-	assert.Equal(t, coredata.AgentRunStatusRunning, current.Status)
-	assert.Nil(t, current.Result)
-	assert.Nil(t, current.ErrorMessage)
-	assert.NotNil(t, current.LeaseExpiresAt)
-	assert.Equal(t, int64(2), current.LeaseGeneration)
-}
-
+// TestWorker_ReclaimedRunDoesNotClobberWinner simulates the residual
+// manual-recovery risk now that leasing is gone: a human moves a still
+// in-flight run back to PENDING (resetRunToPending) while worker A is
+// blocked in a tool. Worker B then claims and finishes it. When worker A
+// finally returns, its commit must be discarded because the row is no
+// longer RUNNING. The CommitAgentRunResult `status = 'RUNNING'` guard is
+// the only fence protecting the winner's result.
 func TestWorker_ReclaimedRunDoesNotClobberWinner(t *testing.T) {
 	client := test.PGClient(t)
 
@@ -743,7 +938,6 @@ func TestWorker_ReclaimedRunDoesNotClobberWinner(t *testing.T) {
 	runWorkerA := newTestWorker(
 		client,
 		&simpleRegistry{agents: map[string]*agent.Agent{"worker-agent": ag}},
-		agentrun.WithWorkerLeaseDuration(5*time.Second),
 		agentrun.WithWorkerMaxConcurrency(1),
 	)
 
@@ -763,7 +957,6 @@ func TestWorker_ReclaimedRunDoesNotClobberWinner(t *testing.T) {
 	runWorkerB := newTestWorker(
 		client,
 		&simpleRegistry{agents: map[string]*agent.Agent{"worker-agent": ag}},
-		agentrun.WithWorkerLeaseDuration(5*time.Second),
 		agentrun.WithWorkerMaxConcurrency(1),
 	)
 

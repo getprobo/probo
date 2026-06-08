@@ -93,7 +93,6 @@ func newTestWorker(
 
 	baseOpts := []agentrun.WorkerOption{
 		agentrun.WithWorkerInterval(250 * time.Millisecond),
-		agentrun.WithWorkerLeaseDuration(30 * time.Second),
 	}
 
 	baseOpts = append(baseOpts, opts...)
@@ -276,7 +275,6 @@ func resetRunToPending(t *testing.T, client *pg.Client, runID gid.GID) {
 				`UPDATE agent_runs
 				 SET status = 'PENDING',
 				     started_at = NULL,
-				     lease_expires_at = NULL,
 				     updated_at = now()
 				 WHERE id = $1`,
 				runID.String(),
@@ -307,27 +305,6 @@ func overwriteRunInputMessagesRaw(
 				 WHERE id = $1`,
 				runID.String(),
 				rawJSON,
-			)
-
-			return err
-		},
-	)
-	require.NoError(t, err)
-}
-
-func bumpRunLeaseGeneration(t *testing.T, client *pg.Client, runID gid.GID) {
-	t.Helper()
-
-	err := client.WithConn(
-		context.Background(),
-		func(ctx context.Context, conn pg.Querier) error {
-			_, err := conn.Exec(
-				ctx,
-				`UPDATE agent_runs
-				 SET lease_generation = lease_generation + 1,
-				     updated_at = now()
-				 WHERE id = $1`,
-				runID.String(),
 			)
 
 			return err

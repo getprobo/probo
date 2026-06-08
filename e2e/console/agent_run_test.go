@@ -16,14 +16,17 @@ package console_test
 
 import (
 	"context"
+	"encoding/json"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.probo.inc/probo/e2e/internal/testutil"
+	"go.probo.inc/probo/pkg/agent"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/llm"
 )
 
 // agentRunSeed describes the agent run row inserted directly into the test
@@ -36,6 +39,7 @@ type agentRunSeed struct {
 	errorMessage *string
 	startedAt    *time.Time
 	createdAt    time.Time
+	checkpoint   []byte
 }
 
 func seedAgentRun(t *testing.T, organizationID gid.GID, seed agentRunSeed) gid.GID {
@@ -59,12 +63,17 @@ func seedAgentRun(t *testing.T, organizationID gid.GID, seed agentRunSeed) gid.G
 
 	id := gid.New(organizationID.TenantID(), coredata.AgentRunEntityType)
 
+	var checkpoint any
+	if len(seed.checkpoint) > 0 {
+		checkpoint = string(seed.checkpoint)
+	}
+
 	_, err := conn.Exec(ctx, `
 		INSERT INTO agent_runs (
 			id, tenant_id, organization_id, start_agent_name, status,
-			input_messages, error_message, started_at, created_at, updated_at
+			input_messages, checkpoint, error_message, started_at, created_at, updated_at
 		) VALUES (
-			$1, $2, $3, $4, $5, $6::jsonb, $7, $8, $9, $9
+			$1, $2, $3, $4, $5, $6::jsonb, $7::jsonb, $8, $9, $10, $10
 		)
 	`,
 		id,
@@ -73,6 +82,7 @@ func seedAgentRun(t *testing.T, organizationID gid.GID, seed agentRunSeed) gid.G
 		seed.agentName,
 		seed.status,
 		"[]",
+		checkpoint,
 		seed.errorMessage,
 		seed.startedAt,
 		seed.createdAt,
@@ -356,7 +366,7 @@ func TestAgentRun_Get(t *testing.T) {
 					createdAt
 					updatedAt
 					organization { id }
-					permission(action: "core:agent-run:get")
+					permission(action: "agentrun:agent-run:get")
 				}
 			}
 		}
@@ -485,4 +495,177 @@ func TestAgentRun_TenantIsolation(t *testing.T) {
 		assert.Equal(t, 0, result.Node.AgentRuns.TotalCount)
 		assert.Empty(t, result.Node.AgentRuns.Edges)
 	})
+}
+
+// awaitingApprovalCheckpoint builds the JSON checkpoint a worker persists
+// when a run pauses for approval, carrying the pending tool-call IDs the
+// approval mutation must reconcile against.
+func awaitingApprovalCheckpoint(t *testing.T, toolCallIDs ...string) []byte {
+	t.Helper()
+
+	approvals := make([]llm.ToolCall, len(toolCallIDs))
+	for i, id := range toolCallIDs {
+		approvals[i] = llm.ToolCall{
+			ID:       id,
+			Function: llm.FunctionCall{Name: "danger", Arguments: "{}"},
+		}
+	}
+
+	cp := agent.Checkpoint{
+		Status:    agent.AgentStatusAwaitingApproval,
+		AgentName: "approval-agent",
+		Messages: []llm.Message{
+			{Role: llm.RoleAssistant, ToolCalls: approvals},
+		},
+		PendingToolCalls: approvals,
+		PendingApprovals: approvals,
+	}
+
+	data, err := json.Marshal(&cp)
+	require.NoError(t, err, "cannot marshal approval checkpoint")
+
+	return data
+}
+
+const submitAgentRunApprovalMutation = `
+	mutation($input: SubmitAgentRunApprovalInput!) {
+		submitAgentRunApproval(input: $input) {
+			agentRun {
+				id
+				status
+			}
+		}
+	}
+`
+
+type submitAgentRunApprovalResult struct {
+	SubmitAgentRunApproval struct {
+		AgentRun struct {
+			ID     string `json:"id"`
+			Status string `json:"status"`
+		} `json:"agentRun"`
+	} `json:"submitAgentRunApproval"`
+}
+
+func TestAgentRun_SubmitApproval(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+
+	runID := seedAgentRun(t, owner.GetOrganizationID(), agentRunSeed{
+		agentName:  "approval-agent",
+		status:     coredata.AgentRunStatusAwaitingApproval,
+		checkpoint: awaitingApprovalCheckpoint(t, "tc_1"),
+	})
+
+	var result submitAgentRunApprovalResult
+
+	err := owner.Execute(submitAgentRunApprovalMutation, map[string]any{
+		"input": map[string]any{
+			"agentRunId": runID.String(),
+			"decisions": []map[string]any{
+				{"toolCallId": "tc_1", "approved": true},
+			},
+		},
+	}, &result)
+	require.NoError(t, err)
+
+	// A submitted decision requeues the run so a worker resumes it.
+	assert.Equal(t, runID.String(), result.SubmitAgentRunApproval.AgentRun.ID)
+	assert.Equal(t, "PENDING", result.SubmitAgentRunApproval.AgentRun.Status)
+}
+
+func TestAgentRun_SubmitApproval_NotAwaiting(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+
+	runID := seedAgentRun(t, owner.GetOrganizationID(), agentRunSeed{
+		agentName: "approval-agent",
+		status:    coredata.AgentRunStatusCompleted,
+	})
+
+	var result submitAgentRunApprovalResult
+
+	err := owner.Execute(submitAgentRunApprovalMutation, map[string]any{
+		"input": map[string]any{
+			"agentRunId": runID.String(),
+			"decisions": []map[string]any{
+				{"toolCallId": "tc_1", "approved": true},
+			},
+		},
+	}, &result)
+	testutil.RequireErrorCode(t, err, "CONFLICT")
+}
+
+func TestAgentRun_SubmitApproval_IncompleteDecisions(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+
+	// Two pending approvals, but only one decision is supplied.
+	runID := seedAgentRun(t, owner.GetOrganizationID(), agentRunSeed{
+		agentName:  "approval-agent",
+		status:     coredata.AgentRunStatusAwaitingApproval,
+		checkpoint: awaitingApprovalCheckpoint(t, "tc_1", "tc_2"),
+	})
+
+	var result submitAgentRunApprovalResult
+
+	err := owner.Execute(submitAgentRunApprovalMutation, map[string]any{
+		"input": map[string]any{
+			"agentRunId": runID.String(),
+			"decisions": []map[string]any{
+				{"toolCallId": "tc_1", "approved": true},
+			},
+		},
+	}, &result)
+	testutil.RequireErrorCode(t, err, "INVALID")
+}
+
+func TestAgentRun_SubmitApproval_RBAC(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+
+	runID := seedAgentRun(t, owner.GetOrganizationID(), agentRunSeed{
+		agentName:  "approval-agent",
+		status:     coredata.AgentRunStatusAwaitingApproval,
+		checkpoint: awaitingApprovalCheckpoint(t, "tc_1"),
+	})
+
+	viewer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
+
+	var result submitAgentRunApprovalResult
+
+	err := viewer.Execute(submitAgentRunApprovalMutation, map[string]any{
+		"input": map[string]any{
+			"agentRunId": runID.String(),
+			"decisions": []map[string]any{
+				{"toolCallId": "tc_1", "approved": true},
+			},
+		},
+	}, &result)
+	testutil.RequireForbiddenError(t, err, "viewer should not be able to approve agent runs")
+}
+
+func TestAgentRun_SubmitApproval_TenantIsolation(t *testing.T) {
+	t.Parallel()
+
+	org1Owner := testutil.NewClient(t, testutil.RoleOwner)
+	org2Owner := testutil.NewClient(t, testutil.RoleOwner)
+
+	runID := seedAgentRun(t, org1Owner.GetOrganizationID(), agentRunSeed{
+		agentName:  "approval-agent",
+		status:     coredata.AgentRunStatusAwaitingApproval,
+		checkpoint: awaitingApprovalCheckpoint(t, "tc_1"),
+	})
+
+	var result submitAgentRunApprovalResult
+
+	err := org2Owner.Execute(submitAgentRunApprovalMutation, map[string]any{
+		"input": map[string]any{
+			"agentRunId": runID.String(),
+			"decisions": []map[string]any{
+				{"toolCallId": "tc_1", "approved": true},
+			},
+		},
+	}, &result)
+	testutil.RequireForbiddenError(t, err, "other org should not be able to approve the run")
 }
