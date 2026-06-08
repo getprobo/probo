@@ -80,6 +80,7 @@ func MergeApprovalDecisions(
 	if cp.ApprovalInput == nil {
 		cp.ApprovalInput = make(map[string]ApprovalResult, len(decisions))
 	}
+
 	maps.Copy(cp.ApprovalInput, decisions)
 
 	data, err := json.Marshal(&cp)

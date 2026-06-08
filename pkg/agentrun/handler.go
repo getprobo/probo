@@ -177,8 +177,7 @@ func (h *handler) executeRun(ctx context.Context, run *coredata.AgentRun) error 
 	run.Result = nil
 	run.ErrorMessage = nil
 
-	switch {
-	case runErr == nil:
+	if runErr == nil {
 		run.Status = coredata.AgentRunStatusCompleted
 
 		if result != nil {

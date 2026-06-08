@@ -151,6 +151,7 @@ func TestWorker_StopAndResume(t *testing.T) {
 		t,
 		func() bool {
 			r, err := tryLoadAgentRun(client, run.ID)
+
 			return err == nil &&
 				r.Status == coredata.AgentRunStatusPending &&
 				r.Checkpoint != nil
@@ -558,6 +559,7 @@ func TestWorker_StopAndResumeAcrossHandoff(t *testing.T) {
 		t,
 		func() bool {
 			r, err := tryLoadAgentRun(client, run.ID)
+
 			return err == nil &&
 				r.Status == coredata.AgentRunStatusPending &&
 				r.Checkpoint != nil
@@ -690,6 +692,7 @@ func TestWorker_StopAndResumeNestedSubAgent(t *testing.T) {
 		t,
 		func() bool {
 			r, err := tryLoadAgentRun(client, run.ID)
+
 			return err == nil &&
 				r.Status == coredata.AgentRunStatusPending &&
 				r.Checkpoint != nil
