@@ -841,6 +841,7 @@ func TestWorker_StopAndResumeNestedSubAgentMultiLevel(t *testing.T) {
 		t,
 		func() bool {
 			r, err := tryLoadAgentRun(client, run.ID)
+
 			return err == nil &&
 				r.Status == coredata.AgentRunStatusPending &&
 				r.Checkpoint != nil
