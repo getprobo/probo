@@ -154,6 +154,12 @@ func apiKeyConnectorSettings(input types.CreateAPIKeyConnectorInput) (json.RawMe
 		}
 
 		return json.Marshal(&coredata.OktaConnectorSettings{Domain: domain})
+	case coredata.ConnectorProviderBetterStack:
+		if input.BetterStackTeamName == nil || *input.BetterStackTeamName == "" {
+			return nil, fmt.Errorf("cannot create better stack connector: betterStackTeamName is required")
+		}
+
+		return json.Marshal(&coredata.BetterStackConnectorSettings{TeamName: *input.BetterStackTeamName})
 	}
 
 	return nil, nil

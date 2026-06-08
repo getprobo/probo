@@ -24,6 +24,7 @@ func NewBuiltinRegistry() *Registry {
 	for _, reg := range []*Registration{
 		anthropicRegistration(),
 		asanaRegistration(),
+		betterStackRegistration(),
 		bitbucketRegistration(),
 		brexRegistration(),
 		clerkRegistration(),

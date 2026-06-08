@@ -136,6 +136,10 @@ type (
 	ZendeskConnectorSettings struct {
 		Subdomain string `json:"subdomain"`
 	}
+
+	BetterStackConnectorSettings struct {
+		TeamName string `json:"team_name"`
+	}
 )
 
 // GrantType returns the OAuth2 grant type recorded on the connector's

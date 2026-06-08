@@ -706,6 +706,21 @@ func (r *resendNameResolver) ResolveInstanceName(_ context.Context) (string, err
 	return "Resend", nil
 }
 
+// betterStackNameResolver returns the Better Stack team name captured when
+// the API-key connector was created. The team name is the human-readable
+// instance identifier, so no HTTP call is required.
+type betterStackNameResolver struct {
+	teamName string
+}
+
+func NewBetterStackNameResolver(teamName string) NameResolver {
+	return &betterStackNameResolver{teamName: teamName}
+}
+
+func (r *betterStackNameResolver) ResolveInstanceName(_ context.Context) (string, error) {
+	return r.teamName, nil
+}
+
 // gitlabNameResolver resolves the GitLab group name.
 type gitlabNameResolver struct {
 	httpClient *http.Client

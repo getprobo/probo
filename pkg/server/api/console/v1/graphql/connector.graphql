@@ -28,6 +28,10 @@ enum ConnectorProvider
         @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderSigNoz")
     SUPABASE
         @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderSupabase")
+    BETTER_STACK
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderBetterStack"
+        )
     GITHUB @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderGitHub")
     INTERCOM
         @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderIntercom")
@@ -141,6 +145,7 @@ input CreateAPIKeyConnectorInput {
     posthogRegion: String
     posthogInstanceUrl: String
     oktaDomain: String
+    betterStackTeamName: String
 }
 
 type CreateAPIKeyConnectorPayload {

@@ -1,5 +1,6 @@
 export { Anthropic } from "./Anthropic";
 export { Asana } from "./Asana";
+export { BetterStack } from "./BetterStack";
 export { Bitbucket } from "./Bitbucket";
 export { Brex } from "./Brex";
 export { Clerk } from "./Clerk";
