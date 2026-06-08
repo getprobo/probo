@@ -59,7 +59,6 @@ import (
 	"go.probo.inc/probo/pkg/evidencedescriber"
 	"go.probo.inc/probo/pkg/file"
 	"go.probo.inc/probo/pkg/filemanager"
-	"go.probo.inc/probo/pkg/filesign"
 	"go.probo.inc/probo/pkg/geoloc"
 	"go.probo.inc/probo/pkg/html2pdf"
 	"go.probo.inc/probo/pkg/iam"
@@ -540,7 +539,6 @@ func (impl *Implm) Run(
 	cookieBannerService := cookiebanner.NewService(pgClient, impl.cfg.Branding)
 
 	fileService := file.NewService(pgClient, baseURL, fileManagerService)
-	filesignService := filesign.NewService(pgClient, fileManagerService)
 
 	proboService, err := probo.NewService(
 		ctx,
@@ -606,7 +604,7 @@ func (impl *Implm) Run(
 			AllowedOrigins:    impl.cfg.Api.Cors.AllowedOrigins,
 			ExtraHeaderFields: impl.cfg.Api.ExtraHeaderFields,
 			Probo:             proboService,
-			FileSign:          filesignService,
+			File:              fileService,
 			IAM:               iamService,
 			Trust:             trustService,
 			ESign:             esignService,

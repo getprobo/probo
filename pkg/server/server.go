@@ -31,7 +31,7 @@ import (
 	"go.probo.inc/probo/pkg/connector/provider"
 	"go.probo.inc/probo/pkg/cookiebanner"
 	"go.probo.inc/probo/pkg/esign"
-	"go.probo.inc/probo/pkg/filesign"
+	"go.probo.inc/probo/pkg/file"
 	"go.probo.inc/probo/pkg/geoloc"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/iam/oauth2server"
@@ -55,7 +55,7 @@ type Config struct {
 	AllowedOrigins    []string
 	ExtraHeaderFields map[string]string
 	Probo             *probo.Service
-	FileSign          *filesign.Service
+	File              *file.Service
 	IAM               *iam.Service
 	Trust             *trust.Service
 	ESign             *esign.Service
@@ -94,7 +94,7 @@ func NewServer(cfg Config) (*Server, error) {
 		BaseURL:           cfg.BaseURL,
 		AllowedOrigins:    cfg.AllowedOrigins,
 		Probo:             cfg.Probo,
-		FileSign:          cfg.FileSign,
+		File:              cfg.File,
 		IAM:               cfg.IAM,
 		Trust:             cfg.Trust,
 		ESign:             cfg.ESign,
@@ -278,7 +278,7 @@ func compliancePageHeadData(baseURL *baseurl.BaseURL, trustService *trust.Servic
 		}
 
 		if tc.LogoFileID != nil {
-			faviconURL, err := baseURL.WithPath("/api/files/v1/" + tc.LogoFileID.String()).String()
+			faviconURL, err := baseURL.WithPath("/api/files/v1/public/" + tc.LogoFileID.String()).String()
 			if err == nil {
 				headData.FaviconURL = faviconURL
 			}
