@@ -70,7 +70,11 @@ func newCmdShow(f *cmdutil.Factory) *cobra.Command {
 
 				if pattern.CommonThirdPartyID != nil {
 					var party coredata.CommonThirdParty
-					if err := party.LoadByID(ctx, conn, *pattern.CommonThirdPartyID); err == nil {
+					if err := party.LoadByID(ctx, conn, *pattern.CommonThirdPartyID); err != nil {
+						if !errors.Is(err, coredata.ErrResourceNotFound) {
+							return fmt.Errorf("cannot load common third party: %w", err)
+						}
+					} else {
 						thirdPartyName = party.Name
 					}
 				}

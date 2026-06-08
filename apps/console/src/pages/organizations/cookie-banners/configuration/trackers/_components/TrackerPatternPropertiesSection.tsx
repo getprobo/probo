@@ -118,8 +118,18 @@ export function TrackerPatternPropertiesSection({
                       type="button"
                       className="p-1 rounded hover:bg-bg-hover transition-colors cursor-pointer"
                       onClick={() => {
-                        void navigator.clipboard.writeText(pattern.commonTrackerPatternId);
-                        toast({ title: __("Copied"), description: __("Common Tracker ID copied to clipboard"), variant: "success" });
+                        const commonTrackerPatternId = pattern.commonTrackerPatternId;
+                        if (!commonTrackerPatternId) {
+                          return;
+                        }
+                        void (async () => {
+                          try {
+                            await navigator.clipboard.writeText(commonTrackerPatternId);
+                            toast({ title: __("Copied"), description: __("Common Tracker ID copied to clipboard"), variant: "success" });
+                          } catch {
+                            toast({ title: __("Error"), description: __("Failed to copy Common Tracker ID"), variant: "error" });
+                          }
+                        })();
                       }}
                     >
                       <IconSquareBehindSquare2 size={16} />
