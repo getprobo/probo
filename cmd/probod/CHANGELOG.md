@@ -4,6 +4,25 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.205.0] - 2026-06-08
+
+### Added
+
+- `submitAgentRunApproval` mutation to merge human approval decisions into an interrupted agent run and resume it
+- Suspendable agent-tool subtrees: nested agent runs can now checkpoint and restore across multi-level tool calls
+
+### Changed
+
+- Agent-run worker no longer relies on leases and heartbeats: a graceful suspend returns the run to `PENDING`, an approval interruption parks it in `AWAITING_APPROVAL`, and crashed runs are left `RUNNING` for manual recovery
+- AWS credentials now resolve through the full standard AWS SDK credential chain
+
+### Fixed
+
+- Auditors can now read the organization context and see the Context page in the console
+- NDA upload now correctly sets the organization ID
+- Logo updates no longer wipe unspecified fields on partial update
+- Cookie tracker pattern analysis now splits on `:` and `.` so UUID-bearing keys collapse to a single template
+
 ## [0.204.0] - 2026-06-05
 
 ### Added
