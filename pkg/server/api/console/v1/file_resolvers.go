@@ -18,12 +18,12 @@ import (
 
 // DownloadURL is the resolver for the downloadUrl field.
 func (r *fileResolver) DownloadURL(ctx context.Context, obj *types.File) (string, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionFileDownloadUrl)
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionFileGet)
 	if err != nil {
 		return "", err
 	}
 
-	downloadUrl, err := r.probo.Files.GenerateFileTempURL(ctx, scope, obj.ID, 60*time.Second)
+	downloadUrl, err := r.probo.Files.GenerateFileURL(ctx, scope, obj.ID, 60*time.Second)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot generate download URL", log.Error(err))
 		return "", gqlutils.Internal(ctx)

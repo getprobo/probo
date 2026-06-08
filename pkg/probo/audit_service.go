@@ -409,7 +409,7 @@ func (s AuditService) GenerateReportURL(
 		return nil, fmt.Errorf("audit has no report")
 	}
 
-	url, err := s.svc.Files.GenerateFileTempURL(ctx, scope, *audit.ReportFileID, expiresIn)
+	url, err := s.svc.Files.GenerateFileURL(ctx, scope, *audit.ReportFileID, expiresIn)
 	if err != nil {
 		return nil, fmt.Errorf("cannot generate report download URL: %w", err)
 	}

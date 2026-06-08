@@ -18,7 +18,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"net/url"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/service/s3"
@@ -193,7 +192,7 @@ func (s FileService) UploadAndSaveFile(
 	return file, nil
 }
 
-func (s FileService) GenerateFileTempURL(
+func (s FileService) GenerateFileURL(
 	ctx context.Context, scope coredata.Scoper,
 	fileID gid.GID,
 	expiresIn time.Duration,
@@ -203,27 +202,10 @@ func (s FileService) GenerateFileTempURL(
 		return "", fmt.Errorf("cannot get file: %w", err)
 	}
 
-	presignClient := s3.NewPresignClient(s.svc.s3)
-
-	// Use RFC 6266/5987 encoding for filename with UTF-8 support
-	encodedFilename := url.QueryEscape(file.FileName)
-	contentDisposition := fmt.Sprintf("attachment; filename=%q; filename*=UTF-8''%s",
-		encodedFilename, encodedFilename)
-
-	presignedReq, err := presignClient.PresignGetObject(
-		ctx,
-		&s3.GetObjectInput{
-			Bucket:                     &s.svc.bucket,
-			Key:                        &file.FileKey,
-			ResponseCacheControl:       new("max-age=3600, public"),
-			ResponseContentType:        &file.MimeType,
-			ResponseContentDisposition: &contentDisposition,
-		},
-		func(opts *s3.PresignOptions) { opts.Expires = expiresIn },
-	)
+	presignedURL, err := s.svc.fileManager.GenerateFileUrl(ctx, file, expiresIn)
 	if err != nil {
-		return "", fmt.Errorf("cannot presign GetObject request: %w", err)
+		return "", fmt.Errorf("cannot generate file URL: %w", err)
 	}
 
-	return presignedReq.URL, nil
+	return presignedURL, nil
 }
