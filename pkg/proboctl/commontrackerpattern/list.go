@@ -37,6 +37,7 @@ func newCmdList(f *cmdutil.Factory) *cobra.Command {
 		flagKeyword              string
 		flagState                string
 		flagWithCommonThirdParty bool
+		flagWithoutDescription   bool
 		flagSort                 string
 		flagOrder                string
 		flagLimit                int
@@ -58,6 +59,7 @@ func newCmdList(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&flagKeyword, "keyword", "", "Filter by pattern/description substring")
 	cmd.Flags().StringVar(&flagState, "state", "", "Filter by enrichment state (queued, enriched, unenriched)")
 	cmd.Flags().BoolVar(&flagWithCommonThirdParty, "with-common-third-party", false, "Filter by whether the pattern is linked to a common third party (true/false); ignored when not set")
+	cmd.Flags().BoolVar(&flagWithoutDescription, "without-description", false, "Only patterns with a blank description")
 	cmd.Flags().StringVar(&flagSort, "sort", "confidence", "Sort field: pattern, confidence, created, updated, enriched")
 	cmd.Flags().StringVar(&flagOrder, "order", "", "Sort order: asc, desc (default depends on field)")
 	cmd.Flags().IntVarP(&flagLimit, "limit", "L", 50, "Maximum rows to return (0 for all)")
@@ -81,7 +83,12 @@ func newCmdList(f *cmdutil.Factory) *cobra.Command {
 			withCommonThirdParty = &flagWithCommonThirdParty
 		}
 
-		filter, err := buildListFilter(flagTrackerType, flagMatchType, flagKeyword, flagState, withCommonThirdParty)
+		var described *bool
+		if flagWithoutDescription {
+			described = new(false)
+		}
+
+		filter, err := buildListFilter(flagTrackerType, flagMatchType, flagKeyword, flagState, withCommonThirdParty, described)
 		if err != nil {
 			return err
 		}
@@ -287,7 +294,7 @@ func parseOrderBy(sort, order string) (page.OrderBy[coredata.CommonTrackerPatter
 
 func buildListFilter(
 	trackerType, matchType, keyword, state string,
-	withCommonThirdParty *bool,
+	withCommonThirdParty, described *bool,
 ) (*coredata.CommonTrackerPatternFilter, error) {
 	filter := coredata.NewCommonTrackerPatternFilter()
 
@@ -324,6 +331,10 @@ func buildListFilter(
 
 	if withCommonThirdParty != nil {
 		filter.WithLinked(withCommonThirdParty)
+	}
+
+	if described != nil {
+		filter.WithDescribed(described)
 	}
 
 	return filter, nil

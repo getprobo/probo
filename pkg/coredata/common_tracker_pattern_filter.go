@@ -77,6 +77,7 @@ type CommonTrackerPatternFilter struct {
 	commonThirdPartyID *gid.GID
 	keyword            *string
 	linked             *bool
+	described          *bool
 	state              *CommonTrackerPatternEnrichmentState
 }
 
@@ -113,6 +114,14 @@ func (f *CommonTrackerPatternFilter) WithKeyword(keyword *string) *CommonTracker
 
 func (f *CommonTrackerPatternFilter) WithLinked(linked *bool) *CommonTrackerPatternFilter {
 	f.linked = linked
+	return f
+}
+
+// WithDescribed filters on whether the pattern has a non-empty
+// description: true keeps only described rows, false keeps only rows with
+// a blank description.
+func (f *CommonTrackerPatternFilter) WithDescribed(described *bool) *CommonTrackerPatternFilter {
+	f.described = described
 	return f
 }
 
@@ -166,6 +175,12 @@ func (f *CommonTrackerPatternFilter) SQLFragment() string {
 	END
 	AND
 	CASE
+		WHEN @filter_described::boolean IS NULL THEN TRUE
+		WHEN @filter_described::boolean THEN description != ''
+		ELSE description = ''
+	END
+	AND
+	CASE
 		WHEN @filter_state_queued::boolean THEN enrichment_requested_at IS NOT NULL
 		WHEN @filter_state_enriched::boolean THEN
 			enrichment_requested_at IS NULL AND enriched_at IS NOT NULL
@@ -184,6 +199,7 @@ func (f *CommonTrackerPatternFilter) SQLArguments() pgx.StrictNamedArgs {
 		"filter_common_third_party_id": nil,
 		"filter_keyword":               nil,
 		"filter_linked":                nil,
+		"filter_described":             nil,
 		"filter_state_queued":          false,
 		"filter_state_enriched":        false,
 		"filter_state_unenriched":      false,
@@ -215,6 +231,10 @@ func (f *CommonTrackerPatternFilter) SQLArguments() pgx.StrictNamedArgs {
 
 	if f.linked != nil {
 		args["filter_linked"] = *f.linked
+	}
+
+	if f.described != nil {
+		args["filter_described"] = *f.described
 	}
 
 	if f.state != nil {

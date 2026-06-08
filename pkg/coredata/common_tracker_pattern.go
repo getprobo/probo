@@ -836,29 +836,27 @@ ORDER BY pattern ASC
 }
 
 // RequestEnrichmentByIDs arms enrichment on the given common tracker
-// patterns. When resetEnriched is true it also clears enriched_at so rows
-// that previously reached a terminal state are re-processed. Returns the
-// number of rows re-queued. This is the async fallback path; the
-// synchronous enricher service is preferred.
+// patterns by stamping enrichment_requested_at, which is the only column
+// the enrichment worker claims on. Already-enriched rows are re-processed
+// too: the worker overwrites enriched_at and the description when it runs.
+// Returns the number of rows re-queued. This is the async fallback path;
+// the synchronous enricher service is preferred.
 func (ps *CommonTrackerPatterns) RequestEnrichmentByIDs(
 	ctx context.Context,
 	tx pg.Tx,
 	ids []gid.GID,
-	resetEnriched bool,
 ) (int64, error) {
 	q := `
 UPDATE common_tracker_patterns
 SET
     enrichment_requested_at = NOW(),
-    enriched_at = CASE WHEN @reset_enriched THEN NULL ELSE enriched_at END,
     updated_at = NOW()
 WHERE
     id = ANY(@ids)
 `
 
 	args := pgx.StrictNamedArgs{
-		"ids":            ids,
-		"reset_enriched": resetEnriched,
+		"ids": ids,
 	}
 
 	result, err := tx.Exec(ctx, q, args)

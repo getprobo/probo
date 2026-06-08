@@ -30,18 +30,18 @@ import (
 
 func newCmdReenrich(f *cmdutil.Factory) *cobra.Command {
 	var (
-		flagIDs              []string
-		flagLinkedBanner     string
-		flagLinkedOrg        string
-		flagCommonThirdParty string
-		flagTrackerType      string
-		flagKeyword          string
-		flagState            string
-		flagConcurrency      int
-		flagResetEnriched    bool
-		flagDryRun           bool
-		flagYes              bool
-		flagEnqueue          bool
+		flagIDs                []string
+		flagLinkedBanner       string
+		flagLinkedOrg          string
+		flagCommonThirdParty   string
+		flagTrackerType        string
+		flagKeyword            string
+		flagState              string
+		flagWithoutDescription bool
+		flagConcurrency        int
+		flagDryRun             bool
+		flagYes                bool
+		flagEnqueue            bool
 	)
 
 	cmd := &cobra.Command{
@@ -62,8 +62,8 @@ func newCmdReenrich(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&flagTrackerType, "tracker-type", "", "Filter selected patterns by tracker type")
 	cmd.Flags().StringVar(&flagKeyword, "keyword", "", "Filter selected patterns by a pattern/description substring")
 	cmd.Flags().StringVar(&flagState, "state", "", "Filter selected patterns by enrichment state (queued, enriched, unenriched)")
+	cmd.Flags().BoolVar(&flagWithoutDescription, "without-description", false, "Only patterns with a blank description")
 	cmd.Flags().IntVar(&flagConcurrency, "concurrency", 4, "Number of patterns to enrich in parallel (sync mode)")
-	cmd.Flags().BoolVar(&flagResetEnriched, "reset-enriched", true, "Clear enriched_at so terminal rows are re-processed")
 	cmd.Flags().BoolVar(&flagDryRun, "dry-run", false, "Print the selected patterns without enriching")
 	cmd.Flags().BoolVar(&flagYes, "yes", false, "Skip confirmation")
 	cmd.Flags().BoolVar(&flagEnqueue, "enqueue", false, "Arm the async enrichment worker instead of running the agent in-process")
@@ -86,6 +86,7 @@ func newCmdReenrich(f *cmdutil.Factory) *cobra.Command {
 			flagTrackerType,
 			flagKeyword,
 			flagState,
+			flagWithoutDescription,
 		)
 		if err != nil {
 			return err
@@ -117,7 +118,7 @@ func newCmdReenrich(f *cmdutil.Factory) *cobra.Command {
 				func(ctx context.Context, tx pg.Tx) error {
 					var ps coredata.CommonTrackerPatterns
 
-					requeued, err = ps.RequestEnrichmentByIDs(ctx, tx, ids, flagResetEnriched)
+					requeued, err = ps.RequestEnrichmentByIDs(ctx, tx, ids)
 
 					return err
 				},
@@ -159,15 +160,16 @@ func newCmdReenrich(f *cmdutil.Factory) *cobra.Command {
 // resolveReenrichIDs turns the selection flags into the set of common
 // tracker pattern IDs to re-enrich. Exactly one selection anchor must be
 // provided: --id, --linked-banner, --linked-org, or --common-third-party.
-// The --tracker-type, --keyword, and --state flags further narrow the
-// anchor's result, except with --id, where the listed patterns are used
-// verbatim.
+// The --tracker-type, --keyword, --state, and --without-description flags
+// further narrow the anchor's result, except with --id, where the listed
+// patterns are used verbatim.
 func resolveReenrichIDs(
 	ctx context.Context,
 	pgClient *pg.Client,
 	rawIDs []string,
 	linkedBanner, linkedOrg, commonThirdParty string,
 	trackerType, keyword, state string,
+	withoutDescription bool,
 ) ([]gid.GID, error) {
 	anchors := 0
 
@@ -205,7 +207,7 @@ func resolveReenrichIDs(
 	err := pgClient.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			filter, err := buildReenrichFilter(trackerType, keyword, state)
+			filter, err := buildReenrichFilter(trackerType, keyword, state, withoutDescription)
 			if err != nil {
 				return err
 			}
@@ -270,7 +272,7 @@ func resolveReenrichIDs(
 	return ids, nil
 }
 
-func buildReenrichFilter(trackerType, keyword, state string) (*coredata.CommonTrackerPatternFilter, error) {
+func buildReenrichFilter(trackerType, keyword, state string, withoutDescription bool) (*coredata.CommonTrackerPatternFilter, error) {
 	filter := coredata.NewCommonTrackerPatternFilter()
 
 	if trackerType != "" {
@@ -293,6 +295,10 @@ func buildReenrichFilter(trackerType, keyword, state string) (*coredata.CommonTr
 		}
 
 		filter.WithState(&st)
+	}
+
+	if withoutDescription {
+		filter.WithDescribed(new(false))
 	}
 
 	return filter, nil
