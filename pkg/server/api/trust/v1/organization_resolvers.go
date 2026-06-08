@@ -7,7 +7,6 @@ package trust_v1
 
 import (
 	"context"
-	"time"
 
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/server/api/trust/v1/schema"
@@ -19,7 +18,7 @@ func (r *organizationResolver) LogoURL(ctx context.Context, obj *types.Organizat
 	scope := coredata.NewScopeFromObjectID(obj.ID)
 	trustService := r.trust
 
-	return trustService.Organizations.GenerateLogoURL(ctx, scope, obj.ID, 1*time.Hour)
+	return trustService.Organizations.GenerateLogoURL(ctx, scope, obj.ID)
 }
 
 // Organization returns schema.OrganizationResolver implementation.

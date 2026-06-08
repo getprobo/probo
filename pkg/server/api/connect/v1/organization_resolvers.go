@@ -9,7 +9,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"time"
 
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
@@ -164,7 +163,7 @@ func (r *organizationResolver) LogoURL(ctx context.Context, obj *types.Organizat
 		return nil, err
 	}
 
-	presignedURL, err := r.iam.OrganizationService.GenerateLogoURL(ctx, obj.ID, 1*time.Hour)
+	presignedURL, err := r.iam.OrganizationService.GenerateLogoURL(ctx, obj.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot generate logo URL", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -179,7 +178,7 @@ func (r *organizationResolver) HorizontalLogoURL(ctx context.Context, obj *types
 		return nil, err
 	}
 
-	presignedURL, err := r.iam.OrganizationService.GenerateHorizontalLogoURL(ctx, obj.ID, 1*time.Hour)
+	presignedURL, err := r.iam.OrganizationService.GenerateHorizontalLogoURL(ctx, obj.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot generate horizontal logo URL", log.Error(err))
 		return nil, gqlutils.Internal(ctx)

@@ -467,28 +467,18 @@ func (s TrustCenterService) uploadFile(
 func (s TrustCenterService) GenerateNDAFileURL(
 	ctx context.Context, scope coredata.Scoper,
 	trustCenterID gid.GID,
-	expiresIn time.Duration,
 ) (*string, error) {
-	var file *coredata.File
-
-	trustCenter := &coredata.TrustCenter{}
+	var ndaFileID *gid.GID
 
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
+			trustCenter := &coredata.TrustCenter{}
 			if err := trustCenter.LoadByID(ctx, conn, scope, trustCenterID); err != nil {
 				return fmt.Errorf("cannot load trust center: %w", err)
 			}
 
-			if trustCenter.NonDisclosureAgreementFileID == nil {
-				return nil
-			}
-
-			file = &coredata.File{}
-			if err := file.LoadByID(ctx, conn, scope, *trustCenter.NonDisclosureAgreementFileID); err != nil {
-				return fmt.Errorf("cannot load file: %w", err)
-			}
-
+			ndaFileID = trustCenter.NonDisclosureAgreementFileID
 			return nil
 		},
 	)
@@ -496,22 +486,21 @@ func (s TrustCenterService) GenerateNDAFileURL(
 		return nil, err
 	}
 
-	if trustCenter.NonDisclosureAgreementFileID == nil {
+	if ndaFileID == nil {
 		return nil, nil
 	}
 
-	presignedURL, err := s.svc.fileManager.GenerateFileUrl(ctx, file, expiresIn)
+	url, err := s.svc.file.GenerateFileURLForID(*ndaFileID)
 	if err != nil {
 		return nil, fmt.Errorf("cannot generate file URL: %w", err)
 	}
 
-	return &presignedURL, nil
+	return &url, nil
 }
 
 func (s TrustCenterService) GenerateLogoURL(
 	ctx context.Context, scope coredata.Scoper,
 	compliancePageID gid.GID,
-	expiresIn time.Duration,
 ) (*string, error) {
 	file := &coredata.File{}
 	compliancePage := &coredata.TrustCenter{}
@@ -546,7 +535,7 @@ func (s TrustCenterService) GenerateLogoURL(
 		return nil, nil
 	}
 
-	presignedURL, err := s.svc.fileManager.GenerateFileUrl(ctx, file, expiresIn)
+	presignedURL, err := s.svc.file.GenerateFileURLForID(file.ID)
 	if err != nil {
 		return nil, fmt.Errorf("cannot generate file URL: %w", err)
 	}
@@ -557,7 +546,6 @@ func (s TrustCenterService) GenerateLogoURL(
 func (s TrustCenterService) GenerateDarkLogoURL(
 	ctx context.Context, scope coredata.Scoper,
 	compliancePageID gid.GID,
-	expiresIn time.Duration,
 ) (*string, error) {
 	file := &coredata.File{}
 	compliancePage := &coredata.TrustCenter{}
@@ -592,7 +580,7 @@ func (s TrustCenterService) GenerateDarkLogoURL(
 		return nil, nil
 	}
 
-	presignedURL, err := s.svc.fileManager.GenerateFileUrl(ctx, file, expiresIn)
+	presignedURL, err := s.svc.file.GenerateFileURLForID(file.ID)
 	if err != nil {
 		return nil, fmt.Errorf("cannot generate file URL: %w", err)
 	}

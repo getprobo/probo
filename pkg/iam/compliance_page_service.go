@@ -19,7 +19,6 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
-	"time"
 
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/packages/emails"
@@ -40,28 +39,19 @@ func NewCompliancePageService(svc *Service) *CompliancePageService {
 func (s *CompliancePageService) GenerateLogoURL(
 	ctx context.Context,
 	compliancePageID gid.GID,
-	expiresIn time.Duration,
 ) (*string, error) {
-	file := &coredata.File{}
-	compliancePage := &coredata.TrustCenter{}
-
+	var logoFileID *gid.GID
 	scope := coredata.NewScopeFromObjectID(compliancePageID)
 
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
+			compliancePage := &coredata.TrustCenter{}
 			if err := compliancePage.LoadByID(ctx, conn, scope, compliancePageID); err != nil {
 				return fmt.Errorf("cannot load compliance page: %w", err)
 			}
 
-			if compliancePage.LogoFileID == nil {
-				return nil
-			}
-
-			if err := file.LoadByID(ctx, conn, scope, *compliancePage.LogoFileID); err != nil {
-				return fmt.Errorf("cannot load file: %w", err)
-			}
-
+			logoFileID = compliancePage.LogoFileID
 			return nil
 		},
 	)
@@ -69,20 +59,16 @@ func (s *CompliancePageService) GenerateLogoURL(
 		return nil, err
 	}
 
-	if compliancePage.LogoFileID == nil {
+	if logoFileID == nil {
 		return nil, nil
 	}
 
-	if file.FileKey == "" {
-		return nil, nil
-	}
-
-	presignedURL, err := s.fm.GenerateFileUrl(ctx, file, expiresIn)
+	url, err := s.file.GenerateFileURLForID(*logoFileID)
 	if err != nil {
 		return nil, fmt.Errorf("cannot generate file URL: %w", err)
 	}
 
-	return &presignedURL, nil
+	return &url, nil
 }
 
 func (s *CompliancePageService) EmailPresenterConfig(ctx context.Context, compliancePageID gid.GID) (emails.PresenterConfig, error) {

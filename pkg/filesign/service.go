@@ -37,31 +37,6 @@ func NewService(pgClient *pg.Client, fileManager *filemanager.Service) *Service 
 	}
 }
 
-// GeneratePresignedFileURL returns a short-lived S3 presigned URL for a PUBLIC file.
-// Prefer file.Service.GenerateFileURL in most cases — it returns a stable, cacheable
-// application URL. Only use this when a direct S3 URL with a controlled TTL is required
-// (e.g. the /api/files/v1 HTTP handler that issues the presign-on-redirect).
-func (s *Service) GeneratePresignedFileURL(
-	ctx context.Context,
-	fileID gid.GID,
-	expiresIn time.Duration,
-) (string, error) {
-	file := &coredata.File{}
-
-	err := s.pg.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
-		if err := file.LoadPublicByID(ctx, conn, fileID); err != nil {
-			return fmt.Errorf("cannot load public file: %w", err)
-		}
-
-		return nil
-	})
-	if err != nil {
-		return "", err
-	}
-
-	return s.fileManager.GenerateFileUrl(ctx, file, expiresIn)
-}
-
 // LoadFile loads a non-deleted file by ID scoped to the given tenant.
 // The scope should be obtained from a prior IAM authorize call.
 func (s *Service) LoadFile(

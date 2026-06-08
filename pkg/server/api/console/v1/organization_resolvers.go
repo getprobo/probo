@@ -9,7 +9,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"time"
 
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/agentrun"
@@ -65,7 +64,7 @@ func (r *organizationResolver) LogoURL(ctx context.Context, obj *types.Organizat
 		return nil, err
 	}
 
-	logoURL, err := r.probo.Organizations.GenerateLogoURL(ctx, scope, obj.ID, 1*time.Hour)
+	logoURL, err := r.probo.Organizations.GenerateLogoURL(ctx, scope, obj.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot generate logo url", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -81,7 +80,7 @@ func (r *organizationResolver) HorizontalLogoURL(ctx context.Context, obj *types
 		return nil, err
 	}
 
-	horizontalLogoURL, err := r.probo.Organizations.GenerateHorizontalLogoURL(ctx, scope, obj.ID, 1*time.Hour)
+	horizontalLogoURL, err := r.probo.Organizations.GenerateHorizontalLogoURL(ctx, scope, obj.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot generate horizontal logo url", log.Error(err))
 		return nil, gqlutils.Internal(ctx)

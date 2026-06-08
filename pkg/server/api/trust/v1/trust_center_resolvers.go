@@ -10,7 +10,6 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"time"
 
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
@@ -266,7 +265,7 @@ func (r *frameworkResolver) LightLogoURL(ctx context.Context, obj *types.Framewo
 	scope := coredata.NewScopeFromObjectID(obj.ID)
 	trustService := r.trust
 
-	return trustService.Frameworks.GenerateLightLogoURL(ctx, scope, obj.ID, 1*time.Hour)
+	return trustService.Frameworks.GenerateLightLogoURL(ctx, scope, obj.ID)
 }
 
 // DarkLogoURL is the resolver for the darkLogoURL field.
@@ -274,7 +273,7 @@ func (r *frameworkResolver) DarkLogoURL(ctx context.Context, obj *types.Framewor
 	scope := coredata.NewScopeFromObjectID(obj.ID)
 	trustService := r.trust
 
-	return trustService.Frameworks.GenerateDarkLogoURL(ctx, scope, obj.ID, 1*time.Hour)
+	return trustService.Frameworks.GenerateDarkLogoURL(ctx, scope, obj.ID)
 }
 
 // RequestAllAccesses is the resolver for the requestAllAccesses field.
@@ -655,7 +654,7 @@ func (r *trustCenterResolver) LogoFileURL(ctx context.Context, obj *types.TrustC
 	scope := coredata.NewScopeFromObjectID(obj.ID)
 	trustService := r.trust
 
-	return trustService.TrustCenters.GenerateLogoURL(ctx, scope, obj.ID, 1*time.Hour)
+	return trustService.TrustCenters.GenerateLogoURL(ctx, scope, obj.ID)
 }
 
 // DarkLogoFileURL is the resolver for the darkLogoFileUrl field.
@@ -663,7 +662,7 @@ func (r *trustCenterResolver) DarkLogoFileURL(ctx context.Context, obj *types.Tr
 	scope := coredata.NewScopeFromObjectID(obj.ID)
 	trustService := r.trust
 
-	return trustService.TrustCenters.GenerateDarkLogoURL(ctx, scope, obj.ID, 1*time.Hour)
+	return trustService.TrustCenters.GenerateDarkLogoURL(ctx, scope, obj.ID)
 }
 
 // NonDisclosureAgreement is the resolver for the nonDisclosureAgreement field.

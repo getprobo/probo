@@ -9,7 +9,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"time"
 
 	"github.com/vikstrous/dataloadgen"
 	"go.gearno.de/kit/log"
@@ -696,7 +695,7 @@ func (r *trustCenterResolver) LogoFileURL(ctx context.Context, obj *types.TrustC
 		return nil, err
 	}
 
-	logoURL, err := r.probo.TrustCenters.GenerateLogoURL(ctx, scope, obj.ID, 1*time.Hour)
+	logoURL, err := r.probo.TrustCenters.GenerateLogoURL(ctx, scope, obj.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot generate logo url", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -712,7 +711,7 @@ func (r *trustCenterResolver) DarkLogoFileURL(ctx context.Context, obj *types.Tr
 		return nil, err
 	}
 
-	logoURL, err := r.probo.TrustCenters.GenerateDarkLogoURL(ctx, scope, obj.ID, 1*time.Hour)
+	logoURL, err := r.probo.TrustCenters.GenerateDarkLogoURL(ctx, scope, obj.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot generate logo url", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -735,7 +734,7 @@ func (r *trustCenterResolver) NdaFileURL(ctx context.Context, obj *types.TrustCe
 
 	scope := coredata.NewScopeFromObjectID(obj.ID)
 
-	fileURL, err := r.probo.TrustCenters.GenerateNDAFileURL(ctx, scope, obj.ID, 15*time.Minute)
+	fileURL, err := r.probo.TrustCenters.GenerateNDAFileURL(ctx, scope, obj.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot generate NDA file URL", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -1150,7 +1149,7 @@ func (r *trustCenterFileResolver) FileURL(ctx context.Context, obj *types.TrustC
 		return "", err
 	}
 
-	fileURL, err := r.probo.TrustCenterFiles.GenerateFileURL(ctx, scope, obj.ID, 1*time.Hour)
+	fileURL, err := r.probo.TrustCenterFiles.GenerateFileURL(ctx, scope, obj.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot generate file URL", log.Error(err))
 		return "", gqlutils.Internal(ctx)

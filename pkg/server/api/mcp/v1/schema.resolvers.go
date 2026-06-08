@@ -4908,17 +4908,17 @@ func (r *Resolver) GetTrustCenterTool(ctx context.Context, req *mcp.CallToolRequ
 
 	tc := types.NewTrustCenter(trustCenter)
 
-	logoURL, err := prb.TrustCenters.GenerateLogoURL(ctx, scope, trustCenter.ID, 1*time.Hour)
+	logoURL, err := prb.TrustCenters.GenerateLogoURL(ctx, scope, trustCenter.ID)
 	if err == nil {
 		tc.LogoFileURL = logoURL
 	}
 
-	darkLogoURL, err := prb.TrustCenters.GenerateDarkLogoURL(ctx, scope, trustCenter.ID, 1*time.Hour)
+	darkLogoURL, err := prb.TrustCenters.GenerateDarkLogoURL(ctx, scope, trustCenter.ID)
 	if err == nil {
 		tc.DarkLogoFileURL = darkLogoURL
 	}
 
-	ndaFileURL, err := prb.TrustCenters.GenerateNDAFileURL(ctx, scope, trustCenter.ID, 15*time.Minute)
+	ndaFileURL, err := prb.TrustCenters.GenerateNDAFileURL(ctx, scope, trustCenter.ID)
 	if err == nil {
 		tc.NdaFileURL = ndaFileURL
 	}
@@ -5104,7 +5104,7 @@ func (r *Resolver) ListTrustCenterFilesTool(ctx context.Context, req *mcp.CallTo
 
 	files := make([]*types.TrustCenterFile, 0, len(p.Data))
 	for _, f := range p.Data {
-		fileURL, err := prb.TrustCenterFiles.GenerateFileURL(ctx, scope, f.ID, 1*time.Hour)
+		fileURL, err := prb.TrustCenterFiles.GenerateFileURL(ctx, scope, f.ID)
 		if err != nil {
 			return nil, types.ListTrustCenterFilesOutput{}, fmt.Errorf("cannot generate file URL: %w", err)
 		}

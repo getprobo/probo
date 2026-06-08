@@ -9,7 +9,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"time"
 
 	pgx "github.com/jackc/pgx/v5"
 	"github.com/vikstrous/dataloadgen"
@@ -989,7 +988,7 @@ func (r *thirdPartyBusinessAssociateAgreementResolver) FileURL(ctx context.Conte
 		return "", err
 	}
 
-	fileURL, err := r.probo.ThirdPartyBusinessAssociateAgreements.GenerateFileURL(ctx, scope, obj.ID, 1*time.Hour)
+	fileURL, err := r.probo.ThirdPartyBusinessAssociateAgreements.GenerateFileURL(ctx, scope, obj.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot generate file URL", log.Error(err))
 		return "", gqlutils.Internal(ctx)
@@ -1180,7 +1179,7 @@ func (r *thirdPartyDataPrivacyAgreementResolver) FileURL(ctx context.Context, ob
 		return "", err
 	}
 
-	fileURL, err := r.probo.ThirdPartyDataPrivacyAgreements.GenerateFileURL(ctx, scope, obj.ID, 1*time.Hour)
+	fileURL, err := r.probo.ThirdPartyDataPrivacyAgreements.GenerateFileURL(ctx, scope, obj.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot generate file URL", log.Error(err))
 		return "", gqlutils.Internal(ctx)

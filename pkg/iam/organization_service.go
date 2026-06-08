@@ -1374,13 +1374,9 @@ func (s *OrganizationService) GetOrganizationForMembership(ctx context.Context, 
 func (s OrganizationService) GenerateLogoURL(
 	ctx context.Context,
 	organizationID gid.GID,
-	expiresIn time.Duration,
 ) (*string, error) {
-	var (
-		errNoLogoFile = errors.New("no logo file found")
-		scope         = coredata.NewScopeFromObjectID(organizationID)
-		file          = &coredata.File{}
-	)
+	var logoFileID *gid.GID
+	scope := coredata.NewScopeFromObjectID(organizationID)
 
 	err := s.pg.WithConn(
 		ctx,
@@ -1390,43 +1386,32 @@ func (s OrganizationService) GenerateLogoURL(
 				return fmt.Errorf("cannot load organization: %w", err)
 			}
 
-			if organization.LogoFileID == nil {
-				return errNoLogoFile
-			}
-
-			if err := file.LoadByID(ctx, conn, scope, *organization.LogoFileID); err != nil {
-				return fmt.Errorf("cannot load file: %w", err)
-			}
-
+			logoFileID = organization.LogoFileID
 			return nil
 		},
 	)
-	if err == errNoLogoFile {
-		return nil, nil
-	}
-
 	if err != nil {
 		return nil, fmt.Errorf("cannot generate logo URL: %w", err)
 	}
 
-	presignedURL, err := s.fm.GenerateFileUrl(ctx, file, expiresIn)
+	if logoFileID == nil {
+		return nil, nil
+	}
+
+	url, err := s.file.GenerateFileURLForID(*logoFileID)
 	if err != nil {
 		return nil, fmt.Errorf("cannot generate file URL: %w", err)
 	}
 
-	return &presignedURL, nil
+	return &url, nil
 }
 
 func (s OrganizationService) GenerateHorizontalLogoURL(
 	ctx context.Context,
 	organizationID gid.GID,
-	expiresIn time.Duration,
 ) (*string, error) {
-	var (
-		errNoLogoFile = errors.New("no logo file found")
-		scope         = coredata.NewScopeFromObjectID(organizationID)
-		file          = &coredata.File{}
-	)
+	var horizontalLogoFileID *gid.GID
+	scope := coredata.NewScopeFromObjectID(organizationID)
 
 	err := s.pg.WithConn(
 		ctx,
@@ -1436,31 +1421,24 @@ func (s OrganizationService) GenerateHorizontalLogoURL(
 				return fmt.Errorf("cannot load organization: %w", err)
 			}
 
-			if organization.HorizontalLogoFileID == nil {
-				return errNoLogoFile
-			}
-
-			if err := file.LoadByID(ctx, conn, scope, *organization.HorizontalLogoFileID); err != nil {
-				return fmt.Errorf("cannot load file: %w", err)
-			}
-
+			horizontalLogoFileID = organization.HorizontalLogoFileID
 			return nil
 		},
 	)
-	if err == errNoLogoFile {
-		return nil, nil
-	}
-
 	if err != nil {
 		return nil, err
 	}
 
-	presignedURL, err := s.fm.GenerateFileUrl(ctx, file, expiresIn)
+	if horizontalLogoFileID == nil {
+		return nil, nil
+	}
+
+	url, err := s.file.GenerateFileURLForID(*horizontalLogoFileID)
 	if err != nil {
 		return nil, fmt.Errorf("cannot generate file URL: %w", err)
 	}
 
-	return &presignedURL, nil
+	return &url, nil
 }
 
 func (s OrganizationService) DeleteSAMLConfiguration(

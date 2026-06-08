@@ -445,10 +445,13 @@ func (impl *Implm) Run(
 		return fmt.Errorf("cannot upload email static assets: %w", err)
 	}
 
+	fileService := file.NewService(pgClient, baseURL)
+
 	iamService, err := iam.NewService(
 		ctx,
 		pgClient,
 		fileManagerService,
+		fileService,
 		hp,
 		iam.Config{
 			DisableSignup:                  impl.cfg.Auth.DisableSignup,
@@ -539,7 +542,6 @@ func (impl *Implm) Run(
 
 	cookieBannerService := cookiebanner.NewService(pgClient, impl.cfg.Branding)
 
-	fileService := file.NewService(pgClient, baseURL)
 	filesignService := filesign.NewService(pgClient, fileManagerService)
 
 	proboService, err := probo.NewService(

@@ -9,7 +9,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"time"
 
 	"github.com/vikstrous/dataloadgen"
 	"go.gearno.de/kit/log"
@@ -88,7 +87,7 @@ func (r *frameworkResolver) LightLogoURL(ctx context.Context, obj *types.Framewo
 		return nil, err
 	}
 
-	return r.probo.Frameworks.GenerateLightLogoURL(ctx, scope, obj.ID, 1*time.Hour)
+	return r.probo.Frameworks.GenerateLightLogoURL(ctx, scope, obj.ID)
 }
 
 // DarkLogoURL is the resolver for the darkLogoURL field.
@@ -98,7 +97,7 @@ func (r *frameworkResolver) DarkLogoURL(ctx context.Context, obj *types.Framewor
 		return nil, err
 	}
 
-	return r.probo.Frameworks.GenerateDarkLogoURL(ctx, scope, obj.ID, 1*time.Hour)
+	return r.probo.Frameworks.GenerateDarkLogoURL(ctx, scope, obj.ID)
 }
 
 // Permission is the resolver for the permission field.

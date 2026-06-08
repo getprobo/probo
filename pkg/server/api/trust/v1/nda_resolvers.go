@@ -104,7 +104,7 @@ func (r *nonDisclosureAgreementResolver) FileURL(ctx context.Context, obj *types
 	scope := coredata.NewScopeFromObjectID(trustCenter.ID)
 	trustService := r.trust
 
-	fileURL, err := trustService.TrustCenters.GenerateNDAFileURL(ctx, scope, trustCenter.ID, 15*time.Minute)
+	fileURL, err := trustService.TrustCenters.GenerateNDAFileURL(ctx, scope, trustCenter.ID)
 	if err != nil {
 		return "", gqlutils.Internal(ctx)
 	}

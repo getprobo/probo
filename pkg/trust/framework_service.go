@@ -17,7 +17,6 @@ package trust
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
@@ -54,9 +53,8 @@ func (s FrameworkService) GenerateLightLogoURL(
 	ctx context.Context,
 	scope coredata.Scoper,
 	frameworkID gid.GID,
-	expiresIn time.Duration,
 ) (*string, error) {
-	file := &coredata.File{}
+	var lightLogoFileID *gid.GID
 
 	err := s.svc.pg.WithConn(
 		ctx,
@@ -66,14 +64,7 @@ func (s FrameworkService) GenerateLightLogoURL(
 				return fmt.Errorf("cannot load framework: %w", err)
 			}
 
-			if framework.LightLogoFileID == nil {
-				return nil
-			}
-
-			if err := file.LoadByID(ctx, conn, scope, *framework.LightLogoFileID); err != nil {
-				return fmt.Errorf("cannot load file: %w", err)
-			}
-
+			lightLogoFileID = framework.LightLogoFileID
 			return nil
 		},
 	)
@@ -81,25 +72,24 @@ func (s FrameworkService) GenerateLightLogoURL(
 		return nil, err
 	}
 
-	if file.FileKey == "" {
+	if lightLogoFileID == nil {
 		return nil, nil
 	}
 
-	presignedURL, err := s.svc.fileManager.GenerateFileUrl(ctx, file, expiresIn)
+	url, err := s.svc.file.GenerateFileURLForID(*lightLogoFileID)
 	if err != nil {
 		return nil, fmt.Errorf("cannot generate file URL: %w", err)
 	}
 
-	return &presignedURL, nil
+	return &url, nil
 }
 
 func (s FrameworkService) GenerateDarkLogoURL(
 	ctx context.Context,
 	scope coredata.Scoper,
 	frameworkID gid.GID,
-	expiresIn time.Duration,
 ) (*string, error) {
-	file := &coredata.File{}
+	var darkLogoFileID *gid.GID
 
 	err := s.svc.pg.WithConn(
 		ctx,
@@ -109,14 +99,7 @@ func (s FrameworkService) GenerateDarkLogoURL(
 				return fmt.Errorf("cannot load framework: %w", err)
 			}
 
-			if framework.DarkLogoFileID == nil {
-				return nil
-			}
-
-			if err := file.LoadByID(ctx, conn, scope, *framework.DarkLogoFileID); err != nil {
-				return fmt.Errorf("cannot load file: %w", err)
-			}
-
+			darkLogoFileID = framework.DarkLogoFileID
 			return nil
 		},
 	)
@@ -124,14 +107,14 @@ func (s FrameworkService) GenerateDarkLogoURL(
 		return nil, err
 	}
 
-	if file.FileKey == "" {
+	if darkLogoFileID == nil {
 		return nil, nil
 	}
 
-	presignedURL, err := s.svc.fileManager.GenerateFileUrl(ctx, file, expiresIn)
+	url, err := s.svc.file.GenerateFileURLForID(*darkLogoFileID)
 	if err != nil {
 		return nil, fmt.Errorf("cannot generate file URL: %w", err)
 	}
 
-	return &presignedURL, nil
+	return &url, nil
 }

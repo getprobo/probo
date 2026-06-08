@@ -19,7 +19,6 @@ import (
 	"fmt"
 	"io"
 	"mime"
-	"net/url"
 	"path/filepath"
 	"time"
 
@@ -231,9 +230,8 @@ func (s ThirdPartyDataPrivacyAgreementService) Get(
 func (s ThirdPartyDataPrivacyAgreementService) GenerateFileURL(
 	ctx context.Context, scope coredata.Scoper,
 	thirdPartyDataPrivacyAgreementID gid.GID,
-	expiresIn time.Duration,
 ) (string, error) {
-	var file *coredata.File
+	var fileID gid.GID
 
 	err := s.svc.pg.WithConn(
 		ctx,
@@ -243,11 +241,7 @@ func (s ThirdPartyDataPrivacyAgreementService) GenerateFileURL(
 				return fmt.Errorf("cannot load thirdParty data privacy agreement: %w", err)
 			}
 
-			file = &coredata.File{}
-			if err := file.LoadByID(ctx, conn, scope, thirdPartyDataPrivacyAgreement.FileID); err != nil {
-				return fmt.Errorf("cannot load file: %w", err)
-			}
-
+			fileID = thirdPartyDataPrivacyAgreement.FileID
 			return nil
 		},
 	)
@@ -255,25 +249,12 @@ func (s ThirdPartyDataPrivacyAgreementService) GenerateFileURL(
 		return "", err
 	}
 
-	presignClient := s3.NewPresignClient(s.svc.s3)
-
-	encodedFilename := url.QueryEscape(file.FileName)
-	contentDisposition := fmt.Sprintf("attachment; filename=\"%s\"; filename*=UTF-8''%s",
-		encodedFilename, encodedFilename)
-
-	presignedReq, err := presignClient.PresignGetObject(ctx, &s3.GetObjectInput{
-		Bucket:                     new(s.svc.bucket),
-		Key:                        new(file.FileKey),
-		ResponseCacheControl:       new("max-age=3600, public"),
-		ResponseContentDisposition: new(contentDisposition),
-	}, func(opts *s3.PresignOptions) {
-		opts.Expires = expiresIn
-	})
+	fileURL, err := s.svc.file.GenerateFileURLForID(fileID)
 	if err != nil {
-		return "", fmt.Errorf("cannot presign GetObject request: %w", err)
+		return "", fmt.Errorf("cannot generate file URL: %w", err)
 	}
 
-	return presignedReq.URL, nil
+	return fileURL, nil
 }
 
 func (s ThirdPartyDataPrivacyAgreementService) Update(

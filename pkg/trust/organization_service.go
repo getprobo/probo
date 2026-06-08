@@ -17,10 +17,7 @@ package trust
 import (
 	"context"
 	"fmt"
-	"net/url"
-	"time"
 
-	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
@@ -98,7 +95,6 @@ func (s OrganizationService) GenerateLogoURL(
 	ctx context.Context,
 	scope coredata.Scoper,
 	organizationID gid.GID,
-	expiresIn time.Duration,
 ) (*string, error) {
 	organization, err := s.Get(ctx, scope, organizationID)
 	if err != nil {
@@ -109,35 +105,10 @@ func (s OrganizationService) GenerateLogoURL(
 		return nil, nil
 	}
 
-	file := &coredata.File{}
-
-	err = s.svc.pg.WithConn(
-		ctx,
-		func(ctx context.Context, conn pg.Querier) error {
-			return file.LoadByID(ctx, conn, scope, *organization.LogoFileID)
-		},
-	)
+	url, err := s.svc.file.GenerateFileURLForID(*organization.LogoFileID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot load file: %w", err)
+		return nil, fmt.Errorf("cannot generate file URL: %w", err)
 	}
 
-	presignClient := s3.NewPresignClient(s.svc.s3)
-
-	encodedFilename := url.QueryEscape(file.FileName)
-	contentDisposition := fmt.Sprintf("attachment; filename=\"%s\"; filename*=UTF-8''%s",
-		encodedFilename, encodedFilename)
-
-	presignedReq, err := presignClient.PresignGetObject(ctx, &s3.GetObjectInput{
-		Bucket:                     new(s.svc.bucket),
-		Key:                        new(file.FileKey),
-		ResponseCacheControl:       new("max-age=3600, public"),
-		ResponseContentDisposition: new(contentDisposition),
-	}, func(opts *s3.PresignOptions) {
-		opts.Expires = expiresIn
-	})
-	if err != nil {
-		return nil, fmt.Errorf("cannot presign GetObject request: %w", err)
-	}
-
-	return &presignedReq.URL, nil
+	return &url, nil
 }

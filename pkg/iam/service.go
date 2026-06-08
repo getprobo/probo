@@ -31,6 +31,7 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/cipher"
 	"go.probo.inc/probo/pkg/crypto/passwdhash"
+	"go.probo.inc/probo/pkg/file"
 	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam/oauth2server"
@@ -44,6 +45,7 @@ type (
 	Service struct {
 		pg                         *pg.Client
 		fm                         *filemanager.Service
+		file                       *file.Service
 		hp                         *passwdhash.Profile
 		dummyHash                  []byte
 		baseURL                    string
@@ -113,6 +115,7 @@ func NewService(
 	ctx context.Context,
 	pgClient *pg.Client,
 	fm *filemanager.Service,
+	fileSvc *file.Service,
 	hp *passwdhash.Profile,
 	cfg Config,
 ) (*Service, error) {
@@ -135,6 +138,7 @@ func NewService(
 	svc := &Service{
 		pg:                         pgClient,
 		fm:                         fm,
+		file:                       fileSvc,
 		hp:                         hp,
 		dummyHash:                  mustHashDummy(hp),
 		baseURL:                    cfg.BaseURL.String(),

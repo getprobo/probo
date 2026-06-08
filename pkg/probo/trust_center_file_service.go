@@ -289,23 +289,18 @@ func (s TrustCenterFileService) Delete(
 func (s TrustCenterFileService) GenerateFileURL(
 	ctx context.Context, scope coredata.Scoper,
 	trustCenterFileID gid.GID,
-	duration time.Duration,
 ) (string, error) {
-	var storedFile *coredata.File
+	var fileID gid.GID
 
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			file := &coredata.TrustCenterFile{}
-			if err := file.LoadByID(ctx, conn, scope, trustCenterFileID); err != nil {
+			tcFile := &coredata.TrustCenterFile{}
+			if err := tcFile.LoadByID(ctx, conn, scope, trustCenterFileID); err != nil {
 				return fmt.Errorf("cannot load trust center file: %w", err)
 			}
 
-			storedFile = &coredata.File{}
-			if err := storedFile.LoadByID(ctx, conn, scope, file.FileID); err != nil {
-				return fmt.Errorf("cannot load file: %w", err)
-			}
-
+			fileID = tcFile.FileID
 			return nil
 		},
 	)
@@ -313,12 +308,12 @@ func (s TrustCenterFileService) GenerateFileURL(
 		return "", err
 	}
 
-	fileURL, err := s.svc.fileManager.GenerateFileUrl(ctx, storedFile, duration)
+	url, err := s.svc.file.GenerateFileURLForID(fileID)
 	if err != nil {
 		return "", fmt.Errorf("cannot generate file URL: %w", err)
 	}
 
-	return fileURL, nil
+	return url, nil
 }
 
 func (s TrustCenterFileService) uploadFile(

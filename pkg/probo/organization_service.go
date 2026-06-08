@@ -419,9 +419,8 @@ func (s OrganizationService) Update(
 func (s OrganizationService) GenerateLogoURL(
 	ctx context.Context, scope coredata.Scoper,
 	organizationID gid.GID,
-	expiresIn time.Duration,
 ) (*string, error) {
-	file := &coredata.File{}
+	var logoFileID *gid.GID
 
 	err := s.svc.pg.WithConn(
 		ctx,
@@ -431,14 +430,7 @@ func (s OrganizationService) GenerateLogoURL(
 				return fmt.Errorf("cannot load organization: %w", err)
 			}
 
-			if organization.LogoFileID == nil {
-				return nil
-			}
-
-			if err := file.LoadByID(ctx, conn, scope, *organization.LogoFileID); err != nil {
-				return fmt.Errorf("cannot load file: %w", err)
-			}
-
+			logoFileID = organization.LogoFileID
 			return nil
 		},
 	)
@@ -446,24 +438,23 @@ func (s OrganizationService) GenerateLogoURL(
 		return nil, err
 	}
 
-	if file.FileKey == "" {
+	if logoFileID == nil {
 		return nil, nil
 	}
 
-	presignedURL, err := s.svc.fileManager.GenerateFileUrl(ctx, file, expiresIn)
+	url, err := s.svc.file.GenerateFileURLForID(*logoFileID)
 	if err != nil {
 		return nil, fmt.Errorf("cannot generate file URL: %w", err)
 	}
 
-	return &presignedURL, nil
+	return &url, nil
 }
 
 func (s OrganizationService) GenerateHorizontalLogoURL(
 	ctx context.Context, scope coredata.Scoper,
 	organizationID gid.GID,
-	expiresIn time.Duration,
 ) (*string, error) {
-	file := &coredata.File{}
+	var horizontalLogoFileID *gid.GID
 
 	err := s.svc.pg.WithConn(
 		ctx,
@@ -473,14 +464,7 @@ func (s OrganizationService) GenerateHorizontalLogoURL(
 				return fmt.Errorf("cannot load organization: %w", err)
 			}
 
-			if organization.HorizontalLogoFileID == nil {
-				return nil
-			}
-
-			if err := file.LoadByID(ctx, conn, scope, *organization.HorizontalLogoFileID); err != nil {
-				return fmt.Errorf("cannot load file: %w", err)
-			}
-
+			horizontalLogoFileID = organization.HorizontalLogoFileID
 			return nil
 		},
 	)
@@ -488,16 +472,16 @@ func (s OrganizationService) GenerateHorizontalLogoURL(
 		return nil, err
 	}
 
-	if file.FileKey == "" {
+	if horizontalLogoFileID == nil {
 		return nil, nil
 	}
 
-	presignedURL, err := s.svc.fileManager.GenerateFileUrl(ctx, file, expiresIn)
+	url, err := s.svc.file.GenerateFileURLForID(*horizontalLogoFileID)
 	if err != nil {
 		return nil, fmt.Errorf("cannot generate file URL: %w", err)
 	}
 
-	return &presignedURL, nil
+	return &url, nil
 }
 
 func (s OrganizationService) DeleteHorizontalLogo(

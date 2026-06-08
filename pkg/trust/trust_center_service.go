@@ -19,7 +19,6 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
-	"time"
 
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/packages/emails"
@@ -119,9 +118,8 @@ func (s TrustCenterService) GenerateNDAFileURL(
 	ctx context.Context,
 	scope coredata.Scoper,
 	trustCenterID gid.GID,
-	expiresIn time.Duration,
 ) (string, error) {
-	var file *coredata.File
+	var ndaFileID *gid.GID
 
 	err := s.svc.pg.WithConn(
 		ctx,
@@ -135,11 +133,7 @@ func (s TrustCenterService) GenerateNDAFileURL(
 				return fmt.Errorf("no NDA file found")
 			}
 
-			file = &coredata.File{}
-			if err := file.LoadByID(ctx, conn, scope, *trustCenter.NonDisclosureAgreementFileID); err != nil {
-				return fmt.Errorf("cannot load file: %w", err)
-			}
-
+			ndaFileID = trustCenter.NonDisclosureAgreementFileID
 			return nil
 		},
 	)
@@ -147,38 +141,30 @@ func (s TrustCenterService) GenerateNDAFileURL(
 		return "", err
 	}
 
-	presignedURL, err := s.svc.fileManager.GenerateFileUrl(ctx, file, expiresIn)
+	url, err := s.svc.file.GenerateFileURLForID(*ndaFileID)
 	if err != nil {
 		return "", fmt.Errorf("cannot generate file URL: %w", err)
 	}
 
-	return presignedURL, nil
+	return url, nil
 }
 
 func (s TrustCenterService) GenerateLogoURL(
 	ctx context.Context,
 	scope coredata.Scoper,
 	compliancePageID gid.GID,
-	expiresIn time.Duration,
 ) (*string, error) {
-	file := &coredata.File{}
-	compliancePage := &coredata.TrustCenter{}
+	var logoFileID *gid.GID
 
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
+			compliancePage := &coredata.TrustCenter{}
 			if err := compliancePage.LoadByID(ctx, conn, scope, compliancePageID); err != nil {
 				return fmt.Errorf("cannot load compliance page: %w", err)
 			}
 
-			if compliancePage.LogoFileID == nil {
-				return nil
-			}
-
-			if err := file.LoadByID(ctx, conn, scope, *compliancePage.LogoFileID); err != nil {
-				return fmt.Errorf("cannot load file: %w", err)
-			}
-
+			logoFileID = compliancePage.LogoFileID
 			return nil
 		},
 	)
@@ -186,46 +172,34 @@ func (s TrustCenterService) GenerateLogoURL(
 		return nil, err
 	}
 
-	if compliancePage.LogoFileID == nil {
+	if logoFileID == nil {
 		return nil, nil
 	}
 
-	if file.FileKey == "" {
-		return nil, nil
-	}
-
-	presignedURL, err := s.svc.fileManager.GenerateFileUrl(ctx, file, expiresIn)
+	url, err := s.svc.file.GenerateFileURLForID(*logoFileID)
 	if err != nil {
 		return nil, fmt.Errorf("cannot generate file URL: %w", err)
 	}
 
-	return &presignedURL, nil
+	return &url, nil
 }
 
 func (s TrustCenterService) GenerateDarkLogoURL(
 	ctx context.Context,
 	scope coredata.Scoper,
 	compliancePageID gid.GID,
-	expiresIn time.Duration,
 ) (*string, error) {
-	file := &coredata.File{}
-	compliancePage := &coredata.TrustCenter{}
+	var darkLogoFileID *gid.GID
 
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
+			compliancePage := &coredata.TrustCenter{}
 			if err := compliancePage.LoadByID(ctx, conn, scope, compliancePageID); err != nil {
 				return fmt.Errorf("cannot load compliance page: %w", err)
 			}
 
-			if compliancePage.DarkLogoFileID == nil {
-				return nil
-			}
-
-			if err := file.LoadByID(ctx, conn, scope, *compliancePage.DarkLogoFileID); err != nil {
-				return fmt.Errorf("cannot load file: %w", err)
-			}
-
+			darkLogoFileID = compliancePage.DarkLogoFileID
 			return nil
 		},
 	)
@@ -233,20 +207,16 @@ func (s TrustCenterService) GenerateDarkLogoURL(
 		return nil, err
 	}
 
-	if compliancePage.DarkLogoFileID == nil {
+	if darkLogoFileID == nil {
 		return nil, nil
 	}
 
-	if file.FileKey == "" {
-		return nil, nil
-	}
-
-	presignedURL, err := s.svc.fileManager.GenerateFileUrl(ctx, file, expiresIn)
+	url, err := s.svc.file.GenerateFileURLForID(*darkLogoFileID)
 	if err != nil {
 		return nil, fmt.Errorf("cannot generate file URL: %w", err)
 	}
 
-	return &presignedURL, nil
+	return &url, nil
 }
 
 func (s *TrustCenterService) EmailPresenterConfig(
