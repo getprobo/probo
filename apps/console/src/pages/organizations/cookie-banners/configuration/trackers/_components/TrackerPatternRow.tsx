@@ -306,13 +306,12 @@ export function TrackerPatternRow({ patternKey, connectionId }: TrackerPatternRo
       <Td>
         {pattern.thirdParty
           ? (
-              <div className="flex items-center gap-2 min-w-0">
-                <span className="truncate">{pattern.thirdParty.name}</span>
-              </div>
+              <span className="truncate">{pattern.thirdParty.name}</span>
             )
           : pattern.commonThirdParty
             ? (
-                <div className="flex items-center gap-2 min-w-0">
+                <div>
+                  <Badge variant="info">{__("Common catalog")}</Badge>
                   <span className="truncate">{pattern.commonThirdParty.name}</span>
                 </div>
               )
