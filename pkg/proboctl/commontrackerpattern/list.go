@@ -144,6 +144,7 @@ func renderPatternTable(cmd *cobra.Command, f *cmdutil.Factory, patterns coredat
 	}
 
 	var linkedIDs []gid.GID
+
 	for _, p := range patterns {
 		if p.CommonThirdPartyID != nil {
 			linkedIDs = append(linkedIDs, *p.CommonThirdPartyID)

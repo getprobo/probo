@@ -44,6 +44,7 @@ func Paginate[E page.Paginable[F], F page.OrderField](
 
 	for {
 		size := paginatePageSize
+
 		if limit > 0 {
 			remaining := limit - len(result)
 			if remaining <= 0 {

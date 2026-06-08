@@ -54,11 +54,11 @@ func newCmdStats(f *cmdutil.Factory) *cobra.Command {
 					filter *coredata.CommonTrackerPatternFilter
 				}{
 					{"total", coredata.NewCommonTrackerPatternFilter()},
-					{"queued", coredata.NewCommonTrackerPatternFilter().WithState(refState(coredata.CommonTrackerPatternEnrichmentStateQueued))},
-					{"enriched", coredata.NewCommonTrackerPatternFilter().WithState(refState(coredata.CommonTrackerPatternEnrichmentStateEnriched))},
-					{"unenriched", coredata.NewCommonTrackerPatternFilter().WithState(refState(coredata.CommonTrackerPatternEnrichmentStateUnenriched))},
-					{"linked", coredata.NewCommonTrackerPatternFilter().WithLinked(refBool(true))},
-					{"unlinked", coredata.NewCommonTrackerPatternFilter().WithLinked(refBool(false))},
+					{"queued", coredata.NewCommonTrackerPatternFilter().WithState(new(coredata.CommonTrackerPatternEnrichmentStateQueued))},
+					{"enriched", coredata.NewCommonTrackerPatternFilter().WithState(new(coredata.CommonTrackerPatternEnrichmentStateEnriched))},
+					{"unenriched", coredata.NewCommonTrackerPatternFilter().WithState(new(coredata.CommonTrackerPatternEnrichmentStateUnenriched))},
+					{"linked", coredata.NewCommonTrackerPatternFilter().WithLinked(new(true))},
+					{"unlinked", coredata.NewCommonTrackerPatternFilter().WithLinked(new(false))},
 				}
 
 				for _, c := range counts {
@@ -93,12 +93,4 @@ func newCmdStats(f *cmdutil.Factory) *cobra.Command {
 	}
 
 	return cmd
-}
-
-func refState(s coredata.CommonTrackerPatternEnrichmentState) *coredata.CommonTrackerPatternEnrichmentState {
-	return &s
-}
-
-func refBool(b bool) *bool {
-	return &b
 }

@@ -70,7 +70,7 @@ func TestResetBannerTrackers_FullRebuild(t *testing.T) {
 				TrackerPatternID: &glob.ID,
 				TrackerType:      coredata.TrackerTypeCookie,
 				Identifier:       identifier,
-				Source:           ref(coredata.CookieSourceScript),
+				Source:           new(coredata.CookieSourceScript),
 				LastDetectedAt:   now,
 				CreatedAt:        now,
 				UpdatedAt:        now,
@@ -97,6 +97,7 @@ func TestResetBannerTrackers_FullRebuild(t *testing.T) {
 	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
 		// The glob is gone.
 		var goneGlob coredata.TrackerPattern
+
 		err := goneGlob.LoadByBannerIDTypeAndPattern(ctx, conn, fx.scope, fx.banner.ID, coredata.TrackerTypeCookie, "_ga_*", nil)
 		require.ErrorIs(t, err, coredata.ErrResourceNotFound)
 
@@ -143,10 +144,6 @@ func TestResetBannerTrackers_FullRebuild(t *testing.T) {
 
 		return nil
 	}))
-}
-
-func ref[T any](v T) *T {
-	return &v
 }
 
 func seedCommonTrackerPattern(t *testing.T, ctx context.Context, client *pg.Client, pattern string) gid.GID {

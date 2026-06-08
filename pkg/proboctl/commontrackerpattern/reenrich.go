@@ -119,6 +119,7 @@ func newCmdReenrich(f *cmdutil.Factory) *cobra.Command {
 				ctx,
 				func(ctx context.Context, tx pg.Tx) error {
 					var ps coredata.CommonTrackerPatterns
+
 					requeued, err = ps.RequestEnrichmentByIDs(ctx, tx, ids, flagResetEnriched)
 
 					return err
@@ -194,6 +195,7 @@ func resolveReenrichIDs(
 				}
 
 				var tps coredata.TrackerPatterns
+
 				ids, err = tps.LoadAllLinkedCommonTrackerPatternIDsByCookieBannerID(ctx, conn, coredata.NewScopeFromObjectID(bannerID), bannerID)
 
 				return err
@@ -204,6 +206,7 @@ func resolveReenrichIDs(
 				}
 
 				var tps coredata.TrackerPatterns
+
 				ids, err = tps.LoadAllLinkedCommonTrackerPatternIDsByOrganizationID(ctx, conn, coredata.NewScopeFromObjectID(orgID), orgID)
 
 				return err
@@ -218,6 +221,7 @@ func resolveReenrichIDs(
 				}
 
 				var ps coredata.CommonTrackerPatterns
+
 				ids, err = ps.LoadAllIDs(ctx, conn, filter)
 
 				return err
@@ -246,6 +250,7 @@ func buildReenrichFilter(
 		}
 
 		filter.WithCommonThirdPartyID(&id)
+
 		hasSelector = true
 	}
 
@@ -256,11 +261,13 @@ func buildReenrichFilter(
 		}
 
 		filter.WithTrackerType(&tt)
+
 		hasSelector = true
 	}
 
 	if keyword != "" {
 		filter.WithKeyword(&keyword)
+
 		hasSelector = true
 	}
 
@@ -271,6 +278,7 @@ func buildReenrichFilter(
 		}
 
 		filter.WithState(&st)
+
 		hasSelector = true
 	}
 
