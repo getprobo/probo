@@ -29,7 +29,17 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 )
 
-const patternMergeThreshold = 3
+const (
+	patternMergeThreshold = 3
+
+	// primarySeparators are the structural delimiters that always
+	// start a new token in splitTokens. `-` is intentionally excluded
+	// because it appears inside UUIDs, which splitTokens preserves as a
+	// single token; a value like "done:ecdd43d7-0193-4d24-b6ed-..."
+	// must split on ":" so the trailing UUID is isolated and collapsed
+	// to a wildcard rather than shredded into fixed hex anchors.
+	primarySeparators = "_:."
+)
 
 // durationUnits mirrors the snap table from cookie-utils.ts. The same
 // tracker observed across different clients can have jitter in its
@@ -565,16 +575,16 @@ func isUUIDShape(s string) bool {
 }
 
 func splitTokens(name string) ([]string, []byte) {
-	underscoreParts := strings.Split(name, "_")
+	primaryParts, primarySeps := splitOnAny(name, primarySeparators)
 
 	var (
 		tokens []string
 		seps   []byte
 	)
 
-	for i, part := range underscoreParts {
+	for i, part := range primaryParts {
 		if i > 0 {
-			seps = append(seps, '_')
+			seps = append(seps, primarySeps[i-1])
 		}
 
 		if isUUIDShape(part) || !strings.Contains(part, "-") {
@@ -597,6 +607,29 @@ func splitTokens(name string) ([]string, []byte) {
 	return tokens, seps
 }
 
+// splitOnAny splits s on every byte found in separators, returning the
+// parts and the separator byte that preceded each part after the first.
+// len(seps) == len(parts)-1.
+func splitOnAny(s, separators string) ([]string, []byte) {
+	var (
+		parts []string
+		seps  []byte
+		start int
+	)
+
+	for i := 0; i < len(s); i++ {
+		if strings.IndexByte(separators, s[i]) >= 0 {
+			parts = append(parts, s[start:i])
+			seps = append(seps, s[i])
+			start = i + 1
+		}
+	}
+
+	parts = append(parts, s[start:])
+
+	return parts, seps
+}
+
 func joinTokens(tokens []string, seps []byte) string {
 	var b strings.Builder
 
@@ -616,10 +649,13 @@ func joinTokens(tokens []string, seps []byte) string {
 // "__*", "-*", "--*", "__*__" would merge unrelated third parties
 // (e.g. __support__, __darkreader__wasEnabledForHost,
 // __EXT_APP_REFRESH_BLACK_SUB_DOMAINS__) under a single glob, so
-// candidates without any fixed alphanumeric anchor are rejected.
+// candidates without any fixed alphanumeric anchor are rejected. The
+// separators recognised here mirror primarySeparators (plus the
+// UUID-internal "-") so a separator-only template such as ":.*" is
+// rejected too.
 func templateHasFixedAnchor(tmpl string) bool {
 	for _, ch := range tmpl {
-		if ch != '*' && ch != '_' && ch != '-' {
+		if ch != '*' && ch != '-' && !strings.ContainsRune(primarySeparators, ch) {
 			return true
 		}
 	}

@@ -243,6 +243,12 @@ func TestHeuristicTemplate(t *testing.T) {
 			input:   "__a1b2c3d4_e5f6g7h8",
 			changed: false,
 		},
+		{
+			name:     "colon-delimited trailing UUID collapses to wildcard",
+			input:    "letaido.onboarding.invite_done:0a1b2c3d-4e5f-6789-abcd-ef0123456789",
+			template: "letaido.onboarding.invite_done:*",
+			changed:  true,
+		},
 	}
 
 	for _, tt := range tests {
@@ -537,6 +543,12 @@ func TestSplitTokens(t *testing.T) {
 			input:  "session_550e8400-e29b-41d4-a716-446655440000_data",
 			tokens: []string{"session", "550e8400-e29b-41d4-a716-446655440000", "data"},
 			seps:   []byte{'_', '_'},
+		},
+		{
+			name:   "colon and dot separators isolate trailing UUID",
+			input:  "letaido.onboarding.invite_done:0a1b2c3d-4e5f-6789-abcd-ef0123456789",
+			tokens: []string{"letaido", "onboarding", "invite", "done", "0a1b2c3d-4e5f-6789-abcd-ef0123456789"},
+			seps:   []byte{'.', '.', '_', ':'},
 		},
 	}
 
@@ -949,6 +961,26 @@ func TestFindMergeGroups(t *testing.T) {
 
 			groups := findMergeGroups(patterns, 3)
 			assert.Empty(t, groups)
+		},
+	)
+
+	t.Run(
+		"colon-delimited UUID keys merge under heuristic glob",
+		func(t *testing.T) {
+			t.Parallel()
+
+			patterns := coredata.TrackerPatterns{
+				makePattern("letaido.onboarding.invite_done:0a1b2c3d-4e5f-6789-abcd-ef0123456789", &oneYear),
+				makePattern("letaido.onboarding.invite_done:11111111-2222-3333-4444-555555555555", &oneYear),
+				makePattern("letaido.onboarding.invite_done:aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee", &oneYear),
+			}
+
+			groups := findMergeGroups(patterns, 3)
+			require.Len(t, groups, 1)
+
+			group, ok := groups[mergeGroupKey{categoryID: gid.Nil, trackerType: coredata.TrackerTypeCookie, template: "letaido.onboarding.invite_done:*", durationBucket: durationBucket(&oneYear)}]
+			require.True(t, ok)
+			assert.Len(t, group, 3)
 		},
 	)
 
