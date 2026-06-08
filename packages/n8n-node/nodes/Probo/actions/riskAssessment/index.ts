@@ -29,6 +29,11 @@ import * as getNodeOp from './getNode.operation';
 import * as getAllNodesOp from './getAllNodes.operation';
 import * as updateNodeOp from './updateNode.operation';
 import * as deleteNodeOp from './deleteNode.operation';
+import * as createBoundaryOp from './createBoundary.operation';
+import * as getBoundaryOp from './getBoundary.operation';
+import * as getAllBoundariesOp from './getAllBoundaries.operation';
+import * as updateBoundaryOp from './updateBoundary.operation';
+import * as deleteBoundaryOp from './deleteBoundary.operation';
 import * as createProcessOp from './createProcess.operation';
 import * as getProcessOp from './getProcess.operation';
 import * as getAllProcessesOp from './getAllProcesses.operation';
@@ -68,6 +73,12 @@ export const description: INodeProperties[] = [
 				action: 'Create a risk assessment',
 			},
 			{
+				name: 'Create Boundary',
+				value: 'createBoundary',
+				description: 'Create a boundary in a scope',
+				action: 'Create a boundary',
+			},
+			{
 				name: 'Create Node',
 				value: 'createNode',
 				description: 'Create a node in a scope',
@@ -102,6 +113,12 @@ export const description: INodeProperties[] = [
 				value: 'delete',
 				description: 'Delete a risk assessment',
 				action: 'Delete a risk assessment',
+			},
+			{
+				name: 'Delete Boundary',
+				value: 'deleteBoundary',
+				description: 'Delete a boundary',
+				action: 'Delete a boundary',
 			},
 			{
 				name: 'Delete Node',
@@ -140,10 +157,21 @@ export const description: INodeProperties[] = [
 				action: 'Get a risk assessment',
 			},
 			{
+				name: 'Get Boundary',
+				value: 'getBoundary',
+				description: 'Get a boundary',
+				action: 'Get a boundary',
+			},
+			{
 				name: 'Get Many',
 				value: 'getAll',
 				description: 'Get many risk assessments',
 				action: 'Get many risk assessments',
+			},
+			{
+				name: 'Get Many Boundaries',
+				value: 'getAllBoundaries',
+				action: 'Get many boundaries',
 			},
 			{
 				name: 'Get Many Nodes',
@@ -237,6 +265,12 @@ export const description: INodeProperties[] = [
 				action: 'Update a risk assessment',
 			},
 			{
+				name: 'Update Boundary',
+				value: 'updateBoundary',
+				description: 'Update a boundary',
+				action: 'Update a boundary',
+			},
+			{
 				name: 'Update Node',
 				value: 'updateNode',
 				description: 'Update a node',
@@ -285,6 +319,11 @@ export const description: INodeProperties[] = [
 	...getAllNodesOp.description,
 	...updateNodeOp.description,
 	...deleteNodeOp.description,
+	...createBoundaryOp.description,
+	...getBoundaryOp.description,
+	...getAllBoundariesOp.description,
+	...updateBoundaryOp.description,
+	...deleteBoundaryOp.description,
 	...createProcessOp.description,
 	...getProcessOp.description,
 	...getAllProcessesOp.description,
@@ -323,6 +362,11 @@ export {
 	getAllNodesOp as getAllNodes,
 	updateNodeOp as updateNode,
 	deleteNodeOp as deleteNode,
+	createBoundaryOp as createBoundary,
+	getBoundaryOp as getBoundary,
+	getAllBoundariesOp as getAllBoundaries,
+	updateBoundaryOp as updateBoundary,
+	deleteBoundaryOp as deleteBoundary,
 	createProcessOp as createProcess,
 	getProcessOp as getProcess,
 	getAllProcessesOp as getAllProcesses,

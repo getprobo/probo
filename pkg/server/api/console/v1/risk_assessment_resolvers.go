@@ -200,6 +200,7 @@ func (r *mutationResolver) CreateRiskAssessmentNode(ctx context.Context, input t
 		scope,
 		riskmanagement.CreateRiskAssessmentNodeRequest{
 			RiskAssessmentScopeID: input.RiskAssessmentScopeID,
+			BoundaryID:            input.BoundaryID,
 			NodeType:              input.NodeType,
 			Name:                  input.Name,
 		},
@@ -237,9 +238,10 @@ func (r *mutationResolver) UpdateRiskAssessmentNode(ctx context.Context, input t
 		ctx,
 		scope,
 		riskmanagement.UpdateRiskAssessmentNodeRequest{
-			ID:       input.ID,
-			NodeType: input.NodeType,
-			Name:     input.Name,
+			ID:         input.ID,
+			BoundaryID: gqlutils.UnwrapOmittable(input.BoundaryID),
+			NodeType:   input.NodeType,
+			Name:       input.Name,
 		},
 	)
 	if err != nil {
@@ -273,6 +275,97 @@ func (r *mutationResolver) DeleteRiskAssessmentNode(ctx context.Context, input t
 	}
 
 	return &types.DeleteRiskAssessmentNodePayload{DeletedRiskAssessmentNodeID: input.RiskAssessmentNodeID}, nil
+}
+
+// CreateRiskAssessmentBoundary is the resolver for the createRiskAssessmentBoundary field.
+func (r *mutationResolver) CreateRiskAssessmentBoundary(ctx context.Context, input types.CreateRiskAssessmentBoundaryInput) (*types.CreateRiskAssessmentBoundaryPayload, error) {
+	scope, err := r.authorize(ctx, input.RiskAssessmentScopeID, probo.ActionRiskAssessmentBoundaryCreate)
+	if err != nil {
+		return nil, err
+	}
+
+	boundary, err := r.riskManagement.CreateBoundary(
+		ctx,
+		scope,
+		riskmanagement.CreateRiskAssessmentBoundaryRequest{
+			RiskAssessmentScopeID: input.RiskAssessmentScopeID,
+			ParentBoundaryID:      input.ParentBoundaryID,
+			Name:                  input.Name,
+		},
+	)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
+			return nil, gqlutils.Conflict(ctx, err)
+		}
+
+		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
+			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot create risk assessment boundary", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.CreateRiskAssessmentBoundaryPayload{
+		RiskAssessmentBoundaryEdge: &types.RiskAssessmentBoundaryConnectionEdge{
+			Cursor: boundary.CursorKey(coredata.RiskAssessmentBoundaryOrderFieldCreatedAt),
+			Node:   types.NewRiskAssessmentBoundary(boundary),
+		},
+	}, nil
+}
+
+// UpdateRiskAssessmentBoundary is the resolver for the updateRiskAssessmentBoundary field.
+func (r *mutationResolver) UpdateRiskAssessmentBoundary(ctx context.Context, input types.UpdateRiskAssessmentBoundaryInput) (*types.UpdateRiskAssessmentBoundaryPayload, error) {
+	scope, err := r.authorize(ctx, input.ID, probo.ActionRiskAssessmentBoundaryUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	boundary, err := r.riskManagement.UpdateBoundary(
+		ctx,
+		scope,
+		riskmanagement.UpdateRiskAssessmentBoundaryRequest{
+			ID:               input.ID,
+			ParentBoundaryID: gqlutils.UnwrapOmittable(input.ParentBoundaryID),
+			Name:             input.Name,
+		},
+	)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
+			return nil, gqlutils.Conflict(ctx, err)
+		}
+
+		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
+			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot update risk assessment boundary", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.UpdateRiskAssessmentBoundaryPayload{RiskAssessmentBoundary: types.NewRiskAssessmentBoundary(boundary)}, nil
+}
+
+// DeleteRiskAssessmentBoundary is the resolver for the deleteRiskAssessmentBoundary field.
+func (r *mutationResolver) DeleteRiskAssessmentBoundary(ctx context.Context, input types.DeleteRiskAssessmentBoundaryInput) (*types.DeleteRiskAssessmentBoundaryPayload, error) {
+	scope, err := r.authorize(ctx, input.RiskAssessmentBoundaryID, probo.ActionRiskAssessmentBoundaryDelete)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := r.riskManagement.DeleteBoundary(ctx, scope, input.RiskAssessmentBoundaryID); err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot delete risk assessment boundary", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.DeleteRiskAssessmentBoundaryPayload{DeletedRiskAssessmentBoundaryID: input.RiskAssessmentBoundaryID}, nil
 }
 
 // CreateRiskAssessmentProcess is the resolver for the createRiskAssessmentProcess field.
@@ -745,6 +838,22 @@ func (r *riskAssessmentResolver) Permission(ctx context.Context, obj *types.Risk
 }
 
 // TotalCount is the resolver for the totalCount field.
+func (r *riskAssessmentBoundaryConnectionResolver) TotalCount(ctx context.Context, obj *types.RiskAssessmentBoundaryConnection) (*int, error) {
+	scope, err := r.authorize(ctx, obj.ParentID, probo.ActionRiskAssessmentBoundaryList)
+	if err != nil {
+		return nil, err
+	}
+
+	count, err := r.riskManagement.CountBoundariesForScopeID(ctx, scope, obj.ParentID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot count risk assessment boundaries", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &count, nil
+}
+
+// TotalCount is the resolver for the totalCount field.
 func (r *riskAssessmentConnectionResolver) TotalCount(ctx context.Context, obj *types.RiskAssessmentConnection) (*int, error) {
 	scope, err := r.authorize(ctx, obj.ParentID, probo.ActionRiskAssessmentList)
 	if err != nil {
@@ -921,6 +1030,32 @@ func (r *riskAssessmentScopeResolver) Nodes(ctx context.Context, obj *types.Risk
 	return types.NewRiskAssessmentNodeConnection(p, r, obj.ID), nil
 }
 
+// Boundaries is the resolver for the boundaries field.
+func (r *riskAssessmentScopeResolver) Boundaries(ctx context.Context, obj *types.RiskAssessmentScope, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.RiskAssessmentBoundaryOrderBy) (*types.RiskAssessmentBoundaryConnection, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionRiskAssessmentBoundaryList)
+	if err != nil {
+		return nil, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.RiskAssessmentBoundaryOrderField]{
+		Field:     coredata.RiskAssessmentBoundaryOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.RiskAssessmentBoundaryOrderField]{Field: orderBy.Field, Direction: orderBy.Direction}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	p, err := r.riskManagement.ListBoundariesForScopeID(ctx, scope, obj.ID, cursor)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list risk assessment boundaries", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewRiskAssessmentBoundaryConnection(p, r, obj.ID), nil
+}
+
 // Processes is the resolver for the processes field.
 func (r *riskAssessmentScopeResolver) Processes(ctx context.Context, obj *types.RiskAssessmentScope, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.RiskAssessmentProcessOrderBy) (*types.RiskAssessmentProcessConnection, error) {
 	scope, err := r.authorize(ctx, obj.ID, probo.ActionRiskAssessmentProcessList)
@@ -1061,6 +1196,11 @@ func (r *riskAssessmentThreatConnectionResolver) TotalCount(ctx context.Context,
 // RiskAssessment returns schema.RiskAssessmentResolver implementation.
 func (r *Resolver) RiskAssessment() schema.RiskAssessmentResolver { return &riskAssessmentResolver{r} }
 
+// RiskAssessmentBoundaryConnection returns schema.RiskAssessmentBoundaryConnectionResolver implementation.
+func (r *Resolver) RiskAssessmentBoundaryConnection() schema.RiskAssessmentBoundaryConnectionResolver {
+	return &riskAssessmentBoundaryConnectionResolver{r}
+}
+
 // RiskAssessmentConnection returns schema.RiskAssessmentConnectionResolver implementation.
 func (r *Resolver) RiskAssessmentConnection() schema.RiskAssessmentConnectionResolver {
 	return &riskAssessmentConnectionResolver{r}
@@ -1102,6 +1242,7 @@ func (r *Resolver) RiskAssessmentThreatConnection() schema.RiskAssessmentThreatC
 }
 
 type riskAssessmentResolver struct{ *Resolver }
+type riskAssessmentBoundaryConnectionResolver struct{ *Resolver }
 type riskAssessmentConnectionResolver struct{ *Resolver }
 type riskAssessmentNodeConnectionResolver struct{ *Resolver }
 type riskAssessmentProcessConnectionResolver struct{ *Resolver }

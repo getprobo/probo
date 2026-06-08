@@ -21,31 +21,31 @@ import (
 )
 
 type (
-	RiskAssessmentNodeOrderBy OrderBy[coredata.RiskAssessmentNodeOrderField]
+	RiskAssessmentBoundaryOrderBy OrderBy[coredata.RiskAssessmentBoundaryOrderField]
 
-	RiskAssessmentNodeConnection struct {
+	RiskAssessmentBoundaryConnection struct {
 		TotalCount int
-		Edges      []*RiskAssessmentNodeConnectionEdge
+		Edges      []*RiskAssessmentBoundaryConnectionEdge
 		PageInfo   PageInfo
 		Resolver   any
 		ParentID   gid.GID
 	}
 )
 
-func NewRiskAssessmentNodeConnection(
-	p *page.Page[*coredata.RiskAssessmentNode, coredata.RiskAssessmentNodeOrderField],
+func NewRiskAssessmentBoundaryConnection(
+	p *page.Page[*coredata.RiskAssessmentBoundary, coredata.RiskAssessmentBoundaryOrderField],
 	parentType any,
 	parentID gid.GID,
-) *RiskAssessmentNodeConnection {
-	edges := make([]*RiskAssessmentNodeConnectionEdge, len(p.Data))
+) *RiskAssessmentBoundaryConnection {
+	edges := make([]*RiskAssessmentBoundaryConnectionEdge, len(p.Data))
 	for i := range edges {
-		edges[i] = &RiskAssessmentNodeConnectionEdge{
+		edges[i] = &RiskAssessmentBoundaryConnectionEdge{
 			Cursor: p.Data[i].CursorKey(p.Cursor.OrderBy.Field),
-			Node:   NewRiskAssessmentNode(p.Data[i]),
+			Node:   NewRiskAssessmentBoundary(p.Data[i]),
 		}
 	}
 
-	return &RiskAssessmentNodeConnection{
+	return &RiskAssessmentBoundaryConnection{
 		Edges:    edges,
 		PageInfo: *NewPageInfo(p),
 		Resolver: parentType,
@@ -53,14 +53,13 @@ func NewRiskAssessmentNodeConnection(
 	}
 }
 
-func NewRiskAssessmentNode(n *coredata.RiskAssessmentNode) *RiskAssessmentNode {
-	return &RiskAssessmentNode{
-		ID:                    n.ID,
-		RiskAssessmentScopeID: n.RiskAssessmentScopeID,
-		BoundaryID:            n.BoundaryID,
-		NodeType:              n.NodeType,
-		Name:                  n.Name,
-		CreatedAt:             n.CreatedAt,
-		UpdatedAt:             n.UpdatedAt,
+func NewRiskAssessmentBoundary(b *coredata.RiskAssessmentBoundary) *RiskAssessmentBoundary {
+	return &RiskAssessmentBoundary{
+		ID:                    b.ID,
+		RiskAssessmentScopeID: b.RiskAssessmentScopeID,
+		ParentBoundaryID:      b.ParentBoundaryID,
+		Name:                  b.Name,
+		CreatedAt:             b.CreatedAt,
+		UpdatedAt:             b.UpdatedAt,
 	}
 }

@@ -27,41 +27,40 @@ import {
 import { useForm } from "react-hook-form";
 import { graphql, useMutation } from "react-relay";
 
-import type { CreateNodeDialogMutation } from "#/__generated__/core/CreateNodeDialogMutation.graphql";
+import type { CreateBoundaryDialogMutation } from "#/__generated__/core/CreateBoundaryDialogMutation.graphql";
 import { ControlledField } from "#/components/form/ControlledField";
 
-const createNodeMutation = graphql`
-  mutation CreateNodeDialogMutation(
-    $input: CreateRiskAssessmentNodeInput!
+const createBoundaryMutation = graphql`
+  mutation CreateBoundaryDialogMutation(
+    $input: CreateRiskAssessmentBoundaryInput!
     $connections: [ID!]!
   ) {
-    createRiskAssessmentNode(input: $input) {
-      riskAssessmentNodeEdge @appendEdge(connections: $connections) {
-        node { id nodeType name boundaryId }
+    createRiskAssessmentBoundary(input: $input) {
+      riskAssessmentBoundaryEdge @appendEdge(connections: $connections) {
+        node { id name parentBoundaryId }
       }
     }
   }
 `;
 
-export function CreateNodeDialog(props: {
+export function CreateBoundaryDialog(props: {
   scopeId: string;
   connectionId: string;
   boundaries: { id: string; name: string }[];
 }) {
   const { __ } = useTranslate();
   const dialogRef = useDialogRef();
-  const [createNode, isCreating] = useMutation<CreateNodeDialogMutation>(createNodeMutation);
+  const [createBoundary, isCreating] = useMutation<CreateBoundaryDialogMutation>(createBoundaryMutation);
   const { register, control, handleSubmit, reset, formState } = useForm({
-    defaultValues: { name: "", nodeType: "ASSET", boundaryId: "none" },
+    defaultValues: { name: "", parentBoundaryId: "none" },
   });
-  const onSubmit = (data: { name: string; nodeType: string; boundaryId: string }) => {
-    createNode({
+  const onSubmit = (data: { name: string; parentBoundaryId: string }) => {
+    createBoundary({
       variables: {
         input: {
           riskAssessmentScopeId: props.scopeId,
-          nodeType: data.nodeType as "ENTITY" | "ASSET" | "DATA",
           name: data.name,
-          boundaryId: data.boundaryId === "none" ? null : data.boundaryId,
+          parentBoundaryId: data.parentBoundaryId === "none" ? null : data.parentBoundaryId,
         },
         connections: [props.connectionId],
       },
@@ -76,24 +75,17 @@ export function CreateNodeDialog(props: {
       className="max-w-lg"
       ref={dialogRef}
       trigger={<Button icon={IconPlusLarge} variant="secondary">{__("Add")}</Button>}
-      title={<Breadcrumb items={[__("Nodes"), __("Add Node")]} />}
+      title={<Breadcrumb items={[__("Boundaries"), __("Add Boundary")]} />}
     >
       <form onSubmit={e => void handleSubmit(onSubmit)(e)}>
         <DialogContent padded className="space-y-4">
-          <ControlledField label={__("Type")} name="nodeType" control={control} type="select">
-            <Option value="ENTITY">{__("Entity")}</Option>
-            <Option value="ASSET">{__("Asset")}</Option>
-            <Option value="DATA">{__("Data")}</Option>
-          </ControlledField>
           <Field label={__("Name")} {...register("name", { required: __("This field is required") })} type="text" error={formState.errors.name?.message} />
-          {props.boundaries.length > 0 && (
-            <ControlledField label={__("Boundary")} name="boundaryId" control={control} type="select">
-              <Option value="none">{__("None")}</Option>
-              {props.boundaries.map(b => (
-                <Option key={b.id} value={b.id}>{b.name}</Option>
-              ))}
-            </ControlledField>
-          )}
+          <ControlledField label={__("Parent boundary")} name="parentBoundaryId" control={control} type="select">
+            <Option value="none">{__("None (top level)")}</Option>
+            {props.boundaries.map(b => (
+              <Option key={b.id} value={b.id}>{b.name}</Option>
+            ))}
+          </ControlledField>
         </DialogContent>
         <DialogFooter><Button type="submit" disabled={isCreating}>{__("Add")}</Button></DialogFooter>
       </form>

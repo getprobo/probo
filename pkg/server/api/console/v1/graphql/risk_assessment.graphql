@@ -50,10 +50,6 @@ enum RiskAssessmentNodeType
         @goEnum(
             value: "go.probo.inc/probo/pkg/coredata.RiskAssessmentNodeTypeEntity"
         )
-    BOUNDARY
-        @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.RiskAssessmentNodeTypeBoundary"
-        )
     ASSET
         @goEnum(
             value: "go.probo.inc/probo/pkg/coredata.RiskAssessmentNodeTypeAsset"
@@ -75,6 +71,20 @@ enum RiskAssessmentNodeOrderField
     NAME
         @goEnum(
             value: "go.probo.inc/probo/pkg/coredata.RiskAssessmentNodeOrderFieldName"
+        )
+}
+
+enum RiskAssessmentBoundaryOrderField
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.RiskAssessmentBoundaryOrderField"
+    ) {
+    CREATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.RiskAssessmentBoundaryOrderFieldCreatedAt"
+        )
+    NAME
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.RiskAssessmentBoundaryOrderFieldName"
         )
 }
 
@@ -146,6 +156,14 @@ input RiskAssessmentNodeOrder
     field: RiskAssessmentNodeOrderField!
 }
 
+input RiskAssessmentBoundaryOrder
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.RiskAssessmentBoundaryOrderBy"
+    ) {
+    direction: OrderDirection!
+    field: RiskAssessmentBoundaryOrderField!
+}
+
 input RiskAssessmentProcessOrder
     @goModel(
         model: "go.probo.inc/probo/pkg/server/api/console/v1/types.RiskAssessmentProcessOrderBy"
@@ -204,6 +222,14 @@ type RiskAssessmentScope implements Node {
         orderBy: RiskAssessmentNodeOrder
     ): RiskAssessmentNodeConnection @goField(forceResolver: true)
 
+    boundaries(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: RiskAssessmentBoundaryOrder
+    ): RiskAssessmentBoundaryConnection @goField(forceResolver: true)
+
     processes(
         first: Int
         after: CursorKey
@@ -237,7 +263,17 @@ type RiskAssessmentScope implements Node {
 type RiskAssessmentNode implements Node {
     id: ID!
     riskAssessmentScopeId: ID!
+    boundaryId: ID
     nodeType: RiskAssessmentNodeType!
+    name: String!
+    createdAt: Datetime!
+    updatedAt: Datetime!
+}
+
+type RiskAssessmentBoundary implements Node {
+    id: ID!
+    riskAssessmentScopeId: ID!
+    parentBoundaryId: ID
     name: String!
     createdAt: Datetime!
     updatedAt: Datetime!
@@ -334,6 +370,20 @@ type RiskAssessmentNodeConnectionEdge {
     node: RiskAssessmentNode!
 }
 
+type RiskAssessmentBoundaryConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.RiskAssessmentBoundaryConnection"
+    ) {
+    totalCount: Int @goField(forceResolver: true)
+    edges: [RiskAssessmentBoundaryConnectionEdge!]!
+    pageInfo: PageInfo!
+}
+
+type RiskAssessmentBoundaryConnectionEdge {
+    cursor: CursorKey!
+    node: RiskAssessmentBoundary!
+}
+
 type RiskAssessmentProcessConnection
     @goModel(
         model: "go.probo.inc/probo/pkg/server/api/console/v1/types.RiskAssessmentProcessConnection"
@@ -408,6 +458,16 @@ extend type Mutation {
     deleteRiskAssessmentNode(
         input: DeleteRiskAssessmentNodeInput!
     ): DeleteRiskAssessmentNodePayload!
+
+    createRiskAssessmentBoundary(
+        input: CreateRiskAssessmentBoundaryInput!
+    ): CreateRiskAssessmentBoundaryPayload!
+    updateRiskAssessmentBoundary(
+        input: UpdateRiskAssessmentBoundaryInput!
+    ): UpdateRiskAssessmentBoundaryPayload!
+    deleteRiskAssessmentBoundary(
+        input: DeleteRiskAssessmentBoundaryInput!
+    ): DeleteRiskAssessmentBoundaryPayload!
 
     createRiskAssessmentProcess(
         input: CreateRiskAssessmentProcessInput!
@@ -512,12 +572,14 @@ type DeleteRiskAssessmentScopePayload {
 
 input CreateRiskAssessmentNodeInput {
     riskAssessmentScopeId: ID!
+    boundaryId: ID
     nodeType: RiskAssessmentNodeType!
     name: String!
 }
 
 input UpdateRiskAssessmentNodeInput {
     id: ID!
+    boundaryId: ID @goField(omittable: true)
     nodeType: RiskAssessmentNodeType
     name: String
 }
@@ -536,6 +598,34 @@ type UpdateRiskAssessmentNodePayload {
 
 type DeleteRiskAssessmentNodePayload {
     deletedRiskAssessmentNodeId: ID!
+}
+
+input CreateRiskAssessmentBoundaryInput {
+    riskAssessmentScopeId: ID!
+    parentBoundaryId: ID
+    name: String!
+}
+
+input UpdateRiskAssessmentBoundaryInput {
+    id: ID!
+    parentBoundaryId: ID @goField(omittable: true)
+    name: String
+}
+
+input DeleteRiskAssessmentBoundaryInput {
+    riskAssessmentBoundaryId: ID!
+}
+
+type CreateRiskAssessmentBoundaryPayload {
+    riskAssessmentBoundaryEdge: RiskAssessmentBoundaryConnectionEdge!
+}
+
+type UpdateRiskAssessmentBoundaryPayload {
+    riskAssessmentBoundary: RiskAssessmentBoundary!
+}
+
+type DeleteRiskAssessmentBoundaryPayload {
+    deletedRiskAssessmentBoundaryId: ID!
 }
 
 input CreateRiskAssessmentProcessInput {

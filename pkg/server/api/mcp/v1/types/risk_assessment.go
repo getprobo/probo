@@ -88,10 +88,44 @@ func NewRiskAssessmentNode(n *coredata.RiskAssessmentNode) *RiskAssessmentNode {
 		ID:                    n.ID,
 		OrganizationID:        n.OrganizationID,
 		RiskAssessmentScopeID: n.RiskAssessmentScopeID,
+		BoundaryID:            n.BoundaryID,
 		NodeType:              n.NodeType,
 		Name:                  n.Name,
 		CreatedAt:             n.CreatedAt,
 		UpdatedAt:             n.UpdatedAt,
+	}
+}
+
+func NewRiskAssessmentBoundary(b *coredata.RiskAssessmentBoundary) *RiskAssessmentBoundary {
+	return &RiskAssessmentBoundary{
+		ID:                    b.ID,
+		OrganizationID:        b.OrganizationID,
+		RiskAssessmentScopeID: b.RiskAssessmentScopeID,
+		ParentBoundaryID:      b.ParentBoundaryID,
+		Name:                  b.Name,
+		CreatedAt:             b.CreatedAt,
+		UpdatedAt:             b.UpdatedAt,
+	}
+}
+
+func NewListRiskAssessmentBoundariesOutput(
+	p *page.Page[*coredata.RiskAssessmentBoundary, coredata.RiskAssessmentBoundaryOrderField],
+) ListRiskAssessmentBoundariesOutput {
+	items := make([]*RiskAssessmentBoundary, 0, len(p.Data))
+	for _, v := range p.Data {
+		items = append(items, NewRiskAssessmentBoundary(v))
+	}
+
+	var nextCursor *page.CursorKey
+
+	if len(p.Data) > 0 {
+		cursorKey := p.Data[len(p.Data)-1].CursorKey(p.Cursor.OrderBy.Field)
+		nextCursor = &cursorKey
+	}
+
+	return ListRiskAssessmentBoundariesOutput{
+		NextCursor:               nextCursor,
+		RiskAssessmentBoundaries: items,
 	}
 }
 

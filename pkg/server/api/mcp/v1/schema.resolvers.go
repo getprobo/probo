@@ -6497,6 +6497,7 @@ func (r *Resolver) AddRiskAssessmentNodeTool(ctx context.Context, req *mcp.CallT
 
 	n, err := r.riskManagement.CreateNode(ctx, scope, riskmanagement.CreateRiskAssessmentNodeRequest{
 		RiskAssessmentScopeID: input.RiskAssessmentScopeID,
+		BoundaryID:            input.BoundaryID,
 		NodeType:              input.NodeType,
 		Name:                  input.Name,
 	})
@@ -6515,10 +6516,16 @@ func (r *Resolver) UpdateRiskAssessmentNodeTool(ctx context.Context, req *mcp.Ca
 		return nil, types.UpdateRiskAssessmentNodeOutput{}, err
 	}
 
+	var boundaryID **gid.GID
+	if input.BoundaryID != nil {
+		boundaryID = &input.BoundaryID
+	}
+
 	n, err := r.riskManagement.UpdateNode(ctx, scope, riskmanagement.UpdateRiskAssessmentNodeRequest{
-		ID:       input.ID,
-		NodeType: input.NodeType,
-		Name:     input.Name,
+		ID:         input.ID,
+		BoundaryID: boundaryID,
+		NodeType:   input.NodeType,
+		Name:       input.Name,
 	})
 	if err != nil {
 		return nil, types.UpdateRiskAssessmentNodeOutput{}, fmt.Errorf("failed to update risk assessment node: %w", err)
@@ -6928,5 +6935,108 @@ func (r *Resolver) GetRiskAssessmentScopeMermaidChartTool(ctx context.Context, r
 
 	return nil, types.GetRiskAssessmentScopeMermaidChartOutput{
 		MermaidChart: chart,
+	}, nil
+}
+
+func (r *Resolver) ListRiskAssessmentBoundariesTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListRiskAssessmentBoundariesInput) (*mcp.CallToolResult, types.ListRiskAssessmentBoundariesOutput, error) {
+	scope, err := r.Authorize(ctx, input.RiskAssessmentScopeID, probo.ActionRiskAssessmentBoundaryList)
+	if err != nil {
+		return nil, types.ListRiskAssessmentBoundariesOutput{}, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.RiskAssessmentBoundaryOrderField]{
+		Field:     coredata.RiskAssessmentBoundaryOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if input.OrderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.RiskAssessmentBoundaryOrderField]{
+			Field:     input.OrderBy.Field,
+			Direction: input.OrderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
+
+	p, err := r.riskManagement.ListBoundariesForScopeID(ctx, scope, input.RiskAssessmentScopeID, cursor)
+	if err != nil {
+		panic(fmt.Errorf("cannot list risk assessment boundaries: %w", err))
+	}
+
+	return nil, types.NewListRiskAssessmentBoundariesOutput(p), nil
+}
+
+func (r *Resolver) GetRiskAssessmentBoundaryTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetRiskAssessmentBoundaryInput) (*mcp.CallToolResult, types.GetRiskAssessmentBoundaryOutput, error) {
+	scope, err := r.Authorize(ctx, input.ID, probo.ActionRiskAssessmentBoundaryGet)
+	if err != nil {
+		return nil, types.GetRiskAssessmentBoundaryOutput{}, err
+	}
+
+	b, err := r.riskManagement.GetBoundary(ctx, scope, input.ID)
+	if err != nil {
+		return nil, types.GetRiskAssessmentBoundaryOutput{}, fmt.Errorf("failed to get risk assessment boundary: %w", err)
+	}
+
+	return nil, types.GetRiskAssessmentBoundaryOutput{
+		RiskAssessmentBoundary: types.NewRiskAssessmentBoundary(b),
+	}, nil
+}
+
+func (r *Resolver) AddRiskAssessmentBoundaryTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddRiskAssessmentBoundaryInput) (*mcp.CallToolResult, types.AddRiskAssessmentBoundaryOutput, error) {
+	scope, err := r.Authorize(ctx, input.RiskAssessmentScopeID, probo.ActionRiskAssessmentBoundaryCreate)
+	if err != nil {
+		return nil, types.AddRiskAssessmentBoundaryOutput{}, err
+	}
+
+	b, err := r.riskManagement.CreateBoundary(ctx, scope, riskmanagement.CreateRiskAssessmentBoundaryRequest{
+		RiskAssessmentScopeID: input.RiskAssessmentScopeID,
+		ParentBoundaryID:      input.ParentBoundaryID,
+		Name:                  input.Name,
+	})
+	if err != nil {
+		return nil, types.AddRiskAssessmentBoundaryOutput{}, fmt.Errorf("failed to create risk assessment boundary: %w", err)
+	}
+
+	return nil, types.AddRiskAssessmentBoundaryOutput{
+		RiskAssessmentBoundary: types.NewRiskAssessmentBoundary(b),
+	}, nil
+}
+
+func (r *Resolver) UpdateRiskAssessmentBoundaryTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateRiskAssessmentBoundaryInput) (*mcp.CallToolResult, types.UpdateRiskAssessmentBoundaryOutput, error) {
+	scope, err := r.Authorize(ctx, input.ID, probo.ActionRiskAssessmentBoundaryUpdate)
+	if err != nil {
+		return nil, types.UpdateRiskAssessmentBoundaryOutput{}, err
+	}
+
+	var parentBoundaryID **gid.GID
+	if input.ParentBoundaryID != nil {
+		parentBoundaryID = &input.ParentBoundaryID
+	}
+
+	b, err := r.riskManagement.UpdateBoundary(ctx, scope, riskmanagement.UpdateRiskAssessmentBoundaryRequest{
+		ID:               input.ID,
+		ParentBoundaryID: parentBoundaryID,
+		Name:             input.Name,
+	})
+	if err != nil {
+		return nil, types.UpdateRiskAssessmentBoundaryOutput{}, fmt.Errorf("failed to update risk assessment boundary: %w", err)
+	}
+
+	return nil, types.UpdateRiskAssessmentBoundaryOutput{
+		RiskAssessmentBoundary: types.NewRiskAssessmentBoundary(b),
+	}, nil
+}
+
+func (r *Resolver) DeleteRiskAssessmentBoundaryTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteRiskAssessmentBoundaryInput) (*mcp.CallToolResult, types.DeleteRiskAssessmentBoundaryOutput, error) {
+	scope, err := r.Authorize(ctx, input.ID, probo.ActionRiskAssessmentBoundaryDelete)
+	if err != nil {
+		return nil, types.DeleteRiskAssessmentBoundaryOutput{}, err
+	}
+
+	if err := r.riskManagement.DeleteBoundary(ctx, scope, input.ID); err != nil {
+		return nil, types.DeleteRiskAssessmentBoundaryOutput{}, fmt.Errorf("failed to delete risk assessment boundary: %w", err)
+	}
+
+	return nil, types.DeleteRiskAssessmentBoundaryOutput{
+		DeletedRiskAssessmentBoundaryID: input.ID,
 	}, nil
 }

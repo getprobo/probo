@@ -170,6 +170,16 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 
 			return types.NewRiskAssessmentScope(s), nil
 		}
+	case coredata.RiskAssessmentBoundaryEntityType:
+		action = probo.ActionRiskAssessmentBoundaryGet
+		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
+			b, err := r.riskManagement.GetBoundary(ctx, scope, id)
+			if err != nil {
+				return nil, err
+			}
+
+			return types.NewRiskAssessmentBoundary(b), nil
+		}
 	case coredata.RiskAssessmentScenarioEntityType:
 		action = probo.ActionRiskAssessmentScenarioGet
 		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {

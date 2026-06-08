@@ -1598,6 +1598,10 @@ func CreateRiskAssessmentNode(c *testutil.Client, scopeID string, attrs ...Attrs
 		"name":                  a.getString("name", SafeName("Node")),
 	}
 
+	if boundaryID := a.getString("boundaryId", ""); boundaryID != "" {
+		input["boundaryId"] = boundaryID
+	}
+
 	var result struct {
 		CreateRiskAssessmentNode struct {
 			RiskAssessmentNodeEdge struct {
@@ -1612,6 +1616,47 @@ func CreateRiskAssessmentNode(c *testutil.Client, scopeID string, attrs ...Attrs
 	require.NoError(c.T, err, "createRiskAssessmentNode mutation failed")
 
 	return result.CreateRiskAssessmentNode.RiskAssessmentNodeEdge.Node.ID
+}
+
+func CreateRiskAssessmentBoundary(c *testutil.Client, scopeID string, attrs ...Attrs) string {
+	c.T.Helper()
+
+	var a Attrs
+	if len(attrs) > 0 {
+		a = attrs[0]
+	}
+
+	const query = `
+		mutation($input: CreateRiskAssessmentBoundaryInput!) {
+			createRiskAssessmentBoundary(input: $input) {
+				riskAssessmentBoundaryEdge { node { id } }
+			}
+		}
+	`
+
+	input := map[string]any{
+		"riskAssessmentScopeId": scopeID,
+		"name":                  a.getString("name", SafeName("Boundary")),
+	}
+
+	if parentID := a.getString("parentBoundaryId", ""); parentID != "" {
+		input["parentBoundaryId"] = parentID
+	}
+
+	var result struct {
+		CreateRiskAssessmentBoundary struct {
+			RiskAssessmentBoundaryEdge struct {
+				Node struct {
+					ID string `json:"id"`
+				} `json:"node"`
+			} `json:"riskAssessmentBoundaryEdge"`
+		} `json:"createRiskAssessmentBoundary"`
+	}
+
+	err := c.Execute(query, map[string]any{"input": input}, &result)
+	require.NoError(c.T, err, "createRiskAssessmentBoundary mutation failed")
+
+	return result.CreateRiskAssessmentBoundary.RiskAssessmentBoundaryEdge.Node.ID
 }
 
 func CreateRiskAssessmentProcess(c *testutil.Client, scopeID, sourceNodeID, targetNodeID string, attrs ...Attrs) string {

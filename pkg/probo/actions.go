@@ -424,6 +424,13 @@ const (
 	ActionRiskAssessmentNodeUpdate = "core:risk-assessment-node:update"
 	ActionRiskAssessmentNodeDelete = "core:risk-assessment-node:delete"
 
+	// RiskAssessmentBoundary actions
+	ActionRiskAssessmentBoundaryGet    = "core:risk-assessment-boundary:get"
+	ActionRiskAssessmentBoundaryList   = "core:risk-assessment-boundary:list"
+	ActionRiskAssessmentBoundaryCreate = "core:risk-assessment-boundary:create"
+	ActionRiskAssessmentBoundaryUpdate = "core:risk-assessment-boundary:update"
+	ActionRiskAssessmentBoundaryDelete = "core:risk-assessment-boundary:delete"
+
 	// RiskAssessmentProcess actions
 	ActionRiskAssessmentProcessGet    = "core:risk-assessment-process:get"
 	ActionRiskAssessmentProcessList   = "core:risk-assessment-process:list"

@@ -136,7 +136,7 @@ func TestRiskAssessmentScope_CRUD(t *testing.T) {
 func TestRiskAssessmentNode_Create(t *testing.T) {
 	t.Parallel()
 
-	for _, nodeType := range []string{"ENTITY", "BOUNDARY", "ASSET", "DATA"} {
+	for _, nodeType := range []string{"ENTITY", "ASSET", "DATA"} {
 		t.Run("nodeType="+nodeType, func(t *testing.T) {
 			t.Parallel()
 			owner := testutil.NewClient(t, testutil.RoleOwner)
@@ -479,13 +479,13 @@ func TestRiskAssessmentNode_Update(t *testing.T) {
 		"input": map[string]any{
 			"id":       nodeID,
 			"name":     "Updated node",
-			"nodeType": "BOUNDARY",
+			"nodeType": "ASSET",
 		},
 	}, &result)
 
 	require.NoError(t, err)
 	assert.Equal(t, "Updated node", result.UpdateRiskAssessmentNode.RiskAssessmentNode.Name)
-	assert.Equal(t, "BOUNDARY", result.UpdateRiskAssessmentNode.RiskAssessmentNode.NodeType)
+	assert.Equal(t, "ASSET", result.UpdateRiskAssessmentNode.RiskAssessmentNode.NodeType)
 }
 
 func TestRiskAssessmentProcess_Update(t *testing.T) {
@@ -778,4 +778,317 @@ func TestRiskAssessment_TenantIsolation(t *testing.T) {
 		query($id: ID!) { node(id: $id) { ... on RiskAssessment { id } } }
 	`, map[string]any{"id": raID}, &result)
 	testutil.AssertNodeNotAccessible(t, err, result.Node == nil, "RiskAssessment")
+}
+
+func TestRiskAssessmentBoundary_Create(t *testing.T) {
+	t.Parallel()
+
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	raID := factory.CreateRiskAssessment(owner)
+	scopeID := factory.CreateRiskAssessmentScope(owner, raID)
+	parentID := factory.CreateRiskAssessmentBoundary(owner, scopeID, factory.Attrs{"name": "External Zone"})
+
+	var result struct {
+		CreateRiskAssessmentBoundary struct {
+			RiskAssessmentBoundaryEdge struct {
+				Node struct {
+					ID               string  `json:"id"`
+					Name             string  `json:"name"`
+					ParentBoundaryID *string `json:"parentBoundaryId"`
+				} `json:"node"`
+			} `json:"riskAssessmentBoundaryEdge"`
+		} `json:"createRiskAssessmentBoundary"`
+	}
+
+	err := owner.Execute(`
+		mutation($input: CreateRiskAssessmentBoundaryInput!) {
+			createRiskAssessmentBoundary(input: $input) {
+				riskAssessmentBoundaryEdge { node { id name parentBoundaryId } }
+			}
+		}
+	`, map[string]any{
+		"input": map[string]any{
+			"riskAssessmentScopeId": scopeID,
+			"parentBoundaryId":      parentID,
+			"name":                  "Internal Network",
+		},
+	}, &result)
+
+	require.NoError(t, err)
+
+	node := result.CreateRiskAssessmentBoundary.RiskAssessmentBoundaryEdge.Node
+	assert.NotEmpty(t, node.ID)
+	assert.Equal(t, "Internal Network", node.Name)
+	require.NotNil(t, node.ParentBoundaryID)
+	assert.Equal(t, parentID, *node.ParentBoundaryID)
+}
+
+func TestRiskAssessmentBoundary_ListViaScope(t *testing.T) {
+	t.Parallel()
+
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	raID := factory.CreateRiskAssessment(owner)
+	scopeID := factory.CreateRiskAssessmentScope(owner, raID)
+	factory.CreateRiskAssessmentBoundary(owner, scopeID, factory.Attrs{"name": "Zone A"})
+	factory.CreateRiskAssessmentBoundary(owner, scopeID, factory.Attrs{"name": "Zone B"})
+
+	var result struct {
+		Node struct {
+			Boundaries struct {
+				TotalCount int `json:"totalCount"`
+				Edges      []struct {
+					Node struct {
+						ID   string `json:"id"`
+						Name string `json:"name"`
+					} `json:"node"`
+				} `json:"edges"`
+			} `json:"boundaries"`
+		} `json:"node"`
+	}
+
+	err := owner.Execute(`
+		query($id: ID!) {
+			node(id: $id) {
+				... on RiskAssessmentScope {
+					boundaries(first: 10) {
+						totalCount
+						edges { node { id name } }
+					}
+				}
+			}
+		}
+	`, map[string]any{"id": scopeID}, &result)
+
+	require.NoError(t, err)
+	assert.Equal(t, 2, result.Node.Boundaries.TotalCount)
+	assert.Len(t, result.Node.Boundaries.Edges, 2)
+}
+
+func TestRiskAssessmentBoundary_Update(t *testing.T) {
+	t.Parallel()
+
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	raID := factory.CreateRiskAssessment(owner)
+	scopeID := factory.CreateRiskAssessmentScope(owner, raID)
+	parentID := factory.CreateRiskAssessmentBoundary(owner, scopeID, factory.Attrs{"name": "Parent"})
+	boundaryID := factory.CreateRiskAssessmentBoundary(owner, scopeID, factory.Attrs{"name": "Original"})
+
+	const mutation = `
+		mutation($input: UpdateRiskAssessmentBoundaryInput!) {
+			updateRiskAssessmentBoundary(input: $input) {
+				riskAssessmentBoundary { id name parentBoundaryId }
+			}
+		}
+	`
+
+	var result struct {
+		UpdateRiskAssessmentBoundary struct {
+			RiskAssessmentBoundary struct {
+				ID               string  `json:"id"`
+				Name             string  `json:"name"`
+				ParentBoundaryID *string `json:"parentBoundaryId"`
+			} `json:"riskAssessmentBoundary"`
+		} `json:"updateRiskAssessmentBoundary"`
+	}
+
+	// Rename and assign a parent.
+	err := owner.Execute(mutation, map[string]any{
+		"input": map[string]any{
+			"id":               boundaryID,
+			"name":             "Renamed",
+			"parentBoundaryId": parentID,
+		},
+	}, &result)
+	require.NoError(t, err)
+	assert.Equal(t, "Renamed", result.UpdateRiskAssessmentBoundary.RiskAssessmentBoundary.Name)
+	require.NotNil(t, result.UpdateRiskAssessmentBoundary.RiskAssessmentBoundary.ParentBoundaryID)
+	assert.Equal(t, parentID, *result.UpdateRiskAssessmentBoundary.RiskAssessmentBoundary.ParentBoundaryID)
+
+	// Clear the parent (move back to the top level).
+	err = owner.Execute(mutation, map[string]any{
+		"input": map[string]any{
+			"id":               boundaryID,
+			"parentBoundaryId": nil,
+		},
+	}, &result)
+	require.NoError(t, err)
+	assert.Nil(t, result.UpdateRiskAssessmentBoundary.RiskAssessmentBoundary.ParentBoundaryID)
+}
+
+func TestRiskAssessmentBoundary_PreventCycle(t *testing.T) {
+	t.Parallel()
+
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	raID := factory.CreateRiskAssessment(owner)
+	scopeID := factory.CreateRiskAssessmentScope(owner, raID)
+	a := factory.CreateRiskAssessmentBoundary(owner, scopeID, factory.Attrs{"name": "A"})
+	b := factory.CreateRiskAssessmentBoundary(owner, scopeID, factory.Attrs{"name": "B", "parentBoundaryId": a})
+
+	// B is nested under A, so nesting A under B would create a cycle.
+	_, err := owner.Do(`
+		mutation($input: UpdateRiskAssessmentBoundaryInput!) {
+			updateRiskAssessmentBoundary(input: $input) {
+				riskAssessmentBoundary { id }
+			}
+		}
+	`, map[string]any{
+		"input": map[string]any{
+			"id":               a,
+			"parentBoundaryId": b,
+		},
+	})
+	require.Error(t, err, "nesting a boundary under its own descendant should be rejected")
+}
+
+func TestRiskAssessmentBoundary_Delete(t *testing.T) {
+	t.Parallel()
+
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	raID := factory.CreateRiskAssessment(owner)
+	scopeID := factory.CreateRiskAssessmentScope(owner, raID)
+	parentID := factory.CreateRiskAssessmentBoundary(owner, scopeID, factory.Attrs{"name": "Parent"})
+	childID := factory.CreateRiskAssessmentBoundary(owner, scopeID, factory.Attrs{"name": "Child", "parentBoundaryId": parentID})
+	nodeID := factory.CreateRiskAssessmentNode(owner, scopeID, factory.Attrs{"name": "Member", "boundaryId": parentID})
+
+	_, err := owner.Do(`
+		mutation($input: DeleteRiskAssessmentBoundaryInput!) {
+			deleteRiskAssessmentBoundary(input: $input) { deletedRiskAssessmentBoundaryId }
+		}
+	`, map[string]any{"input": map[string]any{"riskAssessmentBoundaryId": parentID}})
+	require.NoError(t, err)
+
+	// Deleting a parent moves its nested boundary and member node to the top
+	// level instead of cascading the delete (ON DELETE SET NULL).
+	var result struct {
+		Child *struct {
+			ParentBoundaryID *string `json:"parentBoundaryId"`
+		} `json:"child"`
+		Member *struct {
+			BoundaryID *string `json:"boundaryId"`
+		} `json:"member"`
+	}
+
+	err = owner.Execute(`
+		query($child: ID!, $member: ID!) {
+			child: node(id: $child) { ... on RiskAssessmentBoundary { parentBoundaryId } }
+			member: node(id: $member) { ... on RiskAssessmentNode { boundaryId } }
+		}
+	`, map[string]any{"child": childID, "member": nodeID}, &result)
+	require.NoError(t, err)
+	require.NotNil(t, result.Child)
+	assert.Nil(t, result.Child.ParentBoundaryID)
+	require.NotNil(t, result.Member)
+	assert.Nil(t, result.Member.BoundaryID)
+}
+
+func TestRiskAssessmentNode_WithBoundary(t *testing.T) {
+	t.Parallel()
+
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	raID := factory.CreateRiskAssessment(owner)
+	scopeID := factory.CreateRiskAssessmentScope(owner, raID)
+	boundaryID := factory.CreateRiskAssessmentBoundary(owner, scopeID)
+
+	var createResult struct {
+		CreateRiskAssessmentNode struct {
+			RiskAssessmentNodeEdge struct {
+				Node struct {
+					ID         string  `json:"id"`
+					BoundaryID *string `json:"boundaryId"`
+				} `json:"node"`
+			} `json:"riskAssessmentNodeEdge"`
+		} `json:"createRiskAssessmentNode"`
+	}
+
+	err := owner.Execute(`
+		mutation($input: CreateRiskAssessmentNodeInput!) {
+			createRiskAssessmentNode(input: $input) {
+				riskAssessmentNodeEdge { node { id boundaryId } }
+			}
+		}
+	`, map[string]any{
+		"input": map[string]any{
+			"riskAssessmentScopeId": scopeID,
+			"nodeType":              "ASSET",
+			"name":                  "Member",
+			"boundaryId":            boundaryID,
+		},
+	}, &createResult)
+	require.NoError(t, err)
+
+	created := createResult.CreateRiskAssessmentNode.RiskAssessmentNodeEdge.Node
+	require.NotNil(t, created.BoundaryID)
+	assert.Equal(t, boundaryID, *created.BoundaryID)
+
+	// Clearing boundaryId moves the node back to the top level.
+	var updateResult struct {
+		UpdateRiskAssessmentNode struct {
+			RiskAssessmentNode struct {
+				BoundaryID *string `json:"boundaryId"`
+			} `json:"riskAssessmentNode"`
+		} `json:"updateRiskAssessmentNode"`
+	}
+
+	err = owner.Execute(`
+		mutation($input: UpdateRiskAssessmentNodeInput!) {
+			updateRiskAssessmentNode(input: $input) {
+				riskAssessmentNode { boundaryId }
+			}
+		}
+	`, map[string]any{
+		"input": map[string]any{
+			"id":         created.ID,
+			"boundaryId": nil,
+		},
+	}, &updateResult)
+	require.NoError(t, err)
+	assert.Nil(t, updateResult.UpdateRiskAssessmentNode.RiskAssessmentNode.BoundaryID)
+}
+
+func TestRiskAssessmentBoundary_RBAC(t *testing.T) {
+	t.Parallel()
+
+	t.Run("viewer cannot create", func(t *testing.T) {
+		t.Parallel()
+		owner := testutil.NewClient(t, testutil.RoleOwner)
+		viewer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
+		raID := factory.CreateRiskAssessment(owner)
+		scopeID := factory.CreateRiskAssessmentScope(owner, raID)
+
+		_, err := viewer.Do(`
+			mutation($input: CreateRiskAssessmentBoundaryInput!) {
+				createRiskAssessmentBoundary(input: $input) {
+					riskAssessmentBoundaryEdge { node { id } }
+				}
+			}
+		`, map[string]any{
+			"input": map[string]any{
+				"riskAssessmentScopeId": scopeID,
+				"name":                  "Nope",
+			},
+		})
+		testutil.RequireForbiddenError(t, err, "viewer cannot create risk assessment boundary")
+	})
+
+	t.Run("viewer can read", func(t *testing.T) {
+		t.Parallel()
+		owner := testutil.NewClient(t, testutil.RoleOwner)
+		viewer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
+		raID := factory.CreateRiskAssessment(owner)
+		scopeID := factory.CreateRiskAssessmentScope(owner, raID)
+		boundaryID := factory.CreateRiskAssessmentBoundary(owner, scopeID, factory.Attrs{"name": "Visible"})
+
+		var result struct {
+			Node struct {
+				ID   string `json:"id"`
+				Name string `json:"name"`
+			} `json:"node"`
+		}
+
+		err := viewer.Execute(`
+			query($id: ID!) { node(id: $id) { ... on RiskAssessmentBoundary { id name } } }
+		`, map[string]any{"id": boundaryID}, &result)
+		require.NoError(t, err)
+		assert.Equal(t, "Visible", result.Node.Name)
+	})
 }

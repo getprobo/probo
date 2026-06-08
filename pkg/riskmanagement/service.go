@@ -62,16 +62,30 @@ type (
 		Name *string
 	}
 
+	CreateRiskAssessmentBoundaryRequest struct {
+		RiskAssessmentScopeID gid.GID
+		ParentBoundaryID      *gid.GID
+		Name                  string
+	}
+
+	UpdateRiskAssessmentBoundaryRequest struct {
+		ID               gid.GID
+		ParentBoundaryID **gid.GID
+		Name             *string
+	}
+
 	CreateRiskAssessmentNodeRequest struct {
 		RiskAssessmentScopeID gid.GID
+		BoundaryID            *gid.GID
 		NodeType              coredata.RiskAssessmentNodeType
 		Name                  string
 	}
 
 	UpdateRiskAssessmentNodeRequest struct {
-		ID       gid.GID
-		NodeType *coredata.RiskAssessmentNodeType
-		Name     *string
+		ID         gid.GID
+		BoundaryID **gid.GID
+		NodeType   *coredata.RiskAssessmentNodeType
+		Name       *string
 	}
 
 	CreateRiskAssessmentProcessRequest struct {
@@ -169,11 +183,39 @@ func (r *UpdateRiskAssessmentScopeRequest) Validate() error {
 	return v.Error()
 }
 
+func (r *CreateRiskAssessmentBoundaryRequest) Validate() error {
+	v := validator.New()
+	v.Check(r.RiskAssessmentScopeID, "risk_assessment_scope_id", validator.Required(), validator.GID(coredata.RiskAssessmentScopeEntityType))
+	v.Check(r.Name, "name", validator.Required(), validator.SafeTextNoNewLine(TitleMaxLength))
+
+	if r.ParentBoundaryID != nil {
+		v.Check(*r.ParentBoundaryID, "parent_boundary_id", validator.Required(), validator.GID(coredata.RiskAssessmentBoundaryEntityType))
+	}
+
+	return v.Error()
+}
+
+func (r *UpdateRiskAssessmentBoundaryRequest) Validate() error {
+	v := validator.New()
+	v.Check(r.ID, "id", validator.Required(), validator.GID(coredata.RiskAssessmentBoundaryEntityType))
+	v.Check(r.Name, "name", validator.SafeTextNoNewLine(TitleMaxLength))
+
+	if r.ParentBoundaryID != nil && *r.ParentBoundaryID != nil {
+		v.Check(**r.ParentBoundaryID, "parent_boundary_id", validator.Required(), validator.GID(coredata.RiskAssessmentBoundaryEntityType))
+	}
+
+	return v.Error()
+}
+
 func (r *CreateRiskAssessmentNodeRequest) Validate() error {
 	v := validator.New()
 	v.Check(r.RiskAssessmentScopeID, "risk_assessment_scope_id", validator.Required(), validator.GID(coredata.RiskAssessmentScopeEntityType))
 	v.Check(r.Name, "name", validator.Required(), validator.SafeTextNoNewLine(TitleMaxLength))
 	v.Check(r.NodeType, "node_type", validator.Required(), validator.OneOfSlice(coredata.RiskAssessmentNodeTypes()))
+
+	if r.BoundaryID != nil {
+		v.Check(*r.BoundaryID, "boundary_id", validator.Required(), validator.GID(coredata.RiskAssessmentBoundaryEntityType))
+	}
 
 	return v.Error()
 }
@@ -183,6 +225,10 @@ func (r *UpdateRiskAssessmentNodeRequest) Validate() error {
 	v.Check(r.ID, "id", validator.Required(), validator.GID(coredata.RiskAssessmentNodeEntityType))
 	v.Check(r.Name, "name", validator.SafeTextNoNewLine(TitleMaxLength))
 	v.Check(r.NodeType, "node_type", validator.OneOfSlice(coredata.RiskAssessmentNodeTypes()))
+
+	if r.BoundaryID != nil && *r.BoundaryID != nil {
+		v.Check(**r.BoundaryID, "boundary_id", validator.Required(), validator.GID(coredata.RiskAssessmentBoundaryEntityType))
+	}
 
 	return v.Error()
 }
@@ -593,6 +639,7 @@ func (s *Service) CreateNode(ctx context.Context, scope coredata.Scoper, req Cre
 	node := &coredata.RiskAssessmentNode{
 		ID:                    gid.New(scope.GetTenantID(), coredata.RiskAssessmentNodeEntityType),
 		RiskAssessmentScopeID: req.RiskAssessmentScopeID,
+		BoundaryID:            req.BoundaryID,
 		NodeType:              req.NodeType,
 		Name:                  req.Name,
 		CreatedAt:             now,
@@ -605,6 +652,12 @@ func (s *Service) CreateNode(ctx context.Context, scope coredata.Scoper, req Cre
 			raScope := coredata.RiskAssessmentScope{}
 			if err := raScope.LoadByID(ctx, tx, scope, req.RiskAssessmentScopeID); err != nil {
 				return fmt.Errorf("cannot load risk assessment scope: %w", err)
+			}
+
+			if req.BoundaryID != nil {
+				if err := s.assertBoundaryInScope(ctx, tx, scope, *req.BoundaryID, req.RiskAssessmentScopeID, "boundary_id"); err != nil {
+					return err
+				}
 			}
 
 			node.OrganizationID = raScope.OrganizationID
@@ -662,6 +715,16 @@ func (s *Service) UpdateNode(ctx context.Context, scope coredata.Scoper, req Upd
 
 			if req.NodeType != nil {
 				node.NodeType = *req.NodeType
+			}
+
+			if req.BoundaryID != nil {
+				if *req.BoundaryID != nil {
+					if err := s.assertBoundaryInScope(ctx, tx, scope, **req.BoundaryID, node.RiskAssessmentScopeID, "boundary_id"); err != nil {
+						return err
+					}
+				}
+
+				node.BoundaryID = *req.BoundaryID
 			}
 
 			node.UpdatedAt = time.Now()
@@ -729,6 +792,179 @@ func (s *Service) CountNodesForScopeID(ctx context.Context, scope coredata.Scope
 			count, err = ns.CountByRiskAssessmentScopeID(ctx, conn, scope, scopeID)
 			if err != nil {
 				return fmt.Errorf("cannot count risk assessment nodes: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}
+
+func (s *Service) CreateBoundary(ctx context.Context, scope coredata.Scoper, req CreateRiskAssessmentBoundaryRequest) (*coredata.RiskAssessmentBoundary, error) {
+	if err := req.Validate(); err != nil {
+		return nil, fmt.Errorf("invalid request: %w", err)
+	}
+
+	now := time.Now()
+	boundary := &coredata.RiskAssessmentBoundary{
+		ID:                    gid.New(scope.GetTenantID(), coredata.RiskAssessmentBoundaryEntityType),
+		RiskAssessmentScopeID: req.RiskAssessmentScopeID,
+		ParentBoundaryID:      req.ParentBoundaryID,
+		Name:                  req.Name,
+		CreatedAt:             now,
+		UpdatedAt:             now,
+	}
+
+	err := s.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			raScope := coredata.RiskAssessmentScope{}
+			if err := raScope.LoadByID(ctx, tx, scope, req.RiskAssessmentScopeID); err != nil {
+				return fmt.Errorf("cannot load risk assessment scope: %w", err)
+			}
+
+			if req.ParentBoundaryID != nil {
+				if err := s.assertBoundaryInScope(ctx, tx, scope, *req.ParentBoundaryID, req.RiskAssessmentScopeID, "parent_boundary_id"); err != nil {
+					return err
+				}
+			}
+
+			boundary.OrganizationID = raScope.OrganizationID
+			if err := boundary.Insert(ctx, tx, scope); err != nil {
+				return fmt.Errorf("cannot insert risk assessment boundary: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return boundary, nil
+}
+
+func (s *Service) GetBoundary(ctx context.Context, scope coredata.Scoper, id gid.GID) (*coredata.RiskAssessmentBoundary, error) {
+	boundary := &coredata.RiskAssessmentBoundary{}
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := boundary.LoadByID(ctx, conn, scope, id); err != nil {
+				return fmt.Errorf("cannot load risk assessment boundary: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return boundary, nil
+}
+
+func (s *Service) UpdateBoundary(ctx context.Context, scope coredata.Scoper, req UpdateRiskAssessmentBoundaryRequest) (*coredata.RiskAssessmentBoundary, error) {
+	if err := req.Validate(); err != nil {
+		return nil, fmt.Errorf("invalid request: %w", err)
+	}
+
+	boundary := &coredata.RiskAssessmentBoundary{}
+
+	err := s.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			if err := boundary.LoadByID(ctx, tx, scope, req.ID); err != nil {
+				return fmt.Errorf("cannot load risk assessment boundary: %w", err)
+			}
+
+			if req.Name != nil {
+				boundary.Name = *req.Name
+			}
+
+			if req.ParentBoundaryID != nil {
+				if *req.ParentBoundaryID != nil {
+					if err := s.assertBoundaryInScope(ctx, tx, scope, **req.ParentBoundaryID, boundary.RiskAssessmentScopeID, "parent_boundary_id"); err != nil {
+						return err
+					}
+
+					if err := s.assertNoBoundaryCycle(ctx, tx, scope, boundary.ID, **req.ParentBoundaryID, "parent_boundary_id"); err != nil {
+						return err
+					}
+				}
+
+				boundary.ParentBoundaryID = *req.ParentBoundaryID
+			}
+
+			boundary.UpdatedAt = time.Now()
+			if err := boundary.Update(ctx, tx, scope); err != nil {
+				return fmt.Errorf("cannot update risk assessment boundary: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return boundary, nil
+}
+
+func (s *Service) DeleteBoundary(ctx context.Context, scope coredata.Scoper, id gid.GID) error {
+	return s.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			boundary := &coredata.RiskAssessmentBoundary{}
+			if err := boundary.Delete(ctx, tx, scope, id); err != nil {
+				return fmt.Errorf("cannot delete risk assessment boundary: %w", err)
+			}
+
+			return nil
+		},
+	)
+}
+
+func (s *Service) ListBoundariesForScopeID(
+	ctx context.Context,
+	scope coredata.Scoper,
+	scopeID gid.GID,
+	cursor *page.Cursor[coredata.RiskAssessmentBoundaryOrderField],
+) (*page.Page[*coredata.RiskAssessmentBoundary, coredata.RiskAssessmentBoundaryOrderField], error) {
+	var results coredata.RiskAssessmentBoundaries
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := results.LoadByRiskAssessmentScopeID(ctx, conn, scope, scopeID, cursor); err != nil {
+				return fmt.Errorf("cannot list risk assessment boundaries: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return page.NewPage(results, cursor), nil
+}
+
+func (s *Service) CountBoundariesForScopeID(ctx context.Context, scope coredata.Scoper, scopeID gid.GID) (int, error) {
+	var count int
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) (err error) {
+			bs := &coredata.RiskAssessmentBoundaries{}
+
+			count, err = bs.CountByRiskAssessmentScopeID(ctx, conn, scope, scopeID)
+			if err != nil {
+				return fmt.Errorf("cannot count risk assessment boundaries: %w", err)
 			}
 
 			return nil
@@ -1592,6 +1828,79 @@ func (s *Service) assertNodeInScope(
 	}
 
 	return nil
+}
+
+func (s *Service) assertBoundaryInScope(
+	ctx context.Context,
+	tx pg.Tx,
+	scope coredata.Scoper,
+	boundaryID gid.GID,
+	scopeID gid.GID,
+	field string,
+) error {
+	boundary := &coredata.RiskAssessmentBoundary{}
+	if err := boundary.LoadByID(ctx, tx, scope, boundaryID); err != nil {
+		return validator.ValidationErrors{{
+			Field:   field,
+			Code:    validator.ErrorCodeCustom,
+			Message: "boundary not found",
+		}}
+	}
+
+	// A boundary in a different scope is reported identically to a missing
+	// one so the error does not reveal that the resource exists elsewhere.
+	if boundary.RiskAssessmentScopeID != scopeID {
+		return validator.ValidationErrors{{
+			Field:   field,
+			Code:    validator.ErrorCodeCustom,
+			Message: "boundary not found",
+		}}
+	}
+
+	return nil
+}
+
+// assertNoBoundaryCycle walks the ancestor chain starting from the proposed
+// parent. If it reaches the boundary being updated, the new parent would make
+// the boundary an ancestor of itself (a cycle), which is rejected. A visited
+// set guards against any pre-existing cycle in stored data.
+func (s *Service) assertNoBoundaryCycle(
+	ctx context.Context,
+	tx pg.Tx,
+	scope coredata.Scoper,
+	boundaryID gid.GID,
+	proposedParentID gid.GID,
+	field string,
+) error {
+	visited := make(map[gid.GID]bool)
+	currentID := proposedParentID
+
+	for {
+		if currentID == boundaryID {
+			return validator.ValidationErrors{{
+				Field:   field,
+				Code:    validator.ErrorCodeCustom,
+				Message: "boundary cannot be nested under itself or one of its descendants",
+			}}
+		}
+
+		if visited[currentID] {
+			return nil
+		}
+
+		visited[currentID] = true
+
+		current := &coredata.RiskAssessmentBoundary{}
+		if err := current.LoadByID(ctx, tx, scope, currentID); err != nil {
+			return fmt.Errorf("cannot load parent boundary: %w", err)
+		}
+
+		if current.ParentBoundaryID == nil {
+			return nil
+		}
+
+		currentID = *current.ParentBoundaryID
+	}
 }
 
 func (s *Service) assertProcessInScope(

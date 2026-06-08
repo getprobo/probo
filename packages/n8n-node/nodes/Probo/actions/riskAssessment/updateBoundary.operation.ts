@@ -17,17 +17,17 @@ import { proboApiRequest } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
 	{
-		displayName: 'Node ID',
-		name: 'nodeId',
+		displayName: 'Boundary ID',
+		name: 'boundaryId',
 		type: 'string',
 		displayOptions: {
 			show: {
 				resource: ['riskAssessment'],
-				operation: ['updateNode'],
+				operation: ['updateBoundary'],
 			},
 		},
 		default: '',
-		description: 'The ID of the node to update',
+		description: 'The ID of the boundary to update',
 		required: true,
 	},
 	{
@@ -39,7 +39,7 @@ export const description: INodeProperties[] = [
 		displayOptions: {
 			show: {
 				resource: ['riskAssessment'],
-				operation: ['updateNode'],
+				operation: ['updateBoundary'],
 			},
 		},
 		options: [
@@ -48,35 +48,14 @@ export const description: INodeProperties[] = [
 				name: 'name',
 				type: 'string',
 				default: '',
-				description: 'The name of the node',
+				description: 'The name of the boundary',
 			},
 			{
-				displayName: 'Node Type',
-				name: 'nodeType',
-				type: 'options',
-				options: [
-					{
-						name: 'Entity',
-						value: 'ENTITY',
-					},
-					{
-						name: 'Asset',
-						value: 'ASSET',
-					},
-					{
-						name: 'Data',
-						value: 'DATA',
-					},
-				],
-				default: 'ENTITY',
-				description: 'The type of the node',
-			},
-			{
-				displayName: 'Boundary ID',
-				name: 'boundaryId',
+				displayName: 'Parent Boundary ID',
+				name: 'parentBoundaryId',
 				type: 'string',
 				default: '',
-				description: 'The ID of the boundary that contains this node. Leave empty to move it to the top level.',
+				description: 'The ID of the parent boundary. Leave empty to make the boundary top-level.',
 			},
 		],
 	},
@@ -86,21 +65,19 @@ export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const nodeId = this.getNodeParameter('nodeId', itemIndex) as string;
+	const boundaryId = this.getNodeParameter('boundaryId', itemIndex) as string;
 	const additionalFields = this.getNodeParameter('additionalFields', itemIndex, {}) as {
 		name?: string;
-		nodeType?: string;
-		boundaryId?: string;
+		parentBoundaryId?: string;
 	};
 
 	const query = `
-		mutation UpdateRiskAssessmentNode($input: UpdateRiskAssessmentNodeInput!) {
-			updateRiskAssessmentNode(input: $input) {
-				riskAssessmentNode {
+		mutation UpdateRiskAssessmentBoundary($input: UpdateRiskAssessmentBoundaryInput!) {
+			updateRiskAssessmentBoundary(input: $input) {
+				riskAssessmentBoundary {
 					id
 					riskAssessmentScopeId
-					boundaryId
-					nodeType
+					parentBoundaryId
 					name
 					createdAt
 					updatedAt
@@ -109,11 +86,10 @@ export async function execute(
 		}
 	`;
 
-	const input: Record<string, unknown> = { id: nodeId };
+	const input: Record<string, unknown> = { id: boundaryId };
 	if (additionalFields.name) input.name = additionalFields.name;
-	if (additionalFields.nodeType) input.nodeType = additionalFields.nodeType;
-	if (additionalFields.boundaryId !== undefined) {
-		input.boundaryId = additionalFields.boundaryId || null;
+	if (additionalFields.parentBoundaryId !== undefined) {
+		input.parentBoundaryId = additionalFields.parentBoundaryId || null;
 	}
 
 	if (Object.keys(input).length === 1) {

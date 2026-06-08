@@ -22,10 +22,9 @@ import (
 type RiskAssessmentNodeType string
 
 const (
-	RiskAssessmentNodeTypeEntity   RiskAssessmentNodeType = "ENTITY"
-	RiskAssessmentNodeTypeBoundary RiskAssessmentNodeType = "BOUNDARY"
-	RiskAssessmentNodeTypeAsset    RiskAssessmentNodeType = "ASSET"
-	RiskAssessmentNodeTypeData     RiskAssessmentNodeType = "DATA"
+	RiskAssessmentNodeTypeEntity RiskAssessmentNodeType = "ENTITY"
+	RiskAssessmentNodeTypeAsset  RiskAssessmentNodeType = "ASSET"
+	RiskAssessmentNodeTypeData   RiskAssessmentNodeType = "DATA"
 )
 
 var (
@@ -37,7 +36,6 @@ var (
 func RiskAssessmentNodeTypes() []RiskAssessmentNodeType {
 	return []RiskAssessmentNodeType{
 		RiskAssessmentNodeTypeEntity,
-		RiskAssessmentNodeTypeBoundary,
 		RiskAssessmentNodeTypeAsset,
 		RiskAssessmentNodeTypeData,
 	}
@@ -47,7 +45,6 @@ func (v RiskAssessmentNodeType) IsValid() bool {
 	switch v {
 	case
 		RiskAssessmentNodeTypeEntity,
-		RiskAssessmentNodeTypeBoundary,
 		RiskAssessmentNodeTypeAsset,
 		RiskAssessmentNodeTypeData:
 		return true

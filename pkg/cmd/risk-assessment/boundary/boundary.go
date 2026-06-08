@@ -12,28 +12,22 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package riskassessment
+package boundary
 
 import (
 	"github.com/spf13/cobra"
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
-	"go.probo.inc/probo/pkg/cmd/risk-assessment/boundary"
-	"go.probo.inc/probo/pkg/cmd/risk-assessment/create"
-	"go.probo.inc/probo/pkg/cmd/risk-assessment/delete"
-	"go.probo.inc/probo/pkg/cmd/risk-assessment/list"
-	"go.probo.inc/probo/pkg/cmd/risk-assessment/node"
-	"go.probo.inc/probo/pkg/cmd/risk-assessment/process"
-	"go.probo.inc/probo/pkg/cmd/risk-assessment/scenario"
-	"go.probo.inc/probo/pkg/cmd/risk-assessment/scope"
-	"go.probo.inc/probo/pkg/cmd/risk-assessment/threat"
-	"go.probo.inc/probo/pkg/cmd/risk-assessment/update"
-	"go.probo.inc/probo/pkg/cmd/risk-assessment/view"
+	"go.probo.inc/probo/pkg/cmd/risk-assessment/boundary/create"
+	"go.probo.inc/probo/pkg/cmd/risk-assessment/boundary/delete"
+	"go.probo.inc/probo/pkg/cmd/risk-assessment/boundary/list"
+	"go.probo.inc/probo/pkg/cmd/risk-assessment/boundary/update"
+	"go.probo.inc/probo/pkg/cmd/risk-assessment/boundary/view"
 )
 
-func NewCmdRiskAssessment(f *cmdutil.Factory) *cobra.Command {
+func NewCmdBoundary(f *cmdutil.Factory) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "risk-assessment <command>",
-		Short: "Manage risk assessments",
+		Use:   "boundary <command>",
+		Short: "Manage risk assessment boundaries",
 	}
 
 	cmd.AddCommand(list.NewCmdList(f))
@@ -41,12 +35,6 @@ func NewCmdRiskAssessment(f *cmdutil.Factory) *cobra.Command {
 	cmd.AddCommand(view.NewCmdView(f))
 	cmd.AddCommand(update.NewCmdUpdate(f))
 	cmd.AddCommand(delete.NewCmdDelete(f))
-	cmd.AddCommand(scope.NewCmdScope(f))
-	cmd.AddCommand(node.NewCmdNode(f))
-	cmd.AddCommand(boundary.NewCmdBoundary(f))
-	cmd.AddCommand(process.NewCmdProcess(f))
-	cmd.AddCommand(threat.NewCmdThreat(f))
-	cmd.AddCommand(scenario.NewCmdScenario(f))
 
 	return cmd
 }

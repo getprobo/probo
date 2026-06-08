@@ -23,39 +23,11 @@ export const description: INodeProperties[] = [
 		displayOptions: {
 			show: {
 				resource: ['riskAssessment'],
-				operation: ['createNode'],
+				operation: ['createBoundary'],
 			},
 		},
 		default: '',
 		description: 'The ID of the scope',
-		required: true,
-	},
-	{
-		displayName: 'Node Type',
-		name: 'nodeType',
-		type: 'options',
-		displayOptions: {
-			show: {
-				resource: ['riskAssessment'],
-				operation: ['createNode'],
-			},
-		},
-		options: [
-			{
-				name: 'Entity',
-				value: 'ENTITY',
-			},
-			{
-				name: 'Asset',
-				value: 'ASSET',
-			},
-			{
-				name: 'Data',
-				value: 'DATA',
-			},
-		],
-		default: 'ENTITY',
-		description: 'The type of the node',
 		required: true,
 	},
 	{
@@ -65,25 +37,25 @@ export const description: INodeProperties[] = [
 		displayOptions: {
 			show: {
 				resource: ['riskAssessment'],
-				operation: ['createNode'],
+				operation: ['createBoundary'],
 			},
 		},
 		default: '',
-		description: 'The name of the node',
+		description: 'The name of the boundary',
 		required: true,
 	},
 	{
-		displayName: 'Boundary ID',
-		name: 'boundaryId',
+		displayName: 'Parent Boundary ID',
+		name: 'parentBoundaryId',
 		type: 'string',
 		displayOptions: {
 			show: {
 				resource: ['riskAssessment'],
-				operation: ['createNode'],
+				operation: ['createBoundary'],
 			},
 		},
 		default: '',
-		description: 'The ID of the boundary that contains this node (optional)',
+		description: 'The ID of the parent boundary, for nested boundaries (optional)',
 	},
 ];
 
@@ -92,19 +64,17 @@ export async function execute(
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
 	const riskAssessmentScopeId = this.getNodeParameter('riskAssessmentScopeId', itemIndex) as string;
-	const nodeType = this.getNodeParameter('nodeType', itemIndex) as string;
 	const name = this.getNodeParameter('name', itemIndex) as string;
-	const boundaryId = this.getNodeParameter('boundaryId', itemIndex, '') as string;
+	const parentBoundaryId = this.getNodeParameter('parentBoundaryId', itemIndex, '') as string;
 
 	const query = `
-		mutation CreateRiskAssessmentNode($input: CreateRiskAssessmentNodeInput!) {
-			createRiskAssessmentNode(input: $input) {
-				riskAssessmentNodeEdge {
+		mutation CreateRiskAssessmentBoundary($input: CreateRiskAssessmentBoundaryInput!) {
+			createRiskAssessmentBoundary(input: $input) {
+				riskAssessmentBoundaryEdge {
 					node {
 						id
 						riskAssessmentScopeId
-						boundaryId
-						nodeType
+						parentBoundaryId
 						name
 						createdAt
 						updatedAt
@@ -114,8 +84,8 @@ export async function execute(
 		}
 	`;
 
-	const input: Record<string, unknown> = { riskAssessmentScopeId, nodeType, name };
-	if (boundaryId) input.boundaryId = boundaryId;
+	const input: Record<string, unknown> = { riskAssessmentScopeId, name };
+	if (parentBoundaryId) input.parentBoundaryId = parentBoundaryId;
 
 	const responseData = await proboApiRequest.call(this, query, { input });
 

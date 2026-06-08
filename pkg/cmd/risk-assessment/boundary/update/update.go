@@ -24,11 +24,11 @@ import (
 )
 
 const updateMutation = `
-mutation($input: UpdateRiskAssessmentNodeInput!) {
-  updateRiskAssessmentNode(input: $input) {
-    riskAssessmentNode {
+mutation($input: UpdateRiskAssessmentBoundaryInput!) {
+  updateRiskAssessmentBoundary(input: $input) {
+    riskAssessmentBoundary {
       id
-      nodeType
+      parentBoundaryId
       name
       createdAt
       updatedAt
@@ -38,28 +38,27 @@ mutation($input: UpdateRiskAssessmentNodeInput!) {
 `
 
 type updateResponse struct {
-	UpdateRiskAssessmentNode struct {
-		RiskAssessmentNode struct {
-			ID        string `json:"id"`
-			NodeType  string `json:"nodeType"`
-			Name      string `json:"name"`
-			CreatedAt string `json:"createdAt"`
-			UpdatedAt string `json:"updatedAt"`
-		} `json:"riskAssessmentNode"`
-	} `json:"updateRiskAssessmentNode"`
+	UpdateRiskAssessmentBoundary struct {
+		RiskAssessmentBoundary struct {
+			ID               string  `json:"id"`
+			ParentBoundaryId *string `json:"parentBoundaryId"`
+			Name             string  `json:"name"`
+			CreatedAt        string  `json:"createdAt"`
+			UpdatedAt        string  `json:"updatedAt"`
+		} `json:"riskAssessmentBoundary"`
+	} `json:"updateRiskAssessmentBoundary"`
 }
 
 func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 	var (
-		flagName          string
-		flagNodeType      string
-		flagBoundaryId    string
-		flagClearBoundary bool
+		flagName        string
+		flagParentId    string
+		flagClearParent bool
 	)
 
 	cmd := &cobra.Command{
 		Use:   "update <id>",
-		Short: "Update a risk assessment node",
+		Short: "Update a risk assessment boundary",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, err := f.Config()
@@ -80,8 +79,8 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 				cmdutil.TokenRefreshOption(cfg, host, hc),
 			)
 
-			if flagClearBoundary && cmd.Flags().Changed("boundary-id") {
-				return fmt.Errorf("cannot use --boundary-id and --clear-boundary together")
+			if flagClearParent && cmd.Flags().Changed("parent-id") {
+				return fmt.Errorf("cannot use --parent-id and --clear-parent together")
 			}
 
 			input := map[string]any{
@@ -92,20 +91,12 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 				input["name"] = flagName
 			}
 
-			if cmd.Flags().Changed("node-type") {
-				if err := cmdutil.ValidateEnum("node-type", flagNodeType, []string{"ENTITY", "ASSET", "DATA"}); err != nil {
-					return err
-				}
-
-				input["nodeType"] = flagNodeType
+			if cmd.Flags().Changed("parent-id") {
+				input["parentBoundaryId"] = flagParentId
 			}
 
-			if cmd.Flags().Changed("boundary-id") {
-				input["boundaryId"] = flagBoundaryId
-			}
-
-			if flagClearBoundary {
-				input["boundaryId"] = nil
+			if flagClearParent {
+				input["parentBoundaryId"] = nil
 			}
 
 			if len(input) == 1 {
@@ -125,10 +116,10 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 				return fmt.Errorf("cannot parse response: %w", err)
 			}
 
-			r := resp.UpdateRiskAssessmentNode.RiskAssessmentNode
+			r := resp.UpdateRiskAssessmentBoundary.RiskAssessmentBoundary
 			_, _ = fmt.Fprintf(
 				f.IOStreams.Out,
-				"Updated risk assessment node %s (%s)\n",
+				"Updated risk assessment boundary %s (%s)\n",
 				r.ID,
 				r.Name,
 			)
@@ -137,10 +128,9 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&flagName, "name", "", "Node name")
-	cmd.Flags().StringVar(&flagNodeType, "node-type", "", "Node type: ENTITY, ASSET, DATA")
-	cmd.Flags().StringVar(&flagBoundaryId, "boundary-id", "", "Boundary ID that contains this node")
-	cmd.Flags().BoolVar(&flagClearBoundary, "clear-boundary", false, "Remove the node from its boundary (move to top level)")
+	cmd.Flags().StringVar(&flagName, "name", "", "Boundary name")
+	cmd.Flags().StringVar(&flagParentId, "parent-id", "", "Parent boundary ID")
+	cmd.Flags().BoolVar(&flagClearParent, "clear-parent", false, "Remove the parent boundary (make it top-level)")
 
 	return cmd
 }

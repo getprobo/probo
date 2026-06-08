@@ -10792,7 +10792,6 @@ components:
       type: string
       enum:
         - ENTITY
-        - BOUNDARY
         - ASSET
         - DATA
       go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.RiskAssessmentNodeType
@@ -10848,6 +10847,24 @@ components:
       properties:
         field:
           $ref: "#/components/schemas/RiskAssessmentNodeOrderField"
+        direction:
+          $ref: "#/components/schemas/OrderDirection"
+
+    RiskAssessmentBoundaryOrderField:
+      type: string
+      enum:
+        - CREATED_AT
+        - NAME
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.RiskAssessmentBoundaryOrderField
+
+    RiskAssessmentBoundaryOrderBy:
+      type: object
+      required:
+        - field
+        - direction
+      properties:
+        field:
+          $ref: "#/components/schemas/RiskAssessmentBoundaryOrderField"
         direction:
           $ref: "#/components/schemas/OrderDirection"
 
@@ -10973,8 +10990,39 @@ components:
           $ref: "#/components/schemas/GID"
         risk_assessment_scope_id:
           $ref: "#/components/schemas/GID"
+        boundary_id:
+          $ref: "#/components/schemas/GID"
+          description: ID of the boundary that contains this node, if any
         node_type:
           $ref: "#/components/schemas/RiskAssessmentNodeType"
+        name:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    RiskAssessmentBoundary:
+      type: object
+      required:
+        - id
+        - organization_id
+        - risk_assessment_scope_id
+        - name
+        - created_at
+        - updated_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+        organization_id:
+          $ref: "#/components/schemas/GID"
+        risk_assessment_scope_id:
+          $ref: "#/components/schemas/GID"
+        parent_boundary_id:
+          $ref: "#/components/schemas/GID"
+          description: ID of the parent boundary, if this boundary is nested
         name:
           type: string
         created_at:
@@ -11372,6 +11420,9 @@ components:
         risk_assessment_scope_id:
           $ref: "#/components/schemas/GID"
           description: Risk assessment scope ID
+        boundary_id:
+          $ref: "#/components/schemas/GID"
+          description: ID of the boundary that contains this node (optional)
         node_type:
           $ref: "#/components/schemas/RiskAssessmentNodeType"
           description: Node type
@@ -11395,6 +11446,9 @@ components:
         id:
           $ref: "#/components/schemas/GID"
           description: Risk assessment node ID
+        boundary_id:
+          $ref: "#/components/schemas/GID"
+          description: ID of the boundary that contains this node (optional)
         node_type:
           $ref: "#/components/schemas/RiskAssessmentNodeType"
           description: Node type
@@ -11427,6 +11481,119 @@ components:
         deleted_risk_assessment_node_id:
           $ref: "#/components/schemas/GID"
           description: Deleted risk assessment node ID
+
+    ListRiskAssessmentBoundariesInput:
+      type: object
+      required:
+        - risk_assessment_scope_id
+      properties:
+        risk_assessment_scope_id:
+          $ref: "#/components/schemas/GID"
+          description: Risk assessment scope ID
+        order_by:
+          $ref: "#/components/schemas/RiskAssessmentBoundaryOrderBy"
+          description: Order by
+        size:
+          type: integer
+          description: Page size
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Page cursor
+
+    ListRiskAssessmentBoundariesOutput:
+      type: object
+      required:
+        - risk_assessment_boundaries
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Next cursor
+        risk_assessment_boundaries:
+          type: array
+          items:
+            $ref: "#/components/schemas/RiskAssessmentBoundary"
+
+    GetRiskAssessmentBoundaryInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Risk assessment boundary ID
+
+    GetRiskAssessmentBoundaryOutput:
+      type: object
+      required:
+        - risk_assessment_boundary
+      properties:
+        risk_assessment_boundary:
+          $ref: "#/components/schemas/RiskAssessmentBoundary"
+
+    AddRiskAssessmentBoundaryInput:
+      type: object
+      required:
+        - risk_assessment_scope_id
+        - name
+      properties:
+        risk_assessment_scope_id:
+          $ref: "#/components/schemas/GID"
+          description: Risk assessment scope ID
+        parent_boundary_id:
+          $ref: "#/components/schemas/GID"
+          description: ID of the parent boundary (optional, for nested boundaries)
+        name:
+          type: string
+          description: Risk assessment boundary name
+
+    AddRiskAssessmentBoundaryOutput:
+      type: object
+      required:
+        - risk_assessment_boundary
+      properties:
+        risk_assessment_boundary:
+          $ref: "#/components/schemas/RiskAssessmentBoundary"
+
+    UpdateRiskAssessmentBoundaryInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Risk assessment boundary ID
+        parent_boundary_id:
+          $ref: "#/components/schemas/GID"
+          description: ID of the parent boundary (optional, for nested boundaries)
+        name:
+          type: string
+          description: Risk assessment boundary name
+
+    UpdateRiskAssessmentBoundaryOutput:
+      type: object
+      required:
+        - risk_assessment_boundary
+      properties:
+        risk_assessment_boundary:
+          $ref: "#/components/schemas/RiskAssessmentBoundary"
+
+    DeleteRiskAssessmentBoundaryInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Risk assessment boundary ID
+
+    DeleteRiskAssessmentBoundaryOutput:
+      type: object
+      required:
+        - deleted_risk_assessment_boundary_id
+      properties:
+        deleted_risk_assessment_boundary_id:
+          $ref: "#/components/schemas/GID"
+          description: Deleted risk assessment boundary ID
 
     ListRiskAssessmentProcessesInput:
       type: object
@@ -14005,6 +14172,49 @@ tools:
       $ref: "#/components/schemas/DeleteRiskAssessmentNodeInput"
     outputSchema:
       $ref: "#/components/schemas/DeleteRiskAssessmentNodeOutput"
+  - name: listRiskAssessmentBoundaries
+    description: List all boundaries for a risk assessment scope
+    hints:
+      readonly: true
+      idempotent: true
+    inputSchema:
+      $ref: "#/components/schemas/ListRiskAssessmentBoundariesInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListRiskAssessmentBoundariesOutput"
+  - name: getRiskAssessmentBoundary
+    description: Get a risk assessment boundary by ID
+    hints:
+      readonly: true
+      idempotent: true
+    inputSchema:
+      $ref: "#/components/schemas/GetRiskAssessmentBoundaryInput"
+    outputSchema:
+      $ref: "#/components/schemas/GetRiskAssessmentBoundaryOutput"
+  - name: addRiskAssessmentBoundary
+    description: Create a new risk assessment boundary
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/AddRiskAssessmentBoundaryInput"
+    outputSchema:
+      $ref: "#/components/schemas/AddRiskAssessmentBoundaryOutput"
+  - name: updateRiskAssessmentBoundary
+    description: Update an existing risk assessment boundary
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/UpdateRiskAssessmentBoundaryInput"
+    outputSchema:
+      $ref: "#/components/schemas/UpdateRiskAssessmentBoundaryOutput"
+  - name: deleteRiskAssessmentBoundary
+    description: Delete a risk assessment boundary
+    hints:
+      readonly: false
+      destructive: true
+    inputSchema:
+      $ref: "#/components/schemas/DeleteRiskAssessmentBoundaryInput"
+    outputSchema:
+      $ref: "#/components/schemas/DeleteRiskAssessmentBoundaryOutput"
   - name: listRiskAssessmentProcesses
     description: List all processes for a risk assessment scope
     hints:

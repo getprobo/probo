@@ -26,14 +26,19 @@ import (
 
 func (s *Service) BuildScopeMermaidChart(ctx context.Context, scope coredata.Scoper, scopeID gid.GID) (string, error) {
 	var (
-		nodes     coredata.RiskAssessmentNodes
-		processes coredata.RiskAssessmentProcesses
-		threats   coredata.RiskAssessmentThreats
+		nodes      coredata.RiskAssessmentNodes
+		boundaries coredata.RiskAssessmentBoundaries
+		processes  coredata.RiskAssessmentProcesses
+		threats    coredata.RiskAssessmentThreats
 	)
 
 	err := s.pg.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
 		if err := nodes.LoadAllByRiskAssessmentScopeID(ctx, conn, scope, scopeID); err != nil {
 			return fmt.Errorf("cannot load nodes: %w", err)
+		}
+
+		if err := boundaries.LoadAllByRiskAssessmentScopeID(ctx, conn, scope, scopeID); err != nil {
+			return fmt.Errorf("cannot load boundaries: %w", err)
 		}
 
 		if err := processes.LoadAllByRiskAssessmentScopeID(ctx, conn, scope, scopeID); err != nil {
@@ -50,15 +55,16 @@ func (s *Service) BuildScopeMermaidChart(ctx context.Context, scope coredata.Sco
 		return "", err
 	}
 
-	return buildScopeMermaidChart(nodes, processes, threats), nil
+	return buildScopeMermaidChart(nodes, boundaries, processes, threats), nil
 }
 
 func buildScopeMermaidChart(
 	nodes coredata.RiskAssessmentNodes,
+	boundaries coredata.RiskAssessmentBoundaries,
 	processes coredata.RiskAssessmentProcesses,
 	threats coredata.RiskAssessmentThreats,
 ) string {
-	if len(nodes) == 0 {
+	if len(nodes) == 0 && len(boundaries) == 0 {
 		return ""
 	}
 
@@ -67,13 +73,87 @@ func buildScopeMermaidChart(
 		nodeAlias[n.ID] = fmt.Sprintf("n%d", i)
 	}
 
+	boundaryAlias := make(map[gid.GID]string, len(boundaries))
+	for i, bnd := range boundaries {
+		boundaryAlias[bnd.ID] = fmt.Sprintf("b%d", i)
+	}
+
+	// Group boundaries by their parent so nested boundaries become nested subgraphs.
+	childBoundaries := make(map[gid.GID]coredata.RiskAssessmentBoundaries)
+
+	var rootBoundaries coredata.RiskAssessmentBoundaries
+
+	for _, bnd := range boundaries {
+		if bnd.ParentBoundaryID != nil {
+			if _, ok := boundaryAlias[*bnd.ParentBoundaryID]; ok {
+				childBoundaries[*bnd.ParentBoundaryID] = append(childBoundaries[*bnd.ParentBoundaryID], bnd)
+				continue
+			}
+		}
+
+		rootBoundaries = append(rootBoundaries, bnd)
+	}
+
+	// Group nodes by the boundary that contains them; nodes without a
+	// boundary (or referencing an unknown one) are rendered at the top level.
+	nodesByBoundary := make(map[gid.GID]coredata.RiskAssessmentNodes)
+
+	var rootNodes coredata.RiskAssessmentNodes
+
+	for _, n := range nodes {
+		if n.BoundaryID != nil {
+			if _, ok := boundaryAlias[*n.BoundaryID]; ok {
+				nodesByBoundary[*n.BoundaryID] = append(nodesByBoundary[*n.BoundaryID], n)
+				continue
+			}
+		}
+
+		rootNodes = append(rootNodes, n)
+	}
+
 	var b strings.Builder
 	b.WriteString("flowchart LR\n")
 
-	for _, n := range nodes {
+	// class statements must live at the flowchart level, not inside a
+	// subgraph block, so collect them and emit once all shapes are written.
+	var classLines []string
+
+	emitNode := func(n *coredata.RiskAssessmentNode, indent string) {
 		id := nodeAlias[n.ID]
-		fmt.Fprintf(&b, "  %s\n", mermaidNodeShape(n.NodeType, id, n.Name))
-		fmt.Fprintf(&b, "  class %s %s\n", id, mermaidNodeClass(n.NodeType))
+		fmt.Fprintf(&b, "%s%s\n", indent, mermaidNodeShape(n.NodeType, id, n.Name))
+		classLines = append(classLines, fmt.Sprintf("  class %s %s", id, mermaidNodeClass(n.NodeType)))
+	}
+
+	var emitBoundary func(bnd *coredata.RiskAssessmentBoundary, indent string)
+
+	emitBoundary = func(bnd *coredata.RiskAssessmentBoundary, indent string) {
+		alias := boundaryAlias[bnd.ID]
+		fmt.Fprintf(&b, "%ssubgraph %s[\"%s\"]\n", indent, alias, escapeMermaidLabel(bnd.Name))
+
+		inner := indent + "  "
+		for _, child := range childBoundaries[bnd.ID] {
+			emitBoundary(child, inner)
+		}
+
+		for _, n := range nodesByBoundary[bnd.ID] {
+			emitNode(n, inner)
+		}
+
+		fmt.Fprintf(&b, "%send\n", indent)
+
+		classLines = append(classLines, fmt.Sprintf("  class %s nodeBoundary", alias))
+	}
+
+	for _, bnd := range rootBoundaries {
+		emitBoundary(bnd, "  ")
+	}
+
+	for _, n := range rootNodes {
+		emitNode(n, "  ")
+	}
+
+	for _, line := range classLines {
+		b.WriteString(line + "\n")
 	}
 
 	for _, p := range processes {
@@ -111,7 +191,7 @@ func buildScopeMermaidChart(
 	}
 
 	b.WriteString("  classDef nodeEntity fill:#dbeafe,stroke:#1d4ed8,color:#1e3a8a\n")
-	b.WriteString("  classDef nodeBoundary fill:#fef3c7,stroke:#b45309,color:#78350f\n")
+	b.WriteString("  classDef nodeBoundary fill:#ffffff,stroke:#b45309,color:#78350f\n")
 	b.WriteString("  classDef nodeAsset fill:#e5e7eb,stroke:#374151,color:#111827\n")
 	b.WriteString("  classDef nodeData fill:#dcfce7,stroke:#15803d,color:#14532d\n")
 	b.WriteString("  classDef nodeThreat fill:#fee2e2,stroke:#b91c1c,color:#7f1d1d\n")
@@ -125,8 +205,6 @@ func mermaidNodeShape(t coredata.RiskAssessmentNodeType, id, name string) string
 	switch t {
 	case coredata.RiskAssessmentNodeTypeEntity:
 		return fmt.Sprintf("%s([%s])", id, label)
-	case coredata.RiskAssessmentNodeTypeBoundary:
-		return fmt.Sprintf("%s{{%s}}", id, label)
 	case coredata.RiskAssessmentNodeTypeData:
 		return fmt.Sprintf("%s[(%s)]", id, label)
 	case coredata.RiskAssessmentNodeTypeAsset:
@@ -140,8 +218,6 @@ func mermaidNodeClass(t coredata.RiskAssessmentNodeType) string {
 	switch t {
 	case coredata.RiskAssessmentNodeTypeEntity:
 		return "nodeEntity"
-	case coredata.RiskAssessmentNodeTypeBoundary:
-		return "nodeBoundary"
 	case coredata.RiskAssessmentNodeTypeData:
 		return "nodeData"
 	case coredata.RiskAssessmentNodeTypeAsset:

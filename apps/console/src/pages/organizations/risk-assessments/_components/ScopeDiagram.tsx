@@ -32,6 +32,17 @@ const scopeDiagramFragment = graphql`
           id
           name
           nodeType
+          boundaryId
+        }
+      }
+    }
+    boundaries(first: 100)
+      @connection(key: "RiskAssessmentScope_boundaries", filters: []) {
+      edges {
+        node {
+          id
+          name
+          parentBoundaryId
         }
       }
     }
@@ -82,7 +93,10 @@ export function ScopeDiagram({ scopeKey }: ScopeDiagramProps) {
   const mermaidChart = scope.mermaidChart;
 
   const nodeSignature = scope.nodes?.edges
-    .map(e => `${e.node.id}|${e.node.name}|${e.node.nodeType}`)
+    .map(e => `${e.node.id}|${e.node.name}|${e.node.nodeType}|${e.node.boundaryId ?? ""}`)
+    .join(";") ?? "";
+  const boundarySignature = scope.boundaries?.edges
+    .map(e => `${e.node.id}|${e.node.name}|${e.node.parentBoundaryId ?? ""}`)
     .join(";") ?? "";
   const processSignature = scope.processes?.edges
     .map(e => `${e.node.id}|${e.node.name}|${e.node.sourceNodeId}|${e.node.targetNodeId}`)
@@ -90,7 +104,7 @@ export function ScopeDiagram({ scopeKey }: ScopeDiagramProps) {
   const threatSignature = scope.threats?.edges
     .map(e => `${e.node.id}|${e.node.name}|${e.node.processId}|${e.node.category}`)
     .join(";") ?? "";
-  const signature = `${nodeSignature}::${processSignature}::${threatSignature}`;
+  const signature = `${nodeSignature}::${boundarySignature}::${processSignature}::${threatSignature}`;
   const previousSignature = useRef(signature);
   useEffect(() => {
     if (previousSignature.current === signature) {
@@ -188,7 +202,7 @@ function Legend() {
   const { __ } = useTranslate();
   const items: LegendItem[] = [
     { label: __("Entity"), shape: "stadium", fill: "#dbeafe", stroke: "#1d4ed8", text: "#1e3a8a" },
-    { label: __("Boundary"), shape: "hexagon", fill: "#fef3c7", stroke: "#b45309", text: "#78350f" },
+    { label: __("Boundary"), shape: "rectangle", fill: "#ffffff", stroke: "#b45309", text: "#78350f" },
     { label: __("Asset"), shape: "rectangle", fill: "#e5e7eb", stroke: "#374151", text: "#111827" },
     { label: __("Data"), shape: "cylinder", fill: "#dcfce7", stroke: "#15803d", text: "#14532d" },
     { label: __("Threat"), shape: "hexagon", fill: "#fee2e2", stroke: "#b91c1c", text: "#7f1d1d" },

@@ -31,46 +31,46 @@ import {
 import { useForm } from "react-hook-form";
 import { graphql, useMutation } from "react-relay";
 
-import type { NodeActionsDeleteMutation } from "#/__generated__/core/NodeActionsDeleteMutation.graphql";
-import type { NodeActionsUpdateMutation } from "#/__generated__/core/NodeActionsUpdateMutation.graphql";
+import type { BoundaryActionsDeleteMutation } from "#/__generated__/core/BoundaryActionsDeleteMutation.graphql";
+import type { BoundaryActionsUpdateMutation } from "#/__generated__/core/BoundaryActionsUpdateMutation.graphql";
 import { ControlledField } from "#/components/form/ControlledField";
 
-const updateNodeMutation = graphql`
-  mutation NodeActionsUpdateMutation($input: UpdateRiskAssessmentNodeInput!) {
-    updateRiskAssessmentNode(input: $input) {
-      riskAssessmentNode { id nodeType name boundaryId }
+const updateBoundaryMutation = graphql`
+  mutation BoundaryActionsUpdateMutation($input: UpdateRiskAssessmentBoundaryInput!) {
+    updateRiskAssessmentBoundary(input: $input) {
+      riskAssessmentBoundary { id name parentBoundaryId }
     }
   }
 `;
 
-const deleteNodeMutation = graphql`
-  mutation NodeActionsDeleteMutation(
-    $input: DeleteRiskAssessmentNodeInput!
+const deleteBoundaryMutation = graphql`
+  mutation BoundaryActionsDeleteMutation(
+    $input: DeleteRiskAssessmentBoundaryInput!
     $connections: [ID!]!
   ) {
-    deleteRiskAssessmentNode(input: $input) {
-      deletedRiskAssessmentNodeId @deleteEdge(connections: $connections)
+    deleteRiskAssessmentBoundary(input: $input) {
+      deletedRiskAssessmentBoundaryId @deleteEdge(connections: $connections)
     }
   }
 `;
 
-export function NodeActions(props: {
-  node: { id: string; name: string; nodeType: string; boundaryId: string | null };
+export function BoundaryActions(props: {
+  boundary: { id: string; name: string; parentBoundaryId: string | null };
   boundaries: { id: string; name: string }[];
   connectionId: string;
 }) {
   const { __ } = useTranslate();
   const confirm = useConfirm();
   const dialogRef = useDialogRef();
-  const [updateNode] = useMutation<NodeActionsUpdateMutation>(updateNodeMutation);
-  const [deleteNode] = useMutation<NodeActionsDeleteMutation>(deleteNodeMutation);
+  const [updateBoundary] = useMutation<BoundaryActionsUpdateMutation>(updateBoundaryMutation);
+  const [deleteBoundary] = useMutation<BoundaryActionsDeleteMutation>(deleteBoundaryMutation);
   const { register, control, handleSubmit } = useForm({
     values: {
-      name: props.node.name,
-      nodeType: props.node.nodeType,
-      boundaryId: props.node.boundaryId ?? "none",
+      name: props.boundary.name,
+      parentBoundaryId: props.boundary.parentBoundaryId ?? "none",
     },
   });
+  const parentOptions = props.boundaries.filter(b => b.id !== props.boundary.id);
   return (
     <>
       <ActionDropdown>
@@ -82,37 +82,32 @@ export function NodeActions(props: {
           variant="danger"
           onSelect={() => confirm(
             () => {
-              deleteNode({
+              deleteBoundary({
                 variables: {
-                  input: { riskAssessmentNodeId: props.node.id },
+                  input: { riskAssessmentBoundaryId: props.boundary.id },
                   connections: [props.connectionId],
                 },
               });
             },
-            { message: __("Delete this node?") },
+            { message: __("Delete this boundary? Nodes and nested boundaries inside it will be moved to the top level.") },
           )}
         >
           {__("Delete")}
         </DropdownItem>
       </ActionDropdown>
-      <Dialog className="max-w-lg" ref={dialogRef} title={<Breadcrumb items={[__("Nodes"), __("Edit")]} />}>
+      <Dialog className="max-w-lg" ref={dialogRef} title={<Breadcrumb items={[__("Boundaries"), __("Edit")]} />}>
         <form onSubmit={e => void handleSubmit((d) => {
-          updateNode({
-            variables: { input: { id: props.node.id, name: d.name, nodeType: d.nodeType as "ENTITY" | "ASSET" | "DATA", boundaryId: d.boundaryId === "none" ? null : d.boundaryId } },
+          updateBoundary({
+            variables: { input: { id: props.boundary.id, name: d.name, parentBoundaryId: d.parentBoundaryId === "none" ? null : d.parentBoundaryId } },
             onCompleted: () => { dialogRef.current?.close(); },
           });
         })(e)}
         >
           <DialogContent padded className="space-y-4">
-            <ControlledField label={__("Type")} name="nodeType" control={control} type="select">
-              <Option value="ENTITY">{__("Entity")}</Option>
-              <Option value="ASSET">{__("Asset")}</Option>
-              <Option value="DATA">{__("Data")}</Option>
-            </ControlledField>
             <Field label={__("Name")} {...register("name", { required: __("This field is required") })} type="text" />
-            <ControlledField label={__("Boundary")} name="boundaryId" control={control} type="select">
-              <Option value="none">{__("None")}</Option>
-              {props.boundaries.map(b => (
+            <ControlledField label={__("Parent boundary")} name="parentBoundaryId" control={control} type="select">
+              <Option value="none">{__("None (top level)")}</Option>
+              {parentOptions.map(b => (
                 <Option key={b.id} value={b.id}>{b.name}</Option>
               ))}
             </ControlledField>

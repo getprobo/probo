@@ -32,6 +32,8 @@ import { Link } from "react-router";
 import type { ScopeCardFragment$key } from "#/__generated__/core/ScopeCardFragment.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
+import { BoundaryActions } from "./BoundaryActions";
+import { CreateBoundaryDialog } from "./CreateBoundaryDialog";
 import { CreateNodeDialog } from "./CreateNodeDialog";
 import { CreateProcessDialog } from "./CreateProcessDialog";
 import { CreateScenarioInScopeDialog } from "./CreateScenarioInScopeDialog";
@@ -51,7 +53,14 @@ export const scopeCardFragment = graphql`
       @connection(key: "RiskAssessmentScope_nodes", filters: []) {
       __id
       edges {
-        node { id nodeType name }
+        node { id nodeType name boundaryId }
+      }
+    }
+    boundaries(first: 100)
+      @connection(key: "RiskAssessmentScope_boundaries", filters: []) {
+      __id
+      edges {
+        node { id name parentBoundaryId }
       }
     }
     processes(first: 100)
@@ -112,11 +121,15 @@ export function ScopeCard(props: {
   const { scopesConnectionId } = props;
 
   const nodes = scope.nodes?.edges.map(e => e.node) ?? [];
+  const boundaries = scope.boundaries?.edges.map(e => e.node) ?? [];
   const processes = scope.processes?.edges.map(e => e.node) ?? [];
   const threats = scope.threats?.edges.map(e => e.node) ?? [];
   const scenarios = scope.scenarios?.edges.map(e => e.node) ?? [];
   const nodeMap = new Map(nodes.map(n => [n.id, n]));
+  const boundaryMap = new Map(boundaries.map(b => [b.id, b]));
+  const boundaryOptions = boundaries.map(b => ({ id: b.id, name: b.name }));
   const nodesConnId = scope.nodes?.__id ?? "";
+  const boundariesConnId = scope.boundaries?.__id ?? "";
   const processesConnId = scope.processes?.__id ?? "";
   const threatsConnId = scope.threats?.__id ?? "";
   const scenariosConnId = scope.scenarios?.__id ?? "";
@@ -182,13 +195,14 @@ export function ScopeCard(props: {
                 title={`${__("Nodes")} (${nodes.length})`}
                 hint={__("Entities, boundaries, assets, and data involved in this scope.")}
               >
-                <CreateNodeDialog scopeId={scope.id} connectionId={nodesConnId} />
+                <CreateNodeDialog scopeId={scope.id} connectionId={nodesConnId} boundaries={boundaryOptions} />
               </SectionHeader>
               <Table>
                 <Thead>
                   <Tr>
                     <Th>{__("Name")}</Th>
                     <Th>{__("Type")}</Th>
+                    <Th>{__("Boundary")}</Th>
                     <Th className="w-12" />
                   </Tr>
                 </Thead>
@@ -197,9 +211,16 @@ export function ScopeCard(props: {
                     <Tr key={node.id}>
                       <Td className="font-medium">{node.name}</Td>
                       <Td><Badge>{node.nodeType}</Badge></Td>
+                      <Td className="text-txt-secondary">{node.boundaryId ? boundaryMap.get(node.boundaryId)?.name ?? "—" : "—"}</Td>
                       <Td>
                         <NodeActions
-                          node={{ id: node.id, name: node.name, nodeType: node.nodeType }}
+                          node={{
+                            id: node.id,
+                            name: node.name,
+                            nodeType: node.nodeType,
+                            boundaryId: node.boundaryId ?? null,
+                          }}
+                          boundaries={boundaryOptions}
                           connectionId={nodesConnId}
                         />
                       </Td>
@@ -207,7 +228,7 @@ export function ScopeCard(props: {
                   ))}
                   {nodes.length === 0 && (
                     <Tr>
-                      <Td colSpan={3} className="text-center text-txt-secondary">{__("No nodes")}</Td>
+                      <Td colSpan={4} className="text-center text-txt-secondary">{__("No nodes")}</Td>
                     </Tr>
                   )}
                 </Tbody>
@@ -262,6 +283,52 @@ export function ScopeCard(props: {
                 </Tbody>
               </Table>
             </div>
+          </div>
+
+          <div>
+            <SectionHeader
+              title={`${__("Boundaries")} (${boundaries.length})`}
+              hint={__("Groupings that contain nodes and can be nested inside other boundaries.")}
+            >
+              <CreateBoundaryDialog
+                scopeId={scope.id}
+                connectionId={boundariesConnId}
+                boundaries={boundaryOptions}
+              />
+            </SectionHeader>
+            <Table>
+              <Thead>
+                <Tr>
+                  <Th>{__("Name")}</Th>
+                  <Th>{__("Parent")}</Th>
+                  <Th className="w-12" />
+                </Tr>
+              </Thead>
+              <Tbody>
+                {boundaries.map(boundary => (
+                  <Tr key={boundary.id}>
+                    <Td className="font-medium">{boundary.name}</Td>
+                    <Td className="text-txt-secondary">{boundary.parentBoundaryId ? boundaryMap.get(boundary.parentBoundaryId)?.name ?? "—" : "—"}</Td>
+                    <Td>
+                      <BoundaryActions
+                        boundary={{
+                          id: boundary.id,
+                          name: boundary.name,
+                          parentBoundaryId: boundary.parentBoundaryId ?? null,
+                        }}
+                        boundaries={boundaryOptions}
+                        connectionId={boundariesConnId}
+                      />
+                    </Td>
+                  </Tr>
+                ))}
+                {boundaries.length === 0 && (
+                  <Tr>
+                    <Td colSpan={3} className="text-center text-txt-secondary">{__("No boundaries")}</Td>
+                  </Tr>
+                )}
+              </Tbody>
+            </Table>
           </div>
 
           <div>

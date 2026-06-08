@@ -25,13 +25,13 @@ import (
 )
 
 const createMutation = `
-mutation($input: CreateRiskAssessmentNodeInput!) {
-  createRiskAssessmentNode(input: $input) {
-    riskAssessmentNodeEdge {
+mutation($input: CreateRiskAssessmentBoundaryInput!) {
+  createRiskAssessmentBoundary(input: $input) {
+    riskAssessmentBoundaryEdge {
       node {
         id
         riskAssessmentScopeId
-        nodeType
+        parentBoundaryId
         name
         createdAt
         updatedAt
@@ -42,36 +42,38 @@ mutation($input: CreateRiskAssessmentNodeInput!) {
 `
 
 type createResponse struct {
-	CreateRiskAssessmentNode struct {
-		RiskAssessmentNodeEdge struct {
+	CreateRiskAssessmentBoundary struct {
+		RiskAssessmentBoundaryEdge struct {
 			Node struct {
-				ID                    string `json:"id"`
-				RiskAssessmentScopeId string `json:"riskAssessmentScopeId"`
-				NodeType              string `json:"nodeType"`
-				Name                  string `json:"name"`
-				CreatedAt             string `json:"createdAt"`
-				UpdatedAt             string `json:"updatedAt"`
+				ID                    string  `json:"id"`
+				RiskAssessmentScopeId string  `json:"riskAssessmentScopeId"`
+				ParentBoundaryId      *string `json:"parentBoundaryId"`
+				Name                  string  `json:"name"`
+				CreatedAt             string  `json:"createdAt"`
+				UpdatedAt             string  `json:"updatedAt"`
 			} `json:"node"`
-		} `json:"riskAssessmentNodeEdge"`
-	} `json:"createRiskAssessmentNode"`
+		} `json:"riskAssessmentBoundaryEdge"`
+	} `json:"createRiskAssessmentBoundary"`
 }
 
 func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 	var (
-		flagScopeId    string
-		flagBoundaryId string
-		flagNodeType   string
-		flagName       string
+		flagScopeId  string
+		flagParentId string
+		flagName     string
 	)
 
 	cmd := &cobra.Command{
 		Use:   "create",
-		Short: "Create a new risk assessment node",
-		Example: `  # Create a node interactively
-  prb risk-assessment node create --scope-id <id>
+		Short: "Create a new risk assessment boundary",
+		Example: `  # Create a boundary interactively
+  prb risk-assessment boundary create --scope-id <id>
 
-  # Create a node non-interactively
-  prb risk-assessment node create --scope-id <id> --node-type ASSET --name "Database server"`,
+  # Create a boundary non-interactively
+  prb risk-assessment boundary create --scope-id <id> --name "Production environment"
+
+  # Create a boundary nested inside another boundary
+  prb risk-assessment boundary create --scope-id <id> --name "Database tier" --parent-id <boundary-id>`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, err := f.Config()
 			if err != nil {
@@ -94,23 +96,8 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 			if f.IOStreams.IsInteractive() {
 				if flagName == "" {
 					err := huh.NewInput().
-						Title("Node name").
+						Title("Boundary name").
 						Value(&flagName).
-						Run()
-					if err != nil {
-						return err
-					}
-				}
-
-				if flagNodeType == "" {
-					err := huh.NewSelect[string]().
-						Title("Node type").
-						Options(
-							huh.NewOption("Entity", "ENTITY"),
-							huh.NewOption("Asset", "ASSET"),
-							huh.NewOption("Data", "DATA"),
-						).
-						Value(&flagNodeType).
 						Run()
 					if err != nil {
 						return err
@@ -122,22 +109,13 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 				return fmt.Errorf("name is required; pass --name or run interactively")
 			}
 
-			if flagNodeType == "" {
-				return fmt.Errorf("node type is required; pass --node-type or run interactively")
-			}
-
-			if err := cmdutil.ValidateEnum("node-type", flagNodeType, []string{"ENTITY", "ASSET", "DATA"}); err != nil {
-				return err
-			}
-
 			input := map[string]any{
 				"riskAssessmentScopeId": flagScopeId,
-				"nodeType":              flagNodeType,
 				"name":                  flagName,
 			}
 
-			if flagBoundaryId != "" {
-				input["boundaryId"] = flagBoundaryId
+			if flagParentId != "" {
+				input["parentBoundaryId"] = flagParentId
 			}
 
 			data, err := client.Do(
@@ -153,10 +131,10 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 				return fmt.Errorf("cannot parse response: %w", err)
 			}
 
-			r := resp.CreateRiskAssessmentNode.RiskAssessmentNodeEdge.Node
+			r := resp.CreateRiskAssessmentBoundary.RiskAssessmentBoundaryEdge.Node
 			_, _ = fmt.Fprintf(
 				f.IOStreams.Out,
-				"Created risk assessment node %s (%s)\n",
+				"Created risk assessment boundary %s (%s)\n",
 				r.ID,
 				r.Name,
 			)
@@ -166,9 +144,8 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 	}
 
 	cmd.Flags().StringVar(&flagScopeId, "scope-id", "", "Risk assessment scope ID (required)")
-	cmd.Flags().StringVar(&flagBoundaryId, "boundary-id", "", "Boundary ID that contains this node (optional)")
-	cmd.Flags().StringVar(&flagNodeType, "node-type", "", "Node type: ENTITY, ASSET, DATA (required)")
-	cmd.Flags().StringVar(&flagName, "name", "", "Node name (required)")
+	cmd.Flags().StringVar(&flagParentId, "parent-id", "", "Parent boundary ID (optional, for nested boundaries)")
+	cmd.Flags().StringVar(&flagName, "name", "", "Boundary name (required)")
 
 	_ = cmd.MarkFlagRequired("scope-id")
 
