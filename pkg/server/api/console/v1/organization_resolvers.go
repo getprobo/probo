@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/agentrun"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
@@ -1175,7 +1176,7 @@ func (r *organizationResolver) Tasks(ctx context.Context, obj *types.Organizatio
 
 // AgentRuns is the resolver for the agentRuns field.
 func (r *organizationResolver) AgentRuns(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AgentRunOrderBy) (*types.AgentRunConnection, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionAgentRunList)
+	scope, err := r.authorize(ctx, obj.ID, agentrun.ActionAgentRunList)
 	if err != nil {
 		return nil, err
 	}

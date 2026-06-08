@@ -11,6 +11,7 @@ import (
 	"fmt"
 
 	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/agentrun"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
@@ -370,7 +371,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			return types.NewWebhookSubscription(wc), nil
 		}
 	case coredata.AgentRunEntityType:
-		action = probo.ActionAgentRunGet
+		action = agentrun.ActionAgentRunGet
 		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
 			run, err := r.agentRun.Get(ctx, scope, id)
 			if err != nil {
