@@ -58,3 +58,24 @@ type AgentRunEdge {
     cursor: CursorKey!
     node: AgentRun!
 }
+
+extend type Mutation {
+    submitAgentRunApproval(
+        input: SubmitAgentRunApprovalInput!
+    ): SubmitAgentRunApprovalPayload!
+}
+
+input AgentRunApprovalDecisionInput {
+    toolCallId: String!
+    approved: Boolean!
+    reason: String
+}
+
+input SubmitAgentRunApprovalInput {
+    agentRunId: ID!
+    decisions: [AgentRunApprovalDecisionInput!]!
+}
+
+type SubmitAgentRunApprovalPayload {
+    agentRun: AgentRun!
+}

@@ -12,6 +12,8 @@ import (
 
 	"github.com/vikstrous/dataloadgen"
 	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/agent"
+	"go.probo.inc/probo/pkg/agentrun"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/server/api/console/v1/dataloader"
@@ -49,7 +51,7 @@ func (r *agentRunResolver) Permission(ctx context.Context, obj *types.AgentRun, 
 
 // TotalCount is the resolver for the totalCount field.
 func (r *agentRunConnectionResolver) TotalCount(ctx context.Context, obj *types.AgentRunConnection) (int, error) {
-	scope, err := r.authorize(ctx, obj.ParentID, probo.ActionAgentRunList)
+	scope, err := r.authorize(ctx, obj.ParentID, agentrun.ActionAgentRunList)
 	if err != nil {
 		return 0, err
 	}
@@ -68,6 +70,46 @@ func (r *agentRunConnectionResolver) TotalCount(ctx context.Context, obj *types.
 	r.logger.ErrorCtx(ctx, "unsupported resolver for agent run connection", log.String("resolver", fmt.Sprintf("%T", obj.Resolver)))
 
 	return 0, gqlutils.Internal(ctx)
+}
+
+// SubmitAgentRunApproval is the resolver for the submitAgentRunApproval field.
+func (r *mutationResolver) SubmitAgentRunApproval(ctx context.Context, input types.SubmitAgentRunApprovalInput) (*types.SubmitAgentRunApprovalPayload, error) {
+	scope, err := r.authorize(ctx, input.AgentRunID, agentrun.ActionAgentRunApprove)
+	if err != nil {
+		return nil, err
+	}
+
+	decisions := make(map[string]agent.ApprovalResult, len(input.Decisions))
+	for _, decision := range input.Decisions {
+		message := ""
+		if decision.Reason != nil {
+			message = *decision.Reason
+		}
+
+		decisions[decision.ToolCallID] = agent.ApprovalResult{
+			Approved: decision.Approved,
+			Message:  message,
+		}
+	}
+
+	run, err := r.agentRun.SubmitApproval(ctx, scope, input.AgentRunID, decisions)
+	if err != nil {
+		switch {
+		case errors.Is(err, agentrun.ErrAgentRunNotFound):
+			return nil, gqlutils.NotFound(ctx, err)
+		case errors.Is(err, agentrun.ErrNotAwaitingApproval):
+			return nil, gqlutils.Conflictf(ctx, "agent run is not awaiting approval")
+		case errors.Is(err, agentrun.ErrApprovalDecisionsMismatch):
+			return nil, gqlutils.Invalidf(ctx, "approval decisions must match the run's pending approvals")
+		default:
+			r.logger.ErrorCtx(ctx, "cannot submit agent run approval", log.Error(err))
+			return nil, gqlutils.Internal(ctx)
+		}
+	}
+
+	return &types.SubmitAgentRunApprovalPayload{
+		AgentRun: types.NewAgentRun(run),
+	}, nil
 }
 
 // AgentRun returns schema.AgentRunResolver implementation.

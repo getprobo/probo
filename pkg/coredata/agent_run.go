@@ -35,19 +35,17 @@ type (
 	AgentRunStatus string
 
 	AgentRun struct {
-		ID              gid.GID         `db:"id"`
-		OrganizationID  gid.GID         `db:"organization_id"`
-		StartAgentName  string          `db:"start_agent_name"`
-		Status          AgentRunStatus  `db:"status"`
-		Checkpoint      json.RawMessage `db:"checkpoint"`
-		InputMessages   json.RawMessage `db:"input_messages"`
-		Result          json.RawMessage `db:"result"`
-		ErrorMessage    *string         `db:"error_message"`
-		StartedAt       *time.Time      `db:"started_at"`
-		LeaseExpiresAt  *time.Time      `db:"lease_expires_at"`
-		LeaseGeneration int64           `db:"lease_generation"`
-		CreatedAt       time.Time       `db:"created_at"`
-		UpdatedAt       time.Time       `db:"updated_at"`
+		ID             gid.GID         `db:"id"`
+		OrganizationID gid.GID         `db:"organization_id"`
+		StartAgentName string          `db:"start_agent_name"`
+		Status         AgentRunStatus  `db:"status"`
+		Checkpoint     json.RawMessage `db:"checkpoint"`
+		InputMessages  json.RawMessage `db:"input_messages"`
+		Result         json.RawMessage `db:"result"`
+		ErrorMessage   *string         `db:"error_message"`
+		StartedAt      *time.Time      `db:"started_at"`
+		CreatedAt      time.Time       `db:"created_at"`
+		UpdatedAt      time.Time       `db:"updated_at"`
 	}
 
 	AgentRuns []*AgentRun
@@ -178,8 +176,6 @@ SELECT
 	result,
 	error_message,
 	started_at,
-	lease_expires_at,
-	lease_generation,
 	created_at,
 	updated_at
 FROM
@@ -231,8 +227,6 @@ SELECT
 	result,
 	error_message,
 	started_at,
-	lease_expires_at,
-	lease_generation,
 	created_at,
 	updated_at
 FROM
@@ -286,8 +280,6 @@ SELECT
 	result,
 	error_message,
 	started_at,
-	lease_expires_at,
-	lease_generation,
 	created_at,
 	updated_at
 FROM
@@ -383,8 +375,6 @@ RETURNING
 	result,
 	error_message,
 	started_at,
-	lease_expires_at,
-	lease_generation,
 	created_at,
 	updated_at;
 `
@@ -432,8 +422,6 @@ SET
 	result = @result,
 	error_message = @error_message,
 	started_at = @started_at,
-	lease_expires_at = @lease_expires_at,
-	lease_generation = @lease_generation,
 	updated_at = @updated_at
 WHERE
 	%s
@@ -448,8 +436,6 @@ RETURNING
 	result,
 	error_message,
 	started_at,
-	lease_expires_at,
-	lease_generation,
 	created_at,
 	updated_at;
 `
@@ -457,14 +443,12 @@ RETURNING
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"id":               e.ID.String(),
-		"status":           e.Status,
-		"result":           e.Result,
-		"error_message":    e.ErrorMessage,
-		"started_at":       e.StartedAt,
-		"lease_expires_at": e.LeaseExpiresAt,
-		"lease_generation": e.LeaseGeneration,
-		"updated_at":       e.UpdatedAt,
+		"id":            e.ID.String(),
+		"status":        e.Status,
+		"result":        e.Result,
+		"error_message": e.ErrorMessage,
+		"started_at":    e.StartedAt,
+		"updated_at":    e.UpdatedAt,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
@@ -516,11 +500,17 @@ WHERE
 	return nil
 }
 
+// CommitAgentRunResult writes the terminal or resting state of a run
+// (COMPLETED, FAILED, PENDING on graceful suspend, or AWAITING_APPROVAL)
+// guarded on the row still being RUNNING. The guard is a lightweight
+// safety net: it discards a commit for a run a human moved out of
+// RUNNING manually (the only way a run leaves RUNNING out from under an
+// active worker now that lease-based recovery is gone). Returns the
+// number of rows affected (0 when the guard rejected the write).
 func CommitAgentRunResult(
 	ctx context.Context,
 	tx pg.Tx,
 	e *AgentRun,
-	leaseGeneration int64,
 ) (int64, error) {
 	q := `
 UPDATE agent_runs
@@ -529,23 +519,19 @@ SET
 	result = @result,
 	error_message = @error_message,
 	started_at = @started_at,
-	lease_expires_at = @lease_expires_at,
 	updated_at = @updated_at
 WHERE
 	id = @id
-	AND status = 'RUNNING'
-	AND lease_generation = @lease_generation;
+	AND status = 'RUNNING';
 `
 
 	args := pgx.StrictNamedArgs{
-		"id":               e.ID.String(),
-		"status":           e.Status,
-		"result":           e.Result,
-		"error_message":    e.ErrorMessage,
-		"started_at":       e.StartedAt,
-		"lease_expires_at": e.LeaseExpiresAt,
-		"updated_at":       e.UpdatedAt,
-		"lease_generation": leaseGeneration,
+		"id":            e.ID.String(),
+		"status":        e.Status,
+		"result":        e.Result,
+		"error_message": e.ErrorMessage,
+		"started_at":    e.StartedAt,
+		"updated_at":    e.UpdatedAt,
 	}
 
 	tag, err := tx.Exec(ctx, q, args)
@@ -554,6 +540,56 @@ WHERE
 	}
 
 	return tag.RowsAffected(), nil
+}
+
+// RequeueForApprovalResume persists the run's checkpoint and returns it
+// to PENDING so a worker resumes from the approval boundary. The caller
+// populates e.Checkpoint (with the approval decisions merged in),
+// e.Status, e.StartedAt, and e.UpdatedAt before calling. The write is
+// guarded on the row still being AWAITING_APPROVAL; ErrResourceNotFound
+// is returned when the guard rejects it. This is the one path that writes
+// the checkpoint alongside a status change — Update deliberately omits the
+// checkpoint column.
+func (e *AgentRun) RequeueForApprovalResume(
+	ctx context.Context,
+	tx pg.Tx,
+	scope Scoper,
+) error {
+	q := `
+UPDATE agent_runs
+SET
+	checkpoint = @checkpoint,
+	status = @status,
+	started_at = @started_at,
+	updated_at = @updated_at
+WHERE
+	%s
+	AND id = @id
+	AND status = @expected_status;
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"id":              e.ID.String(),
+		"checkpoint":      e.Checkpoint,
+		"status":          e.Status,
+		"started_at":      e.StartedAt,
+		"updated_at":      e.UpdatedAt,
+		"expected_status": AgentRunStatusAwaitingApproval,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	result, err := tx.Exec(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot requeue agent run for approval resume: %w", err)
+	}
+
+	if result.RowsAffected() == 0 {
+		return ErrResourceNotFound
+	}
+
+	return nil
 }
 
 func (e *AgentRun) LoadNextPendingForUpdateSkipLocked(
@@ -571,8 +607,6 @@ SELECT
 	result,
 	error_message,
 	started_at,
-	lease_expires_at,
-	lease_generation,
 	created_at,
 	updated_at
 FROM
@@ -601,67 +635,6 @@ FOR UPDATE SKIP LOCKED;
 	*e = entity
 
 	return nil
-}
-
-// ResetStaleAgentRuns resets agent runs whose worker lease has expired.
-// The worker refreshes lease_expires_at from a separate heartbeat goroutine,
-// so a long LLM or tool call is not considered stale while the process is alive.
-// Stale recovery returns rows to PENDING so the worker auto-resumes
-// from checkpoint when one exists.
-func ResetStaleAgentRuns(ctx context.Context, conn pg.Querier) error {
-	q := `
-UPDATE agent_runs
-SET
-	status = 'PENDING',
-	started_at = NULL,
-	lease_expires_at = NULL,
-	updated_at = now()
-WHERE
-	status = 'RUNNING'
-	AND lease_expires_at IS NOT NULL
-	AND lease_expires_at < now();
-`
-
-	_, err := conn.Exec(ctx, q)
-	if err != nil {
-		return fmt.Errorf("cannot reset stale agent runs: %w", err)
-	}
-
-	return nil
-}
-
-// HeartbeatAgentRunLease refreshes the lease for a running agent run.
-// Returns the number of rows affected (0 if lease was lost).
-func HeartbeatAgentRunLease(
-	ctx context.Context,
-	conn pg.Querier,
-	runID string,
-	leaseGeneration int64,
-	expiresAt time.Time,
-) (int64, error) {
-	q := `
-UPDATE agent_runs
-SET
-	lease_expires_at = @lease_expires_at,
-	updated_at = now()
-WHERE
-	id = @id
-	AND status = 'RUNNING'
-	AND lease_generation = @lease_generation;
-`
-
-	args := pgx.StrictNamedArgs{
-		"id":               runID,
-		"lease_expires_at": expiresAt,
-		"lease_generation": leaseGeneration,
-	}
-
-	tag, err := conn.Exec(ctx, q, args)
-	if err != nil {
-		return 0, fmt.Errorf("cannot heartbeat agent run lease: %w", err)
-	}
-
-	return tag.RowsAffected(), nil
 }
 
 // PGCheckpointer implements agent.Checkpointer backed by the
@@ -731,55 +704,6 @@ WHERE
 
 			if tag.RowsAffected() == 0 {
 				return fmt.Errorf("cannot save checkpoint: agent run %s not found", runID)
-			}
-
-			return nil
-		},
-	)
-}
-
-func (s *PGCheckpointer) SaveForLease(
-	ctx context.Context,
-	runID string,
-	cp *agent.Checkpoint,
-	leaseGeneration int64,
-) error {
-	if _, err := gid.ParseGID(runID); err != nil {
-		return fmt.Errorf("cannot parse agent run id: %w", err)
-	}
-
-	data, err := s.marshalAgentCheckpoint(cp)
-	if err != nil {
-		return err
-	}
-
-	return s.pg.WithConn(
-		ctx,
-		func(ctx context.Context, conn pg.Querier) error {
-			q := `
-UPDATE agent_runs
-SET
-	checkpoint = @checkpoint,
-	updated_at = now()
-WHERE
-	id = @id
-	AND status = 'RUNNING'
-	AND lease_generation = @lease_generation;
-`
-
-			args := pgx.StrictNamedArgs{
-				"id":               runID,
-				"checkpoint":       json.RawMessage(data),
-				"lease_generation": leaseGeneration,
-			}
-
-			tag, err := conn.Exec(ctx, q, args)
-			if err != nil {
-				return fmt.Errorf("cannot save checkpoint: %w", err)
-			}
-
-			if tag.RowsAffected() == 0 {
-				return fmt.Errorf("cannot save checkpoint: lease lost")
 			}
 
 			return nil

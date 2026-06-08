@@ -16,9 +16,12 @@ package agentrun
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"time"
 
 	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/pkg/agent"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
@@ -84,6 +87,67 @@ func (s *Service) ListForOrganizationID(
 	}
 
 	return page.NewPage(runs, cursor), nil
+}
+
+// SubmitApproval records human approval decisions for a run parked in
+// AWAITING_APPROVAL and requeues it to PENDING so a worker resumes it.
+// decisions is keyed by pending tool-call ID and must cover exactly the
+// run's pending approvals (a missing decision would be treated as an
+// implicit denial on resume, so partial submissions are rejected). The
+// refreshed run is returned.
+func (s *Service) SubmitApproval(
+	ctx context.Context,
+	scope coredata.Scoper,
+	agentRunID gid.GID,
+	decisions map[string]agent.ApprovalResult,
+) (*coredata.AgentRun, error) {
+	run := &coredata.AgentRun{}
+
+	err := s.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			if err := run.LoadByIDForUpdate(ctx, tx, scope, agentRunID); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return ErrAgentRunNotFound
+				}
+
+				return fmt.Errorf("cannot load agent run: %w", err)
+			}
+
+			if run.Status != coredata.AgentRunStatusAwaitingApproval {
+				return ErrNotAwaitingApproval
+			}
+
+			if run.Checkpoint == nil {
+				return fmt.Errorf("agent run %s has no checkpoint", agentRunID)
+			}
+
+			checkpoint, err := agent.MergeApprovalDecisions(run.Checkpoint, decisions)
+			if err != nil {
+				if errors.Is(err, agent.ErrApprovalDecisionsMismatch) {
+					return ErrApprovalDecisionsMismatch
+				}
+
+				return fmt.Errorf("cannot merge approval decisions: %w", err)
+			}
+
+			run.Checkpoint = checkpoint
+			run.Status = coredata.AgentRunStatusPending
+			run.StartedAt = nil
+			run.UpdatedAt = time.Now()
+
+			if err := run.RequeueForApprovalResume(ctx, tx, scope); err != nil {
+				return fmt.Errorf("cannot requeue agent run for approval resume: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return run, nil
 }
 
 func (s *Service) CountForOrganizationID(

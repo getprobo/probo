@@ -16,9 +16,18 @@ package agent
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
+	"fmt"
 
 	"go.probo.inc/probo/pkg/llm"
 )
+
+// ErrApprovalDecisionsMismatch is returned by MergeApprovalDecisions when
+// the supplied decisions do not cover exactly the checkpoint's pending
+// approvals. A missing decision would resume as an implicit denial, so
+// partial submissions are rejected.
+var ErrApprovalDecisionsMismatch = errors.New("approval decisions do not match the checkpoint's pending approvals")
 
 type (
 	ApprovalConfig struct {
@@ -37,6 +46,50 @@ type (
 		Approvals map[string]ApprovalResult
 	}
 )
+
+// MergeApprovalDecisions decodes an awaiting-approval checkpoint, records
+// the human decisions into its ApprovalInput, and returns the re-encoded
+// checkpoint ready to be persisted. decisions is keyed by pending
+// tool-call ID and must cover exactly the checkpoint's pending approvals;
+// otherwise ErrApprovalDecisionsMismatch is returned.
+func MergeApprovalDecisions(
+	raw json.RawMessage,
+	decisions map[string]ApprovalResult,
+) (json.RawMessage, error) {
+	var cp Checkpoint
+	if err := json.Unmarshal(raw, &cp); err != nil {
+		return nil, fmt.Errorf("cannot unmarshal checkpoint: %w", err)
+	}
+
+	pending := make(map[string]struct{}, len(cp.PendingApprovals))
+	for _, toolCall := range cp.PendingApprovals {
+		pending[toolCall.ID] = struct{}{}
+	}
+
+	if len(decisions) != len(pending) {
+		return nil, ErrApprovalDecisionsMismatch
+	}
+
+	for id := range decisions {
+		if _, ok := pending[id]; !ok {
+			return nil, ErrApprovalDecisionsMismatch
+		}
+	}
+
+	if cp.ApprovalInput == nil {
+		cp.ApprovalInput = make(map[string]ApprovalResult, len(decisions))
+	}
+	for id, decision := range decisions {
+		cp.ApprovalInput[id] = decision
+	}
+
+	data, err := json.Marshal(&cp)
+	if err != nil {
+		return nil, fmt.Errorf("cannot marshal checkpoint: %w", err)
+	}
+
+	return data, nil
+}
 
 func buildToolNameSet(names []string) map[string]struct{} {
 	if len(names) == 0 {

@@ -16,7 +16,6 @@ package agentrun
 
 import (
 	"context"
-	"errors"
 	"time"
 
 	"go.gearno.de/kit/log"
@@ -36,28 +35,14 @@ type (
 
 	workerConfig struct {
 		interval       time.Duration
-		leaseDuration  time.Duration
 		maxConcurrency int
 	}
-)
-
-var (
-	ErrHeartbeatFailed = errors.New("agent run heartbeat failed")
-	ErrLeaseLost       = errors.New("agent run lease lost")
 )
 
 func WithWorkerInterval(d time.Duration) WorkerOption {
 	return func(c *workerConfig) {
 		if d > 0 {
 			c.interval = d
-		}
-	}
-}
-
-func WithWorkerLeaseDuration(d time.Duration) WorkerOption {
-	return func(c *workerConfig) {
-		if d > 0 {
-			c.leaseDuration = d
 		}
 	}
 }
@@ -79,7 +64,6 @@ func NewWorker(
 ) *Worker {
 	cfg := workerConfig{
 		interval:       10 * time.Second,
-		leaseDuration:  5 * time.Minute,
 		maxConcurrency: 5,
 	}
 
@@ -88,12 +72,11 @@ func NewWorker(
 	}
 
 	h := &handler{
-		pg:            pgClient,
-		store:         store,
-		registry:      registry,
-		logger:        logger,
-		leaseDuration: cfg.leaseDuration,
-		shutdownCh:    make(chan struct{}),
+		pg:         pgClient,
+		store:      store,
+		registry:   registry,
+		logger:     logger,
+		shutdownCh: make(chan struct{}),
 	}
 
 	w := worker.New(
