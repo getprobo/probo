@@ -565,14 +565,15 @@ func (s FrameworkService) Import(
 				contentType := "image/svg+xml"
 
 				fileRecord := &coredata.File{
-					ID:         fileID,
-					BucketName: s.svc.bucket,
-					MimeType:   contentType,
-					FileName:   filename,
-					FileKey:    objectKey.String(),
-					Visibility: coredata.FileVisibilityPublic,
-					CreatedAt:  now,
-					UpdatedAt:  now,
+					ID:             fileID,
+					OrganizationID: organization.ID,
+					BucketName:     s.svc.bucket,
+					MimeType:       contentType,
+					FileName:       filename,
+					FileKey:        objectKey.String(),
+					Visibility:     coredata.FileVisibilityPublic,
+					CreatedAt:      now,
+					UpdatedAt:      now,
 				}
 
 				fileSize, err := s.svc.fileManager.PutFile(ctx, fileRecord, strings.NewReader(logo), map[string]string{

@@ -391,15 +391,16 @@ func (s TrustCenterReferenceService) uploadLogoFile(
 	}
 
 	fileRecord := &coredata.File{
-		ID:         fileID,
-		BucketName: s.svc.bucket,
-		MimeType:   contentType,
-		FileName:   filename,
-		FileKey:    objectKey.String(),
-		FileSize:   fileSize,
-		Visibility: coredata.FileVisibilityPublic,
-		CreatedAt:  now,
-		UpdatedAt:  now,
+		ID:             fileID,
+		OrganizationID: trustCenter.OrganizationID,
+		BucketName:     s.svc.bucket,
+		MimeType:       contentType,
+		FileName:       filename,
+		FileKey:        objectKey.String(),
+		FileSize:       fileSize,
+		Visibility:     coredata.FileVisibilityPublic,
+		CreatedAt:      now,
+		UpdatedAt:      now,
 	}
 
 	if err := fileRecord.Insert(ctx, tx, scope); err != nil {

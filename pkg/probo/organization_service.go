@@ -305,14 +305,15 @@ func (s OrganizationService) Update(
 				}
 
 				fileRecord := &coredata.File{
-					ID:         fileID,
-					BucketName: s.svc.bucket,
-					MimeType:   contentType,
-					FileName:   filename,
-					FileKey:    objectKey.String(),
-					Visibility: coredata.FileVisibilityPublic,
-					CreatedAt:  now,
-					UpdatedAt:  now,
+					ID:             fileID,
+					OrganizationID: organization.ID,
+					BucketName:     s.svc.bucket,
+					MimeType:       contentType,
+					FileName:       filename,
+					FileKey:        objectKey.String(),
+					Visibility:     coredata.FileVisibilityPublic,
+					CreatedAt:      now,
+					UpdatedAt:      now,
 				}
 
 				fileSize, err = s.svc.fileManager.PutFile(
@@ -368,14 +369,15 @@ func (s OrganizationService) Update(
 				}
 
 				fileRecord := &coredata.File{
-					ID:         fileID,
-					BucketName: s.svc.bucket,
-					MimeType:   contentType,
-					FileName:   filename,
-					FileKey:    objectKey.String(),
-					Visibility: coredata.FileVisibilityPublic,
-					CreatedAt:  now,
-					UpdatedAt:  now,
+					ID:             fileID,
+					OrganizationID: organization.ID,
+					BucketName:     s.svc.bucket,
+					MimeType:       contentType,
+					FileName:       filename,
+					FileKey:        objectKey.String(),
+					Visibility:     coredata.FileVisibilityPublic,
+					CreatedAt:      now,
+					UpdatedAt:      now,
 				}
 
 				fileSize, err = s.svc.fileManager.PutFile(

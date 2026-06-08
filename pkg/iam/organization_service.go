@@ -630,15 +630,16 @@ func (s *OrganizationService) CreateOrganization(
 		)
 
 		logoFile = &coredata.File{
-			ID:         fileID,
-			BucketName: s.bucket,
-			MimeType:   contentType,
-			FileName:   filename,
-			FileKey:    objectKey.String(),
-			FileSize:   req.LogoFile.Size,
-			Visibility: coredata.FileVisibilityPublic,
-			CreatedAt:  now,
-			UpdatedAt:  now,
+			ID:             fileID,
+			OrganizationID: organization.ID,
+			BucketName:     s.bucket,
+			MimeType:       contentType,
+			FileName:       filename,
+			FileKey:        objectKey.String(),
+			FileSize:       req.LogoFile.Size,
+			Visibility:     coredata.FileVisibilityPublic,
+			CreatedAt:      now,
+			UpdatedAt:      now,
 		}
 
 		fileSize, err := s.fm.PutFile(
@@ -667,15 +668,16 @@ func (s *OrganizationService) CreateOrganization(
 		)
 
 		horizontalLogoFile = &coredata.File{
-			ID:         fileID,
-			BucketName: s.bucket,
-			MimeType:   contentType,
-			FileName:   filename,
-			FileKey:    objectKey.String(),
-			FileSize:   req.HorizontalLogoFile.Size,
-			Visibility: coredata.FileVisibilityPublic,
-			CreatedAt:  now,
-			UpdatedAt:  now,
+			ID:             fileID,
+			OrganizationID: organization.ID,
+			BucketName:     s.bucket,
+			MimeType:       contentType,
+			FileName:       filename,
+			FileKey:        objectKey.String(),
+			FileSize:       req.HorizontalLogoFile.Size,
+			Visibility:     coredata.FileVisibilityPublic,
+			CreatedAt:      now,
+			UpdatedAt:      now,
 		}
 
 		fileSize, err := s.fm.PutFile(
@@ -809,15 +811,16 @@ func (s *OrganizationService) UpdateOrganization(ctx context.Context, organizati
 		)
 
 		logoFile = &coredata.File{
-			ID:         fileID,
-			BucketName: s.bucket,
-			MimeType:   contentType,
-			FileName:   filename,
-			FileKey:    objectKey.String(),
-			FileSize:   (*req.LogoFile).Size,
-			Visibility: coredata.FileVisibilityPublic,
-			CreatedAt:  now,
-			UpdatedAt:  now,
+			ID:             fileID,
+			OrganizationID: organizationID,
+			BucketName:     s.bucket,
+			MimeType:       contentType,
+			FileName:       filename,
+			FileKey:        objectKey.String(),
+			FileSize:       (*req.LogoFile).Size,
+			Visibility:     coredata.FileVisibilityPublic,
+			CreatedAt:      now,
+			UpdatedAt:      now,
 		}
 
 		fileSize, err := s.fm.PutFile(
@@ -846,15 +849,16 @@ func (s *OrganizationService) UpdateOrganization(ctx context.Context, organizati
 		)
 
 		horizontalLogoFile = &coredata.File{
-			ID:         fileID,
-			BucketName: s.bucket,
-			MimeType:   contentType,
-			FileName:   filename,
-			FileKey:    objectKey.String(),
-			FileSize:   (*req.HorizontalLogoFile).Size,
-			Visibility: coredata.FileVisibilityPublic,
-			CreatedAt:  now,
-			UpdatedAt:  now,
+			ID:             fileID,
+			OrganizationID: organizationID,
+			BucketName:     s.bucket,
+			MimeType:       contentType,
+			FileName:       filename,
+			FileKey:        objectKey.String(),
+			FileSize:       (*req.HorizontalLogoFile).Size,
+			Visibility:     coredata.FileVisibilityPublic,
+			CreatedAt:      now,
+			UpdatedAt:      now,
 		}
 
 		fileSize, err := s.fm.PutFile(
