@@ -33,6 +33,7 @@ import { compliancePageRoutes } from "./pages/organizations/compliance-page/rout
 import { cookieBannerRoutes } from "./pages/organizations/cookie-banners/routes";
 import { riskAssessmentRoutes } from "./pages/organizations/risk-assessments/routes";
 import { riskRoutes } from "./pages/organizations/risks/routes";
+import { deviceRoutes } from "./pages/organizations/devices/routes";
 import { CurrentUser } from "./providers/CurrentUser";
 import { accessReviewRoutes } from "./routes/accessReviewRoutes";
 import { assetRoutes } from "./routes/assetRoutes";
@@ -191,6 +192,13 @@ const routes = [
                     import("./pages/organizations/employee/EmployeeApprovalsPageLoader"),
                 ),
               },
+              {
+                path: "devices",
+                Component: lazy(
+                  () =>
+                    import("./pages/organizations/employee/EmployeeDevicesPageLoader"),
+                ),
+              },
             ],
           },
           {
@@ -294,6 +302,7 @@ const routes = [
           ...measureRoutes,
           ...documentsRoutes,
           ...thirdPartyRoutes,
+          ...deviceRoutes,
           ...frameworkRoutes,
           ...taskRoutes,
           ...assetRoutes,

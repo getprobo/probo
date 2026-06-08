@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,27 +12,24 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
-import { TabLink, Tabs } from "@probo/ui";
-import { Outlet } from "react-router";
+import { lazy } from "@probo/react-lazy";
+import type { AppRoute } from "@probo/routes";
 
-export default function EmployeeTabsLayout() {
-  const { __ } = useTranslate();
+import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
 
-  return (
-    <div className="space-y-6">
-      <Tabs>
-        <TabLink to="signatures" end>
-          {__("Signatures")}
-        </TabLink>
-        <TabLink to="approvals" end>
-          {__("Approvals")}
-        </TabLink>
-        <TabLink to="devices" end>
-          {__("Devices")}
-        </TabLink>
-      </Tabs>
-      <Outlet />
-    </div>
-  );
-}
+export const deviceRoutes = [
+  {
+    path: "devices",
+    Fallback: PageSkeleton,
+    Component: lazy(
+      () => import("#/pages/organizations/devices/DevicesPageLoader"),
+    ),
+  },
+  {
+    path: "devices/:deviceId",
+    Fallback: PageSkeleton,
+    Component: lazy(
+      () => import("#/pages/organizations/devices/DeviceDetailPageLoader"),
+    ),
+  },
+] satisfies AppRoute[];

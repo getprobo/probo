@@ -476,7 +476,6 @@ const (
 
 	// CookieConsentRecord actions
 	ActionCookieConsentRecordList = "core:cookie-consent-record:list"
-
 	// CommonThirdParty actions (global catalog, no organization scope).
 	ActionCommonThirdPartyGet  = "core:common-third-party:get"
 	ActionCommonThirdPartyList = "core:common-third-party:list"

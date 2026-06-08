@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,27 +12,30 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
-import { TabLink, Tabs } from "@probo/ui";
-import { Outlet } from "react-router";
+package coredata
 
-export default function EmployeeTabsLayout() {
-  const { __ } = useTranslate();
+type DeviceOrderField string
 
-  return (
-    <div className="space-y-6">
-      <Tabs>
-        <TabLink to="signatures" end>
-          {__("Signatures")}
-        </TabLink>
-        <TabLink to="approvals" end>
-          {__("Approvals")}
-        </TabLink>
-        <TabLink to="devices" end>
-          {__("Devices")}
-        </TabLink>
-      </Tabs>
-      <Outlet />
-    </div>
-  );
+const (
+	DeviceOrderFieldCreatedAt  DeviceOrderField = "CREATED_AT"
+	DeviceOrderFieldUpdatedAt  DeviceOrderField = "UPDATED_AT"
+	DeviceOrderFieldHostname   DeviceOrderField = "HOSTNAME"
+	DeviceOrderFieldLastSeenAt DeviceOrderField = "LAST_SEEN_AT"
+)
+
+func (f DeviceOrderField) Column() string {
+	return string(f)
+}
+
+func (f DeviceOrderField) String() string {
+	return string(f)
+}
+
+func (f DeviceOrderField) MarshalText() ([]byte, error) {
+	return []byte(f.String()), nil
+}
+
+func (f *DeviceOrderField) UnmarshalText(text []byte) error {
+	*f = DeviceOrderField(text)
+	return nil
 }

@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@getprobo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@getprobo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,27 +12,14 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { useTranslate } from "@probo/i18n";
-import { TabLink, Tabs } from "@probo/ui";
-import { Outlet } from "react-router";
+package agent_v1
 
-export default function EmployeeTabsLayout() {
-  const { __ } = useTranslate();
+import (
+	"context"
 
-  return (
-    <div className="space-y-6">
-      <Tabs>
-        <TabLink to="signatures" end>
-          {__("Signatures")}
-        </TabLink>
-        <TabLink to="approvals" end>
-          {__("Approvals")}
-        </TabLink>
-        <TabLink to="devices" end>
-          {__("Devices")}
-        </TabLink>
-      </Tabs>
-      <Outlet />
-    </div>
-  );
+	"go.probo.inc/probo/pkg/coredata"
+)
+
+func contextWithDevice(ctx context.Context, device *coredata.Device) context.Context {
+	return context.WithValue(ctx, deviceContextKey, device)
 }

@@ -34,10 +34,12 @@ import (
 	"go.probo.inc/probo/pkg/filesign"
 	"go.probo.inc/probo/pkg/geoloc"
 	"go.probo.inc/probo/pkg/iam"
+	"go.probo.inc/probo/pkg/itam"
 	"go.probo.inc/probo/pkg/mailman"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/riskmanagement"
 	"go.probo.inc/probo/pkg/securecookie"
+	agent_v1 "go.probo.inc/probo/pkg/server/api/agent/v1"
 	connect_v1 "go.probo.inc/probo/pkg/server/api/connect/v1"
 	console_v1 "go.probo.inc/probo/pkg/server/api/console/v1"
 	cookiebanner_v1 "go.probo.inc/probo/pkg/server/api/cookiebanner/v1"
@@ -66,6 +68,7 @@ type (
 		Geoloc            *geoloc.Service
 		ThirdParty        *thirdparty.Service
 		RiskManagement    *riskmanagement.Service
+		ITAM              *itam.Service
 		Cookie            securecookie.Config
 		TokenSecret       string
 		ConnectorRegistry *connector.ConnectorRegistry
@@ -90,6 +93,7 @@ type (
 		mcpHandler            http.Handler
 		slackHandler          http.Handler
 		connectHandler        http.Handler
+		agentHandler          http.Handler
 	}
 )
 
@@ -160,6 +164,14 @@ func NewServer(cfg Config) (*Server, error) {
 	csrf.AddInsecureBypassPattern("POST /connect/v1/oauth2/revoke")
 	csrf.AddInsecureBypassPattern("POST /connect/v1/oauth2/device")
 
+	// The agent API is called from the probo-agent binary running on
+	// employee laptops; it authenticates with Bearer device API keys
+	// (not browser cookies) so cross-origin CSRF protection is moot.
+	csrf.AddInsecureBypassPattern("POST /agent/v1/enroll")
+	csrf.AddInsecureBypassPattern("POST /agent/v1/heartbeat")
+	csrf.AddInsecureBypassPattern("POST /agent/v1/postures")
+	csrf.AddInsecureBypassPattern("POST /agent/v1/unenroll")
+
 	csrf.SetDenyHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		httpserver.RenderJSON(
 			w,
@@ -199,6 +211,7 @@ func NewServer(cfg Config) (*Server, error) {
 			cfg.CustomDomainCname,
 			cfg.ThirdParty,
 			cfg.RiskManagement,
+			cfg.ITAM,
 		),
 		cookieBannerHandler: cookiebanner_v1.NewMux(
 			cfg.Logger.Named("cookiebanner.v1"),
@@ -244,6 +257,11 @@ func NewServer(cfg Config) (*Server, error) {
 				return err == nil
 			},
 		),
+		agentHandler: agent_v1.NewMux(
+			cfg.Logger.Named("agent.v1"),
+			cfg.ITAM,
+			cfg.BaseURL.String(),
+		),
 	}, nil
 }
 
@@ -280,15 +298,22 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// list that applies to console/connect routes.
 	router.Mount("/cookie-banner/v1", http.StripPrefix("/cookie-banner/v1", s.cookieBannerHandler))
 
-	router.Group(func(r chi.Router) {
-		r.Use(cors.Handler(corsOpts))
-		r.Mount("/console/v1", http.StripPrefix("/console/v1", s.consoleHandler))
-		r.Mount("/connect/v1", http.StripPrefix("/connect/v1", s.connectHandler))
-		r.Mount("/files/v1", http.StripPrefix("/files/v1", s.filesHandler))
-		r.Mount("/trust/v1", http.StripPrefix("/trust/v1", s.compliancePageHandler))
-		r.Mount("/mcp/v1", http.StripPrefix("/mcp/v1", s.mcpHandler))
-		r.Mount("/slack/v1", http.StripPrefix("/slack/v1", s.slackHandler))
-	})
+	// Those API should never be called from a browser; mount them outside
+	// to avoid CORS headers to be set on them.
+	router.Mount("/agent/v1", http.StripPrefix("/agent/v1", s.agentHandler))
+	router.Mount("/slack/v1", http.StripPrefix("/slack/v1", s.slackHandler))
+
+	router.Group(
+		func(r chi.Router) {
+			r.Use(cors.Handler(corsOpts))
+
+			r.Mount("/console/v1", http.StripPrefix("/console/v1", s.consoleHandler))
+			r.Mount("/connect/v1", http.StripPrefix("/connect/v1", s.connectHandler))
+			r.Mount("/files/v1", http.StripPrefix("/files/v1", s.filesHandler))
+			r.Mount("/trust/v1", http.StripPrefix("/trust/v1", s.compliancePageHandler))
+			r.Mount("/mcp/v1", http.StripPrefix("/mcp/v1", s.mcpHandler))
+		},
+	)
 
 	s.csrf.Handler(router).ServeHTTP(w, r)
 }
