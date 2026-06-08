@@ -19,6 +19,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
 
 	"go.probo.inc/probo/pkg/llm"
 )
@@ -79,9 +80,7 @@ func MergeApprovalDecisions(
 	if cp.ApprovalInput == nil {
 		cp.ApprovalInput = make(map[string]ApprovalResult, len(decisions))
 	}
-	for id, decision := range decisions {
-		cp.ApprovalInput[id] = decision
-	}
+	maps.Copy(cp.ApprovalInput, decisions)
 
 	data, err := json.Marshal(&cp)
 	if err != nil {

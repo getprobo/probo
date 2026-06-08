@@ -366,7 +366,7 @@ func TestAgentRun_Get(t *testing.T) {
 					createdAt
 					updatedAt
 					organization { id }
-					permission(action: "agentrun:agent-run:get")
+					permission(action: "agent:run:get")
 				}
 			}
 		}
