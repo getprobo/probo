@@ -539,7 +539,7 @@ func (impl *Implm) Run(
 
 	cookieBannerService := cookiebanner.NewService(pgClient, impl.cfg.Branding)
 
-	fileService := file.NewService(pgClient, baseURL)
+	fileService := file.NewService(pgClient, baseURL, fileManagerService)
 	filesignService := filesign.NewService(pgClient, fileManagerService)
 
 	proboService, err := probo.NewService(
