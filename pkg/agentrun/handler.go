@@ -197,16 +197,13 @@ func (h *handler) executeRun(ctx context.Context, run *coredata.AgentRun) error 
 	// interruption parks it in AWAITING_APPROVAL until an approval
 	// decision requeues it. Anything else is a genuine failure.
 	if runErr != nil {
-		switch {
-		case isType[*agent.SuspendedError](runErr):
+		if _, ok := errors.AsType[*agent.SuspendedError](runErr); ok {
 			run.Status = coredata.AgentRunStatusPending
 			runErr = nil
-
-		case isType[*agent.InterruptedError](runErr):
+		} else if _, ok := errors.AsType[*agent.InterruptedError](runErr); ok {
 			run.Status = coredata.AgentRunStatusAwaitingApproval
 			runErr = nil
-
-		default:
+		} else {
 			run.Status = coredata.AgentRunStatusFailed
 			run.Result = nil
 
@@ -256,10 +253,4 @@ func (h *handler) executeRun(ctx context.Context, run *coredata.AgentRun) error 
 	}
 
 	return runErr
-}
-
-func isType[T error](err error) bool {
-	_, ok := errors.AsType[T](err)
-
-	return ok
 }
