@@ -176,6 +176,7 @@ type PasswordRequired {
 
 type SAMLAuthenticationRequired {
   reason: ReauthenticationReason!
+  ssoLoginURL: String!
 }
 
 type AssumeOrganizationSessionPayload {

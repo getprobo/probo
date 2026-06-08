@@ -16,7 +16,7 @@ import { useTranslate } from "@probo/i18n";
 import { UnAuthenticatedError } from "@probo/relay";
 import { useEffect } from "react";
 import { type PreloadedQuery, useMutation, usePreloadedQuery } from "react-relay";
-import { useNavigate, useSearchParams } from "react-router";
+import { useNavigate } from "react-router";
 import { graphql } from "relay-runtime";
 
 import type { AssumePageMutation } from "#/__generated__/iam/AssumePageMutation.graphql";
@@ -38,6 +38,7 @@ const assumeMutation = graphql`
         }
         ... on SAMLAuthenticationRequired {
           reason
+          ssoLoginURL
         }
       }
     }
@@ -48,9 +49,6 @@ export const assumePageQuery = graphql`
   query AssumePageQuery {
     viewer @required(action: THROW) {
       __typename
-      ... on Identity {
-        ssoLoginURL
-      }
     }
   }
 `;
@@ -60,12 +58,11 @@ export function AssumePage(props: { queryRef: PreloadedQuery<AssumePageQuery> })
 
   const organizationId = useOrganizationId();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
   const { __ } = useTranslate();
 
   const safeContinueUrl = useSafeContinueUrl(`/organizations/${organizationId}`);
 
-  const { viewer } = usePreloadedQuery<AssumePageQuery>(assumePageQuery, queryRef);
+  usePreloadedQuery<AssumePageQuery>(assumePageQuery, queryRef);
   const [assumeOrganizationSession] = useMutation<AssumePageMutation>(assumeMutation);
 
   useEffect(() => {
@@ -91,7 +88,6 @@ export function AssumePage(props: { queryRef: PreloadedQuery<AssumePageQuery> })
 
         const { result } = assumeOrganizationSession;
         const search = new URLSearchParams();
-        let samlSSOLoginURL: URL;
 
         switch (result.__typename) {
           case "PasswordRequired":
@@ -100,21 +96,19 @@ export function AssumePage(props: { queryRef: PreloadedQuery<AssumePageQuery> })
 
             void navigate({ pathname: "/auth/login", search: "?" + search.toString() });
             break;
-          case "SAMLAuthenticationRequired":
-            if (!viewer.ssoLoginURL) {
-              throw new Error("missing SSO login URL for user email");
-            }
-            samlSSOLoginURL = new URL(viewer.ssoLoginURL);
-            samlSSOLoginURL.search = "?" + searchParams.toString();
+          case "SAMLAuthenticationRequired": {
+            const samlSSOLoginURL = new URL(result.ssoLoginURL);
+            samlSSOLoginURL.searchParams.set("continue", safeContinueUrl.toString());
 
             window.location.href = samlSSOLoginURL.toString();
             break;
+          }
           default:
             window.location.href = safeContinueUrl.toString();
         }
       },
     });
-  }, [organizationId, navigate, assumeOrganizationSession, safeContinueUrl, searchParams, viewer.ssoLoginURL]);
+  }, [organizationId, navigate, assumeOrganizationSession, safeContinueUrl]);
 
   return (
     <AuthLayout>

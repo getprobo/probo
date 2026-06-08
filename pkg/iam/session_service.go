@@ -581,7 +581,7 @@ func (s SessionService) AssumeOrganizationSession(
 				switch samlConfig.EnforcementPolicy {
 				case coredata.SAMLEnforcementPolicyRequired:
 					if rootSession.AuthMethod != coredata.AuthMethodSAML {
-						return NewSAMLAuthenticationRequiredError("policy_requirement")
+						return NewSAMLAuthenticationRequiredError("policy_requirement", samlConfig.ID)
 					}
 				case coredata.SAMLEnforcementPolicyOptional:
 					// SAML is optional: any password-equivalent (PASSWORD, OIDC,

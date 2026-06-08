@@ -404,11 +404,12 @@ func (e *ErrPasswordAuthenticationRequired) Error() string {
 }
 
 type ErrSAMLAuthenticationRequired struct {
-	Reason string
+	Reason              string
+	SAMLConfigurationID gid.GID
 }
 
-func NewSAMLAuthenticationRequiredError(reason string) *ErrSAMLAuthenticationRequired {
-	return &ErrSAMLAuthenticationRequired{Reason: reason}
+func NewSAMLAuthenticationRequiredError(reason string, samlConfigurationID gid.GID) *ErrSAMLAuthenticationRequired {
+	return &ErrSAMLAuthenticationRequired{Reason: reason, SAMLConfigurationID: samlConfigurationID}
 }
 
 func (e *ErrSAMLAuthenticationRequired) Error() string {
