@@ -33,14 +33,30 @@ type Factory struct {
 	Version   string
 	PgDSN     string
 	CfgFile   string
+
+	pgClient *pg.Client
 }
 
+// PgClient returns a shared pg client, building it on first use. The client
+// is memoized because pg.NewClient registers Prometheus collectors, so
+// constructing it more than once panics with a duplicate registration.
 func (f *Factory) PgClient() (*pg.Client, error) {
+	if f.pgClient != nil {
+		return f.pgClient, nil
+	}
+
 	if f.PgDSN == "" {
 		return nil, fmt.Errorf("set --pg-dsn or DATABASE_URL")
 	}
 
-	return pgconn.NewPgClientFromDSN(f.PgDSN)
+	client, err := pgconn.NewPgClientFromDSN(f.PgDSN)
+	if err != nil {
+		return nil, err
+	}
+
+	f.pgClient = client
+
+	return f.pgClient, nil
 }
 
 // ProbodConfig loads the shared probod configuration file (--cfg-file).

@@ -49,6 +49,8 @@ func enrichmentState(p *coredata.CommonTrackerPattern) string {
 	switch {
 	case p.EnrichmentRequestedAt != nil:
 		return "queued"
+	case p.EnrichedAt != nil && p.Description == "":
+		return "enriched (no description)"
 	case p.EnrichedAt != nil:
 		return "enriched"
 	default:

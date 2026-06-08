@@ -29,16 +29,17 @@ import (
 
 func newCmdList(f *cmdutil.Factory) *cobra.Command {
 	var (
-		flagTrackerType string
-		flagMatchType   string
-		flagThirdParty  string
-		flagKeyword     string
-		flagState       string
-		flagLinked      bool
-		flagUnlinked    bool
-		flagSort        string
-		flagOrder       string
-		flagLimit       int
+		flagTrackerType          string
+		flagMatchType            string
+		flagCommonThirdParty     string
+		flagLinkedBanner         string
+		flagLinkedOrg            string
+		flagKeyword              string
+		flagState                string
+		flagWithCommonThirdParty bool
+		flagSort                 string
+		flagOrder                string
+		flagLimit                int
 	)
 
 	cmd := &cobra.Command{
@@ -51,11 +52,12 @@ func newCmdList(f *cmdutil.Factory) *cobra.Command {
 
 	cmd.Flags().StringVar(&flagTrackerType, "tracker-type", "", "Filter by tracker type (COOKIE, LOCAL_STORAGE, SESSION_STORAGE, INDEXED_DB)")
 	cmd.Flags().StringVar(&flagMatchType, "match-type", "", "Filter by match type (EXACT, GLOB, PREFIX)")
-	cmd.Flags().StringVar(&flagThirdParty, "third-party", "", "Filter by linked common third party (slug or GID)")
+	cmd.Flags().StringVar(&flagCommonThirdParty, "common-third-party", "", "Filter by linked common third party (slug or GID)")
+	cmd.Flags().StringVar(&flagLinkedBanner, "linked-banner", "", "Filter to catalog rows linked to a cookie banner's patterns (GID)")
+	cmd.Flags().StringVar(&flagLinkedOrg, "linked-org", "", "Filter to catalog rows linked to an organization's patterns (GID)")
 	cmd.Flags().StringVar(&flagKeyword, "keyword", "", "Filter by pattern/description substring")
 	cmd.Flags().StringVar(&flagState, "state", "", "Filter by enrichment state (queued, enriched, unenriched)")
-	cmd.Flags().BoolVar(&flagLinked, "linked", false, "Only patterns linked to a common third party")
-	cmd.Flags().BoolVar(&flagUnlinked, "unlinked", false, "Only patterns not linked to a common third party")
+	cmd.Flags().BoolVar(&flagWithCommonThirdParty, "with-common-third-party", false, "Filter by whether the pattern is linked to a common third party (true/false); ignored when not set")
 	cmd.Flags().StringVar(&flagSort, "sort", "confidence", "Sort field: pattern, confidence, created, updated, enriched")
 	cmd.Flags().StringVar(&flagOrder, "order", "", "Sort order: asc, desc (default depends on field)")
 	cmd.Flags().IntVarP(&flagLimit, "limit", "L", 50, "Maximum rows to return (0 for all)")
@@ -65,8 +67,8 @@ func newCmdList(f *cmdutil.Factory) *cobra.Command {
 			return err
 		}
 
-		if flagLinked && flagUnlinked {
-			return fmt.Errorf("--linked and --unlinked are mutually exclusive")
+		if flagLinkedBanner != "" && flagLinkedOrg != "" {
+			return fmt.Errorf("--linked-banner and --linked-org are mutually exclusive")
 		}
 
 		orderBy, err := parseOrderBy(flagSort, flagOrder)
@@ -74,7 +76,12 @@ func newCmdList(f *cmdutil.Factory) *cobra.Command {
 			return err
 		}
 
-		filter, err := buildListFilter(flagTrackerType, flagMatchType, flagKeyword, flagState, flagLinked, flagUnlinked)
+		var withCommonThirdParty *bool
+		if cmd.Flags().Changed("with-common-third-party") {
+			withCommonThirdParty = &flagWithCommonThirdParty
+		}
+
+		filter, err := buildListFilter(flagTrackerType, flagMatchType, flagKeyword, flagState, withCommonThirdParty)
 		if err != nil {
 			return err
 		}
@@ -91,13 +98,52 @@ func newCmdList(f *cmdutil.Factory) *cobra.Command {
 		if err := pgClient.WithConn(
 			ctx,
 			func(ctx context.Context, conn pg.Querier) error {
-				if flagThirdParty != "" {
-					id, err := resolveCommonThirdPartyID(ctx, conn, flagThirdParty)
+				if flagCommonThirdParty != "" {
+					id, err := resolveCommonThirdPartyID(ctx, conn, flagCommonThirdParty)
 					if err != nil {
 						return err
 					}
 
 					filter.WithCommonThirdPartyID(&id)
+				}
+
+				switch {
+				case flagLinkedBanner != "":
+					bannerID, err := gid.ParseGID(flagLinkedBanner)
+					if err != nil {
+						return fmt.Errorf("invalid --linked-banner GID %q: %w", flagLinkedBanner, err)
+					}
+
+					var tps coredata.TrackerPatterns
+
+					linkedIDs, err := tps.LoadAllLinkedCommonTrackerPatternIDsByCookieBannerID(ctx, conn, coredata.NewScopeFromObjectID(bannerID), bannerID)
+					if err != nil {
+						return err
+					}
+
+					if len(linkedIDs) == 0 {
+						return nil
+					}
+
+					filter.WithIDs(linkedIDs)
+				case flagLinkedOrg != "":
+					orgID, err := gid.ParseGID(flagLinkedOrg)
+					if err != nil {
+						return fmt.Errorf("invalid --linked-org GID %q: %w", flagLinkedOrg, err)
+					}
+
+					var tps coredata.TrackerPatterns
+
+					linkedIDs, err := tps.LoadAllLinkedCommonTrackerPatternIDsByOrganizationID(ctx, conn, coredata.NewScopeFromObjectID(orgID), orgID)
+					if err != nil {
+						return err
+					}
+
+					if len(linkedIDs) == 0 {
+						return nil
+					}
+
+					filter.WithIDs(linkedIDs)
 				}
 
 				rows, err := cmdutil.Paginate(
@@ -168,7 +214,7 @@ func renderPatternTable(cmd *cobra.Command, f *cmdutil.Factory, patterns coredat
 		return err
 	}
 
-	table := clicmdutil.NewTable("ID", "TYPE", "MATCH", "PATTERN", "CONF", "STATE", "THIRD PARTY")
+	table := clicmdutil.NewTable("ID", "TYPE", "MATCH", "PATTERN", "CONF", "STATE", "THIRD PARTY", "CREATED", "UPDATED")
 
 	for _, p := range patterns {
 		thirdParty := ""
@@ -184,6 +230,8 @@ func renderPatternTable(cmd *cobra.Command, f *cmdutil.Factory, patterns coredat
 			fmt.Sprintf("%.2f", p.Confidence),
 			enrichmentState(p),
 			thirdParty,
+			p.CreatedAt.Format("2006-01-02 15:04:05"),
+			p.UpdatedAt.Format("2006-01-02 15:04:05"),
 		)
 	}
 
@@ -239,7 +287,7 @@ func parseOrderBy(sort, order string) (page.OrderBy[coredata.CommonTrackerPatter
 
 func buildListFilter(
 	trackerType, matchType, keyword, state string,
-	linked, unlinked bool,
+	withCommonThirdParty *bool,
 ) (*coredata.CommonTrackerPatternFilter, error) {
 	filter := coredata.NewCommonTrackerPatternFilter()
 
@@ -274,13 +322,8 @@ func buildListFilter(
 		filter.WithState(&st)
 	}
 
-	switch {
-	case linked:
-		v := true
-		filter.WithLinked(&v)
-	case unlinked:
-		v := false
-		filter.WithLinked(&v)
+	if withCommonThirdParty != nil {
+		filter.WithLinked(withCommonThirdParty)
 	}
 
 	return filter, nil

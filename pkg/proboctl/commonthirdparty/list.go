@@ -120,9 +120,16 @@ func newCmdList(f *cmdutil.Factory) *cobra.Command {
 			return nil
 		}
 
-		table := clicmdutil.NewTable("ID", "NAME", "SLUG", "CATEGORY")
+		table := clicmdutil.NewTable("ID", "NAME", "SLUG", "CATEGORY", "CREATED", "UPDATED")
 		for _, p := range parties {
-			table.Row(p.ID.String(), p.Name, p.Slug, string(p.Category))
+			table.Row(
+				p.ID.String(),
+				p.Name,
+				p.Slug,
+				string(p.Category),
+				p.CreatedAt.Format("2006-01-02 15:04:05"),
+				p.UpdatedAt.Format("2006-01-02 15:04:05"),
+			)
 		}
 
 		_, _ = fmt.Fprintln(f.IOStreams.Out, table.Render())

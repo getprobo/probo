@@ -71,6 +71,7 @@ func (s *CommonTrackerPatternEnrichmentState) UnmarshalText(text []byte) error {
 }
 
 type CommonTrackerPatternFilter struct {
+	ids                []gid.GID
 	trackerType        *TrackerType
 	matchType          *TrackerPatternMatchType
 	commonThirdPartyID *gid.GID
@@ -81,6 +82,13 @@ type CommonTrackerPatternFilter struct {
 
 func NewCommonTrackerPatternFilter() *CommonTrackerPatternFilter {
 	return &CommonTrackerPatternFilter{}
+}
+
+// WithIDs restricts the result to the given pattern IDs. A non-nil but
+// empty slice matches nothing.
+func (f *CommonTrackerPatternFilter) WithIDs(ids []gid.GID) *CommonTrackerPatternFilter {
+	f.ids = ids
+	return f
 }
 
 func (f *CommonTrackerPatternFilter) WithTrackerType(trackerType *TrackerType) *CommonTrackerPatternFilter {
@@ -120,6 +128,12 @@ func (f *CommonTrackerPatternFilter) SQLFragment() string {
 
 	return `
 (
+	CASE
+		WHEN @filter_ids::text[] IS NOT NULL THEN
+			id = ANY(@filter_ids)
+		ELSE TRUE
+	END
+	AND
 	CASE
 		WHEN @filter_tracker_type::text IS NOT NULL THEN
 			tracker_type = @filter_tracker_type::tracker_type
@@ -164,6 +178,7 @@ func (f *CommonTrackerPatternFilter) SQLFragment() string {
 
 func (f *CommonTrackerPatternFilter) SQLArguments() pgx.StrictNamedArgs {
 	args := pgx.StrictNamedArgs{
+		"filter_ids":                   nil,
 		"filter_tracker_type":          nil,
 		"filter_match_type":            nil,
 		"filter_common_third_party_id": nil,
@@ -176,6 +191,10 @@ func (f *CommonTrackerPatternFilter) SQLArguments() pgx.StrictNamedArgs {
 
 	if f == nil {
 		return args
+	}
+
+	if f.ids != nil {
+		args["filter_ids"] = f.ids
 	}
 
 	if f.trackerType != nil {

@@ -30,19 +30,18 @@ import (
 
 func newCmdReenrich(f *cmdutil.Factory) *cobra.Command {
 	var (
-		flagIDs           []string
-		flagThirdParty    string
-		flagTrackerType   string
-		flagKeyword       string
-		flagState         string
-		flagAll           bool
-		flagLinkedBanner  string
-		flagLinkedOrg     string
-		flagConcurrency   int
-		flagResetEnriched bool
-		flagDryRun        bool
-		flagYes           bool
-		flagEnqueue       bool
+		flagIDs              []string
+		flagLinkedBanner     string
+		flagLinkedOrg        string
+		flagCommonThirdParty string
+		flagTrackerType      string
+		flagKeyword          string
+		flagState            string
+		flagConcurrency      int
+		flagResetEnriched    bool
+		flagDryRun           bool
+		flagYes              bool
+		flagEnqueue          bool
 	)
 
 	cmd := &cobra.Command{
@@ -57,13 +56,12 @@ func newCmdReenrich(f *cmdutil.Factory) *cobra.Command {
 	}
 
 	cmd.Flags().StringSliceVar(&flagIDs, "id", nil, "Common tracker pattern GID(s) to re-enrich (repeatable)")
-	cmd.Flags().StringVar(&flagThirdParty, "third-party", "", "Select patterns linked to a common third party (slug or GID)")
-	cmd.Flags().StringVar(&flagTrackerType, "tracker-type", "", "Select patterns of a tracker type")
-	cmd.Flags().StringVar(&flagKeyword, "keyword", "", "Select patterns matching a pattern/description substring")
-	cmd.Flags().StringVar(&flagState, "state", "", "Select by enrichment state (queued, enriched, unenriched)")
-	cmd.Flags().BoolVar(&flagAll, "all", false, "Select every common tracker pattern")
 	cmd.Flags().StringVar(&flagLinkedBanner, "linked-banner", "", "Select catalog rows linked to a cookie banner's patterns (GID)")
 	cmd.Flags().StringVar(&flagLinkedOrg, "linked-org", "", "Select catalog rows linked to an organization's patterns (GID)")
+	cmd.Flags().StringVar(&flagCommonThirdParty, "common-third-party", "", "Select patterns linked to a common third party (slug or GID)")
+	cmd.Flags().StringVar(&flagTrackerType, "tracker-type", "", "Filter selected patterns by tracker type")
+	cmd.Flags().StringVar(&flagKeyword, "keyword", "", "Filter selected patterns by a pattern/description substring")
+	cmd.Flags().StringVar(&flagState, "state", "", "Filter selected patterns by enrichment state (queued, enriched, unenriched)")
 	cmd.Flags().IntVar(&flagConcurrency, "concurrency", 4, "Number of patterns to enrich in parallel (sync mode)")
 	cmd.Flags().BoolVar(&flagResetEnriched, "reset-enriched", true, "Clear enriched_at so terminal rows are re-processed")
 	cmd.Flags().BoolVar(&flagDryRun, "dry-run", false, "Print the selected patterns without enriching")
@@ -82,13 +80,12 @@ func newCmdReenrich(f *cmdutil.Factory) *cobra.Command {
 			ctx,
 			pgClient,
 			flagIDs,
-			flagThirdParty,
+			flagLinkedBanner,
+			flagLinkedOrg,
+			flagCommonThirdParty,
 			flagTrackerType,
 			flagKeyword,
 			flagState,
-			flagAll,
-			flagLinkedBanner,
-			flagLinkedOrg,
 		)
 		if err != nil {
 			return err
@@ -159,14 +156,35 @@ func newCmdReenrich(f *cmdutil.Factory) *cobra.Command {
 	return cmd
 }
 
+// resolveReenrichIDs turns the selection flags into the set of common
+// tracker pattern IDs to re-enrich. Exactly one selection anchor must be
+// provided: --id, --linked-banner, --linked-org, or --common-third-party.
+// The --tracker-type, --keyword, and --state flags further narrow the
+// anchor's result, except with --id, where the listed patterns are used
+// verbatim.
 func resolveReenrichIDs(
 	ctx context.Context,
 	pgClient *pg.Client,
 	rawIDs []string,
-	thirdParty, trackerType, keyword, state string,
-	all bool,
-	linkedBanner, linkedOrg string,
+	linkedBanner, linkedOrg, commonThirdParty string,
+	trackerType, keyword, state string,
 ) ([]gid.GID, error) {
+	anchors := 0
+
+	for _, set := range []bool{len(rawIDs) > 0, linkedBanner != "", linkedOrg != "", commonThirdParty != ""} {
+		if set {
+			anchors++
+		}
+	}
+
+	switch {
+	case anchors == 0:
+		return nil, fmt.Errorf("specify exactly one selection anchor: --id, --linked-banner, --linked-org, or --common-third-party")
+	case anchors > 1:
+		return nil, fmt.Errorf("--id, --linked-banner, --linked-org, and --common-third-party are mutually exclusive")
+	}
+
+	// --id selects patterns verbatim; the filtering flags do not apply.
 	if len(rawIDs) > 0 {
 		ids := make([]gid.GID, 0, len(rawIDs))
 
@@ -187,6 +205,11 @@ func resolveReenrichIDs(
 	err := pgClient.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
+			filter, err := buildReenrichFilter(trackerType, keyword, state)
+			if err != nil {
+				return err
+			}
+
 			switch {
 			case linkedBanner != "":
 				bannerID, err := gid.ParseGID(linkedBanner)
@@ -196,9 +219,16 @@ func resolveReenrichIDs(
 
 				var tps coredata.TrackerPatterns
 
-				ids, err = tps.LoadAllLinkedCommonTrackerPatternIDsByCookieBannerID(ctx, conn, coredata.NewScopeFromObjectID(bannerID), bannerID)
+				linkedIDs, err := tps.LoadAllLinkedCommonTrackerPatternIDsByCookieBannerID(ctx, conn, coredata.NewScopeFromObjectID(bannerID), bannerID)
+				if err != nil {
+					return err
+				}
 
-				return err
+				if len(linkedIDs) == 0 {
+					return nil
+				}
+
+				filter.WithIDs(linkedIDs)
 			case linkedOrg != "":
 				orgID, err := gid.ParseGID(linkedOrg)
 				if err != nil {
@@ -207,25 +237,30 @@ func resolveReenrichIDs(
 
 				var tps coredata.TrackerPatterns
 
-				ids, err = tps.LoadAllLinkedCommonTrackerPatternIDsByOrganizationID(ctx, conn, coredata.NewScopeFromObjectID(orgID), orgID)
-
-				return err
-			default:
-				filter, hasSelector, err := buildReenrichFilter(ctx, conn, thirdParty, trackerType, keyword, state)
+				linkedIDs, err := tps.LoadAllLinkedCommonTrackerPatternIDsByOrganizationID(ctx, conn, coredata.NewScopeFromObjectID(orgID), orgID)
 				if err != nil {
 					return err
 				}
 
-				if !hasSelector && !all {
-					return fmt.Errorf("specify a selector (--id, --third-party, --tracker-type, --state, --keyword, --linked-banner, --linked-org) or --all")
+				if len(linkedIDs) == 0 {
+					return nil
 				}
 
-				var ps coredata.CommonTrackerPatterns
+				filter.WithIDs(linkedIDs)
+			case commonThirdParty != "":
+				thirdPartyID, err := resolveCommonThirdPartyID(ctx, conn, commonThirdParty)
+				if err != nil {
+					return err
+				}
 
-				ids, err = ps.LoadAllIDs(ctx, conn, filter)
-
-				return err
+				filter.WithCommonThirdPartyID(&thirdPartyID)
 			}
+
+			var ps coredata.CommonTrackerPatterns
+
+			ids, err = ps.LoadAllIDs(ctx, conn, filter)
+
+			return err
 		},
 	)
 	if err != nil {
@@ -235,54 +270,32 @@ func resolveReenrichIDs(
 	return ids, nil
 }
 
-func buildReenrichFilter(
-	ctx context.Context,
-	conn pg.Querier,
-	thirdParty, trackerType, keyword, state string,
-) (*coredata.CommonTrackerPatternFilter, bool, error) {
+func buildReenrichFilter(trackerType, keyword, state string) (*coredata.CommonTrackerPatternFilter, error) {
 	filter := coredata.NewCommonTrackerPatternFilter()
-	hasSelector := false
-
-	if thirdParty != "" {
-		id, err := resolveCommonThirdPartyID(ctx, conn, thirdParty)
-		if err != nil {
-			return nil, false, err
-		}
-
-		filter.WithCommonThirdPartyID(&id)
-
-		hasSelector = true
-	}
 
 	if trackerType != "" {
 		tt := coredata.TrackerType(trackerType)
 		if !tt.IsValid() {
-			return nil, false, fmt.Errorf("invalid --tracker-type value %q", trackerType)
+			return nil, fmt.Errorf("invalid --tracker-type value %q", trackerType)
 		}
 
 		filter.WithTrackerType(&tt)
-
-		hasSelector = true
 	}
 
 	if keyword != "" {
 		filter.WithKeyword(&keyword)
-
-		hasSelector = true
 	}
 
 	if state != "" {
 		st, err := parseEnrichmentState(state)
 		if err != nil {
-			return nil, false, err
+			return nil, err
 		}
 
 		filter.WithState(&st)
-
-		hasSelector = true
 	}
 
-	return filter, hasSelector, nil
+	return filter, nil
 }
 
 func printSample(out io.Writer, ids []gid.GID) {
