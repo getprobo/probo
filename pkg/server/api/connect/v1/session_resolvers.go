@@ -224,7 +224,17 @@ func (r *mutationResolver) ActivateAccount(ctx context.Context, input types.Acti
 
 	var createPasswordToken *string
 
-	if identity.HashedPassword == nil {
+	// A passwordless identity normally authenticates through a federated
+	// provider such as Google or Microsoft, which is valid across every
+	// organization the user belongs to. Only force the user to create a
+	// password when no OIDC provider is available, otherwise we would dead-end
+	// an OIDC user on the create-password page instead of letting them sign in
+	// with their provider.
+	//
+	// The hashed_password column was historically NOT NULL, so a federated
+	// identity can carry an empty (but non-nil) hash; treat both nil and empty
+	// as "no password".
+	if len(identity.HashedPassword) == 0 && len(r.iam.OIDCService.EnabledProviders()) == 0 {
 		token, err := r.iam.AuthService.GetResetPasswordToken(ctx, identity.EmailAddress)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot generate password create token", log.Error(err))
