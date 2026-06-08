@@ -53,6 +53,7 @@ func NewBuiltinRegistry() *Registry {
 		resendRegistration(),
 		sendgridRegistration(),
 		sentryRegistration(),
+		signozRegistration(),
 		slackRegistration(),
 		supabaseRegistration(),
 		tailscaleRegistration(),

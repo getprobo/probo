@@ -37,6 +37,7 @@ const (
 	ConnectorProviderOpenAI       ConnectorProvider = "OPENAI"
 	ConnectorProviderPostHog      ConnectorProvider = "POSTHOG"
 	ConnectorProviderSentry       ConnectorProvider = "SENTRY"
+	ConnectorProviderSigNoz       ConnectorProvider = "SIGNOZ"
 	ConnectorProviderSupabase     ConnectorProvider = "SUPABASE"
 	ConnectorProviderGitHub       ConnectorProvider = "GITHUB"
 	ConnectorProviderIntercom     ConnectorProvider = "INTERCOM"
@@ -84,6 +85,7 @@ func ConnectorProviders() []ConnectorProvider {
 		ConnectorProviderOpenAI,
 		ConnectorProviderPostHog,
 		ConnectorProviderSentry,
+		ConnectorProviderSigNoz,
 		ConnectorProviderSupabase,
 		ConnectorProviderGitHub,
 		ConnectorProviderIntercom,
@@ -127,6 +129,7 @@ func (v ConnectorProvider) IsValid() bool {
 		ConnectorProviderOpenAI,
 		ConnectorProviderPostHog,
 		ConnectorProviderSentry,
+		ConnectorProviderSigNoz,
 		ConnectorProviderSupabase,
 		ConnectorProviderGitHub,
 		ConnectorProviderIntercom,

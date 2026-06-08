@@ -46,6 +46,7 @@ import { PostHog } from "./PostHog";
 import { Resend } from "./Resend";
 import { SendGrid } from "./SendGrid";
 import { Sentry } from "./Sentry";
+import { SigNoz } from "./SigNoz";
 import { Slack } from "./Slack";
 import { Supabase } from "./Supabase";
 import { Tailscale } from "./Tailscale";
@@ -89,6 +90,7 @@ const thirdParties: Record<string, FC<ComponentProps<"svg">>> = {
   RESEND: Resend,
   SENDGRID: SendGrid,
   SENTRY: Sentry,
+  SIGNOZ: SigNoz,
   SLACK: Slack,
   SUPABASE: Supabase,
   TAILSCALE: Tailscale,

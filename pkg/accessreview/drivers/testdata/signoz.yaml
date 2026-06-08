@@ -1,0 +1,53 @@
+---
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: signoz.example.com
+        headers:
+            Accept:
+                - application/json
+        url: https://signoz.example.com/api/v1/user
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"status":"success","data":[{"id":"00000000-0000-4000-8000-000000000001","displayName":"Admin User","email":"admin@example.com","orgId":"00000000-0000-4000-8000-0000000000aa","isRoot":false,"status":"active","createdAt":"2026-05-01T10:20:30Z","updatedAt":"2026-05-01T10:20:30Z","role":"ADMIN"},{"id":"00000000-0000-4000-8000-000000000002","displayName":"Owner User","email":"owner@example.com","orgId":"00000000-0000-4000-8000-0000000000aa","isRoot":true,"status":"active","createdAt":"2026-05-02T10:20:30Z","updatedAt":"2026-05-02T10:20:30Z","role":"VIEWER"},{"id":"00000000-0000-4000-8000-000000000003","displayName":"Editor User","email":"editor@example.com","orgId":"00000000-0000-4000-8000-0000000000aa","isRoot":false,"status":"active","createdAt":"2026-05-03T10:20:30Z","updatedAt":"2026-05-03T10:20:30Z","role":"signoz-editor"},{"id":"00000000-0000-4000-8000-000000000004","displayName":"Invited User","email":"invited@example.com","orgId":"00000000-0000-4000-8000-0000000000aa","isRoot":false,"status":"pending_invite","createdAt":"2026-05-04T10:20:30Z","updatedAt":"2026-05-04T10:20:30Z","role":"VIEWER"},{"id":"00000000-0000-4000-8000-000000000005","displayName":"Removed User","email":"removed@example.com","orgId":"00000000-0000-4000-8000-0000000000aa","isRoot":false,"status":"deleted","createdAt":"2026-05-05T10:20:30Z","updatedAt":"2026-05-05T10:20:30Z","role":"EDITOR"},{"id":"00000000-0000-4000-8000-000000000006","displayName":"No Email","email":"","orgId":"00000000-0000-4000-8000-0000000000aa","isRoot":false,"status":"active","createdAt":"2026-05-06T10:20:30Z","updatedAt":"2026-05-06T10:20:30Z","role":"ADMIN"}]}'
+        headers:
+            Content-Type:
+                - application/json
+        status: 200 OK
+        code: 200
+        duration: 100ms
+    - id: 1
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: signoz.example.com
+        headers:
+            Accept:
+                - application/json
+        url: https://signoz.example.com/api/v2/orgs/me
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"status":"success","data":{"createdAt":"2026-05-01T08:00:00Z","updatedAt":"2026-05-01T08:00:00Z","id":"00000000-0000-4000-8000-0000000000aa","name":"example-org","alias":"","key":12345678,"displayName":"Example Org"}}'
+        headers:
+            Content-Type:
+                - application/json
+        status: 200 OK
+        code: 200
+        duration: 100ms

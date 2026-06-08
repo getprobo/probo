@@ -30,6 +30,7 @@ export { PostHog } from "./PostHog";
 export { Resend } from "./Resend";
 export { SendGrid } from "./SendGrid";
 export { Sentry } from "./Sentry";
+export { SigNoz } from "./SigNoz";
 export { Slack } from "./Slack";
 export { Supabase } from "./Supabase";
 export { Tally } from "./Tally";

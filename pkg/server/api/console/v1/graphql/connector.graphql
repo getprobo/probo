@@ -24,6 +24,8 @@ enum ConnectorProvider
     OPENAI @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderOpenAI")
     POSTHOG @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderPostHog")
     SENTRY @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderSentry")
+    SIGNOZ
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderSigNoz")
     SUPABASE
         @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderSupabase")
     GITHUB @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderGitHub")
@@ -133,6 +135,7 @@ input CreateAPIKeyConnectorInput {
     supabaseOrganizationSlug: String
     githubOrganization: String
     grafanaBaseUrl: String
+    signozBaseUrl: String
     onePasswordScimBridgeUrl: String
     metabaseInstanceUrl: String
     posthogRegion: String

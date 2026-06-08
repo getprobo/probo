@@ -114,6 +114,8 @@ function sourceLabel(connectorProvider: string | null | undefined): string {
       return "Slack";
     case "METABASE":
       return "Metabase";
+    case "SIGNOZ":
+      return "SigNoz";
     default:
       return connectorProvider;
   }

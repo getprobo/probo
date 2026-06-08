@@ -39,6 +39,10 @@ type (
 		OrganizationSlug string `json:"organization_slug"`
 	}
 
+	SigNozConnectorSettings struct {
+		BaseURL string `json:"base_url"`
+	}
+
 	GrafanaConnectorSettings struct {
 		BaseURL string `json:"base_url"`
 	}

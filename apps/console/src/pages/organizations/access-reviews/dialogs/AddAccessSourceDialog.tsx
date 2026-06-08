@@ -132,6 +132,9 @@ function mapAPIKeyExtraSettingToField(
     case "GRAFANA":
       if (settingKey === "baseUrl") return "grafanaBaseUrl";
       break;
+    case "SIGNOZ":
+      if (settingKey === "baseUrl") return "signozBaseUrl";
+      break;
     case "ONE_PASSWORD":
       if (settingKey === "scimBridgeUrl") return "onePasswordScimBridgeUrl";
       break;

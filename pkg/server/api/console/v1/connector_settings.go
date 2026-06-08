@@ -73,6 +73,17 @@ func apiKeyConnectorSettings(input types.CreateAPIKeyConnectorInput) (json.RawMe
 		}
 
 		return json.Marshal(&coredata.GrafanaConnectorSettings{BaseURL: *input.GrafanaBaseURL})
+	case coredata.ConnectorProviderSigNoz:
+		if input.SignozBaseURL == nil || *input.SignozBaseURL == "" {
+			return nil, fmt.Errorf("cannot create signoz connector: signozBaseUrl is required")
+		}
+
+		u, err := url.Parse(*input.SignozBaseURL)
+		if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {
+			return nil, fmt.Errorf("cannot create signoz connector: signozBaseUrl must be an http(s) URL")
+		}
+
+		return json.Marshal(&coredata.SigNozConnectorSettings{BaseURL: *input.SignozBaseURL})
 	case coredata.ConnectorProviderOnePassword:
 		if input.OnePasswordScimBridgeURL == nil || *input.OnePasswordScimBridgeURL == "" {
 			return nil, fmt.Errorf("cannot create 1password connector: onePasswordScimBridgeURL is required")
