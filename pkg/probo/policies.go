@@ -197,6 +197,15 @@ var CommonThirdPartyCatalogPolicy = policy.NewPolicy(
 	).WithSID("read-common-third-party-catalog"),
 ).WithDescription("Allows every authenticated user to read the global common third-party catalog")
 
+// PublicFilePolicy grants unauthenticated (anonymous) callers access to PUBLIC files.
+var PublicFilePolicy = policy.NewPolicy(
+	"probo:public-file",
+	"Public File Access",
+	policy.Allow(ActionFileDownloadUrl).
+		WithSID("public-file-open-access").
+		When(policy.Equals("resource.visibility", "PUBLIC")),
+).WithDescription("Allows anyone to download PUBLIC files without authentication")
+
 // EmployeePolicy defines permissions for employee role.
 var EmployeePolicy = policy.NewPolicy(
 	"probo:employee",
@@ -230,5 +239,5 @@ func ProboPolicySet() *iam.PolicySet {
 		AddRolePolicy("VIEWER", ViewerPolicy).
 		AddRolePolicy("AUDITOR", AuditorPolicy).
 		AddRolePolicy("EMPLOYEE", EmployeePolicy).
-		AddIdentityScopedPolicy(CommonThirdPartyCatalogPolicy)
+		AddIdentityScopedPolicy(CommonThirdPartyCatalogPolicy, PublicFilePolicy)
 }

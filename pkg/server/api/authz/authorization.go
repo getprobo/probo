@@ -139,11 +139,15 @@ func NewHTTPAuthorizeFunc(
 		action string,
 		options ...AuthorizeFuncOption,
 	) (*coredata.Scope, int, error) {
-		identity := authn.IdentityFromContext(ctx)
+		principal := coredata.AnonymousIdentityID
+		if identity := authn.IdentityFromContext(ctx); identity != nil {
+			principal = identity.ID
+		}
+
 		session := authn.SessionFromContext(ctx)
 
 		params := iam.AuthorizeParams{
-			Principal:          identity.ID,
+			Principal:          principal,
 			Resource:           objectID,
 			Action:             action,
 			ResourceAttributes: make(map[string]string),

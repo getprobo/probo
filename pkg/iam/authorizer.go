@@ -122,7 +122,8 @@ func (a *Authorizer) Authorize(ctx context.Context, params AuthorizeParams) (*co
 // AuthorizeBatch checks whether the principal is allowed to perform the action
 // on all provided resources.
 func (a *Authorizer) AuthorizeBatch(ctx context.Context, params AuthorizeBatchParams) (*coredata.Scope, error) {
-	if params.Principal.EntityType() != coredata.IdentityEntityType {
+	if params.Principal.EntityType() != coredata.IdentityEntityType &&
+		params.Principal != coredata.AnonymousIdentityID {
 		return nil, NewUnsupportedPrincipalTypeError(params.Principal.EntityType())
 	}
 
@@ -198,7 +199,8 @@ func (a *Authorizer) AuthorizeMulti(
 	ctx context.Context,
 	params AuthorizeMultiParams,
 ) (*coredata.Scope, []error, error) {
-	if params.Principal.EntityType() != coredata.IdentityEntityType {
+	if params.Principal.EntityType() != coredata.IdentityEntityType &&
+		params.Principal != coredata.AnonymousIdentityID {
 		return nil, nil, NewUnsupportedPrincipalTypeError(params.Principal.EntityType())
 	}
 
@@ -377,9 +379,14 @@ func (a *Authorizer) evaluateMultiInTx(
 		}
 	}
 
-	membership, err := a.loadMembership(ctx, tx, params.Principal, resourceOrgID)
-	if err != nil {
-		return nil, nil, nil, fmt.Errorf("cannot load memberships for principal: %w", err)
+	isAnonymous := params.Principal == coredata.AnonymousIdentityID
+
+	var membership *coredata.Membership
+	if !isAnonymous {
+		membership, err = a.loadMembership(ctx, tx, params.Principal, resourceOrgID)
+		if err != nil {
+			return nil, nil, nil, fmt.Errorf("cannot load memberships for principal: %w", err)
+		}
 	}
 
 	// The assumption check is a property of (principal, membership, session),
@@ -388,7 +395,7 @@ func (a *Authorizer) evaluateMultiInTx(
 	// did not opt out.
 	var assumptionErr error
 
-	if requiresAssumptionCheck {
+	if requiresAssumptionCheck && !isAnonymous {
 		err := a.checkAssumption(
 			ctx,
 			tx,
@@ -411,21 +418,26 @@ func (a *Authorizer) evaluateMultiInTx(
 		role = membership.Role.String()
 	}
 
-	var scopedPrincipalAttrs policy.Attributes
-	if membership != nil && role != "" {
-		scopedPrincipalAttrs = policy.Attributes{
-			"organization_id": membership.OrganizationID.String(),
-			"role":            membership.Role.String(),
+	var principalAttrs policy.Attributes
+	if isAnonymous {
+		principalAttrs = policy.Attributes{"id": params.Principal.String()}
+	} else {
+		var scopedPrincipalAttrs policy.Attributes
+		if membership != nil && role != "" {
+			scopedPrincipalAttrs = policy.Attributes{
+				"organization_id": membership.OrganizationID.String(),
+				"role":            membership.Role.String(),
+			}
 		}
-	}
 
-	principalAttrs, err := a.buildPrincipalAttributes(ctx, tx, params.Principal, scopedPrincipalAttrs)
-	if err != nil {
-		return nil, nil, nil, fmt.Errorf("cannot build principal attributes: %w", err)
-	}
+		principalAttrs, err = a.buildPrincipalAttributes(ctx, tx, params.Principal, scopedPrincipalAttrs)
+		if err != nil {
+			return nil, nil, nil, fmt.Errorf("cannot build principal attributes: %w", err)
+		}
 
-	if params.Session != nil {
-		principalAttrs["session_id"] = params.Session.String()
+		if params.Session != nil {
+			principalAttrs["session_id"] = params.Session.String()
+		}
 	}
 
 	policies := a.buildPoliciesForRole(role)
@@ -738,12 +750,16 @@ func resourceTypeFromAction(action string) string {
 }
 
 // buildAuditLogEntry returns nil when no entry should be recorded
-// (dry run or missing/invalid organization id).
+// (anonymous principal, dry run, or missing/invalid organization id).
 func (a *Authorizer) buildAuditLogEntry(
 	ctx context.Context,
 	params AuthorizeParams,
 	resourceAttrs policy.Attributes,
 ) *coredata.AuditLogEntry {
+	if params.Principal == coredata.AnonymousIdentityID {
+		return nil
+	}
+
 	if params.DryRun {
 		return nil
 	}

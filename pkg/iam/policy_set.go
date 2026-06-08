@@ -22,7 +22,8 @@ type PolicySet struct {
 	// RolePolicies maps role names to policies.
 	RolePolicies map[string][]*policy.Policy
 
-	// IdentityScopedPolicies are applied to all authenticated users, independent of organization membership.
+	// IdentityScopedPolicies are applied to all callers — both authenticated and anonymous —
+	// independent of organization membership or role.
 	IdentityScopedPolicies []*policy.Policy
 }
 

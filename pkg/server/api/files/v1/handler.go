@@ -72,7 +72,28 @@ func (h *Handler) handleGetFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	file, err := h.fileSvc.LoadAnyActiveFile(r.Context(), fileID)
+	scope, statusCode, err := h.authorize(r.Context(), fileID, probo.ActionFileDownloadUrl)
+	if err != nil {
+		if statusCode == http.StatusInternalServerError {
+			h.logger.ErrorCtx(
+				r.Context(),
+				"cannot authorize file access",
+				log.Error(err),
+				log.String("file_id", fileIDStr),
+			)
+			http.Error(w, "internal server error", http.StatusInternalServerError)
+
+			return
+		}
+
+		// Return 404 on any auth failure — 401/403 would confirm the file
+		// exists to an unauthorized caller, leaking private file existence.
+		http.NotFound(w, r)
+
+		return
+	}
+
+	file, err := h.fileSvc.LoadFile(r.Context(), scope, fileID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			http.NotFound(w, r)
@@ -88,34 +109,6 @@ func (h *Handler) handleGetFile(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "internal server error", http.StatusInternalServerError)
 
 		return
-	}
-
-	if file.Visibility == coredata.FileVisibilityPrivate {
-		// Return 404 on any auth failure — 401/403 would confirm the file
-		// exists to an unauthorized caller, leaking private file existence.
-		if authn.IdentityFromContext(r.Context()) == nil {
-			http.NotFound(w, r)
-			return
-		}
-
-		_, statusCode, err := h.authorize(r.Context(), fileID, probo.ActionFileDownloadUrl)
-		if err != nil {
-			if statusCode == http.StatusInternalServerError {
-				h.logger.ErrorCtx(
-					r.Context(),
-					"cannot authorize file access",
-					log.Error(err),
-					log.String("file_id", fileIDStr),
-				)
-				http.Error(w, "internal server error", http.StatusInternalServerError)
-
-				return
-			}
-
-			http.NotFound(w, r)
-
-			return
-		}
 	}
 
 	presignedURL, err := h.fileSvc.GeneratePresignedURLForFile(r.Context(), file, presignedURLExpiry)

@@ -18,10 +18,69 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam/policy"
 	"go.probo.inc/probo/pkg/probo"
 )
+
+func TestPublicFilePolicy(t *testing.T) {
+	t.Parallel()
+
+	evaluator := policy.NewEvaluator()
+	fileID := gid.New(gid.NewTenantID(), coredata.FileEntityType)
+	anonID := coredata.AnonymousIdentityID
+
+	t.Run("allows download-url for PUBLIC file", func(t *testing.T) {
+		t.Parallel()
+
+		req := policy.AuthorizationRequest{
+			Principal: anonID,
+			Resource:  fileID,
+			Action:    probo.ActionFileDownloadUrl,
+			ConditionContext: policy.ConditionContext{
+				Principal: map[string]string{
+					"id": anonID.String(),
+				},
+				Resource: map[string]string{
+					"visibility": "PUBLIC",
+				},
+			},
+		}
+
+		result := evaluator.Evaluate(req, []*policy.Policy{probo.PublicFilePolicy})
+		assert.True(t, result.IsAllowed(), "PUBLIC file should be allowed for anonymous")
+	})
+
+	t.Run("denies download-url for PRIVATE file", func(t *testing.T) {
+		t.Parallel()
+
+		req := policy.AuthorizationRequest{
+			Principal: anonID,
+			Resource:  fileID,
+			Action:    probo.ActionFileDownloadUrl,
+			ConditionContext: policy.ConditionContext{
+				Principal: map[string]string{
+					"id": anonID.String(),
+				},
+				Resource: map[string]string{
+					"visibility": "PRIVATE",
+				},
+			},
+		}
+
+		result := evaluator.Evaluate(req, []*policy.Policy{probo.PublicFilePolicy})
+		assert.False(t, result.IsAllowed(), "PRIVATE file should be denied for anonymous")
+	})
+}
+
+func TestProboPolicySet_RegistersPublicFilePolicy(t *testing.T) {
+	t.Parallel()
+
+	ps := probo.ProboPolicySet()
+	require.NotEmpty(t, ps.IdentityScopedPolicies, "ProboPolicySet should register at least one identity-scoped policy")
+}
 
 func TestAuditorPolicy_ProcessingActivityPageReadAccess(t *testing.T) {
 	t.Parallel()

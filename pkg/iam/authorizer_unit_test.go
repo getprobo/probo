@@ -272,6 +272,41 @@ func TestAuthorizer_LoadMembership(t *testing.T) {
 	})
 }
 
+func TestAuthorizer_AnonymousPrincipal(t *testing.T) {
+	t.Parallel()
+
+	t.Run("authorize accepts anonymous sentinel principal", func(t *testing.T) {
+		t.Parallel()
+
+		a := &Authorizer{
+			evaluator: policy.NewEvaluator(),
+			policySet: NewPolicySet(),
+		}
+
+		// Call authorizeMulti with an errorTx so the DB query fails immediately
+		// (no real connection needed). The call must NOT return ErrUnsupportedPrincipalType.
+		tx := &errorTx{queryErr: io.EOF}
+		_, err := a.authorizeMulti(
+			context.Background(),
+			tx,
+			AuthorizeMultiParams{
+				Principal: coredata.AnonymousIdentityID,
+				Items: []MultiAuthorizeItem{
+					{
+						Resource: gid.New(gid.NewTenantID(), coredata.FileEntityType),
+						Action:   "core:file:download-url",
+					},
+				},
+			},
+			nil,
+		)
+		// The call fails (DB error), but NOT with ErrUnsupportedPrincipalType.
+		require.Error(t, err)
+		_, isUnsupported := errors.AsType[*ErrUnsupportedPrincipalType](err)
+		assert.False(t, isUnsupported, "anonymous principal should not be rejected as unsupported type")
+	})
+}
+
 func TestAuthorizer_BuildAuditLogEntry(t *testing.T) {
 	t.Parallel()
 

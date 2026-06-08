@@ -62,16 +62,17 @@ func (s *Service) GeneratePresignedFileURL(
 	return s.fileManager.GenerateFileUrl(ctx, file, expiresIn)
 }
 
-// LoadAnyActiveFile loads a non-deleted file by ID regardless of visibility.
-// Use only at the HTTP layer where visibility is checked explicitly by the caller.
-func (s *Service) LoadAnyActiveFile(
+// LoadFile loads a non-deleted file by ID scoped to the given tenant.
+// The scope should be obtained from a prior IAM authorize call.
+func (s *Service) LoadFile(
 	ctx context.Context,
+	scope coredata.Scoper,
 	fileID gid.GID,
 ) (*coredata.File, error) {
 	file := &coredata.File{}
 
 	err := s.pg.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
-		if err := file.LoadNonDeletedByID(ctx, conn, fileID); err != nil {
+		if err := file.LoadActiveByID(ctx, conn, scope, fileID); err != nil {
 			return fmt.Errorf("cannot load file: %w", err)
 		}
 
