@@ -87,6 +87,10 @@ func NewCursorFromFlags[F page.OrderField](
 		return nil, fmt.Errorf("--after cannot be combined with --last")
 	}
 
+	if pf.Before != "" && pf.First > 0 {
+		return nil, fmt.Errorf("--before cannot be combined with --first")
+	}
+
 	var (
 		size     int
 		from     *page.CursorKey
