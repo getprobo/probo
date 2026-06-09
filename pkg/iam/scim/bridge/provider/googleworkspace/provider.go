@@ -58,6 +58,10 @@ func (p *Provider) isExcluded(email string) bool {
 	return false
 }
 
+func googleWorkspaceUserSCIMActive(u *admin.User) bool {
+	return !u.Suspended && !u.Archived
+}
+
 func (p *Provider) ListUsers(ctx context.Context) (scimclient.Users, error) {
 	adminService, err := admin.NewService(ctx, option.WithHTTPClient(p.httpClient))
 	if err != nil {
@@ -93,7 +97,7 @@ func (p *Provider) ListUsers(ctx context.Context) (scimclient.Users, error) {
 				DisplayName: u.Name.FullName,
 				GivenName:   u.Name.GivenName,
 				FamilyName:  u.Name.FamilyName,
-				Active:      !u.Suspended && !u.Archived,
+				Active:      googleWorkspaceUserSCIMActive(u),
 				ExternalID:  u.Id,
 			}
 

@@ -87,6 +87,10 @@ func (rt *retryRoundTripper) RoundTrip(req *http.Request) (*http.Response, error
 	return lastResp, nil
 }
 
+func googleWorkspaceUserActive(u *admin.User) *bool {
+	return new(!u.Suspended && !u.Archived)
+}
+
 func (d *GoogleWorkspaceDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error) {
 	adminService, err := admin.NewService(ctx, option.WithHTTPClient(d.httpClient))
 	if err != nil {
@@ -116,7 +120,7 @@ func (d *GoogleWorkspaceDriver) ListAccounts(ctx context.Context) ([]AccountReco
 			rec := AccountRecord{
 				Email:       u.PrimaryEmail,
 				FullName:    u.Name.FullName,
-				Active:      new(!u.Suspended && !u.Archived),
+				Active:      googleWorkspaceUserActive(u),
 				IsAdmin:     u.IsAdmin,
 				ExternalID:  u.Id,
 				MFAStatus:   coredata.MFAStatusUnknown,

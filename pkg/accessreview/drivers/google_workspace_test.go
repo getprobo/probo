@@ -16,7 +16,10 @@ package drivers
 
 import (
 	"context"
+	"io"
+	"net/http"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -39,4 +42,53 @@ func TestGoogleWorkspaceDriver(t *testing.T) {
 	assert.NotEmpty(t, r.FullName)
 	assert.NotEmpty(t, r.ExternalID)
 	assert.NotEmpty(t, r.Role)
+}
+
+func TestGoogleWorkspaceDriverSuspendedAndArchivedUsers(t *testing.T) {
+	t.Parallel()
+
+	client := &http.Client{
+		Transport: roundTripFunc(
+			func(req *http.Request) (*http.Response, error) {
+				if req.URL.Path != "/admin/directory/v1/users" {
+					return googleWorkspaceResponse(http.StatusNotFound, `{"error":"not found"}`), nil
+				}
+
+				return googleWorkspaceResponse(
+					http.StatusOK,
+					`{"kind":"admin#directory#users","users":[
+						{"id":"user-1","primaryEmail":"active@example.com","name":{"fullName":"Active User"},"suspended":false,"archived":false},
+						{"id":"user-2","primaryEmail":"suspended@example.com","name":{"fullName":"Suspended User"},"suspended":true,"archived":false},
+						{"id":"user-3","primaryEmail":"archived@example.com","name":{"fullName":"Archived User"},"suspended":false,"archived":true}
+					]}`,
+				), nil
+			},
+		),
+	}
+
+	driver := NewGoogleWorkspaceDriver(client)
+
+	records, err := driver.ListAccounts(context.Background())
+	require.NoError(t, err)
+	require.Len(t, records, 3)
+
+	assert.Equal(t, "active@example.com", records[0].Email)
+	require.NotNil(t, records[0].Active)
+	assert.True(t, *records[0].Active)
+
+	assert.Equal(t, "suspended@example.com", records[1].Email)
+	require.NotNil(t, records[1].Active)
+	assert.False(t, *records[1].Active)
+
+	assert.Equal(t, "archived@example.com", records[2].Email)
+	require.NotNil(t, records[2].Active)
+	assert.False(t, *records[2].Active)
+}
+
+func googleWorkspaceResponse(statusCode int, body string) *http.Response {
+	return &http.Response{
+		StatusCode: statusCode,
+		Body:       io.NopCloser(strings.NewReader(body)),
+		Header:     make(http.Header),
+	}
 }
