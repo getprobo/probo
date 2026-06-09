@@ -24,7 +24,6 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"go.gearno.de/kit/pg"
-	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam/policy"
 )
@@ -46,24 +45,6 @@ type (
 
 	Files []*File
 )
-
-func (f *File) GetName() string {
-	return f.FileName
-}
-
-func (f *File) GetObjectKey() string {
-	return f.FileKey
-}
-
-func (f *File) GetBucketName() string {
-	return f.BucketName
-}
-
-func (f *File) GetMimeType() string {
-	return f.MimeType
-}
-
-var _ filemanager.File = (*File)(nil)
 
 // AuthorizationAttributes returns the authorization attributes for policy evaluation.
 func (f *File) AuthorizationAttributes(
