@@ -134,6 +134,10 @@ func (a *Agent) EnrollNewDevice(
 		return nil, fmt.Errorf("cannot save api key: %w", err)
 	}
 
+	if err := MarkEnrolled(a.Dir); err != nil {
+		return nil, fmt.Errorf("cannot mark device enrolled: %w", err)
+	}
+
 	if err := clearPendingPostureBatches(a.Dir); err != nil {
 		a.Logger.Warn("cannot clear pending posture queue after enrollment", log.Error(err))
 	}
@@ -341,6 +345,10 @@ func (a *Agent) Unenroll(ctx context.Context) error {
 	}
 
 	if err := DeleteAPIKey(a.Dir); err != nil {
+		return err
+	}
+
+	if err := ClearEnrollmentMarker(a.Dir); err != nil {
 		return err
 	}
 

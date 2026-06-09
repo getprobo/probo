@@ -80,6 +80,7 @@ func newRootCmd() *cobra.Command {
 	root.AddCommand(newStatusCmd())
 	root.AddCommand(newCollectCmd())
 	root.AddCommand(newUpdateCmd())
+	registerPlatformCommands(root)
 
 	return root
 }
@@ -190,11 +191,11 @@ func newInstallCmd() *cobra.Command {
 
 			fmt.Println("Service installed and started.")
 
-			return nil
+			return registerTrayAutoStart(exePath)
 		},
 	}
 
-	cmd.Flags().StringVar(&serverURL, "server", "", "Probo server base URL (e.g. https://app.getprobo.com)")
+	cmd.Flags().StringVar(&serverURL, "server", "", "Probo server base URL (e.g. https://us.console.getprobo.com)")
 	cmd.Flags().StringVar(&enrollmentToken, "enrollment-token", "", "device enrollment token issued by an admin")
 	cmd.Flags().BoolVar(&skipService, "skip-service", false, "register the device but do not install the OS service")
 	cmd.Flags().BoolVar(&noAutoUpdate, "no-auto-update", false, "disable automatic upgrades of the agent binary")

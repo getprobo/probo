@@ -15,6 +15,7 @@
 package service
 
 import (
+	_ "embed"
 	"encoding/xml"
 	"errors"
 	"fmt"
@@ -27,35 +28,14 @@ import (
 
 const plistPath = "/Library/LaunchDaemons/com.getprobo.agent.plist"
 
-const launchdPlistTmpl = `<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
-  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-    <key>Label</key>
-    <string>{{xml .Label}}</string>
-    <key>ProgramArguments</key>
-    <array>
-        <string>{{xml .ExePath}}</string>
-        <string>run</string>
-        <string>--dir</string>
-        <string>{{xml .Dir}}</string>
-    </array>
-    <key>RunAtLoad</key>
-    <true/>
-    <key>KeepAlive</key>
-    <true/>
-    <key>StandardOutPath</key>
-    <string>/var/log/probo-agent.log</string>
-    <key>StandardErrorPath</key>
-    <string>/var/log/probo-agent.log</string>
-    <key>UserName</key>
-    <string>root</string>
-    <key>GroupName</key>
-    <string>wheel</string>
-</dict>
-</plist>
-`
+var (
+	//go:embed launchd.plist.tmpl
+	launchdPlistTmpl string
+
+	launchdPlist = template.Must(
+		template.New("plist").Funcs(template.FuncMap{"xml": xmlEscape}).Parse(launchdPlistTmpl),
+	)
+)
 
 func xmlEscape(v string) (string, error) {
 	var sb strings.Builder
@@ -80,11 +60,6 @@ func Install(cfg Config) error {
 		cfg.Label = DefaultLabel
 	}
 
-	tmpl, err := template.New("plist").Funcs(template.FuncMap{"xml": xmlEscape}).Parse(launchdPlistTmpl)
-	if err != nil {
-		return fmt.Errorf("cannot parse plist template: %w", err)
-	}
-
 	if err := os.MkdirAll(filepath.Dir(plistPath), 0o755); err != nil {
 		return fmt.Errorf("cannot ensure launch daemons directory: %w", err)
 	}
@@ -96,7 +71,7 @@ func Install(cfg Config) error {
 
 	defer func() { _ = f.Close() }()
 
-	if err := tmpl.Execute(f, cfg); err != nil {
+	if err := launchdPlist.Execute(f, cfg); err != nil {
 		return fmt.Errorf("cannot render plist: %w", err)
 	}
 

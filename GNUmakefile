@@ -89,6 +89,15 @@ PROBOCTL_SRC=	cmd/proboctl/main.go
 
 PROBO_AGENT_BIN=	bin/probo-agent
 PROBO_AGENT_SRC=	cmd/probo-agent/main.go
+# Menu bar / tray enrollment is macOS and Windows only; those hosts need CGO.
+PROBO_AGENT_HOST_OS=	$(shell $(GO) env GOOS)
+PROBO_AGENT_CGO=	CGO_ENABLED=0
+ifeq ($(PROBO_AGENT_HOST_OS),darwin)
+PROBO_AGENT_CGO=	CGO_ENABLED=1
+endif
+ifeq ($(PROBO_AGENT_HOST_OS),windows)
+PROBO_AGENT_CGO=	CGO_ENABLED=1
+endif
 
 ifdef WITH_APPS
 GENERATED += relay
@@ -276,7 +285,7 @@ bin/proboctl:
 
 .PHONY: $(PROBO_AGENT_BIN)
 $(PROBO_AGENT_BIN):
-	$(GO_BUILD) $(PROBO_AGENT_LDFLAGS) -o $(PROBO_AGENT_BIN) $(PROBO_AGENT_SRC)
+	$(PROBO_AGENT_CGO) $(GO_BUILD) $(PROBO_AGENT_LDFLAGS) -o $(PROBO_AGENT_BIN) $(PROBO_AGENT_SRC)
 
 .PHONY: @probo/emails
 @probo/emails:
