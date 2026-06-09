@@ -85,7 +85,7 @@ func TestResetBannerTrackers_FullRebuild(t *testing.T) {
 		return nil
 	}))
 
-	result, err := ResetBannerTrackers(ctx, client, fx.scope, fx.banner.ID, false)
+	result, err := ResetBannerTrackers(ctx, client, fx.scope, fx.banner.ID, false, nil, nil)
 	require.NoError(t, err)
 
 	require.Equal(t, 1, result.GlobsDecomposed)

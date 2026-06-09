@@ -1390,14 +1390,19 @@ WHERE
 // iterating on the mapping agent. Excluded patterns are left untouched -
 // exclusion is a deliberate suppression. The cookie_category_id key
 // scopes the reset to the uncategorised category the caller resolves;
-// the Scoper keeps it tenant-isolated. Returns the number of patterns
-// reset.
+// the Scoper keeps it tenant-isolated. When keyword is non-nil and
+// non-empty, the reset is further restricted to patterns whose pattern or
+// display name contains it (case-insensitive). Returns the number of
+// patterns reset.
 func (tps *TrackerPatterns) ResetAndRequestMappingByCookieCategoryID(
 	ctx context.Context,
 	tx pg.Tx,
 	scope Scoper,
 	cookieCategoryID gid.GID,
+	keyword *string,
 ) (int64, error) {
+	filter := NewTrackerPatternFilter(nil, nil, nil).WithPatternKeyword(keyword)
+
 	q := `
 UPDATE tracker_patterns
 SET
@@ -1410,12 +1415,14 @@ WHERE
 	%s
 	AND cookie_category_id = @cookie_category_id
 	AND excluded = false
+	AND %s
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"cookie_category_id": cookieCategoryID}
 	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
 
 	result, err := tx.Exec(ctx, q, args)
 	if err != nil {

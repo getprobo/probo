@@ -24,6 +24,7 @@ type TrackerPatternFilter struct {
 	cookieCategoryID   *gid.GID
 	excluded           *bool
 	query              *string
+	patternKeyword     *string
 	source             *CookieSource
 	trackerType        *TrackerType
 	thirdPartyID       *gid.GID
@@ -44,6 +45,16 @@ func NewTrackerPatternFilter(
 
 func (f *TrackerPatternFilter) WithQuery(query *string) *TrackerPatternFilter {
 	f.query = query
+	return f
+}
+
+// WithPatternKeyword restricts the result to patterns whose pattern or
+// display name contains keyword (case-insensitive). It differs from
+// WithQuery, which matches display name or description: this targets the
+// raw pattern so operators can select by the matched domain or cookie
+// name. A nil or empty keyword disables the filter.
+func (f *TrackerPatternFilter) WithPatternKeyword(keyword *string) *TrackerPatternFilter {
+	f.patternKeyword = keyword
 	return f
 }
 
@@ -103,6 +114,13 @@ func (f *TrackerPatternFilter) SQLFragment() string {
 	END
 	AND
 	CASE
+		WHEN @filter_pattern_keyword::text IS NOT NULL AND @filter_pattern_keyword::text != '' THEN
+			(pattern ILIKE '%' || @filter_pattern_keyword || '%'
+			 OR display_name ILIKE '%' || @filter_pattern_keyword || '%')
+		ELSE TRUE
+	END
+	AND
+	CASE
 		WHEN @has_source_filter::boolean = false THEN TRUE
 		WHEN @has_source_filter::boolean = true THEN
 			source = @filter_source::cookie_source
@@ -148,6 +166,7 @@ func (f *TrackerPatternFilter) SQLArguments() pgx.StrictNamedArgs {
 		"has_excluded_filter":              false,
 		"filter_excluded":                  nil,
 		"filter_query":                     nil,
+		"filter_pattern_keyword":           nil,
 		"has_source_filter":                false,
 		"filter_source":                    nil,
 		"has_tracker_type_filter":          false,
@@ -175,6 +194,10 @@ func (f *TrackerPatternFilter) SQLArguments() pgx.StrictNamedArgs {
 
 	if f.query != nil {
 		args["filter_query"] = *f.query
+	}
+
+	if f.patternKeyword != nil {
+		args["filter_pattern_keyword"] = *f.patternKeyword
 	}
 
 	if f.source != nil {

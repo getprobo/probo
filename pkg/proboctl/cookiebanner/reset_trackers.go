@@ -27,6 +27,7 @@ import (
 func newCmdResetTrackers(f *cmdutil.Factory) *cobra.Command {
 	var (
 		flagMappingOnly bool
+		flagKeyword     string
 		flagDryRun      bool
 		flagYes         bool
 	)
@@ -38,11 +39,14 @@ func newCmdResetTrackers(f *cmdutil.Factory) *cobra.Command {
 			"non-excluded patterns it clears catalog/vendor links, rebuilds the raw exact " +
 			"patterns from detected_trackers (decomposing derived globs), and re-arms the " +
 			"pattern-analysis and mapping workers. User-categorised and excluded patterns are " +
-			"preserved. With --mapping-only it skips the rebuild and only re-arms mapping.",
+			"preserved. With --mapping-only it skips the rebuild and only re-arms mapping. " +
+			"With --keyword the rebuild and mapping reset are scoped to patterns whose pattern " +
+			"or display name contains the substring.",
 		Args: cobra.ExactArgs(1),
 	}
 
 	cmd.Flags().BoolVar(&flagMappingOnly, "mapping-only", false, "Only re-arm mapping (skip the detection rebuild and analysis)")
+	cmd.Flags().StringVar(&flagKeyword, "keyword", "", "Only reset patterns whose pattern or display name contains this substring")
 	cmd.Flags().BoolVar(&flagDryRun, "dry-run", false, "Print the target banner without writing")
 	cmd.Flags().BoolVar(&flagYes, "yes", false, "Skip confirmation")
 
@@ -68,6 +72,12 @@ func newCmdResetTrackers(f *cmdutil.Factory) *cobra.Command {
 			mode = "mapping-only reset"
 		}
 
+		var keyword *string
+		if flagKeyword != "" {
+			keyword = &flagKeyword
+			mode = fmt.Sprintf("%s scoped to keyword %q", mode, flagKeyword)
+		}
+
 		if flagDryRun {
 			_, _ = fmt.Fprintf(out, "Would run %s on banner %s.\n", mode, bannerID.String())
 			return nil
@@ -77,7 +87,13 @@ func newCmdResetTrackers(f *cmdutil.Factory) *cobra.Command {
 			return fmt.Errorf("about to run %s on banner %s; pass --yes to proceed or --dry-run to preview", mode, bannerID.String())
 		}
 
-		result, err := cookiebanner.ResetBannerTrackers(ctx, pgClient, scope, bannerID, flagMappingOnly)
+		_, _ = fmt.Fprintf(out, "Running %s on banner %s.\n", mode, bannerID.String())
+
+		progress := func(message string) {
+			_, _ = fmt.Fprintf(out, "  %s\n", message)
+		}
+
+		result, err := cookiebanner.ResetBannerTrackers(ctx, pgClient, scope, bannerID, flagMappingOnly, keyword, progress)
 		if err != nil {
 			return fmt.Errorf("cannot reset banner %s: %w", bannerID, err)
 		}

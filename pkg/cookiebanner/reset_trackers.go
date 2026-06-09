@@ -33,6 +33,21 @@ type ResetTrackersResult struct {
 	AnalysisRequested  bool
 }
 
+// ResetProgressFunc receives human-readable progress messages emitted as
+// a banner reset advances through its phases. It is optional: pass nil to
+// run silently. Messages are emitted inside the reset transaction, so a
+// later failure that rolls the transaction back may leave already-printed
+// progress describing work that did not commit.
+type ResetProgressFunc func(message string)
+
+func (p ResetProgressFunc) report(format string, args ...any) {
+	if p == nil {
+		return
+	}
+
+	p(fmt.Sprintf(format, args...))
+}
+
 // ResetBannerTrackers re-arms the tracker pipeline for a banner's
 // uncategorised, non-excluded patterns. It is an operator action
 // (proboctl), tenant-scoped via the provided Scoper.
@@ -50,39 +65,57 @@ type ResetTrackersResult struct {
 // every detection it covers becomes (or rejoins) an exact pattern keyed
 // by its identifier - and the now-empty glob is deleted. User-categorised
 // and excluded patterns are never touched.
+//
+// When keyword is non-nil and non-empty, the reset is scoped to patterns
+// whose pattern or display name contains it (case-insensitive): only
+// matching globs are decomposed and only matching patterns are re-armed
+// for mapping. The banner-wide pattern-analysis re-arm is unaffected.
+//
+// progress receives human-readable phase updates as the reset runs; pass
+// nil to run silently.
 func ResetBannerTrackers(
 	ctx context.Context,
 	pgClient *pg.Client,
 	scope coredata.Scoper,
 	bannerID gid.GID,
 	mappingOnly bool,
+	keyword *string,
+	progress ResetProgressFunc,
 ) (ResetTrackersResult, error) {
 	var result ResetTrackersResult
 
 	err := pgClient.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
+			progress.report("Loading uncategorised category for banner %s...", bannerID)
+
 			var uncategorised coredata.CookieCategory
 			if err := uncategorised.LoadUncategorisedByCookieBannerID(ctx, tx, scope, bannerID); err != nil {
 				return fmt.Errorf("cannot load uncategorised category: %w", err)
 			}
 
 			if !mappingOnly {
-				if err := decomposeGlobs(ctx, tx, scope, bannerID, uncategorised.ID, &result); err != nil {
+				if err := decomposeGlobs(ctx, tx, scope, bannerID, uncategorised.ID, keyword, &result, progress); err != nil {
 					return err
 				}
 			}
 
+			progress.report("Resetting links and re-arming mapping on matching patterns...")
+
 			var patterns coredata.TrackerPatterns
 
-			reset, err := patterns.ResetAndRequestMappingByCookieCategoryID(ctx, tx, scope, uncategorised.ID)
+			reset, err := patterns.ResetAndRequestMappingByCookieCategoryID(ctx, tx, scope, uncategorised.ID, keyword)
 			if err != nil {
 				return fmt.Errorf("cannot reset and request mapping: %w", err)
 			}
 
 			result.PatternsReset = reset
 
+			progress.report("Reset %d pattern(s) and re-armed mapping.", reset)
+
 			if !mappingOnly {
+				progress.report("Re-arming pattern analysis on banner %s...", bannerID)
+
 				banner := coredata.CookieBanner{ID: bannerID}
 				if err := banner.SetPatternAnalysisRequested(ctx, tx); err != nil {
 					return fmt.Errorf("cannot request pattern analysis: %w", err)
@@ -110,7 +143,9 @@ func decomposeGlobs(
 	scope coredata.Scoper,
 	bannerID gid.GID,
 	uncategorisedID gid.GID,
+	keyword *string,
 	result *ResetTrackersResult,
+	progress ResetProgressFunc,
 ) error {
 	globMatchType := coredata.TrackerPatternMatchTypeGlob
 	notExcluded := false
@@ -121,17 +156,21 @@ func decomposeGlobs(
 		tx,
 		scope,
 		bannerID,
-		coredata.NewTrackerPatternFilter(&globMatchType, &uncategorisedID, &notExcluded),
+		coredata.NewTrackerPatternFilter(&globMatchType, &uncategorisedID, &notExcluded).WithPatternKeyword(keyword),
 		nil,
 	); err != nil {
 		return fmt.Errorf("cannot load glob patterns: %w", err)
 	}
 
-	for _, glob := range globs {
+	progress.report("Decomposing %d glob pattern(s) into exact patterns...", len(globs))
+
+	for i, glob := range globs {
 		var detections coredata.DetectedTrackers
 		if err := detections.LoadAllByTrackerPatternID(ctx, tx, scope, glob.ID); err != nil {
 			return fmt.Errorf("cannot load detections for glob %q: %w", glob.Pattern, err)
 		}
+
+		progress.report("[%d/%d] Decomposing glob %q (%d detection(s))...", i+1, len(globs), glob.Pattern, len(detections))
 
 		for _, detection := range detections {
 			exactID, created, err := ensureExactPattern(ctx, tx, scope, glob, uncategorisedID, detection)
