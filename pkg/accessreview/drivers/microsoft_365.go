@@ -22,6 +22,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 	"time"
 
 	"go.probo.inc/probo/pkg/coredata"
@@ -113,6 +114,17 @@ type microsoft365MembersPage struct {
 	NextLink string                   `json:"@odata.nextLink"`
 }
 
+type microsoft365UserRegistrationDetails struct {
+	ID                string `json:"id"`
+	UserPrincipalName string `json:"userPrincipalName"`
+	IsMFARegistered   *bool  `json:"isMfaRegistered"`
+}
+
+type microsoft365UserRegistrationDetailsPage struct {
+	Value    []microsoft365UserRegistrationDetails `json:"value"`
+	NextLink string                                `json:"@odata.nextLink"`
+}
+
 func (d *Microsoft365Driver) ListAccounts(ctx context.Context) ([]AccountRecord, error) {
 	roles, err := d.listDirectoryRoles(ctx)
 	if err != nil {
@@ -139,6 +151,11 @@ func (d *Microsoft365Driver) ListAccounts(ctx context.Context) ([]AccountRecord,
 	users, err := d.listUsers(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("cannot list users: %w", err)
+	}
+
+	mfaStatuses, err := d.listMFAStatuses(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("cannot list MFA statuses: %w", err)
 	}
 
 	records := make([]AccountRecord, 0, len(users))
@@ -177,7 +194,7 @@ func (d *Microsoft365Driver) ListAccounts(ctx context.Context) ([]AccountRecord,
 			JobTitle:    u.JobTitle,
 			Active:      &active,
 			IsAdmin:     isAdmin,
-			MFAStatus:   coredata.MFAStatusUnknown,
+			MFAStatus:   microsoft365MFAStatus(u, mfaStatuses),
 			AuthMethod:  coredata.AccessEntryAuthMethodSSO,
 			AccountType: coredata.AccessEntryAccountTypeUser,
 			ExternalID:  u.ID,
@@ -193,6 +210,32 @@ func (d *Microsoft365Driver) ListAccounts(ctx context.Context) ([]AccountRecord,
 	}
 
 	return records, nil
+}
+
+func microsoft365MFAStatus(u microsoft365User, statuses map[string]coredata.MFAStatus) coredata.MFAStatus {
+	if status, ok := statuses[u.ID]; ok {
+		return status
+	}
+
+	if status, ok := statuses[strings.ToLower(u.UserPrincipalName)]; ok {
+		return status
+	}
+
+	return coredata.MFAStatusUnknown
+}
+
+func microsoft365RegistrationMFAStatus(
+	details microsoft365UserRegistrationDetails,
+) coredata.MFAStatus {
+	if details.IsMFARegistered == nil {
+		return coredata.MFAStatusUnknown
+	}
+
+	if *details.IsMFARegistered {
+		return coredata.MFAStatusEnabled
+	}
+
+	return coredata.MFAStatusDisabled
 }
 
 // pickHighestRole returns the most privileged admin role from the list,
@@ -269,6 +312,59 @@ func buildMicrosoft365UsersURL() (string, error) {
 	q.Set("$filter", microsoft365UserTypeMemberFilter)
 	q.Set("$top", strconv.Itoa(microsoft365UsersPageSize))
 	u.RawQuery = q.Encode()
+
+	return u.String(), nil
+}
+
+func (d *Microsoft365Driver) listMFAStatuses(ctx context.Context) (map[string]coredata.MFAStatus, error) {
+	pageURL, err := buildMicrosoft365UserRegistrationDetailsURL()
+	if err != nil {
+		return nil, err
+	}
+
+	statuses := make(map[string]coredata.MFAStatus)
+
+	for range microsoft365MaxPaginationOK {
+		var page microsoft365UserRegistrationDetailsPage
+		if err := d.fetchJSON(ctx, pageURL, &page); err != nil {
+			return nil, err
+		}
+
+		for _, details := range page.Value {
+			status := microsoft365RegistrationMFAStatus(details)
+			if details.ID != "" {
+				statuses[details.ID] = status
+			}
+			if details.UserPrincipalName != "" {
+				statuses[strings.ToLower(details.UserPrincipalName)] = status
+			}
+		}
+
+		if page.NextLink == "" {
+			return statuses, nil
+		}
+
+		pageURL = page.NextLink
+	}
+
+	return nil, fmt.Errorf("cannot list all microsoft 365 MFA statuses: %w", ErrPaginationLimitReached)
+}
+
+func buildMicrosoft365UserRegistrationDetailsURL() (string, error) {
+	endpoint, err := url.JoinPath(
+		microsoft365GraphBaseURL,
+		"reports",
+		"authenticationMethods",
+		"userRegistrationDetails",
+	)
+	if err != nil {
+		return "", fmt.Errorf("cannot build graph user registration details URL: %w", err)
+	}
+
+	u, err := url.Parse(endpoint)
+	if err != nil {
+		return "", fmt.Errorf("cannot parse graph user registration details URL: %w", err)
+	}
 
 	return u.String(), nil
 }
