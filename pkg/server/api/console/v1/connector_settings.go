@@ -166,6 +166,12 @@ func apiKeyConnectorSettings(input types.CreateAPIKeyConnectorInput) (json.RawMe
 		}
 
 		return json.Marshal(&coredata.QoveryConnectorSettings{OrganizationID: *input.QoveryOrganizationID})
+	case coredata.ConnectorProviderRender:
+		if input.RenderWorkspaceID == nil || *input.RenderWorkspaceID == "" {
+			return nil, fmt.Errorf("cannot create render connector: renderWorkspaceId is required")
+		}
+
+		return json.Marshal(&coredata.RenderConnectorSettings{OwnerID: *input.RenderWorkspaceID})
 	}
 
 	return nil, nil

@@ -69,6 +69,7 @@ enum ConnectorProvider
     OKTA @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderOkta")
     ZENDESK @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderZendesk")
     QOVERY @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderQovery")
+    RENDER @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderRender")
 }
 
 type ConnectorProviderInfo {
@@ -148,6 +149,7 @@ input CreateAPIKeyConnectorInput {
     oktaDomain: String
     betterStackTeamName: String
     qoveryOrganizationId: String
+    renderWorkspaceId: String
 }
 
 type CreateAPIKeyConnectorPayload {

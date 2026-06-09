@@ -352,6 +352,62 @@ func (r *qoveryNameResolver) ResolveInstanceName(ctx context.Context) (string, e
 	return resp.Name, nil
 }
 
+// renderNameResolver resolves the Render workspace (owner) name from
+// GET /v1/owners/{ownerId}, used to title the AccessSource "Render <name>".
+type renderNameResolver struct {
+	httpClient *http.Client
+	ownerID    string
+}
+
+func NewRenderNameResolver(httpClient *http.Client, ownerID string) NameResolver {
+	return &renderNameResolver{
+		httpClient: httpClient,
+		ownerID:    ownerID,
+	}
+}
+
+func (r *renderNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
+	if r.ownerID == "" {
+		return "", nil
+	}
+
+	endpoint, err := url.JoinPath(renderAPIBaseURL, "owners", url.PathEscape(r.ownerID))
+	if err != nil {
+		return "", fmt.Errorf("cannot build render owner URL: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
+	if err != nil {
+		return "", fmt.Errorf("cannot create render owner request: %w", err)
+	}
+
+	req.Header.Set("Accept", "application/json")
+
+	httpResp, err := r.httpClient.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("cannot execute render owner request: %w", err)
+	}
+
+	defer func() { _ = httpResp.Body.Close() }()
+
+	// Best-effort: a non-2xx (revoked token, deleted workspace, stale ID) must
+	// not make the source-name worker retry forever. Give up gracefully and
+	// keep the generic source name; a dead token surfaces on the next
+	// ListAccounts.
+	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
+		return "", nil
+	}
+
+	var resp struct {
+		Name string `json:"name"`
+	}
+	if err := json.NewDecoder(httpResp.Body).Decode(&resp); err != nil {
+		return "", fmt.Errorf("cannot decode render owner response: %w", err)
+	}
+
+	return resp.Name, nil
+}
+
 // hubspotNameResolver resolves the HubSpot account name.
 type hubspotNameResolver struct {
 	httpClient *http.Client

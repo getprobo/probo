@@ -1,0 +1,42 @@
+---
+# Anonymized from a real GET /v1/owners/{ownerId}/members recording against a
+# Render workspace (token stripped by the recorder, request-identifying
+# headers removed). The live workspace had a single ADMIN member; real PII
+# (owner ID, member userId, name, email) was replaced with synthetic values
+# and three extra members were added to keep coverage: MFA-enabled admin,
+# MFA-disabled developer, an inactive workspace viewer (empty name → email
+# fallback), and an emailless member that is dropped. The member object shape
+# (userId, name, email, status, role, mfaEnabled) and the flat, unpaginated
+# array mirror the live response, including the uppercase role enum and the
+# "usr-" / "tea-" id formats.
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: api.render.com
+        headers:
+            Accept:
+                - application/json
+        url: https://api.render.com/v1/owners/tea-000000000000000000000/members
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '[{"email":"jane.doe@example.com","mfaEnabled":true,"name":"Jane Doe","role":"ADMIN","status":"active","userId":"usr-000000000000000000a1"},{"email":"john.smith@example.com","mfaEnabled":false,"name":"John Smith","role":"DEVELOPER","status":"active","userId":"usr-000000000000000000b2"},{"email":"sam.viewer@example.com","mfaEnabled":false,"name":"","role":"WORKSPACE_VIEWER","status":"inactive","userId":"usr-000000000000000000c3"},{"email":"","mfaEnabled":false,"name":"No Email","role":"WORKSPACE_BILLING","status":"active","userId":"usr-000000000000000000d4"}]'
+        headers:
+            Content-Type:
+                - application/json; charset=utf-8
+            Strict-Transport-Security:
+                - max-age=315360000; includeSubDomains; preload
+            Vary:
+                - Origin
+        status: 200 OK
+        code: 200
+        duration: 247.104708ms

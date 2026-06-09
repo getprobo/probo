@@ -154,6 +154,9 @@ function mapAPIKeyExtraSettingToField(
     case "QOVERY":
       if (settingKey === "organizationId") return "qoveryOrganizationId";
       break;
+    case "RENDER":
+      if (settingKey === "workspaceId") return "renderWorkspaceId";
+      break;
   }
   return null;
 }

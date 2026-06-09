@@ -29,6 +29,7 @@ export { OpenAI } from "./OpenAI";
 export { PagerDuty } from "./PagerDuty";
 export { PostHog } from "./PostHog";
 export { Qovery } from "./Qovery";
+export { Render } from "./Render";
 export { Resend } from "./Resend";
 export { SendGrid } from "./SendGrid";
 export { Sentry } from "./Sentry";

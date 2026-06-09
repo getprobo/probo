@@ -144,6 +144,14 @@ type (
 	QoveryConnectorSettings struct {
 		OrganizationID string `json:"organization_id"`
 	}
+
+	// RenderConnectorSettings stores the Render workspace identifier. The
+	// value is Render's owner ID (e.g. "tea-..." for a team workspace or
+	// "usr-..." for a personal one), surfaced to operators as "Workspace ID"
+	// and used as the {ownerId} path segment on /v1/owners/{ownerId}/...
+	RenderConnectorSettings struct {
+		OwnerID string `json:"owner_id"`
+	}
 )
 
 // GrantType returns the OAuth2 grant type recorded on the connector's

@@ -45,6 +45,7 @@ import { OpenAI } from "./OpenAI";
 import { PagerDuty } from "./PagerDuty";
 import { PostHog } from "./PostHog";
 import { Qovery } from "./Qovery";
+import { Render } from "./Render";
 import { Resend } from "./Resend";
 import { SendGrid } from "./SendGrid";
 import { Sentry } from "./Sentry";
@@ -91,6 +92,7 @@ const thirdParties: Record<string, FC<ComponentProps<"svg">>> = {
   PAGERDUTY: PagerDuty,
   POSTHOG: PostHog,
   QOVERY: Qovery,
+  RENDER: Render,
   RESEND: Resend,
   SENDGRID: SendGrid,
   SENTRY: Sentry,
