@@ -202,7 +202,7 @@ func (s FileService) GenerateFileURL(
 		return "", fmt.Errorf("cannot get file: %w", err)
 	}
 
-	presignedURL, err := s.svc.fileManager.GenerateFileUrl(ctx, file, expiresIn)
+	presignedURL, err := s.svc.fileManager.GenerateFileURL(ctx, file, expiresIn)
 	if err != nil {
 		return "", fmt.Errorf("cannot generate file URL: %w", err)
 	}

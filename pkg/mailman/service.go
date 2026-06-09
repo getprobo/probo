@@ -722,7 +722,7 @@ func (s *Service) CreateUpdateEmails(
 					return fmt.Errorf("cannot generate unsubscribe URL: %w", err)
 				}
 
-				subject, textBody, htmlBody, err := emails.NewPresenterFromConfig(s.fm, presenterCfg, sub.FullName).
+				subject, textBody, htmlBody, err := emails.NewPresenterFromConfig(presenterCfg, sub.FullName).
 					RenderMailingListNews(ctx, orgName, updateTitle, updateBody, compliancePageURL, unsubscribeURL)
 				if err != nil {
 					return fmt.Errorf("cannot render mailing list update email: %w", err)
@@ -776,7 +776,7 @@ func (s *Service) buildConfirmationMail(
 		return nil, fmt.Errorf("cannot get subscription confirmation email config: %w", err)
 	}
 
-	subject, textBody, htmlBody, err := emails.NewPresenterFromConfig(s.fm, presenterCfg, fullName).
+	subject, textBody, htmlBody, err := emails.NewPresenterFromConfig(presenterCfg, fullName).
 		RenderMailingListSubscription(ctx, orgName, confirmURL, unsubscribeURL)
 	if err != nil {
 		return nil, fmt.Errorf("cannot render subscription confirmation email: %w", err)
@@ -807,7 +807,7 @@ func (s *Service) buildUnsubscriptionMail(
 		return nil, fmt.Errorf("cannot get unsubscription email config: %w", err)
 	}
 
-	subject, textBody, htmlBody, err := emails.NewPresenterFromConfig(s.fm, presenterCfg, fullName).
+	subject, textBody, htmlBody, err := emails.NewPresenterFromConfig(presenterCfg, fullName).
 		RenderMailingListUnsubscription(ctx, orgName)
 	if err != nil {
 		return nil, fmt.Errorf("cannot render unsubscription email: %w", err)

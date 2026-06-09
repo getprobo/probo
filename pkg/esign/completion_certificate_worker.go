@@ -264,7 +264,7 @@ func (h *completionCertificateHandler) generateCertificate(
 		return nil, nil, fmt.Errorf("cannot resolve presenter config: %w", err)
 	}
 
-	emailPresenter := emails.NewPresenterFromConfig(h.fileManager, presenterCfg, ref.UnrefOrZero(signature.SignerFullName))
+	emailPresenter := emails.NewPresenterFromConfig(presenterCfg, ref.UnrefOrZero(signature.SignerFullName))
 
 	docName := ref.UnrefOrZero(signature.DocumentName)
 	if docName == "" {

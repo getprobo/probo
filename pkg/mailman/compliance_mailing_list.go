@@ -18,6 +18,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"path/filepath"
 
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/packages/emails"
@@ -60,7 +61,7 @@ func (s *Service) mailingListEmailConfig(
 		organization   = &coredata.Organization{}
 		customDomain   *coredata.CustomDomain
 		logoFile       = &coredata.File{}
-		defaultCfg     = emails.DefaultPresenterConfig(s.bucket, s.apiBaseURL.String())
+		defaultCfg     = emails.DefaultPresenterConfig(s.apiBaseURL.String())
 	)
 
 	scope := coredata.NewScopeFromObjectID(mailingListID)
@@ -128,7 +129,7 @@ func (s *Service) presenterConfigFromTrustCenter(
 	customDomain *coredata.CustomDomain,
 	logoFile *coredata.File,
 ) (emails.PresenterConfig, string, error) {
-	cfg := emails.DefaultPresenterConfig(s.bucket, s.apiBaseURL.String())
+	cfg := emails.DefaultPresenterConfig(s.apiBaseURL.String())
 
 	compliancePageBase := s.apiBaseURL.WithPath("/trust/" + compliancePage.ID.String())
 
@@ -149,12 +150,7 @@ func (s *Service) presenterConfigFromTrustCenter(
 	cfg.BaseURL = compliancePageURL
 
 	if compliancePage.LogoFileID != nil && logoFile != nil && logoFile.FileKey != "" {
-		cfg.SenderCompanyLogo = emails.Asset{
-			Name:       logoFile.FileName,
-			ObjectKey:  logoFile.FileKey,
-			BucketName: logoFile.BucketName,
-			MimeType:   logoFile.MimeType,
-		}
+		cfg.SenderCompanyLogoPath = filepath.Join("/api/files/v1/public/", logoFile.ID.String())
 
 		cfg.SenderCompanyName = organization.Name
 		if organization.WebsiteURL != nil {

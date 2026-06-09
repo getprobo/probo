@@ -820,7 +820,7 @@ func (s *DocumentApprovalService) sendApprovalEmails(
 
 	approvalEmails := make(coredata.Emails, 0, len(profiles))
 	for _, profile := range profiles {
-		emailPresenter := emails.NewPresenter(s.svc.fileManager, s.svc.bucket, s.svc.baseURL, profile.FullName)
+		emailPresenter := emails.NewPresenter(s.svc.baseURL, profile.FullName)
 
 		var (
 			emailLinkURLPath = approvalURLPath

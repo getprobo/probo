@@ -514,7 +514,7 @@ func (s *OrganizationService) InviteUser(
 				return fmt.Errorf("cannot generate invitation token: %w", err)
 			}
 
-			emailPresenter := emails.NewPresenter(s.fm, s.bucket, s.baseURL, profile.FullName)
+			emailPresenter := emails.NewPresenter(s.baseURL, profile.FullName)
 
 			subject, textBody, htmlBody, err := emailPresenter.RenderInvitation(
 				ctx,
@@ -1409,7 +1409,7 @@ func (s OrganizationService) GenerateLogoURL(
 		return nil, fmt.Errorf("cannot generate logo URL: %w", err)
 	}
 
-	presignedURL, err := s.fm.GenerateFileUrl(ctx, file, expiresIn)
+	presignedURL, err := s.fm.GenerateFileURL(ctx, file, expiresIn)
 	if err != nil {
 		return nil, fmt.Errorf("cannot generate file URL: %w", err)
 	}
@@ -1455,7 +1455,7 @@ func (s OrganizationService) GenerateHorizontalLogoURL(
 		return nil, err
 	}
 
-	presignedURL, err := s.fm.GenerateFileUrl(ctx, file, expiresIn)
+	presignedURL, err := s.fm.GenerateFileURL(ctx, file, expiresIn)
 	if err != nil {
 		return nil, fmt.Errorf("cannot generate file URL: %w", err)
 	}

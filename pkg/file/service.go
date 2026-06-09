@@ -82,11 +82,11 @@ func (s *Service) GeneratePublicPresignedURL(ctx context.Context, fileID gid.GID
 		return "", err
 	}
 
-	return s.fileManager.GenerateFileUrl(ctx, file, expiresIn)
+	return s.fileManager.GenerateFileURL(ctx, file, expiresIn)
 }
 
 // GeneratePresignedURL returns a short-lived S3 presigned URL for an already-loaded file.
 // Used by the authenticated /api/files/v1/{id} HTTP handler to avoid a second DB round-trip.
 func (s *Service) GeneratePresignedURL(ctx context.Context, file *coredata.File, expiresIn time.Duration) (string, error) {
-	return s.fileManager.GenerateFileUrl(ctx, file, expiresIn)
+	return s.fileManager.GenerateFileURL(ctx, file, expiresIn)
 }

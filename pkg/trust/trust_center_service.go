@@ -19,6 +19,7 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"path/filepath"
 	"time"
 
 	"go.gearno.de/kit/pg"
@@ -147,7 +148,7 @@ func (s TrustCenterService) GenerateNDAFileURL(
 		return "", err
 	}
 
-	presignedURL, err := s.svc.fileManager.GenerateFileUrl(ctx, file, expiresIn)
+	presignedURL, err := s.svc.fileManager.GenerateFileURL(ctx, file, expiresIn)
 	if err != nil {
 		return "", fmt.Errorf("cannot generate file URL: %w", err)
 	}
@@ -194,7 +195,7 @@ func (s TrustCenterService) GenerateLogoURL(
 		return nil, nil
 	}
 
-	presignedURL, err := s.svc.fileManager.GenerateFileUrl(ctx, file, expiresIn)
+	presignedURL, err := s.svc.fileManager.GenerateFileURL(ctx, file, expiresIn)
 	if err != nil {
 		return nil, fmt.Errorf("cannot generate file URL: %w", err)
 	}
@@ -241,7 +242,7 @@ func (s TrustCenterService) GenerateDarkLogoURL(
 		return nil, nil
 	}
 
-	presignedURL, err := s.svc.fileManager.GenerateFileUrl(ctx, file, expiresIn)
+	presignedURL, err := s.svc.fileManager.GenerateFileURL(ctx, file, expiresIn)
 	if err != nil {
 		return nil, fmt.Errorf("cannot generate file URL: %w", err)
 	}
@@ -259,7 +260,7 @@ func (s *TrustCenterService) EmailPresenterConfig(
 		organization      = &coredata.Organization{}
 		customDomain      *coredata.CustomDomain
 		logoFile          = &coredata.File{}
-		emailPresenterCfg = emails.DefaultPresenterConfig(s.svc.bucket, s.svc.baseURL)
+		emailPresenterCfg = emails.DefaultPresenterConfig(s.svc.baseURL)
 	)
 
 	err := s.svc.pg.WithConn(
@@ -318,14 +319,7 @@ func (s *TrustCenterService) EmailPresenterConfig(
 		}
 
 		// If logo exists, then we will brand the emails with the org as a sender
-
-		emailPresenterCfg.SenderCompanyLogo = emails.Asset{
-			Name:       logoFile.FileName,
-			ObjectKey:  logoFile.FileKey,
-			BucketName: logoFile.BucketName,
-			MimeType:   logoFile.MimeType,
-		}
-
+		emailPresenterCfg.SenderCompanyLogoPath = filepath.Join("/api/files/v1/public/", logoFile.ID.String())
 		emailPresenterCfg.SenderCompanyName = organization.Name
 
 		if organization.WebsiteURL != nil {

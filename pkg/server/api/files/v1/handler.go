@@ -16,11 +16,14 @@ package files_v1
 
 import (
 	"errors"
+	"fmt"
+	"io/fs"
 	"net/http"
 	"time"
 
 	"github.com/go-chi/chi/v5"
 	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/brand"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/file"
 	"go.probo.inc/probo/pkg/gid"
@@ -57,6 +60,7 @@ func NewMux(
 
 	r := chi.NewRouter()
 
+	r.Get("/static/{file}", h.handleGetStaticFile)
 	r.Get("/public/{fileID}", h.handleGetPublicFile)
 
 	r.Group(func(r chi.Router) {
@@ -68,6 +72,17 @@ func NewMux(
 	})
 
 	return r
+}
+
+func (h *Handler) handleGetStaticFile(w http.ResponseWriter, r *http.Request) {
+	file := chi.URLParam(r, "file")
+
+	if _, statErr := fs.Stat(brand.Assets, file); statErr == nil {
+		http.ServeFileFS(w, r, brand.Assets, file)
+		return
+	}
+
+	jsonutil.RenderNotFound(w, fmt.Errorf("file not found"))
 }
 
 func (h *Handler) handleGetPublicFile(w http.ResponseWriter, r *http.Request) {

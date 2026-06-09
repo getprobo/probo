@@ -500,7 +500,7 @@ func (s TrustCenterService) GenerateNDAFileURL(
 		return nil, nil
 	}
 
-	presignedURL, err := s.svc.fileManager.GenerateFileUrl(ctx, file, expiresIn)
+	presignedURL, err := s.svc.fileManager.GenerateFileURL(ctx, file, expiresIn)
 	if err != nil {
 		return nil, fmt.Errorf("cannot generate file URL: %w", err)
 	}
@@ -546,7 +546,7 @@ func (s TrustCenterService) GenerateLogoURL(
 		return nil, nil
 	}
 
-	presignedURL, err := s.svc.fileManager.GenerateFileUrl(ctx, file, expiresIn)
+	presignedURL, err := s.svc.fileManager.GenerateFileURL(ctx, file, expiresIn)
 	if err != nil {
 		return nil, fmt.Errorf("cannot generate file URL: %w", err)
 	}
@@ -592,7 +592,7 @@ func (s TrustCenterService) GenerateDarkLogoURL(
 		return nil, nil
 	}
 
-	presignedURL, err := s.svc.fileManager.GenerateFileUrl(ctx, file, expiresIn)
+	presignedURL, err := s.svc.fileManager.GenerateFileURL(ctx, file, expiresIn)
 	if err != nil {
 		return nil, fmt.Errorf("cannot generate file URL: %w", err)
 	}
@@ -606,7 +606,7 @@ func (s *TrustCenterService) EmailPresenterConfig(ctx context.Context, scope cor
 		organization      = &coredata.Organization{}
 		customDomain      *coredata.CustomDomain
 		logoFile          = &coredata.File{}
-		emailPresenterCfg = emails.DefaultPresenterConfig(s.svc.bucket, s.svc.baseURL)
+		emailPresenterCfg = emails.DefaultPresenterConfig(s.svc.baseURL)
 	)
 
 	err := s.svc.pg.WithConn(
@@ -664,13 +664,7 @@ func (s *TrustCenterService) EmailPresenterConfig(ctx context.Context, scope cor
 			return emailPresenterCfg, nil
 		}
 
-		emailPresenterCfg.SenderCompanyLogo = emails.Asset{
-			Name:       logoFile.FileName,
-			ObjectKey:  logoFile.FileKey,
-			BucketName: logoFile.BucketName,
-			MimeType:   logoFile.MimeType,
-		}
-
+		emailPresenterCfg.SenderCompanyLogoPath = filepath.Join("/api/files/v1/public/", logoFile.ID.String())
 		emailPresenterCfg.SenderCompanyName = organization.Name
 
 		if organization.WebsiteURL != nil {

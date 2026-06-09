@@ -152,7 +152,7 @@ func (s *Service) PutFile(
 	return *headOutput.ContentLength, nil
 }
 
-func (s *Service) GenerateFileUrl(
+func (s *Service) GenerateFileURL(
 	ctx context.Context,
 	file File,
 	expiresIn time.Duration,

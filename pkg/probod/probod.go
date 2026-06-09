@@ -41,7 +41,6 @@ import (
 	"go.gearno.de/kit/worker"
 	"go.gearno.de/x/ref"
 	"go.opentelemetry.io/otel/trace"
-	"go.probo.inc/probo/packages/emails"
 	"go.probo.inc/probo/pkg/accessreview"
 	"go.probo.inc/probo/pkg/agentrun"
 	"go.probo.inc/probo/pkg/awsconfig"
@@ -434,14 +433,6 @@ func (impl *Implm) Run(
 		if err := defaultConnectorRegistry.Register(string(reg.Provider), oauth2c); err != nil {
 			return fmt.Errorf("cannot register public client connector %q: %w", reg.Provider, err)
 		}
-	}
-
-	if err := emails.UploadStaticAssets(
-		ctx,
-		s3Client,
-		impl.cfg.AWS.Bucket,
-	); err != nil {
-		return fmt.Errorf("cannot upload email static assets: %w", err)
 	}
 
 	iamService, err := iam.NewService(

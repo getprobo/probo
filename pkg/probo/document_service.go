@@ -743,7 +743,7 @@ func (s *DocumentService) SendSigningNotifications(
 			}
 
 			for _, signatory := range signatories {
-				emailPresenter := emails.NewPresenter(s.svc.fileManager, s.svc.bucket, s.svc.baseURL, signatory.FullName)
+				emailPresenter := emails.NewPresenter(s.svc.baseURL, signatory.FullName)
 
 				var (
 					employeeDocumentsURLPath = "/organizations/" + organizationID.String() + "/employee"
@@ -2629,7 +2629,7 @@ func (s *DocumentService) SendExportEmail(
 				return fmt.Errorf("cannot generate download URL: %w", err)
 			}
 
-			emailPresenter := emails.NewPresenter(s.svc.fileManager, s.svc.bucket, s.svc.baseURL, recipientName)
+			emailPresenter := emails.NewPresenter(s.svc.baseURL, recipientName)
 
 			subject, textBody, htmlBody, err := emailPresenter.RenderDocumentExport(
 				ctx,

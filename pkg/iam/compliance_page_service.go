@@ -19,6 +19,7 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"path/filepath"
 	"time"
 
 	"go.gearno.de/kit/pg"
@@ -77,7 +78,7 @@ func (s *CompliancePageService) GenerateLogoURL(
 		return nil, nil
 	}
 
-	presignedURL, err := s.fm.GenerateFileUrl(ctx, file, expiresIn)
+	presignedURL, err := s.fm.GenerateFileURL(ctx, file, expiresIn)
 	if err != nil {
 		return nil, fmt.Errorf("cannot generate file URL: %w", err)
 	}
@@ -91,7 +92,7 @@ func (s *CompliancePageService) EmailPresenterConfig(ctx context.Context, compli
 		organization      = &coredata.Organization{}
 		customDomain      *coredata.CustomDomain
 		logoFile          = &coredata.File{}
-		emailPresenterCfg = emails.DefaultPresenterConfig(s.bucket, s.baseURL)
+		emailPresenterCfg = emails.DefaultPresenterConfig(s.baseURL)
 	)
 
 	scope := coredata.NewScopeFromObjectID(compliancePageID)
@@ -152,14 +153,7 @@ func (s *CompliancePageService) EmailPresenterConfig(ctx context.Context, compli
 		}
 
 		// If logo exists, then we will brand the emails with the org as a sender
-
-		emailPresenterCfg.SenderCompanyLogo = emails.Asset{
-			Name:       logoFile.FileName,
-			ObjectKey:  logoFile.FileKey,
-			BucketName: logoFile.BucketName,
-			MimeType:   logoFile.MimeType,
-		}
-
+		emailPresenterCfg.SenderCompanyLogoPath = filepath.Join("/api/files/v1/public/", logoFile.ID.String())
 		emailPresenterCfg.SenderCompanyName = organization.Name
 
 		if organization.WebsiteURL != nil {
