@@ -63,6 +63,7 @@ func TestAccessReviewDrivers(t *testing.T) {
 	assert.NotEmpty(t, result.AccessReviewDrivers)
 
 	providerNames := make(map[string]bool)
+
 	for _, info := range result.AccessReviewDrivers {
 		assert.NotEmpty(t, info.Provider)
 		assert.NotEmpty(t, info.DisplayName)
