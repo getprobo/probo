@@ -1,4 +1,5 @@
-MAKEFLAGS := --jobs=$(shell nproc)
+NPROC ?=	$(shell nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || getconf _NPROCESSORS_ONLN 2>/dev/null || echo 1)
+MAKEFLAGS := --jobs=$(NPROC)
 
 CAT ?=	cat
 CP ?=	cp
@@ -39,7 +40,7 @@ GCFLAGS=	-gcflags="-e"
 CGO_ENABLED?=	0
 GOOS?=
 
-GO_BASE=	CGO_ENABLED=$(CGO_ENABLED) GOOS=$(GOOS) go
+GO_BASE=	CGO_ENABLED=$(CGO_ENABLED) $(if $(GOOS),GOOS=$(GOOS)) go
 GO_BUILD=	$(GO_BASE) build $(GCFLAGS)
 GO_GENERATE=	$(GO_BASE) generate
 GO_TEST=	$(GO_BASE) tool gotestsum -- $(TEST_FLAGS)
@@ -88,15 +89,15 @@ PROBOCTL_BIN=	bin/proboctl
 PROBOCTL_SRC=	cmd/proboctl/main.go
 
 PROBO_AGENT_BIN=	bin/probo-agent
-PROBO_AGENT_SRC=	cmd/probo-agent/main.go
+PROBO_AGENT_SRC=	./cmd/probo-agent
 # Menu bar / tray enrollment is macOS and Windows only; those hosts need CGO.
-PROBO_AGENT_HOST_OS=	$(shell $(GO) env GOOS)
-PROBO_AGENT_CGO=	CGO_ENABLED=0
-ifeq ($(PROBO_AGENT_HOST_OS),darwin)
-PROBO_AGENT_CGO=	CGO_ENABLED=1
+PROBO_AGENT_TARGET_OS=	$(if $(GOOS),$(GOOS),$(shell $(GO) env GOOS))
+PROBO_AGENT_CGO=	0
+ifeq ($(PROBO_AGENT_TARGET_OS),darwin)
+PROBO_AGENT_CGO=	1
 endif
-ifeq ($(PROBO_AGENT_HOST_OS),windows)
-PROBO_AGENT_CGO=	CGO_ENABLED=1
+ifeq ($(PROBO_AGENT_TARGET_OS),windows)
+PROBO_AGENT_CGO=	1
 endif
 
 ifdef WITH_APPS
@@ -284,8 +285,9 @@ bin/proboctl:
 	$(GO_BUILD) $(PROBOCTL_LDFLAGS) -o $(PROBOCTL_BIN) $(PROBOCTL_SRC)
 
 .PHONY: $(PROBO_AGENT_BIN)
+$(PROBO_AGENT_BIN): CGO_ENABLED=$(PROBO_AGENT_CGO)
 $(PROBO_AGENT_BIN):
-	$(PROBO_AGENT_CGO) $(GO_BUILD) $(PROBO_AGENT_LDFLAGS) -o $(PROBO_AGENT_BIN) $(PROBO_AGENT_SRC)
+	$(GO_BUILD) $(PROBO_AGENT_LDFLAGS) -o $(PROBO_AGENT_BIN) $(PROBO_AGENT_SRC)
 
 .PHONY: @probo/emails
 @probo/emails:
