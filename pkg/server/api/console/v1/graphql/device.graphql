@@ -110,6 +110,19 @@ type DeviceEnrollmentTokenEdge {
     node: DeviceEnrollmentToken!
 }
 
+enum DeviceEnrollmentState {
+    TOKEN_CREATED
+    DEVICE_ENROLLED
+    FIRST_ACTIVITY_RECEIVED
+}
+
+type DeviceEnrollmentStatus {
+    state: DeviceEnrollmentState!
+    tokenUsedCount: Int!
+    device: Device
+    firstActivityAt: Datetime
+}
+
 type CreateDeviceEnrollmentTokenPayload {
     enrollmentToken: DeviceEnrollmentToken!
     # secret is shown ONCE at creation time; the agent installer needs it.

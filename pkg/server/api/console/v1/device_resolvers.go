@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"go.gearno.de/kit/log"
-	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/itam"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
@@ -19,11 +18,10 @@ import (
 
 // LatestPostures is the resolver for the Device.latestPostures field.
 func (r *deviceResolver) LatestPostures(ctx context.Context, obj *types.Device) ([]*types.DevicePosture, error) {
-	if err := r.authorize(ctx, obj.ID, itam.ActionDevicePostureList); err != nil {
+	scope, err := r.authorize(ctx, obj.ID, itam.ActionDevicePostureList)
+	if err != nil {
 		return nil, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(obj.ID)
 
 	postures, err := r.itam.GetLatestPostures(ctx, scope, obj.ID)
 	if err != nil {
@@ -36,11 +34,10 @@ func (r *deviceResolver) LatestPostures(ctx context.Context, obj *types.Device) 
 
 // TotalCount is the resolver for the DeviceConnection.totalCount field.
 func (r *deviceConnectionResolver) TotalCount(ctx context.Context, obj *types.DeviceConnection) (int, error) {
-	if err := r.authorize(ctx, obj.ParentID, itam.ActionDeviceList); err != nil {
+	scope, err := r.authorize(ctx, obj.ParentID, itam.ActionDeviceList)
+	if err != nil {
 		return 0, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(obj.ParentID)
 
 	switch obj.Resolver.(type) {
 	case *organizationResolver:
@@ -52,11 +49,10 @@ func (r *deviceConnectionResolver) TotalCount(ctx context.Context, obj *types.De
 
 // CreateDeviceEnrollmentToken is the resolver for the createDeviceEnrollmentToken field.
 func (r *mutationResolver) CreateDeviceEnrollmentToken(ctx context.Context, input types.CreateDeviceEnrollmentTokenInput) (*types.CreateDeviceEnrollmentTokenPayload, error) {
-	if err := r.authorize(ctx, input.OrganizationID, itam.ActionDeviceEnrollmentTokenCreate); err != nil {
+	scope, err := r.authorize(ctx, input.OrganizationID, itam.ActionDeviceEnrollmentTokenCreate)
+	if err != nil {
 		return nil, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(input.OrganizationID)
 
 	validity := time.Duration(0)
 	if input.ValiditySeconds != nil && *input.ValiditySeconds > 0 {
@@ -82,11 +78,10 @@ func (r *mutationResolver) CreateDeviceEnrollmentToken(ctx context.Context, inpu
 
 // RevokeDeviceEnrollmentToken is the resolver for the revokeDeviceEnrollmentToken field.
 func (r *mutationResolver) RevokeDeviceEnrollmentToken(ctx context.Context, input types.RevokeDeviceEnrollmentTokenInput) (*types.RevokeDeviceEnrollmentTokenPayload, error) {
-	if err := r.authorize(ctx, input.EnrollmentTokenID, itam.ActionDeviceEnrollmentTokenRevoke); err != nil {
+	scope, err := r.authorize(ctx, input.EnrollmentTokenID, itam.ActionDeviceEnrollmentTokenRevoke)
+	if err != nil {
 		return nil, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(input.EnrollmentTokenID)
 
 	token, err := r.itam.RevokeEnrollmentToken(ctx, scope, input.EnrollmentTokenID)
 	if err != nil {
@@ -101,11 +96,10 @@ func (r *mutationResolver) RevokeDeviceEnrollmentToken(ctx context.Context, inpu
 
 // RevokeDevice is the resolver for the revokeDevice field.
 func (r *mutationResolver) RevokeDevice(ctx context.Context, input types.RevokeDeviceInput) (*types.RevokeDevicePayload, error) {
-	if err := r.authorize(ctx, input.DeviceID, itam.ActionDeviceRevoke); err != nil {
+	scope, err := r.authorize(ctx, input.DeviceID, itam.ActionDeviceRevoke)
+	if err != nil {
 		return nil, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(input.DeviceID)
 
 	d, err := r.itam.RevokeDevice(ctx, scope, input.DeviceID)
 	if err != nil {
@@ -118,11 +112,10 @@ func (r *mutationResolver) RevokeDevice(ctx context.Context, input types.RevokeD
 
 // AssignDeviceToUser is the resolver for the assignDeviceToUser field.
 func (r *mutationResolver) AssignDeviceToUser(ctx context.Context, input types.AssignDeviceToUserInput) (*types.AssignDeviceToUserPayload, error) {
-	if err := r.authorize(ctx, input.DeviceID, itam.ActionDeviceAssign); err != nil {
+	scope, err := r.authorize(ctx, input.DeviceID, itam.ActionDeviceAssign)
+	if err != nil {
 		return nil, err
 	}
-
-	scope := coredata.NewScopeFromObjectID(input.DeviceID)
 
 	d, err := r.itam.AssignDeviceToUser(ctx, scope, input.DeviceID, input.UserIdentityID)
 	if err != nil {

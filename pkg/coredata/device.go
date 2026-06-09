@@ -25,6 +25,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/iam/policy"
 	"go.probo.inc/probo/pkg/page"
 )
 
@@ -32,23 +33,24 @@ var emptyJSONObject = json.RawMessage(`{}`)
 
 type (
 	Device struct {
-		ID                     gid.GID              `db:"id"`
-		TenantID               gid.TenantID         `db:"tenant_id"`
-		OrganizationID         gid.GID              `db:"organization_id"`
-		HardwareUUID           string               `db:"hardware_uuid"`
-		SerialNumber           *string              `db:"serial_number"`
-		Hostname               string               `db:"hostname"`
-		Platform               DevicePlatform       `db:"platform"`
-		OSVersion              string               `db:"os_version"`
-		AgentVersion           string               `db:"agent_version"`
-		APIKeyHash             []byte               `db:"api_key_hash"`
-		AssignedUserIdentityID *gid.GID             `db:"assigned_user_identity_id"`
-		Labels                 json.RawMessage      `db:"labels"`
-		EnrolledAt             time.Time            `db:"enrolled_at"`
-		LastSeenAt             time.Time            `db:"last_seen_at"`
-		RevokedAt              *time.Time           `db:"revoked_at"`
-		CreatedAt              time.Time            `db:"created_at"`
-		UpdatedAt              time.Time            `db:"updated_at"`
+		ID                     gid.GID         `db:"id"`
+		TenantID               gid.TenantID    `db:"tenant_id"`
+		OrganizationID         gid.GID         `db:"organization_id"`
+		EnrollmentTokenID      *gid.GID        `db:"enrollment_token_id"`
+		HardwareUUID           string          `db:"hardware_uuid"`
+		SerialNumber           *string         `db:"serial_number"`
+		Hostname               string          `db:"hostname"`
+		Platform               DevicePlatform  `db:"platform"`
+		OSVersion              string          `db:"os_version"`
+		AgentVersion           string          `db:"agent_version"`
+		APIKeyHash             []byte          `db:"api_key_hash"`
+		AssignedUserIdentityID *gid.GID        `db:"assigned_user_identity_id"`
+		Labels                 json.RawMessage `db:"labels"`
+		EnrolledAt             time.Time       `db:"enrolled_at"`
+		LastSeenAt             time.Time       `db:"last_seen_at"`
+		RevokedAt              *time.Time      `db:"revoked_at"`
+		CreatedAt              time.Time       `db:"created_at"`
+		UpdatedAt              time.Time       `db:"updated_at"`
 	}
 
 	Devices []*Device
@@ -69,18 +71,36 @@ func (d *Device) CursorKey(orderBy DeviceOrderField) page.CursorKey {
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
-func (d *Device) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
-	q := `SELECT organization_id FROM devices WHERE id = $1 LIMIT 1;`
+func (d *Device) AuthorizationAttributes(
+	ctx context.Context,
+	conn pg.Querier,
+	resourceIDs []gid.GID,
+) (policy.AttributesByID, error) {
+	q := `SELECT id, organization_id FROM devices WHERE id = ANY(@resource_ids::text[])`
 
-	var organizationID gid.GID
-	if err := conn.QueryRow(ctx, q, d.ID).Scan(&organizationID); err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, ErrResourceNotFound
-		}
+	rows, err := conn.Query(ctx, q, pgx.StrictNamedArgs{"resource_ids": resourceIDs})
+	if err != nil {
 		return nil, fmt.Errorf("cannot query device authorization attributes: %w", err)
 	}
+	defer rows.Close()
 
-	return map[string]string{"organization_id": organizationID.String()}, nil
+	attrsByID := make(policy.AttributesByID)
+	for rows.Next() {
+		var id, organizationID gid.GID
+		if err := rows.Scan(&id, &organizationID); err != nil {
+			return nil, fmt.Errorf("cannot scan device authorization attributes: %w", err)
+		}
+
+		attrsByID[id] = policy.Attributes{
+			"organization_id": organizationID.String(),
+		}
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("cannot iterate device authorization attributes: %w", err)
+	}
+
+	return attrsByID, nil
 }
 
 func (d *Device) LoadByID(
@@ -94,6 +114,7 @@ SELECT
     id,
     tenant_id,
     organization_id,
+    enrollment_token_id,
     hardware_uuid,
     serial_number,
     hostname,
@@ -149,6 +170,7 @@ SELECT
     id,
     tenant_id,
     organization_id,
+    enrollment_token_id,
     hardware_uuid,
     serial_number,
     hostname,
@@ -201,6 +223,7 @@ SELECT
     id,
     tenant_id,
     organization_id,
+    enrollment_token_id,
     hardware_uuid,
     serial_number,
     hostname,
@@ -248,6 +271,63 @@ LIMIT 1;
 	return nil
 }
 
+func (d *Device) LoadLatestByEnrollmentTokenID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	enrollmentTokenID gid.GID,
+) error {
+	q := `
+SELECT
+    id,
+    tenant_id,
+    organization_id,
+    enrollment_token_id,
+    hardware_uuid,
+    serial_number,
+    hostname,
+    platform,
+    os_version,
+    agent_version,
+    api_key_hash,
+    assigned_user_identity_id,
+    labels,
+    enrolled_at,
+    last_seen_at,
+    revoked_at,
+    created_at,
+    updated_at
+FROM
+    devices
+WHERE
+    %s
+    AND enrollment_token_id = @enrollment_token_id
+ORDER BY
+    enrolled_at DESC
+LIMIT 1;
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"enrollment_token_id": enrollmentTokenID}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query device by enrollment token id: %w", err)
+	}
+
+	device, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[Device])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+		return fmt.Errorf("cannot collect device: %w", err)
+	}
+
+	*d = device
+	return nil
+}
+
 func (d Device) Insert(
 	ctx context.Context,
 	conn pg.Tx,
@@ -263,6 +343,7 @@ INSERT INTO devices (
     id,
     tenant_id,
     organization_id,
+    enrollment_token_id,
     hardware_uuid,
     serial_number,
     hostname,
@@ -281,6 +362,7 @@ INSERT INTO devices (
     @device_id,
     @tenant_id,
     @organization_id,
+    @enrollment_token_id,
     @hardware_uuid,
     @serial_number,
     @hostname,
@@ -301,6 +383,7 @@ INSERT INTO devices (
 		"device_id":                 d.ID,
 		"tenant_id":                 scope.GetTenantID(),
 		"organization_id":           d.OrganizationID,
+		"enrollment_token_id":       d.EnrollmentTokenID,
 		"hardware_uuid":             d.HardwareUUID,
 		"serial_number":             d.SerialNumber,
 		"hostname":                  d.Hostname,
@@ -336,6 +419,7 @@ func (d *Device) Reenroll(
 	q := `
 UPDATE devices
 SET
+    enrollment_token_id = @enrollment_token_id,
     serial_number = @serial_number,
     hostname = @hostname,
     platform = @platform,
@@ -351,14 +435,15 @@ WHERE %s
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"device_id":     d.ID,
-		"serial_number": d.SerialNumber,
-		"hostname":      d.Hostname,
-		"platform":      d.Platform,
-		"os_version":    d.OSVersion,
-		"agent_version": d.AgentVersion,
-		"api_key_hash":  d.APIKeyHash,
-		"now":           now,
+		"device_id":           d.ID,
+		"enrollment_token_id": d.EnrollmentTokenID,
+		"serial_number":       d.SerialNumber,
+		"hostname":            d.Hostname,
+		"platform":            d.Platform,
+		"os_version":          d.OSVersion,
+		"agent_version":       d.AgentVersion,
+		"api_key_hash":        d.APIKeyHash,
+		"now":                 now,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
@@ -495,6 +580,7 @@ SELECT
     id,
     tenant_id,
     organization_id,
+    enrollment_token_id,
     hardware_uuid,
     serial_number,
     hostname,

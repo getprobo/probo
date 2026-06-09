@@ -26,6 +26,7 @@ type Query {
     node(id: ID!): Node!
     viewer: Viewer!
     commonThirdParties(name: String!): [CommonThirdParty!]!
+    deviceEnrollmentStatus(enrollmentTokenId: ID!): DeviceEnrollmentStatus!
 }
 
 type Mutation

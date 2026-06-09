@@ -103,6 +103,12 @@ type (
 		Evidence   json.RawMessage
 		ObservedAt time.Time
 	}
+
+	EnrollmentStatusResult struct {
+		Token           *coredata.DeviceEnrollmentToken
+		Device          *coredata.Device
+		FirstActivityAt *time.Time
+	}
 )
 
 func NewService(pgClient *pg.Client, iamSvc *iam.Service, logger *log.Logger) *Service {
@@ -239,6 +245,50 @@ func (s *Service) ListEnrollmentTokens(
 	}
 
 	return tokens, nil
+}
+
+func (s *Service) GetEnrollmentStatus(
+	ctx context.Context,
+	scope coredata.Scoper,
+	enrollmentTokenID gid.GID,
+) (*EnrollmentStatusResult, error) {
+	result := &EnrollmentStatusResult{}
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			token := &coredata.DeviceEnrollmentToken{}
+			if err := token.LoadByID(ctx, conn, scope, enrollmentTokenID); err != nil {
+				return fmt.Errorf("cannot load device enrollment token: %w", err)
+			}
+			result.Token = token
+
+			device := &coredata.Device{}
+			if err := device.LoadLatestByEnrollmentTokenID(ctx, conn, scope, enrollmentTokenID); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return nil
+				}
+				return fmt.Errorf("cannot load latest device by enrollment token: %w", err)
+			}
+			result.Device = device
+
+			posture := &coredata.DevicePosture{}
+			if err := posture.LoadFirstObservedAtByDeviceID(ctx, conn, scope, device.ID); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return nil
+				}
+				return fmt.Errorf("cannot load first device activity posture: %w", err)
+			}
+
+			result.FirstActivityAt = &posture.ObservedAt
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
 }
 
 func (s *Service) GetDevice(
@@ -459,6 +509,7 @@ func (s *Service) EnrollDevice(
 		if !token.IsUsable(now) {
 			return ErrEnrollmentTokenInvalid
 		}
+		enrollmentTokenID := token.ID
 
 		scope := coredata.NewScope(token.OrganizationID.TenantID())
 
@@ -475,6 +526,7 @@ func (s *Service) EnrollDevice(
 			existing.Platform = req.Platform
 			existing.OSVersion = req.OSVersion
 			existing.AgentVersion = req.AgentVersion
+			existing.EnrollmentTokenID = &enrollmentTokenID
 			existing.LastSeenAt = now
 			existing.UpdatedAt = now
 			existing.RevokedAt = nil
@@ -484,20 +536,21 @@ func (s *Service) EnrollDevice(
 			device = existing
 		case errors.Is(err, coredata.ErrResourceNotFound):
 			device = &coredata.Device{
-				ID:             gid.New(token.OrganizationID.TenantID(), coredata.DeviceEntityType),
-				TenantID:       token.OrganizationID.TenantID(),
-				OrganizationID: token.OrganizationID,
-				HardwareUUID:   req.HardwareUUID,
-				SerialNumber:   req.SerialNumber,
-				Hostname:       req.Hostname,
-				Platform:       req.Platform,
-				OSVersion:      req.OSVersion,
-				AgentVersion:   req.AgentVersion,
-				APIKeyHash:     apiKeyHash,
-				EnrolledAt:     now,
-				LastSeenAt:     now,
-				CreatedAt:      now,
-				UpdatedAt:      now,
+				ID:                gid.New(token.OrganizationID.TenantID(), coredata.DeviceEntityType),
+				TenantID:          token.OrganizationID.TenantID(),
+				OrganizationID:    token.OrganizationID,
+				HardwareUUID:      req.HardwareUUID,
+				SerialNumber:      req.SerialNumber,
+				Hostname:          req.Hostname,
+				Platform:          req.Platform,
+				OSVersion:         req.OSVersion,
+				AgentVersion:      req.AgentVersion,
+				EnrollmentTokenID: &enrollmentTokenID,
+				APIKeyHash:        apiKeyHash,
+				EnrolledAt:        now,
+				LastSeenAt:        now,
+				CreatedAt:         now,
+				UpdatedAt:         now,
 			}
 			if err := device.Insert(ctx, conn, scope); err != nil {
 				return fmt.Errorf("cannot insert device: %w", err)

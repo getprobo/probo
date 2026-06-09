@@ -24,6 +24,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/iam/policy"
 )
 
 type (
@@ -45,18 +46,44 @@ type (
 	DeviceEnrollmentTokens []*DeviceEnrollmentToken
 )
 
-func (t *DeviceEnrollmentToken) AuthorizationAttributes(ctx context.Context, conn pg.Querier) (map[string]string, error) {
-	q := `SELECT organization_id FROM device_enrollment_tokens WHERE id = $1 LIMIT 1;`
+func (t *DeviceEnrollmentToken) AuthorizationAttributes(
+	ctx context.Context,
+	conn pg.Querier,
+	resourceIDs []gid.GID,
+) (policy.AttributesByID, error) {
+	q := `
+SELECT
+	id,
+	organization_id
+FROM
+	device_enrollment_tokens
+WHERE
+	id = ANY(@resource_ids::text[])
+`
 
-	var organizationID gid.GID
-	if err := conn.QueryRow(ctx, q, t.ID).Scan(&organizationID); err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, ErrResourceNotFound
-		}
+	rows, err := conn.Query(ctx, q, pgx.StrictNamedArgs{"resource_ids": resourceIDs})
+	if err != nil {
 		return nil, fmt.Errorf("cannot query device enrollment token authorization attributes: %w", err)
 	}
+	defer rows.Close()
 
-	return map[string]string{"organization_id": organizationID.String()}, nil
+	attrsByID := make(policy.AttributesByID)
+	for rows.Next() {
+		var id, organizationID gid.GID
+		if err := rows.Scan(&id, &organizationID); err != nil {
+			return nil, fmt.Errorf("cannot scan device enrollment token authorization attributes: %w", err)
+		}
+
+		attrsByID[id] = policy.Attributes{
+			"organization_id": organizationID.String(),
+		}
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("cannot iterate device enrollment token authorization attributes: %w", err)
+	}
+
+	return attrsByID, nil
 }
 
 func (t DeviceEnrollmentToken) Insert(

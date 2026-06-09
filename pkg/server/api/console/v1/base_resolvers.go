@@ -14,6 +14,7 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
+	"go.probo.inc/probo/pkg/itam"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
@@ -38,6 +39,16 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			}
 
 			return types.NewOrganization(organization), nil
+		}
+	case coredata.DeviceEntityType:
+		action = itam.ActionDeviceGet
+		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
+			device, err := r.itam.GetDevice(ctx, scope, id)
+			if err != nil {
+				return nil, err
+			}
+
+			return types.NewDevice(device), nil
 		}
 	case coredata.ThirdPartyEntityType:
 		action = probo.ActionThirdPartyGet
@@ -523,6 +534,39 @@ func (r *queryResolver) CommonThirdParties(ctx context.Context, name string) ([]
 	result := make([]*types.CommonThirdParty, len(parties))
 	for i, p := range parties {
 		result[i] = types.NewCommonThirdParty(p)
+	}
+
+	return result, nil
+}
+
+// DeviceEnrollmentStatus is the resolver for the deviceEnrollmentStatus field.
+func (r *queryResolver) DeviceEnrollmentStatus(ctx context.Context, enrollmentTokenID gid.GID) (*types.DeviceEnrollmentStatus, error) {
+	scope, err := r.authorize(ctx, enrollmentTokenID, itam.ActionDeviceEnrollmentTokenGet)
+	if err != nil {
+		return nil, err
+	}
+
+	status, err := r.itam.GetEnrollmentStatus(ctx, scope, enrollmentTokenID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot get device enrollment status", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	result := &types.DeviceEnrollmentStatus{
+		State:          types.DeviceEnrollmentStateTokenCreated,
+		TokenUsedCount: status.Token.UsedCount,
+	}
+
+	if status.Device != nil {
+		result.Device = types.NewDevice(status.Device)
+	}
+
+	switch {
+	case status.FirstActivityAt != nil:
+		result.State = types.DeviceEnrollmentStateFirstActivityReceived
+		result.FirstActivityAt = status.FirstActivityAt
+	case status.Device != nil:
+		result.State = types.DeviceEnrollmentStateDeviceEnrolled
 	}
 
 	return result, nil
