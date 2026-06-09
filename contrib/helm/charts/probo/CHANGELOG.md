@@ -4,6 +4,17 @@ All notable changes to the Probo Helm chart will be documented in this file.
 
 ## Unreleased
 
+## [0.5.0] - 2026-06-09
+
+### Added
+
+- Expose dedicated `thirdPartyDisambiguation` and `trackerEnrichment` agent config slots (provider/model/temperature/maxTokens), each falling back to `trackerMapping` when the provider is unset
+- `trackerMappingWorker.disambiguationAgentTimeout` to size the disambiguation sub-agent independently from the main mapping agent
+
+### Changed
+
+- Default `appVersion` to `probod v0.206.0`
+
 ## [0.4.0] - 2026-06-05
 
 ### Added
