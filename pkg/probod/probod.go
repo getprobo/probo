@@ -56,7 +56,6 @@ import (
 	pemutil "go.probo.inc/probo/pkg/crypto/pem"
 	"go.probo.inc/probo/pkg/esign"
 	"go.probo.inc/probo/pkg/evidencedescriber"
-	"go.probo.inc/probo/pkg/file"
 	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/geoloc"
 	"go.probo.inc/probo/pkg/html2pdf"
@@ -327,7 +326,7 @@ func (impl *Implm) Run(
 		return err
 	}
 
-	fileManagerService := filemanager.NewService(s3Client)
+	fileManagerService := filemanager.NewService(pgClient, baseURL, s3Client)
 
 	var (
 		samlCert *x509.Certificate
@@ -529,8 +528,6 @@ func (impl *Implm) Run(
 
 	cookieBannerService := cookiebanner.NewService(pgClient, impl.cfg.Branding)
 
-	fileService := file.NewService(pgClient, baseURL, fileManagerService)
-
 	proboService, err := probo.NewService(
 		ctx,
 		encryptionKey,
@@ -554,7 +551,6 @@ func (impl *Implm) Run(
 		esignService,
 		defaultConnectorRegistry,
 		time.Duration(impl.cfg.Auth.InvitationConfirmationTokenValidity)*time.Second,
-		fileService,
 	)
 	if err != nil {
 		return fmt.Errorf("cannot create probo service: %w", err)
@@ -572,7 +568,6 @@ func (impl *Implm) Run(
 		fileManagerService,
 		l,
 		slackService,
-		fileService,
 	)
 
 	accessReviewService := accessreview.NewService(
@@ -587,7 +582,7 @@ func (impl *Implm) Run(
 
 	iamService.Authorizer.RegisterPolicySet(agentrun.PolicySet())
 
-	thirdPartyService := thirdparty.NewService(pgClient, fileService, thirdPartyVetter)
+	thirdPartyService := thirdparty.NewService(pgClient, fileManagerService, thirdPartyVetter)
 	riskManagementService := riskmanagement.NewService(pgClient)
 
 	serverHandler, err := server.NewServer(
@@ -595,7 +590,7 @@ func (impl *Implm) Run(
 			AllowedOrigins:    impl.cfg.Api.Cors.AllowedOrigins,
 			ExtraHeaderFields: impl.cfg.Api.ExtraHeaderFields,
 			Probo:             proboService,
-			File:              fileService,
+			File:              fileManagerService,
 			IAM:               iamService,
 			Trust:             trustService,
 			ESign:             esignService,

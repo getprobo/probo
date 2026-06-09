@@ -27,6 +27,7 @@ import (
 	"go.gearno.de/crypto/uuid"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/filevalidation"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
@@ -160,7 +161,7 @@ func (s TrustCenterFileService) Create(
 	filename := req.File.Filename
 	contentType := req.File.ContentType
 
-	fileSize, err := s.svc.fileManager.GetFileSize(req.File.Content)
+	fileSize, err := filemanager.GetFileSize(req.File.Content)
 	if err != nil {
 		return nil, fmt.Errorf("cannot get file size: %w", err)
 	}
@@ -313,7 +314,7 @@ func (s TrustCenterFileService) GenerateFileURL(
 		return "", err
 	}
 
-	fileURL, err := s.svc.fileManager.GenerateFileURL(ctx, storedFile, duration)
+	fileURL, err := s.svc.fileManager.GeneratePresignedFileURL(ctx, storedFile, duration)
 	if err != nil {
 		return "", fmt.Errorf("cannot generate file URL: %w", err)
 	}

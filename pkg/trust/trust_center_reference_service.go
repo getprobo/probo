@@ -65,7 +65,7 @@ func (s TrustCenterReferenceService) GenerateLogoURL(
 		return "", fmt.Errorf("cannot load trust center reference: %w", err)
 	}
 
-	return s.svc.file.GenerateFileURL(ctx, reference.LogoFileID)
+	return s.svc.fileManager.GenerateFileURL(ctx, reference.LogoFileID)
 }
 
 func (s TrustCenterReferenceService) Get(

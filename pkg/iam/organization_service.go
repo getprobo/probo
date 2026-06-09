@@ -1410,7 +1410,7 @@ func (s OrganizationService) GenerateLogoURL(
 		return nil, fmt.Errorf("cannot generate logo URL: %w", err)
 	}
 
-	presignedURL, err := s.fm.GenerateFileURL(ctx, file, expiresIn)
+	presignedURL, err := s.fm.GeneratePresignedFileURL(ctx, file, expiresIn)
 	if err != nil {
 		return nil, fmt.Errorf("cannot generate file URL: %w", err)
 	}
@@ -1456,7 +1456,7 @@ func (s OrganizationService) GenerateHorizontalLogoURL(
 		return nil, err
 	}
 
-	presignedURL, err := s.fm.GenerateFileURL(ctx, file, expiresIn)
+	presignedURL, err := s.fm.GeneratePresignedFileURL(ctx, file, expiresIn)
 	if err != nil {
 		return nil, fmt.Errorf("cannot generate file URL: %w", err)
 	}

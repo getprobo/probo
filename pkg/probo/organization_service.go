@@ -25,6 +25,7 @@ import (
 	"go.gearno.de/crypto/uuid"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/filevalidation"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/validator"
@@ -295,7 +296,7 @@ func (s OrganizationService) Update(
 					}
 				}
 
-				fileSize, err := s.svc.fileManager.GetFileSize(req.File.Content)
+				fileSize, err := filemanager.GetFileSize(req.File.Content)
 				if err != nil {
 					return fmt.Errorf("cannot get file size: %w", err)
 				}
@@ -359,7 +360,7 @@ func (s OrganizationService) Update(
 					}
 				}
 
-				fileSize, err := s.svc.fileManager.GetFileSize(req.HorizontalLogoFile.Content)
+				fileSize, err := filemanager.GetFileSize(req.HorizontalLogoFile.Content)
 				if err != nil {
 					return fmt.Errorf("cannot get file size: %w", err)
 				}
@@ -450,7 +451,7 @@ func (s OrganizationService) GenerateLogoURL(
 		return nil, nil
 	}
 
-	presignedURL, err := s.svc.fileManager.GenerateFileURL(ctx, file, expiresIn)
+	presignedURL, err := s.svc.fileManager.GeneratePresignedFileURL(ctx, file, expiresIn)
 	if err != nil {
 		return nil, fmt.Errorf("cannot generate file URL: %w", err)
 	}
@@ -492,7 +493,7 @@ func (s OrganizationService) GenerateHorizontalLogoURL(
 		return nil, nil
 	}
 
-	presignedURL, err := s.svc.fileManager.GenerateFileURL(ctx, file, expiresIn)
+	presignedURL, err := s.svc.fileManager.GeneratePresignedFileURL(ctx, file, expiresIn)
 	if err != nil {
 		return nil, fmt.Errorf("cannot generate file URL: %w", err)
 	}

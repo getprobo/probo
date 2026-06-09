@@ -25,7 +25,7 @@ import (
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/brand"
 	"go.probo.inc/probo/pkg/coredata"
-	"go.probo.inc/probo/pkg/file"
+	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/probo"
@@ -38,14 +38,14 @@ const presignedURLExpiry = 1 * time.Hour
 
 type Handler struct {
 	logger  *log.Logger
-	fileSvc *file.Service
+	fileSvc *filemanager.Service
 	probo   *probo.Service
 	iamSvc  *iam.Service
 }
 
 func NewMux(
 	logger *log.Logger,
-	fileSvc *file.Service,
+	fileSvc *filemanager.Service,
 	proboSvc *probo.Service,
 	iamSvc *iam.Service,
 	cookieConfig securecookie.Config,
@@ -94,7 +94,7 @@ func (h *Handler) handleGetPublicFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	presignedURL, err := h.fileSvc.GeneratePublicPresignedURL(r.Context(), fileID, presignedURLExpiry)
+	presignedURL, err := h.fileSvc.GeneratePublicPresignedFileURL(r.Context(), fileID, presignedURLExpiry)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			jsonutil.RenderNotFound(w, fmt.Errorf("file not found"))
@@ -157,7 +157,7 @@ func (h *Handler) handleGetFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	presignedURL, err := h.fileSvc.GeneratePresignedURL(ctx, f, presignedURLExpiry)
+	presignedURL, err := h.fileSvc.GeneratePresignedFileURL(ctx, f, presignedURLExpiry)
 	if err != nil {
 		h.logger.ErrorCtx(ctx, "cannot generate file URL", log.Error(err), log.String("file_id", fileIDStr))
 		jsonutil.RenderInternalServerError(w)

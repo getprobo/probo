@@ -20,18 +20,18 @@ import (
 
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
-	"go.probo.inc/probo/pkg/file"
+	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/gid"
 )
 
 type Service struct {
 	pg             *pg.Client
-	file           *file.Service
+	file           *filemanager.Service
 	vetter         Vetter
 	vettingEnabled bool
 }
 
-func NewService(pgClient *pg.Client, fileSvc *file.Service, vetter Vetter) *Service {
+func NewService(pgClient *pg.Client, fileSvc *filemanager.Service, vetter Vetter) *Service {
 	_, disabled := vetter.(DisabledVetter)
 
 	return &Service{
