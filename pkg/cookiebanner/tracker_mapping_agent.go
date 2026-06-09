@@ -171,8 +171,12 @@ func buildTrackerIdentificationPrompt(
 	)
 }
 
-func buildAgentPrompt(tp coredata.TrackerPattern, domains []string) string {
+func buildAgentPrompt(tp coredata.TrackerPattern, domains []string, siteDomain string) string {
 	prompt := buildTrackerIdentificationPrompt(tp.Pattern, tp.TrackerType, tp.MatchType, tp.MaxAgeSeconds)
+
+	if siteDomain != "" {
+		prompt += fmt.Sprintf("<scanned_site> %s </scanned_site>\n", siteDomain)
+	}
 
 	if len(domains) > 0 {
 		prompt += fmt.Sprintf("<observed_domains> %s </observed_domains>\n", strings.Join(domains, ", "))

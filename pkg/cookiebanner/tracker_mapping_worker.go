@@ -18,6 +18,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"go.gearno.de/kit/log"
@@ -637,7 +638,9 @@ func (h *trackerMappingHandler) identifyWithAgent(
 
 	domains = uri.FilterFirstPartyDomains(domains, siteOrigin)
 
-	prompt := buildAgentPrompt(tp, domains)
+	siteDomain := uri.ExtractDomain(siteOrigin)
+
+	prompt := buildAgentPrompt(tp, domains, siteDomain)
 
 	agentCtx, cancel := context.WithTimeout(ctx, h.agentTimeout)
 	defer cancel()
@@ -680,9 +683,65 @@ func (h *trackerMappingHandler) identifyWithAgent(
 		return nil, nil
 	}
 
+	// Backstop for the prompt rule that the scanned site is never a third
+	// party of itself: a pattern that embeds the site's own domain (e.g.
+	// an "ethereum-https://example.com" wallet-extension key, or an
+	// owner-set tracker) can lead the agent to attribute the site's own
+	// brand. Discard such attributions outright so the pattern falls
+	// through to the unmatched fallback instead of being mapped to the
+	// site owner.
+	if nameMatchesSiteDomain(identification.ThirdPartyName, siteOrigin) {
+		h.logger.InfoCtx(
+			ctx,
+			"agent attributed scanned site as third party, discarding",
+			log.String("pattern", tp.Pattern),
+		)
+
+		return nil, nil
+	}
+
 	return &agentIdentification{
 		result: identification,
 	}, nil
+}
+
+// nameMatchesSiteDomain reports whether a candidate vendor name refers to
+// the scanned site itself. The site owner is never a third party of its
+// own site, so an attribution whose name resolves to the site's own
+// domain must be rejected. The comparison is alphanumeric-normalised and
+// conservative (equality against the eTLD+1 and its primary label) to
+// avoid suppressing unrelated vendors whose name merely overlaps.
+func nameMatchesSiteDomain(name, siteOrigin string) bool {
+	domain := uri.ExtractDomain(siteOrigin)
+	if domain == "" {
+		return false
+	}
+
+	normalizedName := normalizeAlnum(name)
+	if normalizedName == "" {
+		return false
+	}
+
+	label, _, _ := strings.Cut(domain, ".")
+
+	return normalizedName == normalizeAlnum(domain) ||
+		normalizedName == normalizeAlnum(label)
+}
+
+// normalizeAlnum lowercases s and keeps only ASCII letters and digits,
+// so vendor names and domains can be compared free of spacing,
+// punctuation, and casing differences (e.g. "Letaido" and "letaido.com"
+// both reduce to a comparable form).
+func normalizeAlnum(s string) string {
+	var b strings.Builder
+
+	for _, r := range strings.ToLower(s) {
+		if (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') {
+			b.WriteRune(r)
+		}
+	}
+
+	return b.String()
 }
 
 // persistAgentIdentification writes a confident agent identification:
