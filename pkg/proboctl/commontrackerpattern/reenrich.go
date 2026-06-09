@@ -127,11 +127,13 @@ func newCmdReenrich(f *cmdutil.Factory) *cobra.Command {
 }
 
 // resolveReenrichIDs turns the selection flags into the set of common
-// tracker pattern IDs to re-enrich. Exactly one selection anchor must be
+// tracker pattern IDs to re-enrich. At most one selection anchor may be
 // provided: --id, --linked-banner, --linked-org, or --common-third-party.
 // The --tracker-type, --keyword, --state, and --without-description flags
 // further narrow the anchor's result, except with --id, where the listed
-// patterns are used verbatim.
+// patterns are used verbatim. With no anchor, the filtering flags select
+// across the whole catalog (e.g. --without-description re-enriches every
+// pattern with a blank description).
 func resolveReenrichIDs(
 	ctx context.Context,
 	pgClient *pg.Client,
@@ -148,10 +150,7 @@ func resolveReenrichIDs(
 		}
 	}
 
-	switch {
-	case anchors == 0:
-		return nil, fmt.Errorf("specify exactly one selection anchor: --id, --linked-banner, --linked-org, or --common-third-party")
-	case anchors > 1:
+	if anchors > 1 {
 		return nil, fmt.Errorf("--id, --linked-banner, --linked-org, and --common-third-party are mutually exclusive")
 	}
 
