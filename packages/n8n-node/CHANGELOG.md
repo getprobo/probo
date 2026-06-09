@@ -4,8 +4,12 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+## [0.192.0] - 2026-06-09
+
 ### Added
 
+- Add risk assessment `boundary` resource (`create`, `get`, `getAll`, `update`, `delete`) and `boundaryId` field on node create/update to group risk assessment nodes within a scope
+- Add `cookieBanner regeneratePolicy` operation to re-trigger tracker policy generation for a banner that already has a published version
 - Expose `commonTrackerPatternId` on tracker pattern `get`/`getAll` operations to indicate whether a pattern is linked to the common tracker catalog
 
 ## [0.191.0] - 2026-06-02
