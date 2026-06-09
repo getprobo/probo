@@ -37,6 +37,7 @@ import { Linear } from "./Linear";
 import { Metabase } from "./Metabase";
 import { Microsoft } from "./Microsoft";
 import { Monday } from "./Monday";
+import { Neon } from "./Neon";
 import { Netlify } from "./Netlify";
 import { Notion } from "./Notion";
 import { Okta } from "./Okta";
@@ -83,6 +84,7 @@ const thirdParties: Record<string, FC<ComponentProps<"svg">>> = {
   MICROSOFT: Microsoft,
   MICROSOFT_365: Microsoft,
   MONDAY: Monday,
+  NEON: Neon,
   NETLIFY: Netlify,
   NOTION: Notion,
   OKTA: Okta,

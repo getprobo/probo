@@ -70,6 +70,7 @@ enum ConnectorProvider
     ZENDESK @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderZendesk")
     QOVERY @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderQovery")
     RENDER @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderRender")
+    NEON @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderNeon")
 }
 
 type ConnectorProviderInfo {
@@ -150,6 +151,7 @@ input CreateAPIKeyConnectorInput {
     betterStackTeamName: String
     qoveryOrganizationId: String
     renderWorkspaceId: String
+    neonOrganizationId: String
 }
 
 type CreateAPIKeyConnectorPayload {

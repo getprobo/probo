@@ -408,6 +408,60 @@ func (r *renderNameResolver) ResolveInstanceName(ctx context.Context) (string, e
 	return resp.Name, nil
 }
 
+// neonNameResolver resolves the Neon organization name.
+type neonNameResolver struct {
+	httpClient     *http.Client
+	organizationID string
+}
+
+func NewNeonNameResolver(httpClient *http.Client, organizationID string) NameResolver {
+	return &neonNameResolver{
+		httpClient:     httpClient,
+		organizationID: organizationID,
+	}
+}
+
+func (r *neonNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
+	if r.organizationID == "" {
+		return "", nil
+	}
+
+	endpoint, err := url.JoinPath(neonAPIBaseURL, "organizations", url.PathEscape(r.organizationID))
+	if err != nil {
+		return "", fmt.Errorf("cannot build neon organization URL: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
+	if err != nil {
+		return "", fmt.Errorf("cannot create neon organization request: %w", err)
+	}
+
+	req.Header.Set("Accept", "application/json")
+
+	httpResp, err := r.httpClient.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("cannot execute neon organization request: %w", err)
+	}
+
+	defer func() { _ = httpResp.Body.Close() }()
+
+	// Best-effort: a non-2xx (revoked key, deleted org, stale ID) must not
+	// make the source-name worker retry forever. Give up gracefully and keep
+	// the generic source name; a dead key surfaces on the next ListAccounts.
+	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
+		return "", nil
+	}
+
+	var resp struct {
+		Name string `json:"name"`
+	}
+	if err := json.NewDecoder(httpResp.Body).Decode(&resp); err != nil {
+		return "", fmt.Errorf("cannot decode neon organization response: %w", err)
+	}
+
+	return resp.Name, nil
+}
+
 // hubspotNameResolver resolves the HubSpot account name.
 type hubspotNameResolver struct {
 	httpClient *http.Client

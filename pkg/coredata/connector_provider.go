@@ -64,6 +64,7 @@ const (
 	ConnectorProviderZendesk      ConnectorProvider = "ZENDESK"
 	ConnectorProviderQovery       ConnectorProvider = "QOVERY"
 	ConnectorProviderRender       ConnectorProvider = "RENDER"
+	ConnectorProviderNeon         ConnectorProvider = "NEON"
 )
 
 var (
@@ -115,6 +116,7 @@ func ConnectorProviders() []ConnectorProvider {
 		ConnectorProviderZendesk,
 		ConnectorProviderQovery,
 		ConnectorProviderRender,
+		ConnectorProviderNeon,
 	}
 }
 
@@ -161,7 +163,8 @@ func (v ConnectorProvider) IsValid() bool {
 		ConnectorProviderOkta,
 		ConnectorProviderZendesk,
 		ConnectorProviderQovery,
-		ConnectorProviderRender:
+		ConnectorProviderRender,
+		ConnectorProviderNeon:
 		return true
 	}
 

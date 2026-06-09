@@ -21,6 +21,7 @@ export { Linear } from "./Linear";
 export { Metabase } from "./Metabase";
 export { Microsoft } from "./Microsoft";
 export { Monday } from "./Monday";
+export { Neon } from "./Neon";
 export { Netlify } from "./Netlify";
 export { Notion } from "./Notion";
 export { Okta } from "./Okta";

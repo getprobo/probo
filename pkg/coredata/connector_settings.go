@@ -152,6 +152,10 @@ type (
 	RenderConnectorSettings struct {
 		OwnerID string `json:"owner_id"`
 	}
+
+	NeonConnectorSettings struct {
+		OrganizationID string `json:"organization_id"`
+	}
 )
 
 // GrantType returns the OAuth2 grant type recorded on the connector's

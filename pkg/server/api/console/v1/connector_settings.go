@@ -172,6 +172,12 @@ func apiKeyConnectorSettings(input types.CreateAPIKeyConnectorInput) (json.RawMe
 		}
 
 		return json.Marshal(&coredata.RenderConnectorSettings{OwnerID: *input.RenderWorkspaceID})
+	case coredata.ConnectorProviderNeon:
+		if input.NeonOrganizationID == nil || *input.NeonOrganizationID == "" {
+			return nil, fmt.Errorf("cannot create neon connector: neonOrganizationId is required")
+		}
+
+		return json.Marshal(&coredata.NeonConnectorSettings{OrganizationID: *input.NeonOrganizationID})
 	}
 
 	return nil, nil

@@ -44,6 +44,7 @@ func NewBuiltinRegistry() *Registry {
 		metabaseRegistration(),
 		microsoft365Registration(),
 		mondayRegistration(),
+		neonRegistration(),
 		netlifyRegistration(),
 		notionRegistration(),
 		oktaRegistration(),

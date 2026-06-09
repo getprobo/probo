@@ -157,6 +157,9 @@ function mapAPIKeyExtraSettingToField(
     case "RENDER":
       if (settingKey === "workspaceId") return "renderWorkspaceId";
       break;
+    case "NEON":
+      if (settingKey === "organizationId") return "neonOrganizationId";
+      break;
   }
   return null;
 }
