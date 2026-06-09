@@ -4,6 +4,32 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.206.0] - 2026-06-09
+
+### Added
+
+- `RiskAssessmentBoundary` first-class entity to group nodes within a risk assessment scope, with self-nesting parent boundary, scope-membership validation, nested-subgraph Mermaid rendering, and dedicated IAM actions
+- `regenerateCookieBannerTrackerPolicy` mutation/MCP tool to re-trigger tracker policy generation on a banner that already has a published version, gated by a dedicated `regenerate-policy` action
+- Better Stack access-review connector (Uptime API team members + pending invitations)
+- SigNoz access-review connector (organization members, region/tenant or self-hosted base URL)
+- `commonTrackerPatternId` field on `TrackerPattern` to indicate whether a pattern is linked to the global common-tracker catalog
+- Files API: public endpoint `GET /api/files/v1/public/{fileID}` (unauthenticated, public files only) and private endpoint `GET /api/files/v1/{fileID}` (session/API key/OAuth2, `core:file:get` enforced); IAM and not-found errors both return 404
+- Static brand assets served via `/api/files/v1/static` instead of S3
+
+### Changed
+
+- Connector provider infos promoted from `Organization.connectorProviderInfos` to a root-level `accessReviewDrivers` query, listable by any authenticated identity
+- Tracker-mapping, common-pattern enrichment, and third-party disambiguation agents each get their own config (own timeout, own max-turns, own optional provider slot, with fallback to the tracker-mapping slot when unset)
+- Console: tracker pages now surface common-tracker/third-party links with a "common" badge and updated pattern properties display
+
+### Fixed
+
+- Cookie tracker pattern analysis: removed unused sync re-enrich path and tightened reset/remap scoping
+
+### Removed
+
+- `ActionFileDownloadUrl` (replaced by `ActionFileGet`) and the standalone `pkg/filesign` package (folded into `file.Service`)
+
 ## [0.205.0] - 2026-06-08
 
 ### Added
