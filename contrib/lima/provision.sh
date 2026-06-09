@@ -126,7 +126,7 @@ AWS_ACCESS_KEY_ID="probod" \
 AWS_SECRET_ACCESS_KEY="thisisnotasecret" \
 AWS_USE_PATH_STYLE=true \
 ACME_DIRECTORY="https://127.0.0.1:14000/dir" \
-ACME_EMAIL="admin@getprobo.com" \
+ACME_EMAIL="admin@probo.com" \
 ACME_KEY_TYPE="EC256" \
 ACME_ROOT_CA="$(cat /workspace/compose/pebble/certs/rootCA.pem)" \
     /workspace/bin/probod-bootstrap -output /etc/probod/config.yml

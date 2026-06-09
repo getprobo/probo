@@ -4,7 +4,7 @@
 
 If you believe you have found a security vulnerability in this
 project, please report it to us by emailing
-[security@getprobo.com](security@getprobo.com).
+[security@probo.com](security@probo.com).
 
 Please include:
 - A description of the issue

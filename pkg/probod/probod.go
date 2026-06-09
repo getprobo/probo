@@ -159,7 +159,7 @@ func New() *Implm {
 				ResolverAddr:      "8.8.8.8:53",
 				ACME: ACMEConfig{
 					Directory: "https://acme-v02.api.letsencrypt.org/directory",
-					Email:     "admin@getprobo.com",
+					Email:     "admin@probo.com",
 					KeyType:   "EC256",
 				},
 			},

@@ -91,7 +91,7 @@ export function ViewerDropdown(props: { fKey: ViewerDropdownFragment$key }) {
         />
       )}
       <UserDropdownItem
-        to="mailto:support@getprobo.com"
+        to="mailto:support@probo.com"
         icon={IconCircleQuestionmark}
         label={__("Help")}
       />

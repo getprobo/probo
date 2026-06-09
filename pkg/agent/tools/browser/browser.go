@@ -53,8 +53,8 @@ func NewBrowser(ctx context.Context, addr string) *Browser {
 }
 
 // SetAllowedDomain restricts navigation to URLs under the given domain and
-// its subdomains. For example, setting "getprobo.com" allows navigation to
-// getprobo.com, www.getprobo.com, and compliance.getprobo.com.
+// its subdomains. For example, setting "probo.com" allows navigation to
+// probo.com, www.probo.com, and docs.probo.com.
 // This replaces any previously set domains.
 func (b *Browser) SetAllowedDomain(domain string) {
 	domain = strings.ToLower(strings.TrimSpace(domain))

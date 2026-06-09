@@ -56,7 +56,7 @@ UPDATE vendors SET
     WHEN 'Ramp' THEN 'https://trust.ramp.com/'
     WHEN 'ClickHouse' THEN 'https://clickhouse.com/legal/agreements/subprocessors'
     WHEN 'Tailscale' THEN 'https://tailscale.com/dpa-subprocessors'
-    WHEN 'Probo' THEN 'https://www.getprobo.com/subprocessors'
+    WHEN 'Probo' THEN 'https://www.probo.com/subprocessors'
     WHEN 'folk' THEN 'https://www.folk.app/privacy-policy#3-list-of-sub-processors'
     WHEN 'Claap' THEN 'https://www.claap.io/legal/privacy-policy#sub-processors'
     WHEN 'Pitch' THEN 'https://pitch.com/dpa#annex-7-2'

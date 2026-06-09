@@ -255,7 +255,7 @@ func TestBuilder_Build_Defaults(t *testing.T) {
 	assert.Equal(t, "custom.getprobo.com", cfg.Probod.CustomDomains.CnameTarget)
 	assert.Equal(t, "8.8.8.8:53", cfg.Probod.CustomDomains.ResolverAddr)
 	assert.Equal(t, "https://acme-v02.api.letsencrypt.org/directory", cfg.Probod.CustomDomains.ACME.Directory)
-	assert.Equal(t, "admin@getprobo.com", cfg.Probod.CustomDomains.ACME.Email)
+	assert.Equal(t, "admin@probo.com", cfg.Probod.CustomDomains.ACME.Email)
 	assert.Equal(t, "EC256", cfg.Probod.CustomDomains.ACME.KeyType)
 
 	// SCIM bridge config

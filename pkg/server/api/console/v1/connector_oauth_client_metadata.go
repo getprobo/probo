@@ -33,8 +33,8 @@ import (
 // These describe the Probo product itself (not the per-tenant deployment), so
 // they are the canonical brand homepage and logo rather than the baseURL.
 const (
-	proboBrandURI = "https://www.getprobo.com"
-	proboLogoURI  = "https://www.getprobo.com/probo-logo-only.svg"
+	proboBrandURI = "https://www.probo.com"
+	proboLogoURI  = "https://www.probo.com/probo-logo-only.svg"
 )
 
 type oauthClientMetadata struct {

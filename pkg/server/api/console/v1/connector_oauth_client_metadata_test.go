@@ -67,8 +67,8 @@ func TestHandleConnectorOAuthClientMetadata(t *testing.T) {
 	// ...while the brand fields shown on the consent screen are the canonical
 	// Probo product identity, NOT the per-tenant deployment URL.
 	assert.Equal(t, "Probo", doc.ClientName)
-	assert.Equal(t, "https://www.getprobo.com", doc.ClientURI)
-	assert.Equal(t, "https://www.getprobo.com/probo-logo-only.svg", doc.LogoURI)
+	assert.Equal(t, "https://www.probo.com", doc.ClientURI)
+	assert.Equal(t, "https://www.probo.com/probo-logo-only.svg", doc.LogoURI)
 	assert.Equal(t, "none", doc.TokenEndpointAuthMethod, "public client must advertise token_endpoint_auth_method none")
 	assert.Contains(t, doc.GrantTypes, "authorization_code")
 	assert.Contains(t, doc.GrantTypes, "refresh_token")

@@ -2,7 +2,7 @@
 
 This is a paragraph **with some bold** and *some italic* and some <u>underlined text</u>.\
 It contains a line break, and some ~~strikethrough.~~\
-There's some `inline code`. And a [link](https://getprobo.com)
+There's some `inline code`. And a [link](https://probo.com)
 
 ## Heading 2
 

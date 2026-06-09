@@ -303,7 +303,7 @@ export function NDAPage(props: {
             </div>
           </div>
           <a
-            href="https://www.getprobo.com/"
+            href="https://www.probo.com/"
             className="flex gap-1 text-sm font-medium text-txt-tertiary items-center py-6"
           >
             Powered by

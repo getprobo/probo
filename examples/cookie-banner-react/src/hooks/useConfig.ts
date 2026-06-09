@@ -7,7 +7,7 @@ export interface Config {
 
 const STORAGE_KEY = "probo-example-config";
 
-// Seed defaults from Vite env (loaded from ../../../getprobo.com/.env) so the
+// Seed defaults from Vite env (loaded from ../../../probo.com/.env) so the
 // example is usable without any manual setup when those vars are present.
 const defaultConfig: Config = {
   bannerId: import.meta.env.PUBLIC_COOKIE_BANNER_ID ?? "",

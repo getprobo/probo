@@ -108,7 +108,7 @@ func TestUnmarshalDocument(t *testing.T) {
 
 			linkAttrs, err := linkNode.Marks[0].LinkAttrs()
 			require.NoError(t, err)
-			assert.Equal(t, "https://getprobo.com", linkAttrs.Href)
+			assert.Equal(t, "https://probo.com", linkAttrs.Href)
 			require.NotNil(t, linkAttrs.Target)
 			assert.Equal(t, "_blank", *linkAttrs.Target)
 			require.NotNil(t, linkAttrs.Rel)

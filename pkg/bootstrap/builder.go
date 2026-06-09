@@ -254,7 +254,7 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 				CAAIssuerDomain:   b.getEnvOrDefault("CUSTOM_DOMAINS_CAA_ISSUER_DOMAIN", "letsencrypt.org"),
 				ACME: probodconfig.ACMEConfig{
 					Directory:  b.getEnvOrDefault("ACME_DIRECTORY", "https://acme-v02.api.letsencrypt.org/directory"),
-					Email:      b.getEnvOrDefault("ACME_EMAIL", "admin@getprobo.com"),
+					Email:      b.getEnvOrDefault("ACME_EMAIL", "admin@probo.com"),
 					KeyType:    b.getEnvOrDefault("ACME_KEY_TYPE", "EC256"),
 					RootCA:     b.getEnv("ACME_ROOT_CA"),
 					AccountKey: b.getEnv("ACME_ACCOUNT_KEY"),

@@ -61,7 +61,7 @@ export const EmailLayout = ({
             </Text>
             <Text style={footerAddress}>
               <span style={{verticalAlign: "middle"}}>Powered By </span>
-              <Link style={{display: "inline-block", height: "16px", verticalAlign: "middle"}} href="https://www.getprobo.com">
+              <Link style={{display: "inline-block", height: "16px", verticalAlign: "middle"}} href="https://www.probo.com">
                 <ProboLogo />
               </Link>
             </Text>

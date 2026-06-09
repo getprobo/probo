@@ -15,7 +15,7 @@ When using this data, you must:
 When using this data, please include the following attribution:
 
 ```
-Data sourced from Probo Inc. (https://www.getprobo.com) under CC BY-SA 4.0 license
+Data sourced from Probo Inc. (https://www.probo.com) under CC BY-SA 4.0 license
 ```
 
 ## More Information

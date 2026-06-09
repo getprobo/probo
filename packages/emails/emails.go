@@ -68,7 +68,7 @@ func DefaultPresenterConfig(baseURL string) PresenterConfig {
 		BaseURL:                         baseURL, // can change to custom domain when needed
 		PoweredByLogoPath:               brand.DefaultPoweredByLogoPath,
 		SenderCompanyName:               "Probo",
-		SenderCompanyWebsiteURL:         "https://www.getprobo.com",
+		SenderCompanyWebsiteURL:         "https://www.probo.com",
 		SenderCompanyLogoPath:           brand.DefaultSenderCompanyLogoPath,
 		SenderCompanyHeadquarterAddress: "Probo Inc, 490 Post St, STE 640, San Francisco, CA, 94102, US",
 	}

@@ -1,1 +1,1 @@
-Move to [getprobo.com/docs](https://www.getprobo.com/docs)
+Move to [probo.com/docs](https://www.probo.com/docs)
