@@ -5,6 +5,30 @@ documented in this file.
 
 ## Unreleased
 
+### Added
+
+- macOS and Windows only: menu bar / system tray enrollment helper
+  (`probo-agent tray`). After install, a native enrollment window opens
+  automatically when the device is not yet enrolled (SwiftUI on macOS,
+  WinForms on Windows); users pick a Probo region (US, EU, or Self
+  hosted) and provide an enrollment token.
+  Once enrolled the menu shows **Connected** with **About** and
+  **Quit** only. Linux and FreeBSD keep the CLI-only
+  `probo-agent install` flow.
+- Native enrollment UI helpers (`probo-agent-enroll-ui`) for macOS and
+  Windows, bundled with release archives and macOS `.pkg` installers.
+- Shared `regions.json` manifest for enrollment UI region labels and
+  console URLs, validated against Go server URL constants.
+- World-readable enrollment marker so the user-session tray helper
+  can detect enrollment without reading the API key.
+
+### Changed
+
+- macOS `.pkg` installer no longer prompts for an enrollment token
+  during installation. Enrollment is handled by the menu bar helper
+  (MDM pre-staged `/tmp/probo-agent.conf` still works). Linux and
+  FreeBSD installers are unchanged.
+
 ## [0.1.0] - 2026-05-26
 
 ### Added

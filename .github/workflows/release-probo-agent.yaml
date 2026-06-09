@@ -11,32 +11,75 @@ permissions:
 jobs:
   build-binary:
     name: "binary (${{ matrix.goos }}/${{ matrix.goarch }})"
-    runs-on: "runs-on=${{ github.run_id }}/runner=4cpu-linux-x64/extras=s3-cache"
+    runs-on: ${{ matrix.runner }}
     permissions:
       contents: "read"
     strategy:
       fail-fast: false
       matrix:
         include:
-          - { goos: linux, goarch: amd64 }
-          - { goos: linux, goarch: arm64 }
-          - { goos: darwin, goarch: amd64 }
-          - { goos: darwin, goarch: arm64 }
-          - { goos: windows, goarch: amd64 }
-          - { goos: windows, goarch: arm64 }
-          - { goos: freebsd, goarch: amd64 }
-          - { goos: freebsd, goarch: arm64 }
+          - goos: linux
+            goarch: amd64
+            cgo: "0"
+            cc: ""
+            runner: "runs-on=${{ github.run_id }}/runner=4cpu-linux-x64/extras=s3-cache"
+          - goos: linux
+            goarch: arm64
+            cgo: "0"
+            cc: ""
+            runner: "runs-on=${{ github.run_id }}/runner=4cpu-linux-x64/extras=s3-cache"
+          - goos: darwin
+            goarch: amd64
+            cgo: "1"
+            cc: ""
+            runner: macos-14-large
+          - goos: darwin
+            goarch: arm64
+            cgo: "1"
+            cc: ""
+            runner: macos-14
+          - goos: windows
+            goarch: amd64
+            cgo: "1"
+            cc: x86_64-w64-mingw32-gcc
+            runner: "runs-on=${{ github.run_id }}/runner=4cpu-linux-x64/extras=s3-cache"
+          - goos: windows
+            goarch: arm64
+            cgo: "1"
+            cc: aarch64-w64-mingw32-gcc
+            runner: "runs-on=${{ github.run_id }}/runner=4cpu-linux-x64/extras=s3-cache"
+          - goos: freebsd
+            goarch: amd64
+            cgo: "0"
+            cc: ""
+            runner: "runs-on=${{ github.run_id }}/runner=4cpu-linux-x64/extras=s3-cache"
+          - goos: freebsd
+            goarch: arm64
+            cgo: "0"
+            cc: ""
+            runner: "runs-on=${{ github.run_id }}/runner=4cpu-linux-x64/extras=s3-cache"
     steps:
       - uses: "actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd" # v6
         with:
           submodules: recursive
       - uses: "runs-on/action@742bf56072eb4845a0f94b3394673e4903c90ff0" # v2
+        if: startsWith(matrix.runner, 'runs-on=')
       - uses: "./.github/actions/setup"
         with:
           node: "false"
+      - name: "Install Windows cross-compiler"
+        if: matrix.goos == 'windows'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-mingw-w64-x86-64 gcc-mingw-w64
+      - uses: "actions/setup-dotnet@67a3573fe9eb986a7f1e2c19455fa894544622b7" # v4
+        if: matrix.goos == 'windows'
+        with:
+          dotnet-version: "8.0.x"
       - name: "Build binary"
         env:
-          CGO_ENABLED: "0"
+          CGO_ENABLED: "${{ matrix.cgo }}"
+          CC: "${{ matrix.cc }}"
           GOOS: "${{ matrix.goos }}"
           GOARCH: "${{ matrix.goarch }}"
         run: |
@@ -46,6 +89,16 @@ jobs:
 
           go build -ldflags "-s -w -X 'main.version=${VERSION}'" \
             -gcflags="-e" -o "dist/probo-agent${EXT}" ./cmd/probo-agent/main.go
+
+          if [ "$GOOS" = "windows" ]; then
+            case "$GOARCH" in
+              amd64) ENROLL_ARCH="amd64" ;;
+              arm64) ENROLL_ARCH="arm64" ;;
+            esac
+            cmd/probo-agent/installer/windows/build-enroll-ui.sh \
+              --arch "${ENROLL_ARCH}" \
+              --output dist
+          fi
       - name: "Create archive"
         env:
           GOOS: "${{ matrix.goos }}"
@@ -68,6 +121,10 @@ jobs:
           AGENT_DIR="probo-agent_${OS}_${ARCH}"
           mkdir -p "staging/${AGENT_DIR}"
           cp "dist/probo-agent${EXT}" README.md LICENSE "staging/${AGENT_DIR}/"
+          if [ "$GOOS" = "windows" ] && [ -f dist/probo-agent-enroll-ui.exe ]; then
+            cp dist/probo-agent-enroll-ui.exe "staging/${AGENT_DIR}/"
+            cp cmd/probo-agent/installer/regions.json "staging/${AGENT_DIR}/"
+          fi
           if [ -f cmd/probo-agent/CHANGELOG.md ]; then
             cp cmd/probo-agent/CHANGELOG.md "staging/${AGENT_DIR}/"
           fi

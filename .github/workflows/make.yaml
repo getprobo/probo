@@ -110,32 +110,71 @@ jobs:
   build-snapshot-probo-agent:
     name: "probo-agent (${{ matrix.goos }}/${{ matrix.goarch }})"
     if: github.event_name == 'push'
-    runs-on: "runs-on=${{ github.run_id }}/runner=4cpu-linux-x64/extras=s3-cache"
+    runs-on: ${{ matrix.runner }}
     permissions:
       contents: "read"
     strategy:
       fail-fast: false
       matrix:
         include:
-          - { goos: linux, goarch: amd64 }
-          - { goos: linux, goarch: arm64 }
-          - { goos: darwin, goarch: amd64 }
-          - { goos: darwin, goarch: arm64 }
-          - { goos: windows, goarch: amd64 }
-          - { goos: windows, goarch: arm64 }
-          - { goos: freebsd, goarch: amd64 }
-          - { goos: freebsd, goarch: arm64 }
+          - goos: linux
+            goarch: amd64
+            cgo: "0"
+            cc: ""
+            runner: "runs-on=${{ github.run_id }}/runner=4cpu-linux-x64/extras=s3-cache"
+          - goos: linux
+            goarch: arm64
+            cgo: "0"
+            cc: ""
+            runner: "runs-on=${{ github.run_id }}/runner=4cpu-linux-x64/extras=s3-cache"
+          - goos: darwin
+            goarch: amd64
+            cgo: "1"
+            cc: ""
+            runner: macos-14-large
+          - goos: darwin
+            goarch: arm64
+            cgo: "1"
+            cc: ""
+            runner: macos-14
+          - goos: windows
+            goarch: amd64
+            cgo: "1"
+            cc: x86_64-w64-mingw32-gcc
+            runner: "runs-on=${{ github.run_id }}/runner=4cpu-linux-x64/extras=s3-cache"
+          - goos: windows
+            goarch: arm64
+            cgo: "1"
+            cc: aarch64-w64-mingw32-gcc
+            runner: "runs-on=${{ github.run_id }}/runner=4cpu-linux-x64/extras=s3-cache"
+          - goos: freebsd
+            goarch: amd64
+            cgo: "0"
+            cc: ""
+            runner: "runs-on=${{ github.run_id }}/runner=4cpu-linux-x64/extras=s3-cache"
+          - goos: freebsd
+            goarch: arm64
+            cgo: "0"
+            cc: ""
+            runner: "runs-on=${{ github.run_id }}/runner=4cpu-linux-x64/extras=s3-cache"
     steps:
       - uses: "actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd" # v6
         with:
           submodules: recursive
       - uses: "runs-on/action@742bf56072eb4845a0f94b3394673e4903c90ff0" # v2
+        if: startsWith(matrix.runner, 'runs-on=')
       - uses: "./.github/actions/setup"
         with:
           node: "false"
+      - name: "Install Windows cross-compiler"
+        if: matrix.goos == 'windows'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-mingw-w64-x86-64 gcc-mingw-w64
       - name: "Build probo-agent"
         env:
-          CGO_ENABLED: "0"
+          CGO_ENABLED: "${{ matrix.cgo }}"
+          CC: "${{ matrix.cc }}"
           GOOS: "${{ matrix.goos }}"
           GOARCH: "${{ matrix.goarch }}"
         run: |
@@ -269,8 +308,20 @@ jobs:
           for pid in "${pids[@]}"; do wait "$pid"; done
 
   build-probo-agent:
-    name: "build-probo-agent"
-    runs-on: "runs-on=${{ github.run_id }}/runner=4cpu-linux-x64/extras=s3-cache"
+    name: "build-probo-agent (${{ matrix.goos }}/${{ matrix.goarch }})"
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - goos: linux
+            goarch: amd64
+            cgo: "0"
+            runner: "runs-on=${{ github.run_id }}/runner=4cpu-linux-x64/extras=s3-cache"
+          - goos: darwin
+            goarch: arm64
+            cgo: "1"
+            runner: macos-14
+    runs-on: ${{ matrix.runner }}
     permissions:
       contents: "read"
     steps:
@@ -278,12 +329,15 @@ jobs:
         with:
           submodules: recursive
       - uses: "runs-on/action@742bf56072eb4845a0f94b3394673e4903c90ff0" # v2
+        if: startsWith(matrix.runner, 'runs-on=')
       - uses: "./.github/actions/setup"
         with:
           node: "false"
       - name: "Build probo-agent"
         env:
-          CGO_ENABLED: "0"
+          CGO_ENABLED: "${{ matrix.cgo }}"
+          GOOS: "${{ matrix.goos }}"
+          GOARCH: "${{ matrix.goarch }}"
         run: |
           go build -ldflags "-s -w -X 'main.version=snapshot'" \
             -gcflags="-e" -o bin/probo-agent ./cmd/probo-agent/main.go
