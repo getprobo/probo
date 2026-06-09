@@ -22,9 +22,7 @@ package drivers
 
 import (
 	"context"
-	"io"
-	"net/http"
-	"strings"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -32,42 +30,11 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 )
 
-func TestMicrosoft365DriverMFAStatus(t *testing.T) {
+func TestMicrosoft365Driver(t *testing.T) {
 	t.Parallel()
 
-	client := &http.Client{
-		Transport: microsoft365RoundTripFunc(
-			func(req *http.Request) (*http.Response, error) {
-				switch req.URL.Path {
-				case "/v1.0/directoryRoles":
-					return microsoft365Response(
-						http.StatusOK,
-						`{"value":[{"id":"role-global","displayName":"Global Administrator"}]}`,
-					), nil
-				case "/v1.0/directoryRoles/role-global/members":
-					return microsoft365Response(
-						http.StatusOK,
-						`{"value":[{"id":"user-enabled","@odata.type":"#microsoft.graph.user"}]}`,
-					), nil
-				case "/v1.0/users":
-					assert.Equal(t, "userType eq 'Member'", req.URL.Query().Get("$filter"))
-					return microsoft365Response(
-						http.StatusOK,
-						`{"value":[{"id":"user-enabled","userPrincipalName":"enabled@example.com","mail":"enabled@example.com","displayName":"Enabled User","accountEnabled":true},{"id":"user-disabled","userPrincipalName":"disabled@example.com","mail":"disabled@example.com","displayName":"Disabled User","accountEnabled":true},{"id":"user-fallback","userPrincipalName":"fallback@example.com","mail":"fallback@example.com","displayName":"Fallback User","accountEnabled":true},{"id":"user-missing","userPrincipalName":"missing@example.com","mail":"missing@example.com","displayName":"Missing User","accountEnabled":true}]}`,
-					), nil
-				case "/v1.0/reports/authenticationMethods/userRegistrationDetails":
-					assert.Empty(t, req.URL.RawQuery)
-					return microsoft365Response(
-						http.StatusOK,
-						`{"value":[{"id":"user-enabled","userPrincipalName":"enabled@example.com","isMfaRegistered":true},{"id":"user-disabled","userPrincipalName":"disabled@example.com","isMfaRegistered":false},{"id":"different-id","userPrincipalName":"FALLBACK@example.com","isMfaRegistered":true}]}`,
-					), nil
-				default:
-					t.Fatalf("unexpected Microsoft Graph request: %s", req.URL.String())
-					return nil, nil
-				}
-			},
-		),
-	}
+	rec := newRecorder(t, "testdata/microsoft_365", "MICROSOFT_365_TOKEN")
+	client := newVCRClient(rec, bearerAuth(os.Getenv("MICROSOFT_365_TOKEN")))
 
 	driver := NewMicrosoft365Driver(client)
 	records, err := driver.ListAccounts(context.Background())
@@ -79,24 +46,40 @@ func TestMicrosoft365DriverMFAStatus(t *testing.T) {
 		recordsByEmail[record.Email] = record
 	}
 
-	assert.Equal(t, coredata.MFAStatusEnabled, recordsByEmail["enabled@example.com"].MFAStatus)
-	assert.True(t, recordsByEmail["enabled@example.com"].IsAdmin)
-	assert.Equal(t, []string{"Global Administrator"}, recordsByEmail["enabled@example.com"].Roles)
-	assert.Equal(t, coredata.MFAStatusDisabled, recordsByEmail["disabled@example.com"].MFAStatus)
-	assert.Equal(t, coredata.MFAStatusEnabled, recordsByEmail["fallback@example.com"].MFAStatus)
-	assert.Equal(t, coredata.MFAStatusUnknown, recordsByEmail["missing@example.com"].MFAStatus)
-}
+	// Alice: Global Administrator with MFA registered (matched by user id).
+	alice := recordsByEmail["alice@example.com"]
+	assert.Equal(t, "Alice Admin", alice.FullName)
+	assert.Equal(t, "11111111-1111-1111-1111-111111111111", alice.ExternalID)
+	assert.Equal(t, []string{"Global Administrator"}, alice.Roles)
+	assert.True(t, alice.IsAdmin)
+	assert.Equal(t, coredata.MFAStatusEnabled, alice.MFAStatus)
+	assert.Equal(t, "Security Engineer", alice.JobTitle)
+	require.NotNil(t, alice.Active)
+	assert.True(t, *alice.Active)
+	require.NotNil(t, alice.CreatedAt)
+	assert.Equal(t, coredata.AccessReviewEntryAuthMethodSSO, alice.AuthMethod)
+	assert.Equal(t, coredata.AccessReviewEntryAccountTypeUser, alice.AccountType)
 
-type microsoft365RoundTripFunc func(req *http.Request) (*http.Response, error)
+	// Bob: User Administrator with MFA not registered.
+	bob := recordsByEmail["bob@example.com"]
+	assert.Equal(t, []string{"User Administrator"}, bob.Roles)
+	assert.True(t, bob.IsAdmin)
+	assert.Equal(t, coredata.MFAStatusDisabled, bob.MFAStatus)
+	require.NotNil(t, bob.Active)
+	assert.True(t, *bob.Active)
 
-func (f microsoft365RoundTripFunc) RoundTrip(req *http.Request) (*http.Response, error) {
-	return f(req)
-}
+	// Carol: no directory role (defaults to User); MFA matched by
+	// case-insensitive UPN fallback when the report id differs.
+	carol := recordsByEmail["carol@example.com"]
+	assert.Equal(t, []string{"User"}, carol.Roles)
+	assert.False(t, carol.IsAdmin)
+	assert.Equal(t, coredata.MFAStatusEnabled, carol.MFAStatus)
 
-func microsoft365Response(statusCode int, body string) *http.Response {
-	return &http.Response{
-		StatusCode: statusCode,
-		Body:       io.NopCloser(strings.NewReader(body)),
-		Header:     make(http.Header),
-	}
+	// Dana: inactive, absent from the MFA registration report → Unknown.
+	dana := recordsByEmail["dana@example.com"]
+	assert.Equal(t, []string{"User"}, dana.Roles)
+	assert.False(t, dana.IsAdmin)
+	assert.Equal(t, coredata.MFAStatusUnknown, dana.MFAStatus)
+	require.NotNil(t, dana.Active)
+	assert.False(t, *dana.Active)
 }

@@ -1,0 +1,156 @@
+---
+# Synthetic Microsoft Graph cassette covering the Microsoft 365 access-review
+# driver: directory roles + members, member users, and authentication-method
+# registration details (MFA). Authorization is stripped by the recorder.
+# Fixture covers MFA enabled (by user id), MFA disabled, MFA enabled via
+# case-insensitive UPN fallback, MFA unknown when absent from the report,
+# admin role mapping, and an inactive account.
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: graph.microsoft.com
+        headers:
+            Accept:
+                - application/json
+        url: https://graph.microsoft.com/v1.0/directoryRoles
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 175
+        body: '{"value":[{"id":"00000000-0000-0000-0000-0000000000a1","displayName":"Global Administrator"},{"id":"00000000-0000-0000-0000-0000000000a2","displayName":"User Administrator"}]}'
+        headers:
+            Content-Length:
+                - "175"
+            Content-Type:
+                - application/json
+            Date:
+                - Tue, 28 Jul 2026 09:55:21 GMT
+        status: 200 OK
+        code: 200
+        duration: 2.932209ms
+    - id: 1
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: graph.microsoft.com
+        headers:
+            Accept:
+                - application/json
+        url: https://graph.microsoft.com/v1.0/directoryRoles/00000000-0000-0000-0000-0000000000a1/members
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 123
+        body: '{"value":[{"id":"11111111-1111-1111-1111-111111111111","@odata.type":"#microsoft.graph.user","displayName":"Alice Admin"}]}'
+        headers:
+            Content-Length:
+                - "123"
+            Content-Type:
+                - application/json
+            Date:
+                - Tue, 28 Jul 2026 09:55:21 GMT
+        status: 200 OK
+        code: 200
+        duration: 128.916µs
+    - id: 2
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: graph.microsoft.com
+        headers:
+            Accept:
+                - application/json
+        url: https://graph.microsoft.com/v1.0/directoryRoles/00000000-0000-0000-0000-0000000000a2/members
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 122
+        body: '{"value":[{"id":"22222222-2222-2222-2222-222222222222","@odata.type":"#microsoft.graph.user","displayName":"Bob Member"}]}'
+        headers:
+            Content-Length:
+                - "122"
+            Content-Type:
+                - application/json
+            Date:
+                - Tue, 28 Jul 2026 09:55:21 GMT
+        status: 200 OK
+        code: 200
+        duration: 138.583µs
+    - id: 3
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: graph.microsoft.com
+        form:
+            $filter:
+                - userType eq 'Member'
+            $select:
+                - id,userPrincipalName,mail,displayName,givenName,surname,accountEnabled,jobTitle,department,createdDateTime
+            $top:
+                - "999"
+        headers:
+            Accept:
+                - application/json
+        url: https://graph.microsoft.com/v1.0/users?%24filter=userType+eq+%27Member%27&%24select=id%2CuserPrincipalName%2Cmail%2CdisplayName%2CgivenName%2Csurname%2CaccountEnabled%2CjobTitle%2Cdepartment%2CcreatedDateTime&%24top=999
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 1172
+        body: '{"value":[{"id":"11111111-1111-1111-1111-111111111111","userPrincipalName":"alice@example.com","mail":"alice@example.com","displayName":"Alice Admin","givenName":"Alice","surname":"Admin","accountEnabled":true,"jobTitle":"Security Engineer","department":"Security","createdDateTime":"2024-01-15T10:00:00Z"},{"id":"22222222-2222-2222-2222-222222222222","userPrincipalName":"bob@example.com","mail":"bob@example.com","displayName":"Bob Member","givenName":"Bob","surname":"Member","accountEnabled":true,"jobTitle":"Engineer","department":"Engineering","createdDateTime":"2024-02-20T11:00:00Z"},{"id":"33333333-3333-3333-3333-333333333333","userPrincipalName":"carol@example.com","mail":"carol@example.com","displayName":"Carol Fallback","givenName":"Carol","surname":"Fallback","accountEnabled":true,"jobTitle":"Analyst","department":"Security","createdDateTime":"2024-03-01T12:00:00Z"},{"id":"44444444-4444-4444-4444-444444444444","userPrincipalName":"dana@example.com","mail":"dana@example.com","displayName":"Dana Missing","givenName":"Dana","surname":"Missing","accountEnabled":false,"jobTitle":"Contractor","department":"Ops","createdDateTime":"2024-04-10T09:00:00Z"}]}'
+        headers:
+            Content-Length:
+                - "1172"
+            Content-Type:
+                - application/json
+            Date:
+                - Tue, 28 Jul 2026 09:55:21 GMT
+        status: 200 OK
+        code: 200
+        duration: 124.5µs
+    - id: 4
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: graph.microsoft.com
+        headers:
+            Accept:
+                - application/json
+        url: https://graph.microsoft.com/v1.0/reports/authenticationMethods/userRegistrationDetails
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 337
+        body: '{"value":[{"id":"11111111-1111-1111-1111-111111111111","userPrincipalName":"alice@example.com","isMfaRegistered":true},{"id":"22222222-2222-2222-2222-222222222222","userPrincipalName":"bob@example.com","isMfaRegistered":false},{"id":"99999999-9999-9999-9999-999999999999","userPrincipalName":"CAROL@example.com","isMfaRegistered":true}]}'
+        headers:
+            Content-Length:
+                - "337"
+            Content-Type:
+                - application/json
+            Date:
+                - Tue, 28 Jul 2026 09:55:21 GMT
+        status: 200 OK
+        code: 200
+        duration: 97.625µs
