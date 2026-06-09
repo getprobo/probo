@@ -182,7 +182,6 @@ type Organization implements Node {
     ): SlackConnectionConnection! @goField(forceResolver: true)
     slackOAuth2Scopes: [String!]! @goField(forceResolver: true)
     connectors(filter: ConnectorFilter): [Connector!]! @goField(forceResolver: true)
-    connectorProviderInfos: [ConnectorProviderInfo!]! @goField(forceResolver: true)
 
     controls(
         first: Int

@@ -487,8 +487,9 @@ const (
 	ActionCookieConsentRecordList = "core:cookie-consent-record:list"
 
 	// CommonThirdParty actions (global catalog, no organization scope).
-	ActionCommonThirdPartyGet  = "core:common-third-party:get"
-	ActionCommonThirdPartyList = "core:common-third-party:list"
+	ActionCommonThirdPartyGet           = "core:common-third-party:get"
+	ActionCommonThirdPartyList          = "core:common-third-party:list"
+	ActionAccessReviewDriverCatalogList = "core:access-review-driver-catalog:list"
 
 	// ElectronicSignature actions (tenant-scoped via the related document
 	// version signature / trust center access).

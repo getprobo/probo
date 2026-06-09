@@ -540,48 +540,6 @@ func (r *organizationResolver) Connectors(ctx context.Context, obj *types.Organi
 	return types.NewConnectors(connectors), nil
 }
 
-// ConnectorProviderInfos is the resolver for the connectorProviderInfos field.
-func (r *organizationResolver) ConnectorProviderInfos(ctx context.Context, obj *types.Organization) ([]*types.ConnectorProviderInfo, error) {
-	if _, err := r.authorize(ctx, obj.ID, probo.ActionConnectorList); err != nil {
-		return nil, err
-	}
-
-	var infos []*types.ConnectorProviderInfo
-
-	for _, p := range coredata.ConnectorProviders() {
-		_, oauthErr := r.connectorRegistry.Get(string(p))
-		oauthConfigured := oauthErr == nil
-		apiKeySupported := r.providerSupportsAPIKey(p)
-		clientCredentialsSupported := r.providerSupportsClientCredentials(p)
-
-		// Skip providers that cannot be connected in this deployment: no
-		// OAuth client credentials configured and no key-based fallback
-		// (API key or client credentials) supported. Surfacing them would
-		// render dead entries the operator has no way to use.
-		if !oauthConfigured && !apiKeySupported && !clientCredentialsSupported {
-			continue
-		}
-
-		scopes := r.providerRegistry.ProviderOAuth2Scopes(p)
-		if scopes == nil {
-			scopes = []string{}
-		}
-
-		info := &types.ConnectorProviderInfo{
-			Provider:                   p,
-			DisplayName:                r.providerDisplayName(p),
-			OauthConfigured:            oauthConfigured,
-			APIKeySupported:            apiKeySupported,
-			ClientCredentialsSupported: clientCredentialsSupported,
-			Oauth2Scopes:               scopes,
-			ExtraSettings:              r.providerExtraSettings(p),
-		}
-		infos = append(infos, info)
-	}
-
-	return infos, nil
-}
-
 // Controls is the resolver for the controls field.
 func (r *organizationResolver) Controls(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ControlOrderBy, filter *types.ControlFilter) (*types.ControlConnection, error) {
 	scope, err := r.authorize(ctx, obj.ID, probo.ActionControlList)

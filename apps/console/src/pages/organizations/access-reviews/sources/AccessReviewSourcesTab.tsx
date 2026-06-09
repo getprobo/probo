@@ -43,13 +43,13 @@ import { AddAccessSourceDialog, addAccessSourceDialogConnectorProviderInfoFragme
 
 export const accessReviewSourcesTabQuery = graphql`
   query AccessReviewSourcesTabQuery($organizationId: ID!) {
+    accessReviewDrivers {
+      ...AddAccessSourceDialogConnectorProviderInfoFragment
+    }
     organization: node(id: $organizationId) {
       __typename
       ... on Organization {
         canCreateSource: permission(action: "core:access-source:create")
-        connectorProviderInfos {
-          ...AddAccessSourceDialogConnectorProviderInfoFragment
-        }
         ...AccessReviewSourcesTabFragment
       }
     }
@@ -102,14 +102,15 @@ export default function AccessReviewSourcesTab({ queryRef }: Props) {
   const [searchParams, setSearchParams] = useSearchParams();
   const processedConnectorIdRef = useRef<string | null>(null);
 
-  const { organization } = usePreloadedQuery(accessReviewSourcesTabQuery, queryRef);
+  const query = usePreloadedQuery(accessReviewSourcesTabQuery, queryRef);
+  const { organization } = query;
   if (organization.__typename !== "Organization") {
     throw new Error("Organization not found");
   }
 
   const connectorProviderInfos = useFragment<AddAccessSourceDialogConnectorProviderInfoFragment$key>(
     addAccessSourceDialogConnectorProviderInfoFragment,
-    organization.connectorProviderInfos,
+    query.accessReviewDrivers,
   );
 
   const {

@@ -22,106 +22,71 @@ import (
 	"go.probo.inc/probo/e2e/internal/testutil"
 )
 
-func TestConnectorProviderInfos(t *testing.T) {
+func TestAccessReviewDrivers(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
-	orgID := owner.GetOrganizationID().String()
 
-	t.Run("returns provider infos", func(t *testing.T) {
-		t.Parallel()
-
-		const query = `
-			query($id: ID!) {
-				node(id: $id) {
-					... on Organization {
-						connectorProviderInfos {
-							provider
-							displayName
-							oauthConfigured
-							apiKeySupported
-							clientCredentialsSupported
-							extraSettings {
-								key
-								label
-								required
-							}
-						}
-					}
+	const query = `
+		query {
+			accessReviewDrivers {
+				provider
+				displayName
+				oauthConfigured
+				apiKeySupported
+				clientCredentialsSupported
+				extraSettings {
+					key
+					label
+					required
 				}
 			}
-		`
-
-		var result struct {
-			Node struct {
-				ConnectorProviderInfos []struct {
-					Provider                   string `json:"provider"`
-					DisplayName                string `json:"displayName"`
-					OauthConfigured            bool   `json:"oauthConfigured"`
-					APIKeySupported            bool   `json:"apiKeySupported"`
-					ClientCredentialsSupported bool   `json:"clientCredentialsSupported"`
-					ExtraSettings              []struct {
-						Key      string `json:"key"`
-						Label    string `json:"label"`
-						Required bool   `json:"required"`
-					} `json:"extraSettings"`
-				} `json:"connectorProviderInfos"`
-			} `json:"node"`
 		}
+	`
 
-		err := owner.Execute(query, map[string]any{"id": orgID}, &result)
-		require.NoError(t, err)
+	var result struct {
+		AccessReviewDrivers []struct {
+			Provider                   string `json:"provider"`
+			DisplayName                string `json:"displayName"`
+			OauthConfigured            bool   `json:"oauthConfigured"`
+			APIKeySupported            bool   `json:"apiKeySupported"`
+			ClientCredentialsSupported bool   `json:"clientCredentialsSupported"`
+			ExtraSettings              []struct {
+				Key      string `json:"key"`
+				Label    string `json:"label"`
+				Required bool   `json:"required"`
+			} `json:"extraSettings"`
+		} `json:"accessReviewDrivers"`
+	}
 
-		infos := result.Node.ConnectorProviderInfos
-		assert.NotEmpty(t, infos)
+	err := owner.Execute(query, nil, &result)
+	require.NoError(t, err)
+	assert.NotEmpty(t, result.AccessReviewDrivers)
 
-		providerNames := make(map[string]bool)
+	providerNames := make(map[string]bool)
+	for _, info := range result.AccessReviewDrivers {
+		assert.NotEmpty(t, info.Provider)
+		assert.NotEmpty(t, info.DisplayName)
+		assert.NotNil(t, info.ExtraSettings)
+		providerNames[info.Provider] = true
+	}
 
-		for _, info := range infos {
-			assert.NotEmpty(t, info.Provider)
-			assert.NotEmpty(t, info.DisplayName)
-			assert.NotNil(t, info.ExtraSettings)
-			providerNames[info.Provider] = true
-		}
+	assert.True(t, providerNames["BREX"], "expected BREX provider to be present")
+	assert.True(t, providerNames["HUBSPOT"], "expected HUBSPOT provider to be present")
 
-		// OAuth-only providers (e.g. SLACK) are hidden when the deployment
-		// has no OAuth credentials configured, as is the case in e2e.
-		// Assert on providers that support API keys, which are connectable
-		// regardless of OAuth configuration.
-		assert.True(t, providerNames["BREX"], "expected BREX provider to be present")
-		assert.True(t, providerNames["HUBSPOT"], "expected HUBSPOT provider to be present")
-	})
-
-	t.Run("viewer can list provider infos", func(t *testing.T) {
+	t.Run("viewer can list access review drivers", func(t *testing.T) {
 		t.Parallel()
 		viewer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
 
-		const query = `
-			query($id: ID!) {
-				node(id: $id) {
-					... on Organization {
-						connectorProviderInfos {
-							provider
-							displayName
-						}
-					}
-				}
-			}
-		`
-
-		var result struct {
-			Node struct {
-				ConnectorProviderInfos []struct {
-					Provider    string `json:"provider"`
-					DisplayName string `json:"displayName"`
-				} `json:"connectorProviderInfos"`
-			} `json:"node"`
+		var viewerResult struct {
+			AccessReviewDrivers []struct {
+				Provider    string `json:"provider"`
+				DisplayName string `json:"displayName"`
+			} `json:"accessReviewDrivers"`
 		}
 
-		err := viewer.Execute(query, map[string]any{
-			"id": viewer.GetOrganizationID().String(),
-		}, &result)
+		err := viewer.Execute(query, nil, &viewerResult)
 		require.NoError(t, err)
-		assert.NotEmpty(t, result.Node.ConnectorProviderInfos)
+		assert.NotEmpty(t, viewerResult.AccessReviewDrivers)
 	})
 }
 

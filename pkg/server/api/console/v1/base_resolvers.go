@@ -9,6 +9,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
+	"strings"
 
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/agentrun"
@@ -537,6 +539,73 @@ func (r *queryResolver) CommonThirdParties(ctx context.Context, name string) ([]
 	}
 
 	return result, nil
+}
+
+// AccessReviewDrivers is the resolver for the accessReviewDrivers field.
+func (r *queryResolver) AccessReviewDrivers(ctx context.Context) ([]*types.ConnectorProviderInfo, error) {
+	identity := authn.IdentityFromContext(ctx)
+
+	if _, err := r.authorize(ctx, identity.ID, probo.ActionAccessReviewDriverCatalogList); err != nil {
+		return nil, err
+	}
+
+	registrations := r.providerRegistry.All()
+	infos := make([]*types.ConnectorProviderInfo, 0, len(registrations))
+
+	for _, reg := range registrations {
+		if reg == nil || reg.NewDriver == nil {
+			continue
+		}
+
+		provider := reg.Provider
+		_, oauthErr := r.connectorRegistry.Get(string(provider))
+		oauthConfigured := oauthErr == nil
+		apiKeySupported := reg.SupportsAPIKey
+		clientCredentialsSupported := reg.SupportsClientCredentials
+
+		// Skip providers that cannot be connected in this deployment: no
+		// OAuth client credentials configured and no key-based fallback
+		// (API key or client credentials) supported.
+		if !oauthConfigured && !apiKeySupported && !clientCredentialsSupported {
+			continue
+		}
+
+		scopes := r.providerRegistry.ProviderOAuth2Scopes(provider)
+		if scopes == nil {
+			scopes = []string{}
+		}
+
+		extraSettings := make([]*types.ConnectorProviderSettingInfo, 0, len(reg.ExtraSettings))
+		for _, setting := range reg.ExtraSettings {
+			extraSettings = append(
+				extraSettings,
+				&types.ConnectorProviderSettingInfo{
+					Key:      setting.Key,
+					Label:    setting.Label,
+					Required: setting.Required,
+				},
+			)
+		}
+
+		infos = append(infos, &types.ConnectorProviderInfo{
+			Provider:                   provider,
+			DisplayName:                reg.DisplayName,
+			OauthConfigured:            oauthConfigured,
+			APIKeySupported:            apiKeySupported,
+			ClientCredentialsSupported: clientCredentialsSupported,
+			Oauth2Scopes:               scopes,
+			ExtraSettings:              extraSettings,
+		})
+	}
+
+	slices.SortFunc(
+		infos,
+		func(a, b *types.ConnectorProviderInfo) int {
+			return strings.Compare(a.DisplayName, b.DisplayName)
+		},
+	)
+
+	return infos, nil
 }
 
 // Mutation returns schema.MutationResolver implementation.
