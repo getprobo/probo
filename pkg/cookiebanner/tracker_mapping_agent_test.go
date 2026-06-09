@@ -92,6 +92,39 @@ func TestNameMatchesSiteDomain(t *testing.T) {
 	}
 }
 
+func TestNameIsCookieDatabaseAggregator(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name     string
+		vendor   string
+		expected bool
+	}{
+		{name: "cookifi is denied", vendor: "Cookifi", expected: true},
+		{name: "cookiepedia is denied", vendor: "cookiepedia", expected: true},
+		{name: "cookie database is denied", vendor: "Cookie Database", expected: true},
+		{name: "cookieserve is denied", vendor: "CookieServe", expected: true},
+		{name: "spacing and casing insensitive", vendor: "  COOK IFI ", expected: true},
+		{name: "punctuation insensitive", vendor: "Cookie_Database", expected: true},
+		{name: "onetrust is allowed", vendor: "OneTrust", expected: false},
+		{name: "cookiebot is allowed", vendor: "Cookiebot", expected: false},
+		{name: "cookieyes is allowed", vendor: "CookieYes", expected: false},
+		{name: "cookie-script is allowed", vendor: "Cookie-Script", expected: false},
+		{name: "unrelated vendor is allowed", vendor: "Google Analytics", expected: false},
+		{name: "empty name", vendor: "", expected: false},
+	}
+
+	for _, tt := range tests {
+		t.Run(
+			tt.name,
+			func(t *testing.T) {
+				t.Parallel()
+				assert.Equal(t, tt.expected, nameIsCookieDatabaseAggregator(tt.vendor))
+			},
+		)
+	}
+}
+
 func TestNormalizeAlnum(t *testing.T) {
 	t.Parallel()
 

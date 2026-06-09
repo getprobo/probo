@@ -700,6 +700,25 @@ func (h *trackerMappingHandler) identifyWithAgent(
 		return nil, nil
 	}
 
+	// Cookie-database and cookie-banner directory sites (Cookifi,
+	// Cookiepedia, cookiedatabase.org, ...) rank highly in web search
+	// only because they catalog cookies, not because they set them. A
+	// web result hosted on one can lead the agent to attribute the
+	// tracker to the directory operator itself. Discard such an
+	// attribution so the pattern falls through to the unmatched fallback
+	// instead of being mapped to a database aggregator. The denylist is
+	// scoped to pure aggregators, so a CMP's own product cookie (e.g.
+	// OptanonConsent -> OneTrust) is still attributed normally.
+	if nameIsCookieDatabaseAggregator(identification.ThirdPartyName) {
+		h.logger.InfoCtx(
+			ctx,
+			"agent attributed cookie-database aggregator as third party, discarding",
+			log.String("pattern", tp.Pattern),
+		)
+
+		return nil, nil
+	}
+
 	return &agentIdentification{
 		result: identification,
 	}, nil
@@ -726,6 +745,37 @@ func nameMatchesSiteDomain(name, siteOrigin string) bool {
 
 	return normalizedName == normalizeAlnum(domain) ||
 		normalizedName == normalizeAlnum(label)
+}
+
+// cookieDatabaseAggregators holds alphanumeric-normalised names of pure
+// cookie-database / cookie-banner directory operators that catalog
+// cookies but never legitimately set one on a third-party site. They
+// surface in web search only because they host pattern databases, so an
+// attribution to one is always search-database noise. The set is kept
+// deliberately narrow: consent-management vendors that DO set their own
+// product cookies (Cookie-Script, OneTrust, Cookiebot, CookieYes) are
+// excluded so the backstop never suppresses a legitimate own-cookie
+// attribution — the prompt handles their directory pages instead.
+var cookieDatabaseAggregators = map[string]struct{}{
+	"cookifi":        {},
+	"cookiepedia":    {},
+	"cookiedatabase": {},
+	"cookieserve":    {},
+}
+
+// nameIsCookieDatabaseAggregator reports whether a candidate vendor name
+// is a known cookie-database directory operator that must never be
+// attributed a tracker. The comparison is alphanumeric-normalised so
+// spacing, punctuation, and casing differences do not matter.
+func nameIsCookieDatabaseAggregator(name string) bool {
+	normalized := normalizeAlnum(name)
+	if normalized == "" {
+		return false
+	}
+
+	_, ok := cookieDatabaseAggregators[normalized]
+
+	return ok
 }
 
 // normalizeAlnum lowercases s and keeps only ASCII letters and digits,
