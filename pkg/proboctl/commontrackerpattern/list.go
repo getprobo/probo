@@ -252,6 +252,7 @@ func renderPatternTable(cmd *cobra.Command, f *cmdutil.Factory, patterns coredat
 
 	_, _ = fmt.Fprintln(out, table.Render())
 	cmdutil.PrintPageInfo(out, pageInfo)
+
 	_, _ = fmt.Fprintf(f.IOStreams.ErrOut, "Showing %d common tracker patterns.\n", len(patterns))
 
 	return nil
