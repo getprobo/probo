@@ -143,7 +143,7 @@ export function TrackerPatternPropertiesSection({
       <PropertyRow label={__("Excluded")}>
         <span className="text-sm">{pattern.excluded ? __("Yes") : __("No")}</span>
       </PropertyRow>
-      <PropertyRow label={__("Detected Count")}>
+      <PropertyRow label={__("Distinct Trackers Detected")}>
         <span className="text-sm">{pattern.detectedCount}</span>
       </PropertyRow>
       <PropertyRow label={__("Last Matched")}>
