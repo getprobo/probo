@@ -20,9 +20,7 @@ import (
 	"io"
 
 	"github.com/spf13/cobra"
-	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
-	"go.probo.inc/probo/pkg/cookiebanner"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/proboctl/cmdutil"
@@ -38,19 +36,16 @@ func newCmdReenrich(f *cmdutil.Factory) *cobra.Command {
 		flagKeyword            string
 		flagState              string
 		flagWithoutDescription bool
-		flagConcurrency        int
 		flagDryRun             bool
 		flagYes                bool
-		flagEnqueue            bool
 	)
 
 	cmd := &cobra.Command{
 		Use:   "reenrich",
-		Short: "Re-describe common tracker patterns by running the enrichment agent",
-		Long: "Re-describe selected common tracker patterns. By default the enrichment " +
-			"agent runs in-process and the command returns only when the work is done " +
-			"(requires --cfg-file with an LLM provider). Use --enqueue to instead arm the " +
-			"async enrichment worker. Re-describe a banner's catalog rows with --linked-banner " +
+		Short: "Re-describe common tracker patterns via the enrichment worker",
+		Long: "Re-describe selected common tracker patterns by arming the async " +
+			"enrichment worker, which fills descriptions and fans them out to linked " +
+			"tracker patterns. Re-describe a banner's catalog rows with --linked-banner " +
 			"before running 'cookie-banner reset-trackers' so fresh descriptions copy down.",
 		Args: cobra.NoArgs,
 	}
@@ -63,10 +58,8 @@ func newCmdReenrich(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&flagKeyword, "keyword", "", "Filter selected patterns by a pattern/description substring")
 	cmd.Flags().StringVar(&flagState, "state", "", "Filter selected patterns by enrichment state (queued, enriched, unenriched)")
 	cmd.Flags().BoolVar(&flagWithoutDescription, "without-description", false, "Only patterns with a blank description")
-	cmd.Flags().IntVar(&flagConcurrency, "concurrency", 4, "Number of patterns to enrich in parallel (sync mode)")
 	cmd.Flags().BoolVar(&flagDryRun, "dry-run", false, "Print the selected patterns without enriching")
 	cmd.Flags().BoolVar(&flagYes, "yes", false, "Skip confirmation")
-	cmd.Flags().BoolVar(&flagEnqueue, "enqueue", false, "Arm the async enrichment worker instead of running the agent in-process")
 
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
 		ctx := cmd.Context()
@@ -110,46 +103,22 @@ func newCmdReenrich(f *cmdutil.Factory) *cobra.Command {
 			return fmt.Errorf("about to re-enrich %d pattern(s); pass --yes to proceed or --dry-run to preview", len(ids))
 		}
 
-		if flagEnqueue {
-			var requeued int64
+		var requeued int64
 
-			if err := pgClient.WithTx(
-				ctx,
-				func(ctx context.Context, tx pg.Tx) error {
-					var ps coredata.CommonTrackerPatterns
+		if err := pgClient.WithTx(
+			ctx,
+			func(ctx context.Context, tx pg.Tx) error {
+				var ps coredata.CommonTrackerPatterns
 
-					requeued, err = ps.RequestEnrichmentByIDs(ctx, tx, ids)
+				requeued, err = ps.RequestEnrichmentByIDs(ctx, tx, ids)
 
-					return err
-				},
-			); err != nil {
-				return fmt.Errorf("cannot enqueue enrichment: %w", err)
-			}
-
-			_, _ = fmt.Fprintf(out, "Queued %d common tracker pattern(s) for the enrichment worker.\n", requeued)
-
-			return nil
+				return err
+			},
+		); err != nil {
+			return fmt.Errorf("cannot enqueue enrichment: %w", err)
 		}
 
-		enrichmentCfg, mappingCfg, err := f.TrackerAgentsConfig()
-		if err != nil {
-			return err
-		}
-
-		logger := log.NewLogger(
-			log.WithName("proboctl"),
-			log.WithOutput(f.IOStreams.ErrOut),
-		)
-
-		enricher := cookiebanner.NewCommonPatternEnricher(pgClient, logger, enrichmentCfg, mappingCfg)
-
-		enriched, err := enricher.EnrichByIDs(ctx, ids, flagConcurrency)
-
-		_, _ = fmt.Fprintf(out, "Enriched %d of %d common tracker pattern(s).\n", enriched, len(ids))
-
-		if err != nil {
-			return fmt.Errorf("enrichment did not complete for all patterns: %w", err)
-		}
+		_, _ = fmt.Fprintf(out, "Queued %d common tracker pattern(s) for the enrichment worker.\n", requeued)
 
 		return nil
 	}

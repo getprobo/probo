@@ -41,13 +41,6 @@ func NewCmdRoot(f *cmdutil.Factory) *cobra.Command {
 		"PostgreSQL connection URL (default: DATABASE_URL env)",
 	)
 
-	cmd.PersistentFlags().StringVar(
-		&f.CfgFile,
-		"cfg-file",
-		os.Getenv("PROBOD_CFG_FILE"),
-		"Path to the probod config file (default: PROBOD_CFG_FILE env); required for agent-backed commands",
-	)
-
 	cmd.AddCommand(seed.NewCmdSeed(f))
 	cmd.AddCommand(commontrackerpattern.NewCmdCommonTrackerPattern(f))
 	cmd.AddCommand(commonthirdparty.NewCmdCommonThirdParty(f))

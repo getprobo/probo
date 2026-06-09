@@ -18,7 +18,6 @@ import (
 	"context"
 	"fmt"
 	"strings"
-	"sync/atomic"
 	"time"
 
 	"go.gearno.de/kit/log"
@@ -28,7 +27,6 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/llm"
 	"go.probo.inc/probo/pkg/thirdparty"
-	"golang.org/x/sync/errgroup"
 )
 
 // CommonPatternEnricher fills descriptions on common_tracker_patterns
@@ -90,59 +88,6 @@ func NewCommonPatternEnricher(
 // Enabled reports whether an LLM-backed enrichment agent is configured.
 func (e *CommonPatternEnricher) Enabled() bool {
 	return e.enrichmentAgent != nil
-}
-
-// EnrichByIDs enriches each common tracker pattern id, with bounded
-// concurrency, and returns the number successfully enriched. It is the
-// synchronous entry point used by operator tooling: it completes when the
-// work is done rather than arming the async queue. A concurrency <= 0 is
-// treated as 1.
-func (e *CommonPatternEnricher) EnrichByIDs(
-	ctx context.Context,
-	ids []gid.GID,
-	concurrency int,
-) (int, error) {
-	if !e.Enabled() {
-		return 0, fmt.Errorf("common pattern enricher is disabled: no LLM client configured")
-	}
-
-	if concurrency <= 0 {
-		concurrency = 1
-	}
-
-	var enriched atomic.Int64
-
-	g, gctx := errgroup.WithContext(ctx)
-	g.SetLimit(concurrency)
-
-	for _, id := range ids {
-		g.Go(func() error {
-			var cp coredata.CommonTrackerPattern
-
-			if err := e.pg.WithConn(
-				gctx,
-				func(ctx context.Context, conn pg.Querier) error {
-					return cp.LoadByID(ctx, conn, id)
-				},
-			); err != nil {
-				return fmt.Errorf("cannot load common tracker pattern %s: %w", id, err)
-			}
-
-			if err := e.EnrichPattern(gctx, cp); err != nil {
-				return fmt.Errorf("cannot enrich common tracker pattern %s: %w", id, err)
-			}
-
-			enriched.Add(1)
-
-			return nil
-		})
-	}
-
-	if err := g.Wait(); err != nil {
-		return int(enriched.Load()), err
-	}
-
-	return int(enriched.Load()), nil
 }
 
 // EnrichPattern researches a description for one common tracker pattern
