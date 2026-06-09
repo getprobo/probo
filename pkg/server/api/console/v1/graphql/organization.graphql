@@ -356,13 +356,6 @@ type Organization implements Node {
         orderBy: DeviceOrder
     ): DeviceConnection! @goField(forceResolver: true)
 
-    deviceEnrollmentTokens(
-        first: Int
-        after: CursorKey
-        last: Int
-        before: CursorKey
-    ): DeviceEnrollmentTokenConnection! @goField(forceResolver: true)
-
     webhookSubscriptions(
         first: Int
         after: CursorKey

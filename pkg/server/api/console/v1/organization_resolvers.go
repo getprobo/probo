@@ -1412,22 +1412,6 @@ func (r *organizationResolver) Devices(ctx context.Context, obj *types.Organizat
 	return types.NewDeviceConnection(devicesPage, r, obj.ID), nil
 }
 
-// DeviceEnrollmentTokens is the resolver for the deviceEnrollmentTokens field.
-func (r *organizationResolver) DeviceEnrollmentTokens(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.DeviceEnrollmentTokenConnection, error) {
-	scope, err := r.authorize(ctx, obj.ID, itam.ActionDeviceEnrollmentTokenList)
-	if err != nil {
-		return nil, err
-	}
-
-	tokens, err := r.itam.ListEnrollmentTokens(ctx, scope, obj.ID)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list organization device enrollment tokens", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	return types.NewDeviceEnrollmentTokenConnection(tokens, r, obj.ID), nil
-}
-
 // WebhookSubscriptions is the resolver for the webhookSubscriptions field.
 func (r *organizationResolver) WebhookSubscriptions(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.WebhookSubscriptionOrderBy) (*types.WebhookSubscriptionConnection, error) {
 	scope, err := r.authorize(ctx, obj.ID, probo.ActionWebhookSubscriptionList)

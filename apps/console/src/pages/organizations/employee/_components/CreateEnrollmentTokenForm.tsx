@@ -17,7 +17,7 @@ import { useTranslate } from "@probo/i18n";
 import { Button, Input, useToast } from "@probo/ui";
 import { useState } from "react";
 import { useMutation } from "react-relay";
-import { type DataID, graphql } from "relay-runtime";
+import { graphql } from "relay-runtime";
 
 import type { CreateEnrollmentTokenFormMutation } from "#/__generated__/core/CreateEnrollmentTokenFormMutation.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
@@ -30,34 +30,17 @@ const TOKEN_DEFAULT_MAX_USES = 25;
 const createEnrollmentTokenMutation = graphql`
   mutation CreateEnrollmentTokenFormMutation(
     $input: CreateDeviceEnrollmentTokenInput!
-    $connections: [ID!]!
   ) {
     createDeviceEnrollmentToken(input: $input) {
       secret
-      enrollmentToken
-        @prependNode(
-          connections: $connections
-          edgeTypeName: "DeviceEnrollmentTokenEdge"
-        ) {
+      enrollmentToken {
         id
-        name
-        createdAt
-        expiresAt
-        revokedAt
-        maxUses
-        usedCount
       }
     }
   }
 `;
 
-interface CreateEnrollmentTokenFormProps {
-  connectionId: DataID;
-}
-
-export function CreateEnrollmentTokenForm(
-  { connectionId }: CreateEnrollmentTokenFormProps,
-) {
+export function CreateEnrollmentTokenForm() {
   const { __ } = useTranslate();
   const { toast } = useToast();
 
@@ -82,7 +65,6 @@ export function CreateEnrollmentTokenForm(
           validitySeconds: TOKEN_VALIDITY_SECONDS,
           maxUses: TOKEN_DEFAULT_MAX_USES,
         },
-        connections: [connectionId],
       },
       onCompleted(response, errors) {
         if (errors?.length) {

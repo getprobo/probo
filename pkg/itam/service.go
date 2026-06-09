@@ -223,30 +223,6 @@ func (s *Service) RevokeEnrollmentToken(
 	return token, nil
 }
 
-func (s *Service) ListEnrollmentTokens(
-	ctx context.Context,
-	scope coredata.Scoper,
-	organizationID gid.GID,
-) (coredata.DeviceEnrollmentTokens, error) {
-	var tokens coredata.DeviceEnrollmentTokens
-
-	err := s.pg.WithConn(
-		ctx,
-		func(ctx context.Context, conn pg.Querier) error {
-			if err := tokens.LoadByOrganizationID(ctx, conn, scope, organizationID); err != nil {
-				return fmt.Errorf("cannot load device enrollment tokens: %w", err)
-			}
-
-			return nil
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	return tokens, nil
-}
-
 func (s *Service) GetEnrollmentStatus(
 	ctx context.Context,
 	scope coredata.Scoper,

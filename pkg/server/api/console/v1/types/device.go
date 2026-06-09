@@ -31,34 +31,7 @@ type (
 		Resolver any
 		ParentID gid.GID
 	}
-
-	DeviceEnrollmentTokenConnection struct {
-		Edges    []*DeviceEnrollmentTokenEdge
-		PageInfo PageInfo
-
-		Resolver any
-		ParentID gid.GID
-	}
 )
-
-func NewDeviceEnrollmentTokenConnection(
-	tokens []*coredata.DeviceEnrollmentToken,
-	parentType any,
-	parentID gid.GID,
-) *DeviceEnrollmentTokenConnection {
-	edges := make([]*DeviceEnrollmentTokenEdge, len(tokens))
-	for i, t := range tokens {
-		edges[i] = &DeviceEnrollmentTokenEdge{
-			Cursor: page.NewCursorKey(t.ID, t.CreatedAt),
-			Node:   NewDeviceEnrollmentToken(t),
-		}
-	}
-	return &DeviceEnrollmentTokenConnection{
-		Edges:    edges,
-		Resolver: parentType,
-		ParentID: parentID,
-	}
-}
 
 func NewDeviceConnection(
 	p *page.Page[*coredata.Device, coredata.DeviceOrderField],

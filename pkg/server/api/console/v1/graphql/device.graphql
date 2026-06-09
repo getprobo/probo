@@ -97,19 +97,6 @@ type DeviceEnrollmentToken implements Node {
     createdAt: Datetime!
 }
 
-type DeviceEnrollmentTokenConnection
-    @goModel(
-        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.DeviceEnrollmentTokenConnection"
-    ) {
-    edges: [DeviceEnrollmentTokenEdge!]!
-    pageInfo: PageInfo!
-}
-
-type DeviceEnrollmentTokenEdge {
-    cursor: CursorKey!
-    node: DeviceEnrollmentToken!
-}
-
 enum DeviceEnrollmentState {
     TOKEN_CREATED
     DEVICE_ENROLLED
