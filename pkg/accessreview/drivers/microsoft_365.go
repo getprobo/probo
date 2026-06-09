@@ -335,6 +335,7 @@ func (d *Microsoft365Driver) listMFAStatuses(ctx context.Context) (map[string]co
 			if details.ID != "" {
 				statuses[details.ID] = status
 			}
+
 			if details.UserPrincipalName != "" {
 				statuses[strings.ToLower(details.UserPrincipalName)] = status
 			}

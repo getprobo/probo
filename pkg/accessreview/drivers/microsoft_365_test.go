@@ -45,12 +45,14 @@ func TestMicrosoft365DriverMFAStatus(t *testing.T) {
 					), nil
 				case "/v1.0/users":
 					assert.Equal(t, "userType eq 'Member'", req.URL.Query().Get("$filter"))
+
 					return microsoft365Response(
 						http.StatusOK,
 						`{"value":[{"id":"user-enabled","userPrincipalName":"enabled@example.com","mail":"enabled@example.com","displayName":"Enabled User","accountEnabled":true},{"id":"user-disabled","userPrincipalName":"disabled@example.com","mail":"disabled@example.com","displayName":"Disabled User","accountEnabled":true},{"id":"user-fallback","userPrincipalName":"fallback@example.com","mail":"fallback@example.com","displayName":"Fallback User","accountEnabled":true},{"id":"user-missing","userPrincipalName":"missing@example.com","mail":"missing@example.com","displayName":"Missing User","accountEnabled":true}]}`,
 					), nil
 				case "/v1.0/reports/authenticationMethods/userRegistrationDetails":
 					assert.Empty(t, req.URL.RawQuery)
+
 					return microsoft365Response(
 						http.StatusOK,
 						`{"value":[{"id":"user-enabled","userPrincipalName":"enabled@example.com","isMfaRegistered":true},{"id":"user-disabled","userPrincipalName":"disabled@example.com","isMfaRegistered":false},{"id":"different-id","userPrincipalName":"FALLBACK@example.com","isMfaRegistered":true}]}`,
