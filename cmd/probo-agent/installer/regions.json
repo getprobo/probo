@@ -1,0 +1,27 @@
+{
+  "regions": [
+    {
+      "id": "us",
+      "title": "United States",
+      "subtitle": "us.console.getprobo.com",
+      "flag": "🇺🇸",
+      "server_url": "https://us.console.getprobo.com"
+    },
+    {
+      "id": "eu",
+      "title": "European Union",
+      "subtitle": "eu.console.getprobo.com",
+      "flag": "🇪🇺",
+      "server_url": "https://eu.console.getprobo.com"
+    },
+    {
+      "id": "self_hosted",
+      "title": "Self hosted",
+      "subtitle": "Your own Probo instance",
+      "flag": "🌐",
+      "server_url": null
+    }
+  ],
+  "employee_page_hint": "Get your enrollment token on the Devices tab of your employee page.",
+  "self_hosted_hostname_hint": "Enter your hostname above to open your employee page."
+}
