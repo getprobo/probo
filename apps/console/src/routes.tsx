@@ -137,6 +137,12 @@ const routes = [
             ),
           },
           {
+            path: "enroll",
+            Component: lazy(
+              () => import("./pages/iam/enroll/EnrollDevicePageLoader"),
+            ),
+          },
+          {
             Component: CenteredLayout,
             children: [
               {

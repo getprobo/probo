@@ -59,32 +59,38 @@ Remove-Item -Recurse -Force $zip, "$env:TEMP\\$name"
       <h2 className="font-medium mb-2">{__("Enrollment token generated")}</h2>
       <p className="text-sm text-tertiary mb-2">
         {__(
-          "Copy this token now. It is shown only once — even Probo cannot recover it.",
+          "This token is shown only once. Use browser enrollment for desktop setup, or open the manual section below for CLI/MDM enrollment.",
         )}
       </p>
       <pre className="text-xs bg-surface-default p-3 rounded break-all">
         {secret}
       </pre>
 
-      <h3 className="mt-4 mb-1 text-sm font-medium">
-        {__("Install on macOS or Linux (run from a shell with sudo access)")}
-      </h3>
-      <pre className="text-xs bg-surface-default p-3 rounded whitespace-pre overflow-x-auto">
-        {unixCommand}
-      </pre>
+      <details className="mt-4">
+        <summary className="cursor-pointer text-sm font-medium">
+          {__("Manual install (CLI / MDM)")}
+        </summary>
 
-      <h3 className="mt-4 mb-1 text-sm font-medium">
-        {__("Install on Windows (run from an elevated PowerShell session)")}
-      </h3>
-      <pre className="text-xs bg-surface-default p-3 rounded whitespace-pre overflow-x-auto">
-        {windowsCommand}
-      </pre>
+        <h3 className="mt-3 mb-1 text-sm font-medium">
+          {__("Install on macOS or Linux (run from a shell with sudo access)")}
+        </h3>
+        <pre className="text-xs bg-surface-default p-3 rounded whitespace-pre overflow-x-auto">
+          {unixCommand}
+        </pre>
 
-      <p className="text-xs text-tertiary mt-3">
-        {__(
-          "The token is passed as a CLI flag (not via curl-piped-to-shell or sudo env vars). Once installed, the agent self-updates from GitHub Releases with cosign signature verification.",
-        )}
-      </p>
+        <h3 className="mt-4 mb-1 text-sm font-medium">
+          {__("Install on Windows (run from an elevated PowerShell session)")}
+        </h3>
+        <pre className="text-xs bg-surface-default p-3 rounded whitespace-pre overflow-x-auto">
+          {windowsCommand}
+        </pre>
+
+        <p className="text-xs text-tertiary mt-3">
+          {__(
+            "The token is passed as a CLI flag (not via curl-piped-to-shell or sudo env vars). Once installed, the agent self-updates from GitHub Releases with cosign signature verification.",
+          )}
+        </p>
+      </details>
     </section>
   );
 }

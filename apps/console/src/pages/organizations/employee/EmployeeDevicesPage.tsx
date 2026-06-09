@@ -14,8 +14,9 @@
 
 import { usePageTitle } from "@probo/hooks";
 import { useTranslate } from "@probo/i18n";
-import { Card, Tbody, Td, Th, Thead, Tr } from "@probo/ui";
+import { Button, Card, Tbody, Td, Th, Thead, Tr } from "@probo/ui";
 import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
+import { Link } from "react-router";
 import { graphql } from "relay-runtime";
 
 import type { EmployeeDevicesPageQuery } from "#/__generated__/core/EmployeeDevicesPageQuery.graphql";
@@ -76,10 +77,24 @@ export function EmployeeDevicesPage({ queryRef }: EmployeeDevicesPageProps) {
         <h1 className="text-2xl font-semibold">{__("Enroll your device")}</h1>
         <p className="text-sm text-tertiary">
           {__(
-            "Run the Probo agent on your computer to verify it meets your organization's posture requirements. Generate an enrollment token below and follow the install instructions on the device.",
+            "Use browser enrollment for the easiest setup. You can still generate tokens below for manual CLI or MDM installs.",
           )}
         </p>
       </header>
+
+      {organization.canCreateEnrollmentToken && (
+        <Card padded className="space-y-2">
+          <h2 className="text-base font-medium">{__("Recommended")}</h2>
+          <p className="text-sm text-tertiary">
+            {__(
+              "Open browser enrollment, choose your organization, then click the enroll button to open the Probo agent.",
+            )}
+          </p>
+          <Button asChild>
+            <Link to="/enroll">{__("Open browser enrollment")}</Link>
+          </Button>
+        </Card>
+      )}
 
       {organization.canCreateEnrollmentToken && (
         <CreateEnrollmentTokenForm connectionId={connectionId} />
