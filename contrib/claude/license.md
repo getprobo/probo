@@ -5,7 +5,7 @@ Every source file must start with the ISC license header. Use the **current year
 ## Go, TypeScript, JavaScript (`.go`, `.ts`, `.tsx`, `.js`, `.jsx`)
 
 ```
-// Copyright (c) <YEAR> Probo Inc <hello@getprobo.com>.
+// Copyright (c) <YEAR> Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -23,7 +23,7 @@ Every source file must start with the ISC license header. Use the **current year
 ## CSS (`.css`)
 
 ```
-/* Copyright (c) <YEAR> Probo Inc <hello@getprobo.com>.
+/* Copyright (c) <YEAR> Probo Inc <hello@probo.com>.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -42,7 +42,7 @@ Every source file must start with the ISC license header. Use the **current year
 ## SQL (`.sql`)
 
 ```
--- Copyright (c) <YEAR> Probo Inc <hello@getprobo.com>.
+-- Copyright (c) <YEAR> Probo Inc <hello@probo.com>.
 --
 -- Permission to use, copy, modify, and/or distribute this software for any
 -- purpose with or without fee is hereby granted, provided that the above
@@ -60,7 +60,7 @@ Every source file must start with the ISC license header. Use the **current year
 ## GraphQL (`.graphql`)
 
 ```
-# Copyright (c) <YEAR> Probo Inc <hello@getprobo.com>.
+# Copyright (c) <YEAR> Probo Inc <hello@probo.com>.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above

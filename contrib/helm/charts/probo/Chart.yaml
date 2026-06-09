@@ -14,7 +14,7 @@ sources:
   - https://github.com/getprobo/probo
 maintainers:
   - name: Probo Team
-    email: hello@getprobo.com
+    email: hello@probo.com
 icon: https://github.com/getprobo/probo/blob/main/.github/cover_v3.png
 
 dependencies:
