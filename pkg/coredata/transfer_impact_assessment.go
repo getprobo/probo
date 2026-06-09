@@ -283,51 +283,6 @@ WHERE
 	return nil
 }
 
-func (tias *TransferImpactAssessments) LoadAllByOrganizationID(
-	ctx context.Context,
-	conn pg.Querier,
-	scope Scoper,
-	organizationID gid.GID,
-) error {
-	q := `
-SELECT
-	id,
-	organization_id,
-	processing_activity_id,
-	data_subjects,
-	legal_mechanism,
-	transfer,
-	local_law_risk,
-	supplementary_measures,
-	created_at,
-	updated_at
-FROM
-	processing_activity_transfer_impact_assessments
-WHERE
-	%s
-	AND organization_id = @organization_id
-`
-
-	q = fmt.Sprintf(q, scope.SQLFragment())
-
-	args := pgx.StrictNamedArgs{"organization_id": organizationID}
-	maps.Copy(args, scope.SQLArguments())
-
-	rows, err := conn.Query(ctx, q, args)
-	if err != nil {
-		return fmt.Errorf("cannot query transfer impact assessments: %w", err)
-	}
-
-	results, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[TransferImpactAssessment])
-	if err != nil {
-		return fmt.Errorf("cannot collect transfer impact assessments: %w", err)
-	}
-
-	*tias = results
-
-	return nil
-}
-
 func (tia *TransferImpactAssessment) LoadByID(
 	ctx context.Context,
 	conn pg.Querier,

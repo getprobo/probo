@@ -344,11 +344,12 @@ WHERE
 	return count, nil
 }
 
-func (cnss *MailingListSubscribers) LoadAllConfirmedByMailingListID(
+func (cnss *MailingListSubscribers) LoadConfirmedByMailingListID(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
 	mailingListID gid.GID,
+	cursor *page.Cursor[MailingListSubscriberOrderField],
 ) error {
 	q := `
 SELECT
@@ -366,12 +367,14 @@ WHERE
 	%s
 	AND mailing_list_id = @mailing_list_id
 	AND status = 'CONFIRMED'
+	AND %s
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"mailing_list_id": mailingListID}
 	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, cursor.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {

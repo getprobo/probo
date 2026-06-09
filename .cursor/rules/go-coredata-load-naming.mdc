@@ -6,49 +6,32 @@ alwaysApply: false
 
 # Coredata Load vs LoadAll naming
 
+Do **not** add new unbounded `LoadAll*` loaders that materialise an entire
+result set with one query. They have no ceiling: a table that is small in
+dev can grow without bound in production, blowing up memory and query time.
+Expose a cursor-paginated `LoadBy*` instead, and when a caller genuinely
+needs every row, walk that method with the `page.LoadAll` helper (see
+[`pkg/page/load_all.go`](../../pkg/page/load_all.go)).
+
 The method name signals whether the result set is bounded:
 
-- **`LoadBy*` with a `cursor` param** — paginated list; the cursor provides limit and ordering.
-- **`Load` / `LoadBy*` with a `limit int` param** — filtered list with explicit limit, when cursor pagination is not needed but the caller controls the result count.
-- **`LoadAllBy*`** — returns all matching rows, no limit or cursor.
-- **`LoadAll`** — same as `LoadAllBy*` but without a parent key; returns all rows matching a filter.
+- **`LoadBy*` with a `cursor` param** — paginated list; the cursor provides
+  the limit and ordering. This is the primary list shape; prefer it.
+- **`Load` / `LoadBy*` with a `limit int` param** — filtered list with an
+  explicit, hard-capped limit (e.g. `... LIMIT 20`), when the caller controls
+  a small bounded result count.
+- **`LoadAllBy*` / `LoadAll`** — legacy unbounded loaders. Do not add new
+  ones. The few that remain are deliberate exceptions: tiny per-parent sets
+  (handful of rows), `[]gid.GID` / map projections, or hard-`LIMIT` search
+  helpers. When in doubt, use `LoadBy*` + `page.LoadAll`.
 
-`LoadAll*` methods must **never** accept a cursor or limit parameter — `All` means the entire matching set is returned. The codebase has some legacy `LoadAllBy*` methods that accept a cursor; do not follow that pattern — new code must use `LoadBy*` for paginated queries.
+`LoadAll*` methods must **never** accept a cursor or limit parameter — the
+`All` suffix means the entire matching set is returned. The codebase has
+some legacy `LoadAllBy*` methods that accept a cursor; do not follow that
+pattern.
 
 ```go
-// GOOD — explicit limit, named Load
-func (ds *Things) Load(
-	ctx context.Context,
-	conn pg.Querier,
-	limit int,
-	filter *ThingFilter,
-) error {
-
-// GOOD — no limit, named LoadAll
-func (ds *Things) LoadAll(
-	ctx context.Context,
-	conn pg.Querier,
-	filter *ThingFilter,
-) error {
-
-// BAD — LoadAll with a limit
-func (ds *Things) LoadAll(
-	ctx context.Context,
-	conn pg.Querier,
-	limit int,
-	filter *ThingFilter,
-) error {
-
-// BAD — LoadAllBy with a cursor (legacy pattern, do not use)
-func (ds *Things) LoadAllByParentID(
-	ctx context.Context,
-	conn pg.Querier,
-	scope Scoper,
-	parentID gid.GID,
-	cursor *page.Cursor[ThingOrderField],
-) error {
-
-// GOOD — paginated query uses LoadBy, not LoadAll
+// GOOD — paginated query uses LoadBy with a cursor
 func (ds *Things) LoadByParentID(
 	ctx context.Context,
 	conn pg.Querier,
@@ -56,7 +39,52 @@ func (ds *Things) LoadByParentID(
 	parentID gid.GID,
 	cursor *page.Cursor[ThingOrderField],
 ) error {
+
+// GOOD — caller that needs every row walks the paginated method
+things, err := page.LoadAll(
+	ctx,
+	page.OrderBy[coredata.ThingOrderField]{
+		Field:     coredata.ThingOrderFieldCreatedAt,
+		Direction: page.OrderDirectionAsc,
+	},
+	func(ctx context.Context, cursor *page.Cursor[coredata.ThingOrderField]) ([]*coredata.Thing, error) {
+		var batch coredata.Things
+		if err := batch.LoadByParentID(ctx, conn, scope, parentID, cursor); err != nil {
+			return nil, err
+		}
+
+		return batch, nil
+	},
+)
+
+// GOOD — explicit hard-capped limit, named Load
+func (ds *Things) Load(
+	ctx context.Context,
+	conn pg.Querier,
+	limit int,
+	filter *ThingFilter,
+) error {
+
+// BAD — new unbounded loader; add LoadByParentID + page.LoadAll instead
+func (ds *Things) LoadAllByParentID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	parentID gid.GID,
+) error {
+
+// BAD — LoadAll with a limit, or LoadAllBy with a cursor (legacy, do not use)
+func (ds *Things) LoadAll(
+	ctx context.Context,
+	conn pg.Querier,
+	limit int,
+	filter *ThingFilter,
+) error {
 ```
+
+Whatever order field the loop uses must have a `CursorKey` case on the
+entity — `CursorKey` panics at runtime (not compile time) on an unhandled
+field, so add the case when introducing the order field.
 
 # Cross-entity table references
 

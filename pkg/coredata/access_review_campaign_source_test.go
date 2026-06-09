@@ -16,6 +16,7 @@ package coredata_test
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
@@ -25,6 +26,7 @@ import (
 	"go.probo.inc/probo/internal/test"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/page"
 )
 
 func insertAccessReviewEntry(t *testing.T, ctx context.Context, client *pg.Client, fx accessEntryFixture, accountKey string) gid.GID {
@@ -143,7 +145,28 @@ func TestSourceFetchAttempts_AppendOnly(t *testing.T) {
 	var history coredata.AccessReviewCampaignSourceFetchAttempts
 
 	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
-		return history.LoadAllByCampaignSourceID(ctx, conn, fx.scope, fx.campaignSourceID)
+		loaded, err := page.LoadAll(
+			ctx,
+			page.OrderBy[coredata.AccessReviewCampaignSourceFetchAttemptOrderField]{
+				Field:     coredata.AccessReviewCampaignSourceFetchAttemptOrderFieldCreatedAt,
+				Direction: page.OrderDirectionDesc,
+			},
+			func(ctx context.Context, cursor *page.Cursor[coredata.AccessReviewCampaignSourceFetchAttemptOrderField]) ([]*coredata.AccessReviewCampaignSourceFetchAttempt, error) {
+				var batch coredata.AccessReviewCampaignSourceFetchAttempts
+				if err := batch.LoadByCampaignSourceID(ctx, conn, fx.scope, fx.campaignSourceID, cursor); err != nil {
+					return nil, fmt.Errorf("cannot load fetch attempts: %w", err)
+				}
+
+				return batch, nil
+			},
+		)
+		if err != nil {
+			return err
+		}
+
+		history = loaded
+
+		return nil
 	}))
 	require.Len(t, history, 2, "both attempts must be retained")
 	assert.Equal(t, coredata.AccessReviewCampaignSourceFetchStatusSuccess, history[0].Status, "history is newest first")

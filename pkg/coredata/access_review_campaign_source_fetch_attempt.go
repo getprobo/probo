@@ -386,54 +386,6 @@ WHERE
 	return nil
 }
 
-// LoadAllByCampaignSourceID returns the full attempt history for a snapshot,
-// newest first.
-func (attempts *AccessReviewCampaignSourceFetchAttempts) LoadAllByCampaignSourceID(
-	ctx context.Context,
-	conn pg.Querier,
-	scope Scoper,
-	campaignSourceID gid.GID,
-) error {
-	q := `
-SELECT
-	id,
-	organization_id,
-	tenant_id,
-	access_review_campaign_source_id,
-	attempt_number,
-	status,
-	fetched_accounts_count,
-	error,
-	started_at,
-	completed_at,
-	created_at,
-	updated_at
-FROM access_review_campaign_source_fetch_attempts
-WHERE
-	%s
-	AND access_review_campaign_source_id = @access_review_campaign_source_id
-ORDER BY attempt_number DESC
-`
-	q = fmt.Sprintf(q, scope.SQLFragment())
-
-	args := pgx.StrictNamedArgs{"access_review_campaign_source_id": campaignSourceID}
-	maps.Copy(args, scope.SQLArguments())
-
-	rows, err := conn.Query(ctx, q, args)
-	if err != nil {
-		return fmt.Errorf("cannot query fetch attempts: %w", err)
-	}
-
-	result, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[AccessReviewCampaignSourceFetchAttempt])
-	if err != nil {
-		return fmt.Errorf("cannot collect fetch attempts: %w", err)
-	}
-
-	*attempts = result
-
-	return nil
-}
-
 func (attempts *AccessReviewCampaignSourceFetchAttempts) CountByCampaignSourceID(
 	ctx context.Context,
 	conn pg.Querier,

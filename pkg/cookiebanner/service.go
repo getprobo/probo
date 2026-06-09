@@ -553,21 +553,42 @@ func (s *Service) ensureDraftVersionForBanner(
 
 	consentFilter := coredata.NewCookieCategoryFilter(new(coredata.CookieCategoryKindUncategorised))
 
-	var categories coredata.CookieCategories
-	if err := categories.LoadAllByCookieBannerID(ctx, tx, scope, bannerID, consentFilter); err != nil {
-		return nil, fmt.Errorf("cannot load cookie categories: %w", err)
+	categories, err := page.LoadAll(
+		ctx,
+		page.OrderBy[coredata.CookieCategoryOrderField]{
+			Field:     coredata.CookieCategoryOrderFieldRank,
+			Direction: page.OrderDirectionAsc,
+		},
+		func(ctx context.Context, cursor *page.Cursor[coredata.CookieCategoryOrderField]) ([]*coredata.CookieCategory, error) {
+			var batch coredata.CookieCategories
+			if err := batch.LoadByCookieBannerID(ctx, tx, scope, bannerID, cursor, consentFilter); err != nil {
+				return nil, fmt.Errorf("cannot load cookie categories: %w", err)
+			}
+
+			return batch, nil
+		},
+	)
+	if err != nil {
+		return nil, err
 	}
 
-	var allPatterns coredata.TrackerPatterns
-	if err := allPatterns.LoadAllByCookieBannerID(
+	allPatterns, err := page.LoadAll(
 		ctx,
-		tx,
-		scope,
-		bannerID,
-		coredata.NewTrackerPatternFilter(nil, nil, new(false)),
-		nil,
-	); err != nil {
-		return nil, fmt.Errorf("cannot load tracker patterns: %w", err)
+		page.OrderBy[coredata.TrackerPatternOrderField]{
+			Field:     coredata.TrackerPatternOrderFieldCreatedAt,
+			Direction: page.OrderDirectionAsc,
+		},
+		func(ctx context.Context, cursor *page.Cursor[coredata.TrackerPatternOrderField]) ([]*coredata.TrackerPattern, error) {
+			var batch coredata.TrackerPatterns
+			if err := batch.LoadByCookieBannerID(ctx, tx, scope, bannerID, cursor, coredata.NewTrackerPatternFilter(nil, nil, new(false))); err != nil {
+				return nil, fmt.Errorf("cannot load tracker patterns: %w", err)
+			}
+
+			return batch, nil
+		},
+	)
+	if err != nil {
+		return nil, err
 	}
 
 	return s.ensureDraftVersion(ctx, tx, scope, &banner, categories, allPatterns)
@@ -1695,14 +1716,42 @@ func (s *Service) GetActiveBannerConfig(
 
 			consentFilter := coredata.NewCookieCategoryFilter(new(coredata.CookieCategoryKindUncategorised))
 
-			var categories coredata.CookieCategories
-			if err := categories.LoadAllByCookieBannerID(ctx, conn, scope, banner.ID, consentFilter); err != nil {
-				return fmt.Errorf("cannot load cookie categories: %w", err)
+			categories, err := page.LoadAll(
+				ctx,
+				page.OrderBy[coredata.CookieCategoryOrderField]{
+					Field:     coredata.CookieCategoryOrderFieldRank,
+					Direction: page.OrderDirectionAsc,
+				},
+				func(ctx context.Context, cursor *page.Cursor[coredata.CookieCategoryOrderField]) ([]*coredata.CookieCategory, error) {
+					var batch coredata.CookieCategories
+					if err := batch.LoadByCookieBannerID(ctx, conn, scope, banner.ID, cursor, consentFilter); err != nil {
+						return nil, fmt.Errorf("cannot load cookie categories: %w", err)
+					}
+
+					return batch, nil
+				},
+			)
+			if err != nil {
+				return err
 			}
 
-			var translations coredata.CookieBannerTranslations
-			if err := translations.LoadAllByCookieBannerID(ctx, conn, scope, banner.ID); err != nil {
-				return fmt.Errorf("cannot load cookie banner translations: %w", err)
+			translations, err := page.LoadAll(
+				ctx,
+				page.OrderBy[coredata.CookieBannerTranslationOrderField]{
+					Field:     coredata.CookieBannerTranslationOrderFieldLanguage,
+					Direction: page.OrderDirectionAsc,
+				},
+				func(ctx context.Context, cursor *page.Cursor[coredata.CookieBannerTranslationOrderField]) ([]*coredata.CookieBannerTranslation, error) {
+					var batch coredata.CookieBannerTranslations
+					if err := batch.LoadByCookieBannerID(ctx, conn, scope, banner.ID, cursor); err != nil {
+						return nil, fmt.Errorf("cannot load cookie banner translations: %w", err)
+					}
+
+					return batch, nil
+				},
+			)
+			if err != nil {
+				return err
 			}
 
 			resolved := resolveTranslations(translations, categories)
@@ -1959,7 +2008,28 @@ func (s *Service) ListCookieBannerTranslations(
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			return translations.LoadAllByCookieBannerID(ctx, conn, scope, cookieBannerID)
+			loaded, err := page.LoadAll(
+				ctx,
+				page.OrderBy[coredata.CookieBannerTranslationOrderField]{
+					Field:     coredata.CookieBannerTranslationOrderFieldLanguage,
+					Direction: page.OrderDirectionAsc,
+				},
+				func(ctx context.Context, cursor *page.Cursor[coredata.CookieBannerTranslationOrderField]) ([]*coredata.CookieBannerTranslation, error) {
+					var batch coredata.CookieBannerTranslations
+					if err := batch.LoadByCookieBannerID(ctx, conn, scope, cookieBannerID, cursor); err != nil {
+						return nil, fmt.Errorf("cannot load cookie banner translations: %w", err)
+					}
+
+					return batch, nil
+				},
+			)
+			if err != nil {
+				return err
+			}
+
+			translations = loaded
+
+			return nil
 		},
 	)
 	if err != nil {

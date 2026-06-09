@@ -457,59 +457,6 @@ WHERE
 	return nil
 }
 
-func (trs *TrackerResources) LoadAllByCookieBannerID(
-	ctx context.Context,
-	conn pg.Querier,
-	scope Scoper,
-	cookieBannerID gid.GID,
-	filter *TrackerResourceFilter,
-) error {
-	q := `
-SELECT
-	id,
-	organization_id,
-	cookie_banner_id,
-	cookie_category_id,
-	resource_type,
-	origin,
-	path,
-	display_name,
-	description,
-	excluded,
-	last_detected_at,
-	created_at,
-	updated_at
-FROM
-	tracker_resources
-WHERE
-	%s
-	AND cookie_banner_id = @cookie_banner_id
-	AND %s
-ORDER BY
-	created_at ASC, id ASC;
-`
-
-	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
-
-	args := pgx.StrictNamedArgs{"cookie_banner_id": cookieBannerID}
-	maps.Copy(args, scope.SQLArguments())
-	maps.Copy(args, filter.SQLArguments())
-
-	rows, err := conn.Query(ctx, q, args)
-	if err != nil {
-		return fmt.Errorf("cannot query tracker resources: %w", err)
-	}
-
-	resources, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[TrackerResource])
-	if err != nil {
-		return fmt.Errorf("cannot collect tracker resources: %w", err)
-	}
-
-	*trs = resources
-
-	return nil
-}
-
 func (trs *TrackerResources) LoadUncategorisedByCookieBannerID(
 	ctx context.Context,
 	conn pg.Querier,

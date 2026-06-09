@@ -28,6 +28,7 @@ import (
 	"go.probo.inc/probo/internal/test"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/page"
 )
 
 // workerFixture bootstraps the parent rows the worker's transaction
@@ -324,14 +325,28 @@ func TestPatternAnalysisWorker_PromotesSourceOnExistingGlob(t *testing.T) {
 	var remainingExacts coredata.TrackerPatterns
 
 	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
-		return remainingExacts.LoadAllByCookieBannerID(
+		loaded, err := page.LoadAll(
 			ctx,
-			conn,
-			fx.scope,
-			fx.banner.ID,
-			coredata.NewTrackerPatternFilter(new(coredata.TrackerPatternMatchTypeExact), nil, new(false)),
-			nil,
+			page.OrderBy[coredata.TrackerPatternOrderField]{
+				Field:     coredata.TrackerPatternOrderFieldCreatedAt,
+				Direction: page.OrderDirectionAsc,
+			},
+			func(ctx context.Context, cursor *page.Cursor[coredata.TrackerPatternOrderField]) ([]*coredata.TrackerPattern, error) {
+				var batch coredata.TrackerPatterns
+				if err := batch.LoadByCookieBannerID(ctx, conn, fx.scope, fx.banner.ID, cursor, coredata.NewTrackerPatternFilter(new(coredata.TrackerPatternMatchTypeExact), nil, new(false))); err != nil {
+					return nil, err
+				}
+
+				return batch, nil
+			},
 		)
+		if err != nil {
+			return err
+		}
+
+		remainingExacts = loaded
+
+		return nil
 	}))
 	assert.Empty(t, remainingExacts, "all three exacts must be relinked and deleted")
 }
@@ -401,14 +416,28 @@ func TestPatternAnalysisWorker_AdoptionTriggersDraftVersion(t *testing.T) {
 	var remainingExacts coredata.TrackerPatterns
 
 	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
-		return remainingExacts.LoadAllByCookieBannerID(
+		loaded, err := page.LoadAll(
 			ctx,
-			conn,
-			fx.scope,
-			fx.banner.ID,
-			coredata.NewTrackerPatternFilter(new(coredata.TrackerPatternMatchTypeExact), nil, new(false)),
-			nil,
+			page.OrderBy[coredata.TrackerPatternOrderField]{
+				Field:     coredata.TrackerPatternOrderFieldCreatedAt,
+				Direction: page.OrderDirectionAsc,
+			},
+			func(ctx context.Context, cursor *page.Cursor[coredata.TrackerPatternOrderField]) ([]*coredata.TrackerPattern, error) {
+				var batch coredata.TrackerPatterns
+				if err := batch.LoadByCookieBannerID(ctx, conn, fx.scope, fx.banner.ID, cursor, coredata.NewTrackerPatternFilter(new(coredata.TrackerPatternMatchTypeExact), nil, new(false))); err != nil {
+					return nil, err
+				}
+
+				return batch, nil
+			},
 		)
+		if err != nil {
+			return err
+		}
+
+		remainingExacts = loaded
+
+		return nil
 	}))
 	assert.Empty(t, remainingExacts, "adoptUncategorisedPatterns must absorb the uncategorised exacts into the existing glob")
 
@@ -486,14 +515,28 @@ func TestPatternAnalysisWorker_AdoptionPromotesSourceCrossCategory(t *testing.T)
 	var remainingExacts coredata.TrackerPatterns
 
 	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
-		return remainingExacts.LoadAllByCookieBannerID(
+		loaded, err := page.LoadAll(
 			ctx,
-			conn,
-			fx.scope,
-			fx.banner.ID,
-			coredata.NewTrackerPatternFilter(new(coredata.TrackerPatternMatchTypeExact), nil, new(false)),
-			nil,
+			page.OrderBy[coredata.TrackerPatternOrderField]{
+				Field:     coredata.TrackerPatternOrderFieldCreatedAt,
+				Direction: page.OrderDirectionAsc,
+			},
+			func(ctx context.Context, cursor *page.Cursor[coredata.TrackerPatternOrderField]) ([]*coredata.TrackerPattern, error) {
+				var batch coredata.TrackerPatterns
+				if err := batch.LoadByCookieBannerID(ctx, conn, fx.scope, fx.banner.ID, cursor, coredata.NewTrackerPatternFilter(new(coredata.TrackerPatternMatchTypeExact), nil, new(false))); err != nil {
+					return nil, err
+				}
+
+				return batch, nil
+			},
 		)
+		if err != nil {
+			return err
+		}
+
+		remainingExacts = loaded
+
+		return nil
 	}))
 	assert.Empty(t, remainingExacts, "the uncategorised exact must be adopted into the existing glob")
 }
@@ -559,14 +602,28 @@ func TestReportDetectedTrackers_PromotesSourceOnExistingGlob(t *testing.T) {
 	var exacts coredata.TrackerPatterns
 
 	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
-		return exacts.LoadAllByCookieBannerID(
+		loaded, err := page.LoadAll(
 			ctx,
-			conn,
-			fx.scope,
-			fx.banner.ID,
-			coredata.NewTrackerPatternFilter(new(coredata.TrackerPatternMatchTypeExact), nil, new(false)),
-			nil,
+			page.OrderBy[coredata.TrackerPatternOrderField]{
+				Field:     coredata.TrackerPatternOrderFieldCreatedAt,
+				Direction: page.OrderDirectionAsc,
+			},
+			func(ctx context.Context, cursor *page.Cursor[coredata.TrackerPatternOrderField]) ([]*coredata.TrackerPattern, error) {
+				var batch coredata.TrackerPatterns
+				if err := batch.LoadByCookieBannerID(ctx, conn, fx.scope, fx.banner.ID, cursor, coredata.NewTrackerPatternFilter(new(coredata.TrackerPatternMatchTypeExact), nil, new(false))); err != nil {
+					return nil, err
+				}
+
+				return batch, nil
+			},
 		)
+		if err != nil {
+			return err
+		}
+
+		exacts = loaded
+
+		return nil
 	}))
 	assert.Empty(t, exacts, "the detected cookie globMatches the existing glob; no exact pattern must be created")
 }
@@ -608,14 +665,28 @@ func TestPatternAnalysisWorker_MergeWithoutAdoptionSkipsDraftVersion(t *testing.
 	var globs coredata.TrackerPatterns
 
 	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
-		return globs.LoadAllByCookieBannerID(
+		loaded, err := page.LoadAll(
 			ctx,
-			conn,
-			fx.scope,
-			fx.banner.ID,
-			coredata.NewTrackerPatternFilter(new(coredata.TrackerPatternMatchTypeGlob), nil, new(false)),
-			nil,
+			page.OrderBy[coredata.TrackerPatternOrderField]{
+				Field:     coredata.TrackerPatternOrderFieldCreatedAt,
+				Direction: page.OrderDirectionAsc,
+			},
+			func(ctx context.Context, cursor *page.Cursor[coredata.TrackerPatternOrderField]) ([]*coredata.TrackerPattern, error) {
+				var batch coredata.TrackerPatterns
+				if err := batch.LoadByCookieBannerID(ctx, conn, fx.scope, fx.banner.ID, cursor, coredata.NewTrackerPatternFilter(new(coredata.TrackerPatternMatchTypeGlob), nil, new(false))); err != nil {
+					return nil, err
+				}
+
+				return batch, nil
+			},
 		)
+		if err != nil {
+			return err
+		}
+
+		globs = loaded
+
+		return nil
 	}))
 	require.Len(t, globs, 1, "the three exacts must consolidate into a single glob")
 	assert.Equal(t, "_ga_*", globs[0].Pattern)

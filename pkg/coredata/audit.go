@@ -237,56 +237,6 @@ WHERE
 	return nil
 }
 
-func (a *Audits) LoadAllByOrganizationID(
-	ctx context.Context,
-	conn pg.Querier,
-	scope Scoper,
-	organizationID gid.GID,
-	filter *AuditFilter,
-) error {
-	q := `
-SELECT
-	id,
-	name,
-	organization_id,
-	framework_id,
-	report_file_id,
-	valid_from,
-	valid_until,
-	state,
-	trust_center_visibility,
-	created_at,
-	updated_at
-FROM
-	audits
-WHERE
-	%s
-	AND organization_id = @organization_id
-	AND %s
-ORDER BY valid_from DESC
-`
-
-	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
-
-	args := pgx.StrictNamedArgs{"organization_id": organizationID}
-	maps.Copy(args, scope.SQLArguments())
-	maps.Copy(args, filter.SQLArguments())
-
-	rows, err := conn.Query(ctx, q, args)
-	if err != nil {
-		return fmt.Errorf("cannot query audits: %w", err)
-	}
-
-	audits, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Audit])
-	if err != nil {
-		return fmt.Errorf("cannot collect audits: %w", err)
-	}
-
-	*a = audits
-
-	return nil
-}
-
 func (a *Audit) Insert(
 	ctx context.Context,
 	conn pg.Tx,

@@ -22,6 +22,7 @@ import (
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/page"
 )
 
 func (s *Service) BuildScopeMermaidChart(ctx context.Context, scope coredata.Scoper, scopeID gid.GID) (string, error) {
@@ -33,21 +34,89 @@ func (s *Service) BuildScopeMermaidChart(ctx context.Context, scope coredata.Sco
 	)
 
 	err := s.pg.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
-		if err := nodes.LoadAllByRiskAssessmentScopeID(ctx, conn, scope, scopeID); err != nil {
-			return fmt.Errorf("cannot load nodes: %w", err)
+		loadedNodes, err := page.LoadAll(
+			ctx,
+			page.OrderBy[coredata.RiskAssessmentNodeOrderField]{
+				Field:     coredata.RiskAssessmentNodeOrderFieldCreatedAt,
+				Direction: page.OrderDirectionAsc,
+			},
+			func(ctx context.Context, cursor *page.Cursor[coredata.RiskAssessmentNodeOrderField]) ([]*coredata.RiskAssessmentNode, error) {
+				var batch coredata.RiskAssessmentNodes
+				if err := batch.LoadByRiskAssessmentScopeID(ctx, conn, scope, scopeID, cursor); err != nil {
+					return nil, fmt.Errorf("cannot load nodes: %w", err)
+				}
+
+				return batch, nil
+			},
+		)
+		if err != nil {
+			return err
 		}
 
-		if err := boundaries.LoadAllByRiskAssessmentScopeID(ctx, conn, scope, scopeID); err != nil {
-			return fmt.Errorf("cannot load boundaries: %w", err)
+		nodes = loadedNodes
+
+		loadedBoundaries, err := page.LoadAll(
+			ctx,
+			page.OrderBy[coredata.RiskAssessmentBoundaryOrderField]{
+				Field:     coredata.RiskAssessmentBoundaryOrderFieldCreatedAt,
+				Direction: page.OrderDirectionAsc,
+			},
+			func(ctx context.Context, cursor *page.Cursor[coredata.RiskAssessmentBoundaryOrderField]) ([]*coredata.RiskAssessmentBoundary, error) {
+				var batch coredata.RiskAssessmentBoundaries
+				if err := batch.LoadByRiskAssessmentScopeID(ctx, conn, scope, scopeID, cursor); err != nil {
+					return nil, fmt.Errorf("cannot load boundaries: %w", err)
+				}
+
+				return batch, nil
+			},
+		)
+		if err != nil {
+			return err
 		}
 
-		if err := processes.LoadAllByRiskAssessmentScopeID(ctx, conn, scope, scopeID); err != nil {
-			return fmt.Errorf("cannot load processes: %w", err)
+		boundaries = loadedBoundaries
+
+		loadedProcesses, err := page.LoadAll(
+			ctx,
+			page.OrderBy[coredata.RiskAssessmentProcessOrderField]{
+				Field:     coredata.RiskAssessmentProcessOrderFieldCreatedAt,
+				Direction: page.OrderDirectionAsc,
+			},
+			func(ctx context.Context, cursor *page.Cursor[coredata.RiskAssessmentProcessOrderField]) ([]*coredata.RiskAssessmentProcess, error) {
+				var batch coredata.RiskAssessmentProcesses
+				if err := batch.LoadByRiskAssessmentScopeID(ctx, conn, scope, scopeID, cursor); err != nil {
+					return nil, fmt.Errorf("cannot load processes: %w", err)
+				}
+
+				return batch, nil
+			},
+		)
+		if err != nil {
+			return err
 		}
 
-		if err := threats.LoadAllByRiskAssessmentScopeID(ctx, conn, scope, scopeID); err != nil {
-			return fmt.Errorf("cannot load threats: %w", err)
+		processes = loadedProcesses
+
+		loadedThreats, err := page.LoadAll(
+			ctx,
+			page.OrderBy[coredata.RiskAssessmentThreatOrderField]{
+				Field:     coredata.RiskAssessmentThreatOrderFieldCreatedAt,
+				Direction: page.OrderDirectionAsc,
+			},
+			func(ctx context.Context, cursor *page.Cursor[coredata.RiskAssessmentThreatOrderField]) ([]*coredata.RiskAssessmentThreat, error) {
+				var batch coredata.RiskAssessmentThreats
+				if err := batch.LoadByRiskAssessmentScopeID(ctx, conn, scope, scopeID, cursor); err != nil {
+					return nil, fmt.Errorf("cannot load threats: %w", err)
+				}
+
+				return batch, nil
+			},
+		)
+		if err != nil {
+			return err
 		}
+
+		threats = loadedThreats
 
 		return nil
 	})

@@ -27,6 +27,7 @@ import (
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam/policy"
+	"go.probo.inc/probo/pkg/page"
 )
 
 type (
@@ -42,6 +43,17 @@ type (
 
 	CookieBannerTranslations []*CookieBannerTranslation
 )
+
+func (t CookieBannerTranslation) CursorKey(field CookieBannerTranslationOrderField) page.CursorKey {
+	switch field {
+	case CookieBannerTranslationOrderFieldLanguage:
+		return page.NewCursorKey(t.ID, t.Language)
+	case CookieBannerTranslationOrderFieldCreatedAt:
+		return page.NewCursorKey(t.ID, t.CreatedAt)
+	}
+
+	panic(fmt.Sprintf("unsupported order by: %s", field))
+}
 
 func (t *CookieBannerTranslation) AuthorizationAttributes(
 	ctx context.Context,
@@ -181,11 +193,12 @@ LIMIT 1;
 	return nil
 }
 
-func (t *CookieBannerTranslations) LoadAllByCookieBannerID(
+func (t *CookieBannerTranslations) LoadByCookieBannerID(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
 	cookieBannerID gid.GID,
+	cursor *page.Cursor[CookieBannerTranslationOrderField],
 ) error {
 	q := `
 SELECT
@@ -201,14 +214,14 @@ FROM
 WHERE
 	%s
 	AND cookie_banner_id = @cookie_banner_id
-ORDER BY
-	language ASC;
+	AND %s
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"cookie_banner_id": cookieBannerID}
 	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, cursor.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {

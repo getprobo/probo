@@ -560,60 +560,6 @@ WHERE
 	return count, nil
 }
 
-func (fs *Findings) LoadAllByOrganizationID(
-	ctx context.Context,
-	conn pg.Querier,
-	scope Scoper,
-	organizationID gid.GID,
-) error {
-	q := `
-SELECT
-	id,
-	organization_id,
-	kind,
-	reference_id,
-	description,
-	source,
-	identified_on,
-	root_cause,
-	corrective_action,
-	owner_id,
-	due_date,
-	status,
-	priority,
-	risk_id,
-	effectiveness_check,
-	created_at,
-	updated_at
-FROM
-	findings
-WHERE
-	%s
-	AND organization_id = @organization_id
-ORDER BY
-	reference_id ASC
-`
-
-	q = fmt.Sprintf(q, scope.SQLFragment())
-
-	args := pgx.StrictNamedArgs{"organization_id": organizationID}
-	maps.Copy(args, scope.SQLArguments())
-
-	rows, err := conn.Query(ctx, q, args)
-	if err != nil {
-		return fmt.Errorf("cannot query findings: %w", err)
-	}
-
-	findings, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Finding])
-	if err != nil {
-		return fmt.Errorf("cannot collect findings: %w", err)
-	}
-
-	*fs = findings
-
-	return nil
-}
-
 func (f Finding) GetGeneratedDocumentID(
 	ctx context.Context,
 	conn pg.Querier,

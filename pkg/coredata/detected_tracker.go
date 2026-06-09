@@ -295,59 +295,6 @@ LIMIT @limit;
 	return ids, nil
 }
 
-// LoadAllByTrackerPatternID returns every detected tracker linked to the
-// pattern, with no pagination. It backs the banner-reset rebuild, which
-// recreates exact patterns from a glob's detections.
-func (dts *DetectedTrackers) LoadAllByTrackerPatternID(
-	ctx context.Context,
-	conn pg.Querier,
-	scope Scoper,
-	trackerPatternID gid.GID,
-) error {
-	q := `
-SELECT
-	id,
-	cookie_banner_id,
-	tracker_pattern_id,
-	tracker_type,
-	identifier,
-	max_age_seconds,
-	source,
-	value_size,
-	initiator_url,
-	initiator_domain,
-	last_detected_at,
-	created_at,
-	updated_at
-FROM
-	detected_trackers
-WHERE
-	%s
-	AND tracker_pattern_id = @tracker_pattern_id
-ORDER BY
-	identifier ASC, id ASC
-`
-
-	q = fmt.Sprintf(q, scope.SQLFragment())
-
-	args := pgx.StrictNamedArgs{"tracker_pattern_id": trackerPatternID}
-	maps.Copy(args, scope.SQLArguments())
-
-	rows, err := conn.Query(ctx, q, args)
-	if err != nil {
-		return fmt.Errorf("cannot query detected trackers: %w", err)
-	}
-
-	trackers, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[DetectedTracker])
-	if err != nil {
-		return fmt.Errorf("cannot collect detected trackers: %w", err)
-	}
-
-	*dts = trackers
-
-	return nil
-}
-
 // UpdateTrackerPatternID repoints a single detected tracker at another
 // pattern. It is the per-row counterpart of RelinkByTrackerPatternID,
 // used by the banner-reset rebuild where each detection of a glob moves

@@ -136,48 +136,6 @@ WHERE
 	return nil
 }
 
-func (bs *RiskAssessmentBoundaries) LoadAllByRiskAssessmentScopeID(
-	ctx context.Context,
-	conn pg.Querier,
-	scope Scoper,
-	riskAssessmentScopeID gid.GID,
-) error {
-	q := `
-SELECT
-	id,
-	organization_id,
-	risk_assessment_scope_id,
-	parent_boundary_id,
-	name,
-	created_at,
-	updated_at
-FROM
-	risk_assessment_boundaries
-WHERE
-	%s
-	AND risk_assessment_scope_id = @risk_assessment_scope_id
-ORDER BY
-	created_at ASC, id ASC
-`
-	q = fmt.Sprintf(q, scope.SQLFragment())
-	args := pgx.NamedArgs{"risk_assessment_scope_id": riskAssessmentScopeID}
-	maps.Copy(args, scope.SQLArguments())
-
-	rows, err := conn.Query(ctx, q, args)
-	if err != nil {
-		return fmt.Errorf("cannot query risk assessment boundaries: %w", err)
-	}
-
-	results, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[RiskAssessmentBoundary])
-	if err != nil {
-		return fmt.Errorf("cannot collect risk assessment boundaries: %w", err)
-	}
-
-	*bs = results
-
-	return nil
-}
-
 func (bs *RiskAssessmentBoundaries) CountByRiskAssessmentScopeID(
 	ctx context.Context,
 	conn pg.Querier,

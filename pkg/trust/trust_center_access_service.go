@@ -27,6 +27,7 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/mail"
+	"go.probo.inc/probo/pkg/page"
 )
 
 type (
@@ -76,12 +77,25 @@ func (s TrustCenterAccessService) Request(
 
 			documentIDs := req.DocumentIDs
 			if req.DocumentIDs == nil {
-				var allDocuments coredata.Documents
-
 				filter := coredata.NewDocumentTrustCenterFilter()
 
-				if err := allDocuments.LoadAllByOrganizationID(ctx, tx, scope, organizationID, filter); err != nil {
-					return fmt.Errorf("cannot list documents: %w", err)
+				allDocuments, err := page.LoadAll(
+					ctx,
+					page.OrderBy[coredata.DocumentOrderField]{
+						Field:     coredata.DocumentOrderFieldTitle,
+						Direction: page.OrderDirectionAsc,
+					},
+					func(ctx context.Context, cursor *page.Cursor[coredata.DocumentOrderField]) ([]*coredata.Document, error) {
+						var batch coredata.Documents
+						if err := batch.LoadByOrganizationID(ctx, tx, scope, organizationID, cursor, filter); err != nil {
+							return nil, fmt.Errorf("cannot list documents: %w", err)
+						}
+
+						return batch, nil
+					},
+				)
+				if err != nil {
+					return err
 				}
 
 				for _, doc := range allDocuments {
@@ -91,12 +105,25 @@ func (s TrustCenterAccessService) Request(
 
 			reportIDs := req.ReportIDs
 			if req.ReportIDs == nil {
-				var allAudits coredata.Audits
-
 				auditFilter := coredata.NewAuditTrustCenterFilter()
 
-				if err := allAudits.LoadAllByOrganizationID(ctx, tx, scope, organizationID, auditFilter); err != nil {
-					return fmt.Errorf("cannot list audits: %w", err)
+				allAudits, err := page.LoadAll(
+					ctx,
+					page.OrderBy[coredata.AuditOrderField]{
+						Field:     coredata.AuditOrderFieldCreatedAt,
+						Direction: page.OrderDirectionAsc,
+					},
+					func(ctx context.Context, cursor *page.Cursor[coredata.AuditOrderField]) ([]*coredata.Audit, error) {
+						var batch coredata.Audits
+						if err := batch.LoadByOrganizationID(ctx, tx, scope, organizationID, cursor, auditFilter); err != nil {
+							return nil, fmt.Errorf("cannot list audits: %w", err)
+						}
+
+						return batch, nil
+					},
+				)
+				if err != nil {
+					return err
 				}
 
 				for _, audit := range allAudits {
@@ -108,14 +135,27 @@ func (s TrustCenterAccessService) Request(
 
 			trustCenterFileIDs := req.TrustCenterFileIDs
 			if req.TrustCenterFileIDs == nil {
-				var allTrustCenterFiles coredata.TrustCenterFiles
-
 				filter := coredata.NewTrustCenterFileFilter(
 					coredata.WithTrustCenterFileVisibilities(coredata.TrustCenterVisibilityPrivate, coredata.TrustCenterVisibilityNone),
 				)
 
-				if err := allTrustCenterFiles.LoadAllByOrganizationID(ctx, tx, scope, organizationID, filter); err != nil {
-					return fmt.Errorf("cannot list trust center files: %w", err)
+				allTrustCenterFiles, err := page.LoadAll(
+					ctx,
+					page.OrderBy[coredata.TrustCenterFileOrderField]{
+						Field:     coredata.TrustCenterFileOrderFieldCreatedAt,
+						Direction: page.OrderDirectionDesc,
+					},
+					func(ctx context.Context, cursor *page.Cursor[coredata.TrustCenterFileOrderField]) ([]*coredata.TrustCenterFile, error) {
+						var batch coredata.TrustCenterFiles
+						if err := batch.LoadByOrganizationID(ctx, tx, scope, organizationID, cursor, filter); err != nil {
+							return nil, fmt.Errorf("cannot list trust center files: %w", err)
+						}
+
+						return batch, nil
+					},
+				)
+				if err != nil {
+					return err
 				}
 
 				for _, file := range allTrustCenterFiles {
@@ -123,9 +163,23 @@ func (s TrustCenterAccessService) Request(
 				}
 			}
 
-			var existingAccesses coredata.TrustCenterDocumentAccesses
-			if err := existingAccesses.LoadAllByTrustCenterAccessID(ctx, tx, scope, access.ID); err != nil {
-				return fmt.Errorf("cannot load existing access records: %w", err)
+			existingAccesses, err := page.LoadAll(
+				ctx,
+				page.OrderBy[coredata.TrustCenterDocumentAccessOrderField]{
+					Field:     coredata.TrustCenterDocumentAccessOrderFieldCreatedAt,
+					Direction: page.OrderDirectionAsc,
+				},
+				func(ctx context.Context, cursor *page.Cursor[coredata.TrustCenterDocumentAccessOrderField]) ([]*coredata.TrustCenterDocumentAccess, error) {
+					var batch coredata.TrustCenterDocumentAccesses
+					if err := batch.LoadByTrustCenterAccessID(ctx, tx, scope, access.ID, cursor); err != nil {
+						return nil, fmt.Errorf("cannot load existing access records: %w", err)
+					}
+
+					return batch, nil
+				},
+			)
+			if err != nil {
+				return err
 			}
 
 			existingDocumentIDs, existingReportIDs, existingTrustCenterFileIDs := extractExistingIDs(existingAccesses)

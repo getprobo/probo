@@ -27,6 +27,7 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/mail"
+	"go.probo.inc/probo/pkg/page"
 )
 
 const (
@@ -327,9 +328,23 @@ func (s *Service) loadDocumentsReportsAndFilesFromAccesses(
 	reports = []SlackMessageReport{}
 	files = []SlackMessageFile{}
 
-	var accesses coredata.TrustCenterDocumentAccesses
-	if err := accesses.LoadAllByTrustCenterAccessID(ctx, conn, scope, trustCenterAccessID); err != nil {
-		return nil, nil, nil, fmt.Errorf("cannot load trust center document accesses: %w", err)
+	accesses, err := page.LoadAll(
+		ctx,
+		page.OrderBy[coredata.TrustCenterDocumentAccessOrderField]{
+			Field:     coredata.TrustCenterDocumentAccessOrderFieldCreatedAt,
+			Direction: page.OrderDirectionAsc,
+		},
+		func(ctx context.Context, cursor *page.Cursor[coredata.TrustCenterDocumentAccessOrderField]) ([]*coredata.TrustCenterDocumentAccess, error) {
+			var batch coredata.TrustCenterDocumentAccesses
+			if err := batch.LoadByTrustCenterAccessID(ctx, conn, scope, trustCenterAccessID, cursor); err != nil {
+				return nil, fmt.Errorf("cannot load trust center document accesses: %w", err)
+			}
+
+			return batch, nil
+		},
+	)
+	if err != nil {
+		return nil, nil, nil, err
 	}
 
 	for _, access := range accesses {

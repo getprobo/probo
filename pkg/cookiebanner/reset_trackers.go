@@ -22,6 +22,7 @@ import (
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/page"
 )
 
 // ResetTrackersResult summarizes what a banner reset changed.
@@ -122,22 +123,43 @@ func decomposeGlobs(
 	globMatchType := coredata.TrackerPatternMatchTypeGlob
 	notExcluded := false
 
-	var globs coredata.TrackerPatterns
-	if err := globs.LoadAllByCookieBannerID(
+	globs, err := page.LoadAll(
 		ctx,
-		tx,
-		scope,
-		bannerID,
-		coredata.NewTrackerPatternFilter(&globMatchType, &uncategorisedID, &notExcluded).WithPatternKeyword(keyword),
-		nil,
-	); err != nil {
-		return fmt.Errorf("cannot load glob patterns: %w", err)
+		page.OrderBy[coredata.TrackerPatternOrderField]{
+			Field:     coredata.TrackerPatternOrderFieldCreatedAt,
+			Direction: page.OrderDirectionAsc,
+		},
+		func(ctx context.Context, cursor *page.Cursor[coredata.TrackerPatternOrderField]) ([]*coredata.TrackerPattern, error) {
+			var batch coredata.TrackerPatterns
+			if err := batch.LoadByCookieBannerID(ctx, tx, scope, bannerID, cursor, coredata.NewTrackerPatternFilter(&globMatchType, &uncategorisedID, &notExcluded).WithPatternKeyword(keyword)); err != nil {
+				return nil, fmt.Errorf("cannot load glob patterns: %w", err)
+			}
+
+			return batch, nil
+		},
+	)
+	if err != nil {
+		return err
 	}
 
 	for _, glob := range globs {
-		var detections coredata.DetectedTrackers
-		if err := detections.LoadAllByTrackerPatternID(ctx, tx, scope, glob.ID); err != nil {
-			return fmt.Errorf("cannot load detections for glob %q: %w", glob.Pattern, err)
+		detections, err := page.LoadAll(
+			ctx,
+			page.OrderBy[coredata.DetectedTrackerOrderField]{
+				Field:     coredata.DetectedTrackerOrderFieldLastDetectedAt,
+				Direction: page.OrderDirectionAsc,
+			},
+			func(ctx context.Context, cursor *page.Cursor[coredata.DetectedTrackerOrderField]) ([]*coredata.DetectedTracker, error) {
+				var batch coredata.DetectedTrackers
+				if err := batch.LoadByTrackerPatternID(ctx, tx, scope, glob.ID, cursor); err != nil {
+					return nil, fmt.Errorf("cannot load detections for glob %q: %w", glob.Pattern, err)
+				}
+
+				return batch, nil
+			},
+		)
+		if err != nil {
+			return err
 		}
 
 		for _, detection := range detections {

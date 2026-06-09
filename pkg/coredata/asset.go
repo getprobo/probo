@@ -50,6 +50,8 @@ func (a *Asset) CursorKey(field AssetOrderField) page.CursorKey {
 		return page.NewCursorKey(a.ID, a.CreatedAt)
 	case AssetOrderFieldAmount:
 		return page.NewCursorKey(a.ID, a.Amount)
+	case AssetOrderFieldName:
+		return page.NewCursorKey(a.ID, a.Name)
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", field))
@@ -254,52 +256,6 @@ WHERE
 	args := pgx.StrictNamedArgs{"organization_id": organizationID}
 	maps.Copy(args, scope.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
-
-	rows, err := conn.Query(ctx, q, args)
-	if err != nil {
-		return fmt.Errorf("cannot query assets: %w", err)
-	}
-
-	assets, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Asset])
-	if err != nil {
-		return fmt.Errorf("cannot collect assets: %w", err)
-	}
-
-	*a = assets
-
-	return nil
-}
-
-func (a *Assets) LoadAllByOrganizationID(
-	ctx context.Context,
-	conn pg.Querier,
-	scope Scoper,
-	organizationID gid.GID,
-) error {
-	q := `
-SELECT
-	id,
-	name,
-	organization_id,
-	owner_profile_id,
-	amount,
-	asset_type,
-	data_types_stored,
-	created_at,
-	updated_at
-FROM
-	assets
-WHERE
-	%s
-	AND organization_id = @organization_id
-ORDER BY
-	name ASC
-`
-
-	q = fmt.Sprintf(q, scope.SQLFragment())
-
-	args := pgx.StrictNamedArgs{"organization_id": organizationID}
-	maps.Copy(args, scope.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {

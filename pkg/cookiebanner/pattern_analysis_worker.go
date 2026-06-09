@@ -27,6 +27,7 @@ import (
 	"go.gearno.de/kit/worker"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/page"
 )
 
 const (
@@ -147,16 +148,23 @@ func (h *patternAnalysisHandler) Process(ctx context.Context, banner coredata.Co
 		func(ctx context.Context, tx pg.Tx) error {
 			scope := coredata.NewScopeFromObjectID(banner.ID)
 
-			var exactPatterns coredata.TrackerPatterns
-			if err := exactPatterns.LoadAllByCookieBannerID(
+			exactPatterns, err := page.LoadAll(
 				ctx,
-				tx,
-				scope,
-				banner.ID,
-				coredata.NewTrackerPatternFilter(new(coredata.TrackerPatternMatchTypeExact), nil, new(false)),
-				nil,
-			); err != nil {
-				return fmt.Errorf("cannot load exact patterns: %w", err)
+				page.OrderBy[coredata.TrackerPatternOrderField]{
+					Field:     coredata.TrackerPatternOrderFieldCreatedAt,
+					Direction: page.OrderDirectionAsc,
+				},
+				func(ctx context.Context, cursor *page.Cursor[coredata.TrackerPatternOrderField]) ([]*coredata.TrackerPattern, error) {
+					var batch coredata.TrackerPatterns
+					if err := batch.LoadByCookieBannerID(ctx, tx, scope, banner.ID, cursor, coredata.NewTrackerPatternFilter(new(coredata.TrackerPatternMatchTypeExact), nil, new(false))); err != nil {
+						return nil, fmt.Errorf("cannot load exact patterns: %w", err)
+					}
+
+					return batch, nil
+				},
+			)
+			if err != nil {
+				return err
 			}
 
 			mergeGroups := findMergeGroups(exactPatterns, patternMergeThreshold)
@@ -816,16 +824,23 @@ func (h *patternAnalysisHandler) adoptUncategorisedPatterns(
 		return false, fmt.Errorf("cannot load uncategorised category: %w", err)
 	}
 
-	var globPatterns coredata.TrackerPatterns
-	if err := globPatterns.LoadAllByCookieBannerID(
+	globPatterns, err := page.LoadAll(
 		ctx,
-		tx,
-		scope,
-		banner.ID,
-		coredata.NewTrackerPatternFilter(new(coredata.TrackerPatternMatchTypeGlob), nil, new(false)),
-		nil,
-	); err != nil {
-		return false, fmt.Errorf("cannot load glob patterns: %w", err)
+		page.OrderBy[coredata.TrackerPatternOrderField]{
+			Field:     coredata.TrackerPatternOrderFieldCreatedAt,
+			Direction: page.OrderDirectionAsc,
+		},
+		func(ctx context.Context, cursor *page.Cursor[coredata.TrackerPatternOrderField]) ([]*coredata.TrackerPattern, error) {
+			var batch coredata.TrackerPatterns
+			if err := batch.LoadByCookieBannerID(ctx, tx, scope, banner.ID, cursor, coredata.NewTrackerPatternFilter(new(coredata.TrackerPatternMatchTypeGlob), nil, new(false))); err != nil {
+				return nil, fmt.Errorf("cannot load glob patterns: %w", err)
+			}
+
+			return batch, nil
+		},
+	)
+	if err != nil {
+		return false, err
 	}
 
 	if len(globPatterns) == 0 {
@@ -841,16 +856,23 @@ func (h *patternAnalysisHandler) adoptUncategorisedPatterns(
 
 	exactMatchType := coredata.TrackerPatternMatchTypeExact
 
-	var uncategorisedExact coredata.TrackerPatterns
-	if err := uncategorisedExact.LoadAllByCookieBannerID(
+	uncategorisedExact, err := page.LoadAll(
 		ctx,
-		tx,
-		scope,
-		banner.ID,
-		coredata.NewTrackerPatternFilter(&exactMatchType, &uncategorised.ID, new(false)),
-		nil,
-	); err != nil {
-		return false, fmt.Errorf("cannot load uncategorised exact patterns: %w", err)
+		page.OrderBy[coredata.TrackerPatternOrderField]{
+			Field:     coredata.TrackerPatternOrderFieldCreatedAt,
+			Direction: page.OrderDirectionAsc,
+		},
+		func(ctx context.Context, cursor *page.Cursor[coredata.TrackerPatternOrderField]) ([]*coredata.TrackerPattern, error) {
+			var batch coredata.TrackerPatterns
+			if err := batch.LoadByCookieBannerID(ctx, tx, scope, banner.ID, cursor, coredata.NewTrackerPatternFilter(&exactMatchType, &uncategorised.ID, new(false))); err != nil {
+				return nil, fmt.Errorf("cannot load uncategorised exact patterns: %w", err)
+			}
+
+			return batch, nil
+		},
+	)
+	if err != nil {
+		return false, err
 	}
 
 	adopted := false

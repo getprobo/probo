@@ -377,64 +377,6 @@ SELECT * FROM base WHERE %s
 	return nil
 }
 
-func (p *Documents) LoadAllByOrganizationID(
-	ctx context.Context,
-	conn pg.Querier,
-	scope Scoper,
-	organizationID gid.GID,
-	filter *DocumentFilter,
-) error {
-	q := `
-WITH latest_versions AS (
-    SELECT DISTINCT ON (document_id) document_id, title, document_type
-    FROM document_versions
-    ORDER BY document_id, major DESC, minor DESC
-)
-SELECT
-	documents.id,
-    documents.organization_id,
-    documents.current_published_major,
-    documents.current_published_minor,
-    documents.write_mode,
-    documents.trust_center_visibility,
-    documents.status,
-    documents.archived_at,
-    documents.created_at,
-    documents.updated_at,
-    COALESCE(lv.title, '') AS title,
-    COALESCE(lv.document_type, 'OTHER') AS document_type
-FROM
-    documents
-LEFT JOIN latest_versions lv ON lv.document_id = documents.id
-WHERE
-    %s
-    AND documents.deleted_at IS NULL
-    AND documents.organization_id = @organization_id
-    AND %s
-ORDER BY title ASC
-`
-
-	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
-
-	args := pgx.NamedArgs{"organization_id": organizationID}
-	maps.Copy(args, scope.SQLArguments())
-	maps.Copy(args, filter.SQLArguments())
-
-	rows, err := conn.Query(ctx, q, args)
-	if err != nil {
-		return fmt.Errorf("cannot query documents: %w", err)
-	}
-
-	documents, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Document])
-	if err != nil {
-		return fmt.Errorf("cannot collect documents: %w", err)
-	}
-
-	*p = documents
-
-	return nil
-}
-
 func (p *Documents) LoadPublishedByOrganizationID(
 	ctx context.Context,
 	conn pg.Querier,

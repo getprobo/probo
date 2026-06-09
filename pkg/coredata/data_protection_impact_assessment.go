@@ -284,51 +284,6 @@ WHERE
 	return nil
 }
 
-func (dpias *DataProtectionImpactAssessments) LoadAllByOrganizationID(
-	ctx context.Context,
-	conn pg.Querier,
-	scope Scoper,
-	organizationID gid.GID,
-) error {
-	q := `
-SELECT
-	id,
-	organization_id,
-	processing_activity_id,
-	description,
-	necessity_and_proportionality,
-	potential_risk,
-	mitigations,
-	residual_risk,
-	created_at,
-	updated_at
-FROM
-	processing_activity_data_protection_impact_assessments
-WHERE
-	%s
-	AND organization_id = @organization_id
-`
-
-	q = fmt.Sprintf(q, scope.SQLFragment())
-
-	args := pgx.StrictNamedArgs{"organization_id": organizationID}
-	maps.Copy(args, scope.SQLArguments())
-
-	rows, err := conn.Query(ctx, q, args)
-	if err != nil {
-		return fmt.Errorf("cannot query data protection impact assessments: %w", err)
-	}
-
-	results, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[DataProtectionImpactAssessment])
-	if err != nil {
-		return fmt.Errorf("cannot collect data protection impact assessments: %w", err)
-	}
-
-	*dpias = results
-
-	return nil
-}
-
 func (dpia *DataProtectionImpactAssessment) LoadByID(
 	ctx context.Context,
 	conn pg.Querier,

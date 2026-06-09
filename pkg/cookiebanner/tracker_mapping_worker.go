@@ -29,6 +29,7 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/llm"
+	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/stringsx"
 	"go.probo.inc/probo/pkg/thirdparty"
 	"go.probo.inc/probo/pkg/uri"
@@ -1216,15 +1217,23 @@ func (h *trackerMappingHandler) prepareOrgThirdParty(
 
 	firstLevel := 1
 
-	var orgThirdParties coredata.ThirdParties
-	if err := orgThirdParties.LoadAllByOrganizationID(
+	orgThirdParties, err := page.LoadAll(
 		ctx,
-		conn,
-		scope,
-		tp.OrganizationID,
-		coredata.NewThirdPartyFilter(nil, &firstLevel, nil),
-	); err != nil {
-		return prep, fmt.Errorf("cannot load org third parties: %w", err)
+		page.OrderBy[coredata.ThirdPartyOrderField]{
+			Field:     coredata.ThirdPartyOrderFieldName,
+			Direction: page.OrderDirectionAsc,
+		},
+		func(ctx context.Context, cursor *page.Cursor[coredata.ThirdPartyOrderField]) ([]*coredata.ThirdParty, error) {
+			var batch coredata.ThirdParties
+			if err := batch.LoadByOrganizationID(ctx, conn, scope, tp.OrganizationID, cursor, coredata.NewThirdPartyFilter(nil, &firstLevel, nil)); err != nil {
+				return nil, fmt.Errorf("cannot load org third parties: %w", err)
+			}
+
+			return batch, nil
+		},
+	)
+	if err != nil {
+		return prep, err
 	}
 
 	ranked := thirdparty.RankCandidates(prep.commonParty, prep.commonDomains, orgThirdParties)

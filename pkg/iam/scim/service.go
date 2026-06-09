@@ -38,6 +38,7 @@ import (
 	"go.probo.inc/probo/pkg/crypto/rand"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/mail"
+	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/webhook"
 	webhooktypes "go.probo.inc/probo/pkg/webhook/types"
 )
@@ -407,9 +408,26 @@ func (s *Service) ListUsers(
 	err = s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			if err := profiles.LoadAllByOrganizationID(ctx, conn, scope, config.OrganizationID, filter); err != nil {
-				return fmt.Errorf("cannot load profiles: %w", err)
+			loaded, err := page.LoadAll(
+				ctx,
+				page.OrderBy[coredata.MembershipProfileOrderField]{
+					Field:     coredata.MembershipProfileOrderFieldCreatedAt,
+					Direction: page.OrderDirectionAsc,
+				},
+				func(ctx context.Context, cursor *page.Cursor[coredata.MembershipProfileOrderField]) ([]*coredata.MembershipProfile, error) {
+					var batch coredata.MembershipProfiles
+					if err := batch.LoadByOrganizationID(ctx, conn, scope, config.OrganizationID, cursor, filter); err != nil {
+						return nil, fmt.Errorf("cannot load profiles: %w", err)
+					}
+
+					return batch, nil
+				},
+			)
+			if err != nil {
+				return err
 			}
+
+			profiles = loaded
 
 			return nil
 		},

@@ -594,11 +594,12 @@ WHERE %s
 	return nil
 }
 
-func (tcdas *TrustCenterDocumentAccesses) LoadAllByTrustCenterAccessID(
+func (tcdas *TrustCenterDocumentAccesses) LoadByTrustCenterAccessID(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
 	trustCenterAccessID gid.GID,
+	cursor *page.Cursor[TrustCenterDocumentAccessOrderField],
 ) error {
 	q := `
 SELECT
@@ -616,15 +617,16 @@ FROM
 WHERE
     %s
     AND trust_center_access_id = @trust_center_access_id
-ORDER BY id ASC
+    AND %s
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"trust_center_access_id": trustCenterAccessID,
 	}
 	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, cursor.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {

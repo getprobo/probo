@@ -706,9 +706,23 @@ func (s *Service) CreateUpdateEmails(
 	return s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			var subscribers coredata.MailingListSubscribers
-			if err := subscribers.LoadAllConfirmedByMailingListID(ctx, tx, scope, mailingListID); err != nil {
-				return fmt.Errorf("cannot load confirmed subscribers: %w", err)
+			subscribers, err := page.LoadAll(
+				ctx,
+				page.OrderBy[coredata.MailingListSubscriberOrderField]{
+					Field:     coredata.MailingListSubscriberOrderFieldCreatedAt,
+					Direction: page.OrderDirectionAsc,
+				},
+				func(ctx context.Context, cursor *page.Cursor[coredata.MailingListSubscriberOrderField]) ([]*coredata.MailingListSubscriber, error) {
+					var batch coredata.MailingListSubscribers
+					if err := batch.LoadConfirmedByMailingListID(ctx, tx, scope, mailingListID, cursor); err != nil {
+						return nil, fmt.Errorf("cannot load confirmed subscribers: %w", err)
+					}
+
+					return batch, nil
+				},
+			)
+			if err != nil {
+				return err
 			}
 
 			if len(subscribers) == 0 {

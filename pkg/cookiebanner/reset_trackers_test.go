@@ -24,6 +24,7 @@ import (
 	"go.probo.inc/probo/internal/test"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/page"
 )
 
 // TestResetBannerTrackers_FullRebuild seeds a banner with an
@@ -113,8 +114,22 @@ func TestResetBannerTrackers_FullRebuild(t *testing.T) {
 			require.Nil(t, exact.ThirdPartyID)
 			require.NotNil(t, exact.MappingRequestedAt)
 
-			var detections coredata.DetectedTrackers
-			require.NoError(t, detections.LoadAllByTrackerPatternID(ctx, conn, fx.scope, exact.ID))
+			detections, err := page.LoadAll(
+				ctx,
+				page.OrderBy[coredata.DetectedTrackerOrderField]{
+					Field:     coredata.DetectedTrackerOrderFieldLastDetectedAt,
+					Direction: page.OrderDirectionAsc,
+				},
+				func(ctx context.Context, cursor *page.Cursor[coredata.DetectedTrackerOrderField]) ([]*coredata.DetectedTracker, error) {
+					var batch coredata.DetectedTrackers
+					if err := batch.LoadByTrackerPatternID(ctx, conn, fx.scope, exact.ID, cursor); err != nil {
+						return nil, err
+					}
+
+					return batch, nil
+				},
+			)
+			require.NoError(t, err)
 			require.Len(t, detections, 1)
 			require.Equal(t, identifier, detections[0].Identifier)
 		}

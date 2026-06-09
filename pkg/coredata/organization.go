@@ -255,11 +255,12 @@ WHERE
 	return nil
 }
 
-func (o *Organizations) LoadAllByIdentityIDWithPendingInvitation(
+func (o *Organizations) LoadByIdentityIDWithPendingInvitation(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
 	identityID gid.GID,
+	cursor *page.Cursor[OrganizationOrderField],
 ) error {
 	q := `
 WITH invited_org AS (
@@ -292,13 +293,14 @@ INNER JOIN
 	invited_org ON organizations.id = invited_org.organization_id
 WHERE
 	%s
-ORDER BY name ASC
+	AND %s
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"identity_id": identityID}
 	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, cursor.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
