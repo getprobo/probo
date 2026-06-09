@@ -40,7 +40,6 @@ func newCmdList(f *cmdutil.Factory) *cobra.Command {
 		flagWithoutDescription   bool
 		flagSort                 string
 		flagOrder                string
-		flagLimit                int
 	)
 
 	cmd := &cobra.Command{
@@ -62,7 +61,8 @@ func newCmdList(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().BoolVar(&flagWithoutDescription, "without-description", false, "Only patterns with a blank description")
 	cmd.Flags().StringVar(&flagSort, "sort", "confidence", "Sort field: pattern, confidence, created, updated, enriched")
 	cmd.Flags().StringVar(&flagOrder, "order", "", "Sort order: asc, desc (default depends on field)")
-	cmd.Flags().IntVarP(&flagLimit, "limit", "L", 50, "Maximum rows to return (0 for all)")
+
+	pageFlags := cmdutil.AddPageFlags(cmd)
 
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
 		if err := clicmdutil.ValidateOutputFlag(output); err != nil {
@@ -74,6 +74,11 @@ func newCmdList(f *cmdutil.Factory) *cobra.Command {
 		}
 
 		orderBy, err := parseOrderBy(flagSort, flagOrder)
+		if err != nil {
+			return err
+		}
+
+		cursor, err := cmdutil.NewCursorFromFlags(pageFlags, orderBy)
 		if err != nil {
 			return err
 		}
@@ -100,7 +105,10 @@ func newCmdList(f *cmdutil.Factory) *cobra.Command {
 
 		ctx := cmd.Context()
 
-		var patterns coredata.CommonTrackerPatterns
+		var (
+			patterns coredata.CommonTrackerPatterns
+			pageInfo cmdutil.PageInfo
+		)
 
 		if err := pgClient.WithConn(
 			ctx,
@@ -153,10 +161,9 @@ func newCmdList(f *cmdutil.Factory) *cobra.Command {
 					filter.WithIDs(linkedIDs)
 				}
 
-				rows, err := cmdutil.Paginate(
+				p, err := cmdutil.FetchPage(
 					ctx,
-					orderBy,
-					flagLimit,
+					cursor,
 					func(ctx context.Context, cursor *page.Cursor[coredata.CommonTrackerPatternOrderField]) ([]*coredata.CommonTrackerPattern, error) {
 						var ps coredata.CommonTrackerPatterns
 						if err := ps.Load(ctx, conn, cursor, filter); err != nil {
@@ -170,7 +177,8 @@ func newCmdList(f *cmdutil.Factory) *cobra.Command {
 					return err
 				}
 
-				patterns = rows
+				patterns = p.Data
+				pageInfo = cmdutil.NewPageInfo(p)
 
 				return nil
 			},
@@ -179,16 +187,16 @@ func newCmdList(f *cmdutil.Factory) *cobra.Command {
 		}
 
 		if *output == clicmdutil.OutputJSON {
-			return clicmdutil.PrintJSON(f.IOStreams.Out, patterns)
+			return clicmdutil.PrintJSON(f.IOStreams.Out, cmdutil.PageOutput{Items: patterns, PageInfo: pageInfo})
 		}
 
-		return renderPatternTable(cmd, f, patterns)
+		return renderPatternTable(cmd, f, patterns, pageInfo)
 	}
 
 	return cmd
 }
 
-func renderPatternTable(cmd *cobra.Command, f *cmdutil.Factory, patterns coredata.CommonTrackerPatterns) error {
+func renderPatternTable(cmd *cobra.Command, f *cmdutil.Factory, patterns coredata.CommonTrackerPatterns, pageInfo cmdutil.PageInfo) error {
 	out := f.IOStreams.Out
 
 	if len(patterns) == 0 {
@@ -243,6 +251,7 @@ func renderPatternTable(cmd *cobra.Command, f *cmdutil.Factory, patterns coredat
 	}
 
 	_, _ = fmt.Fprintln(out, table.Render())
+	cmdutil.PrintPageInfo(out, pageInfo)
 	_, _ = fmt.Fprintf(f.IOStreams.ErrOut, "Showing %d common tracker patterns.\n", len(patterns))
 
 	return nil

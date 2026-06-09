@@ -55,7 +55,8 @@ func newCmdStats(f *cmdutil.Factory) *cobra.Command {
 				}{
 					{"total", coredata.NewCommonTrackerPatternFilter()},
 					{"queued", coredata.NewCommonTrackerPatternFilter().WithState(new(coredata.CommonTrackerPatternEnrichmentStateQueued))},
-					{"enriched", coredata.NewCommonTrackerPatternFilter().WithState(new(coredata.CommonTrackerPatternEnrichmentStateEnriched))},
+					{"enriched", coredata.NewCommonTrackerPatternFilter().WithState(new(coredata.CommonTrackerPatternEnrichmentStateEnriched)).WithDescribed(new(true))},
+					{"enriched (no description)", coredata.NewCommonTrackerPatternFilter().WithState(new(coredata.CommonTrackerPatternEnrichmentStateEnriched)).WithDescribed(new(false))},
 					{"unenriched", coredata.NewCommonTrackerPatternFilter().WithState(new(coredata.CommonTrackerPatternEnrichmentStateUnenriched))},
 					{"linked", coredata.NewCommonTrackerPatternFilter().WithLinked(new(true))},
 					{"unlinked", coredata.NewCommonTrackerPatternFilter().WithLinked(new(false))},
@@ -83,7 +84,7 @@ func newCmdStats(f *cmdutil.Factory) *cobra.Command {
 		}
 
 		table := clicmdutil.NewTable("METRIC", "COUNT")
-		for _, key := range []string{"total", "queued", "enriched", "unenriched", "linked", "unlinked"} {
+		for _, key := range []string{"total", "queued", "enriched", "enriched (no description)", "unenriched", "linked", "unlinked"} {
 			table.Row(key, fmt.Sprintf("%d", stats[key]))
 		}
 

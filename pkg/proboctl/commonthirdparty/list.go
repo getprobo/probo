@@ -33,7 +33,6 @@ func newCmdList(f *cmdutil.Factory) *cobra.Command {
 		flagKeyword  string
 		flagSort     string
 		flagOrder    string
-		flagLimit    int
 	)
 
 	cmd := &cobra.Command{
@@ -49,7 +48,8 @@ func newCmdList(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&flagKeyword, "keyword", "", "Filter by name/slug substring")
 	cmd.Flags().StringVar(&flagSort, "sort", "name", "Sort field: name, created, updated")
 	cmd.Flags().StringVar(&flagOrder, "order", "", "Sort order: asc, desc (default depends on field)")
-	cmd.Flags().IntVarP(&flagLimit, "limit", "L", 50, "Maximum rows to return (0 for all)")
+
+	pageFlags := cmdutil.AddPageFlags(cmd)
 
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
 		if err := clicmdutil.ValidateOutputFlag(output); err != nil {
@@ -57,6 +57,11 @@ func newCmdList(f *cmdutil.Factory) *cobra.Command {
 		}
 
 		orderBy, err := parseOrderBy(flagSort, flagOrder)
+		if err != nil {
+			return err
+		}
+
+		cursor, err := cmdutil.NewCursorFromFlags(pageFlags, orderBy)
 		if err != nil {
 			return err
 		}
@@ -81,15 +86,17 @@ func newCmdList(f *cmdutil.Factory) *cobra.Command {
 			return err
 		}
 
-		var parties coredata.CommonThirdParties
+		var (
+			parties  coredata.CommonThirdParties
+			pageInfo cmdutil.PageInfo
+		)
 
 		if err := pgClient.WithConn(
 			cmd.Context(),
 			func(ctx context.Context, conn pg.Querier) error {
-				rows, err := cmdutil.Paginate(
+				p, err := cmdutil.FetchPage(
 					ctx,
-					orderBy,
-					flagLimit,
+					cursor,
 					func(ctx context.Context, cursor *page.Cursor[coredata.CommonThirdPartyOrderField]) ([]*coredata.CommonThirdParty, error) {
 						var ts coredata.CommonThirdParties
 						if err := ts.Load(ctx, conn, cursor, filter); err != nil {
@@ -103,7 +110,8 @@ func newCmdList(f *cmdutil.Factory) *cobra.Command {
 					return err
 				}
 
-				parties = rows
+				parties = p.Data
+				pageInfo = cmdutil.NewPageInfo(p)
 
 				return nil
 			},
@@ -112,7 +120,7 @@ func newCmdList(f *cmdutil.Factory) *cobra.Command {
 		}
 
 		if *output == clicmdutil.OutputJSON {
-			return clicmdutil.PrintJSON(f.IOStreams.Out, parties)
+			return clicmdutil.PrintJSON(f.IOStreams.Out, cmdutil.PageOutput{Items: parties, PageInfo: pageInfo})
 		}
 
 		if len(parties) == 0 {
@@ -133,6 +141,7 @@ func newCmdList(f *cmdutil.Factory) *cobra.Command {
 		}
 
 		_, _ = fmt.Fprintln(f.IOStreams.Out, table.Render())
+		cmdutil.PrintPageInfo(f.IOStreams.Out, pageInfo)
 		_, _ = fmt.Fprintf(f.IOStreams.ErrOut, "Showing %d common third parties.\n", len(parties))
 
 		return nil
