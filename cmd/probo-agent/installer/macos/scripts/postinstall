@@ -39,7 +39,7 @@ fi
 
 mkdir -p "${STATE_DIR}"
 chown root:wheel "${STATE_DIR}"
-chmod 0700 "${STATE_DIR}"
+chmod 0711 "${STATE_DIR}"
 
 register_tray_launchagent() {
     local current_user user_uid user_home agents_dir plist_path
@@ -95,6 +95,29 @@ EOF
     fi
 
     echo "Registered tray LaunchAgent for ${current_user}."
+}
+
+register_enrollment_url_scheme() {
+    local app_path lsregister
+
+    app_path="/Applications/Probo Agent.app"
+    if [ ! -d "${app_path}" ]; then
+        echo "warning: ${app_path} not found; cannot register probo:// URL scheme."
+        return 0
+    fi
+
+    lsregister="/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister"
+    if [ ! -x "${lsregister}" ]; then
+        echo "warning: lsregister is unavailable; URL scheme registration skipped."
+        return 0
+    fi
+
+    if ! "${lsregister}" -f "${app_path}"; then
+        echo "warning: failed to register probo:// URL scheme."
+        return 0
+    fi
+
+    echo "Registered probo:// URL scheme."
 }
 
 # An admin (or MDM) may stage /tmp/probo-agent.conf to drive an
@@ -171,6 +194,7 @@ else
 fi
 
 register_tray_launchagent
+register_enrollment_url_scheme
 
 echo "=== postinstall done ==="
 exit 0

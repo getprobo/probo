@@ -17,68 +17,9 @@
 package tray
 
 import (
-	"encoding/json"
 	"fmt"
-	"os"
 	"os/exec"
-	"path/filepath"
-	"strings"
-
-	"go.probo.inc/probo/pkg/deviceagent"
 )
-
-func promptEnrollmentNative(exePath string) (serverURL, token string, ok bool) {
-	uiPath := enrollUIPath(exePath)
-	if err := ensureEnrollUI(uiPath); err != nil {
-		showError("Enrollment unavailable", err)
-		return "", "", false
-	}
-
-	out, err := exec.Command(uiPath).Output()
-	if err != nil {
-		return "", "", false
-	}
-
-	var result enrollmentUIResult
-	if err := json.Unmarshal(out, &result); err != nil {
-		showError("Enrollment failed", fmt.Errorf("cannot decode enrollment UI response: %w", err))
-		return "", "", false
-	}
-
-	serverURL, err = deviceagent.NormalizeServerURL(result.ServerURL)
-	if err != nil {
-		showError("Invalid server URL", err)
-		return "", "", false
-	}
-
-	token = strings.TrimSpace(result.EnrollmentToken)
-	if token == "" {
-		showError("Enrollment failed", fmt.Errorf("enrollment token is required"))
-		return "", "", false
-	}
-
-	return serverURL, token, true
-}
-
-func enrollUIPath(exePath string) string {
-	if exePath != "" {
-		candidate := filepath.Join(filepath.Dir(exePath), enrollUIBinaryName)
-		if _, err := os.Stat(candidate); err == nil {
-			return candidate
-		}
-	}
-
-	return filepath.Join("/usr/local/bin", enrollUIBinaryName)
-}
-
-func showError(title string, err error) {
-	script := fmt.Sprintf(
-		`display alert %q message %q as warning buttons {"OK"} default button "OK"`,
-		title,
-		err.Error(),
-	)
-	_ = exec.Command("osascript", "-e", script).Run()
-}
 
 func showAbout(version string) {
 	script := fmt.Sprintf(

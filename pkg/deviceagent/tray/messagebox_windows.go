@@ -24,7 +24,6 @@ import (
 
 const (
 	mbOK              = 0x00000000
-	mbIconWarning     = 0x00000030
 	mbIconInformation = 0x00000040
 )
 

@@ -17,6 +17,9 @@ documented in this file.
   `probo-agent install` flow.
 - Native enrollment UI helpers (`probo-agent-enroll-ui`) for macOS and
   Windows, bundled with release archives and macOS `.pkg` installers.
+- Browser deep-link enrollment flow (`probo://enroll?...`) with a hidden
+  `probo-agent enroll-url` command that starts elevated enrollment install
+  on macOS and Windows.
 - Shared `regions.json` manifest for enrollment UI region labels and
   console URLs, validated against Go server URL constants.
 - World-readable enrollment marker so the user-session tray helper
@@ -28,6 +31,10 @@ documented in this file.
   during installation. Enrollment is handled by the menu bar helper
   (MDM pre-staged `/tmp/probo-agent.conf` still works). Linux and
   FreeBSD installers are unchanged.
+- Enrollment helper dialogs on macOS and Windows now open `/enroll` in
+  the browser instead of collecting tokens locally.
+- Windows release archives now include `register-protocol.ps1` to
+  register the `probo://` URL protocol for the current user.
 
 ## [0.1.0] - 2026-05-26
 

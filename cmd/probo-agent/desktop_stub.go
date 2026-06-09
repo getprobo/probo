@@ -20,6 +20,6 @@ import "github.com/spf13/cobra"
 
 func registerPlatformCommands(_ *cobra.Command) {}
 
-func registerTrayAutoStart(_ string) error {
+func registerTrayAutoStart(_ string, _ string) error {
 	return nil
 }

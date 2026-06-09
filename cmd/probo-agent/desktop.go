@@ -29,8 +29,8 @@ func registerPlatformCommands(root *cobra.Command) {
 	root.AddCommand(newTrayCmd())
 }
 
-func registerTrayAutoStart(exePath string) error {
-	if err := tray.RegisterAutoStart(exePath); err != nil {
+func registerTrayAutoStart(exePath string, dir string) error {
+	if err := tray.RegisterAutoStart(exePath, dir); err != nil {
 		return fmt.Errorf("cannot register tray auto-start: %w", err)
 	}
 
@@ -38,8 +38,6 @@ func registerTrayAutoStart(exePath string) error {
 }
 
 func newTrayCmd() *cobra.Command {
-	var promptEnrollment bool
-
 	cmd := &cobra.Command{
 		Use:   "tray",
 		Short: "Run the menu bar / system tray enrollment helper",
@@ -53,22 +51,14 @@ func newTrayCmd() *cobra.Command {
 
 			return tray.Run(
 				tray.Options{
-					Dir:              dir,
-					ExePath:          exePath,
-					ServerURL:        deviceagent.DefaultServerURL,
-					Version:          version,
-					PromptEnrollment: promptEnrollment,
+					Dir:       dir,
+					ExePath:   exePath,
+					ServerURL: deviceagent.DefaultServerURL,
+					Version:   version,
 				},
 			)
 		},
 	}
-
-	cmd.Flags().BoolVar(
-		&promptEnrollment,
-		"prompt-enrollment",
-		false,
-		"open the enrollment dialogs on startup when the device is not yet enrolled",
-	)
 
 	return cmd
 }

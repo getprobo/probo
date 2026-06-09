@@ -12,10 +12,12 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-//go:build windows
+//go:build !darwin && !windows
 
 package tray
 
-func promptEnrollment(exePath string) (serverURL, token string, ok bool) {
-	return promptEnrollmentNative(exePath)
+import "errors"
+
+func RunElevatedInstall(_ string, _ string, _ string) error {
+	return errors.New("elevated enrollment install is only supported on macOS and Windows")
 }

@@ -2,14 +2,14 @@
 import PackageDescription
 
 let package = Package(
-    name: "probo-agent-enroll-ui",
+    name: "probo-agent-url-handler",
     platforms: [
         .macOS(.v11),
     ],
     targets: [
         .executableTarget(
-            name: "probo-agent-enroll-ui",
-            path: "Sources"
+            name: "probo-agent-url-handler",
+            path: "URLHandlerSources"
         ),
     ]
 )

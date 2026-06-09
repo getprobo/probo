@@ -4,6 +4,7 @@ go 1.26.4
 
 require (
 	codeberg.org/miekg/dns v0.6.79
+	fyne.io/systray v1.12.1
 	github.com/99designs/gqlgen v0.17.90
 	github.com/anthropics/anthropic-sdk-go v1.45.0
 	github.com/aws/aws-sdk-go-v2 v1.41.7
@@ -53,7 +54,6 @@ require (
 
 require (
 	dario.cat/mergo v1.0.2 // indirect
-	fyne.io/systray v1.12.1 // indirect
 	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/ProtonMail/go-crypto v1.4.1 // indirect
 	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2 // indirect
@@ -249,7 +249,7 @@ require (
 	go.yaml.in/yaml/v2 v2.4.4 // indirect
 	golang.org/x/mod v0.36.0
 	golang.org/x/net v0.55.0
-	golang.org/x/sys v0.45.0 // indirect
+	golang.org/x/sys v0.45.0
 	golang.org/x/term v0.43.0
 	golang.org/x/text v0.37.0 // indirect
 	golang.org/x/tools v0.45.0 // indirect

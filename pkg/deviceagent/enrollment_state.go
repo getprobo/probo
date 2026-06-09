@@ -21,6 +21,10 @@ import (
 )
 
 const (
+	// EnrollmentDirMode keeps config and key filenames hidden while allowing
+	// the user-session tray helper to stat the public enrollment marker.
+	EnrollmentDirMode = 0o711
+
 	// World-readable so the user-session tray helper can detect enrollment
 	// without reading the API key.
 	EnrollmentMarkerName = "enrolled"
@@ -44,8 +48,11 @@ func MarkEnrolled(dir string) error {
 		dir = DefaultConfigDir()
 	}
 
-	if err := os.MkdirAll(dir, 0o700); err != nil {
+	if err := os.MkdirAll(dir, EnrollmentDirMode); err != nil {
 		return fmt.Errorf("cannot create config dir: %w", err)
+	}
+	if err := os.Chmod(dir, EnrollmentDirMode); err != nil {
+		return fmt.Errorf("cannot set config dir permissions: %w", err)
 	}
 
 	path := EnrollmentMarkerPath(dir)

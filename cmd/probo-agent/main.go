@@ -30,6 +30,7 @@ import (
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/deviceagent"
 	"go.probo.inc/probo/pkg/deviceagent/service"
+	"go.probo.inc/probo/pkg/deviceagent/tray"
 	"go.probo.inc/probo/pkg/deviceagent/update"
 
 	// Side-effect import: registers per-OS posture checks.
@@ -50,6 +51,12 @@ func main() {
 	// a Windows self-update. No-op on Unix.
 	if exe, err := os.Executable(); err == nil {
 		update.CleanupAfterRestart(exe)
+	}
+
+	if len(os.Args) == 2 {
+		if _, _, err := deviceagent.ParseEnrollURL(os.Args[1]); err == nil {
+			os.Args = []string{os.Args[0], "enroll-url", os.Args[1]}
+		}
 	}
 
 	if err := newRootCmd().Execute(); err != nil {
@@ -80,9 +87,44 @@ func newRootCmd() *cobra.Command {
 	root.AddCommand(newStatusCmd())
 	root.AddCommand(newCollectCmd())
 	root.AddCommand(newUpdateCmd())
+	root.AddCommand(newEnrollURLCmd())
 	registerPlatformCommands(root)
 
 	return root
+}
+
+func newEnrollURLCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:    "enroll-url [url]",
+		Hidden: true,
+		Args:   cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			serverURL, token, err := deviceagent.ParseEnrollURL(args[0])
+			if err != nil {
+				return err
+			}
+
+			dir := resolveDir(cmd)
+			if deviceagent.IsEnrolled(dir) {
+				return errors.New("device is already enrolled")
+			}
+
+			exePath, err := os.Executable()
+			if err != nil {
+				return fmt.Errorf("cannot resolve current executable path: %w", err)
+			}
+
+			if err := tray.RunElevatedInstall(exePath, serverURL, token); err != nil {
+				return fmt.Errorf("cannot start elevated enrollment install: %w", err)
+			}
+
+			fmt.Println("Enrollment started.")
+
+			return nil
+		},
+	}
+
+	return cmd
 }
 
 // newUpdater returns an Updater scoped to the running binary, or nil
@@ -191,7 +233,7 @@ func newInstallCmd() *cobra.Command {
 
 			fmt.Println("Service installed and started.")
 
-			return registerTrayAutoStart(exePath)
+			return registerTrayAutoStart(exePath, dir)
 		},
 	}
 

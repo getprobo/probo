@@ -22,6 +22,6 @@
       "server_url": null
     }
   ],
-  "employee_page_hint": "Get your enrollment token on the Devices tab of your employee page.",
-  "self_hosted_hostname_hint": "Enter your hostname above to open your employee page."
+  "employee_page_hint": "Open browser enrollment, choose your organization, then click the enroll button.",
+  "self_hosted_hostname_hint": "Enter your hostname above to continue enrollment in your browser."
 }

@@ -42,6 +42,10 @@ func TestEnrollmentMarker(t *testing.T) {
 			require.NoError(t, err)
 			assert.Equal(t, os.FileMode(0o644), info.Mode().Perm())
 
+			info, err = os.Stat(dir)
+			require.NoError(t, err)
+			assert.Equal(t, os.FileMode(EnrollmentDirMode), info.Mode().Perm())
+
 			require.NoError(t, ClearEnrollmentMarker(dir))
 			assert.False(t, IsEnrolled(dir))
 		},

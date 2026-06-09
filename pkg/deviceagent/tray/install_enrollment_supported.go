@@ -12,10 +12,16 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-//go:build darwin
+//go:build darwin || windows
 
 package tray
 
-func promptEnrollment(exePath string) (serverURL, token string, ok bool) {
-	return promptEnrollmentNative(exePath)
+func RunElevatedInstall(exePath string, serverURL string, token string) error {
+	return runElevatedInstall(
+		Options{
+			ExePath:   exePath,
+			ServerURL: serverURL,
+		},
+		token,
+	)
 }

@@ -15,9 +15,8 @@
 package tray
 
 type Options struct {
-	Dir              string
-	ExePath          string
-	ServerURL        string
-	Version          string
-	PromptEnrollment bool
+	Dir       string
+	ExePath   string
+	ServerURL string
+	Version   string
 }

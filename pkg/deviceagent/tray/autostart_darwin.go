@@ -22,7 +22,6 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"os/user"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -55,19 +54,23 @@ func xmlEscape(v string) (string, error) {
 type launchAgentData struct {
 	Label   string
 	ExePath string
+	Dir     string
 }
 
-func RegisterAutoStart(exePath string) error {
+func RegisterAutoStart(exePath string, dir string) error {
 	if exePath == "" {
 		return fmt.Errorf("executable path is required")
 	}
-
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return fmt.Errorf("cannot resolve home directory: %w", err)
+	if dir == "" {
+		return fmt.Errorf("state directory is required")
 	}
 
-	agentsDir := filepath.Join(home, "Library", "LaunchAgents")
+	guiUser, err := currentGUIUser()
+	if err != nil {
+		return err
+	}
+
+	agentsDir := filepath.Join(guiUser.Home, "Library", "LaunchAgents")
 	if err := os.MkdirAll(agentsDir, 0o755); err != nil {
 		return fmt.Errorf("cannot create LaunchAgents directory: %w", err)
 	}
@@ -86,44 +89,70 @@ func RegisterAutoStart(exePath string) error {
 		launchAgentData{
 			Label:   trayLabel,
 			ExePath: exePath,
+			Dir:     dir,
 		},
 	); err != nil {
 		return fmt.Errorf("cannot render LaunchAgent plist: %w", err)
 	}
 
-	uid, err := currentGUIUID()
-	if err != nil {
-		return err
+	if guiUser.Name != "" {
+		_ = os.Chown(plistPath, guiUser.UID, -1)
 	}
 
-	target := fmt.Sprintf("gui/%s/%s", uid, trayLabel)
+	target := fmt.Sprintf("gui/%d/%s", guiUser.UID, trayLabel)
 	_ = exec.Command("launchctl", "bootout", target).Run()
-	if out, err := exec.Command("launchctl", "bootstrap", fmt.Sprintf("gui/%s", uid), plistPath).CombinedOutput(); err != nil {
+	if out, err := exec.Command("launchctl", "bootstrap", fmt.Sprintf("gui/%d", guiUser.UID), plistPath).CombinedOutput(); err != nil {
 		return fmt.Errorf("cannot run launchctl bootstrap: %w: %s", err, strings.TrimSpace(string(out)))
 	}
 
 	return nil
 }
 
-func currentGUIUID() (string, error) {
-	u, err := user.Current()
+type guiUser struct {
+	Name string
+	UID  int
+	Home string
+}
+
+func currentGUIUser() (guiUser, error) {
+	name := strings.TrimSpace(consoleUserName())
+	if name == "" || name == "root" || name == "loginwindow" {
+		name = strings.TrimSpace(os.Getenv("USER"))
+	}
+
+	if name == "" || name == "root" || name == "loginwindow" {
+		return guiUser{}, fmt.Errorf("cannot resolve active GUI user")
+	}
+
+	uidOut, err := exec.Command("id", "-u", name).Output()
 	if err != nil {
-		return "", fmt.Errorf("cannot resolve current user: %w", err)
+		return guiUser{}, fmt.Errorf("cannot resolve uid for %s: %w", name, err)
 	}
 
-	if u.Uid != "" {
-		return u.Uid, nil
-	}
-
-	out, err := exec.Command("id", "-u").Output()
+	uidRaw := strings.TrimSpace(string(uidOut))
+	uid, err := strconv.Atoi(uidRaw)
 	if err != nil {
-		return "", fmt.Errorf("cannot resolve uid: %w", err)
+		return guiUser{}, fmt.Errorf("invalid uid %q", uidRaw)
 	}
 
-	uid := strings.TrimSpace(string(out))
-	if _, err := strconv.Atoi(uid); err != nil {
-		return "", fmt.Errorf("invalid uid %q", uid)
+	homeOut, err := exec.Command("dscl", ".", "-read", "/Users/"+name, "NFSHomeDirectory").Output()
+	if err != nil {
+		return guiUser{}, fmt.Errorf("cannot resolve home directory for %s: %w", name, err)
 	}
 
-	return uid, nil
+	home := strings.TrimSpace(strings.TrimPrefix(string(homeOut), "NFSHomeDirectory:"))
+	if home == "" {
+		return guiUser{}, fmt.Errorf("empty home directory for %s", name)
+	}
+
+	return guiUser{Name: name, UID: uid, Home: home}, nil
+}
+
+func consoleUserName() string {
+	out, err := exec.Command("stat", "-f", "%Su", "/dev/console").Output()
+	if err != nil {
+		return ""
+	}
+
+	return strings.TrimSpace(string(out))
 }

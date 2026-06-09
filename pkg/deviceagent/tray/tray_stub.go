@@ -22,6 +22,6 @@ func Run(_ Options) error {
 	return errors.New("tray helper is only supported on macOS and Windows")
 }
 
-func RegisterAutoStart(_ string) error {
+func RegisterAutoStart(_ string, _ string) error {
 	return nil
 }

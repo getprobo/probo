@@ -81,9 +81,9 @@ mkdir -p "${PAYLOAD}/usr/local/bin" "${SCRIPTS}" "${RESOURCES}"
 install -m 0755 "${BINARY}" "${PAYLOAD}/usr/local/bin/probo-agent"
 
 ENROLL_UI_DIR="${SCRIPT_DIR}/enroll-ui"
-ENROLL_UI_BIN="${ENROLL_UI_DIR}/.build/release/probo-agent-enroll-ui"
+URL_HANDLER_BIN="${ENROLL_UI_DIR}/.build/release/probo-agent-url-handler"
 if ! command -v swift >/dev/null 2>&1; then
-    echo "error: swift is required to build probo-agent-enroll-ui" >&2
+    echo "error: swift is required to build probo-agent-url-handler" >&2
     exit 1
 fi
 
@@ -92,21 +92,60 @@ case "${ARCH}" in
     amd64) SWIFT_BUILD_FLAGS+=(--triple x86_64-apple-macosx11.0) ;;
 esac
 
-cp "${SCRIPT_DIR}/../regions.json" "${ENROLL_UI_DIR}/regions.json"
-
-echo "Building probo-agent-enroll-ui (${ARCH})..."
+echo "Building probo-agent-url-handler (${ARCH})..."
 (
     cd "${ENROLL_UI_DIR}"
     swift build "${SWIFT_BUILD_FLAGS[@]}"
 )
 
-if [ ! -x "${ENROLL_UI_BIN}" ]; then
-    echo "error: enroll-ui build did not produce ${ENROLL_UI_BIN}" >&2
+if [ ! -x "${URL_HANDLER_BIN}" ]; then
+    echo "error: url-handler build did not produce ${URL_HANDLER_BIN}" >&2
     exit 1
 fi
 
-install -m 0755 "${ENROLL_UI_BIN}" "${PAYLOAD}/usr/local/bin/probo-agent-enroll-ui"
-install -m 0644 "${SCRIPT_DIR}/../regions.json" "${PAYLOAD}/usr/local/bin/regions.json"
+APP_CONTENTS="${PAYLOAD}/Applications/Probo Agent.app/Contents"
+mkdir -p "${APP_CONTENTS}/MacOS"
+
+install -m 0755 "${URL_HANDLER_BIN}" "${APP_CONTENTS}/MacOS/probo-agent-url-handler"
+
+cat > "${APP_CONTENTS}/Info.plist" <<EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>CFBundleDisplayName</key>
+  <string>Probo Agent</string>
+  <key>CFBundleExecutable</key>
+  <string>probo-agent-url-handler</string>
+  <key>CFBundleIdentifier</key>
+  <string>com.getprobo.agent</string>
+  <key>CFBundleInfoDictionaryVersion</key>
+  <string>6.0</string>
+  <key>CFBundleName</key>
+  <string>Probo Agent</string>
+  <key>CFBundlePackageType</key>
+  <string>APPL</string>
+  <key>CFBundleShortVersionString</key>
+  <string>${VERSION}</string>
+  <key>CFBundleVersion</key>
+  <string>${VERSION}</string>
+  <key>CFBundleURLTypes</key>
+  <array>
+    <dict>
+      <key>CFBundleTypeRole</key>
+      <string>Editor</string>
+      <key>CFBundleURLName</key>
+      <string>com.getprobo.agent.enroll</string>
+      <key>CFBundleURLSchemes</key>
+      <array>
+        <string>probo</string>
+      </array>
+    </dict>
+  </array>
+</dict>
+</plist>
+EOF
 
 install -m 0755 "${SCRIPT_DIR}/scripts/preinstall"  "${SCRIPTS}/preinstall"
 install -m 0755 "${SCRIPT_DIR}/scripts/postinstall" "${SCRIPTS}/postinstall"

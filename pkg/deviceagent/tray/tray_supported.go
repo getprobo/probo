@@ -44,10 +44,8 @@ func onReady(opts Options) {
 
 	systray.SetTitle("Probo")
 
-	enrollItem := systray.AddMenuItem(
-		"Provide enrollment token…",
-		"Enroll this device with your Probo workspace",
-	)
+	enrollmentRequiredItem := systray.AddMenuItem("Enrollment required", "Enroll from the Probo console")
+	enrollmentRequiredItem.Disable()
 	connectedItem := systray.AddMenuItem("Connected", "Device is enrolled and reporting")
 	connectedItem.Disable()
 	systray.AddSeparator()
@@ -59,11 +57,11 @@ func onReady(opts Options) {
 
 	updateMenu := func() {
 		if deviceagent.IsEnrolled(opts.Dir) {
-			enrollItem.Hide()
+			enrollmentRequiredItem.Hide()
 			connectedItem.Show()
 			systray.SetTooltip("Probo Device Posture Agent — Connected")
 		} else {
-			enrollItem.Show()
+			enrollmentRequiredItem.Show()
 			connectedItem.Hide()
 			systray.SetTooltip("Probo Device Posture Agent — Enrollment required")
 		}
@@ -80,19 +78,9 @@ func onReady(opts Options) {
 		}
 	}()
 
-	if opts.PromptEnrollment && !deviceagent.IsEnrolled(opts.Dir) {
-		go func() {
-			// Give Installer.app time to close before showing dialogs.
-			time.Sleep(1 * time.Second)
-			handleEnrollment(opts, updateMenu)
-		}()
-	}
-
 	go func() {
 		for {
 			select {
-			case <-enrollItem.ClickedCh:
-				handleEnrollment(opts, updateMenu)
 			case <-aboutItem.ClickedCh:
 				showAbout(opts.Version)
 			case <-quitItem.ClickedCh:
@@ -101,21 +89,4 @@ func onReady(opts Options) {
 			}
 		}
 	}()
-}
-
-func handleEnrollment(opts Options, updateMenu func()) {
-	serverURL, token, ok := promptEnrollment(opts.ExePath)
-	if !ok {
-		return
-	}
-
-	enrollOpts := opts
-	enrollOpts.ServerURL = serverURL
-
-	if err := runElevatedInstall(enrollOpts, token); err != nil {
-		showError("Enrollment failed", err)
-		return
-	}
-
-	updateMenu()
 }

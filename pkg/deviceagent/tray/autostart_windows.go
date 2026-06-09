@@ -26,9 +26,12 @@ const runKeyPath = `Software\Microsoft\Windows\CurrentVersion\Run`
 
 const runValueName = "ProboAgentTray"
 
-func RegisterAutoStart(exePath string) error {
+func RegisterAutoStart(exePath string, dir string) error {
 	if exePath == "" {
 		return fmt.Errorf("executable path is required")
+	}
+	if dir == "" {
+		return fmt.Errorf("state directory is required")
 	}
 
 	key, err := registry.OpenKey(registry.CURRENT_USER, runKeyPath, registry.SET_VALUE)
@@ -38,7 +41,7 @@ func RegisterAutoStart(exePath string) error {
 
 	defer func() { _ = key.Close() }()
 
-	command := fmt.Sprintf(`"%s" tray --prompt-enrollment`, exePath)
+	command := fmt.Sprintf(`"%s" tray --dir "%s"`, exePath, dir)
 	if err := key.SetStringValue(runValueName, command); err != nil {
 		return fmt.Errorf("cannot set Run registry value: %w", err)
 	}
