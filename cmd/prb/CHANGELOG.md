@@ -4,6 +4,14 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.192.0] - 2026-06-09
+
+### Added
+
+- Add `prb risk-assessment boundary` command group (`create`, `list`, `view`, `update`, `delete`) and `--boundary-id` flag on `node create`/`update` to group risk assessment nodes within a scope
+- Add `prb cookie-banner regenerate-policy` command to re-trigger tracker policy generation for a banner that already has a published version
+- Expose `common_tracker_pattern_id` on `prb tracker-pattern list`/`view` to show whether a pattern is linked to the common tracker catalog
+
 ## [0.191.0] - 2026-06-02
 
 ### Changed
