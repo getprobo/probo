@@ -391,6 +391,8 @@ const (
 	ActionCookieBannerActivate   = "core:cookie-banner:activate"
 	ActionCookieBannerDeactivate = "core:cookie-banner:deactivate"
 
+	ActionCookieBannerRegeneratePolicy = "core:cookie-banner:regenerate-policy"
+
 	// CookieBannerVersion actions
 	ActionCookieBannerVersionGet     = "core:cookie-banner-version:get"
 	ActionCookieBannerVersionList    = "core:cookie-banner-version:list"

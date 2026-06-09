@@ -779,7 +779,7 @@ func (r *mutationResolver) PublishCookieBannerVersion(ctx context.Context, input
 
 // RegenerateCookieBannerTrackerPolicy is the resolver for the regenerateCookieBannerTrackerPolicy field.
 func (r *mutationResolver) RegenerateCookieBannerTrackerPolicy(ctx context.Context, input types.RegenerateCookieBannerTrackerPolicyInput) (*types.RegenerateCookieBannerTrackerPolicyPayload, error) {
-	scope, err := r.authorize(ctx, input.CookieBannerID, probo.ActionCookieBannerUpdate)
+	scope, err := r.authorize(ctx, input.CookieBannerID, probo.ActionCookieBannerRegeneratePolicy)
 	if err != nil {
 		return nil, err
 	}

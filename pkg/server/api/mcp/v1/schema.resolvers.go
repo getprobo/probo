@@ -5826,7 +5826,7 @@ func (r *Resolver) PublishCookieBannerVersionTool(ctx context.Context, req *mcp.
 }
 
 func (r *Resolver) RegenerateCookieBannerTrackerPolicyTool(ctx context.Context, req *mcp.CallToolRequest, input *types.RegenerateCookieBannerTrackerPolicyInput) (*mcp.CallToolResult, types.RegenerateCookieBannerTrackerPolicyOutput, error) {
-	scope, err := r.Authorize(ctx, input.CookieBannerID, probo.ActionCookieBannerUpdate)
+	scope, err := r.Authorize(ctx, input.CookieBannerID, probo.ActionCookieBannerRegeneratePolicy)
 	if err != nil {
 		return nil, types.RegenerateCookieBannerTrackerPolicyOutput{}, err
 	}
