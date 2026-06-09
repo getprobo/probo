@@ -43,6 +43,7 @@ func microsoft365Registration() *Registration {
 			"openid",
 			"profile",
 			"offline_access",
+			"https://graph.microsoft.com/AuditLog.Read.All",
 			"https://graph.microsoft.com/User.Read.All",
 			"https://graph.microsoft.com/Directory.Read.All",
 			"https://graph.microsoft.com/RoleManagement.Read.Directory",
