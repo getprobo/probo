@@ -166,14 +166,6 @@ func NewServer(cfg Config) (*Server, error) {
 	csrf.AddInsecureBypassPattern("POST /connect/v1/oauth2/revoke")
 	csrf.AddInsecureBypassPattern("POST /connect/v1/oauth2/device")
 
-	// The agent API is called from the probo-agent binary running on
-	// employee laptops; it authenticates with Bearer device API keys
-	// (not browser cookies) so cross-origin CSRF protection is moot.
-	csrf.AddInsecureBypassPattern("POST /agent/v1/enroll")
-	csrf.AddInsecureBypassPattern("POST /agent/v1/heartbeat")
-	csrf.AddInsecureBypassPattern("POST /agent/v1/postures")
-	csrf.AddInsecureBypassPattern("POST /agent/v1/unenroll")
-
 	csrf.SetDenyHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		httpserver.RenderJSON(
 			w,
