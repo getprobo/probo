@@ -12,7 +12,7 @@
 #
 # We intentionally do not abort the install if enrollment fails:
 # the binary is laid down regardless, and the operator can finish
-# enrollment with `sudo probo-agent install ...` from Terminal.
+# enrollment from the menu bar helper.
 
 set -u
 
@@ -20,6 +20,8 @@ LOG_FILE="/var/log/probo-agent-install.log"
 BINARY="/usr/local/bin/probo-agent"
 STATE_DIR="/var/lib/probo-agent"
 CONF_FILE="/tmp/probo-agent.conf"
+TRAY_LABEL="com.getprobo.agent.tray"
+TRAY_PLIST_NAME="${TRAY_LABEL}.plist"
 
 # Mirror everything to the install log. We keep stdout/stderr open
 # too so failures still surface in macOS Installer.app's log pane.
@@ -38,6 +40,62 @@ fi
 mkdir -p "${STATE_DIR}"
 chown root:wheel "${STATE_DIR}"
 chmod 0700 "${STATE_DIR}"
+
+register_tray_launchagent() {
+    local current_user user_uid user_home agents_dir plist_path
+
+    current_user=$(stat -f "%Su" /dev/console 2>/dev/null || true)
+    if [ -z "${current_user}" ] || \
+       [ "${current_user}" = "root" ] || \
+       [ "${current_user}" = "loginwindow" ]; then
+        echo "No GUI session user found; skipping tray LaunchAgent registration."
+        return 0
+    fi
+
+    user_uid="$(id -u "${current_user}" 2>/dev/null || true)"
+    if [ -z "${user_uid}" ]; then
+        echo "warning: cannot resolve uid for ${current_user}; skipping tray LaunchAgent."
+        return 0
+    fi
+
+    user_home="$(eval echo "~${current_user}")"
+    agents_dir="${user_home}/Library/LaunchAgents"
+    plist_path="${agents_dir}/${TRAY_PLIST_NAME}"
+
+    mkdir -p "${agents_dir}"
+    cat > "${plist_path}" <<EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>${TRAY_LABEL}</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>${BINARY}</string>
+        <string>tray</string>
+        <string>--prompt-enrollment</string>
+    </array>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>KeepAlive</key>
+    <true/>
+</dict>
+</plist>
+EOF
+
+    chown "${current_user}:staff" "${plist_path}"
+    chmod 0644 "${plist_path}"
+
+    sudo -u "${current_user}" launchctl bootout "gui/${user_uid}/${TRAY_LABEL}" 2>/dev/null || true
+    if ! sudo -u "${current_user}" launchctl bootstrap "gui/${user_uid}" "${plist_path}"; then
+        echo "warning: could not start tray helper for ${current_user}."
+        return 0
+    fi
+
+    echo "Registered tray LaunchAgent for ${current_user}."
+}
 
 # An admin (or MDM) may stage /tmp/probo-agent.conf to drive an
 # unattended enrollment. Recognized keys (shell-style):
@@ -85,15 +143,19 @@ if [ -f "${CONF_FILE}" ]; then
     if [ -z "${CONF_SERVER}" ] || [ -z "${CONF_TOKEN}" ]; then
         echo "warning: ${CONF_FILE} is missing PROBO_SERVER_URL or PROBO_ENROLLMENT_TOKEN; skipping enrollment."
     else
-        EXTRA_FLAGS=()
+        # Build argv from the first element so "${INSTALL_ARGS[@]}"
+        # is never empty — macOS /bin/bash 3.2 treats an unset empty
+        # array as unbound under `set -u`.
+        INSTALL_ARGS=(
+            install
+            --server "${CONF_SERVER}"
+            --enrollment-token "${CONF_TOKEN}"
+        )
         case "${CONF_NOUPDATE}" in
-            1|true|TRUE|yes|YES) EXTRA_FLAGS+=("--no-auto-update") ;;
+            1|true|TRUE|yes|YES) INSTALL_ARGS+=(--no-auto-update) ;;
         esac
 
-        if "${BINARY}" install \
-                --server "${CONF_SERVER}" \
-                --enrollment-token "${CONF_TOKEN}" \
-                "${EXTRA_FLAGS[@]}"; then
+        if "${BINARY}" "${INSTALL_ARGS[@]}"; then
             echo "Device enrolled and service installed."
         else
             echo "warning: probo-agent install failed; the binary is in place and can be re-run by an admin."
@@ -105,9 +167,10 @@ if [ -f "${CONF_FILE}" ]; then
     # in /tmp.
     rm -f "${CONF_FILE}"
 else
-    echo "No ${CONF_FILE} found; skipping automatic enrollment."
-    echo "Finish setup with: sudo ${BINARY} install --server <URL> --enrollment-token <TOKEN>"
+    echo "No ${CONF_FILE} found; enrollment can be completed from the menu bar icon."
 fi
+
+register_tray_launchagent
 
 echo "=== postinstall done ==="
 exit 0

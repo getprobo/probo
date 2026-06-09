@@ -27,8 +27,8 @@
 <body>
     <h1>Welcome to the Probo Device Posture Agent</h1>
     <p>
-        This installer adds <code>probo-agent</code> to your Mac and starts it
-        as a system service. The agent reports device posture &mdash; disk
+        This installer adds <code>probo-agent</code> to your Mac and starts a
+        menu bar helper. The agent reports device posture &mdash; disk
         encryption, screen lock, firewall, OS version, and similar
         signals &mdash; back to your Probo workspace over HTTPS.
     </p>
@@ -37,26 +37,27 @@
     <ul>
         <li>Installs the <code>probo-agent</code> binary to
             <code>/usr/local/bin/probo-agent</code>.</li>
-        <li>Registers the launchd unit
-            <code>com.getprobo.agent</code> in
-            <code>/Library/LaunchDaemons</code>.</li>
         <li>Creates the persistent state directory
             <code>/var/lib/probo-agent</code> (root-owned, mode 0700).</li>
-        <li>Enrolls the device automatically when an admin has pre-staged
-            <code>/tmp/probo-agent.conf</code> (typically via an MDM).</li>
+        <li>Starts a menu bar icon you can use to provide an enrollment
+            token after installation (or silently picks up
+            <code>/tmp/probo-agent.conf</code> when pre-staged by an MDM).</li>
     </ul>
 
     <h2>What you will need</h2>
     <ul>
         <li>Administrator privileges on this Mac.</li>
-        <li>The Probo server URL (e.g.
-            <code>https://app.getprobo.com</code>).</li>
-        <li>A device enrollment token issued by a workspace administrator.</li>
+        <li>A device enrollment token issued by a workspace administrator
+            (find it in the Probo console under
+            <strong>Settings &gt; Devices</strong>).</li>
     </ul>
 
     <p>
-        Click <strong>Continue</strong> to review the license, then
-        <strong>Install</strong> to proceed.
+        After installation, click the Probo icon in the menu bar, choose your
+        workspace region (US, EU, or custom), then provide your enrollment
+        token. Once enrolled, the menu shows <strong>Connected</strong> instead.
+        Click
+        <strong>Continue</strong> below to review the license.
     </p>
 </body>
 </html>

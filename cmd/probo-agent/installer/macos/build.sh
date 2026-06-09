@@ -4,7 +4,9 @@
 # pre-built `probo-agent` binary.
 #
 # Required arguments:
-#   --binary  PATH    Path to a compiled probo-agent binary.
+#   --binary  PATH    Path to a compiled probo-agent binary. Build it
+#                     with CGO_ENABLED=1 so the menu bar helper works:
+#                     CGO_ENABLED=1 go build -o probo-agent ./cmd/probo-agent/main.go
 #   --arch    ARCH    Target architecture: amd64 or arm64.
 #   --version VER     Agent version, e.g. 0.1.0. Defaults to the
 #                     content of cmd/probo-agent/VERSION.
@@ -78,13 +80,41 @@ mkdir -p "${PAYLOAD}/usr/local/bin" "${SCRIPTS}" "${RESOURCES}"
 
 install -m 0755 "${BINARY}" "${PAYLOAD}/usr/local/bin/probo-agent"
 
+ENROLL_UI_DIR="${SCRIPT_DIR}/enroll-ui"
+ENROLL_UI_BIN="${ENROLL_UI_DIR}/.build/release/probo-agent-enroll-ui"
+if ! command -v swift >/dev/null 2>&1; then
+    echo "error: swift is required to build probo-agent-enroll-ui" >&2
+    exit 1
+fi
+
+SWIFT_BUILD_FLAGS=(-c release)
+case "${ARCH}" in
+    amd64) SWIFT_BUILD_FLAGS+=(--triple x86_64-apple-macosx11.0) ;;
+esac
+
+cp "${SCRIPT_DIR}/../regions.json" "${ENROLL_UI_DIR}/regions.json"
+
+echo "Building probo-agent-enroll-ui (${ARCH})..."
+(
+    cd "${ENROLL_UI_DIR}"
+    swift build "${SWIFT_BUILD_FLAGS[@]}"
+)
+
+if [ ! -x "${ENROLL_UI_BIN}" ]; then
+    echo "error: enroll-ui build did not produce ${ENROLL_UI_BIN}" >&2
+    exit 1
+fi
+
+install -m 0755 "${ENROLL_UI_BIN}" "${PAYLOAD}/usr/local/bin/probo-agent-enroll-ui"
+install -m 0644 "${SCRIPT_DIR}/../regions.json" "${PAYLOAD}/usr/local/bin/regions.json"
+
+install -m 0755 "${SCRIPT_DIR}/scripts/preinstall"  "${SCRIPTS}/preinstall"
 install -m 0755 "${SCRIPT_DIR}/scripts/postinstall" "${SCRIPTS}/postinstall"
 
 cp "${SCRIPT_DIR}/Resources/welcome.html"    "${RESOURCES}/welcome.html"
 cp "${SCRIPT_DIR}/Resources/conclusion.html" "${RESOURCES}/conclusion.html"
 cp "${REPO_ROOT}/LICENSE"                    "${RESOURCES}/license.txt"
 
-# Component package: payload + scripts only.
 COMPONENT_PKG="${STAGE}/probo-agent-component.pkg"
 pkgbuild \
     --root "${PAYLOAD}" \
@@ -94,7 +124,6 @@ pkgbuild \
     --install-location "/" \
     "${COMPONENT_PKG}"
 
-# Render Distribution.xml from its template.
 DISTRIBUTION="${STAGE}/Distribution.xml"
 sed \
     -e "s|@@VERSION@@|${VERSION}|g" \
