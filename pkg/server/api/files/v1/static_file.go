@@ -32,7 +32,7 @@ import (
 const staticFileCacheControl = "public, max-age=31536000, immutable"
 
 type (
-	StaticFileServer struct {
+	staticFileServer struct {
 		files map[string]staticFile
 	}
 
@@ -44,8 +44,8 @@ type (
 	}
 )
 
-func NewStaticFileServer(files fs.FS) (*StaticFileServer, error) {
-	server := &StaticFileServer{
+func newStaticFileServer(files fs.FS) (*staticFileServer, error) {
+	server := &staticFileServer{
 		files: make(map[string]staticFile),
 	}
 
@@ -90,7 +90,7 @@ func NewStaticFileServer(files fs.FS) (*StaticFileServer, error) {
 	return server, nil
 }
 
-func (s *StaticFileServer) ServeHTTP(w http.ResponseWriter, r *http.Request, file string) bool {
+func (s *staticFileServer) ServeHTTP(w http.ResponseWriter, r *http.Request, file string) bool {
 	asset, ok := s.files[file]
 	if !ok {
 		return false

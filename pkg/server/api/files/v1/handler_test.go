@@ -36,7 +36,7 @@ import (
 func testHandler(t *testing.T) *Handler {
 	t.Helper()
 
-	staticFiles, err := NewStaticFileServer(brand.Assets)
+	staticFiles, err := newStaticFileServer(brand.Assets)
 	require.NoError(t, err)
 
 	return &Handler{
@@ -255,15 +255,15 @@ func TestHandleGetFile_UnauthenticatedReturns401(t *testing.T) {
 
 	// NewMux with nil services — safe because auth middleware returns 401
 	// before any service is called when no credentials are present.
-	mux := NewMux(
+	mux, err := NewMux(
 		log.NewLogger(log.WithOutput(io.Discard)),
 		nil, // fileSvc — not reached
 		nil, // proboSvc — not reached
 		nil, // iamSvc — not reached when no token/cookie present
-		nil, // staticFiles — not reached
 		securecookie.Config{},
 		"test-secret",
 	)
+	require.NoError(t, err)
 
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/some-valid-looking-id", nil)

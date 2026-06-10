@@ -22,6 +22,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/brand"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/gid"
@@ -39,7 +40,7 @@ type Handler struct {
 	fileSvc     *filemanager.Service
 	probo       *probo.Service
 	iamSvc      *iam.Service
-	staticFiles *StaticFileServer
+	staticFiles *staticFileServer
 }
 
 func NewMux(
@@ -47,10 +48,14 @@ func NewMux(
 	fileSvc *filemanager.Service,
 	proboSvc *probo.Service,
 	iamSvc *iam.Service,
-	staticFiles *StaticFileServer,
 	cookieConfig securecookie.Config,
 	tokenSecret string,
-) *chi.Mux {
+) (*chi.Mux, error) {
+	staticFiles, err := newStaticFileServer(brand.Assets)
+	if err != nil {
+		return nil, fmt.Errorf("cannot create static file server: %w", err)
+	}
+
 	h := &Handler{
 		logger:      logger,
 		fileSvc:     fileSvc,
@@ -72,7 +77,7 @@ func NewMux(
 		r.Get("/{fileID}", h.handleGetFile)
 	})
 
-	return r
+	return r, nil
 }
 
 func (h *Handler) handleGetStaticFile(w http.ResponseWriter, r *http.Request) {

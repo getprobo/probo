@@ -28,7 +28,6 @@ import (
 	"go.probo.inc/probo/pkg/accessreview"
 	"go.probo.inc/probo/pkg/agentrun"
 	"go.probo.inc/probo/pkg/baseurl"
-	"go.probo.inc/probo/pkg/brand"
 	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/connector/provider"
 	"go.probo.inc/probo/pkg/cookiebanner"
@@ -173,9 +172,16 @@ func NewServer(cfg Config) (*Server, error) {
 		)
 	}))
 
-	staticFiles, err := files_v1.NewStaticFileServer(brand.Assets)
+	filesHandler, err := files_v1.NewMux(
+		cfg.Logger.Named("files.v1"),
+		cfg.File,
+		cfg.Probo,
+		cfg.IAM,
+		cfg.Cookie,
+		cfg.TokenSecret,
+	)
 	if err != nil {
-		return nil, fmt.Errorf("cannot create files static server: %w", err)
+		return nil, fmt.Errorf("cannot create files handler: %w", err)
 	}
 
 	return &Server{
@@ -216,15 +222,7 @@ func NewServer(cfg Config) (*Server, error) {
 			cfg.CookieBanner,
 			cfg.Geoloc,
 		),
-		filesHandler: files_v1.NewMux(
-			cfg.Logger.Named("files.v1"),
-			cfg.File,
-			cfg.Probo,
-			cfg.IAM,
-			staticFiles,
-			cfg.Cookie,
-			cfg.TokenSecret,
-		),
+		filesHandler: filesHandler,
 		mcpHandler: mcp_v1.NewMux(
 			cfg.Logger.Named("mcp.v1"),
 			cfg.Probo,
