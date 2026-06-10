@@ -4,6 +4,35 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.207.0] - 2026-06-10
+
+### Added
+
+- Neon access-review connector (organization members via Neon API, API-key auth)
+- Render access-review connector (workspace members, API-key + Workspace ID)
+- Qovery access-review connector (organization members, configurable `Token` Authorization scheme)
+- API-key connector providers can now declare a custom Authorization token scheme (defaults to `Bearer`)
+- `regulationSource` (`DETECTED`/`DEFAULT`) on cookie consent records, with GDPR/OPT_IN applied as the safe default when geolocation does not resolve a known regulation
+- `--keyword` scoping on the banner tracker-reset operator path: rebuilds only patterns whose pattern or display name contains the substring
+- `parent_third_party_id` foreign key on third parties for arbitrary sub-third-party nesting depth; `level` (int, 1+) replaces the `firstLevel` boolean
+
+### Changed
+
+- Tracker-mapping agent ignores cookie-database/consent-directory operators (Cookipedia, cookiedatabase.org, CookieServe, …) as vendor attributions; CMP own-cookie attributions (OneTrust, Cookiebot, …) still survive
+- Tracker-mapping agent ignores own-domain tracker attributions (patterns embedding the scanned site's own eTLD+1) with a deterministic backstop
+- Relinking a common tracker pattern to a different third party now updates the confidence on linked org patterns
+- Rename console label "Detected Count" to "Distinct Trackers Detected"
+- `proboctl common-tracker-pattern reenrich` now accepts catalog-wide filters with no selection anchor (e.g. `--without-description` re-enriches every pattern lacking a description)
+
+### Fixed
+
+- Null out stale `initiator_url`/`initiator_domain` rows on `detected_trackers` that point at the @probo/cookie-banner bundle, so genuine third-party initiators repopulate on next detection
+- Cookie-database denylist now matches domain and URL forms (e.g. `cookiedatabase.org`, `https://www.cookiepedia.co.uk/list`), not just bare brand names
+
+### Removed
+
+- `createThirdPartyThirdPartyMapping` and `deleteThirdPartyThirdPartyMapping` mutations and MCP tools; create a child third party by passing `parentThirdPartyId` on `createThirdParty`
+
 ## [0.206.0] - 2026-06-09
 
 ### Added
