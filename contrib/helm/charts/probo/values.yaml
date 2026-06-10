@@ -331,6 +331,30 @@ probo:
     agentTimeout: 45
     agentMaxTurns: 10
 
+  # Common third party enrichment agent (optional, requires a provider
+  # key). Powers the company-profile and compliance-docs agents that fill
+  # common_third_parties metadata. Browser tools for the compliance-docs
+  # agent use the chromeDpAddr endpoint when set; web search uses
+  # firecrawl.apiKey when set.
+  commonThirdPartyEnrichment:
+    provider: ""
+    modelName: ""
+    temperature: ""
+    maxTokens: ""
+
+  # Common third party enrichment background worker tuning (optional).
+  # interval, staleAfter, and agentTimeout are in seconds.
+  # confidenceThreshold is the floor (0-1) a resolved value must clear
+  # before it is written to its column.
+  commonThirdPartyEnrichmentWorker:
+    interval: 10
+    maxConcurrency: 1
+    staleAfter: 900
+    agentTimeout: 90
+    agentMaxTurns: 12
+    confidenceThreshold: 0.7
+    maxAttempts: 3
+
   # Custom domains configuration (optional)
   customDomains:
     enabled: false

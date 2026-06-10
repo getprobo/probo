@@ -242,6 +242,15 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 					Temperature: b.getEnvFloatPtr("AGENT_TRACKER_ENRICHMENT_TEMPERATURE"),
 					MaxTokens:   new(b.getEnvIntOrDefault("AGENT_TRACKER_ENRICHMENT_MAX_TOKENS", 4096)),
 				},
+				CommonThirdPartyEnrichment: probodconfig.LLMAgentConfig{
+					Provider:  b.getEnvOrDefault("AGENT_COMMON_THIRD_PARTY_ENRICHMENT_PROVIDER", ""),
+					ModelName: b.getEnvOrDefault("AGENT_COMMON_THIRD_PARTY_ENRICHMENT_MODEL_NAME", ""),
+					// Agent B browses pages and emits a moderate structured
+					// output; the budget must leave headroom for reasoning
+					// models whose reasoning tokens count against max_tokens.
+					Temperature: b.getEnvFloatPtr("AGENT_COMMON_THIRD_PARTY_ENRICHMENT_TEMPERATURE"),
+					MaxTokens:   new(b.getEnvIntOrDefault("AGENT_COMMON_THIRD_PARTY_ENRICHMENT_MAX_TOKENS", 8192)),
+				},
 				Tools: probodconfig.AgentToolsConfig{
 					FirecrawlAPIKey: b.getEnv("FIRECRAWL_API_KEY"),
 				},
@@ -291,6 +300,15 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 				StaleAfter:     b.getEnvIntOrDefault("COMMON_PATTERN_ENRICHMENT_STALE_AFTER", 600),
 				AgentTimeout:   b.getEnvIntOrDefault("COMMON_PATTERN_ENRICHMENT_AGENT_TIMEOUT", 45),
 				AgentMaxTurns:  b.getEnvIntOrDefault("COMMON_PATTERN_ENRICHMENT_AGENT_MAX_TURNS", 10),
+			},
+			CommonThirdPartyEnrichmentWorker: probodconfig.CommonThirdPartyEnrichmentWorkerConfig{
+				Interval:            b.getEnvIntOrDefault("COMMON_THIRD_PARTY_ENRICHMENT_INTERVAL", 10),
+				MaxConcurrency:      b.getEnvIntOrDefault("COMMON_THIRD_PARTY_ENRICHMENT_MAX_CONCURRENCY", 1),
+				StaleAfter:          b.getEnvIntOrDefault("COMMON_THIRD_PARTY_ENRICHMENT_STALE_AFTER", 900),
+				AgentTimeout:        b.getEnvIntOrDefault("COMMON_THIRD_PARTY_ENRICHMENT_AGENT_TIMEOUT", 90),
+				AgentMaxTurns:       b.getEnvIntOrDefault("COMMON_THIRD_PARTY_ENRICHMENT_AGENT_MAX_TURNS", 12),
+				ConfidenceThreshold: b.getEnvFloatOrDefault("COMMON_THIRD_PARTY_ENRICHMENT_CONFIDENCE_THRESHOLD", 0.7),
+				MaxAttempts:         b.getEnvIntOrDefault("COMMON_THIRD_PARTY_ENRICHMENT_MAX_ATTEMPTS", 3),
 			},
 			Branding: b.getEnvBoolOrDefault("BRANDING", true),
 		},

@@ -62,8 +62,9 @@ type (
 		EvidenceDescriber EvidenceDescriberConfig       `json:"evidence-describer"`
 		ThirdPartyVetting ThirdPartyVettingWorkerConfig `json:"third-party-vetting-worker"`
 
-		TrackerMappingWorker          TrackerMappingWorkerConfig          `json:"tracker-mapping-worker"`
-		CommonPatternEnrichmentWorker CommonPatternEnrichmentWorkerConfig `json:"common-pattern-enrichment-worker"`
+		TrackerMappingWorker             TrackerMappingWorkerConfig             `json:"tracker-mapping-worker"`
+		CommonPatternEnrichmentWorker    CommonPatternEnrichmentWorkerConfig    `json:"common-pattern-enrichment-worker"`
+		CommonThirdPartyEnrichmentWorker CommonThirdPartyEnrichmentWorkerConfig `json:"common-third-party-enrichment-worker"`
 
 		ChromeDPAddr  string              `json:"chrome-dp-addr"`
 		CustomDomains CustomDomainsConfig `json:"custom-domains"`

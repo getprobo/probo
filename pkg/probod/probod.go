@@ -181,6 +181,15 @@ func New() *Implm {
 				StaleAfter:     1500,
 				MaxConcurrency: 1,
 			},
+			CommonThirdPartyEnrichmentWorker: CommonThirdPartyEnrichmentWorkerConfig{
+				Interval:            10,
+				MaxConcurrency:      1,
+				StaleAfter:          900,
+				AgentTimeout:        90,
+				AgentMaxTurns:       12,
+				ConfidenceThreshold: 0.7,
+				MaxAttempts:         3,
+			},
 		},
 	}
 }
@@ -327,6 +336,11 @@ func (impl *Implm) Run(
 	}
 
 	fileManagerService := filemanager.NewService(pgClient, baseURL, s3Client)
+
+	commonThirdPartyEnrichmentCfg, err := impl.buildCommonThirdPartyEnrichmentConfig(l, tp, r, fileManagerService)
+	if err != nil {
+		return err
+	}
 
 	var (
 		samlCert *x509.Certificate
@@ -819,6 +833,34 @@ func (impl *Implm) Run(
 		)
 	}
 
+	// The common-third-party enrichment worker fills catalog metadata
+	// (URLs, address, certifications, logo) via two agents plus a
+	// deterministic logo step. It needs an LLM client, so it is only
+	// started when its agent config is present.
+	stopCommonThirdPartyEnrichmentWorker := func() {}
+
+	if commonThirdPartyEnrichmentCfg.LLMClient != nil {
+		commonThirdPartyEnrichmentWorker := thirdparty.NewCommonThirdPartyEnrichmentWorker(
+			pgClient,
+			l.Named("common-third-party-enrichment-worker"),
+			commonThirdPartyEnrichmentCfg,
+			worker.WithInterval(time.Duration(impl.cfg.CommonThirdPartyEnrichmentWorker.Interval)*time.Second),
+			worker.WithMaxConcurrency(impl.cfg.CommonThirdPartyEnrichmentWorker.MaxConcurrency),
+		)
+
+		var commonThirdPartyEnrichmentWorkerCtx context.Context
+
+		commonThirdPartyEnrichmentWorkerCtx, stopCommonThirdPartyEnrichmentWorker = context.WithCancel(context.Background())
+
+		wg.Go(
+			func() {
+				if err := commonThirdPartyEnrichmentWorker.Run(commonThirdPartyEnrichmentWorkerCtx); err != nil {
+					cancel(fmt.Errorf("common third party enrichment worker crashed: %w", err))
+				}
+			},
+		)
+	}
+
 	mailingListWorker := mailman.NewMailingListWorker(mailmanService, pgClient, l.Named("mailing-list-worker"))
 	mailingListWorkerCtx, stopMailingListWorker := context.WithCancel(context.Background())
 
@@ -910,6 +952,7 @@ func (impl *Implm) Run(
 	stopTrackerPolicyWorker()
 	stopTrackerMappingWorker()
 	stopCommonPatternEnrichmentWorker()
+	stopCommonThirdPartyEnrichmentWorker()
 	stopMailingListWorker()
 	stopVettingWorker()
 	stopEvidenceDescriptionWorker()

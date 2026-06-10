@@ -70,8 +70,14 @@ func ResolveOrCreateCommonThirdParty(
 		Slug:           partySlug,
 		Category:       category,
 		Certifications: []string{},
-		CreatedAt:      now,
-		UpdatedAt:      now,
+		// Request enrichment at creation: a freshly resolved catalog row
+		// carries only name/slug/category, so the enrichment worker fills
+		// the rest (URLs, address, certifications, logo). Curated seed
+		// rows are inserted via Upsert without this flag, so a full
+		// re-seed does not trigger an enrichment storm.
+		EnrichmentRequestedAt: &now,
+		CreatedAt:             now,
+		UpdatedAt:             now,
 	}
 
 	// Insert inside a savepoint so a concurrent transaction that created

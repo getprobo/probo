@@ -229,6 +229,26 @@ probo:
   #   agentTimeout: 45
   #   agentMaxTurns: 10
 
+  # Common third party enrichment agent (optional, fills common_third_parties
+  # metadata: URLs, address, certifications, logo).
+  # commonThirdPartyEnrichment:
+  #   provider: "openai"
+  #   modelName: "gpt-4o"
+  #   temperature: "0.1"
+  #   maxTokens: "8192"
+
+  # Common third party enrichment worker tuning (optional; seconds for
+  # interval/staleAfter/agentTimeout). confidenceThreshold is the 0-1 floor
+  # a value must clear before it is written.
+  # commonThirdPartyEnrichmentWorker:
+  #   interval: 10
+  #   maxConcurrency: 1
+  #   staleAfter: 900
+  #   agentTimeout: 90
+  #   agentMaxTurns: 12
+  #   confidenceThreshold: 0.7
+  #   maxAttempts: 3
+
   # OpenTelemetry tracing (optional)
   tracing:
     enabled: true

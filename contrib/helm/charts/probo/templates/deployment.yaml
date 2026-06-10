@@ -378,6 +378,52 @@ spec:
             - name: COMMON_PATTERN_ENRICHMENT_AGENT_MAX_TURNS
               value: {{ .Values.probo.commonPatternEnrichmentWorker.agentMaxTurns | quote }}
             {{- end }}
+            # Common Third Party Enrichment Agent
+            {{- if .Values.probo.commonThirdPartyEnrichment.provider }}
+            - name: AGENT_COMMON_THIRD_PARTY_ENRICHMENT_PROVIDER
+              value: {{ .Values.probo.commonThirdPartyEnrichment.provider | quote }}
+            {{- end }}
+            {{- if .Values.probo.commonThirdPartyEnrichment.modelName }}
+            - name: AGENT_COMMON_THIRD_PARTY_ENRICHMENT_MODEL_NAME
+              value: {{ .Values.probo.commonThirdPartyEnrichment.modelName | quote }}
+            {{- end }}
+            {{- if .Values.probo.commonThirdPartyEnrichment.temperature }}
+            - name: AGENT_COMMON_THIRD_PARTY_ENRICHMENT_TEMPERATURE
+              value: {{ .Values.probo.commonThirdPartyEnrichment.temperature | quote }}
+            {{- end }}
+            {{- if .Values.probo.commonThirdPartyEnrichment.maxTokens }}
+            - name: AGENT_COMMON_THIRD_PARTY_ENRICHMENT_MAX_TOKENS
+              value: {{ .Values.probo.commonThirdPartyEnrichment.maxTokens | quote }}
+            {{- end }}
+            # Common Third Party Enrichment Worker
+            {{- if .Values.probo.commonThirdPartyEnrichmentWorker.interval }}
+            - name: COMMON_THIRD_PARTY_ENRICHMENT_INTERVAL
+              value: {{ .Values.probo.commonThirdPartyEnrichmentWorker.interval | quote }}
+            {{- end }}
+            {{- if .Values.probo.commonThirdPartyEnrichmentWorker.maxConcurrency }}
+            - name: COMMON_THIRD_PARTY_ENRICHMENT_MAX_CONCURRENCY
+              value: {{ .Values.probo.commonThirdPartyEnrichmentWorker.maxConcurrency | quote }}
+            {{- end }}
+            {{- if .Values.probo.commonThirdPartyEnrichmentWorker.staleAfter }}
+            - name: COMMON_THIRD_PARTY_ENRICHMENT_STALE_AFTER
+              value: {{ .Values.probo.commonThirdPartyEnrichmentWorker.staleAfter | quote }}
+            {{- end }}
+            {{- if .Values.probo.commonThirdPartyEnrichmentWorker.agentTimeout }}
+            - name: COMMON_THIRD_PARTY_ENRICHMENT_AGENT_TIMEOUT
+              value: {{ .Values.probo.commonThirdPartyEnrichmentWorker.agentTimeout | quote }}
+            {{- end }}
+            {{- if .Values.probo.commonThirdPartyEnrichmentWorker.agentMaxTurns }}
+            - name: COMMON_THIRD_PARTY_ENRICHMENT_AGENT_MAX_TURNS
+              value: {{ .Values.probo.commonThirdPartyEnrichmentWorker.agentMaxTurns | quote }}
+            {{- end }}
+            {{- if .Values.probo.commonThirdPartyEnrichmentWorker.confidenceThreshold }}
+            - name: COMMON_THIRD_PARTY_ENRICHMENT_CONFIDENCE_THRESHOLD
+              value: {{ .Values.probo.commonThirdPartyEnrichmentWorker.confidenceThreshold | quote }}
+            {{- end }}
+            {{- if .Values.probo.commonThirdPartyEnrichmentWorker.maxAttempts }}
+            - name: COMMON_THIRD_PARTY_ENRICHMENT_MAX_ATTEMPTS
+              value: {{ .Values.probo.commonThirdPartyEnrichmentWorker.maxAttempts | quote }}
+            {{- end }}
             # Custom Domains
             {{- if .Values.probo.customDomains.enabled }}
             - name: CUSTOM_DOMAINS_RENEWAL_INTERVAL

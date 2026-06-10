@@ -245,6 +245,13 @@ func TestBuilder_Build_Defaults(t *testing.T) {
 	assert.Equal(t, 600, cfg.Probod.CommonPatternEnrichmentWorker.StaleAfter)
 	assert.Equal(t, 45, cfg.Probod.CommonPatternEnrichmentWorker.AgentTimeout)
 	assert.Equal(t, 10, cfg.Probod.CommonPatternEnrichmentWorker.AgentMaxTurns)
+	assert.Equal(t, 10, cfg.Probod.CommonThirdPartyEnrichmentWorker.Interval)
+	assert.Equal(t, 1, cfg.Probod.CommonThirdPartyEnrichmentWorker.MaxConcurrency)
+	assert.Equal(t, 900, cfg.Probod.CommonThirdPartyEnrichmentWorker.StaleAfter)
+	assert.Equal(t, 90, cfg.Probod.CommonThirdPartyEnrichmentWorker.AgentTimeout)
+	assert.Equal(t, 12, cfg.Probod.CommonThirdPartyEnrichmentWorker.AgentMaxTurns)
+	assert.Equal(t, 0.7, cfg.Probod.CommonThirdPartyEnrichmentWorker.ConfidenceThreshold)
+	assert.Equal(t, 3, cfg.Probod.CommonThirdPartyEnrichmentWorker.MaxAttempts)
 	assert.Equal(t, 10, cfg.Probod.ThirdPartyVetting.Interval)
 	assert.Equal(t, 1500, cfg.Probod.ThirdPartyVetting.StaleAfter)
 	assert.Equal(t, 1, cfg.Probod.ThirdPartyVetting.MaxConcurrency)
@@ -369,6 +376,17 @@ func TestBuilder_Build_CustomValues(t *testing.T) {
 	env["COMMON_PATTERN_ENRICHMENT_STALE_AFTER"] = "900"
 	env["COMMON_PATTERN_ENRICHMENT_AGENT_TIMEOUT"] = "50"
 	env["COMMON_PATTERN_ENRICHMENT_AGENT_MAX_TURNS"] = "5"
+	// Common third party enrichment agent + worker tuning override
+	env["AGENT_COMMON_THIRD_PARTY_ENRICHMENT_PROVIDER"] = "openai"
+	env["AGENT_COMMON_THIRD_PARTY_ENRICHMENT_MODEL_NAME"] = "gpt-4o"
+	env["AGENT_COMMON_THIRD_PARTY_ENRICHMENT_MAX_TOKENS"] = "16384"
+	env["COMMON_THIRD_PARTY_ENRICHMENT_INTERVAL"] = "25"
+	env["COMMON_THIRD_PARTY_ENRICHMENT_MAX_CONCURRENCY"] = "2"
+	env["COMMON_THIRD_PARTY_ENRICHMENT_STALE_AFTER"] = "1200"
+	env["COMMON_THIRD_PARTY_ENRICHMENT_AGENT_TIMEOUT"] = "120"
+	env["COMMON_THIRD_PARTY_ENRICHMENT_AGENT_MAX_TURNS"] = "8"
+	env["COMMON_THIRD_PARTY_ENRICHMENT_CONFIDENCE_THRESHOLD"] = "0.85"
+	env["COMMON_THIRD_PARTY_ENRICHMENT_MAX_ATTEMPTS"] = "5"
 	env["THIRD_PARTY_VETTING_INTERVAL"] = "15"
 	env["THIRD_PARTY_VETTING_STALE_AFTER"] = "1800"
 	env["THIRD_PARTY_VETTING_MAX_CONCURRENCY"] = "2"
@@ -490,6 +508,17 @@ func TestBuilder_Build_CustomValues(t *testing.T) {
 	assert.Equal(t, 900, cfg.Probod.CommonPatternEnrichmentWorker.StaleAfter)
 	assert.Equal(t, 50, cfg.Probod.CommonPatternEnrichmentWorker.AgentTimeout)
 	assert.Equal(t, 5, cfg.Probod.CommonPatternEnrichmentWorker.AgentMaxTurns)
+	assert.Equal(t, "openai", cfg.Probod.Agents.CommonThirdPartyEnrichment.Provider)
+	assert.Equal(t, "gpt-4o", cfg.Probod.Agents.CommonThirdPartyEnrichment.ModelName)
+	require.NotNil(t, cfg.Probod.Agents.CommonThirdPartyEnrichment.MaxTokens)
+	assert.Equal(t, 16384, *cfg.Probod.Agents.CommonThirdPartyEnrichment.MaxTokens)
+	assert.Equal(t, 25, cfg.Probod.CommonThirdPartyEnrichmentWorker.Interval)
+	assert.Equal(t, 2, cfg.Probod.CommonThirdPartyEnrichmentWorker.MaxConcurrency)
+	assert.Equal(t, 1200, cfg.Probod.CommonThirdPartyEnrichmentWorker.StaleAfter)
+	assert.Equal(t, 120, cfg.Probod.CommonThirdPartyEnrichmentWorker.AgentTimeout)
+	assert.Equal(t, 8, cfg.Probod.CommonThirdPartyEnrichmentWorker.AgentMaxTurns)
+	assert.Equal(t, 0.85, cfg.Probod.CommonThirdPartyEnrichmentWorker.ConfidenceThreshold)
+	assert.Equal(t, 5, cfg.Probod.CommonThirdPartyEnrichmentWorker.MaxAttempts)
 	assert.Equal(t, 15, cfg.Probod.ThirdPartyVetting.Interval)
 	assert.Equal(t, 1800, cfg.Probod.ThirdPartyVetting.StaleAfter)
 	assert.Equal(t, 2, cfg.Probod.ThirdPartyVetting.MaxConcurrency)

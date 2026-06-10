@@ -16,6 +16,7 @@ package coredata
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"maps"
@@ -49,6 +50,9 @@ type (
 		SecurityPageURL               *string            `db:"security_page_url"`
 		TrustPageURL                  *string            `db:"trust_page_url"`
 		LogoFileID                    *gid.GID           `db:"logo_file_id"`
+		EnrichmentRequestedAt         *time.Time         `db:"enrichment_requested_at"`
+		Enrichment                    json.RawMessage    `db:"enrichment"`
+		EnrichmentAttempts            int                `db:"enrichment_attempts"`
 		CreatedAt                     time.Time          `db:"created_at"`
 		UpdatedAt                     time.Time          `db:"updated_at"`
 	}
@@ -124,6 +128,9 @@ SELECT
     security_page_url,
     trust_page_url,
     logo_file_id,
+    enrichment_requested_at,
+    enrichment,
+    enrichment_attempts,
     created_at,
     updated_at
 FROM
@@ -181,6 +188,9 @@ SELECT
     security_page_url,
     trust_page_url,
     logo_file_id,
+    enrichment_requested_at,
+    enrichment,
+    enrichment_attempts,
     created_at,
     updated_at
 FROM
@@ -238,6 +248,9 @@ SELECT
     security_page_url,
     trust_page_url,
     logo_file_id,
+    enrichment_requested_at,
+    enrichment,
+    enrichment_attempts,
     created_at,
     updated_at
 FROM
@@ -294,6 +307,9 @@ INSERT INTO common_third_parties (
     security_page_url,
     trust_page_url,
     logo_file_id,
+    enrichment_requested_at,
+    enrichment,
+    enrichment_attempts,
     created_at,
     updated_at
 ) VALUES (
@@ -316,6 +332,9 @@ INSERT INTO common_third_parties (
     @security_page_url,
     @trust_page_url,
     @logo_file_id,
+    @enrichment_requested_at,
+    @enrichment,
+    @enrichment_attempts,
     @created_at,
     @updated_at
 )
@@ -341,6 +360,9 @@ INSERT INTO common_third_parties (
 		"security_page_url":                t.SecurityPageURL,
 		"trust_page_url":                   t.TrustPageURL,
 		"logo_file_id":                     t.LogoFileID,
+		"enrichment_requested_at":          t.EnrichmentRequestedAt,
+		"enrichment":                       t.Enrichment,
+		"enrichment_attempts":              t.EnrichmentAttempts,
 		"created_at":                       t.CreatedAt,
 		"updated_at":                       t.UpdatedAt,
 	}
@@ -381,6 +403,9 @@ INSERT INTO common_third_parties (
     security_page_url,
     trust_page_url,
     logo_file_id,
+    enrichment_requested_at,
+    enrichment,
+    enrichment_attempts,
     created_at,
     updated_at
 ) VALUES (
@@ -403,6 +428,9 @@ INSERT INTO common_third_parties (
     @security_page_url,
     @trust_page_url,
     @logo_file_id,
+    @enrichment_requested_at,
+    @enrichment,
+    @enrichment_attempts,
     @created_at,
     @updated_at
 )
@@ -445,6 +473,9 @@ RETURNING
     security_page_url,
     trust_page_url,
     logo_file_id,
+    enrichment_requested_at,
+    enrichment,
+    enrichment_attempts,
     created_at,
     updated_at
 `
@@ -471,6 +502,9 @@ RETURNING
 		"security_page_url":                t.SecurityPageURL,
 		"trust_page_url":                   t.TrustPageURL,
 		"logo_file_id":                     t.LogoFileID,
+		"enrichment_requested_at":          t.EnrichmentRequestedAt,
+		"enrichment":                       t.Enrichment,
+		"enrichment_attempts":              t.EnrichmentAttempts,
 		"created_at":                       t.CreatedAt,
 		"updated_at":                       t.UpdatedAt,
 	}
@@ -534,6 +568,9 @@ SELECT
     security_page_url,
     trust_page_url,
     logo_file_id,
+    enrichment_requested_at,
+    enrichment,
+    enrichment_attempts,
     created_at,
     updated_at
 FROM
@@ -585,6 +622,9 @@ SELECT
     security_page_url,
     trust_page_url,
     logo_file_id,
+    enrichment_requested_at,
+    enrichment,
+    enrichment_attempts,
     created_at,
     updated_at
 FROM
@@ -690,6 +730,9 @@ SELECT
     security_page_url,
     trust_page_url,
     logo_file_id,
+    enrichment_requested_at,
+    enrichment,
+    enrichment_attempts,
     created_at,
     updated_at
 FROM
@@ -749,4 +792,214 @@ WHERE
 	}
 
 	return count, nil
+}
+
+// LoadNextForEnrichmentForUpdateSkipLocked claims the oldest row queued
+// for enrichment. The global catalog is not tenant-scoped, so the claim
+// is intentionally cross-tenant: the enrichment worker is a system
+// worker that drains the queue regardless of tenant.
+func (t *CommonThirdParty) LoadNextForEnrichmentForUpdateSkipLocked(
+	ctx context.Context,
+	tx pg.Tx,
+) error {
+	q := `
+SELECT
+    id,
+    name,
+    slug,
+    category,
+    headquarter_address,
+    legal_name,
+    website_url,
+    privacy_policy_url,
+    service_level_agreement_url,
+    service_software_agreement_url,
+    data_processing_agreement_url,
+    business_associate_agreement_url,
+    subprocessors_list_url,
+    certifications,
+    status_page_url,
+    terms_of_service_url,
+    security_page_url,
+    trust_page_url,
+    logo_file_id,
+    enrichment_requested_at,
+    enrichment,
+    enrichment_attempts,
+    created_at,
+    updated_at
+FROM
+    common_third_parties
+WHERE
+    enrichment_requested_at IS NOT NULL
+ORDER BY
+    enrichment_requested_at ASC
+FOR UPDATE SKIP LOCKED
+LIMIT 1;
+`
+
+	rows, err := tx.Query(ctx, q)
+	if err != nil {
+		return fmt.Errorf("cannot query common third party for enrichment: %w", err)
+	}
+	defer rows.Close()
+
+	row, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[CommonThirdParty])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+
+		return fmt.Errorf("cannot collect common third party for enrichment: %w", err)
+	}
+
+	*t = row
+
+	return nil
+}
+
+// ClearEnrichmentRequestedAt removes the row from the enrichment queue
+// and bumps the attempt counter. It bumps updated_at so the
+// stale-recovery clock starts at claim time, keeping
+// ResetStaleCommonThirdPartyEnrichments from re-arming a row that is
+// still being processed. The attempt counter is incremented up front so
+// a crash between claim and persist still counts against the retry
+// budget.
+func (t *CommonThirdParty) ClearEnrichmentRequestedAt(
+	ctx context.Context,
+	tx pg.Tx,
+) error {
+	q := `
+UPDATE common_third_parties
+SET
+    enrichment_requested_at = NULL,
+    enrichment_attempts = enrichment_attempts + 1,
+    updated_at = NOW()
+WHERE id = @id
+`
+
+	args := pgx.StrictNamedArgs{"id": t.ID}
+
+	_, err := tx.Exec(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot clear enrichment requested at: %w", err)
+	}
+
+	t.EnrichmentRequestedAt = nil
+	t.EnrichmentAttempts++
+
+	return nil
+}
+
+// UpdateEnrichment persists the enrichment result: the resolved metadata
+// fields plus the per-field enrichment provenance JSON. It is a targeted
+// partial update that never touches id, slug, category, name, logo, the
+// queue column, or the attempt counter (logo is owned by
+// UpdateLogoFileID; the queue column and counter are managed by
+// ClearEnrichmentRequestedAt). The caller decides which scalar fields to
+// write versus leave untouched, then passes the merged receiver here.
+func (t CommonThirdParty) UpdateEnrichment(
+	ctx context.Context,
+	conn pg.Tx,
+) error {
+	q := `
+UPDATE common_third_parties
+SET
+    headquarter_address              = @headquarter_address,
+    legal_name                       = @legal_name,
+    website_url                      = @website_url,
+    privacy_policy_url               = @privacy_policy_url,
+    service_level_agreement_url      = @service_level_agreement_url,
+    service_software_agreement_url   = @service_software_agreement_url,
+    data_processing_agreement_url    = @data_processing_agreement_url,
+    business_associate_agreement_url = @business_associate_agreement_url,
+    subprocessors_list_url           = @subprocessors_list_url,
+    certifications                   = @certifications,
+    status_page_url                  = @status_page_url,
+    terms_of_service_url             = @terms_of_service_url,
+    security_page_url                = @security_page_url,
+    trust_page_url                   = @trust_page_url,
+    enrichment                       = @enrichment,
+    updated_at                       = @updated_at
+WHERE
+    id = @id
+`
+
+	args := pgx.StrictNamedArgs{
+		"id":                               t.ID,
+		"headquarter_address":              t.HeadquarterAddress,
+		"legal_name":                       t.LegalName,
+		"website_url":                      t.WebsiteURL,
+		"privacy_policy_url":               t.PrivacyPolicyURL,
+		"service_level_agreement_url":      t.ServiceLevelAgreementURL,
+		"service_software_agreement_url":   t.ServiceSoftwareAgreementURL,
+		"data_processing_agreement_url":    t.DataProcessingAgreementURL,
+		"business_associate_agreement_url": t.BusinessAssociateAgreementURL,
+		"subprocessors_list_url":           t.SubprocessorsListURL,
+		"certifications":                   t.Certifications,
+		"status_page_url":                  t.StatusPageURL,
+		"terms_of_service_url":             t.TermsOfServiceURL,
+		"security_page_url":                t.SecurityPageURL,
+		"trust_page_url":                   t.TrustPageURL,
+		"enrichment":                       t.Enrichment,
+		"updated_at":                       t.UpdatedAt,
+	}
+
+	result, err := conn.Exec(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot update common third party enrichment: %w", err)
+	}
+
+	if result.RowsAffected() == 0 {
+		return ErrResourceNotFound
+	}
+
+	return nil
+}
+
+// ResetStaleCommonThirdPartyEnrichments re-arms enrichment_requested_at
+// on rows whose enrichment was claimed but never completed and have been
+// idle longer than staleAfter, so a crashed or timed-out run is retried.
+//
+// A claimed row has enrichment_attempts > 0 (Claim increments it) and a
+// completed row has a non-null enrichment payload (Process always writes
+// it, even on a no-result run), so the sweep targets rows that were
+// claimed but carry no enrichment yet. Curated rows that were never
+// enqueued keep enrichment_attempts = 0 and are left untouched. The
+// max-attempts ceiling stops permanently failing rows from looping
+// forever.
+//
+// Like the claim query, this sweep is intentionally cross-tenant: the
+// enrichment worker is a system worker that drains the queue regardless
+// of tenant.
+func ResetStaleCommonThirdPartyEnrichments(
+	ctx context.Context,
+	conn pg.Querier,
+	staleAfter time.Duration,
+	maxAttempts int,
+) error {
+	q := `
+UPDATE common_third_parties
+SET
+    enrichment_requested_at = NOW(),
+    updated_at = NOW()
+WHERE
+    enrichment_requested_at IS NULL
+    AND enrichment IS NULL
+    AND enrichment_attempts > 0
+    AND enrichment_attempts < @max_attempts
+    AND updated_at < @stale_before
+`
+
+	args := pgx.StrictNamedArgs{
+		"max_attempts": maxAttempts,
+		"stale_before": time.Now().Add(-staleAfter),
+	}
+
+	_, err := conn.Exec(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot reset stale common third party enrichments: %w", err)
+	}
+
+	return nil
 }

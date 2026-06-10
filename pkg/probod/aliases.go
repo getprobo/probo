@@ -43,8 +43,9 @@ type (
 	ThirdPartyVettingWorkerConfig = probodconfig.ThirdPartyVettingWorkerConfig
 	AgentsConfig                  = probodconfig.AgentsConfig
 
-	TrackerMappingWorkerConfig          = probodconfig.TrackerMappingWorkerConfig
-	CommonPatternEnrichmentWorkerConfig = probodconfig.CommonPatternEnrichmentWorkerConfig
+	TrackerMappingWorkerConfig             = probodconfig.TrackerMappingWorkerConfig
+	CommonPatternEnrichmentWorkerConfig    = probodconfig.CommonPatternEnrichmentWorkerConfig
+	CommonThirdPartyEnrichmentWorkerConfig = probodconfig.CommonThirdPartyEnrichmentWorkerConfig
 
 	MailerConfig        = probodconfig.MailerConfig
 	SMTPConfig          = probodconfig.SMTPConfig
