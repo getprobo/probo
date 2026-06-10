@@ -21,6 +21,9 @@ import { THEMED_STYLES } from "./styles";
 
 export class ProboThemedBanner extends HTMLElement {
   private shadow: ShadowRoot;
+  private scrollLocked = false;
+  private prevOverflow = "";
+  private prevPaddingRight = "";
 
   constructor() {
     super();
@@ -150,6 +153,11 @@ export class ProboThemedBanner extends HTMLElement {
       }
     });
 
+    root.addEventListener("probo-state", (e: Event) => {
+      const { state } = (e as CustomEvent).detail;
+      this.setScrollLock(state === "panel");
+    });
+
     this.shadow.querySelector("[data-action=back]")?.addEventListener("click", () => {
       root.setState(root.client.hasConsent ? "hidden" : "banner");
     });
@@ -174,6 +182,31 @@ export class ProboThemedBanner extends HTMLElement {
       const hideLabel = texts?.aria_hide_details ?? "Hide cookie details";
       btn.setAttribute("aria-label", open ? hideLabel : showLabel);
     });
+  }
+
+  disconnectedCallback(): void {
+    this.setScrollLock(false);
+  }
+
+  private setScrollLock(locked: boolean): void {
+    if (locked === this.scrollLocked) return;
+
+    const root = document.documentElement;
+
+    if (locked) {
+      const scrollbarWidth = window.innerWidth - root.clientWidth;
+      this.prevOverflow = root.style.overflow;
+      this.prevPaddingRight = root.style.paddingRight;
+      root.style.overflow = "hidden";
+      if (scrollbarWidth > 0) {
+        root.style.paddingRight = `${scrollbarWidth}px`;
+      }
+    } else {
+      root.style.overflow = this.prevOverflow;
+      root.style.paddingRight = this.prevPaddingRight;
+    }
+
+    this.scrollLocked = locked;
   }
 
   private applyTexts(config: BannerConfig): void {

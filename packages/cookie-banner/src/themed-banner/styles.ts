@@ -106,6 +106,7 @@ export const THEMED_STYLES = `
 
   probo-preference-panel probo-category-list {
     overflow-y: auto;
+    overscroll-behavior: contain;
     flex: 1;
     min-height: 0;
   }
