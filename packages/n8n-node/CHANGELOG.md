@@ -4,6 +4,13 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+## [0.193.0] - 2026-06-10
+
+### Added
+
+- Expose `regulationSource` (`DETECTED`/`DEFAULT`) on cookie consent record operations to indicate whether the regulation came from geolocation or fell back to GDPR
+- `parentThirdPartyId` and `level` fields on third-party `create`/`getAll` operations for sub-third-party scoping under a parent
+
 ## [0.192.0] - 2026-06-09
 
 ### Added
