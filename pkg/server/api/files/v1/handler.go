@@ -76,6 +76,7 @@ func NewMux(
 
 func (h *Handler) handleGetStaticFile(w http.ResponseWriter, r *http.Request) {
 	file := chi.URLParam(r, "file")
+
 	staticFiles := h.staticFiles
 	if staticFiles == nil {
 		staticFiles = defaultStaticFileServer

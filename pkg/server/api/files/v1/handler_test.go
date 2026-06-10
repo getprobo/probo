@@ -166,6 +166,7 @@ func TestHandleGetStaticFile_CompressesGzipResponses(t *testing.T) {
 
 	gz, err := gzip.NewReader(rec.Body)
 	require.NoError(t, err)
+
 	defer func() { _ = gz.Close() }()
 
 	decompressed, err := io.ReadAll(gz)

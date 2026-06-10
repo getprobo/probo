@@ -80,6 +80,7 @@ func newStaticFileServer(files fs.FS) (*staticFileServer, error) {
 			}
 
 			hash := md5.Sum(content)
+
 			contentType := mime.TypeByExtension(filepath.Ext(path))
 			if contentType == "" {
 				contentType = http.DetectContentType(content)
@@ -143,6 +144,7 @@ func shouldCompressStaticFile(r *http.Request) bool {
 
 	gzipQ := -1.0
 	wildcardQ := -1.0
+
 	for encoding := range strings.SplitSeq(r.Header.Get("Accept-Encoding"), ",") {
 		encoding, q := parseAcceptEncoding(encoding)
 		switch encoding {
@@ -189,6 +191,7 @@ func ifNoneMatch(header string, etag string) bool {
 
 		candidate = strings.TrimPrefix(candidate, "W/")
 		candidate = strings.TrimPrefix(candidate, "w/")
+
 		if candidate == etag {
 			return true
 		}
