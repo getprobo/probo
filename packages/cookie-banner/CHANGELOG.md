@@ -4,6 +4,13 @@ All notable changes to the `@probo/cookie-banner` SDK will be documented in this
 
 ## Unreleased
 
+## [0.9.1] - 2026-06-10
+
+### Fixed
+
+- Lock page scroll while the preference panel is open and add `overscroll-behavior: contain` to the category list, so wheel events at panel edges no longer chain to the host page
+- Exclude the SDK's own served bundle URL from tracker initiator attribution and from the resource detector, so third-party/extension writes are no longer misattributed to `cookie-banner.iife.js` when the SDK is served from a CDN distinct from the API host
+
 ## [0.9.0] - 2026-06-05
 
 ### Added
