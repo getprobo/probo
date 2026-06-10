@@ -1143,6 +1143,55 @@ WHERE
 	return nil
 }
 
+// LinkThirdPartyByCommonThirdPartyID points the organization's unlinked
+// tracker patterns at an org ThirdParty when their catalog row resolves
+// to the given common third party. It is the backfill the explicit
+// import action runs so patterns that previously surfaced the catalog
+// (CommonThirdParty) entry now surface the managed org ThirdParty. Only
+// patterns with no third_party_id are touched, so it is idempotent and
+// never overrides an existing link. The common_tracker_patterns
+// subquery only narrows the WHERE clause, keeping the resolution in the
+// database.
+func (tps *TrackerPatterns) LinkThirdPartyByCommonThirdPartyID(
+	ctx context.Context,
+	tx pg.Tx,
+	scope Scoper,
+	organizationID gid.GID,
+	commonThirdPartyID gid.GID,
+	thirdPartyID gid.GID,
+) error {
+	q := `
+UPDATE tracker_patterns
+SET
+	third_party_id = @third_party_id,
+	updated_at = NOW()
+WHERE
+	%s
+	AND organization_id = @organization_id
+	AND third_party_id IS NULL
+	AND common_tracker_pattern_id IN (
+		SELECT id FROM common_tracker_patterns
+		WHERE common_third_party_id = @common_third_party_id
+	)
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"organization_id":       organizationID,
+		"common_third_party_id": commonThirdPartyID,
+		"third_party_id":        thirdPartyID,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	_, err := tx.Exec(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot link tracker patterns to third party: %w", err)
+	}
+
+	return nil
+}
+
 func (tp *TrackerPattern) LoadNextForMappingForUpdateSkipLocked(
 	ctx context.Context,
 	tx pg.Tx,
