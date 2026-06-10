@@ -167,7 +167,7 @@ test-e2e: CGO_ENABLED=1
 test-e2e: $(PROBOD_BIN) ## Run console e2e tests
 	PROBO_E2E_BINARY=$(CURDIR)/$(PROBOD_BIN) \
 	PROBO_E2E_CONFIG=$(E2E_CONFIG) \
-	GOTESTSUM_FORMAT=testname $(GO_TEST) -count=1 ./e2e/console/...
+	GOTESTSUM_FORMAT=testname $(GO_TEST) -count=1 ./e2e/console/... ./e2e/page/...
 
 bin/probod-coverage:
 	CGO_ENABLED=0 $(GO_BUILD) $(PROBOD_LDFLAGS) -cover -o $@ $(PROBOD_SRC)
