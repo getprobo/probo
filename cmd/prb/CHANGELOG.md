@@ -4,6 +4,20 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.193.0] - 2026-06-10
+
+### Added
+
+- Expose `regulation_source` (`detected`/`default`) on `prb consent-record list`/`view` to show whether the regulation was resolved from geolocation or fell back to GDPR
+
+### Changed
+
+- `prb third-party list --first-level` replaced by `--level <N>` (1 = direct, 2+ = indirect) to support arbitrary nesting depth
+
+### Removed
+
+- `prb third-party link`/`unlink` commands; sub-third-parties are now scoped by a `parent_third_party_id` on the third-party itself
+
 ## [0.192.0] - 2026-06-09
 
 ### Added
