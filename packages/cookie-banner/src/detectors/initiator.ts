@@ -12,6 +12,8 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+import { getSelfResourceUrls } from "./self-origin";
+
 const EXTENSION_URL_RE = /(?:chrome|moz|safari-web)-extension:\/\//;
 const STACK_URL_RE =
   /(?:https?|(?:chrome|moz|safari-web)-extension):\/\/[^\s)'"`]+/g;
@@ -43,6 +45,8 @@ export function getInitiatorURL(apiOrigin: string): InitiatorContext {
   let fromExtension = false;
   let url: string | null = null;
 
+  const selfUrls = getSelfResourceUrls();
+
   STACK_URL_RE.lastIndex = 0;
   let m: RegExpExecArray | null;
   while ((m = STACK_URL_RE.exec(stack)) !== null) {
@@ -67,6 +71,8 @@ export function getInitiatorURL(apiOrigin: string): InitiatorContext {
     if (parsed.origin === location.origin) continue;
 
     const result = parsed.origin + parsed.pathname;
+    if (selfUrls.has(result)) continue;
+
     url = result.length > MAX_INITIATOR_URL_LENGTH
       ? result.slice(0, MAX_INITIATOR_URL_LENGTH)
       : result;
