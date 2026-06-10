@@ -89,11 +89,7 @@ func newCmdResetTrackers(f *cmdutil.Factory) *cobra.Command {
 
 		_, _ = fmt.Fprintf(out, "Running %s on banner %s.\n", mode, bannerID.String())
 
-		progress := func(message string) {
-			_, _ = fmt.Fprintf(out, "  %s\n", message)
-		}
-
-		result, err := cookiebanner.ResetBannerTrackers(ctx, pgClient, scope, bannerID, flagMappingOnly, keyword, progress)
+		result, err := cookiebanner.ResetBannerTrackers(ctx, pgClient, scope, bannerID, flagMappingOnly, keyword)
 		if err != nil {
 			return fmt.Errorf("cannot reset banner %s: %w", bannerID, err)
 		}
