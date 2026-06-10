@@ -454,6 +454,9 @@ type ThirdPartyRiskAssessmentEdge {
 
 extend type Mutation {
     createThirdParty(input: CreateThirdPartyInput!): CreateThirdPartyPayload!
+    importThirdPartyFromCommon(
+        input: ImportThirdPartyFromCommonInput!
+    ): ImportThirdPartyFromCommonPayload!
     updateThirdParty(input: UpdateThirdPartyInput!): UpdateThirdPartyPayload!
     deleteThirdParty(input: DeleteThirdPartyInput!): DeleteThirdPartyPayload!
     createThirdPartyContact(
@@ -672,8 +675,18 @@ input VetThirdPartyInput {
     procedure: String
 }
 
+input ImportThirdPartyFromCommonInput {
+    organizationId: ID!
+    commonThirdPartyId: ID!
+}
+
 type CreateThirdPartyPayload {
     thirdPartyEdge: ThirdPartyEdge!
+}
+
+type ImportThirdPartyFromCommonPayload {
+    thirdPartyEdge: ThirdPartyEdge!
+    created: Boolean!
 }
 
 type UpdateThirdPartyPayload {

@@ -83,6 +83,36 @@ func (r *mutationResolver) CreateThirdParty(ctx context.Context, input types.Cre
 	}, nil
 }
 
+// ImportThirdPartyFromCommon is the resolver for the importThirdPartyFromCommon field.
+func (r *mutationResolver) ImportThirdPartyFromCommon(ctx context.Context, input types.ImportThirdPartyFromCommonInput) (*types.ImportThirdPartyFromCommonPayload, error) {
+	scope, err := r.authorize(ctx, input.OrganizationID, probo.ActionThirdPartyCreate)
+	if err != nil {
+		return nil, err
+	}
+
+	thirdParty, created, err := r.probo.ThirdParties.ImportFromCommon(
+		ctx, scope,
+		probo.ImportThirdPartyFromCommonRequest{
+			OrganizationID:     input.OrganizationID,
+			CommonThirdPartyID: input.CommonThirdPartyID,
+		},
+	)
+	if err != nil {
+		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
+			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot import thirdParty from common", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.ImportThirdPartyFromCommonPayload{
+		ThirdPartyEdge: types.NewThirdPartyEdge(thirdParty, coredata.ThirdPartyOrderFieldName),
+		Created:        created,
+	}, nil
+}
+
 // UpdateThirdParty is the resolver for the updateThirdParty field.
 func (r *mutationResolver) UpdateThirdParty(ctx context.Context, input types.UpdateThirdPartyInput) (*types.UpdateThirdPartyPayload, error) {
 	scope, err := r.authorize(ctx, input.ID, probo.ActionThirdPartyUpdate)
