@@ -12,7 +12,7 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { EyeIcon, EyeSlashIcon } from "@phosphor-icons/react";
+import { DownloadSimpleIcon, EyeIcon, EyeSlashIcon } from "@phosphor-icons/react";
 import { formatError, getTrackerSourceBadge, getTrackerTypeBadge, type GraphQLError, humanizeSeconds } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import {
@@ -32,8 +32,10 @@ import { ConnectionHandler } from "relay-runtime";
 
 import type { TrackerPatternRowDeleteMutation } from "#/__generated__/core/TrackerPatternRowDeleteMutation.graphql";
 import type { TrackerPatternRowFragment$key } from "#/__generated__/core/TrackerPatternRowFragment.graphql";
+import type { TrackerPatternRowImportMutation } from "#/__generated__/core/TrackerPatternRowImportMutation.graphql";
 import type { TrackerPatternRowMoveMutation } from "#/__generated__/core/TrackerPatternRowMoveMutation.graphql";
 import type { TrackerPatternRowUpdateMutation } from "#/__generated__/core/TrackerPatternRowUpdateMutation.graphql";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 import { MoveToCategorySelect } from "./MoveToCategorySelect";
 import { TrackerPatternRowEdit } from "./TrackerPatternRowEdit";
@@ -130,6 +132,22 @@ const updatePatternMutation = graphql`
   }
 `;
 
+const importThirdPartyMutation = graphql`
+  mutation TrackerPatternRowImportMutation(
+    $input: ImportThirdPartyFromCommonInput!
+  ) {
+    importThirdPartyFromCommon(input: $input) {
+      created
+      thirdPartyEdge {
+        node {
+          id
+          name
+        }
+      }
+    }
+  }
+`;
+
 interface TrackerPatternRowProps {
   patternKey: TrackerPatternRowFragment$key;
   connectionId: string;
@@ -139,6 +157,7 @@ export function TrackerPatternRow({ patternKey, connectionId }: TrackerPatternRo
   const { __ } = useTranslate();
   const { toast } = useToast();
   const confirm = useConfirm();
+  const organizationId = useOrganizationId();
   const pattern = useFragment(trackerPatternFragment, patternKey);
 
   const [isEditing, setIsEditing] = useState(false);
@@ -149,6 +168,8 @@ export function TrackerPatternRow({ patternKey, connectionId }: TrackerPatternRo
     = useMutation<TrackerPatternRowMoveMutation>(movePatternMutation);
   const [updatePattern, isUpdating]
     = useMutation<TrackerPatternRowUpdateMutation>(updatePatternMutation);
+  const [importThirdParty, isImporting]
+    = useMutation<TrackerPatternRowImportMutation>(importThirdPartyMutation);
 
   const handleDelete = () => {
     confirm(
@@ -245,6 +266,49 @@ export function TrackerPatternRow({ patternKey, connectionId }: TrackerPatternRo
       },
       onError(error) {
         toast({ title: __("Error"), description: formatError(__("Failed to update cookie"), error as GraphQLError), variant: "error" });
+      },
+    });
+  };
+
+  const handleImport = () => {
+    const commonThirdParty = pattern.commonThirdParty;
+    if (!commonThirdParty || isImporting) {
+      return;
+    }
+
+    importThirdParty({
+      variables: {
+        input: {
+          organizationId,
+          commonThirdPartyId: commonThirdParty.id,
+        },
+      },
+      updater(store) {
+        const node = store
+          .getRootField("importThirdPartyFromCommon")
+          ?.getLinkedRecord("thirdPartyEdge")
+          ?.getLinkedRecord("node");
+        if (!node) {
+          return;
+        }
+
+        // Reflect the import on the clicked pattern immediately. Sibling
+        // patterns of the same vendor are backfilled server-side and pick
+        // up the link on the next fetch of the list.
+        const patternRecord = store.get(pattern.id);
+        if (patternRecord) {
+          patternRecord.setLinkedRecord(node, "thirdParty");
+        }
+      },
+      onCompleted(_, errors) {
+        if (errors?.length) {
+          toast({ title: __("Error"), description: errors[0].message, variant: "error" });
+          return;
+        }
+        toast({ title: __("Success"), description: __("Third party imported"), variant: "success" });
+      },
+      onError(error) {
+        toast({ title: __("Error"), description: formatError(__("Failed to import third party"), error as GraphQLError), variant: "error" });
       },
     });
   };
@@ -352,6 +416,14 @@ export function TrackerPatternRow({ patternKey, connectionId }: TrackerPatternRo
             <IconPencil size={14} />
           </button>
           <ActionDropdown>
+            {!pattern.thirdParty && pattern.commonThirdParty && (
+              <DropdownItem
+                icon={DownloadSimpleIcon}
+                onSelect={handleImport}
+              >
+                {__("Import to third parties")}
+              </DropdownItem>
+            )}
             <DropdownItem
               icon={pattern.excluded ? EyeIcon : EyeSlashIcon}
               onSelect={handleToggleExcluded}
