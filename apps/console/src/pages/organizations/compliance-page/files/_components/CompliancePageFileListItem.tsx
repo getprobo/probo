@@ -35,7 +35,9 @@ const fileFragment = graphql`
     id
     name
     category
-    fileUrl
+    file {
+      downloadUrl
+    }
     trustCenterVisibility
     createdAt
     canUpdate: permission(action: "core:trust-center-file:update")
@@ -124,7 +126,7 @@ export function CompliancePageFileListItem(props: {
             variant="secondary"
             icon={IconArrowLink}
             onClick={() =>
-              window.open(file.fileUrl, "_blank", "noopener,noreferrer")}
+              window.open(file.file?.downloadUrl, "_blank", "noopener,noreferrer")}
             title={__("Download")}
           />
           {file.canUpdate && (

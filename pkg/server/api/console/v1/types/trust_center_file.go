@@ -34,6 +34,7 @@ func NewTrustCenterFile(tcf *coredata.TrustCenterFile) *TrustCenterFile {
 		ID:                    tcf.ID,
 		Name:                  tcf.Name,
 		Category:              tcf.Category,
+		File:                  &File{ID: tcf.FileID},
 		TrustCenterVisibility: tcf.TrustCenterVisibility,
 		CreatedAt:             tcf.CreatedAt,
 		UpdatedAt:             tcf.UpdatedAt,

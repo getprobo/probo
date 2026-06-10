@@ -53,8 +53,12 @@ export const auditNodeQuery = graphql`
         framework {
           id
           name
-          lightLogoURL
-          darkLogoURL
+          lightLogo {
+            downloadUrl
+          }
+          darkLogo {
+            downloadUrl
+          }
         }
         organization {
           id

@@ -45,8 +45,12 @@ const compliancePageFragment = graphql`
           framework {
             id
             name
-            lightLogoURL
-            darkLogoURL
+            lightLogo {
+              downloadUrl
+            }
+            darkLogo {
+              downloadUrl
+            }
           }
         }
       }
@@ -198,8 +202,8 @@ function CompliancePageFrameworkListItem(props: {
         <div className="flex items-center gap-3">
           <FrameworkLogo
             className="size-8"
-            lightLogoURL={framework.lightLogoURL}
-            darkLogoURL={framework.darkLogoURL}
+            lightLogoURL={framework.lightLogo?.downloadUrl}
+            darkLogoURL={framework.darkLogo?.downloadUrl}
             name={framework.name}
           />
           {framework.name}

@@ -216,17 +216,12 @@ func (s TrustCenterService) UploadNDA(
 		return nil, nil, err
 	}
 
-	objectKey, err := uuid.NewV7()
-	if err != nil {
-		return nil, nil, fmt.Errorf("cannot generate object key: %w", err)
-	}
-
 	var (
 		trustCenter *coredata.TrustCenter
 		file        *coredata.File
 	)
 
-	err = s.svc.pg.WithTx(
+	err := s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
 			trustCenter = &coredata.TrustCenter{}
@@ -234,30 +229,18 @@ func (s TrustCenterService) UploadNDA(
 				return fmt.Errorf("cannot load trust center: %w", err)
 			}
 
-			mimeType := mime.TypeByExtension(filepath.Ext(req.FileName))
-
-			_, err := s.svc.s3.PutObject(ctx, &s3.PutObjectInput{
-				Bucket:       &s.svc.bucket,
-				Key:          new(objectKey.String()),
-				Body:         req.File,
-				ContentType:  &mimeType,
-				CacheControl: new("private, max-age=3600"),
-				Metadata: map[string]string{
-					"type":            "trust-center-nda",
-					"trust-center-id": req.TrustCenterID.String(),
-					"organization-id": trustCenter.OrganizationID.String(),
-				},
-			})
-			if err != nil {
-				return fmt.Errorf("cannot upload file to S3: %w", err)
+			if trustCenter.OrganizationID == gid.Nil {
+				return fmt.Errorf("trust center %s has no organization", req.TrustCenterID)
 			}
 
-			headOutput, err := s.svc.s3.HeadObject(ctx, &s3.HeadObjectInput{
-				Bucket: new(s.svc.bucket),
-				Key:    new(objectKey.String()),
-			})
+			objectKey, err := uuid.NewV7()
 			if err != nil {
-				return fmt.Errorf("cannot get object metadata: %w", err)
+				return fmt.Errorf("cannot generate object key: %w", err)
+			}
+
+			mimeType := mime.TypeByExtension(filepath.Ext(req.FileName))
+			if mimeType == "" {
+				mimeType = "application/octet-stream"
 			}
 
 			now := time.Now()
@@ -270,11 +253,26 @@ func (s TrustCenterService) UploadNDA(
 				MimeType:       mimeType,
 				FileName:       req.FileName,
 				FileKey:        objectKey.String(),
-				FileSize:       *headOutput.ContentLength,
 				Visibility:     coredata.FileVisibilityPrivate,
 				CreatedAt:      now,
 				UpdatedAt:      now,
 			}
+
+			fileSize, err := s.svc.fileManager.PutFile(
+				ctx,
+				file,
+				req.File,
+				map[string]string{
+					"type":            "trust-center-nda",
+					"trust-center-id": req.TrustCenterID.String(),
+					"organization-id": trustCenter.OrganizationID.String(),
+				},
+			)
+			if err != nil {
+				return fmt.Errorf("cannot upload file to S3: %w", err)
+			}
+
+			file.FileSize = fileSize
 
 			if err := file.Insert(ctx, conn, scope); err != nil {
 				return fmt.Errorf("cannot insert file: %w", err)

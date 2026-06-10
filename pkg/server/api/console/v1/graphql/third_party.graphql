@@ -342,9 +342,7 @@ type ThirdPartyBusinessAssociateAgreement implements Node {
     thirdParty: ThirdParty! @goField(forceResolver: true)
     validFrom: Datetime
     validUntil: Datetime
-    fileName: String!
-    fileUrl: String! @goField(forceResolver: true)
-    fileSize: BigInt!
+    file: File! @goField(forceResolver: true)
     createdAt: Datetime!
     updatedAt: Datetime!
 
@@ -380,9 +378,7 @@ type ThirdPartyDataPrivacyAgreement implements Node {
     thirdParty: ThirdParty! @goField(forceResolver: true)
     validFrom: Datetime
     validUntil: Datetime
-    fileName: String!
-    fileUrl: String! @goField(forceResolver: true)
-    fileSize: BigInt!
+    file: File! @goField(forceResolver: true)
     createdAt: Datetime!
     updatedAt: Datetime!
 

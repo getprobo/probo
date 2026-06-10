@@ -38,8 +38,10 @@ const uploadDataPrivacyAgreementMutation = graphql`
     uploadThirdPartyDataPrivacyAgreement(input: $input) {
       thirdPartyDataPrivacyAgreement {
         id
-        fileName
-        fileUrl
+        file {
+          fileName
+          downloadUrl
+        }
         validFrom
         validUntil
         createdAt

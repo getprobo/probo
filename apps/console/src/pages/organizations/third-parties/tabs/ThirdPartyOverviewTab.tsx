@@ -50,8 +50,10 @@ const thirdPartyBusinessAssociateAgreementFragment = graphql`
   fragment ThirdPartyOverviewTabBusinessAssociateAgreementFragment on ThirdParty {
     businessAssociateAgreement {
       id
-      fileName
-      fileUrl
+      file {
+        fileName
+        downloadUrl
+      }
       validFrom
       validUntil
       canUpdate: permission(
@@ -68,8 +70,10 @@ const thirdPartyDataPrivacyAgreementFragment = graphql`
   fragment ThirdPartyOverviewTabDataPrivacyAgreementFragment on ThirdParty {
     dataPrivacyAgreement {
       id
-      fileName
-      fileUrl
+      file {
+        fileName
+        downloadUrl
+      }
       validFrom
       validUntil
       canUpdate: permission(action: "core:thirdParty-data-privacy-agreement:update")
@@ -299,7 +303,7 @@ export default function ThirdPartyOverviewTab() {
               </h3>
               <p className="text-sm text-txt-secondary mt-1">
                 {businessAssociateAgreement
-                  ? businessAssociateAgreement.fileName
+                  ? businessAssociateAgreement.file.fileName
                   : __("No business associate agreement available")}
               </p>
               {(businessAssociateAgreement?.validFrom
@@ -322,8 +326,8 @@ export default function ThirdPartyOverviewTab() {
                         variant="secondary"
                         onClick={() =>
                           downloadFile(
-                            businessAssociateAgreement.fileUrl,
-                            businessAssociateAgreement.fileName,
+                            businessAssociateAgreement.file.downloadUrl,
+                            businessAssociateAgreement.file.fileName,
                           )}
                       >
                         {__("Download PDF")}
@@ -343,7 +347,7 @@ export default function ThirdPartyOverviewTab() {
                       {businessAssociateAgreement.canDelete && (
                         <DeleteBusinessAssociateAgreementDialog
                           thirdPartyId={thirdParty.id}
-                          fileName={businessAssociateAgreement.fileName}
+                          fileName={businessAssociateAgreement.file.fileName}
                           onSuccess={() => window.location.reload()}
                         >
                           <Button variant="quaternary" icon={IconTrashCan} />
@@ -373,7 +377,7 @@ export default function ThirdPartyOverviewTab() {
               </h3>
               <p className="text-sm text-txt-secondary mt-1">
                 {dataPrivacyAgreement
-                  ? dataPrivacyAgreement.fileName
+                  ? dataPrivacyAgreement.file.fileName
                   : __("No data privacy agreement available")}
               </p>
               {(dataPrivacyAgreement?.validFrom
@@ -396,8 +400,8 @@ export default function ThirdPartyOverviewTab() {
                         variant="secondary"
                         onClick={() =>
                           downloadFile(
-                            dataPrivacyAgreement.fileUrl,
-                            dataPrivacyAgreement.fileName,
+                            dataPrivacyAgreement.file.downloadUrl,
+                            dataPrivacyAgreement.file.fileName,
                           )}
                       >
                         {__("Download PDF")}
@@ -417,7 +421,7 @@ export default function ThirdPartyOverviewTab() {
                       {dataPrivacyAgreement.canDelete && (
                         <DeleteDataPrivacyAgreementDialog
                           thirdPartyId={thirdParty.id}
-                          fileName={dataPrivacyAgreement.fileName}
+                          fileName={dataPrivacyAgreement.file.fileName}
                           onSuccess={() => window.location.reload()}
                         >
                           <Button variant="quaternary" icon={IconTrashCan} />

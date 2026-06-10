@@ -8,34 +8,23 @@ package console_v1
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
 )
 
-// CertificateFileURL is the resolver for the certificateFileUrl field.
-func (r *electronicSignatureResolver) CertificateFileURL(ctx context.Context, obj *types.ElectronicSignature) (*string, error) {
+// Certificate is the resolver for the certificate field.
+func (r *electronicSignatureResolver) Certificate(ctx context.Context, obj *types.ElectronicSignature) (*types.File, error) {
 	if _, err := r.authorize(ctx, obj.ID, probo.ActionElectronicSignatureGet); err != nil {
 		return nil, err
 	}
 
-	signature, err := r.esign.GetSignatureByID(ctx, obj.ID)
-	if err != nil {
-		return nil, fmt.Errorf("cannot load signature: %w", err)
-	}
-
-	if signature.CertificateFileID == nil {
+	if obj.Certificate == nil {
 		return nil, nil
 	}
 
-	url, err := r.esign.GenerateCertificateFileURL(ctx, *signature.CertificateFileID, 1*time.Hour)
-	if err != nil {
-		return nil, fmt.Errorf("cannot generate certificate file URL: %w", err)
-	}
-
-	return &url, nil
+	return r.loadFile(ctx, obj.Certificate.ID)
 }
 
 // Events is the resolver for the events field.

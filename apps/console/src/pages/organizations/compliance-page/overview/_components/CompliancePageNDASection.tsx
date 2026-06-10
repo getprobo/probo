@@ -24,8 +24,10 @@ const fragment = graphql`
   fragment CompliancePageNDASectionFragment on Organization {
     compliancePage: trustCenter {
       id
-      ndaFileName
-      ndaFileUrl
+      nda {
+        fileName
+        downloadUrl
+      }
       canUploadNDA: permission(action: "core:trust-center:upload-nda")
       canDeleteNDA: permission(action: "core:trust-center:delete-nda")
     }
@@ -103,7 +105,7 @@ export function CompliancePageNDASection(props: { fragmentRef: CompliancePageNDA
         {(isUploadingNDA || isDeletingNDA) && <Spinner />}
       </div>
       <div className="space-y-2">
-        {!organization.compliancePage?.ndaFileName
+        {!organization.compliancePage?.nda?.fileName
           && organization.compliancePage?.canUploadNDA
           ? (
               <p className="text-sm text-txt-tertiary">
@@ -115,14 +117,14 @@ export function CompliancePageNDASection(props: { fragmentRef: CompliancePageNDA
           : (
               <></>
             )}
-        {organization.compliancePage?.ndaFileName
+        {organization.compliancePage?.nda?.fileName
           ? (
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
                       <p className="text-sm font-medium">
-                        {organization.compliancePage.ndaFileName
+                        {organization.compliancePage.nda?.fileName
                           || __("Non-Disclosure Agreement")}
                       </p>
                     </div>
@@ -137,9 +139,9 @@ export function CompliancePageNDASection(props: { fragmentRef: CompliancePageNDA
                       type="button"
                       variant="secondary"
                       onClick={() => {
-                        if (organization.compliancePage?.ndaFileUrl) {
+                        if (organization.compliancePage?.nda?.downloadUrl) {
                           window.open(
-                            organization.compliancePage.ndaFileUrl,
+                            organization.compliancePage.nda.downloadUrl,
                             "_blank",
                             "noopener,noreferrer",
                           );

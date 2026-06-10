@@ -33,7 +33,9 @@ export const createTrustCenterReferenceMutation = graphql`
           name
           description
           websiteUrl
-          logoUrl
+          logo {
+            downloadUrl
+          }
           rank
           createdAt
           updatedAt
@@ -55,7 +57,9 @@ export const updateTrustCenterReferenceMutation = graphql`
         name
         description
         websiteUrl
-        logoUrl
+        logo {
+          downloadUrl
+        }
         rank
         createdAt
         updatedAt

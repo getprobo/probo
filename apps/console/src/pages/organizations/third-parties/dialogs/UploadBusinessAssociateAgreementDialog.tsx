@@ -38,8 +38,10 @@ const uploadBusinessAssociateAgreementMutation = graphql`
     uploadThirdPartyBusinessAssociateAgreement(input: $input) {
       thirdPartyBusinessAssociateAgreement {
         id
-        fileName
-        fileUrl
+        file {
+          fileName
+          downloadUrl
+        }
         validFrom
         validUntil
         createdAt

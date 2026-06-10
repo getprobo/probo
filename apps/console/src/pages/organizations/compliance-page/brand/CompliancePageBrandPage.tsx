@@ -42,8 +42,12 @@ export const compliancePageBrandPageQuery = graphql`
       ... on Organization {
         compliancePage: trustCenter @required(action: THROW) {
           id
-          logoFileUrl
-          darkLogoFileUrl
+          logo {
+            downloadUrl
+          }
+          darkLogo {
+            downloadUrl
+          }
           canUpdate: permission(action: "core:trust-center:update")
           ...CompliancePageFrameworkList_compliancePageFragment
           ...CompliancePageExternalUrlsSection_trustCenterFragment
@@ -58,8 +62,12 @@ const updateTrustCenterBrandMutation = graphql`
     updateTrustCenterBrand(input: $input) {
       trustCenter {
         id
-        logoFileUrl
-        darkLogoFileUrl
+        logo {
+          downloadUrl
+        }
+        darkLogo {
+          downloadUrl
+        }
       }
     }
   }
@@ -77,8 +85,8 @@ export function CompliancePageBrandPage(props: { queryRef: PreloadedQuery<Compli
   }
 
   const trustCenterId = organization.compliancePage.id;
-  const logoFileUrl = organization.compliancePage.logoFileUrl;
-  const darkLogoFileUrl = organization.compliancePage.darkLogoFileUrl;
+  const logoDownloadUrl = organization.compliancePage.logo?.downloadUrl;
+  const darkLogoDownloadUrl = organization.compliancePage.darkLogo?.downloadUrl;
 
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [darkLogoPreview, setDarkLogoPreview] = useState<string | null>(null);
@@ -234,8 +242,8 @@ export function CompliancePageBrandPage(props: { queryRef: PreloadedQuery<Compli
     });
   };
 
-  const currentLogoUrl = logoPreview || logoFileUrl;
-  const currentDarkLogoUrl = darkLogoPreview || darkLogoFileUrl;
+  const currentLogoUrl = logoPreview || logoDownloadUrl;
+  const currentDarkLogoUrl = darkLogoPreview || darkLogoDownloadUrl;
 
   return (
     <div className="space-y-8">

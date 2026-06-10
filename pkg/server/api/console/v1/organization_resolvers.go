@@ -9,7 +9,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"time"
 
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/agentrun"
@@ -58,36 +57,30 @@ func (r *mutationResolver) UpdateOrganizationContext(ctx context.Context, input 
 	}, nil
 }
 
-// LogoURL is the resolver for the logoUrl field.
-func (r *organizationResolver) LogoURL(ctx context.Context, obj *types.Organization) (*string, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGetLogoUrl)
-	if err != nil {
+// Logo is the resolver for the logo field.
+func (r *organizationResolver) Logo(ctx context.Context, obj *types.Organization) (*types.File, error) {
+	if _, err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGetLogoUrl); err != nil {
 		return nil, err
 	}
 
-	logoURL, err := r.probo.Organizations.GenerateLogoURL(ctx, scope, obj.ID, 1*time.Hour)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot generate logo url", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+	if obj.Logo == nil {
+		return nil, nil
 	}
 
-	return logoURL, nil
+	return r.loadFile(ctx, obj.Logo.ID)
 }
 
-// HorizontalLogoURL is the resolver for the horizontalLogoUrl field.
-func (r *organizationResolver) HorizontalLogoURL(ctx context.Context, obj *types.Organization) (*string, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGetHorizontalLogoUrl)
-	if err != nil {
+// HorizontalLogo is the resolver for the horizontalLogo field.
+func (r *organizationResolver) HorizontalLogo(ctx context.Context, obj *types.Organization) (*types.File, error) {
+	if _, err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGetHorizontalLogoUrl); err != nil {
 		return nil, err
 	}
 
-	horizontalLogoURL, err := r.probo.Organizations.GenerateHorizontalLogoURL(ctx, scope, obj.ID, 1*time.Hour)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot generate horizontal logo url", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+	if obj.HorizontalLogo == nil {
+		return nil, nil
 	}
 
-	return horizontalLogoURL, nil
+	return r.loadFile(ctx, obj.HorizontalLogo.ID)
 }
 
 // Context is the resolver for the context field.
@@ -1175,16 +1168,7 @@ func (r *organizationResolver) TrustCenter(ctx context.Context, obj *types.Organ
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	var file *coredata.File
-	if trustCenter.NonDisclosureAgreementFileID != nil {
-		file, err = r.probo.Files.Get(ctx, scope, *trustCenter.NonDisclosureAgreementFileID)
-		if err != nil {
-			r.logger.ErrorCtx(ctx, "cannot get NDA file", log.Error(err))
-			return nil, gqlutils.Internal(ctx)
-		}
-	}
-
-	return types.NewTrustCenter(trustCenter, file), nil
+	return types.NewTrustCenter(trustCenter), nil
 }
 
 // CustomDomain is the resolver for the customDomain field.

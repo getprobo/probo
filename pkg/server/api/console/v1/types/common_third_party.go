@@ -34,13 +34,13 @@ type CommonThirdParty struct {
 	TrustPageURL               *string                     `json:"trustPageUrl,omitempty"`
 	StatusPageURL              *string                     `json:"statusPageUrl,omitempty"`
 	TermsOfServiceURL          *string                     `json:"termsOfServiceUrl,omitempty"`
-	LogoFileID                 *gid.GID                    `json:"logoFileId,omitempty"`
+	Logo                       *File                       `json:"logo,omitempty"`
 }
 
 func (CommonThirdParty) IsTrackerPatternThirdPartyLink() {}
 
 func NewCommonThirdParty(c *coredata.CommonThirdParty) *CommonThirdParty {
-	return &CommonThirdParty{
+	party := &CommonThirdParty{
 		ID:                         c.ID,
 		Name:                       c.Name,
 		Category:                   c.Category,
@@ -55,6 +55,11 @@ func NewCommonThirdParty(c *coredata.CommonThirdParty) *CommonThirdParty {
 		TrustPageURL:               c.TrustPageURL,
 		StatusPageURL:              c.StatusPageURL,
 		TermsOfServiceURL:          c.TermsOfServiceURL,
-		LogoFileID:                 c.LogoFileID,
 	}
+
+	if c.LogoFileID != nil {
+		party.Logo = &File{ID: *c.LogoFileID}
+	}
+
+	return party
 }

@@ -26,7 +26,10 @@ const fragment = graphql`
   fragment ElectronicSignatureSectionFragment on ElectronicSignature {
     status
     signedAt
-    certificateFileUrl
+    certificate {
+      downloadUrl
+      fileName
+    }
     events {
       id
       eventType
@@ -35,16 +38,6 @@ const fragment = graphql`
     }
   }
 `;
-
-function getFilenameFromUrl(url: string): string | null {
-  try {
-    const disposition = new URL(url).searchParams.get("response-content-disposition");
-    const match = disposition?.match(/filename="([^"]+)"/);
-    return match ? decodeURIComponent(match[1]) : null;
-  } catch {
-    return null;
-  }
-}
 
 export function ElectronicSignatureSection({
   fragmentRef,
@@ -72,17 +65,17 @@ export function ElectronicSignatureSection({
             </span>
           </div>
         )}
-        {signature.certificateFileUrl && (
+        {signature.certificate?.downloadUrl && (
           <div className="flex items-center justify-between">
             <span className="text-sm text-txt-secondary">{__("Certificate")}</span>
             <a
-              href={signature.certificateFileUrl}
+              href={signature.certificate.downloadUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="text-sm text-txt-primary hover:underline"
               download
             >
-              {getFilenameFromUrl(signature.certificateFileUrl) ?? __("Download")}
+              {signature.certificate.fileName ?? __("Download")}
             </a>
           </div>
         )}

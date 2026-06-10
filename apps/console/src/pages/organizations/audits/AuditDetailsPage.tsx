@@ -189,8 +189,8 @@ export default function AuditDetailsPage(props: Props) {
           <div className="flex items-center gap-3">
             <FrameworkLogo
               name={auditEntry.framework?.name || ""}
-              lightLogoURL={auditEntry.framework?.lightLogoURL}
-              darkLogoURL={auditEntry.framework?.darkLogoURL}
+              lightLogoURL={auditEntry.framework?.lightLogo?.downloadUrl}
+              darkLogoURL={auditEntry.framework?.darkLogo?.downloadUrl}
             />
             <div className="text-2xl">{auditEntry.framework?.name}</div>
           </div>

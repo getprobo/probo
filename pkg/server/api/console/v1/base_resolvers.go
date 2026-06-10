@@ -8,7 +8,6 @@ package console_v1
 import (
 	"context"
 	"errors"
-	"fmt"
 	"slices"
 	"strings"
 
@@ -332,15 +331,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 				return nil, err
 			}
 
-			var file *coredata.File
-			if trustCenter.NonDisclosureAgreementFileID != nil {
-				file, err = r.probo.Files.Get(ctx, scope, *trustCenter.NonDisclosureAgreementFileID)
-				if err != nil {
-					return nil, fmt.Errorf("cannot get NDA file: %w", err)
-				}
-			}
-
-			return types.NewTrustCenter(trustCenter, file), nil
+			return types.NewTrustCenter(trustCenter), nil
 		}
 	case coredata.TrustCenterAccessEntityType:
 		action = probo.ActionTrustCenterAccessGet

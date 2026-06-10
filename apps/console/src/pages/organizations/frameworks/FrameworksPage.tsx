@@ -187,8 +187,12 @@ const frameworkCardFragment = graphql`
     id
     name
     description
-    lightLogoURL
-    darkLogoURL
+    lightLogo {
+      downloadUrl
+    }
+    darkLogo {
+      downloadUrl
+    }
     canUpdate: permission(action: "core:framework:update")
     canDelete: permission(action: "core:framework:delete")
   }
@@ -220,8 +224,8 @@ function FrameworkCard(props: FrameworkCardProps) {
       <div className="flex justify-between mb-3">
         <FrameworkLogo
           name={framework.name}
-          lightLogoURL={framework.lightLogoURL}
-          darkLogoURL={framework.darkLogoURL}
+          lightLogoURL={framework.lightLogo?.downloadUrl}
+          darkLogoURL={framework.darkLogo?.downloadUrl}
         />
         {props.hasAnyAction && (
           <ActionDropdown className="z-10 relative">

@@ -17,17 +17,11 @@ package types
 import (
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/filemanager"
 )
 
 func NewFile(r *coredata.File, base *baseurl.BaseURL) *File {
-	var path string
-	if r.Visibility == coredata.FileVisibilityPublic {
-		path = "/api/files/v1/public/" + r.ID.String()
-	} else {
-		path = "/api/files/v1/" + r.ID.String()
-	}
-
-	url := base.WithPath(path).MustString()
+	url := base.WithPath(filemanager.DownloadAPIPath(r)).MustString()
 
 	return &File{
 		ID:          r.ID,

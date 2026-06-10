@@ -30,7 +30,9 @@ export type CommonThirdPartyRef
 export const commonThirdPartyFragment = graphql`
   fragment CommonThirdPartyCombobox_commonThirdParty on CommonThirdParty @inline {
     name
-    logoUrl
+    logo {
+      downloadUrl
+    }
     category
     websiteUrl
     headquarterAddress
@@ -51,7 +53,9 @@ export const commonThirdPartiesQuery = graphql`
     commonThirdParties(name: $name) {
       id
       name
-      logoUrl
+      logo {
+      downloadUrl
+    }
       ...CommonThirdPartyCombobox_commonThirdParty
     }
   }
@@ -107,7 +111,7 @@ export function CommonThirdPartyCombobox({
         >
           <Avatar
             name={thirdParty.name}
-            src={thirdParty.logoUrl}
+            src={thirdParty.logo?.downloadUrl}
           />
           {thirdParty.name}
         </ComboboxItem>

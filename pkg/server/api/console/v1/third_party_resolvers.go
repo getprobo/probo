@@ -9,7 +9,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"time"
 
 	pgx "github.com/jackc/pgx/v5"
 	"github.com/vikstrous/dataloadgen"
@@ -359,7 +358,7 @@ func (r *mutationResolver) UploadThirdPartyBusinessAssociateAgreement(ctx contex
 		return nil, err
 	}
 
-	thirdPartyBusinessAssociateAgreement, file, err := r.probo.ThirdPartyBusinessAssociateAgreements.Upload(
+	thirdPartyBusinessAssociateAgreement, _, err := r.probo.ThirdPartyBusinessAssociateAgreements.Upload(
 		ctx, scope,
 		input.ThirdPartyID,
 		&probo.ThirdPartyBusinessAssociateAgreementCreateRequest{
@@ -380,7 +379,7 @@ func (r *mutationResolver) UploadThirdPartyBusinessAssociateAgreement(ctx contex
 	}
 
 	return &types.UploadThirdPartyBusinessAssociateAgreementPayload{
-		ThirdPartyBusinessAssociateAgreement: types.NewThirdPartyBusinessAssociateAgreement(thirdPartyBusinessAssociateAgreement, file),
+		ThirdPartyBusinessAssociateAgreement: types.NewThirdPartyBusinessAssociateAgreement(thirdPartyBusinessAssociateAgreement),
 	}, nil
 }
 
@@ -391,7 +390,7 @@ func (r *mutationResolver) UpdateThirdPartyBusinessAssociateAgreement(ctx contex
 		return nil, err
 	}
 
-	thirdPartyBusinessAssociateAgreement, file, err := r.probo.ThirdPartyBusinessAssociateAgreements.Update(
+	thirdPartyBusinessAssociateAgreement, _, err := r.probo.ThirdPartyBusinessAssociateAgreements.Update(
 		ctx, scope,
 		input.ThirdPartyID,
 		&probo.ThirdPartyBusinessAssociateAgreementUpdateRequest{
@@ -410,7 +409,7 @@ func (r *mutationResolver) UpdateThirdPartyBusinessAssociateAgreement(ctx contex
 	}
 
 	return &types.UpdateThirdPartyBusinessAssociateAgreementPayload{
-		ThirdPartyBusinessAssociateAgreement: types.NewThirdPartyBusinessAssociateAgreement(thirdPartyBusinessAssociateAgreement, file),
+		ThirdPartyBusinessAssociateAgreement: types.NewThirdPartyBusinessAssociateAgreement(thirdPartyBusinessAssociateAgreement),
 	}, nil
 }
 
@@ -438,7 +437,7 @@ func (r *mutationResolver) UploadThirdPartyDataPrivacyAgreement(ctx context.Cont
 		return nil, err
 	}
 
-	thirdPartyDataPrivacyAgreement, file, err := r.probo.ThirdPartyDataPrivacyAgreements.Upload(
+	thirdPartyDataPrivacyAgreement, _, err := r.probo.ThirdPartyDataPrivacyAgreements.Upload(
 		ctx, scope,
 		input.ThirdPartyID,
 		&probo.ThirdPartyDataPrivacyAgreementCreateRequest{
@@ -459,7 +458,7 @@ func (r *mutationResolver) UploadThirdPartyDataPrivacyAgreement(ctx context.Cont
 	}
 
 	return &types.UploadThirdPartyDataPrivacyAgreementPayload{
-		ThirdPartyDataPrivacyAgreement: types.NewThirdPartyDataPrivacyAgreement(thirdPartyDataPrivacyAgreement, file),
+		ThirdPartyDataPrivacyAgreement: types.NewThirdPartyDataPrivacyAgreement(thirdPartyDataPrivacyAgreement),
 	}, nil
 }
 
@@ -470,7 +469,7 @@ func (r *mutationResolver) UpdateThirdPartyDataPrivacyAgreement(ctx context.Cont
 		return nil, err
 	}
 
-	thirdPartyDataPrivacyAgreement, file, err := r.probo.ThirdPartyDataPrivacyAgreements.Update(
+	thirdPartyDataPrivacyAgreement, _, err := r.probo.ThirdPartyDataPrivacyAgreements.Update(
 		ctx, scope,
 		input.ThirdPartyID,
 		&probo.ThirdPartyDataPrivacyAgreementUpdateRequest{
@@ -489,7 +488,7 @@ func (r *mutationResolver) UpdateThirdPartyDataPrivacyAgreement(ctx context.Cont
 	}
 
 	return &types.UpdateThirdPartyDataPrivacyAgreementPayload{
-		ThirdPartyDataPrivacyAgreement: types.NewThirdPartyDataPrivacyAgreement(thirdPartyDataPrivacyAgreement, file),
+		ThirdPartyDataPrivacyAgreement: types.NewThirdPartyDataPrivacyAgreement(thirdPartyDataPrivacyAgreement),
 	}, nil
 }
 
@@ -667,7 +666,7 @@ func (r *thirdPartyResolver) BusinessAssociateAgreement(ctx context.Context, obj
 		return nil, err
 	}
 
-	thirdPartyBusinessAssociateAgreement, file, err := r.probo.ThirdPartyBusinessAssociateAgreements.GetByThirdPartyID(ctx, scope, obj.ID)
+	thirdPartyBusinessAssociateAgreement, _, err := r.probo.ThirdPartyBusinessAssociateAgreements.GetByThirdPartyID(ctx, scope, obj.ID)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, nil
@@ -678,7 +677,7 @@ func (r *thirdPartyResolver) BusinessAssociateAgreement(ctx context.Context, obj
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return types.NewThirdPartyBusinessAssociateAgreement(thirdPartyBusinessAssociateAgreement, file), nil
+	return types.NewThirdPartyBusinessAssociateAgreement(thirdPartyBusinessAssociateAgreement), nil
 }
 
 // DataPrivacyAgreement is the resolver for the dataPrivacyAgreement field.
@@ -688,7 +687,7 @@ func (r *thirdPartyResolver) DataPrivacyAgreement(ctx context.Context, obj *type
 		return nil, err
 	}
 
-	thirdPartyDataPrivacyAgreement, file, err := r.probo.ThirdPartyDataPrivacyAgreements.GetByThirdPartyID(ctx, scope, obj.ID)
+	thirdPartyDataPrivacyAgreement, _, err := r.probo.ThirdPartyDataPrivacyAgreements.GetByThirdPartyID(ctx, scope, obj.ID)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, nil
@@ -699,7 +698,7 @@ func (r *thirdPartyResolver) DataPrivacyAgreement(ctx context.Context, obj *type
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return types.NewThirdPartyDataPrivacyAgreement(thirdPartyDataPrivacyAgreement, file), nil
+	return types.NewThirdPartyDataPrivacyAgreement(thirdPartyDataPrivacyAgreement), nil
 }
 
 // Contacts is the resolver for the contacts field.
@@ -994,20 +993,13 @@ func (r *thirdPartyBusinessAssociateAgreementResolver) ThirdParty(ctx context.Co
 	return types.NewThirdParty(thirdParty), nil
 }
 
-// FileURL is the resolver for the fileUrl field.
-func (r *thirdPartyBusinessAssociateAgreementResolver) FileURL(ctx context.Context, obj *types.ThirdPartyBusinessAssociateAgreement) (string, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionFileGet)
-	if err != nil {
-		return "", err
+// File is the resolver for the file field.
+func (r *thirdPartyBusinessAssociateAgreementResolver) File(ctx context.Context, obj *types.ThirdPartyBusinessAssociateAgreement) (*types.File, error) {
+	if _, err := r.authorize(ctx, obj.ID, probo.ActionFileGet); err != nil {
+		return nil, err
 	}
 
-	fileURL, err := r.probo.ThirdPartyBusinessAssociateAgreements.GenerateFileURL(ctx, scope, obj.ID, 1*time.Hour)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot generate file URL", log.Error(err))
-		return "", gqlutils.Internal(ctx)
-	}
-
-	return fileURL, nil
+	return r.loadFile(ctx, obj.File.ID)
 }
 
 // Permission is the resolver for the permission field.
@@ -1185,20 +1177,13 @@ func (r *thirdPartyDataPrivacyAgreementResolver) ThirdParty(ctx context.Context,
 	return types.NewThirdParty(thirdParty), nil
 }
 
-// FileURL is the resolver for the fileUrl field.
-func (r *thirdPartyDataPrivacyAgreementResolver) FileURL(ctx context.Context, obj *types.ThirdPartyDataPrivacyAgreement) (string, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionFileGet)
-	if err != nil {
-		return "", err
+// File is the resolver for the file field.
+func (r *thirdPartyDataPrivacyAgreementResolver) File(ctx context.Context, obj *types.ThirdPartyDataPrivacyAgreement) (*types.File, error) {
+	if _, err := r.authorize(ctx, obj.ID, probo.ActionFileGet); err != nil {
+		return nil, err
 	}
 
-	fileURL, err := r.probo.ThirdPartyDataPrivacyAgreements.GenerateFileURL(ctx, scope, obj.ID, 1*time.Hour)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot generate file URL", log.Error(err))
-		return "", gqlutils.Internal(ctx)
-	}
-
-	return fileURL, nil
+	return r.loadFile(ctx, obj.File.ID)
 }
 
 // Permission is the resolver for the permission field.

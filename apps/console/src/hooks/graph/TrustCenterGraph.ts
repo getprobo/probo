@@ -47,7 +47,10 @@ const uploadTrustCenterNDAMutation = graphql`
     uploadTrustCenterNDA(input: $input) {
       trustCenter {
         id
-        ndaFileName
+        nda {
+          fileName
+          downloadUrl
+        }
         updatedAt
       }
     }
@@ -68,7 +71,10 @@ const deleteTrustCenterNDAMutation = graphql`
     deleteTrustCenterNDA(input: $input) {
       trustCenter {
         id
-        ndaFileName
+        nda {
+          fileName
+          downloadUrl
+        }
         updatedAt
       }
     }

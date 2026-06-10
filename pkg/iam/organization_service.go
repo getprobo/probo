@@ -1410,12 +1410,12 @@ func (s OrganizationService) GenerateLogoURL(
 		return nil, fmt.Errorf("cannot generate logo URL: %w", err)
 	}
 
-	presignedURL, err := s.fm.GeneratePresignedFileURL(ctx, file, expiresIn)
+	downloadURL, err := s.fm.BuildDownloadURL(file)
 	if err != nil {
 		return nil, fmt.Errorf("cannot generate file URL: %w", err)
 	}
 
-	return &presignedURL, nil
+	return &downloadURL, nil
 }
 
 func (s OrganizationService) GenerateHorizontalLogoURL(
@@ -1456,12 +1456,12 @@ func (s OrganizationService) GenerateHorizontalLogoURL(
 		return nil, err
 	}
 
-	presignedURL, err := s.fm.GeneratePresignedFileURL(ctx, file, expiresIn)
+	downloadURL, err := s.fm.BuildDownloadURL(file)
 	if err != nil {
 		return nil, fmt.Errorf("cannot generate file URL: %w", err)
 	}
 
-	return &presignedURL, nil
+	return &downloadURL, nil
 }
 
 func (s OrganizationService) DeleteSAMLConfiguration(

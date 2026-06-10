@@ -166,6 +166,25 @@ func (s *Service) GeneratePresignedFileURL(
 	return presignedReq.URL, nil
 }
 
+// DownloadAPIPath returns the stable files API path for a stored file.
+func DownloadAPIPath(file *coredata.File) string {
+	if file.Visibility == coredata.FileVisibilityPublic {
+		return "/api/files/v1/public/" + file.ID.String()
+	}
+
+	return "/api/files/v1/" + file.ID.String()
+}
+
+// BuildDownloadURL returns the absolute app URL that routes through the files API.
+func (s *Service) BuildDownloadURL(file *coredata.File) (string, error) {
+	url, err := s.baseURL.AppendPath(DownloadAPIPath(file)).String()
+	if err != nil {
+		return "", fmt.Errorf("cannot build file URL: %w", err)
+	}
+
+	return url, nil
+}
+
 // GenerateFileURL loads a public file from DB and returns the stable app URL
 // /api/files/v1/public/{id}. Used when a long-lived embeddable URL is needed
 // (e.g. trust center logos).
@@ -188,12 +207,7 @@ func (s *Service) GenerateFileURL(
 		return "", err
 	}
 
-	url, err := s.baseURL.AppendPath("/api/files/v1/public/" + fileID.String()).String()
-	if err != nil {
-		return "", fmt.Errorf("cannot build file URL: %w", err)
-	}
-
-	return url, nil
+	return s.BuildDownloadURL(file)
 }
 
 // GeneratePublicPresignedFileURL loads a public file from DB and returns a

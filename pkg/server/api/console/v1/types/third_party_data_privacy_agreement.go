@@ -18,7 +18,7 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 )
 
-func NewThirdPartyDataPrivacyAgreement(v *coredata.ThirdPartyDataPrivacyAgreement, file *coredata.File) *ThirdPartyDataPrivacyAgreement {
+func NewThirdPartyDataPrivacyAgreement(v *coredata.ThirdPartyDataPrivacyAgreement) *ThirdPartyDataPrivacyAgreement {
 	return &ThirdPartyDataPrivacyAgreement{
 		ID: v.ID,
 		ThirdParty: &ThirdParty{
@@ -26,8 +26,7 @@ func NewThirdPartyDataPrivacyAgreement(v *coredata.ThirdPartyDataPrivacyAgreemen
 		},
 		ValidFrom:  v.ValidFrom,
 		ValidUntil: v.ValidUntil,
-		FileName:   file.FileName,
-		FileSize:   file.FileSize,
+		File:       &File{ID: v.FileID},
 		CreatedAt:  v.CreatedAt,
 		UpdatedAt:  v.UpdatedAt,
 	}

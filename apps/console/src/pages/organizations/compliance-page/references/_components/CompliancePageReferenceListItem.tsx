@@ -24,7 +24,9 @@ import { DeleteTrustCenterReferenceDialog } from "#/components/trustCenter/Delet
 const fragment = graphql`
   fragment CompliancePageReferenceListItemFragment on TrustCenterReference {
     id
-    logoUrl
+    logo {
+      downloadUrl
+    }
     name
     description
     websiteUrl
@@ -81,7 +83,7 @@ export function CompliancePageReferenceListItem(props: {
     >
       <Td>
         <div className="flex items-center gap-3">
-          <Avatar src={reference.logoUrl} name={reference.name} size="m" />
+          <Avatar src={reference.logo?.downloadUrl} name={reference.name} size="m" />
           <span className="font-medium">{reference.name}</span>
         </div>
       </Td>

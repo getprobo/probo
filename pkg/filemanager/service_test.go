@@ -19,7 +19,32 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"go.probo.inc/probo/pkg/baseurl"
+	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/filemanager"
+	"go.probo.inc/probo/pkg/gid"
 )
+
+func TestDownloadAPIPath_IncludesPublicSegmentForPublicFiles(t *testing.T) {
+	t.Parallel()
+
+	file := &coredata.File{
+		ID:         gid.New(gid.NilTenant, coredata.FileEntityType),
+		Visibility: coredata.FileVisibilityPublic,
+	}
+
+	assert.Equal(t, "/api/files/v1/public/"+file.ID.String(), filemanager.DownloadAPIPath(file))
+}
+
+func TestDownloadAPIPath_UsesPrivateSegmentForPrivateFiles(t *testing.T) {
+	t.Parallel()
+
+	file := &coredata.File{
+		ID:         gid.New(gid.NilTenant, coredata.FileEntityType),
+		Visibility: coredata.FileVisibilityPrivate,
+	}
+
+	assert.Equal(t, "/api/files/v1/"+file.ID.String(), filemanager.DownloadAPIPath(file))
+}
 
 func TestGenerateFileURL_PathIncludesPublicSegment(t *testing.T) {
 	t.Parallel()
@@ -29,10 +54,15 @@ func TestGenerateFileURL_PathIncludesPublicSegment(t *testing.T) {
 		t.Fatalf("cannot parse base URL: %v", err)
 	}
 
-	url, err := base.AppendPath("/api/files/v1/public/some-id").String()
+	file := &coredata.File{
+		ID:         gid.New(gid.NilTenant, coredata.FileEntityType),
+		Visibility: coredata.FileVisibilityPublic,
+	}
+
+	url, err := base.AppendPath(filemanager.DownloadAPIPath(file)).String()
 	if err != nil {
 		t.Fatalf("cannot build URL: %v", err)
 	}
 
-	assert.Equal(t, "https://app.example.com/api/files/v1/public/some-id", url)
+	assert.Equal(t, "https://app.example.com/api/files/v1/public/"+file.ID.String(), url)
 }

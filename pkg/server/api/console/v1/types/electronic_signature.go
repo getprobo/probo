@@ -19,7 +19,7 @@ import (
 )
 
 func NewElectronicSignature(es *coredata.ElectronicSignature) *ElectronicSignature {
-	return &ElectronicSignature{
+	signature := &ElectronicSignature{
 		ID:           es.ID,
 		Status:       es.Status,
 		DocumentType: es.DocumentType,
@@ -29,6 +29,12 @@ func NewElectronicSignature(es *coredata.ElectronicSignature) *ElectronicSignatu
 		CreatedAt:    es.CreatedAt,
 		UpdatedAt:    es.UpdatedAt,
 	}
+
+	if es.CertificateFileID != nil {
+		signature.Certificate = &File{ID: *es.CertificateFileID}
+	}
+
+	return signature
 }
 
 func NewElectronicSignatureEvent(ev *coredata.ElectronicSignatureEvent) *ElectronicSignatureEvent {

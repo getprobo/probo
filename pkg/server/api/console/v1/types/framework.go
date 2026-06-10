@@ -61,7 +61,7 @@ func NewFrameworkEdge(f *coredata.Framework, orderBy coredata.FrameworkOrderFiel
 }
 
 func NewFramework(f *coredata.Framework) *Framework {
-	return &Framework{
+	framework := &Framework{
 		ID:   f.ID,
 		Name: f.Name,
 		Organization: &Organization{
@@ -71,4 +71,14 @@ func NewFramework(f *coredata.Framework) *Framework {
 		CreatedAt:   f.CreatedAt,
 		UpdatedAt:   f.UpdatedAt,
 	}
+
+	if f.LightLogoFileID != nil {
+		framework.LightLogo = &File{ID: *f.LightLogoFileID}
+	}
+
+	if f.DarkLogoFileID != nil {
+		framework.DarkLogo = &File{ID: *f.DarkLogoFileID}
+	}
+
+	return framework
 }

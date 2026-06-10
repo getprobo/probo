@@ -53,10 +53,13 @@ const frameworkDetailFragment = graphql`
         name
         # eslint-disable-next-line relay/unused-fields
         description
+        lightLogo {
+          downloadUrl
+        }
         # eslint-disable-next-line relay/unused-fields
-        lightLogoURL
-        # eslint-disable-next-line relay/unused-fields
-        darkLogoURL
+        darkLogo {
+          downloadUrl
+        }
         canExport: permission(action: "core:franework:export")
         canUpdate: permission(action: "core:framework:update")
         canDelete: permission(action: "core:framework:delete")
@@ -147,7 +150,11 @@ export default function FrameworkDetailPage(props: Props) {
       <PageHeader
         title={(
           <>
-            <FrameworkLogo {...framework} />
+            <FrameworkLogo
+              name={framework.name}
+              lightLogoURL={framework.lightLogo?.downloadUrl}
+              darkLogoURL={framework.darkLogo?.downloadUrl}
+            />
             {framework.name}
           </>
         )}

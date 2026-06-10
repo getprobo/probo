@@ -9,7 +9,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"time"
 
 	"github.com/vikstrous/dataloadgen"
 	"go.gearno.de/kit/log"
@@ -81,24 +80,30 @@ func (r *frameworkResolver) Controls(ctx context.Context, obj *types.Framework, 
 	return types.NewControlConnection(page, r, obj.ID, controlFilter), nil
 }
 
-// LightLogoURL is the resolver for the lightLogoURL field.
-func (r *frameworkResolver) LightLogoURL(ctx context.Context, obj *types.Framework) (*string, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionFrameworkGet)
-	if err != nil {
+// LightLogo is the resolver for the lightLogo field.
+func (r *frameworkResolver) LightLogo(ctx context.Context, obj *types.Framework) (*types.File, error) {
+	if _, err := r.authorize(ctx, obj.ID, probo.ActionFrameworkGet); err != nil {
 		return nil, err
 	}
 
-	return r.probo.Frameworks.GenerateLightLogoURL(ctx, scope, obj.ID, 1*time.Hour)
+	if obj.LightLogo == nil {
+		return nil, nil
+	}
+
+	return r.loadFile(ctx, obj.LightLogo.ID)
 }
 
-// DarkLogoURL is the resolver for the darkLogoURL field.
-func (r *frameworkResolver) DarkLogoURL(ctx context.Context, obj *types.Framework) (*string, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionFrameworkGet)
-	if err != nil {
+// DarkLogo is the resolver for the darkLogo field.
+func (r *frameworkResolver) DarkLogo(ctx context.Context, obj *types.Framework) (*types.File, error) {
+	if _, err := r.authorize(ctx, obj.ID, probo.ActionFrameworkGet); err != nil {
 		return nil, err
 	}
 
-	return r.probo.Frameworks.GenerateDarkLogoURL(ctx, scope, obj.ID, 1*time.Hour)
+	if obj.DarkLogo == nil {
+		return nil, nil
+	}
+
+	return r.loadFile(ctx, obj.DarkLogo.ID)
 }
 
 // Permission is the resolver for the permission field.

@@ -30,5 +30,5 @@ type CommonThirdParty
     trustPageUrl: String
     statusPageUrl: String
     termsOfServiceUrl: String
-    logoUrl: String @goField(forceResolver: true)
+    logo: File @goField(forceResolver: true)
 }

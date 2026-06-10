@@ -36,7 +36,9 @@ const updateBusinessAssociateAgreementMutation = graphql`
     updateThirdPartyBusinessAssociateAgreement(input: $input) {
       thirdPartyBusinessAssociateAgreement {
         id
-        fileUrl
+        file {
+          downloadUrl
+        }
         validFrom
         validUntil
         createdAt

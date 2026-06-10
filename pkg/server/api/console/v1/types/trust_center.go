@@ -25,10 +25,9 @@ type TrustCenter struct {
 	ID                   gid.GID                          `json:"id"`
 	Active               bool                             `json:"active"`
 	SearchEngineIndexing coredata.SearchEngineIndexing    `json:"searchEngineIndexing"`
-	LogoFileURL          *string                          `json:"logoFileUrl,omitempty"`
-	DarkLogoFileURL      *string                          `json:"darkLogoFileUrl,omitempty"`
-	NdaFileName          *string                          `json:"ndaFileName,omitempty"`
-	NdaFileURL           *string                          `json:"ndaFileUrl,omitempty"`
+	Logo                 *File                            `json:"logo,omitempty"`
+	DarkLogo             *File                            `json:"darkLogo,omitempty"`
+	Nda                  *File                            `json:"nda,omitempty"`
 	CreatedAt            time.Time                        `json:"createdAt"`
 	UpdatedAt            time.Time                        `json:"updatedAt"`
 	Organization         *Organization                    `json:"organization"`
@@ -43,21 +42,29 @@ type TrustCenter struct {
 func (TrustCenter) IsNode()          {}
 func (t TrustCenter) GetID() gid.GID { return t.ID }
 
-func NewTrustCenter(tc *coredata.TrustCenter, file *coredata.File) *TrustCenter {
-	var ndaFileName *string
-	if file != nil {
-		ndaFileName = &file.FileName
-	}
-
-	return &TrustCenter{
+func NewTrustCenter(tc *coredata.TrustCenter) *TrustCenter {
+	trustCenter := &TrustCenter{
 		ID: tc.ID,
 		Organization: &Organization{
 			ID: tc.OrganizationID,
 		},
 		Active:               tc.Active,
 		SearchEngineIndexing: tc.SearchEngineIndexing,
-		NdaFileName:          ndaFileName,
 		CreatedAt:            tc.CreatedAt,
 		UpdatedAt:            tc.UpdatedAt,
 	}
+
+	if tc.LogoFileID != nil {
+		trustCenter.Logo = &File{ID: *tc.LogoFileID}
+	}
+
+	if tc.DarkLogoFileID != nil {
+		trustCenter.DarkLogo = &File{ID: *tc.DarkLogoFileID}
+	}
+
+	if tc.NonDisclosureAgreementFileID != nil {
+		trustCenter.Nda = &File{ID: *tc.NonDisclosureAgreementFileID}
+	}
+
+	return trustCenter
 }

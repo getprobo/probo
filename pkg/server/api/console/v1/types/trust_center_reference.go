@@ -35,6 +35,7 @@ func NewTrustCenterReference(tcc *coredata.TrustCenterReference) *TrustCenterRef
 		Name:        tcc.Name,
 		Description: tcc.Description,
 		WebsiteURL:  tcc.WebsiteURL,
+		Logo:        &File{ID: tcc.LogoFileID},
 		Rank:        tcc.Rank,
 		CreatedAt:   tcc.CreatedAt,
 		UpdatedAt:   tcc.UpdatedAt,
