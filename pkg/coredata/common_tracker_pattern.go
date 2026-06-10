@@ -837,9 +837,12 @@ ORDER BY pattern ASC
 
 // RelinkCommonThirdPartyByIDs repoints the given common tracker patterns
 // at a different common third party (or unlinks them when thirdPartyID is
-// nil). It only touches the catalog rows; callers re-arm enrichment and
-// remap the org-scoped tracker patterns separately. Returns the number of
-// rows updated.
+// nil). Linking is a manual operator attribution - the highest-trust
+// signal - so it bumps confidence to 1 to match the curated/seed tier;
+// unlinking makes no attribution and leaves confidence untouched. It only
+// touches the catalog rows; callers re-arm enrichment and remap the
+// org-scoped tracker patterns separately. Returns the number of rows
+// updated.
 func (ps *CommonTrackerPatterns) RelinkCommonThirdPartyByIDs(
 	ctx context.Context,
 	tx pg.Tx,
@@ -850,6 +853,7 @@ func (ps *CommonTrackerPatterns) RelinkCommonThirdPartyByIDs(
 UPDATE common_tracker_patterns
 SET
     common_third_party_id = @third_party_id,
+    confidence = CASE WHEN @third_party_id::text IS NOT NULL THEN 1 ELSE confidence END,
     updated_at = NOW()
 WHERE
     id = ANY(@ids)
