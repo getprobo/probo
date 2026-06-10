@@ -27,14 +27,12 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
-	"go.probo.inc/probo/pkg/brand"
 )
 
 const staticFileCacheControl = "public, max-age=31536000, immutable"
 
 type (
-	staticFileServer struct {
+	StaticFileServer struct {
 		files map[string]staticFile
 	}
 
@@ -46,19 +44,8 @@ type (
 	}
 )
 
-var defaultStaticFileServer = mustNewStaticFileServer(brand.Assets)
-
-func mustNewStaticFileServer(files fs.FS) *staticFileServer {
-	server, err := newStaticFileServer(files)
-	if err != nil {
-		panic(err)
-	}
-
-	return server
-}
-
-func newStaticFileServer(files fs.FS) (*staticFileServer, error) {
-	server := &staticFileServer{
+func NewStaticFileServer(files fs.FS) (*StaticFileServer, error) {
+	server := &StaticFileServer{
 		files: make(map[string]staticFile),
 	}
 
@@ -103,7 +90,7 @@ func newStaticFileServer(files fs.FS) (*staticFileServer, error) {
 	return server, nil
 }
 
-func (s *staticFileServer) ServeHTTP(w http.ResponseWriter, r *http.Request, file string) bool {
+func (s *StaticFileServer) ServeHTTP(w http.ResponseWriter, r *http.Request, file string) bool {
 	asset, ok := s.files[file]
 	if !ok {
 		return false

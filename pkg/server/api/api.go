@@ -28,6 +28,7 @@ import (
 	"go.probo.inc/probo/pkg/accessreview"
 	"go.probo.inc/probo/pkg/agentrun"
 	"go.probo.inc/probo/pkg/baseurl"
+	"go.probo.inc/probo/pkg/brand"
 	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/connector/provider"
 	"go.probo.inc/probo/pkg/cookiebanner"
@@ -172,6 +173,11 @@ func NewServer(cfg Config) (*Server, error) {
 		)
 	}))
 
+	staticFiles, err := files_v1.NewStaticFileServer(brand.Assets)
+	if err != nil {
+		return nil, fmt.Errorf("cannot create files static server: %w", err)
+	}
+
 	return &Server{
 		cfg:  cfg,
 		csrf: csrf,
@@ -215,6 +221,7 @@ func NewServer(cfg Config) (*Server, error) {
 			cfg.File,
 			cfg.Probo,
 			cfg.IAM,
+			staticFiles,
 			cfg.Cookie,
 			cfg.TokenSecret,
 		),

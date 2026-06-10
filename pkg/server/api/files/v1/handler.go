@@ -39,7 +39,7 @@ type Handler struct {
 	fileSvc     *filemanager.Service
 	probo       *probo.Service
 	iamSvc      *iam.Service
-	staticFiles *staticFileServer
+	staticFiles *StaticFileServer
 }
 
 func NewMux(
@@ -47,6 +47,7 @@ func NewMux(
 	fileSvc *filemanager.Service,
 	proboSvc *probo.Service,
 	iamSvc *iam.Service,
+	staticFiles *StaticFileServer,
 	cookieConfig securecookie.Config,
 	tokenSecret string,
 ) *chi.Mux {
@@ -55,7 +56,7 @@ func NewMux(
 		fileSvc:     fileSvc,
 		probo:       proboSvc,
 		iamSvc:      iamSvc,
-		staticFiles: defaultStaticFileServer,
+		staticFiles: staticFiles,
 	}
 
 	r := chi.NewRouter()
@@ -77,12 +78,7 @@ func NewMux(
 func (h *Handler) handleGetStaticFile(w http.ResponseWriter, r *http.Request) {
 	file := chi.URLParam(r, "file")
 
-	staticFiles := h.staticFiles
-	if staticFiles == nil {
-		staticFiles = defaultStaticFileServer
-	}
-
-	if staticFiles.ServeHTTP(w, r, file) {
+	if h.staticFiles.ServeHTTP(w, r, file) {
 		return
 	}
 

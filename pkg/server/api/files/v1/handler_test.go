@@ -33,9 +33,15 @@ import (
 	"go.probo.inc/probo/pkg/securecookie"
 )
 
-func testHandler() *Handler {
+func testHandler(t *testing.T) *Handler {
+	t.Helper()
+
+	staticFiles, err := NewStaticFileServer(brand.Assets)
+	require.NoError(t, err)
+
 	return &Handler{
-		logger: log.NewLogger(log.WithOutput(io.Discard)),
+		logger:      log.NewLogger(log.WithOutput(io.Discard)),
+		staticFiles: staticFiles,
 	}
 }
 
@@ -66,7 +72,7 @@ func etagForContent(content []byte) string {
 func TestHandleGetStaticFile_SetsCachingHeaders(t *testing.T) {
 	t.Parallel()
 
-	h := testHandler()
+	h := testHandler(t)
 	content := readBrandAsset(t, "probo.png")
 
 	rec := httptest.NewRecorder()
@@ -91,7 +97,7 @@ func TestHandleGetStaticFile_ReturnsNotModifiedForMatchingETag(t *testing.T) {
 		func(t *testing.T) {
 			t.Parallel()
 
-			h := testHandler()
+			h := testHandler(t)
 			content := readBrandAsset(t, "probo.png")
 
 			rec := httptest.NewRecorder()
@@ -112,7 +118,7 @@ func TestHandleGetStaticFile_ReturnsNotModifiedForMatchingETag(t *testing.T) {
 		func(t *testing.T) {
 			t.Parallel()
 
-			h := testHandler()
+			h := testHandler(t)
 			content := readBrandAsset(t, "probo.png")
 
 			rec := httptest.NewRecorder()
@@ -134,7 +140,7 @@ func TestHandleGetStaticFile_ReturnsNotModifiedForMatchingETag(t *testing.T) {
 		func(t *testing.T) {
 			t.Parallel()
 
-			h := testHandler()
+			h := testHandler(t)
 			content := readBrandAsset(t, "probo.png")
 
 			rec := httptest.NewRecorder()
@@ -155,7 +161,7 @@ func TestHandleGetStaticFile_ReturnsNotModifiedForMatchingETag(t *testing.T) {
 func TestHandleGetStaticFile_CompressesGzipResponses(t *testing.T) {
 	t.Parallel()
 
-	h := testHandler()
+	h := testHandler(t)
 	content := readBrandAsset(t, "probo.png")
 
 	rec := httptest.NewRecorder()
@@ -182,7 +188,7 @@ func TestHandleGetStaticFile_CompressesGzipResponses(t *testing.T) {
 func TestHandleGetStaticFile_DoesNotCompressWhenGzipIsRefused(t *testing.T) {
 	t.Parallel()
 
-	h := testHandler()
+	h := testHandler(t)
 	content := readBrandAsset(t, "probo.png")
 
 	rec := httptest.NewRecorder()
@@ -199,7 +205,7 @@ func TestHandleGetStaticFile_DoesNotCompressWhenGzipIsRefused(t *testing.T) {
 func TestHandleGetStaticFile_NotFound(t *testing.T) {
 	t.Parallel()
 
-	h := testHandler()
+	h := testHandler(t)
 
 	rec := httptest.NewRecorder()
 	req := newStaticFileRequest("missing.png")
@@ -213,7 +219,7 @@ func TestHandleGetStaticFile_NotFound(t *testing.T) {
 func TestHandleGetPublicFile_InvalidGID(t *testing.T) {
 	t.Parallel()
 
-	h := testHandler()
+	h := testHandler(t)
 
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/public/not-a-valid-gid", nil)
@@ -230,7 +236,7 @@ func TestHandleGetPublicFile_InvalidGID(t *testing.T) {
 func TestHandleGetFile_InvalidGID(t *testing.T) {
 	t.Parallel()
 
-	h := testHandler()
+	h := testHandler(t)
 
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/not-a-valid-gid", nil)
@@ -254,6 +260,7 @@ func TestHandleGetFile_UnauthenticatedReturns401(t *testing.T) {
 		nil, // fileSvc — not reached
 		nil, // proboSvc — not reached
 		nil, // iamSvc — not reached when no token/cookie present
+		nil, // staticFiles — not reached
 		securecookie.Config{},
 		"test-secret",
 	)
