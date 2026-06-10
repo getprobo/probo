@@ -51,7 +51,12 @@ func NewMux(
 	cookieConfig securecookie.Config,
 	tokenSecret string,
 ) (*chi.Mux, error) {
-	staticFiles, err := newStaticFileServer(brand.Assets)
+	assets, err := brand.NewAssets()
+	if err != nil {
+		return nil, fmt.Errorf("cannot create brand assets: %w", err)
+	}
+
+	staticFiles, err := newStaticFileServer(assets)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create static file server: %w", err)
 	}

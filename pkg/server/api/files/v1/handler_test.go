@@ -36,7 +36,9 @@ import (
 func testHandler(t *testing.T) *Handler {
 	t.Helper()
 
-	staticFiles, err := newStaticFileServer(brand.Assets)
+	assets := testBrandAssets(t)
+
+	staticFiles, err := newStaticFileServer(assets)
 	require.NoError(t, err)
 
 	return &Handler{
@@ -54,10 +56,19 @@ func newStaticFileRequest(file string) *http.Request {
 	return req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
 }
 
+func testBrandAssets(t *testing.T) fs.FS {
+	t.Helper()
+
+	assets, err := brand.NewAssets()
+	require.NoError(t, err)
+
+	return assets
+}
+
 func readBrandAsset(t *testing.T, file string) []byte {
 	t.Helper()
 
-	content, err := fs.ReadFile(brand.Assets, file)
+	content, err := fs.ReadFile(testBrandAssets(t), file)
 	require.NoError(t, err)
 
 	return content
