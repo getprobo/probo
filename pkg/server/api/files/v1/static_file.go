@@ -143,7 +143,7 @@ func shouldCompressStaticFile(r *http.Request) bool {
 
 	gzipQ := -1.0
 	wildcardQ := -1.0
-	for _, encoding := range strings.Split(r.Header.Get("Accept-Encoding"), ",") {
+	for encoding := range strings.SplitSeq(r.Header.Get("Accept-Encoding"), ",") {
 		encoding, q := parseAcceptEncoding(encoding)
 		switch encoding {
 		case "gzip":
@@ -181,7 +181,7 @@ func parseAcceptEncoding(encoding string) (string, float64) {
 }
 
 func ifNoneMatch(header string, etag string) bool {
-	for _, candidate := range strings.Split(header, ",") {
+	for candidate := range strings.SplitSeq(header, ",") {
 		candidate = strings.TrimSpace(candidate)
 		if candidate == "*" {
 			return true
@@ -199,7 +199,7 @@ func ifNoneMatch(header string, etag string) bool {
 
 func addVary(h http.Header, value string) {
 	for _, vary := range h.Values("Vary") {
-		for _, field := range strings.Split(vary, ",") {
+		for field := range strings.SplitSeq(vary, ",") {
 			if strings.EqualFold(strings.TrimSpace(field), value) {
 				return
 			}
