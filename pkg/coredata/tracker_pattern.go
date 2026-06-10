@@ -1383,6 +1383,49 @@ WHERE
 	return result.RowsAffected(), nil
 }
 
+// RequestMappingForUncategorisedByCommonTrackerPatternIDs re-arms mapping
+// on the uncategorised org tracker patterns linked to the given common
+// tracker patterns: it clears their resolved org third party and stamps
+// mapping_requested_at so the mapping worker re-resolves the vendor from
+// the catalog row's (now changed) common third party. Like the
+// description backfill it is a global catalog operation, so it is
+// intentionally not tenant-scoped. Excluded patterns and patterns in
+// user-chosen categories are left untouched - only the uncategorised
+// category is remapped, matching the reset-trackers philosophy. The
+// cookie_categories subquery is used only for filtering. Returns the
+// number of org patterns re-armed.
+func (tps *TrackerPatterns) RequestMappingForUncategorisedByCommonTrackerPatternIDs(
+	ctx context.Context,
+	tx pg.Tx,
+	commonIDs []gid.GID,
+) (int64, error) {
+	q := `
+UPDATE tracker_patterns
+SET
+	third_party_id = NULL,
+	mapping_requested_at = NOW(),
+	updated_at = NOW()
+WHERE
+	common_tracker_pattern_id = ANY(@common_ids)
+	AND excluded = false
+	AND cookie_category_id IN (
+		SELECT id FROM cookie_categories WHERE kind = @uncategorised_kind
+	)
+`
+
+	args := pgx.StrictNamedArgs{
+		"common_ids":         commonIDs,
+		"uncategorised_kind": CookieCategoryKindUncategorised,
+	}
+
+	result, err := tx.Exec(ctx, q, args)
+	if err != nil {
+		return 0, fmt.Errorf("cannot request mapping for uncategorised tracker patterns: %w", err)
+	}
+
+	return result.RowsAffected(), nil
+}
+
 // ResetAndRequestMappingByCookieCategoryID detaches every pattern in the
 // given category from its catalog row, org third party, and copied
 // description, then re-arms mapping. Operators run this (via proboctl) on

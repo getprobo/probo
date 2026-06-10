@@ -835,6 +835,39 @@ ORDER BY pattern ASC
 	return ids, nil
 }
 
+// RelinkCommonThirdPartyByIDs repoints the given common tracker patterns
+// at a different common third party (or unlinks them when thirdPartyID is
+// nil). It only touches the catalog rows; callers re-arm enrichment and
+// remap the org-scoped tracker patterns separately. Returns the number of
+// rows updated.
+func (ps *CommonTrackerPatterns) RelinkCommonThirdPartyByIDs(
+	ctx context.Context,
+	tx pg.Tx,
+	ids []gid.GID,
+	thirdPartyID *gid.GID,
+) (int64, error) {
+	q := `
+UPDATE common_tracker_patterns
+SET
+    common_third_party_id = @third_party_id,
+    updated_at = NOW()
+WHERE
+    id = ANY(@ids)
+`
+
+	args := pgx.StrictNamedArgs{
+		"ids":            ids,
+		"third_party_id": thirdPartyID,
+	}
+
+	result, err := tx.Exec(ctx, q, args)
+	if err != nil {
+		return 0, fmt.Errorf("cannot relink common tracker pattern third party: %w", err)
+	}
+
+	return result.RowsAffected(), nil
+}
+
 // RequestEnrichmentByIDs arms enrichment on the given common tracker
 // patterns by stamping enrichment_requested_at, which is the only column
 // the enrichment worker claims on. Already-enriched rows are re-processed

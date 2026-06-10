@@ -39,6 +39,7 @@ func NewCmdCommonThirdParty(f *cmdutil.Factory) *cobra.Command {
 	cmd.AddCommand(newCmdList(f))
 	cmd.AddCommand(newCmdShow(f))
 	cmd.AddCommand(newCmdDomains(f))
+	cmd.AddCommand(newCmdUpsert(f))
 
 	return cmd
 }
