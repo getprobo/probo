@@ -15,15 +15,21 @@
 package files_v1
 
 import (
+	"compress/gzip"
 	"context"
+	"crypto/md5"
+	"encoding/hex"
 	"io"
+	"io/fs"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/brand"
 	"go.probo.inc/probo/pkg/securecookie"
 )
 
@@ -31,6 +37,176 @@ func testHandler() *Handler {
 	return &Handler{
 		logger: log.NewLogger(log.WithOutput(io.Discard)),
 	}
+}
+
+func newStaticFileRequest(file string) *http.Request {
+	req := httptest.NewRequest(http.MethodGet, "/static/"+file, nil)
+
+	rctx := chi.NewRouteContext()
+	rctx.URLParams.Add("file", file)
+
+	return req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+}
+
+func readBrandAsset(t *testing.T, file string) []byte {
+	t.Helper()
+
+	content, err := fs.ReadFile(brand.Assets, file)
+	require.NoError(t, err)
+
+	return content
+}
+
+func etagForContent(content []byte) string {
+	hash := md5.Sum(content)
+
+	return `"` + hex.EncodeToString(hash[:]) + `"`
+}
+
+func TestHandleGetStaticFile_SetsCachingHeaders(t *testing.T) {
+	t.Parallel()
+
+	h := testHandler()
+	content := readBrandAsset(t, "probo.png")
+
+	rec := httptest.NewRecorder()
+	req := newStaticFileRequest("probo.png")
+
+	h.handleGetStaticFile(rec, req)
+
+	assert.Equal(t, http.StatusOK, rec.Code)
+	assert.Equal(t, "image/png", rec.Header().Get("Content-Type"))
+	assert.Equal(t, "public, max-age=31536000, immutable", rec.Header().Get("Cache-Control"))
+	assert.Equal(t, "Accept-Encoding", rec.Header().Get("Vary"))
+	assert.Equal(t, etagForContent(content), rec.Header().Get("ETag"))
+	assert.Empty(t, rec.Header().Get("Content-Encoding"))
+	assert.Equal(t, content, rec.Body.Bytes())
+}
+
+func TestHandleGetStaticFile_ReturnsNotModifiedForMatchingETag(t *testing.T) {
+	t.Parallel()
+
+	t.Run(
+		"exact match",
+		func(t *testing.T) {
+			t.Parallel()
+
+			h := testHandler()
+			content := readBrandAsset(t, "probo.png")
+
+			rec := httptest.NewRecorder()
+			req := newStaticFileRequest("probo.png")
+			req.Header.Set("If-None-Match", etagForContent(content))
+
+			h.handleGetStaticFile(rec, req)
+
+			assert.Equal(t, http.StatusNotModified, rec.Code)
+			assert.Equal(t, "public, max-age=31536000, immutable", rec.Header().Get("Cache-Control"))
+			assert.Equal(t, etagForContent(content), rec.Header().Get("ETag"))
+			assert.Empty(t, rec.Body.String())
+		},
+	)
+
+	t.Run(
+		"gzip request with etag list",
+		func(t *testing.T) {
+			t.Parallel()
+
+			h := testHandler()
+			content := readBrandAsset(t, "probo.png")
+
+			rec := httptest.NewRecorder()
+			req := newStaticFileRequest("probo.png")
+			req.Header.Set("Accept-Encoding", "gzip")
+			req.Header.Set("If-None-Match", `"other", `+etagForContent(content))
+
+			h.handleGetStaticFile(rec, req)
+
+			assert.Equal(t, http.StatusNotModified, rec.Code)
+			assert.Equal(t, etagForContent(content), rec.Header().Get("ETag"))
+			assert.Empty(t, rec.Header().Get("Content-Encoding"))
+			assert.Empty(t, rec.Body.String())
+		},
+	)
+
+	t.Run(
+		"gzip request with weak etag",
+		func(t *testing.T) {
+			t.Parallel()
+
+			h := testHandler()
+			content := readBrandAsset(t, "probo.png")
+
+			rec := httptest.NewRecorder()
+			req := newStaticFileRequest("probo.png")
+			req.Header.Set("Accept-Encoding", "gzip")
+			req.Header.Set("If-None-Match", "W/"+etagForContent(content))
+
+			h.handleGetStaticFile(rec, req)
+
+			assert.Equal(t, http.StatusNotModified, rec.Code)
+			assert.Equal(t, etagForContent(content), rec.Header().Get("ETag"))
+			assert.Empty(t, rec.Header().Get("Content-Encoding"))
+			assert.Empty(t, rec.Body.String())
+		},
+	)
+}
+
+func TestHandleGetStaticFile_CompressesGzipResponses(t *testing.T) {
+	t.Parallel()
+
+	h := testHandler()
+	content := readBrandAsset(t, "probo.png")
+
+	rec := httptest.NewRecorder()
+	req := newStaticFileRequest("probo.png")
+	req.Header.Set("Accept-Encoding", "br, GZip;q=0.5")
+
+	h.handleGetStaticFile(rec, req)
+
+	gz, err := gzip.NewReader(rec.Body)
+	require.NoError(t, err)
+	defer func() { _ = gz.Close() }()
+
+	decompressed, err := io.ReadAll(gz)
+	require.NoError(t, err)
+
+	assert.Equal(t, http.StatusOK, rec.Code)
+	assert.Equal(t, "gzip", rec.Header().Get("Content-Encoding"))
+	assert.Equal(t, "Accept-Encoding", rec.Header().Get("Vary"))
+	assert.Equal(t, etagForContent(content), rec.Header().Get("ETag"))
+	assert.Equal(t, content, decompressed)
+}
+
+func TestHandleGetStaticFile_DoesNotCompressWhenGzipIsRefused(t *testing.T) {
+	t.Parallel()
+
+	h := testHandler()
+	content := readBrandAsset(t, "probo.png")
+
+	rec := httptest.NewRecorder()
+	req := newStaticFileRequest("probo.png")
+	req.Header.Set("Accept-Encoding", "br, gzip;q=0, *;q=1")
+
+	h.handleGetStaticFile(rec, req)
+
+	assert.Equal(t, http.StatusOK, rec.Code)
+	assert.Empty(t, rec.Header().Get("Content-Encoding"))
+	assert.Equal(t, content, rec.Body.Bytes())
+}
+
+func TestHandleGetStaticFile_NotFound(t *testing.T) {
+	t.Parallel()
+
+	h := testHandler()
+
+	rec := httptest.NewRecorder()
+	req := newStaticFileRequest("missing.png")
+
+	h.handleGetStaticFile(rec, req)
+
+	assert.Equal(t, http.StatusNotFound, rec.Code)
+	assert.Contains(t, rec.Body.String(), "file not found")
 }
 
 func TestHandleGetPublicFile_InvalidGID(t *testing.T) {

@@ -17,13 +17,11 @@ package files_v1
 import (
 	"errors"
 	"fmt"
-	"io/fs"
 	"net/http"
 	"time"
 
 	"github.com/go-chi/chi/v5"
 	"go.gearno.de/kit/log"
-	"go.probo.inc/probo/pkg/brand"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/gid"
@@ -37,10 +35,11 @@ import (
 const presignedURLExpiry = 1 * time.Hour
 
 type Handler struct {
-	logger  *log.Logger
-	fileSvc *filemanager.Service
-	probo   *probo.Service
-	iamSvc  *iam.Service
+	logger      *log.Logger
+	fileSvc     *filemanager.Service
+	probo       *probo.Service
+	iamSvc      *iam.Service
+	staticFiles *staticFileServer
 }
 
 func NewMux(
@@ -52,10 +51,11 @@ func NewMux(
 	tokenSecret string,
 ) *chi.Mux {
 	h := &Handler{
-		logger:  logger,
-		fileSvc: fileSvc,
-		probo:   proboSvc,
-		iamSvc:  iamSvc,
+		logger:      logger,
+		fileSvc:     fileSvc,
+		probo:       proboSvc,
+		iamSvc:      iamSvc,
+		staticFiles: defaultStaticFileServer,
 	}
 
 	r := chi.NewRouter()
@@ -76,9 +76,12 @@ func NewMux(
 
 func (h *Handler) handleGetStaticFile(w http.ResponseWriter, r *http.Request) {
 	file := chi.URLParam(r, "file")
+	staticFiles := h.staticFiles
+	if staticFiles == nil {
+		staticFiles = defaultStaticFileServer
+	}
 
-	if _, statErr := fs.Stat(brand.Assets, file); statErr == nil {
-		http.ServeFileFS(w, r, brand.Assets, file)
+	if staticFiles.ServeHTTP(w, r, file) {
 		return
 	}
 
