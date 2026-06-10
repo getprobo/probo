@@ -762,7 +762,7 @@ func (s ThirdPartyService) ImportFromCommon(
 					SecurityPageURL:               commonParty.SecurityPageURL,
 					TrustPageURL:                  commonParty.TrustPageURL,
 					ShowOnTrustCenter:             false,
-					FirstLevel:                    true,
+					Level:                         1,
 					CreatedAt:                     now,
 					UpdatedAt:                     now,
 				}
