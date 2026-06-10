@@ -64,6 +64,7 @@ type (
 		riskManagement    *riskmanagement.Service
 		thirdParty        *thirdparty.Service
 		logger            *log.Logger
+		baseURL           *baseurl.BaseURL
 		customDomainCname string
 	}
 )
@@ -104,6 +105,7 @@ func NewMux(
 		logger,
 		thirdPartySvc,
 		riskManagementSvc,
+		baseURL,
 	)
 
 	r.Group(func(r chi.Router) {

@@ -20,6 +20,7 @@ import (
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/accessreview"
 	"go.probo.inc/probo/pkg/agentrun"
+	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/connector/provider"
 	"go.probo.inc/probo/pkg/cookiebanner"
@@ -49,6 +50,7 @@ func NewGraphQLHandler(
 	logger *log.Logger,
 	thirdPartySvc *thirdparty.Service,
 	riskManagementSvc *riskmanagement.Service,
+	baseURL *baseurl.BaseURL,
 ) http.Handler {
 	config := schema.Config{
 		Resolvers: &Resolver{
@@ -66,6 +68,7 @@ func NewGraphQLHandler(
 			riskManagement:    riskManagementSvc,
 			thirdParty:        thirdPartySvc,
 			customDomainCname: customDomainCname,
+			baseURL:           baseURL,
 			logger:            logger,
 		},
 	}

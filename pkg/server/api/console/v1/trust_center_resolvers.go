@@ -1079,7 +1079,7 @@ func (r *trustCenterDocumentAccessResolver) ReportFile(ctx context.Context, obj 
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return types.NewFile(file), nil
+	return types.NewFile(file, r.baseURL), nil
 }
 
 // Audit is the resolver for the audit field.

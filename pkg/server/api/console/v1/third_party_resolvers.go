@@ -1064,7 +1064,7 @@ func (r *thirdPartyComplianceReportResolver) File(ctx context.Context, obj *type
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return types.NewFile(file), nil
+	return types.NewFile(file, r.baseURL), nil
 }
 
 // Permission is the resolver for the permission field.
