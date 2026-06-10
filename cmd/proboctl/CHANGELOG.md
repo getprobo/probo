@@ -4,6 +4,19 @@ All notable changes to the `proboctl` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.3.0] - 2026-06-10
+
+### Added
+
+- `proboctl common-third-party upsert` — create or update a vendor in the global catalog (partial-merge, slug-keyed)
+- `proboctl common-tracker-pattern link`/`unlink` — repoint or detach a catalog pattern's third party (link re-arms enrichment and remaps uncategorised org trackers)
+- `proboctl common-tracker-pattern set-description` — write a description, mark the row enriched, and backfill linked org patterns
+- `proboctl cookie-banner reset-trackers --keyword <substring>` — scope both glob decomposition and mapping reset to patterns whose pattern or display name contains the substring
+
+### Changed
+
+- `proboctl common-tracker-pattern reenrich` no longer requires a selection anchor; filter flags (e.g. `--without-description`) now select across the whole catalog when no anchor is supplied
+
 ## [0.2.0] - 2026-06-09
 
 ### Added
