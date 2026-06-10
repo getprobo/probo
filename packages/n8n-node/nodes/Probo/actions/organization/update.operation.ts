@@ -119,8 +119,16 @@ export async function execute(
 					websiteUrl
 					email
 					headquarterAddress
-					logoUrl
-					horizontalLogoUrl
+					logo {
+						id
+						fileName
+						downloadUrl
+					}
+					horizontalLogo {
+						id
+						fileName
+						downloadUrl
+					}
 					createdAt
 					updatedAt
 				}

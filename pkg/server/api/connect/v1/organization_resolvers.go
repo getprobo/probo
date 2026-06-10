@@ -9,7 +9,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"time"
 
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
@@ -18,7 +17,6 @@ import (
 	"go.probo.inc/probo/pkg/iam/scim/bridge/provider/microsoft365"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/server/api/authn"
-	"go.probo.inc/probo/pkg/server/api/authz"
 	"go.probo.inc/probo/pkg/server/api/connect/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/connect/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlutils"
@@ -158,34 +156,34 @@ func (r *mutationResolver) DeleteOrganizationHorizontalLogo(ctx context.Context,
 	panic(fmt.Errorf("not implemented: DeleteOrganizationHorizontalLogo - deleteOrganizationHorizontalLogo"))
 }
 
-// LogoURL is the resolver for the logoUrl field.
-func (r *organizationResolver) LogoURL(ctx context.Context, obj *types.Organization) (*string, error) {
-	if _, err := r.authorize(ctx, obj.ID, iam.ActionOrganizationGet, authz.WithSkipAssumptionCheck()); err != nil {
-		return nil, err
-	}
-
-	presignedURL, err := r.iam.OrganizationService.GenerateLogoURL(ctx, obj.ID, 1*time.Hour)
+// Logo is the resolver for the logo field.
+func (r *organizationResolver) Logo(ctx context.Context, obj *types.Organization) (*types.File, error) {
+	file, err := r.iam.OrganizationService.LogoFile(ctx, obj.ID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot generate logo URL", log.Error(err))
+		r.logger.ErrorCtx(ctx, "cannot load logo file", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return presignedURL, nil
+	if file == nil {
+		return nil, nil
+	}
+
+	return types.NewFile(file, r.baseURL), nil
 }
 
-// HorizontalLogoURL is the resolver for the horizontalLogoUrl field.
-func (r *organizationResolver) HorizontalLogoURL(ctx context.Context, obj *types.Organization) (*string, error) {
-	if _, err := r.authorize(ctx, obj.ID, iam.ActionOrganizationGet); err != nil {
-		return nil, err
-	}
-
-	presignedURL, err := r.iam.OrganizationService.GenerateHorizontalLogoURL(ctx, obj.ID, 1*time.Hour)
+// HorizontalLogo is the resolver for the horizontalLogo field.
+func (r *organizationResolver) HorizontalLogo(ctx context.Context, obj *types.Organization) (*types.File, error) {
+	file, err := r.iam.OrganizationService.HorizontalLogoFile(ctx, obj.ID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot generate horizontal logo URL", log.Error(err))
+		r.logger.ErrorCtx(ctx, "cannot load horizontal logo file", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return presignedURL, nil
+	if file == nil {
+		return nil, nil
+	}
+
+	return types.NewFile(file, r.baseURL), nil
 }
 
 // Profiles is the resolver for the profiles field.

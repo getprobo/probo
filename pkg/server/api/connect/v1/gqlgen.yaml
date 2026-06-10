@@ -38,6 +38,9 @@ models:
   CursorKey:
     model:
       - "go.probo.inc/probo/pkg/server/gqlutils/types/cursor.CursorKeyScalar"
+  BigInt:
+    model:
+      - "go.probo.inc/probo/pkg/server/gqlutils/types/bigint.BigIntScalar"
   EmailAddr:
     model:
       - "go.probo.inc/probo/pkg/server/gqlutils/types/mail.AddrScalar"

@@ -41,7 +41,9 @@ const organizationFragment = graphql`
   fragment MembershipsDropdownMenuItem_organizationFragment on Organization {
     id
     name
-    logoUrl
+    logo {
+      downloadUrl
+    }
   }
 `;
 
@@ -63,7 +65,7 @@ export function MembershipsDropdownMenuItem(props: {
   return (
     <DropdownItem key={id} asChild>
       <Link to={`/organizations/${organization.id}`}>
-        <Avatar name={organization.name} src={organization.logoUrl} />
+        <Avatar name={organization.name} src={organization.logo?.downloadUrl} />
         <span className="flex-1">{organization.name}</span>
         {isAssuming && (
           <IconCheckmark1 size={16} className="text-green-600" />

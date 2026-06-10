@@ -15,32 +15,21 @@
 package types
 
 import (
+	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/filemanager"
 )
 
-type (
-	OrganizationOrderBy OrderBy[coredata.OrganizationOrderField]
-)
+func NewFile(r *coredata.File, base *baseurl.BaseURL) *File {
+	url := base.WithPath(filemanager.DownloadAPIPath(r)).MustString()
 
-func NewOrganization(organization *coredata.Organization) *Organization {
-	org := &Organization{
-		ID:                 organization.ID,
-		Name:               organization.Name,
-		Email:              organization.Email,
-		Description:        organization.Description,
-		WebsiteURL:         organization.WebsiteURL,
-		HeadquarterAddress: organization.HeadquarterAddress,
-		CreatedAt:          organization.CreatedAt,
-		UpdatedAt:          organization.UpdatedAt,
+	return &File{
+		ID:          r.ID,
+		MimeType:    r.MimeType,
+		FileName:    r.FileName,
+		Size:        r.FileSize,
+		DownloadURL: url,
+		CreatedAt:   r.CreatedAt,
+		UpdatedAt:   r.UpdatedAt,
 	}
-
-	if organization.LogoFileID != nil {
-		org.Logo = &File{ID: *organization.LogoFileID}
-	}
-
-	if organization.HorizontalLogoFileID != nil {
-		org.HorizontalLogo = &File{ID: *organization.HorizontalLogoFileID}
-	}
-
-	return org
 }

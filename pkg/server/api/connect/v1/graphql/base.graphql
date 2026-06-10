@@ -11,6 +11,7 @@ directive @goModel(
 
 directive @goEnum(value: String) on ENUM_VALUE
 
+scalar BigInt
 scalar CursorKey
 scalar Datetime
 scalar Upload

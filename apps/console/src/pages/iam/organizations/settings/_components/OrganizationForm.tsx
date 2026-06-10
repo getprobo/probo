@@ -41,8 +41,12 @@ const fragment = graphql`
   fragment OrganizationFormFragment on Organization {
     id
     name @required(action: THROW)
-    logoUrl
-    horizontalLogoUrl
+    logo {
+      downloadUrl
+    }
+    horizontalLogo {
+      downloadUrl
+    }
     description
     websiteUrl
     email
@@ -57,8 +61,12 @@ const updateOrganizationMutation = graphql`
       organization {
         id
         name
-        logoUrl
-        horizontalLogoUrl
+        logo {
+          downloadUrl
+        }
+        horizontalLogo {
+          downloadUrl
+        }
         description
         websiteUrl
         email
@@ -75,7 +83,9 @@ const deleteHorizontalLogoMutation = graphql`
     deleteOrganizationHorizontalLogo(input: $input) {
       organization {
         id
-        horizontalLogoUrl
+        horizontalLogo {
+          downloadUrl
+        }
       }
     }
   }
@@ -225,8 +235,8 @@ export function OrganizationForm(props: {
           <Label>{__("Organization logo")}</Label>
           <div className="flex w-max items-center gap-4">
             <Avatar
-              className={logoPreview || organization.logoUrl ? "bg-transparent" : undefined}
-              src={logoPreview || organization.logoUrl}
+              className={logoPreview || organization.logo?.downloadUrl ? "bg-transparent" : undefined}
+              src={logoPreview || organization.logo?.downloadUrl}
               name={organization.name}
               size="xl"
             />
@@ -253,12 +263,12 @@ export function OrganizationForm(props: {
             )}
           </p>
           <div className="flex items-center gap-4">
-            {(horizontalLogoPreview || organization.horizontalLogoUrl) && (
+            {(horizontalLogoPreview || organization.horizontalLogo?.downloadUrl) && (
               <div className="border border-border-solid rounded-md p-4 bg-surface-secondary">
                 <img
                   src={
                     horizontalLogoPreview
-                    || organization.horizontalLogoUrl
+                    || organization.horizontalLogo?.downloadUrl
                     || undefined
                   }
                   alt={__("Horizontal logo")}
@@ -275,12 +285,12 @@ export function OrganizationForm(props: {
               >
                 {isUpdatingOrganization
                   ? __("Uploading...")
-                  : horizontalLogoPreview || organization.horizontalLogoUrl
+                  : horizontalLogoPreview || organization.horizontalLogo?.downloadUrl
                     ? __("Change horizontal logo")
                     : __("Upload horizontal logo")}
               </FileButton>
             )}
-            {canUpdate && organization.horizontalLogoUrl && (
+            {canUpdate && organization.horizontalLogo?.downloadUrl && (
               <Dialog
                 ref={deleteDialogRef}
                 trigger={(

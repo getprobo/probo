@@ -185,14 +185,18 @@ type UploadFile struct {
 }
 
 func (c *Client) ExecuteWithFile(query string, variables map[string]any, variablePath string, file UploadFile, result any) error {
-	return c.executeMultipart(query, variables, map[string]UploadFile{variablePath: file}, result)
+	return c.executeMultipart("/api/console/v1/graphql", query, variables, map[string]UploadFile{variablePath: file}, result)
+}
+
+func (c *Client) ExecuteConnectWithFile(query string, variables map[string]any, variablePath string, file UploadFile, result any) error {
+	return c.executeMultipart("/api/connect/v1/graphql", query, variables, map[string]UploadFile{variablePath: file}, result)
 }
 
 func (c *Client) ExecuteWithFiles(query string, variables map[string]any, files map[string]UploadFile, result any) error {
-	return c.executeMultipart(query, variables, files, result)
+	return c.executeMultipart("/api/console/v1/graphql", query, variables, files, result)
 }
 
-func (c *Client) executeMultipart(query string, variables map[string]any, files map[string]UploadFile, result any) error {
+func (c *Client) executeMultipart(endpoint string, query string, variables map[string]any, files map[string]UploadFile, result any) error {
 	// Create multipart writer using standard library
 	var buf bytes.Buffer
 
@@ -262,7 +266,7 @@ func (c *Client) executeMultipart(query string, variables map[string]any, files 
 	}
 
 	// Create request
-	req, err := http.NewRequest("POST", c.baseURL+"/api/console/v1/graphql", &buf)
+	req, err := http.NewRequest("POST", c.baseURL+endpoint, &buf)
 	if err != nil {
 		return fmt.Errorf("cannot create request: %w", err)
 	}

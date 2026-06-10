@@ -1372,18 +1372,17 @@ func (s *OrganizationService) GetOrganizationForMembership(ctx context.Context, 
 	return organization, nil
 }
 
-func (s OrganizationService) GenerateLogoURL(
+func (s OrganizationService) LogoFile(
 	ctx context.Context,
 	organizationID gid.GID,
-	expiresIn time.Duration,
-) (*string, error) {
+) (*coredata.File, error) {
 	var (
 		errNoLogoFile = errors.New("no logo file found")
 		scope         = coredata.NewScopeFromObjectID(organizationID)
 		file          = &coredata.File{}
 	)
 
-	err := s.pg.WithConn(
+	if err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
 			organization := &coredata.Organization{}
@@ -1401,35 +1400,28 @@ func (s OrganizationService) GenerateLogoURL(
 
 			return nil
 		},
-	)
-	if err == errNoLogoFile {
-		return nil, nil
+	); err != nil {
+		if errors.Is(err, errNoLogoFile) {
+			return nil, nil
+		}
+
+		return nil, fmt.Errorf("cannot load logo file: %w", err)
 	}
 
-	if err != nil {
-		return nil, fmt.Errorf("cannot generate logo URL: %w", err)
-	}
-
-	downloadURL, err := s.fm.BuildDownloadURL(file)
-	if err != nil {
-		return nil, fmt.Errorf("cannot generate file URL: %w", err)
-	}
-
-	return &downloadURL, nil
+	return file, nil
 }
 
-func (s OrganizationService) GenerateHorizontalLogoURL(
+func (s OrganizationService) HorizontalLogoFile(
 	ctx context.Context,
 	organizationID gid.GID,
-	expiresIn time.Duration,
-) (*string, error) {
+) (*coredata.File, error) {
 	var (
 		errNoLogoFile = errors.New("no logo file found")
 		scope         = coredata.NewScopeFromObjectID(organizationID)
 		file          = &coredata.File{}
 	)
 
-	err := s.pg.WithConn(
+	if err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
 			organization := &coredata.Organization{}
@@ -1447,21 +1439,15 @@ func (s OrganizationService) GenerateHorizontalLogoURL(
 
 			return nil
 		},
-	)
-	if err == errNoLogoFile {
-		return nil, nil
+	); err != nil {
+		if errors.Is(err, errNoLogoFile) {
+			return nil, nil
+		}
+
+		return nil, fmt.Errorf("cannot load horizontal logo file: %w", err)
 	}
 
-	if err != nil {
-		return nil, err
-	}
-
-	downloadURL, err := s.fm.BuildDownloadURL(file)
-	if err != nil {
-		return nil, fmt.Errorf("cannot generate file URL: %w", err)
-	}
-
-	return &downloadURL, nil
+	return file, nil
 }
 
 func (s OrganizationService) DeleteSAMLConfiguration(
