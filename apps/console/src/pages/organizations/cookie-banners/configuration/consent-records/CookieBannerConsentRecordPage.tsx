@@ -58,6 +58,7 @@ export const cookieBannerConsentRecordPageQuery = graphql`
         userAgent
         sdkVersion
         regulation
+        regulationSource
         countryCode
         consentData
         createdAt
@@ -157,6 +158,11 @@ export default function CookieBannerConsentRecordPage({
         <PropertyRow label={__("Regulation")}>
           <span className="font-mono text-sm">
             {record.regulation || "-"}
+          </span>
+        </PropertyRow>
+        <PropertyRow label={__("Regulation Source")}>
+          <span className="font-mono text-sm">
+            {record.regulationSource || "-"}
           </span>
         </PropertyRow>
         <PropertyRow label={__("Country")}>

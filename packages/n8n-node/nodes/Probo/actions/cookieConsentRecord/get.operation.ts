@@ -50,6 +50,7 @@ export async function execute(
 					action
 					sdkVersion
 					regulation
+					regulationSource
 					countryCode
 					createdAt
 				}

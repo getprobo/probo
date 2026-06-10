@@ -216,6 +216,13 @@ components:
         - PDPL
       go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.Regulation
 
+    RegulationSource:
+      type: string
+      enum:
+        - DETECTED
+        - DEFAULT
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.RegulationSource
+
     CountryCode:
       type: string
       enum:
@@ -9714,6 +9721,10 @@ components:
         regulation:
           $ref: "#/components/schemas/Regulation"
           description: Applicable regulation
+          nullable: true
+        regulation_source:
+          $ref: "#/components/schemas/RegulationSource"
+          description: Whether the regulation was detected from geolocation or defaulted to GDPR
           nullable: true
         country_code:
           $ref: "#/components/schemas/CountryCode"

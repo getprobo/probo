@@ -76,11 +76,7 @@ func (h *Handler) handleGetConfig(w http.ResponseWriter, r *http.Request) {
 	lang := r.URL.Query().Get("lang")
 	sdkVersion := sdkVersionFromContext(r.Context())
 	cc := h.resolveCountryCode(r)
-
-	var regulation cookiebanner.Regulation
-	if cc != nil {
-		regulation = cookiebanner.RegulationForCountry(*cc)
-	}
+	regulation, _ := cookiebanner.ResolveRegulation(cc)
 
 	config, err := h.cookieBannerSvc.GetActiveBannerConfig(r.Context(), bannerID, lang, regulation, sdkVersion)
 	if err != nil {
@@ -197,29 +193,22 @@ func (h *Handler) handlePostConsent(w http.ResponseWriter, r *http.Request) {
 	ua := r.UserAgent()
 	sdkVersion := sdkVersionFromContext(r.Context())
 	cc := h.resolveCountryCode(r)
+	regulation, regulationSource := cookiebanner.ResolveRegulation(cc)
 
-	var (
-		regulation         *cookiebanner.Regulation
-		resolvedRegulation cookiebanner.Regulation
-	)
-	if cc != nil {
-		resolvedRegulation = cookiebanner.RegulationForCountry(*cc)
-		regulation = &resolvedRegulation
-	}
-
-	cm := coredata.CookieConsentMode(cookiebanner.ConsentModeForRegulation(resolvedRegulation))
+	cm := coredata.CookieConsentMode(cookiebanner.ConsentModeForRegulation(regulation))
 
 	req := cookiebanner.RecordConsentRequest{
-		Version:     body.Version,
-		VisitorID:   body.VisitorID,
-		IPAddress:   &ip,
-		UserAgent:   &ua,
-		ConsentData: body.ConsentData,
-		Action:      body.Action,
-		SdkVersion:  sdkVersion,
-		Regulation:  regulation,
-		CountryCode: cc,
-		ConsentMode: &cm,
+		Version:          body.Version,
+		VisitorID:        body.VisitorID,
+		IPAddress:        &ip,
+		UserAgent:        &ua,
+		ConsentData:      body.ConsentData,
+		Action:           body.Action,
+		SdkVersion:       sdkVersion,
+		Regulation:       &regulation,
+		RegulationSource: regulationSource,
+		CountryCode:      cc,
+		ConsentMode:      &cm,
 	}
 
 	record, err := h.cookieBannerSvc.RecordConsent(r.Context(), bannerID, req)

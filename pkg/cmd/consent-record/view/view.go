@@ -37,6 +37,7 @@ query($id: ID!) {
       action
       sdkVersion
       regulation
+      regulationSource
       countryCode
       createdAt
     }
@@ -46,17 +47,18 @@ query($id: ID!) {
 
 type viewResponse struct {
 	Node *struct {
-		Typename    string  `json:"__typename"`
-		ID          string  `json:"id"`
-		VisitorID   string  `json:"visitorId"`
-		IPAddress   *string `json:"ipAddress"`
-		UserAgent   *string `json:"userAgent"`
-		ConsentData string  `json:"consentData"`
-		Action      string  `json:"action"`
-		SdkVersion  string  `json:"sdkVersion"`
-		Regulation  *string `json:"regulation"`
-		CountryCode *string `json:"countryCode"`
-		CreatedAt   string  `json:"createdAt"`
+		Typename         string  `json:"__typename"`
+		ID               string  `json:"id"`
+		VisitorID        string  `json:"visitorId"`
+		IPAddress        *string `json:"ipAddress"`
+		UserAgent        *string `json:"userAgent"`
+		ConsentData      string  `json:"consentData"`
+		Action           string  `json:"action"`
+		SdkVersion       string  `json:"sdkVersion"`
+		Regulation       *string `json:"regulation"`
+		RegulationSource *string `json:"regulationSource"`
+		CountryCode      *string `json:"countryCode"`
+		CreatedAt        string  `json:"createdAt"`
 	} `json:"node"`
 }
 
@@ -122,6 +124,10 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("SDK Version:"), v.SdkVersion)
 			if v.Regulation != nil {
 				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Regulation:"), *v.Regulation)
+			}
+
+			if v.RegulationSource != nil {
+				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Regulation Source:"), *v.RegulationSource)
 			}
 
 			if v.CountryCode != nil {

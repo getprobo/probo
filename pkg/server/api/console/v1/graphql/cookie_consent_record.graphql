@@ -96,6 +96,18 @@ enum Regulation
         )
 }
 
+enum RegulationSource
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.RegulationSource") {
+    DETECTED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.RegulationSourceDetected"
+        )
+    DEFAULT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.RegulationSourceDefault"
+        )
+}
+
 enum CookieConsentRecordOrderField
     @goModel(
         model: "go.probo.inc/probo/pkg/coredata.CookieConsentRecordOrderField"
@@ -131,6 +143,7 @@ type CookieConsentRecord implements Node {
     action: CookieConsentAction!
     sdkVersion: String!
     regulation: Regulation
+    regulationSource: RegulationSource
     countryCode: CountryCode
     createdAt: Datetime!
 }

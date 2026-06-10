@@ -36,6 +36,7 @@ const consentRecordFragment = graphql`
     ipAddress
     sdkVersion
     regulation
+    regulationSource
     countryCode
     createdAt
   }
@@ -79,6 +80,11 @@ export function ConsentRecordRow({ recordKey }: ConsentRecordRowProps) {
       <Td>
         <span className="font-mono text-sm">
           {record.regulation || "-"}
+        </span>
+      </Td>
+      <Td>
+        <span className="font-mono text-sm">
+          {record.regulationSource || "-"}
         </span>
       </Td>
       <Td>

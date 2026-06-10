@@ -36,10 +36,31 @@ const (
 	RegulationPDPL    = coredata.RegulationPDPL
 )
 
+type RegulationSource = coredata.RegulationSource
+
+const (
+	RegulationSourceDetected = coredata.RegulationSourceDetected
+	RegulationSourceDefault  = coredata.RegulationSourceDefault
+)
+
 const (
 	ConsentModeOptIn  = "OPT_IN"
 	ConsentModeOptOut = "OPT_OUT"
 )
+
+// ResolveRegulation returns the regulation to apply for a visitor along
+// with its source. It defaults to GDPR when geolocation is unresolved
+// (cc is nil) or when the resolved country maps to no known regulation,
+// ensuring the strictest opt-in consent model applies by default.
+func ResolveRegulation(cc *coredata.CountryCode) (Regulation, RegulationSource) {
+	if cc != nil {
+		if reg := RegulationForCountry(*cc); reg != RegulationNone {
+			return reg, RegulationSourceDetected
+		}
+	}
+
+	return RegulationGDPR, RegulationSourceDefault
+}
 
 // RegulationForCountry maps a country code to the applicable privacy
 // regulation. For countries with no known cookie-consent regulation it

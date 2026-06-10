@@ -96,16 +96,17 @@ type (
 	}
 
 	RecordConsentRequest struct {
-		Version     int
-		VisitorID   string
-		IPAddress   *string
-		UserAgent   *string
-		ConsentData json.RawMessage
-		Action      coredata.CookieConsentAction
-		SdkVersion  string
-		Regulation  *Regulation
-		CountryCode *coredata.CountryCode
-		ConsentMode *coredata.CookieConsentMode
+		Version          int
+		VisitorID        string
+		IPAddress        *string
+		UserAgent        *string
+		ConsentData      json.RawMessage
+		Action           coredata.CookieConsentAction
+		SdkVersion       string
+		Regulation       *Regulation
+		RegulationSource coredata.RegulationSource
+		CountryCode      *coredata.CountryCode
+		ConsentMode      *coredata.CookieConsentMode
 	}
 
 	DetectedCookie struct {
@@ -2076,6 +2077,7 @@ func (s *Service) RecordConsent(
 				Action:                req.Action,
 				SdkVersion:            req.SdkVersion,
 				Regulation:            req.Regulation,
+				RegulationSource:      &req.RegulationSource,
 				CountryCode:           req.CountryCode,
 				ConsentMode:           req.ConsentMode,
 				CreatedAt:             time.Now(),
