@@ -765,15 +765,25 @@ var cookieDatabaseAggregators = map[string]struct{}{
 
 // nameIsCookieDatabaseAggregator reports whether a candidate vendor name
 // is a known cookie-database directory operator that must never be
-// attributed a tracker. The comparison is alphanumeric-normalised so
-// spacing, punctuation, and casing differences do not matter.
+// attributed a tracker. The agent may return either a brand name
+// ("Cookiepedia") or a domain form ("cookiedatabase.org"); the latter
+// would survive a plain normalised lookup because normalizeAlnum folds
+// the eTLD into the key (e.g. "cookiedatabaseorg"). To catch both forms
+// the candidate is also reduced to its primary domain label before the
+// alphanumeric-normalised lookup. The comparison is alphanumeric-
+// normalised so spacing, punctuation, and casing differences do not
+// matter.
 func nameIsCookieDatabaseAggregator(name string) bool {
-	normalized := normalizeAlnum(name)
-	if normalized == "" {
+	if _, ok := cookieDatabaseAggregators[normalizeAlnum(name)]; ok {
+		return true
+	}
+
+	label := normalizeAlnum(uri.DomainLabel(name))
+	if label == "" {
 		return false
 	}
 
-	_, ok := cookieDatabaseAggregators[normalized]
+	_, ok := cookieDatabaseAggregators[label]
 
 	return ok
 }

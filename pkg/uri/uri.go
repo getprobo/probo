@@ -103,6 +103,35 @@ func ExtractDomain(rawURL string) string {
 	return domain
 }
 
+// DomainLabel extracts the primary registrable label from a host-like
+// string. It accepts bare hostnames, full URLs, and host:port forms:
+//
+//	"cookiedatabase.org"                  → "cookiedatabase"
+//	"https://www.cookiedatabase.org/list" → "cookiedatabase"
+//	"Cookiepedia"                         → ""  (no public suffix)
+//
+// Returns an empty string when the input carries no registrable domain
+// (e.g. a bare brand name or an unparseable value).
+func DomainLabel(raw string) string {
+	host := strings.ToLower(strings.TrimSpace(raw))
+	if i := strings.Index(host, "://"); i != -1 {
+		host = host[i+len("://"):]
+	}
+
+	host, _, _ = strings.Cut(host, "/")
+	host, _, _ = strings.Cut(host, "?")
+	host, _, _ = strings.Cut(host, ":")
+
+	domain, err := publicsuffix.EffectiveTLDPlusOne(host)
+	if err != nil {
+		return ""
+	}
+
+	label, _, _ := strings.Cut(domain, ".")
+
+	return label
+}
+
 // FilterFirstPartyDomains removes domains that match the eTLD+1 of
 // siteOrigin. Tracker scripts loaded through a first-party proxy (e.g.
 // t.probo.com proxying PostHog on a probo.com site) share the site's
