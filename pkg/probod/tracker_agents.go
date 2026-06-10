@@ -22,27 +22,25 @@ import (
 	"go.gearno.de/kit/log"
 	"go.opentelemetry.io/otel/trace"
 	"go.probo.inc/probo/pkg/cookiebanner"
-	"go.probo.inc/probo/pkg/thirdparty"
 )
 
-// buildTrackerAgents wires the three tracker agents from the probod
+// buildTrackerAgents wires the two tracker agents from the probod
 // config, each with its own LLM client and tuning: the tracker-mapping
-// agent (catalog identification), the common-pattern enrichment agent
-// (description research), and the third-party disambiguation agent. All
-// are opt-in: when `llm.tracker-mapping.provider` is empty it returns
-// zero configs (nil LLM clients) so callers run without agent fallback.
+// agent (catalog identification) and the common-pattern enrichment agent
+// (description research). Both are opt-in: when
+// `llm.tracker-mapping.provider` is empty it returns zero configs (nil
+// LLM clients) so callers run without agent fallback.
 //
-// The enrichment and disambiguation agents fall back to the
-// tracker-mapping config when their own provider slot is empty, so a
-// deployment that configures only `tracker-mapping` keeps wiring all
-// three agents.
+// The enrichment agent falls back to the tracker-mapping config when its
+// own provider slot is empty, so a deployment that configures only
+// `tracker-mapping` keeps wiring both agents.
 func (impl *Implm) buildTrackerAgents(
 	l *log.Logger,
 	tp trace.TracerProvider,
 	r prometheus.Registerer,
-) (cookiebanner.TrackerMappingAgentConfig, cookiebanner.TrackerEnrichmentAgentConfig, thirdparty.DisambiguationAgentConfig, error) {
+) (cookiebanner.TrackerMappingAgentConfig, cookiebanner.TrackerEnrichmentAgentConfig, error) {
 	if impl.cfg.Agents.TrackerMapping.Provider == "" {
-		return cookiebanner.TrackerMappingAgentConfig{}, cookiebanner.TrackerEnrichmentAgentConfig{}, thirdparty.DisambiguationAgentConfig{}, nil
+		return cookiebanner.TrackerMappingAgentConfig{}, cookiebanner.TrackerEnrichmentAgentConfig{}, nil
 	}
 
 	firecrawlAPIKey := impl.cfg.Agents.Tools.FirecrawlAPIKey
@@ -55,7 +53,7 @@ func (impl *Implm) buildTrackerAgents(
 		r,
 	)
 	if err != nil {
-		return cookiebanner.TrackerMappingAgentConfig{}, cookiebanner.TrackerEnrichmentAgentConfig{}, thirdparty.DisambiguationAgentConfig{}, fmt.Errorf("cannot resolve tracker mapping agent client: %w", err)
+		return cookiebanner.TrackerMappingAgentConfig{}, cookiebanner.TrackerEnrichmentAgentConfig{}, fmt.Errorf("cannot resolve tracker mapping agent client: %w", err)
 	}
 
 	mappingCfg := cookiebanner.TrackerMappingAgentConfig{
@@ -81,7 +79,7 @@ func (impl *Implm) buildTrackerAgents(
 		r,
 	)
 	if err != nil {
-		return cookiebanner.TrackerMappingAgentConfig{}, cookiebanner.TrackerEnrichmentAgentConfig{}, thirdparty.DisambiguationAgentConfig{}, fmt.Errorf("cannot resolve tracker enrichment agent client: %w", err)
+		return cookiebanner.TrackerMappingAgentConfig{}, cookiebanner.TrackerEnrichmentAgentConfig{}, fmt.Errorf("cannot resolve tracker enrichment agent client: %w", err)
 	}
 
 	enrichmentCfg := cookiebanner.TrackerEnrichmentAgentConfig{
@@ -94,29 +92,5 @@ func (impl *Implm) buildTrackerAgents(
 		MaxTurns:        impl.cfg.CommonPatternEnrichmentWorker.AgentMaxTurns,
 	}
 
-	disambiguationSlot := impl.cfg.Agents.ThirdPartyDisambiguation
-	if disambiguationSlot.Provider == "" {
-		disambiguationSlot = impl.cfg.Agents.TrackerMapping
-	}
-
-	disambiguationAgentCfg, disambiguationClient, err := impl.resolveAgentClient(
-		"third-party-disambiguation",
-		disambiguationSlot,
-		l,
-		tp,
-		r,
-	)
-	if err != nil {
-		return cookiebanner.TrackerMappingAgentConfig{}, cookiebanner.TrackerEnrichmentAgentConfig{}, thirdparty.DisambiguationAgentConfig{}, fmt.Errorf("cannot resolve third party disambiguation agent client: %w", err)
-	}
-
-	disambiguationCfg := thirdparty.DisambiguationAgentConfig{
-		LLMClient:   disambiguationClient,
-		Model:       disambiguationAgentCfg.ModelName,
-		MaxTokens:   disambiguationAgentCfg.MaxTokens,
-		Temperature: disambiguationAgentCfg.Temperature,
-		Timeout:     time.Duration(impl.cfg.TrackerMappingWorker.DisambiguationAgentTimeout) * time.Second,
-	}
-
-	return mappingCfg, enrichmentCfg, disambiguationCfg, nil
+	return mappingCfg, enrichmentCfg, nil
 }

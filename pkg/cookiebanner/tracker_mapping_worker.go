@@ -39,20 +39,17 @@ import (
 const defaultMappingStaleAfter = 10 * time.Minute
 
 type trackerMappingHandler struct {
-	pg                    *pg.Client
-	logger                *log.Logger
-	mappingAgent          *agent.Agent
-	disambiguationAgent   *agent.Agent
-	agentTimeout          time.Duration
-	disambiguationTimeout time.Duration
-	staleAfter            time.Duration
+	pg           *pg.Client
+	logger       *log.Logger
+	mappingAgent *agent.Agent
+	agentTimeout time.Duration
+	staleAfter   time.Duration
 }
 
 func NewTrackerMappingWorker(
 	pgClient *pg.Client,
 	logger *log.Logger,
 	mappingCfg TrackerMappingAgentConfig,
-	disambiguationCfg thirdparty.DisambiguationAgentConfig,
 	staleAfter time.Duration,
 	opts ...worker.Option,
 ) *worker.Worker[coredata.TrackerPattern] {
@@ -66,19 +63,14 @@ func NewTrackerMappingWorker(
 	}
 
 	h := &trackerMappingHandler{
-		pg:                    pgClient,
-		logger:                logger,
-		agentTimeout:          agentTimeout,
-		disambiguationTimeout: disambiguationCfg.Timeout,
-		staleAfter:            staleAfter,
+		pg:           pgClient,
+		logger:       logger,
+		agentTimeout: agentTimeout,
+		staleAfter:   staleAfter,
 	}
 
 	if mappingCfg.LLMClient != nil {
 		h.mappingAgent = buildTrackerMappingAgent(mappingCfg, pgClient, logger)
-	}
-
-	if disambiguationCfg.LLMClient != nil {
-		h.disambiguationAgent = thirdparty.BuildDisambiguationAgent(disambiguationCfg, logger)
 	}
 
 	return worker.New(
@@ -132,14 +124,11 @@ func (h *trackerMappingHandler) RecoverStale(ctx context.Context) error {
 
 // catalogMatch is the result of a single catalog signal. commonPatternID
 // is the catalog row the signal resolved (or backfilled); commonThirdPartyID
-// is the catalog third party the signal discovered, when any; thirdPartyID
-// is an existing org ThirdParty the signal knows directly (e.g. a sibling
-// pattern already promoted in the same organization). A nil *catalogMatch
-// means the signal produced nothing.
+// is the catalog third party the signal discovered, when any. A nil
+// *catalogMatch means the signal produced nothing.
 type catalogMatch struct {
 	commonPatternID    *gid.GID
 	commonThirdPartyID *gid.GID
-	thirdPartyID       *gid.GID
 }
 
 // Process resolves the catalog mapping for a tracker pattern and links it
@@ -156,10 +145,11 @@ type catalogMatch struct {
 // common_tracker_pattern_id but its catalog row has no common third
 // party yet.
 //
-// Org ThirdParty resolution links to an existing party freely (even for
-// uncategorised or extension-sourced patterns); only the creation of a
-// brand new org ThirdParty stays gated behind categorisation and a
-// non-extension source.
+// The worker no longer materializes per-org ThirdParty rows: it resolves
+// the shared catalog link only. An org ThirdParty is created exclusively
+// through the explicit per-vendor import action, which also backfills
+// tracker_patterns.third_party_id; an already-set third_party_id is
+// preserved here untouched.
 func (h *trackerMappingHandler) Process(ctx context.Context, tp coredata.TrackerPattern) error {
 	scope := coredata.NewScopeFromObjectID(tp.ID)
 
@@ -184,7 +174,6 @@ func (h *trackerMappingHandler) Process(ctx context.Context, tp coredata.Tracker
 
 	commonPatternID := det.commonPatternID
 	commonThirdPartyID := det.commonThirdPartyID
-	directThirdPartyID := det.directThirdPartyID
 
 	// Phase 2: tracker-mapping agent (no transaction). It runs only when
 	// the deterministic signals could not resolve a catalog third party.
@@ -216,25 +205,6 @@ func (h *trackerMappingHandler) Process(ctx context.Context, tp coredata.Tracker
 		}
 	}
 
-	// Phase 3: org ThirdParty resolution. The heuristic ranking and the
-	// disambiguation agent run without a transaction; only the final link
-	// or create touches the database (in a short transaction).
-	thirdPartyID := tp.ThirdPartyID
-
-	if thirdPartyID == nil {
-		switch {
-		case directThirdPartyID != nil:
-			thirdPartyID = directThirdPartyID
-		case commonThirdPartyID != nil:
-			resolved, err := h.resolveOrgThirdParty(ctx, tp, *commonThirdPartyID)
-			if err != nil {
-				return fmt.Errorf("cannot resolve org third party: %w", err)
-			}
-
-			thirdPartyID = resolved
-		}
-	}
-
 	// Phase 4: persist the pattern mapping in a short transaction. The
 	// unmatched fallback keeps catalog coverage complete even when no
 	// vendor was resolved.
@@ -251,7 +221,6 @@ func (h *trackerMappingHandler) Process(ctx context.Context, tp coredata.Tracker
 			}
 
 			tp.CommonTrackerPatternID = commonPatternID
-			tp.ThirdPartyID = thirdPartyID
 			tp.UpdatedAt = time.Now()
 
 			// Descriptions are owned by the common-pattern enrichment
@@ -321,7 +290,6 @@ type deterministicResult struct {
 	origin                     string
 	commonPatternID            *gid.GID
 	commonThirdPartyID         *gid.GID
-	directThirdPartyID         *gid.GID
 	domains                    []string
 	commonThirdPartyPreexisted bool
 }
@@ -403,7 +371,6 @@ func (h *trackerMappingHandler) resolveDeterministic(
 	if siblingMatch != nil {
 		res.commonPatternID = firstNonNil(res.commonPatternID, siblingMatch.commonPatternID)
 		res.commonThirdPartyID = siblingMatch.commonThirdPartyID
-		res.directThirdPartyID = siblingMatch.thirdPartyID
 	}
 
 	if res.commonThirdPartyID != nil {
@@ -496,27 +463,6 @@ func (h *trackerMappingHandler) loadInitiatorDomains(
 	}
 
 	return domains, nil
-}
-
-// creationAllowed reports whether the pattern is eligible for creating a
-// brand new org ThirdParty. Extension-sourced patterns are never allowed
-// to create one, and a pattern must be categorized first.
-func (h *trackerMappingHandler) creationAllowed(
-	ctx context.Context,
-	conn pg.Querier,
-	scope coredata.Scoper,
-	tp coredata.TrackerPattern,
-) (bool, error) {
-	if tp.Source != nil && *tp.Source == coredata.CookieSourceExtension {
-		return false, nil
-	}
-
-	var category coredata.CookieCategory
-	if err := category.LoadByID(ctx, conn, scope, tp.CookieCategoryID); err != nil {
-		return false, fmt.Errorf("cannot load cookie category: %w", err)
-	}
-
-	return category.Kind != coredata.CookieCategoryKindUncategorised, nil
 }
 
 // matchByPattern looks for a catalog row with the same pattern and
@@ -859,10 +805,8 @@ func (h *trackerMappingHandler) persistAgentIdentification(
 // matchBySiblingOrigin finds other tracker patterns on the same banner
 // that share initiator domains with the current pattern. Sharing an
 // origin across multiple detected patterns is a strong indicator of the
-// same third party. When the siblings resolve to a single existing org
-// ThirdParty, that id is returned directly so promotion can link to it
-// without re-running heuristics; otherwise the resolved common third
-// party is upserted onto the catalog row.
+// same third party, so the common third party the siblings resolve to is
+// upserted onto the catalog row.
 func (h *trackerMappingHandler) matchBySiblingOrigin(
 	ctx context.Context,
 	tx pg.Tx,
@@ -893,19 +837,14 @@ func (h *trackerMappingHandler) matchBySiblingOrigin(
 
 	scope := coredata.NewScopeFromObjectID(tp.ID)
 
-	commonThirdPartyID, thirdPartyID, err := h.resolveThirdPartyFromSiblings(ctx, tx, scope, siblingIDs)
+	commonThirdPartyID, err := h.resolveThirdPartyFromSiblings(ctx, tx, scope, siblingIDs)
 	if err != nil {
 		return nil, fmt.Errorf("cannot resolve third party from siblings: %w", err)
 	}
 
-	// No catalog third party to record: surface a directly-known org
-	// third party (if any) so promotion can still link to it, and leave
-	// catalog creation to a later signal or the unmatched fallback.
+	// No catalog third party to record: leave catalog creation to a later
+	// signal or the unmatched fallback.
 	if commonThirdPartyID == nil {
-		if thirdPartyID != nil {
-			return &catalogMatch{thirdPartyID: thirdPartyID}, nil
-		}
-
 		return nil, nil
 	}
 
@@ -937,37 +876,25 @@ func (h *trackerMappingHandler) matchBySiblingOrigin(
 	return &catalogMatch{
 		commonPatternID:    &commonPattern.ID,
 		commonThirdPartyID: commonPattern.CommonThirdPartyID,
-		thirdPartyID:       thirdPartyID,
 	}, nil
 }
 
 // resolveThirdPartyFromSiblings inspects sibling patterns to resolve a
-// third party. It returns two independent signals: a direct org
-// ThirdParty (set only when the siblings share a single one — the
-// strongest, same-org signal), and a single unambiguous catalog third
-// party for backfill. The catalog third party is resolved first from the
-// siblings' org ThirdParties, then, when those carry none, from siblings'
-// common_tracker_pattern rows. Either signal may be nil; siblings that
-// disagree on the catalog third party resolve it to nothing.
+// single unambiguous catalog third party for backfill. It is resolved
+// first from the siblings' org ThirdParties, then, when those carry none,
+// from siblings' common_tracker_pattern rows. It returns nil when the
+// siblings carry no catalog third party or disagree on one.
 func (h *trackerMappingHandler) resolveThirdPartyFromSiblings(
 	ctx context.Context,
 	conn pg.Querier,
 	scope coredata.Scoper,
 	siblingIDs []gid.GID,
-) (commonThirdPartyID *gid.GID, thirdPartyID *gid.GID, err error) {
+) (commonThirdPartyID *gid.GID, err error) {
 	var patterns coredata.TrackerPatterns
 
 	thirdPartyIDs, err := patterns.LoadDistinctThirdPartyIDsByIDs(ctx, conn, scope, siblingIDs)
 	if err != nil {
-		return nil, nil, fmt.Errorf("cannot load distinct third party ids from siblings: %w", err)
-	}
-
-	// A single org third party shared across the siblings is the
-	// strongest, same-org signal: link to it directly. This is resolved
-	// independently from the catalog third party used for backfill.
-	if len(thirdPartyIDs) == 1 {
-		directID := thirdPartyIDs[0]
-		thirdPartyID = &directID
+		return nil, fmt.Errorf("cannot load distinct third party ids from siblings: %w", err)
 	}
 
 	if len(thirdPartyIDs) > 0 {
@@ -986,29 +913,26 @@ func (h *trackerMappingHandler) resolveThirdPartyFromSiblings(
 
 		if len(commonIDs) == 1 {
 			for id := range commonIDs {
-				return &id, thirdPartyID, nil
+				return &id, nil
 			}
 		}
 
-		// Siblings are promoted to several different catalog third
-		// parties: do not guess one. A single shared org third party (if
-		// any) is still a safe direct link.
+		// Siblings are linked to several different catalog third
+		// parties: do not guess one.
 		if len(commonIDs) > 1 {
-			return nil, thirdPartyID, nil
+			return nil, nil
 		}
 	}
 
 	// Fall back to siblings carrying only a common_tracker_pattern_id, or
-	// whose org ThirdParty is not itself linked to the catalog. This is
-	// reached when the org-third-party scan above found no catalog third
-	// party, so it must not be short-circuited by a direct match.
+	// whose org ThirdParty is not itself linked to the catalog.
 	commonPatternIDs, err := patterns.LoadDistinctCommonTrackerPatternIDsByIDs(ctx, conn, scope, siblingIDs)
 	if err != nil {
-		return nil, nil, fmt.Errorf("cannot load distinct common tracker pattern ids from siblings: %w", err)
+		return nil, fmt.Errorf("cannot load distinct common tracker pattern ids from siblings: %w", err)
 	}
 
 	if len(commonPatternIDs) == 0 {
-		return nil, thirdPartyID, nil
+		return nil, nil
 	}
 
 	commonIDs := make(map[gid.GID]struct{})
@@ -1026,11 +950,11 @@ func (h *trackerMappingHandler) resolveThirdPartyFromSiblings(
 
 	if len(commonIDs) == 1 {
 		for id := range commonIDs {
-			return &id, thirdPartyID, nil
+			return &id, nil
 		}
 	}
 
-	return nil, thirdPartyID, nil
+	return nil, nil
 }
 
 func (h *trackerMappingHandler) createUnmatchedPattern(
@@ -1055,250 +979,4 @@ func (h *trackerMappingHandler) createUnmatchedPattern(
 	}
 
 	return &commonPattern.ID, nil
-}
-
-// resolveOrgThirdParty resolves an org ThirdParty for the given pattern
-// from a known catalog third party. The resolution order is:
-//
-//  1. Exact link by common_third_party_id (O(1)).
-//  2. Heuristic match against the org's existing ThirdParty rows
-//     (lowercased name, suffix-stripped name, slug, website host,
-//     CommonThirdPartyDomain overlap).
-//  3. Agent disambiguation when the heuristic is ambiguous.
-//  4. Fallback create from CommonThirdParty — only when allowCreate.
-//
-// Linking to an existing org ThirdParty (steps 1-3) is always allowed.
-// Creating a brand new org ThirdParty (step 4) is gated by allowCreate:
-// when false, the function returns (nil, nil) rather than creating one.
-// A confident heuristic/agent match is auto-tagged with
-// common_third_party_id so subsequent resolutions hit the exact-link
-// path in O(1).
-func (h *trackerMappingHandler) resolveOrgThirdParty(
-	ctx context.Context,
-	tp coredata.TrackerPattern,
-	commonThirdPartyID gid.GID,
-) (*gid.GID, error) {
-	scope := coredata.NewScopeFromObjectID(tp.ID)
-
-	// Read phase: exact link, candidate ranking, eligibility, and
-	// creation gating. No write or LLM call happens here.
-	var prep orgThirdPartyPrep
-
-	if err := h.pg.WithConn(
-		ctx,
-		func(ctx context.Context, conn pg.Querier) error {
-			var err error
-
-			prep, err = h.prepareOrgThirdParty(ctx, conn, scope, tp, commonThirdPartyID)
-
-			return err
-		},
-	); err != nil {
-		return nil, err
-	}
-
-	if prep.existingID != nil {
-		return prep.existingID, nil
-	}
-
-	picked := prep.highConfidence
-	viaAgent := false
-
-	// Agent phase (no transaction): disambiguate among the heuristic
-	// candidates when none scored high enough on its own.
-	if picked == nil && prep.eligibleForAgent && h.disambiguationAgent != nil {
-		matchedID, err := thirdparty.Disambiguate(
-			ctx,
-			h.disambiguationAgent,
-			h.logger,
-			prep.commonParty,
-			prep.commonDomains,
-			prep.agentSet,
-			h.disambiguationTimeout,
-		)
-		if err != nil {
-			h.logger.WarnCtx(
-				ctx,
-				"third-party disambiguation agent failed",
-				log.Error(err),
-				log.String("tracker_pattern_id", tp.ID.String()),
-			)
-		}
-
-		if matchedID != nil {
-			for _, c := range prep.agentSet {
-				if c.ThirdParty.ID == *matchedID {
-					picked = c.ThirdParty
-					viaAgent = true
-
-					break
-				}
-			}
-		}
-	}
-
-	// Nothing to link and creation is not allowed: leave the pattern
-	// without an org third party.
-	if picked == nil && !prep.allowCreate {
-		return nil, nil
-	}
-
-	// Write phase: link the picked candidate or create a new org third
-	// party from the catalog entry, in a short transaction.
-	var resolved *gid.GID
-
-	if err := h.pg.WithTx(
-		ctx,
-		func(ctx context.Context, tx pg.Tx) error {
-			if picked != nil {
-				if err := thirdparty.LinkToCommon(ctx, tx, scope, picked, commonThirdPartyID); err != nil {
-					return fmt.Errorf("cannot link third party to common: %w", err)
-				}
-
-				if viaAgent {
-					h.logger.InfoCtx(
-						ctx,
-						"promoted tracker pattern via disambiguation agent",
-						log.String("tracker_pattern_id", tp.ID.String()),
-						log.String("third_party_id", picked.ID.String()),
-					)
-				} else {
-					h.logger.InfoCtx(
-						ctx,
-						"promoted tracker pattern via heuristic match",
-						log.String("tracker_pattern_id", tp.ID.String()),
-						log.String("third_party_id", picked.ID.String()),
-						log.Float64("score", prep.highScore),
-					)
-				}
-
-				resolved = &picked.ID
-
-				return nil
-			}
-
-			created, err := thirdparty.CreateFromCommon(ctx, tx, scope, tp.OrganizationID, prep.commonParty)
-			if err != nil {
-				return fmt.Errorf("cannot create third party from common: %w", err)
-			}
-
-			h.logger.InfoCtx(
-				ctx,
-				"promoted tracker pattern by creating org third party from catalog",
-				log.String("tracker_pattern_id", tp.ID.String()),
-				log.String("third_party_id", created.ID.String()),
-				log.String("common_third_party_id", commonThirdPartyID.String()),
-			)
-
-			resolved = &created.ID
-
-			return nil
-		},
-	); err != nil {
-		return nil, err
-	}
-
-	return resolved, nil
-}
-
-// orgThirdPartyPrep is the read-phase outcome for org ThirdParty
-// resolution. existingID is set when an exact common-id link already
-// exists (the other fields are then unused). Otherwise highConfidence
-// holds a heuristic match at or above HighConfidenceScore (with
-// highScore), or agentSet/eligibleForAgent describe the disambiguation
-// candidates. allowCreate gates falling back to creating a new org
-// ThirdParty from the catalog entry.
-type orgThirdPartyPrep struct {
-	existingID       *gid.GID
-	commonParty      coredata.CommonThirdParty
-	commonDomains    coredata.CommonThirdPartyDomains
-	agentSet         []thirdparty.ScoredCandidate
-	highConfidence   *coredata.ThirdParty
-	highScore        float64
-	eligibleForAgent bool
-	allowCreate      bool
-}
-
-// prepareOrgThirdParty performs the read-only work for org ThirdParty
-// resolution: it checks for an exact common-id link, loads the catalog
-// entry and the org's existing third parties, ranks the candidates, and
-// computes creation eligibility. It makes no writes and no LLM call.
-func (h *trackerMappingHandler) prepareOrgThirdParty(
-	ctx context.Context,
-	conn pg.Querier,
-	scope coredata.Scoper,
-	tp coredata.TrackerPattern,
-	commonThirdPartyID gid.GID,
-) (orgThirdPartyPrep, error) {
-	var prep orgThirdPartyPrep
-
-	var existing coredata.ThirdParty
-
-	err := existing.LoadByOrganizationIDAndCommonThirdPartyID(
-		ctx,
-		conn,
-		scope,
-		tp.OrganizationID,
-		commonThirdPartyID,
-	)
-	if err == nil {
-		id := existing.ID
-		prep.existingID = &id
-
-		return prep, nil
-	}
-
-	if !errors.Is(err, coredata.ErrResourceNotFound) {
-		return prep, fmt.Errorf("cannot load org third party by common id: %w", err)
-	}
-
-	if err := prep.commonParty.LoadByID(ctx, conn, commonThirdPartyID); err != nil {
-		return prep, fmt.Errorf("cannot load common third party: %w", err)
-	}
-
-	if err := prep.commonDomains.LoadByCommonThirdPartyID(ctx, conn, commonThirdPartyID); err != nil {
-		return prep, fmt.Errorf("cannot load common third party domains: %w", err)
-	}
-
-	firstLevel := 1
-
-	var orgThirdParties coredata.ThirdParties
-	if err := orgThirdParties.LoadAllByOrganizationID(
-		ctx,
-		conn,
-		scope,
-		tp.OrganizationID,
-		coredata.NewThirdPartyFilter(nil, &firstLevel, nil),
-	); err != nil {
-		return prep, fmt.Errorf("cannot load org third parties: %w", err)
-	}
-
-	ranked := thirdparty.RankCandidates(prep.commonParty, prep.commonDomains, orgThirdParties)
-
-	if len(ranked) > 0 && ranked[0].Score >= thirdparty.HighConfidenceScore {
-		prep.highConfidence = ranked[0].ThirdParty
-		prep.highScore = ranked[0].Score
-	} else {
-		prep.agentSet = ranked
-		if len(prep.agentSet) > thirdparty.MaxAgentCandidates {
-			prep.agentSet = prep.agentSet[:thirdparty.MaxAgentCandidates]
-		}
-
-		for _, c := range prep.agentSet {
-			if c.Score >= thirdparty.MinAgentScore {
-				prep.eligibleForAgent = true
-
-				break
-			}
-		}
-	}
-
-	allowCreate, err := h.creationAllowed(ctx, conn, scope, tp)
-	if err != nil {
-		return prep, err
-	}
-
-	prep.allowCreate = allowCreate
-
-	return prep, nil
 }
