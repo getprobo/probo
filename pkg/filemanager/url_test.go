@@ -73,7 +73,7 @@ func TestGenerateFileURL_PrivateFile(t *testing.T) {
 	)
 }
 
-func TestGeneratePresignedFileURL_EscapesContentDispositionFilename(t *testing.T) {
+func TestGeneratePresignedURL_EscapesContentDispositionFilename(t *testing.T) {
 	t.Parallel()
 
 	s3Client := awss3.NewFromConfig(
@@ -90,7 +90,7 @@ func TestGeneratePresignedFileURL_EscapesContentDispositionFilename(t *testing.T
 		MimeType:   "application/pdf",
 	}
 
-	rawURL, err := svc.GeneratePresignedFileURL(context.Background(), file, time.Hour)
+	rawURL, err := svc.GeneratePresignedURL(context.Background(), file, time.Hour)
 	require.NoError(t, err)
 
 	parsedURL, err := url.Parse(rawURL)
