@@ -441,6 +441,7 @@ func TestAccessEntry_Upsert_InsertsActiveAccount(t *testing.T) {
 	tenantID := fx.scope.GetTenantID()
 	t0 := time.Now().UTC().Truncate(time.Microsecond)
 
+	activeTrue := true
 	entryID := gid.New(tenantID, coredata.AccessEntryEntityType)
 	entry := &coredata.AccessEntry{
 		ID:                     entryID,
@@ -453,7 +454,7 @@ func TestAccessEntry_Upsert_InsertsActiveAccount(t *testing.T) {
 		MFAStatus:              coredata.MFAStatusUnknown,
 		AuthMethod:             coredata.AccessEntryAuthMethodUnknown,
 		AccountType:            coredata.AccessEntryAccountTypeUser,
-		Active:                 new(true),
+		Active:                 &activeTrue,
 		ExternalID:             "ext-active",
 		AccountKey:             fx.accountKey,
 		IncrementalTag:         coredata.AccessEntryIncrementalTagNew,
