@@ -4,6 +4,20 @@ All notable changes to the Probo Helm chart will be documented in this file.
 
 ## Unreleased
 
+## [0.6.0] - 2026-06-11
+
+### Changed
+
+- Default `appVersion` updated to `probod v0.208.0`
+- Tracker mapping config restored to support linking (not create-only)
+- References updated to probo.com
+
+### Removed
+
+- `thirdPartyDisambiguation` agent config slot and
+  `trackerMappingWorker.disambiguationAgentTimeout` removed (disambiguation
+  agent dropped upstream)
+
 ## [0.5.0] - 2026-06-09
 
 ### Added
