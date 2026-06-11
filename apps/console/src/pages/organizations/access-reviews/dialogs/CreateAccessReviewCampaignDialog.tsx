@@ -55,7 +55,7 @@ const sourcesQuery = graphql`
   query CreateAccessReviewCampaignDialogSourcesQuery($organizationId: ID!) {
     organization: node(id: $organizationId) {
       ... on Organization {
-        accessSources(first: 500) {
+        accessReviewSources(first: 500) {
           edges {
             node {
               id
@@ -118,7 +118,7 @@ export function CreateAccessReviewCampaignDialog({
           organizationId,
           name: data.name,
           description: data.description || null,
-          accessSourceIds:
+          accessReviewSourceIds:
             selectedSourceIds.length > 0 ? selectedSourceIds : null,
         },
         connections: [connectionId],
@@ -227,7 +227,7 @@ function SourceSelector({
   );
 
   const sources
-    = data?.organization?.accessSources?.edges
+    = data?.organization?.accessReviewSources?.edges
       ?.map(edge => edge.node)
       .filter((node): node is NonNullable<typeof node> => node !== null) ?? [];
 

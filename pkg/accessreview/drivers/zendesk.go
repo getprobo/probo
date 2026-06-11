@@ -138,8 +138,8 @@ func zendeskRecord(u zendeskUser) AccountRecord {
 		MFAStatus: mfaStatus,
 		// Zendesk's users API does not expose the sign-in method
 		// (password / SSO / social), so the auth method is unknown.
-		AuthMethod:  coredata.AccessEntryAuthMethodUnknown,
-		AccountType: coredata.AccessEntryAccountTypeUser,
+		AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,
+		AccountType: coredata.AccessReviewEntryAccountTypeUser,
 		ExternalID:  strconv.FormatInt(u.ID, 10),
 		LastLogin:   parseRFC3339Ptr(lastLogin),
 		CreatedAt:   parseRFC3339Ptr(u.CreatedAt),

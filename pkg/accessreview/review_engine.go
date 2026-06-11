@@ -22,66 +22,42 @@ import (
 	"strings"
 	"time"
 
-	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/accessreview/drivers"
 	"go.probo.inc/probo/pkg/connector"
-	"go.probo.inc/probo/pkg/connector/provider"
 	"go.probo.inc/probo/pkg/coredata"
-	"go.probo.inc/probo/pkg/crypto/cipher"
 	"go.probo.inc/probo/pkg/gid"
 )
 
-// ReviewEngine contains the stateless core logic for access review campaigns:
-// snapshot and source data collection.
-type ReviewEngine struct {
-	pg                *pg.Client
-	scope             coredata.Scoper
-	encryptionKey     cipher.EncryptionKey
-	connectorRegistry *connector.ConnectorRegistry
-	providerRegistry  *provider.Registry
-	logger            *log.Logger
-}
-
-func NewReviewEngine(
-	pgClient *pg.Client,
-	scope coredata.Scoper,
-	encryptionKey cipher.EncryptionKey,
-	connectorRegistry *connector.ConnectorRegistry,
-	providerRegistry *provider.Registry,
-	logger *log.Logger,
-) *ReviewEngine {
-	return &ReviewEngine{
-		pg:                pgClient,
-		scope:             scope,
-		encryptionKey:     encryptionKey,
-		connectorRegistry: connectorRegistry,
-		providerRegistry:  providerRegistry,
-		logger:            logger,
-	}
-}
-
-// FetchSource pulls accounts from a single source and upserts access entries.
-func (e *ReviewEngine) FetchSource(
+// FetchSource pulls accounts from a single campaign source snapshot and upserts
+// access entries against that snapshot.
+func (s *Service) FetchSource(
 	ctx context.Context,
+	scope coredata.Scoper,
 	campaign *coredata.AccessReviewCampaign,
-	sourceID gid.GID,
+	campaignSource *coredata.AccessReviewCampaignSource,
 ) (int, error) {
 	fetchedCount := 0
+
+	if campaignSource.AccessReviewSourceID == nil {
+		return 0, fmt.Errorf("cannot fetch source %s: the access source no longer exists", campaignSource.ID)
+	}
+
+	sourceID := *campaignSource.AccessReviewSourceID
 
 	// Resolve the driver and load baseline data outside the write transaction
 	// so that external HTTP calls do not hold a database connection.
 	var (
-		source   *coredata.AccessSource
+		source   *coredata.AccessReviewSource
 		driver   drivers.Driver
 		baseline []coredata.BaselineAccountEntry
 	)
 
-	err := e.pg.WithTx(
+	err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			source = &coredata.AccessSource{}
-			if err := source.LoadByID(ctx, tx, e.scope, sourceID); err != nil {
+			source = &coredata.AccessReviewSource{}
+			if err := source.LoadByID(ctx, tx, scope, sourceID); err != nil {
 				return fmt.Errorf("cannot load access source %s: %w", sourceID, err)
 			}
 
@@ -91,20 +67,20 @@ func (e *ReviewEngine) FetchSource(
 
 			var err error
 
-			driver, err = e.resolveDriver(ctx, tx, source)
+			driver, err = s.resolveDriver(ctx, tx, scope, source)
 			if err != nil {
 				return fmt.Errorf("cannot resolve driver for source %s: %w", source.Name, err)
 			}
 
 			lastCompletedCampaign := &coredata.AccessReviewCampaign{}
-			if err := lastCompletedCampaign.LoadLastCompletedByOrganizationID(ctx, tx, e.scope, campaign.OrganizationID); err != nil {
+			if err := lastCompletedCampaign.LoadLastCompletedByOrganizationID(ctx, tx, scope, campaign.OrganizationID); err != nil {
 				if !errors.Is(err, coredata.ErrResourceNotFound) {
 					return fmt.Errorf("cannot load last completed campaign: %w", err)
 				}
 			} else {
-				entries := &coredata.AccessEntries{}
+				entries := &coredata.AccessReviewEntries{}
 
-				baseline, err = entries.LoadBaselineBySourceID(ctx, tx, e.scope, lastCompletedCampaign.ID, sourceID)
+				baseline, err = entries.LoadBaselineBySourceID(ctx, tx, scope, lastCompletedCampaign.ID, sourceID)
 				if err != nil {
 					return fmt.Errorf("cannot load baseline entries by source: %w", err)
 				}
@@ -133,7 +109,7 @@ func (e *ReviewEngine) FetchSource(
 
 	fetchedCount = len(accounts)
 
-	err = e.pg.WithTx(
+	err = s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
 			now := time.Now()
@@ -143,38 +119,38 @@ func (e *ReviewEngine) FetchSource(
 				accountKey := normalizeAccountKey(account.Email, account.ExternalID)
 				seenAccountKeys[accountKey] = struct{}{}
 
-				incrementalTag := coredata.AccessEntryIncrementalTagNew
+				incrementalTag := coredata.AccessReviewEntryIncrementalTagNew
 				if _, ok := previousByAccountKey[accountKey]; ok {
-					incrementalTag = coredata.AccessEntryIncrementalTagUnchanged
+					incrementalTag = coredata.AccessReviewEntryIncrementalTagUnchanged
 				}
 
-				entry := &coredata.AccessEntry{
-					ID:                     gid.New(e.scope.GetTenantID(), coredata.AccessEntryEntityType),
-					OrganizationID:         campaign.OrganizationID,
-					AccessReviewCampaignID: campaign.ID,
-					AccessSourceID:         sourceID,
-					Email:                  account.Email,
-					FullName:               account.FullName,
-					Role:                   account.Role,
-					JobTitle:               account.JobTitle,
-					IsAdmin:                account.IsAdmin,
-					MFAStatus:              account.MFAStatus,
-					AuthMethod:             account.AuthMethod,
-					AccountType:            account.AccountType,
-					Active:                 account.Active,
-					LastLogin:              account.LastLogin,
-					AccountCreatedAt:       account.CreatedAt,
-					ExternalID:             account.ExternalID,
-					AccountKey:             accountKey,
-					IncrementalTag:         incrementalTag,
-					Flags:                  []coredata.AccessEntryFlag{},
-					FlagReasons:            []string{},
-					Decision:               coredata.AccessEntryDecisionPending,
-					CreatedAt:              now,
-					UpdatedAt:              now,
+			entry := &coredata.AccessReviewEntry{
+				ID:                           gid.New(scope.GetTenantID(), coredata.AccessReviewEntryEntityType),
+				OrganizationID:               campaign.OrganizationID,
+				AccessReviewCampaignID:       campaign.ID,
+				AccessReviewCampaignSourceID: campaignSource.ID,
+				Email:                        account.Email,
+				FullName:                     account.FullName,
+				Role:                         account.Role,
+				JobTitle:                     account.JobTitle,
+				IsAdmin:                      account.IsAdmin,
+				MFAStatus:                    account.MFAStatus,
+				AuthMethod:                   account.AuthMethod,
+				AccountType:                  account.AccountType,
+				Active:                       account.Active,
+				LastLogin:                    account.LastLogin,
+				AccountCreatedAt:             account.CreatedAt,
+				ExternalID:                   account.ExternalID,
+				AccountKey:                   accountKey,
+				IncrementalTag:               incrementalTag,
+				Flags:                        []coredata.AccessReviewEntryFlag{},
+				FlagReasons:                  []string{},
+				Decision:                     coredata.AccessReviewEntryDecisionPending,
+				CreatedAt:                    now,
+				UpdatedAt:                    now,
 				}
 
-				if err := entry.Upsert(ctx, conn, e.scope); err != nil {
+				if err := entry.Upsert(ctx, conn, scope); err != nil {
 					return fmt.Errorf("cannot upsert access entry: %w", err)
 				}
 			}
@@ -186,26 +162,26 @@ func (e *ReviewEngine) FetchSource(
 					continue
 				}
 
-				entry := &coredata.AccessEntry{
-					ID:                     gid.New(e.scope.GetTenantID(), coredata.AccessEntryEntityType),
-					OrganizationID:         campaign.OrganizationID,
-					AccessReviewCampaignID: campaign.ID,
-					AccessSourceID:         sourceID,
-					Email:                  prev.Email,
-					FullName:               prev.FullName,
-					AccountKey:             accountKey,
-					IncrementalTag:         coredata.AccessEntryIncrementalTagRemoved,
-					Flags:                  []coredata.AccessEntryFlag{},
-					FlagReasons:            []string{},
-					Decision:               coredata.AccessEntryDecisionPending,
-					MFAStatus:              coredata.MFAStatusUnknown,
-					AuthMethod:             coredata.AccessEntryAuthMethodUnknown,
-					AccountType:            coredata.AccessEntryAccountTypeUser,
-					CreatedAt:              now,
-					UpdatedAt:              now,
+				entry := &coredata.AccessReviewEntry{
+					ID:                           gid.New(scope.GetTenantID(), coredata.AccessReviewEntryEntityType),
+					OrganizationID:               campaign.OrganizationID,
+					AccessReviewCampaignID:       campaign.ID,
+					AccessReviewCampaignSourceID: campaignSource.ID,
+					Email:                        prev.Email,
+					FullName:                     prev.FullName,
+					AccountKey:                   accountKey,
+					IncrementalTag:               coredata.AccessReviewEntryIncrementalTagRemoved,
+					Flags:                        []coredata.AccessReviewEntryFlag{},
+					FlagReasons:                  []string{},
+					Decision:                     coredata.AccessReviewEntryDecisionPending,
+					MFAStatus:                    coredata.MFAStatusUnknown,
+					AuthMethod:                   coredata.AccessReviewEntryAuthMethodUnknown,
+					AccountType:                  coredata.AccessReviewEntryAccountTypeUser,
+					CreatedAt:                    now,
+					UpdatedAt:                    now,
 				}
 
-				if err := entry.Upsert(ctx, conn, e.scope); err != nil {
+				if err := entry.Upsert(ctx, conn, scope); err != nil {
 					return fmt.Errorf("cannot upsert removed access entry: %w", err)
 				}
 			}
@@ -233,13 +209,13 @@ func normalizeAccountKey(email, externalID string) string {
 
 // oauthClient returns an HTTP client for an OAuth2 connection, using
 // RefreshableClient when a refresh config is available for the provider.
-func (e *ReviewEngine) oauthClient(
+func (s *Service) oauthClient(
 	ctx context.Context,
 	conn *connector.OAuth2Connection,
 	provider coredata.ConnectorProvider,
 ) (*http.Client, error) {
-	if e.connectorRegistry != nil {
-		refreshCfg := e.connectorRegistry.GetOAuth2RefreshConfig(string(provider))
+	if s.connectorRegistry != nil {
+		refreshCfg := s.connectorRegistry.GetOAuth2RefreshConfig(string(provider))
 		if refreshCfg != nil {
 			return conn.RefreshableClient(ctx, *refreshCfg)
 		}
@@ -252,23 +228,24 @@ func (e *ReviewEngine) oauthClient(
 // For OAuth2 connections it delegates to oauthClient so that token refresh
 // is handled transparently. For other connection types it falls back to
 // the standard Client method.
-func (e *ReviewEngine) connectorHTTPClient(
+func (s *Service) connectorHTTPClient(
 	ctx context.Context,
 	dbConnector *coredata.Connector,
 ) (*http.Client, error) {
 	if oauth2Conn, ok := dbConnector.Connection.(*connector.OAuth2Connection); ok {
-		return e.oauthClient(ctx, oauth2Conn, dbConnector.Provider)
+		return s.oauthClient(ctx, oauth2Conn, dbConnector.Provider)
 	}
 
 	return dbConnector.Connection.Client(ctx)
 }
 
-// resolveDriver creates a Driver for the given AccessSource based on
+// resolveDriver creates a Driver for the given AccessReviewSource based on
 // connector_id (null = built-in, set = connector-backed).
-func (e *ReviewEngine) resolveDriver(
+func (s *Service) resolveDriver(
 	ctx context.Context,
 	tx pg.Tx,
-	source *coredata.AccessSource,
+	scope coredata.Scoper,
+	source *coredata.AccessReviewSource,
 ) (drivers.Driver, error) {
 	if source.ConnectorID == nil {
 		// CSV-backed source: use CSVDriver when csv_data is present
@@ -277,12 +254,12 @@ func (e *ReviewEngine) resolveDriver(
 		}
 
 		// Built-in driver: default to ProboMemberships
-		return drivers.NewProboMembershipsDriver(e.pg, e.scope, source.OrganizationID), nil
+		return drivers.NewProboMembershipsDriver(s.pg, scope, source.OrganizationID), nil
 	}
 
 	// Connector-backed: look up the connector and resolve driver by provider
 	dbConnector := &coredata.Connector{}
-	if err := dbConnector.LoadByID(ctx, tx, e.scope, *source.ConnectorID, e.encryptionKey); err != nil {
+	if err := dbConnector.LoadByID(ctx, tx, scope, *source.ConnectorID, s.encryptionKey); err != nil {
 		return nil, fmt.Errorf("cannot load connector %s: %w", *source.ConnectorID, err)
 	}
 
@@ -294,7 +271,7 @@ func (e *ReviewEngine) resolveDriver(
 
 	// Build an HTTP client. For OAuth2 connections, use RefreshableClient
 	// so that short-lived tokens are transparently refreshed.
-	httpClient, err := e.connectorHTTPClient(ctx, dbConnector)
+	httpClient, err := s.connectorHTTPClient(ctx, dbConnector)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create HTTP client for %s connector: %w", dbConnector.Provider, err)
 	}
@@ -306,16 +283,16 @@ func (e *ReviewEngine) resolveDriver(
 	if oauth2Conn, ok := dbConnector.Connection.(*connector.OAuth2Connection); ok {
 		if oauth2Conn.AccessToken != tokenBefore {
 			dbConnector.UpdatedAt = time.Now()
-			if err := dbConnector.Update(ctx, tx, e.scope, e.encryptionKey); err != nil {
+			if err := dbConnector.Update(ctx, tx, scope, s.encryptionKey); err != nil {
 				return nil, fmt.Errorf("cannot persist refreshed token for connector %s: %w", *source.ConnectorID, err)
 			}
 		}
 	}
 
-	reg, ok := e.providerRegistry.Get(dbConnector.Provider)
+	reg, ok := s.providerRegistry.Get(dbConnector.Provider)
 	if !ok || reg.NewDriver == nil {
 		return nil, fmt.Errorf("cannot resolve driver: unsupported provider %q", dbConnector.Provider)
 	}
 
-	return reg.NewDriver(ctx, httpClient, dbConnector, e.logger)
+	return reg.NewDriver(ctx, httpClient, dbConnector, s.logger)
 }

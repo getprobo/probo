@@ -111,8 +111,8 @@ func (d *ClickUpDriver) ListAccounts(ctx context.Context) ([]AccountRecord, erro
 			IsAdmin:     isAdmin,
 			ExternalID:  m.User.ID.String(),
 			MFAStatus:   coredata.MFAStatusUnknown,
-			AuthMethod:  coredata.AccessEntryAuthMethodUnknown,
-			AccountType: coredata.AccessEntryAccountTypeUser,
+			AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,
+			AccountType: coredata.AccessReviewEntryAccountTypeUser,
 		}
 
 		if m.InvitePending != nil {

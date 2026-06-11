@@ -110,13 +110,13 @@ type Organization implements Node {
 
     measureCategories: [String!]! @goField(forceResolver: true)
 
-    accessSources(
+    accessReviewSources(
         first: Int
         after: CursorKey
         last: Int
         before: CursorKey
-        orderBy: AccessSourceOrder
-    ): AccessSourceConnection! @goField(forceResolver: true)
+        orderBy: AccessReviewSourceOrder
+    ): AccessReviewSourceConnection! @goField(forceResolver: true)
 
     accessReviewCampaigns(
         first: Int

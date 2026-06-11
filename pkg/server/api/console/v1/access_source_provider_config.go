@@ -40,7 +40,7 @@ type providerOrgConfig struct {
 }
 
 // providerOrgConfigs is the single source of truth that the three
-// AccessSource picker resolvers (ProviderOrganizations,
+// AccessReviewSource picker resolvers (ProviderOrganizations,
 // SelectedOrganization, NeedsConfiguration) dispatch through. Adding a
 // provider takes one entry here, not three switch arms.
 var providerOrgConfigs = map[coredata.ConnectorProvider]providerOrgConfig{

@@ -29,9 +29,9 @@ query(
   $id: ID!,
   $first: Int,
   $after: CursorKey,
-  $orderBy: AccessEntryOrder,
-  $accessSourceId: ID,
-  $filter: AccessEntryFilter
+  $orderBy: AccessReviewEntryOrder,
+  $campaignSourceId: ID,
+  $filter: AccessReviewEntryFilter
 ) {
   node(id: $id) {
     __typename
@@ -40,7 +40,7 @@ query(
         first: $first,
         after: $after,
         orderBy: $orderBy,
-        accessSourceId: $accessSourceId,
+        campaignSourceId: $campaignSourceId,
         filter: $filter
       ) {
         totalCount
@@ -81,24 +81,24 @@ query(
 `
 
 type entryNode struct {
-	ID             string   `json:"id"`
-	Email          string   `json:"email"`
-	FullName       string   `json:"fullName"`
-	Role           string   `json:"role"`
-	JobTitle       string   `json:"jobTitle"`
-	IsAdmin        bool     `json:"isAdmin"`
-	Active         *bool    `json:"active"`
-	MfaStatus      string   `json:"mfaStatus"`
-	AuthMethod     string   `json:"authMethod"`
-	AccountType    string   `json:"accountType"`
-	LastLogin      *string  `json:"lastLogin"`
-	ExternalID     string   `json:"externalId"`
-	IncrementalTag string   `json:"incrementalTag"`
-	Flags          []string `json:"flags"`
-	FlagReasons    []string `json:"flagReasons"`
-	Decision       string   `json:"decision"`
-	DecisionNote   *string  `json:"decisionNote"`
-	AccessSource   struct {
+	ID                 string   `json:"id"`
+	Email              string   `json:"email"`
+	FullName           string   `json:"fullName"`
+	Role               string   `json:"role"`
+	JobTitle           string   `json:"jobTitle"`
+	IsAdmin            bool     `json:"isAdmin"`
+	Active             *bool    `json:"active"`
+	MfaStatus          string   `json:"mfaStatus"`
+	AuthMethod         string   `json:"authMethod"`
+	AccountType        string   `json:"accountType"`
+	LastLogin          *string  `json:"lastLogin"`
+	ExternalID         string   `json:"externalId"`
+	IncrementalTag     string   `json:"incrementalTag"`
+	Flags              []string `json:"flags"`
+	FlagReasons        []string `json:"flagReasons"`
+	Decision           string   `json:"decision"`
+	DecisionNote       *string  `json:"decisionNote"`
+	AccessReviewSource struct {
 		ID   string `json:"id"`
 		Name string `json:"name"`
 	} `json:"accessSource"`
@@ -107,18 +107,18 @@ type entryNode struct {
 
 func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 	var (
-		flagLimit       int
-		flagOrderBy     string
-		flagOrderDir    string
-		flagSourceID    string
-		flagDecision    string
-		flagFlag        string
-		flagIncTag      string
-		flagIsAdmin     *bool
-		flagActive      *bool
-		flagAuthMethod  string
-		flagAccountType string
-		flagOutput      *string
+		flagLimit            int
+		flagOrderBy          string
+		flagOrderDir         string
+		flagCampaignSourceID string
+		flagDecision         string
+		flagFlag             string
+		flagIncTag           string
+		flagIsAdmin          *bool
+		flagActive           *bool
+		flagAuthMethod       string
+		flagAccountType      string
+		flagOutput           *string
 	)
 
 	cmd := &cobra.Command{
@@ -129,7 +129,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
   prb access-review entry list <campaign-id>
 
   # List entries for a specific source
-  prb access-review entry list <campaign-id> --source-id <source-id>
+  prb access-review entry list <campaign-id> --campaign-source-id <source-id>
 
   # List only pending entries
   prb access-review entry list <campaign-id> --decision PENDING
@@ -178,8 +178,8 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				}
 			}
 
-			if flagSourceID != "" {
-				variables["accessSourceId"] = flagSourceID
+			if flagCampaignSourceID != "" {
+				variables["campaignSourceId"] = flagCampaignSourceID
 			}
 
 			filter := map[string]any{}
@@ -326,7 +326,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 					e.ID,
 					e.Email,
 					e.FullName,
-					e.AccessSource.Name,
+					e.AccessReviewSource.Name,
 					e.Decision,
 					strings.Join(e.Flags, ","),
 					admin,
@@ -354,7 +354,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().IntVarP(&flagLimit, "limit", "L", 30, "Maximum number of entries to list")
 	cmd.Flags().StringVar(&flagOrderBy, "order-by", "", "Order by field (CREATED_AT)")
 	cmd.Flags().StringVar(&flagOrderDir, "order-direction", "DESC", "Sort direction (ASC, DESC)")
-	cmd.Flags().StringVar(&flagSourceID, "source-id", "", "Filter by access source ID")
+	cmd.Flags().StringVar(&flagCampaignSourceID, "source-id", "", "Filter by access source ID")
 	cmd.Flags().StringVar(&flagDecision, "decision", "", "Filter by decision (PENDING, APPROVED, REVOKE, DEFER, ESCALATE)")
 	cmd.Flags().StringVar(&flagFlag, "flag", "", "Filter by flag (NONE, ORPHANED, INACTIVE, EXCESSIVE, ROLE_MISMATCH, NEW)")
 	cmd.Flags().StringVar(&flagIncTag, "incremental-tag", "", "Filter by incremental tag (NEW, REMOVED, UNCHANGED)")

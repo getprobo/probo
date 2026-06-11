@@ -95,8 +95,8 @@ func (d *NeonDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error) 
 				Active:      new(m.User.DeactivatedAt == ""),
 				IsAdmin:     neonIsAdmin(m.Member.Role),
 				MFAStatus:   neonMFAStatus(m.User.HasMFA),
-				AuthMethod:  coredata.AccessEntryAuthMethodUnknown,
-				AccountType: coredata.AccessEntryAccountTypeUser,
+				AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,
+				AccountType: coredata.AccessReviewEntryAccountTypeUser,
 				ExternalID:  neonExternalID(m),
 				CreatedAt:   parseRFC3339Ptr(m.Member.JoinedAt),
 			})

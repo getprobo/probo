@@ -123,9 +123,9 @@ func (d *DatadogDriver) ListAccounts(ctx context.Context) ([]AccountRecord, erro
 				}
 			}
 
-			accountType := coredata.AccessEntryAccountTypeUser
+			accountType := coredata.AccessReviewEntryAccountTypeUser
 			if u.Attributes.ServiceAccount {
-				accountType = coredata.AccessEntryAccountTypeServiceAccount
+				accountType = coredata.AccessReviewEntryAccountTypeServiceAccount
 			}
 
 			mfaStatus := coredata.MFAStatusDisabled
@@ -144,7 +144,7 @@ func (d *DatadogDriver) ListAccounts(ctx context.Context) ([]AccountRecord, erro
 				// Datadog's /api/v2/users does not expose the login method
 				// used (no allowed_login_methods in the schema), so the
 				// auth method is unknown.
-				AuthMethod:  coredata.AccessEntryAuthMethodUnknown,
+				AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,
 				AccountType: accountType,
 				ExternalID:  u.ID,
 				CreatedAt:   parseRFC3339Ptr(u.Attributes.CreatedAt),

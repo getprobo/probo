@@ -353,7 +353,7 @@ func (r *qoveryNameResolver) ResolveInstanceName(ctx context.Context) (string, e
 }
 
 // renderNameResolver resolves the Render workspace (owner) name from
-// GET /v1/owners/{ownerId}, used to title the AccessSource "Render <name>".
+// GET /v1/owners/{ownerId}, used to title the AccessReviewSource "Render <name>".
 type renderNameResolver struct {
 	httpClient *http.Client
 	ownerID    string
@@ -651,7 +651,7 @@ func (r *anthropicNameResolver) ResolveInstanceName(ctx context.Context) (string
 }
 
 // sendGridNameResolver resolves the SendGrid account's company name from
-// the user profile endpoint, used as the AccessSource instance label.
+// the user profile endpoint, used as the AccessReviewSource instance label.
 type sendGridNameResolver struct {
 	httpClient *http.Client
 }
@@ -1062,7 +1062,7 @@ func (r *pagerdutyNameResolver) ResolveInstanceName(_ context.Context) (string, 
 
 // datadogNameResolver returns the Datadog site/region label stored in
 // connector settings (e.g. "US3"), captured during the OAuth callback. No
-// HTTP call is required; the AccessSource title becomes "Datadog <region>".
+// HTTP call is required; the AccessReviewSource title becomes "Datadog <region>".
 // Org-name resolution is intentionally omitted to keep scopes to
 // user_access_read (the org name endpoint needs org_management).
 type datadogNameResolver struct {
@@ -1132,7 +1132,7 @@ func (r *oktaNameResolver) ResolveInstanceName(ctx context.Context) (string, err
 
 // zendeskNameResolver returns the Zendesk subdomain stored in connector
 // settings (e.g. "acme" for acme.zendesk.com), captured at connect time. No
-// HTTP call is required; the AccessSource title becomes "Zendesk <subdomain>".
+// HTTP call is required; the AccessReviewSource title becomes "Zendesk <subdomain>".
 // Account-name resolution is intentionally omitted to keep the scope to
 // users:read (Zendesk exposes no human account name on that scope).
 type zendeskNameResolver struct {

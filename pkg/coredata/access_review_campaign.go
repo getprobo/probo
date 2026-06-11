@@ -54,6 +54,34 @@ func (c AccessReviewCampaign) CursorKey(orderBy AccessReviewCampaignOrderField) 
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
+func (c *AccessReviewCampaign) LockForUpdate(
+	ctx context.Context,
+	conn pg.Tx,
+	scope Scoper,
+) error {
+	q := `
+SELECT id
+FROM access_review_campaigns
+WHERE %s
+  AND id = @id
+FOR UPDATE
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+	args := pgx.StrictNamedArgs{"id": c.ID}
+	maps.Copy(args, scope.SQLArguments())
+
+	var id gid.GID
+	if err := conn.QueryRow(ctx, q, args).Scan(&id); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+
+		return fmt.Errorf("cannot lock campaign: %w", err)
+	}
+
+	return nil
+}
+
 func (c *AccessReviewCampaign) AuthorizationAttributes(
 	ctx context.Context,
 	conn pg.Querier,

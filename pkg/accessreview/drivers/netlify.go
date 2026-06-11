@@ -84,8 +84,8 @@ func (d *NetlifyDriver) ListAccounts(ctx context.Context) ([]AccountRecord, erro
 				Role:        m.Role,
 				ExternalID:  m.ID,
 				MFAStatus:   coredata.MFAStatusUnknown,
-				AuthMethod:  coredata.AccessEntryAuthMethodUnknown,
-				AccountType: coredata.AccessEntryAccountTypeUser,
+				AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,
+				AccountType: coredata.AccessReviewEntryAccountTypeUser,
 			}
 			records = append(records, record)
 		}

@@ -38,5 +38,5 @@ func TestResendDriver(t *testing.T) {
 	r := records[0]
 	assert.NotEmpty(t, r.FullName)
 	assert.NotEmpty(t, r.ExternalID)
-	assert.Equal(t, coredata.AccessEntryAccountTypeServiceAccount, r.AccountType)
+	assert.Equal(t, coredata.AccessReviewEntryAccountTypeServiceAccount, r.AccountType)
 }

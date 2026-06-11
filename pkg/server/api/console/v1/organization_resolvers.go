@@ -11,6 +11,7 @@ import (
 	"fmt"
 
 	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/accessreview"
 	"go.probo.inc/probo/pkg/agentrun"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
@@ -157,20 +158,20 @@ func (r *organizationResolver) MeasureCategories(ctx context.Context, obj *types
 	return categories, nil
 }
 
-// AccessSources is the resolver for the accessSources field.
-func (r *organizationResolver) AccessSources(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AccessSourceOrder) (*types.AccessSourceConnection, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionAccessSourceList)
+// AccessReviewSources is the resolver for the accessSources field.
+func (r *organizationResolver) AccessReviewSources(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AccessReviewSourceOrder) (*types.AccessReviewSourceConnection, error) {
+	scope, err := r.authorize(ctx, obj.ID, accessreview.ActionSourceList)
 	if err != nil {
 		return nil, err
 	}
 
-	pageOrderBy := page.OrderBy[coredata.AccessSourceOrderField]{
-		Field:     coredata.AccessSourceOrderFieldCreatedAt,
+	pageOrderBy := page.OrderBy[coredata.AccessReviewSourceOrderField]{
+		Field:     coredata.AccessReviewSourceOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
 
 	if orderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.AccessSourceOrderField]{
+		pageOrderBy = page.OrderBy[coredata.AccessReviewSourceOrderField]{
 			Field:     orderBy.Field,
 			Direction: orderBy.Direction,
 		}
@@ -178,17 +179,17 @@ func (r *organizationResolver) AccessSources(ctx context.Context, obj *types.Org
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	p, err := r.accessReview.Sources(scope).ListForOrganizationID(ctx, obj.ID, cursor)
+	p, err := r.accessReview.ListSourcesForOrganizationID(ctx, scope, obj.ID, cursor)
 	if err != nil {
 		panic(fmt.Errorf("cannot list access sources: %w", err))
 	}
 
-	return types.NewAccessSourceConnection(p, r, obj.ID), nil
+	return types.NewAccessReviewSourceConnection(p, r, obj.ID), nil
 }
 
 // AccessReviewCampaigns is the resolver for the accessReviewCampaigns field.
 func (r *organizationResolver) AccessReviewCampaigns(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AccessReviewCampaignOrder) (*types.AccessReviewCampaignConnection, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionAccessReviewCampaignList)
+	scope, err := r.authorize(ctx, obj.ID, accessreview.ActionCampaignList)
 	if err != nil {
 		return nil, err
 	}
@@ -207,7 +208,7 @@ func (r *organizationResolver) AccessReviewCampaigns(ctx context.Context, obj *t
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	p, err := r.accessReview.Campaigns(scope).ListForOrganizationID(ctx, obj.ID, cursor)
+	p, err := r.accessReview.ListCampaignsForOrganizationID(ctx, scope, obj.ID, cursor)
 	if err != nil {
 		panic(fmt.Errorf("cannot list access review campaigns: %w", err))
 	}

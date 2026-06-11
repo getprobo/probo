@@ -88,9 +88,9 @@ func (d *LinearDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error
 		}
 
 		for _, u := range resp.Data.Users.Nodes {
-			accountType := coredata.AccessEntryAccountTypeUser
+			accountType := coredata.AccessReviewEntryAccountTypeUser
 			if strings.HasSuffix(u.Email, ".linear.app") {
-				accountType = coredata.AccessEntryAccountTypeServiceAccount
+				accountType = coredata.AccessReviewEntryAccountTypeServiceAccount
 			}
 
 			record := AccountRecord{
@@ -101,7 +101,7 @@ func (d *LinearDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error
 				IsAdmin:     u.Admin,
 				ExternalID:  u.ID,
 				MFAStatus:   coredata.MFAStatusUnknown,
-				AuthMethod:  coredata.AccessEntryAuthMethodUnknown,
+				AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,
 				AccountType: accountType,
 			}
 

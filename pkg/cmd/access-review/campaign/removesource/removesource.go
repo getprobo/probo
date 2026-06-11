@@ -24,8 +24,8 @@ import (
 )
 
 const removeSourceMutation = `
-mutation($input: RemoveAccessReviewCampaignScopeSourceInput!) {
-  removeAccessReviewCampaignScopeSource(input: $input) {
+mutation($input: RemoveAccessReviewCampaignSourceInput!) {
+  removeAccessReviewCampaignSource(input: $input) {
     accessReviewCampaign {
       id
       name
@@ -36,13 +36,13 @@ mutation($input: RemoveAccessReviewCampaignScopeSourceInput!) {
 `
 
 type removeSourceResponse struct {
-	RemoveAccessReviewCampaignScopeSource struct {
+	RemoveAccessReviewCampaignSource struct {
 		AccessReviewCampaign struct {
 			ID     string `json:"id"`
 			Name   string `json:"name"`
 			Status string `json:"status"`
 		} `json:"accessReviewCampaign"`
-	} `json:"removeAccessReviewCampaignScopeSource"`
+	} `json:"removeAccessReviewCampaignSource"`
 }
 
 func NewCmdRemoveSource(f *cmdutil.Factory) *cobra.Command {
@@ -73,7 +73,7 @@ func NewCmdRemoveSource(f *cmdutil.Factory) *cobra.Command {
 
 			input := map[string]any{
 				"accessReviewCampaignId": args[0],
-				"accessSourceId":         flagSourceID,
+				"accessReviewSourceId":   flagSourceID,
 			}
 
 			data, err := client.Do(
@@ -89,7 +89,7 @@ func NewCmdRemoveSource(f *cmdutil.Factory) *cobra.Command {
 				return fmt.Errorf("cannot parse response: %w", err)
 			}
 
-			c := resp.RemoveAccessReviewCampaignScopeSource.AccessReviewCampaign
+			c := resp.RemoveAccessReviewCampaignSource.AccessReviewCampaign
 			out := f.IOStreams.Out
 			_, _ = fmt.Fprintf(out, "Removed source %s from campaign %s\n", flagSourceID, c.ID)
 

@@ -159,8 +159,8 @@ func (d *HerokuDriver) listTeamMembers(ctx context.Context) ([]AccountRecord, er
 			Role:        m.Role,
 			IsAdmin:     isAdmin,
 			MFAStatus:   mfaStatus,
-			AuthMethod:  coredata.AccessEntryAuthMethodUnknown,
-			AccountType: coredata.AccessEntryAccountTypeUser,
+			AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,
+			AccountType: coredata.AccessReviewEntryAccountTypeUser,
 			ExternalID:  externalID,
 		}
 
@@ -268,8 +268,8 @@ func herokuPersonalRecord(externalID, email, role string, isAdmin bool) AccountR
 		Role:        role,
 		IsAdmin:     isAdmin,
 		MFAStatus:   coredata.MFAStatusUnknown,
-		AuthMethod:  coredata.AccessEntryAuthMethodUnknown,
-		AccountType: coredata.AccessEntryAccountTypeUser,
+		AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,
+		AccountType: coredata.AccessReviewEntryAccountTypeUser,
 		ExternalID:  externalID,
 	}
 }

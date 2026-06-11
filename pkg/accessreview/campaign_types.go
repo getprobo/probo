@@ -24,11 +24,11 @@ const campaignNameMaxLength = 255
 
 type (
 	CreateAccessReviewCampaignRequest struct {
-		OrganizationID    gid.GID
-		Name              string
-		Description       string
-		FrameworkControls []string
-		AccessSourceIDs   []gid.GID
+		OrganizationID        gid.GID
+		Name                  string
+		Description           string
+		FrameworkControls     []string
+		AccessReviewSourceIDs []gid.GID
 	}
 
 	UpdateAccessReviewCampaignRequest struct {
@@ -38,14 +38,14 @@ type (
 		FrameworkControls *[]string
 	}
 
-	AddCampaignScopeSourceRequest struct {
-		CampaignID     gid.GID
-		AccessSourceID gid.GID
+	AddCampaignSourceRequest struct {
+		CampaignID           gid.GID
+		AccessReviewSourceID gid.GID
 	}
 
-	RemoveCampaignScopeSourceRequest struct {
-		CampaignID     gid.GID
-		AccessSourceID gid.GID
+	RemoveCampaignSourceRequest struct {
+		CampaignID           gid.GID
+		AccessReviewSourceID gid.GID
 	}
 )
 

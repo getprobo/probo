@@ -89,8 +89,8 @@ func (d *OnePasswordUsersAPIDriver) ListAccounts(ctx context.Context) ([]Account
 				Active:      new(u.State == "ACTIVE"),
 				ExternalID:  u.ID,
 				MFAStatus:   coredata.MFAStatusUnknown,
-				AuthMethod:  coredata.AccessEntryAuthMethodUnknown,
-				AccountType: coredata.AccessEntryAccountTypeUser,
+				AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,
+				AccountType: coredata.AccessReviewEntryAccountTypeUser,
 			}
 
 			if u.CreateTime != "" {

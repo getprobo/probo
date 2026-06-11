@@ -67,9 +67,9 @@ func (d *NotionDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error
 		}
 
 		for _, u := range resp.Results {
-			accountType := coredata.AccessEntryAccountTypeUser
+			accountType := coredata.AccessReviewEntryAccountTypeUser
 			if u.Type == "bot" {
-				accountType = coredata.AccessEntryAccountTypeServiceAccount
+				accountType = coredata.AccessReviewEntryAccountTypeServiceAccount
 			}
 
 			var email string
@@ -84,7 +84,7 @@ func (d *NotionDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error
 				IsAdmin:     false,
 				ExternalID:  u.ID,
 				MFAStatus:   coredata.MFAStatusUnknown,
-				AuthMethod:  coredata.AccessEntryAuthMethodUnknown,
+				AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,
 				AccountType: accountType,
 			}
 

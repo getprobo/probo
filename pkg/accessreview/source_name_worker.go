@@ -48,7 +48,7 @@ func NewSourceNameWorker(
 	providerRegistry *provider.Registry,
 	logger *log.Logger,
 	opts ...worker.Option,
-) *worker.Worker[coredata.AccessSource] {
+) *worker.Worker[coredata.AccessReviewSource] {
 	h := &sourceNameHandler{
 		pg:                pgClient,
 		encryptionKey:     encryptionKey,
@@ -70,8 +70,8 @@ func NewSourceNameWorker(
 	)
 }
 
-func (h *sourceNameHandler) Claim(ctx context.Context) (coredata.AccessSource, error) {
-	var source coredata.AccessSource
+func (h *sourceNameHandler) Claim(ctx context.Context) (coredata.AccessReviewSource, error) {
+	var source coredata.AccessReviewSource
 
 	err := h.pg.WithTx(
 		ctx,
@@ -80,17 +80,17 @@ func (h *sourceNameHandler) Claim(ctx context.Context) (coredata.AccessSource, e
 		},
 	)
 	if err != nil {
-		if errors.Is(err, coredata.ErrNoAccessSourceNameSyncAvailable) {
-			return coredata.AccessSource{}, worker.ErrNoTask
+		if errors.Is(err, coredata.ErrNoAccessReviewSourceNameSyncAvailable) {
+			return coredata.AccessReviewSource{}, worker.ErrNoTask
 		}
 
-		return coredata.AccessSource{}, err
+		return coredata.AccessReviewSource{}, err
 	}
 
 	return source, nil
 }
 
-func (h *sourceNameHandler) Process(ctx context.Context, source coredata.AccessSource) error {
+func (h *sourceNameHandler) Process(ctx context.Context, source coredata.AccessReviewSource) error {
 	h.logger.InfoCtx(
 		ctx,
 		"syncing source name",
@@ -206,7 +206,7 @@ func (h *sourceNameHandler) Process(ctx context.Context, source coredata.AccessS
 
 func (h *sourceNameHandler) markNameSynced(
 	ctx context.Context,
-	source *coredata.AccessSource,
+	source *coredata.AccessReviewSource,
 ) error {
 	return h.pg.WithTx(
 		ctx,

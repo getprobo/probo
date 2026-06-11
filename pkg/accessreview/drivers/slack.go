@@ -91,9 +91,9 @@ func (d *SlackDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error)
 				continue
 			}
 
-			accountType := coredata.AccessEntryAccountTypeUser
+			accountType := coredata.AccessReviewEntryAccountTypeUser
 			if m.IsBot || m.IsAppUser {
-				accountType = coredata.AccessEntryAccountTypeServiceAccount
+				accountType = coredata.AccessReviewEntryAccountTypeServiceAccount
 			}
 
 			record := AccountRecord{
@@ -105,7 +105,7 @@ func (d *SlackDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error)
 				IsAdmin:     m.IsAdmin || m.IsOwner || m.IsPrimaryOwner,
 				ExternalID:  m.ID,
 				MFAStatus:   slackMFAStatus(m.Has2FA),
-				AuthMethod:  coredata.AccessEntryAuthMethodUnknown,
+				AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,
 				AccountType: accountType,
 			}
 

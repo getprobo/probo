@@ -100,8 +100,8 @@ func (d *MondayDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error
 				Active:      &active,
 				IsAdmin:     u.IsAdmin,
 				MFAStatus:   coredata.MFAStatusUnknown,
-				AuthMethod:  coredata.AccessEntryAuthMethodUnknown,
-				AccountType: coredata.AccessEntryAccountTypeUser,
+				AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,
+				AccountType: coredata.AccessReviewEntryAccountTypeUser,
 				ExternalID:  u.ID,
 			}
 

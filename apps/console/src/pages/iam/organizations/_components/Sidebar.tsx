@@ -69,7 +69,7 @@ const fragment = graphql`
             action: "core:statement-of-applicability:list"
         )
         canListAccessReviewCampaigns: permission(
-            action: "core:access-review-campaign:list"
+            action: "access-review:campaign:list"
         )
     }
 `;

@@ -44,9 +44,9 @@ func TestDatadogDriver(t *testing.T) {
 	assert.True(t, r.IsAdmin)
 	assert.Equal(t, "Datadog Admin Role", r.Role)
 	assert.Equal(t, "Security Engineer", r.JobTitle)
-	assert.Equal(t, coredata.AccessEntryAccountTypeUser, r.AccountType)
+	assert.Equal(t, coredata.AccessReviewEntryAccountTypeUser, r.AccountType)
 	assert.Equal(t, coredata.MFAStatusEnabled, r.MFAStatus)
-	assert.Equal(t, coredata.AccessEntryAuthMethodUnknown, r.AuthMethod)
+	assert.Equal(t, coredata.AccessReviewEntryAuthMethodUnknown, r.AuthMethod)
 
 	// Second record exercises the inactive, non-admin, and service-account
 	// (MFA-disabled) branches.
@@ -57,6 +57,6 @@ func TestDatadogDriver(t *testing.T) {
 	assert.False(t, *r2.Active)
 	assert.False(t, r2.IsAdmin)
 	assert.Equal(t, "Datadog Standard Role", r2.Role)
-	assert.Equal(t, coredata.AccessEntryAccountTypeServiceAccount, r2.AccountType)
+	assert.Equal(t, coredata.AccessReviewEntryAccountTypeServiceAccount, r2.AccountType)
 	assert.Equal(t, coredata.MFAStatusDisabled, r2.MFAStatus)
 }

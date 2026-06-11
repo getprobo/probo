@@ -40,11 +40,11 @@ func TestClerkDriver(t *testing.T) {
 	assert.Equal(t, "user_3EfkCEWmtIsoMD3rRxIpDsBOPzv", first.ExternalID)
 	assert.Equal(t, "c@example.com", first.Email)
 	assert.Equal(t, "c c", first.FullName)
-	assert.Equal(t, coredata.AccessEntryAccountTypeUser, first.AccountType)
+	assert.Equal(t, coredata.AccessReviewEntryAccountTypeUser, first.AccountType)
 	require.NotNil(t, first.Active)
 	assert.True(t, *first.Active)
 	assert.Equal(t, coredata.MFAStatusDisabled, first.MFAStatus)
-	assert.Equal(t, coredata.AccessEntryAuthMethodPassword, first.AuthMethod)
+	assert.Equal(t, coredata.AccessReviewEntryAuthMethodPassword, first.AuthMethod)
 	assert.NotNil(t, first.CreatedAt)
 	assert.Nil(t, first.LastLogin)
 
@@ -60,7 +60,7 @@ func TestClerkDriver(t *testing.T) {
 	assert.Equal(t, "a a", third.FullName)
 	require.NotNil(t, third.Active)
 	assert.False(t, *third.Active)
-	assert.Equal(t, coredata.AccessEntryAuthMethodPassword, third.AuthMethod)
+	assert.Equal(t, coredata.AccessReviewEntryAuthMethodPassword, third.AuthMethod)
 }
 
 func TestClerkPrimaryEmail(t *testing.T) {

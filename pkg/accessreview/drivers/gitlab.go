@@ -105,8 +105,8 @@ func (d *GitLabDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error
 				Active:      &active,
 				IsAdmin:     m.AccessLevel >= 50, // 50 = Owner
 				MFAStatus:   coredata.MFAStatusUnknown,
-				AuthMethod:  coredata.AccessEntryAuthMethodUnknown,
-				AccountType: coredata.AccessEntryAccountTypeUser,
+				AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,
+				AccountType: coredata.AccessReviewEntryAccountTypeUser,
 				ExternalID:  strconv.FormatInt(m.ID, 10),
 			}
 

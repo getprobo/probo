@@ -72,8 +72,8 @@ func (d *BrexDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error) 
 				IsAdmin:     false,
 				ExternalID:  u.ID,
 				MFAStatus:   coredata.MFAStatusUnknown,
-				AuthMethod:  coredata.AccessEntryAuthMethodUnknown,
-				AccountType: coredata.AccessEntryAccountTypeUser,
+				AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,
+				AccountType: coredata.AccessReviewEntryAccountTypeUser,
 			}
 
 			if record.Email != "" {

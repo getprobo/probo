@@ -98,8 +98,8 @@ func (d *BetterStackDriver) ListAccounts(ctx context.Context) ([]AccountRecord, 
 				Active:      betterStackActive(member.Type),
 				IsAdmin:     betterStackIsAdmin(member.Attributes.Role),
 				MFAStatus:   coredata.MFAStatusUnknown,
-				AuthMethod:  coredata.AccessEntryAuthMethodUnknown,
-				AccountType: coredata.AccessEntryAccountTypeUser,
+				AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,
+				AccountType: coredata.AccessReviewEntryAccountTypeUser,
 				ExternalID:  member.ID,
 			}
 

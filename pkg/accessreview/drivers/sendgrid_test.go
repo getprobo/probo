@@ -46,9 +46,9 @@ func TestSendGridDriver(t *testing.T) {
 	assert.Equal(t, "Owner", owner.Role)
 	assert.True(t, owner.IsAdmin)
 	assert.Equal(t, "owner@example.com", owner.ExternalID)
-	assert.Equal(t, coredata.AccessEntryAccountTypeUser, owner.AccountType)
+	assert.Equal(t, coredata.AccessReviewEntryAccountTypeUser, owner.AccountType)
 	// is_sso=false on the owner -> authenticates with SendGrid credentials.
-	assert.Equal(t, coredata.AccessEntryAuthMethodPassword, owner.AuthMethod)
+	assert.Equal(t, coredata.AccessReviewEntryAuthMethodPassword, owner.AuthMethod)
 	// The owner is a full-access user whose scope catalog contains BOTH
 	// 2fa_exempt and 2fa_required, so the MFA signal is ambiguous and the
 	// driver reports Unknown rather than guessing from scope ordering.
@@ -66,7 +66,7 @@ func TestSendGridDriver(t *testing.T) {
 	assert.False(t, teammate.IsAdmin)
 	// Non-unified teammate: username is a handle distinct from the email.
 	assert.Equal(t, "taylor-teammate", teammate.ExternalID)
-	assert.Equal(t, coredata.AccessEntryAuthMethodSSO, teammate.AuthMethod)
+	assert.Equal(t, coredata.AccessReviewEntryAuthMethodSSO, teammate.AuthMethod)
 	assert.Equal(t, coredata.MFAStatusEnabled, teammate.MFAStatus)
 }
 

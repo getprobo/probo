@@ -24,8 +24,8 @@ import (
 )
 
 const decideMutation = `
-mutation($input: RecordAccessEntryDecisionInput!) {
-  recordAccessEntryDecision(input: $input) {
+mutation($input: RecordAccessReviewEntryDecisionInput!) {
+  recordAccessReviewEntryDecision(input: $input) {
     accessEntry {
       id
       email
@@ -39,8 +39,8 @@ mutation($input: RecordAccessEntryDecisionInput!) {
 `
 
 type decideResponse struct {
-	RecordAccessEntryDecision struct {
-		AccessEntry struct {
+	RecordAccessReviewEntryDecision struct {
+		AccessReviewEntry struct {
 			ID           string  `json:"id"`
 			Email        string  `json:"email"`
 			FullName     string  `json:"fullName"`
@@ -48,7 +48,7 @@ type decideResponse struct {
 			DecisionNote *string `json:"decisionNote"`
 			DecidedAt    *string `json:"decidedAt"`
 		} `json:"accessEntry"`
-	} `json:"recordAccessEntryDecision"`
+	} `json:"recordAccessReviewEntryDecision"`
 }
 
 func NewCmdDecide(f *cmdutil.Factory) *cobra.Command {
@@ -102,8 +102,8 @@ func NewCmdDecide(f *cmdutil.Factory) *cobra.Command {
 			)
 
 			input := map[string]any{
-				"accessEntryId": args[0],
-				"decision":      flagDecision,
+				"accessReviewEntryId": args[0],
+				"decision":            flagDecision,
 			}
 			if flagNote != "" {
 				input["decisionNote"] = flagNote
@@ -122,7 +122,7 @@ func NewCmdDecide(f *cmdutil.Factory) *cobra.Command {
 				return fmt.Errorf("cannot parse response: %w", err)
 			}
 
-			e := resp.RecordAccessEntryDecision.AccessEntry
+			e := resp.RecordAccessReviewEntryDecision.AccessReviewEntry
 
 			if *flagOutput == cmdutil.OutputJSON {
 				return cmdutil.PrintJSON(f.IOStreams.Out, e)

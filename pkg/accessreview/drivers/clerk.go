@@ -94,7 +94,7 @@ func (d *ClerkDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error)
 				IsAdmin:     false,
 				MFAStatus:   clerkMFAStatus(u),
 				AuthMethod:  clerkAuthMethod(u),
-				AccountType: coredata.AccessEntryAccountTypeUser,
+				AccountType: coredata.AccessReviewEntryAccountTypeUser,
 				ExternalID:  u.ID,
 			}
 
@@ -211,12 +211,12 @@ func clerkMFAStatus(u clerkUser) coredata.MFAStatus {
 	return coredata.MFAStatusDisabled
 }
 
-func clerkAuthMethod(u clerkUser) coredata.AccessEntryAuthMethod {
+func clerkAuthMethod(u clerkUser) coredata.AccessReviewEntryAuthMethod {
 	if u.PasswordEnabled {
-		return coredata.AccessEntryAuthMethodPassword
+		return coredata.AccessReviewEntryAuthMethodPassword
 	}
 
-	return coredata.AccessEntryAuthMethodUnknown
+	return coredata.AccessReviewEntryAuthMethodUnknown
 }
 
 func clerkUnixMillisToTime(unixMillis int64) *time.Time {

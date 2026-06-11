@@ -97,8 +97,8 @@ func (d *OnePasswordDriver) ListAccounts(ctx context.Context) ([]AccountRecord, 
 				Active:      new(u.Active),
 				ExternalID:  u.ID,
 				MFAStatus:   coredata.MFAStatusUnknown,
-				AuthMethod:  coredata.AccessEntryAuthMethodUnknown,
-				AccountType: coredata.AccessEntryAccountTypeUser,
+				AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,
+				AccountType: coredata.AccessReviewEntryAccountTypeUser,
 			}
 
 			if record.FullName == "" && u.Name.Formatted != "" {

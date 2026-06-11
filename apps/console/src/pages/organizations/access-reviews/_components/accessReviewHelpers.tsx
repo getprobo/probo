@@ -31,6 +31,21 @@ export function statusBadgeVariant(status: string): BadgeVariant {
   }
 }
 
+export function fetchStatusBadgeVariant(status: string): BadgeVariant {
+  switch (status) {
+    case "SUCCESS":
+      return "success";
+    case "FAILED":
+      return "danger";
+    case "FETCHING":
+      return "info";
+    case "QUEUED":
+      return "neutral";
+    default:
+      return "info";
+  }
+}
+
 export function statusLabel(
   __: (key: string) => string,
   status: string,

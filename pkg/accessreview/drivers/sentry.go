@@ -143,7 +143,7 @@ func (d *SentryDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error
 				ExternalID:  m.ID,
 				MFAStatus:   mfaStatus,
 				AuthMethod:  authMethod,
-				AccountType: coredata.AccessEntryAccountTypeUser,
+				AccountType: coredata.AccessReviewEntryAccountTypeUser,
 			}
 
 			if m.User != nil && m.User.LastLogin != "" {
@@ -216,14 +216,14 @@ func sentryNextLink(header string) string {
 	return ""
 }
 
-func sentryAuthMethod(flags map[string]bool, user *sentryUser) coredata.AccessEntryAuthMethod {
+func sentryAuthMethod(flags map[string]bool, user *sentryUser) coredata.AccessReviewEntryAuthMethod {
 	if flags["sso:linked"] {
-		return coredata.AccessEntryAuthMethodSSO
+		return coredata.AccessReviewEntryAuthMethodSSO
 	}
 
 	if user != nil && user.HasPasswordAuth {
-		return coredata.AccessEntryAuthMethodPassword
+		return coredata.AccessReviewEntryAuthMethodPassword
 	}
 
-	return coredata.AccessEntryAuthMethodUnknown
+	return coredata.AccessReviewEntryAuthMethodUnknown
 }

@@ -69,8 +69,8 @@ func (d *SupabaseDriver) ListAccounts(ctx context.Context) ([]AccountRecord, err
 			IsAdmin:     isAdmin,
 			ExternalID:  m.UserID,
 			MFAStatus:   mfaStatus,
-			AuthMethod:  coredata.AccessEntryAuthMethodUnknown,
-			AccountType: coredata.AccessEntryAccountTypeUser,
+			AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,
+			AccountType: coredata.AccessReviewEntryAccountTypeUser,
 		}
 
 		records = append(records, record)

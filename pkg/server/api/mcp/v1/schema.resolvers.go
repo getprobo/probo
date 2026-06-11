@@ -3382,7 +3382,7 @@ func (r *Resolver) ListFindingAuditsTool(ctx context.Context, req *mcp.CallToolR
 // ListAccessReviewCampaignsTool handles the listAccessReviewCampaigns tool
 // List access review campaigns for an organization
 func (r *Resolver) ListAccessReviewCampaignsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListAccessReviewCampaignsInput) (*mcp.CallToolResult, types.ListAccessReviewCampaignsOutput, error) {
-	scope, err := r.Authorize(ctx, input.OrganizationID, probo.ActionAccessReviewCampaignList)
+	scope, err := r.Authorize(ctx, input.OrganizationID, accessreview.ActionCampaignList)
 	if err != nil {
 		return nil, types.ListAccessReviewCampaignsOutput{}, err
 	}
@@ -3401,7 +3401,7 @@ func (r *Resolver) ListAccessReviewCampaignsTool(ctx context.Context, req *mcp.C
 
 	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
 
-	p, err := r.accessReview.Campaigns(scope).ListForOrganizationID(ctx, input.OrganizationID, cursor)
+	p, err := r.accessReview.ListCampaignsForOrganizationID(ctx, scope, input.OrganizationID, cursor)
 	if err != nil {
 		panic(fmt.Errorf("cannot list access review campaigns: %w", err))
 	}
@@ -3412,18 +3412,18 @@ func (r *Resolver) ListAccessReviewCampaignsTool(ctx context.Context, req *mcp.C
 // ListAccessEntriesTool handles the listAccessEntries tool
 // List access entries for a campaign with optional filters
 func (r *Resolver) ListAccessEntriesTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListAccessEntriesInput) (*mcp.CallToolResult, types.ListAccessEntriesOutput, error) {
-	scope, err := r.Authorize(ctx, input.CampaignID, probo.ActionAccessEntryList)
+	scope, err := r.Authorize(ctx, input.CampaignID, accessreview.ActionEntryList)
 	if err != nil {
 		return nil, types.ListAccessEntriesOutput{}, err
 	}
 
-	pageOrderBy := page.OrderBy[coredata.AccessEntryOrderField]{
-		Field:     coredata.AccessEntryOrderFieldCreatedAt,
+	pageOrderBy := page.OrderBy[coredata.AccessReviewEntryOrderField]{
+		Field:     coredata.AccessReviewEntryOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
 
 	if input.OrderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.AccessEntryOrderField]{
+		pageOrderBy = page.OrderBy[coredata.AccessReviewEntryOrderField]{
 			Field:     input.OrderBy.Field,
 			Direction: input.OrderBy.Direction,
 		}
@@ -3431,9 +3431,9 @@ func (r *Resolver) ListAccessEntriesTool(ctx context.Context, req *mcp.CallToolR
 
 	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
 
-	var filter *coredata.AccessEntryFilter
+	var filter *coredata.AccessReviewEntryFilter
 	if input.Filter != nil {
-		filter = &coredata.AccessEntryFilter{
+		filter = &coredata.AccessReviewEntryFilter{
 			Decision:       input.Filter.Decision,
 			Flag:           input.Filter.Flag,
 			IncrementalTag: input.Filter.IncrementalTag,
@@ -3444,15 +3444,16 @@ func (r *Resolver) ListAccessEntriesTool(ctx context.Context, req *mcp.CallToolR
 		}
 	}
 
-	var p *page.Page[*coredata.AccessEntry, coredata.AccessEntryOrderField]
+	var p *page.Page[*coredata.AccessReviewEntry, coredata.AccessReviewEntryOrderField]
 
-	if input.AccessSourceID != nil {
+	if input.AccessReviewCampaignSourceID != nil {
 		var err error
 
-		p, err = r.accessReview.Entries(scope).ListForCampaignIDAndSourceID(
+		p, err = r.accessReview.ListEntriesForCampaignIDAndSourceID(
 			ctx,
+			scope,
 			input.CampaignID,
-			*input.AccessSourceID,
+			*input.AccessReviewCampaignSourceID,
 			cursor,
 			filter,
 		)
@@ -3462,7 +3463,7 @@ func (r *Resolver) ListAccessEntriesTool(ctx context.Context, req *mcp.CallToolR
 	} else {
 		var err error
 
-		p, err = r.accessReview.Entries(scope).ListForCampaignID(ctx, input.CampaignID, cursor, filter)
+		p, err = r.accessReview.ListEntriesForCampaignID(ctx, scope, input.CampaignID, cursor, filter)
 		if err != nil {
 			panic(fmt.Errorf("cannot list access entries: %w", err))
 		}
@@ -3471,44 +3472,44 @@ func (r *Resolver) ListAccessEntriesTool(ctx context.Context, req *mcp.CallToolR
 	return nil, types.NewListAccessEntriesOutput(p), nil
 }
 
-// GetAccessReviewCampaignStatisticsTool handles the getAccessReviewCampaignStatistics tool
+// GetAccessReviewStatisticsTool handles the getAccessReviewCampaignStatistics tool
 // Get statistics for an access review campaign
-func (r *Resolver) GetAccessReviewCampaignStatisticsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetAccessReviewCampaignStatisticsInput) (*mcp.CallToolResult, types.GetAccessReviewCampaignStatisticsOutput, error) {
-	scope, err := r.Authorize(ctx, input.CampaignID, probo.ActionAccessReviewCampaignGet)
+func (r *Resolver) GetAccessReviewStatisticsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetAccessReviewStatisticsInput) (*mcp.CallToolResult, types.GetAccessReviewStatisticsOutput, error) {
+	scope, err := r.Authorize(ctx, input.CampaignID, accessreview.ActionCampaignGet)
 	if err != nil {
-		return nil, types.GetAccessReviewCampaignStatisticsOutput{}, err
+		return nil, types.GetAccessReviewStatisticsOutput{}, err
 	}
 
-	stats, err := r.accessReview.Entries(scope).Statistics(ctx, input.CampaignID)
+	stats, err := r.accessReview.CampaignStatistics(ctx, scope, input.CampaignID)
 	if err != nil {
 		panic(fmt.Errorf("cannot get campaign statistics: %w", err))
 	}
 
-	return nil, types.GetAccessReviewCampaignStatisticsOutput{
-		Statistics: types.NewAccessEntryStatistics(stats),
+	return nil, types.GetAccessReviewStatisticsOutput{
+		Statistics: types.NewAccessReviewStatistics(stats),
 	}, nil
 }
 
-// RecordAccessEntryDecisionTool handles the recordAccessEntryDecision tool
+// RecordAccessReviewEntryDecisionTool handles the recordAccessEntryDecision tool
 // Record a decision on an access entry
-func (r *Resolver) RecordAccessEntryDecisionTool(ctx context.Context, req *mcp.CallToolRequest, input *types.RecordAccessEntryDecisionInput) (*mcp.CallToolResult, types.RecordAccessEntryDecisionOutput, error) {
-	scope, err := r.Authorize(ctx, input.AccessEntryID, probo.ActionAccessEntryDecide)
+func (r *Resolver) RecordAccessReviewEntryDecisionTool(ctx context.Context, req *mcp.CallToolRequest, input *types.RecordAccessReviewEntryDecisionInput) (*mcp.CallToolResult, types.RecordAccessReviewEntryDecisionOutput, error) {
+	scope, err := r.Authorize(ctx, input.AccessReviewEntryID, accessreview.ActionEntryDecide)
 	if err != nil {
-		return nil, types.RecordAccessEntryDecisionOutput{}, err
+		return nil, types.RecordAccessReviewEntryDecisionOutput{}, err
 	}
 
 	identity := authn.IdentityFromContext(ctx)
 	if identity == nil {
-		return nil, types.RecordAccessEntryDecisionOutput{}, fmt.Errorf("no identity in context")
+		return nil, types.RecordAccessReviewEntryDecisionOutput{}, fmt.Errorf("no identity in context")
 	}
 
-	decisionReq := accessreview.RecordAccessEntryDecisionRequest{
-		EntryID:      input.AccessEntryID,
+	decisionReq := accessreview.RecordAccessReviewEntryDecisionRequest{
+		EntryID:      input.AccessReviewEntryID,
 		Decision:     input.Decision,
 		DecisionNote: input.DecisionNote,
 	}
 
-	organizationID, err := r.accessReview.ResolveEntryOrganizationID(ctx, input.AccessEntryID)
+	organizationID, err := r.accessReview.ResolveEntryOrganizationID(ctx, input.AccessReviewEntryID)
 	if err == nil {
 		profile, err := r.iamSvc.OrganizationService.GetProfileForIdentityAndOrganization(ctx, identity.ID, organizationID)
 		if err == nil {
@@ -3516,53 +3517,53 @@ func (r *Resolver) RecordAccessEntryDecisionTool(ctx context.Context, req *mcp.C
 		}
 	}
 
-	entry, err := r.accessReview.Entries(scope).RecordDecision(ctx, decisionReq)
+	entry, err := r.accessReview.RecordDecision(ctx, scope, decisionReq)
 	if err != nil {
-		return nil, types.RecordAccessEntryDecisionOutput{}, fmt.Errorf("cannot record decision: %w", err)
+		return nil, types.RecordAccessReviewEntryDecisionOutput{}, fmt.Errorf("cannot record decision: %w", err)
 	}
 
-	return nil, types.RecordAccessEntryDecisionOutput{
-		AccessEntry: types.NewAccessEntry(entry),
+	return nil, types.RecordAccessReviewEntryDecisionOutput{
+		AccessEntry: types.NewAccessReviewEntry(entry),
 	}, nil
 }
 
-// RecordAccessEntryDecisionsTool handles the recordAccessEntryDecisions tool
+// RecordAccessReviewEntryDecisionsTool handles the recordAccessEntryDecisions tool
 // Record decisions on multiple access entries in a single batch
-func (r *Resolver) RecordAccessEntryDecisionsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.RecordAccessEntryDecisionsInput) (*mcp.CallToolResult, types.RecordAccessEntryDecisionsOutput, error) {
+func (r *Resolver) RecordAccessReviewEntryDecisionsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.RecordAccessReviewEntryDecisionsInput) (*mcp.CallToolResult, types.RecordAccessReviewEntryDecisionsOutput, error) {
 	if len(input.Decisions) == 0 {
-		return nil, types.RecordAccessEntryDecisionsOutput{
-			AccessEntries: []*types.AccessEntry{},
+		return nil, types.RecordAccessReviewEntryDecisionsOutput{
+			AccessReviewEntries: []*types.AccessReviewEntry{},
 		}, nil
 	}
 
 	const maxBatchSize = 100
 	if len(input.Decisions) > maxBatchSize {
-		return nil, types.RecordAccessEntryDecisionsOutput{}, fmt.Errorf("cannot record decisions: batch size %d exceeds maximum of %d", len(input.Decisions), maxBatchSize)
+		return nil, types.RecordAccessReviewEntryDecisionsOutput{}, fmt.Errorf("cannot record decisions: batch size %d exceeds maximum of %d", len(input.Decisions), maxBatchSize)
 	}
 
 	// Authorize each entry individually to prevent cross-org bypass.
 	for _, d := range input.Decisions {
-		if _, err := r.Authorize(ctx, d.AccessEntryID, probo.ActionAccessEntryDecide); err != nil {
-			return nil, types.RecordAccessEntryDecisionsOutput{}, err
+		if _, err := r.Authorize(ctx, d.AccessReviewEntryID, accessreview.ActionEntryDecide); err != nil {
+			return nil, types.RecordAccessReviewEntryDecisionsOutput{}, err
 		}
 	}
 
-	scope := coredata.NewScopeFromObjectID(input.Decisions[0].AccessEntryID)
+	scope := coredata.NewScopeFromObjectID(input.Decisions[0].AccessReviewEntryID)
 
 	identity := authn.IdentityFromContext(ctx)
 	if identity == nil {
-		return nil, types.RecordAccessEntryDecisionsOutput{}, fmt.Errorf("no identity in context")
+		return nil, types.RecordAccessReviewEntryDecisionsOutput{}, fmt.Errorf("no identity in context")
 	}
 
 	// Cache profile lookups per organization so we resolve the correct
 	// decidedByID for each entry even when a batch spans multiple orgs.
 	profileCache := make(map[gid.GID]*gid.GID)
 
-	decisions := make([]accessreview.RecordAccessEntryDecisionRequest, len(input.Decisions))
+	decisions := make([]accessreview.RecordAccessReviewEntryDecisionRequest, len(input.Decisions))
 	for i, d := range input.Decisions {
 		var decidedByID *gid.GID
 
-		organizationID, err := r.accessReview.ResolveEntryOrganizationID(ctx, d.AccessEntryID)
+		organizationID, err := r.accessReview.ResolveEntryOrganizationID(ctx, d.AccessReviewEntryID)
 		if err == nil {
 			if cached, ok := profileCache[organizationID]; ok {
 				decidedByID = cached
@@ -3576,38 +3577,38 @@ func (r *Resolver) RecordAccessEntryDecisionsTool(ctx context.Context, req *mcp.
 			}
 		}
 
-		decisions[i] = accessreview.RecordAccessEntryDecisionRequest{
-			EntryID:      d.AccessEntryID,
+		decisions[i] = accessreview.RecordAccessReviewEntryDecisionRequest{
+			EntryID:      d.AccessReviewEntryID,
 			Decision:     d.Decision,
 			DecisionNote: d.DecisionNote,
 			DecidedByID:  decidedByID,
 		}
 	}
 
-	entries, err := r.accessReview.Entries(scope).RecordDecisions(ctx, decisions)
+	entries, err := r.accessReview.RecordDecisions(ctx, scope, decisions)
 	if err != nil {
-		return nil, types.RecordAccessEntryDecisionsOutput{}, fmt.Errorf("cannot record decisions: %w", err)
+		return nil, types.RecordAccessReviewEntryDecisionsOutput{}, fmt.Errorf("cannot record decisions: %w", err)
 	}
 
-	accessEntries := make([]*types.AccessEntry, len(entries))
+	accessEntries := make([]*types.AccessReviewEntry, len(entries))
 	for i, e := range entries {
-		accessEntries[i] = types.NewAccessEntry(e)
+		accessEntries[i] = types.NewAccessReviewEntry(e)
 	}
 
-	return nil, types.RecordAccessEntryDecisionsOutput{
-		AccessEntries: accessEntries,
+	return nil, types.RecordAccessReviewEntryDecisionsOutput{
+		AccessReviewEntries: accessEntries,
 	}, nil
 }
 
 // CloseAccessReviewCampaignTool handles the closeAccessReviewCampaign tool
 // Close an access review campaign
 func (r *Resolver) CloseAccessReviewCampaignTool(ctx context.Context, req *mcp.CallToolRequest, input *types.CloseAccessReviewCampaignInput) (*mcp.CallToolResult, types.CloseAccessReviewCampaignOutput, error) {
-	scope, err := r.Authorize(ctx, input.CampaignID, probo.ActionAccessReviewCampaignClose)
+	scope, err := r.Authorize(ctx, input.CampaignID, accessreview.ActionCampaignClose)
 	if err != nil {
 		return nil, types.CloseAccessReviewCampaignOutput{}, err
 	}
 
-	campaign, err := r.accessReview.Campaigns(scope).Close(ctx, input.CampaignID)
+	campaign, err := r.accessReview.CloseCampaign(ctx, scope, input.CampaignID)
 	if err != nil {
 		return nil, types.CloseAccessReviewCampaignOutput{}, fmt.Errorf("cannot close campaign: %w", err)
 	}
@@ -3617,21 +3618,21 @@ func (r *Resolver) CloseAccessReviewCampaignTool(ctx context.Context, req *mcp.C
 	}, nil
 }
 
-// ListAccessSourcesTool handles the listAccessSources tool
+// ListAccessReviewSourcesTool handles the listAccessSources tool
 // List access sources for an organization
-func (r *Resolver) ListAccessSourcesTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListAccessSourcesInput) (*mcp.CallToolResult, types.ListAccessSourcesOutput, error) {
-	scope, err := r.Authorize(ctx, input.OrganizationID, probo.ActionAccessSourceList)
+func (r *Resolver) ListAccessReviewSourcesTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListAccessReviewSourcesInput) (*mcp.CallToolResult, types.ListAccessReviewSourcesOutput, error) {
+	scope, err := r.Authorize(ctx, input.OrganizationID, accessreview.ActionSourceList)
 	if err != nil {
-		return nil, types.ListAccessSourcesOutput{}, err
+		return nil, types.ListAccessReviewSourcesOutput{}, err
 	}
 
-	pageOrderBy := page.OrderBy[coredata.AccessSourceOrderField]{
-		Field:     coredata.AccessSourceOrderFieldCreatedAt,
+	pageOrderBy := page.OrderBy[coredata.AccessReviewSourceOrderField]{
+		Field:     coredata.AccessReviewSourceOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
 
 	if input.OrderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.AccessSourceOrderField]{
+		pageOrderBy = page.OrderBy[coredata.AccessReviewSourceOrderField]{
 			Field:     input.OrderBy.Field,
 			Direction: input.OrderBy.Direction,
 		}
@@ -3639,56 +3640,56 @@ func (r *Resolver) ListAccessSourcesTool(ctx context.Context, req *mcp.CallToolR
 
 	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
 
-	p, err := r.accessReview.Sources(scope).ListForOrganizationID(ctx, input.OrganizationID, cursor)
+	p, err := r.accessReview.ListSourcesForOrganizationID(ctx, scope, input.OrganizationID, cursor)
 	if err != nil {
 		panic(fmt.Errorf("cannot list access sources: %w", err))
 	}
 
-	return nil, types.NewListAccessSourcesOutput(p), nil
+	return nil, types.NewListAccessReviewSourcesOutput(p), nil
 }
 
-// CreateAccessSourceTool handles the createAccessSource tool
+// CreateAccessReviewSourceTool handles the createAccessSource tool
 // Create a new access source for an organization
-func (r *Resolver) CreateAccessSourceTool(ctx context.Context, req *mcp.CallToolRequest, input *types.CreateAccessSourceInput) (*mcp.CallToolResult, types.CreateAccessSourceOutput, error) {
-	scope, err := r.Authorize(ctx, input.OrganizationID, probo.ActionAccessSourceCreate)
+func (r *Resolver) CreateAccessReviewSourceTool(ctx context.Context, req *mcp.CallToolRequest, input *types.CreateAccessReviewSourceInput) (*mcp.CallToolResult, types.CreateAccessReviewSourceOutput, error) {
+	scope, err := r.Authorize(ctx, input.OrganizationID, accessreview.ActionSourceCreate)
 	if err != nil {
-		return nil, types.CreateAccessSourceOutput{}, err
+		return nil, types.CreateAccessReviewSourceOutput{}, err
 	}
 
-	source, err := r.accessReview.Sources(scope).Create(ctx, accessreview.CreateAccessSourceRequest{
+	source, err := r.accessReview.CreateSource(ctx, scope, accessreview.CreateAccessReviewSourceRequest{
 		OrganizationID: input.OrganizationID,
 		ConnectorID:    input.ConnectorID,
 		Name:           input.Name,
-		Category:       coredata.AccessSourceCategorySaaS,
+		Category:       coredata.AccessReviewSourceCategorySaaS,
 		CsvData:        input.CsvData,
 	})
 	if err != nil {
-		return nil, types.CreateAccessSourceOutput{}, fmt.Errorf("cannot create access source: %w", err)
+		return nil, types.CreateAccessReviewSourceOutput{}, fmt.Errorf("cannot create access source: %w", err)
 	}
 
-	return nil, types.CreateAccessSourceOutput{
-		AccessSource: types.NewAccessSource(source),
+	return nil, types.CreateAccessReviewSourceOutput{
+		AccessReviewSource: types.NewAccessReviewSource(source),
 	}, nil
 }
 
-// UpdateAccessSourceTool handles the updateAccessSource tool
+// UpdateAccessReviewSourceTool handles the updateAccessSource tool
 // Update an existing access source
-func (r *Resolver) UpdateAccessSourceTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateAccessSourceInput) (*mcp.CallToolResult, types.UpdateAccessSourceOutput, error) {
-	scope, err := r.Authorize(ctx, input.AccessSourceID, probo.ActionAccessSourceUpdate)
+func (r *Resolver) UpdateAccessReviewSourceTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateAccessReviewSourceInput) (*mcp.CallToolResult, types.UpdateAccessReviewSourceOutput, error) {
+	scope, err := r.Authorize(ctx, input.AccessReviewSourceID, accessreview.ActionSourceUpdate)
 	if err != nil {
-		return nil, types.UpdateAccessSourceOutput{}, err
+		return nil, types.UpdateAccessReviewSourceOutput{}, err
 	}
 
-	updateReq := accessreview.UpdateAccessSourceRequest{
-		AccessSourceID: input.AccessSourceID,
-		Name:           input.Name,
+	updateReq := accessreview.UpdateAccessReviewSourceRequest{
+		AccessReviewSourceID: input.AccessReviewSourceID,
+		Name:                 input.Name,
 	}
 
 	if rawConnectorID := UnwrapOmittable(input.ConnectorID); rawConnectorID != nil {
 		if *rawConnectorID != nil {
 			id, err := gid.ParseGID(**rawConnectorID)
 			if err != nil {
-				return nil, types.UpdateAccessSourceOutput{}, fmt.Errorf("cannot parse connector_id: %w", err)
+				return nil, types.UpdateAccessReviewSourceOutput{}, fmt.Errorf("cannot parse connector_id: %w", err)
 			}
 
 			idPtr := &id
@@ -3704,37 +3705,37 @@ func (r *Resolver) UpdateAccessSourceTool(ctx context.Context, req *mcp.CallTool
 		updateReq.CsvData = rawCsvData
 	}
 
-	source, err := r.accessReview.Sources(scope).Update(ctx, updateReq)
+	source, err := r.accessReview.UpdateSource(ctx, scope, updateReq)
 	if err != nil {
-		return nil, types.UpdateAccessSourceOutput{}, fmt.Errorf("cannot update access source: %w", err)
+		return nil, types.UpdateAccessReviewSourceOutput{}, fmt.Errorf("cannot update access source: %w", err)
 	}
 
-	return nil, types.UpdateAccessSourceOutput{
-		AccessSource: types.NewAccessSource(source),
+	return nil, types.UpdateAccessReviewSourceOutput{
+		AccessReviewSource: types.NewAccessReviewSource(source),
 	}, nil
 }
 
-// DeleteAccessSourceTool handles the deleteAccessSource tool
+// DeleteAccessReviewSourceTool handles the deleteAccessSource tool
 // Delete an access source
-func (r *Resolver) DeleteAccessSourceTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteAccessSourceInput) (*mcp.CallToolResult, types.DeleteAccessSourceOutput, error) {
-	scope, err := r.Authorize(ctx, input.AccessSourceID, probo.ActionAccessSourceDelete)
+func (r *Resolver) DeleteAccessReviewSourceTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteAccessReviewSourceInput) (*mcp.CallToolResult, types.DeleteAccessReviewSourceOutput, error) {
+	scope, err := r.Authorize(ctx, input.AccessReviewSourceID, accessreview.ActionSourceDelete)
 	if err != nil {
-		return nil, types.DeleteAccessSourceOutput{}, err
+		return nil, types.DeleteAccessReviewSourceOutput{}, err
 	}
 
-	if err := r.accessReview.Sources(scope).Delete(ctx, input.AccessSourceID); err != nil {
-		return nil, types.DeleteAccessSourceOutput{}, fmt.Errorf("cannot delete access source: %w", err)
+	if err := r.accessReview.DeleteSource(ctx, scope, input.AccessReviewSourceID); err != nil {
+		return nil, types.DeleteAccessReviewSourceOutput{}, fmt.Errorf("cannot delete access source: %w", err)
 	}
 
-	return nil, types.DeleteAccessSourceOutput{
-		DeletedAccessSourceID: input.AccessSourceID,
+	return nil, types.DeleteAccessReviewSourceOutput{
+		DeletedAccessReviewSourceID: input.AccessReviewSourceID,
 	}, nil
 }
 
 // CreateAccessReviewCampaignTool handles the createAccessReviewCampaign tool
 // Create a new access review campaign for an organization
 func (r *Resolver) CreateAccessReviewCampaignTool(ctx context.Context, req *mcp.CallToolRequest, input *types.CreateAccessReviewCampaignInput) (*mcp.CallToolResult, types.CreateAccessReviewCampaignOutput, error) {
-	scope, err := r.Authorize(ctx, input.OrganizationID, probo.ActionAccessReviewCampaignCreate)
+	scope, err := r.Authorize(ctx, input.OrganizationID, accessreview.ActionCampaignCreate)
 	if err != nil {
 		return nil, types.CreateAccessReviewCampaignOutput{}, err
 	}
@@ -3744,12 +3745,12 @@ func (r *Resolver) CreateAccessReviewCampaignTool(ctx context.Context, req *mcp.
 		description = *input.Description
 	}
 
-	campaign, err := r.accessReview.Campaigns(scope).Create(ctx, accessreview.CreateAccessReviewCampaignRequest{
-		OrganizationID:    input.OrganizationID,
-		Name:              input.Name,
-		Description:       description,
-		FrameworkControls: input.FrameworkControls,
-		AccessSourceIDs:   input.AccessSourceIds,
+	campaign, err := r.accessReview.CreateCampaign(ctx, scope, accessreview.CreateAccessReviewCampaignRequest{
+		OrganizationID:        input.OrganizationID,
+		Name:                  input.Name,
+		Description:           description,
+		FrameworkControls:     input.FrameworkControls,
+		AccessReviewSourceIDs: input.AccessReviewSourceIds,
 	})
 	if err != nil {
 		return nil, types.CreateAccessReviewCampaignOutput{}, fmt.Errorf("cannot create access review campaign: %w", err)
@@ -3763,7 +3764,7 @@ func (r *Resolver) CreateAccessReviewCampaignTool(ctx context.Context, req *mcp.
 // UpdateAccessReviewCampaignTool handles the updateAccessReviewCampaign tool
 // Update an existing access review campaign
 func (r *Resolver) UpdateAccessReviewCampaignTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateAccessReviewCampaignInput) (*mcp.CallToolResult, types.UpdateAccessReviewCampaignOutput, error) {
-	scope, err := r.Authorize(ctx, input.CampaignID, probo.ActionAccessReviewCampaignUpdate)
+	scope, err := r.Authorize(ctx, input.CampaignID, accessreview.ActionCampaignUpdate)
 	if err != nil {
 		return nil, types.UpdateAccessReviewCampaignOutput{}, err
 	}
@@ -3790,7 +3791,7 @@ func (r *Resolver) UpdateAccessReviewCampaignTool(ctx context.Context, req *mcp.
 		}
 	}
 
-	campaign, err := r.accessReview.Campaigns(scope).Update(ctx, updateReq)
+	campaign, err := r.accessReview.UpdateCampaign(ctx, scope, updateReq)
 	if err != nil {
 		return nil, types.UpdateAccessReviewCampaignOutput{}, fmt.Errorf("cannot update access review campaign: %w", err)
 	}
@@ -3803,12 +3804,12 @@ func (r *Resolver) UpdateAccessReviewCampaignTool(ctx context.Context, req *mcp.
 // DeleteAccessReviewCampaignTool handles the deleteAccessReviewCampaign tool
 // Delete an access review campaign
 func (r *Resolver) DeleteAccessReviewCampaignTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteAccessReviewCampaignInput) (*mcp.CallToolResult, types.DeleteAccessReviewCampaignOutput, error) {
-	scope, err := r.Authorize(ctx, input.CampaignID, probo.ActionAccessReviewCampaignDelete)
+	scope, err := r.Authorize(ctx, input.CampaignID, accessreview.ActionCampaignDelete)
 	if err != nil {
 		return nil, types.DeleteAccessReviewCampaignOutput{}, err
 	}
 
-	if err := r.accessReview.Campaigns(scope).Delete(ctx, input.CampaignID); err != nil {
+	if err := r.accessReview.DeleteCampaign(ctx, scope, input.CampaignID); err != nil {
 		return nil, types.DeleteAccessReviewCampaignOutput{}, fmt.Errorf("cannot delete access review campaign: %w", err)
 	}
 
@@ -3820,12 +3821,12 @@ func (r *Resolver) DeleteAccessReviewCampaignTool(ctx context.Context, req *mcp.
 // StartAccessReviewCampaignTool handles the startAccessReviewCampaign tool
 // Start an access review campaign
 func (r *Resolver) StartAccessReviewCampaignTool(ctx context.Context, req *mcp.CallToolRequest, input *types.StartAccessReviewCampaignInput) (*mcp.CallToolResult, types.StartAccessReviewCampaignOutput, error) {
-	scope, err := r.Authorize(ctx, input.CampaignID, probo.ActionAccessReviewCampaignStart)
+	scope, err := r.Authorize(ctx, input.CampaignID, accessreview.ActionCampaignStart)
 	if err != nil {
 		return nil, types.StartAccessReviewCampaignOutput{}, err
 	}
 
-	campaign, err := r.accessReview.Campaigns(scope).Start(ctx, input.CampaignID)
+	campaign, err := r.accessReview.StartCampaign(ctx, scope, input.CampaignID)
 	if err != nil {
 		return nil, types.StartAccessReviewCampaignOutput{}, fmt.Errorf("cannot start access review campaign: %w", err)
 	}
@@ -3838,12 +3839,12 @@ func (r *Resolver) StartAccessReviewCampaignTool(ctx context.Context, req *mcp.C
 // CancelAccessReviewCampaignTool handles the cancelAccessReviewCampaign tool
 // Cancel an in-progress access review campaign
 func (r *Resolver) CancelAccessReviewCampaignTool(ctx context.Context, req *mcp.CallToolRequest, input *types.CancelAccessReviewCampaignInput) (*mcp.CallToolResult, types.CancelAccessReviewCampaignOutput, error) {
-	scope, err := r.Authorize(ctx, input.CampaignID, probo.ActionAccessReviewCampaignCancel)
+	scope, err := r.Authorize(ctx, input.CampaignID, accessreview.ActionCampaignCancel)
 	if err != nil {
 		return nil, types.CancelAccessReviewCampaignOutput{}, err
 	}
 
-	campaign, err := r.accessReview.Campaigns(scope).Cancel(ctx, input.CampaignID)
+	campaign, err := r.accessReview.CancelCampaign(ctx, scope, input.CampaignID)
 	if err != nil {
 		return nil, types.CancelAccessReviewCampaignOutput{}, fmt.Errorf("cannot cancel access review campaign: %w", err)
 	}
@@ -3853,67 +3854,67 @@ func (r *Resolver) CancelAccessReviewCampaignTool(ctx context.Context, req *mcp.
 	}, nil
 }
 
-// AddAccessReviewCampaignScopeSourceTool handles the addAccessReviewCampaignScopeSource tool
+// AddAccessReviewCampaignSourceTool handles the addAccessReviewCampaignScopeSource tool
 // Add an access source to an access review campaign's scope
-func (r *Resolver) AddAccessReviewCampaignScopeSourceTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddAccessReviewCampaignScopeSourceInput) (*mcp.CallToolResult, types.AddAccessReviewCampaignScopeSourceOutput, error) {
-	scope, err := r.Authorize(ctx, input.CampaignID, probo.ActionAccessReviewCampaignAddScopeSource)
+func (r *Resolver) AddAccessReviewCampaignSourceTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddAccessReviewCampaignSourceInput) (*mcp.CallToolResult, types.AddAccessReviewCampaignSourceOutput, error) {
+	scope, err := r.Authorize(ctx, input.CampaignID, accessreview.ActionCampaignAddSource)
 	if err != nil {
-		return nil, types.AddAccessReviewCampaignScopeSourceOutput{}, err
+		return nil, types.AddAccessReviewCampaignSourceOutput{}, err
 	}
 
-	campaign, err := r.accessReview.Campaigns(scope).AddScopeSource(ctx, accessreview.AddCampaignScopeSourceRequest{
-		CampaignID:     input.CampaignID,
-		AccessSourceID: input.AccessSourceID,
+	campaign, err := r.accessReview.AddCampaignSource(ctx, scope, accessreview.AddCampaignSourceRequest{
+		CampaignID:           input.CampaignID,
+		AccessReviewSourceID: input.AccessReviewSourceID,
 	})
 	if err != nil {
-		return nil, types.AddAccessReviewCampaignScopeSourceOutput{}, fmt.Errorf("cannot add scope source to access review campaign: %w", err)
+		return nil, types.AddAccessReviewCampaignSourceOutput{}, fmt.Errorf("cannot add scope source to access review campaign: %w", err)
 	}
 
-	return nil, types.AddAccessReviewCampaignScopeSourceOutput{
+	return nil, types.AddAccessReviewCampaignSourceOutput{
 		Campaign: types.NewAccessReviewCampaign(campaign),
 	}, nil
 }
 
-// RemoveAccessReviewCampaignScopeSourceTool handles the removeAccessReviewCampaignScopeSource tool
+// RemoveAccessReviewCampaignSourceTool handles the removeAccessReviewCampaignScopeSource tool
 // Remove an access source from an access review campaign's scope
-func (r *Resolver) RemoveAccessReviewCampaignScopeSourceTool(ctx context.Context, req *mcp.CallToolRequest, input *types.RemoveAccessReviewCampaignScopeSourceInput) (*mcp.CallToolResult, types.RemoveAccessReviewCampaignScopeSourceOutput, error) {
-	scope, err := r.Authorize(ctx, input.CampaignID, probo.ActionAccessReviewCampaignRemoveScopeSource)
+func (r *Resolver) RemoveAccessReviewCampaignSourceTool(ctx context.Context, req *mcp.CallToolRequest, input *types.RemoveAccessReviewCampaignSourceInput) (*mcp.CallToolResult, types.RemoveAccessReviewCampaignSourceOutput, error) {
+	scope, err := r.Authorize(ctx, input.CampaignID, accessreview.ActionCampaignRemoveSource)
 	if err != nil {
-		return nil, types.RemoveAccessReviewCampaignScopeSourceOutput{}, err
+		return nil, types.RemoveAccessReviewCampaignSourceOutput{}, err
 	}
 
-	campaign, err := r.accessReview.Campaigns(scope).RemoveScopeSource(ctx, accessreview.RemoveCampaignScopeSourceRequest{
-		CampaignID:     input.CampaignID,
-		AccessSourceID: input.AccessSourceID,
+	campaign, err := r.accessReview.RemoveCampaignSource(ctx, scope, accessreview.RemoveCampaignSourceRequest{
+		CampaignID:           input.CampaignID,
+		AccessReviewSourceID: input.AccessReviewSourceID,
 	})
 	if err != nil {
-		return nil, types.RemoveAccessReviewCampaignScopeSourceOutput{}, fmt.Errorf("cannot remove scope source from access review campaign: %w", err)
+		return nil, types.RemoveAccessReviewCampaignSourceOutput{}, fmt.Errorf("cannot remove scope source from access review campaign: %w", err)
 	}
 
-	return nil, types.RemoveAccessReviewCampaignScopeSourceOutput{
+	return nil, types.RemoveAccessReviewCampaignSourceOutput{
 		Campaign: types.NewAccessReviewCampaign(campaign),
 	}, nil
 }
 
-// FlagAccessEntryTool handles the flagAccessEntry tool
+// FlagAccessReviewEntryTool handles the flagAccessEntry tool
 // Flag an access entry during review
-func (r *Resolver) FlagAccessEntryTool(ctx context.Context, req *mcp.CallToolRequest, input *types.FlagAccessEntryInput) (*mcp.CallToolResult, types.FlagAccessEntryOutput, error) {
-	scope, err := r.Authorize(ctx, input.AccessEntryID, probo.ActionAccessEntryFlag)
+func (r *Resolver) FlagAccessReviewEntryTool(ctx context.Context, req *mcp.CallToolRequest, input *types.FlagAccessReviewEntryInput) (*mcp.CallToolResult, types.FlagAccessReviewEntryOutput, error) {
+	scope, err := r.Authorize(ctx, input.AccessReviewEntryID, accessreview.ActionEntryFlag)
 	if err != nil {
-		return nil, types.FlagAccessEntryOutput{}, err
+		return nil, types.FlagAccessReviewEntryOutput{}, err
 	}
 
-	entry, err := r.accessReview.Entries(scope).FlagEntry(ctx, accessreview.FlagAccessEntryRequest{
-		EntryID:     input.AccessEntryID,
+	entry, err := r.accessReview.FlagEntry(ctx, scope, accessreview.FlagAccessReviewEntryRequest{
+		EntryID:     input.AccessReviewEntryID,
 		Flags:       input.Flags,
 		FlagReasons: input.FlagReasons,
 	})
 	if err != nil {
-		return nil, types.FlagAccessEntryOutput{}, fmt.Errorf("cannot flag access entry: %w", err)
+		return nil, types.FlagAccessReviewEntryOutput{}, fmt.Errorf("cannot flag access entry: %w", err)
 	}
 
-	return nil, types.FlagAccessEntryOutput{
-		AccessEntry: types.NewAccessEntry(entry),
+	return nil, types.FlagAccessReviewEntryOutput{
+		AccessEntry: types.NewAccessReviewEntry(entry),
 	}, nil
 }
 

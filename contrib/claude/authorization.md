@@ -251,6 +251,7 @@ and `r.AuthorizeBatch` (MCP) — keep the returned scope and pass it down.
 | Product action constants (`core:*`) | `pkg/probo/actions.go` |
 | IAM action constants (`iam:*`) | `pkg/iam/iam_actions.go` |
 | Product role policies (`ProboPolicySet`) | `pkg/probo/policies.go` |
+| Per-service policy sets (e.g. `accessreview.PolicySet`, `agentrun.PolicySet`) | `pkg/<service>/actions.go`, `pkg/<service>/policies.go` |
 | IAM role policies (`IAMPolicySet`) | `pkg/iam/iam_policies.go` |
 | Authorizer + `AuthorizationAttributer` | `pkg/iam/authorizer.go` |
 | PolicySet registration | `pkg/iam/policy_set.go` |

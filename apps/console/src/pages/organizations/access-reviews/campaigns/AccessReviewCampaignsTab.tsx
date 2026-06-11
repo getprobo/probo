@@ -48,7 +48,7 @@ export const accessReviewCampaignsTabQuery = graphql`
     organization: node(id: $organizationId) {
       __typename
       ... on Organization {
-        canCreateCampaign: permission(action: "core:access-review-campaign:create")
+        canCreateCampaign: permission(action: "access-review:campaign:create")
         ...AccessReviewCampaignsTabFragment
       }
     }
@@ -78,7 +78,7 @@ const campaignsFragment = graphql`
           name
           status
           createdAt
-          canDelete: permission(action: "core:access-review-campaign:delete")
+          canDelete: permission(action: "access-review:campaign:delete")
         }
       }
     }
