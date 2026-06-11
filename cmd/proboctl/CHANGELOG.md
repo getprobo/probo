@@ -4,6 +4,12 @@ All notable changes to the `proboctl` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.3.1] - 2026-06-11
+
+### Changed
+
+- References updated to probo.com
+
 ## [0.3.0] - 2026-06-10
 
 ### Added
