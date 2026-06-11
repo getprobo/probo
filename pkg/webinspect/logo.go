@@ -39,6 +39,7 @@ func FindLogoURL(info *PageInfo) (string, error) {
 
 	for _, n := range findAllIn(head, "link") {
 		rel := strings.ToLower(attrVal(n, "rel"))
+
 		href := attrVal(n, "href")
 		if href == "" {
 			continue
@@ -64,6 +65,7 @@ func FindLogoURL(info *PageInfo) (string, error) {
 
 	for _, n := range findAllIn(head, "meta") {
 		name := strings.ToLower(attrVal(n, "name"))
+
 		content := attrVal(n, "content")
 		if name == "msapplication-tileimage" && content != "" {
 			msTileImage = content
@@ -92,8 +94,10 @@ func parseSizeAttr(sizes string) int {
 	}
 
 	best := 0
+
 	for token := range strings.FieldsSeq(sizes) {
 		token = strings.ToLower(token)
+
 		parts := strings.SplitN(token, "x", 2)
 		if len(parts) != 2 {
 			continue
@@ -117,6 +121,7 @@ func ExtensionForMIME(contentType string) string {
 	if idx := strings.Index(ct, ";"); idx != -1 {
 		ct = ct[:idx]
 	}
+
 	ct = strings.TrimSpace(ct)
 
 	switch ct {
@@ -146,6 +151,7 @@ func (p *PageInfo) HeadLinks(rel string) []*html.Node {
 	}
 
 	rel = strings.ToLower(rel)
+
 	var matches []*html.Node
 
 	for _, n := range findAllIn(head, "link") {

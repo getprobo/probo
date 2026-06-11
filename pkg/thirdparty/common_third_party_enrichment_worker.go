@@ -250,6 +250,7 @@ func (h *enrichmentHandler) Process(ctx context.Context, party coredata.CommonTh
 	applyCertifications(&party, meta, prior, compliance.Certifications, h.cfg.ConfidenceThreshold, now)
 
 	status := enrichmentStatusDone
+
 	switch {
 	case !anySuccess:
 		status = enrichmentStatusFailed

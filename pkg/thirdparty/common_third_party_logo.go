@@ -178,6 +178,7 @@ func downloadImage(
 	if err != nil {
 		return nil, "", fmt.Errorf("cannot fetch logo: %w", err)
 	}
+
 	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
@@ -188,6 +189,7 @@ func downloadImage(
 	if idx := strings.Index(contentType, ";"); idx != -1 {
 		contentType = contentType[:idx]
 	}
+
 	contentType = strings.TrimSpace(contentType)
 
 	if !strings.HasPrefix(contentType, "image/") {

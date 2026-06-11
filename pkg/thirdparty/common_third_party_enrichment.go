@@ -248,6 +248,7 @@ func normalizeCertifications(values []string) []string {
 		}
 
 		seen[key] = struct{}{}
+
 		out = append(out, v)
 	}
 

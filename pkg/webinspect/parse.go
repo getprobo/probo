@@ -50,6 +50,7 @@ func Parse(ctx context.Context, client *http.Client, websiteURL string) (*PageIn
 	if err != nil {
 		return nil, fmt.Errorf("cannot fetch page: %w", err)
 	}
+
 	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
@@ -57,6 +58,7 @@ func Parse(ctx context.Context, client *http.Client, websiteURL string) (*PageIn
 	}
 
 	const maxHTMLSize = 10 << 20 // 10 MiB
+
 	return ParseHTML(parsed, io.LimitReader(resp.Body, maxHTMLSize))
 }
 
