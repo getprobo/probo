@@ -4,6 +4,12 @@ All notable changes to `probod-bootstrap` will be documented in this file.
 
 ## Unreleased
 
+## [0.1.2] - 2026-06-11
+
+### Changed
+
+- Support email updated to hello@probo.com
+
 ## [0.1.1] - 2026-05-08
 
 ### Fixed
