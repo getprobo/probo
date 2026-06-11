@@ -103,8 +103,8 @@ func (d *AsanaDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error)
 					FullName:    u.Name,
 					ExternalID:  u.GID,
 					MFAStatus:   coredata.MFAStatusUnknown,
-					AuthMethod:  coredata.AccessEntryAuthMethodUnknown,
-					AccountType: coredata.AccessEntryAccountTypeUser,
+					AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,
+					AccountType: coredata.AccessReviewEntryAccountTypeUser,
 				},
 			)
 		}

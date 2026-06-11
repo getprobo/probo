@@ -98,7 +98,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 			}
 
 			if len(flagSourceIDs) > 0 {
-				input["accessSourceIds"] = flagSourceIDs
+				input["accessReviewSourceIds"] = flagSourceIDs
 			}
 
 			data, err := client.Do(

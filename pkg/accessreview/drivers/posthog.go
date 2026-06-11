@@ -296,8 +296,8 @@ func posthogAccountRecord(member posthogMember) AccountRecord {
 		IsAdmin:     posthogIsAdmin(member.Level),
 		ExternalID:  member.User.UUID,
 		MFAStatus:   posthogMFAStatus(member.Is2FAEnabled),
-		AuthMethod:  coredata.AccessEntryAuthMethodUnknown,
-		AccountType: coredata.AccessEntryAccountTypeUser,
+		AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,
+		AccountType: coredata.AccessReviewEntryAccountTypeUser,
 	}
 
 	if record.ExternalID == "" {

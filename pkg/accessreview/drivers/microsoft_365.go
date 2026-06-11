@@ -178,8 +178,8 @@ func (d *Microsoft365Driver) ListAccounts(ctx context.Context) ([]AccountRecord,
 			Active:      &active,
 			IsAdmin:     isAdmin,
 			MFAStatus:   coredata.MFAStatusUnknown,
-			AuthMethod:  coredata.AccessEntryAuthMethodSSO,
-			AccountType: coredata.AccessEntryAccountTypeUser,
+			AuthMethod:  coredata.AccessReviewEntryAuthMethodSSO,
+			AccountType: coredata.AccessReviewEntryAccountTypeUser,
 			ExternalID:  u.ID,
 		}
 

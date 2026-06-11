@@ -108,9 +108,9 @@ func (d *GitHubDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error
 			fullName = m.Login
 		}
 
-		accountType := coredata.AccessEntryAccountTypeUser
+		accountType := coredata.AccessReviewEntryAccountTypeUser
 		if m.Type == "Bot" {
-			accountType = coredata.AccessEntryAccountTypeServiceAccount
+			accountType = coredata.AccessReviewEntryAccountTypeServiceAccount
 		}
 
 		mfaStatus := coredata.MFAStatusUnknown
@@ -130,7 +130,7 @@ func (d *GitHubDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error
 			Active:      new(membership.State == "active"),
 			IsAdmin:     membership.Role == "admin",
 			MFAStatus:   mfaStatus,
-			AuthMethod:  coredata.AccessEntryAuthMethodUnknown,
+			AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,
 			AccountType: accountType,
 			ExternalID:  strconv.FormatInt(m.ID, 10),
 		}

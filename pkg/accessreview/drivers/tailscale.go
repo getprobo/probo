@@ -86,8 +86,8 @@ func (d *TailscaleDriver) ListAccounts(ctx context.Context) ([]AccountRecord, er
 			// Tailscale has no local credentials; it always delegates
 			// authentication to an upstream identity provider, so every
 			// account is SSO regardless of which IdP backs the tailnet.
-			AuthMethod:  coredata.AccessEntryAuthMethodSSO,
-			AccountType: coredata.AccessEntryAccountTypeUser,
+			AuthMethod:  coredata.AccessReviewEntryAuthMethodSSO,
+			AccountType: coredata.AccessReviewEntryAccountTypeUser,
 		}
 
 		if u.Created != "" {

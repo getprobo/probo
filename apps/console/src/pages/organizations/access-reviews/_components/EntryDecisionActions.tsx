@@ -31,16 +31,16 @@ import { useState } from "react";
 import { useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
 
-import type { AccessEntryDecision, EntryDecisionActionsMutation } from "#/__generated__/core/EntryDecisionActionsMutation.graphql";
+import type { AccessReviewEntryDecision, EntryDecisionActionsMutation } from "#/__generated__/core/EntryDecisionActionsMutation.graphql";
 
 import { decisionBadgeVariant, decisionLabel } from "./accessReviewHelpers";
 
 const mutation = graphql`
   mutation EntryDecisionActionsMutation(
-    $input: RecordAccessEntryDecisionInput!
+    $input: RecordAccessReviewEntryDecisionInput!
   ) {
-    recordAccessEntryDecision(input: $input) {
-      accessEntry {
+    recordAccessReviewEntryDecision(input: $input) {
+      accessReviewEntry {
         id
         decision
         decisionNote
@@ -59,16 +59,16 @@ export function EntryDecisionActions({ entryId, decision }: Props) {
   const { toast } = useToast();
   const ref = useDialogRef();
   const [editing, setEditing] = useState(false);
-  const [pendingDecision, setPendingDecision] = useState<AccessEntryDecision | null>(null);
+  const [pendingDecision, setPendingDecision] = useState<AccessReviewEntryDecision | null>(null);
   const [note, setNote] = useState("");
   const [recordDecision, isRecording]
     = useMutation<EntryDecisionActionsMutation>(mutation);
 
-  const submitDecision = (decisionValue: AccessEntryDecision, decisionNote?: string) => {
+  const submitDecision = (decisionValue: AccessReviewEntryDecision, decisionNote?: string) => {
     recordDecision({
       variables: {
         input: {
-          accessEntryId: entryId,
+          accessReviewEntryId: entryId,
           decision: decisionValue,
           decisionNote: decisionNote || null,
         },
@@ -103,14 +103,14 @@ export function EntryDecisionActions({ entryId, decision }: Props) {
     });
   };
 
-  const openNoteDialog = (decisionValue: AccessEntryDecision) => {
+  const openNoteDialog = (decisionValue: AccessReviewEntryDecision) => {
     setPendingDecision(decisionValue);
     setNote("");
     ref.current?.open();
   };
 
   const handleDecision = (value: string) => {
-    const decision = value as AccessEntryDecision;
+    const decision = value as AccessReviewEntryDecision;
     if (decision === "APPROVED") {
       submitDecision(decision);
     } else {

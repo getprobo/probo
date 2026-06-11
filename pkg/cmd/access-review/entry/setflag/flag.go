@@ -25,8 +25,8 @@ import (
 )
 
 const flagMutation = `
-mutation($input: FlagAccessEntryInput!) {
-  flagAccessEntry(input: $input) {
+mutation($input: FlagAccessReviewEntryInput!) {
+  flagAccessReviewEntry(input: $input) {
     accessEntry {
       id
       email
@@ -40,8 +40,8 @@ mutation($input: FlagAccessEntryInput!) {
 `
 
 type flagResponse struct {
-	FlagAccessEntry struct {
-		AccessEntry struct {
+	FlagAccessReviewEntry struct {
+		AccessReviewEntry struct {
 			ID          string   `json:"id"`
 			Email       string   `json:"email"`
 			FullName    string   `json:"fullName"`
@@ -49,7 +49,7 @@ type flagResponse struct {
 			FlagReasons []string `json:"flagReasons"`
 			Decision    string   `json:"decision"`
 		} `json:"accessEntry"`
-	} `json:"flagAccessEntry"`
+	} `json:"flagAccessReviewEntry"`
 }
 
 func NewCmdFlag(f *cmdutil.Factory) *cobra.Command {
@@ -107,8 +107,8 @@ func NewCmdFlag(f *cmdutil.Factory) *cobra.Command {
 			)
 
 			input := map[string]any{
-				"accessEntryId": args[0],
-				"flags":         flagFlags,
+				"accessReviewEntryId": args[0],
+				"flags":               flagFlags,
 			}
 			if flagReason != "" {
 				input["flagReasons"] = []string{flagReason}
@@ -127,7 +127,7 @@ func NewCmdFlag(f *cmdutil.Factory) *cobra.Command {
 				return fmt.Errorf("cannot parse response: %w", err)
 			}
 
-			e := resp.FlagAccessEntry.AccessEntry
+			e := resp.FlagAccessReviewEntry.AccessReviewEntry
 
 			if *flagOutput == cmdutil.OutputJSON {
 				return cmdutil.PrintJSON(f.IOStreams.Out, e)

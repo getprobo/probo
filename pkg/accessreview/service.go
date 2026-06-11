@@ -38,8 +38,8 @@ type (
 		providerRegistry  *provider.Registry
 		logger            *log.Logger
 
-		fetchWorker      *worker.Worker[coredata.AccessReviewCampaignSourceFetch]
-		sourceNameWorker *worker.Worker[coredata.AccessSource]
+		fetchWorker      *worker.Worker[coredata.AccessReviewCampaignSourceFetchAttempt]
+		sourceNameWorker *worker.Worker[coredata.AccessReviewSource]
 	}
 
 	Option func(*options)
@@ -102,39 +102,6 @@ func NewService(
 	return s
 }
 
-// Sources returns a tenant-scoped AccessSourceService.
-func (s *Service) Sources(scope coredata.Scoper) *AccessSourceService {
-	return &AccessSourceService{
-		pg:                s.pg,
-		scope:             scope,
-		encryptionKey:     s.encryptionKey,
-		connectorRegistry: s.connectorRegistry,
-		providerRegistry:  s.providerRegistry,
-	}
-}
-
-// Campaigns returns a tenant-scoped CampaignService.
-func (s *Service) Campaigns(scope coredata.Scoper) *CampaignService {
-	return NewCampaignService(s.pg, scope)
-}
-
-// Entries returns a tenant-scoped AccessEntryService.
-func (s *Service) Entries(scope coredata.Scoper) *AccessEntryService {
-	return &AccessEntryService{pg: s.pg, scope: scope}
-}
-
-// Engine returns a tenant-scoped ReviewEngine.
-func (s *Service) Engine(scope coredata.Scoper) *ReviewEngine {
-	return NewReviewEngine(
-		s.pg,
-		scope,
-		s.encryptionKey,
-		s.connectorRegistry,
-		s.providerRegistry,
-		s.logger.Named("review_engine"),
-	)
-}
-
 // ResolveEntryOrganizationID resolves the organization ID for an access entry.
 // This is unscoped because it is used by resolvers before authorization to
 // find the organization from an entry ID.
@@ -146,7 +113,7 @@ func (s *Service) ResolveEntryOrganizationID(ctx context.Context, entryID gid.GI
 		func(ctx context.Context, conn pg.Querier) error {
 			var err error
 
-			entry := &coredata.AccessEntry{}
+			entry := &coredata.AccessReviewEntry{}
 
 			organizationID, err = entry.LoadOrganizationID(ctx, conn, entryID)
 			if err != nil {

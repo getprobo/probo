@@ -595,6 +595,7 @@ func (impl *Implm) Run(
 	agentRunService := agentrun.NewService(pgClient)
 
 	iamService.Authorizer.RegisterPolicySet(agentrun.PolicySet())
+	iamService.Authorizer.RegisterPolicySet(accessreview.PolicySet())
 
 	thirdPartyService := thirdparty.NewService(pgClient, fileManagerService, thirdPartyVetter)
 	riskManagementService := riskmanagement.NewService(pgClient)

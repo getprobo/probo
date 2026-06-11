@@ -83,8 +83,8 @@ func (d *MetabaseDriver) ListAccounts(ctx context.Context) ([]AccountRecord, err
 			IsAdmin:     u.IsSuperuser,
 			ExternalID:  strconv.Itoa(u.ID),
 			MFAStatus:   coredata.MFAStatusUnknown,
-			AuthMethod:  coredata.AccessEntryAuthMethodUnknown,
-			AccountType: coredata.AccessEntryAccountTypeUser,
+			AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,
+			AccountType: coredata.AccessReviewEntryAccountTypeUser,
 		}
 
 		if t, ok := parseMetabaseTimestamp(u.LastLogin); ok {

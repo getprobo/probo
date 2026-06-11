@@ -110,7 +110,7 @@ func (d *SendGridDriver) ListAccounts(ctx context.Context) ([]AccountRecord, err
 				ExternalID:  strings.TrimSpace(teammate.Username),
 				MFAStatus:   mfaStatus,
 				AuthMethod:  sendGridAuthMethod(teammate),
-				AccountType: coredata.AccessEntryAccountTypeUser,
+				AccountType: coredata.AccessReviewEntryAccountTypeUser,
 			})
 		}
 
@@ -232,12 +232,12 @@ func sendGridRole(userType string, isAdmin bool) string {
 // authenticated through SSO (native or partner) is SSO; otherwise they sign in
 // with SendGrid's own credentials. Both flags are always present on the
 // teammate payload, so this is a definitive signal.
-func sendGridAuthMethod(t sendGridTeammate) coredata.AccessEntryAuthMethod {
+func sendGridAuthMethod(t sendGridTeammate) coredata.AccessReviewEntryAuthMethod {
 	if t.IsSSO || t.IsPartnerSSO {
-		return coredata.AccessEntryAuthMethodSSO
+		return coredata.AccessReviewEntryAuthMethodSSO
 	}
 
-	return coredata.AccessEntryAuthMethodPassword
+	return coredata.AccessReviewEntryAuthMethodPassword
 }
 
 // sendGridMFAStatus derives a teammate's MFA status from the auto-set 2fa

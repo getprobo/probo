@@ -61,8 +61,8 @@ func (d *ResendDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error
 			IsAdmin:     false,
 			ExternalID:  k.ID,
 			MFAStatus:   coredata.MFAStatusUnknown,
-			AuthMethod:  coredata.AccessEntryAuthMethodUnknown,
-			AccountType: coredata.AccessEntryAccountTypeServiceAccount,
+			AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,
+			AccountType: coredata.AccessReviewEntryAccountTypeServiceAccount,
 		}
 
 		if k.CreatedAt != "" {

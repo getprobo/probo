@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/accessreview"
 	"go.probo.inc/probo/pkg/agentrun"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
@@ -384,34 +385,34 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			return types.NewAgentRun(run), nil
 		}
 	case coredata.AccessReviewCampaignEntityType:
-		action = probo.ActionAccessReviewCampaignGet
+		action = accessreview.ActionCampaignGet
 		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
-			campaign, err := r.accessReview.Campaigns(scope).Get(ctx, id)
+			campaign, err := r.accessReview.GetCampaign(ctx, scope, id)
 			if err != nil {
 				return nil, err
 			}
 
 			return types.NewAccessReviewCampaign(campaign), nil
 		}
-	case coredata.AccessSourceEntityType:
-		action = probo.ActionAccessSourceGet
+	case coredata.AccessReviewSourceEntityType:
+		action = accessreview.ActionSourceGet
 		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
-			source, err := r.accessReview.Sources(scope).Get(ctx, id)
+			source, err := r.accessReview.GetSource(ctx, scope, id)
 			if err != nil {
 				return nil, err
 			}
 
-			return types.NewAccessSource(source), nil
+			return types.NewAccessReviewSource(source), nil
 		}
-	case coredata.AccessEntryEntityType:
-		action = probo.ActionAccessEntryGet
+	case coredata.AccessReviewEntryEntityType:
+		action = accessreview.ActionEntryGet
 		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
-			entry, err := r.accessReview.Entries(scope).Get(ctx, id)
+			entry, err := r.accessReview.GetEntry(ctx, scope, id)
 			if err != nil {
 				return nil, err
 			}
 
-			return types.NewAccessEntry(entry), nil
+			return types.NewAccessReviewEntry(entry), nil
 		}
 	case coredata.CookieBannerEntityType:
 		action = probo.ActionCookieBannerGet

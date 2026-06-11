@@ -204,32 +204,32 @@ const (
 			}
 		}`
 
-	createAccessSourceMutation = `
-		mutation CreateAccessSource($input: CreateAccessSourceInput!) {
-			createAccessSource(input: $input) {
-				accessSourceEdge { node { id } }
+	createAccessReviewSourceMutation = `
+		mutation CreateAccessReviewSource($input: CreateAccessReviewSourceInput!) {
+			createAccessReviewSource(input: $input) {
+				accessReviewSourceEdge { node { id } }
 			}
 		}`
 
-	updateAccessSourceMutation = `
-		mutation UpdateAccessSource($input: UpdateAccessSourceInput!) {
-			updateAccessSource(input: $input) {
-				accessSource { id }
+	updateAccessReviewSourceMutation = `
+		mutation UpdateAccessReviewSource($input: UpdateAccessReviewSourceInput!) {
+			updateAccessReviewSource(input: $input) {
+				accessReviewSource { id }
 			}
 		}`
 
-	deleteAccessSourceMutation = `
-		mutation DeleteAccessSource($input: DeleteAccessSourceInput!) {
-			deleteAccessSource(input: $input) {
-				deletedAccessSourceId
+	deleteAccessReviewSourceMutation = `
+		mutation DeleteAccessReviewSource($input: DeleteAccessReviewSourceInput!) {
+			deleteAccessReviewSource(input: $input) {
+				deletedAccessReviewSourceId
 			}
 		}`
 
-	listAccessSourcesQuery = `
-		query GetAccessSources($id: ID!) {
+	listAccessReviewSourcesQuery = `
+		query GetAccessReviewSources($id: ID!) {
 			node(id: $id) {
 				... on Organization {
-					accessSources(first: 10) { totalCount }
+					accessReviewSources(first: 10) { totalCount }
 				}
 			}
 		}`
@@ -305,7 +305,7 @@ func TestRBAC(t *testing.T) {
 	taskID := factory.NewTask(owner, measureID).WithName("RBAC Test Task").Create()
 	riskID := factory.NewRisk(owner).WithName("RBAC Test Risk").Create()
 	thirdPartyID := factory.NewThirdParty(owner).WithName("RBAC Test ThirdParty").Create()
-	accessSourceID := factory.NewAccessSource(owner, owner.GetOrganizationID().String()).WithName("RBAC Test Source").Create()
+	accessReviewSourceID := factory.NewAccessReviewSource(owner, owner.GetOrganizationID().String()).WithName("RBAC Test Source").Create()
 	accessReviewCampaignID := factory.NewAccessReviewCampaign(owner, owner.GetOrganizationID().String()).WithName("RBAC Test Campaign").Create()
 
 	tests := []struct {
@@ -1063,9 +1063,9 @@ func TestRBAC(t *testing.T) {
 			name:   "owner can create access source",
 			role:   "owner",
 			client: owner,
-			query:  createAccessSourceMutation,
+			query:  createAccessReviewSourceMutation,
 			variables: func() map[string]any {
-				return map[string]any{"input": map[string]any{"organizationId": owner.GetOrganizationID().String(), "name": factory.SafeName("AccessSource")}}
+				return map[string]any{"input": map[string]any{"organizationId": owner.GetOrganizationID().String(), "name": factory.SafeName("AccessReviewSource")}}
 			},
 			shouldAllow: true,
 		},
@@ -1073,9 +1073,9 @@ func TestRBAC(t *testing.T) {
 			name:   "admin can create access source",
 			role:   "admin",
 			client: admin,
-			query:  createAccessSourceMutation,
+			query:  createAccessReviewSourceMutation,
 			variables: func() map[string]any {
-				return map[string]any{"input": map[string]any{"organizationId": owner.GetOrganizationID().String(), "name": factory.SafeName("AccessSource")}}
+				return map[string]any{"input": map[string]any{"organizationId": owner.GetOrganizationID().String(), "name": factory.SafeName("AccessReviewSource")}}
 			},
 			shouldAllow: true,
 		},
@@ -1083,9 +1083,9 @@ func TestRBAC(t *testing.T) {
 			name:   "viewer cannot create access source",
 			role:   "viewer",
 			client: viewer,
-			query:  createAccessSourceMutation,
+			query:  createAccessReviewSourceMutation,
 			variables: func() map[string]any {
-				return map[string]any{"input": map[string]any{"organizationId": owner.GetOrganizationID().String(), "name": factory.SafeName("AccessSource")}}
+				return map[string]any{"input": map[string]any{"organizationId": owner.GetOrganizationID().String(), "name": factory.SafeName("AccessReviewSource")}}
 			},
 			shouldAllow: false,
 		},
@@ -1094,9 +1094,9 @@ func TestRBAC(t *testing.T) {
 			name:   "owner can update access source",
 			role:   "owner",
 			client: owner,
-			query:  updateAccessSourceMutation,
+			query:  updateAccessReviewSourceMutation,
 			variables: func() map[string]any {
-				return map[string]any{"input": map[string]any{"accessSourceId": accessSourceID, "name": factory.SafeName("Updated Source")}}
+				return map[string]any{"input": map[string]any{"accessReviewSourceId": accessReviewSourceID, "name": factory.SafeName("Updated Source")}}
 			},
 			shouldAllow: true,
 		},
@@ -1104,9 +1104,9 @@ func TestRBAC(t *testing.T) {
 			name:   "admin can update access source",
 			role:   "admin",
 			client: admin,
-			query:  updateAccessSourceMutation,
+			query:  updateAccessReviewSourceMutation,
 			variables: func() map[string]any {
-				return map[string]any{"input": map[string]any{"accessSourceId": accessSourceID, "name": factory.SafeName("Updated Source")}}
+				return map[string]any{"input": map[string]any{"accessReviewSourceId": accessReviewSourceID, "name": factory.SafeName("Updated Source")}}
 			},
 			shouldAllow: true,
 		},
@@ -1114,9 +1114,9 @@ func TestRBAC(t *testing.T) {
 			name:   "viewer cannot update access source",
 			role:   "viewer",
 			client: viewer,
-			query:  updateAccessSourceMutation,
+			query:  updateAccessReviewSourceMutation,
 			variables: func() map[string]any {
-				return map[string]any{"input": map[string]any{"accessSourceId": accessSourceID, "name": factory.SafeName("Updated Source")}}
+				return map[string]any{"input": map[string]any{"accessReviewSourceId": accessReviewSourceID, "name": factory.SafeName("Updated Source")}}
 			},
 			shouldAllow: false,
 		},
@@ -1125,10 +1125,10 @@ func TestRBAC(t *testing.T) {
 			name:   "owner can delete access source",
 			role:   "owner",
 			client: owner,
-			query:  deleteAccessSourceMutation,
+			query:  deleteAccessReviewSourceMutation,
 			variables: func() map[string]any {
-				id := factory.NewAccessSource(owner, owner.GetOrganizationID().String()).WithName(factory.SafeName("ToDelete")).Create()
-				return map[string]any{"input": map[string]any{"accessSourceId": id}}
+				id := factory.NewAccessReviewSource(owner, owner.GetOrganizationID().String()).WithName(factory.SafeName("ToDelete")).Create()
+				return map[string]any{"input": map[string]any{"accessReviewSourceId": id}}
 			},
 			shouldAllow: true,
 		},
@@ -1136,10 +1136,10 @@ func TestRBAC(t *testing.T) {
 			name:   "admin can delete access source",
 			role:   "admin",
 			client: admin,
-			query:  deleteAccessSourceMutation,
+			query:  deleteAccessReviewSourceMutation,
 			variables: func() map[string]any {
-				id := factory.NewAccessSource(owner, owner.GetOrganizationID().String()).WithName(factory.SafeName("ToDelete")).Create()
-				return map[string]any{"input": map[string]any{"accessSourceId": id}}
+				id := factory.NewAccessReviewSource(owner, owner.GetOrganizationID().String()).WithName(factory.SafeName("ToDelete")).Create()
+				return map[string]any{"input": map[string]any{"accessReviewSourceId": id}}
 			},
 			shouldAllow: true,
 		},
@@ -1147,10 +1147,10 @@ func TestRBAC(t *testing.T) {
 			name:   "viewer cannot delete access source",
 			role:   "viewer",
 			client: viewer,
-			query:  deleteAccessSourceMutation,
+			query:  deleteAccessReviewSourceMutation,
 			variables: func() map[string]any {
-				id := factory.NewAccessSource(owner, owner.GetOrganizationID().String()).WithName(factory.SafeName("ToDelete")).Create()
-				return map[string]any{"input": map[string]any{"accessSourceId": id}}
+				id := factory.NewAccessReviewSource(owner, owner.GetOrganizationID().String()).WithName(factory.SafeName("ToDelete")).Create()
+				return map[string]any{"input": map[string]any{"accessReviewSourceId": id}}
 			},
 			shouldAllow: false,
 		},
@@ -1159,7 +1159,7 @@ func TestRBAC(t *testing.T) {
 			name:   "owner can list access sources",
 			role:   "owner",
 			client: owner,
-			query:  listAccessSourcesQuery,
+			query:  listAccessReviewSourcesQuery,
 			variables: func() map[string]any {
 				return map[string]any{"id": owner.GetOrganizationID().String()}
 			},
@@ -1169,7 +1169,7 @@ func TestRBAC(t *testing.T) {
 			name:   "admin can list access sources",
 			role:   "admin",
 			client: admin,
-			query:  listAccessSourcesQuery,
+			query:  listAccessReviewSourcesQuery,
 			variables: func() map[string]any {
 				return map[string]any{"id": owner.GetOrganizationID().String()}
 			},
@@ -1179,7 +1179,7 @@ func TestRBAC(t *testing.T) {
 			name:   "viewer can list access sources",
 			role:   "viewer",
 			client: viewer,
-			query:  listAccessSourcesQuery,
+			query:  listAccessReviewSourcesQuery,
 			variables: func() map[string]any {
 				return map[string]any{"id": owner.GetOrganizationID().String()}
 			},

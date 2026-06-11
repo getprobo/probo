@@ -75,8 +75,8 @@ func (d *AnthropicDriver) ListAccounts(ctx context.Context) ([]AccountRecord, er
 				IsAdmin:     u.Role == "admin",
 				ExternalID:  u.ID,
 				MFAStatus:   coredata.MFAStatusUnknown,
-				AuthMethod:  coredata.AccessEntryAuthMethodUnknown,
-				AccountType: coredata.AccessEntryAccountTypeUser,
+				AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,
+				AccountType: coredata.AccessReviewEntryAccountTypeUser,
 			}
 
 			// added_at is an RFC 3339 datetime string; ignore parse

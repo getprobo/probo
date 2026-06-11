@@ -24,8 +24,8 @@ import (
 )
 
 const addSourceMutation = `
-mutation($input: AddAccessReviewCampaignScopeSourceInput!) {
-  addAccessReviewCampaignScopeSource(input: $input) {
+mutation($input: AddAccessReviewCampaignSourceInput!) {
+  addAccessReviewCampaignSource(input: $input) {
     accessReviewCampaign {
       id
       name
@@ -36,13 +36,13 @@ mutation($input: AddAccessReviewCampaignScopeSourceInput!) {
 `
 
 type addSourceResponse struct {
-	AddAccessReviewCampaignScopeSource struct {
+	AddAccessReviewCampaignSource struct {
 		AccessReviewCampaign struct {
 			ID     string `json:"id"`
 			Name   string `json:"name"`
 			Status string `json:"status"`
 		} `json:"accessReviewCampaign"`
-	} `json:"addAccessReviewCampaignScopeSource"`
+	} `json:"addAccessReviewCampaignSource"`
 }
 
 func NewCmdAddSource(f *cmdutil.Factory) *cobra.Command {
@@ -73,7 +73,7 @@ func NewCmdAddSource(f *cmdutil.Factory) *cobra.Command {
 
 			input := map[string]any{
 				"accessReviewCampaignId": args[0],
-				"accessSourceId":         flagSourceID,
+				"accessReviewSourceId":   flagSourceID,
 			}
 
 			data, err := client.Do(
@@ -89,7 +89,7 @@ func NewCmdAddSource(f *cmdutil.Factory) *cobra.Command {
 				return fmt.Errorf("cannot parse response: %w", err)
 			}
 
-			c := resp.AddAccessReviewCampaignScopeSource.AccessReviewCampaign
+			c := resp.AddAccessReviewCampaignSource.AccessReviewCampaign
 			out := f.IOStreams.Out
 			_, _ = fmt.Fprintf(out, "Added source %s to campaign %s\n", flagSourceID, c.ID)
 

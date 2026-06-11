@@ -86,8 +86,8 @@ func (d *SigNozDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error
 			Active:      sigNozActiveStatus(u.Status),
 			IsAdmin:     u.IsRoot || strings.EqualFold(role, "Admin"),
 			MFAStatus:   coredata.MFAStatusUnknown,
-			AuthMethod:  coredata.AccessEntryAuthMethodUnknown,
-			AccountType: coredata.AccessEntryAccountTypeUser,
+			AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,
+			AccountType: coredata.AccessReviewEntryAccountTypeUser,
 			ExternalID:  strings.TrimSpace(u.ID),
 		}
 

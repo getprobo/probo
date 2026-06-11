@@ -120,8 +120,8 @@ func (d *TallyDriver) listUsers(ctx context.Context) ([]AccountRecord, error) {
 			Active:      new(!u.IsDeleted),
 			ExternalID:  u.ID,
 			MFAStatus:   mfaStatus,
-			AuthMethod:  coredata.AccessEntryAuthMethodUnknown,
-			AccountType: coredata.AccessEntryAccountTypeUser,
+			AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,
+			AccountType: coredata.AccessReviewEntryAccountTypeUser,
 			CreatedAt:   new(u.CreatedAt),
 		}
 
@@ -176,8 +176,8 @@ func (d *TallyDriver) listInvites(ctx context.Context) ([]AccountRecord, error) 
 			Active:      new(false),
 			ExternalID:  inv.ID,
 			MFAStatus:   coredata.MFAStatusUnknown,
-			AuthMethod:  coredata.AccessEntryAuthMethodUnknown,
-			AccountType: coredata.AccessEntryAccountTypeUser,
+			AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,
+			AccountType: coredata.AccessReviewEntryAccountTypeUser,
 			Role:        "Invited",
 		}
 

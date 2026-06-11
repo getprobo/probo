@@ -1703,11 +1703,11 @@ func (s OrganizationService) DeleteSCIMConfiguration(
 
 			if err == nil {
 				// Bridge exists. Only delete the underlying connector if nothing
-				// else references it (e.g. access_sources). Otherwise leave it in
+				// else references it (e.g. access_review_sources). Otherwise leave it in
 				// place — the bridge's FK is ON DELETE SET NULL, so deleting the
 				// bridge alone is sufficient to unbind SCIM from the connector.
 				if bridge.ConnectorID != nil {
-					accessSources := &coredata.AccessSources{}
+					accessSources := &coredata.AccessReviewSources{}
 
 					count, err := accessSources.CountByConnectorID(ctx, tx, scope, *bridge.ConnectorID)
 					if err != nil {

@@ -24,11 +24,11 @@ import (
 )
 
 const listQuery = `
-query($id: ID!, $first: Int, $after: CursorKey, $orderBy: AccessSourceOrder) {
+query($id: ID!, $first: Int, $after: CursorKey, $orderBy: AccessReviewSourceOrder) {
   node(id: $id) {
     __typename
     ... on Organization {
-      accessSources(first: $first, after: $after, orderBy: $orderBy) {
+      accessReviewSources(first: $first, after: $after, orderBy: $orderBy) {
         totalCount
         edges {
           node {
@@ -125,8 +125,8 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				func(data json.RawMessage) (*api.Connection[sourceNode], error) {
 					var resp struct {
 						Node *struct {
-							Typename      string                     `json:"__typename"`
-							AccessSources api.Connection[sourceNode] `json:"accessSources"`
+							Typename            string                     `json:"__typename"`
+							AccessReviewSources api.Connection[sourceNode] `json:"accessReviewSources"`
 						} `json:"node"`
 					}
 					if err := json.Unmarshal(data, &resp); err != nil {
@@ -141,7 +141,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 						return nil, fmt.Errorf("expected Organization node, got %s", resp.Node.Typename)
 					}
 
-					return &resp.Node.AccessSources, nil
+					return &resp.Node.AccessReviewSources, nil
 				},
 			)
 			if err != nil {

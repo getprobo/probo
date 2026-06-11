@@ -19,8 +19,8 @@ import (
 	"go.probo.inc/probo/pkg/page"
 )
 
-func NewAccessSource(s *coredata.AccessSource) *AccessSource {
-	return &AccessSource{
+func NewAccessReviewSource(s *coredata.AccessReviewSource) *AccessReviewSource {
+	return &AccessReviewSource{
 		ID:             s.ID,
 		OrganizationID: s.OrganizationID,
 		ConnectorID:    s.ConnectorID,
@@ -31,12 +31,12 @@ func NewAccessSource(s *coredata.AccessSource) *AccessSource {
 	}
 }
 
-func NewListAccessSourcesOutput(
-	p *page.Page[*coredata.AccessSource, coredata.AccessSourceOrderField],
-) ListAccessSourcesOutput {
-	sources := make([]*AccessSource, 0, len(p.Data))
+func NewListAccessReviewSourcesOutput(
+	p *page.Page[*coredata.AccessReviewSource, coredata.AccessReviewSourceOrderField],
+) ListAccessReviewSourcesOutput {
+	sources := make([]*AccessReviewSource, 0, len(p.Data))
 	for _, s := range p.Data {
-		sources = append(sources, NewAccessSource(s))
+		sources = append(sources, NewAccessReviewSource(s))
 	}
 
 	var nextCursor *page.CursorKey
@@ -46,9 +46,9 @@ func NewListAccessSourcesOutput(
 		nextCursor = &cursorKey
 	}
 
-	return ListAccessSourcesOutput{
-		NextCursor:    nextCursor,
-		AccessSources: sources,
+	return ListAccessReviewSourcesOutput{
+		NextCursor:          nextCursor,
+		AccessReviewSources: sources,
 	}
 }
 
@@ -67,32 +67,32 @@ func NewAccessReviewCampaign(c *coredata.AccessReviewCampaign) *AccessReviewCamp
 	}
 }
 
-func NewAccessEntry(e *coredata.AccessEntry) *AccessEntry {
-	entry := &AccessEntry{
-		ID:               e.ID,
-		CampaignID:       e.AccessReviewCampaignID,
-		AccessSourceID:   e.AccessSourceID,
-		Email:            e.Email,
-		FullName:         e.FullName,
-		Role:             e.Role,
-		JobTitle:         e.JobTitle,
-		IsAdmin:          e.IsAdmin,
-		Active:           e.Active,
-		MfaStatus:        e.MFAStatus,
-		AuthMethod:       e.AuthMethod,
-		AccountType:      e.AccountType,
-		LastLogin:        e.LastLogin,
-		AccountCreatedAt: e.AccountCreatedAt,
-		ExternalID:       e.ExternalID,
-		IncrementalTag:   e.IncrementalTag,
-		Flags:            e.Flags,
-		FlagReasons:      e.FlagReasons,
-		Decision:         e.Decision,
-		DecisionNote:     e.DecisionNote,
-		DecidedBy:        e.DecidedBy,
-		DecidedAt:        e.DecidedAt,
-		CreatedAt:        e.CreatedAt,
-		UpdatedAt:        e.UpdatedAt,
+func NewAccessReviewEntry(e *coredata.AccessReviewEntry) *AccessReviewEntry {
+	entry := &AccessReviewEntry{
+		ID:                           e.ID,
+		CampaignID:                   e.AccessReviewCampaignID,
+		AccessReviewCampaignSourceID: e.AccessReviewCampaignSourceID,
+		Email:                        e.Email,
+		FullName:                     e.FullName,
+		Role:                         e.Role,
+		JobTitle:                     e.JobTitle,
+		IsAdmin:                      e.IsAdmin,
+		Active:                       e.Active,
+		MfaStatus:                    e.MFAStatus,
+		AuthMethod:                   e.AuthMethod,
+		AccountType:                  e.AccountType,
+		LastLogin:                    e.LastLogin,
+		AccountCreatedAt:             e.AccountCreatedAt,
+		ExternalID:                   e.ExternalID,
+		IncrementalTag:               e.IncrementalTag,
+		Flags:                        e.Flags,
+		FlagReasons:                  e.FlagReasons,
+		Decision:                     e.Decision,
+		DecisionNote:                 e.DecisionNote,
+		DecidedBy:                    e.DecidedBy,
+		DecidedAt:                    e.DecidedAt,
+		CreatedAt:                    e.CreatedAt,
+		UpdatedAt:                    e.UpdatedAt,
 	}
 
 	return entry
@@ -120,11 +120,11 @@ func NewListAccessReviewCampaignsOutput(
 }
 
 func NewListAccessEntriesOutput(
-	p *page.Page[*coredata.AccessEntry, coredata.AccessEntryOrderField],
+	p *page.Page[*coredata.AccessReviewEntry, coredata.AccessReviewEntryOrderField],
 ) ListAccessEntriesOutput {
-	entries := make([]*AccessEntry, 0, len(p.Data))
+	entries := make([]*AccessReviewEntry, 0, len(p.Data))
 	for _, e := range p.Data {
-		entries = append(entries, NewAccessEntry(e))
+		entries = append(entries, NewAccessReviewEntry(e))
 	}
 
 	var nextCursor *page.CursorKey
@@ -140,7 +140,7 @@ func NewListAccessEntriesOutput(
 	}
 }
 
-func NewAccessEntryStatistics(s *coredata.AccessEntryStatistics) *AccessEntryStatistics {
+func NewAccessReviewStatistics(s *coredata.AccessReviewStatistics) *AccessReviewStatistics {
 	decisionCounts := make(map[string]any, len(s.DecisionCounts))
 	for k, v := range s.DecisionCounts {
 		decisionCounts[string(k)] = v
@@ -156,7 +156,7 @@ func NewAccessEntryStatistics(s *coredata.AccessEntryStatistics) *AccessEntrySta
 		incrementalTagCounts[string(k)] = v
 	}
 
-	return &AccessEntryStatistics{
+	return &AccessReviewStatistics{
 		TotalCount:           s.TotalCount,
 		DecisionCounts:       decisionCounts,
 		FlagCounts:           flagCounts,

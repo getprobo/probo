@@ -19,58 +19,58 @@ import (
 	"fmt"
 )
 
-type AccessEntryAuthMethod string
+type AccessReviewEntryAuthMethod string
 
 const (
-	AccessEntryAuthMethodSSO            AccessEntryAuthMethod = "SSO"
-	AccessEntryAuthMethodPassword       AccessEntryAuthMethod = "PASSWORD"
-	AccessEntryAuthMethodAPIKey         AccessEntryAuthMethod = "API_KEY"
-	AccessEntryAuthMethodServiceAccount AccessEntryAuthMethod = "SERVICE_ACCOUNT"
-	AccessEntryAuthMethodUnknown        AccessEntryAuthMethod = "UNKNOWN"
+	AccessReviewEntryAuthMethodSSO            AccessReviewEntryAuthMethod = "SSO"
+	AccessReviewEntryAuthMethodPassword       AccessReviewEntryAuthMethod = "PASSWORD"
+	AccessReviewEntryAuthMethodAPIKey         AccessReviewEntryAuthMethod = "API_KEY"
+	AccessReviewEntryAuthMethodServiceAccount AccessReviewEntryAuthMethod = "SERVICE_ACCOUNT"
+	AccessReviewEntryAuthMethodUnknown        AccessReviewEntryAuthMethod = "UNKNOWN"
 )
 
 var (
-	_ fmt.Stringer             = AccessEntryAuthMethod("")
-	_ encoding.TextMarshaler   = AccessEntryAuthMethod("")
-	_ encoding.TextUnmarshaler = (*AccessEntryAuthMethod)(nil)
+	_ fmt.Stringer             = AccessReviewEntryAuthMethod("")
+	_ encoding.TextMarshaler   = AccessReviewEntryAuthMethod("")
+	_ encoding.TextUnmarshaler = (*AccessReviewEntryAuthMethod)(nil)
 )
 
-func AccessEntryAuthMethods() []AccessEntryAuthMethod {
-	return []AccessEntryAuthMethod{
-		AccessEntryAuthMethodSSO,
-		AccessEntryAuthMethodPassword,
-		AccessEntryAuthMethodAPIKey,
-		AccessEntryAuthMethodServiceAccount,
-		AccessEntryAuthMethodUnknown,
+func AccessReviewEntryAuthMethods() []AccessReviewEntryAuthMethod {
+	return []AccessReviewEntryAuthMethod{
+		AccessReviewEntryAuthMethodSSO,
+		AccessReviewEntryAuthMethodPassword,
+		AccessReviewEntryAuthMethodAPIKey,
+		AccessReviewEntryAuthMethodServiceAccount,
+		AccessReviewEntryAuthMethodUnknown,
 	}
 }
 
-func (v AccessEntryAuthMethod) IsValid() bool {
+func (v AccessReviewEntryAuthMethod) IsValid() bool {
 	switch v {
 	case
-		AccessEntryAuthMethodSSO,
-		AccessEntryAuthMethodPassword,
-		AccessEntryAuthMethodAPIKey,
-		AccessEntryAuthMethodServiceAccount,
-		AccessEntryAuthMethodUnknown:
+		AccessReviewEntryAuthMethodSSO,
+		AccessReviewEntryAuthMethodPassword,
+		AccessReviewEntryAuthMethodAPIKey,
+		AccessReviewEntryAuthMethodServiceAccount,
+		AccessReviewEntryAuthMethodUnknown:
 		return true
 	}
 
 	return false
 }
 
-func (v AccessEntryAuthMethod) String() string {
+func (v AccessReviewEntryAuthMethod) String() string {
 	return string(v)
 }
 
-func (v AccessEntryAuthMethod) MarshalText() ([]byte, error) {
+func (v AccessReviewEntryAuthMethod) MarshalText() ([]byte, error) {
 	return []byte(v.String()), nil
 }
 
-func (v *AccessEntryAuthMethod) UnmarshalText(text []byte) error {
-	val := AccessEntryAuthMethod(text)
+func (v *AccessReviewEntryAuthMethod) UnmarshalText(text []byte) error {
+	val := AccessReviewEntryAuthMethod(text)
 	if !val.IsValid() {
-		return fmt.Errorf("invalid AccessEntryAuthMethod value: %q", string(text))
+		return fmt.Errorf("invalid AccessReviewEntryAuthMethod value: %q", string(text))
 	}
 
 	*v = val

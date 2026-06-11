@@ -20,14 +20,14 @@ import { useRef, useState } from "react";
 import { useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
 
-import type { AccessEntryFlag, EntryFlagSelectMutation } from "#/__generated__/core/EntryFlagSelectMutation.graphql";
+import type { AccessReviewEntryFlag, EntryFlagSelectMutation } from "#/__generated__/core/EntryFlagSelectMutation.graphql";
 
 import { flagBadgeVariant, flagGroups, flagLabel } from "./accessReviewHelpers";
 
 const mutation = graphql`
-  mutation EntryFlagSelectMutation($input: FlagAccessEntryInput!) {
-    flagAccessEntry(input: $input) {
-      accessEntry {
+  mutation EntryFlagSelectMutation($input: FlagAccessReviewEntryInput!) {
+    flagAccessReviewEntry(input: $input) {
+      accessReviewEntry {
         id
         flags
         flagReasons
@@ -38,18 +38,18 @@ const mutation = graphql`
 
 type Props = {
   entryId: string;
-  currentFlags: readonly AccessEntryFlag[];
+  currentFlags: readonly AccessReviewEntryFlag[];
 };
 
 export function EntryFlagSelect({ entryId, currentFlags }: Props) {
   const { __ } = useTranslate();
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
-  const [localFlags, setLocalFlags] = useState<AccessEntryFlag[]>([...currentFlags]);
-  const openedWithRef = useRef<readonly AccessEntryFlag[]>(currentFlags);
+  const [localFlags, setLocalFlags] = useState<AccessReviewEntryFlag[]>([...currentFlags]);
+  const openedWithRef = useRef<readonly AccessReviewEntryFlag[]>(currentFlags);
   const [flagEntry] = useMutation<EntryFlagSelectMutation>(mutation);
 
-  const toggleFlag = (flagValue: AccessEntryFlag) => {
+  const toggleFlag = (flagValue: AccessReviewEntryFlag) => {
     setLocalFlags(prev =>
       prev.includes(flagValue)
         ? prev.filter(f => f !== flagValue)
@@ -73,7 +73,7 @@ export function EntryFlagSelect({ entryId, currentFlags }: Props) {
         flagEntry({
           variables: {
             input: {
-              accessEntryId: entryId,
+              accessReviewEntryId: entryId,
               flags: localFlags,
             },
           },

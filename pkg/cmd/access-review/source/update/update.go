@@ -25,8 +25,8 @@ import (
 )
 
 const updateMutation = `
-mutation($input: UpdateAccessSourceInput!) {
-  updateAccessSource(input: $input) {
+mutation($input: UpdateAccessReviewSourceInput!) {
+  updateAccessReviewSource(input: $input) {
     accessSource {
       id
       name
@@ -36,12 +36,12 @@ mutation($input: UpdateAccessSourceInput!) {
 `
 
 type updateResponse struct {
-	UpdateAccessSource struct {
-		AccessSource struct {
+	UpdateAccessReviewSource struct {
+		AccessReviewSource struct {
 			ID   string `json:"id"`
 			Name string `json:"name"`
 		} `json:"accessSource"`
-	} `json:"updateAccessSource"`
+	} `json:"updateAccessReviewSource"`
 }
 
 func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
@@ -80,7 +80,7 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 			)
 
 			input := map[string]any{
-				"accessSourceId": args[0],
+				"accessReviewSourceId": args[0],
 			}
 
 			if cmd.Flags().Changed("name") {
@@ -113,7 +113,7 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 				return fmt.Errorf("cannot parse response: %w", err)
 			}
 
-			s := resp.UpdateAccessSource.AccessSource
+			s := resp.UpdateAccessReviewSource.AccessReviewSource
 
 			if *flagOutput == cmdutil.OutputJSON {
 				return cmdutil.PrintJSON(f.IOStreams.Out, s)

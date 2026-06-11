@@ -197,8 +197,8 @@ func (d *CloudflareDriver) queryAllMembers(ctx context.Context, accountID string
 				IsAdmin:     isAdmin,
 				ExternalID:  m.ID,
 				MFAStatus:   mfaStatus,
-				AuthMethod:  coredata.AccessEntryAuthMethodUnknown,
-				AccountType: coredata.AccessEntryAccountTypeUser,
+				AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,
+				AccountType: coredata.AccessReviewEntryAccountTypeUser,
 			}
 
 			if record.Email != "" {

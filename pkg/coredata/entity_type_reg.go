@@ -23,108 +23,110 @@ var (
 )
 
 const (
-	OrganizationEntityType                         uint16 = 0
-	FrameworkEntityType                            uint16 = 1
-	MeasureEntityType                              uint16 = 2
-	TaskEntityType                                 uint16 = 3
-	EvidenceEntityType                             uint16 = 4
-	ConnectorEntityType                            uint16 = 5
-	ThirdPartyRiskAssessmentEntityType             uint16 = 6
-	ThirdPartyEntityType                           uint16 = 7
-	_                                              uint16 = 8 // PeopleEntityType - removed
-	ThirdPartyComplianceReportEntityType           uint16 = 9
-	DocumentEntityType                             uint16 = 10
-	IdentityEntityType                             uint16 = 11
-	SessionEntityType                              uint16 = 12
-	EmailEntityType                                uint16 = 13
-	ControlEntityType                              uint16 = 14
-	RiskEntityType                                 uint16 = 15
-	DocumentVersionEntityType                      uint16 = 16
-	DocumentVersionSignatureEntityType             uint16 = 17
-	AssetEntityType                                uint16 = 18
-	DatumEntityType                                uint16 = 19
-	AuditEntityType                                uint16 = 20
-	_                                              uint16 = 21 // ReportEntityType - removed
-	TrustCenterEntityType                          uint16 = 22
-	TrustCenterAccessEntityType                    uint16 = 23
-	ThirdPartyBusinessAssociateAgreementEntityType uint16 = 24
-	FileEntityType                                 uint16 = 25
-	ThirdPartyContactEntityType                    uint16 = 26
-	ThirdPartyDataPrivacyAgreementEntityType       uint16 = 27
-	_                                              uint16 = 28 // NonconformityEntityType - removed
-	ObligationEntityType                           uint16 = 29
-	ThirdPartyServiceEntityType                    uint16 = 30
-	_                                              uint16 = 31 // SnapshotEntityType - removed
-	_                                              uint16 = 32 // ContinualImprovementEntityType - removed
-	ProcessingActivityEntityType                   uint16 = 33
-	ExportJobEntityType                            uint16 = 34
-	TrustCenterReferenceEntityType                 uint16 = 35
-	TrustCenterDocumentAccessEntityType            uint16 = 36
-	CustomDomainEntityType                         uint16 = 37
-	InvitationEntityType                           uint16 = 38
-	MembershipEntityType                           uint16 = 39
-	SlackMessageEntityType                         uint16 = 40
-	TrustCenterFileEntityType                      uint16 = 41
-	SAMLConfigurationEntityType                    uint16 = 42
-	PersonalAPIKeyEntityType                       uint16 = 43
-	_                                              uint16 = 44 // PersonalAPIKeyMembershipEntityType - removed
-	_                                              uint16 = 45 // MeetingEntityType - removed
-	DataProtectionImpactAssessmentEntityType       uint16 = 46
-	TransferImpactAssessmentEntityType             uint16 = 47
-	RightsRequestEntityType                        uint16 = 48
-	StatementOfApplicabilityEntityType             uint16 = 49
-	ApplicabilityStatementEntityType               uint16 = 50
-	MembershipProfileEntityType                    uint16 = 51
-	SCIMConfigurationEntityType                    uint16 = 52
-	SCIMEventEntityType                            uint16 = 53
-	TokenEntityType                                uint16 = 54
-	SCIMBridgeEntityType                           uint16 = 55
-	WebhookSubscriptionEntityType                  uint16 = 56
-	WebhookDataEntityType                          uint16 = 57
-	WebhookEventEntityType                         uint16 = 58
-	ElectronicSignatureEntityType                  uint16 = 59
-	ElectronicSignatureEventEntityType             uint16 = 60
-	EmailAttachmentEntityType                      uint16 = 61
-	ComplianceFrameworkEntityType                  uint16 = 62
-	ComplianceExternalURLEntityType                uint16 = 63
-	MailingListEntityType                          uint16 = 64
-	MailingListSubscriberEntityType                uint16 = 65
-	MailingListUpdateEntityType                    uint16 = 66
-	FindingEntityType                              uint16 = 67
-	AuditLogEntryEntityType                        uint16 = 68
-	DocumentVersionApprovalQuorumEntityType        uint16 = 69
-	DocumentVersionApprovalDecisionEntityType      uint16 = 70
-	AccessSourceEntityType                         uint16 = 71
-	AccessReviewCampaignEntityType                 uint16 = 72
-	AccessEntryEntityType                          uint16 = 73
-	AccessEntryDecisionHistoryEntityType           uint16 = 74
-	CookieBannerEntityType                         uint16 = 75
-	CookieCategoryEntityType                       uint16 = 76
-	CookieConsentRecordEntityType                  uint16 = 77
-	CookieBannerVersionEntityType                  uint16 = 78
-	OAuth2ClientEntityType                         uint16 = 79
-	OAuth2ConsentEntityType                        uint16 = 80
-	OAuth2AccessTokenEntityType                    uint16 = 81
-	OAuth2RefreshTokenEntityType                   uint16 = 82
-	OAuth2AuthorizationCodeEntityType              uint16 = 83
-	OAuth2DeviceCodeEntityType                     uint16 = 84
-	_                                              uint16 = 85 // CookieEntityType - removed
-	CookieBannerTranslationEntityType              uint16 = 86
-	AgentRunEntityType                             uint16 = 87
-	_                                              uint16 = 88 // CookiePatternEntityType - removed
-	TrackerPatternEntityType                       uint16 = 89
-	DetectedTrackerEntityType                      uint16 = 90
-	TrackerResourceEntityType                      uint16 = 91
-	CommonThirdPartyEntityType                     uint16 = 92
-	CommonThirdPartyDomainEntityType               uint16 = 93
-	CommonTrackerPatternEntityType                 uint16 = 94
-	RiskAssessmentEntityType                       uint16 = 95
-	RiskAssessmentNodeEntityType                   uint16 = 96
-	RiskAssessmentProcessEntityType                uint16 = 97
-	RiskAssessmentThreatEntityType                 uint16 = 98
-	RiskAssessmentScopeEntityType                  uint16 = 99
-	RiskAssessmentScenarioEntityType               uint16 = 100
-	RiskAssessmentBoundaryEntityType               uint16 = 101
+	OrganizationEntityType                           uint16 = 0
+	FrameworkEntityType                              uint16 = 1
+	MeasureEntityType                                uint16 = 2
+	TaskEntityType                                   uint16 = 3
+	EvidenceEntityType                               uint16 = 4
+	ConnectorEntityType                              uint16 = 5
+	ThirdPartyRiskAssessmentEntityType               uint16 = 6
+	ThirdPartyEntityType                             uint16 = 7
+	_                                                uint16 = 8 // PeopleEntityType - removed
+	ThirdPartyComplianceReportEntityType             uint16 = 9
+	DocumentEntityType                               uint16 = 10
+	IdentityEntityType                               uint16 = 11
+	SessionEntityType                                uint16 = 12
+	EmailEntityType                                  uint16 = 13
+	ControlEntityType                                uint16 = 14
+	RiskEntityType                                   uint16 = 15
+	DocumentVersionEntityType                        uint16 = 16
+	DocumentVersionSignatureEntityType               uint16 = 17
+	AssetEntityType                                  uint16 = 18
+	DatumEntityType                                  uint16 = 19
+	AuditEntityType                                  uint16 = 20
+	_                                                uint16 = 21 // ReportEntityType - removed
+	TrustCenterEntityType                            uint16 = 22
+	TrustCenterAccessEntityType                      uint16 = 23
+	ThirdPartyBusinessAssociateAgreementEntityType   uint16 = 24
+	FileEntityType                                   uint16 = 25
+	ThirdPartyContactEntityType                      uint16 = 26
+	ThirdPartyDataPrivacyAgreementEntityType         uint16 = 27
+	_                                                uint16 = 28 // NonconformityEntityType - removed
+	ObligationEntityType                             uint16 = 29
+	ThirdPartyServiceEntityType                      uint16 = 30
+	_                                                uint16 = 31 // SnapshotEntityType - removed
+	_                                                uint16 = 32 // ContinualImprovementEntityType - removed
+	ProcessingActivityEntityType                     uint16 = 33
+	ExportJobEntityType                              uint16 = 34
+	TrustCenterReferenceEntityType                   uint16 = 35
+	TrustCenterDocumentAccessEntityType              uint16 = 36
+	CustomDomainEntityType                           uint16 = 37
+	InvitationEntityType                             uint16 = 38
+	MembershipEntityType                             uint16 = 39
+	SlackMessageEntityType                           uint16 = 40
+	TrustCenterFileEntityType                        uint16 = 41
+	SAMLConfigurationEntityType                      uint16 = 42
+	PersonalAPIKeyEntityType                         uint16 = 43
+	_                                                uint16 = 44 // PersonalAPIKeyMembershipEntityType - removed
+	_                                                uint16 = 45 // MeetingEntityType - removed
+	DataProtectionImpactAssessmentEntityType         uint16 = 46
+	TransferImpactAssessmentEntityType               uint16 = 47
+	RightsRequestEntityType                          uint16 = 48
+	StatementOfApplicabilityEntityType               uint16 = 49
+	ApplicabilityStatementEntityType                 uint16 = 50
+	MembershipProfileEntityType                      uint16 = 51
+	SCIMConfigurationEntityType                      uint16 = 52
+	SCIMEventEntityType                              uint16 = 53
+	TokenEntityType                                  uint16 = 54
+	SCIMBridgeEntityType                             uint16 = 55
+	WebhookSubscriptionEntityType                    uint16 = 56
+	WebhookDataEntityType                            uint16 = 57
+	WebhookEventEntityType                           uint16 = 58
+	ElectronicSignatureEntityType                    uint16 = 59
+	ElectronicSignatureEventEntityType               uint16 = 60
+	EmailAttachmentEntityType                        uint16 = 61
+	ComplianceFrameworkEntityType                    uint16 = 62
+	ComplianceExternalURLEntityType                  uint16 = 63
+	MailingListEntityType                            uint16 = 64
+	MailingListSubscriberEntityType                  uint16 = 65
+	MailingListUpdateEntityType                      uint16 = 66
+	FindingEntityType                                uint16 = 67
+	AuditLogEntryEntityType                          uint16 = 68
+	DocumentVersionApprovalQuorumEntityType          uint16 = 69
+	DocumentVersionApprovalDecisionEntityType        uint16 = 70
+	AccessReviewSourceEntityType                     uint16 = 71
+	AccessReviewCampaignEntityType                   uint16 = 72
+	AccessReviewEntryEntityType                      uint16 = 73
+	AccessReviewEntryDecisionHistoryEntityType       uint16 = 74
+	CookieBannerEntityType                           uint16 = 75
+	CookieCategoryEntityType                         uint16 = 76
+	CookieConsentRecordEntityType                    uint16 = 77
+	CookieBannerVersionEntityType                    uint16 = 78
+	OAuth2ClientEntityType                           uint16 = 79
+	OAuth2ConsentEntityType                          uint16 = 80
+	OAuth2AccessTokenEntityType                      uint16 = 81
+	OAuth2RefreshTokenEntityType                     uint16 = 82
+	OAuth2AuthorizationCodeEntityType                uint16 = 83
+	OAuth2DeviceCodeEntityType                       uint16 = 84
+	_                                                uint16 = 85 // CookieEntityType - removed
+	CookieBannerTranslationEntityType                uint16 = 86
+	AgentRunEntityType                               uint16 = 87
+	_                                                uint16 = 88 // CookiePatternEntityType - removed
+	TrackerPatternEntityType                         uint16 = 89
+	DetectedTrackerEntityType                        uint16 = 90
+	TrackerResourceEntityType                        uint16 = 91
+	CommonThirdPartyEntityType                       uint16 = 92
+	CommonThirdPartyDomainEntityType                 uint16 = 93
+	CommonTrackerPatternEntityType                   uint16 = 94
+	RiskAssessmentEntityType                         uint16 = 95
+	RiskAssessmentNodeEntityType                     uint16 = 96
+	RiskAssessmentProcessEntityType                  uint16 = 97
+	RiskAssessmentThreatEntityType                   uint16 = 98
+	RiskAssessmentScopeEntityType                    uint16 = 99
+	RiskAssessmentScenarioEntityType                 uint16 = 100
+	RiskAssessmentBoundaryEntityType                 uint16 = 101
+	AccessReviewCampaignSourceEntityType             uint16 = 102
+	AccessReviewCampaignSourceFetchAttemptEntityType uint16 = 103
 )
 
 func NewEntityFromID(id gid.GID) (any, bool) {
@@ -257,14 +259,14 @@ func NewEntityFromID(id gid.GID) (any, bool) {
 		return &DocumentVersionApprovalDecision{ID: id}, true
 	case DocumentVersionApprovalQuorumEntityType:
 		return &DocumentVersionApprovalQuorum{ID: id}, true
-	case AccessSourceEntityType:
-		return &AccessSource{ID: id}, true
+	case AccessReviewSourceEntityType:
+		return &AccessReviewSource{ID: id}, true
 	case AccessReviewCampaignEntityType:
 		return &AccessReviewCampaign{ID: id}, true
-	case AccessEntryEntityType:
-		return &AccessEntry{ID: id}, true
-	case AccessEntryDecisionHistoryEntityType:
-		return &AccessEntryDecisionHistory{ID: id}, true
+	case AccessReviewEntryEntityType:
+		return &AccessReviewEntry{ID: id}, true
+	case AccessReviewEntryDecisionHistoryEntityType:
+		return &AccessReviewEntryDecisionHistory{ID: id}, true
 	case CookieBannerEntityType:
 		return &CookieBanner{ID: id}, true
 	case CookieCategoryEntityType:
@@ -315,6 +317,10 @@ func NewEntityFromID(id gid.GID) (any, bool) {
 		return &RiskAssessmentScenario{ID: id}, true
 	case RiskAssessmentBoundaryEntityType:
 		return &RiskAssessmentBoundary{ID: id}, true
+	case AccessReviewCampaignSourceEntityType:
+		return &AccessReviewCampaignSource{ID: id}, true
+	case AccessReviewCampaignSourceFetchAttemptEntityType:
+		return &AccessReviewCampaignSourceFetchAttempt{ID: id}, true
 	default:
 		return nil, false
 	}

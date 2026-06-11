@@ -76,8 +76,8 @@ func (d *ProboMembershipsDriver) ListAccounts(ctx context.Context) ([]AccountRec
 						ExternalID:  account.ID.String(),
 						CreatedAt:   &createdAt,
 						MFAStatus:   coredata.MFAStatusUnknown,
-						AuthMethod:  coredata.AccessEntryAuthMethodUnknown,
-						AccountType: coredata.AccessEntryAccountTypeUser,
+						AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,
+						AccountType: coredata.AccessReviewEntryAccountTypeUser,
 					},
 				)
 			}

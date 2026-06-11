@@ -972,7 +972,7 @@ func (b *ProcessingActivityBuilder) Create() string {
 	return CreateProcessingActivity(b.client, b.attrs)
 }
 
-func CreateAccessSource(c *testutil.Client, organizationID string, attrs ...Attrs) string {
+func CreateAccessReviewSource(c *testutil.Client, organizationID string, attrs ...Attrs) string {
 	c.T.Helper()
 
 	var a Attrs
@@ -981,9 +981,9 @@ func CreateAccessSource(c *testutil.Client, organizationID string, attrs ...Attr
 	}
 
 	const query = `
-		mutation($input: CreateAccessSourceInput!) {
-			createAccessSource(input: $input) {
-				accessSourceEdge {
+		mutation($input: CreateAccessReviewSourceInput!) {
+			createAccessReviewSource(input: $input) {
+				accessReviewSourceEdge {
 					node { id }
 				}
 			}
@@ -992,7 +992,7 @@ func CreateAccessSource(c *testutil.Client, organizationID string, attrs ...Attr
 
 	input := map[string]any{
 		"organizationId": organizationID,
-		"name":           a.getString("name", SafeName("AccessSource")),
+		"name":           a.getString("name", SafeName("AccessReviewSource")),
 	}
 	if csvData := a.getStringPtr("csvData"); csvData != nil {
 		input["csvData"] = *csvData
@@ -1003,43 +1003,43 @@ func CreateAccessSource(c *testutil.Client, organizationID string, attrs ...Attr
 	}
 
 	var result struct {
-		CreateAccessSource struct {
-			AccessSourceEdge struct {
+		CreateAccessReviewSource struct {
+			AccessReviewSourceEdge struct {
 				Node struct {
 					ID string `json:"id"`
 				} `json:"node"`
-			} `json:"accessSourceEdge"`
-		} `json:"createAccessSource"`
+			} `json:"accessReviewSourceEdge"`
+		} `json:"createAccessReviewSource"`
 	}
 
 	err := c.Execute(query, map[string]any{"input": input}, &result)
-	require.NoError(c.T, err, "createAccessSource mutation failed")
+	require.NoError(c.T, err, "createAccessReviewSource mutation failed")
 
-	return result.CreateAccessSource.AccessSourceEdge.Node.ID
+	return result.CreateAccessReviewSource.AccessReviewSourceEdge.Node.ID
 }
 
-type AccessSourceBuilder struct {
+type AccessReviewSourceBuilder struct {
 	client         *testutil.Client
 	organizationID string
 	attrs          Attrs
 }
 
-func NewAccessSource(c *testutil.Client, organizationID string) *AccessSourceBuilder {
-	return &AccessSourceBuilder{client: c, organizationID: organizationID, attrs: Attrs{}}
+func NewAccessReviewSource(c *testutil.Client, organizationID string) *AccessReviewSourceBuilder {
+	return &AccessReviewSourceBuilder{client: c, organizationID: organizationID, attrs: Attrs{}}
 }
 
-func (b *AccessSourceBuilder) WithName(name string) *AccessSourceBuilder {
+func (b *AccessReviewSourceBuilder) WithName(name string) *AccessReviewSourceBuilder {
 	b.attrs["name"] = name
 	return b
 }
 
-func (b *AccessSourceBuilder) WithCsvData(csvData string) *AccessSourceBuilder {
+func (b *AccessReviewSourceBuilder) WithCsvData(csvData string) *AccessReviewSourceBuilder {
 	b.attrs["csvData"] = csvData
 	return b
 }
 
-func (b *AccessSourceBuilder) Create() string {
-	return CreateAccessSource(b.client, b.organizationID, b.attrs)
+func (b *AccessReviewSourceBuilder) Create() string {
+	return CreateAccessReviewSource(b.client, b.organizationID, b.attrs)
 }
 
 func CreateAccessReviewCampaign(c *testutil.Client, organizationID string, attrs ...Attrs) string {
@@ -1065,8 +1065,8 @@ func CreateAccessReviewCampaign(c *testutil.Client, organizationID string, attrs
 		"name":           a.getString("name", SafeName("Campaign")),
 	}
 
-	if v, ok := a["accessSourceIds"]; ok {
-		input["accessSourceIds"] = v
+	if v, ok := a["accessReviewSourceIds"]; ok {
+		input["accessReviewSourceIds"] = v
 	}
 
 	var result struct {
@@ -1100,8 +1100,8 @@ func (b *AccessReviewCampaignBuilder) WithName(name string) *AccessReviewCampaig
 	return b
 }
 
-func (b *AccessReviewCampaignBuilder) WithAccessSourceIDs(ids []string) *AccessReviewCampaignBuilder {
-	b.attrs["accessSourceIds"] = ids
+func (b *AccessReviewCampaignBuilder) WithAccessReviewSourceIDs(ids []string) *AccessReviewCampaignBuilder {
+	b.attrs["accessReviewSourceIds"] = ids
 	return b
 }
 

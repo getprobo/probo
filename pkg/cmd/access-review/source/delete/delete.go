@@ -24,9 +24,9 @@ import (
 )
 
 const deleteMutation = `
-mutation($input: DeleteAccessSourceInput!) {
-  deleteAccessSource(input: $input) {
-    deletedAccessSourceId
+mutation($input: DeleteAccessReviewSourceInput!) {
+  deleteAccessReviewSource(input: $input) {
+    deletedAccessReviewSourceId
   }
 }
 `
@@ -81,7 +81,7 @@ func NewCmdDelete(f *cmdutil.Factory) *cobra.Command {
 				deleteMutation,
 				map[string]any{
 					"input": map[string]any{
-						"accessSourceId": args[0],
+						"accessReviewSourceId": args[0],
 					},
 				},
 			)

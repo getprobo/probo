@@ -100,8 +100,8 @@ func (d *BitbucketDriver) ListAccounts(ctx context.Context) ([]AccountRecord, er
 				FullName:    fullName,
 				ExternalID:  m.User.AccountID,
 				MFAStatus:   coredata.MFAStatusUnknown,
-				AuthMethod:  coredata.AccessEntryAuthMethodUnknown,
-				AccountType: coredata.AccessEntryAccountTypeUser,
+				AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,
+				AccountType: coredata.AccessReviewEntryAccountTypeUser,
 			}
 
 			records = append(records, record)

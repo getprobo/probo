@@ -109,7 +109,7 @@ type (
 
 	// DatadogConnectorSettings holds the per-customer Datadog site captured
 	// during the OAuth callback. Region is the site key (e.g. "US3") used for
-	// the AccessSource title; Domain is the API domain (e.g.
+	// the AccessReviewSource title; Domain is the API domain (e.g.
 	// "us3.datadoghq.com") the driver and name resolver use to build hosts.
 	DatadogConnectorSettings struct {
 		Region string `json:"region"`
@@ -132,7 +132,7 @@ type (
 	// redirect, and it rides the signed state token to the callback —
 	// Zendesk does not echo it back). Subdomain is the <subdomain> part of
 	// <subdomain>.zendesk.com, used by the driver to build the API host and
-	// by the name resolver for the AccessSource title.
+	// by the name resolver for the AccessReviewSource title.
 	ZendeskConnectorSettings struct {
 		Subdomain string `json:"subdomain"`
 	}
