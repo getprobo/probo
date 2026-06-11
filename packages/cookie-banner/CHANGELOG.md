@@ -4,6 +4,10 @@ All notable changes to the `@probo/cookie-banner` SDK will be documented in this
 
 ## Unreleased
 
+### Fixed
+
+- Hold the page scroll lock on sites using JS-driven smooth-scroll libraries (e.g. Lenis, as used by Framer) that bypass `overflow: hidden`. The body is now pinned with `position: fixed` (scroll position saved and restored) to remove the viewport's scroll distance entirely, with capture-phase wheel/touch cancellation as defense-in-depth for inner scroll containers; the preference panel's own list can still scroll
+
 ## [0.9.2] - 2026-06-11
 
 ### Changed
