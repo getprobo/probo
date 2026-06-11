@@ -638,9 +638,6 @@ function CampaignSourceCard({ source, isPendingActions }: { source: CampaignSour
             ? <IconChevronDown className="size-4 text-txt-tertiary" />
             : <IconChevronRight className="size-4 text-txt-tertiary" />}
           <span className="font-medium">{source.name}</span>
-          {!source.source && (
-            <Badge variant="neutral">{__("Source deleted")}</Badge>
-          )}
           <Badge variant="neutral">
             {source.fetchedAccountsCount}
             {" "}
