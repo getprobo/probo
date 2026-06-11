@@ -401,6 +401,12 @@ func coreLoop(ctx context.Context, startAgent *Agent, inputMessages []llm.Messag
 
 	emptyOutputRetries := 0
 
+	// forcedSynthesis records that the turn budget was exhausted while
+	// the agent was still exploring with a pending structured output, so
+	// the last turn was spent forcing the schema rather than failing
+	// outright. It guards against looping past the cap more than once.
+	forcedSynthesis := false
+
 	structuredFormat := resolveStructuredFormat(s.agent)
 
 	// When the agent has both tools and a structured output request,
@@ -440,7 +446,33 @@ func coreLoop(ctx context.Context, startAgent *Agent, inputMessages []llm.Messag
 		}
 
 		if s.turns >= s.agent.maxTurns {
-			return s.finishRun(ctx, nil, &MaxTurnsExceededError{MaxTurns: s.agent.maxTurns})
+			// The turn budget is exhausted. If the agent is still
+			// exploring with tools and owes a structured output, spend
+			// one final turn forcing the schema (ToolChoice=none) so it
+			// emits the best answer it can from what it has gathered,
+			// rather than failing with nothing. This runs at most once;
+			// the next iteration falls through to the error below.
+			if !exploring || forcedSynthesis || structuredFormat == nil || len(s.toolDefs) == 0 {
+				return s.finishRun(ctx, nil, &MaxTurnsExceededError{MaxTurns: s.agent.maxTurns})
+			}
+
+			forcedSynthesis = true
+			exploring = false
+
+			s.messages = append(
+				s.messages,
+				llm.Message{
+					Role:  llm.RoleUser,
+					Parts: []llm.Part{llm.TextPart{Text: synthesisNudge}},
+				},
+			)
+
+			s.logger.WarnCtx(
+				ctx,
+				"max turns reached while exploring: forcing final synthesis turn",
+				log.Int("turn", s.turns),
+				log.Int("max_turns", s.agent.maxTurns),
+			)
 		}
 
 		fullMessages := buildFullMessages(s.systemPrompt, s.messages)
@@ -533,7 +565,7 @@ func coreLoop(ctx context.Context, startAgent *Agent, inputMessages []llm.Messag
 						Parts: []llm.Part{llm.TextPart{Text: synthesisNudge}},
 					},
 				)
-				s.logger.WarnCtx(
+				s.logger.DebugCtx(
 					ctx,
 					"entering synthesis turn: forcing structured output with tool_choice=none",
 					log.Int("turn", s.turns),

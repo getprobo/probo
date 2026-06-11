@@ -38,11 +38,17 @@ type CompanyProfileResult struct {
 	WebsiteURL         EnrichedField `json:"website_url" jsonschema:"The vendor's canonical primary marketing website URL (https scheme, no tracking query parameters, no trailing path)."`
 }
 
+// buildCompanyProfileAgent builds Agent A. extraTools carries the
+// browser read-only toolset when a headless Chrome endpoint is
+// configured; it is empty otherwise, in which case the agent relies on
+// web_search alone. The browser lets it read footer/imprint/about/legal
+// pages where the legal name and headquarters address live.
 func buildCompanyProfileAgent(
 	cfg EnrichmentConfig,
 	logger *log.Logger,
+	extraTools []agent.Tool,
 ) *agent.Agent {
-	var tools []agent.Tool
+	tools := append([]agent.Tool{}, extraTools...)
 
 	if cfg.FirecrawlAPIKey != "" {
 		tools = append(tools, search.FirecrawlSearchTool(cfg.FirecrawlAPIKey))

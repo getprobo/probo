@@ -30,10 +30,11 @@ const (
 	enrichmentSourceEnrichment = "enrichment"
 	enrichmentSourceExternal   = "external"
 
-	enrichmentFieldStatusFound         = "found"
-	enrichmentFieldStatusNotFound      = "not_found"
-	enrichmentFieldStatusLowConfidence = "low_confidence"
-	enrichmentFieldStatusExternal      = "exists_external"
+	enrichmentFieldStatusFound               = "found"
+	enrichmentFieldStatusNotFound            = "not_found"
+	enrichmentFieldStatusLowConfidence       = "low_confidence"
+	enrichmentFieldStatusExternal            = "exists_external"
+	enrichmentFieldStatusFallbackDisplayName = "fallback_display_name"
 
 	// Run-level status recorded at the top of the enrichment payload.
 	enrichmentStatusDone    = "done"
@@ -227,6 +228,35 @@ func applyCertifications(
 		Status:     status,
 		Source:     enrichmentSourceEnrichment,
 		UpdatedAt:  now,
+	}
+}
+
+// applyLegalNameFallback fills legal_name with the catalog display name
+// when the merge left the column empty, so it is never blank. A real
+// value (agent-resolved or external) already on the row is left
+// untouched. The fallback is recorded as enrichment-owned so a later run
+// that resolves the real legal entity overwrites it.
+func applyLegalNameFallback(
+	party *coredata.CommonThirdParty,
+	meta map[string]EnrichmentFieldMeta,
+	now time.Time,
+) {
+	const name = "legal_name"
+
+	if party.LegalName != nil && strings.TrimSpace(*party.LegalName) != "" {
+		return
+	}
+
+	displayName := strings.TrimSpace(party.Name)
+	if displayName == "" {
+		return
+	}
+
+	party.LegalName = &displayName
+	meta[name] = EnrichmentFieldMeta{
+		Status:    enrichmentFieldStatusFallbackDisplayName,
+		Source:    enrichmentSourceEnrichment,
+		UpdatedAt: now,
 	}
 }
 

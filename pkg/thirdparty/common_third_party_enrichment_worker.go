@@ -132,11 +132,10 @@ func resolveEnrichmentMaxTokens(configured *int) int {
 }
 
 type enrichmentHandler struct {
-	pg           *pg.Client
-	logger       *log.Logger
-	cfg          EnrichmentConfig
-	companyAgent *agent.Agent
-	httpClient   *http.Client
+	pg         *pg.Client
+	logger     *log.Logger
+	cfg        EnrichmentConfig
+	httpClient *http.Client
 }
 
 // NewCommonThirdPartyEnrichmentWorker builds the worker that enriches
@@ -156,13 +155,6 @@ func NewCommonThirdPartyEnrichmentWorker(
 		logger:     logger,
 		cfg:        cfg,
 		httpClient: newEnrichmentHTTPClient(),
-	}
-
-	// Agent A has no browser, so it is built once and reused. Agent B is
-	// built per Process because it needs a per-run browser bound to the
-	// process context.
-	if cfg.LLMClient != nil {
-		h.companyAgent = buildCompanyProfileAgent(cfg, logger)
 	}
 
 	return worker.New(
@@ -203,7 +195,7 @@ func (h *enrichmentHandler) Claim(ctx context.Context) (coredata.CommonThirdPart
 // transaction. Process always writes an enrichment payload, even on a
 // no-result run, so stale recovery does not re-queue the row.
 func (h *enrichmentHandler) Process(ctx context.Context, party coredata.CommonThirdParty) error {
-	if h.companyAgent == nil {
+	if h.cfg.LLMClient == nil {
 		return nil
 	}
 
@@ -226,6 +218,33 @@ func (h *enrichmentHandler) Process(ctx context.Context, party coredata.CommonTh
 	}
 
 	website := effectiveWebsiteURL(party, company, h.cfg.ConfidenceThreshold)
+
+	meta := make(map[string]EnrichmentFieldMeta)
+
+	// Website is the hard precondition: Agent B and the logo step both
+	// depend on it, and an Agent B run without a domain scope produces
+	// inconsistent cross-domain results. When no website is resolved,
+	// persist what Agent A found and stop here rather than running Agent
+	// B blind.
+	if website == "" {
+		for _, field := range scalarFields(company, ComplianceDocsResult{}) {
+			applyScalarField(&party, meta, prior, field, h.cfg.ConfidenceThreshold, now)
+		}
+
+		applyCertifications(&party, meta, prior, CertificationsField{}, h.cfg.ConfidenceThreshold, now)
+		applyLegalNameFallback(&party, meta, now)
+
+		runErrors = append(runErrors, "website_url unresolved: skipped compliance docs")
+
+		return h.persist(ctx, party, EnrichmentMetadata{
+			Model:       h.cfg.Model,
+			AttemptedAt: now,
+			Status:      enrichmentStatusFailed,
+			Error:       strings.Join(runErrors, "; "),
+			Fields:      meta,
+		}, nil, now)
+	}
+
 	legalName := effectiveLegalName(party, company, h.cfg.ConfidenceThreshold)
 
 	// Agent B: compliance documents and trust pages.
@@ -241,13 +260,12 @@ func (h *enrichmentHandler) Process(ctx context.Context, party coredata.CommonTh
 	// transaction; the File row is inserted below.
 	logoFile := h.prepareLogo(ctx, party, website)
 
-	meta := make(map[string]EnrichmentFieldMeta)
-
 	for _, field := range scalarFields(company, compliance) {
 		applyScalarField(&party, meta, prior, field, h.cfg.ConfidenceThreshold, now)
 	}
 
 	applyCertifications(&party, meta, prior, compliance.Certifications, h.cfg.ConfidenceThreshold, now)
+	applyLegalNameFallback(&party, meta, now)
 
 	status := enrichmentStatusDone
 
@@ -266,6 +284,20 @@ func (h *enrichmentHandler) Process(ctx context.Context, party coredata.CommonTh
 		Fields:      meta,
 	}
 
+	return h.persist(ctx, party, payload, logoFile, now)
+}
+
+// persist marshals the enrichment payload onto the row and writes it in a
+// single transaction, inserting the logo File row and linking it when one
+// was prepared. It always writes an enrichment payload, even on a
+// no-result run, so stale recovery does not re-queue the row.
+func (h *enrichmentHandler) persist(
+	ctx context.Context,
+	party coredata.CommonThirdParty,
+	payload EnrichmentMetadata,
+	logoFile *coredata.File,
+	now time.Time,
+) error {
 	raw, err := json.Marshal(payload)
 	if err != nil {
 		return fmt.Errorf("cannot marshal enrichment metadata: %w", err)
@@ -298,7 +330,7 @@ func (h *enrichmentHandler) Process(ctx context.Context, party coredata.CommonTh
 				"enriched common third party",
 				log.String("common_third_party_id", party.ID.String()),
 				log.String("name", party.Name),
-				log.String("status", status),
+				log.String("status", payload.Status),
 				log.Bool("logo_stored", logoFile != nil),
 			)
 
@@ -323,10 +355,27 @@ func (h *enrichmentHandler) RecoverStale(ctx context.Context) error {
 	)
 }
 
+// runCompanyProfile builds Agent A with a per-run browser when a Chrome
+// endpoint is configured, then runs it. The browser is closed when the
+// run returns. It is not pinned to a domain so the agent can follow a
+// product site to the legal entity's corporate domain (where the legal
+// name and headquarters address live); SSRF protection still blocks
+// non-public hosts.
 func (h *enrichmentHandler) runCompanyProfile(
 	ctx context.Context,
 	party coredata.CommonThirdParty,
 ) (CompanyProfileResult, error) {
+	var browserTools []agent.Tool
+
+	if h.cfg.ChromeAddr != "" {
+		webBrowser := browser.NewBrowser(ctx, h.cfg.ChromeAddr)
+		defer webBrowser.Close()
+
+		browserTools = browser.NewReadOnlyToolset(webBrowser).Tools()
+	}
+
+	companyAgent := buildCompanyProfileAgent(h.cfg, h.logger, browserTools)
+
 	prompt := buildCompanyProfilePrompt(party)
 
 	agentCtx, cancel := context.WithTimeout(ctx, h.cfg.AgentTimeout)
@@ -334,7 +383,7 @@ func (h *enrichmentHandler) runCompanyProfile(
 
 	result, err := agent.RunTyped[CompanyProfileResult](
 		agentCtx,
-		h.companyAgent,
+		companyAgent,
 		[]llm.Message{
 			{
 				Role:  llm.RoleUser,

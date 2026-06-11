@@ -62,7 +62,7 @@ func FindLinksMatchingTool(b *Browser) agent.Tool {
 
 			js := fmt.Sprintf(
 				`(() => {
-					const pattern = JSON.parse(%s).toLowerCase();
+					const pattern = (%s).toLowerCase();
 					const normalize = s => s.replace(/[-_\s]+/g, "");
 					const normalizedPattern = normalize(pattern);
 					return Array.from(document.querySelectorAll("a[href]"))
