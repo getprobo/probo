@@ -168,7 +168,7 @@ func (v *SAMLDomainVerifier) tryVerifyDomain(ctx context.Context, configID gid.G
 
 			expectedValue := txtRecordValuePrefix + *config.DomainVerificationToken
 
-			if err := v.checkDNSTXTRecord(config.EmailDomain, expectedValue); err != nil {
+			if err := v.checkDNSTXTRecord(ctx, config.EmailDomain, expectedValue); err != nil {
 				return err
 			}
 
@@ -194,20 +194,21 @@ func (v *SAMLDomainVerifier) tryVerifyDomain(ctx context.Context, configID gid.G
 	)
 }
 
-func (v *SAMLDomainVerifier) checkDNSTXTRecord(emailDomain string, expectedValue string) error {
-	fqdn := emailDomain
-	if !strings.HasSuffix(fqdn, ".") {
-		fqdn = fqdn + "."
-	}
-
-	msg := &dns.Msg{MsgHeader: dns.MsgHeader{ID: dns.ID(), RecursionDesired: true}}
-	msg.Question = []dns.RR{&dns.TXT{Hdr: dns.Header{Name: fqdn, Class: dns.ClassINET}}}
+func (v *SAMLDomainVerifier) checkDNSTXTRecord(ctx context.Context, emailDomain string, expectedValue string) error {
+	msg := dns.NewMsg(emailDomain, dns.TypeTXT)
 
 	client := dns.NewClient()
 
-	resp, _, err := client.Exchange(context.Background(), msg, "udp", v.resolverAddr)
+	resp, _, err := client.Exchange(ctx, msg, "udp", v.resolverAddr)
 	if err != nil {
 		return fmt.Errorf("cannot query TXT record for %q: %w", emailDomain, err)
+	}
+
+	if resp.Truncated {
+		resp, _, err = client.Exchange(ctx, msg, "tcp", v.resolverAddr)
+		if err != nil {
+			return fmt.Errorf("cannot query TXT record for %q over TCP: %w", emailDomain, err)
+		}
 	}
 
 	if resp.Rcode != dns.RcodeSuccess {
@@ -224,9 +225,7 @@ func (v *SAMLDomainVerifier) checkDNSTXTRecord(emailDomain string, expectedValue
 			continue
 		}
 
-		value := strings.Join(txt.Txt, "")
-
-		if value == expectedValue {
+		if strings.Join(txt.Txt, "") == expectedValue {
 			return nil
 		}
 	}
