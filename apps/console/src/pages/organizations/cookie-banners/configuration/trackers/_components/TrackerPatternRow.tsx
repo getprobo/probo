@@ -203,6 +203,9 @@ export function TrackerPatternRow({ patternKey, connectionId }: TrackerPatternRo
   };
 
   const handleMove = (targetCategoryId: string) => {
+    if (targetCategoryId === pattern.cookieCategory?.id) {
+      return;
+    }
     movePattern({
       variables: {
         input: {
@@ -232,22 +235,6 @@ export function TrackerPatternRow({ patternKey, connectionId }: TrackerPatternRo
         toast({ title: __("Error"), description: formatError(__("Failed to move cookie"), error as GraphQLError), variant: "error" });
       },
     });
-  };
-
-  const handleMoveWithConfirm = (targetCategoryId: string) => {
-    if (targetCategoryId === pattern.cookieCategory?.id) {
-      return;
-    }
-    confirm(
-      () => {
-        handleMove(targetCategoryId);
-      },
-      {
-        message: __("Moving this tracker to a category will create a third party for it (or link an existing one) if it doesn't have one yet. Continue?"),
-        variant: "primary",
-        label: __("Move"),
-      },
-    );
   };
 
   const handleToggleExcluded = () => {
@@ -390,7 +377,7 @@ export function TrackerPatternRow({ patternKey, connectionId }: TrackerPatternRo
         <MoveToCategorySelect
           currentCategoryId={pattern.cookieCategory?.id}
           currentCategoryName={pattern.cookieCategory?.name}
-          onSelect={handleMoveWithConfirm}
+          onSelect={handleMove}
         />
       </Td>
       <Td>
