@@ -4,6 +4,12 @@ All notable changes to the `@probo/cookie-banner` SDK will be documented in this
 
 ## Unreleased
 
+## [0.9.2] - 2026-06-11
+
+### Changed
+
+- References updated to probo.com
+
 ## [0.9.1] - 2026-06-10
 
 ### Fixed
