@@ -86,10 +86,12 @@ func (d *CursorDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error
 			continue
 		}
 
-		// isRemoved is Cursor's only account-status signal, so Active is
+		// Cursor exposes two removal signals that are not always
+		// consistent: the isRemoved soft-delete flag and a role of
+		// "removed". Either one marks the member inactive, so Active is
 		// always populated (never nil): a removed member is reported
 		// inactive rather than dropped, per the AccountRecord contract.
-		active := !m.IsRemoved
+		active := !m.IsRemoved && m.Role != "removed"
 
 		records = append(records, AccountRecord{
 			Email:       m.Email,
@@ -98,8 +100,8 @@ func (d *CursorDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error
 			Active:      &active,
 			IsAdmin:     cursorIsAdmin(m.Role),
 			MFAStatus:   coredata.MFAStatusUnknown,
-			AuthMethod:  coredata.AccessEntryAuthMethodUnknown,
-			AccountType: coredata.AccessEntryAccountTypeUser,
+			AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,
+			AccountType: coredata.AccessReviewEntryAccountTypeUser,
 			ExternalID:  m.ID,
 		})
 	}
