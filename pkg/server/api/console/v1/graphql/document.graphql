@@ -367,6 +367,7 @@ type DocumentVersionApprovalDecision implements Node {
     approver: Profile! @goField(forceResolver: true)
     state: DocumentVersionApprovalDecisionState!
     comment: String
+    consentText: String! @goField(forceResolver: true)
     decidedAt: Datetime
     createdAt: Datetime!
     updatedAt: Datetime!
@@ -422,6 +423,7 @@ type EmployeeDocumentVersion
     classification: DocumentClassification!
     documentType: DocumentType!
     signed: Boolean! @goField(forceResolver: true)
+    consentText: String! @goField(forceResolver: true)
     approvalDecision: DocumentVersionApprovalDecision @goField(forceResolver: true)
     publishedAt: Datetime
     createdAt: Datetime!

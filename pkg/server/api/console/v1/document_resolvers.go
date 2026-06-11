@@ -427,6 +427,11 @@ func (r *documentVersionApprovalDecisionResolver) Approver(ctx context.Context, 
 	return types.NewProfile(profile), nil
 }
 
+// ConsentText is the resolver for the consentText field.
+func (r *documentVersionApprovalDecisionResolver) ConsentText(ctx context.Context, obj *types.DocumentVersionApprovalDecision) (string, error) {
+	return probo.DocumentApprovalConsentText, nil
+}
+
 // Permission is the resolver for the permission field.
 func (r *documentVersionApprovalDecisionResolver) Permission(ctx context.Context, obj *types.DocumentVersionApprovalDecision, action string) (bool, error) {
 	// Approve and reject actions are only allowed for the viewer's own decision.
@@ -786,6 +791,11 @@ func (r *employeeDocumentVersionResolver) Signed(ctx context.Context, obj *types
 	}
 
 	return signed, nil
+}
+
+// ConsentText is the resolver for the consentText field.
+func (r *employeeDocumentVersionResolver) ConsentText(ctx context.Context, obj *types.EmployeeDocumentVersion) (string, error) {
+	return probo.DocumentSignatureConsentText, nil
 }
 
 // ApprovalDecision is the resolver for the approvalDecision field.
@@ -1423,9 +1433,38 @@ func (r *mutationResolver) SignDocument(ctx context.Context, input types.SignDoc
 	}
 
 	identity := authn.IdentityFromContext(ctx)
+	httpReq := gqlutils.HTTPRequestFromContext(ctx)
 
-	documentVersionSignature, err := r.probo.Documents.SignDocumentVersionByIdentity(ctx, scope, input.DocumentVersionID, identity.ID)
+	signerIP, _, _ := net.SplitHostPort(httpReq.RemoteAddr)
+	if signerIP == "" {
+		signerIP = httpReq.RemoteAddr
+	}
+
+	documentVersionSignature, err := r.probo.Documents.SignDocumentVersionByIdentity(
+		ctx,
+		scope,
+		probo.SignDocumentVersionRequest{
+			DocumentVersionID: input.DocumentVersionID,
+			IdentityID:        identity.ID,
+			SignerFullName:    identity.FullName,
+			SignerEmail:       identity.EmailAddress,
+			SignerIPAddr:      signerIP,
+			SignerUA:          httpReq.UserAgent(),
+		},
+	)
 	if err != nil {
+		if errArchived, ok := errors.AsType[*probo.ErrDocumentArchived](err); ok {
+			return nil, gqlutils.Conflict(ctx, errArchived)
+		}
+
+		if errNotPublished, ok := errors.AsType[*probo.ErrDocumentVersionNotPublished](err); ok {
+			return nil, gqlutils.Invalid(ctx, errNotPublished)
+		}
+
+		if errAlreadySigned, ok := errors.AsType[*probo.ErrDocumentVersionSignatureAlreadySigned](err); ok {
+			return nil, gqlutils.Conflict(ctx, errAlreadySigned)
+		}
+
 		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
 			return nil, gqlutils.Conflict(ctx, err)
 		}

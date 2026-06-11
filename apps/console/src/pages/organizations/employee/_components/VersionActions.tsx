@@ -22,6 +22,7 @@ const fragment = graphql`
   fragment VersionActionsFragment on EmployeeDocumentVersion {
     id
     signed
+    consentText
   }
 `;
 
@@ -59,12 +60,10 @@ export function VersionActions({
         disabled={isSigning}
         icon={isSigning ? Spinner : undefined}
       >
-        {__("I acknowledge and agree")}
+        {__("Review and sign")}
       </Button>
-      <p className="text-xs text-txt-tertiary mt-2 h-5">
-        {__(
-          "By clicking 'I acknowledge and agree', your digital signature will be recorded.",
-        )}
+      <p className="text-xs text-txt-tertiary mt-2">
+        {versionData.consentText}
       </p>
     </>
   );

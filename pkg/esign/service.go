@@ -19,7 +19,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strings"
 	"time"
 
 	"go.gearno.de/crypto/uuid"
@@ -151,16 +150,7 @@ func (s *Service) CreateSignature(
 ) (*coredata.ElectronicSignature, error) {
 	consentText := req.ConsentText
 	if consentText == "" {
-		var err error
-
-		consentText, err = req.DocumentType.ConsentText()
-		if err != nil {
-			return nil, fmt.Errorf("cannot derive consent text: %w", err)
-		}
-	} else {
-		if !strings.HasSuffix(consentText, coredata.ESignProcessConsentText) {
-			consentText = consentText + " " + coredata.ESignProcessConsentText
-		}
+		return nil, fmt.Errorf("consent text is required")
 	}
 
 	emailSubject := req.EmailSubject

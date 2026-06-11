@@ -98,6 +98,7 @@ const decisionFragment = graphql`
   fragment DocumentApprovePageDecisionFragment on DocumentVersionApprovalDecision {
     id
     state
+    consentText
     canApprove: permission(action: "core:document-version:approve")
     canReject: permission(action: "core:document-version:reject")
   }
@@ -350,12 +351,12 @@ function ViewerDecision(props: {
                 });
               }}
             >
-              {__("Approve")}
+              {__("Review and approve")}
             </Button>
           )}
         </div>
         <p className="text-xs text-txt-tertiary">
-          {__("By clicking Approve, I consent to approve this document electronically and agree that my electronic signature has the same legal validity as a handwritten signature.")}
+          {decision.consentText}
         </p>
         <Button onClick={onBack} className="w-full" variant="secondary">
           {__("Back to Documents")}

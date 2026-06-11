@@ -38,6 +38,7 @@ import (
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/docgen"
+	"go.probo.inc/probo/pkg/esign"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/html2pdf"
 	"go.probo.inc/probo/pkg/iam"
@@ -49,6 +50,8 @@ import (
 	"go.probo.inc/probo/pkg/statelesstoken"
 	"go.probo.inc/probo/pkg/validator"
 )
+
+const DocumentSignatureConsentText = "By clicking \"Review and sign\", I consent to sign this document electronically and agree that my electronic signature has the same legal validity as a handwritten signature."
 
 type (
 	DocumentService struct {
@@ -117,6 +120,15 @@ type (
 	RequestSignatureRequest struct {
 		DocumentVersionID gid.GID
 		Signatory         gid.GID
+	}
+
+	SignDocumentVersionRequest struct {
+		DocumentVersionID gid.GID
+		IdentityID        gid.GID
+		SignerFullName    string
+		SignerEmail       mail.Addr
+		SignerIPAddr      string
+		SignerUA          string
 	}
 
 	BulkRequestSignaturesRequest struct {
@@ -842,75 +854,161 @@ func (s *DocumentService) SendSigningNotifications(
 
 func (s *DocumentService) SignDocumentVersionByIdentity(
 	ctx context.Context, scope coredata.Scoper,
-	documentVersionID gid.GID,
-	identityID gid.GID,
+	req SignDocumentVersionRequest,
 ) (*coredata.DocumentVersionSignature, error) {
-	var documentVersionSignature *coredata.DocumentVersionSignature
+	var (
+		documentVersion          *coredata.DocumentVersion
+		document                 *coredata.Document
+		documentVersionSignature *coredata.DocumentVersionSignature
+	)
 
-	err := s.svc.pg.WithTx(
+	err := s.svc.pg.WithConn(
 		ctx,
-		func(ctx context.Context, conn pg.Tx) error {
-			documentVersion := &coredata.DocumentVersion{}
-			if err := documentVersion.LoadByID(ctx, conn, scope, documentVersionID); err != nil {
+		func(ctx context.Context, conn pg.Querier) error {
+			documentVersion = &coredata.DocumentVersion{}
+			if err := documentVersion.LoadByID(ctx, conn, scope, req.DocumentVersionID); err != nil {
 				return fmt.Errorf("cannot get document version: %w", err)
+			}
+
+			if documentVersion.Status != coredata.DocumentVersionStatusPublished {
+				return &ErrDocumentVersionNotPublished{}
+			}
+
+			document = &coredata.Document{}
+			if err := document.LoadByID(ctx, conn, scope, documentVersion.DocumentID); err != nil {
+				return fmt.Errorf("cannot load document: %w", err)
+			}
+
+			if document.ArchivedAt != nil {
+				return &ErrDocumentArchived{}
 			}
 
 			profile := &coredata.MembershipProfile{}
 			// FIXME: will be done differently
-			if err := profile.LoadByIdentityIDAndOrganizationID(ctx, conn, scope, identityID, documentVersion.OrganizationID); err != nil {
+			if err := profile.LoadByIdentityIDAndOrganizationID(ctx, conn, scope, req.IdentityID, documentVersion.OrganizationID); err != nil {
 				return fmt.Errorf("cannot find profile record for user email in organization %q: %w", documentVersion.OrganizationID, err)
 			}
 
-			var signErr error
+			documentVersionSignature = &coredata.DocumentVersionSignature{}
+			if err := documentVersionSignature.LoadByDocumentVersionIDAndSignatory(ctx, conn, scope, req.DocumentVersionID, profile.ID); err != nil {
+				return fmt.Errorf("cannot load document version signature: %w", err)
+			}
 
-			documentVersionSignature, signErr = s.signDocumentVersionInTx(ctx, scope, conn, documentVersionID, profile.ID)
+			if documentVersionSignature.State == coredata.DocumentVersionSignatureStateSigned {
+				return &ErrDocumentVersionSignatureAlreadySigned{}
+			}
 
-			return signErr
+			return nil
 		},
 	)
 	if err != nil {
-		return nil, fmt.Errorf("cannot sign document version: %w", err)
+		return nil, err
 	}
 
-	return documentVersionSignature, nil
-}
-
-func (s *DocumentService) signDocumentVersionInTx(
-	ctx context.Context, scope coredata.Scoper,
-	conn pg.Tx,
-	documentVersionID gid.GID,
-	signatory gid.GID,
-) (*coredata.DocumentVersionSignature, error) {
-	documentVersion := &coredata.DocumentVersion{}
-	documentVersionSignature := &coredata.DocumentVersionSignature{}
 	now := time.Now()
 
-	if err := documentVersion.LoadByID(ctx, conn, scope, documentVersionID); err != nil {
-		return nil, fmt.Errorf("cannot load document version %q: %w", documentVersionID, err)
+	pdfData, err := s.ExportPDF(ctx, scope, req.DocumentVersionID, ExportPDFOptions{})
+	if err != nil {
+		return nil, fmt.Errorf("cannot export document PDF: %w", err)
 	}
 
-	if documentVersion.Status != coredata.DocumentVersionStatusPublished {
-		return nil, fmt.Errorf("cannot sign unpublished version")
+	fileRecord := &coredata.File{
+		ID:             gid.New(scope.GetTenantID(), coredata.FileEntityType),
+		OrganizationID: documentVersion.OrganizationID,
+		BucketName:     s.svc.bucket,
+		MimeType:       "application/pdf",
+		FileName:       fmt.Sprintf("signature-%s.pdf", documentVersionSignature.ID),
+		FileKey:        uuid.MustNewV4().String(),
+		Visibility:     coredata.FileVisibilityPrivate,
+		CreatedAt:      now,
+		UpdatedAt:      now,
 	}
 
-	if err := documentVersionSignature.LoadByDocumentVersionIDAndSignatory(ctx, conn, scope, documentVersionID, signatory); err != nil {
-		return nil, fmt.Errorf("cannot load document version signature: %w", err)
+	fileSize, err := s.svc.fileManager.PutFile(
+		ctx,
+		fileRecord,
+		bytes.NewReader(pdfData),
+		map[string]string{
+			"type":         "signature-document",
+			"signature-id": documentVersionSignature.ID.String(),
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("cannot upload signature PDF: %w", err)
 	}
 
-	if documentVersionSignature.State == coredata.DocumentVersionSignatureStateSigned {
-		return nil, &ErrDocumentVersionSignatureAlreadySigned{}
-	}
+	fileRecord.FileSize = fileSize
 
-	documentVersionSignature.State = coredata.DocumentVersionSignatureStateSigned
-	documentVersionSignature.SignedAt = &now
-	documentVersionSignature.UpdatedAt = now
+	signatureID := documentVersionSignature.ID
 
-	if err := documentVersion.Update(ctx, conn, scope); err != nil {
-		return nil, fmt.Errorf("cannot update document version: %w", err)
-	}
+	err = s.svc.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			documentVersion = &coredata.DocumentVersion{}
+			if err := documentVersion.LoadByID(ctx, tx, scope, req.DocumentVersionID); err != nil {
+				return fmt.Errorf("cannot load document version: %w", err)
+			}
 
-	if err := documentVersionSignature.Update(ctx, conn, scope); err != nil {
-		return nil, fmt.Errorf("cannot update document version signature: %w", err)
+			if documentVersion.Status != coredata.DocumentVersionStatusPublished {
+				return &ErrDocumentVersionNotPublished{}
+			}
+
+			document = &coredata.Document{}
+			if err := document.LoadByID(ctx, tx, scope, documentVersion.DocumentID); err != nil {
+				return fmt.Errorf("cannot load document: %w", err)
+			}
+
+			if document.ArchivedAt != nil {
+				return &ErrDocumentArchived{}
+			}
+
+			documentVersionSignature = &coredata.DocumentVersionSignature{}
+			if err := documentVersionSignature.LoadByID(ctx, tx, scope, signatureID); err != nil {
+				return fmt.Errorf("cannot load document version signature: %w", err)
+			}
+
+			if documentVersionSignature.State == coredata.DocumentVersionSignatureStateSigned {
+				return &ErrDocumentVersionSignatureAlreadySigned{}
+			}
+
+			if err := fileRecord.Insert(ctx, tx, scope); err != nil {
+				return fmt.Errorf("cannot insert signature file record: %w", err)
+			}
+
+			esig, err := s.svc.esign.CreateAndAcceptSignature(
+				ctx,
+				tx,
+				&esign.CreateAndAcceptSignatureRequest{
+					OrganizationID: documentVersion.OrganizationID,
+					DocumentType:   coredata.ElectronicSignatureDocumentTypeFromDocumentType(documentVersion.DocumentType),
+					DocumentName:   &document.Title,
+					FileID:         fileRecord.ID,
+					SignerEmail:    req.SignerEmail,
+					SignerFullName: req.SignerFullName,
+					SignerIPAddr:   req.SignerIPAddr,
+					SignerUA:       req.SignerUA,
+					ConsentText:    DocumentSignatureConsentText,
+					EmailSubject:   fmt.Sprintf("Your signed %s - Certificate of Completion", document.Title),
+				},
+			)
+			if err != nil {
+				return fmt.Errorf("cannot create electronic signature: %w", err)
+			}
+
+			documentVersionSignature.State = coredata.DocumentVersionSignatureStateSigned
+			documentVersionSignature.SignedAt = &now
+			documentVersionSignature.ElectronicSignatureID = &esig.ID
+			documentVersionSignature.UpdatedAt = now
+
+			if err := documentVersionSignature.Update(ctx, tx, scope); err != nil {
+				return fmt.Errorf("cannot update document version signature: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
 	}
 
 	return documentVersionSignature, nil

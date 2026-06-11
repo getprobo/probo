@@ -2051,3 +2051,145 @@ func TestDocumentVersion_RequestSignatureDeduplicatesAcrossMinors(t *testing.T) 
 	assertRequestedSignatureCount(t, owner, v10ID, 1)
 	assertRequestedSignatureCount(t, owner, v11ID, 1)
 }
+
+// signDocumentVersion signs the version as the authenticated client and returns
+// the resulting signature node's id, state and signing time.
+func signDocumentVersion(t *testing.T, signer *testutil.Client, versionID string) (id, state, signedAt string) {
+	t.Helper()
+
+	var result struct {
+		SignDocument struct {
+			DocumentVersionSignature struct {
+				ID       string `json:"id"`
+				State    string `json:"state"`
+				SignedAt string `json:"signedAt"`
+			} `json:"documentVersionSignature"`
+		} `json:"signDocument"`
+	}
+
+	err := signer.Execute(`
+		mutation($input: SignDocumentInput!) {
+			signDocument(input: $input) {
+				documentVersionSignature { id state signedAt }
+			}
+		}
+	`, map[string]any{
+		"input": map[string]any{
+			"documentVersionId": versionID,
+		},
+	}, &result)
+	require.NoError(t, err)
+
+	return result.SignDocument.DocumentVersionSignature.ID,
+		result.SignDocument.DocumentVersionSignature.State,
+		result.SignDocument.DocumentVersionSignature.SignedAt
+}
+
+// signDocumentVersionMutation is the raw mutation used by the negative-path
+// signing tests so they can assert the request is rejected.
+const signDocumentVersionMutation = `
+	mutation($input: SignDocumentInput!) {
+		signDocument(input: $input) {
+			documentVersionSignature { id state }
+		}
+	}
+`
+
+// TestDocumentVersion_SignDocument verifies that a requested signature can be
+// signed by the signatory, transitioning REQUESTED -> SIGNED and recording the
+// signing time. Signing exercises the electronic-signature integration end to
+// end: PDF export, upload, and esign create-and-accept.
+func TestDocumentVersion_SignDocument(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+
+	docID, _ := createTestDocument(t, owner)
+	approveTestDocument(t, owner, docID)
+
+	publishedVersionID := latestDocumentVersionID(t, owner, docID)
+	ownerProfileID := owner.GetProfileID().String()
+
+	requestDocumentSignature(t, owner, publishedVersionID, ownerProfileID)
+
+	id, state, signedAt := signDocumentVersion(t, owner, publishedVersionID)
+
+	assert.NotEmpty(t, id)
+	assert.Equal(t, "SIGNED", state)
+	assert.NotEmpty(t, signedAt)
+}
+
+// TestDocumentVersion_SignDocumentWithoutRequestFails verifies that a version
+// cannot be signed unless a signature was first requested for the signatory.
+func TestDocumentVersion_SignDocumentWithoutRequestFails(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+
+	docID, _ := createTestDocument(t, owner)
+	approveTestDocument(t, owner, docID)
+
+	publishedVersionID := latestDocumentVersionID(t, owner, docID)
+
+	_ = owner.ExecuteShouldFail(signDocumentVersionMutation, map[string]any{
+		"input": map[string]any{
+			"documentVersionId": publishedVersionID,
+		},
+	})
+}
+
+// TestDocumentVersion_SignDocumentTwiceFails verifies that an already-signed
+// signature cannot be signed again.
+func TestDocumentVersion_SignDocumentTwiceFails(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+
+	docID, _ := createTestDocument(t, owner)
+	approveTestDocument(t, owner, docID)
+
+	publishedVersionID := latestDocumentVersionID(t, owner, docID)
+	ownerProfileID := owner.GetProfileID().String()
+
+	requestDocumentSignature(t, owner, publishedVersionID, ownerProfileID)
+	signDocumentVersion(t, owner, publishedVersionID)
+
+	_ = owner.ExecuteShouldFail(signDocumentVersionMutation, map[string]any{
+		"input": map[string]any{
+			"documentVersionId": publishedVersionID,
+		},
+	})
+}
+
+// TestDocumentVersion_SignArchivedDocumentFails verifies that a document
+// archived after its signature was requested can no longer be signed. This
+// guards the archived/published preconditions that are re-validated inside the
+// signing transaction so a state change between request and sign is honored.
+func TestDocumentVersion_SignArchivedDocumentFails(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+
+	docID, _ := createTestDocument(t, owner)
+	approveTestDocument(t, owner, docID)
+
+	publishedVersionID := latestDocumentVersionID(t, owner, docID)
+	ownerProfileID := owner.GetProfileID().String()
+
+	requestDocumentSignature(t, owner, publishedVersionID, ownerProfileID)
+
+	_, err := owner.Do(`
+		mutation($input: ArchiveDocumentInput!) {
+			archiveDocument(input: $input) {
+				document { id }
+			}
+		}
+	`, map[string]any{
+		"input": map[string]any{
+			"documentId": docID,
+		},
+	})
+	require.NoError(t, err)
+
+	_ = owner.ExecuteShouldFail(signDocumentVersionMutation, map[string]any{
+		"input": map[string]any{
+			"documentVersionId": publishedVersionID,
+		},
+	})
+}

@@ -41,8 +41,6 @@ const (
 	ElectronicSignatureDocumentTypeTemplate                 ElectronicSignatureDocumentType = "TEMPLATE"
 	ElectronicSignatureDocumentTypeStatementOfApplicability ElectronicSignatureDocumentType = "STATEMENT_OF_APPLICABILITY"
 	ElectronicSignatureDocumentTypeOther                    ElectronicSignatureDocumentType = "OTHER"
-
-	ESignProcessConsentText = "By typing my full name and clicking Accept, I consent to sign this document electronically and agree that my electronic signature has the same legal validity as a handwritten signature."
 )
 
 var (
@@ -50,28 +48,6 @@ var (
 	_ encoding.TextMarshaler   = ElectronicSignatureDocumentType("")
 	_ encoding.TextUnmarshaler = (*ElectronicSignatureDocumentType)(nil)
 )
-
-func ElectronicSignatureDocumentTypes() []ElectronicSignatureDocumentType {
-	return []ElectronicSignatureDocumentType{
-		ElectronicSignatureDocumentTypeNDA,
-		ElectronicSignatureDocumentTypeDPA,
-		ElectronicSignatureDocumentTypeMSA,
-		ElectronicSignatureDocumentTypeSOW,
-		ElectronicSignatureDocumentTypeSLA,
-		ElectronicSignatureDocumentTypeTOS,
-		ElectronicSignatureDocumentTypePrivacyPolicy,
-		ElectronicSignatureDocumentTypeGovernance,
-		ElectronicSignatureDocumentTypePolicy,
-		ElectronicSignatureDocumentTypeProcedure,
-		ElectronicSignatureDocumentTypePlan,
-		ElectronicSignatureDocumentTypeRegister,
-		ElectronicSignatureDocumentTypeRecord,
-		ElectronicSignatureDocumentTypeReport,
-		ElectronicSignatureDocumentTypeTemplate,
-		ElectronicSignatureDocumentTypeStatementOfApplicability,
-		ElectronicSignatureDocumentTypeOther,
-	}
-}
 
 func (v ElectronicSignatureDocumentType) IsValid() bool {
 	switch v {
@@ -155,51 +131,6 @@ func (dt ElectronicSignatureDocumentType) DisplayName() string {
 	default:
 		return string(dt)
 	}
-}
-
-func (dt ElectronicSignatureDocumentType) ConsentText() (string, error) {
-	var docAgreement string
-
-	switch dt {
-	case ElectronicSignatureDocumentTypeNDA:
-		docAgreement = "I agree to the terms of this Non-Disclosure Agreement."
-	case ElectronicSignatureDocumentTypeDPA:
-		docAgreement = "I agree to the terms of this Data Processing Agreement."
-	case ElectronicSignatureDocumentTypeMSA:
-		docAgreement = "I agree to the terms of this Master Service Agreement."
-	case ElectronicSignatureDocumentTypeSOW:
-		docAgreement = "I agree to the terms of this Statement of Work."
-	case ElectronicSignatureDocumentTypeSLA:
-		docAgreement = "I agree to the terms of this Service Level Agreement."
-	case ElectronicSignatureDocumentTypeTOS:
-		docAgreement = "I agree to these Terms of Service."
-	case ElectronicSignatureDocumentTypePrivacyPolicy:
-		docAgreement = "I agree to this Privacy Policy."
-	case ElectronicSignatureDocumentTypeGovernance:
-		docAgreement = "I acknowledge and agree to this Governance Document."
-	case ElectronicSignatureDocumentTypePolicy:
-		docAgreement = "I acknowledge and agree to this Policy."
-	case ElectronicSignatureDocumentTypeProcedure:
-		docAgreement = "I acknowledge and agree to this Procedure."
-	case ElectronicSignatureDocumentTypePlan:
-		docAgreement = "I acknowledge and agree to this Plan."
-	case ElectronicSignatureDocumentTypeRegister:
-		docAgreement = "I acknowledge and agree to this Register."
-	case ElectronicSignatureDocumentTypeRecord:
-		docAgreement = "I acknowledge and agree to this Record."
-	case ElectronicSignatureDocumentTypeReport:
-		docAgreement = "I acknowledge and agree to this Report."
-	case ElectronicSignatureDocumentTypeTemplate:
-		docAgreement = "I acknowledge and agree to this Template."
-	case ElectronicSignatureDocumentTypeStatementOfApplicability:
-		docAgreement = "I acknowledge and agree to this Statement of Applicability."
-	case ElectronicSignatureDocumentTypeOther:
-		return "", fmt.Errorf("cannot get consent text: document type OTHER requires explicit consent text")
-	default:
-		return "", fmt.Errorf("cannot get consent text: unknown document type %q", dt)
-	}
-
-	return docAgreement + " " + ESignProcessConsentText, nil
 }
 
 func ElectronicSignatureDocumentTypeFromDocumentType(dt DocumentType) ElectronicSignatureDocumentType {

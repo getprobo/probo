@@ -223,11 +223,7 @@ export function NDAPage(props: {
     return <Navigate to="/overview" replace />;
   }
 
-  const consentText = ndaSignature?.consentText
-    ? ndaSignature.consentText
-    : __(
-        "By clicking Review & Sign, you agree to the terms of this NDA. If you have questions about the NDA, please contact security@probo.com.",
-      );
+  const consentText = ndaSignature?.consentText;
 
   return (
     <div className="bg-level-2 flex flex-col min-h-screen lg:h-screen">
@@ -297,7 +293,7 @@ export function NDAPage(props: {
                     >
                       {isFailed
                         ? __("Try again")
-                        : __("Accept")}
+                        : __("Review and sign")}
                     </Button>
                   )}
             </div>

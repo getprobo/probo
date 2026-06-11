@@ -32,15 +32,16 @@ import (
 
 type (
 	DocumentVersionSignature struct {
-		ID                gid.GID                       `json:"id" db:"id"`
-		OrganizationID    gid.GID                       `json:"-" db:"organization_id"`
-		DocumentVersionID gid.GID                       `json:"document_version_id" db:"document_version_id"`
-		State             DocumentVersionSignatureState `json:"state" db:"state"`
-		SignedBy          gid.GID                       `json:"signed_by" db:"signed_by_profile_id"`
-		SignedAt          *time.Time                    `json:"signed_at" db:"signed_at"`
-		RequestedAt       time.Time                     `json:"requested_at" db:"requested_at"`
-		CreatedAt         time.Time                     `json:"created_at" db:"created_at"`
-		UpdatedAt         time.Time                     `json:"updated_at" db:"updated_at"`
+		ID                    gid.GID                       `json:"id" db:"id"`
+		OrganizationID        gid.GID                       `json:"-" db:"organization_id"`
+		DocumentVersionID     gid.GID                       `json:"document_version_id" db:"document_version_id"`
+		State                 DocumentVersionSignatureState `json:"state" db:"state"`
+		SignedBy              gid.GID                       `json:"signed_by" db:"signed_by_profile_id"`
+		SignedAt              *time.Time                    `json:"signed_at" db:"signed_at"`
+		RequestedAt           time.Time                     `json:"requested_at" db:"requested_at"`
+		ElectronicSignatureID *gid.GID                      `json:"-" db:"electronic_signature_id"`
+		CreatedAt             time.Time                     `json:"created_at" db:"created_at"`
+		UpdatedAt             time.Time                     `json:"updated_at" db:"updated_at"`
 	}
 
 	DocumentVersionSignatures []*DocumentVersionSignature
@@ -120,6 +121,7 @@ SELECT
 	signed_by_profile_id,
 	signed_at,
 	requested_at,
+	electronic_signature_id,
 	created_at,
 	updated_at
 FROM
@@ -181,6 +183,7 @@ major_signatures AS (
 		dvs.signed_by_profile_id,
 		dvs.signed_at,
 		dvs.requested_at,
+		dvs.electronic_signature_id,
 		dvs.created_at,
 		dvs.updated_at
 	FROM document_version_signatures dvs
@@ -195,6 +198,7 @@ SELECT
 	signed_by_profile_id,
 	signed_at,
 	requested_at,
+	electronic_signature_id,
 	created_at,
 	updated_at
 FROM
@@ -246,6 +250,7 @@ SELECT
 	signed_by_profile_id,
 	signed_at,
 	requested_at,
+	electronic_signature_id,
 	created_at,
 	updated_at
 FROM
@@ -290,6 +295,7 @@ INSERT INTO document_version_signatures (
 	signed_by_profile_id,
 	signed_at,
 	requested_at,
+	electronic_signature_id,
 	created_at,
 	updated_at
 ) VALUES (
@@ -301,22 +307,24 @@ INSERT INTO document_version_signatures (
 	@signed_by_profile_id,
 	@signed_at,
 	@requested_at,
+	@electronic_signature_id,
 	@created_at,
 	@updated_at
 )
 `
 
 	args := pgx.StrictNamedArgs{
-		"id":                   pvs.ID,
-		"tenant_id":            scope.GetTenantID(),
-		"organization_id":      pvs.OrganizationID,
-		"document_version_id":  pvs.DocumentVersionID,
-		"state":                pvs.State,
-		"signed_by_profile_id": pvs.SignedBy,
-		"signed_at":            pvs.SignedAt,
-		"requested_at":         pvs.RequestedAt,
-		"created_at":           pvs.CreatedAt,
-		"updated_at":           pvs.UpdatedAt,
+		"id":                      pvs.ID,
+		"tenant_id":               scope.GetTenantID(),
+		"organization_id":         pvs.OrganizationID,
+		"document_version_id":     pvs.DocumentVersionID,
+		"state":                   pvs.State,
+		"signed_by_profile_id":    pvs.SignedBy,
+		"signed_at":               pvs.SignedAt,
+		"requested_at":            pvs.RequestedAt,
+		"electronic_signature_id": pvs.ElectronicSignatureID,
+		"created_at":              pvs.CreatedAt,
+		"updated_at":              pvs.UpdatedAt,
 	}
 
 	_, err := conn.Exec(ctx, q, args)
@@ -357,6 +365,7 @@ SELECT
 	document_version_signatures.signed_by_profile_id,
 	document_version_signatures.signed_at,
 	document_version_signatures.requested_at,
+	document_version_signatures.electronic_signature_id,
 	document_version_signatures.created_at,
 	document_version_signatures.updated_at
 FROM
@@ -401,6 +410,7 @@ SET
 	state = @state,
 	signed_by_profile_id = @signed_by_profile_id,
 	signed_at = @signed_at,
+	electronic_signature_id = @electronic_signature_id,
 	updated_at = @updated_at
 WHERE
 	%s
@@ -410,11 +420,12 @@ WHERE
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"id":                   pvs.ID,
-		"state":                pvs.State,
-		"signed_by_profile_id": pvs.SignedBy,
-		"signed_at":            pvs.SignedAt,
-		"updated_at":           pvs.UpdatedAt,
+		"id":                      pvs.ID,
+		"state":                   pvs.State,
+		"signed_by_profile_id":    pvs.SignedBy,
+		"signed_at":               pvs.SignedAt,
+		"electronic_signature_id": pvs.ElectronicSignatureID,
+		"updated_at":              pvs.UpdatedAt,
 	}
 
 	maps.Copy(args, scope.SQLArguments())
@@ -543,6 +554,7 @@ signatures_with_people AS (
 		dvs.signed_by_profile_id,
 		dvs.signed_at,
 		dvs.requested_at,
+		dvs.electronic_signature_id,
 		dvs.created_at,
 		dvs.updated_at,
 		p.full_name AS signed_by_full_name
@@ -570,6 +582,7 @@ SELECT
 	signed_by_profile_id,
 	signed_at,
 	requested_at,
+	electronic_signature_id,
 	created_at,
 	updated_at,
 	signed_by_full_name

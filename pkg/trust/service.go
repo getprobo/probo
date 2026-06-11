@@ -34,6 +34,8 @@ import (
 	"go.probo.inc/probo/pkg/slack"
 )
 
+const NDAConsentText = "By clicking \"Review and sign\", I consent to sign this document electronically and agree that my electronic signature has the same legal validity as a handwritten signature. If you have questions about the NDA, please contact security@probo.com."
+
 type (
 	Service struct {
 		pg                     *pg.Client
@@ -385,6 +387,7 @@ func (s *Service) ProvisionMember(
 							DocumentType:   coredata.ElectronicSignatureDocumentTypeNDA,
 							FileID:         *compliancePage.NonDisclosureAgreementFileID,
 							SignerEmail:    identity.EmailAddress,
+							ConsentText:    NDAConsentText,
 						},
 					)
 					if err != nil {
