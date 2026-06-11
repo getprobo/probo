@@ -4,6 +4,34 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.208.0] - 2026-06-11
+
+### Added
+
+- `active` status field on access entries
+- Import action for catalog vendors in trackers; `importThirdPartyFromCommon`
+  mutation to pull a catalog vendor into an org
+- Catalog vendors surfaced in tracker policy documents
+- File download URLs for console file fields
+
+### Changed
+
+- Trust and MCP connector logos now use the File type
+- Third parties deduplicated by name; unique index enforced per org
+- Tracker mapping no longer auto-creates org third parties; explicit import required
+- Tracker row and category select restyled; move-to-category confirm dialog removed
+- Tracker mapping restored to link existing patterns; "create only" mode removed
+- Document major version publishing requires explicit `approver_ids`
+- References updated to probo.com
+
+### Removed
+
+- Third-party disambiguation agent and automatic matching removed
+
+### Fixed
+
+- DNS TXT lookup retried over TCP on truncated UDP response
+
 ## [0.207.0] - 2026-06-10
 
 ### Added
