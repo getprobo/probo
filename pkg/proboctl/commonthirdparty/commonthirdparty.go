@@ -16,6 +16,7 @@ package commonthirdparty
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 
@@ -27,21 +28,98 @@ import (
 	"go.probo.inc/probo/pkg/proboctl/cmdutil"
 )
 
-// NewCmdCommonThirdParty is the entry point for inspecting the global
-// common third party catalog.
+// NewCmdCommonThirdParty is the entry point for inspecting and
+// re-enriching the global common third party catalog.
 func NewCmdCommonThirdParty(f *cmdutil.Factory) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "common-third-party <command>",
 		Aliases: []string{"ctp3"},
-		Short:   "Inspect the global common third party catalog",
+		Short:   "Inspect and re-enrich the global common third party catalog",
 	}
 
 	cmd.AddCommand(newCmdList(f))
 	cmd.AddCommand(newCmdShow(f))
 	cmd.AddCommand(newCmdDomains(f))
 	cmd.AddCommand(newCmdUpsert(f))
+	cmd.AddCommand(newCmdReenrich(f))
+	cmd.AddCommand(newCmdStats(f))
 
 	return cmd
+}
+
+// enrichmentState classifies a common third party's position in the
+// enrichment lifecycle for display. A row is "enriched" once it carries
+// an enrichment payload; there is no enriched_at column.
+func enrichmentState(p *coredata.CommonThirdParty) string {
+	switch {
+	case p.EnrichmentRequestedAt != nil:
+		return "queued"
+	case len(p.Enrichment) > 0:
+		return "enriched"
+	default:
+		return "unenriched"
+	}
+}
+
+// enrichmentStatus returns the run-level status recorded in the
+// enrichment payload (done, partial, failed), or an empty string when
+// the row has never been enriched or the payload is malformed.
+func enrichmentStatus(p *coredata.CommonThirdParty) string {
+	if len(p.Enrichment) == 0 {
+		return ""
+	}
+
+	var meta struct {
+		Status string `json:"status"`
+	}
+
+	if err := json.Unmarshal(p.Enrichment, &meta); err != nil {
+		return ""
+	}
+
+	return meta.Status
+}
+
+// parseEnrichmentState maps the --state flag to a coredata enrichment
+// state.
+func parseEnrichmentState(value string) (coredata.CommonThirdPartyEnrichmentState, error) {
+	switch value {
+	case "queued":
+		return coredata.CommonThirdPartyEnrichmentStateQueued, nil
+	case "enriched":
+		return coredata.CommonThirdPartyEnrichmentStateEnriched, nil
+	case "unenriched":
+		return coredata.CommonThirdPartyEnrichmentStateUnenriched, nil
+	default:
+		return "", fmt.Errorf("invalid --state value %q: valid values are queued, enriched, unenriched", value)
+	}
+}
+
+// validEnrichmentStatuses are the run-level statuses the enrichment
+// worker records in the payload.
+var validEnrichmentStatuses = map[string]struct{}{
+	"done":    {},
+	"partial": {},
+	"failed":  {},
+}
+
+// resolveCommonThirdPartyID accepts either a common third party GID or a
+// slug and returns the corresponding id.
+func resolveCommonThirdPartyID(ctx context.Context, conn pg.Querier, value string) (gid.GID, error) {
+	if id, err := gid.ParseGID(value); err == nil {
+		return id, nil
+	}
+
+	var party coredata.CommonThirdParty
+	if err := party.LoadBySlug(ctx, conn, value); err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return gid.GID{}, fmt.Errorf("no common third party found for %q (pass a slug or GID)", value)
+		}
+
+		return gid.GID{}, fmt.Errorf("cannot resolve common third party %q: %w", value, err)
+	}
+
+	return party.ID, nil
 }
 
 // resolveCommonThirdParty loads a common third party by GID or slug.

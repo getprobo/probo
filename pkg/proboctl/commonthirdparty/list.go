@@ -31,6 +31,8 @@ func newCmdList(f *cmdutil.Factory) *cobra.Command {
 		flagName     string
 		flagCategory string
 		flagKeyword  string
+		flagState    string
+		flagStatus   string
 		flagSort     string
 		flagOrder    string
 	)
@@ -46,6 +48,8 @@ func newCmdList(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&flagName, "name", "", "Filter by name substring")
 	cmd.Flags().StringVar(&flagCategory, "category", "", "Filter by category")
 	cmd.Flags().StringVar(&flagKeyword, "keyword", "", "Filter by name/slug substring")
+	cmd.Flags().StringVar(&flagState, "state", "", "Filter by enrichment state (queued, enriched, unenriched)")
+	cmd.Flags().StringVar(&flagStatus, "status", "", "Filter by last enrichment status (done, partial, failed)")
 	cmd.Flags().StringVar(&flagSort, "sort", "name", "Sort field: name, created, updated")
 	cmd.Flags().StringVar(&flagOrder, "order", "", "Sort order: asc, desc (default depends on field)")
 
@@ -79,6 +83,23 @@ func newCmdList(f *cmdutil.Factory) *cobra.Command {
 
 		if flagKeyword != "" {
 			filter.WithKeyword(&flagKeyword)
+		}
+
+		if flagState != "" {
+			st, err := parseEnrichmentState(flagState)
+			if err != nil {
+				return err
+			}
+
+			filter.WithState(&st)
+		}
+
+		if flagStatus != "" {
+			if _, ok := validEnrichmentStatuses[flagStatus]; !ok {
+				return fmt.Errorf("invalid --status value %q: valid values are done, partial, failed", flagStatus)
+			}
+
+			filter.WithEnrichmentStatus(&flagStatus)
 		}
 
 		pgClient, err := f.PgClient()
@@ -128,14 +149,15 @@ func newCmdList(f *cmdutil.Factory) *cobra.Command {
 			return nil
 		}
 
-		table := clicmdutil.NewTable("ID", "NAME", "SLUG", "CATEGORY", "CREATED", "UPDATED")
+		table := clicmdutil.NewTable("ID", "NAME", "SLUG", "CATEGORY", "STATE", "STATUS", "UPDATED")
 		for _, p := range parties {
 			table.Row(
 				p.ID.String(),
 				p.Name,
 				p.Slug,
 				string(p.Category),
-				p.CreatedAt.Format("2006-01-02 15:04:05"),
+				enrichmentState(p),
+				enrichmentStatus(p),
 				p.UpdatedAt.Format("2006-01-02 15:04:05"),
 			)
 		}

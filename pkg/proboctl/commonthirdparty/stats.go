@@ -1,0 +1,99 @@
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+// OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
+
+package commonthirdparty
+
+import (
+	"context"
+	"fmt"
+
+	"github.com/spf13/cobra"
+	"go.gearno.de/kit/pg"
+	clicmdutil "go.probo.inc/probo/pkg/cmd/cmdutil"
+	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/proboctl/cmdutil"
+)
+
+func newCmdStats(f *cmdutil.Factory) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "stats",
+		Short: "Summarize the common third party catalog by enrichment state and status",
+		Args:  cobra.NoArgs,
+	}
+
+	output := clicmdutil.AddOutputFlag(cmd)
+
+	cmd.RunE = func(cmd *cobra.Command, args []string) error {
+		if err := clicmdutil.ValidateOutputFlag(output); err != nil {
+			return err
+		}
+
+		pgClient, err := f.PgClient()
+		if err != nil {
+			return err
+		}
+
+		stats := map[string]int{}
+
+		if err := pgClient.WithConn(
+			cmd.Context(),
+			func(ctx context.Context, conn pg.Querier) error {
+				counts := []struct {
+					key    string
+					filter *coredata.CommonThirdPartyFilter
+				}{
+					{"total", coredata.NewCommonThirdPartyFilter(nil)},
+					{"queued", coredata.NewCommonThirdPartyFilter(nil).WithState(new(coredata.CommonThirdPartyEnrichmentStateQueued))},
+					{"enriched", coredata.NewCommonThirdPartyFilter(nil).WithState(new(coredata.CommonThirdPartyEnrichmentStateEnriched))},
+					{"unenriched", coredata.NewCommonThirdPartyFilter(nil).WithState(new(coredata.CommonThirdPartyEnrichmentStateUnenriched))},
+					{"status: done", coredata.NewCommonThirdPartyFilter(nil).WithEnrichmentStatus(new("done"))},
+					{"status: partial", coredata.NewCommonThirdPartyFilter(nil).WithEnrichmentStatus(new("partial"))},
+					{"status: failed", coredata.NewCommonThirdPartyFilter(nil).WithEnrichmentStatus(new("failed"))},
+				}
+
+				for _, c := range counts {
+					var parties coredata.CommonThirdParties
+
+					n, err := parties.CountAll(ctx, conn, c.filter)
+					if err != nil {
+						return err
+					}
+
+					stats[c.key] = n
+				}
+
+				return nil
+			},
+		); err != nil {
+			return err
+		}
+
+		order := []string{"total", "queued", "enriched", "unenriched", "status: done", "status: partial", "status: failed"}
+
+		if *output == clicmdutil.OutputJSON {
+			return clicmdutil.PrintJSON(f.IOStreams.Out, stats)
+		}
+
+		table := clicmdutil.NewTable("METRIC", "COUNT")
+		for _, key := range order {
+			table.Row(key, fmt.Sprintf("%d", stats[key]))
+		}
+
+		_, _ = fmt.Fprintln(f.IOStreams.Out, table.Render())
+
+		return nil
+	}
+
+	return cmd
+}

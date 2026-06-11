@@ -16,8 +16,12 @@ package commonthirdparty
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"io"
+	"sort"
 	"strings"
+	"time"
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/spf13/cobra"
@@ -26,6 +30,31 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/proboctl/cmdutil"
 )
+
+// enrichmentMetadataView mirrors the subset of the enrichment payload
+// (written by the common-third-party enrichment worker) that show
+// renders. It is decoded locally to avoid a dependency on the thirdparty
+// package.
+type enrichmentMetadataView struct {
+	Model       string                             `json:"model"`
+	AttemptedAt time.Time                          `json:"attempted_at"`
+	Status      string                             `json:"status"`
+	Error       string                             `json:"error"`
+	Fields      map[string]enrichmentFieldMetaView `json:"fields"`
+	Domains     []enrichmentDomainMetaView         `json:"domains"`
+}
+
+type enrichmentFieldMetaView struct {
+	Confidence float64 `json:"confidence"`
+	SourceURL  string  `json:"source_url"`
+	Status     string  `json:"status"`
+	Source     string  `json:"source"`
+}
+
+type enrichmentDomainMetaView struct {
+	Domain     string  `json:"domain"`
+	Confidence float64 `json:"confidence"`
+}
 
 func newCmdShow(f *cmdutil.Factory) *cobra.Command {
 	cmd := &cobra.Command{
@@ -115,8 +144,81 @@ func newCmdShow(f *cmdutil.Factory) *cobra.Command {
 		row("Created:", party.CreatedAt.Format("2006-01-02 15:04:05"))
 		row("Updated:", party.UpdatedAt.Format("2006-01-02 15:04:05"))
 
+		row("Enrichment state:", enrichmentState(&party))
+		row("Enrichment attempts:", fmt.Sprintf("%d", party.EnrichmentAttempts))
+
+		if party.EnrichmentRequestedAt != nil {
+			row("Queued at:", party.EnrichmentRequestedAt.Format("2006-01-02 15:04:05"))
+		}
+
+		printEnrichmentDetails(out, label, party)
+
 		return nil
 	}
 
 	return cmd
+}
+
+// printEnrichmentDetails renders the run-level status and per-field
+// provenance recorded in the enrichment payload, when present.
+func printEnrichmentDetails(out io.Writer, label lipgloss.Style, party coredata.CommonThirdParty) {
+	if len(party.Enrichment) == 0 {
+		return
+	}
+
+	var meta enrichmentMetadataView
+	if err := json.Unmarshal(party.Enrichment, &meta); err != nil {
+		return
+	}
+
+	row := func(name, value string) {
+		_, _ = fmt.Fprintf(out, "%s%s\n", label.Render(name), value)
+	}
+
+	if meta.Status != "" {
+		row("Last run status:", meta.Status)
+	}
+
+	if !meta.AttemptedAt.IsZero() {
+		row("Last attempt:", meta.AttemptedAt.Format("2006-01-02 15:04:05"))
+	}
+
+	if meta.Model != "" {
+		row("Enrichment model:", meta.Model)
+	}
+
+	if meta.Error != "" {
+		row("Last error:", meta.Error)
+	}
+
+	if len(meta.Fields) > 0 {
+		names := make([]string, 0, len(meta.Fields))
+		for name := range meta.Fields {
+			names = append(names, name)
+		}
+
+		sort.Strings(names)
+
+		_, _ = fmt.Fprintln(out)
+
+		table := clicmdutil.NewTable("FIELD", "STATUS", "SOURCE", "CONF")
+
+		for _, name := range names {
+			fm := meta.Fields[name]
+			table.Row(name, fm.Status, fm.Source, fmt.Sprintf("%.2f", fm.Confidence))
+		}
+
+		_, _ = fmt.Fprintln(out, table.Render())
+	}
+
+	if len(meta.Domains) > 0 {
+		_, _ = fmt.Fprintln(out)
+
+		table := clicmdutil.NewTable("DISCOVERED DOMAIN", "CONF")
+		for _, d := range meta.Domains {
+			table.Row(d.Domain, fmt.Sprintf("%.2f", d.Confidence))
+		}
+
+		_, _ = fmt.Fprintln(out, table.Render())
+	}
 }

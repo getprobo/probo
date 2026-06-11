@@ -15,6 +15,7 @@
 package thirdparty
 
 import (
+	"slices"
 	"strings"
 
 	"go.probo.inc/probo/pkg/uri"
@@ -163,13 +164,7 @@ func vendorLabels(name, website string) []string {
 
 // exactLabelMatch reports whether label equals any vendor label.
 func exactLabelMatch(label string, vendorLabels []string) bool {
-	for _, vl := range vendorLabels {
-		if label == vl {
-			return true
-		}
-	}
-
-	return false
+	return slices.Contains(vendorLabels, label)
 }
 
 // relatedLabelMatch reports whether label is the same as, contains, or is

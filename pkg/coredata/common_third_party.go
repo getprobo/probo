@@ -655,6 +655,42 @@ LIMIT 20
 	return nil
 }
 
+// LoadAllIDs returns the IDs of every common third party matching the
+// filter, ignoring pagination. It is the selection primitive behind bulk
+// operator actions such as re-arming enrichment across a filtered set.
+func (t *CommonThirdParties) LoadAllIDs(
+	ctx context.Context,
+	conn pg.Querier,
+	filter *CommonThirdPartyFilter,
+) ([]gid.GID, error) {
+	q := `
+SELECT
+    id
+FROM
+    common_third_parties
+WHERE
+    %s
+ORDER BY name ASC
+`
+
+	q = fmt.Sprintf(q, filter.SQLFragment())
+
+	args := pgx.StrictNamedArgs{}
+	maps.Copy(args, filter.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return nil, fmt.Errorf("cannot query common third party ids: %w", err)
+	}
+
+	ids, err := pgx.CollectRows(rows, pgx.RowTo[gid.GID])
+	if err != nil {
+		return nil, fmt.Errorf("cannot collect common third party ids: %w", err)
+	}
+
+	return ids, nil
+}
+
 func (t CommonThirdParty) UpdateLogoFileID(
 	ctx context.Context,
 	conn pg.Tx,
@@ -1002,4 +1038,41 @@ WHERE
 	}
 
 	return nil
+}
+
+// RequestEnrichmentByIDs re-arms enrichment on the given common third
+// parties by stamping enrichment_requested_at, which is the only column
+// the enrichment worker claims on. It resets enrichment_attempts to 0 so
+// the row gets a fresh retry budget: the claim path bumps the counter on
+// every run, and without a reset a row near the max-attempts ceiling
+// would not be re-armed by stale recovery if a re-run crashed. The
+// enrichment payload is left in place so the worker's merge keeps prior
+// per-field provenance (it only overwrites fields it owns, never curated
+// seed data or human edits). Already-enriched rows are re-processed too.
+// Returns the number of rows re-queued.
+func (t *CommonThirdParties) RequestEnrichmentByIDs(
+	ctx context.Context,
+	tx pg.Tx,
+	ids []gid.GID,
+) (int64, error) {
+	q := `
+UPDATE common_third_parties
+SET
+    enrichment_requested_at = NOW(),
+    enrichment_attempts = 0,
+    updated_at = NOW()
+WHERE
+    id = ANY(@ids)
+`
+
+	args := pgx.StrictNamedArgs{
+		"ids": ids,
+	}
+
+	result, err := tx.Exec(ctx, q, args)
+	if err != nil {
+		return 0, fmt.Errorf("cannot request common third party enrichment: %w", err)
+	}
+
+	return result.RowsAffected(), nil
 }
