@@ -16,7 +16,7 @@ package types
 
 import "go.probo.inc/probo/pkg/coredata"
 
-func NewProfile(p *coredata.MembershipProfile) *Profile {
+func NewProfile(p *coredata.MembershipProfile, role *coredata.MembershipRole) *Profile {
 	return &Profile{
 		ID:                       p.ID,
 		OrganizationID:           p.OrganizationID,
@@ -29,6 +29,7 @@ func NewProfile(p *coredata.MembershipProfile) *Profile {
 		Position:                 p.Position,
 		ContractStartDate:        p.ContractStartDate,
 		ContractEndDate:          p.ContractEndDate,
+		Role:                     role,
 		CreatedAt:                p.CreatedAt,
 		UpdatedAt:                p.UpdatedAt,
 	}

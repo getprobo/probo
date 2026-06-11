@@ -2774,9 +2774,24 @@ func (r *Resolver) ListUsersTool(ctx context.Context, req *mcp.CallToolRequest, 
 		return nil, types.ListUsersOutput{}, fmt.Errorf("list users: %w", err)
 	}
 
+	identityIDs := make([]gid.GID, 0, len(pageResult.Data))
+	for _, p := range pageResult.Data {
+		identityIDs = append(identityIDs, p.IdentityID)
+	}
+
+	roles, err := r.iamSvc.OrganizationService.GetMembershipRolesByIdentityIDs(ctx, input.OrganizationID, identityIDs)
+	if err != nil {
+		return nil, types.ListUsersOutput{}, fmt.Errorf("list user roles: %w", err)
+	}
+
 	users := make([]*types.Profile, 0, len(pageResult.Data))
 	for _, p := range pageResult.Data {
-		users = append(users, types.NewProfile(p))
+		var role *coredata.MembershipRole
+		if r, ok := roles[p.IdentityID]; ok {
+			role = &r
+		}
+
+		users = append(users, types.NewProfile(p, role))
 	}
 
 	var nextCursor *page.CursorKey
@@ -2806,7 +2821,18 @@ func (r *Resolver) GetUserTool(ctx context.Context, req *mcp.CallToolRequest, in
 		return nil, types.GetUserOutput{}, err
 	}
 
-	return nil, types.GetUserOutput{User: types.NewProfile(profile)}, nil
+	var role *coredata.MembershipRole
+
+	membership, err := r.iamSvc.AccountService.GetMembershipForOrganization(ctx, profile.IdentityID, profile.OrganizationID)
+	if err != nil {
+		if !errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, types.GetUserOutput{}, fmt.Errorf("get user role: %w", err)
+		}
+	} else {
+		role = &membership.Role
+	}
+
+	return nil, types.GetUserOutput{User: types.NewProfile(profile, role)}, nil
 }
 
 func (r *Resolver) CreateUserTool(ctx context.Context, req *mcp.CallToolRequest, input *types.CreateUserInput) (*mcp.CallToolResult, types.CreateUserOutput, error) {
@@ -2842,7 +2868,7 @@ func (r *Resolver) CreateUserTool(ctx context.Context, req *mcp.CallToolRequest,
 		return nil, types.CreateUserOutput{}, fmt.Errorf("create user: %w", err)
 	}
 
-	return nil, types.CreateUserOutput{User: types.NewProfile(profile)}, nil
+	return nil, types.CreateUserOutput{User: types.NewProfile(profile, nil)}, nil
 }
 
 func (r *Resolver) InviteUserTool(ctx context.Context, req *mcp.CallToolRequest, input *types.InviteUserInput) (*mcp.CallToolResult, types.InviteUserOutput, error) {
@@ -2906,7 +2932,7 @@ func (r *Resolver) UpdateUserTool(ctx context.Context, req *mcp.CallToolRequest,
 		return nil, types.UpdateUserOutput{}, fmt.Errorf("update user: %w", err)
 	}
 
-	return nil, types.UpdateUserOutput{User: types.NewProfile(profile)}, nil
+	return nil, types.UpdateUserOutput{User: types.NewProfile(profile, nil)}, nil
 }
 
 func (r *Resolver) UpdateMembershipTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateMembershipInput) (*mcp.CallToolResult, types.UpdateMembershipOutput, error) {

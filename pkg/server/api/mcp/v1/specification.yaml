@@ -537,6 +537,11 @@ components:
             - "null"
           format: date-time
           description: Contract end date
+        role:
+          anyOf:
+            - $ref: "#/components/schemas/MembershipRole"
+            - type: "null"
+          description: Membership role in the organization
         created_at:
           type: string
           format: date-time

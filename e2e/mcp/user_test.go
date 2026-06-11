@@ -48,22 +48,35 @@ func TestMCP_User_CRUD(t *testing.T) {
 	// Get
 	var getResult struct {
 		User struct {
-			ID string `json:"id"`
+			ID   string `json:"id"`
+			Role string `json:"role"`
 		} `json:"user"`
 	}
 	mc.CallToolInto("getUser", map[string]any{
 		"id": createResult.User.ID,
 	}, &getResult)
 	assert.Equal(t, createResult.User.ID, getResult.User.ID)
+	assert.Equal(t, "EMPLOYEE", getResult.User.Role)
 
 	// List
 	var listResult struct {
 		Users []struct {
-			ID string `json:"id"`
+			ID   string `json:"id"`
+			Role string `json:"role"`
 		} `json:"users"`
 	}
 	mc.CallToolInto("listUsers", map[string]any{
 		"organizationId": orgID,
 	}, &listResult)
-	assert.NotEmpty(t, listResult.Users)
+	require.NotEmpty(t, listResult.Users)
+
+	var foundRole bool
+	for _, user := range listResult.Users {
+		if user.Role != "" {
+			foundRole = true
+			break
+		}
+	}
+
+	assert.True(t, foundRole)
 }

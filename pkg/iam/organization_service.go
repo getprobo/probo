@@ -1306,6 +1306,48 @@ func (s *OrganizationService) ListProfiles(
 	return page.NewPage(profiles, cursor), nil
 }
 
+func (s *OrganizationService) GetMembershipRolesByIdentityIDs(
+	ctx context.Context,
+	organizationID gid.GID,
+	identityIDs []gid.GID,
+) (map[gid.GID]coredata.MembershipRole, error) {
+	if len(identityIDs) == 0 {
+		return map[gid.GID]coredata.MembershipRole{}, nil
+	}
+
+	var (
+		scope       = coredata.NewScopeFromObjectID(organizationID)
+		memberships coredata.Memberships
+	)
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := memberships.LoadByIdentityIDsAndOrganizationID(
+				ctx,
+				conn,
+				scope,
+				organizationID,
+				identityIDs,
+			); err != nil {
+				return fmt.Errorf("cannot load memberships: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	roles := make(map[gid.GID]coredata.MembershipRole, len(memberships))
+	for _, membership := range memberships {
+		roles[membership.IdentityID] = membership.Role
+	}
+
+	return roles, nil
+}
+
 func (s OrganizationService) CountProfiles(
 	ctx context.Context,
 	organizationID gid.GID,
