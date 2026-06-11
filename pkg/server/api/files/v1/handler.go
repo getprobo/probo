@@ -50,15 +50,15 @@ func NewMux(
 	iamSvc *iam.Service,
 	cookieConfig securecookie.Config,
 	tokenSecret string,
-) (*chi.Mux, error) {
+) *chi.Mux {
 	assets, err := brand.NewAssets()
 	if err != nil {
-		return nil, fmt.Errorf("cannot create brand assets: %w", err)
+		panic(fmt.Errorf("cannot create brand assets: %w", err))
 	}
 
 	staticFiles, err := newStaticFileServer(assets)
 	if err != nil {
-		return nil, fmt.Errorf("cannot create static file server: %w", err)
+		panic(fmt.Errorf("cannot create static file server: %w", err))
 	}
 
 	h := &Handler{
@@ -82,7 +82,7 @@ func NewMux(
 		r.Get("/{fileID}", h.handleGetFile)
 	})
 
-	return r, nil
+	return r
 }
 
 func (h *Handler) handleGetStaticFile(w http.ResponseWriter, r *http.Request) {

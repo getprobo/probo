@@ -266,7 +266,7 @@ func TestHandleGetFile_UnauthenticatedReturns401(t *testing.T) {
 
 	// NewMux with nil services — safe because auth middleware returns 401
 	// before any service is called when no credentials are present.
-	mux, err := NewMux(
+	mux := NewMux(
 		log.NewLogger(log.WithOutput(io.Discard)),
 		nil, // fileSvc — not reached
 		nil, // proboSvc — not reached
@@ -274,7 +274,6 @@ func TestHandleGetFile_UnauthenticatedReturns401(t *testing.T) {
 		securecookie.Config{},
 		"test-secret",
 	)
-	require.NoError(t, err)
 
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/some-valid-looking-id", nil)

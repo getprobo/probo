@@ -172,18 +172,6 @@ func NewServer(cfg Config) (*Server, error) {
 		)
 	}))
 
-	filesHandler, err := files_v1.NewMux(
-		cfg.Logger.Named("files.v1"),
-		cfg.File,
-		cfg.Probo,
-		cfg.IAM,
-		cfg.Cookie,
-		cfg.TokenSecret,
-	)
-	if err != nil {
-		return nil, fmt.Errorf("cannot create files handler: %w", err)
-	}
-
 	return &Server{
 		cfg:  cfg,
 		csrf: csrf,
@@ -222,7 +210,14 @@ func NewServer(cfg Config) (*Server, error) {
 			cfg.CookieBanner,
 			cfg.Geoloc,
 		),
-		filesHandler: filesHandler,
+		filesHandler: files_v1.NewMux(
+			cfg.Logger.Named("files.v1"),
+			cfg.File,
+			cfg.Probo,
+			cfg.IAM,
+			cfg.Cookie,
+			cfg.TokenSecret,
+		),
 		mcpHandler: mcp_v1.NewMux(
 			cfg.Logger.Named("mcp.v1"),
 			cfg.Probo,
