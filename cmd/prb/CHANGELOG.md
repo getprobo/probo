@@ -4,6 +4,16 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.194.0] - 2026-06-11
+
+### Added
+
+- `active` status field on access entries exposed in `prb access-entry` commands
+
+### Changed
+
+- References updated to probo.com
+
 ## [0.193.0] - 2026-06-10
 
 ### Added
