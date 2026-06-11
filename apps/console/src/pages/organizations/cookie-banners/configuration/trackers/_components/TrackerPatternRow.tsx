@@ -340,12 +340,19 @@ export function TrackerPatternRow({ patternKey, connectionId }: TrackerPatternRo
   const srcBadge = pattern.source ? getTrackerSourceBadge(pattern.source, __) : null;
 
   return (
-    <Tr to={pattern.id} className={pattern.excluded ? "bg-txt-quaternary opacity-80  line-through" : undefined}>
+    <Tr
+      to={pattern.id}
+      className={
+        pattern.excluded
+          ? "bg-txt-quaternary/70 line-through"
+          : pattern.source === "SCRIPT"
+            ? undefined
+            : "bg-txt-quaternary/25"
+      }
+    >
       <Td>
-        <Badge variant={typeBadge.variant}>{typeBadge.label}</Badge>
-      </Td>
-      <Td>
-        <div className="flex flex-col min-w-0 max-w-xs gap-1">
+        <div className="flex flex-col items-start min-w-0 max-w-xs gap-1">
+          <Badge variant={typeBadge.variant}>{typeBadge.label}</Badge>
           <span className={pattern.excluded ? undefined : "font-medium"}>{pattern.displayName}</span>
           {pattern.description && (
             <span className="text-xs text-txt-tertiary wrap-break-word line-clamp-1">
@@ -374,14 +381,17 @@ export function TrackerPatternRow({ patternKey, connectionId }: TrackerPatternRo
           : <span className="text-txt-tertiary">-</span>}
       </Td>
       <Td noLink>
-        <MoveToCategorySelect
-          currentCategoryId={pattern.cookieCategory?.id}
-          currentCategoryName={pattern.cookieCategory?.name}
-          onSelect={handleMove}
-        />
+        <div className="pr-2 flex justify-start">
+          <MoveToCategorySelect
+            currentCategoryId={pattern.cookieCategory?.id}
+            currentCategoryName={pattern.cookieCategory?.name}
+            highlight={!!pattern.cookieCategory && pattern.cookieCategory.kind !== "UNCATEGORISED"}
+            onSelect={handleMove}
+          />
+        </div>
       </Td>
       <Td>
-        <span>{humanizeSeconds(pattern.maxAgeSeconds ?? null)}</span>
+        <span className="pl-2">{humanizeSeconds(pattern.maxAgeSeconds ?? null)}</span>
       </Td>
       <Td>
         {pattern.lastMatchedAt

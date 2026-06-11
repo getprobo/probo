@@ -25,12 +25,14 @@ import { moveToCategoryDropdownQuery } from "./MoveToCategoryDropdown";
 interface MoveToCategorySelectProps {
   currentCategoryId?: string;
   currentCategoryName?: string;
+  highlight?: boolean;
   onSelect: (categoryId: string) => void;
 }
 
 export function MoveToCategorySelect({
   currentCategoryId,
   currentCategoryName,
+  highlight = false,
   onSelect,
 }: MoveToCategorySelectProps) {
   const { cookieBannerId } = useParams<{ cookieBannerId: string }>();
@@ -57,7 +59,8 @@ export function MoveToCategorySelect({
 
   return (
     <Select
-      variant="ghost"
+      variant={highlight ? "editor" : "ghost"}
+      className={highlight ? undefined : "px-0"}
       placeholder={currentCategoryName ?? <span className="text-txt-tertiary">-</span>}
       onValueChange={handleValueChange}
       onOpenChange={handleOpenChange}

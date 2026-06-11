@@ -58,7 +58,7 @@ export function TrackerPatternRowEdit({
 
   return (
     <Tr>
-      <Td colSpan={8}>
+      <Td colSpan={7}>
         <div className="flex flex-col gap-3">
           <span className="font-medium wrap-break-word">{pattern}</span>
           <div className="flex items-end gap-2">

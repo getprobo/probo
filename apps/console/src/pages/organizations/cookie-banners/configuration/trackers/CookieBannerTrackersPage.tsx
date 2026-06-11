@@ -267,7 +267,6 @@ export default function CookieBannerTrackersPage({
               >
                 <Thead>
                   <Tr>
-                    <Th>{__("Type")}</Th>
                     <SortableTh field="NAME">{__("Name")}</SortableTh>
                     <Th>{__("Third party")}</Th>
                     <SortableTh field="SOURCE">{__("Source")}</SortableTh>
