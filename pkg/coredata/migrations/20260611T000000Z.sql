@@ -14,3 +14,6 @@
 
 ALTER TABLE access_entries
     ADD COLUMN active BOOLEAN NOT NULL DEFAULT TRUE;
+
+ALTER TABLE access_entries
+    ALTER COLUMN active DROP DEFAULT;
