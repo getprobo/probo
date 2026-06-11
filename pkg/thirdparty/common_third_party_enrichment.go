@@ -71,6 +71,16 @@ type (
 		UpdatedAt  time.Time `json:"updated_at"`
 	}
 
+	// EnrichmentDomainMeta is the provenance of one domain written to
+	// common_third_party_domains during a run, recorded in the enrichment
+	// payload so the discovered domain set is auditable.
+	EnrichmentDomainMeta struct {
+		Domain     string    `json:"domain"`
+		Confidence float64   `json:"confidence"`
+		SourceURL  string    `json:"source_url,omitempty"`
+		UpdatedAt  time.Time `json:"updated_at"`
+	}
+
 	// EnrichmentMetadata is the full payload stored in the enrichment
 	// JSON column: run-level bookkeeping plus per-field provenance keyed
 	// by the column name.
@@ -80,6 +90,7 @@ type (
 		Status      string                         `json:"status"`
 		Error       string                         `json:"error,omitempty"`
 		Fields      map[string]EnrichmentFieldMeta `json:"fields"`
+		Domains     []EnrichmentDomainMeta         `json:"domains,omitempty"`
 	}
 )
 

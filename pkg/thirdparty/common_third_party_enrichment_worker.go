@@ -56,6 +56,13 @@ const (
 	// recorded in the enrichment metadata but not promoted.
 	defaultEnrichmentConfidenceThreshold = 0.7
 
+	// defaultEnrichmentDomainConfidenceThreshold is the ownership-confidence
+	// floor a discovered domain must clear before it is written to
+	// common_third_party_domains. It is stricter than the field threshold
+	// because a domain feeds cross-tenant tracker attribution: a wrong
+	// domain mis-attributes every tracker served from it.
+	defaultEnrichmentDomainConfidenceThreshold = 0.85
+
 	// defaultEnrichmentStaleAfter is the idle window after which a
 	// claimed-but-unfinished enrichment is re-armed.
 	defaultEnrichmentStaleAfter = 15 * time.Minute
@@ -236,13 +243,15 @@ func (h *enrichmentHandler) Process(ctx context.Context, party coredata.CommonTh
 
 		runErrors = append(runErrors, "website_url unresolved: skipped compliance docs")
 
-		return h.persist(ctx, party, EnrichmentMetadata{
+		payload := EnrichmentMetadata{
 			Model:       h.cfg.Model,
 			AttemptedAt: now,
 			Status:      enrichmentStatusFailed,
 			Error:       strings.Join(runErrors, "; "),
 			Fields:      meta,
-		}, nil, now)
+		}
+
+		return h.persist(ctx, party, payload, nil, nil, now)
 	}
 
 	legalName := effectiveLegalName(party, company, h.cfg.ConfidenceThreshold)
@@ -256,6 +265,19 @@ func (h *enrichmentHandler) Process(ctx context.Context, party coredata.CommonTh
 		anySuccess = true
 	}
 
+	// Agent C: domains the vendor owns and operates. Anchored on the
+	// resolved website, so it runs only on this website-resolved path.
+	var owned []ownedDomain
+
+	domainsResult, err := h.runDomains(ctx, party.Name, website)
+	if err != nil {
+		h.logger.WarnCtx(ctx, "domains agent failed", log.Error(err), log.String("common_third_party_id", party.ID.String()))
+		runErrors = append(runErrors, "domains: "+err.Error())
+	} else {
+		anySuccess = true
+		owned = resolveOwnedDomains(party.Name, website, domainsResult, defaultEnrichmentDomainConfidenceThreshold)
+	}
+
 	// Deterministic logo step (no LLM). Uploads to S3 outside the final
 	// transaction; the File row is inserted below.
 	logoFile := h.prepareLogo(ctx, party, website)
@@ -266,6 +288,26 @@ func (h *enrichmentHandler) Process(ctx context.Context, party coredata.CommonTh
 
 	applyCertifications(&party, meta, prior, compliance.Certifications, h.cfg.ConfidenceThreshold, now)
 	applyLegalNameFallback(&party, meta, now)
+
+	domainRows := make([]coredata.CommonThirdPartyDomain, 0, len(owned))
+	domainMeta := make([]EnrichmentDomainMeta, 0, len(owned))
+
+	for _, d := range owned {
+		domainRows = append(domainRows, coredata.CommonThirdPartyDomain{
+			ID:                 gid.New(gid.NilTenant, coredata.CommonThirdPartyDomainEntityType),
+			CommonThirdPartyID: party.ID,
+			Domain:             d.Domain,
+			CreatedAt:          now,
+			UpdatedAt:          now,
+		})
+
+		domainMeta = append(domainMeta, EnrichmentDomainMeta{
+			Domain:     d.Domain,
+			Confidence: d.Confidence,
+			SourceURL:  d.SourceURL,
+			UpdatedAt:  now,
+		})
+	}
 
 	status := enrichmentStatusDone
 
@@ -282,20 +324,25 @@ func (h *enrichmentHandler) Process(ctx context.Context, party coredata.CommonTh
 		Status:      status,
 		Error:       strings.Join(runErrors, "; "),
 		Fields:      meta,
+		Domains:     domainMeta,
 	}
 
-	return h.persist(ctx, party, payload, logoFile, now)
+	return h.persist(ctx, party, payload, logoFile, domainRows, now)
 }
 
 // persist marshals the enrichment payload onto the row and writes it in a
 // single transaction, inserting the logo File row and linking it when one
-// was prepared. It always writes an enrichment payload, even on a
-// no-result run, so stale recovery does not re-queue the row.
+// was prepared and upserting the discovered owned domains. It always
+// writes an enrichment payload, even on a no-result run, so stale
+// recovery does not re-queue the row. Domain upserts are idempotent
+// against the (common_third_party_id, domain) unique index, so re-runs
+// are safe and never conflict with curated seed rows.
 func (h *enrichmentHandler) persist(
 	ctx context.Context,
 	party coredata.CommonThirdParty,
 	payload EnrichmentMetadata,
 	logoFile *coredata.File,
+	domains []coredata.CommonThirdPartyDomain,
 	now time.Time,
 ) error {
 	raw, err := json.Marshal(payload)
@@ -325,6 +372,12 @@ func (h *enrichmentHandler) persist(
 				return fmt.Errorf("cannot persist common third party enrichment: %w", err)
 			}
 
+			for i := range domains {
+				if _, err := domains[i].Upsert(ctx, tx); err != nil {
+					return fmt.Errorf("cannot upsert common third party domain: %w", err)
+				}
+			}
+
 			h.logger.InfoCtx(
 				ctx,
 				"enriched common third party",
@@ -332,6 +385,7 @@ func (h *enrichmentHandler) persist(
 				log.String("name", party.Name),
 				log.String("status", payload.Status),
 				log.Bool("logo_stored", logoFile != nil),
+				log.Int("domains_stored", len(domains)),
 			)
 
 			return nil
@@ -437,6 +491,49 @@ func (h *enrichmentHandler) runComplianceDocs(
 	)
 	if err != nil {
 		return ComplianceDocsResult{}, fmt.Errorf("compliance docs agent run failed: %w", err)
+	}
+
+	return result.Output, nil
+}
+
+// runDomains builds Agent C with a per-run browser when a Chrome endpoint
+// is configured, then runs it. The browser is closed when the run
+// returns. It is not pinned to the vendor domain so the agent can follow
+// links to the vendor's other owned domains; SSRF protection still blocks
+// non-public hosts.
+func (h *enrichmentHandler) runDomains(
+	ctx context.Context,
+	name string,
+	website string,
+) (DomainsResult, error) {
+	var browserTools []agent.Tool
+
+	if h.cfg.ChromeAddr != "" {
+		webBrowser := browser.NewBrowser(ctx, h.cfg.ChromeAddr)
+		defer webBrowser.Close()
+
+		browserTools = browser.NewReadOnlyToolset(webBrowser).Tools()
+	}
+
+	domainsAgent := buildCommonThirdPartyDomainsAgent(h.cfg, h.logger, browserTools)
+
+	prompt := buildCommonThirdPartyDomainsPrompt(name, website)
+
+	agentCtx, cancel := context.WithTimeout(ctx, h.cfg.AgentTimeout)
+	defer cancel()
+
+	result, err := agent.RunTyped[DomainsResult](
+		agentCtx,
+		domainsAgent,
+		[]llm.Message{
+			{
+				Role:  llm.RoleUser,
+				Parts: []llm.Part{llm.TextPart{Text: prompt}},
+			},
+		},
+	)
+	if err != nil {
+		return DomainsResult{}, fmt.Errorf("domains agent run failed: %w", err)
 	}
 
 	return result.Output, nil
