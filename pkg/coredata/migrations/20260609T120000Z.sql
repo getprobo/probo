@@ -21,6 +21,13 @@ ADD
 ADD
     COLUMN enrichment_attempts INTEGER NOT NULL DEFAULT 0;
 
+-- The DEFAULT only backfills existing rows; drop it so inserts must
+-- supply the value explicitly.
+ALTER TABLE
+    common_third_parties
+ALTER COLUMN
+    enrichment_attempts DROP DEFAULT;
+
 -- Partial index backs the enrichment worker's claim query, which polls
 -- only rows currently queued for enrichment.
 CREATE INDEX common_third_parties_enrichment_requested_at_idx
