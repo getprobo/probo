@@ -4,6 +4,14 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+## [0.194.0] - 2026-06-11
+
+### Changed
+
+- Connect org logo fields now return File download URLs
+- `document publishVersion` now requires explicit `approverIds` when publishing a major version
+- References updated to probo.com
+
 ## [0.193.0] - 2026-06-10
 
 ### Added
