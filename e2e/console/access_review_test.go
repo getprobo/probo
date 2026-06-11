@@ -1135,6 +1135,7 @@ func TestAccessReviewCampaign_FullLifecycle(t *testing.T) {
 	// All entries should be PENDING
 	for _, edge := range campaignResult.Node.Entries.Edges {
 		assert.Equal(t, "PENDING", edge.Node.Decision)
+
 		if edge.Node.Email == "jane@example.com" {
 			require.NotNil(t, edge.Node.Active)
 			assert.True(t, *edge.Node.Active)

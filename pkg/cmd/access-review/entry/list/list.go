@@ -313,6 +313,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				}
 
 				active := "unknown"
+
 				if e.Active != nil {
 					if *e.Active {
 						active = "active"
