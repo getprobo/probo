@@ -15,9 +15,16 @@
 package filemanager_test
 
 import (
+	"context"
+	"net/url"
 	"testing"
+	"time"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/credentials"
+	awss3 "github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/filemanager"
@@ -63,5 +70,35 @@ func TestGenerateFileURL_PrivateFile(t *testing.T) {
 		t,
 		"https://app.example.com/api/files/v1/"+file.ID.String(),
 		svc.GenerateFileURL(file),
+	)
+}
+
+func TestGeneratePresignedFileURL_EscapesContentDispositionFilename(t *testing.T) {
+	t.Parallel()
+
+	s3Client := awss3.NewFromConfig(
+		aws.Config{
+			Region:      "us-east-1",
+			Credentials: credentials.NewStaticCredentialsProvider("access-key", "secret-key", ""),
+		},
+	)
+	svc := filemanager.NewService(nil, nil, s3Client)
+	file := &coredata.File{
+		BucketName: "uploads",
+		FileKey:    "tenant/file",
+		FileName:   `report "Q2"/résumé 100%.pdf`,
+		MimeType:   "application/pdf",
+	}
+
+	rawURL, err := svc.GeneratePresignedFileURL(context.Background(), file, time.Hour)
+	require.NoError(t, err)
+
+	parsedURL, err := url.Parse(rawURL)
+	require.NoError(t, err)
+
+	assert.Equal(
+		t,
+		`attachment; filename="report \"Q2\"/r_sum_ 100%.pdf"; filename*=UTF-8''report%20%22Q2%22%2Fr%C3%A9sum%C3%A9%20100%25.pdf`,
+		parsedURL.Query().Get("response-content-disposition"),
 	)
 }

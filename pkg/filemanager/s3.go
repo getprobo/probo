@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"io"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/service/s3"
@@ -118,11 +119,10 @@ func (s *Service) GeneratePresignedURL(
 ) (string, error) {
 	presignClient := s3.NewPresignClient(s.s3Client)
 
-	encodedFilename := url.QueryEscape(file.FileName)
 	contentDisposition := fmt.Sprintf(
 		"attachment; filename=%q; filename*=UTF-8''%s",
-		encodedFilename,
-		encodedFilename,
+		asciiFilename(file.FileName),
+		url.PathEscape(file.FileName),
 	)
 
 	presignedReq, err := presignClient.PresignGetObject(
@@ -143,6 +143,22 @@ func (s *Service) GeneratePresignedURL(
 	}
 
 	return presignedReq.URL, nil
+}
+
+func asciiFilename(filename string) string {
+	var b strings.Builder
+	b.Grow(len(filename))
+
+	for _, r := range filename {
+		if r < 0x20 || r > 0x7e {
+			b.WriteByte('_')
+			continue
+		}
+
+		b.WriteRune(r)
+	}
+
+	return b.String()
 }
 
 // GetFileSize determines the byte size of a seekable io.Reader by seeking to
