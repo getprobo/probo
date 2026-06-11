@@ -53,6 +53,7 @@ const trackerPatternFragment = graphql`
     cookieCategory {
       id
       name
+      kind
     }
     thirdParty {
       id
