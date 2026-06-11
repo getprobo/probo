@@ -508,15 +508,11 @@ func (r *accessReviewSourceResolver) ConnectionStatus(ctx context.Context, obj *
 		return types.AccessReviewSourceConnectionStatusDisconnected, nil
 	}
 
-	if dbConnector.Protocol != coredata.ConnectorProtocolOAuth2 {
-		return types.AccessReviewSourceConnectionStatusConnected, nil
-	}
-
-	// Creating an HTTP client may succeed even with an expired token
-	// (e.g. no refresh token available). Make a lightweight probe
-	// request to verify the token is actually valid.
-	probeURL := r.providerRegistry.ProbeURL(string(dbConnector.Provider))
-	if err := probeConnection(ctx, httpClient, probeURL); err != nil {
+	// Creating an HTTP client may succeed even with an expired or invalid
+	// credential (e.g. no refresh token available, or a dead API key).
+	// When the provider registers a probe, make a lightweight request to
+	// verify the credential is actually accepted.
+	if err := r.providerRegistry.ProbeConnection(ctx, httpClient, dbConnector); err != nil {
 		return types.AccessReviewSourceConnectionStatusDisconnected, nil
 	}
 

@@ -33,10 +33,8 @@ func zendeskRegistration() *Registration {
 	// persisted on the connector settings for the driver's API host. Unlike
 	// Datadog, Zendesk does NOT echo a host back on the callback, so
 	// BuildTokenURLForSite reads the subdomain from the state rather than a
-	// query param. AuthURL, TokenURL, and ProbeURL are therefore empty: the
-	// closures build the per-customer hosts, and a static probe URL is
-	// impossible for a per-subdomain host (an empty probe is skipped; a dead
-	// token surfaces on the first ListAccounts). The global confidential
+	// query param. AuthURL and TokenURL are empty: the closures build the
+	// per-customer hosts. BuildProbeURL targets the stored subdomain. The global confidential
 	// client carries a client_secret, which both authenticates the token
 	// exchange (default post-form) and signs the state.
 	return &Registration{
@@ -45,6 +43,7 @@ func zendeskRegistration() *Registration {
 		OAuth2Scopes:         []string{"users:read"},
 		BuildAuthURLForSite:  connector.ZendeskAuthorizeURL,
 		BuildTokenURLForSite: connector.ZendeskTokenURL,
+		BuildProbeURL:        buildZendeskProbeURL,
 		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger) (drivers.Driver, error) {
 			s, err := coredata.ConnectorSettings[coredata.ZendeskConnectorSettings](conn)
 			if err != nil {

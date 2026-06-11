@@ -30,6 +30,7 @@ func qoveryRegistration() *Registration {
 		DisplayName:      "Qovery",
 		SupportsAPIKey:   true,
 		APIKeyAuthScheme: "Token",
+		BuildProbeURL:    buildQoveryProbeURL,
 		ExtraSettings: []ExtraSetting{
 			{Key: "organizationId", Label: "Organization ID", Required: true},
 		},

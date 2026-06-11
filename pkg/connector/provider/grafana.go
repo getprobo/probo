@@ -31,6 +31,7 @@ func grafanaRegistration() *Registration {
 		Provider:       coredata.ConnectorProviderGrafana,
 		DisplayName:    "Grafana",
 		SupportsAPIKey: true,
+		BuildProbeURL:  buildGrafanaProbeURL,
 		ExtraSettings: []ExtraSetting{
 			{Key: "baseUrl", Label: "Base URL", Required: true},
 		},

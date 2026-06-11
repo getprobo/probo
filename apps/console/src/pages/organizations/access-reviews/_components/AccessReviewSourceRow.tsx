@@ -116,6 +116,8 @@ function sourceLabel(connectorProvider: string | null | undefined): string {
       return "Metabase";
     case "SIGNOZ":
       return "SigNoz";
+    case "CURSOR":
+      return "Cursor";
     default:
       return connectorProvider;
   }
@@ -231,6 +233,7 @@ export function AccessReviewSourceRow({ fKey, connectionId, organizationId }: Pr
   };
 
   const showOrgSelector = accessSource.needsConfiguration || accessSource.selectedOrganization;
+  const canReconnect = (accessSource.connector?.oauth2Scopes.length ?? 0) > 0;
 
   return (
     <Tr>
@@ -246,10 +249,14 @@ export function AccessReviewSourceRow({ fKey, connectionId, organizationId }: Pr
         )}
         {accessSource.connectionStatus === "DISCONNECTED" && (
           <div className="flex items-center gap-2">
-            <Badge variant="danger" size="sm">{__("Disconnected")}</Badge>
-            <Button variant="secondary" onClick={handleReconnect}>
-              {__("Reconnect")}
-            </Button>
+            <Badge variant="danger" size="sm">
+              {canReconnect ? __("Disconnected") : __("Invalid credentials")}
+            </Badge>
+            {canReconnect && (
+              <Button variant="secondary" onClick={handleReconnect}>
+                {__("Reconnect")}
+              </Button>
+            )}
           </div>
         )}
       </Td>

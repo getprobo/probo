@@ -32,6 +32,7 @@ func metabaseRegistration() *Registration {
 		DisplayName:    "Metabase",
 		SupportsAPIKey: true,
 		APIKeyHeader:   "x-api-key",
+		BuildProbeURL:  buildMetabaseProbeURL,
 		ExtraSettings: []ExtraSetting{
 			{Key: "instanceUrl", Label: "Instance URL", Required: true},
 		},

@@ -23,6 +23,8 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 )
 
+const cursorMembersEndpoint = "https://api.cursor.com/teams/members"
+
 func cursorRegistration() *Registration {
 	return &Registration{
 		Provider:       coredata.ConnectorProviderCursor,
@@ -36,11 +38,7 @@ func cursorRegistration() *Registration {
 		// there is nothing to pick (Pattern 3): no settings struct, no
 		// picker, and no SetOrganizationSettings.
 		APIKeyBasicAuth: true,
-		// ProbeURL is intentionally empty. API-key connectors skip the
-		// connection probe entirely (it runs only for OAuth2), so a probe
-		// URL would be dead config; a dead key surfaces on the first
-		// ListAccounts instead.
-		//
+		ProbeURL:        cursorMembersEndpoint,
 		// No NewNameResolver: the Admin API exposes no team/organization
 		// name endpoint, so the source keeps its generic name (the
 		// source-name worker degrades gracefully when no resolver is set).

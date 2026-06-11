@@ -32,6 +32,7 @@ func signozRegistration() *Registration {
 		DisplayName:    "SigNoz",
 		SupportsAPIKey: true,
 		APIKeyHeader:   "SIGNOZ-API-KEY",
+		BuildProbeURL:  buildSigNozProbeURL,
 		ExtraSettings: []ExtraSetting{
 			{Key: "baseUrl", Label: "Base URL", Required: true},
 		},

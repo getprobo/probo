@@ -35,6 +35,7 @@ func renderRegistration() *Registration {
 		Provider:       coredata.ConnectorProviderRender,
 		DisplayName:    "Render",
 		SupportsAPIKey: true,
+		BuildProbeURL:  buildRenderProbeURL,
 		ExtraSettings: []ExtraSetting{
 			{Key: "workspaceId", Label: "Workspace ID", Required: true},
 		},

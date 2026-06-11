@@ -52,12 +52,8 @@ func posthogRegistration() *Registration {
 		// organization_member:read applies org-wide and the org endpoints
 		// resolve @current to the granted organization.
 		ExtraAuthParams: map[string]string{"required_access_level": "organization"},
-		// ProbeURL is intentionally empty: the data host varies per
-		// connection (the region-agnostic gateway for OAuth, us/eu for
-		// API-key), so a single static probe URL cannot match it. A dead
-		// token surfaces on the first ListAccounts.
-
-		SupportsAPIKey: true,
+		Probe:           probePostHog,
+		SupportsAPIKey:  true,
 		// API-key connections are either PostHog Cloud (a region, us/eu) or
 		// self-hosted (an instance URL). The two are mutually exclusive, so
 		// neither is individually Required; apiKeyConnectorSettings enforces

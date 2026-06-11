@@ -35,10 +35,8 @@ func neonRegistration() *Registration {
 		// can belong to several organizations; the operator supplies the
 		// org ID (org-...) of the one to review.
 		//
-		// ProbeURL is intentionally empty: the connection probe runs only
-		// for OAuth2 connections, so it would be dead config for an
-		// API-key provider; a dead key surfaces on the first ListAccounts.
 		SupportsAPIKey: true,
+		BuildProbeURL:  buildNeonProbeURL,
 		ExtraSettings: []ExtraSetting{
 			{Key: "organizationId", Label: "Organization ID", Required: true},
 		},

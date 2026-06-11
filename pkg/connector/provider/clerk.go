@@ -36,11 +36,7 @@ func clerkRegistration() *Registration {
 		// API. The secret key is bound to one Clerk instance, so there is
 		// nothing to pick (Pattern 3): no settings struct, no picker, no
 		// SetOrganizationSettings.
-		//
-		// ProbeURL is intentionally empty: the connection probe runs only
-		// for OAuth2 connections, so it would be dead config for an API-key
-		// provider; a dead key surfaces on the first ListAccounts instead.
-		//
+		ProbeURL: "https://api.clerk.com/v1/users?limit=1",
 		// No NewNameResolver: the Backend API exposes no instance/application
 		// name endpoint reachable with a secret key, so the source keeps its
 		// generic name (the source-name worker degrades gracefully).
