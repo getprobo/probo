@@ -3438,7 +3438,9 @@ func (r *Resolver) ListAccessEntriesTool(ctx context.Context, req *mcp.CallToolR
 			Flag:           input.Filter.Flag,
 			IncrementalTag: input.Filter.IncrementalTag,
 			IsAdmin:        input.Filter.IsAdmin,
+			Active:         input.Filter.Active,
 			AuthMethod:     input.Filter.AuthMethod,
+			AccountType:    input.Filter.AccountType,
 		}
 	}
 

@@ -52,6 +52,7 @@ query(
             role
             jobTitle
             isAdmin
+            active
             mfaStatus
             authMethod
             accountType
@@ -86,6 +87,7 @@ type entryNode struct {
 	Role           string   `json:"role"`
 	JobTitle       string   `json:"jobTitle"`
 	IsAdmin        bool     `json:"isAdmin"`
+	Active         *bool    `json:"active"`
 	MfaStatus      string   `json:"mfaStatus"`
 	AuthMethod     string   `json:"authMethod"`
 	AccountType    string   `json:"accountType"`
@@ -113,6 +115,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 		flagFlag        string
 		flagIncTag      string
 		flagIsAdmin     *bool
+		flagActive      *bool
 		flagAuthMethod  string
 		flagAccountType string
 		flagOutput      *string
@@ -226,6 +229,10 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				filter["isAdmin"] = *flagIsAdmin
 			}
 
+			if cmd.Flags().Changed("active") {
+				filter["active"] = *flagActive
+			}
+
 			if flagAuthMethod != "" {
 				if err := cmdutil.ValidateEnum(
 					"auth-method",
@@ -305,6 +312,15 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 					admin = "yes"
 				}
 
+				active := "unknown"
+				if e.Active != nil {
+					if *e.Active {
+						active = "active"
+					} else {
+						active = "disabled"
+					}
+				}
+
 				rows = append(rows, []string{
 					e.ID,
 					e.Email,
@@ -313,10 +329,11 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 					e.Decision,
 					strings.Join(e.Flags, ","),
 					admin,
+					active,
 				})
 			}
 
-			t := cmdutil.NewTable("ID", "EMAIL", "NAME", "SOURCE", "DECISION", "FLAGS", "ADMIN").Rows(rows...)
+			t := cmdutil.NewTable("ID", "EMAIL", "NAME", "SOURCE", "DECISION", "FLAGS", "ADMIN", "ACTIVE").Rows(rows...)
 
 			_, _ = fmt.Fprintln(f.IOStreams.Out, t)
 
@@ -341,6 +358,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&flagFlag, "flag", "", "Filter by flag (NONE, ORPHANED, INACTIVE, EXCESSIVE, ROLE_MISMATCH, NEW)")
 	cmd.Flags().StringVar(&flagIncTag, "incremental-tag", "", "Filter by incremental tag (NEW, REMOVED, UNCHANGED)")
 	flagIsAdmin = cmd.Flags().Bool("is-admin", false, "Filter by admin status")
+	flagActive = cmd.Flags().Bool("active", false, "Filter by active status at the source")
 	cmd.Flags().StringVar(&flagAuthMethod, "auth-method", "", "Filter by auth method (SSO, PASSWORD, API_KEY, SERVICE_ACCOUNT, UNKNOWN)")
 	cmd.Flags().StringVar(&flagAccountType, "account-type", "", "Filter by account type (USER, SERVICE_ACCOUNT)")
 	flagOutput = cmdutil.AddOutputFlag(cmd)

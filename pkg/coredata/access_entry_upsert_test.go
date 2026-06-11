@@ -350,6 +350,82 @@ func TestAccessEntry_Upsert_RefreshesSourceTrackingFields(t *testing.T) {
 	assert.Nil(t, loaded.DecidedAt)
 }
 
+func TestAccessEntry_Upsert_RefreshesActiveStatus(t *testing.T) {
+	t.Parallel()
+
+	client := test.PGClient(t)
+	ctx := context.Background()
+	fx := seedAccessEntryFixture(t, ctx, client)
+
+	tenantID := fx.scope.GetTenantID()
+	t0 := time.Now().UTC().Truncate(time.Microsecond)
+	activeTrue := true
+	activeFalse := false
+
+	entryID := gid.New(tenantID, coredata.AccessEntryEntityType)
+	first := &coredata.AccessEntry{
+		ID:                     entryID,
+		OrganizationID:         fx.organizationID,
+		AccessReviewCampaignID: fx.campaignID,
+		AccessSourceID:         fx.sourceID,
+		Email:                  "user@example.com",
+		FullName:               "User",
+		Role:                   "member",
+		MFAStatus:              coredata.MFAStatusUnknown,
+		AuthMethod:             coredata.AccessEntryAuthMethodUnknown,
+		AccountType:            coredata.AccessEntryAccountTypeUser,
+		Active:                 &activeTrue,
+		ExternalID:             "ext-active",
+		AccountKey:             fx.accountKey,
+		IncrementalTag:         coredata.AccessEntryIncrementalTagNew,
+		Flags:                  []coredata.AccessEntryFlag{},
+		FlagReasons:            []string{},
+		Decision:               coredata.AccessEntryDecisionPending,
+		CreatedAt:              t0,
+		UpdatedAt:              t0,
+	}
+
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		return first.Upsert(ctx, tx, fx.scope)
+	}))
+
+	t1 := t0.Add(1 * time.Hour)
+	second := &coredata.AccessEntry{
+		ID:                     gid.New(tenantID, coredata.AccessEntryEntityType),
+		OrganizationID:         fx.organizationID,
+		AccessReviewCampaignID: fx.campaignID,
+		AccessSourceID:         fx.sourceID,
+		Email:                  "user@example.com",
+		FullName:               "User",
+		Role:                   "member",
+		MFAStatus:              coredata.MFAStatusUnknown,
+		AuthMethod:             coredata.AccessEntryAuthMethodUnknown,
+		AccountType:            coredata.AccessEntryAccountTypeUser,
+		Active:                 &activeFalse,
+		ExternalID:             "ext-active",
+		AccountKey:             fx.accountKey,
+		IncrementalTag:         coredata.AccessEntryIncrementalTagUnchanged,
+		Flags:                  []coredata.AccessEntryFlag{},
+		FlagReasons:            []string{},
+		Decision:               coredata.AccessEntryDecisionPending,
+		CreatedAt:              t1,
+		UpdatedAt:              t1,
+	}
+
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		return second.Upsert(ctx, tx, fx.scope)
+	}))
+
+	loaded := &coredata.AccessEntry{}
+
+	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+		return loaded.LoadByID(ctx, conn, fx.scope, entryID)
+	}))
+
+	require.NotNil(t, loaded.Active)
+	assert.False(t, *loaded.Active)
+}
+
 // TestAccessEntry_Upsert_InsertsActiveAccount covers the shape FetchSource
 // builds for an active account: a PENDING decision and explicit empty
 // flags / flag_reasons slices. The access_entries.flags and flag_reasons
@@ -377,6 +453,7 @@ func TestAccessEntry_Upsert_InsertsActiveAccount(t *testing.T) {
 		MFAStatus:              coredata.MFAStatusUnknown,
 		AuthMethod:             coredata.AccessEntryAuthMethodUnknown,
 		AccountType:            coredata.AccessEntryAccountTypeUser,
+		Active:                 new(true),
 		ExternalID:             "ext-active",
 		AccountKey:             fx.accountKey,
 		IncrementalTag:         coredata.AccessEntryIncrementalTagNew,
@@ -397,6 +474,8 @@ func TestAccessEntry_Upsert_InsertsActiveAccount(t *testing.T) {
 		return loaded.LoadByID(ctx, conn, fx.scope, entryID)
 	}))
 
+	require.NotNil(t, loaded.Active)
+	assert.True(t, *loaded.Active)
 	assert.Equal(t, coredata.AccessEntryDecisionPending, loaded.Decision)
 	assert.Equal(t, []coredata.AccessEntryFlag{}, loaded.Flags)
 	assert.Equal(t, []string{}, loaded.FlagReasons)

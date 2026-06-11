@@ -162,6 +162,7 @@ export const campaignDetailPageQuery = graphql`
                 fullName
                 role
                 isAdmin
+                active
                 mfaStatus
                 accountType
                 lastLogin
@@ -670,6 +671,7 @@ function ScopeSourceCard({ source, isPendingActions }: { source: ScopeSource; is
                         <Th>{__("Email")}</Th>
                         <Th>{__("Role")}</Th>
                         <Th>{__("Admin")}</Th>
+                        <Th>{__("Status")}</Th>
                         <Th>{__("MFA")}</Th>
                         <Th>{__("Last login")}</Th>
                         <Th>{__("Flag")}</Th>
@@ -698,6 +700,15 @@ function ScopeSourceCard({ source, isPendingActions }: { source: ScopeSource; is
                           <Td>{edge.node.email || <NotAvailable />}</Td>
                           <Td>{edge.node.role || <NotAvailable />}</Td>
                           <Td>{edge.node.isAdmin ? __("Yes") : __("No")}</Td>
+                          <Td>
+                            {edge.node.active == null
+                              ? <NotAvailable />
+                              : (
+                                  <Badge variant={edge.node.active ? "success" : "danger"}>
+                                    {edge.node.active ? __("Active") : __("Disabled")}
+                                  </Badge>
+                                )}
+                          </Td>
                           <Td>
                             {edge.node.mfaStatus === "UNKNOWN"
                               ? <NotAvailable />

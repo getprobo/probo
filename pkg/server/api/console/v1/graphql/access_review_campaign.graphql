@@ -280,6 +280,7 @@ input AccessEntryFilter
     flag: AccessEntryFlag
     incrementalTag: AccessEntryIncrementalTag
     isAdmin: Boolean
+    active: Boolean
     authMethod: AccessEntryAuthMethod
     accountType: AccessEntryAccountType
 }
@@ -372,6 +373,7 @@ type AccessEntry implements Node {
     role: String!
     jobTitle: String!
     isAdmin: Boolean!
+    active: Boolean
     mfaStatus: MfaStatus!
     authMethod: AccessEntryAuthMethod!
     accountType: AccessEntryAccountType!

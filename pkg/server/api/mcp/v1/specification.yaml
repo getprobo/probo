@@ -7721,6 +7721,11 @@ components:
         is_admin:
           type: boolean
           description: Whether the user has admin privileges
+        active:
+          type:
+            - boolean
+            - "null"
+          description: Whether the account is active at the source (null when unknown)
         mfa_status:
           $ref: "#/components/schemas/MFAStatus"
           description: MFA status
@@ -7879,6 +7884,9 @@ components:
             is_admin:
               type: boolean
               description: Filter by admin status
+            active:
+              type: boolean
+              description: Filter by active status at the source
             auth_method:
               $ref: "#/components/schemas/AccessEntryAuthMethod"
               description: Filter by auth method
@@ -13277,7 +13285,7 @@ tools:
     outputSchema:
       $ref: "#/components/schemas/ListAccessReviewCampaignsOutput"
   - name: listAccessEntries
-    description: List access entries for a campaign with optional filters (decision, flag, incremental_tag, is_admin, auth_method, account_type)
+    description: List access entries for a campaign with optional filters (decision, flag, incremental_tag, is_admin, active, auth_method, account_type)
     hints:
       readonly: true
       idempotent: true

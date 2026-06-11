@@ -161,6 +161,7 @@ func (e *ReviewEngine) FetchSource(
 					MFAStatus:              account.MFAStatus,
 					AuthMethod:             account.AuthMethod,
 					AccountType:            account.AccountType,
+					Active:                 account.Active,
 					LastLogin:              account.LastLogin,
 					AccountCreatedAt:       account.CreatedAt,
 					ExternalID:             account.ExternalID,

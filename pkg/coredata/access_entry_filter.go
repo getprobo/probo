@@ -23,6 +23,7 @@ type AccessEntryFilter struct {
 	Flag           *AccessEntryFlag
 	IncrementalTag *AccessEntryIncrementalTag
 	IsAdmin        *bool
+	Active         *bool
 	AuthMethod     *AccessEntryAuthMethod
 	AccountType    *AccessEntryAccountType
 }
@@ -59,6 +60,12 @@ func (f *AccessEntryFilter) SQLFragment() string {
 	END
 	AND
 	CASE
+		WHEN @filter_active::boolean IS NOT NULL THEN
+			active = @filter_active::boolean
+		ELSE TRUE
+	END
+	AND
+	CASE
 		WHEN @filter_auth_method::text IS NOT NULL THEN
 			auth_method = @filter_auth_method::text
 		ELSE TRUE
@@ -82,6 +89,7 @@ func (f *AccessEntryFilter) SQLArguments() pgx.StrictNamedArgs {
 		"filter_flag":            nil,
 		"filter_incremental_tag": nil,
 		"filter_is_admin":        nil,
+		"filter_active":          nil,
 		"filter_auth_method":     nil,
 		"filter_account_type":    nil,
 	}
@@ -100,6 +108,10 @@ func (f *AccessEntryFilter) SQLArguments() pgx.StrictNamedArgs {
 
 	if f.IsAdmin != nil {
 		args["filter_is_admin"] = *f.IsAdmin
+	}
+
+	if f.Active != nil {
+		args["filter_active"] = *f.Active
 	}
 
 	if f.AuthMethod != nil {

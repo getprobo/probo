@@ -43,6 +43,7 @@ type (
 		MFAStatus              MFAStatus                 `db:"mfa_status"`
 		AuthMethod             AccessEntryAuthMethod     `db:"auth_method"`
 		AccountType            AccessEntryAccountType    `db:"account_type"`
+		Active                 *bool                     `db:"active"`
 		LastLogin              *time.Time                `db:"last_login"`
 		AccountCreatedAt       *time.Time                `db:"account_created_at"`
 		ExternalID             string                    `db:"external_id"`
@@ -130,6 +131,7 @@ SELECT
     mfa_status,
     auth_method,
     account_type,
+    active,
     last_login,
     account_created_at,
     external_id,
@@ -196,6 +198,7 @@ INSERT INTO
         mfa_status,
         auth_method,
         account_type,
+        active,
         last_login,
         account_created_at,
         external_id,
@@ -225,6 +228,7 @@ VALUES (
     @mfa_status,
     @auth_method,
     @account_type,
+    @active,
     @last_login,
     @account_created_at,
     @external_id,
@@ -256,6 +260,7 @@ VALUES (
 		"mfa_status":                e.MFAStatus,
 		"auth_method":               e.AuthMethod,
 		"account_type":              e.AccountType,
+		"active":                    e.Active,
 		"last_login":                e.LastLogin,
 		"account_created_at":        e.AccountCreatedAt,
 		"external_id":               e.ExternalID,
@@ -347,6 +352,7 @@ SELECT
     mfa_status,
     auth_method,
     account_type,
+    active,
     last_login,
     account_created_at,
     external_id,
@@ -414,6 +420,7 @@ SELECT
     mfa_status,
     auth_method,
     account_type,
+    active,
     last_login,
     account_created_at,
     external_id,
@@ -629,6 +636,7 @@ INSERT INTO access_entries (
     mfa_status,
     auth_method,
     account_type,
+    active,
     last_login,
     account_created_at,
     external_id,
@@ -657,6 +665,7 @@ INSERT INTO access_entries (
     @mfa_status,
     @auth_method,
     @account_type,
+    @active,
     @last_login,
     @account_created_at,
     @external_id,
@@ -680,6 +689,7 @@ ON CONFLICT (access_review_campaign_id, access_source_id, account_key) DO UPDATE
     mfa_status         = EXCLUDED.mfa_status,
     auth_method        = EXCLUDED.auth_method,
     account_type       = EXCLUDED.account_type,
+    active             = EXCLUDED.active,
     last_login         = EXCLUDED.last_login,
     account_created_at = EXCLUDED.account_created_at,
     external_id        = EXCLUDED.external_id,
@@ -702,6 +712,7 @@ ON CONFLICT (access_review_campaign_id, access_source_id, account_key) DO UPDATE
 		"mfa_status":                e.MFAStatus,
 		"auth_method":               e.AuthMethod,
 		"account_type":              e.AccountType,
+		"active":                    e.Active,
 		"last_login":                e.LastLogin,
 		"account_created_at":        e.AccountCreatedAt,
 		"external_id":               e.ExternalID,

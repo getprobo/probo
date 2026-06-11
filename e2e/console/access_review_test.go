@@ -24,7 +24,7 @@ import (
 	"go.probo.inc/probo/e2e/internal/testutil"
 )
 
-const testCsvData = "email,full_name,role,job_title,is_admin,mfa_status,auth_method,last_login,account_created_at,external_id\njane@example.com,Jane Smith,admin,CTO,true,ENABLED,SSO,2026-01-15T00:00:00Z,2024-06-01T00:00:00Z,ext-jane"
+const testCsvData = "email,full_name,role,job_title,is_admin,active,mfa_status,auth_method,last_login,account_created_at,external_id\njane@example.com,Jane Smith,admin,CTO,true,true,ENABLED,SSO,2026-01-15T00:00:00Z,2024-06-01T00:00:00Z,ext-jane"
 
 func TestAccessSource_Create(t *testing.T) {
 	t.Parallel()
@@ -1073,6 +1073,7 @@ func TestAccessReviewCampaign_FullLifecycle(t *testing.T) {
 								id
 								email
 								fullName
+								active
 								decision
 							}
 						}
@@ -1100,6 +1101,7 @@ func TestAccessReviewCampaign_FullLifecycle(t *testing.T) {
 						ID       string `json:"id"`
 						Email    string `json:"email"`
 						FullName string `json:"fullName"`
+						Active   *bool  `json:"active"`
 						Decision string `json:"decision"`
 					} `json:"node"`
 				} `json:"edges"`
@@ -1133,6 +1135,10 @@ func TestAccessReviewCampaign_FullLifecycle(t *testing.T) {
 	// All entries should be PENDING
 	for _, edge := range campaignResult.Node.Entries.Edges {
 		assert.Equal(t, "PENDING", edge.Node.Decision)
+		if edge.Node.Email == "jane@example.com" {
+			require.NotNil(t, edge.Node.Active)
+			assert.True(t, *edge.Node.Active)
+		}
 	}
 
 	// Step 5: Record decisions on all entries

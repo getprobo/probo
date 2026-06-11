@@ -77,6 +77,7 @@ func NewAccessEntry(e *coredata.AccessEntry) *AccessEntry {
 		Role:             e.Role,
 		JobTitle:         e.JobTitle,
 		IsAdmin:          e.IsAdmin,
+		Active:           e.Active,
 		MfaStatus:        e.MFAStatus,
 		AuthMethod:       e.AuthMethod,
 		AccountType:      e.AccountType,
