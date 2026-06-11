@@ -325,23 +325,36 @@ func (s *GeneratedDocumentService) buildTrackerPolicyThirdParties(
 	// Dedupe by name so a vendor present both as an org third party (one
 	// pattern) and as a catalog entry (an unlinked pattern) is listed
 	// once. Org third parties are appended first, so their richer
-	// (user-editable) data wins for a shared name.
-	seenName := make(map[string]struct{}, len(thirdParties)+len(commonParties))
+	// (user-editable) data wins for a shared name. When the kept row left a
+	// field empty (e.g. an org third party with no privacy policy URL), a
+	// later duplicate backfills it from the catalog so common-vendor
+	// metadata is not dropped.
+	rowIndexByName := make(map[string]int, len(thirdParties)+len(commonParties))
 
 	addRow := func(name, description, privacyPolicyURL string) {
 		name = strings.TrimSpace(name)
+		description = collapseWhitespace(description)
+		privacyPolicyURL = strings.TrimSpace(privacyPolicyURL)
 
 		key := strings.ToLower(name)
-		if _, ok := seenName[key]; ok {
+		if idx, ok := rowIndexByName[key]; ok {
+			if rows[idx].Description == "" {
+				rows[idx].Description = description
+			}
+
+			if rows[idx].PrivacyPolicyURL == "" {
+				rows[idx].PrivacyPolicyURL = privacyPolicyURL
+			}
+
 			return
 		}
 
-		seenName[key] = struct{}{}
+		rowIndexByName[key] = len(rows)
 
 		rows = append(rows, docgen.TrackerPolicyThirdParty{
 			Name:             name,
-			Description:      collapseWhitespace(description),
-			PrivacyPolicyURL: strings.TrimSpace(privacyPolicyURL),
+			Description:      description,
+			PrivacyPolicyURL: privacyPolicyURL,
 		})
 	}
 
