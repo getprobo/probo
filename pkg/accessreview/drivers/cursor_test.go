@@ -35,7 +35,7 @@ func TestCursorDriver(t *testing.T) {
 	driver := NewCursorDriver(client)
 	records, err := driver.ListAccounts(context.Background())
 	require.NoError(t, err)
-	require.Len(t, records, 3)
+	require.Len(t, records, 4)
 
 	member := records[0]
 	assert.Equal(t, "jane@example.com", member.Email)
@@ -61,6 +61,15 @@ func TestCursorDriver(t *testing.T) {
 	assert.False(t, removed.IsAdmin)
 	require.NotNil(t, removed.Active)
 	assert.False(t, *removed.Active)
+
+	// Cursor's two removal signals are not always consistent: a member can
+	// carry role "removed" while isRemoved is still false. The role alone
+	// must mark the account inactive.
+	removedByRole := records[3]
+	assert.Equal(t, "Removed", removedByRole.Role)
+	assert.False(t, removedByRole.IsAdmin)
+	require.NotNil(t, removedByRole.Active)
+	assert.False(t, *removedByRole.Active)
 }
 
 func TestCursorRole(t *testing.T) {

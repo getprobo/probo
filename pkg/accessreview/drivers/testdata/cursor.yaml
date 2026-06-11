@@ -19,7 +19,7 @@ interactions:
         proto_minor: 0
         content_length: -1
         uncompressed: true
-        body: '{"teamMembers":[{"id":"10000001","name":"Jane Doe","email":"jane@example.com","role":"member","isRemoved":false},{"id":"10000002","name":"Alex Martin","email":"alex@example.com","role":"owner","isRemoved":false},{"id":"10000003","name":"John Smith","email":"john@example.com","role":"removed","isRemoved":true}]}'
+        body: '{"teamMembers":[{"id":"10000001","name":"Jane Doe","email":"jane@example.com","role":"member","isRemoved":false},{"id":"10000002","name":"Alex Martin","email":"alex@example.com","role":"owner","isRemoved":false},{"id":"10000003","name":"John Smith","email":"john@example.com","role":"removed","isRemoved":true},{"id":"10000004","name":"Mary Jones","email":"mary@example.com","role":"removed","isRemoved":false}]}'
         headers:
             Content-Type:
                 - application/json
