@@ -326,3 +326,186 @@ func TestResetStaleMappings(t *testing.T) {
 	assert.Nil(t, load(fresh.ID).MappingRequestedAt, "recently claimed row must not be re-armed before the window elapses")
 	assert.Nil(t, load(completed.ID).MappingRequestedAt, "completed mapping (catalog row assigned) must never be re-armed")
 }
+
+// TestRequestMappingForUnmappedByInitiatorDomains pins the new-domain
+// re-map cascade: when a vendor gains owned domains, only still-unmapped
+// org patterns whose detected trackers share one of those domains are
+// re-armed. A pattern already linked to a vendor (via a catalog row that
+// carries a common_third_party_id, or via third_party_id), an
+// extension-sourced pattern, and a pattern whose trackers were seen on a
+// different domain are all left untouched. An empty domain set is a
+// no-op.
+func TestRequestMappingForUnmappedByInitiatorDomains(t *testing.T) {
+	t.Parallel()
+
+	client := test.PGClient(t)
+	ctx := context.Background()
+	fx := seedTrackerPatternFixture(t, ctx, client)
+
+	const (
+		vendorDomain = "vendor.example"
+		otherDomain  = "unrelated.example"
+	)
+
+	now := time.Now().UTC().Truncate(time.Microsecond)
+	maxAge := 3600
+
+	// Cascade-deletes from the fixture's cookie_banner / organization
+	// drops cleanup take care of detected_trackers and third_parties; run
+	// these first (LIFO) so nothing is stranded if a FK lacks the cascade.
+	t.Cleanup(func() {
+		_ = client.WithTx(context.Background(), func(ctx context.Context, tx pg.Tx) error {
+			if _, err := tx.Exec(ctx, `DELETE FROM detected_trackers WHERE cookie_banner_id = $1`, fx.cookieBannerID); err != nil {
+				return err
+			}
+
+			if _, err := tx.Exec(ctx, `DELETE FROM third_parties WHERE organization_id = $1`, fx.organizationID); err != nil {
+				return err
+			}
+
+			return nil
+		})
+	})
+
+	// A catalog row already linked to a vendor: patterns pointing at it
+	// are considered mapped and must be left alone.
+	party := seedCommonThirdParty(t, ctx, client)
+	linkedCommon := coredata.CommonTrackerPattern{
+		ID:                 gid.New(gid.NilTenant, coredata.CommonTrackerPatternEntityType),
+		CommonThirdPartyID: &party.ID,
+		TrackerType:        coredata.TrackerTypeCookie,
+		Pattern:            "linked_catalog_" + gid.New(gid.NilTenant, coredata.CommonTrackerPatternEntityType).String(),
+		MatchType:          coredata.TrackerPatternMatchTypeExact,
+		Confidence:         0.7,
+		CreatedAt:          now,
+		UpdatedAt:          now,
+	}
+	insertCommonTrackerPattern(t, ctx, client, linkedCommon)
+
+	// An org third party for the third_party_id-linked pattern.
+	orgThirdPartyID := gid.New(fx.scope.GetTenantID(), coredata.ThirdPartyEntityType)
+	orgThirdParty := coredata.ThirdParty{
+		ID:             orgThirdPartyID,
+		OrganizationID: fx.organizationID,
+		Name:           "Org Vendor",
+		Category:       coredata.ThirdPartyCategoryAnalytics,
+		Certifications: []string{},
+		Countries:      coredata.CountryCodes{},
+		Level:          1,
+		CreatedAt:      now,
+		UpdatedAt:      now,
+	}
+
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		return orgThirdParty.Insert(ctx, tx, fx.scope)
+	}))
+
+	newPattern := func(
+		pattern string,
+		source coredata.CookieSource,
+		commonID *gid.GID,
+		thirdPartyID *gid.GID,
+	) *coredata.TrackerPattern {
+		src := source
+		tp := &coredata.TrackerPattern{
+			ID:                     gid.New(fx.scope.GetTenantID(), coredata.TrackerPatternEntityType),
+			OrganizationID:         fx.organizationID,
+			CookieBannerID:         fx.cookieBannerID,
+			CookieCategoryID:       fx.cookieCategoryID,
+			CommonTrackerPatternID: commonID,
+			ThirdPartyID:           thirdPartyID,
+			TrackerType:            coredata.TrackerTypeCookie,
+			Pattern:                pattern,
+			MatchType:              coredata.TrackerPatternMatchTypeExact,
+			DisplayName:            pattern,
+			MaxAgeSeconds:          &maxAge,
+			Source:                 &src,
+			CreatedAt:              now,
+			UpdatedAt:              now,
+		}
+
+		require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+			return tp.Insert(ctx, tx, fx.scope)
+		}))
+
+		return tp
+	}
+
+	seedDetectedTracker := func(patternID gid.GID, identifier, domain string) {
+		d := domain
+		dt := &coredata.DetectedTracker{
+			ID:               gid.New(fx.scope.GetTenantID(), coredata.DetectedTrackerEntityType),
+			CookieBannerID:   fx.cookieBannerID,
+			TrackerPatternID: &patternID,
+			TrackerType:      coredata.TrackerTypeCookie,
+			Identifier:       identifier,
+			InitiatorDomain:  &d,
+			LastDetectedAt:   now,
+			CreatedAt:        now,
+			UpdatedAt:        now,
+		}
+
+		require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+			_, err := dt.Upsert(ctx, tx, fx.scope)
+
+			return err
+		}))
+	}
+
+	unmapped := newPattern("unmapped", coredata.CookieSourceScript, nil, nil)
+	catalogLinked := newPattern("catalog_linked", coredata.CookieSourceScript, &linkedCommon.ID, nil)
+	thirdPartyLinked := newPattern("third_party_linked", coredata.CookieSourceScript, nil, &orgThirdPartyID)
+	extension := newPattern("extension", coredata.CookieSourceExtension, nil, nil)
+	otherDomainPattern := newPattern("other_domain", coredata.CookieSourceScript, nil, nil)
+
+	seedDetectedTracker(unmapped.ID, "unmapped_id", vendorDomain)
+	seedDetectedTracker(catalogLinked.ID, "catalog_linked_id", vendorDomain)
+	seedDetectedTracker(thirdPartyLinked.ID, "third_party_linked_id", vendorDomain)
+	seedDetectedTracker(extension.ID, "extension_id", vendorDomain)
+	seedDetectedTracker(otherDomainPattern.ID, "other_domain_id", otherDomain)
+
+	var count int64
+
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		var patterns coredata.TrackerPatterns
+
+		var err error
+
+		count, err = patterns.RequestMappingForUnmappedByInitiatorDomains(ctx, tx, []string{vendorDomain})
+
+		return err
+	}))
+
+	assert.Equal(t, int64(1), count, "only the unmapped pattern sharing the domain must be re-armed")
+
+	load := func(id gid.GID) coredata.TrackerPattern {
+		var reloaded coredata.TrackerPattern
+
+		require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+			return reloaded.LoadByID(ctx, conn, fx.scope, id)
+		}))
+
+		return reloaded
+	}
+
+	assert.NotNil(t, load(unmapped.ID).MappingRequestedAt, "unmapped pattern sharing the domain must be re-armed")
+	assert.Nil(t, load(catalogLinked.ID).MappingRequestedAt, "pattern linked to a vendor via the catalog must be left alone")
+	assert.Nil(t, load(thirdPartyLinked.ID).MappingRequestedAt, "pattern linked to an org third party must be left alone")
+	assert.Nil(t, load(extension.ID).MappingRequestedAt, "extension-sourced pattern must be skipped")
+	assert.Nil(t, load(otherDomainPattern.ID).MappingRequestedAt, "pattern seen on a different domain must not be re-armed")
+
+	// Empty domain set is a no-op.
+	var emptyCount int64
+
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		var patterns coredata.TrackerPatterns
+
+		var err error
+
+		emptyCount, err = patterns.RequestMappingForUnmappedByInitiatorDomains(ctx, tx, nil)
+
+		return err
+	}))
+
+	assert.Equal(t, int64(0), emptyCount, "empty domain set must be a no-op")
+}

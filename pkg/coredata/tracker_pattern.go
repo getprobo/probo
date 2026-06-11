@@ -1475,6 +1475,68 @@ WHERE
 	return result.RowsAffected(), nil
 }
 
+// RequestMappingForUnmappedByInitiatorDomains re-arms mapping on the
+// still-unmapped org tracker patterns whose detected trackers share one
+// of the given initiator domains, so the mapping worker re-resolves them
+// via its domain-overlap signal. It is invoked by the common-third-party
+// enrichment worker when a vendor gains new owned domains, a global
+// catalog operation, so it is intentionally not tenant-scoped: a single
+// catalog domain benefits all tenants' patterns.
+//
+// Only patterns with no resolved vendor are targeted (third_party_id IS
+// NULL and an absent or unlinked catalog row), so a pattern already
+// linked to the vendor that gained the domain - or to any other vendor -
+// is never disturbed and never re-attributed. Extension-sourced patterns
+// and patterns already queued for mapping are skipped. The
+// common_tracker_patterns and detected_trackers subqueries are used only
+// for filtering. Returns the number of patterns re-armed; an empty
+// domains slice is a no-op.
+func (tps *TrackerPatterns) RequestMappingForUnmappedByInitiatorDomains(
+	ctx context.Context,
+	tx pg.Tx,
+	domains []string,
+) (int64, error) {
+	if len(domains) == 0 {
+		return 0, nil
+	}
+
+	q := `
+UPDATE tracker_patterns
+SET
+	mapping_requested_at = NOW(),
+	updated_at = NOW()
+WHERE
+	third_party_id IS NULL
+	AND mapping_requested_at IS NULL
+	AND (source IS NULL OR source != @extension_source)
+	AND (
+		common_tracker_pattern_id IS NULL
+		OR common_tracker_pattern_id IN (
+			SELECT id FROM common_tracker_patterns
+			WHERE common_third_party_id IS NULL
+		)
+	)
+	AND id IN (
+		SELECT DISTINCT tracker_pattern_id
+		FROM detected_trackers
+		WHERE initiator_domain = ANY(@domains)
+			AND tracker_pattern_id IS NOT NULL
+	)
+`
+
+	args := pgx.StrictNamedArgs{
+		"extension_source": CookieSourceExtension,
+		"domains":          domains,
+	}
+
+	result, err := tx.Exec(ctx, q, args)
+	if err != nil {
+		return 0, fmt.Errorf("cannot request mapping for unmapped tracker patterns by initiator domains: %w", err)
+	}
+
+	return result.RowsAffected(), nil
+}
+
 // ResetAndRequestMappingByCookieCategoryID detaches every pattern in the
 // given category from its catalog row, org third party, and copied
 // description, then re-arms mapping. Operators run this (via proboctl) on

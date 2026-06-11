@@ -372,10 +372,37 @@ func (h *enrichmentHandler) persist(
 				return fmt.Errorf("cannot persist common third party enrichment: %w", err)
 			}
 
+			var (
+				newDomains []string
+				remapped   int64
+			)
+
 			for i := range domains {
-				if _, err := domains[i].Upsert(ctx, tx); err != nil {
+				inserted, err := domains[i].Upsert(ctx, tx)
+				if err != nil {
 					return fmt.Errorf("cannot upsert common third party domain: %w", err)
 				}
+
+				if inserted {
+					newDomains = append(newDomains, domains[i].Domain)
+				}
+			}
+
+			// A newly-discovered owned domain can resolve org tracker
+			// patterns that were detected and left unmapped before the
+			// domain was known. Re-arm those still-unmapped patterns so
+			// the mapping worker re-resolves them via its domain-overlap
+			// signal. Only newly-inserted domains trigger this: a re-run
+			// that rediscovers existing domains cascaded them already.
+			if len(newDomains) > 0 {
+				var patterns coredata.TrackerPatterns
+
+				n, err := patterns.RequestMappingForUnmappedByInitiatorDomains(ctx, tx, newDomains)
+				if err != nil {
+					return fmt.Errorf("cannot re-arm mapping for unmapped tracker patterns: %w", err)
+				}
+
+				remapped = n
 			}
 
 			h.logger.InfoCtx(
@@ -386,6 +413,8 @@ func (h *enrichmentHandler) persist(
 				log.String("status", payload.Status),
 				log.Bool("logo_stored", logoFile != nil),
 				log.Int("domains_stored", len(domains)),
+				log.Int("domains_new", len(newDomains)),
+				log.Int64("tracker_patterns_remapped", remapped),
 			)
 
 			return nil
