@@ -286,6 +286,7 @@ func (s *GeneratedDocumentService) buildTrackerPolicyThirdParties(
 	}
 
 	var commonParties coredata.CommonThirdParties
+
 	if len(commonPatternIDs) > 0 {
 		var commonPatterns coredata.CommonTrackerPatterns
 		if err := commonPatterns.LoadByIDs(ctx, conn, commonPatternIDs); err != nil {
