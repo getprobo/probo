@@ -416,7 +416,7 @@ spec:
             - name: COMMON_THIRD_PARTY_ENRICHMENT_AGENT_MAX_TURNS
               value: {{ .Values.probo.commonThirdPartyEnrichmentWorker.agentMaxTurns | quote }}
             {{- end }}
-            {{- if .Values.probo.commonThirdPartyEnrichmentWorker.confidenceThreshold }}
+            {{- if ne .Values.probo.commonThirdPartyEnrichmentWorker.confidenceThreshold nil }}
             - name: COMMON_THIRD_PARTY_ENRICHMENT_CONFIDENCE_THRESHOLD
               value: {{ .Values.probo.commonThirdPartyEnrichmentWorker.confidenceThreshold | quote }}
             {{- end }}

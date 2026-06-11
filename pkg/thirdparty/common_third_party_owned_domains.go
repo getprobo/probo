@@ -167,10 +167,11 @@ func exactLabelMatch(label string, vendorLabels []string) bool {
 	return slices.Contains(vendorLabels, label)
 }
 
-// relatedLabelMatch reports whether label is the same as, contains, or is
-// contained by any vendor label. Substring matches require the shorter
-// string to be at least minLabelOverlap characters to avoid spurious hits
-// on very short labels.
+// relatedLabelMatch reports whether label is the same as, or shares a
+// dominant root with, any vendor label. A substring match requires the
+// shorter label to be at least minLabelOverlap characters AND to cover at
+// least half of the longer label, so a short root (e.g. "meta") no longer
+// attributes an unrelated domain (e.g. "metallica") to the vendor.
 func relatedLabelMatch(label string, vendorLabels []string) bool {
 	for _, vl := range vendorLabels {
 		if label == vl {
@@ -182,7 +183,15 @@ func relatedLabelMatch(label string, vendorLabels []string) bool {
 			shorter, longer = longer, shorter
 		}
 
-		if len(shorter) >= minLabelOverlap && strings.Contains(longer, shorter) {
+		if len(shorter) < minLabelOverlap {
+			continue
+		}
+
+		if len(shorter)*2 < len(longer) {
+			continue
+		}
+
+		if strings.Contains(longer, shorter) {
 			return true
 		}
 	}

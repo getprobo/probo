@@ -196,9 +196,13 @@ func downloadImage(
 		return nil, "", fmt.Errorf("logo response is not an image: %q", contentType)
 	}
 
-	body, err := io.ReadAll(io.LimitReader(resp.Body, maxLogoSize))
+	body, err := io.ReadAll(io.LimitReader(resp.Body, maxLogoSize+1))
 	if err != nil {
 		return nil, "", fmt.Errorf("cannot read logo body: %w", err)
+	}
+
+	if len(body) > maxLogoSize {
+		return nil, "", fmt.Errorf("logo response exceeds max size %d bytes", maxLogoSize)
 	}
 
 	if len(body) == 0 {

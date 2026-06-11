@@ -73,7 +73,26 @@ const (
 	defaultEnrichmentMaxAttempts = 3
 
 	enrichmentLogoUserAgent = "Probo-Enricher/1.0"
+
+	// maxEnrichmentErrorLen bounds the per-agent error text persisted in
+	// enrichment metadata so a verbose or hostile agent/tool error cannot
+	// leak unbounded internal detail into the column.
+	maxEnrichmentErrorLen = 500
 )
+
+// sanitizeAgentError reduces a raw agent or tool error to a single bounded
+// line safe to persist in enrichment metadata: whitespace runs (including
+// embedded newlines) collapse to single spaces and the result is truncated
+// to maxEnrichmentErrorLen runes.
+func sanitizeAgentError(err error) string {
+	msg := strings.Join(strings.Fields(err.Error()), " ")
+
+	if runes := []rune(msg); len(runes) > maxEnrichmentErrorLen {
+		msg = string(runes[:maxEnrichmentErrorLen]) + "…"
+	}
+
+	return msg
+}
 
 // EnrichmentConfig configures the common-third-party enrichment worker
 // and the two agents it runs. The worker no-ops when LLMClient is nil;
@@ -219,7 +238,7 @@ func (h *enrichmentHandler) Process(ctx context.Context, party coredata.CommonTh
 	company, err := h.runCompanyProfile(ctx, party)
 	if err != nil {
 		h.logger.WarnCtx(ctx, "company profile agent failed", log.Error(err), log.String("common_third_party_id", party.ID.String()))
-		runErrors = append(runErrors, "company_profile: "+err.Error())
+		runErrors = append(runErrors, "company_profile: "+sanitizeAgentError(err))
 	} else {
 		anySuccess = true
 	}
@@ -260,7 +279,7 @@ func (h *enrichmentHandler) Process(ctx context.Context, party coredata.CommonTh
 	compliance, err := h.runComplianceDocs(ctx, party.Name, website, legalName)
 	if err != nil {
 		h.logger.WarnCtx(ctx, "compliance docs agent failed", log.Error(err), log.String("common_third_party_id", party.ID.String()))
-		runErrors = append(runErrors, "compliance_docs: "+err.Error())
+		runErrors = append(runErrors, "compliance_docs: "+sanitizeAgentError(err))
 	} else {
 		anySuccess = true
 	}
@@ -272,7 +291,7 @@ func (h *enrichmentHandler) Process(ctx context.Context, party coredata.CommonTh
 	domainsResult, err := h.runDomains(ctx, party.Name, website)
 	if err != nil {
 		h.logger.WarnCtx(ctx, "domains agent failed", log.Error(err), log.String("common_third_party_id", party.ID.String()))
-		runErrors = append(runErrors, "domains: "+err.Error())
+		runErrors = append(runErrors, "domains: "+sanitizeAgentError(err))
 	} else {
 		anySuccess = true
 		owned = resolveOwnedDomains(party.Name, website, domainsResult, defaultEnrichmentDomainConfidenceThreshold)
