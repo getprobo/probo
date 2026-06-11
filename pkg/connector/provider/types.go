@@ -104,6 +104,16 @@ type Registration struct {
 	// APIKeyConnection.
 	APIKeyAuthScheme string
 
+	// BuildProbeURL derives a per-connector probe URL when the API host or
+	// path depends on connector settings (e.g. a customer subdomain or
+	// instance URL). Nil for providers with a static ProbeURL.
+	BuildProbeURL func(*coredata.Connector) (string, error)
+	// Probe runs a provider-specific connection check when a plain GET
+	// against ProbeURL/BuildProbeURL is insufficient (e.g. GraphQL POST,
+	// extra headers, or multi-host region probing). Takes precedence over
+	// ProbeURL and BuildProbeURL when set.
+	Probe func(context.Context, *http.Client, *coredata.Connector) error
+
 	// Factory closures — wired by Stages 2 and 3.
 	NewDriver               func(context.Context, *http.Client, *coredata.Connector, *log.Logger) (drivers.Driver, error)
 	NewNameResolver         func(context.Context, *http.Client, *coredata.Connector, *log.Logger) drivers.NameResolver

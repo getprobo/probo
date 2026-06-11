@@ -28,10 +28,9 @@ import (
 func datadogRegistration() *Registration {
 	// Datadog is multi-site: the customer's region drives the authorize
 	// host (built at initiate from the region pick) and the token + API
-	// host (built at callback from Datadog's `domain` param). AuthURL,
-	// TokenURL, and ProbeURL are therefore empty — the closures build the
-	// per-customer hosts, and an empty probe is skipped (a dead token
-	// surfaces on the first ListAccounts). Confidential client + PKCE map
+	// host (built at callback from Datadog's `domain` param). AuthURL and
+	// TokenURL are empty — the closures build the per-customer hosts.
+	// BuildProbeURL targets the stored API domain. Confidential client + PKCE map
 	// to the default post-form token-endpoint auth.
 	return &Registration{
 		Provider:               coredata.ConnectorProviderDatadog,
@@ -40,6 +39,7 @@ func datadogRegistration() *Registration {
 		RequiresPKCE:           true,
 		BuildAuthURLForSite:    connector.DatadogAuthorizeURL,
 		BuildTokenURLForDomain: connector.DatadogTokenURL,
+		BuildProbeURL:          buildDatadogProbeURL,
 		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger) (drivers.Driver, error) {
 			s, err := coredata.ConnectorSettings[coredata.DatadogConnectorSettings](conn)
 			if err != nil {

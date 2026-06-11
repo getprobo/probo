@@ -30,15 +30,14 @@ import (
 // possible — it authenticates with a read-only API token presented under the
 // `SSWS` Authorization scheme (APIKeyAuthScheme), plus the customer's org
 // domain. The token + domain identify exactly one org, so there is no picker
-// and no OAuth metadata. ProbeURL is empty because the API host is per-org and
-// there is no static URL to probe; a dead token surfaces on the first
-// ListAccounts.
+// and no OAuth metadata. BuildProbeURL targets the org's own API host.
 func oktaRegistration() *Registration {
 	return &Registration{
 		Provider:         coredata.ConnectorProviderOkta,
 		DisplayName:      "Okta",
 		SupportsAPIKey:   true,
 		APIKeyAuthScheme: "SSWS",
+		BuildProbeURL:    buildOktaProbeURL,
 		ExtraSettings: []ExtraSetting{
 			{Key: "domain", Label: "Okta Domain", Required: true},
 		},
