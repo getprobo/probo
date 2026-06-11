@@ -31,10 +31,10 @@ import (
 
 // promotionFixture extends workerFixture with a CommonThirdParty and a
 // CommonTrackerPattern linking the catalog to the test pattern. It is
-// the minimum scaffolding the catalog-resolution paths need to run
-// end-to-end.
+// the minimum scaffolding resolveOrgThirdParty needs to run end-to-end.
 type promotionFixture struct {
 	workerFixture
+	commonThirdParty   coredata.CommonThirdParty
 	commonPatternID    gid.GID
 	trackerPattern     coredata.TrackerPattern
 	commonThirdPartyID gid.GID
@@ -130,6 +130,7 @@ func seedPromotionFixture(t *testing.T, ctx context.Context, client *pg.Client) 
 
 	return promotionFixture{
 		workerFixture:      fx,
+		commonThirdParty:   commonThirdParty,
 		commonPatternID:    commonPattern.ID,
 		commonThirdPartyID: commonThirdPartyID,
 		trackerPattern:     pattern,
@@ -141,6 +142,112 @@ func newMappingHandler(client *pg.Client) *trackerMappingHandler {
 		pg:     client,
 		logger: log.NewLogger(log.WithOutput(io.Discard)),
 	}
+}
+
+// promote runs resolveOrgThirdParty, which manages its own short
+// transactions internally and only links to an existing org ThirdParty
+// (it never creates one).
+func promote(
+	t *testing.T,
+	ctx context.Context,
+	h *trackerMappingHandler,
+	tp coredata.TrackerPattern,
+	commonThirdPartyID gid.GID,
+) *gid.GID {
+	t.Helper()
+
+	got, err := h.resolveOrgThirdParty(ctx, tp, commonThirdPartyID)
+	require.NoError(t, err)
+
+	return got
+}
+
+func TestPromoteThirdParty_ExactCommonLink(t *testing.T) {
+	t.Parallel()
+
+	client := test.PGClient(t)
+	ctx := context.Background()
+	fx := seedPromotionFixture(t, ctx, client)
+
+	now := time.Now().UTC().Truncate(time.Microsecond)
+	existing := coredata.ThirdParty{
+		ID:                 gid.New(fx.scope.GetTenantID(), coredata.ThirdPartyEntityType),
+		OrganizationID:     fx.organizationID,
+		CommonThirdPartyID: &fx.commonThirdPartyID,
+		Name:               "Google LLC",
+		Category:           coredata.ThirdPartyCategoryAnalytics,
+		Certifications:     []string{},
+		Countries:          coredata.CountryCodes{},
+		CreatedAt:          now,
+		UpdatedAt:          now,
+	}
+
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		return existing.Insert(ctx, tx, fx.scope)
+	}))
+
+	got := promote(t, ctx, newMappingHandler(client), fx.trackerPattern, fx.commonThirdPartyID)
+
+	require.NotNil(t, got)
+	assert.Equal(t, existing.ID, *got, "should return the existing org ThirdParty linked by common id")
+}
+
+func TestPromoteThirdParty_HeuristicMatch(t *testing.T) {
+	t.Parallel()
+
+	client := test.PGClient(t)
+	ctx := context.Background()
+	fx := seedPromotionFixture(t, ctx, client)
+
+	now := time.Now().UTC().Truncate(time.Microsecond)
+	// Append a corporate suffix to the catalog name so the heuristic
+	// matches on the suffix-stripped name (score 0.9) rather than an
+	// exact link.
+	manualEntry := coredata.ThirdParty{
+		ID:             gid.New(fx.scope.GetTenantID(), coredata.ThirdPartyEntityType),
+		OrganizationID: fx.organizationID,
+		Name:           fx.commonThirdParty.Name + " LLC",
+		Category:       coredata.ThirdPartyCategoryAnalytics,
+		Certifications: []string{},
+		Countries:      coredata.CountryCodes{},
+		Level:          1,
+		CreatedAt:      now,
+		UpdatedAt:      now,
+	}
+
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		return manualEntry.Insert(ctx, tx, fx.scope)
+	}))
+
+	got := promote(t, ctx, newMappingHandler(client), fx.trackerPattern, fx.commonThirdPartyID)
+
+	require.NotNil(t, got)
+	assert.Equal(t, manualEntry.ID, *got, "heuristic match should return the manually-entered ThirdParty")
+
+	var reloaded coredata.ThirdParty
+
+	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+		return reloaded.LoadByID(ctx, conn, fx.scope, manualEntry.ID)
+	}))
+
+	require.NotNil(t, reloaded.CommonThirdPartyID, "matched row must be tagged with common_third_party_id")
+	assert.Equal(t, fx.commonThirdPartyID, *reloaded.CommonThirdPartyID)
+}
+
+// TestPromoteThirdParty_NoCreateWithoutMatch asserts that when no
+// existing org ThirdParty matches the catalog third party, resolution
+// returns nothing: the worker never creates a brand new org ThirdParty
+// (that is done only through the explicit ImportFromCommon action).
+func TestPromoteThirdParty_NoCreateWithoutMatch(t *testing.T) {
+	t.Parallel()
+
+	client := test.PGClient(t)
+	ctx := context.Background()
+	fx := seedPromotionFixture(t, ctx, client)
+
+	got := promote(t, ctx, newMappingHandler(client), fx.trackerPattern, fx.commonThirdPartyID)
+
+	assert.Nil(t, got, "resolution must not create a new org ThirdParty")
 }
 
 // TestProcess_PreservesCatalogMappingOnReTrigger asserts that when
@@ -169,7 +276,7 @@ func TestProcess_PreservesCatalogMappingOnReTrigger(t *testing.T) {
 
 	require.NotNil(t, reloaded.CommonTrackerPatternID, "common tracker pattern link must be preserved")
 	assert.Equal(t, fx.commonPatternID, *reloaded.CommonTrackerPatternID)
-	assert.Nil(t, reloaded.ThirdPartyID, "the worker must not auto-create or link an org ThirdParty")
+	assert.Nil(t, reloaded.ThirdPartyID, "no org ThirdParty exists to link, so third_party_id stays unset")
 }
 
 // TestProcess_UncategorisedPatternIsNotPromoted asserts that a pattern
@@ -442,6 +549,8 @@ func TestMatchBySiblingOrigin_SiblingWithThirdPartyID(t *testing.T) {
 
 	require.NotNil(t, got, "sibling origin match should return a catalog match")
 	require.NotNil(t, got.commonPatternID, "sibling origin match should return a common tracker pattern ID")
+	require.NotNil(t, got.thirdPartyID, "sibling origin match should surface the sibling's org third party directly")
+	assert.Equal(t, orgThirdParty.ID, *got.thirdPartyID)
 
 	var commonPattern coredata.CommonTrackerPattern
 
@@ -874,11 +983,56 @@ func TestMatchBySiblingOrigin_ConvergentSiblings(t *testing.T) {
 	assert.Equal(t, fx.commonThirdPartyID, *commonPattern.CommonThirdPartyID)
 }
 
+func TestPromoteThirdParty_ExactCommonLinkIgnoresSimilarUnlinked(t *testing.T) {
+	t.Parallel()
+
+	client := test.PGClient(t)
+	ctx := context.Background()
+	fx := seedPromotionFixture(t, ctx, client)
+
+	now := time.Now().UTC().Truncate(time.Microsecond)
+
+	manualEntry := coredata.ThirdParty{
+		ID:             gid.New(fx.scope.GetTenantID(), coredata.ThirdPartyEntityType),
+		OrganizationID: fx.organizationID,
+		Name:           "Google LLC",
+		Category:       coredata.ThirdPartyCategoryAnalytics,
+		Certifications: []string{},
+		Countries:      coredata.CountryCodes{},
+		CreatedAt:      now,
+		UpdatedAt:      now,
+	}
+
+	linked := coredata.ThirdParty{
+		ID:                 gid.New(fx.scope.GetTenantID(), coredata.ThirdPartyEntityType),
+		OrganizationID:     fx.organizationID,
+		CommonThirdPartyID: &fx.commonThirdPartyID,
+		Name:               "Google",
+		Category:           coredata.ThirdPartyCategoryAnalytics,
+		Certifications:     []string{},
+		Countries:          coredata.CountryCodes{},
+		CreatedAt:          now,
+		UpdatedAt:          now,
+	}
+
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		if err := manualEntry.Insert(ctx, tx, fx.scope); err != nil {
+			return err
+		}
+
+		return linked.Insert(ctx, tx, fx.scope)
+	}))
+
+	got := promote(t, ctx, newMappingHandler(client), fx.trackerPattern, fx.commonThirdPartyID)
+
+	require.NotNil(t, got)
+	assert.Equal(t, linked.ID, *got, "exact-link path must short-circuit before the heuristic fires")
+}
+
 // TestProcess_BackfillsCommonThirdPartyFromSibling asserts that a pattern
 // linked to an unlinked catalog row (no common_third_party_id) gets its
-// catalog row backfilled from a sibling signal. The worker resolves the
-// catalog link only; it must not promote the pattern to an org
-// ThirdParty.
+// catalog row backfilled from a sibling signal, and is promoted directly
+// to the sibling's existing org ThirdParty.
 func TestProcess_BackfillsCommonThirdPartyFromSibling(t *testing.T) {
 	t.Parallel()
 
@@ -1022,18 +1176,81 @@ func TestProcess_BackfillsCommonThirdPartyFromSibling(t *testing.T) {
 		return reloadedTarget.LoadByID(ctx, conn, fx.scope, target.ID)
 	}))
 
-	assert.Nil(t, reloadedTarget.ThirdPartyID, "target must not be auto-promoted to an org third party")
+	require.NotNil(t, reloadedTarget.ThirdPartyID, "target must be promoted to the sibling's org third party")
+	assert.Equal(t, orgThirdParty.ID, *reloadedTarget.ThirdPartyID)
 	require.NotNil(t, reloadedTarget.CommonTrackerPatternID)
 	assert.Equal(t, unlinkedCommon.ID, *reloadedTarget.CommonTrackerPatternID, "the existing catalog link must be preserved")
 }
 
-// TestProcess_SiblingCatalogResolutionOnFirstPartyOrigin asserts that a
-// pattern detected on the banner's own (first-party) origin is still
-// grouped with its siblings sharing that origin for catalog resolution.
-// Sibling matching is an org-local co-occurrence signal and must not be
-// defeated by the first-party domain filter that only protects the global
-// catalog (domain) match.
-func TestProcess_SiblingCatalogResolutionOnFirstPartyOrigin(t *testing.T) {
+// TestProcess_UncategorisedLinksExistingThirdParty asserts that an
+// uncategorised pattern is still linked to an already-existing matching
+// org ThirdParty (linking to an existing party is ungated); only the
+// creation of a new party stays gated, as covered by
+// TestProcess_UncategorisedPatternIsNotPromoted.
+func TestProcess_UncategorisedLinksExistingThirdParty(t *testing.T) {
+	t.Parallel()
+
+	client := test.PGClient(t)
+	ctx := context.Background()
+	fx := seedPromotionFixture(t, ctx, client)
+
+	now := time.Now().UTC().Truncate(time.Microsecond)
+	existing := coredata.ThirdParty{
+		ID:                 gid.New(fx.scope.GetTenantID(), coredata.ThirdPartyEntityType),
+		OrganizationID:     fx.organizationID,
+		CommonThirdPartyID: &fx.commonThirdPartyID,
+		Name:               "Google LLC",
+		Category:           coredata.ThirdPartyCategoryAnalytics,
+		Certifications:     []string{},
+		Countries:          coredata.CountryCodes{},
+		CreatedAt:          now,
+		UpdatedAt:          now,
+	}
+
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		if err := existing.Insert(ctx, tx, fx.scope); err != nil {
+			return err
+		}
+
+		_, err := tx.Exec(
+			ctx,
+			`UPDATE tracker_patterns
+			   SET cookie_category_id = $1,
+			       mapping_requested_at = $2
+			 WHERE id = $3`,
+			fx.uncategorisedID,
+			now,
+			fx.trackerPattern.ID,
+		)
+
+		return err
+	}))
+
+	var reloadedBefore coredata.TrackerPattern
+
+	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+		return reloadedBefore.LoadByID(ctx, conn, fx.scope, fx.trackerPattern.ID)
+	}))
+
+	h := newMappingHandler(client)
+	require.NoError(t, h.Process(ctx, reloadedBefore))
+
+	var reloaded coredata.TrackerPattern
+
+	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+		return reloaded.LoadByID(ctx, conn, fx.scope, fx.trackerPattern.ID)
+	}))
+
+	require.NotNil(t, reloaded.ThirdPartyID, "uncategorised pattern must still link to an existing org third party")
+	assert.Equal(t, existing.ID, *reloaded.ThirdPartyID)
+}
+
+// TestProcess_SiblingPromotionOnFirstPartyOrigin asserts that a pattern
+// detected on the banner's own (first-party) origin is still grouped with
+// its siblings sharing that origin. Sibling matching is an org-local
+// co-occurrence signal and must not be defeated by the first-party domain
+// filter that only protects the global catalog (domain) match.
+func TestProcess_SiblingPromotionOnFirstPartyOrigin(t *testing.T) {
 	t.Parallel()
 
 	client := test.PGClient(t)
@@ -1177,7 +1394,8 @@ func TestProcess_SiblingCatalogResolutionOnFirstPartyOrigin(t *testing.T) {
 		return reloadedTarget.LoadByID(ctx, conn, fx.scope, target.ID)
 	}))
 
-	assert.Nil(t, reloadedTarget.ThirdPartyID, "target must not be auto-promoted to an org third party")
+	require.NotNil(t, reloadedTarget.ThirdPartyID, "target sharing a first-party origin must be promoted via its sibling")
+	assert.Equal(t, orgThirdParty.ID, *reloadedTarget.ThirdPartyID)
 }
 
 // TestProcess_ReenqueuesUnmappedSiblingOnResolve asserts that when a
@@ -1295,8 +1513,7 @@ func TestProcess_ReenqueuesUnmappedSiblingOnResolve(t *testing.T) {
 		return reloadedTarget.LoadByID(ctx, conn, fx.scope, target.ID)
 	}))
 
-	require.NotNil(t, reloadedTarget.CommonTrackerPatternID, "target must resolve a catalog link via its sibling")
-	assert.Nil(t, reloadedTarget.ThirdPartyID, "target must not be auto-promoted to an org third party")
+	require.NotNil(t, reloadedTarget.ThirdPartyID, "target must resolve via its promoted sibling")
 
 	var reloadedUnmapped coredata.TrackerPattern
 
@@ -1450,8 +1667,7 @@ func TestProcess_DoesNotReenqueuePromotedOrExtensionSiblings(t *testing.T) {
 		return p
 	}
 
-	require.NotNil(t, reload(target.ID).CommonTrackerPatternID, "target must resolve a catalog link via its sibling")
-	assert.Nil(t, reload(target.ID).ThirdPartyID, "target must not be auto-promoted to an org third party")
+	require.NotNil(t, reload(target.ID).ThirdPartyID, "target must resolve via its promoted sibling")
 	require.NotNil(t, reload(plainSibling.ID).MappingRequestedAt, "plain unmapped sibling must be re-enqueued")
 	assert.Nil(t, reload(mappedSibling.ID).MappingRequestedAt, "promoted sibling must not be re-enqueued")
 	assert.Nil(t, reload(extensionSibling.ID).MappingRequestedAt, "EXTENSION-sourced sibling must not be re-enqueued")

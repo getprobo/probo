@@ -53,12 +53,16 @@ type (
 	// tracker-mapping background worker. LLM parameters for the mapping
 	// agent it runs live under AgentsConfig.TrackerMapping. AgentTimeout
 	// and AgentMaxTurns bound a single mapping agent run.
+	// DisambiguationAgentTimeout caps a single third-party
+	// disambiguation agent run; that agent runs inside this worker but
+	// uses its own LLM parameters from AgentsConfig.ThirdPartyDisambiguation.
 	TrackerMappingWorkerConfig struct {
-		Interval       int `json:"interval"` // seconds between polls
-		MaxConcurrency int `json:"max-concurrency"`
-		StaleAfter     int `json:"stale-after"`   // seconds before a claim is recycled
-		AgentTimeout   int `json:"agent-timeout"` // seconds, single agent run
-		AgentMaxTurns  int `json:"agent-max-turns"`
+		Interval                   int `json:"interval"` // seconds between polls
+		MaxConcurrency             int `json:"max-concurrency"`
+		StaleAfter                 int `json:"stale-after"`   // seconds before a claim is recycled
+		AgentTimeout               int `json:"agent-timeout"` // seconds, single agent run
+		AgentMaxTurns              int `json:"agent-max-turns"`
+		DisambiguationAgentTimeout int `json:"disambiguation-agent-timeout"` // seconds, single disambiguation run
 	}
 
 	// CommonPatternEnrichmentWorkerConfig holds worker-side tuning for
@@ -82,14 +86,15 @@ type (
 	// settings. Default is used as a fallback when an agent-specific field
 	// is zero-valued.
 	AgentsConfig struct {
-		Providers         map[string]LLMProviderConfig `json:"providers"`
-		Default           LLMAgentConfig               `json:"defaults"`
-		Probo             LLMAgentConfig               `json:"probo"`
-		EvidenceDescriber LLMAgentConfig               `json:"evidence-describer"`
-		ThirdPartyVetter  LLMAgentConfig               `json:"third-party-vetter"`
-		TrackerMapping    LLMAgentConfig               `json:"tracker-mapping"`
-		TrackerEnrichment LLMAgentConfig               `json:"tracker-enrichment"`
-		Tools             AgentToolsConfig             `json:"tools"`
+		Providers                map[string]LLMProviderConfig `json:"providers"`
+		Default                  LLMAgentConfig               `json:"defaults"`
+		Probo                    LLMAgentConfig               `json:"probo"`
+		EvidenceDescriber        LLMAgentConfig               `json:"evidence-describer"`
+		ThirdPartyVetter         LLMAgentConfig               `json:"third-party-vetter"`
+		ThirdPartyDisambiguation LLMAgentConfig               `json:"third-party-disambiguation"`
+		TrackerMapping           LLMAgentConfig               `json:"tracker-mapping"`
+		TrackerEnrichment        LLMAgentConfig               `json:"tracker-enrichment"`
+		Tools                    AgentToolsConfig             `json:"tools"`
 	}
 )
 

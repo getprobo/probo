@@ -321,7 +321,7 @@ func (impl *Implm) Run(
 		return err
 	}
 
-	trackerMappingCfg, trackerEnrichmentCfg, err := impl.buildTrackerAgents(l, tp, r)
+	trackerMappingCfg, trackerEnrichmentCfg, thirdPartyDisambiguationCfg, err := impl.buildTrackerAgents(l, tp, r)
 	if err != nil {
 		return err
 	}
@@ -775,6 +775,7 @@ func (impl *Implm) Run(
 		pgClient,
 		l,
 		trackerMappingCfg,
+		thirdPartyDisambiguationCfg,
 		time.Duration(impl.cfg.TrackerMappingWorker.StaleAfter)*time.Second,
 		worker.WithInterval(time.Duration(impl.cfg.TrackerMappingWorker.Interval)*time.Second),
 		worker.WithMaxConcurrency(impl.cfg.TrackerMappingWorker.MaxConcurrency),

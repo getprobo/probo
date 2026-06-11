@@ -185,6 +185,15 @@ probo:
   #   maxConcurrency: 1
   #   staleAfter: 1500
 
+  # Third-party disambiguation agent (optional; runs inside the tracker
+  # mapping worker to pick the best matching org third party). Falls back
+  # to trackerMapping when its provider is unset.
+  # thirdPartyDisambiguation:
+  #   provider: "openai"
+  #   modelName: "gpt-4o"
+  #   temperature: "0.4"
+  #   maxTokens: "4096"
+
   # Tracker mapping agent (optional, auto-links tracker patterns to vendors)
   # trackerMapping:
   #   provider: "openai"
@@ -201,7 +210,7 @@ probo:
   #   maxTokens: "4096"
 
   # Tracker mapping worker tuning (optional; seconds for
-  # interval/staleAfter/agentTimeout).
+  # interval/staleAfter/agentTimeout/disambiguationAgentTimeout).
   # Keep concurrency modest to stay under OpenAI/Firecrawl limits and the DB pool.
   # trackerMappingWorker:
   #   interval: 10
@@ -209,6 +218,7 @@ probo:
   #   staleAfter: 600
   #   agentTimeout: 45
   #   agentMaxTurns: 10
+  #   disambiguationAgentTimeout: 45
 
   # Common-pattern enrichment worker tuning (optional; seconds for
   # interval/staleAfter/agentTimeout).
