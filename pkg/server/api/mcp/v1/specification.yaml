@@ -6305,12 +6305,12 @@ components:
           description: Document ID
         minor:
           type: boolean
-          description: When true, publish the draft as a minor version and ignore approver_ids. When false, publish as a new major version; if approver_ids are provided, an approval is requested instead.
+          description: When true, publish the draft as a minor version; approver_ids must be omitted. When false, publish as a new major version; approver_ids is required (a non-empty list requests approval, an empty list publishes directly without approval).
         approver_ids:
           type: array
           items:
             $ref: "#/components/schemas/GID"
-          description: Approver profile IDs (ignored when minor is true)
+          description: "Approver profile IDs. Required when minor is false: pass a non-empty list to request approval (approvers receive an email notification), or an empty list to publish directly without approval. Must be omitted when minor is true."
         changelog:
           type: string
           description: Changelog for this version

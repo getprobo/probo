@@ -190,9 +190,10 @@ func publishMajorDocumentVersion(t *testing.T, owner *testutil.Client, docID str
 		}
 	`, map[string]any{
 		"input": map[string]any{
-			"minor":      false,
-			"documentId": docID,
-			"changelog":  "Major release",
+			"minor":       false,
+			"documentId":  docID,
+			"approverIds": []string{},
+			"changelog":   "Major release",
 		},
 	}, &result)
 	require.NoError(t, err)
@@ -1425,9 +1426,10 @@ func TestDocumentVersion_PublishBlockedWhenPendingApproval(t *testing.T) {
 			}
 		`, map[string]any{
 			"input": map[string]any{
-				"minor":      false,
-				"documentId": docID,
-				"changelog":  "Major release",
+				"minor":       false,
+				"documentId":  docID,
+				"approverIds": []string{},
+				"changelog":   "Major release",
 			},
 		})
 		require.Error(t, err)
@@ -1447,6 +1449,128 @@ func TestDocumentVersion_PublishBlockedWhenPendingApproval(t *testing.T) {
 				"minor":      true,
 				"documentId": docID,
 				"changelog":  "Minor release",
+			},
+		})
+		require.Error(t, err)
+	})
+}
+
+// TestDocumentVersion_PublishApproverIDsContract verifies that approver_ids must
+// be an explicit choice when publishing: required for a major version (empty
+// list publishes directly, non-empty requests approval) and rejected for a minor
+// version (which ignores approvers).
+func TestDocumentVersion_PublishApproverIDsContract(t *testing.T) {
+	t.Parallel()
+
+	const publishMutation = `
+		mutation($input: PublishDocumentInput!) {
+			publishDocument(input: $input) {
+				documentVersion { status }
+				approvalQuorum { id }
+			}
+		}
+	`
+
+	type publishResult struct {
+		PublishDocument struct {
+			DocumentVersion struct {
+				Status string `json:"status"`
+			} `json:"documentVersion"`
+			ApprovalQuorum *struct {
+				ID string `json:"id"`
+			} `json:"approvalQuorum"`
+		} `json:"publishDocument"`
+	}
+
+	t.Run("major publish without approver_ids is rejected", func(t *testing.T) {
+		t.Parallel()
+		owner := testutil.NewClient(t, testutil.RoleOwner)
+		docID, _ := createTestDocument(t, owner)
+
+		_, err := owner.Do(publishMutation, map[string]any{
+			"input": map[string]any{
+				"minor":      false,
+				"documentId": docID,
+				"changelog":  "Major release",
+			},
+		})
+		require.Error(t, err)
+	})
+
+	t.Run("major publish with empty approver_ids publishes directly", func(t *testing.T) {
+		t.Parallel()
+		owner := testutil.NewClient(t, testutil.RoleOwner)
+		docID, _ := createTestDocument(t, owner)
+
+		var result publishResult
+
+		err := owner.Execute(publishMutation, map[string]any{
+			"input": map[string]any{
+				"minor":       false,
+				"documentId":  docID,
+				"approverIds": []string{},
+				"changelog":   "Direct major release",
+			},
+		}, &result)
+		require.NoError(t, err)
+		assert.Equal(t, "PUBLISHED", result.PublishDocument.DocumentVersion.Status)
+		assert.Nil(t, result.PublishDocument.ApprovalQuorum)
+	})
+
+	t.Run("major publish with approver_ids requests approval", func(t *testing.T) {
+		t.Parallel()
+		owner := testutil.NewClient(t, testutil.RoleOwner)
+		docID, _ := createTestDocument(t, owner)
+
+		var result publishResult
+
+		err := owner.Execute(publishMutation, map[string]any{
+			"input": map[string]any{
+				"minor":       false,
+				"documentId":  docID,
+				"approverIds": []string{getOwnerProfileID(t, owner)},
+				"changelog":   "Major release needing approval",
+			},
+		}, &result)
+		require.NoError(t, err)
+		assert.Equal(t, "PENDING_APPROVAL", result.PublishDocument.DocumentVersion.Status)
+		require.NotNil(t, result.PublishDocument.ApprovalQuorum)
+	})
+
+	t.Run("minor publish without approver_ids is allowed", func(t *testing.T) {
+		t.Parallel()
+		owner := testutil.NewClient(t, testutil.RoleOwner)
+		docID, _ := createTestDocument(t, owner)
+		publishMajorDocumentVersion(t, owner, docID)
+		updateDocumentContent(t, owner, docID, "Updated content for minor")
+
+		var result publishResult
+
+		err := owner.Execute(publishMutation, map[string]any{
+			"input": map[string]any{
+				"minor":      true,
+				"documentId": docID,
+				"changelog":  "Minor release",
+			},
+		}, &result)
+		require.NoError(t, err)
+		assert.Equal(t, "PUBLISHED", result.PublishDocument.DocumentVersion.Status)
+		assert.Nil(t, result.PublishDocument.ApprovalQuorum)
+	})
+
+	t.Run("minor publish with approver_ids is rejected", func(t *testing.T) {
+		t.Parallel()
+		owner := testutil.NewClient(t, testutil.RoleOwner)
+		docID, _ := createTestDocument(t, owner)
+		publishMajorDocumentVersion(t, owner, docID)
+		updateDocumentContent(t, owner, docID, "Updated content for rejected minor")
+
+		_, err := owner.Do(publishMutation, map[string]any{
+			"input": map[string]any{
+				"minor":       true,
+				"documentId":  docID,
+				"approverIds": []string{getOwnerProfileID(t, owner)},
+				"changelog":   "Minor release",
 			},
 		})
 		require.Error(t, err)

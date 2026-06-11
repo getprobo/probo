@@ -184,6 +184,27 @@ func (req *PublishDocumentRequest) Validate() error {
 	})
 	v.Check(req.Changelog, "changelog", validator.Required(), validator.SafeText(5000))
 
+	// approver_ids must be an explicit choice for a major publish (an empty list
+	// publishes directly without approval, a non-empty list requests approval)
+	// and must be omitted for a minor publish, which ignores approvers.
+	if req.Minor && req.ApproverIDs != nil {
+		v.Check(req.ApproverIDs, "approver_ids", func(any) *validator.ValidationError {
+			return &validator.ValidationError{
+				Code:    validator.ErrorCodeCustom,
+				Message: "must not be set when publishing a minor version",
+			}
+		})
+	}
+
+	if !req.Minor && req.ApproverIDs == nil {
+		v.Check(req.ApproverIDs, "approver_ids", func(any) *validator.ValidationError {
+			return &validator.ValidationError{
+				Code:    validator.ErrorCodeCustom,
+				Message: "must be set when publishing a major version: provide approver profile IDs to request approval, or an empty list to publish directly without approval",
+			}
+		})
+	}
+
 	return v.Error()
 }
 

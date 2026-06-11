@@ -55,7 +55,7 @@ export const description: INodeProperties[] = [
 			},
 		},
 		default: '',
-		description: 'Comma-separated list of approver profile IDs. When provided, an approval is requested instead of publishing immediately.',
+		description: 'Comma-separated list of approver profile IDs. Provide IDs to request approval; leave empty to publish the major version directly without approval.',
 	},
 	{
 		displayName: 'Changelog',
@@ -122,12 +122,14 @@ export async function execute(
 	`;
 
 	const input: Record<string, unknown> = { documentId, minor, changelog };
-	if (!minor && approverIdsRaw) {
-		const approverIds = approverIdsRaw
+	if (!minor) {
+		// A major publish must set approverIds explicitly: an empty list publishes
+		// directly without approval, a non-empty list requests approval. It must be
+		// omitted for a minor publish, which ignores approvers.
+		input.approverIds = approverIdsRaw
 			.split(',')
 			.map(id => id.trim())
 			.filter(Boolean);
-		if (approverIds.length > 0) input.approverIds = approverIds;
 	}
 
 	const responseData = await proboApiRequest.call(this, query, { input });

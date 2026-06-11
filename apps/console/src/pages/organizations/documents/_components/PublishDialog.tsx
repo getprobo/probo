@@ -153,7 +153,7 @@ export function PublishDialog({
         input: {
           documentId,
           minor,
-          approverIds: minor ? [] : data.approverIds,
+          approverIds: minor ? null : data.approverIds,
           changelog: data.changelog,
         },
       },
