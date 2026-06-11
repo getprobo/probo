@@ -8846,6 +8846,35 @@ components:
         direction:
           $ref: "#/components/schemas/OrderDirection"
 
+    File:
+      type: object
+      required:
+        - id
+        - mime_type
+        - file_name
+        - size
+        - download_url
+        - created_at
+        - updated_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+        mime_type:
+          type: string
+        file_name:
+          type: string
+        size:
+          type: integer
+          format: int64
+        download_url:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
     TrustCenter:
       type: object
       required:
@@ -8864,22 +8893,12 @@ components:
           type: boolean
         search_engine_indexing:
           $ref: "#/components/schemas/SearchEngineIndexing"
-        logo_file_url:
-          type:
-            - string
-            - "null"
-        dark_logo_file_url:
-          type:
-            - string
-            - "null"
-        nda_file_name:
-          type:
-            - string
-            - "null"
-        nda_file_url:
-          type:
-            - string
-            - "null"
+        logo:
+          $ref: "#/components/schemas/File"
+        dark_logo:
+          $ref: "#/components/schemas/File"
+        nda:
+          $ref: "#/components/schemas/File"
         created_at:
           type: string
           format: date-time
@@ -8908,10 +8927,8 @@ components:
           type:
             - string
             - "null"
-        logo_url:
-          type:
-            - string
-            - "null"
+        logo:
+          $ref: "#/components/schemas/File"
         rank:
           type: integer
         created_at:
@@ -8927,7 +8944,7 @@ components:
         - id
         - name
         - category
-        - file_url
+        - file
         - trust_center_visibility
         - organization_id
         - created_at
@@ -8939,8 +8956,8 @@ components:
           type: string
         category:
           type: string
-        file_url:
-          type: string
+        file:
+          $ref: "#/components/schemas/File"
         trust_center_visibility:
           $ref: "#/components/schemas/TrustCenterVisibility"
         organization_id:

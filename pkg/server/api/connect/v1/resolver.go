@@ -37,6 +37,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/baseurl"
+	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/saferedirect"
@@ -52,6 +53,7 @@ type (
 		batchAuthorize authz.BatchAuthorizeFunc
 		logger         *log.Logger
 		iam            *iam.Service
+		fileManager    *filemanager.Service
 		baseURL        *baseurl.BaseURL
 		sessionCookie  *authn.Cookie
 	}
@@ -62,6 +64,7 @@ func NewMux(
 	svc *iam.Service,
 	cookieConfig securecookie.Config,
 	tokenSecret string,
+	fileManagerSvc *filemanager.Service,
 	baseURL *baseurl.BaseURL,
 	allowedRedirectHost saferedirect.AllowedHostFunc,
 	isTrustCenterDomain IsTrustCenterDomainFunc,
@@ -71,7 +74,7 @@ func NewMux(
 	sessionMiddleware := authn.NewSessionMiddleware(svc, cookieConfig)
 	apiKeyMiddleware := authn.NewAPIKeyMiddleware(svc, tokenSecret)
 	oauth2Middleware := authn.NewOAuth2AccessTokenMiddleware(svc)
-	graphqlHandler := NewGraphQLHandler(svc, logger, baseURL, cookieConfig)
+	graphqlHandler := NewGraphQLHandler(svc, logger, fileManagerSvc, baseURL, cookieConfig)
 	samlHandler := NewSAMLHandler(svc, cookieConfig, baseURL, logger)
 	scimHandler := NewSCIMHandler(svc, logger.Named("scim"))
 

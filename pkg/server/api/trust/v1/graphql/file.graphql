@@ -1,0 +1,10 @@
+# Trust File: public assets use /api/files/v1/public/{id} (no auth).
+type File {
+  id: ID!
+  mimeType: String!
+  fileName: String!
+  size: BigInt!
+  downloadUrl: String!
+  createdAt: Datetime!
+  updatedAt: Datetime!
+}

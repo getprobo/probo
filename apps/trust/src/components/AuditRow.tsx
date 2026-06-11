@@ -66,8 +66,12 @@ const auditRowFragment = graphql`
     framework {
       id
       name
-      lightLogoURL
-      darkLogoURL
+      lightLogo {
+        downloadUrl
+      }
+      darkLogo {
+        downloadUrl
+      }
     }
   }
 `;
@@ -176,8 +180,8 @@ export function AuditRowAvatar(props: { audit: AuditRowFragment$key }) {
           <div className="flex flex-col gap-2 items-center w-19">
             <FrameworkLogo
               className="size-19"
-              lightLogoURL={audit.framework.lightLogoURL}
-              darkLogoURL={audit.framework.darkLogoURL}
+              lightLogoURL={audit.framework.lightLogo?.downloadUrl}
+              darkLogoURL={audit.framework.darkLogo?.downloadUrl}
               name={audit.framework.name}
             />
             <div className="txt-primary text-sm max-w-19 overflow-hidden min-w-0 whitespace-nowrap text-ellipsis">
@@ -215,8 +219,8 @@ function AuditDialog(
       <DialogContent className="p-4 lg:p-8 space-y-6">
         <FrameworkLogo
           className="size-24 mx-auto"
-          lightLogoURL={audit.framework.lightLogoURL}
-          darkLogoURL={audit.framework.darkLogoURL}
+          lightLogoURL={audit.framework.lightLogo?.downloadUrl}
+          darkLogoURL={audit.framework.darkLogo?.downloadUrl}
           name={audit.framework.name}
         />
         <h2 className="text-xl font-semibold mb-1">{audit.framework.name}</h2>

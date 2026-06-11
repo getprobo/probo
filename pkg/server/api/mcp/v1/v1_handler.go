@@ -22,7 +22,9 @@ import (
 	"go.gearno.de/kit/log"
 	mcpgenmcp "go.probo.inc/mcpgen/mcp"
 	"go.probo.inc/probo/pkg/accessreview"
+	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/cookiebanner"
+	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/riskmanagement"
@@ -41,6 +43,8 @@ func NewMux(
 	cookieBannerSvc *cookiebanner.Service,
 	riskManagementSvc *riskmanagement.Service,
 	tokenSecret string,
+	fileManagerSvc *filemanager.Service,
+	baseURL *baseurl.BaseURL,
 ) *chi.Mux {
 	logger = logger.Named("mcp.v1")
 
@@ -54,6 +58,8 @@ func NewMux(
 		cookieBanner:   cookieBannerSvc,
 		riskManagement: riskManagementSvc,
 		logger:         logger,
+		fileManager:    fileManagerSvc,
+		baseURL:        baseURL,
 	}
 
 	mcpServer := server.New(resolver, mcpgenmcp.WithRecoverFunc(mcputils.NewRecoverFunc(logger)))

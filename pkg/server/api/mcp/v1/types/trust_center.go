@@ -42,12 +42,10 @@ func NewTrustCenterReference(r *coredata.TrustCenterReference) *TrustCenterRefer
 	}
 }
 
-func NewListTrustCenterReferencesOutput(p *page.Page[*coredata.TrustCenterReference, coredata.TrustCenterReferenceOrderField]) ListTrustCenterReferencesOutput {
-	refs := make([]*TrustCenterReference, 0, len(p.Data))
-	for _, r := range p.Data {
-		refs = append(refs, NewTrustCenterReference(r))
-	}
-
+func NewListTrustCenterReferencesOutput(
+	refs []*TrustCenterReference,
+	p *page.Page[*coredata.TrustCenterReference, coredata.TrustCenterReferenceOrderField],
+) ListTrustCenterReferencesOutput {
 	var nextCursor *page.CursorKey
 
 	if len(p.Data) > 0 {
@@ -61,13 +59,13 @@ func NewListTrustCenterReferencesOutput(p *page.Page[*coredata.TrustCenterRefere
 	}
 }
 
-func NewTrustCenterFile(f *coredata.TrustCenterFile, fileURL string) *TrustCenterFile {
+func NewTrustCenterFile(f *coredata.TrustCenterFile, file *File) *TrustCenterFile {
 	return &TrustCenterFile{
 		ID:                    f.ID,
 		OrganizationID:        f.OrganizationID,
 		Name:                  f.Name,
 		Category:              f.Category,
-		FileURL:               fileURL,
+		File:                  file,
 		TrustCenterVisibility: f.TrustCenterVisibility,
 		CreatedAt:             f.CreatedAt,
 		UpdatedAt:             f.UpdatedAt,

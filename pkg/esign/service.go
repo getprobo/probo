@@ -464,7 +464,7 @@ func (s *Service) GenerateCertificateFileURL(
 		return "", err
 	}
 
-	url, err := s.fileManager.GeneratePresignedFileURL(ctx, &file, expiresIn)
+	url, err := s.fileManager.GeneratePresignedURL(ctx, &file, expiresIn)
 	if err != nil {
 		return "", fmt.Errorf("cannot generate certificate file URL: %w", err)
 	}
@@ -501,7 +501,7 @@ func (s *Service) GenerateSignatureFileURL(
 		return "", err
 	}
 
-	url, err := s.fileManager.GeneratePresignedFileURL(ctx, &file, expiresIn)
+	url, err := s.fileManager.GeneratePresignedURL(ctx, &file, expiresIn)
 	if err != nil {
 		return "", fmt.Errorf("cannot generate signature file URL: %w", err)
 	}

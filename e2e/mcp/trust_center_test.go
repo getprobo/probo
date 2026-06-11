@@ -15,6 +15,7 @@
 package mcp_test
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -23,11 +24,16 @@ import (
 	"go.probo.inc/probo/e2e/internal/testutil"
 )
 
+type mcpFile struct {
+	DownloadURL string `json:"download_url"`
+}
+
 type trustCenter struct {
-	ID                 string `json:"id"`
-	CompanyName        string `json:"companyName"`
-	PageTitle          string `json:"pageTitle"`
-	TrustCenterVisible bool   `json:"trustCenterVisible"`
+	ID                 string   `json:"id"`
+	CompanyName        string   `json:"companyName"`
+	PageTitle          string   `json:"pageTitle"`
+	TrustCenterVisible bool     `json:"trustCenterVisible"`
+	Logo               *mcpFile `json:"logo,omitempty"`
 }
 
 type trustCenterReference struct {
@@ -49,6 +55,85 @@ func TestMCP_GetTrustCenter(t *testing.T) {
 	mc := testutil.NewMCPClient(t, owner)
 	orgID := owner.GetOrganizationID().String()
 
+	const trustCenterQuery = `
+		query($organizationId: ID!) {
+			node(id: $organizationId) {
+				... on Organization {
+					trustCenter {
+						id
+					}
+				}
+			}
+		}
+	`
+
+	var trustCenterLookup struct {
+		Node struct {
+			TrustCenter struct {
+				ID string `json:"id"`
+			} `json:"trustCenter"`
+		} `json:"node"`
+	}
+
+	err := owner.Execute(trustCenterQuery, map[string]any{
+		"organizationId": orgID,
+	}, &trustCenterLookup)
+	require.NoError(t, err)
+	require.NotEmpty(t, trustCenterLookup.Node.TrustCenter.ID)
+
+	trustCenterID := trustCenterLookup.Node.TrustCenter.ID
+
+	const uploadMutation = `
+		mutation UpdateTrustCenterBrand($input: UpdateTrustCenterBrandInput!) {
+			updateTrustCenterBrand(input: $input) {
+				trustCenter {
+					id
+					logo {
+						id
+						downloadUrl
+					}
+				}
+			}
+		}
+	`
+
+	pngContent := []byte{
+		0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a,
+		0x00, 0x00, 0x00, 0x0d, 0x49, 0x48, 0x44, 0x52,
+		0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01,
+		0x08, 0x06, 0x00, 0x00, 0x00, 0x1f, 0x15, 0xc4,
+		0x89, 0x00, 0x00, 0x00, 0x0a, 0x49, 0x44, 0x41,
+		0x54, 0x78, 0x9c, 0x63, 0x00, 0x01, 0x00, 0x00,
+		0x05, 0x00, 0x01, 0x0d, 0x0a, 0x2d, 0xb4, 0x00,
+		0x00, 0x00, 0x00, 0x49, 0x45, 0x4e, 0x44, 0xae,
+		0x42, 0x60, 0x82,
+	}
+
+	var uploadResult struct {
+		UpdateTrustCenterBrand struct {
+			TrustCenter struct {
+				ID   string `json:"id"`
+				Logo *struct {
+					ID          string `json:"id"`
+					DownloadURL string `json:"downloadUrl"`
+				} `json:"logo"`
+			} `json:"trustCenter"`
+		} `json:"updateTrustCenterBrand"`
+	}
+
+	err = owner.ExecuteWithFile(uploadMutation, map[string]any{
+		"input": map[string]any{
+			"trustCenterId": trustCenterID,
+			"logoFile":      nil,
+		},
+	}, "input.logoFile", testutil.UploadFile{
+		Filename:    "mcp-trust-center-logo.png",
+		ContentType: "image/png",
+		Content:     pngContent,
+	}, &uploadResult)
+	require.NoError(t, err)
+	require.NotNil(t, uploadResult.UpdateTrustCenterBrand.TrustCenter.Logo)
+
 	var result struct {
 		TrustCenter trustCenter `json:"trustCenter"`
 	}
@@ -57,6 +142,13 @@ func TestMCP_GetTrustCenter(t *testing.T) {
 	}, &result)
 
 	assert.NotEmpty(t, result.TrustCenter.ID)
+	require.NotNil(t, result.TrustCenter.Logo)
+	assert.True(
+		t,
+		strings.Contains(result.TrustCenter.Logo.DownloadURL, "/api/files/v1/public/"),
+		"download_url must route through the public files API, got %q",
+		result.TrustCenter.Logo.DownloadURL,
+	)
 }
 
 func TestMCP_UpdateTrustCenter(t *testing.T) {

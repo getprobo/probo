@@ -85,7 +85,9 @@ export function OrganizationSidebar({
   const navigate = useNavigate();
   const location = useLocation();
 
-  const logoFileUrl = theme === "dark" ? (trustCenter?.darkLogoFileUrl ?? trustCenter?.logoFileUrl) : trustCenter?.logoFileUrl;
+  const logoFileUrl = theme === "dark"
+    ? (trustCenter?.darkLogo?.downloadUrl ?? trustCenter?.logo?.downloadUrl)
+    : trustCenter?.logo?.downloadUrl;
 
   const [requestAllAccesses, isRequestingAccess]
     = useMutation<OrganizationSidebar_requestAllAccessesMutation>(

@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,28 +12,21 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package filemanager
+package types
 
 import (
-	awss3 "github.com/aws/aws-sdk-go-v2/service/s3"
-	"go.gearno.de/kit/pg"
-	"go.probo.inc/probo/pkg/baseurl"
+	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/filemanager"
 )
 
-type Service struct {
-	pg       *pg.Client
-	baseURL  *baseurl.BaseURL
-	s3Client *awss3.Client
-}
-
-func NewService(
-	pgClient *pg.Client,
-	baseURL *baseurl.BaseURL,
-	s3Client *awss3.Client,
-) *Service {
-	return &Service{
-		pg:       pgClient,
-		baseURL:  baseURL,
-		s3Client: s3Client,
+func NewFile(r *coredata.File, files *filemanager.Service) *File {
+	return &File{
+		ID:          r.ID,
+		MimeType:    r.MimeType,
+		FileName:    r.FileName,
+		Size:        int(r.FileSize),
+		DownloadURL: files.GenerateFileURL(r),
+		CreatedAt:   r.CreatedAt,
+		UpdatedAt:   r.UpdatedAt,
 	}
 }

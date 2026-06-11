@@ -7,19 +7,27 @@ package trust_v1
 
 import (
 	"context"
-	"time"
 
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/server/api/trust/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/trust/v1/types"
+	"go.probo.inc/probo/pkg/server/gqlutils"
 )
 
-// LogoURL is the resolver for the logoUrl field.
-func (r *organizationResolver) LogoURL(ctx context.Context, obj *types.Organization) (*string, error) {
+// Logo is the resolver for the logo field.
+func (r *organizationResolver) Logo(ctx context.Context, obj *types.Organization) (*types.File, error) {
 	scope := coredata.NewScopeFromObjectID(obj.ID)
-	trustService := r.trust
 
-	return trustService.Organizations.GenerateLogoURL(ctx, scope, obj.ID, 1*time.Hour)
+	organization, err := r.trust.Organizations.Get(ctx, scope, obj.ID)
+	if err != nil {
+		return nil, gqlutils.NotFoundf(ctx, "organization %q not found", obj.ID)
+	}
+
+	if organization.LogoFileID == nil {
+		return nil, nil
+	}
+
+	return r.loadPublicFile(ctx, *organization.LogoFileID)
 }
 
 // Organization returns schema.OrganizationResolver implementation.

@@ -126,6 +126,10 @@ func (c *Client) DoConnect(query string, variables map[string]any) (*GraphQLResp
 	return c.doWithEndpoint("/api/connect/v1/graphql", query, variables)
 }
 
+func (c *Client) DoTrust(trustCenterID string, query string, variables map[string]any) (*GraphQLResponse, error) {
+	return c.doWithEndpoint(fmt.Sprintf("/trust/%s/api/trust/v1/graphql", trustCenterID), query, variables)
+}
+
 func (c *Client) Execute(query string, variables map[string]any, result any) error {
 	resp, err := c.Do(query, variables)
 	if err != nil {
@@ -143,6 +147,21 @@ func (c *Client) Execute(query string, variables map[string]any, result any) err
 
 func (c *Client) ExecuteConnect(query string, variables map[string]any, result any) error {
 	resp, err := c.DoConnect(query, variables)
+	if err != nil {
+		return err
+	}
+
+	if result != nil && resp.Data != nil {
+		if err := json.Unmarshal(resp.Data, result); err != nil {
+			return fmt.Errorf("cannot unmarshal data: %w", err)
+		}
+	}
+
+	return nil
+}
+
+func (c *Client) ExecuteTrust(trustCenterID string, query string, variables map[string]any, result any) error {
+	resp, err := c.DoTrust(trustCenterID, query, variables)
 	if err != nil {
 		return err
 	}

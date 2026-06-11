@@ -40,5 +40,5 @@ func (r *Resolver) loadFile(ctx context.Context, fileID gid.GID) (*types.File, e
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return types.NewFile(file, r.baseURL), nil
+	return types.NewFile(file, r.fileManager), nil
 }

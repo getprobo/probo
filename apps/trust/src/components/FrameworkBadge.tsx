@@ -23,8 +23,12 @@ const frameworkFragment = graphql`
     # eslint-disable-next-line relay/unused-fields
     id
     name
-    lightLogoURL
-    darkLogoURL
+    lightLogo {
+      downloadUrl
+    }
+    darkLogo {
+      downloadUrl
+    }
   }
 `;
 
@@ -35,8 +39,8 @@ export function FrameworkBadge(props: { framework: FrameworkBadgeFragment$key })
     <div className="flex flex-col gap-2 items-center w-19">
       <FrameworkLogo
         className="size-19"
-        lightLogoURL={framework.lightLogoURL}
-        darkLogoURL={framework.darkLogoURL}
+        lightLogoURL={framework.lightLogo?.downloadUrl}
+        darkLogoURL={framework.darkLogo?.downloadUrl}
         name={framework.name}
       />
       <div className="txt-primary text-xs max-w-19 min-w-0 text-center">

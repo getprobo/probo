@@ -46,7 +46,9 @@ const overviewFragment = graphql`
         node {
           id
           name
-          logoUrl
+          logo {
+            downloadUrl
+          }
           websiteUrl
         }
       }
@@ -223,7 +225,7 @@ function Subprocessors({
 
 type Reference = {
   name: string;
-  logoUrl: string;
+  logo: { downloadUrl: string } | null;
   websiteUrl: string;
   id: string;
 };
@@ -248,7 +250,7 @@ function References({ references }: { references: Reference[] }) {
             className="flex flex-col justify-center items-center gap-2"
           >
             <img
-              src={reference.logoUrl}
+              src={reference.logo?.downloadUrl}
               alt={reference.name}
               className="rounded-2xl size-12 block"
             />

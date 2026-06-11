@@ -39,6 +39,7 @@ import (
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/esign"
+	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/mailman"
 	"go.probo.inc/probo/pkg/securecookie"
@@ -61,6 +62,7 @@ type (
 
 	Resolver struct {
 		trust         *trust.Service
+		fileManager   *filemanager.Service
 		esign         *esign.Service
 		mailman       *mailman.Service
 		logger        *log.Logger
@@ -74,6 +76,7 @@ func NewMux(
 	logger *log.Logger,
 	iamSvc *iam.Service,
 	trustSvc *trust.Service,
+	fileManagerSvc *filemanager.Service,
 	esignSvc *esign.Service,
 	mailmanSvc *mailman.Service,
 	cookieConfig securecookie.Config,
@@ -95,7 +98,7 @@ func NewMux(
 	)
 	r.Method(http.MethodGet, "/session-transfer", sessionTransferHandler)
 
-	graphqlHandler := NewGraphQLHandler(iamSvc, trustSvc, esignSvc, mailmanSvc, logger, baseURL, cookieConfig, tokenSecret)
+	graphqlHandler := NewGraphQLHandler(iamSvc, trustSvc, fileManagerSvc, esignSvc, mailmanSvc, logger, baseURL, cookieConfig, tokenSecret)
 
 	r.Group(
 		func(r chi.Router) {

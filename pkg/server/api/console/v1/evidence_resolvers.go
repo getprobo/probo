@@ -43,7 +43,7 @@ func (r *evidenceResolver) File(ctx context.Context, obj *types.Evidence) (*type
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return types.NewFile(file, r.baseURL), nil
+	return types.NewFile(file, r.fileManager), nil
 }
 
 // Task is the resolver for the task field.

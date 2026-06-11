@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,28 +12,30 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package filemanager
+package trust_v1
 
 import (
-	awss3 "github.com/aws/aws-sdk-go-v2/service/s3"
-	"go.gearno.de/kit/pg"
-	"go.probo.inc/probo/pkg/baseurl"
+	"context"
+	"errors"
+
+	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/server/api/trust/v1/types"
+	"go.probo.inc/probo/pkg/server/gqlutils"
 )
 
-type Service struct {
-	pg       *pg.Client
-	baseURL  *baseurl.BaseURL
-	s3Client *awss3.Client
-}
+func (r *Resolver) loadPublicFile(ctx context.Context, fileID gid.GID) (*types.File, error) {
+	file, err := r.fileManager.GetPublicFile(ctx, fileID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
 
-func NewService(
-	pgClient *pg.Client,
-	baseURL *baseurl.BaseURL,
-	s3Client *awss3.Client,
-) *Service {
-	return &Service{
-		pg:       pgClient,
-		baseURL:  baseURL,
-		s3Client: s3Client,
+		r.logger.ErrorCtx(ctx, "cannot load public file", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
 	}
+
+	return types.NewFile(file, r.fileManager), nil
 }

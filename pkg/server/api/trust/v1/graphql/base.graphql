@@ -13,6 +13,7 @@ directive @goEnum(value: String) on ENUM_VALUE
 
 directive @nda on FIELD_DEFINITION | OBJECT
 
+scalar BigInt
 scalar CursorKey
 scalar Datetime
 scalar EmailAddr

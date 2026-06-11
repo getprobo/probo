@@ -34,6 +34,7 @@ import (
 	"go.probo.inc/probo/pkg/cookiebanner"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/esign"
+	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/mailman"
@@ -64,6 +65,7 @@ type (
 		riskManagement    *riskmanagement.Service
 		thirdParty        *thirdparty.Service
 		logger            *log.Logger
+		fileManager       *filemanager.Service
 		baseURL           *baseurl.BaseURL
 		customDomainCname string
 	}
@@ -82,6 +84,7 @@ func NewMux(
 	tokenSecret string,
 	connectorRegistry *connector.ConnectorRegistry,
 	providerRegistry *provider.Registry,
+	fileManagerSvc *filemanager.Service,
 	baseURL *baseurl.BaseURL,
 	customDomainCname string,
 	thirdPartySvc *thirdparty.Service,
@@ -105,6 +108,7 @@ func NewMux(
 		logger,
 		thirdPartySvc,
 		riskManagementSvc,
+		fileManagerSvc,
 		baseURL,
 	)
 

@@ -168,7 +168,7 @@ func (r *organizationResolver) Logo(ctx context.Context, obj *types.Organization
 		return nil, nil
 	}
 
-	return types.NewFile(file, r.baseURL), nil
+	return types.NewFile(file, r.fileManager), nil
 }
 
 // HorizontalLogo is the resolver for the horizontalLogo field.
@@ -183,7 +183,7 @@ func (r *organizationResolver) HorizontalLogo(ctx context.Context, obj *types.Or
 		return nil, nil
 	}
 
-	return types.NewFile(file, r.baseURL), nil
+	return types.NewFile(file, r.fileManager), nil
 }
 
 // Profiles is the resolver for the profiles field.

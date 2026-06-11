@@ -15,20 +15,17 @@
 package types
 
 import (
-	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/filemanager"
 )
 
-func NewFile(r *coredata.File, base *baseurl.BaseURL) *File {
-	url := base.WithPath(filemanager.DownloadAPIPath(r)).MustString()
-
+func NewFile(r *coredata.File, files *filemanager.Service) *File {
 	return &File{
 		ID:          r.ID,
 		MimeType:    r.MimeType,
 		FileName:    r.FileName,
 		Size:        r.FileSize,
-		DownloadURL: url,
+		DownloadURL: files.GenerateFileURL(r),
 		CreatedAt:   r.CreatedAt,
 		UpdatedAt:   r.UpdatedAt,
 	}

@@ -15,25 +15,18 @@
 package filemanager
 
 import (
-	awss3 "github.com/aws/aws-sdk-go-v2/service/s3"
-	"go.gearno.de/kit/pg"
-	"go.probo.inc/probo/pkg/baseurl"
+	"go.probo.inc/probo/pkg/coredata"
 )
 
-type Service struct {
-	pg       *pg.Client
-	baseURL  *baseurl.BaseURL
-	s3Client *awss3.Client
+func apiPath(file *coredata.File) string {
+	if file.Visibility == coredata.FileVisibilityPublic {
+		return "/api/files/v1/public/" + file.ID.String()
+	}
+
+	return "/api/files/v1/" + file.ID.String()
 }
 
-func NewService(
-	pgClient *pg.Client,
-	baseURL *baseurl.BaseURL,
-	s3Client *awss3.Client,
-) *Service {
-	return &Service{
-		pg:       pgClient,
-		baseURL:  baseURL,
-		s3Client: s3Client,
-	}
+// GenerateFileURL returns the stable app URL routing through the files API.
+func (s *Service) GenerateFileURL(file *coredata.File) string {
+	return s.baseURL.WithPath(apiPath(file)).MustString()
 }

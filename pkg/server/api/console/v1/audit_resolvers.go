@@ -90,7 +90,7 @@ func (r *auditResolver) ReportFile(ctx context.Context, obj *types.Audit) (*type
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return types.NewFile(file, r.baseURL), nil
+	return types.NewFile(file, r.fileManager), nil
 }
 
 // Controls is the resolver for the controls field.

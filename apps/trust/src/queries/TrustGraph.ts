@@ -31,8 +31,12 @@ export const currentTrustGraphQuery = graphql`
         createdAt
         updatedAt
       }
-      logoFileUrl
-      darkLogoFileUrl
+      logo {
+        downloadUrl
+      }
+      darkLogo {
+        downloadUrl
+      }
       nonDisclosureAgreement {
         fileName
         fileUrl

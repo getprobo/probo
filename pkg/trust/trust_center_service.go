@@ -148,7 +148,7 @@ func (s TrustCenterService) GenerateNDAFileURL(
 		return "", err
 	}
 
-	presignedURL, err := s.svc.fileManager.GeneratePresignedFileURL(ctx, file, expiresIn)
+	presignedURL, err := s.svc.fileManager.GeneratePresignedURL(ctx, file, expiresIn)
 	if err != nil {
 		return "", fmt.Errorf("cannot generate file URL: %w", err)
 	}
@@ -195,7 +195,7 @@ func (s TrustCenterService) GenerateLogoURL(
 		return nil, nil
 	}
 
-	presignedURL, err := s.svc.fileManager.GeneratePresignedFileURL(ctx, file, expiresIn)
+	presignedURL, err := s.svc.fileManager.GeneratePresignedURL(ctx, file, expiresIn)
 	if err != nil {
 		return nil, fmt.Errorf("cannot generate file URL: %w", err)
 	}
@@ -242,7 +242,7 @@ func (s TrustCenterService) GenerateDarkLogoURL(
 		return nil, nil
 	}
 
-	presignedURL, err := s.svc.fileManager.GeneratePresignedFileURL(ctx, file, expiresIn)
+	presignedURL, err := s.svc.fileManager.GeneratePresignedURL(ctx, file, expiresIn)
 	if err != nil {
 		return nil, fmt.Errorf("cannot generate file URL: %w", err)
 	}

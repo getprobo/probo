@@ -314,7 +314,7 @@ func (s TrustCenterFileService) GenerateFileURL(
 		return "", err
 	}
 
-	fileURL, err := s.svc.fileManager.GeneratePresignedFileURL(ctx, storedFile, duration)
+	fileURL, err := s.svc.fileManager.GeneratePresignedURL(ctx, storedFile, duration)
 	if err != nil {
 		return "", fmt.Errorf("cannot generate file URL: %w", err)
 	}

@@ -179,6 +179,7 @@ func NewServer(cfg Config) (*Server, error) {
 			cfg.Logger.Named("trust.v1"),
 			cfg.IAM,
 			cfg.Trust,
+			cfg.File,
 			cfg.ESign,
 			cfg.Mailman,
 			cfg.Cookie,
@@ -198,6 +199,7 @@ func NewServer(cfg Config) (*Server, error) {
 			cfg.TokenSecret,
 			cfg.ConnectorRegistry,
 			cfg.ProviderRegistry,
+			cfg.File,
 			cfg.BaseURL,
 			cfg.CustomDomainCname,
 			cfg.ThirdParty,
@@ -225,6 +227,8 @@ func NewServer(cfg Config) (*Server, error) {
 			cfg.CookieBanner,
 			cfg.RiskManagement,
 			cfg.TokenSecret,
+			cfg.File,
+			cfg.BaseURL,
 		),
 		slackHandler: slack_v1.NewMux(
 			cfg.Logger.Named("slack.v1"),
@@ -236,6 +240,7 @@ func NewServer(cfg Config) (*Server, error) {
 			cfg.IAM,
 			cfg.Cookie,
 			cfg.TokenSecret,
+			cfg.File,
 			cfg.BaseURL,
 			func(ctx context.Context, host string) bool {
 				if host == cfg.BaseURL.Host() {

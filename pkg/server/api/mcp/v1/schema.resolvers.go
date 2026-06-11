@@ -4910,19 +4910,31 @@ func (r *Resolver) GetTrustCenterTool(ctx context.Context, req *mcp.CallToolRequ
 
 	tc := types.NewTrustCenter(trustCenter)
 
-	logoURL, err := prb.TrustCenters.GenerateLogoURL(ctx, scope, trustCenter.ID, 1*time.Hour)
-	if err == nil {
-		tc.LogoFileURL = logoURL
+	if trustCenter.LogoFileID != nil {
+		logo, err := r.loadFile(ctx, scope, *trustCenter.LogoFileID)
+		if err != nil {
+			return nil, types.GetTrustCenterOutput{}, err
+		}
+
+		tc.Logo = logo
 	}
 
-	darkLogoURL, err := prb.TrustCenters.GenerateDarkLogoURL(ctx, scope, trustCenter.ID, 1*time.Hour)
-	if err == nil {
-		tc.DarkLogoFileURL = darkLogoURL
+	if trustCenter.DarkLogoFileID != nil {
+		darkLogo, err := r.loadFile(ctx, scope, *trustCenter.DarkLogoFileID)
+		if err != nil {
+			return nil, types.GetTrustCenterOutput{}, err
+		}
+
+		tc.DarkLogo = darkLogo
 	}
 
-	ndaFileURL, err := prb.TrustCenters.GenerateNDAFileURL(ctx, scope, trustCenter.ID, 15*time.Minute)
-	if err == nil {
-		tc.NdaFileURL = ndaFileURL
+	if trustCenter.NonDisclosureAgreementFileID != nil {
+		nda, err := r.loadFile(ctx, scope, *trustCenter.NonDisclosureAgreementFileID)
+		if err != nil {
+			return nil, types.GetTrustCenterOutput{}, err
+		}
+
+		tc.Nda = nda
 	}
 
 	return nil, types.GetTrustCenterOutput{TrustCenter: tc}, nil
@@ -4987,7 +4999,21 @@ func (r *Resolver) ListTrustCenterReferencesTool(ctx context.Context, req *mcp.C
 		return nil, types.ListTrustCenterReferencesOutput{}, fmt.Errorf("cannot list trust center references: %w", err)
 	}
 
-	return nil, types.NewListTrustCenterReferencesOutput(p), nil
+	refs := make([]*types.TrustCenterReference, 0, len(p.Data))
+	for _, reference := range p.Data {
+		ref := types.NewTrustCenterReference(reference)
+
+		logo, err := r.loadFile(ctx, scope, reference.LogoFileID)
+		if err != nil {
+			return nil, types.ListTrustCenterReferencesOutput{}, err
+		}
+
+		ref.Logo = logo
+
+		refs = append(refs, ref)
+	}
+
+	return nil, types.NewListTrustCenterReferencesOutput(refs, p), nil
 }
 
 // AddTrustCenterReferenceTool handles the addTrustCenterReference tool
@@ -5106,12 +5132,12 @@ func (r *Resolver) ListTrustCenterFilesTool(ctx context.Context, req *mcp.CallTo
 
 	files := make([]*types.TrustCenterFile, 0, len(p.Data))
 	for _, f := range p.Data {
-		fileURL, err := prb.TrustCenterFiles.GenerateFileURL(ctx, scope, f.ID, 1*time.Hour)
+		file, err := r.loadFile(ctx, scope, f.FileID)
 		if err != nil {
-			return nil, types.ListTrustCenterFilesOutput{}, fmt.Errorf("cannot generate file URL: %w", err)
+			return nil, types.ListTrustCenterFilesOutput{}, err
 		}
 
-		files = append(files, types.NewTrustCenterFile(f, fileURL))
+		files = append(files, types.NewTrustCenterFile(f, file))
 	}
 
 	return nil, types.NewListTrustCenterFilesOutput(files, p), nil

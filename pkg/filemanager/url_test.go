@@ -24,29 +24,7 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 )
 
-func TestDownloadAPIPath_IncludesPublicSegmentForPublicFiles(t *testing.T) {
-	t.Parallel()
-
-	file := &coredata.File{
-		ID:         gid.New(gid.NilTenant, coredata.FileEntityType),
-		Visibility: coredata.FileVisibilityPublic,
-	}
-
-	assert.Equal(t, "/api/files/v1/public/"+file.ID.String(), filemanager.DownloadAPIPath(file))
-}
-
-func TestDownloadAPIPath_UsesPrivateSegmentForPrivateFiles(t *testing.T) {
-	t.Parallel()
-
-	file := &coredata.File{
-		ID:         gid.New(gid.NilTenant, coredata.FileEntityType),
-		Visibility: coredata.FileVisibilityPrivate,
-	}
-
-	assert.Equal(t, "/api/files/v1/"+file.ID.String(), filemanager.DownloadAPIPath(file))
-}
-
-func TestGenerateFileURL_PathIncludesPublicSegment(t *testing.T) {
+func TestGenerateFileURL_PublicFile(t *testing.T) {
 	t.Parallel()
 
 	base, err := baseurl.Parse("https://app.example.com")
@@ -54,15 +32,36 @@ func TestGenerateFileURL_PathIncludesPublicSegment(t *testing.T) {
 		t.Fatalf("cannot parse base URL: %v", err)
 	}
 
+	svc := filemanager.NewService(nil, base, nil)
 	file := &coredata.File{
 		ID:         gid.New(gid.NilTenant, coredata.FileEntityType),
 		Visibility: coredata.FileVisibilityPublic,
 	}
 
-	url, err := base.AppendPath(filemanager.DownloadAPIPath(file)).String()
+	assert.Equal(
+		t,
+		"https://app.example.com/api/files/v1/public/"+file.ID.String(),
+		svc.GenerateFileURL(file),
+	)
+}
+
+func TestGenerateFileURL_PrivateFile(t *testing.T) {
+	t.Parallel()
+
+	base, err := baseurl.Parse("https://app.example.com")
 	if err != nil {
-		t.Fatalf("cannot build URL: %v", err)
+		t.Fatalf("cannot parse base URL: %v", err)
 	}
 
-	assert.Equal(t, "https://app.example.com/api/files/v1/public/"+file.ID.String(), url)
+	svc := filemanager.NewService(nil, base, nil)
+	file := &coredata.File{
+		ID:         gid.New(gid.NilTenant, coredata.FileEntityType),
+		Visibility: coredata.FileVisibilityPrivate,
+	}
+
+	assert.Equal(
+		t,
+		"https://app.example.com/api/files/v1/"+file.ID.String(),
+		svc.GenerateFileURL(file),
+	)
 }

@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,28 +12,31 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package filemanager
+package mcp_v1
 
 import (
-	awss3 "github.com/aws/aws-sdk-go-v2/service/s3"
-	"go.gearno.de/kit/pg"
-	"go.probo.inc/probo/pkg/baseurl"
+	"context"
+	"errors"
+	"fmt"
+
+	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/server/api/mcp/v1/types"
 )
 
-type Service struct {
-	pg       *pg.Client
-	baseURL  *baseurl.BaseURL
-	s3Client *awss3.Client
-}
+func (r *Resolver) loadFile(
+	ctx context.Context,
+	scope *coredata.Scope,
+	fileID gid.GID,
+) (*types.File, error) {
+	file, err := r.proboSvc.Files.Get(ctx, scope, fileID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, fmt.Errorf("file not found")
+		}
 
-func NewService(
-	pgClient *pg.Client,
-	baseURL *baseurl.BaseURL,
-	s3Client *awss3.Client,
-) *Service {
-	return &Service{
-		pg:       pgClient,
-		baseURL:  baseURL,
-		s3Client: s3Client,
+		return nil, fmt.Errorf("cannot load file: %w", err)
 	}
+
+	return types.NewFile(file, r.fileManager), nil
 }

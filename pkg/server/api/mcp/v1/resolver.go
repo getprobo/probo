@@ -24,8 +24,10 @@ import (
 
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/accessreview"
+	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/cookiebanner"
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/probo"
@@ -43,6 +45,8 @@ type Resolver struct {
 	cookieBanner   *cookiebanner.Service
 	riskManagement *riskmanagement.Service
 	logger         *log.Logger
+	fileManager    *filemanager.Service
+	baseURL        *baseurl.BaseURL
 }
 
 func markdownToProseMirrorJSON(markdown string) (string, error) {

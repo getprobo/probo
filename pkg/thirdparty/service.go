@@ -46,10 +46,12 @@ func (s *Service) GenerateLogoURL(
 	ctx context.Context,
 	logoFileID gid.GID,
 ) (*string, error) {
-	url, err := s.file.GenerateFileURL(ctx, logoFileID)
+	file, err := s.file.GetPublicFile(ctx, logoFileID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot generate logo URL: %w", err)
+		return nil, fmt.Errorf("cannot load logo file: %w", err)
 	}
+
+	url := s.file.GenerateFileURL(file)
 
 	return &url, nil
 }

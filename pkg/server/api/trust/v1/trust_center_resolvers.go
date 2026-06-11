@@ -10,7 +10,6 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"time"
 
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
@@ -261,20 +260,36 @@ func (r *documentResolver) Access(ctx context.Context, obj *types.Document) (*ty
 	}, nil
 }
 
-// LightLogoURL is the resolver for the lightLogoURL field.
-func (r *frameworkResolver) LightLogoURL(ctx context.Context, obj *types.Framework) (*string, error) {
+// LightLogo is the resolver for the lightLogo field.
+func (r *frameworkResolver) LightLogo(ctx context.Context, obj *types.Framework) (*types.File, error) {
 	scope := coredata.NewScopeFromObjectID(obj.ID)
-	trustService := r.trust
 
-	return trustService.Frameworks.GenerateLightLogoURL(ctx, scope, obj.ID, 1*time.Hour)
+	framework, err := r.trust.Frameworks.Get(ctx, scope, obj.ID)
+	if err != nil {
+		return nil, gqlutils.NotFoundf(ctx, "framework %q not found", obj.ID)
+	}
+
+	if framework.LightLogoFileID == nil {
+		return nil, nil
+	}
+
+	return r.loadPublicFile(ctx, *framework.LightLogoFileID)
 }
 
-// DarkLogoURL is the resolver for the darkLogoURL field.
-func (r *frameworkResolver) DarkLogoURL(ctx context.Context, obj *types.Framework) (*string, error) {
+// DarkLogo is the resolver for the darkLogo field.
+func (r *frameworkResolver) DarkLogo(ctx context.Context, obj *types.Framework) (*types.File, error) {
 	scope := coredata.NewScopeFromObjectID(obj.ID)
-	trustService := r.trust
 
-	return trustService.Frameworks.GenerateDarkLogoURL(ctx, scope, obj.ID, 1*time.Hour)
+	framework, err := r.trust.Frameworks.Get(ctx, scope, obj.ID)
+	if err != nil {
+		return nil, gqlutils.NotFoundf(ctx, "framework %q not found", obj.ID)
+	}
+
+	if framework.DarkLogoFileID == nil {
+		return nil, nil
+	}
+
+	return r.loadPublicFile(ctx, *framework.DarkLogoFileID)
 }
 
 // RequestAllAccesses is the resolver for the requestAllAccesses field.
@@ -650,20 +665,24 @@ func (r *subprocessorConnectionResolver) TotalCount(ctx context.Context, obj *ty
 	return 0, gqlutils.Internal(ctx)
 }
 
-// LogoFileURL is the resolver for the logoFileUrl field.
-func (r *trustCenterResolver) LogoFileURL(ctx context.Context, obj *types.TrustCenter) (*string, error) {
-	scope := coredata.NewScopeFromObjectID(obj.ID)
-	trustService := r.trust
+// Logo is the resolver for the logo field.
+func (r *trustCenterResolver) Logo(ctx context.Context, obj *types.TrustCenter) (*types.File, error) {
+	trustCenter := compliancepage.CompliancePageFromContext(ctx)
+	if trustCenter.LogoFileID == nil {
+		return nil, nil
+	}
 
-	return trustService.TrustCenters.GenerateLogoURL(ctx, scope, obj.ID, 1*time.Hour)
+	return r.loadPublicFile(ctx, *trustCenter.LogoFileID)
 }
 
-// DarkLogoFileURL is the resolver for the darkLogoFileUrl field.
-func (r *trustCenterResolver) DarkLogoFileURL(ctx context.Context, obj *types.TrustCenter) (*string, error) {
-	scope := coredata.NewScopeFromObjectID(obj.ID)
-	trustService := r.trust
+// DarkLogo is the resolver for the darkLogo field.
+func (r *trustCenterResolver) DarkLogo(ctx context.Context, obj *types.TrustCenter) (*types.File, error) {
+	trustCenter := compliancepage.CompliancePageFromContext(ctx)
+	if trustCenter.DarkLogoFileID == nil {
+		return nil, nil
+	}
 
-	return trustService.TrustCenters.GenerateDarkLogoURL(ctx, scope, obj.ID, 1*time.Hour)
+	return r.loadPublicFile(ctx, *trustCenter.DarkLogoFileID)
 }
 
 // NonDisclosureAgreement is the resolver for the nonDisclosureAgreement field.
@@ -975,18 +994,16 @@ func (r *trustCenterFileResolver) Access(ctx context.Context, obj *types.TrustCe
 	}, nil
 }
 
-// LogoURL is the resolver for the logoUrl field.
-func (r *trustCenterReferenceResolver) LogoURL(ctx context.Context, obj *types.TrustCenterReference) (string, error) {
+// Logo is the resolver for the logo field.
+func (r *trustCenterReferenceResolver) Logo(ctx context.Context, obj *types.TrustCenterReference) (*types.File, error) {
 	scope := coredata.NewScopeFromObjectID(obj.ID)
-	trustService := r.trust
 
-	logoURL, err := trustService.TrustCenterReferences.GenerateLogoURL(ctx, scope, obj.ID)
+	reference, err := r.trust.TrustCenterReferences.Get(ctx, scope, obj.ID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot generate logo URL", log.Error(err))
-		return "", gqlutils.Internal(ctx)
+		return nil, gqlutils.NotFoundf(ctx, "trust center reference %q not found", obj.ID)
 	}
 
-	return logoURL, nil
+	return r.loadPublicFile(ctx, reference.LogoFileID)
 }
 
 // Audit returns schema.AuditResolver implementation.

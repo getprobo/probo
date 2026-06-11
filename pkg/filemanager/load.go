@@ -15,25 +15,34 @@
 package filemanager
 
 import (
-	awss3 "github.com/aws/aws-sdk-go-v2/service/s3"
+	"context"
+	"fmt"
+
 	"go.gearno.de/kit/pg"
-	"go.probo.inc/probo/pkg/baseurl"
+	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/gid"
 )
 
-type Service struct {
-	pg       *pg.Client
-	baseURL  *baseurl.BaseURL
-	s3Client *awss3.Client
-}
+// GetPublicFile loads a public file record by ID.
+func (s *Service) GetPublicFile(
+	ctx context.Context,
+	fileID gid.GID,
+) (*coredata.File, error) {
+	file := &coredata.File{}
 
-func NewService(
-	pgClient *pg.Client,
-	baseURL *baseurl.BaseURL,
-	s3Client *awss3.Client,
-) *Service {
-	return &Service{
-		pg:       pgClient,
-		baseURL:  baseURL,
-		s3Client: s3Client,
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := file.LoadPublicByID(ctx, conn, fileID); err != nil {
+				return fmt.Errorf("cannot load public file: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
 	}
+
+	return file, nil
 }

@@ -38,8 +38,8 @@ export function MainLayout(props: Props) {
 
   useFavicon(
     theme === "dark"
-      ? (trustCenter?.darkLogoFileUrl ?? trustCenter?.logoFileUrl)
-      : trustCenter?.logoFileUrl,
+      ? (trustCenter?.darkLogo?.downloadUrl ?? trustCenter?.logo?.downloadUrl)
+      : trustCenter?.logo?.downloadUrl,
   );
   useRequestAccessCallback();
 

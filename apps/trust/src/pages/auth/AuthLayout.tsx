@@ -23,8 +23,12 @@ import type { AuthLayoutQuery } from "./__generated__/AuthLayoutQuery.graphql";
 export const authLayoutQuery = graphql`
   query AuthLayoutQuery {
     currentTrustCenter @required(action: THROW) {
-      logoFileUrl
-      darkLogoFileUrl
+      logo {
+        downloadUrl
+      }
+      darkLogo {
+        downloadUrl
+      }
     }
   }
 `;
@@ -36,8 +40,8 @@ export function AuthLayout(props: { queryRef: PreloadedQuery<AuthLayoutQuery> })
   const theme = useSystemTheme();
 
   const logoFileUrl = theme === "dark"
-    ? compliancePage.darkLogoFileUrl ?? compliancePage.logoFileUrl
-    : compliancePage.logoFileUrl;
+    ? compliancePage.darkLogo?.downloadUrl ?? compliancePage.logo?.downloadUrl
+    : compliancePage.logo?.downloadUrl;
 
   return (
     <div className="min-h-screen text-txt-primary bg-level-0 flex flex-col items-center justify-center">

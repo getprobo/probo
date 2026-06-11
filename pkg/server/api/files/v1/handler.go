@@ -94,13 +94,26 @@ func (h *Handler) handleGetPublicFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	presignedURL, err := h.fileSvc.GeneratePublicPresignedFileURL(r.Context(), fileID, presignedURLExpiry)
+	file, err := h.fileSvc.GetPublicFile(r.Context(), fileID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			jsonutil.RenderNotFound(w, fmt.Errorf("file not found"))
 			return
 		}
 
+		h.logger.ErrorCtx(
+			r.Context(),
+			"cannot get public file URL",
+			log.Error(err),
+			log.String("file_id", fileIDStr),
+		)
+		jsonutil.RenderInternalServerError(w)
+
+		return
+	}
+
+	presignedURL, err := h.fileSvc.GeneratePresignedURL(r.Context(), file, presignedURLExpiry)
+	if err != nil {
 		h.logger.ErrorCtx(
 			r.Context(),
 			"cannot get public file URL",
@@ -157,7 +170,7 @@ func (h *Handler) handleGetFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	presignedURL, err := h.fileSvc.GeneratePresignedFileURL(ctx, f, presignedURLExpiry)
+	presignedURL, err := h.fileSvc.GeneratePresignedURL(ctx, f, presignedURLExpiry)
 	if err != nil {
 		h.logger.ErrorCtx(ctx, "cannot generate file URL", log.Error(err), log.String("file_id", fileIDStr))
 		jsonutil.RenderInternalServerError(w)

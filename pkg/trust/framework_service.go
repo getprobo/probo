@@ -85,7 +85,7 @@ func (s FrameworkService) GenerateLightLogoURL(
 		return nil, nil
 	}
 
-	presignedURL, err := s.svc.fileManager.GeneratePresignedFileURL(ctx, file, expiresIn)
+	presignedURL, err := s.svc.fileManager.GeneratePresignedURL(ctx, file, expiresIn)
 	if err != nil {
 		return nil, fmt.Errorf("cannot generate file URL: %w", err)
 	}
@@ -128,7 +128,7 @@ func (s FrameworkService) GenerateDarkLogoURL(
 		return nil, nil
 	}
 
-	presignedURL, err := s.svc.fileManager.GeneratePresignedFileURL(ctx, file, expiresIn)
+	presignedURL, err := s.svc.fileManager.GeneratePresignedURL(ctx, file, expiresIn)
 	if err != nil {
 		return nil, fmt.Errorf("cannot generate file URL: %w", err)
 	}

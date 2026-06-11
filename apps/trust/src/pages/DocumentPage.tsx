@@ -47,8 +47,12 @@ import type { DocumentPageRequestTrustCenterFileAccessMutation } from "./__gener
 export const documentPageQuery = graphql`
   query DocumentPageQuery($id: ID!) {
     currentTrustCenter {
-      logoFileUrl
-      darkLogoFileUrl
+      logo {
+        downloadUrl
+      }
+      darkLogo {
+        downloadUrl
+      }
     }
     node(id: $id) @required(action: THROW) {
       __typename
@@ -230,8 +234,8 @@ export function DocumentPage({ queryRef }: Props) {
   const nodeId = getNodeId(node);
 
   const logoFileUrl = theme === "dark"
-    ? (trustCenter?.darkLogoFileUrl ?? trustCenter?.logoFileUrl)
-    : trustCenter?.logoFileUrl;
+    ? (trustCenter?.darkLogo?.downloadUrl ?? trustCenter?.logo?.downloadUrl)
+    : trustCenter?.logo?.downloadUrl;
 
   const [exportDocument, isExportingDocument]
     = useMutation<DocumentPageExportDocumentMutation>(exportDocumentMutation);
