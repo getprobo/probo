@@ -28,6 +28,7 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/llm"
+	"go.probo.inc/probo/pkg/strutil"
 	"go.probo.inc/probo/pkg/thirdparty"
 	"go.probo.inc/probo/pkg/uri"
 )
@@ -715,15 +716,15 @@ func nameMatchesSiteDomain(name, siteOrigin string) bool {
 		return false
 	}
 
-	normalizedName := normalizeAlnum(name)
+	normalizedName := strutil.NormalizeAlnum(name)
 	if normalizedName == "" {
 		return false
 	}
 
 	label, _, _ := strings.Cut(domain, ".")
 
-	return normalizedName == normalizeAlnum(domain) ||
-		normalizedName == normalizeAlnum(label)
+	return normalizedName == strutil.NormalizeAlnum(domain) ||
+		normalizedName == strutil.NormalizeAlnum(label)
 }
 
 // cookieDatabaseAggregators holds alphanumeric-normalised names of pure
@@ -746,18 +747,18 @@ var cookieDatabaseAggregators = map[string]struct{}{
 // is a known cookie-database directory operator that must never be
 // attributed a tracker. The agent may return either a brand name
 // ("Cookiepedia") or a domain form ("cookiedatabase.org"); the latter
-// would survive a plain normalised lookup because normalizeAlnum folds
+// would survive a plain normalised lookup because NormalizeAlnum folds
 // the eTLD into the key (e.g. "cookiedatabaseorg"). To catch both forms
 // the candidate is also reduced to its primary domain label before the
 // alphanumeric-normalised lookup. The comparison is alphanumeric-
 // normalised so spacing, punctuation, and casing differences do not
 // matter.
 func nameIsCookieDatabaseAggregator(name string) bool {
-	if _, ok := cookieDatabaseAggregators[normalizeAlnum(name)]; ok {
+	if _, ok := cookieDatabaseAggregators[strutil.NormalizeAlnum(name)]; ok {
 		return true
 	}
 
-	label := normalizeAlnum(uri.DomainLabel(name))
+	label := strutil.NormalizeAlnum(uri.DomainLabel(name))
 	if label == "" {
 		return false
 	}
@@ -765,22 +766,6 @@ func nameIsCookieDatabaseAggregator(name string) bool {
 	_, ok := cookieDatabaseAggregators[label]
 
 	return ok
-}
-
-// normalizeAlnum lowercases s and keeps only ASCII letters and digits,
-// so vendor names and domains can be compared free of spacing,
-// punctuation, and casing differences (e.g. "Letaido" and "letaido.com"
-// both reduce to a comparable form).
-func normalizeAlnum(s string) string {
-	var b strings.Builder
-
-	for _, r := range strings.ToLower(s) {
-		if (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') {
-			b.WriteRune(r)
-		}
-	}
-
-	return b.String()
 }
 
 // persistAgentIdentification writes a confident agent identification:

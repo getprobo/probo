@@ -18,6 +18,7 @@ import (
 	"slices"
 	"strings"
 
+	"go.probo.inc/probo/pkg/strutil"
 	"go.probo.inc/probo/pkg/uri"
 )
 
@@ -157,7 +158,7 @@ func vendorLabels(name, website string) []string {
 	}
 
 	add(uri.DomainLabel(website))
-	add(normalizeAlnum(name))
+	add(strutil.NormalizeAlnum(name))
 
 	return labels
 }
@@ -212,19 +213,4 @@ func normalizeToETLD1(raw string) string {
 	}
 
 	return uri.ExtractDomain(raw)
-}
-
-// normalizeAlnum lowercases a string and drops every non-alphanumeric
-// rune, so "Dark Reader" and "DarkReader, Inc." both reduce to a
-// comparable label root.
-func normalizeAlnum(s string) string {
-	var b strings.Builder
-
-	for _, r := range strings.ToLower(s) {
-		if (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') {
-			b.WriteRune(r)
-		}
-	}
-
-	return b.String()
 }
