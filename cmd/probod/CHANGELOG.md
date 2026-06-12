@@ -4,6 +4,27 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.209.0] - 2026-06-12
+
+### Added
+
+- Common third-party enricher worker that fills the global catalog (legal name, headquarters, canonical website, compliance docs, certifications, logo, owned domains) with per-field provenance and confidence thresholds; opt-in, no-ops without an agent provider
+- Tracker mapping and common-pattern enrichment agents can now open pages with a read-only headless browser (gated on Chrome endpoint) to read setters from cookie-database and policy pages
+- Discovery and persistence of common third-party owned domains, used to re-resolve previously unmapped tracker patterns
+- `Cache-Control` and `ETag` on `/api/files/v1/static` brand assets; startup validation of required assets
+
+### Changed
+
+- Tracker enrichment agent now restates source-page descriptions in its own words rather than copying them verbatim
+- Common third-party enrichment agents run in parallel after website resolution; prompts rewritten in role/task/instructions XML style with a calibrated confidence rubric
+- Oversized logo responses are rejected instead of truncated; ownership substring matching tightened with a length-ratio guard; per-agent error text sanitized and bounded before persistence
+
+### Fixed
+
+- Activate-login path
+- `find_links_matching` browser tool double-encoded its pattern, starving any agent using it
+- Worker confidence threshold of `0` no longer dropped by Helm falsy-numeric truthiness
+
 ## [0.208.1] - 2026-06-12
 
 ### Fixed
