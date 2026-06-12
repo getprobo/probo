@@ -28,7 +28,7 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/llm"
-	"go.probo.inc/probo/pkg/strutil"
+	"go.probo.inc/probo/pkg/stringsx"
 	"go.probo.inc/probo/pkg/thirdparty"
 	"go.probo.inc/probo/pkg/uri"
 )
@@ -716,15 +716,15 @@ func nameMatchesSiteDomain(name, siteOrigin string) bool {
 		return false
 	}
 
-	normalizedName := strutil.NormalizeAlnum(name)
+	normalizedName := stringsx.NormalizeAlnum(name)
 	if normalizedName == "" {
 		return false
 	}
 
 	label, _, _ := strings.Cut(domain, ".")
 
-	return normalizedName == strutil.NormalizeAlnum(domain) ||
-		normalizedName == strutil.NormalizeAlnum(label)
+	return normalizedName == stringsx.NormalizeAlnum(domain) ||
+		normalizedName == stringsx.NormalizeAlnum(label)
 }
 
 // cookieDatabaseAggregators holds alphanumeric-normalised names of pure
@@ -754,11 +754,11 @@ var cookieDatabaseAggregators = map[string]struct{}{
 // normalised so spacing, punctuation, and casing differences do not
 // matter.
 func nameIsCookieDatabaseAggregator(name string) bool {
-	if _, ok := cookieDatabaseAggregators[strutil.NormalizeAlnum(name)]; ok {
+	if _, ok := cookieDatabaseAggregators[stringsx.NormalizeAlnum(name)]; ok {
 		return true
 	}
 
-	label := strutil.NormalizeAlnum(uri.DomainLabel(name))
+	label := stringsx.NormalizeAlnum(uri.DomainLabel(name))
 	if label == "" {
 		return false
 	}

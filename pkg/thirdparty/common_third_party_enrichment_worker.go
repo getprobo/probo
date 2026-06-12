@@ -299,25 +299,17 @@ func (h *enrichmentHandler) Process(ctx context.Context, party coredata.CommonTh
 
 	var wg sync.WaitGroup
 
-	wg.Add(3)
-
-	go func() {
-		defer wg.Done()
-
+	wg.Go(func() {
 		compliance, complianceErr = h.runComplianceDocs(ctx, party.Name, website, legalName)
-	}()
+	})
 
-	go func() {
-		defer wg.Done()
-
+	wg.Go(func() {
 		domainsResult, domainsErr = h.runDomains(ctx, party.Name, website)
-	}()
+	})
 
-	go func() {
-		defer wg.Done()
-
+	wg.Go(func() {
 		logoFile = h.prepareLogo(ctx, party, website)
-	}()
+	})
 
 	wg.Wait()
 

@@ -12,37 +12,24 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package strutil_test
+// Package stringsx holds small, dependency-free string helpers shared
+// across packages.
+package stringsx
 
-import (
-	"testing"
+import "strings"
 
-	"github.com/stretchr/testify/assert"
-	"go.probo.inc/probo/pkg/strutil"
-)
+// NormalizeAlnum lowercases s and keeps only ASCII letters and digits, so
+// vendor names and domains can be compared free of spacing, punctuation,
+// and casing differences (e.g. "Letaido" and "letaido.com" both reduce to
+// a comparable form).
+func NormalizeAlnum(s string) string {
+	var b strings.Builder
 
-func TestNormalizeAlnum(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		name     string
-		input    string
-		expected string
-	}{
-		{name: "letters lowercased", input: "Letaido", expected: "letaido"},
-		{name: "strips punctuation and spaces", input: "letaido.com - Inc", expected: "letaidocominc"},
-		{name: "keeps digits", input: "auth0", expected: "auth0"},
-		{name: "empty", input: "", expected: ""},
-		{name: "only punctuation", input: "-_.:", expected: ""},
+	for _, r := range strings.ToLower(s) {
+		if (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') {
+			b.WriteRune(r)
+		}
 	}
 
-	for _, tt := range tests {
-		t.Run(
-			tt.name,
-			func(t *testing.T) {
-				t.Parallel()
-				assert.Equal(t, tt.expected, strutil.NormalizeAlnum(tt.input))
-			},
-		)
-	}
+	return b.String()
 }

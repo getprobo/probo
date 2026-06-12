@@ -18,7 +18,7 @@ import (
 	"slices"
 	"strings"
 
-	"go.probo.inc/probo/pkg/strutil"
+	"go.probo.inc/probo/pkg/stringsx"
 	"go.probo.inc/probo/pkg/uri"
 )
 
@@ -158,7 +158,7 @@ func vendorLabels(name, website string) []string {
 	}
 
 	add(uri.DomainLabel(website))
-	add(strutil.NormalizeAlnum(name))
+	add(stringsx.NormalizeAlnum(name))
 
 	return labels
 }
