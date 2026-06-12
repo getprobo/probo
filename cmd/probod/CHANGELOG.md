@@ -4,6 +4,13 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.208.1] - 2026-06-12
+
+### Fixed
+
+- Trust center file creation in console
+- S3 filename header escaping
+
 ## [0.208.0] - 2026-06-11
 
 ### Added
