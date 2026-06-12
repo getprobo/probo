@@ -1,0 +1,35 @@
+---
+# Hand-authored fixture for GET /api/v1/users against a Mercury organization.
+# The user object shape (userId, firstName, lastName, email, organizationRole)
+# mirrors the documented UserDetails schema; the page cursor is absent so the
+# driver stops after one page. Synthetic IDs/emails only.
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: api.mercury.com
+        form:
+            limit:
+                - "500"
+        headers:
+            Accept:
+                - application/json
+        url: https://api.mercury.com/api/v1/users?limit=500
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"users":[{"userId":"8f1a6f1e-0000-4000-8000-000000000001","firstName":"Ada","lastName":"Admin","email":"ada@example.com","organizationRole":"administrator"},{"userId":"8f1a6f1e-0000-4000-8000-000000000002","firstName":"Ben","lastName":"Books","email":"ben@example.com","organizationRole":"bookkeeper"},{"userId":"8f1a6f1e-0000-4000-8000-000000000003","firstName":"Eve","lastName":"Employee","email":"eve@example.com","organizationRole":"employee"}],"page":{"nextPage":null,"previousPage":null}}'
+        headers:
+            Content-Type:
+                - application/json
+        status: 200 OK
+        code: 200
+        duration: 120ms

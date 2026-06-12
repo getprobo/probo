@@ -1,0 +1,58 @@
+---
+# Hand-authored fixture for the ClickHouse Cloud member-listing flow: GET
+# /v1/organizations (key maps to exactly one org) then GET
+# /v1/organizations/{id}/members. Responses use the {status,requestId,result}
+# envelope. assignedRoles is the live role source; the deprecated `role` field
+# is the fallback. Synthetic IDs/emails only.
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: api.clickhouse.cloud
+        headers:
+            Accept:
+                - application/json
+        url: https://api.clickhouse.cloud/v1/organizations
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"status":200,"requestId":"11111111-1111-4111-8111-111111111111","result":[{"id":"aaaaaaaa-0000-4000-8000-000000000001","name":"Example Org","createdAt":"2025-12-01T08:00:00Z"}]}'
+        headers:
+            Content-Type:
+                - application/json
+        status: 200 OK
+        code: 200
+        duration: 110ms
+    - id: 1
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: api.clickhouse.cloud
+        headers:
+            Accept:
+                - application/json
+        url: https://api.clickhouse.cloud/v1/organizations/aaaaaaaa-0000-4000-8000-000000000001/members
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"status":200,"requestId":"22222222-2222-4222-8222-222222222222","result":[{"userId":"u-0000-0001","name":"Admin User","email":"admin@example.com","role":"admin","joinedAt":"2026-01-02T10:00:00Z","assignedRoles":[{"roleId":"33333333-3333-4333-8333-333333333333","roleName":"Admin","roleType":"system"}]},{"userId":"u-0000-0002","name":"Dev User","email":"dev@example.com","role":"developer","joinedAt":"2026-02-03T11:00:00Z","assignedRoles":[]},{"userId":"u-0000-0003","name":"","email":"custom@example.com","role":"developer","joinedAt":"2026-03-04T12:00:00Z","assignedRoles":[{"roleId":"44444444-4444-4444-8444-444444444444","roleName":"Billing Admin","roleType":"custom"}]}]}'
+        headers:
+            Content-Type:
+                - application/json
+        status: 200 OK
+        code: 200
+        duration: 110ms

@@ -114,6 +114,20 @@ func basicAuth(username string) string {
 	return "Basic " + base64.StdEncoding.EncodeToString([]byte(username+":"))
 }
 
+// basicAuthUserPass returns the HTTP Basic auth header value for a credential
+// that already holds the "username:password" pair ("Basic
+// base64(<credential>)"), or "" if the credential is empty. ClickHouse
+// Cloud (keyId:keySecret) and Langfuse (publicKey:secretKey) present such
+// a credential. The matcher ignores Authorization, so this only matters
+// when re-recording.
+func basicAuthUserPass(credential string) string {
+	if credential == "" {
+		return ""
+	}
+
+	return "Basic " + base64.StdEncoding.EncodeToString([]byte(credential))
+}
+
 // newVCRClient creates an *http.Client backed by the recorder's transport,
 // with an optional Authorization header injected into requests (for recording
 // mode). The authValue should be the complete header value, e.g.

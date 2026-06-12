@@ -15,15 +15,18 @@
 import type { ComponentProps, FC } from "react";
 
 import { Anthropic } from "./Anthropic";
+import { Apollo } from "./Apollo";
 import { Asana } from "./Asana";
 import { BetterStack } from "./BetterStack";
 import { Bitbucket } from "./Bitbucket";
 import { Brex } from "./Brex";
 import { Clerk } from "./Clerk";
+import { ClickHouse } from "./ClickHouse";
 import { ClickUp } from "./ClickUp";
 import { Cloudflare } from "./Cloudflare";
 import { Cursor } from "./Cursor";
 import { Datadog } from "./Datadog";
+import { Deepgram } from "./Deepgram";
 import { DocuSign } from "./DocuSign";
 import { Figma } from "./Figma";
 import { GitHub } from "./GitHub";
@@ -33,7 +36,9 @@ import { Grafana } from "./Grafana";
 import { Heroku } from "./Heroku";
 import { HubSpot } from "./HubSpot";
 import { Intercom } from "./Intercom";
+import { Langfuse } from "./Langfuse";
 import { Linear } from "./Linear";
+import { Mercury } from "./Mercury";
 import { Metabase } from "./Metabase";
 import { Microsoft } from "./Microsoft";
 import { Monday } from "./Monday";
@@ -60,15 +65,18 @@ import { Zendesk } from "./Zendesk";
 
 const thirdParties: Record<string, FC<ComponentProps<"svg">>> = {
   ANTHROPIC: Anthropic,
+  APOLLO: Apollo,
   ASANA: Asana,
   BETTER_STACK: BetterStack,
   BITBUCKET: Bitbucket,
   BREX: Brex,
   CLERK: Clerk,
+  CLICKHOUSE: ClickHouse,
   CLICKUP: ClickUp,
   CLOUDFLARE: Cloudflare,
   CURSOR: Cursor,
   DATADOG: Datadog,
+  DEEPGRAM: Deepgram,
   DOCUSIGN: DocuSign,
   FIGMA: Figma,
   GITHUB: GitHub,
@@ -79,7 +87,9 @@ const thirdParties: Record<string, FC<ComponentProps<"svg">>> = {
   HEROKU: Heroku,
   HUBSPOT: HubSpot,
   INTERCOM: Intercom,
+  LANGFUSE: Langfuse,
   LINEAR: Linear,
+  MERCURY: Mercury,
   METABASE: Metabase,
   MICROSOFT: Microsoft,
   MICROSOFT_365: Microsoft,

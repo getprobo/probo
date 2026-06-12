@@ -314,6 +314,25 @@ func buildMetabaseProbeURL(conn *coredata.Connector) (string, error) {
 	return endpoint.String(), nil
 }
 
+func buildLangfuseProbeURL(conn *coredata.Connector) (string, error) {
+	s, err := coredata.ConnectorSettings[coredata.LangfuseConnectorSettings](conn)
+	if err != nil {
+		return "", fmt.Errorf("cannot read langfuse connector settings: %w", err)
+	}
+
+	baseURL, err := normalizeLangfuseBaseURL(s.BaseURL)
+	if err != nil {
+		return "", err
+	}
+
+	u, err := url.Parse(baseURL)
+	if err != nil {
+		return "", fmt.Errorf("cannot parse langfuse base URL: %w", err)
+	}
+
+	return u.JoinPath("api", "public", "organizations", "memberships").String(), nil
+}
+
 func buildSigNozProbeURL(conn *coredata.Connector) (string, error) {
 	s, err := coredata.ConnectorSettings[coredata.SigNozConnectorSettings](conn)
 	if err != nil {

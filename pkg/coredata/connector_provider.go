@@ -65,6 +65,11 @@ const (
 	ConnectorProviderQovery       ConnectorProvider = "QOVERY"
 	ConnectorProviderRender       ConnectorProvider = "RENDER"
 	ConnectorProviderNeon         ConnectorProvider = "NEON"
+	ConnectorProviderMercury      ConnectorProvider = "MERCURY"
+	ConnectorProviderApollo       ConnectorProvider = "APOLLO"
+	ConnectorProviderDeepgram     ConnectorProvider = "DEEPGRAM"
+	ConnectorProviderClickHouse   ConnectorProvider = "CLICKHOUSE"
+	ConnectorProviderLangfuse     ConnectorProvider = "LANGFUSE"
 )
 
 var (
@@ -117,6 +122,11 @@ func ConnectorProviders() []ConnectorProvider {
 		ConnectorProviderQovery,
 		ConnectorProviderRender,
 		ConnectorProviderNeon,
+		ConnectorProviderMercury,
+		ConnectorProviderApollo,
+		ConnectorProviderDeepgram,
+		ConnectorProviderClickHouse,
+		ConnectorProviderLangfuse,
 	}
 }
 
@@ -164,7 +174,12 @@ func (v ConnectorProvider) IsValid() bool {
 		ConnectorProviderZendesk,
 		ConnectorProviderQovery,
 		ConnectorProviderRender,
-		ConnectorProviderNeon:
+		ConnectorProviderNeon,
+		ConnectorProviderMercury,
+		ConnectorProviderApollo,
+		ConnectorProviderDeepgram,
+		ConnectorProviderClickHouse,
+		ConnectorProviderLangfuse:
 		return true
 	}
 

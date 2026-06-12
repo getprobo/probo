@@ -1,0 +1,82 @@
+---
+# Hand-authored fixture for the Deepgram account-listing flow: GET /v1/projects
+# then GET /v1/projects/{project_id}/members for each project. owner@example.com
+# belongs to both projects (with different scopes), exercising the dedup +
+# scope-union path. Synthetic IDs/emails only.
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: api.deepgram.com
+        headers:
+            Accept:
+                - application/json
+        url: https://api.deepgram.com/v1/projects
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"projects":[{"project_id":"proj-1111-1111","name":"Production"},{"project_id":"proj-2222-2222","name":"Staging"}]}'
+        headers:
+            Content-Type:
+                - application/json
+        status: 200 OK
+        code: 200
+        duration: 90ms
+    - id: 1
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: api.deepgram.com
+        headers:
+            Accept:
+                - application/json
+        url: https://api.deepgram.com/v1/projects/proj-1111-1111/members
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"members":[{"member_id":"m-0000-0000-0001","email":"owner@example.com","first_name":"Olivia","last_name":"Owner","scopes":["member"]},{"member_id":"m-0000-0000-0002","email":"member@example.com","first_name":"Mia","last_name":"Member","scopes":["member"]}]}'
+        headers:
+            Content-Type:
+                - application/json
+        status: 200 OK
+        code: 200
+        duration: 90ms
+    - id: 2
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: api.deepgram.com
+        headers:
+            Accept:
+                - application/json
+        url: https://api.deepgram.com/v1/projects/proj-2222-2222/members
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"members":[{"member_id":"m-0000-0000-0001","email":"owner@example.com","first_name":"Olivia","last_name":"Owner","scopes":["owner"]},{"member_id":"m-0000-0000-0003","email":"dev@example.com","first_name":"Dan","last_name":"Dev","scopes":["member"]}]}'
+        headers:
+            Content-Type:
+                - application/json
+        status: 200 OK
+        code: 200
+        duration: 90ms

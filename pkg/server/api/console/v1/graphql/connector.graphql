@@ -71,6 +71,17 @@ enum ConnectorProvider
     QOVERY @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderQovery")
     RENDER @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderRender")
     NEON @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderNeon")
+    MERCURY
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderMercury")
+    APOLLO @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderApollo")
+    DEEPGRAM
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderDeepgram")
+    CLICKHOUSE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderClickHouse"
+        )
+    LANGFUSE
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderLangfuse")
 }
 
 type ConnectorProviderInfo {
@@ -152,6 +163,7 @@ input CreateAPIKeyConnectorInput {
     qoveryOrganizationId: String
     renderWorkspaceId: String
     neonOrganizationId: String
+    langfuseBaseUrl: String
 }
 
 type CreateAPIKeyConnectorPayload {

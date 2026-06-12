@@ -178,6 +178,17 @@ func apiKeyConnectorSettings(input types.CreateAPIKeyConnectorInput) (json.RawMe
 		}
 
 		return json.Marshal(&coredata.NeonConnectorSettings{OrganizationID: *input.NeonOrganizationID})
+	case coredata.ConnectorProviderLangfuse:
+		if input.LangfuseBaseURL == nil || *input.LangfuseBaseURL == "" {
+			return nil, fmt.Errorf("cannot create langfuse connector: langfuseBaseUrl is required")
+		}
+
+		u, err := url.Parse(*input.LangfuseBaseURL)
+		if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {
+			return nil, fmt.Errorf("cannot create langfuse connector: langfuseBaseUrl must be an http(s) URL")
+		}
+
+		return json.Marshal(&coredata.LangfuseConnectorSettings{BaseURL: *input.LangfuseBaseURL})
 	}
 
 	return nil, nil

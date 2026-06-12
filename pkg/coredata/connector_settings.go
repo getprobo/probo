@@ -156,6 +156,15 @@ type (
 	NeonConnectorSettings struct {
 		OrganizationID string `json:"organization_id"`
 	}
+
+	// LangfuseConnectorSettings carries the Langfuse API base URL, which
+	// spans the regional cloud hosts (cloud.langfuse.com /
+	// us.cloud.langfuse.com / …) and self-hosted instances. The
+	// organization-scoped API key is bound to a single organization on
+	// that host, so the base URL is the only per-tenant setting.
+	LangfuseConnectorSettings struct {
+		BaseURL string `json:"base_url"`
+	}
 )
 
 // GrantType returns the OAuth2 grant type recorded on the connector's

@@ -78,6 +78,19 @@ func TestBuildOktaProbeURL(t *testing.T) {
 	assert.Equal(t, "https://acme.okta.com/api/v1/users?limit=1", probeURL)
 }
 
+func TestBuildLangfuseProbeURL(t *testing.T) {
+	t.Parallel()
+
+	conn := &coredata.Connector{Provider: coredata.ConnectorProviderLangfuse}
+	require.NoError(t, conn.SetSettings(&coredata.LangfuseConnectorSettings{
+		BaseURL: "https://us.cloud.langfuse.com",
+	}))
+
+	probeURL, err := buildLangfuseProbeURL(conn)
+	require.NoError(t, err)
+	assert.Equal(t, "https://us.cloud.langfuse.com/api/public/organizations/memberships", probeURL)
+}
+
 func TestBuildPostHogProbeURL(t *testing.T) {
 	t.Parallel()
 
