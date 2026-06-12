@@ -80,11 +80,11 @@ func seedCommonThirdParty(t *testing.T, name string) gid.GID {
 
 	_, err := conn.Exec(ctx, `
 		INSERT INTO common_third_parties (
-			id, name, slug, category, certifications, created_at, updated_at
+			id, name, slug, category, certifications, enrichment_attempts, created_at, updated_at
 		) VALUES (
-			$1, $2, $3, $4, $5, $6, $7
+			$1, $2, $3, $4, $5, $6, $7, $8
 		)
-	`, id, name, slug, "OTHER", []string{}, now, now)
+	`, id, name, slug, "OTHER", []string{}, 0, now, now)
 	require.NoError(t, err)
 
 	t.Cleanup(func() {
