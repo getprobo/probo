@@ -25,6 +25,7 @@ import (
 	"go.gearno.de/kit/pg"
 	"go.gearno.de/kit/worker"
 	"go.probo.inc/probo/pkg/agent"
+	"go.probo.inc/probo/pkg/agent/tools/browser"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/llm"
@@ -42,7 +43,8 @@ const defaultMappingStaleAfter = 10 * time.Minute
 type trackerMappingHandler struct {
 	pg                    *pg.Client
 	logger                *log.Logger
-	mappingAgent          *agent.Agent
+	mappingCfg            TrackerMappingAgentConfig
+	mappingEnabled        bool
 	disambiguationAgent   *agent.Agent
 	agentTimeout          time.Duration
 	disambiguationTimeout time.Duration
@@ -69,13 +71,11 @@ func NewTrackerMappingWorker(
 	h := &trackerMappingHandler{
 		pg:                    pgClient,
 		logger:                logger,
+		mappingCfg:            mappingCfg,
+		mappingEnabled:        mappingCfg.LLMClient != nil,
 		agentTimeout:          agentTimeout,
 		disambiguationTimeout: disambiguationCfg.Timeout,
 		staleAfter:            staleAfter,
-	}
-
-	if mappingCfg.LLMClient != nil {
-		h.mappingAgent = buildTrackerMappingAgent(mappingCfg, pgClient, logger)
 	}
 
 	if disambiguationCfg.LLMClient != nil {
@@ -191,7 +191,7 @@ func (h *trackerMappingHandler) Process(ctx context.Context, tp coredata.Tracker
 	// the deterministic signals could not resolve a catalog third party.
 	// The LLM and web-search calls happen outside any transaction; the
 	// result is persisted in its own short transaction.
-	if commonThirdPartyID == nil && h.mappingAgent != nil {
+	if commonThirdPartyID == nil && h.mappingEnabled {
 		ident, err := h.identifyWithAgent(ctx, tp, det.origin)
 		if err != nil {
 			return fmt.Errorf("cannot identify with agent: %w", err)
@@ -622,12 +622,27 @@ func (h *trackerMappingHandler) identifyWithAgent(
 
 	prompt := buildAgentPrompt(tp, domains, siteDomain)
 
+	// Build the mapping agent per run so it can carry a per-run browser
+	// when a Chrome endpoint is configured. The browser lets the agent
+	// open cookie-database and cookie-policy pages to read the true
+	// setter; it is closed when this run returns.
+	var browserTools []agent.Tool
+
+	if h.mappingCfg.ChromeAddr != "" {
+		webBrowser := browser.NewBrowser(ctx, h.mappingCfg.ChromeAddr)
+		defer webBrowser.Close()
+
+		browserTools = browser.NewReadOnlyToolset(webBrowser).Tools()
+	}
+
+	mappingAgent := buildTrackerMappingAgent(h.mappingCfg, h.pg, h.logger, browserTools)
+
 	agentCtx, cancel := context.WithTimeout(ctx, h.agentTimeout)
 	defer cancel()
 
 	result, err := agent.RunTyped[TrackerMappingAgentResult](
 		agentCtx,
-		h.mappingAgent,
+		mappingAgent,
 		[]llm.Message{
 			{
 				Role:  llm.RoleUser,

@@ -75,15 +75,23 @@ type TrackerMappingAgentResult struct {
 	ThirdPartyConfidence float64                     `json:"third_party_confidence" jsonschema:"Confidence (0.0 to 1.0) in which company or service set this tracker, independent of whether the artifact is a classic web tracker. Set below 0.5 if unsure who set it."`
 }
 
+// buildTrackerMappingAgent builds the tracker-mapping agent. extraTools
+// carries the browser read-only toolset when a headless Chrome endpoint
+// is configured; it is empty otherwise, in which case the agent relies on
+// the DB search tools and web search alone. The browser lets it open
+// cookie-database and cookie-policy pages to read the true setter.
 func buildTrackerMappingAgent(
 	cfg TrackerMappingAgentConfig,
 	pgClient *pg.Client,
 	logger *log.Logger,
+	extraTools []agent.Tool,
 ) *agent.Agent {
 	tools := []agent.Tool{
 		searchTrackerPatternsTool(pgClient),
 		searchThirdPartiesTool(pgClient),
 	}
+
+	tools = append(tools, extraTools...)
 
 	if cfg.FirecrawlAPIKey != "" {
 		tools = append(tools, search.FirecrawlSearchTool(cfg.FirecrawlAPIKey))

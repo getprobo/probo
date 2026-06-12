@@ -23,6 +23,7 @@ import (
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/agent"
+	"go.probo.inc/probo/pkg/agent/tools/browser"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/llm"
@@ -39,8 +40,10 @@ import (
 type CommonPatternEnricher struct {
 	pg                *pg.Client
 	logger            *log.Logger
-	enrichmentAgent   *agent.Agent
-	mappingAgent      *agent.Agent
+	enrichmentCfg     TrackerEnrichmentAgentConfig
+	mappingCfg        TrackerMappingAgentConfig
+	enrichmentEnabled bool
+	mappingEnabled    bool
 	enrichmentTimeout time.Duration
 	mappingTimeout    time.Duration
 }
@@ -70,16 +73,12 @@ func NewCommonPatternEnricher(
 	e := &CommonPatternEnricher{
 		pg:                pgClient,
 		logger:            logger,
+		enrichmentCfg:     enrichmentCfg,
+		mappingCfg:        mappingCfg,
+		enrichmentEnabled: enrichmentCfg.LLMClient != nil,
+		mappingEnabled:    mappingCfg.LLMClient != nil,
 		enrichmentTimeout: enrichmentTimeout,
 		mappingTimeout:    mappingTimeout,
-	}
-
-	if enrichmentCfg.LLMClient != nil {
-		e.enrichmentAgent = buildCommonPatternEnrichmentAgent(enrichmentCfg, pgClient, logger)
-	}
-
-	if mappingCfg.LLMClient != nil {
-		e.mappingAgent = buildTrackerMappingAgent(mappingCfg, pgClient, logger)
 	}
 
 	return e
@@ -87,7 +86,7 @@ func NewCommonPatternEnricher(
 
 // Enabled reports whether an LLM-backed enrichment agent is configured.
 func (e *CommonPatternEnricher) Enabled() bool {
-	return e.enrichmentAgent != nil
+	return e.enrichmentEnabled
 }
 
 // EnrichPattern researches a description for one common tracker pattern
@@ -105,6 +104,19 @@ func (e *CommonPatternEnricher) EnrichPattern(ctx context.Context, cp coredata.C
 		return err
 	}
 
+	// Build one per-run browser shared by both agent sub-runs when a
+	// Chrome endpoint is configured. The browser lets the agents open
+	// cookie-database and cookie-policy pages to read the true setter and
+	// ground a description; it is closed when this run returns.
+	var browserTools []agent.Tool
+
+	if e.enrichmentCfg.ChromeAddr != "" {
+		webBrowser := browser.NewBrowser(ctx, e.enrichmentCfg.ChromeAddr)
+		defer webBrowser.Close()
+
+		browserTools = browser.NewReadOnlyToolset(webBrowser).Tools()
+	}
+
 	// Map before enriching: an unlinked pattern is run through the
 	// mapping agent first so a confident vendor both seeds the enrichment
 	// prompt and gets linked. Attribution stays the mapping pipeline's
@@ -113,7 +125,7 @@ func (e *CommonPatternEnricher) EnrichPattern(ctx context.Context, cp coredata.C
 	var attribution *TrackerMappingAgentResult
 
 	if cp.CommonThirdPartyID == nil {
-		attribution, err = e.identifyThirdParty(ctx, cp)
+		attribution, err = e.identifyThirdParty(ctx, cp, browserTools)
 		if err != nil {
 			return err
 		}
@@ -123,7 +135,7 @@ func (e *CommonPatternEnricher) EnrichPattern(ctx context.Context, cp coredata.C
 		}
 	}
 
-	description, err := e.research(ctx, cp, thirdPartyName)
+	description, err := e.research(ctx, cp, thirdPartyName, browserTools)
 	if err != nil {
 		return fmt.Errorf("cannot research tracker description: %w", err)
 	}
@@ -207,15 +219,18 @@ func (e *CommonPatternEnricher) research(
 	ctx context.Context,
 	cp coredata.CommonTrackerPattern,
 	thirdPartyName string,
+	browserTools []agent.Tool,
 ) (string, error) {
 	prompt := buildEnrichmentPrompt(cp, thirdPartyName)
+
+	enrichmentAgent := buildCommonPatternEnrichmentAgent(e.enrichmentCfg, e.pg, e.logger, browserTools)
 
 	agentCtx, cancel := context.WithTimeout(ctx, e.enrichmentTimeout)
 	defer cancel()
 
 	result, err := agent.RunTyped[CommonPatternEnrichmentResult](
 		agentCtx,
-		e.enrichmentAgent,
+		enrichmentAgent,
 		[]llm.Message{
 			{
 				Role:  llm.RoleUser,
@@ -239,19 +254,22 @@ func (e *CommonPatternEnricher) research(
 func (e *CommonPatternEnricher) identifyThirdParty(
 	ctx context.Context,
 	cp coredata.CommonTrackerPattern,
+	browserTools []agent.Tool,
 ) (*TrackerMappingAgentResult, error) {
-	if e.mappingAgent == nil {
+	if !e.mappingEnabled {
 		return nil, nil
 	}
 
 	prompt := buildCommonPatternIdentificationPrompt(cp)
+
+	mappingAgent := buildTrackerMappingAgent(e.mappingCfg, e.pg, e.logger, browserTools)
 
 	agentCtx, cancel := context.WithTimeout(ctx, e.mappingTimeout)
 	defer cancel()
 
 	result, err := agent.RunTyped[TrackerMappingAgentResult](
 		agentCtx,
-		e.mappingAgent,
+		mappingAgent,
 		[]llm.Message{
 			{
 				Role:  llm.RoleUser,
