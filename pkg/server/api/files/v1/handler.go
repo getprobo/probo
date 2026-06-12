@@ -17,7 +17,6 @@ package files_v1
 import (
 	"errors"
 	"fmt"
-	"io/fs"
 	"net/http"
 	"time"
 
@@ -31,7 +30,7 @@ import (
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/securecookie"
 	"go.probo.inc/probo/pkg/server/api/authn"
-	"go.probo.inc/probo/pkg/server/jsonutil"
+	"go.probo.inc/probo/pkg/server/jsonx"
 )
 
 const presignedURLExpiry = 1 * time.Hour
@@ -41,6 +40,7 @@ type Handler struct {
 	fileSvc *filemanager.Service
 	probo   *probo.Service
 	iamSvc  *iam.Service
+	assets  *brand.Assets
 }
 
 func NewMux(
@@ -56,6 +56,7 @@ func NewMux(
 		fileSvc: fileSvc,
 		probo:   proboSvc,
 		iamSvc:  iamSvc,
+		assets:  brand.NewAssets(),
 	}
 
 	r := chi.NewRouter()
@@ -77,12 +78,15 @@ func NewMux(
 func (h *Handler) handleGetStaticFile(w http.ResponseWriter, r *http.Request) {
 	file := chi.URLParam(r, "file")
 
-	if _, statErr := fs.Stat(brand.Assets, file); statErr == nil {
-		http.ServeFileFS(w, r, brand.Assets, file)
+	if _, statErr := h.assets.Stat(file); statErr != nil {
+		jsonx.RenderNotFound(w, fmt.Errorf("file not found"))
 		return
 	}
 
-	jsonutil.RenderNotFound(w, fmt.Errorf("file not found"))
+	// ServeAssets honors the ETag header we set above for If-None-Match (and
+	// If-Range), so it emits 304 Not Modified and handles range requests without
+	// any extra conditional logic here.
+	h.assets.ServeAssets(w, r, file)
 }
 
 func (h *Handler) handleGetPublicFile(w http.ResponseWriter, r *http.Request) {
@@ -90,14 +94,14 @@ func (h *Handler) handleGetPublicFile(w http.ResponseWriter, r *http.Request) {
 
 	fileID, err := gid.ParseGID(fileIDStr)
 	if err != nil {
-		jsonutil.RenderNotFound(w, fmt.Errorf("file not found"))
+		jsonx.RenderNotFound(w, fmt.Errorf("file not found"))
 		return
 	}
 
 	file, err := h.fileSvc.GetPublicFile(r.Context(), fileID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			jsonutil.RenderNotFound(w, fmt.Errorf("file not found"))
+			jsonx.RenderNotFound(w, fmt.Errorf("file not found"))
 			return
 		}
 
@@ -107,7 +111,7 @@ func (h *Handler) handleGetPublicFile(w http.ResponseWriter, r *http.Request) {
 			log.Error(err),
 			log.String("file_id", fileIDStr),
 		)
-		jsonutil.RenderInternalServerError(w)
+		jsonx.RenderInternalServerError(w)
 
 		return
 	}
@@ -120,7 +124,7 @@ func (h *Handler) handleGetPublicFile(w http.ResponseWriter, r *http.Request) {
 			log.Error(err),
 			log.String("file_id", fileIDStr),
 		)
-		jsonutil.RenderInternalServerError(w)
+		jsonx.RenderInternalServerError(w)
 
 		return
 	}
@@ -133,7 +137,7 @@ func (h *Handler) handleGetFile(w http.ResponseWriter, r *http.Request) {
 
 	fileID, err := gid.ParseGID(fileIDStr)
 	if err != nil {
-		jsonutil.RenderNotFound(w, fmt.Errorf("file not found"))
+		jsonx.RenderNotFound(w, fmt.Errorf("file not found"))
 		return
 	}
 
@@ -153,19 +157,19 @@ func (h *Handler) handleGetFile(w http.ResponseWriter, r *http.Request) {
 
 	scope, err := h.iamSvc.Authorizer.Authorize(ctx, params)
 	if err != nil {
-		jsonutil.RenderNotFound(w, fmt.Errorf("file not found"))
+		jsonx.RenderNotFound(w, fmt.Errorf("file not found"))
 		return
 	}
 
 	f, err := h.probo.Files.Get(ctx, scope, fileID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			jsonutil.RenderNotFound(w, fmt.Errorf("file not found"))
+			jsonx.RenderNotFound(w, fmt.Errorf("file not found"))
 			return
 		}
 
 		h.logger.ErrorCtx(ctx, "cannot get file", log.Error(err), log.String("file_id", fileIDStr))
-		jsonutil.RenderInternalServerError(w)
+		jsonx.RenderInternalServerError(w)
 
 		return
 	}
@@ -173,7 +177,7 @@ func (h *Handler) handleGetFile(w http.ResponseWriter, r *http.Request) {
 	presignedURL, err := h.fileSvc.GeneratePresignedURL(ctx, f, presignedURLExpiry)
 	if err != nil {
 		h.logger.ErrorCtx(ctx, "cannot generate file URL", log.Error(err), log.String("file_id", fileIDStr))
-		jsonutil.RenderInternalServerError(w)
+		jsonx.RenderInternalServerError(w)
 
 		return
 	}

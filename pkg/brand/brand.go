@@ -2,24 +2,18 @@ package brand
 
 import (
 	"embed"
-	"io/fs"
 )
 
-var (
-	//go:embed assets
-	staticAssets embed.FS
+//go:embed assets
+var staticAssets embed.FS
 
-	Assets fs.FS
-
-	DefaultPoweredByLogoPath     string = "/api/files/v1/static/probo-gray-small.png"
-	DefaultSenderCompanyLogoPath string = "/api/files/v1/static/probo.png"
+// Logical brand assets. These filenames must exist under assets/; NewAssets
+// verifies their presence at startup so a rename or removal fails fast instead
+// of silently producing a 404 in the consumers (e.g. emails).
+const (
+	PoweredByLogo     = "probo-gray-small.png"
+	SenderCompanyLogo = "probo.png"
 )
 
-func init() {
-	var err error
-
-	Assets, err = fs.Sub(staticAssets, "assets")
-	if err != nil {
-		panic(err)
-	}
-}
+// requiredAssets are validated to exist whenever an Assets is constructed.
+var requiredAssets = []string{PoweredByLogo, SenderCompanyLogo}

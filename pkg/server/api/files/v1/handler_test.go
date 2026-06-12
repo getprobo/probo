@@ -19,10 +19,12 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/securecookie"
 )
@@ -65,6 +67,43 @@ func TestHandleGetFile_InvalidGID(t *testing.T) {
 	h.handleGetFile(rec, req)
 
 	assert.Equal(t, http.StatusNotFound, rec.Code)
+}
+
+func TestHandleGetStaticFile(t *testing.T) {
+	t.Parallel()
+
+	mux := NewMux(
+		log.NewLogger(log.WithOutput(io.Discard)),
+		nil,
+		nil,
+		nil,
+		securecookie.Config{},
+		"test-secret",
+	)
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/static/probo.png", nil)
+	mux.ServeHTTP(rec, req)
+
+	require.Equal(t, http.StatusOK, rec.Code)
+	require.Contains(t, rec.Header().Get("Cache-Control"), "max-age=3600")
+
+	etag := rec.Header().Get("ETag")
+	require.NotEmpty(t, etag)
+	require.True(t, strings.HasPrefix(etag, `"`) && strings.HasSuffix(etag, `"`))
+
+	recNotModified := httptest.NewRecorder()
+	reqNotModified := httptest.NewRequest(http.MethodGet, "/static/probo.png", nil)
+	reqNotModified.Header.Set("If-None-Match", etag)
+	mux.ServeHTTP(recNotModified, reqNotModified)
+
+	require.Equal(t, http.StatusNotModified, recNotModified.Code)
+
+	recMissing := httptest.NewRecorder()
+	reqMissing := httptest.NewRequest(http.MethodGet, "/static/does-not-exist.png", nil)
+	mux.ServeHTTP(recMissing, reqMissing)
+
+	require.Equal(t, http.StatusNotFound, recMissing.Code)
 }
 
 func TestHandleGetFile_UnauthenticatedReturns401(t *testing.T) {
