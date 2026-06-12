@@ -41,7 +41,7 @@ func TestMetabaseDriver(t *testing.T) {
 
 	assert.Equal(t, "alice@example.com", records[0].Email)
 	assert.Equal(t, "Alice A.", records[0].FullName)
-	assert.Equal(t, "Admin", records[0].Role)
+	assert.Equal(t, []string{"Admin"}, records[0].Roles)
 	assert.True(t, records[0].IsAdmin)
 	require.NotNil(t, records[0].Active)
 	assert.True(t, *records[0].Active)
@@ -51,7 +51,7 @@ func TestMetabaseDriver(t *testing.T) {
 
 	assert.Equal(t, "bob@example.com", records[1].Email)
 	assert.Equal(t, "Bob Builder", records[1].FullName)
-	assert.Equal(t, "User", records[1].Role)
+	assert.Equal(t, []string{"User"}, records[1].Roles)
 	assert.False(t, records[1].IsAdmin)
 	require.NotNil(t, records[1].Active)
 	assert.False(t, *records[1].Active)

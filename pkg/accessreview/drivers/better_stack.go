@@ -94,7 +94,7 @@ func (d *BetterStackDriver) ListAccounts(ctx context.Context) ([]AccountRecord, 
 			record := AccountRecord{
 				Email:       member.Attributes.Email,
 				FullName:    strings.TrimSpace(member.Attributes.FirstName + " " + member.Attributes.LastName),
-				Role:        betterStackRole(member.Attributes.Role),
+				Roles:       betterStackRoles(member.Attributes.Role),
 				Active:      betterStackActive(member.Type),
 				IsAdmin:     betterStackIsAdmin(member.Attributes.Role),
 				MFAStatus:   coredata.MFAStatusUnknown,
@@ -168,23 +168,27 @@ func (d *BetterStackDriver) fetchTeamMembersPage(
 	return &resp, nil
 }
 
-// betterStackRole maps a Better Stack role token to a human-readable label.
+// betterStackRoles maps a Better Stack role token to a human-readable label.
 // Unknown roles (including the Enterprise "custom" roles) are passed through
 // unchanged so the reviewer still sees the source value.
-func betterStackRole(role string) string {
+func betterStackRoles(role string) []string {
+	if role == "" {
+		return []string{}
+	}
+
 	switch role {
 	case "admin":
-		return "Admin"
+		return []string{"Admin"}
 	case "billing_admin":
-		return "Billing admin"
+		return []string{"Billing admin"}
 	case "team_lead":
-		return "Team lead"
+		return []string{"Team lead"}
 	case "responder":
-		return "Responder"
+		return []string{"Responder"}
 	case "member":
-		return "Member"
+		return []string{"Member"}
 	default:
-		return role
+		return []string{role}
 	}
 }
 

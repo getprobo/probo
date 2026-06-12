@@ -103,7 +103,7 @@ func (d *SendGridDriver) ListAccounts(ctx context.Context) ([]AccountRecord, err
 			records = append(records, AccountRecord{
 				Email:    teammate.Email,
 				FullName: sendGridFullName(teammate.FirstName, teammate.LastName),
-				Role:     sendGridRole(teammate.UserType, teammate.IsAdmin),
+				Roles:    sendGridRoles(teammate.UserType, teammate.IsAdmin),
 				IsAdmin:  teammate.IsAdmin,
 				// SendGrid exposes no UUID for teammates; the username is the
 				// only stable handle. For unified accounts it equals the email.
@@ -209,22 +209,22 @@ func sendGridFullName(firstName, lastName string) string {
 	return strings.TrimSpace(strings.Join([]string{firstName, lastName}, " "))
 }
 
-func sendGridRole(userType string, isAdmin bool) string {
+func sendGridRoles(userType string, isAdmin bool) []string {
 	switch userType {
 	case "owner":
-		return "Owner"
+		return []string{"Owner"}
 	case "admin":
-		return "Admin"
+		return []string{"Admin"}
 	case "teammate":
-		return "Teammate"
+		return []string{"Teammate"}
 	case "":
 		if isAdmin {
-			return "Admin"
+			return []string{"Admin"}
 		}
 
-		return "Teammate"
+		return []string{"Teammate"}
 	default:
-		return userType
+		return []string{userType}
 	}
 }
 

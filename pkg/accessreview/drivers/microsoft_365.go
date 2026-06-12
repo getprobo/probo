@@ -164,16 +164,16 @@ func (d *Microsoft365Driver) ListAccounts(ctx context.Context) ([]AccountRecord,
 			}
 		}
 
-		role := pickHighestRole(userRoles)
-		if role == "" {
-			role = "User"
+		roles := userRoles
+		if len(roles) == 0 {
+			roles = []string{"User"}
 		}
 
 		active := u.AccountEnabled
 		rec := AccountRecord{
 			Email:       email,
 			FullName:    u.DisplayName,
-			Role:        role,
+			Roles:       roles,
 			JobTitle:    u.JobTitle,
 			Active:      &active,
 			IsAdmin:     isAdmin,
@@ -193,39 +193,6 @@ func (d *Microsoft365Driver) ListAccounts(ctx context.Context) ([]AccountRecord,
 	}
 
 	return records, nil
-}
-
-// pickHighestRole returns the most privileged admin role from the list,
-// falling back to the first non-admin role when no admin role is present.
-// Privilege order is hard-coded to Microsoft's well-known directory roles.
-func pickHighestRole(roles []string) string {
-	priority := []string{
-		"Global Administrator",
-		"Company Administrator",
-		"Privileged Role Administrator",
-		"Privileged Authentication Administrator",
-		"Security Administrator",
-		"Application Administrator",
-		"Cloud Application Administrator",
-		"User Administrator",
-		"Conditional Access Administrator",
-		"Compliance Administrator",
-		"Authentication Administrator",
-	}
-
-	for _, p := range priority {
-		for _, r := range roles {
-			if r == p {
-				return r
-			}
-		}
-	}
-
-	if len(roles) > 0 {
-		return roles[0]
-	}
-
-	return ""
 }
 
 func (d *Microsoft365Driver) listUsers(ctx context.Context) ([]microsoft365User, error) {

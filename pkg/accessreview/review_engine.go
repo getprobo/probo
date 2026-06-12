@@ -131,7 +131,7 @@ func (s *Service) FetchSource(
 					AccessReviewCampaignSourceID: campaignSource.ID,
 					Email:                        account.Email,
 					FullName:                     account.FullName,
-					Role:                         account.Role,
+					Roles:                        account.Roles,
 					JobTitle:                     account.JobTitle,
 					IsAdmin:                      account.IsAdmin,
 					MFAStatus:                    account.MFAStatus,

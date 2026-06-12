@@ -92,25 +92,12 @@ func (d *HubSpotDriver) ListAccounts(ctx context.Context) ([]AccountRecord, erro
 		}
 
 		for _, u := range resp.Results {
-			role := "User"
-			roleID := hubspotRoleID(u)
-
-			if roleMap != nil && roleID != "" {
-				if name, ok := roleMap[roleID]; ok {
-					role = name
-				} else if u.SuperAdmin {
-					role = "Super Admin"
-				}
-			} else if u.SuperAdmin {
-				role = "Super Admin"
-			}
-
 			fullName := strings.TrimSpace(u.FirstName + " " + u.LastName)
 
 			record := AccountRecord{
 				Email:       u.Email,
 				FullName:    fullName,
-				Role:        role,
+				Roles:       hubspotRoles(u, roleMap),
 				Active:      hubspotUserActive(u),
 				IsAdmin:     u.SuperAdmin,
 				ExternalID:  u.ID,
@@ -206,16 +193,65 @@ func (d *HubSpotDriver) fetchRoles(ctx context.Context) (map[string]string, erro
 	return roleMap, nil
 }
 
-func hubspotRoleID(user hubspotUser) string {
-	if user.RoleID != "" {
-		return user.RoleID
+func hubspotRoles(user hubspotUser, roleMap map[string]string) []string {
+	roleIDs := hubspotRoleIDs(user)
+
+	seen := make(map[string]struct{}, len(roleIDs)+1)
+	roles := make([]string, 0, len(roleIDs)+1)
+
+	if roleMap != nil {
+		for _, id := range roleIDs {
+			name, ok := roleMap[id]
+			if !ok {
+				continue
+			}
+
+			if _, dup := seen[name]; dup {
+				continue
+			}
+
+			seen[name] = struct{}{}
+			roles = append(roles, name)
+		}
 	}
 
-	if len(user.RoleIDs) > 0 {
-		return user.RoleIDs[0]
+	if user.SuperAdmin {
+		if _, dup := seen["Super Admin"]; !dup {
+			roles = append(roles, "Super Admin")
+		}
 	}
 
-	return ""
+	if len(roles) > 0 {
+		return roles
+	}
+
+	return []string{"User"}
+}
+
+func hubspotRoleIDs(user hubspotUser) []string {
+	seen := make(map[string]struct{}, 1+len(user.RoleIDs))
+	ids := make([]string, 0, 1+len(user.RoleIDs))
+
+	add := func(id string) {
+		if id == "" {
+			return
+		}
+
+		if _, ok := seen[id]; ok {
+			return
+		}
+
+		seen[id] = struct{}{}
+		ids = append(ids, id)
+	}
+
+	add(user.RoleID)
+
+	for _, id := range user.RoleIDs {
+		add(id)
+	}
+
+	return ids
 }
 
 func hubspotUserActive(user hubspotUser) *bool {

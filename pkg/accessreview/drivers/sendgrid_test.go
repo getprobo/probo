@@ -43,7 +43,7 @@ func TestSendGridDriver(t *testing.T) {
 	owner := records[0]
 	assert.Equal(t, "owner@example.com", owner.Email)
 	assert.Empty(t, owner.FullName)
-	assert.Equal(t, "Owner", owner.Role)
+	assert.Equal(t, []string{"Owner"}, owner.Roles)
 	assert.True(t, owner.IsAdmin)
 	assert.Equal(t, "owner@example.com", owner.ExternalID)
 	assert.Equal(t, coredata.AccessReviewEntryAccountTypeUser, owner.AccountType)
@@ -62,7 +62,7 @@ func TestSendGridDriver(t *testing.T) {
 	teammate := records[1]
 	assert.Equal(t, "taylor@example.com", teammate.Email)
 	assert.Equal(t, "Taylor Teammate", teammate.FullName)
-	assert.Equal(t, "Teammate", teammate.Role)
+	assert.Equal(t, []string{"Teammate"}, teammate.Roles)
 	assert.False(t, teammate.IsAdmin)
 	// Non-unified teammate: username is a handle distinct from the email.
 	assert.Equal(t, "taylor-teammate", teammate.ExternalID)
@@ -70,27 +70,27 @@ func TestSendGridDriver(t *testing.T) {
 	assert.Equal(t, coredata.MFAStatusEnabled, teammate.MFAStatus)
 }
 
-func TestSendGridRole(t *testing.T) {
+func TestSendGridRoles(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
 		name     string
 		userType string
 		isAdmin  bool
-		want     string
+		want     []string
 	}{
-		{name: "owner", userType: "owner", isAdmin: true, want: "Owner"},
-		{name: "admin", userType: "admin", isAdmin: true, want: "Admin"},
-		{name: "teammate", userType: "teammate", isAdmin: false, want: "Teammate"},
-		{name: "empty admin", userType: "", isAdmin: true, want: "Admin"},
-		{name: "empty teammate", userType: "", isAdmin: false, want: "Teammate"},
-		{name: "unknown", userType: "custom-role", isAdmin: false, want: "custom-role"},
+		{name: "owner", userType: "owner", isAdmin: true, want: []string{"Owner"}},
+		{name: "admin", userType: "admin", isAdmin: true, want: []string{"Admin"}},
+		{name: "teammate", userType: "teammate", isAdmin: false, want: []string{"Teammate"}},
+		{name: "empty admin", userType: "", isAdmin: true, want: []string{"Admin"}},
+		{name: "empty teammate", userType: "", isAdmin: false, want: []string{"Teammate"}},
+		{name: "unknown", userType: "custom-role", isAdmin: false, want: []string{"custom-role"}},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			assert.Equal(t, tt.want, sendGridRole(tt.userType, tt.isAdmin))
+			assert.Equal(t, tt.want, sendGridRoles(tt.userType, tt.isAdmin))
 		})
 	}
 }

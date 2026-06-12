@@ -56,6 +56,7 @@ import type { CampaignDetailPageQuery } from "#/__generated__/core/CampaignDetai
 import type { CampaignDetailPageStartMutation } from "#/__generated__/core/CampaignDetailPageStartMutation.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
+import { AccessEntryRolesCell } from "../_components/AccessEntryRolesCell";
 import {
   decisionBadgeVariant,
   decisionLabel,
@@ -169,7 +170,7 @@ export const campaignDetailPageQuery = graphql`
                 id
                 email
                 fullName
-                role
+                ...AccessEntryRolesCell_accessEntry
                 isAdmin
                 active
                 mfaStatus
@@ -721,7 +722,7 @@ function CampaignSourceCard({ source, isPendingActions }: { source: CampaignSour
                             </span>
                           </Td>
                           <Td>{edge.node.email || <NotAvailable />}</Td>
-                          <Td>{edge.node.role || <NotAvailable />}</Td>
+                          <AccessEntryRolesCell accessEntryKey={edge.node} />
                           <Td>{edge.node.isAdmin ? __("Yes") : __("No")}</Td>
                           <Td>
                             {edge.node.active == null

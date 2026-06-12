@@ -80,7 +80,7 @@ func (d *NotionDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error
 			record := AccountRecord{
 				Email:       email,
 				FullName:    u.Name,
-				Role:        "Member",
+				Roles:       []string{"Member"},
 				IsAdmin:     false,
 				ExternalID:  u.ID,
 				MFAStatus:   coredata.MFAStatusUnknown,

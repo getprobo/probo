@@ -96,12 +96,12 @@ func (d *GitLabDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error
 
 			active := m.State == "active"
 
-			role := gitlabAccessLevelLabel(m.AccessLevel)
+			roles := gitlabRoles(m.AccessLevel)
 
 			record := AccountRecord{
 				Email:       m.Email,
 				FullName:    fullName,
-				Role:        role,
+				Roles:       roles,
 				Active:      &active,
 				IsAdmin:     m.AccessLevel >= 50, // 50 = Owner
 				MFAStatus:   coredata.MFAStatusUnknown,
@@ -149,25 +149,25 @@ func (d *GitLabDriver) queryMembers(ctx context.Context, endpoint string) ([]git
 	return members, httpResp.Header.Get("Link"), nil
 }
 
-// gitlabAccessLevelLabel maps GitLab numeric access levels to human
+// gitlabRoles maps GitLab numeric access levels to human
 // labels. Source: https://docs.gitlab.com/api/members/#roles
-func gitlabAccessLevelLabel(level int) string {
+func gitlabRoles(level int) []string {
 	switch level {
 	case 5:
-		return "Minimal Access"
+		return []string{"Minimal Access"}
 	case 10:
-		return "Guest"
+		return []string{"Guest"}
 	case 15:
-		return "Planner"
+		return []string{"Planner"}
 	case 20:
-		return "Reporter"
+		return []string{"Reporter"}
 	case 30:
-		return "Developer"
+		return []string{"Developer"}
 	case 40:
-		return "Maintainer"
+		return []string{"Maintainer"}
 	case 50:
-		return "Owner"
+		return []string{"Owner"}
 	default:
-		return ""
+		return []string{}
 	}
 }

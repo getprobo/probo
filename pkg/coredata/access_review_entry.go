@@ -37,7 +37,7 @@ type (
 		IdentityID                   *gid.GID                        `db:"identity_id"`
 		Email                        string                          `db:"email"`
 		FullName                     string                          `db:"full_name"`
-		Role                         string                          `db:"role"`
+		Roles                        []string                        `db:"roles"`
 		JobTitle                     string                          `db:"job_title"`
 		IsAdmin                      bool                            `db:"is_admin"`
 		MFAStatus                    MFAStatus                       `db:"mfa_status"`
@@ -125,7 +125,7 @@ SELECT
     identity_id,
     email,
     full_name,
-    role,
+    roles,
     job_title,
     is_admin,
     mfa_status,
@@ -192,7 +192,7 @@ INSERT INTO
         identity_id,
         email,
         full_name,
-        role,
+        roles,
         job_title,
         is_admin,
         mfa_status,
@@ -222,7 +222,7 @@ VALUES (
     @identity_id,
     @email,
     @full_name,
-    @role,
+    COALESCE(@roles, '{}'::TEXT[]),
     @job_title,
     @is_admin,
     @mfa_status,
@@ -254,7 +254,7 @@ VALUES (
 		"identity_id":                      e.IdentityID,
 		"email":                            e.Email,
 		"full_name":                        e.FullName,
-		"role":                             e.Role,
+		"roles":                            e.Roles,
 		"job_title":                        e.JobTitle,
 		"is_admin":                         e.IsAdmin,
 		"mfa_status":                       e.MFAStatus,
@@ -346,7 +346,7 @@ SELECT
     identity_id,
     email,
     full_name,
-    role,
+    roles,
     job_title,
     is_admin,
     mfa_status,
@@ -414,7 +414,7 @@ SELECT
     identity_id,
     email,
     full_name,
-    role,
+    roles,
     job_title,
     is_admin,
     mfa_status,
@@ -630,7 +630,7 @@ INSERT INTO access_review_entries (
     identity_id,
     email,
     full_name,
-    role,
+    roles,
     job_title,
     is_admin,
     mfa_status,
@@ -659,7 +659,7 @@ INSERT INTO access_review_entries (
     @identity_id,
     @email,
     @full_name,
-    @role,
+    COALESCE(@roles, '{}'::TEXT[]),
     @job_title,
     @is_admin,
     @mfa_status,
@@ -683,7 +683,7 @@ INSERT INTO access_review_entries (
 ON CONFLICT (access_review_campaign_source_id, account_key) DO UPDATE SET
     email              = EXCLUDED.email,
     full_name          = EXCLUDED.full_name,
-    role               = EXCLUDED.role,
+    roles               = EXCLUDED.roles,
     job_title          = EXCLUDED.job_title,
     is_admin           = EXCLUDED.is_admin,
     mfa_status         = EXCLUDED.mfa_status,
@@ -706,7 +706,7 @@ ON CONFLICT (access_review_campaign_source_id, account_key) DO UPDATE SET
 		"identity_id":                      e.IdentityID,
 		"email":                            e.Email,
 		"full_name":                        e.FullName,
-		"role":                             e.Role,
+		"roles":                            e.Roles,
 		"job_title":                        e.JobTitle,
 		"is_admin":                         e.IsAdmin,
 		"mfa_status":                       e.MFAStatus,

@@ -78,7 +78,7 @@ func (d *MetabaseDriver) ListAccounts(ctx context.Context) ([]AccountRecord, err
 		record := AccountRecord{
 			Email:       u.Email,
 			FullName:    metabaseFullName(u),
-			Role:        metabaseRole(u.IsSuperuser),
+			Roles:       metabaseRoles(u.IsSuperuser),
 			Active:      new(u.IsActive),
 			IsAdmin:     u.IsSuperuser,
 			ExternalID:  strconv.Itoa(u.ID),
@@ -176,12 +176,12 @@ func metabaseFullName(u metabaseUser) string {
 	return strings.TrimSpace(strings.Join([]string{u.FirstName, u.LastName}, " "))
 }
 
-func metabaseRole(isSuperuser bool) string {
+func metabaseRoles(isSuperuser bool) []string {
 	if isSuperuser {
-		return "Admin"
+		return []string{"Admin"}
 	}
 
-	return "User"
+	return []string{"User"}
 }
 
 // metabaseNameResolver resolves the Metabase site name by querying

@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"slices"
 	"strings"
 	"time"
 
@@ -77,14 +78,14 @@ func (d *SigNozDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error
 			continue
 		}
 
-		role := sigNozRole(u.Role)
+		roles := sigNozRoles(u.Role)
 
 		record := AccountRecord{
 			Email:       email,
 			FullName:    strings.TrimSpace(u.DisplayName),
-			Role:        role,
+			Roles:       roles,
 			Active:      sigNozActiveStatus(u.Status),
-			IsAdmin:     u.IsRoot || strings.EqualFold(role, "Admin"),
+			IsAdmin:     u.IsRoot || slices.Contains(roles, "Admin"),
 			MFAStatus:   coredata.MFAStatusUnknown,
 			AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,
 			AccountType: coredata.AccessReviewEntryAccountTypeUser,
@@ -146,26 +147,26 @@ func (d *SigNozDriver) queryUsers(ctx context.Context) ([]sigNozUser, error) {
 	return users, nil
 }
 
-// sigNozRole normalizes a SigNoz role string (ADMIN / EDITOR / VIEWER, or the
+// sigNozRoles normalizes a SigNoz role string (ADMIN / EDITOR / VIEWER, or the
 // managed-role display names signoz-admin / signoz-editor / signoz-viewer)
 // into a stable label, preserving unknown custom roles verbatim. Matching is
 // exact (not substring) so a custom role merely containing "admin" is not
 // silently promoted to Admin.
-func sigNozRole(raw string) string {
+func sigNozRoles(raw string) []string {
 	role := strings.TrimSpace(raw)
 	if role == "" {
-		return "User"
+		return []string{}
 	}
 
 	switch strings.ToLower(role) {
 	case "admin", "signoz-admin":
-		return "Admin"
+		return []string{"Admin"}
 	case "editor", "signoz-editor":
-		return "Editor"
+		return []string{"Editor"}
 	case "viewer", "signoz-viewer":
-		return "Viewer"
+		return []string{"Viewer"}
 	default:
-		return role
+		return []string{role}
 	}
 }
 

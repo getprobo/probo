@@ -377,7 +377,7 @@ type AccessReviewEntry implements Node {
     campaignSource: AccessReviewCampaignSource! @goField(forceResolver: true)
     email: String!
     fullName: String!
-    role: String!
+    roles: [String!]!
     jobTitle: String!
     isAdmin: Boolean!
     active: Boolean

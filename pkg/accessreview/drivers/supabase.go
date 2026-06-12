@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strings"
 
 	"go.probo.inc/probo/pkg/coredata"
 )
@@ -62,10 +63,17 @@ func (d *SupabaseDriver) ListAccounts(ctx context.Context) ([]AccountRecord, err
 
 		isAdmin := m.RoleName == "Owner" || m.RoleName == "Administrator"
 
+		role := strings.TrimSpace(m.RoleName)
+
+		roles := []string{}
+		if role != "" {
+			roles = []string{role}
+		}
+
 		record := AccountRecord{
 			Email:       m.Email,
 			FullName:    m.UserName,
-			Role:        m.RoleName,
+			Roles:       roles,
 			IsAdmin:     isAdmin,
 			ExternalID:  m.UserID,
 			MFAStatus:   mfaStatus,

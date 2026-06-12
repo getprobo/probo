@@ -21,7 +21,6 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
-	"strings"
 
 	"go.probo.inc/probo/pkg/coredata"
 )
@@ -170,9 +169,8 @@ func (d *CloudflareDriver) queryAllMembers(ctx context.Context, accountID string
 				roles = append(roles, r.Name)
 			}
 
-			role := "Member"
-			if len(roles) > 0 {
-				role = strings.Join(roles, ", ")
+			if len(roles) == 0 {
+				roles = []string{"Member"}
 			}
 
 			isAdmin := false
@@ -192,7 +190,7 @@ func (d *CloudflareDriver) queryAllMembers(ctx context.Context, accountID string
 			record := AccountRecord{
 				Email:       m.User.Email,
 				FullName:    m.User.FirstName + " " + m.User.LastName,
-				Role:        role,
+				Roles:       roles,
 				Active:      new(m.Status == "accepted"),
 				IsAdmin:     isAdmin,
 				ExternalID:  m.ID,

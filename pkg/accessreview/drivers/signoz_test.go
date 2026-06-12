@@ -47,7 +47,7 @@ func TestSigNozDriver(t *testing.T) {
 	// ADMIN role -> admin.
 	assert.Equal(t, "admin@example.com", records[0].Email)
 	assert.Equal(t, "Admin User", records[0].FullName)
-	assert.Equal(t, "Admin", records[0].Role)
+	assert.Equal(t, []string{"Admin"}, records[0].Roles)
 	assert.True(t, records[0].IsAdmin)
 	assert.Equal(t, "00000000-0000-4000-8000-000000000001", records[0].ExternalID)
 	assert.Equal(t, coredata.MFAStatusUnknown, records[0].MFAStatus)
@@ -57,25 +57,25 @@ func TestSigNozDriver(t *testing.T) {
 
 	// isRoot -> admin even with a non-admin role.
 	assert.Equal(t, "owner@example.com", records[1].Email)
-	assert.Equal(t, "Viewer", records[1].Role)
+	assert.Equal(t, []string{"Viewer"}, records[1].Roles)
 	assert.True(t, records[1].IsAdmin)
 
 	// Managed-role display name -> Editor; not admin.
 	assert.Equal(t, "editor@example.com", records[2].Email)
-	assert.Equal(t, "Editor", records[2].Role)
+	assert.Equal(t, []string{"Editor"}, records[2].Roles)
 	assert.False(t, records[2].IsAdmin)
 	require.NotNil(t, records[2].Active)
 	assert.True(t, *records[2].Active)
 
 	// pending_invite -> inactive.
 	assert.Equal(t, "invited@example.com", records[3].Email)
-	assert.Equal(t, "Viewer", records[3].Role)
+	assert.Equal(t, []string{"Viewer"}, records[3].Roles)
 	require.NotNil(t, records[3].Active)
 	assert.False(t, *records[3].Active)
 
 	// deleted -> inactive.
 	assert.Equal(t, "removed@example.com", records[4].Email)
-	assert.Equal(t, "Editor", records[4].Role)
+	assert.Equal(t, []string{"Editor"}, records[4].Roles)
 	require.NotNil(t, records[4].Active)
 	assert.False(t, *records[4].Active)
 
@@ -121,22 +121,22 @@ func TestSigNozDriverListAccountsErrorStatus(t *testing.T) {
 	assert.Contains(t, err.Error(), "unexpected status 403")
 }
 
-func TestSigNozRole(t *testing.T) {
+func TestSigNozRoles(t *testing.T) {
 	t.Parallel()
 
-	for in, want := range map[string]string{
-		"ADMIN":         "Admin",
-		"signoz-admin":  "Admin",
-		"EDITOR":        "Editor",
-		"signoz-editor": "Editor",
-		"VIEWER":        "Viewer",
-		"signoz-viewer": "Viewer",
-		"":              "User",
-		"  ":            "User",
-		"custom-role":   "custom-role", // unknown role preserved verbatim
-		"superadmin":    "superadmin",  // contains "admin" but must NOT be promoted
+	for in, want := range map[string][]string{
+		"ADMIN":         {"Admin"},
+		"signoz-admin":  {"Admin"},
+		"EDITOR":        {"Editor"},
+		"signoz-editor": {"Editor"},
+		"VIEWER":        {"Viewer"},
+		"signoz-viewer": {"Viewer"},
+		"":              {},
+		"  ":            {},
+		"custom-role":   {"custom-role"}, // unknown role preserved verbatim
+		"superadmin":    {"superadmin"},  // contains "admin" but must NOT be promoted
 	} {
-		assert.Equalf(t, want, sigNozRole(in), "role %q", in)
+		assert.Equalf(t, want, sigNozRoles(in), "role %q", in)
 	}
 }
 

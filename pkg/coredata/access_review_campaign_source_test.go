@@ -41,7 +41,7 @@ func insertAccessReviewEntry(t *testing.T, ctx context.Context, client *pg.Clien
 		AccessReviewCampaignSourceID: fx.campaignSourceID,
 		Email:                        accountKey,
 		FullName:                     "Snapshot User",
-		Role:                         "member",
+		Roles:                        []string{"member"},
 		MFAStatus:                    coredata.MFAStatusUnknown,
 		AuthMethod:                   coredata.AccessReviewEntryAuthMethodUnknown,
 		AccountType:                  coredata.AccessReviewEntryAccountTypeUser,

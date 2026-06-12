@@ -96,7 +96,7 @@ func (d *LinearDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error
 			record := AccountRecord{
 				Email:       u.Email,
 				FullName:    u.Name,
-				Role:        linearRole(u.Admin, u.Guest),
+				Roles:       linearRoles(u.Admin, u.Guest),
 				Active:      new(u.Active),
 				IsAdmin:     u.Admin,
 				ExternalID:  u.ID,
@@ -200,13 +200,13 @@ query AccessReviewLinearUsers($after: String) {
 	return &resp, nil
 }
 
-func linearRole(admin, guest bool) string {
+func linearRoles(admin, guest bool) []string {
 	switch {
 	case admin:
-		return "Admin"
+		return []string{"Admin"}
 	case guest:
-		return "Guest"
+		return []string{"Guest"}
 	default:
-		return "Member"
+		return []string{"Member"}
 	}
 }

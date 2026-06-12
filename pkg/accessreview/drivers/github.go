@@ -21,6 +21,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 	"time"
 
 	"go.gearno.de/kit/log"
@@ -123,10 +124,17 @@ func (d *GitHubDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error
 			}
 		}
 
+		role := strings.TrimSpace(membership.Role)
+
+		roles := []string{}
+		if role != "" {
+			roles = []string{role}
+		}
+
 		record := AccountRecord{
 			Email:       profile.Email,
 			FullName:    fullName,
-			Role:        membership.Role,
+			Roles:       roles,
 			Active:      new(membership.State == "active"),
 			IsAdmin:     membership.Role == "admin",
 			MFAStatus:   mfaStatus,

@@ -51,7 +51,7 @@ func TestRenderDriverListAccounts(t *testing.T) {
 	// never the email.
 	assert.Equal(t, "jane.doe@example.com", records[0].Email)
 	assert.Equal(t, "Jane Doe", records[0].FullName)
-	assert.Equal(t, "Admin", records[0].Role)
+	assert.Equal(t, []string{"Admin"}, records[0].Roles)
 	assert.True(t, records[0].IsAdmin)
 	assert.Equal(t, coredata.MFAStatusEnabled, records[0].MFAStatus)
 	assert.Equal(t, coredata.AccessReviewEntryAccountTypeUser, records[0].AccountType)
@@ -63,7 +63,7 @@ func TestRenderDriverListAccounts(t *testing.T) {
 	// Developer: active, MFA disabled, not an admin.
 	assert.Equal(t, "john.smith@example.com", records[1].Email)
 	assert.Equal(t, "John Smith", records[1].FullName)
-	assert.Equal(t, "Developer", records[1].Role)
+	assert.Equal(t, []string{"Developer"}, records[1].Roles)
 	assert.False(t, records[1].IsAdmin)
 	assert.Equal(t, coredata.MFAStatusDisabled, records[1].MFAStatus)
 	assert.Equal(t, "usr-000000000000000000b2", records[1].ExternalID)
@@ -74,7 +74,7 @@ func TestRenderDriverListAccounts(t *testing.T) {
 	// email so the row is never nameless.
 	assert.Equal(t, "sam.viewer@example.com", records[2].Email)
 	assert.Equal(t, "sam.viewer@example.com", records[2].FullName)
-	assert.Equal(t, "Viewer", records[2].Role)
+	assert.Equal(t, []string{"Viewer"}, records[2].Roles)
 	assert.False(t, records[2].IsAdmin)
 	assert.Equal(t, coredata.MFAStatusDisabled, records[2].MFAStatus)
 	assert.Equal(t, "usr-000000000000000000c3", records[2].ExternalID)
@@ -105,27 +105,28 @@ func TestRenderDriverListAccountsError(t *testing.T) {
 	assert.NotContains(t, err.Error(), "unauthorized")
 }
 
-func TestRenderRole(t *testing.T) {
+func TestRenderRoles(t *testing.T) {
 	t.Parallel()
 
 	cases := []struct {
 		in      string
-		want    string
+		want    []string
 		isAdmin bool
 	}{
-		{in: "ADMIN", want: "Admin", isAdmin: true},
-		{in: "DEVELOPER", want: "Developer", isAdmin: false},
-		{in: "WORKSPACE_CONTRIBUTOR", want: "Contributor", isAdmin: false},
-		{in: "WORKSPACE_BILLING", want: "Billing", isAdmin: false},
-		{in: "WORKSPACE_VIEWER", want: "Viewer", isAdmin: false},
-		{in: "future_role", want: "future_role", isAdmin: false},
+		{in: "ADMIN", want: []string{"Admin"}, isAdmin: true},
+		{in: "DEVELOPER", want: []string{"Developer"}, isAdmin: false},
+		{in: "WORKSPACE_CONTRIBUTOR", want: []string{"Contributor"}, isAdmin: false},
+		{in: "WORKSPACE_BILLING", want: []string{"Billing"}, isAdmin: false},
+		{in: "WORKSPACE_VIEWER", want: []string{"Viewer"}, isAdmin: false},
+		{in: "future_role", want: []string{"future_role"}, isAdmin: false},
+		{in: "", want: []string{}, isAdmin: false},
 	}
 
 	for _, c := range cases {
 		t.Run(c.in, func(t *testing.T) {
 			t.Parallel()
 
-			assert.Equal(t, c.want, renderRole(c.in))
+			assert.Equal(t, c.want, renderRoles(c.in))
 			assert.Equal(t, c.isAdmin, renderIsAdmin(c.in))
 		})
 	}

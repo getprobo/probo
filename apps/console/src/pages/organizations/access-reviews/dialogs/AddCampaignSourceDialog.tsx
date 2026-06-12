@@ -56,7 +56,7 @@ const addScopeMutation = graphql`
                 id
                 email
                 fullName
-                role
+                roles
                 isAdmin
                 mfaStatus
                 lastLogin

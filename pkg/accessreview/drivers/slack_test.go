@@ -46,5 +46,5 @@ func TestSlackDriver(t *testing.T) {
 
 	require.NotEmpty(t, r.Email, "expected at least one record with an email")
 	assert.NotEmpty(t, r.ExternalID)
-	assert.NotEmpty(t, r.Role)
+	assert.NotEmpty(t, r.Roles)
 }

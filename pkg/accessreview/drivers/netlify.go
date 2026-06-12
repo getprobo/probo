@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strings"
 
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/rfc5988"
@@ -78,10 +79,17 @@ func (d *NetlifyDriver) ListAccounts(ctx context.Context) ([]AccountRecord, erro
 		}
 
 		for _, m := range members {
+			role := strings.TrimSpace(m.Role)
+
+			roles := []string{}
+			if role != "" {
+				roles = []string{role}
+			}
+
 			record := AccountRecord{
 				Email:       m.Email,
 				FullName:    m.FullName,
-				Role:        m.Role,
+				Roles:       roles,
 				ExternalID:  m.ID,
 				MFAStatus:   coredata.MFAStatusUnknown,
 				AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,

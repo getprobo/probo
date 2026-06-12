@@ -75,10 +75,17 @@ func (d *TailscaleDriver) ListAccounts(ctx context.Context) ([]AccountRecord, er
 			continue
 		}
 
+		role := strings.TrimSpace(u.Role)
+
+		roles := []string{}
+		if role != "" {
+			roles = []string{role}
+		}
+
 		record := AccountRecord{
 			Email:      email,
 			FullName:   u.DisplayName,
-			Role:       u.Role,
+			Roles:      roles,
 			Active:     tailscaleUserActive(u.Status),
 			IsAdmin:    tailscaleUserIsAdmin(u.Role),
 			ExternalID: u.ID,

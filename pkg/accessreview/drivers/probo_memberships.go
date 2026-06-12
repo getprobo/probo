@@ -17,6 +17,7 @@ package drivers
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
@@ -61,7 +62,13 @@ func (d *ProboMembershipsDriver) ListAccounts(ctx context.Context) ([]AccountRec
 			}
 
 			for _, account := range accounts {
-				role := account.Role
+				role := strings.TrimSpace(account.Role)
+
+				roles := []string{}
+				if role != "" {
+					roles = []string{role}
+				}
+
 				isAdmin := role == string(coredata.MembershipRoleOwner) || role == string(coredata.MembershipRoleAdmin)
 				createdAt := account.CreatedAt
 
@@ -70,7 +77,7 @@ func (d *ProboMembershipsDriver) ListAccounts(ctx context.Context) ([]AccountRec
 					AccountRecord{
 						Email:       account.Email,
 						FullName:    account.FullName,
-						Role:        role,
+						Roles:       roles,
 						Active:      new(account.State == string(coredata.ProfileStateActive)),
 						IsAdmin:     isAdmin,
 						ExternalID:  account.ID.String(),

@@ -21,6 +21,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 
 	"go.probo.inc/probo/pkg/coredata"
 )
@@ -129,10 +130,17 @@ func zendeskRecord(u zendeskUser) AccountRecord {
 		lastLogin = *u.LastLoginAt
 	}
 
+	role := strings.TrimSpace(u.Role)
+
+	roles := []string{}
+	if role != "" {
+		roles = []string{role}
+	}
+
 	return AccountRecord{
 		Email:     u.Email,
 		FullName:  u.Name,
-		Role:      u.Role,
+		Roles:     roles,
 		Active:    &active,
 		IsAdmin:   isAdmin,
 		MFAStatus: mfaStatus,

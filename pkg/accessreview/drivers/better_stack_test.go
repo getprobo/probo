@@ -46,7 +46,7 @@ func TestBetterStackDriver(t *testing.T) {
 	r := records[0]
 	assert.Equal(t, "alice@example.com", r.Email)
 	assert.Equal(t, "Alice Smith", r.FullName)
-	assert.Equal(t, "Admin", r.Role)
+	assert.Equal(t, []string{"Admin"}, r.Roles)
 	assert.True(t, r.IsAdmin)
 	assert.Equal(t, "101", r.ExternalID)
 	require.NotNil(t, r.Active)
@@ -107,28 +107,29 @@ func TestBetterStackDriverListAccountsError(t *testing.T) {
 	assert.Contains(t, err.Error(), "unexpected status 401")
 }
 
-func TestBetterStackRole(t *testing.T) {
+func TestBetterStackRoles(t *testing.T) {
 	t.Parallel()
 
 	cases := []struct {
 		in      string
-		want    string
+		want    []string
 		isAdmin bool
 	}{
-		{"admin", "Admin", true},
-		{"billing_admin", "Billing admin", false},
-		{"team_lead", "Team lead", true},
-		{"responder", "Responder", false},
-		{"member", "Member", false},
-		{"custom", "custom", false},
-		{"future_role", "future_role", false},
+		{"admin", []string{"Admin"}, true},
+		{"billing_admin", []string{"Billing admin"}, false},
+		{"team_lead", []string{"Team lead"}, true},
+		{"responder", []string{"Responder"}, false},
+		{"member", []string{"Member"}, false},
+		{"custom", []string{"custom"}, false},
+		{"future_role", []string{"future_role"}, false},
+		{"", []string{}, false},
 	}
 
 	for _, c := range cases {
 		t.Run(c.in, func(t *testing.T) {
 			t.Parallel()
 
-			assert.Equal(t, c.want, betterStackRole(c.in))
+			assert.Equal(t, c.want, betterStackRoles(c.in))
 			assert.Equal(t, c.isAdmin, betterStackIsAdmin(c.in))
 		})
 	}

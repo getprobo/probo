@@ -75,11 +75,18 @@ func (d *GrafanaDriver) ListAccounts(ctx context.Context) ([]AccountRecord, erro
 				continue
 			}
 
+			role := strings.TrimSpace(u.Role)
+
+			roles := []string{}
+			if role != "" {
+				roles = []string{role}
+			}
+
 			record := AccountRecord{
 				Email:       email,
 				FullName:    strings.TrimSpace(u.Name),
-				Role:        strings.TrimSpace(u.Role),
-				IsAdmin:     strings.EqualFold(strings.TrimSpace(u.Role), "Admin"),
+				Roles:       roles,
+				IsAdmin:     strings.EqualFold(role, "Admin"),
 				MFAStatus:   coredata.MFAStatusUnknown,
 				AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,
 				AccountType: coredata.AccessReviewEntryAccountTypeUser,

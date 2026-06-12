@@ -37,8 +37,8 @@ import (
 type AccountRecord struct {
 	Email       string
 	FullName    string
-	Role        string // system role/permission (e.g. "Admin", "Viewer")
-	JobTitle    string // HR job title / department (e.g. "Software Engineer")
+	Roles       []string // system roles/permissions (e.g. "Admin", "Viewer")
+	JobTitle    string   // HR job title / department (e.g. "Software Engineer")
 	Active      *bool
 	IsAdmin     bool
 	MFAStatus   coredata.MFAStatus

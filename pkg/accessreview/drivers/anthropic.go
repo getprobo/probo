@@ -71,7 +71,7 @@ func (d *AnthropicDriver) ListAccounts(ctx context.Context) ([]AccountRecord, er
 			record := AccountRecord{
 				Email:       u.Email,
 				FullName:    u.Name,
-				Role:        anthropicRole(u.Role),
+				Roles:       anthropicRoles(u.Role),
 				IsAdmin:     u.Role == "admin",
 				ExternalID:  u.ID,
 				MFAStatus:   coredata.MFAStatusUnknown,
@@ -141,19 +141,23 @@ func (d *AnthropicDriver) fetchUsers(ctx context.Context, afterID string) (*anth
 	return &resp, nil
 }
 
-func anthropicRole(role string) string {
+func anthropicRoles(role string) []string {
+	if role == "" {
+		return []string{}
+	}
+
 	switch role {
 	case "admin":
-		return "Admin"
+		return []string{"Admin"}
 	case "billing":
-		return "Billing"
+		return []string{"Billing"}
 	case "developer":
-		return "Developer"
+		return []string{"Developer"}
 	case "claude_code_user":
-		return "Claude Code User"
+		return []string{"Claude Code User"}
 	case "user":
-		return "User"
+		return []string{"User"}
 	default:
-		return role
+		return []string{role}
 	}
 }

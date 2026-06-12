@@ -46,5 +46,5 @@ func TestClickUpDriver(t *testing.T) {
 	assert.NotEmpty(t, r.ExternalID)
 	assert.NotEmpty(t, r.Email)
 	assert.NotEmpty(t, r.FullName)
-	assert.NotEmpty(t, r.Role)
+	assert.NotEmpty(t, r.Roles)
 }

@@ -73,7 +73,7 @@ func TestHubSpotDriverArchivedUsers(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, records, 2)
 
-	assert.Equal(t, "Sales Admin", records[0].Role)
+	assert.Equal(t, []string{"Sales Admin"}, records[0].Roles)
 	require.NotNil(t, records[0].Active)
 	assert.True(t, *records[0].Active)
 
@@ -81,6 +81,65 @@ func TestHubSpotDriverArchivedUsers(t *testing.T) {
 	assert.Empty(t, records[1].Email)
 	require.NotNil(t, records[1].Active)
 	assert.False(t, *records[1].Active)
+}
+
+func TestHubSpotRoles(t *testing.T) {
+	t.Parallel()
+
+	roleMap := map[string]string{
+		"role-1": "Sales Admin",
+		"role-2": "Marketing Admin",
+	}
+
+	tests := []struct {
+		name string
+		user hubspotUser
+		want []string
+	}{
+		{
+			name: "multiple role IDs",
+			user: hubspotUser{RoleIDs: []string{"role-1", "role-2"}},
+			want: []string{"Sales Admin", "Marketing Admin"},
+		},
+		{
+			name: "roleId and roleIds merged without duplicates",
+			user: hubspotUser{RoleID: "role-1", RoleIDs: []string{"role-1", "role-2"}},
+			want: []string{"Sales Admin", "Marketing Admin"},
+		},
+		{
+			name: "unknown role falls back to user",
+			user: hubspotUser{RoleIDs: []string{"missing"}},
+			want: []string{"User"},
+		},
+		{
+			name: "unknown role with super admin",
+			user: hubspotUser{RoleIDs: []string{"missing"}, SuperAdmin: true},
+			want: []string{"Super Admin"},
+		},
+		{
+			name: "known role merged with super admin",
+			user: hubspotUser{RoleIDs: []string{"role-1"}, SuperAdmin: true},
+			want: []string{"Sales Admin", "Super Admin"},
+		},
+		{
+			name: "multiple roles merged with super admin",
+			user: hubspotUser{RoleIDs: []string{"role-1", "role-2"}, SuperAdmin: true},
+			want: []string{"Sales Admin", "Marketing Admin", "Super Admin"},
+		},
+		{
+			name: "no roles defaults to user",
+			user: hubspotUser{},
+			want: []string{"User"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			assert.Equal(t, tt.want, hubspotRoles(tt.user, roleMap))
+		})
+	}
 }
 
 type roundTripFunc func(req *http.Request) (*http.Response, error)

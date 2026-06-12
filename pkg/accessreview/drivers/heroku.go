@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 
 	"go.probo.inc/probo/pkg/coredata"
@@ -153,10 +154,17 @@ func (d *HerokuDriver) listTeamMembers(ctx context.Context) ([]AccountRecord, er
 			externalID = m.ID
 		}
 
+		role := strings.TrimSpace(m.Role)
+
+		roles := []string{}
+		if role != "" {
+			roles = []string{role}
+		}
+
 		record := AccountRecord{
 			Email:       email,
 			FullName:    fullName,
-			Role:        m.Role,
+			Roles:       roles,
 			IsAdmin:     isAdmin,
 			MFAStatus:   mfaStatus,
 			AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,
@@ -262,10 +270,17 @@ func (d *HerokuDriver) listPersonalAccounts(ctx context.Context) ([]AccountRecor
 // personal Heroku app. These endpoints expose no display name or MFA signal,
 // so the email doubles as the full name and MFA is left unknown.
 func herokuPersonalRecord(externalID, email, role string, isAdmin bool) AccountRecord {
+	role = strings.TrimSpace(role)
+
+	roles := []string{}
+	if role != "" {
+		roles = []string{role}
+	}
+
 	return AccountRecord{
 		Email:       email,
 		FullName:    email,
-		Role:        role,
+		Roles:       roles,
 		IsAdmin:     isAdmin,
 		MFAStatus:   coredata.MFAStatusUnknown,
 		AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,

@@ -101,7 +101,7 @@ func (d *QoveryDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error
 		record := AccountRecord{
 			Email:       member.Email,
 			FullName:    qoveryFullName(member),
-			Role:        qoveryRole(member.Role),
+			Roles:       qoveryRoles(member.Role),
 			IsAdmin:     qoveryIsAdmin(member.Role),
 			MFAStatus:   coredata.MFAStatusUnknown,
 			AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,
@@ -139,18 +139,22 @@ func qoveryFullName(member qoveryMember) string {
 	return member.Email
 }
 
-func qoveryRole(role string) string {
+func qoveryRoles(role string) []string {
+	if role == "" {
+		return []string{}
+	}
+
 	switch strings.ToUpper(role) {
 	case "OWNER":
-		return "Owner"
+		return []string{"Owner"}
 	case "ADMIN":
-		return "Admin"
+		return []string{"Admin"}
 	case "DEVELOPER":
-		return "Developer"
+		return []string{"Developer"}
 	case "VIEWER":
-		return "Viewer"
+		return []string{"Viewer"}
 	default:
-		return role
+		return []string{role}
 	}
 }
 

@@ -144,11 +144,11 @@ func (d *GoogleWorkspaceDriver) ListAccounts(ctx context.Context) ([]AccountReco
 
 			switch {
 			case u.IsAdmin:
-				rec.Role = "Super Admin"
+				rec.Roles = []string{"Super Admin"}
 			case u.IsDelegatedAdmin:
-				rec.Role = "Delegated Admin"
+				rec.Roles = []string{"Delegated Admin"}
 			default:
-				rec.Role = "User"
+				rec.Roles = []string{"User"}
 			}
 
 			records = append(records, rec)

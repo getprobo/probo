@@ -278,6 +278,11 @@ func NewAccessReviewEntryEdge(e *coredata.AccessReviewEntry, orderBy coredata.Ac
 }
 
 func NewAccessReviewEntry(e *coredata.AccessReviewEntry) *AccessReviewEntry {
+	roles := e.Roles
+	if roles == nil {
+		roles = []string{}
+	}
+
 	entry := &AccessReviewEntry{
 		ID: e.ID,
 		Campaign: &AccessReviewCampaign{
@@ -288,7 +293,7 @@ func NewAccessReviewEntry(e *coredata.AccessReviewEntry) *AccessReviewEntry {
 		},
 		Email:            e.Email,
 		FullName:         e.FullName,
-		Role:             e.Role,
+		Roles:            roles,
 		JobTitle:         e.JobTitle,
 		IsAdmin:          e.IsAdmin,
 		Active:           e.Active,

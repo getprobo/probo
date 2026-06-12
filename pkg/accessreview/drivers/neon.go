@@ -90,7 +90,7 @@ func (d *NeonDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error) 
 				// The members endpoint exposes no display name;
 				// fall back to the email.
 				FullName: m.User.Email,
-				Role:     neonRole(m.Member.Role),
+				Roles:    neonRoles(m.Member.Role),
 				// deactivated_at is absent for active accounts.
 				Active:      new(m.User.DeactivatedAt == ""),
 				IsAdmin:     neonIsAdmin(m.Member.Role),
@@ -160,22 +160,26 @@ func (d *NeonDriver) queryMembers(ctx context.Context, cursor string) (*neonMemb
 	return &resp, nil
 }
 
-// neonRole maps Neon's lowercase member roles to their display form,
+// neonRoles maps Neon's lowercase member roles to their display form,
 // passing unknown values through unchanged.
-func neonRole(role string) string {
+func neonRoles(role string) []string {
+	if role == "" {
+		return []string{}
+	}
+
 	switch strings.ToLower(role) {
 	case "admin":
-		return "Admin"
+		return []string{"Admin"}
 	case "member":
-		return "Member"
+		return []string{"Member"}
 	case "editor":
-		return "Editor"
+		return []string{"Editor"}
 	case "viewer":
-		return "Viewer"
+		return []string{"Viewer"}
 	case "collaborator":
-		return "Collaborator"
+		return []string{"Collaborator"}
 	default:
-		return role
+		return []string{role}
 	}
 }
 

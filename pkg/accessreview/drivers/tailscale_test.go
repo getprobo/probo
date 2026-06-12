@@ -37,6 +37,6 @@ func TestTailscaleDriver(t *testing.T) {
 	r := records[0]
 	assert.NotEmpty(t, r.Email)
 	assert.NotEmpty(t, r.ExternalID)
-	assert.NotEmpty(t, r.Role)
+	assert.NotEmpty(t, r.Roles)
 	assert.NotNil(t, r.Active)
 }

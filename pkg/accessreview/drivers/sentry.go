@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 
 	"go.probo.inc/probo/pkg/coredata"
@@ -120,7 +121,8 @@ func (d *SentryDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error
 				active = active && m.User.IsActive
 			}
 
-			isAdmin := m.OrgRole == "admin" || m.OrgRole == "owner"
+			role := strings.TrimSpace(m.OrgRole)
+			isAdmin := role == "admin" || role == "owner"
 
 			mfaStatus := coredata.MFAStatusUnknown
 
@@ -134,10 +136,15 @@ func (d *SentryDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error
 
 			authMethod := sentryAuthMethod(m.Flags, m.User)
 
+			roles := []string{}
+			if role != "" {
+				roles = []string{role}
+			}
+
 			record := AccountRecord{
 				Email:       m.Email,
 				FullName:    fullName,
-				Role:        m.OrgRole,
+				Roles:       roles,
 				Active:      new(active),
 				IsAdmin:     isAdmin,
 				ExternalID:  m.ID,

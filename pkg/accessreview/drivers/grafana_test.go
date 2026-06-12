@@ -42,7 +42,7 @@ func TestGrafanaDriver(t *testing.T) {
 
 	assert.Equal(t, "admin@example.com", records[0].Email)
 	assert.Equal(t, "Admin User", records[0].FullName)
-	assert.Equal(t, "Admin", records[0].Role)
+	assert.Equal(t, []string{"Admin"}, records[0].Roles)
 	assert.True(t, records[0].IsAdmin)
 	assert.Equal(t, strconv.Itoa(1), records[0].ExternalID)
 	require.NotNil(t, records[0].Active)
@@ -51,7 +51,7 @@ func TestGrafanaDriver(t *testing.T) {
 
 	assert.Equal(t, "viewer@example.com", records[1].Email)
 	assert.Equal(t, "Viewer User", records[1].FullName)
-	assert.Equal(t, "Viewer", records[1].Role)
+	assert.Equal(t, []string{"Viewer"}, records[1].Roles)
 	assert.False(t, records[1].IsAdmin)
 	assert.Equal(t, strconv.Itoa(2), records[1].ExternalID)
 	require.NotNil(t, records[1].Active)

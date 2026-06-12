@@ -42,7 +42,7 @@ func TestDatadogDriver(t *testing.T) {
 	require.NotNil(t, r.Active)
 	assert.True(t, *r.Active)
 	assert.True(t, r.IsAdmin)
-	assert.Equal(t, "Datadog Admin Role", r.Role)
+	assert.Equal(t, []string{"Datadog Admin Role"}, r.Roles)
 	assert.Equal(t, "Security Engineer", r.JobTitle)
 	assert.Equal(t, coredata.AccessReviewEntryAccountTypeUser, r.AccountType)
 	assert.Equal(t, coredata.MFAStatusEnabled, r.MFAStatus)
@@ -56,7 +56,7 @@ func TestDatadogDriver(t *testing.T) {
 	require.NotNil(t, r2.Active)
 	assert.False(t, *r2.Active)
 	assert.False(t, r2.IsAdmin)
-	assert.Equal(t, "Datadog Standard Role", r2.Role)
+	assert.Equal(t, []string{"Datadog Standard Role"}, r2.Roles)
 	assert.Equal(t, coredata.AccessReviewEntryAccountTypeServiceAccount, r2.AccountType)
 	assert.Equal(t, coredata.MFAStatusDisabled, r2.MFAStatus)
 }

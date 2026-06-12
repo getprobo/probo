@@ -178,7 +178,7 @@ func (d *TallyDriver) listInvites(ctx context.Context) ([]AccountRecord, error) 
 			MFAStatus:   coredata.MFAStatusUnknown,
 			AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,
 			AccountType: coredata.AccessReviewEntryAccountTypeUser,
-			Role:        "Invited",
+			Roles:       tallyRoles(),
 		}
 
 		if record.Email != "" {
@@ -187,4 +187,8 @@ func (d *TallyDriver) listInvites(ctx context.Context) ([]AccountRecord, error) 
 	}
 
 	return records, nil
+}
+
+func tallyRoles() []string {
+	return []string{"Invited"}
 }

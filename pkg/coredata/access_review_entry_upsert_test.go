@@ -19,6 +19,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.gearno.de/kit/pg"
@@ -152,7 +153,7 @@ func TestAccessReviewEntry_Upsert_FreezesDecidedFields(t *testing.T) {
 	originalFlags := []coredata.AccessReviewEntryFlag{coredata.AccessReviewEntryFlagNew}
 	originalEmail := "old@example.com"
 	originalFullName := "Old Name"
-	originalRole := "viewer"
+	originalRoles := []string{"viewer"}
 
 	t0 := time.Now().UTC().Truncate(time.Microsecond)
 
@@ -165,7 +166,7 @@ func TestAccessReviewEntry_Upsert_FreezesDecidedFields(t *testing.T) {
 		AccessReviewCampaignSourceID: fx.campaignSourceID,
 		Email:                        originalEmail,
 		FullName:                     originalFullName,
-		Role:                         originalRole,
+		Roles:                        originalRoles,
 		JobTitle:                     "",
 		IsAdmin:                      false,
 		MFAStatus:                    coredata.MFAStatusUnknown,
@@ -214,7 +215,7 @@ func TestAccessReviewEntry_Upsert_FreezesDecidedFields(t *testing.T) {
 	t2 := decisionTime.Add(1 * time.Hour)
 	secondEmail := "new@example.com"
 	secondFullName := "New Name"
-	secondRole := "admin"
+	secondRoles := []string{"admin"}
 	refresh := &coredata.AccessReviewEntry{
 		ID:                           gid.New(tenantID, coredata.AccessReviewEntryEntityType), // ignored by ON CONFLICT
 		OrganizationID:               fx.organizationID,
@@ -222,7 +223,7 @@ func TestAccessReviewEntry_Upsert_FreezesDecidedFields(t *testing.T) {
 		AccessReviewCampaignSourceID: fx.campaignSourceID,
 		Email:                        secondEmail,
 		FullName:                     secondFullName,
-		Role:                         secondRole,
+		Roles:                        secondRoles,
 		JobTitle:                     "",
 		IsAdmin:                      true,
 		MFAStatus:                    coredata.MFAStatusEnabled,
@@ -271,7 +272,7 @@ func TestAccessReviewEntry_Upsert_FreezesDecidedFields(t *testing.T) {
 	// Columns that ARE refreshed on every poll.
 	assert.Equal(t, secondEmail, loaded.Email)
 	assert.Equal(t, secondFullName, loaded.FullName)
-	assert.Equal(t, secondRole, loaded.Role)
+	assert.Equal(t, secondRoles, loaded.Roles)
 	assert.True(t, loaded.IsAdmin)
 	assert.Equal(t, coredata.MFAStatusEnabled, loaded.MFAStatus)
 	assert.Equal(t, coredata.AccessReviewEntryAuthMethodSSO, loaded.AuthMethod)
@@ -303,7 +304,7 @@ func TestAccessReviewEntry_Upsert_RefreshesSourceTrackingFields(t *testing.T) {
 		AccessReviewCampaignSourceID: fx.campaignSourceID,
 		Email:                        "old@example.com",
 		FullName:                     "Old Name",
-		Role:                         "viewer",
+		Roles:                        []string{"viewer"},
 		MFAStatus:                    coredata.MFAStatusUnknown,
 		AuthMethod:                   coredata.AccessReviewEntryAuthMethodUnknown,
 		AccountType:                  coredata.AccessReviewEntryAccountTypeUser,
@@ -329,7 +330,7 @@ func TestAccessReviewEntry_Upsert_RefreshesSourceTrackingFields(t *testing.T) {
 		AccessReviewCampaignSourceID: fx.campaignSourceID,
 		Email:                        "new@example.com",
 		FullName:                     "New Name",
-		Role:                         "admin",
+		Roles:                        []string{"admin"},
 		MFAStatus:                    coredata.MFAStatusEnabled,
 		AuthMethod:                   coredata.AccessReviewEntryAuthMethodSSO,
 		AccountType:                  coredata.AccessReviewEntryAccountTypeUser,
@@ -356,7 +357,7 @@ func TestAccessReviewEntry_Upsert_RefreshesSourceTrackingFields(t *testing.T) {
 	// Source-tracking columns advanced to the second poll's values.
 	assert.Equal(t, "new@example.com", loaded.Email)
 	assert.Equal(t, "New Name", loaded.FullName)
-	assert.Equal(t, "admin", loaded.Role)
+	assert.Equal(t, []string{"admin"}, loaded.Roles)
 	assert.Equal(t, coredata.MFAStatusEnabled, loaded.MFAStatus)
 	assert.Equal(t, coredata.AccessReviewEntryAuthMethodSSO, loaded.AuthMethod)
 
@@ -393,7 +394,7 @@ func TestAccessReviewEntry_Upsert_InsertsActiveAccount(t *testing.T) {
 		AccessReviewCampaignSourceID: fx.campaignSourceID,
 		Email:                        "active@example.com",
 		FullName:                     "Active User",
-		Role:                         "member",
+		Roles:                        []string{"member"},
 		MFAStatus:                    coredata.MFAStatusUnknown,
 		AuthMethod:                   coredata.AccessReviewEntryAuthMethodUnknown,
 		AccountType:                  coredata.AccessReviewEntryAccountTypeUser,
@@ -423,4 +424,53 @@ func TestAccessReviewEntry_Upsert_InsertsActiveAccount(t *testing.T) {
 	assert.Nil(t, loaded.DecisionNote)
 	assert.Nil(t, loaded.DecidedBy)
 	assert.Nil(t, loaded.DecidedAt)
+}
+
+func TestAccessReviewEntry_Upsert_NilRolesWritesEmptyArray(t *testing.T) {
+	t.Parallel()
+
+	client := test.PGClient(t)
+	ctx := context.Background()
+	fx := seedAccessReviewEntryFixture(t, ctx, client)
+
+	tenantID := fx.scope.GetTenantID()
+	t0 := time.Now().UTC().Truncate(time.Microsecond)
+
+	entryID := gid.New(tenantID, coredata.AccessReviewEntryEntityType)
+	entry := &coredata.AccessReviewEntry{
+		ID:                           entryID,
+		OrganizationID:               fx.organizationID,
+		AccessReviewCampaignID:       fx.campaignID,
+		AccessReviewCampaignSourceID: fx.campaignSourceID,
+		Email:                        "nil-roles@example.com",
+		FullName:                     "Nil Roles User",
+		Roles:                        nil,
+		MFAStatus:                    coredata.MFAStatusUnknown,
+		AuthMethod:                   coredata.AccessReviewEntryAuthMethodUnknown,
+		AccountType:                  coredata.AccessReviewEntryAccountTypeUser,
+		ExternalID:                   "ext-nil-roles",
+		AccountKey:                   "nil-roles@example.com",
+		IncrementalTag:               coredata.AccessReviewEntryIncrementalTagNew,
+		Flags:                        []coredata.AccessReviewEntryFlag{},
+		FlagReasons:                  []string{},
+		Decision:                     coredata.AccessReviewEntryDecisionPending,
+		CreatedAt:                    t0,
+		UpdatedAt:                    t0,
+	}
+
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		return entry.Upsert(ctx, tx, fx.scope)
+	}))
+
+	var roles []string
+
+	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+		return conn.QueryRow(
+			ctx,
+			`SELECT roles FROM access_review_entries WHERE id = @id`,
+			pgx.StrictNamedArgs{"id": entryID},
+		).Scan(&roles)
+	}))
+
+	assert.Equal(t, []string{}, roles)
 }

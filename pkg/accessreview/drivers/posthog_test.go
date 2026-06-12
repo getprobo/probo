@@ -41,7 +41,7 @@ func TestPostHogDriverListAccounts(t *testing.T) {
 	owner := records[0]
 	assert.Equal(t, "owner@example.com", owner.Email)
 	assert.Equal(t, "Olivia Owner", owner.FullName)
-	assert.Equal(t, "Owner", owner.Role)
+	assert.Equal(t, []string{"Owner"}, owner.Roles)
 	assert.True(t, owner.IsAdmin)
 	assert.Equal(t, coredata.MFAStatusEnabled, owner.MFAStatus)
 	assert.Equal(t, "user-1", owner.ExternalID)
@@ -50,7 +50,7 @@ func TestPostHogDriverListAccounts(t *testing.T) {
 
 	member := records[1]
 	assert.Equal(t, "member@example.com", member.Email)
-	assert.Equal(t, "Member", member.Role)
+	assert.Equal(t, []string{"Member"}, member.Roles)
 	assert.False(t, member.IsAdmin)
 	assert.Equal(t, coredata.MFAStatusDisabled, member.MFAStatus)
 	require.NotNil(t, member.CreatedAt)
@@ -58,7 +58,7 @@ func TestPostHogDriverListAccounts(t *testing.T) {
 
 	admin := records[2]
 	assert.Equal(t, "admin@example.com", admin.Email)
-	assert.Equal(t, "Admin", admin.Role)
+	assert.Equal(t, []string{"Admin"}, admin.Roles)
 	assert.True(t, admin.IsAdmin)
 	assert.Equal(t, coredata.MFAStatusUnknown, admin.MFAStatus)
 	assert.Equal(t, "membership-3", admin.ExternalID)
@@ -177,12 +177,12 @@ func TestPostHogNameResolver(t *testing.T) {
 	}
 }
 
-func TestPostHogRoleFallback(t *testing.T) {
+func TestPostHogRolesFallback(t *testing.T) {
 	t.Parallel()
 
-	assert.Equal(t, "Owner", posthogRole(15, ""))
-	assert.Equal(t, "Admin", posthogRole(8, ""))
-	assert.Equal(t, "Member", posthogRole(1, ""))
-	assert.Equal(t, "engineering", posthogRole(0, "engineering"))
-	assert.Equal(t, "Member", posthogRole(0, ""))
+	assert.Equal(t, []string{"Owner"}, posthogRoles(15, ""))
+	assert.Equal(t, []string{"Admin"}, posthogRoles(8, ""))
+	assert.Equal(t, []string{"Member"}, posthogRoles(1, ""))
+	assert.Equal(t, []string{"engineering"}, posthogRoles(0, "engineering"))
+	assert.Equal(t, []string{"Member"}, posthogRoles(0, ""))
 }

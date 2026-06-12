@@ -96,7 +96,7 @@ func (d *CursorDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error
 		records = append(records, AccountRecord{
 			Email:       m.Email,
 			FullName:    m.Name,
-			Role:        cursorRole(m.Role),
+			Roles:       cursorRoles(m.Role),
 			Active:      &active,
 			IsAdmin:     cursorIsAdmin(m.Role),
 			MFAStatus:   coredata.MFAStatusUnknown,
@@ -116,15 +116,19 @@ func cursorIsAdmin(role string) bool {
 	return role == "owner" || role == "free-owner"
 }
 
-func cursorRole(role string) string {
+func cursorRoles(role string) []string {
+	if role == "" {
+		return []string{}
+	}
+
 	switch role {
 	case "owner", "free-owner":
-		return "Owner"
+		return []string{"Owner"}
 	case "member":
-		return "Member"
+		return []string{"Member"}
 	case "removed":
-		return "Removed"
+		return []string{"Removed"}
 	default:
-		return role
+		return []string{role}
 	}
 }

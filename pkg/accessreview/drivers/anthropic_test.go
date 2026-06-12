@@ -39,38 +39,39 @@ func TestAnthropicDriver(t *testing.T) {
 	assert.NotEmpty(t, first.Email)
 	assert.NotEmpty(t, first.FullName)
 	assert.NotEmpty(t, first.ExternalID)
-	assert.Equal(t, "User", first.Role)
+	assert.Equal(t, []string{"User"}, first.Roles)
 	assert.False(t, first.IsAdmin)
 	assert.NotNil(t, first.CreatedAt)
 
-	assert.Equal(t, "Developer", records[1].Role)
+	assert.Equal(t, []string{"Developer"}, records[1].Roles)
 	assert.False(t, records[1].IsAdmin)
 
 	admin := records[2]
-	assert.Equal(t, "Admin", admin.Role)
+	assert.Equal(t, []string{"Admin"}, admin.Roles)
 	assert.True(t, admin.IsAdmin)
 }
 
-func TestAnthropicRole(t *testing.T) {
+func TestAnthropicRoles(t *testing.T) {
 	t.Parallel()
 
 	cases := []struct {
 		in   string
-		want string
+		want []string
 	}{
-		{"admin", "Admin"},
-		{"billing", "Billing"},
-		{"developer", "Developer"},
-		{"claude_code_user", "Claude Code User"},
-		{"user", "User"},
-		{"unknown_future_role", "unknown_future_role"},
+		{"admin", []string{"Admin"}},
+		{"billing", []string{"Billing"}},
+		{"developer", []string{"Developer"}},
+		{"claude_code_user", []string{"Claude Code User"}},
+		{"user", []string{"User"}},
+		{"unknown_future_role", []string{"unknown_future_role"}},
+		{"", []string{}},
 	}
 
 	for _, c := range cases {
 		t.Run(c.in, func(t *testing.T) {
 			t.Parallel()
 
-			assert.Equal(t, c.want, anthropicRole(c.in))
+			assert.Equal(t, c.want, anthropicRoles(c.in))
 		})
 	}
 }

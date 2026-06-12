@@ -51,7 +51,7 @@ func TestNeonDriverListAccounts(t *testing.T) {
 	// ExternalID is the stable account UUID (member.user_id).
 	assert.Equal(t, "jane.doe@example.com", records[0].Email)
 	assert.Equal(t, "jane.doe@example.com", records[0].FullName)
-	assert.Equal(t, "Admin", records[0].Role)
+	assert.Equal(t, []string{"Admin"}, records[0].Roles)
 	assert.True(t, records[0].IsAdmin)
 	assert.Equal(t, coredata.MFAStatusEnabled, records[0].MFAStatus)
 	assert.Equal(t, "bbbbbbbb-1111-2222-3333-000000000001", records[0].ExternalID)
@@ -62,7 +62,7 @@ func TestNeonDriverListAccounts(t *testing.T) {
 
 	// Deactivated member with MFA disabled.
 	assert.Equal(t, "john.smith@example.com", records[1].Email)
-	assert.Equal(t, "Member", records[1].Role)
+	assert.Equal(t, []string{"Member"}, records[1].Roles)
 	assert.False(t, records[1].IsAdmin)
 	assert.Equal(t, coredata.MFAStatusDisabled, records[1].MFAStatus)
 	assert.Equal(t, "bbbbbbbb-1111-2222-3333-000000000002", records[1].ExternalID)
@@ -72,7 +72,7 @@ func TestNeonDriverListAccounts(t *testing.T) {
 	// Second page: editor with has_mfa omitted (Unknown) and an empty
 	// user_id falling back to the membership ID.
 	assert.Equal(t, "erin.lee@example.com", records[2].Email)
-	assert.Equal(t, "Editor", records[2].Role)
+	assert.Equal(t, []string{"Editor"}, records[2].Roles)
 	assert.False(t, records[2].IsAdmin)
 	assert.Equal(t, coredata.MFAStatusUnknown, records[2].MFAStatus)
 	assert.Equal(t, "aaaaaaaa-1111-2222-3333-000000000003", records[2].ExternalID)
@@ -101,27 +101,28 @@ func TestNeonDriverListAccountsError(t *testing.T) {
 	assert.Contains(t, err.Error(), "unexpected status 401")
 }
 
-func TestNeonRole(t *testing.T) {
+func TestNeonRoles(t *testing.T) {
 	t.Parallel()
 
 	cases := []struct {
 		in      string
-		want    string
+		want    []string
 		isAdmin bool
 	}{
-		{in: "admin", want: "Admin", isAdmin: true},
-		{in: "member", want: "Member", isAdmin: false},
-		{in: "editor", want: "Editor", isAdmin: false},
-		{in: "viewer", want: "Viewer", isAdmin: false},
-		{in: "collaborator", want: "Collaborator", isAdmin: false},
-		{in: "future_role", want: "future_role", isAdmin: false},
+		{in: "admin", want: []string{"Admin"}, isAdmin: true},
+		{in: "member", want: []string{"Member"}, isAdmin: false},
+		{in: "editor", want: []string{"Editor"}, isAdmin: false},
+		{in: "viewer", want: []string{"Viewer"}, isAdmin: false},
+		{in: "collaborator", want: []string{"Collaborator"}, isAdmin: false},
+		{in: "future_role", want: []string{"future_role"}, isAdmin: false},
+		{in: "", want: []string{}, isAdmin: false},
 	}
 
 	for _, c := range cases {
 		t.Run(c.in, func(t *testing.T) {
 			t.Parallel()
 
-			assert.Equal(t, c.want, neonRole(c.in))
+			assert.Equal(t, c.want, neonRoles(c.in))
 			assert.Equal(t, c.isAdmin, neonIsAdmin(c.in))
 		})
 	}

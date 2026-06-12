@@ -21,6 +21,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 
 	"go.probo.inc/probo/pkg/coredata"
 )
@@ -92,11 +93,18 @@ func (d *VercelDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error
 				fullName = m.Username
 			}
 
+			role := strings.TrimSpace(m.Role)
+
+			roles := []string{}
+			if role != "" {
+				roles = []string{role}
+			}
+
 			confirmed := m.Confirmed
 			record := AccountRecord{
 				Email:       m.Email,
 				FullName:    fullName,
-				Role:        m.Role,
+				Roles:       roles,
 				Active:      &confirmed,
 				IsAdmin:     m.Role == "OWNER" || m.Role == "owner",
 				MFAStatus:   coredata.MFAStatusUnknown,

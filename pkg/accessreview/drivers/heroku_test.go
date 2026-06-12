@@ -46,7 +46,7 @@ func TestHerokuDriver(t *testing.T) {
 	assert.NotEmpty(t, r.Email)
 	assert.NotEmpty(t, r.ExternalID)
 	assert.NotEmpty(t, r.FullName)
-	assert.NotEmpty(t, r.Role)
+	assert.NotEmpty(t, r.Roles)
 	assert.Equal(t, coredata.MFAStatusEnabled, r.MFAStatus)
 	assert.True(t, r.IsAdmin)
 	require.NotNil(t, r.CreatedAt)
@@ -106,7 +106,7 @@ func TestHerokuDriverPersonalAccount(t *testing.T) {
 	assert.Contains(t, byEmail, "carol@example.com")
 
 	assert.True(t, byEmail["alice@example.com"].IsAdmin)
-	assert.Equal(t, "owner", byEmail["alice@example.com"].Role)
+	assert.Equal(t, []string{"owner"}, byEmail["alice@example.com"].Roles)
 	assert.False(t, byEmail["bob@example.com"].IsAdmin)
 }
 

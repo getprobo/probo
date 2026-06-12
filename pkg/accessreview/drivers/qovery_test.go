@@ -54,7 +54,7 @@ func TestQoveryDriverListAccounts(t *testing.T) {
 	// Qovery member IDs are the IdP subject (e.g. "google-oauth2|<sub>").
 	assert.Equal(t, "jane.doe@example.com", records[0].Email)
 	assert.Equal(t, "Jane Doe", records[0].FullName)
-	assert.Equal(t, "Owner", records[0].Role)
+	assert.Equal(t, []string{"Owner"}, records[0].Roles)
 	assert.True(t, records[0].IsAdmin)
 	assert.Equal(t, "google-oauth2|100000000000000000001", records[0].ExternalID)
 	require.NotNil(t, records[0].LastLogin)
@@ -65,7 +65,7 @@ func TestQoveryDriverListAccounts(t *testing.T) {
 	// leaves LastLogin nil.
 	assert.Equal(t, "john.smith@example.com", records[1].Email)
 	assert.Equal(t, "john", records[1].FullName)
-	assert.Equal(t, "Developer", records[1].Role)
+	assert.Equal(t, []string{"Developer"}, records[1].Roles)
 	assert.False(t, records[1].IsAdmin)
 	assert.Equal(t, "google-oauth2|100000000000000000002", records[1].ExternalID)
 	assert.Nil(t, records[1].LastLogin)
@@ -93,26 +93,27 @@ func TestQoveryDriverListAccountsError(t *testing.T) {
 	assert.Contains(t, err.Error(), "unexpected status 401")
 }
 
-func TestQoveryRole(t *testing.T) {
+func TestQoveryRoles(t *testing.T) {
 	t.Parallel()
 
 	cases := []struct {
 		in      string
-		want    string
+		want    []string
 		isAdmin bool
 	}{
-		{in: "OWNER", want: "Owner", isAdmin: true},
-		{in: "ADMIN", want: "Admin", isAdmin: true},
-		{in: "DEVELOPER", want: "Developer", isAdmin: false},
-		{in: "VIEWER", want: "Viewer", isAdmin: false},
-		{in: "future_role", want: "future_role", isAdmin: false},
+		{in: "OWNER", want: []string{"Owner"}, isAdmin: true},
+		{in: "ADMIN", want: []string{"Admin"}, isAdmin: true},
+		{in: "DEVELOPER", want: []string{"Developer"}, isAdmin: false},
+		{in: "VIEWER", want: []string{"Viewer"}, isAdmin: false},
+		{in: "future_role", want: []string{"future_role"}, isAdmin: false},
+		{in: "", want: []string{}, isAdmin: false},
 	}
 
 	for _, c := range cases {
 		t.Run(c.in, func(t *testing.T) {
 			t.Parallel()
 
-			assert.Equal(t, c.want, qoveryRole(c.in))
+			assert.Equal(t, c.want, qoveryRoles(c.in))
 			assert.Equal(t, c.isAdmin, qoveryIsAdmin(c.in))
 		})
 	}

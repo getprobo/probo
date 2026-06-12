@@ -107,19 +107,20 @@ func (d *DatadogDriver) ListAccounts(ctx context.Context) ([]AccountRecord, erro
 			active := !u.Attributes.Disabled
 
 			var (
-				role    string
+				roles   []string
 				isAdmin bool
 			)
 
 			for _, r := range u.Relationships.Roles.Data {
 				name := roleNames[r.ID]
-				if role == "" {
-					role = name
+				if name == "" {
+					continue
 				}
+
+				roles = append(roles, name)
 
 				if strings.Contains(strings.ToLower(name), "admin") {
 					isAdmin = true
-					role = name
 				}
 			}
 
@@ -136,7 +137,7 @@ func (d *DatadogDriver) ListAccounts(ctx context.Context) ([]AccountRecord, erro
 			records = append(records, AccountRecord{
 				Email:     u.Attributes.Email,
 				FullName:  u.Attributes.Name,
-				Role:      role,
+				Roles:     roles,
 				JobTitle:  u.Attributes.Title,
 				Active:    &active,
 				IsAdmin:   isAdmin,

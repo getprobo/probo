@@ -7684,7 +7684,7 @@ components:
         - access_review_campaign_source_id
         - email
         - full_name
-        - role
+        - roles
         - job_title
         - is_admin
         - mfa_status
@@ -7712,9 +7712,11 @@ components:
         full_name:
           type: string
           description: User full name
-        role:
-          type: string
-          description: User role in the system
+        roles:
+          type: array
+          items:
+            type: string
+          description: User roles in the system
         job_title:
           type: string
           description: User job title

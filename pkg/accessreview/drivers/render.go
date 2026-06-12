@@ -99,7 +99,7 @@ func (d *RenderDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error
 		records = append(records, AccountRecord{
 			Email:       member.Email,
 			FullName:    renderFullName(member),
-			Role:        renderRole(member.Role),
+			Roles:       renderRoles(member.Role),
 			Active:      renderActive(member.Status),
 			IsAdmin:     renderIsAdmin(member.Role),
 			MFAStatus:   renderMFAStatus(member.MFAEnabled),
@@ -120,24 +120,28 @@ func renderFullName(member renderMember) string {
 	return member.Email
 }
 
-// renderRole maps Render's uppercase role enum to a human-readable label.
+// renderRoles maps Render's uppercase role enum to a human-readable label.
 // Render documents ADMIN, DEVELOPER, WORKSPACE_CONTRIBUTOR,
 // WORKSPACE_BILLING, and WORKSPACE_VIEWER; unknown future roles fall through
 // to the raw value.
-func renderRole(role string) string {
+func renderRoles(role string) []string {
+	if role == "" {
+		return []string{}
+	}
+
 	switch strings.ToUpper(role) {
 	case "ADMIN":
-		return "Admin"
+		return []string{"Admin"}
 	case "DEVELOPER":
-		return "Developer"
+		return []string{"Developer"}
 	case "WORKSPACE_CONTRIBUTOR":
-		return "Contributor"
+		return []string{"Contributor"}
 	case "WORKSPACE_BILLING":
-		return "Billing"
+		return []string{"Billing"}
 	case "WORKSPACE_VIEWER":
-		return "Viewer"
+		return []string{"Viewer"}
 	default:
-		return role
+		return []string{role}
 	}
 }
 

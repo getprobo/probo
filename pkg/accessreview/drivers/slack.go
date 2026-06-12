@@ -100,7 +100,7 @@ func (d *SlackDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error)
 				Email:       m.Profile.Email,
 				FullName:    m.RealName,
 				JobTitle:    m.Profile.Title,
-				Role:        slackRole(m),
+				Roles:       slackRoles(m),
 				Active:      new(!m.Deleted),
 				IsAdmin:     m.IsAdmin || m.IsOwner || m.IsPrimaryOwner,
 				ExternalID:  m.ID,
@@ -163,20 +163,20 @@ func (d *SlackDriver) queryUsers(ctx context.Context, cursor string) (*slackUser
 	return &resp, nil
 }
 
-func slackRole(m slackMember) string {
+func slackRoles(m slackMember) []string {
 	switch {
 	case m.IsPrimaryOwner:
-		return "Primary Owner"
+		return []string{"Primary Owner"}
 	case m.IsOwner:
-		return "Owner"
+		return []string{"Owner"}
 	case m.IsAdmin:
-		return "Admin"
+		return []string{"Admin"}
 	case m.IsUltraRestricted:
-		return "Ultra Restricted"
+		return []string{"Ultra Restricted"}
 	case m.IsRestricted:
-		return "Restricted"
+		return []string{"Restricted"}
 	default:
-		return "Member"
+		return []string{"Member"}
 	}
 }
 

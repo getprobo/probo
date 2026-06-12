@@ -292,7 +292,7 @@ func posthogAccountRecord(member posthogMember) AccountRecord {
 	record := AccountRecord{
 		Email:       member.User.Email,
 		FullName:    posthogFullName(member.User),
-		Role:        posthogRole(member.Level, member.User.RoleAtOrganization),
+		Roles:       posthogRoles(member.Level, member.User.RoleAtOrganization),
 		IsAdmin:     posthogIsAdmin(member.Level),
 		ExternalID:  member.User.UUID,
 		MFAStatus:   posthogMFAStatus(member.Is2FAEnabled),
@@ -319,18 +319,18 @@ func posthogFullName(user posthogMemberUser) string {
 	return strings.TrimSpace(strings.Join([]string{user.FirstName, user.LastName}, " "))
 }
 
-func posthogRole(level int, fallback string) string {
+func posthogRoles(level int, fallback string) []string {
 	switch {
 	case level >= posthogMembershipLevelOwner:
-		return "Owner"
+		return []string{"Owner"}
 	case level >= posthogMembershipLevelAdmin:
-		return "Admin"
+		return []string{"Admin"}
 	case level >= posthogMembershipLevelMember:
-		return "Member"
+		return []string{"Member"}
 	case fallback != "":
-		return fallback
+		return []string{fallback}
 	default:
-		return "Member"
+		return []string{"Member"}
 	}
 }
 

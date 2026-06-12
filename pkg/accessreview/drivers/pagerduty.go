@@ -21,6 +21,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 	"time"
 
 	"go.probo.inc/probo/pkg/coredata"
@@ -77,10 +78,17 @@ func (d *PagerDutyDriver) ListAccounts(ctx context.Context) ([]AccountRecord, er
 		for _, u := range page.Users {
 			isAdmin := u.Role == "admin" || u.Role == "owner"
 
+			role := strings.TrimSpace(u.Role)
+
+			roles := []string{}
+			if role != "" {
+				roles = []string{role}
+			}
+
 			record := AccountRecord{
 				Email:       u.Email,
 				FullName:    u.Name,
-				Role:        u.Role,
+				Roles:       roles,
 				IsAdmin:     isAdmin,
 				MFAStatus:   coredata.MFAStatusUnknown,
 				AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,

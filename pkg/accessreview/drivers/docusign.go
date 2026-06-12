@@ -90,10 +90,17 @@ func (d *DocuSignDriver) ListAccounts(ctx context.Context) ([]AccountRecord, err
 		}
 
 		for _, u := range resp.Users {
+			role := strings.TrimSpace(u.PermissionProfileName)
+
+			roles := []string{}
+			if role != "" {
+				roles = []string{role}
+			}
+
 			record := AccountRecord{
 				Email:       u.Email,
 				FullName:    u.UserName,
-				Role:        u.PermissionProfileName,
+				Roles:       roles,
 				JobTitle:    u.JobTitle,
 				Active:      new(strings.EqualFold(u.UserStatus, "active")),
 				IsAdmin:     strings.EqualFold(u.IsAdmin, "True"),

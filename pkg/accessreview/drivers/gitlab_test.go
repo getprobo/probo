@@ -43,7 +43,7 @@ func TestGitLabDriver(t *testing.T) {
 	r := records[0]
 	assert.NotEmpty(t, r.ExternalID)
 	assert.NotEmpty(t, r.FullName)
-	assert.NotEmpty(t, r.Role)
+	assert.NotEmpty(t, r.Roles)
 	assert.Equal(t, coredata.MFAStatusUnknown, r.MFAStatus)
 	require.NotNil(t, r.Active)
 	assert.True(t, *r.Active)
