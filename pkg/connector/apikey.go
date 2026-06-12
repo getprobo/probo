@@ -16,6 +16,7 @@ package connector
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"net/http"
 
@@ -41,6 +42,15 @@ type APIKeyConnection struct {
 	// It is mutually exclusive with Header and is populated from the
 	// provider Registration at connector creation time.
 	BasicAuth bool `json:"basic_auth,omitempty"`
+	// BasicAuthUserPass, when true, presents the API key as a complete HTTP
+	// Basic credential (`Authorization: Basic base64(<key>)`), with the
+	// stored key already holding the `username:password` pair — required
+	// by providers such as ClickHouse Cloud (keyId:keySecret) and
+	// Langfuse (publicKey:secretKey) whose Basic credential carries a real
+	// password, which BasicAuth (empty password) cannot express. It is
+	// mutually exclusive with the other modes and is populated from the
+	// provider Registration at connector creation time.
+	BasicAuthUserPass bool `json:"basic_auth_user_pass,omitempty"`
 	// Scheme selects a non-Bearer Authorization scheme: when non-empty
 	// the key is sent as `Authorization: <Scheme> <key>` instead of
 	// `Authorization: Bearer <key>` — required by providers such as Okta
@@ -67,6 +77,15 @@ func (c *APIKeyConnection) Client(ctx context.Context) (*http.Client, error) {
 		return &http.Client{
 			Transport: &basicAuthTransport{
 				username:   c.APIKey,
+				underlying: underlying,
+			},
+		}, nil
+	}
+
+	if c.BasicAuthUserPass {
+		return &http.Client{
+			Transport: &basicAuthUserPassTransport{
+				credential: c.APIKey,
 				underlying: underlying,
 			},
 		}, nil
@@ -149,6 +168,25 @@ type basicAuthTransport struct {
 func (t *basicAuthTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	req2 := req.Clone(req.Context())
 	req2.SetBasicAuth(t.username, "")
+
+	return t.underlying.RoundTrip(req2)
+}
+
+// basicAuthUserPassTransport presents a complete HTTP Basic credential whose
+// `username:password` pair is already encoded in the stored key
+// (`Authorization: Basic base64(<credential>)`). Providers such as
+// ClickHouse Cloud (keyId:keySecret) and Langfuse (publicKey:secretKey)
+// authenticate with a real password, which basicAuthTransport's empty
+// password cannot carry; SetBasicAuth would also re-append a ":" and
+// corrupt the credential, so the value is base64-encoded verbatim.
+type basicAuthUserPassTransport struct {
+	credential string
+	underlying http.RoundTripper
+}
+
+func (t *basicAuthUserPassTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	req2 := req.Clone(req.Context())
+	req2.Header.Set("Authorization", "Basic "+base64.StdEncoding.EncodeToString([]byte(t.credential)))
 
 	return t.underlying.RoundTrip(req2)
 }

@@ -71,13 +71,18 @@ func (r *Registry) Register(reg *Registration) error {
 		return fmt.Errorf("cannot register connector provider %q: missing DisplayName", reg.Provider)
 	}
 
-	// APIKeyBasicAuth, APIKeyHeader, and APIKeyAuthScheme select different
-	// presentations of the same key; setting more than one is a programmer
-	// error with a silent winner (Client checks BasicAuth, then Header,
-	// then Scheme). Reject it at startup.
+	// APIKeyBasicAuth, APIKeyBasicAuthUserPass, APIKeyHeader, and
+	// APIKeyAuthScheme select different presentations of the same key;
+	// setting more than one is a programmer error with a silent winner
+	// (Client checks BasicAuth, then BasicAuthUserPass, then Header, then
+	// Scheme). Reject it at startup.
 	apiKeyModes := 0
 
 	if reg.APIKeyBasicAuth {
+		apiKeyModes++
+	}
+
+	if reg.APIKeyBasicAuthUserPass {
 		apiKeyModes++
 	}
 
@@ -90,7 +95,7 @@ func (r *Registry) Register(reg *Registration) error {
 	}
 
 	if apiKeyModes > 1 {
-		return fmt.Errorf("cannot register connector provider %q: APIKeyBasicAuth, APIKeyHeader, and APIKeyAuthScheme are mutually exclusive", reg.Provider)
+		return fmt.Errorf("cannot register connector provider %q: APIKeyBasicAuth, APIKeyBasicAuthUserPass, APIKeyHeader, and APIKeyAuthScheme are mutually exclusive", reg.Provider)
 	}
 
 	// BuildTokenURLForDomain and BuildTokenURLForSite both build the token
@@ -204,6 +209,19 @@ func (r *Registry) APIKeyAuthScheme(p coredata.ConnectorProvider) string {
 	}
 
 	return ""
+}
+
+// APIKeyUsesBasicAuthUserPass reports whether an API-key connection for the
+// given provider must present its key as a complete HTTP Basic credential
+// (`username:password` already encoded in the key, base64'd verbatim)
+// instead of a Bearer token. Returns false for unknown providers and for
+// providers that use the default Bearer scheme.
+func (r *Registry) APIKeyUsesBasicAuthUserPass(p coredata.ConnectorProvider) bool {
+	if reg, ok := r.Get(p); ok {
+		return reg.APIKeyBasicAuthUserPass
+	}
+
+	return false
 }
 
 // ProviderOAuth2Scopes returns the OAuth2 scopes the access review

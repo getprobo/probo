@@ -41,10 +41,11 @@ func (r *mutationResolver) CreateAPIKeyConnector(ctx context.Context, input type
 		Provider:       input.Provider,
 		Protocol:       coredata.ConnectorProtocolAPIKey,
 		Connection: &connector.APIKeyConnection{
-			APIKey:    input.APIKey,
-			Header:    r.providerRegistry.APIKeyHeader(input.Provider),
-			BasicAuth: r.providerRegistry.APIKeyUsesBasicAuth(input.Provider),
-			Scheme:    r.providerRegistry.APIKeyAuthScheme(input.Provider),
+			APIKey:            input.APIKey,
+			Header:            r.providerRegistry.APIKeyHeader(input.Provider),
+			BasicAuth:         r.providerRegistry.APIKeyUsesBasicAuth(input.Provider),
+			BasicAuthUserPass: r.providerRegistry.APIKeyUsesBasicAuthUserPass(input.Provider),
+			Scheme:            r.providerRegistry.APIKeyAuthScheme(input.Provider),
 		},
 	}
 

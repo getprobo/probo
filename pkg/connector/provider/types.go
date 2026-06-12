@@ -103,6 +103,15 @@ type Registration struct {
 	// Consumed when the create-connector resolver builds the
 	// APIKeyConnection.
 	APIKeyAuthScheme string
+	// APIKeyBasicAuthUserPass, when true, presents the API key as a complete
+	// HTTP Basic credential whose `username:password` pair is already
+	// encoded in the key (base64 of the verbatim string) — required by
+	// providers such as ClickHouse Cloud (keyId:keySecret) and Langfuse
+	// (publicKey:secretKey) whose Basic credential carries a real
+	// password, unlike APIKeyBasicAuth's empty-password form. Mutually
+	// exclusive with the other API-key auth modes. Consumed when the
+	// create-connector resolver builds the APIKeyConnection.
+	APIKeyBasicAuthUserPass bool
 
 	// BuildProbeURL derives a per-connector probe URL when the API host or
 	// path depends on connector settings (e.g. a customer subdomain or

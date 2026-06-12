@@ -76,6 +76,42 @@ func TestAPIKeyConnection_Client_BasicAuth(t *testing.T) {
 	assert.Equal(t, "key_secret", transport.username)
 }
 
+func TestBasicAuthUserPassTransport_RoundTrip(t *testing.T) {
+	t.Parallel()
+
+	rec := &recordingRoundTripper{}
+	transport := &basicAuthUserPassTransport{credential: "key_id:key_secret", underlying: rec}
+
+	req := httptest.NewRequest(http.MethodGet, "https://api.clickhouse.cloud/v1/organizations", nil)
+	_, err := transport.RoundTrip(req)
+	require.NoError(t, err)
+
+	require.NotNil(t, rec.lastRequest)
+	// The stored credential already carries username:password, so it is
+	// base64-encoded verbatim and the password survives the round-trip.
+	user, pass, ok := rec.lastRequest.BasicAuth()
+	require.True(t, ok, "expected a Basic auth header")
+	assert.Equal(t, "key_id", user)
+	assert.Equal(t, "key_secret", pass)
+
+	// The original request must be left untouched (RoundTrip clones it).
+	_, _, originalHasAuth := req.BasicAuth()
+	assert.False(t, originalHasAuth, "original request must not be mutated")
+}
+
+func TestAPIKeyConnection_Client_BasicAuthUserPass(t *testing.T) {
+	t.Parallel()
+
+	conn := &APIKeyConnection{APIKey: "key_id:key_secret", BasicAuthUserPass: true}
+
+	client, err := conn.Client(context.Background())
+	require.NoError(t, err)
+
+	transport, ok := client.Transport.(*basicAuthUserPassTransport)
+	require.Truef(t, ok, "expected *basicAuthUserPassTransport, got %T", client.Transport)
+	assert.Equal(t, "key_id:key_secret", transport.credential)
+}
+
 func TestAPIKeyConnection_Client_Header(t *testing.T) {
 	t.Parallel()
 
