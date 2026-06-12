@@ -4,6 +4,18 @@ All notable changes to the Probo Helm chart will be documented in this file.
 
 ## Unreleased
 
+## [0.7.0] - 2026-06-12
+
+### Added
+
+- `commonThirdPartyEnrichment` agent config slot (provider/modelName/temperature/maxTokens) for the new common third-party enricher
+- `commonThirdPartyEnrichmentWorker` config slot (interval, maxConcurrency, staleAfter, agentTimeout, agentMaxTurns, confidenceThreshold, maxAttempts) for tuning the background worker
+
+### Changed
+
+- Default `appVersion` updated to `probod v0.209.0`
+- `commonThirdPartyEnrichmentWorker.confidenceThreshold` of `0` is now rendered correctly (was previously dropped by Helm's falsy-numeric truthiness)
+
 ## [0.6.0] - 2026-06-11
 
 ### Changed
