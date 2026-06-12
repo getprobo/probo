@@ -32,7 +32,13 @@ Each field carries a value, a 0.0-1.0 confidence, and the source_url where you f
 
 5. Never guess or fabricate a URL. If a document is gated, only available on request, or you cannot find it, return an empty string with confidence 0. Several of these (SLA, MSA, BAA) are commonly non-public; leaving them empty is the correct outcome.
 
-6. confidence is your own 0.0-1.0 estimate that the URL is correct and current. Reserve values above 0.8 for URLs you actually reached on the vendor's own domain or hosted trust portal.
+6. confidence is your own calibrated 0.0-1.0 estimate that the URL is correct and current — it measures how sure you are, not how hard you looked. Aim for it to be well-calibrated: across many vendors, the URLs you tag around 0.9 should turn out correct roughly nine times in ten. Anchor your estimate on the strength of the evidence:
+   - 0.9-1.0: a URL you actually reached and that loaded the expected document on the vendor's own domain or hosted trust portal.
+   - 0.7-0.9: a URL you found linked from the vendor's own site or trust portal but did not fully open or verify, or one with minor ambiguity about whether it is the current canonical version.
+   - 0.4-0.7: a URL from a single third-party source or search result you could not confirm on the vendor's own domain.
+   - 0.1-0.4: a weak guess, for example a path you assume exists by convention but never reached.
+   - 0: not found, gated, or you cannot verify it at all.
+   A downstream step only persists a field when its confidence clears a threshold, so calibrate honestly: do not inflate a value to push it over the bar, and do not deflate a URL you genuinely reached.
 
 7. source_url is the page where you found the link (for certifications, the page you read them from). Leave it empty when nothing was found.
 

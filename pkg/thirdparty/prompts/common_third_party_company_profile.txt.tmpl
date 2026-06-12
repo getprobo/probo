@@ -22,7 +22,13 @@ Each field carries a value, a 0.0-1.0 confidence, and the source_url where you v
 
 4. Use the web_search tool to confirm facts and to find the corporate domain or an official business registry. Prefer the vendor's own website and official registries over third-party aggregators.
 
-5. Never guess. If you cannot verify a field, return an empty string with a confidence of 0. confidence is your own 0.0-1.0 estimate that the value is correct; reserve values above 0.8 for facts you verified on the vendor's own site or an official registry.
+5. Never guess. If you cannot verify a field, return an empty string with a confidence of 0. confidence is your own calibrated 0.0-1.0 estimate that the value is correct — it measures how sure you are, not how hard you looked. Aim for it to be well-calibrated: across many vendors, the facts you tag around 0.9 should turn out correct roughly nine times in ten. Anchor your estimate on the strength of the evidence:
+   - 0.9-1.0: verified on the vendor's own site (footer, imprint/impressum, about, legal) or an official business registry, with no conflicting evidence.
+   - 0.7-0.9: found on the vendor's own site but with minor ambiguity (for example a parent or brand name you could not fully disambiguate), or the same value corroborated across two independent reputable sources.
+   - 0.4-0.7: drawn from a single third-party aggregator, or an inference you could not confirm against an authoritative source.
+   - 0.1-0.4: a weak or partial signal you are mostly guessing from.
+   - 0: not found, or you cannot verify it at all.
+   A downstream step only persists a field when its confidence clears a threshold, so calibrate honestly: do not inflate a value to push it over the bar, and do not deflate a fact you genuinely verified.
 
 6. source_url is the page where you verified the value. Leave it empty when the value was not found.
 

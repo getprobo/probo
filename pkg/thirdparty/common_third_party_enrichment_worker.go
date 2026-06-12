@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"sync"
 	"time"
 
 	"go.gearno.de/kit/httpclient"
@@ -215,11 +216,13 @@ func (h *enrichmentHandler) Claim(ctx context.Context) (coredata.CommonThirdPart
 }
 
 // Process runs the enrichment pipeline for one catalog row: Agent A
-// (company profile) first, then Agent B (compliance docs) and the
-// deterministic logo step, all outside any transaction. The merged
-// result and per-field provenance are persisted in a single final
-// transaction. Process always writes an enrichment payload, even on a
-// no-result run, so stale recovery does not re-queue the row.
+// (company profile) first, then Agent B (compliance docs), Agent C
+// (owned domains), and the deterministic logo step concurrently, all
+// outside any transaction. Agent A runs first because the others depend
+// on the website it resolves. The merged result and per-field provenance
+// are persisted in a single final transaction. Process always writes an
+// enrichment payload, even on a no-result run, so stale recovery does not
+// re-queue the row.
 func (h *enrichmentHandler) Process(ctx context.Context, party coredata.CommonThirdParty) error {
 	if h.cfg.LLMClient == nil {
 		return nil
@@ -275,11 +278,50 @@ func (h *enrichmentHandler) Process(ctx context.Context, party coredata.CommonTh
 
 	legalName := effectiveLegalName(party, company, h.cfg.ConfidenceThreshold)
 
+	// Agent B (compliance docs), Agent C (owned domains), and the
+	// deterministic logo step all depend only on the resolved website
+	// (Agent B also on the legal name) and are independent of each other.
+	// Run them concurrently so wall time is the slowest of the three
+	// rather than their sum. Each builds its own per-run browser and
+	// writes only into its own locals; the shared LLM/HTTP/FileManager
+	// clients are safe for concurrent use and the database is not touched
+	// until persist below. Results are merged after Wait in a fixed order
+	// to keep runErrors and log output deterministic.
+	var (
+		compliance    ComplianceDocsResult
+		complianceErr error
+
+		domainsResult DomainsResult
+		domainsErr    error
+
+		logoFile *coredata.File
+	)
+
+	var wg sync.WaitGroup
+
+	wg.Add(3)
+
+	go func() {
+		defer wg.Done()
+		compliance, complianceErr = h.runComplianceDocs(ctx, party.Name, website, legalName)
+	}()
+
+	go func() {
+		defer wg.Done()
+		domainsResult, domainsErr = h.runDomains(ctx, party.Name, website)
+	}()
+
+	go func() {
+		defer wg.Done()
+		logoFile = h.prepareLogo(ctx, party, website)
+	}()
+
+	wg.Wait()
+
 	// Agent B: compliance documents and trust pages.
-	compliance, err := h.runComplianceDocs(ctx, party.Name, website, legalName)
-	if err != nil {
-		h.logger.WarnCtx(ctx, "compliance docs agent failed", log.Error(err), log.String("common_third_party_id", party.ID.String()))
-		runErrors = append(runErrors, "compliance_docs: "+sanitizeAgentError(err))
+	if complianceErr != nil {
+		h.logger.WarnCtx(ctx, "compliance docs agent failed", log.Error(complianceErr), log.String("common_third_party_id", party.ID.String()))
+		runErrors = append(runErrors, "compliance_docs: "+sanitizeAgentError(complianceErr))
 	} else {
 		anySuccess = true
 	}
@@ -288,18 +330,13 @@ func (h *enrichmentHandler) Process(ctx context.Context, party coredata.CommonTh
 	// resolved website, so it runs only on this website-resolved path.
 	var owned []ownedDomain
 
-	domainsResult, err := h.runDomains(ctx, party.Name, website)
-	if err != nil {
-		h.logger.WarnCtx(ctx, "domains agent failed", log.Error(err), log.String("common_third_party_id", party.ID.String()))
-		runErrors = append(runErrors, "domains: "+sanitizeAgentError(err))
+	if domainsErr != nil {
+		h.logger.WarnCtx(ctx, "domains agent failed", log.Error(domainsErr), log.String("common_third_party_id", party.ID.String()))
+		runErrors = append(runErrors, "domains: "+sanitizeAgentError(domainsErr))
 	} else {
 		anySuccess = true
 		owned = resolveOwnedDomains(party.Name, website, domainsResult, defaultEnrichmentDomainConfidenceThreshold)
 	}
-
-	// Deterministic logo step (no LLM). Uploads to S3 outside the final
-	// transaction; the File row is inserted below.
-	logoFile := h.prepareLogo(ctx, party, website)
 
 	for _, field := range scalarFields(company, compliance) {
 		applyScalarField(&party, meta, prior, field, h.cfg.ConfidenceThreshold, now)

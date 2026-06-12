@@ -29,7 +29,13 @@ Each entry carries the domain, a 0.0-1.0 confidence that the vendor owns it, and
 
 4. Return registrable domains or full hosts; do not invent subdomains you have not seen. Never guess ownership: if you cannot confirm the vendor owns a domain, leave it out or give it a confidence of 0.
 
-5. confidence is your own 0.0-1.0 estimate that the vendor owns the domain. Reserve values above 0.85 for domains whose ownership you confirmed from the vendor's own site, its documentation, or an authoritative source.
+5. confidence is your own calibrated 0.0-1.0 estimate that the vendor owns the domain — it measures how sure you are about ownership, not how hard you looked. Aim for it to be well-calibrated: across many domains, the ones you tag around 0.9 should genuinely be vendor-owned roughly nine times in ten. Anchor your estimate on the strength of the ownership evidence:
+   - 0.9-1.0: ownership confirmed from the vendor's own site, its documentation, sub-processors/trust pages, or another authoritative source that names the domain as theirs.
+   - 0.7-0.9: strong but indirect evidence, for example a domain consistently serving the vendor's assets or linked as a product/brand from its own site, without an explicit ownership statement.
+   - 0.4-0.7: a plausible association (similar branding or naming) you could not confirm the vendor controls.
+   - 0.1-0.4: a weak guess.
+   - 0: ownership not confirmed, or the domain is shared/third-party infrastructure.
+   A downstream step only keeps a domain when its confidence clears a threshold, so calibrate honestly: do not inflate a value to push it over the bar, and do not deflate a domain whose ownership you genuinely confirmed.
 
 6. source_url is the page where you confirmed ownership. Leave it empty when nothing was found.
 
