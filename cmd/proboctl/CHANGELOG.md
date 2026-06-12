@@ -4,6 +4,14 @@ All notable changes to the `proboctl` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.4.0] - 2026-06-12
+
+### Added
+
+- `proboctl common-third-party reenrich` — re-arm the async enrichment worker for selected catalog rows (verbatim via `--id`/`--slug`, or across the catalog via `--category`/`--keyword`/`--state`/`--status`), gated by `--dry-run` and `--yes`
+- `proboctl common-third-party stats` — summarize the catalog by enrichment state and last run status
+- `--state`/`--status` filters and `STATE`/`STATUS` columns on `common-third-party list`; enrichment state, attempts, last run status, error, per-field provenance, and discovered domains on `common-third-party show`
+
 ## [0.3.1] - 2026-06-11
 
 ### Changed
