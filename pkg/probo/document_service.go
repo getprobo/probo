@@ -2212,15 +2212,16 @@ func (s *DocumentService) BuildAndUploadExport(ctx context.Context, scope coreda
 			now := time.Now()
 
 			file := coredata.File{
-				ID:         gid.New(exportJob.ID.TenantID(), coredata.FileEntityType),
-				BucketName: s.svc.bucket,
-				MimeType:   "application/zip",
-				FileName:   fmt.Sprintf("Documents Export %s.zip", now.Format("2006-01-02")),
-				FileKey:    uuid.String(),
-				FileSize:   fileInfo.Size(),
-				Visibility: coredata.FileVisibilityPrivate,
-				CreatedAt:  now,
-				UpdatedAt:  now,
+				ID:             gid.New(exportJob.ID.TenantID(), coredata.FileEntityType),
+				OrganizationID: organizationID,
+				BucketName:     s.svc.bucket,
+				MimeType:       "application/zip",
+				FileName:       fmt.Sprintf("Documents Export %s.zip", now.Format("2006-01-02")),
+				FileKey:        uuid.String(),
+				FileSize:       fileInfo.Size(),
+				Visibility:     coredata.FileVisibilityPrivate,
+				CreatedAt:      now,
+				UpdatedAt:      now,
 			}
 
 			if err := file.Insert(ctx, tx, scope); err != nil {

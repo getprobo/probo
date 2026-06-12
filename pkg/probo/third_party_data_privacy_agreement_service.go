@@ -156,15 +156,16 @@ func (s ThirdPartyDataPrivacyAgreementService) Upload(
 			fileID := gid.New(scope.GetTenantID(), coredata.FileEntityType)
 			thirdPartyDataPrivacyAgreementID := gid.New(scope.GetTenantID(), coredata.ThirdPartyDataPrivacyAgreementEntityType)
 			file = &coredata.File{
-				ID:         fileID,
-				BucketName: s.svc.bucket,
-				MimeType:   mimeType,
-				FileName:   req.FileName,
-				FileKey:    objectKey.String(),
-				FileSize:   *headOutput.ContentLength,
-				Visibility: coredata.FileVisibilityPrivate,
-				CreatedAt:  now,
-				UpdatedAt:  now,
+				ID:             fileID,
+				OrganizationID: thirdParty.OrganizationID,
+				BucketName:     s.svc.bucket,
+				MimeType:       mimeType,
+				FileName:       req.FileName,
+				FileKey:        objectKey.String(),
+				FileSize:       *headOutput.ContentLength,
+				Visibility:     coredata.FileVisibilityPrivate,
+				CreatedAt:      now,
+				UpdatedAt:      now,
 			}
 
 			thirdPartyDataPrivacyAgreement = &coredata.ThirdPartyDataPrivacyAgreement{

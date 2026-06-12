@@ -156,15 +156,16 @@ func (s ThirdPartyBusinessAssociateAgreementService) Upload(
 			thirdPartyBusinessAssociateAgreementID := gid.New(scope.GetTenantID(), coredata.ThirdPartyBusinessAssociateAgreementEntityType)
 
 			file = &coredata.File{
-				ID:         fileID,
-				BucketName: s.svc.bucket,
-				MimeType:   mimeType,
-				FileName:   req.FileName,
-				FileKey:    objectKey.String(),
-				FileSize:   *headOutput.ContentLength,
-				Visibility: coredata.FileVisibilityPrivate,
-				CreatedAt:  now,
-				UpdatedAt:  now,
+				ID:             fileID,
+				OrganizationID: thirdParty.OrganizationID,
+				BucketName:     s.svc.bucket,
+				MimeType:       mimeType,
+				FileName:       req.FileName,
+				FileKey:        objectKey.String(),
+				FileSize:       *headOutput.ContentLength,
+				Visibility:     coredata.FileVisibilityPrivate,
+				CreatedAt:      now,
+				UpdatedAt:      now,
 			}
 
 			thirdPartyBusinessAssociateAgreement = &coredata.ThirdPartyBusinessAssociateAgreement{

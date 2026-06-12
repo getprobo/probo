@@ -400,15 +400,16 @@ func (s TrustCenterFileService) uploadFile(
 	}
 
 	fileRecord := &coredata.File{
-		ID:         fileID,
-		BucketName: s.svc.bucket,
-		MimeType:   contentType,
-		FileName:   filename,
-		FileKey:    objectKey.String(),
-		FileSize:   fileSize,
-		Visibility: coredata.FileVisibilityPrivate,
-		CreatedAt:  now,
-		UpdatedAt:  now,
+		ID:             fileID,
+		OrganizationID: organizationID,
+		BucketName:     s.svc.bucket,
+		MimeType:       contentType,
+		FileName:       filename,
+		FileKey:        objectKey.String(),
+		FileSize:       fileSize,
+		Visibility:     coredata.FileVisibilityPrivate,
+		CreatedAt:      now,
+		UpdatedAt:      now,
 	}
 
 	if err := fileRecord.Insert(ctx, tx, scope); err != nil {
