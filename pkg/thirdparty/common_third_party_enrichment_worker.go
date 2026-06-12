@@ -303,16 +303,19 @@ func (h *enrichmentHandler) Process(ctx context.Context, party coredata.CommonTh
 
 	go func() {
 		defer wg.Done()
+
 		compliance, complianceErr = h.runComplianceDocs(ctx, party.Name, website, legalName)
 	}()
 
 	go func() {
 		defer wg.Done()
+
 		domainsResult, domainsErr = h.runDomains(ctx, party.Name, website)
 	}()
 
 	go func() {
 		defer wg.Done()
+
 		logoFile = h.prepareLogo(ctx, party, website)
 	}()
 
