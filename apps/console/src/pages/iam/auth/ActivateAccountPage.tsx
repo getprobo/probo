@@ -113,7 +113,7 @@ export default function ActivateAccountPage() {
 
         const search = new URLSearchParams([["continue", safeContinueUrl.toString()]]);
         void navigate({
-          pathname: "/auth/password-login",
+          pathname: "/auth/login",
           search: "?" + search.toString(),
         }, { replace: true });
       },
