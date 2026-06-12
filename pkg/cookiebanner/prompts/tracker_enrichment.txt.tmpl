@@ -25,7 +25,7 @@ Return a structured JSON response with:
 
 5. Be factual and conservative. Describe only what the evidence supports. Do not speculate about data flows or purposes you cannot substantiate. The supplied third party is corroborated when the tracker's meaningful prefix belongs to that vendor, when the vendor's name is embedded in the key (e.g. "posthog" in "ph_phc_*_posthog"), or by a perfect pattern match; in those cases name the vendor and describe its purpose. Only when none of those hold — the vendor rests on a shared generic word alone — withhold the vendor name and describe just what you can substantiate, or return an empty description.
 
-6. Keep the description concise (one to two sentences) and free of marketing language. It should read as a neutral, compliance-grade statement of purpose.
+6. Keep the description concise (one to two sentences) and free of marketing language. It should read as a neutral, compliance-grade statement of purpose. Write it in your own words as an original factual statement; never copy a sentence verbatim from a cookie-database, vendor, or cookie-policy page — use those pages only to learn the facts (setter, purpose, data stored), then state them yourself.
 
 7. If you genuinely cannot substantiate the tracker's purpose from evidence, return an empty description. Do not write a fallback such as "purpose could not be determined", and do not guess a purpose from the name or max-age alone (e.g. do not claim a key is "used for session" just because it has no expiry). An empty description is preferable to an unverified one.
 </instructions>
