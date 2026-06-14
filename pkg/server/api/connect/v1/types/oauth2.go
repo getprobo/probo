@@ -301,7 +301,7 @@ func NewConsent(consent *coredata.OAuth2Consent) *Consent {
 	return &Consent{
 		ID:          consent.ID,
 		Application: &Application{ID: consent.ClientID},
-		Scopes:      scopes,
+		Scopes: scopes,
 	}
 }
 
@@ -331,7 +331,7 @@ func InactiveIntrospectResponse() *OAuth2IntrospectResponse {
 func ActiveIntrospectResponse(result *oauth2server.IntrospectResult) *OAuth2IntrospectResponse {
 	return &OAuth2IntrospectResponse{
 		Active:    true,
-		Scope:     result.Scopes,
+		Scope: result.Scopes,
 		ClientID:  result.ClientID,
 		Sub:       result.IdentityID,
 		Exp:       result.ExpiresAt.Unix(),

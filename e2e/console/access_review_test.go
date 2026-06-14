@@ -727,11 +727,11 @@ func TestAccessReviewCampaign_AddAndRemoveScopeSource(t *testing.T) {
 	orgID := owner.GetOrganizationID().String()
 
 	sourceID := factory.NewAccessSource(owner, orgID).
-		WithName("Scope Source").
+		WithName("Predicate Source").
 		Create()
 
 	campaignID := factory.NewAccessReviewCampaign(owner, orgID).
-		WithName("Scope Management Campaign").
+		WithName("Predicate Management Campaign").
 		Create()
 
 	t.Run("add scope source", func(t *testing.T) {

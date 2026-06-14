@@ -99,7 +99,7 @@ func (tc *TrustCenter) AuthorizationAttributes(
 func (tc *TrustCenter) LoadByID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	trustCenterID gid.GID,
 ) error {
 	q := `
@@ -124,10 +124,10 @@ WHERE
 LIMIT 1;
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"trust_center_id": trustCenterID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -151,7 +151,7 @@ LIMIT 1;
 func (tc *TrustCenter) LoadByMailingListID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	mailingListID gid.GID,
 ) error {
 	q := `
@@ -176,10 +176,10 @@ WHERE
 LIMIT 1;
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"mailing_list_id": mailingListID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -203,7 +203,7 @@ LIMIT 1;
 func (tc *TrustCenter) LoadByOrganizationID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	organizationID gid.GID,
 ) error {
 	q := `
@@ -228,10 +228,10 @@ WHERE
 LIMIT 1;
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"organization_id": organizationID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -252,7 +252,7 @@ LIMIT 1;
 	return nil
 }
 
-// Tenant id scope is not applied because we want to access trust centers by slug across all tenants for public access.
+// Tenant predicate is not applied because we want to access trust centers by slug across all tenants for public access.
 func (tc *TrustCenter) LoadBySlug(
 	ctx context.Context,
 	conn pg.Querier,
@@ -303,7 +303,7 @@ LIMIT 1;
 func (tc *TrustCenter) Insert(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 INSERT INTO trust_centers (
@@ -367,7 +367,7 @@ INSERT INTO trust_centers (
 func (tc *TrustCenter) Update(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 UPDATE trust_centers
@@ -384,7 +384,7 @@ WHERE
 	AND id = @id
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"id":                               tc.ID,
@@ -396,7 +396,7 @@ WHERE
 		"non_disclosure_agreement_file_id": tc.NonDisclosureAgreementFileID,
 		"updated_at":                       tc.UpdatedAt,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {

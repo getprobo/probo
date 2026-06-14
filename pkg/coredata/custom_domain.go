@@ -182,7 +182,7 @@ func (cd *CustomDomain) ParseCertificate(encryptionKey cipher.EncryptionKey) err
 func (cd *CustomDomain) LoadByID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	domainID gid.GID,
 ) error {
 	q := `
@@ -212,10 +212,10 @@ WHERE
 LIMIT 1
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.NamedArgs{"id": domainID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -239,7 +239,7 @@ LIMIT 1
 func (cd *CustomDomain) LoadByIDForUpdateSkipLocked(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 	domainID gid.GID,
 ) error {
 	q := `
@@ -269,10 +269,10 @@ WHERE
 LIMIT 1
 FOR UPDATE SKIP LOCKED
 `
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.NamedArgs{"id": domainID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -296,7 +296,7 @@ FOR UPDATE SKIP LOCKED
 func (cd *CustomDomain) LoadByDomain(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	domain string,
 ) error {
 	q := `
@@ -326,10 +326,10 @@ WHERE
 LIMIT 1
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.NamedArgs{"domain": domain}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -353,7 +353,7 @@ LIMIT 1
 func (cd *CustomDomain) LoadByOrganizationID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	organizationID gid.GID,
 ) error {
 	q := `
@@ -383,10 +383,10 @@ WHERE
 LIMIT 1
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.NamedArgs{"organization_id": organizationID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -410,7 +410,7 @@ LIMIT 1
 func (cd *CustomDomain) Insert(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 	encryptionKey cipher.EncryptionKey,
 ) error {
 	var encryptedKey []byte
@@ -462,7 +462,7 @@ INSERT INTO custom_domains (
 
 	args := pgx.NamedArgs{
 		"id":                        cd.ID,
-		"tenant_id":                 scope.GetTenantID(),
+		"tenant_id":                 predicate.GetTenantID(),
 		"organization_id":           cd.OrganizationID,
 		"domain":                    cd.Domain,
 		"http_challenge_token":      cd.HTTPChallengeToken,
@@ -500,7 +500,7 @@ INSERT INTO custom_domains (
 func (cd *CustomDomain) Update(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	var encryptedKey []byte
 	if len(cd.EncryptedSSLPrivateKey) > 0 {
@@ -529,7 +529,7 @@ WHERE
 	AND id = @id
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.NamedArgs{
 		"id":                        cd.ID,
@@ -547,7 +547,7 @@ WHERE
 		"provisioning_error":        cd.ProvisioningError,
 		"updated_at":                time.Now(),
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
@@ -562,7 +562,7 @@ WHERE
 func (cd *CustomDomain) Delete(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 DELETE FROM
@@ -571,10 +571,10 @@ WHERE
 	%s
 	AND id = @id
 `
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.NamedArgs{"id": cd.ID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
@@ -587,7 +587,7 @@ WHERE
 func (cd *CustomDomain) LoadByHTTPChallengeToken(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	token string,
 ) error {
 	q := `
@@ -617,10 +617,10 @@ WHERE
 LIMIT 1
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.NamedArgs{"token": token}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -640,7 +640,7 @@ LIMIT 1
 func (domains *CustomDomains) ListDomainsForRenewal(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 SELECT
@@ -671,10 +671,10 @@ ORDER BY
 	ssl_expires_at ASC
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.NamedArgs{"status": string(CustomDomainSSLStatusActive)}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -694,7 +694,7 @@ ORDER BY
 func (domains *CustomDomains) ListDomainsWithPendingHTTPChallenges(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 SELECT
@@ -722,7 +722,7 @@ WHERE
 	AND ssl_status = ANY(@statuses)
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.NamedArgs{
 		"statuses": []string{
@@ -731,7 +731,7 @@ WHERE
 			string(CustomDomainSSLStatusRenewing),
 		},
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -751,7 +751,7 @@ WHERE
 func (domains *CustomDomains) LoadActiveCertificates(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 SELECT
@@ -780,10 +780,10 @@ WHERE
 	AND ssl_certificate IS NOT NULL
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.NamedArgs{"status": string(CustomDomainSSLStatusActive)}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -803,7 +803,7 @@ WHERE
 func (domains *CustomDomains) ListStaleProvisioningDomains(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 SELECT
@@ -837,7 +837,7 @@ WHERE
 	AND ssl_status != @active_status
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.NamedArgs{
 		"provisioning_status": string(CustomDomainSSLStatusProvisioning),
@@ -845,7 +845,7 @@ WHERE
 		"failed_status":       string(CustomDomainSSLStatusFailed),
 		"active_status":       string(CustomDomainSSLStatusActive),
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {

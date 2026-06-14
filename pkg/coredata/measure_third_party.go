@@ -44,7 +44,7 @@ type (
 func (mtp MeasureThirdParty) Upsert(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 INSERT INTO
@@ -72,7 +72,7 @@ ON CONFLICT (measure_id, third_party_id) DO NOTHING;
 	args := pgx.StrictNamedArgs{
 		"measure_id":     mtp.MeasureID,
 		"third_party_id": mtp.ThirdPartyID,
-		"tenant_id":      scope.GetTenantID(),
+		"tenant_id":      predicate.GetTenantID(),
 		"created_at":     mtp.CreatedAt,
 	}
 
@@ -86,7 +86,7 @@ ON CONFLICT (measure_id, third_party_id) DO NOTHING;
 func (mtp MeasureThirdParty) Delete(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 	measureID gid.GID,
 	thirdPartyID gid.GID,
 ) error {
@@ -104,9 +104,9 @@ WHERE
 		"measure_id":     measureID,
 		"third_party_id": thirdPartyID,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	_, err := conn.Exec(ctx, q, args)
 

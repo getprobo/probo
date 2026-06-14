@@ -48,7 +48,7 @@ type (
 	}
 
 	AuthorizeResult struct {
-		Scope *coredata.Scope
+		Predicate *coredata.Predicate
 	}
 
 	Loaders struct {
@@ -125,9 +125,9 @@ func (f *batchFetcher) newLoaders() *Loaders {
 }
 
 func (f *batchFetcher) fetchOrganizations(ctx context.Context, keys []gid.GID) (map[gid.GID]*coredata.Organization, error) {
-	scope := coredata.NewScopeFromObjectID(keys[0])
+	predicate := coredata.NewPredicateFromObjectID(keys[0])
 
-	orgs, err := f.probo.Organizations.GetByIDs(ctx, scope, keys...)
+	orgs, err := f.probo.Organizations.GetByIDs(ctx, predicate, keys...)
 	if err != nil {
 		return nil, fmt.Errorf("cannot batch load organizations: %w", err)
 	}
@@ -141,9 +141,9 @@ func (f *batchFetcher) fetchOrganizations(ctx context.Context, keys []gid.GID) (
 }
 
 func (f *batchFetcher) fetchFrameworks(ctx context.Context, keys []gid.GID) (map[gid.GID]*coredata.Framework, error) {
-	scope := coredata.NewScopeFromObjectID(keys[0])
+	predicate := coredata.NewPredicateFromObjectID(keys[0])
 
-	frameworks, err := f.probo.Frameworks.GetByIDs(ctx, scope, keys...)
+	frameworks, err := f.probo.Frameworks.GetByIDs(ctx, predicate, keys...)
 	if err != nil {
 		return nil, fmt.Errorf("cannot batch load frameworks: %w", err)
 	}
@@ -157,9 +157,9 @@ func (f *batchFetcher) fetchFrameworks(ctx context.Context, keys []gid.GID) (map
 }
 
 func (f *batchFetcher) fetchControls(ctx context.Context, keys []gid.GID) (map[gid.GID]*coredata.Control, error) {
-	scope := coredata.NewScopeFromObjectID(keys[0])
+	predicate := coredata.NewPredicateFromObjectID(keys[0])
 
-	controls, err := f.probo.Controls.GetByIDs(ctx, scope, keys...)
+	controls, err := f.probo.Controls.GetByIDs(ctx, predicate, keys...)
 	if err != nil {
 		return nil, fmt.Errorf("cannot batch load controls: %w", err)
 	}
@@ -173,9 +173,9 @@ func (f *batchFetcher) fetchControls(ctx context.Context, keys []gid.GID) (map[g
 }
 
 func (f *batchFetcher) fetchThirdParties(ctx context.Context, keys []gid.GID) (map[gid.GID]*coredata.ThirdParty, error) {
-	scope := coredata.NewScopeFromObjectID(keys[0])
+	predicate := coredata.NewPredicateFromObjectID(keys[0])
 
-	thirdParties, err := f.probo.ThirdParties.GetByIDs(ctx, scope, keys...)
+	thirdParties, err := f.probo.ThirdParties.GetByIDs(ctx, predicate, keys...)
 	if err != nil {
 		return nil, fmt.Errorf("cannot batch load thirdParties: %w", err)
 	}
@@ -189,9 +189,9 @@ func (f *batchFetcher) fetchThirdParties(ctx context.Context, keys []gid.GID) (m
 }
 
 func (f *batchFetcher) fetchDocuments(ctx context.Context, keys []gid.GID) (map[gid.GID]*coredata.Document, error) {
-	scope := coredata.NewScopeFromObjectID(keys[0])
+	predicate := coredata.NewPredicateFromObjectID(keys[0])
 
-	documents, err := f.probo.Documents.GetByIDs(ctx, scope, keys...)
+	documents, err := f.probo.Documents.GetByIDs(ctx, predicate, keys...)
 	if err != nil {
 		return nil, fmt.Errorf("cannot batch load documents: %w", err)
 	}
@@ -205,9 +205,9 @@ func (f *batchFetcher) fetchDocuments(ctx context.Context, keys []gid.GID) (map[
 }
 
 func (f *batchFetcher) fetchProfiles(ctx context.Context, keys []gid.GID) (map[gid.GID]*coredata.MembershipProfile, error) {
-	scope := coredata.NewScopeFromObjectID(keys[0])
+	predicate := coredata.NewPredicateFromObjectID(keys[0])
 
-	profiles, err := f.iam.OrganizationService.GetProfilesByIDs(ctx, scope, keys...)
+	profiles, err := f.iam.OrganizationService.GetProfilesByIDs(ctx, predicate, keys...)
 	if err != nil {
 		return nil, fmt.Errorf("cannot batch load profiles: %w", err)
 	}
@@ -221,9 +221,9 @@ func (f *batchFetcher) fetchProfiles(ctx context.Context, keys []gid.GID) (map[g
 }
 
 func (f *batchFetcher) fetchRisks(ctx context.Context, keys []gid.GID) (map[gid.GID]*coredata.Risk, error) {
-	scope := coredata.NewScopeFromObjectID(keys[0])
+	predicate := coredata.NewPredicateFromObjectID(keys[0])
 
-	risks, err := f.probo.Risks.GetByIDs(ctx, scope, keys...)
+	risks, err := f.probo.Risks.GetByIDs(ctx, predicate, keys...)
 	if err != nil {
 		return nil, fmt.Errorf("cannot batch load risks: %w", err)
 	}
@@ -237,9 +237,9 @@ func (f *batchFetcher) fetchRisks(ctx context.Context, keys []gid.GID) (map[gid.
 }
 
 func (f *batchFetcher) fetchMeasures(ctx context.Context, keys []gid.GID) (map[gid.GID]*coredata.Measure, error) {
-	scope := coredata.NewScopeFromObjectID(keys[0])
+	predicate := coredata.NewPredicateFromObjectID(keys[0])
 
-	measures, err := f.probo.Measures.GetByIDs(ctx, scope, keys...)
+	measures, err := f.probo.Measures.GetByIDs(ctx, predicate, keys...)
 	if err != nil {
 		return nil, fmt.Errorf("cannot batch load measures: %w", err)
 	}
@@ -253,9 +253,9 @@ func (f *batchFetcher) fetchMeasures(ctx context.Context, keys []gid.GID) (map[g
 }
 
 func (f *batchFetcher) fetchTasks(ctx context.Context, keys []gid.GID) (map[gid.GID]*coredata.Task, error) {
-	scope := coredata.NewScopeFromObjectID(keys[0])
+	predicate := coredata.NewPredicateFromObjectID(keys[0])
 
-	tasks, err := f.probo.Tasks.GetByIDs(ctx, scope, keys...)
+	tasks, err := f.probo.Tasks.GetByIDs(ctx, predicate, keys...)
 	if err != nil {
 		return nil, fmt.Errorf("cannot batch load tasks: %w", err)
 	}
@@ -269,9 +269,9 @@ func (f *batchFetcher) fetchTasks(ctx context.Context, keys []gid.GID) (map[gid.
 }
 
 func (f *batchFetcher) fetchFiles(ctx context.Context, keys []gid.GID) (map[gid.GID]*coredata.File, error) {
-	scope := coredata.NewScopeFromObjectID(keys[0])
+	predicate := coredata.NewPredicateFromObjectID(keys[0])
 
-	files, err := f.probo.Files.GetByIDs(ctx, scope, keys...)
+	files, err := f.probo.Files.GetByIDs(ctx, predicate, keys...)
 	if err != nil {
 		return nil, fmt.Errorf("cannot batch load files: %w", err)
 	}
@@ -285,9 +285,9 @@ func (f *batchFetcher) fetchFiles(ctx context.Context, keys []gid.GID) (map[gid.
 }
 
 func (f *batchFetcher) fetchCookieBanners(ctx context.Context, keys []gid.GID) (map[gid.GID]*coredata.CookieBanner, error) {
-	scope := coredata.NewScopeFromObjectID(keys[0])
+	predicate := coredata.NewPredicateFromObjectID(keys[0])
 
-	banners, err := f.cookieBanner.GetCookieBannersByIDs(ctx, scope, keys...)
+	banners, err := f.cookieBanner.GetCookieBannersByIDs(ctx, predicate, keys...)
 	if err != nil {
 		return nil, fmt.Errorf("cannot batch load cookie banners: %w", err)
 	}
@@ -301,9 +301,9 @@ func (f *batchFetcher) fetchCookieBanners(ctx context.Context, keys []gid.GID) (
 }
 
 func (f *batchFetcher) fetchCookieCategories(ctx context.Context, keys []gid.GID) (map[gid.GID]*coredata.CookieCategory, error) {
-	scope := coredata.NewScopeFromObjectID(keys[0])
+	predicate := coredata.NewPredicateFromObjectID(keys[0])
 
-	categories, err := f.cookieBanner.GetCookieCategoriesByIDs(ctx, scope, keys...)
+	categories, err := f.cookieBanner.GetCookieCategoriesByIDs(ctx, predicate, keys...)
 	if err != nil {
 		return nil, fmt.Errorf("cannot batch load cookie categories: %w", err)
 	}
@@ -348,7 +348,7 @@ func (f *batchFetcher) fetchCommonThirdParties(ctx context.Context, keys []gid.G
 // surfaces per-key denials via dataloadgen.MappedFetchError. When
 // AuthorizeMulti cannot evaluate the batch as a whole (e.g. mixed
 // organizations), we fall back to per-item Authorize so every key still
-// gets a scope or iam error.
+// gets a predicate or iam error.
 //
 // The Authorize loader is created with WithoutCache() so repeated calls
 // with the same (resource, action) within a single request still produce
@@ -388,7 +388,7 @@ func (f *batchFetcher) fetchAuthorizes(
 		multiParams.Session = &session.ID
 	}
 
-	scope, decisions, err := f.iam.Authorizer.AuthorizeMulti(ctx, multiParams)
+	predicate, decisions, err := f.iam.Authorizer.AuthorizeMulti(ctx, multiParams)
 	if err != nil {
 		return f.fetchAuthorizesIndividually(ctx, keys, identity.ID, session)
 	}
@@ -402,7 +402,7 @@ func (f *batchFetcher) fetchAuthorizes(
 			continue
 		}
 
-		result[key] = AuthorizeResult{Scope: scope}
+		result[key] = AuthorizeResult{Predicate: predicate}
 	}
 
 	if len(perKeyErrs) > 0 {
@@ -443,13 +443,13 @@ func (f *batchFetcher) fetchAuthorizesIndividually(
 			params.Session = &session.ID
 		}
 
-		scope, err := f.iam.Authorizer.Authorize(ctx, params)
+		predicate, err := f.iam.Authorizer.Authorize(ctx, params)
 		if err != nil {
 			perKeyErrs[key] = err
 			continue
 		}
 
-		result[key] = AuthorizeResult{Scope: scope}
+		result[key] = AuthorizeResult{Predicate: predicate}
 	}
 
 	if len(perKeyErrs) > 0 {

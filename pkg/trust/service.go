@@ -114,7 +114,7 @@ func (s *Service) Get(
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			err := trustCenter.LoadByID(ctx, conn, coredata.NewNoScope(), id)
+			err := trustCenter.LoadByID(ctx, conn, coredata.NewNoPredicate(), id)
 			if err != nil {
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return ErrPageNotFound
@@ -168,7 +168,7 @@ func (s *Service) GetByDomainName(ctx context.Context, domain string) (*coredata
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
 			var customDomain coredata.CustomDomain
-			if err := customDomain.LoadByDomain(ctx, conn, coredata.NewNoScope(), domain); err != nil {
+			if err := customDomain.LoadByDomain(ctx, conn, coredata.NewNoPredicate(), domain); err != nil {
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return ErrPageNotFound
 				}
@@ -177,7 +177,7 @@ func (s *Service) GetByDomainName(ctx context.Context, domain string) (*coredata
 			}
 
 			var org coredata.Organization
-			if err := org.LoadByCustomDomainID(ctx, conn, coredata.NewNoScope(), customDomain.ID); err != nil {
+			if err := org.LoadByCustomDomainID(ctx, conn, coredata.NewNoPredicate(), customDomain.ID); err != nil {
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return ErrPageNotFound
 				}
@@ -186,7 +186,7 @@ func (s *Service) GetByDomainName(ctx context.Context, domain string) (*coredata
 			}
 
 			trustCenter = &coredata.TrustCenter{}
-			if err := trustCenter.LoadByOrganizationID(ctx, conn, coredata.NewNoScope(), org.ID); err != nil {
+			if err := trustCenter.LoadByOrganizationID(ctx, conn, coredata.NewNoPredicate(), org.ID); err != nil {
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return ErrPageNotFound
 				}
@@ -210,7 +210,7 @@ func (s *Service) GetCustomDomainByOrganizationID(ctx context.Context, organizat
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			return customDomain.LoadByOrganizationID(ctx, conn, coredata.NewNoScope(), organizationID)
+			return customDomain.LoadByOrganizationID(ctx, conn, coredata.NewNoPredicate(), organizationID)
 		},
 	)
 	if err != nil {
@@ -230,16 +230,16 @@ func (s *Service) GetCustomDomainByOrganizationID(ctx context.Context, organizat
 func (s *Service) EmailPresenterConfigByOrganizationID(ctx context.Context, orgID gid.GID) (emails.PresenterConfig, error) {
 	var trustCenter coredata.TrustCenter
 
-	scope := coredata.NewScopeFromObjectID(orgID)
+	predicate := coredata.NewPredicateFromObjectID(orgID)
 
 	err := s.pg.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
-		return trustCenter.LoadByOrganizationID(ctx, conn, scope, orgID)
+		return trustCenter.LoadByOrganizationID(ctx, conn, predicate, orgID)
 	})
 	if err != nil {
 		return emails.PresenterConfig{}, fmt.Errorf("cannot load trust center for org %s: %w", orgID, err)
 	}
 
-	return s.TrustCenters.EmailPresenterConfig(ctx, scope, trustCenter.ID)
+	return s.TrustCenters.EmailPresenterConfig(ctx, predicate, trustCenter.ID)
 }
 
 func (s *Service) GetOrganizationByTrustCenterID(
@@ -256,7 +256,7 @@ func (s *Service) GetOrganizationByTrustCenterID(
 	err = s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			return org.LoadByID(ctx, conn, coredata.NewNoScope(), trustCenter.OrganizationID)
+			return org.LoadByID(ctx, conn, coredata.NewNoPredicate(), trustCenter.OrganizationID)
 		},
 	)
 	if err != nil {
@@ -275,7 +275,7 @@ func (s *Service) GetMembershipByCompliancePageIDAndIdentityID(ctx context.Conte
 			return membership.LoadByTrustCenterIDAndIdentityID(
 				ctx,
 				conn,
-				coredata.NewScopeFromObjectID(compliancePageID),
+				coredata.NewPredicateFromObjectID(compliancePageID),
 				compliancePageID,
 				identityID,
 			)
@@ -298,14 +298,14 @@ func (s *Service) GetNDAFile(
 ) (*coredata.File, error) {
 	var (
 		file  *coredata.File
-		scope = coredata.NewScopeFromObjectID(compliancePageID)
+		predicate = coredata.NewPredicateFromObjectID(compliancePageID)
 	)
 
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
 			trustCenter := &coredata.TrustCenter{}
-			if err := trustCenter.LoadByID(ctx, conn, scope, compliancePageID); err != nil {
+			if err := trustCenter.LoadByID(ctx, conn, predicate, compliancePageID); err != nil {
 				return fmt.Errorf("cannot load trust center: %w", err)
 			}
 
@@ -314,7 +314,7 @@ func (s *Service) GetNDAFile(
 			}
 
 			file = &coredata.File{}
-			if err := file.LoadByID(ctx, conn, scope, *trustCenter.NonDisclosureAgreementFileID); err != nil {
+			if err := file.LoadByID(ctx, conn, predicate, *trustCenter.NonDisclosureAgreementFileID); err != nil {
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return ErrNDAFileNotFound
 				}
@@ -340,14 +340,14 @@ func (s *Service) ProvisionMember(
 	var (
 		access *coredata.TrustCenterAccess
 		now    = time.Now()
-		scope  = coredata.NewScopeFromObjectID(compliancePageID)
+		predicate = coredata.NewPredicateFromObjectID(compliancePageID)
 	)
 
 	err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			compliancePage := &coredata.TrustCenter{}
-			if err := compliancePage.LoadByID(ctx, tx, scope, compliancePageID); err != nil {
+			if err := compliancePage.LoadByID(ctx, tx, predicate, compliancePageID); err != nil {
 				return fmt.Errorf("cannot load trust center: %w", err)
 			}
 
@@ -357,15 +357,15 @@ func (s *Service) ProvisionMember(
 			}
 
 			access = &coredata.TrustCenterAccess{}
-			if err := access.LoadByTrustCenterIDAndIdentityID(ctx, tx, scope, compliancePageID, identityID); err != nil {
+			if err := access.LoadByTrustCenterIDAndIdentityID(ctx, tx, predicate, compliancePageID, identityID); err != nil {
 				if !errors.Is(err, coredata.ErrResourceNotFound) {
 					return fmt.Errorf("cannot load trust center access: %w", err)
 				}
 
 				access = &coredata.TrustCenterAccess{
-					ID:             gid.New(scope.GetTenantID(), coredata.TrustCenterAccessEntityType),
+					ID:             gid.New(predicate.GetTenantID(), coredata.TrustCenterAccessEntityType),
 					OrganizationID: compliancePage.OrganizationID,
-					TenantID:       scope.GetTenantID(),
+					TenantID:       predicate.GetTenantID(),
 					IdentityID:     identityID,
 					TrustCenterID:  compliancePageID,
 					CreatedAt:      now,
@@ -396,7 +396,7 @@ func (s *Service) ProvisionMember(
 					access.ElectronicSignatureID = &sig.ID
 				}
 
-				if err := access.Insert(ctx, tx, scope); err != nil {
+				if err := access.Insert(ctx, tx, predicate); err != nil {
 					return fmt.Errorf("cannot insert trust center access: %w", err)
 				}
 			}
@@ -405,7 +405,7 @@ func (s *Service) ProvisionMember(
 			if err := profile.LoadByIdentityIDAndOrganizationID(
 				ctx,
 				tx,
-				coredata.NewScopeFromObjectID(access.ID),
+				coredata.NewPredicateFromObjectID(access.ID),
 				identityID,
 				access.OrganizationID,
 			); err != nil {

@@ -44,12 +44,12 @@ func (r *cookieConsentRecordResolver) CookieBanner(ctx context.Context, obj *typ
 
 // CookieBannerVersion is the resolver for the cookieBannerVersion field.
 func (r *cookieConsentRecordResolver) CookieBannerVersion(ctx context.Context, obj *types.CookieConsentRecord) (*types.CookieBannerVersion, error) {
-	scope, err := r.authorize(ctx, obj.CookieBannerVersion.ID, probo.ActionCookieBannerVersionGet)
+	predicate, err := r.authorize(ctx, obj.CookieBannerVersion.ID, probo.ActionCookieBannerVersionGet)
 	if err != nil {
 		return nil, err
 	}
 
-	version, err := r.cookieBanner.GetCookieBannerVersion(ctx, scope, obj.CookieBannerVersion.ID)
+	version, err := r.cookieBanner.GetCookieBannerVersion(ctx, predicate, obj.CookieBannerVersion.ID)
 	if err != nil {
 		if errors.Is(err, cookiebanner.ErrVersionNotFound) {
 			return nil, nil
@@ -71,12 +71,12 @@ func (r *cookieConsentRecordResolver) CookieBannerVersion(ctx context.Context, o
 
 // TotalCount is the resolver for the totalCount field.
 func (r *cookieConsentRecordConnectionResolver) TotalCount(ctx context.Context, obj *types.CookieConsentRecordConnection) (int, error) {
-	scope, err := r.authorize(ctx, obj.ParentID, probo.ActionCookieConsentRecordList)
+	predicate, err := r.authorize(ctx, obj.ParentID, probo.ActionCookieConsentRecordList)
 	if err != nil {
 		return 0, err
 	}
 
-	count, err := r.cookieBanner.CountCookieConsentRecordsForBanner(ctx, scope, obj.ParentID, obj.Filter)
+	count, err := r.cookieBanner.CountCookieConsentRecordsForBanner(ctx, predicate, obj.ParentID, obj.Filter)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot count consent records", log.Error(err))
 		return 0, gqlutils.Internal(ctx)

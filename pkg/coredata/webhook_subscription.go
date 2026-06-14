@@ -127,7 +127,7 @@ func (w *WebhookSubscription) AuthorizationAttributes(
 func (w *WebhookSubscription) LoadByID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	webhookSubscriptionID gid.GID,
 ) error {
 	q := `
@@ -147,10 +147,10 @@ WHERE
 LIMIT 1;
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"webhook_subscription_id": webhookSubscriptionID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -174,7 +174,7 @@ LIMIT 1;
 func (w *WebhookSubscriptions) LoadByOrganizationID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	organizationID gid.GID,
 	cursor *page.Cursor[WebhookSubscriptionOrderField],
 ) error {
@@ -194,10 +194,10 @@ WHERE
     AND organization_id = @organization_id
     AND %s
 `
-	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.NamedArgs{"organization_id": organizationID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
@@ -218,7 +218,7 @@ WHERE
 func (w *WebhookSubscriptions) CountByOrganizationID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	organizationID gid.GID,
 ) (int, error) {
 	q := `
@@ -230,12 +230,12 @@ WHERE
     %s
     AND organization_id = @organization_id
 `
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"organization_id": organizationID,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	row := conn.QueryRow(ctx, q, args)
 
@@ -250,7 +250,7 @@ WHERE
 func (w *WebhookSubscriptions) ExistsByOrganizationIDAndEventType(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	organizationID gid.GID,
 	eventType WebhookEventType,
 ) (bool, error) {
@@ -263,13 +263,13 @@ SELECT EXISTS (
         AND @event_type = ANY(selected_events)
 )
 `
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"organization_id": organizationID,
 		"event_type":      eventType.String(),
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	var exists bool
 	if err := conn.QueryRow(ctx, q, args).Scan(&exists); err != nil {
@@ -282,7 +282,7 @@ SELECT EXISTS (
 func (w *WebhookSubscription) Insert(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 INSERT INTO
@@ -309,7 +309,7 @@ VALUES (
 `
 
 	args := pgx.StrictNamedArgs{
-		"tenant_id":                scope.GetTenantID(),
+		"tenant_id":                predicate.GetTenantID(),
 		"webhook_subscription_id":  w.ID,
 		"organization_id":          w.OrganizationID,
 		"endpoint_url":             w.EndpointURL,
@@ -330,7 +330,7 @@ VALUES (
 func (w *WebhookSubscription) Update(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 UPDATE webhook_subscriptions
@@ -342,7 +342,7 @@ WHERE %s
     AND id = @webhook_subscription_id
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"webhook_subscription_id": w.ID,
@@ -350,7 +350,7 @@ WHERE %s
 		"selected_events":         w.SelectedEvents,
 		"updated_at":              w.UpdatedAt,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	result, err := conn.Exec(ctx, q, args)
 	if err != nil {
@@ -367,7 +367,7 @@ WHERE %s
 func (w *WebhookSubscriptions) LoadMatchingByOrganizationIDAndEventType(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	organizationID gid.GID,
 	eventType WebhookEventType,
 ) error {
@@ -387,13 +387,13 @@ WHERE
     AND organization_id = @organization_id
     AND @event_type = ANY(selected_events)
 `
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"organization_id": organizationID,
 		"event_type":      eventType.String(),
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -413,19 +413,19 @@ WHERE
 func (w *WebhookSubscription) Delete(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 DELETE FROM webhook_subscriptions
 WHERE %s
     AND id = @webhook_subscription_id
 `
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"webhook_subscription_id": w.ID,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {

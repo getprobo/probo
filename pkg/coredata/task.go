@@ -106,7 +106,7 @@ func (t *Task) AuthorizationAttributes(
 func (t *Task) LoadByID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	taskID gid.GID,
 ) error {
 	q := `
@@ -134,10 +134,10 @@ WHERE
 LIMIT 1;
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"task_id": taskID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -161,7 +161,7 @@ LIMIT 1;
 func (t *Tasks) LoadByIDs(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	taskIDs []gid.GID,
 ) error {
 	q := `
@@ -188,10 +188,10 @@ WHERE
     AND id = ANY(@task_ids)
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"task_ids": taskIDs}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -211,7 +211,7 @@ WHERE
 func (t *Task) Insert(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 WITH next_rank AS (
@@ -258,7 +258,7 @@ RETURNING rank, priority_rank;
 `
 
 	args := pgx.StrictNamedArgs{
-		"tenant_id":              scope.GetTenantID(),
+		"tenant_id":              predicate.GetTenantID(),
 		"task_id":                t.ID,
 		"organization_id":        t.OrganizationID,
 		"measure_id":             t.MeasureID,
@@ -291,7 +291,7 @@ RETURNING rank, priority_rank;
 func (t *Task) Upsert(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 WITH next_rank AS (
@@ -358,7 +358,7 @@ RETURNING
 `
 
 	args := pgx.StrictNamedArgs{
-		"tenant_id":              scope.GetTenantID(),
+		"tenant_id":              predicate.GetTenantID(),
 		"task_id":                t.ID,
 		"organization_id":        t.OrganizationID,
 		"measure_id":             t.MeasureID,
@@ -392,7 +392,7 @@ RETURNING
 func (t *Tasks) CountByOrganizationID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	organizationID gid.GID,
 ) (int, error) {
 	q := `
@@ -405,10 +405,10 @@ func (t *Tasks) CountByOrganizationID(
 		AND organization_id = @organization_id
 	`
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"organization_id": organizationID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	row := conn.QueryRow(ctx, q, args)
 
@@ -425,7 +425,7 @@ func (t *Tasks) CountByOrganizationID(
 func (t *Tasks) LoadByOrganizationID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	organizationID gid.GID,
 	cursor *page.Cursor[TaskOrderField],
 ) error {
@@ -453,10 +453,10 @@ func (t *Tasks) LoadByOrganizationID(
 		AND organization_id = @organization_id
 		AND %s
 	`
-	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"organization_id": organizationID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
@@ -477,7 +477,7 @@ func (t *Tasks) LoadByOrganizationID(
 func (t *Tasks) CountByMeasureID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	measureID gid.GID,
 ) (int, error) {
 	q := `
@@ -490,10 +490,10 @@ WHERE
     AND measure_id = @measure_id
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"measure_id": measureID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	row := conn.QueryRow(ctx, q, args)
 
@@ -510,7 +510,7 @@ WHERE
 func (t *Tasks) LoadByMeasureID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	measureID gid.GID,
 	cursor *page.Cursor[TaskOrderField],
 ) error {
@@ -538,10 +538,10 @@ WHERE
     AND measure_id = @measure_id
     AND %s
 `
-	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"measure_id": measureID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
@@ -562,7 +562,7 @@ WHERE
 func (t *Task) Update(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 UPDATE tasks
@@ -579,7 +579,7 @@ SET
 WHERE %s
     AND id = @task_id
 `
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.NamedArgs{
 		"task_id":                t.ID,
@@ -594,7 +594,7 @@ WHERE %s
 		"deadline":               t.Deadline,
 	}
 
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
 
@@ -604,7 +604,7 @@ WHERE %s
 func (t *Task) NextRankForStatePriority(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 SELECT COALESCE(MAX(rank), 0) + 1
@@ -616,7 +616,7 @@ WHERE
     AND id != @id
     AND %s;
 `
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"id":              t.ID,
@@ -624,7 +624,7 @@ WHERE
 		"state":           t.State,
 		"priority":        t.Priority,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -644,7 +644,7 @@ WHERE
 func (t *Task) UpdateRank(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 WITH old AS (
@@ -675,7 +675,7 @@ WHERE %s
   );
 `
 
-	scopeFragment := scope.SQLFragment()
+	scopeFragment := predicate.SQLFragment()
 	q = fmt.Sprintf(q, scopeFragment, scopeFragment)
 
 	args := pgx.StrictNamedArgs{
@@ -686,7 +686,7 @@ WHERE %s
 		"priority":        t.Priority,
 		"updated_at":      t.UpdatedAt,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
@@ -699,20 +699,20 @@ WHERE %s
 func (t *Task) Delete(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 DELETE FROM tasks
 WHERE %s
     AND id = @task_id
 `
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.NamedArgs{
 		"task_id": t.ID,
 	}
 
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {

@@ -85,7 +85,7 @@ func (t *CookieBannerTranslation) AuthorizationAttributes(
 func (t *CookieBannerTranslation) LoadByID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	translationID gid.GID,
 ) error {
 	q := `
@@ -105,10 +105,10 @@ WHERE
 LIMIT 1;
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"translation_id": translationID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -132,7 +132,7 @@ LIMIT 1;
 func (t *CookieBannerTranslation) LoadByCookieBannerIDAndLanguage(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	cookieBannerID gid.GID,
 	language string,
 ) error {
@@ -154,13 +154,13 @@ WHERE
 LIMIT 1;
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"cookie_banner_id": cookieBannerID,
 		"language":         language,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -184,7 +184,7 @@ LIMIT 1;
 func (t *CookieBannerTranslations) LoadAllByCookieBannerID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	cookieBannerID gid.GID,
 ) error {
 	q := `
@@ -205,10 +205,10 @@ ORDER BY
 	language ASC;
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"cookie_banner_id": cookieBannerID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -228,7 +228,7 @@ ORDER BY
 func (t *CookieBannerTranslation) Insert(
 	ctx context.Context,
 	tx pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 INSERT INTO cookie_banner_translations (
@@ -254,7 +254,7 @@ INSERT INTO cookie_banner_translations (
 
 	args := pgx.StrictNamedArgs{
 		"id":               t.ID,
-		"tenant_id":        scope.GetTenantID(),
+		"tenant_id":        predicate.GetTenantID(),
 		"organization_id":  t.OrganizationID,
 		"cookie_banner_id": t.CookieBannerID,
 		"language":         t.Language,
@@ -280,7 +280,7 @@ INSERT INTO cookie_banner_translations (
 func (t *CookieBannerTranslation) Update(
 	ctx context.Context,
 	tx pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 UPDATE cookie_banner_translations
@@ -292,14 +292,14 @@ WHERE
 	AND id = @id
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"id":           t.ID,
 		"translations": t.Translations,
 		"updated_at":   t.UpdatedAt,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	result, err := tx.Exec(ctx, q, args)
 	if err != nil {
@@ -316,7 +316,7 @@ WHERE
 func (t *CookieBannerTranslation) Delete(
 	ctx context.Context,
 	tx pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 DELETE FROM cookie_banner_translations
@@ -325,10 +325,10 @@ WHERE
 	AND id = @id
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"id": t.ID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	_, err := tx.Exec(ctx, q, args)
 	if err != nil {

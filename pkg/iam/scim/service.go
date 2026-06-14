@@ -156,7 +156,7 @@ func (s *Service) CreateUser(
 		profile    *coredata.MembershipProfile
 	)
 
-	scope := coredata.NewScopeFromObjectID(config.OrganizationID)
+	predicate := coredata.NewPredicateFromObjectID(config.OrganizationID)
 
 	err = s.pg.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		identity := &coredata.Identity{}
@@ -186,7 +186,7 @@ func (s *Service) CreateUser(
 		if err := profile.LoadByIdentityIDAndOrganizationID(
 			ctx,
 			tx,
-			coredata.NewScopeFromObjectID(config.OrganizationID),
+			coredata.NewPredicateFromObjectID(config.OrganizationID),
 			identity.ID,
 			config.OrganizationID,
 		); err != nil {
@@ -202,9 +202,7 @@ func (s *Service) CreateUser(
 			if externalIdPtr != nil {
 				if err := profile.LoadByExternalIDAndOrganizationID(
 					ctx,
-					tx,
-					scope,
-					*externalIdPtr,
+					tx, predicate, *externalIdPtr,
 					config.OrganizationID,
 				); err == nil {
 					// Migrate the existing membership to the new identity
@@ -214,15 +212,13 @@ func (s *Service) CreateUser(
 					existingMembership := &coredata.Membership{}
 					if err := existingMembership.LoadByIdentityIDAndOrganizationID(
 						ctx,
-						tx,
-						scope,
-						oldIdentityID,
+						tx, predicate, oldIdentityID,
 						config.OrganizationID,
 					); err == nil {
 						existingMembership.IdentityID = identity.ID
 
 						existingMembership.UpdatedAt = now
-						if err := existingMembership.Update(ctx, tx, scope); err != nil {
+						if err := existingMembership.Update(ctx, tx, predicate); err != nil {
 							return fmt.Errorf("cannot update membership identity: %w", err)
 						}
 					} else if !errors.Is(err, coredata.ErrResourceNotFound) {
@@ -233,7 +229,7 @@ func (s *Service) CreateUser(
 					profile.EmailAddress = emailAddr
 					applyUserAttributes(profile, attrs, externalIdPtr, profileState, now)
 
-					if err := profile.Update(ctx, tx, scope); err != nil {
+					if err := profile.Update(ctx, tx, predicate); err != nil {
 						return fmt.Errorf("cannot update profile: %w", err)
 					}
 				} else if !errors.Is(err, coredata.ErrResourceNotFound) {
@@ -270,9 +266,7 @@ func (s *Service) CreateUser(
 			if externalIdPtr != nil {
 				if err := profile.ClearExternalID(
 					ctx,
-					tx,
-					scope,
-					*externalIdPtr,
+					tx, predicate, *externalIdPtr,
 					config.OrganizationID,
 				); err != nil {
 					return fmt.Errorf("cannot clear conflicting external id: %w", err)
@@ -281,7 +275,7 @@ func (s *Service) CreateUser(
 
 			applyUserAttributes(profile, attrs, externalIdPtr, profileState, now)
 
-			if err := profile.Update(ctx, tx, scope); err != nil {
+			if err := profile.Update(ctx, tx, predicate); err != nil {
 				return fmt.Errorf("cannot update profile: %w", err)
 			}
 		}
@@ -293,7 +287,7 @@ func (s *Service) CreateUser(
 			if err := invitations.ExpireByUserID(
 				ctx,
 				tx,
-				coredata.NewScopeFromObjectID(profile.OrganizationID),
+				coredata.NewPredicateFromObjectID(profile.OrganizationID),
 				profile.ID,
 				onlyPending,
 			); err != nil {
@@ -301,7 +295,7 @@ func (s *Service) CreateUser(
 			}
 
 			signatures := &coredata.DocumentVersionSignatures{}
-			if err := signatures.DeleteRequestedBySignatory(ctx, tx, scope, profile.ID); err != nil {
+			if err := signatures.DeleteRequestedBySignatory(ctx, tx, predicate, profile.ID); err != nil {
 				return fmt.Errorf("cannot delete requested signatures: %w", err)
 			}
 		}
@@ -309,9 +303,7 @@ func (s *Service) CreateUser(
 		membership = &coredata.Membership{}
 		if err := membership.LoadByIdentityIDAndOrganizationID(
 			ctx,
-			tx,
-			scope,
-			identity.ID,
+			tx, predicate, identity.ID,
 			config.OrganizationID,
 		); err != nil {
 			if errors.Is(err, coredata.ErrResourceNotFound) {
@@ -324,7 +316,7 @@ func (s *Service) CreateUser(
 					UpdatedAt:      now,
 				}
 
-				err = membership.Insert(ctx, tx, scope)
+				err = membership.Insert(ctx, tx, predicate)
 				if err != nil {
 					return fmt.Errorf("cannot insert membership: %w", err)
 				}
@@ -333,7 +325,7 @@ func (s *Service) CreateUser(
 			}
 		}
 
-		if err := webhook.InsertData(ctx, tx, scope, config.OrganizationID, eventType, webhooktypes.NewUser(profile, membership)); err != nil {
+		if err := webhook.InsertData(ctx, tx, predicate, config.OrganizationID, eventType, webhooktypes.NewUser(profile, membership)); err != nil {
 			return fmt.Errorf("cannot insert webhook event: %w", err)
 		}
 
@@ -351,7 +343,7 @@ func (s *Service) GetUser(
 	config *coredata.SCIMConfiguration,
 	profileID gid.GID,
 ) (scim.Resource, error) {
-	scope := coredata.NewScopeFromObjectID(config.OrganizationID)
+	predicate := coredata.NewPredicateFromObjectID(config.OrganizationID)
 
 	var profile *coredata.MembershipProfile
 
@@ -359,7 +351,7 @@ func (s *Service) GetUser(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
 			profile = &coredata.MembershipProfile{}
-			if err := profile.LoadByID(ctx, conn, scope, profileID); err != nil {
+			if err := profile.LoadByID(ctx, conn, predicate, profileID); err != nil {
 				if err == coredata.ErrResourceNotFound {
 					return scimerrors.ScimErrorResourceNotFound(profileID.String())
 				}
@@ -400,14 +392,14 @@ func (s *Service) ListUsers(
 	//    SCIM list, CreateUser is called which enrolls them into SCIM management.
 	filter.WithSource(coredata.ProfileSourceSCIM)
 
-	scope := coredata.NewScopeFromObjectID(config.OrganizationID)
+	predicate := coredata.NewPredicateFromObjectID(config.OrganizationID)
 
 	var profiles coredata.MembershipProfiles
 
 	err = s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			if err := profiles.LoadAllByOrganizationID(ctx, conn, scope, config.OrganizationID, filter); err != nil {
+			if err := profiles.LoadAllByOrganizationID(ctx, conn, predicate, config.OrganizationID, filter); err != nil {
 				return fmt.Errorf("cannot load profiles: %w", err)
 			}
 
@@ -464,7 +456,7 @@ func (s *Service) updateUser(
 	profileID gid.GID,
 	attrs scimReplaceAttributes,
 ) (*coredata.MembershipProfile, error) {
-	scope := coredata.NewScopeFromObjectID(config.OrganizationID)
+	predicate := coredata.NewPredicateFromObjectID(config.OrganizationID)
 	now := time.Now()
 
 	var (
@@ -476,7 +468,7 @@ func (s *Service) updateUser(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			profile = &coredata.MembershipProfile{}
-			if err := profile.LoadByID(ctx, tx, scope, profileID); err != nil {
+			if err := profile.LoadByID(ctx, tx, predicate, profileID); err != nil {
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return scimerrors.ScimErrorResourceNotFound(profileID.String())
 				}
@@ -489,7 +481,7 @@ func (s *Service) updateUser(
 			}
 
 			membership = &coredata.Membership{}
-			if err := membership.LoadByIdentityIDAndOrganizationID(ctx, tx, scope, profile.IdentityID, profile.OrganizationID); err != nil {
+			if err := membership.LoadByIdentityIDAndOrganizationID(ctx, tx, predicate, profile.IdentityID, profile.OrganizationID); err != nil {
 				return fmt.Errorf("cannot load membership: %w", err)
 			}
 
@@ -717,7 +709,7 @@ func (s *Service) updateUser(
 				profile.UpdatedAt = now
 			}
 
-			if err := profile.Update(ctx, tx, scope); err != nil {
+			if err := profile.Update(ctx, tx, predicate); err != nil {
 				return fmt.Errorf("cannot update membership profile: %w", err)
 			}
 
@@ -728,7 +720,7 @@ func (s *Service) updateUser(
 				if err := invitations.ExpireByUserID(
 					ctx,
 					tx,
-					coredata.NewScopeFromObjectID(profile.OrganizationID),
+					coredata.NewPredicateFromObjectID(profile.OrganizationID),
 					profile.ID,
 					onlyPending,
 				); err != nil {
@@ -736,7 +728,7 @@ func (s *Service) updateUser(
 				}
 
 				signatures := &coredata.DocumentVersionSignatures{}
-				if err := signatures.DeleteRequestedBySignatory(ctx, tx, scope, profile.ID); err != nil {
+				if err := signatures.DeleteRequestedBySignatory(ctx, tx, predicate, profile.ID); err != nil {
 					return fmt.Errorf("cannot delete requested signatures: %w", err)
 				}
 			}
@@ -756,12 +748,12 @@ func (s *Service) updateUser(
 
 			if needsUpdate {
 				membership.UpdatedAt = now
-				if err := membership.Update(ctx, tx, scope); err != nil {
+				if err := membership.Update(ctx, tx, predicate); err != nil {
 					return fmt.Errorf("cannot update membership: %w", err)
 				}
 			}
 
-			if err := webhook.InsertData(ctx, tx, scope, config.OrganizationID, coredata.WebhookEventTypeUserUpdated, webhooktypes.NewUser(profile, membership)); err != nil {
+			if err := webhook.InsertData(ctx, tx, predicate, config.OrganizationID, coredata.WebhookEventTypeUserUpdated, webhooktypes.NewUser(profile, membership)); err != nil {
 				return fmt.Errorf("cannot insert webhook event: %w", err)
 			}
 
@@ -818,13 +810,13 @@ func (s *Service) DeleteUser(
 	config *coredata.SCIMConfiguration,
 	profileID gid.GID,
 ) error {
-	scope := coredata.NewScopeFromObjectID(config.OrganizationID)
+	predicate := coredata.NewPredicateFromObjectID(config.OrganizationID)
 
 	return s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			profile := &coredata.MembershipProfile{}
-			if err := profile.LoadByID(ctx, tx, scope, profileID); err != nil {
+			if err := profile.LoadByID(ctx, tx, predicate, profileID); err != nil {
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return scimerrors.ScimErrorResourceNotFound(profileID.String())
 				}
@@ -840,7 +832,7 @@ func (s *Service) DeleteUser(
 
 			m := &coredata.Membership{}
 			if err := m.LoadByIdentityIDAndOrganizationID(
-				ctx, tx, scope, profile.IdentityID, config.OrganizationID,
+				ctx, tx, predicate, profile.IdentityID, config.OrganizationID,
 			); err != nil {
 				if !errors.Is(err, coredata.ErrResourceNotFound) {
 					return fmt.Errorf("cannot load membership: %w", err)
@@ -849,7 +841,7 @@ func (s *Service) DeleteUser(
 				membership = m
 			}
 
-			if err := profile.Delete(ctx, tx, scope, profile.ID); err != nil {
+			if err := profile.Delete(ctx, tx, predicate, profile.ID); err != nil {
 				if errors.Is(err, coredata.ErrResourceInUse) {
 					s.logger.WarnCtx(
 						ctx,
@@ -857,7 +849,7 @@ func (s *Service) DeleteUser(
 						log.String("profile_id", profileID.String()),
 					)
 
-					if err := s.deactivateProfileInTx(ctx, tx, scope, config, profile, membership); err != nil {
+					if err := s.deactivateProfileInTx(ctx, tx, predicate, config, profile, membership); err != nil {
 						return fmt.Errorf("cannot deactivate profile: %w", err)
 					}
 
@@ -872,20 +864,18 @@ func (s *Service) DeleteUser(
 			onlyPending := coredata.NewInvitationFilter([]coredata.InvitationStatus{coredata.InvitationStatusPending})
 			if err := invitations.ExpireByUserID(
 				ctx,
-				tx,
-				scope,
-				profile.ID,
+				tx, predicate, profile.ID,
 				onlyPending,
 			); err != nil {
 				return fmt.Errorf("cannot expire pending invitations: %w", err)
 			}
 
-			if err := webhook.InsertData(ctx, tx, scope, config.OrganizationID, coredata.WebhookEventTypeUserDeleted, webhooktypes.NewUser(profile, membership)); err != nil {
+			if err := webhook.InsertData(ctx, tx, predicate, config.OrganizationID, coredata.WebhookEventTypeUserDeleted, webhooktypes.NewUser(profile, membership)); err != nil {
 				return fmt.Errorf("cannot insert webhook event: %w", err)
 			}
 
 			if membership != nil {
-				if err := membership.Delete(ctx, tx, scope, membership.ID); err != nil {
+				if err := membership.Delete(ctx, tx, predicate, membership.ID); err != nil {
 					return fmt.Errorf("cannot delete membership: %w", err)
 				}
 			}
@@ -898,7 +888,7 @@ func (s *Service) DeleteUser(
 func (s *Service) deactivateProfileInTx(
 	ctx context.Context,
 	tx pg.Tx,
-	scope coredata.Scoper,
+	predicate coredata.Predicater,
 	config *coredata.SCIMConfiguration,
 	profile *coredata.MembershipProfile,
 	membership *coredata.Membership,
@@ -911,7 +901,7 @@ func (s *Service) deactivateProfileInTx(
 	profile.State = coredata.ProfileStateInactive
 	profile.UpdatedAt = now
 
-	if err := profile.Update(ctx, tx, scope); err != nil {
+	if err := profile.Update(ctx, tx, predicate); err != nil {
 		return fmt.Errorf("cannot deactivate profile: %w", err)
 	}
 
@@ -920,27 +910,25 @@ func (s *Service) deactivateProfileInTx(
 	onlyPending := coredata.NewInvitationFilter([]coredata.InvitationStatus{coredata.InvitationStatusPending})
 	if err := invitations.ExpireByUserID(
 		ctx,
-		tx,
-		scope,
-		profile.ID,
+		tx, predicate, profile.ID,
 		onlyPending,
 	); err != nil {
 		return fmt.Errorf("cannot expire pending invitations: %w", err)
 	}
 
 	signatures := &coredata.DocumentVersionSignatures{}
-	if err := signatures.DeleteRequestedBySignatory(ctx, tx, scope, profile.ID); err != nil {
+	if err := signatures.DeleteRequestedBySignatory(ctx, tx, predicate, profile.ID); err != nil {
 		return fmt.Errorf("cannot delete requested signatures: %w", err)
 	}
 
 	if membership != nil {
 		membership.UpdatedAt = now
-		if err := membership.Update(ctx, tx, scope); err != nil {
+		if err := membership.Update(ctx, tx, predicate); err != nil {
 			return fmt.Errorf("cannot update membership: %w", err)
 		}
 	}
 
-	if err := webhook.InsertData(ctx, tx, scope, config.OrganizationID, coredata.WebhookEventTypeUserUpdated, webhooktypes.NewUser(profile, membership)); err != nil {
+	if err := webhook.InsertData(ctx, tx, predicate, config.OrganizationID, coredata.WebhookEventTypeUserUpdated, webhooktypes.NewUser(profile, membership)); err != nil {
 		return fmt.Errorf("cannot insert webhook event: %w", err)
 	}
 
@@ -957,14 +945,14 @@ func (s *Service) LogEvent(
 	statusCode int,
 	errorMessage *string,
 ) {
-	scope := coredata.NewScopeFromObjectID(config.OrganizationID)
+	predicate := coredata.NewPredicateFromObjectID(config.OrganizationID)
 
 	event := s.createEvent(config, method, path, userName, ipAddress, statusCode, errorMessage)
 
 	err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			err := event.Insert(ctx, tx, scope)
+			err := event.Insert(ctx, tx, predicate)
 			if err != nil {
 				return fmt.Errorf("cannot insert SCIM event: %w", err)
 			}

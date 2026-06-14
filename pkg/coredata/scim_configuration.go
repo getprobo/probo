@@ -93,7 +93,7 @@ func (s *SCIMConfiguration) AuthorizationAttributes(
 func (s *SCIMConfiguration) LoadByID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	configID gid.GID,
 ) error {
 	q := `
@@ -124,10 +124,10 @@ LEFT JOIN
     iam_scim_bridges b ON b.scim_configuration_id = sc.id;
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"id": configID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -151,7 +151,7 @@ LEFT JOIN
 func (s *SCIMConfiguration) LoadByOrganizationID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	organizationID gid.GID,
 ) error {
 	q := `
@@ -182,10 +182,10 @@ LEFT JOIN
     iam_scim_bridges b ON b.scim_configuration_id = sc.id;
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"organization_id": organizationID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -262,7 +262,7 @@ LEFT JOIN
 func (s *SCIMConfiguration) Insert(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 INSERT INTO iam_scim_configurations (
@@ -284,7 +284,7 @@ INSERT INTO iam_scim_configurations (
 
 	args := pgx.StrictNamedArgs{
 		"id":              s.ID,
-		"tenant_id":       scope.GetTenantID(),
+		"tenant_id":       predicate.GetTenantID(),
 		"organization_id": s.OrganizationID,
 		"hashed_token":    s.HashedToken,
 		"created_at":      s.CreatedAt,
@@ -308,7 +308,7 @@ INSERT INTO iam_scim_configurations (
 func (s *SCIMConfiguration) Update(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 UPDATE iam_scim_configurations
@@ -320,7 +320,7 @@ WHERE
     AND id = @id
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"id":           s.ID,
@@ -328,7 +328,7 @@ WHERE
 		"updated_at":   s.UpdatedAt,
 	}
 
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
@@ -341,7 +341,7 @@ WHERE
 func (s *SCIMConfiguration) Delete(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 DELETE FROM iam_scim_configurations
@@ -350,10 +350,10 @@ WHERE
     AND id = @id
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"id": s.ID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {

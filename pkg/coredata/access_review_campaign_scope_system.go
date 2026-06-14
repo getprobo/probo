@@ -34,7 +34,7 @@ type AccessReviewCampaignScopeSystem struct {
 func (ss AccessReviewCampaignScopeSystem) Insert(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 INSERT INTO access_review_campaign_scope_systems (access_review_campaign_id, access_source_id, tenant_id)
@@ -43,7 +43,7 @@ VALUES (@access_review_campaign_id, @access_source_id, @tenant_id)
 	args := pgx.StrictNamedArgs{
 		"access_review_campaign_id": ss.AccessReviewCampaignID,
 		"access_source_id":          ss.AccessSourceID,
-		"tenant_id":                 scope.GetTenantID(),
+		"tenant_id":                 predicate.GetTenantID(),
 	}
 
 	_, err := conn.Exec(ctx, q, args)
@@ -57,7 +57,7 @@ VALUES (@access_review_campaign_id, @access_source_id, @tenant_id)
 func (ss AccessReviewCampaignScopeSystem) Upsert(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 INSERT INTO access_review_campaign_scope_systems (access_review_campaign_id, access_source_id, tenant_id)
@@ -67,7 +67,7 @@ ON CONFLICT (access_review_campaign_id, access_source_id) DO NOTHING
 	args := pgx.StrictNamedArgs{
 		"access_review_campaign_id": ss.AccessReviewCampaignID,
 		"access_source_id":          ss.AccessSourceID,
-		"tenant_id":                 scope.GetTenantID(),
+		"tenant_id":                 predicate.GetTenantID(),
 	}
 
 	_, err := conn.Exec(ctx, q, args)
@@ -81,7 +81,7 @@ ON CONFLICT (access_review_campaign_id, access_source_id) DO NOTHING
 func (ss AccessReviewCampaignScopeSystem) Delete(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 DELETE FROM access_review_campaign_scope_systems
@@ -90,13 +90,13 @@ WHERE
     AND access_review_campaign_id = @access_review_campaign_id
     AND access_source_id = @access_source_id
 `
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"access_review_campaign_id": ss.AccessReviewCampaignID,
 		"access_source_id":          ss.AccessSourceID,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
@@ -109,7 +109,7 @@ WHERE
 func (c *AccessReviewCampaign) LockForUpdate(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 SELECT id
@@ -118,9 +118,9 @@ WHERE %s
   AND id = @id
 FOR UPDATE
 `
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 	args := pgx.StrictNamedArgs{"id": c.ID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	var id gid.GID
 	if err := conn.QueryRow(ctx, q, args).Scan(&id); err != nil {
@@ -137,7 +137,7 @@ FOR UPDATE
 func (f *AccessReviewCampaignSourceFetch) UpsertQueued(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	now time.Time,
 ) error {
 	q := `
@@ -167,7 +167,7 @@ ON CONFLICT (access_review_campaign_id, access_source_id) DO UPDATE SET
 	updated_at = EXCLUDED.updated_at
 `
 	args := pgx.StrictNamedArgs{
-		"tenant_id":                 scope.GetTenantID(),
+		"tenant_id":                 predicate.GetTenantID(),
 		"access_review_campaign_id": f.AccessReviewCampaignID,
 		"access_source_id":          f.AccessSourceID,
 		"now":                       now,

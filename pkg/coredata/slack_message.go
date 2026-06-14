@@ -98,13 +98,13 @@ func (sm *SlackMessage) AuthorizationAttributes(
 }
 
 func NewSlackMessage(
-	scope Scoper,
+	predicate Predicater,
 	organizationID gid.GID,
 	messageType SlackMessageType,
 	body map[string]any,
 ) *SlackMessage {
 	now := time.Now()
-	id := gid.New(scope.GetTenantID(), SlackMessageEntityType)
+	id := gid.New(predicate.GetTenantID(), SlackMessageEntityType)
 
 	return &SlackMessage{
 		ID:                    id,
@@ -120,7 +120,7 @@ func NewSlackMessage(
 func (s *SlackMessage) Insert(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 INSERT INTO slack_messages (
@@ -155,7 +155,7 @@ VALUES (
 
 	args := pgx.StrictNamedArgs{
 		"id":                       s.ID,
-		"tenant_id":                scope.GetTenantID(),
+		"tenant_id":                predicate.GetTenantID(),
 		"organization_id":          s.OrganizationID,
 		"type":                     s.Type,
 		"body":                     s.Body,
@@ -293,7 +293,7 @@ FOR UPDATE OF sm
 func (s *SlackMessage) LoadInitialByChannelAndTS(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	channelID string,
 	messageTS string,
 ) error {
@@ -308,9 +308,9 @@ LIMIT 1
 		"message_ts": messageTS,
 		"channel_id": channelID,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -334,7 +334,7 @@ LIMIT 1
 func (s *SlackMessage) Update(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 UPDATE slack_messages
@@ -349,9 +349,9 @@ WHERE id = @id AND %s
 		"error":      s.Error,
 	}
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
@@ -364,7 +364,7 @@ WHERE id = @id AND %s
 func (s *SlackMessage) UpdateChannelAndTSByInitialMessageID(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 	initialSlackMessageID gid.GID,
 	channelID string,
 	messageTS string,
@@ -376,7 +376,7 @@ SET channel_id = @channel_id, message_ts = @message_ts, updated_at = @updated_at
 WHERE initial_slack_message_id = @initial_slack_message_id AND %s
 	`
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"initial_slack_message_id": initialSlackMessageID,
@@ -385,7 +385,7 @@ WHERE initial_slack_message_id = @initial_slack_message_id AND %s
 		"updated_at":               updatedAt,
 	}
 
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
@@ -398,7 +398,7 @@ WHERE initial_slack_message_id = @initial_slack_message_id AND %s
 func (s *SlackMessage) LoadById(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	slackMessageID gid.GID,
 ) error {
 	q := `
@@ -409,12 +409,12 @@ AND %s
 LIMIT 1
 	`
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"id": slackMessageID,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -438,7 +438,7 @@ LIMIT 1
 func (s *SlackMessage) LoadLatestByInitialMessageID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	initialSlackMessageID gid.GID,
 ) error {
 	q := `
@@ -450,12 +450,12 @@ ORDER BY created_at DESC
 LIMIT 1
 	`
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"initial_slack_message_id": initialSlackMessageID,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -479,7 +479,7 @@ LIMIT 1
 func (s *SlackMessage) LoadLatestByRequesterEmailAndType(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	organizationID gid.GID,
 	requesterEmail mail.Addr,
 	messageType SlackMessageType,
@@ -497,7 +497,7 @@ ORDER BY created_at DESC
 LIMIT 1
 	`
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"organization_id": organizationID,
@@ -505,7 +505,7 @@ LIMIT 1
 		"type":            messageType,
 		"since":           since,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {

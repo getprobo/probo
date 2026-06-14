@@ -28,8 +28,8 @@ import (
 
 type (
 	AccessEntryService struct {
-		pg    *pg.Client
-		scope coredata.Scoper
+		pg        *pg.Client
+		predicate coredata.Predicater
 	}
 
 	RecordAccessEntryDecisionRequest struct {
@@ -55,7 +55,7 @@ func (s AccessEntryService) Get(
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			return entry.LoadByID(ctx, conn, s.scope, entryID)
+			return entry.LoadByID(ctx, conn, s.predicate, entryID)
 		},
 	)
 	if err != nil {
@@ -84,12 +84,12 @@ func (s AccessEntryService) RecordDecision(
 	err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
-			if err := entry.LoadByID(ctx, conn, s.scope, req.EntryID); err != nil {
+			if err := entry.LoadByID(ctx, conn, s.predicate, req.EntryID); err != nil {
 				return fmt.Errorf("cannot load access entry: %w", err)
 			}
 
 			campaign := &coredata.AccessReviewCampaign{}
-			if err := campaign.LoadByID(ctx, conn, s.scope, entry.AccessReviewCampaignID); err != nil {
+			if err := campaign.LoadByID(ctx, conn, s.predicate, entry.AccessReviewCampaignID); err != nil {
 				return fmt.Errorf("cannot load campaign: %w", err)
 			}
 
@@ -118,12 +118,12 @@ func (s AccessEntryService) RecordDecision(
 				}
 			}
 
-			if err := entry.Update(ctx, conn, s.scope); err != nil {
+			if err := entry.Update(ctx, conn, s.predicate); err != nil {
 				return fmt.Errorf("cannot record access entry decision: %w", err)
 			}
 
 			history := &coredata.AccessEntryDecisionHistory{
-				ID:             gid.New(s.scope.GetTenantID(), coredata.AccessEntryDecisionHistoryEntityType),
+				ID:             gid.New(s.predicate.GetTenantID(), coredata.AccessEntryDecisionHistoryEntityType),
 				OrganizationID: entry.OrganizationID,
 				AccessEntry:    entry.ID,
 				Decision:       entry.Decision,
@@ -132,7 +132,7 @@ func (s AccessEntryService) RecordDecision(
 				DecidedAt:      *entry.DecidedAt,
 				CreatedAt:      now,
 			}
-			if err := history.Insert(ctx, conn, s.scope); err != nil {
+			if err := history.Insert(ctx, conn, s.predicate); err != nil {
 				return fmt.Errorf("cannot insert decision history: %w", err)
 			}
 
@@ -184,13 +184,13 @@ func (s AccessEntryService) RecordDecisions(
 
 			for _, d := range decisions {
 				entry := &coredata.AccessEntry{}
-				if err := entry.LoadByID(ctx, conn, s.scope, d.EntryID); err != nil {
+				if err := entry.LoadByID(ctx, conn, s.predicate, d.EntryID); err != nil {
 					return fmt.Errorf("cannot load access entry %s: %w", d.EntryID, err)
 				}
 
 				if !verifiedCampaigns[entry.AccessReviewCampaignID] {
 					campaign := &coredata.AccessReviewCampaign{}
-					if err := campaign.LoadByID(ctx, conn, s.scope, entry.AccessReviewCampaignID); err != nil {
+					if err := campaign.LoadByID(ctx, conn, s.predicate, entry.AccessReviewCampaignID); err != nil {
 						return fmt.Errorf("cannot load campaign: %w", err)
 					}
 
@@ -222,12 +222,12 @@ func (s AccessEntryService) RecordDecisions(
 					}
 				}
 
-				if err := entry.Update(ctx, conn, s.scope); err != nil {
+				if err := entry.Update(ctx, conn, s.predicate); err != nil {
 					return fmt.Errorf("cannot record decision for entry %s: %w", d.EntryID, err)
 				}
 
 				history := &coredata.AccessEntryDecisionHistory{
-					ID:             gid.New(s.scope.GetTenantID(), coredata.AccessEntryDecisionHistoryEntityType),
+					ID:             gid.New(s.predicate.GetTenantID(), coredata.AccessEntryDecisionHistoryEntityType),
 					OrganizationID: entry.OrganizationID,
 					AccessEntry:    entry.ID,
 					Decision:       entry.Decision,
@@ -236,7 +236,7 @@ func (s AccessEntryService) RecordDecisions(
 					DecidedAt:      *entry.DecidedAt,
 					CreatedAt:      now,
 				}
-				if err := history.Insert(ctx, conn, s.scope); err != nil {
+				if err := history.Insert(ctx, conn, s.predicate); err != nil {
 					return fmt.Errorf("cannot insert decision history for entry %s: %w", d.EntryID, err)
 				}
 			}
@@ -270,12 +270,12 @@ func (s AccessEntryService) FlagEntry(
 	err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
-			if err := entry.LoadByID(ctx, conn, s.scope, req.EntryID); err != nil {
+			if err := entry.LoadByID(ctx, conn, s.predicate, req.EntryID); err != nil {
 				return fmt.Errorf("cannot load access entry: %w", err)
 			}
 
 			campaign := &coredata.AccessReviewCampaign{}
-			if err := campaign.LoadByID(ctx, conn, s.scope, entry.AccessReviewCampaignID); err != nil {
+			if err := campaign.LoadByID(ctx, conn, s.predicate, entry.AccessReviewCampaignID); err != nil {
 				return fmt.Errorf("cannot load campaign: %w", err)
 			}
 
@@ -297,7 +297,7 @@ func (s AccessEntryService) FlagEntry(
 
 			entry.UpdatedAt = now
 
-			return entry.UpdateFlags(ctx, conn, s.scope)
+			return entry.UpdateFlags(ctx, conn, s.predicate)
 		},
 	)
 	if err != nil {
@@ -318,7 +318,7 @@ func (s AccessEntryService) ListForCampaignID(
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			return entries.LoadByCampaignID(ctx, conn, s.scope, campaignID, cursor, filter)
+			return entries.LoadByCampaignID(ctx, conn, s.predicate, campaignID, cursor, filter)
 		},
 	)
 	if err != nil {
@@ -340,7 +340,7 @@ func (s AccessEntryService) ListForCampaignIDAndSourceID(
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			return entries.LoadByCampaignIDAndSourceID(ctx, conn, s.scope, campaignID, sourceID, cursor, filter)
+			return entries.LoadByCampaignIDAndSourceID(ctx, conn, s.predicate, campaignID, sourceID, cursor, filter)
 		},
 	)
 	if err != nil {
@@ -362,7 +362,7 @@ func (s AccessEntryService) CountForCampaignID(
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			entries := coredata.AccessEntries{}
 
-			count, err = entries.CountByCampaignID(ctx, conn, s.scope, campaignID, filter)
+			count, err = entries.CountByCampaignID(ctx, conn, s.predicate, campaignID, filter)
 			if err != nil {
 				return fmt.Errorf("cannot count access entries by campaign: %w", err)
 			}
@@ -390,7 +390,7 @@ func (s AccessEntryService) CountForCampaignIDAndSourceID(
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			entries := coredata.AccessEntries{}
 
-			count, err = entries.CountByCampaignIDAndSourceID(ctx, conn, s.scope, campaignID, sourceID, filter)
+			count, err = entries.CountByCampaignIDAndSourceID(ctx, conn, s.predicate, campaignID, sourceID, filter)
 			if err != nil {
 				return fmt.Errorf("cannot count access entries by campaign and source: %w", err)
 			}
@@ -416,7 +416,7 @@ func (s AccessEntryService) CountPendingForCampaignID(
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			entries := coredata.AccessEntries{}
 
-			count, err = entries.CountPendingByCampaignID(ctx, conn, s.scope, campaignID)
+			count, err = entries.CountPendingByCampaignID(ctx, conn, s.predicate, campaignID)
 			if err != nil {
 				return fmt.Errorf("cannot count pending access entries: %w", err)
 			}
@@ -440,7 +440,7 @@ func (s AccessEntryService) DecisionHistory(
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			return histories.LoadByEntryID(ctx, conn, s.scope, entryID)
+			return histories.LoadByEntryID(ctx, conn, s.predicate, entryID)
 		},
 	)
 	if err != nil {
@@ -459,7 +459,7 @@ func (s AccessEntryService) Statistics(
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			return stats.LoadByCampaignID(ctx, conn, s.scope, campaignID)
+			return stats.LoadByCampaignID(ctx, conn, s.predicate, campaignID)
 		},
 	)
 	if err != nil {
@@ -479,7 +479,7 @@ func (s AccessEntryService) StatisticsForSource(
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			return stats.LoadByCampaignIDAndSourceID(ctx, conn, s.scope, campaignID, sourceID)
+			return stats.LoadByCampaignIDAndSourceID(ctx, conn, s.predicate, campaignID, sourceID)
 		},
 	)
 	if err != nil {

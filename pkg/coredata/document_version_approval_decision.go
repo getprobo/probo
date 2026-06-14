@@ -97,7 +97,7 @@ func (d *DocumentVersionApprovalDecision) AuthorizationAttributes(
 func (d *DocumentVersionApprovalDecision) LoadByID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	id gid.GID,
 ) error {
 	q := `
@@ -119,10 +119,10 @@ WHERE
 	AND %s
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"id": id}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -146,7 +146,7 @@ WHERE
 func (d *DocumentVersionApprovalDecision) LoadByQuorumIDAndApproverID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	quorumID gid.GID,
 	approverID gid.GID,
 ) error {
@@ -171,13 +171,13 @@ WHERE
 LIMIT 1
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"quorum_id":   quorumID,
 		"approver_id": approverID,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -201,7 +201,7 @@ LIMIT 1
 func (d *DocumentVersionApprovalDecisions) CountApprovedByQuorumID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	quorumID gid.GID,
 ) (int, error) {
 	q := `
@@ -215,10 +215,10 @@ WHERE
 	AND state = 'APPROVED'
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"quorum_id": quorumID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	row := conn.QueryRow(ctx, q, args)
 
@@ -233,7 +233,7 @@ WHERE
 func (d *DocumentVersionApprovalDecisions) LoadByQuorumID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	quorumID gid.GID,
 	cursor *page.Cursor[DocumentVersionApprovalDecisionOrderField],
 	filter *DocumentVersionApprovalDecisionFilter,
@@ -259,10 +259,10 @@ WHERE
 	AND %s
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"quorum_id": quorumID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 	maps.Copy(args, filter.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 
@@ -284,7 +284,7 @@ WHERE
 func (d *DocumentVersionApprovalDecision) Insert(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 INSERT INTO document_version_approval_decisions (
@@ -316,7 +316,7 @@ INSERT INTO document_version_approval_decisions (
 
 	args := pgx.StrictNamedArgs{
 		"id":                      d.ID,
-		"tenant_id":               scope.GetTenantID(),
+		"tenant_id":               predicate.GetTenantID(),
 		"organization_id":         d.OrganizationID,
 		"quorum_id":               d.QuorumID,
 		"approver_id":             d.ApproverID,
@@ -345,7 +345,7 @@ INSERT INTO document_version_approval_decisions (
 func (ds DocumentVersionApprovalDecisions) BulkInsert(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	if len(ds) == 0 {
 		return nil
@@ -357,7 +357,7 @@ func (ds DocumentVersionApprovalDecisions) BulkInsert(
 			rows,
 			[]any{
 				d.ID,
-				scope.GetTenantID(),
+				predicate.GetTenantID(),
 				d.OrganizationID,
 				d.QuorumID,
 				d.ApproverID,
@@ -396,7 +396,7 @@ func (ds DocumentVersionApprovalDecisions) BulkInsert(
 func (d *DocumentVersionApprovalDecision) Update(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 UPDATE document_version_approval_decisions
@@ -411,7 +411,7 @@ WHERE
 	AND id = @id
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"id":                      d.ID,
@@ -422,7 +422,7 @@ WHERE
 		"updated_at":              d.UpdatedAt,
 	}
 
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
@@ -435,7 +435,7 @@ WHERE
 func (d *DocumentVersionApprovalDecision) Delete(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 DELETE FROM document_version_approval_decisions
@@ -444,10 +444,10 @@ WHERE
 	AND id = @id
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"id": d.ID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
@@ -460,7 +460,7 @@ WHERE
 func (d *DocumentVersionApprovalDecisions) VoidPendingByQuorumID(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 	quorumID gid.GID,
 	now time.Time,
 ) error {
@@ -475,13 +475,13 @@ WHERE
 	AND state = 'PENDING'
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"quorum_id":  quorumID,
 		"updated_at": now,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
@@ -494,7 +494,7 @@ WHERE
 func (d *DocumentVersionApprovalDecisions) CountByQuorumID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	quorumID gid.GID,
 	filter *DocumentVersionApprovalDecisionFilter,
 ) (int, error) {
@@ -509,10 +509,10 @@ WHERE
 	AND %s
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment(), filter.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"quorum_id": quorumID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 	maps.Copy(args, filter.SQLArguments())
 
 	row := conn.QueryRow(ctx, q, args)

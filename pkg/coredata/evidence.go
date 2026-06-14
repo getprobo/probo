@@ -102,7 +102,7 @@ func (e *Evidence) AuthorizationAttributes(
 func (e Evidence) Upsert(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 INSERT INTO
@@ -146,7 +146,7 @@ WHERE evidences.state = 'REQUESTED';
 `
 
 	args := pgx.StrictNamedArgs{
-		"tenant_id":                         scope.GetTenantID(),
+		"tenant_id":                         predicate.GetTenantID(),
 		"evidence_id":                       e.ID,
 		"measure_id":                        e.MeasureID,
 		"task_id":                           e.TaskID,
@@ -169,7 +169,7 @@ WHERE evidences.state = 'REQUESTED';
 func (e Evidence) Insert(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 INSERT INTO
@@ -210,7 +210,7 @@ VALUES (
 `
 
 	args := pgx.StrictNamedArgs{
-		"tenant_id":                         scope.GetTenantID(),
+		"tenant_id":                         predicate.GetTenantID(),
 		"evidence_id":                       e.ID,
 		"organization_id":                   e.OrganizationID,
 		"measure_id":                        e.MeasureID,
@@ -244,7 +244,7 @@ VALUES (
 func (e *Evidence) LoadByID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	evidenceID gid.GID,
 ) error {
 	q := `
@@ -271,10 +271,10 @@ WHERE
 LIMIT 1;
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"evidence_id": evidenceID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -294,7 +294,7 @@ LIMIT 1;
 func (e *Evidences) CountByMeasureID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	measureID gid.GID,
 ) (int, error) {
 	q := `
@@ -307,10 +307,10 @@ WHERE
 	AND measure_id = @measure_id
 	`
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"measure_id": measureID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	row := conn.QueryRow(ctx, q, args)
 
@@ -327,7 +327,7 @@ WHERE
 func (e *Evidences) LoadByMeasureID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	measureID gid.GID,
 	cursor *page.Cursor[EvidenceOrderField],
 ) error {
@@ -355,10 +355,10 @@ WHERE
 	AND %s
 	`
 
-	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"measure_id": measureID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
@@ -379,7 +379,7 @@ WHERE
 func (e *Evidences) CountByTaskID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	taskID gid.GID,
 ) (int, error) {
 	q := `
@@ -392,10 +392,10 @@ WHERE
     AND task_id = @task_id
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"task_id": taskID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	row := conn.QueryRow(ctx, q, args)
 
@@ -412,7 +412,7 @@ WHERE
 func (e *Evidences) LoadByTaskID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	taskID gid.GID,
 	cursor *page.Cursor[EvidenceOrderField],
 ) error {
@@ -440,10 +440,10 @@ WHERE
     AND %s
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"task_id": taskID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
@@ -464,7 +464,7 @@ WHERE
 func (e Evidence) Update(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 UPDATE
@@ -483,7 +483,7 @@ WHERE
 	AND id = @evidence_id
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"evidence_id":                       e.ID,
@@ -496,7 +496,7 @@ WHERE
 		"description_processing_started_at": e.DescriptionProcessingStartedAt,
 		"updated_at":                        e.UpdatedAt,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
 
@@ -506,7 +506,7 @@ WHERE
 func (e Evidence) Delete(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 DELETE FROM
@@ -516,10 +516,10 @@ WHERE
     AND id = @evidence_id
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"evidence_id": e.ID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {

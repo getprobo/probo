@@ -116,7 +116,7 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 			_, _ = fmt.Fprintf(out, "%s\n\n", bold.Render(r.Name))
 
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("ID:"), r.ID)
-			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Scope:"), r.RiskAssessmentScopeId)
+			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Predicate:"), r.RiskAssessmentScopeId)
 
 			if r.Description != nil && *r.Description != "" {
 				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Description:"), *r.Description)

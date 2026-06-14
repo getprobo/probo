@@ -28,9 +28,9 @@ import (
 
 type (
 	AuthorizeFuncOption      func(*iam.AuthorizeParams)
-	AuthorizeFunc            func(context.Context, gid.GID, string, ...AuthorizeFuncOption) (*coredata.Scope, error)
+	AuthorizeFunc            func(context.Context, gid.GID, string, ...AuthorizeFuncOption) (*coredata.Predicate, error)
 	BatchAuthorizeFuncOption func(*iam.AuthorizeBatchParams)
-	BatchAuthorizeFunc       func(context.Context, string, []gid.GID, ...BatchAuthorizeFuncOption) (*coredata.Scope, error)
+	BatchAuthorizeFunc       func(context.Context, string, []gid.GID, ...BatchAuthorizeFuncOption) (*coredata.Predicate, error)
 )
 
 func WithAttr(key, value string) AuthorizeFuncOption {
@@ -80,7 +80,7 @@ func NewAuthorizeFunc(
 		objectID gid.GID,
 		action string,
 		options ...AuthorizeFuncOption,
-	) (*coredata.Scope, error) {
+	) (*coredata.Predicate, error) {
 		identity := authn.IdentityFromContext(ctx)
 		session := authn.SessionFromContext(ctx)
 
@@ -98,7 +98,7 @@ func NewAuthorizeFunc(
 			option(&params)
 		}
 
-		scope, err := svc.Authorizer.Authorize(ctx, params)
+		predicate, err := svc.Authorizer.Authorize(ctx, params)
 		if err != nil {
 			if _, ok := errors.AsType[*iam.ErrAssumptionRequired](err); ok {
 				return nil, gqlutils.AssumptionRequired(ctx, err)
@@ -117,7 +117,7 @@ func NewAuthorizeFunc(
 			return nil, gqlutils.Internal(ctx)
 		}
 
-		return scope, nil
+		return predicate, nil
 	}
 }
 
@@ -130,7 +130,7 @@ func NewBatchAuthorizeFunc(
 		action string,
 		objectIDs []gid.GID,
 		options ...BatchAuthorizeFuncOption,
-	) (*coredata.Scope, error) {
+	) (*coredata.Predicate, error) {
 		identity := authn.IdentityFromContext(ctx)
 		session := authn.SessionFromContext(ctx)
 
@@ -148,7 +148,7 @@ func NewBatchAuthorizeFunc(
 			option(&params)
 		}
 
-		scope, err := svc.Authorizer.AuthorizeBatch(ctx, params)
+		predicate, err := svc.Authorizer.AuthorizeBatch(ctx, params)
 		if err != nil {
 			if _, ok := errors.AsType[*iam.ErrAssumptionRequired](err); ok {
 				return nil, gqlutils.AssumptionRequired(ctx, err)
@@ -179,6 +179,6 @@ func NewBatchAuthorizeFunc(
 			return nil, gqlutils.Internal(ctx)
 		}
 
-		return scope, nil
+		return predicate, nil
 	}
 }

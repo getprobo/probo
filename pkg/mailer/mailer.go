@@ -193,7 +193,7 @@ func (h *sendingHandler) sendAndCommit(
 
 			for _, att := range attachments {
 				var file coredata.File
-				if err := file.LoadByID(ctx, conn, coredata.NewNoScope(), att.FileID); err != nil {
+				if err := file.LoadByID(ctx, conn, coredata.NewNoPredicate(), att.FileID); err != nil {
 					return fmt.Errorf("cannot load file record for attachment %s: %w", att.Filename, err)
 				}
 

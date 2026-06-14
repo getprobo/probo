@@ -250,14 +250,14 @@ func (s *OrganizationService) UpdateMembership(
 	membershipID gid.GID,
 	role coredata.MembershipRole,
 ) (*coredata.Membership, error) {
-	scope := coredata.NewScopeFromObjectID(organizationID)
+	predicate := coredata.NewPredicateFromObjectID(organizationID)
 
 	membership := coredata.Membership{}
 
 	if err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			if err := membership.LoadByID(ctx, tx, scope, membershipID); err != nil {
+			if err := membership.LoadByID(ctx, tx, predicate, membershipID); err != nil {
 				if err == coredata.ErrResourceNotFound {
 					return NewMembershipNotFoundError(membershipID)
 				}
@@ -270,14 +270,14 @@ func (s *OrganizationService) UpdateMembership(
 			}
 
 			profile := &coredata.MembershipProfile{}
-			if err := profile.LoadByIdentityIDAndOrganizationID(ctx, tx, scope, membership.IdentityID, membership.OrganizationID); err != nil {
+			if err := profile.LoadByIdentityIDAndOrganizationID(ctx, tx, predicate, membership.IdentityID, membership.OrganizationID); err != nil {
 				return fmt.Errorf("cannot load profile: %w", err)
 			}
 
 			if membership.Role == coredata.MembershipRoleOwner && role != coredata.MembershipRoleOwner && profile.State == coredata.ProfileStateActive {
 				profiles := coredata.MembershipProfiles{}
 
-				count, err := profiles.CountActiveOwnerByOrganizationID(ctx, tx, scope, organizationID)
+				count, err := profiles.CountActiveOwnerByOrganizationID(ctx, tx, predicate, organizationID)
 				if err != nil {
 					return fmt.Errorf("cannot count active owners: %w", err)
 				}
@@ -290,11 +290,11 @@ func (s *OrganizationService) UpdateMembership(
 			membership.Role = role
 			membership.UpdatedAt = time.Now()
 
-			if err := membership.Update(ctx, tx, scope); err != nil {
+			if err := membership.Update(ctx, tx, predicate); err != nil {
 				return fmt.Errorf("cannot update membership: %w", err)
 			}
 
-			if err := webhook.InsertData(ctx, tx, scope, organizationID, coredata.WebhookEventTypeUserUpdated, webhooktypes.NewUser(profile, &membership)); err != nil {
+			if err := webhook.InsertData(ctx, tx, predicate, organizationID, coredata.WebhookEventTypeUserUpdated, webhooktypes.NewUser(profile, &membership)); err != nil {
 				return fmt.Errorf("cannot insert webhook event: %w", err)
 			}
 
@@ -312,14 +312,14 @@ func (s *OrganizationService) RemoveUser(
 	organizationID gid.GID,
 	profileID gid.GID,
 ) error {
-	scope := coredata.NewScopeFromObjectID(organizationID)
+	predicate := coredata.NewPredicateFromObjectID(organizationID)
 
 	return s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			profile := coredata.MembershipProfile{}
 
-			if err := profile.LoadByID(ctx, tx, scope, profileID); err != nil {
+			if err := profile.LoadByID(ctx, tx, predicate, profileID); err != nil {
 				if err == coredata.ErrResourceNotFound {
 					return NewProfileNotFoundError(profileID)
 				}
@@ -336,14 +336,14 @@ func (s *OrganizationService) RemoveUser(
 			}
 
 			membership := &coredata.Membership{}
-			if err := membership.LoadByIdentityIDAndOrganizationID(ctx, tx, scope, profile.IdentityID, profile.OrganizationID); err != nil {
+			if err := membership.LoadByIdentityIDAndOrganizationID(ctx, tx, predicate, profile.IdentityID, profile.OrganizationID); err != nil {
 				return fmt.Errorf("cannot load membership: %w", err)
 			}
 
 			if membership.Role == coredata.MembershipRoleOwner && profile.State == coredata.ProfileStateActive {
 				profiles := coredata.MembershipProfiles{}
 
-				count, err := profiles.CountActiveOwnerByOrganizationID(ctx, tx, scope, profile.OrganizationID)
+				count, err := profiles.CountActiveOwnerByOrganizationID(ctx, tx, predicate, profile.OrganizationID)
 				if err != nil {
 					return fmt.Errorf("cannot count active owners: %w", err)
 				}
@@ -353,15 +353,15 @@ func (s *OrganizationService) RemoveUser(
 				}
 			}
 
-			if err := profile.Delete(ctx, tx, scope, profileID); err != nil {
+			if err := profile.Delete(ctx, tx, predicate, profileID); err != nil {
 				return fmt.Errorf("cannot delete profile: %w", err)
 			}
 
-			if err := membership.Delete(ctx, tx, scope, membership.ID); err != nil {
+			if err := membership.Delete(ctx, tx, predicate, membership.ID); err != nil {
 				return fmt.Errorf("cannot delete membership: %w", err)
 			}
 
-			if err := webhook.InsertData(ctx, tx, scope, organizationID, coredata.WebhookEventTypeUserDeleted, webhooktypes.NewUser(&profile, membership)); err != nil {
+			if err := webhook.InsertData(ctx, tx, predicate, organizationID, coredata.WebhookEventTypeUserDeleted, webhooktypes.NewUser(&profile, membership)); err != nil {
 				return fmt.Errorf("cannot insert webhook event: %w", err)
 			}
 
@@ -372,7 +372,7 @@ func (s *OrganizationService) RemoveUser(
 
 func (s *OrganizationService) ArchiveUser(
 	ctx context.Context,
-	scope coredata.Scoper,
+	predicate coredata.Predicater,
 	organizationID gid.GID,
 	profileID gid.GID,
 ) error {
@@ -381,7 +381,7 @@ func (s *OrganizationService) ArchiveUser(
 		func(ctx context.Context, tx pg.Tx) error {
 			profile := coredata.MembershipProfile{}
 
-			if err := profile.LoadByID(ctx, tx, scope, profileID); err != nil {
+			if err := profile.LoadByID(ctx, tx, predicate, profileID); err != nil {
 				if err == coredata.ErrResourceNotFound {
 					return NewProfileNotFoundError(profileID)
 				}
@@ -394,14 +394,14 @@ func (s *OrganizationService) ArchiveUser(
 			}
 
 			membership := &coredata.Membership{}
-			if err := membership.LoadByIdentityIDAndOrganizationID(ctx, tx, scope, profile.IdentityID, profile.OrganizationID); err != nil {
+			if err := membership.LoadByIdentityIDAndOrganizationID(ctx, tx, predicate, profile.IdentityID, profile.OrganizationID); err != nil {
 				return fmt.Errorf("cannot load membership: %w", err)
 			}
 
 			if membership.Role == coredata.MembershipRoleOwner && profile.State == coredata.ProfileStateActive {
 				profiles := coredata.MembershipProfiles{}
 
-				count, err := profiles.CountActiveOwnerByOrganizationID(ctx, tx, scope, organizationID)
+				count, err := profiles.CountActiveOwnerByOrganizationID(ctx, tx, predicate, organizationID)
 				if err != nil {
 					return fmt.Errorf("cannot count active owners: %w", err)
 				}
@@ -417,16 +417,14 @@ func (s *OrganizationService) ArchiveUser(
 
 			if err := invitations.ExpireByUserID(
 				ctx,
-				tx,
-				scope,
-				profile.ID,
+				tx, predicate, profile.ID,
 				onlyPending,
 			); err != nil {
 				return fmt.Errorf("cannot expire pending invitations: %w", err)
 			}
 
 			signatures := &coredata.DocumentVersionSignatures{}
-			if err := signatures.DeleteRequestedBySignatory(ctx, tx, scope, profile.ID); err != nil {
+			if err := signatures.DeleteRequestedBySignatory(ctx, tx, predicate, profile.ID); err != nil {
 				return fmt.Errorf("cannot delete requested signatures: %w", err)
 			}
 
@@ -436,17 +434,17 @@ func (s *OrganizationService) ArchiveUser(
 				profile.State = coredata.ProfileStateInactive
 				profile.UpdatedAt = now
 
-				if err := profile.Update(ctx, tx, scope); err != nil {
+				if err := profile.Update(ctx, tx, predicate); err != nil {
 					return fmt.Errorf("cannot update profile state: %w", err)
 				}
 			}
 
 			membership.UpdatedAt = now
-			if err := membership.Update(ctx, tx, scope); err != nil {
+			if err := membership.Update(ctx, tx, predicate); err != nil {
 				return fmt.Errorf("cannot update membership: %w", err)
 			}
 
-			if err := webhook.InsertData(ctx, tx, scope, profile.OrganizationID, coredata.WebhookEventTypeUserUpdated, webhooktypes.NewUser(&profile, membership)); err != nil {
+			if err := webhook.InsertData(ctx, tx, predicate, profile.OrganizationID, coredata.WebhookEventTypeUserUpdated, webhooktypes.NewUser(&profile, membership)); err != nil {
 				return fmt.Errorf("cannot insert webhook event: %w", err)
 			}
 
@@ -460,7 +458,7 @@ func (s *OrganizationService) InviteUser(
 	req *CreateInvitationRequest,
 ) (*coredata.Invitation, error) {
 	var (
-		scope      = coredata.NewScopeFromObjectID(req.OrganizationID)
+		predicate = coredata.NewPredicateFromObjectID(req.OrganizationID)
 		now        = time.Now()
 		invitation = &coredata.Invitation{
 			ID:             gid.New(req.OrganizationID.TenantID(), coredata.InvitationEntityType),
@@ -477,7 +475,7 @@ func (s *OrganizationService) InviteUser(
 		func(ctx context.Context, tx pg.Tx) error {
 			organization := coredata.Organization{}
 
-			err := organization.LoadByID(ctx, tx, scope, req.OrganizationID)
+			err := organization.LoadByID(ctx, tx, predicate, req.OrganizationID)
 			if err != nil {
 				if err == coredata.ErrResourceNotFound {
 					return NewOrganizationNotFoundError(req.OrganizationID)
@@ -487,7 +485,7 @@ func (s *OrganizationService) InviteUser(
 			}
 
 			profile := &coredata.MembershipProfile{}
-			if err := profile.LoadByID(ctx, tx, scope, req.ProfileID); err != nil {
+			if err := profile.LoadByID(ctx, tx, predicate, req.ProfileID); err != nil {
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return NewProfileNotFoundError(req.ProfileID)
 				}
@@ -499,7 +497,7 @@ func (s *OrganizationService) InviteUser(
 				return NewUserManagedBySCIMError(profile.ID)
 			}
 
-			err = invitation.Insert(ctx, tx, scope)
+			err = invitation.Insert(ctx, tx, predicate)
 			if err != nil {
 				return fmt.Errorf("cannot insert invitation: %w", err)
 			}
@@ -617,7 +615,7 @@ func (s *OrganizationService) CreateOrganization(
 
 		logoFile           *coredata.File
 		horizontalLogoFile *coredata.File
-		scope              = coredata.NewScope(tenantID)
+		predicate = coredata.NewPredicate(tenantID)
 	)
 
 	if req.LogoFile != nil {
@@ -714,7 +712,7 @@ func (s *OrganizationService) CreateOrganization(
 			}
 
 			if logoFile != nil {
-				err := logoFile.Insert(ctx, tx, scope)
+				err := logoFile.Insert(ctx, tx, predicate)
 				if err != nil {
 					return fmt.Errorf("cannot insert file: %w", err)
 				}
@@ -724,7 +722,7 @@ func (s *OrganizationService) CreateOrganization(
 			}
 
 			if horizontalLogoFile != nil {
-				err := horizontalLogoFile.Insert(ctx, tx, scope)
+				err := horizontalLogoFile.Insert(ctx, tx, predicate)
 				if err != nil {
 					return fmt.Errorf("cannot insert file: %w", err)
 				}
@@ -737,25 +735,25 @@ func (s *OrganizationService) CreateOrganization(
 				return fmt.Errorf("cannot insert profile: %w", err)
 			}
 
-			err = membership.Insert(ctx, tx, scope)
+			err = membership.Insert(ctx, tx, predicate)
 			if err != nil {
 				return fmt.Errorf("cannot insert membership: %w", err)
 			}
 
-			if err := organizationContext.Insert(ctx, tx, scope); err != nil {
+			if err := organizationContext.Insert(ctx, tx, predicate); err != nil {
 				return fmt.Errorf("cannot insert organization context: %w", err)
 			}
 
-			if err := mailingList.Insert(ctx, tx, scope); err != nil {
+			if err := mailingList.Insert(ctx, tx, predicate); err != nil {
 				return fmt.Errorf("cannot insert mailing list: %w", err)
 			}
 
-			if err := trustCenter.Insert(ctx, tx, scope); err != nil {
+			if err := trustCenter.Insert(ctx, tx, predicate); err != nil {
 				return fmt.Errorf("cannot insert trust center: %w", err)
 			}
 
 			proboData := &coredata.ThirdParty{
-				ID:                   gid.New(scope.GetTenantID(), coredata.ThirdPartyEntityType),
+				ID:                   gid.New(predicate.GetTenantID(), coredata.ThirdPartyEntityType),
 				OrganizationID:       organization.ID,
 				Name:                 proboThirdParty.Name,
 				Description:          &proboThirdParty.Description,
@@ -772,7 +770,7 @@ func (s *OrganizationService) CreateOrganization(
 				UpdatedAt:            now,
 			}
 
-			if err := proboData.Insert(ctx, tx, scope); err != nil {
+			if err := proboData.Insert(ctx, tx, predicate); err != nil {
 				return fmt.Errorf("cannot insert thirdParty: %w", err)
 			}
 
@@ -796,7 +794,7 @@ func (s *OrganizationService) UpdateOrganization(ctx context.Context, organizati
 		logoFile           *coredata.File
 		horizontalLogoFile *coredata.File
 		tenantID           = organizationID.TenantID()
-		scope              = coredata.NewScopeFromObjectID(organizationID)
+		predicate = coredata.NewPredicateFromObjectID(organizationID)
 		organization       = &coredata.Organization{}
 		compliancePage     = &coredata.TrustCenter{}
 	)
@@ -881,7 +879,7 @@ func (s *OrganizationService) UpdateOrganization(ctx context.Context, organizati
 	err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			err := organization.LoadByID(ctx, tx, scope, organizationID)
+			err := organization.LoadByID(ctx, tx, predicate, organizationID)
 			if err != nil {
 				return fmt.Errorf("cannot load organization: %w", err)
 			}
@@ -915,14 +913,14 @@ func (s *OrganizationService) UpdateOrganization(ctx context.Context, organizati
 			}
 
 			if logoFile != nil {
-				if err := logoFile.Insert(ctx, tx, scope); err != nil {
+				if err := logoFile.Insert(ctx, tx, predicate); err != nil {
 					return fmt.Errorf("cannot insert file: %w", err)
 				}
 
 				organization.LogoFileID = &logoFile.ID
 
 				// Auto set the compliance page org logo in case it wasn't already specified
-				if err := compliancePage.LoadByOrganizationID(ctx, tx, scope, organizationID); err != nil {
+				if err := compliancePage.LoadByOrganizationID(ctx, tx, predicate, organizationID); err != nil {
 					return fmt.Errorf("cannot load compliance page: %w", err)
 				}
 
@@ -930,14 +928,14 @@ func (s *OrganizationService) UpdateOrganization(ctx context.Context, organizati
 					compliancePage.LogoFileID = &logoFile.ID
 					compliancePage.UpdatedAt = now
 
-					if err := compliancePage.Update(ctx, tx, scope); err != nil {
+					if err := compliancePage.Update(ctx, tx, predicate); err != nil {
 						return fmt.Errorf("cannot update compliance page: %w", err)
 					}
 				}
 			}
 
 			if horizontalLogoFile != nil {
-				err := horizontalLogoFile.Insert(ctx, tx, scope)
+				err := horizontalLogoFile.Insert(ctx, tx, predicate)
 				if err != nil {
 					return fmt.Errorf("cannot insert file: %w", err)
 				}
@@ -945,7 +943,7 @@ func (s *OrganizationService) UpdateOrganization(ctx context.Context, organizati
 				organization.HorizontalLogoFileID = &horizontalLogoFile.ID
 			}
 
-			err = organization.Update(ctx, scope, tx)
+			err = organization.Update(ctx, predicate, tx)
 			if err != nil {
 				return fmt.Errorf("cannot update organization: %w", err)
 			}
@@ -961,14 +959,14 @@ func (s *OrganizationService) UpdateOrganization(ctx context.Context, organizati
 }
 
 func (s *OrganizationService) DeleteOrganization(ctx context.Context, organizationID gid.GID) error {
-	scope := coredata.NewScopeFromObjectID(organizationID)
+	predicate := coredata.NewPredicateFromObjectID(organizationID)
 
 	return s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			organization := &coredata.Organization{}
 
-			err := organization.LoadByID(ctx, tx, scope, organizationID)
+			err := organization.LoadByID(ctx, tx, predicate, organizationID)
 			if err != nil {
 				return fmt.Errorf("cannot load organization: %w", err)
 			}
@@ -989,7 +987,7 @@ func (s *OrganizationService) CreateUser(ctx context.Context, req *CreateUserReq
 	}
 
 	var (
-		scope   = coredata.NewScopeFromObjectID(req.OrganizationID)
+		predicate = coredata.NewPredicateFromObjectID(req.OrganizationID)
 		profile *coredata.MembershipProfile
 		now     = time.Now()
 	)
@@ -1056,11 +1054,11 @@ func (s *OrganizationService) CreateUser(ctx context.Context, req *CreateUserReq
 				CreatedAt:      now,
 				UpdatedAt:      now,
 			}
-			if err := membership.Insert(ctx, conn, scope); err != nil {
+			if err := membership.Insert(ctx, conn, predicate); err != nil {
 				return fmt.Errorf("cannot insert membership: %w", err)
 			}
 
-			if err := webhook.InsertData(ctx, conn, scope, req.OrganizationID, coredata.WebhookEventTypeUserCreated, webhooktypes.NewUser(profile, membership)); err != nil {
+			if err := webhook.InsertData(ctx, conn, predicate, req.OrganizationID, coredata.WebhookEventTypeUserCreated, webhooktypes.NewUser(profile, membership)); err != nil {
 				return fmt.Errorf("cannot insert webhook event: %w", err)
 			}
 
@@ -1080,14 +1078,14 @@ func (s *OrganizationService) UpdateUser(ctx context.Context, req *UpdateUserReq
 	}
 
 	var (
-		scope   = coredata.NewScopeFromObjectID(req.ID)
+		predicate = coredata.NewPredicateFromObjectID(req.ID)
 		profile = &coredata.MembershipProfile{}
 	)
 
 	err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
-			if err := profile.LoadByID(ctx, conn, scope, req.ID); err != nil {
+			if err := profile.LoadByID(ctx, conn, predicate, req.ID); err != nil {
 				return fmt.Errorf("cannot load profile: %w", err)
 			}
 
@@ -1109,13 +1107,13 @@ func (s *OrganizationService) UpdateUser(ctx context.Context, req *UpdateUserReq
 			now := time.Now()
 			profile.UpdatedAt = now
 
-			if err := profile.Update(ctx, conn, scope); err != nil {
+			if err := profile.Update(ctx, conn, predicate); err != nil {
 				return fmt.Errorf("cannot update profile: %w", err)
 			}
 
 			if profile.ContractEndDate != nil && profile.ContractEndDate.Before(now) {
 				signatures := &coredata.DocumentVersionSignatures{}
-				if err := signatures.DeleteRequestedBySignatory(ctx, conn, scope, profile.ID); err != nil {
+				if err := signatures.DeleteRequestedBySignatory(ctx, conn, predicate, profile.ID); err != nil {
 					return fmt.Errorf("cannot delete requested signatures: %w", err)
 				}
 			}
@@ -1124,7 +1122,7 @@ func (s *OrganizationService) UpdateUser(ctx context.Context, req *UpdateUserReq
 
 			var webhookPayload *webhooktypes.User
 
-			if err := membership.LoadByIdentityIDAndOrganizationID(ctx, conn, scope, profile.IdentityID, profile.OrganizationID); err != nil {
+			if err := membership.LoadByIdentityIDAndOrganizationID(ctx, conn, predicate, profile.IdentityID, profile.OrganizationID); err != nil {
 				if !errors.Is(err, coredata.ErrResourceNotFound) {
 					return fmt.Errorf("cannot load membership: %w", err)
 				}
@@ -1135,9 +1133,7 @@ func (s *OrganizationService) UpdateUser(ctx context.Context, req *UpdateUserReq
 			}
 
 			if err := webhook.InsertData(ctx,
-				conn,
-				scope,
-				profile.OrganizationID,
+				conn, predicate, profile.OrganizationID,
 				coredata.WebhookEventTypeUserUpdated,
 				webhookPayload,
 			); err != nil {
@@ -1160,27 +1156,27 @@ func (s *OrganizationService) UpdateUserState(
 	state coredata.ProfileState,
 ) (*coredata.MembershipProfile, error) {
 	var (
-		scope   = coredata.NewScopeFromObjectID(userID)
+		predicate = coredata.NewPredicateFromObjectID(userID)
 		profile = &coredata.MembershipProfile{}
 	)
 
 	err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			if err := profile.LoadByID(ctx, tx, scope, userID); err != nil {
+			if err := profile.LoadByID(ctx, tx, predicate, userID); err != nil {
 				return fmt.Errorf("cannot load profile: %w", err)
 			}
 
 			profile.State = state
 			profile.UpdatedAt = time.Now()
 
-			if err := profile.Update(ctx, tx, scope); err != nil {
+			if err := profile.Update(ctx, tx, predicate); err != nil {
 				return fmt.Errorf("cannot update profile: %w", err)
 			}
 
 			if state == coredata.ProfileStateInactive {
 				signatures := &coredata.DocumentVersionSignatures{}
-				if err := signatures.DeleteRequestedBySignatory(ctx, tx, scope, profile.ID); err != nil {
+				if err := signatures.DeleteRequestedBySignatory(ctx, tx, predicate, profile.ID); err != nil {
 					return fmt.Errorf("cannot delete requested signatures: %w", err)
 				}
 			}
@@ -1201,7 +1197,7 @@ func (s *OrganizationService) GetProfile(ctx context.Context, profileID gid.GID)
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			if err := profile.LoadByID(ctx, conn, coredata.NewScopeFromObjectID(profileID), profileID); err != nil {
+			if err := profile.LoadByID(ctx, conn, coredata.NewPredicateFromObjectID(profileID), profileID); err != nil {
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return NewProfileNotFoundError(profileID)
 				}
@@ -1221,7 +1217,7 @@ func (s *OrganizationService) GetProfile(ctx context.Context, profileID gid.GID)
 
 func (s *OrganizationService) GetProfilesByIDs(
 	ctx context.Context,
-	scope coredata.Scoper,
+	predicate coredata.Predicater,
 	profileIDs ...gid.GID,
 ) (coredata.MembershipProfiles, error) {
 	var profiles coredata.MembershipProfiles
@@ -1231,9 +1227,7 @@ func (s *OrganizationService) GetProfilesByIDs(
 		func(ctx context.Context, conn pg.Querier) error {
 			if err := profiles.LoadByIDs(
 				ctx,
-				conn,
-				scope,
-				profileIDs,
+				conn, predicate, profileIDs,
 			); err != nil {
 				return fmt.Errorf("cannot load profiles by ids: %w", err)
 			}
@@ -1257,7 +1251,7 @@ func (s *OrganizationService) GetProfileForIdentityAndOrganization(ctx context.C
 			if err := profile.LoadByIdentityIDAndOrganizationID(
 				ctx,
 				conn,
-				coredata.NewScopeFromObjectID(organizationID),
+				coredata.NewPredicateFromObjectID(organizationID),
 				identityID,
 				organizationID,
 			); err != nil {
@@ -1285,14 +1279,14 @@ func (s *OrganizationService) ListProfiles(
 	filter *coredata.MembershipProfileFilter,
 ) (*page.Page[*coredata.MembershipProfile, coredata.MembershipProfileOrderField], error) {
 	var (
-		scope    = coredata.NewScopeFromObjectID(organizationID)
+		predicate = coredata.NewPredicateFromObjectID(organizationID)
 		profiles = coredata.MembershipProfiles{}
 	)
 
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			if err := profiles.LoadByOrganizationID(ctx, conn, scope, organizationID, cursor, filter); err != nil {
+			if err := profiles.LoadByOrganizationID(ctx, conn, predicate, organizationID, cursor, filter); err != nil {
 				return fmt.Errorf("cannot load profiles: %w", err)
 			}
 
@@ -1312,7 +1306,7 @@ func (s OrganizationService) CountProfiles(
 	filter *coredata.MembershipProfileFilter,
 ) (int, error) {
 	var (
-		scope = coredata.NewScopeFromObjectID(organizationID)
+		predicate = coredata.NewPredicateFromObjectID(organizationID)
 		count int
 	)
 
@@ -1321,7 +1315,7 @@ func (s OrganizationService) CountProfiles(
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			profiles := coredata.MembershipProfiles{}
 
-			count, err = profiles.CountByOrganizationID(ctx, conn, scope, organizationID, filter)
+			count, err = profiles.CountByOrganizationID(ctx, conn, predicate, organizationID, filter)
 			if err != nil {
 				return fmt.Errorf("cannot count profiles: %w", err)
 			}
@@ -1335,7 +1329,7 @@ func (s OrganizationService) CountProfiles(
 
 func (s *OrganizationService) GetOrganizationForMembership(ctx context.Context, membershipID gid.GID) (*coredata.Organization, error) {
 	var (
-		scope        = coredata.NewScopeFromObjectID(membershipID)
+		predicate = coredata.NewPredicateFromObjectID(membershipID)
 		organization = &coredata.Organization{}
 	)
 
@@ -1344,7 +1338,7 @@ func (s *OrganizationService) GetOrganizationForMembership(ctx context.Context, 
 		func(ctx context.Context, conn pg.Querier) error {
 			membership := &coredata.Membership{}
 
-			err := membership.LoadByID(ctx, conn, scope, membershipID)
+			err := membership.LoadByID(ctx, conn, predicate, membershipID)
 			if err != nil {
 				if err == coredata.ErrResourceNotFound {
 					return NewMembershipNotFoundError(membershipID)
@@ -1353,7 +1347,7 @@ func (s *OrganizationService) GetOrganizationForMembership(ctx context.Context, 
 				return fmt.Errorf("cannot load membership: %w", err)
 			}
 
-			err = organization.LoadByID(ctx, conn, scope, membership.OrganizationID)
+			err = organization.LoadByID(ctx, conn, predicate, membership.OrganizationID)
 			if err != nil {
 				if err == coredata.ErrResourceNotFound {
 					return NewOrganizationNotFoundError(membership.OrganizationID)
@@ -1378,7 +1372,7 @@ func (s OrganizationService) LogoFile(
 ) (*coredata.File, error) {
 	var (
 		errNoLogoFile = errors.New("no logo file found")
-		scope         = coredata.NewScopeFromObjectID(organizationID)
+		predicate = coredata.NewPredicateFromObjectID(organizationID)
 		file          = &coredata.File{}
 	)
 
@@ -1386,7 +1380,7 @@ func (s OrganizationService) LogoFile(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
 			organization := &coredata.Organization{}
-			if err := organization.LoadByID(ctx, conn, scope, organizationID); err != nil {
+			if err := organization.LoadByID(ctx, conn, predicate, organizationID); err != nil {
 				return fmt.Errorf("cannot load organization: %w", err)
 			}
 
@@ -1394,7 +1388,7 @@ func (s OrganizationService) LogoFile(
 				return errNoLogoFile
 			}
 
-			if err := file.LoadByID(ctx, conn, scope, *organization.LogoFileID); err != nil {
+			if err := file.LoadByID(ctx, conn, predicate, *organization.LogoFileID); err != nil {
 				return fmt.Errorf("cannot load file: %w", err)
 			}
 
@@ -1417,7 +1411,7 @@ func (s OrganizationService) HorizontalLogoFile(
 ) (*coredata.File, error) {
 	var (
 		errNoLogoFile = errors.New("no logo file found")
-		scope         = coredata.NewScopeFromObjectID(organizationID)
+		predicate = coredata.NewPredicateFromObjectID(organizationID)
 		file          = &coredata.File{}
 	)
 
@@ -1425,7 +1419,7 @@ func (s OrganizationService) HorizontalLogoFile(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
 			organization := &coredata.Organization{}
-			if err := organization.LoadByID(ctx, conn, scope, organizationID); err != nil {
+			if err := organization.LoadByID(ctx, conn, predicate, organizationID); err != nil {
 				return fmt.Errorf("cannot load organization: %w", err)
 			}
 
@@ -1433,7 +1427,7 @@ func (s OrganizationService) HorizontalLogoFile(
 				return errNoLogoFile
 			}
 
-			if err := file.LoadByID(ctx, conn, scope, *organization.HorizontalLogoFileID); err != nil {
+			if err := file.LoadByID(ctx, conn, predicate, *organization.HorizontalLogoFileID); err != nil {
 				return fmt.Errorf("cannot load file: %w", err)
 			}
 
@@ -1455,13 +1449,13 @@ func (s OrganizationService) DeleteSAMLConfiguration(
 	organizationID gid.GID,
 	configID gid.GID,
 ) error {
-	scope := coredata.NewScopeFromObjectID(organizationID)
+	predicate := coredata.NewPredicateFromObjectID(organizationID)
 
 	return s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			var config coredata.SAMLConfiguration
-			if err := config.LoadByID(ctx, tx, scope, configID); err != nil {
+			if err := config.LoadByID(ctx, tx, predicate, configID); err != nil {
 				return fmt.Errorf("cannot load saml configuration: %w", err)
 			}
 
@@ -1469,7 +1463,7 @@ func (s OrganizationService) DeleteSAMLConfiguration(
 				return NewSAMLConfigurationNotFoundError(configID)
 			}
 
-			if err := config.Delete(ctx, tx, scope); err != nil {
+			if err := config.Delete(ctx, tx, predicate); err != nil {
 				return fmt.Errorf("cannot delete saml configuration: %w", err)
 			}
 
@@ -1484,14 +1478,14 @@ func (s OrganizationService) ListSAMLConfigurations(
 	cursor *page.Cursor[coredata.SAMLConfigurationOrderField],
 ) (*page.Page[*coredata.SAMLConfiguration, coredata.SAMLConfigurationOrderField], error) {
 	var (
-		scope              = coredata.NewScopeFromObjectID(organizationID)
+		predicate = coredata.NewPredicateFromObjectID(organizationID)
 		samlConfigurations = coredata.SAMLConfigurations{}
 	)
 
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			err := samlConfigurations.LoadByOrganizationID(ctx, conn, scope, organizationID)
+			err := samlConfigurations.LoadByOrganizationID(ctx, conn, predicate, organizationID)
 			if err != nil {
 				return fmt.Errorf("cannot load saml configurations: %w", err)
 			}
@@ -1511,7 +1505,7 @@ func (s OrganizationService) CountSAMLConfigurations(
 	organizationID gid.GID,
 ) (int, error) {
 	var (
-		scope = coredata.NewScopeFromObjectID(organizationID)
+		predicate = coredata.NewPredicateFromObjectID(organizationID)
 		count int
 	)
 
@@ -1520,7 +1514,7 @@ func (s OrganizationService) CountSAMLConfigurations(
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			samlConfigurations := coredata.SAMLConfigurations{}
 
-			count, err = samlConfigurations.CountByOrganizationID(ctx, conn, scope, organizationID)
+			count, err = samlConfigurations.CountByOrganizationID(ctx, conn, predicate, organizationID)
 			if err != nil {
 				return fmt.Errorf("cannot count saml configurations: %w", err)
 			}
@@ -1538,14 +1532,14 @@ func (s OrganizationService) ListSCIMEvents(
 	cursor *page.Cursor[coredata.SCIMEventOrderField],
 ) (*page.Page[*coredata.SCIMEvent, coredata.SCIMEventOrderField], error) {
 	var (
-		scope      = coredata.NewScopeFromObjectID(organizationID)
+		predicate = coredata.NewPredicateFromObjectID(organizationID)
 		scimEvents = coredata.SCIMEvents{}
 	)
 
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			err := scimEvents.LoadByOrganizationID(ctx, conn, scope, organizationID, cursor)
+			err := scimEvents.LoadByOrganizationID(ctx, conn, predicate, organizationID, cursor)
 			if err != nil {
 				return fmt.Errorf("cannot load scim events: %w", err)
 			}
@@ -1565,7 +1559,7 @@ func (s OrganizationService) CountSCIMEvents(
 	organizationID gid.GID,
 ) (int, error) {
 	var (
-		scope = coredata.NewScopeFromObjectID(organizationID)
+		predicate = coredata.NewPredicateFromObjectID(organizationID)
 		count int
 	)
 
@@ -1574,7 +1568,7 @@ func (s OrganizationService) CountSCIMEvents(
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			scimEvents := coredata.SCIMEvents{}
 
-			count, err = scimEvents.CountByOrganizationID(ctx, conn, scope, organizationID)
+			count, err = scimEvents.CountByOrganizationID(ctx, conn, predicate, organizationID)
 			if err != nil {
 				return fmt.Errorf("cannot count scim events: %w", err)
 			}
@@ -1591,14 +1585,14 @@ func (s OrganizationService) GetSCIMConfiguration(
 	organizationID gid.GID,
 ) (*coredata.SCIMConfiguration, error) {
 	var (
-		scope  = coredata.NewScopeFromObjectID(organizationID)
+		predicate = coredata.NewPredicateFromObjectID(organizationID)
 		config = &coredata.SCIMConfiguration{}
 	)
 
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			err := config.LoadByOrganizationID(ctx, conn, scope, organizationID)
+			err := config.LoadByOrganizationID(ctx, conn, predicate, organizationID)
 			if err != nil {
 				if err == coredata.ErrResourceNotFound {
 					return NewNoSCIMConfigurationFoundError(organizationID)
@@ -1637,12 +1631,12 @@ func (s OrganizationService) CreateSCIMConfiguration(
 		UpdatedAt:      now,
 	}
 
-	scope := coredata.NewScopeFromObjectID(organizationID)
+	predicate := coredata.NewPredicateFromObjectID(organizationID)
 
 	err = s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			err := config.Insert(ctx, tx, scope)
+			err := config.Insert(ctx, tx, predicate)
 			if err != nil {
 				if err == coredata.ErrResourceAlreadyExists {
 					return scim.NewSCIMConfigurationAlreadyExistsError(organizationID)
@@ -1666,14 +1660,14 @@ func (s OrganizationService) DeleteSCIMConfiguration(
 	organizationID gid.GID,
 	configID gid.GID,
 ) error {
-	scope := coredata.NewScopeFromObjectID(configID)
+	predicate := coredata.NewPredicateFromObjectID(configID)
 
 	return s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			config := &coredata.SCIMConfiguration{}
 
-			err := config.LoadByID(ctx, tx, scope, configID)
+			err := config.LoadByID(ctx, tx, predicate, configID)
 			if err != nil {
 				if err == coredata.ErrResourceNotFound {
 					return scim.NewSCIMConfigurationNotFoundError(configID)
@@ -1688,7 +1682,7 @@ func (s OrganizationService) DeleteSCIMConfiguration(
 
 			profiles := &coredata.MembershipProfiles{}
 
-			err = profiles.ResetSCIMSources(ctx, tx, scope, config.OrganizationID)
+			err = profiles.ResetSCIMSources(ctx, tx, predicate, config.OrganizationID)
 			if err != nil {
 				return fmt.Errorf("cannot reset user sources: %w", err)
 			}
@@ -1696,7 +1690,7 @@ func (s OrganizationService) DeleteSCIMConfiguration(
 			// Delete SCIM bridge and its connector if they exist
 			bridge := &coredata.SCIMBridge{}
 
-			err = bridge.LoadBySCIMConfigurationID(ctx, tx, scope, configID)
+			err = bridge.LoadBySCIMConfigurationID(ctx, tx, predicate, configID)
 			if err != nil && err != coredata.ErrResourceNotFound {
 				return fmt.Errorf("cannot load SCIM bridge: %w", err)
 			}
@@ -1709,7 +1703,7 @@ func (s OrganizationService) DeleteSCIMConfiguration(
 				if bridge.ConnectorID != nil {
 					accessSources := &coredata.AccessSources{}
 
-					count, err := accessSources.CountByConnectorID(ctx, tx, scope, *bridge.ConnectorID)
+					count, err := accessSources.CountByConnectorID(ctx, tx, predicate, *bridge.ConnectorID)
 					if err != nil {
 						return fmt.Errorf("cannot count access sources for connector: %w", err)
 					}
@@ -1717,7 +1711,7 @@ func (s OrganizationService) DeleteSCIMConfiguration(
 					if count == 0 {
 						connector := &coredata.Connector{ID: *bridge.ConnectorID}
 
-						err = connector.Delete(ctx, tx, scope)
+						err = connector.Delete(ctx, tx, predicate)
 						if err != nil {
 							return fmt.Errorf("cannot delete connector: %w", err)
 						}
@@ -1725,13 +1719,13 @@ func (s OrganizationService) DeleteSCIMConfiguration(
 				}
 
 				// Delete the bridge
-				err = bridge.Delete(ctx, tx, scope)
+				err = bridge.Delete(ctx, tx, predicate)
 				if err != nil {
 					return fmt.Errorf("cannot delete SCIM bridge: %w", err)
 				}
 			}
 
-			err = config.Delete(ctx, tx, scope)
+			err = config.Delete(ctx, tx, predicate)
 			if err != nil {
 				return fmt.Errorf("cannot delete SCIM configuration: %w", err)
 			}
@@ -1753,12 +1747,12 @@ func (s OrganizationService) RegenerateSCIMToken(
 
 	hashedToken := scim.HashToken(token)
 	config := &coredata.SCIMConfiguration{}
-	scope := coredata.NewScopeFromObjectID(configID)
+	predicate := coredata.NewPredicateFromObjectID(configID)
 
 	err = s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			err := config.LoadByID(ctx, tx, scope, configID)
+			err := config.LoadByID(ctx, tx, predicate, configID)
 			if err != nil {
 				if err == coredata.ErrResourceNotFound {
 					return scim.NewSCIMConfigurationNotFoundError(configID)
@@ -1774,7 +1768,7 @@ func (s OrganizationService) RegenerateSCIMToken(
 			config.HashedToken = hashedToken
 			config.UpdatedAt = time.Now()
 
-			err = config.Update(ctx, tx, scope)
+			err = config.Update(ctx, tx, predicate)
 			if err != nil {
 				return fmt.Errorf("cannot update SCIM configuration: %w", err)
 			}
@@ -1796,12 +1790,12 @@ func (s OrganizationService) UpdateSCIMBridge(
 	excludedUserNames []string,
 ) (*coredata.SCIMBridge, error) {
 	bridge := &coredata.SCIMBridge{}
-	scope := coredata.NewScopeFromObjectID(bridgeID)
+	predicate := coredata.NewPredicateFromObjectID(bridgeID)
 
 	err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			err := bridge.LoadByID(ctx, tx, scope, bridgeID)
+			err := bridge.LoadByID(ctx, tx, predicate, bridgeID)
 			if err != nil {
 				if err == coredata.ErrResourceNotFound {
 					return NewSCIMBridgeNotFoundError(bridgeID)
@@ -1817,7 +1811,7 @@ func (s OrganizationService) UpdateSCIMBridge(
 			bridge.ExcludedUserNames = excludedUserNames
 			bridge.UpdatedAt = time.Now()
 
-			err = bridge.Update(ctx, tx, scope)
+			err = bridge.Update(ctx, tx, predicate)
 			if err != nil {
 				return fmt.Errorf("cannot update SCIM bridge: %w", err)
 			}
@@ -1838,14 +1832,14 @@ func (s OrganizationService) ListSCIMEventsByConfigID(
 	cursor *page.Cursor[coredata.SCIMEventOrderField],
 ) (*page.Page[*coredata.SCIMEvent, coredata.SCIMEventOrderField], error) {
 	var (
-		scope      = coredata.NewScopeFromObjectID(scimConfigurationID)
+		predicate = coredata.NewPredicateFromObjectID(scimConfigurationID)
 		scimEvents = coredata.SCIMEvents{}
 	)
 
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			err := scimEvents.LoadBySCIMConfigurationID(ctx, conn, scope, scimConfigurationID, cursor)
+			err := scimEvents.LoadBySCIMConfigurationID(ctx, conn, predicate, scimConfigurationID, cursor)
 			if err != nil {
 				return fmt.Errorf("cannot load scim events: %w", err)
 			}
@@ -1865,7 +1859,7 @@ func (s OrganizationService) CountSCIMEventsByConfigID(
 	scimConfigurationID gid.GID,
 ) (int, error) {
 	var (
-		scope = coredata.NewScopeFromObjectID(scimConfigurationID)
+		predicate = coredata.NewPredicateFromObjectID(scimConfigurationID)
 		count int
 	)
 
@@ -1874,7 +1868,7 @@ func (s OrganizationService) CountSCIMEventsByConfigID(
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			scimEvents := coredata.SCIMEvents{}
 
-			count, err = scimEvents.CountBySCIMConfigurationID(ctx, conn, scope, scimConfigurationID)
+			count, err = scimEvents.CountBySCIMConfigurationID(ctx, conn, predicate, scimConfigurationID)
 			if err != nil {
 				return fmt.Errorf("cannot count scim events: %w", err)
 			}
@@ -1893,10 +1887,10 @@ func (s OrganizationService) CreateSAMLConfiguration(
 ) (*coredata.SAMLConfiguration, error) {
 	var (
 		now                     = time.Now()
-		scope                   = coredata.NewScopeFromObjectID(organizationID)
+		predicate = coredata.NewPredicateFromObjectID(organizationID)
 		domainVerificationToken = uuid.MustNewV4().String()
 		config                  = &coredata.SAMLConfiguration{
-			ID:                      gid.New(scope.GetTenantID(), coredata.SAMLConfigurationEntityType),
+			ID:                      gid.New(predicate.GetTenantID(), coredata.SAMLConfigurationEntityType),
 			OrganizationID:          organizationID,
 			EnforcementPolicy:       coredata.SAMLEnforcementPolicyOff,
 			IdPEntityID:             req.IdPEntityID,
@@ -1935,12 +1929,12 @@ func (s OrganizationService) CreateSAMLConfiguration(
 		func(ctx context.Context, tx pg.Tx) error {
 			organization := &coredata.Organization{}
 
-			err := organization.LoadByID(ctx, tx, scope, organizationID)
+			err := organization.LoadByID(ctx, tx, predicate, organizationID)
 			if err != nil {
 				return fmt.Errorf("cannot load organization: %w", err)
 			}
 
-			err = config.Insert(ctx, tx, scope)
+			err = config.Insert(ctx, tx, predicate)
 			if err != nil {
 				if errors.Is(err, coredata.ErrResourceAlreadyExists) {
 					return NewSAMLConfigurationEmailDomainAlreadyExistsError(req.EmailDomain)
@@ -1966,7 +1960,7 @@ func (s OrganizationService) UpdateSAMLConfiguration(
 	req *UpdateSAMLConfigurationRequest,
 ) (*coredata.SAMLConfiguration, error) {
 	var (
-		scope  = coredata.NewScopeFromObjectID(organizationID)
+		predicate = coredata.NewPredicateFromObjectID(organizationID)
 		config = &coredata.SAMLConfiguration{}
 	)
 
@@ -1975,14 +1969,14 @@ func (s OrganizationService) UpdateSAMLConfiguration(
 		func(ctx context.Context, tx pg.Tx) error {
 			organization := &coredata.Organization{}
 
-			err := organization.LoadByID(ctx, tx, scope, organizationID)
+			err := organization.LoadByID(ctx, tx, predicate, organizationID)
 			if err != nil {
 				return fmt.Errorf("cannot load organization: %w", err)
 			}
 
 			config = &coredata.SAMLConfiguration{}
 
-			err = config.LoadByID(ctx, tx, scope, configID)
+			err = config.LoadByID(ctx, tx, predicate, configID)
 			if err != nil {
 				return fmt.Errorf("cannot load saml configuration: %w", err)
 			}
@@ -2029,7 +2023,7 @@ func (s OrganizationService) UpdateSAMLConfiguration(
 
 			config.UpdatedAt = time.Now()
 
-			err = config.Update(ctx, tx, scope)
+			err = config.Update(ctx, tx, predicate)
 			if err != nil {
 				return fmt.Errorf("cannot update saml configuration: %w", err)
 			}
@@ -2046,14 +2040,14 @@ func (s OrganizationService) UpdateSAMLConfiguration(
 
 func (s OrganizationService) GetOrganization(ctx context.Context, organizationID gid.GID) (*coredata.Organization, error) {
 	var (
-		scope        = coredata.NewScopeFromObjectID(organizationID)
+		predicate = coredata.NewPredicateFromObjectID(organizationID)
 		organization = &coredata.Organization{}
 	)
 
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			err := organization.LoadByID(ctx, conn, scope, organizationID)
+			err := organization.LoadByID(ctx, conn, predicate, organizationID)
 			if err != nil {
 				if err == coredata.ErrResourceNotFound {
 					return NewOrganizationNotFoundError(organizationID)
@@ -2074,14 +2068,14 @@ func (s OrganizationService) GetOrganization(ctx context.Context, organizationID
 
 func (s OrganizationService) GetSCIMBridgeByID(ctx context.Context, bridgeID gid.GID) (*coredata.SCIMBridge, error) {
 	var (
-		scope  = coredata.NewScopeFromObjectID(bridgeID)
+		predicate = coredata.NewPredicateFromObjectID(bridgeID)
 		bridge = &coredata.SCIMBridge{}
 	)
 
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			err := bridge.LoadByID(ctx, conn, scope, bridgeID)
+			err := bridge.LoadByID(ctx, conn, predicate, bridgeID)
 			if err != nil {
 				if err == coredata.ErrResourceNotFound {
 					return NewSCIMBridgeNotFoundError(bridgeID)
@@ -2104,14 +2098,14 @@ func (s OrganizationService) GetSCIMBridgeByID(ctx context.Context, bridgeID gid
 // Use this when you only need provider, organization, or other metadata fields.
 func (s OrganizationService) GetConnectorMetadataByID(ctx context.Context, connectorID gid.GID) (*coredata.Connector, error) {
 	var (
-		scope     = coredata.NewScopeFromObjectID(connectorID)
+		predicate = coredata.NewPredicateFromObjectID(connectorID)
 		connector = &coredata.Connector{}
 	)
 
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			err := connector.LoadMetadataByID(ctx, conn, scope, connectorID)
+			err := connector.LoadMetadataByID(ctx, conn, predicate, connectorID)
 			if err != nil {
 				if err == coredata.ErrResourceNotFound {
 					return NewConnectorNotFoundError(connectorID)
@@ -2132,14 +2126,14 @@ func (s OrganizationService) GetConnectorMetadataByID(ctx context.Context, conne
 
 func (s OrganizationService) GetSCIMBridgeByOrganizationID(ctx context.Context, organizationID gid.GID) (*coredata.SCIMBridge, error) {
 	var (
-		scope  = coredata.NewScopeFromObjectID(organizationID)
+		predicate = coredata.NewPredicateFromObjectID(organizationID)
 		bridge = &coredata.SCIMBridge{}
 	)
 
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			err := bridge.LoadByOrganizationID(ctx, conn, scope, organizationID)
+			err := bridge.LoadByOrganizationID(ctx, conn, predicate, organizationID)
 			if err != nil {
 				if err == coredata.ErrResourceNotFound {
 					return nil // No bridge found, not an error
@@ -2170,7 +2164,7 @@ func (s OrganizationService) CreateSCIMBridge(
 	connectorID gid.GID,
 ) (*coredata.SCIMBridge, error) {
 	var (
-		scope  = coredata.NewScopeFromObjectID(organizationID)
+		predicate = coredata.NewPredicateFromObjectID(organizationID)
 		now    = time.Now()
 		bridge *coredata.SCIMBridge
 	)
@@ -2180,7 +2174,7 @@ func (s OrganizationService) CreateSCIMBridge(
 		func(ctx context.Context, tx pg.Tx) error {
 			organization := &coredata.Organization{}
 
-			err := organization.LoadByID(ctx, tx, scope, organizationID)
+			err := organization.LoadByID(ctx, tx, predicate, organizationID)
 			if err != nil {
 				if err == coredata.ErrResourceNotFound {
 					return NewOrganizationNotFoundError(organizationID)
@@ -2191,7 +2185,7 @@ func (s OrganizationService) CreateSCIMBridge(
 
 			config := &coredata.SCIMConfiguration{}
 
-			err = config.LoadByID(ctx, tx, scope, scimConfigurationID)
+			err = config.LoadByID(ctx, tx, predicate, scimConfigurationID)
 			if err != nil {
 				if err == coredata.ErrResourceNotFound {
 					return scim.NewSCIMConfigurationNotFoundError(scimConfigurationID)
@@ -2207,7 +2201,7 @@ func (s OrganizationService) CreateSCIMBridge(
 			// Load and validate the connector (metadata only, no decryption needed)
 			existingConnector := &coredata.Connector{}
 
-			err = existingConnector.LoadMetadataByID(ctx, tx, scope, connectorID)
+			err = existingConnector.LoadMetadataByID(ctx, tx, predicate, connectorID)
 			if err != nil {
 				if err == coredata.ErrResourceNotFound {
 					return NewConnectorNotFoundError(connectorID)
@@ -2245,7 +2239,7 @@ func (s OrganizationService) CreateSCIMBridge(
 				UpdatedAt:           now,
 			}
 
-			if err := bridge.Insert(ctx, tx, scope); err != nil {
+			if err := bridge.Insert(ctx, tx, predicate); err != nil {
 				return fmt.Errorf("cannot insert SCIM bridge: %w", err)
 			}
 
@@ -2261,7 +2255,7 @@ func (s OrganizationService) CreateSCIMBridge(
 
 func (s OrganizationService) DeleteSCIMBridge(ctx context.Context, organizationID gid.GID, bridgeID gid.GID) error {
 	var (
-		scope  = coredata.NewScopeFromObjectID(organizationID)
+		predicate = coredata.NewPredicateFromObjectID(organizationID)
 		bridge = &coredata.SCIMBridge{}
 	)
 
@@ -2270,12 +2264,12 @@ func (s OrganizationService) DeleteSCIMBridge(ctx context.Context, organizationI
 		func(ctx context.Context, tx pg.Tx) error {
 			organization := &coredata.Organization{}
 
-			err := organization.LoadByID(ctx, tx, scope, organizationID)
+			err := organization.LoadByID(ctx, tx, predicate, organizationID)
 			if err != nil {
 				return fmt.Errorf("cannot load organization: %w", err)
 			}
 
-			if err := bridge.LoadByID(ctx, tx, scope, bridgeID); err != nil {
+			if err := bridge.LoadByID(ctx, tx, predicate, bridgeID); err != nil {
 				return fmt.Errorf("cannot load SCIM bridge: %w", err)
 			}
 
@@ -2283,7 +2277,7 @@ func (s OrganizationService) DeleteSCIMBridge(ctx context.Context, organizationI
 				return NewSCIMBridgeNotFoundError(bridgeID)
 			}
 
-			if err := bridge.Delete(ctx, tx, scope); err != nil {
+			if err := bridge.Delete(ctx, tx, predicate); err != nil {
 				return fmt.Errorf("cannot delete SCIM bridge: %w", err)
 			}
 
@@ -2302,14 +2296,14 @@ func (s *OrganizationService) GetAuditLogEntry(
 	id gid.GID,
 ) (*coredata.AuditLogEntry, error) {
 	var (
-		scope = coredata.NewScopeFromObjectID(id)
+		predicate = coredata.NewPredicateFromObjectID(id)
 		entry = &coredata.AuditLogEntry{}
 	)
 
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			return entry.LoadByID(ctx, conn, scope, id)
+			return entry.LoadByID(ctx, conn, predicate, id)
 		},
 	)
 	if err != nil {
@@ -2326,14 +2320,14 @@ func (s *OrganizationService) ListAuditLogEntries(
 	filter *coredata.AuditLogEntryFilter,
 ) (*page.Page[*coredata.AuditLogEntry, coredata.AuditLogEntryOrderField], error) {
 	var (
-		scope   = coredata.NewScopeFromObjectID(organizationID)
+		predicate = coredata.NewPredicateFromObjectID(organizationID)
 		entries = coredata.AuditLogEntries{}
 	)
 
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			if err := entries.LoadAllByOrganizationID(ctx, conn, scope, organizationID, cursor, filter); err != nil {
+			if err := entries.LoadAllByOrganizationID(ctx, conn, predicate, organizationID, cursor, filter); err != nil {
 				return fmt.Errorf("cannot load audit log entries: %w", err)
 			}
 
@@ -2353,7 +2347,7 @@ func (s *OrganizationService) CountAuditLogEntries(
 	filter *coredata.AuditLogEntryFilter,
 ) (int, error) {
 	var (
-		scope = coredata.NewScopeFromObjectID(organizationID)
+		predicate = coredata.NewPredicateFromObjectID(organizationID)
 		count int
 	)
 
@@ -2362,7 +2356,7 @@ func (s *OrganizationService) CountAuditLogEntries(
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			entries := coredata.AuditLogEntries{}
 
-			count, err = entries.CountByOrganizationID(ctx, conn, scope, organizationID, filter)
+			count, err = entries.CountByOrganizationID(ctx, conn, predicate, organizationID, filter)
 			if err != nil {
 				return fmt.Errorf("cannot count audit log entries: %w", err)
 			}

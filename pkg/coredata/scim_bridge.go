@@ -103,7 +103,7 @@ func (s *SCIMBridge) AuthorizationAttributes(
 func (s *SCIMBridge) LoadByID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	bridgeID gid.GID,
 ) error {
 	q := `
@@ -131,10 +131,10 @@ WHERE
 LIMIT 1;
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"id": bridgeID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -158,7 +158,7 @@ LIMIT 1;
 func (s *SCIMBridge) LoadByOrganizationID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	organizationID gid.GID,
 ) error {
 	q := `
@@ -186,10 +186,10 @@ WHERE
 LIMIT 1;
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"organization_id": organizationID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -213,7 +213,7 @@ LIMIT 1;
 func (s *SCIMBridge) LoadBySCIMConfigurationID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	scimConfigurationID gid.GID,
 ) error {
 	q := `
@@ -241,10 +241,10 @@ WHERE
 LIMIT 1;
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"scim_configuration_id": scimConfigurationID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -268,7 +268,7 @@ LIMIT 1;
 func (s *SCIMBridges) CountByConnectorID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	connectorID gid.GID,
 ) (int, error) {
 	q := `
@@ -278,10 +278,10 @@ WHERE
     %s
     AND connector_id = @connector_id;
 `
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"connector_id": connectorID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	var count int
 	if err := conn.QueryRow(ctx, q, args).Scan(&count); err != nil {
@@ -294,7 +294,7 @@ WHERE
 func (s *SCIMBridge) Insert(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 INSERT INTO iam_scim_bridges (
@@ -336,7 +336,7 @@ INSERT INTO iam_scim_bridges (
 
 	args := pgx.StrictNamedArgs{
 		"id":                    s.ID,
-		"tenant_id":             scope.GetTenantID(),
+		"tenant_id":             predicate.GetTenantID(),
 		"organization_id":       s.OrganizationID,
 		"scim_configuration_id": s.ScimConfigurationID,
 		"connector_id":          s.ConnectorID,
@@ -364,7 +364,7 @@ INSERT INTO iam_scim_bridges (
 func (s *SCIMBridge) Update(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 UPDATE iam_scim_bridges
@@ -384,7 +384,7 @@ WHERE
     AND id = @id
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"id":                   s.ID,
@@ -400,7 +400,7 @@ WHERE
 		"updated_at":           s.UpdatedAt,
 	}
 
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
@@ -473,7 +473,7 @@ FOR UPDATE SKIP LOCKED
 func (s *SCIMBridge) Delete(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 DELETE FROM iam_scim_bridges
@@ -482,10 +482,10 @@ WHERE
     AND id = @id
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"id": s.ID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {

@@ -104,7 +104,7 @@ func (rr *RightsRequest) AuthorizationAttributes(
 func (rr *RightsRequest) LoadByID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	rightsRequestID gid.GID,
 ) error {
 	q := `
@@ -128,10 +128,10 @@ WHERE
 LIMIT 1;
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"rights_request_id": rightsRequestID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -155,7 +155,7 @@ LIMIT 1;
 func (rrs *RightsRequests) CountByOrganizationID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	organizationID gid.GID,
 ) (int, error) {
 	q := `
@@ -168,10 +168,10 @@ WHERE
 	AND organization_id = @organization_id
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"organization_id": organizationID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	row := conn.QueryRow(ctx, q, args)
 
@@ -188,7 +188,7 @@ WHERE
 func (rrs *RightsRequests) LoadByOrganizationID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	organizationID gid.GID,
 	cursor *page.Cursor[RightsRequestOrderField],
 ) error {
@@ -213,10 +213,10 @@ WHERE
 	AND %s
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"organization_id": organizationID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
@@ -237,7 +237,7 @@ WHERE
 func (rr *RightsRequest) Insert(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 INSERT INTO rights_requests (
@@ -271,7 +271,7 @@ INSERT INTO rights_requests (
 
 	args := pgx.StrictNamedArgs{
 		"id":              rr.ID,
-		"tenant_id":       scope.GetTenantID(),
+		"tenant_id":       predicate.GetTenantID(),
 		"organization_id": rr.OrganizationID,
 		"request_type":    rr.RequestType,
 		"request_state":   rr.RequestState,
@@ -295,7 +295,7 @@ INSERT INTO rights_requests (
 func (rr *RightsRequest) Update(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 UPDATE rights_requests SET
@@ -312,7 +312,7 @@ WHERE
 	AND id = @id
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"id":            rr.ID,
@@ -325,7 +325,7 @@ WHERE
 		"action_taken":  rr.ActionTaken,
 		"updated_at":    rr.UpdatedAt,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
@@ -338,7 +338,7 @@ WHERE
 func (rr *RightsRequest) Delete(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 DELETE FROM rights_requests
@@ -347,10 +347,10 @@ WHERE
 	AND id = @id
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"id": rr.ID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {

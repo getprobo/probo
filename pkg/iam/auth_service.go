@@ -135,7 +135,7 @@ func (s *AuthService) ActivateAccount(
 	}
 
 	var (
-		scope      = coredata.NewScopeFromObjectID(payload.Data.InvitationID)
+		predicate = coredata.NewPredicateFromObjectID(payload.Data.InvitationID)
 		invitation = &coredata.Invitation{}
 		profile    *coredata.MembershipProfile
 		identity   *coredata.Identity
@@ -145,7 +145,7 @@ func (s *AuthService) ActivateAccount(
 	if err = s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			err := invitation.LoadByID(ctx, tx, scope, payload.Data.InvitationID)
+			err := invitation.LoadByID(ctx, tx, predicate, payload.Data.InvitationID)
 			if err != nil {
 				if err == coredata.ErrResourceNotFound {
 					return NewInvitationNotFoundError(payload.Data.InvitationID)
@@ -163,7 +163,7 @@ func (s *AuthService) ActivateAccount(
 			}
 
 			profile = &coredata.MembershipProfile{}
-			if err := profile.LoadByID(ctx, tx, scope, invitation.UserID); err != nil {
+			if err := profile.LoadByID(ctx, tx, predicate, invitation.UserID); err != nil {
 				return fmt.Errorf("cannot load user: %w", err)
 			}
 
@@ -175,7 +175,7 @@ func (s *AuthService) ActivateAccount(
 				profile.State = coredata.ProfileStateActive
 				profile.UpdatedAt = now
 
-				if err := profile.Update(ctx, tx, scope); err != nil {
+				if err := profile.Update(ctx, tx, predicate); err != nil {
 					return fmt.Errorf("cannot update user: %w", err)
 				}
 			}
@@ -194,7 +194,7 @@ func (s *AuthService) ActivateAccount(
 			}
 
 			invitation.AcceptedAt = &now
-			if err := invitation.Update(ctx, tx, scope); err != nil {
+			if err := invitation.Update(ctx, tx, predicate); err != nil {
 				if err == coredata.ErrResourceNotFound {
 					return NewInvitationNotFoundError(payload.Data.InvitationID)
 				}
@@ -209,7 +209,7 @@ func (s *AuthService) ActivateAccount(
 			if err := invitations.ExpireByUserID(
 				ctx,
 				tx,
-				coredata.NewScopeFromObjectID(invitation.OrganizationID),
+				coredata.NewPredicateFromObjectID(invitation.OrganizationID),
 				invitation.UserID,
 				onlyPending,
 			); err != nil {
@@ -590,7 +590,7 @@ func (s AuthService) SendMagicLink(ctx context.Context, req *SendMagicLinkReques
 				}
 			}
 
-			if err := organization.LoadByID(ctx, tx, coredata.NewNoScope(), req.OrganizationID); err != nil {
+			if err := organization.LoadByID(ctx, tx, coredata.NewNoPredicate(), req.OrganizationID); err != nil {
 				return fmt.Errorf("cannot load organization: %w", err)
 			}
 

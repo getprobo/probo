@@ -194,7 +194,7 @@ func handleConnectorComplete(
 			return
 		}
 
-		scope := coredata.NewScopeFromObjectID(organizationID)
+		predicate := coredata.NewPredicateFromObjectID(organizationID)
 		svc := proboSvc
 
 		var cnnctr *coredata.Connector
@@ -270,9 +270,7 @@ func handleConnectorComplete(
 			}
 
 			cnnctr, err = svc.Connectors.Reconnect(
-				r.Context(),
-				scope,
-				probo.ReconnectConnectorRequest{
+				r.Context(), predicate, probo.ReconnectConnectorRequest{
 					ConnectorID:    connectorID,
 					OrganizationID: organizationID,
 					Provider:       connectorProvider,
@@ -372,7 +370,7 @@ func handleConnectorComplete(
 				createReq.RawSettings = rawSettings
 			}
 
-			cnnctr, err = svc.Connectors.Create(r.Context(), scope, createReq)
+			cnnctr, err = svc.Connectors.Create(r.Context(), predicate, createReq)
 			if err != nil {
 				logger.ErrorCtx(r.Context(), "cannot create connector", log.Error(err))
 				httpserver.RenderError(w, http.StatusInternalServerError, fmt.Errorf("internal error"))

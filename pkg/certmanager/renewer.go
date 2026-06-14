@@ -99,8 +99,8 @@ func (r *Renewer) checkAndRenew(ctx context.Context) error {
 
 			domains := coredata.CustomDomains{}
 
-			scope := coredata.NewNoScope()
-			if err := domains.ListDomainsForRenewal(ctx, tx, scope); err != nil {
+			predicate := coredata.NewNoPredicate()
+			if err := domains.ListDomainsForRenewal(ctx, tx, predicate); err != nil {
 				return fmt.Errorf("cannot list domains for renewal: %w", err)
 			}
 
@@ -133,7 +133,7 @@ func (r *Renewer) checkAndRenew(ctx context.Context) error {
 
 func (r *Renewer) renewDomain(ctx context.Context, tx pg.Tx, domainID gid.GID) error {
 	domain := &coredata.CustomDomain{}
-	if err := domain.LoadByIDForUpdateSkipLocked(ctx, tx, coredata.NewNoScope(), domainID); err != nil {
+	if err := domain.LoadByIDForUpdateSkipLocked(ctx, tx, coredata.NewNoPredicate(), domainID); err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil
 		}
@@ -152,7 +152,7 @@ func (r *Renewer) renewDomain(ctx context.Context, tx pg.Tx, domainID gid.GID) e
 	}
 
 	domain.SSLStatus = coredata.CustomDomainSSLStatusRenewing
-	if err := domain.Update(ctx, tx, coredata.NewNoScope()); err != nil {
+	if err := domain.Update(ctx, tx, coredata.NewNoPredicate()); err != nil {
 		return fmt.Errorf("cannot update domain status: %w", err)
 	}
 

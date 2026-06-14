@@ -7,7 +7,7 @@ All raw SQL lives in `pkg/coredata` — never in service, handler, or resolver p
 
 ## Entity struct pattern
 
-Every entity uses `gid.GID` for its ID, `db` tags for pgx mapping, and `CreatedAt`/`UpdatedAt` timestamps. The `tenant_id` column exists in the database but is **never** stored on the Go struct — it is injected at query time via `Scoper`.
+Every entity uses `gid.GID` for its ID, `db` tags for pgx mapping, and `CreatedAt`/`UpdatedAt` timestamps. The `tenant_id` column exists in the database but is **never** stored on the Go struct — it is injected at query time via `Predicater`.
 
 ```go
 type (
@@ -38,22 +38,33 @@ func (c *CookieCategory) AuthorizationAttributes(ctx context.Context, conn pg.Qu
 }
 ```
 
-## Scoper interface
+## Predicater interface
 
-`Scoper` provides tenant isolation. Two implementations:
+`Predicater` provides the authorized row-access SQL predicate. Today this is
+tenant isolation (`tenant_id = @tenant_id`); additional constraints (e.g. file
+visibility) will be composed into `SQLFragment()` over time.
 
 
 | Type      | Constructor                                         | `SQLFragment()`            | `GetTenantID()`         | Use case                              |
 | --------- | --------------------------------------------------- | -------------------------- | ----------------------- | ------------------------------------- |
-| `Scope`   | `NewScope(tenantID)` or `NewScopeFromObjectID(gid)` | `"tenant_id = @tenant_id"` | Returns tenant ID       | Multi-tenant queries (default)        |
-| `NoScope` | `NewNoScope()`                                      | `"TRUE"`                   | **Panics** — never call | Cross-tenant / administrative queries |
+| `Predicate`   | `NewPredicate(tenantID)` or `NewPredicateFromObjectID(gid)` | `"tenant_id = @tenant_id"` | Returns tenant ID       | Multi-tenant queries (default)        |
+| `NoPredicate` | `NewNoPredicate()`                                      | `"TRUE"`                   | **Panics** — never call | Cross-tenant / administrative queries |
 
 
-Always inject `tenant_id` at INSERT time using `scope.GetTenantID()`, never from the struct.
+Always inject `tenant_id` at INSERT time using `predicate.GetTenantID()`, never from the struct.
+
+### OAuth scopes vs SQL predicates
+
+| Layer | Type | Role |
+|-------|------|------|
+| OAuth | `OAuth2Scope` | Client delegation ceiling; PEP scope gate |
+| PDP point | `authorize(…) → error` + `*Predicate` | Per-resource ALLOW/DENY; predicate carries tenant for downstream |
+| PDP list (future) | `CompileListPredicate(…) → Predicater` | Policy → SQL row filter before query |
+| coredata | `Predicater` | Injected `WHERE` fragment; never encodes OAuth scopes |
 
 ## SQL query composition
 
-All queries use `fmt.Sprintf` to inject scope/filter/cursor fragments, then `pgx.StrictNamedArgs` for parameters. Merge args with `maps.Copy`.
+All queries use `fmt.Sprintf` to inject predicate/filter/cursor fragments, then `pgx.StrictNamedArgs` for parameters. Merge args with `maps.Copy`.
 
 ```go
 q := `
@@ -67,10 +78,10 @@ WHERE
 LIMIT %d;
 `
 
-q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment(), cursor.Limit())
+q = fmt.Sprintf(q, predicate.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment(), cursor.Limit())
 
 args := pgx.StrictNamedArgs{"organization_id": organizationID}
-maps.Copy(args, scope.SQLArguments())
+maps.Copy(args, predicate.SQLArguments())
 maps.Copy(args, filter.SQLArguments())
 maps.Copy(args, cursor.SQLArguments())
 ```
@@ -98,16 +109,16 @@ This ensures the compiler catches renamed or removed enum values instead of sile
 
 | Method                                                   | Receiver    | Returns                      | Purpose                              |
 | -------------------------------------------------------- | ----------- | ---------------------------- | ------------------------------------ |
-| `LoadByID(ctx, conn, scope, id)`                         | `*Entity`   | `error`                      | Single entity by ID                  |
-| `LoadBy*(ctx, conn, scope, key)`                         | `*Entity`   | `error`                      | Single entity by unique key          |
-| `LoadBy*(ctx, conn, scope, parentID, cursor, filter)`    | `*Entities` | `error`                      | Paginated list (cursor provides limit) |
+| `LoadByID(ctx, conn, predicate, id)`                         | `*Entity`   | `error`                      | Single entity by ID                  |
+| `LoadBy*(ctx, conn, predicate, key)`                         | `*Entity`   | `error`                      | Single entity by unique key          |
+| `LoadBy*(ctx, conn, predicate, parentID, cursor, filter)`    | `*Entities` | `error`                      | Paginated list (cursor provides limit) |
 | `Load(ctx, conn, limit, filter)`                         | `*Entities` | `error`                      | Filtered list with explicit limit    |
-| `LoadAllBy*(ctx, conn, scope, parentID)`                 | `*Entities` | `error`                      | All matching rows (never cursor/limit) |
+| `LoadAllBy*(ctx, conn, predicate, parentID)`                 | `*Entities` | `error`                      | All matching rows (never cursor/limit) |
 | `LoadAll(ctx, conn, filter)`                             | `*Entities` | `error`                      | All matching rows with filter (never cursor/limit) |
-| `CountBy*(ctx, conn, scope, parentID, filter)`           | `*Entities` | `(int, error)`               | Count matching rows                  |
-| `Insert(ctx, conn, scope)`                               | `*Entity`   | `error`                      | Insert, uses `scope.GetTenantID()`   |
-| `Update(ctx, conn, scope)`                               | `*Entity`   | `error`                      | Update via `Exec` (no `RETURNING`)   |
-| `Delete(ctx, conn, scope)`                               | `*Entity`   | `error`                      | Delete entity                        |
+| `CountBy*(ctx, conn, predicate, parentID, filter)`           | `*Entities` | `(int, error)`               | Count matching rows                  |
+| `Insert(ctx, conn, predicate)`                               | `*Entity`   | `error`                      | Insert, uses `predicate.GetTenantID()`   |
+| `Update(ctx, conn, predicate)`                               | `*Entity`   | `error`                      | Update via `Exec` (no `RETURNING`)   |
+| `Delete(ctx, conn, predicate)`                               | `*Entity`   | `error`                      | Delete entity                        |
 | `CursorKey(orderField)`                                  | `*Entity`   | `page.CursorKey`             | Cursor for pagination                |
 | `AuthorizationAttributes(ctx, conn)`                     | `*Entity`   | `(map[string]string, error)` | Attributes for IAM policy evaluation |
 
@@ -115,7 +126,7 @@ This ensures the compiler catches renamed or removed enum values instead of sile
 
 The method name signals whether the result set is bounded:
 
-- **`LoadBy*` with a `cursor` param** — paginated list tied to a GraphQL connection; the cursor provides the limit and ordering. Example: `Assets.LoadByOrganizationID(ctx, conn, scope, orgID, cursor)`.
+- **`LoadBy*` with a `cursor` param** — paginated list tied to a GraphQL connection; the cursor provides the limit and ordering. Example: `Assets.LoadByOrganizationID(ctx, conn, predicate, orgID, cursor)`.
 - **`Load` / `LoadBy*` with a `limit int` param** — filtered list with an explicit limit, used when cursor pagination is not needed but the caller controls the result count. Example: `CommonThirdPartyDomains.Load(ctx, conn, 1, filter)`.
 - **`LoadAllBy*`** — returns all matching rows with no limit or cursor. Use only when the full set is needed (e.g. all categories for a banner).
 - **`LoadAll`** — same as `LoadAllBy*` but without a parent key; returns all rows matching a filter. Example: `CommonThirdParties.LoadAll(ctx, conn, filter)`.

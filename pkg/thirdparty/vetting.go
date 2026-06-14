@@ -98,7 +98,7 @@ func sanitizeVettingError(err error) string {
 
 func (s *Service) Vet(
 	ctx context.Context,
-	scope coredata.Scoper,
+	predicate coredata.Predicater,
 	req VetRequest,
 ) (*coredata.ThirdParty, error) {
 	if err := req.Validate(); err != nil {
@@ -114,7 +114,7 @@ func (s *Service) Vet(
 	err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
-			if err := thirdParty.LoadByIDForUpdate(ctx, conn, scope, req.ID); err != nil {
+			if err := thirdParty.LoadByIDForUpdate(ctx, conn, predicate, req.ID); err != nil {
 				return fmt.Errorf("cannot load thirdParty %q: %w", req.ID, err)
 			}
 
@@ -132,7 +132,7 @@ func (s *Service) Vet(
 			thirdParty.VettingErrorMessage = nil
 			thirdParty.UpdatedAt = time.Now()
 
-			if err := thirdParty.Update(ctx, conn, scope); err != nil {
+			if err := thirdParty.Update(ctx, conn, predicate); err != nil {
 				return fmt.Errorf("cannot enqueue vetting: %w", err)
 			}
 
@@ -148,7 +148,7 @@ func (s *Service) Vet(
 
 func (s *Service) VettingStatus(
 	ctx context.Context,
-	scope coredata.Scoper,
+	predicate coredata.Predicater,
 	thirdPartyID gid.GID,
 ) (*coredata.ThirdPartyVettingStatus, error) {
 	thirdParty := &coredata.ThirdParty{}
@@ -156,7 +156,7 @@ func (s *Service) VettingStatus(
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			return thirdParty.LoadByID(ctx, conn, scope, thirdPartyID)
+			return thirdParty.LoadByID(ctx, conn, predicate, thirdPartyID)
 		},
 	)
 	if err != nil {

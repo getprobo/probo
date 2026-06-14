@@ -48,7 +48,7 @@ type (
 		Email         string                `json:"email,omitempty"`
 		EmailVerified *bool                 `json:"email_verified,omitempty"`
 		Name          string                `json:"name,omitempty"`
-		Scope         coredata.OAuth2Scopes `json:"-"`
+		Scopes        coredata.OAuth2Scopes `json:"-"`
 	}
 
 	SigningKeys []SigningKey
@@ -83,7 +83,7 @@ func NewIDTokenClaims(
 		ExpiresAt: now.Add(ttl).Unix(),
 		IssuedAt:  now.Unix(),
 		AuthTime:  authTime.Unix(),
-		Scope:     scopes,
+		Scopes: scopes,
 	}
 
 	if nonce != "" {

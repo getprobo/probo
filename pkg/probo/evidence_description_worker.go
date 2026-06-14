@@ -86,7 +86,7 @@ func (h *evidenceDescriptionHandler) Claim(ctx context.Context) (coredata.Eviden
 			evidence.DescriptionProcessingStartedAt = &now
 
 			evidence.UpdatedAt = now
-			if err := evidence.Update(ctx, tx, coredata.NewNoScope()); err != nil {
+			if err := evidence.Update(ctx, tx, coredata.NewNoPredicate()); err != nil {
 				return fmt.Errorf("cannot update evidence: %w", err)
 			}
 
@@ -143,14 +143,14 @@ func (h *evidenceDescriptionHandler) describeAndCommit(
 		return fmt.Errorf("evidence %s has no file", evidence.ID)
 	}
 
-	scope := coredata.NewScopeFromObjectID(evidence.ID)
+	predicate := coredata.NewPredicateFromObjectID(evidence.ID)
 
 	var file coredata.File
 
 	if err := h.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			if err := file.LoadByID(ctx, conn, scope, *evidence.EvidenceFileId); err != nil {
+			if err := file.LoadByID(ctx, conn, predicate, *evidence.EvidenceFileId); err != nil {
 				return fmt.Errorf("cannot load file: %w", err)
 			}
 
@@ -178,7 +178,7 @@ func (h *evidenceDescriptionHandler) describeAndCommit(
 			evidence.DescriptionProcessingStartedAt = nil
 
 			evidence.UpdatedAt = time.Now()
-			if err := evidence.Update(ctx, tx, scope); err != nil {
+			if err := evidence.Update(ctx, tx, predicate); err != nil {
 				return fmt.Errorf("cannot update evidence: %w", err)
 			}
 
@@ -191,7 +191,7 @@ func (h *evidenceDescriptionHandler) failEvidence(
 	ctx context.Context,
 	evidence *coredata.Evidence,
 ) error {
-	scope := coredata.NewScopeFromObjectID(evidence.ID)
+	predicate := coredata.NewPredicateFromObjectID(evidence.ID)
 
 	return h.pg.WithTx(
 		ctx,
@@ -200,7 +200,7 @@ func (h *evidenceDescriptionHandler) failEvidence(
 			evidence.DescriptionProcessingStartedAt = nil
 
 			evidence.UpdatedAt = time.Now()
-			if err := evidence.Update(ctx, tx, scope); err != nil {
+			if err := evidence.Update(ctx, tx, predicate); err != nil {
 				return fmt.Errorf("cannot update evidence: %w", err)
 			}
 

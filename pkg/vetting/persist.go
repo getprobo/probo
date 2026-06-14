@@ -46,21 +46,21 @@ func PersistAssessmentResult(
 	pc *PersistenceContext,
 	result Result,
 ) error {
-	scope := coredata.NewScopeFromObjectID(pc.ThirdPartyID)
+	predicate := coredata.NewPredicateFromObjectID(pc.ThirdPartyID)
 
 	return pc.PG.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
 			thirdParty := &coredata.ThirdParty{}
 
-			if err := thirdParty.LoadByID(ctx, conn, scope, pc.ThirdPartyID); err != nil {
+			if err := thirdParty.LoadByID(ctx, conn, predicate, pc.ThirdPartyID); err != nil {
 				return fmt.Errorf("cannot load third party: %w", err)
 			}
 
 			// Sub third parties store hierarchy-qualified names ("aws (Probo)").
 			// Load the ancestor chain so the vetted third party and any
 			// discovered sub-processors are named consistently with the console.
-			ancestorBaseNames, err := loadAncestorBaseNames(ctx, conn, scope, thirdParty.ID)
+			ancestorBaseNames, err := loadAncestorBaseNames(ctx, conn, predicate, thirdParty.ID)
 			if err != nil {
 				return err
 			}
@@ -68,7 +68,7 @@ func PersistAssessmentResult(
 			applySaveParams(thirdParty, pc.WebsiteURL, saveParamsFromInfo(result.Info), ancestorBaseNames)
 			thirdParty.UpdatedAt = time.Now()
 
-			if err := thirdParty.Update(ctx, conn, scope); err != nil {
+			if err := thirdParty.Update(ctx, conn, predicate); err != nil {
 				return fmt.Errorf("cannot update third party: %w", err)
 			}
 
@@ -86,9 +86,7 @@ func PersistAssessmentResult(
 
 				if err := linkSubThirdParty(
 					ctx,
-					conn,
-					scope,
-					pc,
+					conn, predicate, pc,
 					thirdParty.Level,
 					childNamePath,
 					linkSubThirdPartyParams{
@@ -103,9 +101,7 @@ func PersistAssessmentResult(
 
 			if err := persistVettingRiskAssessment(
 				ctx,
-				conn,
-				scope,
-				pc,
+				conn, predicate, pc,
 				thirdParty,
 				result,
 			); err != nil {
@@ -120,12 +116,12 @@ func PersistAssessmentResult(
 func persistVettingRiskAssessment(
 	ctx context.Context,
 	conn pg.Tx,
-	scope coredata.Scoper,
+	predicate coredata.Predicater,
 	pc *PersistenceContext,
 	thirdParty *coredata.ThirdParty,
 	result Result,
 ) error {
-	if err := thirdParty.ExpireNonExpiredRiskAssessments(ctx, conn, scope); err != nil {
+	if err := thirdParty.ExpireNonExpiredRiskAssessments(ctx, conn, predicate); err != nil {
 		return fmt.Errorf("cannot expire existing risk assessments: %w", err)
 	}
 
@@ -133,7 +129,7 @@ func persistVettingRiskAssessment(
 	notes := buildRiskAssessmentNotes(result.Info)
 
 	assessment := &coredata.ThirdPartyRiskAssessment{
-		ID:              gid.New(scope.GetTenantID(), coredata.ThirdPartyRiskAssessmentEntityType),
+		ID:              gid.New(predicate.GetTenantID(), coredata.ThirdPartyRiskAssessmentEntityType),
 		OrganizationID:  pc.OrganizationID,
 		ThirdPartyID:    pc.ThirdPartyID,
 		ExpiresAt:       now.Add(vettingRiskAssessmentValidity),
@@ -144,7 +140,7 @@ func persistVettingRiskAssessment(
 		UpdatedAt:       now,
 	}
 
-	if err := assessment.Insert(ctx, conn, scope); err != nil {
+	if err := assessment.Insert(ctx, conn, predicate); err != nil {
 		return fmt.Errorf("cannot insert risk assessment: %w", err)
 	}
 
@@ -395,7 +391,7 @@ func applySaveParams(
 func linkSubThirdParty(
 	ctx context.Context,
 	conn pg.Tx,
-	scope coredata.Scoper,
+	predicate coredata.Predicater,
 	pc *PersistenceContext,
 	parentLevel int,
 	parentNamePath []string,
@@ -420,14 +416,14 @@ func linkSubThirdParty(
 	// Sub-third-parties are scoped per parent, so a child is matched by name
 	// within this parent only — a same-named third party under a different
 	// parent is an independent entity and must be created here too.
-	err := child.LoadByNameAndParentThirdPartyID(ctx, conn, scope, qualifiedName, pc.ThirdPartyID)
+	err := child.LoadByNameAndParentThirdPartyID(ctx, conn, predicate, qualifiedName, pc.ThirdPartyID)
 	switch {
 	case err == nil:
 		if countries := parseOptionalCountryCodes(p.Country); len(countries) > 0 && len(child.Countries) == 0 {
 			child.Countries = countries
 			child.UpdatedAt = time.Now()
 
-			if err := child.Update(ctx, conn, scope); err != nil {
+			if err := child.Update(ctx, conn, predicate); err != nil {
 				return fmt.Errorf("cannot update child third party %q countries: %w", p.Name, err)
 			}
 		}
@@ -440,7 +436,7 @@ func linkSubThirdParty(
 	now := time.Now()
 	parentID := pc.ThirdPartyID
 	child = &coredata.ThirdParty{
-		ID:                 gid.New(scope.GetTenantID(), coredata.ThirdPartyEntityType),
+		ID:                 gid.New(predicate.GetTenantID(), coredata.ThirdPartyEntityType),
 		OrganizationID:     pc.OrganizationID,
 		ParentThirdPartyID: &parentID,
 		Name:               qualifiedName,
@@ -468,7 +464,7 @@ func linkSubThirdParty(
 		child.Countries = countries
 	}
 
-	if err := child.Insert(ctx, conn, scope); err != nil {
+	if err := child.Insert(ctx, conn, predicate); err != nil {
 		return fmt.Errorf("cannot create child third party %q: %w", p.Name, err)
 	}
 
@@ -500,12 +496,12 @@ func qualifyThirdPartyName(base string, path []string) string {
 func loadAncestorBaseNames(
 	ctx context.Context,
 	conn pg.Querier,
-	scope coredata.Scoper,
+	predicate coredata.Predicater,
 	thirdPartyID gid.GID,
 ) ([]string, error) {
 	var ancestors coredata.ThirdParties
 
-	if err := ancestors.LoadAllAncestorsByThirdPartyID(ctx, conn, scope, thirdPartyID); err != nil {
+	if err := ancestors.LoadAllAncestorsByThirdPartyID(ctx, conn, predicate, thirdPartyID); err != nil {
 		return nil, fmt.Errorf("cannot load ancestors: %w", err)
 	}
 

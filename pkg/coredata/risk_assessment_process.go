@@ -97,7 +97,7 @@ func (p *RiskAssessmentProcess) AuthorizationAttributes(
 func (ps *RiskAssessmentProcesses) LoadByRiskAssessmentScopeID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	riskAssessmentScopeID gid.GID,
 	cursor *page.Cursor[RiskAssessmentProcessOrderField],
 ) error {
@@ -118,9 +118,9 @@ WHERE
 	AND risk_assessment_scope_id = @risk_assessment_scope_id
 	AND %s
 `
-	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment(), cursor.SQLFragment())
 	args := pgx.NamedArgs{"risk_assessment_scope_id": riskAssessmentScopeID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
@@ -141,7 +141,7 @@ WHERE
 func (ps *RiskAssessmentProcesses) LoadAllByRiskAssessmentScopeID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	riskAssessmentScopeID gid.GID,
 ) error {
 	q := `
@@ -162,9 +162,9 @@ WHERE
 ORDER BY
 	created_at ASC, id ASC
 `
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 	args := pgx.NamedArgs{"risk_assessment_scope_id": riskAssessmentScopeID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -184,7 +184,7 @@ ORDER BY
 func (ps *RiskAssessmentProcesses) CountByRiskAssessmentScopeID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	riskAssessmentScopeID gid.GID,
 ) (int, error) {
 	q := `
@@ -197,9 +197,9 @@ WHERE
 	AND risk_assessment_scope_id = @risk_assessment_scope_id
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 	args := pgx.NamedArgs{"risk_assessment_scope_id": riskAssessmentScopeID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	var count int
 	if err := conn.QueryRow(ctx, q, args).Scan(&count); err != nil {
@@ -209,7 +209,7 @@ WHERE
 	return count, nil
 }
 
-func (p *RiskAssessmentProcess) LoadByID(ctx context.Context, conn pg.Querier, scope Scoper, id gid.GID) error {
+func (p *RiskAssessmentProcess) LoadByID(ctx context.Context, conn pg.Querier, predicate Predicater, id gid.GID) error {
 	q := `
 SELECT
 	id,
@@ -227,9 +227,9 @@ WHERE
 	AND id = @id
 LIMIT 1;
 `
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 	args := pgx.StrictNamedArgs{"id": id}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -250,7 +250,7 @@ LIMIT 1;
 	return nil
 }
 
-func (p *RiskAssessmentProcess) Insert(ctx context.Context, conn pg.Tx, scope Scoper) error {
+func (p *RiskAssessmentProcess) Insert(ctx context.Context, conn pg.Tx, predicate Predicater) error {
 	q := `
 INSERT INTO risk_assessment_processes (
 	id,
@@ -276,7 +276,7 @@ INSERT INTO risk_assessment_processes (
 `
 	args := pgx.StrictNamedArgs{
 		"id":                       p.ID,
-		"tenant_id":                scope.GetTenantID(),
+		"tenant_id":                predicate.GetTenantID(),
 		"organization_id":          p.OrganizationID,
 		"risk_assessment_scope_id": p.RiskAssessmentScopeID,
 		"source_node_id":           p.SourceNodeID,
@@ -298,7 +298,7 @@ INSERT INTO risk_assessment_processes (
 	return nil
 }
 
-func (p *RiskAssessmentProcess) Update(ctx context.Context, conn pg.Tx, scope Scoper) error {
+func (p *RiskAssessmentProcess) Update(ctx context.Context, conn pg.Tx, predicate Predicater) error {
 	q := `
 UPDATE risk_assessment_processes
 SET
@@ -310,7 +310,7 @@ WHERE
 	%s
 	AND id = @id
 `
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 	args := pgx.StrictNamedArgs{
 		"id":             p.ID,
 		"source_node_id": p.SourceNodeID,
@@ -318,7 +318,7 @@ WHERE
 		"name":           p.Name,
 		"updated_at":     p.UpdatedAt,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	result, err := conn.Exec(ctx, q, args)
 	if err != nil {
@@ -332,16 +332,16 @@ WHERE
 	return nil
 }
 
-func (p *RiskAssessmentProcess) Delete(ctx context.Context, conn pg.Tx, scope Scoper, id gid.GID) error {
+func (p *RiskAssessmentProcess) Delete(ctx context.Context, conn pg.Tx, predicate Predicater, id gid.GID) error {
 	q := `
 DELETE FROM risk_assessment_processes
 WHERE
 	%s
 	AND id = @id
 `
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 	args := pgx.StrictNamedArgs{"id": id}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 	_, err := conn.Exec(ctx, q, args)
 
 	return err

@@ -96,7 +96,7 @@ func (v *ThirdPartyComplianceReport) AuthorizationAttributes(
 func (vcs *ThirdPartyComplianceReports) LoadForThirdPartyID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	thirdPartyID gid.GID,
 	cursor *page.Cursor[ThirdPartyComplianceReportOrderField],
 ) error {
@@ -119,10 +119,10 @@ WHERE
 	AND %s
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.NamedArgs{"third_party_id": thirdPartyID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
@@ -143,7 +143,7 @@ WHERE
 func (vcs *ThirdPartyComplianceReports) LoadByThirdPartyIDs(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	thirdPartyIDs []gid.GID,
 ) error {
 	if len(thirdPartyIDs) == 0 {
@@ -171,7 +171,7 @@ ORDER BY
 	third_party_id, report_date DESC
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	ids := make([]string, len(thirdPartyIDs))
 	for i, id := range thirdPartyIDs {
@@ -179,7 +179,7 @@ ORDER BY
 	}
 
 	args := pgx.NamedArgs{"third_party_ids": ids}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -199,7 +199,7 @@ ORDER BY
 func (vcr *ThirdPartyComplianceReport) LoadByID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	thirdPartyComplianceReportID gid.GID,
 ) error {
 	q := `
@@ -221,10 +221,10 @@ WHERE
 LIMIT 1;
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.NamedArgs{"id": thirdPartyComplianceReportID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -244,7 +244,7 @@ LIMIT 1;
 func (vcr *ThirdPartyComplianceReport) Insert(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 INSERT INTO
@@ -276,7 +276,7 @@ VALUES (
 	args := pgx.NamedArgs{
 		"id":              vcr.ID,
 		"organization_id": vcr.OrganizationID,
-		"tenant_id":       scope.GetTenantID(),
+		"tenant_id":       predicate.GetTenantID(),
 		"third_party_id":  vcr.ThirdPartyID,
 		"report_date":     vcr.ReportDate,
 		"valid_until":     vcr.ValidUntil,
@@ -294,7 +294,7 @@ VALUES (
 func (vcr *ThirdPartyComplianceReport) Delete(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 DELETE
@@ -306,10 +306,10 @@ WHERE
 RETURNING report_file_id
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"id": vcr.ID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	var vcrFileId *gid.GID
 
@@ -320,7 +320,7 @@ RETURNING report_file_id
 
 	if vcrFileId != nil {
 		file := &File{ID: *vcrFileId}
-		if err = file.SoftDelete(ctx, conn, scope); err != nil {
+		if err = file.SoftDelete(ctx, conn, predicate); err != nil {
 			return fmt.Errorf("cannot soft delete thirdParty compliance file: %w", err)
 		}
 	}

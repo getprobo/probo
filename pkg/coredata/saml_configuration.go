@@ -120,7 +120,7 @@ func (s *SAMLConfiguration) GetIdPCertificate() (*x509.Certificate, error) {
 func (s *SAMLConfiguration) LoadByOrganizationIDAndEmailDomain(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	organizationID gid.GID,
 	emailDomain string,
 ) error {
@@ -152,13 +152,13 @@ WHERE
 LIMIT 1;
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"organization_id": organizationID,
 		"email_domain":    emailDomain,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -182,7 +182,7 @@ LIMIT 1;
 func (s *SAMLConfiguration) LoadByID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	configID gid.GID,
 ) error {
 	q := `
@@ -212,10 +212,10 @@ WHERE
 LIMIT 1;
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"id": configID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -291,7 +291,7 @@ FOR UPDATE SKIP LOCKED;
 func (s *SAMLConfiguration) Insert(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 INSERT INTO iam_saml_configurations (
@@ -337,7 +337,7 @@ INSERT INTO iam_saml_configurations (
 
 	args := pgx.StrictNamedArgs{
 		"id":                        s.ID,
-		"tenant_id":                 scope.GetTenantID(),
+		"tenant_id":                 predicate.GetTenantID(),
 		"organization_id":           s.OrganizationID,
 		"email_domain":              s.EmailDomain,
 		"enforcement_policy":        s.EnforcementPolicy,
@@ -373,7 +373,7 @@ INSERT INTO iam_saml_configurations (
 func (s *SAMLConfiguration) Update(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 UPDATE iam_saml_configurations
@@ -396,7 +396,7 @@ WHERE
     AND id = @id
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"id":                        s.ID,
@@ -415,7 +415,7 @@ WHERE
 		"updated_at":                s.UpdatedAt,
 	}
 
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
@@ -428,7 +428,7 @@ WHERE
 func (s *SAMLConfiguration) Delete(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 DELETE FROM iam_saml_configurations
@@ -437,10 +437,10 @@ WHERE
     AND id = @id
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"id": s.ID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
@@ -453,7 +453,7 @@ WHERE
 func (s *SAMLConfigurations) LoadByOrganizationID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	organizationID gid.GID,
 ) error {
 	q := `
@@ -483,10 +483,10 @@ WHERE
 ORDER BY email_domain ASC;
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"organization_id": organizationID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -506,7 +506,7 @@ ORDER BY email_domain ASC;
 func (s *SAMLConfigurations) CountByOrganizationID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	organizationID gid.GID,
 ) (int, error) {
 	q := `
@@ -519,10 +519,10 @@ WHERE
     AND organization_id = @organization_id
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"organization_id": organizationID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {

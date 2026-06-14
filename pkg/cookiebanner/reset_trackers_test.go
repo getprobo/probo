@@ -59,14 +59,14 @@ func TestResetBannerTrackers_FullRebuild(t *testing.T) {
 
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		for _, p := range []*coredata.TrackerPattern{glob, linkedExact, categorised, excluded} {
-			if err := p.Insert(ctx, tx, fx.scope); err != nil {
+			if err := p.Insert(ctx, tx, fx.predicate); err != nil {
 				return err
 			}
 		}
 
 		for _, identifier := range []string{"_ga_ABC", "_ga_DEF"} {
 			detection := &coredata.DetectedTracker{
-				ID:               gid.New(fx.scope.GetTenantID(), coredata.DetectedTrackerEntityType),
+				ID:               gid.New(fx.predicate.GetTenantID(), coredata.DetectedTrackerEntityType),
 				CookieBannerID:   fx.banner.ID,
 				TrackerPatternID: &glob.ID,
 				TrackerType:      coredata.TrackerTypeCookie,
@@ -77,7 +77,7 @@ func TestResetBannerTrackers_FullRebuild(t *testing.T) {
 				UpdatedAt:        now,
 			}
 
-			if _, err := detection.Upsert(ctx, tx, fx.scope); err != nil {
+			if _, err := detection.Upsert(ctx, tx, fx.predicate); err != nil {
 				return err
 			}
 		}
@@ -85,7 +85,7 @@ func TestResetBannerTrackers_FullRebuild(t *testing.T) {
 		return nil
 	}))
 
-	result, err := ResetBannerTrackers(ctx, client, fx.scope, fx.banner.ID, false, nil)
+	result, err := ResetBannerTrackers(ctx, client, fx.predicate, fx.banner.ID, false, nil)
 	require.NoError(t, err)
 
 	require.Equal(t, 1, result.GlobsDecomposed)
@@ -99,14 +99,14 @@ func TestResetBannerTrackers_FullRebuild(t *testing.T) {
 		// The glob is gone.
 		var goneGlob coredata.TrackerPattern
 
-		err := goneGlob.LoadByBannerIDTypeAndPattern(ctx, conn, fx.scope, fx.banner.ID, coredata.TrackerTypeCookie, "_ga_*", nil)
+		err := goneGlob.LoadByBannerIDTypeAndPattern(ctx, conn, fx.predicate, fx.banner.ID, coredata.TrackerTypeCookie, "_ga_*", nil)
 		require.ErrorIs(t, err, coredata.ErrResourceNotFound)
 
 		// Each detection identifier is now its own exact, with mapping armed
 		// and no links, and the detection relinked to it.
 		for _, identifier := range []string{"_ga_ABC", "_ga_DEF"} {
 			var exact coredata.TrackerPattern
-			require.NoError(t, exact.LoadByBannerIDTypeAndPattern(ctx, conn, fx.scope, fx.banner.ID, coredata.TrackerTypeCookie, identifier, nil))
+			require.NoError(t, exact.LoadByBannerIDTypeAndPattern(ctx, conn, fx.predicate, fx.banner.ID, coredata.TrackerTypeCookie, identifier, nil))
 			require.Equal(t, coredata.TrackerPatternMatchTypeExact, exact.MatchType)
 			require.Equal(t, fx.uncategorisedID, exact.CookieCategoryID)
 			require.Nil(t, exact.CommonTrackerPatternID)
@@ -114,7 +114,7 @@ func TestResetBannerTrackers_FullRebuild(t *testing.T) {
 			require.NotNil(t, exact.MappingRequestedAt)
 
 			var detections coredata.DetectedTrackers
-			require.NoError(t, detections.LoadAllByTrackerPatternID(ctx, conn, fx.scope, exact.ID))
+			require.NoError(t, detections.LoadAllByTrackerPatternID(ctx, conn, fx.predicate, exact.ID))
 			require.Len(t, detections, 1)
 			require.Equal(t, identifier, detections[0].Identifier)
 		}
@@ -122,7 +122,7 @@ func TestResetBannerTrackers_FullRebuild(t *testing.T) {
 		// The surviving uncategorised exact had its links and copied
 		// description cleared and mapping re-armed.
 		var survivor coredata.TrackerPattern
-		require.NoError(t, survivor.LoadByBannerIDTypeAndPattern(ctx, conn, fx.scope, fx.banner.ID, coredata.TrackerTypeCookie, "linked_cookie", nil))
+		require.NoError(t, survivor.LoadByBannerIDTypeAndPattern(ctx, conn, fx.predicate, fx.banner.ID, coredata.TrackerTypeCookie, "linked_cookie", nil))
 		require.Nil(t, survivor.CommonTrackerPatternID)
 		require.Nil(t, survivor.ThirdPartyID)
 		require.Empty(t, survivor.Description)
@@ -130,17 +130,17 @@ func TestResetBannerTrackers_FullRebuild(t *testing.T) {
 
 		// The categorised pattern is untouched.
 		var categorisedRow coredata.TrackerPattern
-		require.NoError(t, categorisedRow.LoadByBannerIDTypeAndPattern(ctx, conn, fx.scope, fx.banner.ID, coredata.TrackerTypeCookie, "categorised_cookie", nil))
+		require.NoError(t, categorisedRow.LoadByBannerIDTypeAndPattern(ctx, conn, fx.predicate, fx.banner.ID, coredata.TrackerTypeCookie, "categorised_cookie", nil))
 		require.Equal(t, fx.normalCategoryID, categorisedRow.CookieCategoryID)
 
 		// The excluded pattern is preserved.
 		var excludedRow coredata.TrackerPattern
-		require.NoError(t, excludedRow.LoadByBannerIDTypeAndPattern(ctx, conn, fx.scope, fx.banner.ID, coredata.TrackerTypeCookie, "excluded_cookie", nil))
+		require.NoError(t, excludedRow.LoadByBannerIDTypeAndPattern(ctx, conn, fx.predicate, fx.banner.ID, coredata.TrackerTypeCookie, "excluded_cookie", nil))
 		require.True(t, excludedRow.Excluded)
 
 		// Pattern analysis is armed on the banner.
 		var banner coredata.CookieBanner
-		require.NoError(t, banner.LoadByID(ctx, conn, fx.scope, fx.banner.ID))
+		require.NoError(t, banner.LoadByID(ctx, conn, fx.predicate, fx.banner.ID))
 		require.NotNil(t, banner.PatternAnalysisRequestedAt)
 
 		return nil

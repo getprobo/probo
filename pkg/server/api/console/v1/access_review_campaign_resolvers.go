@@ -26,12 +26,12 @@ import (
 
 // Campaign is the resolver for the campaign field.
 func (r *accessEntryResolver) Campaign(ctx context.Context, obj *types.AccessEntry) (*types.AccessReviewCampaign, error) {
-	scope, err := r.authorize(ctx, obj.Campaign.ID, probo.ActionAccessReviewCampaignGet)
+	predicate, err := r.authorize(ctx, obj.Campaign.ID, probo.ActionAccessReviewCampaignGet)
 	if err != nil {
 		return nil, err
 	}
 
-	campaign, err := r.accessReview.Campaigns(scope).Get(ctx, obj.Campaign.ID)
+	campaign, err := r.accessReview.Campaigns(predicate).Get(ctx, obj.Campaign.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
@@ -45,12 +45,12 @@ func (r *accessEntryResolver) Campaign(ctx context.Context, obj *types.AccessEnt
 
 // AccessSource is the resolver for the accessSource field.
 func (r *accessEntryResolver) AccessSource(ctx context.Context, obj *types.AccessEntry) (*types.AccessSource, error) {
-	scope, err := r.authorize(ctx, obj.AccessSource.ID, probo.ActionAccessSourceGet)
+	predicate, err := r.authorize(ctx, obj.AccessSource.ID, probo.ActionAccessSourceGet)
 	if err != nil {
 		return nil, err
 	}
 
-	source, err := r.accessReview.Sources(scope).Get(ctx, obj.AccessSource.ID)
+	source, err := r.accessReview.Sources(predicate).Get(ctx, obj.AccessSource.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
@@ -64,12 +64,12 @@ func (r *accessEntryResolver) AccessSource(ctx context.Context, obj *types.Acces
 
 // DecisionHistory is the resolver for the decisionHistory field.
 func (r *accessEntryResolver) DecisionHistory(ctx context.Context, obj *types.AccessEntry) ([]*types.AccessEntryDecisionHistoryEntry, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionAccessEntryGet)
+	predicate, err := r.authorize(ctx, obj.ID, probo.ActionAccessEntryGet)
 	if err != nil {
 		return nil, err
 	}
 
-	histories, err := r.accessReview.Entries(scope).DecisionHistory(ctx, obj.ID)
+	histories, err := r.accessReview.Entries(predicate).DecisionHistory(ctx, obj.ID)
 	if err != nil {
 		panic(fmt.Errorf("cannot get decision history: %w", err))
 	}
@@ -89,7 +89,7 @@ func (r *accessEntryResolver) Permission(ctx context.Context, obj *types.AccessE
 
 // TotalCount is the resolver for the totalCount field.
 func (r *accessEntryConnectionResolver) TotalCount(ctx context.Context, obj *types.AccessEntryConnection) (int, error) {
-	scope, err := r.authorize(ctx, obj.ParentID, probo.ActionAccessEntryList)
+	predicate, err := r.authorize(ctx, obj.ParentID, probo.ActionAccessEntryList)
 	if err != nil {
 		return 0, err
 	}
@@ -97,7 +97,7 @@ func (r *accessEntryConnectionResolver) TotalCount(ctx context.Context, obj *typ
 	switch obj.Resolver.(type) {
 	case *accessReviewCampaignResolver:
 		if obj.SourceID != nil {
-			count, err := r.accessReview.Entries(scope).CountForCampaignIDAndSourceID(ctx, obj.ParentID, *obj.SourceID, obj.Filter)
+			count, err := r.accessReview.Entries(predicate).CountForCampaignIDAndSourceID(ctx, obj.ParentID, *obj.SourceID, obj.Filter)
 			if err != nil {
 				panic(fmt.Errorf("cannot count access entries: %w", err))
 			}
@@ -105,7 +105,7 @@ func (r *accessEntryConnectionResolver) TotalCount(ctx context.Context, obj *typ
 			return count, nil
 		}
 
-		count, err := r.accessReview.Entries(scope).CountForCampaignID(ctx, obj.ParentID, obj.Filter)
+		count, err := r.accessReview.Entries(predicate).CountForCampaignID(ctx, obj.ParentID, obj.Filter)
 		if err != nil {
 			panic(fmt.Errorf("cannot count access entries: %w", err))
 		}
@@ -140,17 +140,17 @@ func (r *accessReviewCampaignResolver) Organization(ctx context.Context, obj *ty
 
 // ScopeSources is the resolver for the scopeSources field.
 func (r *accessReviewCampaignResolver) ScopeSources(ctx context.Context, obj *types.AccessReviewCampaign) ([]*types.AccessReviewCampaignScopeSource, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionAccessSourceList)
+	predicate, err := r.authorize(ctx, obj.ID, probo.ActionAccessSourceList)
 	if err != nil {
 		return nil, err
 	}
 
-	sources, err := r.accessReview.Sources(scope).ListScopeSourcesForCampaignID(ctx, obj.ID)
+	sources, err := r.accessReview.Sources(predicate).ListScopeSourcesForCampaignID(ctx, obj.ID)
 	if err != nil {
 		panic(fmt.Errorf("cannot list scope sources: %w", err))
 	}
 
-	fetches, err := r.accessReview.Campaigns(scope).ListSourceFetches(ctx, obj.ID)
+	fetches, err := r.accessReview.Campaigns(predicate).ListSourceFetches(ctx, obj.ID)
 	if err != nil {
 		panic(fmt.Errorf("cannot list source fetch states: %w", err))
 	}
@@ -170,7 +170,7 @@ func (r *accessReviewCampaignResolver) ScopeSources(ctx context.Context, obj *ty
 
 // Entries is the resolver for the entries field.
 func (r *accessReviewCampaignResolver) Entries(ctx context.Context, obj *types.AccessReviewCampaign, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AccessEntryOrder, accessSourceID *gid.GID, filter *coredata.AccessEntryFilter) (*types.AccessEntryConnection, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionAccessEntryList)
+	predicate, err := r.authorize(ctx, obj.ID, probo.ActionAccessEntryList)
 	if err != nil {
 		return nil, err
 	}
@@ -194,9 +194,9 @@ func (r *accessReviewCampaignResolver) Entries(ctx context.Context, obj *types.A
 	)
 
 	if accessSourceID != nil {
-		p, err = r.accessReview.Entries(scope).ListForCampaignIDAndSourceID(ctx, obj.ID, *accessSourceID, cursor, filter)
+		p, err = r.accessReview.Entries(predicate).ListForCampaignIDAndSourceID(ctx, obj.ID, *accessSourceID, cursor, filter)
 	} else {
-		p, err = r.accessReview.Entries(scope).ListForCampaignID(ctx, obj.ID, cursor, filter)
+		p, err = r.accessReview.Entries(predicate).ListForCampaignID(ctx, obj.ID, cursor, filter)
 	}
 
 	if err != nil {
@@ -208,12 +208,12 @@ func (r *accessReviewCampaignResolver) Entries(ctx context.Context, obj *types.A
 
 // PendingEntryCount is the resolver for the pendingEntryCount field.
 func (r *accessReviewCampaignResolver) PendingEntryCount(ctx context.Context, obj *types.AccessReviewCampaign) (int, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionAccessEntryList)
+	predicate, err := r.authorize(ctx, obj.ID, probo.ActionAccessEntryList)
 	if err != nil {
 		return 0, err
 	}
 
-	count, err := r.accessReview.Entries(scope).CountPendingForCampaignID(ctx, obj.ID)
+	count, err := r.accessReview.Entries(predicate).CountPendingForCampaignID(ctx, obj.ID)
 	if err != nil {
 		panic(fmt.Errorf("cannot count pending access entries: %w", err))
 	}
@@ -223,12 +223,12 @@ func (r *accessReviewCampaignResolver) PendingEntryCount(ctx context.Context, ob
 
 // Statistics is the resolver for the statistics field.
 func (r *accessReviewCampaignResolver) Statistics(ctx context.Context, obj *types.AccessReviewCampaign) (*types.AccessReviewCampaignStatistics, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionAccessEntryList)
+	predicate, err := r.authorize(ctx, obj.ID, probo.ActionAccessEntryList)
 	if err != nil {
 		return nil, err
 	}
 
-	stats, err := r.accessReview.Entries(scope).Statistics(ctx, obj.ID)
+	stats, err := r.accessReview.Entries(predicate).Statistics(ctx, obj.ID)
 	if err != nil {
 		panic(fmt.Errorf("cannot get campaign statistics: %w", err))
 	}
@@ -243,14 +243,14 @@ func (r *accessReviewCampaignResolver) Permission(ctx context.Context, obj *type
 
 // TotalCount is the resolver for the totalCount field.
 func (r *accessReviewCampaignConnectionResolver) TotalCount(ctx context.Context, obj *types.AccessReviewCampaignConnection) (int, error) {
-	scope, err := r.authorize(ctx, obj.ParentID, probo.ActionAccessReviewCampaignList)
+	predicate, err := r.authorize(ctx, obj.ParentID, probo.ActionAccessReviewCampaignList)
 	if err != nil {
 		return 0, err
 	}
 
 	switch obj.Resolver.(type) {
 	case *organizationResolver:
-		count, err := r.accessReview.Campaigns(scope).CountForOrganizationID(ctx, obj.ParentID)
+		count, err := r.accessReview.Campaigns(predicate).CountForOrganizationID(ctx, obj.ParentID)
 		if err != nil {
 			panic(fmt.Errorf("cannot count access review campaigns: %w", err))
 		}
@@ -263,7 +263,7 @@ func (r *accessReviewCampaignConnectionResolver) TotalCount(ctx context.Context,
 
 // Entries is the resolver for the entries field.
 func (r *accessReviewCampaignScopeSourceResolver) Entries(ctx context.Context, obj *types.AccessReviewCampaignScopeSource, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AccessEntryOrder, filter *coredata.AccessEntryFilter) (*types.AccessEntryConnection, error) {
-	scope, err := r.authorize(ctx, obj.CampaignID, probo.ActionAccessEntryList)
+	predicate, err := r.authorize(ctx, obj.CampaignID, probo.ActionAccessEntryList)
 	if err != nil {
 		return nil, err
 	}
@@ -282,7 +282,7 @@ func (r *accessReviewCampaignScopeSourceResolver) Entries(ctx context.Context, o
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	p, err := r.accessReview.Entries(scope).ListForCampaignIDAndSourceID(ctx, obj.CampaignID, obj.ID, cursor, filter)
+	p, err := r.accessReview.Entries(predicate).ListForCampaignIDAndSourceID(ctx, obj.CampaignID, obj.ID, cursor, filter)
 	if err != nil {
 		panic(fmt.Errorf("cannot list access entries: %w", err))
 	}
@@ -294,12 +294,12 @@ func (r *accessReviewCampaignScopeSourceResolver) Entries(ctx context.Context, o
 
 // Statistics is the resolver for the statistics field.
 func (r *accessReviewCampaignScopeSourceResolver) Statistics(ctx context.Context, obj *types.AccessReviewCampaignScopeSource) (*types.AccessReviewCampaignStatistics, error) {
-	scope, err := r.authorize(ctx, obj.CampaignID, probo.ActionAccessEntryList)
+	predicate, err := r.authorize(ctx, obj.CampaignID, probo.ActionAccessEntryList)
 	if err != nil {
 		return nil, err
 	}
 
-	stats, err := r.accessReview.Entries(scope).StatisticsForSource(ctx, obj.CampaignID, obj.ID)
+	stats, err := r.accessReview.Entries(predicate).StatisticsForSource(ctx, obj.CampaignID, obj.ID)
 	if err != nil {
 		panic(fmt.Errorf("cannot get source statistics: %w", err))
 	}
@@ -335,12 +335,12 @@ func (r *accessSourceResolver) Connector(ctx context.Context, obj *types.AccessS
 		return nil, nil
 	}
 
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionAccessSourceGet)
+	predicate, err := r.authorize(ctx, obj.ID, probo.ActionAccessSourceGet)
 	if err != nil {
 		return nil, err
 	}
 
-	connector, err := r.probo.Connectors.Get(ctx, scope, *obj.ConnectorID)
+	connector, err := r.probo.Connectors.Get(ctx, predicate, *obj.ConnectorID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, nil
@@ -354,7 +354,7 @@ func (r *accessSourceResolver) Connector(ctx context.Context, obj *types.AccessS
 
 // ProviderOrganizations is the resolver for the providerOrganizations field.
 func (r *accessSourceResolver) ProviderOrganizations(ctx context.Context, obj *types.AccessSource) ([]*types.ProviderOrganization, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionAccessSourceGet)
+	predicate, err := r.authorize(ctx, obj.ID, probo.ActionAccessSourceGet)
 	if err != nil {
 		return nil, err
 	}
@@ -363,7 +363,7 @@ func (r *accessSourceResolver) ProviderOrganizations(ctx context.Context, obj *t
 		return []*types.ProviderOrganization{}, nil
 	}
 
-	httpClient, dbConnector, err := r.accessReview.Sources(scope).ConnectorHTTPClient(ctx, *obj.ConnectorID)
+	httpClient, dbConnector, err := r.accessReview.Sources(predicate).ConnectorHTTPClient(ctx, *obj.ConnectorID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return []*types.ProviderOrganization{}, nil
@@ -397,7 +397,7 @@ func (r *accessSourceResolver) ProviderOrganizations(ctx context.Context, obj *t
 // return false: the identifier is captured during the OAuth callback,
 // not via a follow-up configure mutation.
 func (r *accessSourceResolver) NeedsConfiguration(ctx context.Context, obj *types.AccessSource) (bool, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionAccessSourceGet)
+	predicate, err := r.authorize(ctx, obj.ID, probo.ActionAccessSourceGet)
 	if err != nil {
 		return false, err
 	}
@@ -406,7 +406,7 @@ func (r *accessSourceResolver) NeedsConfiguration(ctx context.Context, obj *type
 		return false, nil
 	}
 
-	dbConnector, err := r.probo.Connectors.Get(ctx, scope, *obj.ConnectorID)
+	dbConnector, err := r.probo.Connectors.Get(ctx, predicate, *obj.ConnectorID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return false, nil
@@ -429,12 +429,12 @@ func (r *accessSourceResolver) ConnectionStatus(ctx context.Context, obj *types.
 		return types.AccessSourceConnectionStatusNotApplicable, nil
 	}
 
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionAccessSourceGet)
+	predicate, err := r.authorize(ctx, obj.ID, probo.ActionAccessSourceGet)
 	if err != nil {
 		return types.AccessSourceConnectionStatusNotApplicable, err
 	}
 
-	httpClient, dbConnector, err := r.accessReview.Sources(scope).ConnectorHTTPClient(ctx, *obj.ConnectorID)
+	httpClient, dbConnector, err := r.accessReview.Sources(predicate).ConnectorHTTPClient(ctx, *obj.ConnectorID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return types.AccessSourceConnectionStatusNotApplicable, nil
@@ -460,7 +460,7 @@ func (r *accessSourceResolver) ConnectionStatus(ctx context.Context, obj *types.
 
 // SelectedOrganization is the resolver for the selectedOrganization field.
 func (r *accessSourceResolver) SelectedOrganization(ctx context.Context, obj *types.AccessSource) (*string, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionAccessSourceGet)
+	predicate, err := r.authorize(ctx, obj.ID, probo.ActionAccessSourceGet)
 	if err != nil {
 		return nil, err
 	}
@@ -469,7 +469,7 @@ func (r *accessSourceResolver) SelectedOrganization(ctx context.Context, obj *ty
 		return nil, nil
 	}
 
-	dbConnector, err := r.probo.Connectors.Get(ctx, scope, *obj.ConnectorID)
+	dbConnector, err := r.probo.Connectors.Get(ctx, predicate, *obj.ConnectorID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, nil
@@ -498,14 +498,14 @@ func (r *accessSourceResolver) Permission(ctx context.Context, obj *types.Access
 
 // TotalCount is the resolver for the totalCount field.
 func (r *accessSourceConnectionResolver) TotalCount(ctx context.Context, obj *types.AccessSourceConnection) (int, error) {
-	scope, err := r.authorize(ctx, obj.ParentID, probo.ActionAccessSourceList)
+	predicate, err := r.authorize(ctx, obj.ParentID, probo.ActionAccessSourceList)
 	if err != nil {
 		return 0, err
 	}
 
 	switch obj.Resolver.(type) {
 	case *organizationResolver:
-		count, err := r.accessReview.Sources(scope).CountForOrganizationID(ctx, obj.ParentID)
+		count, err := r.accessReview.Sources(predicate).CountForOrganizationID(ctx, obj.ParentID)
 		if err != nil {
 			panic(fmt.Errorf("cannot count access sources: %w", err))
 		}
@@ -518,12 +518,12 @@ func (r *accessSourceConnectionResolver) TotalCount(ctx context.Context, obj *ty
 
 // CreateAccessSource is the resolver for the createAccessSource field.
 func (r *mutationResolver) CreateAccessSource(ctx context.Context, input types.CreateAccessSourceInput) (*types.CreateAccessSourcePayload, error) {
-	scope, err := r.authorize(ctx, input.OrganizationID, probo.ActionAccessSourceCreate)
+	predicate, err := r.authorize(ctx, input.OrganizationID, probo.ActionAccessSourceCreate)
 	if err != nil {
 		return nil, err
 	}
 
-	source, err := r.accessReview.Sources(scope).Create(ctx, accessreview.CreateAccessSourceRequest{
+	source, err := r.accessReview.Sources(predicate).Create(ctx, accessreview.CreateAccessSourceRequest{
 		OrganizationID: input.OrganizationID,
 		ConnectorID:    input.ConnectorID,
 		Name:           input.Name,
@@ -541,7 +541,7 @@ func (r *mutationResolver) CreateAccessSource(ctx context.Context, input types.C
 
 // UpdateAccessSource is the resolver for the updateAccessSource field.
 func (r *mutationResolver) UpdateAccessSource(ctx context.Context, input types.UpdateAccessSourceInput) (*types.UpdateAccessSourcePayload, error) {
-	scope, err := r.authorize(ctx, input.AccessSourceID, probo.ActionAccessSourceUpdate)
+	predicate, err := r.authorize(ctx, input.AccessSourceID, probo.ActionAccessSourceUpdate)
 	if err != nil {
 		return nil, err
 	}
@@ -562,7 +562,7 @@ func (r *mutationResolver) UpdateAccessSource(ctx context.Context, input types.U
 		req.CsvData = gqlutils.UnwrapOmittable(input.CSVData)
 	}
 
-	source, err := r.accessReview.Sources(scope).Update(ctx, req)
+	source, err := r.accessReview.Sources(predicate).Update(ctx, req)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
@@ -578,12 +578,12 @@ func (r *mutationResolver) UpdateAccessSource(ctx context.Context, input types.U
 
 // DeleteAccessSource is the resolver for the deleteAccessSource field.
 func (r *mutationResolver) DeleteAccessSource(ctx context.Context, input types.DeleteAccessSourceInput) (*types.DeleteAccessSourcePayload, error) {
-	scope, err := r.authorize(ctx, input.AccessSourceID, probo.ActionAccessSourceDelete)
+	predicate, err := r.authorize(ctx, input.AccessSourceID, probo.ActionAccessSourceDelete)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := r.accessReview.Sources(scope).Delete(ctx, input.AccessSourceID); err != nil {
+	if err := r.accessReview.Sources(predicate).Delete(ctx, input.AccessSourceID); err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
 		}
@@ -598,12 +598,12 @@ func (r *mutationResolver) DeleteAccessSource(ctx context.Context, input types.D
 
 // ConfigureAccessSource is the resolver for the configureAccessSource field.
 func (r *mutationResolver) ConfigureAccessSource(ctx context.Context, input types.ConfigureAccessSourceInput) (*types.ConfigureAccessSourcePayload, error) {
-	scope, err := r.authorize(ctx, input.AccessSourceID, probo.ActionAccessSourceUpdate)
+	predicate, err := r.authorize(ctx, input.AccessSourceID, probo.ActionAccessSourceUpdate)
 	if err != nil {
 		return nil, err
 	}
 
-	source, err := r.accessReview.Sources(scope).ConfigureAccessSource(
+	source, err := r.accessReview.Sources(predicate).ConfigureAccessSource(
 		ctx,
 		accessreview.ConfigureAccessSourceRequest{
 			AccessSourceID:   input.AccessSourceID,
@@ -625,7 +625,7 @@ func (r *mutationResolver) ConfigureAccessSource(ctx context.Context, input type
 
 // CreateAccessReviewCampaign is the resolver for the createAccessReviewCampaign field.
 func (r *mutationResolver) CreateAccessReviewCampaign(ctx context.Context, input types.CreateAccessReviewCampaignInput) (*types.CreateAccessReviewCampaignPayload, error) {
-	scope, err := r.authorize(ctx, input.OrganizationID, probo.ActionAccessReviewCampaignCreate)
+	predicate, err := r.authorize(ctx, input.OrganizationID, probo.ActionAccessReviewCampaignCreate)
 	if err != nil {
 		return nil, err
 	}
@@ -635,7 +635,7 @@ func (r *mutationResolver) CreateAccessReviewCampaign(ctx context.Context, input
 		description = *input.Description
 	}
 
-	campaign, err := r.accessReview.Campaigns(scope).Create(ctx, accessreview.CreateAccessReviewCampaignRequest{
+	campaign, err := r.accessReview.Campaigns(predicate).Create(ctx, accessreview.CreateAccessReviewCampaignRequest{
 		OrganizationID:    input.OrganizationID,
 		Name:              input.Name,
 		Description:       description,
@@ -653,7 +653,7 @@ func (r *mutationResolver) CreateAccessReviewCampaign(ctx context.Context, input
 
 // UpdateAccessReviewCampaign is the resolver for the updateAccessReviewCampaign field.
 func (r *mutationResolver) UpdateAccessReviewCampaign(ctx context.Context, input types.UpdateAccessReviewCampaignInput) (*types.UpdateAccessReviewCampaignPayload, error) {
-	scope, err := r.authorize(ctx, input.AccessReviewCampaignID, probo.ActionAccessReviewCampaignUpdate)
+	predicate, err := r.authorize(ctx, input.AccessReviewCampaignID, probo.ActionAccessReviewCampaignUpdate)
 	if err != nil {
 		return nil, err
 	}
@@ -675,7 +675,7 @@ func (r *mutationResolver) UpdateAccessReviewCampaign(ctx context.Context, input
 		req.FrameworkControls = &controls
 	}
 
-	campaign, err := r.accessReview.Campaigns(scope).Update(ctx, req)
+	campaign, err := r.accessReview.Campaigns(predicate).Update(ctx, req)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
@@ -691,12 +691,12 @@ func (r *mutationResolver) UpdateAccessReviewCampaign(ctx context.Context, input
 
 // DeleteAccessReviewCampaign is the resolver for the deleteAccessReviewCampaign field.
 func (r *mutationResolver) DeleteAccessReviewCampaign(ctx context.Context, input types.DeleteAccessReviewCampaignInput) (*types.DeleteAccessReviewCampaignPayload, error) {
-	scope, err := r.authorize(ctx, input.AccessReviewCampaignID, probo.ActionAccessReviewCampaignDelete)
+	predicate, err := r.authorize(ctx, input.AccessReviewCampaignID, probo.ActionAccessReviewCampaignDelete)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := r.accessReview.Campaigns(scope).Delete(ctx, input.AccessReviewCampaignID); err != nil {
+	if err := r.accessReview.Campaigns(predicate).Delete(ctx, input.AccessReviewCampaignID); err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
 		}
@@ -711,12 +711,12 @@ func (r *mutationResolver) DeleteAccessReviewCampaign(ctx context.Context, input
 
 // StartAccessReviewCampaign is the resolver for the startAccessReviewCampaign field.
 func (r *mutationResolver) StartAccessReviewCampaign(ctx context.Context, input types.StartAccessReviewCampaignInput) (*types.StartAccessReviewCampaignPayload, error) {
-	scope, err := r.authorize(ctx, input.AccessReviewCampaignID, probo.ActionAccessReviewCampaignStart)
+	predicate, err := r.authorize(ctx, input.AccessReviewCampaignID, probo.ActionAccessReviewCampaignStart)
 	if err != nil {
 		return nil, err
 	}
 
-	campaign, err := r.accessReview.Campaigns(scope).Start(ctx, input.AccessReviewCampaignID)
+	campaign, err := r.accessReview.Campaigns(predicate).Start(ctx, input.AccessReviewCampaignID)
 	if err != nil {
 		panic(fmt.Errorf("cannot start access review campaign: %w", err))
 	}
@@ -728,12 +728,12 @@ func (r *mutationResolver) StartAccessReviewCampaign(ctx context.Context, input 
 
 // CloseAccessReviewCampaign is the resolver for the closeAccessReviewCampaign field.
 func (r *mutationResolver) CloseAccessReviewCampaign(ctx context.Context, input types.CloseAccessReviewCampaignInput) (*types.CloseAccessReviewCampaignPayload, error) {
-	scope, err := r.authorize(ctx, input.AccessReviewCampaignID, probo.ActionAccessReviewCampaignClose)
+	predicate, err := r.authorize(ctx, input.AccessReviewCampaignID, probo.ActionAccessReviewCampaignClose)
 	if err != nil {
 		return nil, err
 	}
 
-	campaign, err := r.accessReview.Campaigns(scope).Close(ctx, input.AccessReviewCampaignID)
+	campaign, err := r.accessReview.Campaigns(predicate).Close(ctx, input.AccessReviewCampaignID)
 	if err != nil {
 		panic(fmt.Errorf("cannot close access review campaign: %w", err))
 	}
@@ -745,12 +745,12 @@ func (r *mutationResolver) CloseAccessReviewCampaign(ctx context.Context, input 
 
 // CancelAccessReviewCampaign is the resolver for the cancelAccessReviewCampaign field.
 func (r *mutationResolver) CancelAccessReviewCampaign(ctx context.Context, input types.CancelAccessReviewCampaignInput) (*types.CancelAccessReviewCampaignPayload, error) {
-	scope, err := r.authorize(ctx, input.AccessReviewCampaignID, probo.ActionAccessReviewCampaignCancel)
+	predicate, err := r.authorize(ctx, input.AccessReviewCampaignID, probo.ActionAccessReviewCampaignCancel)
 	if err != nil {
 		return nil, err
 	}
 
-	campaign, err := r.accessReview.Campaigns(scope).Cancel(ctx, input.AccessReviewCampaignID)
+	campaign, err := r.accessReview.Campaigns(predicate).Cancel(ctx, input.AccessReviewCampaignID)
 	if err != nil {
 		panic(fmt.Errorf("cannot cancel access review campaign: %w", err))
 	}
@@ -762,12 +762,12 @@ func (r *mutationResolver) CancelAccessReviewCampaign(ctx context.Context, input
 
 // AddAccessReviewCampaignScopeSource is the resolver for the addAccessReviewCampaignScopeSource field.
 func (r *mutationResolver) AddAccessReviewCampaignScopeSource(ctx context.Context, input types.AddAccessReviewCampaignScopeSourceInput) (*types.AddAccessReviewCampaignScopeSourcePayload, error) {
-	scope, err := r.authorize(ctx, input.AccessReviewCampaignID, probo.ActionAccessReviewCampaignAddScopeSource)
+	predicate, err := r.authorize(ctx, input.AccessReviewCampaignID, probo.ActionAccessReviewCampaignAddScopeSource)
 	if err != nil {
 		return nil, err
 	}
 
-	campaign, err := r.accessReview.Campaigns(scope).AddScopeSource(ctx, accessreview.AddCampaignScopeSourceRequest{
+	campaign, err := r.accessReview.Campaigns(predicate).AddScopeSource(ctx, accessreview.AddCampaignScopeSourceRequest{
 		CampaignID:     input.AccessReviewCampaignID,
 		AccessSourceID: input.AccessSourceID,
 	})
@@ -782,12 +782,12 @@ func (r *mutationResolver) AddAccessReviewCampaignScopeSource(ctx context.Contex
 
 // RemoveAccessReviewCampaignScopeSource is the resolver for the removeAccessReviewCampaignScopeSource field.
 func (r *mutationResolver) RemoveAccessReviewCampaignScopeSource(ctx context.Context, input types.RemoveAccessReviewCampaignScopeSourceInput) (*types.RemoveAccessReviewCampaignScopeSourcePayload, error) {
-	scope, err := r.authorize(ctx, input.AccessReviewCampaignID, probo.ActionAccessReviewCampaignRemoveScopeSource)
+	predicate, err := r.authorize(ctx, input.AccessReviewCampaignID, probo.ActionAccessReviewCampaignRemoveScopeSource)
 	if err != nil {
 		return nil, err
 	}
 
-	campaign, err := r.accessReview.Campaigns(scope).RemoveScopeSource(ctx, accessreview.RemoveCampaignScopeSourceRequest{
+	campaign, err := r.accessReview.Campaigns(predicate).RemoveScopeSource(ctx, accessreview.RemoveCampaignScopeSourceRequest{
 		CampaignID:     input.AccessReviewCampaignID,
 		AccessSourceID: input.AccessSourceID,
 	})
@@ -802,7 +802,7 @@ func (r *mutationResolver) RemoveAccessReviewCampaignScopeSource(ctx context.Con
 
 // RecordAccessEntryDecision is the resolver for the recordAccessEntryDecision field.
 func (r *mutationResolver) RecordAccessEntryDecision(ctx context.Context, input types.RecordAccessEntryDecisionInput) (*types.RecordAccessEntryDecisionPayload, error) {
-	scope, err := r.authorize(ctx, input.AccessEntryID, probo.ActionAccessEntryDecide)
+	predicate, err := r.authorize(ctx, input.AccessEntryID, probo.ActionAccessEntryDecide)
 	if err != nil {
 		return nil, err
 	}
@@ -829,7 +829,7 @@ func (r *mutationResolver) RecordAccessEntryDecision(ctx context.Context, input 
 		}
 	}
 
-	entry, err := r.accessReview.Entries(scope).RecordDecision(ctx, req)
+	entry, err := r.accessReview.Entries(predicate).RecordDecision(ctx, req)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
@@ -870,7 +870,7 @@ func (r *mutationResolver) RecordAccessEntryDecisions(ctx context.Context, input
 	}
 
 	tenantID := input.Decisions[0].AccessEntryID.TenantID()
-	scope := coredata.NewScope(tenantID)
+	predicate := coredata.NewPredicate(tenantID)
 
 	// Cache profile lookups per organization so we resolve the correct
 	// decidedByID for each entry even when a batch spans multiple orgs.
@@ -902,7 +902,7 @@ func (r *mutationResolver) RecordAccessEntryDecisions(ctx context.Context, input
 		}
 	}
 
-	entries, err := r.accessReview.Entries(scope).RecordDecisions(ctx, decisions)
+	entries, err := r.accessReview.Entries(predicate).RecordDecisions(ctx, decisions)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
@@ -923,12 +923,12 @@ func (r *mutationResolver) RecordAccessEntryDecisions(ctx context.Context, input
 
 // FlagAccessEntry is the resolver for the flagAccessEntry field.
 func (r *mutationResolver) FlagAccessEntry(ctx context.Context, input types.FlagAccessEntryInput) (*types.FlagAccessEntryPayload, error) {
-	scope, err := r.authorize(ctx, input.AccessEntryID, probo.ActionAccessEntryFlag)
+	predicate, err := r.authorize(ctx, input.AccessEntryID, probo.ActionAccessEntryFlag)
 	if err != nil {
 		return nil, err
 	}
 
-	entry, err := r.accessReview.Entries(scope).FlagEntry(ctx, accessreview.FlagAccessEntryRequest{
+	entry, err := r.accessReview.Entries(predicate).FlagEntry(ctx, accessreview.FlagAccessEntryRequest{
 		EntryID:     input.AccessEntryID,
 		Flags:       input.Flags,
 		FlagReasons: input.FlagReasons,

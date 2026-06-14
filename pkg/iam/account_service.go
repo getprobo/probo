@@ -202,7 +202,7 @@ func (s *AccountService) ListPendingInvitations(
 	cursor *page.Cursor[coredata.InvitationOrderField],
 ) (*page.Page[*coredata.Invitation, coredata.InvitationOrderField], error) {
 	var (
-		scope       = coredata.NewScopeFromObjectID(userID)
+		predicate = coredata.NewPredicateFromObjectID(userID)
 		invitations coredata.Invitations
 	)
 
@@ -211,7 +211,7 @@ func (s *AccountService) ListPendingInvitations(
 		func(ctx context.Context, conn pg.Querier) error {
 			profile := coredata.MembershipProfile{}
 
-			err := profile.LoadByID(ctx, conn, scope, userID)
+			err := profile.LoadByID(ctx, conn, predicate, userID)
 			if err != nil {
 				if err == coredata.ErrResourceNotFound {
 					return NewIdentityNotFoundError(userID)
@@ -222,7 +222,7 @@ func (s *AccountService) ListPendingInvitations(
 
 			onlyPending := coredata.NewInvitationFilter([]coredata.InvitationStatus{coredata.InvitationStatusPending})
 
-			err = invitations.LoadByUserID(ctx, conn, scope, userID, cursor, onlyPending)
+			err = invitations.LoadByUserID(ctx, conn, predicate, userID, cursor, onlyPending)
 			if err != nil {
 				return fmt.Errorf("cannot load invitations: %w", err)
 			}
@@ -483,7 +483,7 @@ func (s *AccountService) RevealPersonalAPIKeyToken(
 
 func (s AccountService) GetIdentityForMembership(ctx context.Context, membershipID gid.GID) (*coredata.Identity, error) {
 	var (
-		scope    = coredata.NewScopeFromObjectID(membershipID)
+		predicate = coredata.NewPredicateFromObjectID(membershipID)
 		identity = &coredata.Identity{}
 	)
 
@@ -492,7 +492,7 @@ func (s AccountService) GetIdentityForMembership(ctx context.Context, membership
 		func(ctx context.Context, conn pg.Querier) error {
 			membership := &coredata.Membership{}
 
-			err := membership.LoadByID(ctx, conn, scope, membershipID)
+			err := membership.LoadByID(ctx, conn, predicate, membershipID)
 			if err != nil {
 				if err == coredata.ErrResourceNotFound {
 					return NewMembershipNotFoundError(membershipID)
@@ -606,7 +606,7 @@ func (s AccountService) ListInvitingOrganizations(ctx context.Context, identityI
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			err := organizations.LoadAllByIdentityIDWithPendingInvitation(ctx, conn, coredata.NewNoScope(), identityID)
+			err := organizations.LoadAllByIdentityIDWithPendingInvitation(ctx, conn, coredata.NewNoPredicate(), identityID)
 			if err != nil {
 				return fmt.Errorf("cannot load inviting organizations: %w", err)
 			}
@@ -633,7 +633,7 @@ func (s AccountService) ListOrganizations(ctx context.Context, identityID gid.GI
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			err := organizations.LoadByIdentityID(ctx, conn, coredata.NewNoScope(), identityID, cursor)
+			err := organizations.LoadByIdentityID(ctx, conn, coredata.NewNoPredicate(), identityID, cursor)
 			if err != nil {
 				return fmt.Errorf("cannot load organizations: %w", err)
 			}
@@ -671,7 +671,7 @@ func (s AccountService) GetMembershipForOrganization(
 			if err := membership.LoadByIdentityIDAndOrganizationID(
 				ctx,
 				tx,
-				coredata.NewScopeFromObjectID(organizationID),
+				coredata.NewPredicateFromObjectID(organizationID),
 				identityID,
 				organizationID,
 			); err != nil {

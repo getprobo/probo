@@ -115,7 +115,7 @@ func (s *Service) InitiateLogin(
 		func(ctx context.Context, tx pg.Tx) error {
 			config := &coredata.SAMLConfiguration{}
 
-			err := config.LoadByID(ctx, tx, coredata.NewNoScope(), configID)
+			err := config.LoadByID(ctx, tx, coredata.NewNoPredicate(), configID)
 			if err != nil {
 				if err == coredata.ErrResourceNotFound {
 					return NewSAMLConfigurationNotFoundError(configID)
@@ -183,7 +183,7 @@ func (s *Service) HandleAssertion(
 		func(ctx context.Context, tx pg.Tx) error {
 			config := &coredata.SAMLConfiguration{}
 
-			err := config.LoadByID(ctx, tx, coredata.NewNoScope(), configID)
+			err := config.LoadByID(ctx, tx, coredata.NewNoPredicate(), configID)
 			if err != nil {
 				if err == coredata.ErrResourceNotFound {
 					return NewSAMLConfigurationNotFoundError(configID)
@@ -290,13 +290,11 @@ func (s *Service) HandleAssertion(
 				}
 			}
 
-			scope := coredata.NewScopeFromObjectID(config.OrganizationID)
+			predicate := coredata.NewPredicateFromObjectID(config.OrganizationID)
 
 			if err := profile.LoadByIdentityIDAndOrganizationID(
 				ctx,
-				tx,
-				scope,
-				identity.ID,
+				tx, predicate, identity.ID,
 				config.OrganizationID,
 			); err != nil {
 				if !errors.Is(err, coredata.ErrResourceNotFound) {
@@ -326,9 +324,7 @@ func (s *Service) HandleAssertion(
 
 			if err := membership.LoadByIdentityIDAndOrganizationID(
 				ctx,
-				tx,
-				scope,
-				identity.ID,
+				tx, predicate, identity.ID,
 				config.OrganizationID,
 			); err != nil {
 				if !errors.Is(err, coredata.ErrResourceNotFound) {
@@ -344,7 +340,7 @@ func (s *Service) HandleAssertion(
 					UpdatedAt:      now,
 				}
 
-				err = membership.Insert(ctx, tx, scope)
+				err = membership.Insert(ctx, tx, predicate)
 				if err != nil {
 					return fmt.Errorf("cannot insert membership: %w", err)
 				}
@@ -358,7 +354,7 @@ func (s *Service) HandleAssertion(
 					profile.Source = coredata.ProfileSourceSAML
 				}
 
-				err = profile.Update(ctx, tx, scope)
+				err = profile.Update(ctx, tx, predicate)
 				if err != nil {
 					return fmt.Errorf("cannot update profile: %w", err)
 				}
@@ -367,7 +363,7 @@ func (s *Service) HandleAssertion(
 					membership.Role = *role
 					membership.UpdatedAt = now
 
-					err = membership.Update(ctx, tx, scope)
+					err = membership.Update(ctx, tx, predicate)
 					if err != nil {
 						return fmt.Errorf("cannot update membership: %w", err)
 					}
@@ -381,7 +377,7 @@ func (s *Service) HandleAssertion(
 			if err := invitations.ExpireByUserID(
 				ctx,
 				tx,
-				coredata.NewScopeFromObjectID(profile.OrganizationID),
+				coredata.NewPredicateFromObjectID(profile.OrganizationID),
 				profile.ID,
 				onlyPending,
 			); err != nil {

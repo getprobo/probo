@@ -42,7 +42,7 @@ type (
 func (cp ControlDocument) Insert(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 INSERT INTO
@@ -66,7 +66,7 @@ VALUES (
 		"control_id":      cp.ControlID,
 		"document_id":     cp.DocumentID,
 		"organization_id": cp.OrganizationID,
-		"tenant_id":       scope.GetTenantID(),
+		"tenant_id":       predicate.GetTenantID(),
 		"created_at":      cp.CreatedAt,
 	}
 
@@ -87,7 +87,7 @@ VALUES (
 func (cp ControlDocument) Delete(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 	controlID gid.GID,
 	documentID gid.GID,
 ) error {
@@ -105,9 +105,9 @@ WHERE
 		"control_id":  controlID,
 		"document_id": documentID,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	_, err := conn.Exec(ctx, q, args)
 
@@ -117,7 +117,7 @@ WHERE
 func (cp ControlDocument) DeleteByDocumentIDs(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 	documentIDs []gid.GID,
 ) error {
 	q := `
@@ -132,9 +132,9 @@ WHERE
 	args := pgx.StrictNamedArgs{
 		"document_ids": documentIDs,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	if _, err := conn.Exec(ctx, q, args); err != nil {
 		return fmt.Errorf("cannot delete control document mappings by document ids: %w", err)

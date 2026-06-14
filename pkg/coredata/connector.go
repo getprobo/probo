@@ -129,13 +129,13 @@ func (c *Connector) AuthorizationAttributes(
 func (c *Connectors) LoadAllByOrganizationIDProtocolAndProvider(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	organizationID gid.GID,
 	protocol ConnectorProtocol,
 	provider ConnectorProvider,
 	encryptionKey cipher.EncryptionKey,
 ) error {
-	if err := c.loadAllByOrganizationIDProtocolAndProvider(ctx, conn, scope, organizationID, protocol, provider); err != nil {
+	if err := c.loadAllByOrganizationIDProtocolAndProvider(ctx, conn, predicate, organizationID, protocol, provider); err != nil {
 		return fmt.Errorf("cannot load all connectors by organization ID, protocol and provider: %w", err)
 	}
 
@@ -153,7 +153,7 @@ func (c *Connectors) LoadAllByOrganizationIDProtocolAndProvider(
 func (c *Connector) LoadOneByOrganizationIDAndProvider(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	encryptionKey cipher.EncryptionKey,
 	organizationID gid.GID,
 	provider ConnectorProvider,
@@ -161,9 +161,7 @@ func (c *Connector) LoadOneByOrganizationIDAndProvider(
 	var connectors Connectors
 	if err := connectors.LoadAllByOrganizationIDProtocolAndProvider(
 		ctx,
-		conn,
-		scope,
-		organizationID,
+		conn, predicate, organizationID,
 		ConnectorProtocolOAuth2,
 		provider,
 		encryptionKey,
@@ -204,31 +202,31 @@ func connectorScopeCount(c *Connector) int {
 func (c *Connectors) LoadByOrganizationIDWithoutDecryptedConnection(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	organizationID gid.GID,
 	cursor *page.Cursor[ConnectorOrderField],
 	filter *ConnectorFilter,
 ) error {
-	return c.loadByOrganizationIDWithPagination(ctx, conn, scope, organizationID, cursor, filter)
+	return c.loadByOrganizationIDWithPagination(ctx, conn, predicate, organizationID, cursor, filter)
 }
 
 func (c *Connectors) LoadAllByOrganizationIDWithoutDecryptedConnection(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	organizationID gid.GID,
 ) error {
-	return c.loadAllByOrganizationID(ctx, conn, scope, organizationID)
+	return c.loadAllByOrganizationID(ctx, conn, predicate, organizationID)
 }
 
 func (c *Connector) LoadByID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	connectorID gid.GID,
 	encryptionKey cipher.EncryptionKey,
 ) error {
-	if err := c.LoadMetadataByID(ctx, conn, scope, connectorID); err != nil {
+	if err := c.LoadMetadataByID(ctx, conn, predicate, connectorID); err != nil {
 		return err
 	}
 
@@ -261,7 +259,7 @@ func (c *Connector) LoadByID(
 func (c *Connector) LoadMetadataByID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	connectorID gid.GID,
 ) error {
 	q := `
@@ -282,10 +280,10 @@ WHERE
 LIMIT 1;
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"id": connectorID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -309,16 +307,16 @@ LIMIT 1;
 func (c *Connector) Delete(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 DELETE FROM connectors
 WHERE %s AND id = @id
 `
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"id": c.ID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
@@ -337,7 +335,7 @@ WHERE %s AND id = @id
 func (c *Connector) Insert(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 	encryptionKey cipher.EncryptionKey,
 ) error {
 	q := `
@@ -396,7 +394,7 @@ INSERT INTO connectors (
 
 	args := pgx.StrictNamedArgs{
 		"id":                   c.ID,
-		"tenant_id":            scope.GetTenantID(),
+		"tenant_id":            predicate.GetTenantID(),
 		"organization_id":      c.OrganizationID,
 		"provider":             c.Provider,
 		"protocol":             c.Protocol,
@@ -425,7 +423,7 @@ INSERT INTO connectors (
 func (c *Connectors) loadByOrganizationIDWithPagination(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	organizationID gid.GID,
 	cursor *page.Cursor[ConnectorOrderField],
 	filter *ConnectorFilter,
@@ -449,10 +447,10 @@ WHERE
 	AND %s
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"organization_id": organizationID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 	maps.Copy(args, filter.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 
@@ -474,7 +472,7 @@ WHERE
 func (c *Connectors) loadAllByOrganizationID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	organizationID gid.GID,
 ) error {
 	q := `
@@ -496,10 +494,10 @@ ORDER BY
 	created_at ASC
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"organization_id": organizationID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -519,7 +517,7 @@ ORDER BY
 func (c *Connectors) loadAllByOrganizationIDProtocolAndProvider(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	organizationID gid.GID,
 	protocol ConnectorProtocol,
 	provider ConnectorProvider,
@@ -545,14 +543,14 @@ ORDER BY
 	created_at ASC
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"organization_id": organizationID,
 		"protocol":        protocol,
 		"provider":        provider,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -572,7 +570,7 @@ ORDER BY
 func (c *Connector) Update(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 	encryptionKey cipher.EncryptionKey,
 ) error {
 	q := `
@@ -586,7 +584,7 @@ WHERE
     AND id = @id
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	if c.Connection == nil {
 		return fmt.Errorf("connection is nil")
@@ -624,7 +622,7 @@ WHERE
 		"encrypted_connection": encryptedConnection,
 		"updated_at":           c.UpdatedAt,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	result, err := conn.Exec(ctx, q, args)
 	if err != nil {

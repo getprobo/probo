@@ -102,14 +102,14 @@ func (r *evidenceResolver) Permission(ctx context.Context, obj *types.Evidence, 
 
 // TotalCount is the resolver for the totalCount field.
 func (r *evidenceConnectionResolver) TotalCount(ctx context.Context, obj *types.EvidenceConnection) (int, error) {
-	scope, err := r.authorize(ctx, obj.ParentID, probo.ActionEvidenceList)
+	predicate, err := r.authorize(ctx, obj.ParentID, probo.ActionEvidenceList)
 	if err != nil {
 		return 0, err
 	}
 
 	switch obj.Resolver.(type) {
 	case *measureResolver:
-		count, err := r.probo.Evidences.CountForMeasureID(ctx, scope, obj.ParentID)
+		count, err := r.probo.Evidences.CountForMeasureID(ctx, predicate, obj.ParentID)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count measure evidence", log.Error(err))
 			return 0, gqlutils.Internal(ctx)
@@ -117,7 +117,7 @@ func (r *evidenceConnectionResolver) TotalCount(ctx context.Context, obj *types.
 
 		return count, nil
 	case *taskResolver:
-		count, err := r.probo.Evidences.CountForTaskID(ctx, scope, obj.ParentID)
+		count, err := r.probo.Evidences.CountForTaskID(ctx, predicate, obj.ParentID)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count task evidence", log.Error(err))
 			return 0, gqlutils.Internal(ctx)
@@ -133,12 +133,12 @@ func (r *evidenceConnectionResolver) TotalCount(ctx context.Context, obj *types.
 
 // DeleteEvidence is the resolver for the deleteEvidence field.
 func (r *mutationResolver) DeleteEvidence(ctx context.Context, input types.DeleteEvidenceInput) (*types.DeleteEvidencePayload, error) {
-	scope, err := r.authorize(ctx, input.EvidenceID, probo.ActionEvidenceDelete)
+	predicate, err := r.authorize(ctx, input.EvidenceID, probo.ActionEvidenceDelete)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := r.probo.Evidences.Delete(ctx, scope, input.EvidenceID); err != nil {
+	if err := r.probo.Evidences.Delete(ctx, predicate, input.EvidenceID); err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete evidence", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
@@ -150,14 +150,13 @@ func (r *mutationResolver) DeleteEvidence(ctx context.Context, input types.Delet
 
 // UploadMeasureEvidence is the resolver for the uploadMeasureEvidence field.
 func (r *mutationResolver) UploadMeasureEvidence(ctx context.Context, input types.UploadMeasureEvidenceInput) (*types.UploadMeasureEvidencePayload, error) {
-	scope, err := r.authorize(ctx, input.MeasureID, probo.ActionMeasureEvidenceUpload)
+	predicate, err := r.authorize(ctx, input.MeasureID, probo.ActionMeasureEvidenceUpload)
 	if err != nil {
 		return nil, err
 	}
 
 	evidence, err := r.probo.Evidences.UploadMeasureEvidence(
-		ctx, scope,
-		probo.UploadMeasureEvidenceRequest{
+		ctx, predicate, probo.UploadMeasureEvidenceRequest{
 			MeasureID: input.MeasureID,
 			File: probo.FileUpload{
 				Content:     input.File.File,

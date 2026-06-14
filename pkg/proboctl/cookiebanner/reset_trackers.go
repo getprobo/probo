@@ -63,7 +63,7 @@ func newCmdResetTrackers(f *cmdutil.Factory) *cobra.Command {
 			return err
 		}
 
-		scope := coredata.NewScopeFromObjectID(bannerID)
+		predicate := coredata.NewPredicateFromObjectID(bannerID)
 
 		out := f.IOStreams.Out
 
@@ -89,7 +89,7 @@ func newCmdResetTrackers(f *cmdutil.Factory) *cobra.Command {
 
 		_, _ = fmt.Fprintf(out, "Running %s on banner %s.\n", mode, bannerID.String())
 
-		result, err := cookiebanner.ResetBannerTrackers(ctx, pgClient, scope, bannerID, flagMappingOnly, keyword)
+		result, err := cookiebanner.ResetBannerTrackers(ctx, pgClient, predicate, bannerID, flagMappingOnly, keyword)
 		if err != nil {
 			return fmt.Errorf("cannot reset banner %s: %w", bannerID, err)
 		}

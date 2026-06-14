@@ -51,7 +51,7 @@ func (ccdr *CreateCustomDomainRequest) Validate() error {
 }
 
 func (s *CustomDomainService) CreateCustomDomain(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	req CreateCustomDomainRequest,
 ) (*coredata.CustomDomain, error) {
 	if err := req.Validate(); err != nil {
@@ -63,20 +63,20 @@ func (s *CustomDomainService) CreateCustomDomain(
 	err := s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			domain = coredata.NewCustomDomain(scope.GetTenantID(), req.Domain)
+			domain = coredata.NewCustomDomain(predicate.GetTenantID(), req.Domain)
 			domain.OrganizationID = req.OrganizationID
 
-			if err := domain.Insert(ctx, tx, scope, s.encryptionKey); err != nil {
+			if err := domain.Insert(ctx, tx, predicate, s.encryptionKey); err != nil {
 				return fmt.Errorf("cannot insert custom domain: %w", err)
 			}
 
 			var org coredata.Organization
-			if err := org.LoadByID(ctx, tx, scope, req.OrganizationID); err != nil {
+			if err := org.LoadByID(ctx, tx, predicate, req.OrganizationID); err != nil {
 				return fmt.Errorf("cannot load organization: %w", err)
 			}
 
 			org.CustomDomainID = &domain.ID
-			if err := org.Update(ctx, scope, tx); err != nil {
+			if err := org.Update(ctx, predicate, tx); err != nil {
 				return fmt.Errorf("cannot update organization: %w", err)
 			}
 
@@ -91,14 +91,14 @@ func (s *CustomDomainService) CreateCustomDomain(
 }
 
 func (s *CustomDomainService) DeleteCustomDomain(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	organizationID gid.GID,
 ) error {
 	return s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			var org coredata.Organization
-			if err := org.LoadByID(ctx, tx, scope, organizationID); err != nil {
+			if err := org.LoadByID(ctx, tx, predicate, organizationID); err != nil {
 				return fmt.Errorf("cannot load organization: %w", err)
 			}
 
@@ -107,16 +107,16 @@ func (s *CustomDomainService) DeleteCustomDomain(
 			}
 
 			domain := &coredata.CustomDomain{}
-			if err := domain.LoadByID(ctx, tx, scope, *org.CustomDomainID); err != nil {
+			if err := domain.LoadByID(ctx, tx, predicate, *org.CustomDomainID); err != nil {
 				return fmt.Errorf("cannot load domain: %w", err)
 			}
 
-			if err := domain.Delete(ctx, tx, scope); err != nil {
+			if err := domain.Delete(ctx, tx, predicate); err != nil {
 				return fmt.Errorf("cannot delete domain: %w", err)
 			}
 
 			org.CustomDomainID = nil
-			if err := org.Update(ctx, scope, tx); err != nil {
+			if err := org.Update(ctx, predicate, tx); err != nil {
 				return fmt.Errorf("cannot update organization: %w", err)
 			}
 
@@ -126,7 +126,7 @@ func (s *CustomDomainService) DeleteCustomDomain(
 }
 
 func (s *CustomDomainService) GetOrganizationCustomDomain(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	organizationID gid.GID,
 ) (*coredata.CustomDomain, error) {
 	var domain *coredata.CustomDomain
@@ -135,7 +135,7 @@ func (s *CustomDomainService) GetOrganizationCustomDomain(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
 			var org coredata.Organization
-			if err := org.LoadByID(ctx, conn, scope, organizationID); err != nil {
+			if err := org.LoadByID(ctx, conn, predicate, organizationID); err != nil {
 				return fmt.Errorf("cannot load organization: %w", err)
 			}
 
@@ -144,7 +144,7 @@ func (s *CustomDomainService) GetOrganizationCustomDomain(
 			}
 
 			domain = &coredata.CustomDomain{}
-			if err := domain.LoadByID(ctx, conn, scope, *org.CustomDomainID); err != nil {
+			if err := domain.LoadByID(ctx, conn, predicate, *org.CustomDomainID); err != nil {
 				return fmt.Errorf("cannot load custom domain: %w", err)
 			}
 

@@ -79,7 +79,7 @@ func (h *ACMEChallengeHandler) getKeyAuthForToken(ctx context.Context, token str
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
 			domain := &coredata.CustomDomain{}
-			if err := domain.LoadByHTTPChallengeToken(ctx, conn, coredata.NewNoScope(), token); err != nil {
+			if err := domain.LoadByHTTPChallengeToken(ctx, conn, coredata.NewNoPredicate(), token); err != nil {
 				return err
 			}
 

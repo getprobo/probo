@@ -24,14 +24,13 @@ import (
 
 // CreateWebhookSubscription is the resolver for the createWebhookSubscription field.
 func (r *mutationResolver) CreateWebhookSubscription(ctx context.Context, input types.CreateWebhookSubscriptionInput) (*types.CreateWebhookSubscriptionPayload, error) {
-	scope, err := r.authorize(ctx, input.OrganizationID, probo.ActionWebhookSubscriptionCreate)
+	predicate, err := r.authorize(ctx, input.OrganizationID, probo.ActionWebhookSubscriptionCreate)
 	if err != nil {
 		return nil, err
 	}
 
 	wc, err := r.probo.WebhookSubscriptions.Create(
-		ctx, scope,
-		probo.CreateWebhookSubscriptionRequest{
+		ctx, predicate, probo.CreateWebhookSubscriptionRequest{
 			OrganizationID: input.OrganizationID,
 			EndpointURL:    input.EndpointURL,
 			SelectedEvents: input.SelectedEvents,
@@ -54,14 +53,13 @@ func (r *mutationResolver) CreateWebhookSubscription(ctx context.Context, input 
 
 // UpdateWebhookSubscription is the resolver for the updateWebhookSubscription field.
 func (r *mutationResolver) UpdateWebhookSubscription(ctx context.Context, input types.UpdateWebhookSubscriptionInput) (*types.UpdateWebhookSubscriptionPayload, error) {
-	scope, err := r.authorize(ctx, input.ID, probo.ActionWebhookSubscriptionUpdate)
+	predicate, err := r.authorize(ctx, input.ID, probo.ActionWebhookSubscriptionUpdate)
 	if err != nil {
 		return nil, err
 	}
 
 	wc, err := r.probo.WebhookSubscriptions.Update(
-		ctx, scope,
-		probo.UpdateWebhookSubscriptionRequest{
+		ctx, predicate, probo.UpdateWebhookSubscriptionRequest{
 			WebhookSubscriptionID: input.ID,
 			EndpointURL:           input.EndpointURL,
 			SelectedEvents:        input.SelectedEvents,
@@ -84,12 +82,12 @@ func (r *mutationResolver) UpdateWebhookSubscription(ctx context.Context, input 
 
 // DeleteWebhookSubscription is the resolver for the deleteWebhookSubscription field.
 func (r *mutationResolver) DeleteWebhookSubscription(ctx context.Context, input types.DeleteWebhookSubscriptionInput) (*types.DeleteWebhookSubscriptionPayload, error) {
-	scope, err := r.authorize(ctx, input.WebhookSubscriptionID, probo.ActionWebhookSubscriptionDelete)
+	predicate, err := r.authorize(ctx, input.WebhookSubscriptionID, probo.ActionWebhookSubscriptionDelete)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := r.probo.WebhookSubscriptions.Delete(ctx, scope, input.WebhookSubscriptionID); err != nil {
+	if err := r.probo.WebhookSubscriptions.Delete(ctx, predicate, input.WebhookSubscriptionID); err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete webhook subscription", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
@@ -101,12 +99,12 @@ func (r *mutationResolver) DeleteWebhookSubscription(ctx context.Context, input 
 
 // TotalCount is the resolver for the totalCount field.
 func (r *webhookEventConnectionResolver) TotalCount(ctx context.Context, obj *types.WebhookEventConnection) (int, error) {
-	scope, err := r.authorize(ctx, obj.ParentID, probo.ActionWebhookSubscriptionGet)
+	predicate, err := r.authorize(ctx, obj.ParentID, probo.ActionWebhookSubscriptionGet)
 	if err != nil {
 		return 0, err
 	}
 
-	count, err := r.probo.WebhookSubscriptions.CountEventsForSubscriptionID(ctx, scope, obj.ParentID)
+	count, err := r.probo.WebhookSubscriptions.CountEventsForSubscriptionID(ctx, predicate, obj.ParentID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot count webhook events", log.Error(err))
 		return 0, gqlutils.Internal(ctx)
@@ -139,12 +137,12 @@ func (r *webhookSubscriptionResolver) Organization(ctx context.Context, obj *typ
 
 // SigningSecret is the resolver for the signingSecret field.
 func (r *webhookSubscriptionResolver) SigningSecret(ctx context.Context, obj *types.WebhookSubscription) (string, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionWebhookSubscriptionUpdate)
+	predicate, err := r.authorize(ctx, obj.ID, probo.ActionWebhookSubscriptionUpdate)
 	if err != nil {
 		return "", err
 	}
 
-	signingSecret, err := r.probo.WebhookSubscriptions.GetSigningSecret(ctx, scope, obj.ID)
+	signingSecret, err := r.probo.WebhookSubscriptions.GetSigningSecret(ctx, predicate, obj.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot get signing secret", log.Error(err))
 		return "", gqlutils.Internal(ctx)
@@ -155,7 +153,7 @@ func (r *webhookSubscriptionResolver) SigningSecret(ctx context.Context, obj *ty
 
 // Events is the resolver for the events field.
 func (r *webhookSubscriptionResolver) Events(ctx context.Context, obj *types.WebhookSubscription, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.WebhookEventOrderBy) (*types.WebhookEventConnection, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionWebhookSubscriptionGet)
+	predicate, err := r.authorize(ctx, obj.ID, probo.ActionWebhookSubscriptionGet)
 	if err != nil {
 		return nil, err
 	}
@@ -174,7 +172,7 @@ func (r *webhookSubscriptionResolver) Events(ctx context.Context, obj *types.Web
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	page, err := r.probo.WebhookSubscriptions.ListEventsForSubscriptionID(ctx, scope, obj.ID, cursor)
+	page, err := r.probo.WebhookSubscriptions.ListEventsForSubscriptionID(ctx, predicate, obj.ID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list webhook events", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -190,14 +188,14 @@ func (r *webhookSubscriptionResolver) Permission(ctx context.Context, obj *types
 
 // TotalCount is the resolver for the totalCount field.
 func (r *webhookSubscriptionConnectionResolver) TotalCount(ctx context.Context, obj *types.WebhookSubscriptionConnection) (int, error) {
-	scope, err := r.authorize(ctx, obj.ParentID, probo.ActionWebhookSubscriptionList)
+	predicate, err := r.authorize(ctx, obj.ParentID, probo.ActionWebhookSubscriptionList)
 	if err != nil {
 		return 0, err
 	}
 
 	switch obj.Resolver.(type) {
 	case *organizationResolver:
-		count, err := r.probo.WebhookSubscriptions.CountForOrganizationID(ctx, scope, obj.ParentID)
+		count, err := r.probo.WebhookSubscriptions.CountForOrganizationID(ctx, predicate, obj.ParentID)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count webhook subscriptions", log.Error(err))
 			return 0, gqlutils.Internal(ctx)

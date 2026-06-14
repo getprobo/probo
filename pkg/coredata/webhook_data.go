@@ -43,7 +43,7 @@ type (
 func (w *WebhookData) Insert(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 INSERT INTO webhook_data (
@@ -66,7 +66,7 @@ VALUES (
 
 	args := pgx.StrictNamedArgs{
 		"id":              w.ID,
-		"tenant_id":       scope.GetTenantID(),
+		"tenant_id":       predicate.GetTenantID(),
 		"organization_id": w.OrganizationID,
 		"event_type":      w.EventType,
 		"data":            w.Data,
@@ -122,7 +122,7 @@ FOR UPDATE SKIP LOCKED
 func (w *WebhookData) UpdateProcessedAt(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 UPDATE webhook_data
@@ -131,13 +131,13 @@ WHERE %s
     AND id = @id
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"id":           w.ID,
 		"processed_at": w.ProcessedAt,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	result, err := conn.Exec(ctx, q, args)
 	if err != nil {

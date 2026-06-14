@@ -57,7 +57,7 @@ func TestAuthorizer_AuthorizeBatch(t *testing.T) {
 		action := newBatchTestAction()
 		authorizer := newTestAuthorizer(client, action, nil)
 
-		scope, err := authorizer.AuthorizeBatch(
+		predicate, err := authorizer.AuthorizeBatch(
 			context.Background(),
 			iam.AuthorizeBatchParams{
 				Principal: fixture.identityID,
@@ -69,8 +69,8 @@ func TestAuthorizer_AuthorizeBatch(t *testing.T) {
 			},
 		)
 		require.NoError(t, err)
-		require.NotNil(t, scope)
-		assert.Equal(t, fixture.tenantID, scope.GetTenantID())
+		require.NotNil(t, predicate)
+		assert.Equal(t, fixture.tenantID, predicate.GetTenantID())
 		assert.Equal(t, 2, countAuditLogsForAction(t, context.Background(), client, action))
 	})
 
@@ -196,7 +196,7 @@ func TestAuthorizer_AuthorizeBatch(t *testing.T) {
 		action := newBatchTestAction()
 		authorizer := newTestAuthorizer(client, action, nil)
 
-		scope, err := authorizer.AuthorizeBatch(
+		predicate, err := authorizer.AuthorizeBatch(
 			context.Background(),
 			iam.AuthorizeBatchParams{
 				Principal: fixture.identityID,
@@ -208,8 +208,8 @@ func TestAuthorizer_AuthorizeBatch(t *testing.T) {
 			},
 		)
 		require.NoError(t, err)
-		require.NotNil(t, scope)
-		assert.Equal(t, fixture.tenantID, scope.GetTenantID())
+		require.NotNil(t, predicate)
+		assert.Equal(t, fixture.tenantID, predicate.GetTenantID())
 		assert.Equal(t, 2, countAuditLogsForAction(t, context.Background(), client, action))
 	})
 
@@ -239,7 +239,7 @@ func TestAuthorizer_AuthorizeBatch(t *testing.T) {
 		action := newBatchTestAction()
 		authorizer := newTestAuthorizer(client, action, nil)
 
-		scope, err := authorizer.AuthorizeBatch(
+		predicate, err := authorizer.AuthorizeBatch(
 			context.Background(),
 			iam.AuthorizeBatchParams{
 				Principal: fixture.identityID,
@@ -252,8 +252,8 @@ func TestAuthorizer_AuthorizeBatch(t *testing.T) {
 			},
 		)
 		require.NoError(t, err)
-		require.NotNil(t, scope)
-		assert.Equal(t, fixture.tenantID, scope.GetTenantID())
+		require.NotNil(t, predicate)
+		assert.Equal(t, fixture.tenantID, predicate.GetTenantID())
 		assert.Equal(t, 0, countAuditLogsForAction(t, context.Background(), client, action))
 	})
 
@@ -293,7 +293,7 @@ func TestAuthorizer_AuthorizeBatch(t *testing.T) {
 		)
 		nonExistentOrgID := gid.New(gid.NewTenantID(), coredata.OrganizationEntityType)
 
-		scope, err := authorizer.AuthorizeBatch(
+		predicate, err := authorizer.AuthorizeBatch(
 			context.Background(),
 			iam.AuthorizeBatchParams{
 				Principal: fixture.identityID,
@@ -308,7 +308,7 @@ func TestAuthorizer_AuthorizeBatch(t *testing.T) {
 			},
 		)
 		require.Error(t, err)
-		assert.Nil(t, scope)
+		assert.Nil(t, predicate)
 		assert.ErrorContains(t, err, "cannot commit transaction")
 		assert.Equal(t, 0, countAuditLogsForAction(t, context.Background(), client, action))
 	})
@@ -359,7 +359,7 @@ func TestAuthorizer_AuthorizeBatch(t *testing.T) {
 			false,
 		)
 
-		scope, err := authorizer.AuthorizeBatch(
+		predicate, err := authorizer.AuthorizeBatch(
 			context.Background(),
 			iam.AuthorizeBatchParams{
 				Principal: fixture.identityID,
@@ -372,8 +372,8 @@ func TestAuthorizer_AuthorizeBatch(t *testing.T) {
 			},
 		)
 		require.NoError(t, err)
-		require.NotNil(t, scope)
-		assert.Equal(t, fixture.tenantID, scope.GetTenantID())
+		require.NotNil(t, predicate)
+		assert.Equal(t, fixture.tenantID, predicate.GetTenantID())
 		assert.Equal(t, 2, countAuditLogsForAction(t, context.Background(), client, action))
 	})
 
@@ -466,7 +466,7 @@ func TestAuthorizer_AuthorizeMulti(t *testing.T) {
 			policy.Allow(action).WithSID("allow-evaluate-multi-all"),
 		)
 
-		scope, decisions, err := authorizer.AuthorizeMulti(
+		predicate, decisions, err := authorizer.AuthorizeMulti(
 			context.Background(),
 			iam.AuthorizeMultiParams{
 				Principal: fixture.identityID,
@@ -483,8 +483,8 @@ func TestAuthorizer_AuthorizeMulti(t *testing.T) {
 			},
 		)
 		require.NoError(t, err)
-		require.NotNil(t, scope)
-		assert.Equal(t, fixture.tenantID, scope.GetTenantID())
+		require.NotNil(t, predicate)
+		assert.Equal(t, fixture.tenantID, predicate.GetTenantID())
 		require.Len(t, decisions, 2)
 		assert.NoError(t, decisions[0])
 		assert.NoError(t, decisions[1])
@@ -504,7 +504,7 @@ func TestAuthorizer_AuthorizeMulti(t *testing.T) {
 				When(policy.Equals("resource.id", fixture.frameworkID1.String())),
 		)
 
-		scope, decisions, err := authorizer.AuthorizeMulti(
+		predicate, decisions, err := authorizer.AuthorizeMulti(
 			context.Background(),
 			iam.AuthorizeMultiParams{
 				Principal: fixture.identityID,
@@ -521,8 +521,8 @@ func TestAuthorizer_AuthorizeMulti(t *testing.T) {
 			},
 		)
 		require.NoError(t, err)
-		require.NotNil(t, scope)
-		assert.Equal(t, fixture.tenantID, scope.GetTenantID())
+		require.NotNil(t, predicate)
+		assert.Equal(t, fixture.tenantID, predicate.GetTenantID())
 		require.Len(t, decisions, 2)
 		assert.NoError(t, decisions[0])
 		require.Error(t, decisions[1])
@@ -547,7 +547,7 @@ func TestAuthorizer_AuthorizeMulti(t *testing.T) {
 				When(policy.Equals("resource.id", "missing")),
 		)
 
-		scope, decisions, err := authorizer.AuthorizeMulti(
+		predicate, decisions, err := authorizer.AuthorizeMulti(
 			context.Background(),
 			iam.AuthorizeMultiParams{
 				Principal: fixture.identityID,
@@ -564,7 +564,7 @@ func TestAuthorizer_AuthorizeMulti(t *testing.T) {
 			},
 		)
 		require.NoError(t, err)
-		require.NotNil(t, scope)
+		require.NotNil(t, predicate)
 		require.Len(t, decisions, 2)
 		require.Error(t, decisions[0])
 		require.Error(t, decisions[1])
@@ -617,7 +617,7 @@ func TestAuthorizer_AuthorizeMulti(t *testing.T) {
 			policy.Allow(action).WithSID("allow-evaluate-mixed-org"),
 		)
 
-		scope, decisions, err := authorizer.AuthorizeMulti(
+		predicate, decisions, err := authorizer.AuthorizeMulti(
 			context.Background(),
 			iam.AuthorizeMultiParams{
 				Principal: fixture.identityID,
@@ -634,7 +634,7 @@ func TestAuthorizer_AuthorizeMulti(t *testing.T) {
 			},
 		)
 		require.Error(t, err)
-		assert.Nil(t, scope)
+		assert.Nil(t, predicate)
 		assert.Nil(t, decisions)
 
 		_, ok := errors.AsType[*iam.ErrMixedOrganizationBatch](err)
@@ -646,14 +646,14 @@ func TestAuthorizer_AuthorizeMulti(t *testing.T) {
 
 		authorizer := iam.NewAuthorizer(nil, log.NewLogger(log.WithOutput(io.Discard)))
 
-		scope, decisions, err := authorizer.AuthorizeMulti(
+		predicate, decisions, err := authorizer.AuthorizeMulti(
 			context.Background(),
 			iam.AuthorizeMultiParams{
 				Principal: gid.New(gid.NilTenant, coredata.IdentityEntityType),
 			},
 		)
 		require.Error(t, err)
-		assert.Nil(t, scope)
+		assert.Nil(t, predicate)
 		assert.Nil(t, decisions)
 
 		_, ok := errors.AsType[*iam.ErrEmptyResourceBatch](err)
@@ -665,7 +665,7 @@ func TestAuthorizer_AuthorizeMulti(t *testing.T) {
 
 		authorizer := iam.NewAuthorizer(nil, log.NewLogger(log.WithOutput(io.Discard)))
 
-		scope, decisions, err := authorizer.AuthorizeMulti(
+		predicate, decisions, err := authorizer.AuthorizeMulti(
 			context.Background(),
 			iam.AuthorizeMultiParams{
 				Principal: gid.New(gid.NewTenantID(), coredata.OrganizationEntityType),
@@ -678,7 +678,7 @@ func TestAuthorizer_AuthorizeMulti(t *testing.T) {
 			},
 		)
 		require.Error(t, err)
-		assert.Nil(t, scope)
+		assert.Nil(t, predicate)
 		assert.Nil(t, decisions)
 
 		_, ok := errors.AsType[*iam.ErrUnsupportedPrincipalType](err)
@@ -697,7 +697,7 @@ func TestAuthorizer_AuthorizeMulti(t *testing.T) {
 		)
 		sessionID := gid.New(gid.NilTenant, coredata.SessionEntityType)
 
-		scope, decisions, err := authorizer.AuthorizeMulti(
+		predicate, decisions, err := authorizer.AuthorizeMulti(
 			context.Background(),
 			iam.AuthorizeMultiParams{
 				Principal: fixture.identityID,
@@ -716,7 +716,7 @@ func TestAuthorizer_AuthorizeMulti(t *testing.T) {
 			},
 		)
 		require.NoError(t, err)
-		require.NotNil(t, scope)
+		require.NotNil(t, predicate)
 		require.Len(t, decisions, 2)
 		assert.NoError(t, decisions[0])
 		require.Error(t, decisions[1])
@@ -740,7 +740,7 @@ func TestAuthorizer_AuthorizeMulti(t *testing.T) {
 				When(policy.Equals("resource.flag", "on")),
 		)
 
-		scope, decisions, err := authorizer.AuthorizeMulti(
+		predicate, decisions, err := authorizer.AuthorizeMulti(
 			context.Background(),
 			iam.AuthorizeMultiParams{
 				Principal: fixture.identityID,
@@ -759,7 +759,7 @@ func TestAuthorizer_AuthorizeMulti(t *testing.T) {
 			},
 		)
 		require.NoError(t, err)
-		require.NotNil(t, scope)
+		require.NotNil(t, predicate)
 		require.Len(t, decisions, 2)
 		assert.NoError(t, decisions[0])
 		require.Error(t, decisions[1])
@@ -808,7 +808,7 @@ func seedBatchAuthorizeFixture(t *testing.T, ctx context.Context, client *pg.Cli
 	t.Helper()
 
 	tenantID := gid.NewTenantID()
-	scope := coredata.NewScope(tenantID)
+	predicate := coredata.NewPredicate(tenantID)
 	identityID := gid.New(gid.NilTenant, coredata.IdentityEntityType)
 	organizationID := gid.New(tenantID, coredata.OrganizationEntityType)
 	organization2ID := gid.New(tenantID, coredata.OrganizationEntityType)
@@ -865,7 +865,7 @@ func seedBatchAuthorizeFixture(t *testing.T, ctx context.Context, client *pg.Cli
 			CreatedAt:      now,
 			UpdatedAt:      now,
 		}
-		if err := membership.Insert(ctx, tx, scope); err != nil {
+		if err := membership.Insert(ctx, tx, predicate); err != nil {
 			return fmt.Errorf("cannot insert membership: %w", err)
 		}
 
@@ -891,7 +891,7 @@ func seedBatchAuthorizeFixture(t *testing.T, ctx context.Context, client *pg.Cli
 			CreatedAt:      now,
 			UpdatedAt:      now,
 		}
-		if err := framework1.Insert(ctx, tx, scope); err != nil {
+		if err := framework1.Insert(ctx, tx, predicate); err != nil {
 			return fmt.Errorf("cannot insert first framework: %w", err)
 		}
 
@@ -903,7 +903,7 @@ func seedBatchAuthorizeFixture(t *testing.T, ctx context.Context, client *pg.Cli
 			CreatedAt:      now,
 			UpdatedAt:      now,
 		}
-		if err := framework2.Insert(ctx, tx, scope); err != nil {
+		if err := framework2.Insert(ctx, tx, predicate); err != nil {
 			return fmt.Errorf("cannot insert second framework: %w", err)
 		}
 
@@ -915,7 +915,7 @@ func seedBatchAuthorizeFixture(t *testing.T, ctx context.Context, client *pg.Cli
 			CreatedAt:      now,
 			UpdatedAt:      now,
 		}
-		if err := framework3.Insert(ctx, tx, scope); err != nil {
+		if err := framework3.Insert(ctx, tx, predicate); err != nil {
 			return fmt.Errorf("cannot insert third framework: %w", err)
 		}
 

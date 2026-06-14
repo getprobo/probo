@@ -64,7 +64,7 @@ func (dt *DetectedTracker) CursorKey(field DetectedTrackerOrderField) page.Curso
 func (dt *DetectedTracker) Upsert(
 	ctx context.Context,
 	tx pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) (bool, error) {
 	q := `
 INSERT INTO detected_trackers (
@@ -112,7 +112,7 @@ ON CONFLICT (cookie_banner_id, tracker_type, identifier) DO UPDATE
 
 	args := pgx.StrictNamedArgs{
 		"id":                 dt.ID,
-		"tenant_id":          scope.GetTenantID(),
+		"tenant_id":          predicate.GetTenantID(),
 		"cookie_banner_id":   dt.CookieBannerID,
 		"tracker_pattern_id": dt.TrackerPatternID,
 		"tracker_type":       dt.TrackerType,
@@ -139,7 +139,7 @@ ON CONFLICT (cookie_banner_id, tracker_type, identifier) DO UPDATE
 func (dts *DetectedTrackers) CountByTrackerPatternID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	trackerPatternID gid.GID,
 ) (int, error) {
 	q := `
@@ -152,10 +152,10 @@ WHERE
 	AND tracker_pattern_id = @tracker_pattern_id
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"tracker_pattern_id": trackerPatternID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	row := conn.QueryRow(ctx, q, args)
 
@@ -202,7 +202,7 @@ LIMIT @limit;
 func (dts *DetectedTrackers) LoadByTrackerPatternID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	trackerPatternID gid.GID,
 	cursor *page.Cursor[DetectedTrackerOrderField],
 ) error {
@@ -229,12 +229,12 @@ WHERE
 	AND %s
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"tracker_pattern_id": trackerPatternID,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
@@ -301,7 +301,7 @@ LIMIT @limit;
 func (dts *DetectedTrackers) LoadAllByTrackerPatternID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	trackerPatternID gid.GID,
 ) error {
 	q := `
@@ -328,10 +328,10 @@ ORDER BY
 	identifier ASC, id ASC
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"tracker_pattern_id": trackerPatternID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -355,7 +355,7 @@ ORDER BY
 func (dt *DetectedTracker) UpdateTrackerPatternID(
 	ctx context.Context,
 	tx pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 UPDATE detected_trackers
@@ -367,14 +367,14 @@ WHERE
 	AND id = @id
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"id":                 dt.ID,
 		"tracker_pattern_id": dt.TrackerPatternID,
 		"updated_at":         time.Now(),
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	result, err := tx.Exec(ctx, q, args)
 	if err != nil {
@@ -391,7 +391,7 @@ WHERE
 func (dts *DetectedTrackers) RelinkByTrackerPatternID(
 	ctx context.Context,
 	tx pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 	sourcePatternID gid.GID,
 	targetPatternID gid.GID,
 ) error {
@@ -405,14 +405,14 @@ WHERE
 	AND tracker_pattern_id = @source_pattern_id
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"source_pattern_id": sourcePatternID,
 		"target_pattern_id": targetPatternID,
 		"updated_at":        time.Now(),
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	_, err := tx.Exec(ctx, q, args)
 	if err != nil {

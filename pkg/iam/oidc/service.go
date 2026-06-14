@@ -184,7 +184,7 @@ func NewService(
 				ClientSecret: google.ClientSecret,
 				Endpoint:     googleEndpoint,
 				RedirectURL:  baseURL + "/api/connect/v1/oidc/google/callback",
-				Scopes:       []string{"openid", "email", "profile"},
+				Scopes: []string{"openid", "email", "profile"},
 			},
 			jwksURL: googleJWKSURL,
 			issuerValidator: func(iss string) bool {
@@ -206,7 +206,7 @@ func NewService(
 				ClientSecret: microsoft.ClientSecret,
 				Endpoint:     microsoftEndpoint,
 				RedirectURL:  baseURL + "/api/connect/v1/oidc/microsoft/callback",
-				Scopes:       []string{"openid", "email", "profile"},
+				Scopes: []string{"openid", "email", "profile"},
 			},
 			jwksURL:            microsoftJWKSURL,
 			trustProviderEmail: true,

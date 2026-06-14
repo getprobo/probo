@@ -26,7 +26,7 @@ func (h *fooHandler) Claim(ctx context.Context) (coredata.FooItem, error) {
 			now := time.Now()
 			item.Status = coredata.FooStatusProcessing
 			item.UpdatedAt = now
-			return item.Update(ctx, tx, coredata.NewNoScope())
+			return item.Update(ctx, tx, coredata.NewNoPredicate())
 		},
 	); err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {

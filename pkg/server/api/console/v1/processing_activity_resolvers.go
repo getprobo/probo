@@ -23,7 +23,7 @@ import (
 
 // CreateProcessingActivity is the resolver for the createProcessingActivity field.
 func (r *mutationResolver) CreateProcessingActivity(ctx context.Context, input types.CreateProcessingActivityInput) (*types.CreateProcessingActivityPayload, error) {
-	scope, err := r.authorize(ctx, input.OrganizationID, probo.ActionProcessingActivityCreate)
+	predicate, err := r.authorize(ctx, input.OrganizationID, probo.ActionProcessingActivityCreate)
 	if err != nil {
 		return nil, err
 	}
@@ -51,7 +51,7 @@ func (r *mutationResolver) CreateProcessingActivity(ctx context.Context, input t
 		ThirdPartyIDs:                        input.ThirdPartyIds,
 	}
 
-	activity, err := r.probo.ProcessingActivities.Create(ctx, scope, &req)
+	activity, err := r.probo.ProcessingActivities.Create(ctx, predicate, &req)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot create processing activity", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -64,7 +64,7 @@ func (r *mutationResolver) CreateProcessingActivity(ctx context.Context, input t
 
 // UpdateProcessingActivity is the resolver for the updateProcessingActivity field.
 func (r *mutationResolver) UpdateProcessingActivity(ctx context.Context, input types.UpdateProcessingActivityInput) (*types.UpdateProcessingActivityPayload, error) {
-	scope, err := r.authorize(ctx, input.ID, probo.ActionProcessingActivityUpdate)
+	predicate, err := r.authorize(ctx, input.ID, probo.ActionProcessingActivityUpdate)
 	if err != nil {
 		return nil, err
 	}
@@ -92,7 +92,7 @@ func (r *mutationResolver) UpdateProcessingActivity(ctx context.Context, input t
 		ThirdPartyIDs:                        &input.ThirdPartyIds,
 	}
 
-	activity, err := r.probo.ProcessingActivities.Update(ctx, scope, &req)
+	activity, err := r.probo.ProcessingActivities.Update(ctx, predicate, &req)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot update processing activity", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -105,12 +105,12 @@ func (r *mutationResolver) UpdateProcessingActivity(ctx context.Context, input t
 
 // DeleteProcessingActivity is the resolver for the deleteProcessingActivity field.
 func (r *mutationResolver) DeleteProcessingActivity(ctx context.Context, input types.DeleteProcessingActivityInput) (*types.DeleteProcessingActivityPayload, error) {
-	scope, err := r.authorize(ctx, input.ProcessingActivityID, probo.ActionProcessingActivityDelete)
+	predicate, err := r.authorize(ctx, input.ProcessingActivityID, probo.ActionProcessingActivityDelete)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := r.probo.ProcessingActivities.Delete(ctx, scope, input.ProcessingActivityID); err != nil {
+	if err := r.probo.ProcessingActivities.Delete(ctx, predicate, input.ProcessingActivityID); err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete processing activity", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
@@ -122,12 +122,12 @@ func (r *mutationResolver) DeleteProcessingActivity(ctx context.Context, input t
 
 // PublishProcessingActivityList is the resolver for the publishProcessingActivityList field.
 func (r *mutationResolver) PublishProcessingActivityList(ctx context.Context, input types.PublishProcessingActivityListInput) (*types.PublishProcessingActivityListPayload, error) {
-	scope, err := r.authorize(ctx, input.OrganizationID, probo.ActionProcessingActivityPublish)
+	predicate, err := r.authorize(ctx, input.OrganizationID, probo.ActionProcessingActivityPublish)
 	if err != nil {
 		return nil, err
 	}
 
-	document, documentVersion, err := r.probo.GeneratedDocuments.PublishProcessingActivityList(ctx, scope, input.OrganizationID, input.ApproverIds, input.Minor)
+	document, documentVersion, err := r.probo.GeneratedDocuments.PublishProcessingActivityList(ctx, predicate, input.OrganizationID, input.ApproverIds, input.Minor)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
 			return nil, gqlutils.Conflict(ctx, err)
@@ -194,7 +194,7 @@ func (r *processingActivityResolver) DataProtectionOfficer(ctx context.Context, 
 
 // ThirdParties is the resolver for the thirdParties field.
 func (r *processingActivityResolver) ThirdParties(ctx context.Context, obj *types.ProcessingActivity, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ThirdPartyOrderBy) (*types.ThirdPartyConnection, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionThirdPartyList)
+	predicate, err := r.authorize(ctx, obj.ID, probo.ActionThirdPartyList)
 	if err != nil {
 		return nil, err
 	}
@@ -213,7 +213,7 @@ func (r *processingActivityResolver) ThirdParties(ctx context.Context, obj *type
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	page, err := r.probo.ThirdParties.ListForProcessingActivityID(ctx, scope, obj.ID, cursor)
+	page, err := r.probo.ThirdParties.ListForProcessingActivityID(ctx, predicate, obj.ID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list processing activity thirdParties", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -224,12 +224,12 @@ func (r *processingActivityResolver) ThirdParties(ctx context.Context, obj *type
 
 // DataProtectionImpactAssessment is the resolver for the dataProtectionImpactAssessment field.
 func (r *processingActivityResolver) DataProtectionImpactAssessment(ctx context.Context, obj *types.ProcessingActivity) (*types.DataProtectionImpactAssessment, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionDataProtectionImpactAssessmentGet)
+	predicate, err := r.authorize(ctx, obj.ID, probo.ActionDataProtectionImpactAssessmentGet)
 	if err != nil {
 		return nil, err
 	}
 
-	dpia, err := r.probo.DataProtectionImpactAssessments.GetByProcessingActivityID(ctx, scope, obj.ID)
+	dpia, err := r.probo.DataProtectionImpactAssessments.GetByProcessingActivityID(ctx, predicate, obj.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, nil
@@ -245,12 +245,12 @@ func (r *processingActivityResolver) DataProtectionImpactAssessment(ctx context.
 
 // TransferImpactAssessment is the resolver for the transferImpactAssessment field.
 func (r *processingActivityResolver) TransferImpactAssessment(ctx context.Context, obj *types.ProcessingActivity) (*types.TransferImpactAssessment, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionTransferImpactAssessmentGet)
+	predicate, err := r.authorize(ctx, obj.ID, probo.ActionTransferImpactAssessmentGet)
 	if err != nil {
 		return nil, err
 	}
 
-	tia, err := r.probo.TransferImpactAssessments.GetByProcessingActivityID(ctx, scope, obj.ID)
+	tia, err := r.probo.TransferImpactAssessments.GetByProcessingActivityID(ctx, predicate, obj.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, nil
@@ -271,14 +271,14 @@ func (r *processingActivityResolver) Permission(ctx context.Context, obj *types.
 
 // TotalCount is the resolver for the totalCount field.
 func (r *processingActivityConnectionResolver) TotalCount(ctx context.Context, obj *types.ProcessingActivityConnection) (int, error) {
-	scope, err := r.authorize(ctx, obj.ParentID, probo.ActionProcessingActivityList)
+	predicate, err := r.authorize(ctx, obj.ParentID, probo.ActionProcessingActivityList)
 	if err != nil {
 		return 0, err
 	}
 
 	switch obj.Resolver.(type) {
 	case *organizationResolver:
-		count, err := r.probo.ProcessingActivities.CountForOrganizationID(ctx, scope, obj.ParentID)
+		count, err := r.probo.ProcessingActivities.CountForOrganizationID(ctx, predicate, obj.ParentID)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count organization processing activities", log.Error(err))
 			return 0, gqlutils.Internal(ctx)

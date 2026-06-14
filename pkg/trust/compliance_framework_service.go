@@ -30,7 +30,7 @@ type ComplianceFrameworkService struct {
 
 func (s ComplianceFrameworkService) ListByTrustCenterID(
 	ctx context.Context,
-	scope coredata.Scoper,
+	predicate coredata.Predicater,
 	trustCenterID gid.GID,
 	cursor *page.Cursor[coredata.ComplianceFrameworkOrderField],
 ) (*page.Page[*coredata.ComplianceFramework, coredata.ComplianceFrameworkOrderField], error) {
@@ -39,7 +39,7 @@ func (s ComplianceFrameworkService) ListByTrustCenterID(
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			err := complianceFrameworks.LoadByTrustCenterID(ctx, conn, scope, trustCenterID, cursor)
+			err := complianceFrameworks.LoadByTrustCenterID(ctx, conn, predicate, trustCenterID, cursor)
 			if err != nil {
 				return fmt.Errorf("cannot load compliance frameworks: %w", err)
 			}

@@ -203,7 +203,7 @@ func (c *CookieCategory) AuthorizationAttributes(
 func (c *CookieCategory) LoadByID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	categoryID gid.GID,
 ) error {
 	q := `
@@ -228,10 +228,10 @@ WHERE
 LIMIT 1;
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"category_id": categoryID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -255,7 +255,7 @@ LIMIT 1;
 func (c *CookieCategories) LoadByIDs(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	categoryIDs []gid.GID,
 ) error {
 	q := `
@@ -279,10 +279,10 @@ WHERE
 	AND id = ANY(@category_ids)
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"category_ids": categoryIDs}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -302,7 +302,7 @@ WHERE
 func (c *CookieCategories) LoadByCookieBannerID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	cookieBannerID gid.GID,
 	cursor *page.Cursor[CookieCategoryOrderField],
 	filter *CookieCategoryFilter,
@@ -330,10 +330,10 @@ WHERE
 	AND %s
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"cookie_banner_id": cookieBannerID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 	maps.Copy(args, filter.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 
@@ -355,7 +355,7 @@ WHERE
 func (c *CookieCategories) CountByCookieBannerID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	cookieBannerID gid.GID,
 	filter *CookieCategoryFilter,
 ) (int, error) {
@@ -370,10 +370,10 @@ WHERE
 	AND %s
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment(), filter.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"cookie_banner_id": cookieBannerID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 	maps.Copy(args, filter.SQLArguments())
 
 	row := conn.QueryRow(ctx, q, args)
@@ -389,7 +389,7 @@ WHERE
 func (c *CookieCategories) LoadAllByCookieBannerID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	cookieBannerID gid.GID,
 	filter *CookieCategoryFilter,
 ) error {
@@ -417,10 +417,10 @@ ORDER BY
 	rank ASC, id ASC;
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment(), filter.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"cookie_banner_id": cookieBannerID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 	maps.Copy(args, filter.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
@@ -441,7 +441,7 @@ ORDER BY
 func (c *CookieCategory) Insert(
 	ctx context.Context,
 	tx pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 INSERT INTO cookie_categories (
@@ -477,7 +477,7 @@ INSERT INTO cookie_categories (
 
 	args := pgx.StrictNamedArgs{
 		"id":                c.ID,
-		"tenant_id":         scope.GetTenantID(),
+		"tenant_id":         predicate.GetTenantID(),
 		"organization_id":   c.OrganizationID,
 		"cookie_banner_id":  c.CookieBannerID,
 		"name":              c.Name,
@@ -508,7 +508,7 @@ INSERT INTO cookie_categories (
 func (c *CookieCategory) Update(
 	ctx context.Context,
 	tx pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 UPDATE cookie_categories
@@ -524,7 +524,7 @@ WHERE
 	AND id = @id
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"id":                c.ID,
@@ -535,7 +535,7 @@ WHERE
 		"posthog_consent":   c.PostHogConsent,
 		"updated_at":        c.UpdatedAt,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	result, err := tx.Exec(ctx, q, args)
 	if err != nil {
@@ -558,7 +558,7 @@ WHERE
 func (c *CookieCategory) UpdateRank(
 	ctx context.Context,
 	tx pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 WITH old AS (
@@ -585,7 +585,7 @@ WHERE %s
 	);
 `
 
-	scopeFragment := scope.SQLFragment()
+	scopeFragment := predicate.SQLFragment()
 	q = fmt.Sprintf(q, scopeFragment, scopeFragment)
 
 	args := pgx.StrictNamedArgs{
@@ -594,7 +594,7 @@ WHERE %s
 		"cookie_banner_id": c.CookieBannerID,
 		"updated_at":       c.UpdatedAt,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	result, err := tx.Exec(ctx, q, args)
 	if err != nil {
@@ -611,7 +611,7 @@ WHERE %s
 func (c *CookieCategory) Delete(
 	ctx context.Context,
 	tx pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 DELETE FROM cookie_categories
@@ -620,10 +620,10 @@ WHERE
 	AND id = @id
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"id": c.ID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	_, err := tx.Exec(ctx, q, args)
 	if err != nil {
@@ -636,7 +636,7 @@ WHERE
 func (c *CookieCategories) ClearPostHogConsentByBannerID(
 	ctx context.Context,
 	tx pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 	cookieBannerID gid.GID,
 ) error {
 	q := `
@@ -650,13 +650,13 @@ WHERE
 	AND posthog_consent = true
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"cookie_banner_id": cookieBannerID,
 		"updated_at":       time.Now(),
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	_, err := tx.Exec(ctx, q, args)
 	if err != nil {
@@ -669,7 +669,7 @@ WHERE
 func (c *CookieCategory) LoadUncategorisedByCookieBannerID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	cookieBannerID gid.GID,
 ) error {
 	q := `
@@ -695,13 +695,13 @@ WHERE
 LIMIT 1;
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"cookie_banner_id": cookieBannerID,
 		"kind":             CookieCategoryKindUncategorised,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {

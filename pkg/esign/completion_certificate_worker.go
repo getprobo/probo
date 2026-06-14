@@ -88,13 +88,13 @@ func (h *completionCertificateHandler) Claim(ctx context.Context) (coredata.Elec
 			}
 
 			now := time.Now()
-			scope := coredata.NewScopeFromObjectID(signature.ID)
+			predicate := coredata.NewPredicateFromObjectID(signature.ID)
 			signature.CertificateProcessingStartedAt = &now
 			signature.AttemptCount++
 			signature.LastAttemptedAt = &now
 			signature.UpdatedAt = now
 
-			if err := signature.Update(ctx, tx, scope); err != nil {
+			if err := signature.Update(ctx, tx, predicate); err != nil {
 				return fmt.Errorf("cannot update signature: %w", err)
 			}
 
@@ -112,10 +112,10 @@ func (h *completionCertificateHandler) Claim(ctx context.Context) (coredata.Elec
 }
 
 func (h *completionCertificateHandler) Process(ctx context.Context, signature coredata.ElectronicSignature) error {
-	scope := coredata.NewScopeFromObjectID(signature.ID)
+	predicate := coredata.NewPredicateFromObjectID(signature.ID)
 
 	if err := h.generateAndCommit(ctx, &signature); err != nil {
-		if err := h.handleCertFailure(ctx, &signature, scope, err); err != nil {
+		if err := h.handleCertFailure(ctx, &signature, predicate, err); err != nil {
 			h.logger.ErrorCtx(ctx, "cannot handle certificate failure", log.Error(err))
 		}
 
@@ -138,9 +138,9 @@ func (h *completionCertificateHandler) generateAndCommit(
 	ctx context.Context,
 	signature *coredata.ElectronicSignature,
 ) error {
-	scope := coredata.NewScopeFromObjectID(signature.ID)
+	predicate := coredata.NewPredicateFromObjectID(signature.ID)
 
-	email, attachments, err := h.generateCertificate(ctx, signature, scope)
+	email, attachments, err := h.generateCertificate(ctx, signature, predicate)
 	if err != nil {
 		return err
 	}
@@ -151,7 +151,7 @@ func (h *completionCertificateHandler) generateAndCommit(
 			signature.CertificateFileID = &attachments[1].FileID
 
 			signature.UpdatedAt = time.Now()
-			if err := signature.Update(ctx, tx, scope); err != nil {
+			if err := signature.Update(ctx, tx, predicate); err != nil {
 				return fmt.Errorf("cannot update signature: %w", err)
 			}
 
@@ -159,7 +159,7 @@ func (h *completionCertificateHandler) generateAndCommit(
 				coredata.ElectronicSignatureEventTypeCertificateGenerated,
 				coredata.ElectronicSignatureEventSourceServer,
 			)
-			if err := event.Insert(ctx, tx, scope); err != nil {
+			if err := event.Insert(ctx, tx, predicate); err != nil {
 				return fmt.Errorf("cannot insert certificate event: %w", err)
 			}
 
@@ -185,7 +185,7 @@ func (h *completionCertificateHandler) generateAndCommit(
 func (h *completionCertificateHandler) generateCertificate(
 	ctx context.Context,
 	signature *coredata.ElectronicSignature,
-	scope coredata.Scoper,
+	predicate coredata.Predicater,
 ) (*coredata.Email, coredata.EmailAttachments, error) {
 	var (
 		events       = coredata.ElectronicSignatureEvents{}
@@ -196,15 +196,15 @@ func (h *completionCertificateHandler) generateCertificate(
 	if err := h.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			if err := events.LoadBySignatureID(ctx, conn, scope, signature.ID); err != nil {
+			if err := events.LoadBySignatureID(ctx, conn, predicate, signature.ID); err != nil {
 				return fmt.Errorf("cannot load events: %w", err)
 			}
 
-			if err := signedFile.LoadByID(ctx, conn, scope, signature.FileID); err != nil {
+			if err := signedFile.LoadByID(ctx, conn, predicate, signature.FileID); err != nil {
 				return fmt.Errorf("cannot load signed file: %w", err)
 			}
 
-			if err := organization.LoadByID(ctx, conn, scope, signature.OrganizationID); err != nil {
+			if err := organization.LoadByID(ctx, conn, predicate, signature.OrganizationID); err != nil {
 				return fmt.Errorf("cannot load organization: %w", err)
 			}
 
@@ -220,7 +220,7 @@ func (h *completionCertificateHandler) generateCertificate(
 	}
 
 	certificateOfCompletionFile := coredata.File{
-		ID:             gid.New(scope.GetTenantID(), coredata.FileEntityType),
+		ID:             gid.New(predicate.GetTenantID(), coredata.FileEntityType),
 		OrganizationID: signature.OrganizationID,
 		BucketName:     h.bucket,
 		MimeType:       "application/pdf",
@@ -249,7 +249,7 @@ func (h *completionCertificateHandler) generateCertificate(
 	if err := h.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			if err := certificateOfCompletionFile.Insert(ctx, tx, scope); err != nil {
+			if err := certificateOfCompletionFile.Insert(ctx, tx, predicate); err != nil {
 				return fmt.Errorf("cannot insert certificate of completion file: %w", err)
 			}
 
@@ -311,7 +311,7 @@ func (h *completionCertificateHandler) generateCertificate(
 func (h *completionCertificateHandler) handleCertFailure(
 	ctx context.Context,
 	signature *coredata.ElectronicSignature,
-	scope coredata.Scoper,
+	predicate coredata.Predicater,
 	processingError error,
 ) error {
 	h.logger.ErrorCtx(
@@ -333,7 +333,7 @@ func (h *completionCertificateHandler) handleCertFailure(
 				signature.Status = coredata.ElectronicSignatureStatusFailed
 			}
 
-			if err := signature.Update(ctx, tx, scope); err != nil {
+			if err := signature.Update(ctx, tx, predicate); err != nil {
 				return fmt.Errorf("cannot update signature: %w", err)
 			}
 

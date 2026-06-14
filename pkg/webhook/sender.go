@@ -142,14 +142,12 @@ func (s *Sender) claimNextWebhookData(ctx context.Context) (*coredata.WebhookDat
 			return fmt.Errorf("cannot load next unprocessed webhook data: %w", err)
 		}
 
-		scope := coredata.NewScopeFromObjectID(webhookData.ID)
+		predicate := coredata.NewPredicateFromObjectID(webhookData.ID)
 
 		var configs coredata.WebhookSubscriptions
 		if err := configs.LoadMatchingByOrganizationIDAndEventType(
 			ctx,
-			tx,
-			scope,
-			webhookData.OrganizationID,
+			tx, predicate, webhookData.OrganizationID,
 			webhookData.EventType,
 		); err != nil {
 			return fmt.Errorf("cannot load matching webhook subscriptions: %w", err)
@@ -166,7 +164,7 @@ func (s *Sender) claimNextWebhookData(ctx context.Context) (*coredata.WebhookDat
 				CreatedAt:             now,
 			}
 
-			if err := event.Insert(ctx, tx, scope); err != nil {
+			if err := event.Insert(ctx, tx, predicate); err != nil {
 				return fmt.Errorf("cannot insert webhook event: %w", err)
 			}
 
@@ -180,7 +178,7 @@ func (s *Sender) claimNextWebhookData(ctx context.Context) (*coredata.WebhookDat
 		}
 
 		webhookData.ProcessedAt = &now
-		if err := webhookData.UpdateProcessedAt(ctx, tx, scope); err != nil {
+		if err := webhookData.UpdateProcessedAt(ctx, tx, predicate); err != nil {
 			return fmt.Errorf("cannot update webhook data processed_at: %w", err)
 		}
 
@@ -200,7 +198,7 @@ func (s *Sender) processDeliveries(ctx context.Context, webhookData *coredata.We
 }
 
 func (s *Sender) deliver(ctx context.Context, webhookData *coredata.WebhookData, d pendingDelivery) {
-	scope := coredata.NewScopeFromObjectID(d.Event.ID)
+	predicate := coredata.NewPredicateFromObjectID(d.Event.ID)
 
 	signingSecret, err := s.getSigningSecret(d.Config.ID.String(), d.Config.EncryptedSigningSecret)
 	if err != nil {
@@ -211,7 +209,7 @@ func (s *Sender) deliver(ctx context.Context, webhookData *coredata.WebhookData,
 			log.String("webhook_data_id", webhookData.ID.String()),
 			log.String("subscription_id", d.Config.ID.String()),
 		)
-		s.updateEventStatus(ctx, d.Event, scope, coredata.WebhookEventStatusFailed, nil)
+		s.updateEventStatus(ctx, d.Event, predicate, coredata.WebhookEventStatusFailed, nil)
 
 		return
 	}
@@ -231,13 +229,13 @@ func (s *Sender) deliver(ctx context.Context, webhookData *coredata.WebhookData,
 		)
 	}
 
-	s.updateEventStatus(ctx, d.Event, scope, eventStatus, response)
+	s.updateEventStatus(ctx, d.Event, predicate, eventStatus, response)
 }
 
 func (s *Sender) updateEventStatus(
 	ctx context.Context,
 	event *coredata.WebhookEvent,
-	scope coredata.Scoper,
+	predicate coredata.Predicater,
 	status coredata.WebhookEventStatus,
 	response json.RawMessage,
 ) {
@@ -245,7 +243,7 @@ func (s *Sender) updateEventStatus(
 	event.Response = response
 
 	err := s.pg.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
-		return event.UpdateStatus(ctx, tx, scope)
+		return event.UpdateStatus(ctx, tx, predicate)
 	})
 	if err != nil {
 		s.logger.ErrorCtx(

@@ -167,7 +167,7 @@ func (cvrar *CreateThirdPartyRiskAssessmentRequest) Validate() error {
 }
 
 func (s ThirdPartyService) CountForOrganizationID(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	organizationID gid.GID,
 	filter *coredata.ThirdPartyFilter,
 ) (int, error) {
@@ -182,7 +182,7 @@ func (s ThirdPartyService) CountForOrganizationID(
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			thirdParties := coredata.ThirdParties{}
 
-			count, err = thirdParties.CountByOrganizationID(ctx, conn, scope, organizationID, filter)
+			count, err = thirdParties.CountByOrganizationID(ctx, conn, predicate, organizationID, filter)
 			if err != nil {
 				return fmt.Errorf("cannot count thirdParties: %w", err)
 			}
@@ -198,7 +198,7 @@ func (s ThirdPartyService) CountForOrganizationID(
 }
 
 func (s ThirdPartyService) ListForOrganizationID(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	organizationID gid.GID,
 	cursor *page.Cursor[coredata.ThirdPartyOrderField],
 	filter *coredata.ThirdPartyFilter,
@@ -210,15 +210,13 @@ func (s ThirdPartyService) ListForOrganizationID(
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			if err := organization.LoadByID(ctx, conn, scope, organizationID); err != nil {
+			if err := organization.LoadByID(ctx, conn, predicate, organizationID); err != nil {
 				return fmt.Errorf("cannot load organization: %w", err)
 			}
 
 			return thirdParties.LoadByOrganizationID(
 				ctx,
-				conn,
-				scope,
-				organization.ID,
+				conn, predicate, organization.ID,
 				cursor,
 				filter,
 			)
@@ -232,7 +230,7 @@ func (s ThirdPartyService) ListForOrganizationID(
 }
 
 func (s ThirdPartyService) CountForMeasureID(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	measureID gid.GID,
 ) (int, error) {
 	var count int
@@ -242,7 +240,7 @@ func (s ThirdPartyService) CountForMeasureID(
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			thirdParties := coredata.ThirdParties{}
 
-			count, err = thirdParties.CountByMeasureID(ctx, conn, scope, measureID)
+			count, err = thirdParties.CountByMeasureID(ctx, conn, predicate, measureID)
 			if err != nil {
 				return fmt.Errorf("cannot count thirdParties: %w", err)
 			}
@@ -258,7 +256,7 @@ func (s ThirdPartyService) CountForMeasureID(
 }
 
 func (s ThirdPartyService) ListForMeasureID(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	measureID gid.GID,
 	cursor *page.Cursor[coredata.ThirdPartyOrderField],
 ) (*page.Page[*coredata.ThirdParty, coredata.ThirdPartyOrderField], error) {
@@ -269,15 +267,13 @@ func (s ThirdPartyService) ListForMeasureID(
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			if err := measure.LoadByID(ctx, conn, scope, measureID); err != nil {
+			if err := measure.LoadByID(ctx, conn, predicate, measureID); err != nil {
 				return fmt.Errorf("cannot load measure: %w", err)
 			}
 
 			if err := thirdParties.LoadByMeasureID(
 				ctx,
-				conn,
-				scope,
-				measure.ID,
+				conn, predicate, measure.ID,
 				cursor,
 			); err != nil {
 				return fmt.Errorf("cannot load thirdParties: %w", err)
@@ -294,7 +290,7 @@ func (s ThirdPartyService) ListForMeasureID(
 }
 
 func (s ThirdPartyService) CountForDatumID(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	datumID gid.GID,
 ) (int, error) {
 	var count int
@@ -304,7 +300,7 @@ func (s ThirdPartyService) CountForDatumID(
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			thirdParties := coredata.ThirdParties{}
 
-			count, err = thirdParties.CountByDatumID(ctx, conn, scope, datumID)
+			count, err = thirdParties.CountByDatumID(ctx, conn, predicate, datumID)
 			if err != nil {
 				return fmt.Errorf("cannot count thirdParties: %w", err)
 			}
@@ -320,7 +316,7 @@ func (s ThirdPartyService) CountForDatumID(
 }
 
 func (s ThirdPartyService) ListForDatumID(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	datumID gid.GID,
 	cursor *page.Cursor[coredata.ThirdPartyOrderField],
 ) (*page.Page[*coredata.ThirdParty, coredata.ThirdPartyOrderField], error) {
@@ -331,9 +327,7 @@ func (s ThirdPartyService) ListForDatumID(
 		func(ctx context.Context, conn pg.Querier) error {
 			return thirdParties.LoadByDatumID(
 				ctx,
-				conn,
-				scope,
-				datumID,
+				conn, predicate, datumID,
 				cursor,
 			)
 		},
@@ -346,7 +340,7 @@ func (s ThirdPartyService) ListForDatumID(
 }
 
 func (s ThirdPartyService) Update(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	req UpdateThirdPartyRequest,
 ) (*coredata.ThirdParty, error) {
 	if err := req.Validate(); err != nil {
@@ -358,7 +352,7 @@ func (s ThirdPartyService) Update(
 	err := s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
-			if err := thirdParty.LoadByID(ctx, conn, scope, req.ID); err != nil {
+			if err := thirdParty.LoadByID(ctx, conn, predicate, req.ID); err != nil {
 				return fmt.Errorf("cannot load thirdParty %q: %w", req.ID, err)
 			}
 
@@ -443,7 +437,7 @@ func (s ThirdPartyService) Update(
 			if req.BusinessOwnerID != nil {
 				if *req.BusinessOwnerID != nil {
 					businessOwner := &coredata.MembershipProfile{}
-					if err := businessOwner.LoadByID(ctx, conn, scope, **req.BusinessOwnerID); err != nil {
+					if err := businessOwner.LoadByID(ctx, conn, predicate, **req.BusinessOwnerID); err != nil {
 						return fmt.Errorf("cannot load business owner profile: %w", err)
 					}
 
@@ -456,7 +450,7 @@ func (s ThirdPartyService) Update(
 			if req.SecurityOwnerID != nil {
 				if *req.SecurityOwnerID != nil {
 					securityOwner := &coredata.MembershipProfile{}
-					if err := securityOwner.LoadByID(ctx, conn, scope, **req.SecurityOwnerID); err != nil {
+					if err := securityOwner.LoadByID(ctx, conn, predicate, **req.SecurityOwnerID); err != nil {
 						return fmt.Errorf("cannot load security owner profile: %w", err)
 					}
 
@@ -468,15 +462,13 @@ func (s ThirdPartyService) Update(
 
 			thirdParty.UpdatedAt = time.Now()
 
-			if err := thirdParty.Update(ctx, conn, scope); err != nil {
+			if err := thirdParty.Update(ctx, conn, predicate); err != nil {
 				return fmt.Errorf("cannot update thirdParty: %w", err)
 			}
 
 			if err := webhook.InsertData(
 				ctx,
-				conn,
-				scope,
-				thirdParty.OrganizationID,
+				conn, predicate, thirdParty.OrganizationID,
 				coredata.WebhookEventTypeThirdPartyUpdated,
 				webhooktypes.NewThirdParty(thirdParty),
 			); err != nil {
@@ -494,7 +486,7 @@ func (s ThirdPartyService) Update(
 }
 
 func (s ThirdPartyService) Get(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	thirdPartyID gid.GID,
 ) (*coredata.ThirdParty, error) {
 	thirdParty := &coredata.ThirdParty{}
@@ -502,7 +494,7 @@ func (s ThirdPartyService) Get(
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			return thirdParty.LoadByID(ctx, conn, scope, thirdPartyID)
+			return thirdParty.LoadByID(ctx, conn, predicate, thirdPartyID)
 		},
 	)
 	if err != nil {
@@ -513,7 +505,7 @@ func (s ThirdPartyService) Get(
 }
 
 func (s ThirdPartyService) GetByIDs(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	thirdPartyIDs ...gid.GID,
 ) (coredata.ThirdParties, error) {
 	var thirdParties coredata.ThirdParties
@@ -523,9 +515,7 @@ func (s ThirdPartyService) GetByIDs(
 		func(ctx context.Context, conn pg.Querier) error {
 			if err := thirdParties.LoadByIDs(
 				ctx,
-				conn,
-				scope,
-				thirdPartyIDs,
+				conn, predicate, thirdPartyIDs,
 			); err != nil {
 				return fmt.Errorf("cannot load thirdParties by ids: %w", err)
 			}
@@ -541,7 +531,7 @@ func (s ThirdPartyService) GetByIDs(
 }
 
 func (s ThirdPartyService) Delete(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	thirdPartyID gid.GID,
 ) error {
 	thirdParty := &coredata.ThirdParty{}
@@ -549,28 +539,26 @@ func (s ThirdPartyService) Delete(
 	return s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
-			if err := thirdParty.LoadByID(ctx, conn, scope, thirdPartyID); err != nil {
+			if err := thirdParty.LoadByID(ctx, conn, predicate, thirdPartyID); err != nil {
 				return fmt.Errorf("cannot load thirdParty: %w", err)
 			}
 
 			if err := webhook.InsertData(
 				ctx,
-				conn,
-				scope,
-				thirdParty.OrganizationID,
+				conn, predicate, thirdParty.OrganizationID,
 				coredata.WebhookEventTypeThirdPartyDeleted,
 				webhooktypes.NewThirdParty(thirdParty),
 			); err != nil {
 				return fmt.Errorf("cannot insert webhook event: %w", err)
 			}
 
-			return thirdParty.Delete(ctx, conn, scope)
+			return thirdParty.Delete(ctx, conn, predicate)
 		},
 	)
 }
 
 func (s ThirdPartyService) Create(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	req CreateThirdPartyRequest,
 ) (*coredata.ThirdParty, error) {
 	if err := req.Validate(); err != nil {
@@ -579,7 +567,7 @@ func (s ThirdPartyService) Create(
 
 	now := time.Now()
 	thirdParty := &coredata.ThirdParty{
-		ID:                            gid.New(scope.GetTenantID(), coredata.ThirdPartyEntityType),
+		ID:                            gid.New(predicate.GetTenantID(), coredata.ThirdPartyEntityType),
 		Name:                          req.Name,
 		CreatedAt:                     now,
 		UpdatedAt:                     now,
@@ -606,7 +594,7 @@ func (s ThirdPartyService) Create(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
 			organization := &coredata.Organization{}
-			if err := organization.LoadByID(ctx, conn, scope, req.OrganizationID); err != nil {
+			if err := organization.LoadByID(ctx, conn, predicate, req.OrganizationID); err != nil {
 				return fmt.Errorf("cannot load organization %q: %w", req.OrganizationID, err)
 			}
 
@@ -614,7 +602,7 @@ func (s ThirdPartyService) Create(
 
 			if req.ParentThirdPartyID != nil {
 				parent := &coredata.ThirdParty{}
-				if err := parent.LoadByID(ctx, conn, scope, *req.ParentThirdPartyID); err != nil {
+				if err := parent.LoadByID(ctx, conn, predicate, *req.ParentThirdPartyID); err != nil {
 					return fmt.Errorf("cannot load parent third party: %w", err)
 				}
 
@@ -637,7 +625,7 @@ func (s ThirdPartyService) Create(
 
 			if req.BusinessOwnerID != nil {
 				businessOwner := &coredata.MembershipProfile{}
-				if err := businessOwner.LoadByID(ctx, conn, scope, *req.BusinessOwnerID); err != nil {
+				if err := businessOwner.LoadByID(ctx, conn, predicate, *req.BusinessOwnerID); err != nil {
 					return fmt.Errorf("cannot load business owner profile: %w", err)
 				}
 
@@ -646,7 +634,7 @@ func (s ThirdPartyService) Create(
 
 			if req.SecurityOwnerID != nil {
 				securityOwner := &coredata.MembershipProfile{}
-				if err := securityOwner.LoadByID(ctx, conn, scope, *req.SecurityOwnerID); err != nil {
+				if err := securityOwner.LoadByID(ctx, conn, predicate, *req.SecurityOwnerID); err != nil {
 					return fmt.Errorf("cannot load security owner profile: %w", err)
 				}
 
@@ -659,15 +647,13 @@ func (s ThirdPartyService) Create(
 				thirdParty.Category = coredata.ThirdPartyCategoryOther
 			}
 
-			if err := thirdParty.Insert(ctx, conn, scope); err != nil {
+			if err := thirdParty.Insert(ctx, conn, predicate); err != nil {
 				return fmt.Errorf("cannot insert thirdParty: %w", err)
 			}
 
 			if err := webhook.InsertData(
 				ctx,
-				conn,
-				scope,
-				organization.ID,
+				conn, predicate, organization.ID,
 				coredata.WebhookEventTypeThirdPartyCreated,
 				webhooktypes.NewThirdParty(thirdParty),
 			); err != nil {
@@ -696,7 +682,7 @@ func (s ThirdPartyService) Create(
 // import; it only touches patterns with no existing link. Returns the
 // org ThirdParty and whether it was newly created.
 func (s ThirdPartyService) ImportFromCommon(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	req ImportThirdPartyFromCommonRequest,
 ) (*coredata.ThirdParty, bool, error) {
 	if err := req.Validate(); err != nil {
@@ -710,7 +696,7 @@ func (s ThirdPartyService) ImportFromCommon(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
 			organization := &coredata.Organization{}
-			if err := organization.LoadByID(ctx, conn, scope, req.OrganizationID); err != nil {
+			if err := organization.LoadByID(ctx, conn, predicate, req.OrganizationID); err != nil {
 				return fmt.Errorf("cannot load organization: %w", err)
 			}
 
@@ -718,9 +704,7 @@ func (s ThirdPartyService) ImportFromCommon(
 
 			err := existing.LoadByOrganizationIDAndCommonThirdPartyID(
 				ctx,
-				conn,
-				scope,
-				organization.ID,
+				conn, predicate, organization.ID,
 				req.CommonThirdPartyID,
 			)
 
@@ -742,7 +726,7 @@ func (s ThirdPartyService) ImportFromCommon(
 				}
 
 				*thirdParty = coredata.ThirdParty{
-					ID:                            gid.New(scope.GetTenantID(), coredata.ThirdPartyEntityType),
+					ID:                            gid.New(predicate.GetTenantID(), coredata.ThirdPartyEntityType),
 					OrganizationID:                organization.ID,
 					CommonThirdPartyID:            &commonID,
 					Name:                          commonParty.Name,
@@ -767,7 +751,7 @@ func (s ThirdPartyService) ImportFromCommon(
 					UpdatedAt:                     now,
 				}
 
-				if err := thirdParty.Insert(ctx, conn, scope); err != nil {
+				if err := thirdParty.Insert(ctx, conn, predicate); err != nil {
 					return fmt.Errorf("cannot insert third party: %w", err)
 				}
 
@@ -775,9 +759,7 @@ func (s ThirdPartyService) ImportFromCommon(
 
 				if err := webhook.InsertData(
 					ctx,
-					conn,
-					scope,
-					organization.ID,
+					conn, predicate, organization.ID,
 					coredata.WebhookEventTypeThirdPartyCreated,
 					webhooktypes.NewThirdParty(thirdParty),
 				); err != nil {
@@ -790,9 +772,7 @@ func (s ThirdPartyService) ImportFromCommon(
 			var patterns coredata.TrackerPatterns
 			if err := patterns.LinkThirdPartyByCommonThirdPartyID(
 				ctx,
-				conn,
-				scope,
-				organization.ID,
+				conn, predicate, organization.ID,
 				req.CommonThirdPartyID,
 				thirdParty.ID,
 			); err != nil {
@@ -810,7 +790,7 @@ func (s ThirdPartyService) ImportFromCommon(
 }
 
 func (s ThirdPartyService) CountForAssetID(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	assetID gid.GID,
 ) (int, error) {
 	var count int
@@ -820,7 +800,7 @@ func (s ThirdPartyService) CountForAssetID(
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			thirdParties := coredata.ThirdParties{}
 
-			count, err = thirdParties.CountByAssetID(ctx, conn, scope, assetID)
+			count, err = thirdParties.CountByAssetID(ctx, conn, predicate, assetID)
 			if err != nil {
 				return fmt.Errorf("cannot count thirdParties: %w", err)
 			}
@@ -836,7 +816,7 @@ func (s ThirdPartyService) CountForAssetID(
 }
 
 func (s ThirdPartyService) ListForAssetID(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	assetID gid.GID,
 	cursor *page.Cursor[coredata.ThirdPartyOrderField],
 ) (*page.Page[*coredata.ThirdParty, coredata.ThirdPartyOrderField], error) {
@@ -845,7 +825,7 @@ func (s ThirdPartyService) ListForAssetID(
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			return thirdParties.LoadByAssetID(ctx, conn, scope, assetID, cursor)
+			return thirdParties.LoadByAssetID(ctx, conn, predicate, assetID, cursor)
 		},
 	)
 	if err != nil {
@@ -856,7 +836,7 @@ func (s ThirdPartyService) ListForAssetID(
 }
 
 func (s ThirdPartyService) ListForProcessingActivityID(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	processingActivityID gid.GID,
 	cursor *page.Cursor[coredata.ThirdPartyOrderField],
 ) (*page.Page[*coredata.ThirdParty, coredata.ThirdPartyOrderField], error) {
@@ -865,7 +845,7 @@ func (s ThirdPartyService) ListForProcessingActivityID(
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			err := thirdParties.LoadByProcessingActivityID(ctx, conn, scope, processingActivityID, cursor)
+			err := thirdParties.LoadByProcessingActivityID(ctx, conn, predicate, processingActivityID, cursor)
 			if err != nil {
 				return fmt.Errorf("cannot load thirdParties by processing activity: %w", err)
 			}
@@ -881,7 +861,7 @@ func (s ThirdPartyService) ListForProcessingActivityID(
 }
 
 func (s ThirdPartyService) ListRiskAssessments(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	thirdPartyID gid.GID,
 	cursor *page.Cursor[coredata.ThirdPartyRiskAssessmentOrderField],
 ) (*page.Page[*coredata.ThirdPartyRiskAssessment, coredata.ThirdPartyRiskAssessmentOrderField], error) {
@@ -890,7 +870,7 @@ func (s ThirdPartyService) ListRiskAssessments(
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			return thirdPartyRiskAssessments.LoadByThirdPartyID(ctx, conn, scope, thirdPartyID, cursor)
+			return thirdPartyRiskAssessments.LoadByThirdPartyID(ctx, conn, predicate, thirdPartyID, cursor)
 		},
 	)
 	if err != nil {
@@ -901,14 +881,14 @@ func (s ThirdPartyService) ListRiskAssessments(
 }
 
 func (s ThirdPartyService) CreateRiskAssessment(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	req CreateThirdPartyRiskAssessmentRequest,
 ) (*coredata.ThirdPartyRiskAssessment, error) {
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
 
-	thirdPartyRiskAssessmentID := gid.New(scope.GetTenantID(), coredata.ThirdPartyRiskAssessmentEntityType)
+	thirdPartyRiskAssessmentID := gid.New(predicate.GetTenantID(), coredata.ThirdPartyRiskAssessmentEntityType)
 
 	now := time.Now()
 
@@ -931,17 +911,17 @@ func (s ThirdPartyService) CreateRiskAssessment(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			thirdParty := coredata.ThirdParty{}
-			if err := thirdParty.LoadByID(ctx, tx, scope, req.ThirdPartyID); err != nil {
+			if err := thirdParty.LoadByID(ctx, tx, predicate, req.ThirdPartyID); err != nil {
 				return fmt.Errorf("cannot load thirdParty: %w", err)
 			}
 
 			thirdPartyRiskAssessment.OrganizationID = thirdParty.OrganizationID
 
-			if err := thirdParty.ExpireNonExpiredRiskAssessments(ctx, tx, scope); err != nil {
+			if err := thirdParty.ExpireNonExpiredRiskAssessments(ctx, tx, predicate); err != nil {
 				return fmt.Errorf("cannot expire thirdParty risk assessments: %w", err)
 			}
 
-			if err := thirdPartyRiskAssessment.Insert(ctx, tx, scope); err != nil {
+			if err := thirdPartyRiskAssessment.Insert(ctx, tx, predicate); err != nil {
 				return fmt.Errorf("cannot insert thirdParty risk assessment: %w", err)
 			}
 
@@ -956,7 +936,7 @@ func (s ThirdPartyService) CreateRiskAssessment(
 }
 
 func (s ThirdPartyService) GetRiskAssessment(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	thirdPartyRiskAssessmentID gid.GID,
 ) (*coredata.ThirdPartyRiskAssessment, error) {
 	thirdPartyRiskAssessment := &coredata.ThirdPartyRiskAssessment{}
@@ -964,7 +944,7 @@ func (s ThirdPartyService) GetRiskAssessment(
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			return thirdPartyRiskAssessment.LoadByID(ctx, conn, scope, thirdPartyRiskAssessmentID)
+			return thirdPartyRiskAssessment.LoadByID(ctx, conn, predicate, thirdPartyRiskAssessmentID)
 		},
 	)
 	if err != nil {
@@ -975,7 +955,7 @@ func (s ThirdPartyService) GetRiskAssessment(
 }
 
 func (s ThirdPartyService) GetByRiskAssessmentID(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	thirdPartyRiskAssessmentID gid.GID,
 ) (*coredata.ThirdParty, error) {
 	thirdParty := &coredata.ThirdParty{}
@@ -984,11 +964,11 @@ func (s ThirdPartyService) GetByRiskAssessmentID(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
 			thirdPartyRiskAssessment := &coredata.ThirdPartyRiskAssessment{}
-			if err := thirdPartyRiskAssessment.LoadByID(ctx, conn, scope, thirdPartyRiskAssessmentID); err != nil {
+			if err := thirdPartyRiskAssessment.LoadByID(ctx, conn, predicate, thirdPartyRiskAssessmentID); err != nil {
 				return fmt.Errorf("cannot load thirdParty risk assessment: %w", err)
 			}
 
-			if err := thirdParty.LoadByID(ctx, conn, scope, thirdPartyRiskAssessment.ThirdPartyID); err != nil {
+			if err := thirdParty.LoadByID(ctx, conn, predicate, thirdPartyRiskAssessment.ThirdPartyID); err != nil {
 				return fmt.Errorf("cannot load thirdParty: %w", err)
 			}
 
@@ -1004,7 +984,7 @@ func (s ThirdPartyService) GetByRiskAssessmentID(
 
 func (s ThirdPartyService) GetAncestors(
 	ctx context.Context,
-	scope coredata.Scoper,
+	predicate coredata.Predicater,
 	thirdPartyID gid.GID,
 ) (coredata.ThirdParties, error) {
 	var ancestors coredata.ThirdParties
@@ -1012,7 +992,7 @@ func (s ThirdPartyService) GetAncestors(
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			return ancestors.LoadAllAncestorsByThirdPartyID(ctx, conn, scope, thirdPartyID)
+			return ancestors.LoadAllAncestorsByThirdPartyID(ctx, conn, predicate, thirdPartyID)
 		},
 	)
 	if err != nil {
@@ -1024,7 +1004,7 @@ func (s ThirdPartyService) GetAncestors(
 
 func (s ThirdPartyService) CountForParentThirdPartyID(
 	ctx context.Context,
-	scope coredata.Scoper,
+	predicate coredata.Predicater,
 	parentThirdPartyID gid.GID,
 ) (int, error) {
 	var count int
@@ -1034,7 +1014,7 @@ func (s ThirdPartyService) CountForParentThirdPartyID(
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			thirdParties := coredata.ThirdParties{}
 
-			count, err = thirdParties.CountByParentThirdPartyID(ctx, conn, scope, parentThirdPartyID)
+			count, err = thirdParties.CountByParentThirdPartyID(ctx, conn, predicate, parentThirdPartyID)
 			if err != nil {
 				return fmt.Errorf("cannot count child third parties: %w", err)
 			}
@@ -1051,7 +1031,7 @@ func (s ThirdPartyService) CountForParentThirdPartyID(
 
 func (s ThirdPartyService) ListForParentThirdPartyID(
 	ctx context.Context,
-	scope coredata.Scoper,
+	predicate coredata.Predicater,
 	parentThirdPartyID gid.GID,
 	cursor *page.Cursor[coredata.ThirdPartyOrderField],
 ) (*page.Page[*coredata.ThirdParty, coredata.ThirdPartyOrderField], error) {
@@ -1060,7 +1040,7 @@ func (s ThirdPartyService) ListForParentThirdPartyID(
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			return thirdParties.LoadByParentThirdPartyID(ctx, conn, scope, parentThirdPartyID, cursor)
+			return thirdParties.LoadByParentThirdPartyID(ctx, conn, predicate, parentThirdPartyID, cursor)
 		},
 	)
 	if err != nil {

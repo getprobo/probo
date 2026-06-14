@@ -69,9 +69,9 @@ func (h *documentPDFHandler) Claim(ctx context.Context) (coredata.DocumentVersio
 }
 
 func (h *documentPDFHandler) Process(ctx context.Context, version coredata.DocumentVersion) error {
-	scope := coredata.NewScope(version.ID.TenantID())
+	predicate := coredata.NewPredicate(version.ID.TenantID())
 
-	if err := h.service.Documents.generateAndUploadPublicationPDF(ctx, scope, &version); err != nil {
+	if err := h.service.Documents.generateAndUploadPublicationPDF(ctx, predicate, &version); err != nil {
 		h.logger.ErrorCtx(
 			ctx,
 			"document pdf worker failure",

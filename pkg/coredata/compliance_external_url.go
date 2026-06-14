@@ -96,7 +96,7 @@ func (c *ComplianceExternalURL) AuthorizationAttributes(
 func (c *ComplianceExternalURL) LoadByID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	id gid.GID,
 ) error {
 	q := `
@@ -116,10 +116,10 @@ WHERE
     AND id = @id
 LIMIT 1;
 `
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"id": id}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -143,7 +143,7 @@ LIMIT 1;
 func (c *ComplianceExternalURL) Insert(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 INSERT INTO
@@ -174,7 +174,7 @@ RETURNING rank;
 
 	args := pgx.StrictNamedArgs{
 		"id":              c.ID,
-		"tenant_id":       scope.GetTenantID(),
+		"tenant_id":       predicate.GetTenantID(),
 		"organization_id": c.OrganizationID,
 		"trust_center_id": c.TrustCenterID,
 		"name":            c.Name,
@@ -193,7 +193,7 @@ RETURNING rank;
 func (c *ComplianceExternalURL) Update(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 UPDATE compliance_external_urls
@@ -205,7 +205,7 @@ WHERE
     %s
     AND id = @id;
 `
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"id":         c.ID,
@@ -213,7 +213,7 @@ WHERE
 		"url":        c.URL,
 		"updated_at": c.UpdatedAt,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
@@ -226,7 +226,7 @@ WHERE
 func (c *ComplianceExternalURL) UpdateRank(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 WITH old AS (
@@ -255,7 +255,7 @@ WHERE %s
   );
 `
 
-	scopeFragment := scope.SQLFragment()
+	scopeFragment := predicate.SQLFragment()
 	q = fmt.Sprintf(q, scopeFragment, scopeFragment)
 
 	args := pgx.StrictNamedArgs{
@@ -264,7 +264,7 @@ WHERE %s
 		"trust_center_id": c.TrustCenterID,
 		"updated_at":      c.UpdatedAt,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
@@ -277,7 +277,7 @@ WHERE %s
 func (c *ComplianceExternalURL) Delete(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 DELETE FROM
@@ -286,10 +286,10 @@ WHERE
     %s
     AND id = @id;
 `
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"id": c.ID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
@@ -302,7 +302,7 @@ WHERE
 func (c *ComplianceExternalURLs) LoadByTrustCenterID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	trustCenterID gid.GID,
 	cursor *page.Cursor[ComplianceExternalURLOrderField],
 ) error {
@@ -323,10 +323,10 @@ WHERE
     AND trust_center_id = @trust_center_id
     AND %s
 `
-	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.NamedArgs{"trust_center_id": trustCenterID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)

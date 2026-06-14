@@ -30,14 +30,14 @@ type TrustCenterReferenceService struct {
 
 func (s TrustCenterReferenceService) ListForTrustCenterID(
 	ctx context.Context,
-	scope coredata.Scoper,
+	predicate coredata.Predicater,
 	trustCenterID gid.GID,
 	cursor *page.Cursor[coredata.TrustCenterReferenceOrderField],
 ) (*page.Page[*coredata.TrustCenterReference, coredata.TrustCenterReferenceOrderField], error) {
 	var references coredata.TrustCenterReferences
 
 	err := s.svc.pg.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
-		err := references.LoadByTrustCenterID(ctx, conn, scope, trustCenterID, cursor)
+		err := references.LoadByTrustCenterID(ctx, conn, predicate, trustCenterID, cursor)
 		if err != nil {
 			return fmt.Errorf("cannot load trust center references: %w", err)
 		}
@@ -53,13 +53,13 @@ func (s TrustCenterReferenceService) ListForTrustCenterID(
 
 func (s TrustCenterReferenceService) GenerateLogoURL(
 	ctx context.Context,
-	scope coredata.Scoper,
+	predicate coredata.Predicater,
 	referenceID gid.GID,
 ) (string, error) {
 	reference := &coredata.TrustCenterReference{}
 
 	err := s.svc.pg.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
-		return reference.LoadByID(ctx, tx, scope, referenceID)
+		return reference.LoadByID(ctx, tx, predicate, referenceID)
 	})
 	if err != nil {
 		return "", fmt.Errorf("cannot load trust center reference: %w", err)
@@ -75,7 +75,7 @@ func (s TrustCenterReferenceService) GenerateLogoURL(
 
 func (s TrustCenterReferenceService) Get(
 	ctx context.Context,
-	scope coredata.Scoper,
+	predicate coredata.Predicater,
 	referenceID gid.GID,
 ) (*coredata.TrustCenterReference, error) {
 	reference := &coredata.TrustCenterReference{}
@@ -83,7 +83,7 @@ func (s TrustCenterReferenceService) Get(
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			err := reference.LoadByID(ctx, conn, scope, referenceID)
+			err := reference.LoadByID(ctx, conn, predicate, referenceID)
 			if err != nil {
 				return fmt.Errorf("cannot load trust center reference: %w", err)
 			}

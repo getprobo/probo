@@ -323,14 +323,14 @@ func (r *UpdateRiskAssessmentScenarioRequest) Validate() error {
 	return v.Error()
 }
 
-func (s *Service) Create(ctx context.Context, scope coredata.Scoper, req CreateRiskAssessmentRequest) (*coredata.RiskAssessment, error) {
+func (s *Service) Create(ctx context.Context, predicate coredata.Predicater, req CreateRiskAssessmentRequest) (*coredata.RiskAssessment, error) {
 	if err := req.Validate(); err != nil {
 		return nil, fmt.Errorf("invalid request: %w", err)
 	}
 
 	now := time.Now()
 	ra := &coredata.RiskAssessment{
-		ID:             gid.New(scope.GetTenantID(), coredata.RiskAssessmentEntityType),
+		ID:             gid.New(predicate.GetTenantID(), coredata.RiskAssessmentEntityType),
 		OrganizationID: req.OrganizationID,
 		Name:           req.Name,
 		Description:    req.Description,
@@ -341,7 +341,7 @@ func (s *Service) Create(ctx context.Context, scope coredata.Scoper, req CreateR
 	err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			if err := ra.Insert(ctx, tx, scope); err != nil {
+			if err := ra.Insert(ctx, tx, predicate); err != nil {
 				return fmt.Errorf("cannot insert risk assessment: %w", err)
 			}
 
@@ -355,13 +355,13 @@ func (s *Service) Create(ctx context.Context, scope coredata.Scoper, req CreateR
 	return ra, nil
 }
 
-func (s *Service) Get(ctx context.Context, scope coredata.Scoper, id gid.GID) (*coredata.RiskAssessment, error) {
+func (s *Service) Get(ctx context.Context, predicate coredata.Predicater, id gid.GID) (*coredata.RiskAssessment, error) {
 	ra := &coredata.RiskAssessment{}
 
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			if err := ra.LoadByID(ctx, conn, scope, id); err != nil {
+			if err := ra.LoadByID(ctx, conn, predicate, id); err != nil {
 				return fmt.Errorf("cannot load risk assessment: %w", err)
 			}
 
@@ -375,7 +375,7 @@ func (s *Service) Get(ctx context.Context, scope coredata.Scoper, id gid.GID) (*
 	return ra, nil
 }
 
-func (s *Service) Update(ctx context.Context, scope coredata.Scoper, req UpdateRiskAssessmentRequest) (*coredata.RiskAssessment, error) {
+func (s *Service) Update(ctx context.Context, predicate coredata.Predicater, req UpdateRiskAssessmentRequest) (*coredata.RiskAssessment, error) {
 	if err := req.Validate(); err != nil {
 		return nil, fmt.Errorf("invalid request: %w", err)
 	}
@@ -385,7 +385,7 @@ func (s *Service) Update(ctx context.Context, scope coredata.Scoper, req UpdateR
 	err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			if err := ra.LoadByID(ctx, tx, scope, req.ID); err != nil {
+			if err := ra.LoadByID(ctx, tx, predicate, req.ID); err != nil {
 				return fmt.Errorf("cannot load risk assessment: %w", err)
 			}
 
@@ -398,7 +398,7 @@ func (s *Service) Update(ctx context.Context, scope coredata.Scoper, req UpdateR
 			}
 
 			ra.UpdatedAt = time.Now()
-			if err := ra.Update(ctx, tx, scope); err != nil {
+			if err := ra.Update(ctx, tx, predicate); err != nil {
 				return fmt.Errorf("cannot update risk assessment: %w", err)
 			}
 
@@ -412,12 +412,12 @@ func (s *Service) Update(ctx context.Context, scope coredata.Scoper, req UpdateR
 	return ra, nil
 }
 
-func (s *Service) Delete(ctx context.Context, scope coredata.Scoper, id gid.GID) error {
+func (s *Service) Delete(ctx context.Context, predicate coredata.Predicater, id gid.GID) error {
 	return s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			ra := &coredata.RiskAssessment{}
-			if err := ra.Delete(ctx, tx, scope, id); err != nil {
+			if err := ra.Delete(ctx, tx, predicate, id); err != nil {
 				return fmt.Errorf("cannot delete risk assessment: %w", err)
 			}
 
@@ -428,7 +428,7 @@ func (s *Service) Delete(ctx context.Context, scope coredata.Scoper, id gid.GID)
 
 func (s *Service) ListForOrganizationID(
 	ctx context.Context,
-	scope coredata.Scoper,
+	predicate coredata.Predicater,
 	organizationID gid.GID,
 	cursor *page.Cursor[coredata.RiskAssessmentOrderField],
 ) (*page.Page[*coredata.RiskAssessment, coredata.RiskAssessmentOrderField], error) {
@@ -437,7 +437,7 @@ func (s *Service) ListForOrganizationID(
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			if err := results.LoadByOrganizationID(ctx, conn, scope, organizationID, cursor); err != nil {
+			if err := results.LoadByOrganizationID(ctx, conn, predicate, organizationID, cursor); err != nil {
 				return fmt.Errorf("cannot list risk assessments: %w", err)
 			}
 
@@ -453,7 +453,7 @@ func (s *Service) ListForOrganizationID(
 
 func (s *Service) CountForOrganizationID(
 	ctx context.Context,
-	scope coredata.Scoper,
+	predicate coredata.Predicater,
 	organizationID gid.GID,
 ) (int, error) {
 	var count int
@@ -463,7 +463,7 @@ func (s *Service) CountForOrganizationID(
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			ras := &coredata.RiskAssessments{}
 
-			count, err = ras.CountByOrganizationID(ctx, conn, scope, organizationID)
+			count, err = ras.CountByOrganizationID(ctx, conn, predicate, organizationID)
 			if err != nil {
 				return fmt.Errorf("cannot count risk assessments: %w", err)
 			}
@@ -478,14 +478,14 @@ func (s *Service) CountForOrganizationID(
 	return count, nil
 }
 
-func (s *Service) CreateScope(ctx context.Context, scope coredata.Scoper, req CreateRiskAssessmentScopeRequest) (*coredata.RiskAssessmentScope, error) {
+func (s *Service) CreateScope(ctx context.Context, predicate coredata.Predicater, req CreateRiskAssessmentScopeRequest) (*coredata.RiskAssessmentScope, error) {
 	if err := req.Validate(); err != nil {
 		return nil, fmt.Errorf("invalid request: %w", err)
 	}
 
 	now := time.Now()
 	raScope := &coredata.RiskAssessmentScope{
-		ID:               gid.New(scope.GetTenantID(), coredata.RiskAssessmentScopeEntityType),
+		ID:               gid.New(predicate.GetTenantID(), coredata.RiskAssessmentScopeEntityType),
 		RiskAssessmentID: req.RiskAssessmentID,
 		Name:             req.Name,
 		CreatedAt:        now,
@@ -496,12 +496,12 @@ func (s *Service) CreateScope(ctx context.Context, scope coredata.Scoper, req Cr
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			ra := coredata.RiskAssessment{}
-			if err := ra.LoadByID(ctx, tx, scope, req.RiskAssessmentID); err != nil {
+			if err := ra.LoadByID(ctx, tx, predicate, req.RiskAssessmentID); err != nil {
 				return fmt.Errorf("cannot load risk assessment: %w", err)
 			}
 
 			raScope.OrganizationID = ra.OrganizationID
-			if err := raScope.Insert(ctx, tx, scope); err != nil {
+			if err := raScope.Insert(ctx, tx, predicate); err != nil {
 				return fmt.Errorf("cannot insert risk assessment scope: %w", err)
 			}
 
@@ -515,13 +515,13 @@ func (s *Service) CreateScope(ctx context.Context, scope coredata.Scoper, req Cr
 	return raScope, nil
 }
 
-func (s *Service) GetScope(ctx context.Context, scope coredata.Scoper, id gid.GID) (*coredata.RiskAssessmentScope, error) {
+func (s *Service) GetScope(ctx context.Context, predicate coredata.Predicater, id gid.GID) (*coredata.RiskAssessmentScope, error) {
 	raScope := &coredata.RiskAssessmentScope{}
 
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			if err := raScope.LoadByID(ctx, conn, scope, id); err != nil {
+			if err := raScope.LoadByID(ctx, conn, predicate, id); err != nil {
 				return fmt.Errorf("cannot load risk assessment scope: %w", err)
 			}
 
@@ -535,7 +535,7 @@ func (s *Service) GetScope(ctx context.Context, scope coredata.Scoper, id gid.GI
 	return raScope, nil
 }
 
-func (s *Service) UpdateScope(ctx context.Context, scope coredata.Scoper, req UpdateRiskAssessmentScopeRequest) (*coredata.RiskAssessmentScope, error) {
+func (s *Service) UpdateScope(ctx context.Context, predicate coredata.Predicater, req UpdateRiskAssessmentScopeRequest) (*coredata.RiskAssessmentScope, error) {
 	if err := req.Validate(); err != nil {
 		return nil, fmt.Errorf("invalid request: %w", err)
 	}
@@ -545,7 +545,7 @@ func (s *Service) UpdateScope(ctx context.Context, scope coredata.Scoper, req Up
 	err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			if err := raScope.LoadByID(ctx, tx, scope, req.ID); err != nil {
+			if err := raScope.LoadByID(ctx, tx, predicate, req.ID); err != nil {
 				return fmt.Errorf("cannot load risk assessment scope: %w", err)
 			}
 
@@ -554,7 +554,7 @@ func (s *Service) UpdateScope(ctx context.Context, scope coredata.Scoper, req Up
 			}
 
 			raScope.UpdatedAt = time.Now()
-			if err := raScope.Update(ctx, tx, scope); err != nil {
+			if err := raScope.Update(ctx, tx, predicate); err != nil {
 				return fmt.Errorf("cannot update risk assessment scope: %w", err)
 			}
 
@@ -568,12 +568,12 @@ func (s *Service) UpdateScope(ctx context.Context, scope coredata.Scoper, req Up
 	return raScope, nil
 }
 
-func (s *Service) DeleteScope(ctx context.Context, scope coredata.Scoper, id gid.GID) error {
+func (s *Service) DeleteScope(ctx context.Context, predicate coredata.Predicater, id gid.GID) error {
 	return s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			raScope := &coredata.RiskAssessmentScope{}
-			if err := raScope.Delete(ctx, tx, scope, id); err != nil {
+			if err := raScope.Delete(ctx, tx, predicate, id); err != nil {
 				return fmt.Errorf("cannot delete risk assessment scope: %w", err)
 			}
 
@@ -584,7 +584,7 @@ func (s *Service) DeleteScope(ctx context.Context, scope coredata.Scoper, id gid
 
 func (s *Service) ListScopesForRiskAssessmentID(
 	ctx context.Context,
-	scope coredata.Scoper,
+	predicate coredata.Predicater,
 	riskAssessmentID gid.GID,
 	cursor *page.Cursor[coredata.RiskAssessmentScopeOrderField],
 ) (*page.Page[*coredata.RiskAssessmentScope, coredata.RiskAssessmentScopeOrderField], error) {
@@ -593,7 +593,7 @@ func (s *Service) ListScopesForRiskAssessmentID(
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			if err := results.LoadByRiskAssessmentID(ctx, conn, scope, riskAssessmentID, cursor); err != nil {
+			if err := results.LoadByRiskAssessmentID(ctx, conn, predicate, riskAssessmentID, cursor); err != nil {
 				return fmt.Errorf("cannot list risk assessment scopes: %w", err)
 			}
 
@@ -607,7 +607,7 @@ func (s *Service) ListScopesForRiskAssessmentID(
 	return page.NewPage(results, cursor), nil
 }
 
-func (s *Service) CountScopesForRiskAssessmentID(ctx context.Context, scope coredata.Scoper, riskAssessmentID gid.GID) (int, error) {
+func (s *Service) CountScopesForRiskAssessmentID(ctx context.Context, predicate coredata.Predicater, riskAssessmentID gid.GID) (int, error) {
 	var count int
 
 	err := s.pg.WithConn(
@@ -615,7 +615,7 @@ func (s *Service) CountScopesForRiskAssessmentID(ctx context.Context, scope core
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			ss := &coredata.RiskAssessmentScopes{}
 
-			count, err = ss.CountByRiskAssessmentID(ctx, conn, scope, riskAssessmentID)
+			count, err = ss.CountByRiskAssessmentID(ctx, conn, predicate, riskAssessmentID)
 			if err != nil {
 				return fmt.Errorf("cannot count risk assessment scopes: %w", err)
 			}
@@ -630,14 +630,14 @@ func (s *Service) CountScopesForRiskAssessmentID(ctx context.Context, scope core
 	return count, nil
 }
 
-func (s *Service) CreateNode(ctx context.Context, scope coredata.Scoper, req CreateRiskAssessmentNodeRequest) (*coredata.RiskAssessmentNode, error) {
+func (s *Service) CreateNode(ctx context.Context, predicate coredata.Predicater, req CreateRiskAssessmentNodeRequest) (*coredata.RiskAssessmentNode, error) {
 	if err := req.Validate(); err != nil {
 		return nil, fmt.Errorf("invalid request: %w", err)
 	}
 
 	now := time.Now()
 	node := &coredata.RiskAssessmentNode{
-		ID:                    gid.New(scope.GetTenantID(), coredata.RiskAssessmentNodeEntityType),
+		ID:                    gid.New(predicate.GetTenantID(), coredata.RiskAssessmentNodeEntityType),
 		RiskAssessmentScopeID: req.RiskAssessmentScopeID,
 		BoundaryID:            req.BoundaryID,
 		NodeType:              req.NodeType,
@@ -650,18 +650,18 @@ func (s *Service) CreateNode(ctx context.Context, scope coredata.Scoper, req Cre
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			raScope := coredata.RiskAssessmentScope{}
-			if err := raScope.LoadByID(ctx, tx, scope, req.RiskAssessmentScopeID); err != nil {
+			if err := raScope.LoadByID(ctx, tx, predicate, req.RiskAssessmentScopeID); err != nil {
 				return fmt.Errorf("cannot load risk assessment scope: %w", err)
 			}
 
 			if req.BoundaryID != nil {
-				if err := s.assertBoundaryInScope(ctx, tx, scope, *req.BoundaryID, req.RiskAssessmentScopeID, "boundary_id"); err != nil {
+				if err := s.assertBoundaryInScope(ctx, tx, predicate, *req.BoundaryID, req.RiskAssessmentScopeID, "boundary_id"); err != nil {
 					return err
 				}
 			}
 
 			node.OrganizationID = raScope.OrganizationID
-			if err := node.Insert(ctx, tx, scope); err != nil {
+			if err := node.Insert(ctx, tx, predicate); err != nil {
 				return fmt.Errorf("cannot insert risk assessment node: %w", err)
 			}
 
@@ -675,13 +675,13 @@ func (s *Service) CreateNode(ctx context.Context, scope coredata.Scoper, req Cre
 	return node, nil
 }
 
-func (s *Service) GetNode(ctx context.Context, scope coredata.Scoper, id gid.GID) (*coredata.RiskAssessmentNode, error) {
+func (s *Service) GetNode(ctx context.Context, predicate coredata.Predicater, id gid.GID) (*coredata.RiskAssessmentNode, error) {
 	node := &coredata.RiskAssessmentNode{}
 
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			if err := node.LoadByID(ctx, conn, scope, id); err != nil {
+			if err := node.LoadByID(ctx, conn, predicate, id); err != nil {
 				return fmt.Errorf("cannot load risk assessment node: %w", err)
 			}
 
@@ -695,7 +695,7 @@ func (s *Service) GetNode(ctx context.Context, scope coredata.Scoper, id gid.GID
 	return node, nil
 }
 
-func (s *Service) UpdateNode(ctx context.Context, scope coredata.Scoper, req UpdateRiskAssessmentNodeRequest) (*coredata.RiskAssessmentNode, error) {
+func (s *Service) UpdateNode(ctx context.Context, predicate coredata.Predicater, req UpdateRiskAssessmentNodeRequest) (*coredata.RiskAssessmentNode, error) {
 	if err := req.Validate(); err != nil {
 		return nil, fmt.Errorf("invalid request: %w", err)
 	}
@@ -705,7 +705,7 @@ func (s *Service) UpdateNode(ctx context.Context, scope coredata.Scoper, req Upd
 	err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			if err := node.LoadByID(ctx, tx, scope, req.ID); err != nil {
+			if err := node.LoadByID(ctx, tx, predicate, req.ID); err != nil {
 				return fmt.Errorf("cannot load risk assessment node: %w", err)
 			}
 
@@ -719,7 +719,7 @@ func (s *Service) UpdateNode(ctx context.Context, scope coredata.Scoper, req Upd
 
 			if req.BoundaryID != nil {
 				if *req.BoundaryID != nil {
-					if err := s.assertBoundaryInScope(ctx, tx, scope, **req.BoundaryID, node.RiskAssessmentScopeID, "boundary_id"); err != nil {
+					if err := s.assertBoundaryInScope(ctx, tx, predicate, **req.BoundaryID, node.RiskAssessmentScopeID, "boundary_id"); err != nil {
 						return err
 					}
 				}
@@ -728,7 +728,7 @@ func (s *Service) UpdateNode(ctx context.Context, scope coredata.Scoper, req Upd
 			}
 
 			node.UpdatedAt = time.Now()
-			if err := node.Update(ctx, tx, scope); err != nil {
+			if err := node.Update(ctx, tx, predicate); err != nil {
 				return fmt.Errorf("cannot update risk assessment node: %w", err)
 			}
 
@@ -742,12 +742,12 @@ func (s *Service) UpdateNode(ctx context.Context, scope coredata.Scoper, req Upd
 	return node, nil
 }
 
-func (s *Service) DeleteNode(ctx context.Context, scope coredata.Scoper, id gid.GID) error {
+func (s *Service) DeleteNode(ctx context.Context, predicate coredata.Predicater, id gid.GID) error {
 	return s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			node := &coredata.RiskAssessmentNode{}
-			if err := node.Delete(ctx, tx, scope, id); err != nil {
+			if err := node.Delete(ctx, tx, predicate, id); err != nil {
 				return fmt.Errorf("cannot delete risk assessment node: %w", err)
 			}
 
@@ -758,7 +758,7 @@ func (s *Service) DeleteNode(ctx context.Context, scope coredata.Scoper, id gid.
 
 func (s *Service) ListNodesForScopeID(
 	ctx context.Context,
-	scope coredata.Scoper,
+	predicate coredata.Predicater,
 	scopeID gid.GID,
 	cursor *page.Cursor[coredata.RiskAssessmentNodeOrderField],
 ) (*page.Page[*coredata.RiskAssessmentNode, coredata.RiskAssessmentNodeOrderField], error) {
@@ -767,7 +767,7 @@ func (s *Service) ListNodesForScopeID(
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			if err := results.LoadByRiskAssessmentScopeID(ctx, conn, scope, scopeID, cursor); err != nil {
+			if err := results.LoadByRiskAssessmentScopeID(ctx, conn, predicate, scopeID, cursor); err != nil {
 				return fmt.Errorf("cannot list risk assessment nodes: %w", err)
 			}
 
@@ -781,7 +781,7 @@ func (s *Service) ListNodesForScopeID(
 	return page.NewPage(results, cursor), nil
 }
 
-func (s *Service) CountNodesForScopeID(ctx context.Context, scope coredata.Scoper, scopeID gid.GID) (int, error) {
+func (s *Service) CountNodesForScopeID(ctx context.Context, predicate coredata.Predicater, scopeID gid.GID) (int, error) {
 	var count int
 
 	err := s.pg.WithConn(
@@ -789,7 +789,7 @@ func (s *Service) CountNodesForScopeID(ctx context.Context, scope coredata.Scope
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			ns := &coredata.RiskAssessmentNodes{}
 
-			count, err = ns.CountByRiskAssessmentScopeID(ctx, conn, scope, scopeID)
+			count, err = ns.CountByRiskAssessmentScopeID(ctx, conn, predicate, scopeID)
 			if err != nil {
 				return fmt.Errorf("cannot count risk assessment nodes: %w", err)
 			}
@@ -804,14 +804,14 @@ func (s *Service) CountNodesForScopeID(ctx context.Context, scope coredata.Scope
 	return count, nil
 }
 
-func (s *Service) CreateBoundary(ctx context.Context, scope coredata.Scoper, req CreateRiskAssessmentBoundaryRequest) (*coredata.RiskAssessmentBoundary, error) {
+func (s *Service) CreateBoundary(ctx context.Context, predicate coredata.Predicater, req CreateRiskAssessmentBoundaryRequest) (*coredata.RiskAssessmentBoundary, error) {
 	if err := req.Validate(); err != nil {
 		return nil, fmt.Errorf("invalid request: %w", err)
 	}
 
 	now := time.Now()
 	boundary := &coredata.RiskAssessmentBoundary{
-		ID:                    gid.New(scope.GetTenantID(), coredata.RiskAssessmentBoundaryEntityType),
+		ID:                    gid.New(predicate.GetTenantID(), coredata.RiskAssessmentBoundaryEntityType),
 		RiskAssessmentScopeID: req.RiskAssessmentScopeID,
 		ParentBoundaryID:      req.ParentBoundaryID,
 		Name:                  req.Name,
@@ -823,18 +823,18 @@ func (s *Service) CreateBoundary(ctx context.Context, scope coredata.Scoper, req
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			raScope := coredata.RiskAssessmentScope{}
-			if err := raScope.LoadByID(ctx, tx, scope, req.RiskAssessmentScopeID); err != nil {
+			if err := raScope.LoadByID(ctx, tx, predicate, req.RiskAssessmentScopeID); err != nil {
 				return fmt.Errorf("cannot load risk assessment scope: %w", err)
 			}
 
 			if req.ParentBoundaryID != nil {
-				if err := s.assertBoundaryInScope(ctx, tx, scope, *req.ParentBoundaryID, req.RiskAssessmentScopeID, "parent_boundary_id"); err != nil {
+				if err := s.assertBoundaryInScope(ctx, tx, predicate, *req.ParentBoundaryID, req.RiskAssessmentScopeID, "parent_boundary_id"); err != nil {
 					return err
 				}
 			}
 
 			boundary.OrganizationID = raScope.OrganizationID
-			if err := boundary.Insert(ctx, tx, scope); err != nil {
+			if err := boundary.Insert(ctx, tx, predicate); err != nil {
 				return fmt.Errorf("cannot insert risk assessment boundary: %w", err)
 			}
 
@@ -848,13 +848,13 @@ func (s *Service) CreateBoundary(ctx context.Context, scope coredata.Scoper, req
 	return boundary, nil
 }
 
-func (s *Service) GetBoundary(ctx context.Context, scope coredata.Scoper, id gid.GID) (*coredata.RiskAssessmentBoundary, error) {
+func (s *Service) GetBoundary(ctx context.Context, predicate coredata.Predicater, id gid.GID) (*coredata.RiskAssessmentBoundary, error) {
 	boundary := &coredata.RiskAssessmentBoundary{}
 
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			if err := boundary.LoadByID(ctx, conn, scope, id); err != nil {
+			if err := boundary.LoadByID(ctx, conn, predicate, id); err != nil {
 				return fmt.Errorf("cannot load risk assessment boundary: %w", err)
 			}
 
@@ -868,7 +868,7 @@ func (s *Service) GetBoundary(ctx context.Context, scope coredata.Scoper, id gid
 	return boundary, nil
 }
 
-func (s *Service) UpdateBoundary(ctx context.Context, scope coredata.Scoper, req UpdateRiskAssessmentBoundaryRequest) (*coredata.RiskAssessmentBoundary, error) {
+func (s *Service) UpdateBoundary(ctx context.Context, predicate coredata.Predicater, req UpdateRiskAssessmentBoundaryRequest) (*coredata.RiskAssessmentBoundary, error) {
 	if err := req.Validate(); err != nil {
 		return nil, fmt.Errorf("invalid request: %w", err)
 	}
@@ -878,7 +878,7 @@ func (s *Service) UpdateBoundary(ctx context.Context, scope coredata.Scoper, req
 	err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			if err := boundary.LoadByID(ctx, tx, scope, req.ID); err != nil {
+			if err := boundary.LoadByID(ctx, tx, predicate, req.ID); err != nil {
 				return fmt.Errorf("cannot load risk assessment boundary: %w", err)
 			}
 
@@ -888,11 +888,11 @@ func (s *Service) UpdateBoundary(ctx context.Context, scope coredata.Scoper, req
 
 			if req.ParentBoundaryID != nil {
 				if *req.ParentBoundaryID != nil {
-					if err := s.assertBoundaryInScope(ctx, tx, scope, **req.ParentBoundaryID, boundary.RiskAssessmentScopeID, "parent_boundary_id"); err != nil {
+					if err := s.assertBoundaryInScope(ctx, tx, predicate, **req.ParentBoundaryID, boundary.RiskAssessmentScopeID, "parent_boundary_id"); err != nil {
 						return err
 					}
 
-					if err := s.assertNoBoundaryCycle(ctx, tx, scope, boundary.ID, **req.ParentBoundaryID, "parent_boundary_id"); err != nil {
+					if err := s.assertNoBoundaryCycle(ctx, tx, predicate, boundary.ID, **req.ParentBoundaryID, "parent_boundary_id"); err != nil {
 						return err
 					}
 				}
@@ -901,7 +901,7 @@ func (s *Service) UpdateBoundary(ctx context.Context, scope coredata.Scoper, req
 			}
 
 			boundary.UpdatedAt = time.Now()
-			if err := boundary.Update(ctx, tx, scope); err != nil {
+			if err := boundary.Update(ctx, tx, predicate); err != nil {
 				return fmt.Errorf("cannot update risk assessment boundary: %w", err)
 			}
 
@@ -915,12 +915,12 @@ func (s *Service) UpdateBoundary(ctx context.Context, scope coredata.Scoper, req
 	return boundary, nil
 }
 
-func (s *Service) DeleteBoundary(ctx context.Context, scope coredata.Scoper, id gid.GID) error {
+func (s *Service) DeleteBoundary(ctx context.Context, predicate coredata.Predicater, id gid.GID) error {
 	return s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			boundary := &coredata.RiskAssessmentBoundary{}
-			if err := boundary.Delete(ctx, tx, scope, id); err != nil {
+			if err := boundary.Delete(ctx, tx, predicate, id); err != nil {
 				return fmt.Errorf("cannot delete risk assessment boundary: %w", err)
 			}
 
@@ -931,7 +931,7 @@ func (s *Service) DeleteBoundary(ctx context.Context, scope coredata.Scoper, id 
 
 func (s *Service) ListBoundariesForScopeID(
 	ctx context.Context,
-	scope coredata.Scoper,
+	predicate coredata.Predicater,
 	scopeID gid.GID,
 	cursor *page.Cursor[coredata.RiskAssessmentBoundaryOrderField],
 ) (*page.Page[*coredata.RiskAssessmentBoundary, coredata.RiskAssessmentBoundaryOrderField], error) {
@@ -940,7 +940,7 @@ func (s *Service) ListBoundariesForScopeID(
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			if err := results.LoadByRiskAssessmentScopeID(ctx, conn, scope, scopeID, cursor); err != nil {
+			if err := results.LoadByRiskAssessmentScopeID(ctx, conn, predicate, scopeID, cursor); err != nil {
 				return fmt.Errorf("cannot list risk assessment boundaries: %w", err)
 			}
 
@@ -954,7 +954,7 @@ func (s *Service) ListBoundariesForScopeID(
 	return page.NewPage(results, cursor), nil
 }
 
-func (s *Service) CountBoundariesForScopeID(ctx context.Context, scope coredata.Scoper, scopeID gid.GID) (int, error) {
+func (s *Service) CountBoundariesForScopeID(ctx context.Context, predicate coredata.Predicater, scopeID gid.GID) (int, error) {
 	var count int
 
 	err := s.pg.WithConn(
@@ -962,7 +962,7 @@ func (s *Service) CountBoundariesForScopeID(ctx context.Context, scope coredata.
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			bs := &coredata.RiskAssessmentBoundaries{}
 
-			count, err = bs.CountByRiskAssessmentScopeID(ctx, conn, scope, scopeID)
+			count, err = bs.CountByRiskAssessmentScopeID(ctx, conn, predicate, scopeID)
 			if err != nil {
 				return fmt.Errorf("cannot count risk assessment boundaries: %w", err)
 			}
@@ -977,14 +977,14 @@ func (s *Service) CountBoundariesForScopeID(ctx context.Context, scope coredata.
 	return count, nil
 }
 
-func (s *Service) CreateProcess(ctx context.Context, scope coredata.Scoper, req CreateRiskAssessmentProcessRequest) (*coredata.RiskAssessmentProcess, error) {
+func (s *Service) CreateProcess(ctx context.Context, predicate coredata.Predicater, req CreateRiskAssessmentProcessRequest) (*coredata.RiskAssessmentProcess, error) {
 	if err := req.Validate(); err != nil {
 		return nil, fmt.Errorf("invalid request: %w", err)
 	}
 
 	now := time.Now()
 	process := &coredata.RiskAssessmentProcess{
-		ID:                    gid.New(scope.GetTenantID(), coredata.RiskAssessmentProcessEntityType),
+		ID:                    gid.New(predicate.GetTenantID(), coredata.RiskAssessmentProcessEntityType),
 		RiskAssessmentScopeID: req.RiskAssessmentScopeID,
 		SourceNodeID:          req.SourceNodeID,
 		TargetNodeID:          req.TargetNodeID,
@@ -997,21 +997,21 @@ func (s *Service) CreateProcess(ctx context.Context, scope coredata.Scoper, req 
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			raScope := coredata.RiskAssessmentScope{}
-			if err := raScope.LoadByID(ctx, tx, scope, req.RiskAssessmentScopeID); err != nil {
+			if err := raScope.LoadByID(ctx, tx, predicate, req.RiskAssessmentScopeID); err != nil {
 				return fmt.Errorf("cannot load risk assessment scope: %w", err)
 			}
 
 			process.OrganizationID = raScope.OrganizationID
 
-			if err := s.assertNodeInScope(ctx, tx, scope, req.SourceNodeID, req.RiskAssessmentScopeID, "source_node_id"); err != nil {
+			if err := s.assertNodeInScope(ctx, tx, predicate, req.SourceNodeID, req.RiskAssessmentScopeID, "source_node_id"); err != nil {
 				return err
 			}
 
-			if err := s.assertNodeInScope(ctx, tx, scope, req.TargetNodeID, req.RiskAssessmentScopeID, "target_node_id"); err != nil {
+			if err := s.assertNodeInScope(ctx, tx, predicate, req.TargetNodeID, req.RiskAssessmentScopeID, "target_node_id"); err != nil {
 				return err
 			}
 
-			if err := process.Insert(ctx, tx, scope); err != nil {
+			if err := process.Insert(ctx, tx, predicate); err != nil {
 				return fmt.Errorf("cannot insert risk assessment process: %w", err)
 			}
 
@@ -1025,13 +1025,13 @@ func (s *Service) CreateProcess(ctx context.Context, scope coredata.Scoper, req 
 	return process, nil
 }
 
-func (s *Service) GetProcess(ctx context.Context, scope coredata.Scoper, id gid.GID) (*coredata.RiskAssessmentProcess, error) {
+func (s *Service) GetProcess(ctx context.Context, predicate coredata.Predicater, id gid.GID) (*coredata.RiskAssessmentProcess, error) {
 	process := &coredata.RiskAssessmentProcess{}
 
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			if err := process.LoadByID(ctx, conn, scope, id); err != nil {
+			if err := process.LoadByID(ctx, conn, predicate, id); err != nil {
 				return fmt.Errorf("cannot load risk assessment process: %w", err)
 			}
 
@@ -1045,7 +1045,7 @@ func (s *Service) GetProcess(ctx context.Context, scope coredata.Scoper, id gid.
 	return process, nil
 }
 
-func (s *Service) UpdateProcess(ctx context.Context, scope coredata.Scoper, req UpdateRiskAssessmentProcessRequest) (*coredata.RiskAssessmentProcess, error) {
+func (s *Service) UpdateProcess(ctx context.Context, predicate coredata.Predicater, req UpdateRiskAssessmentProcessRequest) (*coredata.RiskAssessmentProcess, error) {
 	if err := req.Validate(); err != nil {
 		return nil, fmt.Errorf("invalid request: %w", err)
 	}
@@ -1055,12 +1055,12 @@ func (s *Service) UpdateProcess(ctx context.Context, scope coredata.Scoper, req 
 	err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			if err := process.LoadByID(ctx, tx, scope, req.ID); err != nil {
+			if err := process.LoadByID(ctx, tx, predicate, req.ID); err != nil {
 				return fmt.Errorf("cannot load risk assessment process: %w", err)
 			}
 
 			if req.SourceNodeID != nil {
-				if err := s.assertNodeInScope(ctx, tx, scope, *req.SourceNodeID, process.RiskAssessmentScopeID, "source_node_id"); err != nil {
+				if err := s.assertNodeInScope(ctx, tx, predicate, *req.SourceNodeID, process.RiskAssessmentScopeID, "source_node_id"); err != nil {
 					return err
 				}
 
@@ -1068,7 +1068,7 @@ func (s *Service) UpdateProcess(ctx context.Context, scope coredata.Scoper, req 
 			}
 
 			if req.TargetNodeID != nil {
-				if err := s.assertNodeInScope(ctx, tx, scope, *req.TargetNodeID, process.RiskAssessmentScopeID, "target_node_id"); err != nil {
+				if err := s.assertNodeInScope(ctx, tx, predicate, *req.TargetNodeID, process.RiskAssessmentScopeID, "target_node_id"); err != nil {
 					return err
 				}
 
@@ -1080,7 +1080,7 @@ func (s *Service) UpdateProcess(ctx context.Context, scope coredata.Scoper, req 
 			}
 
 			process.UpdatedAt = time.Now()
-			if err := process.Update(ctx, tx, scope); err != nil {
+			if err := process.Update(ctx, tx, predicate); err != nil {
 				return fmt.Errorf("cannot update risk assessment process: %w", err)
 			}
 
@@ -1094,12 +1094,12 @@ func (s *Service) UpdateProcess(ctx context.Context, scope coredata.Scoper, req 
 	return process, nil
 }
 
-func (s *Service) DeleteProcess(ctx context.Context, scope coredata.Scoper, id gid.GID) error {
+func (s *Service) DeleteProcess(ctx context.Context, predicate coredata.Predicater, id gid.GID) error {
 	return s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			process := &coredata.RiskAssessmentProcess{}
-			if err := process.Delete(ctx, tx, scope, id); err != nil {
+			if err := process.Delete(ctx, tx, predicate, id); err != nil {
 				return fmt.Errorf("cannot delete risk assessment process: %w", err)
 			}
 
@@ -1110,7 +1110,7 @@ func (s *Service) DeleteProcess(ctx context.Context, scope coredata.Scoper, id g
 
 func (s *Service) ListProcessesForScopeID(
 	ctx context.Context,
-	scope coredata.Scoper,
+	predicate coredata.Predicater,
 	scopeID gid.GID,
 	cursor *page.Cursor[coredata.RiskAssessmentProcessOrderField],
 ) (*page.Page[*coredata.RiskAssessmentProcess, coredata.RiskAssessmentProcessOrderField], error) {
@@ -1119,7 +1119,7 @@ func (s *Service) ListProcessesForScopeID(
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			if err := results.LoadByRiskAssessmentScopeID(ctx, conn, scope, scopeID, cursor); err != nil {
+			if err := results.LoadByRiskAssessmentScopeID(ctx, conn, predicate, scopeID, cursor); err != nil {
 				return fmt.Errorf("cannot list risk assessment processes: %w", err)
 			}
 
@@ -1133,7 +1133,7 @@ func (s *Service) ListProcessesForScopeID(
 	return page.NewPage(results, cursor), nil
 }
 
-func (s *Service) CountProcessesForScopeID(ctx context.Context, scope coredata.Scoper, scopeID gid.GID) (int, error) {
+func (s *Service) CountProcessesForScopeID(ctx context.Context, predicate coredata.Predicater, scopeID gid.GID) (int, error) {
 	var count int
 
 	err := s.pg.WithConn(
@@ -1141,7 +1141,7 @@ func (s *Service) CountProcessesForScopeID(ctx context.Context, scope coredata.S
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			ps := &coredata.RiskAssessmentProcesses{}
 
-			count, err = ps.CountByRiskAssessmentScopeID(ctx, conn, scope, scopeID)
+			count, err = ps.CountByRiskAssessmentScopeID(ctx, conn, predicate, scopeID)
 			if err != nil {
 				return fmt.Errorf("cannot count risk assessment processes: %w", err)
 			}
@@ -1156,14 +1156,14 @@ func (s *Service) CountProcessesForScopeID(ctx context.Context, scope coredata.S
 	return count, nil
 }
 
-func (s *Service) CreateThreat(ctx context.Context, scope coredata.Scoper, req CreateRiskAssessmentThreatRequest) (*coredata.RiskAssessmentThreat, error) {
+func (s *Service) CreateThreat(ctx context.Context, predicate coredata.Predicater, req CreateRiskAssessmentThreatRequest) (*coredata.RiskAssessmentThreat, error) {
 	if err := req.Validate(); err != nil {
 		return nil, fmt.Errorf("invalid request: %w", err)
 	}
 
 	now := time.Now()
 	threat := &coredata.RiskAssessmentThreat{
-		ID:                    gid.New(scope.GetTenantID(), coredata.RiskAssessmentThreatEntityType),
+		ID:                    gid.New(predicate.GetTenantID(), coredata.RiskAssessmentThreatEntityType),
 		RiskAssessmentScopeID: req.RiskAssessmentScopeID,
 		ProcessID:             req.ProcessID,
 		Name:                  req.Name,
@@ -1176,17 +1176,17 @@ func (s *Service) CreateThreat(ctx context.Context, scope coredata.Scoper, req C
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			raScope := coredata.RiskAssessmentScope{}
-			if err := raScope.LoadByID(ctx, tx, scope, req.RiskAssessmentScopeID); err != nil {
+			if err := raScope.LoadByID(ctx, tx, predicate, req.RiskAssessmentScopeID); err != nil {
 				return fmt.Errorf("cannot load risk assessment scope: %w", err)
 			}
 
 			threat.OrganizationID = raScope.OrganizationID
 
-			if err := s.assertProcessInScope(ctx, tx, scope, req.ProcessID, req.RiskAssessmentScopeID, "process_id"); err != nil {
+			if err := s.assertProcessInScope(ctx, tx, predicate, req.ProcessID, req.RiskAssessmentScopeID, "process_id"); err != nil {
 				return err
 			}
 
-			if err := threat.Insert(ctx, tx, scope); err != nil {
+			if err := threat.Insert(ctx, tx, predicate); err != nil {
 				return fmt.Errorf("cannot insert risk threat: %w", err)
 			}
 
@@ -1200,13 +1200,13 @@ func (s *Service) CreateThreat(ctx context.Context, scope coredata.Scoper, req C
 	return threat, nil
 }
 
-func (s *Service) GetThreat(ctx context.Context, scope coredata.Scoper, id gid.GID) (*coredata.RiskAssessmentThreat, error) {
+func (s *Service) GetThreat(ctx context.Context, predicate coredata.Predicater, id gid.GID) (*coredata.RiskAssessmentThreat, error) {
 	threat := &coredata.RiskAssessmentThreat{}
 
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			if err := threat.LoadByID(ctx, conn, scope, id); err != nil {
+			if err := threat.LoadByID(ctx, conn, predicate, id); err != nil {
 				return fmt.Errorf("cannot load risk threat: %w", err)
 			}
 
@@ -1220,7 +1220,7 @@ func (s *Service) GetThreat(ctx context.Context, scope coredata.Scoper, id gid.G
 	return threat, nil
 }
 
-func (s *Service) UpdateThreat(ctx context.Context, scope coredata.Scoper, req UpdateRiskAssessmentThreatRequest) (*coredata.RiskAssessmentThreat, error) {
+func (s *Service) UpdateThreat(ctx context.Context, predicate coredata.Predicater, req UpdateRiskAssessmentThreatRequest) (*coredata.RiskAssessmentThreat, error) {
 	if err := req.Validate(); err != nil {
 		return nil, fmt.Errorf("invalid request: %w", err)
 	}
@@ -1230,12 +1230,12 @@ func (s *Service) UpdateThreat(ctx context.Context, scope coredata.Scoper, req U
 	err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			if err := threat.LoadByID(ctx, tx, scope, req.ID); err != nil {
+			if err := threat.LoadByID(ctx, tx, predicate, req.ID); err != nil {
 				return fmt.Errorf("cannot load risk threat: %w", err)
 			}
 
 			if req.ProcessID != nil {
-				if err := s.assertProcessInScope(ctx, tx, scope, *req.ProcessID, threat.RiskAssessmentScopeID, "process_id"); err != nil {
+				if err := s.assertProcessInScope(ctx, tx, predicate, *req.ProcessID, threat.RiskAssessmentScopeID, "process_id"); err != nil {
 					return err
 				}
 
@@ -1251,7 +1251,7 @@ func (s *Service) UpdateThreat(ctx context.Context, scope coredata.Scoper, req U
 			}
 
 			threat.UpdatedAt = time.Now()
-			if err := threat.Update(ctx, tx, scope); err != nil {
+			if err := threat.Update(ctx, tx, predicate); err != nil {
 				return fmt.Errorf("cannot update risk threat: %w", err)
 			}
 
@@ -1265,12 +1265,12 @@ func (s *Service) UpdateThreat(ctx context.Context, scope coredata.Scoper, req U
 	return threat, nil
 }
 
-func (s *Service) DeleteThreat(ctx context.Context, scope coredata.Scoper, id gid.GID) error {
+func (s *Service) DeleteThreat(ctx context.Context, predicate coredata.Predicater, id gid.GID) error {
 	return s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			threat := &coredata.RiskAssessmentThreat{}
-			if err := threat.Delete(ctx, tx, scope, id); err != nil {
+			if err := threat.Delete(ctx, tx, predicate, id); err != nil {
 				return fmt.Errorf("cannot delete risk threat: %w", err)
 			}
 
@@ -1281,7 +1281,7 @@ func (s *Service) DeleteThreat(ctx context.Context, scope coredata.Scoper, id gi
 
 func (s *Service) ListThreatsForScopeID(
 	ctx context.Context,
-	scope coredata.Scoper,
+	predicate coredata.Predicater,
 	scopeID gid.GID,
 	cursor *page.Cursor[coredata.RiskAssessmentThreatOrderField],
 ) (*page.Page[*coredata.RiskAssessmentThreat, coredata.RiskAssessmentThreatOrderField], error) {
@@ -1290,7 +1290,7 @@ func (s *Service) ListThreatsForScopeID(
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			if err := results.LoadByRiskAssessmentScopeID(ctx, conn, scope, scopeID, cursor); err != nil {
+			if err := results.LoadByRiskAssessmentScopeID(ctx, conn, predicate, scopeID, cursor); err != nil {
 				return fmt.Errorf("cannot list risk threats: %w", err)
 			}
 
@@ -1304,7 +1304,7 @@ func (s *Service) ListThreatsForScopeID(
 	return page.NewPage(results, cursor), nil
 }
 
-func (s *Service) CountThreatsForScopeID(ctx context.Context, scope coredata.Scoper, scopeID gid.GID) (int, error) {
+func (s *Service) CountThreatsForScopeID(ctx context.Context, predicate coredata.Predicater, scopeID gid.GID) (int, error) {
 	var count int
 
 	err := s.pg.WithConn(
@@ -1312,7 +1312,7 @@ func (s *Service) CountThreatsForScopeID(ctx context.Context, scope coredata.Sco
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			ts := &coredata.RiskAssessmentThreats{}
 
-			count, err = ts.CountByRiskAssessmentScopeID(ctx, conn, scope, scopeID)
+			count, err = ts.CountByRiskAssessmentScopeID(ctx, conn, predicate, scopeID)
 			if err != nil {
 				return fmt.Errorf("cannot count risk threats: %w", err)
 			}
@@ -1327,14 +1327,14 @@ func (s *Service) CountThreatsForScopeID(ctx context.Context, scope coredata.Sco
 	return count, nil
 }
 
-func (s *Service) CreateScenario(ctx context.Context, scope coredata.Scoper, req CreateRiskAssessmentScenarioRequest) (*coredata.RiskAssessmentScenario, error) {
+func (s *Service) CreateScenario(ctx context.Context, predicate coredata.Predicater, req CreateRiskAssessmentScenarioRequest) (*coredata.RiskAssessmentScenario, error) {
 	if err := req.Validate(); err != nil {
 		return nil, fmt.Errorf("invalid request: %w", err)
 	}
 
 	now := time.Now()
 	scenario := &coredata.RiskAssessmentScenario{
-		ID:                    gid.New(scope.GetTenantID(), coredata.RiskAssessmentScenarioEntityType),
+		ID:                    gid.New(predicate.GetTenantID(), coredata.RiskAssessmentScenarioEntityType),
 		RiskAssessmentScopeID: req.RiskAssessmentScopeID,
 		Name:                  req.Name,
 		Description:           req.Description,
@@ -1346,12 +1346,12 @@ func (s *Service) CreateScenario(ctx context.Context, scope coredata.Scoper, req
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			raScope := coredata.RiskAssessmentScope{}
-			if err := raScope.LoadByID(ctx, tx, scope, req.RiskAssessmentScopeID); err != nil {
+			if err := raScope.LoadByID(ctx, tx, predicate, req.RiskAssessmentScopeID); err != nil {
 				return fmt.Errorf("cannot load risk assessment scope: %w", err)
 			}
 
 			scenario.OrganizationID = raScope.OrganizationID
-			if err := scenario.Insert(ctx, tx, scope); err != nil {
+			if err := scenario.Insert(ctx, tx, predicate); err != nil {
 				return fmt.Errorf("cannot insert risk scenario: %w", err)
 			}
 
@@ -1365,13 +1365,13 @@ func (s *Service) CreateScenario(ctx context.Context, scope coredata.Scoper, req
 	return scenario, nil
 }
 
-func (s *Service) GetScenario(ctx context.Context, scope coredata.Scoper, id gid.GID) (*coredata.RiskAssessmentScenario, error) {
+func (s *Service) GetScenario(ctx context.Context, predicate coredata.Predicater, id gid.GID) (*coredata.RiskAssessmentScenario, error) {
 	scenario := &coredata.RiskAssessmentScenario{}
 
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			if err := scenario.LoadByID(ctx, conn, scope, id); err != nil {
+			if err := scenario.LoadByID(ctx, conn, predicate, id); err != nil {
 				return fmt.Errorf("cannot load risk scenario: %w", err)
 			}
 
@@ -1385,7 +1385,7 @@ func (s *Service) GetScenario(ctx context.Context, scope coredata.Scoper, id gid
 	return scenario, nil
 }
 
-func (s *Service) UpdateScenario(ctx context.Context, scope coredata.Scoper, req UpdateRiskAssessmentScenarioRequest) (*coredata.RiskAssessmentScenario, error) {
+func (s *Service) UpdateScenario(ctx context.Context, predicate coredata.Predicater, req UpdateRiskAssessmentScenarioRequest) (*coredata.RiskAssessmentScenario, error) {
 	if err := req.Validate(); err != nil {
 		return nil, fmt.Errorf("invalid request: %w", err)
 	}
@@ -1395,7 +1395,7 @@ func (s *Service) UpdateScenario(ctx context.Context, scope coredata.Scoper, req
 	err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			if err := scenario.LoadByID(ctx, tx, scope, req.ID); err != nil {
+			if err := scenario.LoadByID(ctx, tx, predicate, req.ID); err != nil {
 				return fmt.Errorf("cannot load risk scenario: %w", err)
 			}
 
@@ -1408,7 +1408,7 @@ func (s *Service) UpdateScenario(ctx context.Context, scope coredata.Scoper, req
 			}
 
 			scenario.UpdatedAt = time.Now()
-			if err := scenario.Update(ctx, tx, scope); err != nil {
+			if err := scenario.Update(ctx, tx, predicate); err != nil {
 				return fmt.Errorf("cannot update risk scenario: %w", err)
 			}
 
@@ -1422,12 +1422,12 @@ func (s *Service) UpdateScenario(ctx context.Context, scope coredata.Scoper, req
 	return scenario, nil
 }
 
-func (s *Service) DeleteScenario(ctx context.Context, scope coredata.Scoper, id gid.GID) error {
+func (s *Service) DeleteScenario(ctx context.Context, predicate coredata.Predicater, id gid.GID) error {
 	return s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			scenario := &coredata.RiskAssessmentScenario{}
-			if err := scenario.Delete(ctx, tx, scope, id); err != nil {
+			if err := scenario.Delete(ctx, tx, predicate, id); err != nil {
 				return fmt.Errorf("cannot delete risk scenario: %w", err)
 			}
 
@@ -1438,7 +1438,7 @@ func (s *Service) DeleteScenario(ctx context.Context, scope coredata.Scoper, id 
 
 func (s *Service) ListScenariosForOrganizationID(
 	ctx context.Context,
-	scope coredata.Scoper,
+	predicate coredata.Predicater,
 	organizationID gid.GID,
 	cursor *page.Cursor[coredata.RiskAssessmentScenarioOrderField],
 ) (*page.Page[*coredata.RiskAssessmentScenario, coredata.RiskAssessmentScenarioOrderField], error) {
@@ -1447,7 +1447,7 @@ func (s *Service) ListScenariosForOrganizationID(
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			if err := results.LoadByOrganizationID(ctx, conn, scope, organizationID, cursor); err != nil {
+			if err := results.LoadByOrganizationID(ctx, conn, predicate, organizationID, cursor); err != nil {
 				return fmt.Errorf("cannot list risk scenarios: %w", err)
 			}
 
@@ -1463,7 +1463,7 @@ func (s *Service) ListScenariosForOrganizationID(
 
 func (s *Service) CountScenariosForOrganizationID(
 	ctx context.Context,
-	scope coredata.Scoper,
+	predicate coredata.Predicater,
 	organizationID gid.GID,
 ) (int, error) {
 	var count int
@@ -1473,7 +1473,7 @@ func (s *Service) CountScenariosForOrganizationID(
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			ss := &coredata.RiskAssessmentScenarios{}
 
-			count, err = ss.CountByOrganizationID(ctx, conn, scope, organizationID)
+			count, err = ss.CountByOrganizationID(ctx, conn, predicate, organizationID)
 			if err != nil {
 				return fmt.Errorf("cannot count risk scenarios: %w", err)
 			}
@@ -1490,7 +1490,7 @@ func (s *Service) CountScenariosForOrganizationID(
 
 func (s *Service) ListScenariosForRiskID(
 	ctx context.Context,
-	scope coredata.Scoper,
+	predicate coredata.Predicater,
 	riskID gid.GID,
 	cursor *page.Cursor[coredata.RiskAssessmentScenarioOrderField],
 ) (*page.Page[*coredata.RiskAssessmentScenario, coredata.RiskAssessmentScenarioOrderField], error) {
@@ -1499,7 +1499,7 @@ func (s *Service) ListScenariosForRiskID(
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			if err := results.LoadByRiskID(ctx, conn, scope, riskID, cursor); err != nil {
+			if err := results.LoadByRiskID(ctx, conn, predicate, riskID, cursor); err != nil {
 				return fmt.Errorf("cannot list risk scenarios: %w", err)
 			}
 
@@ -1513,7 +1513,7 @@ func (s *Service) ListScenariosForRiskID(
 	return page.NewPage(results, cursor), nil
 }
 
-func (s *Service) CountScenariosForRiskID(ctx context.Context, scope coredata.Scoper, riskID gid.GID) (int, error) {
+func (s *Service) CountScenariosForRiskID(ctx context.Context, predicate coredata.Predicater, riskID gid.GID) (int, error) {
 	var count int
 
 	err := s.pg.WithConn(
@@ -1521,7 +1521,7 @@ func (s *Service) CountScenariosForRiskID(ctx context.Context, scope coredata.Sc
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			ss := &coredata.RiskAssessmentScenarios{}
 
-			count, err = ss.CountByRiskID(ctx, conn, scope, riskID)
+			count, err = ss.CountByRiskID(ctx, conn, predicate, riskID)
 			if err != nil {
 				return fmt.Errorf("cannot count risk scenarios: %w", err)
 			}
@@ -1538,7 +1538,7 @@ func (s *Service) CountScenariosForRiskID(ctx context.Context, scope coredata.Sc
 
 func (s *Service) ListScenariosForScopeID(
 	ctx context.Context,
-	scope coredata.Scoper,
+	predicate coredata.Predicater,
 	scopeID gid.GID,
 	cursor *page.Cursor[coredata.RiskAssessmentScenarioOrderField],
 ) (*page.Page[*coredata.RiskAssessmentScenario, coredata.RiskAssessmentScenarioOrderField], error) {
@@ -1547,7 +1547,7 @@ func (s *Service) ListScenariosForScopeID(
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			if err := results.LoadByRiskAssessmentScopeID(ctx, conn, scope, scopeID, cursor); err != nil {
+			if err := results.LoadByRiskAssessmentScopeID(ctx, conn, predicate, scopeID, cursor); err != nil {
 				return fmt.Errorf("cannot list risk scenarios: %w", err)
 			}
 
@@ -1561,7 +1561,7 @@ func (s *Service) ListScenariosForScopeID(
 	return page.NewPage(results, cursor), nil
 }
 
-func (s *Service) CountScenariosForScopeID(ctx context.Context, scope coredata.Scoper, scopeID gid.GID) (int, error) {
+func (s *Service) CountScenariosForScopeID(ctx context.Context, predicate coredata.Predicater, scopeID gid.GID) (int, error) {
 	var count int
 
 	err := s.pg.WithConn(
@@ -1569,7 +1569,7 @@ func (s *Service) CountScenariosForScopeID(ctx context.Context, scope coredata.S
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			ss := &coredata.RiskAssessmentScenarios{}
 
-			count, err = ss.CountByRiskAssessmentScopeID(ctx, conn, scope, scopeID)
+			count, err = ss.CountByRiskAssessmentScopeID(ctx, conn, predicate, scopeID)
 			if err != nil {
 				return fmt.Errorf("cannot count risk scenarios: %w", err)
 			}
@@ -1584,7 +1584,7 @@ func (s *Service) CountScenariosForScopeID(ctx context.Context, scope coredata.S
 	return count, nil
 }
 
-func (s *Service) LinkScenarioThreat(ctx context.Context, scope coredata.Scoper, req LinkRiskAssessmentScenarioThreatRequest) error {
+func (s *Service) LinkScenarioThreat(ctx context.Context, predicate coredata.Predicater, req LinkRiskAssessmentScenarioThreatRequest) error {
 	if err := req.Validate(); err != nil {
 		return fmt.Errorf("invalid request: %w", err)
 	}
@@ -1593,12 +1593,12 @@ func (s *Service) LinkScenarioThreat(ctx context.Context, scope coredata.Scoper,
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			scenario := coredata.RiskAssessmentScenario{}
-			if err := scenario.LoadByID(ctx, tx, scope, req.RiskAssessmentScenarioID); err != nil {
+			if err := scenario.LoadByID(ctx, tx, predicate, req.RiskAssessmentScenarioID); err != nil {
 				return fmt.Errorf("cannot load risk scenario: %w", err)
 			}
 
 			threat := coredata.RiskAssessmentThreat{}
-			if err := threat.LoadByID(ctx, tx, scope, req.ThreatID); err != nil {
+			if err := threat.LoadByID(ctx, tx, predicate, req.ThreatID); err != nil {
 				return fmt.Errorf("cannot load threat: %w", err)
 			}
 
@@ -1615,7 +1615,7 @@ func (s *Service) LinkScenarioThreat(ctx context.Context, scope coredata.Scoper,
 				RiskAssessmentThreatID:   req.ThreatID,
 				CreatedAt:                time.Now(),
 			}
-			if err := link.Insert(ctx, tx, scope); err != nil {
+			if err := link.Insert(ctx, tx, predicate); err != nil {
 				return fmt.Errorf("cannot link scenario threat: %w", err)
 			}
 
@@ -1624,7 +1624,7 @@ func (s *Service) LinkScenarioThreat(ctx context.Context, scope coredata.Scoper,
 	)
 }
 
-func (s *Service) UnlinkScenarioThreat(ctx context.Context, scope coredata.Scoper, req UnlinkRiskAssessmentScenarioThreatRequest) error {
+func (s *Service) UnlinkScenarioThreat(ctx context.Context, predicate coredata.Predicater, req UnlinkRiskAssessmentScenarioThreatRequest) error {
 	if err := req.Validate(); err != nil {
 		return fmt.Errorf("invalid request: %w", err)
 	}
@@ -1636,7 +1636,7 @@ func (s *Service) UnlinkScenarioThreat(ctx context.Context, scope coredata.Scope
 				RiskAssessmentScenarioID: req.RiskAssessmentScenarioID,
 				RiskAssessmentThreatID:   req.ThreatID,
 			}
-			if err := link.Delete(ctx, tx, scope); err != nil {
+			if err := link.Delete(ctx, tx, predicate); err != nil {
 				return fmt.Errorf("cannot unlink scenario threat: %w", err)
 			}
 
@@ -1645,7 +1645,7 @@ func (s *Service) UnlinkScenarioThreat(ctx context.Context, scope coredata.Scope
 	)
 }
 
-func (s *Service) LinkScenarioRisk(ctx context.Context, scope coredata.Scoper, req LinkRiskAssessmentScenarioRiskRequest) error {
+func (s *Service) LinkScenarioRisk(ctx context.Context, predicate coredata.Predicater, req LinkRiskAssessmentScenarioRiskRequest) error {
 	if err := req.Validate(); err != nil {
 		return fmt.Errorf("invalid request: %w", err)
 	}
@@ -1654,12 +1654,12 @@ func (s *Service) LinkScenarioRisk(ctx context.Context, scope coredata.Scoper, r
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			scenario := coredata.RiskAssessmentScenario{}
-			if err := scenario.LoadByID(ctx, tx, scope, req.RiskAssessmentScenarioID); err != nil {
+			if err := scenario.LoadByID(ctx, tx, predicate, req.RiskAssessmentScenarioID); err != nil {
 				return fmt.Errorf("cannot load risk scenario: %w", err)
 			}
 
 			risk := coredata.Risk{}
-			if err := risk.LoadByID(ctx, tx, scope, req.RiskID); err != nil {
+			if err := risk.LoadByID(ctx, tx, predicate, req.RiskID); err != nil {
 				return fmt.Errorf("cannot load risk: %w", err)
 			}
 
@@ -1676,7 +1676,7 @@ func (s *Service) LinkScenarioRisk(ctx context.Context, scope coredata.Scoper, r
 				RiskID:                   req.RiskID,
 				CreatedAt:                time.Now(),
 			}
-			if err := link.Insert(ctx, tx, scope); err != nil {
+			if err := link.Insert(ctx, tx, predicate); err != nil {
 				return fmt.Errorf("cannot link scenario risk: %w", err)
 			}
 
@@ -1685,7 +1685,7 @@ func (s *Service) LinkScenarioRisk(ctx context.Context, scope coredata.Scoper, r
 	)
 }
 
-func (s *Service) UnlinkScenarioRisk(ctx context.Context, scope coredata.Scoper, req UnlinkRiskAssessmentScenarioRiskRequest) error {
+func (s *Service) UnlinkScenarioRisk(ctx context.Context, predicate coredata.Predicater, req UnlinkRiskAssessmentScenarioRiskRequest) error {
 	if err := req.Validate(); err != nil {
 		return fmt.Errorf("invalid request: %w", err)
 	}
@@ -1697,7 +1697,7 @@ func (s *Service) UnlinkScenarioRisk(ctx context.Context, scope coredata.Scoper,
 				RiskAssessmentScenarioID: req.RiskAssessmentScenarioID,
 				RiskID:                   req.RiskID,
 			}
-			if err := link.Delete(ctx, tx, scope); err != nil {
+			if err := link.Delete(ctx, tx, predicate); err != nil {
 				return fmt.Errorf("cannot unlink scenario risk: %w", err)
 			}
 
@@ -1708,7 +1708,7 @@ func (s *Service) UnlinkScenarioRisk(ctx context.Context, scope coredata.Scoper,
 
 func (s *Service) ListThreatsForScenarioID(
 	ctx context.Context,
-	scope coredata.Scoper,
+	predicate coredata.Predicater,
 	scenarioID gid.GID,
 	cursor *page.Cursor[coredata.RiskAssessmentThreatOrderField],
 ) (*page.Page[*coredata.RiskAssessmentThreat, coredata.RiskAssessmentThreatOrderField], error) {
@@ -1717,7 +1717,7 @@ func (s *Service) ListThreatsForScenarioID(
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			if err := results.LoadByScenarioID(ctx, conn, scope, scenarioID, cursor); err != nil {
+			if err := results.LoadByScenarioID(ctx, conn, predicate, scenarioID, cursor); err != nil {
 				return fmt.Errorf("cannot list scenario threats: %w", err)
 			}
 
@@ -1731,7 +1731,7 @@ func (s *Service) ListThreatsForScenarioID(
 	return page.NewPage(results, cursor), nil
 }
 
-func (s *Service) CountThreatsForScenarioID(ctx context.Context, scope coredata.Scoper, scenarioID gid.GID) (int, error) {
+func (s *Service) CountThreatsForScenarioID(ctx context.Context, predicate coredata.Predicater, scenarioID gid.GID) (int, error) {
 	var count int
 
 	err := s.pg.WithConn(
@@ -1739,7 +1739,7 @@ func (s *Service) CountThreatsForScenarioID(ctx context.Context, scope coredata.
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			ts := &coredata.RiskAssessmentThreats{}
 
-			count, err = ts.CountByScenarioID(ctx, conn, scope, scenarioID)
+			count, err = ts.CountByScenarioID(ctx, conn, predicate, scenarioID)
 			if err != nil {
 				return fmt.Errorf("cannot count scenario threats: %w", err)
 			}
@@ -1756,7 +1756,7 @@ func (s *Service) CountThreatsForScenarioID(ctx context.Context, scope coredata.
 
 func (s *Service) ListRisksForScenarioID(
 	ctx context.Context,
-	scope coredata.Scoper,
+	predicate coredata.Predicater,
 	scenarioID gid.GID,
 	cursor *page.Cursor[coredata.RiskOrderField],
 ) (*page.Page[*coredata.Risk, coredata.RiskOrderField], error) {
@@ -1765,7 +1765,7 @@ func (s *Service) ListRisksForScenarioID(
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			if err := results.LoadByScenarioID(ctx, conn, scope, scenarioID, cursor); err != nil {
+			if err := results.LoadByScenarioID(ctx, conn, predicate, scenarioID, cursor); err != nil {
 				return fmt.Errorf("cannot list scenario risks: %w", err)
 			}
 
@@ -1779,7 +1779,7 @@ func (s *Service) ListRisksForScenarioID(
 	return page.NewPage(results, cursor), nil
 }
 
-func (s *Service) CountRisksForScenarioID(ctx context.Context, scope coredata.Scoper, scenarioID gid.GID) (int, error) {
+func (s *Service) CountRisksForScenarioID(ctx context.Context, predicate coredata.Predicater, scenarioID gid.GID) (int, error) {
 	var count int
 
 	err := s.pg.WithConn(
@@ -1787,7 +1787,7 @@ func (s *Service) CountRisksForScenarioID(ctx context.Context, scope coredata.Sc
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			rs := &coredata.Risks{}
 
-			count, err = rs.CountByScenarioID(ctx, conn, scope, scenarioID)
+			count, err = rs.CountByScenarioID(ctx, conn, predicate, scenarioID)
 			if err != nil {
 				return fmt.Errorf("cannot count scenario risks: %w", err)
 			}
@@ -1805,13 +1805,13 @@ func (s *Service) CountRisksForScenarioID(ctx context.Context, scope coredata.Sc
 func (s *Service) assertNodeInScope(
 	ctx context.Context,
 	tx pg.Tx,
-	scope coredata.Scoper,
+	predicate coredata.Predicater,
 	nodeID gid.GID,
 	scopeID gid.GID,
 	field string,
 ) error {
 	node := &coredata.RiskAssessmentNode{}
-	if err := node.LoadByID(ctx, tx, scope, nodeID); err != nil {
+	if err := node.LoadByID(ctx, tx, predicate, nodeID); err != nil {
 		return validator.ValidationErrors{{
 			Field:   field,
 			Code:    validator.ErrorCodeCustom,
@@ -1833,13 +1833,13 @@ func (s *Service) assertNodeInScope(
 func (s *Service) assertBoundaryInScope(
 	ctx context.Context,
 	tx pg.Tx,
-	scope coredata.Scoper,
+	predicate coredata.Predicater,
 	boundaryID gid.GID,
 	scopeID gid.GID,
 	field string,
 ) error {
 	boundary := &coredata.RiskAssessmentBoundary{}
-	if err := boundary.LoadByID(ctx, tx, scope, boundaryID); err != nil {
+	if err := boundary.LoadByID(ctx, tx, predicate, boundaryID); err != nil {
 		return validator.ValidationErrors{{
 			Field:   field,
 			Code:    validator.ErrorCodeCustom,
@@ -1867,7 +1867,7 @@ func (s *Service) assertBoundaryInScope(
 func (s *Service) assertNoBoundaryCycle(
 	ctx context.Context,
 	tx pg.Tx,
-	scope coredata.Scoper,
+	predicate coredata.Predicater,
 	boundaryID gid.GID,
 	proposedParentID gid.GID,
 	field string,
@@ -1891,7 +1891,7 @@ func (s *Service) assertNoBoundaryCycle(
 		visited[currentID] = true
 
 		current := &coredata.RiskAssessmentBoundary{}
-		if err := current.LoadByID(ctx, tx, scope, currentID); err != nil {
+		if err := current.LoadByID(ctx, tx, predicate, currentID); err != nil {
 			return fmt.Errorf("cannot load parent boundary: %w", err)
 		}
 
@@ -1906,13 +1906,13 @@ func (s *Service) assertNoBoundaryCycle(
 func (s *Service) assertProcessInScope(
 	ctx context.Context,
 	tx pg.Tx,
-	scope coredata.Scoper,
+	predicate coredata.Predicater,
 	processID gid.GID,
 	scopeID gid.GID,
 	field string,
 ) error {
 	process := &coredata.RiskAssessmentProcess{}
-	if err := process.LoadByID(ctx, tx, scope, processID); err != nil {
+	if err := process.LoadByID(ctx, tx, predicate, processID); err != nil {
 		return validator.ValidationErrors{{
 			Field:   field,
 			Code:    validator.ErrorCodeCustom,

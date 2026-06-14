@@ -37,7 +37,7 @@ func NewService(pgClient *pg.Client) *Service {
 
 func (s *Service) Get(
 	ctx context.Context,
-	scope coredata.Scoper,
+	predicate coredata.Predicater,
 	agentRunID gid.GID,
 ) (*coredata.AgentRun, error) {
 	run := &coredata.AgentRun{}
@@ -45,7 +45,7 @@ func (s *Service) Get(
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			if err := run.LoadByID(ctx, conn, scope, agentRunID); err != nil {
+			if err := run.LoadByID(ctx, conn, predicate, agentRunID); err != nil {
 				return fmt.Errorf("cannot load agent run: %w", err)
 			}
 
@@ -61,7 +61,7 @@ func (s *Service) Get(
 
 func (s *Service) ListForOrganizationID(
 	ctx context.Context,
-	scope coredata.Scoper,
+	predicate coredata.Predicater,
 	organizationID gid.GID,
 	cursor *page.Cursor[coredata.AgentRunOrderField],
 ) (*page.Page[*coredata.AgentRun, coredata.AgentRunOrderField], error) {
@@ -71,11 +71,11 @@ func (s *Service) ListForOrganizationID(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
 			organization := &coredata.Organization{}
-			if err := organization.LoadByID(ctx, conn, scope, organizationID); err != nil {
+			if err := organization.LoadByID(ctx, conn, predicate, organizationID); err != nil {
 				return fmt.Errorf("cannot load organization: %w", err)
 			}
 
-			if err := runs.LoadByOrganizationID(ctx, conn, scope, organization.ID, cursor); err != nil {
+			if err := runs.LoadByOrganizationID(ctx, conn, predicate, organization.ID, cursor); err != nil {
 				return fmt.Errorf("cannot load agent runs: %w", err)
 			}
 
@@ -97,7 +97,7 @@ func (s *Service) ListForOrganizationID(
 // refreshed run is returned.
 func (s *Service) SubmitApproval(
 	ctx context.Context,
-	scope coredata.Scoper,
+	predicate coredata.Predicater,
 	agentRunID gid.GID,
 	decisions map[string]agent.ApprovalResult,
 ) (*coredata.AgentRun, error) {
@@ -106,7 +106,7 @@ func (s *Service) SubmitApproval(
 	err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			if err := run.LoadByIDForUpdate(ctx, tx, scope, agentRunID); err != nil {
+			if err := run.LoadByIDForUpdate(ctx, tx, predicate, agentRunID); err != nil {
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return ErrAgentRunNotFound
 				}
@@ -136,7 +136,7 @@ func (s *Service) SubmitApproval(
 			run.StartedAt = nil
 			run.UpdatedAt = time.Now()
 
-			if err := run.RequeueForApprovalResume(ctx, tx, scope); err != nil {
+			if err := run.RequeueForApprovalResume(ctx, tx, predicate); err != nil {
 				return fmt.Errorf("cannot requeue agent run for approval resume: %w", err)
 			}
 
@@ -152,7 +152,7 @@ func (s *Service) SubmitApproval(
 
 func (s *Service) CountForOrganizationID(
 	ctx context.Context,
-	scope coredata.Scoper,
+	predicate coredata.Predicater,
 	organizationID gid.GID,
 ) (int, error) {
 	var count int
@@ -162,7 +162,7 @@ func (s *Service) CountForOrganizationID(
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			runs := &coredata.AgentRuns{}
 
-			count, err = runs.CountByOrganizationID(ctx, conn, scope, organizationID)
+			count, err = runs.CountByOrganizationID(ctx, conn, predicate, organizationID)
 			if err != nil {
 				return fmt.Errorf("cannot count agent runs: %w", err)
 			}

@@ -43,7 +43,7 @@ type (
 func (co ControlObligation) Upsert(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 INSERT INTO
@@ -65,7 +65,7 @@ ON CONFLICT (control_id, obligation_id) DO NOTHING;
 	args := pgx.StrictNamedArgs{
 		"control_id":    co.ControlID,
 		"obligation_id": co.ObligationID,
-		"tenant_id":     scope.GetTenantID(),
+		"tenant_id":     predicate.GetTenantID(),
 		"created_at":    co.CreatedAt,
 	}
 	_, err := conn.Exec(ctx, q, args)
@@ -76,7 +76,7 @@ ON CONFLICT (control_id, obligation_id) DO NOTHING;
 func (co ControlObligation) Delete(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 	controlID gid.GID,
 	obligationID gid.GID,
 ) error {
@@ -94,8 +94,8 @@ WHERE
 		"control_id":    controlID,
 		"obligation_id": obligationID,
 	}
-	maps.Copy(args, scope.SQLArguments())
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	maps.Copy(args, predicate.SQLArguments())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	_, err := conn.Exec(ctx, q, args)
 
@@ -105,7 +105,7 @@ WHERE
 func (cos *ControlObligations) CountByControlID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	controlID gid.GID,
 	filter *ControlObligationFilter,
 ) (int, error) {
@@ -129,10 +129,10 @@ FROM
 WHERE %s
 	AND %s
 `
-	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment(), filter.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"control_id": controlID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 	maps.Copy(args, filter.SQLArguments())
 
 	row := conn.QueryRow(ctx, q, args)
@@ -148,7 +148,7 @@ WHERE %s
 func LoadObligationTypesByControlIDs(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	controlIDs []gid.GID,
 ) ([]ControlObligationType, error) {
 	q := `
@@ -172,10 +172,10 @@ FROM
 WHERE
     %s;
 `
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"control_ids": controlIDs}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {

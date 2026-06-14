@@ -51,14 +51,14 @@ func (r *agentRunResolver) Permission(ctx context.Context, obj *types.AgentRun, 
 
 // TotalCount is the resolver for the totalCount field.
 func (r *agentRunConnectionResolver) TotalCount(ctx context.Context, obj *types.AgentRunConnection) (int, error) {
-	scope, err := r.authorize(ctx, obj.ParentID, agentrun.ActionAgentRunList)
+	predicate, err := r.authorize(ctx, obj.ParentID, agentrun.ActionAgentRunList)
 	if err != nil {
 		return 0, err
 	}
 
 	switch obj.Resolver.(type) {
 	case *organizationResolver:
-		count, err := r.agentRun.CountForOrganizationID(ctx, scope, obj.ParentID)
+		count, err := r.agentRun.CountForOrganizationID(ctx, predicate, obj.ParentID)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count agent runs", log.Error(err))
 			return 0, gqlutils.Internal(ctx)
@@ -74,7 +74,7 @@ func (r *agentRunConnectionResolver) TotalCount(ctx context.Context, obj *types.
 
 // SubmitAgentRunApproval is the resolver for the submitAgentRunApproval field.
 func (r *mutationResolver) SubmitAgentRunApproval(ctx context.Context, input types.SubmitAgentRunApprovalInput) (*types.SubmitAgentRunApprovalPayload, error) {
-	scope, err := r.authorize(ctx, input.AgentRunID, agentrun.ActionAgentRunApprove)
+	predicate, err := r.authorize(ctx, input.AgentRunID, agentrun.ActionAgentRunApprove)
 	if err != nil {
 		return nil, err
 	}
@@ -92,7 +92,7 @@ func (r *mutationResolver) SubmitAgentRunApproval(ctx context.Context, input typ
 		}
 	}
 
-	run, err := r.agentRun.SubmitApproval(ctx, scope, input.AgentRunID, decisions)
+	run, err := r.agentRun.SubmitApproval(ctx, predicate, input.AgentRunID, decisions)
 	if err != nil {
 		switch {
 		case errors.Is(err, agentrun.ErrAgentRunNotFound):

@@ -94,7 +94,7 @@ func (umr *UpdateMeasureRequest) Validate() error {
 }
 
 func (s MeasureService) CountForRiskID(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	riskID gid.GID,
 	filter *coredata.MeasureFilter,
 ) (int, error) {
@@ -105,7 +105,7 @@ func (s MeasureService) CountForRiskID(
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			measures := &coredata.Measures{}
 
-			count, err = measures.CountByRiskID(ctx, conn, scope, riskID, filter)
+			count, err = measures.CountByRiskID(ctx, conn, predicate, riskID, filter)
 			if err != nil {
 				return fmt.Errorf("cannot count measures: %w", err)
 			}
@@ -120,7 +120,7 @@ func (s MeasureService) CountForRiskID(
 	return count, nil
 }
 func (s MeasureService) ListForRiskID(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	riskID gid.GID,
 	cursor *page.Cursor[coredata.MeasureOrderField],
 	filter *coredata.MeasureFilter,
@@ -132,11 +132,11 @@ func (s MeasureService) ListForRiskID(
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			if err := risk.LoadByID(ctx, conn, scope, riskID); err != nil {
+			if err := risk.LoadByID(ctx, conn, predicate, riskID); err != nil {
 				return fmt.Errorf("cannot load risk: %w", err)
 			}
 
-			err := measures.LoadByRiskID(ctx, conn, scope, risk.ID, cursor, filter)
+			err := measures.LoadByRiskID(ctx, conn, predicate, risk.ID, cursor, filter)
 			if err != nil {
 				return fmt.Errorf("cannot load measures: %w", err)
 			}
@@ -152,7 +152,7 @@ func (s MeasureService) ListForRiskID(
 }
 
 func (s MeasureService) CountForControlID(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	controlID gid.GID,
 	filter *coredata.MeasureFilter,
 ) (int, error) {
@@ -163,7 +163,7 @@ func (s MeasureService) CountForControlID(
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			measures := &coredata.Measures{}
 
-			count, err = measures.CountByControlID(ctx, conn, scope, controlID, filter)
+			count, err = measures.CountByControlID(ctx, conn, predicate, controlID, filter)
 			if err != nil {
 				return fmt.Errorf("cannot count measures: %w", err)
 			}
@@ -179,7 +179,7 @@ func (s MeasureService) CountForControlID(
 }
 
 func (s MeasureService) ListForControlID(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	controlID gid.GID,
 	cursor *page.Cursor[coredata.MeasureOrderField],
 	filter *coredata.MeasureFilter,
@@ -191,11 +191,11 @@ func (s MeasureService) ListForControlID(
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			if err := control.LoadByID(ctx, conn, scope, controlID); err != nil {
+			if err := control.LoadByID(ctx, conn, predicate, controlID); err != nil {
 				return fmt.Errorf("cannot load control: %w", err)
 			}
 
-			err := measures.LoadByControlID(ctx, conn, scope, control.ID, cursor, filter)
+			err := measures.LoadByControlID(ctx, conn, predicate, control.ID, cursor, filter)
 			if err != nil {
 				return fmt.Errorf("cannot load measures: %w", err)
 			}
@@ -211,7 +211,7 @@ func (s MeasureService) ListForControlID(
 }
 
 func (s MeasureService) CountForOrganizationID(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	organizationID gid.GID,
 	filter *coredata.MeasureFilter,
 ) (int, error) {
@@ -222,7 +222,7 @@ func (s MeasureService) CountForOrganizationID(
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			measures := &coredata.Measures{}
 
-			count, err = measures.CountByOrganizationID(ctx, conn, scope, organizationID, filter)
+			count, err = measures.CountByOrganizationID(ctx, conn, predicate, organizationID, filter)
 			if err != nil {
 				return fmt.Errorf("cannot count measures: %w", err)
 			}
@@ -238,7 +238,7 @@ func (s MeasureService) CountForOrganizationID(
 }
 
 func (s MeasureService) ListDistinctCategoriesForOrganizationID(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	organizationID gid.GID,
 ) ([]string, error) {
 	var categories []string
@@ -247,7 +247,7 @@ func (s MeasureService) ListDistinctCategoriesForOrganizationID(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
 			organization := &coredata.Organization{}
-			if err := organization.LoadByID(ctx, conn, scope, organizationID); err != nil {
+			if err := organization.LoadByID(ctx, conn, predicate, organizationID); err != nil {
 				return fmt.Errorf("cannot load organization: %w", err)
 			}
 
@@ -258,9 +258,7 @@ func (s MeasureService) ListDistinctCategoriesForOrganizationID(
 
 			categories, err = measures.LoadDistinctCategoriesByOrganizationID(
 				ctx,
-				conn,
-				scope,
-				organization.ID,
+				conn, predicate, organization.ID,
 			)
 			if err != nil {
 				return fmt.Errorf("cannot load measure categories: %w", err)
@@ -277,7 +275,7 @@ func (s MeasureService) ListDistinctCategoriesForOrganizationID(
 }
 
 func (s MeasureService) ListForOrganizationID(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	organizationID gid.GID,
 	cursor *page.Cursor[coredata.MeasureOrderField],
 	filter *coredata.MeasureFilter,
@@ -289,15 +287,13 @@ func (s MeasureService) ListForOrganizationID(
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			if err := organization.LoadByID(ctx, conn, scope, organizationID); err != nil {
+			if err := organization.LoadByID(ctx, conn, predicate, organizationID); err != nil {
 				return fmt.Errorf("cannot load organization: %w", err)
 			}
 
 			err := measures.LoadByOrganizationID(
 				ctx,
-				conn,
-				scope,
-				organization.ID,
+				conn, predicate, organization.ID,
 				cursor,
 				filter,
 			)
@@ -316,7 +312,7 @@ func (s MeasureService) ListForOrganizationID(
 }
 
 func (s MeasureService) Get(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	measureID gid.GID,
 ) (*coredata.Measure, error) {
 	measure := &coredata.Measure{}
@@ -324,7 +320,7 @@ func (s MeasureService) Get(
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			return measure.LoadByID(ctx, conn, scope, measureID)
+			return measure.LoadByID(ctx, conn, predicate, measureID)
 		},
 	)
 	if err != nil {
@@ -335,7 +331,7 @@ func (s MeasureService) Get(
 }
 
 func (s MeasureService) GetByIDs(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	measureIDs ...gid.GID,
 ) (coredata.Measures, error) {
 	var measures coredata.Measures
@@ -345,9 +341,7 @@ func (s MeasureService) GetByIDs(
 		func(ctx context.Context, conn pg.Querier) error {
 			if err := measures.LoadByIDs(
 				ctx,
-				conn,
-				scope,
-				measureIDs,
+				conn, predicate, measureIDs,
 			); err != nil {
 				return fmt.Errorf("cannot load measures by ids: %w", err)
 			}
@@ -363,7 +357,7 @@ func (s MeasureService) GetByIDs(
 }
 
 func (s MeasureService) Import(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	organizationID gid.GID,
 	req ImportMeasureRequest,
 ) (*page.Page[*coredata.Measure, coredata.MeasureOrderField], error) {
@@ -373,7 +367,7 @@ func (s MeasureService) Import(
 	err := s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			if err := organization.LoadByID(ctx, tx, scope, organizationID); err != nil {
+			if err := organization.LoadByID(ctx, tx, predicate, organizationID); err != nil {
 				return fmt.Errorf("cannot load organization: %w", err)
 			}
 
@@ -396,7 +390,7 @@ func (s MeasureService) Import(
 
 				importedMeasures = append(importedMeasures, measure)
 
-				if err := measure.Upsert(ctx, tx, scope); err != nil {
+				if err := measure.Upsert(ctx, tx, predicate); err != nil {
 					return fmt.Errorf("cannot upsert measure: %w", err)
 				}
 
@@ -417,7 +411,7 @@ func (s MeasureService) Import(
 						UpdatedAt:      now,
 					}
 
-					if err := task.Upsert(ctx, tx, scope); err != nil {
+					if err := task.Upsert(ctx, tx, predicate); err != nil {
 						return fmt.Errorf("cannot upsert task: %w", err)
 					}
 
@@ -437,7 +431,7 @@ func (s MeasureService) Import(
 							UpdatedAt:         now,
 						}
 
-						if err := evidence.Upsert(ctx, tx, scope); err != nil {
+						if err := evidence.Upsert(ctx, tx, predicate); err != nil {
 							return fmt.Errorf("cannot upsert evidence: %w", err)
 						}
 					}
@@ -445,12 +439,12 @@ func (s MeasureService) Import(
 
 				for _, standard := range req.Measures[i].Standards {
 					framework := &coredata.Framework{}
-					if err := framework.LoadByReferenceID(ctx, tx, scope, standard.Framework); err != nil {
+					if err := framework.LoadByReferenceID(ctx, tx, predicate, standard.Framework); err != nil {
 						continue
 					}
 
 					control := &coredata.Control{}
-					if err := control.LoadByFrameworkIDAndSectionTitle(ctx, tx, scope, framework.ID, standard.Control); err != nil {
+					if err := control.LoadByFrameworkIDAndSectionTitle(ctx, tx, predicate, framework.ID, standard.Control); err != nil {
 						continue
 					}
 
@@ -461,7 +455,7 @@ func (s MeasureService) Import(
 						CreatedAt:      now,
 					}
 
-					if err := controlMeasure.Upsert(ctx, tx, scope); err != nil {
+					if err := controlMeasure.Upsert(ctx, tx, predicate); err != nil {
 						return fmt.Errorf("cannot insert control measure: %w", err)
 					}
 				}
@@ -488,7 +482,7 @@ func (s MeasureService) Import(
 }
 
 func (s MeasureService) Update(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	req UpdateMeasureRequest,
 ) (*coredata.Measure, error) {
 	if err := req.Validate(); err != nil {
@@ -500,7 +494,7 @@ func (s MeasureService) Update(
 	err := s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
-			if err := measure.LoadByID(ctx, conn, scope, req.ID); err != nil {
+			if err := measure.LoadByID(ctx, conn, predicate, req.ID); err != nil {
 				return fmt.Errorf("cannot load measure: %w", err)
 			}
 
@@ -522,7 +516,7 @@ func (s MeasureService) Update(
 
 			measure.UpdatedAt = time.Now()
 
-			if err := measure.Update(ctx, conn, scope); err != nil {
+			if err := measure.Update(ctx, conn, predicate); err != nil {
 				return fmt.Errorf("cannot update measure: %w", err)
 			}
 
@@ -537,7 +531,7 @@ func (s MeasureService) Update(
 }
 
 func (s MeasureService) Create(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	req CreateMeasureRequest,
 ) (*coredata.Measure, error) {
 	if err := req.Validate(); err != nil {
@@ -558,7 +552,7 @@ func (s MeasureService) Create(
 	err = s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
-			if err := organization.LoadByID(ctx, conn, scope, req.OrganizationID); err != nil {
+			if err := organization.LoadByID(ctx, conn, predicate, req.OrganizationID); err != nil {
 				return fmt.Errorf("cannot load organization: %w", err)
 			}
 
@@ -574,7 +568,7 @@ func (s MeasureService) Create(
 				UpdatedAt:      now,
 			}
 
-			if err := measure.Insert(ctx, conn, scope); err != nil {
+			if err := measure.Insert(ctx, conn, predicate); err != nil {
 				return fmt.Errorf("cannot insert measure: %w", err)
 			}
 
@@ -589,13 +583,13 @@ func (s MeasureService) Create(
 }
 
 func (s MeasureService) Delete(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	measureID gid.GID,
 ) error {
 	return s.svc.pg.WithTx(ctx, func(ctx context.Context, conn pg.Tx) error {
 		measure := &coredata.Measure{}
 
-		if err := measure.Delete(ctx, conn, scope, measureID); err != nil {
+		if err := measure.Delete(ctx, conn, predicate, measureID); err != nil {
 			return fmt.Errorf("cannot delete measure: %w", err)
 		}
 
@@ -604,7 +598,7 @@ func (s MeasureService) Delete(
 }
 
 func (s MeasureService) CreateDocumentMapping(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	measureID gid.GID,
 	documentID gid.GID,
 ) (*coredata.Measure, *coredata.Document, error) {
@@ -614,11 +608,11 @@ func (s MeasureService) CreateDocumentMapping(
 	err := s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			if err := measure.LoadByID(ctx, tx, scope, measureID); err != nil {
+			if err := measure.LoadByID(ctx, tx, predicate, measureID); err != nil {
 				return fmt.Errorf("cannot load measure: %w", err)
 			}
 
-			if err := document.LoadByID(ctx, tx, scope, documentID); err != nil {
+			if err := document.LoadByID(ctx, tx, predicate, documentID); err != nil {
 				return fmt.Errorf("cannot load document: %w", err)
 			}
 
@@ -626,11 +620,11 @@ func (s MeasureService) CreateDocumentMapping(
 				MeasureID:      measure.ID,
 				DocumentID:     document.ID,
 				OrganizationID: measure.OrganizationID,
-				TenantID:       scope.GetTenantID(),
+				TenantID:       predicate.GetTenantID(),
 				CreatedAt:      time.Now(),
 			}
 
-			if err := measureDocument.Insert(ctx, tx, scope); err != nil {
+			if err := measureDocument.Insert(ctx, tx, predicate); err != nil {
 				return fmt.Errorf("cannot insert measure document: %w", err)
 			}
 
@@ -645,7 +639,7 @@ func (s MeasureService) CreateDocumentMapping(
 }
 
 func (s MeasureService) CountForThirdPartyID(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	thirdPartyID gid.GID,
 	filter *coredata.MeasureFilter,
 ) (int, error) {
@@ -656,7 +650,7 @@ func (s MeasureService) CountForThirdPartyID(
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			measures := &coredata.Measures{}
 
-			count, err = measures.CountByThirdPartyID(ctx, conn, scope, thirdPartyID, filter)
+			count, err = measures.CountByThirdPartyID(ctx, conn, predicate, thirdPartyID, filter)
 			if err != nil {
 				return fmt.Errorf("cannot count measures: %w", err)
 			}
@@ -672,7 +666,7 @@ func (s MeasureService) CountForThirdPartyID(
 }
 
 func (s MeasureService) ListForThirdPartyID(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	thirdPartyID gid.GID,
 	cursor *page.Cursor[coredata.MeasureOrderField],
 	filter *coredata.MeasureFilter,
@@ -684,11 +678,11 @@ func (s MeasureService) ListForThirdPartyID(
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			if err := thirdParty.LoadByID(ctx, conn, scope, thirdPartyID); err != nil {
+			if err := thirdParty.LoadByID(ctx, conn, predicate, thirdPartyID); err != nil {
 				return fmt.Errorf("cannot load third party: %w", err)
 			}
 
-			err := measures.LoadByThirdPartyID(ctx, conn, scope, thirdParty.ID, cursor, filter)
+			err := measures.LoadByThirdPartyID(ctx, conn, predicate, thirdParty.ID, cursor, filter)
 			if err != nil {
 				return fmt.Errorf("cannot load measures: %w", err)
 			}
@@ -704,7 +698,7 @@ func (s MeasureService) ListForThirdPartyID(
 }
 
 func (s MeasureService) CreateThirdPartyMapping(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	measureID gid.GID,
 	thirdPartyID gid.GID,
 ) (*coredata.Measure, *coredata.ThirdParty, error) {
@@ -714,11 +708,11 @@ func (s MeasureService) CreateThirdPartyMapping(
 	err := s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			if err := measure.LoadByID(ctx, tx, scope, measureID); err != nil {
+			if err := measure.LoadByID(ctx, tx, predicate, measureID); err != nil {
 				return fmt.Errorf("cannot load measure: %w", err)
 			}
 
-			if err := thirdParty.LoadByID(ctx, tx, scope, thirdPartyID); err != nil {
+			if err := thirdParty.LoadByID(ctx, tx, predicate, thirdPartyID); err != nil {
 				return fmt.Errorf("cannot load third party: %w", err)
 			}
 
@@ -728,7 +722,7 @@ func (s MeasureService) CreateThirdPartyMapping(
 				CreatedAt:    time.Now(),
 			}
 
-			if err := measureThirdParty.Upsert(ctx, tx, scope); err != nil {
+			if err := measureThirdParty.Upsert(ctx, tx, predicate); err != nil {
 				return fmt.Errorf("cannot upsert measure third party: %w", err)
 			}
 
@@ -743,7 +737,7 @@ func (s MeasureService) CreateThirdPartyMapping(
 }
 
 func (s MeasureService) DeleteThirdPartyMapping(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	measureID gid.GID,
 	thirdPartyID gid.GID,
 ) (*coredata.Measure, *coredata.ThirdParty, error) {
@@ -753,16 +747,16 @@ func (s MeasureService) DeleteThirdPartyMapping(
 	err := s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			if err := measure.LoadByID(ctx, tx, scope, measureID); err != nil {
+			if err := measure.LoadByID(ctx, tx, predicate, measureID); err != nil {
 				return fmt.Errorf("cannot load measure: %w", err)
 			}
 
-			if err := thirdParty.LoadByID(ctx, tx, scope, thirdPartyID); err != nil {
+			if err := thirdParty.LoadByID(ctx, tx, predicate, thirdPartyID); err != nil {
 				return fmt.Errorf("cannot load third party: %w", err)
 			}
 
 			measureThirdParty := &coredata.MeasureThirdParty{}
-			if err := measureThirdParty.Delete(ctx, tx, scope, measure.ID, thirdParty.ID); err != nil {
+			if err := measureThirdParty.Delete(ctx, tx, predicate, measure.ID, thirdParty.ID); err != nil {
 				return fmt.Errorf("cannot delete measure third party mapping: %w", err)
 			}
 
@@ -777,7 +771,7 @@ func (s MeasureService) DeleteThirdPartyMapping(
 }
 
 func (s MeasureService) DeleteDocumentMapping(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	measureID gid.GID,
 	documentID gid.GID,
 ) (*coredata.Measure, *coredata.Document, error) {
@@ -787,16 +781,16 @@ func (s MeasureService) DeleteDocumentMapping(
 	err := s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			if err := measure.LoadByID(ctx, tx, scope, measureID); err != nil {
+			if err := measure.LoadByID(ctx, tx, predicate, measureID); err != nil {
 				return fmt.Errorf("cannot load measure: %w", err)
 			}
 
-			if err := document.LoadByID(ctx, tx, scope, documentID); err != nil {
+			if err := document.LoadByID(ctx, tx, predicate, documentID); err != nil {
 				return fmt.Errorf("cannot load document: %w", err)
 			}
 
 			measureDocument := &coredata.MeasureDocument{}
-			if err := measureDocument.Delete(ctx, tx, scope, measure.ID, document.ID); err != nil {
+			if err := measureDocument.Delete(ctx, tx, predicate, measure.ID, document.ID); err != nil {
 				return fmt.Errorf("cannot delete measure document mapping: %w", err)
 			}
 

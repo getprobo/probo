@@ -30,7 +30,7 @@ import (
 // accessEntryFixture bootstraps the parent rows (organization, campaign,
 // source) that the access_entries FKs require.
 type accessEntryFixture struct {
-	scope          *coredata.Scope
+	predicate *coredata.Predicate
 	organizationID gid.GID
 	campaignID     gid.GID
 	sourceID       gid.GID
@@ -41,7 +41,7 @@ func seedAccessEntryFixture(t *testing.T, ctx context.Context, client *pg.Client
 	t.Helper()
 
 	tenantID := gid.NewTenantID()
-	scope := coredata.NewScope(tenantID)
+	predicate := coredata.NewPredicate(tenantID)
 	organizationID := gid.New(tenantID, coredata.OrganizationEntityType)
 	campaignID := gid.New(tenantID, coredata.AccessReviewCampaignEntityType)
 	sourceID := gid.New(tenantID, coredata.AccessSourceEntityType)
@@ -68,7 +68,7 @@ func seedAccessEntryFixture(t *testing.T, ctx context.Context, client *pg.Client
 			CreatedAt:      now,
 			UpdatedAt:      now,
 		}
-		if err := source.Insert(ctx, tx, scope); err != nil {
+		if err := source.Insert(ctx, tx, predicate); err != nil {
 			return err
 		}
 
@@ -80,7 +80,7 @@ func seedAccessEntryFixture(t *testing.T, ctx context.Context, client *pg.Client
 			CreatedAt:      now,
 			UpdatedAt:      now,
 		}
-		if err := campaign.Insert(ctx, tx, scope); err != nil {
+		if err := campaign.Insert(ctx, tx, predicate); err != nil {
 			return err
 		}
 
@@ -112,7 +112,7 @@ func seedAccessEntryFixture(t *testing.T, ctx context.Context, client *pg.Client
 	})
 
 	return accessEntryFixture{
-		scope:          scope,
+		predicate:      predicate,
 		organizationID: organizationID,
 		campaignID:     campaignID,
 		sourceID:       sourceID,
@@ -127,7 +127,7 @@ func TestAccessEntry_Upsert_FreezesDecidedFields(t *testing.T) {
 	ctx := context.Background()
 	fx := seedAccessEntryFixture(t, ctx, client)
 
-	tenantID := fx.scope.GetTenantID()
+	tenantID := fx.predicate.GetTenantID()
 	originalFlagReasons := []string{"original-flag-reason"}
 	originalFlags := []coredata.AccessEntryFlag{coredata.AccessEntryFlagNew}
 	originalEmail := "old@example.com"
@@ -165,7 +165,7 @@ func TestAccessEntry_Upsert_FreezesDecidedFields(t *testing.T) {
 	}
 
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
-		return initial.Upsert(ctx, tx, fx.scope)
+		return initial.Upsert(ctx, tx, fx.predicate)
 	}))
 
 	// Step 2: Record a decision via Update — APPROVED with decided_by / decided_at.
@@ -185,7 +185,7 @@ func TestAccessEntry_Upsert_FreezesDecidedFields(t *testing.T) {
 	}
 
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
-		return decided.Update(ctx, tx, fx.scope)
+		return decided.Update(ctx, tx, fx.predicate)
 	}))
 
 	// Step 3: Second Upsert with the same unique key but new flags, new
@@ -222,14 +222,14 @@ func TestAccessEntry_Upsert_FreezesDecidedFields(t *testing.T) {
 	}
 
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
-		return refresh.Upsert(ctx, tx, fx.scope)
+		return refresh.Upsert(ctx, tx, fx.predicate)
 	}))
 
 	// Step 4: Load and assert the freeze semantics.
 	loaded := &coredata.AccessEntry{}
 
 	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
-		return loaded.LoadByID(ctx, conn, fx.scope, entryID)
+		return loaded.LoadByID(ctx, conn, fx.predicate, entryID)
 	}))
 
 	// Decision fields are FROZEN at APPROVED / decided_by / decided_at /
@@ -272,7 +272,7 @@ func TestAccessEntry_Upsert_RefreshesSourceTrackingFields(t *testing.T) {
 	ctx := context.Background()
 	fx := seedAccessEntryFixture(t, ctx, client)
 
-	tenantID := fx.scope.GetTenantID()
+	tenantID := fx.predicate.GetTenantID()
 	t0 := time.Now().UTC().Truncate(time.Microsecond)
 
 	entryID := gid.New(tenantID, coredata.AccessEntryEntityType)
@@ -298,7 +298,7 @@ func TestAccessEntry_Upsert_RefreshesSourceTrackingFields(t *testing.T) {
 	}
 
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
-		return first.Upsert(ctx, tx, fx.scope)
+		return first.Upsert(ctx, tx, fx.predicate)
 	}))
 
 	t1 := t0.Add(1 * time.Hour)
@@ -324,13 +324,13 @@ func TestAccessEntry_Upsert_RefreshesSourceTrackingFields(t *testing.T) {
 	}
 
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
-		return second.Upsert(ctx, tx, fx.scope)
+		return second.Upsert(ctx, tx, fx.predicate)
 	}))
 
 	loaded := &coredata.AccessEntry{}
 
 	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
-		return loaded.LoadByID(ctx, conn, fx.scope, entryID)
+		return loaded.LoadByID(ctx, conn, fx.predicate, entryID)
 	}))
 
 	// Source-tracking columns advanced to the second poll's values.
@@ -357,7 +357,7 @@ func TestAccessEntry_Upsert_RefreshesActiveStatus(t *testing.T) {
 	ctx := context.Background()
 	fx := seedAccessEntryFixture(t, ctx, client)
 
-	tenantID := fx.scope.GetTenantID()
+	tenantID := fx.predicate.GetTenantID()
 	t0 := time.Now().UTC().Truncate(time.Microsecond)
 	activeTrue := true
 	activeFalse := false
@@ -386,7 +386,7 @@ func TestAccessEntry_Upsert_RefreshesActiveStatus(t *testing.T) {
 	}
 
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
-		return first.Upsert(ctx, tx, fx.scope)
+		return first.Upsert(ctx, tx, fx.predicate)
 	}))
 
 	t1 := t0.Add(1 * time.Hour)
@@ -413,13 +413,13 @@ func TestAccessEntry_Upsert_RefreshesActiveStatus(t *testing.T) {
 	}
 
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
-		return second.Upsert(ctx, tx, fx.scope)
+		return second.Upsert(ctx, tx, fx.predicate)
 	}))
 
 	loaded := &coredata.AccessEntry{}
 
 	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
-		return loaded.LoadByID(ctx, conn, fx.scope, entryID)
+		return loaded.LoadByID(ctx, conn, fx.predicate, entryID)
 	}))
 
 	require.NotNil(t, loaded.Active)
@@ -438,7 +438,7 @@ func TestAccessEntry_Upsert_InsertsActiveAccount(t *testing.T) {
 	ctx := context.Background()
 	fx := seedAccessEntryFixture(t, ctx, client)
 
-	tenantID := fx.scope.GetTenantID()
+	tenantID := fx.predicate.GetTenantID()
 	t0 := time.Now().UTC().Truncate(time.Microsecond)
 
 	activeTrue := true
@@ -466,13 +466,13 @@ func TestAccessEntry_Upsert_InsertsActiveAccount(t *testing.T) {
 	}
 
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
-		return entry.Upsert(ctx, tx, fx.scope)
+		return entry.Upsert(ctx, tx, fx.predicate)
 	}))
 
 	loaded := &coredata.AccessEntry{}
 
 	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
-		return loaded.LoadByID(ctx, conn, fx.scope, entryID)
+		return loaded.LoadByID(ctx, conn, fx.predicate, entryID)
 	}))
 
 	require.NotNil(t, loaded.Active)

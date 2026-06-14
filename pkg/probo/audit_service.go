@@ -103,7 +103,7 @@ func (uarr *UploadAuditReportRequest) Validate() error {
 }
 
 func (s AuditService) Get(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	auditID gid.GID,
 ) (*coredata.Audit, error) {
 	audit := &coredata.Audit{}
@@ -111,7 +111,7 @@ func (s AuditService) Get(
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			if err := audit.LoadByID(ctx, conn, scope, auditID); err != nil {
+			if err := audit.LoadByID(ctx, conn, predicate, auditID); err != nil {
 				return fmt.Errorf("cannot load audit: %w", err)
 			}
 
@@ -126,7 +126,7 @@ func (s AuditService) Get(
 }
 
 func (s AuditService) GetByReportFileID(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	fileID gid.GID,
 ) (*coredata.Audit, error) {
 	audit := &coredata.Audit{}
@@ -134,7 +134,7 @@ func (s AuditService) GetByReportFileID(
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			if err := audit.LoadByReportFileID(ctx, conn, scope, fileID); err != nil {
+			if err := audit.LoadByReportFileID(ctx, conn, predicate, fileID); err != nil {
 				return fmt.Errorf("cannot load report file: %w", err)
 			}
 
@@ -149,7 +149,7 @@ func (s AuditService) GetByReportFileID(
 }
 
 func (s *AuditService) Create(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	req *CreateAuditRequest,
 ) (*coredata.Audit, error) {
 	if err := req.Validate(); err != nil {
@@ -158,7 +158,7 @@ func (s *AuditService) Create(
 
 	now := time.Now()
 	audit := &coredata.Audit{
-		ID:                    gid.New(scope.GetTenantID(), coredata.AuditEntityType),
+		ID:                    gid.New(predicate.GetTenantID(), coredata.AuditEntityType),
 		Name:                  req.Name,
 		OrganizationID:        req.OrganizationID,
 		FrameworkID:           req.FrameworkID,
@@ -182,16 +182,16 @@ func (s *AuditService) Create(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
 			organization := &coredata.Organization{}
-			if err := organization.LoadByID(ctx, conn, scope, req.OrganizationID); err != nil {
+			if err := organization.LoadByID(ctx, conn, predicate, req.OrganizationID); err != nil {
 				return fmt.Errorf("cannot load organization: %w", err)
 			}
 
 			framework := &coredata.Framework{}
-			if err := framework.LoadByID(ctx, conn, scope, req.FrameworkID); err != nil {
+			if err := framework.LoadByID(ctx, conn, predicate, req.FrameworkID); err != nil {
 				return fmt.Errorf("cannot load framework: %w", err)
 			}
 
-			if err := audit.Insert(ctx, conn, scope); err != nil {
+			if err := audit.Insert(ctx, conn, predicate); err != nil {
 				return fmt.Errorf("cannot insert audit: %w", err)
 			}
 
@@ -206,7 +206,7 @@ func (s *AuditService) Create(
 }
 
 func (s *AuditService) Update(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	req *UpdateAuditRequest,
 ) (*coredata.Audit, error) {
 	if err := req.Validate(); err != nil {
@@ -218,7 +218,7 @@ func (s *AuditService) Update(
 	err := s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
-			if err := audit.LoadByID(ctx, conn, scope, req.ID); err != nil {
+			if err := audit.LoadByID(ctx, conn, predicate, req.ID); err != nil {
 				return fmt.Errorf("cannot load audit: %w", err)
 			}
 
@@ -244,7 +244,7 @@ func (s *AuditService) Update(
 
 			audit.UpdatedAt = time.Now()
 
-			if err := audit.Update(ctx, conn, scope); err != nil {
+			if err := audit.Update(ctx, conn, predicate); err != nil {
 				return fmt.Errorf("cannot update audit: %w", err)
 			}
 
@@ -259,7 +259,7 @@ func (s *AuditService) Update(
 }
 
 func (s AuditService) Delete(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	auditID gid.GID,
 ) error {
 	audit := coredata.Audit{ID: auditID}
@@ -267,7 +267,7 @@ func (s AuditService) Delete(
 	return s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			err := audit.Delete(ctx, tx, scope)
+			err := audit.Delete(ctx, tx, predicate)
 			if err != nil {
 				return fmt.Errorf("cannot delete audit: %w", err)
 			}
@@ -278,7 +278,7 @@ func (s AuditService) Delete(
 }
 
 func (s AuditService) ListForOrganizationID(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	organizationID gid.GID,
 	cursor *page.Cursor[coredata.AuditOrderField],
 ) (*page.Page[*coredata.Audit, coredata.AuditOrderField], error) {
@@ -289,7 +289,7 @@ func (s AuditService) ListForOrganizationID(
 		func(ctx context.Context, conn pg.Querier) error {
 			filter := coredata.NewAuditFilter()
 
-			err := audits.LoadByOrganizationID(ctx, conn, scope, organizationID, cursor, filter)
+			err := audits.LoadByOrganizationID(ctx, conn, predicate, organizationID, cursor, filter)
 			if err != nil {
 				return fmt.Errorf("cannot load audits: %w", err)
 			}
@@ -305,7 +305,7 @@ func (s AuditService) ListForOrganizationID(
 }
 
 func (s AuditService) CountForOrganizationID(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	organizationID gid.GID,
 ) (int, error) {
 	var count int
@@ -315,7 +315,7 @@ func (s AuditService) CountForOrganizationID(
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			audits := coredata.Audits{}
 
-			count, err = audits.CountByOrganizationID(ctx, conn, scope, organizationID)
+			count, err = audits.CountByOrganizationID(ctx, conn, predicate, organizationID)
 			if err != nil {
 				return fmt.Errorf("cannot count audits: %w", err)
 			}
@@ -331,7 +331,7 @@ func (s AuditService) CountForOrganizationID(
 }
 
 func (s AuditService) UploadReport(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	req *UploadAuditReportRequest,
 ) (*coredata.Audit, error) {
 	if err := req.Validate(); err != nil {
@@ -343,7 +343,7 @@ func (s AuditService) UploadReport(
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			err := audit.LoadByID(ctx, conn, scope, req.AuditID)
+			err := audit.LoadByID(ctx, conn, predicate, req.AuditID)
 			if err != nil {
 				return fmt.Errorf("cannot load audit: %w", err)
 			}
@@ -361,8 +361,7 @@ func (s AuditService) UploadReport(
 	)
 
 	file, err := s.svc.Files.UploadAndSaveFile(
-		ctx, scope,
-		fv,
+		ctx, predicate, fv,
 		map[string]string{"organization-id": audit.OrganizationID.String()},
 		&FileUpload{
 			Content:     req.File.Content,
@@ -378,14 +377,14 @@ func (s AuditService) UploadReport(
 	err = s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
-			if err := audit.LoadByID(ctx, conn, scope, req.AuditID); err != nil {
+			if err := audit.LoadByID(ctx, conn, predicate, req.AuditID); err != nil {
 				return fmt.Errorf("cannot load audit: %w", err)
 			}
 
 			audit.ReportFileID = &file.ID
 			audit.UpdatedAt = time.Now()
 
-			return audit.Update(ctx, conn, scope)
+			return audit.Update(ctx, conn, predicate)
 		},
 	)
 	if err != nil {
@@ -396,11 +395,11 @@ func (s AuditService) UploadReport(
 }
 
 func (s AuditService) GenerateReportURL(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	auditID gid.GID,
 	expiresIn time.Duration,
 ) (*string, error) {
-	audit, err := s.Get(ctx, scope, auditID)
+	audit, err := s.Get(ctx, predicate, auditID)
 	if err != nil {
 		return nil, fmt.Errorf("cannot get audit: %w", err)
 	}
@@ -409,7 +408,7 @@ func (s AuditService) GenerateReportURL(
 		return nil, fmt.Errorf("audit has no report")
 	}
 
-	url, err := s.svc.Files.GenerateFileURL(ctx, scope, *audit.ReportFileID, expiresIn)
+	url, err := s.svc.Files.GenerateFileURL(ctx, predicate, *audit.ReportFileID, expiresIn)
 	if err != nil {
 		return nil, fmt.Errorf("cannot generate report download URL: %w", err)
 	}
@@ -418,7 +417,7 @@ func (s AuditService) GenerateReportURL(
 }
 
 func (s AuditService) DeleteReport(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	auditID gid.GID,
 ) (*coredata.Audit, error) {
 	audit := &coredata.Audit{}
@@ -426,21 +425,21 @@ func (s AuditService) DeleteReport(
 	return audit, s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
-			if err := audit.LoadByID(ctx, conn, scope, auditID); err != nil {
+			if err := audit.LoadByID(ctx, conn, predicate, auditID); err != nil {
 				return fmt.Errorf("cannot load audit: %w", err)
 			}
 
 			if audit.ReportFileID != nil {
 				file := coredata.File{ID: *audit.ReportFileID}
 
-				if err := file.SoftDelete(ctx, conn, scope); err != nil {
+				if err := file.SoftDelete(ctx, conn, predicate); err != nil {
 					return fmt.Errorf("cannot soft-delete report file: %w", err)
 				}
 
 				audit.ReportFileID = nil
 				audit.UpdatedAt = time.Now()
 
-				if err := audit.Update(ctx, conn, scope); err != nil {
+				if err := audit.Update(ctx, conn, predicate); err != nil {
 					return fmt.Errorf("cannot update audit: %w", err)
 				}
 			}
@@ -451,7 +450,7 @@ func (s AuditService) DeleteReport(
 }
 
 func (s AuditService) ListForControlID(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	controlID gid.GID,
 	cursor *page.Cursor[coredata.AuditOrderField],
 ) (*page.Page[*coredata.Audit, coredata.AuditOrderField], error) {
@@ -462,11 +461,11 @@ func (s AuditService) ListForControlID(
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			if err := control.LoadByID(ctx, conn, scope, controlID); err != nil {
+			if err := control.LoadByID(ctx, conn, predicate, controlID); err != nil {
 				return fmt.Errorf("cannot load control: %w", err)
 			}
 
-			err := audits.LoadByControlID(ctx, conn, scope, control.ID, cursor)
+			err := audits.LoadByControlID(ctx, conn, predicate, control.ID, cursor)
 			if err != nil {
 				return fmt.Errorf("cannot load audits: %w", err)
 			}
@@ -482,7 +481,7 @@ func (s AuditService) ListForControlID(
 }
 
 func (s AuditService) CountForControlID(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	controlID gid.GID,
 ) (int, error) {
 	var count int
@@ -492,7 +491,7 @@ func (s AuditService) CountForControlID(
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			audits := coredata.Audits{}
 
-			count, err = audits.CountByControlID(ctx, conn, scope, controlID)
+			count, err = audits.CountByControlID(ctx, conn, predicate, controlID)
 			if err != nil {
 				return fmt.Errorf("cannot count audits: %w", err)
 			}
@@ -508,7 +507,7 @@ func (s AuditService) CountForControlID(
 }
 
 func (s AuditService) CountForFindingID(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	findingID gid.GID,
 ) (int, error) {
 	var count int
@@ -518,7 +517,7 @@ func (s AuditService) CountForFindingID(
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			audits := coredata.Audits{}
 
-			count, err = audits.CountByFindingID(ctx, conn, scope, findingID)
+			count, err = audits.CountByFindingID(ctx, conn, predicate, findingID)
 			if err != nil {
 				return fmt.Errorf("cannot count audits: %w", err)
 			}
@@ -534,7 +533,7 @@ func (s AuditService) CountForFindingID(
 }
 
 func (s AuditService) ListForFindingID(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	findingID gid.GID,
 	cursor *page.Cursor[coredata.AuditOrderField],
 ) (*page.Page[*coredata.Audit, coredata.AuditOrderField], error) {
@@ -545,11 +544,11 @@ func (s AuditService) ListForFindingID(
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			if err := finding.LoadByID(ctx, conn, scope, findingID); err != nil {
+			if err := finding.LoadByID(ctx, conn, predicate, findingID); err != nil {
 				return fmt.Errorf("cannot load finding: %w", err)
 			}
 
-			err := audits.LoadByFindingID(ctx, conn, scope, finding.ID, cursor)
+			err := audits.LoadByFindingID(ctx, conn, predicate, finding.ID, cursor)
 			if err != nil {
 				return fmt.Errorf("cannot load audits: %w", err)
 			}

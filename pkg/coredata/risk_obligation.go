@@ -39,7 +39,7 @@ type (
 func (ro RiskObligation) Insert(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 INSERT INTO risks_obligations (
@@ -61,7 +61,7 @@ INSERT INTO risks_obligations (
 		"risk_id":         ro.RiskID,
 		"obligation_id":   ro.ObligationID,
 		"organization_id": ro.OrganizationID,
-		"tenant_id":       scope.GetTenantID(),
+		"tenant_id":       predicate.GetTenantID(),
 		"created_at":      ro.CreatedAt,
 	}
 
@@ -76,7 +76,7 @@ INSERT INTO risks_obligations (
 func (ro RiskObligation) Delete(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 DELETE FROM risks_obligations
@@ -86,13 +86,13 @@ WHERE
 	AND obligation_id = @obligation_id
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"risk_id":       ro.RiskID,
 		"obligation_id": ro.ObligationID,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {

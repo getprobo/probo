@@ -93,7 +93,7 @@ func (mlu *MailingListUpdate) AuthorizationAttributes(
 	return attrsByID, nil
 }
 
-func (mlu *MailingListUpdate) Insert(ctx context.Context, conn pg.Tx, scope Scoper) error {
+func (mlu *MailingListUpdate) Insert(ctx context.Context, conn pg.Tx, predicate Predicater) error {
 	q := `
 INSERT INTO mailing_list_updates (
 	id,
@@ -127,14 +127,14 @@ INSERT INTO mailing_list_updates (
 		"created_at":      mlu.CreatedAt,
 		"updated_at":      mlu.UpdatedAt,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
 
 	return err
 }
 
-func (mlu *MailingListUpdate) Update(ctx context.Context, conn pg.Tx, scope Scoper) error {
+func (mlu *MailingListUpdate) Update(ctx context.Context, conn pg.Tx, predicate Predicater) error {
 	q := `
 UPDATE mailing_list_updates
 SET
@@ -146,7 +146,7 @@ WHERE
 	%s
 	AND id = @id
 `
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"id":         mlu.ID,
@@ -155,7 +155,7 @@ WHERE
 		"status":     mlu.Status,
 		"updated_at": mlu.UpdatedAt,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	tag, err := conn.Exec(ctx, q, args)
 	if err != nil {
@@ -169,19 +169,19 @@ WHERE
 	return nil
 }
 
-func (mlu *MailingListUpdate) Delete(ctx context.Context, conn pg.Tx, scope Scoper) error {
+func (mlu *MailingListUpdate) Delete(ctx context.Context, conn pg.Tx, predicate Predicater) error {
 	q := `
 DELETE FROM mailing_list_updates
 WHERE
 	%s
 	AND id = @id
 `
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"id": mlu.ID,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
@@ -191,7 +191,7 @@ WHERE
 	return nil
 }
 
-func (mlu *MailingListUpdate) LoadByID(ctx context.Context, conn pg.Querier, scope Scoper, id gid.GID) error {
+func (mlu *MailingListUpdate) LoadByID(ctx context.Context, conn pg.Querier, predicate Predicater, id gid.GID) error {
 	q := `
 SELECT
 	id,
@@ -208,12 +208,12 @@ WHERE
 	AND id = @id
 LIMIT 1;
 `
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"id": id,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -237,7 +237,7 @@ LIMIT 1;
 func (mlul *MailingListUpdateItems) LoadSentByMailingListID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	mailingListID gid.GID,
 	cursor *page.Cursor[MailingListUpdateOrderField],
 ) error {
@@ -259,12 +259,12 @@ WHERE
 	AND %s
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"mailing_list_id": mailingListID,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
@@ -285,7 +285,7 @@ WHERE
 func (mlul *MailingListUpdateItems) LoadByMailingListID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	mailingListID gid.GID,
 	cursor *page.Cursor[MailingListUpdateOrderField],
 ) error {
@@ -306,12 +306,12 @@ WHERE
 	AND %s
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"mailing_list_id": mailingListID,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
@@ -332,7 +332,7 @@ WHERE
 func (mlul *MailingListUpdateItems) CountByMailingListID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	mailingListID gid.GID,
 ) (int, error) {
 	q := `
@@ -343,12 +343,12 @@ WHERE
 	AND mailing_list_id = @mailing_list_id
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"mailing_list_id": mailingListID,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	var count int
 	if err := conn.QueryRow(ctx, q, args).Scan(&count); err != nil {

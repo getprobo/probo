@@ -50,7 +50,7 @@ func (vcrcr *ThirdPartyComplianceReportCreateRequest) Validate() error {
 }
 
 func (s ThirdPartyComplianceReportService) ListForThirdPartyID(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	thirdPartyID gid.GID,
 	cursor *page.Cursor[coredata.ThirdPartyComplianceReportOrderField],
 ) (*page.Page[*coredata.ThirdPartyComplianceReport, coredata.ThirdPartyComplianceReportOrderField], error) {
@@ -59,7 +59,7 @@ func (s ThirdPartyComplianceReportService) ListForThirdPartyID(
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			return thirdPartyComplianceReports.LoadForThirdPartyID(ctx, conn, scope, thirdPartyID, cursor)
+			return thirdPartyComplianceReports.LoadForThirdPartyID(ctx, conn, predicate, thirdPartyID, cursor)
 		},
 	)
 	if err != nil {
@@ -70,7 +70,7 @@ func (s ThirdPartyComplianceReportService) ListForThirdPartyID(
 }
 
 func (s ThirdPartyComplianceReportService) Upload(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	thirdPartyID gid.GID,
 	req *ThirdPartyComplianceReportCreateRequest,
 ) (*coredata.ThirdPartyComplianceReport, error) {
@@ -78,15 +78,13 @@ func (s ThirdPartyComplianceReportService) Upload(
 		return nil, err
 	}
 
-	thirdParty, err := s.svc.ThirdParties.Get(ctx, scope, thirdPartyID)
+	thirdParty, err := s.svc.ThirdParties.Get(ctx, predicate, thirdPartyID)
 	if err != nil {
 		return nil, fmt.Errorf("cannot get thirdParty: %w", err)
 	}
 
 	f, err := s.svc.Files.UploadAndSaveFile(
-		ctx,
-		scope,
-		s.fileValidator,
+		ctx, predicate, s.fileValidator,
 		map[string]string{
 			"type":            "thirdParty-compliance-report",
 			"thirdParty-id":   thirdPartyID.String(),
@@ -99,7 +97,7 @@ func (s ThirdPartyComplianceReportService) Upload(
 
 	now := time.Now()
 
-	thirdPartyComplianceReportID := gid.New(scope.GetTenantID(), coredata.ThirdPartyComplianceReportEntityType)
+	thirdPartyComplianceReportID := gid.New(predicate.GetTenantID(), coredata.ThirdPartyComplianceReportEntityType)
 
 	thirdPartyComplianceReport := &coredata.ThirdPartyComplianceReport{
 		ID:             thirdPartyComplianceReportID,
@@ -116,7 +114,7 @@ func (s ThirdPartyComplianceReportService) Upload(
 	err = s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			return thirdPartyComplianceReport.Insert(ctx, tx, scope)
+			return thirdPartyComplianceReport.Insert(ctx, tx, predicate)
 		},
 	)
 	if err != nil {
@@ -127,7 +125,7 @@ func (s ThirdPartyComplianceReportService) Upload(
 }
 
 func (s ThirdPartyComplianceReportService) Get(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	thirdPartyComplianceReportID gid.GID,
 ) (*coredata.ThirdPartyComplianceReport, error) {
 	thirdPartyComplianceReport := &coredata.ThirdPartyComplianceReport{}
@@ -135,7 +133,7 @@ func (s ThirdPartyComplianceReportService) Get(
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			return thirdPartyComplianceReport.LoadByID(ctx, conn, scope, thirdPartyComplianceReportID)
+			return thirdPartyComplianceReport.LoadByID(ctx, conn, predicate, thirdPartyComplianceReportID)
 		},
 	)
 	if err != nil {
@@ -146,7 +144,7 @@ func (s ThirdPartyComplianceReportService) Get(
 }
 
 func (s ThirdPartyComplianceReportService) Delete(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	thirdPartyComplianceReportID gid.GID,
 ) error {
 	thirdPartyComplianceReport := &coredata.ThirdPartyComplianceReport{ID: thirdPartyComplianceReportID}
@@ -154,7 +152,7 @@ func (s ThirdPartyComplianceReportService) Delete(
 	err := s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			if err := thirdPartyComplianceReport.Delete(ctx, tx, scope); err != nil {
+			if err := thirdPartyComplianceReport.Delete(ctx, tx, predicate); err != nil {
 				return err
 			}
 

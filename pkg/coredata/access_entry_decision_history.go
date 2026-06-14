@@ -44,7 +44,7 @@ type (
 func (h *AccessEntryDecisionHistory) Insert(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 INSERT INTO access_entry_decision_history (
@@ -71,7 +71,7 @@ INSERT INTO access_entry_decision_history (
 `
 	args := pgx.StrictNamedArgs{
 		"id":              h.ID,
-		"tenant_id":       scope.GetTenantID(),
+		"tenant_id":       predicate.GetTenantID(),
 		"organization_id": h.OrganizationID,
 		"access_entry_id": h.AccessEntry,
 		"decision":        h.Decision,
@@ -131,7 +131,7 @@ func (h *AccessEntryDecisionHistory) AuthorizationAttributes(
 func (hs *AccessEntryDecisionHistories) LoadByEntryID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	entryID gid.GID,
 ) error {
 	q := `
@@ -151,10 +151,10 @@ WHERE
     AND access_entry_id = @access_entry_id
 ORDER BY decided_at ASC;
 `
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"access_entry_id": entryID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {

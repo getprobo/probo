@@ -96,7 +96,7 @@ func (dv *DocumentVersion) AuthorizationAttributes(
 func (dv *DocumentVersions) LoadByDocumentID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	documentID gid.GID,
 	cursor *page.Cursor[DocumentVersionOrderField],
 	filter *DocumentVersionFilter,
@@ -128,12 +128,12 @@ WHERE
 	AND %s
 	AND %s
 `
-	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"document_id": documentID,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 	maps.Copy(args, filter.SQLArguments())
 
@@ -164,7 +164,7 @@ func (dv DocumentVersion) CursorKey(orderBy DocumentVersionOrderField) page.Curs
 func (dv *DocumentVersion) LoadByID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	documentVersionID gid.GID,
 ) error {
 	q := `
@@ -194,12 +194,12 @@ WHERE
 LIMIT 1;
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"document_version_id": documentVersionID,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -223,7 +223,7 @@ LIMIT 1;
 func (dv DocumentVersion) Insert(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 INSERT INTO document_versions (
@@ -268,7 +268,7 @@ VALUES (
 )
 `
 	args := pgx.StrictNamedArgs{
-		"tenant_id":         scope.GetTenantID(),
+		"tenant_id":         predicate.GetTenantID(),
 		"id":                dv.ID,
 		"organization_id":   dv.OrganizationID,
 		"document_id":       dv.DocumentID,
@@ -307,7 +307,7 @@ VALUES (
 func (dv *DocumentVersion) LoadByDocumentIDAndVersion(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	documentID gid.GID,
 	major int,
 	minor int,
@@ -341,14 +341,14 @@ WHERE
 LIMIT 1;
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"document_id": documentID,
 		"major":       major,
 		"minor":       minor,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -372,7 +372,7 @@ LIMIT 1;
 func (dv *DocumentVersion) LoadLatestVersion(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	documentID gid.GID,
 ) error {
 	q := `
@@ -402,12 +402,12 @@ WHERE
 ORDER BY created_at DESC
 LIMIT 1;
 `
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"document_id": documentID,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -431,7 +431,7 @@ LIMIT 1;
 func (dv *DocumentVersion) LoadLatestPublishedVersion(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	documentID gid.GID,
 ) error {
 	q := `
@@ -462,13 +462,13 @@ WHERE
 ORDER BY published_at DESC
 LIMIT 1;
 `
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"document_id": documentID,
 		"status":      DocumentVersionStatusPublished,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -492,7 +492,7 @@ LIMIT 1;
 func (dv DocumentVersion) Update(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 UPDATE document_versions SET
@@ -513,7 +513,7 @@ WHERE %s
 	AND id = @document_version_id
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"document_version_id": dv.ID,
@@ -531,7 +531,7 @@ WHERE %s
 		"pdf_attempt_count":   dv.PdfAttemptCount,
 		"updated_at":          dv.UpdatedAt,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
@@ -544,20 +544,20 @@ WHERE %s
 func (dv DocumentVersion) Delete(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 DELETE FROM document_versions
 WHERE %s
 	AND id = @document_version_id
 `
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.NamedArgs{
 		"document_version_id": dv.ID,
 	}
 
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
@@ -656,7 +656,7 @@ WHERE
 func (dv *DocumentVersions) CountByDocumentID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	documentID gid.GID,
 	filter *DocumentVersionFilter,
 ) (int, error) {
@@ -671,10 +671,10 @@ WHERE
 	AND %s
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment(), filter.SQLFragment())
 
 	args := pgx.NamedArgs{"document_id": documentID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 	maps.Copy(args, filter.SQLArguments())
 
 	row := conn.QueryRow(ctx, q, args)

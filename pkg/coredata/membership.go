@@ -56,7 +56,7 @@ func (m Membership) CursorKey(orderBy MembershipOrderField) page.CursorKey {
 func (m *Membership) LoadByIdentityIDAndOrganizationID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	identityID gid.GID,
 	organizationID gid.GID,
 ) error {
@@ -76,13 +76,13 @@ WHERE
     AND %s
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"identity_id":     identityID,
 		"organization_id": organizationID,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows,
 		err := conn.Query(ctx, q, args)
@@ -104,7 +104,7 @@ WHERE
 	return nil
 }
 
-func (m *Membership) Insert(ctx context.Context, conn pg.Tx, scope Scoper) error {
+func (m *Membership) Insert(ctx context.Context, conn pg.Tx, predicate Predicater) error {
 	query := `
 INSERT INTO
     iam_memberships (
@@ -128,7 +128,7 @@ VALUES (
 `
 
 	args := pgx.StrictNamedArgs{
-		"tenant_id":       scope.GetTenantID(),
+		"tenant_id":       predicate.GetTenantID(),
 		"id":              m.ID,
 		"identity_id":     m.IdentityID,
 		"organization_id": m.OrganizationID,
@@ -156,7 +156,7 @@ VALUES (
 func (m *Membership) LoadByID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	membershipID gid.GID,
 ) error {
 	query := `
@@ -174,12 +174,12 @@ WHERE
     AND %s
 `
 
-	query = fmt.Sprintf(query, scope.SQLFragment())
+	query = fmt.Sprintf(query, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"membership_id": membershipID,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, query, args)
 	if err != nil {
@@ -264,7 +264,7 @@ WHERE
 func (m *Membership) LoadByIdentityAndOrg(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	identityID gid.GID,
 	organizationID gid.GID,
 ) error {
@@ -284,13 +284,13 @@ WHERE
     AND %s
 )
 `
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"identity_id":     identityID,
 		"organization_id": organizationID,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -311,7 +311,7 @@ WHERE
 	return nil
 }
 
-func (m *Membership) Update(ctx context.Context, conn pg.Tx, scope Scoper) error {
+func (m *Membership) Update(ctx context.Context, conn pg.Tx, predicate Predicater) error {
 	query := `
 UPDATE
     iam_memberships
@@ -324,7 +324,7 @@ WHERE
     AND %s
 `
 
-	query = fmt.Sprintf(query, scope.SQLFragment())
+	query = fmt.Sprintf(query, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"id":          m.ID,
@@ -332,7 +332,7 @@ WHERE
 		"role":        m.Role,
 		"updated_at":  m.UpdatedAt,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	result, err := conn.Exec(ctx, query, args)
 	if err != nil {
@@ -346,7 +346,7 @@ WHERE
 	return nil
 }
 
-func (m *Membership) Delete(ctx context.Context, conn pg.Tx, scope Scoper, membershipID gid.GID) error {
+func (m *Membership) Delete(ctx context.Context, conn pg.Tx, predicate Predicater, membershipID gid.GID) error {
 	query := `
 DELETE FROM
     iam_memberships
@@ -355,12 +355,12 @@ WHERE
     AND id = @membership_id
 `
 
-	query = fmt.Sprintf(query, scope.SQLFragment())
+	query = fmt.Sprintf(query, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"membership_id": membershipID,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	_, err := conn.Exec(ctx, query, args)
 	if err != nil {

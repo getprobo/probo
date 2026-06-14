@@ -91,7 +91,7 @@ func (h *vettingHandler) Claim(ctx context.Context) (coredata.ThirdParty, error)
 			thirdParty.VettingErrorMessage = nil
 			thirdParty.UpdatedAt = now
 
-			if err := thirdParty.Update(ctx, tx, coredata.NewNoScope()); err != nil {
+			if err := thirdParty.Update(ctx, tx, coredata.NewNoPredicate()); err != nil {
 				return fmt.Errorf("cannot update third party: %w", err)
 			}
 
@@ -221,14 +221,14 @@ func (h *vettingHandler) commitVettingOutcome(
 		func(ctx context.Context, tx pg.Tx) error {
 			thirdParty := &coredata.ThirdParty{}
 
-			if err := thirdParty.LoadByID(ctx, tx, coredata.NewNoScope(), thirdPartyID); err != nil {
+			if err := thirdParty.LoadByID(ctx, tx, coredata.NewNoPredicate(), thirdPartyID); err != nil {
 				return fmt.Errorf("cannot reload third party: %w", err)
 			}
 
 			apply(thirdParty)
 			thirdParty.UpdatedAt = time.Now()
 
-			if err := thirdParty.Update(ctx, tx, coredata.NewNoScope()); err != nil {
+			if err := thirdParty.Update(ctx, tx, coredata.NewNoPredicate()); err != nil {
 				return fmt.Errorf("cannot update third party: %w", err)
 			}
 

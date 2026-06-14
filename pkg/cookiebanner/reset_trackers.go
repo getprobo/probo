@@ -35,7 +35,7 @@ type ResetTrackersResult struct {
 
 // ResetBannerTrackers re-arms the tracker pipeline for a banner's
 // uncategorised, non-excluded patterns. It is an operator action
-// (proboctl), tenant-scoped via the provided Scoper.
+// (proboctl), tenant-scoped via the provided coredata.Predicater.
 //
 // With mappingOnly, it only clears each pattern's catalog/vendor links
 // and re-arms mapping, for iterating on the mapping agent without
@@ -58,7 +58,7 @@ type ResetTrackersResult struct {
 func ResetBannerTrackers(
 	ctx context.Context,
 	pgClient *pg.Client,
-	scope coredata.Scoper,
+	predicate coredata.Predicater,
 	bannerID gid.GID,
 	mappingOnly bool,
 	keyword *string,
@@ -69,19 +69,19 @@ func ResetBannerTrackers(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			var uncategorised coredata.CookieCategory
-			if err := uncategorised.LoadUncategorisedByCookieBannerID(ctx, tx, scope, bannerID); err != nil {
+			if err := uncategorised.LoadUncategorisedByCookieBannerID(ctx, tx, predicate, bannerID); err != nil {
 				return fmt.Errorf("cannot load uncategorised category: %w", err)
 			}
 
 			if !mappingOnly {
-				if err := decomposeGlobs(ctx, tx, scope, bannerID, uncategorised.ID, keyword, &result); err != nil {
+				if err := decomposeGlobs(ctx, tx, predicate, bannerID, uncategorised.ID, keyword, &result); err != nil {
 					return err
 				}
 			}
 
 			var patterns coredata.TrackerPatterns
 
-			reset, err := patterns.ResetAndRequestMappingByCookieCategoryID(ctx, tx, scope, uncategorised.ID, keyword)
+			reset, err := patterns.ResetAndRequestMappingByCookieCategoryID(ctx, tx, predicate, uncategorised.ID, keyword)
 			if err != nil {
 				return fmt.Errorf("cannot reset and request mapping: %w", err)
 			}
@@ -113,7 +113,7 @@ func ResetBannerTrackers(
 func decomposeGlobs(
 	ctx context.Context,
 	tx pg.Tx,
-	scope coredata.Scoper,
+	predicate coredata.Predicater,
 	bannerID gid.GID,
 	uncategorisedID gid.GID,
 	keyword *string,
@@ -125,9 +125,7 @@ func decomposeGlobs(
 	var globs coredata.TrackerPatterns
 	if err := globs.LoadAllByCookieBannerID(
 		ctx,
-		tx,
-		scope,
-		bannerID,
+		tx, predicate, bannerID,
 		coredata.NewTrackerPatternFilter(&globMatchType, &uncategorisedID, &notExcluded).WithPatternKeyword(keyword),
 		nil,
 	); err != nil {
@@ -136,12 +134,12 @@ func decomposeGlobs(
 
 	for _, glob := range globs {
 		var detections coredata.DetectedTrackers
-		if err := detections.LoadAllByTrackerPatternID(ctx, tx, scope, glob.ID); err != nil {
+		if err := detections.LoadAllByTrackerPatternID(ctx, tx, predicate, glob.ID); err != nil {
 			return fmt.Errorf("cannot load detections for glob %q: %w", glob.Pattern, err)
 		}
 
 		for _, detection := range detections {
-			exactID, created, err := ensureExactPattern(ctx, tx, scope, glob, uncategorisedID, detection)
+			exactID, created, err := ensureExactPattern(ctx, tx, predicate, glob, uncategorisedID, detection)
 			if err != nil {
 				return err
 			}
@@ -151,14 +149,14 @@ func decomposeGlobs(
 			}
 
 			detection.TrackerPatternID = &exactID
-			if err := detection.UpdateTrackerPatternID(ctx, tx, scope); err != nil {
+			if err := detection.UpdateTrackerPatternID(ctx, tx, predicate); err != nil {
 				return fmt.Errorf("cannot relink detection %s: %w", detection.ID, err)
 			}
 
 			result.DetectionsRelinked++
 		}
 
-		if err := glob.Delete(ctx, tx, scope); err != nil {
+		if err := glob.Delete(ctx, tx, predicate); err != nil {
 			return fmt.Errorf("cannot delete glob pattern %q: %w", glob.Pattern, err)
 		}
 
@@ -174,7 +172,7 @@ func decomposeGlobs(
 func ensureExactPattern(
 	ctx context.Context,
 	tx pg.Tx,
-	scope coredata.Scoper,
+	predicate coredata.Predicater,
 	glob *coredata.TrackerPattern,
 	uncategorisedID gid.GID,
 	detection *coredata.DetectedTracker,
@@ -197,13 +195,13 @@ func ensureExactPattern(
 		UpdatedAt:          now,
 	}
 
-	created, err := exact.InsertIfNotExists(ctx, tx, scope)
+	created, err := exact.InsertIfNotExists(ctx, tx, predicate)
 	if err != nil {
 		return gid.GID{}, false, fmt.Errorf("cannot insert exact pattern %q: %w", detection.Identifier, err)
 	}
 
 	if !created {
-		if err := exact.LoadByBannerIDTypeAndPattern(ctx, tx, scope, glob.CookieBannerID, detection.TrackerType, detection.Identifier, detection.MaxAgeSeconds); err != nil {
+		if err := exact.LoadByBannerIDTypeAndPattern(ctx, tx, predicate, glob.CookieBannerID, detection.TrackerType, detection.Identifier, detection.MaxAgeSeconds); err != nil {
 			return gid.GID{}, false, fmt.Errorf("cannot load existing exact pattern %q: %w", detection.Identifier, err)
 		}
 	}

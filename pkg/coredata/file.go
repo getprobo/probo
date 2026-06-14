@@ -89,7 +89,7 @@ func (f *File) AuthorizationAttributes(
 func (f *File) LoadByID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	fileID gid.GID,
 ) error {
 	q := `
@@ -113,10 +113,10 @@ WHERE
 LIMIT 1;
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"file_id": fileID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -145,7 +145,7 @@ LIMIT 1;
 func (f *Files) LoadByIDs(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	fileIDs []gid.GID,
 ) error {
 	q := `
@@ -168,10 +168,10 @@ WHERE
     AND id = ANY(@file_ids)
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"file_ids": fileIDs}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -191,7 +191,7 @@ WHERE
 func (f File) Insert(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 INSERT INTO
@@ -227,7 +227,7 @@ VALUES (
 
 	args := pgx.StrictNamedArgs{
 		"file_id":         f.ID,
-		"tenant_id":       scope.GetTenantID(),
+		"tenant_id":       predicate.GetTenantID(),
 		"organization_id": f.OrganizationID,
 		"bucket_name":     f.BucketName,
 		"mime_type":       f.MimeType,
@@ -257,7 +257,7 @@ VALUES (
 func (f *File) LoadActiveByID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	fileID gid.GID,
 ) error {
 	q := `
@@ -282,10 +282,10 @@ WHERE
 LIMIT 1;
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"file_id": fileID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -356,7 +356,7 @@ LIMIT 1;
 	return nil
 }
 
-func (f File) SoftDelete(ctx context.Context, conn pg.Tx, scope Scoper) error {
+func (f File) SoftDelete(ctx context.Context, conn pg.Tx, predicate Predicater) error {
 	q := `
 UPDATE files
 SET deleted_at = NOW()
@@ -364,10 +364,10 @@ WHERE %s
     AND id = @file_id
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"file_id": f.ID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
 

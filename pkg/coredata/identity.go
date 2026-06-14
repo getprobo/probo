@@ -54,7 +54,7 @@ func (i Identity) CursorKey(orderBy IdentityOrderField) page.CursorKey {
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
-// Tenant id scope is not applied because we want to access identities across all tenants for authentication purposes.
+// Tenant predicate is not applied because we want to access identities across all tenants for authentication purposes.
 func (i *Identity) LoadByEmail(
 	ctx context.Context,
 	conn pg.Querier,
@@ -98,7 +98,7 @@ LIMIT 1;
 	return nil
 }
 
-// Tenant id scope is not applied because we want to access identities across all tenants for authentication purposes.
+// Tenant predicate is not applied because we want to access identities across all tenants for authentication purposes.
 func (i *Identity) LoadByID(
 	ctx context.Context,
 	conn pg.Querier,

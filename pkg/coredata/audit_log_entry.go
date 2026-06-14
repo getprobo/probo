@@ -96,7 +96,7 @@ func (e *AuditLogEntry) AuthorizationAttributes(
 func (e *AuditLogEntry) Insert(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 INSERT INTO audit_log_entries (
@@ -127,7 +127,7 @@ VALUES (
 
 	args := pgx.StrictNamedArgs{
 		"id":              e.ID,
-		"tenant_id":       scope.GetTenantID(),
+		"tenant_id":       predicate.GetTenantID(),
 		"organization_id": e.OrganizationID,
 		"actor_id":        e.ActorID,
 		"actor_type":      e.ActorType,
@@ -152,7 +152,7 @@ VALUES (
 func (es AuditLogEntries) BulkInsert(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	if len(es) == 0 {
 		return nil
@@ -164,7 +164,7 @@ func (es AuditLogEntries) BulkInsert(
 			rows,
 			[]any{
 				e.ID,
-				scope.GetTenantID(),
+				predicate.GetTenantID(),
 				e.OrganizationID,
 				e.ActorID,
 				e.ActorType,
@@ -204,7 +204,7 @@ func (es AuditLogEntries) BulkInsert(
 func (e *AuditLogEntry) LoadByID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	id gid.GID,
 ) error {
 	q := `
@@ -225,10 +225,10 @@ WHERE
     AND id = @id
 LIMIT 1;
 `
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"id": id}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -252,7 +252,7 @@ LIMIT 1;
 func (es *AuditLogEntries) LoadAllByOrganizationID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	organizationID gid.GID,
 	cursor *page.Cursor[AuditLogEntryOrderField],
 	filter *AuditLogEntryFilter,
@@ -276,10 +276,10 @@ WHERE
     AND %s
     AND %s
 `
-	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"organization_id": organizationID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 	maps.Copy(args, filter.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 
@@ -301,7 +301,7 @@ WHERE
 func (es *AuditLogEntries) CountByOrganizationID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	organizationID gid.GID,
 	filter *AuditLogEntryFilter,
 ) (int, error) {
@@ -312,10 +312,10 @@ WHERE %s
     AND organization_id = @organization_id
     AND %s
 `
-	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment(), filter.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"organization_id": organizationID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 	maps.Copy(args, filter.SQLArguments())
 
 	var count int

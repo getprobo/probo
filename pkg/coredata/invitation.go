@@ -51,7 +51,7 @@ func (i Invitation) CursorKey(orderBy InvitationOrderField) page.CursorKey {
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
-func (i *Invitation) Insert(ctx context.Context, conn pg.Tx, scope Scoper) error {
+func (i *Invitation) Insert(ctx context.Context, conn pg.Tx, predicate Predicater) error {
 	query := `
 INSERT INTO
     iam_invitations (
@@ -73,7 +73,7 @@ VALUES (
 `
 
 	args := pgx.StrictNamedArgs{
-		"tenant_id":       scope.GetTenantID(),
+		"tenant_id":       predicate.GetTenantID(),
 		"organization_id": i.OrganizationID,
 		"id":              i.ID,
 		"user_id":         i.UserID,
@@ -92,7 +92,7 @@ VALUES (
 func (i *Invitation) LoadByID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	id gid.GID,
 ) error {
 	query := `
@@ -115,12 +115,12 @@ WHERE
     AND %s
 `
 
-	query = fmt.Sprintf(query, scope.SQLFragment())
+	query = fmt.Sprintf(query, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"id": id,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, query, args)
 	if err != nil {
@@ -196,7 +196,7 @@ WHERE
 	return attrsByID, nil
 }
 
-func (i *Invitation) Update(ctx context.Context, conn pg.Tx, scope Scoper) error {
+func (i *Invitation) Update(ctx context.Context, conn pg.Tx, predicate Predicater) error {
 	query := `
 UPDATE
     iam_invitations
@@ -207,13 +207,13 @@ WHERE
     AND %s
 `
 
-	query = fmt.Sprintf(query, scope.SQLFragment())
+	query = fmt.Sprintf(query, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"id":          i.ID,
 		"accepted_at": i.AcceptedAt,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	result, err := conn.Exec(ctx, query, args)
 	if err != nil {
@@ -227,7 +227,7 @@ WHERE
 	return nil
 }
 
-func (i *Invitation) Delete(ctx context.Context, conn pg.Tx, scope Scoper, invitationID gid.GID) error {
+func (i *Invitation) Delete(ctx context.Context, conn pg.Tx, predicate Predicater, invitationID gid.GID) error {
 	query := `
 DELETE FROM
     iam_invitations
@@ -236,12 +236,12 @@ WHERE
     AND id = @invitation_id
 `
 
-	query = fmt.Sprintf(query, scope.SQLFragment())
+	query = fmt.Sprintf(query, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"invitation_id": invitationID,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	result, err := conn.Exec(ctx, query, args)
 	if err != nil {
@@ -258,7 +258,7 @@ WHERE
 func (i *Invitations) LoadByUserID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	userID gid.GID,
 	cursor *page.Cursor[InvitationOrderField],
 	filter *InvitationFilter,
@@ -285,12 +285,12 @@ WHERE
     AND %s
 `
 
-	query = fmt.Sprintf(query, scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
+	query = fmt.Sprintf(query, predicate.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"user_id": userID,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 	maps.Copy(args, filter.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 
@@ -312,7 +312,7 @@ WHERE
 func (i *Invitations) ExpireByUserID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	userID gid.GID,
 	filter *InvitationFilter,
 ) error {
@@ -327,12 +327,12 @@ func (i *Invitations) ExpireByUserID(
 	    AND %s
 	`
 
-	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment(), filter.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"user_id": userID,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 	maps.Copy(args, filter.SQLArguments())
 
 	if _, err := conn.Exec(ctx, q, args); err != nil {

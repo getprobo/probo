@@ -30,7 +30,7 @@ type ThirdPartyService struct {
 
 func (s ThirdPartyService) Get(
 	ctx context.Context,
-	scope coredata.Scoper,
+	predicate coredata.Predicater,
 	thirdPartyID gid.GID,
 ) (*coredata.ThirdParty, error) {
 	thirdParty := &coredata.ThirdParty{}
@@ -38,7 +38,7 @@ func (s ThirdPartyService) Get(
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			err := thirdParty.LoadByID(ctx, conn, scope, thirdPartyID)
+			err := thirdParty.LoadByID(ctx, conn, predicate, thirdPartyID)
 			if err != nil {
 				return fmt.Errorf("cannot load thirdParty: %w", err)
 			}
@@ -55,7 +55,7 @@ func (s ThirdPartyService) Get(
 
 func (s ThirdPartyService) ListForOrganizationId(
 	ctx context.Context,
-	scope coredata.Scoper,
+	predicate coredata.Predicater,
 	organizationID gid.GID,
 	cursor *page.Cursor[coredata.ThirdPartyOrderField],
 ) (*page.Page[*coredata.ThirdParty, coredata.ThirdPartyOrderField], error) {
@@ -67,7 +67,7 @@ func (s ThirdPartyService) ListForOrganizationId(
 			showOnTrustCenter := true
 			filter := coredata.NewThirdPartyFilter(&showOnTrustCenter, nil, nil)
 
-			err := thirdParties.LoadByOrganizationID(ctx, conn, scope, organizationID, cursor, filter)
+			err := thirdParties.LoadByOrganizationID(ctx, conn, predicate, organizationID, cursor, filter)
 			if err != nil {
 				return fmt.Errorf("cannot load thirdParties: %w", err)
 			}
@@ -84,7 +84,7 @@ func (s ThirdPartyService) ListForOrganizationId(
 
 func (s ThirdPartyService) CountForTrustCenterId(
 	ctx context.Context,
-	scope coredata.Scoper,
+	predicate coredata.Predicater,
 	trustCenterID gid.GID,
 ) (int, error) {
 	var count int
@@ -92,7 +92,7 @@ func (s ThirdPartyService) CountForTrustCenterId(
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) (err error) {
-			trustCenter, err := s.svc.TrustCenters.Get(ctx, scope, trustCenterID)
+			trustCenter, err := s.svc.TrustCenters.Get(ctx, predicate, trustCenterID)
 			if err != nil {
 				return fmt.Errorf("cannot load trust center: %w", err)
 			}
@@ -101,7 +101,7 @@ func (s ThirdPartyService) CountForTrustCenterId(
 			showOnTrustCenter := true
 			filter := coredata.NewThirdPartyFilter(&showOnTrustCenter, nil, nil)
 
-			count, err = thirdParties.CountByOrganizationID(ctx, conn, scope, trustCenter.OrganizationID, filter)
+			count, err = thirdParties.CountByOrganizationID(ctx, conn, predicate, trustCenter.OrganizationID, filter)
 			if err != nil {
 				return fmt.Errorf("cannot count thirdParties: %w", err)
 			}

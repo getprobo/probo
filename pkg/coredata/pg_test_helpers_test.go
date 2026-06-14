@@ -64,7 +64,7 @@ func insertPendingRun(
 				return fmt.Errorf("cannot insert placeholder organization: %w", err)
 			}
 
-			return run.Insert(ctx, tx, coredata.NewScope(tenantID))
+			return run.Insert(ctx, tx, coredata.NewPredicate(tenantID))
 		},
 	)
 	require.NoError(t, err)

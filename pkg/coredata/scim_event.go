@@ -99,7 +99,7 @@ func (s *SCIMEvent) AuthorizationAttributes(
 func (s *SCIMEvent) LoadByID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	eventID gid.GID,
 ) error {
 	q := `
@@ -124,10 +124,10 @@ WHERE
 LIMIT 1;
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"id": eventID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -151,7 +151,7 @@ LIMIT 1;
 func (s *SCIMEvent) Insert(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 INSERT INTO iam_scim_events (
@@ -187,7 +187,7 @@ INSERT INTO iam_scim_events (
 
 	args := pgx.StrictNamedArgs{
 		"id":                    s.ID,
-		"tenant_id":             scope.GetTenantID(),
+		"tenant_id":             predicate.GetTenantID(),
 		"organization_id":       s.OrganizationID,
 		"scim_configuration_id": s.SCIMConfigurationID,
 		"method":                s.Method,
@@ -212,7 +212,7 @@ INSERT INTO iam_scim_events (
 func (s *SCIMEvents) LoadByOrganizationID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	organizationID gid.GID,
 	cursor *page.Cursor[SCIMEventOrderField],
 ) error {
@@ -238,10 +238,10 @@ WHERE
     AND %s
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"organization_id": organizationID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
@@ -262,7 +262,7 @@ WHERE
 func (s *SCIMEvents) CountByOrganizationID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	organizationID gid.GID,
 ) (int, error) {
 	q := `
@@ -275,10 +275,10 @@ WHERE
     AND organization_id = @organization_id
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"organization_id": organizationID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	row := conn.QueryRow(ctx, q, args)
 
@@ -293,7 +293,7 @@ WHERE
 func (s *SCIMEvents) LoadBySCIMConfigurationID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	scimConfigurationID gid.GID,
 	cursor *page.Cursor[SCIMEventOrderField],
 ) error {
@@ -319,10 +319,10 @@ WHERE
     AND %s
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"scim_configuration_id": scimConfigurationID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
@@ -343,7 +343,7 @@ WHERE
 func (s *SCIMEvents) CountBySCIMConfigurationID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	scimConfigurationID gid.GID,
 ) (int, error) {
 	q := `
@@ -356,10 +356,10 @@ WHERE
     AND scim_configuration_id = @scim_configuration_id
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"scim_configuration_id": scimConfigurationID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	row := conn.QueryRow(ctx, q, args)
 

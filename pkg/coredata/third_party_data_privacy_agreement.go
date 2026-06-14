@@ -95,7 +95,7 @@ func (vdpa *ThirdPartyDataPrivacyAgreement) AuthorizationAttributes(
 func (vdpa *ThirdPartyDataPrivacyAgreement) LoadByThirdPartyID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	thirdPartyID gid.GID,
 ) error {
 	q := `
@@ -116,10 +116,10 @@ WHERE
 LIMIT 1;
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.NamedArgs{"third_party_id": thirdPartyID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -139,7 +139,7 @@ LIMIT 1;
 func (vdpas *ThirdPartyDataPrivacyAgreements) LoadByThirdPartyIDs(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	thirdPartyIDs []gid.GID,
 ) error {
 	if len(thirdPartyIDs) == 0 {
@@ -164,7 +164,7 @@ WHERE
 	AND third_party_id = ANY(@third_party_ids)
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	ids := make([]string, len(thirdPartyIDs))
 	for i, id := range thirdPartyIDs {
@@ -172,7 +172,7 @@ WHERE
 	}
 
 	args := pgx.NamedArgs{"third_party_ids": ids}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -192,7 +192,7 @@ WHERE
 func (vdpa *ThirdPartyDataPrivacyAgreement) LoadByID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	thirdPartyDataPrivacyAgreementID gid.GID,
 ) error {
 	q := `
@@ -213,10 +213,10 @@ WHERE
 LIMIT 1;
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.NamedArgs{"id": thirdPartyDataPrivacyAgreementID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -236,7 +236,7 @@ LIMIT 1;
 func (vdpa *ThirdPartyDataPrivacyAgreement) Update(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 UPDATE
@@ -251,7 +251,7 @@ WHERE
 	AND id = @id
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"id":          vdpa.ID,
@@ -260,7 +260,7 @@ WHERE
 		"file_id":     vdpa.FileID,
 		"updated_at":  vdpa.UpdatedAt,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
@@ -273,7 +273,7 @@ WHERE
 func (vdpa *ThirdPartyDataPrivacyAgreement) Upsert(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 INSERT INTO
@@ -308,7 +308,7 @@ ON CONFLICT (organization_id, third_party_id) DO UPDATE SET
 `
 	args := pgx.StrictNamedArgs{
 		"id":              vdpa.ID,
-		"tenant_id":       scope.GetTenantID(),
+		"tenant_id":       predicate.GetTenantID(),
 		"third_party_id":  vdpa.ThirdPartyID,
 		"organization_id": vdpa.OrganizationID,
 		"valid_from":      vdpa.ValidFrom,
@@ -329,7 +329,7 @@ ON CONFLICT (organization_id, third_party_id) DO UPDATE SET
 func (vdpa *ThirdPartyDataPrivacyAgreement) Delete(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 DELETE
@@ -340,10 +340,10 @@ WHERE
 	AND id = @id
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"id": vdpa.ID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
 
@@ -353,7 +353,7 @@ WHERE
 func (vdpa *ThirdPartyDataPrivacyAgreement) DeleteByThirdPartyID(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 	thirdPartyID gid.GID,
 ) error {
 	q := `
@@ -365,10 +365,10 @@ WHERE
 	AND third_party_id = @third_party_id
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"third_party_id": thirdPartyID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
 

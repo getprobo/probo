@@ -73,8 +73,8 @@ func (h *sourceFetchHandler) Claim(ctx context.Context) (coredata.AccessReviewCa
 			sourceFetch.CompletedAt = nil
 			sourceFetch.UpdatedAt = now
 
-			scope := coredata.NewScope(sourceFetch.TenantID)
-			if err := sourceFetch.Update(ctx, tx, scope); err != nil {
+			predicate := coredata.NewPredicate(sourceFetch.TenantID)
+			if err := sourceFetch.Update(ctx, tx, predicate); err != nil {
 				return fmt.Errorf("cannot update source fetch status: %w", err)
 			}
 
@@ -126,9 +126,9 @@ func (h *sourceFetchHandler) handle(
 	ctx context.Context,
 	sourceFetch *coredata.AccessReviewCampaignSourceFetch,
 ) error {
-	scope := coredata.NewScope(sourceFetch.TenantID)
+	predicate := coredata.NewPredicate(sourceFetch.TenantID)
 
-	campaign, err := h.svc.Campaigns(scope).Get(ctx, sourceFetch.AccessReviewCampaignID)
+	campaign, err := h.svc.Campaigns(predicate).Get(ctx, sourceFetch.AccessReviewCampaignID)
 	if err != nil {
 		commitErr := h.commitFailedSourceFetch(
 			ctx,
@@ -142,7 +142,7 @@ func (h *sourceFetchHandler) handle(
 		return fmt.Errorf("cannot load campaign: %w", err)
 	}
 
-	count, err := h.svc.Engine(scope).FetchSource(ctx, campaign, sourceFetch.AccessSourceID)
+	count, err := h.svc.Engine(predicate).FetchSource(ctx, campaign, sourceFetch.AccessSourceID)
 	if err != nil {
 		commitErr := h.commitFailedSourceFetch(ctx, sourceFetch, err)
 		if commitErr != nil {
@@ -181,9 +181,9 @@ func (h *sourceFetchHandler) commitFailedSourceFetch(
 	failureErr error,
 ) error {
 	var (
-		now    = time.Now()
-		errMsg = failureErr.Error()
-		scope  = coredata.NewScopeFromObjectID(sourceFetch.AccessReviewCampaignID)
+		now       = time.Now()
+		errMsg    = failureErr.Error()
+		predicate = coredata.NewPredicateFromObjectID(sourceFetch.AccessReviewCampaignID)
 	)
 
 	sourceFetch.Status = coredata.AccessReviewCampaignSourceFetchStatusFailed
@@ -194,7 +194,7 @@ func (h *sourceFetchHandler) commitFailedSourceFetch(
 	return h.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			return sourceFetch.Update(ctx, tx, scope)
+			return sourceFetch.Update(ctx, tx, predicate)
 		},
 	)
 }
@@ -205,8 +205,8 @@ func (h *sourceFetchHandler) commitSuccessfulSourceFetch(
 	fetchedAccountsCount int,
 ) error {
 	var (
-		now   = time.Now()
-		scope = coredata.NewScopeFromObjectID(sourceFetch.AccessReviewCampaignID)
+		now       = time.Now()
+		predicate = coredata.NewPredicateFromObjectID(sourceFetch.AccessReviewCampaignID)
 	)
 
 	sourceFetch.Status = coredata.AccessReviewCampaignSourceFetchStatusSuccess
@@ -218,7 +218,7 @@ func (h *sourceFetchHandler) commitSuccessfulSourceFetch(
 	return h.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			return sourceFetch.Update(ctx, tx, scope)
+			return sourceFetch.Update(ctx, tx, predicate)
 		},
 	)
 }
@@ -228,17 +228,17 @@ func (h *sourceFetchHandler) finalizeCampaignFetchLifecycle(
 	tenantID gid.TenantID,
 	campaignID gid.GID,
 ) error {
-	scope := coredata.NewScope(tenantID)
+	predicate := coredata.NewPredicate(tenantID)
 
 	return h.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			if err := lockCampaignForUpdate(ctx, tx, scope, campaignID); err != nil {
+			if err := lockCampaignForUpdate(ctx, tx, predicate, campaignID); err != nil {
 				return fmt.Errorf("cannot lock campaign: %w", err)
 			}
 
 			campaign := &coredata.AccessReviewCampaign{}
-			if err := campaign.LoadByID(ctx, tx, scope, campaignID); err != nil {
+			if err := campaign.LoadByID(ctx, tx, predicate, campaignID); err != nil {
 				return fmt.Errorf("cannot load campaign: %w", err)
 			}
 
@@ -247,7 +247,7 @@ func (h *sourceFetchHandler) finalizeCampaignFetchLifecycle(
 			}
 
 			fetches := coredata.AccessReviewCampaignSourceFetches{}
-			if err := fetches.LoadByCampaignID(ctx, tx, scope, campaignID); err != nil {
+			if err := fetches.LoadByCampaignID(ctx, tx, predicate, campaignID); err != nil {
 				return fmt.Errorf("cannot load source fetches: %w", err)
 			}
 
@@ -264,7 +264,7 @@ func (h *sourceFetchHandler) finalizeCampaignFetchLifecycle(
 			campaign.Status = coredata.AccessReviewCampaignStatusPendingActions
 			campaign.UpdatedAt = time.Now()
 
-			return campaign.Update(ctx, tx, scope)
+			return campaign.Update(ctx, tx, predicate)
 		},
 	)
 }

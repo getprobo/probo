@@ -31,7 +31,7 @@ import (
 // pattern's FKs require: organization, cookie banner, and a normal
 // cookie category.
 type trackerPatternFixture struct {
-	scope            *coredata.Scope
+	predicate *coredata.Predicate
 	organizationID   gid.GID
 	cookieBannerID   gid.GID
 	cookieCategoryID gid.GID
@@ -41,7 +41,7 @@ func seedTrackerPatternFixture(t *testing.T, ctx context.Context, client *pg.Cli
 	t.Helper()
 
 	tenantID := gid.NewTenantID()
-	scope := coredata.NewScope(tenantID)
+	predicate := coredata.NewPredicate(tenantID)
 	organizationID := gid.New(tenantID, coredata.OrganizationEntityType)
 	cookieBannerID := gid.New(tenantID, coredata.CookieBannerEntityType)
 	cookieCategoryID := gid.New(tenantID, coredata.CookieCategoryEntityType)
@@ -72,7 +72,7 @@ func seedTrackerPatternFixture(t *testing.T, ctx context.Context, client *pg.Cli
 			CreatedAt:         now,
 			UpdatedAt:         now,
 		}
-		if err := banner.Insert(ctx, tx, scope); err != nil {
+		if err := banner.Insert(ctx, tx, predicate); err != nil {
 			return err
 		}
 
@@ -90,7 +90,7 @@ func seedTrackerPatternFixture(t *testing.T, ctx context.Context, client *pg.Cli
 			CreatedAt:       now,
 			UpdatedAt:       now,
 		}
-		if err := category.Insert(ctx, tx, scope); err != nil {
+		if err := category.Insert(ctx, tx, predicate); err != nil {
 			return err
 		}
 
@@ -120,7 +120,7 @@ func seedTrackerPatternFixture(t *testing.T, ctx context.Context, client *pg.Cli
 	})
 
 	return trackerPatternFixture{
-		scope:            scope,
+		predicate:        predicate,
 		organizationID:   organizationID,
 		cookieBannerID:   cookieBannerID,
 		cookieCategoryID: cookieCategoryID,
@@ -141,7 +141,7 @@ func seedTrackerPattern(
 	now := time.Now().UTC().Truncate(time.Microsecond)
 	maxAge := 3600
 	tp := &coredata.TrackerPattern{
-		ID:               gid.New(fx.scope.GetTenantID(), coredata.TrackerPatternEntityType),
+		ID:               gid.New(fx.predicate.GetTenantID(), coredata.TrackerPatternEntityType),
 		OrganizationID:   fx.organizationID,
 		CookieBannerID:   fx.cookieBannerID,
 		CookieCategoryID: fx.cookieCategoryID,
@@ -157,7 +157,7 @@ func seedTrackerPattern(
 	}
 
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
-		return tp.Insert(ctx, tx, fx.scope)
+		return tp.Insert(ctx, tx, fx.predicate)
 	}))
 
 	return tp
@@ -193,20 +193,20 @@ func TestTrackerPattern_Update_WritesSource(t *testing.T) {
 
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		var loaded coredata.TrackerPattern
-		if err := loaded.LoadByID(ctx, tx, fx.scope, tp.ID); err != nil {
+		if err := loaded.LoadByID(ctx, tx, fx.predicate, tp.ID); err != nil {
 			return err
 		}
 
 		loaded.Source = &newSource
 		loaded.UpdatedAt = bumpedAt
 
-		return loaded.Update(ctx, tx, fx.scope)
+		return loaded.Update(ctx, tx, fx.predicate)
 	}))
 
 	reloaded := &coredata.TrackerPattern{}
 
 	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
-		return reloaded.LoadByID(ctx, conn, fx.scope, tp.ID)
+		return reloaded.LoadByID(ctx, conn, fx.predicate, tp.ID)
 	}))
 
 	require.NotNil(t, reloaded.Source)
@@ -230,7 +230,7 @@ func TestTrackerPattern_Update_NotFoundForMissingRow(t *testing.T) {
 	source := coredata.CookieSourceScript
 	now := time.Now().UTC().Truncate(time.Microsecond)
 	tp := &coredata.TrackerPattern{
-		ID:               gid.New(fx.scope.GetTenantID(), coredata.TrackerPatternEntityType),
+		ID:               gid.New(fx.predicate.GetTenantID(), coredata.TrackerPatternEntityType),
 		OrganizationID:   fx.organizationID,
 		CookieBannerID:   fx.cookieBannerID,
 		CookieCategoryID: fx.cookieCategoryID,
@@ -245,7 +245,7 @@ func TestTrackerPattern_Update_NotFoundForMissingRow(t *testing.T) {
 	}
 
 	err := client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
-		return tp.Update(ctx, tx, fx.scope)
+		return tp.Update(ctx, tx, fx.predicate)
 	})
 
 	assert.ErrorIs(t, err, coredata.ErrResourceNotFound)
@@ -271,7 +271,7 @@ func TestResetStaleMappings(t *testing.T) {
 
 	newPattern := func(pattern string, updatedAt time.Time, commonID *gid.GID) *coredata.TrackerPattern {
 		tp := &coredata.TrackerPattern{
-			ID:                     gid.New(fx.scope.GetTenantID(), coredata.TrackerPatternEntityType),
+			ID:                     gid.New(fx.predicate.GetTenantID(), coredata.TrackerPatternEntityType),
 			OrganizationID:         fx.organizationID,
 			CookieBannerID:         fx.cookieBannerID,
 			CookieCategoryID:       fx.cookieCategoryID,
@@ -287,7 +287,7 @@ func TestResetStaleMappings(t *testing.T) {
 		}
 
 		require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
-			return tp.Insert(ctx, tx, fx.scope)
+			return tp.Insert(ctx, tx, fx.predicate)
 		}))
 
 		return tp
@@ -316,7 +316,7 @@ func TestResetStaleMappings(t *testing.T) {
 		var reloaded coredata.TrackerPattern
 
 		require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
-			return reloaded.LoadByID(ctx, conn, fx.scope, id)
+			return reloaded.LoadByID(ctx, conn, fx.predicate, id)
 		}))
 
 		return reloaded
@@ -383,7 +383,7 @@ func TestRequestMappingForUnmappedByInitiatorDomains(t *testing.T) {
 	insertCommonTrackerPattern(t, ctx, client, linkedCommon)
 
 	// An org third party for the third_party_id-linked pattern.
-	orgThirdPartyID := gid.New(fx.scope.GetTenantID(), coredata.ThirdPartyEntityType)
+	orgThirdPartyID := gid.New(fx.predicate.GetTenantID(), coredata.ThirdPartyEntityType)
 	orgThirdParty := coredata.ThirdParty{
 		ID:             orgThirdPartyID,
 		OrganizationID: fx.organizationID,
@@ -397,7 +397,7 @@ func TestRequestMappingForUnmappedByInitiatorDomains(t *testing.T) {
 	}
 
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
-		return orgThirdParty.Insert(ctx, tx, fx.scope)
+		return orgThirdParty.Insert(ctx, tx, fx.predicate)
 	}))
 
 	newPattern := func(
@@ -408,7 +408,7 @@ func TestRequestMappingForUnmappedByInitiatorDomains(t *testing.T) {
 	) *coredata.TrackerPattern {
 		src := source
 		tp := &coredata.TrackerPattern{
-			ID:                     gid.New(fx.scope.GetTenantID(), coredata.TrackerPatternEntityType),
+			ID:                     gid.New(fx.predicate.GetTenantID(), coredata.TrackerPatternEntityType),
 			OrganizationID:         fx.organizationID,
 			CookieBannerID:         fx.cookieBannerID,
 			CookieCategoryID:       fx.cookieCategoryID,
@@ -425,7 +425,7 @@ func TestRequestMappingForUnmappedByInitiatorDomains(t *testing.T) {
 		}
 
 		require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
-			return tp.Insert(ctx, tx, fx.scope)
+			return tp.Insert(ctx, tx, fx.predicate)
 		}))
 
 		return tp
@@ -434,7 +434,7 @@ func TestRequestMappingForUnmappedByInitiatorDomains(t *testing.T) {
 	seedDetectedTracker := func(patternID gid.GID, identifier, domain string) {
 		d := domain
 		dt := &coredata.DetectedTracker{
-			ID:               gid.New(fx.scope.GetTenantID(), coredata.DetectedTrackerEntityType),
+			ID:               gid.New(fx.predicate.GetTenantID(), coredata.DetectedTrackerEntityType),
 			CookieBannerID:   fx.cookieBannerID,
 			TrackerPatternID: &patternID,
 			TrackerType:      coredata.TrackerTypeCookie,
@@ -446,7 +446,7 @@ func TestRequestMappingForUnmappedByInitiatorDomains(t *testing.T) {
 		}
 
 		require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
-			_, err := dt.Upsert(ctx, tx, fx.scope)
+			_, err := dt.Upsert(ctx, tx, fx.predicate)
 
 			return err
 		}))
@@ -482,7 +482,7 @@ func TestRequestMappingForUnmappedByInitiatorDomains(t *testing.T) {
 		var reloaded coredata.TrackerPattern
 
 		require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
-			return reloaded.LoadByID(ctx, conn, fx.scope, id)
+			return reloaded.LoadByID(ctx, conn, fx.predicate, id)
 		}))
 
 		return reloaded

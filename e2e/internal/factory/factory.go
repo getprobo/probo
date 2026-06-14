@@ -1557,7 +1557,7 @@ func CreateRiskAssessmentScope(c *testutil.Client, riskAssessmentID string, attr
 
 	input := map[string]any{
 		"riskAssessmentId": riskAssessmentID,
-		"name":             a.getString("name", SafeName("Scope")),
+		"name":             a.getString("name", SafeName("Predicate")),
 	}
 
 	var result struct {

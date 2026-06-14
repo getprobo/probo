@@ -155,13 +155,13 @@ func (h *Handler) handleGetFile(w http.ResponseWriter, r *http.Request) {
 		params.Session = &session.ID
 	}
 
-	scope, err := h.iamSvc.Authorizer.Authorize(ctx, params)
+	predicate, err := h.iamSvc.Authorizer.Authorize(ctx, params)
 	if err != nil {
 		jsonx.RenderNotFound(w, fmt.Errorf("file not found"))
 		return
 	}
 
-	f, err := h.probo.Files.Get(ctx, scope, fileID)
+	f, err := h.probo.Files.Get(ctx, predicate, fileID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			jsonx.RenderNotFound(w, fmt.Errorf("file not found"))

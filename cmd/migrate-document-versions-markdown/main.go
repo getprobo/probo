@@ -173,7 +173,7 @@ func migrateOne(ctx context.Context, tx pg.Tx, idStr string, dryRun bool) error 
 	}
 
 	dv := &coredata.DocumentVersion{}
-	if err := dv.LoadByID(ctx, tx, coredata.NewNoScope(), versionID); err != nil {
+	if err := dv.LoadByID(ctx, tx, coredata.NewNoPredicate(), versionID); err != nil {
 		return fmt.Errorf("cannot load document version %q: %w", idStr, err)
 	}
 
@@ -200,7 +200,7 @@ func migrateOne(ctx context.Context, tx pg.Tx, idStr string, dryRun bool) error 
 	dv.Content = string(out)
 	dv.UpdatedAt = time.Now()
 
-	if err := dv.Update(ctx, tx, coredata.NewNoScope()); err != nil {
+	if err := dv.Update(ctx, tx, coredata.NewNoPredicate()); err != nil {
 		return fmt.Errorf("cannot update document version %q: %w", idStr, err)
 	}
 

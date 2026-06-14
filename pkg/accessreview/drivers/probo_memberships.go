@@ -28,18 +28,18 @@ import (
 // connector is needed.
 type ProboMembershipsDriver struct {
 	pg             *pg.Client
-	scope          coredata.Scoper
+	predicate      coredata.Predicater
 	organizationID gid.GID
 }
 
 func NewProboMembershipsDriver(
 	pgClient *pg.Client,
-	scope coredata.Scoper,
+	predicate coredata.Predicater,
 	organizationID gid.GID,
 ) *ProboMembershipsDriver {
 	return &ProboMembershipsDriver{
 		pg:             pgClient,
-		scope:          scope,
+		predicate:      predicate,
 		organizationID: organizationID,
 	}
 }
@@ -53,7 +53,7 @@ func (d *ProboMembershipsDriver) ListAccounts(ctx context.Context) ([]AccountRec
 			accounts, err := coredata.LoadMembershipAccountsByOrganizationID(
 				ctx,
 				conn,
-				d.scope,
+				d.predicate,
 				d.organizationID,
 			)
 			if err != nil {

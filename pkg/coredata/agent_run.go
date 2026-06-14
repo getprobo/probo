@@ -162,7 +162,7 @@ func (e *AgentRun) AuthorizationAttributes(
 func (e *AgentRun) LoadByID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	id gid.GID,
 ) error {
 	q := `
@@ -186,10 +186,10 @@ WHERE
 LIMIT 1;
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"id": id.String()}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -213,7 +213,7 @@ LIMIT 1;
 func (e *AgentRun) LoadByIDForUpdate(
 	ctx context.Context,
 	tx pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 	id gid.GID,
 ) error {
 	q := `
@@ -238,10 +238,10 @@ LIMIT 1
 FOR UPDATE;
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"id": id.String()}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := tx.Query(ctx, q, args)
 	if err != nil {
@@ -265,7 +265,7 @@ FOR UPDATE;
 func (rs *AgentRuns) LoadByOrganizationID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	organizationID gid.GID,
 	cursor *page.Cursor[AgentRunOrderField],
 ) error {
@@ -290,10 +290,10 @@ WHERE
 	AND %s
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"organization_id": organizationID.String()}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
@@ -314,7 +314,7 @@ WHERE
 func (rs *AgentRuns) CountByOrganizationID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	organizationID gid.GID,
 ) (int, error) {
 	q := `
@@ -327,10 +327,10 @@ WHERE
 	AND organization_id = @organization_id;
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"organization_id": organizationID.String()}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	var count int
 	if err := conn.QueryRow(ctx, q, args).Scan(&count); err != nil {
@@ -343,7 +343,7 @@ WHERE
 func (e *AgentRun) Insert(
 	ctx context.Context,
 	tx pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 INSERT INTO agent_runs (
@@ -381,7 +381,7 @@ RETURNING
 
 	args := pgx.StrictNamedArgs{
 		"id":               e.ID.String(),
-		"tenant_id":        scope.GetTenantID(),
+		"tenant_id":        predicate.GetTenantID(),
 		"organization_id":  e.OrganizationID.String(),
 		"start_agent_name": e.StartAgentName,
 		"status":           e.Status,
@@ -413,7 +413,7 @@ RETURNING
 func (e *AgentRun) Update(
 	ctx context.Context,
 	tx pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 UPDATE agent_runs
@@ -440,7 +440,7 @@ RETURNING
 	updated_at;
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"id":            e.ID.String(),
@@ -450,7 +450,7 @@ RETURNING
 		"started_at":    e.StartedAt,
 		"updated_at":    e.UpdatedAt,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := tx.Query(ctx, q, args)
 	if err != nil {
@@ -473,7 +473,7 @@ RETURNING
 func (e *AgentRun) ClearCheckpoint(
 	ctx context.Context,
 	tx pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 UPDATE agent_runs
@@ -485,10 +485,10 @@ WHERE
 	AND id = @id;
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"id": e.ID.String()}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	_, err := tx.Exec(ctx, q, args)
 	if err != nil {
@@ -553,7 +553,7 @@ WHERE
 func (e *AgentRun) RequeueForApprovalResume(
 	ctx context.Context,
 	tx pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 UPDATE agent_runs
@@ -568,7 +568,7 @@ WHERE
 	AND status = @expected_status;
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"id":              e.ID.String(),
@@ -578,7 +578,7 @@ WHERE
 		"updated_at":      e.UpdatedAt,
 		"expected_status": AgentRunStatusAwaitingApproval,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	result, err := tx.Exec(ctx, q, args)
 	if err != nil {

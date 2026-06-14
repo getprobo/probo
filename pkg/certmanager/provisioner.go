@@ -205,7 +205,7 @@ func (p *Provisioner) checkPendingDomains(ctx context.Context) error {
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			var domains coredata.CustomDomains
-			if err := domains.ListDomainsWithPendingHTTPChallenges(ctx, tx, coredata.NewNoScope()); err != nil {
+			if err := domains.ListDomainsWithPendingHTTPChallenges(ctx, tx, coredata.NewNoPredicate()); err != nil {
 				return fmt.Errorf("cannot load domains with pending challenges: %w", err)
 			}
 
@@ -244,7 +244,7 @@ func (p *Provisioner) checkPendingDomains(ctx context.Context) error {
 
 func (p *Provisioner) handleStaleProvisioningAttempts(ctx context.Context, tx pg.Tx) error {
 	var domains coredata.CustomDomains
-	if err := domains.ListStaleProvisioningDomains(ctx, tx, coredata.NewNoScope()); err != nil {
+	if err := domains.ListStaleProvisioningDomains(ctx, tx, coredata.NewNoPredicate()); err != nil {
 		return fmt.Errorf("cannot load stale provisioning domains: %w", err)
 	}
 
@@ -274,7 +274,7 @@ func (p *Provisioner) resetStaleDomain(
 	domain *coredata.CustomDomain,
 ) error {
 	fullDomain := &coredata.CustomDomain{}
-	if err := fullDomain.LoadByIDForUpdateSkipLocked(ctx, tx, coredata.NewNoScope(), domain.ID); err != nil {
+	if err := fullDomain.LoadByIDForUpdateSkipLocked(ctx, tx, coredata.NewNoPredicate(), domain.ID); err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil
 		}
@@ -311,7 +311,7 @@ func (p *Provisioner) resetStaleDomain(
 		fullDomain.SSLLastAttemptAt = nil
 	}
 
-	if err := fullDomain.Update(ctx, tx, coredata.NewNoScope()); err != nil {
+	if err := fullDomain.Update(ctx, tx, coredata.NewNoPredicate()); err != nil {
 		return fmt.Errorf("cannot update stale domain: %w", err)
 	}
 
@@ -324,7 +324,7 @@ func (p *Provisioner) provisionDomainCertificate(
 	domainID gid.GID,
 ) error {
 	domain := &coredata.CustomDomain{}
-	if err := domain.LoadByIDForUpdateSkipLocked(ctx, tx, coredata.NewNoScope(), domainID); err != nil {
+	if err := domain.LoadByIDForUpdateSkipLocked(ctx, tx, coredata.NewNoPredicate(), domainID); err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil
 		}
@@ -344,7 +344,7 @@ func (p *Provisioner) provisionDomainCertificate(
 			errMsg := err.Error()
 
 			domain.ProvisioningError = &errMsg
-			if err := domain.Update(ctx, tx, coredata.NewNoScope()); err != nil {
+			if err := domain.Update(ctx, tx, coredata.NewNoPredicate()); err != nil {
 				return fmt.Errorf("cannot update domain with provisioning error: %w", err)
 			}
 
@@ -362,7 +362,7 @@ func (p *Provisioner) provisionDomainCertificate(
 			errMsg := err.Error()
 
 			domain.ProvisioningError = &errMsg
-			if err := domain.Update(ctx, tx, coredata.NewNoScope()); err != nil {
+			if err := domain.Update(ctx, tx, coredata.NewNoPredicate()); err != nil {
 				return fmt.Errorf("cannot update domain with provisioning error: %w", err)
 			}
 
@@ -370,7 +370,7 @@ func (p *Provisioner) provisionDomainCertificate(
 		}
 
 		domain.ProvisioningError = nil
-		if err := domain.Update(ctx, tx, coredata.NewNoScope()); err != nil {
+		if err := domain.Update(ctx, tx, coredata.NewNoPredicate()); err != nil {
 			return fmt.Errorf("cannot clear provisioning error: %w", err)
 		}
 
@@ -394,7 +394,7 @@ func (p *Provisioner) provisionDomainCertificate(
 		domain.HTTPOrderURL = &challenge.OrderURL
 		domain.SSLStatus = coredata.CustomDomainSSLStatusProvisioning
 
-		if err := domain.Update(ctx, tx, coredata.NewNoScope()); err != nil {
+		if err := domain.Update(ctx, tx, coredata.NewNoPredicate()); err != nil {
 			return fmt.Errorf("cannot update domain with challenge: %w", err)
 		}
 
@@ -453,7 +453,7 @@ func (p *Provisioner) provisionDomainCertificate(
 			domain.SSLStatus = coredata.CustomDomainSSLStatusPending
 		}
 
-		if err := domain.Update(ctx, tx, coredata.NewNoScope()); err != nil {
+		if err := domain.Update(ctx, tx, coredata.NewNoPredicate()); err != nil {
 			return fmt.Errorf("cannot update domain: %w", err)
 		}
 
@@ -487,7 +487,7 @@ func (p *Provisioner) provisionDomainCertificate(
 	domain.HTTPChallengeURL = nil
 	domain.HTTPOrderURL = nil
 
-	if err := domain.Update(ctx, tx, coredata.NewNoScope()); err != nil {
+	if err := domain.Update(ctx, tx, coredata.NewNoPredicate()); err != nil {
 		return fmt.Errorf("cannot update domain: %w", err)
 	}
 

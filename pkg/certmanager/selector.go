@@ -118,7 +118,7 @@ func (s *Selector) loadFromDatabase(domain string) (*tls.Certificate, error) {
 
 func (s *Selector) rebuildCacheEntry(ctx context.Context, conn pg.Querier, domain string) error {
 	var customDomain coredata.CustomDomain
-	if err := customDomain.LoadByDomain(ctx, conn, coredata.NewNoScope(), domain); err != nil {
+	if err := customDomain.LoadByDomain(ctx, conn, coredata.NewNoPredicate(), domain); err != nil {
 		return fmt.Errorf("cannot load domain: %w", err)
 	}
 

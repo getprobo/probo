@@ -52,7 +52,7 @@ func (w WebhookEvent) CursorKey(orderBy WebhookEventOrderField) page.CursorKey {
 func (w *WebhookEvents) LoadBySubscriptionID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	webhookSubscriptionID gid.GID,
 	cursor *page.Cursor[WebhookEventOrderField],
 ) error {
@@ -71,10 +71,10 @@ WHERE
     AND webhook_subscription_id = @webhook_subscription_id
     AND %s
 `
-	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.NamedArgs{"webhook_subscription_id": webhookSubscriptionID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
@@ -95,7 +95,7 @@ WHERE
 func (w *WebhookEvents) CountBySubscriptionID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	webhookSubscriptionID gid.GID,
 ) (int, error) {
 	q := `
@@ -104,10 +104,10 @@ FROM webhook_events
 WHERE %s
     AND webhook_subscription_id = @webhook_subscription_id
 `
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"webhook_subscription_id": webhookSubscriptionID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	var count int
 	if err := conn.QueryRow(ctx, q, args).Scan(&count); err != nil {
@@ -120,7 +120,7 @@ WHERE %s
 func (w *WebhookEvent) Insert(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 INSERT INTO webhook_events (
@@ -145,7 +145,7 @@ VALUES (
 
 	args := pgx.StrictNamedArgs{
 		"id":                      w.ID,
-		"tenant_id":               scope.GetTenantID(),
+		"tenant_id":               predicate.GetTenantID(),
 		"webhook_data_id":         w.WebhookDataID,
 		"webhook_subscription_id": w.WebhookSubscriptionID,
 		"status":                  w.Status,
@@ -164,7 +164,7 @@ VALUES (
 func (w *WebhookEvent) UpdateStatus(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 UPDATE webhook_events
@@ -175,14 +175,14 @@ WHERE %s
     AND id = @id
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"id":       w.ID,
 		"status":   w.Status,
 		"response": w.Response,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	result, err := conn.Exec(ctx, q, args)
 	if err != nil {

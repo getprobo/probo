@@ -100,7 +100,7 @@ func (ufr *UpdateFrameworkRequest) Validate() error {
 }
 
 func (s FrameworkService) RequestExport(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	frameworkID gid.GID,
 	recipientEmail mail.Addr,
 	recipientName string,
@@ -111,12 +111,12 @@ func (s FrameworkService) RequestExport(
 
 	err := s.svc.pg.WithTx(ctx, func(ctx context.Context, conn pg.Tx) error {
 		framework := &coredata.Framework{}
-		if err := framework.LoadByID(ctx, conn, scope, frameworkID); err != nil {
+		if err := framework.LoadByID(ctx, conn, predicate, frameworkID); err != nil {
 			return fmt.Errorf("cannot load framework: %w", err)
 		}
 
 		now := time.Now()
-		exportJobID = gid.New(scope.GetTenantID(), coredata.ExportJobEntityType)
+		exportJobID = gid.New(predicate.GetTenantID(), coredata.ExportJobEntityType)
 
 		args := coredata.FrameworkExportArguments{
 			FrameworkID: frameworkID,
@@ -138,7 +138,7 @@ func (s FrameworkService) RequestExport(
 			CreatedAt:      now,
 		}
 
-		if err := exportJob.Insert(ctx, conn, scope); err != nil {
+		if err := exportJob.Insert(ctx, conn, predicate); err != nil {
 			return fmt.Errorf("cannot insert export job: %w", err)
 		}
 
@@ -152,7 +152,7 @@ func (s FrameworkService) RequestExport(
 }
 
 func (s FrameworkService) Export(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	frameworkID gid.GID,
 	file io.Writer,
 ) error {
@@ -164,7 +164,7 @@ func (s FrameworkService) Export(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
 			framework := &coredata.Framework{}
-			if err := framework.LoadByID(ctx, conn, scope, frameworkID); err != nil {
+			if err := framework.LoadByID(ctx, conn, predicate, frameworkID); err != nil {
 				return fmt.Errorf("cannot load framework: %w", err)
 			}
 
@@ -172,9 +172,7 @@ func (s FrameworkService) Export(
 
 			err := controls.LoadByFrameworkID(
 				ctx,
-				conn,
-				scope,
-				frameworkID,
+				conn, predicate, frameworkID,
 				page.NewCursor(
 					10_000,
 					nil,
@@ -200,9 +198,7 @@ func (s FrameworkService) Export(
 
 				err = measures.LoadByControlID(
 					ctx,
-					conn,
-					scope,
-					control.ID,
+					conn, predicate, control.ID,
 					page.NewCursor(
 						10_000,
 						nil,
@@ -228,9 +224,7 @@ func (s FrameworkService) Export(
 
 					err = evidences.LoadByMeasureID(
 						ctx,
-						conn,
-						scope,
-						measure.ID,
+						conn, predicate, measure.ID,
 						page.NewCursor(
 							10_000,
 							nil,
@@ -253,7 +247,7 @@ func (s FrameworkService) Export(
 						}
 
 						evidence_file := &coredata.File{}
-						if err := evidence_file.LoadByID(ctx, conn, scope, *evidence.EvidenceFileId); err != nil {
+						if err := evidence_file.LoadByID(ctx, conn, predicate, *evidence.EvidenceFileId); err != nil {
 							return fmt.Errorf("cannot load evidence file: %w", err)
 						}
 
@@ -286,9 +280,7 @@ func (s FrameworkService) Export(
 
 				err = documents.LoadByControlID(
 					ctx,
-					conn,
-					scope,
-					control.ID,
+					conn, predicate, control.ID,
 					page.NewCursor(
 						10_000,
 						nil,
@@ -306,7 +298,7 @@ func (s FrameworkService) Export(
 
 				for _, document := range documents {
 					documentVersion := &coredata.DocumentVersion{}
-					if err := documentVersion.LoadLatestPublishedVersion(ctx, conn, scope, document.ID); err != nil {
+					if err := documentVersion.LoadLatestPublishedVersion(ctx, conn, predicate, document.ID); err != nil {
 						return fmt.Errorf("cannot load document version: %w", err)
 					}
 
@@ -314,9 +306,7 @@ func (s FrameworkService) Export(
 						ctx,
 						s.svc,
 						s.html2pdfConverter,
-						conn,
-						scope,
-						documentVersion.ID,
+						conn, predicate, documentVersion.ID,
 						ExportPDFOptions{WithSignatures: true},
 					)
 					if err != nil {
@@ -341,7 +331,7 @@ func (s FrameworkService) Export(
 }
 
 func (s FrameworkService) Create(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	req CreateFrameworkRequest,
 ) (*coredata.Framework, error) {
 	if err := req.Validate(); err != nil {
@@ -352,7 +342,7 @@ func (s FrameworkService) Create(
 	organization := &coredata.Organization{}
 
 	framework := &coredata.Framework{
-		ID:          gid.New(scope.GetTenantID(), coredata.FrameworkEntityType),
+		ID:          gid.New(predicate.GetTenantID(), coredata.FrameworkEntityType),
 		Name:        req.Name,
 		Description: req.Description,
 		ReferenceID: slug.Make(req.Name),
@@ -361,13 +351,13 @@ func (s FrameworkService) Create(
 	}
 
 	err := s.svc.pg.WithTx(ctx, func(ctx context.Context, conn pg.Tx) error {
-		if err := organization.LoadByID(ctx, conn, scope, req.OrganizationID); err != nil {
+		if err := organization.LoadByID(ctx, conn, predicate, req.OrganizationID); err != nil {
 			return fmt.Errorf("cannot load organization: %w", err)
 		}
 
 		framework.OrganizationID = organization.ID
 
-		if err := framework.Insert(ctx, conn, scope); err != nil {
+		if err := framework.Insert(ctx, conn, predicate); err != nil {
 			return fmt.Errorf("cannot insert framework: %w", err)
 		}
 
@@ -381,7 +371,7 @@ func (s FrameworkService) Create(
 }
 
 func (s FrameworkService) CountForOrganizationID(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	organizationID gid.GID,
 ) (int, error) {
 	var count int
@@ -389,7 +379,7 @@ func (s FrameworkService) CountForOrganizationID(
 	err := s.svc.pg.WithConn(ctx, func(ctx context.Context, conn pg.Querier) (err error) {
 		frameworks := &coredata.Frameworks{}
 
-		count, err = frameworks.CountByOrganizationID(ctx, conn, scope, organizationID)
+		count, err = frameworks.CountByOrganizationID(ctx, conn, predicate, organizationID)
 		if err != nil {
 			return fmt.Errorf("cannot count frameworks: %w", err)
 		}
@@ -404,7 +394,7 @@ func (s FrameworkService) CountForOrganizationID(
 }
 
 func (s FrameworkService) ListForOrganizationID(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	organizationID gid.GID,
 	cursor *page.Cursor[coredata.FrameworkOrderField],
 ) (*page.Page[*coredata.Framework, coredata.FrameworkOrderField], error) {
@@ -413,15 +403,13 @@ func (s FrameworkService) ListForOrganizationID(
 	organization := &coredata.Organization{}
 
 	err := s.svc.pg.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
-		if err := organization.LoadByID(ctx, conn, scope, organizationID); err != nil {
+		if err := organization.LoadByID(ctx, conn, predicate, organizationID); err != nil {
 			return fmt.Errorf("cannot load organization: %w", err)
 		}
 
 		err := frameworks.LoadByOrganizationID(
 			ctx,
-			conn,
-			scope,
-			organization.ID,
+			conn, predicate, organization.ID,
 			cursor,
 		)
 		if err != nil {
@@ -438,13 +426,13 @@ func (s FrameworkService) ListForOrganizationID(
 }
 
 func (s FrameworkService) Get(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	frameworkID gid.GID,
 ) (*coredata.Framework, error) {
 	framework := &coredata.Framework{}
 
 	err := s.svc.pg.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
-		return framework.LoadByID(ctx, conn, scope, frameworkID)
+		return framework.LoadByID(ctx, conn, predicate, frameworkID)
 	})
 	if err != nil {
 		return nil, err
@@ -454,7 +442,7 @@ func (s FrameworkService) Get(
 }
 
 func (s FrameworkService) GetByIDs(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	frameworkIDs ...gid.GID,
 ) (coredata.Frameworks, error) {
 	var frameworks coredata.Frameworks
@@ -464,9 +452,7 @@ func (s FrameworkService) GetByIDs(
 		func(ctx context.Context, conn pg.Querier) error {
 			if err := frameworks.LoadByIDs(
 				ctx,
-				conn,
-				scope,
-				frameworkIDs,
+				conn, predicate, frameworkIDs,
 			); err != nil {
 				return fmt.Errorf("cannot load frameworks by ids: %w", err)
 			}
@@ -482,7 +468,7 @@ func (s FrameworkService) GetByIDs(
 }
 
 func (s FrameworkService) Update(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	req UpdateFrameworkRequest,
 ) (*coredata.Framework, error) {
 	if err := req.Validate(); err != nil {
@@ -492,7 +478,7 @@ func (s FrameworkService) Update(
 	framework := &coredata.Framework{ID: req.ID}
 
 	err := s.svc.pg.WithTx(ctx, func(ctx context.Context, conn pg.Tx) error {
-		if err := framework.LoadByID(ctx, conn, scope, req.ID); err != nil {
+		if err := framework.LoadByID(ctx, conn, predicate, req.ID); err != nil {
 			return fmt.Errorf("cannot load framework: %w", err)
 		}
 
@@ -504,7 +490,7 @@ func (s FrameworkService) Update(
 			framework.Description = *req.Description
 		}
 
-		return framework.Update(ctx, conn, scope)
+		return framework.Update(ctx, conn, predicate)
 	})
 	if err != nil {
 		return nil, err
@@ -514,18 +500,18 @@ func (s FrameworkService) Update(
 }
 
 func (s FrameworkService) Delete(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	frameworkID gid.GID,
 ) error {
 	framework := &coredata.Framework{}
 
 	return s.svc.pg.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
-		return framework.Delete(ctx, tx, scope, frameworkID)
+		return framework.Delete(ctx, tx, predicate, frameworkID)
 	})
 }
 
 func (s FrameworkService) Import(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	organizationID gid.GID,
 	req ImportFrameworkRequest,
 ) (*coredata.Framework, error) {
@@ -536,7 +522,7 @@ func (s FrameworkService) Import(
 
 	err := s.svc.pg.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		organization := &coredata.Organization{}
-		if err := organization.LoadByID(ctx, tx, scope, organizationID); err != nil {
+		if err := organization.LoadByID(ctx, tx, predicate, organizationID); err != nil {
 			return fmt.Errorf("cannot load organization: %w", err)
 		}
 
@@ -554,7 +540,7 @@ func (s FrameworkService) Import(
 				"light": req.Framework.Logo.Light,
 				"dark":  req.Framework.Logo.Dark,
 			} {
-				fileID := gid.New(scope.GetTenantID(), coredata.FileEntityType)
+				fileID := gid.New(predicate.GetTenantID(), coredata.FileEntityType)
 
 				objectKey, err := uuid.NewV7()
 				if err != nil {
@@ -588,7 +574,7 @@ func (s FrameworkService) Import(
 
 				fileRecord.FileSize = fileSize
 
-				if err := fileRecord.Insert(ctx, tx, scope); err != nil {
+				if err := fileRecord.Insert(ctx, tx, predicate); err != nil {
 					return fmt.Errorf("cannot insert file: %w", err)
 				}
 
@@ -600,7 +586,7 @@ func (s FrameworkService) Import(
 			}
 		}
 
-		if err := framework.Insert(ctx, tx, scope); err != nil {
+		if err := framework.Insert(ctx, tx, predicate); err != nil {
 			return fmt.Errorf("cannot insert framework: %w", err)
 		}
 
@@ -643,7 +629,7 @@ func (s FrameworkService) Import(
 				UpdatedAt:                   now,
 			}
 
-			if err := control.Insert(ctx, tx, scope); err != nil {
+			if err := control.Insert(ctx, tx, predicate); err != nil {
 				return fmt.Errorf("cannot insert control: %w", err)
 			}
 		}
@@ -658,7 +644,7 @@ func (s FrameworkService) Import(
 }
 
 func (s FrameworkService) SendExportEmail(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	fileID gid.GID,
 	recipientName string,
 	recipientEmail mail.Addr,
@@ -667,11 +653,11 @@ func (s FrameworkService) SendExportEmail(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			file := &coredata.File{}
-			if err := file.LoadByID(ctx, tx, scope, fileID); err != nil {
+			if err := file.LoadByID(ctx, tx, predicate, fileID); err != nil {
 				return fmt.Errorf("cannot load file: %w", err)
 			}
 
-			downloadURL, err := s.GenerateFrameworkExportDownloadURL(ctx, scope, file)
+			downloadURL, err := s.GenerateFrameworkExportDownloadURL(ctx, predicate, file)
 			if err != nil {
 				return fmt.Errorf("cannot generate download URL: %w", err)
 			}
@@ -705,7 +691,7 @@ func (s FrameworkService) SendExportEmail(
 }
 
 func (s FrameworkService) GenerateFrameworkExportDownloadURL(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	file *coredata.File,
 ) (string, error) {
 	presignClient := s3.NewPresignClient(s.svc.s3)
@@ -730,13 +716,13 @@ func (s FrameworkService) GenerateFrameworkExportDownloadURL(
 	return presignedReq.URL, nil
 }
 
-func (s *FrameworkService) BuildAndUploadExport(ctx context.Context, scope coredata.Scoper, exportJobID gid.GID) (*coredata.ExportJob, error) {
+func (s *FrameworkService) BuildAndUploadExport(ctx context.Context, predicate coredata.Predicater, exportJobID gid.GID) (*coredata.ExportJob, error) {
 	exportJob := &coredata.ExportJob{}
 
 	err := s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			if err := exportJob.LoadByID(ctx, tx, scope, exportJobID); err != nil {
+			if err := exportJob.LoadByID(ctx, tx, predicate, exportJobID); err != nil {
 				return fmt.Errorf("cannot load export job: %w", err)
 			}
 
@@ -746,7 +732,7 @@ func (s *FrameworkService) BuildAndUploadExport(ctx context.Context, scope cored
 			}
 
 			framework := &coredata.Framework{}
-			if err := framework.LoadByID(ctx, tx, scope, frameworkID); err != nil {
+			if err := framework.LoadByID(ctx, tx, predicate, frameworkID); err != nil {
 				return fmt.Errorf("cannot load framework: %w", err)
 			}
 
@@ -760,7 +746,7 @@ func (s *FrameworkService) BuildAndUploadExport(ctx context.Context, scope cored
 			defer func() { _ = tempFile.Close() }()
 			defer func() { _ = os.Remove(tempFile.Name()) }()
 
-			err = s.Export(ctx, scope, frameworkID, tempFile)
+			err = s.Export(ctx, predicate, frameworkID, tempFile)
 			if err != nil {
 				return fmt.Errorf("cannot export framework: %w", err)
 			}
@@ -814,12 +800,12 @@ func (s *FrameworkService) BuildAndUploadExport(ctx context.Context, scope cored
 				UpdatedAt:      now,
 			}
 
-			if err := file.Insert(ctx, tx, scope); err != nil {
+			if err := file.Insert(ctx, tx, predicate); err != nil {
 				return fmt.Errorf("cannot insert file: %w", err)
 			}
 
 			exportJob.FileID = &file.ID
-			if err := exportJob.Update(ctx, tx, scope); err != nil {
+			if err := exportJob.Update(ctx, tx, predicate); err != nil {
 				return fmt.Errorf("cannot update export job: %w", err)
 			}
 
@@ -834,7 +820,7 @@ func (s *FrameworkService) BuildAndUploadExport(ctx context.Context, scope cored
 }
 
 func (s FrameworkService) GenerateLightLogoURL(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	frameworkID gid.GID,
 	expiresIn time.Duration,
 ) (*string, error) {
@@ -844,7 +830,7 @@ func (s FrameworkService) GenerateLightLogoURL(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
 			framework := &coredata.Framework{}
-			if err := framework.LoadByID(ctx, conn, scope, frameworkID); err != nil {
+			if err := framework.LoadByID(ctx, conn, predicate, frameworkID); err != nil {
 				return fmt.Errorf("cannot load framework: %w", err)
 			}
 
@@ -852,7 +838,7 @@ func (s FrameworkService) GenerateLightLogoURL(
 				return nil
 			}
 
-			if err := file.LoadByID(ctx, conn, scope, *framework.LightLogoFileID); err != nil {
+			if err := file.LoadByID(ctx, conn, predicate, *framework.LightLogoFileID); err != nil {
 				return fmt.Errorf("cannot load file: %w", err)
 			}
 
@@ -876,7 +862,7 @@ func (s FrameworkService) GenerateLightLogoURL(
 }
 
 func (s FrameworkService) GenerateDarkLogoURL(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	frameworkID gid.GID,
 	expiresIn time.Duration,
 ) (*string, error) {
@@ -886,7 +872,7 @@ func (s FrameworkService) GenerateDarkLogoURL(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
 			framework := &coredata.Framework{}
-			if err := framework.LoadByID(ctx, conn, scope, frameworkID); err != nil {
+			if err := framework.LoadByID(ctx, conn, predicate, frameworkID); err != nil {
 				return fmt.Errorf("cannot load framework: %w", err)
 			}
 
@@ -894,7 +880,7 @@ func (s FrameworkService) GenerateDarkLogoURL(
 				return nil
 			}
 
-			if err := file.LoadByID(ctx, conn, scope, *framework.DarkLogoFileID); err != nil {
+			if err := file.LoadByID(ctx, conn, predicate, *framework.DarkLogoFileID); err != nil {
 				return fmt.Errorf("cannot load file: %w", err)
 			}
 

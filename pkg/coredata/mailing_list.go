@@ -78,7 +78,7 @@ func (ml *MailingList) AuthorizationAttributes(
 func (ml *MailingList) LoadByID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	id gid.GID,
 ) error {
 	q := `
@@ -96,10 +96,10 @@ WHERE
 LIMIT 1;
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"mailing_list_id": id}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -123,7 +123,7 @@ LIMIT 1;
 func (ml *MailingList) Update(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 UPDATE mailing_lists
@@ -135,14 +135,14 @@ WHERE
 	AND id = @mailing_list_id;
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"mailing_list_id": ml.ID,
 		"reply_to":        ml.ReplyTo,
 		"updated_at":      ml.UpdatedAt,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	tag, err := conn.Exec(ctx, q, args)
 	if err != nil {
@@ -159,7 +159,7 @@ WHERE
 func (ml *MailingList) Insert(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 INSERT INTO mailing_lists (
@@ -182,7 +182,7 @@ VALUES (
 
 	args := pgx.StrictNamedArgs{
 		"mailing_list_id": ml.ID,
-		"tenant_id":       scope.GetTenantID(),
+		"tenant_id":       predicate.GetTenantID(),
 		"organization_id": ml.OrganizationID,
 		"reply_to":        ml.ReplyTo,
 		"created_at":      ml.CreatedAt,

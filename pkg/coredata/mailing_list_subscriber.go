@@ -96,7 +96,7 @@ func (cns *MailingListSubscriber) CursorKey(orderBy MailingListSubscriberOrderFi
 func (cns *MailingListSubscriber) LoadByID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	id gid.GID,
 ) error {
 	q := `
@@ -117,12 +117,12 @@ WHERE
 LIMIT 1;
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"id": id,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -146,7 +146,7 @@ LIMIT 1;
 func (cns *MailingListSubscriber) LoadByMailingListIDAndEmail(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	mailingListID gid.GID,
 	email mail.Addr,
 ) error {
@@ -169,13 +169,13 @@ WHERE
 LIMIT 1;
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"mailing_list_id": mailingListID,
 		"email":           email,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -199,7 +199,7 @@ LIMIT 1;
 func (cns *MailingListSubscriber) Insert(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 INSERT INTO mailing_list_subscribers (
@@ -228,7 +228,7 @@ VALUES (
 
 	args := pgx.StrictNamedArgs{
 		"mailing_list_subscriber_id": cns.ID,
-		"tenant_id":                  scope.GetTenantID(),
+		"tenant_id":                  predicate.GetTenantID(),
 		"organization_id":            cns.OrganizationID,
 		"mailing_list_id":            cns.MailingListID,
 		"full_name":                  cns.FullName,
@@ -252,7 +252,7 @@ VALUES (
 func (cns *MailingListSubscriber) Update(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 UPDATE mailing_list_subscribers
@@ -264,14 +264,14 @@ WHERE
 	AND id = @mailing_list_subscriber_id;
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"mailing_list_subscriber_id": cns.ID,
 		"status":                     cns.Status,
 		"updated_at":                 cns.UpdatedAt,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	tag, err := conn.Exec(ctx, q, args)
 	if err != nil {
@@ -288,7 +288,7 @@ WHERE
 func (cns *MailingListSubscriber) Delete(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 DELETE FROM
@@ -298,10 +298,10 @@ WHERE
 	AND id = @mailing_list_subscriber_id;
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"mailing_list_subscriber_id": cns.ID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
@@ -314,7 +314,7 @@ WHERE
 func (cnss *MailingListSubscribers) CountByMailingListID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	mailingListID gid.GID,
 ) (int, error) {
 	q := `
@@ -327,10 +327,10 @@ WHERE
 	AND mailing_list_id = @mailing_list_id
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"mailing_list_id": mailingListID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	row := conn.QueryRow(ctx, q, args)
 
@@ -347,7 +347,7 @@ WHERE
 func (cnss *MailingListSubscribers) LoadAllConfirmedByMailingListID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	mailingListID gid.GID,
 ) error {
 	q := `
@@ -368,10 +368,10 @@ WHERE
 	AND status = 'CONFIRMED'
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"mailing_list_id": mailingListID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -391,7 +391,7 @@ WHERE
 func (cnss *MailingListSubscribers) LoadByMailingListID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	mailingListID gid.GID,
 	cursor *page.Cursor[MailingListSubscriberOrderField],
 ) error {
@@ -413,12 +413,12 @@ WHERE
 	AND %s
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"mailing_list_id": mailingListID,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)

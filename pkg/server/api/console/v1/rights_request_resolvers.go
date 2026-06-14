@@ -21,7 +21,7 @@ import (
 
 // CreateRightsRequest is the resolver for the createRightsRequest field.
 func (r *mutationResolver) CreateRightsRequest(ctx context.Context, input types.CreateRightsRequestInput) (*types.CreateRightsRequestPayload, error) {
-	scope, err := r.authorize(ctx, input.OrganizationID, probo.ActionRightsRequestCreate)
+	predicate, err := r.authorize(ctx, input.OrganizationID, probo.ActionRightsRequestCreate)
 	if err != nil {
 		return nil, err
 	}
@@ -37,7 +37,7 @@ func (r *mutationResolver) CreateRightsRequest(ctx context.Context, input types.
 		ActionTaken:    input.ActionTaken,
 	}
 
-	rightsRequest, err := r.probo.RightsRequests.Create(ctx, scope, &req)
+	rightsRequest, err := r.probo.RightsRequests.Create(ctx, predicate, &req)
 	if err != nil {
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
@@ -55,7 +55,7 @@ func (r *mutationResolver) CreateRightsRequest(ctx context.Context, input types.
 
 // UpdateRightsRequest is the resolver for the updateRightsRequest field.
 func (r *mutationResolver) UpdateRightsRequest(ctx context.Context, input types.UpdateRightsRequestInput) (*types.UpdateRightsRequestPayload, error) {
-	scope, err := r.authorize(ctx, input.ID, probo.ActionRightsRequestUpdate)
+	predicate, err := r.authorize(ctx, input.ID, probo.ActionRightsRequestUpdate)
 	if err != nil {
 		return nil, err
 	}
@@ -71,7 +71,7 @@ func (r *mutationResolver) UpdateRightsRequest(ctx context.Context, input types.
 		ActionTaken:  gqlutils.UnwrapOmittable(input.ActionTaken),
 	}
 
-	rightsRequest, err := r.probo.RightsRequests.Update(ctx, scope, &req)
+	rightsRequest, err := r.probo.RightsRequests.Update(ctx, predicate, &req)
 	if err != nil {
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
@@ -89,12 +89,12 @@ func (r *mutationResolver) UpdateRightsRequest(ctx context.Context, input types.
 
 // DeleteRightsRequest is the resolver for the deleteRightsRequest field.
 func (r *mutationResolver) DeleteRightsRequest(ctx context.Context, input types.DeleteRightsRequestInput) (*types.DeleteRightsRequestPayload, error) {
-	scope, err := r.authorize(ctx, input.RightsRequestID, probo.ActionRightsRequestDelete)
+	predicate, err := r.authorize(ctx, input.RightsRequestID, probo.ActionRightsRequestDelete)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := r.probo.RightsRequests.Delete(ctx, scope, input.RightsRequestID); err != nil {
+	if err := r.probo.RightsRequests.Delete(ctx, predicate, input.RightsRequestID); err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete rights request", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
@@ -106,18 +106,18 @@ func (r *mutationResolver) DeleteRightsRequest(ctx context.Context, input types.
 
 // Organization is the resolver for the organization field.
 func (r *rightsRequestResolver) Organization(ctx context.Context, obj *types.RightsRequest) (*types.Organization, error) {
-	scope, err := r.authorize(ctx, obj.ID, iam.ActionOrganizationGet)
+	predicate, err := r.authorize(ctx, obj.ID, iam.ActionOrganizationGet)
 	if err != nil {
 		return nil, err
 	}
 
-	rightsRequest, err := r.probo.RightsRequests.Get(ctx, scope, obj.ID)
+	rightsRequest, err := r.probo.RightsRequests.Get(ctx, predicate, obj.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot get rights request", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	organization, err := r.probo.Organizations.Get(ctx, scope, rightsRequest.OrganizationID)
+	organization, err := r.probo.Organizations.Get(ctx, predicate, rightsRequest.OrganizationID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
@@ -138,14 +138,14 @@ func (r *rightsRequestResolver) Permission(ctx context.Context, obj *types.Right
 
 // TotalCount is the resolver for the totalCount field.
 func (r *rightsRequestConnectionResolver) TotalCount(ctx context.Context, obj *types.RightsRequestConnection) (int, error) {
-	scope, err := r.authorize(ctx, obj.ParentID, probo.ActionRightsRequestList)
+	predicate, err := r.authorize(ctx, obj.ParentID, probo.ActionRightsRequestList)
 	if err != nil {
 		return 0, err
 	}
 
 	switch obj.Resolver.(type) {
 	case *organizationResolver:
-		count, err := r.probo.RightsRequests.CountByOrganizationID(ctx, scope, obj.ParentID)
+		count, err := r.probo.RightsRequests.CountByOrganizationID(ctx, predicate, obj.ParentID)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count rights requests", log.Error(err))
 			return 0, gqlutils.Internal(ctx)

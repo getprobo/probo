@@ -16,7 +16,7 @@ Every entity ID in the system is a 24-byte tenant-scoped GID, serialized as base
 GIDs are created in the **service layer** (e.g. `pkg/probo/*_service.go`), not in coredata `Insert` methods. The entity type constant comes from `pkg/coredata/entity_type_reg.go`:
 
 ```go
-assetID := gid.New(s.svc.scope.GetTenantID(), coredata.AssetEntityType)
+assetID := gid.New(s.svc.predicate.GetTenantID(), coredata.AssetEntityType)
 
 asset := &coredata.Asset{
     ID:             assetID,
@@ -26,7 +26,7 @@ asset := &coredata.Asset{
     UpdatedAt:      now,
 }
 
-err := asset.Insert(ctx, conn, s.svc.scope)
+err := asset.Insert(ctx, conn, s.svc.predicate)
 ```
 
 `gid.New` panics on random source failure (should never happen). Use `gid.NewGID` if you need the error.
@@ -81,4 +81,4 @@ const (
 
 1. Add `FooEntityType uint16 = N` in the `const` block in `entity_type_reg.go` (next sequential number)
 2. Add a `case FooEntityType` in `NewEntityFromID` returning `&Foo{ID: id}, true`
-3. In the service `Create` method, call `gid.New(scope.GetTenantID(), coredata.FooEntityType)` to generate the ID before `Insert`
+3. In the service `Create` method, call `gid.New(predicate.GetTenantID(), coredata.FooEntityType)` to generate the ID before `Insert`

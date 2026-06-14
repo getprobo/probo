@@ -81,8 +81,8 @@ func (s *Sender) batchSendMessages(ctx context.Context) error {
 						message.Error = &panicErr
 						message.UpdatedAt = time.Now()
 
-						scope := coredata.NewScope(message.ID.TenantID())
-						if updateErr := message.Update(ctx, tx, scope); updateErr != nil {
+						predicate := coredata.NewPredicate(message.ID.TenantID())
+						if updateErr := message.Update(ctx, tx, predicate); updateErr != nil {
 							s.logger.ErrorCtx(ctx, "cannot update slack message after panic", log.Error(updateErr))
 						}
 
@@ -97,7 +97,7 @@ func (s *Sender) batchSendMessages(ctx context.Context) error {
 					return err
 				}
 
-				scope := coredata.NewScope(message.ID.TenantID())
+				predicate := coredata.NewPredicate(message.ID.TenantID())
 				channelID, messageTS, sendErr := s.sendMessage(ctx, tx, message)
 
 				now := time.Now()
@@ -108,7 +108,7 @@ func (s *Sender) batchSendMessages(ctx context.Context) error {
 					message.MessageTS = messageTS
 					message.UpdatedAt = now
 
-					if err := message.UpdateChannelAndTSByInitialMessageID(ctx, tx, scope, message.ID, *channelID, *messageTS, now); err != nil {
+					if err := message.UpdateChannelAndTSByInitialMessageID(ctx, tx, predicate, message.ID, *channelID, *messageTS, now); err != nil {
 						return fmt.Errorf("cannot update all messages with initial message id: %w", err)
 					}
 				}
@@ -117,7 +117,7 @@ func (s *Sender) batchSendMessages(ctx context.Context) error {
 					errorMsg := sendErr.Error()
 					message.Error = &errorMsg
 
-					if err := message.Update(ctx, tx, scope); err != nil {
+					if err := message.Update(ctx, tx, predicate); err != nil {
 						return fmt.Errorf("cannot update slack message with error: %w", err)
 					}
 
@@ -128,7 +128,7 @@ func (s *Sender) batchSendMessages(ctx context.Context) error {
 
 				message.SentAt = &now
 
-				if err := message.Update(ctx, tx, scope); err != nil {
+				if err := message.Update(ctx, tx, predicate); err != nil {
 					return fmt.Errorf("cannot update slack message: %w", err)
 				}
 
@@ -148,14 +148,12 @@ func (s *Sender) batchSendMessages(ctx context.Context) error {
 
 func (s *Sender) sendMessage(ctx context.Context, tx pg.Querier, message *coredata.SlackMessage) (*string, *string, error) {
 	tenantID := message.ID.TenantID()
-	scope := coredata.NewScope(tenantID)
+	predicate := coredata.NewPredicate(tenantID)
 
 	var c coredata.Connector
 	if err := c.LoadOneByOrganizationIDAndProvider(
 		ctx,
-		tx,
-		scope,
-		s.encryptionKey,
+		tx, predicate, s.encryptionKey,
 		message.OrganizationID,
 		coredata.ConnectorProviderSlack,
 	); err != nil {
@@ -213,8 +211,8 @@ func (s *Sender) batchUpdateMessages(ctx context.Context) error {
 						updateMessage.Error = &panicErr
 						updateMessage.UpdatedAt = time.Now()
 
-						scope := coredata.NewScope(updateMessage.ID.TenantID())
-						if updateErr := updateMessage.Update(ctx, tx, scope); updateErr != nil {
+						predicate := coredata.NewPredicate(updateMessage.ID.TenantID())
+						if updateErr := updateMessage.Update(ctx, tx, predicate); updateErr != nil {
 							s.logger.ErrorCtx(ctx, "cannot update slack message after panic", log.Error(updateErr))
 						}
 
@@ -229,7 +227,7 @@ func (s *Sender) batchUpdateMessages(ctx context.Context) error {
 					return err
 				}
 
-				scope := coredata.NewScope(updateMessage.ID.TenantID())
+				predicate := coredata.NewPredicate(updateMessage.ID.TenantID())
 				updateErr := s.updateMessage(ctx, tx, updateMessage)
 
 				now := time.Now()
@@ -240,7 +238,7 @@ func (s *Sender) batchUpdateMessages(ctx context.Context) error {
 					updateMessage.Error = &errorMsg
 					updateMessage.UpdatedAt = time.Now()
 
-					if err := updateMessage.Update(ctx, tx, scope); err != nil {
+					if err := updateMessage.Update(ctx, tx, predicate); err != nil {
 						return fmt.Errorf("cannot update slack message with error: %w", err)
 					}
 
@@ -251,7 +249,7 @@ func (s *Sender) batchUpdateMessages(ctx context.Context) error {
 
 				updateMessage.SentAt = &now
 
-				if err := updateMessage.Update(ctx, tx, scope); err != nil {
+				if err := updateMessage.Update(ctx, tx, predicate); err != nil {
 					return fmt.Errorf("cannot update slack message: %w", err)
 				}
 
@@ -275,14 +273,12 @@ func (s *Sender) updateMessage(ctx context.Context, tx pg.Querier, updateMessage
 	}
 
 	tenantID := updateMessage.ID.TenantID()
-	scope := coredata.NewScope(tenantID)
+	predicate := coredata.NewPredicate(tenantID)
 
 	var c coredata.Connector
 	if err := c.LoadOneByOrganizationIDAndProvider(
 		ctx,
-		tx,
-		scope,
-		s.encryptionKey,
+		tx, predicate, s.encryptionKey,
 		updateMessage.OrganizationID,
 		coredata.ConnectorProviderSlack,
 	); err != nil {

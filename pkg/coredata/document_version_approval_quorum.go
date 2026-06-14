@@ -93,7 +93,7 @@ func (q *DocumentVersionApprovalQuorum) AuthorizationAttributes(
 func (q *DocumentVersionApprovalQuorum) LoadByID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	id gid.GID,
 ) error {
 	query := `
@@ -111,10 +111,10 @@ WHERE
 	AND %s
 `
 
-	query = fmt.Sprintf(query, scope.SQLFragment())
+	query = fmt.Sprintf(query, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"id": id}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, query, args)
 	if err != nil {
@@ -138,7 +138,7 @@ WHERE
 func (q *DocumentVersionApprovalQuorum) LoadLastByDocumentVersionID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	documentVersionID gid.GID,
 ) error {
 	query := `
@@ -165,10 +165,10 @@ ORDER BY document_version_approval_quorums.created_at DESC
 LIMIT 1
 `
 
-	query = fmt.Sprintf(query, scope.SQLFragment())
+	query = fmt.Sprintf(query, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"version_id": documentVersionID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, query, args)
 	if err != nil {
@@ -192,7 +192,7 @@ LIMIT 1
 func (q *DocumentVersionApprovalQuorums) LoadAllByDocumentVersionID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	documentVersionID gid.GID,
 	cursor *page.Cursor[DocumentVersionApprovalQuorumOrderField],
 ) error {
@@ -219,10 +219,10 @@ WHERE
 	AND %s
 `
 
-	query = fmt.Sprintf(query, scope.SQLFragment(), cursor.SQLFragment())
+	query = fmt.Sprintf(query, predicate.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"version_id": documentVersionID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 
 	rows, err := conn.Query(ctx, query, args)
@@ -243,7 +243,7 @@ WHERE
 func (q *DocumentVersionApprovalQuorums) CountByDocumentVersionID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	documentVersionID gid.GID,
 ) (int, error) {
 	query := `
@@ -263,10 +263,10 @@ WHERE
 	%s
 `
 
-	query = fmt.Sprintf(query, scope.SQLFragment())
+	query = fmt.Sprintf(query, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"version_id": documentVersionID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	row := conn.QueryRow(ctx, query, args)
 
@@ -281,7 +281,7 @@ WHERE
 func (q *DocumentVersionApprovalQuorum) Insert(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	query := `
 INSERT INTO document_version_approval_quorums (
@@ -305,7 +305,7 @@ INSERT INTO document_version_approval_quorums (
 
 	args := pgx.StrictNamedArgs{
 		"id":              q.ID,
-		"tenant_id":       scope.GetTenantID(),
+		"tenant_id":       predicate.GetTenantID(),
 		"organization_id": q.OrganizationID,
 		"version_id":      q.VersionID,
 		"status":          q.Status,
@@ -330,7 +330,7 @@ INSERT INTO document_version_approval_quorums (
 func (q *DocumentVersionApprovalQuorum) Delete(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	query := `
 DELETE FROM document_version_approval_quorums
@@ -339,10 +339,10 @@ WHERE
 	AND id = @id
 `
 
-	query = fmt.Sprintf(query, scope.SQLFragment())
+	query = fmt.Sprintf(query, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"id": q.ID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	_, err := conn.Exec(ctx, query, args)
 	if err != nil {
@@ -355,7 +355,7 @@ WHERE
 func (q *DocumentVersionApprovalQuorum) Update(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	query := `
 UPDATE document_version_approval_quorums
@@ -367,7 +367,7 @@ WHERE
 	AND id = @id
 `
 
-	query = fmt.Sprintf(query, scope.SQLFragment())
+	query = fmt.Sprintf(query, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"id":         q.ID,
@@ -375,7 +375,7 @@ WHERE
 		"updated_at": q.UpdatedAt,
 	}
 
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	_, err := conn.Exec(ctx, query, args)
 	if err != nil {

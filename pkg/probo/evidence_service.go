@@ -52,7 +52,7 @@ func (umer *UploadMeasureEvidenceRequest) Validate() error {
 }
 
 func (s EvidenceService) Get(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	evidenceID gid.GID,
 ) (*coredata.Evidence, error) {
 	evidence := &coredata.Evidence{}
@@ -60,7 +60,7 @@ func (s EvidenceService) Get(
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			if err := evidence.LoadByID(ctx, conn, scope, evidenceID); err != nil {
+			if err := evidence.LoadByID(ctx, conn, predicate, evidenceID); err != nil {
 				return fmt.Errorf("cannot load evidence %w", err)
 			}
 
@@ -75,7 +75,7 @@ func (s EvidenceService) Get(
 }
 
 func (s EvidenceService) UploadMeasureEvidence(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	req UploadMeasureEvidenceRequest,
 ) (*coredata.Evidence, error) {
 	if err := req.Validate(); err != nil {
@@ -83,7 +83,7 @@ func (s EvidenceService) UploadMeasureEvidence(
 	}
 
 	now := time.Now()
-	evidenceID := gid.New(scope.GetTenantID(), coredata.EvidenceEntityType)
+	evidenceID := gid.New(predicate.GetTenantID(), coredata.EvidenceEntityType)
 
 	referenceID, err := uuid.NewV4()
 	if err != nil {
@@ -111,14 +111,12 @@ func (s EvidenceService) UploadMeasureEvidence(
 				err  error
 			)
 
-			if err := measure.LoadByID(ctx, conn, scope, req.MeasureID); err != nil {
+			if err := measure.LoadByID(ctx, conn, predicate, req.MeasureID); err != nil {
 				return fmt.Errorf("cannot load measure %q: %w", req.MeasureID, err)
 			}
 
 			file, err = s.svc.Files.UploadAndSaveFile(
-				ctx,
-				scope,
-				s.fileValidator,
+				ctx, predicate, s.fileValidator,
 				map[string]string{
 					"type":            "evidence",
 					"evidence-id":     evidenceID.String(),
@@ -133,7 +131,7 @@ func (s EvidenceService) UploadMeasureEvidence(
 			evidence.EvidenceFileId = &file.ID
 			evidence.MeasureID = req.MeasureID
 
-			if err := evidence.Insert(ctx, conn, scope); err != nil {
+			if err := evidence.Insert(ctx, conn, predicate); err != nil {
 				return fmt.Errorf("cannot insert evidence: %w", err)
 			}
 
@@ -149,7 +147,7 @@ func (s EvidenceService) UploadMeasureEvidence(
 }
 
 func (s EvidenceService) CountForMeasureID(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	measureID gid.GID,
 ) (int, error) {
 	var count int
@@ -159,7 +157,7 @@ func (s EvidenceService) CountForMeasureID(
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			evidences := coredata.Evidences{}
 
-			count, err = evidences.CountByMeasureID(ctx, conn, scope, measureID)
+			count, err = evidences.CountByMeasureID(ctx, conn, predicate, measureID)
 			if err != nil {
 				return fmt.Errorf("cannot count evidences: %w", err)
 			}
@@ -175,7 +173,7 @@ func (s EvidenceService) CountForMeasureID(
 }
 
 func (s EvidenceService) ListForMeasureID(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	measureID gid.GID,
 	cursor *page.Cursor[coredata.EvidenceOrderField],
 ) (*page.Page[*coredata.Evidence, coredata.EvidenceOrderField], error) {
@@ -186,9 +184,7 @@ func (s EvidenceService) ListForMeasureID(
 		func(ctx context.Context, conn pg.Querier) error {
 			return evidences.LoadByMeasureID(
 				ctx,
-				conn,
-				scope,
-				measureID,
+				conn, predicate, measureID,
 				cursor,
 			)
 		},
@@ -201,7 +197,7 @@ func (s EvidenceService) ListForMeasureID(
 }
 
 func (s EvidenceService) CountForTaskID(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	taskID gid.GID,
 ) (int, error) {
 	var count int
@@ -211,7 +207,7 @@ func (s EvidenceService) CountForTaskID(
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			evidences := coredata.Evidences{}
 
-			count, err = evidences.CountByTaskID(ctx, conn, scope, taskID)
+			count, err = evidences.CountByTaskID(ctx, conn, predicate, taskID)
 			if err != nil {
 				return fmt.Errorf("cannot count evidences: %w", err)
 			}
@@ -227,7 +223,7 @@ func (s EvidenceService) CountForTaskID(
 }
 
 func (s EvidenceService) ListForTaskID(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	taskID gid.GID,
 	cursor *page.Cursor[coredata.EvidenceOrderField],
 ) (*page.Page[*coredata.Evidence, coredata.EvidenceOrderField], error) {
@@ -238,9 +234,7 @@ func (s EvidenceService) ListForTaskID(
 		func(ctx context.Context, conn pg.Querier) error {
 			return evidences.LoadByTaskID(
 				ctx,
-				conn,
-				scope,
-				taskID,
+				conn, predicate, taskID,
 				cursor,
 			)
 		},
@@ -253,7 +247,7 @@ func (s EvidenceService) ListForTaskID(
 }
 
 func (s *EvidenceService) Delete(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	evidenceID gid.GID,
 ) error {
 	evidence := &coredata.Evidence{ID: evidenceID}
@@ -261,7 +255,7 @@ func (s *EvidenceService) Delete(
 	return s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			err := evidence.Delete(ctx, tx, scope)
+			err := evidence.Delete(ctx, tx, predicate)
 			if err != nil {
 				return fmt.Errorf("cannot delete evidence: %w", err)
 			}

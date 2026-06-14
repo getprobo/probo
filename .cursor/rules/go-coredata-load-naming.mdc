@@ -43,7 +43,7 @@ func (ds *Things) LoadAll(
 func (ds *Things) LoadAllByParentID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	parentID gid.GID,
 	cursor *page.Cursor[ThingOrderField],
 ) error {
@@ -52,7 +52,7 @@ func (ds *Things) LoadAllByParentID(
 func (ds *Things) LoadByParentID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	parentID gid.GID,
 	cursor *page.Cursor[ThingOrderField],
 ) error {

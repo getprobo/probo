@@ -30,7 +30,7 @@ type AuditService struct {
 
 func (s AuditService) Get(
 	ctx context.Context,
-	scope coredata.Scoper,
+	predicate coredata.Predicater,
 	auditID gid.GID,
 ) (*coredata.Audit, error) {
 	audit := &coredata.Audit{}
@@ -38,7 +38,7 @@ func (s AuditService) Get(
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			err := audit.LoadByID(ctx, conn, scope, auditID)
+			err := audit.LoadByID(ctx, conn, predicate, auditID)
 			if err != nil {
 				return fmt.Errorf("cannot load audit: %w", err)
 			}
@@ -55,7 +55,7 @@ func (s AuditService) Get(
 
 func (s AuditService) GetByReportFileID(
 	ctx context.Context,
-	scope coredata.Scoper,
+	predicate coredata.Predicater,
 	fileID gid.GID,
 ) (*coredata.Audit, error) {
 	audit := &coredata.Audit{}
@@ -63,7 +63,7 @@ func (s AuditService) GetByReportFileID(
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			if err := audit.LoadByReportFileID(ctx, conn, scope, fileID); err != nil {
+			if err := audit.LoadByReportFileID(ctx, conn, predicate, fileID); err != nil {
 				return fmt.Errorf("cannot load audit: %w", err)
 			}
 
@@ -79,7 +79,7 @@ func (s AuditService) GetByReportFileID(
 
 func (s AuditService) ListForOrganizationId(
 	ctx context.Context,
-	scope coredata.Scoper,
+	predicate coredata.Predicater,
 	organizationID gid.GID,
 	cursor *page.Cursor[coredata.AuditOrderField],
 ) (*page.Page[*coredata.Audit, coredata.AuditOrderField], error) {
@@ -90,7 +90,7 @@ func (s AuditService) ListForOrganizationId(
 		func(ctx context.Context, conn pg.Querier) error {
 			filter := coredata.NewAuditTrustCenterFilter()
 
-			err := audits.LoadByOrganizationID(ctx, conn, scope, organizationID, cursor, filter)
+			err := audits.LoadByOrganizationID(ctx, conn, predicate, organizationID, cursor, filter)
 			if err != nil {
 				return fmt.Errorf("cannot load audits: %w", err)
 			}

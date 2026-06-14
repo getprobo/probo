@@ -229,7 +229,7 @@ func (s *Service) CreateAccessToken(
 		HashedValue: hash.SHA256String(tokenValue),
 		ClientID:    clientID,
 		IdentityID:  identityID,
-		Scopes:      scopes,
+		Scopes: scopes,
 		CreatedAt:   now,
 		ExpiresAt:   now.Add(s.accessTokenDuration),
 	}
@@ -256,7 +256,7 @@ func (s *Service) GetClientByID(ctx context.Context, clientID gid.GID) (*coredat
 	if err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			if err := client.LoadByID(ctx, conn, coredata.NewNoScope(), clientID); err != nil {
+			if err := client.LoadByID(ctx, conn, coredata.NewNoPredicate(), clientID); err != nil {
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return NewError(ErrInvalidClient, WithDescription("client not found"))
 				}
@@ -417,7 +417,7 @@ func (s *Service) ExchangeAuthorizationCode(
 				HashedValue: hash.SHA256String(accessTokenValue),
 				ClientID:    client.ID,
 				IdentityID:  code.IdentityID,
-				Scopes:      code.Scopes,
+				Scopes: code.Scopes,
 				CreatedAt:   now,
 				ExpiresAt:   accessTokenExpiresAt,
 			}
@@ -434,7 +434,7 @@ func (s *Service) ExchangeAuthorizationCode(
 					HashedValue:   hash.SHA256String(refreshTokenValue),
 					ClientID:      client.ID,
 					IdentityID:    code.IdentityID,
-					Scopes:        code.Scopes,
+					Scopes: code.Scopes,
 					AccessTokenID: accessToken.ID,
 					CreatedAt:     now,
 					ExpiresAt:     now.Add(s.refreshTokenDuration),
@@ -456,7 +456,7 @@ func (s *Service) ExchangeAuthorizationCode(
 		TokenType:    tokenTypeBearer,
 		ExpiresIn:    int64(time.Until(accessTokenExpiresAt).Seconds()),
 		RefreshToken: refreshTokenValue,
-		Scope:        code.Scopes.String(),
+		Scope: code.Scopes.String(),
 		IDToken:      idToken,
 	}, nil
 }
@@ -610,7 +610,7 @@ func (s *Service) RefreshToken(
 				HashedValue: hash.SHA256String(accessTokenValue),
 				ClientID:    client.ID,
 				IdentityID:  previousRefreshToken.IdentityID,
-				Scopes:      previousRefreshToken.Scopes,
+				Scopes: previousRefreshToken.Scopes,
 				CreatedAt:   now,
 				ExpiresAt:   accessTokenExpiresAt,
 			}
@@ -623,7 +623,7 @@ func (s *Service) RefreshToken(
 				HashedValue:   hash.SHA256String(refreshTokenValueNew),
 				ClientID:      client.ID,
 				IdentityID:    previousRefreshToken.IdentityID,
-				Scopes:        previousRefreshToken.Scopes,
+				Scopes: previousRefreshToken.Scopes,
 				AccessTokenID: accessToken.ID,
 				CreatedAt:     now,
 				ExpiresAt:     now.Add(s.refreshTokenDuration),
@@ -643,7 +643,7 @@ func (s *Service) RefreshToken(
 		TokenType:    tokenTypeBearer,
 		ExpiresIn:    int64(time.Until(accessTokenExpiresAt).Seconds()),
 		RefreshToken: refreshTokenValueNew,
-		Scope:        previousRefreshToken.Scopes.String(),
+		Scope: previousRefreshToken.Scopes.String(),
 		IDToken:      idToken,
 	}, nil
 }
@@ -663,7 +663,7 @@ func (s *Service) CreateDeviceCode(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			client := coredata.OAuth2Client{}
-			if err := client.LoadByID(ctx, tx, coredata.NewNoScope(), clientID); err != nil {
+			if err := client.LoadByID(ctx, tx, coredata.NewNoPredicate(), clientID); err != nil {
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return NewError(
 						ErrInvalidRequest,
@@ -706,7 +706,7 @@ func (s *Service) CreateDeviceCode(
 					DeviceCodeHash: hash.SHA256String(deviceCodeValue),
 					UserCode:       coredata.OAuth2UserCode(userCode),
 					ClientID:       client.ID,
-					Scopes:         requestedScopes,
+					Scopes: requestedScopes,
 					Status:         coredata.OAuth2DeviceCodeStatusPending,
 					PollInterval:   5,
 					CreatedAt:      now,
@@ -768,7 +768,7 @@ func (s *Service) PollDeviceCode(
 				}
 			}
 
-			if err := client.LoadByID(ctx, tx, coredata.NewNoScope(), clientID); err != nil {
+			if err := client.LoadByID(ctx, tx, coredata.NewNoPredicate(), clientID); err != nil {
 				return fmt.Errorf("cannot load client: %w", err)
 			}
 
@@ -879,7 +879,7 @@ func (s *Service) PollDeviceCode(
 				HashedValue: hash.SHA256String(accessTokenValue),
 				ClientID:    clientID,
 				IdentityID:  *deviceCode.IdentityID,
-				Scopes:      deviceCode.Scopes,
+				Scopes: deviceCode.Scopes,
 				CreatedAt:   now,
 				ExpiresAt:   accessTokenExpiresAt,
 			}
@@ -895,7 +895,7 @@ func (s *Service) PollDeviceCode(
 					HashedValue:   hash.SHA256String(refreshTokenValue),
 					ClientID:      clientID,
 					IdentityID:    *deviceCode.IdentityID,
-					Scopes:        deviceCode.Scopes,
+					Scopes: deviceCode.Scopes,
 					AccessTokenID: accessToken.ID,
 					CreatedAt:     now,
 					ExpiresAt:     now.Add(s.refreshTokenDuration),
@@ -917,7 +917,7 @@ func (s *Service) PollDeviceCode(
 		TokenType:    tokenTypeBearer,
 		ExpiresIn:    int64(accessTokenExpiresAt.Sub(now).Seconds()),
 		RefreshToken: refreshTokenValue,
-		Scope:        deviceCode.Scopes.String(),
+		Scope: deviceCode.Scopes.String(),
 		IDToken:      idToken,
 	}, nil
 }
@@ -961,7 +961,7 @@ func (s *Service) AuthorizeDevice(
 				)
 			}
 
-			if err := client.LoadByID(ctx, tx, coredata.NewNoScope(), deviceCode.ClientID); err != nil {
+			if err := client.LoadByID(ctx, tx, coredata.NewNoPredicate(), deviceCode.ClientID); err != nil {
 				return fmt.Errorf("cannot load oauth2 client: %w", err)
 			}
 
@@ -994,7 +994,7 @@ func (s *Service) AuthorizeDevice(
 				IdentityID:   identityID,
 				SessionID:    sessionID,
 				ClientID:     client.ID,
-				Scopes:       deviceCode.Scopes,
+				Scopes: deviceCode.Scopes,
 				DeviceCodeID: &deviceCode.ID,
 				Approved:     false,
 				CreatedAt:    now,
@@ -1009,7 +1009,7 @@ func (s *Service) AuthorizeDevice(
 				&ConsentRequiredError{
 					ConsentID: pendingConsent.ID,
 					Client:    &client,
-					Scopes:    deviceCode.Scopes,
+					Scopes: deviceCode.Scopes,
 				},
 			)
 		},
@@ -1073,15 +1073,15 @@ func (s *Service) RegisterClient(
 
 	var (
 		now    = time.Now()
-		scope  = coredata.NewScopeFromObjectID(*req.OrganizationID)
+		predicate = coredata.NewPredicateFromObjectID(*req.OrganizationID)
 		client = &coredata.OAuth2Client{
-			ID:                      gid.New(scope.GetTenantID(), coredata.OAuth2ClientEntityType),
+			ID:                      gid.New(predicate.GetTenantID(), coredata.OAuth2ClientEntityType),
 			OrganizationID:          req.OrganizationID,
 			ClientSecretHash:        secretHash,
 			ClientName:              req.ClientName,
 			Visibility:              req.Visibility,
 			RedirectURIs:            req.RedirectURIs,
-			Scopes:                  req.Scopes,
+			Scopes: req.Scopes,
 			GrantTypes:              req.GrantTypes,
 			ResponseTypes:           req.ResponseTypes,
 			TokenEndpointAuthMethod: req.TokenEndpointAuthMethod,
@@ -1114,7 +1114,7 @@ func (s *Service) RegisterClient(
 				return fmt.Errorf("cannot load membership: %w", err)
 			}
 
-			if err := client.Insert(ctx, tx, scope); err != nil {
+			if err := client.Insert(ctx, tx, predicate); err != nil {
 				return fmt.Errorf("cannot insert oauth2 client: %w", err)
 			}
 
@@ -1238,7 +1238,7 @@ func (s *Service) IntrospectToken(
 		return &IntrospectResult{
 			ClientID:   accessToken.ClientID,
 			IdentityID: accessToken.IdentityID,
-			Scopes:     accessToken.Scopes,
+			Scopes: accessToken.Scopes,
 			IssuedAt:   accessToken.CreatedAt,
 			ExpiresAt:  accessToken.ExpiresAt,
 			TokenType:  tokenTypeBearer,
@@ -1251,7 +1251,7 @@ func (s *Service) IntrospectToken(
 		return &IntrospectResult{
 			ClientID:   refreshToken.ClientID,
 			IdentityID: refreshToken.IdentityID,
-			Scopes:     refreshToken.Scopes,
+			Scopes: refreshToken.Scopes,
 			IssuedAt:   refreshToken.CreatedAt,
 			ExpiresAt:  refreshToken.ExpiresAt,
 		}, nil
@@ -1404,7 +1404,7 @@ func (s *Service) Authorize(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			var client coredata.OAuth2Client
-			if err := client.LoadByID(ctx, tx, coredata.NewNoScope(), req.ClientID); err != nil {
+			if err := client.LoadByID(ctx, tx, coredata.NewNoPredicate(), req.ClientID); err != nil {
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return ErrClientNotFound
 				}
@@ -1504,7 +1504,7 @@ func (s *Service) Authorize(
 				IdentityID:          req.IdentityID,
 				SessionID:           req.SessionID,
 				ClientID:            client.ID,
-				Scopes:              requestedScopes,
+				Scopes: requestedScopes,
 				RedirectURI:         new(uri.URI(req.RedirectURI)),
 				CodeChallenge:       req.CodeChallenge,
 				CodeChallengeMethod: codeChallengeMethod,
@@ -1523,7 +1523,7 @@ func (s *Service) Authorize(
 				&ConsentRequiredError{
 					ConsentID: pendingConsent.ID,
 					Client:    &client,
-					Scopes:    requestedScopes,
+					Scopes: requestedScopes,
 				},
 			)
 		},
@@ -1612,7 +1612,7 @@ func (s *Service) ApproveConsent(
 			}
 
 			var client coredata.OAuth2Client
-			if err := client.LoadByID(ctx, tx, coredata.NewNoScope(), consent.ClientID); err != nil {
+			if err := client.LoadByID(ctx, tx, coredata.NewNoPredicate(), consent.ClientID); err != nil {
 				return fmt.Errorf("cannot load client: %w", err)
 			}
 
@@ -1751,7 +1751,7 @@ func (s *Service) issueAuthorizationCode(
 		ClientID:    client.ID,
 		IdentityID:  identityID,
 		RedirectURI: redirectURI,
-		Scopes:      scopes,
+		Scopes: scopes,
 		AuthTime:    authTime,
 		CreatedAt:   now,
 		ExpiresAt:   now.Add(s.authorizationCodeDuration),

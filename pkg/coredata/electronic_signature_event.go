@@ -45,7 +45,7 @@ type (
 func (e *ElectronicSignatureEvent) Insert(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 INSERT INTO electronic_signature_events (
@@ -60,7 +60,7 @@ INSERT INTO electronic_signature_events (
 `
 	args := pgx.StrictNamedArgs{
 		"id":                      e.ID,
-		"tenant_id":               scope.GetTenantID(),
+		"tenant_id":               predicate.GetTenantID(),
 		"electronic_signature_id": e.ElectronicSignatureID,
 		"event_type":              e.EventType,
 		"event_source":            e.EventSource,
@@ -82,7 +82,7 @@ INSERT INTO electronic_signature_events (
 func (es *ElectronicSignatureEvents) LoadBySignatureID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	sigID gid.GID,
 ) error {
 	q := `
@@ -94,12 +94,12 @@ FROM electronic_signature_events
 WHERE %s AND electronic_signature_id = @electronic_signature_id
 ORDER BY occurred_at ASC
 `
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"electronic_signature_id": sigID,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {

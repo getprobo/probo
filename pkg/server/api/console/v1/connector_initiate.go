@@ -72,7 +72,7 @@ func handleConnectorInitiate(
 			return
 		}
 
-		scope, err := iamSvc.Authorizer.Authorize(r.Context(), iam.AuthorizeParams{
+		predicate, err := iamSvc.Authorizer.Authorize(r.Context(), iam.AuthorizeParams{
 			Principal: identity.ID,
 			Resource:  organizationID,
 			Session:   &session.ID,
@@ -90,7 +90,7 @@ func handleConnectorInitiate(
 		// into the new auth request. Cross-org/provider/protocol mismatches
 		// are caught inside Reconnect at callback time; this handler only
 		// needs the scope set.
-		existing, err := loadExistingConnector(r, prb, scope, organizationID, provider)
+		existing, err := loadExistingConnector(r, prb, predicate, organizationID, provider)
 		if err != nil {
 			if errors.Is(err, coredata.ErrResourceNotFound) {
 				httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("cannot reconnect: connector not found"))
@@ -140,7 +140,7 @@ func handleConnectorInitiate(
 func loadExistingConnector(
 	r *http.Request,
 	prb *probo.Service,
-	scope coredata.Scoper,
+	predicate coredata.Predicater,
 	organizationID gid.GID,
 	provider string,
 ) (*coredata.Connector, error) {
@@ -150,7 +150,7 @@ func loadExistingConnector(
 			return nil, fmt.Errorf("%w: cannot parse connector id: %w", errInvalidReconnectConnector, err)
 		}
 
-		found, err := prb.Connectors.GetWithConnection(r.Context(), scope, parsedID)
+		found, err := prb.Connectors.GetWithConnection(r.Context(), predicate, parsedID)
 		if err != nil {
 			return nil, err
 		}
@@ -159,9 +159,7 @@ func loadExistingConnector(
 	}
 
 	found, err := prb.Connectors.GetByOrganizationIDAndProvider(
-		r.Context(),
-		scope,
-		organizationID,
+		r.Context(), predicate, organizationID,
 		coredata.ConnectorProvider(provider),
 	)
 	if errors.Is(err, coredata.ErrResourceNotFound) {

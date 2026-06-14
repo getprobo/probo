@@ -103,7 +103,7 @@ func (t *TrustCenterReference) AuthorizationAttributes(
 func (t *TrustCenterReference) LoadByID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	trustCenterReferenceID gid.GID,
 ) error {
 	q := `
@@ -125,10 +125,10 @@ WHERE
     AND id = @trust_center_reference_id
 LIMIT 1;
 `
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"trust_center_reference_id": trustCenterReferenceID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -148,7 +148,7 @@ LIMIT 1;
 func (t *TrustCenterReference) Insert(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 INSERT INTO
@@ -182,7 +182,7 @@ RETURNING rank;
 `
 
 	args := pgx.StrictNamedArgs{
-		"tenant_id":       scope.GetTenantID(),
+		"tenant_id":       predicate.GetTenantID(),
 		"id":              t.ID,
 		"organization_id": t.OrganizationID,
 		"trust_center_id": t.TrustCenterID,
@@ -211,7 +211,7 @@ RETURNING rank;
 func (t *TrustCenterReference) Update(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 UPDATE trust_center_references
@@ -226,7 +226,7 @@ WHERE
     AND id = @id;
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"id":           t.ID,
@@ -236,7 +236,7 @@ WHERE
 		"logo_file_id": t.LogoFileID,
 		"updated_at":   t.UpdatedAt,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	result, err := conn.Exec(ctx, q, args)
 	if err != nil {
@@ -253,7 +253,7 @@ WHERE
 func (t *TrustCenterReference) UpdateRank(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 WITH old AS (
@@ -281,7 +281,7 @@ WHERE %s
   );
 `
 
-	scopeFragment := scope.SQLFragment()
+	scopeFragment := predicate.SQLFragment()
 	q = fmt.Sprintf(q, scopeFragment, scopeFragment)
 
 	args := pgx.StrictNamedArgs{
@@ -290,7 +290,7 @@ WHERE %s
 		"trust_center_id": t.TrustCenterID,
 		"updated_at":      t.UpdatedAt,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
@@ -303,7 +303,7 @@ WHERE %s
 func (t *TrustCenterReference) Delete(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 DELETE FROM
@@ -313,10 +313,10 @@ WHERE
     AND id = @id
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"id": t.ID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
@@ -329,7 +329,7 @@ WHERE
 func (t *TrustCenterReferences) LoadByTrustCenterID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	trustCenterID gid.GID,
 	cursor *page.Cursor[TrustCenterReferenceOrderField],
 ) error {
@@ -353,10 +353,10 @@ WHERE
     AND %s
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"trust_center_id": trustCenterID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
@@ -377,7 +377,7 @@ WHERE
 func (t *TrustCenterReferences) CountByTrustCenterID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	trustCenterID gid.GID,
 ) (int, error) {
 	q := `
@@ -390,10 +390,10 @@ WHERE
     AND trust_center_id = @trust_center_id
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"trust_center_id": trustCenterID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	var count int
 

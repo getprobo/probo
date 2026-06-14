@@ -102,7 +102,7 @@ func (r *CookieConsentRecord) AuthorizationAttributes(
 func (r *CookieConsentRecords) LoadByCookieBannerID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	cookieBannerID gid.GID,
 	cursor *page.Cursor[CookieConsentRecordOrderField],
 	filter *CookieConsentRecordFilter,
@@ -133,10 +133,10 @@ WHERE
 	AND %s
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"cookie_banner_id": cookieBannerID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 	maps.Copy(args, filter.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 
@@ -158,7 +158,7 @@ WHERE
 func (r *CookieConsentRecords) CountByCookieBannerID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	cookieBannerID gid.GID,
 	filter *CookieConsentRecordFilter,
 ) (int, error) {
@@ -173,10 +173,10 @@ WHERE
 	AND %s
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment(), filter.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"cookie_banner_id": cookieBannerID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 	maps.Copy(args, filter.SQLArguments())
 
 	row := conn.QueryRow(ctx, q, args)
@@ -192,7 +192,7 @@ WHERE
 func (r *CookieConsentRecord) Insert(
 	ctx context.Context,
 	tx pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 INSERT INTO cookie_consent_records (
@@ -234,7 +234,7 @@ INSERT INTO cookie_consent_records (
 
 	args := pgx.StrictNamedArgs{
 		"id":                       r.ID,
-		"tenant_id":                scope.GetTenantID(),
+		"tenant_id":                predicate.GetTenantID(),
 		"organization_id":          r.OrganizationID,
 		"cookie_banner_id":         r.CookieBannerID,
 		"cookie_banner_version_id": r.CookieBannerVersionID,
@@ -262,7 +262,7 @@ INSERT INTO cookie_consent_records (
 func (r *CookieConsentRecord) LoadByID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	id gid.GID,
 ) error {
 	q := `
@@ -289,10 +289,10 @@ WHERE
 	AND id = @id
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"id": id}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -316,7 +316,7 @@ WHERE
 func (r *CookieConsentRecord) LoadLatestByVisitorAndBannerID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	cookieBannerID gid.GID,
 	visitorID string,
 ) error {
@@ -347,13 +347,13 @@ ORDER BY created_at DESC, id DESC
 LIMIT 1;
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"cookie_banner_id": cookieBannerID,
 		"visitor_id":       visitorID,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {

@@ -354,7 +354,7 @@ func TestWorker_ApprovalApprovedResumesAndCompletes(t *testing.T) {
 	svc := agentrun.NewService(client)
 	_, err := svc.SubmitApproval(
 		context.Background(),
-		coredata.NewNoScope(),
+		coredata.NewNoPredicate(),
 		run.ID,
 		map[string]agent.ApprovalResult{"tc_danger": {Approved: true}},
 	)
@@ -444,7 +444,7 @@ func TestWorker_ApprovalDeniedResumesAndCompletes(t *testing.T) {
 	svc := agentrun.NewService(client)
 	_, err := svc.SubmitApproval(
 		context.Background(),
-		coredata.NewNoScope(),
+		coredata.NewNoPredicate(),
 		run.ID,
 		map[string]agent.ApprovalResult{"tc_danger": {Approved: false, Message: "denied by reviewer"}},
 	)

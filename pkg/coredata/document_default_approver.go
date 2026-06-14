@@ -41,7 +41,7 @@ type (
 func (das *DocumentDefaultApprovers) LoadByDocumentID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	documentID gid.GID,
 ) error {
 	q := `
@@ -58,10 +58,10 @@ WHERE
 ORDER BY created_at ASC;
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"document_id": documentID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -83,7 +83,7 @@ ORDER BY created_at ASC;
 func (das *DocumentDefaultApprovers) MergeByDocumentID(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 	documentID gid.GID,
 	organizationID gid.GID,
 	approverProfileIDs []gid.GID,
@@ -106,7 +106,7 @@ WHEN NOT MATCHED BY SOURCE
 	DELETE;
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment(), scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment(), predicate.SQLFragment())
 
 	now := time.Now()
 
@@ -118,11 +118,11 @@ WHEN NOT MATCHED BY SOURCE
 	args := pgx.StrictNamedArgs{
 		"document_id":          documentID,
 		"approver_profile_ids": ids,
-		"tenant_id":            scope.GetTenantID(),
+		"tenant_id":            predicate.GetTenantID(),
 		"organization_id":      organizationID,
 		"now":                  now,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	if _, err := conn.Exec(ctx, q, args); err != nil {
 		return fmt.Errorf("cannot merge document default approvers: %w", err)

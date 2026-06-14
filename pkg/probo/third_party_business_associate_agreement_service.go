@@ -67,7 +67,7 @@ func (vbaaur *ThirdPartyBusinessAssociateAgreementUpdateRequest) Validate() erro
 }
 
 func (s ThirdPartyBusinessAssociateAgreementService) GetByThirdPartyID(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	thirdPartyID gid.GID,
 ) (*coredata.ThirdPartyBusinessAssociateAgreement, *coredata.File, error) {
 	var (
@@ -79,12 +79,12 @@ func (s ThirdPartyBusinessAssociateAgreementService) GetByThirdPartyID(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
 			thirdPartyBusinessAssociateAgreement = &coredata.ThirdPartyBusinessAssociateAgreement{}
-			if err := thirdPartyBusinessAssociateAgreement.LoadByThirdPartyID(ctx, conn, scope, thirdPartyID); err != nil {
+			if err := thirdPartyBusinessAssociateAgreement.LoadByThirdPartyID(ctx, conn, predicate, thirdPartyID); err != nil {
 				return fmt.Errorf("cannot load thirdParty business associate agreement: %w", err)
 			}
 
 			file = &coredata.File{}
-			if err := file.LoadByID(ctx, conn, scope, thirdPartyBusinessAssociateAgreement.FileID); err != nil {
+			if err := file.LoadByID(ctx, conn, predicate, thirdPartyBusinessAssociateAgreement.FileID); err != nil {
 				return fmt.Errorf("cannot load file: %w", err)
 			}
 
@@ -99,7 +99,7 @@ func (s ThirdPartyBusinessAssociateAgreementService) GetByThirdPartyID(
 }
 
 func (s ThirdPartyBusinessAssociateAgreementService) Upload(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	thirdPartyID gid.GID,
 	req *ThirdPartyBusinessAssociateAgreementCreateRequest,
 ) (*coredata.ThirdPartyBusinessAssociateAgreement, *coredata.File, error) {
@@ -121,7 +121,7 @@ func (s ThirdPartyBusinessAssociateAgreementService) Upload(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
 			thirdParty := &coredata.ThirdParty{}
-			if err := thirdParty.LoadByID(ctx, conn, scope, thirdPartyID); err != nil {
+			if err := thirdParty.LoadByID(ctx, conn, predicate, thirdPartyID); err != nil {
 				return fmt.Errorf("cannot load thirdParty: %w", err)
 			}
 
@@ -152,8 +152,8 @@ func (s ThirdPartyBusinessAssociateAgreementService) Upload(
 			}
 
 			now := time.Now()
-			fileID := gid.New(scope.GetTenantID(), coredata.FileEntityType)
-			thirdPartyBusinessAssociateAgreementID := gid.New(scope.GetTenantID(), coredata.ThirdPartyBusinessAssociateAgreementEntityType)
+			fileID := gid.New(predicate.GetTenantID(), coredata.FileEntityType)
+			thirdPartyBusinessAssociateAgreementID := gid.New(predicate.GetTenantID(), coredata.ThirdPartyBusinessAssociateAgreementEntityType)
 
 			file = &coredata.File{
 				ID:             fileID,
@@ -179,11 +179,11 @@ func (s ThirdPartyBusinessAssociateAgreementService) Upload(
 				UpdatedAt:      now,
 			}
 
-			if err := file.Insert(ctx, conn, scope); err != nil {
+			if err := file.Insert(ctx, conn, predicate); err != nil {
 				return fmt.Errorf("cannot insert file: %w", err)
 			}
 
-			if err := thirdPartyBusinessAssociateAgreement.Upsert(ctx, conn, scope); err != nil {
+			if err := thirdPartyBusinessAssociateAgreement.Upsert(ctx, conn, predicate); err != nil {
 				return fmt.Errorf("cannot insert thirdParty business associate agreement: %w", err)
 			}
 
@@ -198,7 +198,7 @@ func (s ThirdPartyBusinessAssociateAgreementService) Upload(
 }
 
 func (s ThirdPartyBusinessAssociateAgreementService) Get(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	thirdPartyBusinessAssociateAgreementID gid.GID,
 ) (*coredata.ThirdPartyBusinessAssociateAgreement, *coredata.File, error) {
 	var (
@@ -210,12 +210,12 @@ func (s ThirdPartyBusinessAssociateAgreementService) Get(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
 			thirdPartyBusinessAssociateAgreement = &coredata.ThirdPartyBusinessAssociateAgreement{}
-			if err := thirdPartyBusinessAssociateAgreement.LoadByID(ctx, conn, scope, thirdPartyBusinessAssociateAgreementID); err != nil {
+			if err := thirdPartyBusinessAssociateAgreement.LoadByID(ctx, conn, predicate, thirdPartyBusinessAssociateAgreementID); err != nil {
 				return fmt.Errorf("cannot load thirdParty business associate agreement: %w", err)
 			}
 
 			file = &coredata.File{}
-			if err := file.LoadByID(ctx, conn, scope, thirdPartyBusinessAssociateAgreement.FileID); err != nil {
+			if err := file.LoadByID(ctx, conn, predicate, thirdPartyBusinessAssociateAgreement.FileID); err != nil {
 				return fmt.Errorf("cannot load file: %w", err)
 			}
 
@@ -230,7 +230,7 @@ func (s ThirdPartyBusinessAssociateAgreementService) Get(
 }
 
 func (s ThirdPartyBusinessAssociateAgreementService) GenerateFileURL(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	thirdPartyBusinessAssociateAgreementID gid.GID,
 	expiresIn time.Duration,
 ) (string, error) {
@@ -240,12 +240,12 @@ func (s ThirdPartyBusinessAssociateAgreementService) GenerateFileURL(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
 			thirdPartyBusinessAssociateAgreement := &coredata.ThirdPartyBusinessAssociateAgreement{}
-			if err := thirdPartyBusinessAssociateAgreement.LoadByID(ctx, conn, scope, thirdPartyBusinessAssociateAgreementID); err != nil {
+			if err := thirdPartyBusinessAssociateAgreement.LoadByID(ctx, conn, predicate, thirdPartyBusinessAssociateAgreementID); err != nil {
 				return fmt.Errorf("cannot load thirdParty business associate agreement: %w", err)
 			}
 
 			file = &coredata.File{}
-			if err := file.LoadByID(ctx, conn, scope, thirdPartyBusinessAssociateAgreement.FileID); err != nil {
+			if err := file.LoadByID(ctx, conn, predicate, thirdPartyBusinessAssociateAgreement.FileID); err != nil {
 				return fmt.Errorf("cannot load file: %w", err)
 			}
 
@@ -278,7 +278,7 @@ func (s ThirdPartyBusinessAssociateAgreementService) GenerateFileURL(
 }
 
 func (s ThirdPartyBusinessAssociateAgreementService) Update(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	thirdPartyID gid.GID,
 	req *ThirdPartyBusinessAssociateAgreementUpdateRequest,
 ) (*coredata.ThirdPartyBusinessAssociateAgreement, *coredata.File, error) {
@@ -292,7 +292,7 @@ func (s ThirdPartyBusinessAssociateAgreementService) Update(
 	err := s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
-			if err := existingAgreement.LoadByThirdPartyID(ctx, conn, scope, thirdPartyID); err != nil {
+			if err := existingAgreement.LoadByThirdPartyID(ctx, conn, predicate, thirdPartyID); err != nil {
 				return fmt.Errorf("cannot load existing thirdParty business associate agreement: %w", err)
 			}
 
@@ -308,11 +308,11 @@ func (s ThirdPartyBusinessAssociateAgreementService) Update(
 
 			existingAgreement.UpdatedAt = now
 
-			if err := existingAgreement.Update(ctx, conn, scope); err != nil {
+			if err := existingAgreement.Update(ctx, conn, predicate); err != nil {
 				return fmt.Errorf("cannot update thirdParty business associate agreement: %w", err)
 			}
 
-			if err := file.LoadByID(ctx, conn, scope, existingAgreement.FileID); err != nil {
+			if err := file.LoadByID(ctx, conn, predicate, existingAgreement.FileID); err != nil {
 				return fmt.Errorf("cannot load file: %w", err)
 			}
 
@@ -327,18 +327,18 @@ func (s ThirdPartyBusinessAssociateAgreementService) Update(
 }
 
 func (s ThirdPartyBusinessAssociateAgreementService) Delete(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	thirdPartyBusinessAssociateAgreementID gid.GID,
 ) error {
 	return s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
 			thirdPartyBusinessAssociateAgreement := &coredata.ThirdPartyBusinessAssociateAgreement{}
-			if err := thirdPartyBusinessAssociateAgreement.LoadByID(ctx, conn, scope, thirdPartyBusinessAssociateAgreementID); err != nil {
+			if err := thirdPartyBusinessAssociateAgreement.LoadByID(ctx, conn, predicate, thirdPartyBusinessAssociateAgreementID); err != nil {
 				return fmt.Errorf("cannot load thirdParty business associate agreement: %w", err)
 			}
 
-			if err := thirdPartyBusinessAssociateAgreement.Delete(ctx, conn, scope); err != nil {
+			if err := thirdPartyBusinessAssociateAgreement.Delete(ctx, conn, predicate); err != nil {
 				return fmt.Errorf("cannot delete thirdParty business associate agreement: %w", err)
 			}
 
@@ -348,18 +348,18 @@ func (s ThirdPartyBusinessAssociateAgreementService) Delete(
 }
 
 func (s ThirdPartyBusinessAssociateAgreementService) DeleteByThirdPartyID(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	thirdPartyID gid.GID,
 ) error {
 	return s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
 			thirdPartyBusinessAssociateAgreement := &coredata.ThirdPartyBusinessAssociateAgreement{}
-			if err := thirdPartyBusinessAssociateAgreement.LoadByThirdPartyID(ctx, conn, scope, thirdPartyID); err != nil {
+			if err := thirdPartyBusinessAssociateAgreement.LoadByThirdPartyID(ctx, conn, predicate, thirdPartyID); err != nil {
 				return fmt.Errorf("cannot load thirdParty business associate agreement: %w", err)
 			}
 
-			if err := thirdPartyBusinessAssociateAgreement.DeleteByThirdPartyID(ctx, conn, scope, thirdPartyID); err != nil {
+			if err := thirdPartyBusinessAssociateAgreement.DeleteByThirdPartyID(ctx, conn, predicate, thirdPartyID); err != nil {
 				return fmt.Errorf("cannot delete thirdParty business associate agreement: %w", err)
 			}
 

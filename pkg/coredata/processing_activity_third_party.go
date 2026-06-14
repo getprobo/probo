@@ -38,7 +38,7 @@ type (
 func (pav ProcessingActivityThirdParties) Merge(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	processingActivityID gid.GID,
 	organizationID gid.GID,
 	thirdPartyIDs []gid.GID,
@@ -66,7 +66,7 @@ WHEN NOT MATCHED
 	`
 
 	args := pgx.StrictNamedArgs{
-		"tenant_id":              scope.GetTenantID(),
+		"tenant_id":              predicate.GetTenantID(),
 		"processing_activity_id": processingActivityID,
 		"organization_id":        organizationID,
 		"created_at":             time.Now(),
@@ -84,7 +84,7 @@ WHEN NOT MATCHED
 func (pav ProcessingActivityThirdParties) Insert(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 	processingActivityID gid.GID,
 	organizationID gid.GID,
 	thirdPartyIDs []gid.GID,
@@ -104,7 +104,7 @@ FROM third_party_ids
 `
 
 	args := pgx.StrictNamedArgs{
-		"tenant_id":              scope.GetTenantID(),
+		"tenant_id":              predicate.GetTenantID(),
 		"processing_activity_id": processingActivityID,
 		"organization_id":        organizationID,
 		"created_at":             time.Now(),

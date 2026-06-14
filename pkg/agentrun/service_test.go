@@ -39,13 +39,13 @@ func TestService_Get(t *testing.T) {
 		nil,
 	)
 
-	got, err := svc.Get(context.Background(), coredata.NewNoScope(), run.ID)
+	got, err := svc.Get(context.Background(), coredata.NewNoPredicate(), run.ID)
 	require.NoError(t, err)
 	require.NotNil(t, got)
 	assert.Equal(t, run.ID, got.ID)
 
 	missingID := gid.New(run.ID.TenantID(), coredata.AgentRunEntityType)
-	_, err = svc.Get(context.Background(), coredata.NewNoScope(), missingID)
+	_, err = svc.Get(context.Background(), coredata.NewNoPredicate(), missingID)
 	require.Error(t, err)
 	assert.ErrorIs(t, err, coredata.ErrResourceNotFound)
 }
@@ -69,7 +69,7 @@ func TestService_ListForOrganizationID(t *testing.T) {
 		},
 	)
 
-	got, err := svc.ListForOrganizationID(context.Background(), coredata.NewNoScope(), orgID, cursor)
+	got, err := svc.ListForOrganizationID(context.Background(), coredata.NewNoPredicate(), orgID, cursor)
 	require.NoError(t, err)
 	require.NotNil(t, got)
 
@@ -91,7 +91,7 @@ func TestService_SubmitApproval_NotAwaitingApproval(t *testing.T) {
 
 	_, err := svc.SubmitApproval(
 		context.Background(),
-		coredata.NewNoScope(),
+		coredata.NewNoPredicate(),
 		run.ID,
 		map[string]agent.ApprovalResult{"tc_x": {Approved: true}},
 	)
@@ -108,7 +108,7 @@ func TestService_CountForOrganizationID(t *testing.T) {
 	_ = insertPendingRunInOrg(t, client, orgID, "service-count-agent-b", nil)
 	_ = insertPendingRunInOrg(t, client, orgID, "service-count-agent-c", nil)
 
-	count, err := svc.CountForOrganizationID(context.Background(), coredata.NewNoScope(), orgID)
+	count, err := svc.CountForOrganizationID(context.Background(), coredata.NewNoPredicate(), orgID)
 	require.NoError(t, err)
 	assert.Equal(t, 3, count)
 }

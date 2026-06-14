@@ -104,7 +104,7 @@ func (a *Authorizer) RegisterPolicySet(ps *PolicySet) {
 }
 
 // Authorize checks if the principal is allowed to perform the action on the resource.
-func (a *Authorizer) Authorize(ctx context.Context, params AuthorizeParams) (*coredata.Scope, error) {
+func (a *Authorizer) Authorize(ctx context.Context, params AuthorizeParams) (*coredata.Predicate, error) {
 	return a.AuthorizeBatch(
 		ctx,
 		AuthorizeBatchParams{
@@ -121,7 +121,7 @@ func (a *Authorizer) Authorize(ctx context.Context, params AuthorizeParams) (*co
 
 // AuthorizeBatch checks whether the principal is allowed to perform the action
 // on all provided resources.
-func (a *Authorizer) AuthorizeBatch(ctx context.Context, params AuthorizeBatchParams) (*coredata.Scope, error) {
+func (a *Authorizer) AuthorizeBatch(ctx context.Context, params AuthorizeBatchParams) (*coredata.Predicate, error) {
 	if params.Principal.EntityType() != coredata.IdentityEntityType {
 		return nil, NewUnsupportedPrincipalTypeError(params.Principal.EntityType())
 	}
@@ -157,12 +157,12 @@ func (a *Authorizer) AuthorizeBatch(ctx context.Context, params AuthorizeBatchPa
 		)
 	}
 
-	var scope *coredata.Scope
+	var predicate *coredata.Predicate
 
 	if err := a.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			authorizedScope, err := a.authorizeMulti(
+			authorizedPredicate, err := a.authorizeMulti(
 				ctx,
 				tx,
 				AuthorizeMultiParams{
@@ -176,7 +176,7 @@ func (a *Authorizer) AuthorizeBatch(ctx context.Context, params AuthorizeBatchPa
 				return err
 			}
 
-			scope = authorizedScope
+			predicate = authorizedPredicate
 
 			return nil
 		},
@@ -184,7 +184,7 @@ func (a *Authorizer) AuthorizeBatch(ctx context.Context, params AuthorizeBatchPa
 		return nil, err
 	}
 
-	return scope, nil
+	return predicate, nil
 }
 
 // AuthorizeMulti evaluates each item independently and returns one decision
@@ -197,7 +197,7 @@ func (a *Authorizer) AuthorizeBatch(ctx context.Context, params AuthorizeBatchPa
 func (a *Authorizer) AuthorizeMulti(
 	ctx context.Context,
 	params AuthorizeMultiParams,
-) (*coredata.Scope, []error, error) {
+) (*coredata.Predicate, []error, error) {
 	if params.Principal.EntityType() != coredata.IdentityEntityType {
 		return nil, nil, NewUnsupportedPrincipalTypeError(params.Principal.EntityType())
 	}
@@ -207,7 +207,7 @@ func (a *Authorizer) AuthorizeMulti(
 	}
 
 	var (
-		scope     *coredata.Scope
+		predicate *coredata.Predicate
 		decisions []error
 	)
 
@@ -254,7 +254,7 @@ func (a *Authorizer) AuthorizeMulti(
 				}
 			}
 
-			scope = s
+			predicate = s
 			decisions = d
 
 			return nil
@@ -263,7 +263,7 @@ func (a *Authorizer) AuthorizeMulti(
 		return nil, nil, err
 	}
 
-	return scope, decisions, nil
+	return predicate, decisions, nil
 }
 
 func (a *Authorizer) authorizeMulti(
@@ -271,8 +271,8 @@ func (a *Authorizer) authorizeMulti(
 	tx pg.Tx,
 	params AuthorizeMultiParams,
 	extraResourceAttributes policy.Attributes,
-) (*coredata.Scope, error) {
-	scope, itemAttrs, decisions, err := a.evaluateMultiInTx(
+) (*coredata.Predicate, error) {
+	predicate, itemAttrs, decisions, err := a.evaluateMultiInTx(
 		ctx,
 		tx,
 		params,
@@ -309,7 +309,7 @@ func (a *Authorizer) authorizeMulti(
 	}
 
 	if len(entries) > 0 {
-		if err := entries.BulkInsert(ctx, tx, scope); err != nil {
+		if err := entries.BulkInsert(ctx, tx, predicate); err != nil {
 			a.logger.ErrorCtx(
 				ctx,
 				"cannot bulk insert audit log entries",
@@ -319,11 +319,11 @@ func (a *Authorizer) authorizeMulti(
 		}
 	}
 
-	return scope, nil
+	return predicate, nil
 }
 
 // evaluateMultiInTx evaluates every item in params against the loaded
-// policies and resource attributes. It returns the shared scope, the merged
+// policies and resource attributes. It returns the shared predicate, the merged
 // per-item resource attributes (used for both evaluation and audit log
 // building), and a parallel slice of per-item decisions (nil = allowed).
 // Callers decide which decisions to persist to the audit log.
@@ -332,7 +332,7 @@ func (a *Authorizer) evaluateMultiInTx(
 	tx pg.Tx,
 	params AuthorizeMultiParams,
 	extraResourceAttributes policy.Attributes,
-) (*coredata.Scope, []policy.Attributes, []error, error) {
+) (*coredata.Predicate, []policy.Attributes, []error, error) {
 	uniqueResourceIDs := make([]gid.GID, 0, len(params.Items))
 	seenResourceIDs := make(map[gid.GID]struct{}, len(params.Items))
 	requiresAssumptionCheck := false
@@ -463,14 +463,14 @@ func (a *Authorizer) evaluateMultiInTx(
 		}
 	}
 
-	scope := coredata.NewScopeFromObjectID(uniqueResourceIDs[0])
+	predicate := coredata.NewPredicateFromObjectID(uniqueResourceIDs[0])
 
 	if resourceOrgID != "" {
 		orgID, _ := gid.ParseGID(resourceOrgID)
-		scope = coredata.NewScope(orgID.TenantID())
+		predicate = coredata.NewPredicate(orgID.TenantID())
 	}
 
-	return scope, itemAttrs, decisions, nil
+	return predicate, itemAttrs, decisions, nil
 }
 
 func (a *Authorizer) buildResourceAttributesBatch(

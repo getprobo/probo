@@ -25,16 +25,16 @@ import (
 
 // Framework is the resolver for the framework field.
 func (r *auditResolver) Framework(ctx context.Context, obj *types.Audit) (*types.Framework, error) {
-	scope := coredata.NewScopeFromObjectID(obj.ID)
+	predicate := coredata.NewPredicateFromObjectID(obj.ID)
 	trustService := r.trust
 
-	audit, err := trustService.Audits.Get(ctx, scope, obj.ID)
+	audit, err := trustService.Audits.Get(ctx, predicate, obj.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot load audit", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	framework, err := trustService.Frameworks.Get(ctx, scope, audit.FrameworkID)
+	framework, err := trustService.Frameworks.Get(ctx, predicate, audit.FrameworkID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot load framework", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -45,10 +45,10 @@ func (r *auditResolver) Framework(ctx context.Context, obj *types.Audit) (*types
 
 // ReportFile is the resolver for the reportFile field.
 func (r *auditResolver) ReportFile(ctx context.Context, obj *types.Audit) (*types.AuditReport, error) {
-	scope := coredata.NewScopeFromObjectID(obj.ID)
+	predicate := coredata.NewPredicateFromObjectID(obj.ID)
 	trustService := r.trust
 
-	audit, err := trustService.Audits.Get(ctx, scope, obj.ID)
+	audit, err := trustService.Audits.Get(ctx, predicate, obj.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot load audit", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -60,7 +60,7 @@ func (r *auditResolver) ReportFile(ctx context.Context, obj *types.Audit) (*type
 
 	trustCenter := compliancepage.CompliancePageFromContext(ctx)
 
-	file, err := trustService.Reports.Get(ctx, scope, trustCenter.OrganizationID, *audit.ReportFileID)
+	file, err := trustService.Reports.Get(ctx, predicate, trustCenter.OrganizationID, *audit.ReportFileID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot load report file", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -71,11 +71,11 @@ func (r *auditResolver) ReportFile(ctx context.Context, obj *types.Audit) (*type
 
 // IsUserAuthorized is the resolver for the isUserAuthorized field.
 func (r *auditReportResolver) IsUserAuthorized(ctx context.Context, obj *types.AuditReport) (bool, error) {
-	scope := coredata.NewScopeFromObjectID(obj.ID)
+	predicate := coredata.NewPredicateFromObjectID(obj.ID)
 	trustService := r.trust
 	trustCenter := compliancepage.CompliancePageFromContext(ctx)
 
-	audit, err := trustService.Audits.GetByReportFileID(ctx, scope, obj.ID)
+	audit, err := trustService.Audits.GetByReportFileID(ctx, predicate, obj.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return false, nil
@@ -95,8 +95,7 @@ func (r *auditReportResolver) IsUserAuthorized(ctx context.Context, obj *types.A
 		return false, nil
 	}
 
-	reportAccess, err := trustService.TrustCenterAccesses.GetReportFileAccess(ctx, scope,
-		trustCenter.ID,
+	reportAccess, err := trustService.TrustCenterAccesses.GetReportFileAccess(ctx, predicate, trustCenter.ID,
 		identity.ID,
 		obj.ID,
 	)
@@ -118,7 +117,7 @@ func (r *auditReportResolver) IsUserAuthorized(ctx context.Context, obj *types.A
 
 // Access is the resolver for the access field.
 func (r *auditReportResolver) Access(ctx context.Context, obj *types.AuditReport) (*types.DocumentAccess, error) {
-	scope := coredata.NewScopeFromObjectID(obj.ID)
+	predicate := coredata.NewPredicateFromObjectID(obj.ID)
 	trustService := r.trust
 	trustCenter := compliancepage.CompliancePageFromContext(ctx)
 
@@ -128,8 +127,7 @@ func (r *auditReportResolver) Access(ctx context.Context, obj *types.AuditReport
 	}
 
 	access, err := trustService.TrustCenterAccesses.GetReportFileAccess(
-		ctx, scope,
-		trustCenter.ID,
+		ctx, predicate, trustCenter.ID,
 		identity.ID,
 		obj.ID,
 	)
@@ -157,10 +155,10 @@ func (r *auditReportResolver) Access(ctx context.Context, obj *types.AuditReport
 
 // Framework is the resolver for the framework field on ComplianceFramework.
 func (r *complianceFrameworkResolver) Framework(ctx context.Context, obj *types.ComplianceFramework) (*types.Framework, error) {
-	scope := coredata.NewScopeFromObjectID(obj.ID)
+	predicate := coredata.NewPredicateFromObjectID(obj.ID)
 	trustService := r.trust
 
-	framework, err := trustService.Frameworks.Get(ctx, scope, obj.FrameworkID)
+	framework, err := trustService.Frameworks.Get(ctx, predicate, obj.FrameworkID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot load framework", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -171,11 +169,11 @@ func (r *complianceFrameworkResolver) Framework(ctx context.Context, obj *types.
 
 // IsUserAuthorized is the resolver for the isUserAuthorized field.
 func (r *documentResolver) IsUserAuthorized(ctx context.Context, obj *types.Document) (bool, error) {
-	scope := coredata.NewScopeFromObjectID(obj.ID)
+	predicate := coredata.NewPredicateFromObjectID(obj.ID)
 	trustService := r.trust
 	trustCenter := compliancepage.CompliancePageFromContext(ctx)
 
-	document, err := trustService.Documents.Get(ctx, scope, trustCenter.OrganizationID, obj.ID)
+	document, err := trustService.Documents.Get(ctx, predicate, trustCenter.OrganizationID, obj.ID)
 	if err != nil {
 		if errors.Is(err, trust.ErrDocumentNotFound) || errors.Is(err, trust.ErrDocumentNotVisible) || errors.Is(err, coredata.ErrResourceNotFound) {
 			return false, gqlutils.NotFoundf(ctx, "document %q not found", obj.ID)
@@ -200,8 +198,7 @@ func (r *documentResolver) IsUserAuthorized(ctx context.Context, obj *types.Docu
 	}
 
 	documentAccess, err := trustService.TrustCenterAccesses.GetDocumentAccess(
-		ctx, scope,
-		trustCenter.ID,
+		ctx, predicate, trustCenter.ID,
 		identity.ID,
 		obj.ID,
 	)
@@ -223,7 +220,7 @@ func (r *documentResolver) IsUserAuthorized(ctx context.Context, obj *types.Docu
 
 // Access is the resolver for the access field.
 func (r *documentResolver) Access(ctx context.Context, obj *types.Document) (*types.DocumentAccess, error) {
-	scope := coredata.NewScopeFromObjectID(obj.ID)
+	predicate := coredata.NewPredicateFromObjectID(obj.ID)
 	trustService := r.trust
 	trustCenter := compliancepage.CompliancePageFromContext(ctx)
 
@@ -233,8 +230,7 @@ func (r *documentResolver) Access(ctx context.Context, obj *types.Document) (*ty
 	}
 
 	access, err := trustService.TrustCenterAccesses.GetDocumentAccess(
-		ctx, scope,
-		trustCenter.ID,
+		ctx, predicate, trustCenter.ID,
 		identity.ID,
 		obj.ID,
 	)
@@ -262,9 +258,9 @@ func (r *documentResolver) Access(ctx context.Context, obj *types.Document) (*ty
 
 // LightLogo is the resolver for the lightLogo field.
 func (r *frameworkResolver) LightLogo(ctx context.Context, obj *types.Framework) (*types.File, error) {
-	scope := coredata.NewScopeFromObjectID(obj.ID)
+	predicate := coredata.NewPredicateFromObjectID(obj.ID)
 
-	framework, err := r.trust.Frameworks.Get(ctx, scope, obj.ID)
+	framework, err := r.trust.Frameworks.Get(ctx, predicate, obj.ID)
 	if err != nil {
 		return nil, gqlutils.NotFoundf(ctx, "framework %q not found", obj.ID)
 	}
@@ -278,9 +274,9 @@ func (r *frameworkResolver) LightLogo(ctx context.Context, obj *types.Framework)
 
 // DarkLogo is the resolver for the darkLogo field.
 func (r *frameworkResolver) DarkLogo(ctx context.Context, obj *types.Framework) (*types.File, error) {
-	scope := coredata.NewScopeFromObjectID(obj.ID)
+	predicate := coredata.NewPredicateFromObjectID(obj.ID)
 
-	framework, err := r.trust.Frameworks.Get(ctx, scope, obj.ID)
+	framework, err := r.trust.Frameworks.Get(ctx, predicate, obj.ID)
 	if err != nil {
 		return nil, gqlutils.NotFoundf(ctx, "framework %q not found", obj.ID)
 	}
@@ -295,7 +291,7 @@ func (r *frameworkResolver) DarkLogo(ctx context.Context, obj *types.Framework) 
 // RequestAllAccesses is the resolver for the requestAllAccesses field.
 func (r *mutationResolver) RequestAllAccesses(ctx context.Context) (*types.RequestAccessesPayload, error) {
 	trustCenter := compliancepage.CompliancePageFromContext(ctx)
-	scope := coredata.NewScopeFromObjectID(trustCenter.ID)
+	predicate := coredata.NewPredicateFromObjectID(trustCenter.ID)
 	trustService := r.trust
 
 	identity := authn.IdentityFromContext(ctx)
@@ -304,8 +300,7 @@ func (r *mutationResolver) RequestAllAccesses(ctx context.Context) (*types.Reque
 	}
 
 	access, err := trustService.TrustCenterAccesses.Request(
-		ctx, scope,
-		&trust.TrustCenterAccessRequest{
+		ctx, predicate, &trust.TrustCenterAccessRequest{
 			TrustCenterID: trustCenter.ID,
 			IdentityID:    identity.ID,
 			DocumentIDs:   nil,
@@ -328,11 +323,11 @@ func (r *mutationResolver) RequestAllAccesses(ctx context.Context) (*types.Reque
 
 // ExportDocumentPDF is the resolver for the exportDocumentPDF field.
 func (r *mutationResolver) ExportDocumentPDF(ctx context.Context, input types.ExportDocumentPDFInput) (*types.ExportDocumentPDFPayload, error) {
-	scope := coredata.NewScopeFromObjectID(input.DocumentID)
+	predicate := coredata.NewPredicateFromObjectID(input.DocumentID)
 	trustService := r.trust
 	trustCenter := compliancepage.CompliancePageFromContext(ctx)
 
-	document, err := trustService.Documents.Get(ctx, scope, trustCenter.OrganizationID, input.DocumentID)
+	document, err := trustService.Documents.Get(ctx, predicate, trustCenter.OrganizationID, input.DocumentID)
 	if err != nil {
 		if errors.Is(err, trust.ErrDocumentNotFound) || errors.Is(err, trust.ErrDocumentNotVisible) || errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlutils.NotFoundf(ctx, "document %q not found", input.DocumentID)
@@ -348,7 +343,7 @@ func (r *mutationResolver) ExportDocumentPDF(ctx context.Context, input types.Ex
 	}
 
 	if document.TrustCenterVisibility == coredata.TrustCenterVisibilityPublic {
-		pdf, err := trustService.Documents.ExportPDFWithoutWatermark(ctx, scope, input.DocumentID)
+		pdf, err := trustService.Documents.ExportPDFWithoutWatermark(ctx, predicate, input.DocumentID)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot export document PDF", log.Error(err))
 			return nil, gqlutils.Internal(ctx)
@@ -365,8 +360,7 @@ func (r *mutationResolver) ExportDocumentPDF(ctx context.Context, input types.Ex
 	}
 
 	documentAccess, err := trustService.TrustCenterAccesses.GetDocumentAccess(
-		ctx, scope,
-		trustCenter.ID,
+		ctx, predicate, trustCenter.ID,
 		identity.ID,
 		input.DocumentID,
 	)
@@ -378,7 +372,7 @@ func (r *mutationResolver) ExportDocumentPDF(ctx context.Context, input types.Ex
 		return nil, gqlutils.Forbiddenf(ctx, "access denied: no permission to access this document")
 	}
 
-	pdf, err := trustService.Documents.ExportPDF(ctx, scope, input.DocumentID, identity.EmailAddress)
+	pdf, err := trustService.Documents.ExportPDF(ctx, predicate, input.DocumentID, identity.EmailAddress)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot export document PDF", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -391,18 +385,18 @@ func (r *mutationResolver) ExportDocumentPDF(ctx context.Context, input types.Ex
 
 // ExportReportPDF is the resolver for the exportReportPDF field.
 func (r *mutationResolver) ExportReportPDF(ctx context.Context, input types.ExportReportPDFInput) (*types.ExportReportPDFPayload, error) {
-	scope := coredata.NewScopeFromObjectID(input.ReportID)
+	predicate := coredata.NewPredicateFromObjectID(input.ReportID)
 	trustService := r.trust
 	trustCenter := compliancepage.CompliancePageFromContext(ctx)
 
-	audit, err := trustService.Audits.GetByReportFileID(ctx, scope, input.ReportID)
+	audit, err := trustService.Audits.GetByReportFileID(ctx, predicate, input.ReportID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot load audit", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
 	if audit.TrustCenterVisibility == coredata.TrustCenterVisibilityPublic {
-		pdf, err := trustService.Reports.ExportPDFWithoutWatermark(ctx, scope, input.ReportID)
+		pdf, err := trustService.Reports.ExportPDFWithoutWatermark(ctx, predicate, input.ReportID)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot export report PDF", log.Error(err))
 			return nil, gqlutils.Internal(ctx)
@@ -419,8 +413,7 @@ func (r *mutationResolver) ExportReportPDF(ctx context.Context, input types.Expo
 	}
 
 	reportAccess, err := trustService.TrustCenterAccesses.GetReportFileAccess(
-		ctx, scope,
-		trustCenter.ID,
+		ctx, predicate, trustCenter.ID,
 		identity.ID,
 		input.ReportID,
 	)
@@ -432,7 +425,7 @@ func (r *mutationResolver) ExportReportPDF(ctx context.Context, input types.Expo
 		return nil, gqlutils.Forbiddenf(ctx, "access denied: no permission to access this report")
 	}
 
-	pdf, err := trustService.Reports.ExportPDF(ctx, scope, input.ReportID, identity.EmailAddress)
+	pdf, err := trustService.Reports.ExportPDF(ctx, predicate, input.ReportID, identity.EmailAddress)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot export report PDF", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -446,10 +439,10 @@ func (r *mutationResolver) ExportReportPDF(ctx context.Context, input types.Expo
 // ExportTrustCenterFile is the resolver for the exportTrustCenterFile field.
 func (r *mutationResolver) ExportTrustCenterFile(ctx context.Context, input types.ExportTrustCenterFileInput) (*types.ExportTrustCenterFilePayload, error) {
 	trustCenter := compliancepage.CompliancePageFromContext(ctx)
-	scope := coredata.NewScopeFromObjectID(trustCenter.ID)
+	predicate := coredata.NewPredicateFromObjectID(trustCenter.ID)
 	trustService := r.trust
 
-	trustCenterFile, err := trustService.TrustCenterFiles.Get(ctx, scope, trustCenter.OrganizationID, input.TrustCenterFileID)
+	trustCenterFile, err := trustService.TrustCenterFiles.Get(ctx, predicate, trustCenter.OrganizationID, input.TrustCenterFileID)
 	if err != nil {
 		if errors.Is(err, trust.ErrTrustCenterFileNotFound) || errors.Is(err, trust.ErrTrustCenterFileNotVisible) {
 			return nil, gqlutils.NotFoundf(ctx, "trust center file %q not found", input.TrustCenterFileID)
@@ -461,7 +454,7 @@ func (r *mutationResolver) ExportTrustCenterFile(ctx context.Context, input type
 	}
 
 	if trustCenterFile.TrustCenterVisibility == coredata.TrustCenterVisibilityPublic {
-		fileData, mimeType, err := trustService.TrustCenterFiles.ExportFileWithoutWatermark(ctx, scope, input.TrustCenterFileID)
+		fileData, mimeType, err := trustService.TrustCenterFiles.ExportFileWithoutWatermark(ctx, predicate, input.TrustCenterFileID)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot export trust center file", log.Error(err))
 			return nil, gqlutils.Internal(ctx)
@@ -477,8 +470,7 @@ func (r *mutationResolver) ExportTrustCenterFile(ctx context.Context, input type
 		return nil, gqlutils.Unauthenticatedf(ctx, "unauthenticated")
 	}
 
-	fileAccess, err := trustService.TrustCenterAccesses.GetTrustCenterFileAccess(ctx, scope,
-		trustCenter.ID,
+	fileAccess, err := trustService.TrustCenterAccesses.GetTrustCenterFileAccess(ctx, predicate, trustCenter.ID,
 		identity.ID,
 		input.TrustCenterFileID,
 	)
@@ -490,7 +482,7 @@ func (r *mutationResolver) ExportTrustCenterFile(ctx context.Context, input type
 		return nil, gqlutils.Forbiddenf(ctx, "access denied: no permission to access this file")
 	}
 
-	fileData, mimeType, err := trustService.TrustCenterFiles.ExportFile(ctx, scope, input.TrustCenterFileID, identity.EmailAddress)
+	fileData, mimeType, err := trustService.TrustCenterFiles.ExportFile(ctx, predicate, input.TrustCenterFileID, identity.EmailAddress)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot export trust center file", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -504,10 +496,10 @@ func (r *mutationResolver) ExportTrustCenterFile(ctx context.Context, input type
 // RequestDocumentAccess is the resolver for the requestDocumentAccess field.
 func (r *mutationResolver) RequestDocumentAccess(ctx context.Context, input types.RequestDocumentAccessInput) (*types.RequestDocumentAccessPayload, error) {
 	trustCenter := compliancepage.CompliancePageFromContext(ctx)
-	scope := coredata.NewScopeFromObjectID(trustCenter.ID)
+	predicate := coredata.NewPredicateFromObjectID(trustCenter.ID)
 	trustService := r.trust
 
-	document, err := trustService.Documents.Get(ctx, scope, trustCenter.OrganizationID, input.DocumentID)
+	document, err := trustService.Documents.Get(ctx, predicate, trustCenter.OrganizationID, input.DocumentID)
 	if err != nil {
 		if errors.Is(err, trust.ErrDocumentNotFound) || errors.Is(err, trust.ErrDocumentNotVisible) || errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlutils.NotFoundf(ctx, "document %q not found", input.DocumentID)
@@ -535,8 +527,7 @@ func (r *mutationResolver) RequestDocumentAccess(ctx context.Context, input type
 	}
 
 	if _, err := trustService.TrustCenterAccesses.Request(
-		ctx, scope,
-		&trust.TrustCenterAccessRequest{
+		ctx, predicate, &trust.TrustCenterAccessRequest{
 			TrustCenterID:      trustCenter.ID,
 			IdentityID:         identity.ID,
 			DocumentIDs:        []gid.GID{input.DocumentID},
@@ -556,10 +547,10 @@ func (r *mutationResolver) RequestDocumentAccess(ctx context.Context, input type
 // RequestReportAccess is the resolver for the requestReportAccess field.
 func (r *mutationResolver) RequestReportAccess(ctx context.Context, input types.RequestReportAccessInput) (*types.RequestReportAccessPayload, error) {
 	trustCenter := compliancepage.CompliancePageFromContext(ctx)
-	scope := coredata.NewScopeFromObjectID(trustCenter.ID)
+	predicate := coredata.NewPredicateFromObjectID(trustCenter.ID)
 	trustService := r.trust
 
-	audit, err := trustService.Audits.GetByReportFileID(ctx, scope, input.ReportID)
+	audit, err := trustService.Audits.GetByReportFileID(ctx, predicate, input.ReportID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot load audit", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -578,8 +569,7 @@ func (r *mutationResolver) RequestReportAccess(ctx context.Context, input types.
 	}
 
 	if _, err := trustService.TrustCenterAccesses.Request(
-		ctx, scope,
-		&trust.TrustCenterAccessRequest{
+		ctx, predicate, &trust.TrustCenterAccessRequest{
 			TrustCenterID:      trustCenter.ID,
 			IdentityID:         identity.ID,
 			DocumentIDs:        []gid.GID{},
@@ -599,10 +589,10 @@ func (r *mutationResolver) RequestReportAccess(ctx context.Context, input types.
 // RequestTrustCenterFileAccess is the resolver for the requestTrustCenterFileAccess field.
 func (r *mutationResolver) RequestTrustCenterFileAccess(ctx context.Context, input types.RequestTrustCenterFileAccessInput) (*types.RequestFileAccessPayload, error) {
 	trustCenter := compliancepage.CompliancePageFromContext(ctx)
-	scope := coredata.NewScopeFromObjectID(trustCenter.ID)
+	predicate := coredata.NewPredicateFromObjectID(trustCenter.ID)
 	trustService := r.trust
 
-	trustCenterFile, err := trustService.TrustCenterFiles.Get(ctx, scope, trustCenter.OrganizationID, input.TrustCenterFileID)
+	trustCenterFile, err := trustService.TrustCenterFiles.Get(ctx, predicate, trustCenter.OrganizationID, input.TrustCenterFileID)
 	if err != nil {
 		if errors.Is(err, trust.ErrTrustCenterFileNotFound) || errors.Is(err, trust.ErrTrustCenterFileNotVisible) {
 			return nil, gqlutils.NotFoundf(ctx, "trust center file %q not found", input.TrustCenterFileID)
@@ -626,8 +616,7 @@ func (r *mutationResolver) RequestTrustCenterFileAccess(ctx context.Context, inp
 	}
 
 	if _, err := trustService.TrustCenterAccesses.Request(
-		ctx, scope,
-		&trust.TrustCenterAccessRequest{
+		ctx, predicate, &trust.TrustCenterAccessRequest{
 			TrustCenterID:      trustCenter.ID,
 			IdentityID:         identity.ID,
 			DocumentIDs:        []gid.GID{},
@@ -646,12 +635,12 @@ func (r *mutationResolver) RequestTrustCenterFileAccess(ctx context.Context, inp
 
 // TotalCount is the resolver for the totalCount field.
 func (r *subprocessorConnectionResolver) TotalCount(ctx context.Context, obj *types.SubprocessorConnection) (int, error) {
-	scope := coredata.NewScopeFromObjectID(obj.ParentID)
+	predicate := coredata.NewPredicateFromObjectID(obj.ParentID)
 	trustService := r.trust
 
 	switch obj.Resolver.(type) {
 	case *trustCenterResolver:
-		count, err := trustService.ThirdParties.CountForTrustCenterId(ctx, scope, obj.ParentID)
+		count, err := trustService.ThirdParties.CountForTrustCenterId(ctx, predicate, obj.ParentID)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count subprocessors", log.Error(err))
 			return 0, gqlutils.Internal(ctx)
@@ -692,10 +681,10 @@ func (r *trustCenterResolver) NonDisclosureAgreement(ctx context.Context, obj *t
 		return nil, nil
 	}
 
-	scope := coredata.NewScopeFromObjectID(obj.ID)
+	predicate := coredata.NewPredicateFromObjectID(obj.ID)
 	trustService := r.trust
 
-	file, err := trustService.TrustCenters.GetNDAFile(ctx, scope, obj.ID)
+	file, err := trustService.TrustCenters.GetNDAFile(ctx, predicate, obj.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot load NDA file", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -740,7 +729,7 @@ func (r *trustCenterResolver) Organization(ctx context.Context, obj *types.Trust
 
 // Documents is the resolver for the documents field.
 func (r *trustCenterResolver) Documents(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.DocumentConnection, error) {
-	scope := coredata.NewScopeFromObjectID(obj.ID)
+	predicate := coredata.NewPredicateFromObjectID(obj.ID)
 	trustService := r.trust
 	pageOrderBy := page.OrderBy[coredata.DocumentOrderField]{
 		Field:     coredata.DocumentOrderFieldTitle,
@@ -748,7 +737,7 @@ func (r *trustCenterResolver) Documents(ctx context.Context, obj *types.TrustCen
 	}
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	documentPage, err := trustService.Documents.ListForOrganizationId(ctx, scope, obj.Organization.ID, cursor)
+	documentPage, err := trustService.Documents.ListForOrganizationId(ctx, predicate, obj.Organization.ID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list public documents", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -759,7 +748,7 @@ func (r *trustCenterResolver) Documents(ctx context.Context, obj *types.TrustCen
 
 // Audits is the resolver for the audits field.
 func (r *trustCenterResolver) Audits(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.AuditConnection, error) {
-	scope := coredata.NewScopeFromObjectID(obj.ID)
+	predicate := coredata.NewPredicateFromObjectID(obj.ID)
 	trustService := r.trust
 	pageOrderBy := page.OrderBy[coredata.AuditOrderField]{
 		Field:     coredata.AuditOrderFieldValidFrom,
@@ -767,7 +756,7 @@ func (r *trustCenterResolver) Audits(ctx context.Context, obj *types.TrustCenter
 	}
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	auditPage, err := trustService.Audits.ListForOrganizationId(ctx, scope, obj.Organization.ID, cursor)
+	auditPage, err := trustService.Audits.ListForOrganizationId(ctx, predicate, obj.Organization.ID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list public audits", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -778,7 +767,7 @@ func (r *trustCenterResolver) Audits(ctx context.Context, obj *types.TrustCenter
 
 // Subprocessors is the resolver for the subprocessors field.
 func (r *trustCenterResolver) Subprocessors(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.SubprocessorConnection, error) {
-	scope := coredata.NewScopeFromObjectID(obj.ID)
+	predicate := coredata.NewPredicateFromObjectID(obj.ID)
 	trustService := r.trust
 	pageOrderBy := page.OrderBy[coredata.ThirdPartyOrderField]{
 		Field:     coredata.ThirdPartyOrderFieldName,
@@ -786,7 +775,7 @@ func (r *trustCenterResolver) Subprocessors(ctx context.Context, obj *types.Trus
 	}
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	thirdPartyPage, err := trustService.ThirdParties.ListForOrganizationId(ctx, scope, obj.Organization.ID, cursor)
+	thirdPartyPage, err := trustService.ThirdParties.ListForOrganizationId(ctx, predicate, obj.Organization.ID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list subprocessors", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -797,7 +786,7 @@ func (r *trustCenterResolver) Subprocessors(ctx context.Context, obj *types.Trus
 
 // References is the resolver for the references field.
 func (r *trustCenterResolver) References(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.TrustCenterReferenceConnection, error) {
-	scope := coredata.NewScopeFromObjectID(obj.ID)
+	predicate := coredata.NewPredicateFromObjectID(obj.ID)
 	trustService := r.trust
 	pageOrderBy := page.OrderBy[coredata.TrustCenterReferenceOrderField]{
 		Field:     coredata.TrustCenterReferenceOrderFieldRank,
@@ -805,7 +794,7 @@ func (r *trustCenterResolver) References(ctx context.Context, obj *types.TrustCe
 	}
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	referencePage, err := trustService.TrustCenterReferences.ListForTrustCenterID(ctx, scope, obj.ID, cursor)
+	referencePage, err := trustService.TrustCenterReferences.ListForTrustCenterID(ctx, predicate, obj.ID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list public trust center references", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -816,7 +805,7 @@ func (r *trustCenterResolver) References(ctx context.Context, obj *types.TrustCe
 
 // TrustCenterFiles is the resolver for the trustCenterFiles field.
 func (r *trustCenterResolver) TrustCenterFiles(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.TrustCenterFileConnection, error) {
-	scope := coredata.NewScopeFromObjectID(obj.ID)
+	predicate := coredata.NewPredicateFromObjectID(obj.ID)
 	trustService := r.trust
 	pageOrderBy := page.OrderBy[coredata.TrustCenterFileOrderField]{
 		Field:     coredata.TrustCenterFileOrderFieldName,
@@ -831,7 +820,7 @@ func (r *trustCenterResolver) TrustCenterFiles(ctx context.Context, obj *types.T
 		),
 	)
 
-	trustCenterFilePage, err := trustService.TrustCenterFiles.ListForOrganizationId(ctx, scope, obj.Organization.ID, cursor, filter)
+	trustCenterFilePage, err := trustService.TrustCenterFiles.ListForOrganizationId(ctx, predicate, obj.Organization.ID, cursor, filter)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list public trust center files", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -842,7 +831,7 @@ func (r *trustCenterResolver) TrustCenterFiles(ctx context.Context, obj *types.T
 
 // ComplianceFrameworks is the resolver for the complianceFrameworks field.
 func (r *trustCenterResolver) ComplianceFrameworks(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.ComplianceFrameworkConnection, error) {
-	scope := coredata.NewScopeFromObjectID(obj.ID)
+	predicate := coredata.NewPredicateFromObjectID(obj.ID)
 	trustService := r.trust
 	pageOrderBy := page.OrderBy[coredata.ComplianceFrameworkOrderField]{
 		Field:     coredata.ComplianceFrameworkOrderFieldRank,
@@ -850,7 +839,7 @@ func (r *trustCenterResolver) ComplianceFrameworks(ctx context.Context, obj *typ
 	}
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	cfPage, err := trustService.ComplianceFrameworks.ListByTrustCenterID(ctx, scope, obj.ID, cursor)
+	cfPage, err := trustService.ComplianceFrameworks.ListByTrustCenterID(ctx, predicate, obj.ID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list compliance frameworks", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -861,7 +850,7 @@ func (r *trustCenterResolver) ComplianceFrameworks(ctx context.Context, obj *typ
 
 // ExternalUrls is the resolver for the externalUrls field.
 func (r *trustCenterResolver) ExternalUrls(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.ComplianceExternalURLConnection, error) {
-	scope := coredata.NewScopeFromObjectID(obj.ID)
+	predicate := coredata.NewPredicateFromObjectID(obj.ID)
 	trustService := r.trust
 	pageOrderBy := page.OrderBy[coredata.ComplianceExternalURLOrderField]{
 		Field:     coredata.ComplianceExternalURLOrderFieldRank,
@@ -869,7 +858,7 @@ func (r *trustCenterResolver) ExternalUrls(ctx context.Context, obj *types.Trust
 	}
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	result, err := trustService.ComplianceExternalURLs.ListForTrustCenterID(ctx, scope, obj.ID, cursor)
+	result, err := trustService.ComplianceExternalURLs.ListForTrustCenterID(ctx, predicate, obj.ID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list compliance external URLs", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -880,10 +869,10 @@ func (r *trustCenterResolver) ExternalUrls(ctx context.Context, obj *types.Trust
 
 // Updates is the resolver for the updates field.
 func (r *trustCenterResolver) Updates(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.MailingListUpdateConnection, error) {
-	scope := coredata.NewScopeFromObjectID(obj.ID)
+	predicate := coredata.NewPredicateFromObjectID(obj.ID)
 	trustService := r.trust
 
-	tc, err := trustService.TrustCenters.Get(ctx, scope, obj.ID)
+	tc, err := trustService.TrustCenters.Get(ctx, predicate, obj.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot load trust center", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -910,11 +899,11 @@ func (r *trustCenterResolver) Updates(ctx context.Context, obj *types.TrustCente
 
 // IsUserAuthorized is the resolver for the isUserAuthorized field.
 func (r *trustCenterFileResolver) IsUserAuthorized(ctx context.Context, obj *types.TrustCenterFile) (bool, error) {
-	scope := coredata.NewScopeFromObjectID(obj.ID)
+	predicate := coredata.NewPredicateFromObjectID(obj.ID)
 	trustService := r.trust
 	trustCenter := compliancepage.CompliancePageFromContext(ctx)
 
-	trustCenterFile, err := trustService.TrustCenterFiles.Get(ctx, scope, trustCenter.OrganizationID, obj.ID)
+	trustCenterFile, err := trustService.TrustCenterFiles.Get(ctx, predicate, trustCenter.OrganizationID, obj.ID)
 	if err != nil {
 		if errors.Is(err, trust.ErrTrustCenterFileNotFound) || errors.Is(err, trust.ErrTrustCenterFileNotVisible) {
 			return false, gqlutils.NotFoundf(ctx, "trust center file %q not found", obj.ID)
@@ -934,8 +923,7 @@ func (r *trustCenterFileResolver) IsUserAuthorized(ctx context.Context, obj *typ
 		return false, nil
 	}
 
-	fileAccess, err := trustService.TrustCenterAccesses.GetTrustCenterFileAccess(ctx, scope,
-		trustCenter.ID,
+	fileAccess, err := trustService.TrustCenterAccesses.GetTrustCenterFileAccess(ctx, predicate, trustCenter.ID,
 		identity.ID,
 		obj.ID,
 	)
@@ -957,7 +945,7 @@ func (r *trustCenterFileResolver) IsUserAuthorized(ctx context.Context, obj *typ
 
 // Access is the resolver for the access field.
 func (r *trustCenterFileResolver) Access(ctx context.Context, obj *types.TrustCenterFile) (*types.DocumentAccess, error) {
-	scope := coredata.NewScopeFromObjectID(obj.ID)
+	predicate := coredata.NewPredicateFromObjectID(obj.ID)
 	trustService := r.trust
 	trustCenter := compliancepage.CompliancePageFromContext(ctx)
 
@@ -967,8 +955,7 @@ func (r *trustCenterFileResolver) Access(ctx context.Context, obj *types.TrustCe
 	}
 
 	access, err := trustService.TrustCenterAccesses.GetTrustCenterFileAccess(
-		ctx, scope,
-		trustCenter.ID,
+		ctx, predicate, trustCenter.ID,
 		identity.ID,
 		obj.ID,
 	)
@@ -996,9 +983,9 @@ func (r *trustCenterFileResolver) Access(ctx context.Context, obj *types.TrustCe
 
 // Logo is the resolver for the logo field.
 func (r *trustCenterReferenceResolver) Logo(ctx context.Context, obj *types.TrustCenterReference) (*types.File, error) {
-	scope := coredata.NewScopeFromObjectID(obj.ID)
+	predicate := coredata.NewPredicateFromObjectID(obj.ID)
 
-	reference, err := r.trust.TrustCenterReferences.Get(ctx, scope, obj.ID)
+	reference, err := r.trust.TrustCenterReferences.Get(ctx, predicate, obj.ID)
 	if err != nil {
 		return nil, gqlutils.NotFoundf(ctx, "trust center reference %q not found", obj.ID)
 	}

@@ -72,7 +72,7 @@ func (uvcr *UpdateThirdPartyContactRequest) Validate() error {
 }
 
 func (s ThirdPartyContactService) Get(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	thirdPartyContactID gid.GID,
 ) (*coredata.ThirdPartyContact, error) {
 	thirdPartyContact := &coredata.ThirdPartyContact{}
@@ -80,7 +80,7 @@ func (s ThirdPartyContactService) Get(
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			err := thirdPartyContact.LoadByID(ctx, conn, scope, thirdPartyContactID)
+			err := thirdPartyContact.LoadByID(ctx, conn, predicate, thirdPartyContactID)
 			if err != nil {
 				return fmt.Errorf("cannot load thirdParty contact: %w", err)
 			}
@@ -96,7 +96,7 @@ func (s ThirdPartyContactService) Get(
 }
 
 func (s ThirdPartyContactService) List(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	thirdPartyID gid.GID,
 	cursor *page.Cursor[coredata.ThirdPartyContactOrderField],
 ) (*page.Page[*coredata.ThirdPartyContact, coredata.ThirdPartyContactOrderField], error) {
@@ -105,7 +105,7 @@ func (s ThirdPartyContactService) List(
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			err := thirdPartyContacts.LoadByThirdPartyID(ctx, conn, scope, thirdPartyID, cursor)
+			err := thirdPartyContacts.LoadByThirdPartyID(ctx, conn, predicate, thirdPartyID, cursor)
 			if err != nil {
 				return fmt.Errorf("cannot load thirdParty contacts: %w", err)
 			}
@@ -121,7 +121,7 @@ func (s ThirdPartyContactService) List(
 }
 
 func (s ThirdPartyContactService) Create(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	req CreateThirdPartyContactRequest,
 ) (*coredata.ThirdPartyContact, error) {
 	if err := req.Validate(); err != nil {
@@ -130,7 +130,7 @@ func (s ThirdPartyContactService) Create(
 
 	now := time.Now()
 	thirdPartyContact := &coredata.ThirdPartyContact{
-		ID:           gid.New(scope.GetTenantID(), coredata.ThirdPartyContactEntityType),
+		ID:           gid.New(predicate.GetTenantID(), coredata.ThirdPartyContactEntityType),
 		ThirdPartyID: req.ThirdPartyID,
 		FullName:     req.FullName,
 		Email:        req.Email,
@@ -144,13 +144,13 @@ func (s ThirdPartyContactService) Create(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
 			thirdParty := &coredata.ThirdParty{}
-			if err := thirdParty.LoadByID(ctx, conn, scope, req.ThirdPartyID); err != nil {
+			if err := thirdParty.LoadByID(ctx, conn, predicate, req.ThirdPartyID); err != nil {
 				return fmt.Errorf("cannot load thirdParty: %w", err)
 			}
 
 			thirdPartyContact.OrganizationID = thirdParty.OrganizationID
 
-			if err := thirdPartyContact.Insert(ctx, conn, scope); err != nil {
+			if err := thirdPartyContact.Insert(ctx, conn, predicate); err != nil {
 				return fmt.Errorf("cannot insert thirdParty contact: %w", err)
 			}
 
@@ -165,7 +165,7 @@ func (s ThirdPartyContactService) Create(
 }
 
 func (s ThirdPartyContactService) Update(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	req UpdateThirdPartyContactRequest,
 ) (*coredata.ThirdPartyContact, error) {
 	if err := req.Validate(); err != nil {
@@ -177,7 +177,7 @@ func (s ThirdPartyContactService) Update(
 	err := s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
-			err := thirdPartyContact.LoadByID(ctx, conn, scope, req.ID)
+			err := thirdPartyContact.LoadByID(ctx, conn, predicate, req.ID)
 			if err != nil {
 				return fmt.Errorf("cannot load thirdParty contact: %w", err)
 			}
@@ -200,7 +200,7 @@ func (s ThirdPartyContactService) Update(
 
 			thirdPartyContact.UpdatedAt = time.Now()
 
-			return thirdPartyContact.Update(ctx, conn, scope)
+			return thirdPartyContact.Update(ctx, conn, predicate)
 		},
 	)
 	if err != nil {
@@ -211,7 +211,7 @@ func (s ThirdPartyContactService) Update(
 }
 
 func (s ThirdPartyContactService) Delete(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	thirdPartyContactID gid.GID,
 ) error {
 	thirdPartyContact := coredata.ThirdPartyContact{ID: thirdPartyContactID}
@@ -219,11 +219,11 @@ func (s ThirdPartyContactService) Delete(
 	return s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
-			if err := thirdPartyContact.LoadByID(ctx, conn, scope, thirdPartyContactID); err != nil {
+			if err := thirdPartyContact.LoadByID(ctx, conn, predicate, thirdPartyContactID); err != nil {
 				return fmt.Errorf("cannot load thirdParty contact: %w", err)
 			}
 
-			if err := thirdPartyContact.Delete(ctx, conn, scope); err != nil {
+			if err := thirdPartyContact.Delete(ctx, conn, predicate); err != nil {
 				return fmt.Errorf("cannot delete thirdParty contact: %w", err)
 			}
 

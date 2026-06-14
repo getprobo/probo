@@ -119,7 +119,7 @@ func (es *ElectronicSignature) NewEvent(
 func (es *ElectronicSignature) Insert(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 INSERT INTO electronic_signatures (
@@ -134,7 +134,7 @@ INSERT INTO electronic_signatures (
 `
 	args := pgx.StrictNamedArgs{
 		"id":              es.ID,
-		"tenant_id":       scope.GetTenantID(),
+		"tenant_id":       predicate.GetTenantID(),
 		"organization_id": es.OrganizationID,
 		"status":          es.Status,
 		"document_type":   es.DocumentType,
@@ -161,7 +161,7 @@ INSERT INTO electronic_signatures (
 func (es *ElectronicSignature) Update(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 UPDATE electronic_signatures SET
@@ -186,7 +186,7 @@ WHERE
 	%s
 	AND id = @id
 `
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"id":                                es.ID,
@@ -208,7 +208,7 @@ WHERE
 		"processing_started_at":             es.ProcessingStartedAt,
 		"updated_at":                        es.UpdatedAt,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
@@ -221,7 +221,7 @@ WHERE
 func (es *ElectronicSignature) LoadByID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	id gid.GID,
 ) error {
 	q := `
@@ -236,10 +236,10 @@ FROM electronic_signatures
 WHERE %s AND id = @id
 LIMIT 1
 `
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"id": id}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {

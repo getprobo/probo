@@ -75,7 +75,7 @@ func (m SlackMessageMetadata) toMap() map[string]any {
 
 func (s *Service) GetSlackMessageDocumentIDs(
 	ctx context.Context,
-	scope coredata.Scoper,
+	predicate coredata.Predicater,
 	slackMessageID gid.GID,
 ) (documentIDs []gid.GID, reportIDs []gid.GID, fileIDs []gid.GID, err error) {
 	var slackMessage coredata.SlackMessage
@@ -83,7 +83,7 @@ func (s *Service) GetSlackMessageDocumentIDs(
 	err = s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			if err := slackMessage.LoadById(ctx, conn, scope, slackMessageID); err != nil {
+			if err := slackMessage.LoadById(ctx, conn, predicate, slackMessageID); err != nil {
 				return fmt.Errorf("cannot load slack message: %w", err)
 			}
 
@@ -103,7 +103,7 @@ func (s *Service) GetSlackMessageDocumentIDs(
 
 func (s *Service) UpdateSlackAccessMessage(
 	ctx context.Context,
-	scope coredata.Scoper,
+	predicate coredata.Predicater,
 	slackMessageID gid.GID,
 	responseURL string,
 	requesterEmail mail.Addr,
@@ -112,12 +112,12 @@ func (s *Service) UpdateSlackAccessMessage(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			var slackMessage coredata.SlackMessage
-			if err := slackMessage.LoadById(ctx, tx, scope, slackMessageID); err != nil {
+			if err := slackMessage.LoadById(ctx, tx, predicate, slackMessageID); err != nil {
 				return fmt.Errorf("cannot load slack message: %w", err)
 			}
 
 			var trustCenter coredata.TrustCenter
-			if err := trustCenter.LoadByOrganizationID(ctx, tx, scope, slackMessage.OrganizationID); err != nil {
+			if err := trustCenter.LoadByOrganizationID(ctx, tx, predicate, slackMessage.OrganizationID); err != nil {
 				return fmt.Errorf("cannot load trust center: %w", err)
 			}
 
@@ -127,16 +127,16 @@ func (s *Service) UpdateSlackAccessMessage(
 			}
 
 			var trustCenterAccess coredata.TrustCenterAccess
-			if err := trustCenterAccess.LoadByTrustCenterIDAndIdentityID(ctx, tx, scope, trustCenter.ID, identity.ID); err != nil {
+			if err := trustCenterAccess.LoadByTrustCenterIDAndIdentityID(ctx, tx, predicate, trustCenter.ID, identity.ID); err != nil {
 				return fmt.Errorf("cannot load trust center access: %w", err)
 			}
 
-			documents, reports, files, err := s.loadDocumentsReportsAndFilesFromAccesses(ctx, tx, scope, trustCenterAccess.ID)
+			documents, reports, files, err := s.loadDocumentsReportsAndFilesFromAccesses(ctx, tx, predicate, trustCenterAccess.ID)
 			if err != nil {
 				return err
 			}
 
-			newSlackMessageID := gid.New(scope.GetTenantID(), coredata.SlackMessageEntityType)
+			newSlackMessageID := gid.New(predicate.GetTenantID(), coredata.SlackMessageEntityType)
 
 			updatedBody, err := s.buildAccessRequestMessage(
 				newSlackMessageID,
@@ -173,7 +173,7 @@ func (s *Service) UpdateSlackAccessMessage(
 				SentAt:                &now,
 			}
 
-			if err := newSlackMessage.Insert(ctx, tx, scope); err != nil {
+			if err := newSlackMessage.Insert(ctx, tx, predicate); err != nil {
 				return fmt.Errorf("cannot insert slack message: %w", err)
 			}
 
@@ -188,7 +188,7 @@ func (s *Service) UpdateSlackAccessMessage(
 
 func (s *Service) QueueSlackNotification(
 	ctx context.Context,
-	scope coredata.Scoper,
+	predicate coredata.Predicater,
 	identityID gid.GID,
 	trustCenterID gid.GID,
 ) error {
@@ -203,21 +203,19 @@ func (s *Service) QueueSlackNotification(
 		}
 
 		trustCenterAccess = &coredata.TrustCenterAccess{}
-		if err := trustCenterAccess.LoadByTrustCenterIDAndIdentityID(ctx, tx, scope, trustCenterID, identityID); err != nil {
+		if err := trustCenterAccess.LoadByTrustCenterIDAndIdentityID(ctx, tx, predicate, trustCenterID, identityID); err != nil {
 			return fmt.Errorf("cannot load trust center access: %w", err)
 		}
 
 		var trustCenter coredata.TrustCenter
-		if err := trustCenter.LoadByID(ctx, tx, scope, trustCenterID); err != nil {
+		if err := trustCenter.LoadByID(ctx, tx, predicate, trustCenterID); err != nil {
 			return fmt.Errorf("cannot load trust center: %w", err)
 		}
 
 		var connectors coredata.Connectors
 		if err := connectors.LoadAllByOrganizationIDWithoutDecryptedConnection(
 			ctx,
-			tx,
-			scope,
-			trustCenter.OrganizationID,
+			tx, predicate, trustCenter.OrganizationID,
 		); err != nil {
 			return fmt.Errorf("cannot load connectors: %w", err)
 		}
@@ -235,12 +233,12 @@ func (s *Service) QueueSlackNotification(
 			return ErrNoSlackConnector
 		}
 
-		documents, reports, files, err := s.loadDocumentsReportsAndFilesFromAccesses(ctx, tx, scope, trustCenterAccess.ID)
+		documents, reports, files, err := s.loadDocumentsReportsAndFilesFromAccesses(ctx, tx, predicate, trustCenterAccess.ID)
 		if err != nil {
 			return fmt.Errorf("cannot load documents, reports and files: %w", err)
 		}
 
-		slackMessageID := gid.New(scope.GetTenantID(), coredata.SlackMessageEntityType)
+		slackMessageID := gid.New(predicate.GetTenantID(), coredata.SlackMessageEntityType)
 
 		body, err := s.buildAccessRequestMessage(
 			slackMessageID,
@@ -279,9 +277,7 @@ func (s *Service) QueueSlackNotification(
 
 		err = existingMessage.LoadLatestByRequesterEmailAndType(
 			ctx,
-			tx,
-			scope,
-			trustCenter.OrganizationID,
+			tx, predicate, trustCenter.OrganizationID,
 			identity.EmailAddress,
 			coredata.SlackMessageTypeTrustCenterAccessRequest,
 			sevenDaysAgo,
@@ -291,7 +287,7 @@ func (s *Service) QueueSlackNotification(
 			slackMessage.ChannelID = existingMessage.ChannelID
 			slackMessage.InitialSlackMessageID = existingMessage.InitialSlackMessageID
 
-			if err := slackMessage.Insert(ctx, tx, scope); err != nil {
+			if err := slackMessage.Insert(ctx, tx, predicate); err != nil {
 				return fmt.Errorf("cannot insert slack message: %w", err)
 			}
 
@@ -304,7 +300,7 @@ func (s *Service) QueueSlackNotification(
 		}
 
 		slackMessage.InitialSlackMessageID = slackMessageID
-		if err := slackMessage.Insert(ctx, tx, scope); err != nil {
+		if err := slackMessage.Insert(ctx, tx, predicate); err != nil {
 			return fmt.Errorf("cannot insert slack message: %w", err)
 		}
 
@@ -315,7 +311,7 @@ func (s *Service) QueueSlackNotification(
 func (s *Service) loadDocumentsReportsAndFilesFromAccesses(
 	ctx context.Context,
 	conn pg.Querier,
-	scope coredata.Scoper,
+	predicate coredata.Predicater,
 	trustCenterAccessID gid.GID,
 ) (
 	documents []SlackMessageDocument,
@@ -328,14 +324,14 @@ func (s *Service) loadDocumentsReportsAndFilesFromAccesses(
 	files = []SlackMessageFile{}
 
 	var accesses coredata.TrustCenterDocumentAccesses
-	if err := accesses.LoadAllByTrustCenterAccessID(ctx, conn, scope, trustCenterAccessID); err != nil {
+	if err := accesses.LoadAllByTrustCenterAccessID(ctx, conn, predicate, trustCenterAccessID); err != nil {
 		return nil, nil, nil, fmt.Errorf("cannot load trust center document accesses: %w", err)
 	}
 
 	for _, access := range accesses {
 		if access.DocumentID != nil {
 			doc := &coredata.Document{}
-			if err := doc.LoadByID(ctx, conn, scope, *access.DocumentID); err != nil {
+			if err := doc.LoadByID(ctx, conn, predicate, *access.DocumentID); err != nil {
 				return nil, nil, nil, fmt.Errorf("cannot load document: %w", err)
 			}
 
@@ -351,12 +347,12 @@ func (s *Service) loadDocumentsReportsAndFilesFromAccesses(
 
 		if access.ReportFileID != nil {
 			audit := &coredata.Audit{}
-			if err := audit.LoadByReportFileID(ctx, conn, scope, *access.ReportFileID); err != nil {
+			if err := audit.LoadByReportFileID(ctx, conn, predicate, *access.ReportFileID); err != nil {
 				return nil, nil, nil, fmt.Errorf("cannot load audit: %w", err)
 			}
 
 			framework := &coredata.Framework{}
-			if err := framework.LoadByID(ctx, conn, scope, audit.FrameworkID); err != nil {
+			if err := framework.LoadByID(ctx, conn, predicate, audit.FrameworkID); err != nil {
 				return nil, nil, nil, fmt.Errorf("cannot load framework: %w", err)
 			}
 
@@ -378,7 +374,7 @@ func (s *Service) loadDocumentsReportsAndFilesFromAccesses(
 
 		if access.TrustCenterFileID != nil {
 			file := &coredata.TrustCenterFile{}
-			if err := file.LoadByID(ctx, conn, scope, *access.TrustCenterFileID); err != nil {
+			if err := file.LoadByID(ctx, conn, predicate, *access.TrustCenterFileID); err != nil {
 				return nil, nil, nil, fmt.Errorf("cannot load trust center file: %w", err)
 			}
 

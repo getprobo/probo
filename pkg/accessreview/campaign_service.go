@@ -26,14 +26,14 @@ import (
 )
 
 type CampaignService struct {
-	pg    *pg.Client
-	scope coredata.Scoper
+	pg        *pg.Client
+	predicate coredata.Predicater
 }
 
-func NewCampaignService(pgClient *pg.Client, scope coredata.Scoper) *CampaignService {
+func NewCampaignService(pgClient *pg.Client, predicate coredata.Predicater) *CampaignService {
 	return &CampaignService{
-		pg:    pgClient,
-		scope: scope,
+		pg:        pgClient,
+		predicate: predicate,
 	}
 }
 
@@ -47,7 +47,7 @@ func (s *CampaignService) Create(
 
 	now := time.Now()
 	campaign := &coredata.AccessReviewCampaign{
-		ID:                gid.New(s.scope.GetTenantID(), coredata.AccessReviewCampaignEntityType),
+		ID:                gid.New(s.predicate.GetTenantID(), coredata.AccessReviewCampaignEntityType),
 		OrganizationID:    req.OrganizationID,
 		Name:              req.Name,
 		Description:       req.Description,
@@ -60,13 +60,13 @@ func (s *CampaignService) Create(
 	err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
-			if err := campaign.Insert(ctx, conn, s.scope); err != nil {
+			if err := campaign.Insert(ctx, conn, s.predicate); err != nil {
 				return fmt.Errorf("cannot insert access review campaign: %w", err)
 			}
 
 			for _, sourceID := range req.AccessSourceIDs {
 				source := &coredata.AccessSource{}
-				if err := source.LoadByID(ctx, conn, s.scope, sourceID); err != nil {
+				if err := source.LoadByID(ctx, conn, s.predicate, sourceID); err != nil {
 					return fmt.Errorf("cannot load access source %s: %w", sourceID, err)
 				}
 
@@ -78,7 +78,7 @@ func (s *CampaignService) Create(
 					AccessReviewCampaignID: campaign.ID,
 					AccessSourceID:         sourceID,
 				}
-				if err := scopeSystem.Insert(ctx, conn, s.scope); err != nil {
+				if err := scopeSystem.Insert(ctx, conn, s.predicate); err != nil {
 					return fmt.Errorf("cannot insert scope system: %w", err)
 				}
 			}
@@ -102,7 +102,7 @@ func (s *CampaignService) Get(
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			if err := campaign.LoadByID(ctx, conn, s.scope, campaignID); err != nil {
+			if err := campaign.LoadByID(ctx, conn, s.predicate, campaignID); err != nil {
 				return fmt.Errorf("cannot load campaign: %w", err)
 			}
 
@@ -129,11 +129,11 @@ func (s *CampaignService) Update(
 	err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
-			if err := lockCampaignForUpdate(ctx, conn, s.scope, req.CampaignID); err != nil {
+			if err := lockCampaignForUpdate(ctx, conn, s.predicate, req.CampaignID); err != nil {
 				return fmt.Errorf("cannot lock campaign: %w", err)
 			}
 
-			if err := campaign.LoadByID(ctx, conn, s.scope, req.CampaignID); err != nil {
+			if err := campaign.LoadByID(ctx, conn, s.predicate, req.CampaignID); err != nil {
 				return fmt.Errorf("cannot load campaign: %w", err)
 			}
 
@@ -155,7 +155,7 @@ func (s *CampaignService) Update(
 
 			campaign.UpdatedAt = time.Now()
 
-			if err := campaign.Update(ctx, conn, s.scope); err != nil {
+			if err := campaign.Update(ctx, conn, s.predicate); err != nil {
 				return fmt.Errorf("cannot update campaign: %w", err)
 			}
 
@@ -176,12 +176,12 @@ func (s *CampaignService) Delete(
 	return s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
-			if err := lockCampaignForUpdate(ctx, conn, s.scope, campaignID); err != nil {
+			if err := lockCampaignForUpdate(ctx, conn, s.predicate, campaignID); err != nil {
 				return fmt.Errorf("cannot lock campaign: %w", err)
 			}
 
 			campaign := &coredata.AccessReviewCampaign{}
-			if err := campaign.LoadByID(ctx, conn, s.scope, campaignID); err != nil {
+			if err := campaign.LoadByID(ctx, conn, s.predicate, campaignID); err != nil {
 				return fmt.Errorf("cannot load campaign: %w", err)
 			}
 
@@ -190,7 +190,7 @@ func (s *CampaignService) Delete(
 				return fmt.Errorf("cannot delete campaign: status is %s, expected %s or %s", campaign.Status, coredata.AccessReviewCampaignStatusDraft, coredata.AccessReviewCampaignStatusCancelled)
 			}
 
-			if err := campaign.Delete(ctx, conn, s.scope); err != nil {
+			if err := campaign.Delete(ctx, conn, s.predicate); err != nil {
 				return fmt.Errorf("cannot delete campaign: %w", err)
 			}
 
@@ -208,11 +208,11 @@ func (s *CampaignService) AddScopeSource(
 	err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
-			if err := lockCampaignForUpdate(ctx, conn, s.scope, req.CampaignID); err != nil {
+			if err := lockCampaignForUpdate(ctx, conn, s.predicate, req.CampaignID); err != nil {
 				return fmt.Errorf("cannot lock campaign: %w", err)
 			}
 
-			if err := campaign.LoadByID(ctx, conn, s.scope, req.CampaignID); err != nil {
+			if err := campaign.LoadByID(ctx, conn, s.predicate, req.CampaignID); err != nil {
 				return fmt.Errorf("cannot load campaign: %w", err)
 			}
 
@@ -221,7 +221,7 @@ func (s *CampaignService) AddScopeSource(
 			}
 
 			source := &coredata.AccessSource{}
-			if err := source.LoadByID(ctx, conn, s.scope, req.AccessSourceID); err != nil {
+			if err := source.LoadByID(ctx, conn, s.predicate, req.AccessSourceID); err != nil {
 				return fmt.Errorf("cannot load access source %s: %w", req.AccessSourceID, err)
 			}
 
@@ -233,7 +233,7 @@ func (s *CampaignService) AddScopeSource(
 				AccessReviewCampaignID: campaign.ID,
 				AccessSourceID:         req.AccessSourceID,
 			}
-			if err := scopeSystem.Upsert(ctx, conn, s.scope); err != nil {
+			if err := scopeSystem.Upsert(ctx, conn, s.predicate); err != nil {
 				return fmt.Errorf("cannot upsert scope system: %w", err)
 			}
 
@@ -256,11 +256,11 @@ func (s *CampaignService) RemoveScopeSource(
 	err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
-			if err := lockCampaignForUpdate(ctx, conn, s.scope, req.CampaignID); err != nil {
+			if err := lockCampaignForUpdate(ctx, conn, s.predicate, req.CampaignID); err != nil {
 				return fmt.Errorf("cannot lock campaign: %w", err)
 			}
 
-			if err := campaign.LoadByID(ctx, conn, s.scope, req.CampaignID); err != nil {
+			if err := campaign.LoadByID(ctx, conn, s.predicate, req.CampaignID); err != nil {
 				return fmt.Errorf("cannot load campaign: %w", err)
 			}
 
@@ -272,7 +272,7 @@ func (s *CampaignService) RemoveScopeSource(
 				AccessReviewCampaignID: campaign.ID,
 				AccessSourceID:         req.AccessSourceID,
 			}
-			if err := scopeSystem.Delete(ctx, conn, s.scope); err != nil {
+			if err := scopeSystem.Delete(ctx, conn, s.predicate); err != nil {
 				return fmt.Errorf("cannot delete scope system: %w", err)
 			}
 
@@ -295,11 +295,11 @@ func (s *CampaignService) Start(
 	err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
-			if err := lockCampaignForUpdate(ctx, conn, s.scope, campaignID); err != nil {
+			if err := lockCampaignForUpdate(ctx, conn, s.predicate, campaignID); err != nil {
 				return fmt.Errorf("cannot lock campaign: %w", err)
 			}
 
-			if err := campaign.LoadByID(ctx, conn, s.scope, campaignID); err != nil {
+			if err := campaign.LoadByID(ctx, conn, s.predicate, campaignID); err != nil {
 				return fmt.Errorf("cannot load campaign: %w", err)
 			}
 
@@ -308,7 +308,7 @@ func (s *CampaignService) Start(
 			}
 
 			var sources coredata.AccessSources
-			if err := sources.LoadScopeSourcesByCampaignID(ctx, conn, s.scope, campaign.ID); err != nil {
+			if err := sources.LoadScopeSourcesByCampaignID(ctx, conn, s.predicate, campaign.ID); err != nil {
 				return fmt.Errorf("cannot load scope sources: %w", err)
 			}
 
@@ -321,7 +321,7 @@ func (s *CampaignService) Start(
 			campaign.StartedAt = &now
 			campaign.UpdatedAt = now
 
-			if err := campaign.Update(ctx, conn, s.scope); err != nil {
+			if err := campaign.Update(ctx, conn, s.predicate); err != nil {
 				return fmt.Errorf("cannot update campaign: %w", err)
 			}
 
@@ -348,11 +348,11 @@ func (s *CampaignService) Close(
 	err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
-			if err := lockCampaignForUpdate(ctx, conn, s.scope, campaignID); err != nil {
+			if err := lockCampaignForUpdate(ctx, conn, s.predicate, campaignID); err != nil {
 				return fmt.Errorf("cannot lock campaign: %w", err)
 			}
 
-			if err := campaign.LoadByID(ctx, conn, s.scope, campaignID); err != nil {
+			if err := campaign.LoadByID(ctx, conn, s.predicate, campaignID); err != nil {
 				return fmt.Errorf("cannot load campaign: %w", err)
 			}
 
@@ -362,7 +362,7 @@ func (s *CampaignService) Close(
 
 			entries := coredata.AccessEntries{}
 
-			pendingCount, err := entries.CountPendingByCampaignID(ctx, conn, s.scope, campaignID)
+			pendingCount, err := entries.CountPendingByCampaignID(ctx, conn, s.predicate, campaignID)
 			if err != nil {
 				return fmt.Errorf("cannot count pending entries: %w", err)
 			}
@@ -376,7 +376,7 @@ func (s *CampaignService) Close(
 			campaign.CompletedAt = &now
 			campaign.UpdatedAt = now
 
-			if err := campaign.Update(ctx, conn, s.scope); err != nil {
+			if err := campaign.Update(ctx, conn, s.predicate); err != nil {
 				return fmt.Errorf("cannot update campaign: %w", err)
 			}
 
@@ -390,9 +390,9 @@ func (s *CampaignService) Close(
 	return campaign, nil
 }
 
-func lockCampaignForUpdate(ctx context.Context, tx pg.Tx, scope coredata.Scoper, campaignID gid.GID) error {
+func lockCampaignForUpdate(ctx context.Context, tx pg.Tx, predicate coredata.Predicater, campaignID gid.GID) error {
 	c := &coredata.AccessReviewCampaign{ID: campaignID}
-	if err := c.LockForUpdate(ctx, tx, scope); err != nil {
+	if err := c.LockForUpdate(ctx, tx, predicate); err != nil {
 		return fmt.Errorf("cannot lock campaign for update: %w", err)
 	}
 
@@ -412,7 +412,7 @@ func (s *CampaignService) enqueueSourceFetches(
 			AccessReviewCampaignID: campaignID,
 			AccessSourceID:         source.ID,
 		}
-		if err := fetch.UpsertQueued(ctx, tx, s.scope, now); err != nil {
+		if err := fetch.UpsertQueued(ctx, tx, s.predicate, now); err != nil {
 			return fmt.Errorf("cannot queue source fetch %s: %w", source.ID, err)
 		}
 	}
@@ -429,11 +429,11 @@ func (s *CampaignService) Cancel(
 	err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
-			if err := lockCampaignForUpdate(ctx, conn, s.scope, campaignID); err != nil {
+			if err := lockCampaignForUpdate(ctx, conn, s.predicate, campaignID); err != nil {
 				return fmt.Errorf("cannot lock campaign: %w", err)
 			}
 
-			if err := campaign.LoadByID(ctx, conn, s.scope, campaignID); err != nil {
+			if err := campaign.LoadByID(ctx, conn, s.predicate, campaignID); err != nil {
 				return fmt.Errorf("cannot load campaign: %w", err)
 			}
 
@@ -447,7 +447,7 @@ func (s *CampaignService) Cancel(
 			campaign.CompletedAt = &now
 			campaign.UpdatedAt = now
 
-			if err := campaign.Update(ctx, conn, s.scope); err != nil {
+			if err := campaign.Update(ctx, conn, s.predicate); err != nil {
 				return fmt.Errorf("cannot update campaign: %w", err)
 			}
 
@@ -471,7 +471,7 @@ func (s *CampaignService) ListForOrganizationID(
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			if err := campaigns.LoadByOrganizationID(ctx, conn, s.scope, organizationID, cursor); err != nil {
+			if err := campaigns.LoadByOrganizationID(ctx, conn, s.predicate, organizationID, cursor); err != nil {
 				return fmt.Errorf("cannot load campaigns by organization: %w", err)
 			}
 
@@ -494,7 +494,7 @@ func (s *CampaignService) ListSourceFetches(
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			if err := fetches.LoadByCampaignID(ctx, conn, s.scope, campaignID); err != nil {
+			if err := fetches.LoadByCampaignID(ctx, conn, s.predicate, campaignID); err != nil {
 				return fmt.Errorf("cannot load source fetches by campaign: %w", err)
 			}
 
@@ -519,7 +519,7 @@ func (s *CampaignService) CountForOrganizationID(
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			campaigns := coredata.AccessReviewCampaigns{}
 
-			count, err = campaigns.CountByOrganizationID(ctx, conn, s.scope, organizationID)
+			count, err = campaigns.CountByOrganizationID(ctx, conn, s.predicate, organizationID)
 			if err != nil {
 				return fmt.Errorf("cannot count campaigns by organization: %w", err)
 			}

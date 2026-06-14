@@ -16,9 +16,9 @@ import (
 
 // Logo is the resolver for the logo field.
 func (r *organizationResolver) Logo(ctx context.Context, obj *types.Organization) (*types.File, error) {
-	scope := coredata.NewScopeFromObjectID(obj.ID)
+	predicate := coredata.NewPredicateFromObjectID(obj.ID)
 
-	organization, err := r.trust.Organizations.Get(ctx, scope, obj.ID)
+	organization, err := r.trust.Organizations.Get(ctx, predicate, obj.ID)
 	if err != nil {
 		return nil, gqlutils.NotFoundf(ctx, "organization %q not found", obj.ID)
 	}

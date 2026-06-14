@@ -36,7 +36,7 @@ import (
 // snapshot and source data collection.
 type ReviewEngine struct {
 	pg                *pg.Client
-	scope             coredata.Scoper
+	predicate         coredata.Predicater
 	encryptionKey     cipher.EncryptionKey
 	connectorRegistry *connector.ConnectorRegistry
 	providerRegistry  *provider.Registry
@@ -45,7 +45,7 @@ type ReviewEngine struct {
 
 func NewReviewEngine(
 	pgClient *pg.Client,
-	scope coredata.Scoper,
+	predicate coredata.Predicater,
 	encryptionKey cipher.EncryptionKey,
 	connectorRegistry *connector.ConnectorRegistry,
 	providerRegistry *provider.Registry,
@@ -53,7 +53,7 @@ func NewReviewEngine(
 ) *ReviewEngine {
 	return &ReviewEngine{
 		pg:                pgClient,
-		scope:             scope,
+		predicate:         predicate,
 		encryptionKey:     encryptionKey,
 		connectorRegistry: connectorRegistry,
 		providerRegistry:  providerRegistry,
@@ -81,7 +81,7 @@ func (e *ReviewEngine) FetchSource(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			source = &coredata.AccessSource{}
-			if err := source.LoadByID(ctx, tx, e.scope, sourceID); err != nil {
+			if err := source.LoadByID(ctx, tx, e.predicate, sourceID); err != nil {
 				return fmt.Errorf("cannot load access source %s: %w", sourceID, err)
 			}
 
@@ -97,14 +97,14 @@ func (e *ReviewEngine) FetchSource(
 			}
 
 			lastCompletedCampaign := &coredata.AccessReviewCampaign{}
-			if err := lastCompletedCampaign.LoadLastCompletedByOrganizationID(ctx, tx, e.scope, campaign.OrganizationID); err != nil {
+			if err := lastCompletedCampaign.LoadLastCompletedByOrganizationID(ctx, tx, e.predicate, campaign.OrganizationID); err != nil {
 				if !errors.Is(err, coredata.ErrResourceNotFound) {
 					return fmt.Errorf("cannot load last completed campaign: %w", err)
 				}
 			} else {
 				entries := &coredata.AccessEntries{}
 
-				baseline, err = entries.LoadBaselineBySourceID(ctx, tx, e.scope, lastCompletedCampaign.ID, sourceID)
+				baseline, err = entries.LoadBaselineBySourceID(ctx, tx, e.predicate, lastCompletedCampaign.ID, sourceID)
 				if err != nil {
 					return fmt.Errorf("cannot load baseline entries by source: %w", err)
 				}
@@ -149,7 +149,7 @@ func (e *ReviewEngine) FetchSource(
 				}
 
 				entry := &coredata.AccessEntry{
-					ID:                     gid.New(e.scope.GetTenantID(), coredata.AccessEntryEntityType),
+					ID:                     gid.New(e.predicate.GetTenantID(), coredata.AccessEntryEntityType),
 					OrganizationID:         campaign.OrganizationID,
 					AccessReviewCampaignID: campaign.ID,
 					AccessSourceID:         sourceID,
@@ -174,7 +174,7 @@ func (e *ReviewEngine) FetchSource(
 					UpdatedAt:              now,
 				}
 
-				if err := entry.Upsert(ctx, conn, e.scope); err != nil {
+				if err := entry.Upsert(ctx, conn, e.predicate); err != nil {
 					return fmt.Errorf("cannot upsert access entry: %w", err)
 				}
 			}
@@ -187,7 +187,7 @@ func (e *ReviewEngine) FetchSource(
 				}
 
 				entry := &coredata.AccessEntry{
-					ID:                     gid.New(e.scope.GetTenantID(), coredata.AccessEntryEntityType),
+					ID:                     gid.New(e.predicate.GetTenantID(), coredata.AccessEntryEntityType),
 					OrganizationID:         campaign.OrganizationID,
 					AccessReviewCampaignID: campaign.ID,
 					AccessSourceID:         sourceID,
@@ -205,7 +205,7 @@ func (e *ReviewEngine) FetchSource(
 					UpdatedAt:              now,
 				}
 
-				if err := entry.Upsert(ctx, conn, e.scope); err != nil {
+				if err := entry.Upsert(ctx, conn, e.predicate); err != nil {
 					return fmt.Errorf("cannot upsert removed access entry: %w", err)
 				}
 			}
@@ -277,12 +277,12 @@ func (e *ReviewEngine) resolveDriver(
 		}
 
 		// Built-in driver: default to ProboMemberships
-		return drivers.NewProboMembershipsDriver(e.pg, e.scope, source.OrganizationID), nil
+		return drivers.NewProboMembershipsDriver(e.pg, e.predicate, source.OrganizationID), nil
 	}
 
 	// Connector-backed: look up the connector and resolve driver by provider
 	dbConnector := &coredata.Connector{}
-	if err := dbConnector.LoadByID(ctx, tx, e.scope, *source.ConnectorID, e.encryptionKey); err != nil {
+	if err := dbConnector.LoadByID(ctx, tx, e.predicate, *source.ConnectorID, e.encryptionKey); err != nil {
 		return nil, fmt.Errorf("cannot load connector %s: %w", *source.ConnectorID, err)
 	}
 
@@ -306,7 +306,7 @@ func (e *ReviewEngine) resolveDriver(
 	if oauth2Conn, ok := dbConnector.Connection.(*connector.OAuth2Connection); ok {
 		if oauth2Conn.AccessToken != tokenBefore {
 			dbConnector.UpdatedAt = time.Now()
-			if err := dbConnector.Update(ctx, tx, e.scope, e.encryptionKey); err != nil {
+			if err := dbConnector.Update(ctx, tx, e.predicate, e.encryptionKey); err != nil {
 				return nil, fmt.Errorf("cannot persist refreshed token for connector %s: %w", *source.ConnectorID, err)
 			}
 		}

@@ -64,7 +64,7 @@ func (h *handler) Claim(ctx context.Context) (coredata.AgentRun, error) {
 			run.StartedAt = &now
 			run.UpdatedAt = now
 
-			if err := run.Update(ctx, tx, coredata.NewNoScope()); err != nil {
+			if err := run.Update(ctx, tx, coredata.NewNoPredicate()); err != nil {
 				return fmt.Errorf("cannot update agent run: %w", err)
 			}
 
@@ -238,7 +238,7 @@ func (h *handler) executeRun(ctx context.Context, run *coredata.AgentRun) error 
 			}
 
 			if run.Status == coredata.AgentRunStatusCompleted {
-				if err := run.ClearCheckpoint(ctx, tx, coredata.NewNoScope()); err != nil {
+				if err := run.ClearCheckpoint(ctx, tx, coredata.NewNoPredicate()); err != nil {
 					return err
 				}
 			}

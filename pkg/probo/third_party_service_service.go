@@ -65,7 +65,7 @@ func (uvsr *UpdateThirdPartyServiceRequest) Validate() error {
 }
 
 func (s ThirdPartyServiceService) Get(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	thirdPartyServiceID gid.GID,
 ) (*coredata.ThirdPartyService, error) {
 	thirdPartyService := &coredata.ThirdPartyService{}
@@ -73,7 +73,7 @@ func (s ThirdPartyServiceService) Get(
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			err := thirdPartyService.LoadByID(ctx, conn, scope, thirdPartyServiceID)
+			err := thirdPartyService.LoadByID(ctx, conn, predicate, thirdPartyServiceID)
 			if err != nil {
 				return fmt.Errorf("cannot load thirdParty service: %w", err)
 			}
@@ -89,7 +89,7 @@ func (s ThirdPartyServiceService) Get(
 }
 
 func (s ThirdPartyServiceService) List(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	thirdPartyID gid.GID,
 	cursor *page.Cursor[coredata.ThirdPartyServiceOrderField],
 ) (*page.Page[*coredata.ThirdPartyService, coredata.ThirdPartyServiceOrderField], error) {
@@ -98,7 +98,7 @@ func (s ThirdPartyServiceService) List(
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			err := thirdPartyServices.LoadByThirdPartyID(ctx, conn, scope, thirdPartyID, cursor)
+			err := thirdPartyServices.LoadByThirdPartyID(ctx, conn, predicate, thirdPartyID, cursor)
 			if err != nil {
 				return fmt.Errorf("cannot load thirdParty services: %w", err)
 			}
@@ -114,7 +114,7 @@ func (s ThirdPartyServiceService) List(
 }
 
 func (s ThirdPartyServiceService) Create(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	req CreateThirdPartyServiceRequest,
 ) (*coredata.ThirdPartyService, error) {
 	if err := req.Validate(); err != nil {
@@ -123,7 +123,7 @@ func (s ThirdPartyServiceService) Create(
 
 	now := time.Now()
 	thirdPartyService := &coredata.ThirdPartyService{
-		ID:           gid.New(scope.GetTenantID(), coredata.ThirdPartyServiceEntityType),
+		ID:           gid.New(predicate.GetTenantID(), coredata.ThirdPartyServiceEntityType),
 		ThirdPartyID: req.ThirdPartyID,
 		Name:         req.Name,
 		Description:  req.Description,
@@ -135,13 +135,13 @@ func (s ThirdPartyServiceService) Create(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
 			thirdParty := &coredata.ThirdParty{}
-			if err := thirdParty.LoadByID(ctx, conn, scope, req.ThirdPartyID); err != nil {
+			if err := thirdParty.LoadByID(ctx, conn, predicate, req.ThirdPartyID); err != nil {
 				return fmt.Errorf("cannot load thirdParty: %w", err)
 			}
 
 			thirdPartyService.OrganizationID = thirdParty.OrganizationID
 
-			if err := thirdPartyService.Insert(ctx, conn, scope); err != nil {
+			if err := thirdPartyService.Insert(ctx, conn, predicate); err != nil {
 				return fmt.Errorf("cannot insert thirdParty service: %w", err)
 			}
 
@@ -156,7 +156,7 @@ func (s ThirdPartyServiceService) Create(
 }
 
 func (s ThirdPartyServiceService) Update(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	req UpdateThirdPartyServiceRequest,
 ) (*coredata.ThirdPartyService, error) {
 	if err := req.Validate(); err != nil {
@@ -168,7 +168,7 @@ func (s ThirdPartyServiceService) Update(
 	err := s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
-			err := thirdPartyService.LoadByID(ctx, conn, scope, req.ID)
+			err := thirdPartyService.LoadByID(ctx, conn, predicate, req.ID)
 			if err != nil {
 				return fmt.Errorf("cannot load thirdParty service: %w", err)
 			}
@@ -183,7 +183,7 @@ func (s ThirdPartyServiceService) Update(
 
 			thirdPartyService.UpdatedAt = time.Now()
 
-			if err := thirdPartyService.Update(ctx, conn, scope); err != nil {
+			if err := thirdPartyService.Update(ctx, conn, predicate); err != nil {
 				return fmt.Errorf("cannot update thirdParty service: %w", err)
 			}
 
@@ -198,7 +198,7 @@ func (s ThirdPartyServiceService) Update(
 }
 
 func (s ThirdPartyServiceService) Delete(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	thirdPartyServiceID gid.GID,
 ) error {
 	thirdPartyService := coredata.ThirdPartyService{ID: thirdPartyServiceID}
@@ -206,11 +206,11 @@ func (s ThirdPartyServiceService) Delete(
 	return s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
-			if err := thirdPartyService.LoadByID(ctx, conn, scope, thirdPartyServiceID); err != nil {
+			if err := thirdPartyService.LoadByID(ctx, conn, predicate, thirdPartyServiceID); err != nil {
 				return fmt.Errorf("cannot load thirdParty service: %w", err)
 			}
 
-			if err := thirdPartyService.Delete(ctx, conn, scope); err != nil {
+			if err := thirdPartyService.Delete(ctx, conn, predicate); err != nil {
 				return fmt.Errorf("cannot delete thirdParty service: %w", err)
 			}
 

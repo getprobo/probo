@@ -67,7 +67,7 @@ func (vdpaur *ThirdPartyDataPrivacyAgreementUpdateRequest) Validate() error {
 }
 
 func (s ThirdPartyDataPrivacyAgreementService) GetByThirdPartyID(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	thirdPartyID gid.GID,
 ) (*coredata.ThirdPartyDataPrivacyAgreement, *coredata.File, error) {
 	var (
@@ -79,12 +79,12 @@ func (s ThirdPartyDataPrivacyAgreementService) GetByThirdPartyID(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
 			thirdPartyDataPrivacyAgreement = &coredata.ThirdPartyDataPrivacyAgreement{}
-			if err := thirdPartyDataPrivacyAgreement.LoadByThirdPartyID(ctx, conn, scope, thirdPartyID); err != nil {
+			if err := thirdPartyDataPrivacyAgreement.LoadByThirdPartyID(ctx, conn, predicate, thirdPartyID); err != nil {
 				return fmt.Errorf("cannot load thirdParty data privacy agreement: %w", err)
 			}
 
 			file = &coredata.File{}
-			if err := file.LoadByID(ctx, conn, scope, thirdPartyDataPrivacyAgreement.FileID); err != nil {
+			if err := file.LoadByID(ctx, conn, predicate, thirdPartyDataPrivacyAgreement.FileID); err != nil {
 				return fmt.Errorf("cannot load file: %w", err)
 			}
 
@@ -99,7 +99,7 @@ func (s ThirdPartyDataPrivacyAgreementService) GetByThirdPartyID(
 }
 
 func (s ThirdPartyDataPrivacyAgreementService) Upload(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	thirdPartyID gid.GID,
 	req *ThirdPartyDataPrivacyAgreementCreateRequest,
 ) (*coredata.ThirdPartyDataPrivacyAgreement, *coredata.File, error) {
@@ -122,7 +122,7 @@ func (s ThirdPartyDataPrivacyAgreementService) Upload(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
 			thirdParty = &coredata.ThirdParty{}
-			if err := thirdParty.LoadByID(ctx, conn, scope, thirdPartyID); err != nil {
+			if err := thirdParty.LoadByID(ctx, conn, predicate, thirdPartyID); err != nil {
 				return fmt.Errorf("cannot load thirdParty: %w", err)
 			}
 
@@ -153,8 +153,8 @@ func (s ThirdPartyDataPrivacyAgreementService) Upload(
 			}
 
 			now := time.Now()
-			fileID := gid.New(scope.GetTenantID(), coredata.FileEntityType)
-			thirdPartyDataPrivacyAgreementID := gid.New(scope.GetTenantID(), coredata.ThirdPartyDataPrivacyAgreementEntityType)
+			fileID := gid.New(predicate.GetTenantID(), coredata.FileEntityType)
+			thirdPartyDataPrivacyAgreementID := gid.New(predicate.GetTenantID(), coredata.ThirdPartyDataPrivacyAgreementEntityType)
 			file = &coredata.File{
 				ID:             fileID,
 				OrganizationID: thirdParty.OrganizationID,
@@ -179,11 +179,11 @@ func (s ThirdPartyDataPrivacyAgreementService) Upload(
 				UpdatedAt:      now,
 			}
 
-			if err := file.Insert(ctx, conn, scope); err != nil {
+			if err := file.Insert(ctx, conn, predicate); err != nil {
 				return fmt.Errorf("cannot insert file: %w", err)
 			}
 
-			if err := thirdPartyDataPrivacyAgreement.Upsert(ctx, conn, scope); err != nil {
+			if err := thirdPartyDataPrivacyAgreement.Upsert(ctx, conn, predicate); err != nil {
 				return fmt.Errorf("cannot insert thirdParty data privacy agreement: %w", err)
 			}
 
@@ -198,7 +198,7 @@ func (s ThirdPartyDataPrivacyAgreementService) Upload(
 }
 
 func (s ThirdPartyDataPrivacyAgreementService) Get(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	thirdPartyDataPrivacyAgreementID gid.GID,
 ) (*coredata.ThirdPartyDataPrivacyAgreement, *coredata.File, error) {
 	var (
@@ -210,12 +210,12 @@ func (s ThirdPartyDataPrivacyAgreementService) Get(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
 			thirdPartyDataPrivacyAgreement = &coredata.ThirdPartyDataPrivacyAgreement{}
-			if err := thirdPartyDataPrivacyAgreement.LoadByID(ctx, conn, scope, thirdPartyDataPrivacyAgreementID); err != nil {
+			if err := thirdPartyDataPrivacyAgreement.LoadByID(ctx, conn, predicate, thirdPartyDataPrivacyAgreementID); err != nil {
 				return fmt.Errorf("cannot load thirdParty data privacy agreement: %w", err)
 			}
 
 			file = &coredata.File{}
-			if err := file.LoadByID(ctx, conn, scope, thirdPartyDataPrivacyAgreement.FileID); err != nil {
+			if err := file.LoadByID(ctx, conn, predicate, thirdPartyDataPrivacyAgreement.FileID); err != nil {
 				return fmt.Errorf("cannot load file: %w", err)
 			}
 
@@ -230,7 +230,7 @@ func (s ThirdPartyDataPrivacyAgreementService) Get(
 }
 
 func (s ThirdPartyDataPrivacyAgreementService) GenerateFileURL(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	thirdPartyDataPrivacyAgreementID gid.GID,
 	expiresIn time.Duration,
 ) (string, error) {
@@ -240,12 +240,12 @@ func (s ThirdPartyDataPrivacyAgreementService) GenerateFileURL(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
 			thirdPartyDataPrivacyAgreement := &coredata.ThirdPartyDataPrivacyAgreement{}
-			if err := thirdPartyDataPrivacyAgreement.LoadByID(ctx, conn, scope, thirdPartyDataPrivacyAgreementID); err != nil {
+			if err := thirdPartyDataPrivacyAgreement.LoadByID(ctx, conn, predicate, thirdPartyDataPrivacyAgreementID); err != nil {
 				return fmt.Errorf("cannot load thirdParty data privacy agreement: %w", err)
 			}
 
 			file = &coredata.File{}
-			if err := file.LoadByID(ctx, conn, scope, thirdPartyDataPrivacyAgreement.FileID); err != nil {
+			if err := file.LoadByID(ctx, conn, predicate, thirdPartyDataPrivacyAgreement.FileID); err != nil {
 				return fmt.Errorf("cannot load file: %w", err)
 			}
 
@@ -278,7 +278,7 @@ func (s ThirdPartyDataPrivacyAgreementService) GenerateFileURL(
 }
 
 func (s ThirdPartyDataPrivacyAgreementService) Update(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	thirdPartyID gid.GID,
 	req *ThirdPartyDataPrivacyAgreementUpdateRequest,
 ) (*coredata.ThirdPartyDataPrivacyAgreement, *coredata.File, error) {
@@ -292,7 +292,7 @@ func (s ThirdPartyDataPrivacyAgreementService) Update(
 	err := s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
-			if err := existingAgreement.LoadByThirdPartyID(ctx, conn, scope, thirdPartyID); err != nil {
+			if err := existingAgreement.LoadByThirdPartyID(ctx, conn, predicate, thirdPartyID); err != nil {
 				return fmt.Errorf("cannot load existing thirdParty data privacy agreement: %w", err)
 			}
 
@@ -308,11 +308,11 @@ func (s ThirdPartyDataPrivacyAgreementService) Update(
 
 			existingAgreement.UpdatedAt = now
 
-			if err := existingAgreement.Update(ctx, conn, scope); err != nil {
+			if err := existingAgreement.Update(ctx, conn, predicate); err != nil {
 				return fmt.Errorf("cannot update thirdParty data privacy agreement: %w", err)
 			}
 
-			if err := file.LoadByID(ctx, conn, scope, existingAgreement.FileID); err != nil {
+			if err := file.LoadByID(ctx, conn, predicate, existingAgreement.FileID); err != nil {
 				return fmt.Errorf("cannot load file: %w", err)
 			}
 
@@ -327,18 +327,18 @@ func (s ThirdPartyDataPrivacyAgreementService) Update(
 }
 
 func (s ThirdPartyDataPrivacyAgreementService) Delete(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	thirdPartyDataPrivacyAgreementID gid.GID,
 ) error {
 	return s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
 			thirdPartyDataPrivacyAgreement := &coredata.ThirdPartyDataPrivacyAgreement{}
-			if err := thirdPartyDataPrivacyAgreement.LoadByID(ctx, conn, scope, thirdPartyDataPrivacyAgreementID); err != nil {
+			if err := thirdPartyDataPrivacyAgreement.LoadByID(ctx, conn, predicate, thirdPartyDataPrivacyAgreementID); err != nil {
 				return fmt.Errorf("cannot load thirdParty data privacy agreement: %w", err)
 			}
 
-			if err := thirdPartyDataPrivacyAgreement.Delete(ctx, conn, scope); err != nil {
+			if err := thirdPartyDataPrivacyAgreement.Delete(ctx, conn, predicate); err != nil {
 				return fmt.Errorf("cannot delete thirdParty data privacy agreement: %w", err)
 			}
 
@@ -348,18 +348,18 @@ func (s ThirdPartyDataPrivacyAgreementService) Delete(
 }
 
 func (s ThirdPartyDataPrivacyAgreementService) DeleteByThirdPartyID(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	thirdPartyID gid.GID,
 ) error {
 	return s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
 			thirdPartyDataPrivacyAgreement := &coredata.ThirdPartyDataPrivacyAgreement{}
-			if err := thirdPartyDataPrivacyAgreement.LoadByThirdPartyID(ctx, conn, scope, thirdPartyID); err != nil {
+			if err := thirdPartyDataPrivacyAgreement.LoadByThirdPartyID(ctx, conn, predicate, thirdPartyID); err != nil {
 				return fmt.Errorf("cannot load thirdParty data privacy agreement: %w", err)
 			}
 
-			if err := thirdPartyDataPrivacyAgreement.DeleteByThirdPartyID(ctx, conn, scope, thirdPartyID); err != nil {
+			if err := thirdPartyDataPrivacyAgreement.DeleteByThirdPartyID(ctx, conn, predicate, thirdPartyID); err != nil {
 				return fmt.Errorf("cannot delete thirdParty data privacy agreement: %w", err)
 			}
 

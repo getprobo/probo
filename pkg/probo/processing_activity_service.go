@@ -136,7 +136,7 @@ func (upar *UpdateProcessingActivityRequest) Validate() error {
 }
 
 func (s ProcessingActivityService) Get(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	processingActivityID gid.GID,
 ) (*coredata.ProcessingActivity, error) {
 	processingActivity := &coredata.ProcessingActivity{}
@@ -144,7 +144,7 @@ func (s ProcessingActivityService) Get(
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			return processingActivity.LoadByID(ctx, conn, scope, processingActivityID)
+			return processingActivity.LoadByID(ctx, conn, predicate, processingActivityID)
 		},
 	)
 	if err != nil {
@@ -155,14 +155,14 @@ func (s ProcessingActivityService) Get(
 }
 
 func (s *ProcessingActivityService) Create(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	req *CreateProcessingActivityRequest,
 ) (*coredata.ProcessingActivity, error) {
 	now := time.Now()
 	processingActivityThirdParties := &coredata.ProcessingActivityThirdParties{}
 
 	processingActivity := &coredata.ProcessingActivity{
-		ID:                                   gid.New(scope.GetTenantID(), coredata.ProcessingActivityEntityType),
+		ID:                                   gid.New(predicate.GetTenantID(), coredata.ProcessingActivityEntityType),
 		OrganizationID:                       req.OrganizationID,
 		Name:                                 req.Name,
 		Purpose:                              req.Purpose,
@@ -191,16 +191,16 @@ func (s *ProcessingActivityService) Create(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
 			organization := &coredata.Organization{}
-			if err := organization.LoadByID(ctx, conn, scope, req.OrganizationID); err != nil {
+			if err := organization.LoadByID(ctx, conn, predicate, req.OrganizationID); err != nil {
 				return fmt.Errorf("cannot load organization: %w", err)
 			}
 
-			if err := processingActivity.Insert(ctx, conn, scope); err != nil {
+			if err := processingActivity.Insert(ctx, conn, predicate); err != nil {
 				return fmt.Errorf("cannot insert processing activity: %w", err)
 			}
 
 			if len(req.ThirdPartyIDs) > 0 {
-				if err := processingActivityThirdParties.Insert(ctx, conn, scope, processingActivity.ID, req.OrganizationID, req.ThirdPartyIDs); err != nil {
+				if err := processingActivityThirdParties.Insert(ctx, conn, predicate, processingActivity.ID, req.OrganizationID, req.ThirdPartyIDs); err != nil {
 					return fmt.Errorf("cannot create processing activity thirdParties: %w", err)
 				}
 			}
@@ -216,7 +216,7 @@ func (s *ProcessingActivityService) Create(
 }
 
 func (s *ProcessingActivityService) Update(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	req *UpdateProcessingActivityRequest,
 ) (*coredata.ProcessingActivity, error) {
 	processingActivity := &coredata.ProcessingActivity{}
@@ -225,7 +225,7 @@ func (s *ProcessingActivityService) Update(
 	err := s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
-			if err := processingActivity.LoadByID(ctx, conn, scope, req.ID); err != nil {
+			if err := processingActivity.LoadByID(ctx, conn, predicate, req.ID); err != nil {
 				return fmt.Errorf("cannot load processing activity: %w", err)
 			}
 
@@ -307,12 +307,12 @@ func (s *ProcessingActivityService) Update(
 
 			processingActivity.UpdatedAt = time.Now()
 
-			if err := processingActivity.Update(ctx, conn, scope); err != nil {
+			if err := processingActivity.Update(ctx, conn, predicate); err != nil {
 				return fmt.Errorf("cannot update processing activity: %w", err)
 			}
 
 			if req.ThirdPartyIDs != nil {
-				if err := processingActivityThirdParties.Merge(ctx, conn, scope, processingActivity.ID, processingActivity.OrganizationID, *req.ThirdPartyIDs); err != nil {
+				if err := processingActivityThirdParties.Merge(ctx, conn, predicate, processingActivity.ID, processingActivity.OrganizationID, *req.ThirdPartyIDs); err != nil {
 					return fmt.Errorf("cannot update processing activity thirdParties: %w", err)
 				}
 			}
@@ -328,7 +328,7 @@ func (s *ProcessingActivityService) Update(
 }
 
 func (s ProcessingActivityService) Delete(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	processingActivityID gid.GID,
 ) error {
 	processingActivity := coredata.ProcessingActivity{ID: processingActivityID}
@@ -336,7 +336,7 @@ func (s ProcessingActivityService) Delete(
 	return s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			err := processingActivity.Delete(ctx, tx, scope)
+			err := processingActivity.Delete(ctx, tx, predicate)
 			if err != nil {
 				return fmt.Errorf("cannot delete processing activity: %w", err)
 			}
@@ -347,7 +347,7 @@ func (s ProcessingActivityService) Delete(
 }
 
 func (s ProcessingActivityService) ListForOrganizationID(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	organizationID gid.GID,
 	cursor *page.Cursor[coredata.ProcessingActivityOrderField],
 ) (*page.Page[*coredata.ProcessingActivity, coredata.ProcessingActivityOrderField], error) {
@@ -356,7 +356,7 @@ func (s ProcessingActivityService) ListForOrganizationID(
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			err := processingActivities.LoadByOrganizationID(ctx, conn, scope, organizationID, cursor)
+			err := processingActivities.LoadByOrganizationID(ctx, conn, predicate, organizationID, cursor)
 			if err != nil {
 				return fmt.Errorf("cannot load processing activities: %w", err)
 			}
@@ -372,7 +372,7 @@ func (s ProcessingActivityService) ListForOrganizationID(
 }
 
 func (s ProcessingActivityService) CountForOrganizationID(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	organizationID gid.GID,
 ) (int, error) {
 	var count int
@@ -382,7 +382,7 @@ func (s ProcessingActivityService) CountForOrganizationID(
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			processingActivities := coredata.ProcessingActivities{}
 
-			count, err = processingActivities.CountByOrganizationID(ctx, conn, scope, organizationID)
+			count, err = processingActivities.CountByOrganizationID(ctx, conn, predicate, organizationID)
 			if err != nil {
 				return fmt.Errorf("cannot count processing activities: %w", err)
 			}

@@ -39,7 +39,7 @@ type (
 func (ca ControlAudit) Upsert(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 INSERT INTO
@@ -64,7 +64,7 @@ ON CONFLICT (control_id, audit_id) DO NOTHING;
 		"control_id":      ca.ControlID,
 		"audit_id":        ca.AuditID,
 		"organization_id": ca.OrganizationID,
-		"tenant_id":       scope.GetTenantID(),
+		"tenant_id":       predicate.GetTenantID(),
 		"created_at":      ca.CreatedAt,
 	}
 	_, err := conn.Exec(ctx, q, args)
@@ -75,7 +75,7 @@ ON CONFLICT (control_id, audit_id) DO NOTHING;
 func (ca ControlAudit) Delete(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 	controlID gid.GID,
 	auditID gid.GID,
 ) error {
@@ -93,8 +93,8 @@ WHERE
 		"control_id": controlID,
 		"audit_id":   auditID,
 	}
-	maps.Copy(args, scope.SQLArguments())
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	maps.Copy(args, predicate.SQLArguments())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	_, err := conn.Exec(ctx, q, args)
 

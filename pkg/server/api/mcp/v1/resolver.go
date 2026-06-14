@@ -63,10 +63,10 @@ func markdownToProseMirrorJSON(markdown string) (string, error) {
 	return string(out), nil
 }
 
-func (r *Resolver) Authorize(ctx context.Context, entityID gid.GID, action iam.Action) (*coredata.Scope, error) {
+func (r *Resolver) Authorize(ctx context.Context, entityID gid.GID, action iam.Action) (*coredata.Predicate, error) {
 	identity := authn.IdentityFromContext(ctx)
 
-	scope, err := r.iamSvc.Authorizer.Authorize(
+	predicate, err := r.iamSvc.Authorizer.Authorize(
 		ctx,
 		iam.AuthorizeParams{
 			Principal: identity.ID,
@@ -75,7 +75,7 @@ func (r *Resolver) Authorize(ctx context.Context, entityID gid.GID, action iam.A
 		},
 	)
 	if err == nil {
-		return scope, nil
+		return predicate, nil
 	}
 
 	if _, ok := errors.AsType[*iam.ErrInsufficientPermissions](err); ok {
@@ -95,10 +95,10 @@ func (r *Resolver) Authorize(ctx context.Context, entityID gid.GID, action iam.A
 	return nil, fmt.Errorf("internal server error")
 }
 
-func (r *Resolver) AuthorizeBatch(ctx context.Context, entityIDs []gid.GID, action iam.Action) (*coredata.Scope, error) {
+func (r *Resolver) AuthorizeBatch(ctx context.Context, entityIDs []gid.GID, action iam.Action) (*coredata.Predicate, error) {
 	identity := authn.IdentityFromContext(ctx)
 
-	scope, err := r.iamSvc.Authorizer.AuthorizeBatch(
+	predicate, err := r.iamSvc.Authorizer.AuthorizeBatch(
 		ctx,
 		iam.AuthorizeBatchParams{
 			Principal: identity.ID,
@@ -107,7 +107,7 @@ func (r *Resolver) AuthorizeBatch(ctx context.Context, entityIDs []gid.GID, acti
 		},
 	)
 	if err == nil {
-		return scope, nil
+		return predicate, nil
 	}
 
 	if _, ok := errors.AsType[*iam.ErrInsufficientPermissions](err); ok {

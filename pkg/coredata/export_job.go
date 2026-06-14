@@ -106,7 +106,7 @@ func (ej *ExportJob) AuthorizationAttributes(
 func (ej *ExportJob) Insert(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 INSERT INTO export_jobs (
@@ -133,7 +133,7 @@ INSERT INTO export_jobs (
 	args := pgx.StrictNamedArgs{
 		"id":              ej.ID,
 		"organization_id": ej.OrganizationID,
-		"tenant_id":       scope.GetTenantID(),
+		"tenant_id":       predicate.GetTenantID(),
 		"type":            ej.Type,
 		"arguments":       ej.Arguments,
 		"status":          ej.Status,
@@ -149,7 +149,7 @@ INSERT INTO export_jobs (
 func (ej *ExportJob) Update(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 UPDATE
@@ -164,7 +164,7 @@ WHERE
 	%s
 	AND id = @id
 `
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 	args := pgx.StrictNamedArgs{
 		"status":       ej.Status,
 		"error":        ej.Error,
@@ -173,7 +173,7 @@ WHERE
 		"completed_at": ej.CompletedAt,
 		"id":           ej.ID,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 	_, err := conn.Exec(ctx, q, args)
 
 	return err
@@ -182,7 +182,7 @@ WHERE
 func (ej *ExportJob) LoadByID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	id gid.GID,
 ) error {
 	q := `
@@ -205,9 +205,9 @@ WHERE
 	%s
 	AND id = @id
 `
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 	args := pgx.StrictNamedArgs{"id": id}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {

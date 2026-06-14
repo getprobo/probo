@@ -37,7 +37,7 @@ The evaluator processes all statements against a request:
 `Authorizer` is the main orchestrator in `pkg/iam/authorizer.go`:
 
 ```go
-scope, err := iamService.Authorizer.Authorize(ctx, iam.AuthorizeParams{
+predicate, err := iamService.Authorizer.Authorize(ctx, iam.AuthorizeParams{
 	Principal:          identityID,    // who
 	Resource:           thirdPartyID,      // what
 	Action:             probo.ActionThirdPartyGet,  // which action
@@ -51,7 +51,7 @@ The flow:
 3. Load resource attributes via `AuthorizationAttributes()` on the entity
 4. Build policies: identity-scoped + role-specific
 5. Evaluate all policies
-6. Return an authorization scope (`*coredata.Scope`) for downstream data access
+6. Return an authorized predicate (`*coredata.Predicate`) for downstream data access
 7. Return `ErrInsufficientPermissions` if no allow match
 
 ## Batch authorization
@@ -60,7 +60,7 @@ Use batch authorization when a caller needs all-or-nothing authorization across
 multiple resources for the same action:
 
 ```go
-scope, err := iamService.Authorizer.AuthorizeBatch(ctx, iam.AuthorizeBatchParams{
+predicate, err := iamService.Authorizer.AuthorizeBatch(ctx, iam.AuthorizeBatchParams{
 	Principal: identityID,
 	Action:    probo.ActionTaskDelete,
 	Resources: taskIDs, // all resources must have same entity type + organization
@@ -178,7 +178,7 @@ var (
 
 **GraphQL resolvers** use `AuthorizeFunc` from `pkg/server/api/authz/`:
 ```go
-scope, err := r.authorize(ctx, thirdPartyID, probo.ActionThirdPartyGet)
+predicate, err := r.authorize(ctx, thirdPartyID, probo.ActionThirdPartyGet)
 if err != nil {
 	return nil, err
 }
@@ -186,63 +186,66 @@ if err != nil {
 
 **MCP resolvers** use `Authorize` and return early on error:
 ```go
-scope, err := r.Authorize(ctx, input.ID, probo.ActionThirdPartyGet)
+predicate, err := r.Authorize(ctx, input.ID, probo.ActionThirdPartyGet)
 if err != nil {
 	return nil, types.GetThirdPartyOutput{}, err
 }
 ```
 
-### Always take `scope` from `authorize` — never reconstruct it
+### Always take `predicate` from `authorize` — never reconstruct it
 
-`authorize` (and `Authorize` in MCP) returns a `*coredata.Scope` that has been
-resolved from the resource's `organization_id` attribute. Pass that scope
+`authorize` (and `Authorize` in MCP) returns a `*coredata.Predicate` that has been
+resolved from the resource's `organization_id` attribute. Pass that predicate
 straight to the service/coredata layer instead of building a new one with
-`coredata.NewScopeFromObjectID(...)` after the authorize call.
+`coredata.NewPredicateFromObjectID(...)` after the authorize call.
 
-The two are not strictly identical: `NewScopeFromObjectID(id)` only reads the
-tenant component of the GID, while the authorizer derives the scope from the
-loaded resource attributes (and may be extended to compute it differently in
-the future). Reconstructing the scope from the GID bypasses that and silently
-drifts when the resource lookup changes.
+The two are not strictly identical: `NewPredicateFromObjectID(id)` only reads the
+tenant component of the GID, while the authorizer derives the predicate from the
+loaded resource attributes (and may attach additional constraints in the future).
+Reconstructing the predicate from the GID bypasses that and silently drifts when
+the resource lookup changes.
 
 ```go
-// GOOD — scope comes from authorize, fed straight to the service
-scope, err := r.authorize(ctx, obj.ID, probo.ActionThirdPartyList)
+// GOOD — predicate comes from authorize, fed straight to the service
+predicate, err := r.authorize(ctx, obj.ID, probo.ActionThirdPartyList)
 if err != nil {
 	return nil, err
 }
 
-thirdPartyIDs, err := r.cookieBanner.LoadDistinctThirdPartyIDsByCookieBannerID(ctx, scope, obj.ID)
+thirdPartyIDs, err := r.cookieBanner.LoadDistinctThirdPartyIDsByCookieBannerID(ctx, predicate, obj.ID)
 
-// BAD — authorize discards scope, then we rebuild it from the same GID
+// BAD — authorize discards predicate, then we rebuild it from the same GID
 if _, err := r.authorize(ctx, obj.ID, probo.ActionThirdPartyList); err != nil {
 	return nil, err
 }
 
-scope := coredata.NewScopeFromObjectID(obj.ID)
-thirdPartyIDs, err := r.cookieBanner.LoadDistinctThirdPartyIDsByCookieBannerID(ctx, scope, obj.ID)
+predicate := coredata.NewPredicateFromObjectID(obj.ID)
+thirdPartyIDs, err := r.cookieBanner.LoadDistinctThirdPartyIDsByCookieBannerID(ctx, predicate, obj.ID)
 ```
 
 The only time it is acceptable to write `if _, err := r.authorize(...)` is when
-**no downstream call needs a scope** — typically authorize calls against the
+**no downstream call needs a predicate** — typically authorize calls against the
 caller's `identity.ID` for global / cross-tenant catalogs (e.g.
 `ActionCommonThirdPartyList`, `ActionCommonThirdPartyGet`) whose service
-methods are unscoped. In that case the returned scope would be derived from
-the identity (a nil-tenant principal) and is useless to the caller, so
-discarding it with `_` is correct:
+methods omit a predicate argument. In that case the returned predicate would be
+derived from the identity (a nil-tenant principal) and is useless to the caller,
+so discarding it with `_` is correct:
 
 ```go
-// GOOD — global catalog, downstream is unscoped
+// GOOD — global catalog, downstream omits a predicate
 identity := authn.IdentityFromContext(ctx)
 if _, err := r.authorize(ctx, identity.ID, probo.ActionCommonThirdPartyList); err != nil {
 	return nil, err
 }
 
-parties, err := r.thirdParty.Search(ctx, name) // no scope argument
+parties, err := r.thirdParty.Search(ctx, name) // no predicate argument
 ```
 
 For batch authorization, the same rule applies to `r.batchAuthorize` (GraphQL)
-and `r.AuthorizeBatch` (MCP) — keep the returned scope and pass it down.
+and `r.AuthorizeBatch` (MCP) — keep the returned predicate and pass it down.
+
+List endpoints today use a coarse parent point-check (`ActionFooList` on
+org/parent) plus tenant predicate — not yet a PDP-compiled list filter.
 
 ## File locations
 
@@ -289,7 +292,7 @@ When adding a new entity that needs authorization:
 2. **Role policies** — wire actions into the appropriate role policies in `pkg/probo/policies.go` (`OwnerPolicy`, `AdminPolicy`, `ViewerPolicy`, etc.) with `organization_id` condition
 3. **`AuthorizationAttributes`** — implement on the `coredata` entity struct, returning at minimum `{"organization_id": ...}` (use the denormalized `OrganizationID` field — see coredata doc)
 4. **Entity type registry** — register in `pkg/coredata/entity_type_reg.go` and `NewEntityFromID` so the authorizer can construct the entity from its GID
-5. **Resolver calls** — add `scope, err := r.authorize(ctx, id, probo.ActionEntityGet)` in GraphQL resolvers and `scope, err := r.Authorize(ctx, id, probo.ActionEntityGet)` in MCP resolvers, then pass `scope` to services
+5. **Resolver calls** — add `predicate, err := r.authorize(ctx, id, probo.ActionEntityGet)` in GraphQL resolvers and `predicate, err := r.Authorize(ctx, id, probo.ActionEntityGet)` in MCP resolvers, then pass `scope` to services
 
 ## Key patterns
 

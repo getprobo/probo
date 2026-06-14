@@ -217,7 +217,7 @@ func insertPendingRunInOrg(
 	err = client.WithTx(
 		context.Background(),
 		func(ctx context.Context, tx pg.Tx) error {
-			return run.Insert(ctx, tx, coredata.NewScope(organizationID.TenantID()))
+			return run.Insert(ctx, tx, coredata.NewPredicate(organizationID.TenantID()))
 		},
 	)
 	require.NoError(t, err)
@@ -243,7 +243,7 @@ func loadAgentRun(t *testing.T, client *pg.Client, id gid.GID) coredata.AgentRun
 	err := client.WithConn(
 		context.Background(),
 		func(ctx context.Context, conn pg.Querier) error {
-			return run.LoadByID(ctx, conn, coredata.NewNoScope(), id)
+			return run.LoadByID(ctx, conn, coredata.NewNoPredicate(), id)
 		},
 	)
 	require.NoError(t, err, "cannot load agent run %s", id)
@@ -257,7 +257,7 @@ func tryLoadAgentRun(client *pg.Client, id gid.GID) (coredata.AgentRun, error) {
 	err := client.WithConn(
 		context.Background(),
 		func(ctx context.Context, conn pg.Querier) error {
-			return run.LoadByID(ctx, conn, coredata.NewNoScope(), id)
+			return run.LoadByID(ctx, conn, coredata.NewNoPredicate(), id)
 		},
 	)
 

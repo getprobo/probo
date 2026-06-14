@@ -40,7 +40,7 @@ type (
 func (rp RiskDocument) Insert(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 INSERT INTO
@@ -64,7 +64,7 @@ VALUES (
 		"risk_id":         rp.RiskID,
 		"document_id":     rp.DocumentID,
 		"organization_id": rp.OrganizationID,
-		"tenant_id":       scope.GetTenantID(),
+		"tenant_id":       predicate.GetTenantID(),
 		"created_at":      rp.CreatedAt,
 	}
 	_, err := conn.Exec(ctx, q, args)
@@ -75,7 +75,7 @@ VALUES (
 func (rp RiskDocument) Delete(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 	riskID gid.GID,
 	documentID gid.GID,
 ) error {
@@ -89,13 +89,13 @@ WHERE
     AND document_id = @document_id;
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"risk_id":     riskID,
 		"document_id": documentID,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
 
@@ -105,7 +105,7 @@ WHERE
 func (rp RiskDocument) DeleteByDocumentIDs(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 	documentIDs []gid.GID,
 ) error {
 	q := `
@@ -117,12 +117,12 @@ WHERE
     AND document_id = ANY(@document_ids);
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"document_ids": documentIDs,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	if _, err := conn.Exec(ctx, q, args); err != nil {
 		return fmt.Errorf("cannot delete risk document mappings by document ids: %w", err)

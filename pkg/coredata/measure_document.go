@@ -42,7 +42,7 @@ type (
 func (md MeasureDocument) Insert(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 INSERT INTO
@@ -66,7 +66,7 @@ VALUES (
 		"measure_id":      md.MeasureID,
 		"document_id":     md.DocumentID,
 		"organization_id": md.OrganizationID,
-		"tenant_id":       scope.GetTenantID(),
+		"tenant_id":       predicate.GetTenantID(),
 		"created_at":      md.CreatedAt,
 	}
 
@@ -87,7 +87,7 @@ VALUES (
 func (md MeasureDocument) Delete(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 	measureID gid.GID,
 	documentID gid.GID,
 ) error {
@@ -105,9 +105,9 @@ WHERE
 		"measure_id":  measureID,
 		"document_id": documentID,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	_, err := conn.Exec(ctx, q, args)
 
@@ -117,7 +117,7 @@ WHERE
 func (md MeasureDocument) DeleteByDocumentIDs(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 	documentIDs []gid.GID,
 ) error {
 	q := `
@@ -129,12 +129,12 @@ WHERE
     AND document_id = ANY(@document_ids);
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"document_ids": documentIDs,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	if _, err := conn.Exec(ctx, q, args); err != nil {
 		return fmt.Errorf("cannot delete measure document mappings by document ids: %w", err)

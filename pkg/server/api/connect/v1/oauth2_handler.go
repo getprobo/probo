@@ -187,7 +187,7 @@ func (h *OAuth2Handler) AuthorizeHandler(w http.ResponseWriter, r *http.Request)
 			ResponseType:        in.ResponseType,
 			ClientID:            in.ClientID,
 			RedirectURI:         in.RedirectURI,
-			Scopes:              in.Scopes,
+			Scopes: in.Scopes,
 			CodeChallenge:       in.CodeChallenge,
 			CodeChallengeMethod: in.CodeChallengeMethod,
 			Nonce:               in.Nonce,
@@ -389,7 +389,7 @@ func (h *OAuth2Handler) RegisterHandler(w http.ResponseWriter, r *http.Request) 
 			LogoURI:                 in.LogoURI,
 			ClientURI:               in.ClientURI,
 			Contacts:                in.Contacts,
-			Scopes:                  in.Scopes,
+			Scopes: in.Scopes,
 		},
 	)
 	if err != nil {
@@ -409,7 +409,7 @@ func (h *OAuth2Handler) RegisterHandler(w http.ResponseWriter, r *http.Request) 
 			GrantTypes:              in.GrantTypes,
 			ResponseTypes:           in.ResponseTypes,
 			TokenEndpointAuthMethod: in.TokenEndpointAuthMethod,
-			Scopes:                  in.Scopes,
+			Scopes: in.Scopes,
 		},
 	)
 }
@@ -543,7 +543,7 @@ func tokenResultToResponse(r *oauth2server.TokenResult) *types.OAuth2TokenRespon
 		ExpiresIn:    r.ExpiresIn,
 		RefreshToken: r.RefreshToken,
 		IDToken:      r.IDToken,
-		Scope:        r.Scope,
+		Scope: r.Scope,
 	}
 }
 

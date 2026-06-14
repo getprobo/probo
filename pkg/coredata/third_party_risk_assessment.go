@@ -98,7 +98,7 @@ func (v *ThirdPartyRiskAssessment) AuthorizationAttributes(
 func (r ThirdPartyRiskAssessment) Insert(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 INSERT INTO
@@ -129,7 +129,7 @@ VALUES (
 `
 
 	args := pgx.StrictNamedArgs{
-		"tenant_id":        scope.GetTenantID(),
+		"tenant_id":        predicate.GetTenantID(),
 		"id":               r.ID,
 		"organization_id":  r.OrganizationID,
 		"third_party_id":   r.ThirdPartyID,
@@ -149,7 +149,7 @@ VALUES (
 func (r *ThirdPartyRiskAssessment) LoadByID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	id gid.GID,
 ) error {
 	q := `
@@ -171,10 +171,10 @@ WHERE
 LIMIT 1;
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"id": id}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -196,7 +196,7 @@ LIMIT 1;
 func (r *ThirdPartyRiskAssessment) LoadLatestByThirdPartyID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	thirdPartyID gid.GID,
 ) error {
 	q := `
@@ -220,10 +220,10 @@ ORDER BY
 LIMIT 1;
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"third_party_id": thirdPartyID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -245,7 +245,7 @@ LIMIT 1;
 func (r *ThirdPartyRiskAssessments) LoadByThirdPartyID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	thirdPartyID gid.GID,
 	cursor *page.Cursor[ThirdPartyRiskAssessmentOrderField],
 ) error {
@@ -268,10 +268,10 @@ WHERE
 	AND %s
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"third_party_id": thirdPartyID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
@@ -292,7 +292,7 @@ WHERE
 func (r *ThirdPartyRiskAssessments) LoadByThirdPartyIDs(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	thirdPartyIDs []gid.GID,
 ) error {
 	if len(thirdPartyIDs) == 0 {
@@ -320,7 +320,7 @@ ORDER BY
     third_party_id, created_at DESC
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	ids := make([]string, len(thirdPartyIDs))
 	for i, id := range thirdPartyIDs {
@@ -328,7 +328,7 @@ ORDER BY
 	}
 
 	args := pgx.StrictNamedArgs{"third_party_ids": ids}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {

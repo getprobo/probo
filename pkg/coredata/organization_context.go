@@ -42,7 +42,7 @@ type (
 func (oc *OrganizationContext) LoadByOrganizationID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	organizationID gid.GID,
 ) error {
 	q := `
@@ -63,10 +63,10 @@ WHERE
 LIMIT 1;
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"organization_id": organizationID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -90,7 +90,7 @@ LIMIT 1;
 func (oc *OrganizationContext) Insert(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 INSERT INTO organization_contexts (
@@ -118,7 +118,7 @@ INSERT INTO organization_contexts (
 
 	args := pgx.StrictNamedArgs{
 		"organization_id": oc.OrganizationID,
-		"tenant_id":       scope.GetTenantID(),
+		"tenant_id":       predicate.GetTenantID(),
 		"product":         oc.Product,
 		"architecture":    oc.Architecture,
 		"team":            oc.Team,
@@ -139,7 +139,7 @@ INSERT INTO organization_contexts (
 func (oc *OrganizationContext) Update(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 UPDATE organization_contexts
@@ -155,7 +155,7 @@ WHERE
     AND organization_id = @organization_id
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"organization_id": oc.OrganizationID,
@@ -167,7 +167,7 @@ WHERE
 		"updated_at":      oc.UpdatedAt,
 	}
 
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	result, err := conn.Exec(ctx, q, args)
 	if err != nil {

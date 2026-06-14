@@ -101,7 +101,7 @@ func (o Organization) CursorKey(orderBy OrganizationOrderField) page.CursorKey {
 func (o *Organization) LoadByID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	organizationID gid.GID,
 ) error {
 	q := `
@@ -126,10 +126,10 @@ WHERE
 LIMIT 1;
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"organization_id": organizationID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -153,7 +153,7 @@ LIMIT 1;
 func (o *Organizations) LoadByIDs(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	organizationIDs []gid.GID,
 ) error {
 	q := `
@@ -177,10 +177,10 @@ WHERE
     AND id = ANY(@organization_ids)
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"organization_ids": organizationIDs}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -200,7 +200,7 @@ WHERE
 func (o *Organizations) LoadByIdentityID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	identityID gid.GID,
 	cursor *page.Cursor[OrganizationOrderField],
 ) error {
@@ -235,7 +235,7 @@ WHERE
 	AND %s
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"identity_id": identityID}
 	maps.Copy(args, cursor.SQLArguments())
@@ -258,7 +258,7 @@ WHERE
 func (o *Organizations) LoadAllByIdentityIDWithPendingInvitation(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	identityID gid.GID,
 ) error {
 	q := `
@@ -295,10 +295,10 @@ WHERE
 ORDER BY name ASC
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"identity_id": identityID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -361,7 +361,7 @@ INSERT INTO organizations (
 
 func (o *Organization) Update(
 	ctx context.Context,
-	scope Scoper,
+	predicate Predicater,
 	conn pg.Tx,
 ) error {
 	q := `
@@ -381,7 +381,7 @@ WHERE
     AND id = @id
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"id":                      o.ID,
@@ -396,7 +396,7 @@ WHERE
 		"updated_at":              o.UpdatedAt,
 	}
 
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
@@ -429,7 +429,7 @@ WHERE id = @id
 func (o *Organization) LoadByCustomDomainID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	customDomainID gid.GID,
 ) error {
 	q := `
@@ -454,10 +454,10 @@ WHERE
 LIMIT 1
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"custom_domain_id": customDomainID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {

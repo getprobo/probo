@@ -102,7 +102,7 @@ func TestRiskAssessmentScope_CRUD(t *testing.T) {
 
 		var result struct {
 			Node struct {
-				Scopes struct {
+				Predicates struct {
 					TotalCount int `json:"totalCount"`
 					Edges      []struct {
 						Node struct {

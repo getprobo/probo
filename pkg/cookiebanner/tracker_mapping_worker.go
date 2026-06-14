@@ -162,7 +162,7 @@ type catalogMatch struct {
 // new org ThirdParty. Creating an org ThirdParty from a catalog vendor is
 // done exclusively through the explicit ImportFromCommon action.
 func (h *trackerMappingHandler) Process(ctx context.Context, tp coredata.TrackerPattern) error {
-	scope := coredata.NewScopeFromObjectID(tp.ID)
+	predicate := coredata.NewPredicateFromObjectID(tp.ID)
 
 	// Phase 1: deterministic catalog resolution in a short transaction.
 	// The existing-link, pattern, sibling, and domain signals (and their
@@ -267,7 +267,7 @@ func (h *trackerMappingHandler) Process(ctx context.Context, tp coredata.Tracker
 				}
 			}
 
-			if err := tp.UpdateMapping(ctx, tx, scope); err != nil {
+			if err := tp.UpdateMapping(ctx, tx, predicate); err != nil {
 				// The pattern can be merged into a glob and deleted by
 				// the pattern-analysis worker while this worker holds no
 				// row lock (the LLM/web-search phases run between short
@@ -337,12 +337,12 @@ func (h *trackerMappingHandler) resolveDeterministic(
 	tx pg.Tx,
 	tp coredata.TrackerPattern,
 ) (deterministicResult, error) {
-	scope := coredata.NewScopeFromObjectID(tp.ID)
+	predicate := coredata.NewPredicateFromObjectID(tp.ID)
 
 	var res deterministicResult
 
 	var banner coredata.CookieBanner
-	if err := banner.LoadByID(ctx, tx, scope, tp.CookieBannerID); err != nil {
+	if err := banner.LoadByID(ctx, tx, predicate, tp.CookieBannerID); err != nil {
 		return res, fmt.Errorf("cannot load cookie banner for domain filtering: %w", err)
 	}
 
@@ -438,15 +438,13 @@ func (h *trackerMappingHandler) reenqueueUnmappedSiblings(
 	tp coredata.TrackerPattern,
 	domains []string,
 ) error {
-	scope := coredata.NewScopeFromObjectID(tp.ID)
+	predicate := coredata.NewPredicateFromObjectID(tp.ID)
 
 	var patterns coredata.TrackerPatterns
 
 	count, err := patterns.RequestMappingForUnmappedSiblings(
 		ctx,
-		tx,
-		scope,
-		tp.CookieBannerID,
+		tx, predicate, tp.CookieBannerID,
 		tp.ID,
 		domains,
 	)
@@ -870,9 +868,9 @@ func (h *trackerMappingHandler) matchBySiblingOrigin(
 		return nil, nil
 	}
 
-	scope := coredata.NewScopeFromObjectID(tp.ID)
+	predicate := coredata.NewPredicateFromObjectID(tp.ID)
 
-	commonThirdPartyID, thirdPartyID, err := h.resolveThirdPartyFromSiblings(ctx, tx, scope, siblingIDs)
+	commonThirdPartyID, thirdPartyID, err := h.resolveThirdPartyFromSiblings(ctx, tx, predicate, siblingIDs)
 	if err != nil {
 		return nil, fmt.Errorf("cannot resolve third party from siblings: %w", err)
 	}
@@ -931,12 +929,12 @@ func (h *trackerMappingHandler) matchBySiblingOrigin(
 func (h *trackerMappingHandler) resolveThirdPartyFromSiblings(
 	ctx context.Context,
 	conn pg.Querier,
-	scope coredata.Scoper,
+	predicate coredata.Predicater,
 	siblingIDs []gid.GID,
 ) (commonThirdPartyID *gid.GID, thirdPartyID *gid.GID, err error) {
 	var patterns coredata.TrackerPatterns
 
-	thirdPartyIDs, err := patterns.LoadDistinctThirdPartyIDsByIDs(ctx, conn, scope, siblingIDs)
+	thirdPartyIDs, err := patterns.LoadDistinctThirdPartyIDsByIDs(ctx, conn, predicate, siblingIDs)
 	if err != nil {
 		return nil, nil, fmt.Errorf("cannot load distinct third party ids from siblings: %w", err)
 	}
@@ -954,7 +952,7 @@ func (h *trackerMappingHandler) resolveThirdPartyFromSiblings(
 
 		for _, tpID := range thirdPartyIDs {
 			var t coredata.ThirdParty
-			if err := t.LoadByID(ctx, conn, scope, tpID); err != nil {
+			if err := t.LoadByID(ctx, conn, predicate, tpID); err != nil {
 				continue
 			}
 
@@ -981,7 +979,7 @@ func (h *trackerMappingHandler) resolveThirdPartyFromSiblings(
 	// whose org ThirdParty is not itself linked to the catalog. This is
 	// reached when the org-third-party scan above found no catalog third
 	// party, so it must not be short-circuited by a direct match.
-	commonPatternIDs, err := patterns.LoadDistinctCommonTrackerPatternIDsByIDs(ctx, conn, scope, siblingIDs)
+	commonPatternIDs, err := patterns.LoadDistinctCommonTrackerPatternIDsByIDs(ctx, conn, predicate, siblingIDs)
 	if err != nil {
 		return nil, nil, fmt.Errorf("cannot load distinct common tracker pattern ids from siblings: %w", err)
 	}
@@ -1056,7 +1054,7 @@ func (h *trackerMappingHandler) resolveOrgThirdParty(
 	tp coredata.TrackerPattern,
 	commonThirdPartyID gid.GID,
 ) (*gid.GID, error) {
-	scope := coredata.NewScopeFromObjectID(tp.ID)
+	predicate := coredata.NewPredicateFromObjectID(tp.ID)
 
 	// Read phase: exact link, candidate ranking, and eligibility. No
 	// write or LLM call happens here.
@@ -1067,7 +1065,7 @@ func (h *trackerMappingHandler) resolveOrgThirdParty(
 		func(ctx context.Context, conn pg.Querier) error {
 			var err error
 
-			prep, err = h.prepareOrgThirdParty(ctx, conn, scope, tp, commonThirdPartyID)
+			prep, err = h.prepareOrgThirdParty(ctx, conn, predicate, tp, commonThirdPartyID)
 
 			return err
 		},
@@ -1127,7 +1125,7 @@ func (h *trackerMappingHandler) resolveOrgThirdParty(
 	if err := h.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			if err := thirdparty.LinkToCommon(ctx, tx, scope, picked, commonThirdPartyID); err != nil {
+			if err := thirdparty.LinkToCommon(ctx, tx, predicate, picked, commonThirdPartyID); err != nil {
 				return fmt.Errorf("cannot link third party to common: %w", err)
 			}
 
@@ -1180,7 +1178,7 @@ type orgThirdPartyPrep struct {
 func (h *trackerMappingHandler) prepareOrgThirdParty(
 	ctx context.Context,
 	conn pg.Querier,
-	scope coredata.Scoper,
+	predicate coredata.Predicater,
 	tp coredata.TrackerPattern,
 	commonThirdPartyID gid.GID,
 ) (orgThirdPartyPrep, error) {
@@ -1190,9 +1188,7 @@ func (h *trackerMappingHandler) prepareOrgThirdParty(
 
 	err := existing.LoadByOrganizationIDAndCommonThirdPartyID(
 		ctx,
-		conn,
-		scope,
-		tp.OrganizationID,
+		conn, predicate, tp.OrganizationID,
 		commonThirdPartyID,
 	)
 	if err == nil {
@@ -1219,9 +1215,7 @@ func (h *trackerMappingHandler) prepareOrgThirdParty(
 	var orgThirdParties coredata.ThirdParties
 	if err := orgThirdParties.LoadAllByOrganizationID(
 		ctx,
-		conn,
-		scope,
-		tp.OrganizationID,
+		conn, predicate, tp.OrganizationID,
 		coredata.NewThirdPartyFilter(nil, &firstLevel, nil),
 	); err != nil {
 		return prep, fmt.Errorf("cannot load org third parties: %w", err)

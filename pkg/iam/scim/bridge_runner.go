@@ -142,7 +142,7 @@ func (r *BridgeRunner) Run(ctx context.Context) error {
 }
 
 func (r *BridgeRunner) processBridge(ctx context.Context) error {
-	bridge, scope, err := r.acquireNextBridge(ctx)
+	bridge, predicate, err := r.acquireNextBridge(ctx)
 	if err != nil {
 		return err
 	}
@@ -162,13 +162,13 @@ func (r *BridgeRunner) processBridge(ctx context.Context) error {
 	syncCtx, cancel := context.WithTimeout(ctx, r.cfg.SyncTimeout)
 	defer cancel()
 
-	stats, duration, connector, err := r.executeSync(syncCtx, bridge, scope, logger)
+	stats, duration, connector, err := r.executeSync(syncCtx, bridge, predicate, logger)
 	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, "sync failed")
 
-		return r.transitionToFailed(ctx, bridge, scope, err, duration, logger)
+		return r.transitionToFailed(ctx, bridge, predicate, err, duration, logger)
 	}
 
-	return r.transitionToSuccess(ctx, bridge, scope, stats, duration, connector, logger)
+	return r.transitionToSuccess(ctx, bridge, predicate, stats, duration, connector, logger)
 }

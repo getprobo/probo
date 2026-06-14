@@ -107,7 +107,7 @@ func (dvs *DocumentVersionSignature) AuthorizationAttributes(
 func (pvs *DocumentVersionSignature) LoadByDocumentVersionIDAndSignatory(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	documentVersionID gid.GID,
 	signatory gid.GID,
 ) error {
@@ -131,10 +131,10 @@ WHERE
 LIMIT 1
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"document_version_id": documentVersionID, "signatory": signatory}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -159,7 +159,7 @@ LIMIT 1
 func (pvs *DocumentVersionSignature) LoadByDocumentMajorAndSignatory(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	documentVersionID gid.GID,
 	signatory gid.GID,
 ) error {
@@ -207,10 +207,10 @@ ORDER BY
 LIMIT 1
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"document_version_id": documentVersionID, "signatory": signatory}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -234,7 +234,7 @@ LIMIT 1
 func (pvs *DocumentVersionSignature) LoadByID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	signatureID gid.GID,
 ) error {
 	q := `
@@ -255,10 +255,10 @@ WHERE
 	AND %s
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"document_version_signature_id": signatureID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -278,7 +278,7 @@ WHERE
 func (pvs DocumentVersionSignature) Insert(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 INSERT INTO document_version_signatures (
@@ -308,7 +308,7 @@ INSERT INTO document_version_signatures (
 
 	args := pgx.StrictNamedArgs{
 		"id":                   pvs.ID,
-		"tenant_id":            scope.GetTenantID(),
+		"tenant_id":            predicate.GetTenantID(),
 		"organization_id":      pvs.OrganizationID,
 		"document_version_id":  pvs.DocumentVersionID,
 		"state":                pvs.State,
@@ -336,7 +336,7 @@ INSERT INTO document_version_signatures (
 func (pvss *DocumentVersionSignatures) LoadByDocumentVersionID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	documentVersionID gid.GID,
 	cursor *page.Cursor[DocumentVersionSignatureOrderField],
 	filter *DocumentVersionSignatureFilter,
@@ -368,10 +368,10 @@ WHERE
 	AND %s
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"document_version_id": documentVersionID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 	maps.Copy(args, filter.SQLArguments())
 
@@ -393,7 +393,7 @@ WHERE
 func (pvs *DocumentVersionSignature) Update(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 UPDATE document_version_signatures
@@ -407,7 +407,7 @@ WHERE
 	AND id = @id
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"id":                   pvs.ID,
@@ -417,7 +417,7 @@ WHERE
 		"updated_at":           pvs.UpdatedAt,
 	}
 
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
@@ -430,7 +430,7 @@ WHERE
 func (pvs *DocumentVersionSignature) Delete(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 	documentVersionSignatureID gid.GID,
 ) error {
 	q := `
@@ -440,10 +440,10 @@ WHERE
 	AND id = @id
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"id": documentVersionSignatureID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
@@ -456,7 +456,7 @@ WHERE
 func (pvss *DocumentVersionSignatures) DeleteRequestedBySignatory(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 	signatoryID gid.GID,
 ) error {
 	q := `
@@ -467,13 +467,13 @@ WHERE
 	AND state = @state
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"signatory_id": signatoryID,
 		"state":        DocumentVersionSignatureStateRequested,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	if _, err := conn.Exec(ctx, q, args); err != nil {
 		return fmt.Errorf("cannot delete requested document version signatures: %w", err)
@@ -485,7 +485,7 @@ WHERE
 func (pvss *DocumentVersionSignatures) DeleteRequestedByDocumentIDBelowMajor(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 	documentID gid.GID,
 	major int,
 ) error {
@@ -502,14 +502,14 @@ WHERE
 	)
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"document_id": documentID,
 		"major":       major,
 		"state":       DocumentVersionSignatureStateRequested,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	if _, err := conn.Exec(ctx, q, args); err != nil {
 		return fmt.Errorf("cannot delete requested document version signatures from previous major versions: %w", err)
@@ -521,7 +521,7 @@ WHERE
 func (pvss *DocumentVersionSignaturesWithPeople) LoadByDocumentVersionIDWithPeople(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	documentVersionID gid.GID,
 	limit int,
 ) error {
@@ -582,13 +582,13 @@ ORDER BY
 LIMIT @limit
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"document_version_id": documentVersionID,
 		"limit":               limit,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -608,7 +608,7 @@ LIMIT @limit
 func (pvs *DocumentVersionSignature) IsSignedByUserEmail(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	documentVersionID gid.GID,
 	userEmail mail.Addr,
 ) (bool, error) {
@@ -636,13 +636,13 @@ SELECT EXISTS (
 ) AS signed
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"document_version_id": documentVersionID,
 		"user_email":          userEmail,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -660,7 +660,7 @@ SELECT EXISTS (
 func (dvs *DocumentVersionSignatures) CountByDocumentVersionID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	documentVersionID gid.GID,
 	filter *DocumentVersionSignatureFilter,
 ) (int, error) {
@@ -682,10 +682,10 @@ WHERE
 	AND %s
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment(), filter.SQLFragment())
 
 	args := pgx.NamedArgs{"document_version_id": documentVersionID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 	maps.Copy(args, filter.SQLArguments())
 
 	row := conn.QueryRow(ctx, q, args)

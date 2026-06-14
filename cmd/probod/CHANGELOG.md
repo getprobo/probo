@@ -272,7 +272,7 @@ No user-facing changes; tag-only release.
 ### Changed
 
 - Reject demotion of the last owner of an organization
-- Scope document signatures to the major version
+- Predicate document signatures to the major version
 
 ### Fixed
 
@@ -410,7 +410,7 @@ No user-facing changes; tag-only release.
 
 ### Added
 
-- Add a hierarchical risk assessment system with Risk Assessment, Scope, Node (ENTITY / BOUNDARY / ASSET / DATA), Process, Threat, and Risk Scenario entities, and render a Mermaid data-flow diagram per scope (nodes typed by shape, threats attached as dashed edges)
+- Add a hierarchical risk assessment system with Risk Assessment, Predicate, Node (ENTITY / BOUNDARY / ASSET / DATA), Process, Threat, and Risk Scenario entities, and render a Mermaid data-flow diagram per scope (nodes typed by shape, threats attached as dashed edges)
 - Add 13 access-review connector providers (with PKCE, token-body extras, and `AuthURL` templating support in the OAuth2 driver), and wire them through the review engine, the name worker, and the Helm chart
 - Add a tracker mapping worker that resolves detected trackers to third parties using initiator domain extraction (eTLD+1), pattern-glob analysis, and a Firecrawl-backed LLM agent fallback for unmapped patterns
 - Add a shared `common_third_parties` / `common_third_party_domains` catalog with slug-based deduplication, allow a single domain to be associated with multiple third parties, and auto-create entries from OCD imports

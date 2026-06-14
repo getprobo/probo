@@ -106,12 +106,12 @@ func (h *sourceNameHandler) Process(ctx context.Context, source coredata.AccessS
 	err := h.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			scope := coredata.NewScopeFromObjectID(source.ID)
+			predicate := coredata.NewPredicateFromObjectID(source.ID)
 			if source.ConnectorID == nil {
 				return fmt.Errorf("source %s has no connector", source.ID)
 			}
 
-			if err := dbConnector.LoadByID(ctx, tx, scope, *source.ConnectorID, h.encryptionKey); err != nil {
+			if err := dbConnector.LoadByID(ctx, tx, predicate, *source.ConnectorID, h.encryptionKey); err != nil {
 				return fmt.Errorf("cannot load connector %s: %w", *source.ConnectorID, err)
 			}
 
@@ -128,7 +128,7 @@ func (h *sourceNameHandler) Process(ctx context.Context, source coredata.AccessS
 			if oauth2Conn, ok := dbConnector.Connection.(*connector.OAuth2Connection); ok {
 				if oauth2Conn.AccessToken != tokenBefore {
 					dbConnector.UpdatedAt = time.Now()
-					if err := dbConnector.Update(ctx, tx, scope, h.encryptionKey); err != nil {
+					if err := dbConnector.Update(ctx, tx, predicate, h.encryptionKey); err != nil {
 						return fmt.Errorf("cannot persist refreshed token for connector %s: %w", *source.ConnectorID, err)
 					}
 				}
@@ -211,13 +211,13 @@ func (h *sourceNameHandler) markNameSynced(
 	return h.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			scope := coredata.NewScopeFromObjectID(source.ID)
+			predicate := coredata.NewPredicateFromObjectID(source.ID)
 			now := time.Now()
 
 			source.NameSyncedAt = new(now)
 			source.UpdatedAt = now
 
-			if err := source.Update(ctx, tx, scope); err != nil {
+			if err := source.Update(ctx, tx, predicate); err != nil {
 				return fmt.Errorf("cannot update access source: %w", err)
 			}
 

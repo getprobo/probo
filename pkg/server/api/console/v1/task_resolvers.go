@@ -24,14 +24,13 @@ import (
 
 // CreateTask is the resolver for the createTask field.
 func (r *mutationResolver) CreateTask(ctx context.Context, input types.CreateTaskInput) (*types.CreateTaskPayload, error) {
-	scope, err := r.authorize(ctx, input.OrganizationID, probo.ActionTaskCreate)
+	predicate, err := r.authorize(ctx, input.OrganizationID, probo.ActionTaskCreate)
 	if err != nil {
 		return nil, err
 	}
 
 	task, err := r.probo.Tasks.Create(
-		ctx, scope,
-		probo.CreateTaskRequest{
+		ctx, predicate, probo.CreateTaskRequest{
 			MeasureID:      input.MeasureID,
 			OrganizationID: input.OrganizationID,
 			Name:           input.Name,
@@ -63,14 +62,13 @@ func (r *mutationResolver) CreateTask(ctx context.Context, input types.CreateTas
 
 // UpdateTask is the resolver for the updateTask field.
 func (r *mutationResolver) UpdateTask(ctx context.Context, input types.UpdateTaskInput) (*types.UpdateTaskPayload, error) {
-	scope, err := r.authorize(ctx, input.TaskID, probo.ActionTaskUpdate)
+	predicate, err := r.authorize(ctx, input.TaskID, probo.ActionTaskUpdate)
 	if err != nil {
 		return nil, err
 	}
 
 	task, err := r.probo.Tasks.Update(
-		ctx, scope,
-		probo.UpdateTaskRequest{
+		ctx, predicate, probo.UpdateTaskRequest{
 			TaskID:       input.TaskID,
 			Name:         input.Name,
 			Description:  gqlutils.UnwrapOmittable(input.Description),
@@ -100,12 +98,12 @@ func (r *mutationResolver) UpdateTask(ctx context.Context, input types.UpdateTas
 
 // DeleteTask is the resolver for the deleteTask field.
 func (r *mutationResolver) DeleteTask(ctx context.Context, input types.DeleteTaskInput) (*types.DeleteTaskPayload, error) {
-	scope, err := r.authorize(ctx, input.TaskID, probo.ActionTaskDelete)
+	predicate, err := r.authorize(ctx, input.TaskID, probo.ActionTaskDelete)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := r.probo.Tasks.Delete(ctx, scope, input.TaskID); err != nil {
+	if err := r.probo.Tasks.Delete(ctx, predicate, input.TaskID); err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete task", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
@@ -191,7 +189,7 @@ func (r *taskResolver) Measure(ctx context.Context, obj *types.Task) (*types.Mea
 
 // Evidences is the resolver for the evidences field.
 func (r *taskResolver) Evidences(ctx context.Context, obj *types.Task, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.EvidenceOrderBy) (*types.EvidenceConnection, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionEvidenceList)
+	predicate, err := r.authorize(ctx, obj.ID, probo.ActionEvidenceList)
 	if err != nil {
 		return nil, err
 	}
@@ -210,7 +208,7 @@ func (r *taskResolver) Evidences(ctx context.Context, obj *types.Task, first *in
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	page, err := r.probo.Evidences.ListForTaskID(ctx, scope, obj.ID, cursor)
+	page, err := r.probo.Evidences.ListForTaskID(ctx, predicate, obj.ID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list task evidences", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -226,14 +224,14 @@ func (r *taskResolver) Permission(ctx context.Context, obj *types.Task, action s
 
 // TotalCount is the resolver for the totalCount field.
 func (r *taskConnectionResolver) TotalCount(ctx context.Context, obj *types.TaskConnection) (int, error) {
-	scope, err := r.authorize(ctx, obj.ParentID, probo.ActionTaskList)
+	predicate, err := r.authorize(ctx, obj.ParentID, probo.ActionTaskList)
 	if err != nil {
 		return 0, err
 	}
 
 	switch obj.Resolver.(type) {
 	case *measureResolver:
-		count, err := r.probo.Tasks.CountForMeasureID(ctx, scope, obj.ParentID)
+		count, err := r.probo.Tasks.CountForMeasureID(ctx, predicate, obj.ParentID)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count tasks", log.Error(err))
 			return 0, gqlutils.Internal(ctx)
@@ -241,7 +239,7 @@ func (r *taskConnectionResolver) TotalCount(ctx context.Context, obj *types.Task
 
 		return count, nil
 	case *organizationResolver:
-		count, err := r.probo.Tasks.CountForOrganizationID(ctx, scope, obj.ParentID)
+		count, err := r.probo.Tasks.CountForOrganizationID(ctx, predicate, obj.ParentID)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count tasks", log.Error(err))
 			return 0, gqlutils.Internal(ctx)

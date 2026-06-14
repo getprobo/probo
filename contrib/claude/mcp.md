@@ -65,7 +65,7 @@ First return is always `nil`. Authorization errors are returned and handled like
 Use `Authorize` with an early return:
 
 ```go
-scope, err := r.Authorize(ctx, input.OrganizationID, probo.ActionThirdPartyList)
+predicate, err := r.Authorize(ctx, input.OrganizationID, probo.ActionThirdPartyList)
 if err != nil {
 	return nil, types.ListThirdPartiesOutput{}, err
 }

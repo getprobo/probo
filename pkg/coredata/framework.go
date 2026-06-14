@@ -105,7 +105,7 @@ WHERE
 func (f *Frameworks) CountByOrganizationID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	organizationID gid.GID,
 ) (int, error) {
 	q := `
@@ -118,10 +118,10 @@ WHERE
     AND organization_id = @organization_id
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.NamedArgs{"organization_id": organizationID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	row := conn.QueryRow(ctx, q, args)
 
@@ -152,7 +152,7 @@ func uniqueGIDs(values []gid.GID) []gid.GID {
 func (f *Frameworks) LoadByOrganizationID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	organizationID gid.GID,
 	cursor *page.Cursor[FrameworkOrderField],
 ) error {
@@ -175,10 +175,10 @@ WHERE
     AND %s
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.NamedArgs{"organization_id": organizationID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -198,7 +198,7 @@ WHERE
 func (f *Framework) LoadByReferenceID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	referenceID string,
 ) error {
 	q := `
@@ -220,10 +220,10 @@ WHERE
 LIMIT 1;
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"reference_id": referenceID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -247,7 +247,7 @@ LIMIT 1;
 func (f *Framework) LoadByID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	frameworkID gid.GID,
 ) error {
 	q := `
@@ -269,10 +269,10 @@ WHERE
 LIMIT 1;
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"framework_id": frameworkID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -296,7 +296,7 @@ LIMIT 1;
 func (f *Frameworks) LoadByIDs(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	frameworkIDs []gid.GID,
 ) error {
 	q := `
@@ -317,10 +317,10 @@ WHERE
     AND id = ANY(@framework_ids)
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"framework_ids": frameworkIDs}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -340,7 +340,7 @@ WHERE
 func (f Framework) Insert(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 INSERT INTO
@@ -371,7 +371,7 @@ VALUES (
 `
 
 	args := pgx.StrictNamedArgs{
-		"tenant_id":          scope.GetTenantID(),
+		"tenant_id":          predicate.GetTenantID(),
 		"framework_id":       f.ID,
 		"organization_id":    f.OrganizationID,
 		"reference_id":       f.ReferenceID,
@@ -400,7 +400,7 @@ VALUES (
 func (f Framework) Delete(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 	frameworkID gid.GID,
 ) error {
 	q := `
@@ -413,8 +413,8 @@ WHERE
 `
 
 	args := pgx.StrictNamedArgs{"framework_id": frameworkID}
-	maps.Copy(args, scope.SQLArguments())
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	maps.Copy(args, predicate.SQLArguments())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	_, err := conn.Exec(ctx, q, args)
 
@@ -424,7 +424,7 @@ WHERE
 func (f *Framework) Update(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 UPDATE frameworks
@@ -436,7 +436,7 @@ WHERE
   %s
   AND id = @framework_id
 `
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"framework_id": f.ID,
@@ -445,7 +445,7 @@ WHERE
 		"description":  f.Description,
 	}
 
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
 

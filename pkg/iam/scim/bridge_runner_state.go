@@ -32,10 +32,10 @@ type SyncStats struct {
 	Skipped     int
 }
 
-func (r *BridgeRunner) acquireNextBridge(ctx context.Context) (*coredata.SCIMBridge, coredata.Scoper, error) {
+func (r *BridgeRunner) acquireNextBridge(ctx context.Context) (*coredata.SCIMBridge, coredata.Predicater, error) {
 	var (
 		bridge *coredata.SCIMBridge
-		scope  coredata.Scoper
+		predicate coredata.Predicater
 	)
 
 	err := r.pg.WithTx(
@@ -46,26 +46,26 @@ func (r *BridgeRunner) acquireNextBridge(ctx context.Context) (*coredata.SCIMBri
 				return err
 			}
 
-			scope = coredata.NewScope(bridge.ID.TenantID())
+			predicate = coredata.NewPredicate(bridge.ID.TenantID())
 
 			now := time.Now()
 			bridge.State = coredata.SCIMBridgeStateSyncing
 			bridge.UpdatedAt = now
 
-			return bridge.Update(ctx, tx, scope)
+			return bridge.Update(ctx, tx, predicate)
 		},
 	)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	return bridge, scope, nil
+	return bridge, predicate, nil
 }
 
 func (r *BridgeRunner) transitionToSuccess(
 	ctx context.Context,
 	bridge *coredata.SCIMBridge,
-	scope coredata.Scoper,
+	predicate coredata.Predicater,
 	stats SyncStats,
 	duration time.Duration,
 	connector *coredata.Connector,
@@ -85,7 +85,7 @@ func (r *BridgeRunner) transitionToSuccess(
 			bridge.TotalSyncCount++
 			bridge.UpdatedAt = now
 
-			if err := bridge.Update(ctx, tx, scope); err != nil {
+			if err := bridge.Update(ctx, tx, predicate); err != nil {
 				logger.ErrorCtx(
 					ctx,
 					"cannot update bridge after successful sync",
@@ -97,7 +97,7 @@ func (r *BridgeRunner) transitionToSuccess(
 
 			if connector != nil {
 				connector.UpdatedAt = now
-				if err := connector.Update(ctx, tx, scope, r.encryptionKey); err != nil {
+				if err := connector.Update(ctx, tx, predicate, r.encryptionKey); err != nil {
 					logger.WarnCtx(
 						ctx,
 						"cannot persist refreshed OAuth2 token",
@@ -126,7 +126,7 @@ func (r *BridgeRunner) transitionToSuccess(
 func (r *BridgeRunner) transitionToFailed(
 	ctx context.Context,
 	bridge *coredata.SCIMBridge,
-	scope coredata.Scoper,
+	predicate coredata.Predicater,
 	syncErr error,
 	duration time.Duration,
 	logger *log.Logger,
@@ -173,7 +173,7 @@ func (r *BridgeRunner) transitionToFailed(
 				)
 			}
 
-			if err := bridge.Update(ctx, tx, scope); err != nil {
+			if err := bridge.Update(ctx, tx, predicate); err != nil {
 				logger.ErrorCtx(
 					ctx,
 					"cannot update bridge after failed sync",

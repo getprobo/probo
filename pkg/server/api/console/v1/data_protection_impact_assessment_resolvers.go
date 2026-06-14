@@ -22,18 +22,18 @@ import (
 
 // ProcessingActivity is the resolver for the processingActivity field.
 func (r *dataProtectionImpactAssessmentResolver) ProcessingActivity(ctx context.Context, obj *types.DataProtectionImpactAssessment) (*types.ProcessingActivity, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionProcessingActivityList)
+	predicate, err := r.authorize(ctx, obj.ID, probo.ActionProcessingActivityList)
 	if err != nil {
 		return nil, err
 	}
 
-	dpia, err := r.probo.DataProtectionImpactAssessments.Get(ctx, scope, obj.ID)
+	dpia, err := r.probo.DataProtectionImpactAssessments.Get(ctx, predicate, obj.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot get processing activity dpia", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	processingActivity, err := r.probo.ProcessingActivities.Get(ctx, scope, dpia.ProcessingActivityID)
+	processingActivity, err := r.probo.ProcessingActivities.Get(ctx, predicate, dpia.ProcessingActivityID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot get processing activity", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -44,18 +44,18 @@ func (r *dataProtectionImpactAssessmentResolver) ProcessingActivity(ctx context.
 
 // Organization is the resolver for the organization field.
 func (r *dataProtectionImpactAssessmentResolver) Organization(ctx context.Context, obj *types.DataProtectionImpactAssessment) (*types.Organization, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGet)
+	predicate, err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGet)
 	if err != nil {
 		return nil, err
 	}
 
-	dpia, err := r.probo.DataProtectionImpactAssessments.Get(ctx, scope, obj.ID)
+	dpia, err := r.probo.DataProtectionImpactAssessments.Get(ctx, predicate, obj.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot get processing activity dpia", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	organization, err := r.probo.Organizations.Get(ctx, scope, dpia.OrganizationID)
+	organization, err := r.probo.Organizations.Get(ctx, predicate, dpia.OrganizationID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
@@ -76,14 +76,14 @@ func (r *dataProtectionImpactAssessmentResolver) Permission(ctx context.Context,
 
 // TotalCount is the resolver for the totalCount field.
 func (r *dataProtectionImpactAssessmentConnectionResolver) TotalCount(ctx context.Context, obj *types.DataProtectionImpactAssessmentConnection) (int, error) {
-	scope, err := r.authorize(ctx, obj.ParentID, probo.ActionDataProtectionImpactAssessmentList)
+	predicate, err := r.authorize(ctx, obj.ParentID, probo.ActionDataProtectionImpactAssessmentList)
 	if err != nil {
 		return 0, err
 	}
 
 	switch obj.Resolver.(type) {
 	case *organizationResolver:
-		count, err := r.probo.DataProtectionImpactAssessments.CountForOrganizationID(ctx, scope, obj.ParentID)
+		count, err := r.probo.DataProtectionImpactAssessments.CountForOrganizationID(ctx, predicate, obj.ParentID)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count organization data protection impact assessments", log.Error(err))
 			return 0, gqlutils.Internal(ctx)
@@ -99,7 +99,7 @@ func (r *dataProtectionImpactAssessmentConnectionResolver) TotalCount(ctx contex
 
 // CreateDataProtectionImpactAssessment is the resolver for the createDataProtectionImpactAssessment field.
 func (r *mutationResolver) CreateDataProtectionImpactAssessment(ctx context.Context, input types.CreateDataProtectionImpactAssessmentInput) (*types.CreateDataProtectionImpactAssessmentPayload, error) {
-	scope, err := r.authorize(ctx, input.ProcessingActivityID, probo.ActionDataProtectionImpactAssessmentCreate)
+	predicate, err := r.authorize(ctx, input.ProcessingActivityID, probo.ActionDataProtectionImpactAssessmentCreate)
 	if err != nil {
 		return nil, err
 	}
@@ -113,7 +113,7 @@ func (r *mutationResolver) CreateDataProtectionImpactAssessment(ctx context.Cont
 		ResidualRisk:                input.ResidualRisk,
 	}
 
-	dpia, err := r.probo.DataProtectionImpactAssessments.Create(ctx, scope, &req)
+	dpia, err := r.probo.DataProtectionImpactAssessments.Create(ctx, predicate, &req)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
 			return nil, gqlutils.Conflict(ctx, err)
@@ -135,7 +135,7 @@ func (r *mutationResolver) CreateDataProtectionImpactAssessment(ctx context.Cont
 
 // UpdateDataProtectionImpactAssessment is the resolver for the updateDataProtectionImpactAssessment field.
 func (r *mutationResolver) UpdateDataProtectionImpactAssessment(ctx context.Context, input types.UpdateDataProtectionImpactAssessmentInput) (*types.UpdateDataProtectionImpactAssessmentPayload, error) {
-	scope, err := r.authorize(ctx, input.ID, probo.ActionDataProtectionImpactAssessmentUpdate)
+	predicate, err := r.authorize(ctx, input.ID, probo.ActionDataProtectionImpactAssessmentUpdate)
 	if err != nil {
 		return nil, err
 	}
@@ -149,7 +149,7 @@ func (r *mutationResolver) UpdateDataProtectionImpactAssessment(ctx context.Cont
 		ResidualRisk:                input.ResidualRisk,
 	}
 
-	dpia, err := r.probo.DataProtectionImpactAssessments.Update(ctx, scope, &req)
+	dpia, err := r.probo.DataProtectionImpactAssessments.Update(ctx, predicate, &req)
 	if err != nil {
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
@@ -167,12 +167,12 @@ func (r *mutationResolver) UpdateDataProtectionImpactAssessment(ctx context.Cont
 
 // DeleteDataProtectionImpactAssessment is the resolver for the deleteDataProtectionImpactAssessment field.
 func (r *mutationResolver) DeleteDataProtectionImpactAssessment(ctx context.Context, input types.DeleteDataProtectionImpactAssessmentInput) (*types.DeleteDataProtectionImpactAssessmentPayload, error) {
-	scope, err := r.authorize(ctx, input.DataProtectionImpactAssessmentID, probo.ActionDataProtectionImpactAssessmentDelete)
+	predicate, err := r.authorize(ctx, input.DataProtectionImpactAssessmentID, probo.ActionDataProtectionImpactAssessmentDelete)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := r.probo.DataProtectionImpactAssessments.Delete(ctx, scope, input.DataProtectionImpactAssessmentID); err != nil {
+	if err := r.probo.DataProtectionImpactAssessments.Delete(ctx, predicate, input.DataProtectionImpactAssessmentID); err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete data protection impact assessment", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
@@ -184,7 +184,7 @@ func (r *mutationResolver) DeleteDataProtectionImpactAssessment(ctx context.Cont
 
 // CreateTransferImpactAssessment is the resolver for the createTransferImpactAssessment field.
 func (r *mutationResolver) CreateTransferImpactAssessment(ctx context.Context, input types.CreateTransferImpactAssessmentInput) (*types.CreateTransferImpactAssessmentPayload, error) {
-	scope, err := r.authorize(ctx, input.ProcessingActivityID, probo.ActionTransferImpactAssessmentCreate)
+	predicate, err := r.authorize(ctx, input.ProcessingActivityID, probo.ActionTransferImpactAssessmentCreate)
 	if err != nil {
 		return nil, err
 	}
@@ -198,7 +198,7 @@ func (r *mutationResolver) CreateTransferImpactAssessment(ctx context.Context, i
 		SupplementaryMeasures: input.SupplementaryMeasures,
 	}
 
-	tia, err := r.probo.TransferImpactAssessments.Create(ctx, scope, &req)
+	tia, err := r.probo.TransferImpactAssessments.Create(ctx, predicate, &req)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
 			return nil, gqlutils.Conflict(ctx, err)
@@ -220,7 +220,7 @@ func (r *mutationResolver) CreateTransferImpactAssessment(ctx context.Context, i
 
 // UpdateTransferImpactAssessment is the resolver for the updateTransferImpactAssessment field.
 func (r *mutationResolver) UpdateTransferImpactAssessment(ctx context.Context, input types.UpdateTransferImpactAssessmentInput) (*types.UpdateTransferImpactAssessmentPayload, error) {
-	scope, err := r.authorize(ctx, input.ID, probo.ActionTransferImpactAssessmentUpdate)
+	predicate, err := r.authorize(ctx, input.ID, probo.ActionTransferImpactAssessmentUpdate)
 	if err != nil {
 		return nil, err
 	}
@@ -234,7 +234,7 @@ func (r *mutationResolver) UpdateTransferImpactAssessment(ctx context.Context, i
 		SupplementaryMeasures: gqlutils.UnwrapOmittable(input.SupplementaryMeasures),
 	}
 
-	tia, err := r.probo.TransferImpactAssessments.Update(ctx, scope, &req)
+	tia, err := r.probo.TransferImpactAssessments.Update(ctx, predicate, &req)
 	if err != nil {
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
@@ -252,12 +252,12 @@ func (r *mutationResolver) UpdateTransferImpactAssessment(ctx context.Context, i
 
 // DeleteTransferImpactAssessment is the resolver for the deleteTransferImpactAssessment field.
 func (r *mutationResolver) DeleteTransferImpactAssessment(ctx context.Context, input types.DeleteTransferImpactAssessmentInput) (*types.DeleteTransferImpactAssessmentPayload, error) {
-	scope, err := r.authorize(ctx, input.TransferImpactAssessmentID, probo.ActionTransferImpactAssessmentDelete)
+	predicate, err := r.authorize(ctx, input.TransferImpactAssessmentID, probo.ActionTransferImpactAssessmentDelete)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := r.probo.TransferImpactAssessments.Delete(ctx, scope, input.TransferImpactAssessmentID); err != nil {
+	if err := r.probo.TransferImpactAssessments.Delete(ctx, predicate, input.TransferImpactAssessmentID); err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete transfer impact assessment", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
@@ -269,12 +269,12 @@ func (r *mutationResolver) DeleteTransferImpactAssessment(ctx context.Context, i
 
 // PublishDataProtectionImpactAssessmentList is the resolver for the publishDataProtectionImpactAssessmentList field.
 func (r *mutationResolver) PublishDataProtectionImpactAssessmentList(ctx context.Context, input types.PublishDataProtectionImpactAssessmentListInput) (*types.PublishDataProtectionImpactAssessmentListPayload, error) {
-	scope, err := r.authorize(ctx, input.OrganizationID, probo.ActionDataProtectionImpactAssessmentPublish)
+	predicate, err := r.authorize(ctx, input.OrganizationID, probo.ActionDataProtectionImpactAssessmentPublish)
 	if err != nil {
 		return nil, err
 	}
 
-	document, documentVersion, err := r.probo.GeneratedDocuments.PublishDataProtectionImpactAssessmentList(ctx, scope, input.OrganizationID, input.ApproverIds, input.Minor)
+	document, documentVersion, err := r.probo.GeneratedDocuments.PublishDataProtectionImpactAssessmentList(ctx, predicate, input.OrganizationID, input.ApproverIds, input.Minor)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
 			return nil, gqlutils.Conflict(ctx, err)
@@ -293,12 +293,12 @@ func (r *mutationResolver) PublishDataProtectionImpactAssessmentList(ctx context
 
 // PublishTransferImpactAssessmentList is the resolver for the publishTransferImpactAssessmentList field.
 func (r *mutationResolver) PublishTransferImpactAssessmentList(ctx context.Context, input types.PublishTransferImpactAssessmentListInput) (*types.PublishTransferImpactAssessmentListPayload, error) {
-	scope, err := r.authorize(ctx, input.OrganizationID, probo.ActionTransferImpactAssessmentPublish)
+	predicate, err := r.authorize(ctx, input.OrganizationID, probo.ActionTransferImpactAssessmentPublish)
 	if err != nil {
 		return nil, err
 	}
 
-	document, documentVersion, err := r.probo.GeneratedDocuments.PublishTransferImpactAssessmentList(ctx, scope, input.OrganizationID, input.ApproverIds, input.Minor)
+	document, documentVersion, err := r.probo.GeneratedDocuments.PublishTransferImpactAssessmentList(ctx, predicate, input.OrganizationID, input.ApproverIds, input.Minor)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
 			return nil, gqlutils.Conflict(ctx, err)
@@ -317,12 +317,12 @@ func (r *mutationResolver) PublishTransferImpactAssessmentList(ctx context.Conte
 
 // ProcessingActivity is the resolver for the processingActivity field.
 func (r *transferImpactAssessmentResolver) ProcessingActivity(ctx context.Context, obj *types.TransferImpactAssessment) (*types.ProcessingActivity, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionProcessingActivityGet)
+	predicate, err := r.authorize(ctx, obj.ID, probo.ActionProcessingActivityGet)
 	if err != nil {
 		return nil, err
 	}
 
-	processingActivity, err := r.probo.ProcessingActivities.Get(ctx, scope, obj.ProcessingActivity.ID)
+	processingActivity, err := r.probo.ProcessingActivities.Get(ctx, predicate, obj.ProcessingActivity.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot get processing activity", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -360,14 +360,14 @@ func (r *transferImpactAssessmentResolver) Permission(ctx context.Context, obj *
 
 // TotalCount is the resolver for the totalCount field.
 func (r *transferImpactAssessmentConnectionResolver) TotalCount(ctx context.Context, obj *types.TransferImpactAssessmentConnection) (int, error) {
-	scope, err := r.authorize(ctx, obj.ParentID, probo.ActionTransferImpactAssessmentList)
+	predicate, err := r.authorize(ctx, obj.ParentID, probo.ActionTransferImpactAssessmentList)
 	if err != nil {
 		return 0, err
 	}
 
 	switch obj.Resolver.(type) {
 	case *organizationResolver:
-		count, err := r.probo.TransferImpactAssessments.CountForOrganizationID(ctx, scope, obj.ParentID)
+		count, err := r.probo.TransferImpactAssessments.CountForOrganizationID(ctx, predicate, obj.ParentID)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count organization transfer impact assessments", log.Error(err))
 			return 0, gqlutils.Internal(ctx)

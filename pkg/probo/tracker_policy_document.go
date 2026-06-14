@@ -74,7 +74,7 @@ func BuildTrackerPolicyDocument(data docgen.TrackerPolicyData) (string, error) {
 // cookie_banners.policy_document_id.
 func (s *GeneratedDocumentService) PublishTrackerPolicy(
 	ctx context.Context,
-	scope coredata.Scoper,
+	predicate coredata.Predicater,
 	cookieBannerID gid.GID,
 ) error {
 	// Phase 1: collect data and render the prosemirror document outside any
@@ -88,18 +88,18 @@ func (s *GeneratedDocumentService) PublishTrackerPolicy(
 
 	err := s.svc.pg.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
 		banner := &coredata.CookieBanner{}
-		if err := banner.LoadByID(ctx, conn, scope, cookieBannerID); err != nil {
+		if err := banner.LoadByID(ctx, conn, predicate, cookieBannerID); err != nil {
 			return fmt.Errorf("cannot load cookie banner: %w", err)
 		}
 
 		organization := &coredata.Organization{}
-		if err := organization.LoadByID(ctx, conn, scope, banner.OrganizationID); err != nil {
+		if err := organization.LoadByID(ctx, conn, predicate, banner.OrganizationID); err != nil {
 			return fmt.Errorf("cannot load organization: %w", err)
 		}
 
 		var err error
 
-		documentData, err = s.buildTrackerPolicyDocumentData(ctx, scope, conn, organization, banner)
+		documentData, err = s.buildTrackerPolicyDocumentData(ctx, predicate, conn, organization, banner)
 		if err != nil {
 			return fmt.Errorf("cannot build document data: %w", err)
 		}
@@ -123,7 +123,7 @@ func (s *GeneratedDocumentService) PublishTrackerPolicy(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			banner := &coredata.CookieBanner{}
-			if err := banner.LoadByID(ctx, tx, scope, cookieBannerID); err != nil {
+			if err := banner.LoadByID(ctx, tx, predicate, cookieBannerID); err != nil {
 				return fmt.Errorf("cannot reload cookie banner: %w", err)
 			}
 
@@ -137,7 +137,7 @@ func (s *GeneratedDocumentService) PublishTrackerPolicy(
 			if banner.PolicyDocumentID != nil {
 				doc := &coredata.Document{}
 
-				err = doc.LoadByID(ctx, tx, scope, *banner.PolicyDocumentID)
+				err = doc.LoadByID(ctx, tx, predicate, *banner.PolicyDocumentID)
 				if err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
 					return fmt.Errorf("cannot load tracker policy document: %w", err)
 				}
@@ -148,14 +148,14 @@ func (s *GeneratedDocumentService) PublishTrackerPolicy(
 					banner.PolicyDocumentID = nil
 					banner.UpdatedAt = now
 
-					if err := banner.Update(ctx, tx, scope); err != nil {
+					if err := banner.Update(ctx, tx, predicate); err != nil {
 						return fmt.Errorf("cannot clear tracker policy document reference: %w", err)
 					}
 				}
 			}
 
 			if existingDoc == nil {
-				documentID := gid.New(scope.GetTenantID(), coredata.DocumentEntityType)
+				documentID := gid.New(predicate.GetTenantID(), coredata.DocumentEntityType)
 
 				document = &coredata.Document{
 					ID:                    documentID,
@@ -167,21 +167,21 @@ func (s *GeneratedDocumentService) PublishTrackerPolicy(
 					UpdatedAt:             now,
 				}
 
-				if err := document.Insert(ctx, tx, scope); err != nil {
+				if err := document.Insert(ctx, tx, predicate); err != nil {
 					return fmt.Errorf("cannot insert document: %w", err)
 				}
 
 				banner.PolicyDocumentID = &documentID
 				banner.UpdatedAt = now
 
-				if err := banner.Update(ctx, tx, scope); err != nil {
+				if err := banner.Update(ctx, tx, predicate); err != nil {
 					return fmt.Errorf("cannot update tracker policy document reference: %w", err)
 				}
 			} else {
 				document = existingDoc
 			}
 
-			documentVersionID := gid.New(scope.GetTenantID(), coredata.DocumentVersionEntityType)
+			documentVersionID := gid.New(predicate.GetTenantID(), coredata.DocumentVersionEntityType)
 			documentVersion := &coredata.DocumentVersion{
 				ID:             documentVersionID,
 				OrganizationID: organizationID,
@@ -195,19 +195,19 @@ func (s *GeneratedDocumentService) PublishTrackerPolicy(
 				UpdatedAt:      now,
 			}
 
-			return s.publishOrRequestApproval(ctx, scope, tx, document, documentVersion, organizationID, nil, false, now)
+			return s.publishOrRequestApproval(ctx, predicate, tx, document, documentVersion, organizationID, nil, false, now)
 		},
 	)
 }
 
 func (s *GeneratedDocumentService) buildTrackerPolicyDocumentData(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	conn pg.Querier,
 	organization *coredata.Organization,
 	banner *coredata.CookieBanner,
 ) (docgen.TrackerPolicyData, error) {
 	version := &coredata.CookieBannerVersion{}
-	if err := version.LoadLatestPublishedByCookieBannerID(ctx, conn, scope, banner.ID); err != nil {
+	if err := version.LoadLatestPublishedByCookieBannerID(ctx, conn, predicate, banner.ID); err != nil {
 		return docgen.TrackerPolicyData{}, fmt.Errorf("cannot load latest published version: %w", err)
 	}
 
@@ -236,7 +236,7 @@ func (s *GeneratedDocumentService) buildTrackerPolicyDocumentData(
 		})
 	}
 
-	thirdParties, err := s.buildTrackerPolicyThirdParties(ctx, scope, conn, banner.ID)
+	thirdParties, err := s.buildTrackerPolicyThirdParties(ctx, predicate, conn, banner.ID)
 	if err != nil {
 		return docgen.TrackerPolicyData{}, err
 	}
@@ -258,20 +258,20 @@ func (s *GeneratedDocumentService) buildTrackerPolicyDocumentData(
 }
 
 func (s *GeneratedDocumentService) buildTrackerPolicyThirdParties(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	conn pg.Querier,
 	cookieBannerID gid.GID,
 ) ([]docgen.TrackerPolicyThirdParty, error) {
 	var patterns coredata.TrackerPatterns
 
-	thirdPartyIDs, err := patterns.LoadDistinctThirdPartyIDsByCookieBannerID(ctx, conn, scope, cookieBannerID)
+	thirdPartyIDs, err := patterns.LoadDistinctThirdPartyIDsByCookieBannerID(ctx, conn, predicate, cookieBannerID)
 	if err != nil {
 		return nil, fmt.Errorf("cannot load distinct third party ids: %w", err)
 	}
 
 	var thirdParties coredata.ThirdParties
 	if len(thirdPartyIDs) > 0 {
-		if err := thirdParties.LoadByIDs(ctx, conn, scope, thirdPartyIDs); err != nil {
+		if err := thirdParties.LoadByIDs(ctx, conn, predicate, thirdPartyIDs); err != nil {
 			return nil, fmt.Errorf("cannot load third parties: %w", err)
 		}
 	}
@@ -280,7 +280,7 @@ func (s *GeneratedDocumentService) buildTrackerPolicyThirdParties(
 	// (CommonThirdParty) vendor, mirroring the banner's linkedThirdParties
 	// union, so the policy stays complete whether or not the vendor was
 	// imported into the org register.
-	commonPatternIDs, err := patterns.LoadDistinctCommonTrackerPatternIDsByCookieBannerID(ctx, conn, scope, cookieBannerID)
+	commonPatternIDs, err := patterns.LoadDistinctCommonTrackerPatternIDsByCookieBannerID(ctx, conn, predicate, cookieBannerID)
 	if err != nil {
 		return nil, fmt.Errorf("cannot load distinct common tracker pattern ids: %w", err)
 	}

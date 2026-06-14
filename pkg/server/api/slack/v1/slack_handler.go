@@ -159,7 +159,7 @@ func SlackHandler(slackSvc *slack.Service, slackSigningSecret string, logger *lo
 		}
 
 		requesterEmail := *initialSlackMessage.RequesterEmail
-		scope := coredata.NewScopeFromObjectID(initialSlackMessage.OrganizationID)
+		predicate := coredata.NewPredicateFromObjectID(initialSlackMessage.OrganizationID)
 
 		var (
 			documentIDs  []gid.GID
@@ -176,7 +176,7 @@ func SlackHandler(slackSvc *slack.Service, slackSigningSecret string, logger *lo
 				return
 			}
 
-			documentIDs, reportIDs, fileIDs, err = slackSvc.GetSlackMessageDocumentIDs(ctx, scope, currentMessageId)
+			documentIDs, reportIDs, fileIDs, err = slackSvc.GetSlackMessageDocumentIDs(ctx, predicate, currentMessageId)
 			if err != nil {
 				logger.ErrorCtx(ctx, "cannot load slack message document ids", log.Error(err))
 				httpserver.RenderJSON(w, http.StatusInternalServerError, SlackInteractiveResponse{Success: false, Message: "internal server error"})
@@ -242,9 +242,7 @@ func SlackHandler(slackSvc *slack.Service, slackSigningSecret string, logger *lo
 		switch statusAction {
 		case StatusAccept:
 			if err := trustSvc.TrustCenterAccesses.GrantByIDs(
-				ctx,
-				scope,
-				initialSlackMessage.OrganizationID,
+				ctx, predicate, initialSlackMessage.OrganizationID,
 				requesterEmail,
 				documentIDs,
 				reportIDs,
@@ -257,9 +255,7 @@ func SlackHandler(slackSvc *slack.Service, slackSigningSecret string, logger *lo
 			}
 		case StatusReject:
 			if err := trustSvc.TrustCenterAccesses.RejectOrRevokeByIDs(
-				ctx,
-				scope,
-				initialSlackMessage.OrganizationID,
+				ctx, predicate, initialSlackMessage.OrganizationID,
 				requesterEmail,
 				documentIDs,
 				reportIDs,
@@ -278,9 +274,7 @@ func SlackHandler(slackSvc *slack.Service, slackSigningSecret string, logger *lo
 		}
 
 		if err := slackSvc.UpdateSlackAccessMessage(
-			ctx,
-			scope,
-			initialSlackMessage.ID,
+			ctx, predicate, initialSlackMessage.ID,
 			slackPayload.ResponseURL,
 			requesterEmail,
 		); err != nil {

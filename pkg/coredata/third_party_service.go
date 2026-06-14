@@ -95,7 +95,7 @@ func (vs *ThirdPartyService) AuthorizationAttributes(
 func (vs *ThirdPartyService) LoadByID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	thirdPartyServiceID gid.GID,
 ) error {
 	q := `
@@ -115,10 +115,10 @@ WHERE
 LIMIT 1;
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"third_party_service_id": thirdPartyServiceID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -143,7 +143,7 @@ LIMIT 1;
 func (vs *ThirdPartyServices) LoadByThirdPartyID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	thirdPartyID gid.GID,
 	cursor *page.Cursor[ThirdPartyServiceOrderField],
 ) error {
@@ -163,12 +163,12 @@ WHERE
 	AND third_party_id = @third_party_id
 	AND %s
 `
-	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"third_party_id": thirdPartyID,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
@@ -190,7 +190,7 @@ WHERE
 func (vs *ThirdPartyServices) LoadByThirdPartyIDs(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	thirdPartyIDs []gid.GID,
 ) error {
 	if len(thirdPartyIDs) == 0 {
@@ -215,7 +215,7 @@ WHERE
 ORDER BY
 	third_party_id, name ASC
 `
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	ids := make([]string, len(thirdPartyIDs))
 	for i, id := range thirdPartyIDs {
@@ -223,7 +223,7 @@ ORDER BY
 	}
 
 	args := pgx.StrictNamedArgs{"third_party_ids": ids}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -244,7 +244,7 @@ ORDER BY
 func (vs ThirdPartyService) Insert(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 INSERT INTO
@@ -271,7 +271,7 @@ VALUES (
 `
 
 	args := pgx.StrictNamedArgs{
-		"tenant_id":              scope.GetTenantID(),
+		"tenant_id":              predicate.GetTenantID(),
 		"third_party_service_id": vs.ID,
 		"organization_id":        vs.OrganizationID,
 		"third_party_id":         vs.ThirdPartyID,
@@ -292,7 +292,7 @@ VALUES (
 func (vs ThirdPartyService) Update(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 UPDATE
@@ -306,7 +306,7 @@ WHERE
 	AND id = @third_party_service_id
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"third_party_service_id": vs.ID,
@@ -314,7 +314,7 @@ WHERE
 		"description":            vs.Description,
 		"updated_at":             vs.UpdatedAt,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
@@ -327,7 +327,7 @@ WHERE
 func (vs ThirdPartyService) Delete(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 DELETE FROM
@@ -337,10 +337,10 @@ WHERE
 	AND id = @third_party_service_id
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"third_party_service_id": vs.ID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {

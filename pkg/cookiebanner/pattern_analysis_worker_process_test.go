@@ -35,7 +35,7 @@ import (
 // and a normal category. Patterns/detected trackers are seeded
 // per-test.
 type workerFixture struct {
-	scope            *coredata.Scope
+	predicate *coredata.Predicate
 	organizationID   gid.GID
 	banner           coredata.CookieBanner
 	uncategorisedID  gid.GID
@@ -46,7 +46,7 @@ func seedWorkerFixture(t *testing.T, ctx context.Context, client *pg.Client) wor
 	t.Helper()
 
 	tenantID := gid.NewTenantID()
-	scope := coredata.NewScope(tenantID)
+	predicate := coredata.NewPredicate(tenantID)
 	organizationID := gid.New(tenantID, coredata.OrganizationEntityType)
 	bannerID := gid.New(tenantID, coredata.CookieBannerEntityType)
 	uncategorisedID := gid.New(tenantID, coredata.CookieCategoryEntityType)
@@ -79,7 +79,7 @@ func seedWorkerFixture(t *testing.T, ctx context.Context, client *pg.Client) wor
 			return err
 		}
 
-		if err := banner.Insert(ctx, tx, scope); err != nil {
+		if err := banner.Insert(ctx, tx, predicate); err != nil {
 			return err
 		}
 
@@ -97,7 +97,7 @@ func seedWorkerFixture(t *testing.T, ctx context.Context, client *pg.Client) wor
 			CreatedAt:       now,
 			UpdatedAt:       now,
 		}
-		if err := uncategorised.Insert(ctx, tx, scope); err != nil {
+		if err := uncategorised.Insert(ctx, tx, predicate); err != nil {
 			return err
 		}
 
@@ -115,7 +115,7 @@ func seedWorkerFixture(t *testing.T, ctx context.Context, client *pg.Client) wor
 			CreatedAt:       now,
 			UpdatedAt:       now,
 		}
-		if err := normal.Insert(ctx, tx, scope); err != nil {
+		if err := normal.Insert(ctx, tx, predicate); err != nil {
 			return err
 		}
 
@@ -171,7 +171,7 @@ func newExactPattern(
 	now := time.Now().UTC().Truncate(time.Microsecond)
 
 	return &coredata.TrackerPattern{
-		ID:                 gid.New(fx.scope.GetTenantID(), coredata.TrackerPatternEntityType),
+		ID:                 gid.New(fx.predicate.GetTenantID(), coredata.TrackerPatternEntityType),
 		OrganizationID:     fx.organizationID,
 		CookieBannerID:     fx.banner.ID,
 		CookieCategoryID:   categoryID,
@@ -198,7 +198,7 @@ func newGlobInCategory(
 	now := time.Now().UTC().Truncate(time.Microsecond)
 
 	return &coredata.TrackerPattern{
-		ID:                 gid.New(fx.scope.GetTenantID(), coredata.TrackerPatternEntityType),
+		ID:                 gid.New(fx.predicate.GetTenantID(), coredata.TrackerPatternEntityType),
 		OrganizationID:     fx.organizationID,
 		CookieBannerID:     fx.banner.ID,
 		CookieCategoryID:   categoryID,
@@ -229,7 +229,7 @@ func seedThirdParty(t *testing.T, ctx context.Context, client *pg.Client, fx wor
 	t.Helper()
 
 	now := time.Now().UTC().Truncate(time.Microsecond)
-	id := gid.New(fx.scope.GetTenantID(), coredata.ThirdPartyEntityType)
+	id := gid.New(fx.predicate.GetTenantID(), coredata.ThirdPartyEntityType)
 
 	party := coredata.ThirdParty{
 		ID:             id,
@@ -243,7 +243,7 @@ func seedThirdParty(t *testing.T, ctx context.Context, client *pg.Client, fx wor
 	}
 
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
-		return party.Insert(ctx, tx, fx.scope)
+		return party.Insert(ctx, tx, fx.predicate)
 	}))
 
 	t.Cleanup(func() {
@@ -286,12 +286,12 @@ func TestPatternAnalysisWorker_PromotesSourceOnExistingGlob(t *testing.T) {
 	}
 
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
-		if err := existingGlob.Insert(ctx, tx, fx.scope); err != nil {
+		if err := existingGlob.Insert(ctx, tx, fx.predicate); err != nil {
 			return err
 		}
 
 		for _, ep := range exacts {
-			if err := ep.Insert(ctx, tx, fx.scope); err != nil {
+			if err := ep.Insert(ctx, tx, fx.predicate); err != nil {
 				return err
 			}
 		}
@@ -308,7 +308,7 @@ func TestPatternAnalysisWorker_PromotesSourceOnExistingGlob(t *testing.T) {
 		return loaded.LoadByBannerIDTypeAndPattern(
 			ctx,
 			conn,
-			fx.scope,
+			fx.predicate,
 			fx.banner.ID,
 			coredata.TrackerTypeCookie,
 			"_ga_*",
@@ -327,7 +327,7 @@ func TestPatternAnalysisWorker_PromotesSourceOnExistingGlob(t *testing.T) {
 		return remainingExacts.LoadAllByCookieBannerID(
 			ctx,
 			conn,
-			fx.scope,
+			fx.predicate,
 			fx.banner.ID,
 			coredata.NewTrackerPatternFilter(new(coredata.TrackerPatternMatchTypeExact), nil, new(false)),
 			nil,
@@ -366,12 +366,12 @@ func TestPatternAnalysisWorker_AdoptionTriggersDraftVersion(t *testing.T) {
 	}
 
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
-		if err := existingGlob.Insert(ctx, tx, fx.scope); err != nil {
+		if err := existingGlob.Insert(ctx, tx, fx.predicate); err != nil {
 			return err
 		}
 
 		for _, ep := range exacts {
-			if err := ep.Insert(ctx, tx, fx.scope); err != nil {
+			if err := ep.Insert(ctx, tx, fx.predicate); err != nil {
 				return err
 			}
 		}
@@ -388,7 +388,7 @@ func TestPatternAnalysisWorker_AdoptionTriggersDraftVersion(t *testing.T) {
 		return loaded.LoadByBannerIDTypeAndPattern(
 			ctx,
 			conn,
-			fx.scope,
+			fx.predicate,
 			fx.banner.ID,
 			coredata.TrackerTypeCookie,
 			"_ga_*",
@@ -404,7 +404,7 @@ func TestPatternAnalysisWorker_AdoptionTriggersDraftVersion(t *testing.T) {
 		return remainingExacts.LoadAllByCookieBannerID(
 			ctx,
 			conn,
-			fx.scope,
+			fx.predicate,
 			fx.banner.ID,
 			coredata.NewTrackerPatternFilter(new(coredata.TrackerPatternMatchTypeExact), nil, new(false)),
 			nil,
@@ -415,7 +415,7 @@ func TestPatternAnalysisWorker_AdoptionTriggersDraftVersion(t *testing.T) {
 	latest := &coredata.CookieBannerVersion{}
 
 	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
-		return latest.LoadLatestByCookieBannerID(ctx, conn, fx.scope, fx.banner.ID)
+		return latest.LoadLatestByCookieBannerID(ctx, conn, fx.predicate, fx.banner.ID)
 	}))
 	assert.Equal(t, coredata.CookieBannerVersionStateDraft, latest.State, "adoption must trigger a draft version")
 }
@@ -454,11 +454,11 @@ func TestPatternAnalysisWorker_AdoptionPromotesSourceCrossCategory(t *testing.T)
 	)
 
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
-		if err := existingGlob.Insert(ctx, tx, fx.scope); err != nil {
+		if err := existingGlob.Insert(ctx, tx, fx.predicate); err != nil {
 			return err
 		}
 
-		return uncategorisedExact.Insert(ctx, tx, fx.scope)
+		return uncategorisedExact.Insert(ctx, tx, fx.predicate)
 	}))
 
 	h := newTestHandler(client)
@@ -470,7 +470,7 @@ func TestPatternAnalysisWorker_AdoptionPromotesSourceCrossCategory(t *testing.T)
 		return loaded.LoadByBannerIDTypeAndPattern(
 			ctx,
 			conn,
-			fx.scope,
+			fx.predicate,
 			fx.banner.ID,
 			coredata.TrackerTypeCookie,
 			"ph_phc_*_posthog",
@@ -489,7 +489,7 @@ func TestPatternAnalysisWorker_AdoptionPromotesSourceCrossCategory(t *testing.T)
 		return remainingExacts.LoadAllByCookieBannerID(
 			ctx,
 			conn,
-			fx.scope,
+			fx.predicate,
 			fx.banner.ID,
 			coredata.NewTrackerPatternFilter(new(coredata.TrackerPatternMatchTypeExact), nil, new(false)),
 			nil,
@@ -530,7 +530,7 @@ func TestReportDetectedTrackers_PromotesSourceOnExistingGlob(t *testing.T) {
 	)
 
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
-		return existingGlob.Insert(ctx, tx, fx.scope)
+		return existingGlob.Insert(ctx, tx, fx.predicate)
 	}))
 
 	svc := NewService(client, false)
@@ -548,7 +548,7 @@ func TestReportDetectedTrackers_PromotesSourceOnExistingGlob(t *testing.T) {
 	loaded := &coredata.TrackerPattern{}
 
 	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
-		return loaded.LoadByID(ctx, conn, fx.scope, existingGlob.ID)
+		return loaded.LoadByID(ctx, conn, fx.predicate, existingGlob.ID)
 	}))
 
 	require.NotNil(t, loaded.Source)
@@ -562,7 +562,7 @@ func TestReportDetectedTrackers_PromotesSourceOnExistingGlob(t *testing.T) {
 		return exacts.LoadAllByCookieBannerID(
 			ctx,
 			conn,
-			fx.scope,
+			fx.predicate,
 			fx.banner.ID,
 			coredata.NewTrackerPatternFilter(new(coredata.TrackerPatternMatchTypeExact), nil, new(false)),
 			nil,
@@ -594,7 +594,7 @@ func TestPatternAnalysisWorker_MergeWithoutAdoptionSkipsDraftVersion(t *testing.
 
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		for _, ep := range exacts {
-			if err := ep.Insert(ctx, tx, fx.scope); err != nil {
+			if err := ep.Insert(ctx, tx, fx.predicate); err != nil {
 				return err
 			}
 		}
@@ -611,7 +611,7 @@ func TestPatternAnalysisWorker_MergeWithoutAdoptionSkipsDraftVersion(t *testing.
 		return globs.LoadAllByCookieBannerID(
 			ctx,
 			conn,
-			fx.scope,
+			fx.predicate,
 			fx.banner.ID,
 			coredata.NewTrackerPatternFilter(new(coredata.TrackerPatternMatchTypeGlob), nil, new(false)),
 			nil,
@@ -623,7 +623,7 @@ func TestPatternAnalysisWorker_MergeWithoutAdoptionSkipsDraftVersion(t *testing.
 
 	latest := &coredata.CookieBannerVersion{}
 	err := client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
-		return latest.LoadLatestByCookieBannerID(ctx, conn, fx.scope, fx.banner.ID)
+		return latest.LoadLatestByCookieBannerID(ctx, conn, fx.predicate, fx.banner.ID)
 	})
 	assert.ErrorIs(t, err, coredata.ErrResourceNotFound, "merge alone must not create a draft version")
 	// Sanity-check the negative assertion: if the lookup unexpectedly
@@ -663,7 +663,7 @@ func TestPatternAnalysisWorker_GlobInheritsUnanimousMapping(t *testing.T) {
 
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		for _, ep := range exacts {
-			if err := ep.Insert(ctx, tx, fx.scope); err != nil {
+			if err := ep.Insert(ctx, tx, fx.predicate); err != nil {
 				return err
 			}
 		}
@@ -680,7 +680,7 @@ func TestPatternAnalysisWorker_GlobInheritsUnanimousMapping(t *testing.T) {
 		return loaded.LoadByBannerIDTypeAndPattern(
 			ctx,
 			conn,
-			fx.scope,
+			fx.predicate,
 			fx.banner.ID,
 			coredata.TrackerTypeCookie,
 			"_ga_*",
@@ -720,7 +720,7 @@ func TestPatternAnalysisWorker_GlobSkipsConflictingMapping(t *testing.T) {
 
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		for _, ep := range exacts {
-			if err := ep.Insert(ctx, tx, fx.scope); err != nil {
+			if err := ep.Insert(ctx, tx, fx.predicate); err != nil {
 				return err
 			}
 		}
@@ -737,7 +737,7 @@ func TestPatternAnalysisWorker_GlobSkipsConflictingMapping(t *testing.T) {
 		return loaded.LoadByBannerIDTypeAndPattern(
 			ctx,
 			conn,
-			fx.scope,
+			fx.predicate,
 			fx.banner.ID,
 			coredata.TrackerTypeCookie,
 			"_ga_*",

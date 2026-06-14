@@ -235,7 +235,7 @@ func (v *ThirdParty) AuthorizationAttributes(
 func (v *ThirdParty) LoadByID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	thirdPartyID gid.GID,
 ) error {
 	q := `
@@ -280,10 +280,10 @@ WHERE
 LIMIT 1;
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"third_party_id": thirdPartyID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -308,7 +308,7 @@ LIMIT 1;
 func (v *ThirdParty) LoadByIDForUpdate(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 	thirdPartyID gid.GID,
 ) error {
 	q := `
@@ -354,10 +354,10 @@ LIMIT 1
 FOR UPDATE;
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"third_party_id": thirdPartyID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -382,7 +382,7 @@ FOR UPDATE;
 func (v *ThirdParty) LoadByNameAndOrganizationID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	name string,
 	organizationID gid.GID,
 ) error {
@@ -429,13 +429,13 @@ WHERE
 LIMIT 1;
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"organization_id": organizationID,
 		"name":            name,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -460,7 +460,7 @@ LIMIT 1;
 func (v *ThirdParty) LoadByNameAndParentThirdPartyID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	name string,
 	parentThirdPartyID gid.GID,
 ) error {
@@ -507,13 +507,13 @@ WHERE
 LIMIT 1;
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"parent_third_party_id": parentThirdPartyID,
 		"name":                  name,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -538,7 +538,7 @@ LIMIT 1;
 func (v *ThirdParties) LoadByIDs(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	thirdPartyIDs []gid.GID,
 ) error {
 	q := `
@@ -582,10 +582,10 @@ WHERE
     AND id = ANY(@third_party_ids)
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"third_party_ids": thirdPartyIDs}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -605,7 +605,7 @@ WHERE
 func (v ThirdParty) Insert(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 INSERT INTO
@@ -682,7 +682,7 @@ VALUES (
 `
 
 	args := pgx.StrictNamedArgs{
-		"tenant_id":                        scope.GetTenantID(),
+		"tenant_id":                        predicate.GetTenantID(),
 		"third_party_id":                   v.ID,
 		"organization_id":                  v.OrganizationID,
 		"parent_third_party_id":            v.ParentThirdPartyID,
@@ -724,16 +724,16 @@ VALUES (
 func (v ThirdParty) Delete(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 DELETE FROM third_parties WHERE %s AND id = @third_party_id
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"third_party_id": v.ID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
 
@@ -743,7 +743,7 @@ DELETE FROM third_parties WHERE %s AND id = @third_party_id
 func (v *ThirdParties) CountByOrganizationID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	organizationID gid.GID,
 	filter *ThirdPartyFilter,
 ) (int, error) {
@@ -758,10 +758,10 @@ WHERE
     AND %s
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment(), filter.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"organization_id": organizationID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 	maps.Copy(args, filter.SQLArguments())
 
 	row := conn.QueryRow(ctx, q, args)
@@ -779,7 +779,7 @@ WHERE
 func (v *ThirdParties) LoadAllByOrganizationID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	organizationID gid.GID,
 	filter *ThirdPartyFilter,
 ) error {
@@ -825,10 +825,10 @@ WHERE
 	AND %s
 ORDER BY name ASC
 `
-	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment(), filter.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"organization_id": organizationID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 	maps.Copy(args, filter.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
@@ -849,7 +849,7 @@ ORDER BY name ASC
 func (v *ThirdParties) LoadByOrganizationID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	organizationID gid.GID,
 	cursor *page.Cursor[ThirdPartyOrderField],
 	filter *ThirdPartyFilter,
@@ -896,10 +896,10 @@ WHERE
 	AND %s
 	AND %s
 `
-	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"organization_id": organizationID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 	maps.Copy(args, filter.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 
@@ -921,7 +921,7 @@ WHERE
 func (v *ThirdParty) Update(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 UPDATE third_parties
@@ -958,7 +958,7 @@ SET
 WHERE %s
     AND id = @third_party_id
 `
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"third_party_id":                   v.ID,
@@ -993,7 +993,7 @@ WHERE %s
 		"vetting_error_message":            v.VettingErrorMessage,
 	}
 
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	result, err := conn.Exec(ctx, q, args)
 	if err != nil {
@@ -1010,7 +1010,7 @@ WHERE %s
 func (v ThirdParty) ExpireNonExpiredRiskAssessments(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	now := time.Now()
 
@@ -1025,13 +1025,13 @@ func (v ThirdParty) ExpireNonExpiredRiskAssessments(
 		AND expires_at > @now
 	`
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"third_party_id": v.ID,
 		"now":            now,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
@@ -1044,7 +1044,7 @@ func (v ThirdParty) ExpireNonExpiredRiskAssessments(
 func (v *ThirdParties) CountByAssetID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	assetID gid.GID,
 ) (int, error) {
 	q := `
@@ -1064,10 +1064,10 @@ FROM
 	vend
 WHERE %s
 `
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"asset_id": assetID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	row := conn.QueryRow(ctx, q, args)
 
@@ -1084,7 +1084,7 @@ WHERE %s
 func (v *ThirdParties) LoadByAssetID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	assetID gid.GID,
 	cursor *page.Cursor[ThirdPartyOrderField],
 ) error {
@@ -1169,10 +1169,10 @@ FROM
 WHERE %s
 	AND %s
 `
-	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"asset_id": assetID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
@@ -1193,7 +1193,7 @@ WHERE %s
 func (v *ThirdParties) CountByDatumID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	datumID gid.GID,
 ) (int, error) {
 	q := `
@@ -1213,10 +1213,10 @@ FROM
 	vend
 WHERE %s
 `
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"datum_id": datumID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	row := conn.QueryRow(ctx, q, args)
 
@@ -1233,7 +1233,7 @@ WHERE %s
 func (vs *ThirdParties) LoadAllByDatumID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	datumID gid.GID,
 ) error {
 	q := `
@@ -1317,10 +1317,10 @@ FROM
 WHERE %s
 ORDER BY name ASC
 `
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"datum_id": datumID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -1340,7 +1340,7 @@ ORDER BY name ASC
 func (vs *ThirdParties) LoadByDatumID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	datumID gid.GID,
 	cursor *page.Cursor[ThirdPartyOrderField],
 ) error {
@@ -1425,10 +1425,10 @@ FROM
 WHERE %s
 	AND %s
 `
-	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"datum_id": datumID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
@@ -1449,7 +1449,7 @@ WHERE %s
 func (v *ThirdParties) LoadByProcessingActivityID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	processingActivityID gid.GID,
 	cursor *page.Cursor[ThirdPartyOrderField],
 ) error {
@@ -1534,10 +1534,10 @@ FROM
 WHERE %s
 	AND %s
 `
-	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"processing_activity_id": processingActivityID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
@@ -1558,7 +1558,7 @@ WHERE %s
 func (v *ThirdParties) LoadAllByProcessingActivities(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	organizationID gid.GID,
 ) (map[gid.GID][]string, error) {
 	q := `
@@ -1598,7 +1598,7 @@ ORDER BY
 	args := pgx.StrictNamedArgs{
 		"organization_id": organizationID,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -1627,7 +1627,7 @@ ORDER BY
 func (vs *ThirdParties) LoadAllByAssetID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	assetID gid.GID,
 ) error {
 	q := `
@@ -1711,10 +1711,10 @@ FROM
 WHERE %s
 ORDER BY name ASC
 `
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"asset_id": assetID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -1734,7 +1734,7 @@ ORDER BY name ASC
 func (v *ThirdParty) LoadByOrganizationIDAndCommonThirdPartyID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	organizationID gid.GID,
 	commonThirdPartyID gid.GID,
 ) error {
@@ -1782,13 +1782,13 @@ ORDER BY id ASC
 LIMIT 1;
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"organization_id":       organizationID,
 		"common_third_party_id": commonThirdPartyID,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -1813,7 +1813,7 @@ LIMIT 1;
 func (v *ThirdParties) CountByMeasureID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	measureID gid.GID,
 ) (int, error) {
 	q := `
@@ -1834,10 +1834,10 @@ FROM
 	tps
 WHERE %s
 `
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"measure_id": measureID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	row := conn.QueryRow(ctx, q, args)
 
@@ -1853,7 +1853,7 @@ WHERE %s
 func (v *ThirdParties) LoadByMeasureID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	measureID gid.GID,
 	cursor *page.Cursor[ThirdPartyOrderField],
 ) error {
@@ -1938,10 +1938,10 @@ FROM
 WHERE %s
 	AND %s
 `
-	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"measure_id": measureID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
@@ -1962,7 +1962,7 @@ WHERE %s
 func (v *ThirdParties) CountByParentThirdPartyID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	parentThirdPartyID gid.GID,
 ) (int, error) {
 	q := `
@@ -1974,10 +1974,10 @@ WHERE
 	%s
 	AND parent_third_party_id = @parent_third_party_id
 `
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"parent_third_party_id": parentThirdPartyID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	var count int
 
@@ -1992,7 +1992,7 @@ WHERE
 func (v *ThirdParties) LoadAllAncestorsByThirdPartyID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	thirdPartyID gid.GID,
 ) error {
 	q := `
@@ -2118,13 +2118,13 @@ SELECT
 FROM ancestor_chain
 ORDER BY depth DESC
 `
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"third_party_id": thirdPartyID,
 		"max_depth":      MaxThirdPartyLevel,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -2144,7 +2144,7 @@ ORDER BY depth DESC
 func (v *ThirdParties) LoadByParentThirdPartyID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	parentThirdPartyID gid.GID,
 	cursor *page.Cursor[ThirdPartyOrderField],
 ) error {
@@ -2189,10 +2189,10 @@ WHERE
 	AND parent_third_party_id = @parent_third_party_id
 	AND %s
 `
-	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"parent_third_party_id": parentThirdPartyID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)

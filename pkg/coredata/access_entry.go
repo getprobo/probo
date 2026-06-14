@@ -113,7 +113,7 @@ func (e *AccessEntry) AuthorizationAttributes(
 func (e *AccessEntry) LoadByID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	id gid.GID,
 ) error {
 	q := `
@@ -152,10 +152,10 @@ WHERE
     AND id = @id
 LIMIT 1;
 `
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"id": id}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -179,7 +179,7 @@ LIMIT 1;
 func (e *AccessEntry) Insert(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 INSERT INTO
@@ -247,7 +247,7 @@ VALUES (
 
 	args := pgx.StrictNamedArgs{
 		"id":                        e.ID,
-		"tenant_id":                 scope.GetTenantID(),
+		"tenant_id":                 predicate.GetTenantID(),
 		"organization_id":           e.OrganizationID,
 		"access_review_campaign_id": e.AccessReviewCampaignID,
 		"access_source_id":          e.AccessSourceID,
@@ -287,7 +287,7 @@ VALUES (
 func (e *AccessEntry) Update(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 UPDATE access_entries
@@ -303,7 +303,7 @@ WHERE
     %s
     AND id = @id
 `
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"id":            e.ID,
@@ -315,7 +315,7 @@ WHERE
 		"decided_at":    e.DecidedAt,
 		"updated_at":    e.UpdatedAt,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	result, err := conn.Exec(ctx, q, args)
 	if err != nil {
@@ -332,7 +332,7 @@ WHERE
 func (entries *AccessEntries) LoadByCampaignID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	campaignID gid.GID,
 	cursor *page.Cursor[AccessEntryOrderField],
 	filter *AccessEntryFilter,
@@ -374,10 +374,10 @@ WHERE
     AND %s
     AND %s
 `
-	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"campaign_id": campaignID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 	maps.Copy(args, filter.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 
@@ -399,7 +399,7 @@ WHERE
 func (entries *AccessEntries) LoadByCampaignIDAndSourceID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	campaignID gid.GID,
 	sourceID gid.GID,
 	cursor *page.Cursor[AccessEntryOrderField],
@@ -443,10 +443,10 @@ WHERE
     AND %s
     AND %s
 `
-	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"campaign_id": campaignID, "source_id": sourceID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 	maps.Copy(args, filter.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 
@@ -468,7 +468,7 @@ WHERE
 func (entries *AccessEntries) CountByCampaignID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	campaignID gid.GID,
 	filter *AccessEntryFilter,
 ) (int, error) {
@@ -480,10 +480,10 @@ WHERE
     AND access_review_campaign_id = @campaign_id
     AND %s;
 `
-	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment(), filter.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"campaign_id": campaignID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 	maps.Copy(args, filter.SQLArguments())
 
 	var count int
@@ -497,7 +497,7 @@ WHERE
 func (entries *AccessEntries) CountByCampaignIDAndSourceID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	campaignID gid.GID,
 	sourceID gid.GID,
 	filter *AccessEntryFilter,
@@ -511,10 +511,10 @@ WHERE
     AND access_source_id = @source_id
     AND %s;
 `
-	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment(), filter.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"campaign_id": campaignID, "source_id": sourceID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 	maps.Copy(args, filter.SQLArguments())
 
 	var count int
@@ -528,7 +528,7 @@ WHERE
 func (entries *AccessEntries) CountPendingByCampaignID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	campaignID gid.GID,
 ) (int, error) {
 	q := `
@@ -539,10 +539,10 @@ WHERE
     AND access_review_campaign_id = @campaign_id
     AND decision = 'PENDING';
 `
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"campaign_id": campaignID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	var count int
 	if err := conn.QueryRow(ctx, q, args).Scan(&count); err != nil {
@@ -574,7 +574,7 @@ func (e *AccessEntry) LoadOrganizationID(
 func (e *AccessEntry) UpdateFlags(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 UPDATE access_entries
@@ -586,7 +586,7 @@ WHERE
     %s
     AND id = @id
 `
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"id":           e.ID,
@@ -594,7 +594,7 @@ WHERE
 		"flag_reasons": e.FlagReasons,
 		"updated_at":   e.UpdatedAt,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	result, err := conn.Exec(ctx, q, args)
 	if err != nil {
@@ -618,7 +618,7 @@ WHERE
 func (e *AccessEntry) Upsert(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 INSERT INTO access_entries (
@@ -699,7 +699,7 @@ ON CONFLICT (access_review_campaign_id, access_source_id, account_key) DO UPDATE
 
 	args := pgx.StrictNamedArgs{
 		"id":                        e.ID,
-		"tenant_id":                 scope.GetTenantID(),
+		"tenant_id":                 predicate.GetTenantID(),
 		"organization_id":           e.OrganizationID,
 		"access_review_campaign_id": e.AccessReviewCampaignID,
 		"access_source_id":          e.AccessSourceID,
@@ -746,7 +746,7 @@ type BaselineAccountEntry struct {
 func (entries *AccessEntries) LoadBaselineBySourceID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	campaignID gid.GID,
 	sourceID gid.GID,
 ) ([]BaselineAccountEntry, error) {
@@ -756,13 +756,13 @@ FROM access_entries
 WHERE %s
   AND access_review_campaign_id = @campaign_id
   AND access_source_id = @source_id
-`, scope.SQLFragment())
+`, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"campaign_id": campaignID,
 		"source_id":   sourceID,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -802,7 +802,7 @@ type MembershipAccount struct {
 func LoadMembershipAccountsByOrganizationID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	organizationID gid.GID,
 ) ([]MembershipAccount, error) {
 	q := `
@@ -824,12 +824,12 @@ WHERE
 ORDER BY
     i.email_address ASC
 `
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"organization_id": organizationID,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {

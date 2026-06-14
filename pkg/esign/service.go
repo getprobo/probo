@@ -174,11 +174,11 @@ func (s *Service) CreateSignature(
 	}
 
 	now := time.Now()
-	scope := coredata.NewScopeFromObjectID(req.OrganizationID)
+	predicate := coredata.NewPredicateFromObjectID(req.OrganizationID)
 
-	signatureID := gid.New(scope.GetTenantID(), coredata.ElectronicSignatureEntityType)
+	signatureID := gid.New(predicate.GetTenantID(), coredata.ElectronicSignatureEntityType)
 
-	stampedFileID, err := s.createStampedDocument(ctx, conn, scope, req.OrganizationID, req.FileID, signatureID)
+	stampedFileID, err := s.createStampedDocument(ctx, conn, predicate, req.OrganizationID, req.FileID, signatureID)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create stamped document: %w", err)
 	}
@@ -200,7 +200,7 @@ func (s *Service) CreateSignature(
 		UpdatedAt:      now,
 	}
 
-	if err := sig.Insert(ctx, conn, scope); err != nil {
+	if err := sig.Insert(ctx, conn, predicate); err != nil {
 		return nil, fmt.Errorf("cannot insert electronic signature: %w", err)
 	}
 
@@ -230,7 +230,7 @@ func (s *Service) CreateAndAcceptSignature(
 	}
 
 	now := time.Now()
-	scope := coredata.NewScopeFromObjectID(req.OrganizationID)
+	predicate := coredata.NewPredicateFromObjectID(req.OrganizationID)
 
 	sig.SignerFullName = &req.SignerFullName
 	sig.SignerIPAddress = &req.SignerIPAddr
@@ -239,7 +239,7 @@ func (s *Service) CreateAndAcceptSignature(
 	sig.Status = coredata.ElectronicSignatureStatusAccepted
 	sig.UpdatedAt = now
 
-	if err := sig.Update(ctx, conn, scope); err != nil {
+	if err := sig.Update(ctx, conn, predicate); err != nil {
 		return nil, fmt.Errorf("cannot accept signature: %w", err)
 	}
 
@@ -264,13 +264,13 @@ func (s *Service) CreateAndAcceptSignature(
 func (s *Service) createStampedDocument(
 	ctx context.Context,
 	conn pg.Tx,
-	scope coredata.Scoper,
+	predicate coredata.Predicater,
 	organizationID gid.GID,
 	originalFileID gid.GID,
 	signatureID gid.GID,
 ) (gid.GID, error) {
 	var originalFile coredata.File
-	if err := originalFile.LoadByID(ctx, conn, scope, originalFileID); err != nil {
+	if err := originalFile.LoadByID(ctx, conn, predicate, originalFileID); err != nil {
 		return gid.GID{}, fmt.Errorf("cannot load original file: %w", err)
 	}
 
@@ -286,7 +286,7 @@ func (s *Service) createStampedDocument(
 
 	now := time.Now()
 	stampedFile := coredata.File{
-		ID:             gid.New(scope.GetTenantID(), coredata.FileEntityType),
+		ID:             gid.New(predicate.GetTenantID(), coredata.FileEntityType),
 		OrganizationID: organizationID,
 		BucketName:     s.bucket,
 		MimeType:       "application/pdf",
@@ -312,7 +312,7 @@ func (s *Service) createStampedDocument(
 
 	stampedFile.FileSize = stampedSize
 
-	if err := stampedFile.Insert(ctx, conn, scope); err != nil {
+	if err := stampedFile.Insert(ctx, conn, predicate); err != nil {
 		return gid.GID{}, fmt.Errorf("cannot insert stamped file record: %w", err)
 	}
 
@@ -321,7 +321,7 @@ func (s *Service) createStampedDocument(
 
 func (s *Service) AcceptSignature(ctx context.Context, req *AcceptSignatureRequest) (*coredata.ElectronicSignature, error) {
 	var (
-		scope     = coredata.NewScopeFromObjectID(req.SignatureID)
+		predicate = coredata.NewPredicateFromObjectID(req.SignatureID)
 		now       = time.Now()
 		signature = coredata.ElectronicSignature{}
 	)
@@ -329,7 +329,7 @@ func (s *Service) AcceptSignature(ctx context.Context, req *AcceptSignatureReque
 	err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			if err := signature.LoadByID(ctx, tx, scope, req.SignatureID); err != nil {
+			if err := signature.LoadByID(ctx, tx, predicate, req.SignatureID); err != nil {
 				return fmt.Errorf("cannot load electronic signature: %w", err)
 			}
 
@@ -350,7 +350,7 @@ func (s *Service) AcceptSignature(ctx context.Context, req *AcceptSignatureReque
 			signature.Status = coredata.ElectronicSignatureStatusAccepted
 			signature.UpdatedAt = now
 
-			if err := signature.Update(ctx, tx, scope); err != nil {
+			if err := signature.Update(ctx, tx, predicate); err != nil {
 				return fmt.Errorf("cannot update signature: %w", err)
 			}
 
@@ -391,11 +391,11 @@ func (s *Service) RecordEvent(ctx context.Context, req *RecordEventRequest) erro
 func (s *Service) recordEvent(ctx context.Context, tx pg.Tx, req *RecordEventRequest) error {
 	var (
 		now   = time.Now()
-		scope = coredata.NewScopeFromObjectID(req.SignatureID)
+		predicate = coredata.NewPredicateFromObjectID(req.SignatureID)
 	)
 
 	event := coredata.ElectronicSignatureEvent{
-		ID:                    gid.New(scope.GetTenantID(), coredata.ElectronicSignatureEventEntityType),
+		ID:                    gid.New(predicate.GetTenantID(), coredata.ElectronicSignatureEventEntityType),
 		ElectronicSignatureID: req.SignatureID,
 		EventType:             req.EventType,
 		EventSource:           req.EventSource,
@@ -406,7 +406,7 @@ func (s *Service) recordEvent(ctx context.Context, tx pg.Tx, req *RecordEventReq
 		CreatedAt:             now,
 	}
 
-	if err := event.Insert(ctx, tx, scope); err != nil {
+	if err := event.Insert(ctx, tx, predicate); err != nil {
 		return fmt.Errorf("cannot insert signing event: %w", err)
 	}
 
@@ -415,14 +415,14 @@ func (s *Service) recordEvent(ctx context.Context, tx pg.Tx, req *RecordEventReq
 
 func (s *Service) GetSignatureByID(ctx context.Context, id gid.GID) (*coredata.ElectronicSignature, error) {
 	var (
-		scope     = coredata.NewScopeFromObjectID(id)
+		predicate = coredata.NewPredicateFromObjectID(id)
 		signature = coredata.ElectronicSignature{}
 	)
 
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			if err := signature.LoadByID(ctx, conn, scope, id); err != nil {
+			if err := signature.LoadByID(ctx, conn, predicate, id); err != nil {
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return ErrElectronicSignatureNotFound
 				}
@@ -446,14 +446,14 @@ func (s *Service) GenerateCertificateFileURL(
 	expiresIn time.Duration,
 ) (string, error) {
 	var (
-		scope = coredata.NewScopeFromObjectID(certificateFileID)
+		predicate = coredata.NewPredicateFromObjectID(certificateFileID)
 		file  = coredata.File{}
 	)
 
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			if err := file.LoadByID(ctx, conn, scope, certificateFileID); err != nil {
+			if err := file.LoadByID(ctx, conn, predicate, certificateFileID); err != nil {
 				return fmt.Errorf("cannot load certificate file: %w", err)
 			}
 
@@ -478,7 +478,7 @@ func (s *Service) GenerateSignatureFileURL(
 	expiresIn time.Duration,
 ) (string, error) {
 	var (
-		scope     = coredata.NewScopeFromObjectID(signatureID)
+		predicate = coredata.NewPredicateFromObjectID(signatureID)
 		signature coredata.ElectronicSignature
 		file      coredata.File
 	)
@@ -486,11 +486,11 @@ func (s *Service) GenerateSignatureFileURL(
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			if err := signature.LoadByID(ctx, conn, scope, signatureID); err != nil {
+			if err := signature.LoadByID(ctx, conn, predicate, signatureID); err != nil {
 				return fmt.Errorf("cannot load electronic signature: %w", err)
 			}
 
-			if err := file.LoadByID(ctx, conn, scope, signature.FileID); err != nil {
+			if err := file.LoadByID(ctx, conn, predicate, signature.FileID); err != nil {
 				return fmt.Errorf("cannot load signature file: %w", err)
 			}
 
@@ -514,14 +514,14 @@ func (s *Service) GetEventsBySignatureID(
 	signatureID gid.GID,
 ) (coredata.ElectronicSignatureEvents, error) {
 	var (
-		scope  = coredata.NewScopeFromObjectID(signatureID)
+		predicate = coredata.NewPredicateFromObjectID(signatureID)
 		events = coredata.ElectronicSignatureEvents{}
 	)
 
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			if err := events.LoadBySignatureID(ctx, conn, scope, signatureID); err != nil {
+			if err := events.LoadBySignatureID(ctx, conn, predicate, signatureID); err != nil {
 				return fmt.Errorf("cannot load events: %w", err)
 			}
 

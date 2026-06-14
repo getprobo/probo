@@ -129,7 +129,7 @@ WHERE
 func (c *OAuth2Client) LoadByID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	clientID gid.GID,
 ) error {
 	q := `
@@ -157,10 +157,10 @@ WHERE
 LIMIT 1;
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"id": clientID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -184,7 +184,7 @@ LIMIT 1;
 func (c *OAuth2Clients) LoadByOrganizationID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	organizationID gid.GID,
 	cursor *page.Cursor[OAuth2ClientOrderField],
 ) error {
@@ -215,12 +215,12 @@ WHERE
 
 	q = fmt.Sprintf(
 		q,
-		scope.SQLFragment(),
+		predicate.SQLFragment(),
 		cursor.SQLFragment(),
 	)
 
 	args := pgx.StrictNamedArgs{"organization_id": organizationID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
@@ -241,7 +241,7 @@ WHERE
 func (c *OAuth2Clients) CountByOrganizationID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	organizationID gid.GID,
 ) (int, error) {
 	q := `
@@ -254,10 +254,10 @@ WHERE
 	AND organization_id = @organization_id;
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"organization_id": organizationID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	var count int
 	if err := conn.QueryRow(ctx, q, args).Scan(&count); err != nil {
@@ -270,7 +270,7 @@ WHERE
 func (c *OAuth2Client) Insert(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 INSERT INTO iam_oauth2_clients (
@@ -312,7 +312,7 @@ INSERT INTO iam_oauth2_clients (
 
 	args := pgx.StrictNamedArgs{
 		"id":                         c.ID,
-		"tenant_id":                  scope.GetTenantID(),
+		"tenant_id":                  predicate.GetTenantID(),
 		"organization_id":            c.OrganizationID,
 		"client_secret_hash":         c.ClientSecretHash,
 		"client_name":                c.ClientName,
@@ -340,7 +340,7 @@ INSERT INTO iam_oauth2_clients (
 func (c *OAuth2Client) Update(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 UPDATE iam_oauth2_clients
@@ -361,7 +361,7 @@ WHERE
 	AND id = @id
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"id":                         c.ID,
@@ -377,7 +377,7 @@ WHERE
 		"contacts":                   c.Contacts,
 		"updated_at":                 c.UpdatedAt,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
@@ -390,7 +390,7 @@ WHERE
 func (c *OAuth2Client) Delete(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 DELETE FROM iam_oauth2_clients
@@ -399,10 +399,10 @@ WHERE
 	AND id = @id
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"id": c.ID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {

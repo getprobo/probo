@@ -24,7 +24,7 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 )
 
-func (s *Service) BuildScopeMermaidChart(ctx context.Context, scope coredata.Scoper, scopeID gid.GID) (string, error) {
+func (s *Service) BuildScopeMermaidChart(ctx context.Context, predicate coredata.Predicater, scopeID gid.GID) (string, error) {
 	var (
 		nodes      coredata.RiskAssessmentNodes
 		boundaries coredata.RiskAssessmentBoundaries
@@ -33,19 +33,19 @@ func (s *Service) BuildScopeMermaidChart(ctx context.Context, scope coredata.Sco
 	)
 
 	err := s.pg.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
-		if err := nodes.LoadAllByRiskAssessmentScopeID(ctx, conn, scope, scopeID); err != nil {
+		if err := nodes.LoadAllByRiskAssessmentScopeID(ctx, conn, predicate, scopeID); err != nil {
 			return fmt.Errorf("cannot load nodes: %w", err)
 		}
 
-		if err := boundaries.LoadAllByRiskAssessmentScopeID(ctx, conn, scope, scopeID); err != nil {
+		if err := boundaries.LoadAllByRiskAssessmentScopeID(ctx, conn, predicate, scopeID); err != nil {
 			return fmt.Errorf("cannot load boundaries: %w", err)
 		}
 
-		if err := processes.LoadAllByRiskAssessmentScopeID(ctx, conn, scope, scopeID); err != nil {
+		if err := processes.LoadAllByRiskAssessmentScopeID(ctx, conn, predicate, scopeID); err != nil {
 			return fmt.Errorf("cannot load processes: %w", err)
 		}
 
-		if err := threats.LoadAllByRiskAssessmentScopeID(ctx, conn, scope, scopeID); err != nil {
+		if err := threats.LoadAllByRiskAssessmentScopeID(ctx, conn, predicate, scopeID); err != nil {
 			return fmt.Errorf("cannot load threats: %w", err)
 		}
 

@@ -131,7 +131,7 @@ func newCmdList(f *cmdutil.Factory) *cobra.Command {
 
 					var tps coredata.TrackerPatterns
 
-					linkedIDs, err := tps.LoadAllLinkedCommonTrackerPatternIDsByCookieBannerID(ctx, conn, coredata.NewScopeFromObjectID(bannerID), bannerID)
+					linkedIDs, err := tps.LoadAllLinkedCommonTrackerPatternIDsByCookieBannerID(ctx, conn, coredata.NewPredicateFromObjectID(bannerID), bannerID)
 					if err != nil {
 						return err
 					}
@@ -149,7 +149,7 @@ func newCmdList(f *cmdutil.Factory) *cobra.Command {
 
 					var tps coredata.TrackerPatterns
 
-					linkedIDs, err := tps.LoadAllLinkedCommonTrackerPatternIDsByOrganizationID(ctx, conn, coredata.NewScopeFromObjectID(orgID), orgID)
+					linkedIDs, err := tps.LoadAllLinkedCommonTrackerPatternIDsByOrganizationID(ctx, conn, coredata.NewPredicateFromObjectID(orgID), orgID)
 					if err != nil {
 						return err
 					}

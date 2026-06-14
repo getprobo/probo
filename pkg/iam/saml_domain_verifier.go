@@ -184,8 +184,8 @@ func (v *SAMLDomainVerifier) tryVerifyDomain(ctx context.Context, configID gid.G
 			config.EnforcementPolicy = coredata.SAMLEnforcementPolicyOptional
 			config.UpdatedAt = now
 
-			scope := coredata.NewScopeFromObjectID(config.OrganizationID)
-			if err := config.Update(ctx, tx, scope); err != nil {
+			predicate := coredata.NewPredicateFromObjectID(config.OrganizationID)
+			if err := config.Update(ctx, tx, predicate); err != nil {
 				return fmt.Errorf("cannot update SAML configuration: %w", err)
 			}
 

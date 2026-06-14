@@ -95,7 +95,7 @@ func (s *StatementOfApplicability) AuthorizationAttributes(
 func (s *StatementOfApplicability) LoadByID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	statementOfApplicabilityID gid.GID,
 ) error {
 	q := `
@@ -114,10 +114,10 @@ WHERE
 LIMIT 1;
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"statement_of_applicability_id": statementOfApplicabilityID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -141,7 +141,7 @@ LIMIT 1;
 func (s *StatementsOfApplicability) LoadByOrganizationID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	organizationID gid.GID,
 	cursor *page.Cursor[StatementOfApplicabilityOrderField],
 ) error {
@@ -160,10 +160,10 @@ WHERE
     AND organization_id = @organization_id
     AND %s
 `
-	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.NamedArgs{"organization_id": organizationID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
@@ -184,7 +184,7 @@ WHERE
 func (s *StatementsOfApplicability) CountByOrganizationID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	organizationID gid.GID,
 ) (int, error) {
 	q := `
@@ -196,12 +196,12 @@ WHERE
     %s
     AND organization_id = @organization_id
 `
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"organization_id": organizationID,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	row := conn.QueryRow(ctx, q, args)
 
@@ -216,7 +216,7 @@ WHERE
 func (s *StatementOfApplicability) Insert(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 INSERT INTO
@@ -241,7 +241,7 @@ VALUES (
 `
 
 	args := pgx.StrictNamedArgs{
-		"tenant_id":                     scope.GetTenantID(),
+		"tenant_id":                     predicate.GetTenantID(),
 		"statement_of_applicability_id": s.ID,
 		"organization_id":               s.OrganizationID,
 		"name":                          s.Name,
@@ -269,7 +269,7 @@ VALUES (
 func (s *StatementOfApplicability) Update(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 UPDATE statements_of_applicability
@@ -282,7 +282,7 @@ WHERE
     AND id = @statement_of_applicability_id
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"statement_of_applicability_id": s.ID,
@@ -290,7 +290,7 @@ WHERE
 		"document_id":                   s.DocumentID,
 		"updated_at":                    s.UpdatedAt,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	result, err := conn.Exec(ctx, q, args)
 	if err != nil {
@@ -315,7 +315,7 @@ WHERE
 func (s *StatementOfApplicability) Delete(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 DELETE FROM statements_of_applicability
@@ -323,12 +323,12 @@ WHERE
     %s
     AND id = @statement_of_applicability_id
 `
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"statement_of_applicability_id": s.ID,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {

@@ -40,7 +40,7 @@ type (
 func (cm ControlMeasure) Upsert(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 INSERT INTO
@@ -65,7 +65,7 @@ ON CONFLICT (control_id, measure_id) DO NOTHING;
 		"control_id":      cm.ControlID,
 		"measure_id":      cm.MeasureID,
 		"organization_id": cm.OrganizationID,
-		"tenant_id":       scope.GetTenantID(),
+		"tenant_id":       predicate.GetTenantID(),
 		"created_at":      cm.CreatedAt,
 	}
 	_, err := conn.Exec(ctx, q, args)
@@ -76,7 +76,7 @@ ON CONFLICT (control_id, measure_id) DO NOTHING;
 func (cm ControlMeasure) Delete(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 	controlID gid.GID,
 	measureID gid.GID,
 ) error {
@@ -94,8 +94,8 @@ WHERE
 		"control_id": controlID,
 		"measure_id": measureID,
 	}
-	maps.Copy(args, scope.SQLArguments())
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	maps.Copy(args, predicate.SQLArguments())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	_, err := conn.Exec(ctx, q, args)
 
@@ -111,7 +111,7 @@ type ControlsWithRisk []*ControlWithRisk
 func (cwrs *ControlsWithRisk) LoadByControlIDs(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	controlIDs []gid.GID,
 ) error {
 	q := `
@@ -155,10 +155,10 @@ FROM
 WHERE
 	%s
 `
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.NamedArgs{"control_ids": controlIDs}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {

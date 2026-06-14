@@ -46,12 +46,12 @@ func (s *CompliancePageService) GenerateLogoURL(
 	file := &coredata.File{}
 	compliancePage := &coredata.TrustCenter{}
 
-	scope := coredata.NewScopeFromObjectID(compliancePageID)
+	predicate := coredata.NewPredicateFromObjectID(compliancePageID)
 
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			if err := compliancePage.LoadByID(ctx, conn, scope, compliancePageID); err != nil {
+			if err := compliancePage.LoadByID(ctx, conn, predicate, compliancePageID); err != nil {
 				return fmt.Errorf("cannot load compliance page: %w", err)
 			}
 
@@ -59,7 +59,7 @@ func (s *CompliancePageService) GenerateLogoURL(
 				return nil
 			}
 
-			if err := file.LoadByID(ctx, conn, scope, *compliancePage.LogoFileID); err != nil {
+			if err := file.LoadByID(ctx, conn, predicate, *compliancePage.LogoFileID); err != nil {
 				return fmt.Errorf("cannot load file: %w", err)
 			}
 
@@ -95,27 +95,27 @@ func (s *CompliancePageService) EmailPresenterConfig(ctx context.Context, compli
 		emailPresenterCfg = emails.DefaultPresenterConfig(s.baseURL)
 	)
 
-	scope := coredata.NewScopeFromObjectID(compliancePageID)
+	predicate := coredata.NewPredicateFromObjectID(compliancePageID)
 
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			if err := compliancePage.LoadByID(ctx, conn, scope, compliancePageID); err != nil {
+			if err := compliancePage.LoadByID(ctx, conn, predicate, compliancePageID); err != nil {
 				return fmt.Errorf("cannot load compliance page: %w", err)
 			}
 
 			if compliancePage.LogoFileID != nil {
-				if err := logoFile.LoadByID(ctx, conn, scope, *compliancePage.LogoFileID); err != nil {
+				if err := logoFile.LoadByID(ctx, conn, predicate, *compliancePage.LogoFileID); err != nil {
 					return fmt.Errorf("cannot load logoFile: %w", err)
 				}
 			}
 
-			if err := organization.LoadByID(ctx, conn, scope, compliancePage.OrganizationID); err != nil {
+			if err := organization.LoadByID(ctx, conn, predicate, compliancePage.OrganizationID); err != nil {
 				return fmt.Errorf("cannot load organization: %w", err)
 			}
 
 			customDomain = &coredata.CustomDomain{}
-			if err := customDomain.LoadByOrganizationID(ctx, conn, scope, organization.ID); err != nil {
+			if err := customDomain.LoadByOrganizationID(ctx, conn, predicate, organization.ID); err != nil {
 				if !errors.Is(err, coredata.ErrResourceNotFound) {
 					return fmt.Errorf("cannot load custom domain: %w", err)
 				}

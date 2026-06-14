@@ -108,7 +108,7 @@ func (d *Document) AuthorizationAttributes(
 func (p *Document) LoadByID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	documentID gid.GID,
 ) error {
 	q := `
@@ -140,10 +140,10 @@ WHERE
 LIMIT 1;
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"document_id": documentID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -167,7 +167,7 @@ LIMIT 1;
 func (p *Document) LoadByIDWithFilter(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	documentID gid.GID,
 	filter *DocumentFilter,
 ) error {
@@ -201,10 +201,10 @@ WHERE
 LIMIT 1;
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment(), filter.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"document_id": documentID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 	maps.Copy(args, filter.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
@@ -229,7 +229,7 @@ LIMIT 1;
 func (p *Documents) LoadByIDs(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	documentIDs []gid.GID,
 ) error {
 	q := `
@@ -260,10 +260,10 @@ WHERE
     AND documents.id = ANY(@document_ids)
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"document_ids": documentIDs}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -283,7 +283,7 @@ WHERE
 func (p *Documents) CountByOrganizationID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	organizationID gid.GID,
 	filter *DocumentFilter,
 ) (int, error) {
@@ -299,10 +299,10 @@ WHERE
     AND %s
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment(), filter.SQLFragment())
 
 	args := pgx.NamedArgs{"organization_id": organizationID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 	maps.Copy(args, filter.SQLArguments())
 
 	row := conn.QueryRow(ctx, q, args)
@@ -318,7 +318,7 @@ WHERE
 func (p *Documents) LoadByOrganizationID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	organizationID gid.GID,
 	cursor *page.Cursor[DocumentOrderField],
 	filter *DocumentFilter,
@@ -355,10 +355,10 @@ base AS (
 SELECT * FROM base WHERE %s
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.NamedArgs{"organization_id": organizationID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 	maps.Copy(args, filter.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 
@@ -380,7 +380,7 @@ SELECT * FROM base WHERE %s
 func (p *Documents) LoadAllByOrganizationID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	organizationID gid.GID,
 	filter *DocumentFilter,
 ) error {
@@ -414,10 +414,10 @@ WHERE
 ORDER BY title ASC
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment(), filter.SQLFragment())
 
 	args := pgx.NamedArgs{"organization_id": organizationID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 	maps.Copy(args, filter.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
@@ -438,7 +438,7 @@ ORDER BY title ASC
 func (p *Documents) LoadPublishedByOrganizationID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	organizationID gid.GID,
 	cursor *page.Cursor[DocumentOrderField],
 	filter *DocumentFilter,
@@ -489,10 +489,10 @@ base AS (
 )
 SELECT * FROM base WHERE %s
 `
-	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.NamedArgs{"organization_id": organizationID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 	maps.Copy(args, filter.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 
@@ -514,7 +514,7 @@ SELECT * FROM base WHERE %s
 func (p Document) Insert(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 INSERT INTO
@@ -547,7 +547,7 @@ VALUES (
 `
 
 	args := pgx.StrictNamedArgs{
-		"tenant_id":               scope.GetTenantID(),
+		"tenant_id":               predicate.GetTenantID(),
 		"document_id":             p.ID,
 		"organization_id":         p.OrganizationID,
 		"current_published_major": p.CurrentPublishedMajor,
@@ -567,16 +567,16 @@ VALUES (
 func (p Document) SoftDelete(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 UPDATE documents SET deleted_at = @deleted_at WHERE %s AND id = @document_id
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"document_id": p.ID, "deleted_at": time.Now()}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
 
@@ -586,17 +586,17 @@ UPDATE documents SET deleted_at = @deleted_at WHERE %s AND id = @document_id
 func (p Document) DeleteByOrganizationID(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 	organizationID gid.GID,
 ) error {
 	q := `
 DELETE FROM documents WHERE %s AND organization_id = @organization_id
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"organization_id": organizationID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
 
@@ -606,7 +606,7 @@ DELETE FROM documents WHERE %s AND organization_id = @organization_id
 func (p *Document) Update(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 UPDATE
@@ -623,7 +623,7 @@ WHERE
 	AND id = @document_id
 	AND deleted_at IS NULL
 `
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"document_id":             p.ID,
@@ -634,7 +634,7 @@ WHERE
 		"status":                  p.Status,
 		"archived_at":             p.ArchivedAt,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
@@ -647,7 +647,7 @@ WHERE
 func (p *Documents) CountByControlID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	controlID gid.GID,
 	filter *DocumentFilter,
 ) (int, error) {
@@ -665,10 +665,10 @@ INNER JOIN controls_documents cp ON scoped_documents.id = cp.document_id
 WHERE cp.control_id = @control_id
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment(), filter.SQLFragment())
 
 	args := pgx.NamedArgs{"control_id": controlID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 	maps.Copy(args, filter.SQLArguments())
 
 	row := conn.QueryRow(ctx, q, args)
@@ -684,7 +684,7 @@ WHERE cp.control_id = @control_id
 func (p *Documents) LoadByControlID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	controlID gid.GID,
 	cursor *page.Cursor[DocumentOrderField],
 	filter *DocumentFilter,
@@ -723,10 +723,10 @@ base AS (
 )
 SELECT * FROM base WHERE %s
 `
-	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.NamedArgs{"control_id": controlID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 	maps.Copy(args, filter.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 
@@ -748,7 +748,7 @@ SELECT * FROM base WHERE %s
 func (p *Documents) CountByRiskID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	riskID gid.GID,
 	filter *DocumentFilter,
 ) (int, error) {
@@ -766,10 +766,10 @@ INNER JOIN risks_documents rp ON scoped_documents.id = rp.document_id
 WHERE rp.risk_id = @risk_id
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment(), filter.SQLFragment())
 
 	args := pgx.NamedArgs{"risk_id": riskID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 	maps.Copy(args, filter.SQLArguments())
 
 	row := conn.QueryRow(ctx, q, args)
@@ -785,7 +785,7 @@ WHERE rp.risk_id = @risk_id
 func (p *Documents) LoadByRiskID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	riskID gid.GID,
 	cursor *page.Cursor[DocumentOrderField],
 	filter *DocumentFilter,
@@ -824,10 +824,10 @@ base AS (
 )
 SELECT * FROM base WHERE %s
 `
-	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.NamedArgs{"risk_id": riskID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 	maps.Copy(args, filter.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 
@@ -849,7 +849,7 @@ SELECT * FROM base WHERE %s
 func (p *Documents) CountByMeasureID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	measureID gid.GID,
 	filter *DocumentFilter,
 ) (int, error) {
@@ -867,10 +867,10 @@ INNER JOIN measures_documents md ON scoped_documents.id = md.document_id
 WHERE md.measure_id = @measure_id
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment(), filter.SQLFragment())
 
 	args := pgx.NamedArgs{"measure_id": measureID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 	maps.Copy(args, filter.SQLArguments())
 
 	row := conn.QueryRow(ctx, q, args)
@@ -886,7 +886,7 @@ WHERE md.measure_id = @measure_id
 func (p *Documents) LoadByMeasureID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	measureID gid.GID,
 	cursor *page.Cursor[DocumentOrderField],
 	filter *DocumentFilter,
@@ -925,10 +925,10 @@ base AS (
 )
 SELECT * FROM base WHERE %s
 `
-	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.NamedArgs{"measure_id": measureID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 	maps.Copy(args, filter.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 
@@ -950,12 +950,12 @@ SELECT * FROM base WHERE %s
 func (p *Documents) BulkSoftDelete(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 UPDATE documents SET deleted_at = @deleted_at WHERE %s AND id = ANY(@document_ids)
 `
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	ids := make([]gid.GID, len(*p))
 	for i, doc := range *p {
@@ -965,7 +965,7 @@ UPDATE documents SET deleted_at = @deleted_at WHERE %s AND id = ANY(@document_id
 	args := pgx.StrictNamedArgs{
 		"document_ids": ids,
 		"deleted_at":   time.Now()}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
 
@@ -975,12 +975,12 @@ UPDATE documents SET deleted_at = @deleted_at WHERE %s AND id = ANY(@document_id
 func (p *Documents) BulkArchive(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 UPDATE documents SET status = 'ARCHIVED', archived_at = @archived_at, trust_center_visibility = 'NONE' WHERE %s AND id = ANY(@document_ids)
 `
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	ids := make([]gid.GID, len(*p))
 	for i, doc := range *p {
@@ -991,7 +991,7 @@ UPDATE documents SET status = 'ARCHIVED', archived_at = @archived_at, trust_cent
 		"document_ids": ids,
 		"archived_at":  time.Now(),
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	if _, err := conn.Exec(ctx, q, args); err != nil {
 		return fmt.Errorf("cannot bulk archive documents: %w", err)
@@ -1003,12 +1003,12 @@ UPDATE documents SET status = 'ARCHIVED', archived_at = @archived_at, trust_cent
 func (p *Documents) BulkUnarchive(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 UPDATE documents SET status = 'ACTIVE', archived_at = NULL WHERE %s AND id = ANY(@document_ids)
 `
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	ids := make([]gid.GID, len(*p))
 	for i, doc := range *p {
@@ -1018,7 +1018,7 @@ UPDATE documents SET status = 'ACTIVE', archived_at = NULL WHERE %s AND id = ANY
 	args := pgx.StrictNamedArgs{
 		"document_ids": ids,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	if _, err := conn.Exec(ctx, q, args); err != nil {
 		return fmt.Errorf("cannot bulk unarchive documents: %w", err)
@@ -1030,7 +1030,7 @@ UPDATE documents SET status = 'ACTIVE', archived_at = NULL WHERE %s AND id = ANY
 func (p *Document) IsLastSignableVersionSignedByUserEmail(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	documentID gid.GID,
 	userEmail mail.Addr,
 ) (bool, error) {
@@ -1067,13 +1067,13 @@ SELECT EXISTS (
 ) AS signed
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"document_id": documentID,
 		"user_email":  userEmail,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -1091,7 +1091,7 @@ SELECT EXISTS (
 func (p *Document) GetViewerApprovalStateForLastVersion(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	documentID gid.GID,
 	identityID gid.GID,
 ) (DocumentVersionApprovalDecisionState, error) {
@@ -1117,13 +1117,13 @@ ORDER BY major DESC, quorum_created_at DESC
 LIMIT 1
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"document_id": documentID,
 		"identity_id": identityID,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {

@@ -117,7 +117,7 @@ func (s *Service) RenderCompliancePageMarkdown(
 	ctx context.Context,
 	w io.Writer,
 	trustCenterID gid.GID,
-	scope coredata.Scoper,
+	predicate coredata.Predicater,
 ) error {
 	org, err := s.GetOrganizationByTrustCenterID(ctx, trustCenterID)
 	if err != nil {
@@ -144,32 +144,32 @@ func (s *Service) RenderCompliancePageMarkdown(
 		data.Details = append(data.Details, compliancePageDetail{Label: "Headquarters", Value: *org.HeadquarterAddress})
 	}
 
-	data.Frameworks, err = s.fetchComplianceFrameworks(ctx, scope, trustCenterID)
+	data.Frameworks, err = s.fetchComplianceFrameworks(ctx, predicate, trustCenterID)
 	if err != nil {
 		return fmt.Errorf("cannot fetch compliance frameworks: %w", err)
 	}
 
-	data.Documents, err = s.fetchDocuments(ctx, scope, org.ID)
+	data.Documents, err = s.fetchDocuments(ctx, predicate, org.ID)
 	if err != nil {
 		return fmt.Errorf("cannot fetch documents: %w", err)
 	}
 
-	data.Audits, err = s.fetchAudits(ctx, scope, org.ID)
+	data.Audits, err = s.fetchAudits(ctx, predicate, org.ID)
 	if err != nil {
 		return fmt.Errorf("cannot fetch audits: %w", err)
 	}
 
-	data.ThirdParties, err = s.fetchThirdParties(ctx, scope, org.ID)
+	data.ThirdParties, err = s.fetchThirdParties(ctx, predicate, org.ID)
 	if err != nil {
 		return fmt.Errorf("cannot fetch thirdParties: %w", err)
 	}
 
-	data.References, err = s.fetchReferences(ctx, scope, trustCenterID)
+	data.References, err = s.fetchReferences(ctx, predicate, trustCenterID)
 	if err != nil {
 		return fmt.Errorf("cannot fetch references: %w", err)
 	}
 
-	data.ExternalLinks, err = s.fetchExternalLinks(ctx, scope, trustCenterID)
+	data.ExternalLinks, err = s.fetchExternalLinks(ctx, predicate, trustCenterID)
 	if err != nil {
 		return fmt.Errorf("cannot fetch external links: %w", err)
 	}
@@ -197,7 +197,7 @@ func (s *Service) RenderSitemap(
 	ctx context.Context,
 	w io.Writer,
 	trustCenterID gid.GID,
-	scope coredata.Scoper,
+	predicate coredata.Predicater,
 	baseURL string,
 ) error {
 	org, err := s.GetOrganizationByTrustCenterID(ctx, trustCenterID)
@@ -209,7 +209,7 @@ func (s *Service) RenderSitemap(
 		BaseURL: baseURL,
 	}
 
-	data.Documents, err = s.fetchDocumentIDs(ctx, scope, org.ID)
+	data.Documents, err = s.fetchDocumentIDs(ctx, predicate, org.ID)
 	if err != nil {
 		return fmt.Errorf("cannot fetch document IDs for sitemap: %w", err)
 	}
@@ -239,7 +239,7 @@ func (s *Service) RenderRobotsTxt(
 	return nil
 }
 
-func (s *Service) fetchDocumentIDs(ctx context.Context, scope coredata.Scoper, orgID gid.GID) ([]string, error) {
+func (s *Service) fetchDocumentIDs(ctx context.Context, predicate coredata.Predicater, orgID gid.GID) ([]string, error) {
 	var ids []string
 
 	var cursorKey *page.CursorKey
@@ -254,7 +254,7 @@ func (s *Service) fetchDocumentIDs(ctx context.Context, scope coredata.Scoper, o
 			},
 		)
 
-		result, err := s.Documents.ListForOrganizationId(ctx, scope, orgID, cursor)
+		result, err := s.Documents.ListForOrganizationId(ctx, predicate, orgID, cursor)
 		if err != nil {
 			return nil, fmt.Errorf("cannot list documents: %w", err)
 		}
@@ -279,7 +279,7 @@ func (s *Service) fetchDocumentIDs(ctx context.Context, scope coredata.Scoper, o
 	return ids, nil
 }
 
-func (s *Service) fetchComplianceFrameworks(ctx context.Context, scope coredata.Scoper, trustCenterID gid.GID) ([]compliancePageFramework, error) {
+func (s *Service) fetchComplianceFrameworks(ctx context.Context, predicate coredata.Predicater, trustCenterID gid.GID) ([]compliancePageFramework, error) {
 	var frameworks []compliancePageFramework
 
 	var cursorKey *page.CursorKey
@@ -294,7 +294,7 @@ func (s *Service) fetchComplianceFrameworks(ctx context.Context, scope coredata.
 			},
 		)
 
-		result, err := s.ComplianceFrameworks.ListByTrustCenterID(ctx, scope, trustCenterID, cursor)
+		result, err := s.ComplianceFrameworks.ListByTrustCenterID(ctx, predicate, trustCenterID, cursor)
 		if err != nil {
 			return nil, fmt.Errorf("cannot list compliance frameworks: %w", err)
 		}
@@ -304,7 +304,7 @@ func (s *Service) fetchComplianceFrameworks(ctx context.Context, scope coredata.
 				continue
 			}
 
-			fw, err := s.Frameworks.Get(ctx, scope, cf.FrameworkID)
+			fw, err := s.Frameworks.Get(ctx, predicate, cf.FrameworkID)
 			if err != nil {
 				return nil, fmt.Errorf("cannot get framework %s: %w", cf.FrameworkID, err)
 			}
@@ -329,7 +329,7 @@ func (s *Service) fetchComplianceFrameworks(ctx context.Context, scope coredata.
 	return frameworks, nil
 }
 
-func (s *Service) fetchDocuments(ctx context.Context, scope coredata.Scoper, orgID gid.GID) ([]compliancePageDocument, error) {
+func (s *Service) fetchDocuments(ctx context.Context, predicate coredata.Predicater, orgID gid.GID) ([]compliancePageDocument, error) {
 	var docs []compliancePageDocument
 
 	var cursorKey *page.CursorKey
@@ -344,7 +344,7 @@ func (s *Service) fetchDocuments(ctx context.Context, scope coredata.Scoper, org
 			},
 		)
 
-		result, err := s.Documents.ListForOrganizationId(ctx, scope, orgID, cursor)
+		result, err := s.Documents.ListForOrganizationId(ctx, predicate, orgID, cursor)
 		if err != nil {
 			return nil, fmt.Errorf("cannot list documents: %w", err)
 		}
@@ -375,7 +375,7 @@ func (s *Service) fetchDocuments(ctx context.Context, scope coredata.Scoper, org
 	return docs, nil
 }
 
-func (s *Service) fetchAudits(ctx context.Context, scope coredata.Scoper, orgID gid.GID) ([]compliancePageAudit, error) {
+func (s *Service) fetchAudits(ctx context.Context, predicate coredata.Predicater, orgID gid.GID) ([]compliancePageAudit, error) {
 	var audits []compliancePageAudit
 
 	var cursorKey *page.CursorKey
@@ -390,7 +390,7 @@ func (s *Service) fetchAudits(ctx context.Context, scope coredata.Scoper, orgID 
 			},
 		)
 
-		result, err := s.Audits.ListForOrganizationId(ctx, scope, orgID, cursor)
+		result, err := s.Audits.ListForOrganizationId(ctx, predicate, orgID, cursor)
 		if err != nil {
 			return nil, fmt.Errorf("cannot list audits: %w", err)
 		}
@@ -402,7 +402,7 @@ func (s *Service) fetchAudits(ctx context.Context, scope coredata.Scoper, orgID 
 
 			frameworkName := ""
 
-			fw, err := s.Frameworks.Get(ctx, scope, audit.FrameworkID)
+			fw, err := s.Frameworks.Get(ctx, predicate, audit.FrameworkID)
 			if err == nil {
 				frameworkName = fw.Name
 			}
@@ -434,7 +434,7 @@ func (s *Service) fetchAudits(ctx context.Context, scope coredata.Scoper, orgID 
 	return audits, nil
 }
 
-func (s *Service) fetchThirdParties(ctx context.Context, scope coredata.Scoper, orgID gid.GID) ([]compliancePageThirdParty, error) {
+func (s *Service) fetchThirdParties(ctx context.Context, predicate coredata.Predicater, orgID gid.GID) ([]compliancePageThirdParty, error) {
 	var thirdParties []compliancePageThirdParty
 
 	var cursorKey *page.CursorKey
@@ -449,7 +449,7 @@ func (s *Service) fetchThirdParties(ctx context.Context, scope coredata.Scoper, 
 			},
 		)
 
-		result, err := s.ThirdParties.ListForOrganizationId(ctx, scope, orgID, cursor)
+		result, err := s.ThirdParties.ListForOrganizationId(ctx, predicate, orgID, cursor)
 		if err != nil {
 			return nil, fmt.Errorf("cannot list thirdParties: %w", err)
 		}
@@ -483,7 +483,7 @@ func (s *Service) fetchThirdParties(ctx context.Context, scope coredata.Scoper, 
 	return thirdParties, nil
 }
 
-func (s *Service) fetchReferences(ctx context.Context, scope coredata.Scoper, trustCenterID gid.GID) ([]compliancePageReference, error) {
+func (s *Service) fetchReferences(ctx context.Context, predicate coredata.Predicater, trustCenterID gid.GID) ([]compliancePageReference, error) {
 	var refs []compliancePageReference
 
 	var cursorKey *page.CursorKey
@@ -498,7 +498,7 @@ func (s *Service) fetchReferences(ctx context.Context, scope coredata.Scoper, tr
 			},
 		)
 
-		result, err := s.TrustCenterReferences.ListForTrustCenterID(ctx, scope, trustCenterID, cursor)
+		result, err := s.TrustCenterReferences.ListForTrustCenterID(ctx, predicate, trustCenterID, cursor)
 		if err != nil {
 			return nil, fmt.Errorf("cannot list references: %w", err)
 		}
@@ -527,7 +527,7 @@ func (s *Service) fetchReferences(ctx context.Context, scope coredata.Scoper, tr
 	return refs, nil
 }
 
-func (s *Service) fetchExternalLinks(ctx context.Context, scope coredata.Scoper, trustCenterID gid.GID) ([]compliancePageExternalLink, error) {
+func (s *Service) fetchExternalLinks(ctx context.Context, predicate coredata.Predicater, trustCenterID gid.GID) ([]compliancePageExternalLink, error) {
 	var links []compliancePageExternalLink
 
 	var cursorKey *page.CursorKey
@@ -542,7 +542,7 @@ func (s *Service) fetchExternalLinks(ctx context.Context, scope coredata.Scoper,
 			},
 		)
 
-		result, err := s.ComplianceExternalURLs.ListForTrustCenterID(ctx, scope, trustCenterID, cursor)
+		result, err := s.ComplianceExternalURLs.ListForTrustCenterID(ctx, predicate, trustCenterID, cursor)
 		if err != nil {
 			return nil, fmt.Errorf("cannot list external links: %w", err)
 		}

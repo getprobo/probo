@@ -103,10 +103,10 @@ func NewService(
 }
 
 // Sources returns a tenant-scoped AccessSourceService.
-func (s *Service) Sources(scope coredata.Scoper) *AccessSourceService {
+func (s *Service) Sources(predicate coredata.Predicater) *AccessSourceService {
 	return &AccessSourceService{
 		pg:                s.pg,
-		scope:             scope,
+		predicate:         predicate,
 		encryptionKey:     s.encryptionKey,
 		connectorRegistry: s.connectorRegistry,
 		providerRegistry:  s.providerRegistry,
@@ -114,21 +114,19 @@ func (s *Service) Sources(scope coredata.Scoper) *AccessSourceService {
 }
 
 // Campaigns returns a tenant-scoped CampaignService.
-func (s *Service) Campaigns(scope coredata.Scoper) *CampaignService {
-	return NewCampaignService(s.pg, scope)
+func (s *Service) Campaigns(predicate coredata.Predicater) *CampaignService {
+	return NewCampaignService(s.pg, predicate)
 }
 
 // Entries returns a tenant-scoped AccessEntryService.
-func (s *Service) Entries(scope coredata.Scoper) *AccessEntryService {
-	return &AccessEntryService{pg: s.pg, scope: scope}
+func (s *Service) Entries(predicate coredata.Predicater) *AccessEntryService {
+	return &AccessEntryService{pg: s.pg, predicate: predicate}
 }
 
 // Engine returns a tenant-scoped ReviewEngine.
-func (s *Service) Engine(scope coredata.Scoper) *ReviewEngine {
+func (s *Service) Engine(predicate coredata.Predicater) *ReviewEngine {
 	return NewReviewEngine(
-		s.pg,
-		scope,
-		s.encryptionKey,
+		s.pg, predicate, s.encryptionKey,
 		s.connectorRegistry,
 		s.providerRegistry,
 		s.logger.Named("review_engine"),

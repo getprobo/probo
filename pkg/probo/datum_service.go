@@ -77,7 +77,7 @@ func (udr *UpdateDatumRequest) Validate() error {
 }
 
 func (s DatumService) Get(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	datumID gid.GID,
 ) (*coredata.Datum, error) {
 	datum := &coredata.Datum{}
@@ -85,7 +85,7 @@ func (s DatumService) Get(
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			return datum.LoadByID(ctx, conn, scope, datumID)
+			return datum.LoadByID(ctx, conn, predicate, datumID)
 		},
 	)
 	if err != nil {
@@ -96,7 +96,7 @@ func (s DatumService) Get(
 }
 
 func (s DatumService) GetByOwnerID(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	ownerID gid.GID,
 ) (*coredata.Datum, error) {
 	datum := &coredata.Datum{OwnerID: ownerID}
@@ -104,7 +104,7 @@ func (s DatumService) GetByOwnerID(
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			return datum.LoadByOwnerID(ctx, conn, scope)
+			return datum.LoadByOwnerID(ctx, conn, predicate)
 		},
 	)
 	if err != nil {
@@ -115,7 +115,7 @@ func (s DatumService) GetByOwnerID(
 }
 
 func (s DatumService) CountForOrganizationID(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	organizationID gid.GID,
 ) (int, error) {
 	var count int
@@ -125,7 +125,7 @@ func (s DatumService) CountForOrganizationID(
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			data := coredata.Data{}
 
-			count, err = data.CountByOrganizationID(ctx, conn, scope, organizationID)
+			count, err = data.CountByOrganizationID(ctx, conn, predicate, organizationID)
 			if err != nil {
 				return fmt.Errorf("cannot count data: %w", err)
 			}
@@ -141,7 +141,7 @@ func (s DatumService) CountForOrganizationID(
 }
 
 func (s DatumService) ListForOrganizationID(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	organizationID gid.GID,
 	cursor *page.Cursor[coredata.DatumOrderField],
 ) (*page.Page[*coredata.Datum, coredata.DatumOrderField], error) {
@@ -152,9 +152,7 @@ func (s DatumService) ListForOrganizationID(
 		func(ctx context.Context, conn pg.Querier) error {
 			return data.LoadByOrganizationID(
 				ctx,
-				conn,
-				scope,
-				organizationID,
+				conn, predicate, organizationID,
 				cursor,
 			)
 		},
@@ -167,7 +165,7 @@ func (s DatumService) ListForOrganizationID(
 }
 
 func (s DatumService) Update(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	req UpdateDatumRequest,
 ) (*coredata.Datum, error) {
 	if err := req.Validate(); err != nil {
@@ -179,7 +177,7 @@ func (s DatumService) Update(
 	datumThirdParties := &coredata.DatumThirdParties{}
 
 	err := s.svc.pg.WithTx(ctx, func(ctx context.Context, conn pg.Tx) error {
-		if err := datum.LoadByID(ctx, conn, scope, req.ID); err != nil {
+		if err := datum.LoadByID(ctx, conn, predicate, req.ID); err != nil {
 			return fmt.Errorf("cannot load data: %w", err)
 		}
 
@@ -193,7 +191,7 @@ func (s DatumService) Update(
 
 		if req.OwnerID != nil {
 			owner := &coredata.MembershipProfile{}
-			if err := owner.LoadByID(ctx, conn, scope, *req.OwnerID); err != nil {
+			if err := owner.LoadByID(ctx, conn, predicate, *req.OwnerID); err != nil {
 				return fmt.Errorf("cannot load owner profile: %w", err)
 			}
 
@@ -202,12 +200,12 @@ func (s DatumService) Update(
 
 		datum.UpdatedAt = now
 
-		if err := datum.Update(ctx, conn, scope); err != nil {
+		if err := datum.Update(ctx, conn, predicate); err != nil {
 			return fmt.Errorf("cannot update data: %w", err)
 		}
 
 		if req.ThirdPartyIDs != nil {
-			if err := datumThirdParties.Merge(ctx, conn, scope, datum.ID, datum.OrganizationID, req.ThirdPartyIDs); err != nil {
+			if err := datumThirdParties.Merge(ctx, conn, predicate, datum.ID, datum.OrganizationID, req.ThirdPartyIDs); err != nil {
 				return fmt.Errorf("cannot update data thirdParties: %w", err)
 			}
 		}
@@ -222,7 +220,7 @@ func (s DatumService) Update(
 }
 
 func (s DatumService) Create(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	req CreateDatumRequest,
 ) (*coredata.Datum, error) {
 	if err := req.Validate(); err != nil {
@@ -230,7 +228,7 @@ func (s DatumService) Create(
 	}
 
 	now := time.Now()
-	datumID := gid.New(scope.GetTenantID(), coredata.DatumEntityType)
+	datumID := gid.New(predicate.GetTenantID(), coredata.DatumEntityType)
 	datumThirdParties := &coredata.DatumThirdParties{}
 
 	datum := &coredata.Datum{
@@ -247,16 +245,16 @@ func (s DatumService) Create(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
 			owner := &coredata.MembershipProfile{}
-			if err := owner.LoadByID(ctx, conn, scope, req.OwnerID); err != nil {
+			if err := owner.LoadByID(ctx, conn, predicate, req.OwnerID); err != nil {
 				return fmt.Errorf("cannot load owner profile: %w", err)
 			}
 
-			if err := datum.Insert(ctx, conn, scope); err != nil {
+			if err := datum.Insert(ctx, conn, predicate); err != nil {
 				return fmt.Errorf("cannot insert datum: %w", err)
 			}
 
 			if len(req.ThirdPartyIDs) > 0 {
-				if err := datumThirdParties.Insert(ctx, conn, scope, datum.ID, datum.OrganizationID, req.ThirdPartyIDs); err != nil {
+				if err := datumThirdParties.Insert(ctx, conn, predicate, datum.ID, datum.OrganizationID, req.ThirdPartyIDs); err != nil {
 					return fmt.Errorf("cannot create data thirdParties: %w", err)
 				}
 			}
@@ -272,7 +270,7 @@ func (s DatumService) Create(
 }
 
 func (s DatumService) Delete(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	datumID gid.GID,
 ) error {
 	datum := &coredata.Datum{ID: datumID}
@@ -280,13 +278,13 @@ func (s DatumService) Delete(
 	return s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			return datum.Delete(ctx, tx, scope)
+			return datum.Delete(ctx, tx, predicate)
 		},
 	)
 }
 
 func (s DatumService) ListThirdParties(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	datumID gid.GID,
 	cursor *page.Cursor[coredata.ThirdPartyOrderField],
 ) (*page.Page[*coredata.ThirdParty, coredata.ThirdPartyOrderField], error) {
@@ -295,7 +293,7 @@ func (s DatumService) ListThirdParties(
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			return thirdParties.LoadByDatumID(ctx, conn, scope, datumID, cursor)
+			return thirdParties.LoadByDatumID(ctx, conn, predicate, datumID, cursor)
 		},
 	)
 	if err != nil {

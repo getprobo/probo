@@ -72,14 +72,14 @@ func SaveThirdPartyInfoTool(pc *PersistenceContext) agent.Tool {
 		"save_third_party_info",
 		"Persist the discovered third party metadata to the database. Call this once after completing the analysis. Use an empty string for any field you could not discover.",
 		func(ctx context.Context, p saveThirdPartyInfoToolParams) (agent.ToolResult, error) {
-			scope := coredata.NewScopeFromObjectID(pc.ThirdPartyID)
+			predicate := coredata.NewPredicateFromObjectID(pc.ThirdPartyID)
 
 			err := pc.PG.WithTx(
 				ctx,
 				func(ctx context.Context, conn pg.Tx) error {
 					thirdParty := &coredata.ThirdParty{}
 
-					if err := thirdParty.LoadByID(ctx, conn, scope, pc.ThirdPartyID); err != nil {
+					if err := thirdParty.LoadByID(ctx, conn, predicate, pc.ThirdPartyID); err != nil {
 						return fmt.Errorf("cannot load third party: %w", err)
 					}
 
@@ -89,7 +89,7 @@ func SaveThirdPartyInfoTool(pc *PersistenceContext) agent.Tool {
 						}
 					}
 
-					ancestorBaseNames, err := loadAncestorBaseNames(ctx, conn, scope, thirdParty.ID)
+					ancestorBaseNames, err := loadAncestorBaseNames(ctx, conn, predicate, thirdParty.ID)
 					if err != nil {
 						return err
 					}
@@ -99,7 +99,7 @@ func SaveThirdPartyInfoTool(pc *PersistenceContext) agent.Tool {
 					}, ancestorBaseNames)
 					thirdParty.UpdatedAt = time.Now()
 
-					if err := thirdParty.Update(ctx, conn, scope); err != nil {
+					if err := thirdParty.Update(ctx, conn, predicate); err != nil {
 						return fmt.Errorf("cannot update third party: %w", err)
 					}
 
@@ -124,17 +124,17 @@ func LinkSubThirdPartyTool(pc *PersistenceContext) agent.Tool {
 				return agent.ToolResult{Content: "Skipped: empty name."}, nil
 			}
 
-			scope := coredata.NewScopeFromObjectID(pc.ThirdPartyID)
+			predicate := coredata.NewPredicateFromObjectID(pc.ThirdPartyID)
 
 			err := pc.PG.WithTx(
 				ctx,
 				func(ctx context.Context, conn pg.Tx) error {
 					parent := &coredata.ThirdParty{}
-					if err := parent.LoadByID(ctx, conn, scope, pc.ThirdPartyID); err != nil {
+					if err := parent.LoadByID(ctx, conn, predicate, pc.ThirdPartyID); err != nil {
 						return fmt.Errorf("cannot load parent third party: %w", err)
 					}
 
-					ancestorBaseNames, err := loadAncestorBaseNames(ctx, conn, scope, pc.ThirdPartyID)
+					ancestorBaseNames, err := loadAncestorBaseNames(ctx, conn, predicate, pc.ThirdPartyID)
 					if err != nil {
 						return err
 					}
@@ -142,7 +142,7 @@ func LinkSubThirdPartyTool(pc *PersistenceContext) agent.Tool {
 					// Child suffix path is the parent's ancestors plus the parent itself.
 					childNamePath := append(ancestorBaseNames, baseThirdPartyName(parent.Name))
 
-					return linkSubThirdParty(ctx, conn, scope, pc, parent.Level, childNamePath, p)
+					return linkSubThirdParty(ctx, conn, predicate, pc, parent.Level, childNamePath, p)
 				},
 			)
 			if err != nil {

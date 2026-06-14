@@ -1,0 +1,59 @@
+---
+description: Go authorize — always take predicate from authorize, never reconstruct it
+globs: "pkg/server/api/**/*.go"
+alwaysApply: false
+---
+
+# Authorize returns the predicate — use it
+
+`r.authorize` (GraphQL) and `r.Authorize` (MCP) return a `*coredata.Predicate`
+resolved from the resource's `organization_id` attribute. **Always** pass that
+predicate to the downstream service or coredata call. **Never** discard it and
+rebuild a predicate with `coredata.NewPredicateFromObjectID(...)`.
+
+The two are not identical: `NewPredicateFromObjectID(id)` only reads the tenant
+encoded in the GID, while the authorizer derives the predicate from the loaded
+resource attributes. Reconstructing the predicate from the GID silently drifts
+when the resource lookup changes.
+
+```go
+// GOOD — predicate comes from authorize, fed straight to the service
+predicate, err := r.authorize(ctx, obj.ID, probo.ActionThirdPartyList)
+if err != nil {
+	return nil, err
+}
+
+thirdPartyIDs, err := r.cookieBanner.LoadDistinctThirdPartyIDsByCookieBannerID(ctx, predicate, obj.ID)
+
+// BAD — authorize discards predicate, then we rebuild it from the same GID
+if _, err := r.authorize(ctx, obj.ID, probo.ActionThirdPartyList); err != nil {
+	return nil, err
+}
+
+predicate := coredata.NewPredicateFromObjectID(obj.ID)
+thirdPartyIDs, err := r.cookieBanner.LoadDistinctThirdPartyIDsByCookieBannerID(ctx, predicate, obj.ID)
+```
+
+## When discarding `predicate` with `_` is acceptable
+
+Only when **no downstream call needs a predicate** — typically authorize calls
+against the caller's `identity.ID` for global / cross-tenant catalogs (e.g.
+`ActionCommonThirdPartyList`, `ActionCommonThirdPartyGet`) whose service
+methods omit a predicate argument. The returned predicate would be derived from
+the identity (a nil-tenant principal) and is useless to the caller:
+
+```go
+// GOOD — global catalog, downstream omits a predicate
+identity := authn.IdentityFromContext(ctx)
+if _, err := r.authorize(ctx, identity.ID, probo.ActionCommonThirdPartyList); err != nil {
+	return nil, err
+}
+
+parties, err := r.thirdParty.Search(ctx, name) // no predicate argument
+```
+
+The same rule applies to `r.batchAuthorize` (GraphQL) and `r.AuthorizeBatch`
+(MCP).
+
+See [`contrib/claude/authorization.md`](../../contrib/claude/authorization.md)
+for the full authorization guide.

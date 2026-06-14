@@ -55,7 +55,7 @@ type (
 		CookieDuration    time.Duration
 		TokenDuration     time.Duration
 		ReportURLDuration time.Duration
-		Scope             string
+		Predicate             string
 		TokenType         string
 		CookieSecure      bool
 	}

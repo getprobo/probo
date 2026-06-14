@@ -97,7 +97,7 @@ func (urr *UpdateRiskRequest) Validate() error {
 }
 
 func (s RiskService) CountForMeasureID(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	measureID gid.GID,
 	filter *coredata.RiskFilter,
 ) (int, error) {
@@ -108,7 +108,7 @@ func (s RiskService) CountForMeasureID(
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			risks := &coredata.Risks{}
 
-			count, err = risks.CountByMeasureID(ctx, conn, scope, measureID, filter)
+			count, err = risks.CountByMeasureID(ctx, conn, predicate, measureID, filter)
 			if err != nil {
 				return fmt.Errorf("cannot count risks: %w", err)
 			}
@@ -124,7 +124,7 @@ func (s RiskService) CountForMeasureID(
 }
 
 func (s RiskService) ListForMeasureID(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	measureID gid.GID,
 	cursor *page.Cursor[coredata.RiskOrderField],
 	filter *coredata.RiskFilter,
@@ -134,7 +134,7 @@ func (s RiskService) ListForMeasureID(
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			return risks.LoadByMeasureID(ctx, conn, scope, measureID, cursor, filter)
+			return risks.LoadByMeasureID(ctx, conn, predicate, measureID, cursor, filter)
 		},
 	)
 	if err != nil {
@@ -145,7 +145,7 @@ func (s RiskService) ListForMeasureID(
 }
 
 func (s RiskService) CountForOrganizationID(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	organizationID gid.GID,
 	filter *coredata.RiskFilter,
 ) (int, error) {
@@ -156,7 +156,7 @@ func (s RiskService) CountForOrganizationID(
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			risks := &coredata.Risks{}
 
-			count, err = risks.CountByOrganizationID(ctx, conn, scope, organizationID, filter)
+			count, err = risks.CountByOrganizationID(ctx, conn, predicate, organizationID, filter)
 			if err != nil {
 				return fmt.Errorf("cannot count risks: %w", err)
 			}
@@ -172,7 +172,7 @@ func (s RiskService) CountForOrganizationID(
 }
 
 func (s RiskService) ListForOrganizationID(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	organizationID gid.GID,
 	cursor *page.Cursor[coredata.RiskOrderField],
 	filter *coredata.RiskFilter,
@@ -184,9 +184,7 @@ func (s RiskService) ListForOrganizationID(
 		func(ctx context.Context, conn pg.Querier) error {
 			return risks.LoadByOrganizationID(
 				ctx,
-				conn,
-				scope,
-				organizationID,
+				conn, predicate, organizationID,
 				cursor,
 				filter,
 			)
@@ -200,7 +198,7 @@ func (s RiskService) ListForOrganizationID(
 }
 
 func (s RiskService) CreateDocumentMapping(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	riskID gid.GID,
 	documentID gid.GID,
 ) (*coredata.Risk, *coredata.Document, error) {
@@ -210,11 +208,11 @@ func (s RiskService) CreateDocumentMapping(
 	err := s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			if err := risk.LoadByID(ctx, tx, scope, riskID); err != nil {
+			if err := risk.LoadByID(ctx, tx, predicate, riskID); err != nil {
 				return fmt.Errorf("cannot load risk: %w", err)
 			}
 
-			if err := document.LoadByID(ctx, tx, scope, documentID); err != nil {
+			if err := document.LoadByID(ctx, tx, predicate, documentID); err != nil {
 				return fmt.Errorf("cannot load document: %w", err)
 			}
 
@@ -225,7 +223,7 @@ func (s RiskService) CreateDocumentMapping(
 				CreatedAt:      time.Now(),
 			}
 
-			return riskDocument.Insert(ctx, tx, scope)
+			return riskDocument.Insert(ctx, tx, predicate)
 		},
 	)
 	if err != nil {
@@ -236,7 +234,7 @@ func (s RiskService) CreateDocumentMapping(
 }
 
 func (s RiskService) DeleteDocumentMapping(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	riskID gid.GID,
 	documentID gid.GID,
 ) (*coredata.Risk, *coredata.Document, error) {
@@ -247,15 +245,15 @@ func (s RiskService) DeleteDocumentMapping(
 	err := s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			if err := risk.LoadByID(ctx, tx, scope, riskID); err != nil {
+			if err := risk.LoadByID(ctx, tx, predicate, riskID); err != nil {
 				return fmt.Errorf("cannot load risk: %w", err)
 			}
 
-			if err := document.LoadByID(ctx, tx, scope, documentID); err != nil {
+			if err := document.LoadByID(ctx, tx, predicate, documentID); err != nil {
 				return fmt.Errorf("cannot load document: %w", err)
 			}
 
-			return riskDocument.Delete(ctx, tx, scope, risk.ID, document.ID)
+			return riskDocument.Delete(ctx, tx, predicate, risk.ID, document.ID)
 		},
 	)
 	if err != nil {
@@ -266,7 +264,7 @@ func (s RiskService) DeleteDocumentMapping(
 }
 
 func (s RiskService) CreateMeasureMapping(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	riskID gid.GID,
 	measureID gid.GID,
 ) (*coredata.Risk, *coredata.Measure, error) {
@@ -276,11 +274,11 @@ func (s RiskService) CreateMeasureMapping(
 	err := s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			if err := risk.LoadByID(ctx, tx, scope, riskID); err != nil {
+			if err := risk.LoadByID(ctx, tx, predicate, riskID); err != nil {
 				return fmt.Errorf("cannot load risk: %w", err)
 			}
 
-			if err := measure.LoadByID(ctx, tx, scope, measureID); err != nil {
+			if err := measure.LoadByID(ctx, tx, predicate, measureID); err != nil {
 				return fmt.Errorf("cannot load measure: %w", err)
 			}
 
@@ -291,7 +289,7 @@ func (s RiskService) CreateMeasureMapping(
 				CreatedAt:      time.Now(),
 			}
 
-			return riskMeasure.Insert(ctx, tx, scope)
+			return riskMeasure.Insert(ctx, tx, predicate)
 		},
 	)
 	if err != nil {
@@ -302,7 +300,7 @@ func (s RiskService) CreateMeasureMapping(
 }
 
 func (s RiskService) DeleteMeasureMapping(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	riskID gid.GID,
 	measureID gid.GID,
 ) (*coredata.Risk, *coredata.Measure, error) {
@@ -312,11 +310,11 @@ func (s RiskService) DeleteMeasureMapping(
 	err := s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			if err := risk.LoadByID(ctx, tx, scope, riskID); err != nil {
+			if err := risk.LoadByID(ctx, tx, predicate, riskID); err != nil {
 				return fmt.Errorf("cannot load risk: %w", err)
 			}
 
-			if err := measure.LoadByID(ctx, tx, scope, measureID); err != nil {
+			if err := measure.LoadByID(ctx, tx, predicate, measureID); err != nil {
 				return fmt.Errorf("cannot load measure: %w", err)
 			}
 
@@ -327,7 +325,7 @@ func (s RiskService) DeleteMeasureMapping(
 				CreatedAt:      time.Now(),
 			}
 
-			return riskMeasure.Delete(ctx, tx, scope, risk.ID, measure.ID)
+			return riskMeasure.Delete(ctx, tx, predicate, risk.ID, measure.ID)
 		},
 	)
 	if err != nil {
@@ -338,7 +336,7 @@ func (s RiskService) DeleteMeasureMapping(
 }
 
 func (s RiskService) CreateObligationMapping(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	riskID gid.GID,
 	obligationID gid.GID,
 ) (*coredata.Risk, *coredata.Obligation, error) {
@@ -348,11 +346,11 @@ func (s RiskService) CreateObligationMapping(
 	err := s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			if err := risk.LoadByID(ctx, tx, scope, riskID); err != nil {
+			if err := risk.LoadByID(ctx, tx, predicate, riskID); err != nil {
 				return fmt.Errorf("cannot load risk: %w", err)
 			}
 
-			if err := obligation.LoadByID(ctx, tx, scope, obligationID); err != nil {
+			if err := obligation.LoadByID(ctx, tx, predicate, obligationID); err != nil {
 				return fmt.Errorf("cannot load obligation: %w", err)
 			}
 
@@ -363,7 +361,7 @@ func (s RiskService) CreateObligationMapping(
 				CreatedAt:      time.Now(),
 			}
 
-			return riskObligation.Insert(ctx, tx, scope)
+			return riskObligation.Insert(ctx, tx, predicate)
 		},
 	)
 	if err != nil {
@@ -374,7 +372,7 @@ func (s RiskService) CreateObligationMapping(
 }
 
 func (s RiskService) DeleteObligationMapping(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	riskID gid.GID,
 	obligationID gid.GID,
 ) (*coredata.Risk, *coredata.Obligation, error) {
@@ -385,18 +383,18 @@ func (s RiskService) DeleteObligationMapping(
 	err := s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			if err := risk.LoadByID(ctx, tx, scope, riskID); err != nil {
+			if err := risk.LoadByID(ctx, tx, predicate, riskID); err != nil {
 				return fmt.Errorf("cannot load risk: %w", err)
 			}
 
-			if err := obligation.LoadByID(ctx, tx, scope, obligationID); err != nil {
+			if err := obligation.LoadByID(ctx, tx, predicate, obligationID); err != nil {
 				return fmt.Errorf("cannot load obligation: %w", err)
 			}
 
 			riskObligation.RiskID = risk.ID
 			riskObligation.ObligationID = obligation.ID
 
-			return riskObligation.Delete(ctx, tx, scope)
+			return riskObligation.Delete(ctx, tx, predicate)
 		},
 	)
 	if err != nil {
@@ -407,7 +405,7 @@ func (s RiskService) DeleteObligationMapping(
 }
 
 func (s RiskService) Create(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	req CreateRiskRequest,
 ) (*coredata.Risk, error) {
 	if err := req.Validate(); err != nil {
@@ -419,7 +417,7 @@ func (s RiskService) Create(
 	organization := coredata.Organization{}
 
 	risk := &coredata.Risk{
-		ID:                 gid.New(scope.GetTenantID(), coredata.RiskEntityType),
+		ID:                 gid.New(predicate.GetTenantID(), coredata.RiskEntityType),
 		OrganizationID:     req.OrganizationID,
 		Name:               req.Name,
 		Description:        req.Description,
@@ -449,17 +447,17 @@ func (s RiskService) Create(
 	err := s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			if err := organization.LoadByID(ctx, tx, scope, req.OrganizationID); err != nil {
+			if err := organization.LoadByID(ctx, tx, predicate, req.OrganizationID); err != nil {
 				return fmt.Errorf("cannot load organization: %w", err)
 			}
 
 			if req.OwnerID != nil {
-				if err := owner.LoadByID(ctx, tx, scope, *req.OwnerID); err != nil {
+				if err := owner.LoadByID(ctx, tx, predicate, *req.OwnerID); err != nil {
 					return fmt.Errorf("cannot load owner profile: %w", err)
 				}
 			}
 
-			return risk.Insert(ctx, tx, scope)
+			return risk.Insert(ctx, tx, predicate)
 		},
 	)
 	if err != nil {
@@ -470,7 +468,7 @@ func (s RiskService) Create(
 }
 
 func (s RiskService) Get(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	riskID gid.GID,
 ) (*coredata.Risk, error) {
 	risk := &coredata.Risk{}
@@ -478,7 +476,7 @@ func (s RiskService) Get(
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			return risk.LoadByID(ctx, conn, scope, riskID)
+			return risk.LoadByID(ctx, conn, predicate, riskID)
 		},
 	)
 	if err != nil {
@@ -489,7 +487,7 @@ func (s RiskService) Get(
 }
 
 func (s RiskService) GetByIDs(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	riskIDs ...gid.GID,
 ) (coredata.Risks, error) {
 	var risks coredata.Risks
@@ -499,9 +497,7 @@ func (s RiskService) GetByIDs(
 		func(ctx context.Context, conn pg.Querier) error {
 			if err := risks.LoadByIDs(
 				ctx,
-				conn,
-				scope,
-				riskIDs,
+				conn, predicate, riskIDs,
 			); err != nil {
 				return fmt.Errorf("cannot load risks by ids: %w", err)
 			}
@@ -517,7 +513,7 @@ func (s RiskService) GetByIDs(
 }
 
 func (s RiskService) Update(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	req UpdateRiskRequest,
 ) (*coredata.Risk, error) {
 	if err := req.Validate(); err != nil {
@@ -529,7 +525,7 @@ func (s RiskService) Update(
 	err := s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
-			if err := risk.LoadByID(ctx, conn, scope, req.ID); err != nil {
+			if err := risk.LoadByID(ctx, conn, predicate, req.ID); err != nil {
 				return fmt.Errorf("cannot load risk: %w", err)
 			}
 
@@ -564,7 +560,7 @@ func (s RiskService) Update(
 			if req.OwnerID != nil {
 				if *req.OwnerID != nil {
 					owner := coredata.MembershipProfile{}
-					if err := owner.LoadByID(ctx, conn, scope, **req.OwnerID); err != nil {
+					if err := owner.LoadByID(ctx, conn, predicate, **req.OwnerID); err != nil {
 						return fmt.Errorf("cannot load owner profile: %w", err)
 					}
 
@@ -584,7 +580,7 @@ func (s RiskService) Update(
 
 			risk.UpdatedAt = time.Now()
 
-			if err := risk.Update(ctx, conn, scope); err != nil {
+			if err := risk.Update(ctx, conn, predicate); err != nil {
 				return fmt.Errorf("cannot update risk: %w", err)
 			}
 
@@ -599,7 +595,7 @@ func (s RiskService) Update(
 }
 
 func (s RiskService) Delete(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	riskID gid.GID,
 ) error {
 	risk := &coredata.Risk{}
@@ -607,7 +603,7 @@ func (s RiskService) Delete(
 	return s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			return risk.Delete(ctx, tx, scope, riskID)
+			return risk.Delete(ctx, tx, predicate, riskID)
 		},
 	)
 }

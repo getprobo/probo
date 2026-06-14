@@ -206,7 +206,7 @@ func (dpia *DataProtectionImpactAssessment) AuthorizationAttributes(
 func (dpias *DataProtectionImpactAssessments) CountByOrganizationID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	organizationID gid.GID,
 ) (int, error) {
 	q := `
@@ -219,10 +219,10 @@ WHERE
 	AND organization_id = @organization_id
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"organization_id": organizationID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	row := conn.QueryRow(ctx, q, args)
 
@@ -239,7 +239,7 @@ WHERE
 func (dpias *DataProtectionImpactAssessments) LoadByOrganizationID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	organizationID gid.GID,
 	cursor *page.Cursor[DataProtectionImpactAssessmentOrderField],
 ) error {
@@ -263,10 +263,10 @@ WHERE
 	AND %s
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"organization_id": organizationID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
@@ -287,7 +287,7 @@ WHERE
 func (dpias *DataProtectionImpactAssessments) LoadAllByOrganizationID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	organizationID gid.GID,
 ) error {
 	q := `
@@ -309,10 +309,10 @@ WHERE
 	AND organization_id = @organization_id
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"organization_id": organizationID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -332,7 +332,7 @@ WHERE
 func (dpia *DataProtectionImpactAssessment) LoadByID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	dpiaID gid.GID,
 ) error {
 	q := `
@@ -355,10 +355,10 @@ WHERE
 LIMIT 1;
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"dpia_id": dpiaID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -382,7 +382,7 @@ LIMIT 1;
 func (dpia *DataProtectionImpactAssessment) LoadByProcessingActivityID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	processingActivityID gid.GID,
 ) error {
 	q := `
@@ -405,10 +405,10 @@ WHERE
 LIMIT 1;
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"processing_activity_id": processingActivityID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -432,7 +432,7 @@ LIMIT 1;
 func (dpia *DataProtectionImpactAssessment) Insert(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 INSERT INTO processing_activity_data_protection_impact_assessments (
@@ -464,7 +464,7 @@ INSERT INTO processing_activity_data_protection_impact_assessments (
 
 	args := pgx.StrictNamedArgs{
 		"id":                            dpia.ID,
-		"tenant_id":                     scope.GetTenantID(),
+		"tenant_id":                     predicate.GetTenantID(),
 		"organization_id":               dpia.OrganizationID,
 		"processing_activity_id":        dpia.ProcessingActivityID,
 		"description":                   dpia.Description,
@@ -493,7 +493,7 @@ INSERT INTO processing_activity_data_protection_impact_assessments (
 func (dpia *DataProtectionImpactAssessment) Update(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 UPDATE processing_activity_data_protection_impact_assessments SET
@@ -508,7 +508,7 @@ WHERE
 	AND id = @id
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"id":                            dpia.ID,
@@ -519,7 +519,7 @@ WHERE
 		"residual_risk":                 dpia.ResidualRisk,
 		"updated_at":                    dpia.UpdatedAt,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
@@ -532,7 +532,7 @@ WHERE
 func (dpia *DataProtectionImpactAssessment) Delete(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 DELETE FROM processing_activity_data_protection_impact_assessments
@@ -541,10 +541,10 @@ WHERE
 	AND id = @id
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"id": dpia.ID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {

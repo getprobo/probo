@@ -106,7 +106,7 @@ func (h *sealingHandler) Claim(ctx context.Context) (coredata.ElectronicSignatur
 			signature.LastAttemptedAt = &now
 
 			signature.UpdatedAt = now
-			if err := signature.Update(ctx, tx, coredata.NewNoScope()); err != nil {
+			if err := signature.Update(ctx, tx, coredata.NewNoPredicate()); err != nil {
 				return fmt.Errorf("cannot update signature: %w", err)
 			}
 
@@ -149,7 +149,7 @@ func (h *sealingHandler) sealAndCommit(
 	signature *coredata.ElectronicSignature,
 ) error {
 	var (
-		scope  = coredata.NewScopeFromObjectID(signature.ID)
+		predicate = coredata.NewPredicateFromObjectID(signature.ID)
 		file   coredata.File
 		events []coredata.ElectronicSignatureEvent
 	)
@@ -157,7 +157,7 @@ func (h *sealingHandler) sealAndCommit(
 	if err := h.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			if err := file.LoadByID(ctx, conn, scope, signature.FileID); err != nil {
+			if err := file.LoadByID(ctx, conn, predicate, signature.FileID); err != nil {
 				return fmt.Errorf("cannot load file: %w", err)
 			}
 
@@ -211,7 +211,7 @@ func (h *sealingHandler) sealAndCommit(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			var current coredata.ElectronicSignature
-			if err := current.LoadByID(ctx, tx, scope, signature.ID); err != nil {
+			if err := current.LoadByID(ctx, tx, predicate, signature.ID); err != nil {
 				return fmt.Errorf("cannot load signature: %w", err)
 			}
 
@@ -222,7 +222,7 @@ func (h *sealingHandler) sealAndCommit(
 			signature.Status = coredata.ElectronicSignatureStatusCompleted
 
 			signature.UpdatedAt = time.Now()
-			if err := signature.Update(ctx, tx, scope); err != nil {
+			if err := signature.Update(ctx, tx, predicate); err != nil {
 				return fmt.Errorf("cannot update signature: %w", err)
 			}
 
@@ -235,7 +235,7 @@ func (h *sealingHandler) sealAndCommit(
 			)
 
 			for i := range events {
-				if err := events[i].Insert(ctx, tx, scope); err != nil {
+				if err := events[i].Insert(ctx, tx, predicate); err != nil {
 					return fmt.Errorf("cannot insert %s event: %w", events[i].EventType, err)
 				}
 			}
@@ -254,7 +254,7 @@ func (h *sealingHandler) failSignature(
 	signature *coredata.ElectronicSignature,
 	processingError error,
 ) error {
-	scope := coredata.NewScopeFromObjectID(signature.ID)
+	predicate := coredata.NewPredicateFromObjectID(signature.ID)
 
 	h.logger.ErrorCtx(
 		ctx,
@@ -277,12 +277,12 @@ func (h *sealingHandler) failSignature(
 				signature.Status = coredata.ElectronicSignatureStatusAccepted
 			}
 
-			if err := signature.Update(ctx, tx, scope); err != nil {
+			if err := signature.Update(ctx, tx, predicate); err != nil {
 				return fmt.Errorf("cannot update signature: %w", err)
 			}
 
 			event := signature.NewEvent(coredata.ElectronicSignatureEventTypeProcessingError, coredata.ElectronicSignatureEventSourceServer)
-			if err := event.Insert(ctx, tx, scope); err != nil {
+			if err := event.Insert(ctx, tx, predicate); err != nil {
 				return fmt.Errorf("cannot insert PROCESSING_ERROR event: %w", err)
 			}
 

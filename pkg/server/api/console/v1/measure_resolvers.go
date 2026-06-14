@@ -22,7 +22,7 @@ import (
 
 // Evidences is the resolver for the evidences field.
 func (r *measureResolver) Evidences(ctx context.Context, obj *types.Measure, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.EvidenceOrderBy) (*types.EvidenceConnection, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionEvidenceList)
+	predicate, err := r.authorize(ctx, obj.ID, probo.ActionEvidenceList)
 	if err != nil {
 		return nil, err
 	}
@@ -41,7 +41,7 @@ func (r *measureResolver) Evidences(ctx context.Context, obj *types.Measure, fir
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	page, err := r.probo.Evidences.ListForMeasureID(ctx, scope, obj.ID, cursor)
+	page, err := r.probo.Evidences.ListForMeasureID(ctx, predicate, obj.ID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list measure evidences", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -52,7 +52,7 @@ func (r *measureResolver) Evidences(ctx context.Context, obj *types.Measure, fir
 
 // Tasks is the resolver for the tasks field.
 func (r *measureResolver) Tasks(ctx context.Context, obj *types.Measure, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TaskOrderBy) (*types.TaskConnection, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionTaskList)
+	predicate, err := r.authorize(ctx, obj.ID, probo.ActionTaskList)
 	if err != nil {
 		return nil, err
 	}
@@ -71,7 +71,7 @@ func (r *measureResolver) Tasks(ctx context.Context, obj *types.Measure, first *
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	page, err := r.probo.Tasks.ListForMeasureID(ctx, scope, obj.ID, cursor)
+	page, err := r.probo.Tasks.ListForMeasureID(ctx, predicate, obj.ID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list measure tasks", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -82,7 +82,7 @@ func (r *measureResolver) Tasks(ctx context.Context, obj *types.Measure, first *
 
 // Risks is the resolver for the risks field.
 func (r *measureResolver) Risks(ctx context.Context, obj *types.Measure, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.RiskOrderBy, filter *types.RiskFilter) (*types.RiskConnection, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionRiskList)
+	predicate, err := r.authorize(ctx, obj.ID, probo.ActionRiskList)
 	if err != nil {
 		return nil, err
 	}
@@ -106,7 +106,7 @@ func (r *measureResolver) Risks(ctx context.Context, obj *types.Measure, first *
 		riskFilter = coredata.NewRiskFilter(filter.Query)
 	}
 
-	page, err := r.probo.Risks.ListForMeasureID(ctx, scope, obj.ID, cursor, riskFilter)
+	page, err := r.probo.Risks.ListForMeasureID(ctx, predicate, obj.ID, cursor, riskFilter)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list measure risks", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -117,7 +117,7 @@ func (r *measureResolver) Risks(ctx context.Context, obj *types.Measure, first *
 
 // Controls is the resolver for the controls field.
 func (r *measureResolver) Controls(ctx context.Context, obj *types.Measure, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ControlOrderBy, filter *types.ControlFilter) (*types.ControlConnection, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionControlList)
+	predicate, err := r.authorize(ctx, obj.ID, probo.ActionControlList)
 	if err != nil {
 		return nil, err
 	}
@@ -141,7 +141,7 @@ func (r *measureResolver) Controls(ctx context.Context, obj *types.Measure, firs
 		controlFilter = coredata.NewControlFilter(filter.Query)
 	}
 
-	page, err := r.probo.Controls.ListForMeasureID(ctx, scope, obj.ID, cursor, controlFilter)
+	page, err := r.probo.Controls.ListForMeasureID(ctx, predicate, obj.ID, cursor, controlFilter)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list measure controls", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -152,7 +152,7 @@ func (r *measureResolver) Controls(ctx context.Context, obj *types.Measure, firs
 
 // Documents is the resolver for the documents field.
 func (r *measureResolver) Documents(ctx context.Context, obj *types.Measure, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentOrderBy, filter *types.DocumentFilter) (*types.DocumentConnection, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionDocumentList)
+	predicate, err := r.authorize(ctx, obj.ID, probo.ActionDocumentList)
 	if err != nil {
 		return nil, err
 	}
@@ -179,7 +179,7 @@ func (r *measureResolver) Documents(ctx context.Context, obj *types.Measure, fir
 			WithClassifications(filter.Classifications)
 	}
 
-	pg, err := r.probo.Documents.ListForMeasureID(ctx, scope, obj.ID, cursor, documentFilter)
+	pg, err := r.probo.Documents.ListForMeasureID(ctx, predicate, obj.ID, cursor, documentFilter)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list documents", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -190,7 +190,7 @@ func (r *measureResolver) Documents(ctx context.Context, obj *types.Measure, fir
 
 // ThirdParties is the resolver for the thirdParties field.
 func (r *measureResolver) ThirdParties(ctx context.Context, obj *types.Measure, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ThirdPartyOrderBy) (*types.ThirdPartyConnection, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionThirdPartyList)
+	predicate, err := r.authorize(ctx, obj.ID, probo.ActionThirdPartyList)
 	if err != nil {
 		return nil, err
 	}
@@ -208,7 +208,7 @@ func (r *measureResolver) ThirdParties(ctx context.Context, obj *types.Measure, 
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	page, err := r.probo.ThirdParties.ListForMeasureID(ctx, scope, obj.ID, cursor)
+	page, err := r.probo.ThirdParties.ListForMeasureID(ctx, predicate, obj.ID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list measure third parties", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -224,14 +224,14 @@ func (r *measureResolver) Permission(ctx context.Context, obj *types.Measure, ac
 
 // TotalCount is the resolver for the totalCount field.
 func (r *measureConnectionResolver) TotalCount(ctx context.Context, obj *types.MeasureConnection) (int, error) {
-	scope, err := r.authorize(ctx, obj.ParentID, probo.ActionMeasureList)
+	predicate, err := r.authorize(ctx, obj.ParentID, probo.ActionMeasureList)
 	if err != nil {
 		return 0, err
 	}
 
 	switch obj.Resolver.(type) {
 	case *organizationResolver:
-		count, err := r.probo.Measures.CountForOrganizationID(ctx, scope, obj.ParentID, obj.Filters)
+		count, err := r.probo.Measures.CountForOrganizationID(ctx, predicate, obj.ParentID, obj.Filters)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count measures", log.Error(err))
 			return 0, gqlutils.Internal(ctx)
@@ -239,7 +239,7 @@ func (r *measureConnectionResolver) TotalCount(ctx context.Context, obj *types.M
 
 		return count, nil
 	case *controlResolver:
-		count, err := r.probo.Measures.CountForControlID(ctx, scope, obj.ParentID, obj.Filters)
+		count, err := r.probo.Measures.CountForControlID(ctx, predicate, obj.ParentID, obj.Filters)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count measures", log.Error(err))
 			return 0, gqlutils.Internal(ctx)
@@ -247,7 +247,7 @@ func (r *measureConnectionResolver) TotalCount(ctx context.Context, obj *types.M
 
 		return count, nil
 	case *riskResolver:
-		count, err := r.probo.Measures.CountForRiskID(ctx, scope, obj.ParentID, obj.Filters)
+		count, err := r.probo.Measures.CountForRiskID(ctx, predicate, obj.ParentID, obj.Filters)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count measures", log.Error(err))
 			return 0, gqlutils.Internal(ctx)
@@ -255,7 +255,7 @@ func (r *measureConnectionResolver) TotalCount(ctx context.Context, obj *types.M
 
 		return count, nil
 	case *thirdPartyResolver:
-		count, err := r.probo.Measures.CountForThirdPartyID(ctx, scope, obj.ParentID, obj.Filters)
+		count, err := r.probo.Measures.CountForThirdPartyID(ctx, predicate, obj.ParentID, obj.Filters)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count measures", log.Error(err))
 			return 0, gqlutils.Internal(ctx)
@@ -271,14 +271,13 @@ func (r *measureConnectionResolver) TotalCount(ctx context.Context, obj *types.M
 
 // // CreateMeasure is the resolver for the createMeasure field.
 func (r *mutationResolver) CreateMeasure(ctx context.Context, input types.CreateMeasureInput) (*types.CreateMeasurePayload, error) {
-	scope, err := r.authorize(ctx, input.OrganizationID, probo.ActionMeasureCreate)
+	predicate, err := r.authorize(ctx, input.OrganizationID, probo.ActionMeasureCreate)
 	if err != nil {
 		return nil, err
 	}
 
 	measure, err := r.probo.Measures.Create(
-		ctx, scope,
-		probo.CreateMeasureRequest{
+		ctx, predicate, probo.CreateMeasureRequest{
 			OrganizationID: input.OrganizationID,
 			Name:           input.Name,
 			Description:    input.Description,
@@ -306,14 +305,13 @@ func (r *mutationResolver) CreateMeasure(ctx context.Context, input types.Create
 
 // UpdateMeasure is the resolver for the updateMeasure field.
 func (r *mutationResolver) UpdateMeasure(ctx context.Context, input types.UpdateMeasureInput) (*types.UpdateMeasurePayload, error) {
-	scope, err := r.authorize(ctx, input.ID, probo.ActionMeasureUpdate)
+	predicate, err := r.authorize(ctx, input.ID, probo.ActionMeasureUpdate)
 	if err != nil {
 		return nil, err
 	}
 
 	measure, err := r.probo.Measures.Update(
-		ctx, scope,
-		probo.UpdateMeasureRequest{
+		ctx, predicate, probo.UpdateMeasureRequest{
 			ID:          input.ID,
 			Name:        input.Name,
 			Description: gqlutils.UnwrapOmittable(input.Description),
@@ -338,7 +336,7 @@ func (r *mutationResolver) UpdateMeasure(ctx context.Context, input types.Update
 
 // ImportMeasure is the resolver for the importMeasure field.
 func (r *mutationResolver) ImportMeasure(ctx context.Context, input types.ImportMeasureInput) (*types.ImportMeasurePayload, error) {
-	scope, err := r.authorize(ctx, input.OrganizationID, probo.ActionMeasureImport)
+	predicate, err := r.authorize(ctx, input.OrganizationID, probo.ActionMeasureImport)
 	if err != nil {
 		return nil, err
 	}
@@ -349,7 +347,7 @@ func (r *mutationResolver) ImportMeasure(ctx context.Context, input types.Import
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	measures, err := r.probo.Measures.Import(ctx, scope, input.OrganizationID, req)
+	measures, err := r.probo.Measures.Import(ctx, predicate, input.OrganizationID, req)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot import measure", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -367,12 +365,12 @@ func (r *mutationResolver) ImportMeasure(ctx context.Context, input types.Import
 
 // DeleteMeasure is the resolver for the deleteMeasure field.
 func (r *mutationResolver) DeleteMeasure(ctx context.Context, input types.DeleteMeasureInput) (*types.DeleteMeasurePayload, error) {
-	scope, err := r.authorize(ctx, input.MeasureID, probo.ActionMeasureDelete)
+	predicate, err := r.authorize(ctx, input.MeasureID, probo.ActionMeasureDelete)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := r.probo.Measures.Delete(ctx, scope, input.MeasureID); err != nil {
+	if err := r.probo.Measures.Delete(ctx, predicate, input.MeasureID); err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete measure", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
@@ -384,12 +382,12 @@ func (r *mutationResolver) DeleteMeasure(ctx context.Context, input types.Delete
 
 // CreateMeasureDocumentMapping is the resolver for the createMeasureDocumentMapping field.
 func (r *mutationResolver) CreateMeasureDocumentMapping(ctx context.Context, input types.CreateMeasureDocumentMappingInput) (*types.CreateMeasureDocumentMappingPayload, error) {
-	scope, err := r.authorize(ctx, input.MeasureID, probo.ActionMeasureDocumentMappingCreate)
+	predicate, err := r.authorize(ctx, input.MeasureID, probo.ActionMeasureDocumentMappingCreate)
 	if err != nil {
 		return nil, err
 	}
 
-	measure, document, err := r.probo.Measures.CreateDocumentMapping(ctx, scope, input.MeasureID, input.DocumentID)
+	measure, document, err := r.probo.Measures.CreateDocumentMapping(ctx, predicate, input.MeasureID, input.DocumentID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
 			return nil, gqlutils.Conflict(ctx, err)
@@ -408,12 +406,12 @@ func (r *mutationResolver) CreateMeasureDocumentMapping(ctx context.Context, inp
 
 // DeleteMeasureDocumentMapping is the resolver for the deleteMeasureDocumentMapping field.
 func (r *mutationResolver) DeleteMeasureDocumentMapping(ctx context.Context, input types.DeleteMeasureDocumentMappingInput) (*types.DeleteMeasureDocumentMappingPayload, error) {
-	scope, err := r.authorize(ctx, input.MeasureID, probo.ActionMeasureDocumentMappingDelete)
+	predicate, err := r.authorize(ctx, input.MeasureID, probo.ActionMeasureDocumentMappingDelete)
 	if err != nil {
 		return nil, err
 	}
 
-	measure, document, err := r.probo.Measures.DeleteDocumentMapping(ctx, scope, input.MeasureID, input.DocumentID)
+	measure, document, err := r.probo.Measures.DeleteDocumentMapping(ctx, predicate, input.MeasureID, input.DocumentID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete measure document mapping", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -427,12 +425,12 @@ func (r *mutationResolver) DeleteMeasureDocumentMapping(ctx context.Context, inp
 
 // CreateMeasureThirdPartyMapping is the resolver for the createMeasureThirdPartyMapping field.
 func (r *mutationResolver) CreateMeasureThirdPartyMapping(ctx context.Context, input types.CreateMeasureThirdPartyMappingInput) (*types.CreateMeasureThirdPartyMappingPayload, error) {
-	scope, err := r.authorize(ctx, input.MeasureID, probo.ActionMeasureThirdPartyMappingCreate)
+	predicate, err := r.authorize(ctx, input.MeasureID, probo.ActionMeasureThirdPartyMappingCreate)
 	if err != nil {
 		return nil, err
 	}
 
-	measure, thirdParty, err := r.probo.Measures.CreateThirdPartyMapping(ctx, scope, input.MeasureID, input.ThirdPartyID)
+	measure, thirdParty, err := r.probo.Measures.CreateThirdPartyMapping(ctx, predicate, input.MeasureID, input.ThirdPartyID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot create measure third party mapping", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -446,12 +444,12 @@ func (r *mutationResolver) CreateMeasureThirdPartyMapping(ctx context.Context, i
 
 // DeleteMeasureThirdPartyMapping is the resolver for the deleteMeasureThirdPartyMapping field.
 func (r *mutationResolver) DeleteMeasureThirdPartyMapping(ctx context.Context, input types.DeleteMeasureThirdPartyMappingInput) (*types.DeleteMeasureThirdPartyMappingPayload, error) {
-	scope, err := r.authorize(ctx, input.MeasureID, probo.ActionMeasureThirdPartyMappingDelete)
+	predicate, err := r.authorize(ctx, input.MeasureID, probo.ActionMeasureThirdPartyMappingDelete)
 	if err != nil {
 		return nil, err
 	}
 
-	measure, thirdParty, err := r.probo.Measures.DeleteThirdPartyMapping(ctx, scope, input.MeasureID, input.ThirdPartyID)
+	measure, thirdParty, err := r.probo.Measures.DeleteThirdPartyMapping(ctx, predicate, input.MeasureID, input.ThirdPartyID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete measure third party mapping", log.Error(err))
 		return nil, gqlutils.Internal(ctx)

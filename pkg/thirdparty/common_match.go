@@ -199,7 +199,7 @@ func stripCorporateSuffixes(lowerName string) string {
 func LinkToCommon(
 	ctx context.Context,
 	tx pg.Tx,
-	scope coredata.Scoper,
+	predicate coredata.Predicater,
 	orgThirdParty *coredata.ThirdParty,
 	commonID gid.GID,
 ) error {
@@ -209,7 +209,7 @@ func LinkToCommon(
 
 	orgThirdParty.CommonThirdPartyID = &commonID
 
-	if err := orgThirdParty.Update(ctx, tx, scope); err != nil {
+	if err := orgThirdParty.Update(ctx, tx, predicate); err != nil {
 		return fmt.Errorf("cannot update third party with common id: %w", err)
 	}
 

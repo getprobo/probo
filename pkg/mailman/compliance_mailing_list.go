@@ -64,16 +64,16 @@ func (s *Service) mailingListEmailConfig(
 		defaultCfg     = emails.DefaultPresenterConfig(s.apiBaseURL.String())
 	)
 
-	scope := coredata.NewScopeFromObjectID(mailingListID)
+	predicate := coredata.NewPredicateFromObjectID(mailingListID)
 
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			if err := mailingList.LoadByID(ctx, conn, scope, mailingListID); err != nil {
+			if err := mailingList.LoadByID(ctx, conn, predicate, mailingListID); err != nil {
 				return fmt.Errorf("cannot load mailing list: %w", err)
 			}
 
-			if err := compliancePage.LoadByMailingListID(ctx, conn, scope, mailingListID); err != nil {
+			if err := compliancePage.LoadByMailingListID(ctx, conn, predicate, mailingListID); err != nil {
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return err
 				}
@@ -82,17 +82,17 @@ func (s *Service) mailingListEmailConfig(
 			}
 
 			if compliancePage.LogoFileID != nil {
-				if err := logoFile.LoadByID(ctx, conn, scope, *compliancePage.LogoFileID); err != nil {
+				if err := logoFile.LoadByID(ctx, conn, predicate, *compliancePage.LogoFileID); err != nil {
 					return fmt.Errorf("cannot load logo file: %w", err)
 				}
 			}
 
-			if err := organization.LoadByID(ctx, conn, scope, compliancePage.OrganizationID); err != nil {
+			if err := organization.LoadByID(ctx, conn, predicate, compliancePage.OrganizationID); err != nil {
 				return fmt.Errorf("cannot load organization: %w", err)
 			}
 
 			customDomain = &coredata.CustomDomain{}
-			if err := customDomain.LoadByOrganizationID(ctx, conn, scope, organization.ID); err != nil {
+			if err := customDomain.LoadByOrganizationID(ctx, conn, predicate, organization.ID); err != nil {
 				if !errors.Is(err, coredata.ErrResourceNotFound) {
 					return fmt.Errorf("cannot load custom domain: %w", err)
 				}

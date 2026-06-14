@@ -96,7 +96,7 @@ func (tcda *TrustCenterDocumentAccess) AuthorizationAttributes(
 func (tcda *TrustCenterDocumentAccess) LoadByID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	accessID gid.GID,
 ) error {
 	q := `
@@ -118,10 +118,10 @@ WHERE
 LIMIT 1;
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"access_id": accessID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -145,7 +145,7 @@ LIMIT 1;
 func (tcda *TrustCenterDocumentAccess) LoadByTrustCenterAccessIDAndDocumentID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	trustCenterAccessID gid.GID,
 	documentID gid.GID,
 ) error {
@@ -169,13 +169,13 @@ WHERE
 LIMIT 1;
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"trust_center_access_id": trustCenterAccessID,
 		"document_id":            documentID,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -199,7 +199,7 @@ LIMIT 1;
 func (tcda *TrustCenterDocumentAccess) LoadByTrustCenterAccessIDAndReportFileID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	trustCenterAccessID gid.GID,
 	reportFileID gid.GID,
 ) error {
@@ -223,13 +223,13 @@ WHERE
 LIMIT 1;
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"trust_center_access_id": trustCenterAccessID,
 		"report_file_id":         reportFileID,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -253,7 +253,7 @@ LIMIT 1;
 func (tcda *TrustCenterDocumentAccess) Insert(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 INSERT INTO trust_center_document_accesses (
@@ -283,7 +283,7 @@ INSERT INTO trust_center_document_accesses (
 
 	args := pgx.StrictNamedArgs{
 		"id":                     tcda.ID,
-		"tenant_id":              scope.GetTenantID(),
+		"tenant_id":              predicate.GetTenantID(),
 		"organization_id":        tcda.OrganizationID,
 		"trust_center_access_id": tcda.TrustCenterAccessID,
 		"document_id":            tcda.DocumentID,
@@ -316,7 +316,7 @@ INSERT INTO trust_center_document_accesses (
 func (tcda *TrustCenterDocumentAccess) Update(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 UPDATE trust_center_document_accesses SET
@@ -327,14 +327,14 @@ WHERE
     AND id = @id
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"id":         tcda.ID,
 		"status":     tcda.Status,
 		"updated_at": tcda.UpdatedAt,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
@@ -347,7 +347,7 @@ WHERE
 func (tcda *TrustCenterDocumentAccess) Delete(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 DELETE FROM trust_center_document_accesses
@@ -356,12 +356,12 @@ WHERE
     AND id = @id
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"id": tcda.ID,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
@@ -374,7 +374,7 @@ WHERE
 func (tcdas *TrustCenterDocumentAccesses) CountByTrustCenterAccessID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	trustCenterAccessID gid.GID,
 ) (int, error) {
 	q := `
@@ -387,12 +387,12 @@ WHERE
     AND trust_center_access_id = @trust_center_access_id
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"trust_center_access_id": trustCenterAccessID,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	row := conn.QueryRow(ctx, q, args)
 
@@ -407,7 +407,7 @@ WHERE
 func (tcdas *TrustCenterDocumentAccesses) CountPendingRequestByTrustCenterAccessID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	trustCenterAccessID gid.GID,
 ) (int, error) {
 	q := `
@@ -421,12 +421,12 @@ WHERE
     AND status = 'REQUESTED'::trust_center_document_access_status
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"trust_center_access_id": trustCenterAccessID,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	row := conn.QueryRow(ctx, q, args)
 
@@ -441,7 +441,7 @@ WHERE
 func (tcdas *TrustCenterDocumentAccesses) CountActiveByTrustCenterAccessID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	trustCenterAccessID gid.GID,
 ) (int, error) {
 	q := `
@@ -455,12 +455,12 @@ WHERE
     AND status = 'GRANTED'::trust_center_document_access_status
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"trust_center_access_id": trustCenterAccessID,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	row := conn.QueryRow(ctx, q, args)
 
@@ -475,7 +475,7 @@ WHERE
 func (tcdas *TrustCenterDocumentAccesses) LoadAvailableByTrustCenterAccessID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	trustCenterAccessID gid.GID,
 	cursor *page.Cursor[TrustCenterDocumentAccessOrderField],
 ) error {
@@ -571,12 +571,12 @@ FROM final_items
 WHERE %s
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"trust_center_access_id": trustCenterAccessID,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
@@ -597,7 +597,7 @@ WHERE %s
 func (tcdas *TrustCenterDocumentAccesses) LoadAllByTrustCenterAccessID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	trustCenterAccessID gid.GID,
 ) error {
 	q := `
@@ -619,12 +619,12 @@ WHERE
 ORDER BY id ASC
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"trust_center_access_id": trustCenterAccessID,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -644,7 +644,7 @@ ORDER BY id ASC
 func GrantByDocumentIDs(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	trustCenterAccessID gid.GID,
 	documentIDs []gid.GID,
 	updatedAt time.Time,
@@ -658,14 +658,14 @@ WHERE
     AND document_id = ANY(@document_ids)
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"trust_center_access_id": trustCenterAccessID,
 		"document_ids":           documentIDs,
 		"updated_at":             updatedAt,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
@@ -678,7 +678,7 @@ WHERE
 func RejectOrRevokeByDocumentIDs(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	trustCenterAccessID gid.GID,
 	documentIDs []gid.GID,
 	updatedAt time.Time,
@@ -697,14 +697,14 @@ WHERE
     AND document_id = ANY(@document_ids)
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"trust_center_access_id": trustCenterAccessID,
 		"document_ids":           documentIDs,
 		"updated_at":             updatedAt,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
@@ -717,7 +717,7 @@ WHERE
 func GrantByReportFileIDs(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	trustCenterAccessID gid.GID,
 	reportFileIDs []gid.GID,
 	updatedAt time.Time,
@@ -731,14 +731,14 @@ WHERE
     AND report_file_id = ANY(@report_file_ids)
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"trust_center_access_id": trustCenterAccessID,
 		"report_file_ids":        reportFileIDs,
 		"updated_at":             updatedAt,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
@@ -751,7 +751,7 @@ WHERE
 func RejectOrRevokeByReportFileIDs(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	trustCenterAccessID gid.GID,
 	reportFileIDs []gid.GID,
 	updatedAt time.Time,
@@ -770,14 +770,14 @@ WHERE
     AND report_file_id = ANY(@report_file_ids)
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"trust_center_access_id": trustCenterAccessID,
 		"report_file_ids":        reportFileIDs,
 		"updated_at":             updatedAt,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
@@ -795,7 +795,7 @@ type MergeTrustCenterDocumentAccessesData struct {
 func (tcdas TrustCenterDocumentAccesses) MergeDocumentAccesses(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	organizationID gid.GID,
 	trustCenterAccessID gid.GID,
 	data []MergeTrustCenterDocumentAccessesData,
@@ -851,7 +851,7 @@ WHEN NOT MATCHED
 
 	args := pgx.StrictNamedArgs{
 		"trust_center_document_access_entity_type": TrustCenterDocumentAccessEntityType,
-		"tenant_id":              scope.GetTenantID(),
+		"tenant_id":              predicate.GetTenantID(),
 		"trust_center_access_id": trustCenterAccessID,
 		"organization_id":        organizationID,
 		"now":                    time.Now(),
@@ -868,7 +868,7 @@ WHEN NOT MATCHED
 func (tcdas TrustCenterDocumentAccesses) BulkInsertDocumentAccesses(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	trustCenterAccessID gid.GID,
 	organizationID gid.GID,
 	documentIDs []gid.GID,
@@ -910,7 +910,7 @@ ON CONFLICT DO NOTHING
 `
 
 	args := pgx.StrictNamedArgs{
-		"tenant_id":              scope.GetTenantID(),
+		"tenant_id":              predicate.GetTenantID(),
 		"organization_id":        organizationID,
 		"trust_center_access_id": trustCenterAccessID,
 		"document_ids":           documentIDs,
@@ -930,7 +930,7 @@ ON CONFLICT DO NOTHING
 func (tcdas TrustCenterDocumentAccesses) MergeReportFileAccesses(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	organizationID gid.GID,
 	trustCenterAccessID gid.GID,
 	data []MergeTrustCenterDocumentAccessesData,
@@ -986,7 +986,7 @@ WHEN NOT MATCHED
 
 	args := pgx.StrictNamedArgs{
 		"trust_center_document_access_entity_type": TrustCenterDocumentAccessEntityType,
-		"tenant_id":              scope.GetTenantID(),
+		"tenant_id":              predicate.GetTenantID(),
 		"trust_center_access_id": trustCenterAccessID,
 		"organization_id":        organizationID,
 		"now":                    time.Now(),
@@ -1003,7 +1003,7 @@ WHEN NOT MATCHED
 func (tcdas TrustCenterDocumentAccesses) BulkInsertReportFileAccesses(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	trustCenterAccessID gid.GID,
 	organizationID gid.GID,
 	reportFileIDs []gid.GID,
@@ -1045,7 +1045,7 @@ ON CONFLICT DO NOTHING
 `
 
 	args := pgx.StrictNamedArgs{
-		"tenant_id":       scope.GetTenantID(),
+		"tenant_id":       predicate.GetTenantID(),
 		"organization_id": organizationID,
 		"trust_center_document_access_entity_type": TrustCenterDocumentAccessEntityType,
 		"trust_center_access_id":                   trustCenterAccessID,
@@ -1065,7 +1065,7 @@ ON CONFLICT DO NOTHING
 func (tcda *TrustCenterDocumentAccess) LoadByTrustCenterAccessIDAndTrustCenterFileID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	trustCenterAccessID gid.GID,
 	trustCenterFileID gid.GID,
 ) error {
@@ -1089,13 +1089,13 @@ WHERE
 LIMIT 1;
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"trust_center_access_id": trustCenterAccessID,
 		"trust_center_file_id":   trustCenterFileID,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -1119,7 +1119,7 @@ LIMIT 1;
 func GrantByTrustCenterFileIDs(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	trustCenterAccessID gid.GID,
 	trustCenterFileIDs []gid.GID,
 	updatedAt time.Time,
@@ -1133,14 +1133,14 @@ WHERE
     AND trust_center_file_id = ANY(@trust_center_file_ids)
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"trust_center_access_id": trustCenterAccessID,
 		"trust_center_file_ids":  trustCenterFileIDs,
 		"updated_at":             updatedAt,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
@@ -1153,7 +1153,7 @@ WHERE
 func RejectOrRevokeByTrustCenterFileIDs(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	trustCenterAccessID gid.GID,
 	trustCenterFileIDs []gid.GID,
 	updatedAt time.Time,
@@ -1172,14 +1172,14 @@ WHERE
     AND trust_center_file_id = ANY(@trust_center_file_ids)
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"trust_center_access_id": trustCenterAccessID,
 		"trust_center_file_ids":  trustCenterFileIDs,
 		"updated_at":             updatedAt,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
@@ -1192,7 +1192,7 @@ WHERE
 func (tcdas TrustCenterDocumentAccesses) MergeTrustCenterFileAccesses(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	organizationID gid.GID,
 	trustCenterAccessID gid.GID,
 	data []MergeTrustCenterDocumentAccessesData,
@@ -1248,7 +1248,7 @@ WHEN NOT MATCHED
 
 	args := pgx.StrictNamedArgs{
 		"trust_center_document_access_entity_type": TrustCenterDocumentAccessEntityType,
-		"tenant_id":              scope.GetTenantID(),
+		"tenant_id":              predicate.GetTenantID(),
 		"trust_center_access_id": trustCenterAccessID,
 		"organization_id":        organizationID,
 		"now":                    time.Now(),
@@ -1265,7 +1265,7 @@ WHEN NOT MATCHED
 func (tcdas TrustCenterDocumentAccesses) BulkInsertTrustCenterFileAccesses(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	trustCenterAccessID gid.GID,
 	organizationID gid.GID,
 	trustCenterFileIDs []gid.GID,
@@ -1303,7 +1303,7 @@ ON CONFLICT DO NOTHING
 `
 
 	args := pgx.StrictNamedArgs{
-		"tenant_id":       scope.GetTenantID(),
+		"tenant_id":       predicate.GetTenantID(),
 		"organization_id": organizationID,
 		"trust_center_document_access_entity_type": TrustCenterDocumentAccessEntityType,
 		"trust_center_access_id":                   trustCenterAccessID,

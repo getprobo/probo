@@ -288,14 +288,14 @@ func (s *Service) Run(ctx context.Context) error {
 
 func (s *Service) GetMembership(ctx context.Context, membershipID gid.GID) (*coredata.Membership, error) {
 	var (
-		scope      = coredata.NewScopeFromObjectID(membershipID)
+		predicate = coredata.NewPredicateFromObjectID(membershipID)
 		membership = &coredata.Membership{}
 	)
 
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			err := membership.LoadByID(ctx, conn, scope, membershipID)
+			err := membership.LoadByID(ctx, conn, predicate, membershipID)
 			if err != nil {
 				if err == coredata.ErrResourceNotFound {
 					return NewMembershipNotFoundError(membershipID)
@@ -316,14 +316,14 @@ func (s *Service) GetMembership(ctx context.Context, membershipID gid.GID) (*cor
 
 func (s *Service) GetInvitation(ctx context.Context, invitationID gid.GID) (*coredata.Invitation, error) {
 	var (
-		scope      = coredata.NewScopeFromObjectID(invitationID)
+		predicate = coredata.NewPredicateFromObjectID(invitationID)
 		invitation = &coredata.Invitation{}
 	)
 
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			err := invitation.LoadByID(ctx, conn, scope, invitationID)
+			err := invitation.LoadByID(ctx, conn, predicate, invitationID)
 			if err != nil {
 				if err == coredata.ErrResourceNotFound {
 					return NewInvitationNotFoundError(invitationID)
@@ -369,14 +369,14 @@ func (s *Service) GetSession(ctx context.Context, sessionID gid.GID) (*coredata.
 
 func (s *Service) GetSAMLconfiguration(ctx context.Context, samlConfigurationID gid.GID) (*coredata.SAMLConfiguration, error) {
 	var (
-		scope             = coredata.NewScopeFromObjectID(samlConfigurationID)
+		predicate = coredata.NewPredicateFromObjectID(samlConfigurationID)
 		samlConfiguration = &coredata.SAMLConfiguration{}
 	)
 
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			err := samlConfiguration.LoadByID(ctx, conn, scope, samlConfigurationID)
+			err := samlConfiguration.LoadByID(ctx, conn, predicate, samlConfigurationID)
 			if err != nil {
 				if err == coredata.ErrResourceNotFound {
 					return saml.NewSAMLConfigurationNotFoundError(samlConfigurationID)
@@ -422,14 +422,14 @@ func (s *Service) GetPersonalAPIKey(ctx context.Context, personalAPIKeyID gid.GI
 
 func (s *Service) GetSCIMConfiguration(ctx context.Context, scimConfigurationID gid.GID) (*coredata.SCIMConfiguration, error) {
 	var (
-		scope             = coredata.NewScopeFromObjectID(scimConfigurationID)
+		predicate = coredata.NewPredicateFromObjectID(scimConfigurationID)
 		scimConfiguration = &coredata.SCIMConfiguration{}
 	)
 
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			err := scimConfiguration.LoadByID(ctx, conn, scope, scimConfigurationID)
+			err := scimConfiguration.LoadByID(ctx, conn, predicate, scimConfigurationID)
 			if err != nil {
 				if err == coredata.ErrResourceNotFound {
 					return scim.NewSCIMConfigurationNotFoundError(scimConfigurationID)
@@ -450,14 +450,14 @@ func (s *Service) GetSCIMConfiguration(ctx context.Context, scimConfigurationID 
 
 func (s *Service) GetSCIMEvent(ctx context.Context, scimEventID gid.GID) (*coredata.SCIMEvent, error) {
 	var (
-		scope     = coredata.NewScopeFromObjectID(scimEventID)
+		predicate = coredata.NewPredicateFromObjectID(scimEventID)
 		scimEvent = &coredata.SCIMEvent{}
 	)
 
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			err := scimEvent.LoadByID(ctx, conn, scope, scimEventID)
+			err := scimEvent.LoadByID(ctx, conn, predicate, scimEventID)
 			if err != nil {
 				if err == coredata.ErrResourceNotFound {
 					return fmt.Errorf("SCIM event not found: %s", scimEventID)

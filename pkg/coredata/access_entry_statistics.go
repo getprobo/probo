@@ -34,11 +34,11 @@ type AccessEntryStatistics struct {
 func (s *AccessEntryStatistics) LoadByCampaignID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	campaignID gid.GID,
 ) error {
 	args := pgx.StrictNamedArgs{"campaign_id": campaignID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	s.DecisionCounts = make(map[AccessEntryDecision]int)
 	s.FlagCounts = make(map[AccessEntryFlag]int)
@@ -53,7 +53,7 @@ WHERE
     AND access_review_campaign_id = @campaign_id
 GROUP BY decision;
 `
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -87,7 +87,7 @@ WHERE
     AND access_review_campaign_id = @campaign_id
 GROUP BY f;
 `
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	rows, err = conn.Query(ctx, q, args)
 	if err != nil {
@@ -120,7 +120,7 @@ WHERE
     AND access_review_campaign_id = @campaign_id
 GROUP BY incremental_tag;
 `
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	rows, err = conn.Query(ctx, q, args)
 	if err != nil {
@@ -151,7 +151,7 @@ GROUP BY incremental_tag;
 func (s *AccessEntryStatistics) LoadByCampaignIDAndSourceID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	campaignID gid.GID,
 	sourceID gid.GID,
 ) error {
@@ -159,7 +159,7 @@ func (s *AccessEntryStatistics) LoadByCampaignIDAndSourceID(
 		"campaign_id": campaignID,
 		"source_id":   sourceID,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	s.DecisionCounts = make(map[AccessEntryDecision]int)
 	s.FlagCounts = make(map[AccessEntryFlag]int)
@@ -175,7 +175,7 @@ WHERE
     AND access_source_id = @source_id
 GROUP BY decision;
 `
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -210,7 +210,7 @@ WHERE
     AND access_source_id = @source_id
 GROUP BY f;
 `
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	rows, err = conn.Query(ctx, q, args)
 	if err != nil {
@@ -244,7 +244,7 @@ WHERE
     AND access_source_id = @source_id
 GROUP BY incremental_tag;
 `
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	rows, err = conn.Query(ctx, q, args)
 	if err != nil {

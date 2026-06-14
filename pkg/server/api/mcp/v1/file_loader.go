@@ -26,10 +26,10 @@ import (
 
 func (r *Resolver) loadFile(
 	ctx context.Context,
-	scope *coredata.Scope,
+	predicate *coredata.Predicate,
 	fileID gid.GID,
 ) (*types.File, error) {
-	file, err := r.proboSvc.Files.Get(ctx, scope, fileID)
+	file, err := r.proboSvc.Files.Get(ctx, predicate, fileID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, fmt.Errorf("file not found")

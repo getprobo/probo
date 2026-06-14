@@ -37,7 +37,7 @@ func NewAuthorizeFunc(logger *log.Logger) authz.AuthorizeFunc {
 		objectID gid.GID,
 		action string,
 		options ...authz.AuthorizeFuncOption,
-	) (*coredata.Scope, error) {
+	) (*coredata.Predicate, error) {
 		loaders := FromContext(ctx)
 
 		applied := iam.AuthorizeParams{
@@ -75,6 +75,6 @@ func NewAuthorizeFunc(logger *log.Logger) authz.AuthorizeFunc {
 			return nil, gqlutils.Internal(ctx)
 		}
 
-		return result.Scope, nil
+		return result.Predicate, nil
 	}
 }

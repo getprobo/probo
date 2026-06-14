@@ -57,14 +57,13 @@ func (r *customDomainResolver) Permission(ctx context.Context, obj *types.Custom
 
 // UpdateTrustCenter is the resolver for the updateTrustCenter field.
 func (r *mutationResolver) UpdateTrustCenter(ctx context.Context, input types.UpdateTrustCenterInput) (*types.UpdateTrustCenterPayload, error) {
-	scope, err := r.authorize(ctx, input.TrustCenterID, probo.ActionTrustCenterUpdate)
+	predicate, err := r.authorize(ctx, input.TrustCenterID, probo.ActionTrustCenterUpdate)
 	if err != nil {
 		return nil, err
 	}
 
 	trustCenter, _, err := r.probo.TrustCenters.Update(
-		ctx, scope,
-		&probo.UpdateTrustCenterRequest{
+		ctx, predicate, &probo.UpdateTrustCenterRequest{
 			ID:                   input.TrustCenterID,
 			Active:               input.Active,
 			SearchEngineIndexing: input.SearchEngineIndexing,
@@ -87,14 +86,13 @@ func (r *mutationResolver) UpdateTrustCenter(ctx context.Context, input types.Up
 
 // UploadTrustCenterNda is the resolver for the uploadTrustCenterNDA field.
 func (r *mutationResolver) UploadTrustCenterNda(ctx context.Context, input types.UploadTrustCenterNDAInput) (*types.UploadTrustCenterNDAPayload, error) {
-	scope, err := r.authorize(ctx, input.TrustCenterID, probo.ActionTrustCenterNonDisclosureAgreementUpload)
+	predicate, err := r.authorize(ctx, input.TrustCenterID, probo.ActionTrustCenterNonDisclosureAgreementUpload)
 	if err != nil {
 		return nil, err
 	}
 
 	trustCenter, _, err := r.probo.TrustCenters.UploadNDA(
-		ctx, scope,
-		&probo.UploadTrustCenterNDARequest{
+		ctx, predicate, &probo.UploadTrustCenterNDARequest{
 			TrustCenterID: input.TrustCenterID,
 			File:          input.File.File,
 			FileName:      input.FileName,
@@ -117,12 +115,12 @@ func (r *mutationResolver) UploadTrustCenterNda(ctx context.Context, input types
 
 // DeleteTrustCenterNda is the resolver for the deleteTrustCenterNDA field.
 func (r *mutationResolver) DeleteTrustCenterNda(ctx context.Context, input types.DeleteTrustCenterNDAInput) (*types.DeleteTrustCenterNDAPayload, error) {
-	scope, err := r.authorize(ctx, input.TrustCenterID, probo.ActionTrustCenterNonDisclosureAgreementDelete)
+	predicate, err := r.authorize(ctx, input.TrustCenterID, probo.ActionTrustCenterNonDisclosureAgreementDelete)
 	if err != nil {
 		return nil, err
 	}
 
-	trustCenter, _, err := r.probo.TrustCenters.DeleteNDA(ctx, scope, input.TrustCenterID)
+	trustCenter, _, err := r.probo.TrustCenters.DeleteNDA(ctx, predicate, input.TrustCenterID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete trust center NDA", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -135,7 +133,7 @@ func (r *mutationResolver) DeleteTrustCenterNda(ctx context.Context, input types
 
 // UpdateTrustCenterBrand is the resolver for the updateTrustCenterBrand field.
 func (r *mutationResolver) UpdateTrustCenterBrand(ctx context.Context, input types.UpdateTrustCenterBrandInput) (*types.UpdateTrustCenterBrandPayload, error) {
-	scope, err := r.authorize(ctx, input.TrustCenterID, probo.ActionTrustCenterUpdate)
+	predicate, err := r.authorize(ctx, input.TrustCenterID, probo.ActionTrustCenterUpdate)
 	if err != nil {
 		return nil, err
 	}
@@ -178,7 +176,7 @@ func (r *mutationResolver) UpdateTrustCenterBrand(ctx context.Context, input typ
 		}
 	}
 
-	trustCenter, _, err := r.probo.TrustCenters.UpdateTrustCenterBrand(ctx, scope, req)
+	trustCenter, _, err := r.probo.TrustCenters.UpdateTrustCenterBrand(ctx, predicate, req)
 	if err != nil {
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
@@ -196,7 +194,7 @@ func (r *mutationResolver) UpdateTrustCenterBrand(ctx context.Context, input typ
 
 // UpdateTrustCenterAccess is the resolver for the updateTrustCenterAccess field.
 func (r *mutationResolver) UpdateTrustCenterAccess(ctx context.Context, input types.UpdateTrustCenterAccessInput) (*types.UpdateTrustCenterAccessPayload, error) {
-	scope, err := r.authorize(ctx, input.ID, probo.ActionTrustCenterAccessUpdate)
+	predicate, err := r.authorize(ctx, input.ID, probo.ActionTrustCenterAccessUpdate)
 	if err != nil {
 		return nil, err
 	}
@@ -229,8 +227,7 @@ func (r *mutationResolver) UpdateTrustCenterAccess(ctx context.Context, input ty
 	}
 
 	access, err := r.probo.TrustCenterAccesses.Update(
-		ctx, scope,
-		&probo.UpdateTrustCenterAccessRequest{
+		ctx, predicate, &probo.UpdateTrustCenterAccessRequest{
 			ID:                      input.ID,
 			DocumentAccesses:        documentAccesses,
 			ReportAccesses:          reportAccesses,
@@ -254,12 +251,12 @@ func (r *mutationResolver) UpdateTrustCenterAccess(ctx context.Context, input ty
 
 // DeleteTrustCenterAccess is the resolver for the deleteTrustCenterAccess field.
 func (r *mutationResolver) DeleteTrustCenterAccess(ctx context.Context, input types.DeleteTrustCenterAccessInput) (*types.DeleteTrustCenterAccessPayload, error) {
-	scope, err := r.authorize(ctx, input.ID, probo.ActionTrustCenterAccessDelete)
+	predicate, err := r.authorize(ctx, input.ID, probo.ActionTrustCenterAccessDelete)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := r.probo.TrustCenterAccesses.Delete(ctx, scope, input.ID); err != nil {
+	if err := r.probo.TrustCenterAccesses.Delete(ctx, predicate, input.ID); err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete trust center access", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
@@ -271,14 +268,13 @@ func (r *mutationResolver) DeleteTrustCenterAccess(ctx context.Context, input ty
 
 // CreateTrustCenterReference is the resolver for the createTrustCenterReference field.
 func (r *mutationResolver) CreateTrustCenterReference(ctx context.Context, input types.CreateTrustCenterReferenceInput) (*types.CreateTrustCenterReferencePayload, error) {
-	scope, err := r.authorize(ctx, input.TrustCenterID, probo.ActionTrustCenterReferenceCreate)
+	predicate, err := r.authorize(ctx, input.TrustCenterID, probo.ActionTrustCenterReferenceCreate)
 	if err != nil {
 		return nil, err
 	}
 
 	reference, err := r.probo.TrustCenterReferences.Create(
-		ctx, scope,
-		&probo.CreateTrustCenterReferenceRequest{
+		ctx, predicate, &probo.CreateTrustCenterReferenceRequest{
 			TrustCenterID: input.TrustCenterID,
 			Name:          input.Name,
 			Description:   input.Description,
@@ -308,7 +304,7 @@ func (r *mutationResolver) CreateTrustCenterReference(ctx context.Context, input
 
 // UpdateTrustCenterReference is the resolver for the updateTrustCenterReference field.
 func (r *mutationResolver) UpdateTrustCenterReference(ctx context.Context, input types.UpdateTrustCenterReferenceInput) (*types.UpdateTrustCenterReferencePayload, error) {
-	scope, err := r.authorize(ctx, input.ID, probo.ActionTrustCenterReferenceUpdate)
+	predicate, err := r.authorize(ctx, input.ID, probo.ActionTrustCenterReferenceUpdate)
 	if err != nil {
 		return nil, err
 	}
@@ -330,7 +326,7 @@ func (r *mutationResolver) UpdateTrustCenterReference(ctx context.Context, input
 		}
 	}
 
-	reference, err := r.probo.TrustCenterReferences.Update(ctx, scope, req)
+	reference, err := r.probo.TrustCenterReferences.Update(ctx, predicate, req)
 	if err != nil {
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
@@ -348,12 +344,12 @@ func (r *mutationResolver) UpdateTrustCenterReference(ctx context.Context, input
 
 // DeleteTrustCenterReference is the resolver for the deleteTrustCenterReference field.
 func (r *mutationResolver) DeleteTrustCenterReference(ctx context.Context, input types.DeleteTrustCenterReferenceInput) (*types.DeleteTrustCenterReferencePayload, error) {
-	scope, err := r.authorize(ctx, input.ID, probo.ActionTrustCenterReferenceDelete)
+	predicate, err := r.authorize(ctx, input.ID, probo.ActionTrustCenterReferenceDelete)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := r.probo.TrustCenterReferences.Delete(ctx, scope, input.ID); err != nil {
+	if err := r.probo.TrustCenterReferences.Delete(ctx, predicate, input.ID); err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete trust center reference", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
@@ -365,14 +361,13 @@ func (r *mutationResolver) DeleteTrustCenterReference(ctx context.Context, input
 
 // CreateComplianceFramework is the resolver for the createComplianceFramework field.
 func (r *mutationResolver) CreateComplianceFramework(ctx context.Context, input types.CreateComplianceFrameworkInput) (*types.CreateComplianceFrameworkPayload, error) {
-	scope, err := r.authorize(ctx, input.TrustCenterID, probo.ActionComplianceFrameworkCreate)
+	predicate, err := r.authorize(ctx, input.TrustCenterID, probo.ActionComplianceFrameworkCreate)
 	if err != nil {
 		return nil, err
 	}
 
 	cf, err := r.probo.ComplianceFrameworks.Create(
-		ctx, scope,
-		&probo.CreateComplianceFrameworkRequest{
+		ctx, predicate, &probo.CreateComplianceFrameworkRequest{
 			TrustCenterID: input.TrustCenterID,
 			FrameworkID:   input.FrameworkID,
 		},
@@ -394,12 +389,12 @@ func (r *mutationResolver) CreateComplianceFramework(ctx context.Context, input 
 
 // UpdateComplianceFramework is the resolver for the updateComplianceFramework field.
 func (r *mutationResolver) UpdateComplianceFramework(ctx context.Context, input types.UpdateComplianceFrameworkInput) (*types.UpdateComplianceFrameworkPayload, error) {
-	scope, err := r.authorize(ctx, input.ID, probo.ActionComplianceFrameworkUpdateRank)
+	predicate, err := r.authorize(ctx, input.ID, probo.ActionComplianceFrameworkUpdateRank)
 	if err != nil {
 		return nil, err
 	}
 
-	cf, err := r.probo.ComplianceFrameworks.Update(ctx, scope, &probo.UpdateComplianceFrameworkRequest{
+	cf, err := r.probo.ComplianceFrameworks.Update(ctx, predicate, &probo.UpdateComplianceFrameworkRequest{
 		ID:   input.ID,
 		Rank: input.Rank,
 	})
@@ -420,14 +415,13 @@ func (r *mutationResolver) UpdateComplianceFramework(ctx context.Context, input 
 
 // DeleteComplianceFramework is the resolver for the deleteComplianceFramework field.
 func (r *mutationResolver) DeleteComplianceFramework(ctx context.Context, input types.DeleteComplianceFrameworkInput) (*types.DeleteComplianceFrameworkPayload, error) {
-	scope, err := r.authorize(ctx, input.ID, probo.ActionComplianceFrameworkDelete)
+	predicate, err := r.authorize(ctx, input.ID, probo.ActionComplianceFrameworkDelete)
 	if err != nil {
 		return nil, err
 	}
 
 	if err := r.probo.ComplianceFrameworks.Delete(
-		ctx, scope,
-		&probo.DeleteComplianceFrameworkRequest{
+		ctx, predicate, &probo.DeleteComplianceFrameworkRequest{
 			ID: input.ID,
 		},
 	); err != nil {
@@ -447,14 +441,13 @@ func (r *mutationResolver) DeleteComplianceFramework(ctx context.Context, input 
 
 // CreateComplianceExternalURL is the resolver for the createComplianceExternalURL field.
 func (r *mutationResolver) CreateComplianceExternalURL(ctx context.Context, input types.CreateComplianceExternalURLInput) (*types.CreateComplianceExternalURLPayload, error) {
-	scope, err := r.authorize(ctx, input.TrustCenterID, probo.ActionComplianceExternalURLCreate)
+	predicate, err := r.authorize(ctx, input.TrustCenterID, probo.ActionComplianceExternalURLCreate)
 	if err != nil {
 		return nil, err
 	}
 
 	item, err := r.probo.ComplianceExternalURLs.Create(
-		ctx, scope,
-		&probo.CreateComplianceExternalURLRequest{
+		ctx, predicate, &probo.CreateComplianceExternalURLRequest{
 			TrustCenterID: input.TrustCenterID,
 			Name:          input.Name,
 			URL:           input.URL,
@@ -477,12 +470,12 @@ func (r *mutationResolver) CreateComplianceExternalURL(ctx context.Context, inpu
 
 // UpdateComplianceExternalURL is the resolver for the updateComplianceExternalURL field.
 func (r *mutationResolver) UpdateComplianceExternalURL(ctx context.Context, input types.UpdateComplianceExternalURLInput) (*types.UpdateComplianceExternalURLPayload, error) {
-	scope, err := r.authorize(ctx, input.ID, probo.ActionComplianceExternalURLUpdate)
+	predicate, err := r.authorize(ctx, input.ID, probo.ActionComplianceExternalURLUpdate)
 	if err != nil {
 		return nil, err
 	}
 
-	item, err := r.probo.ComplianceExternalURLs.Update(ctx, scope, &probo.UpdateComplianceExternalURLRequest{
+	item, err := r.probo.ComplianceExternalURLs.Update(ctx, predicate, &probo.UpdateComplianceExternalURLRequest{
 		ID:   input.ID,
 		Name: input.Name,
 		URL:  input.URL,
@@ -505,12 +498,12 @@ func (r *mutationResolver) UpdateComplianceExternalURL(ctx context.Context, inpu
 
 // DeleteComplianceExternalURL is the resolver for the deleteComplianceExternalURL field.
 func (r *mutationResolver) DeleteComplianceExternalURL(ctx context.Context, input types.DeleteComplianceExternalURLInput) (*types.DeleteComplianceExternalURLPayload, error) {
-	scope, err := r.authorize(ctx, input.ID, probo.ActionComplianceExternalURLDelete)
+	predicate, err := r.authorize(ctx, input.ID, probo.ActionComplianceExternalURLDelete)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := r.probo.ComplianceExternalURLs.Delete(ctx, scope, &probo.DeleteComplianceExternalURLRequest{ID: input.ID}); err != nil {
+	if err := r.probo.ComplianceExternalURLs.Delete(ctx, predicate, &probo.DeleteComplianceExternalURLRequest{ID: input.ID}); err != nil {
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
 		}
@@ -527,14 +520,13 @@ func (r *mutationResolver) DeleteComplianceExternalURL(ctx context.Context, inpu
 
 // CreateTrustCenterFile is the resolver for the createTrustCenterFile field.
 func (r *mutationResolver) CreateTrustCenterFile(ctx context.Context, input types.CreateTrustCenterFileInput) (*types.CreateTrustCenterFilePayload, error) {
-	scope, err := r.authorize(ctx, input.OrganizationID, probo.ActionTrustCenterFileCreate)
+	predicate, err := r.authorize(ctx, input.OrganizationID, probo.ActionTrustCenterFileCreate)
 	if err != nil {
 		return nil, err
 	}
 
 	file, err := r.probo.TrustCenterFiles.Create(
-		ctx, scope,
-		&probo.CreateTrustCenterFileRequest{
+		ctx, predicate, &probo.CreateTrustCenterFileRequest{
 			OrganizationID: input.OrganizationID,
 			Name:           input.Name,
 			Category:       input.Category,
@@ -564,14 +556,13 @@ func (r *mutationResolver) CreateTrustCenterFile(ctx context.Context, input type
 
 // UpdateTrustCenterFile is the resolver for the updateTrustCenterFile field.
 func (r *mutationResolver) UpdateTrustCenterFile(ctx context.Context, input types.UpdateTrustCenterFileInput) (*types.UpdateTrustCenterFilePayload, error) {
-	scope, err := r.authorize(ctx, input.ID, probo.ActionTrustCenterFileUpdate)
+	predicate, err := r.authorize(ctx, input.ID, probo.ActionTrustCenterFileUpdate)
 	if err != nil {
 		return nil, err
 	}
 
 	file, err := r.probo.TrustCenterFiles.Update(
-		ctx, scope,
-		&probo.UpdateTrustCenterFileRequest{
+		ctx, predicate, &probo.UpdateTrustCenterFileRequest{
 			ID:                    input.ID,
 			Name:                  input.Name,
 			Category:              input.Category,
@@ -595,12 +586,12 @@ func (r *mutationResolver) UpdateTrustCenterFile(ctx context.Context, input type
 
 // GetTrustCenterFile is the resolver for the getTrustCenterFile field.
 func (r *mutationResolver) GetTrustCenterFile(ctx context.Context, input types.GetTrustCenterFileInput) (*types.GetTrustCenterFilePayload, error) {
-	scope, err := r.authorize(ctx, input.ID, probo.ActionTrustCenterFileGet)
+	predicate, err := r.authorize(ctx, input.ID, probo.ActionTrustCenterFileGet)
 	if err != nil {
 		return nil, err
 	}
 
-	file, err := r.probo.TrustCenterFiles.Get(ctx, scope, input.ID)
+	file, err := r.probo.TrustCenterFiles.Get(ctx, predicate, input.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot get trust center file", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -613,12 +604,12 @@ func (r *mutationResolver) GetTrustCenterFile(ctx context.Context, input types.G
 
 // DeleteTrustCenterFile is the resolver for the deleteTrustCenterFile field.
 func (r *mutationResolver) DeleteTrustCenterFile(ctx context.Context, input types.DeleteTrustCenterFileInput) (*types.DeleteTrustCenterFilePayload, error) {
-	scope, err := r.authorize(ctx, input.ID, probo.ActionTrustCenterFileDelete)
+	predicate, err := r.authorize(ctx, input.ID, probo.ActionTrustCenterFileDelete)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := r.probo.TrustCenterFiles.Delete(ctx, scope, input.ID); err != nil {
+	if err := r.probo.TrustCenterFiles.Delete(ctx, predicate, input.ID); err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete trust center file", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
@@ -630,14 +621,13 @@ func (r *mutationResolver) DeleteTrustCenterFile(ctx context.Context, input type
 
 // CreateCustomDomain is the resolver for the createCustomDomain field.
 func (r *mutationResolver) CreateCustomDomain(ctx context.Context, input types.CreateCustomDomainInput) (*types.CreateCustomDomainPayload, error) {
-	scope, err := r.authorize(ctx, input.OrganizationID, probo.ActionCustomDomainCreate)
+	predicate, err := r.authorize(ctx, input.OrganizationID, probo.ActionCustomDomainCreate)
 	if err != nil {
 		return nil, err
 	}
 
 	domain, err := r.probo.CustomDomains.CreateCustomDomain(
-		ctx, scope,
-		probo.CreateCustomDomainRequest{
+		ctx, predicate, probo.CreateCustomDomainRequest{
 			OrganizationID: input.OrganizationID,
 			Domain:         input.Domain,
 		},
@@ -659,14 +649,14 @@ func (r *mutationResolver) CreateCustomDomain(ctx context.Context, input types.C
 
 // DeleteCustomDomain is the resolver for the deleteCustomDomain field.
 func (r *mutationResolver) DeleteCustomDomain(ctx context.Context, input types.DeleteCustomDomainInput) (*types.DeleteCustomDomainPayload, error) {
-	scope, err := r.authorize(ctx, input.OrganizationID, probo.ActionCustomDomainDelete)
+	predicate, err := r.authorize(ctx, input.OrganizationID, probo.ActionCustomDomainDelete)
 	if err != nil {
 		return nil, err
 	}
 
 	// TODO Drop this wierd logic
 	// Get the current custom domain ID before deleting
-	domain, err := r.probo.CustomDomains.GetOrganizationCustomDomain(ctx, scope, input.OrganizationID)
+	domain, err := r.probo.CustomDomains.GetOrganizationCustomDomain(ctx, predicate, input.OrganizationID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot get custom domain", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -678,7 +668,7 @@ func (r *mutationResolver) DeleteCustomDomain(ctx context.Context, input types.D
 
 	deletedDomainID := domain.ID
 
-	if err := r.probo.CustomDomains.DeleteCustomDomain(ctx, scope, input.OrganizationID); err != nil {
+	if err := r.probo.CustomDomains.DeleteCustomDomain(ctx, predicate, input.OrganizationID); err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete custom domain", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
@@ -731,18 +721,18 @@ func (r *trustCenterResolver) Nda(ctx context.Context, obj *types.TrustCenter) (
 
 // Organization is the resolver for the organization field.
 func (r *trustCenterResolver) Organization(ctx context.Context, obj *types.TrustCenter) (*types.Organization, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGet)
+	predicate, err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGet)
 	if err != nil {
 		return nil, err
 	}
 
-	trustCenter, err := r.probo.TrustCenters.Get(ctx, scope, obj.ID)
+	trustCenter, err := r.probo.TrustCenters.Get(ctx, predicate, obj.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot get trust center", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	organization, err := r.probo.Organizations.Get(ctx, scope, trustCenter.OrganizationID)
+	organization, err := r.probo.Organizations.Get(ctx, predicate, trustCenter.OrganizationID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
@@ -758,7 +748,7 @@ func (r *trustCenterResolver) Organization(ctx context.Context, obj *types.Trust
 
 // Accesses is the resolver for the accesses field.
 func (r *trustCenterResolver) Accesses(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.OrderBy[coredata.TrustCenterAccessOrderField]) (*types.TrustCenterAccessConnection, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionTrustCenterAccessList)
+	predicate, err := r.authorize(ctx, obj.ID, probo.ActionTrustCenterAccessList)
 	if err != nil {
 		return nil, err
 	}
@@ -777,7 +767,7 @@ func (r *trustCenterResolver) Accesses(ctx context.Context, obj *types.TrustCent
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	result, err := r.probo.TrustCenterAccesses.ListForTrustCenterID(ctx, scope, obj.ID, cursor)
+	result, err := r.probo.TrustCenterAccesses.ListForTrustCenterID(ctx, predicate, obj.ID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list trust center accesses", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -788,7 +778,7 @@ func (r *trustCenterResolver) Accesses(ctx context.Context, obj *types.TrustCent
 
 // References is the resolver for the references field.
 func (r *trustCenterResolver) References(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.OrderBy[coredata.TrustCenterReferenceOrderField]) (*types.TrustCenterReferenceConnection, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionTrustCenterReferenceList)
+	predicate, err := r.authorize(ctx, obj.ID, probo.ActionTrustCenterReferenceList)
 	if err != nil {
 		return nil, err
 	}
@@ -807,7 +797,7 @@ func (r *trustCenterResolver) References(ctx context.Context, obj *types.TrustCe
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	result, err := r.probo.TrustCenterReferences.ListForTrustCenterID(ctx, scope, obj.ID, cursor)
+	result, err := r.probo.TrustCenterReferences.ListForTrustCenterID(ctx, predicate, obj.ID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list trust center references", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -818,7 +808,7 @@ func (r *trustCenterResolver) References(ctx context.Context, obj *types.TrustCe
 
 // ComplianceFrameworks is the resolver for the complianceFrameworks field.
 func (r *trustCenterResolver) ComplianceFrameworks(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.OrderBy[coredata.ComplianceFrameworkOrderField]) (*types.ComplianceFrameworkConnection, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionComplianceFrameworkList)
+	predicate, err := r.authorize(ctx, obj.ID, probo.ActionComplianceFrameworkList)
 	if err != nil {
 		return nil, err
 	}
@@ -837,7 +827,7 @@ func (r *trustCenterResolver) ComplianceFrameworks(ctx context.Context, obj *typ
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	result, err := r.probo.ComplianceFrameworks.ListWithHiddenForTrustCenterID(ctx, scope, obj.ID, cursor)
+	result, err := r.probo.ComplianceFrameworks.ListWithHiddenForTrustCenterID(ctx, predicate, obj.ID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list compliance frameworks", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -848,7 +838,7 @@ func (r *trustCenterResolver) ComplianceFrameworks(ctx context.Context, obj *typ
 
 // ExternalUrls is the resolver for the externalUrls field.
 func (r *trustCenterResolver) ExternalUrls(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.OrderBy[coredata.ComplianceExternalURLOrderField]) (*types.ComplianceExternalURLConnection, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionComplianceExternalURLList)
+	predicate, err := r.authorize(ctx, obj.ID, probo.ActionComplianceExternalURLList)
 	if err != nil {
 		return nil, err
 	}
@@ -867,7 +857,7 @@ func (r *trustCenterResolver) ExternalUrls(ctx context.Context, obj *types.Trust
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	result, err := r.probo.ComplianceExternalURLs.List(ctx, scope, obj.ID, cursor)
+	result, err := r.probo.ComplianceExternalURLs.List(ctx, predicate, obj.ID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list compliance external URLs", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -878,7 +868,7 @@ func (r *trustCenterResolver) ExternalUrls(ctx context.Context, obj *types.Trust
 
 // MailingList is the resolver for the mailingList field.
 func (r *trustCenterResolver) MailingList(ctx context.Context, obj *types.TrustCenter) (*types.MailingList, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionMailingListSubscriberList)
+	predicate, err := r.authorize(ctx, obj.ID, probo.ActionMailingListSubscriberList)
 	if err != nil {
 		return nil, err
 	}
@@ -887,7 +877,7 @@ func (r *trustCenterResolver) MailingList(ctx context.Context, obj *types.TrustC
 		return obj.MailingList, nil
 	}
 
-	ml, err := r.probo.TrustCenters.GetMailingList(ctx, scope, obj.ID)
+	ml, err := r.probo.TrustCenters.GetMailingList(ctx, predicate, obj.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot get mailing list for trust center", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -907,12 +897,12 @@ func (r *trustCenterResolver) Permission(ctx context.Context, obj *types.TrustCe
 
 // NdaSignature is the resolver for the ndaSignature field.
 func (r *trustCenterAccessResolver) NdaSignature(ctx context.Context, obj *types.TrustCenterAccess) (*types.ElectronicSignature, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionTrustCenterAccessGet)
+	predicate, err := r.authorize(ctx, obj.ID, probo.ActionTrustCenterAccessGet)
 	if err != nil {
 		return nil, err
 	}
 
-	access, err := r.probo.TrustCenterAccesses.Get(ctx, scope, obj.ID)
+	access, err := r.probo.TrustCenterAccesses.Get(ctx, predicate, obj.ID)
 	if err != nil {
 		return nil, fmt.Errorf("cannot load trust center access: %w", err)
 	}
@@ -931,12 +921,12 @@ func (r *trustCenterAccessResolver) NdaSignature(ctx context.Context, obj *types
 
 // PendingRequestCount is the resolver for the pendingRequestCount field.
 func (r *trustCenterAccessResolver) PendingRequestCount(ctx context.Context, obj *types.TrustCenterAccess) (int, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionTrustCenterAccessGet)
+	predicate, err := r.authorize(ctx, obj.ID, probo.ActionTrustCenterAccessGet)
 	if err != nil {
 		return 0, err
 	}
 
-	count, err := r.probo.TrustCenterAccesses.CountPendingRequestDocumentAccesses(ctx, scope, obj.ID)
+	count, err := r.probo.TrustCenterAccesses.CountPendingRequestDocumentAccesses(ctx, predicate, obj.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot count pending request document accesses", log.Error(err))
 		return 0, gqlutils.Internal(ctx)
@@ -947,12 +937,12 @@ func (r *trustCenterAccessResolver) PendingRequestCount(ctx context.Context, obj
 
 // ActiveCount is the resolver for the activeCount field.
 func (r *trustCenterAccessResolver) ActiveCount(ctx context.Context, obj *types.TrustCenterAccess) (int, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionTrustCenterAccessGet)
+	predicate, err := r.authorize(ctx, obj.ID, probo.ActionTrustCenterAccessGet)
 	if err != nil {
 		return 0, err
 	}
 
-	count, err := r.probo.TrustCenterAccesses.CountActiveDocumentAccesses(ctx, scope, obj.ID)
+	count, err := r.probo.TrustCenterAccesses.CountActiveDocumentAccesses(ctx, predicate, obj.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot count active document accesses", log.Error(err))
 		return 0, gqlutils.Internal(ctx)
@@ -983,7 +973,7 @@ func (r *trustCenterAccessResolver) Profile(ctx context.Context, obj *types.Trus
 
 // AvailableDocumentAccesses is the resolver for the availableDocumentAccesses field.
 func (r *trustCenterAccessResolver) AvailableDocumentAccesses(ctx context.Context, obj *types.TrustCenterAccess, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.OrderBy[coredata.TrustCenterDocumentAccessOrderField]) (*types.TrustCenterDocumentAccessConnection, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionTrustCenterAccessGet)
+	predicate, err := r.authorize(ctx, obj.ID, probo.ActionTrustCenterAccessGet)
 	if err != nil {
 		return nil, err
 	}
@@ -1002,7 +992,7 @@ func (r *trustCenterAccessResolver) AvailableDocumentAccesses(ctx context.Contex
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	result, err := r.probo.TrustCenterAccesses.ListAvailableDocumentAccesses(ctx, scope, obj.ID, cursor)
+	result, err := r.probo.TrustCenterAccesses.ListAvailableDocumentAccesses(ctx, predicate, obj.ID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list trust center document accesses", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -1018,7 +1008,7 @@ func (r *trustCenterAccessResolver) Permission(ctx context.Context, obj *types.T
 
 // Document is the resolver for the document field.
 func (r *trustCenterDocumentAccessResolver) Document(ctx context.Context, obj *types.TrustCenterDocumentAccess) (*types.Document, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionDocumentGet)
+	predicate, err := r.authorize(ctx, obj.ID, probo.ActionDocumentGet)
 	if err != nil {
 		return nil, err
 	}
@@ -1027,7 +1017,7 @@ func (r *trustCenterDocumentAccessResolver) Document(ctx context.Context, obj *t
 		return nil, nil
 	}
 
-	document, err := r.probo.Documents.Get(ctx, scope, *obj.DocumentID)
+	document, err := r.probo.Documents.Get(ctx, predicate, *obj.DocumentID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
@@ -1069,7 +1059,7 @@ func (r *trustCenterDocumentAccessResolver) ReportFile(ctx context.Context, obj 
 
 // Audit is the resolver for the audit field.
 func (r *trustCenterDocumentAccessResolver) Audit(ctx context.Context, obj *types.TrustCenterDocumentAccess) (*types.Audit, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionAuditGet)
+	predicate, err := r.authorize(ctx, obj.ID, probo.ActionAuditGet)
 	if err != nil {
 		return nil, err
 	}
@@ -1078,7 +1068,7 @@ func (r *trustCenterDocumentAccessResolver) Audit(ctx context.Context, obj *type
 		return nil, nil
 	}
 
-	audit, err := r.probo.Audits.GetByReportFileID(ctx, scope, *obj.ReportFileID)
+	audit, err := r.probo.Audits.GetByReportFileID(ctx, predicate, *obj.ReportFileID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, nil
@@ -1094,7 +1084,7 @@ func (r *trustCenterDocumentAccessResolver) Audit(ctx context.Context, obj *type
 
 // TrustCenterFile is the resolver for the trustCenterFile field.
 func (r *trustCenterDocumentAccessResolver) TrustCenterFile(ctx context.Context, obj *types.TrustCenterDocumentAccess) (*types.TrustCenterFile, error) {
-	scope, err := r.authorize(ctx, obj.TrustCenterAccessID, probo.ActionTrustCenterFileGet)
+	predicate, err := r.authorize(ctx, obj.TrustCenterAccessID, probo.ActionTrustCenterFileGet)
 	if err != nil {
 		return nil, err
 	}
@@ -1103,7 +1093,7 @@ func (r *trustCenterDocumentAccessResolver) TrustCenterFile(ctx context.Context,
 		return nil, nil
 	}
 
-	trustCenterFile, err := r.probo.TrustCenterFiles.Get(ctx, scope, *obj.TrustCenterFileID)
+	trustCenterFile, err := r.probo.TrustCenterFiles.Get(ctx, predicate, *obj.TrustCenterFileID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot load trust center file", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -1114,12 +1104,12 @@ func (r *trustCenterDocumentAccessResolver) TrustCenterFile(ctx context.Context,
 
 // TotalCount is the resolver for the totalCount field.
 func (r *trustCenterDocumentAccessConnectionResolver) TotalCount(ctx context.Context, obj *types.TrustCenterDocumentAccessConnection) (int, error) {
-	scope, err := r.authorize(ctx, obj.ParentID, probo.ActionTrustCenterDocumentAccessList)
+	predicate, err := r.authorize(ctx, obj.ParentID, probo.ActionTrustCenterDocumentAccessList)
 	if err != nil {
 		return 0, err
 	}
 
-	count, err := r.probo.TrustCenterAccesses.CountDocumentAccesses(ctx, scope, obj.ParentID)
+	count, err := r.probo.TrustCenterAccesses.CountDocumentAccesses(ctx, predicate, obj.ParentID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot count trust center document accesses", log.Error(err))
 		return 0, gqlutils.Internal(ctx)
@@ -1139,18 +1129,18 @@ func (r *trustCenterFileResolver) File(ctx context.Context, obj *types.TrustCent
 
 // Organization is the resolver for the organization field.
 func (r *trustCenterFileResolver) Organization(ctx context.Context, obj *types.TrustCenterFile) (*types.Organization, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGet)
+	predicate, err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGet)
 	if err != nil {
 		return nil, err
 	}
 
-	trustCenterFile, err := r.probo.TrustCenterFiles.Get(ctx, scope, obj.ID)
+	trustCenterFile, err := r.probo.TrustCenterFiles.Get(ctx, predicate, obj.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot get trust center file", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	organization, err := r.probo.Organizations.Get(ctx, scope, trustCenterFile.OrganizationID)
+	organization, err := r.probo.Organizations.Get(ctx, predicate, trustCenterFile.OrganizationID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
@@ -1171,12 +1161,12 @@ func (r *trustCenterFileResolver) Permission(ctx context.Context, obj *types.Tru
 
 // TotalCount is the resolver for the totalCount field.
 func (r *trustCenterFileConnectionResolver) TotalCount(ctx context.Context, obj *types.TrustCenterFileConnection) (int, error) {
-	scope, err := r.authorize(ctx, obj.ParentID, probo.ActionTrustCenterFileList)
+	predicate, err := r.authorize(ctx, obj.ParentID, probo.ActionTrustCenterFileList)
 	if err != nil {
 		return 0, err
 	}
 
-	count, err := r.probo.TrustCenterFiles.CountForOrganizationID(ctx, scope, obj.ParentID)
+	count, err := r.probo.TrustCenterFiles.CountForOrganizationID(ctx, predicate, obj.ParentID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot count trust center files", log.Error(err))
 		return 0, gqlutils.Internal(ctx)
@@ -1201,12 +1191,12 @@ func (r *trustCenterReferenceResolver) Permission(ctx context.Context, obj *type
 
 // TotalCount is the resolver for the totalCount field.
 func (r *trustCenterReferenceConnectionResolver) TotalCount(ctx context.Context, obj *types.TrustCenterReferenceConnection) (int, error) {
-	scope, err := r.authorize(ctx, obj.ParentID, probo.ActionTrustCenterReferenceList)
+	predicate, err := r.authorize(ctx, obj.ParentID, probo.ActionTrustCenterReferenceList)
 	if err != nil {
 		return 0, err
 	}
 
-	count, err := r.probo.TrustCenterReferences.CountForTrustCenterID(ctx, scope, obj.ParentID)
+	count, err := r.probo.TrustCenterReferences.CountForTrustCenterID(ctx, predicate, obj.ParentID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot count trust center references", log.Error(err))
 		return 0, gqlutils.Internal(ctx)

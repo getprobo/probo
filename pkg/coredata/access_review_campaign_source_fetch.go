@@ -30,7 +30,7 @@ type (
 	// AccessReviewCampaignSourceFetch tracks per-source fetch lifecycle.
 	// TenantID is retained on the struct because the background worker claims
 	// rows cross-tenant via LoadNextQueuedForUpdateSkipLocked and needs the
-	// tenant to construct a Scope for subsequent operations.
+	// tenant to construct a Predicate for subsequent operations.
 	AccessReviewCampaignSourceFetch struct {
 		TenantID               gid.TenantID                          `db:"tenant_id"`
 		AccessReviewCampaignID gid.GID                               `db:"access_review_campaign_id"`
@@ -55,7 +55,7 @@ var (
 func (f *AccessReviewCampaignSourceFetch) Insert(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 INSERT INTO access_review_campaign_source_fetches (
@@ -85,7 +85,7 @@ INSERT INTO access_review_campaign_source_fetches (
 )
 `
 	args := pgx.StrictNamedArgs{
-		"tenant_id":                 scope.GetTenantID(),
+		"tenant_id":                 predicate.GetTenantID(),
 		"access_review_campaign_id": f.AccessReviewCampaignID,
 		"access_source_id":          f.AccessSourceID,
 		"status":                    f.Status,
@@ -109,7 +109,7 @@ INSERT INTO access_review_campaign_source_fetches (
 func (f *AccessReviewCampaignSourceFetch) Update(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 UPDATE access_review_campaign_source_fetches
@@ -126,7 +126,7 @@ WHERE
 	AND access_review_campaign_id = @access_review_campaign_id
 	AND access_source_id = @access_source_id
 `
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"status":                    f.Status,
@@ -139,7 +139,7 @@ WHERE
 		"access_review_campaign_id": f.AccessReviewCampaignID,
 		"access_source_id":          f.AccessSourceID,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	result, err := conn.Exec(ctx, q, args)
 	if err != nil {
@@ -156,7 +156,7 @@ WHERE
 func (f *AccessReviewCampaignSourceFetch) LoadByID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	campaignID gid.GID,
 	sourceID gid.GID,
 ) error {
@@ -180,13 +180,13 @@ WHERE
 	AND access_source_id = @access_source_id
 LIMIT 1
 `
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"access_review_campaign_id": campaignID,
 		"access_source_id":          sourceID,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -210,7 +210,7 @@ LIMIT 1
 func (fs *AccessReviewCampaignSourceFetches) LoadByCampaignID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	campaignID gid.GID,
 ) error {
 	q := `
@@ -232,12 +232,12 @@ WHERE
 	AND access_review_campaign_id = @access_review_campaign_id
 ORDER BY created_at ASC
 `
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"access_review_campaign_id": campaignID,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -257,7 +257,7 @@ ORDER BY created_at ASC
 // LoadNextQueuedForUpdateSkipLocked is intentionally cross-tenant: the
 // background worker claims the next available fetch regardless of tenant.
 // The caller extracts TenantID from the returned struct to construct a
-// Scope for subsequent operations.
+// Predicate for subsequent operations.
 func (f *AccessReviewCampaignSourceFetch) LoadNextQueuedForUpdateSkipLocked(
 	ctx context.Context,
 	conn pg.Tx,

@@ -285,7 +285,7 @@ func (s SessionService) GetActiveSessionForMembership(ctx context.Context, rootS
 
 			membership := &coredata.Membership{}
 
-			err = membership.LoadByID(ctx, tx, coredata.NewScopeFromObjectID(membershipID), membershipID)
+			err = membership.LoadByID(ctx, tx, coredata.NewPredicateFromObjectID(membershipID), membershipID)
 			if err != nil {
 				return fmt.Errorf("cannot load membership: %w", err)
 			}
@@ -321,7 +321,7 @@ func (s SessionService) OpenPasswordChildSessionForOrganization(
 		profile      = &coredata.MembershipProfile{}
 		membership   = &coredata.Membership{}
 		childSession = &coredata.Session{}
-		scope        = coredata.NewScopeFromObjectID(organizationID)
+		predicate = coredata.NewPredicateFromObjectID(organizationID)
 	)
 
 	err := s.pg.WithTx(
@@ -349,7 +349,7 @@ func (s SessionService) OpenPasswordChildSessionForOrganization(
 				return fmt.Errorf("cannot load identity: %w", err)
 			}
 
-			err = profile.LoadByIdentityIDAndOrganizationID(ctx, tx, scope, rootSession.IdentityID, organizationID)
+			err = profile.LoadByIdentityIDAndOrganizationID(ctx, tx, predicate, rootSession.IdentityID, organizationID)
 			if err != nil {
 				if err == coredata.ErrResourceNotFound {
 					return NewProfileNotFoundError(gid.Nil)
@@ -362,7 +362,7 @@ func (s SessionService) OpenPasswordChildSessionForOrganization(
 				return NewUserInactiveError(profile.ID)
 			}
 
-			err = membership.LoadByIdentityIDAndOrganizationID(ctx, tx, scope, rootSession.IdentityID, organizationID)
+			err = membership.LoadByIdentityIDAndOrganizationID(ctx, tx, predicate, rootSession.IdentityID, organizationID)
 			if err != nil {
 				if err == coredata.ErrResourceNotFound {
 					return NewMembershipNotFoundError(organizationID)
@@ -371,7 +371,7 @@ func (s SessionService) OpenPasswordChildSessionForOrganization(
 				return fmt.Errorf("cannot load membership: %w", err)
 			}
 
-			tenantID := scope.GetTenantID()
+			tenantID := predicate.GetTenantID()
 			childSession = &coredata.Session{
 				ID:              gid.New(tenantID, coredata.SessionEntityType),
 				IdentityID:      rootSession.IdentityID,
@@ -426,7 +426,7 @@ func (s SessionService) OpenSAMLChildSessionForOrganization(
 		profile      = &coredata.MembershipProfile{}
 		membership   = &coredata.Membership{}
 		childSession = &coredata.Session{}
-		scope        = coredata.NewScopeFromObjectID(organizationID)
+		predicate = coredata.NewPredicateFromObjectID(organizationID)
 	)
 
 	err := s.pg.WithTx(
@@ -454,7 +454,7 @@ func (s SessionService) OpenSAMLChildSessionForOrganization(
 				return fmt.Errorf("cannot load identity: %w", err)
 			}
 
-			err = profile.LoadByIdentityIDAndOrganizationID(ctx, tx, scope, rootSession.IdentityID, organizationID)
+			err = profile.LoadByIdentityIDAndOrganizationID(ctx, tx, predicate, rootSession.IdentityID, organizationID)
 			if err != nil {
 				if err == coredata.ErrResourceNotFound {
 					return NewProfileNotFoundError(gid.Nil)
@@ -467,7 +467,7 @@ func (s SessionService) OpenSAMLChildSessionForOrganization(
 				return NewUserInactiveError(profile.ID)
 			}
 
-			err = membership.LoadByIdentityIDAndOrganizationID(ctx, tx, scope, rootSession.IdentityID, organizationID)
+			err = membership.LoadByIdentityIDAndOrganizationID(ctx, tx, predicate, rootSession.IdentityID, organizationID)
 			if err != nil {
 				if err == coredata.ErrResourceNotFound {
 					return NewMembershipNotFoundError(organizationID)
@@ -476,7 +476,7 @@ func (s SessionService) OpenSAMLChildSessionForOrganization(
 				return fmt.Errorf("cannot load membership: %w", err)
 			}
 
-			tenantID := scope.GetTenantID()
+			tenantID := predicate.GetTenantID()
 			childSession = &coredata.Session{
 				ID:              gid.New(tenantID, coredata.SessionEntityType),
 				IdentityID:      rootSession.IdentityID,
@@ -518,7 +518,7 @@ func (s SessionService) AssumeOrganizationSession(
 		profile      = &coredata.MembershipProfile{}
 		membership   = &coredata.Membership{}
 		childSession = &coredata.Session{}
-		scope        = coredata.NewScopeFromObjectID(organizationID)
+		predicate = coredata.NewPredicateFromObjectID(organizationID)
 	)
 
 	err := s.pg.WithTx(
@@ -544,7 +544,7 @@ func (s SessionService) AssumeOrganizationSession(
 				return fmt.Errorf("cannot load identity: %w", err)
 			}
 
-			if err := profile.LoadByIdentityIDAndOrganizationID(ctx, tx, scope, rootSession.IdentityID, organizationID); err != nil {
+			if err := profile.LoadByIdentityIDAndOrganizationID(ctx, tx, predicate, rootSession.IdentityID, organizationID); err != nil {
 				if err == coredata.ErrResourceNotFound {
 					return NewProfileNotFoundError(gid.Nil)
 				}
@@ -556,7 +556,7 @@ func (s SessionService) AssumeOrganizationSession(
 				return NewUserInactiveError(profile.ID)
 			}
 
-			if err := membership.LoadByIdentityIDAndOrganizationID(ctx, tx, scope, rootSession.IdentityID, organizationID); err != nil {
+			if err := membership.LoadByIdentityIDAndOrganizationID(ctx, tx, predicate, rootSession.IdentityID, organizationID); err != nil {
 				if err == coredata.ErrResourceNotFound {
 					return NewMembershipNotFoundError(organizationID)
 				}
@@ -568,9 +568,7 @@ func (s SessionService) AssumeOrganizationSession(
 
 			err := samlConfig.LoadByOrganizationIDAndEmailDomain(
 				ctx,
-				tx,
-				scope,
-				organizationID,
+				tx, predicate, organizationID,
 				identity.EmailAddress.Domain(),
 			)
 			if err != nil && err != coredata.ErrResourceNotFound {
@@ -607,7 +605,7 @@ func (s SessionService) AssumeOrganizationSession(
 				}
 			}
 
-			tenantID := scope.GetTenantID()
+			tenantID := predicate.GetTenantID()
 			childSession = &coredata.Session{
 				ID:              gid.New(tenantID, coredata.SessionEntityType),
 				IdentityID:      rootSession.IdentityID,

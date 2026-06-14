@@ -35,11 +35,11 @@ type ReportService struct {
 
 func (s ReportService) Get(
 	ctx context.Context,
-	scope coredata.Scoper,
+	predicate coredata.Predicater,
 	organizationID gid.GID,
 	fileID gid.GID,
 ) (*coredata.File, error) {
-	file, err := s.loadByID(ctx, scope, fileID)
+	file, err := s.loadByID(ctx, predicate, fileID)
 	if err != nil {
 		return nil, err
 	}
@@ -50,7 +50,7 @@ func (s ReportService) Get(
 
 	// check the given report file ID is linked to an audit in order to avoid
 	// being able to get any file from the report request.
-	_, err = s.svc.Audits.GetByReportFileID(ctx, scope, fileID)
+	_, err = s.svc.Audits.GetByReportFileID(ctx, predicate, fileID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, ErrReportNotFound
@@ -64,7 +64,7 @@ func (s ReportService) Get(
 
 func (s ReportService) loadByID(
 	ctx context.Context,
-	scope coredata.Scoper,
+	predicate coredata.Predicater,
 	fileID gid.GID,
 ) (*coredata.File, error) {
 	file := &coredata.File{}
@@ -72,7 +72,7 @@ func (s ReportService) loadByID(
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			if err := file.LoadActiveByID(ctx, conn, scope, fileID); err != nil {
+			if err := file.LoadActiveByID(ctx, conn, predicate, fileID); err != nil {
 				return fmt.Errorf("cannot load file: %w", err)
 			}
 
@@ -88,11 +88,11 @@ func (s ReportService) loadByID(
 
 func (s ReportService) GenerateDownloadURL(
 	ctx context.Context,
-	scope coredata.Scoper,
+	predicate coredata.Predicater,
 	fileID gid.GID,
 	expiresIn time.Duration,
 ) (*string, error) {
-	file, err := s.loadByID(ctx, scope, fileID)
+	file, err := s.loadByID(ctx, predicate, fileID)
 	if err != nil {
 		return nil, fmt.Errorf("cannot get file: %w", err)
 	}
@@ -117,11 +117,11 @@ func (s ReportService) GenerateDownloadURL(
 
 func (s ReportService) ExportPDF(
 	ctx context.Context,
-	scope coredata.Scoper,
+	predicate coredata.Predicater,
 	reportID gid.GID,
 	email mail.Addr,
 ) ([]byte, error) {
-	pdfData, err := s.exportPDFData(ctx, scope, reportID)
+	pdfData, err := s.exportPDFData(ctx, predicate, reportID)
 	if err != nil {
 		return nil, fmt.Errorf("cannot export report PDF: %w", err)
 	}
@@ -136,18 +136,18 @@ func (s ReportService) ExportPDF(
 
 func (s ReportService) ExportPDFWithoutWatermark(
 	ctx context.Context,
-	scope coredata.Scoper,
+	predicate coredata.Predicater,
 	reportID gid.GID,
 ) ([]byte, error) {
-	return s.exportPDFData(ctx, scope, reportID)
+	return s.exportPDFData(ctx, predicate, reportID)
 }
 
 func (s ReportService) exportPDFData(
 	ctx context.Context,
-	scope coredata.Scoper,
+	predicate coredata.Predicater,
 	fileID gid.GID,
 ) ([]byte, error) {
-	file, err := s.loadByID(ctx, scope, fileID)
+	file, err := s.loadByID(ctx, predicate, fileID)
 	if err != nil {
 		return nil, fmt.Errorf("cannot get file: %w", err)
 	}

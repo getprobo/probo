@@ -122,7 +122,7 @@ func (tp *TrackerPattern) AuthorizationAttributes(
 func (tp *TrackerPattern) LoadByID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	trackerPatternID gid.GID,
 ) error {
 	q := `
@@ -153,10 +153,10 @@ WHERE
 LIMIT 1;
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"tracker_pattern_id": trackerPatternID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -180,7 +180,7 @@ LIMIT 1;
 func (tp *TrackerPattern) LoadByBannerIDTypeAndPattern(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	cookieBannerID gid.GID,
 	trackerType TrackerType,
 	pattern string,
@@ -217,7 +217,7 @@ WHERE
 LIMIT 1;
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"cookie_banner_id": cookieBannerID,
@@ -225,7 +225,7 @@ LIMIT 1;
 		"pattern":          pattern,
 		"max_age_seconds":  maxAgeSeconds,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -249,7 +249,7 @@ LIMIT 1;
 func (tp *TrackerPattern) FindMatchingPattern(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	cookieBannerID gid.GID,
 	trackerType TrackerType,
 	identifier string,
@@ -296,7 +296,7 @@ ORDER BY
 LIMIT 1;
 `
 
-	q = strings.Replace(q, "%s", scope.SQLFragment(), 1)
+	q = strings.Replace(q, "%s", predicate.SQLFragment(), 1)
 
 	args := pgx.StrictNamedArgs{
 		"cookie_banner_id": cookieBannerID,
@@ -305,7 +305,7 @@ LIMIT 1;
 		"match_type_glob":  TrackerPatternMatchTypeGlob,
 		"match_type_exact": TrackerPatternMatchTypeExact,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -329,7 +329,7 @@ LIMIT 1;
 func (tp *TrackerPattern) Insert(
 	ctx context.Context,
 	tx pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 INSERT INTO tracker_patterns (
@@ -377,7 +377,7 @@ INSERT INTO tracker_patterns (
 
 	args := pgx.StrictNamedArgs{
 		"id":                        tp.ID,
-		"tenant_id":                 scope.GetTenantID(),
+		"tenant_id":                 predicate.GetTenantID(),
 		"organization_id":           tp.OrganizationID,
 		"cookie_banner_id":          tp.CookieBannerID,
 		"cookie_category_id":        tp.CookieCategoryID,
@@ -414,7 +414,7 @@ INSERT INTO tracker_patterns (
 func (tp *TrackerPattern) InsertIfNotExists(
 	ctx context.Context,
 	tx pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) (bool, error) {
 	q := `
 INSERT INTO tracker_patterns (
@@ -463,7 +463,7 @@ ON CONFLICT (cookie_banner_id, tracker_type, pattern, COALESCE(max_age_seconds, 
 
 	args := pgx.StrictNamedArgs{
 		"id":                        tp.ID,
-		"tenant_id":                 scope.GetTenantID(),
+		"tenant_id":                 predicate.GetTenantID(),
 		"organization_id":           tp.OrganizationID,
 		"cookie_banner_id":          tp.CookieBannerID,
 		"cookie_category_id":        tp.CookieCategoryID,
@@ -500,7 +500,7 @@ ON CONFLICT (cookie_banner_id, tracker_type, pattern, COALESCE(max_age_seconds, 
 func (tp *TrackerPattern) Update(
 	ctx context.Context,
 	tx pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 UPDATE tracker_patterns
@@ -520,7 +520,7 @@ WHERE
 	AND id = @id
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"id":                        tp.ID,
@@ -535,7 +535,7 @@ WHERE
 		"last_matched_at":           tp.LastMatchedAt,
 		"updated_at":                tp.UpdatedAt,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	result, err := tx.Exec(ctx, q, args)
 	if err != nil {
@@ -569,7 +569,7 @@ WHERE
 func (tp *TrackerPattern) UpdateMapping(
 	ctx context.Context,
 	tx pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 UPDATE tracker_patterns
@@ -586,7 +586,7 @@ WHERE
 	AND id = @id
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"id":                        tp.ID,
@@ -595,7 +595,7 @@ WHERE
 		"description":               tp.Description,
 		"updated_at":                tp.UpdatedAt,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	result, err := tx.Exec(ctx, q, args)
 	if err != nil {
@@ -612,7 +612,7 @@ WHERE
 func (tp *TrackerPattern) Delete(
 	ctx context.Context,
 	tx pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 DELETE FROM tracker_patterns
@@ -621,10 +621,10 @@ WHERE
 	AND id = @id
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"id": tp.ID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	_, err := tx.Exec(ctx, q, args)
 	if err != nil {
@@ -637,7 +637,7 @@ WHERE
 func (tps *TrackerPatterns) LoadAllByCookieBannerID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	cookieBannerID gid.GID,
 	filter *TrackerPatternFilter,
 	trackerType *TrackerType,
@@ -678,10 +678,10 @@ ORDER BY
 	created_at ASC, id ASC;
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment(), trackerTypeFragment, filter.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment(), trackerTypeFragment, filter.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"cookie_banner_id": cookieBannerID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 	maps.Copy(args, filter.SQLArguments())
 
 	if trackerType != nil {
@@ -706,7 +706,7 @@ ORDER BY
 func (tps *TrackerPatterns) RefreshLastMatchedAtByCookieBannerID(
 	ctx context.Context,
 	tx pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 	cookieBannerID gid.GID,
 ) error {
 	q := `
@@ -725,10 +725,10 @@ WHERE
 	AND tracker_patterns.cookie_banner_id = @cookie_banner_id
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"cookie_banner_id": cookieBannerID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	_, err := tx.Exec(ctx, q, args)
 	if err != nil {
@@ -741,7 +741,7 @@ WHERE
 func (tps *TrackerPatterns) LoadByCookieBannerID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	cookieBannerID gid.GID,
 	cursor *page.Cursor[TrackerPatternOrderField],
 	filter *TrackerPatternFilter,
@@ -775,12 +775,12 @@ WHERE
 	AND %s
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"cookie_banner_id": cookieBannerID,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 	maps.Copy(args, filter.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 
@@ -802,7 +802,7 @@ WHERE
 func (tps *TrackerPatterns) CountByCookieBannerID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	cookieBannerID gid.GID,
 	filter *TrackerPatternFilter,
 ) (int, error) {
@@ -817,12 +817,12 @@ WHERE
 	AND %s
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment(), filter.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"cookie_banner_id": cookieBannerID,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 	maps.Copy(args, filter.SQLArguments())
 
 	row := conn.QueryRow(ctx, q, args)
@@ -838,7 +838,7 @@ WHERE
 func (tps *TrackerPatterns) LoadByCookieCategoryID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	cookieCategoryID gid.GID,
 	cursor *page.Cursor[TrackerPatternOrderField],
 ) error {
@@ -870,10 +870,10 @@ WHERE
 	AND %s
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"cookie_category_id": cookieCategoryID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
@@ -894,7 +894,7 @@ WHERE
 func (tps *TrackerPatterns) CountByCookieCategoryID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	cookieCategoryID gid.GID,
 ) (int, error) {
 	q := `
@@ -907,10 +907,10 @@ WHERE
 	AND cookie_category_id = @cookie_category_id
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"cookie_category_id": cookieCategoryID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	row := conn.QueryRow(ctx, q, args)
 
@@ -929,7 +929,7 @@ WHERE
 func (tps *TrackerPatterns) LoadDistinctThirdPartyIDsByCookieBannerID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	cookieBannerID gid.GID,
 ) ([]gid.GID, error) {
 	q := `
@@ -941,10 +941,10 @@ WHERE
 	AND third_party_id IS NOT NULL
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"cookie_banner_id": cookieBannerID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -967,7 +967,7 @@ WHERE
 func (tps *TrackerPatterns) LoadDistinctCommonTrackerPatternIDsByCookieBannerID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	cookieBannerID gid.GID,
 ) ([]gid.GID, error) {
 	q := `
@@ -980,10 +980,10 @@ WHERE
 	AND third_party_id IS NULL
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"cookie_banner_id": cookieBannerID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -1001,7 +1001,7 @@ WHERE
 func (tps *TrackerPatterns) LoadDistinctThirdPartyIDsByIDs(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	ids []gid.GID,
 ) ([]gid.GID, error) {
 	if len(ids) == 0 {
@@ -1017,10 +1017,10 @@ WHERE
 	AND third_party_id IS NOT NULL
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"ids": ids}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -1038,7 +1038,7 @@ WHERE
 func (tps *TrackerPatterns) LoadDistinctCommonTrackerPatternIDsByIDs(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	ids []gid.GID,
 ) ([]gid.GID, error) {
 	if len(ids) == 0 {
@@ -1054,10 +1054,10 @@ WHERE
 	AND common_tracker_pattern_id IS NOT NULL
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"ids": ids}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -1075,7 +1075,7 @@ WHERE
 func (tps *TrackerPatterns) UpdateLastMatchedAt(
 	ctx context.Context,
 	tx pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 	patternIDs []gid.GID,
 	matchedAt time.Time,
 ) error {
@@ -1093,14 +1093,14 @@ WHERE
 	AND id = ANY(@pattern_ids)
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"pattern_ids": patternIDs,
 		"matched_at":  matchedAt,
 		"updated_at":  matchedAt,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	_, err := tx.Exec(ctx, q, args)
 	if err != nil {
@@ -1113,7 +1113,7 @@ WHERE
 func (tps *TrackerPatterns) MoveToCategoryByCookieCategoryID(
 	ctx context.Context,
 	tx pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 	sourceCategoryID gid.GID,
 	targetCategoryID gid.GID,
 ) error {
@@ -1126,14 +1126,14 @@ WHERE
 	%s
 	AND cookie_category_id = @source_category_id
 `
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"source_category_id": sourceCategoryID,
 		"target_category_id": targetCategoryID,
 		"updated_at":         time.Now(),
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	_, err := tx.Exec(ctx, q, args)
 	if err != nil {
@@ -1155,7 +1155,7 @@ WHERE
 func (tps *TrackerPatterns) LinkThirdPartyByCommonThirdPartyID(
 	ctx context.Context,
 	tx pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 	organizationID gid.GID,
 	commonThirdPartyID gid.GID,
 	thirdPartyID gid.GID,
@@ -1175,14 +1175,14 @@ WHERE
 	)
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"organization_id":       organizationID,
 		"common_third_party_id": commonThirdPartyID,
 		"third_party_id":        thirdPartyID,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	_, err := tx.Exec(ctx, q, args)
 	if err != nil {
@@ -1346,7 +1346,7 @@ WHERE id = @id
 func (tps *TrackerPatterns) RequestMappingForUnmappedSiblings(
 	ctx context.Context,
 	tx pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 	cookieBannerID gid.GID,
 	excludePatternID gid.GID,
 	domains []string,
@@ -1377,7 +1377,7 @@ WHERE
 	)
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"cookie_banner_id":   cookieBannerID,
@@ -1385,7 +1385,7 @@ WHERE
 		"extension_source":   CookieSourceExtension,
 		"domains":            domains,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	result, err := tx.Exec(ctx, q, args)
 	if err != nil {
@@ -1544,14 +1544,14 @@ WHERE
 // iterating on the mapping agent. Excluded patterns are left untouched -
 // exclusion is a deliberate suppression. The cookie_category_id key
 // scopes the reset to the uncategorised category the caller resolves;
-// the Scoper keeps it tenant-isolated. When keyword is non-nil and
+// the Predicater keeps it tenant-isolated. When keyword is non-nil and
 // non-empty, the reset is further restricted to patterns whose pattern or
 // display name contains it (case-insensitive). Returns the number of
 // patterns reset.
 func (tps *TrackerPatterns) ResetAndRequestMappingByCookieCategoryID(
 	ctx context.Context,
 	tx pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 	cookieCategoryID gid.GID,
 	keyword *string,
 ) (int64, error) {
@@ -1572,10 +1572,10 @@ WHERE
 	AND %s
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment(), filter.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"cookie_category_id": cookieCategoryID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 	maps.Copy(args, filter.SQLArguments())
 
 	result, err := tx.Exec(ctx, q, args)
@@ -1596,7 +1596,7 @@ WHERE
 func (tps *TrackerPatterns) LoadAllLinkedCommonTrackerPatternIDsByCookieBannerID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	cookieBannerID gid.GID,
 ) ([]gid.GID, error) {
 	q := `
@@ -1608,10 +1608,10 @@ WHERE
 	AND common_tracker_pattern_id IS NOT NULL
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"cookie_banner_id": cookieBannerID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -1633,7 +1633,7 @@ WHERE
 func (tps *TrackerPatterns) LoadAllLinkedCommonTrackerPatternIDsByOrganizationID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	organizationID gid.GID,
 ) ([]gid.GID, error) {
 	q := `
@@ -1645,10 +1645,10 @@ WHERE
 	AND common_tracker_pattern_id IS NOT NULL
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"organization_id": organizationID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {

@@ -38,9 +38,9 @@ func (h *Handler) HandleLLMsTxt(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 
-	scope := coredata.NewScopeFromObjectID(tc.ID)
+	predicate := coredata.NewPredicateFromObjectID(tc.ID)
 
-	if err := h.trustService.RenderCompliancePageMarkdown(r.Context(), w, tc.ID, scope); err != nil {
+	if err := h.trustService.RenderCompliancePageMarkdown(r.Context(), w, tc.ID, predicate); err != nil {
 		http.Error(w, "internal server error", http.StatusInternalServerError)
 	}
 }
@@ -80,9 +80,9 @@ func (h *Handler) HandleSitemap(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/xml; charset=utf-8")
 
-	scope := coredata.NewScopeFromObjectID(tc.ID)
+	predicate := coredata.NewPredicateFromObjectID(tc.ID)
 
-	if err := h.trustService.RenderSitemap(r.Context(), w, tc.ID, scope, *baseURL); err != nil {
+	if err := h.trustService.RenderSitemap(r.Context(), w, tc.ID, predicate, *baseURL); err != nil {
 		http.Error(w, "internal server error", http.StatusInternalServerError)
 	}
 }

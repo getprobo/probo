@@ -77,7 +77,7 @@ func (req *UpdateDataProtectionImpactAssessmentRequest) Validate() error {
 }
 
 func (s DataProtectionImpactAssessmentService) Get(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	dpiaID gid.GID,
 ) (*coredata.DataProtectionImpactAssessment, error) {
 	dpia := &coredata.DataProtectionImpactAssessment{}
@@ -85,7 +85,7 @@ func (s DataProtectionImpactAssessmentService) Get(
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			if err := dpia.LoadByID(ctx, conn, scope, dpiaID); err != nil {
+			if err := dpia.LoadByID(ctx, conn, predicate, dpiaID); err != nil {
 				return fmt.Errorf("cannot load data protection impact assessment: %w", err)
 			}
 
@@ -100,7 +100,7 @@ func (s DataProtectionImpactAssessmentService) Get(
 }
 
 func (s DataProtectionImpactAssessmentService) GetByProcessingActivityID(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	processingActivityID gid.GID,
 ) (*coredata.DataProtectionImpactAssessment, error) {
 	dpia := &coredata.DataProtectionImpactAssessment{}
@@ -108,7 +108,7 @@ func (s DataProtectionImpactAssessmentService) GetByProcessingActivityID(
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			if err := dpia.LoadByProcessingActivityID(ctx, conn, scope, processingActivityID); err != nil {
+			if err := dpia.LoadByProcessingActivityID(ctx, conn, predicate, processingActivityID); err != nil {
 				return fmt.Errorf("cannot load data protection impact assessment: %w", err)
 			}
 
@@ -123,7 +123,7 @@ func (s DataProtectionImpactAssessmentService) GetByProcessingActivityID(
 }
 
 func (s DataProtectionImpactAssessmentService) ListForOrganizationID(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	organizationID gid.GID,
 	cursor *page.Cursor[coredata.DataProtectionImpactAssessmentOrderField],
 ) (*page.Page[*coredata.DataProtectionImpactAssessment, coredata.DataProtectionImpactAssessmentOrderField], error) {
@@ -132,7 +132,7 @@ func (s DataProtectionImpactAssessmentService) ListForOrganizationID(
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			err := dpias.LoadByOrganizationID(ctx, conn, scope, organizationID, cursor)
+			err := dpias.LoadByOrganizationID(ctx, conn, predicate, organizationID, cursor)
 			if err != nil {
 				return fmt.Errorf("cannot load data protection impact assessments: %w", err)
 			}
@@ -148,7 +148,7 @@ func (s DataProtectionImpactAssessmentService) ListForOrganizationID(
 }
 
 func (s DataProtectionImpactAssessmentService) CountForOrganizationID(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	organizationID gid.GID,
 ) (int, error) {
 	var count int
@@ -157,7 +157,7 @@ func (s DataProtectionImpactAssessmentService) CountForOrganizationID(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			dpias := coredata.DataProtectionImpactAssessments{}
-			count, err = dpias.CountByOrganizationID(ctx, conn, scope, organizationID)
+			count, err = dpias.CountByOrganizationID(ctx, conn, predicate, organizationID)
 
 			return err
 		},
@@ -170,7 +170,7 @@ func (s DataProtectionImpactAssessmentService) CountForOrganizationID(
 }
 
 func (s *DataProtectionImpactAssessmentService) Create(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	req *CreateDataProtectionImpactAssessmentRequest,
 ) (*coredata.DataProtectionImpactAssessment, error) {
 	if err := req.Validate(); err != nil {
@@ -180,7 +180,7 @@ func (s *DataProtectionImpactAssessmentService) Create(
 	now := time.Now()
 
 	dpia := &coredata.DataProtectionImpactAssessment{
-		ID:                          gid.New(scope.GetTenantID(), coredata.DataProtectionImpactAssessmentEntityType),
+		ID:                          gid.New(predicate.GetTenantID(), coredata.DataProtectionImpactAssessmentEntityType),
 		ProcessingActivityID:        req.ProcessingActivityID,
 		Description:                 req.Description,
 		NecessityAndProportionality: req.NecessityAndProportionality,
@@ -195,13 +195,13 @@ func (s *DataProtectionImpactAssessmentService) Create(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
 			processingActivity := &coredata.ProcessingActivity{}
-			if err := processingActivity.LoadByID(ctx, conn, scope, req.ProcessingActivityID); err != nil {
+			if err := processingActivity.LoadByID(ctx, conn, predicate, req.ProcessingActivityID); err != nil {
 				return fmt.Errorf("cannot load processing activity: %w", err)
 			}
 
 			dpia.OrganizationID = processingActivity.OrganizationID
 
-			if err := dpia.Insert(ctx, conn, scope); err != nil {
+			if err := dpia.Insert(ctx, conn, predicate); err != nil {
 				return fmt.Errorf("cannot insert data protection impact assessment: %w", err)
 			}
 
@@ -216,7 +216,7 @@ func (s *DataProtectionImpactAssessmentService) Create(
 }
 
 func (s *DataProtectionImpactAssessmentService) Update(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	req *UpdateDataProtectionImpactAssessmentRequest,
 ) (*coredata.DataProtectionImpactAssessment, error) {
 	if err := req.Validate(); err != nil {
@@ -228,7 +228,7 @@ func (s *DataProtectionImpactAssessmentService) Update(
 	err := s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
-			if err := dpia.LoadByID(ctx, conn, scope, req.ID); err != nil {
+			if err := dpia.LoadByID(ctx, conn, predicate, req.ID); err != nil {
 				return fmt.Errorf("cannot load data protection impact assessment: %w", err)
 			}
 
@@ -254,7 +254,7 @@ func (s *DataProtectionImpactAssessmentService) Update(
 
 			dpia.UpdatedAt = time.Now()
 
-			if err := dpia.Update(ctx, conn, scope); err != nil {
+			if err := dpia.Update(ctx, conn, predicate); err != nil {
 				return fmt.Errorf("cannot update data protection impact assessment: %w", err)
 			}
 
@@ -269,18 +269,18 @@ func (s *DataProtectionImpactAssessmentService) Update(
 }
 
 func (s *DataProtectionImpactAssessmentService) Delete(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context, predicate coredata.Predicater,
 	dpiaID gid.GID,
 ) error {
 	err := s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
 			dpia := &coredata.DataProtectionImpactAssessment{}
-			if err := dpia.LoadByID(ctx, conn, scope, dpiaID); err != nil {
+			if err := dpia.LoadByID(ctx, conn, predicate, dpiaID); err != nil {
 				return fmt.Errorf("cannot load data protection impact assessment: %w", err)
 			}
 
-			if err := dpia.Delete(ctx, conn, scope); err != nil {
+			if err := dpia.Delete(ctx, conn, predicate); err != nil {
 				return fmt.Errorf("cannot delete data protection impact assessment: %w", err)
 			}
 

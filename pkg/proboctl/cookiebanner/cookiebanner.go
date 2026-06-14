@@ -21,7 +21,7 @@ import (
 
 // NewCmdCookieBanner groups operator commands acting on a tenant's cookie
 // banners. Unlike the global catalog commands, these are tenant-scoped:
-// every write derives a coredata.Scope from the banner/org GID.
+// every write derives a coredata.Predicate from the banner/org GID.
 func NewCmdCookieBanner(f *cmdutil.Factory) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "cookie-banner <command>",

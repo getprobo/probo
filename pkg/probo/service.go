@@ -46,12 +46,12 @@ const (
 type ExportService interface {
 	BuildAndUploadExport(
 		ctx context.Context,
-		scope coredata.Scoper,
+		predicate coredata.Predicater,
 		exportJobID gid.GID,
 	) (*coredata.ExportJob, error)
 	SendExportEmail(
 		ctx context.Context,
-		scope coredata.Scoper,
+		predicate coredata.Predicater,
 		fileID gid.GID,
 		recipientName string,
 		recipientEmail mail.Addr,
@@ -270,7 +270,7 @@ func (s *Service) ExportJob(ctx context.Context) error {
 		return fmt.Errorf("cannot lock export job: %w", err)
 	}
 
-	scope := coredata.NewScope(exportJob.ID.TenantID())
+	predicate := coredata.NewPredicate(exportJob.ID.TenantID())
 
 	var exportService ExportService
 
@@ -288,7 +288,7 @@ func (s *Service) ExportJob(ctx context.Context) error {
 		return unknownTypeErr
 	}
 
-	updatedExportJob, buildErr := exportService.BuildAndUploadExport(ctx, scope, exportJob.ID)
+	updatedExportJob, buildErr := exportService.BuildAndUploadExport(ctx, predicate, exportJob.ID)
 	if buildErr != nil {
 		if err := s.commitFailedExport(ctx, exportJob, buildErr); err != nil {
 			return fmt.Errorf(
@@ -305,9 +305,7 @@ func (s *Service) ExportJob(ctx context.Context) error {
 	exportJob = updatedExportJob
 
 	if emailErr := exportService.SendExportEmail(
-		ctx,
-		scope,
-		*exportJob.FileID,
+		ctx, predicate, *exportJob.FileID,
 		exportJob.RecipientName,
 		exportJob.RecipientEmail,
 	); emailErr != nil {
@@ -332,7 +330,7 @@ func (s *Service) ExportJob(ctx context.Context) error {
 func (s *Service) lockExportJob(ctx context.Context) (*coredata.ExportJob, error) {
 	exportJob := &coredata.ExportJob{}
 
-	var scope coredata.Scoper
+	var predicate coredata.Predicater
 
 	err := s.pg.WithTx(
 		ctx,
@@ -341,12 +339,12 @@ func (s *Service) lockExportJob(ctx context.Context) (*coredata.ExportJob, error
 				return fmt.Errorf("cannot load next pending export job: %w", err)
 			}
 
-			scope = coredata.NewScope(exportJob.ID.TenantID())
+			predicate = coredata.NewPredicate(exportJob.ID.TenantID())
 
 			exportJob.Status = coredata.ExportJobStatusProcessing
 
 			exportJob.StartedAt = new(time.Now())
-			if err := exportJob.Update(ctx, tx, scope); err != nil {
+			if err := exportJob.Update(ctx, tx, predicate); err != nil {
 				return fmt.Errorf("cannot update %s export job: %w", exportJob.Type, err)
 			}
 
@@ -369,8 +367,8 @@ func (s *Service) commitFailedExport(ctx context.Context, exportJob *coredata.Ex
 	return s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			scope := coredata.NewScope(exportJob.ID.TenantID())
-			if err := exportJob.Update(ctx, tx, scope); err != nil {
+			predicate := coredata.NewPredicate(exportJob.ID.TenantID())
+			if err := exportJob.Update(ctx, tx, predicate); err != nil {
 				return fmt.Errorf("cannot update %s export job: %w", exportJob.Type, err)
 			}
 
@@ -386,8 +384,8 @@ func (s *Service) commitSuccessfulExport(ctx context.Context, exportJob *coredat
 	return s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			scope := coredata.NewScope(exportJob.ID.TenantID())
-			if err := exportJob.Update(ctx, tx, scope); err != nil {
+			predicate := coredata.NewPredicate(exportJob.ID.TenantID())
+			if err := exportJob.Update(ctx, tx, predicate); err != nil {
 				return fmt.Errorf("cannot update %s export job: %w", exportJob.Type, err)
 			}
 
@@ -403,12 +401,12 @@ func (s *Service) LoadOrganizationByDomain(ctx context.Context, domain string) (
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
 			var customDomain coredata.CustomDomain
-			if err := customDomain.LoadByDomain(ctx, conn, coredata.NewNoScope(), domain); err != nil {
+			if err := customDomain.LoadByDomain(ctx, conn, coredata.NewNoPredicate(), domain); err != nil {
 				return fmt.Errorf("cannot load custom domain: %w", err)
 			}
 
 			var org coredata.Organization
-			if err := org.LoadByCustomDomainID(ctx, conn, coredata.NewNoScope(), customDomain.ID); err != nil {
+			if err := org.LoadByCustomDomainID(ctx, conn, coredata.NewNoPredicate(), customDomain.ID); err != nil {
 				return fmt.Errorf("cannot load organization: %w", err)
 			}
 

@@ -145,14 +145,12 @@ func (h *patternAnalysisHandler) Process(ctx context.Context, banner coredata.Co
 	return h.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			scope := coredata.NewScopeFromObjectID(banner.ID)
+			predicate := coredata.NewPredicateFromObjectID(banner.ID)
 
 			var exactPatterns coredata.TrackerPatterns
 			if err := exactPatterns.LoadAllByCookieBannerID(
 				ctx,
-				tx,
-				scope,
-				banner.ID,
+				tx, predicate, banner.ID,
 				coredata.NewTrackerPatternFilter(new(coredata.TrackerPatternMatchTypeExact), nil, new(false)),
 				nil,
 			); err != nil {
@@ -200,13 +198,13 @@ func (h *patternAnalysisHandler) Process(ctx context.Context, banner coredata.Co
 					UpdatedAt:          now,
 				}
 
-				inserted, err := globPattern.InsertIfNotExists(ctx, tx, scope)
+				inserted, err := globPattern.InsertIfNotExists(ctx, tx, predicate)
 				if err != nil {
 					return fmt.Errorf("cannot insert glob pattern %q: %w", key.template, err)
 				}
 
 				if !inserted {
-					if err := globPattern.LoadByBannerIDTypeAndPattern(ctx, tx, scope, banner.ID, key.trackerType, key.template, maxAge); err != nil {
+					if err := globPattern.LoadByBannerIDTypeAndPattern(ctx, tx, predicate, banner.ID, key.trackerType, key.template, maxAge); err != nil {
 						return fmt.Errorf("cannot load existing glob pattern %q: %w", key.template, err)
 					}
 
@@ -226,7 +224,7 @@ func (h *patternAnalysisHandler) Process(ctx context.Context, banner coredata.Co
 						globPattern.Source = source
 						globPattern.UpdatedAt = now
 
-						if err := globPattern.Update(ctx, tx, scope); err != nil {
+						if err := globPattern.Update(ctx, tx, predicate); err != nil {
 							return fmt.Errorf("cannot promote source on glob pattern %q: %w", key.template, err)
 						}
 
@@ -242,11 +240,11 @@ func (h *patternAnalysisHandler) Process(ctx context.Context, banner coredata.Co
 
 				for _, exactPattern := range group {
 					var trackers coredata.DetectedTrackers
-					if err := trackers.RelinkByTrackerPatternID(ctx, tx, scope, exactPattern.ID, globPattern.ID); err != nil {
+					if err := trackers.RelinkByTrackerPatternID(ctx, tx, predicate, exactPattern.ID, globPattern.ID); err != nil {
 						return fmt.Errorf("cannot relink detected trackers from pattern %q: %w", exactPattern.Pattern, err)
 					}
 
-					if err := exactPattern.Delete(ctx, tx, scope); err != nil {
+					if err := exactPattern.Delete(ctx, tx, predicate); err != nil {
 						return fmt.Errorf("cannot delete orphaned exact pattern %q: %w", exactPattern.Pattern, err)
 					}
 				}
@@ -261,13 +259,13 @@ func (h *patternAnalysisHandler) Process(ctx context.Context, banner coredata.Co
 				)
 			}
 
-			adopted, err := h.adoptUncategorisedPatterns(ctx, tx, scope, banner)
+			adopted, err := h.adoptUncategorisedPatterns(ctx, tx, predicate, banner)
 			if err != nil {
 				return fmt.Errorf("cannot adopt uncategorised patterns: %w", err)
 			}
 
 			var patterns coredata.TrackerPatterns
-			if err := patterns.RefreshLastMatchedAtByCookieBannerID(ctx, tx, scope, banner.ID); err != nil {
+			if err := patterns.RefreshLastMatchedAtByCookieBannerID(ctx, tx, predicate, banner.ID); err != nil {
 				return fmt.Errorf("cannot refresh last_matched_at: %w", err)
 			}
 
@@ -278,7 +276,7 @@ func (h *patternAnalysisHandler) Process(ctx context.Context, banner coredata.Co
 			// only operation in this worker that moves trackers
 			// between categories and therefore changes consent.
 			if adopted {
-				if _, err := h.svc.ensureDraftVersionForBanner(ctx, tx, scope, banner.ID); err != nil {
+				if _, err := h.svc.ensureDraftVersionForBanner(ctx, tx, predicate, banner.ID); err != nil {
 					return fmt.Errorf("cannot ensure draft version: %w", err)
 				}
 			}
@@ -804,11 +802,11 @@ func inheritedMapping(patterns []*coredata.TrackerPattern) (*gid.GID, string) {
 func (h *patternAnalysisHandler) adoptUncategorisedPatterns(
 	ctx context.Context,
 	tx pg.Tx,
-	scope coredata.Scoper,
+	predicate coredata.Predicater,
 	banner coredata.CookieBanner,
 ) (bool, error) {
 	var uncategorised coredata.CookieCategory
-	if err := uncategorised.LoadUncategorisedByCookieBannerID(ctx, tx, scope, banner.ID); err != nil {
+	if err := uncategorised.LoadUncategorisedByCookieBannerID(ctx, tx, predicate, banner.ID); err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return false, nil
 		}
@@ -819,9 +817,7 @@ func (h *patternAnalysisHandler) adoptUncategorisedPatterns(
 	var globPatterns coredata.TrackerPatterns
 	if err := globPatterns.LoadAllByCookieBannerID(
 		ctx,
-		tx,
-		scope,
-		banner.ID,
+		tx, predicate, banner.ID,
 		coredata.NewTrackerPatternFilter(new(coredata.TrackerPatternMatchTypeGlob), nil, new(false)),
 		nil,
 	); err != nil {
@@ -844,9 +840,7 @@ func (h *patternAnalysisHandler) adoptUncategorisedPatterns(
 	var uncategorisedExact coredata.TrackerPatterns
 	if err := uncategorisedExact.LoadAllByCookieBannerID(
 		ctx,
-		tx,
-		scope,
-		banner.ID,
+		tx, predicate, banner.ID,
 		coredata.NewTrackerPatternFilter(&exactMatchType, &uncategorised.ID, new(false)),
 		nil,
 	); err != nil {
@@ -871,7 +865,7 @@ func (h *patternAnalysisHandler) adoptUncategorisedPatterns(
 		}
 
 		var trackers coredata.DetectedTrackers
-		if err := trackers.RelinkByTrackerPatternID(ctx, tx, scope, ep.ID, match.ID); err != nil {
+		if err := trackers.RelinkByTrackerPatternID(ctx, tx, predicate, ep.ID, match.ID); err != nil {
 			return false, fmt.Errorf("cannot relink detected trackers from pattern %q: %w", ep.Pattern, err)
 		}
 
@@ -891,7 +885,7 @@ func (h *patternAnalysisHandler) adoptUncategorisedPatterns(
 			match.Source = ep.Source
 			match.UpdatedAt = time.Now()
 
-			if err := match.Update(ctx, tx, scope); err != nil {
+			if err := match.Update(ctx, tx, predicate); err != nil {
 				return false, fmt.Errorf("cannot promote source on glob pattern %q: %w", match.Pattern, err)
 			}
 
@@ -903,7 +897,7 @@ func (h *patternAnalysisHandler) adoptUncategorisedPatterns(
 			}
 		}
 
-		if err := ep.Delete(ctx, tx, scope); err != nil {
+		if err := ep.Delete(ctx, tx, predicate); err != nil {
 			return false, fmt.Errorf("cannot delete adopted exact pattern %q: %w", ep.Pattern, err)
 		}
 

@@ -37,7 +37,7 @@ type (
 func (dv DatumThirdParties) Merge(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	datumID gid.GID,
 	organizationID gid.GID,
 	thirdPartyIDs []gid.GID,
@@ -65,7 +65,7 @@ WHEN NOT MATCHED BY SOURCE
 	`
 
 	args := pgx.StrictNamedArgs{
-		"tenant_id":       scope.GetTenantID(),
+		"tenant_id":       predicate.GetTenantID(),
 		"datum_id":        datumID,
 		"organization_id": organizationID,
 		"created_at":      time.Now(),
@@ -83,7 +83,7 @@ WHEN NOT MATCHED BY SOURCE
 func (dv DatumThirdParties) Insert(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 	datumID gid.GID,
 	organizationID gid.GID,
 	thirdPartyIDs []gid.GID,
@@ -103,7 +103,7 @@ FROM third_party_ids
 `
 
 	args := pgx.StrictNamedArgs{
-		"tenant_id":       scope.GetTenantID(),
+		"tenant_id":       predicate.GetTenantID(),
 		"datum_id":        datumID,
 		"organization_id": organizationID,
 		"created_at":      time.Now(),

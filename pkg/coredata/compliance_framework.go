@@ -99,7 +99,7 @@ func (c *ComplianceFramework) AuthorizationAttributes(
 func (c *ComplianceFramework) LoadByID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	complianceFrameworkID gid.GID,
 ) error {
 	q := `
@@ -119,10 +119,10 @@ WHERE
     AND id = @compliance_framework_id
 LIMIT 1;
 `
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"compliance_framework_id": complianceFrameworkID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -146,7 +146,7 @@ LIMIT 1;
 func (c *ComplianceFramework) LoadByTrustCenterIDAndFrameworkID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	trustCenterID gid.GID,
 	frameworkID gid.GID,
 ) error {
@@ -168,13 +168,13 @@ WHERE
     AND framework_id = @framework_id
 LIMIT 1;
 `
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"trust_center_id": trustCenterID,
 		"framework_id":    frameworkID,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -198,7 +198,7 @@ LIMIT 1;
 func (c *ComplianceFramework) Insert(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 INSERT INTO
@@ -227,7 +227,7 @@ RETURNING rank;
 
 	args := pgx.StrictNamedArgs{
 		"id":              c.ID,
-		"tenant_id":       scope.GetTenantID(),
+		"tenant_id":       predicate.GetTenantID(),
 		"organization_id": c.OrganizationID,
 		"trust_center_id": c.TrustCenterID,
 		"framework_id":    c.FrameworkID,
@@ -252,7 +252,7 @@ RETURNING rank;
 func (c *ComplianceFramework) UpdateRank(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 WITH old AS (
@@ -280,7 +280,7 @@ WHERE %s
   );
 `
 
-	scopeFragment := scope.SQLFragment()
+	scopeFragment := predicate.SQLFragment()
 	q = fmt.Sprintf(q, scopeFragment, scopeFragment)
 
 	args := pgx.StrictNamedArgs{
@@ -289,7 +289,7 @@ WHERE %s
 		"trust_center_id": c.TrustCenterID,
 		"updated_at":      c.UpdatedAt,
 	}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
@@ -302,7 +302,7 @@ WHERE %s
 func (c *ComplianceFramework) Delete(
 	ctx context.Context,
 	conn pg.Tx,
-	scope Scoper,
+	predicate Predicater,
 ) error {
 	q := `
 DELETE FROM
@@ -311,10 +311,10 @@ WHERE
     %s
     AND id = @id;
 `
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"id": c.ID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
@@ -327,7 +327,7 @@ WHERE
 func (c *ComplianceFrameworks) LoadByTrustCenterID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	trustCenterID gid.GID,
 	cursor *page.Cursor[ComplianceFrameworkOrderField],
 ) error {
@@ -348,10 +348,10 @@ WHERE
     AND trust_center_id = @trust_center_id
     AND %s
 `
-	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
+	q = fmt.Sprintf(q, predicate.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.NamedArgs{"trust_center_id": trustCenterID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
@@ -372,7 +372,7 @@ WHERE
 func (c *ComplianceFrameworks) LoadWithHiddenByTrustCenterID(
 	ctx context.Context,
 	conn pg.Querier,
-	scope Scoper,
+	predicate Predicater,
 	trustCenterID gid.GID,
 	cursor *page.Cursor[ComplianceFrameworkOrderField],
 ) error {
@@ -408,7 +408,7 @@ WHERE %s
 	q = fmt.Sprintf(q, cursor.SQLFragment())
 
 	args := pgx.NamedArgs{"trust_center_id": trustCenterID}
-	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, predicate.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)

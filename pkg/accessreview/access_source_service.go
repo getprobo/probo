@@ -37,7 +37,7 @@ const (
 type (
 	AccessSourceService struct {
 		pg                *pg.Client
-		scope             coredata.Scoper
+		predicate         coredata.Predicater
 		encryptionKey     cipher.EncryptionKey
 		connectorRegistry *connector.ConnectorRegistry
 		providerRegistry  *provider.Registry
@@ -104,7 +104,7 @@ func (s AccessSourceService) Create(
 
 	now := time.Now()
 	source := &coredata.AccessSource{
-		ID:             gid.New(s.scope.GetTenantID(), coredata.AccessSourceEntityType),
+		ID:             gid.New(s.predicate.GetTenantID(), coredata.AccessSourceEntityType),
 		OrganizationID: req.OrganizationID,
 		ConnectorID:    req.ConnectorID,
 		Name:           req.Name,
@@ -120,12 +120,12 @@ func (s AccessSourceService) Create(
 			// Validate connector exists if provided
 			if req.ConnectorID != nil {
 				connector := &coredata.Connector{}
-				if err := connector.LoadMetadataByID(ctx, conn, s.scope, *req.ConnectorID); err != nil {
+				if err := connector.LoadMetadataByID(ctx, conn, s.predicate, *req.ConnectorID); err != nil {
 					return fmt.Errorf("cannot load connector: %w", err)
 				}
 			}
 
-			if err := source.Insert(ctx, conn, s.scope); err != nil {
+			if err := source.Insert(ctx, conn, s.predicate); err != nil {
 				return fmt.Errorf("cannot insert access source: %w", err)
 			}
 
@@ -148,7 +148,7 @@ func (s AccessSourceService) Get(
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			return source.LoadByID(ctx, conn, s.scope, accessSourceID)
+			return source.LoadByID(ctx, conn, s.predicate, accessSourceID)
 		},
 	)
 	if err != nil {
@@ -171,7 +171,7 @@ func (s AccessSourceService) Update(
 	err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
-			if err := source.LoadByID(ctx, conn, s.scope, req.AccessSourceID); err != nil {
+			if err := source.LoadByID(ctx, conn, s.predicate, req.AccessSourceID); err != nil {
 				return fmt.Errorf("cannot load access source: %w", err)
 			}
 
@@ -186,7 +186,7 @@ func (s AccessSourceService) Update(
 			if req.ConnectorID != nil {
 				if *req.ConnectorID != nil {
 					connector := &coredata.Connector{}
-					if err := connector.LoadMetadataByID(ctx, conn, s.scope, **req.ConnectorID); err != nil {
+					if err := connector.LoadMetadataByID(ctx, conn, s.predicate, **req.ConnectorID); err != nil {
 						return fmt.Errorf("cannot load connector: %w", err)
 					}
 				}
@@ -200,7 +200,7 @@ func (s AccessSourceService) Update(
 
 			source.UpdatedAt = time.Now()
 
-			if err := source.Update(ctx, conn, s.scope); err != nil {
+			if err := source.Update(ctx, conn, s.predicate); err != nil {
 				return fmt.Errorf("cannot update access source: %w", err)
 			}
 
@@ -223,11 +223,11 @@ func (s AccessSourceService) Delete(
 	return s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
-			if err := source.LoadByID(ctx, conn, s.scope, accessSourceID); err != nil {
+			if err := source.LoadByID(ctx, conn, s.predicate, accessSourceID); err != nil {
 				return fmt.Errorf("cannot load access source: %w", err)
 			}
 
-			if err := source.Delete(ctx, conn, s.scope); err != nil {
+			if err := source.Delete(ctx, conn, s.predicate); err != nil {
 				return fmt.Errorf("cannot delete access source: %w", err)
 			}
 
@@ -241,7 +241,7 @@ func (s AccessSourceService) Delete(
 
 			accessSources := &coredata.AccessSources{}
 
-			sourceCount, err := accessSources.CountByConnectorID(ctx, conn, s.scope, *source.ConnectorID)
+			sourceCount, err := accessSources.CountByConnectorID(ctx, conn, s.predicate, *source.ConnectorID)
 			if err != nil {
 				return fmt.Errorf("cannot count access sources for connector: %w", err)
 			}
@@ -252,7 +252,7 @@ func (s AccessSourceService) Delete(
 
 			bridges := &coredata.SCIMBridges{}
 
-			bridgeCount, err := bridges.CountByConnectorID(ctx, conn, s.scope, *source.ConnectorID)
+			bridgeCount, err := bridges.CountByConnectorID(ctx, conn, s.predicate, *source.ConnectorID)
 			if err != nil {
 				return fmt.Errorf("cannot count scim bridges for connector: %w", err)
 			}
@@ -272,7 +272,7 @@ func (s AccessSourceService) Delete(
 				ctx,
 				func(ctx context.Context, conn pg.Tx) error {
 					cnnctr := &coredata.Connector{ID: *source.ConnectorID}
-					if err := cnnctr.Delete(ctx, conn, s.scope); err != nil {
+					if err := cnnctr.Delete(ctx, conn, s.predicate); err != nil {
 						return fmt.Errorf("cannot delete connector: %w", err)
 					}
 
@@ -297,7 +297,7 @@ func (s AccessSourceService) ListForOrganizationID(
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			return sources.LoadByOrganizationID(ctx, conn, s.scope, organizationID, cursor)
+			return sources.LoadByOrganizationID(ctx, conn, s.predicate, organizationID, cursor)
 		},
 	)
 	if err != nil {
@@ -317,7 +317,7 @@ func (s AccessSourceService) CountForOrganizationID(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			sources := coredata.AccessSources{}
-			count, err = sources.CountByOrganizationID(ctx, conn, s.scope, organizationID)
+			count, err = sources.CountByOrganizationID(ctx, conn, s.predicate, organizationID)
 
 			return err
 		},
@@ -338,7 +338,7 @@ func (s AccessSourceService) ListScopeSourcesForCampaignID(
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			return sources.LoadScopeSourcesByCampaignID(ctx, conn, s.scope, campaignID)
+			return sources.LoadScopeSourcesByCampaignID(ctx, conn, s.predicate, campaignID)
 		},
 	)
 	if err != nil {
@@ -360,7 +360,7 @@ func (s AccessSourceService) ConnectorHTTPClient(
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			if err := dbConnector.LoadByID(ctx, conn, s.scope, connectorID, s.encryptionKey); err != nil {
+			if err := dbConnector.LoadByID(ctx, conn, s.predicate, connectorID, s.encryptionKey); err != nil {
 				return fmt.Errorf("cannot load connector: %w", err)
 			}
 
@@ -408,7 +408,7 @@ func (s AccessSourceService) ConnectorHTTPClient(
 		if err := s.pg.WithTx(
 			ctx,
 			func(ctx context.Context, tx pg.Tx) error {
-				return dbConnector.Update(ctx, tx, s.scope, s.encryptionKey)
+				return dbConnector.Update(ctx, tx, s.predicate, s.encryptionKey)
 			},
 		); err != nil {
 			return nil, nil, fmt.Errorf("cannot persist refreshed token: %w", err)
@@ -431,7 +431,7 @@ func (s AccessSourceService) ConfigureAccessSource(
 	err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
-			if err := source.LoadByID(ctx, conn, s.scope, req.AccessSourceID); err != nil {
+			if err := source.LoadByID(ctx, conn, s.predicate, req.AccessSourceID); err != nil {
 				return fmt.Errorf("cannot load access source: %w", err)
 			}
 
@@ -440,7 +440,7 @@ func (s AccessSourceService) ConfigureAccessSource(
 			}
 
 			dbConnector := &coredata.Connector{}
-			if err := dbConnector.LoadByID(ctx, conn, s.scope, *source.ConnectorID, s.encryptionKey); err != nil {
+			if err := dbConnector.LoadByID(ctx, conn, s.predicate, *source.ConnectorID, s.encryptionKey); err != nil {
 				return fmt.Errorf("cannot load connector: %w", err)
 			}
 
@@ -455,7 +455,7 @@ func (s AccessSourceService) ConfigureAccessSource(
 
 			dbConnector.UpdatedAt = time.Now()
 
-			if err := dbConnector.Update(ctx, conn, s.scope, s.encryptionKey); err != nil {
+			if err := dbConnector.Update(ctx, conn, s.predicate, s.encryptionKey); err != nil {
 				return fmt.Errorf("cannot update connector: %w", err)
 			}
 

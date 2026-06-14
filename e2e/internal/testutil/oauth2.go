@@ -37,7 +37,7 @@ type (
 		ExpiresIn    int64  `json:"expires_in"`
 		RefreshToken string `json:"refresh_token,omitempty"`
 		IDToken      string `json:"id_token,omitempty"`
-		Scope        string `json:"scope,omitempty"`
+		Predicate        string `json:"scope,omitempty"`
 	}
 
 	OAuth2ErrorResponse struct {
@@ -54,12 +54,12 @@ type (
 		GrantTypes              []string `json:"grant_types"`
 		ResponseTypes           []string `json:"response_types"`
 		TokenEndpointAuthMethod string   `json:"token_endpoint_auth_method"`
-		Scopes                  string   `json:"scopes"`
+		Predicates                  string   `json:"scopes"`
 	}
 
 	OAuth2IntrospectResponse struct {
 		Active    bool   `json:"active"`
-		Scope     string `json:"scope,omitempty"`
+		Predicate     string `json:"scope,omitempty"`
 		ClientID  string `json:"client_id,omitempty"`
 		Sub       string `json:"sub,omitempty"`
 		Exp       int64  `json:"exp,omitempty"`

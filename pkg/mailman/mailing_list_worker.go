@@ -64,11 +64,11 @@ func (h *mailingListHandler) Claim(ctx context.Context) (coredata.MailingListUpd
 				return err
 			}
 
-			scope := coredata.NewScopeFromObjectID(mlu.ID)
+			predicate := coredata.NewPredicateFromObjectID(mlu.ID)
 			mlu.Status = coredata.MailingListUpdateStatusProcessing
 			mlu.UpdatedAt = time.Now()
 
-			if err := mlu.Update(ctx, tx, scope); err != nil {
+			if err := mlu.Update(ctx, tx, predicate); err != nil {
 				return fmt.Errorf("cannot claim mailing list update: %w", err)
 			}
 
@@ -130,10 +130,10 @@ func (h *mailingListHandler) sendAndCommit(ctx context.Context, mlu *coredata.Ma
 	return h.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			scope := coredata.NewScopeFromObjectID(mlu.ID)
+			predicate := coredata.NewPredicateFromObjectID(mlu.ID)
 
 			var current coredata.MailingListUpdate
-			if err := current.LoadByID(ctx, tx, scope, mlu.ID); err != nil {
+			if err := current.LoadByID(ctx, tx, predicate, mlu.ID); err != nil {
 				return fmt.Errorf("cannot reload mailing list update: %w", err)
 			}
 
@@ -144,7 +144,7 @@ func (h *mailingListHandler) sendAndCommit(ctx context.Context, mlu *coredata.Ma
 			mlu.Status = coredata.MailingListUpdateStatusSent
 			mlu.UpdatedAt = time.Now()
 
-			if err := mlu.Update(ctx, tx, scope); err != nil {
+			if err := mlu.Update(ctx, tx, predicate); err != nil {
 				return fmt.Errorf("cannot mark mailing list update as sent: %w", err)
 			}
 
@@ -157,11 +157,11 @@ func (h *mailingListHandler) resetEnqueued(ctx context.Context, mlu *coredata.Ma
 	return h.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			scope := coredata.NewScopeFromObjectID(mlu.ID)
+			predicate := coredata.NewPredicateFromObjectID(mlu.ID)
 			mlu.Status = coredata.MailingListUpdateStatusEnqueued
 			mlu.UpdatedAt = time.Now()
 
-			if err := mlu.Update(ctx, tx, scope); err != nil {
+			if err := mlu.Update(ctx, tx, predicate); err != nil {
 				return fmt.Errorf("cannot reset mailing list update: %w", err)
 			}
 

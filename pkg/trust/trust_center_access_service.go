@@ -51,7 +51,7 @@ const (
 
 func (s TrustCenterAccessService) Request(
 	ctx context.Context,
-	scope coredata.Scoper,
+	predicate coredata.Predicater,
 	req *TrustCenterAccessRequest,
 ) (*coredata.TrustCenterAccess, error) {
 	var (
@@ -63,12 +63,12 @@ func (s TrustCenterAccessService) Request(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			trustCenter := &coredata.TrustCenter{}
-			if err := trustCenter.LoadByID(ctx, tx, scope, req.TrustCenterID); err != nil {
+			if err := trustCenter.LoadByID(ctx, tx, predicate, req.TrustCenterID); err != nil {
 				return fmt.Errorf("cannot load trust center: %w", err)
 			}
 
 			access = &coredata.TrustCenterAccess{}
-			if err := access.LoadByTrustCenterIDAndIdentityID(ctx, tx, scope, req.TrustCenterID, req.IdentityID); err != nil {
+			if err := access.LoadByTrustCenterIDAndIdentityID(ctx, tx, predicate, req.TrustCenterID, req.IdentityID); err != nil {
 				return fmt.Errorf("cannot load compliance page membership: %w", err)
 			}
 
@@ -80,7 +80,7 @@ func (s TrustCenterAccessService) Request(
 
 				filter := coredata.NewDocumentTrustCenterFilter()
 
-				if err := allDocuments.LoadAllByOrganizationID(ctx, tx, scope, organizationID, filter); err != nil {
+				if err := allDocuments.LoadAllByOrganizationID(ctx, tx, predicate, organizationID, filter); err != nil {
 					return fmt.Errorf("cannot list documents: %w", err)
 				}
 
@@ -95,7 +95,7 @@ func (s TrustCenterAccessService) Request(
 
 				auditFilter := coredata.NewAuditTrustCenterFilter()
 
-				if err := allAudits.LoadAllByOrganizationID(ctx, tx, scope, organizationID, auditFilter); err != nil {
+				if err := allAudits.LoadAllByOrganizationID(ctx, tx, predicate, organizationID, auditFilter); err != nil {
 					return fmt.Errorf("cannot list audits: %w", err)
 				}
 
@@ -114,7 +114,7 @@ func (s TrustCenterAccessService) Request(
 					coredata.WithTrustCenterFileVisibilities(coredata.TrustCenterVisibilityPrivate, coredata.TrustCenterVisibilityNone),
 				)
 
-				if err := allTrustCenterFiles.LoadAllByOrganizationID(ctx, tx, scope, organizationID, filter); err != nil {
+				if err := allTrustCenterFiles.LoadAllByOrganizationID(ctx, tx, predicate, organizationID, filter); err != nil {
 					return fmt.Errorf("cannot list trust center files: %w", err)
 				}
 
@@ -124,7 +124,7 @@ func (s TrustCenterAccessService) Request(
 			}
 
 			var existingAccesses coredata.TrustCenterDocumentAccesses
-			if err := existingAccesses.LoadAllByTrustCenterAccessID(ctx, tx, scope, access.ID); err != nil {
+			if err := existingAccesses.LoadAllByTrustCenterAccessID(ctx, tx, predicate, access.ID); err != nil {
 				return fmt.Errorf("cannot load existing access records: %w", err)
 			}
 
@@ -137,9 +137,7 @@ func (s TrustCenterAccessService) Request(
 
 			if err := accesses.BulkInsertDocumentAccesses(
 				ctx,
-				tx,
-				scope,
-				access.ID,
+				tx, predicate, access.ID,
 				access.OrganizationID,
 				newDocumentIDs,
 				coredata.TrustCenterDocumentAccessStatusRequested,
@@ -150,9 +148,7 @@ func (s TrustCenterAccessService) Request(
 
 			if err := accesses.BulkInsertReportFileAccesses(
 				ctx,
-				tx,
-				scope,
-				access.ID,
+				tx, predicate, access.ID,
 				access.OrganizationID,
 				newReportIDs,
 				coredata.TrustCenterDocumentAccessStatusRequested,
@@ -163,9 +159,7 @@ func (s TrustCenterAccessService) Request(
 
 			if err := accesses.BulkInsertTrustCenterFileAccesses(
 				ctx,
-				tx,
-				scope,
-				access.ID,
+				tx, predicate, access.ID,
 				access.OrganizationID,
 				newTrustCenterFileIDs,
 				coredata.TrustCenterDocumentAccessStatusRequested,
@@ -181,7 +175,7 @@ func (s TrustCenterAccessService) Request(
 		return nil, err
 	}
 
-	if err := s.svc.slack.QueueSlackNotification(ctx, scope, req.IdentityID, req.TrustCenterID); err != nil {
+	if err := s.svc.slack.QueueSlackNotification(ctx, predicate, req.IdentityID, req.TrustCenterID); err != nil {
 		s.logger.ErrorCtx(ctx, "cannot queue slack notification", log.Error(err))
 	}
 
@@ -190,14 +184,14 @@ func (s TrustCenterAccessService) Request(
 
 func (s TrustCenterAccessService) GetAccess(
 	ctx context.Context,
-	scope coredata.Scoper,
+	predicate coredata.Predicater,
 	trustCenterID gid.GID,
 	identityID gid.GID,
 ) (coredata.TrustCenterAccess, error) {
 	var access coredata.TrustCenterAccess
 
 	err := s.svc.pg.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
-		return access.LoadByTrustCenterIDAndIdentityID(ctx, conn, scope, trustCenterID, identityID)
+		return access.LoadByTrustCenterIDAndIdentityID(ctx, conn, predicate, trustCenterID, identityID)
 	})
 
 	return access, err
@@ -205,7 +199,7 @@ func (s TrustCenterAccessService) GetAccess(
 
 func (s TrustCenterAccessService) GetDocumentAccess(
 	ctx context.Context,
-	scope coredata.Scoper,
+	predicate coredata.Predicater,
 	trustCenterID gid.GID,
 	identityID gid.GID,
 	documentID gid.GID,
@@ -215,7 +209,7 @@ func (s TrustCenterAccessService) GetDocumentAccess(
 	err := s.svc.pg.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
 		access := &coredata.TrustCenterAccess{}
 
-		err := access.LoadByTrustCenterIDAndIdentityID(ctx, conn, scope, trustCenterID, identityID)
+		err := access.LoadByTrustCenterIDAndIdentityID(ctx, conn, predicate, trustCenterID, identityID)
 		if err != nil {
 			if errors.Is(err, coredata.ErrResourceNotFound) {
 				return ErrMembershipNotFound
@@ -225,7 +219,7 @@ func (s TrustCenterAccessService) GetDocumentAccess(
 		}
 
 		profile := &coredata.MembershipProfile{}
-		if err := profile.LoadByIdentityIDAndOrganizationID(ctx, conn, scope, identityID, access.OrganizationID); err != nil {
+		if err := profile.LoadByIdentityIDAndOrganizationID(ctx, conn, predicate, identityID, access.OrganizationID); err != nil {
 			if errors.Is(err, coredata.ErrResourceNotFound) {
 				return ErrUserNotFound
 			}
@@ -237,7 +231,7 @@ func (s TrustCenterAccessService) GetDocumentAccess(
 
 		documentAccess = &coredata.TrustCenterDocumentAccess{}
 
-		err = documentAccess.LoadByTrustCenterAccessIDAndDocumentID(ctx, conn, scope, access.ID, documentID)
+		err = documentAccess.LoadByTrustCenterAccessIDAndDocumentID(ctx, conn, predicate, access.ID, documentID)
 		if err != nil {
 			if errors.Is(err, coredata.ErrResourceNotFound) {
 				return ErrDocumentAccessNotFound
@@ -257,7 +251,7 @@ func (s TrustCenterAccessService) GetDocumentAccess(
 
 func (s TrustCenterAccessService) GetReportFileAccess(
 	ctx context.Context,
-	scope coredata.Scoper,
+	predicate coredata.Predicater,
 	trustCenterID gid.GID,
 	identityID gid.GID,
 	reportFileID gid.GID,
@@ -267,7 +261,7 @@ func (s TrustCenterAccessService) GetReportFileAccess(
 	err := s.svc.pg.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
 		access := &coredata.TrustCenterAccess{}
 
-		err := access.LoadByTrustCenterIDAndIdentityID(ctx, conn, scope, trustCenterID, identityID)
+		err := access.LoadByTrustCenterIDAndIdentityID(ctx, conn, predicate, trustCenterID, identityID)
 		if err != nil {
 			if errors.Is(err, coredata.ErrResourceNotFound) {
 				return ErrMembershipNotFound
@@ -277,7 +271,7 @@ func (s TrustCenterAccessService) GetReportFileAccess(
 		}
 
 		profile := &coredata.MembershipProfile{}
-		if err := profile.LoadByIdentityIDAndOrganizationID(ctx, conn, scope, identityID, access.OrganizationID); err != nil {
+		if err := profile.LoadByIdentityIDAndOrganizationID(ctx, conn, predicate, identityID, access.OrganizationID); err != nil {
 			if errors.Is(err, coredata.ErrResourceNotFound) {
 				return ErrUserNotFound
 			}
@@ -289,7 +283,7 @@ func (s TrustCenterAccessService) GetReportFileAccess(
 
 		reportAccess = &coredata.TrustCenterDocumentAccess{}
 
-		err = reportAccess.LoadByTrustCenterAccessIDAndReportFileID(ctx, conn, scope, access.ID, reportFileID)
+		err = reportAccess.LoadByTrustCenterAccessIDAndReportFileID(ctx, conn, predicate, access.ID, reportFileID)
 		if err != nil {
 			if errors.Is(err, coredata.ErrResourceNotFound) {
 				return ErrDocumentAccessNotFound
@@ -309,7 +303,7 @@ func (s TrustCenterAccessService) GetReportFileAccess(
 
 func (s TrustCenterAccessService) GetTrustCenterFileAccess(
 	ctx context.Context,
-	scope coredata.Scoper,
+	predicate coredata.Predicater,
 	trustCenterID gid.GID,
 	identityID gid.GID,
 	trustCenterFileID gid.GID,
@@ -319,7 +313,7 @@ func (s TrustCenterAccessService) GetTrustCenterFileAccess(
 	err := s.svc.pg.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
 		access := &coredata.TrustCenterAccess{}
 
-		err := access.LoadByTrustCenterIDAndIdentityID(ctx, conn, scope, trustCenterID, identityID)
+		err := access.LoadByTrustCenterIDAndIdentityID(ctx, conn, predicate, trustCenterID, identityID)
 		if err != nil {
 			if errors.Is(err, coredata.ErrResourceNotFound) {
 				return ErrMembershipNotFound
@@ -329,7 +323,7 @@ func (s TrustCenterAccessService) GetTrustCenterFileAccess(
 		}
 
 		profile := &coredata.MembershipProfile{}
-		if err := profile.LoadByIdentityIDAndOrganizationID(ctx, conn, scope, identityID, access.OrganizationID); err != nil {
+		if err := profile.LoadByIdentityIDAndOrganizationID(ctx, conn, predicate, identityID, access.OrganizationID); err != nil {
 			if errors.Is(err, coredata.ErrResourceNotFound) {
 				return ErrUserNotFound
 			}
@@ -341,7 +335,7 @@ func (s TrustCenterAccessService) GetTrustCenterFileAccess(
 
 		fileAccess = &coredata.TrustCenterDocumentAccess{}
 
-		err = fileAccess.LoadByTrustCenterAccessIDAndTrustCenterFileID(ctx, conn, scope, access.ID, trustCenterFileID)
+		err = fileAccess.LoadByTrustCenterAccessIDAndTrustCenterFileID(ctx, conn, predicate, access.ID, trustCenterFileID)
 		if err != nil {
 			if errors.Is(err, coredata.ErrResourceNotFound) {
 				return ErrDocumentAccessNotFound
@@ -361,7 +355,7 @@ func (s TrustCenterAccessService) GetTrustCenterFileAccess(
 
 func (s *TrustCenterAccessService) GrantByIDs(
 	ctx context.Context,
-	scope coredata.Scoper,
+	predicate coredata.Predicater,
 	organizationID gid.GID,
 	email mail.Addr,
 	documentIDs []gid.GID,
@@ -370,7 +364,7 @@ func (s *TrustCenterAccessService) GrantByIDs(
 ) error {
 	return s.svc.pg.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		trustCenter := &coredata.TrustCenter{}
-		if err := trustCenter.LoadByOrganizationID(ctx, tx, scope, organizationID); err != nil {
+		if err := trustCenter.LoadByOrganizationID(ctx, tx, predicate, organizationID); err != nil {
 			return fmt.Errorf("cannot load trust center: %w", err)
 		}
 
@@ -380,12 +374,12 @@ func (s *TrustCenterAccessService) GrantByIDs(
 		}
 
 		access := &coredata.TrustCenterAccess{}
-		if err := access.LoadByTrustCenterIDAndIdentityID(ctx, tx, scope, trustCenter.ID, identity.ID); err != nil {
+		if err := access.LoadByTrustCenterIDAndIdentityID(ctx, tx, predicate, trustCenter.ID, identity.ID); err != nil {
 			return fmt.Errorf("cannot load trust center access: %w", err)
 		}
 
 		profile := &coredata.MembershipProfile{}
-		if err := profile.LoadByIdentityIDAndOrganizationID(ctx, tx, scope, identity.ID, access.OrganizationID); err != nil {
+		if err := profile.LoadByIdentityIDAndOrganizationID(ctx, tx, predicate, identity.ID, access.OrganizationID); err != nil {
 			if errors.Is(err, coredata.ErrResourceNotFound) {
 				return ErrUserNotFound
 			}
@@ -399,19 +393,19 @@ func (s *TrustCenterAccessService) GrantByIDs(
 		now := time.Now()
 
 		if len(documentIDs) > 0 {
-			if err := coredata.GrantByDocumentIDs(ctx, tx, scope, access.ID, documentIDs, now); err != nil {
+			if err := coredata.GrantByDocumentIDs(ctx, tx, predicate, access.ID, documentIDs, now); err != nil {
 				return fmt.Errorf("cannot grant document accesses: %w", err)
 			}
 		}
 
 		if len(reportIDs) > 0 {
-			if err := coredata.GrantByReportFileIDs(ctx, tx, scope, access.ID, reportIDs, now); err != nil {
+			if err := coredata.GrantByReportFileIDs(ctx, tx, predicate, access.ID, reportIDs, now); err != nil {
 				return fmt.Errorf("cannot grant report accesses: %w", err)
 			}
 		}
 
 		if len(fileIDs) > 0 {
-			if err := coredata.GrantByTrustCenterFileIDs(ctx, tx, scope, access.ID, fileIDs, now); err != nil {
+			if err := coredata.GrantByTrustCenterFileIDs(ctx, tx, predicate, access.ID, fileIDs, now); err != nil {
 				return fmt.Errorf("cannot grant trust center file accesses: %w", err)
 			}
 		}
@@ -420,11 +414,11 @@ func (s *TrustCenterAccessService) GrantByIDs(
 			profile.State = coredata.ProfileStateActive
 
 			profile.UpdatedAt = now
-			if err := profile.Update(ctx, tx, scope); err != nil {
+			if err := profile.Update(ctx, tx, predicate); err != nil {
 				return fmt.Errorf("cannot update profile: %w", err)
 			}
 
-			if err := s.sendAccessEmail(ctx, tx, scope, access, profile); err != nil {
+			if err := s.sendAccessEmail(ctx, tx, predicate, access, profile); err != nil {
 				return fmt.Errorf("cannot send access email: %w", err)
 			}
 		}
@@ -436,23 +430,23 @@ func (s *TrustCenterAccessService) GrantByIDs(
 func (s *TrustCenterAccessService) sendAccessEmail(
 	ctx context.Context,
 	tx pg.Tx,
-	scope coredata.Scoper,
+	predicate coredata.Predicater,
 	access *coredata.TrustCenterAccess,
 	profile *coredata.MembershipProfile,
 ) error {
 	organization := &coredata.Organization{}
-	if err := organization.LoadByID(ctx, tx, scope, access.OrganizationID); err != nil {
+	if err := organization.LoadByID(ctx, tx, predicate, access.OrganizationID); err != nil {
 		return fmt.Errorf("cannot load organization: %w", err)
 	}
 
 	now := time.Now()
 	access.UpdatedAt = now
 
-	if err := access.Update(ctx, tx, scope); err != nil {
+	if err := access.Update(ctx, tx, predicate); err != nil {
 		return fmt.Errorf("cannot update trust center access with expiration: %w", err)
 	}
 
-	emailPresenterCfg, err := s.svc.TrustCenters.EmailPresenterConfig(ctx, scope, access.TrustCenterID)
+	emailPresenterCfg, err := s.svc.TrustCenters.EmailPresenterConfig(ctx, predicate, access.TrustCenterID)
 	if err != nil {
 		return fmt.Errorf("cannot get compliance page email presenter config: %w", err)
 	}
@@ -484,7 +478,7 @@ func (s *TrustCenterAccessService) sendAccessEmail(
 
 func (s *TrustCenterAccessService) RejectOrRevokeByIDs(
 	ctx context.Context,
-	scope coredata.Scoper,
+	predicate coredata.Predicater,
 	organizationID gid.GID,
 	email mail.Addr,
 	documentIDs []gid.GID,
@@ -493,7 +487,7 @@ func (s *TrustCenterAccessService) RejectOrRevokeByIDs(
 ) error {
 	return s.svc.pg.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		trustCenter := &coredata.TrustCenter{}
-		if err := trustCenter.LoadByOrganizationID(ctx, tx, scope, organizationID); err != nil {
+		if err := trustCenter.LoadByOrganizationID(ctx, tx, predicate, organizationID); err != nil {
 			return fmt.Errorf("cannot load trust center: %w", err)
 		}
 
@@ -503,12 +497,12 @@ func (s *TrustCenterAccessService) RejectOrRevokeByIDs(
 		}
 
 		access := &coredata.TrustCenterAccess{}
-		if err := access.LoadByTrustCenterIDAndIdentityID(ctx, tx, scope, trustCenter.ID, identity.ID); err != nil {
+		if err := access.LoadByTrustCenterIDAndIdentityID(ctx, tx, predicate, trustCenter.ID, identity.ID); err != nil {
 			return fmt.Errorf("cannot load trust center access: %w", err)
 		}
 
 		profile := &coredata.MembershipProfile{}
-		if err := profile.LoadByIdentityIDAndOrganizationID(ctx, tx, scope, identity.ID, access.OrganizationID); err != nil {
+		if err := profile.LoadByIdentityIDAndOrganizationID(ctx, tx, predicate, identity.ID, access.OrganizationID); err != nil {
 			return fmt.Errorf("cannot load profile: %w", err)
 		}
 
@@ -518,7 +512,7 @@ func (s *TrustCenterAccessService) RejectOrRevokeByIDs(
 		if len(documentIDs) > 0 {
 			shouldSendEmail = true
 
-			if err := coredata.RejectOrRevokeByDocumentIDs(ctx, tx, scope, access.ID, documentIDs, now); err != nil {
+			if err := coredata.RejectOrRevokeByDocumentIDs(ctx, tx, predicate, access.ID, documentIDs, now); err != nil {
 				return fmt.Errorf("cannot reject/revoke document accesses: %w", err)
 			}
 		}
@@ -526,7 +520,7 @@ func (s *TrustCenterAccessService) RejectOrRevokeByIDs(
 		if len(reportIDs) > 0 {
 			shouldSendEmail = true
 
-			if err := coredata.RejectOrRevokeByReportFileIDs(ctx, tx, scope, access.ID, reportIDs, now); err != nil {
+			if err := coredata.RejectOrRevokeByReportFileIDs(ctx, tx, predicate, access.ID, reportIDs, now); err != nil {
 				return fmt.Errorf("cannot reject/revoke report accesses: %w", err)
 			}
 		}
@@ -534,13 +528,13 @@ func (s *TrustCenterAccessService) RejectOrRevokeByIDs(
 		if len(fileIDs) > 0 {
 			shouldSendEmail = true
 
-			if err := coredata.RejectOrRevokeByTrustCenterFileIDs(ctx, tx, scope, access.ID, fileIDs, now); err != nil {
+			if err := coredata.RejectOrRevokeByTrustCenterFileIDs(ctx, tx, predicate, access.ID, fileIDs, now); err != nil {
 				return fmt.Errorf("cannot reject/revoke trust center file accesses: %w", err)
 			}
 		}
 
 		if shouldSendEmail {
-			if err := s.sendDocumentAccessRejectedEmail(ctx, tx, scope, access, profile, documentIDs, reportIDs, fileIDs); err != nil {
+			if err := s.sendDocumentAccessRejectedEmail(ctx, tx, predicate, access, profile, documentIDs, reportIDs, fileIDs); err != nil {
 				return fmt.Errorf("cannot send access email: %w", err)
 			}
 		}
@@ -552,7 +546,7 @@ func (s *TrustCenterAccessService) RejectOrRevokeByIDs(
 func (s *TrustCenterAccessService) sendDocumentAccessRejectedEmail(
 	ctx context.Context,
 	tx pg.Tx,
-	scope coredata.Scoper,
+	predicate coredata.Predicater,
 	access *coredata.TrustCenterAccess,
 	profile *coredata.MembershipProfile,
 	documentIDs []gid.GID,
@@ -560,7 +554,7 @@ func (s *TrustCenterAccessService) sendDocumentAccessRejectedEmail(
 	fileIDs []gid.GID,
 ) error {
 	organization := &coredata.Organization{}
-	if err := organization.LoadByID(ctx, tx, scope, access.OrganizationID); err != nil {
+	if err := organization.LoadByID(ctx, tx, predicate, access.OrganizationID); err != nil {
 		return fmt.Errorf("cannot load organization: %w", err)
 	}
 
@@ -570,7 +564,7 @@ func (s *TrustCenterAccessService) sendDocumentAccessRejectedEmail(
 	)
 
 	if len(documentIDs) > 0 {
-		if err := documents.LoadByIDs(ctx, tx, scope, documentIDs); err != nil {
+		if err := documents.LoadByIDs(ctx, tx, predicate, documentIDs); err != nil {
 			return fmt.Errorf("cannot load documents by IDs: %w", err)
 		}
 
@@ -580,7 +574,7 @@ func (s *TrustCenterAccessService) sendDocumentAccessRejectedEmail(
 	}
 
 	if len(reportIDs) > 0 {
-		reportLabels, err := reportAccessLabels(ctx, tx, scope, reportIDs)
+		reportLabels, err := reportAccessLabels(ctx, tx, predicate, reportIDs)
 		if err != nil {
 			return fmt.Errorf("cannot build report access labels: %w", err)
 		}
@@ -590,7 +584,7 @@ func (s *TrustCenterAccessService) sendDocumentAccessRejectedEmail(
 
 	var files coredata.TrustCenterFiles
 	if len(fileIDs) > 0 {
-		if err := files.LoadByIDs(ctx, tx, scope, fileIDs); err != nil {
+		if err := files.LoadByIDs(ctx, tx, predicate, fileIDs); err != nil {
 			return fmt.Errorf("cannot load files by IDs: %w", err)
 		}
 
@@ -599,7 +593,7 @@ func (s *TrustCenterAccessService) sendDocumentAccessRejectedEmail(
 		}
 	}
 
-	emailPresenterCfg, err := s.svc.TrustCenters.EmailPresenterConfig(ctx, scope, access.TrustCenterID)
+	emailPresenterCfg, err := s.svc.TrustCenters.EmailPresenterConfig(ctx, predicate, access.TrustCenterID)
 	if err != nil {
 		return fmt.Errorf("cannot get compliance page email presenter config: %w", err)
 	}
@@ -677,11 +671,11 @@ func filterExistingIDs(allIDs []gid.GID, existingIDs []gid.GID) []gid.GID {
 func reportAccessLabels(
 	ctx context.Context,
 	conn pg.Querier,
-	scope coredata.Scoper,
+	predicate coredata.Predicater,
 	reportFileIDs []gid.GID,
 ) ([]string, error) {
 	var reportFiles coredata.Files
-	if err := reportFiles.LoadByIDs(ctx, conn, scope, reportFileIDs); err != nil {
+	if err := reportFiles.LoadByIDs(ctx, conn, predicate, reportFileIDs); err != nil {
 		return nil, fmt.Errorf("cannot load report files by IDs: %w", err)
 	}
 
@@ -691,7 +685,7 @@ func reportAccessLabels(
 	}
 
 	var audits coredata.Audits
-	if err := audits.LoadByReportFileIDs(ctx, conn, scope, reportFileIDs); err != nil {
+	if err := audits.LoadByReportFileIDs(ctx, conn, predicate, reportFileIDs); err != nil {
 		return nil, fmt.Errorf("cannot load audits by report file IDs: %w", err)
 	}
 
@@ -720,7 +714,7 @@ func reportAccessLabels(
 
 	if len(frameworkIDs) > 0 {
 		var frameworks coredata.Frameworks
-		if err := frameworks.LoadByIDs(ctx, conn, scope, frameworkIDs); err != nil {
+		if err := frameworks.LoadByIDs(ctx, conn, predicate, frameworkIDs); err != nil {
 			return nil, fmt.Errorf("cannot load frameworks by IDs: %w", err)
 		}
 
