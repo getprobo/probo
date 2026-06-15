@@ -3529,7 +3529,7 @@ func (r *Resolver) RecordAccessReviewEntryDecisionTool(ctx context.Context, req 
 			EntryID:      input.AccessReviewEntryID,
 			Decision:     input.Decision,
 			DecisionNote: input.DecisionNote,
-			DecidedByID:  authn.IdentityIDFromContext(ctx),
+			DecidedByID:  &authn.IdentityFromContext(ctx).ID,
 		},
 	)
 	if err != nil {

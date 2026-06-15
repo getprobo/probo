@@ -945,7 +945,7 @@ func (r *mutationResolver) RecordAccessReviewEntryDecision(ctx context.Context, 
 			EntryID:      input.AccessReviewEntryID,
 			Decision:     input.Decision,
 			DecisionNote: input.DecisionNote,
-			DecidedByID:  authn.IdentityIDFromContext(ctx),
+			DecidedByID:  &authn.IdentityFromContext(ctx).ID,
 		},
 	)
 	if err != nil {
