@@ -30,15 +30,14 @@ import (
 
 type (
 	AccessReviewSource struct {
-		ID             gid.GID                    `db:"id"`
-		OrganizationID gid.GID                    `db:"organization_id"`
-		ConnectorID    *gid.GID                   `db:"connector_id"`
-		Name           string                     `db:"name"`
-		Category       AccessReviewSourceCategory `db:"category"`
-		CsvData        *string                    `db:"csv_data"`
-		NameSyncedAt   *time.Time                 `db:"name_synced_at"`
-		CreatedAt      time.Time                  `db:"created_at"`
-		UpdatedAt      time.Time                  `db:"updated_at"`
+		ID             gid.GID    `db:"id"`
+		OrganizationID gid.GID    `db:"organization_id"`
+		ConnectorID    *gid.GID   `db:"connector_id"`
+		Name           string     `db:"name"`
+		CsvData        *string    `db:"csv_data"`
+		NameSyncedAt   *time.Time `db:"name_synced_at"`
+		CreatedAt      time.Time  `db:"created_at"`
+		UpdatedAt      time.Time  `db:"updated_at"`
 	}
 
 	AccessReviewSources []*AccessReviewSource
@@ -104,7 +103,6 @@ SELECT
     organization_id,
     connector_id,
     name,
-    category,
     csv_data,
     name_synced_at,
     created_at,
@@ -153,7 +151,6 @@ INSERT INTO
         organization_id,
         connector_id,
         name,
-        category,
         csv_data,
         name_synced_at,
         created_at,
@@ -165,7 +162,6 @@ VALUES (
     @organization_id,
     @connector_id,
     @name,
-    @category,
     @csv_data,
     @name_synced_at,
     @created_at,
@@ -179,7 +175,6 @@ VALUES (
 		"organization_id": as.OrganizationID,
 		"connector_id":    as.ConnectorID,
 		"name":            as.Name,
-		"category":        as.Category,
 		"csv_data":        as.CsvData,
 		"name_synced_at":  as.NameSyncedAt,
 		"created_at":      as.CreatedAt,
@@ -203,7 +198,6 @@ func (as *AccessReviewSource) Update(
 UPDATE access_review_sources
 SET
     name = @name,
-    category = @category,
     connector_id = @connector_id,
     csv_data = @csv_data,
     name_synced_at = @name_synced_at,
@@ -217,7 +211,6 @@ WHERE
 	args := pgx.StrictNamedArgs{
 		"id":             as.ID,
 		"name":           as.Name,
-		"category":       as.Category,
 		"connector_id":   as.ConnectorID,
 		"csv_data":       as.CsvData,
 		"name_synced_at": as.NameSyncedAt,
@@ -276,7 +269,6 @@ SELECT
     organization_id,
     connector_id,
     name,
-    category,
     csv_data,
     name_synced_at,
     created_at,
@@ -378,7 +370,6 @@ SELECT
     organization_id,
     connector_id,
     name,
-    category,
     csv_data,
     name_synced_at,
     created_at,

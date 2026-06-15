@@ -37,14 +37,12 @@ type (
 		OrganizationID gid.GID
 		ConnectorID    *gid.GID
 		Name           string
-		Category       coredata.AccessReviewSourceCategory
 		CsvData        *string
 	}
 
 	UpdateAccessReviewSourceRequest struct {
 		AccessReviewSourceID gid.GID
-		Name                 *string
-		Category             *coredata.AccessReviewSourceCategory
+		Name                 **string
 		ConnectorID          **gid.GID
 		CsvData              **string
 	}
@@ -60,7 +58,6 @@ func (r *CreateAccessReviewSourceRequest) Validate() error {
 
 	v.Check(r.OrganizationID, "organization_id", validator.Required(), validator.GID(coredata.OrganizationEntityType))
 	v.Check(r.Name, "name", validator.SafeTextNoNewLine(NameMaxLength))
-	v.Check(r.Category, "category", validator.OneOfSlice(coredata.AccessReviewSourceCategories()))
 
 	return v.Error()
 }
@@ -79,7 +76,6 @@ func (r *UpdateAccessReviewSourceRequest) Validate() error {
 
 	v.Check(r.AccessReviewSourceID, "access_review_source_id", validator.Required(), validator.GID(coredata.AccessReviewSourceEntityType))
 	v.Check(r.Name, "name", validator.SafeTextNoNewLine(NameMaxLength))
-	v.Check(r.Category, "category", validator.OneOfSlice(coredata.AccessReviewSourceCategories()))
 
 	return v.Error()
 }
@@ -99,7 +95,6 @@ func (s *Service) CreateSource(
 		OrganizationID: req.OrganizationID,
 		ConnectorID:    req.ConnectorID,
 		Name:           req.Name,
-		Category:       req.Category,
 		CsvData:        req.CsvData,
 		CreatedAt:      now,
 		UpdatedAt:      now,
@@ -169,11 +164,9 @@ func (s *Service) UpdateSource(
 			}
 
 			if req.Name != nil {
-				source.Name = *req.Name
-			}
-
-			if req.Category != nil {
-				source.Category = *req.Category
+				if *req.Name != nil {
+					source.Name = **req.Name
+				}
 			}
 
 			if req.ConnectorID != nil {
