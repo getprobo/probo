@@ -867,6 +867,24 @@ func TestAccessReviewCampaignSource_Node(t *testing.T) {
 
 	campaignSourceID := campaignResult.Node.Sources[0].ID
 
+	const startQuery = `
+		mutation($input: StartAccessReviewCampaignInput!) {
+			startAccessReviewCampaign(input: $input) {
+				accessReviewCampaign {
+					id
+					status
+				}
+			}
+		}
+	`
+
+	err = owner.Execute(startQuery, map[string]any{
+		"input": map[string]any{
+			"accessReviewCampaignId": campaignID,
+		},
+	}, nil)
+	require.NoError(t, err)
+
 	const nodeQuery = `
 		query($id: ID!) {
 			node(id: $id) {
@@ -899,8 +917,15 @@ func TestAccessReviewCampaignSource_Node(t *testing.T) {
 		} `json:"node"`
 	}
 
-	err = owner.Execute(nodeQuery, map[string]any{"id": campaignSourceID}, &nodeResult)
-	require.NoError(t, err)
+	require.Eventually(t, func() bool {
+		err := owner.Execute(nodeQuery, map[string]any{"id": campaignSourceID}, &nodeResult)
+		if err != nil {
+			return false
+		}
+
+		return nodeResult.Node.Entries.TotalCount > 0
+	}, 60*time.Second, 1*time.Second, "campaign source should have entries after start")
+
 	assert.Equal(t, "AccessReviewCampaignSource", nodeResult.Node.Typename)
 	assert.Equal(t, campaignSourceID, nodeResult.Node.ID)
 	assert.Equal(t, campaignID, nodeResult.Node.Campaign.ID)
@@ -1333,7 +1358,7 @@ func TestAccessReviewCampaign_FullLifecycle(t *testing.T) {
 	const recordDecisionQuery = `
 		mutation($input: RecordAccessReviewEntryDecisionInput!) {
 			recordAccessReviewEntryDecision(input: $input) {
-				accessEntry {
+				accessReviewEntry {
 					id
 					decision
 					decidedAt
@@ -1358,7 +1383,7 @@ func TestAccessReviewCampaign_FullLifecycle(t *testing.T) {
 						ID       string `json:"id"`
 						Decision string `json:"decision"`
 					} `json:"decisionHistory"`
-				} `json:"accessEntry"`
+				} `json:"accessReviewEntry"`
 			} `json:"recordAccessReviewEntryDecision"`
 		}
 
