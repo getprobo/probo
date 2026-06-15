@@ -59,7 +59,6 @@ const createDocumentMutation = graphql`
           canRequestSignatures: permission(action: "core:document-version:request-signature")
           canArchive: permission(action: "core:document:archive")
           canUnarchive: permission(action: "core:document:unarchive")
-          canSendSigningNotifications: permission(action: "core:document:send-signing-notifications")
           ...DocumentListItemFragment
         }
       }

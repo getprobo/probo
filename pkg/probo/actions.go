@@ -183,16 +183,15 @@ const (
 	ActionEvidenceDelete = "core:evidence:delete"
 
 	// Document actions
-	ActionDocumentGet                      = "core:document:get"
-	ActionDocumentList                     = "core:document:list"
-	ActionDocumentCreate                   = "core:document:create"
-	ActionDocumentUpdate                   = "core:document:update"
-	ActionDocumentDelete                   = "core:document:delete"
-	ActionDocumentChangelogGenerate        = "core:document:generate-changelog"
-	ActionDocumentArchive                  = "core:document:archive"
-	ActionDocumentUnarchive                = "core:document:unarchive"
-	ActionDocumentDeleteDraft              = "core:document:delete-draft"
-	ActionDocumentSendSigningNotifications = "core:document:send-signing-notifications"
+	ActionDocumentGet               = "core:document:get"
+	ActionDocumentList              = "core:document:list"
+	ActionDocumentCreate            = "core:document:create"
+	ActionDocumentUpdate            = "core:document:update"
+	ActionDocumentDelete            = "core:document:delete"
+	ActionDocumentChangelogGenerate = "core:document:generate-changelog"
+	ActionDocumentArchive           = "core:document:archive"
+	ActionDocumentUnarchive         = "core:document:unarchive"
+	ActionDocumentDeleteDraft       = "core:document:delete-draft"
 
 	// DocumentVersion actions
 	ActionDocumentVersionGet             = "core:document-version:get"

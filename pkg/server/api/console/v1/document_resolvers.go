@@ -1386,23 +1386,6 @@ func (r *mutationResolver) BulkRequestSignatures(ctx context.Context, input type
 	}, nil
 }
 
-// SendSigningNotifications is the resolver for the sendSigningNotifications field.
-func (r *mutationResolver) SendSigningNotifications(ctx context.Context, input types.SendSigningNotificationsInput) (*types.SendSigningNotificationsPayload, error) {
-	scope, err := r.authorize(ctx, input.OrganizationID, probo.ActionDocumentSendSigningNotifications)
-	if err != nil {
-		return nil, err
-	}
-
-	if err := r.probo.Documents.SendSigningNotifications(ctx, scope, input.OrganizationID); err != nil {
-		r.logger.ErrorCtx(ctx, "cannot send signing notifications", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	return &types.SendSigningNotificationsPayload{
-		Success: true,
-	}, nil
-}
-
 // CancelSignatureRequest is the resolver for the cancelSignatureRequest field.
 func (r *mutationResolver) CancelSignatureRequest(ctx context.Context, input types.CancelSignatureRequestInput) (*types.CancelSignatureRequestPayload, error) {
 	scope, err := r.authorize(ctx, input.DocumentVersionSignatureID, probo.ActionDocumentVersionCancelSignature)

@@ -152,6 +152,11 @@ func New() *Implm {
 					SenderInterval: 5,
 					CacheTTL:       86400,
 				},
+				Document: DocumentNotificationConfig{
+					Interval:         300,   // 5 minutes
+					DebounceDelay:    900,   // 15 minutes
+					ReminderInterval: 86400, // 1 day base cadence (1x, 2x, 3x)
+				},
 			},
 			CustomDomains: CustomDomainsConfig{
 				RenewalInterval:   3600,
@@ -734,6 +739,40 @@ func (impl *Implm) Run(
 		},
 	)
 
+	documentNotificationInterval := time.Duration(impl.cfg.Notifications.Document.Interval) * time.Second
+	if documentNotificationInterval <= 0 {
+		documentNotificationInterval = 5 * time.Minute
+	}
+
+	documentNotificationDebounce := time.Duration(impl.cfg.Notifications.Document.DebounceDelay) * time.Second
+	if documentNotificationDebounce <= 0 {
+		documentNotificationDebounce = 15 * time.Minute
+	}
+
+	documentNotificationReminder := time.Duration(impl.cfg.Notifications.Document.ReminderInterval) * time.Second
+	if documentNotificationReminder <= 0 {
+		documentNotificationReminder = 24 * time.Hour
+	}
+
+	documentNotificationWorker := probo.NewDocumentNotificationWorker(
+		proboService,
+		l.Named("document-notification-worker"),
+		probo.DocumentNotificationWorkerConfig{
+			DebounceDelay:    documentNotificationDebounce,
+			ReminderInterval: documentNotificationReminder,
+		},
+		worker.WithInterval(documentNotificationInterval),
+	)
+	documentNotificationCtx, stopDocumentNotification := context.WithCancel(context.Background())
+
+	wg.Go(
+		func() {
+			if err := documentNotificationWorker.Run(documentNotificationCtx); err != nil {
+				cancel(fmt.Errorf("document notification worker crashed: %w", err))
+			}
+		},
+	)
+
 	accessReviewWorkerCtx, stopAccessReviewWorker := context.WithCancel(context.Background())
 
 	wg.Go(
@@ -959,6 +998,7 @@ func (impl *Implm) Run(
 	stopVettingWorker()
 	stopEvidenceDescriptionWorker()
 	stopDocumentPDFWorker()
+	stopDocumentNotification()
 	stopExportJobExporter()
 	stopAccessReviewWorker()
 	stopIAMService()

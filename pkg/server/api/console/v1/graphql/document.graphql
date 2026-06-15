@@ -567,9 +567,6 @@ extend type Mutation {
     bulkRequestSignatures(
         input: BulkRequestSignaturesInput!
     ): BulkRequestSignaturesPayload!
-    sendSigningNotifications(
-        input: SendSigningNotificationsInput!
-    ): SendSigningNotificationsPayload!
     cancelSignatureRequest(
         input: CancelSignatureRequestInput!
     ): CancelSignatureRequestPayload!
@@ -685,10 +682,6 @@ input BulkRequestSignaturesInput {
     signatoryIds: [ID!]!
 }
 
-input SendSigningNotificationsInput {
-    organizationId: ID!
-}
-
 input CancelSignatureRequestInput {
     documentVersionSignatureId: ID!
 }
@@ -780,10 +773,6 @@ type RequestSignaturePayload {
 
 type BulkRequestSignaturesPayload {
     documentVersionSignatureEdges: [DocumentVersionSignatureEdge!]!
-}
-
-type SendSigningNotificationsPayload {
-    success: Boolean!
 }
 
 type CancelSignatureRequestPayload {

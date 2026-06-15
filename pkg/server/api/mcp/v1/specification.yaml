@@ -6570,24 +6570,6 @@ components:
         approval_decision:
           $ref: "#/components/schemas/DocumentVersionApprovalDecision"
 
-    SendSigningNotificationsInput:
-      type: object
-      required:
-        - organization_id
-      properties:
-        organization_id:
-          $ref: "#/components/schemas/GID"
-          description: Organization ID
-
-    SendSigningNotificationsOutput:
-      type: object
-      required:
-        - success
-      properties:
-        success:
-          type: boolean
-          description: Whether the notifications were sent successfully
-
     WebhookEventType:
       type: string
       enum:
@@ -13109,14 +13091,6 @@ tools:
       $ref: "#/components/schemas/VoidDocumentVersionApprovalInput"
     outputSchema:
       $ref: "#/components/schemas/VoidDocumentVersionApprovalOutput"
-  - name: sendSigningNotifications
-    description: Send signing notifications to all signatories with pending signature requests in the organization
-    hints:
-      readonly: false
-    inputSchema:
-      $ref: "#/components/schemas/SendSigningNotificationsInput"
-    outputSchema:
-      $ref: "#/components/schemas/SendSigningNotificationsOutput"
   - name: listStatementsOfApplicability
     description: List all statements of applicability for the organization
     hints:

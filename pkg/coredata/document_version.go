@@ -152,6 +152,58 @@ WHERE
 	return nil
 }
 
+func (dv *DocumentVersions) LoadByIDs(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	documentVersionIDs []gid.GID,
+) error {
+	q := `
+SELECT
+	id,
+	organization_id,
+	document_id,
+	title,
+	major,
+	minor,
+	classification,
+	document_type,
+	content,
+	changelog,
+	status,
+	orientation,
+	file_id,
+	pdf_attempt_count,
+	published_at,
+	created_at,
+	updated_at
+FROM
+	document_versions
+WHERE
+	%s
+	AND id = ANY(@document_version_ids)
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"document_version_ids": documentVersionIDs}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query document versions: %w", err)
+	}
+
+	documentVersions, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[DocumentVersion])
+	if err != nil {
+		return fmt.Errorf("cannot collect document versions: %w", err)
+	}
+
+	*dv = documentVersions
+
+	return nil
+}
+
 func (dv DocumentVersion) CursorKey(orderBy DocumentVersionOrderField) page.CursorKey {
 	switch orderBy {
 	case DocumentVersionOrderFieldCreatedAt:

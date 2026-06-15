@@ -16,14 +16,22 @@ import { Button, Section, Text } from 'react-email';
 import * as React from 'react';
 import EmailLayout, { bodyText, button, buttonContainer, footerText } from './components/EmailLayout';
 
+const documentList = {
+  ...bodyText,
+  paddingLeft: '20px',
+};
+
 export const DocumentApproval = () => {
   return (
-    <EmailLayout subject={'Action Required – Please review and approve {{.DocumentName}}'}>
+    <EmailLayout subject={'Action Required – Please review and approve {{.OrganizationName}} compliance documents'}>
       <Text style={bodyText}>
-        You're receiving this message because <strong>{'{{.OrganizationName}}'}</strong> has requested your approval on the document <strong>{'{{.DocumentName}}'}</strong>.
+        You're receiving this message because <strong>{'{{.OrganizationName}}'}</strong> has requested your approval on the following documents:
       </Text>
+
+      <ul style={documentList} dangerouslySetInnerHTML={{ __html: '{{range .Documents}}<li><a href="{{.URL}}">{{.Title}}</a> ({{.Type}})</li>{{end}}' }} />
+
       <Text style={bodyText}>
-        Please take a moment to review the document and approve or reject it by clicking the button below:
+        Please take a moment to review them and approve or reject each one by clicking the button below:
       </Text>
 
       <Section style={buttonContainer}>

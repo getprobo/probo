@@ -80,6 +80,31 @@ func (v DocumentType) String() string {
 	return string(v)
 }
 
+func (v DocumentType) Label() string {
+	switch v {
+	case DocumentTypeGovernance:
+		return "Governance"
+	case DocumentTypePolicy:
+		return "Policy"
+	case DocumentTypeProcedure:
+		return "Procedure"
+	case DocumentTypePlan:
+		return "Plan"
+	case DocumentTypeRegister:
+		return "Register"
+	case DocumentTypeRecord:
+		return "Record"
+	case DocumentTypeReport:
+		return "Report"
+	case DocumentTypeTemplate:
+		return "Template"
+	case DocumentTypeStatementOfApplicability:
+		return "Statement of Applicability"
+	default:
+		return "Document"
+	}
+}
+
 func (v DocumentType) MarshalText() ([]byte, error) {
 	return []byte(v.String()), nil
 }

@@ -23,7 +23,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"net/url"
 	"os"
 	"regexp"
 	"strings"
@@ -35,19 +34,16 @@ import (
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/packages/emails"
 	"go.probo.inc/probo/pkg/agent"
-	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/docgen"
 	"go.probo.inc/probo/pkg/esign"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/html2pdf"
-	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/llm"
 	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/pdfutils"
 	"go.probo.inc/probo/pkg/prosemirror"
-	"go.probo.inc/probo/pkg/statelesstoken"
 	"go.probo.inc/probo/pkg/validator"
 )
 
@@ -754,102 +750,6 @@ func (s *DocumentService) Create(
 	}
 
 	return document, documentVersion, nil
-}
-
-func (s *DocumentService) SendSigningNotifications(
-	ctx context.Context, scope coredata.Scoper,
-	organizationID gid.GID,
-) error {
-	now := time.Now()
-
-	err := s.svc.pg.WithTx(
-		ctx,
-		func(ctx context.Context, tx pg.Tx) error {
-			var signatories coredata.MembershipProfiles
-			if err := signatories.LoadAwaitingSigning(ctx, tx, scope); err != nil {
-				return fmt.Errorf("cannot load signatories: %w", err)
-			}
-
-			organization := &coredata.Organization{}
-			if err := organization.LoadByID(ctx, tx, scope, organizationID); err != nil {
-				return fmt.Errorf("cannot load organization: %w", err)
-			}
-
-			for _, signatory := range signatories {
-				emailPresenter := emails.NewPresenter(s.svc.baseURL, signatory.FullName)
-
-				var (
-					employeeDocumentsURLPath = "/organizations/" + organizationID.String() + "/employee"
-					emailLinkURLPath         = employeeDocumentsURLPath
-					query                    = make(url.Values)
-				)
-
-				if signatory.State != coredata.ProfileStateActive {
-					if signatory.Source != coredata.ProfileSourceSCIM {
-						invitation := &coredata.Invitation{
-							ID:             gid.New(organizationID.TenantID(), coredata.InvitationEntityType),
-							OrganizationID: organizationID,
-							UserID:         signatory.ID,
-							Status:         coredata.InvitationStatusPending,
-							ExpiresAt:      now.Add(s.invitationTokenValidity),
-							CreatedAt:      now,
-						}
-						if err := invitation.Insert(ctx, tx, coredata.NewScopeFromObjectID(organizationID)); err != nil {
-							return fmt.Errorf("cannot insert invitation: %w", err)
-						}
-
-						invitationToken, err := statelesstoken.NewToken(
-							s.tokenSecret,
-							iam.TokenTypeOrganizationInvitation,
-							s.invitationTokenValidity,
-							iam.InvitationTokenData{InvitationID: invitation.ID},
-						)
-						if err != nil {
-							return fmt.Errorf("cannot generate invitation token: %w", err)
-						}
-
-						emailLinkURLPath = "/auth/activate-account"
-						continueURL := baseurl.MustParse(s.svc.baseURL).AppendPath(employeeDocumentsURLPath).MustString()
-
-						query.Add("token", invitationToken)
-						query.Add("continue", continueURL)
-					}
-				}
-
-				subject, textBody, htmlBody, err := emailPresenter.RenderDocumentSigning(
-					ctx,
-					emailLinkURLPath,
-					query,
-					organization.Name,
-				)
-				if err != nil {
-					return fmt.Errorf("cannot render signing request email: %w", err)
-				}
-
-				email := coredata.NewEmail(
-					signatory.FullName,
-					signatory.EmailAddress,
-					subject,
-					textBody,
-					htmlBody,
-					&coredata.EmailOptions{
-						SenderName: new(organization.Name),
-					},
-				)
-
-				if err := email.Insert(ctx, tx); err != nil {
-					return fmt.Errorf("cannot insert email: %w", err)
-				}
-			}
-
-			return nil
-		},
-	)
-	if err != nil {
-		return fmt.Errorf("cannot send signing notifications: %w", err)
-	}
-
-	return nil
 }
 
 func (s *DocumentService) SignDocumentVersionByIdentity(

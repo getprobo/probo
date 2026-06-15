@@ -72,9 +72,6 @@ const fragment = graphql`
           )
           canArchive: permission(action: "core:document:archive")
           canUnarchive: permission(action: "core:document:unarchive")
-          canSendSigningNotifications: permission(
-            action: "core:document:send-signing-notifications"
-          )
           ...DocumentListItemFragment
         }
       }
@@ -115,10 +112,9 @@ const bulkUnarchiveMutation = graphql`
 export function DocumentList(props: {
   fKey: DocumentListFragment$key;
   onConnectionIdChange: (connectionId: string) => void;
-  onCanSendNotificationsChange?: (can: boolean) => void;
   tab: "ACTIVE" | "ARCHIVED";
 }) {
-  const { fKey, onConnectionIdChange, onCanSendNotificationsChange, tab } = props;
+  const { fKey, onConnectionIdChange, tab } = props;
 
   const organizationId = useOrganizationId();
   const { email: defaultEmail } = use(CurrentUser);
@@ -170,18 +166,11 @@ export function DocumentList(props: {
   const canRequestAnySignatures = documents.some(({ canRequestSignatures }) => canRequestSignatures);
   const canArchiveAny = documents.some(({ canArchive }) => canArchive);
   const canUnarchiveAny = documents.some(({ canUnarchive }) => canUnarchive);
-  const canSendAnySignatureNotifications = documents.some(
-    ({ canSendSigningNotifications }) => canSendSigningNotifications,
-  );
   const hasAnyAction = tab === "ARCHIVED" ? canUnarchiveAny || canDeleteAny : canArchiveAny || canDeleteAny || canUpdateAny;
 
   useEffect(() => {
     onConnectionIdChange(connectionId);
   }, [connectionId, onConnectionIdChange]);
-
-  useEffect(() => {
-    onCanSendNotificationsChange?.(canSendAnySignatureNotifications);
-  }, [canSendAnySignatureNotifications, onCanSendNotificationsChange]);
 
   const handleDocumentTypeFilterChange = (value: string) => {
     const newType = value === "ALL" ? null : (value as DocumentType);

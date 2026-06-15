@@ -2,9 +2,11 @@ Probo
 
 Hi {{.RecipientFullName}},
 
-You're receiving this message because your company, {{.OrganizationName}}, has shared a new compliance document that requires your review and signature.
+You're receiving this message because your company, {{.OrganizationName}}, has shared compliance documents that require your review and signature:
 
-To stay compliant with company policies, please take a moment to review and sign the document by clicking the link below:
+{{range .Documents}}- {{.Title}} ({{.Type}}): {{.URL}}
+{{end}}
+To stay compliant with company policies, please take a moment to review and sign them by clicking the link below:
 
 {{.SigningUrl}}
 

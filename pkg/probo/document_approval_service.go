@@ -19,21 +19,16 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net/url"
 	"time"
 
 	"go.gearno.de/crypto/uuid"
 	"go.gearno.de/kit/pg"
-	"go.probo.inc/probo/packages/emails"
-	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/esign"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/html2pdf"
-	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/page"
-	"go.probo.inc/probo/pkg/statelesstoken"
 )
 
 const DocumentApprovalConsentText = "By clicking \"Review and approve\", I consent to approve this document electronically and agree that my electronic signature has the same legal validity as a handwritten signature."
@@ -82,16 +77,6 @@ func (s *DocumentApprovalService) RequestApprovalInTx(
 	approverIDs []gid.GID,
 	changelog *string,
 ) (*coredata.DocumentVersionApprovalQuorum, error) {
-	organization := &coredata.Organization{}
-	if err := organization.LoadByID(ctx, tx, scope, document.OrganizationID); err != nil {
-		return nil, fmt.Errorf("cannot load organization: %w", err)
-	}
-
-	approverProfiles := &coredata.MembershipProfiles{}
-	if err := approverProfiles.LoadByIDs(ctx, tx, scope, approverIDs); err != nil {
-		return nil, fmt.Errorf("cannot load approver profiles: %w", err)
-	}
-
 	now := time.Now()
 
 	documentVersion.Status = coredata.DocumentVersionStatusPendingApproval
@@ -129,9 +114,9 @@ func (s *DocumentApprovalService) RequestApprovalInTx(
 		return nil, fmt.Errorf("cannot create approval decisions: %w", err)
 	}
 
-	if err := s.sendApprovalEmails(ctx, scope, tx, *approverProfiles, document, organization, documentVersion.ID); err != nil {
-		return nil, fmt.Errorf("cannot send approval emails: %w", err)
-	}
+	// Approval notifications are sent asynchronously and debounced by the
+	// document notification worker, which batches all pending approvals per
+	// recipient into a single email.
 
 	return quorum, nil
 }
@@ -804,88 +789,6 @@ func (s *DocumentApprovalService) createDecisions(
 
 	if err := decisions.BulkInsert(ctx, tx, scope); err != nil {
 		return fmt.Errorf("cannot insert approval decisions: %w", err)
-	}
-
-	return nil
-}
-
-func (s *DocumentApprovalService) sendApprovalEmails(
-	ctx context.Context, scope coredata.Scoper,
-	tx pg.Tx,
-	profiles coredata.MembershipProfiles,
-	document *coredata.Document,
-	organization *coredata.Organization,
-	documentVersionID gid.GID,
-) error {
-	now := time.Now()
-	approvalURLPath := "/organizations/" + document.OrganizationID.String() + "/employee/approvals/" + document.ID.String()
-
-	approvalEmails := make(coredata.Emails, 0, len(profiles))
-	for _, profile := range profiles {
-		emailPresenter := emails.NewPresenter(s.svc.baseURL, profile.FullName)
-
-		var (
-			emailLinkURLPath = approvalURLPath
-			query            = make(url.Values)
-		)
-
-		if profile.State != coredata.ProfileStateActive {
-			if profile.Source != coredata.ProfileSourceSCIM {
-				invitation := &coredata.Invitation{
-					ID:             gid.New(document.OrganizationID.TenantID(), coredata.InvitationEntityType),
-					OrganizationID: document.OrganizationID,
-					UserID:         profile.ID,
-					Status:         coredata.InvitationStatusPending,
-					ExpiresAt:      now.Add(s.invitationTokenValidity),
-					CreatedAt:      now,
-				}
-				if err := invitation.Insert(ctx, tx, coredata.NewScopeFromObjectID(document.OrganizationID)); err != nil {
-					return fmt.Errorf("cannot insert invitation: %w", err)
-				}
-
-				invitationToken, err := statelesstoken.NewToken(
-					s.tokenSecret,
-					iam.TokenTypeOrganizationInvitation,
-					s.invitationTokenValidity,
-					iam.InvitationTokenData{InvitationID: invitation.ID},
-				)
-				if err != nil {
-					return fmt.Errorf("cannot generate invitation token: %w", err)
-				}
-
-				emailLinkURLPath = "/auth/activate-account"
-				continueURL := baseurl.MustParse(s.svc.baseURL).AppendPath(approvalURLPath).MustString()
-
-				query.Add("token", invitationToken)
-				query.Add("continue", continueURL)
-			}
-		}
-
-		subject, textBody, htmlBody, err := emailPresenter.RenderDocumentApproval(
-			ctx,
-			emailLinkURLPath,
-			query,
-			organization.Name,
-			document.Title,
-		)
-		if err != nil {
-			return fmt.Errorf("cannot render approval request email: %w", err)
-		}
-
-		approvalEmails = append(approvalEmails, coredata.NewEmail(
-			profile.FullName,
-			profile.EmailAddress,
-			subject,
-			textBody,
-			htmlBody,
-			&coredata.EmailOptions{
-				SenderName: new(organization.Name),
-			},
-		))
-	}
-
-	if err := approvalEmails.BulkInsert(ctx, tx); err != nil {
-		return fmt.Errorf("cannot insert approval emails: %w", err)
 	}
 
 	return nil

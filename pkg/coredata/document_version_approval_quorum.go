@@ -135,6 +135,47 @@ WHERE
 	return nil
 }
 
+func (q *DocumentVersionApprovalQuorums) LoadByIDs(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	quorumIDs []gid.GID,
+) error {
+	query := `
+SELECT
+	id,
+	organization_id,
+	version_id,
+	status,
+	created_at,
+	updated_at
+FROM
+	document_version_approval_quorums
+WHERE
+	%s
+	AND id = ANY(@quorum_ids)
+`
+
+	query = fmt.Sprintf(query, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"quorum_ids": quorumIDs}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, query, args)
+	if err != nil {
+		return fmt.Errorf("cannot query approval quorums: %w", err)
+	}
+
+	quorums, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[DocumentVersionApprovalQuorum])
+	if err != nil {
+		return fmt.Errorf("cannot collect approval quorums: %w", err)
+	}
+
+	*q = quorums
+
+	return nil
+}
+
 func (q *DocumentVersionApprovalQuorum) LoadLastByDocumentVersionID(
 	ctx context.Context,
 	conn pg.Querier,

@@ -31,7 +31,6 @@ import * as getSignatureOp from './getSignature.operation';
 import * as getAllSignaturesOp from './getAllSignatures.operation';
 import * as requestSignatureOp from './requestSignature.operation';
 import * as cancelSignatureOp from './cancelSignature.operation';
-import * as sendSigningNotificationsOp from './sendSigningNotifications.operation';
 import * as getApprovalQuorumOp from './getApprovalQuorum.operation';
 import * as getAllApprovalQuorumsOp from './getAllApprovalQuorums.operation';
 import * as getApprovalDecisionOp from './getApprovalDecision.operation';
@@ -158,12 +157,6 @@ export const description: INodeProperties[] = [
 				action: 'Request a document version signature',
 			},
 			{
-				name: 'Send Signing Notifications',
-				value: 'sendSigningNotifications',
-				description: 'Send signing notifications to all pending signatories',
-				action: 'Send signing notifications',
-			},
-			{
 				name: 'Unarchive',
 				value: 'unarchive',
 				description: 'Unarchive a document',
@@ -208,7 +201,6 @@ export const description: INodeProperties[] = [
 	...getAllSignaturesOp.description,
 	...requestSignatureOp.description,
 	...cancelSignatureOp.description,
-	...sendSigningNotificationsOp.description,
 	...getApprovalQuorumOp.description,
 	...getAllApprovalQuorumsOp.description,
 	...getApprovalDecisionOp.description,
@@ -234,7 +226,6 @@ export {
 	getAllSignaturesOp as getAllSignatures,
 	requestSignatureOp as requestSignature,
 	cancelSignatureOp as cancelSignature,
-	sendSigningNotificationsOp as sendSigningNotifications,
 	getApprovalQuorumOp as getApprovalQuorum,
 	getAllApprovalQuorumsOp as getAllApprovalQuorums,
 	getApprovalDecisionOp as getApprovalDecision,

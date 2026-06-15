@@ -16,7 +16,6 @@ import { usePageTitle } from "@probo/hooks";
 import { useTranslate } from "@probo/i18n";
 import {
   Button,
-  IconBell2,
   IconPlusLarge,
   PageHeader,
   TabItem,
@@ -30,9 +29,6 @@ import {
 import { ConnectionHandler, graphql } from "relay-runtime";
 
 import type { DocumentsPageQuery } from "#/__generated__/core/DocumentsPageQuery.graphql";
-import {
-  useSendSigningNotificationsMutation,
-} from "#/hooks/graph/DocumentGraph";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 import { CreateDocumentDialog } from "./_components/CreateDocumentDialog";
@@ -66,11 +62,8 @@ export default function DocumentsPage(props: {
     throw new Error("invalid type for node");
   }
 
-  const [sendSigningNotifications] = useSendSigningNotificationsMutation();
-
   usePageTitle(__("Documents"));
 
-  const [canSendAnySignatureNotifications, setCanSendAnySignatureNotifications] = useState(false);
   const [tab, setTab] = useState<"ACTIVE" | "ARCHIVED">("ACTIVE");
   const [documentListConnectionId, setDocumentListConnectionId] = useState(
     ConnectionHandler.getConnectionID(
@@ -80,14 +73,6 @@ export default function DocumentsPage(props: {
     ),
   );
 
-  const handleSendSigningNotifications = async () => {
-    await sendSigningNotifications({
-      variables: {
-        input: { organizationId },
-      },
-    });
-  };
-
   return (
     <div className="space-y-6">
       <PageHeader
@@ -95,15 +80,6 @@ export default function DocumentsPage(props: {
         description={__("Manage your organization's documents")}
       >
         <div className="flex gap-2">
-          {canSendAnySignatureNotifications && (
-            <Button
-              icon={IconBell2}
-              variant="secondary"
-              onClick={() => void handleSendSigningNotifications()}
-            >
-              {__("Send signing notifications")}
-            </Button>
-          )}
           {organization.canCreateDocument && tab === "ACTIVE" && (
             <CreateDocumentDialog
               connection={documentListConnectionId}
@@ -125,7 +101,6 @@ export default function DocumentsPage(props: {
       <DocumentList
         fKey={organization}
         onConnectionIdChange={setDocumentListConnectionId}
-        onCanSendNotificationsChange={setCanSendAnySignatureNotifications}
         tab={tab}
       />
     </div>

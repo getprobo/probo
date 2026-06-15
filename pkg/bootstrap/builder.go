@@ -177,6 +177,11 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 					SenderInterval: b.getEnvIntOrDefault("WEBHOOK_SENDER_INTERVAL", 5),
 					CacheTTL:       b.getEnvIntOrDefault("WEBHOOK_CACHE_TTL", 86400),
 				},
+				Document: probodconfig.DocumentNotificationConfig{
+					Interval:         b.getEnvIntOrDefault("DOCUMENT_NOTIFICATION_INTERVAL", 300),
+					DebounceDelay:    b.getEnvIntOrDefault("DOCUMENT_NOTIFICATION_DEBOUNCE_DELAY", 900),
+					ReminderInterval: b.getEnvIntOrDefault("DOCUMENT_NOTIFICATION_REMINDER_INTERVAL", 86400),
+				},
 			},
 			Agents: probodconfig.AgentsConfig{
 				Providers: map[string]probodconfig.LLMProviderConfig{

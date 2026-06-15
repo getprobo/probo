@@ -20,7 +20,6 @@ import (
 	"embed"
 	"fmt"
 	htmltemplate "html/template"
-	"net/url"
 	texttemplate "text/template"
 	"time"
 
@@ -60,6 +59,12 @@ type (
 		config            PresenterConfig
 		RecipientFullName string
 	}
+
+	DocumentSummary struct {
+		Title string
+		Type  string
+		URL   string
+	}
 )
 
 func DefaultPresenterConfig(baseURL string) PresenterConfig {
@@ -92,7 +97,7 @@ const (
 	subjectConfirmEmail                      = "Confirm your email address"
 	subjectPasswordReset                     = "Reset your password"
 	subjectInvitation                        = "Invitation to join %s on Probo"
-	subjectDocumentApproval                  = "Action Required – Please review and approve %s"
+	subjectDocumentApproval                  = "Action Required – Please review and approve %s compliance documents"
 	subjectDocumentSigning                   = "Action Required – Please review and sign %s compliance documents"
 	subjectDocumentExport                    = "Your document export is ready"
 	subjectFrameworkExport                   = "Your framework export is ready"
@@ -231,62 +236,53 @@ func (p *Presenter) RenderInvitation(ctx context.Context, invitationURLPath stri
 
 func (p *Presenter) RenderDocumentApproval(
 	ctx context.Context,
-	approvalURLPath string,
-	approvalURLQuery url.Values,
+	approvalURL string,
 	organizationName string,
-	documentName string,
+	documents []DocumentSummary,
 ) (subject string, textBody string, htmlBody *string, err error) {
 	vars, err := p.getCommonVariables()
 	if err != nil {
 		return "", "", nil, fmt.Errorf("cannot get common variables: %w", err)
 	}
-
-	approvalURL := baseurl.MustParse(vars.BaseURL).
-		AppendPath(approvalURLPath).
-		WithQueryValues(approvalURLQuery).
-		MustString()
 
 	data := struct {
 		*CommonVariables
 		ApprovalUrl      string
 		OrganizationName string
-		DocumentName     string
+		Documents        []DocumentSummary
 	}{
 		CommonVariables:  vars,
 		ApprovalUrl:      approvalURL,
 		OrganizationName: organizationName,
-		DocumentName:     documentName,
+		Documents:        documents,
 	}
 
 	textBody, htmlBody, err = renderEmail(documentApprovalTextTemplate, documentApprovalHTMLTemplate, data)
 
-	return fmt.Sprintf(subjectDocumentApproval, documentName), textBody, htmlBody, err
+	return fmt.Sprintf(subjectDocumentApproval, organizationName), textBody, htmlBody, err
 }
 
 func (p *Presenter) RenderDocumentSigning(
 	ctx context.Context,
-	signingURLPath string,
-	signingURLQuery url.Values,
+	signingURL string,
 	organizationName string,
+	documents []DocumentSummary,
 ) (subject string, textBody string, htmlBody *string, err error) {
 	vars, err := p.getCommonVariables()
 	if err != nil {
 		return "", "", nil, fmt.Errorf("cannot get common variables: %w", err)
 	}
 
-	signingURL := baseurl.MustParse(vars.BaseURL).
-		AppendPath(signingURLPath).
-		WithQueryValues(signingURLQuery).
-		MustString()
-
 	data := struct {
 		*CommonVariables
 		SigningUrl       string
 		OrganizationName string
+		Documents        []DocumentSummary
 	}{
 		CommonVariables:  vars,
 		SigningUrl:       signingURL,
 		OrganizationName: organizationName,
+		Documents:        documents,
 	}
 
 	textBody, htmlBody, err = renderEmail(documentSigningTextTemplate, documentSigningHTMLTemplate, data)

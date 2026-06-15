@@ -4125,24 +4125,6 @@ func (r *Resolver) VoidDocumentVersionApprovalTool(ctx context.Context, req *mcp
 	}, nil
 }
 
-func (r *Resolver) SendSigningNotificationsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.SendSigningNotificationsInput) (*mcp.CallToolResult, types.SendSigningNotificationsOutput, error) {
-	scope, err := r.Authorize(ctx, input.OrganizationID, probo.ActionDocumentSendSigningNotifications)
-	if err != nil {
-		return nil, types.SendSigningNotificationsOutput{}, err
-	}
-
-	svc := r.proboSvc
-
-	err = svc.Documents.SendSigningNotifications(ctx, scope, input.OrganizationID)
-	if err != nil {
-		panic(fmt.Errorf("cannot send signing notifications: %w", err))
-	}
-
-	return nil, types.SendSigningNotificationsOutput{
-		Success: true,
-	}, nil
-}
-
 func (r *Resolver) DeleteDocumentDraftTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteDocumentDraftInput) (*mcp.CallToolResult, types.DeleteDocumentDraftOutput, error) {
 	scope, err := r.Authorize(ctx, input.ID, probo.ActionDocumentDeleteDraft)
 	if err != nil {

@@ -51,9 +51,11 @@ type (
 	SMTPConfig          = probodconfig.SMTPConfig
 	NotificationsConfig = probodconfig.NotificationsConfig
 	WebhookConfig       = probodconfig.WebhookConfig
-	OIDCProviderConfig  = probodconfig.OIDCProviderConfig
-	PgConfig            = probodconfig.PgConfig
-	SAMLConfig          = probodconfig.SAMLConfig
-	SCIMBridgeConfig    = probodconfig.SCIMBridgeConfig
-	SlackConfig         = probodconfig.SlackConfig
+
+	DocumentNotificationConfig = probodconfig.DocumentNotificationConfig
+	OIDCProviderConfig         = probodconfig.OIDCProviderConfig
+	PgConfig                   = probodconfig.PgConfig
+	SAMLConfig                 = probodconfig.SAMLConfig
+	SCIMBridgeConfig           = probodconfig.SCIMBridgeConfig
+	SlackConfig                = probodconfig.SlackConfig
 )

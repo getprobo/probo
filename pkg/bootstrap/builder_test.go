@@ -198,6 +198,9 @@ func TestBuilder_Build_Defaults(t *testing.T) {
 	assert.Empty(t, cfg.Probod.Notifications.Slack.SigningSecret)
 	assert.Equal(t, 5, cfg.Probod.Notifications.Webhook.SenderInterval)
 	assert.Equal(t, 86400, cfg.Probod.Notifications.Webhook.CacheTTL)
+	assert.Equal(t, 300, cfg.Probod.Notifications.Document.Interval)
+	assert.Equal(t, 900, cfg.Probod.Notifications.Document.DebounceDelay)
+	assert.Equal(t, 86400, cfg.Probod.Notifications.Document.ReminderInterval)
 
 	// Agents tools — Firecrawl empty by default
 	assert.Empty(t, cfg.Probod.Agents.Tools.FirecrawlAPIKey)
@@ -329,6 +332,9 @@ func TestBuilder_Build_CustomValues(t *testing.T) {
 	env["WEBHOOK_SENDER_INTERVAL"] = "10"
 	env["WEBHOOK_CACHE_TTL"] = "3600"
 	env["CONNECTOR_SLACK_SIGNING_SECRET"] = "slack-signing-secret"
+	env["DOCUMENT_NOTIFICATION_INTERVAL"] = "120"
+	env["DOCUMENT_NOTIFICATION_DEBOUNCE_DELAY"] = "60"
+	env["DOCUMENT_NOTIFICATION_REMINDER_INTERVAL"] = "43200"
 	// Firecrawl
 	env["FIRECRAWL_API_KEY"] = "fc-test-key"
 	// Agents — providers
@@ -456,6 +462,9 @@ func TestBuilder_Build_CustomValues(t *testing.T) {
 	assert.Equal(t, "slack-signing-secret", cfg.Probod.Notifications.Slack.SigningSecret)
 	assert.Equal(t, 10, cfg.Probod.Notifications.Webhook.SenderInterval)
 	assert.Equal(t, 3600, cfg.Probod.Notifications.Webhook.CacheTTL)
+	assert.Equal(t, 120, cfg.Probod.Notifications.Document.Interval)
+	assert.Equal(t, 60, cfg.Probod.Notifications.Document.DebounceDelay)
+	assert.Equal(t, 43200, cfg.Probod.Notifications.Document.ReminderInterval)
 	// Agents tools — Firecrawl
 	assert.Equal(t, "fc-test-key", cfg.Probod.Agents.Tools.FirecrawlAPIKey)
 	// Agents — providers

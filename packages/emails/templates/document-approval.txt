@@ -2,9 +2,11 @@ Probo
 
 Hi {{.RecipientFullName}},
 
-You're receiving this message because {{.OrganizationName}} has requested your approval on the document {{.DocumentName}}.
+You're receiving this message because {{.OrganizationName}} has requested your approval on the following documents:
 
-Please take a moment to review the document and approve or reject it by clicking the link below:
+{{range .Documents}}- {{.Title}} ({{.Type}}): {{.URL}}
+{{end}}
+Please take a moment to review them and approve or reject each one by clicking the link below:
 
 {{.ApprovalUrl}}
 
