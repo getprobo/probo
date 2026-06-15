@@ -462,3 +462,52 @@ func TestEvaluationResult_IsAllowed(t *testing.T) {
 		})
 	}
 }
+
+func TestEvaluationResult_PolicyID(t *testing.T) {
+	t.Parallel()
+
+	result := EvaluationResult{
+		Decision: DecisionAllow,
+		MatchedStatement: &Statement{
+			SID: "read-thirdParties",
+		},
+		MatchedPolicy: &Policy{
+			ID: "probo:viewer",
+		},
+	}
+
+	if got := result.PolicyID(); got != "read-thirdParties" {
+		t.Errorf("PolicyID() = %q, want read-thirdParties", got)
+	}
+}
+
+func TestEvaluationResult_Reason(t *testing.T) {
+	t.Parallel()
+
+	t.Run("implicit deny includes role", func(t *testing.T) {
+		t.Parallel()
+
+		result := EvaluationResult{Decision: DecisionNoMatch}
+		want := "implicit deny: no matching allow for role VIEWER"
+
+		if got := result.Reason("VIEWER"); got != want {
+			t.Errorf("Reason() = %q, want %q", got, want)
+		}
+	})
+
+	t.Run("explicit deny uses statement sid", func(t *testing.T) {
+		t.Parallel()
+
+		result := EvaluationResult{
+			Decision: DecisionDeny,
+			MatchedStatement: &Statement{
+				SID: "deny-delete",
+			},
+		}
+		want := "explicit deny by statement deny-delete"
+
+		if got := result.Reason("ADMIN"); got != want {
+			t.Errorf("Reason() = %q, want %q", got, want)
+		}
+	})
+}
