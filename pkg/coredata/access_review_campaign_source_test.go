@@ -111,6 +111,7 @@ func TestSourceFetchAttempts_AppendOnly(t *testing.T) {
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		first := &coredata.AccessReviewCampaignSourceFetchAttempt{
 			ID:                           gid.New(tenantID, coredata.AccessReviewCampaignSourceFetchAttemptEntityType),
+			OrganizationID:               fx.organizationID,
 			AccessReviewCampaignSourceID: fx.campaignSourceID,
 			Status:                       coredata.AccessReviewCampaignSourceFetchStatusFailed,
 			Error:                        &failureMsg,
@@ -124,6 +125,7 @@ func TestSourceFetchAttempts_AppendOnly(t *testing.T) {
 
 		second := &coredata.AccessReviewCampaignSourceFetchAttempt{
 			ID:                           gid.New(tenantID, coredata.AccessReviewCampaignSourceFetchAttemptEntityType),
+			OrganizationID:               fx.organizationID,
 			AccessReviewCampaignSourceID: fx.campaignSourceID,
 			Status:                       coredata.AccessReviewCampaignSourceFetchStatusSuccess,
 			FetchedAccountsCount:         7,

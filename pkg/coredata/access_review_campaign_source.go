@@ -35,6 +35,7 @@ type (
 	// entries and fetch attempts reference this snapshot, not the live source.
 	AccessReviewCampaignSource struct {
 		ID                     gid.GID      `db:"id"`
+		OrganizationID         gid.GID      `db:"organization_id"`
 		TenantID               gid.TenantID `db:"tenant_id"`
 		AccessReviewCampaignID gid.GID      `db:"access_review_campaign_id"`
 		AccessReviewSourceID   *gid.GID     `db:"access_review_source_id"`
@@ -52,17 +53,7 @@ func (s *AccessReviewCampaignSource) AuthorizationAttributes(
 	conn pg.Querier,
 	resourceIDs []gid.GID,
 ) (policy.AttributesByID, error) {
-	q := `
-SELECT
-	cs.id,
-	c.organization_id
-FROM
-	access_review_campaign_sources cs
-JOIN
-	access_review_campaigns c ON c.id = cs.access_review_campaign_id
-WHERE
-	cs.id = ANY(@resource_ids::text[])
-`
+	q := `SELECT id, organization_id FROM access_review_campaign_sources WHERE id = ANY(@resource_ids::text[])`
 
 	args := pgx.StrictNamedArgs{
 		"resource_ids": resourceIDs,
@@ -108,6 +99,7 @@ func (s *AccessReviewCampaignSource) Upsert(
 	q := `
 INSERT INTO access_review_campaign_sources (
 	id,
+	organization_id,
 	tenant_id,
 	access_review_campaign_id,
 	access_review_source_id,
@@ -117,6 +109,7 @@ INSERT INTO access_review_campaign_sources (
 	updated_at
 ) VALUES (
 	@id,
+	@organization_id,
 	@tenant_id,
 	@access_review_campaign_id,
 	@access_review_source_id,
@@ -133,6 +126,7 @@ RETURNING id
 `
 	args := pgx.StrictNamedArgs{
 		"id":                        s.ID,
+		"organization_id":           s.OrganizationID,
 		"tenant_id":                 scope.GetTenantID(),
 		"access_review_campaign_id": s.AccessReviewCampaignID,
 		"access_review_source_id":   s.AccessReviewSourceID,
@@ -158,6 +152,7 @@ func (s *AccessReviewCampaignSource) LoadByID(
 	q := `
 SELECT
 	id,
+	organization_id,
 	tenant_id,
 	access_review_campaign_id,
 	access_review_source_id,
@@ -233,6 +228,7 @@ func (sources *AccessReviewCampaignSources) LoadByCampaignID(
 	q := `
 SELECT
 	id,
+	organization_id,
 	tenant_id,
 	access_review_campaign_id,
 	access_review_source_id,

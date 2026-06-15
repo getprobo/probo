@@ -24,6 +24,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/iam/policy"
 	"go.probo.inc/probo/pkg/page"
 )
 
@@ -39,6 +40,7 @@ type (
 	// tenant to construct a Scope for subsequent operations.
 	AccessReviewCampaignSourceFetchAttempt struct {
 		ID                           gid.GID                               `db:"id"`
+		OrganizationID               gid.GID                               `db:"organization_id"`
 		TenantID                     gid.TenantID                          `db:"tenant_id"`
 		AccessReviewCampaignSourceID gid.GID                               `db:"access_review_campaign_source_id"`
 		Status                       AccessReviewCampaignSourceFetchStatus `db:"status"`
@@ -69,6 +71,45 @@ var (
 	ErrNoAccessReviewCampaignSourceFetchAttemptAvailable = errors.New("no access review source fetch attempt available")
 )
 
+func (a *AccessReviewCampaignSourceFetchAttempt) AuthorizationAttributes(
+	ctx context.Context,
+	conn pg.Querier,
+	resourceIDs []gid.GID,
+) (policy.AttributesByID, error) {
+	q := `SELECT id, organization_id FROM access_review_campaign_source_fetch_attempts WHERE id = ANY(@resource_ids::text[])`
+
+	args := pgx.StrictNamedArgs{
+		"resource_ids": resourceIDs,
+	}
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return nil, fmt.Errorf("cannot query authorization attributes: %w", err)
+	}
+
+	defer rows.Close()
+
+	attrsByID := make(policy.AttributesByID)
+
+	for rows.Next() {
+		var id, organizationID gid.GID
+
+		if err := rows.Scan(&id, &organizationID); err != nil {
+			return nil, fmt.Errorf("cannot scan authorization attributes: %w", err)
+		}
+
+		attrsByID[id] = policy.Attributes{
+			"organization_id": organizationID.String(),
+		}
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("cannot iterate authorization attributes: %w", err)
+	}
+
+	return attrsByID, nil
+}
+
 // Insert appends a new attempt for the snapshot, assigning the next
 // attempt_number atomically. The receiver's AttemptNumber is synced from the
 // database.
@@ -80,6 +121,7 @@ func (a *AccessReviewCampaignSourceFetchAttempt) Insert(
 	q := `
 INSERT INTO access_review_campaign_source_fetch_attempts (
 	id,
+	organization_id,
 	tenant_id,
 	access_review_campaign_source_id,
 	attempt_number,
@@ -92,6 +134,7 @@ INSERT INTO access_review_campaign_source_fetch_attempts (
 	updated_at
 ) VALUES (
 	@id,
+	@organization_id,
 	@tenant_id,
 	@access_review_campaign_source_id,
 	COALESCE((
@@ -111,6 +154,7 @@ RETURNING attempt_number
 `
 	args := pgx.StrictNamedArgs{
 		"id":                               a.ID,
+		"organization_id":                  a.OrganizationID,
 		"tenant_id":                        scope.GetTenantID(),
 		"access_review_campaign_source_id": a.AccessReviewCampaignSourceID,
 		"status":                           a.Status,
@@ -185,6 +229,7 @@ func (a *AccessReviewCampaignSourceFetchAttempt) LoadNextQueuedForUpdateSkipLock
 	q := `
 SELECT
 	id,
+	organization_id,
 	tenant_id,
 	access_review_campaign_source_id,
 	attempt_number,
@@ -235,6 +280,7 @@ func (attempts *AccessReviewCampaignSourceFetchAttempts) LoadLatestByCampaignID(
 	q := `
 SELECT DISTINCT ON (access_review_campaign_source_id)
 	id,
+	organization_id,
 	tenant_id,
 	access_review_campaign_source_id,
 	attempt_number,
@@ -286,6 +332,7 @@ func (attempts *AccessReviewCampaignSourceFetchAttempts) LoadByCampaignSourceID(
 	q := `
 SELECT
 	id,
+	organization_id,
 	tenant_id,
 	access_review_campaign_source_id,
 	status,
@@ -299,6 +346,7 @@ SELECT
 FROM (
 	SELECT
 		id,
+		organization_id,
 		tenant_id,
 		access_review_campaign_source_id,
 		status,
@@ -349,6 +397,7 @@ func (attempts *AccessReviewCampaignSourceFetchAttempts) LoadAllByCampaignSource
 	q := `
 SELECT
 	id,
+	organization_id,
 	tenant_id,
 	access_review_campaign_source_id,
 	attempt_number,
@@ -424,6 +473,7 @@ func (attempts *AccessReviewCampaignSourceFetchAttempts) RecoverStale(
 	q := `
 SELECT
 	id,
+	organization_id,
 	tenant_id,
 	access_review_campaign_source_id,
 	attempt_number,
@@ -466,6 +516,7 @@ FOR UPDATE SKIP LOCKED
 
 		retry := &AccessReviewCampaignSourceFetchAttempt{
 			ID:                           gid.New(attempt.TenantID, AccessReviewCampaignSourceFetchAttemptEntityType),
+			OrganizationID:               attempt.OrganizationID,
 			AccessReviewCampaignSourceID: attempt.AccessReviewCampaignSourceID,
 			Status:                       AccessReviewCampaignSourceFetchStatusQueued,
 			CreatedAt:                    now,

@@ -87,6 +87,7 @@ func seedAccessReviewEntryFixture(t *testing.T, ctx context.Context, client *pg.
 
 		campaignSource := &coredata.AccessReviewCampaignSource{
 			ID:                     campaignSourceID,
+			OrganizationID:         organizationID,
 			TenantID:               tenantID,
 			AccessReviewCampaignID: campaignID,
 			AccessReviewSourceID:   &sourceID,
