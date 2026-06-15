@@ -422,6 +422,7 @@ func (s *Service) upsertCampaignSource(
 
 	campaignSource := &coredata.AccessReviewCampaignSource{
 		ID:                     gid.New(scope.GetTenantID(), coredata.AccessReviewCampaignSourceEntityType),
+		OrganizationID:         source.OrganizationID,
 		AccessReviewCampaignID: campaignID,
 		AccessReviewSourceID:   &sourceID,
 		Name:                   source.Name,
@@ -448,6 +449,7 @@ func (s *Service) enqueueSourceFetches(
 	for _, campaignSource := range campaignSources {
 		attempt := &coredata.AccessReviewCampaignSourceFetchAttempt{
 			ID:                           gid.New(scope.GetTenantID(), coredata.AccessReviewCampaignSourceFetchAttemptEntityType),
+			OrganizationID:               campaignSource.OrganizationID,
 			AccessReviewCampaignSourceID: campaignSource.ID,
 			Status:                       coredata.AccessReviewCampaignSourceFetchStatusQueued,
 			CreatedAt:                    now,
@@ -590,6 +592,7 @@ func (s *Service) CountFetchAttemptsForCampaignSourceID(
 			var attempts coredata.AccessReviewCampaignSourceFetchAttempts
 
 			var err error
+
 			count, err = attempts.CountByCampaignSourceID(ctx, conn, scope, campaignSourceID)
 			if err != nil {
 				return fmt.Errorf("cannot count fetch attempts: %w", err)

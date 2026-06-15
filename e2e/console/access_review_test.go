@@ -839,6 +839,29 @@ func TestAccessReviewCampaignSource_Node(t *testing.T) {
 		WithAccessReviewSourceIDs([]string{sourceID}).
 		Create()
 
+	// Start the campaign so the CSV source is fetched and entries are created.
+	const startMutation = `
+		mutation($input: StartAccessReviewCampaignInput!) {
+			startAccessReviewCampaign(input: $input) {
+				accessReviewCampaign {
+					id
+				}
+			}
+		}
+	`
+
+	var startResult struct {
+		StartAccessReviewCampaign struct {
+			AccessReviewCampaign struct {
+				ID string `json:"id"`
+			} `json:"accessReviewCampaign"`
+		} `json:"startAccessReviewCampaign"`
+	}
+
+	require.NoError(t, owner.Execute(startMutation, map[string]any{
+		"input": map[string]any{"accessReviewCampaignId": campaignID},
+	}, &startResult))
+
 	const campaignQuery = `
 		query($id: ID!) {
 			node(id: $id) {
@@ -899,8 +922,16 @@ func TestAccessReviewCampaignSource_Node(t *testing.T) {
 		} `json:"node"`
 	}
 
-	err = owner.Execute(nodeQuery, map[string]any{"id": campaignSourceID}, &nodeResult)
-	require.NoError(t, err)
+	// Entries are produced asynchronously by the fetch worker after the
+	// campaign starts, so poll until the snapshot reports them.
+	require.Eventually(t, func() bool {
+		if err := owner.Execute(nodeQuery, map[string]any{"id": campaignSourceID}, &nodeResult); err != nil {
+			return false
+		}
+
+		return nodeResult.Node.Entries.TotalCount > 0
+	}, 60*time.Second, 1*time.Second, "campaign source entries should be populated after fetch")
+
 	assert.Equal(t, "AccessReviewCampaignSource", nodeResult.Node.Typename)
 	assert.Equal(t, campaignSourceID, nodeResult.Node.ID)
 	assert.Equal(t, campaignID, nodeResult.Node.Campaign.ID)
@@ -914,6 +945,7 @@ func TestAccessReviewCampaignSource_NameSurvivesSourceDeletion(t *testing.T) {
 	orgID := owner.GetOrganizationID().String()
 
 	const snapshotName = "Archived Snapshot Source"
+
 	sourceID := factory.NewAccessReviewSource(owner, orgID).
 		WithName(snapshotName).
 		WithCsvData(testCsvData).
@@ -1332,7 +1364,7 @@ func TestAccessReviewCampaign_FullLifecycle(t *testing.T) {
 	const recordDecisionQuery = `
 		mutation($input: RecordAccessReviewEntryDecisionInput!) {
 			recordAccessReviewEntryDecision(input: $input) {
-				accessEntry {
+				accessReviewEntry {
 					id
 					decision
 					decidedAt
@@ -1357,7 +1389,7 @@ func TestAccessReviewCampaign_FullLifecycle(t *testing.T) {
 						ID       string `json:"id"`
 						Decision string `json:"decision"`
 					} `json:"decisionHistory"`
-				} `json:"accessEntry"`
+				} `json:"accessReviewEntry"`
 			} `json:"recordAccessReviewEntryDecision"`
 		}
 

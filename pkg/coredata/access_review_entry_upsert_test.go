@@ -88,6 +88,7 @@ func seedAccessReviewEntryFixture(t *testing.T, ctx context.Context, client *pg.
 		campaignSource := &coredata.AccessReviewCampaignSource{
 			ID:                     campaignSourceID,
 			TenantID:               tenantID,
+			OrganizationID:         organizationID,
 			AccessReviewCampaignID: campaignID,
 			AccessReviewSourceID:   &sourceID,
 			Name:                   "Upsert Freeze Test Source",

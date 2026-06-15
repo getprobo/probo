@@ -38,6 +38,7 @@ $$ LANGUAGE sql VOLATILE;
 CREATE TABLE access_review_campaign_sources (
     id TEXT PRIMARY KEY,
     tenant_id TEXT NOT NULL,
+    organization_id TEXT NOT NULL REFERENCES organizations(id),
     access_review_campaign_id TEXT NOT NULL REFERENCES access_review_campaigns(id) ON DELETE CASCADE,
     access_source_id TEXT REFERENCES access_sources(id) ON DELETE SET NULL,
     name TEXT NOT NULL,
@@ -53,6 +54,7 @@ CREATE TABLE access_review_campaign_sources (
 CREATE TABLE access_review_campaign_source_fetch_attempts (
     id TEXT PRIMARY KEY,
     tenant_id TEXT NOT NULL,
+    organization_id TEXT NOT NULL REFERENCES organizations(id),
     access_review_campaign_source_id TEXT NOT NULL REFERENCES access_review_campaign_sources(id) ON DELETE CASCADE,
     attempt_number INTEGER NOT NULL,
     status access_review_campaign_source_fetch_status NOT NULL,
@@ -72,12 +74,13 @@ CREATE INDEX idx_fetch_attempts_queued
 -- 3. Back-fill snapshots from every (campaign, source) pair already present in
 -- the scope, entries, or fetches.
 INSERT INTO access_review_campaign_sources (
-    id, tenant_id, access_review_campaign_id, access_source_id,
+    id, tenant_id, organization_id, access_review_campaign_id, access_source_id,
     name, category, connector_id, created_at, updated_at
 )
 SELECT
     pg_temp.gen_gid(s.tenant_id, 102),
     s.tenant_id,
+    s.organization_id,
     p.access_review_campaign_id,
     p.access_source_id,
     s.name,
@@ -125,13 +128,14 @@ ALTER TABLE access_entries
 
 -- 5. Migrate fetch rows into the append-only attempt log (one attempt each).
 INSERT INTO access_review_campaign_source_fetch_attempts (
-    id, tenant_id, access_review_campaign_source_id, attempt_number,
+    id, tenant_id, organization_id, access_review_campaign_source_id, attempt_number,
     status, fetched_accounts_count, error, started_at, completed_at,
     created_at, updated_at
 )
 SELECT
     pg_temp.gen_gid(f.tenant_id, 103),
     f.tenant_id,
+    cs.organization_id,
     cs.id,
     GREATEST(f.attempt_count, 1),
     f.status,

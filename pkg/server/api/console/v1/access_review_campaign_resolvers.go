@@ -21,6 +21,7 @@ import (
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlutils"
+	"go.probo.inc/probo/pkg/validator"
 )
 
 // Organization is the resolver for the organization field.
@@ -640,6 +641,10 @@ func (r *mutationResolver) CreateAccessReviewSource(ctx context.Context, input t
 		},
 	)
 	if err != nil {
+		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
+			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+		}
+
 		r.logger.ErrorCtx(ctx, "cannot create access source", log.Error(err))
 
 		return nil, gqlutils.Internal(ctx)
@@ -670,6 +675,10 @@ func (r *mutationResolver) UpdateAccessReviewSource(ctx context.Context, input t
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
+		}
+
+		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
+			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot update access source", log.Error(err))
@@ -758,6 +767,10 @@ func (r *mutationResolver) CreateAccessReviewCampaign(ctx context.Context, input
 		},
 	)
 	if err != nil {
+		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
+			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+		}
+
 		r.logger.ErrorCtx(ctx, "cannot create access review campaign", log.Error(err))
 
 		return nil, gqlutils.Internal(ctx)
@@ -788,6 +801,10 @@ func (r *mutationResolver) UpdateAccessReviewCampaign(ctx context.Context, input
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
+		}
+
+		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
+			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot update access review campaign", log.Error(err))

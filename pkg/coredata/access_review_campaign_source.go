@@ -36,6 +36,7 @@ type (
 	AccessReviewCampaignSource struct {
 		ID                     gid.GID      `db:"id"`
 		TenantID               gid.TenantID `db:"tenant_id"`
+		OrganizationID         gid.GID      `db:"organization_id"`
 		AccessReviewCampaignID gid.GID      `db:"access_review_campaign_id"`
 		AccessReviewSourceID   *gid.GID     `db:"access_review_source_id"`
 		Name                   string       `db:"name"`
@@ -52,17 +53,7 @@ func (s *AccessReviewCampaignSource) AuthorizationAttributes(
 	conn pg.Querier,
 	resourceIDs []gid.GID,
 ) (policy.AttributesByID, error) {
-	q := `
-SELECT
-	cs.id,
-	c.organization_id
-FROM
-	access_review_campaign_sources cs
-JOIN
-	access_review_campaigns c ON c.id = cs.access_review_campaign_id
-WHERE
-	cs.id = ANY(@resource_ids::text[])
-`
+	q := `SELECT id, organization_id FROM access_review_campaign_sources WHERE id = ANY(@resource_ids::text[])`
 
 	args := pgx.StrictNamedArgs{
 		"resource_ids": resourceIDs,
@@ -109,6 +100,7 @@ func (s *AccessReviewCampaignSource) Upsert(
 INSERT INTO access_review_campaign_sources (
 	id,
 	tenant_id,
+	organization_id,
 	access_review_campaign_id,
 	access_review_source_id,
 	name,
@@ -118,6 +110,7 @@ INSERT INTO access_review_campaign_sources (
 ) VALUES (
 	@id,
 	@tenant_id,
+	@organization_id,
 	@access_review_campaign_id,
 	@access_review_source_id,
 	@name,
@@ -134,6 +127,7 @@ RETURNING id
 	args := pgx.StrictNamedArgs{
 		"id":                        s.ID,
 		"tenant_id":                 scope.GetTenantID(),
+		"organization_id":           s.OrganizationID,
 		"access_review_campaign_id": s.AccessReviewCampaignID,
 		"access_review_source_id":   s.AccessReviewSourceID,
 		"name":                      s.Name,
@@ -159,6 +153,7 @@ func (s *AccessReviewCampaignSource) LoadByID(
 SELECT
 	id,
 	tenant_id,
+	organization_id,
 	access_review_campaign_id,
 	access_review_source_id,
 	name,
@@ -234,6 +229,7 @@ func (sources *AccessReviewCampaignSources) LoadByCampaignID(
 SELECT
 	id,
 	tenant_id,
+	organization_id,
 	access_review_campaign_id,
 	access_review_source_id,
 	name,

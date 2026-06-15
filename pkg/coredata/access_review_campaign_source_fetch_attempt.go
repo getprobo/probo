@@ -40,6 +40,7 @@ type (
 	AccessReviewCampaignSourceFetchAttempt struct {
 		ID                           gid.GID                               `db:"id"`
 		TenantID                     gid.TenantID                          `db:"tenant_id"`
+		OrganizationID               gid.GID                               `db:"organization_id"`
 		AccessReviewCampaignSourceID gid.GID                               `db:"access_review_campaign_source_id"`
 		Status                       AccessReviewCampaignSourceFetchStatus `db:"status"`
 		FetchedAccountsCount         int                                   `db:"fetched_accounts_count"`
@@ -81,6 +82,7 @@ func (a *AccessReviewCampaignSourceFetchAttempt) Insert(
 INSERT INTO access_review_campaign_source_fetch_attempts (
 	id,
 	tenant_id,
+	organization_id,
 	access_review_campaign_source_id,
 	attempt_number,
 	status,
@@ -93,6 +95,7 @@ INSERT INTO access_review_campaign_source_fetch_attempts (
 ) VALUES (
 	@id,
 	@tenant_id,
+	@organization_id,
 	@access_review_campaign_source_id,
 	COALESCE((
 		SELECT MAX(attempt_number)
@@ -112,6 +115,7 @@ RETURNING attempt_number
 	args := pgx.StrictNamedArgs{
 		"id":                               a.ID,
 		"tenant_id":                        scope.GetTenantID(),
+		"organization_id":                  a.OrganizationID,
 		"access_review_campaign_source_id": a.AccessReviewCampaignSourceID,
 		"status":                           a.Status,
 		"fetched_accounts_count":           a.FetchedAccountsCount,
@@ -186,6 +190,7 @@ func (a *AccessReviewCampaignSourceFetchAttempt) LoadNextQueuedForUpdateSkipLock
 SELECT
 	id,
 	tenant_id,
+	organization_id,
 	access_review_campaign_source_id,
 	attempt_number,
 	status,
@@ -236,6 +241,7 @@ func (attempts *AccessReviewCampaignSourceFetchAttempts) LoadLatestByCampaignID(
 SELECT DISTINCT ON (access_review_campaign_source_id)
 	id,
 	tenant_id,
+	organization_id,
 	access_review_campaign_source_id,
 	attempt_number,
 	status,
@@ -287,6 +293,7 @@ func (attempts *AccessReviewCampaignSourceFetchAttempts) LoadByCampaignSourceID(
 SELECT
 	id,
 	tenant_id,
+	organization_id,
 	access_review_campaign_source_id,
 	status,
 	fetched_accounts_count,
@@ -300,6 +307,7 @@ FROM (
 	SELECT
 		id,
 		tenant_id,
+		organization_id,
 		access_review_campaign_source_id,
 		status,
 		fetched_accounts_count,
@@ -350,6 +358,7 @@ func (attempts *AccessReviewCampaignSourceFetchAttempts) LoadAllByCampaignSource
 SELECT
 	id,
 	tenant_id,
+	organization_id,
 	access_review_campaign_source_id,
 	attempt_number,
 	status,
@@ -425,6 +434,7 @@ func (attempts *AccessReviewCampaignSourceFetchAttempts) RecoverStale(
 SELECT
 	id,
 	tenant_id,
+	organization_id,
 	access_review_campaign_source_id,
 	attempt_number,
 	status,
@@ -435,11 +445,15 @@ SELECT
 	created_at,
 	updated_at
 FROM access_review_campaign_source_fetch_attempts
-WHERE status = 'FETCHING'
+WHERE status = @status
 	AND updated_at < @stale_threshold
 FOR UPDATE SKIP LOCKED
 `
-	rows, err := conn.Query(ctx, q, pgx.StrictNamedArgs{"stale_threshold": staleThreshold})
+
+	rows, err := conn.Query(ctx, q, pgx.StrictNamedArgs{
+		"status":          AccessReviewCampaignSourceFetchStatusFetching,
+		"stale_threshold": staleThreshold,
+	})
 	if err != nil {
 		return 0, fmt.Errorf("cannot query stale fetch attempts: %w", err)
 	}
@@ -465,6 +479,7 @@ FOR UPDATE SKIP LOCKED
 
 		retry := &AccessReviewCampaignSourceFetchAttempt{
 			ID:                           gid.New(attempt.TenantID, AccessReviewCampaignSourceFetchAttemptEntityType),
+			OrganizationID:               attempt.OrganizationID,
 			AccessReviewCampaignSourceID: attempt.AccessReviewCampaignSourceID,
 			Status:                       AccessReviewCampaignSourceFetchStatusQueued,
 			CreatedAt:                    now,

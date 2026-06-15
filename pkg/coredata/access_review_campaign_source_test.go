@@ -80,12 +80,14 @@ func TestAccessReviewSourceDeletion_PreservesSnapshotAndEntries(t *testing.T) {
 	}))
 
 	loadedEntry := &coredata.AccessReviewEntry{}
+
 	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
 		return loadedEntry.LoadByID(ctx, conn, fx.scope, entryID)
 	}))
 	assert.Equal(t, "preserve-me@example.com", loadedEntry.Email, "entry must survive source deletion")
 
 	loadedSource := &coredata.AccessReviewCampaignSource{}
+
 	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
 		return loadedSource.LoadByID(ctx, conn, fx.scope, fx.campaignSourceID)
 	}))
@@ -109,6 +111,7 @@ func TestSourceFetchAttempts_AppendOnly(t *testing.T) {
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		first := &coredata.AccessReviewCampaignSourceFetchAttempt{
 			ID:                           gid.New(tenantID, coredata.AccessReviewCampaignSourceFetchAttemptEntityType),
+			OrganizationID:               fx.organizationID,
 			AccessReviewCampaignSourceID: fx.campaignSourceID,
 			Status:                       coredata.AccessReviewCampaignSourceFetchStatusFailed,
 			Error:                        &failureMsg,
@@ -122,6 +125,7 @@ func TestSourceFetchAttempts_AppendOnly(t *testing.T) {
 
 		second := &coredata.AccessReviewCampaignSourceFetchAttempt{
 			ID:                           gid.New(tenantID, coredata.AccessReviewCampaignSourceFetchAttemptEntityType),
+			OrganizationID:               fx.organizationID,
 			AccessReviewCampaignSourceID: fx.campaignSourceID,
 			Status:                       coredata.AccessReviewCampaignSourceFetchStatusSuccess,
 			FetchedAccountsCount:         7,
@@ -137,6 +141,7 @@ func TestSourceFetchAttempts_AppendOnly(t *testing.T) {
 	}))
 
 	var history coredata.AccessReviewCampaignSourceFetchAttempts
+
 	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
 		return history.LoadAllByCampaignSourceID(ctx, conn, fx.scope, fx.campaignSourceID)
 	}))
@@ -147,6 +152,7 @@ func TestSourceFetchAttempts_AppendOnly(t *testing.T) {
 	assert.Equal(t, failureMsg, *history[1].Error, "the failed attempt's error is retained")
 
 	var latest coredata.AccessReviewCampaignSourceFetchAttempts
+
 	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
 		return latest.LoadLatestByCampaignID(ctx, conn, fx.scope, fx.campaignID)
 	}))
