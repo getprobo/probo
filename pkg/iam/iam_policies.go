@@ -228,6 +228,11 @@ var IAMOwnerPolicy = policy.NewPolicy(
 	).
 		WithSID("audit-log-entry-access").
 		When(policy.Equals("principal.organization_id", "resource.organization_id")),
+
+	// Can view connector metadata (scoped to own organization)
+	policy.Allow(ActionConnectorGet).
+		WithSID("connector-owner-access").
+		When(policy.Equals("principal.organization_id", "resource.organization_id")),
 ).
 	WithDescription("Full IAM access for organization owners")
 
@@ -340,6 +345,11 @@ var IAMAdminPolicy = policy.NewPolicy(
 		When(
 			policy.Equals("principal.organization_id", "resource.organization_id"),
 		),
+
+	// Can view connector metadata (scoped to own organization)
+	policy.Allow(ActionConnectorGet).
+		WithSID("connector-admin-access").
+		When(policy.Equals("principal.organization_id", "resource.organization_id")),
 ).
 	WithDescription("IAM admin access - can manage members but cannot delete organization or manage SAML/SCIM")
 
@@ -384,5 +394,10 @@ var IAMViewerPolicy = policy.NewPolicy(
 		When(
 			policy.Equals("principal.organization_id", "resource.organization_id"),
 		),
+
+	// Can view connector metadata (scoped to own organization)
+	policy.Allow(ActionConnectorGet).
+		WithSID("connector-viewer-access").
+		When(policy.Equals("principal.organization_id", "resource.organization_id")),
 ).
 	WithDescription("Read-only IAM access for organization viewers")

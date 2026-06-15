@@ -14,6 +14,8 @@
 
 package iam
 
+//go:generate go run go.probo.inc/probo/internal/cmd/genactions iam iam_actions.go declared_actions_gen.go
+
 type Action = string
 
 const (

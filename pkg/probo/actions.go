@@ -16,6 +16,8 @@ package probo
 
 // Probo Service Actions
 // Format: core:<entity>:<action>
+//
+//go:generate go run go.probo.inc/probo/internal/cmd/genactions probo actions.go declared_actions_gen.go
 const (
 	// Organization actions
 	ActionOrganizationGet                  = "core:organization:get"

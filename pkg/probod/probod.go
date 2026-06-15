@@ -25,6 +25,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -595,6 +596,13 @@ func (impl *Implm) Run(
 	agentRunService := agentrun.NewService(pgClient)
 
 	iamService.Authorizer.RegisterPolicySet(agentrun.PolicySet())
+	iamService.Authorizer.MustCoverDeclaredActions(
+		slices.Concat(
+			probo.DeclaredActions(),
+			iam.DeclaredActions(),
+			agentrun.DeclaredActions(),
+		),
+	)
 
 	thirdPartyService := thirdparty.NewService(pgClient, fileManagerService, thirdPartyVetter)
 	riskManagementService := riskmanagement.NewService(pgClient)

@@ -305,6 +305,18 @@ log line through the authorizer logger with opaque IDs only:
 Audit log entries remain **allow-only**. Denials are visible in application logs,
 not the product audit trail.
 
+## Startup action coverage
+
+After all policy sets are registered, `probod` calls
+`Authorizer.MustCoverDeclaredActions` with every action constant from
+`pkg/probo/actions.go`, `pkg/iam/iam_actions.go`, and `pkg/agentrun/actions.go`.
+Any declared action not matched by a registered policy pattern causes startup to
+panic. Regenerate `declared_actions_gen.go` after adding action constants:
+
+```bash
+go generate ./pkg/probo/... ./pkg/iam/... ./pkg/agentrun/...
+```
+
 ## Key patterns
 
 - **Always use `organization_id` condition** — most policies scope access to the principal's organization
