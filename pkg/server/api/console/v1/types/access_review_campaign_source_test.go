@@ -16,7 +16,6 @@ package types
 
 import (
 	"testing"
-	"time"
 
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
@@ -29,28 +28,23 @@ func newTestCampaignSource(tenantID gid.TenantID, sourceID *gid.GID, name string
 		AccessReviewCampaignID: gid.New(tenantID, coredata.AccessReviewCampaignEntityType),
 		AccessReviewSourceID:   sourceID,
 		Name:                   name,
-		Category:               coredata.AccessReviewSourceCategorySaaS,
 	}
 }
 
-func TestNewAccessReviewCampaignSource_DefaultFetchState(t *testing.T) {
+func TestNewAccessReviewCampaignSource(t *testing.T) {
 	t.Parallel()
 
 	tenantID := gid.NewTenantID()
 	sourceID := gid.New(tenantID, coredata.AccessReviewSourceEntityType)
 	campaignSource := newTestCampaignSource(tenantID, &sourceID, "Google Workspace")
 
-	got := NewAccessReviewCampaignSource(campaignSource, nil)
-	if got.FetchStatus != coredata.AccessReviewCampaignSourceFetchStatusQueued {
-		t.Fatalf("fetch status = %q, want QUEUED", got.FetchStatus)
+	got := NewAccessReviewCampaignSource(campaignSource)
+	if got.ID != campaignSource.ID {
+		t.Fatalf("id = %v, want %v", got.ID, campaignSource.ID)
 	}
 
-	if got.FetchedAccountsCount != 0 {
-		t.Fatalf("fetched accounts count = %d, want 0", got.FetchedAccountsCount)
-	}
-
-	if got.AttemptCount != 0 {
-		t.Fatalf("attempt count = %d, want 0", got.AttemptCount)
+	if got.Campaign == nil || got.Campaign.ID != campaignSource.AccessReviewCampaignID {
+		t.Fatalf("campaign id = %v, want %v", got.Campaign, campaignSource.AccessReviewCampaignID)
 	}
 
 	if got.SourceID == nil || *got.SourceID != sourceID {
@@ -59,41 +53,6 @@ func TestNewAccessReviewCampaignSource_DefaultFetchState(t *testing.T) {
 
 	if got.Name != "Google Workspace" {
 		t.Fatalf("name = %q, want snapshot name", got.Name)
-	}
-}
-
-func TestNewAccessReviewCampaignSource_UsesLatestAttempt(t *testing.T) {
-	t.Parallel()
-
-	now := time.Now()
-	errMsg := "We couldn't fetch accounts from this source."
-	tenantID := gid.NewTenantID()
-	sourceID := gid.New(tenantID, coredata.AccessReviewSourceEntityType)
-	campaignSource := newTestCampaignSource(tenantID, &sourceID, "Linear")
-	attempt := &coredata.AccessReviewCampaignSourceFetchAttempt{
-		Status:               coredata.AccessReviewCampaignSourceFetchStatusFailed,
-		FetchedAccountsCount: 42,
-		AttemptNumber:        3,
-		Error:                &errMsg,
-		StartedAt:            &now,
-		CompletedAt:          &now,
-	}
-
-	got := NewAccessReviewCampaignSource(campaignSource, attempt)
-	if got.FetchStatus != coredata.AccessReviewCampaignSourceFetchStatusFailed {
-		t.Fatalf("fetch status = %q, want FAILED", got.FetchStatus)
-	}
-
-	if got.FetchedAccountsCount != 42 {
-		t.Fatalf("fetched accounts count = %d, want 42", got.FetchedAccountsCount)
-	}
-
-	if got.AttemptCount != 3 {
-		t.Fatalf("attempt count = %d, want 3", got.AttemptCount)
-	}
-
-	if got.LastError == nil || *got.LastError != errMsg {
-		t.Fatalf("last error = %v, want %q", got.LastError, errMsg)
 	}
 }
 
@@ -106,7 +65,7 @@ func TestNewAccessReviewCampaignSource_DeletedSource(t *testing.T) {
 	tenantID := gid.NewTenantID()
 	campaignSource := newTestCampaignSource(tenantID, nil, "Deleted Source")
 
-	got := NewAccessReviewCampaignSource(campaignSource, nil)
+	got := NewAccessReviewCampaignSource(campaignSource)
 	if got.SourceID != nil {
 		t.Fatalf("source id = %v, want nil for deleted source", got.SourceID)
 	}

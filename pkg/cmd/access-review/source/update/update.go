@@ -27,7 +27,7 @@ import (
 const updateMutation = `
 mutation($input: UpdateAccessReviewSourceInput!) {
   updateAccessReviewSource(input: $input) {
-    accessSource {
+    accessReviewSource {
       id
       name
     }
@@ -40,7 +40,7 @@ type updateResponse struct {
 		AccessReviewSource struct {
 			ID   string `json:"id"`
 			Name string `json:"name"`
-		} `json:"accessSource"`
+		} `json:"accessReviewSource"`
 	} `json:"updateAccessReviewSource"`
 }
 

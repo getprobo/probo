@@ -27,7 +27,7 @@ import (
 const createMutation = `
 mutation($input: CreateAccessReviewSourceInput!) {
   createAccessReviewSource(input: $input) {
-    accessSourceEdge {
+    accessReviewSourceEdge {
       node {
         id
         name
@@ -44,7 +44,7 @@ type createResponse struct {
 				ID   string `json:"id"`
 				Name string `json:"name"`
 			} `json:"node"`
-		} `json:"accessSourceEdge"`
+		} `json:"accessReviewSourceEdge"`
 	} `json:"createAccessReviewSource"`
 }
 

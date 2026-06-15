@@ -15,17 +15,16 @@
 package types
 
 import (
-	"time"
-
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
 )
 
 type (
-	AccessReviewSourceOrderBy   OrderBy[coredata.AccessReviewSourceOrderField]
-	AccessReviewCampaignOrderBy OrderBy[coredata.AccessReviewCampaignOrderField]
-	AccessReviewEntryOrderBy    OrderBy[coredata.AccessReviewEntryOrderField]
+	AccessReviewSourceOrderBy                     OrderBy[coredata.AccessReviewSourceOrderField]
+	AccessReviewCampaignOrderBy                   OrderBy[coredata.AccessReviewCampaignOrderField]
+	AccessReviewEntryOrderBy                      OrderBy[coredata.AccessReviewEntryOrderField]
+	AccessReviewCampaignSourceFetchAttemptOrderBy OrderBy[coredata.AccessReviewCampaignSourceFetchAttemptOrderField]
 
 	AccessReviewSourceConnection struct {
 		TotalCount int
@@ -54,6 +53,15 @@ type (
 		ParentID gid.GID
 		SourceID *gid.GID
 		Filter   *coredata.AccessReviewEntryFilter
+	}
+
+	AccessReviewCampaignSourceFetchAttemptConnection struct {
+		TotalCount int
+		Edges      []*AccessReviewCampaignSourceFetchAttemptEdge
+		PageInfo   PageInfo
+
+		Resolver any
+		ParentID gid.GID
 	}
 )
 
@@ -100,53 +108,37 @@ func NewAccessReviewSource(s *coredata.AccessReviewSource) *AccessReviewSource {
 	}
 }
 
-// NewAccessReviewCampaignSource builds the GraphQL scope source from a
-// campaign source snapshot. The current fetch state is derived from the latest
-// fetch attempt (nil when the source has never been fetched). The live access
-// source is resolved lazily via the source field resolver from SourceID.
+// NewAccessReviewCampaignSource builds the GraphQL campaign source from a
+// snapshot row. Fetch state is resolved lazily via field resolvers on
+// AccessReviewCampaignSource. The live access source is resolved via the
+// source field resolver from SourceID.
 func NewAccessReviewCampaignSource(
 	campaignSource *coredata.AccessReviewCampaignSource,
-	latestAttempt *coredata.AccessReviewCampaignSourceFetchAttempt,
 ) *AccessReviewCampaignSource {
-	status := coredata.AccessReviewCampaignSourceFetchStatusQueued
-	fetchedAccountsCount := 0
-	attemptCount := 0
-
-	var (
-		lastError        *string
-		fetchStartedAt   *time.Time
-		fetchCompletedAt *time.Time
-	)
-
-	if latestAttempt != nil {
-		status = latestAttempt.Status
-		fetchedAccountsCount = latestAttempt.FetchedAccountsCount
-		attemptCount = latestAttempt.AttemptNumber
-		lastError = latestAttempt.Error
-		fetchStartedAt = latestAttempt.StartedAt
-		fetchCompletedAt = latestAttempt.CompletedAt
-	}
-
 	return &AccessReviewCampaignSource{
-		ID:                   campaignSource.ID,
-		CampaignID:           campaignSource.AccessReviewCampaignID,
-		SourceID:             campaignSource.AccessReviewSourceID,
-		Name:                 campaignSource.Name,
-		FetchStatus:          status,
-		FetchedAccountsCount: fetchedAccountsCount,
-		AttemptCount:         attemptCount,
-		LastError:            lastError,
-		FetchStartedAt:       fetchStartedAt,
-		FetchCompletedAt:     fetchCompletedAt,
+		ID: campaignSource.ID,
+		Campaign: &AccessReviewCampaign{
+			ID: campaignSource.AccessReviewCampaignID,
+		},
+		SourceID: campaignSource.AccessReviewSourceID,
+		Name:     campaignSource.Name,
 	}
 }
 
 // NewAccessReviewCampaignSourceFetchAttempt builds the GraphQL representation of a
-// single append-only fetch attempt.
-func NewAccessReviewCampaignSourceFetchAttempt(a *coredata.AccessReviewCampaignSourceFetchAttempt) *AccessReviewCampaignSourceFetchAttempt {
+// single append-only fetch attempt. attemptNumber is the 1-based position in the
+// snapshot's history, counting up from the oldest attempt.
+func NewAccessReviewCampaignSourceFetchAttempt(
+	a *coredata.AccessReviewCampaignSourceFetchAttempt,
+	attemptNumber int,
+) *AccessReviewCampaignSourceFetchAttempt {
+	if a.AttemptNumber > 0 {
+		attemptNumber = a.AttemptNumber
+	}
+
 	return &AccessReviewCampaignSourceFetchAttempt{
 		ID:                   a.ID,
-		AttemptNumber:        a.AttemptNumber,
+		AttemptNumber:        attemptNumber,
 		Status:               a.Status,
 		FetchedAccountsCount: a.FetchedAccountsCount,
 		Error:                a.Error,
@@ -154,6 +146,37 @@ func NewAccessReviewCampaignSourceFetchAttempt(a *coredata.AccessReviewCampaignS
 		CompletedAt:          a.CompletedAt,
 		CreatedAt:            a.CreatedAt,
 		UpdatedAt:            a.UpdatedAt,
+	}
+}
+
+func NewAccessReviewCampaignSourceFetchAttemptConnection(
+	p *page.Page[*coredata.AccessReviewCampaignSourceFetchAttempt, coredata.AccessReviewCampaignSourceFetchAttemptOrderField],
+	parentType any,
+	parentID gid.GID,
+) *AccessReviewCampaignSourceFetchAttemptConnection {
+	edges := make([]*AccessReviewCampaignSourceFetchAttemptEdge, len(p.Data))
+
+	for i := range edges {
+		edges[i] = NewAccessReviewCampaignSourceFetchAttemptEdge(p.Data[i], p.Cursor.OrderBy.Field, 0)
+	}
+
+	return &AccessReviewCampaignSourceFetchAttemptConnection{
+		Edges:    edges,
+		PageInfo: *NewPageInfo(p),
+
+		Resolver: parentType,
+		ParentID: parentID,
+	}
+}
+
+func NewAccessReviewCampaignSourceFetchAttemptEdge(
+	a *coredata.AccessReviewCampaignSourceFetchAttempt,
+	orderBy coredata.AccessReviewCampaignSourceFetchAttemptOrderField,
+	attemptNumber int,
+) *AccessReviewCampaignSourceFetchAttemptEdge {
+	return &AccessReviewCampaignSourceFetchAttemptEdge{
+		Cursor: a.CursorKey(orderBy),
+		Node:   NewAccessReviewCampaignSourceFetchAttempt(a, attemptNumber),
 	}
 }
 
@@ -259,6 +282,9 @@ func NewAccessReviewEntry(e *coredata.AccessReviewEntry) *AccessReviewEntry {
 		ID: e.ID,
 		Campaign: &AccessReviewCampaign{
 			ID: e.AccessReviewCampaignID,
+		},
+		CampaignSource: &AccessReviewCampaignSource{
+			ID: e.AccessReviewCampaignSourceID,
 		},
 		Email:            e.Email,
 		FullName:         e.FullName,

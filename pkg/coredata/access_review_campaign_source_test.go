@@ -119,7 +119,6 @@ func TestSourceFetchAttempts_AppendOnly(t *testing.T) {
 		if err := first.Insert(ctx, tx, fx.scope); err != nil {
 			return err
 		}
-		require.Equal(t, 1, first.AttemptNumber)
 
 		second := &coredata.AccessReviewCampaignSourceFetchAttempt{
 			ID:                           gid.New(tenantID, coredata.AccessReviewCampaignSourceFetchAttemptEntityType),
@@ -133,17 +132,16 @@ func TestSourceFetchAttempts_AppendOnly(t *testing.T) {
 		if err := second.Insert(ctx, tx, fx.scope); err != nil {
 			return err
 		}
-		require.Equal(t, 2, second.AttemptNumber)
 
 		return nil
 	}))
 
 	var history coredata.AccessReviewCampaignSourceFetchAttempts
 	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
-		return history.LoadByCampaignSourceID(ctx, conn, fx.scope, fx.campaignSourceID)
+		return history.LoadAllByCampaignSourceID(ctx, conn, fx.scope, fx.campaignSourceID)
 	}))
 	require.Len(t, history, 2, "both attempts must be retained")
-	assert.Equal(t, 2, history[0].AttemptNumber, "history is newest first")
+	assert.Equal(t, coredata.AccessReviewCampaignSourceFetchStatusSuccess, history[0].Status, "history is newest first")
 	assert.Equal(t, coredata.AccessReviewCampaignSourceFetchStatusFailed, history[1].Status)
 	require.NotNil(t, history[1].Error)
 	assert.Equal(t, failureMsg, *history[1].Error, "the failed attempt's error is retained")

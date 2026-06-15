@@ -26,7 +26,7 @@ import (
 const decideMutation = `
 mutation($input: RecordAccessReviewEntryDecisionInput!) {
   recordAccessReviewEntryDecision(input: $input) {
-    accessEntry {
+    accessReviewEntry {
       id
       email
       fullName
@@ -47,7 +47,7 @@ type decideResponse struct {
 			Decision     string  `json:"decision"`
 			DecisionNote *string `json:"decisionNote"`
 			DecidedAt    *string `json:"decidedAt"`
-		} `json:"accessEntry"`
+		} `json:"accessReviewEntry"`
 	} `json:"recordAccessReviewEntryDecision"`
 }
 

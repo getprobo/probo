@@ -33,8 +33,8 @@ type (
 
 	UpdateAccessReviewCampaignRequest struct {
 		CampaignID        gid.GID
-		Name              *string
-		Description       *string
+		Name              **string
+		Description       **string
 		FrameworkControls *[]string
 	}
 

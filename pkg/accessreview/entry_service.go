@@ -51,11 +51,15 @@ func (s *Service) GetEntry(
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			return entry.LoadByID(ctx, conn, scope, entryID)
+			if err := entry.LoadByID(ctx, conn, scope, entryID); err != nil {
+				return fmt.Errorf("cannot load access entry: %w", err)
+			}
+
+			return nil
 		},
 	)
 	if err != nil {
-		return nil, fmt.Errorf("cannot get access entry: %w", err)
+		return nil, err
 	}
 
 	return entry, nil
@@ -66,86 +70,12 @@ func (s *Service) RecordDecision(
 	scope coredata.Scoper,
 	req RecordAccessReviewEntryDecisionRequest,
 ) (*coredata.AccessReviewEntry, error) {
-	if req.Decision == coredata.AccessReviewEntryDecisionPending {
-		return nil, fmt.Errorf("cannot decide access entry: invalid decision %q", req.Decision)
-	}
-
-	if req.Decision != coredata.AccessReviewEntryDecisionApproved {
-		if req.DecisionNote == nil || strings.TrimSpace(*req.DecisionNote) == "" {
-			return nil, fmt.Errorf("cannot decide access entry: note is required for non-approved decisions")
-		}
-	}
-
-	entry := &coredata.AccessReviewEntry{}
-
-	err := s.pg.WithTx(
-		ctx,
-		func(ctx context.Context, conn pg.Tx) error {
-			if err := entry.LoadByID(ctx, conn, scope, req.EntryID); err != nil {
-				return fmt.Errorf("cannot load access entry: %w", err)
-			}
-
-			campaign := &coredata.AccessReviewCampaign{}
-			if err := campaign.LoadByID(ctx, conn, scope, entry.AccessReviewCampaignID); err != nil {
-				return fmt.Errorf("cannot load campaign: %w", err)
-			}
-
-			if campaign.Status != coredata.AccessReviewCampaignStatusPendingActions {
-				return fmt.Errorf("cannot decide access entry: campaign status is %s, expected PENDING_ACTIONS", campaign.Status)
-			}
-
-			now := time.Now()
-			entry.Decision = req.Decision
-			entry.DecisionNote = req.DecisionNote
-			entry.DecidedBy = req.DecidedByID
-			entry.DecidedAt = &now
-
-			entry.UpdatedAt = now
-			if entry.Flags == nil {
-				entry.Flags = []coredata.AccessReviewEntryFlag{}
-			}
-
-			if entry.FlagReasons == nil {
-				entry.FlagReasons = []string{}
-			}
-
-			if req.Decision == coredata.AccessReviewEntryDecisionRevoke || req.Decision == coredata.AccessReviewEntryDecisionEscalate {
-				if len(entry.Flags) == 0 {
-					entry.Flags = []coredata.AccessReviewEntryFlag{coredata.AccessReviewEntryFlagExcessive}
-				}
-			}
-
-			if err := entry.Update(ctx, conn, scope); err != nil {
-				return fmt.Errorf("cannot record access entry decision: %w", err)
-			}
-
-			history := &coredata.AccessReviewEntryDecisionHistory{
-				ID:                gid.New(scope.GetTenantID(), coredata.AccessReviewEntryDecisionHistoryEntityType),
-				OrganizationID:    entry.OrganizationID,
-				AccessReviewEntry: entry.ID,
-				Decision:          entry.Decision,
-				DecisionNote:      entry.DecisionNote,
-				DecidedBy:         entry.DecidedBy,
-				DecidedAt:         *entry.DecidedAt,
-				CreatedAt:         now,
-			}
-			if err := history.Insert(ctx, conn, scope); err != nil {
-				return fmt.Errorf("cannot insert decision history: %w", err)
-			}
-
-			return nil
-		},
-	)
+	entries, err := s.RecordDecisions(ctx, scope, []RecordAccessReviewEntryDecisionRequest{req})
 	if err != nil {
-		return nil, fmt.Errorf("cannot record access entry decision: %w", err)
+		return nil, err
 	}
 
-	updatedEntry, err := s.GetEntry(ctx, scope, req.EntryID)
-	if err != nil {
-		return nil, fmt.Errorf("cannot reload access entry after decision: %w", err)
-	}
-
-	return updatedEntry, nil
+	return entries[0], nil
 }
 
 func (s *Service) RecordDecisions(
@@ -179,6 +109,7 @@ func (s *Service) RecordDecisions(
 			// Track verified campaigns to avoid repeated loads within the
 			// same transaction.
 			verifiedCampaigns := make(map[gid.GID]bool)
+			decidedByCache := make(map[gid.GID]*gid.GID)
 
 			for _, d := range decisions {
 				entry := &coredata.AccessReviewEntry{}
@@ -199,10 +130,23 @@ func (s *Service) RecordDecisions(
 					verifiedCampaigns[entry.AccessReviewCampaignID] = true
 				}
 
+				decidedByID, ok := decidedByCache[entry.OrganizationID]
+				if !ok {
+					decidedByID = nil
+					if d.DecidedByID != nil {
+						profile := &coredata.MembershipProfile{}
+						if err := profile.LoadByIdentityIDAndOrganizationID(ctx, conn, scope, *d.DecidedByID, entry.OrganizationID); err == nil {
+							decidedByID = &profile.ID
+						}
+					}
+
+					decidedByCache[entry.OrganizationID] = decidedByID
+				}
+
 				now := time.Now()
 				entry.Decision = d.Decision
 				entry.DecisionNote = d.DecisionNote
-				entry.DecidedBy = d.DecidedByID
+				entry.DecidedBy = decidedByID
 				entry.DecidedAt = &now
 
 				entry.UpdatedAt = now
@@ -279,10 +223,8 @@ func (s *Service) FlagEntry(
 			}
 
 			if campaign.Status != coredata.AccessReviewCampaignStatusPendingActions {
-				return fmt.Errorf("cannot flag access entry: campaign status is %s, expected PENDING_ACTIONS", campaign.Status)
+				return fmt.Errorf("cannot flag access entry: campaign status is %q, expected PENDING_ACTIONS", campaign.Status)
 			}
-
-			now := time.Now()
 
 			entry.Flags = req.Flags
 			if entry.Flags == nil {
@@ -294,16 +236,20 @@ func (s *Service) FlagEntry(
 				entry.FlagReasons = []string{}
 			}
 
-			entry.UpdatedAt = now
+			entry.UpdatedAt = time.Now()
 
-			return entry.UpdateFlags(ctx, conn, scope)
+			if err := entry.UpdateFlags(ctx, conn, scope); err != nil {
+				return fmt.Errorf("cannot update access entry flags: %w", err)
+			}
+
+			return nil
 		},
 	)
 	if err != nil {
-		return nil, fmt.Errorf("cannot flag access entry: %w", err)
+		return nil, err
 	}
 
-	return s.GetEntry(ctx, scope, req.EntryID)
+	return entry, nil
 }
 
 func (s *Service) ListEntriesForCampaignID(
@@ -318,11 +264,22 @@ func (s *Service) ListEntriesForCampaignID(
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			return entries.LoadByCampaignID(ctx, conn, scope, campaignID, cursor, filter)
+			if err := entries.LoadByCampaignID(
+				ctx,
+				conn,
+				scope,
+				campaignID,
+				cursor,
+				filter,
+			); err != nil {
+				return fmt.Errorf("cannot load access entries: %w", err)
+			}
+
+			return nil
 		},
 	)
 	if err != nil {
-		return nil, fmt.Errorf("cannot list access entries: %w", err)
+		return nil, err
 	}
 
 	return page.NewPage(entries, cursor), nil
@@ -341,11 +298,23 @@ func (s *Service) ListEntriesForCampaignIDAndSourceID(
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			return entries.LoadByCampaignIDAndSourceID(ctx, conn, scope, campaignID, sourceID, cursor, filter)
+			if err := entries.LoadByCampaignIDAndSourceID(
+				ctx,
+				conn,
+				scope,
+				campaignID,
+				sourceID,
+				cursor,
+				filter,
+			); err != nil {
+				return fmt.Errorf("cannot load access entries: %w", err)
+			}
+
+			return nil
 		},
 	)
 	if err != nil {
-		return nil, fmt.Errorf("cannot list access entries: %w", err)
+		return nil, err
 	}
 
 	return page.NewPage(entries, cursor), nil
@@ -373,7 +342,7 @@ func (s *Service) CountEntriesForCampaignID(
 		},
 	)
 	if err != nil {
-		return 0, fmt.Errorf("cannot count access entries: %w", err)
+		return 0, err
 	}
 
 	return count, nil
@@ -402,7 +371,7 @@ func (s *Service) CountEntriesForCampaignIDAndSourceID(
 		},
 	)
 	if err != nil {
-		return 0, fmt.Errorf("cannot count access entries: %w", err)
+		return 0, err
 	}
 
 	return count, nil
@@ -429,7 +398,7 @@ func (s *Service) CountPendingEntriesForCampaignID(
 		},
 	)
 	if err != nil {
-		return 0, fmt.Errorf("cannot count pending access entries: %w", err)
+		return 0, err
 	}
 
 	return count, nil
@@ -465,7 +434,11 @@ func (s *Service) CampaignStatistics(
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			return stats.LoadByCampaignID(ctx, conn, scope, campaignID)
+			if err := stats.LoadByCampaignID(ctx, conn, scope, campaignID); err != nil {
+				return fmt.Errorf("cannot load campaign statistics: %w", err)
+			}
+
+			return nil
 		},
 	)
 	if err != nil {
@@ -486,11 +459,15 @@ func (s *Service) CampaignSourceStatistics(
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			return stats.LoadByCampaignIDAndSourceID(ctx, conn, scope, campaignID, sourceID)
+			if err := stats.LoadByCampaignIDAndSourceID(ctx, conn, scope, campaignID, sourceID); err != nil {
+				return fmt.Errorf("cannot load source statistics: %w", err)
+			}
+
+			return nil
 		},
 	)
 	if err != nil {
-		return nil, fmt.Errorf("cannot load source statistics: %w", err)
+		return nil, err
 	}
 
 	return stats, nil

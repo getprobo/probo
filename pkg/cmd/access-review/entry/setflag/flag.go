@@ -27,7 +27,7 @@ import (
 const flagMutation = `
 mutation($input: FlagAccessReviewEntryInput!) {
   flagAccessReviewEntry(input: $input) {
-    accessEntry {
+    accessReviewEntry {
       id
       email
       fullName
@@ -48,7 +48,7 @@ type flagResponse struct {
 			Flags       []string `json:"flags"`
 			FlagReasons []string `json:"flagReasons"`
 			Decision    string   `json:"decision"`
-		} `json:"accessEntry"`
+		} `json:"accessReviewEntry"`
 	} `json:"flagAccessReviewEntry"`
 }
 

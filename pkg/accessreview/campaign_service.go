@@ -152,12 +152,12 @@ func (s *Service) UpdateCampaign(
 				return fmt.Errorf("cannot update campaign: status is %s, expected DRAFT", campaign.Status)
 			}
 
-			if req.Name != nil {
-				campaign.Name = *req.Name
+			if req.Name != nil && *req.Name != nil {
+				campaign.Name = **req.Name
 			}
 
-			if req.Description != nil {
-				campaign.Description = *req.Description
+			if req.Description != nil && *req.Description != nil {
+				campaign.Description = **req.Description
 			}
 
 			if req.FrameworkControls != nil {
@@ -425,7 +425,6 @@ func (s *Service) upsertCampaignSource(
 		AccessReviewCampaignID: campaignID,
 		AccessReviewSourceID:   &sourceID,
 		Name:                   source.Name,
-		Category:               source.Category,
 		ConnectorID:            source.ConnectorID,
 		CreatedAt:              now,
 		UpdatedAt:              now,
@@ -553,41 +552,18 @@ func (s *Service) ListCampaignSources(
 	return sources, nil
 }
 
-func (s *Service) ListLatestFetchAttempts(
-	ctx context.Context,
-	scope coredata.Scoper,
-	campaignID gid.GID,
-) (coredata.AccessReviewCampaignSourceFetchAttempts, error) {
-	var attempts coredata.AccessReviewCampaignSourceFetchAttempts
-
-	err := s.pg.WithConn(
-		ctx,
-		func(ctx context.Context, conn pg.Querier) error {
-			if err := attempts.LoadLatestByCampaignID(ctx, conn, scope, campaignID); err != nil {
-				return fmt.Errorf("cannot load latest fetch attempts by campaign: %w", err)
-			}
-
-			return nil
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	return attempts, nil
-}
-
-func (s *Service) ListFetchAttempts(
+func (s *Service) ListFetchAttemptsForCampaignSourceID(
 	ctx context.Context,
 	scope coredata.Scoper,
 	campaignSourceID gid.GID,
-) (coredata.AccessReviewCampaignSourceFetchAttempts, error) {
+	cursor *page.Cursor[coredata.AccessReviewCampaignSourceFetchAttemptOrderField],
+) (*page.Page[*coredata.AccessReviewCampaignSourceFetchAttempt, coredata.AccessReviewCampaignSourceFetchAttemptOrderField], error) {
 	var attempts coredata.AccessReviewCampaignSourceFetchAttempts
 
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			if err := attempts.LoadByCampaignSourceID(ctx, conn, scope, campaignSourceID); err != nil {
+			if err := attempts.LoadByCampaignSourceID(ctx, conn, scope, campaignSourceID, cursor); err != nil {
 				return fmt.Errorf("cannot load fetch attempts: %w", err)
 			}
 
@@ -598,7 +574,35 @@ func (s *Service) ListFetchAttempts(
 		return nil, err
 	}
 
-	return attempts, nil
+	return page.NewPage(attempts, cursor), nil
+}
+
+func (s *Service) CountFetchAttemptsForCampaignSourceID(
+	ctx context.Context,
+	scope coredata.Scoper,
+	campaignSourceID gid.GID,
+) (int, error) {
+	var count int
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			var attempts coredata.AccessReviewCampaignSourceFetchAttempts
+
+			var err error
+			count, err = attempts.CountByCampaignSourceID(ctx, conn, scope, campaignSourceID)
+			if err != nil {
+				return fmt.Errorf("cannot count fetch attempts: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
 }
 
 func (s *Service) CountCampaignsForOrganizationID(

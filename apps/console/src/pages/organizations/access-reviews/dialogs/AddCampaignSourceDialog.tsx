@@ -41,8 +41,15 @@ const addScopeMutation = graphql`
         sources {
           id
           name
-          fetchStatus
-          fetchedAccountsCount
+          fetchAttempts(first: 1) {
+            edges {
+              node {
+                status
+                fetchedAccountsCount
+                error
+              }
+            }
+          }
           entries(first: 50) {
             edges {
               node {
