@@ -15,6 +15,8 @@
 package provider
 
 import (
+	"context"
+	"net/http"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -22,6 +24,12 @@ import (
 
 	"go.probo.inc/probo/pkg/coredata"
 )
+
+// probeRoundTripFunc lets a test capture the probe request and return a
+// canned response without touching the network.
+type probeRoundTripFunc func(*http.Request) (*http.Response, error)
+
+func (f probeRoundTripFunc) RoundTrip(r *http.Request) (*http.Response, error) { return f(r) }
 
 func TestBuiltinRegistry_ProbeCoverage(t *testing.T) {
 	t.Parallel()
@@ -102,4 +110,48 @@ func TestBuildPostHogProbeURL(t *testing.T) {
 	probeURL, err := buildPostHogProbeURL(conn)
 	require.NoError(t, err)
 	assert.Equal(t, "https://us.posthog.com/api/organizations/@current/", probeURL)
+}
+
+func TestProbeHeroku(t *testing.T) {
+	t.Parallel()
+
+	// The fix's contract: probeHeroku must send Heroku's versioned Accept
+	// header — a plain "application/json" returns 400, which doProbeRequest
+	// reads as connected and masks a dead token — and it must map 401/403 to
+	// a rejection while letting 2xx pass.
+	cases := []struct {
+		name       string
+		status     int
+		wantReject bool
+	}{
+		{"valid credential", http.StatusOK, false},
+		{"revoked credential", http.StatusUnauthorized, true},
+		{"forbidden credential", http.StatusForbidden, true},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			var gotAccept, gotURL string
+
+			client := &http.Client{Transport: probeRoundTripFunc(func(r *http.Request) (*http.Response, error) {
+				gotAccept = r.Header.Get("Accept")
+				gotURL = r.URL.String()
+
+				return &http.Response{StatusCode: tc.status, Body: http.NoBody, Header: make(http.Header)}, nil
+			})}
+
+			err := probeHeroku(context.Background(), client, &coredata.Connector{Provider: coredata.ConnectorProviderHeroku})
+
+			assert.Equal(t, "application/vnd.heroku+json; version=3", gotAccept)
+			assert.Equal(t, "https://api.heroku.com/account", gotURL)
+
+			if tc.wantReject {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
 }

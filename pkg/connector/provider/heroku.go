@@ -26,11 +26,14 @@ import (
 
 func herokuRegistration() *Registration {
 	return &Registration{
-		Provider:     coredata.ConnectorProviderHeroku,
-		DisplayName:  "Heroku",
-		AuthURL:      "https://id.heroku.com/oauth/authorize",
-		TokenURL:     "https://id.heroku.com/oauth/token",
-		ProbeURL:     "https://api.heroku.com/account",
+		Provider:    coredata.ConnectorProviderHeroku,
+		DisplayName: "Heroku",
+		AuthURL:     "https://id.heroku.com/oauth/authorize",
+		TokenURL:    "https://id.heroku.com/oauth/token",
+		// Heroku requires the versioned Accept header; a plain ProbeURL GET
+		// (Accept: application/json) returns 400 and would read as connected,
+		// so probe via a closure that sends application/vnd.heroku+json.
+		Probe:        probeHeroku,
 		OAuth2Scopes: []string{"read"},
 		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger) (drivers.Driver, error) {
 			s, err := coredata.ConnectorSettings[coredata.HerokuConnectorSettings](conn)

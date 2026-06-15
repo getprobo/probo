@@ -31,6 +31,7 @@ import (
 const (
 	anthropicAPIVersion     = "2023-06-01"
 	anthropicUsersProbeURL  = "https://api.anthropic.com/v1/organizations/users?limit=1"
+	herokuAccountProbeURL   = "https://api.heroku.com/account"
 	linearGraphQLEndpoint   = "https://api.linear.app/graphql"
 	mondayGraphQLEndpoint   = "https://api.monday.com/v2"
 	posthogOrganizationPath = "/api/organizations/@current/"
@@ -406,6 +407,26 @@ func probeAnthropic(
 
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("anthropic-version", anthropicAPIVersion)
+
+	return doProbeRequest(httpClient, req)
+}
+
+func probeHeroku(
+	ctx context.Context,
+	httpClient *http.Client,
+	_ *coredata.Connector,
+) error {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, herokuAccountProbeURL, nil)
+	if err != nil {
+		return fmt.Errorf("cannot create probe request: %w", err)
+	}
+
+	// Heroku negotiates the API version through the Accept media type; the
+	// generic "application/json" the default probe sends yields 400 (not
+	// 401/403), which doProbeRequest would read as "connected" and mask a
+	// dead token. Send the versioned Accept so a revoked token surfaces as
+	// 401 (verified live: 400 with application/json, 401 with this header).
+	req.Header.Set("Accept", "application/vnd.heroku+json; version=3")
 
 	return doProbeRequest(httpClient, req)
 }
