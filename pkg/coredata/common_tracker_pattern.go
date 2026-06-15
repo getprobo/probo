@@ -16,6 +16,7 @@ package coredata
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"maps"
@@ -29,18 +30,20 @@ import (
 
 type (
 	CommonTrackerPattern struct {
-		ID                    gid.GID                 `db:"id"`
-		CommonThirdPartyID    *gid.GID                `db:"common_third_party_id"`
-		TrackerType           TrackerType             `db:"tracker_type"`
-		Pattern               string                  `db:"pattern"`
-		MatchType             TrackerPatternMatchType `db:"match_type"`
-		Description           string                  `db:"description"`
-		MaxAgeSeconds         *int                    `db:"max_age_seconds"`
-		Confidence            float32                 `db:"confidence"`
-		EnrichmentRequestedAt *time.Time              `db:"enrichment_requested_at"`
-		EnrichedAt            *time.Time              `db:"enriched_at"`
-		CreatedAt             time.Time               `db:"created_at"`
-		UpdatedAt             time.Time               `db:"updated_at"`
+		ID                      gid.GID                 `db:"id"`
+		CommonThirdPartyID      *gid.GID                `db:"common_third_party_id"`
+		TrackerType             TrackerType             `db:"tracker_type"`
+		Pattern                 string                  `db:"pattern"`
+		MatchType               TrackerPatternMatchType `db:"match_type"`
+		Description             string                  `db:"description"`
+		MaxAgeSeconds           *int                    `db:"max_age_seconds"`
+		Confidence              float32                 `db:"confidence"`
+		EnrichmentRequestedAt   *time.Time              `db:"enrichment_requested_at"`
+		Enrichment              json.RawMessage         `db:"enrichment"`
+		EnrichmentAttempts      int                     `db:"enrichment_attempts"`
+		LastEnrichmentAttemptAt *time.Time              `db:"last_enrichment_attempt_at"`
+		CreatedAt               time.Time               `db:"created_at"`
+		UpdatedAt               time.Time               `db:"updated_at"`
 	}
 
 	CommonTrackerPatterns []*CommonTrackerPattern
@@ -62,7 +65,9 @@ SELECT
     max_age_seconds,
     confidence,
     enrichment_requested_at,
-    enriched_at,
+    enrichment,
+    enrichment_attempts,
+    last_enrichment_attempt_at,
     created_at,
     updated_at
 FROM
@@ -111,7 +116,9 @@ SELECT
     max_age_seconds,
     confidence,
     enrichment_requested_at,
-    enriched_at,
+    enrichment,
+    enrichment_attempts,
+    last_enrichment_attempt_at,
     created_at,
     updated_at
 FROM
@@ -163,7 +170,9 @@ INSERT INTO common_tracker_patterns (
     max_age_seconds,
     confidence,
     enrichment_requested_at,
-    enriched_at,
+    enrichment,
+    enrichment_attempts,
+    last_enrichment_attempt_at,
     created_at,
     updated_at
 ) VALUES (
@@ -176,25 +185,29 @@ INSERT INTO common_tracker_patterns (
     @max_age_seconds,
     @confidence,
     @enrichment_requested_at,
-    @enriched_at,
+    @enrichment,
+    @enrichment_attempts,
+    @last_enrichment_attempt_at,
     @created_at,
     @updated_at
 )
 `
 
 	args := pgx.StrictNamedArgs{
-		"id":                      p.ID,
-		"common_third_party_id":   p.CommonThirdPartyID,
-		"tracker_type":            p.TrackerType,
-		"pattern":                 p.Pattern,
-		"match_type":              p.MatchType,
-		"description":             p.Description,
-		"max_age_seconds":         p.MaxAgeSeconds,
-		"confidence":              p.Confidence,
-		"enrichment_requested_at": p.EnrichmentRequestedAt,
-		"enriched_at":             p.EnrichedAt,
-		"created_at":              p.CreatedAt,
-		"updated_at":              p.UpdatedAt,
+		"id":                         p.ID,
+		"common_third_party_id":      p.CommonThirdPartyID,
+		"tracker_type":               p.TrackerType,
+		"pattern":                    p.Pattern,
+		"match_type":                 p.MatchType,
+		"description":                p.Description,
+		"max_age_seconds":            p.MaxAgeSeconds,
+		"confidence":                 p.Confidence,
+		"enrichment_requested_at":    p.EnrichmentRequestedAt,
+		"enrichment":                 p.Enrichment,
+		"enrichment_attempts":        p.EnrichmentAttempts,
+		"last_enrichment_attempt_at": p.LastEnrichmentAttemptAt,
+		"created_at":                 p.CreatedAt,
+		"updated_at":                 p.UpdatedAt,
 	}
 
 	_, err := conn.Exec(ctx, q, args)
@@ -226,7 +239,9 @@ INSERT INTO common_tracker_patterns (
     max_age_seconds,
     confidence,
     enrichment_requested_at,
-    enriched_at,
+    enrichment,
+    enrichment_attempts,
+    last_enrichment_attempt_at,
     created_at,
     updated_at
 ) VALUES (
@@ -239,6 +254,8 @@ INSERT INTO common_tracker_patterns (
     @max_age_seconds,
     @confidence,
     CASE WHEN @description = '' THEN NOW() ELSE NULL END,
+    NULL,
+    0,
     NULL,
     @created_at,
     @updated_at
@@ -255,8 +272,8 @@ SET
     -- A blank, unlinked catalog row that now gains a third party is
     -- re-queued for enrichment: the enrichment agent leaves descriptions
     -- blank when it cannot substantiate a purpose, and knowing the vendor
-    -- gives it a second, better-informed attempt. enriched_at is cleared
-    -- so the row is no longer terminal.
+    -- gives it a second, better-informed attempt. The attempt counter is
+    -- reset so the re-armed row gets a fresh retry budget.
     enrichment_requested_at = CASE
         WHEN common_tracker_patterns.description = ''
          AND common_tracker_patterns.common_third_party_id IS NULL
@@ -264,12 +281,12 @@ SET
         THEN NOW()
         ELSE common_tracker_patterns.enrichment_requested_at
     END,
-    enriched_at           = CASE
+    enrichment_attempts   = CASE
         WHEN common_tracker_patterns.description = ''
          AND common_tracker_patterns.common_third_party_id IS NULL
          AND EXCLUDED.common_third_party_id IS NOT NULL
-        THEN NULL
-        ELSE common_tracker_patterns.enriched_at
+        THEN 0
+        ELSE common_tracker_patterns.enrichment_attempts
     END,
     updated_at            = EXCLUDED.updated_at
 RETURNING
@@ -282,7 +299,9 @@ RETURNING
     max_age_seconds,
     confidence,
     enrichment_requested_at,
-    enriched_at,
+    enrichment,
+    enrichment_attempts,
+    last_enrichment_attempt_at,
     created_at,
     updated_at
 `
@@ -352,7 +371,9 @@ SELECT
     max_age_seconds,
     confidence,
     enrichment_requested_at,
-    enriched_at,
+    enrichment,
+    enrichment_attempts,
+    last_enrichment_attempt_at,
     created_at,
     updated_at
 FROM
@@ -469,7 +490,9 @@ SELECT
     max_age_seconds,
     confidence,
     enrichment_requested_at,
-    enriched_at,
+    enrichment,
+    enrichment_attempts,
+    last_enrichment_attempt_at,
     created_at,
     updated_at
 FROM
@@ -516,7 +539,9 @@ SELECT
     max_age_seconds,
     confidence,
     enrichment_requested_at,
-    enriched_at,
+    enrichment,
+    enrichment_attempts,
+    last_enrichment_attempt_at,
     created_at,
     updated_at
 FROM
@@ -548,8 +573,11 @@ LIMIT 1;
 	return nil
 }
 
-// ClearEnrichmentRequestedAt removes the row from the enrichment queue. It
-// bumps updated_at so the stale-recovery clock starts at claim time.
+// ClearEnrichmentRequestedAt removes the row from the enrichment queue and
+// records the attempt: it bumps the attempt counter and stamps
+// last_enrichment_attempt_at, which is the stale-recovery clock. The
+// attempt counter is incremented up front so a crash between claim and
+// persist still counts against the retry budget. It bumps updated_at too.
 func (p *CommonTrackerPattern) ClearEnrichmentRequestedAt(
 	ctx context.Context,
 	tx pg.Tx,
@@ -558,42 +586,57 @@ func (p *CommonTrackerPattern) ClearEnrichmentRequestedAt(
 UPDATE common_tracker_patterns
 SET
     enrichment_requested_at = NULL,
+    enrichment_attempts = enrichment_attempts + 1,
+    last_enrichment_attempt_at = NOW(),
     updated_at = NOW()
 WHERE id = @id
+RETURNING enrichment_attempts, last_enrichment_attempt_at
 `
 
 	args := pgx.StrictNamedArgs{"id": p.ID}
 
-	_, err := tx.Exec(ctx, q, args)
+	var (
+		attempts    int
+		lastAttempt *time.Time
+	)
+
+	err := tx.QueryRow(ctx, q, args).Scan(&attempts, &lastAttempt)
 	if err != nil {
 		return fmt.Errorf("cannot clear enrichment requested at: %w", err)
 	}
 
 	p.EnrichmentRequestedAt = nil
+	p.EnrichmentAttempts = attempts
+	p.LastEnrichmentAttemptAt = lastAttempt
 
 	return nil
 }
 
-// SetEnriched records the researched description and marks the row
-// enriched so the stale-recovery loop never re-queues it. An empty
-// description is allowed: the enrichment agent leaves it blank when it
-// cannot substantiate a purpose, and a later third-party link re-arms
-// enrichment for a second attempt. When thirdPartyID is non-nil it links
-// the row to that third party, but only when none is set yet
-// (COALESCE) — the enrichment worker links, it never overrides an
-// attribution the mapping pipeline already resolved.
-func (p *CommonTrackerPattern) SetEnriched(
+// UpdateEnrichment records the researched description and the per-run
+// enrichment provenance payload (named to mirror
+// CommonThirdParty.UpdateEnrichment, the sibling persist step). The
+// payload presence is what marks a row as having been through the
+// workflow, so the stale-recovery loop never re-queues it
+// (last_enrichment_attempt_at, the attempt clock, is stamped separately at
+// claim time). An empty description is allowed: the enrichment agent
+// leaves it blank when it cannot substantiate a purpose, and a later
+// third-party link re-arms enrichment for a second attempt. When
+// thirdPartyID is non-nil it links the row to that third party, but only
+// when none is set yet (COALESCE) — the enrichment worker links, it never
+// overrides an attribution the mapping pipeline already resolved.
+func (p *CommonTrackerPattern) UpdateEnrichment(
 	ctx context.Context,
 	tx pg.Tx,
 	description string,
 	thirdPartyID *gid.GID,
+	enrichment json.RawMessage,
 ) error {
 	q := `
 UPDATE common_tracker_patterns
 SET
     description = @description,
     common_third_party_id = COALESCE(common_third_party_id, @third_party_id),
-    enriched_at = NOW(),
+    enrichment = @enrichment,
     enrichment_requested_at = NULL,
     updated_at = NOW()
 WHERE id = @id
@@ -603,6 +646,7 @@ WHERE id = @id
 		"id":             p.ID,
 		"description":    description,
 		"third_party_id": thirdPartyID,
+		"enrichment":     enrichment,
 	}
 
 	result, err := tx.Exec(ctx, q, args)
@@ -615,6 +659,8 @@ WHERE id = @id
 	}
 
 	p.Description = description
+	p.Enrichment = enrichment
+	p.EnrichmentRequestedAt = nil
 
 	if p.CommonThirdPartyID == nil {
 		p.CommonThirdPartyID = thirdPartyID
@@ -624,13 +670,21 @@ WHERE id = @id
 }
 
 // ResetStaleEnrichments re-queues rows whose enrichment was claimed but
-// never completed (no enriched_at, still description-less) and have been
-// idle longer than staleAfter, so a crashed or timed-out enrichment is
-// retried.
+// never completed and have been idle longer than staleAfter, so a crashed
+// or timed-out enrichment is retried.
+//
+// A claimed row has enrichment_attempts > 0 (the claim increments it) and
+// a completed row carries a non-null enrichment payload (UpdateEnrichment
+// always writes it, even on a blank-description run), so the sweep targets
+// rows that were claimed but carry no payload yet. Curated rows that were
+// never enqueued keep enrichment_attempts = 0 and are left untouched. The
+// max-attempts ceiling stops permanently failing rows from looping
+// forever. last_enrichment_attempt_at, stamped at claim, is the idle clock.
 func ResetStaleEnrichments(
 	ctx context.Context,
 	conn pg.Querier,
 	staleAfter time.Duration,
+	maxAttempts int,
 ) error {
 	q := `
 UPDATE common_tracker_patterns
@@ -639,12 +693,16 @@ SET
     updated_at = NOW()
 WHERE
     enrichment_requested_at IS NULL
-    AND enriched_at IS NULL
-    AND description = ''
-    AND updated_at < @stale_before
+    AND enrichment IS NULL
+    AND enrichment_attempts > 0
+    AND enrichment_attempts < @max_attempts
+    AND last_enrichment_attempt_at < @stale_before
 `
 
-	args := pgx.StrictNamedArgs{"stale_before": time.Now().Add(-staleAfter)}
+	args := pgx.StrictNamedArgs{
+		"max_attempts": maxAttempts,
+		"stale_before": time.Now().Add(-staleAfter),
+	}
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
@@ -670,7 +728,9 @@ SELECT
     max_age_seconds,
     confidence,
     enrichment_requested_at,
-    enriched_at,
+    enrichment,
+    enrichment_attempts,
+    last_enrichment_attempt_at,
     created_at,
     updated_at
 FROM
@@ -706,12 +766,12 @@ func (p *CommonTrackerPattern) CursorKey(field CommonTrackerPatternOrderField) p
 		return page.NewCursorKey(p.ID, p.CreatedAt)
 	case CommonTrackerPatternOrderFieldUpdatedAt:
 		return page.NewCursorKey(p.ID, p.UpdatedAt)
-	case CommonTrackerPatternOrderFieldEnrichedAt:
-		if p.EnrichedAt == nil {
+	case CommonTrackerPatternOrderFieldLastEnrichmentAttemptAt:
+		if p.LastEnrichmentAttemptAt == nil {
 			return page.NewCursorKey(p.ID, time.Time{})
 		}
 
-		return page.NewCursorKey(p.ID, *p.EnrichedAt)
+		return page.NewCursorKey(p.ID, *p.LastEnrichmentAttemptAt)
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", field))
@@ -737,7 +797,9 @@ SELECT
     max_age_seconds,
     confidence,
     enrichment_requested_at,
-    enriched_at,
+    enrichment,
+    enrichment_attempts,
+    last_enrichment_attempt_at,
     created_at,
     updated_at
 FROM
@@ -874,10 +936,14 @@ WHERE
 
 // RequestEnrichmentByIDs arms enrichment on the given common tracker
 // patterns by stamping enrichment_requested_at, which is the only column
-// the enrichment worker claims on. Already-enriched rows are re-processed
-// too: the worker overwrites enriched_at and the description when it runs.
-// Returns the number of rows re-queued. This is the async fallback path;
-// the synchronous enricher service is preferred.
+// the enrichment worker claims on. It resets enrichment_attempts to 0 so
+// the re-queued rows get a fresh retry budget: the claim path bumps the
+// counter on every run, and without a reset a row near the max-attempts
+// ceiling would not be re-armed by stale recovery if a re-run crashed.
+// Already-enriched rows are re-processed too: the worker overwrites the
+// description and enrichment payload when it runs. Returns the number of
+// rows re-queued. This is the async fallback path; the synchronous
+// enricher service is preferred.
 func (ps *CommonTrackerPatterns) RequestEnrichmentByIDs(
 	ctx context.Context,
 	tx pg.Tx,
@@ -887,6 +953,7 @@ func (ps *CommonTrackerPatterns) RequestEnrichmentByIDs(
 UPDATE common_tracker_patterns
 SET
     enrichment_requested_at = NOW(),
+    enrichment_attempts = 0,
     updated_at = NOW()
 WHERE
     id = ANY(@ids)

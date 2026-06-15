@@ -16,8 +16,10 @@ package commontrackerpattern
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/spf13/cobra"
 	"go.gearno.de/kit/pg"
@@ -25,6 +27,41 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/proboctl/cmdutil"
 )
+
+// manualEnrichmentPayload builds the enrichment provenance written when an
+// operator sets a description by hand. It records only the description
+// outcome (resolved), so the row reads "enriched" and the enrichment
+// worker leaves it alone, while marking the source as manual for audit.
+func manualEnrichmentPayload() json.RawMessage {
+	now := time.Now()
+
+	payload := struct {
+		Status      string    `json:"status"`
+		Source      string    `json:"source"`
+		AttemptedAt time.Time `json:"attempted_at"`
+		Fields      map[string]struct {
+			Status    string    `json:"status"`
+			UpdatedAt time.Time `json:"updated_at"`
+		} `json:"fields"`
+	}{
+		Status:      "manual",
+		Source:      "manual",
+		AttemptedAt: now,
+		Fields: map[string]struct {
+			Status    string    `json:"status"`
+			UpdatedAt time.Time `json:"updated_at"`
+		}{
+			"description": {Status: "found", UpdatedAt: now},
+		},
+	}
+
+	raw, err := json.Marshal(payload)
+	if err != nil {
+		return nil
+	}
+
+	return raw
+}
 
 func newCmdSetDescription(f *cmdutil.Factory) *cobra.Command {
 	var (
@@ -83,7 +120,7 @@ func newCmdSetDescription(f *cmdutil.Factory) *cobra.Command {
 					return fmt.Errorf("cannot load common tracker pattern: %w", err)
 				}
 
-				if err := pattern.SetEnriched(ctx, tx, flagDescription, nil); err != nil {
+				if err := pattern.UpdateEnrichment(ctx, tx, flagDescription, nil, manualEnrichmentPayload()); err != nil {
 					return fmt.Errorf("cannot set common tracker pattern description: %w", err)
 				}
 

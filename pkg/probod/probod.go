@@ -817,6 +817,7 @@ func (impl *Implm) Run(
 			trackerEnrichmentCfg,
 			trackerMappingCfg,
 			time.Duration(impl.cfg.CommonPatternEnrichmentWorker.StaleAfter)*time.Second,
+			0,
 			worker.WithInterval(time.Duration(impl.cfg.CommonPatternEnrichmentWorker.Interval)*time.Second),
 			worker.WithMaxConcurrency(impl.cfg.CommonPatternEnrichmentWorker.MaxConcurrency),
 		)

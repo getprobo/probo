@@ -147,6 +147,10 @@ func newCmdShow(f *cmdutil.Factory) *cobra.Command {
 		row("Enrichment state:", enrichmentState(&party))
 		row("Enrichment attempts:", fmt.Sprintf("%d", party.EnrichmentAttempts))
 
+		if party.LastEnrichmentAttemptAt != nil {
+			row("Last attempt:", party.LastEnrichmentAttemptAt.Format("2006-01-02 15:04:05"))
+		}
+
 		if party.EnrichmentRequestedAt != nil {
 			row("Queued at:", party.EnrichmentRequestedAt.Format("2006-01-02 15:04:05"))
 		}
@@ -180,7 +184,7 @@ func printEnrichmentDetails(out io.Writer, label lipgloss.Style, party coredata.
 	}
 
 	if !meta.AttemptedAt.IsZero() {
-		row("Last attempt:", meta.AttemptedAt.Format("2006-01-02 15:04:05"))
+		row("Last run recorded:", meta.AttemptedAt.Format("2006-01-02 15:04:05"))
 	}
 
 	if meta.Model != "" {

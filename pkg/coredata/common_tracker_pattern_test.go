@@ -16,6 +16,7 @@ package coredata_test
 
 import (
 	"context"
+	"encoding/json"
 	"testing"
 	"time"
 
@@ -100,12 +101,12 @@ func loadCommonTrackerPattern(
 	return reloaded
 }
 
-// TestCommonTrackerPattern_SetEnriched_AllowsEmptyDescription pins the
-// no-fabrication contract: the enrichment worker records an empty
-// description when it cannot substantiate a purpose, and the row is
-// still marked terminally enriched so the stale-recovery loop never
-// re-queues it.
-func TestCommonTrackerPattern_SetEnriched_AllowsEmptyDescription(t *testing.T) {
+// TestCommonTrackerPattern_UpdateEnrichment_AllowsEmptyDescription pins
+// the no-fabrication contract: the enrichment worker records an empty
+// description when it cannot substantiate a purpose, but still writes an
+// enrichment payload so the row reads as having been through the workflow
+// and the stale-recovery loop never re-queues it.
+func TestCommonTrackerPattern_UpdateEnrichment_AllowsEmptyDescription(t *testing.T) {
 	t.Parallel()
 
 	client := test.PGClient(t)
@@ -126,30 +127,32 @@ func TestCommonTrackerPattern_SetEnriched_AllowsEmptyDescription(t *testing.T) {
 	}
 	insertCommonTrackerPattern(t, ctx, client, cp)
 
+	payload := json.RawMessage(`{"status":"no_result","fields":{"description":{"status":"not_found"}}}`)
+
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
-		return cp.SetEnriched(ctx, tx, "", nil)
+		return cp.UpdateEnrichment(ctx, tx, "", nil, payload)
 	}))
 
 	reloaded := loadCommonTrackerPattern(t, ctx, client, cp.ID)
 	assert.Equal(t, "", reloaded.Description, "blank description must stay blank")
-	assert.NotNil(t, reloaded.EnrichedAt, "blank row must be marked enriched (terminal-for-now)")
+	assert.NotEmpty(t, reloaded.Enrichment, "blank row must still record an enrichment payload")
 	assert.Nil(t, reloaded.EnrichmentRequestedAt, "enriched row must leave the queue")
 
 	// A blank but enriched row must NOT be re-queued by stale recovery:
-	// enriched_at is set, so the stale sweep skips it.
+	// the enrichment payload is present, so the stale sweep skips it.
 	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
-		return coredata.ResetStaleEnrichments(ctx, conn, 0)
+		return coredata.ResetStaleEnrichments(ctx, conn, 0, 3)
 	}))
 
 	afterSweep := loadCommonTrackerPattern(t, ctx, client, cp.ID)
 	assert.Nil(t, afterSweep.EnrichmentRequestedAt, "stale recovery must not re-queue an enriched blank row")
 }
 
-// TestCommonTrackerPattern_SetEnriched_LinksThirdPartyWithoutOverride
+// TestCommonTrackerPattern_UpdateEnrichment_LinksThirdPartyWithoutOverride
 // pins the link-no-override contract: the enrichment worker links a
 // resolved third party only when the row has none, and never clobbers an
 // attribution the mapping pipeline already resolved.
-func TestCommonTrackerPattern_SetEnriched_LinksThirdPartyWithoutOverride(t *testing.T) {
+func TestCommonTrackerPattern_UpdateEnrichment_LinksThirdPartyWithoutOverride(t *testing.T) {
 	t.Parallel()
 
 	client := test.PGClient(t)
@@ -173,7 +176,7 @@ func TestCommonTrackerPattern_SetEnriched_LinksThirdPartyWithoutOverride(t *test
 		insertCommonTrackerPattern(t, ctx, client, cp)
 
 		require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
-			return cp.SetEnriched(ctx, tx, "Analytics tracker.", &party.ID)
+			return cp.UpdateEnrichment(ctx, tx, "Analytics tracker.", &party.ID, json.RawMessage(`{"status":"done"}`))
 		}))
 
 		reloaded := loadCommonTrackerPattern(t, ctx, client, cp.ID)
@@ -195,7 +198,7 @@ func TestCommonTrackerPattern_SetEnriched_LinksThirdPartyWithoutOverride(t *test
 		insertCommonTrackerPattern(t, ctx, client, cp)
 
 		require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
-			return cp.SetEnriched(ctx, tx, "Analytics tracker.", &other.ID)
+			return cp.UpdateEnrichment(ctx, tx, "Analytics tracker.", &other.ID, json.RawMessage(`{"status":"done"}`))
 		}))
 
 		reloaded := loadCommonTrackerPattern(t, ctx, client, cp.ID)
@@ -218,20 +221,23 @@ func TestCommonTrackerPattern_Upsert_RequeuesBlankRowOnThirdPartyLink(t *testing
 	party := seedCommonThirdParty(t, ctx, client)
 
 	now := time.Now().UTC().Truncate(time.Microsecond)
-	enrichedAt := now.Add(-time.Hour)
+	attemptAt := now.Add(-time.Hour)
 	pattern := "requeue_" + gid.New(gid.NilTenant, coredata.CommonTrackerPatternEntityType).String()
 
-	// Stage a terminal blank row: enriched, no description, no vendor.
+	// Stage a completed blank row: enriched (carries a payload), no
+	// description, no vendor, with prior attempts spent.
 	blank := coredata.CommonTrackerPattern{
-		ID:          gid.New(gid.NilTenant, coredata.CommonTrackerPatternEntityType),
-		TrackerType: coredata.TrackerTypeCookie,
-		Pattern:     pattern,
-		MatchType:   coredata.TrackerPatternMatchTypeExact,
-		Description: "",
-		Confidence:  0.5,
-		EnrichedAt:  &enrichedAt,
-		CreatedAt:   now,
-		UpdatedAt:   now,
+		ID:                      gid.New(gid.NilTenant, coredata.CommonTrackerPatternEntityType),
+		TrackerType:             coredata.TrackerTypeCookie,
+		Pattern:                 pattern,
+		MatchType:               coredata.TrackerPatternMatchTypeExact,
+		Description:             "",
+		Confidence:              0.5,
+		Enrichment:              json.RawMessage(`{"status":"no_result"}`),
+		EnrichmentAttempts:      2,
+		LastEnrichmentAttemptAt: &attemptAt,
+		CreatedAt:               now,
+		UpdatedAt:               now,
 	}
 	insertCommonTrackerPattern(t, ctx, client, blank)
 
@@ -263,7 +269,7 @@ func TestCommonTrackerPattern_Upsert_RequeuesBlankRowOnThirdPartyLink(t *testing
 	require.NotNil(t, reloaded.CommonThirdPartyID)
 	assert.Equal(t, party.ID, *reloaded.CommonThirdPartyID, "blank row must gain the linked third party")
 	assert.NotNil(t, reloaded.EnrichmentRequestedAt, "linking a vendor must re-queue the blank row for enrichment")
-	assert.Nil(t, reloaded.EnrichedAt, "re-queued row must no longer be terminal")
+	assert.Equal(t, 0, reloaded.EnrichmentAttempts, "re-queued row must get a fresh retry budget")
 }
 
 // TestCommonTrackerPattern_Upsert_KeepsDescribedRowTerminal pins the
@@ -279,19 +285,21 @@ func TestCommonTrackerPattern_Upsert_KeepsDescribedRowTerminal(t *testing.T) {
 	party := seedCommonThirdParty(t, ctx, client)
 
 	now := time.Now().UTC().Truncate(time.Microsecond)
-	enrichedAt := now.Add(-time.Hour)
+	attemptAt := now.Add(-time.Hour)
 	pattern := "described_" + gid.New(gid.NilTenant, coredata.CommonTrackerPatternEntityType).String()
 
 	described := coredata.CommonTrackerPattern{
-		ID:          gid.New(gid.NilTenant, coredata.CommonTrackerPatternEntityType),
-		TrackerType: coredata.TrackerTypeCookie,
-		Pattern:     pattern,
-		MatchType:   coredata.TrackerPatternMatchTypeExact,
-		Description: "An established analytics cookie.",
-		Confidence:  0.9,
-		EnrichedAt:  &enrichedAt,
-		CreatedAt:   now,
-		UpdatedAt:   now,
+		ID:                      gid.New(gid.NilTenant, coredata.CommonTrackerPatternEntityType),
+		TrackerType:             coredata.TrackerTypeCookie,
+		Pattern:                 pattern,
+		MatchType:               coredata.TrackerPatternMatchTypeExact,
+		Description:             "An established analytics cookie.",
+		Confidence:              0.9,
+		Enrichment:              json.RawMessage(`{"status":"done"}`),
+		EnrichmentAttempts:      1,
+		LastEnrichmentAttemptAt: &attemptAt,
+		CreatedAt:               now,
+		UpdatedAt:               now,
 	}
 	insertCommonTrackerPattern(t, ctx, client, described)
 
@@ -315,5 +323,93 @@ func TestCommonTrackerPattern_Upsert_KeepsDescribedRowTerminal(t *testing.T) {
 	reloaded := loadCommonTrackerPattern(t, ctx, client, described.ID)
 	assert.Equal(t, "An established analytics cookie.", reloaded.Description, "existing description must be preserved")
 	assert.Nil(t, reloaded.EnrichmentRequestedAt, "described row must not be re-queued")
-	assert.NotNil(t, reloaded.EnrichedAt, "described row must stay terminal")
+	assert.NotEmpty(t, reloaded.Enrichment, "described row must keep its enrichment payload")
+	assert.Equal(t, 1, reloaded.EnrichmentAttempts, "described row's retry budget must be untouched")
+}
+
+// TestCommonTrackerPattern_ClearEnrichmentRequestedAt_CountsAttempt pins
+// the claim contract: dequeuing a row counts the attempt and stamps the
+// idle clock, so a crash before UpdateEnrichment still spends part of the
+// retry budget and the stale clock starts at claim time.
+func TestCommonTrackerPattern_ClearEnrichmentRequestedAt_CountsAttempt(t *testing.T) {
+	t.Parallel()
+
+	client := test.PGClient(t)
+	ctx := context.Background()
+
+	now := time.Now().UTC().Truncate(time.Microsecond)
+	requestedAt := now.Add(-time.Minute)
+	cp := coredata.CommonTrackerPattern{
+		ID:                    gid.New(gid.NilTenant, coredata.CommonTrackerPatternEntityType),
+		TrackerType:           coredata.TrackerTypeCookie,
+		Pattern:               "claim_" + gid.New(gid.NilTenant, coredata.CommonTrackerPatternEntityType).String(),
+		MatchType:             coredata.TrackerPatternMatchTypeExact,
+		Confidence:            0.5,
+		EnrichmentRequestedAt: &requestedAt,
+		CreatedAt:             now,
+		UpdatedAt:             now,
+	}
+	insertCommonTrackerPattern(t, ctx, client, cp)
+
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		return cp.ClearEnrichmentRequestedAt(ctx, tx)
+	}))
+
+	reloaded := loadCommonTrackerPattern(t, ctx, client, cp.ID)
+	assert.Nil(t, reloaded.EnrichmentRequestedAt, "claim must remove the row from the queue")
+	assert.Equal(t, 1, reloaded.EnrichmentAttempts, "claim must count the attempt")
+	assert.NotNil(t, reloaded.LastEnrichmentAttemptAt, "claim must stamp the idle clock")
+}
+
+// TestCommonTrackerPattern_ResetStaleEnrichments_RespectsMaxAttempts pins
+// the retry-budget contract: stale recovery re-queues a claimed-but-
+// incomplete row that still has budget, but leaves a row at the
+// max-attempts ceiling alone so a permanently failing row does not loop.
+func TestCommonTrackerPattern_ResetStaleEnrichments_RespectsMaxAttempts(t *testing.T) {
+	t.Parallel()
+
+	client := test.PGClient(t)
+	ctx := context.Background()
+
+	now := time.Now().UTC().Truncate(time.Microsecond)
+	staleAttempt := now.Add(-time.Hour)
+
+	// A claimed-but-incomplete row with budget left: no payload yet, one
+	// attempt spent, idle past the threshold.
+	eligible := coredata.CommonTrackerPattern{
+		ID:                      gid.New(gid.NilTenant, coredata.CommonTrackerPatternEntityType),
+		TrackerType:             coredata.TrackerTypeCookie,
+		Pattern:                 "stale_eligible_" + gid.New(gid.NilTenant, coredata.CommonTrackerPatternEntityType).String(),
+		MatchType:               coredata.TrackerPatternMatchTypeExact,
+		Confidence:              0.5,
+		EnrichmentAttempts:      1,
+		LastEnrichmentAttemptAt: &staleAttempt,
+		CreatedAt:               now,
+		UpdatedAt:               now,
+	}
+	insertCommonTrackerPattern(t, ctx, client, eligible)
+
+	// A row that has exhausted its retry budget must be left alone.
+	exhausted := coredata.CommonTrackerPattern{
+		ID:                      gid.New(gid.NilTenant, coredata.CommonTrackerPatternEntityType),
+		TrackerType:             coredata.TrackerTypeCookie,
+		Pattern:                 "stale_exhausted_" + gid.New(gid.NilTenant, coredata.CommonTrackerPatternEntityType).String(),
+		MatchType:               coredata.TrackerPatternMatchTypeExact,
+		Confidence:              0.5,
+		EnrichmentAttempts:      3,
+		LastEnrichmentAttemptAt: &staleAttempt,
+		CreatedAt:               now,
+		UpdatedAt:               now,
+	}
+	insertCommonTrackerPattern(t, ctx, client, exhausted)
+
+	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+		return coredata.ResetStaleEnrichments(ctx, conn, time.Minute, 3)
+	}))
+
+	reloadedEligible := loadCommonTrackerPattern(t, ctx, client, eligible.ID)
+	assert.NotNil(t, reloadedEligible.EnrichmentRequestedAt, "stale row with budget must be re-queued")
+
+	reloadedExhausted := loadCommonTrackerPattern(t, ctx, client, exhausted.ID)
+	assert.Nil(t, reloadedExhausted.EnrichmentRequestedAt, "row at the max-attempts ceiling must not be re-queued")
 }

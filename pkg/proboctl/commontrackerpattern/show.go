@@ -127,12 +127,14 @@ func renderPatternDetail(f *cmdutil.Factory, p coredata.CommonTrackerPattern, th
 
 	row("Description:", description)
 
+	row("Enrichment attempts:", fmt.Sprintf("%d", p.EnrichmentAttempts))
+
 	if p.EnrichmentRequestedAt != nil {
 		row("Enrichment queued:", p.EnrichmentRequestedAt.Format("2006-01-02 15:04:05"))
 	}
 
-	if p.EnrichedAt != nil {
-		row("Enriched at:", p.EnrichedAt.Format("2006-01-02 15:04:05"))
+	if p.LastEnrichmentAttemptAt != nil {
+		row("Last attempt:", p.LastEnrichmentAttemptAt.Format("2006-01-02 15:04:05"))
 	}
 
 	row("Created:", p.CreatedAt.Format("2006-01-02 15:04:05"))

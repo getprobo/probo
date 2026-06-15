@@ -24,11 +24,11 @@ import (
 type CommonTrackerPatternOrderField string
 
 const (
-	CommonTrackerPatternOrderFieldPattern    CommonTrackerPatternOrderField = "PATTERN"
-	CommonTrackerPatternOrderFieldConfidence CommonTrackerPatternOrderField = "CONFIDENCE"
-	CommonTrackerPatternOrderFieldCreatedAt  CommonTrackerPatternOrderField = "CREATED_AT"
-	CommonTrackerPatternOrderFieldUpdatedAt  CommonTrackerPatternOrderField = "UPDATED_AT"
-	CommonTrackerPatternOrderFieldEnrichedAt CommonTrackerPatternOrderField = "ENRICHED_AT"
+	CommonTrackerPatternOrderFieldPattern                 CommonTrackerPatternOrderField = "PATTERN"
+	CommonTrackerPatternOrderFieldConfidence              CommonTrackerPatternOrderField = "CONFIDENCE"
+	CommonTrackerPatternOrderFieldCreatedAt               CommonTrackerPatternOrderField = "CREATED_AT"
+	CommonTrackerPatternOrderFieldUpdatedAt               CommonTrackerPatternOrderField = "UPDATED_AT"
+	CommonTrackerPatternOrderFieldLastEnrichmentAttemptAt CommonTrackerPatternOrderField = "LAST_ENRICHMENT_ATTEMPT_AT"
 )
 
 var (
@@ -44,7 +44,7 @@ func CommonTrackerPatternOrderFields() []CommonTrackerPatternOrderField {
 		CommonTrackerPatternOrderFieldConfidence,
 		CommonTrackerPatternOrderFieldCreatedAt,
 		CommonTrackerPatternOrderFieldUpdatedAt,
-		CommonTrackerPatternOrderFieldEnrichedAt,
+		CommonTrackerPatternOrderFieldLastEnrichmentAttemptAt,
 	}
 }
 
@@ -55,7 +55,7 @@ func (v CommonTrackerPatternOrderField) IsValid() bool {
 		CommonTrackerPatternOrderFieldConfidence,
 		CommonTrackerPatternOrderFieldCreatedAt,
 		CommonTrackerPatternOrderFieldUpdatedAt,
-		CommonTrackerPatternOrderFieldEnrichedAt:
+		CommonTrackerPatternOrderFieldLastEnrichmentAttemptAt:
 		return true
 	}
 
@@ -91,8 +91,8 @@ func (v CommonTrackerPatternOrderField) Column() string {
 		return "created_at"
 	case CommonTrackerPatternOrderFieldUpdatedAt:
 		return "updated_at"
-	case CommonTrackerPatternOrderFieldEnrichedAt:
-		return "COALESCE(enriched_at, '0001-01-01T00:00:00Z'::timestamptz)"
+	case CommonTrackerPatternOrderFieldLastEnrichmentAttemptAt:
+		return "COALESCE(last_enrichment_attempt_at, '0001-01-01T00:00:00Z'::timestamptz)"
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", v))

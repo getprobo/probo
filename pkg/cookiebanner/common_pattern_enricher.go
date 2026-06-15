@@ -16,6 +16,7 @@ package cookiebanner
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -140,6 +141,8 @@ func (e *CommonPatternEnricher) EnrichPattern(ctx context.Context, cp coredata.C
 		return fmt.Errorf("cannot research tracker description: %w", err)
 	}
 
+	alreadyLinked := cp.CommonThirdPartyID != nil
+
 	return e.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
@@ -156,7 +159,23 @@ func (e *CommonPatternEnricher) EnrichPattern(ctx context.Context, cp coredata.C
 				}
 			}
 
-			if err := cp.SetEnriched(ctx, tx, description, thirdPartyID); err != nil {
+			linked := alreadyLinked || thirdPartyID != nil
+
+			meta := buildCommonPatternEnrichmentMetadata(
+				e.enrichmentCfg.Model,
+				description,
+				attribution,
+				alreadyLinked,
+				linked,
+				time.Now(),
+			)
+
+			payload, err := json.Marshal(meta)
+			if err != nil {
+				return fmt.Errorf("cannot marshal common tracker pattern enrichment metadata: %w", err)
+			}
+
+			if err := cp.UpdateEnrichment(ctx, tx, description, thirdPartyID, payload); err != nil {
 				return fmt.Errorf("cannot set common tracker pattern enriched: %w", err)
 			}
 
@@ -177,7 +196,8 @@ func (e *CommonPatternEnricher) EnrichPattern(ctx context.Context, cp coredata.C
 				log.String("common_tracker_pattern_id", cp.ID.String()),
 				log.String("pattern", cp.Pattern),
 				log.Bool("described", description != ""),
-				log.Bool("third_party_linked", thirdPartyID != nil),
+				log.Bool("third_party_linked", linked),
+				log.Int("enrichment_attempts", cp.EnrichmentAttempts),
 				log.Int64("backfilled_tracker_patterns", backfilled),
 			)
 

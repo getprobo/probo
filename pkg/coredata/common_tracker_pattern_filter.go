@@ -22,7 +22,7 @@ import (
 )
 
 // CommonTrackerPatternEnrichmentState is a synthetic filter over the
-// enrichment_requested_at / enriched_at columns. It is not a stored
+// enrichment_requested_at / enrichment columns. It is not a stored
 // column; it classifies a row's position in the enrichment lifecycle.
 type CommonTrackerPatternEnrichmentState string
 
@@ -30,8 +30,8 @@ const (
 	// CommonTrackerPatternEnrichmentStateQueued: a row armed for the
 	// enrichment worker (enrichment_requested_at IS NOT NULL).
 	CommonTrackerPatternEnrichmentStateQueued CommonTrackerPatternEnrichmentState = "QUEUED"
-	// CommonTrackerPatternEnrichmentStateEnriched: a row whose
-	// enrichment has completed (enriched_at IS NOT NULL) and is not
+	// CommonTrackerPatternEnrichmentStateEnriched: a row that has been
+	// through the enrichment workflow (enrichment IS NOT NULL) and is not
 	// re-queued.
 	CommonTrackerPatternEnrichmentStateEnriched CommonTrackerPatternEnrichmentState = "ENRICHED"
 	// CommonTrackerPatternEnrichmentStateUnenriched: a row never enriched
@@ -183,9 +183,9 @@ func (f *CommonTrackerPatternFilter) SQLFragment() string {
 	CASE
 		WHEN @filter_state_queued::boolean THEN enrichment_requested_at IS NOT NULL
 		WHEN @filter_state_enriched::boolean THEN
-			enrichment_requested_at IS NULL AND enriched_at IS NOT NULL
+			enrichment_requested_at IS NULL AND enrichment IS NOT NULL
 		WHEN @filter_state_unenriched::boolean THEN
-			enrichment_requested_at IS NULL AND enriched_at IS NULL
+			enrichment_requested_at IS NULL AND enrichment IS NULL
 		ELSE TRUE
 	END
 )`

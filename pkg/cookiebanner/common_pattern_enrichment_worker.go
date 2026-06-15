@@ -26,17 +26,25 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 )
 
-const defaultEnrichmentStaleAfter = 10 * time.Minute
+const (
+	defaultEnrichmentStaleAfter = 10 * time.Minute
+
+	// defaultEnrichmentMaxAttempts caps how many times a row is retried
+	// before stale recovery leaves it alone, so a permanently failing row
+	// does not loop forever.
+	defaultEnrichmentMaxAttempts = 3
+)
 
 // commonPatternEnrichmentHandler is the queue poller for common tracker
 // pattern enrichment. It owns only the claim/dequeue and stale-recovery
 // mechanics; the enrichment work itself lives in CommonPatternEnricher so
 // it can also run synchronously from operator tooling.
 type commonPatternEnrichmentHandler struct {
-	pg         *pg.Client
-	logger     *log.Logger
-	enricher   *CommonPatternEnricher
-	staleAfter time.Duration
+	pg          *pg.Client
+	logger      *log.Logger
+	enricher    *CommonPatternEnricher
+	staleAfter  time.Duration
+	maxAttempts int
 }
 
 // NewCommonPatternEnrichmentWorker builds the worker that fills
@@ -52,17 +60,23 @@ func NewCommonPatternEnrichmentWorker(
 	enrichmentCfg TrackerEnrichmentAgentConfig,
 	mappingCfg TrackerMappingAgentConfig,
 	staleAfter time.Duration,
+	maxAttempts int,
 	opts ...worker.Option,
 ) *worker.Worker[coredata.CommonTrackerPattern] {
 	if staleAfter <= 0 {
 		staleAfter = defaultEnrichmentStaleAfter
 	}
 
+	if maxAttempts <= 0 {
+		maxAttempts = defaultEnrichmentMaxAttempts
+	}
+
 	h := &commonPatternEnrichmentHandler{
-		pg:         pgClient,
-		logger:     logger,
-		enricher:   NewCommonPatternEnricher(pgClient, logger, enrichmentCfg, mappingCfg),
-		staleAfter: staleAfter,
+		pg:          pgClient,
+		logger:      logger,
+		enricher:    NewCommonPatternEnricher(pgClient, logger, enrichmentCfg, mappingCfg),
+		staleAfter:  staleAfter,
+		maxAttempts: maxAttempts,
 	}
 
 	return worker.New(
@@ -108,7 +122,7 @@ func (h *commonPatternEnrichmentHandler) RecoverStale(ctx context.Context) error
 	return h.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			if err := coredata.ResetStaleEnrichments(ctx, conn, h.staleAfter); err != nil {
+			if err := coredata.ResetStaleEnrichments(ctx, conn, h.staleAfter, h.maxAttempts); err != nil {
 				return fmt.Errorf("cannot reset stale common tracker pattern enrichments: %w", err)
 			}
 

@@ -53,6 +53,7 @@ type (
 		EnrichmentRequestedAt         *time.Time         `db:"enrichment_requested_at"`
 		Enrichment                    json.RawMessage    `db:"enrichment"`
 		EnrichmentAttempts            int                `db:"enrichment_attempts"`
+		LastEnrichmentAttemptAt       *time.Time         `db:"last_enrichment_attempt_at"`
 		CreatedAt                     time.Time          `db:"created_at"`
 		UpdatedAt                     time.Time          `db:"updated_at"`
 	}
@@ -131,6 +132,7 @@ SELECT
     enrichment_requested_at,
     enrichment,
     enrichment_attempts,
+    last_enrichment_attempt_at,
     created_at,
     updated_at
 FROM
@@ -191,6 +193,7 @@ SELECT
     enrichment_requested_at,
     enrichment,
     enrichment_attempts,
+    last_enrichment_attempt_at,
     created_at,
     updated_at
 FROM
@@ -251,6 +254,7 @@ SELECT
     enrichment_requested_at,
     enrichment,
     enrichment_attempts,
+    last_enrichment_attempt_at,
     created_at,
     updated_at
 FROM
@@ -310,6 +314,7 @@ INSERT INTO common_third_parties (
     enrichment_requested_at,
     enrichment,
     enrichment_attempts,
+    last_enrichment_attempt_at,
     created_at,
     updated_at
 ) VALUES (
@@ -335,6 +340,7 @@ INSERT INTO common_third_parties (
     @enrichment_requested_at,
     @enrichment,
     @enrichment_attempts,
+    @last_enrichment_attempt_at,
     @created_at,
     @updated_at
 )
@@ -363,6 +369,7 @@ INSERT INTO common_third_parties (
 		"enrichment_requested_at":          t.EnrichmentRequestedAt,
 		"enrichment":                       t.Enrichment,
 		"enrichment_attempts":              t.EnrichmentAttempts,
+		"last_enrichment_attempt_at":       t.LastEnrichmentAttemptAt,
 		"created_at":                       t.CreatedAt,
 		"updated_at":                       t.UpdatedAt,
 	}
@@ -406,6 +413,7 @@ INSERT INTO common_third_parties (
     enrichment_requested_at,
     enrichment,
     enrichment_attempts,
+    last_enrichment_attempt_at,
     created_at,
     updated_at
 ) VALUES (
@@ -431,6 +439,7 @@ INSERT INTO common_third_parties (
     @enrichment_requested_at,
     @enrichment,
     @enrichment_attempts,
+    @last_enrichment_attempt_at,
     @created_at,
     @updated_at
 )
@@ -476,6 +485,7 @@ RETURNING
     enrichment_requested_at,
     enrichment,
     enrichment_attempts,
+    last_enrichment_attempt_at,
     created_at,
     updated_at
 `
@@ -505,6 +515,7 @@ RETURNING
 		"enrichment_requested_at":          t.EnrichmentRequestedAt,
 		"enrichment":                       t.Enrichment,
 		"enrichment_attempts":              t.EnrichmentAttempts,
+		"last_enrichment_attempt_at":       t.LastEnrichmentAttemptAt,
 		"created_at":                       t.CreatedAt,
 		"updated_at":                       t.UpdatedAt,
 	}
@@ -571,6 +582,7 @@ SELECT
     enrichment_requested_at,
     enrichment,
     enrichment_attempts,
+    last_enrichment_attempt_at,
     created_at,
     updated_at
 FROM
@@ -625,6 +637,7 @@ SELECT
     enrichment_requested_at,
     enrichment,
     enrichment_attempts,
+    last_enrichment_attempt_at,
     created_at,
     updated_at
 FROM
@@ -769,6 +782,7 @@ SELECT
     enrichment_requested_at,
     enrichment,
     enrichment_attempts,
+    last_enrichment_attempt_at,
     created_at,
     updated_at
 FROM
@@ -862,6 +876,7 @@ SELECT
     enrichment_requested_at,
     enrichment,
     enrichment_attempts,
+    last_enrichment_attempt_at,
     created_at,
     updated_at
 FROM
@@ -895,8 +910,8 @@ LIMIT 1;
 }
 
 // ClearEnrichmentRequestedAt removes the row from the enrichment queue
-// and bumps the attempt counter. It bumps updated_at so the
-// stale-recovery clock starts at claim time, keeping
+// and bumps the attempt counter. It stamps last_enrichment_attempt_at so
+// the stale-recovery clock starts at claim time, keeping
 // ResetStaleCommonThirdPartyEnrichments from re-arming a row that is
 // still being processed. The attempt counter is incremented up front so
 // a crash between claim and persist still counts against the retry
@@ -910,19 +925,27 @@ UPDATE common_third_parties
 SET
     enrichment_requested_at = NULL,
     enrichment_attempts = enrichment_attempts + 1,
+    last_enrichment_attempt_at = NOW(),
     updated_at = NOW()
 WHERE id = @id
+RETURNING enrichment_attempts, last_enrichment_attempt_at
 `
 
 	args := pgx.StrictNamedArgs{"id": t.ID}
 
-	_, err := tx.Exec(ctx, q, args)
+	var (
+		attempts    int
+		lastAttempt *time.Time
+	)
+
+	err := tx.QueryRow(ctx, q, args).Scan(&attempts, &lastAttempt)
 	if err != nil {
 		return fmt.Errorf("cannot clear enrichment requested at: %w", err)
 	}
 
 	t.EnrichmentRequestedAt = nil
-	t.EnrichmentAttempts++
+	t.EnrichmentAttempts = attempts
+	t.LastEnrichmentAttemptAt = lastAttempt
 
 	return nil
 }
@@ -1024,7 +1047,7 @@ WHERE
     AND enrichment IS NULL
     AND enrichment_attempts > 0
     AND enrichment_attempts < @max_attempts
-    AND updated_at < @stale_before
+    AND last_enrichment_attempt_at < @stale_before
 `
 
 	args := pgx.StrictNamedArgs{

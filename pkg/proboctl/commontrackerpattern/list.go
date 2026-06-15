@@ -59,7 +59,7 @@ func newCmdList(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&flagState, "state", "", "Filter by enrichment state (queued, enriched, unenriched)")
 	cmd.Flags().BoolVar(&flagWithCommonThirdParty, "with-common-third-party", false, "Filter by whether the pattern is linked to a common third party (true/false); ignored when not set")
 	cmd.Flags().BoolVar(&flagWithoutDescription, "without-description", false, "Only patterns with a blank description")
-	cmd.Flags().StringVar(&flagSort, "sort", "confidence", "Sort field: pattern, confidence, created, updated, enriched")
+	cmd.Flags().StringVar(&flagSort, "sort", "confidence", "Sort field: pattern, confidence, created, updated, attempted")
 	cmd.Flags().StringVar(&flagOrder, "order", "", "Sort order: asc, desc (default depends on field)")
 
 	pageFlags := cmdutil.AddPageFlags(cmd)
@@ -277,10 +277,10 @@ func parseOrderBy(sort, order string) (page.OrderBy[coredata.CommonTrackerPatter
 		field, defaultDesc = coredata.CommonTrackerPatternOrderFieldCreatedAt, true
 	case "updated":
 		field, defaultDesc = coredata.CommonTrackerPatternOrderFieldUpdatedAt, true
-	case "enriched":
-		field, defaultDesc = coredata.CommonTrackerPatternOrderFieldEnrichedAt, true
+	case "attempted":
+		field, defaultDesc = coredata.CommonTrackerPatternOrderFieldLastEnrichmentAttemptAt, true
 	default:
-		return zeroOrderBy, fmt.Errorf("invalid --sort value %q: valid values are pattern, confidence, created, updated, enriched", sort)
+		return zeroOrderBy, fmt.Errorf("invalid --sort value %q: valid values are pattern, confidence, created, updated, attempted", sort)
 	}
 
 	direction := page.OrderDirectionAsc

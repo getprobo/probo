@@ -16,6 +16,7 @@ package commontrackerpattern
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 
@@ -47,18 +48,60 @@ func NewCmdCommonTrackerPattern(f *cmdutil.Factory) *cobra.Command {
 }
 
 // enrichmentState classifies a pattern's position in the enrichment
-// lifecycle for display.
+// lifecycle for display. A row that has been through the workflow (it
+// carries an enrichment payload) reads "enriched" only when every field
+// the last run recorded an outcome for resolved a value; otherwise it
+// reads "partial (X/Y)".
 func enrichmentState(p *coredata.CommonTrackerPattern) string {
 	switch {
 	case p.EnrichmentRequestedAt != nil:
 		return "queued"
-	case p.EnrichedAt != nil && p.Description == "":
-		return "enriched (no description)"
-	case p.EnrichedAt != nil:
-		return "enriched"
+	case len(p.Enrichment) > 0:
+		resolved, total := enrichmentCompleteness(p)
+		if total == 0 || resolved == total {
+			return "enriched"
+		}
+
+		return fmt.Sprintf("partial (%d/%d)", resolved, total)
 	default:
 		return "unenriched"
 	}
+}
+
+// resolvedFieldStatuses are the per-field enrichment statuses that carry a
+// value, as opposed to not_found.
+var resolvedFieldStatuses = map[string]struct{}{
+	"found":           {},
+	"exists_external": {},
+}
+
+// enrichmentCompleteness counts how many of the fields the last enrichment
+// run recorded an outcome for resolved a value (X) versus the total it
+// recorded (Y), parsed from the enrichment payload's per-field provenance.
+func enrichmentCompleteness(p *coredata.CommonTrackerPattern) (resolved, total int) {
+	if len(p.Enrichment) == 0 {
+		return 0, 0
+	}
+
+	var meta struct {
+		Fields map[string]struct {
+			Status string `json:"status"`
+		} `json:"fields"`
+	}
+
+	if err := json.Unmarshal(p.Enrichment, &meta); err != nil {
+		return 0, 0
+	}
+
+	for _, f := range meta.Fields {
+		total++
+
+		if _, ok := resolvedFieldStatuses[f.Status]; ok {
+			resolved++
+		}
+	}
+
+	return resolved, total
 }
 
 // resolveCommonThirdPartyID accepts either a common third party GID or a

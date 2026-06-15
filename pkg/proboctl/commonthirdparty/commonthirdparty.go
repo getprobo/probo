@@ -48,17 +48,61 @@ func NewCmdCommonThirdParty(f *cmdutil.Factory) *cobra.Command {
 }
 
 // enrichmentState classifies a common third party's position in the
-// enrichment lifecycle for display. A row is "enriched" once it carries
-// an enrichment payload; there is no enriched_at column.
+// enrichment lifecycle for display. A row that has been through the
+// workflow (it carries an enrichment payload) reads "enriched" only when
+// every field the last run recorded an outcome for resolved a value;
+// otherwise it reads "partial (X/Y)".
 func enrichmentState(p *coredata.CommonThirdParty) string {
 	switch {
 	case p.EnrichmentRequestedAt != nil:
 		return "queued"
 	case len(p.Enrichment) > 0:
-		return "enriched"
+		resolved, total := enrichmentCompleteness(p)
+		if total == 0 || resolved == total {
+			return "enriched"
+		}
+
+		return fmt.Sprintf("partial (%d/%d)", resolved, total)
 	default:
 		return "unenriched"
 	}
+}
+
+// resolvedFieldStatuses are the per-field enrichment statuses that carry a
+// value, as opposed to not_found / low_confidence.
+var resolvedFieldStatuses = map[string]struct{}{
+	"found":                 {},
+	"exists_external":       {},
+	"fallback_display_name": {},
+}
+
+// enrichmentCompleteness counts how many of the fields the last enrichment
+// run recorded an outcome for resolved a value (X) versus the total it
+// recorded (Y), parsed from the enrichment payload's per-field provenance.
+func enrichmentCompleteness(p *coredata.CommonThirdParty) (resolved, total int) {
+	if len(p.Enrichment) == 0 {
+		return 0, 0
+	}
+
+	var meta struct {
+		Fields map[string]struct {
+			Status string `json:"status"`
+		} `json:"fields"`
+	}
+
+	if err := json.Unmarshal(p.Enrichment, &meta); err != nil {
+		return 0, 0
+	}
+
+	for _, f := range meta.Fields {
+		total++
+
+		if _, ok := resolvedFieldStatuses[f.Status]; ok {
+			resolved++
+		}
+	}
+
+	return resolved, total
 }
 
 // enrichmentStatus returns the run-level status recorded in the

@@ -23,10 +23,9 @@ import (
 
 // CommonThirdPartyEnrichmentState is a synthetic filter over the
 // enrichment_requested_at / enrichment columns. It is not a stored
-// column; it classifies a row's position in the enrichment lifecycle.
-// Unlike common tracker patterns, a common third party has no
-// enriched_at column: a row is "enriched" once it carries an enrichment
-// payload (Process always writes one, even on a no-result run).
+// column; it classifies a row's position in the enrichment lifecycle. A
+// row is "enriched" once it carries an enrichment payload (Process always
+// writes one, even on a no-result run).
 type CommonThirdPartyEnrichmentState string
 
 const (
