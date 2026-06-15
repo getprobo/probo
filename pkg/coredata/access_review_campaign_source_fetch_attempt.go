@@ -439,6 +439,7 @@ WHERE status = 'FETCHING'
 	AND updated_at < @stale_threshold
 FOR UPDATE SKIP LOCKED
 `
+
 	rows, err := conn.Query(ctx, q, pgx.StrictNamedArgs{"stale_threshold": staleThreshold})
 	if err != nil {
 		return 0, fmt.Errorf("cannot query stale fetch attempts: %w", err)

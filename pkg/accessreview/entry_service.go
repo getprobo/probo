@@ -133,6 +133,7 @@ func (s *Service) RecordDecisions(
 				decidedByID, ok := decidedByCache[entry.OrganizationID]
 				if !ok {
 					decidedByID = nil
+
 					if d.DecidedByID != nil {
 						profile := &coredata.MembershipProfile{}
 						if err := profile.LoadByIdentityIDAndOrganizationID(ctx, conn, scope, *d.DecidedByID, entry.OrganizationID); err == nil {

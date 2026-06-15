@@ -590,6 +590,7 @@ func (s *Service) CountFetchAttemptsForCampaignSourceID(
 			var attempts coredata.AccessReviewCampaignSourceFetchAttempts
 
 			var err error
+
 			count, err = attempts.CountByCampaignSourceID(ctx, conn, scope, campaignSourceID)
 			if err != nil {
 				return fmt.Errorf("cannot count fetch attempts: %w", err)
