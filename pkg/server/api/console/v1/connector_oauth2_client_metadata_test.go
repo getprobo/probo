@@ -25,18 +25,18 @@ import (
 	"go.probo.inc/probo/pkg/baseurl"
 )
 
-// TestHandleConnectorOAuthClientMetadata verifies the public CIMD document:
+// TestHandleConnectorOAuth2ClientMetadata verifies the public CIMD document:
 // PostHog fetches it server-to-server during authorization, so client_id,
 // redirect_uris (derived from the deployment base URL) and the public-client
 // token_endpoint_auth_method must be exactly right or the OAuth flow breaks.
-func TestHandleConnectorOAuthClientMetadata(t *testing.T) {
+func TestHandleConnectorOAuth2ClientMetadata(t *testing.T) {
 	t.Parallel()
 
 	base, err := baseurl.Parse("https://probo.example.com")
 	require.NoError(t, err)
 
 	rec := httptest.NewRecorder()
-	handleConnectorOAuthClientMetadata(base)(
+	handleConnectorOAuth2ClientMetadata(base)(
 		rec,
 		httptest.NewRequest(http.MethodGet, "/api/console/v1/connectors/oauth-client-metadata", nil),
 	)

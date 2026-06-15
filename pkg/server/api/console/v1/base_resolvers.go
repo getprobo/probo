@@ -16,7 +16,6 @@ import (
 	"go.probo.inc/probo/pkg/agentrun"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
-	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
@@ -33,7 +32,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 
 	switch id.EntityType() {
 	case coredata.OrganizationEntityType:
-		action = iam.ActionOrganizationGet
+		action = probo.ActionOrganizationGet
 		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
 			organization, err := r.probo.Organizations.Get(ctx, scope, id)
 			if err != nil {
@@ -547,7 +546,7 @@ func (r *queryResolver) CommonThirdParties(ctx context.Context, name string) ([]
 func (r *queryResolver) AccessReviewDrivers(ctx context.Context) ([]*types.ConnectorProviderInfo, error) {
 	identity := authn.IdentityFromContext(ctx)
 
-	if _, err := r.authorize(ctx, identity.ID, probo.ActionAccessReviewDriverCatalogList); err != nil {
+	if _, err := r.authorize(ctx, identity.ID, accessreview.ActionDriverCatalogList); err != nil {
 		return nil, err
 	}
 

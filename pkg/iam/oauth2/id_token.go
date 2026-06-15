@@ -12,7 +12,7 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package oauth2server
+package oauth2
 
 import (
 	"crypto/rsa"
@@ -96,10 +96,10 @@ func NewIDTokenClaims(
 
 	for _, scope := range scopes {
 		switch scope {
-		case coredata.OAuth2ScopeEmail:
+		case ScopeEmail:
 			claims.Email = email
 			claims.EmailVerified = &emailVerified
-		case coredata.OAuth2ScopeProfile:
+		case ScopeProfile:
 			claims.Name = fullName
 		}
 	}

@@ -142,7 +142,7 @@ func NewMux(
 	// is fetched server-to-server by public-client providers (PostHog)
 	// during authorization, with no Probo credentials. Mounted outside the
 	// auth group above.
-	r.Get("/connectors/oauth-client-metadata", handleConnectorOAuthClientMetadata(baseURL))
+	r.Get("/connectors/oauth-client-metadata", handleConnectorOAuth2ClientMetadata(baseURL))
 
 	return r
 }

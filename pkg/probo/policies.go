@@ -196,18 +196,6 @@ var CommonThirdPartyCatalogPolicy = policy.NewPolicy(
 	).WithSID("read-common-third-party-catalog"),
 ).WithDescription("Allows every authenticated user to read the global common third-party catalog")
 
-// AccessReviewDriverCatalogPolicy grants every authenticated identity
-// read access to the global access-review driver catalog. The catalog
-// is deployment-scoped and has no organization scoping, so the allow
-// has no condition.
-var AccessReviewDriverCatalogPolicy = policy.NewPolicy(
-	"probo:access-review-driver-catalog",
-	"Probo Access Review Driver Catalog",
-	policy.Allow(
-		ActionAccessReviewDriverCatalogList,
-	).WithSID("read-access-review-driver-catalog"),
-).WithDescription("Allows every authenticated user to read the global access-review driver catalog")
-
 // EmployeePolicy defines permissions for employee role.
 var EmployeePolicy = policy.NewPolicy(
 	"probo:employee",
@@ -241,6 +229,5 @@ func ProboPolicySet() *iam.PolicySet {
 		AddRolePolicy("VIEWER", ViewerPolicy).
 		AddRolePolicy("AUDITOR", AuditorPolicy).
 		AddRolePolicy("EMPLOYEE", EmployeePolicy).
-		AddIdentityScopedPolicy(CommonThirdPartyCatalogPolicy).
-		AddIdentityScopedPolicy(AccessReviewDriverCatalogPolicy)
+		AddIdentityScopedPolicy(CommonThirdPartyCatalogPolicy)
 }

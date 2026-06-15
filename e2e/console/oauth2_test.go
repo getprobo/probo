@@ -65,6 +65,7 @@ func TestOAuth2_Discovery(t *testing.T) {
 	assert.Contains(t, discovery.ScopesSupported, "profile")
 	assert.Contains(t, discovery.ScopesSupported, "email")
 	assert.Contains(t, discovery.ScopesSupported, "offline_access")
+	assert.Contains(t, discovery.ScopesSupported, "v1:document:read")
 
 	assert.Contains(t, discovery.ResponseTypesSupported, "code")
 	assert.Contains(t, discovery.CodeChallengeMethodsSupported, "S256")
@@ -95,6 +96,46 @@ func TestOAuth2_Discovery(t *testing.T) {
 	assert.Contains(t, discovery.ClaimsSupported, "email")
 	assert.Contains(t, discovery.ClaimsSupported, "email_verified")
 	assert.Contains(t, discovery.ClaimsSupported, "name")
+}
+
+func TestOAuth2_ProtectedResourceMetadata(t *testing.T) {
+	t.Parallel()
+
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+
+	metadata, raw, err := testutil.OAuth2ProtectedResourceMetadata(owner)
+	require.NoError(t, err)
+	require.Equal(t, http.StatusOK, raw.StatusCode)
+	require.NotNil(t, metadata)
+
+	expectedResource := owner.BaseURL()
+	assert.Equal(t, expectedResource, metadata.Resource)
+	assert.Contains(t, metadata.AuthorizationServers, expectedResource)
+	assert.Contains(t, metadata.BearerMethodsSupported, "header")
+	assert.Contains(t, metadata.ScopesSupported, "openid")
+	assert.Contains(t, metadata.ScopesSupported, "v1:document:read")
+	assert.NotContains(t, metadata.ScopesSupported, "profile")
+}
+
+func TestOAuth2_RegisterClientWithAPIScope(t *testing.T) {
+	t.Parallel()
+
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+
+	resp, raw, err := testutil.OAuth2RegisterClient(owner, map[string]any{
+		"organization_id":            owner.GetOrganizationID().String(),
+		"client_name":                "API scope client",
+		"visibility":                 "private",
+		"redirect_uris":              []string{"http://localhost:9999/callback"},
+		"grant_types":                []string{"authorization_code"},
+		"response_types":             []string{"code"},
+		"token_endpoint_auth_method": "client_secret_basic",
+		"scopes":                     "openid v1:document:read",
+	})
+	require.NoError(t, err)
+	require.Equal(t, http.StatusCreated, raw.StatusCode)
+	require.NotNil(t, resp)
+	assert.Contains(t, resp.Scopes, "v1:document:read")
 }
 
 func TestOAuth2_JWKS(t *testing.T) {

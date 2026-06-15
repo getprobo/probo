@@ -35,7 +35,7 @@ func NewAuthorizeFunc(logger *log.Logger) authz.AuthorizeFunc {
 	return func(
 		ctx context.Context,
 		objectID gid.GID,
-		action string,
+		action iam.Action,
 		options ...authz.AuthorizeFuncOption,
 	) (*coredata.Scope, error) {
 		loaders := FromContext(ctx)
@@ -63,6 +63,10 @@ func NewAuthorizeFunc(logger *log.Logger) authz.AuthorizeFunc {
 			}
 
 			if _, ok := errors.AsType[*iam.ErrInsufficientPermissions](err); ok {
+				return nil, gqlutils.Forbidden(ctx, err)
+			}
+
+			if _, ok := errors.AsType[*iam.ErrInsufficientOAuth2Scope](err); ok {
 				return nil, gqlutils.Forbidden(ctx, err)
 			}
 

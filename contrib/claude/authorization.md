@@ -255,6 +255,9 @@ and `r.AuthorizeBatch` (MCP) — keep the returned scope and pass it down.
 | IAM role policies (`IAMPolicySet`) | `pkg/iam/iam_policies.go` |
 | Authorizer + `AuthorizationAttributer` | `pkg/iam/authorizer.go` |
 | PolicySet registration | `pkg/iam/policy_set.go` |
+| OAuth2 scope mappings (`ScopeSet`) | `pkg/iam/scope_set.go` |
+| OAuth2 scope constants (per domain) | `pkg/<service>/oauth2_scopes.go` |
+| OAuth2 discovery + request context | `pkg/iam/oauth2/` |
 | GraphQL authz helper | `pkg/server/api/authz/authorization.go` |
 | MCP authz + recovery | `pkg/server/api/mcp/v1/resolver.go`, `mcputils/recovery.go` |
 
@@ -272,6 +275,14 @@ const (
 )
 ```
 
+## OAuth2 API scopes
+
+OAuth2 scopes for API access are defined as `coredata.OAuth2Scope` constants in each owning package (for example `pkg/probo/oauth2_scopes.go`, `pkg/iam/oauth2_scopes.go`). `pkg/coredata/oauth2_scope.go` defines the persistence type. Standard OIDC scopes live in `pkg/iam/oauth2/scope.go`. Register scope sets with `Authorizer.RegisterScopes`.
+
+**Enforcement:** OAuth2 bearer-token requests carry the validated access token on the request context (`pkg/iam/oauth2/request_context.go`). Before IAM policy evaluation, `iam.Authorizer` checks registered `iam.ScopeSet` mappings via `ScopeSet.Allows` (`RegisterScopes`, same composition model as `RegisterPolicySet`). Each domain package exports an `OAuth2ScopeSet()` (or `IAMOAuth2ScopeSet()` in `pkg/iam`) and registers it at service startup. The check uses explicit scope→action lists — no `:read` / `:get` heuristics at enforcement time. Session, personal API key, and SCIM auth skip the check (no access token on context). Unmapped IAM actions **deny** OAuth requests (fail closed). Enforcement reads scopes from the access token directly.
+
+To add a new OAuth surface for OAuth clients: add namespace-level scope constants in the owning package's `oauth2_scopes.go`, map IAM actions in that package's `OAuth2ScopeSet()`, and register the set on the authorizer at service startup. Write scopes are registered only when their mutating IAM actions are mapped.
+
 ## Built-in role policies
 
 | Role | Access level |
@@ -281,6 +292,26 @@ const (
 | `VIEWER` | Read-only access to most entities |
 | `AUDITOR` | Read-only, excludes internal/employee content |
 | `EMPLOYEE` | Can sign documents and view internal content |
+
+## OAuth2 API scopes
+
+OAuth2 scopes for API access are defined as `coredata.OAuth2Scope` constants in each owning package (for example [`pkg/probo/oauth2_scopes.go`](../../pkg/probo/oauth2_scopes.go), [`pkg/iam/oauth2_scopes.go`](../../pkg/iam/oauth2_scopes.go)). [`pkg/coredata/oauth2_scope.go`](../../pkg/coredata/oauth2_scope.go) defines the persistence type. Standard OIDC scopes live in [`pkg/iam/oauth2/scope.go`](../../pkg/iam/oauth2/scope.go). Register scope sets with `Authorizer.RegisterScopes`; discovery scopes are derived from each `ScopeSet` automatically.
+
+**Format:**
+
+- Read: `v1:<namespace>:read` (e.g. `v1:privacy:read`, `v1:document:read`, `v1:org:read`)
+- Write / full: `v1:<namespace>` without the `:read` suffix (e.g. `v1:org`, `v1:connector`, `v1:agent`)
+
+Scopes are namespace- or product-level only — no resource segments (e.g. `v1:privacy:dpia` is not supported).
+
+**Discovery:**
+
+- Authorization server (RFC 8414): `scopes_supported` on `/.well-known/oauth-authorization-server` lists OIDC + all API scopes; `protected_resources` links to the resource metadata document
+- Protected resource (RFC 9728): `scopes_supported` on `/.well-known/oauth-protected-resource` lists `openid` plus API scopes
+
+**Enforcement:** OAuth2 bearer-token requests carry the validated access token on the request context (`pkg/iam/oauth2/request_context.go`). Before IAM policy evaluation, `iam.Authorizer` runs an OAuth2 scope gate built from registered `iam.ScopeSet` mappings (`RegisterScopes`, same composition model as `RegisterPolicySet`). Each domain package exports an `OAuth2ScopeSet()` (or `IAMOAuth2ScopeSet()` in `pkg/iam`) and registers it at service startup. The gate uses explicit scope→action lists — no `:read` / `:get` heuristics at enforcement time. Session, personal API key, and SCIM auth skip the gate (no access token on context). Unmapped IAM actions **deny** OAuth requests (fail closed). Enforcement reads scopes from the access token directly.
+
+Add new namespace-level scope constants in the owning package's `oauth2_scopes.go`, map their IAM actions in that package's `OAuth2ScopeSet()`, and register that set on the authorizer when the surface is ready for OAuth clients. Write scopes are registered only when their mutating IAM actions are mapped.
 
 ## New entity IAM wiring
 

@@ -12,7 +12,7 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package oauth2server_test
+package oauth2_test
 
 import (
 	"crypto/sha256"
@@ -22,7 +22,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.probo.inc/probo/pkg/coredata"
-	"go.probo.inc/probo/pkg/iam/oauth2server"
+	"go.probo.inc/probo/pkg/iam/oauth2"
 )
 
 func computeS256Challenge(verifier string) string {
@@ -41,7 +41,7 @@ func TestValidateCodeChallenge(t *testing.T) {
 		func(t *testing.T) {
 			t.Parallel()
 
-			result := oauth2server.ValidateCodeChallenge(
+			result := oauth2.ValidateCodeChallenge(
 				verifier,
 				challenge,
 				coredata.OAuth2CodeChallengeMethodS256,
@@ -56,7 +56,7 @@ func TestValidateCodeChallenge(t *testing.T) {
 		func(t *testing.T) {
 			t.Parallel()
 
-			result := oauth2server.ValidateCodeChallenge(
+			result := oauth2.ValidateCodeChallenge(
 				"wrong-verifier",
 				challenge,
 				coredata.OAuth2CodeChallengeMethodS256,
@@ -71,7 +71,7 @@ func TestValidateCodeChallenge(t *testing.T) {
 		func(t *testing.T) {
 			t.Parallel()
 
-			result := oauth2server.ValidateCodeChallenge(
+			result := oauth2.ValidateCodeChallenge(
 				verifier,
 				"wrong-challenge",
 				coredata.OAuth2CodeChallengeMethodS256,
@@ -86,7 +86,7 @@ func TestValidateCodeChallenge(t *testing.T) {
 		func(t *testing.T) {
 			t.Parallel()
 
-			result := oauth2server.ValidateCodeChallenge(
+			result := oauth2.ValidateCodeChallenge(
 				verifier,
 				challenge,
 				coredata.OAuth2CodeChallengeMethod("plain"),
@@ -101,7 +101,7 @@ func TestValidateCodeChallenge(t *testing.T) {
 		func(t *testing.T) {
 			t.Parallel()
 
-			result := oauth2server.ValidateCodeChallenge(
+			result := oauth2.ValidateCodeChallenge(
 				verifier,
 				challenge,
 				coredata.OAuth2CodeChallengeMethod(""),
@@ -116,7 +116,7 @@ func TestValidateCodeChallenge(t *testing.T) {
 		func(t *testing.T) {
 			t.Parallel()
 
-			result := oauth2server.ValidateCodeChallenge(
+			result := oauth2.ValidateCodeChallenge(
 				"",
 				challenge,
 				coredata.OAuth2CodeChallengeMethodS256,
@@ -131,7 +131,7 @@ func TestValidateCodeChallenge(t *testing.T) {
 		func(t *testing.T) {
 			t.Parallel()
 
-			result := oauth2server.ValidateCodeChallenge(
+			result := oauth2.ValidateCodeChallenge(
 				verifier,
 				"",
 				coredata.OAuth2CodeChallengeMethodS256,
@@ -146,7 +146,7 @@ func TestValidateCodeChallenge(t *testing.T) {
 		func(t *testing.T) {
 			t.Parallel()
 
-			result := oauth2server.ValidateCodeChallenge(
+			result := oauth2.ValidateCodeChallenge(
 				"",
 				"",
 				coredata.OAuth2CodeChallengeMethodS256,

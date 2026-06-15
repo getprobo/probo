@@ -12,7 +12,7 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package oauth2server_test
+package oauth2_test
 
 import (
 	"crypto/sha256"
@@ -24,7 +24,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
-	"go.probo.inc/probo/pkg/iam/oauth2server"
+	"go.probo.inc/probo/pkg/iam/oauth2"
 	"go.probo.inc/probo/pkg/uri"
 )
 
@@ -42,7 +42,7 @@ func TestComputeAtHash(t *testing.T) {
 			h := sha256.Sum256([]byte(accessToken))
 			expected := base64.RawURLEncoding.EncodeToString(h[:16])
 
-			result := oauth2server.ComputeAtHash(accessToken)
+			result := oauth2.ComputeAtHash(accessToken)
 			assert.Equal(t, expected, result)
 		},
 	)
@@ -52,8 +52,8 @@ func TestComputeAtHash(t *testing.T) {
 		func(t *testing.T) {
 			t.Parallel()
 
-			hash1 := oauth2server.ComputeAtHash("token-a")
-			hash2 := oauth2server.ComputeAtHash("token-b")
+			hash1 := oauth2.ComputeAtHash("token-a")
+			hash2 := oauth2.ComputeAtHash("token-b")
 			assert.NotEqual(t, hash1, hash2)
 		},
 	)
@@ -63,7 +63,7 @@ func TestComputeAtHash(t *testing.T) {
 		func(t *testing.T) {
 			t.Parallel()
 
-			result := oauth2server.ComputeAtHash("")
+			result := oauth2.ComputeAtHash("")
 			assert.NotEmpty(t, result)
 		},
 	)
@@ -73,8 +73,8 @@ func TestComputeAtHash(t *testing.T) {
 		func(t *testing.T) {
 			t.Parallel()
 
-			hash1 := oauth2server.ComputeAtHash("same-token")
-			hash2 := oauth2server.ComputeAtHash("same-token")
+			hash1 := oauth2.ComputeAtHash("same-token")
+			hash2 := oauth2.ComputeAtHash("same-token")
 			assert.Equal(t, hash1, hash2)
 		},
 	)
@@ -92,12 +92,12 @@ func TestNewIDTokenClaims(t *testing.T) {
 		func(t *testing.T) {
 			t.Parallel()
 
-			claims := oauth2server.NewIDTokenClaims(
+			claims := oauth2.NewIDTokenClaims(
 				testIssuer,
 				identityID,
 				clientID,
 				authTime,
-				coredata.OAuth2Scopes{coredata.OAuth2ScopeOpenID},
+				coredata.OAuth2Scopes{oauth2.ScopeOpenID},
 				"",
 				"",
 				"user@example.com",
@@ -123,12 +123,12 @@ func TestNewIDTokenClaims(t *testing.T) {
 		func(t *testing.T) {
 			t.Parallel()
 
-			claims := oauth2server.NewIDTokenClaims(
+			claims := oauth2.NewIDTokenClaims(
 				testIssuer,
 				identityID,
 				clientID,
 				authTime,
-				coredata.OAuth2Scopes{coredata.OAuth2ScopeOpenID},
+				coredata.OAuth2Scopes{oauth2.ScopeOpenID},
 				"test-nonce",
 				"",
 				"",
@@ -146,12 +146,12 @@ func TestNewIDTokenClaims(t *testing.T) {
 		func(t *testing.T) {
 			t.Parallel()
 
-			claims := oauth2server.NewIDTokenClaims(
+			claims := oauth2.NewIDTokenClaims(
 				testIssuer,
 				identityID,
 				clientID,
 				authTime,
-				coredata.OAuth2Scopes{coredata.OAuth2ScopeOpenID},
+				coredata.OAuth2Scopes{oauth2.ScopeOpenID},
 				"",
 				"access-token-123",
 				"",
@@ -160,7 +160,7 @@ func TestNewIDTokenClaims(t *testing.T) {
 				1*time.Hour,
 			)
 
-			expected := oauth2server.ComputeAtHash("access-token-123")
+			expected := oauth2.ComputeAtHash("access-token-123")
 			assert.Equal(t, expected, claims.AtHash)
 		},
 	)
@@ -170,12 +170,12 @@ func TestNewIDTokenClaims(t *testing.T) {
 		func(t *testing.T) {
 			t.Parallel()
 
-			claims := oauth2server.NewIDTokenClaims(
+			claims := oauth2.NewIDTokenClaims(
 				testIssuer,
 				identityID,
 				clientID,
 				authTime,
-				coredata.OAuth2Scopes{coredata.OAuth2ScopeOpenID, coredata.OAuth2ScopeEmail},
+				coredata.OAuth2Scopes{oauth2.ScopeOpenID, oauth2.ScopeEmail},
 				"",
 				"",
 				"user@example.com",
@@ -195,12 +195,12 @@ func TestNewIDTokenClaims(t *testing.T) {
 		func(t *testing.T) {
 			t.Parallel()
 
-			claims := oauth2server.NewIDTokenClaims(
+			claims := oauth2.NewIDTokenClaims(
 				testIssuer,
 				identityID,
 				clientID,
 				authTime,
-				coredata.OAuth2Scopes{coredata.OAuth2ScopeOpenID, coredata.OAuth2ScopeProfile},
+				coredata.OAuth2Scopes{oauth2.ScopeOpenID, oauth2.ScopeProfile},
 				"",
 				"",
 				"",
@@ -218,15 +218,15 @@ func TestNewIDTokenClaims(t *testing.T) {
 		func(t *testing.T) {
 			t.Parallel()
 
-			claims := oauth2server.NewIDTokenClaims(
+			claims := oauth2.NewIDTokenClaims(
 				testIssuer,
 				identityID,
 				clientID,
 				authTime,
 				coredata.OAuth2Scopes{
-					coredata.OAuth2ScopeOpenID,
-					coredata.OAuth2ScopeEmail,
-					coredata.OAuth2ScopeProfile,
+					oauth2.ScopeOpenID,
+					oauth2.ScopeEmail,
+					oauth2.ScopeProfile,
 				},
 				"nonce-val",
 				"access-token",
@@ -252,12 +252,12 @@ func TestNewIDTokenClaims(t *testing.T) {
 
 			ttl := 2 * time.Hour
 			before := time.Now()
-			claims := oauth2server.NewIDTokenClaims(
+			claims := oauth2.NewIDTokenClaims(
 				testIssuer,
 				identityID,
 				clientID,
 				authTime,
-				coredata.OAuth2Scopes{coredata.OAuth2ScopeOpenID},
+				coredata.OAuth2Scopes{oauth2.ScopeOpenID},
 				"",
 				"",
 				"",
@@ -279,12 +279,12 @@ func TestNewIDTokenClaims(t *testing.T) {
 		func(t *testing.T) {
 			t.Parallel()
 
-			claims := oauth2server.NewIDTokenClaims(
+			claims := oauth2.NewIDTokenClaims(
 				testIssuer,
 				identityID,
 				clientID,
 				authTime,
-				coredata.OAuth2Scopes{coredata.OAuth2ScopeOpenID, coredata.OAuth2ScopeEmail},
+				coredata.OAuth2Scopes{oauth2.ScopeOpenID, oauth2.ScopeEmail},
 				"",
 				"",
 				"user@example.com",

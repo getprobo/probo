@@ -22,7 +22,7 @@ import (
 	"go.probo.inc/probo/pkg/connector"
 )
 
-// oauthClientMetadata is the OAuth Client ID Metadata Document (CIMD)
+// oauth2ClientMetadata is the OAuth2 Client ID Metadata Document (CIMD)
 // published for public-client connectors. The deployment's
 // (baseURL + CIMDMetadataPath) URL is the OAuth client_id; providers such as
 // PostHog fetch this document server-to-server during authorization to learn
@@ -37,7 +37,7 @@ const (
 	proboLogoURI  = "https://www.probo.com/probo-logo-only.svg"
 )
 
-type oauthClientMetadata struct {
+type oauth2ClientMetadata struct {
 	ClientID                string   `json:"client_id"`
 	ClientName              string   `json:"client_name"`
 	ClientURI               string   `json:"client_uri"`
@@ -48,11 +48,11 @@ type oauthClientMetadata struct {
 	ResponseTypes           []string `json:"response_types"`
 }
 
-// handleConnectorOAuthClientMetadata serves the public, unauthenticated CIMD
-// document. It is intentionally outside the auth middleware group: the OAuth
+// handleConnectorOAuth2ClientMetadata serves the public, unauthenticated CIMD
+// document. It is intentionally outside the auth middleware group: the OAuth2
 // provider fetches it without any Probo credentials.
-func handleConnectorOAuthClientMetadata(baseURL *baseurl.BaseURL) http.HandlerFunc {
-	doc := oauthClientMetadata{
+func handleConnectorOAuth2ClientMetadata(baseURL *baseurl.BaseURL) http.HandlerFunc {
+	doc := oauth2ClientMetadata{
 		ClientID:                baseURL.WithPath(connector.CIMDMetadataPath).MustString(),
 		ClientName:              "Probo",
 		ClientURI:               proboBrandURI,

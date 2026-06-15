@@ -12,23 +12,27 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package oauth2server_test
+package oauth2_test
 
 import (
+	"slices"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.probo.inc/probo/pkg/coredata"
-	"go.probo.inc/probo/pkg/iam/oauth2server"
+	"go.probo.inc/probo/pkg/iam/oauth2"
+	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/uri"
 )
 
 func TestNewMetadata(t *testing.T) {
 	t.Parallel()
 
+	apiScopes := []coredata.OAuth2Scope{probo.ScopeV1DocumentRead}
+
 	issuer := uri.URI("https://auth.example.com")
-	endpoints := oauth2server.Endpoints{
+	endpoints := oauth2.Endpoints{
 		Authorization:       "https://auth.example.com/authorize",
 		Token:               "https://auth.example.com/token",
 		Userinfo:            "https://auth.example.com/userinfo",
@@ -39,7 +43,7 @@ func TestNewMetadata(t *testing.T) {
 		DeviceAuthorization: "https://auth.example.com/device",
 	}
 
-	metadata := oauth2server.NewMetadata(issuer, endpoints)
+	metadata := oauth2.NewMetadata(issuer, endpoints, apiScopes)
 	require.NotNil(t, metadata)
 
 	t.Run(
@@ -72,16 +76,28 @@ func TestNewMetadata(t *testing.T) {
 		func(t *testing.T) {
 			t.Parallel()
 
-			assert.Equal(
-				t,
+			expectedScopes := slices.Concat(
 				[]coredata.OAuth2Scope{
-					coredata.OAuth2ScopeOpenID,
-					coredata.OAuth2ScopeProfile,
-					coredata.OAuth2ScopeEmail,
-					coredata.OAuth2ScopeOfflineAccess,
+					oauth2.ScopeOpenID,
+					oauth2.ScopeProfile,
+					oauth2.ScopeEmail,
+					oauth2.ScopeOfflineAccess,
 				},
-				metadata.ScopesSupported,
+				apiScopes,
 			)
+
+			assert.Equal(t, expectedScopes, metadata.ScopesSupported)
+			assert.Contains(t, metadata.ScopesSupported, oauth2.ScopeOpenID)
+			assert.Contains(t, metadata.ScopesSupported, probo.ScopeV1DocumentRead)
+		},
+	)
+
+	t.Run(
+		"protected resources",
+		func(t *testing.T) {
+			t.Parallel()
+
+			assert.Equal(t, []uri.URI{issuer}, metadata.ProtectedResources)
 		},
 	)
 

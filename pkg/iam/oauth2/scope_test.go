@@ -12,16 +12,17 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package coredata_test
+package oauth2_test
 
 import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/iam/oauth2"
 )
 
-func TestOAuth2Scope_IsValid(t *testing.T) {
+func TestIsValid(t *testing.T) {
 	t.Parallel()
 
 	t.Run(
@@ -29,7 +30,7 @@ func TestOAuth2Scope_IsValid(t *testing.T) {
 		func(t *testing.T) {
 			t.Parallel()
 
-			assert.True(t, coredata.OAuth2ScopeOfflineAccess.IsValid())
+			assert.True(t, oauth2.IsValid(oauth2.ScopeOfflineAccess))
 		},
 	)
 
@@ -38,12 +39,12 @@ func TestOAuth2Scope_IsValid(t *testing.T) {
 		func(t *testing.T) {
 			t.Parallel()
 
-			assert.False(t, coredata.OAuth2Scope("admin").IsValid())
+			assert.False(t, oauth2.IsValid(coredata.OAuth2Scope("admin")))
 		},
 	)
 }
 
-func TestOAuth2Scope_UnmarshalText(t *testing.T) {
+func TestUnmarshalScope(t *testing.T) {
 	t.Parallel()
 
 	t.Run(
@@ -51,11 +52,9 @@ func TestOAuth2Scope_UnmarshalText(t *testing.T) {
 		func(t *testing.T) {
 			t.Parallel()
 
-			var scope coredata.OAuth2Scope
-
-			err := scope.UnmarshalText([]byte("offline_access"))
+			scope, err := oauth2.UnmarshalScope([]byte("offline_access"))
 			assert.NoError(t, err)
-			assert.Equal(t, coredata.OAuth2ScopeOfflineAccess, scope)
+			assert.Equal(t, oauth2.ScopeOfflineAccess, scope)
 		},
 	)
 
@@ -64,15 +63,13 @@ func TestOAuth2Scope_UnmarshalText(t *testing.T) {
 		func(t *testing.T) {
 			t.Parallel()
 
-			var scope coredata.OAuth2Scope
-
-			err := scope.UnmarshalText([]byte("admin"))
+			_, err := oauth2.UnmarshalScope([]byte("admin"))
 			assert.Error(t, err)
 		},
 	)
 }
 
-func TestOAuth2Scopes_Contains(t *testing.T) {
+func TestOAuth2ScopesContains(t *testing.T) {
 	t.Parallel()
 
 	t.Run(
@@ -81,10 +78,10 @@ func TestOAuth2Scopes_Contains(t *testing.T) {
 			t.Parallel()
 
 			scopes := coredata.OAuth2Scopes{
-				coredata.OAuth2ScopeOpenID,
-				coredata.OAuth2ScopeOfflineAccess,
+				oauth2.ScopeOpenID,
+				oauth2.ScopeOfflineAccess,
 			}
-			assert.True(t, scopes.Contains(coredata.OAuth2ScopeOfflineAccess))
+			assert.True(t, scopes.Contains(oauth2.ScopeOfflineAccess))
 		},
 	)
 
@@ -94,20 +91,20 @@ func TestOAuth2Scopes_Contains(t *testing.T) {
 			t.Parallel()
 
 			scopes := coredata.OAuth2Scopes{
-				coredata.OAuth2ScopeOpenID,
-				coredata.OAuth2ScopeProfile,
+				oauth2.ScopeOpenID,
+				oauth2.ScopeProfile,
 			}
-			assert.False(t, scopes.Contains(coredata.OAuth2ScopeOfflineAccess))
+			assert.False(t, scopes.Contains(oauth2.ScopeOfflineAccess))
 		},
 	)
 }
 
-func TestOAuth2Scopes_OrDefault(t *testing.T) {
+func TestOAuth2ScopesOrDefault(t *testing.T) {
 	t.Parallel()
 
 	defaultScopes := coredata.OAuth2Scopes{
-		coredata.OAuth2ScopeOpenID,
-		coredata.OAuth2ScopeProfile,
+		oauth2.ScopeOpenID,
+		oauth2.ScopeProfile,
 	}
 
 	t.Run(
@@ -138,7 +135,7 @@ func TestOAuth2Scopes_OrDefault(t *testing.T) {
 		func(t *testing.T) {
 			t.Parallel()
 
-			scopes := coredata.OAuth2Scopes{coredata.OAuth2ScopeEmail}
+			scopes := coredata.OAuth2Scopes{oauth2.ScopeEmail}
 			result := scopes.OrDefault(defaultScopes)
 			assert.Equal(t, scopes, result)
 		},

@@ -16,7 +16,7 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
-	"go.probo.inc/probo/pkg/iam/oauth2server"
+	"go.probo.inc/probo/pkg/iam/oauth2"
 	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/connect/v1/schema"
@@ -176,7 +176,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			return nil, gqlutils.NotFound(ctx, err)
 		}
 
-		if oauthErr, ok := errors.AsType[*oauth2server.OAuth2Error](err); ok {
+		if oauthErr, ok := errors.AsType[*oauth2.OAuth2Error](err); ok {
 			return nil, gqlutils.Invalidf(ctx, "%s", oauthErr.Description())
 		}
 

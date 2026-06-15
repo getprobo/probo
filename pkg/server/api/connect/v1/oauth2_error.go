@@ -21,7 +21,7 @@ import (
 
 	"go.gearno.de/kit/httpserver"
 	"go.gearno.de/kit/log"
-	"go.probo.inc/probo/pkg/iam/oauth2server"
+	"go.probo.inc/probo/pkg/iam/oauth2"
 	"go.probo.inc/probo/pkg/server/api/connect/v1/types"
 )
 
@@ -35,13 +35,13 @@ func (h *OAuth2Handler) handleAuthorizeError(w http.ResponseWriter, r *http.Requ
 }
 
 func (h *OAuth2Handler) renderOAuth2ErrorResponse(w http.ResponseWriter, r *http.Request, err error) {
-	oauthErr, ok := errors.AsType[*oauth2server.OAuth2Error](err)
+	oauthErr, ok := errors.AsType[*oauth2.OAuth2Error](err)
 	if !ok {
 		httpserver.RenderError(w, http.StatusInternalServerError, err)
 		return
 	}
 
-	if errors.Is(err, oauth2server.ErrServerError) {
+	if errors.Is(err, oauth2.ErrServerError) {
 		h.logger.ErrorCtx(r.Context(), "oauth2 server error", log.Error(err))
 	}
 
@@ -54,15 +54,15 @@ func (h *OAuth2Handler) renderOAuth2ErrorResponse(w http.ResponseWriter, r *http
 }
 
 func isRedirectableError(err error) bool {
-	return errors.Is(err, oauth2server.ErrAccessDenied) ||
-		errors.Is(err, oauth2server.ErrInvalidRequest) ||
-		errors.Is(err, oauth2server.ErrInvalidScope) ||
-		errors.Is(err, oauth2server.ErrUnauthorizedClient) ||
-		errors.Is(err, oauth2server.ErrInvalidGrant) ||
-		errors.Is(err, oauth2server.ErrUnsupportedGrantType)
+	return errors.Is(err, oauth2.ErrAccessDenied) ||
+		errors.Is(err, oauth2.ErrInvalidRequest) ||
+		errors.Is(err, oauth2.ErrInvalidScope) ||
+		errors.Is(err, oauth2.ErrUnauthorizedClient) ||
+		errors.Is(err, oauth2.ErrInvalidGrant) ||
+		errors.Is(err, oauth2.ErrUnsupportedGrantType)
 }
 
-func oauth2ErrorStatusCode(err *oauth2server.OAuth2Error) int {
+func oauth2ErrorStatusCode(err *oauth2.OAuth2Error) int {
 	switch err.ErrorCode() {
 	case "access_denied":
 		return http.StatusForbidden
@@ -75,22 +75,22 @@ func oauth2ErrorStatusCode(err *oauth2server.OAuth2Error) int {
 	}
 }
 
-func toOAuth2Error(err error) *oauth2server.OAuth2Error {
+func toOAuth2Error(err error) *oauth2.OAuth2Error {
 	switch {
-	case errors.Is(err, oauth2server.ErrClientNotFound):
-		return oauth2server.NewError(oauth2server.ErrInvalidClient, oauth2server.WithDescription("client not found"))
-	case errors.Is(err, oauth2server.ErrInvalidRedirectURI):
-		return oauth2server.ErrInvalidRedirectURI
-	case errors.Is(err, oauth2server.ErrUnauthorizedMember):
-		return oauth2server.NewError(oauth2server.ErrUnauthorizedClient, oauth2server.WithDescription("client is private and user is not a member of the organization"))
-	case errors.Is(err, oauth2server.ErrDeviceCodeNotPending):
-		return oauth2server.NewError(oauth2server.ErrInvalidGrant, oauth2server.WithDescription("device code is not pending"))
+	case errors.Is(err, oauth2.ErrClientNotFound):
+		return oauth2.NewError(oauth2.ErrInvalidClient, oauth2.WithDescription("client not found"))
+	case errors.Is(err, oauth2.ErrInvalidRedirectURI):
+		return oauth2.ErrInvalidRedirectURI
+	case errors.Is(err, oauth2.ErrUnauthorizedMember):
+		return oauth2.NewError(oauth2.ErrUnauthorizedClient, oauth2.WithDescription("client is private and user is not a member of the organization"))
+	case errors.Is(err, oauth2.ErrDeviceCodeNotPending):
+		return oauth2.NewError(oauth2.ErrInvalidGrant, oauth2.WithDescription("device code is not pending"))
 	default:
-		if oauthErr, ok := errors.AsType[*oauth2server.OAuth2Error](err); ok {
+		if oauthErr, ok := errors.AsType[*oauth2.OAuth2Error](err); ok {
 			return oauthErr
 		}
 
-		return oauth2server.NewError(oauth2server.ErrServerError, oauth2server.WithDescription("internal error"))
+		return oauth2.NewError(oauth2.ErrServerError, oauth2.WithDescription("internal error"))
 	}
 }
 
@@ -101,7 +101,7 @@ func redirectWithError(w http.ResponseWriter, r *http.Request, redirectURI, stat
 		return
 	}
 
-	oauthErr, ok := errors.AsType[*oauth2server.OAuth2Error](err)
+	oauthErr, ok := errors.AsType[*oauth2.OAuth2Error](err)
 	if !ok {
 		httpserver.RenderError(w, http.StatusInternalServerError, errors.New("internal server error"))
 		return

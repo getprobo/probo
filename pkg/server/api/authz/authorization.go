@@ -28,9 +28,9 @@ import (
 
 type (
 	AuthorizeFuncOption      func(*iam.AuthorizeParams)
-	AuthorizeFunc            func(context.Context, gid.GID, string, ...AuthorizeFuncOption) (*coredata.Scope, error)
+	AuthorizeFunc            func(context.Context, gid.GID, iam.Action, ...AuthorizeFuncOption) (*coredata.Scope, error)
 	BatchAuthorizeFuncOption func(*iam.AuthorizeBatchParams)
-	BatchAuthorizeFunc       func(context.Context, string, []gid.GID, ...BatchAuthorizeFuncOption) (*coredata.Scope, error)
+	BatchAuthorizeFunc       func(context.Context, iam.Action, []gid.GID, ...BatchAuthorizeFuncOption) (*coredata.Scope, error)
 )
 
 func WithAttr(key, value string) AuthorizeFuncOption {
@@ -78,7 +78,7 @@ func NewAuthorizeFunc(
 	return func(
 		ctx context.Context,
 		objectID gid.GID,
-		action string,
+		action iam.Action,
 		options ...AuthorizeFuncOption,
 	) (*coredata.Scope, error) {
 		identity := authn.IdentityFromContext(ctx)
@@ -108,6 +108,10 @@ func NewAuthorizeFunc(
 				return nil, gqlutils.Forbidden(ctx, err)
 			}
 
+			if _, ok := errors.AsType[*iam.ErrInsufficientOAuth2Scope](err); ok {
+				return nil, gqlutils.Forbidden(ctx, err)
+			}
+
 			if errors.Is(err, coredata.ErrResourceNotFound) {
 				return nil, gqlutils.NotFoundf(ctx, "resource not found")
 			}
@@ -127,7 +131,7 @@ func NewBatchAuthorizeFunc(
 ) BatchAuthorizeFunc {
 	return func(
 		ctx context.Context,
-		action string,
+		action iam.Action,
 		objectIDs []gid.GID,
 		options ...BatchAuthorizeFuncOption,
 	) (*coredata.Scope, error) {
@@ -155,6 +159,10 @@ func NewBatchAuthorizeFunc(
 			}
 
 			if _, ok := errors.AsType[*iam.ErrInsufficientPermissions](err); ok {
+				return nil, gqlutils.Forbidden(ctx, err)
+			}
+
+			if _, ok := errors.AsType[*iam.ErrInsufficientOAuth2Scope](err); ok {
 				return nil, gqlutils.Forbidden(ctx, err)
 			}
 

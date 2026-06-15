@@ -12,7 +12,7 @@ import (
 	"strings"
 
 	"go.gearno.de/kit/log"
-	"go.probo.inc/probo/pkg/iam/oauth2server"
+	"go.probo.inc/probo/pkg/iam/oauth2"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/connect/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/connect/v1/types"
@@ -39,13 +39,13 @@ func (r *mutationResolver) AuthorizeDevice(ctx context.Context, input types.Auth
 
 	err := r.iam.OAuth2ServerService.AuthorizeDevice(ctx, identity.ID, session.ID, userCode)
 	if err != nil {
-		if consentErr, ok := errors.AsType[*oauth2server.ConsentRequiredError](err); ok {
+		if consentErr, ok := errors.AsType[*oauth2.ConsentRequiredError](err); ok {
 			return &types.AuthorizeDevicePayload{
 				ConsentID: &consentErr.ConsentID,
 			}, nil
 		}
 
-		if oauthErr, ok := errors.AsType[*oauth2server.OAuth2Error](err); ok {
+		if oauthErr, ok := errors.AsType[*oauth2.OAuth2Error](err); ok {
 			return nil, gqlutils.Invalidf(ctx, "%s", oauthErr.Description())
 		}
 
@@ -66,7 +66,7 @@ func (r *mutationResolver) ApproveConsent(ctx context.Context, input types.Appro
 
 	result, err := r.iam.OAuth2ServerService.ApproveConsent(
 		ctx,
-		&oauth2server.ConsentApprovalRequest{
+		&oauth2.ConsentApprovalRequest{
 			ConsentID:  input.ConsentID,
 			IdentityID: identity.ID,
 			SessionID:  session.ID,

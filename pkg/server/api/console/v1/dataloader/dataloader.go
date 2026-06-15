@@ -41,7 +41,7 @@ type (
 	// batch together.
 	AuthorizeKey struct {
 		ResourceID          gid.GID
-		Action              string
+		Action              iam.Action
 		ResourceAttributes  string
 		DryRun              bool
 		SkipAssumptionCheck bool

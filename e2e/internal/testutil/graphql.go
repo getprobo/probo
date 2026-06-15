@@ -22,6 +22,8 @@ import (
 	"mime/multipart"
 	"net/http"
 	"net/textproto"
+	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 )
@@ -34,6 +36,16 @@ type GraphQLRequest struct {
 type GraphQLResponse struct {
 	Data   json.RawMessage `json:"data"`
 	Errors []GraphQLError  `json:"errors,omitempty"`
+}
+
+// DataString returns the GraphQL data payload as JSON text. Absent and JSON null
+// responses both normalize to an empty string for assert.Empty checks.
+func (r *GraphQLResponse) DataString() string {
+	if len(r.Data) == 0 || string(r.Data) == "null" {
+		return ""
+	}
+
+	return string(r.Data)
 }
 
 type GraphQLError struct {
@@ -126,6 +138,68 @@ func (c *Client) DoConnect(query string, variables map[string]any) (*GraphQLResp
 	return c.doWithEndpoint("/api/connect/v1/graphql", query, variables)
 }
 
+// ConsoleGraphQLWithAccessToken posts to the console GraphQL endpoint using a
+// bearer access token and no session cookies.
+func ConsoleGraphQLWithAccessToken(
+	t testing.TB,
+	accessToken string,
+	query string,
+	variables map[string]any,
+) (*GraphQLResponse, error) {
+	t.Helper()
+
+	reqBody := GraphQLRequest{
+		Query:     query,
+		Variables: variables,
+	}
+
+	body, err := json.Marshal(reqBody)
+	if err != nil {
+		return nil, fmt.Errorf("cannot marshal request: %w", err)
+	}
+
+	req, err := http.NewRequest(
+		"POST",
+		GetBaseURL()+"/api/console/v1/graphql",
+		bytes.NewReader(body),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("cannot create request: %w", err)
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+accessToken)
+
+	client := &http.Client{Timeout: 30 * time.Second}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("request failed: %w", err)
+	}
+
+	defer func() { _ = resp.Body.Close() }()
+
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("cannot read response: %w", err)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("unexpected status %d: %s", resp.StatusCode, string(respBody))
+	}
+
+	var gqlResp GraphQLResponse
+	if err := json.Unmarshal(respBody, &gqlResp); err != nil {
+		return nil, fmt.Errorf("cannot decode response: %w", err)
+	}
+
+	if len(gqlResp.Errors) > 0 {
+		return &gqlResp, GraphQLErrors(gqlResp.Errors)
+	}
+
+	return &gqlResp, nil
+}
+
 func (c *Client) DoTrust(trustCenterID string, query string, variables map[string]any) (*GraphQLResponse, error) {
 	return c.doWithEndpoint(fmt.Sprintf("/trust/%s/api/trust/v1/graphql", trustCenterID), query, variables)
 }
@@ -136,7 +210,7 @@ func (c *Client) Execute(query string, variables map[string]any, result any) err
 		return err
 	}
 
-	if result != nil && resp.Data != nil {
+	if result != nil && resp.DataString() != "" {
 		if err := json.Unmarshal(resp.Data, result); err != nil {
 			return fmt.Errorf("cannot unmarshal data: %w", err)
 		}
@@ -151,7 +225,7 @@ func (c *Client) ExecuteConnect(query string, variables map[string]any, result a
 		return err
 	}
 
-	if result != nil && resp.Data != nil {
+	if result != nil && resp.DataString() != "" {
 		if err := json.Unmarshal(resp.Data, result); err != nil {
 			return fmt.Errorf("cannot unmarshal data: %w", err)
 		}
@@ -166,7 +240,7 @@ func (c *Client) ExecuteTrust(trustCenterID string, query string, variables map[
 		return err
 	}
 
-	if result != nil && resp.Data != nil {
+	if result != nil && resp.DataString() != "" {
 		if err := json.Unmarshal(resp.Data, result); err != nil {
 			return fmt.Errorf("cannot unmarshal data: %w", err)
 		}
@@ -318,7 +392,7 @@ func (c *Client) executeMultipart(endpoint string, query string, variables map[s
 		return GraphQLErrors(gqlResp.Errors)
 	}
 
-	if result != nil && gqlResp.Data != nil {
+	if result != nil && gqlResp.DataString() != "" {
 		if err := json.Unmarshal(gqlResp.Data, result); err != nil {
 			return fmt.Errorf("cannot unmarshal data: %w", err)
 		}

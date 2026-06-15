@@ -1230,6 +1230,33 @@ func CreateOAuth2Client(c *testutil.Client, attrs Attrs) OAuth2ClientResult {
 	}
 }
 
+func CreateOAuth2ClientWithAPIScopes(c *testutil.Client, scopes string, attrs Attrs) OAuth2ClientResult {
+	input := map[string]any{
+		"organization_id": c.GetOrganizationID().String(),
+		"client_name":     SafeName("OAuth2 API Client"),
+		"visibility":      "private",
+		"redirect_uris":   []string{"http://localhost:9999/callback"},
+		"grant_types": []string{
+			"authorization_code",
+			"refresh_token",
+		},
+		"response_types":             []string{"code"},
+		"token_endpoint_auth_method": "client_secret_basic",
+		"scopes":                     scopes,
+	}
+
+	maps.Copy(input, attrs)
+
+	resp, raw, err := testutil.OAuth2RegisterClient(c, input)
+	require.NoError(c.T, err, "OAuth2 API client registration failed")
+	require.NotNil(c.T, resp, "OAuth2 API client registration returned nil (status=%d body=%s)", raw.StatusCode, string(raw.Body))
+
+	return OAuth2ClientResult{
+		ClientID:     resp.ClientID,
+		ClientSecret: resp.ClientSecret,
+	}
+}
+
 func CreatePublicOAuth2Client(c *testutil.Client, attrs Attrs) OAuth2ClientResult {
 	input := map[string]any{
 		"organization_id": c.GetOrganizationID().String(),

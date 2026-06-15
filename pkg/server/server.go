@@ -34,7 +34,7 @@ import (
 	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/geoloc"
 	"go.probo.inc/probo/pkg/iam"
-	"go.probo.inc/probo/pkg/iam/oauth2server"
+	"go.probo.inc/probo/pkg/iam/oauth2"
 	"go.probo.inc/probo/pkg/mailman"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/riskmanagement"
@@ -155,6 +155,7 @@ func (s *Server) setupRoutes(baseURL string) {
 	// document at the issuer root under well-known paths.
 	s.router.Get("/.well-known/openid-configuration", s.oidcDiscoveryHandler)
 	s.router.Get("/.well-known/oauth-authorization-server", s.oidcDiscoveryHandler)
+	s.router.Get("/.well-known/oauth-protected-resource", s.protectedResourceMetadataHandler)
 
 	s.router.Mount("/api", http.StripPrefix("/api", s.apiServer))
 	s.router.Mount("/mail-actions", http.StripPrefix("/mail-actions", s.mailActionsHandler))
@@ -182,7 +183,7 @@ func (s *Server) setExtraHeaders(w http.ResponseWriter) {
 func (s *Server) oidcDiscoveryHandler(w http.ResponseWriter, r *http.Request) {
 	api := s.baseURL + "/api/connect/v1"
 
-	endpoints := oauth2server.Endpoints{
+	endpoints := oauth2.Endpoints{
 		Authorization:       uri.URI(api + "/oauth2/authorize"),
 		Token:               uri.URI(api + "/oauth2/token"),
 		Userinfo:            uri.URI(api + "/oauth2/userinfo"),
@@ -193,7 +194,15 @@ func (s *Server) oidcDiscoveryHandler(w http.ResponseWriter, r *http.Request) {
 		DeviceAuthorization: uri.URI(api + "/oauth2/device"),
 	}
 
-	metadata := s.iamService.OAuth2ServerService.Metadata(endpoints)
+	metadata := s.iamService.OAuth2ServerMetadata(endpoints)
+
+	w.Header().Set("Cache-Control", "public, max-age=3600")
+	httpserver.RenderJSON(w, http.StatusOK, metadata)
+}
+
+func (s *Server) protectedResourceMetadataHandler(w http.ResponseWriter, r *http.Request) {
+	resource := uri.URI(s.baseURL)
+	metadata := s.iamService.OAuth2ProtectedResourceMetadata(resource)
 
 	w.Header().Set("Cache-Control", "public, max-age=3600")
 	httpserver.RenderJSON(w, http.StatusOK, metadata)

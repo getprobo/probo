@@ -157,7 +157,18 @@ func (h *Handler) handleGetFile(w http.ResponseWriter, r *http.Request) {
 
 	scope, err := h.iamSvc.Authorizer.Authorize(ctx, params)
 	if err != nil {
+		if _, ok := errors.AsType[*iam.ErrInsufficientOAuth2Scope](err); ok {
+			jsonx.RenderForbidden(w)
+			return
+		}
+
+		if _, ok := errors.AsType[*iam.ErrInsufficientPermissions](err); ok {
+			jsonx.RenderForbidden(w)
+			return
+		}
+
 		jsonx.RenderNotFound(w, fmt.Errorf("file not found"))
+
 		return
 	}
 

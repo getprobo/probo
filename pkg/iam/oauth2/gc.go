@@ -12,7 +12,7 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package oauth2server
+package oauth2
 
 import (
 	"context"
@@ -45,11 +45,11 @@ func NewGarbageCollector(
 ) *GarbageCollector {
 	h := &gcHandler{
 		pg:     pgClient,
-		logger: logger.Named("oauth2server.garbage_collector"),
+		logger: logger.Named("oauth.garbage_collector"),
 	}
 
 	return worker.New(
-		"oauth2server.garbage_collector",
+		"oauth.garbage_collector",
 		h,
 		logger,
 		append(

@@ -94,9 +94,6 @@ const (
 	ActionOAuth2ConsentGet     = "iam:oauth2-consent:get"
 	ActionOAuth2ConsentApprove = "iam:oauth2-consent:approve"
 
-	// Connector actions
-	ActionConnectorGet = "iam:connector:get"
-
 	// Audit log entry actions
 	ActionAuditLogEntryGet  = "iam:audit-log-entry:get"
 	ActionAuditLogEntryList = "iam:audit-log-entry:list"

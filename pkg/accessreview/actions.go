@@ -42,4 +42,7 @@ const (
 	ActionSourceUpdate = "access-review:source:update"
 	ActionSourceDelete = "access-review:source:delete"
 	ActionSourceSync   = "access-review:source:sync"
+
+	// Driver catalog actions (global deployment-scoped catalog).
+	ActionDriverCatalogList = "access-review:driver-catalog:list"
 )

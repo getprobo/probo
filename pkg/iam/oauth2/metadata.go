@@ -12,9 +12,11 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package oauth2server
+package oauth2
 
 import (
+	"slices"
+
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/uri"
 )
@@ -33,6 +35,7 @@ type (
 		RevocationEndpoint                        uri.URI                                        `json:"revocation_endpoint"`
 		DeviceAuthorizationEndpoint               uri.URI                                        `json:"device_authorization_endpoint"`
 		ScopesSupported                           []coredata.OAuth2Scope                         `json:"scopes_supported"`
+		ProtectedResources                        []uri.URI                                      `json:"protected_resources,omitempty"`
 		ResponseTypesSupported                    []coredata.OAuth2ResponseType                  `json:"response_types_supported"`
 		GrantTypesSupported                       []coredata.OAuth2GrantType                     `json:"grant_types_supported"`
 		TokenEndpointAuthMethodsSupported         []coredata.OAuth2ClientTokenEndpointAuthMethod `json:"token_endpoint_auth_methods_supported"`
@@ -57,7 +60,7 @@ type (
 	}
 )
 
-func NewMetadata(issuer uri.URI, endpoints Endpoints) *ServerMetadata {
+func NewMetadata(issuer uri.URI, endpoints Endpoints, apiScopes []coredata.OAuth2Scope) *ServerMetadata {
 	return &ServerMetadata{
 		Issuer:                      issuer,
 		AuthorizationEndpoint:       endpoints.Authorization,
@@ -68,12 +71,16 @@ func NewMetadata(issuer uri.URI, endpoints Endpoints) *ServerMetadata {
 		IntrospectionEndpoint:       endpoints.Introspection,
 		RevocationEndpoint:          endpoints.Revocation,
 		DeviceAuthorizationEndpoint: endpoints.DeviceAuthorization,
-		ScopesSupported: []coredata.OAuth2Scope{
-			coredata.OAuth2ScopeOpenID,
-			coredata.OAuth2ScopeProfile,
-			coredata.OAuth2ScopeEmail,
-			coredata.OAuth2ScopeOfflineAccess,
-		},
+		ScopesSupported: slices.Concat(
+			[]coredata.OAuth2Scope{
+				ScopeOpenID,
+				ScopeProfile,
+				ScopeEmail,
+				ScopeOfflineAccess,
+			},
+			apiScopes,
+		),
+		ProtectedResources: []uri.URI{issuer},
 		ResponseTypesSupported: []coredata.OAuth2ResponseType{
 			coredata.OAuth2ResponseTypeCode,
 		},

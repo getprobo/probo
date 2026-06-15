@@ -60,7 +60,7 @@ import (
 	"go.probo.inc/probo/pkg/geoloc"
 	"go.probo.inc/probo/pkg/html2pdf"
 	"go.probo.inc/probo/pkg/iam"
-	"go.probo.inc/probo/pkg/iam/oauth2server"
+	"go.probo.inc/probo/pkg/iam/oauth2"
 	"go.probo.inc/probo/pkg/iam/oidc"
 	"go.probo.inc/probo/pkg/mailer"
 	"go.probo.inc/probo/pkg/mailman"
@@ -385,7 +385,7 @@ func (impl *Implm) Run(
 	}
 
 	var (
-		oauth2SigningKeys   oauth2server.SigningKeys
+		oauth2SigningKeys   oauth2.SigningKeys
 		hasActive           bool
 		activeSigningKeyPEM string
 	)
@@ -413,7 +413,7 @@ func (impl *Implm) Run(
 
 		oauth2SigningKeys = append(
 			oauth2SigningKeys,
-			oauth2server.SigningKey{
+			oauth2.SigningKey{
 				PrivateKey: rsaKey,
 				KID:        kid,
 				Active:     keyCfg.Active,
@@ -601,6 +601,8 @@ func (impl *Implm) Run(
 
 	iamService.Authorizer.RegisterPolicySet(agentrun.PolicySet())
 	iamService.Authorizer.RegisterPolicySet(accessreview.PolicySet())
+	iamService.Authorizer.RegisterScopes(agentrun.OAuth2ScopeSet())
+	iamService.Authorizer.RegisterScopes(accessreview.OAuth2ScopeSet())
 
 	thirdPartyService := thirdparty.NewService(pgClient, fileManagerService, thirdPartyVetter)
 	riskManagementService := riskmanagement.NewService(pgClient)
@@ -1401,23 +1403,23 @@ func (impl *Implm) runTrustCenterServer(
 	return ctx.Err()
 }
 
-func oauth2ServerOptions(cfg OAuth2ServerConfig) []oauth2server.Option {
-	var opts []oauth2server.Option
+func oauth2ServerOptions(cfg OAuth2ServerConfig) []oauth2.Option {
+	var opts []oauth2.Option
 
 	if cfg.AccessTokenDuration > 0 {
-		opts = append(opts, oauth2server.WithAccessTokenDuration(time.Duration(cfg.AccessTokenDuration)*time.Second))
+		opts = append(opts, oauth2.WithAccessTokenDuration(time.Duration(cfg.AccessTokenDuration)*time.Second))
 	}
 
 	if cfg.RefreshTokenDuration > 0 {
-		opts = append(opts, oauth2server.WithRefreshTokenDuration(time.Duration(cfg.RefreshTokenDuration)*time.Second))
+		opts = append(opts, oauth2.WithRefreshTokenDuration(time.Duration(cfg.RefreshTokenDuration)*time.Second))
 	}
 
 	if cfg.AuthorizationCodeDuration > 0 {
-		opts = append(opts, oauth2server.WithAuthorizationCodeDuration(time.Duration(cfg.AuthorizationCodeDuration)*time.Second))
+		opts = append(opts, oauth2.WithAuthorizationCodeDuration(time.Duration(cfg.AuthorizationCodeDuration)*time.Second))
 	}
 
 	if cfg.DeviceCodeDuration > 0 {
-		opts = append(opts, oauth2server.WithDeviceCodeDuration(time.Duration(cfg.DeviceCodeDuration)*time.Second))
+		opts = append(opts, oauth2.WithDeviceCodeDuration(time.Duration(cfg.DeviceCodeDuration)*time.Second))
 	}
 
 	return opts

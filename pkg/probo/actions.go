@@ -303,6 +303,7 @@ const (
 
 	// Connector actions (generic)
 	ActionConnectorCreate = "core:connector:create"
+	ActionConnectorGet    = "core:connector:get"
 	ActionConnectorList   = "core:connector:list"
 	ActionConnectorDelete = "core:connector:delete"
 
@@ -458,9 +459,8 @@ const (
 	ActionCookieConsentRecordList = "core:cookie-consent-record:list"
 
 	// CommonThirdParty actions (global catalog, no organization scope).
-	ActionCommonThirdPartyGet           = "core:common-third-party:get"
-	ActionCommonThirdPartyList          = "core:common-third-party:list"
-	ActionAccessReviewDriverCatalogList = "core:access-review-driver-catalog:list"
+	ActionCommonThirdPartyGet  = "core:common-third-party:get"
+	ActionCommonThirdPartyList = "core:common-third-party:list"
 
 	// ElectronicSignature actions (tenant-scoped via the related document
 	// version signature / trust center access).

@@ -82,6 +82,10 @@ func (r *Resolver) Authorize(ctx context.Context, entityID gid.GID, action iam.A
 		return nil, fmt.Errorf("permission denied")
 	}
 
+	if _, ok := errors.AsType[*iam.ErrInsufficientOAuth2Scope](err); ok {
+		return nil, fmt.Errorf("insufficient scope")
+	}
+
 	if _, ok := errors.AsType[*iam.ErrAssumptionRequired](err); ok {
 		return nil, fmt.Errorf("assumption required")
 	}
@@ -112,6 +116,10 @@ func (r *Resolver) AuthorizeBatch(ctx context.Context, entityIDs []gid.GID, acti
 
 	if _, ok := errors.AsType[*iam.ErrInsufficientPermissions](err); ok {
 		return nil, fmt.Errorf("permission denied")
+	}
+
+	if _, ok := errors.AsType[*iam.ErrInsufficientOAuth2Scope](err); ok {
+		return nil, fmt.Errorf("insufficient scope")
 	}
 
 	if _, ok := errors.AsType[*iam.ErrAssumptionRequired](err); ok {

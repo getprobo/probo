@@ -33,7 +33,7 @@ import (
 	"go.probo.inc/probo/pkg/crypto/passwdhash"
 	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/gid"
-	"go.probo.inc/probo/pkg/iam/oauth2server"
+	"go.probo.inc/probo/pkg/iam/oauth2"
 	"go.probo.inc/probo/pkg/iam/oidc"
 	"go.probo.inc/probo/pkg/iam/saml"
 	"go.probo.inc/probo/pkg/iam/scim"
@@ -67,7 +67,7 @@ type (
 		OIDCService           *oidc.Service
 		SCIMService           *scim.Service
 		APIKeyService         *APIKeyService
-		OAuth2ServerService   *oauth2server.Service
+		OAuth2ServerService   *oauth2.Service
 		Authorizer            *Authorizer
 
 		samlDomainVerifier *SAMLDomainVerifier
@@ -95,8 +95,8 @@ type (
 		SCIMBridgePollInterval         time.Duration
 		GoogleOIDC                     oidc.ProviderConfig
 		MicrosoftOIDC                  oidc.ProviderConfig
-		OAuth2ServerSigningKeys        oauth2server.SigningKeys
-		OAuth2ServerOptions            []oauth2server.Option
+		OAuth2ServerSigningKeys        oauth2.SigningKeys
+		OAuth2ServerOptions            []oauth2.Option
 	}
 )
 
@@ -162,6 +162,7 @@ func NewService(
 		cfg.Logger.Named("authorizer"),
 	)
 	svc.Authorizer.RegisterPolicySet(IAMPolicySet())
+	svc.Authorizer.RegisterScopes(IAMOAuth2ScopeSet())
 
 	samlService, err := saml.NewService(svc.pg, svc.baseURL, svc.certificate, svc.privateKey, cfg.Logger)
 	if err != nil {
@@ -194,11 +195,11 @@ func NewService(
 		},
 	)
 
-	svc.OAuth2ServerService = oauth2server.NewService(
+	svc.OAuth2ServerService = oauth2.NewService(
 		pgClient,
 		cfg.OAuth2ServerSigningKeys,
 		uri.URI(cfg.BaseURL.String()),
-		cfg.Logger.Named("oauth2server"),
+		cfg.Logger.Named("oauth2"),
 		cfg.OAuth2ServerOptions...,
 	)
 
@@ -211,6 +212,16 @@ func NewService(
 	)
 
 	return svc, nil
+}
+
+// OAuth2ServerMetadata returns the OIDC discovery document.
+func (s *Service) OAuth2ServerMetadata(endpoints oauth2.Endpoints) *oauth2.ServerMetadata {
+	return oauth2.NewMetadata(uri.URI(s.baseURL), endpoints, s.Authorizer.APIScopes())
+}
+
+// OAuth2ProtectedResourceMetadata returns the RFC 9728 protected resource metadata document.
+func (s *Service) OAuth2ProtectedResourceMetadata(resource uri.URI) *oauth2.ProtectedResourceMetadata {
+	return oauth2.NewProtectedResourceMetadata(resource, resource, s.Authorizer.APIScopes())
 }
 
 func (s *Service) IsSignUpEnabled() bool {

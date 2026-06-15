@@ -96,6 +96,14 @@ type (
 		IDTokenSigningAlgValuesSupported          []string `json:"id_token_signing_alg_values_supported"`
 		CodeChallengeMethodsSupported             []string `json:"code_challenge_methods_supported"`
 		ClaimsSupported                           []string `json:"claims_supported"`
+		ProtectedResources                        []string `json:"protected_resources,omitempty"`
+	}
+
+	OAuth2ProtectedResourceMetadataResponse struct {
+		Resource               string   `json:"resource"`
+		AuthorizationServers   []string `json:"authorization_servers"`
+		BearerMethodsSupported []string `json:"bearer_methods_supported"`
+		ScopesSupported        []string `json:"scopes_supported"`
 	}
 
 	OAuth2JWKSResponse struct {
@@ -260,6 +268,28 @@ func OAuth2JWKS(c *Client) (*OAuth2JWKSResponse, *OAuth2HTTPResponse, error) {
 	var result OAuth2JWKSResponse
 	if err := json.Unmarshal(raw.Body, &result); err != nil {
 		return nil, raw, fmt.Errorf("cannot decode jwks response: %w", err)
+	}
+
+	return &result, raw, nil
+}
+
+// OAuth2ProtectedResourceMetadata fetches the RFC 9728 protected resource
+// metadata document.
+func OAuth2ProtectedResourceMetadata(
+	c *Client,
+) (*OAuth2ProtectedResourceMetadataResponse, *OAuth2HTTPResponse, error) {
+	raw, err := getJSON(c.HTTPClient(), c.BaseURL()+"/.well-known/oauth-protected-resource", nil)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if raw.StatusCode != http.StatusOK {
+		return nil, raw, nil
+	}
+
+	var result OAuth2ProtectedResourceMetadataResponse
+	if err := json.Unmarshal(raw.Body, &result); err != nil {
+		return nil, raw, fmt.Errorf("cannot decode protected resource metadata: %w", err)
 	}
 
 	return &result, raw, nil
@@ -890,13 +920,32 @@ func OAuth2PerformAuthorizationCodeFlow(
 ) *OAuth2TokenResponse {
 	t.Helper()
 
+	return OAuth2PerformAuthorizationCodeFlowWithScopes(
+		t,
+		c,
+		clientID,
+		clientSecret,
+		redirectURI,
+		"openid email profile offline_access",
+	)
+}
+
+// OAuth2PerformAuthorizationCodeFlowWithScopes performs the authorization code
+// flow with the requested OAuth2 scopes.
+func OAuth2PerformAuthorizationCodeFlowWithScopes(
+	t testing.TB,
+	c *Client,
+	clientID, clientSecret, redirectURI, scopes string,
+) *OAuth2TokenResponse {
+	t.Helper()
+
 	verifier, challenge := GeneratePKCE()
 
 	params := url.Values{
 		"client_id":             {clientID},
 		"redirect_uri":          {redirectURI},
 		"response_type":         {"code"},
-		"scope":                 {"openid email profile offline_access"},
+		"scope":                 {scopes},
 		"state":                 {"test-state"},
 		"code_challenge":        {challenge},
 		"code_challenge_method": {"S256"},

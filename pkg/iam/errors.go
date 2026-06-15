@@ -203,6 +203,23 @@ func (e ErrInsufficientPermissions) Error() string {
 	return fmt.Sprintf("identity %q does not have sufficient permissions to perform action %s on entity %q", e.IdentityID, e.Action, e.EntityID)
 }
 
+type ErrInsufficientOAuth2Scope struct {
+	IdentityID gid.GID
+	Action     Action
+}
+
+func NewInsufficientOAuth2ScopeError(identityID gid.GID, action Action) error {
+	return &ErrInsufficientOAuth2Scope{IdentityID: identityID, Action: action}
+}
+
+func (e ErrInsufficientOAuth2Scope) Error() string {
+	return fmt.Sprintf(
+		"identity %q does not have an OAuth2 scope granting action %s",
+		e.IdentityID,
+		e.Action,
+	)
+}
+
 type ErrMixedOrganizationBatch struct {
 	Action          Action
 	OrganizationIDs []string

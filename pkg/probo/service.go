@@ -149,6 +149,7 @@ func NewService(
 	}
 
 	iamService.Authorizer.RegisterPolicySet(ProboPolicySet())
+	iamService.Authorizer.RegisterScopes(OAuth2ScopeSet())
 
 	svc := &Service{
 		pg:                      pgClient,

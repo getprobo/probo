@@ -22,6 +22,7 @@ import (
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/bearertoken"
 	"go.probo.inc/probo/pkg/iam"
+	"go.probo.inc/probo/pkg/iam/oauth2"
 )
 
 func NewOAuth2AccessTokenMiddleware(svc *iam.Service) func(next http.Handler) http.Handler {
@@ -53,6 +54,7 @@ func NewOAuth2AccessTokenMiddleware(svc *iam.Service) func(next http.Handler) ht
 				}
 
 				ctx = ContextWithIdentity(ctx, identity)
+				ctx = oauth2.ContextWithAccessToken(ctx, accessToken)
 
 				httpserver.LoggerFromContext(ctx).InfoCtx(
 					ctx,

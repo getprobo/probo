@@ -19,6 +19,7 @@ import {
   Button,
   IconArrowsClockwise,
   IconEnvelope,
+  IconKey,
   IconLockOpen,
   IconUser,
   IconUserCircle,
@@ -67,6 +68,14 @@ const scopeIcons: Record<string, React.ReactNode> = {
   profile: <IconUserCircle size={18} className="shrink-0 text-txt-tertiary" />,
   offline_access: <IconArrowsClockwise size={18} className="shrink-0 text-txt-tertiary" />,
 };
+
+function scopeIcon(name: string): React.ReactNode {
+  return scopeIcons[name] ?? <IconKey size={18} className="shrink-0 text-txt-tertiary" />;
+}
+
+function scopeLabel(name: string): string {
+  return scopeLabels[name] ?? name;
+}
 
 export default function ConsentPage(props: {
   queryRef: PreloadedQuery<ConsentPageQuery>;
@@ -192,16 +201,17 @@ export default function ConsentPage(props: {
       </div>
 
       <ul className="space-y-2">
-        {consent.scopes.map((scope: string) => {
-          const label = scopeLabels[scope];
-          if (!label) return null;
+        {consent.scopes.map((scope) => {
+          const label = scopeLabel(scope);
+          const translated = scopeLabels[scope] ? __(label) : label;
+
           return (
             <li
               key={scope}
               className="flex items-center gap-2.5 px-3 py-2.5 text-sm text-txt-secondary border border-border-mid rounded-lg"
             >
-              {scopeIcons[scope]}
-              {__(label)}
+              {scopeIcon(scope)}
+              {translated}
             </li>
           );
         })}

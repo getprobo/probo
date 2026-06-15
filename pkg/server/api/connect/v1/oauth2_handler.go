@@ -15,7 +15,6 @@
 package connect_v1
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -30,16 +29,11 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
-	"go.probo.inc/probo/pkg/iam/oauth2server"
+	"go.probo.inc/probo/pkg/iam/oauth2"
 	"go.probo.inc/probo/pkg/securecookie"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/connect/v1/types"
 	"go.probo.inc/probo/pkg/uri"
-)
-
-var (
-	oauth2ClientContextKey      = &ctxKey{name: "oauth2_client"}
-	oauth2AccessTokenContextKey = &ctxKey{name: "oauth2_access_token"}
 )
 
 type OAuth2Handler struct {
@@ -63,29 +57,17 @@ func NewOAuth2Handler(
 	}
 }
 
-// oauth2ClientFromContext returns the authenticated OAuth2 client from context.
-func oauth2ClientFromContext(r *http.Request) *coredata.OAuth2Client {
-	client, _ := r.Context().Value(oauth2ClientContextKey).(*coredata.OAuth2Client)
-	return client
-}
-
-// oauth2AccessTokenFromContext returns the validated OAuth2 access token from context.
-func oauth2AccessTokenFromContext(r *http.Request) *coredata.OAuth2AccessToken {
-	token, _ := r.Context().Value(oauth2AccessTokenContextKey).(*coredata.OAuth2AccessToken)
-	return token
-}
-
 // ClientAuthMiddleware authenticates the OAuth2 client from HTTP Basic auth
 // or POST body credentials and stores it in the request context.
 func (h *OAuth2Handler) ClientAuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		client, err := h.authenticateClient(r)
 		if err != nil {
-			h.renderOAuth2ErrorResponse(w, r, oauth2server.ErrInvalidClient)
+			h.renderOAuth2ErrorResponse(w, r, oauth2.ErrInvalidClient)
 			return
 		}
 
-		ctx := context.WithValue(r.Context(), oauth2ClientContextKey, client)
+		ctx := oauth2.ContextWithClient(r.Context(), client)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
@@ -110,15 +92,15 @@ func (h *OAuth2Handler) BearerTokenMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		ctx := context.WithValue(r.Context(), oauth2AccessTokenContextKey, accessToken)
+		ctx := oauth2.ContextWithAccessToken(r.Context(), accessToken)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
 
-func (h *OAuth2Handler) endpoints() oauth2server.Endpoints {
+func (h *OAuth2Handler) endpoints() oauth2.Endpoints {
 	api := h.baseURL.String() + "/api/connect/v1"
 
-	return oauth2server.Endpoints{
+	return oauth2.Endpoints{
 		Authorization:       uri.URI(api + "/oauth2/authorize"),
 		Token:               uri.URI(api + "/oauth2/token"),
 		Userinfo:            uri.URI(api + "/oauth2/userinfo"),
@@ -135,7 +117,7 @@ func (h *OAuth2Handler) endpoints() oauth2server.Endpoints {
 // DiscoveryHandler serves the OpenID Connect Discovery document.
 // GET /.well-known/openid-configuration
 func (h *OAuth2Handler) DiscoveryHandler(w http.ResponseWriter, r *http.Request) {
-	metadata := h.iam.OAuth2ServerService.Metadata(h.endpoints())
+	metadata := h.iam.OAuth2ServerMetadata(h.endpoints())
 
 	PublicCache(w, 1*time.Hour)
 	httpserver.RenderJSON(w, http.StatusOK, metadata)
@@ -168,7 +150,7 @@ func (h *OAuth2Handler) AuthorizeHandler(w http.ResponseWriter, r *http.Request)
 
 	var in types.OAuth2AuthorizeInput
 	if err := in.DecodeQuery(r.URL.Query()); err != nil {
-		h.handleAuthorizeError(w, r, oauth2server.NewError(oauth2server.ErrInvalidRequest, oauth2server.WithError(err)), "", "")
+		h.handleAuthorizeError(w, r, oauth2.NewError(oauth2.ErrInvalidRequest, oauth2.WithError(err)), "", "")
 		return
 	}
 
@@ -181,7 +163,7 @@ func (h *OAuth2Handler) AuthorizeHandler(w http.ResponseWriter, r *http.Request)
 
 	code, err := h.iam.OAuth2ServerService.Authorize(
 		r.Context(),
-		&oauth2server.AuthorizeRequest{
+		&oauth2.AuthorizeRequest{
 			IdentityID:          identity.ID,
 			SessionID:           session.ID,
 			ResponseType:        in.ResponseType,
@@ -196,7 +178,7 @@ func (h *OAuth2Handler) AuthorizeHandler(w http.ResponseWriter, r *http.Request)
 		},
 	)
 
-	if consentErr, ok := errors.AsType[*oauth2server.ConsentRequiredError](err); ok {
+	if consentErr, ok := errors.AsType[*oauth2.ConsentRequiredError](err); ok {
 		consentURL := h.baseURL.WithPath("/auth/consent").
 			WithQuery("consent_id", consentErr.ConsentID.String()).
 			MustString()
@@ -217,7 +199,7 @@ func (h *OAuth2Handler) AuthorizeHandler(w http.ResponseWriter, r *http.Request)
 
 func (h *OAuth2Handler) TokenHandler(w http.ResponseWriter, r *http.Request) {
 	if err := r.ParseForm(); err != nil {
-		h.renderOAuth2ErrorResponse(w, r, oauth2server.NewError(oauth2server.ErrInvalidRequest, oauth2server.WithDescription("invalid form data")))
+		h.renderOAuth2ErrorResponse(w, r, oauth2.NewError(oauth2.ErrInvalidRequest, oauth2.WithDescription("invalid form data")))
 		return
 	}
 
@@ -227,7 +209,7 @@ func (h *OAuth2Handler) TokenHandler(w http.ResponseWriter, r *http.Request) {
 	)
 
 	if err := grantType.UnmarshalText([]byte(value)); err != nil {
-		h.renderOAuth2ErrorResponse(w, r, oauth2server.ErrUnsupportedGrantType)
+		h.renderOAuth2ErrorResponse(w, r, oauth2.ErrUnsupportedGrantType)
 		return
 	}
 
@@ -244,13 +226,15 @@ func (h *OAuth2Handler) TokenHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *OAuth2Handler) IntrospectHandler(w http.ResponseWriter, r *http.Request) {
-	var (
-		client = oauth2ClientFromContext(r)
-		in     = types.OAuth2IntrospectInput{}
-	)
+	client, ok := oauth2.ClientFromContext(r.Context())
+	if !ok {
+		h.renderOAuth2ErrorResponse(w, r, oauth2.ErrInvalidClient)
+		return
+	}
 
+	in := types.OAuth2IntrospectInput{}
 	if err := in.DecodeForm(r); err != nil {
-		h.renderOAuth2ErrorResponse(w, r, oauth2server.NewError(oauth2server.ErrInvalidRequest, oauth2server.WithError(err)))
+		h.renderOAuth2ErrorResponse(w, r, oauth2.NewError(oauth2.ErrInvalidRequest, oauth2.WithError(err)))
 		return
 	}
 
@@ -270,12 +254,12 @@ func (h *OAuth2Handler) IntrospectHandler(w http.ResponseWriter, r *http.Request
 
 func (h *OAuth2Handler) RevokeHandler(w http.ResponseWriter, r *http.Request) {
 	var (
-		client = oauth2ClientFromContext(r)
-		in     = types.OAuth2RevokeInput{}
+		client, _ = oauth2.ClientFromContext(r.Context())
+		in        = types.OAuth2RevokeInput{}
 	)
 
 	if err := in.DecodeForm(r); err != nil {
-		h.renderOAuth2ErrorResponse(w, r, oauth2server.NewError(oauth2server.ErrInvalidRequest, oauth2server.WithError(err)))
+		h.renderOAuth2ErrorResponse(w, r, oauth2.NewError(oauth2.ErrInvalidRequest, oauth2.WithError(err)))
 		return
 	}
 
@@ -300,7 +284,7 @@ func (h *OAuth2Handler) RevokeHandler(w http.ResponseWriter, r *http.Request) {
 func (h *OAuth2Handler) DeviceAuthHandler(w http.ResponseWriter, r *http.Request) {
 	in := types.OAuth2DeviceAuthInput{}
 	if err := in.DecodeForm(r); err != nil {
-		h.renderOAuth2ErrorResponse(w, r, oauth2server.NewError(oauth2server.ErrInvalidRequest, oauth2server.WithError(err)))
+		h.renderOAuth2ErrorResponse(w, r, oauth2.NewError(oauth2.ErrInvalidRequest, oauth2.WithError(err)))
 		return
 	}
 
@@ -345,7 +329,7 @@ func (h *OAuth2Handler) RegisterHandler(w http.ResponseWriter, r *http.Request) 
 		h.renderOAuth2ErrorResponse(
 			w,
 			r,
-			oauth2server.NewError(oauth2server.ErrInvalidRequest, oauth2server.WithDescription("invalid JSON body")),
+			oauth2.NewError(oauth2.ErrInvalidRequest, oauth2.WithDescription("invalid JSON body")),
 		)
 
 		return
@@ -369,15 +353,15 @@ func (h *OAuth2Handler) RegisterHandler(w http.ResponseWriter, r *http.Request) 
 
 	if len(in.Scopes) == 0 {
 		in.Scopes = coredata.OAuth2Scopes{
-			coredata.OAuth2ScopeOpenID,
-			coredata.OAuth2ScopeProfile,
-			coredata.OAuth2ScopeEmail,
+			oauth2.ScopeOpenID,
+			oauth2.ScopeProfile,
+			oauth2.ScopeEmail,
 		}
 	}
 
 	clientID, clientSecret, err := h.iam.OAuth2ServerService.RegisterClient(
 		r.Context(),
-		&oauth2server.RegisterClientRequest{
+		&oauth2.RegisterClientRequest{
 			IdentityID:              identity.ID,
 			OrganizationID:          in.OrganizationID,
 			ClientName:              in.ClientName,
@@ -417,7 +401,13 @@ func (h *OAuth2Handler) RegisterHandler(w http.ResponseWriter, r *http.Request) 
 // UserInfoHandler serves the OIDC UserInfo endpoint.
 // GET /oauth2/userinfo
 func (h *OAuth2Handler) UserInfoHandler(w http.ResponseWriter, r *http.Request) {
-	accessToken := oauth2AccessTokenFromContext(r)
+	accessToken, ok := oauth2.AccessTokenFromContext(r.Context())
+	if !ok {
+		w.Header().Set("WWW-Authenticate", `Bearer error="invalid_token"`)
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+
+		return
+	}
 
 	claims, err := h.iam.OAuth2ServerService.UserInfo(
 		r.Context(),
@@ -425,7 +415,7 @@ func (h *OAuth2Handler) UserInfoHandler(w http.ResponseWriter, r *http.Request) 
 		accessToken.Scopes,
 	)
 	if err != nil {
-		h.renderOAuth2ErrorResponse(w, r, oauth2server.ErrServerError)
+		h.renderOAuth2ErrorResponse(w, r, oauth2.ErrServerError)
 		return
 	}
 
@@ -452,12 +442,12 @@ func (h *OAuth2Handler) authenticateClient(r *http.Request) (*coredata.OAuth2Cli
 	}
 
 	if clientIDStr == "" {
-		return nil, oauth2server.ErrInvalidClient
+		return nil, oauth2.ErrInvalidClient
 	}
 
 	clientID, err := gid.ParseGID(clientIDStr)
 	if err != nil {
-		return nil, oauth2server.ErrInvalidClient
+		return nil, oauth2.ErrInvalidClient
 	}
 
 	return h.iam.OAuth2ServerService.AuthenticateClient(r.Context(), clientID, clientSecret)
@@ -466,13 +456,13 @@ func (h *OAuth2Handler) authenticateClient(r *http.Request) (*coredata.OAuth2Cli
 func (h *OAuth2Handler) handleAuthorizationCodeGrant(w http.ResponseWriter, r *http.Request) {
 	client, err := h.authenticateClient(r)
 	if err != nil {
-		h.renderOAuth2ErrorResponse(w, r, oauth2server.ErrInvalidClient)
+		h.renderOAuth2ErrorResponse(w, r, oauth2.ErrInvalidClient)
 		return
 	}
 
 	var in types.OAuth2AuthorizationCodeGrantInput
 	if err := in.DecodeForm(r); err != nil {
-		h.renderOAuth2ErrorResponse(w, r, oauth2server.NewError(oauth2server.ErrInvalidGrant, oauth2server.WithError(err)))
+		h.renderOAuth2ErrorResponse(w, r, oauth2.NewError(oauth2.ErrInvalidGrant, oauth2.WithError(err)))
 		return
 	}
 
@@ -484,7 +474,7 @@ func (h *OAuth2Handler) handleAuthorizationCodeGrant(w http.ResponseWriter, r *h
 		in.CodeVerifier,
 	)
 	if err != nil {
-		h.renderOAuth2ErrorResponse(w, r, oauth2server.NewError(oauth2server.ErrInvalidGrant, oauth2server.WithDescription("invalid or expired code")))
+		h.renderOAuth2ErrorResponse(w, r, oauth2.NewError(oauth2.ErrInvalidGrant, oauth2.WithDescription("invalid or expired code")))
 		return
 	}
 
@@ -495,19 +485,19 @@ func (h *OAuth2Handler) handleAuthorizationCodeGrant(w http.ResponseWriter, r *h
 func (h *OAuth2Handler) handleRefreshTokenGrant(w http.ResponseWriter, r *http.Request) {
 	client, err := h.authenticateClient(r)
 	if err != nil {
-		h.renderOAuth2ErrorResponse(w, r, oauth2server.ErrInvalidClient)
+		h.renderOAuth2ErrorResponse(w, r, oauth2.ErrInvalidClient)
 		return
 	}
 
 	var in types.OAuth2RefreshTokenGrantInput
 	if err := in.DecodeForm(r); err != nil {
-		h.renderOAuth2ErrorResponse(w, r, oauth2server.NewError(oauth2server.ErrInvalidGrant, oauth2server.WithError(err)))
+		h.renderOAuth2ErrorResponse(w, r, oauth2.NewError(oauth2.ErrInvalidGrant, oauth2.WithError(err)))
 		return
 	}
 
 	result, err := h.iam.OAuth2ServerService.RefreshToken(r.Context(), client, in.RefreshToken)
 	if err != nil {
-		h.renderOAuth2ErrorResponse(w, r, oauth2server.NewError(oauth2server.ErrInvalidGrant, oauth2server.WithDescription("invalid or expired refresh token")))
+		h.renderOAuth2ErrorResponse(w, r, oauth2.NewError(oauth2.ErrInvalidGrant, oauth2.WithDescription("invalid or expired refresh token")))
 		return
 	}
 
@@ -518,7 +508,7 @@ func (h *OAuth2Handler) handleRefreshTokenGrant(w http.ResponseWriter, r *http.R
 func (h *OAuth2Handler) handleDeviceCodeGrant(w http.ResponseWriter, r *http.Request) {
 	var in types.OAuth2DeviceCodeGrantInput
 	if err := in.DecodeForm(r); err != nil {
-		h.renderOAuth2ErrorResponse(w, r, oauth2server.NewError(oauth2server.ErrInvalidRequest, oauth2server.WithError(err)))
+		h.renderOAuth2ErrorResponse(w, r, oauth2.NewError(oauth2.ErrInvalidRequest, oauth2.WithError(err)))
 		return
 	}
 
@@ -536,7 +526,7 @@ func (h *OAuth2Handler) handleDeviceCodeGrant(w http.ResponseWriter, r *http.Req
 	httpserver.RenderJSON(w, http.StatusOK, tokenResultToResponse(result))
 }
 
-func tokenResultToResponse(r *oauth2server.TokenResult) *types.OAuth2TokenResponse {
+func tokenResultToResponse(r *oauth2.TokenResult) *types.OAuth2TokenResponse {
 	return &types.OAuth2TokenResponse{
 		AccessToken:  r.AccessToken,
 		TokenType:    r.TokenType,

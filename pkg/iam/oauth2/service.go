@@ -12,7 +12,7 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package oauth2server
+package oauth2
 
 import (
 	"context"
@@ -192,11 +192,6 @@ func (s *Service) signingKey() *SigningKey {
 
 func (s *Service) Run(ctx context.Context) error {
 	return s.gc.Run(ctx)
-}
-
-// Metadata returns the OIDC discovery document.
-func (s *Service) Metadata(endpoints Endpoints) *ServerMetadata {
-	return NewMetadata(s.baseURL, endpoints)
 }
 
 // JWKS returns the public key set.
@@ -384,7 +379,7 @@ func (s *Service) ExchangeAuthorizationCode(
 		}
 	}
 
-	if code.Scopes.Contains(coredata.OAuth2ScopeOpenID) {
+	if code.Scopes.Contains(ScopeOpenID) {
 		var (
 			idTokenClaims = NewIDTokenClaims(
 				s.baseURL,
@@ -426,7 +421,7 @@ func (s *Service) ExchangeAuthorizationCode(
 				return fmt.Errorf("cannot create access token: %w", err)
 			}
 
-			if client.HasGrantType(coredata.OAuth2GrantTypeRefreshToken) && code.Scopes.Contains(coredata.OAuth2ScopeOfflineAccess) {
+			if client.HasGrantType(coredata.OAuth2GrantTypeRefreshToken) && code.Scopes.Contains(ScopeOfflineAccess) {
 				refreshTokenValue = rand.MustHexString(refreshTokenByteLength)
 
 				refreshToken := &coredata.OAuth2RefreshToken{
@@ -560,7 +555,7 @@ func (s *Service) RefreshToken(
 		)
 	}
 
-	if previousRefreshToken.Scopes.Contains(coredata.OAuth2ScopeOpenID) {
+	if previousRefreshToken.Scopes.Contains(ScopeOpenID) {
 		var (
 			claims = NewIDTokenClaims(
 				s.baseURL,
@@ -689,7 +684,7 @@ func (s *Service) CreateDeviceCode(
 				)
 			}
 
-			if requestedScopes.Contains(coredata.OAuth2ScopeOfflineAccess) && !client.HasGrantType(coredata.OAuth2GrantTypeRefreshToken) {
+			if requestedScopes.Contains(ScopeOfflineAccess) && !client.HasGrantType(coredata.OAuth2GrantTypeRefreshToken) {
 				return NewError(
 					ErrInvalidScope,
 					WithDescription("offline_access requires the refresh_token grant type"),
@@ -846,7 +841,7 @@ func (s *Service) PollDeviceCode(
 		idToken              string
 	)
 
-	if deviceCode.Scopes.Contains(coredata.OAuth2ScopeOpenID) {
+	if deviceCode.Scopes.Contains(ScopeOpenID) {
 		var (
 			claims = NewIDTokenClaims(
 				s.baseURL,
@@ -887,7 +882,7 @@ func (s *Service) PollDeviceCode(
 				return fmt.Errorf("cannot create access token: %w", err)
 			}
 
-			if client.HasGrantType(coredata.OAuth2GrantTypeRefreshToken) && deviceCode.Scopes.Contains(coredata.OAuth2ScopeOfflineAccess) {
+			if client.HasGrantType(coredata.OAuth2GrantTypeRefreshToken) && deviceCode.Scopes.Contains(ScopeOfflineAccess) {
 				refreshTokenValue = rand.MustHexString(refreshTokenByteLength)
 
 				refreshToken := &coredata.OAuth2RefreshToken{
@@ -1287,10 +1282,10 @@ func (s *Service) UserInfo(
 
 	for _, scope := range scopes {
 		switch scope {
-		case coredata.OAuth2ScopeEmail:
+		case ScopeEmail:
 			claims["email"] = identity.EmailAddress.String()
 			claims["email_verified"] = identity.EmailAddressVerified
-		case coredata.OAuth2ScopeProfile:
+		case ScopeProfile:
 			claims["name"] = identity.FullName
 		}
 	}
@@ -1445,7 +1440,7 @@ func (s *Service) Authorize(
 				return fmt.Errorf("cannot authorize: requested scope exceeds client registration")
 			}
 
-			if requestedScopes.Contains(coredata.OAuth2ScopeOfflineAccess) && !client.HasGrantType(coredata.OAuth2GrantTypeRefreshToken) {
+			if requestedScopes.Contains(ScopeOfflineAccess) && !client.HasGrantType(coredata.OAuth2GrantTypeRefreshToken) {
 				return NewError(
 					ErrInvalidScope,
 					WithDescription("offline_access requires the refresh_token grant type"),

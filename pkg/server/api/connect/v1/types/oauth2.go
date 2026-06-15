@@ -21,7 +21,7 @@ import (
 
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
-	"go.probo.inc/probo/pkg/iam/oauth2server"
+	"go.probo.inc/probo/pkg/iam/oauth2"
 	"go.probo.inc/probo/pkg/uri"
 )
 
@@ -328,7 +328,7 @@ func InactiveIntrospectResponse() *OAuth2IntrospectResponse {
 	return &OAuth2IntrospectResponse{Active: false}
 }
 
-func ActiveIntrospectResponse(result *oauth2server.IntrospectResult) *OAuth2IntrospectResponse {
+func ActiveIntrospectResponse(result *oauth2.IntrospectResult) *OAuth2IntrospectResponse {
 	return &OAuth2IntrospectResponse{
 		Active:    true,
 		Scope:     result.Scopes,

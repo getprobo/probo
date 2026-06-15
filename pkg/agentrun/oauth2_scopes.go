@@ -12,32 +12,29 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package oauth2server
+package agentrun
 
 import (
-	"crypto/sha256"
-	"crypto/subtle"
-	"encoding/base64"
-
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/iam"
 )
 
-func ValidateCodeChallenge(verifier, challenge string, method coredata.OAuth2CodeChallengeMethod) bool {
-	if verifier == "" || challenge == "" {
-		return false
-	}
+const (
+	ScopeV1AgentRead coredata.OAuth2Scope = "v1:agent:read"
+	ScopeV1Agent     coredata.OAuth2Scope = "v1:agent"
+)
 
-	switch method {
-	case coredata.OAuth2CodeChallengeMethodS256:
-		return validateS256(verifier, challenge)
-	default:
-		return false
-	}
-}
-
-func validateS256(verifier, challenge string) bool {
-	h := sha256.Sum256([]byte(verifier))
-	computed := base64.RawURLEncoding.EncodeToString(h[:])
-
-	return subtle.ConstantTimeCompare([]byte(computed), []byte(challenge)) == 1
+// OAuth2ScopeSet returns OAuth2 scope mappings for agent-run actions.
+func OAuth2ScopeSet() *iam.ScopeSet {
+	return iam.CreateScopeSet(
+		map[coredata.OAuth2Scope][]iam.Action{
+			ScopeV1AgentRead: {
+				ActionAgentRunGet,
+				ActionAgentRunList,
+			},
+			ScopeV1Agent: {
+				ActionAgentRunApprove,
+			},
+		},
+	)
 }

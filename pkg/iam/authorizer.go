@@ -27,6 +27,7 @@ import (
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/iam/oauth2"
 	"go.probo.inc/probo/pkg/iam/policy"
 )
 
@@ -82,25 +83,58 @@ type AuthorizeMultiParams struct {
 
 // Authorizer evaluates authorization requests against registered policies.
 type Authorizer struct {
-	pg        *pg.Client
-	evaluator *policy.Evaluator
-	policySet *PolicySet
-	logger    *log.Logger
+	pg             *pg.Client
+	evaluator      *policy.Evaluator
+	policySet      *PolicySet
+	oauth2ScopeSet *ScopeSet
+	logger         *log.Logger
 }
 
 // NewAuthorizer creates a new Authorizer instance.
 func NewAuthorizer(pgClient *pg.Client, logger *log.Logger) *Authorizer {
 	return &Authorizer{
-		pg:        pgClient,
-		evaluator: policy.NewEvaluator(),
-		policySet: NewPolicySet(),
-		logger:    logger,
+		pg:             pgClient,
+		evaluator:      policy.NewEvaluator(),
+		policySet:      NewPolicySet(),
+		oauth2ScopeSet: NewScopeSet(),
+		logger:         logger,
 	}
 }
 
 // RegisterPolicySet merges the given policy set into the authorizer.
 func (a *Authorizer) RegisterPolicySet(ps *PolicySet) {
 	a.policySet.Merge(ps)
+}
+
+// RegisterScopes merges OAuth2 scope-to-action mappings into the authorizer.
+func (a *Authorizer) RegisterScopes(ss *ScopeSet) {
+	a.oauth2ScopeSet.Merge(ss)
+}
+
+// APIScopes returns OAuth2 API scopes advertised in discovery metadata.
+func (a *Authorizer) APIScopes() []coredata.OAuth2Scope {
+	if a.oauth2ScopeSet == nil {
+		return []coredata.OAuth2Scope{}
+	}
+
+	return a.oauth2ScopeSet.APIScopes()
+}
+
+func (a *Authorizer) checkOAuth2Scope(
+	ctx context.Context,
+	principal gid.GID,
+	action Action,
+) error {
+	accessToken, ok := oauth2.AccessTokenFromContext(ctx)
+	if !ok {
+		return nil
+	}
+
+	if a.oauth2ScopeSet == nil || !a.oauth2ScopeSet.Allows(accessToken.Scopes, action) {
+		return NewInsufficientOAuth2ScopeError(principal, action)
+	}
+
+	return nil
 }
 
 // Authorize checks if the principal is allowed to perform the action on the resource.
@@ -453,6 +487,22 @@ func (a *Authorizer) evaluateMultiInTx(
 					ResourceID: item.Resource,
 					Principal:  params.Principal,
 					Reason:     assumptionErr.Error(),
+				},
+			)
+
+			continue
+		}
+
+		if err := a.checkOAuth2Scope(ctx, params.Principal, item.Action); err != nil {
+			decisions[i] = err
+			a.logDecision(
+				ctx,
+				DecisionRecord{
+					Effect:     effectError,
+					Action:     item.Action,
+					ResourceID: item.Resource,
+					Principal:  params.Principal,
+					Reason:     err.Error(),
 				},
 			)
 
