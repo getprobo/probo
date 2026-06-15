@@ -48,6 +48,7 @@ func newCmdUpsert(f *cmdutil.Factory) *cobra.Command {
 		flagTrustPageURL                  string
 		flagCertifications                []string
 		flagDryRun                        bool
+		flagEnrich                        bool
 	)
 
 	cmd := &cobra.Command{
@@ -56,7 +57,11 @@ func newCmdUpsert(f *cmdutil.Factory) *cobra.Command {
 		Long: "Insert a new common third party or update an existing one keyed by " +
 			"slug. Only --name and --category are required; every other field is " +
 			"updated only when its flag is passed, so an existing row's other " +
-			"columns are preserved.",
+			"columns are preserved.\n\n" +
+			"Pass --enrich to queue the row for the async enrichment worker after " +
+			"writing, so a minimal name/category row gets its profile, compliance " +
+			"documents, owned domains, and logo filled in. Enrichment is expensive " +
+			"(LLM + browser per row).",
 		Args: cobra.NoArgs,
 	}
 
@@ -78,6 +83,7 @@ func newCmdUpsert(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&flagTrustPageURL, "trust-page-url", "", "Trust page URL")
 	cmd.Flags().StringSliceVar(&flagCertifications, "certifications", nil, "Certifications (repeatable)")
 	cmd.Flags().BoolVar(&flagDryRun, "dry-run", false, "Print the resulting row without writing")
+	cmd.Flags().BoolVar(&flagEnrich, "enrich", false, "Queue the row for the async enrichment worker after writing")
 
 	_ = cmd.MarkFlagRequired("name")
 	_ = cmd.MarkFlagRequired("category")
@@ -165,14 +171,32 @@ func newCmdUpsert(f *cmdutil.Factory) *cobra.Command {
 					return fmt.Errorf("cannot upsert common third party: %w", err)
 				}
 
+				// Arm enrichment explicitly rather than via the receiver:
+				// Upsert sets enrichment_requested_at from the receiver only
+				// on insert and leaves it untouched on conflict, so this is
+				// the only path that re-arms an existing row uniformly. It
+				// also resets the attempt budget for a fresh run.
+				if flagEnrich {
+					var parties coredata.CommonThirdParties
+
+					if _, err := parties.RequestEnrichmentByIDs(ctx, tx, []gid.GID{party.ID}); err != nil {
+						return fmt.Errorf("cannot queue enrichment: %w", err)
+					}
+				}
+
 				return nil
 			},
 		); err != nil {
 			return err
 		}
 
+		enrichSuffix := ""
+		if flagEnrich {
+			enrichSuffix = " (queued for enrichment)"
+		}
+
 		if flagDryRun {
-			_, _ = fmt.Fprintf(out, "Would upsert common third party %q (slug %q, category %s).\n", party.Name, party.Slug, party.Category)
+			_, _ = fmt.Fprintf(out, "Would upsert common third party %q (slug %q, category %s)%s.\n", party.Name, party.Slug, party.Category, enrichSuffix)
 			return nil
 		}
 
@@ -181,7 +205,7 @@ func newCmdUpsert(f *cmdutil.Factory) *cobra.Command {
 			action = "Created"
 		}
 
-		_, _ = fmt.Fprintf(out, "%s common third party %s (%q, slug %q).\n", action, party.ID.String(), party.Name, party.Slug)
+		_, _ = fmt.Fprintf(out, "%s common third party %s (%q, slug %q)%s.\n", action, party.ID.String(), party.Name, party.Slug, enrichSuffix)
 
 		return nil
 	}
