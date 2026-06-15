@@ -66,7 +66,6 @@ func seedAccessReviewEntryFixture(t *testing.T, ctx context.Context, client *pg.
 			ID:             sourceID,
 			OrganizationID: organizationID,
 			Name:           "Upsert Freeze Test Source",
-			Category:       coredata.AccessReviewSourceCategorySaaS,
 			CreatedAt:      now,
 			UpdatedAt:      now,
 		}
@@ -92,7 +91,6 @@ func seedAccessReviewEntryFixture(t *testing.T, ctx context.Context, client *pg.
 			AccessReviewCampaignID: campaignID,
 			AccessReviewSourceID:   &sourceID,
 			Name:                   "Upsert Freeze Test Source",
-			Category:               coredata.AccessReviewSourceCategorySaaS,
 			CreatedAt:              now,
 			UpdatedAt:              now,
 		}

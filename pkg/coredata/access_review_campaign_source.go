@@ -24,28 +24,77 @@ import (
 	"github.com/jackc/pgx/v5"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/iam/policy"
 )
 
 type (
 	// AccessReviewCampaignSource is the per-campaign snapshot of an access
-	// source. It captures the source identity (name, category, connector) at
+	// source. It captures the source identity (name, connector) at
 	// the time the source was scoped into the campaign so that the review's
 	// data survives even if the live access source is later deleted. Access
 	// entries and fetch attempts reference this snapshot, not the live source.
 	AccessReviewCampaignSource struct {
-		ID                     gid.GID                    `db:"id"`
-		TenantID               gid.TenantID               `db:"tenant_id"`
-		AccessReviewCampaignID gid.GID                    `db:"access_review_campaign_id"`
-		AccessReviewSourceID   *gid.GID                   `db:"access_review_source_id"`
-		Name                   string                     `db:"name"`
-		Category               AccessReviewSourceCategory `db:"category"`
-		ConnectorID            *gid.GID                   `db:"connector_id"`
-		CreatedAt              time.Time                  `db:"created_at"`
-		UpdatedAt              time.Time                  `db:"updated_at"`
+		ID                     gid.GID      `db:"id"`
+		TenantID               gid.TenantID `db:"tenant_id"`
+		AccessReviewCampaignID gid.GID      `db:"access_review_campaign_id"`
+		AccessReviewSourceID   *gid.GID     `db:"access_review_source_id"`
+		Name                   string       `db:"name"`
+		ConnectorID            *gid.GID     `db:"connector_id"`
+		CreatedAt              time.Time    `db:"created_at"`
+		UpdatedAt              time.Time    `db:"updated_at"`
 	}
 
 	AccessReviewCampaignSources []*AccessReviewCampaignSource
 )
+
+func (s *AccessReviewCampaignSource) AuthorizationAttributes(
+	ctx context.Context,
+	conn pg.Querier,
+	resourceIDs []gid.GID,
+) (policy.AttributesByID, error) {
+	q := `
+SELECT
+	cs.id,
+	c.organization_id
+FROM
+	access_review_campaign_sources cs
+JOIN
+	access_review_campaigns c ON c.id = cs.access_review_campaign_id
+WHERE
+	cs.id = ANY(@resource_ids::text[])
+`
+
+	args := pgx.StrictNamedArgs{
+		"resource_ids": resourceIDs,
+	}
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return nil, fmt.Errorf("cannot query authorization attributes: %w", err)
+	}
+
+	defer rows.Close()
+
+	attrsByID := make(policy.AttributesByID)
+
+	for rows.Next() {
+		var id, organizationID gid.GID
+
+		if err := rows.Scan(&id, &organizationID); err != nil {
+			return nil, fmt.Errorf("cannot scan authorization attributes: %w", err)
+		}
+
+		attrsByID[id] = policy.Attributes{
+			"organization_id": organizationID.String(),
+		}
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("cannot iterate authorization attributes: %w", err)
+	}
+
+	return attrsByID, nil
+}
 
 // Upsert inserts the snapshot or refreshes its denormalized identity from the
 // live source. The generated ID is preserved across upserts because it is not
@@ -63,7 +112,6 @@ INSERT INTO access_review_campaign_sources (
 	access_review_campaign_id,
 	access_review_source_id,
 	name,
-	category,
 	connector_id,
 	created_at,
 	updated_at
@@ -73,14 +121,12 @@ INSERT INTO access_review_campaign_sources (
 	@access_review_campaign_id,
 	@access_review_source_id,
 	@name,
-	@category,
 	@connector_id,
 	@created_at,
 	@updated_at
 )
 ON CONFLICT (access_review_campaign_id, access_review_source_id) DO UPDATE SET
 	name         = EXCLUDED.name,
-	category     = EXCLUDED.category,
 	connector_id = EXCLUDED.connector_id,
 	updated_at   = EXCLUDED.updated_at
 RETURNING id
@@ -91,7 +137,6 @@ RETURNING id
 		"access_review_campaign_id": s.AccessReviewCampaignID,
 		"access_review_source_id":   s.AccessReviewSourceID,
 		"name":                      s.Name,
-		"category":                  s.Category,
 		"connector_id":              s.ConnectorID,
 		"created_at":                s.CreatedAt,
 		"updated_at":                s.UpdatedAt,
@@ -117,7 +162,6 @@ SELECT
 	access_review_campaign_id,
 	access_review_source_id,
 	name,
-	category,
 	connector_id,
 	created_at,
 	updated_at
@@ -193,7 +237,6 @@ SELECT
 	access_review_campaign_id,
 	access_review_source_id,
 	name,
-	category,
 	connector_id,
 	created_at,
 	updated_at
