@@ -445,6 +445,17 @@ func (a *Authorizer) evaluateMultiInTx(
 
 		if assumptionErr != nil && !item.SkipAssumptionCheck {
 			decisions[i] = assumptionErr
+			a.logDecision(
+				ctx,
+				DecisionRecord{
+					Effect:     effectError,
+					Action:     item.Action,
+					ResourceID: item.Resource,
+					Principal:  params.Principal,
+					Reason:     assumptionErr.Error(),
+				},
+			)
+
 			continue
 		}
 
@@ -458,7 +469,22 @@ func (a *Authorizer) evaluateMultiInTx(
 			},
 		}
 
-		if !a.evaluator.Evaluate(req, policies).IsAllowed() {
+		startedAt := time.Now()
+		result := a.evaluator.Evaluate(req, policies)
+
+		a.logDecision(
+			ctx,
+			newDecisionRecord(
+				result,
+				params.Principal,
+				item.Resource,
+				item.Action,
+				role,
+				time.Since(startedAt),
+			),
+		)
+
+		if !result.IsAllowed() {
 			decisions[i] = NewInsufficientPermissionsError(params.Principal, item.Resource, item.Action)
 		}
 	}

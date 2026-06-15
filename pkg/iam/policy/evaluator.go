@@ -47,6 +47,52 @@ func (r EvaluationResult) IsAllowed() bool {
 	return r.Decision == DecisionAllow
 }
 
+func (r EvaluationResult) statementSID() string {
+	if r.MatchedStatement != nil {
+		return r.MatchedStatement.SID
+	}
+
+	return ""
+}
+
+// PolicyID returns the statement SID or matched policy ID for logging.
+func (r EvaluationResult) PolicyID() string {
+	if sid := r.statementSID(); sid != "" {
+		return sid
+	}
+
+	if r.MatchedPolicy != nil {
+		return r.MatchedPolicy.ID
+	}
+
+	return ""
+}
+
+// Reason returns a human-readable explanation for logging.
+func (r EvaluationResult) Reason(role string) string {
+	if sid := r.statementSID(); sid != "" {
+		switch r.Decision {
+		case DecisionAllow:
+			return "allowed by statement " + sid
+		case DecisionDeny:
+			return "explicit deny by statement " + sid
+		}
+	}
+
+	switch r.Decision {
+	case DecisionAllow:
+		return "allowed"
+	case DecisionDeny:
+		return "explicit deny"
+	default:
+		if role != "" {
+			return "implicit deny: no matching allow for role " + role
+		}
+
+		return "implicit deny: no matching allow"
+	}
+}
+
 // AuthorizationRequest contains all information needed to evaluate access.
 type AuthorizationRequest struct {
 	// Principal is the actor requesting access.

@@ -291,6 +291,20 @@ When adding a new entity that needs authorization:
 4. **Entity type registry** — register in `pkg/coredata/entity_type_reg.go` and `NewEntityFromID` so the authorizer can construct the entity from its GID
 5. **Resolver calls** — add `scope, err := r.authorize(ctx, id, probo.ActionEntityGet)` in GraphQL resolvers and `scope, err := r.Authorize(ctx, id, probo.ActionEntityGet)` in MCP resolvers, then pass `scope` to services
 
+## Decision logging
+
+Every authorization evaluation (allow and deny) emits a structured `authz decision`
+log line through the authorizer logger with opaque IDs only:
+
+- `effect` — `allow`, `deny`, `no_match`, or `error`
+- `action`, `principal_id`, `resource_id`
+- `policy_id` — statement SID when available
+- `reason` — human-readable explanation for operators (never returned to clients)
+- `latency` — PDP evaluation duration
+
+Audit log entries remain **allow-only**. Denials are visible in application logs,
+not the product audit trail.
+
 ## Key patterns
 
 - **Always use `organization_id` condition** — most policies scope access to the principal's organization
