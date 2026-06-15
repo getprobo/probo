@@ -18,6 +18,7 @@ import (
 	"context"
 
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/gid"
 )
 
 type (
@@ -43,6 +44,15 @@ func ContextWithSession(ctx context.Context, session *coredata.Session) context.
 func IdentityFromContext(ctx context.Context) *coredata.Identity {
 	identity, _ := ctx.Value(identityContextKey).(*coredata.Identity)
 	return identity
+}
+
+func IdentityIDFromContext(ctx context.Context) *gid.GID {
+	identity := IdentityFromContext(ctx)
+	if identity == nil {
+		return nil
+	}
+
+	return &identity.ID
 }
 
 func ContextWithIdentity(ctx context.Context, identity *coredata.Identity) context.Context {

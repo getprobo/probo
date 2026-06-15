@@ -16,7 +16,6 @@ package accessreview
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"go.gearno.de/kit/log"
@@ -26,7 +25,6 @@ import (
 	"go.probo.inc/probo/pkg/connector/provider"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/cipher"
-	"go.probo.inc/probo/pkg/gid"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -100,34 +98,6 @@ func NewService(
 	)
 
 	return s
-}
-
-// ResolveEntryOrganizationID resolves the organization ID for an access entry.
-// This is unscoped because it is used by resolvers before authorization to
-// find the organization from an entry ID.
-func (s *Service) ResolveEntryOrganizationID(ctx context.Context, entryID gid.GID) (gid.GID, error) {
-	var organizationID gid.GID
-
-	err := s.pg.WithConn(
-		ctx,
-		func(ctx context.Context, conn pg.Querier) error {
-			var err error
-
-			entry := &coredata.AccessReviewEntry{}
-
-			organizationID, err = entry.LoadOrganizationID(ctx, conn, entryID)
-			if err != nil {
-				return fmt.Errorf("cannot load organization id: %w", err)
-			}
-
-			return nil
-		},
-	)
-	if err != nil {
-		return gid.GID{}, fmt.Errorf("cannot resolve organization id: %w", err)
-	}
-
-	return organizationID, nil
 }
 
 func (s *Service) Run(ctx context.Context) error {

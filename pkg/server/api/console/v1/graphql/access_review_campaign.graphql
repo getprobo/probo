@@ -24,28 +24,6 @@ enum AccessReviewCampaignStatus
         )
 }
 
-enum AccessReviewSourceCategory
-    @goModel(
-        model: "go.probo.inc/probo/pkg/coredata.AccessReviewSourceCategory"
-    ) {
-    SAAS
-        @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.AccessReviewSourceCategorySaaS"
-        )
-    CLOUD_INFRA
-        @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.AccessReviewSourceCategoryCloudInfra"
-        )
-    SOURCE_CODE
-        @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.AccessReviewSourceCategorySourceCode"
-        )
-    OTHER
-        @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.AccessReviewSourceCategoryOther"
-        )
-}
-
 enum AccessReviewCampaignSourceFetchStatus
     @goModel(
         model: "go.probo.inc/probo/pkg/coredata.AccessReviewCampaignSourceFetchStatus"
@@ -251,6 +229,21 @@ enum AccessReviewEntryOrderField
     CREATED_AT
 }
 
+enum AccessReviewCampaignSourceFetchAttemptOrderField
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.AccessReviewCampaignSourceFetchAttemptOrderField"
+    ) {
+    CREATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.AccessReviewCampaignSourceFetchAttemptOrderFieldCreatedAt"
+        )
+}
+
+input AccessReviewCampaignSourceFetchAttemptOrder {
+    direction: OrderDirection!
+    field: AccessReviewCampaignSourceFetchAttemptOrderField!
+}
+
 enum AccessReviewSourceConnectionStatus {
     CONNECTED
     DISCONNECTED
@@ -307,10 +300,7 @@ type AccessReviewSource implements Node {
     permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
-type AccessReviewCampaignSourceFetchAttempt
-    @goModel(
-        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.AccessReviewCampaignSourceFetchAttempt"
-    ) {
+type AccessReviewCampaignSourceFetchAttempt {
     id: ID!
     attemptNumber: Int!
     status: AccessReviewCampaignSourceFetchStatus!
@@ -322,25 +312,22 @@ type AccessReviewCampaignSourceFetchAttempt
     updatedAt: Datetime!
 }
 
-type AccessReviewCampaignSource
-    @goModel(
-        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.AccessReviewCampaignSource"
-    ) {
+type AccessReviewCampaignSource implements Node {
     id: ID!
+    campaign: AccessReviewCampaign! @goField(forceResolver: true)
+    sourceId: ID
     "The live access source this snapshot was taken from. Null once the source is deleted."
     source: AccessReviewSource @goField(forceResolver: true)
     name: String!
-    "Current fetch status, derived from the latest fetch attempt."
-    fetchStatus: AccessReviewCampaignSourceFetchStatus!
-    fetchedAccountsCount: Int!
-    attemptCount: Int!
-    "Generic, user-facing error from the latest attempt. Raw errors stay in logs."
-    lastError: String
-    fetchStartedAt: Datetime
-    fetchCompletedAt: Datetime
 
-    "Full append-only history of fetch attempts, most recent first."
-    fetchAttempts: [AccessReviewCampaignSourceFetchAttempt!]! @goField(forceResolver: true)
+    fetchAttempts(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: AccessReviewCampaignSourceFetchAttemptOrder
+    ): AccessReviewCampaignSourceFetchAttemptConnection!
+        @goField(forceResolver: true)
 
     entries(
         first: Int
@@ -374,7 +361,6 @@ type AccessReviewCampaign implements Node {
         last: Int
         before: CursorKey
         orderBy: AccessReviewEntryOrder
-        campaignSourceId: ID
         filter: AccessReviewEntryFilter
     ): AccessReviewEntryConnection! @goField(forceResolver: true)
 
@@ -388,8 +374,7 @@ type AccessReviewCampaign implements Node {
 type AccessReviewEntry implements Node {
     id: ID!
     campaign: AccessReviewCampaign! @goField(forceResolver: true)
-    "The live access source this entry came from. Null once the source is deleted."
-    accessReviewSource: AccessReviewSource @goField(forceResolver: true)
+    campaignSource: AccessReviewCampaignSource! @goField(forceResolver: true)
     email: String!
     fullName: String!
     role: String!
@@ -466,6 +451,20 @@ type AccessReviewEntryConnection
 type AccessReviewEntryEdge {
     cursor: CursorKey!
     node: AccessReviewEntry!
+}
+
+type AccessReviewCampaignSourceFetchAttemptConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.AccessReviewCampaignSourceFetchAttemptConnection"
+    ) {
+    totalCount: Int! @goField(forceResolver: true)
+    edges: [AccessReviewCampaignSourceFetchAttemptEdge!]!
+    pageInfo: PageInfo!
+}
+
+type AccessReviewCampaignSourceFetchAttemptEdge {
+    cursor: CursorKey!
+    node: AccessReviewCampaignSourceFetchAttempt!
 }
 
 type AccessReviewStatistics {

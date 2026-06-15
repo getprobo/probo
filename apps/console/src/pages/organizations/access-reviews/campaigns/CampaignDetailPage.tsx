@@ -154,9 +154,15 @@ export const campaignDetailPageQuery = graphql`
             id
           }
           name
-          fetchStatus
-          fetchedAccountsCount
-          lastError
+          fetchAttempts(first: 1) {
+            edges {
+              node {
+                status
+                fetchedAccountsCount
+                error
+              }
+            }
+          }
           entries(first: 500) {
             edges {
               node {
@@ -504,6 +510,10 @@ function CampaignSourceCard({ source, isPendingActions }: { source: CampaignSour
 
   const entries = source.entries?.edges ?? [];
   const entryIds = entries.map(edge => edge.node.id);
+  const latestAttempt = source.fetchAttempts.edges[0]?.node;
+  const fetchStatus = latestAttempt?.status ?? "QUEUED";
+  const fetchedAccountsCount = latestAttempt?.fetchedAccountsCount ?? 0;
+  const lastError = latestAttempt?.error;
 
   const handleBulkDecision = (value: string) => {
     const decision = value as AccessReviewEntryDecision;
@@ -639,22 +649,22 @@ function CampaignSourceCard({ source, isPendingActions }: { source: CampaignSour
             : <IconChevronRight className="size-4 text-txt-tertiary" />}
           <span className="font-medium">{source.name}</span>
           <Badge variant="neutral">
-            {source.fetchedAccountsCount}
+            {fetchedAccountsCount}
             {" "}
             {__("accounts")}
           </Badge>
-          <Badge variant={fetchStatusBadgeVariant(source.fetchStatus)}>
-            {formatStatus(source.fetchStatus)}
+          <Badge variant={fetchStatusBadgeVariant(fetchStatus)}>
+            {formatStatus(fetchStatus)}
           </Badge>
         </div>
       </button>
 
-      {source.fetchStatus === "FAILED" && source.lastError && (
+      {fetchStatus === "FAILED" && lastError && (
         <div className="flex items-start gap-2 border-t bg-danger px-4 py-3 text-sm text-txt-danger">
           <IconWarning className="mt-0.5 size-4 shrink-0" />
           <div>
             <p className="font-medium">{__("Fetch failed")}</p>
-            <p>{source.lastError}</p>
+            <p>{lastError}</p>
           </div>
         </div>
       )}

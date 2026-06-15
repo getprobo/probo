@@ -3410,11 +3410,39 @@ func (r *Resolver) ListAccessReviewCampaignsTool(ctx context.Context, req *mcp.C
 }
 
 // ListAccessEntriesTool handles the listAccessEntries tool
-// List access entries for a campaign with optional filters
+// List access entries for a campaign or campaign source with optional filters
 func (r *Resolver) ListAccessEntriesTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListAccessEntriesInput) (*mcp.CallToolResult, types.ListAccessEntriesOutput, error) {
-	scope, err := r.Authorize(ctx, input.CampaignID, accessreview.ActionEntryList)
-	if err != nil {
-		return nil, types.ListAccessEntriesOutput{}, err
+	if input.AccessReviewCampaignSourceID == nil && input.CampaignID == nil {
+		return nil, types.ListAccessEntriesOutput{}, fmt.Errorf("campaign_id or access_review_campaign_source_id is required")
+	}
+
+	var (
+		scope      *coredata.Scope
+		campaignID gid.GID
+		sourceID   *gid.GID
+		err        error
+	)
+
+	if input.AccessReviewCampaignSourceID != nil {
+		scope, err = r.Authorize(ctx, *input.AccessReviewCampaignSourceID, accessreview.ActionEntryList)
+		if err != nil {
+			return nil, types.ListAccessEntriesOutput{}, err
+		}
+
+		campaignSource, err := r.accessReview.GetCampaignSource(ctx, scope, *input.AccessReviewCampaignSourceID)
+		if err != nil {
+			panic(fmt.Errorf("cannot get campaign source: %w", err))
+		}
+
+		campaignID = campaignSource.AccessReviewCampaignID
+		sourceID = input.AccessReviewCampaignSourceID
+	} else {
+		scope, err = r.Authorize(ctx, *input.CampaignID, accessreview.ActionEntryList)
+		if err != nil {
+			return nil, types.ListAccessEntriesOutput{}, err
+		}
+
+		campaignID = *input.CampaignID
 	}
 
 	pageOrderBy := page.OrderBy[coredata.AccessReviewEntryOrderField]{
@@ -3446,14 +3474,12 @@ func (r *Resolver) ListAccessEntriesTool(ctx context.Context, req *mcp.CallToolR
 
 	var p *page.Page[*coredata.AccessReviewEntry, coredata.AccessReviewEntryOrderField]
 
-	if input.AccessReviewCampaignSourceID != nil {
-		var err error
-
+	if sourceID != nil {
 		p, err = r.accessReview.ListEntriesForCampaignIDAndSourceID(
 			ctx,
 			scope,
-			input.CampaignID,
-			*input.AccessReviewCampaignSourceID,
+			campaignID,
+			*sourceID,
 			cursor,
 			filter,
 		)
@@ -3461,9 +3487,7 @@ func (r *Resolver) ListAccessEntriesTool(ctx context.Context, req *mcp.CallToolR
 			panic(fmt.Errorf("cannot list access entries: %w", err))
 		}
 	} else {
-		var err error
-
-		p, err = r.accessReview.ListEntriesForCampaignID(ctx, scope, input.CampaignID, cursor, filter)
+		p, err = r.accessReview.ListEntriesForCampaignID(ctx, scope, campaignID, cursor, filter)
 		if err != nil {
 			panic(fmt.Errorf("cannot list access entries: %w", err))
 		}
@@ -3498,26 +3522,16 @@ func (r *Resolver) RecordAccessReviewEntryDecisionTool(ctx context.Context, req 
 		return nil, types.RecordAccessReviewEntryDecisionOutput{}, err
 	}
 
-	identity := authn.IdentityFromContext(ctx)
-	if identity == nil {
-		return nil, types.RecordAccessReviewEntryDecisionOutput{}, fmt.Errorf("no identity in context")
-	}
-
-	decisionReq := accessreview.RecordAccessReviewEntryDecisionRequest{
-		EntryID:      input.AccessReviewEntryID,
-		Decision:     input.Decision,
-		DecisionNote: input.DecisionNote,
-	}
-
-	organizationID, err := r.accessReview.ResolveEntryOrganizationID(ctx, input.AccessReviewEntryID)
-	if err == nil {
-		profile, err := r.iamSvc.OrganizationService.GetProfileForIdentityAndOrganization(ctx, identity.ID, organizationID)
-		if err == nil {
-			decisionReq.DecidedByID = &profile.ID
-		}
-	}
-
-	entry, err := r.accessReview.RecordDecision(ctx, scope, decisionReq)
+	entry, err := r.accessReview.RecordDecision(
+		ctx,
+		scope,
+		accessreview.RecordAccessReviewEntryDecisionRequest{
+			EntryID:      input.AccessReviewEntryID,
+			Decision:     input.Decision,
+			DecisionNote: input.DecisionNote,
+			DecidedByID:  authn.IdentityIDFromContext(ctx),
+		},
+	)
 	if err != nil {
 		return nil, types.RecordAccessReviewEntryDecisionOutput{}, fmt.Errorf("cannot record decision: %w", err)
 	}
@@ -3555,28 +3569,10 @@ func (r *Resolver) RecordAccessReviewEntryDecisionsTool(ctx context.Context, req
 		return nil, types.RecordAccessReviewEntryDecisionsOutput{}, fmt.Errorf("no identity in context")
 	}
 
-	// Cache profile lookups per organization so we resolve the correct
-	// decidedByID for each entry even when a batch spans multiple orgs.
-	profileCache := make(map[gid.GID]*gid.GID)
+	decidedByID := &identity.ID
 
 	decisions := make([]accessreview.RecordAccessReviewEntryDecisionRequest, len(input.Decisions))
 	for i, d := range input.Decisions {
-		var decidedByID *gid.GID
-
-		organizationID, err := r.accessReview.ResolveEntryOrganizationID(ctx, d.AccessReviewEntryID)
-		if err == nil {
-			if cached, ok := profileCache[organizationID]; ok {
-				decidedByID = cached
-			} else {
-				profile, err := r.iamSvc.OrganizationService.GetProfileForIdentityAndOrganization(ctx, identity.ID, organizationID)
-				if err == nil {
-					decidedByID = &profile.ID
-				}
-
-				profileCache[organizationID] = decidedByID
-			}
-		}
-
 		decisions[i] = accessreview.RecordAccessReviewEntryDecisionRequest{
 			EntryID:      d.AccessReviewEntryID,
 			Decision:     d.Decision,
@@ -3660,7 +3656,6 @@ func (r *Resolver) CreateAccessReviewSourceTool(ctx context.Context, req *mcp.Ca
 		OrganizationID: input.OrganizationID,
 		ConnectorID:    input.ConnectorID,
 		Name:           input.Name,
-		Category:       coredata.AccessReviewSourceCategorySaaS,
 		CsvData:        input.CsvData,
 	})
 	if err != nil {
@@ -3682,7 +3677,10 @@ func (r *Resolver) UpdateAccessReviewSourceTool(ctx context.Context, req *mcp.Ca
 
 	updateReq := accessreview.UpdateAccessReviewSourceRequest{
 		AccessReviewSourceID: input.AccessReviewSourceID,
-		Name:                 input.Name,
+	}
+
+	if input.Name != nil {
+		updateReq.Name = &input.Name
 	}
 
 	if rawConnectorID := UnwrapOmittable(input.ConnectorID); rawConnectorID != nil {
@@ -3770,9 +3768,15 @@ func (r *Resolver) UpdateAccessReviewCampaignTool(ctx context.Context, req *mcp.
 	}
 
 	updateReq := accessreview.UpdateAccessReviewCampaignRequest{
-		CampaignID:  input.CampaignID,
-		Name:        input.Name,
-		Description: input.Description,
+		CampaignID: input.CampaignID,
+	}
+
+	if input.Name != nil {
+		updateReq.Name = &input.Name
+	}
+
+	if input.Description != nil {
+		updateReq.Description = &input.Description
 	}
 
 	if rawControls := UnwrapOmittable(input.FrameworkControls); rawControls != nil {

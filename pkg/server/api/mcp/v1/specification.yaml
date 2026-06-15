@@ -7851,15 +7851,13 @@ components:
 
     ListAccessEntriesInput:
       type: object
-      required:
-        - campaign_id
       properties:
         campaign_id:
           $ref: "#/components/schemas/GID"
-          description: Campaign ID
+          description: Campaign ID. Required when access_review_campaign_source_id is omitted.
         access_review_campaign_source_id:
           $ref: "#/components/schemas/GID"
-          description: Filter by per-campaign source snapshot ID
+          description: Campaign source snapshot ID. When set, lists entries for that source only and campaign_id is ignored.
         order_by:
           $ref: "#/components/schemas/AccessReviewEntryOrderBy"
           description: Order by
@@ -8025,15 +8023,6 @@ components:
       properties:
         campaign:
           $ref: "#/components/schemas/AccessReviewCampaign"
-
-    AccessReviewSourceCategory:
-      type: string
-      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.AccessReviewSourceCategory
-      enum:
-        - SAAS
-        - CLOUD_INFRA
-        - SOURCE_CODE
-        - OTHER
 
     AccessReviewSourceOrderField:
       type: string

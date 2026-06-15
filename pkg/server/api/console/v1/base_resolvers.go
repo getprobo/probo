@@ -394,6 +394,16 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 
 			return types.NewAccessReviewCampaign(campaign), nil
 		}
+	case coredata.AccessReviewCampaignSourceEntityType:
+		action = accessreview.ActionCampaignGet
+		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
+			campaignSource, err := r.accessReview.GetCampaignSource(ctx, scope, id)
+			if err != nil {
+				return nil, err
+			}
+
+			return types.NewAccessReviewCampaignSource(campaignSource), nil
+		}
 	case coredata.AccessReviewSourceEntityType:
 		action = accessreview.ActionSourceGet
 		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {

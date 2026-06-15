@@ -24,13 +24,14 @@ import (
 	"github.com/jackc/pgx/v5"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/page"
 )
 
 type (
 	// AccessReviewCampaignSourceFetchAttempt is a single, append-only fetch run for a
 	// campaign source snapshot. Each retry produces a new row, so the error of
 	// every attempt is retained. The current state of a snapshot is the latest
-	// attempt (highest attempt_number). Terminal rows (SUCCESS / FAILED) are
+	// attempt (most recently created). Terminal rows (SUCCESS / FAILED) are
 	// immutable; only the in-flight attempt is updated.
 	//
 	// TenantID is retained on the struct because the background worker claims
@@ -40,7 +41,6 @@ type (
 		ID                           gid.GID                               `db:"id"`
 		TenantID                     gid.TenantID                          `db:"tenant_id"`
 		AccessReviewCampaignSourceID gid.GID                               `db:"access_review_campaign_source_id"`
-		AttemptNumber                int                                   `db:"attempt_number"`
 		Status                       AccessReviewCampaignSourceFetchStatus `db:"status"`
 		FetchedAccountsCount         int                                   `db:"fetched_accounts_count"`
 		Error                        *string                               `db:"error"`
@@ -48,10 +48,22 @@ type (
 		CompletedAt                  *time.Time                            `db:"completed_at"`
 		CreatedAt                    time.Time                             `db:"created_at"`
 		UpdatedAt                    time.Time                             `db:"updated_at"`
+		AttemptNumber                int                                   `db:"attempt_number"`
 	}
 
 	AccessReviewCampaignSourceFetchAttempts []*AccessReviewCampaignSourceFetchAttempt
 )
+
+func (a AccessReviewCampaignSourceFetchAttempt) CursorKey(
+	orderBy AccessReviewCampaignSourceFetchAttemptOrderField,
+) page.CursorKey {
+	switch orderBy {
+	case AccessReviewCampaignSourceFetchAttemptOrderFieldCreatedAt:
+		return page.NewCursorKey(a.ID, a.CreatedAt)
+	}
+
+	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
+}
 
 var (
 	ErrNoAccessReviewCampaignSourceFetchAttemptAvailable = errors.New("no access review source fetch attempt available")
@@ -185,7 +197,7 @@ SELECT
 	updated_at
 FROM access_review_campaign_source_fetch_attempts
 WHERE status = @status
-ORDER BY created_at ASC
+ORDER BY created_at ASC, id ASC
 LIMIT 1
 FOR UPDATE SKIP LOCKED
 `
@@ -263,9 +275,72 @@ ORDER BY access_review_campaign_source_id, attempt_number DESC
 	return nil
 }
 
-// LoadByCampaignSourceID returns the full attempt history for a snapshot,
-// newest first.
+// LoadByCampaignSourceID returns a page of fetch attempts for a snapshot.
 func (attempts *AccessReviewCampaignSourceFetchAttempts) LoadByCampaignSourceID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	campaignSourceID gid.GID,
+	cursor *page.Cursor[AccessReviewCampaignSourceFetchAttemptOrderField],
+) error {
+	q := `
+SELECT
+	id,
+	tenant_id,
+	access_review_campaign_source_id,
+	status,
+	fetched_accounts_count,
+	error,
+	started_at,
+	completed_at,
+	created_at,
+	updated_at,
+	attempt_number
+FROM (
+	SELECT
+		id,
+		tenant_id,
+		access_review_campaign_source_id,
+		status,
+		fetched_accounts_count,
+		error,
+		started_at,
+		completed_at,
+		created_at,
+		updated_at,
+		ROW_NUMBER() OVER (ORDER BY created_at ASC, id ASC)::int AS attempt_number
+	FROM access_review_campaign_source_fetch_attempts
+	WHERE
+		%s
+		AND access_review_campaign_source_id = @access_review_campaign_source_id
+) fetch_attempts
+WHERE
+	%s
+`
+	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"access_review_campaign_source_id": campaignSourceID}
+	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, cursor.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query fetch attempts: %w", err)
+	}
+
+	result, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[AccessReviewCampaignSourceFetchAttempt])
+	if err != nil {
+		return fmt.Errorf("cannot collect fetch attempts: %w", err)
+	}
+
+	*attempts = result
+
+	return nil
+}
+
+// LoadAllByCampaignSourceID returns the full attempt history for a snapshot,
+// newest first.
+func (attempts *AccessReviewCampaignSourceFetchAttempts) LoadAllByCampaignSourceID(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
@@ -308,6 +383,33 @@ ORDER BY attempt_number DESC
 	*attempts = result
 
 	return nil
+}
+
+func (attempts *AccessReviewCampaignSourceFetchAttempts) CountByCampaignSourceID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	campaignSourceID gid.GID,
+) (int, error) {
+	q := `
+SELECT COUNT(*)
+FROM access_review_campaign_source_fetch_attempts
+WHERE
+	%s
+	AND access_review_campaign_source_id = @access_review_campaign_source_id
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"access_review_campaign_source_id": campaignSourceID}
+	maps.Copy(args, scope.SQLArguments())
+
+	var count int
+
+	if err := conn.QueryRow(ctx, q, args).Scan(&count); err != nil {
+		return 0, fmt.Errorf("cannot count fetch attempts: %w", err)
+	}
+
+	return count, nil
 }
 
 // RecoverStale fails attempts stuck in FETCHING past the threshold and queues a

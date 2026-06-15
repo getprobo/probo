@@ -824,6 +824,182 @@ func TestAccessReviewCampaign_AddAndRemoveCampaignSource(t *testing.T) {
 	})
 }
 
+func TestAccessReviewCampaignSource_Node(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	orgID := owner.GetOrganizationID().String()
+
+	sourceID := factory.NewAccessReviewSource(owner, orgID).
+		WithName("Node Query Source").
+		WithCsvData(testCsvData).
+		Create()
+
+	campaignID := factory.NewAccessReviewCampaign(owner, orgID).
+		WithName("Node Query Campaign").
+		WithAccessReviewSourceIDs([]string{sourceID}).
+		Create()
+
+	const campaignQuery = `
+		query($id: ID!) {
+			node(id: $id) {
+				... on AccessReviewCampaign {
+					sources {
+						id
+						name
+					}
+				}
+			}
+		}
+	`
+
+	var campaignResult struct {
+		Node struct {
+			Sources []struct {
+				ID   string `json:"id"`
+				Name string `json:"name"`
+			} `json:"sources"`
+		} `json:"node"`
+	}
+
+	err := owner.Execute(campaignQuery, map[string]any{"id": campaignID}, &campaignResult)
+	require.NoError(t, err)
+	require.Len(t, campaignResult.Node.Sources, 1)
+
+	campaignSourceID := campaignResult.Node.Sources[0].ID
+
+	const nodeQuery = `
+		query($id: ID!) {
+			node(id: $id) {
+				__typename
+				... on AccessReviewCampaignSource {
+					id
+					campaign {
+						id
+					}
+					name
+					entries(first: 10) {
+						totalCount
+					}
+				}
+			}
+		}
+	`
+
+	var nodeResult struct {
+		Node struct {
+			Typename string `json:"__typename"`
+			ID       string `json:"id"`
+			Campaign struct {
+				ID string `json:"id"`
+			} `json:"campaign"`
+			Name    string `json:"name"`
+			Entries struct {
+				TotalCount int `json:"totalCount"`
+			} `json:"entries"`
+		} `json:"node"`
+	}
+
+	err = owner.Execute(nodeQuery, map[string]any{"id": campaignSourceID}, &nodeResult)
+	require.NoError(t, err)
+	assert.Equal(t, "AccessReviewCampaignSource", nodeResult.Node.Typename)
+	assert.Equal(t, campaignSourceID, nodeResult.Node.ID)
+	assert.Equal(t, campaignID, nodeResult.Node.Campaign.ID)
+	assert.Equal(t, "Node Query Source", nodeResult.Node.Name)
+	assert.Greater(t, nodeResult.Node.Entries.TotalCount, 0)
+}
+
+func TestAccessReviewCampaignSource_NameSurvivesSourceDeletion(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	orgID := owner.GetOrganizationID().String()
+
+	const snapshotName = "Archived Snapshot Source"
+	sourceID := factory.NewAccessReviewSource(owner, orgID).
+		WithName(snapshotName).
+		WithCsvData(testCsvData).
+		Create()
+
+	campaignID := factory.NewAccessReviewCampaign(owner, orgID).
+		WithName("Archival Campaign").
+		WithAccessReviewSourceIDs([]string{sourceID}).
+		Create()
+
+	const sourcesQuery = `
+		query($id: ID!) {
+			node(id: $id) {
+				... on AccessReviewCampaign {
+					sources {
+						id
+						name
+						sourceId
+						source {
+							id
+						}
+					}
+				}
+			}
+		}
+	`
+
+	var before struct {
+		Node struct {
+			Sources []struct {
+				ID       string  `json:"id"`
+				Name     string  `json:"name"`
+				SourceID *string `json:"sourceId"`
+				Source   *struct {
+					ID string `json:"id"`
+				} `json:"source"`
+			} `json:"sources"`
+		} `json:"node"`
+	}
+
+	err := owner.Execute(sourcesQuery, map[string]any{"id": campaignID}, &before)
+	require.NoError(t, err)
+	require.Len(t, before.Node.Sources, 1)
+	assert.Equal(t, snapshotName, before.Node.Sources[0].Name)
+	require.NotNil(t, before.Node.Sources[0].SourceID)
+	assert.Equal(t, sourceID, *before.Node.Sources[0].SourceID)
+	require.NotNil(t, before.Node.Sources[0].Source)
+	assert.Equal(t, sourceID, before.Node.Sources[0].Source.ID)
+
+	const deleteQuery = `
+		mutation($input: DeleteAccessReviewSourceInput!) {
+			deleteAccessReviewSource(input: $input) {
+				deletedAccessReviewSourceId
+			}
+		}
+	`
+
+	err = owner.Execute(deleteQuery, map[string]any{
+		"input": map[string]any{
+			"accessReviewSourceId": sourceID,
+		},
+	}, nil)
+	require.NoError(t, err)
+
+	var after struct {
+		Node struct {
+			Sources []struct {
+				ID       string  `json:"id"`
+				Name     string  `json:"name"`
+				SourceID *string `json:"sourceId"`
+				Source   *struct {
+					ID string `json:"id"`
+				} `json:"source"`
+			} `json:"sources"`
+		} `json:"node"`
+	}
+
+	err = owner.Execute(sourcesQuery, map[string]any{"id": campaignID}, &after)
+	require.NoError(t, err)
+	require.Len(t, after.Node.Sources, 1)
+	assert.Equal(t, before.Node.Sources[0].ID, after.Node.Sources[0].ID)
+	assert.Equal(t, snapshotName, after.Node.Sources[0].Name)
+	assert.Nil(t, after.Node.Sources[0].SourceID)
+	assert.Nil(t, after.Node.Sources[0].Source)
+}
+
 func TestAccessReviewCampaign_Cancel(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
