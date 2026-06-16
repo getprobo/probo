@@ -309,16 +309,20 @@ SET
     -- re-queued for enrichment: the enrichment agent leaves descriptions
     -- blank when it cannot substantiate a purpose, and knowing the vendor
     -- gives it a second, better-informed attempt. The attempt counter is
-    -- reset so the re-armed row gets a fresh retry budget.
+    -- reset so the re-armed row gets a fresh retry budget. A terminal
+    -- FIRST_PARTY row never gains a vendor (the clause above discards the
+    -- incoming one), so it must never re-arm on a vendor it did not adopt.
     enrichment_requested_at = CASE
-        WHEN common_tracker_patterns.description = ''
+        WHEN common_tracker_patterns.attribution <> 'FIRST_PARTY'
+         AND common_tracker_patterns.description = ''
          AND common_tracker_patterns.common_third_party_id IS NULL
          AND EXCLUDED.common_third_party_id IS NOT NULL
         THEN NOW()
         ELSE common_tracker_patterns.enrichment_requested_at
     END,
     enrichment_attempts   = CASE
-        WHEN common_tracker_patterns.description = ''
+        WHEN common_tracker_patterns.attribution <> 'FIRST_PARTY'
+         AND common_tracker_patterns.description = ''
          AND common_tracker_patterns.common_third_party_id IS NULL
          AND EXCLUDED.common_third_party_id IS NOT NULL
         THEN 0
@@ -330,7 +334,8 @@ SET
     -- unrecoverable: the stale-recovery sweep skips any row whose payload
     -- is non-null, so the re-claimed-but-never-finished row never requeues.
     enrichment            = CASE
-        WHEN common_tracker_patterns.description = ''
+        WHEN common_tracker_patterns.attribution <> 'FIRST_PARTY'
+         AND common_tracker_patterns.description = ''
          AND common_tracker_patterns.common_third_party_id IS NULL
          AND EXCLUDED.common_third_party_id IS NOT NULL
         THEN NULL

@@ -215,6 +215,7 @@ func (h *trackerMappingHandler) Process(ctx context.Context, tp coredata.Tracker
 	commonPatternID := det.commonPatternID
 	commonThirdPartyID := det.commonThirdPartyID
 	directThirdPartyID := det.directThirdPartyID
+	firstParty := det.firstParty
 
 	// Phase 2: tracker-mapping agent (no transaction). It runs only when
 	// the deterministic signals could not resolve a catalog third party.
@@ -251,6 +252,7 @@ func (h *trackerMappingHandler) Process(ctx context.Context, tp coredata.Tracker
 
 					commonPatternID = firstNonNil(commonPatternID, match.commonPatternID)
 					commonThirdPartyID = match.commonThirdPartyID
+					firstParty = match.firstParty
 
 					return nil
 				},
@@ -265,7 +267,12 @@ func (h *trackerMappingHandler) Process(ctx context.Context, tp coredata.Tracker
 	// touches the database (in a short transaction).
 	thirdPartyID := tp.ThirdPartyID
 
-	if thirdPartyID == nil {
+	// A first-party verdict is terminal: the artifact has no vendor, so
+	// any org ThirdParty link a prior mapping run left on the pattern is
+	// stale and must be cleared.
+	if firstParty {
+		thirdPartyID = nil
+	} else if thirdPartyID == nil {
 		switch {
 		case directThirdPartyID != nil:
 			thirdPartyID = directThirdPartyID

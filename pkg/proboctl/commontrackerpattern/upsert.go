@@ -158,6 +158,18 @@ func newCmdUpsert(f *cmdutil.Factory) *cobra.Command {
 				if cmd.Flags().Changed("common-third-party") {
 					if flagCommonThirdParty == "" {
 						pattern.CommonThirdPartyID = nil
+
+						// Removing the vendor invalidates a THIRD_PARTY
+						// verdict, which by definition carries one. When the
+						// operator did not set an explicit --attribution,
+						// downgrade the now-stale verdict to UNDETERMINED so
+						// the mapping pipeline probes the vendor-free row
+						// again. A FIRST_PARTY row is already vendor-free and
+						// terminal, so it is left untouched.
+						if !cmd.Flags().Changed("attribution") &&
+							pattern.Attribution == coredata.CommonTrackerPatternAttributionThirdParty {
+							pattern.Attribution = coredata.CommonTrackerPatternAttributionUndetermined
+						}
 					} else {
 						thirdPartyID, err := resolveCommonThirdPartyID(ctx, tx, flagCommonThirdParty)
 						if err != nil {
@@ -165,6 +177,19 @@ func newCmdUpsert(f *cmdutil.Factory) *cobra.Command {
 						}
 
 						pattern.CommonThirdPartyID = &thirdPartyID
+
+						// A vendor-linked row is, by definition, attributed to
+						// a third party. When the operator did not set an
+						// explicit --attribution, normalize the verdict to
+						// THIRD_PARTY so the row never persists with an
+						// UNDETERMINED (or unset) verdict. A FIRST_PARTY row is
+						// terminal and stays vendor-free — the upsert discards
+						// the incoming vendor and keeps the verdict — so it is
+						// left untouched.
+						if !cmd.Flags().Changed("attribution") &&
+							pattern.Attribution != coredata.CommonTrackerPatternAttributionFirstParty {
+							pattern.Attribution = coredata.CommonTrackerPatternAttributionThirdParty
+						}
 					}
 				}
 
