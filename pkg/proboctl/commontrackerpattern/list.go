@@ -229,12 +229,17 @@ func renderPatternTable(cmd *cobra.Command, f *cmdutil.Factory, patterns coredat
 		return err
 	}
 
-	table := clicmdutil.NewTable("ID", "TYPE", "MATCH", "PATTERN", "CONF", "STATE", "THIRD PARTY", "CREATED", "UPDATED")
+	table := clicmdutil.NewTable("ID", "TYPE", "MATCH", "PATTERN", "CONF", "STATE", "THIRD PARTY", "LAST ATTEMPT", "CREATED", "UPDATED")
 
 	for _, p := range patterns {
 		thirdParty := ""
 		if p.CommonThirdPartyID != nil {
 			thirdParty = names[*p.CommonThirdPartyID]
+		}
+
+		lastAttempt := ""
+		if p.LastEnrichmentAttemptAt != nil {
+			lastAttempt = p.LastEnrichmentAttemptAt.Format("2006-01-02 15:04:05")
 		}
 
 		table.Row(
@@ -245,6 +250,7 @@ func renderPatternTable(cmd *cobra.Command, f *cmdutil.Factory, patterns coredat
 			fmt.Sprintf("%.2f", p.Confidence),
 			enrichmentState(p),
 			thirdParty,
+			lastAttempt,
 			p.CreatedAt.Format("2006-01-02 15:04:05"),
 			p.UpdatedAt.Format("2006-01-02 15:04:05"),
 		)

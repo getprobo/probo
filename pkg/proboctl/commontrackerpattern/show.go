@@ -16,8 +16,12 @@ package commontrackerpattern
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
+	"sort"
+	"time"
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/spf13/cobra"
@@ -27,6 +31,31 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/proboctl/cmdutil"
 )
+
+// patternEnrichmentMetadataView mirrors the subset of the common tracker
+// pattern enrichment payload (written by the enrichment worker) that show
+// renders. It is decoded locally to avoid a dependency on the cookiebanner
+// package.
+type patternEnrichmentMetadataView struct {
+	Model       string                                `json:"model"`
+	AttemptedAt time.Time                             `json:"attempted_at"`
+	Status      string                                `json:"status"`
+	Error       string                                `json:"error"`
+	Fields      map[string]patternEnrichmentFieldView `json:"fields"`
+	Attribution *patternEnrichmentAttributionView     `json:"attribution"`
+}
+
+type patternEnrichmentFieldView struct {
+	Status    string    `json:"status"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
+type patternEnrichmentAttributionView struct {
+	ThirdPartyName string  `json:"third_party_name"`
+	Category       string  `json:"category"`
+	Confidence     float64 `json:"confidence"`
+	Linked         bool    `json:"linked"`
+}
 
 func newCmdShow(f *cmdutil.Factory) *cobra.Command {
 	cmd := &cobra.Command{
@@ -140,5 +169,81 @@ func renderPatternDetail(f *cmdutil.Factory, p coredata.CommonTrackerPattern, th
 	row("Created:", p.CreatedAt.Format("2006-01-02 15:04:05"))
 	row("Updated:", p.UpdatedAt.Format("2006-01-02 15:04:05"))
 
+	printPatternEnrichmentDetails(out, label, p)
+
 	return nil
+}
+
+// printPatternEnrichmentDetails renders the run-level status (done,
+// partial, no_result), the agent attribution, and the per-field
+// provenance recorded in the enrichment payload, when present.
+func printPatternEnrichmentDetails(out io.Writer, label lipgloss.Style, p coredata.CommonTrackerPattern) {
+	if len(p.Enrichment) == 0 {
+		return
+	}
+
+	var meta patternEnrichmentMetadataView
+	if err := json.Unmarshal(p.Enrichment, &meta); err != nil {
+		return
+	}
+
+	row := func(name, value string) {
+		_, _ = fmt.Fprintf(out, "%s%s\n", label.Render(name), value)
+	}
+
+	if meta.Status != "" {
+		row("Last run status:", meta.Status)
+	}
+
+	if !meta.AttemptedAt.IsZero() {
+		row("Last run recorded:", meta.AttemptedAt.Format("2006-01-02 15:04:05"))
+	}
+
+	if meta.Model != "" {
+		row("Enrichment model:", meta.Model)
+	}
+
+	if meta.Error != "" {
+		row("Last error:", meta.Error)
+	}
+
+	if meta.Attribution != nil {
+		name := meta.Attribution.ThirdPartyName
+		if name == "" {
+			name = "(none)"
+		}
+
+		linked := "no"
+		if meta.Attribution.Linked {
+			linked = "yes"
+		}
+
+		row("Agent attribution:", fmt.Sprintf("%s [%s] conf %.2f linked=%s", name, meta.Attribution.Category, meta.Attribution.Confidence, linked))
+	}
+
+	if len(meta.Fields) > 0 {
+		names := make([]string, 0, len(meta.Fields))
+		for name := range meta.Fields {
+			names = append(names, name)
+		}
+
+		sort.Strings(names)
+
+		_, _ = fmt.Fprintln(out)
+
+		table := clicmdutil.NewTable("FIELD", "STATUS", "UPDATED")
+
+		for _, name := range names {
+			fm := meta.Fields[name]
+
+			updated := ""
+			if !fm.UpdatedAt.IsZero() {
+				updated = fm.UpdatedAt.Format("2006-01-02 15:04:05")
+			}
+
+			table.Row(name, fm.Status, updated)
+		}
+
+		_, _ = fmt.Fprintln(out, table.Render())
+	}
 }

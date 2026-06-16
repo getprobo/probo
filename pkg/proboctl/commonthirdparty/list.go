@@ -149,8 +149,13 @@ func newCmdList(f *cmdutil.Factory) *cobra.Command {
 			return nil
 		}
 
-		table := clicmdutil.NewTable("ID", "NAME", "SLUG", "CATEGORY", "STATE", "STATUS", "UPDATED")
+		table := clicmdutil.NewTable("ID", "NAME", "SLUG", "CATEGORY", "STATE", "STATUS", "LAST ATTEMPT", "UPDATED")
 		for _, p := range parties {
+			lastAttempt := ""
+			if p.LastEnrichmentAttemptAt != nil {
+				lastAttempt = p.LastEnrichmentAttemptAt.Format("2006-01-02 15:04:05")
+			}
+
 			table.Row(
 				p.ID.String(),
 				p.Name,
@@ -158,6 +163,7 @@ func newCmdList(f *cmdutil.Factory) *cobra.Command {
 				string(p.Category),
 				enrichmentState(p),
 				enrichmentStatus(p),
+				lastAttempt,
 				p.UpdatedAt.Format("2006-01-02 15:04:05"),
 			)
 		}
