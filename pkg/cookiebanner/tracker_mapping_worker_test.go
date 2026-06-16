@@ -1816,6 +1816,7 @@ func TestProcess_FirstPartyVerdictIsTerminal(t *testing.T) {
 	assert.Nil(t, reloaded.ThirdPartyID, "a first-party verdict must never attribute a third party")
 
 	reloadedCommon := coredata.CommonTrackerPattern{}
+
 	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
 		return reloadedCommon.LoadByID(ctx, conn, firstPartyCommon.ID)
 	}))
@@ -1915,6 +1916,7 @@ func TestProcess_LowConfidenceCatalogVendorNotAdopted(t *testing.T) {
 		_ = client.WithTx(context.Background(), func(ctx context.Context, tx pg.Tx) error {
 			_, _ = tx.Exec(ctx, `DELETE FROM common_tracker_patterns WHERE id = $1`, lowConfCommon.ID)
 			_, _ = tx.Exec(ctx, `DELETE FROM common_third_parties WHERE id = $1`, commonThirdPartyID)
+
 			return nil
 		})
 	})
@@ -1935,6 +1937,7 @@ func TestProcess_LowConfidenceCatalogVendorNotAdopted(t *testing.T) {
 	// The catalog row is untouched: its low-confidence vendor remains for
 	// a later evidence-backed corroboration.
 	reloadedCommon := coredata.CommonTrackerPattern{}
+
 	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
 		return reloadedCommon.LoadByID(ctx, conn, lowConfCommon.ID)
 	}))

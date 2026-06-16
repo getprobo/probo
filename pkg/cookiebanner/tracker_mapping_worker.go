@@ -244,6 +244,7 @@ func (h *trackerMappingHandler) Process(ctx context.Context, tp coredata.Tracker
 					} else {
 						match, err = h.persistAgentIdentification(ctx, tx, tp, *ident, det.untrustedThirdPartyID)
 					}
+
 					if err != nil {
 						return err
 					}

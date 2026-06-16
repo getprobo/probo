@@ -545,8 +545,10 @@ func TestCommonTrackerPatterns_SetAttributionByIDs(t *testing.T) {
 	var affected int64
 
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
-		var ps coredata.CommonTrackerPatterns
-		var err error
+		var (
+			ps  coredata.CommonTrackerPatterns
+			err error
+		)
 
 		affected, err = ps.SetAttributionByIDs(ctx, tx, []gid.GID{linked.ID}, coredata.CommonTrackerPatternAttributionFirstParty)
 
@@ -586,7 +588,9 @@ func TestCommonTrackerPatterns_RelinkCommonThirdPartyByIDs_SetsAttribution(t *te
 
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		var ps coredata.CommonTrackerPatterns
+
 		_, err := ps.RelinkCommonThirdPartyByIDs(ctx, tx, []gid.GID{row.ID}, &party.ID)
+
 		return err
 	}))
 
@@ -598,7 +602,9 @@ func TestCommonTrackerPatterns_RelinkCommonThirdPartyByIDs_SetsAttribution(t *te
 
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		var ps coredata.CommonTrackerPatterns
+
 		_, err := ps.RelinkCommonThirdPartyByIDs(ctx, tx, []gid.GID{row.ID}, nil)
+
 		return err
 	}))
 

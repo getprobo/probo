@@ -280,6 +280,7 @@ func TestVendorAttributionRejected(t *testing.T) {
 		"rejects below confidence threshold",
 		func(t *testing.T) {
 			t.Parallel()
+
 			r := confident(func(r *TrackerMappingAgentResult) { r.ThirdPartyConfidence = 0.3 })
 			assert.True(t, h.vendorAttributionRejected(ctx, tp, r, "https://example.com"))
 		},
@@ -289,6 +290,7 @@ func TestVendorAttributionRejected(t *testing.T) {
 		"rejects empty name",
 		func(t *testing.T) {
 			t.Parallel()
+
 			r := confident(func(r *TrackerMappingAgentResult) { r.ThirdPartyName = "" })
 			assert.True(t, h.vendorAttributionRejected(ctx, tp, r, "https://example.com"))
 		},
@@ -298,6 +300,7 @@ func TestVendorAttributionRejected(t *testing.T) {
 		"rejects when evidence source is none",
 		func(t *testing.T) {
 			t.Parallel()
+
 			r := confident(func(r *TrackerMappingAgentResult) { r.EvidenceSource = evidenceSourceNone })
 			assert.True(t, h.vendorAttributionRejected(ctx, tp, r, "https://example.com"))
 		},
@@ -307,6 +310,7 @@ func TestVendorAttributionRejected(t *testing.T) {
 		"rejects when evidence source is empty",
 		func(t *testing.T) {
 			t.Parallel()
+
 			r := confident(func(r *TrackerMappingAgentResult) { r.EvidenceSource = "" })
 			assert.True(t, h.vendorAttributionRejected(ctx, tp, r, "https://example.com"))
 		},
@@ -316,6 +320,7 @@ func TestVendorAttributionRejected(t *testing.T) {
 		"rejects when name matches scanned site",
 		func(t *testing.T) {
 			t.Parallel()
+
 			r := confident(func(r *TrackerMappingAgentResult) { r.ThirdPartyName = "Example" })
 			assert.True(t, h.vendorAttributionRejected(ctx, tp, r, "https://example.com"))
 		},
@@ -325,6 +330,7 @@ func TestVendorAttributionRejected(t *testing.T) {
 		"rejects cookie-database aggregator",
 		func(t *testing.T) {
 			t.Parallel()
+
 			r := confident(func(r *TrackerMappingAgentResult) { r.ThirdPartyName = "Cookiepedia" })
 			assert.True(t, h.vendorAttributionRejected(ctx, tp, r, "https://example.com"))
 		},
