@@ -136,12 +136,40 @@ func (h *trackerMappingHandler) RecoverStale(ctx context.Context) error {
 // is the catalog row the signal resolved (or backfilled); commonThirdPartyID
 // is the catalog third party the signal discovered, when any; thirdPartyID
 // is an existing org ThirdParty the signal knows directly (e.g. a sibling
-// pattern already promoted in the same organization). A nil *catalogMatch
-// means the signal produced nothing.
+// pattern already promoted in the same organization). firstParty is set
+// when the resolved catalog row carries the terminal FIRST_PARTY verdict.
+// untrustedThirdPartyID carries a vendor that was present on the resolved
+// row but not adopted because its confidence fell below
+// trustedAttributionConfidence; it lets the agent corroborate the prior
+// guess. A nil *catalogMatch means the signal produced nothing.
 type catalogMatch struct {
-	commonPatternID    *gid.GID
-	commonThirdPartyID *gid.GID
-	thirdPartyID       *gid.GID
+	commonPatternID       *gid.GID
+	commonThirdPartyID    *gid.GID
+	thirdPartyID          *gid.GID
+	untrustedThirdPartyID *gid.GID
+	firstParty            bool
+}
+
+// interpretCatalogRow maps a resolved catalog row onto the mapping
+// pipeline's adoption rules. A FIRST_PARTY row is terminal. A vendor is
+// adopted only when the row clears trustedAttributionConfidence;
+// otherwise the vendor is surfaced as untrusted so the agent can
+// corroborate it rather than the pipeline inheriting a low-confidence
+// precedent.
+func interpretCatalogRow(cp coredata.CommonTrackerPattern) (adopt *gid.GID, untrusted *gid.GID, firstParty bool) {
+	if cp.Attribution == coredata.CommonTrackerPatternAttributionFirstParty {
+		return nil, nil, true
+	}
+
+	if cp.CommonThirdPartyID == nil {
+		return nil, nil, false
+	}
+
+	if cp.Confidence >= trustedAttributionConfidence {
+		return cp.CommonThirdPartyID, nil, false
+	}
+
+	return nil, cp.CommonThirdPartyID, false
 }
 
 // Process resolves the catalog mapping for a tracker pattern and links it
@@ -191,8 +219,15 @@ func (h *trackerMappingHandler) Process(ctx context.Context, tp coredata.Tracker
 	// Phase 2: tracker-mapping agent (no transaction). It runs only when
 	// the deterministic signals could not resolve a catalog third party.
 	// The LLM and web-search calls happen outside any transaction; the
-	// result is persisted in its own short transaction.
-	if commonThirdPartyID == nil && h.mappingEnabled {
+	// result is persisted in its own short transaction. Patterns whose
+	// source is PRE_EXISTING are skipped: that source is the low-signal
+	// catch-all (storage enumerated at SDK init, which bundles extension
+	// state and prior-session artifacts), so a speculative agent run on it
+	// is more likely to invent a vendor than to find a real one. The
+	// deterministic catalog match still applies above, so a known cookie
+	// still maps; and a later SCRIPT/EXTENSION detection upgrades the
+	// source and re-arms mapping, giving the agent a better-grounded run.
+	if commonThirdPartyID == nil && h.mappingEnabled && !det.firstParty && !isPreExistingSource(tp) {
 		ident, err := h.identifyWithAgent(ctx, tp, det.origin)
 		if err != nil {
 			return fmt.Errorf("cannot identify with agent: %w", err)
@@ -202,7 +237,13 @@ func (h *trackerMappingHandler) Process(ctx context.Context, tp coredata.Tracker
 			if err := h.pg.WithTx(
 				ctx,
 				func(ctx context.Context, tx pg.Tx) error {
-					match, err := h.persistAgentIdentification(ctx, tx, tp, *ident)
+					var match *catalogMatch
+
+					if ident.firstParty {
+						match, err = h.persistFirstPartyVerdict(ctx, tx, tp)
+					} else {
+						match, err = h.persistAgentIdentification(ctx, tx, tp, *ident, det.untrustedThirdPartyID)
+					}
 					if err != nil {
 						return err
 					}
@@ -324,8 +365,10 @@ type deterministicResult struct {
 	commonPatternID            *gid.GID
 	commonThirdPartyID         *gid.GID
 	directThirdPartyID         *gid.GID
+	untrustedThirdPartyID      *gid.GID
 	domains                    []string
 	commonThirdPartyPreexisted bool
+	firstParty                 bool
 }
 
 // resolveDeterministic runs the catalog signals that need no network
@@ -357,7 +400,7 @@ func (h *trackerMappingHandler) resolveDeterministic(
 			return res, fmt.Errorf("cannot load linked common tracker pattern: %w", err)
 		}
 
-		res.commonThirdPartyID = commonPattern.CommonThirdPartyID
+		res.commonThirdPartyID, res.untrustedThirdPartyID, res.firstParty = interpretCatalogRow(commonPattern)
 	} else {
 		match, err := h.matchByPattern(ctx, tx, tp)
 		if err != nil {
@@ -367,7 +410,16 @@ func (h *trackerMappingHandler) resolveDeterministic(
 		if match != nil {
 			res.commonPatternID = match.commonPatternID
 			res.commonThirdPartyID = match.commonThirdPartyID
+			res.untrustedThirdPartyID = match.untrustedThirdPartyID
+			res.firstParty = match.firstParty
 		}
+	}
+
+	// A terminal FIRST_PARTY verdict short-circuits every remaining
+	// signal: the artifact has no third party, so neither the heuristic
+	// matches nor the agent should run, and no org party is linked.
+	if res.firstParty {
+		return res, nil
 	}
 
 	res.commonThirdPartyPreexisted = res.commonThirdPartyID != nil
@@ -467,6 +519,15 @@ func (h *trackerMappingHandler) reenqueueUnmappedSiblings(
 	return nil
 }
 
+// isPreExistingSource reports whether the org tracker pattern's source is
+// PRE_EXISTING. That source is the low-signal catch-all enumerated from
+// storage at SDK init (it bundles browser-extension state and
+// prior-session artifacts), so the speculative mapping agent is not run
+// for it; the deterministic catalog signals still apply.
+func isPreExistingSource(tp coredata.TrackerPattern) bool {
+	return tp.Source != nil && *tp.Source == coredata.CookieSourcePreExisting
+}
+
 // firstNonNil returns a when it is set, otherwise b. It keeps the first
 // catalog row id resolved by the pipeline stable: later signals upsert
 // the same row (same key) and return the same id, but the explicit guard
@@ -518,9 +579,13 @@ func (h *trackerMappingHandler) matchByPattern(
 		return nil, fmt.Errorf("cannot load common tracker pattern: %w", err)
 	}
 
+	adopt, untrusted, firstParty := interpretCatalogRow(commonPattern)
+
 	return &catalogMatch{
-		commonPatternID:    &commonPattern.ID,
-		commonThirdPartyID: commonPattern.CommonThirdPartyID,
+		commonPatternID:       &commonPattern.ID,
+		commonThirdPartyID:    adopt,
+		untrustedThirdPartyID: untrusted,
+		firstParty:            firstParty,
 	}, nil
 }
 
@@ -567,6 +632,7 @@ func (h *trackerMappingHandler) matchByDomain(
 		MatchType:          tp.MatchType,
 		MaxAgeSeconds:      tp.MaxAgeSeconds,
 		Confidence:         0.7,
+		Attribution:        coredata.CommonTrackerPatternAttributionThirdParty,
 		CreatedAt:          now,
 		UpdatedAt:          now,
 	}
@@ -581,10 +647,14 @@ func (h *trackerMappingHandler) matchByDomain(
 	}, nil
 }
 
-// agentIdentification carries a confident tracker-mapping agent result
-// from the no-tx agent phase to the short transaction that persists it.
+// agentIdentification carries a tracker-mapping agent verdict from the
+// no-tx agent phase to the short transaction that persists it. Exactly
+// one outcome is meaningful: firstParty set means the agent declared a
+// terminal no-third-party verdict; otherwise result holds a defensible
+// vendor attribution.
 type agentIdentification struct {
-	result TrackerMappingAgentResult
+	result     TrackerMappingAgentResult
+	firstParty bool
 }
 
 // identifyWithAgent runs the tracker-mapping agent outside any
@@ -664,10 +734,43 @@ func (h *trackerMappingHandler) identifyWithAgent(
 
 	identification := result.Output
 
+	// A defensible vendor attribution wins: record it for the catalog.
+	if !h.vendorAttributionRejected(ctx, tp, identification, siteOrigin) {
+		return &agentIdentification{result: identification}, nil
+	}
+
+	// No defensible vendor. An explicit first-party declaration is a
+	// terminal verdict: persist it so the pipeline stops retrying this
+	// artifact. Otherwise leave the pattern undetermined for a later,
+	// better-informed attempt (the unmatched fallback records it with no
+	// third party).
+	if identification.IsFirstParty {
+		h.logger.InfoCtx(
+			ctx,
+			"agent declared tracker first-party",
+			log.String("pattern", tp.Pattern),
+		)
+
+		return &agentIdentification{firstParty: true}, nil
+	}
+
+	return nil, nil
+}
+
+// vendorAttributionRejected reports whether the agent's vendor
+// attribution must be discarded, logging the reason. It enforces, in
+// order: a confident attribution, a concrete evidence source (no
+// general-knowledge guesses), the scanned-site backstop, and the
+// cookie-database-aggregator backstop.
+func (h *trackerMappingHandler) vendorAttributionRejected(
+	ctx context.Context,
+	tp coredata.TrackerPattern,
+	identification TrackerMappingAgentResult,
+	siteOrigin string,
+) bool {
 	// The agent's confidence gauges the attribution (who set the
 	// tracker), not whether the artifact is a meaningful tracker. Without
-	// a confident vendor there is nothing to catalog here; the unmatched
-	// fallback records the pattern with no third party instead.
+	// a confident vendor there is nothing to catalog here.
 	if identification.ThirdPartyName == "" || identification.ThirdPartyConfidence < agentThirdPartyConfidenceThreshold {
 		h.logger.InfoCtx(
 			ctx,
@@ -676,7 +779,23 @@ func (h *trackerMappingHandler) identifyWithAgent(
 			log.Float64("third_party_confidence", identification.ThirdPartyConfidence),
 		)
 
-		return nil, nil
+		return true
+	}
+
+	// Evidence guard: a vendor is attributed only on concrete evidence (a
+	// database match, a meaningful naming convention, or a web/browser
+	// result that names the setter). An attribution with no evidence
+	// source is a general-knowledge guess and is discarded, so a wrong
+	// precedent never enters the catalog.
+	if !evidenceSupportsAttribution(identification.EvidenceSource) {
+		h.logger.InfoCtx(
+			ctx,
+			"agent attribution lacks concrete evidence, discarding",
+			log.String("pattern", tp.Pattern),
+			log.String("evidence_source", identification.EvidenceSource),
+		)
+
+		return true
 	}
 
 	// Backstop for the prompt rule that the scanned site is never a third
@@ -693,7 +812,7 @@ func (h *trackerMappingHandler) identifyWithAgent(
 			log.String("pattern", tp.Pattern),
 		)
 
-		return nil, nil
+		return true
 	}
 
 	// Cookie-database and cookie-banner directory sites (Cookifi,
@@ -712,12 +831,10 @@ func (h *trackerMappingHandler) identifyWithAgent(
 			log.String("pattern", tp.Pattern),
 		)
 
-		return nil, nil
+		return true
 	}
 
-	return &agentIdentification{
-		result: identification,
-	}, nil
+	return false
 }
 
 // nameMatchesSiteDomain reports whether a candidate vendor name refers to
@@ -788,11 +905,18 @@ func nameIsCookieDatabaseAggregator(name string) bool {
 // it resolves or creates the catalog third party and upserts the
 // catalog pattern row that links to it. It runs inside the caller's
 // short transaction.
+//
+// priorUntrustedThirdPartyID, when set, is the vendor an existing
+// catalog row carried but that was too low-confidence to adopt
+// deterministically. When the agent independently lands on the same
+// vendor, that is corroboration: the row is promoted to the trusted tier
+// so subsequent patterns adopt it without re-running the agent.
 func (h *trackerMappingHandler) persistAgentIdentification(
 	ctx context.Context,
 	tx pg.Tx,
 	tp coredata.TrackerPattern,
 	ident agentIdentification,
+	priorUntrustedThirdPartyID *gid.GID,
 ) (*catalogMatch, error) {
 	commonThirdPartyID, err := thirdparty.ResolveOrCreateCommonThirdParty(
 		ctx,
@@ -805,6 +929,15 @@ func (h *trackerMappingHandler) persistAgentIdentification(
 		return nil, fmt.Errorf("cannot resolve or create common third party: %w", err)
 	}
 
+	confidence := float32(agentSourceConfidence)
+
+	corroborated := priorUntrustedThirdPartyID != nil &&
+		commonThirdPartyID != nil &&
+		*priorUntrustedThirdPartyID == *commonThirdPartyID
+	if corroborated {
+		confidence = trustedAttributionConfidence
+	}
+
 	now := time.Now()
 	commonPattern := coredata.CommonTrackerPattern{
 		ID:                 gid.New(gid.NilTenant, coredata.CommonTrackerPatternEntityType),
@@ -813,7 +946,8 @@ func (h *trackerMappingHandler) persistAgentIdentification(
 		Pattern:            tp.Pattern,
 		MatchType:          tp.MatchType,
 		MaxAgeSeconds:      tp.MaxAgeSeconds,
-		Confidence:         agentSourceConfidence,
+		Confidence:         confidence,
+		Attribution:        coredata.CommonTrackerPatternAttributionThirdParty,
 		CreatedAt:          now,
 		UpdatedAt:          now,
 	}
@@ -828,11 +962,52 @@ func (h *trackerMappingHandler) persistAgentIdentification(
 		log.String("pattern", tp.Pattern),
 		log.String("third_party", ident.result.ThirdPartyName),
 		log.Float64("third_party_confidence", ident.result.ThirdPartyConfidence),
+		log.Bool("corroborated_prior_attribution", corroborated),
 	)
 
 	return &catalogMatch{
 		commonPatternID:    &commonPattern.ID,
 		commonThirdPartyID: commonPattern.CommonThirdPartyID,
+	}, nil
+}
+
+// persistFirstPartyVerdict records the agent's terminal first-party
+// verdict on the catalog: it upserts the row with no vendor and the
+// FIRST_PARTY attribution, which the upsert preserves on later automated
+// runs. Any stray low-confidence vendor a prior run left on the row is
+// cleared. It runs inside the caller's short transaction.
+func (h *trackerMappingHandler) persistFirstPartyVerdict(
+	ctx context.Context,
+	tx pg.Tx,
+	tp coredata.TrackerPattern,
+) (*catalogMatch, error) {
+	now := time.Now()
+	commonPattern := coredata.CommonTrackerPattern{
+		ID:            gid.New(gid.NilTenant, coredata.CommonTrackerPatternEntityType),
+		TrackerType:   tp.TrackerType,
+		Pattern:       tp.Pattern,
+		MatchType:     tp.MatchType,
+		MaxAgeSeconds: tp.MaxAgeSeconds,
+		Confidence:    agentSourceConfidence,
+		Attribution:   coredata.CommonTrackerPatternAttributionFirstParty,
+		CreatedAt:     now,
+		UpdatedAt:     now,
+	}
+
+	if _, err := commonPattern.Upsert(ctx, tx); err != nil {
+		return nil, fmt.Errorf("cannot upsert first-party common tracker pattern: %w", err)
+	}
+
+	h.logger.InfoCtx(
+		ctx,
+		"recorded first-party tracker verdict",
+		log.String("pattern", tp.Pattern),
+		log.String("tracker_pattern_id", tp.ID.String()),
+	)
+
+	return &catalogMatch{
+		commonPatternID: &commonPattern.ID,
+		firstParty:      true,
 	}, nil
 }
 
@@ -898,6 +1073,7 @@ func (h *trackerMappingHandler) matchBySiblingOrigin(
 		MatchType:          tp.MatchType,
 		MaxAgeSeconds:      tp.MaxAgeSeconds,
 		Confidence:         0.7,
+		Attribution:        coredata.CommonTrackerPatternAttributionThirdParty,
 		CreatedAt:          now,
 		UpdatedAt:          now,
 	}
@@ -1026,6 +1202,7 @@ func (h *trackerMappingHandler) createUnmatchedPattern(
 		MatchType:     tp.MatchType,
 		MaxAgeSeconds: tp.MaxAgeSeconds,
 		Confidence:    0.5,
+		Attribution:   coredata.CommonTrackerPatternAttributionUndetermined,
 		CreatedAt:     now,
 		UpdatedAt:     now,
 	}

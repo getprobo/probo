@@ -36,6 +36,7 @@ func newCmdList(f *cmdutil.Factory) *cobra.Command {
 		flagLinkedOrg            string
 		flagKeyword              string
 		flagState                string
+		flagAttribution          string
 		flagWithCommonThirdParty bool
 		flagWithoutDescription   bool
 		flagSort                 string
@@ -57,6 +58,7 @@ func newCmdList(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&flagLinkedOrg, "linked-org", "", "Filter to catalog rows linked to an organization's patterns (GID)")
 	cmd.Flags().StringVar(&flagKeyword, "keyword", "", "Filter by pattern/description substring")
 	cmd.Flags().StringVar(&flagState, "state", "", "Filter by enrichment state (queued, enriched, unenriched)")
+	cmd.Flags().StringVar(&flagAttribution, "attribution", "", "Filter by attribution verdict (UNDETERMINED, THIRD_PARTY, FIRST_PARTY)")
 	cmd.Flags().BoolVar(&flagWithCommonThirdParty, "with-common-third-party", false, "Filter by whether the pattern is linked to a common third party (true/false); ignored when not set")
 	cmd.Flags().BoolVar(&flagWithoutDescription, "without-description", false, "Only patterns with a blank description")
 	cmd.Flags().StringVar(&flagSort, "sort", "confidence", "Sort field: pattern, confidence, created, updated, attempted")
@@ -93,7 +95,7 @@ func newCmdList(f *cmdutil.Factory) *cobra.Command {
 			described = new(false)
 		}
 
-		filter, err := buildListFilter(flagTrackerType, flagMatchType, flagKeyword, flagState, withCommonThirdParty, described)
+		filter, err := buildListFilter(flagTrackerType, flagMatchType, flagKeyword, flagState, flagAttribution, withCommonThirdParty, described)
 		if err != nil {
 			return err
 		}
@@ -229,7 +231,7 @@ func renderPatternTable(cmd *cobra.Command, f *cmdutil.Factory, patterns coredat
 		return err
 	}
 
-	table := clicmdutil.NewTable("ID", "TYPE", "MATCH", "PATTERN", "CONF", "STATE", "THIRD PARTY", "LAST ATTEMPT", "CREATED", "UPDATED")
+	table := clicmdutil.NewTable("ID", "TYPE", "MATCH", "PATTERN", "CONF", "VERDICT", "STATE", "THIRD PARTY", "LAST ATTEMPT", "CREATED", "UPDATED")
 
 	for _, p := range patterns {
 		thirdParty := ""
@@ -248,6 +250,7 @@ func renderPatternTable(cmd *cobra.Command, f *cmdutil.Factory, patterns coredat
 			string(p.MatchType),
 			p.Pattern,
 			fmt.Sprintf("%.2f", p.Confidence),
+			string(p.Attribution),
 			enrichmentState(p),
 			thirdParty,
 			lastAttempt,
@@ -309,7 +312,7 @@ func parseOrderBy(sort, order string) (page.OrderBy[coredata.CommonTrackerPatter
 }
 
 func buildListFilter(
-	trackerType, matchType, keyword, state string,
+	trackerType, matchType, keyword, state, attribution string,
 	withCommonThirdParty, described *bool,
 ) (*coredata.CommonTrackerPatternFilter, error) {
 	filter := coredata.NewCommonTrackerPatternFilter()
@@ -343,6 +346,15 @@ func buildListFilter(
 		}
 
 		filter.WithState(&st)
+	}
+
+	if attribution != "" {
+		attr := coredata.CommonTrackerPatternAttribution(attribution)
+		if !attr.IsValid() {
+			return nil, fmt.Errorf("invalid --attribution value %q: valid values are UNDETERMINED, THIRD_PARTY, FIRST_PARTY", attribution)
+		}
+
+		filter.WithAttribution(&attr)
 	}
 
 	if withCommonThirdParty != nil {

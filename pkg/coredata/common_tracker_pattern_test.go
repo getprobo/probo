@@ -430,3 +430,179 @@ func TestCommonTrackerPattern_ResetStaleEnrichments_RespectsMaxAttempts(t *testi
 	reloadedExhausted := loadCommonTrackerPattern(t, ctx, client, exhausted.ID)
 	assert.Nil(t, reloadedExhausted.EnrichmentRequestedAt, "row at the max-attempts ceiling must not be re-queued")
 }
+
+// TestCommonTrackerPatternAttribution_IsValid pins the enum's accepted
+// values.
+func TestCommonTrackerPatternAttribution_IsValid(t *testing.T) {
+	t.Parallel()
+
+	for _, v := range coredata.CommonTrackerPatternAttributions() {
+		assert.True(t, v.IsValid(), "%q must be valid", v)
+	}
+
+	assert.False(t, coredata.CommonTrackerPatternAttribution("").IsValid())
+	assert.False(t, coredata.CommonTrackerPatternAttribution("nonsense").IsValid())
+}
+
+// TestCommonTrackerPattern_Upsert_RoundTripsAttribution pins that the
+// attribution verdict is persisted and read back, and that an empty
+// verdict defaults to UNDETERMINED.
+func TestCommonTrackerPattern_Upsert_RoundTripsAttribution(t *testing.T) {
+	t.Parallel()
+
+	client := test.PGClient(t)
+	ctx := context.Background()
+
+	now := time.Now().UTC().Truncate(time.Microsecond)
+	cp := coredata.CommonTrackerPattern{
+		ID:          gid.New(gid.NilTenant, coredata.CommonTrackerPatternEntityType),
+		TrackerType: coredata.TrackerTypeLocalStorage,
+		Pattern:     "attr_default_" + gid.New(gid.NilTenant, coredata.CommonTrackerPatternEntityType).String(),
+		MatchType:   coredata.TrackerPatternMatchTypeExact,
+		Confidence:  0.5,
+		CreatedAt:   now,
+		UpdatedAt:   now,
+	}
+	insertCommonTrackerPattern(t, ctx, client, cp)
+
+	reloaded := loadCommonTrackerPattern(t, ctx, client, cp.ID)
+	assert.Equal(t, coredata.CommonTrackerPatternAttributionUndetermined, reloaded.Attribution, "empty verdict must default to UNDETERMINED")
+}
+
+// TestCommonTrackerPattern_Upsert_PreservesFirstPartyVerdict pins the
+// terminal contract: once a row is FIRST_PARTY, an automated upsert that
+// carries a vendor neither flips the verdict nor attaches the vendor.
+func TestCommonTrackerPattern_Upsert_PreservesFirstPartyVerdict(t *testing.T) {
+	t.Parallel()
+
+	client := test.PGClient(t)
+	ctx := context.Background()
+
+	party := seedCommonThirdParty(t, ctx, client)
+
+	now := time.Now().UTC().Truncate(time.Microsecond)
+	pattern := "first_party_terminal_" + gid.New(gid.NilTenant, coredata.CommonTrackerPatternEntityType).String()
+
+	firstParty := coredata.CommonTrackerPattern{
+		ID:          gid.New(gid.NilTenant, coredata.CommonTrackerPatternEntityType),
+		TrackerType: coredata.TrackerTypeLocalStorage,
+		Pattern:     pattern,
+		MatchType:   coredata.TrackerPatternMatchTypeExact,
+		Confidence:  0.8,
+		Attribution: coredata.CommonTrackerPatternAttributionFirstParty,
+		CreatedAt:   now,
+		UpdatedAt:   now,
+	}
+	insertCommonTrackerPattern(t, ctx, client, firstParty)
+
+	// An automated upsert (same key) that tries to attach a vendor.
+	intruder := coredata.CommonTrackerPattern{
+		ID:                 gid.New(gid.NilTenant, coredata.CommonTrackerPatternEntityType),
+		CommonThirdPartyID: &party.ID,
+		TrackerType:        coredata.TrackerTypeLocalStorage,
+		Pattern:            pattern,
+		MatchType:          coredata.TrackerPatternMatchTypeExact,
+		Confidence:         0.7,
+		Attribution:        coredata.CommonTrackerPatternAttributionThirdParty,
+		CreatedAt:          now,
+		UpdatedAt:          now.Add(time.Minute),
+	}
+
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		_, err := intruder.Upsert(ctx, tx)
+		return err
+	}))
+
+	reloaded := loadCommonTrackerPattern(t, ctx, client, firstParty.ID)
+	assert.Equal(t, coredata.CommonTrackerPatternAttributionFirstParty, reloaded.Attribution, "FIRST_PARTY verdict must survive an automated upsert")
+	assert.Nil(t, reloaded.CommonThirdPartyID, "a terminal first-party row must stay vendor-free")
+}
+
+// TestCommonTrackerPatterns_SetAttributionByIDs pins that the operator
+// helper records the verdict and clears any vendor link.
+func TestCommonTrackerPatterns_SetAttributionByIDs(t *testing.T) {
+	t.Parallel()
+
+	client := test.PGClient(t)
+	ctx := context.Background()
+
+	party := seedCommonThirdParty(t, ctx, client)
+
+	now := time.Now().UTC().Truncate(time.Microsecond)
+	linked := coredata.CommonTrackerPattern{
+		ID:                 gid.New(gid.NilTenant, coredata.CommonTrackerPatternEntityType),
+		CommonThirdPartyID: &party.ID,
+		TrackerType:        coredata.TrackerTypeCookie,
+		Pattern:            "to_first_party_" + gid.New(gid.NilTenant, coredata.CommonTrackerPatternEntityType).String(),
+		MatchType:          coredata.TrackerPatternMatchTypeExact,
+		Confidence:         0.8,
+		Attribution:        coredata.CommonTrackerPatternAttributionThirdParty,
+		CreatedAt:          now,
+		UpdatedAt:          now,
+	}
+	insertCommonTrackerPattern(t, ctx, client, linked)
+
+	var affected int64
+
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		var ps coredata.CommonTrackerPatterns
+		var err error
+
+		affected, err = ps.SetAttributionByIDs(ctx, tx, []gid.GID{linked.ID}, coredata.CommonTrackerPatternAttributionFirstParty)
+
+		return err
+	}))
+
+	assert.Equal(t, int64(1), affected)
+
+	reloaded := loadCommonTrackerPattern(t, ctx, client, linked.ID)
+	assert.Equal(t, coredata.CommonTrackerPatternAttributionFirstParty, reloaded.Attribution)
+	assert.Nil(t, reloaded.CommonThirdPartyID, "marking first-party must clear the vendor link")
+}
+
+// TestCommonTrackerPatterns_RelinkCommonThirdPartyByIDs_SetsAttribution
+// pins that linking sets THIRD_PARTY and unlinking returns the row to
+// UNDETERMINED.
+func TestCommonTrackerPatterns_RelinkCommonThirdPartyByIDs_SetsAttribution(t *testing.T) {
+	t.Parallel()
+
+	client := test.PGClient(t)
+	ctx := context.Background()
+
+	party := seedCommonThirdParty(t, ctx, client)
+
+	now := time.Now().UTC().Truncate(time.Microsecond)
+	row := coredata.CommonTrackerPattern{
+		ID:          gid.New(gid.NilTenant, coredata.CommonTrackerPatternEntityType),
+		TrackerType: coredata.TrackerTypeCookie,
+		Pattern:     "relink_attr_" + gid.New(gid.NilTenant, coredata.CommonTrackerPatternEntityType).String(),
+		MatchType:   coredata.TrackerPatternMatchTypeExact,
+		Confidence:  0.5,
+		Attribution: coredata.CommonTrackerPatternAttributionUndetermined,
+		CreatedAt:   now,
+		UpdatedAt:   now,
+	}
+	insertCommonTrackerPattern(t, ctx, client, row)
+
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		var ps coredata.CommonTrackerPatterns
+		_, err := ps.RelinkCommonThirdPartyByIDs(ctx, tx, []gid.GID{row.ID}, &party.ID)
+		return err
+	}))
+
+	linked := loadCommonTrackerPattern(t, ctx, client, row.ID)
+	assert.Equal(t, coredata.CommonTrackerPatternAttributionThirdParty, linked.Attribution, "linking must set THIRD_PARTY")
+	require.NotNil(t, linked.CommonThirdPartyID)
+	assert.Equal(t, party.ID, *linked.CommonThirdPartyID)
+	assert.Equal(t, float32(1), linked.Confidence, "linking must bump confidence to the curated tier")
+
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		var ps coredata.CommonTrackerPatterns
+		_, err := ps.RelinkCommonThirdPartyByIDs(ctx, tx, []gid.GID{row.ID}, nil)
+		return err
+	}))
+
+	unlinked := loadCommonTrackerPattern(t, ctx, client, row.ID)
+	assert.Equal(t, coredata.CommonTrackerPatternAttributionUndetermined, unlinked.Attribution, "unlinking must return the verdict to UNDETERMINED")
+	assert.Nil(t, unlinked.CommonThirdPartyID)
+}

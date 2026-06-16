@@ -30,20 +30,21 @@ import (
 
 type (
 	CommonTrackerPattern struct {
-		ID                      gid.GID                 `db:"id"`
-		CommonThirdPartyID      *gid.GID                `db:"common_third_party_id"`
-		TrackerType             TrackerType             `db:"tracker_type"`
-		Pattern                 string                  `db:"pattern"`
-		MatchType               TrackerPatternMatchType `db:"match_type"`
-		Description             string                  `db:"description"`
-		MaxAgeSeconds           *int                    `db:"max_age_seconds"`
-		Confidence              float32                 `db:"confidence"`
-		EnrichmentRequestedAt   *time.Time              `db:"enrichment_requested_at"`
-		Enrichment              json.RawMessage         `db:"enrichment"`
-		EnrichmentAttempts      int                     `db:"enrichment_attempts"`
-		LastEnrichmentAttemptAt *time.Time              `db:"last_enrichment_attempt_at"`
-		CreatedAt               time.Time               `db:"created_at"`
-		UpdatedAt               time.Time               `db:"updated_at"`
+		ID                      gid.GID                         `db:"id"`
+		CommonThirdPartyID      *gid.GID                        `db:"common_third_party_id"`
+		TrackerType             TrackerType                     `db:"tracker_type"`
+		Pattern                 string                          `db:"pattern"`
+		MatchType               TrackerPatternMatchType         `db:"match_type"`
+		Description             string                          `db:"description"`
+		MaxAgeSeconds           *int                            `db:"max_age_seconds"`
+		Confidence              float32                         `db:"confidence"`
+		Attribution             CommonTrackerPatternAttribution `db:"attribution"`
+		EnrichmentRequestedAt   *time.Time                      `db:"enrichment_requested_at"`
+		Enrichment              json.RawMessage                 `db:"enrichment"`
+		EnrichmentAttempts      int                             `db:"enrichment_attempts"`
+		LastEnrichmentAttemptAt *time.Time                      `db:"last_enrichment_attempt_at"`
+		CreatedAt               time.Time                       `db:"created_at"`
+		UpdatedAt               time.Time                       `db:"updated_at"`
 	}
 
 	CommonTrackerPatterns []*CommonTrackerPattern
@@ -64,6 +65,7 @@ SELECT
     description,
     max_age_seconds,
     confidence,
+    attribution,
     enrichment_requested_at,
     enrichment,
     enrichment_attempts,
@@ -115,6 +117,7 @@ SELECT
     description,
     max_age_seconds,
     confidence,
+    attribution,
     enrichment_requested_at,
     enrichment,
     enrichment_attempts,
@@ -159,6 +162,10 @@ func (p CommonTrackerPattern) Insert(
 	ctx context.Context,
 	conn pg.Tx,
 ) error {
+	if p.Attribution == "" {
+		p.Attribution = CommonTrackerPatternAttributionUndetermined
+	}
+
 	q := `
 INSERT INTO common_tracker_patterns (
     id,
@@ -169,6 +176,7 @@ INSERT INTO common_tracker_patterns (
     description,
     max_age_seconds,
     confidence,
+    attribution,
     enrichment_requested_at,
     enrichment,
     enrichment_attempts,
@@ -184,6 +192,7 @@ INSERT INTO common_tracker_patterns (
     @description,
     @max_age_seconds,
     @confidence,
+    @attribution,
     @enrichment_requested_at,
     @enrichment,
     @enrichment_attempts,
@@ -202,6 +211,7 @@ INSERT INTO common_tracker_patterns (
 		"description":                p.Description,
 		"max_age_seconds":            p.MaxAgeSeconds,
 		"confidence":                 p.Confidence,
+		"attribution":                p.Attribution,
 		"enrichment_requested_at":    p.EnrichmentRequestedAt,
 		"enrichment":                 p.Enrichment,
 		"enrichment_attempts":        p.EnrichmentAttempts,
@@ -232,6 +242,10 @@ func (p *CommonTrackerPattern) Upsert(
 	// enrichment, and re-arming resets the attempt counter and drops the
 	// prior payload so the row reads as not-yet-completed again (see the
 	// enrichment CASE below).
+	if p.Attribution == "" {
+		p.Attribution = CommonTrackerPatternAttributionUndetermined
+	}
+
 	q := `
 INSERT INTO common_tracker_patterns (
     id,
@@ -242,6 +256,7 @@ INSERT INTO common_tracker_patterns (
     description,
     max_age_seconds,
     confidence,
+    attribution,
     enrichment_requested_at,
     enrichment,
     enrichment_attempts,
@@ -257,6 +272,7 @@ INSERT INTO common_tracker_patterns (
     @description,
     @max_age_seconds,
     @confidence,
+    @attribution,
     CASE WHEN @description = '' THEN NOW() ELSE NULL END,
     NULL,
     0,
@@ -266,13 +282,29 @@ INSERT INTO common_tracker_patterns (
 )
 ON CONFLICT (tracker_type, pattern, COALESCE(max_age_seconds, -1)) DO UPDATE
 SET
-    common_third_party_id = EXCLUDED.common_third_party_id,
+    -- A terminal FIRST_PARTY row stays vendor-free: an automated upsert
+    -- must never attach a third party to an artifact an operator (or the
+    -- agent) ruled has none. Other rows take the incoming vendor.
+    common_third_party_id = CASE
+        WHEN common_tracker_patterns.attribution = 'FIRST_PARTY' THEN NULL
+        ELSE EXCLUDED.common_third_party_id
+    END,
     match_type            = EXCLUDED.match_type,
     description           = CASE
         WHEN EXCLUDED.description = '' THEN common_tracker_patterns.description
         ELSE EXCLUDED.description
     END,
     confidence            = EXCLUDED.confidence,
+    -- A FIRST_PARTY verdict is terminal: it is only ever set by an
+    -- explicit operator action (proboctl mark-first-party). Automated
+    -- mapping upserts must never downgrade it back to a vendor or
+    -- UNDETERMINED, otherwise a stray domain/sibling match would
+    -- resurrect the very attribution the operator suppressed.
+    attribution           = CASE
+        WHEN common_tracker_patterns.attribution = 'FIRST_PARTY'
+        THEN common_tracker_patterns.attribution
+        ELSE EXCLUDED.attribution
+    END,
     -- A blank, unlinked catalog row that now gains a third party is
     -- re-queued for enrichment: the enrichment agent leaves descriptions
     -- blank when it cannot substantiate a purpose, and knowing the vendor
@@ -314,6 +346,7 @@ RETURNING
     description,
     max_age_seconds,
     confidence,
+    attribution,
     enrichment_requested_at,
     enrichment,
     enrichment_attempts,
@@ -333,6 +366,7 @@ RETURNING
 		"description":           p.Description,
 		"max_age_seconds":       p.MaxAgeSeconds,
 		"confidence":            p.Confidence,
+		"attribution":           p.Attribution,
 		"created_at":            p.CreatedAt,
 		"updated_at":            p.UpdatedAt,
 	}
@@ -386,6 +420,7 @@ SELECT
     description,
     max_age_seconds,
     confidence,
+    attribution,
     enrichment_requested_at,
     enrichment,
     enrichment_attempts,
@@ -505,6 +540,7 @@ SELECT
     description,
     max_age_seconds,
     confidence,
+    attribution,
     enrichment_requested_at,
     enrichment,
     enrichment_attempts,
@@ -554,6 +590,7 @@ SELECT
     description,
     max_age_seconds,
     confidence,
+    attribution,
     enrichment_requested_at,
     enrichment,
     enrichment_attempts,
@@ -743,6 +780,7 @@ SELECT
     description,
     max_age_seconds,
     confidence,
+    attribution,
     enrichment_requested_at,
     enrichment,
     enrichment_attempts,
@@ -812,6 +850,7 @@ SELECT
     description,
     max_age_seconds,
     confidence,
+    attribution,
     enrichment_requested_at,
     enrichment,
     enrichment_attempts,
@@ -916,11 +955,12 @@ ORDER BY pattern ASC
 // RelinkCommonThirdPartyByIDs repoints the given common tracker patterns
 // at a different common third party (or unlinks them when thirdPartyID is
 // nil). Linking is a manual operator attribution - the highest-trust
-// signal - so it bumps confidence to 1 to match the curated/seed tier;
-// unlinking makes no attribution and leaves confidence untouched. It only
-// touches the catalog rows; callers re-arm enrichment and remap the
-// org-scoped tracker patterns separately. Returns the number of rows
-// updated.
+// signal - so it bumps confidence to 1 to match the curated/seed tier and
+// sets the attribution verdict to THIRD_PARTY; unlinking makes no
+// attribution, returns the verdict to UNDETERMINED so the pipeline can
+// re-probe the row, and leaves confidence untouched. It only touches the
+// catalog rows; callers re-arm enrichment and remap the org-scoped tracker
+// patterns separately. Returns the number of rows updated.
 func (ps *CommonTrackerPatterns) RelinkCommonThirdPartyByIDs(
 	ctx context.Context,
 	tx pg.Tx,
@@ -932,6 +972,10 @@ UPDATE common_tracker_patterns
 SET
     common_third_party_id = @third_party_id,
     confidence = CASE WHEN @third_party_id::text IS NOT NULL THEN 1 ELSE confidence END,
+    attribution = CASE
+        WHEN @third_party_id::text IS NOT NULL THEN 'THIRD_PARTY'::common_tracker_pattern_attribution
+        ELSE 'UNDETERMINED'::common_tracker_pattern_attribution
+    END,
     updated_at = NOW()
 WHERE
     id = ANY(@ids)
@@ -945,6 +989,42 @@ WHERE
 	result, err := tx.Exec(ctx, q, args)
 	if err != nil {
 		return 0, fmt.Errorf("cannot relink common tracker pattern third party: %w", err)
+	}
+
+	return result.RowsAffected(), nil
+}
+
+// SetAttributionByIDs records a terminal attribution verdict on the given
+// catalog rows. It is an operator action: marking a row FIRST_PARTY (or
+// UNDETERMINED) clears any vendor link, because a non-third-party verdict
+// cannot keep a common_third_party_id. THIRD_PARTY is not a valid verdict
+// here - that attribution carries a vendor and must go through
+// RelinkCommonThirdPartyByIDs. Callers re-arm the org-scoped tracker
+// patterns separately. Returns the number of rows updated.
+func (ps *CommonTrackerPatterns) SetAttributionByIDs(
+	ctx context.Context,
+	tx pg.Tx,
+	ids []gid.GID,
+	attribution CommonTrackerPatternAttribution,
+) (int64, error) {
+	q := `
+UPDATE common_tracker_patterns
+SET
+    attribution = @attribution,
+    common_third_party_id = NULL,
+    updated_at = NOW()
+WHERE
+    id = ANY(@ids)
+`
+
+	args := pgx.StrictNamedArgs{
+		"ids":         ids,
+		"attribution": attribution,
+	}
+
+	result, err := tx.Exec(ctx, q, args)
+	if err != nil {
+		return 0, fmt.Errorf("cannot set common tracker pattern attribution: %w", err)
 	}
 
 	return result.RowsAffected(), nil

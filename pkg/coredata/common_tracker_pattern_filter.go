@@ -79,6 +79,7 @@ type CommonTrackerPatternFilter struct {
 	linked             *bool
 	described          *bool
 	state              *CommonTrackerPatternEnrichmentState
+	attribution        *CommonTrackerPatternAttribution
 }
 
 func NewCommonTrackerPatternFilter() *CommonTrackerPatternFilter {
@@ -127,6 +128,11 @@ func (f *CommonTrackerPatternFilter) WithDescribed(described *bool) *CommonTrack
 
 func (f *CommonTrackerPatternFilter) WithState(state *CommonTrackerPatternEnrichmentState) *CommonTrackerPatternFilter {
 	f.state = state
+	return f
+}
+
+func (f *CommonTrackerPatternFilter) WithAttribution(attribution *CommonTrackerPatternAttribution) *CommonTrackerPatternFilter {
+	f.attribution = attribution
 	return f
 }
 
@@ -188,6 +194,12 @@ func (f *CommonTrackerPatternFilter) SQLFragment() string {
 			enrichment_requested_at IS NULL AND enrichment IS NULL
 		ELSE TRUE
 	END
+	AND
+	CASE
+		WHEN @filter_attribution::text IS NOT NULL THEN
+			attribution = @filter_attribution::common_tracker_pattern_attribution
+		ELSE TRUE
+	END
 )`
 }
 
@@ -203,6 +215,7 @@ func (f *CommonTrackerPatternFilter) SQLArguments() pgx.StrictNamedArgs {
 		"filter_state_queued":          false,
 		"filter_state_enriched":        false,
 		"filter_state_unenriched":      false,
+		"filter_attribution":           nil,
 	}
 
 	if f == nil {
@@ -246,6 +259,10 @@ func (f *CommonTrackerPatternFilter) SQLArguments() pgx.StrictNamedArgs {
 		case CommonTrackerPatternEnrichmentStateUnenriched:
 			args["filter_state_unenriched"] = true
 		}
+	}
+
+	if f.attribution != nil {
+		args["filter_attribution"] = string(*f.attribution)
 	}
 
 	return args

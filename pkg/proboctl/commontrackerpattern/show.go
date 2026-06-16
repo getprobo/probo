@@ -137,6 +137,7 @@ func renderPatternDetail(f *cmdutil.Factory, p coredata.CommonTrackerPattern, th
 	row("Match type:", string(p.MatchType))
 	row("Pattern:", p.Pattern)
 	row("Confidence:", fmt.Sprintf("%.2f", p.Confidence))
+	row("Verdict:", string(p.Attribution))
 	row("State:", enrichmentState(&p))
 
 	if p.MaxAgeSeconds != nil {

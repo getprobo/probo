@@ -15,11 +15,14 @@
 package cookiebanner
 
 import (
+	"context"
 	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/gid"
 )
 
 func TestNameMatchesSiteDomain(t *testing.T) {
@@ -128,6 +131,204 @@ func TestNameIsCookieDatabaseAggregator(t *testing.T) {
 			},
 		)
 	}
+}
+
+func TestEvidenceSupportsAttribution(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name     string
+		evidence string
+		expected bool
+	}{
+		{name: "database match supports", evidence: evidenceSourceDatabaseMatch, expected: true},
+		{name: "naming convention supports", evidence: evidenceSourceNamingConvention, expected: true},
+		{name: "web search supports", evidence: evidenceSourceWebSearch, expected: true},
+		{name: "browser page supports", evidence: evidenceSourceBrowserPage, expected: true},
+		{name: "none does not support", evidence: evidenceSourceNone, expected: false},
+		{name: "empty does not support", evidence: "", expected: false},
+		{name: "unknown value does not support", evidence: "vibes", expected: false},
+	}
+
+	for _, tt := range tests {
+		t.Run(
+			tt.name,
+			func(t *testing.T) {
+				t.Parallel()
+				assert.Equal(t, tt.expected, evidenceSupportsAttribution(tt.evidence))
+			},
+		)
+	}
+}
+
+func TestInterpretCatalogRow(t *testing.T) {
+	t.Parallel()
+
+	vendorID := gid.New(gid.NilTenant, coredata.CommonThirdPartyEntityType)
+
+	t.Run(
+		"first party verdict is terminal",
+		func(t *testing.T) {
+			t.Parallel()
+
+			adopt, untrusted, firstParty := interpretCatalogRow(coredata.CommonTrackerPattern{
+				CommonThirdPartyID: &vendorID,
+				Confidence:         1,
+				Attribution:        coredata.CommonTrackerPatternAttributionFirstParty,
+			})
+
+			assert.Nil(t, adopt)
+			assert.Nil(t, untrusted)
+			assert.True(t, firstParty)
+		},
+	)
+
+	t.Run(
+		"trusted vendor is adopted",
+		func(t *testing.T) {
+			t.Parallel()
+
+			adopt, untrusted, firstParty := interpretCatalogRow(coredata.CommonTrackerPattern{
+				CommonThirdPartyID: &vendorID,
+				Confidence:         trustedAttributionConfidence,
+				Attribution:        coredata.CommonTrackerPatternAttributionThirdParty,
+			})
+
+			require.NotNil(t, adopt)
+			assert.Equal(t, vendorID, *adopt)
+			assert.Nil(t, untrusted)
+			assert.False(t, firstParty)
+		},
+	)
+
+	t.Run(
+		"low-confidence vendor is untrusted, not adopted",
+		func(t *testing.T) {
+			t.Parallel()
+
+			adopt, untrusted, firstParty := interpretCatalogRow(coredata.CommonTrackerPattern{
+				CommonThirdPartyID: &vendorID,
+				Confidence:         agentSourceConfidence,
+				Attribution:        coredata.CommonTrackerPatternAttributionThirdParty,
+			})
+
+			assert.Nil(t, adopt)
+			require.NotNil(t, untrusted)
+			assert.Equal(t, vendorID, *untrusted)
+			assert.False(t, firstParty)
+		},
+	)
+
+	t.Run(
+		"unlinked row yields nothing",
+		func(t *testing.T) {
+			t.Parallel()
+
+			adopt, untrusted, firstParty := interpretCatalogRow(coredata.CommonTrackerPattern{
+				Confidence:  0.5,
+				Attribution: coredata.CommonTrackerPatternAttributionUndetermined,
+			})
+
+			assert.Nil(t, adopt)
+			assert.Nil(t, untrusted)
+			assert.False(t, firstParty)
+		},
+	)
+}
+
+func TestIsPreExistingSource(t *testing.T) {
+	t.Parallel()
+
+	preExisting := coredata.CookieSourcePreExisting
+	script := coredata.CookieSourceScript
+
+	assert.True(t, isPreExistingSource(coredata.TrackerPattern{Source: &preExisting}))
+	assert.False(t, isPreExistingSource(coredata.TrackerPattern{Source: &script}))
+	assert.False(t, isPreExistingSource(coredata.TrackerPattern{Source: nil}))
+}
+
+func TestVendorAttributionRejected(t *testing.T) {
+	t.Parallel()
+
+	h := newMappingHandler(nil)
+	ctx := context.Background()
+	tp := coredata.TrackerPattern{Pattern: "_x", TrackerType: coredata.TrackerTypeCookie}
+
+	confident := func(mut func(*TrackerMappingAgentResult)) TrackerMappingAgentResult {
+		r := TrackerMappingAgentResult{
+			ThirdPartyName:       "Acme Analytics",
+			Category:             coredata.ThirdPartyCategoryAnalytics,
+			ThirdPartyConfidence: 0.9,
+			EvidenceSource:       evidenceSourceNamingConvention,
+		}
+		if mut != nil {
+			mut(&r)
+		}
+
+		return r
+	}
+
+	t.Run(
+		"accepts a confident, evidence-backed attribution",
+		func(t *testing.T) {
+			t.Parallel()
+			assert.False(t, h.vendorAttributionRejected(ctx, tp, confident(nil), "https://example.com"))
+		},
+	)
+
+	t.Run(
+		"rejects below confidence threshold",
+		func(t *testing.T) {
+			t.Parallel()
+			r := confident(func(r *TrackerMappingAgentResult) { r.ThirdPartyConfidence = 0.3 })
+			assert.True(t, h.vendorAttributionRejected(ctx, tp, r, "https://example.com"))
+		},
+	)
+
+	t.Run(
+		"rejects empty name",
+		func(t *testing.T) {
+			t.Parallel()
+			r := confident(func(r *TrackerMappingAgentResult) { r.ThirdPartyName = "" })
+			assert.True(t, h.vendorAttributionRejected(ctx, tp, r, "https://example.com"))
+		},
+	)
+
+	t.Run(
+		"rejects when evidence source is none",
+		func(t *testing.T) {
+			t.Parallel()
+			r := confident(func(r *TrackerMappingAgentResult) { r.EvidenceSource = evidenceSourceNone })
+			assert.True(t, h.vendorAttributionRejected(ctx, tp, r, "https://example.com"))
+		},
+	)
+
+	t.Run(
+		"rejects when evidence source is empty",
+		func(t *testing.T) {
+			t.Parallel()
+			r := confident(func(r *TrackerMappingAgentResult) { r.EvidenceSource = "" })
+			assert.True(t, h.vendorAttributionRejected(ctx, tp, r, "https://example.com"))
+		},
+	)
+
+	t.Run(
+		"rejects when name matches scanned site",
+		func(t *testing.T) {
+			t.Parallel()
+			r := confident(func(r *TrackerMappingAgentResult) { r.ThirdPartyName = "Example" })
+			assert.True(t, h.vendorAttributionRejected(ctx, tp, r, "https://example.com"))
+		},
+	)
+
+	t.Run(
+		"rejects cookie-database aggregator",
+		func(t *testing.T) {
+			t.Parallel()
+			r := confident(func(r *TrackerMappingAgentResult) { r.ThirdPartyName = "Cookiepedia" })
+			assert.True(t, h.vendorAttributionRejected(ctx, tp, r, "https://example.com"))
+		},
+	)
 }
 
 func TestBuildAgentPrompt(t *testing.T) {

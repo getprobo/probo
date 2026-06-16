@@ -1742,3 +1742,203 @@ func TestProcess_NoReenqueueWhenCommonThirdPartyPreexisted(t *testing.T) {
 
 	assert.Nil(t, reloadedUnmapped.MappingRequestedAt, "re-trigger with a pre-existing common third party must not re-enqueue siblings")
 }
+
+// TestProcess_FirstPartyVerdictIsTerminal asserts that a pattern whose
+// matching catalog row carries the FIRST_PARTY verdict is linked to that
+// row but never attributed a third party: the heuristic signals and the
+// agent are short-circuited, leaving third_party_id unset.
+func TestProcess_FirstPartyVerdictIsTerminal(t *testing.T) {
+	t.Parallel()
+
+	client := test.PGClient(t)
+	ctx := context.Background()
+	fx := seedWorkerFixture(t, ctx, client)
+
+	now := time.Now().UTC().Truncate(time.Microsecond)
+	patternName := "loglevel_" + fx.scope.GetTenantID().String()
+
+	firstPartyCommon := coredata.CommonTrackerPattern{
+		ID:          gid.New(gid.NilTenant, coredata.CommonTrackerPatternEntityType),
+		TrackerType: coredata.TrackerTypeLocalStorage,
+		Pattern:     patternName,
+		MatchType:   coredata.TrackerPatternMatchTypeExact,
+		Confidence:  0.8,
+		Attribution: coredata.CommonTrackerPatternAttributionFirstParty,
+		CreatedAt:   now,
+		UpdatedAt:   now,
+	}
+
+	// An org pattern with no catalog link yet, so matchByPattern resolves
+	// the FIRST_PARTY row by (tracker_type, pattern, max_age).
+	target := coredata.TrackerPattern{
+		ID:               gid.New(fx.scope.GetTenantID(), coredata.TrackerPatternEntityType),
+		OrganizationID:   fx.organizationID,
+		CookieBannerID:   fx.banner.ID,
+		CookieCategoryID: fx.normalCategoryID,
+		TrackerType:      coredata.TrackerTypeLocalStorage,
+		Pattern:          patternName,
+		MatchType:        coredata.TrackerPatternMatchTypeExact,
+		DisplayName:      patternName,
+		CreatedAt:        now,
+		UpdatedAt:        now,
+	}
+
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		if _, err := firstPartyCommon.Upsert(ctx, tx); err != nil {
+			return err
+		}
+
+		if err := target.Insert(ctx, tx, fx.scope); err != nil {
+			return err
+		}
+
+		return target.SetMappingRequested(ctx, tx)
+	}))
+
+	t.Cleanup(func() {
+		_ = client.WithTx(context.Background(), func(ctx context.Context, tx pg.Tx) error {
+			_, _ = tx.Exec(ctx, `DELETE FROM common_tracker_patterns WHERE id = $1`, firstPartyCommon.ID)
+			return nil
+		})
+	})
+
+	h := newMappingHandler(client)
+	require.NoError(t, h.Process(ctx, target))
+
+	var reloaded coredata.TrackerPattern
+
+	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+		return reloaded.LoadByID(ctx, conn, fx.scope, target.ID)
+	}))
+
+	require.NotNil(t, reloaded.CommonTrackerPatternID, "the pattern must be linked to the first-party catalog row for coverage")
+	assert.Equal(t, firstPartyCommon.ID, *reloaded.CommonTrackerPatternID)
+	assert.Nil(t, reloaded.ThirdPartyID, "a first-party verdict must never attribute a third party")
+
+	reloadedCommon := coredata.CommonTrackerPattern{}
+	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+		return reloadedCommon.LoadByID(ctx, conn, firstPartyCommon.ID)
+	}))
+
+	assert.Equal(t, coredata.CommonTrackerPatternAttributionFirstParty, reloadedCommon.Attribution, "verdict must remain first-party")
+	assert.Nil(t, reloadedCommon.CommonThirdPartyID, "first-party row must stay vendor-free")
+}
+
+// TestProcess_LowConfidenceCatalogVendorNotAdopted asserts that a catalog
+// row whose vendor was attributed below trustedAttributionConfidence is
+// not adopted deterministically: the pattern links to the row but is not
+// promoted to the vendor's org third party, so a single low-confidence
+// guess never auto-propagates across organizations.
+func TestProcess_LowConfidenceCatalogVendorNotAdopted(t *testing.T) {
+	t.Parallel()
+
+	client := test.PGClient(t)
+	ctx := context.Background()
+	fx := seedWorkerFixture(t, ctx, client)
+
+	now := time.Now().UTC().Truncate(time.Microsecond)
+	suffix := fx.scope.GetTenantID().String()
+	patternName := "lowconf_" + suffix
+
+	commonThirdPartyID := gid.New(gid.NilTenant, coredata.CommonThirdPartyEntityType)
+	commonThirdParty := coredata.CommonThirdParty{
+		ID:             commonThirdPartyID,
+		Name:           "Acme " + suffix,
+		Slug:           "acme-lowconf-" + suffix,
+		Category:       coredata.ThirdPartyCategoryAnalytics,
+		Certifications: []string{},
+		CreatedAt:      now,
+		UpdatedAt:      now,
+	}
+
+	// Agent-tier (0.8) attribution: below the 0.9 trusted bar.
+	lowConfCommon := coredata.CommonTrackerPattern{
+		ID:                 gid.New(gid.NilTenant, coredata.CommonTrackerPatternEntityType),
+		CommonThirdPartyID: &commonThirdPartyID,
+		TrackerType:        coredata.TrackerTypeCookie,
+		Pattern:            patternName,
+		MatchType:          coredata.TrackerPatternMatchTypeExact,
+		Confidence:         agentSourceConfidence,
+		Attribution:        coredata.CommonTrackerPatternAttributionThirdParty,
+		CreatedAt:          now,
+		UpdatedAt:          now,
+	}
+
+	// An existing org party for the vendor, so promotion WOULD link if the
+	// vendor were adopted.
+	orgThirdParty := coredata.ThirdParty{
+		ID:                 gid.New(fx.scope.GetTenantID(), coredata.ThirdPartyEntityType),
+		OrganizationID:     fx.organizationID,
+		CommonThirdPartyID: &commonThirdPartyID,
+		Name:               "Acme LLC",
+		Category:           coredata.ThirdPartyCategoryAnalytics,
+		Certifications:     []string{},
+		Countries:          coredata.CountryCodes{},
+		CreatedAt:          now,
+		UpdatedAt:          now,
+	}
+
+	target := coredata.TrackerPattern{
+		ID:               gid.New(fx.scope.GetTenantID(), coredata.TrackerPatternEntityType),
+		OrganizationID:   fx.organizationID,
+		CookieBannerID:   fx.banner.ID,
+		CookieCategoryID: fx.normalCategoryID,
+		TrackerType:      coredata.TrackerTypeCookie,
+		Pattern:          patternName,
+		MatchType:        coredata.TrackerPatternMatchTypeExact,
+		DisplayName:      patternName,
+		CreatedAt:        now,
+		UpdatedAt:        now,
+	}
+
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		if err := commonThirdParty.Insert(ctx, tx); err != nil {
+			return err
+		}
+
+		if _, err := lowConfCommon.Upsert(ctx, tx); err != nil {
+			return err
+		}
+
+		if err := orgThirdParty.Insert(ctx, tx, fx.scope); err != nil {
+			return err
+		}
+
+		if err := target.Insert(ctx, tx, fx.scope); err != nil {
+			return err
+		}
+
+		return target.SetMappingRequested(ctx, tx)
+	}))
+
+	t.Cleanup(func() {
+		_ = client.WithTx(context.Background(), func(ctx context.Context, tx pg.Tx) error {
+			_, _ = tx.Exec(ctx, `DELETE FROM common_tracker_patterns WHERE id = $1`, lowConfCommon.ID)
+			_, _ = tx.Exec(ctx, `DELETE FROM common_third_parties WHERE id = $1`, commonThirdPartyID)
+			return nil
+		})
+	})
+
+	h := newMappingHandler(client)
+	require.NoError(t, h.Process(ctx, target))
+
+	var reloaded coredata.TrackerPattern
+
+	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+		return reloaded.LoadByID(ctx, conn, fx.scope, target.ID)
+	}))
+
+	require.NotNil(t, reloaded.CommonTrackerPatternID, "the pattern must still be linked to the catalog row")
+	assert.Equal(t, lowConfCommon.ID, *reloaded.CommonTrackerPatternID)
+	assert.Nil(t, reloaded.ThirdPartyID, "a below-trust catalog vendor must not be adopted/promoted")
+
+	// The catalog row is untouched: its low-confidence vendor remains for
+	// a later evidence-backed corroboration.
+	reloadedCommon := coredata.CommonTrackerPattern{}
+	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+		return reloadedCommon.LoadByID(ctx, conn, lowConfCommon.ID)
+	}))
+
+	require.NotNil(t, reloadedCommon.CommonThirdPartyID, "the catalog vendor must be left in place")
+	assert.Equal(t, commonThirdPartyID, *reloadedCommon.CommonThirdPartyID)
+}

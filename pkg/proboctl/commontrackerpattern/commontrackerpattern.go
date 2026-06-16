@@ -42,6 +42,7 @@ func NewCmdCommonTrackerPattern(f *cmdutil.Factory) *cobra.Command {
 	cmd.AddCommand(newCmdStats(f))
 	cmd.AddCommand(newCmdLink(f))
 	cmd.AddCommand(newCmdUnlink(f))
+	cmd.AddCommand(newCmdMarkFirstParty(f))
 	cmd.AddCommand(newCmdSetDescription(f))
 
 	return cmd
