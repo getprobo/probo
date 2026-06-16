@@ -14,15 +14,23 @@
 
 package types
 
-import "go.probo.inc/probo/pkg/coredata"
+import (
+	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/mail"
+)
 
 func NewProfile(p *coredata.MembershipProfile) *Profile {
+	additionalEmailAddresses := p.AdditionalEmailAddresses
+	if additionalEmailAddresses == nil {
+		additionalEmailAddresses = mail.Addrs{}
+	}
+
 	return &Profile{
 		ID:                       p.ID,
 		OrganizationID:           p.OrganizationID,
 		FullName:                 p.FullName,
 		EmailAddress:             p.EmailAddress,
-		AdditionalEmailAddresses: p.AdditionalEmailAddresses,
+		AdditionalEmailAddresses: additionalEmailAddresses,
 		Kind:                     p.Kind,
 		Source:                   p.Source,
 		State:                    p.State,
