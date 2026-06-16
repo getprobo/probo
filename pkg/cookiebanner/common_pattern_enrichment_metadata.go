@@ -97,6 +97,7 @@ func buildCommonPatternEnrichmentMetadata(
 	}
 
 	thirdPartyStatus := commonPatternFieldStatusNotFound
+
 	switch {
 	case alreadyLinked:
 		thirdPartyStatus = commonPatternFieldStatusExternal
