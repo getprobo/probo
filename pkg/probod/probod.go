@@ -55,7 +55,7 @@ import (
 	"go.probo.inc/probo/pkg/crypto/passwdhash"
 	pemutil "go.probo.inc/probo/pkg/crypto/pem"
 	"go.probo.inc/probo/pkg/esign"
-	"go.probo.inc/probo/pkg/evidencedescriber"
+	"go.probo.inc/probo/pkg/evidenceassessor"
 	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/geoloc"
 	"go.probo.inc/probo/pkg/html2pdf"
@@ -171,7 +171,7 @@ func New() *Implm {
 				TSAURL: "http://timestamp.digicert.com",
 			},
 			Branding: true,
-			EvidenceDescriber: EvidenceDescriberConfig{
+			EvidenceAssessor: EvidenceAssessmentConfig{
 				Interval:       10,
 				StaleAfter:     300,
 				MaxConcurrency: 10,
@@ -320,9 +320,25 @@ func (impl *Implm) Run(
 		return err
 	}
 
-	evidenceDescriberAgentCfg, evidenceDescriberLLMClient, err := impl.resolveAgentClient("evidence-describer", impl.cfg.Agents.EvidenceDescriber, l, tp, r)
+	evidenceAssessorAgentCfg, evidenceAssessorLLMClient, err := impl.resolveAgentClient("evidence-assessor", impl.cfg.Agents.EvidenceAssessor, l, tp, r)
 	if err != nil {
 		return err
+	}
+
+	evidenceAssessorCfg := evidenceassessor.Config{
+		Client:    evidenceAssessorLLMClient,
+		Model:     evidenceAssessorAgentCfg.ModelName,
+		Temp:      ref.UnrefOrZero(evidenceAssessorAgentCfg.Temperature),
+		MaxTokens: ref.UnrefOrZero(evidenceAssessorAgentCfg.MaxTokens),
+		Logger:    l.Named("evidence-assessor"),
+	}
+	if evidenceAssessorAgentCfg.Thinking != nil {
+		evidenceAssessorCfg.Thinking = *evidenceAssessorAgentCfg.Thinking
+	}
+
+	evidenceAssessor, err := evidenceassessor.New(evidenceAssessorCfg)
+	if err != nil {
+		return fmt.Errorf("cannot build evidence assessor: %w", err)
 	}
 
 	thirdPartyVetter, err := impl.buildThirdPartyVetter(l, tp, r)
@@ -873,31 +889,23 @@ func (impl *Implm) Run(
 		},
 	)
 
-	evidenceDescriber := evidencedescriber.New(
-		evidenceDescriberLLMClient,
-		evidencedescriber.Config{
-			Model:     evidenceDescriberAgentCfg.ModelName,
-			Temp:      ref.UnrefOrZero(evidenceDescriberAgentCfg.Temperature),
-			MaxTokens: ref.UnrefOrZero(evidenceDescriberAgentCfg.MaxTokens),
-		},
-	)
-	evidenceDescriptionWorker := probo.NewEvidenceDescriptionWorker(
+	evidenceAssessmentWorker := probo.NewEvidenceAssessmentWorker(
 		pgClient,
 		fileManagerService,
-		evidenceDescriber,
-		l.Named("evidence-description-worker"),
-		probo.EvidenceDescriptionWorkerConfig{
-			StaleAfter: time.Duration(impl.cfg.EvidenceDescriber.StaleAfter) * time.Second,
+		evidenceAssessor,
+		l.Named("evidence-assessment-worker"),
+		probo.EvidenceAssessmentWorkerConfig{
+			StaleAfter: time.Duration(impl.cfg.EvidenceAssessor.StaleAfter) * time.Second,
 		},
-		worker.WithInterval(time.Duration(impl.cfg.EvidenceDescriber.Interval)*time.Second),
-		worker.WithMaxConcurrency(impl.cfg.EvidenceDescriber.MaxConcurrency),
+		worker.WithInterval(time.Duration(impl.cfg.EvidenceAssessor.Interval)*time.Second),
+		worker.WithMaxConcurrency(impl.cfg.EvidenceAssessor.MaxConcurrency),
 	)
-	evidenceDescriptionWorkerCtx, stopEvidenceDescriptionWorker := context.WithCancel(context.Background())
+	evidenceAssessmentWorkerCtx, stopEvidenceAssessmentWorker := context.WithCancel(context.Background())
 
 	wg.Go(
 		func() {
-			if err := evidenceDescriptionWorker.Run(evidenceDescriptionWorkerCtx); err != nil {
-				cancel(fmt.Errorf("evidence description worker crashed: %w", err))
+			if err := evidenceAssessmentWorker.Run(evidenceAssessmentWorkerCtx); err != nil {
+				cancel(fmt.Errorf("evidence assessment worker crashed: %w", err))
 			}
 		},
 	)
@@ -956,7 +964,7 @@ func (impl *Implm) Run(
 	stopCommonThirdPartyEnrichmentWorker()
 	stopMailingListWorker()
 	stopVettingWorker()
-	stopEvidenceDescriptionWorker()
+	stopEvidenceAssessmentWorker()
 	stopDocumentPDFWorker()
 	stopExportJobExporter()
 	stopAccessReviewWorker()

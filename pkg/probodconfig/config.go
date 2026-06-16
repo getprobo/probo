@@ -59,7 +59,7 @@ type (
 		Notifications     NotificationsConfig           `json:"notifications"`
 		Connectors        []ConnectorConfig             `json:"connectors"`
 		Agents            AgentsConfig                  `json:"llm"`
-		EvidenceDescriber EvidenceDescriberConfig       `json:"evidence-describer"`
+		EvidenceAssessor  EvidenceAssessmentConfig      `json:"evidence-assessor"`
 		ThirdPartyVetting ThirdPartyVettingWorkerConfig `json:"third-party-vetting-worker"`
 
 		TrackerMappingWorker             TrackerMappingWorkerConfig             `json:"tracker-mapping-worker"`

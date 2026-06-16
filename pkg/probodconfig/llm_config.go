@@ -29,12 +29,17 @@ type (
 		ModelName   string   `json:"model-name"`
 		Temperature *float64 `json:"temperature"`
 		MaxTokens   *int     `json:"max-tokens"`
+		// Thinking is the extended-thinking budget in tokens for agents
+		// that opt in. Leave nil to disable extended thinking; set to 0
+		// to explicitly disable via config. Only a few providers and
+		// models support this; see pkg/agent/WithThinking.
+		Thinking *int `json:"thinking"`
 	}
 
-	// EvidenceDescriberConfig holds worker-side tuning for the evidence
-	// description background worker. LLM parameters for the same worker
-	// live under AgentsConfig.EvidenceDescriber.
-	EvidenceDescriberConfig struct {
+	// EvidenceAssessmentConfig holds worker-side tuning for the evidence
+	// assessment background worker. LLM parameters for the same worker
+	// live under AgentsConfig.EvidenceAssessor.
+	EvidenceAssessmentConfig struct {
 		Interval       int `json:"interval"`    // seconds between polls
 		StaleAfter     int `json:"stale-after"` // seconds before a claim is recycled
 		MaxConcurrency int `json:"max-concurrency"`
@@ -105,7 +110,7 @@ type (
 		Providers                  map[string]LLMProviderConfig `json:"providers"`
 		Default                    LLMAgentConfig               `json:"defaults"`
 		Probo                      LLMAgentConfig               `json:"probo"`
-		EvidenceDescriber          LLMAgentConfig               `json:"evidence-describer"`
+		EvidenceAssessor           LLMAgentConfig               `json:"evidence-assessor"`
 		ThirdPartyVetter           LLMAgentConfig               `json:"third-party-vetter"`
 		ThirdPartyDisambiguation   LLMAgentConfig               `json:"third-party-disambiguation"`
 		TrackerMapping             LLMAgentConfig               `json:"tracker-mapping"`
@@ -128,6 +133,10 @@ func (c *AgentsConfig) ResolveAgent(agent LLMAgentConfig) LLMAgentConfig {
 
 	if agent.MaxTokens == nil && c.Default.MaxTokens != nil {
 		agent.MaxTokens = new(*c.Default.MaxTokens)
+	}
+
+	if agent.Thinking == nil {
+		agent.Thinking = c.Default.Thinking
 	}
 
 	return agent

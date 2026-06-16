@@ -679,6 +679,7 @@ func seedCommonTrackerPattern(t *testing.T) gid.GID {
 		defer cancel()
 
 		cleanupConn := dialTestPg(t, cleanupCtx)
+
 		defer func() { _ = cleanupConn.Close(cleanupCtx) }()
 
 		_, err := cleanupConn.Exec(cleanupCtx, `DELETE FROM common_tracker_patterns WHERE id = $1`, id)
