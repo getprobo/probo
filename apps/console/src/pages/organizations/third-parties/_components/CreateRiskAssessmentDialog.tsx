@@ -46,7 +46,7 @@ const createRiskAssessmentMutation = graphql`
     createThirdPartyRiskAssessment(input: $input) {
       thirdPartyRiskAssessmentEdge @prependEdge(connections: $connections) {
         node {
-          ...ThirdPartyRiskAssessmentTabFragment_assessment
+          ...ThirdPartyRiskAssessmentRow_assessment
         }
       }
     }

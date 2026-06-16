@@ -27,13 +27,13 @@ import { useEffect } from "react";
 import { graphql } from "relay-runtime";
 import { z } from "zod";
 
-import type { ThirdPartyContactsTabFragment_contact$data } from "#/__generated__/core/ThirdPartyContactsTabFragment_contact.graphql";
+import type { ThirdPartyContactRow_contact$data } from "#/__generated__/core/ThirdPartyContactRow_contact.graphql";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 
 type Props = {
   contactId: string;
-  contact: ThirdPartyContactsTabFragment_contact$data;
+  contact: ThirdPartyContactRow_contact$data;
   onClose: () => void;
 };
 
@@ -41,7 +41,7 @@ const updateContactMutation = graphql`
   mutation EditContactDialogUpdateMutation($input: UpdateThirdPartyContactInput!) {
     updateThirdPartyContact(input: $input) {
       thirdPartyContact {
-        ...ThirdPartyContactsTabFragment_contact
+        ...ThirdPartyContactRow_contact
       }
     }
   }

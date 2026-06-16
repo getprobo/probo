@@ -12,19 +12,14 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { promisifyMutation, sprintf } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
-import { useConfirm } from "@probo/ui";
 import { useMemo } from "react";
-import { useLazyLoadQuery, useMutation } from "react-relay";
+import { useLazyLoadQuery } from "react-relay";
 import { graphql } from "relay-runtime";
 
 import type { ThirdPartyGraphCreateMutation } from "#/__generated__/core/ThirdPartyGraphCreateMutation.graphql";
-import type { ThirdPartyGraphDeleteMutation } from "#/__generated__/core/ThirdPartyGraphDeleteMutation.graphql";
 import type { ThirdPartyGraphSelectQuery } from "#/__generated__/core/ThirdPartyGraphSelectQuery.graphql";
 import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
-
-/* eslint-disable relay/unused-fields, relay/must-colocate-fragment-spreads */
 
 const createThirdPartyMutation = graphql`
   mutation ThirdPartyGraphCreateMutation(
@@ -55,172 +50,6 @@ export function useCreateThirdPartyMutation() {
     errorMessage: __("Failed to create third party"),
   });
 }
-
-const deleteThirdPartyMutation = graphql`
-  mutation ThirdPartyGraphDeleteMutation(
-    $input: DeleteThirdPartyInput!
-    $connections: [ID!]!
-  ) {
-    deleteThirdParty(input: $input) {
-      deletedThirdPartyId @deleteEdge(connections: $connections)
-    }
-  }
-`;
-
-export const useDeleteThirdParty = (
-  thirdParty: { id?: string; name?: string },
-  connectionId: string,
-) => {
-  const [mutate] = useMutation<ThirdPartyGraphDeleteMutation>(deleteThirdPartyMutation);
-  const confirm = useConfirm();
-  const { __ } = useTranslate();
-
-  return () => {
-    if (!thirdParty.id || !thirdParty.name) {
-      return alert(__("Failed to delete third party: missing id or name"));
-    }
-    confirm(
-      () =>
-        promisifyMutation(mutate)({
-          variables: {
-            input: {
-              thirdPartyId: thirdParty.id!,
-            },
-            connections: [connectionId],
-          },
-        }),
-      {
-        message: sprintf(
-          __(
-            "This will permanently delete thirdParty \"%s\". This action cannot be undone.",
-          ),
-          thirdParty.name,
-        ),
-      },
-    );
-  };
-};
-
-export const thirdPartyConnectionKey = "ThirdPartiesPage_thirdParties";
-
-export const thirdPartiesQuery = graphql`
-  query ThirdPartyGraphListQuery($organizationId: ID!) {
-    node(id: $organizationId) {
-      ... on Organization {
-        id
-        canCreateThirdParty: permission(action: "core:thirdParty:create")
-        canPublishThirdParty: permission(action: "core:thirdParty:publish")
-        thirdPartiesDocument {
-          id
-          currentPublishedMajor
-          currentPublishedMinor
-          defaultApprovers {
-            id
-          }
-        }
-        ...ThirdPartyGraphPaginatedFragment
-      }
-    }
-  }
-`;
-
-export const paginatedThirdPartiesFragment = graphql`
-  fragment ThirdPartyGraphPaginatedFragment on Organization
-  @refetchable(queryName: "ThirdPartiesListQuery")
-  @argumentDefinitions(
-    first: { type: "Int", defaultValue: 50 }
-    order: { type: "ThirdPartyOrder", defaultValue: null }
-    after: { type: "CursorKey", defaultValue: null }
-    before: { type: "CursorKey", defaultValue: null }
-    last: { type: "Int", defaultValue: null }
-    filter: { type: "ThirdPartyFilter", defaultValue: { level: 1 } }
-  ) {
-    thirdParties(
-      first: $first
-      after: $after
-      last: $last
-      before: $before
-      orderBy: $order
-      filter: $filter
-    ) @connection(key: "ThirdPartiesListQuery_thirdParties", filters: ["filter"]) {
-      __id
-      edges {
-        node {
-          id
-          name
-          websiteUrl
-          level
-          updatedAt
-          riskAssessments(
-            first: 1
-            orderBy: { direction: DESC, field: CREATED_AT }
-          ) {
-            edges {
-              node {
-                id
-                createdAt
-                expiresAt
-                dataSensitivity
-                businessImpact
-              }
-            }
-          }
-          canUpdate: permission(action: "core:thirdParty:update")
-          canDelete: permission(action: "core:thirdParty:delete")
-        }
-      }
-    }
-  }
-`;
-
-export const thirdPartyNodeQuery = graphql`
-  query ThirdPartyGraphNodeQuery($thirdPartyId: ID!) {
-    node(id: $thirdPartyId) {
-      id
-      ... on ThirdParty {
-        name
-        websiteUrl
-        level
-        ancestors {
-          id
-          name
-        }
-        vettingStatus
-        canVet: permission(action: "core:thirdParty:vet")
-        canUpdate: permission(action: "core:thirdParty:update")
-        canDelete: permission(action: "core:thirdParty:delete")
-        canUploadComplianceReport: permission(
-          action: "core:thirdParty-compliance-report:upload"
-        )
-        canCreateRiskAssessment: permission(
-          action: "core:thirdParty-risk-assessment:create"
-        )
-        canCreateContact: permission(action: "core:thirdParty-contact:create")
-        canCreateService: permission(action: "core:thirdParty-service:create")
-        canUploadBAA: permission(
-          action: "core:thirdParty-business-associate-agreement:upload"
-        )
-        canUploadDPA: permission(
-          action: "core:thirdParty-data-privacy-agreement:upload"
-        )
-        measuresInfos: measures(first: 0) {
-          totalCount
-        }
-        ...useThirdPartyFormFragment
-        ...ThirdPartyComplianceTabFragment
-        ...ThirdPartyContactsTabFragment
-        ...ThirdPartyServicesTabFragment
-        ...ThirdPartyRiskAssessmentTabFragment
-        ...ThirdPartyOverviewTabBusinessAssociateAgreementFragment
-        ...ThirdPartyOverviewTabDataPrivacyAgreementFragment
-        ...ThirdPartyMeasuresPageFragment
-      }
-    }
-    viewer {
-      id
-    }
-  }
-`;
 
 export const thirdPartiesSelectQuery = graphql`
   query ThirdPartyGraphSelectQuery($organizationId: ID!) {

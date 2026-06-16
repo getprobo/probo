@@ -36,22 +36,26 @@ type Props = {
   thirdPartyId: string;
 };
 
-const createServiceMutation = graphql`
-  mutation CreateServiceDialogMutation(
-    $input: CreateThirdPartyServiceInput!
+const createContactMutation = graphql`
+  mutation CreateContactDialogMutation(
+    $input: CreateThirdPartyContactInput!
     $connections: [ID!]!
   ) {
-    createThirdPartyService(input: $input) {
-      thirdPartyServiceEdge @prependEdge(connections: $connections) {
+    createThirdPartyContact(input: $input) {
+      thirdPartyContactEdge @prependEdge(connections: $connections) {
         node {
-          ...ThirdPartyServicesTabFragment_service
+          canUpdate: permission(action: "core:thirdParty-contact:update")
+          canDelete: permission(action: "core:thirdParty-contact:delete")
+          ...ThirdPartyContactRow_contact
         }
       }
     }
   }
 `;
 
-export function CreateServiceDialog({
+const phoneRegex = /^\+[0-9]{8,15}$/;
+
+export function CreateContactDialog({
   children,
   connectionId,
   thirdPartyId,
@@ -59,31 +63,48 @@ export function CreateServiceDialog({
   const { __ } = useTranslate();
 
   const schema = z.object({
-    name: z.string().min(1, __("Service name is required")),
-    description: z.string().optional(),
+    fullName: z.string().optional(),
+    email: z.union([
+      z.string().email(__("Please enter a valid email address")),
+      z.literal(""),
+    ]),
+    phone: z.union([
+      z
+        .string()
+        .regex(
+          phoneRegex,
+          __(
+            "Phone number must be in international format (e.g., +1234567890)",
+          ),
+        ),
+      z.literal(""),
+    ]),
+    role: z.string().optional(),
   });
 
   const { register, handleSubmit, formState, reset } = useFormWithSchema(
     schema,
     {
       defaultValues: {
-        name: "",
-        description: "",
+        fullName: "",
+        email: "",
+        phone: "",
+        role: "",
       },
     },
   );
-  const [createService, isLoading] = useMutationWithToasts(
-    createServiceMutation,
+  const [createContact, isLoading] = useMutationWithToasts(
+    createContactMutation,
     {
-      successMessage: __("Service created successfully."),
-      errorMessage: __("Failed to create service"),
+      successMessage: __("Contact created successfully."),
+      errorMessage: __("Failed to create contact"),
     },
   );
 
   const onSubmit = async (data: z.infer<typeof schema>) => {
     const cleanData = cleanFormData(data);
 
-    await createService({
+    await createContact({
       variables: {
         input: {
           thirdPartyId,
@@ -105,26 +126,38 @@ export function CreateServiceDialog({
       className="max-w-lg"
       ref={dialogRef}
       trigger={children}
-      title={
-        <Breadcrumb items={[__("Services"), __("New Service")]} />
-      }
+      title={<Breadcrumb items={[__("Contacts"), __("New Contact")]} />}
     >
       <form onSubmit={e => void handleSubmit(onSubmit)(e)}>
         <DialogContent padded className="space-y-4">
           <Field
             label={__("Name")}
-            {...register("name")}
+            {...register("fullName")}
             type="text"
-            error={formState.errors.name?.message}
-            placeholder={__("Service name")}
-            required
+            error={formState.errors.fullName?.message}
+            placeholder={__("Contact's full name")}
           />
           <Field
-            label={__("Description")}
-            {...register("description")}
-            type="textarea"
-            error={formState.errors.description?.message}
-            placeholder={__("Brief description of the service")}
+            label={__("Email")}
+            {...register("email")}
+            type="email"
+            error={formState.errors.email?.message}
+            placeholder={__("contact@example.com")}
+          />
+          <Field
+            label={__("Phone")}
+            {...register("phone")}
+            type="text"
+            error={formState.errors.phone?.message}
+            placeholder={__("e.g., +1234567890")}
+            help={__("Use international format starting with +")}
+          />
+          <Field
+            label={__("Role")}
+            {...register("role")}
+            type="text"
+            error={formState.errors.role?.message}
+            placeholder={__("e.g., Account Manager, Technical Support")}
           />
         </DialogContent>
         <DialogFooter>

@@ -17,6 +17,7 @@ import {
   certifications,
   objectEntries,
 } from "@probo/helpers";
+import { usePageTitle } from "@probo/hooks";
 import { useTranslate } from "@probo/i18n";
 import {
   Badge,
@@ -30,20 +31,41 @@ import {
 import { clsx } from "clsx";
 import { useState } from "react";
 import { Controller } from "react-hook-form";
-import { useOutletContext } from "react-router";
+import { graphql, type PreloadedQuery, usePreloadedQuery } from "react-relay";
 
-import type { ThirdPartyGraphNodeQuery$data } from "#/__generated__/core/ThirdPartyGraphNodeQuery.graphql";
+import type { ThirdPartyCertificationsPageQuery } from "#/__generated__/core/ThirdPartyCertificationsPageQuery.graphql";
 import { useThirdPartyForm } from "#/hooks/forms/useThirdPartyForm";
 
-/**
- * ThirdParty certifications tab
- */
-export default function ThirdPartyCertificationsTab() {
-  const { thirdParty } = useOutletContext<{
-    thirdParty: ThirdPartyGraphNodeQuery$data["node"];
-  }>();
+export const thirdPartyCertificationsPageQuery = graphql`
+  query ThirdPartyCertificationsPageQuery($thirdPartyId: ID!) {
+    node(id: $thirdPartyId) {
+      __typename
+      ... on ThirdParty {
+        name
+        canUpdate: permission(action: "core:thirdParty:update")
+        ...useThirdPartyFormFragment
+      }
+    }
+  }
+`;
+
+interface ThirdPartyCertificationsPageProps {
+  queryRef: PreloadedQuery<ThirdPartyCertificationsPageQuery>;
+}
+
+export default function ThirdPartyCertificationsPage(
+  props: ThirdPartyCertificationsPageProps,
+) {
+  const data = usePreloadedQuery(thirdPartyCertificationsPageQuery, props.queryRef);
+  if (data.node?.__typename !== "ThirdParty") {
+    throw new Error("Third party not found");
+  }
+  const thirdParty = data.node;
+
   const { __ } = useTranslate();
   const { control, handleSubmit } = useThirdPartyForm(thirdParty);
+
+  usePageTitle(thirdParty.name + " - " + __("Certifications"));
 
   return (
     <form
@@ -74,15 +96,12 @@ export default function ThirdPartyCertificationsTab() {
   );
 }
 
-type CertificationsProps = {
+interface CertificationsProps {
   value: string[];
   onValueChange: (value: string[]) => void;
   readOnly?: boolean;
-};
+}
 
-/**
- * List all certifications badges
- */
 function Certifications(props: CertificationsProps) {
   const categorizedCertifications = Object.values(certifications).flat();
   const { __ } = useTranslate();
@@ -92,7 +111,7 @@ function Certifications(props: CertificationsProps) {
       ([key, value]) =>
         [key, value.filter(c => props.value.includes(c))] as const,
     )
-    .filter(([, certifications]) => certifications.length > 0);
+    .filter(([, certs]) => certs.length > 0);
   categories.push([
     "custom",
     props.value.filter(c => !categorizedCertifications.includes(c)),
@@ -110,13 +129,13 @@ function Certifications(props: CertificationsProps) {
 
   return (
     <div className="space-y-6">
-      {categories.map(([key, certifications]) => (
+      {categories.map(([key, certs]) => (
         <div key={key} className="space-y-2">
           <div className="text-sm font-medium text-txt-secondary">
             {certificationCategoryLabel(__, key)}
           </div>
           <div className="flex flex-wrap gap-2">
-            {certifications.map(certification => (
+            {certs.map(certification => (
               <Badge asChild size="md" key={certification}>
                 {props.readOnly
                   ? (
@@ -155,9 +174,6 @@ function Certifications(props: CertificationsProps) {
   );
 }
 
-/**
- * Input to add a new certification
- */
 function CertificationInput({
   certifications,
   onAdd,

@@ -48,7 +48,7 @@ import { processingActivityRoutes } from "./routes/processingActivityRoutes";
 import { rightsRequestRoutes } from "./routes/rightsRequestRoutes";
 import { statementsOfApplicabilityRoutes } from "./routes/statementsOfApplicabilityRoutes";
 import { taskRoutes } from "./routes/taskRoutes";
-import { thirdPartyRoutes } from "./routes/thirdPartyRoutes";
+import { thirdPartyRoutes } from "./pages/organizations/third-parties/routes";
 
 const routes = [
   {

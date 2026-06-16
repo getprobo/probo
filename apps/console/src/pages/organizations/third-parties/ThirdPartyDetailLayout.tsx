@@ -12,7 +12,8 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { faviconUrl } from "@probo/helpers";
+import { faviconUrl, formatError, type GraphQLError, sprintf } from "@probo/helpers";
+import { usePageTitle } from "@probo/hooks";
 import { useTranslate } from "@probo/i18n";
 import {
   ActionDropdown,
@@ -25,59 +26,113 @@ import {
   TabBadge,
   TabLink,
   Tabs,
+  useConfirm,
+  useToast,
 } from "@probo/ui";
 import { useEffect, useRef } from "react";
 import {
-  ConnectionHandler,
+  graphql,
   type PreloadedQuery,
-  useFragment,
+  useMutation,
   usePreloadedQuery,
   useRelayEnvironment,
 } from "react-relay";
-import { Link, Outlet } from "react-router";
-import { fetchQuery } from "relay-runtime";
+import { Link, Outlet, useNavigate, useParams } from "react-router";
+import { ConnectionHandler, fetchQuery } from "relay-runtime";
 
-import type { ThirdPartyComplianceTabFragment$key } from "#/__generated__/core/ThirdPartyComplianceTabFragment.graphql";
-import type { ThirdPartyGraphNodeQuery } from "#/__generated__/core/ThirdPartyGraphNodeQuery.graphql";
-import {
-  thirdPartyConnectionKey,
-  thirdPartyNodeQuery,
-  useDeleteThirdParty,
-} from "#/hooks/graph/ThirdPartyGraph";
+import type { ThirdPartyDetailLayoutDeleteMutation } from "#/__generated__/core/ThirdPartyDetailLayoutDeleteMutation.graphql";
+import type { ThirdPartyDetailLayoutQuery } from "#/__generated__/core/ThirdPartyDetailLayoutQuery.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
-import { VettingDialog } from "./dialogs/VettingDialog";
-import { measuresFragment } from "./measures/ThirdPartyMeasuresPage";
-import { complianceReportsFragment } from "./tabs/ThirdPartyComplianceTab";
+import { VettingDialog } from "./_components/VettingDialog";
+import { ThirdPartiesConnectionKey } from "./ThirdPartiesPage";
 
-void measuresFragment;
+export const thirdPartyDetailLayoutQuery = graphql`
+  query ThirdPartyDetailLayoutQuery($thirdPartyId: ID!) {
+    node(id: $thirdPartyId) {
+      __typename
+      ... on ThirdParty {
+        id
+        name
+        websiteUrl
+        level
+        ancestors {
+          id
+          name
+        }
+        vettingStatus
+        canVet: permission(action: "core:thirdParty:vet")
+        canDelete: permission(action: "core:thirdParty:delete")
+        complianceReportsInfo: complianceReports(first: 100) {
+          edges {
+            node {
+              id
+            }
+          }
+        }
+        measuresInfo: measures(first: 0) {
+          totalCount
+        }
+      }
+    }
+  }
+`;
 
-type Props = {
-  queryRef: PreloadedQuery<ThirdPartyGraphNodeQuery>;
-};
+const deleteThirdPartyMutation = graphql`
+  mutation ThirdPartyDetailLayoutDeleteMutation(
+    $input: DeleteThirdPartyInput!
+    $connections: [ID!]!
+  ) {
+    deleteThirdParty(input: $input) {
+      deletedThirdPartyId @deleteEdge(connections: $connections)
+    }
+  }
+`;
 
-export default function ThirdPartyDetailPage(props: Props) {
+interface ThirdPartyDetailLayoutProps {
+  queryRef: PreloadedQuery<ThirdPartyDetailLayoutQuery>;
+}
+
+export default function ThirdPartyDetailLayout(props: ThirdPartyDetailLayoutProps) {
+  const { thirdPartyId } = useParams<{ thirdPartyId: string }>();
   const environment = useRelayEnvironment();
-  const { node: thirdParty } = usePreloadedQuery(thirdPartyNodeQuery, props.queryRef);
-  const { __ } = useTranslate();
   const organizationId = useOrganizationId();
-  const thirdPartyIdRef = useRef(thirdParty.id);
+  const navigate = useNavigate();
+  const { __ } = useTranslate();
+  const confirm = useConfirm();
+  const { toast } = useToast();
 
+  if (!thirdPartyId) {
+    throw new Error("Cannot load third party detail layout without thirdPartyId parameter");
+  }
+
+  const data = usePreloadedQuery(thirdPartyDetailLayoutQuery, props.queryRef);
+  if (data.node?.__typename !== "ThirdParty") {
+    throw new Error("Third party not found");
+  }
+  const thirdParty = data.node;
+
+  const thirdPartyIdRef = useRef(thirdParty.id);
   useEffect(() => {
     thirdPartyIdRef.current = thirdParty.id;
   }, [thirdParty.id]);
 
-  const isVetting = thirdParty.vettingStatus === "PENDING" || thirdParty.vettingStatus === "PROCESSING";
+  const isVetting = thirdParty.vettingStatus === "PENDING"
+    || thirdParty.vettingStatus === "PROCESSING";
 
   useEffect(() => {
-    if (!isVetting) return;
+    if (!isVetting) {
+      return;
+    }
 
     const interval = setInterval(() => {
-      if (document.hidden) return;
+      if (document.hidden) {
+        return;
+      }
 
-      fetchQuery<ThirdPartyGraphNodeQuery>(
+      fetchQuery(
         environment,
-        thirdPartyNodeQuery,
+        thirdPartyDetailLayoutQuery,
         { thirdPartyId: thirdPartyIdRef.current },
         { fetchPolicy: "network-only" },
       ).subscribe({});
@@ -86,25 +141,65 @@ export default function ThirdPartyDetailPage(props: Props) {
     return () => clearInterval(interval);
   }, [isVetting, environment]);
 
-  const deleteThirdParty = useDeleteThirdParty(
-    thirdParty,
-    ConnectionHandler.getConnectionID(organizationId, thirdPartyConnectionKey),
+  const [deleteThirdParty] = useMutation<ThirdPartyDetailLayoutDeleteMutation>(
+    deleteThirdPartyMutation,
   );
+
+  usePageTitle(thirdParty.name ?? __("Third party"));
+
+  const onDelete = () => {
+    if (!thirdParty.name) {
+      return;
+    }
+    const connectionId = ConnectionHandler.getConnectionID(
+      organizationId,
+      ThirdPartiesConnectionKey,
+    );
+    confirm(
+      () =>
+        new Promise<void>((resolve) => {
+          void deleteThirdParty({
+            variables: {
+              input: { thirdPartyId: thirdParty.id },
+              connections: [connectionId],
+            },
+            onCompleted() {
+              void navigate(`/organizations/${organizationId}/third-parties`);
+              resolve();
+            },
+            onError(error) {
+              toast({
+                title: __("Error"),
+                description: formatError(
+                  __("Failed to delete third party"),
+                  error as GraphQLError,
+                ),
+                variant: "error",
+              });
+              resolve();
+            },
+          });
+        }),
+      {
+        message: sprintf(
+          __(
+            "This will permanently delete thirdParty \"%s\". This action cannot be undone.",
+          ),
+          thirdParty.name,
+        ),
+      },
+    );
+  };
+
   const logo = faviconUrl(thirdParty.websiteUrl);
-  const reportsCount = useFragment(
-    complianceReportsFragment,
-    thirdParty as ThirdPartyComplianceTabFragment$key,
-  ).complianceReports.edges.length;
-  const measuresCount = thirdParty.measuresInfos?.totalCount ?? 0;
+  const reportsCount = thirdParty.complianceReportsInfo?.edges.length ?? 0;
+  const measuresCount = thirdParty.measuresInfo?.totalCount ?? 0;
+  const isVettingFailed = thirdParty.vettingStatus === "FAILED";
+  const ancestors = thirdParty.ancestors ?? [];
 
   const thirdPartiesUrl = `/organizations/${organizationId}/third-parties`;
-
   const baseThirdPartyUrl
     = `/organizations/${organizationId}/third-parties/${thirdParty.id}`;
-
-  const isVettingFailed = thirdParty.vettingStatus === "FAILED";
-
-  const ancestors = thirdParty.ancestors ?? [];
 
   return (
     <div className="space-y-6">
@@ -181,7 +276,7 @@ export default function ThirdPartyDetailPage(props: Props) {
               <DropdownItem
                 variant="danger"
                 icon={IconTrashCan}
-                onClick={deleteThirdParty}
+                onClick={onDelete}
               >
                 {__("Delete")}
               </DropdownItem>
@@ -211,7 +306,7 @@ export default function ThirdPartyDetailPage(props: Props) {
         </TabLink>
       </Tabs>
 
-      <Outlet context={{ thirdParty }} />
+      <Outlet />
     </div>
   );
 }

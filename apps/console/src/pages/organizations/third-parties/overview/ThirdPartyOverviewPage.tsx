@@ -26,12 +26,11 @@ import {
   Option,
 } from "@probo/ui";
 import { useMemo } from "react";
-import { graphql, useFragment } from "react-relay";
-import { useOutletContext } from "react-router";
+import { graphql, type PreloadedQuery, useFragment, usePreloadedQuery } from "react-relay";
 
-import type { ThirdPartyGraphNodeQuery$data } from "#/__generated__/core/ThirdPartyGraphNodeQuery.graphql";
-import type { ThirdPartyOverviewTabBusinessAssociateAgreementFragment$key } from "#/__generated__/core/ThirdPartyOverviewTabBusinessAssociateAgreementFragment.graphql";
-import type { ThirdPartyOverviewTabDataPrivacyAgreementFragment$key } from "#/__generated__/core/ThirdPartyOverviewTabDataPrivacyAgreementFragment.graphql";
+import type { ThirdPartyOverviewPageBusinessAssociateAgreementFragment$key } from "#/__generated__/core/ThirdPartyOverviewPageBusinessAssociateAgreementFragment.graphql";
+import type { ThirdPartyOverviewPageDataPrivacyAgreementFragment$key } from "#/__generated__/core/ThirdPartyOverviewPageDataPrivacyAgreementFragment.graphql";
+import type { ThirdPartyOverviewPageQuery } from "#/__generated__/core/ThirdPartyOverviewPageQuery.graphql";
 import type { ThirdPartyCategory } from "#/__generated__/core/useThirdPartyFormFragment.graphql";
 import { ControlledField } from "#/components/form/ControlledField";
 import { CountriesField } from "#/components/form/CountriesField";
@@ -39,15 +38,15 @@ import { PeopleSelectField } from "#/components/form/PeopleSelectField";
 import { useThirdPartyForm } from "#/hooks/forms/useThirdPartyForm";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
-import { DeleteBusinessAssociateAgreementDialog } from "../dialogs/DeleteBusinessAssociateAgreementDialog";
-import { DeleteDataPrivacyAgreementDialog } from "../dialogs/DeleteDataPrivacyAgreementDialog";
-import { EditBusinessAssociateAgreementDialog } from "../dialogs/EditBusinessAssociateAgreementDialog";
-import { EditDataPrivacyAgreementDialog } from "../dialogs/EditDataPrivacyAgreementDialog";
-import { UploadBusinessAssociateAgreementDialog } from "../dialogs/UploadBusinessAssociateAgreementDialog";
-import { UploadDataPrivacyAgreementDialog } from "../dialogs/UploadDataPrivacyAgreementDialog";
+import { DeleteBusinessAssociateAgreementDialog } from "../_components/DeleteBusinessAssociateAgreementDialog";
+import { DeleteDataPrivacyAgreementDialog } from "../_components/DeleteDataPrivacyAgreementDialog";
+import { EditBusinessAssociateAgreementDialog } from "../_components/EditBusinessAssociateAgreementDialog";
+import { EditDataPrivacyAgreementDialog } from "../_components/EditDataPrivacyAgreementDialog";
+import { UploadBusinessAssociateAgreementDialog } from "../_components/UploadBusinessAssociateAgreementDialog";
+import { UploadDataPrivacyAgreementDialog } from "../_components/UploadDataPrivacyAgreementDialog";
 
 const thirdPartyBusinessAssociateAgreementFragment = graphql`
-  fragment ThirdPartyOverviewTabBusinessAssociateAgreementFragment on ThirdParty {
+  fragment ThirdPartyOverviewPageBusinessAssociateAgreementFragment on ThirdParty {
     businessAssociateAgreement {
       id
       file {
@@ -67,7 +66,7 @@ const thirdPartyBusinessAssociateAgreementFragment = graphql`
 `;
 
 const thirdPartyDataPrivacyAgreementFragment = graphql`
-  fragment ThirdPartyOverviewTabDataPrivacyAgreementFragment on ThirdParty {
+  fragment ThirdPartyOverviewPageDataPrivacyAgreementFragment on ThirdParty {
     dataPrivacyAgreement {
       id
       file {
@@ -82,10 +81,38 @@ const thirdPartyDataPrivacyAgreementFragment = graphql`
   }
 `;
 
-export default function ThirdPartyOverviewTab() {
-  const { thirdParty } = useOutletContext<{
-    thirdParty: ThirdPartyGraphNodeQuery$data["node"];
-  }>();
+export const thirdPartyOverviewPageQuery = graphql`
+  query ThirdPartyOverviewPageQuery($thirdPartyId: ID!) {
+    node(id: $thirdPartyId) {
+      __typename
+      ... on ThirdParty {
+        id
+        name
+        canUpdate: permission(action: "core:thirdParty:update")
+        canUploadBAA: permission(
+          action: "core:thirdParty-business-associate-agreement:upload"
+        )
+        canUploadDPA: permission(
+          action: "core:thirdParty-data-privacy-agreement:upload"
+        )
+        ...useThirdPartyFormFragment
+        ...ThirdPartyOverviewPageBusinessAssociateAgreementFragment
+        ...ThirdPartyOverviewPageDataPrivacyAgreementFragment
+      }
+    }
+  }
+`;
+
+interface ThirdPartyOverviewPageProps {
+  queryRef: PreloadedQuery<ThirdPartyOverviewPageQuery>;
+}
+
+export default function ThirdPartyOverviewPage(props: ThirdPartyOverviewPageProps) {
+  const data = usePreloadedQuery(thirdPartyOverviewPageQuery, props.queryRef);
+  if (data.node?.__typename !== "ThirdParty") {
+    throw new Error("Third party not found");
+  }
+  const thirdParty = data.node;
 
   const { __ } = useTranslate();
   const thirdPartyCategories: { value: ThirdPartyCategory; label: string }[] = [
@@ -125,14 +152,14 @@ export default function ThirdPartyOverviewTab() {
   } = useThirdPartyForm(thirdParty);
 
   const thirdPartyWithBAA
-    = useFragment<ThirdPartyOverviewTabBusinessAssociateAgreementFragment$key>(
+    = useFragment<ThirdPartyOverviewPageBusinessAssociateAgreementFragment$key>(
       thirdPartyBusinessAssociateAgreementFragment,
       thirdParty,
     );
   const businessAssociateAgreement = thirdPartyWithBAA.businessAssociateAgreement;
 
   const thirdPartyWithDPA
-    = useFragment<ThirdPartyOverviewTabDataPrivacyAgreementFragment$key>(
+    = useFragment<ThirdPartyOverviewPageDataPrivacyAgreementFragment$key>(
       thirdPartyDataPrivacyAgreementFragment,
       thirdParty,
     );
@@ -169,7 +196,6 @@ export default function ThirdPartyOverviewTab() {
         : e => void handleSubmit(e)}
       className="space-y-12"
     >
-      {/* ThirdParty Details */}
       <div className="space-y-4">
         <h2 className="text-base font-medium">{__("Third party details")}</h2>
         <Card className="space-y-4" padded>
@@ -237,7 +263,6 @@ export default function ThirdPartyOverviewTab() {
         </Card>
       </div>
 
-      {/* Ownership */}
       <div className="space-y-4">
         <h2 className="text-base font-medium">{__("Ownership details")}</h2>
         <Card className="space-y-4" padded>
@@ -262,7 +287,6 @@ export default function ThirdPartyOverviewTab() {
         </Card>
       </div>
 
-      {/* Links */}
       <div className="space-y-4 mb-4">
         <h2 className="text-base font-medium">{__("Links")}</h2>
         <Card className="divide-y divide-border-low">
@@ -292,7 +316,6 @@ export default function ThirdPartyOverviewTab() {
         </Card>
       </div>
 
-      {/* Data agreements */}
       <div className="space-y-4">
         <h2 className="text-base font-medium">{__("Data agreements")}</h2>
         <Card className="space-y-4" padded>
@@ -446,7 +469,6 @@ export default function ThirdPartyOverviewTab() {
         </Card>
       </div>
 
-      {/* Submit */}
       <div className="flex justify-end">
         {thirdParty.canUpdate && (
           <Button type="submit" disabled={isSubmitting}>

@@ -43,7 +43,7 @@ const updateServiceMutation = graphql`
   mutation EditServiceDialogUpdateMutation($input: UpdateThirdPartyServiceInput!) {
     updateThirdPartyService(input: $input) {
       thirdPartyService {
-        ...ThirdPartyServicesTabFragment_service
+        ...ThirdPartyServiceRow_service
       }
     }
   }
