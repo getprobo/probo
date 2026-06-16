@@ -667,11 +667,11 @@ func seedCommonTrackerPattern(t *testing.T) gid.GID {
 
 	_, err := conn.Exec(ctx, `
 		INSERT INTO common_tracker_patterns (
-			id, tracker_type, pattern, match_type, description, confidence, enrichment_attempts, created_at, updated_at
+			id, tracker_type, pattern, match_type, description, confidence, attribution, enrichment_attempts, created_at, updated_at
 		) VALUES (
-			$1, $2, $3, $4, $5, $6, $7, $8, $9
+			$1, $2, $3, $4, $5, $6, $7, $8, $9, $10
 		)
-	`, id, "COOKIE", "e2e_common_"+id.String(), "EXACT", "Seeded catalog description", 1.0, 0, now, now)
+	`, id, "COOKIE", "e2e_common_"+id.String(), "EXACT", "Seeded catalog description", 1.0, coredata.CommonTrackerPatternAttributionUndetermined, 0, now, now)
 	require.NoError(t, err)
 
 	t.Cleanup(func() {
