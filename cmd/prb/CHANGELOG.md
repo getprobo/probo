@@ -4,6 +4,12 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.195.0] - 2026-06-16
+
+### Changed
+
+- `prb access-review` campaign sources are now first-class: each campaign captures a source snapshot (name, connector) at start time so a review stays coherent when the underlying source is edited or deleted, and fetch attempts are tracked as an append-only log instead of a single denormalized status field
+
 ## [0.194.0] - 2026-06-11
 
 ### Added
