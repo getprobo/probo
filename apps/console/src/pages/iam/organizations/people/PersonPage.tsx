@@ -139,7 +139,7 @@ export function PersonPage(props: { queryRef: PreloadedQuery<PersonPageQuery> })
     );
   };
 
-  const canArchive = person.canDelete && person.source !== "SCIM" && person.state !== "INACTIVE";
+  const canArchive = person.canDelete && person.source !== "SCIM" && person.state !== "DEACTIVATED";
   const canRemove = person.canDelete && person.source !== "SCIM";
 
   return (

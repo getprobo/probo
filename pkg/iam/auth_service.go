@@ -171,9 +171,8 @@ func (s *AuthService) ActivateAccount(
 				return NewUserManagedBySCIMError(profile.ID)
 			}
 
-			if profile.State == coredata.ProfileStateInactive {
-				profile.State = coredata.ProfileStateActive
-				profile.UpdatedAt = now
+			if profile.State == coredata.ProfileStatePending {
+				profile.MarkActive(now)
 
 				if err := profile.Update(ctx, tx, scope); err != nil {
 					return fmt.Errorf("cannot update user: %w", err)

@@ -99,8 +99,9 @@ export const description: INodeProperties[] = [
 				description: 'Filter by signatory profile state',
 				options: [
 					{ name: 'Any', value: '' },
+					{ name: 'Pending', value: 'PENDING' },
 					{ name: 'Active', value: 'ACTIVE' },
-					{ name: 'Inactive', value: 'INACTIVE' },
+					{ name: 'Deactivated', value: 'DEACTIVATED' },
 				],
 			},
 		],

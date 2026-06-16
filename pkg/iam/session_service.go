@@ -358,7 +358,7 @@ func (s SessionService) OpenPasswordChildSessionForOrganization(
 				return fmt.Errorf("cannot load profile: %w", err)
 			}
 
-			if profile.State == coredata.ProfileStateInactive {
+			if profile.State == coredata.ProfileStateDeactivated {
 				return NewUserInactiveError(profile.ID)
 			}
 
@@ -463,7 +463,7 @@ func (s SessionService) OpenSAMLChildSessionForOrganization(
 				return fmt.Errorf("cannot load profile: %w", err)
 			}
 
-			if profile.State == coredata.ProfileStateInactive {
+			if profile.State == coredata.ProfileStateDeactivated {
 				return NewUserInactiveError(profile.ID)
 			}
 
@@ -552,7 +552,7 @@ func (s SessionService) AssumeOrganizationSession(
 				return fmt.Errorf("cannot load profile: %w", err)
 			}
 
-			if profile.State == coredata.ProfileStateInactive {
+			if profile.State == coredata.ProfileStateDeactivated {
 				return NewUserInactiveError(profile.ID)
 			}
 
