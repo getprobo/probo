@@ -24,6 +24,7 @@ Detailed guides for specific subsystems live in `contrib/claude/`:
 - [`contrib/claude/relay.md`](contrib/claude/relay.md) — Frontend Relay client (queries, fragments, mutations, pagination)
 - [`contrib/claude/react-components.md`](contrib/claude/react-components.md) — React component shape (file/export, props, configure vs data via hooks)
 - [`contrib/claude/ui.md`](contrib/claude/ui.md) — @probo/ui, Tailwind, tailwind-variants, folders, skeletons, compound components
+- [`contrib/claude/v2-colors.md`](contrib/claude/v2-colors.md) — v2 color system (Radix scale, step usage, do/don't)
 - [`contrib/claude/config.md`](contrib/claude/config.md) — Configuration propagation (all files to update when config changes)
 - [`contrib/claude/file-naming.md`](contrib/claude/file-naming.md) — File naming conventions (template files, extensions)
 - [`contrib/claude/prompt-style.md`](contrib/claude/prompt-style.md) — Agent prompt template structure (role/task/instructions XML style)

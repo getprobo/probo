@@ -1,0 +1,19 @@
+---
+description: v2 UI color system — Radix numbered scale, no hardcoded colors, no manual dark mode
+globs: "packages/ui/src/v2/**/*.{ts,tsx}"
+alwaysApply: false
+---
+
+# v2 color scale
+
+Use the Radix 12-step numbered scale for all colors in v2 components: `sand`, `gold`, `red`, `green`, `amber`, `sky` (steps 1–12).
+
+## Rules
+
+- Use scale classes (`bg-sand-3`, `text-red-11`, `border-gold-7`) — never v1 semantic names (`txt-primary`, `border-low`, `bg-primary`, etc.)
+- Never hardcode hex/rgb/oklch values for colors that exist in the scale
+- Never use the `dark:` variant prefix for v2 color overrides — dark mode is handled by the `.dark` class on `<html>` via Radix CSS imports
+- Do not mix v1 and v2 color classes in the same component
+- Respect step ranges: 1–2 backgrounds, 3–5 component bg, 6–8 borders, 9–10 solid bg, 11–12 text
+
+Full guide: `contrib/claude/v2-colors.md`
