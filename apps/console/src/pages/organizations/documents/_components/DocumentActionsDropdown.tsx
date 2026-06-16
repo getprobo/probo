@@ -27,9 +27,11 @@ import type { DocumentActionsDropdown_exportVersionMutation } from "#/__generate
 import type { DocumentActionsDropdown_unarchiveMutation } from "#/__generated__/core/DocumentActionsDropdown_unarchiveMutation.graphql";
 import type { DocumentActionsDropdown_versionFragment$key } from "#/__generated__/core/DocumentActionsDropdown_versionFragment.graphql";
 import { PdfDownloadDialog, type PdfDownloadDialogRef } from "#/components/documents/PdfDownloadDialog";
-import { DocumentsConnectionKey, useDeleteDocumentMutation } from "#/hooks/graph/DocumentGraph";
+import { DocumentsConnectionKey } from "#/hooks/graph/DocumentGraph";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { CurrentUser } from "#/providers/CurrentUser";
+
+import { DeleteDocumentDialog, type DeleteDocumentDialogRef } from "./DeleteDocumentDialog";
 
 const documentFragment = graphql`
   fragment DocumentActionsDropdown_documentFragment on Document {
@@ -121,13 +123,13 @@ export function DocumentActionsDropdown(props: {
   const { __ } = useTranslate();
   const { email: defaultEmail } = use(CurrentUser);
   const pdfDownloadDialogRef = useRef<PdfDownloadDialogRef>(null);
+  const deleteDocumentDialogRef = useRef<DeleteDocumentDialogRef>(null);
   const confirm = useConfirm();
   const { toast } = useToast();
 
   const document = useFragment<DocumentActionsDropdown_documentFragment$key>(documentFragment, documentFragmentRef);
   const version = useFragment<DocumentActionsDropdown_versionFragment$key>(versionFragment, versionFragmentRef);
 
-  const [deleteDocument, isDeleting] = useDeleteDocumentMutation();
   const [archiveDocument, isArchiving]
     = useMutation<DocumentActionsDropdown_archiveMutation>(archiveDocumentMutation);
   const [unarchiveDocument, isUnarchiving]
@@ -214,33 +216,11 @@ export function DocumentActionsDropdown(props: {
     );
   };
 
-  const handleDelete = () => {
-    const connectionId = ConnectionHandler.getConnectionID(
-      organizationId,
-      DocumentsConnectionKey,
-      { orderBy: { direction: "ASC", field: "TITLE" } },
-    );
-    confirm(
-      () =>
-        deleteDocument({
-          variables: {
-            input: { documentId: document.id },
-            connections: [connectionId],
-          },
-          onSuccess() {
-            void navigate(`/organizations/${organizationId}/documents`);
-          },
-        }),
-      {
-        message: sprintf(
-          __(
-            "This will permanently delete the document \"%s\". This action cannot be undone.",
-          ),
-          version.title,
-        ),
-      },
-    );
-  };
+  const documentsConnectionId = ConnectionHandler.getConnectionID(
+    organizationId,
+    DocumentsConnectionKey,
+    { orderBy: { direction: "ASC", field: "TITLE" } },
+  );
 
   const handleExportDocumentVersion = (options: {
     withWatermark: boolean;
@@ -290,6 +270,13 @@ export function DocumentActionsDropdown(props: {
         isLoading={isExporting}
         defaultEmail={defaultEmail}
       />
+      <DeleteDocumentDialog
+        ref={deleteDocumentDialogRef}
+        documentId={document.id}
+        documentTitle={version.title}
+        connections={[documentsConnectionId]}
+        onSuccess={() => void navigate(`/organizations/${organizationId}/documents`)}
+      />
       <ActionDropdown variant="secondary">
         <DropdownItem
           onClick={() => pdfDownloadDialogRef.current?.open()}
@@ -329,8 +316,7 @@ export function DocumentActionsDropdown(props: {
           <DropdownItem
             variant="danger"
             icon={IconTrashCan}
-            disabled={isDeleting}
-            onClick={handleDelete}
+            onClick={() => deleteDocumentDialogRef.current?.open()}
           >
             {__("Delete document")}
           </DropdownItem>

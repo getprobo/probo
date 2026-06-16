@@ -32,14 +32,16 @@ import {
   useConfirm,
   useToast,
 } from "@probo/ui";
+import { useRef } from "react";
 import { useFragment, useMutation } from "react-relay";
 import { ConnectionHandler, type DataID, graphql } from "relay-runtime";
 
 import type { DocumentListItem_archiveMutation } from "#/__generated__/core/DocumentListItem_archiveMutation.graphql";
-import type { DocumentListItem_deleteMutation } from "#/__generated__/core/DocumentListItem_deleteMutation.graphql";
 import type { DocumentListItem_unarchiveMutation } from "#/__generated__/core/DocumentListItem_unarchiveMutation.graphql";
 import type { DocumentListItemFragment$key } from "#/__generated__/core/DocumentListItemFragment.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
+
+import { DeleteDocumentDialog, type DeleteDocumentDialogRef } from "./DeleteDocumentDialog";
 
 const fragment = graphql`
   fragment DocumentListItemFragment on Document {
@@ -105,17 +107,6 @@ const archiveDocumentMutation = graphql`
   }
 `;
 
-const deleteDocumentMutation = graphql`
-  mutation DocumentListItem_deleteMutation(
-    $input: DeleteDocumentInput!
-    $connections: [ID!]!
-  ) {
-    deleteDocument(input: $input) {
-      deletedDocumentId @deleteEdge(connections: $connections)
-    }
-  }
-`;
-
 const unarchiveDocumentMutation = graphql`
   mutation DocumentListItem_unarchiveMutation(
     $input: UnarchiveDocumentInput!
@@ -152,9 +143,9 @@ export function DocumentListItem(props: {
   const { __ } = useTranslate();
   const { toast } = useToast();
   const [archiveDocument, isArchiving] = useMutation<DocumentListItem_archiveMutation>(archiveDocumentMutation);
-  const [deleteDocument] = useMutation<DocumentListItem_deleteMutation>(deleteDocumentMutation);
   const [unarchiveDocument, isUnarchiving] = useMutation<DocumentListItem_unarchiveMutation>(unarchiveDocumentMutation);
   const confirm = useConfirm();
+  const deleteDialogRef = useRef<DeleteDocumentDialogRef>(null);
   const document = useFragment<DocumentListItemFragment$key>(
     fragment,
     fragmentRef,
@@ -222,27 +213,7 @@ export function DocumentListItem(props: {
   };
 
   const handleDelete = () => {
-    confirm(
-      () =>
-        new Promise<void>((resolve, reject) => {
-          deleteDocument({
-            variables: {
-              connections: [connectionId],
-              input: { documentId: document.id },
-            },
-            onCompleted: () => resolve(),
-            onError: err => reject(err),
-          });
-        }),
-      {
-        message: sprintf(
-          __(
-            "This will permanently delete the document \"%s\". This action cannot be undone.",
-          ),
-          lastVersion.title,
-        ),
-      },
-    );
+    deleteDialogRef.current?.open();
   };
 
   const handleUnarchive = () => {
@@ -281,87 +252,95 @@ export function DocumentListItem(props: {
       || document.canDelete;
 
   return (
-    <Tr
-      to={`/organizations/${organizationId}/documents/${document.id}`}
-    >
-      <Td noLink className="w-18">
-        <Checkbox checked={checked} onChange={onCheck} />
-      </Td>
-      <Td className="min-w-0">
-        <div className="flex gap-4 items-center">{lastVersion.title}</div>
-      </Td>
-      <Td className="w-24">
-        <Badge variant={statusVariant[lastVersion.status]}>
-          {statusLabel[lastVersion.status]}
-        </Badge>
-      </Td>
-      <Td className="w-20">
-        v
-        {lastVersion.major}
-        .
-        {lastVersion.minor}
-      </Td>
-      <Td className="w-28">
-        {getDocumentTypeLabel(__, lastVersion.documentType)}
-      </Td>
-      <Td className="w-32">
-        {getDocumentClassificationLabel(__, lastVersion.classification)}
-      </Td>
-      <Td className="w-60">
-        {(() => {
-          if (lastVersion.status === "PENDING_APPROVAL") {
-            const quorum = lastVersion.approvalQuorums?.edges?.[0]?.node;
-            if (quorum) {
-              if (quorum.status === "REJECTED") return __("Rejected");
-              return `${quorum.approvedDecisions.totalCount}/${quorum.decisions.totalCount}`;
-            }
-            return "—";
-          }
-          if (!document.defaultApprovers.length) return "—";
-          return document.defaultApprovers.map(a => a.fullName).join(", ");
-        })()}
-      </Td>
-      <Td className="w-40">{formatDate(document.updatedAt)}</Td>
-      <Td className="w-20">
-        {lastVersion.signedSignatures.totalCount}
-        /
-        {lastVersion.signatures.totalCount}
-      </Td>
-      {hasAnyAction && (
-        <Td noLink width={50} className="text-end w-18">
-          {hasRowAction && (
-            <ActionDropdown>
-              {document.canArchive && document.status === "ACTIVE" && (
-                <DropdownItem
-                  icon={IconArchive}
-                  disabled={isArchiving}
-                  onClick={handleArchive}
-                >
-                  {__("Archive")}
-                </DropdownItem>
-              )}
-              {document.canUnarchive && document.status === "ARCHIVED" && (
-                <DropdownItem
-                  icon={IconArchive}
-                  disabled={isUnarchiving}
-                  onClick={handleUnarchive}
-                >
-                  {__("Unarchive")}
-                </DropdownItem>
-              )}
-              {document.canDelete && (
-                <DropdownItem
-                  variant="danger"
-                  icon={IconTrashCan}
-                  onClick={handleDelete}
-                >
-                  {__("Delete")}
-                </DropdownItem>
-              )}
-            </ActionDropdown>
-          )}
+    <>
+      <Tr
+        to={`/organizations/${organizationId}/documents/${document.id}`}
+      >
+        <Td noLink className="w-18">
+          <Checkbox checked={checked} onChange={onCheck} />
         </Td>
-      )}
-    </Tr>
+        <Td className="min-w-0">
+          <div className="flex gap-4 items-center">{lastVersion.title}</div>
+        </Td>
+        <Td className="w-24">
+          <Badge variant={statusVariant[lastVersion.status]}>
+            {statusLabel[lastVersion.status]}
+          </Badge>
+        </Td>
+        <Td className="w-20">
+          v
+          {lastVersion.major}
+          .
+          {lastVersion.minor}
+        </Td>
+        <Td className="w-28">
+          {getDocumentTypeLabel(__, lastVersion.documentType)}
+        </Td>
+        <Td className="w-32">
+          {getDocumentClassificationLabel(__, lastVersion.classification)}
+        </Td>
+        <Td className="w-60">
+          {(() => {
+            if (lastVersion.status === "PENDING_APPROVAL") {
+              const quorum = lastVersion.approvalQuorums?.edges?.[0]?.node;
+              if (quorum) {
+                if (quorum.status === "REJECTED") return __("Rejected");
+                return `${quorum.approvedDecisions.totalCount}/${quorum.decisions.totalCount}`;
+              }
+              return "—";
+            }
+            if (!document.defaultApprovers.length) return "—";
+            return document.defaultApprovers.map(a => a.fullName).join(", ");
+          })()}
+        </Td>
+        <Td className="w-40">{formatDate(document.updatedAt)}</Td>
+        <Td className="w-20">
+          {lastVersion.signedSignatures.totalCount}
+          /
+          {lastVersion.signatures.totalCount}
+        </Td>
+        {hasAnyAction && (
+          <Td noLink width={50} className="text-end w-18">
+            {hasRowAction && (
+              <ActionDropdown>
+                {document.canArchive && document.status === "ACTIVE" && (
+                  <DropdownItem
+                    icon={IconArchive}
+                    disabled={isArchiving}
+                    onClick={handleArchive}
+                  >
+                    {__("Archive")}
+                  </DropdownItem>
+                )}
+                {document.canUnarchive && document.status === "ARCHIVED" && (
+                  <DropdownItem
+                    icon={IconArchive}
+                    disabled={isUnarchiving}
+                    onClick={handleUnarchive}
+                  >
+                    {__("Unarchive")}
+                  </DropdownItem>
+                )}
+                {document.canDelete && (
+                  <DropdownItem
+                    variant="danger"
+                    icon={IconTrashCan}
+                    onClick={handleDelete}
+                  >
+                    {__("Delete")}
+                  </DropdownItem>
+                )}
+              </ActionDropdown>
+            )}
+          </Td>
+        )}
+      </Tr>
+      <DeleteDocumentDialog
+        ref={deleteDialogRef}
+        documentId={document.id}
+        documentTitle={lastVersion.title}
+        connections={[connectionId]}
+      />
+    </>
   );
 }
