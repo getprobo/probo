@@ -12,28 +12,32 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { graphql, useFragment } from "react-relay";
-import { useOutletContext, useParams } from "react-router";
+import { graphql, type PreloadedQuery, usePreloadedQuery } from "react-relay";
 
-import type { ThirdPartyMeasuresPageFragment$key } from "#/__generated__/core/ThirdPartyMeasuresPageFragment.graphql";
+import type { ThirdPartyMeasuresPageQuery } from "#/__generated__/core/ThirdPartyMeasuresPageQuery.graphql";
 import { LinkedMeasuresCard } from "#/components/measures/LinkedMeasuresCard";
 import { useMutationWithIncrement } from "#/hooks/useMutationWithIncrement";
 
-export const measuresFragment = graphql`
-  fragment ThirdPartyMeasuresPageFragment on ThirdParty {
-    id
-    canCreateMeasureThirdPartyMapping: permission(
-      action: "core:measure:create-third-party-mapping"
-    )
-    canDeleteMeasureThirdPartyMapping: permission(
-      action: "core:measure:delete-third-party-mapping"
-    )
-    measures(first: 100) @connection(key: "ThirdPartyMeasuresPage_measures") {
-      __id
-      edges {
-        node {
-          id
-          ...LinkedMeasuresCardFragment
+export const thirdPartyMeasuresPageQuery = graphql`
+  query ThirdPartyMeasuresPageQuery($thirdPartyId: ID!) {
+    node(id: $thirdPartyId) {
+      __typename
+      ... on ThirdParty {
+        id
+        canCreateMeasureThirdPartyMapping: permission(
+          action: "core:measure:create-third-party-mapping"
+        )
+        canDeleteMeasureThirdPartyMapping: permission(
+          action: "core:measure:delete-third-party-mapping"
+        )
+        measures(first: 100) @connection(key: "ThirdPartyMeasuresPage_measures") {
+          __id
+          edges {
+            node {
+              id
+              ...LinkedMeasuresCardFragment
+            }
+          }
         }
       }
     }
@@ -67,24 +71,26 @@ const detachMeasureMutation = graphql`
   }
 `;
 
-export default function ThirdPartyMeasuresPage() {
-  const { thirdPartyId } = useParams<{ thirdPartyId: string }>();
-  if (!thirdPartyId) {
-    throw new Error("Missing :thirdPartyId param in route");
-  }
-  const { thirdParty } = useOutletContext<{
-    thirdParty: ThirdPartyMeasuresPageFragment$key;
-  }>();
-  const data = useFragment(measuresFragment, thirdParty);
-  const connectionId = data.measures.__id;
-  const measures = data.measures?.edges?.map(edge => edge.node) ?? [];
+interface ThirdPartyMeasuresPageProps {
+  queryRef: PreloadedQuery<ThirdPartyMeasuresPageQuery>;
+}
 
-  const canLink = data.canCreateMeasureThirdPartyMapping;
-  const canUnlink = data.canDeleteMeasureThirdPartyMapping;
+export default function ThirdPartyMeasuresPage(props: ThirdPartyMeasuresPageProps) {
+  const data = usePreloadedQuery<ThirdPartyMeasuresPageQuery>(thirdPartyMeasuresPageQuery, props.queryRef);
+  if (data.node?.__typename !== "ThirdParty") {
+    throw new Error("Third party not found");
+  }
+  const thirdParty = data.node;
+
+  const connectionId = thirdParty.measures.__id;
+  const measures = thirdParty.measures.edges.map(edge => edge.node);
+
+  const canLink = thirdParty.canCreateMeasureThirdPartyMapping;
+  const canUnlink = thirdParty.canDeleteMeasureThirdPartyMapping;
   const readOnly = !canLink && !canUnlink;
 
   const incrementOptions = {
-    id: data.id,
+    id: thirdParty.id,
     node: "measures(first:0)",
   };
   const [detachMeasure, isDetaching] = useMutationWithIncrement(
@@ -109,7 +115,7 @@ export default function ThirdPartyMeasuresPage() {
       measures={measures}
       onAttach={attachMeasure}
       onDetach={detachMeasure}
-      params={{ thirdPartyId: data.id }}
+      params={{ thirdPartyId: thirdParty.id }}
       connectionId={connectionId}
       readOnly={readOnly}
     />

@@ -12,83 +12,131 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { faviconUrl, formatDate } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
 import { useTranslate } from "@probo/i18n";
 import {
-  ActionDropdown,
-  Avatar,
   Button,
-  DropdownItem,
   IconPageTextLine,
   IconPlusLarge,
-  IconTrashCan,
   IconUpload,
   PageHeader,
-  RiskBadge,
   Tbody,
-  Td,
   Th,
   Thead,
   Tr,
 } from "@probo/ui";
 import {
+  graphql,
   type PreloadedQuery,
   usePaginationFragment,
   usePreloadedQuery,
 } from "react-relay";
 import { useNavigate } from "react-router";
 
-import type { ThirdPartyGraphListQuery } from "#/__generated__/core/ThirdPartyGraphListQuery.graphql";
-import type {
-  ThirdPartyGraphPaginatedFragment$data,
-  ThirdPartyGraphPaginatedFragment$key,
-} from "#/__generated__/core/ThirdPartyGraphPaginatedFragment.graphql";
+import type { ThirdPartiesPageFragment$key } from "#/__generated__/core/ThirdPartiesPageFragment.graphql";
+import type { ThirdPartiesPageQuery } from "#/__generated__/core/ThirdPartiesPageQuery.graphql";
+import type { ThirdPartiesPageRefetchQuery } from "#/__generated__/core/ThirdPartiesPageRefetchQuery.graphql";
 import { SortableTable, SortableTh } from "#/components/SortableTable";
-import {
-  paginatedThirdPartiesFragment,
-  thirdPartiesQuery,
-  useDeleteThirdParty,
-} from "#/hooks/graph/ThirdPartyGraph";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
-import type { NodeOf } from "#/types";
 
-import { CreateThirdPartyDialog } from "./dialogs/CreateThirdPartyDialog";
-import { PublishThirdPartyListDialog } from "./dialogs/PublishThirdPartyListDialog";
+import { CreateThirdPartyDialog } from "./_components/CreateThirdPartyDialog";
+import { PublishThirdPartyListDialog } from "./_components/PublishThirdPartyListDialog";
+import { ThirdPartyRow } from "./_components/ThirdPartyRow";
 
-type ThirdParty = NodeOf<ThirdPartyGraphPaginatedFragment$data["thirdParties"]>;
+export const thirdPartiesPageQuery = graphql`
+  query ThirdPartiesPageQuery($organizationId: ID!) {
+    organization: node(id: $organizationId) {
+      id
+      ...ThirdPartiesPageFragment
+    }
+  }
+`;
 
-function thirdPartyDisplayName(tp: ThirdParty): string {
-  // Sub-third-parties are persisted with their fully-qualified name
-  // (e.g. "aws (Probo/Level2/Level3)"), so the stored name is shown as-is.
-  return tp.name;
+const thirdPartiesFragment = graphql`
+  fragment ThirdPartiesPageFragment on Organization
+  @refetchable(queryName: "ThirdPartiesPageRefetchQuery")
+  @argumentDefinitions(
+    first: { type: "Int", defaultValue: 50 }
+    order: { type: "ThirdPartyOrder", defaultValue: null }
+    after: { type: "CursorKey", defaultValue: null }
+    before: { type: "CursorKey", defaultValue: null }
+    last: { type: "Int", defaultValue: null }
+    filter: { type: "ThirdPartyFilter", defaultValue: { level: 1 } }
+  ) {
+    canCreateThirdParty: permission(action: "core:thirdParty:create")
+    canPublishThirdParty: permission(action: "core:thirdParty:publish")
+    thirdPartiesDocument {
+      id
+      defaultApprovers {
+        id
+      }
+    }
+    thirdParties(
+      first: $first
+      after: $after
+      last: $last
+      before: $before
+      orderBy: $order
+      filter: $filter
+    ) @connection(key: "ThirdPartiesPage_thirdParties", filters: ["filter"]) {
+      __id
+      edges {
+        node {
+          id
+          canDelete: permission(action: "core:thirdParty:delete")
+          ...ThirdPartyRow_thirdParty
+        }
+      }
+    }
+  }
+`;
+
+export const ThirdPartiesConnectionKey = "ThirdPartiesPage_thirdParties";
+
+// Must match the `filter` default of `ThirdPartiesPageFragment` above — the
+// connection is keyed on this filter (`@connection(filters: ["filter"])`), so
+// deriving its id elsewhere requires the same value.
+export const ThirdPartiesConnectionFilter = { level: 1 };
+
+interface ThirdPartiesPageProps {
+  queryRef: PreloadedQuery<ThirdPartiesPageQuery>;
 }
 
-type Props = {
-  queryRef: PreloadedQuery<ThirdPartyGraphListQuery>;
-};
-
-export default function ThirdPartiesPage(props: Props) {
+export default function ThirdPartiesPage(props: ThirdPartiesPageProps) {
   const { __ } = useTranslate();
   const organizationId = useOrganizationId();
   const navigate = useNavigate();
 
-  const data = usePreloadedQuery<ThirdPartyGraphListQuery>(thirdPartiesQuery, props.queryRef);
-  // eslint-disable-next-line relay/generated-typescript-types
-  const pagination = usePaginationFragment(
-    paginatedThirdPartiesFragment,
-    data.node as ThirdPartyGraphPaginatedFragment$key,
-  );
+  const queryData = usePreloadedQuery<ThirdPartiesPageQuery>(thirdPartiesPageQuery, props.queryRef);
+  const { data: fragmentData, ...pagination } = usePaginationFragment<
+    ThirdPartiesPageRefetchQuery,
+    ThirdPartiesPageFragment$key
+  >(thirdPartiesFragment, queryData.organization);
 
-  const thirdParties = pagination.data.thirdParties?.edges.map(edge => edge.node);
-  const connectionId = pagination.data.thirdParties.__id;
+  const refetch = ({
+    order,
+  }: {
+    order: { direction: string; field: string };
+  }) => {
+    pagination.refetch(
+      {
+        order: {
+          direction: order.direction as "ASC" | "DESC",
+          field: order.field as "NAME" | "CREATED_AT" | "UPDATED_AT",
+        },
+      },
+      { fetchPolicy: "network-only" },
+    );
+  };
+
+  const thirdParties = fragmentData.thirdParties?.edges.map(edge => edge.node) ?? [];
+  const connectionId = fragmentData.thirdParties.__id;
 
   usePageTitle(__("Third parties"));
 
-  const hasAnyAction
-    = thirdParties.some(({ canUpdate, canDelete }) => canUpdate || canDelete);
+  const hasAnyAction = thirdParties.some(({ canDelete }) => canDelete);
 
-  const thirdPartiesDocument = data.node?.thirdPartiesDocument;
+  const thirdPartiesDocument = fragmentData.thirdPartiesDocument;
   const defaultApproverIds
     = thirdPartiesDocument?.defaultApprovers?.map(a => a.id) ?? [];
 
@@ -112,7 +160,7 @@ export default function ThirdPartiesPage(props: Props) {
               {__("Document")}
             </Button>
           )}
-          {data.node.canPublishThirdParty && (
+          {fragmentData.canPublishThirdParty && (
             <PublishThirdPartyListDialog
               organizationId={organizationId}
               defaultApproverIds={defaultApproverIds}
@@ -125,7 +173,7 @@ export default function ThirdPartiesPage(props: Props) {
               </Button>
             </PublishThirdPartyListDialog>
           )}
-          {data.node.canCreateThirdParty && (
+          {fragmentData.canCreateThirdParty && (
             <CreateThirdPartyDialog
               connection={connectionId}
               organizationId={organizationId}
@@ -135,7 +183,7 @@ export default function ThirdPartiesPage(props: Props) {
           )}
         </div>
       </PageHeader>
-      <SortableTable {...pagination}>
+      <SortableTable {...pagination} refetch={refetch}>
         <Thead>
           <Tr>
             <SortableTh field="NAME">{__("Third party")}</SortableTh>
@@ -146,11 +194,10 @@ export default function ThirdPartiesPage(props: Props) {
           </Tr>
         </Thead>
         <Tbody>
-          {thirdParties?.map(thirdParty => (
+          {thirdParties.map(thirdParty => (
             <ThirdPartyRow
               key={thirdParty.id}
-              thirdParty={thirdParty}
-              organizationId={organizationId}
+              thirdPartyKey={thirdParty}
               connectionId={connectionId}
               hasAnyAction={hasAnyAction}
             />
@@ -158,63 +205,5 @@ export default function ThirdPartiesPage(props: Props) {
         </Tbody>
       </SortableTable>
     </div>
-  );
-}
-
-function ThirdPartyRow({
-  thirdParty,
-  organizationId,
-  connectionId,
-  hasAnyAction,
-}: {
-  thirdParty: ThirdParty;
-  organizationId: string;
-  connectionId: string;
-  hasAnyAction: boolean;
-}) {
-  const { __ } = useTranslate();
-  const latestAssessment = thirdParty.riskAssessments?.edges[0]?.node;
-  const deleteThirdParty = useDeleteThirdParty(thirdParty, connectionId);
-  const displayName = thirdPartyDisplayName(thirdParty);
-
-  const thirdPartyUrl = `/organizations/${organizationId}/third-parties/${thirdParty.id}/overview`;
-
-  return (
-    <>
-      <Tr to={thirdPartyUrl}>
-        <Td>
-          <div className="flex gap-2 items-center">
-            <Avatar name={thirdParty.name} src={faviconUrl(thirdParty.websiteUrl)} />
-            <div>{displayName}</div>
-          </div>
-        </Td>
-        <Td>
-          {latestAssessment?.createdAt
-            ? formatDate(latestAssessment.createdAt)
-            : __("Not assessed")}
-        </Td>
-        <Td>
-          <RiskBadge level={latestAssessment?.dataSensitivity ?? "NONE"} />
-        </Td>
-        <Td>
-          <RiskBadge level={latestAssessment?.businessImpact ?? "NONE"} />
-        </Td>
-        {hasAnyAction && (
-          <Td noLink width={50} className="text-end">
-            <ActionDropdown>
-              {thirdParty.canDelete && (
-                <DropdownItem
-                  onClick={deleteThirdParty}
-                  variant="danger"
-                  icon={IconTrashCan}
-                >
-                  {__("Delete")}
-                </DropdownItem>
-              )}
-            </ActionDropdown>
-          </Td>
-        )}
-      </Tr>
-    </>
   );
 }

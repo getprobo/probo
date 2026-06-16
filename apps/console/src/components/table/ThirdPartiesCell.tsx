@@ -14,10 +14,31 @@
 
 import { faviconUrl } from "@probo/helpers";
 import { Avatar, Badge, IconCrossLargeX } from "@probo/ui";
+import { graphql } from "relay-runtime";
 
-import type { ThirdPartyGraphSelectQuery } from "#/__generated__/core/ThirdPartyGraphSelectQuery.graphql";
+import type { ThirdPartiesCellQuery } from "#/__generated__/core/ThirdPartiesCellQuery.graphql";
 import { GraphQLCell } from "#/components/table/GraphQLCell";
-import { thirdPartiesSelectQuery } from "#/hooks/graph/ThirdPartyGraph";
+
+const thirdPartiesCellQuery = graphql`
+  query ThirdPartiesCellQuery($organizationId: ID!) {
+    organization: node(id: $organizationId) {
+      ... on Organization {
+        thirdParties(
+          first: 100
+          orderBy: { direction: ASC, field: NAME }
+        ) {
+          edges {
+            node {
+              id
+              name
+              websiteUrl
+            }
+          }
+        }
+      }
+    }
+  }
+`;
 
 type ThirdParty = {
   id: string;
@@ -35,15 +56,19 @@ const empty = [] as ThirdParty[];
 
 export function ThirdPartiesCell(props: Props) {
   return (
-    <GraphQLCell<ThirdPartyGraphSelectQuery, ThirdParty>
+    <GraphQLCell<ThirdPartiesCellQuery, ThirdParty>
       multiple
       name={props.name}
-      query={thirdPartiesSelectQuery}
+      query={thirdPartiesCellQuery}
       variables={{
         organizationId: props.organizationId,
       }}
       items={data =>
-        data.organization?.thirdParties?.edges?.map(edge => edge.node) ?? []}
+        data.organization?.thirdParties?.edges?.map(edge => ({
+          id: edge.node.id,
+          name: edge.node.name,
+          websiteUrl: edge.node.websiteUrl,
+        })) ?? []}
       itemRenderer={({ item, onRemove }) => (
         <ThirdPartyBadge thirdParty={item} onRemove={onRemove} />
       )}

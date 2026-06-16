@@ -15,16 +15,38 @@
 import { faviconUrl } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import { Avatar, Badge, Button, Field, IconCrossLargeX, Option, Select } from "@probo/ui";
-import { type ComponentProps, Suspense, useState } from "react";
+import { type ComponentProps, Suspense, useEffect, useState } from "react";
 import { type Control, Controller, type FieldValues, type Path } from "react-hook-form";
+import { type PreloadedQuery, usePreloadedQuery, useQueryLoader } from "react-relay";
+import { graphql } from "relay-runtime";
 
-import { useThirdParties } from "#/hooks/graph/ThirdPartyGraph";
+import type { ThirdPartiesMultiSelectFieldQuery } from "#/__generated__/core/ThirdPartiesMultiSelectFieldQuery.graphql";
+
+const thirdPartiesQuery = graphql`
+  query ThirdPartiesMultiSelectFieldQuery($organizationId: ID!) {
+    organization: node(id: $organizationId) {
+      ... on Organization {
+        thirdParties(
+          first: 100
+          orderBy: { direction: ASC, field: NAME }
+        ) {
+          edges {
+            node {
+              id
+              name
+              websiteUrl
+            }
+          }
+        }
+      }
+    }
+  }
+`;
 
 type ThirdParty = {
   id: string;
   name: string;
   websiteUrl: string | null | undefined;
-  level?: number;
 };
 
 type Props<T extends FieldValues = FieldValues> = {
@@ -42,29 +64,47 @@ export function ThirdPartiesMultiSelectField<T extends FieldValues = FieldValues
   selectedThirdParties = [],
   ...props
 }: Props<T>) {
+  const [queryRef, loadQuery]
+    = useQueryLoader<ThirdPartiesMultiSelectFieldQuery>(thirdPartiesQuery);
+
+  useEffect(() => {
+    loadQuery({ organizationId }, { fetchPolicy: "network-only" });
+  }, [loadQuery, organizationId]);
+
+  const loadingState = (
+    <Select variant="editor" disabled placeholder="Loading..." />
+  );
+
   return (
     <Field {...props}>
-      <Suspense
-        fallback={<Select variant="editor" disabled placeholder="Loading..." />}
-      >
-        <ThirdPartiesMultiSelectWithQuery
-          organizationId={organizationId}
-          control={control}
-          name={props.name}
-          disabled={props.disabled}
-          selectedThirdParties={selectedThirdParties}
-        />
-      </Suspense>
+      {queryRef
+        ? (
+            <Suspense fallback={loadingState}>
+              <ThirdPartiesMultiSelectWithQuery
+                queryRef={queryRef}
+                control={control}
+                name={props.name}
+                disabled={props.disabled}
+                selectedThirdParties={selectedThirdParties}
+              />
+            </Suspense>
+          )
+        : (
+            loadingState
+          )}
     </Field>
   );
 }
 
 function ThirdPartiesMultiSelectWithQuery<T extends FieldValues = FieldValues>(
-  props: Pick<Props<T>, "organizationId" | "control" | "name" | "disabled" | "selectedThirdParties">,
+  props: Pick<Props<T>, "control" | "name" | "disabled" | "selectedThirdParties"> & {
+    queryRef: PreloadedQuery<ThirdPartiesMultiSelectFieldQuery>;
+  },
 ) {
   const { __ } = useTranslate();
-  const { name, organizationId, control, selectedThirdParties = [] } = props;
-  const thirdParties = useThirdParties(organizationId);
+  const { name, control, selectedThirdParties = [] } = props;
+  const data = usePreloadedQuery<ThirdPartiesMultiSelectFieldQuery>(thirdPartiesQuery, props.queryRef);
+  const thirdParties = data.organization?.thirdParties?.edges.map(edge => edge.node) ?? [];
   const [isOpen, setIsOpen] = useState(false);
 
   const allThirdParties: ThirdParty[] = [...thirdParties];

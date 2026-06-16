@@ -33,6 +33,7 @@ import { compliancePageRoutes } from "./pages/organizations/compliance-page/rout
 import { cookieBannerRoutes } from "./pages/organizations/cookie-banners/routes";
 import { riskAssessmentRoutes } from "./pages/organizations/risk-assessments/routes";
 import { riskRoutes } from "./pages/organizations/risks/routes";
+import { thirdPartyRoutes } from "./pages/organizations/third-parties/routes";
 import { CurrentUser } from "./providers/CurrentUser";
 import { accessReviewRoutes } from "./routes/accessReviewRoutes";
 import { assetRoutes } from "./routes/assetRoutes";
@@ -48,7 +49,6 @@ import { processingActivityRoutes } from "./routes/processingActivityRoutes";
 import { rightsRequestRoutes } from "./routes/rightsRequestRoutes";
 import { statementsOfApplicabilityRoutes } from "./routes/statementsOfApplicabilityRoutes";
 import { taskRoutes } from "./routes/taskRoutes";
-import { thirdPartyRoutes } from "./routes/thirdPartyRoutes";
 
 const routes = [
   {

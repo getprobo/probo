@@ -45,7 +45,7 @@ import type { ThirdPartyThirdPartiesPageQuery } from "#/__generated__/core/Third
 import { SortableTable, SortableTh } from "#/components/SortableTable";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
-import { AddChildThirdPartyDialog } from "../dialogs/AddChildThirdPartyDialog";
+import { AddChildThirdPartyDialog } from "../_components/AddChildThirdPartyDialog";
 
 // Keep in sync with coredata.MaxThirdPartyLevel on the backend.
 const MAX_THIRD_PARTY_LEVEL = 4;
