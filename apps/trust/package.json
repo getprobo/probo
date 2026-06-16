@@ -11,7 +11,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@hookform/resolvers": "^5.0.1",
+    "@hookform/resolvers": "^5.4.0",
     "@probo/helpers": "1.0.0",
     "@probo/hooks": "1.0.0",
     "@probo/i18n": "1.0.0",
@@ -19,32 +19,32 @@
     "@probo/ui": "1.0.0",
     "clsx": "^2.1.1",
     "react": "^19.1.0",
-    "react-dom": "^19.1.0",
-    "react-error-boundary": "^6.0.0",
-    "react-hook-form": "^7.56.4",
+    "react-dom": "^19.2.7",
+    "react-error-boundary": "^6.1.2",
+    "react-hook-form": "^7.79.0",
     "react-pdf": "^10.3.0",
-    "react-relay": "^20.1.1",
-    "react-router": "^7.17.0",
-    "relay-runtime": "^20.1.1",
+    "react-relay": "^21.0.1",
+    "react-router": "^7.18.0",
+    "relay-runtime": "^21.0.1",
     "usehooks-ts": "^3.1.1",
-    "zod": "^3.25.71"
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@probo/eslint-config": "1.0.0",
     "@probo/eslint-plugin-relay-types": "^1.0.0",
-    "@tailwindcss/vite": "^4.1.7",
-    "@types/node": "^22.15.21",
-    "@types/react": "^19.1.2",
+    "@tailwindcss/vite": "^4.3.1",
+    "@types/node": "^25.9.3",
+    "@types/react": "^19.2.17",
     "@types/react-dom": "^19.1.2",
     "@types/react-relay": "^18.2.1",
     "@types/relay-runtime": "^20.1.1",
-    "@vitejs/plugin-react": "^5.1.4",
-    "babel-plugin-relay": "^20.1.1",
-    "eslint": "^9.39.2",
-    "graphql": "^16.11.0",
+    "@vitejs/plugin-react": "^6.0.2",
+    "babel-plugin-relay": "^21.0.1",
+    "eslint": "^10.5.0",
+    "graphql": "^17.0.0",
     "tailwindcss": "^4.1.7",
-    "typescript": "~5.8.3",
-    "vite": "^7.3.2"
+    "typescript": "~6.0.3",
+    "vite": "^8.0.16"
   },
   "volta": {
     "node": "24.4.0"
