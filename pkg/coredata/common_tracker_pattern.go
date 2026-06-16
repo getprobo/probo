@@ -224,10 +224,14 @@ func (p *CommonTrackerPattern) Upsert(
 ) (inserted bool, err error) {
 	// On insert, a description-less row is immediately queued for the
 	// enrichment worker (enrichment_requested_at = NOW()). On conflict the
-	// enrichment columns are left untouched, and an empty incoming
+	// enrichment columns are otherwise left untouched, and an empty incoming
 	// description never overwrites an existing one — descriptions are owned
 	// by the enrichment worker, so mapping-side upserts must not clobber a
-	// researched description with an empty string.
+	// researched description with an empty string. The one exception is a
+	// blank, unlinked row that gains a third party: it is re-armed for
+	// enrichment, and re-arming resets the attempt counter and drops the
+	// prior payload so the row reads as not-yet-completed again (see the
+	// enrichment CASE below).
 	q := `
 INSERT INTO common_tracker_patterns (
     id,
@@ -287,6 +291,18 @@ SET
          AND EXCLUDED.common_third_party_id IS NOT NULL
         THEN 0
         ELSE common_tracker_patterns.enrichment_attempts
+    END,
+    -- The prior attempt's payload is dropped so the re-armed row matches
+    -- the "not yet completed" predicate (enrichment IS NULL) again. Left
+    -- in place, a stale payload makes a crash between claim and persist
+    -- unrecoverable: the stale-recovery sweep skips any row whose payload
+    -- is non-null, so the re-claimed-but-never-finished row never requeues.
+    enrichment            = CASE
+        WHEN common_tracker_patterns.description = ''
+         AND common_tracker_patterns.common_third_party_id IS NULL
+         AND EXCLUDED.common_third_party_id IS NOT NULL
+        THEN NULL
+        ELSE common_tracker_patterns.enrichment
     END,
     updated_at            = EXCLUDED.updated_at
 RETURNING

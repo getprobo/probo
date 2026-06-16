@@ -270,6 +270,23 @@ func TestCommonTrackerPattern_Upsert_RequeuesBlankRowOnThirdPartyLink(t *testing
 	assert.Equal(t, party.ID, *reloaded.CommonThirdPartyID, "blank row must gain the linked third party")
 	assert.NotNil(t, reloaded.EnrichmentRequestedAt, "linking a vendor must re-queue the blank row for enrichment")
 	assert.Equal(t, 0, reloaded.EnrichmentAttempts, "re-queued row must get a fresh retry budget")
+	assert.Empty(t, reloaded.Enrichment, "re-armed row must drop the prior payload so it reads as not yet completed")
+
+	// The prior payload must be cleared so a crash between the worker's
+	// claim and persist stays recoverable. Simulate the claim (which bumps
+	// attempts past zero and stamps the idle clock) without completing, then
+	// confirm the stale sweep re-queues the row — it only catches rows whose
+	// payload is still null.
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		return reloaded.ClearEnrichmentRequestedAt(ctx, tx)
+	}))
+
+	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+		return coredata.ResetStaleEnrichments(ctx, conn, 0, 3)
+	}))
+
+	afterSweep := loadCommonTrackerPattern(t, ctx, client, blank.ID)
+	assert.NotNil(t, afterSweep.EnrichmentRequestedAt, "stale recovery must re-queue a re-armed row claimed but never completed")
 }
 
 // TestCommonTrackerPattern_Upsert_KeepsDescribedRowTerminal pins the
