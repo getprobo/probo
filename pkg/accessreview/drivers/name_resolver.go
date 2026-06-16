@@ -18,12 +18,14 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
 
 	"go.probo.inc/probo/pkg/connector"
 	admin "google.golang.org/api/admin/directory/v1"
+	"google.golang.org/api/googleapi"
 	"google.golang.org/api/option"
 )
 
@@ -87,6 +89,11 @@ func (r *googleWorkspaceNameResolver) ResolveInstanceName(ctx context.Context) (
 
 	customer, err := adminService.Customers.Get("my_customer").Context(ctx).Do()
 	if err != nil {
+		var gerr *googleapi.Error
+		if errors.As(err, &gerr) && gerr.Code == http.StatusForbidden {
+			return "", nil
+		}
+
 		return "", fmt.Errorf("cannot fetch google workspace customer: %w", err)
 	}
 
