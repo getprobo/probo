@@ -4,6 +4,24 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.210.0] - 2026-06-16
+
+### Added
+
+- Electronic signature on employee document signings: the signed PDF is generated and an esign record is created and accepted (capturing signer IP and user agent), mirroring the document approval flow; consent wording is now a single backend source of truth rendered consistently across the signing, approval, and NDA pages
+- Structured authorization decision logging: every authorizer evaluation (allow, deny, no_match, assumption error) emits a decision line with policy id and reason using opaque ids
+
+### Changed
+
+- Access review campaign sources reworked: sources are first-class with a per-campaign snapshot (name, connector) taken at start time, fetch attempts recorded as an append-only log, the unused source category removed, and the deleted-source badge dropped from the campaign detail
+- Access review roles render as up to three badges with a "+X more" popover instead of one long comma-separated string
+
+### Fixed
+
+- Access review connection status now probes all providers (static, dynamic, and custom) so bad API keys and expired OAuth tokens no longer show as Connected
+- Cursor access review driver marks an account inactive when either `isRemoved` or role `removed` is set, fixing accounts reported active despite removal
+- MCP profile output no longer fails schema validation when a profile has no additional email addresses
+
 ## [0.209.0] - 2026-06-12
 
 ### Added
