@@ -67,6 +67,22 @@
 @import "@radix-ui/colors/sky-dark.css";
 
 /* ---------------------------------------------------------------------------
+ * Reset the default Tailwind palette
+ *
+ * v2 is a standalone theme: an app opts in by importing this file instead of
+ * the v1 theme.css. Wiping --color-* removes Tailwind's default palette so the
+ * only colors available are the v2 Radix scales below, plus the three base
+ * colors kept here. This must precede the @theme inline block so it does not
+ * wipe the scales registered after it.
+ * ------------------------------------------------------------------------- */
+@theme {
+    --color-*: initial;
+    --color-transparent: transparent;
+    --color-black: #000000;
+    --color-white: #ffffff;
+}
+
+/* ---------------------------------------------------------------------------
  * Register v2 color names with Tailwind (generates utility classes)
  *
  * Maps --sand-1 → --color-sand-1 so Tailwind generates bg-sand-1, text-sand-1,
@@ -75,99 +91,6 @@
  * propagates automatically.
  * ------------------------------------------------------------------------- */
 @theme inline {
-    /* sand */
-    --color-sand-1: var(--sand-1);
-    --color-sand-2: var(--sand-2);
-    --color-sand-3: var(--sand-3);
-    --color-sand-4: var(--sand-4);
-    --color-sand-5: var(--sand-5);
-    --color-sand-6: var(--sand-6);
-    --color-sand-7: var(--sand-7);
-    --color-sand-8: var(--sand-8);
-    --color-sand-9: var(--sand-9);
-    --color-sand-10: var(--sand-10);
-    --color-sand-11: var(--sand-11);
-    --color-sand-12: var(--sand-12);
-
-    /* gold */
-    --color-gold-1: var(--gold-1);
-    --color-gold-2: var(--gold-2);
-    --color-gold-3: var(--gold-3);
-    --color-gold-4: var(--gold-4);
-    --color-gold-5: var(--gold-5);
-    --color-gold-6: var(--gold-6);
-    --color-gold-7: var(--gold-7);
-    --color-gold-8: var(--gold-8);
-    --color-gold-9: var(--gold-9);
-    --color-gold-10: var(--gold-10);
-    --color-gold-11: var(--gold-11);
-    --color-gold-12: var(--gold-12);
-
-    /* red */
-    --color-red-1: var(--red-1);
-    --color-red-2: var(--red-2);
-    --color-red-3: var(--red-3);
-    --color-red-4: var(--red-4);
-    --color-red-5: var(--red-5);
-    --color-red-6: var(--red-6);
-    --color-red-7: var(--red-7);
-    --color-red-8: var(--red-8);
-    --color-red-9: var(--red-9);
-    --color-red-10: var(--red-10);
-    --color-red-11: var(--red-11);
-    --color-red-12: var(--red-12);
-
-    /* green */
-    --color-green-1: var(--green-1);
-    --color-green-2: var(--green-2);
-    --color-green-3: var(--green-3);
-    --color-green-4: var(--green-4);
-    --color-green-5: var(--green-5);
-    --color-green-6: var(--green-6);
-    --color-green-7: var(--green-7);
-    --color-green-8: var(--green-8);
-    --color-green-9: var(--green-9);
-    --color-green-10: var(--green-10);
-    --color-green-11: var(--green-11);
-    --color-green-12: var(--green-12);
-
-    /* amber */
-    --color-amber-1: var(--amber-1);
-    --color-amber-2: var(--amber-2);
-    --color-amber-3: var(--amber-3);
-    --color-amber-4: var(--amber-4);
-    --color-amber-5: var(--amber-5);
-    --color-amber-6: var(--amber-6);
-    --color-amber-7: var(--amber-7);
-    --color-amber-8: var(--amber-8);
-    --color-amber-9: var(--amber-9);
-    --color-amber-10: var(--amber-10);
-    --color-amber-11: var(--amber-11);
-    --color-amber-12: var(--amber-12);
-
-    /* sky */
-    --color-sky-1: var(--sky-1);
-    --color-sky-2: var(--sky-2);
-    --color-sky-3: var(--sky-3);
-    --color-sky-4: var(--sky-4);
-    --color-sky-5: var(--sky-5);
-    --color-sky-6: var(--sky-6);
-    --color-sky-7: var(--sky-7);
-    --color-sky-8: var(--sky-8);
-    --color-sky-9: var(--sky-9);
-    --color-sky-10: var(--sky-10);
-    --color-sky-11: var(--sky-11);
-    --color-sky-12: var(--sky-12);
-}
-
-/* ---------------------------------------------------------------------------
- * v2 boundary scope
- *
- * All v2 tokens resolve from this scope at runtime. Colors reference the Radix
- * variables so light/dark switching is automatic. Future non-color tokens
- * (fonts, spacing, shadows, radii) will go here too.
- * ------------------------------------------------------------------------- */
-[data-theme="v2"] {
     /* sand */
     --color-sand-1: var(--sand-1);
     --color-sand-2: var(--sand-2);

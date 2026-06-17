@@ -95,15 +95,17 @@ The same Tailwind classes (`bg-sand-1`, `text-red-11`, etc.) resolve to the corr
 
 This is independent of v1's dark mode which uses `@variant dark` / `prefers-color-scheme`.
 
-## `data-theme="v2"` boundary
+## Isolation from v1
 
-All v2 components must render inside a `[data-theme="v2"]` ancestor. This boundary scopes v2 token values (colors now, fonts/spacing/shadows later) so they don't collide with the v1 theme during progressive migration.
+v2 is a standalone theme isolated at the build level, not via a runtime DOM scope. An app opts into v2 by importing the v2 theme instead of the v1 `theme.css`:
 
-```html
-<div data-theme="v2">
-  <!-- v2 components resolve their tokens from this scope -->
-</div>
+```css
+/* app index.css — v2 build */
+@import "tailwindcss";
+@import "@probo/ui/src/v2/theme.css";
 ```
+
+The v2 theme wipes Tailwind's default palette (`--color-*: initial`), keeping only `transparent`, `black`, `white`, and the Radix scales below. Within a v2 build these color utilities are global — there is no `[data-theme="v2"]` ancestor requirement. A given build is either v1 or v2; the two do not coexist on the same page.
 
 ## Do / don't
 
