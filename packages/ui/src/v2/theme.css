@@ -66,6 +66,11 @@
 @import "@radix-ui/colors/sky.css";
 @import "@radix-ui/colors/sky-dark.css";
 
+/* Alpha scales + black alpha — required by the Radix shadow definitions */
+@import "@radix-ui/colors/sand-alpha.css";
+@import "@radix-ui/colors/sand-dark-alpha.css";
+@import "@radix-ui/colors/black-alpha.css";
+
 /* ---------------------------------------------------------------------------
  * Reset the default Tailwind palette
  *
@@ -249,4 +254,84 @@
     --font-weight-normal: 400;
     --font-weight-medium: 500;
     --font-weight-bold: 700;
+}
+
+/* ---------------------------------------------------------------------------
+ * Radius — Radix Themes radius scale (steps 1–6)
+ *
+ * Sourced from the "Probo Radix UI" Figma file, which defaults to the
+ * Radix "Medium" radius set. Exposed as rounded-1 … rounded-6, matching the
+ * numbered convention used for color and type.
+ *
+ *   Step   value           rem
+ *   ─────  ──────────────  ─────────
+ *   1      3px             0.1875rem
+ *   2      4px             0.25rem
+ *   3      6px             0.375rem
+ *   4      8px             0.5rem
+ *   5      12px            0.75rem
+ *   6      16px            1rem
+ *
+ * --radius-* is reset to initial so the v2 build exposes only the numeric
+ * Radix scale (the static rounded-none / rounded-full utilities are
+ * unaffected, as they are not theme-driven), mirroring the color and type
+ * resets above.
+ * ------------------------------------------------------------------------- */
+@theme {
+    --radius-*: initial;
+
+    --radius-1: 0.1875rem;
+    --radius-2: 0.25rem;
+    --radius-3: 0.375rem;
+    --radius-4: 0.5rem;
+    --radius-5: 0.75rem;
+    --radius-6: 1rem;
+}
+
+/* ---------------------------------------------------------------------------
+ * Shadows — Radix Themes shadow scale (steps 1–6)
+ *
+ * Values taken from @radix-ui/themes (tokens/shadow.css), mapping Radix's
+ * neutral `gray` to the v2 neutral `sand`. Registered the same way as the
+ * color scale: `inline` so each utility keeps the var() references, and
+ * because every layer is built from alpha tokens (--sand-a*, --black-a*)
+ * that already flip light↔dark, shadow-1 … shadow-6 adapt to dark mode
+ * automatically from a single definition — no .dark overrides needed.
+ *
+ * --shadow-* is reset to initial first so the v2 build exposes only this
+ * numeric scale (not Tailwind's shadow-sm/md/lg).
+ * ------------------------------------------------------------------------- */
+@theme {
+    --shadow-*: initial;
+}
+
+@theme inline {
+    --shadow-1:
+        inset 0 0 0 1px var(--sand-a5),
+        inset 0 1.5px 2px 0 var(--sand-a2),
+        inset 0 1.5px 2px 0 var(--black-a2);
+    --shadow-2:
+        0 0 0 1px var(--sand-a3),
+        0 0 0 0.5px var(--black-a1),
+        0 1px 1px 0 var(--sand-a2),
+        0 2px 1px -1px var(--black-a1),
+        0 1px 3px 0 var(--black-a1);
+    --shadow-3:
+        0 0 0 1px var(--sand-a3),
+        0 2px 3px -2px var(--sand-a3),
+        0 3px 12px -4px var(--black-a2),
+        0 4px 16px -8px var(--black-a2);
+    --shadow-4:
+        0 0 0 1px var(--sand-a3),
+        0 8px 40px var(--black-a1),
+        0 12px 32px -16px var(--sand-a3);
+    --shadow-5:
+        0 0 0 1px var(--sand-a3),
+        0 12px 60px var(--black-a3),
+        0 12px 32px -16px var(--sand-a5);
+    --shadow-6:
+        0 0 0 1px var(--sand-a3),
+        0 12px 60px var(--black-a3),
+        0 16px 64px var(--sand-a2),
+        0 16px 36px -20px var(--sand-a7);
 }
