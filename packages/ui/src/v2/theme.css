@@ -53,6 +53,9 @@
  * These define --sand-1 … --sand-12, --gold-1 … etc. as raw CSS variables.
  * P3 wide-gamut overrides are included via @supports in each file.
  * ------------------------------------------------------------------------- */
+/* Inter — self-hosted variable font (family name: "Inter Variable") */
+@import "@fontsource-variable/inter/index.css";
+
 @import "@radix-ui/colors/sand.css";
 @import "@radix-ui/colors/sand-dark.css";
 @import "@radix-ui/colors/gold.css";
@@ -209,7 +212,11 @@
  * build is the Radix one, the same way --color-* is wiped above.
  * ------------------------------------------------------------------------- */
 @theme {
-    --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+    --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+
+    /* Code/mono — Radix-style system stack. The design specifies Menlo, an
+     * Apple system font that is not self-hostable, so fall back per OS. */
+    --font-mono: "Menlo", "Consolas", "Liberation Mono", "Monaco", monospace;
 
     --text-*: initial;
 
