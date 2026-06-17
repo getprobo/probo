@@ -113,6 +113,20 @@
     --color-sand-11: var(--sand-11);
     --color-sand-12: var(--sand-12);
 
+    /* sand alpha — translucent neutral (overlays, scrims, layered tints) */
+    --color-sand-a1: var(--sand-a1);
+    --color-sand-a2: var(--sand-a2);
+    --color-sand-a3: var(--sand-a3);
+    --color-sand-a4: var(--sand-a4);
+    --color-sand-a5: var(--sand-a5);
+    --color-sand-a6: var(--sand-a6);
+    --color-sand-a7: var(--sand-a7);
+    --color-sand-a8: var(--sand-a8);
+    --color-sand-a9: var(--sand-a9);
+    --color-sand-a10: var(--sand-a10);
+    --color-sand-a11: var(--sand-a11);
+    --color-sand-a12: var(--sand-a12);
+
     /* gold */
     --color-gold-1: var(--gold-1);
     --color-gold-2: var(--gold-2);
