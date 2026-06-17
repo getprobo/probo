@@ -505,6 +505,99 @@ func (s SessionService) OpenSAMLChildSessionForOrganization(
 	return childSession, membership, nil
 }
 
+// OpenOIDCChildSessionForOrganization creates an OIDC-authenticated child session for the
+// given organization under the provided root session.
+func (s SessionService) OpenOIDCChildSessionForOrganization(
+	ctx context.Context,
+	rootSessionID gid.GID,
+	organizationID gid.GID,
+) (*coredata.Session, *coredata.Membership, error) {
+	var (
+		now          = time.Now()
+		rootSession  = &coredata.Session{}
+		identity     = &coredata.Identity{}
+		profile      = &coredata.MembershipProfile{}
+		membership   = &coredata.Membership{}
+		childSession = &coredata.Session{}
+		scope        = coredata.NewScopeFromObjectID(organizationID)
+	)
+
+	err := s.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			err := rootSession.LoadByID(ctx, tx, rootSessionID)
+			if err != nil {
+				if err == coredata.ErrResourceNotFound {
+					return NewSessionNotFoundError(rootSessionID)
+				}
+
+				return fmt.Errorf("cannot load session: %w", err)
+			}
+
+			if !rootSession.IsRootSession() {
+				return fmt.Errorf("session %q is not a root session", rootSessionID)
+			}
+
+			if rootSession.ExpireReason != nil || now.After(rootSession.ExpiredAt) {
+				return NewSessionExpiredError(rootSessionID)
+			}
+
+			err = identity.LoadByID(ctx, tx, rootSession.IdentityID)
+			if err != nil {
+				return fmt.Errorf("cannot load identity: %w", err)
+			}
+
+			err = profile.LoadByIdentityIDAndOrganizationID(ctx, tx, scope, rootSession.IdentityID, organizationID)
+			if err != nil {
+				if err == coredata.ErrResourceNotFound {
+					return NewProfileNotFoundError(gid.Nil)
+				}
+
+				return fmt.Errorf("cannot load profile: %w", err)
+			}
+
+			if profile.State == coredata.ProfileStateInactive {
+				return NewUserInactiveError(profile.ID)
+			}
+
+			err = membership.LoadByIdentityIDAndOrganizationID(ctx, tx, scope, rootSession.IdentityID, organizationID)
+			if err != nil {
+				if err == coredata.ErrResourceNotFound {
+					return NewMembershipNotFoundError(organizationID)
+				}
+
+				return fmt.Errorf("cannot load membership: %w", err)
+			}
+
+			tenantID := scope.GetTenantID()
+			childSession = &coredata.Session{
+				ID:              gid.New(tenantID, coredata.SessionEntityType),
+				IdentityID:      rootSession.IdentityID,
+				TenantID:        &tenantID,
+				MembershipID:    &membership.ID,
+				ParentSessionID: &rootSession.ID,
+				AuthMethod:      coredata.AuthMethodOIDC,
+				AuthenticatedAt: now,
+				ExpiredAt:       rootSession.ExpiredAt,
+				CreatedAt:       now,
+				UpdatedAt:       now,
+			}
+
+			err = childSession.Insert(ctx, tx)
+			if err != nil {
+				return fmt.Errorf("cannot insert child session: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return childSession, membership, nil
+}
+
 func (s SessionService) AssumeOrganizationSession(
 	ctx context.Context,
 	sessionID gid.GID,
