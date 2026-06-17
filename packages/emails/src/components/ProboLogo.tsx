@@ -12,7 +12,7 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { Img } from '@react-email/components';
+import { Img } from 'react-email';
 import * as React from 'react';
 
 export function ProboLogo() {

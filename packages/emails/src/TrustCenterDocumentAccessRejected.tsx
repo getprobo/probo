@@ -12,7 +12,7 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { Text } from '@react-email/components';
+import { Text } from 'react-email';
 import * as React from 'react';
 import EmailLayout, { bodyText } from './components/EmailLayout';
 
