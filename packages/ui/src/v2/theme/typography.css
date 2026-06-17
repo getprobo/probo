@@ -94,3 +94,21 @@
     --font-weight-medium: 500;
     --font-weight-bold: 700;
 }
+
+/* ---------------------------------------------------------------------------
+ * Base text rendering
+ *
+ * Global polish mirroring Radix's root defaults. The body font itself is not
+ * set here: Tailwind's preflight already applies var(--font-sans) (→ Inter)
+ * via --default-font-family, so it inherits automatically.
+ * ------------------------------------------------------------------------- */
+@layer base {
+    html {
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+    }
+
+    body {
+        overflow-wrap: break-word;
+    }
+}
