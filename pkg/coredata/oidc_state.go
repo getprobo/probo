@@ -22,32 +22,35 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/pkg/gid"
 )
 
 type OIDCState struct {
-	ID           string       `db:"id"`
-	Provider     OIDCProvider `db:"provider"`
-	Nonce        string       `db:"nonce"`
-	CodeVerifier string       `db:"code_verifier"`
-	ContinueURL  string       `db:"continue_url"`
-	CreatedAt    time.Time    `db:"created_at"`
-	ExpiresAt    time.Time    `db:"expires_at"`
+	ID             string       `db:"id"`
+	Provider       OIDCProvider `db:"provider"`
+	Nonce          string       `db:"nonce"`
+	CodeVerifier   string       `db:"code_verifier"`
+	ContinueURL    string       `db:"continue_url"`
+	OrganizationID *gid.GID     `db:"organization_id"`
+	CreatedAt      time.Time    `db:"created_at"`
+	ExpiresAt      time.Time    `db:"expires_at"`
 }
 
 func (s *OIDCState) Insert(ctx context.Context, conn pg.Tx) error {
 	query := `
-INSERT INTO iam_oidc_states (id, provider, nonce, code_verifier, continue_url, created_at, expires_at)
-VALUES (@id, @provider, @nonce, @code_verifier, @continue_url, @created_at, @expires_at)
+INSERT INTO iam_oidc_states (id, provider, nonce, code_verifier, continue_url, organization_id, created_at, expires_at)
+VALUES (@id, @provider, @nonce, @code_verifier, @continue_url, @organization_id, @created_at, @expires_at)
 `
 
 	args := pgx.StrictNamedArgs{
-		"id":            s.ID,
-		"provider":      s.Provider,
-		"nonce":         s.Nonce,
-		"code_verifier": s.CodeVerifier,
-		"continue_url":  s.ContinueURL,
-		"created_at":    s.CreatedAt,
-		"expires_at":    s.ExpiresAt,
+		"id":              s.ID,
+		"provider":        s.Provider,
+		"nonce":           s.Nonce,
+		"code_verifier":   s.CodeVerifier,
+		"continue_url":    s.ContinueURL,
+		"organization_id": s.OrganizationID,
+		"created_at":      s.CreatedAt,
+		"expires_at":      s.ExpiresAt,
 	}
 
 	_, err := conn.Exec(ctx, query, args)
@@ -60,7 +63,7 @@ VALUES (@id, @provider, @nonce, @code_verifier, @continue_url, @created_at, @exp
 
 func (s *OIDCState) LoadByIDForUpdate(ctx context.Context, conn pg.Tx, id string) error {
 	query := `
-SELECT id, provider, nonce, code_verifier, continue_url, created_at, expires_at
+SELECT id, provider, nonce, code_verifier, continue_url, organization_id, created_at, expires_at
 FROM iam_oidc_states
 WHERE id = @id
 FOR UPDATE

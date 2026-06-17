@@ -25,6 +25,7 @@ import (
 	"go.gearno.de/kit/httpserver"
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/saferedirect"
 	"go.probo.inc/probo/pkg/securecookie"
@@ -77,7 +78,19 @@ func (h *OIDCHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	continueURL := r.URL.Query().Get("continue")
 
-	authURL, err := h.iam.OIDCService.InitiateLogin(ctx, provider, continueURL)
+	var organizationID *gid.GID
+
+	if organizationIDParam := r.URL.Query().Get("organization_id"); organizationIDParam != "" {
+		parsedOrganizationID, err := gid.ParseGID(organizationIDParam)
+		if err != nil {
+			httpserver.RenderError(w, http.StatusBadRequest, errors.New("invalid organization_id parameter"))
+			return
+		}
+
+		organizationID = &parsedOrganizationID
+	}
+
+	authURL, err := h.iam.OIDCService.InitiateLogin(ctx, provider, continueURL, organizationID)
 	if err != nil {
 		h.logger.ErrorCtx(ctx, "cannot initiate OIDC login", log.Error(err))
 		httpserver.RenderError(w, http.StatusInternalServerError, errors.New("internal server error"))
@@ -118,7 +131,7 @@ func (h *OIDCHandler) CallbackHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	identity, continueURL, err := h.iam.OIDCService.HandleCallback(ctx, provider, stateParam, code)
+	identity, continueURL, organizationID, err := h.iam.OIDCService.HandleCallback(ctx, provider, stateParam, code)
 	if err != nil {
 		h.logger.ErrorCtx(ctx, "cannot handle OIDC callback", log.Error(err))
 		httpserver.RenderError(w, http.StatusUnauthorized, errors.New("authentication failed"))
@@ -155,9 +168,24 @@ func (h *OIDCHandler) CallbackHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	if organizationID != nil {
+		_, _, err = h.iam.SessionService.OpenOIDCChildSessionForOrganization(ctx, rootSession.ID, *organizationID)
+		if err != nil {
+			h.logger.ErrorCtx(ctx, "cannot open OIDC child session", log.Error(err))
+			httpserver.RenderError(w, http.StatusInternalServerError, errors.New("internal server error"))
+
+			return
+		}
+	}
+
 	h.sessionCookie.Set(w, rootSession)
 
-	redirectURL := h.safeRedirect.GetSafeRedirectURL(ctx, continueURL, "/")
+	defaultRedirect := "/"
+	if organizationID != nil {
+		defaultRedirect = "/organizations/" + organizationID.String()
+	}
+
+	redirectURL := h.safeRedirect.GetSafeRedirectURL(ctx, continueURL, defaultRedirect)
 
 	if transferURL, ok := h.buildSessionTransferURL(ctx, redirectURL, rootSession.ID.String()); ok {
 		http.Redirect(w, r, transferURL, http.StatusFound)

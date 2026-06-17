@@ -274,6 +274,7 @@ func (s *Service) InitiateLogin(
 	ctx context.Context,
 	provider coredata.OIDCProvider,
 	continueURL string,
+	organizationID *gid.GID,
 ) (string, error) {
 	info, ok := s.providers[provider]
 	if !ok {
@@ -297,13 +298,14 @@ func (s *Service) InitiateLogin(
 
 	now := time.Now()
 	oidcState := &coredata.OIDCState{
-		ID:           state,
-		Provider:     provider,
-		Nonce:        nonce,
-		CodeVerifier: codeVerifier,
-		ContinueURL:  continueURL,
-		CreatedAt:    now,
-		ExpiresAt:    now.Add(10 * time.Minute),
+		ID:             state,
+		Provider:       provider,
+		Nonce:          nonce,
+		CodeVerifier:   codeVerifier,
+		ContinueURL:    continueURL,
+		OrganizationID: organizationID,
+		CreatedAt:      now,
+		ExpiresAt:      now.Add(10 * time.Minute),
 	}
 
 	err = s.pg.WithTx(
@@ -337,10 +339,10 @@ func (s *Service) HandleCallback(
 	provider coredata.OIDCProvider,
 	stateParam string,
 	code string,
-) (*coredata.Identity, string, error) {
+) (*coredata.Identity, string, *gid.GID, error) {
 	info, ok := s.providers[provider]
 	if !ok {
-		return nil, "", NewProviderNotEnabledError(provider)
+		return nil, "", nil, NewProviderNotEnabledError(provider)
 	}
 
 	var oidcState coredata.OIDCState
@@ -364,15 +366,15 @@ func (s *Service) HandleCallback(
 		},
 	)
 	if err != nil {
-		return nil, "", err
+		return nil, "", nil, err
 	}
 
 	if time.Now().After(oidcState.ExpiresAt) {
-		return nil, "", NewInvalidStateError()
+		return nil, "", nil, NewInvalidStateError()
 	}
 
 	if oidcState.Provider != provider {
-		return nil, "", NewInvalidStateError()
+		return nil, "", nil, NewInvalidStateError()
 	}
 
 	token, err := info.oauth2Config.Exchange(
@@ -381,34 +383,34 @@ func (s *Service) HandleCallback(
 		oauth2.SetAuthURLParam("code_verifier", oidcState.CodeVerifier),
 	)
 	if err != nil {
-		return nil, "", NewCodeExchangeError(err)
+		return nil, "", nil, NewCodeExchangeError(err)
 	}
 
 	rawIDToken, ok := token.Extra("id_token").(string)
 	if !ok {
-		return nil, "", NewIDTokenMissingError()
+		return nil, "", nil, NewIDTokenMissingError()
 	}
 
 	claims, err := s.verifyAndParseIDToken(ctx, info, rawIDToken, oidcState.Nonce)
 	if err != nil {
-		return nil, "", fmt.Errorf("cannot verify id token: %w", err)
+		return nil, "", nil, fmt.Errorf("cannot verify id token: %w", err)
 	}
 
 	if claims.Email == "" {
-		return nil, "", NewMissingEmailClaimError()
+		return nil, "", nil, NewMissingEmailClaimError()
 	}
 
 	if !info.trustProviderEmail && !claims.isEmailVerified() {
-		return nil, "", NewEmailNotVerifiedError()
+		return nil, "", nil, NewEmailNotVerifiedError()
 	}
 
 	if !info.enterpriseChecker(claims) {
-		return nil, "", NewPersonalAccountNotAllowedError()
+		return nil, "", nil, NewPersonalAccountNotAllowedError()
 	}
 
 	email, err := mail.ParseAddr(claims.Email)
 	if err != nil {
-		return nil, "", fmt.Errorf("cannot parse email from id token: %w", err)
+		return nil, "", nil, fmt.Errorf("cannot parse email from id token: %w", err)
 	}
 
 	var identity *coredata.Identity
@@ -455,10 +457,10 @@ func (s *Service) HandleCallback(
 		},
 	)
 	if err != nil {
-		return nil, "", err
+		return nil, "", nil, err
 	}
 
-	return identity, oidcState.ContinueURL, nil
+	return identity, oidcState.ContinueURL, oidcState.OrganizationID, nil
 }
 
 func (s *Service) verifyAndParseIDToken(ctx context.Context, info *providerInfo, rawIDToken string, expectedNonce string) (*idTokenClaims, error) {

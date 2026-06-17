@@ -16,6 +16,7 @@ import { useTranslate } from "@probo/i18n";
 import { Button, Google, Microsoft } from "@probo/ui";
 import type { ComponentProps } from "react";
 import { useFragment } from "react-relay";
+import { useSearchParams } from "react-router";
 import { graphql } from "relay-runtime";
 
 import { useSafeContinueUrl } from "#/hooks/useSafeContinueUrl";
@@ -43,19 +44,24 @@ export function OIDCButton({
   providerRef: OIDCButtonFragment$key;
 }) {
   const { __ } = useTranslate();
+  const [searchParams] = useSearchParams();
   const safeContinueUrl = useSafeContinueUrl();
   const provider = useFragment(fragment, providerRef);
   const Icon = providerIcons[provider.name];
+  const organizationId = searchParams.get("organization-id");
 
   return (
     <Button
       variant="secondary"
       className="w-full h-10"
       onClick={() => {
-        window.location.href
-          = provider.loginURL
-            + "?continue="
-            + encodeURIComponent(safeContinueUrl.toString());
+        const loginURL = new URL(provider.loginURL, window.location.origin);
+        loginURL.searchParams.set("continue", safeContinueUrl.toString());
+        if (organizationId) {
+          loginURL.searchParams.set("organization_id", organizationId);
+        }
+
+        window.location.href = loginURL.toString();
       }}
     >
       <span className="flex items-center gap-2">
