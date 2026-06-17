@@ -14,29 +14,40 @@
  */
 
 /* ---------------------------------------------------------------------------
- * Shadows — Radix Themes shadow scale (steps 1–6)
+ * Shadows — drop-shadow elevation scale (steps 1–6)
  *
- * Values taken from @radix-ui/themes (tokens/shadow.css), mapping Radix's
- * neutral `gray` to the v2 neutral `sand`. Registered the same way as the
- * color scale: `inline` so each utility keeps the var() references, and
- * because every layer is built from alpha tokens (--sand-a*, --black-a*)
- * that already flip light↔dark, shadow-1 … shadow-6 adapt to dark mode
- * automatically from a single definition — no .dark overrides needed.
+ * Steps 2–6 are Radix Themes' shadows (tokens/shadow.css) with Radix's
+ * neutral `gray` mapped to the v2 neutral `sand`. Step 1 deliberately
+ * diverges from Radix: Radix's shadow-1 is a fully *inset* shadow, which
+ * belongs in Tailwind's separate inset-shadow-* slot, not the drop-shadow
+ * shadow-* slot. To keep shadow-1 … shadow-6 a single, composable drop
+ * elevation ramp, shadow-1 is our own subtle drop shadow one notch below
+ * shadow-2. If a recessed/inset treatment is ever needed, add it under the
+ * --inset-shadow-* namespace instead.
  *
+ * Inset shadows live in Tailwind's separate inset-shadow-* slot. We expose a
+ * numeric inset-shadow-1 … inset-shadow-3 ramp that mirrors the depth of
+ * Tailwind's default 2xs/xs/sm but is sand-tinted, so (unlike the flat-black
+ * defaults) it adapts to dark mode. inset-shadow-none stays a static utility.
+ *
+ * Registered with `inline` so each utility keeps its var() references; every
+ * layer is built from alpha tokens (--sand-a*, --black-a*) that already flip
+ * light↔dark, so the scales adapt to dark mode from a single definition.
  * The alpha tokens these reference are imported in colors.css.
  *
- * --shadow-* is reset to initial first so the v2 build exposes only this
- * numeric scale (not Tailwind's shadow-sm/md/lg).
+ * --shadow-* and --inset-shadow-* are reset to initial first so the v2 build
+ * exposes only these numeric scales (not Tailwind's shadow-sm/md/lg or the
+ * 2xs/xs/sm inset defaults).
  * ------------------------------------------------------------------------- */
 @theme {
     --shadow-*: initial;
+    --inset-shadow-*: initial;
 }
 
 @theme inline {
     --shadow-1:
-        inset 0 0 0 1px var(--sand-a5),
-        inset 0 1.5px 2px 0 var(--sand-a2),
-        inset 0 1.5px 2px 0 var(--black-a2);
+        0 0 0 1px var(--sand-a3),
+        0 1px 2px 0 var(--black-a1);
     --shadow-2:
         0 0 0 1px var(--sand-a3),
         0 0 0 0.5px var(--black-a1),
@@ -61,4 +72,9 @@
         0 12px 60px var(--black-a3),
         0 16px 64px var(--sand-a2),
         0 16px 36px -20px var(--sand-a7);
+
+    /* Inset elevation — mirrors the depth of Tailwind's 2xs/xs/sm defaults. */
+    --inset-shadow-1: inset 0 1px var(--sand-a3);
+    --inset-shadow-2: inset 0 1px 1px var(--sand-a3);
+    --inset-shadow-3: inset 0 2px 4px var(--sand-a3);
 }
