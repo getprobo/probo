@@ -1,0 +1,96 @@
+/* Copyright (c) 2026 Probo Inc <hello@probo.com>.
+ *
+ * Permission to use, copy, modify, and/or distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+ * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+ * OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
+ */
+
+/* Inter — self-hosted variable font (family name: "Inter Variable") */
+@import "@fontsource-variable/inter/index.css";
+
+/* ---------------------------------------------------------------------------
+ * Typography — Radix Themes type scale (sizes 1–9)
+ *
+ * Sourced from the "Probo Radix UI" Figma file (Text component). Like the
+ * color system, v2 uses Radix's numbered scale rather than named t-shirt
+ * sizes: utilities are text-1 … text-9 (paired with their line-height and
+ * letter-spacing), mirroring how sand-1 … sand-12 work for color.
+ *
+ *   Step   font-size      line-height   letter-spacing
+ *   ─────  ─────────────  ────────────  ──────────────
+ *   1      0.75rem  12px  1rem    16px  0.0025em
+ *   2      0.875rem 14px  1.25rem 20px  0
+ *   3      1rem     16px  1.5rem  24px  0
+ *   4      1.125rem 18px  1.625rem 26px -0.0025em
+ *   5      1.25rem  20px  1.75rem 28px  -0.005em
+ *   6      1.5rem   24px  1.875rem 30px -0.00625em
+ *   7      1.75rem  28px  2.25rem 36px  -0.0075em
+ *   8      2.1875rem 35px 2.5rem  40px  -0.01em
+ *   9      3.75rem  60px  3.75rem 60px  -0.025em
+ *
+ * Letter-spacing is kept in em so tracking scales with the font size, per
+ * the Radix specification (Figma stores the same values resolved at 16px,
+ * e.g. -0.005em → -0.08px).
+ *
+ * --text-* is reset to initial so the only type scale available in a v2
+ * build is the Radix one, the same way --color-* is wiped in colors.css.
+ * ------------------------------------------------------------------------- */
+@theme {
+    --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+
+    /* Code/mono — Radix-style system stack. The design specifies Menlo, an
+     * Apple system font that is not self-hostable, so fall back per OS. */
+    --font-mono: "Menlo", "Consolas", "Liberation Mono", "Monaco", monospace;
+
+    --text-*: initial;
+
+    --text-1: 0.75rem;
+    --text-1--line-height: 1rem;
+    --text-1--letter-spacing: 0.0025em;
+
+    --text-2: 0.875rem;
+    --text-2--line-height: 1.25rem;
+    --text-2--letter-spacing: 0em;
+
+    --text-3: 1rem;
+    --text-3--line-height: 1.5rem;
+    --text-3--letter-spacing: 0em;
+
+    --text-4: 1.125rem;
+    --text-4--line-height: 1.625rem;
+    --text-4--letter-spacing: -0.0025em;
+
+    --text-5: 1.25rem;
+    --text-5--line-height: 1.75rem;
+    --text-5--letter-spacing: -0.005em;
+
+    --text-6: 1.5rem;
+    --text-6--line-height: 1.875rem;
+    --text-6--letter-spacing: -0.00625em;
+
+    --text-7: 1.75rem;
+    --text-7--line-height: 2.25rem;
+    --text-7--letter-spacing: -0.0075em;
+
+    --text-8: 2.1875rem;
+    --text-8--line-height: 2.5rem;
+    --text-8--letter-spacing: -0.01em;
+
+    --text-9: 3.75rem;
+    --text-9--line-height: 3.75rem;
+    --text-9--letter-spacing: -0.025em;
+
+    /* Font weights — Radix "text" styles (light / regular / medium / bold) */
+    --font-weight-light: 300;
+    --font-weight-normal: 400;
+    --font-weight-medium: 500;
+    --font-weight-bold: 700;
+}

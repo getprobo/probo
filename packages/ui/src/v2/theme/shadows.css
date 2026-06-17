@@ -1,0 +1,64 @@
+/* Copyright (c) 2026 Probo Inc <hello@probo.com>.
+ *
+ * Permission to use, copy, modify, and/or distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+ * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+ * OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
+ */
+
+/* ---------------------------------------------------------------------------
+ * Shadows — Radix Themes shadow scale (steps 1–6)
+ *
+ * Values taken from @radix-ui/themes (tokens/shadow.css), mapping Radix's
+ * neutral `gray` to the v2 neutral `sand`. Registered the same way as the
+ * color scale: `inline` so each utility keeps the var() references, and
+ * because every layer is built from alpha tokens (--sand-a*, --black-a*)
+ * that already flip light↔dark, shadow-1 … shadow-6 adapt to dark mode
+ * automatically from a single definition — no .dark overrides needed.
+ *
+ * The alpha tokens these reference are imported in colors.css.
+ *
+ * --shadow-* is reset to initial first so the v2 build exposes only this
+ * numeric scale (not Tailwind's shadow-sm/md/lg).
+ * ------------------------------------------------------------------------- */
+@theme {
+    --shadow-*: initial;
+}
+
+@theme inline {
+    --shadow-1:
+        inset 0 0 0 1px var(--sand-a5),
+        inset 0 1.5px 2px 0 var(--sand-a2),
+        inset 0 1.5px 2px 0 var(--black-a2);
+    --shadow-2:
+        0 0 0 1px var(--sand-a3),
+        0 0 0 0.5px var(--black-a1),
+        0 1px 1px 0 var(--sand-a2),
+        0 2px 1px -1px var(--black-a1),
+        0 1px 3px 0 var(--black-a1);
+    --shadow-3:
+        0 0 0 1px var(--sand-a3),
+        0 2px 3px -2px var(--sand-a3),
+        0 3px 12px -4px var(--black-a2),
+        0 4px 16px -8px var(--black-a2);
+    --shadow-4:
+        0 0 0 1px var(--sand-a3),
+        0 8px 40px var(--black-a1),
+        0 12px 32px -16px var(--sand-a3);
+    --shadow-5:
+        0 0 0 1px var(--sand-a3),
+        0 12px 60px var(--black-a3),
+        0 12px 32px -16px var(--sand-a5);
+    --shadow-6:
+        0 0 0 1px var(--sand-a3),
+        0 12px 60px var(--black-a3),
+        0 16px 64px var(--sand-a2),
+        0 16px 36px -20px var(--sand-a7);
+}
