@@ -68,7 +68,7 @@ export default function TrackerPatternDetailPage({
   const pattern = data.node;
 
   return (
-    <div className="space-y-6" data-theme="v2">
+    <div className="space-y-6">
       <Breadcrumb
         items={[
           {

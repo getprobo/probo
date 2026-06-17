@@ -60,7 +60,7 @@ export function TrackerPatternPropertiesSection({
   const typeBadge = getTrackerTypeBadge(pattern.trackerType, __);
 
   return (
-    <Card padded className="bg-amber-4">
+    <Card padded>
       <PropertyRow label={__("Pattern")}>
         <span className="font-mono text-sm">{pattern.pattern}</span>
       </PropertyRow>
