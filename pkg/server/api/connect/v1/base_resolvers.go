@@ -122,6 +122,16 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 
 			return types.NewPersonalAPIKey(personalAPIKey), nil
 		}
+	case coredata.OAuth2AccessTokenEntityType:
+		action = iam.ActionOAuth2AccessTokenGet
+		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
+			accessToken, err := r.iam.OAuth2ServerService.GetAccessTokenByID(ctx, id)
+			if err != nil {
+				return nil, err
+			}
+
+			return types.NewOAuth2AccessToken(accessToken), nil
+		}
 	case coredata.SCIMConfigurationEntityType:
 		action = iam.ActionSCIMConfigurationGet
 		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
@@ -254,6 +264,18 @@ func (r *queryResolver) OidcProviders(ctx context.Context) ([]*types.OIDCProvide
 // SignUpEnabled is the resolver for the signUpEnabled field.
 func (r *queryResolver) SignUpEnabled(ctx context.Context) (bool, error) {
 	return r.iam.IsSignUpEnabled(), nil
+}
+
+// Oauth2ScopesSupported is the resolver for the oauth2ScopesSupported field.
+func (r *queryResolver) Oauth2ScopesSupported(ctx context.Context) ([]string, error) {
+	apiScopes := r.iam.Authorizer.APIScopes()
+
+	scopes := make([]string, len(apiScopes))
+	for i, scope := range apiScopes {
+		scopes[i] = scope.String()
+	}
+
+	return scopes, nil
 }
 
 // Mutation returns schema.MutationResolver implementation.

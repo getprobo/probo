@@ -42,6 +42,7 @@ var IAMSelfManageIdentityPolicy = policy.NewPolicy(
 		ActionInvitationList,
 		ActionSessionList,
 		ActionPersonalAPIKeyList,
+		ActionOAuth2AccessTokenList,
 	).
 		WithSID("list-own-associations").
 		When(policy.Equals("principal.id", "resource.identity_id")),
@@ -122,6 +123,21 @@ var IAMSelfManagePersonalAPIKeyPolicy = policy.NewPolicy(
 		When(policy.Equals("principal.id", "resource.identity_id")),
 ).
 	WithDescription("Allows users to manage their own personal API keys")
+
+// IAMSelfManageOAuth2AccessTokenPolicy allows users to manage their own OAuth2 access tokens.
+var IAMSelfManageOAuth2AccessTokenPolicy = policy.NewPolicy(
+	"iam:self-manage-oauth2-access-token",
+	"Self-Manage OAuth2 Access Tokens",
+
+	policy.Allow(
+		ActionOAuth2AccessTokenCreate,
+		ActionOAuth2AccessTokenGet,
+		ActionOAuth2AccessTokenDelete,
+	).
+		WithSID("manage-own-oauth2-access-tokens").
+		When(policy.Equals("principal.id", "resource.identity_id")),
+).
+	WithDescription("Allows users to manage their own manually created OAuth2 access tokens")
 
 // IAMSelfManageOAuth2ConsentPolicy allows users to manage their own OAuth2 consents.
 var IAMSelfManageOAuth2ConsentPolicy = policy.NewPolicy(

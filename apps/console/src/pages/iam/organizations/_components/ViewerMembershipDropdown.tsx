@@ -38,6 +38,9 @@ export const fragment = graphql`
       identity @required(action: THROW) {
         email
         canListAPIKeys: permission(action: "iam:personal-api-key:list")
+        canListOAuth2AccessTokens: permission(
+          action: "iam:oauth2-access-token:list"
+        )
       }
     }
   }
@@ -63,7 +66,7 @@ export function ViewerMembershipDropdown(props: {
   const {
     viewer: {
       fullName,
-      identity: { canListAPIKeys, email },
+      identity: { canListAPIKeys, canListOAuth2AccessTokens, email },
     },
   } = useFragment<ViewerMembershipDropdownFragment$key>(fragment, fKey);
   const [signOut] = useMutation<ViewerMembershipDropdownSignOutMutation>(signOutMutation);
@@ -101,6 +104,13 @@ export function ViewerMembershipDropdown(props: {
           to="/me/api-keys"
           icon={IconKey}
           label={__("API Keys")}
+        />
+      )}
+      {canListOAuth2AccessTokens && (
+        <UserDropdownItem
+          to="/me/oauth-tokens"
+          icon={IconKey}
+          label={__("OAuth tokens")}
         />
       )}
       <UserDropdownItem

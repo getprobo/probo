@@ -151,7 +151,7 @@ func TestAuthorizer_AuthorizeBatch(t *testing.T) {
 				Principal: fixture.identityID,
 				Action:    action,
 				Resources: []gid.GID{
-					gid.New(fixture.tenantID, coredata.OAuth2AccessTokenEntityType),
+					gid.New(fixture.tenantID, coredata.OAuth2RefreshTokenEntityType),
 				},
 			},
 		)
@@ -159,7 +159,7 @@ func TestAuthorizer_AuthorizeBatch(t *testing.T) {
 
 		errUnsupported, ok := errors.AsType[*iam.ErrBatchAuthorizationUnsupportedResourceType](err)
 		require.True(t, ok)
-		assert.Equal(t, coredata.OAuth2AccessTokenEntityType, errUnsupported.EntityType)
+		assert.Equal(t, coredata.OAuth2RefreshTokenEntityType, errUnsupported.EntityType)
 	})
 
 	t.Run("single deny rolls back entire batch", func(t *testing.T) {

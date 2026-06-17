@@ -94,6 +94,12 @@ const (
 	ActionOAuth2ConsentGet     = "iam:oauth2-consent:get"
 	ActionOAuth2ConsentApprove = "iam:oauth2-consent:approve"
 
+	// OAuth2 Access Token actions
+	ActionOAuth2AccessTokenCreate = "iam:oauth2-access-token:create"
+	ActionOAuth2AccessTokenGet    = "iam:oauth2-access-token:get"
+	ActionOAuth2AccessTokenList   = "iam:oauth2-access-token:list"
+	ActionOAuth2AccessTokenDelete = "iam:oauth2-access-token:delete"
+
 	// Audit log entry actions
 	ActionAuditLogEntryGet  = "iam:audit-log-entry:get"
 	ActionAuditLogEntryList = "iam:audit-log-entry:list"

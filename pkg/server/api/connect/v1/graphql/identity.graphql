@@ -33,6 +33,16 @@ type Identity implements Node {
     @authentication(required: PRESENT)
     @sessionOnly
 
+  oauth2AccessTokens(
+    first: Int
+    after: CursorKey
+    last: Int
+    before: CursorKey
+  ): OAuth2AccessTokenConnection
+    @goField(forceResolver: true)
+    @authentication(required: PRESENT)
+    @sessionOnly
+
   invitingOrganizations: [Organization!]!
     @goField(forceResolver: true)
     @authentication(required: PRESENT)

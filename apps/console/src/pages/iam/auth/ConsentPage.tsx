@@ -18,6 +18,7 @@ import { useTranslate } from "@probo/i18n";
 import {
   Button,
   IconArrowsClockwise,
+  IconChevronDown,
   IconEnvelope,
   IconKey,
   IconLockOpen,
@@ -25,12 +26,13 @@ import {
   IconUserCircle,
   useToast,
 } from "@probo/ui";
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { type PreloadedQuery, useMutation, usePreloadedQuery } from "react-relay";
 import { graphql } from "relay-runtime";
 
 import type { ConsentPageMutation } from "#/__generated__/iam/ConsentPageMutation.graphql";
 import type { ConsentPageQuery } from "#/__generated__/iam/ConsentPageQuery.graphql";
+import { formatApiScopeLabel } from "#/pages/iam/oauthTokens/_components/scopeLabels";
 
 export const consentPageQuery = graphql`
   query ConsentPageQuery($consentId: ID!) {
@@ -74,7 +76,81 @@ function scopeIcon(name: string): React.ReactNode {
 }
 
 function scopeLabel(name: string): string {
-  return scopeLabels[name] ?? name;
+  return scopeLabels[name] ?? formatApiScopeLabel(name);
+}
+
+function isApiScope(scope: string): boolean {
+  return scope.startsWith("v1:");
+}
+
+function partitionScopes(scopes: readonly string[]) {
+  const oidcScopes: string[] = [];
+  const apiScopes: string[] = [];
+
+  for (const scope of scopes) {
+    if (isApiScope(scope)) {
+      apiScopes.push(scope);
+    } else {
+      oidcScopes.push(scope);
+    }
+  }
+
+  return { oidcScopes, apiScopes };
+}
+
+function ConsentScopeRow(props: {
+  scope: string;
+  translate: (label: string) => string;
+  nested?: boolean;
+}) {
+  const label = scopeLabel(props.scope);
+  const translated = label !== props.scope ? props.translate(label) : label;
+
+  return (
+    <li
+      className={
+        props.nested
+          ? "flex items-center gap-2.5 py-1.5 text-sm text-txt-secondary"
+          : "flex items-center gap-2.5 px-3 py-2.5 text-sm text-txt-secondary border border-border-mid rounded-lg"
+      }
+    >
+      {scopeIcon(props.scope)}
+      {translated}
+    </li>
+  );
+}
+
+function ConsentApiScopesAccordion(props: {
+  scopes: readonly string[];
+  translate: (label: string) => string;
+  summaryLabel: string;
+}) {
+  if (props.scopes.length === 0) {
+    return null;
+  }
+
+  return (
+    <details className="group border border-border-mid rounded-lg">
+      <summary className="flex cursor-pointer list-none items-center gap-2.5 px-3 py-2.5 text-sm text-txt-secondary select-none [&::-webkit-details-marker]:hidden">
+        <IconKey size={18} className="shrink-0 text-txt-tertiary" />
+        <span className="min-w-0 flex-1 text-start">{props.summaryLabel}</span>
+        <IconChevronDown
+          size={16}
+          className="shrink-0 text-txt-tertiary transition-transform group-open:rotate-180"
+        />
+      </summary>
+      <ul className="space-y-1 border-t border-border-mid px-3 py-2.5">
+        {props.scopes.map(scope => (
+          <ConsentScopeRow
+            key={scope}
+            scope={scope}
+            translate={props.translate}
+            nested
+          />
+        ))}
+      </ul>
+    </details>
+  );
 }
 
 export default function ConsentPage(props: {
@@ -91,6 +167,16 @@ export default function ConsentPage(props: {
 
   const [approveConsent, isInFlight]
     = useMutation<ConsentPageMutation>(approveConsentMutation);
+
+  const { oidcScopes, apiScopes } = useMemo(
+    () => partitionScopes(consent.scopes ?? []),
+    [consent.scopes],
+  );
+
+  const apiScopesSummary = useMemo(
+    () => `${__("API access")} (${apiScopes.length})`,
+    [__, apiScopes.length],
+  );
 
   const handleAction = useCallback(
     (approved: boolean) => {
@@ -200,22 +286,25 @@ export default function ConsentPage(props: {
         </p>
       </div>
 
-      <ul className="space-y-2">
-        {consent.scopes.map((scope) => {
-          const label = scopeLabel(scope);
-          const translated = scopeLabels[scope] ? __(label) : label;
+      <div className="space-y-2">
+        {oidcScopes.length > 0 && (
+          <ul className="space-y-2">
+            {oidcScopes.map(scope => (
+              <ConsentScopeRow
+                key={scope}
+                scope={scope}
+                translate={__}
+              />
+            ))}
+          </ul>
+        )}
 
-          return (
-            <li
-              key={scope}
-              className="flex items-center gap-2.5 px-3 py-2.5 text-sm text-txt-secondary border border-border-mid rounded-lg"
-            >
-              {scopeIcon(scope)}
-              {translated}
-            </li>
-          );
-        })}
-      </ul>
+        <ConsentApiScopesAccordion
+          scopes={apiScopes}
+          translate={__}
+          summaryLabel={apiScopesSummary}
+        />
+      </div>
 
       <div className="flex gap-3">
         <Button

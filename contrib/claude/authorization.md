@@ -277,25 +277,7 @@ const (
 
 ## OAuth2 API scopes
 
-OAuth2 scopes for API access are defined as `coredata.OAuth2Scope` constants in each owning package (for example `pkg/probo/oauth2_scopes.go`, `pkg/iam/oauth2_scopes.go`). `pkg/coredata/oauth2_scope.go` defines the persistence type. Standard OIDC scopes live in `pkg/iam/oauth2/scope.go`. Register scope sets with `Authorizer.RegisterScopes`.
-
-**Enforcement:** OAuth2 bearer-token requests carry the validated access token on the request context (`pkg/iam/oauth2/request_context.go`). Before IAM policy evaluation, `iam.Authorizer` checks registered `iam.ScopeSet` mappings via `ScopeSet.Allows` (`RegisterScopes`, same composition model as `RegisterPolicySet`). Each domain package exports an `OAuth2ScopeSet()` (or `IAMOAuth2ScopeSet()` in `pkg/iam`) and registers it at service startup. The check uses explicit scope→action lists — no `:read` / `:get` heuristics at enforcement time. Session, personal API key, and SCIM auth skip the check (no access token on context). Unmapped IAM actions **deny** OAuth requests (fail closed). Enforcement reads scopes from the access token directly.
-
-To add a new OAuth surface for OAuth clients: add namespace-level scope constants in the owning package's `oauth2_scopes.go`, map IAM actions in that package's `OAuth2ScopeSet()`, and register the set on the authorizer at service startup. Write scopes are registered only when their mutating IAM actions are mapped.
-
-## Built-in role policies
-
-| Role | Access level |
-|------|-------------|
-| `OWNER` | Full access to all features including org management |
-| `ADMIN` | Full access to core features, restricted org management |
-| `VIEWER` | Read-only access to most entities |
-| `AUDITOR` | Read-only, excludes internal/employee content |
-| `EMPLOYEE` | Can sign documents and view internal content |
-
-## OAuth2 API scopes
-
-OAuth2 scopes for API access are defined as `coredata.OAuth2Scope` constants in each owning package (for example [`pkg/probo/oauth2_scopes.go`](../../pkg/probo/oauth2_scopes.go), [`pkg/iam/oauth2_scopes.go`](../../pkg/iam/oauth2_scopes.go)). [`pkg/coredata/oauth2_scope.go`](../../pkg/coredata/oauth2_scope.go) defines the persistence type. Standard OIDC scopes live in [`pkg/iam/oauth2/scope.go`](../../pkg/iam/oauth2/scope.go). Register scope sets with `Authorizer.RegisterScopes`; discovery scopes are derived from each `ScopeSet` automatically.
+OAuth2 scopes for API access are defined as `coredata.OAuth2Scope` constants in each owning package (for example [`pkg/probo/oauth2_scopes.go`](../../pkg/probo/oauth2_scopes.go), [`pkg/iam/oauth2_scopes.go`](../../pkg/iam/oauth2_scopes.go)). [`pkg/coredata/oauth2_scope.go`](../../pkg/coredata/oauth2_scope.go) defines the persistence type. Standard OIDC scopes live in [`pkg/iam/oauth2/scope.go`](../../pkg/iam/oauth2/scope.go). Register scope sets with `Authorizer.RegisterScopes`.
 
 **Format:**
 
@@ -309,9 +291,34 @@ Scopes are namespace- or product-level only — no resource segments (e.g. `v1:p
 - Authorization server (RFC 8414): `scopes_supported` on `/.well-known/oauth-authorization-server` lists OIDC + all API scopes; `protected_resources` links to the resource metadata document
 - Protected resource (RFC 9728): `scopes_supported` on `/.well-known/oauth-protected-resource` lists `openid` plus API scopes
 
-**Enforcement:** OAuth2 bearer-token requests carry the validated access token on the request context (`pkg/iam/oauth2/request_context.go`). Before IAM policy evaluation, `iam.Authorizer` runs an OAuth2 scope gate built from registered `iam.ScopeSet` mappings (`RegisterScopes`, same composition model as `RegisterPolicySet`). Each domain package exports an `OAuth2ScopeSet()` (or `IAMOAuth2ScopeSet()` in `pkg/iam`) and registers it at service startup. The gate uses explicit scope→action lists — no `:read` / `:get` heuristics at enforcement time. Session, personal API key, and SCIM auth skip the gate (no access token on context). Unmapped IAM actions **deny** OAuth requests (fail closed). Enforcement reads scopes from the access token directly.
+**Enforcement:** OAuth2 bearer-token requests carry the validated access token on the request context (`pkg/iam/oauth2/request_context.go`). Before IAM policy evaluation, `iam.Authorizer` checks registered `iam.ScopeSet` mappings via `ScopeSet.Allows` (`RegisterScopes`, same composition model as `RegisterPolicySet`). Each domain package exports an `OAuth2ScopeSet()` (or `IAMOAuth2ScopeSet()` in `pkg/iam`) and registers it at service startup. The check uses explicit scope→action lists — no `:read` / `:get` heuristics at enforcement time. Session, personal API key, and SCIM auth skip the check (no access token on context). Unmapped IAM actions **deny** OAuth requests (fail closed). Enforcement reads scopes from the access token directly.
 
 Add new namespace-level scope constants in the owning package's `oauth2_scopes.go`, map their IAM actions in that package's `OAuth2ScopeSet()`, and register that set on the authorizer when the surface is ready for OAuth clients. Write scopes are registered only when their mutating IAM actions are mapped.
+
+**Well-known Probo CLI client:** `iam_oauth2_clients` scopes for `AAAAAAAAAAAASwAAAAAAAAAAcHJiY2xp` must match `CLIClientScopes` in `pkg/cli/config/config.go` (requested by `prb auth login`). When adding API scopes, update the client migration, `CLIClientScopes`, and scope registration together.
+
+### Personal OAuth2 access tokens
+
+Manual bearer tokens created from the console are stored in `iam_oauth2_access_tokens` with a `NULL` `client_id` and are scoped to the creating identity. They are managed via Connect GraphQL on the signed-in user's `Identity`, similar to personal API keys. IAM actions:
+
+| Action | Purpose |
+|--------|---------|
+| `iam:oauth2-access-token:create` | Create a manual token |
+| `iam:oauth2-access-token:list` | List your tokens |
+| `iam:oauth2-access-token:get` | Read token metadata |
+| `iam:oauth2-access-token:delete` | Revoke (delete) a token |
+
+**Policies:** `IAMSelfManageIdentityPolicy` allows listing on your identity; `IAMSelfManageOAuth2AccessTokenPolicy` allows create/get/delete when `principal.id == resource.identity_id`. **OAuth2 scope gate:** create/list/get/delete map to `v1:iam:read` / `v1:iam` in `pkg/iam/oauth2_scopes.go`.
+
+## Built-in role policies
+
+| Role | Access level |
+|------|-------------|
+| `OWNER` | Full access to all features including org management |
+| `ADMIN` | Full access to core features, restricted org management |
+| `VIEWER` | Read-only access to most entities |
+| `AUDITOR` | Read-only, excludes internal/employee content |
+| `EMPLOYEE` | Can sign documents and view internal content |
 
 ## New entity IAM wiring
 

@@ -91,7 +91,7 @@ func TestAuthorizer_InternalErrorPaths(t *testing.T) {
 	ctx := context.Background()
 	identityID := gid.New(gid.NilTenant, coredata.IdentityEntityType)
 	unknownResourceID := gid.New(gid.NewTenantID(), 65535)
-	unsupportedResourceID := gid.New(gid.NewTenantID(), coredata.OAuth2AccessTokenEntityType)
+	unsupportedResourceID := gid.New(gid.NewTenantID(), coredata.OAuth2RefreshTokenEntityType)
 
 	a := &Authorizer{
 		evaluator: policy.NewEvaluator(),
@@ -156,7 +156,7 @@ func TestAuthorizer_InternalErrorPaths(t *testing.T) {
 		require.Error(t, err)
 		errUnsupported, ok := errors.AsType[*ErrBatchAuthorizationUnsupportedResourceType](err)
 		require.True(t, ok)
-		assert.Equal(t, coredata.OAuth2AccessTokenEntityType, errUnsupported.EntityType)
+		assert.Equal(t, coredata.OAuth2RefreshTokenEntityType, errUnsupported.EntityType)
 	})
 
 	t.Run("build principal attributes keeps defaults when entity type is unknown", func(t *testing.T) {

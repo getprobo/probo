@@ -33,6 +33,9 @@ type Query {
   signUpEnabled: Boolean!
     @goField(forceResolver: true)
     @authentication(required: OPTIONAL)
+  oauth2ScopesSupported: [String!]!
+    @goField(forceResolver: true)
+    @authentication(required: OPTIONAL)
 }
 
 type OIDCProviderInfo {

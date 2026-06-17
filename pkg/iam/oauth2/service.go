@@ -32,6 +32,7 @@ import (
 	"go.probo.inc/probo/pkg/crypto/rand"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/net"
+	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/uri"
 )
 
@@ -41,9 +42,10 @@ import (
 var CLIClientID = gid.MustParseGID("AAAAAAAAAAAASwAAAAAAAAAAcHJiY2xp")
 
 const (
-	tokenByteLength        = 32
-	refreshTokenByteLength = 48
-	tokenTypeBearer        = "Bearer"
+	tokenByteLength           = 32
+	refreshTokenByteLength    = 48
+	tokenTypeBearer           = "Bearer"
+	oauthGrantAccessTokenName = "OAuth grant"
 
 	// userCodeAlphabet excludes ambiguous characters: 0/O, 1/I/L.
 	userCodeAlphabet = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"
@@ -119,6 +121,14 @@ type (
 		IssuedAt   time.Time
 		ExpiresAt  time.Time
 		TokenType  string
+	}
+
+	CreateManualAccessTokenRequest struct {
+		IdentityID       gid.GID
+		Name             string
+		ExpiresAt        time.Time
+		Scopes           coredata.OAuth2Scopes
+		AllowedAPIScopes []coredata.OAuth2Scope
 	}
 )
 
@@ -221,8 +231,9 @@ func (s *Service) CreateAccessToken(
 	now := time.Now()
 	token := &coredata.OAuth2AccessToken{
 		ID:          gid.New(clientID.TenantID(), coredata.OAuth2AccessTokenEntityType),
+		Name:        oauthGrantAccessTokenName,
 		HashedValue: hash.SHA256String(tokenValue),
-		ClientID:    clientID,
+		ClientID:    new(clientID),
 		IdentityID:  identityID,
 		Scopes:      scopes,
 		CreatedAt:   now,
@@ -409,8 +420,9 @@ func (s *Service) ExchangeAuthorizationCode(
 		func(ctx context.Context, tx pg.Tx) error {
 			accessToken := &coredata.OAuth2AccessToken{
 				ID:          accessTokenID,
+				Name:        oauthGrantAccessTokenName,
 				HashedValue: hash.SHA256String(accessTokenValue),
-				ClientID:    client.ID,
+				ClientID:    new(client.ID),
 				IdentityID:  code.IdentityID,
 				Scopes:      code.Scopes,
 				CreatedAt:   now,
@@ -602,8 +614,9 @@ func (s *Service) RefreshToken(
 
 			accessToken := &coredata.OAuth2AccessToken{
 				ID:          gid.New(client.ID.TenantID(), coredata.OAuth2AccessTokenEntityType),
+				Name:        oauthGrantAccessTokenName,
 				HashedValue: hash.SHA256String(accessTokenValue),
-				ClientID:    client.ID,
+				ClientID:    new(client.ID),
 				IdentityID:  previousRefreshToken.IdentityID,
 				Scopes:      previousRefreshToken.Scopes,
 				CreatedAt:   now,
@@ -871,8 +884,9 @@ func (s *Service) PollDeviceCode(
 		func(ctx context.Context, tx pg.Tx) error {
 			accessToken := &coredata.OAuth2AccessToken{
 				ID:          gid.New(clientID.TenantID(), coredata.OAuth2AccessTokenEntityType),
+				Name:        oauthGrantAccessTokenName,
 				HashedValue: hash.SHA256String(accessTokenValue),
-				ClientID:    clientID,
+				ClientID:    new(clientID),
 				IdentityID:  *deviceCode.IdentityID,
 				Scopes:      deviceCode.Scopes,
 				CreatedAt:   now,
@@ -1230,8 +1244,13 @@ func (s *Service) IntrospectToken(
 			return nil, nil
 		}
 
+		var resultClientID gid.GID
+		if accessToken.ClientID != nil {
+			resultClientID = *accessToken.ClientID
+		}
+
 		return &IntrospectResult{
-			ClientID:   accessToken.ClientID,
+			ClientID:   resultClientID,
 			IdentityID: accessToken.IdentityID,
 			Scopes:     accessToken.Scopes,
 			IssuedAt:   accessToken.CreatedAt,
@@ -1766,4 +1785,169 @@ func (s *Service) issueAuthorizationCode(
 	}
 
 	return codeValue, nil
+}
+
+func (s *Service) GetAccessTokenByID(ctx context.Context, accessTokenID gid.GID) (*coredata.OAuth2AccessToken, error) {
+	token := &coredata.OAuth2AccessToken{}
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := token.LoadByID(ctx, conn, accessTokenID); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return coredata.ErrResourceNotFound
+				}
+
+				return fmt.Errorf("cannot load oauth2 access token: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return token, nil
+}
+
+func (s *Service) ListAccessTokensByIdentityID(
+	ctx context.Context,
+	identityID gid.GID,
+	cursor *page.Cursor[coredata.OAuth2AccessTokenOrderField],
+) (*page.Page[*coredata.OAuth2AccessToken, coredata.OAuth2AccessTokenOrderField], error) {
+	var tokens coredata.OAuth2AccessTokens
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := tokens.LoadByIdentityID(ctx, conn, identityID, cursor); err != nil {
+				return fmt.Errorf("cannot load oauth2 access tokens: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return page.NewPage(tokens, cursor), nil
+}
+
+func (s *Service) CountAccessTokensByIdentityID(
+	ctx context.Context,
+	identityID gid.GID,
+) (int, error) {
+	var count int
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			var tokens coredata.OAuth2AccessTokens
+
+			var err error
+
+			count, err = tokens.CountByIdentityID(ctx, conn, identityID)
+			if err != nil {
+				return fmt.Errorf("cannot count oauth2 access tokens: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}
+
+func (s *Service) RevokeAccessToken(ctx context.Context, accessTokenID gid.GID) error {
+	return s.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			token := &coredata.OAuth2AccessToken{}
+
+			if err := token.LoadByID(ctx, tx, accessTokenID); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return nil
+				}
+
+				return fmt.Errorf("cannot load oauth2 access token: %w", err)
+			}
+
+			if err := token.Delete(ctx, tx); err != nil {
+				return fmt.Errorf("cannot revoke oauth2 access token: %w", err)
+			}
+
+			return nil
+		},
+	)
+}
+
+func (s *Service) CreateManualAccessToken(
+	ctx context.Context,
+	req *CreateManualAccessTokenRequest,
+) (string, *coredata.OAuth2AccessToken, error) {
+	if req.Name == "" {
+		return "", nil, NewError(ErrInvalidRequest, WithDescription("name is required"))
+	}
+
+	now := time.Now()
+	if !req.ExpiresAt.After(now) {
+		return "", nil, NewError(ErrInvalidRequest, WithDescription("expires_at must be in the future"))
+	}
+
+	if len(req.Scopes) == 0 {
+		return "", nil, NewError(ErrInvalidRequest, WithDescription("scopes are required"))
+	}
+
+	if err := validateManualAccessTokenScopes(req.Scopes, req.AllowedAPIScopes); err != nil {
+		return "", nil, err
+	}
+
+	tokenValue := rand.MustHexString(tokenByteLength)
+
+	accessToken := &coredata.OAuth2AccessToken{
+		ID:          gid.New(req.IdentityID.TenantID(), coredata.OAuth2AccessTokenEntityType),
+		Name:        req.Name,
+		HashedValue: hash.SHA256String(tokenValue),
+		ClientID:    nil,
+		IdentityID:  req.IdentityID,
+		Scopes:      req.Scopes,
+		CreatedAt:   now,
+		ExpiresAt:   req.ExpiresAt,
+	}
+
+	err := s.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			if err := accessToken.Insert(ctx, tx); err != nil {
+				return fmt.Errorf("cannot insert oauth2 access token: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return "", nil, err
+	}
+
+	return tokenValue, accessToken, nil
+}
+
+func validateManualAccessTokenScopes(scopes, allowedAPIScopes coredata.OAuth2Scopes) error {
+	allowed := make(map[coredata.OAuth2Scope]struct{}, len(allowedAPIScopes))
+	for _, scope := range allowedAPIScopes {
+		allowed[scope] = struct{}{}
+	}
+
+	for _, scope := range scopes {
+		if _, ok := allowed[scope]; !ok {
+			return NewError(ErrInvalidScope, WithDescription("invalid scope: "+string(scope)))
+		}
+	}
+
+	return nil
 }

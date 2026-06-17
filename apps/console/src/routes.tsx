@@ -136,6 +136,18 @@ const routes = [
             ),
           },
           {
+            path: "me/oauth-tokens",
+            Component: lazy(
+              () => import("./pages/iam/oauthTokens/OAuthTokensPageLoader"),
+            ),
+          },
+          {
+            path: "me/oauth-tokens/new",
+            Component: lazy(
+              () => import("./pages/iam/oauthTokens/NewOAuthTokenPageLoader"),
+            ),
+          },
+          {
             Component: CenteredLayout,
             children: [
               {

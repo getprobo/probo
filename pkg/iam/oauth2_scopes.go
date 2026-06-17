@@ -48,6 +48,8 @@ func IAMOAuth2ScopeSet() *ScopeSet {
 				ActionOAuth2ConsentGet,
 				ActionAuditLogEntryGet,
 				ActionAuditLogEntryList,
+				ActionOAuth2AccessTokenGet,
+				ActionOAuth2AccessTokenList,
 			},
 			ScopeV1IAM: {
 				ActionOrganizationCreate,
