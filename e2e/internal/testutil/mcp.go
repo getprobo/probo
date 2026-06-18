@@ -63,15 +63,49 @@ func (c *Client) CreateAPIKey(name string) string {
 	return result.CreatePersonalAPIKey.Token
 }
 
+// CreateOAuth2AccessToken creates a manual OAuth access token via the connect GraphQL API.
+// It returns the raw bearer token string.
+func (c *Client) CreateOAuth2AccessToken(name string, scopes []string) string {
+	const query = `
+		mutation($input: CreateOAuth2AccessTokenInput!) {
+			createOAuth2AccessToken(input: $input) {
+				token
+			}
+		}
+	`
+
+	var result struct {
+		CreateOAuth2AccessToken struct {
+			Token string `json:"token"`
+		} `json:"createOAuth2AccessToken"`
+	}
+
+	err := c.ExecuteConnect(query, map[string]any{
+		"input": map[string]any{
+			"name":      name,
+			"expiresAt": time.Now().Add(90 * 24 * time.Hour).UTC().Format(time.RFC3339),
+			"scopes":    scopes,
+		},
+	}, &result)
+	require.NoError(c.T, err, "createOAuth2AccessToken failed")
+	require.NotEmpty(c.T, result.CreateOAuth2AccessToken.Token, "OAuth access token is empty")
+
+	return result.CreateOAuth2AccessToken.Token
+}
+
 // NewMCPClient creates an MCP client authenticated with an API key.
 // It initializes an MCP session and stores the session ID.
 func NewMCPClient(t require.TestingT, owner *Client) *MCPClient {
-	token := owner.CreateAPIKey("e2e-mcp-test")
+	return NewMCPClientWithAccessToken(t, owner, owner.CreateAPIKey("e2e-mcp-test"))
+}
 
+// NewMCPClientWithAccessToken creates an MCP client authenticated with a bearer token.
+// It initializes an MCP session and stores the session ID.
+func NewMCPClientWithAccessToken(t require.TestingT, owner *Client, accessToken string) *MCPClient {
 	mc := &MCPClient{
 		t:        t,
 		baseURL:  owner.BaseURL() + "/mcp/v1",
-		apiToken: token,
+		apiToken: accessToken,
 		httpClient: &http.Client{
 			Timeout: 30 * time.Second,
 		},
