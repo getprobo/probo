@@ -4,6 +4,13 @@ All notable changes to the `proboctl` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.5.0] - 2026-06-18
+
+### Added
+
+- `--enrich` flag on `common-third-party upsert` triggers enrichment immediately after upsert
+- Enrichment provenance (state, attempts, last-run status, error, per-field confidence) now visible in `common-third-party` and `common-tracker-pattern` list and show views; enrichment tracking unified with outcome-based status
+
 ## [0.4.0] - 2026-06-12
 
 ### Added
