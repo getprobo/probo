@@ -12,15 +12,19 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { getTrackerSourceBadge, getTrackerTypeBadge, humanizeSeconds } from "@probo/helpers";
+import { formatError, getTrackerSourceBadge, getTrackerTypeBadge, type GraphQLError, humanizeSeconds } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import { Badge, Card, IconSquareBehindSquare2, PropertyRow, useToast } from "@probo/ui";
-import { graphql, useFragment } from "react-relay";
+import { graphql, useFragment, useMutation } from "react-relay";
 
 import type { TrackerPatternPropertiesSection_trackerPattern$key } from "#/__generated__/core/TrackerPatternPropertiesSection_trackerPattern.graphql";
+import type { TrackerPatternPropertiesSectionMoveMutation } from "#/__generated__/core/TrackerPatternPropertiesSectionMoveMutation.graphql";
+
+import { MoveToCategorySelect } from "./MoveToCategorySelect";
 
 const trackerPatternPropertiesSectionFragment = graphql`
   fragment TrackerPatternPropertiesSection_trackerPattern on TrackerPattern {
+    id
     pattern
     matchType
     trackerType
@@ -32,13 +36,40 @@ const trackerPatternPropertiesSectionFragment = graphql`
     lastMatchedAt
     commonTrackerPatternId
     cookieCategory {
+      id
       name
+      kind
     }
     thirdParty {
       name
     }
     commonThirdParty {
       name
+    }
+  }
+`;
+
+const movePatternMutation = graphql`
+  mutation TrackerPatternPropertiesSectionMoveMutation(
+    $input: MoveTrackerPatternToCategoryInput!
+  ) {
+    moveTrackerPatternToCategory(input: $input) {
+      trackerPattern {
+        id
+        cookieCategory {
+          id
+          name
+          kind
+        }
+      }
+      cookieBanner {
+        id
+        latestVersion {
+          id
+          version
+          state
+        }
+      }
     }
   }
 `;
@@ -56,6 +87,33 @@ export function TrackerPatternPropertiesSection({
     trackerPatternPropertiesSectionFragment,
     trackerPatternKey,
   );
+
+  const [movePattern]
+    = useMutation<TrackerPatternPropertiesSectionMoveMutation>(movePatternMutation);
+
+  const handleMove = (targetCategoryId: string) => {
+    if (targetCategoryId === pattern.cookieCategory?.id) {
+      return;
+    }
+    movePattern({
+      variables: {
+        input: {
+          trackerPatternId: pattern.id,
+          targetCookieCategoryId: targetCategoryId,
+        },
+      },
+      onCompleted(_, errors) {
+        if (errors?.length) {
+          toast({ title: __("Error"), description: errors[0].message, variant: "error" });
+          return;
+        }
+        toast({ title: __("Success"), description: __("Cookie moved"), variant: "success" });
+      },
+      onError(error) {
+        toast({ title: __("Error"), description: formatError(__("Failed to move cookie"), error as GraphQLError), variant: "error" });
+      },
+    });
+  };
 
   const typeBadge = getTrackerTypeBadge(pattern.trackerType, __);
 
@@ -78,9 +136,12 @@ export function TrackerPatternPropertiesSection({
         </PropertyRow>
       )}
       <PropertyRow label={__("Category")}>
-        <span className="text-sm">
-          {pattern.cookieCategory?.name ?? "-"}
-        </span>
+        <MoveToCategorySelect
+          currentCategoryId={pattern.cookieCategory?.id}
+          currentCategoryName={pattern.cookieCategory?.name}
+          highlight={!!pattern.cookieCategory && pattern.cookieCategory.kind !== "UNCATEGORISED"}
+          onSelect={handleMove}
+        />
       </PropertyRow>
       <PropertyRow label={__("Third party")}>
         {pattern.thirdParty
