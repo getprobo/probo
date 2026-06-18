@@ -312,7 +312,7 @@ func requestDeviceCode(
 ) (*deviceAuthResponse, error) {
 	values := url.Values{
 		"client_id": {clientID},
-		"scope":     {"openid profile email offline_access"},
+		"scope":     {config.CLIClientScopes},
 	}
 
 	req, err := http.NewRequest(

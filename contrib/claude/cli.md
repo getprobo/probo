@@ -225,6 +225,36 @@ f.IOStreams.IsInteractive()  // true if TTY and not forced non-interactive
 
 Environment variables: `PROBO_NO_INTERACTIVE=1`, `CI=true`, `TERM=dumb` (non-interactive), `NO_COLOR` (disable color).
 
+## OAuth device login (`prb auth login`)
+
+The well-known CLI OAuth client (`config.CLIClientID`) requests `config.CLIClientScopes` at device authorization. Keep three places in sync when adding `v1:*` scopes:
+
+1. Scope constants and `OAuth2ScopeSet()` registration in the owning package
+2. `iam_oauth2_clients.scopes` for `CLIClientID` (SQL migration)
+3. `CLIClientScopes` in `pkg/cli/config/config.go`
+
+After scope changes ship, users must re-authenticate so new tokens carry the updated scopes:
+
+```sh
+prb auth logout --hostname <host>
+prb auth login --hostname <host>
+```
+
+Existing tokens may be backfilled by migration; fresh logins need the client row and `CLIClientScopes` updated.
+
+### Local development against probod
+
+```sh
+make stack-up
+make build
+make dev-config
+bin/probod -cfg-file cfg/dev.yaml   # API + OAuth at http://localhost:8080
+
+bin/prb auth login --hostname http://localhost:8080
+```
+
+Use `http://` explicitly — hosts without a scheme default to HTTPS. Config is stored under the OS user config dir (`prb/config.yaml`). Override with `PROBO_HOST` and `PROBO_TOKEN` for scripting; see `contrib/seed.sh` for a personal API key bootstrap.
+
 ## New resource command checklist
 
 1. **Group command** — `pkg/cmd/<resource>/<resource>.go` with `NewCmd<Resource>(f)`, wiring all verb subcommands

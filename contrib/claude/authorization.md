@@ -320,6 +320,16 @@ Manual bearer tokens created from the console are stored in `iam_oauth2_access_t
 | `AUDITOR` | Read-only, excludes internal/employee content |
 | `EMPLOYEE` | Can sign documents and view internal content |
 
+## Built-in role policies
+
+| Role | Access level |
+|------|-------------|
+| `OWNER` | Full access to all features including org management |
+| `ADMIN` | Full access to core features, restricted org management |
+| `VIEWER` | Read-only access to most entities |
+| `AUDITOR` | Read-only, excludes internal/employee content |
+| `EMPLOYEE` | Can sign documents and view internal content |
+
 ## New entity IAM wiring
 
 When adding a new entity that needs authorization:
