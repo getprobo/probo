@@ -81,7 +81,7 @@ Use **sand** for all general UI chrome: page backgrounds, card backgrounds, bord
 
 ## Contrast guarantees
 
-Per the Radix spec, steps 11 and 12 are guaranteed to meet APCA contrast requirements on top of a step 1 or 2 background from the same scale. This means `text-sand-11` on `bg-sand-2` is always readable, and `text-sand-12` on `bg-sand-1` is always readable.
+Per the [Radix spec](https://www.radix-ui.com/colors/docs/palette-composition/understanding-the-scale), steps 11 and 12 — which are designed for text — are guaranteed to reach Lc 60 and Lc 90 APCA contrast respectively on top of a **step 2** background from the same scale. So both `text-sand-11` and `text-sand-12` are readable on `bg-sand-2`. The guarantee is documented against step 2 only; step 1 is the more extreme background (lighter in light mode, darker in dark mode), so text steps stay at least as readable there in practice, but Radix does not state it as a guarantee.
 
 ## Dark mode
 
