@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <script>
+    (function () {
+      var m = location.pathname.match(/^\/trust\/[^/]+/);
+      var b = document.createElement("base");
+      b.href = m ? m[0] + "/" : "/";
+      document.head.appendChild(b);
+    })();
+  </script>
+
+  <link rel="icon" id="favicon" href="{{if .FaviconURL}}{{.FaviconURL}}{{else}}/favicons/favicon.ico{{end}}">
+
+  <meta name="application-name" content="&nbsp;" />
+  <meta name="msapplication-TileColor" content="#FFFFFF" />
+  <meta name="msapplication-TileImage" content="/favicons/mstile-144x144.png" />
+  <meta name="msapplication-square70x70logo" content="/favicons/mstile-70x70.png" />
+  <meta name="msapplication-square150x150logo" content="/favicons/mstile-150x150.png" />
+  <meta name="msapplication-wide310x150logo" content="/favicons/mstile-310x150.png" />
+  <meta name="msapplication-square310x310logo" content="/favicons/mstile-310x310.png" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{.Title}}</title>
+  <meta name="description" content="{{.Description}}">
+  <meta property="og:title" content="{{.Title}}">
+  <meta property="og:description" content="{{.Description}}">
+  <meta property="og:url" content="{{.OGURL}}">
+  <meta property="og:type" content="website">
+</head>
+
+<body class="text-txt-primary bg-level-0">
+  <div id="root"></div>
+  <script type="module" src="/src/main.tsx"></script>
+</body>
+
+</html>

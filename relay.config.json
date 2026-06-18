@@ -6,7 +6,8 @@
   "sources": {
     "apps/console/src/pages/iam": "iam",
     "apps/console/src": "core",
-    "apps/trust/src": "trust"
+    "apps/trust/src": "trust",
+    "apps/compliance-portal/src": "complianceportal"
   },
   "projects": {
     "core": {
@@ -41,6 +42,16 @@
       }
     },
     "trust": {
+      "schema": "pkg/server/api/trust/v1/schema.graphql",
+      "language": "typescript",
+      "noFutureProofEnums": true,
+      "customScalarTypes": {
+        "Datetime": "string",
+        "CursorKey": "string",
+        "EmailAddr": "string"
+      }
+    },
+    "complianceportal": {
       "schema": "pkg/server/api/trust/v1/schema.graphql",
       "language": "typescript",
       "noFutureProofEnums": true,
