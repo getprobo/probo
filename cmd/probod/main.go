@@ -16,6 +16,9 @@ package main
 
 import (
 	"context"
+	"fmt"
+	"os"
+	"time"
 
 	"go.gearno.de/kit/unit"
 	"go.probo.inc/probo/pkg/probod"
@@ -32,6 +35,14 @@ func main() {
 
 	err := unit.Run()
 	if err != nil && err != context.Canceled {
-		panic(err)
+		fmt.Fprintf(
+			os.Stderr,
+			`{"time": %q, "msg": %q, "version": %q, "environment": %q, "level": "ERROR", "name": "probod", "error": %q}\n`,
+			time.Now().Format(time.RFC3339),
+			"cannot run probod",
+			version,
+			env,
+			err.Error(),
+		)
 	}
 }
