@@ -41,10 +41,15 @@ func newCmdUnlink(f *cmdutil.Factory) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "unlink",
 		Short: "Unlink common tracker patterns from any common third party",
-		Long: "Detach selected common tracker patterns from their common third party. " +
-			"Unlinking only clears the catalog link: there is no new vendor to " +
-			"re-enrich a description for or to remap org patterns onto, so neither " +
-			"enrichment nor org remapping is triggered. Selection mirrors 'reenrich'.",
+		Long: "Detach selected common tracker patterns from their common third party, " +
+			"returning the verdict to UNDETERMINED so the pipeline can re-probe them. " +
+			"The now-stale description - which still names the removed vendor - is " +
+			"blanked on both the catalog row and the uncategorised org tracker patterns " +
+			"linked to it, and those org patterns are remapped (org third party cleared, " +
+			"mapping re-armed) so the pipeline drops the stale vendor and re-resolves; a " +
+			"re-resolved vendor re-arms catalog enrichment, re-deriving the description. " +
+			"User-categorised and excluded org patterns are left untouched. Selection " +
+			"mirrors 'reenrich'.",
 		Args: cobra.NoArgs,
 	}
 
@@ -101,7 +106,11 @@ func newCmdUnlink(f *cmdutil.Factory) *cobra.Command {
 			return fmt.Errorf("about to unlink %d pattern(s); pass --yes to proceed or --dry-run to preview", len(ids))
 		}
 
-		var unlinked int64
+		var (
+			unlinked int64
+			remapped int64
+			cleared  int64
+		)
 
 		if err := pgClient.WithTx(
 			ctx,
@@ -109,14 +118,39 @@ func newCmdUnlink(f *cmdutil.Factory) *cobra.Command {
 				var ps coredata.CommonTrackerPatterns
 
 				unlinked, err = ps.RelinkCommonThirdPartyByIDs(ctx, tx, ids, nil)
+				if err != nil {
+					return err
+				}
 
-				return err
+				if _, err = ps.ClearDescriptionByIDs(ctx, tx, ids); err != nil {
+					return err
+				}
+
+				var tps coredata.TrackerPatterns
+
+				remapped, err = tps.RequestMappingForUncategorisedByCommonTrackerPatternIDs(ctx, tx, ids)
+				if err != nil {
+					return err
+				}
+
+				cleared, err = tps.ClearDescriptionForUncategorisedByCommonTrackerPatternIDs(ctx, tx, ids)
+				if err != nil {
+					return err
+				}
+
+				return nil
 			},
 		); err != nil {
 			return fmt.Errorf("cannot unlink common tracker patterns: %w", err)
 		}
 
-		_, _ = fmt.Fprintf(out, "Unlinked %d pattern(s) from any common third party.\n", unlinked)
+		_, _ = fmt.Fprintf(
+			out,
+			"Unlinked %d pattern(s) from any common third party, remapped %d uncategorised org tracker pattern(s), cleared %d stale org description(s).\n",
+			unlinked,
+			remapped,
+			cleared,
+		)
 
 		return nil
 	}
