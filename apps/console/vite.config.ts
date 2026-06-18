@@ -15,42 +15,40 @@
 import { createRequire } from "node:module";
 import { fileURLToPath, URL } from "node:url";
 
+import babel from "@rolldown/plugin-babel";
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 
 const require = createRequire(import.meta.url);
 
+// @vitejs/plugin-react v6 (rolldown) no longer runs Babel, so the Relay
+// transform is applied through @rolldown/plugin-babel instead. The two
+// instances mirror the previous core/iam split: every file outside
+// src/pages/iam gets the "core" artifact directory, files inside it get "iam".
+const iamPattern = /[/\\]src[/\\]pages[/\\]iam[/\\]/;
+
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
-    react({
-      exclude: ["src/pages/iam/**/*"],
-      babel: {
-        plugins: [
-          [
-            "relay",
-            {
-              eagerEsModules: true,
-              artifactDirectory: "src/__generated__/core",
-            },
-          ],
+    react(),
+    babel({
+      plugins: [
+        [
+          "relay",
+          { eagerEsModules: true, artifactDirectory: "src/__generated__/core" },
         ],
-      },
+      ],
+      exclude: [/[/\\]node_modules[/\\]/, iamPattern],
     }),
-    react({
-      include: ["src/pages/iam/**/*"],
-      babel: {
-        plugins: [
-          [
-            "relay",
-            {
-              eagerEsModules: true,
-              artifactDirectory: "src/__generated__/iam",
-            },
-          ],
+    babel({
+      plugins: [
+        [
+          "relay",
+          { eagerEsModules: true, artifactDirectory: "src/__generated__/iam" },
         ],
-      },
+      ],
+      include: [iamPattern],
     }),
     tailwindcss(),
   ],

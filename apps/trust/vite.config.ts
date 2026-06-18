@@ -14,13 +14,16 @@
 
 import { fileURLToPath, URL } from "node:url";
 
+import babel from "@rolldown/plugin-babel";
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 
+// @vitejs/plugin-react v6 (rolldown) no longer runs Babel, so the Relay
+// transform is applied through @rolldown/plugin-babel instead.
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react({ babel: { plugins: ["relay"] } }), tailwindcss()],
+  plugins: [react(), babel({ plugins: ["relay"] }), tailwindcss()],
   build: {
     assetsDir: "assets",
   },
