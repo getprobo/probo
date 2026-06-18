@@ -282,9 +282,6 @@ INSERT INTO common_tracker_patterns (
 )
 ON CONFLICT (tracker_type, pattern, COALESCE(max_age_seconds, -1)) DO UPDATE
 SET
-    -- A terminal FIRST_PARTY row stays vendor-free: an automated upsert
-    -- must never attach a third party to an artifact an operator (or the
-    -- agent) ruled has none. Other rows take the incoming vendor.
     common_third_party_id = CASE
         WHEN common_tracker_patterns.attribution = 'FIRST_PARTY' THEN NULL
         ELSE EXCLUDED.common_third_party_id
@@ -295,23 +292,11 @@ SET
         ELSE EXCLUDED.description
     END,
     confidence            = EXCLUDED.confidence,
-    -- A FIRST_PARTY verdict is terminal: it is only ever set by an
-    -- explicit operator action (proboctl mark-first-party). Automated
-    -- mapping upserts must never downgrade it back to a vendor or
-    -- UNDETERMINED, otherwise a stray domain/sibling match would
-    -- resurrect the very attribution the operator suppressed.
     attribution           = CASE
         WHEN common_tracker_patterns.attribution = 'FIRST_PARTY'
         THEN common_tracker_patterns.attribution
         ELSE EXCLUDED.attribution
     END,
-    -- A blank, unlinked catalog row that now gains a third party is
-    -- re-queued for enrichment: the enrichment agent leaves descriptions
-    -- blank when it cannot substantiate a purpose, and knowing the vendor
-    -- gives it a second, better-informed attempt. The attempt counter is
-    -- reset so the re-armed row gets a fresh retry budget. A terminal
-    -- FIRST_PARTY row never gains a vendor (the clause above discards the
-    -- incoming one), so it must never re-arm on a vendor it did not adopt.
     enrichment_requested_at = CASE
         WHEN common_tracker_patterns.attribution <> 'FIRST_PARTY'
          AND common_tracker_patterns.description = ''
@@ -328,11 +313,6 @@ SET
         THEN 0
         ELSE common_tracker_patterns.enrichment_attempts
     END,
-    -- The prior attempt's payload is dropped so the re-armed row matches
-    -- the "not yet completed" predicate (enrichment IS NULL) again. Left
-    -- in place, a stale payload makes a crash between claim and persist
-    -- unrecoverable: the stale-recovery sweep skips any row whose payload
-    -- is non-null, so the re-claimed-but-never-finished row never requeues.
     enrichment            = CASE
         WHEN common_tracker_patterns.attribution <> 'FIRST_PARTY'
          AND common_tracker_patterns.description = ''
