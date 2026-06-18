@@ -4,6 +4,17 @@ All notable changes to the `proboctl` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.6.0] - 2026-06-18
+
+### Added
+
+- `proboctl common-tracker-pattern upsert` — create or update a catalog pattern by its natural key (tracker type, pattern, max age), applying each field only when its flag is passed and honoring the FIRST_PARTY and description-preservation invariants; `--enrich` re-arms the row for the async enrichment worker
+- `proboctl common-tracker-pattern mark-first-party` and an `--attribution` filter on `common-tracker-pattern list` to audit and remediate wrongly attributed rows
+
+### Changed
+
+- `common-tracker-pattern` upsert now normalizes the attribution verdict when a vendor is linked or unlinked without `--attribution`: UNDETERMINED is promoted to THIRD_PARTY on link and THIRD_PARTY is downgraded to UNDETERMINED on unlink
+
 ## [0.5.0] - 2026-06-18
 
 ### Added
