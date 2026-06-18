@@ -1014,6 +1014,23 @@ func (s *OrganizationService) CreateUser(ctx context.Context, req *CreateUserReq
 				if err := identity.Insert(ctx, conn); err != nil {
 					return fmt.Errorf("cannot insert identity: %w", err)
 				}
+			} else {
+				existingProfile := &coredata.MembershipProfile{}
+
+				err := existingProfile.LoadByIdentityIDAndOrganizationID(
+					ctx,
+					conn,
+					scope,
+					identity.ID,
+					req.OrganizationID,
+				)
+				if err == nil {
+					return NewUserAlreadyExistsError(identity.ID, req.OrganizationID, existingProfile.ID)
+				}
+
+				if !errors.Is(err, coredata.ErrResourceNotFound) {
+					return fmt.Errorf("cannot load existing profile: %w", err)
+				}
 			}
 
 			profile = &coredata.MembershipProfile{
@@ -1042,7 +1059,7 @@ func (s *OrganizationService) CreateUser(ctx context.Context, req *CreateUserReq
 
 			if err := profile.Insert(ctx, conn); err != nil {
 				if errors.Is(err, coredata.ErrResourceAlreadyExists) {
-					return NewUserAlreadyExistsError(identity.ID, req.OrganizationID)
+					return NewUserAlreadyExistsError(identity.ID, req.OrganizationID, gid.Nil)
 				}
 
 				return fmt.Errorf("cannot insert profile: %w", err)
@@ -1068,6 +1085,30 @@ func (s *OrganizationService) CreateUser(ctx context.Context, req *CreateUserReq
 		},
 	)
 	if err != nil {
+		if errAlreadyExists, ok := errors.AsType[*ErrUserAlreadyExists](err); ok && errAlreadyExists.ProfileID == gid.Nil {
+			existingProfile := &coredata.MembershipProfile{}
+
+			loadErr := s.pg.WithConn(
+				ctx,
+				func(ctx context.Context, conn pg.Querier) error {
+					return existingProfile.LoadByIdentityIDAndOrganizationID(
+						ctx,
+						conn,
+						scope,
+						errAlreadyExists.IdentityID,
+						errAlreadyExists.OrganizationID,
+					)
+				},
+			)
+			if loadErr == nil {
+				return nil, NewUserAlreadyExistsError(
+					errAlreadyExists.IdentityID,
+					errAlreadyExists.OrganizationID,
+					existingProfile.ID,
+				)
+			}
+		}
+
 		return nil, err
 	}
 

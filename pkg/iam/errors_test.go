@@ -30,6 +30,8 @@ func TestAuthorizeRelatedErrors_Error(t *testing.T) {
 	identityID := gid.New(gid.NilTenant, coredata.IdentityEntityType)
 	resourceID := gid.New(tenantID, coredata.FrameworkEntityType)
 	membershipID := gid.New(tenantID, coredata.MembershipEntityType)
+	organizationID := gid.New(tenantID, coredata.OrganizationEntityType)
+	profileID := gid.New(tenantID, coredata.MembershipProfileEntityType)
 	sessionID := gid.New(gid.NilTenant, coredata.SessionEntityType)
 	action := iam.Action("core:framework:get")
 	mixedOrgIDs := []string{
@@ -100,6 +102,16 @@ func TestAuthorizeRelatedErrors_Error(t *testing.T) {
 			name: "session expired",
 			err:  iam.NewSessionExpiredError(sessionID),
 			want: fmt.Sprintf("session %q expired", sessionID),
+		},
+		{
+			name: "user already exists",
+			err:  iam.NewUserAlreadyExistsError(identityID, organizationID, profileID),
+			want: fmt.Sprintf(
+				"user already exists for identity %q in organization %q with profile %q",
+				identityID,
+				organizationID,
+				profileID,
+			),
 		},
 	}
 

@@ -318,14 +318,24 @@ func (e ErrSessionExpired) Error() string {
 type ErrUserAlreadyExists struct {
 	IdentityID     gid.GID
 	OrganizationID gid.GID
+	ProfileID      gid.GID
 }
 
-func NewUserAlreadyExistsError(identityID gid.GID, organizationID gid.GID) error {
-	return &ErrUserAlreadyExists{IdentityID: identityID, OrganizationID: organizationID}
+func NewUserAlreadyExistsError(identityID gid.GID, organizationID gid.GID, profileID gid.GID) error {
+	return &ErrUserAlreadyExists{
+		IdentityID:     identityID,
+		OrganizationID: organizationID,
+		ProfileID:      profileID,
+	}
 }
 
 func (e ErrUserAlreadyExists) Error() string {
-	return fmt.Sprintf("user already exists for identity %q in organization %q", e.IdentityID, e.OrganizationID)
+	return fmt.Sprintf(
+		"user already exists for identity %q in organization %q with profile %q",
+		e.IdentityID,
+		e.OrganizationID,
+		e.ProfileID,
+	)
 }
 
 type ErrSAMLConfigurationNotFound struct{ ConfigID gid.GID }
