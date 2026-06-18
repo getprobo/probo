@@ -4,6 +4,16 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.212.0] - 2026-06-18
+
+### Added
+
+- OIDC authentication now opens a child session when assuming an organization
+
+### Fixed
+
+- OIDC organization access errors now return a 404 instead of an internal error
+
 ## [0.211.2] - 2026-06-18
 
 ### Fixed
