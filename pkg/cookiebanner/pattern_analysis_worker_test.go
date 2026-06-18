@@ -1159,15 +1159,45 @@ func TestShouldPromoteSource(t *testing.T) {
 			want:      false,
 		},
 		{
-			name:      "HTTP collapses to PRE_EXISTING rank: does not promote SCRIPT",
+			name:      "HTTP does not promote to SCRIPT (HTTP ranks below SCRIPT)",
 			existing:  &script,
 			candidate: &http,
 			want:      false,
 		},
 		{
-			name:      "HTTP collapses to PRE_EXISTING rank: equal to nil existing",
+			name:      "nil existing promotes to HTTP",
 			existing:  nil,
 			candidate: &http,
+			want:      true,
+		},
+		{
+			name:      "PRE_EXISTING promotes to HTTP",
+			existing:  &preExisting,
+			candidate: &http,
+			want:      true,
+		},
+		{
+			name:      "EXTENSION promotes to HTTP (real server cookie outranks extension state)",
+			existing:  &extension,
+			candidate: &http,
+			want:      true,
+		},
+		{
+			name:      "HTTP promotes to SCRIPT",
+			existing:  &http,
+			candidate: &script,
+			want:      true,
+		},
+		{
+			name:      "HTTP does not promote to EXTENSION",
+			existing:  &http,
+			candidate: &extension,
+			want:      false,
+		},
+		{
+			name:      "HTTP does not promote to PRE_EXISTING",
+			existing:  &http,
+			candidate: &preExisting,
 			want:      false,
 		},
 	}
