@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"os"
 	"time"
+	"errors"
 
 	"go.gearno.de/kit/unit"
 	"go.probo.inc/probo/pkg/probod"
@@ -34,7 +35,7 @@ func main() {
 	unit := unit.NewUnit(impl, "probod", version, env)
 
 	err := unit.Run()
-	if err != nil && err != context.Canceled {
+	if err != nil && !errors.Is(err, context.Canceled) {
 		fmt.Fprintf(
 			os.Stderr,
 			`{"time": %q, "msg": %q, "version": %q, "environment": %q, "level": "ERROR", "name": "probod", "error": %q}\n`,
