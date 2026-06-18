@@ -171,6 +171,24 @@ func (h *OIDCHandler) CallbackHandler(w http.ResponseWriter, r *http.Request) {
 	if organizationID != nil {
 		_, _, err = h.iam.SessionService.OpenOIDCChildSessionForOrganization(ctx, rootSession.ID, *organizationID)
 		if err != nil {
+			if _, ok := errors.AsType[*iam.ErrMembershipNotFound](err); ok {
+				httpserver.RenderError(w, http.StatusNotFound, errors.New("not found"))
+
+				return
+			}
+
+			if _, ok := errors.AsType[*iam.ErrProfileNotFound](err); ok {
+				httpserver.RenderError(w, http.StatusNotFound, errors.New("not found"))
+
+				return
+			}
+
+			if _, ok := errors.AsType[*iam.ErrUserInactive](err); ok {
+				httpserver.RenderError(w, http.StatusNotFound, errors.New("not found"))
+
+				return
+			}
+
 			h.logger.ErrorCtx(ctx, "cannot open OIDC child session", log.Error(err))
 			httpserver.RenderError(w, http.StatusInternalServerError, errors.New("internal server error"))
 
