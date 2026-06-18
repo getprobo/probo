@@ -12,7 +12,7 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { formatDate, formatError, type GraphQLError } from "@probo/helpers";
+import { formatDate, formatError } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
 import { useTranslate } from "@probo/i18n";
 import {
@@ -468,7 +468,7 @@ function DocumentApproveContent({
             title: __("Error"),
             description: formatError(
               __("Failed to load PDF"),
-              errors as GraphQLError[],
+              errors,
             ),
             variant: "error",
           });
@@ -485,7 +485,7 @@ function DocumentApproveContent({
           title: __("Error"),
           description: formatError(
             __("Failed to load PDF"),
-            error as GraphQLError,
+            error,
           ),
           variant: "error",
         });

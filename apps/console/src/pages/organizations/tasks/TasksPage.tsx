@@ -18,7 +18,6 @@ import { Button, IconPlusLarge, PageHeader } from "@probo/ui";
 import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { graphql } from "relay-runtime";
 
-import type { TasksCardOrganizationFragment$key } from "#/__generated__/core/TasksCardOrganizationFragment.graphql";
 import type { TasksPageQuery } from "#/__generated__/core/TasksPageQuery.graphql";
 import TaskFormDialog from "#/components/tasks/TaskFormDialog";
 import { OrganizationTasksCard } from "#/components/tasks/TasksCard";
@@ -39,13 +38,13 @@ interface Props {
 
 export default function TasksPage({ queryRef }: Props) {
   const { __ } = useTranslate();
-  const query = usePreloadedQuery(tasksPageQuery, queryRef);
+  const query = usePreloadedQuery<TasksPageQuery>(tasksPageQuery, queryRef);
   usePageTitle(__("Tasks"));
 
   return (
     <div className="space-y-6">
       <OrganizationTasksCard
-        organizationRef={query.organization as TasksCardOrganizationFragment$key}
+        organizationRef={query.organization}
         header={({ connectionId, canCreateTask, refetch }) => (
           <PageHeader
             title={__("Tasks")}

@@ -60,7 +60,7 @@ export function SAMLSettingsPage(props: {
 
   const { __ } = useTranslate();
 
-  const { organization } = usePreloadedQuery(samlSettingsPageQuery, queryRef);
+  const { organization } = usePreloadedQuery<SAMLSettingsPageQuery>(samlSettingsPageQuery, queryRef);
   if (organization.__typename !== "Organization") {
     throw new Error("invalid node type");
   }

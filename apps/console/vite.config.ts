@@ -15,42 +15,45 @@
 import { createRequire } from "node:module";
 import { fileURLToPath, URL } from "node:url";
 
+import babel from "@rolldown/plugin-babel";
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 
 const require = createRequire(import.meta.url);
 
+// @vitejs/plugin-react@6 (Vite 8) no longer runs Babel, so the Relay tagged
+// template transform is applied via @rolldown/plugin-babel instead. The iam
+// pages and the rest of the app compile against separate artifact directories.
+const iamFiles = /src[/\\]pages[/\\]iam[/\\]/;
+
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
-    react({
-      exclude: ["src/pages/iam/**/*"],
-      babel: {
-        plugins: [
-          [
-            "relay",
-            {
-              eagerEsModules: true,
-              artifactDirectory: "src/__generated__/core",
-            },
-          ],
+    react(),
+    babel({
+      exclude: [/[/\\]node_modules[/\\]/, /\0rolldown[/\\]runtime\.js/, iamFiles],
+      plugins: [
+        [
+          "relay",
+          {
+            eagerEsModules: true,
+            artifactDirectory: "src/__generated__/core",
+          },
         ],
-      },
+      ],
     }),
-    react({
-      include: ["src/pages/iam/**/*"],
-      babel: {
-        plugins: [
-          [
-            "relay",
-            {
-              eagerEsModules: true,
-              artifactDirectory: "src/__generated__/iam",
-            },
-          ],
+    babel({
+      include: /src[/\\]pages[/\\]iam[/\\].*\.[jt]sx?(?:$|\?)/,
+      plugins: [
+        [
+          "relay",
+          {
+            eagerEsModules: true,
+            artifactDirectory: "src/__generated__/iam",
+          },
         ],
-      },
+      ],
     }),
     tailwindcss(),
   ],

@@ -15,7 +15,6 @@
 import {
   formatError,
   getMeasureStateLabel,
-  type GraphQLError,
   sprintf,
 } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
@@ -174,7 +173,7 @@ export default function MeasuresPage({ queryRef }: MeasuresPageProps) {
 
   usePageTitle(__("Measures"));
 
-  const { organization } = usePreloadedQuery(measuresPageQuery, queryRef);
+  const { organization } = usePreloadedQuery<MeasuresPageListQuery>(measuresPageQuery, queryRef);
   if (organization.__typename !== "Organization") {
     throw new Error("invalid node type");
   }
@@ -455,7 +454,7 @@ function MeasureRow(props: MeasureRowProps) {
                   title: __("Error"),
                   description: formatError(
                     __("Failed to delete measure"),
-                    error as GraphQLError[],
+                    error,
                   ),
                   variant: "error",
                 });
@@ -473,7 +472,7 @@ function MeasureRow(props: MeasureRowProps) {
                 title: __("Error"),
                 description: formatError(
                   __("Failed to delete measure"),
-                  error as GraphQLError,
+                  error,
                 ),
                 variant: "error",
               });

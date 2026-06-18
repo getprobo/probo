@@ -27,7 +27,7 @@ type Props = {
 
 export function SubprocessorsPage({ queryRef }: Props) {
   const { __ } = useTranslate();
-  const data = usePreloadedQuery(currentTrustSubprocessorsQuery, queryRef);
+  const data = usePreloadedQuery<TrustGraphCurrentSubprocessorsQuery>(currentTrustSubprocessorsQuery, queryRef);
   const subprocessors
     = data.currentTrustCenter?.subprocessors.edges.map(edge => edge.node) ?? [];
 

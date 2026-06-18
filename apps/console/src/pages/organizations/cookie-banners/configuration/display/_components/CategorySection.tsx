@@ -340,7 +340,7 @@ export function CategorySection({ categoryKey, connectionId }: CategorySectionPr
           title: __("Error"),
           description: formatError(
             __("Failed to update category"),
-            error as GraphQLError,
+            error,
           ),
           variant: "error",
         });
@@ -388,7 +388,7 @@ export function CategorySection({ categoryKey, connectionId }: CategorySectionPr
           title: __("Error"),
           description: formatError(
             __("Failed to add cookie"),
-            error as GraphQLError,
+            error,
           ),
           variant: "error",
         });
@@ -432,7 +432,7 @@ export function CategorySection({ categoryKey, connectionId }: CategorySectionPr
           title: __("Error"),
           description: formatError(
             __("Failed to update cookie"),
-            error as GraphQLError,
+            error,
           ),
           variant: "error",
         });
@@ -463,7 +463,7 @@ export function CategorySection({ categoryKey, connectionId }: CategorySectionPr
           title: __("Error"),
           description: formatError(
             __("Failed to update cookie"),
-            error as GraphQLError,
+            error,
           ),
           variant: "error",
         });
@@ -501,7 +501,7 @@ export function CategorySection({ categoryKey, connectionId }: CategorySectionPr
                 title: __("Error"),
                 description: formatError(
                   __("Failed to delete cookie"),
-                  error as GraphQLError,
+                  error,
                 ),
                 variant: "error",
               });
@@ -542,7 +542,7 @@ export function CategorySection({ categoryKey, connectionId }: CategorySectionPr
               resolve();
             },
             onError(error) {
-              toast({ title: __("Error"), description: formatError(__("Failed to delete category"), error as GraphQLError), variant: "error" });
+              toast({ title: __("Error"), description: formatError(__("Failed to delete category"), error), variant: "error" });
               resolve();
             },
           });
@@ -566,7 +566,7 @@ export function CategorySection({ categoryKey, connectionId }: CategorySectionPr
         }
       },
       onError(error) {
-        toast({ title: __("Error"), description: formatError(__("Failed to reorder"), error as GraphQLError), variant: "error" });
+        toast({ title: __("Error"), description: formatError(__("Failed to reorder"), error), variant: "error" });
       },
     });
   };
@@ -582,7 +582,7 @@ export function CategorySection({ categoryKey, connectionId }: CategorySectionPr
         }
       },
       onError(error) {
-        toast({ title: __("Error"), description: formatError(__("Failed to reorder"), error as GraphQLError), variant: "error" });
+        toast({ title: __("Error"), description: formatError(__("Failed to reorder"), error), variant: "error" });
       },
     });
   };
@@ -647,7 +647,7 @@ export function CategorySection({ categoryKey, connectionId }: CategorySectionPr
           title: __("Error"),
           description: formatError(
             __("Failed to move cookie"),
-            error as GraphQLError,
+            error,
           ),
           variant: "error",
         });

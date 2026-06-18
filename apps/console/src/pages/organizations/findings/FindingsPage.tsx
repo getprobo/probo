@@ -18,7 +18,6 @@ import {
   getStatusLabel,
   getStatusOptions,
   getStatusVariant,
-  type GraphQLError,
   sprintf,
 } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
@@ -176,7 +175,7 @@ export default function FindingsPage({ queryRef }: FindingsPageProps) {
   usePageTitle(__("Findings"));
 
   const navigate = useNavigate();
-  const organization = usePreloadedQuery(findingsPageQuery, queryRef);
+  const organization = usePreloadedQuery<FindingsPageListQuery>(findingsPageQuery, queryRef);
   const defaultApproverIds = (organization.node.findingsDocument?.defaultApprovers ?? []).map(a => a.id);
 
   const [isPending, startTransition] = useTransition();
@@ -451,7 +450,7 @@ function FindingRow(props: FindingRowProps) {
                   title: __("Error"),
                   description: formatError(
                     __("Failed to delete finding"),
-                    error as GraphQLError[],
+                    error,
                   ),
                   variant: "error",
                 });
@@ -469,7 +468,7 @@ function FindingRow(props: FindingRowProps) {
                 title: __("Error"),
                 description: formatError(
                   __("Failed to delete finding"),
-                  error as GraphQLError,
+                  error,
                 ),
                 variant: "error",
               });

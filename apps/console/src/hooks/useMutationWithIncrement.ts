@@ -12,7 +12,7 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { formatError, type GraphQLError } from "@probo/helpers";
+import { formatError } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import { useToast } from "@probo/ui";
 import { useCallback } from "react";
@@ -60,7 +60,7 @@ export function useMutationWithIncrement<T extends MutationParameters>(
             const errorTitle = options.errorMessage ?? __("Failed to commit this operation");
             toast({
               title: __("Error"),
-              description: formatError(errorTitle, error as GraphQLError[]),
+              description: formatError(errorTitle, error),
               variant: "error",
             });
           } else {
@@ -78,7 +78,7 @@ export function useMutationWithIncrement<T extends MutationParameters>(
           const errorTitle = options.errorMessage ?? __("Failed to commit this operation");
           toast({
             title: __("Error"),
-            description: formatError(errorTitle, error as GraphQLError),
+            description: formatError(errorTitle, error),
             variant: "error",
           });
           queryOptions.onError?.(error);
@@ -100,7 +100,7 @@ export function updateStoreCounter(
 ) {
   commitLocalUpdate(relayEnv, (store) => {
     const node = store?.get(recordId)?.getLinkedRecord(nodeName);
-    const previousValue = node?.getValue(fieldName);
+    const previousValue: unknown = node?.getValue(fieldName);
     if (node && typeof previousValue === "number") {
       node.setValue(previousValue + value, fieldName);
     }

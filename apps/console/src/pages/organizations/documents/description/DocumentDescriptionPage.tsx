@@ -96,7 +96,10 @@ export function DocumentDescriptionPage(props: {
   }
 
   const lastVersion = document.lastVersion?.edges[0].node;
-  const currentVersion = lastVersion ?? version as NonNullable<typeof lastVersion | typeof version>;
+  const currentVersion = lastVersion ?? version;
+  if (!currentVersion) {
+    throw new Error("Document version not found");
+  }
 
   const [updateContent] = useMutation<DocumentDescriptionPage_updateContentMutation>(updateContentMutation);
 

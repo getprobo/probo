@@ -77,7 +77,7 @@ export default function CookieBannerConsentRecordPage({
 }: CookieBannerConsentRecordPageProps) {
   const { __ } = useTranslate();
   const organizationId = useOrganizationId();
-  const data = usePreloadedQuery(cookieBannerConsentRecordPageQuery, queryRef);
+  const data = usePreloadedQuery<CookieBannerConsentRecordPageQuery>(cookieBannerConsentRecordPageQuery, queryRef);
 
   if (data.node.__typename !== "CookieConsentRecord") {
     throw new Error("invalid type for node");

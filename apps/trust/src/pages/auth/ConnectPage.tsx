@@ -67,7 +67,7 @@ export function ConnectPage(props: {
   const { __ } = useTranslate();
   const { toast } = useToast();
   const [magicLinkSent, setMagicLinkSent] = useState<boolean>(false);
-  const interval = useRef<NodeJS.Timeout>(undefined);
+  const interval = useRef<ReturnType<typeof setTimeout>>(undefined);
   const [timer, setTimer] = useState<number>(timerDurationSeconds);
   const safeContinueUrl = useSafeContinueUrl();
 

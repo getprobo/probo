@@ -126,7 +126,7 @@ interface Props {
 }
 
 export default function ThirdPartyThirdPartiesPage({ queryRef }: Props) {
-  const { node } = usePreloadedQuery(thirdPartyThirdPartiesPageQuery, queryRef);
+  const { node } = usePreloadedQuery<ThirdPartyThirdPartiesPageQuery>(thirdPartyThirdPartiesPageQuery, queryRef);
   const thirdParty = node.__typename === "ThirdParty" ? node : null;
   const { __ } = useTranslate();
   const organizationId = useOrganizationId();

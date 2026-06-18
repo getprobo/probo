@@ -69,7 +69,7 @@ const importFrameworkMutation = graphql`
 export default function FrameworksPage(props: Props) {
   const { __ } = useTranslate();
   usePageTitle(__("Frameworks"));
-  const data = usePreloadedQuery(frameworksQuery, props.queryRef);
+  const data = usePreloadedQuery<FrameworkGraphListQuery>(frameworksQuery, props.queryRef);
   const connectionId = data.organization.frameworks!.__id;
   const frameworks
     = data.organization.frameworks?.edges.map(edge => edge.node) ?? [];

@@ -160,7 +160,7 @@ export default function ConsentPage(props: {
   const { toast } = useToast();
   const [deviceResult, setDeviceResult] = useState<"authorized" | "denied" | null>(null);
 
-  const data = usePreloadedQuery(consentPageQuery, props.queryRef);
+  const data = usePreloadedQuery<ConsentPageQuery>(consentPageQuery, props.queryRef);
   usePageTitle(__("Authorize Application"));
 
   const { node: consent } = data;

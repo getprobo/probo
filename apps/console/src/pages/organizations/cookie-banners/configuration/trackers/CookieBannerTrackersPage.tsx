@@ -121,7 +121,7 @@ export default function CookieBannerTrackersPage({
   queryRef,
 }: CookieBannerTrackersPageProps) {
   const { __ } = useTranslate();
-  const data = usePreloadedQuery(cookieBannerTrackersPageQuery, queryRef);
+  const data = usePreloadedQuery<CookieBannerTrackersPageQuery>(cookieBannerTrackersPageQuery, queryRef);
 
   if (data.node.__typename !== "CookieBanner") {
     throw new Error("invalid type for node");

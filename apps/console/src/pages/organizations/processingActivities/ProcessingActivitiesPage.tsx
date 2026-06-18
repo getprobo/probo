@@ -196,7 +196,7 @@ export default function ProcessingActivitiesPage({
 
   usePageTitle(__("Processing Activities"));
 
-  const organization = usePreloadedQuery(processingActivitiesQuery, queryRef);
+  const organization = usePreloadedQuery<ProcessingActivityGraphListQuery>(processingActivitiesQuery, queryRef);
 
   const paDocument = organization.node.processingActivitiesDocument;
   const dpiaDocument = organization.node.dataProtectionImpactAssessmentsDocument;

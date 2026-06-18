@@ -55,7 +55,7 @@ export default function DeviceActivationPage(props: {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
-  usePreloadedQuery(deviceActivationPageQuery, props.queryRef);
+  usePreloadedQuery<DeviceActivationPageQuery>(deviceActivationPageQuery, props.queryRef);
   usePageTitle(__("Device Activation"));
 
   const preset = (searchParams.get("user_code") ?? "").replace(/-/g, "");

@@ -12,7 +12,7 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { formatError, getRiskImpacts, getRiskLikelihoods, type GraphQLError } from "@probo/helpers";
+import { formatError, getRiskImpacts, getRiskLikelihoods } from "@probo/helpers";
 import { useToggle } from "@probo/hooks";
 import { useTranslate } from "@probo/i18n";
 import {
@@ -180,7 +180,7 @@ export function FormRiskDialog({
             title: __("Error"),
             description: formatError(
               __("Failed to update risk"),
-              error as GraphQLError,
+              error,
             ),
             variant: "error",
           });
@@ -212,7 +212,7 @@ export function FormRiskDialog({
           title: __("Error"),
           description: formatError(
             __("Failed to create risk"),
-            error as GraphQLError,
+            error,
           ),
           variant: "error",
         });

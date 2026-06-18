@@ -14,6 +14,7 @@
 
 import { objectKeys } from "@probo/helpers";
 import type { Meta, StoryObj } from "@storybook/react";
+import type { ComponentType } from "react";
 
 import * as icons from "./Atoms/Icons";
 
@@ -183,7 +184,7 @@ export const Icons: Story = {
       <div className="flex flex-wrap gap-4">
         {objectKeys(icons).map((k) => {
           /* eslint import-x/namespace: ['error', { allowComputed: true }] */
-          const IconComponent = icons[k];
+          const IconComponent = icons[k] as ComponentType;
           return (
             <button
               title={k}

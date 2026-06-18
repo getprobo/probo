@@ -115,7 +115,7 @@ export default function ObligationsPage({ queryRef }: ObligationsPageProps) {
 
   usePageTitle(__("Obligations"));
 
-  const organization = usePreloadedQuery(obligationsQuery, queryRef);
+  const organization = usePreloadedQuery<ObligationGraphListQuery>(obligationsQuery, queryRef);
   const defaultApproverIds = (organization.node.obligationsDocument?.defaultApprovers ?? []).map(a => a.id);
 
   const {

@@ -110,7 +110,7 @@ export default function RisksPage(props: RisksPageProps) {
   const organizationId = useOrganizationId();
   const navigate = useNavigate();
 
-  const queryData = usePreloadedQuery(risksPageQuery, props.queryRef);
+  const queryData = usePreloadedQuery<RisksPageQuery>(risksPageQuery, props.queryRef);
   const { data: fragmentData, ...pagination } = usePaginationFragment<
     RisksPageRefetchQuery,
     RisksPageFragment$key

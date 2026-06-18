@@ -81,7 +81,7 @@ interface RiskControlsPageProps {
 export default function RiskControlsPage(props: RiskControlsPageProps) {
   const { __ } = useTranslate();
   const organizationId = useOrganizationId();
-  const data = usePreloadedQuery(riskControlsPageQuery, props.queryRef);
+  const data = usePreloadedQuery<RiskControlsPageQuery>(riskControlsPageQuery, props.queryRef);
   if (data.node?.__typename !== "Risk") {
     throw new Error("Risk not found");
   }

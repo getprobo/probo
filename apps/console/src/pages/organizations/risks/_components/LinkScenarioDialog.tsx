@@ -123,7 +123,7 @@ type ContentProps = Omit<LinkScenarioDialogProps, "children"> & {
 };
 
 function LinkScenarioDialogContent(props: ContentProps) {
-  const query = usePreloadedQuery(scenariosQuery, props.queryRef);
+  const query = usePreloadedQuery<LinkScenarioDialogQuery>(scenariosQuery, props.queryRef);
   const { data, loadNext, hasNext, isLoadingNext }
     = usePaginationFragment<LinkScenarioDialogQuery_fragment, LinkScenarioDialogFragment$key>(
       scenariosFragment,

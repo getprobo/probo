@@ -47,7 +47,7 @@ export function MoveToCategoryDropdown({
   onMove,
 }: MoveToCategoryDropdownProps) {
   const { __ } = useTranslate();
-  const data = usePreloadedQuery(moveToCategoryDropdownQuery, queryRef);
+  const data = usePreloadedQuery<MoveToCategoryDropdownQuery>(moveToCategoryDropdownQuery, queryRef);
 
   if (data.node.__typename !== "CookieBanner") {
     return null;

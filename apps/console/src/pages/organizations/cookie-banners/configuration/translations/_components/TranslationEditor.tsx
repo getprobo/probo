@@ -12,7 +12,7 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { formatError, type GraphQLError } from "@probo/helpers";
+import { formatError } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import { Button, useToast } from "@probo/ui";
 import { useMemo } from "react";
@@ -150,7 +150,7 @@ export function TranslationEditor({
           title: __("Error"),
           description: formatError(
             __("Failed to save translation"),
-            error as GraphQLError,
+            error,
           ),
           variant: "error",
         });

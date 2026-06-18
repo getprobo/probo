@@ -18,7 +18,6 @@ import {
   getStatusLabel,
   getStatusOptions,
   getStatusVariant,
-  type GraphQLError,
   sprintf,
 } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
@@ -209,7 +208,7 @@ export default function FindingDetailsPage(props: Props) {
                   title: __("Error"),
                   description: formatError(
                     __("Failed to delete finding"),
-                    error as GraphQLError[],
+                    error,
                   ),
                   variant: "error",
                 });
@@ -227,7 +226,7 @@ export default function FindingDetailsPage(props: Props) {
                 title: __("Error"),
                 description: formatError(
                   __("Failed to delete finding"),
-                  error as GraphQLError,
+                  error,
                 ),
                 variant: "error",
               });
@@ -294,7 +293,7 @@ export default function FindingDetailsPage(props: Props) {
           title: __("Error"),
           description: formatError(
             __("Failed to update finding"),
-            error as GraphQLError,
+            error,
           ),
           variant: "error",
         });

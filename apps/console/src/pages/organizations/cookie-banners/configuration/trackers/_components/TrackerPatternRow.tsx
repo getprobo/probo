@@ -13,7 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 import { DownloadSimpleIcon, EyeIcon, EyeSlashIcon } from "@phosphor-icons/react";
-import { formatError, getTrackerSourceBadge, getTrackerTypeBadge, type GraphQLError, humanizeSeconds } from "@probo/helpers";
+import { formatError, getTrackerSourceBadge, getTrackerTypeBadge, humanizeSeconds } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import {
   ActionDropdown,
@@ -191,7 +191,7 @@ export function TrackerPatternRow({ patternKey, connectionId }: TrackerPatternRo
               resolve();
             },
             onError(error) {
-              toast({ title: __("Error"), description: formatError(__("Failed to delete cookie"), error as GraphQLError), variant: "error" });
+              toast({ title: __("Error"), description: formatError(__("Failed to delete cookie"), error), variant: "error" });
               resolve();
             },
           });
@@ -223,7 +223,7 @@ export function TrackerPatternRow({ patternKey, connectionId }: TrackerPatternRo
         toast({ title: __("Success"), description: __("Cookie moved"), variant: "success" });
       },
       onError(error) {
-        toast({ title: __("Error"), description: formatError(__("Failed to move cookie"), error as GraphQLError), variant: "error" });
+        toast({ title: __("Error"), description: formatError(__("Failed to move cookie"), error), variant: "error" });
       },
     });
   };
@@ -243,7 +243,7 @@ export function TrackerPatternRow({ patternKey, connectionId }: TrackerPatternRo
         }
       },
       onError(error) {
-        toast({ title: __("Error"), description: formatError(__("Failed to update cookie"), error as GraphQLError), variant: "error" });
+        toast({ title: __("Error"), description: formatError(__("Failed to update cookie"), error), variant: "error" });
       },
     });
   };
@@ -286,7 +286,7 @@ export function TrackerPatternRow({ patternKey, connectionId }: TrackerPatternRo
         toast({ title: __("Success"), description: __("Third party imported"), variant: "success" });
       },
       onError(error) {
-        toast({ title: __("Error"), description: formatError(__("Failed to import third party"), error as GraphQLError), variant: "error" });
+        toast({ title: __("Error"), description: formatError(__("Failed to import third party"), error), variant: "error" });
       },
     });
   };
@@ -309,7 +309,7 @@ export function TrackerPatternRow({ patternKey, connectionId }: TrackerPatternRo
         setIsEditing(false);
       },
       onError(error) {
-        toast({ title: __("Error"), description: formatError(__("Failed to update cookie"), error as GraphQLError), variant: "error" });
+        toast({ title: __("Error"), description: formatError(__("Failed to update cookie"), error), variant: "error" });
       },
     });
   };

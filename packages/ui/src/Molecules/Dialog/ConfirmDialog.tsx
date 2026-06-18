@@ -38,12 +38,14 @@ type State = {
   onConfirm: () => void | Promise<unknown>;
 };
 
+const initialConfirmState: State = {
+  message: null,
+  onConfirm: () => Promise.resolve(),
+};
+
 const useConfirmStore = create(
   combine(
-    {
-      message: null,
-      onConfirm: () => Promise.resolve(),
-    } as State,
+    initialConfirmState,
     set => ({
       open: (props: State) => {
         set(props);

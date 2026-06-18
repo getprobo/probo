@@ -36,8 +36,8 @@ type Props = PropsWithChildren<{
   sidebar?: ReactNode;
 }>;
 
-const LayoutContext = createContext({
-  setDrawer: (() => {}) as (v: boolean) => void,
+const LayoutContext = createContext<{ setDrawer: (v: boolean) => void }>({
+  setDrawer: () => {},
 });
 
 export function Layout({

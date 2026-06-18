@@ -16,7 +16,6 @@ import {
   formatDatetime,
   formatError,
   getStatusOptions,
-  type GraphQLError,
 } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import {
@@ -171,7 +170,7 @@ export function CreateFindingDialog({
       onError(error) {
         toast({
           title: __("Error"),
-          description: formatError(__("Failed to create finding"), error as GraphQLError),
+          description: formatError(__("Failed to create finding"), error),
           variant: "error",
         });
       },

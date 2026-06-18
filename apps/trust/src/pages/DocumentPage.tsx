@@ -218,7 +218,7 @@ export function DocumentPage({ queryRef }: Props) {
   const [fileData, setFileData] = useState<string | null>(null);
   const [exportError, setExportError] = useState<string | null>(null);
 
-  const data = usePreloadedQuery(documentPageQuery, queryRef);
+  const data = usePreloadedQuery<DocumentPageQueryType>(documentPageQuery, queryRef);
   const trustCenter = data.currentTrustCenter;
   const node = data.node;
 

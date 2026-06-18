@@ -58,7 +58,7 @@ type Props = {
 
 export default function ThirdPartyDetailPage(props: Props) {
   const environment = useRelayEnvironment();
-  const { node: thirdParty } = usePreloadedQuery(thirdPartyNodeQuery, props.queryRef);
+  const { node: thirdParty } = usePreloadedQuery<ThirdPartyGraphNodeQuery>(thirdPartyNodeQuery, props.queryRef);
   const { __ } = useTranslate();
   const organizationId = useOrganizationId();
   const thirdPartyIdRef = useRef(thirdParty.id);

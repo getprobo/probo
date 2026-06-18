@@ -175,7 +175,7 @@ export function AuditLogSettingsPage(props: {
 }) {
   const { __ } = useTranslate();
 
-  const { organization } = usePreloadedQuery(
+  const { organization } = usePreloadedQuery<AuditLogSettingsPageQuery>(
     auditLogSettingsPageQuery,
     props.queryRef,
   );

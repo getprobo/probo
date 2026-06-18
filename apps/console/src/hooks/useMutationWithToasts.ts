@@ -12,7 +12,7 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { formatError, type GraphQLError } from "@probo/helpers";
+import { formatError } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import { useToast } from "@probo/ui";
 import { useCallback } from "react";
@@ -50,7 +50,7 @@ export function useMutationWithToasts<T extends MutationParameters>(
               const errorTitle = options.errorMessage ?? __("Failed to commit this operation");
               toast({
                 title: __("Error"),
-                description: formatError(errorTitle, error as GraphQLError[]),
+                description: formatError(errorTitle, error),
                 variant: "error",
               });
               reject(new Error(errorTitle));
@@ -74,7 +74,7 @@ export function useMutationWithToasts<T extends MutationParameters>(
             const errorTitle = options.errorMessage ?? __("Failed to commit this operation");
             toast({
               title: __("Error"),
-              description: formatError(errorTitle, error as GraphQLError),
+              description: formatError(errorTitle, error),
               variant: "error",
             });
             reject(error);

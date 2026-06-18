@@ -244,7 +244,7 @@ export default function ProcessingActivityDetailsPage(props: Props) {
         activity?.dataProtectionImpactAssessment?.potentialRisk || "",
       mitigations: activity?.dataProtectionImpactAssessment?.mitigations || "",
       residualRisk: (activity?.dataProtectionImpactAssessment?.residualRisk
-        || "") as ProcessingActivityDPIAResidualRisk | "",
+        || ""),
     },
   });
 

@@ -12,7 +12,7 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { formatError, type GraphQLError } from "@probo/helpers";
+import { formatError } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import {
   Button,
@@ -117,7 +117,7 @@ export function PublishAssetListDialog({
           title: __("Error"),
           description: formatError(
             __("Failed to publish asset list"),
-            error as GraphQLError,
+            error,
           ),
           variant: "error",
         });

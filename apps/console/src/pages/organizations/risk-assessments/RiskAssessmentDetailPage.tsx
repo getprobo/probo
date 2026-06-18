@@ -12,7 +12,7 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { formatDate, formatError, type GraphQLError } from "@probo/helpers";
+import { formatDate, formatError } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
 import { useTranslate } from "@probo/i18n";
 import {
@@ -89,7 +89,7 @@ export default function RiskAssessmentDetailPage({ queryRef }: RiskAssessmentDet
   const navigate = useNavigate();
   const confirm = useConfirm();
   const { toast } = useToast();
-  const data = usePreloadedQuery(riskAssessmentDetailPageQuery, queryRef);
+  const data = usePreloadedQuery<RiskAssessmentDetailPageQuery>(riskAssessmentDetailPageQuery, queryRef);
   const ra = data.node;
   const [deleteRiskAssessment] = useMutation<RiskAssessmentDetailPageDeleteMutation>(deleteMutation);
 
@@ -133,7 +133,7 @@ export default function RiskAssessmentDetailPage({ queryRef }: RiskAssessmentDet
             onError(error) {
               toast({
                 title: __("Error"),
-                description: formatError(__("Failed to delete risk assessment"), error as GraphQLError),
+                description: formatError(__("Failed to delete risk assessment"), error),
                 variant: "error",
               });
               reject(error);

@@ -13,7 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 import { ClipboardTextIcon, CodeIcon, MagnifyingGlassIcon } from "@phosphor-icons/react";
-import { formatError, type GraphQLError } from "@probo/helpers";
+import { formatError } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import {
   Badge,
@@ -112,7 +112,7 @@ export default function CookieBannerConfigLayout({ queryRef }: CookieBannerConfi
   const organizationId = useOrganizationId();
   const { cookieBannerId } = useParams<{ cookieBannerId: string }>();
 
-  const data = usePreloadedQuery(cookieBannerConfigLayoutQuery, queryRef);
+  const data = usePreloadedQuery<CookieBannerConfigLayoutQuery>(cookieBannerConfigLayoutQuery, queryRef);
   if (data.node.__typename !== "CookieBanner") {
     throw new Error("invalid type for node");
   }
@@ -133,7 +133,7 @@ export default function CookieBannerConfigLayout({ queryRef }: CookieBannerConfi
           toast({ title: __("Success"), description: __("Banner deactivated"), variant: "success" });
         },
         onError(error) {
-          toast({ title: __("Error"), description: formatError(__("Failed to deactivate"), error as GraphQLError), variant: "error" });
+          toast({ title: __("Error"), description: formatError(__("Failed to deactivate"), error), variant: "error" });
         },
       });
     } else {
@@ -143,7 +143,7 @@ export default function CookieBannerConfigLayout({ queryRef }: CookieBannerConfi
           toast({ title: __("Success"), description: __("Banner activated"), variant: "success" });
         },
         onError(error) {
-          toast({ title: __("Error"), description: formatError(__("Failed to activate"), error as GraphQLError), variant: "error" });
+          toast({ title: __("Error"), description: formatError(__("Failed to activate"), error), variant: "error" });
         },
       });
     }
@@ -156,7 +156,7 @@ export default function CookieBannerConfigLayout({ queryRef }: CookieBannerConfi
         toast({ title: __("Success"), description: __("Version published"), variant: "success" });
       },
       onError(error) {
-        toast({ title: __("Error"), description: formatError(__("Failed to publish"), error as GraphQLError), variant: "error" });
+        toast({ title: __("Error"), description: formatError(__("Failed to publish"), error), variant: "error" });
       },
     });
   };

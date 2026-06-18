@@ -90,7 +90,7 @@ export function CommonThirdPartyCombobox({
   onSelect,
   excludeNames,
 }: CommonThirdPartyComboboxProps) {
-  const data = usePreloadedQuery(commonThirdPartiesQuery, queryRef);
+  const data = usePreloadedQuery<CommonThirdPartyComboboxQuery>(commonThirdPartiesQuery, queryRef);
 
   const items = excludeNames
     ? data.commonThirdParties.filter(tp => !excludeNames.has(tp.name.toLowerCase()))

@@ -113,6 +113,7 @@ export class CookieDetector implements Detector {
 
     this.cookieStoreHandler = (event: CookieChangeEvent) => {
       for (const cookie of event.changed) {
+        if (cookie.name === undefined) continue;
         if (this.knownNames.has(cookie.name)) continue;
 
         const maxAge = cookie.expires

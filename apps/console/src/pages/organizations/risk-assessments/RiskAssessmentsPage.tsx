@@ -95,7 +95,7 @@ export default function RiskAssessmentsPage({ queryRef }: RiskAssessmentsPagePro
   const { __ } = useTranslate();
   const organizationId = useOrganizationId();
 
-  const data = usePreloadedQuery(riskAssessmentsPageQuery, queryRef);
+  const data = usePreloadedQuery<RiskAssessmentsPageQuery>(riskAssessmentsPageQuery, queryRef);
   const { data: fragmentData, ...pagination } = usePaginationFragment<
     RiskAssessmentsPageRefetchQuery,
     RiskAssessmentsPageFragment$key

@@ -18,14 +18,19 @@ import { type LoaderFunction, type LoaderFunctionArgs, useLoaderData } from "rea
 import { type OperationType } from "relay-runtime";
 import { useCleanup } from "@probo/hooks";
 
+// Infer the concrete `queryRef` type from a naked type position. Relay 21's
+// first-party types model `PreloadedQuery#variables` as `VariablesOf<TQuery>`,
+// which prevents inferring `TQuery` through it, so we infer the whole queryRef.
 export function withQueryRef<
-  TQuery extends OperationType,
-  TEnvironmentProviderOptions = EnvironmentProviderOptions
+  TQueryRef extends PreloadedQuery<OperationType>
 >(
-  Component: ComponentType<{ queryRef: PreloadedQuery<TQuery, TEnvironmentProviderOptions> }>,
+  Component: ComponentType<{ queryRef: TQueryRef }>,
 ) {
   return () => {
-    const { queryRef, dispose } = useLoaderData();
+    const { queryRef, dispose } = useLoaderData() as {
+      queryRef: TQueryRef;
+      dispose: () => void;
+    };
 
     useCleanup(dispose, 1000);
 

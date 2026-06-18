@@ -109,7 +109,7 @@ export default function AuditsPage(props: Props) {
   const { toast } = useToast();
   const organizationId = useOrganizationId();
 
-  const data = usePreloadedQuery(auditsQuery, props.queryRef);
+  const data = usePreloadedQuery<AuditGraphListQuery>(auditsQuery, props.queryRef);
   // eslint-disable-next-line relay/generated-typescript-types
   const pagination = usePaginationFragment(
     paginatedAuditsFragment,

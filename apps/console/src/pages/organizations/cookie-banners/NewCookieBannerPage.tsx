@@ -12,7 +12,7 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { formatError, type GraphQLError } from "@probo/helpers";
+import { formatError } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
 import { useTranslate } from "@probo/i18n";
 import {
@@ -87,7 +87,7 @@ export default function NewCookieBannerPage() {
       onError(error) {
         toast({
           title: __("Error"),
-          description: formatError(__("Failed to create cookie banner"), error as GraphQLError),
+          description: formatError(__("Failed to create cookie banner"), error),
           variant: "error",
         });
       },

@@ -76,7 +76,7 @@ interface RiskObligationsPageProps {
 }
 
 export default function RiskObligationsPage(props: RiskObligationsPageProps) {
-  const data = usePreloadedQuery(riskObligationsPageQuery, props.queryRef);
+  const data = usePreloadedQuery<RiskObligationsPageQuery>(riskObligationsPageQuery, props.queryRef);
   if (data.node?.__typename !== "Risk") {
     throw new Error("Risk not found");
   }

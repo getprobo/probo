@@ -107,7 +107,7 @@ export default function RiskDetailLayout(props: RiskDetailLayoutProps) {
   }
 
   const { __ } = useTranslate();
-  const data = usePreloadedQuery(riskDetailLayoutQuery, props.queryRef);
+  const data = usePreloadedQuery<RiskDetailLayoutQuery>(riskDetailLayoutQuery, props.queryRef);
   if (data.node?.__typename !== "Risk") {
     throw new Error("Risk not found");
   }

@@ -137,7 +137,7 @@ type Props = {
 export default function MeasureDetailPage(props: Props) {
   const { measureId } = useParams<{ measureId: string }>();
   const organizationId = useOrganizationId();
-  const data = usePreloadedQuery(measureNodeQuery, props.queryRef);
+  const data = usePreloadedQuery<MeasureDetailPageNodeQuery>(measureNodeQuery, props.queryRef);
   const measure = data.node;
   const { __ } = useTranslate();
   const [deleteMeasure] = useDeleteMeasureMutation();

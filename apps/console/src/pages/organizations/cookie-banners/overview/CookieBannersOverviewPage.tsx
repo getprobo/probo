@@ -12,7 +12,7 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { formatError, type GraphQLError, sprintf } from "@probo/helpers";
+import { formatError, sprintf } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
 import { useTranslate } from "@probo/i18n";
 import {
@@ -84,7 +84,7 @@ export function CookieBannersOverviewPage({ queryRef }: CookieBannersOverviewPag
 
   usePageTitle(__("Cookie Banners"));
 
-  const { organization } = usePreloadedQuery(cookieBannersOverviewPageQuery, queryRef);
+  const { organization } = usePreloadedQuery<CookieBannersOverviewPageQuery>(cookieBannersOverviewPageQuery, queryRef);
   if (organization.__typename !== "Organization") {
     throw new Error("invalid type for node");
   }
@@ -125,7 +125,7 @@ export function CookieBannersOverviewPage({ queryRef }: CookieBannersOverviewPag
                 title: __("Error"),
                 description: formatError(
                   __("Failed to delete cookie banner"),
-                  error as GraphQLError,
+                  error,
                 ),
                 variant: "error",
               });

@@ -104,7 +104,7 @@ export function NDAPage(props: {
   const isMobile = width < 1100;
   const isDesktop = !isMobile;
 
-  const queryData = usePreloadedQuery(ndaPageQuery, props.queryRef);
+  const queryData = usePreloadedQuery<NDAPageQueryType>(ndaPageQuery, props.queryRef);
   const trustCenter = queryData.currentTrustCenter;
   const viewer = queryData.viewer;
 

@@ -12,7 +12,7 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { formatError, type GraphQLError } from "@probo/helpers";
+import { formatError } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import { Button, Card, Field, Input, Label, Option, Select, useToast } from "@probo/ui";
 import { Controller, useForm } from "react-hook-form";
@@ -100,7 +100,7 @@ export function BannerSettingsForm({ cookieBannerKey }: BannerSettingsFormProps)
         toast({ title: __("Success"), description: __("Banner settings updated"), variant: "success" });
       },
       onError(error) {
-        toast({ title: __("Error"), description: formatError(__("Failed to update"), error as GraphQLError), variant: "error" });
+        toast({ title: __("Error"), description: formatError(__("Failed to update"), error), variant: "error" });
       },
     });
   };

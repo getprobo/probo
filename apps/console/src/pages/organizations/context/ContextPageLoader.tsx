@@ -47,7 +47,7 @@ function ContextPageQueryLoader() {
 }
 
 function ContextPageInner({ queryRef }: { queryRef: PreloadedQuery<ContextPageLoaderQuery> }) {
-  const data = usePreloadedQuery(contextPageQuery, queryRef);
+  const data = usePreloadedQuery<ContextPageLoaderQuery>(contextPageQuery, queryRef);
 
   return <ContextPage organization={data.organization} />;
 }

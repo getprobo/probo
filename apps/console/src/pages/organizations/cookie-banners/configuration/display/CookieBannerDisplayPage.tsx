@@ -56,7 +56,7 @@ export default function CookieBannerDisplayPage({
   queryRef,
 }: CookieBannerDisplayPageProps) {
   const { __ } = useTranslate();
-  const data = usePreloadedQuery(cookieBannerDisplayPageQuery, queryRef);
+  const data = usePreloadedQuery<CookieBannerDisplayPageQuery>(cookieBannerDisplayPageQuery, queryRef);
 
   if (data.node.__typename !== "CookieBanner") {
     throw new Error("invalid type for node");

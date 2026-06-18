@@ -38,7 +38,7 @@ interface CookieBannerSettingsPageProps {
 export default function CookieBannerSettingsPage({
   queryRef,
 }: CookieBannerSettingsPageProps) {
-  const data = usePreloadedQuery(cookieBannerSettingsPageQuery, queryRef);
+  const data = usePreloadedQuery<CookieBannerSettingsPageQuery>(cookieBannerSettingsPageQuery, queryRef);
 
   if (data.node.__typename !== "CookieBanner") {
     throw new Error("invalid type for node");

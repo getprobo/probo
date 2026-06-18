@@ -12,7 +12,7 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { formatError, type GraphQLError } from "@probo/helpers";
+import { formatError } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import { Badge, Checkbox, useToast } from "@probo/ui";
 import * as Popover from "@radix-ui/react-popover";
@@ -83,7 +83,7 @@ export function EntryFlagSelect({ entryId, currentFlags }: Props) {
                 title: __("Error"),
                 description: formatError(
                   __("Failed to flag entry"),
-                  errors as GraphQLError[],
+                  errors,
                 ),
                 variant: "error",
               });
@@ -94,7 +94,7 @@ export function EntryFlagSelect({ entryId, currentFlags }: Props) {
               title: __("Error"),
               description: formatError(
                 __("Failed to flag entry"),
-                error as GraphQLError,
+                error,
               ),
               variant: "error",
             });

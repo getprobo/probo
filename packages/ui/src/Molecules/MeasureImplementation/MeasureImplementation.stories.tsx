@@ -25,22 +25,20 @@ export default {
 
 type Story = StoryObj<typeof MeasureImplementation>;
 
-type MeasureState = "IMPLEMENTED" | "IN_PROGRESS" | "NOT_APPLICABLE" | "NOT_STARTED" | "UNKNOWN" | "NOT_IMPLEMENTED";
-
 export const Default: Story = {
   args: {
     measures: [
       ...times(15, () => ({
-        state: "IMPLEMENTED" as MeasureState,
+        state: "IMPLEMENTED" as const,
       })),
       ...times(10, () => ({
-        state: "IN_PROGRESS" as MeasureState,
+        state: "IN_PROGRESS" as const,
       })),
       ...times(5, () => ({
-        state: "NOT_APPLICABLE" as MeasureState,
+        state: "NOT_APPLICABLE" as const,
       })),
       ...times(5, () => ({
-        state: "NOT_STARTED" as MeasureState,
+        state: "NOT_STARTED" as const,
       })),
     ],
   },

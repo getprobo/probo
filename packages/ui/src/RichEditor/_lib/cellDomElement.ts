@@ -14,5 +14,5 @@ export function cellDomElement(
   while (el && !(el instanceof HTMLTableCellElement)) {
     el = (el as HTMLElement).parentElement;
   }
-  return el as HTMLElement | null;
+  return el;
 }

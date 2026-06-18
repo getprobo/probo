@@ -12,7 +12,7 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { formatError, type GraphQLError } from "@probo/helpers";
+import { formatError } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
 import { useTranslate } from "@probo/i18n";
 import { Card, Spinner, useToast } from "@probo/ui";
@@ -180,7 +180,7 @@ function DocumentSignatureContent({
           title: __("Error"),
           description: formatError(
             __("Failed to sign document"),
-            error as GraphQLError,
+            error,
           ),
           variant: "error",
         });
@@ -203,7 +203,7 @@ function DocumentSignatureContent({
             title: __("Error"),
             description: formatError(
               __("Failed to load PDF"),
-              errors as GraphQLError[],
+              errors,
             ),
             variant: "error",
           });
@@ -220,7 +220,7 @@ function DocumentSignatureContent({
           title: __("Error"),
           description: formatError(
             __("Failed to load PDF"),
-            error as GraphQLError,
+            error,
           ),
           variant: "error",
         });

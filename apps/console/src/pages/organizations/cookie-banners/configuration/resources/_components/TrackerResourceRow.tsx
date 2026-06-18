@@ -13,7 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 import { EyeIcon, EyeSlashIcon } from "@phosphor-icons/react";
-import { formatError, type GraphQLError } from "@probo/helpers";
+import { formatError } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import {
   ActionDropdown,
@@ -176,7 +176,7 @@ export function TrackerResourceRow({ resourceKey, connectionId }: TrackerResourc
               resolve();
             },
             onError(error) {
-              toast({ title: __("Error"), description: formatError(__("Failed to delete resource"), error as GraphQLError), variant: "error" });
+              toast({ title: __("Error"), description: formatError(__("Failed to delete resource"), error), variant: "error" });
               resolve();
             },
           });
@@ -216,7 +216,7 @@ export function TrackerResourceRow({ resourceKey, connectionId }: TrackerResourc
         toast({ title: __("Success"), description: __("Resource moved"), variant: "success" });
       },
       onError(error) {
-        toast({ title: __("Error"), description: formatError(__("Failed to move resource"), error as GraphQLError), variant: "error" });
+        toast({ title: __("Error"), description: formatError(__("Failed to move resource"), error), variant: "error" });
       },
     });
   };
@@ -236,7 +236,7 @@ export function TrackerResourceRow({ resourceKey, connectionId }: TrackerResourc
         }
       },
       onError(error) {
-        toast({ title: __("Error"), description: formatError(__("Failed to update resource"), error as GraphQLError), variant: "error" });
+        toast({ title: __("Error"), description: formatError(__("Failed to update resource"), error), variant: "error" });
       },
     });
   };
@@ -259,7 +259,7 @@ export function TrackerResourceRow({ resourceKey, connectionId }: TrackerResourc
         setIsEditing(false);
       },
       onError(error) {
-        toast({ title: __("Error"), description: formatError(__("Failed to update resource"), error as GraphQLError), variant: "error" });
+        toast({ title: __("Error"), description: formatError(__("Failed to update resource"), error), variant: "error" });
       },
     });
   };

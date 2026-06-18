@@ -73,7 +73,7 @@ export default function ThirdPartiesPage(props: Props) {
   const organizationId = useOrganizationId();
   const navigate = useNavigate();
 
-  const data = usePreloadedQuery(thirdPartiesQuery, props.queryRef);
+  const data = usePreloadedQuery<ThirdPartyGraphListQuery>(thirdPartiesQuery, props.queryRef);
   // eslint-disable-next-line relay/generated-typescript-types
   const pagination = usePaginationFragment(
     paginatedThirdPartiesFragment,

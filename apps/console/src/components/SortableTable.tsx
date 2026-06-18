@@ -39,12 +39,15 @@ export type Order = {
 
 const defaultPageSize = 50;
 
-export const SortableContext = createContext({
+export const SortableContext = createContext<{
+  order: Order;
+  changeOrder: (order: Order) => void;
+}>({
   order: {
     direction: "DESC",
     field: "CREATED_AT",
   },
-  changeOrder: (() => {}) as (order: Order) => void,
+  changeOrder: () => {},
 });
 
 const defaultOrder = {

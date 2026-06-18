@@ -72,7 +72,7 @@ export function SCIMSettingsPage(props: {
   const connectorId = searchParams.get("connector_id");
   const mutationTriggeredRef = useRef(false);
 
-  const { organization } = usePreloadedQuery(scimSettingsPageQuery, queryRef);
+  const { organization } = usePreloadedQuery<SCIMSettingsPageQuery>(scimSettingsPageQuery, queryRef);
   if (organization.__typename !== "Organization") {
     throw new Error("invalid node type");
   }

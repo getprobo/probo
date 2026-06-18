@@ -30,7 +30,7 @@ type Props = {
 
 export function MainLayout(props: Props) {
   const { __ } = useTranslate();
-  const data = usePreloadedQuery(currentTrustGraphQuery, props.queryRef);
+  const data = usePreloadedQuery<TrustGraphCurrentQuery>(currentTrustGraphQuery, props.queryRef);
   const trustCenter = data.currentTrustCenter;
   const isAuthenticated = data.viewer != null;
 

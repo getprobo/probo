@@ -81,7 +81,7 @@ export function Th({
   );
 }
 
-const TrContext = createContext({} as { to?: string });
+const TrContext = createContext<{ to?: string }>({});
 
 export function Tr({
   to,

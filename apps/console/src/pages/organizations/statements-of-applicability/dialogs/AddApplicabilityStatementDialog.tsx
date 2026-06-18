@@ -376,7 +376,7 @@ function AddApplicabilityStatementDialogContent({
         applicabilityStatementId: applicability?.id ?? null,
         applicability: applicability?.applicability ?? null,
         justification: applicability?.justification ?? null,
-      } as ControlWithStatement;
+      };
     });
   }, [data.organization?.controls, applicabilityMap]);
 

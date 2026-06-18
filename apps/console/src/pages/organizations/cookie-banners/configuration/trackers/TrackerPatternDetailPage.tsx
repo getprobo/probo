@@ -55,7 +55,7 @@ export default function TrackerPatternDetailPage({
 }: TrackerPatternDetailPageProps) {
   const { __ } = useTranslate();
   const organizationId = useOrganizationId();
-  const data = usePreloadedQuery(trackerPatternDetailPageQuery, queryRef);
+  const data = usePreloadedQuery<TrackerPatternDetailPageQuery>(trackerPatternDetailPageQuery, queryRef);
 
   if (data.cookieBanner.__typename !== "CookieBanner") {
     throw new Error("invalid type for cookieBanner node");

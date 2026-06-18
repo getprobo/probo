@@ -1,5 +1,8 @@
 {
   "root": ".",
+  "featureFlags": {
+    "enforce_fragment_alias_where_ambiguous": { "kind": "disabled" }
+  },
   "sources": {
     "apps/console/src/pages/iam": "iam",
     "apps/console/src": "core",

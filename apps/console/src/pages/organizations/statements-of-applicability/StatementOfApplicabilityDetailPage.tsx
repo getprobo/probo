@@ -138,7 +138,7 @@ export default function StatementOfApplicabilityDetailPage(props: Props) {
     statementOfApplicabilityId: string;
   }>();
   const organizationId = useOrganizationId();
-  const data = usePreloadedQuery(statementOfApplicabilityDetailPageQuery, props.queryRef);
+  const data = usePreloadedQuery<StatementOfApplicabilityDetailPageQuery>(statementOfApplicabilityDetailPageQuery, props.queryRef);
   const statementOfApplicability = data.node;
   const { __ } = useTranslate();
   const navigate = useNavigate();
@@ -244,7 +244,7 @@ export default function StatementOfApplicabilityDetailPage(props: Props) {
           title: __("Error"),
           description: formatError(
             __("Failed to update Statement of Applicability"),
-            error as GraphQLError,
+            error,
           ),
           variant: "error",
         });
@@ -300,7 +300,7 @@ export default function StatementOfApplicabilityDetailPage(props: Props) {
           title: __("Error"),
           description: formatError(
             __("Failed to update approvers"),
-            error as GraphQLError,
+            error,
           ),
           variant: "error",
         });

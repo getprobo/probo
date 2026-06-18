@@ -92,7 +92,7 @@ export default function StatementsOfApplicabilityPage({
 
   usePageTitle(__("Statements of Applicability"));
 
-  const { organization } = usePreloadedQuery(statementsOfApplicabilityPageQuery, queryRef);
+  const { organization } = usePreloadedQuery<StatementsOfApplicabilityPageQuery>(statementsOfApplicabilityPageQuery, queryRef);
 
   if (organization.__typename !== "Organization") {
     throw new Error("Organization not found");

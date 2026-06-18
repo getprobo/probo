@@ -12,7 +12,7 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { formatError, type GraphQLError, sprintf } from "@probo/helpers";
+import { formatError, sprintf } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import {
   ActionDropdown,
@@ -337,7 +337,7 @@ export function AddAccessReviewSourceDialog({
             title: __("Error"),
             description: formatError(
               __("Failed to create access source"),
-              errors as GraphQLError[],
+              errors,
             ),
             variant: "error",
           });
@@ -356,7 +356,7 @@ export function AddAccessReviewSourceDialog({
           title: __("Error"),
           description: formatError(
             __("Failed to create access source"),
-            error as GraphQLError,
+            error,
           ),
           variant: "error",
         });

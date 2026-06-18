@@ -131,7 +131,7 @@ export const SlashCommandExtension = Extension.create<object, SlashCommandStorag
                   "data-empty": isEmpty
                     ? "true"
                     : "false",
-                } as Record<string, string>),
+                }),
               ]);
             } catch {
               deactivateSlashCommand(storage);

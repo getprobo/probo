@@ -31,7 +31,10 @@ export const reactConfigs: FlatConfig.ConfigArray = [
   {
     settings: {
       react: {
-        version: "detect",
+        // Pin an explicit version: eslint-plugin-react@7.37.5 predates ESLint 10
+        // and its "detect" path calls the removed context.getFilename(), which
+        // crashes under ESLint 10.
+        version: "19.2",
       },
     },
   },

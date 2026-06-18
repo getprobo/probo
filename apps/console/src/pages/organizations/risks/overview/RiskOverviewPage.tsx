@@ -37,7 +37,7 @@ interface RiskOverviewPageProps {
 }
 
 export default function RiskOverviewPage(props: RiskOverviewPageProps) {
-  const data = usePreloadedQuery(riskOverviewPageQuery, props.queryRef);
+  const data = usePreloadedQuery<RiskOverviewPageQuery>(riskOverviewPageQuery, props.queryRef);
   if (data.node?.__typename !== "Risk") {
     throw new Error("Risk not found");
   }

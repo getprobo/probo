@@ -69,7 +69,7 @@ export function DocumentVersionsDropdownMenu(props: {
   }
 
   const lastVersion = document.lastVersion?.edges[0].node;
-  const currentVersion = lastVersion ?? version as NonNullable<typeof lastVersion | typeof version>;
+  const currentVersion = lastVersion ?? version;
 
   return (
     <>
@@ -77,7 +77,7 @@ export function DocumentVersionsDropdownMenu(props: {
         <DocumentVersionsDropdownItem
           key={version.id}
           fragmentRef={version}
-          active={version.id === currentVersion.id}
+          active={version.id === currentVersion?.id}
           currentTab={currentTab}
         />
       ))}

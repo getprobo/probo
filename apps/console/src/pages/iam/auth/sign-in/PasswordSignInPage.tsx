@@ -12,7 +12,7 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { formatError, type GraphQLError } from "@probo/helpers";
+import { formatError } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import { Button, Field, IconChevronLeft, useToast } from "@probo/ui";
 import type { FormEventHandler } from "react";
@@ -71,7 +71,7 @@ export default function PasswordSignInPage() {
             title: __("Error"),
             description: formatError(
               __("Failed to login"),
-              error as GraphQLError,
+              error,
             ),
             variant: "error",
           });

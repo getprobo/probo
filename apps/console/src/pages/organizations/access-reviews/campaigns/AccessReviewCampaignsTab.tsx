@@ -12,7 +12,7 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { formatError, type GraphQLError, sprintf } from "@probo/helpers";
+import { formatError, sprintf } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import {
   ActionDropdown,
@@ -106,7 +106,7 @@ export default function AccessReviewCampaignsTab({ queryRef }: Props) {
   const confirm = useConfirm();
   const { toast } = useToast();
 
-  const { organization } = usePreloadedQuery(accessReviewCampaignsTabQuery, queryRef);
+  const { organization } = usePreloadedQuery<AccessReviewCampaignsTabQuery>(accessReviewCampaignsTabQuery, queryRef);
   if (organization.__typename !== "Organization") {
     throw new Error("Organization not found");
   }
@@ -143,7 +143,7 @@ export default function AccessReviewCampaignsTab({ queryRef }: Props) {
                 title: __("Error"),
                 description: formatError(
                   __("Failed to delete campaign"),
-                  errors as GraphQLError[],
+                  errors,
                 ),
                 variant: "error",
               });
@@ -160,7 +160,7 @@ export default function AccessReviewCampaignsTab({ queryRef }: Props) {
               title: __("Error"),
               description: formatError(
                 __("Failed to delete campaign"),
-                error as GraphQLError,
+                error,
               ),
               variant: "error",
             });

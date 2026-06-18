@@ -332,7 +332,7 @@ function LinkControlDialogContent({
         applicabilityStatementId: applicability?.id ?? null,
         applicability: applicability?.applicability ?? null,
         justification: applicability?.justification ?? null,
-      } as Control;
+      };
     });
   }, [data.organization?.controls, applicabilityMap]);
 

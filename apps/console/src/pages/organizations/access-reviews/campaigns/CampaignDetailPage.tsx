@@ -12,7 +12,7 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { formatDate, formatError, type GraphQLError, sprintf } from "@probo/helpers";
+import { formatDate, formatError, sprintf } from "@probo/helpers";
 import { useList } from "@probo/hooks";
 import { useTranslate } from "@probo/i18n";
 import {
@@ -199,7 +199,7 @@ export default function CampaignDetailPage({ queryRef }: Props) {
   const organizationId = useOrganizationId();
   const navigate = useNavigate();
   const environment = useRelayEnvironment();
-  const data = usePreloadedQuery(campaignDetailPageQuery, queryRef);
+  const data = usePreloadedQuery<CampaignDetailPageQuery>(campaignDetailPageQuery, queryRef);
 
   if (data.node.__typename !== "AccessReviewCampaign") {
     throw new Error("Campaign not found");
@@ -269,7 +269,7 @@ export default function CampaignDetailPage({ queryRef }: Props) {
             title: __("Error"),
             description: formatError(
               __("Failed to start campaign"),
-              errors as GraphQLError[],
+              errors,
             ),
             variant: "error",
           });
@@ -286,7 +286,7 @@ export default function CampaignDetailPage({ queryRef }: Props) {
           title: __("Error"),
           description: formatError(
             __("Failed to start campaign"),
-            error as GraphQLError,
+            error,
           ),
           variant: "error",
         });
@@ -315,7 +315,7 @@ export default function CampaignDetailPage({ queryRef }: Props) {
                   title: __("Error"),
                   description: formatError(
                     __("Failed to delete campaign"),
-                    errors as GraphQLError[],
+                    errors,
                   ),
                   variant: "error",
                 });
@@ -335,7 +335,7 @@ export default function CampaignDetailPage({ queryRef }: Props) {
                 title: __("Error"),
                 description: formatError(
                   __("Failed to delete campaign"),
-                  error as GraphQLError,
+                  error,
                 ),
                 variant: "error",
               });
@@ -368,7 +368,7 @@ export default function CampaignDetailPage({ queryRef }: Props) {
                   title: __("Error"),
                   description: formatError(
                     __("Failed to complete campaign"),
-                    errors as GraphQLError[],
+                    errors,
                   ),
                   variant: "error",
                 });
@@ -387,7 +387,7 @@ export default function CampaignDetailPage({ queryRef }: Props) {
                 title: __("Error"),
                 description: formatError(
                   __("Failed to complete campaign"),
-                  error as GraphQLError,
+                  error,
                 ),
                 variant: "error",
               });
@@ -524,7 +524,7 @@ function CampaignSourceCard({ source, isPendingActions }: { source: CampaignSour
           input: {
             decisions: selection.map(id => ({
               accessReviewEntryId: id,
-              decision: "APPROVED" as AccessReviewEntryDecision,
+              decision: "APPROVED",
             })),
           },
         },
@@ -534,7 +534,7 @@ function CampaignSourceCard({ source, isPendingActions }: { source: CampaignSour
               title: __("Error"),
               description: formatError(
                 __("Failed to record decisions"),
-                errors as GraphQLError[],
+                errors,
               ),
               variant: "error",
             });
@@ -552,7 +552,7 @@ function CampaignSourceCard({ source, isPendingActions }: { source: CampaignSour
             title: __("Error"),
             description: formatError(
               __("Failed to record decisions"),
-              error as GraphQLError,
+              error,
             ),
             variant: "error",
           });
@@ -877,7 +877,7 @@ function CampaignSourceCard({ source, isPendingActions }: { source: CampaignSour
                             title: __("Error"),
                             description: formatError(
                               __("Failed to record decisions"),
-                              errors as GraphQLError[],
+                              errors,
                             ),
                             variant: "error",
                           });
@@ -898,7 +898,7 @@ function CampaignSourceCard({ source, isPendingActions }: { source: CampaignSour
                           title: __("Error"),
                           description: formatError(
                             __("Failed to record decisions"),
-                            error as GraphQLError,
+                            error,
                           ),
                           variant: "error",
                         });

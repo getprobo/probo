@@ -94,7 +94,7 @@ interface RiskScenariosPageProps {
 export default function RiskScenariosPage(props: RiskScenariosPageProps) {
   const { __ } = useTranslate();
   const organizationId = useOrganizationId();
-  const data = usePreloadedQuery(riskScenariosPageQuery, props.queryRef);
+  const data = usePreloadedQuery<RiskScenariosPageQuery>(riskScenariosPageQuery, props.queryRef);
   if (data.node?.__typename !== "Risk") {
     throw new Error("Risk not found");
   }
