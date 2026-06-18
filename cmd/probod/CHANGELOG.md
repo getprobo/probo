@@ -4,6 +4,12 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.211.1] - 2026-06-18
+
+### Fixed
+
+- Missing OS exit code on error
+
 ## [0.211.0] - 2026-06-18
 
 ### Added
