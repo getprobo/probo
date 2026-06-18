@@ -44,12 +44,14 @@ func newCmdMarkFirstParty(f *cmdutil.Factory) *cobra.Command {
 		Long: "Record the terminal FIRST_PARTY verdict on selected common tracker " +
 			"patterns: the artifact has no third party (it is the scanned site's own, " +
 			"a generic library/log key, or an extension key embedding the site origin). " +
-			"Any vendor link is cleared, and the uncategorised org tracker patterns " +
-			"linked to them are remapped (org third party cleared, mapping re-armed) so " +
-			"the pipeline drops the stale vendor; because the verdict is terminal the " +
-			"mapping worker leaves them unattributed. User-categorised and excluded org " +
-			"patterns are left untouched. Selection mirrors 'reenrich'. To re-attribute " +
-			"a row later, use 'link' (which returns it to THIRD_PARTY).",
+			"Any vendor link is cleared and the now-stale description - which may name " +
+			"the wrong vendor - is blanked on both the catalog row and the uncategorised " +
+			"org tracker patterns linked to it. Those org patterns are remapped (org " +
+			"third party cleared, mapping re-armed) so the pipeline drops the stale " +
+			"vendor; because the verdict is terminal the mapping worker leaves them " +
+			"unattributed. User-categorised and excluded org patterns are left " +
+			"untouched. Selection mirrors 'reenrich'. To re-attribute a row later, use " +
+			"'link' (which returns it to THIRD_PARTY).",
 		Args: cobra.NoArgs,
 	}
 
@@ -109,6 +111,7 @@ func newCmdMarkFirstParty(f *cmdutil.Factory) *cobra.Command {
 		var (
 			marked   int64
 			remapped int64
+			cleared  int64
 		)
 
 		if err := pgClient.WithTx(
@@ -121,9 +124,18 @@ func newCmdMarkFirstParty(f *cmdutil.Factory) *cobra.Command {
 					return err
 				}
 
+				if _, err = ps.ClearDescriptionByIDs(ctx, tx, ids); err != nil {
+					return err
+				}
+
 				var tps coredata.TrackerPatterns
 
 				remapped, err = tps.RequestMappingForUncategorisedByCommonTrackerPatternIDs(ctx, tx, ids)
+				if err != nil {
+					return err
+				}
+
+				cleared, err = tps.ClearDescriptionForUncategorisedByCommonTrackerPatternIDs(ctx, tx, ids)
 				if err != nil {
 					return err
 				}
@@ -136,9 +148,10 @@ func newCmdMarkFirstParty(f *cmdutil.Factory) *cobra.Command {
 
 		_, _ = fmt.Fprintf(
 			out,
-			"Marked %d pattern(s) first-party, remapped %d uncategorised org tracker pattern(s).\n",
+			"Marked %d pattern(s) first-party, remapped %d uncategorised org tracker pattern(s), cleared %d stale org description(s).\n",
 			marked,
 			remapped,
+			cleared,
 		)
 
 		return nil

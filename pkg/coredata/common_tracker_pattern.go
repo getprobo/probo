@@ -1015,6 +1015,38 @@ WHERE
 	return result.RowsAffected(), nil
 }
 
+// ClearDescriptionByIDs blanks the researched description on the given
+// catalog rows without re-arming enrichment or touching the enrichment
+// payload. It backs the first-party verdict: a terminal non-third-party
+// row keeps no vendor link, so a description that named the (now-cleared)
+// vendor would be stale. The verdict is terminal, so rather than re-derive
+// a description - which would re-run the mapping agent and re-link a
+// vendor - the description simply returns to empty. Returns the number of
+// rows updated.
+func (ps *CommonTrackerPatterns) ClearDescriptionByIDs(
+	ctx context.Context,
+	tx pg.Tx,
+	ids []gid.GID,
+) (int64, error) {
+	q := `
+UPDATE common_tracker_patterns
+SET
+    description = '',
+    updated_at = NOW()
+WHERE
+    id = ANY(@ids)
+`
+
+	args := pgx.StrictNamedArgs{"ids": ids}
+
+	result, err := tx.Exec(ctx, q, args)
+	if err != nil {
+		return 0, fmt.Errorf("cannot clear common tracker pattern description: %w", err)
+	}
+
+	return result.RowsAffected(), nil
+}
+
 // RequestEnrichmentByIDs arms enrichment on the given common tracker
 // patterns by stamping enrichment_requested_at, which is the only column
 // the enrichment worker claims on. It resets enrichment_attempts to 0 so

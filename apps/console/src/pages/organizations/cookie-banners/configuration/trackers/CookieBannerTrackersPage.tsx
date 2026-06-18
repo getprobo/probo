@@ -244,6 +244,7 @@ export default function CookieBannerTrackersPage({
           <Option value="ALL">{__("All sources")}</Option>
           <Option value="SCRIPT">{__("Script")}</Option>
           <Option value="PRE_EXISTING">{__("Pre-existing")}</Option>
+          <Option value="HTTP">{__("HTTP")}</Option>
           <Option value="EXTENSION">{__("Extension")}</Option>
         </Select>
         <Select

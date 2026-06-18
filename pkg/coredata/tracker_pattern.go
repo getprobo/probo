@@ -1406,6 +1406,49 @@ WHERE
 	return result.RowsAffected(), nil
 }
 
+// ClearDescriptionForUncategorisedByCommonTrackerPatternIDs blanks the
+// description on the uncategorised org tracker patterns linked to the
+// given common tracker patterns. It pairs with the first-party verdict on
+// the catalog row: when the catalog description is cleared because its
+// vendor attribution was wrong, the descriptions fanned out to org
+// patterns named the same stale vendor and must be cleared too - the
+// mapping worker only ever copies a description into an empty org row, it
+// never clears one. Like the mapping re-arm it is a global catalog
+// operation, so it is intentionally not tenant-scoped, and it leaves
+// excluded and user-categorised patterns untouched. The cookie_categories
+// subquery is used only for filtering. Returns the number of org patterns
+// cleared.
+func (tps *TrackerPatterns) ClearDescriptionForUncategorisedByCommonTrackerPatternIDs(
+	ctx context.Context,
+	tx pg.Tx,
+	commonIDs []gid.GID,
+) (int64, error) {
+	q := `
+UPDATE tracker_patterns
+SET
+	description = '',
+	updated_at = NOW()
+WHERE
+	common_tracker_pattern_id = ANY(@common_ids)
+	AND excluded = false
+	AND cookie_category_id IN (
+		SELECT id FROM cookie_categories WHERE kind = @uncategorised_kind
+	)
+`
+
+	args := pgx.StrictNamedArgs{
+		"common_ids":         commonIDs,
+		"uncategorised_kind": CookieCategoryKindUncategorised,
+	}
+
+	result, err := tx.Exec(ctx, q, args)
+	if err != nil {
+		return 0, fmt.Errorf("cannot clear uncategorised tracker pattern descriptions: %w", err)
+	}
+
+	return result.RowsAffected(), nil
+}
+
 // RequestMappingForUnmappedByInitiatorDomains re-arms mapping on the
 // still-unmapped org tracker patterns whose detected trackers share one
 // of the given initiator domains, so the mapping worker re-resolves them

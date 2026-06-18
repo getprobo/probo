@@ -43,6 +43,7 @@ export function getTrackerSourceBadge(source: string, __: Translator): Badge {
     case "SCRIPT": return { label: __("Script"), variant: "info" };
     case "PRE_EXISTING": return { label: __("Pre-existing"), variant: "outline" };
     case "HTTP": return { label: __("HTTP"), variant: "neutral" };
+    case "EXTENSION": return { label: __("Extension"), variant: "warning" };
     default: return { label: source, variant: "neutral" };
   }
 }
