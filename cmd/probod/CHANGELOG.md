@@ -4,6 +4,22 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.211.0] - 2026-06-18
+
+### Added
+
+- Document delete confirmation dialog in the console
+
+### Changed
+
+- Error responses during a server panic are now always serialized as JSON
+- Enrichment tracking unified with outcome-based status; enrichment state, attempts, and run outcome now recorded per field
+
+### Fixed
+
+- Enrichment re-arm and migration backfill gaps corrected
+- Google Workspace access review source-name resolution no longer loops on 403 responses
+
 ## [0.210.0] - 2026-06-16
 
 ### Added
