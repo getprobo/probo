@@ -4,6 +4,21 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.213.0] - 2026-06-18
+
+### Added
+
+- Tracker-pattern catalog rows now carry a terminal attribution verdict (UNDETERMINED, THIRD_PARTY, FIRST_PARTY); FIRST_PARTY short-circuits the mapping pipeline so first-party and generic artifacts are never re-attributed
+
+### Changed
+
+- Document signing and approval emails are now batched per recipient by a debounced worker that sends one consolidated email and widening reminders, replacing the immediate per-document approval email and the manual "send signing notifications" action
+- Deterministic vendor adoption in tracker mapping is gated behind a confidence/trust bar; lower-confidence rows are reused as hints and re-confirmed by an independent agent, and attributions must cite concrete evidence
+
+### Fixed
+
+- Tracker-pattern attribution is kept consistent with the vendor link: a first-party reclassification clears the stale org vendor link, and FIRST_PARTY rows are excluded from the enrichment requeue
+
 ## [0.212.0] - 2026-06-18
 
 ### Added
