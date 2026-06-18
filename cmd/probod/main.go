@@ -44,5 +44,8 @@ func main() {
 			env,
 			err.Error(),
 		)
+		os.Exit(1)
 	}
+
+	os.Exit(0)
 }
