@@ -16,10 +16,10 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"time"
-	"errors"
 
 	"go.gearno.de/kit/unit"
 	"go.probo.inc/probo/pkg/probod"
