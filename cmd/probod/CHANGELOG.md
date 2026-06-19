@@ -4,6 +4,22 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.215.0] - 2026-06-19
+
+### Added
+
+- Tracker pattern category is now editable from the pattern detail page (matching the table-row behaviour)
+- Trackers page filter now offers the HTTP cookie source, and extension-sourced rows render a proper source badge
+
+### Changed
+
+- Local storage, IndexedDB, and cache-storage trackers without an expiry now display as "persistent" rather than "session"
+
+### Fixed
+
+- Fixed a deadlock between concurrent tracker-mapping workers processing sibling patterns on the same banner
+- An HTTP server-set cookie now outranks a pre-existing detection, re-arming mapping so the pattern is identified instead of being skipped
+
 ## [0.214.0] - 2026-06-19
 
 ### Added
