@@ -14,7 +14,7 @@ The project uses a `GNUmakefile` at the root. Builds run with `--jobs=$(nproc)` 
 | `make test-short`            | Short tests only                                                                                       |
 | `make test-bench`            | Run benchmarks                                                                                         |
 | `make test-e2e`              | Run console end-to-end tests (requires `bin/probod`)                                                   |
-| `make lint`                  | Run all linters: `vet` + `go-fmt` + `go-fix` + `go-lint` + `npm-lint`                                  |
+| `make lint`                  | Run all linters: `vet` + `go-fmt` + `go-fix` + `go-lint` + `lint-js`                                   |
 | `make fmt`                   | Format Go code (`go fmt ./...`)                                                                        |
 | `make clean`                 | Remove all build artifacts, `node_modules`, generated files, and coverage                              |
 | `make help`                  | List targets with `##` doc comments                                                                    |

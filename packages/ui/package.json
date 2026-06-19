@@ -6,7 +6,6 @@
   "sideEffects": false,
   "main": "src/index.ts",
   "scripts": {
-    "lint": "eslint . --concurrency 2",
     "dev": "storybook dev -p 6006 --no-open",
     "check": "tsc --noEmit -p tsconfig.app.json",
     "icons": "bun run src/Atoms/Icons/generator.ts"
@@ -48,7 +47,6 @@
   },
   "devDependencies": {
     "@chromatic-com/storybook": "^5.0.1",
-    "@probo/eslint-config": "1.0.0",
     "@rollup/pluginutils": "^5.1.4",
     "@storybook/addon-vitest": "^10.2.8",
     "@storybook/react": "^10.2.8",
@@ -60,7 +58,6 @@
     "@vitejs/plugin-react": "^6.0.2",
     "@vitest/browser": "4.1.8",
     "@vitest/coverage-v8": "4.1.8",
-    "eslint": "^10.5.0",
     "playwright": "^1.55.1",
     "react": "^19.2.7",
     "react-docgen": "^7.1.1",

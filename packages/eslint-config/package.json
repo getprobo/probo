@@ -19,9 +19,7 @@
     "#languageOptionsConfigs": "./src/languageOptionsConfigs.ts",
     "#stylisticConfigs": "./src/stylisticConfigs.ts"
   },
-  "scripts": {
-    "lint": "eslint src"
-  },
+  "scripts": {},
   "keywords": [],
   "author": "",
   "license": "ISC",

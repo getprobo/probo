@@ -107,15 +107,12 @@ lint: lint-go lint-js
 lint-go: vet go-fmt go-fix go-lint
 
 .PHONY: lint-js
-lint-js: npm-lint
+lint-js:
+	$(NPM) run lint
 
 .PHONY: vet
 vet: generate embed
 	$(GO_VET) ./...
-
-.PHONY: npm-lint
-npm-lint:
-	$(NPM) run lint
 
 .PHONY: go-fmt
 go-fmt:

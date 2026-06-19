@@ -47,7 +47,12 @@ export const importsConfigs: FlatConfig.ConfigArray = [
     settings: {
       "import-x/resolver-next": createTypeScriptImportResolver({
         alwaysTryTypes: true,
-        project: "tsconfig.json",
+        // Linting runs from the repo root, so resolve every workspace's
+        // tsconfig rather than a single cwd-relative one. The `#/*` path
+        // aliases live in the per-app `tsconfig.app.json`, so match all
+        // tsconfig variants, not just the references-only `tsconfig.json`.
+        project: ["apps/*/tsconfig*.json", "packages/*/tsconfig*.json"],
+        noWarnOnMultipleProjects: true,
       }),
     },
   },
