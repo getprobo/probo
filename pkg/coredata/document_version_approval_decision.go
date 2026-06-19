@@ -437,6 +437,13 @@ WITH next_group AS (
 				AND doc.deleted_at IS NULL
 				AND doc.archived_at IS NULL
 		)
+		AND EXISTS (
+			SELECT 1
+			FROM iam_membership_profiles p
+			WHERE p.id = document_version_approval_decisions.approver_id
+				AND p.state = @recipient_state::membership_state
+				AND (p.contract_end_date IS NULL OR p.contract_end_date >= @now::date)
+		)
 	GROUP BY
 		organization_id,
 		approver_id
@@ -479,6 +486,7 @@ ORDER BY
 
 	args := pgx.StrictNamedArgs{
 		"state":                     DocumentVersionApprovalDecisionStatePending,
+		"recipient_state":           ProfileStateActive,
 		"max_notifications":         documentNotificationMaxCount,
 		"now":                       now,
 		"debounce_before":           debounceBefore,
