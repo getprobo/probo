@@ -22,8 +22,24 @@ export const DURATION_UNITS: { value: string; label: string; singular: string; s
   { value: "years", label: "years", singular: "year", seconds: 31536000, snap: 21 * 24 *  3600 },
 ] as const;
 
-export function humanizeSeconds(seconds: number | null): string {
-  if (seconds === null || seconds <= 0) return "session";
+// Tracker types whose data persists until explicitly cleared. When such a
+// tracker has no max-age, its lifetime is "persistent" rather than "session"
+// (cookies and session storage are cleared when the session/tab ends).
+const PERSISTENT_TRACKER_TYPES = new Set([
+  "LOCAL_STORAGE",
+  "INDEXED_DB",
+  "CACHE_STORAGE",
+]);
+
+export function humanizeSeconds(
+  seconds: number | null,
+  trackerType?: string | null,
+): string {
+  if (seconds === null || seconds <= 0) {
+    return trackerType && PERSISTENT_TRACKER_TYPES.has(trackerType)
+      ? "persistent"
+      : "session";
+  }
 
   let remaining = seconds;
   const parts: string[] = [];

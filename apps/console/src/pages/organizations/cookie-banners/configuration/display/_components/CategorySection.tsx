@@ -795,7 +795,7 @@ export function CategorySection({ categoryKey, connectionId }: CategorySectionPr
                       })()}
                     </Td>
                     <Td className="text-sm text-muted-foreground">
-                      {humanizeSeconds(pattern.maxAgeSeconds ?? null)}
+                      {humanizeSeconds(pattern.maxAgeSeconds ?? null, pattern.trackerType)}
                     </Td>
                     <Td>
                       <div className="flex items-center gap-1">

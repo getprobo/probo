@@ -28,7 +28,6 @@ import {
 } from "@probo/ui";
 import { useState } from "react";
 import { graphql, useFragment, useMutation } from "react-relay";
-import { ConnectionHandler } from "relay-runtime";
 
 import type { TrackerPatternRowDeleteMutation } from "#/__generated__/core/TrackerPatternRowDeleteMutation.graphql";
 import type { TrackerPatternRowFragment$key } from "#/__generated__/core/TrackerPatternRowFragment.graphql";
@@ -94,6 +93,8 @@ const movePatternMutation = graphql`
         id
         cookieCategory {
           id
+          name
+          kind
         }
       }
       cookieBanner {
@@ -213,17 +214,6 @@ export function TrackerPatternRow({ patternKey, connectionId }: TrackerPatternRo
           trackerPatternId: pattern.id,
           targetCookieCategoryId: targetCategoryId,
         },
-      },
-      updater(store) {
-        const payload = store.getRootField("moveTrackerPatternToCategory");
-        if (!payload?.getLinkedRecord("trackerPattern")) {
-          return;
-        }
-
-        const conn = store.get(connectionId);
-        if (conn) {
-          ConnectionHandler.deleteNode(conn, pattern.id);
-        }
       },
       onCompleted(_, errors) {
         if (errors?.length) {
@@ -392,7 +382,7 @@ export function TrackerPatternRow({ patternKey, connectionId }: TrackerPatternRo
         </div>
       </Td>
       <Td>
-        <span className="pl-2">{humanizeSeconds(pattern.maxAgeSeconds ?? null)}</span>
+        <span className="pl-2">{humanizeSeconds(pattern.maxAgeSeconds ?? null, pattern.trackerType)}</span>
       </Td>
       <Td>
         {pattern.lastMatchedAt

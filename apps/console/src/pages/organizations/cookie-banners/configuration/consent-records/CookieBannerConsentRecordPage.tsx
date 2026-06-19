@@ -49,6 +49,7 @@ export const cookieBannerConsentRecordPageQuery = graphql`
             kind
             cookies {
               name
+              trackerType
               maxAgeSeconds
               description
             }
@@ -235,7 +236,7 @@ export default function CookieBannerConsentRecordPage({
                                     {cookie.name}
                                   </td>
                                   <td className="py-1 pr-4 text-txt-secondary">
-                                    {humanizeSeconds(cookie.maxAgeSeconds ?? null)}
+                                    {humanizeSeconds(cookie.maxAgeSeconds ?? null, cookie.trackerType)}
                                   </td>
                                   <td className="py-1 text-txt-secondary">
                                     {cookie.description}

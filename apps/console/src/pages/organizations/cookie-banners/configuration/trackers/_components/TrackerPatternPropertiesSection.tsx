@@ -161,7 +161,7 @@ export function TrackerPatternPropertiesSection({
       </PropertyRow>
       <PropertyRow label={__("Max Age")}>
         <span className="text-sm">
-          {humanizeSeconds(pattern.maxAgeSeconds ?? null)}
+          {humanizeSeconds(pattern.maxAgeSeconds ?? null, pattern.trackerType)}
         </span>
       </PropertyRow>
       {pattern.description && (

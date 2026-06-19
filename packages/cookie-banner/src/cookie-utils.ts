@@ -13,6 +13,16 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 import { interpolate } from "./i18n";
+import type { TrackerType } from "./types";
+
+// Tracker types whose data persists until explicitly cleared. When such a
+// tracker has no max-age, its lifetime is "persistent" rather than "session"
+// (cookies and session storage are cleared when the session/tab ends).
+const PERSISTENT_TRACKER_TYPES: ReadonlySet<TrackerType> = new Set([
+  "LOCAL_STORAGE",
+  "INDEXED_DB",
+  "CACHE_STORAGE",
+]);
 
 interface DurationTexts {
   [key: string]: string;
@@ -35,6 +45,7 @@ const durationTextsByLanguage: Record<string, DurationTexts> = {
     duration_second_one: "{{count}} second",
     duration_second_other: "{{count}} seconds",
     duration_session: "session",
+    duration_persistent: "persistent",
   },
   fr: {
     duration_year_one: "{{count}} an",
@@ -52,6 +63,7 @@ const durationTextsByLanguage: Record<string, DurationTexts> = {
     duration_second_one: "{{count}} seconde",
     duration_second_other: "{{count}} secondes",
     duration_session: "session",
+    duration_persistent: "persistant",
   },
   de: {
     duration_year_one: "{{count}} Jahr",
@@ -69,6 +81,7 @@ const durationTextsByLanguage: Record<string, DurationTexts> = {
     duration_second_one: "{{count}} Sekunde",
     duration_second_other: "{{count}} Sekunden",
     duration_session: "Sitzung",
+    duration_persistent: "dauerhaft",
   },
   es: {
     duration_year_one: "{{count}} año",
@@ -86,6 +99,7 @@ const durationTextsByLanguage: Record<string, DurationTexts> = {
     duration_second_one: "{{count}} segundo",
     duration_second_other: "{{count}} segundos",
     duration_session: "sesión",
+    duration_persistent: "persistente",
   },
 };
 
@@ -107,9 +121,17 @@ const DURATION_UNITS: [number, string, number][] = [
   [1, "duration_second", 0],
 ];
 
-export function humanizeDuration(seconds: number, lang?: string): string {
+export function humanizeDuration(
+  seconds: number,
+  lang?: string,
+  trackerType?: TrackerType,
+): string {
   const texts = getDurationTexts(lang);
-  if (seconds <= 0) return texts.duration_session;
+  if (seconds <= 0) {
+    return trackerType && PERSISTENT_TRACKER_TYPES.has(trackerType)
+      ? texts.duration_persistent
+      : texts.duration_session;
+  }
 
   let remaining = seconds;
   const parts: string[] = [];
