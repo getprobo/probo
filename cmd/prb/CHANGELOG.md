@@ -4,6 +4,12 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.196.0] - 2026-06-19
+
+### Added
+
+- `prb login` now requests all v1 API scopes so device tokens work under OAuth2 scope enforcement
+
 ## [0.195.0] - 2026-06-16
 
 ### Changed
