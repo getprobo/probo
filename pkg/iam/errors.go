@@ -17,6 +17,7 @@ package iam
 import (
 	"fmt"
 
+	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/mail"
 )
@@ -205,18 +206,17 @@ func (e ErrInsufficientPermissions) Error() string {
 
 type ErrInsufficientOAuth2Scope struct {
 	IdentityID gid.GID
-	Action     Action
+	Scopes     []coredata.OAuth2Scope
 }
 
-func NewInsufficientOAuth2ScopeError(identityID gid.GID, action Action) error {
-	return &ErrInsufficientOAuth2Scope{IdentityID: identityID, Action: action}
+func NewInsufficientOAuth2ScopeError(identityID gid.GID, scopes ...coredata.OAuth2Scope) error {
+	return &ErrInsufficientOAuth2Scope{IdentityID: identityID, Scopes: scopes}
 }
 
 func (e ErrInsufficientOAuth2Scope) Error() string {
 	return fmt.Sprintf(
-		"identity %q does not have an OAuth2 scope granting action %s",
+		"identity %q does not have an OAuth2 scope granting the requested action",
 		e.IdentityID,
-		e.Action,
 	)
 }
 

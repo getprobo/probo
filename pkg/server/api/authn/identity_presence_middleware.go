@@ -20,16 +20,25 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/vektah/gqlparser/v2/gqlerror"
 	"go.gearno.de/kit/httpserver"
+	"go.probo.inc/probo/pkg/baseurl"
+	"go.probo.inc/probo/pkg/bearertoken"
 	"go.probo.inc/probo/pkg/server/gqlutils"
 )
 
-func NewIdentityPresenceMiddleware() func(next http.Handler) http.Handler {
+func NewIdentityPresenceMiddleware(baseURL *baseurl.BaseURL) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(
 			func(w http.ResponseWriter, r *http.Request) {
-				identity := IdentityFromContext(r.Context())
+				ctx := r.Context()
+				identity := IdentityFromContext(ctx)
 
 				if identity == nil {
+					if bearertoken.IsAttempt(r.Header.Get("Authorization")) {
+						bearertoken.SetBearerInvalidToken(w, baseURL)
+					} else {
+						bearertoken.SetBearerUnauthenticated(w, baseURL)
+					}
+
 					httpserver.RenderJSON(
 						w,
 						http.StatusUnauthorized,

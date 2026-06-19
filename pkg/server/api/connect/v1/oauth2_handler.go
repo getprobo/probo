@@ -77,7 +77,7 @@ func (h *OAuth2Handler) BearerTokenMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		tokenValue, err := bearertoken.Parse(r.Header.Get("Authorization"))
 		if err != nil {
-			w.Header().Set("WWW-Authenticate", `Bearer error="invalid_token"`)
+			bearertoken.SetBearerInvalidToken(w, h.baseURL)
 			http.Error(w, "unauthorized", http.StatusUnauthorized)
 
 			return
@@ -85,7 +85,7 @@ func (h *OAuth2Handler) BearerTokenMiddleware(next http.Handler) http.Handler {
 
 		accessToken, err := h.iam.OAuth2ServerService.LoadAccessToken(r.Context(), tokenValue)
 		if err != nil {
-			w.Header().Set("WWW-Authenticate", `Bearer error="invalid_token"`)
+			bearertoken.SetBearerInvalidToken(w, h.baseURL)
 			http.Error(w, "unauthorized", http.StatusUnauthorized)
 
 			return
@@ -402,7 +402,7 @@ func (h *OAuth2Handler) RegisterHandler(w http.ResponseWriter, r *http.Request) 
 func (h *OAuth2Handler) UserInfoHandler(w http.ResponseWriter, r *http.Request) {
 	accessToken, ok := oauth2.AccessTokenFromContext(r.Context())
 	if !ok {
-		w.Header().Set("WWW-Authenticate", `Bearer error="invalid_token"`)
+		bearertoken.SetBearerInvalidToken(w, h.baseURL)
 		http.Error(w, "unauthorized", http.StatusUnauthorized)
 
 		return

@@ -221,6 +221,7 @@ func NewServer(cfg Config) (*Server, error) {
 			cfg.IAM,
 			cfg.Cookie,
 			cfg.TokenSecret,
+			cfg.BaseURL,
 		),
 		mcpHandler: mcp_v1.NewMux(
 			cfg.Logger.Named("mcp.v1"),

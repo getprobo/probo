@@ -26,6 +26,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/securecookie"
 )
 
@@ -79,6 +80,7 @@ func TestHandleGetStaticFile(t *testing.T) {
 		nil,
 		securecookie.Config{},
 		"test-secret",
+		baseurl.MustParse("https://example.com"),
 	)
 
 	rec := httptest.NewRecorder()
@@ -118,6 +120,7 @@ func TestHandleGetFile_UnauthenticatedReturns401(t *testing.T) {
 		nil, // iamSvc — not reached when no token/cookie present
 		securecookie.Config{},
 		"test-secret",
+		baseurl.MustParse("https://example.com"),
 	)
 
 	rec := httptest.NewRecorder()

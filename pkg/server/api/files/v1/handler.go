@@ -22,6 +22,8 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/baseurl"
+	"go.probo.inc/probo/pkg/bearertoken"
 	"go.probo.inc/probo/pkg/brand"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/filemanager"
@@ -41,6 +43,7 @@ type Handler struct {
 	probo   *probo.Service
 	iamSvc  *iam.Service
 	assets  *brand.Assets
+	baseURL *baseurl.BaseURL
 }
 
 func NewMux(
@@ -50,6 +53,7 @@ func NewMux(
 	iamSvc *iam.Service,
 	cookieConfig securecookie.Config,
 	tokenSecret string,
+	baseURL *baseurl.BaseURL,
 ) *chi.Mux {
 	h := &Handler{
 		logger:  logger,
@@ -57,6 +61,7 @@ func NewMux(
 		probo:   proboSvc,
 		iamSvc:  iamSvc,
 		assets:  brand.NewAssets(),
+		baseURL: baseURL,
 	}
 
 	r := chi.NewRouter()
@@ -68,7 +73,7 @@ func NewMux(
 		r.Use(authn.NewSessionMiddleware(iamSvc, cookieConfig))
 		r.Use(authn.NewAPIKeyMiddleware(iamSvc, tokenSecret))
 		r.Use(authn.NewOAuth2AccessTokenMiddleware(iamSvc))
-		r.Use(authn.NewIdentityPresenceMiddleware())
+		r.Use(authn.NewIdentityPresenceMiddleware(baseURL))
 		r.Get("/{fileID}", h.handleGetFile)
 	})
 
@@ -157,8 +162,10 @@ func (h *Handler) handleGetFile(w http.ResponseWriter, r *http.Request) {
 
 	scope, err := h.iamSvc.Authorizer.Authorize(ctx, params)
 	if err != nil {
-		if _, ok := errors.AsType[*iam.ErrInsufficientOAuth2Scope](err); ok {
+		if scopeErr, ok := errors.AsType[*iam.ErrInsufficientOAuth2Scope](err); ok {
+			bearertoken.SetBearerInsufficientScope(w, h.baseURL, scopeErr.Scopes...)
 			jsonx.RenderForbidden(w)
+
 			return
 		}
 

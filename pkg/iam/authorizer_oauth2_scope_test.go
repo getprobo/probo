@@ -60,7 +60,38 @@ func TestAuthorizer_checkOAuth2Scope(t *testing.T) {
 		scopeErr, ok := errors.AsType[*ErrInsufficientOAuth2Scope](err)
 		require.True(t, ok)
 		assert.Equal(t, principal, scopeErr.IdentityID)
-		assert.Equal(t, action, scopeErr.Action)
+		assert.Empty(t, scopeErr.Scopes)
+	})
+
+	t.Run("reports granting scopes when token lacks authorization", func(t *testing.T) {
+		t.Parallel()
+
+		const (
+			scopeV1OrgWrite = coredata.OAuth2Scope("v1:org")
+			updateAction    = Action("core:organization:update")
+		)
+
+		scopeSet := oauth2scope.NewRegistry().Register(
+			map[coredata.OAuth2Scope][]string{
+				scopeV1OrgRead:  {action},
+				scopeV1OrgWrite: {updateAction},
+			},
+		)
+
+		a := NewAuthorizer(nil, nil, scopeSet)
+
+		ctx := oauth2.ContextWithAccessToken(
+			context.Background(),
+			&coredata.OAuth2AccessToken{Scopes: coredata.OAuth2Scopes{scopeV1OrgRead}},
+		)
+
+		err := a.checkOAuth2Scope(ctx, principal, updateAction)
+		require.Error(t, err)
+
+		scopeErr, ok := errors.AsType[*ErrInsufficientOAuth2Scope](err)
+		require.True(t, ok)
+		assert.Equal(t, principal, scopeErr.IdentityID)
+		assert.Equal(t, []coredata.OAuth2Scope{scopeV1OrgWrite}, scopeErr.Scopes)
 	})
 
 	t.Run("allows when registered scopes authorize the action", func(t *testing.T) {

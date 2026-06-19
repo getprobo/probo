@@ -81,6 +81,30 @@ func TestRegistry_ValidateScopes(t *testing.T) {
 	assert.EqualError(t, err, "invalid scope: v1:unknown:read")
 }
 
+func TestRegistry_ScopesForAction(t *testing.T) {
+	t.Parallel()
+
+	const (
+		scopeV1OrgRead  = coredata.OAuth2Scope("v1:org:read")
+		scopeV1OrgWrite = coredata.OAuth2Scope("v1:org")
+	)
+
+	reg := oauth2scope.NewRegistry().Register(
+		map[coredata.OAuth2Scope][]string{
+			scopeV1OrgRead:  {"core:organization:get"},
+			scopeV1OrgWrite: {"core:organization:get", "core:organization:update"},
+		},
+	)
+
+	assert.Equal(
+		t,
+		[]coredata.OAuth2Scope{scopeV1OrgWrite, scopeV1OrgRead},
+		reg.ScopesForAction("core:organization:get"),
+	)
+	assert.Equal(t, []coredata.OAuth2Scope{scopeV1OrgWrite}, reg.ScopesForAction("core:organization:update"))
+	assert.Nil(t, reg.ScopesForAction("core:organization:delete"))
+}
+
 func TestRegistry_RegisteredScopes(t *testing.T) {
 	t.Parallel()
 

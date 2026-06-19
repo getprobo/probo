@@ -118,7 +118,12 @@ func (a *Authorizer) checkOAuth2Scope(
 	}
 
 	if a.scopeRegistry == nil || !a.scopeRegistry.Allows(accessToken.Scopes, action) {
-		return NewInsufficientOAuth2ScopeError(principal, action)
+		var scopes []coredata.OAuth2Scope
+		if a.scopeRegistry != nil {
+			scopes = a.scopeRegistry.ScopesForAction(action)
+		}
+
+		return NewInsufficientOAuth2ScopeError(principal, scopes...)
 	}
 
 	return nil

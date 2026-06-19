@@ -72,6 +72,13 @@ func (r *Registry) Allows(tokenScopes coredata.OAuth2Scopes, action string) bool
 	return slices.ContainsFunc(grantingScopes, tokenScopes.Contains)
 }
 
+func (r *Registry) ScopesForAction(action string) []coredata.OAuth2Scope {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	return sortedScopes(r.invertedIndex[action])
+}
+
 func (r *Registry) ValidateScopes(scopes coredata.OAuth2Scopes) error {
 	r.mu.RLock()
 	defer r.mu.RUnlock()

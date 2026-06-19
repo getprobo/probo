@@ -76,11 +76,16 @@ func NewMux(
 	sessionMiddleware := authn.NewSessionMiddleware(svc, cookieConfig)
 	apiKeyMiddleware := authn.NewAPIKeyMiddleware(svc, tokenSecret)
 	oauth2Middleware := authn.NewOAuth2AccessTokenMiddleware(svc)
+	identityPresenceMiddleware := authn.NewIdentityPresenceMiddleware(baseURL)
 	graphqlHandler := NewGraphQLHandler(svc, logger, fileManagerSvc, baseURL, cookieConfig)
 	samlHandler := NewSAMLHandler(svc, cookieConfig, baseURL, logger)
 	scimHandler := NewSCIMHandler(svc, logger.Named("scim"))
 
-	router := r.With(sessionMiddleware, apiKeyMiddleware, oauth2Middleware)
+	router := r.With(
+		sessionMiddleware,
+		apiKeyMiddleware,
+		oauth2Middleware,
+	)
 
 	oidcHandler := NewOIDCHandler(svc, cookieConfig, logger, allowedRedirectHost, isTrustCenterDomain)
 
@@ -115,7 +120,7 @@ func NewMux(
 	// Session-authenticated endpoints.
 	router.Get("/oauth2/authorize", oauth2Handler.AuthorizeHandler)
 
-	requireIdentity := router.With(authn.NewIdentityPresenceMiddleware())
+	requireIdentity := router.With(identityPresenceMiddleware)
 	requireIdentity.Post("/oauth2/register", oauth2Handler.RegisterHandler)
 
 	return r

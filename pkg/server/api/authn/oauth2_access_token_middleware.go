@@ -36,15 +36,19 @@ func NewOAuth2AccessTokenMiddleware(svc *iam.Service) func(next http.Handler) ht
 					return
 				}
 
-				tokenValue, err := bearertoken.Parse(r.Header.Get("Authorization"))
+				authorization := r.Header.Get("Authorization")
+
+				tokenValue, err := bearertoken.Parse(authorization)
 				if err != nil {
 					next.ServeHTTP(w, r)
+
 					return
 				}
 
 				accessToken, err := svc.OAuth2ServerService.LoadAccessToken(ctx, tokenValue)
 				if err != nil {
 					next.ServeHTTP(w, r)
+
 					return
 				}
 

@@ -86,7 +86,7 @@ func NewMux(
 	r := chi.NewMux()
 	r.Use(authn.NewAPIKeyMiddleware(iamSvc, tokenSecret))
 	r.Use(authn.NewOAuth2AccessTokenMiddleware(iamSvc))
-	r.Use(authn.NewIdentityPresenceMiddleware())
+	r.Use(authn.NewIdentityPresenceMiddleware(baseURL))
 	r.Handle("/", protectedHandler)
 
 	logger.Info("MCP server initialized successfully")
