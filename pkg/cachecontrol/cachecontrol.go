@@ -137,6 +137,11 @@ func ParseRequest(header string) (*RequestDirective, error) {
 
 			dir.maxAge = &seconds
 		case MaxStale:
+			if token.Value == "" {
+				dir.maxStaleUnbounded = true
+				break
+			}
+
 			seconds, err := parseDeltaSeconds(token.Value)
 			if err != nil {
 				return nil, fmt.Errorf("cannot parse max-stale: %w", err)
@@ -292,6 +297,10 @@ func parseDirectives(header string, parse func(string) (*TokenPair, error)) ([]*
 		tokens = append(tokens, token)
 	}
 
+	if err := scanner.Err(); err != nil {
+		return nil, fmt.Errorf("cannot scan cache-control directives: %w", err)
+	}
+
 	return tokens, nil
 }
 
@@ -370,6 +379,7 @@ func scanCommaSeparatedWords(data []byte, atEOF bool) (advance int, token []byte
 
 	for width := 0; start < len(data); start += width {
 		var r rune
+
 		r, width = utf8.DecodeRune(data[start:])
 		if !isSpace(r) {
 			break
@@ -377,10 +387,12 @@ func scanCommaSeparatedWords(data []byte, atEOF bool) (advance int, token []byte
 	}
 
 	var ws int
+
 	inQuotes := false
 
 	for width, i := 0, start; i < len(data); i += width {
 		var r rune
+
 		r, width = utf8.DecodeRune(data[i:])
 
 		switch {

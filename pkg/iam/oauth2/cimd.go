@@ -17,6 +17,7 @@ package oauth2
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -196,12 +197,8 @@ func validateClientMetadataDocument(clientIDURL string, doc *ClientMetadataDocum
 	}
 
 	for _, redirectURI := range doc.RedirectURIs {
-		parsed, err := url.Parse(redirectURI)
-		if err != nil || parsed.Scheme == "" || parsed.Host == "" {
-			return NewError(
-				ErrInvalidClient,
-				WithDescription("client metadata document contains invalid redirect_uri"),
-			)
+		if err := validateCIMDRedirectURI(redirectURI); err != nil {
+			return err
 		}
 	}
 
@@ -217,6 +214,41 @@ func validateClientMetadataDocument(clientIDURL string, doc *ClientMetadataDocum
 		return NewError(
 			ErrInvalidClient,
 			WithDescription("unsupported token_endpoint_auth_method in client metadata document"),
+		)
+	}
+
+	return nil
+}
+
+func validateCIMDRedirectURI(redirectURI string) error {
+	parsed, err := url.Parse(redirectURI)
+	if err != nil || parsed.Scheme == "" || parsed.Host == "" {
+		return NewError(
+			ErrInvalidClient,
+			WithDescription("client metadata document contains invalid redirect_uri"),
+		)
+	}
+
+	if parsed.User != nil || parsed.Fragment != "" {
+		return NewError(
+			ErrInvalidClient,
+			WithDescription("client metadata document contains invalid redirect_uri"),
+		)
+	}
+
+	switch parsed.Scheme {
+	case "https":
+	case "http":
+		if !net.IsLoopback(parsed.Hostname()) {
+			return NewError(
+				ErrInvalidClient,
+				WithDescription("client metadata document contains invalid redirect_uri"),
+			)
+		}
+	default:
+		return NewError(
+			ErrInvalidClient,
+			WithDescription("client metadata document contains invalid redirect_uri"),
 		)
 	}
 
@@ -280,8 +312,14 @@ func (f *cimdFetcher) loadCache(clientIDURL string) (*ClientMetadataDocument, bo
 }
 
 func (f *cimdFetcher) storeCache(clientIDURL string, doc *ClientMetadataDocument, cacheControl string) {
+	dir, err := cachecontrol.ParseResponse(cacheControl)
+	if err == nil && dir.NoStore() {
+		return
+	}
+
 	ttl := cimdDefaultCacheTTL
-	if dir, err := cachecontrol.ParseResponse(cacheControl); err == nil {
+
+	if err == nil {
 		if maxAge, ok := dir.MaxAgeDuration(); ok {
 			ttl = min(ttl, maxAge)
 		}
@@ -301,7 +339,29 @@ func (s *Service) ResolveClient(
 	clientIDRaw string,
 	redirectURI string,
 ) (*coredata.OAuth2Client, error) {
+	return s.resolveClient(ctx, nil, clientIDRaw, redirectURI)
+}
+
+func (s *Service) resolveClient(
+	ctx context.Context,
+	tx pg.Tx,
+	clientIDRaw string,
+	redirectURI string,
+) (*coredata.OAuth2Client, error) {
 	if clientID, err := gid.ParseGID(clientIDRaw); err == nil {
+		if tx != nil {
+			client := coredata.OAuth2Client{}
+			if err := client.LoadByID(ctx, tx, coredata.NewNoScope(), clientID); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return nil, NewError(ErrInvalidClient, WithDescription("client not found"))
+				}
+
+				return nil, fmt.Errorf("cannot load oauth2 client: %w", err)
+			}
+
+			return &client, nil
+		}
+
 		return s.GetClientByID(ctx, clientID)
 	}
 
@@ -325,7 +385,7 @@ func (s *Service) ResolveClient(
 		return nil, ErrInvalidRedirectURI
 	}
 
-	client, err := s.upsertCIMDClient(ctx, clientIDRaw, doc)
+	client, err := s.upsertCIMDClient(ctx, tx, clientIDRaw, doc)
 	if err != nil {
 		return nil, err
 	}
@@ -335,6 +395,7 @@ func (s *Service) ResolveClient(
 
 func (s *Service) upsertCIMDClient(
 	ctx context.Context,
+	tx pg.Tx,
 	externalClientID string,
 	doc *ClientMetadataDocument,
 ) (*coredata.OAuth2Client, error) {
@@ -358,6 +419,7 @@ func (s *Service) upsertCIMDClient(
 	)
 
 	now := time.Now()
+
 	candidate, err := coredata.NewCIMDClient(
 		externalClientID,
 		doc.ClientName,
@@ -373,16 +435,28 @@ func (s *Service) upsertCIMDClient(
 
 	var client coredata.OAuth2Client
 
+	upsert := func(ctx context.Context, conn pg.Tx) error {
+		client = *candidate
+
+		if err := client.UpsertCIMD(ctx, conn); err != nil {
+			return fmt.Errorf("cannot upsert cimd oauth2 client: %w", err)
+		}
+
+		return nil
+	}
+
+	if tx != nil {
+		if err := upsert(ctx, tx); err != nil {
+			return nil, err
+		}
+
+		return &client, nil
+	}
+
 	err = s.pg.WithTx(
 		ctx,
-		func(ctx context.Context, tx pg.Tx) error {
-			client = *candidate
-
-			if err := client.UpsertCIMD(ctx, tx); err != nil {
-				return fmt.Errorf("cannot upsert cimd oauth2 client: %w", err)
-			}
-
-			return nil
+		func(ctx context.Context, conn pg.Tx) error {
+			return upsert(ctx, conn)
 		},
 	)
 	if err != nil {

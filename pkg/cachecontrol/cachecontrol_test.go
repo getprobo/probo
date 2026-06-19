@@ -172,6 +172,37 @@ func TestParseRequest(t *testing.T) {
 			require.Error(t, err)
 		},
 	)
+
+	t.Run(
+		"max-stale without value",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dir, err := cachecontrol.ParseRequest("max-stale")
+			require.NoError(t, err)
+			assert.True(t, dir.MaxStaleUnbounded())
+
+			_, bounded, ok := dir.MaxStale()
+			require.True(t, ok)
+			assert.False(t, bounded)
+		},
+	)
+
+	t.Run(
+		"max-stale with value",
+		func(t *testing.T) {
+			t.Parallel()
+
+			dir, err := cachecontrol.ParseRequest("max-stale=120")
+			require.NoError(t, err)
+			assert.False(t, dir.MaxStaleUnbounded())
+
+			seconds, bounded, ok := dir.MaxStale()
+			require.True(t, ok)
+			assert.True(t, bounded)
+			assert.Equal(t, uint64(120), seconds)
+		},
+	)
 }
 
 func TestParseResponse(t *testing.T) {
@@ -378,10 +409,12 @@ func TestResponseMaxAgeDuration(t *testing.T) {
 						_, gotOK := dir.MaxAgeDuration()
 						assert.False(t, gotOK)
 					}
+
 					return
 				}
 
 				require.NoError(t, err)
+
 				gotAge, gotOK := dir.MaxAgeDuration()
 				assert.True(t, gotOK)
 				assert.Equal(t, tt.wantAge, gotAge)

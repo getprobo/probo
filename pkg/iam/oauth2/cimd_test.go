@@ -103,6 +103,31 @@ func TestValidateClientMetadataDocument(t *testing.T) {
 	require.NoError(t, validateClientMetadataDocument(clientID, &doc))
 
 	t.Run(
+		"http redirect on non-loopback rejected",
+		func(t *testing.T) {
+			t.Parallel()
+
+			bad := doc
+			bad.RedirectURIs = []string{"http://example.com/callback"}
+
+			err := validateClientMetadataDocument(clientID, &bad)
+			require.Error(t, err)
+		},
+	)
+
+	t.Run(
+		"http loopback redirect allowed",
+		func(t *testing.T) {
+			t.Parallel()
+
+			loopback := doc
+			loopback.RedirectURIs = []string{"http://127.0.0.1:3000/callback"}
+
+			require.NoError(t, validateClientMetadataDocument(clientID, &loopback))
+		},
+	)
+
+	t.Run(
 		"mismatched client_id",
 		func(t *testing.T) {
 			t.Parallel()
@@ -143,35 +168,82 @@ func TestCIMDRedirectURIAllowed(t *testing.T) {
 func TestCIMDFetcherFetch(t *testing.T) {
 	t.Parallel()
 
-	doc := ClientMetadataDocument{
-		ClientName:              "Test MCP Client",
-		RedirectURIs:            []string{"http://127.0.0.1:3000/callback"},
-		TokenEndpointAuthMethod: "none",
-	}
+	t.Run(
+		"caches response with max-age",
+		func(t *testing.T) {
+			t.Parallel()
 
-	server := httptest.NewTLSServer(
-		http.HandlerFunc(
-			func(w http.ResponseWriter, _ *http.Request) {
-				w.Header().Set("Cache-Control", "max-age=60")
-				_ = json.NewEncoder(w).Encode(doc)
-			},
-		),
+			doc := ClientMetadataDocument{
+				ClientName:              "Test MCP Client",
+				RedirectURIs:            []string{"http://127.0.0.1:3000/callback"},
+				TokenEndpointAuthMethod: "none",
+			}
+
+			server := httptest.NewTLSServer(
+				http.HandlerFunc(
+					func(w http.ResponseWriter, _ *http.Request) {
+						w.Header().Set("Cache-Control", "max-age=60")
+						_ = json.NewEncoder(w).Encode(doc)
+					},
+				),
+			)
+			t.Cleanup(server.Close)
+
+			clientID := server.URL + "/oauth/client.json"
+			doc.ClientID = clientID
+
+			fetcher := &cimdFetcher{
+				httpClient: server.Client(),
+				logger:     log.NewLogger(),
+			}
+
+			fetched, err := fetcher.fetch(t.Context(), clientID)
+			require.NoError(t, err)
+			require.Equal(t, doc.ClientName, fetched.ClientName)
+
+			cached, err := fetcher.fetch(t.Context(), clientID)
+			require.NoError(t, err)
+			require.Equal(t, fetched.ClientName, cached.ClientName)
+		},
 	)
-	t.Cleanup(server.Close)
 
-	clientID := server.URL + "/oauth/client.json"
-	doc.ClientID = clientID
+	t.Run(
+		"no-store response is not cached",
+		func(t *testing.T) {
+			t.Parallel()
 
-	fetcher := &cimdFetcher{
-		httpClient: server.Client(),
-		logger:     log.NewLogger(),
-	}
+			doc := ClientMetadataDocument{
+				ClientName:              "Test MCP Client",
+				RedirectURIs:            []string{"http://127.0.0.1:3000/callback"},
+				TokenEndpointAuthMethod: "none",
+			}
 
-	fetched, err := fetcher.fetch(t.Context(), clientID)
-	require.NoError(t, err)
-	require.Equal(t, doc.ClientName, fetched.ClientName)
+			requestCount := 0
+			server := httptest.NewTLSServer(
+				http.HandlerFunc(
+					func(w http.ResponseWriter, _ *http.Request) {
+						requestCount++
 
-	cached, err := fetcher.fetch(t.Context(), clientID)
-	require.NoError(t, err)
-	require.Equal(t, fetched.ClientName, cached.ClientName)
+						w.Header().Set("Cache-Control", "no-store")
+						_ = json.NewEncoder(w).Encode(doc)
+					},
+				),
+			)
+			t.Cleanup(server.Close)
+
+			clientID := server.URL + "/oauth/client.json"
+			doc.ClientID = clientID
+
+			fetcher := &cimdFetcher{
+				httpClient: server.Client(),
+				logger:     log.NewLogger(),
+			}
+
+			_, err := fetcher.fetch(t.Context(), clientID)
+			require.NoError(t, err)
+			_, err = fetcher.fetch(t.Context(), clientID)
+			require.NoError(t, err)
+			assert.Equal(t, 2, requestCount)
+		},
+	)
 }

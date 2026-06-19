@@ -136,6 +136,7 @@ func (c *OAuth2Client) LoadByID(
 	q := `
 SELECT
 	id,
+	COALESCE(external_client_id, '') AS external_client_id,
 	organization_id,
 	client_secret_hash,
 	client_name,
@@ -190,6 +191,7 @@ func (c *OAuth2Client) LoadByExternalClientID(
 	q := `
 SELECT
 	id,
+	COALESCE(external_client_id, '') AS external_client_id,
 	organization_id,
 	client_secret_hash,
 	client_name,
@@ -242,6 +244,7 @@ func (c *OAuth2Clients) LoadByOrganizationID(
 	q := `
 SELECT
 	id,
+	COALESCE(external_client_id, '') AS external_client_id,
 	organization_id,
 	client_secret_hash,
 	client_name,

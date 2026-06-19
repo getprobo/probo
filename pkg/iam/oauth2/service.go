@@ -1433,7 +1433,7 @@ func (s *Service) Authorize(
 	if err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			client, err := s.ResolveClient(ctx, req.ClientIDRaw, req.RedirectURI)
+			client, err := s.resolveClient(ctx, tx, req.ClientIDRaw, req.RedirectURI)
 			if err != nil {
 				return err
 			}

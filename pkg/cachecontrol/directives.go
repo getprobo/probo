@@ -18,14 +18,15 @@ import "time"
 
 type (
 	RequestDirective struct {
-		maxAge       *uint64
-		maxStale     *uint64
-		minFresh     *uint64
-		noCache      bool
-		noStore      bool
-		noTransform  bool
-		onlyIfCached bool
-		extensions   map[string]string
+		maxAge            *uint64
+		maxStale          *uint64
+		maxStaleUnbounded bool
+		minFresh          *uint64
+		noCache           bool
+		noStore           bool
+		noTransform       bool
+		onlyIfCached      bool
+		extensions        map[string]string
 	}
 
 	ResponseDirective struct {
@@ -50,12 +51,20 @@ func (d *RequestDirective) MaxAge() (uint64, bool) {
 	return 0, false
 }
 
-func (d *RequestDirective) MaxStale() (uint64, bool) {
-	if v := d.maxStale; v != nil {
-		return *v, true
+func (d *RequestDirective) MaxStale() (seconds uint64, bounded bool, ok bool) {
+	if d.maxStaleUnbounded {
+		return 0, false, true
 	}
 
-	return 0, false
+	if v := d.maxStale; v != nil {
+		return *v, true, true
+	}
+
+	return 0, false, false
+}
+
+func (d *RequestDirective) MaxStaleUnbounded() bool {
+	return d.maxStaleUnbounded
 }
 
 func (d *RequestDirective) MinFresh() (uint64, bool) {
