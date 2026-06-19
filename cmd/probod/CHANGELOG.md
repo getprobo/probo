@@ -4,6 +4,23 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.214.0] - 2026-06-19
+
+### Added
+
+- OAuth2 API scope enforcement: v1:* scopes registered and advertised in OIDC discovery and protected-resource metadata, enforced in the IAM authorizer before policy evaluation
+- Identity-scoped OAuth token management: users can create, list, and revoke manual bearer tokens from `/me/oauth-tokens` and the console UI
+- Auditor role now includes the `v1:iam:read` scope
+
+### Changed
+
+- OAuth consent screen groups API scopes under an accordion
+
+### Fixed
+
+- MCP API now accepts OAuth bearer tokens (was previously rejected)
+- Notifications are skipped for inactive users
+
 ## [0.213.0] - 2026-06-18
 
 ### Added
