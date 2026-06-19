@@ -191,6 +191,9 @@ probo:
   # Generate with: openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048
   oauth2:
     signingKey: ""
+    # Comma-separated HTTPS client metadata document URLs allowed for CIMD
+    # OAuth clients (e.g. MCP connectors). Leave empty to disable CIMD.
+    cimdAllowedClientIds: []
 
   # CORS configuration
   cors:

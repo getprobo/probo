@@ -38,6 +38,7 @@ type OAuth2ServerConfig struct {
 	RefreshTokenDuration      int                      `json:"refresh-token-duration"`
 	AuthorizationCodeDuration int                      `json:"authorization-code-duration"`
 	DeviceCodeDuration        int                      `json:"device-code-duration"`
+	CIMDAllowedClientIDs      []string                 `json:"cimd-allowed-client-ids"`
 }
 
 type OAuth2SigningKeyConfig struct {

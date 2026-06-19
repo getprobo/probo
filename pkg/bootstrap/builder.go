@@ -139,6 +139,9 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 					RefreshTokenDuration:      b.getEnvIntOrDefault("OAUTH2_SERVER_REFRESH_TOKEN_DURATION", 2592000),
 					AuthorizationCodeDuration: b.getEnvIntOrDefault("OAUTH2_SERVER_AUTHORIZATION_CODE_DURATION", 600),
 					DeviceCodeDuration:        b.getEnvIntOrDefault("OAUTH2_SERVER_DEVICE_CODE_DURATION", 600),
+					CIMDAllowedClientIDs: b.parseOriginsList(
+						b.getEnv("OAUTH2_SERVER_CIMD_ALLOWED_CLIENT_IDS"),
+					),
 				},
 			},
 			TrustCenter: probodconfig.TrustCenterConfig{

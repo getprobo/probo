@@ -96,6 +96,7 @@ func TestOAuth2_Discovery(t *testing.T) {
 	assert.Contains(t, discovery.ClaimsSupported, "email")
 	assert.Contains(t, discovery.ClaimsSupported, "email_verified")
 	assert.Contains(t, discovery.ClaimsSupported, "name")
+	assert.True(t, discovery.ClientIDMetadataDocumentSupported)
 }
 
 func TestOAuth2_ProtectedResourceMetadata(t *testing.T) {

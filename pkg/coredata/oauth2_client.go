@@ -33,6 +33,7 @@ import (
 type (
 	OAuth2Client struct {
 		ID                      gid.GID                             `db:"id"`
+		ExternalClientID        string                              `db:"external_client_id"`
 		OrganizationID          *gid.GID                            `db:"organization_id"`
 		ClientSecretHash        []byte                              `db:"client_secret_hash"`
 		ClientName              string                              `db:"client_name"`
@@ -165,6 +166,56 @@ LIMIT 1;
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
 		return fmt.Errorf("cannot query iam_oauth2_clients: %w", err)
+	}
+
+	client, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[OAuth2Client])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+
+		return fmt.Errorf("cannot collect oauth2_client: %w", err)
+	}
+
+	*c = client
+
+	return nil
+}
+
+func (c *OAuth2Client) LoadByExternalClientID(
+	ctx context.Context,
+	conn pg.Querier,
+	externalClientID string,
+) error {
+	q := `
+SELECT
+	id,
+	organization_id,
+	client_secret_hash,
+	client_name,
+	visibility,
+	redirect_uris,
+	scopes,
+	grant_types,
+	response_types,
+	token_endpoint_auth_method,
+	logo_uri,
+	client_uri,
+	contacts,
+	created_at,
+	updated_at
+FROM
+	iam_oauth2_clients
+WHERE
+	external_client_id = @external_client_id
+LIMIT 1;
+`
+
+	args := pgx.StrictNamedArgs{"external_client_id": externalClientID}
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query iam_oauth2_clients by external_client_id: %w", err)
 	}
 
 	client, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[OAuth2Client])
@@ -337,6 +388,110 @@ INSERT INTO iam_oauth2_clients (
 	return nil
 }
 
+func (c *OAuth2Client) UpsertCIMD(
+	ctx context.Context,
+	conn pg.Tx,
+) error {
+	q := `
+INSERT INTO iam_oauth2_clients (
+	id,
+	tenant_id,
+	organization_id,
+	external_client_id,
+	client_secret_hash,
+	client_name,
+	visibility,
+	redirect_uris,
+	scopes,
+	grant_types,
+	response_types,
+	token_endpoint_auth_method,
+	logo_uri,
+	client_uri,
+	contacts,
+	created_at,
+	updated_at
+) VALUES (
+	@id,
+	NULL,
+	NULL,
+	@external_client_id,
+	@client_secret_hash,
+	@client_name,
+	@visibility,
+	@redirect_uris,
+	@scopes,
+	@grant_types,
+	@response_types,
+	@token_endpoint_auth_method,
+	@logo_uri,
+	@client_uri,
+	@contacts,
+	@created_at,
+	@updated_at
+)
+ON CONFLICT (external_client_id) WHERE external_client_id IS NOT NULL DO UPDATE SET
+	client_name = EXCLUDED.client_name,
+	redirect_uris = EXCLUDED.redirect_uris,
+	grant_types = EXCLUDED.grant_types,
+	response_types = EXCLUDED.response_types,
+	token_endpoint_auth_method = EXCLUDED.token_endpoint_auth_method,
+	logo_uri = EXCLUDED.logo_uri,
+	client_uri = EXCLUDED.client_uri,
+	updated_at = EXCLUDED.updated_at
+RETURNING
+	id,
+	external_client_id,
+	organization_id,
+	client_secret_hash,
+	client_name,
+	visibility,
+	redirect_uris,
+	scopes,
+	grant_types,
+	response_types,
+	token_endpoint_auth_method,
+	logo_uri,
+	client_uri,
+	contacts,
+	created_at,
+	updated_at
+`
+
+	args := pgx.StrictNamedArgs{
+		"id":                         c.ID,
+		"external_client_id":         c.ExternalClientID,
+		"client_secret_hash":         c.ClientSecretHash,
+		"client_name":                c.ClientName,
+		"visibility":                 c.Visibility,
+		"redirect_uris":              c.RedirectURIs,
+		"scopes":                     c.Scopes,
+		"grant_types":                c.GrantTypes,
+		"response_types":             c.ResponseTypes,
+		"token_endpoint_auth_method": c.TokenEndpointAuthMethod,
+		"logo_uri":                   c.LogoURI,
+		"client_uri":                 c.ClientURI,
+		"contacts":                   c.Contacts,
+		"created_at":                 c.CreatedAt,
+		"updated_at":                 c.UpdatedAt,
+	}
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot upsert cimd oauth2_client: %w", err)
+	}
+	defer rows.Close()
+
+	row, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[OAuth2Client])
+	if err != nil {
+		return fmt.Errorf("cannot collect upsert result: %w", err)
+	}
+
+	*c = row
+
+	return nil
+}
+
 func (c *OAuth2Client) Update(
 	ctx context.Context,
 	conn pg.Tx,
@@ -410,4 +565,49 @@ WHERE
 	}
 
 	return nil
+}
+
+func NewCIMDClient(
+	externalClientID string,
+	name string,
+	redirectURIs []string,
+	scopes OAuth2Scopes,
+	logoURI, clientURI *string,
+	now time.Time,
+) (*OAuth2Client, error) {
+	uris := make([]uri.URI, 0, len(redirectURIs))
+	for _, raw := range redirectURIs {
+		uris = append(uris, uri.URI(raw))
+	}
+
+	client := &OAuth2Client{
+		ID:               gid.New(gid.NewTenantID(), OAuth2ClientEntityType),
+		ExternalClientID: externalClientID,
+		ClientName:       name,
+		Visibility:       OAuth2ClientVisibilityPublic,
+		RedirectURIs:     uris,
+		Scopes:           scopes,
+		GrantTypes: OAuth2GrantTypes{
+			OAuth2GrantTypeAuthorizationCode,
+			OAuth2GrantTypeRefreshToken,
+		},
+		ResponseTypes: OAuth2ResponseTypes{
+			OAuth2ResponseTypeCode,
+		},
+		TokenEndpointAuthMethod: OAuth2ClientTokenEndpointAuthMethodNone,
+		CreatedAt:               now,
+		UpdatedAt:               now,
+	}
+
+	if logoURI != nil && *logoURI != "" {
+		u := uri.URI(*logoURI)
+		client.LogoURI = &u
+	}
+
+	if clientURI != nil && *clientURI != "" {
+		u := uri.URI(*clientURI)
+		client.ClientURI = &u
+	}
+
+	return client, nil
 }

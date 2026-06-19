@@ -27,7 +27,6 @@ import (
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/bearertoken"
 	"go.probo.inc/probo/pkg/coredata"
-	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/iam/oauth2"
 	"go.probo.inc/probo/pkg/securecookie"
@@ -167,7 +166,7 @@ func (h *OAuth2Handler) AuthorizeHandler(w http.ResponseWriter, r *http.Request)
 			IdentityID:          identity.ID,
 			SessionID:           session.ID,
 			ResponseType:        in.ResponseType,
-			ClientID:            in.ClientID,
+			ClientIDRaw:         in.ClientIDRaw,
 			RedirectURI:         in.RedirectURI,
 			Scopes:              in.Scopes,
 			CodeChallenge:       in.CodeChallenge,
@@ -445,12 +444,7 @@ func (h *OAuth2Handler) authenticateClient(r *http.Request) (*coredata.OAuth2Cli
 		return nil, oauth2.ErrInvalidClient
 	}
 
-	clientID, err := gid.ParseGID(clientIDStr)
-	if err != nil {
-		return nil, oauth2.ErrInvalidClient
-	}
-
-	return h.iam.OAuth2ServerService.AuthenticateClient(r.Context(), clientID, clientSecret)
+	return h.iam.OAuth2ServerService.AuthenticateClient(r.Context(), clientIDStr, clientSecret)
 }
 
 func (h *OAuth2Handler) handleAuthorizationCodeGrant(w http.ResponseWriter, r *http.Request) {

@@ -135,6 +135,10 @@ spec:
                 secretKeyRef:
                   name: {{ include "probo.fullname" . }}
                   key: oauth2-signing-key
+            {{- if .Values.probo.oauth2.cimdAllowedClientIds }}
+            - name: OAUTH2_SERVER_CIMD_ALLOWED_CLIENT_IDS
+              value: {{ join "," .Values.probo.oauth2.cimdAllowedClientIds | quote }}
+            {{- end }}
             - name: AUTH_PASSWORD_ITERATIONS
               value: {{ .Values.probo.auth.passwordIterations | quote }}
             {{- if .Values.probo.saml.enabled }}

@@ -200,7 +200,10 @@ func NewService(
 		cfg.OAuth2ServerSigningKeys,
 		uri.URI(cfg.BaseURL.String()),
 		cfg.Logger.Named("oauth2"),
-		cfg.OAuth2ServerOptions...,
+		append(
+			[]oauth2.Option{oauth2.WithAPIScopes(svc.Authorizer.APIScopes())},
+			cfg.OAuth2ServerOptions...,
+		)...,
 	)
 
 	svc.samlDomainVerifier = NewSAMLDomainVerifier(

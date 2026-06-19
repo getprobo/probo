@@ -60,6 +60,9 @@ type (
 		baseURL                   uri.URI
 		logger                    *log.Logger
 		gc                        *GarbageCollector
+		cimd                      *cimdFetcher
+		cimdAllowedClientIDs      []string
+		apiScopes                 []coredata.OAuth2Scope
 		accessTokenDuration       time.Duration
 		refreshTokenDuration      time.Duration
 		authorizationCodeDuration time.Duration
@@ -72,7 +75,7 @@ type (
 		IdentityID          gid.GID
 		SessionID           gid.GID
 		ResponseType        coredata.OAuth2ResponseType
-		ClientID            gid.GID
+		ClientIDRaw         string
 		RedirectURI         string
 		Scopes              coredata.OAuth2Scopes
 		CodeChallenge       string
@@ -156,6 +159,18 @@ func WithDeviceCodeDuration(d time.Duration) Option {
 	}
 }
 
+func WithAPIScopes(scopes []coredata.OAuth2Scope) Option {
+	return func(s *Service) {
+		s.apiScopes = scopes
+	}
+}
+
+func WithCIMDAllowedClientIDs(clientIDs []string) Option {
+	return func(s *Service) {
+		s.cimdAllowedClientIDs = clientIDs
+	}
+}
+
 func NewService(
 	pgClient *pg.Client,
 	signingKeys SigningKeys,
@@ -188,6 +203,7 @@ func NewService(
 	}
 
 	s.gc = NewGarbageCollector(pgClient, logger)
+	s.cimd = newCIMDFetcher(logger.Named("cimd"))
 
 	return s
 }
@@ -1417,13 +1433,9 @@ func (s *Service) Authorize(
 	if err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			var client coredata.OAuth2Client
-			if err := client.LoadByID(ctx, tx, coredata.NewNoScope(), req.ClientID); err != nil {
-				if errors.Is(err, coredata.ErrResourceNotFound) {
-					return ErrClientNotFound
-				}
-
-				return fmt.Errorf("cannot load client: %w", err)
+			client, err := s.ResolveClient(ctx, req.ClientIDRaw, req.RedirectURI)
+			if err != nil {
+				return err
 			}
 
 			if !client.IsRedirectURIAllowed(req.RedirectURI) {
@@ -1495,7 +1507,7 @@ func (s *Service) Authorize(
 					code, err = s.issueAuthorizationCode(
 						ctx,
 						tx,
-						&client,
+						client,
 						req.IdentityID,
 						uri.URI(req.RedirectURI),
 						requestedScopes,
@@ -1536,7 +1548,7 @@ func (s *Service) Authorize(
 			return pg.NoRollback(
 				&ConsentRequiredError{
 					ConsentID: pendingConsent.ID,
-					Client:    &client,
+					Client:    client,
 					Scopes:    requestedScopes,
 				},
 			)
@@ -1721,12 +1733,12 @@ func (s *Service) ApproveConsent(
 
 func (s *Service) AuthenticateClient(
 	ctx context.Context,
-	clientID gid.GID,
+	clientIDRaw string,
 	clientSecret string,
 ) (*coredata.OAuth2Client, error) {
-	client, err := s.GetClientByID(ctx, clientID)
+	client, err := s.ResolveClient(ctx, clientIDRaw, "")
 	if err != nil {
-		return nil, NewError(ErrInvalidClient, WithDescription("cannot load client"))
+		return nil, err
 	}
 
 	if client.TokenEndpointAuthMethod == coredata.OAuth2ClientTokenEndpointAuthMethodNone {

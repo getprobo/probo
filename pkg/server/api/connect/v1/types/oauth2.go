@@ -50,7 +50,7 @@ func parseScopes(s string) (coredata.OAuth2Scopes, error) {
 
 type (
 	OAuth2AuthorizeInput struct {
-		ClientID            gid.GID
+		ClientIDRaw         string
 		RedirectURI         string
 		State               string
 		ResponseType        coredata.OAuth2ResponseType
@@ -112,9 +112,9 @@ type (
 func (in *OAuth2AuthorizeInput) DecodeQuery(q url.Values) error {
 	var err error
 
-	in.ClientID, err = requireGID(q, "client_id")
-	if err != nil {
-		return err
+	in.ClientIDRaw = q.Get("client_id")
+	if in.ClientIDRaw == "" {
+		return fmt.Errorf("missing client_id")
 	}
 
 	in.RedirectURI = q.Get("redirect_uri")

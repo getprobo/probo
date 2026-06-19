@@ -253,4 +253,13 @@ func TestNewMetadata(t *testing.T) {
 			)
 		},
 	)
+
+	t.Run(
+		"cimd supported",
+		func(t *testing.T) {
+			t.Parallel()
+
+			assert.True(t, metadata.ClientIDMetadataDocumentSupported)
+		},
+	)
 }

@@ -45,6 +45,7 @@ type (
 		IDTokenSigningAlgValuesSupported          []coredata.OAuth2SigningAlgorithm              `json:"id_token_signing_alg_values_supported"`
 		CodeChallengeMethodsSupported             []coredata.OAuth2CodeChallengeMethod           `json:"code_challenge_methods_supported"`
 		ClaimsSupported                           []coredata.OAuth2Claim                         `json:"claims_supported"`
+		ClientIDMetadataDocumentSupported         bool                                           `json:"client_id_metadata_document_supported"`
 	}
 
 	// Endpoints holds the endpoint URLs for the OIDC discovery document.
@@ -126,5 +127,6 @@ func NewMetadata(issuer uri.URI, endpoints Endpoints, apiScopes []coredata.OAuth
 			coredata.OAuth2ClaimEmailVerified,
 			coredata.OAuth2ClaimName,
 		},
+		ClientIDMetadataDocumentSupported: true,
 	}
 }

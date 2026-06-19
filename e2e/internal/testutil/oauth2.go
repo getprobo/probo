@@ -97,6 +97,7 @@ type (
 		CodeChallengeMethodsSupported             []string `json:"code_challenge_methods_supported"`
 		ClaimsSupported                           []string `json:"claims_supported"`
 		ProtectedResources                        []string `json:"protected_resources,omitempty"`
+		ClientIDMetadataDocumentSupported         bool     `json:"client_id_metadata_document_supported"`
 	}
 
 	OAuth2ProtectedResourceMetadataResponse struct {

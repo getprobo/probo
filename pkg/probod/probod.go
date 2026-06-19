@@ -1422,5 +1422,9 @@ func oauth2ServerOptions(cfg OAuth2ServerConfig) []oauth2.Option {
 		opts = append(opts, oauth2.WithDeviceCodeDuration(time.Duration(cfg.DeviceCodeDuration)*time.Second))
 	}
 
+	if len(cfg.CIMDAllowedClientIDs) > 0 {
+		opts = append(opts, oauth2.WithCIMDAllowedClientIDs(cfg.CIMDAllowedClientIDs))
+	}
+
 	return opts
 }

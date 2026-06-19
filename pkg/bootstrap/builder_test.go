@@ -728,6 +728,7 @@ func TestBuilder_Build_OAuth2Defaults(t *testing.T) {
 	assert.Equal(t, 2592000, cfg.Probod.Auth.OAuth2Server.RefreshTokenDuration)
 	assert.Equal(t, 600, cfg.Probod.Auth.OAuth2Server.AuthorizationCodeDuration)
 	assert.Equal(t, 600, cfg.Probod.Auth.OAuth2Server.DeviceCodeDuration)
+	assert.Nil(t, cfg.Probod.Auth.OAuth2Server.CIMDAllowedClientIDs)
 }
 
 func TestBuilder_Build_OAuth2FromEnv(t *testing.T) {
@@ -738,6 +739,7 @@ func TestBuilder_Build_OAuth2FromEnv(t *testing.T) {
 	env["OAUTH2_SERVER_REFRESH_TOKEN_DURATION"] = "20"
 	env["OAUTH2_SERVER_AUTHORIZATION_CODE_DURATION"] = "30"
 	env["OAUTH2_SERVER_DEVICE_CODE_DURATION"] = "40"
+	env["OAUTH2_SERVER_CIMD_ALLOWED_CLIENT_IDS"] = "https://chatgpt.com/oauth/client.json,https://claude.ai/oauth/client.json"
 
 	b := NewBuilder(mockEnv(env))
 
@@ -754,6 +756,14 @@ func TestBuilder_Build_OAuth2FromEnv(t *testing.T) {
 	assert.Equal(t, 20, cfg.Probod.Auth.OAuth2Server.RefreshTokenDuration)
 	assert.Equal(t, 30, cfg.Probod.Auth.OAuth2Server.AuthorizationCodeDuration)
 	assert.Equal(t, 40, cfg.Probod.Auth.OAuth2Server.DeviceCodeDuration)
+	assert.Equal(
+		t,
+		[]string{
+			"https://chatgpt.com/oauth/client.json",
+			"https://claude.ai/oauth/client.json",
+		},
+		cfg.Probod.Auth.OAuth2Server.CIMDAllowedClientIDs,
+	)
 }
 
 func TestBuilder_Build_OAuth2Preset(t *testing.T) {
