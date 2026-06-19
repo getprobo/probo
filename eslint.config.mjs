@@ -4,7 +4,7 @@ import { defineConfig, globalIgnores } from "eslint/config";
 // Workspaces that are linted by this root config. Each gets the shared rule
 // sets below; everything else is ignored so a bare `eslint .` keeps the same
 // scope as the previous per-workspace configs.
-const appDirs = ["apps/console/**", "apps/trust/**"];
+const appDirs = ["apps/console/**", "apps/trust/**", "apps/compliance-portal/**"];
 const reactDirs = [...appDirs, "packages/ui/**"];
 const lintedDirs = [...reactDirs, "packages/eslint-config/**"];
 
@@ -14,6 +14,7 @@ export default defineConfig([
   configs.base,
   globalIgnores([
     "examples/**",
+    "pkg/**",
     "packages/coredata/**",
     "packages/cookie-banner/**",
     "packages/emails/**",

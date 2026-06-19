@@ -13,7 +13,7 @@
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev",
-    "lint": "eslint apps/console apps/trust packages/ui packages/eslint-config --concurrency auto && npm -w @probo/n8n-nodes-probo run lint",
+    "lint": "eslint . --concurrency auto && npm -w @probo/n8n-nodes-probo run lint",
     "check": "turbo run check",
     "relay": "relay-compiler"
   },
