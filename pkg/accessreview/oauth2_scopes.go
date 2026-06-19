@@ -14,45 +14,38 @@
 
 package accessreview
 
-import (
-	"go.probo.inc/probo/pkg/coredata"
-	"go.probo.inc/probo/pkg/iam"
-)
+import "go.probo.inc/probo/pkg/coredata"
 
 const (
 	ScopeV1AccessReviewRead coredata.OAuth2Scope = "v1:access-review:read"
 	ScopeV1AccessReview     coredata.OAuth2Scope = "v1:access-review"
 )
 
-// OAuth2ScopeSet returns OAuth2 scope mappings for access-review actions.
-func OAuth2ScopeSet() *iam.ScopeSet {
-	return iam.CreateScopeSet(
-		map[coredata.OAuth2Scope][]iam.Action{
-			ScopeV1AccessReviewRead: {
-				ActionCampaignGet,
-				ActionCampaignList,
-				ActionEntryGet,
-				ActionEntryList,
-				ActionSourceGet,
-				ActionSourceList,
-				ActionDriverCatalogList,
-			},
-			ScopeV1AccessReview: {
-				ActionCampaignCreate,
-				ActionCampaignUpdate,
-				ActionCampaignDelete,
-				ActionCampaignStart,
-				ActionCampaignClose,
-				ActionCampaignCancel,
-				ActionCampaignAddSource,
-				ActionCampaignRemoveSource,
-				ActionEntryDecide,
-				ActionEntryFlag,
-				ActionSourceCreate,
-				ActionSourceUpdate,
-				ActionSourceDelete,
-				ActionSourceSync,
-			},
-		},
-	)
+// OAuth2ScopeMappings maps OAuth2 scopes to access-review actions.
+var OAuth2ScopeMappings = map[coredata.OAuth2Scope][]string{
+	ScopeV1AccessReviewRead: {
+		ActionCampaignGet,
+		ActionCampaignList,
+		ActionEntryGet,
+		ActionEntryList,
+		ActionSourceGet,
+		ActionSourceList,
+		ActionDriverCatalogList,
+	},
+	ScopeV1AccessReview: {
+		ActionCampaignCreate,
+		ActionCampaignUpdate,
+		ActionCampaignDelete,
+		ActionCampaignStart,
+		ActionCampaignClose,
+		ActionCampaignCancel,
+		ActionCampaignAddSource,
+		ActionCampaignRemoveSource,
+		ActionEntryDecide,
+		ActionEntryFlag,
+		ActionSourceCreate,
+		ActionSourceUpdate,
+		ActionSourceDelete,
+		ActionSourceSync,
+	},
 }

@@ -29,6 +29,7 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam/oauth2"
 	"go.probo.inc/probo/pkg/iam/policy"
+	"go.probo.inc/probo/pkg/iam/scopeset"
 )
 
 // AuthorizationAttributer is implemented by entities that can provide
@@ -86,17 +87,17 @@ type Authorizer struct {
 	pg             *pg.Client
 	evaluator      *policy.Evaluator
 	policySet      *PolicySet
-	oauth2ScopeSet *ScopeSet
+	oauth2ScopeSet *scopeset.ScopeSet
 	logger         *log.Logger
 }
 
 // NewAuthorizer creates a new Authorizer instance.
-func NewAuthorizer(pgClient *pg.Client, logger *log.Logger) *Authorizer {
+func NewAuthorizer(pgClient *pg.Client, logger *log.Logger, scopeSet *scopeset.ScopeSet) *Authorizer {
 	return &Authorizer{
 		pg:             pgClient,
 		evaluator:      policy.NewEvaluator(),
 		policySet:      NewPolicySet(),
-		oauth2ScopeSet: NewScopeSet(),
+		oauth2ScopeSet: scopeSet,
 		logger:         logger,
 	}
 }
@@ -104,20 +105,6 @@ func NewAuthorizer(pgClient *pg.Client, logger *log.Logger) *Authorizer {
 // RegisterPolicySet merges the given policy set into the authorizer.
 func (a *Authorizer) RegisterPolicySet(ps *PolicySet) {
 	a.policySet.Merge(ps)
-}
-
-// RegisterScopes merges OAuth2 scope-to-action mappings into the authorizer.
-func (a *Authorizer) RegisterScopes(ss *ScopeSet) {
-	a.oauth2ScopeSet.Merge(ss)
-}
-
-// APIScopes returns OAuth2 API scopes advertised in discovery metadata.
-func (a *Authorizer) APIScopes() []coredata.OAuth2Scope {
-	if a.oauth2ScopeSet == nil {
-		return []coredata.OAuth2Scope{}
-	}
-
-	return a.oauth2ScopeSet.APIScopes()
 }
 
 func (a *Authorizer) checkOAuth2Scope(

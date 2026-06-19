@@ -12,18 +12,17 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package iam
+package scopeset_test
 
 import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/iam/scopeset"
 )
 
-func TestAuthorizer_UsesOAuth2ScopeSet(t *testing.T) {
+func TestScopeSet_Allows(t *testing.T) {
 	t.Parallel()
 
 	const scopeV1OrgRead = coredata.OAuth2Scope("v1:org:read")
@@ -34,11 +33,31 @@ func TestAuthorizer_UsesOAuth2ScopeSet(t *testing.T) {
 		},
 	)
 
-	authorizer := NewAuthorizer(nil, nil, scopeSet)
+	tokenScopes := coredata.OAuth2Scopes{scopeV1OrgRead}
 
-	require.NotNil(t, authorizer.oauth2ScopeSet)
+	assert.True(t, scopeSet.Allows(tokenScopes, "core:organization:get"))
+	assert.False(t, scopeSet.Allows(tokenScopes, "core:organization:update"))
+}
+
+func TestScopeSet_Register(t *testing.T) {
+	t.Parallel()
+
+	const scopeV1OrgRead = coredata.OAuth2Scope("v1:org:read")
+
+	scopeSet := scopeset.New().
+		Register(
+			map[coredata.OAuth2Scope][]string{
+				scopeV1OrgRead: {"core:organization:get"},
+			},
+		).
+		Register(
+			map[coredata.OAuth2Scope][]string{
+				scopeV1OrgRead: {"core:organization-context:get"},
+			},
+		)
 
 	tokenScopes := coredata.OAuth2Scopes{scopeV1OrgRead}
-	assert.True(t, authorizer.oauth2ScopeSet.Allows(tokenScopes, "core:organization:get"))
-	assert.False(t, authorizer.oauth2ScopeSet.Allows(tokenScopes, "core:organization:update"))
+
+	assert.True(t, scopeSet.Allows(tokenScopes, "core:organization:get"))
+	assert.True(t, scopeSet.Allows(tokenScopes, "core:organization-context:get"))
 }

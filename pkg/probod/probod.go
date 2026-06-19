@@ -601,8 +601,8 @@ func (impl *Implm) Run(
 
 	iamService.Authorizer.RegisterPolicySet(agentrun.PolicySet())
 	iamService.Authorizer.RegisterPolicySet(accessreview.PolicySet())
-	iamService.Authorizer.RegisterScopes(agentrun.OAuth2ScopeSet())
-	iamService.Authorizer.RegisterScopes(accessreview.OAuth2ScopeSet())
+	iamService.OAuth2ScopeSet.Register(agentrun.OAuth2ScopeMappings)
+	iamService.OAuth2ScopeSet.Register(accessreview.OAuth2ScopeMappings)
 
 	thirdPartyService := thirdparty.NewService(pgClient, fileManagerService, thirdPartyVetter)
 	riskManagementService := riskmanagement.NewService(pgClient)

@@ -37,6 +37,7 @@ import (
 	"go.probo.inc/probo/pkg/iam/oidc"
 	"go.probo.inc/probo/pkg/iam/saml"
 	"go.probo.inc/probo/pkg/iam/scim"
+	"go.probo.inc/probo/pkg/iam/scopeset"
 	"go.probo.inc/probo/pkg/uri"
 )
 
@@ -69,6 +70,7 @@ type (
 		APIKeyService         *APIKeyService
 		OAuth2ServerService   *oauth2.Service
 		Authorizer            *Authorizer
+		OAuth2ScopeSet        *scopeset.ScopeSet
 
 		samlDomainVerifier *SAMLDomainVerifier
 	}
@@ -157,12 +159,15 @@ func NewService(
 	svc.AuthService = NewAuthService(svc)
 	svc.APIKeyService = NewAPIKeyService(svc)
 
+	svc.OAuth2ScopeSet = scopeset.New()
+	svc.OAuth2ScopeSet.Register(IAMOAuth2ScopeMappings)
+
 	svc.Authorizer = NewAuthorizer(
 		pgClient,
 		cfg.Logger.Named("authorizer"),
+		svc.OAuth2ScopeSet,
 	)
 	svc.Authorizer.RegisterPolicySet(IAMPolicySet())
-	svc.Authorizer.RegisterScopes(IAMOAuth2ScopeSet())
 
 	samlService, err := saml.NewService(svc.pg, svc.baseURL, svc.certificate, svc.privateKey, cfg.Logger)
 	if err != nil {
@@ -201,7 +206,7 @@ func NewService(
 		uri.URI(cfg.BaseURL.String()),
 		cfg.Logger.Named("oauth2"),
 		append(
-			[]oauth2.Option{oauth2.WithAPIScopes(svc.Authorizer.APIScopes())},
+			[]oauth2.Option{oauth2.WithScopeSet(svc.OAuth2ScopeSet)},
 			cfg.OAuth2ServerOptions...,
 		)...,
 	)
@@ -219,12 +224,12 @@ func NewService(
 
 // OAuth2ServerMetadata returns the OIDC discovery document.
 func (s *Service) OAuth2ServerMetadata(endpoints oauth2.Endpoints) *oauth2.ServerMetadata {
-	return oauth2.NewMetadata(uri.URI(s.baseURL), endpoints, s.Authorizer.APIScopes())
+	return oauth2.NewMetadata(uri.URI(s.baseURL), endpoints, s.OAuth2ScopeSet.APIScopes())
 }
 
 // OAuth2ProtectedResourceMetadata returns the RFC 9728 protected resource metadata document.
 func (s *Service) OAuth2ProtectedResourceMetadata(resource uri.URI) *oauth2.ProtectedResourceMetadata {
-	return oauth2.NewProtectedResourceMetadata(resource, resource, s.Authorizer.APIScopes())
+	return oauth2.NewProtectedResourceMetadata(resource, resource, s.OAuth2ScopeSet.APIScopes())
 }
 
 func (s *Service) IsSignUpEnabled() bool {

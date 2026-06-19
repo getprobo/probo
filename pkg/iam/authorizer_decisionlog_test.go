@@ -30,6 +30,7 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/iam/policy"
+	"go.probo.inc/probo/pkg/iam/scopeset"
 )
 
 func TestAuthorizer_DecisionLogging(t *testing.T) {
@@ -151,7 +152,7 @@ func newTestAuthorizerWithLogger(
 
 	statements = append(statements, extraStatements...)
 
-	authorizer := iam.NewAuthorizer(client, log.NewLogger(log.WithOutput(logOutput)))
+	authorizer := iam.NewAuthorizer(client, log.NewLogger(log.WithOutput(logOutput)), scopeset.New())
 	authorizer.RegisterPolicySet(
 		iam.NewPolicySet().AddRolePolicy(
 			string(coredata.MembershipRoleOwner),

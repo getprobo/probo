@@ -334,14 +334,6 @@ func (f *cimdFetcher) storeCache(clientIDURL string, doc *ClientMetadataDocument
 	)
 }
 
-func (s *Service) ResolveClient(
-	ctx context.Context,
-	clientIDRaw string,
-	redirectURI string,
-) (*coredata.OAuth2Client, error) {
-	return s.resolveClient(ctx, nil, clientIDRaw, redirectURI)
-}
-
 func (s *Service) resolveClient(
 	ctx context.Context,
 	tx pg.Tx,
@@ -415,7 +407,7 @@ func (s *Service) upsertCIMDClient(
 			ScopeEmail,
 			ScopeOfflineAccess,
 		},
-		s.apiScopes,
+		s.scopeSet.APIScopes(),
 	)
 
 	now := time.Now()

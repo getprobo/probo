@@ -40,7 +40,7 @@ func (r *mutationResolver) CreateOAuth2AccessToken(ctx context.Context, input ty
 			Name:             strings.TrimSpace(input.Name),
 			ExpiresAt:        input.ExpiresAt,
 			Scopes:           scopes,
-			AllowedAPIScopes: r.iam.Authorizer.APIScopes(),
+			AllowedAPIScopes: r.iam.OAuth2ScopeSet.APIScopes(),
 		},
 	)
 	if err != nil {

@@ -33,6 +33,7 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/net"
 	"go.probo.inc/probo/pkg/page"
+	"go.probo.inc/probo/pkg/iam/scopeset"
 	"go.probo.inc/probo/pkg/uri"
 )
 
@@ -62,7 +63,7 @@ type (
 		gc                        *GarbageCollector
 		cimd                      *cimdFetcher
 		cimdAllowedClientIDs      []string
-		apiScopes                 []coredata.OAuth2Scope
+		scopeSet                  *scopeset.ScopeSet
 		accessTokenDuration       time.Duration
 		refreshTokenDuration      time.Duration
 		authorizationCodeDuration time.Duration
@@ -159,9 +160,9 @@ func WithDeviceCodeDuration(d time.Duration) Option {
 	}
 }
 
-func WithAPIScopes(scopes []coredata.OAuth2Scope) Option {
+func WithScopeSet(scopeSet *scopeset.ScopeSet) Option {
 	return func(s *Service) {
-		s.apiScopes = scopes
+		s.scopeSet = scopeSet
 	}
 }
 
@@ -1438,6 +1439,8 @@ func (s *Service) Authorize(
 				return err
 			}
 
+			fmt.Printf("X: %+v\n", client)
+
 			if !client.IsRedirectURIAllowed(req.RedirectURI) {
 				return ErrInvalidRedirectURI
 			}
@@ -1736,7 +1739,7 @@ func (s *Service) AuthenticateClient(
 	clientIDRaw string,
 	clientSecret string,
 ) (*coredata.OAuth2Client, error) {
-	client, err := s.ResolveClient(ctx, clientIDRaw, "")
+	client, err := s.resolveClient(ctx, nil, clientIDRaw, "")
 	if err != nil {
 		return nil, err
 	}

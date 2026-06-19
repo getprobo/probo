@@ -22,29 +22,20 @@ import (
 	"go.probo.inc/probo/pkg/agentrun"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/iam"
+	"go.probo.inc/probo/pkg/iam/scopeset"
 	"go.probo.inc/probo/pkg/probo"
 )
 
-func allRegisteredOAuth2ScopeSets() *iam.ScopeSet {
-	return iam.NewScopeSet().
-		Merge(iam.IAMOAuth2ScopeSet()).
-		Merge(probo.OAuth2ScopeSet()).
-		Merge(accessreview.OAuth2ScopeSet()).
-		Merge(agentrun.OAuth2ScopeSet())
-}
-
-func registerAllOAuth2ScopeSets(authorizer *iam.Authorizer) {
-	authorizer.RegisterScopes(iam.IAMOAuth2ScopeSet())
-	authorizer.RegisterScopes(probo.OAuth2ScopeSet())
-	authorizer.RegisterScopes(accessreview.OAuth2ScopeSet())
-	authorizer.RegisterScopes(agentrun.OAuth2ScopeSet())
+func allRegisteredOAuth2ScopeSets() *scopeset.ScopeSet {
+	return scopeset.New().
+		Register(iam.IAMOAuth2ScopeMappings).
+		Register(probo.OAuth2ScopeMappings).
+		Register(accessreview.OAuth2ScopeMappings).
+		Register(agentrun.OAuth2ScopeMappings)
 }
 
 func TestRegisteredOAuth2ScopeSets_OrganizationRead(t *testing.T) {
 	t.Parallel()
-
-	authorizer := iam.NewAuthorizer(nil, nil)
-	registerAllOAuth2ScopeSets(authorizer)
 
 	scopeSet := allRegisteredOAuth2ScopeSets()
 	tokenScopes := coredata.OAuth2Scopes{probo.ScopeV1OrgRead}
@@ -56,9 +47,6 @@ func TestRegisteredOAuth2ScopeSets_OrganizationRead(t *testing.T) {
 
 func TestRegisteredOAuth2ScopeSets_UnmappedActionDenies(t *testing.T) {
 	t.Parallel()
-
-	authorizer := iam.NewAuthorizer(nil, nil)
-	registerAllOAuth2ScopeSets(authorizer)
 
 	scopeSet := allRegisteredOAuth2ScopeSets()
 	tokenScopes := coredata.OAuth2Scopes{

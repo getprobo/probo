@@ -14,27 +14,19 @@
 
 package agentrun
 
-import (
-	"go.probo.inc/probo/pkg/coredata"
-	"go.probo.inc/probo/pkg/iam"
-)
+import "go.probo.inc/probo/pkg/coredata"
 
 const (
 	ScopeV1AgentRead coredata.OAuth2Scope = "v1:agent:read"
 	ScopeV1Agent     coredata.OAuth2Scope = "v1:agent"
 )
 
-// OAuth2ScopeSet returns OAuth2 scope mappings for agent-run actions.
-func OAuth2ScopeSet() *iam.ScopeSet {
-	return iam.CreateScopeSet(
-		map[coredata.OAuth2Scope][]iam.Action{
-			ScopeV1AgentRead: {
-				ActionAgentRunGet,
-				ActionAgentRunList,
-			},
-			ScopeV1Agent: {
-				ActionAgentRunApprove,
-			},
-		},
-	)
+var OAuth2ScopeMappings = map[coredata.OAuth2Scope][]string{
+	ScopeV1AgentRead: {
+		ActionAgentRunGet,
+		ActionAgentRunList,
+	},
+	ScopeV1Agent: {
+		ActionAgentRunApprove,
+	},
 }

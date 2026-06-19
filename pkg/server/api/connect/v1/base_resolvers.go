@@ -268,7 +268,7 @@ func (r *queryResolver) SignUpEnabled(ctx context.Context) (bool, error) {
 
 // Oauth2ScopesSupported is the resolver for the oauth2ScopesSupported field.
 func (r *queryResolver) Oauth2ScopesSupported(ctx context.Context) ([]string, error) {
-	apiScopes := r.iam.Authorizer.APIScopes()
+	apiScopes := r.iam.OAuth2ScopeSet.APIScopes()
 
 	scopes := make([]string, len(apiScopes))
 	for i, scope := range apiScopes {
