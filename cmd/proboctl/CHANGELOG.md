@@ -4,6 +4,13 @@ All notable changes to the `proboctl` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.7.0] - 2026-06-19
+
+### Changed
+
+- `common-tracker-pattern mark-first-party` now also blanks the stale description on the catalog row and its uncategorised org tracker patterns, so a terminal first-party row no longer keeps a description naming a cleared vendor
+- Unlinking a vendor now has full parity with first-party cleanup: it clears the stale description on both the catalog row and its uncategorised org tracker patterns and remaps those patterns to drop the stale vendor and re-resolve (re-arming catalog enrichment)
+
 ## [0.6.0] - 2026-06-18
 
 ### Added
