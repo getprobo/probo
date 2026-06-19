@@ -4,6 +4,12 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.216.1] - 2026-06-19
+
+### Fixed
+
+- OAuth2 scope registration for CIMD client identifiers was missing; CIMD actions are now correctly gated by their corresponding scopes
+
 ## [0.216.0] - 2026-06-19
 
 ### Added
