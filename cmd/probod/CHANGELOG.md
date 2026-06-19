@@ -4,6 +4,12 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.215.1] - 2026-06-19
+
+### Fixed
+
+- Tracker-mapping no longer reprocesses sibling patterns O(N^2) times per banner; the re-enqueue now skips siblings already linked to a common third party or marked first-party, and routine mapping logs are demoted from INFO to Debug
+
 ## [0.215.0] - 2026-06-19
 
 ### Added
