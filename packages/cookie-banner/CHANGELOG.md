@@ -4,6 +4,12 @@ All notable changes to the `@probo/cookie-banner` SDK will be documented in this
 
 ## Unreleased
 
+## [0.10.0] - 2026-06-19
+
+### Changed
+
+- Local storage, IndexedDB, and cache-storage trackers without an expiry now display a localized "persistent" duration rather than "session"
+
 ## [0.9.3] - 2026-06-12
 
 ### Fixed
