@@ -15,16 +15,11 @@
     "dev": "turbo run dev",
     "lint": "turbo run lint",
     "check": "turbo run check",
-    "relay-clean": "find apps -type d -name __generated__ -exec rm -rf {} +",
-    "relay-compile": "npx relay-compiler",
-    "relay": "npm run relay-clean && npm run relay-compile"
+    "relay": "relay-compiler"
   },
   "devDependencies": {
     "relay-compiler": "^21.0.1",
     "turbo": "^2.9.14"
-  },
-  "graphql": {
-    "schema": "./pkg/server/api/console/v1/graphql/"
   },
   "overrides": {
     "brace-expansion": "^5.0.5",

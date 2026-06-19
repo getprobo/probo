@@ -282,29 +282,13 @@ $(PROBO_AGENT_BIN):
 @probo/emails:
 	$(NPM) --workspace $@ run build
 
-RELAY_SCHEMAS = \
-	pkg/server/api/connect/v1/schema.graphql \
-	pkg/server/api/console/v1/schema.graphql \
-	pkg/server/api/trust/v1/schema.graphql
-
 .PHONY: relay
-relay: $(RELAY_SCHEMAS)
-	$(NPX) relay-compiler
-
-MERGE_GRAPHQL = contrib/merge-graphql-schema.sh
+relay:
+	$(NPM) run relay
 
 CONNECT_GQL = $(wildcard pkg/server/api/connect/v1/graphql/*.graphql)
 CONSOLE_GQL = $(wildcard pkg/server/api/console/v1/graphql/*.graphql)
 TRUST_GQL   = $(wildcard pkg/server/api/trust/v1/graphql/*.graphql)
-
-pkg/server/api/connect/v1/schema.graphql: pkg/server/api/connect/v1/graphql $(CONNECT_GQL)
-	$(MERGE_GRAPHQL) $@ pkg/server/api/connect/v1/graphql
-
-pkg/server/api/console/v1/schema.graphql: pkg/server/api/console/v1/graphql $(CONSOLE_GQL)
-	$(MERGE_GRAPHQL) $@ pkg/server/api/console/v1/graphql
-
-pkg/server/api/trust/v1/schema.graphql: pkg/server/api/trust/v1/graphql $(TRUST_GQL)
-	$(MERGE_GRAPHQL) $@ pkg/server/api/trust/v1/graphql
 
 .PHONY: @probo/console
 @probo/console: NODE_ENV=production

@@ -41,7 +41,7 @@ Individual codegen is driven by `go generate`:
 - `go generate ./pkg/server/api/mcp/v1` — MCP (mcpgen)
 - `go generate ./pkg/llm` — LLM model registry from OpenRouter (`make genmodels`)
 
-`make relay` merges split `.graphql` schema files and runs `relay-compiler`.
+`make relay` runs `relay-compiler`, which reads the split `.graphql` schema files directly (via each project's `schema` + `schemaExtensions` in `relay.config.json`) and keeps generated artifacts in sync (stale ones are removed automatically).
 
 ## Coverage
 
