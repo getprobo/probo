@@ -12,31 +12,10 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { fileURLToPath, URL } from "node:url";
-
-import tailwindcss from "@tailwindcss/vite";
-import react from "@vitejs/plugin-react";
-import { defineConfig } from "vite";
-
-// https://vite.dev/config/
-export default defineConfig({
-  plugins: [react(), tailwindcss()],
-  build: {
-    assetsDir: "assets",
-  },
-  base: "./",
-  server: {
-    port: 5175,
-    proxy: {
-      "^/trust/[^/]+/api": {
-        target: "http://localhost:8080",
-        changeOrigin: true,
-      },
-    },
-  },
-  resolve: {
-    alias: {
-      "#": fileURLToPath(new URL("./src", import.meta.url)),
-    },
-  },
-});
+export function App() {
+  return (
+    <main className="flex min-h-screen items-center justify-center bg-sand-1">
+      <h1 className="text-6 font-bold text-sand-12">Compliance Portal</h1>
+    </main>
+  );
+}

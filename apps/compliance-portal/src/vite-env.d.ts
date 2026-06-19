@@ -12,31 +12,12 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { fileURLToPath, URL } from "node:url";
+/// <reference types="vite/client" />
 
-import tailwindcss from "@tailwindcss/vite";
-import react from "@vitejs/plugin-react";
-import { defineConfig } from "vite";
+interface ImportMetaEnv {
+  readonly VITE_API_URL: string;
+}
 
-// https://vite.dev/config/
-export default defineConfig({
-  plugins: [react(), tailwindcss()],
-  build: {
-    assetsDir: "assets",
-  },
-  base: "./",
-  server: {
-    port: 5175,
-    proxy: {
-      "^/trust/[^/]+/api": {
-        target: "http://localhost:8080",
-        changeOrigin: true,
-      },
-    },
-  },
-  resolve: {
-    alias: {
-      "#": fileURLToPath(new URL("./src", import.meta.url)),
-    },
-  },
-});
+interface ImportMeta {
+  readonly env: ImportMetaEnv;
+}
