@@ -4,6 +4,16 @@ All notable changes to the Probo Helm chart will be documented in this file.
 
 ## Unreleased
 
+## [0.8.0] - 2026-06-19
+
+### Added
+
+- `probo.oauth2.cimdAllowedClientIds` config slot: list of HTTPS client metadata document URLs allowed for CIMD OAuth clients (e.g. MCP connectors); leave empty to disable CIMD
+
+### Changed
+
+- Default `appVersion` updated to `probod v0.216.0`
+
 ## [0.7.0] - 2026-06-12
 
 ### Added
