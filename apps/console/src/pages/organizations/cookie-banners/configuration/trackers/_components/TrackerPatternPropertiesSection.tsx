@@ -12,7 +12,7 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { formatError, getTrackerSourceBadge, getTrackerTypeBadge, type GraphQLError, humanizeSeconds } from "@probo/helpers";
+import { formatError, getTrackerSourceBadge, getTrackerTypeBadge, humanizeSeconds } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import { Badge, Card, IconSquareBehindSquare2, PropertyRow, useToast } from "@probo/ui";
 import { graphql, useFragment, useMutation } from "react-relay";
@@ -83,7 +83,7 @@ export function TrackerPatternPropertiesSection({
 }: TrackerPatternPropertiesSectionProps) {
   const { toast } = useToast();
   const { __ } = useTranslate();
-  const pattern = useFragment(
+  const pattern = useFragment<TrackerPatternPropertiesSection_trackerPattern$key>(
     trackerPatternPropertiesSectionFragment,
     trackerPatternKey,
   );
@@ -110,7 +110,7 @@ export function TrackerPatternPropertiesSection({
         toast({ title: __("Success"), description: __("Cookie moved"), variant: "success" });
       },
       onError(error) {
-        toast({ title: __("Error"), description: formatError(__("Failed to move cookie"), error as GraphQLError), variant: "error" });
+        toast({ title: __("Error"), description: formatError(__("Failed to move cookie"), error), variant: "error" });
       },
     });
   };
