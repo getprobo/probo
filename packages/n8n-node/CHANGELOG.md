@@ -4,6 +4,12 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+## [0.195.0] - 2026-06-19
+
+### Removed
+
+- `document.sendSigningNotifications` operation (replaced by an automatic debounced notification worker on the server)
+
 ## [0.194.0] - 2026-06-11
 
 ### Changed
