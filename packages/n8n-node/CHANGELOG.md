@@ -4,6 +4,12 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+## [0.196.0] - 2026-06-19
+
+### Changed
+
+- Internal toolchain maintenance (build/lint dependency bumps); no change to node behavior or operations
+
 ## [0.195.0] - 2026-06-19
 
 ### Removed
