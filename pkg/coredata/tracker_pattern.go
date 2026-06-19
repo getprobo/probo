@@ -1269,11 +1269,18 @@ WHERE id = @id
 // siblings that were processed earlier and left unmatched can now be
 // re-evaluated against it.
 //
-// Only unpromoted (third_party_id IS NULL), not-already-queued
-// (mapping_requested_at IS NULL), non-extension siblings are touched, so
-// a fully mapped banner re-enqueues nothing. detected_trackers is used
-// only as a filtering subquery. Returns the number of siblings
-// re-enqueued.
+// Only siblings still genuinely unresolved are touched: not promoted to
+// an org party (third_party_id IS NULL), not already linked to a catalog
+// row that carries a common third party, and not marked FIRST_PARTY
+// (a terminal verdict). third_party_id IS NULL alone is no longer a
+// sufficient guard: since org-party auto-creation was dropped a pattern
+// can resolve a common third party yet stay third_party_id IS NULL, and
+// re-enqueueing those (or first-party siblings) on every cascade step is
+// what amplified reprocessing to O(N^2) per banner. The siblings must
+// also be not-already-queued (mapping_requested_at IS NULL) and
+// non-extension. A fully mapped banner re-enqueues nothing.
+// common_tracker_patterns and detected_trackers are used only as
+// filtering subqueries. Returns the number of siblings re-enqueued.
 func (tps *TrackerPatterns) RequestMappingForUnmappedSiblings(
 	ctx context.Context,
 	tx pg.Tx,
@@ -1306,6 +1313,15 @@ WHERE id IN (
 		AND third_party_id IS NULL
 		AND mapping_requested_at IS NULL
 		AND (source IS NULL OR source != @extension_source)
+		AND NOT EXISTS (
+			SELECT 1
+			FROM common_tracker_patterns ctp
+			WHERE ctp.id = tracker_patterns.common_tracker_pattern_id
+				AND (
+					ctp.common_third_party_id IS NOT NULL
+					OR ctp.attribution = 'FIRST_PARTY'
+				)
+		)
 		AND id IN (
 			SELECT DISTINCT tracker_pattern_id
 			FROM detected_trackers

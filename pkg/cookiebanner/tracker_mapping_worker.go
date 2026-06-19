@@ -341,7 +341,7 @@ func (h *trackerMappingHandler) Process(ctx context.Context, tp coredata.Tracker
 				return fmt.Errorf("cannot update tracker pattern mapping: %w", err)
 			}
 
-			h.logger.InfoCtx(
+			h.logger.DebugCtx(
 				ctx,
 				"mapped tracker pattern",
 				log.String("pattern", tp.Pattern),
@@ -539,7 +539,7 @@ func (h *trackerMappingHandler) reenqueueUnmappedSiblings(
 	}
 
 	if count > 0 {
-		h.logger.InfoCtx(
+		h.logger.DebugCtx(
 			ctx,
 			"re-enqueued unmapped sibling tracker patterns",
 			log.String("tracker_pattern_id", tp.ID.String()),
