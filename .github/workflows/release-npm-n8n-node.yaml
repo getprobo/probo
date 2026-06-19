@@ -27,6 +27,7 @@ jobs:
           cache: "npm"
           registry-url: "https://registry.npmjs.org"
           scope: "@probo"
+      - run: "npm install -g npm@^11.8.0"
       - run: "npm ci"
       - name: "Verify package.json version matches tag"
         run: |
