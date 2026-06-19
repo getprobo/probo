@@ -85,7 +85,10 @@ export function OAuthTokensPage(props: {
 
   usePageTitle(__("OAuth tokens"));
 
-  const { viewer } = usePreloadedQuery(oauthTokensPageQuery, queryRef);
+  const { viewer } = usePreloadedQuery<OAuthTokensPageQuery>(
+    oauthTokensPageQuery,
+    queryRef,
+  );
   const { data, loadNext, hasNext, isLoadingNext } = usePaginationFragment<
     OAuthTokensPageRefetchQuery,
     OAuthTokensPageFragment$key
