@@ -31,9 +31,9 @@ import (
 	"go.probo.inc/probo/pkg/crypto/jose"
 	"go.probo.inc/probo/pkg/crypto/rand"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/iam/scopeset"
 	"go.probo.inc/probo/pkg/net"
 	"go.probo.inc/probo/pkg/page"
-	"go.probo.inc/probo/pkg/iam/scopeset"
 	"go.probo.inc/probo/pkg/uri"
 )
 
