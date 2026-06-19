@@ -4,6 +4,12 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.216.0] - 2026-06-19
+
+### Added
+
+- OAuth2 Client ID Metadata Document (CIMD) support: MCP connectors such as ChatGPT and Claude can now register via HTTPS client_id URLs instead of pre-provisioned GIDs; metadata documents are fetched and cached, clients are upserted on first use, and CIMD is advertised in OIDC discovery when allowed URLs are configured
+
 ## [0.215.1] - 2026-06-19
 
 ### Fixed
