@@ -70,7 +70,10 @@ export default function CreateCsvAccessReviewSourcePage({
 
   usePageTitle(__("Add CSV Access Source"));
 
-  const { organization } = usePreloadedQuery<CreateCsvAccessReviewSourcePageQuery>(createCsvAccessReviewSourcePageQuery, queryRef);
+  const { organization } = usePreloadedQuery<CreateCsvAccessReviewSourcePageQuery>(
+    createCsvAccessReviewSourcePageQuery,
+    queryRef,
+  );
   if (organization.__typename !== "Organization") {
     throw new Error("Organization not found");
   }

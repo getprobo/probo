@@ -138,7 +138,10 @@ export default function StatementOfApplicabilityDetailPage(props: Props) {
     statementOfApplicabilityId: string;
   }>();
   const organizationId = useOrganizationId();
-  const data = usePreloadedQuery<StatementOfApplicabilityDetailPageQuery>(statementOfApplicabilityDetailPageQuery, props.queryRef);
+  const data = usePreloadedQuery<StatementOfApplicabilityDetailPageQuery>(
+    statementOfApplicabilityDetailPageQuery,
+    props.queryRef,
+  );
   const statementOfApplicability = data.node;
   const { __ } = useTranslate();
   const navigate = useNavigate();

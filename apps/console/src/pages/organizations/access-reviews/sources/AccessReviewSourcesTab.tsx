@@ -102,7 +102,10 @@ export default function AccessReviewSourcesTab({ queryRef }: Props) {
   const [searchParams, setSearchParams] = useSearchParams();
   const processedConnectorIdRef = useRef<string | null>(null);
 
-  const { organization, accessReviewDrivers } = usePreloadedQuery<AccessReviewSourcesTabQuery>(accessReviewSourcesTabQuery, queryRef);
+  const { organization, accessReviewDrivers } = usePreloadedQuery<AccessReviewSourcesTabQuery>(
+    accessReviewSourcesTabQuery,
+    queryRef,
+  );
   if (organization.__typename !== "Organization") {
     throw new Error("Organization not found");
   }

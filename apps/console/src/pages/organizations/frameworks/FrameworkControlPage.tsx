@@ -15,8 +15,8 @@
 import {
   formatError,
   getControlMaturityLevelLabel,
+  promisifyMutation,
 } from "@probo/helpers";
-import { promisifyMutation } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import {
   ActionDropdown,
