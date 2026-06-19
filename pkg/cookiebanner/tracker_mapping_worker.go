@@ -289,7 +289,9 @@ func (h *trackerMappingHandler) Process(ctx context.Context, tp coredata.Tracker
 	// Phase 4: persist the pattern mapping in a short transaction. The
 	// unmatched fallback keeps catalog coverage complete even when no
 	// vendor was resolved.
-	return h.pg.WithTx(
+	mapped := true
+
+	if err := h.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			if commonPatternID == nil {
@@ -331,6 +333,8 @@ func (h *trackerMappingHandler) Process(ctx context.Context, tp coredata.Tracker
 						log.String("tracker_pattern_id", tp.ID.String()),
 					)
 
+					mapped = false
+
 					return nil
 				}
 
@@ -344,20 +348,39 @@ func (h *trackerMappingHandler) Process(ctx context.Context, tp coredata.Tracker
 				log.String("tracker_pattern_id", tp.ID.String()),
 			)
 
-			// This run newly resolved a catalog third party, so
-			// same-banner siblings that share an initiator domain but
-			// were processed earlier and left unmatched can now match
-			// against it. Re-arm their mapping so the worker revisits
-			// them; the guards keep already-mapped siblings untouched.
-			if commonThirdPartyID != nil && !det.commonThirdPartyPreexisted {
-				if err := h.reenqueueUnmappedSiblings(ctx, tx, tp, det.domains); err != nil {
-					return err
-				}
-			}
-
 			return nil
 		},
-	)
+	); err != nil {
+		return err
+	}
+
+	// Phase 5: re-arm same-banner siblings in a separate short
+	// transaction, after the mapping above has committed. This run newly
+	// resolved a catalog third party, so siblings that share an initiator
+	// domain but were processed earlier and left unmatched can now match
+	// against it. Re-arm their mapping so the worker revisits them; the
+	// guards keep already-mapped siblings untouched.
+	//
+	// The re-enqueue must not run inside the Phase 4 transaction: that
+	// transaction holds the row lock on tp, and the sibling UPDATE then
+	// takes locks on other tracker_patterns rows while holding it. Two
+	// workers mapping sibling patterns on the same banner would acquire
+	// those row locks in opposite orders and deadlock. Committing Phase 4
+	// first releases tp's lock, and RequestMappingForUnmappedSiblings
+	// takes its locks in a deterministic id order, so the two can no
+	// longer cycle.
+	if mapped && commonThirdPartyID != nil && !det.commonThirdPartyPreexisted {
+		if err := h.pg.WithTx(
+			ctx,
+			func(ctx context.Context, tx pg.Tx) error {
+				return h.reenqueueUnmappedSiblings(ctx, tx, tp, det.domains)
+			},
+		); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 // deterministicResult carries the outcome of the pure-SQL catalog

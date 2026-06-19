@@ -1286,26 +1286,37 @@ func (tps *TrackerPatterns) RequestMappingForUnmappedSiblings(
 		return 0, nil
 	}
 
+	// The target rows are locked through an ORDER BY id ... FOR UPDATE
+	// subquery so concurrent re-enqueues over overlapping sibling sets
+	// always acquire their row locks in the same ascending id order. Two
+	// workers mapping sibling patterns on the same banner would otherwise
+	// lock the shared rows in opposite orders and deadlock (40P01).
 	q := `
 UPDATE tracker_patterns
 SET
 	mapping_requested_at = NOW(),
 	updated_at = NOW()
-WHERE
-	%[1]s
-	AND cookie_banner_id = @cookie_banner_id
-	AND id != @exclude_pattern_id
-	AND third_party_id IS NULL
-	AND mapping_requested_at IS NULL
-	AND (source IS NULL OR source != @extension_source)
-	AND id IN (
-		SELECT DISTINCT tracker_pattern_id
-		FROM detected_trackers
-		WHERE %[1]s
-			AND cookie_banner_id = @cookie_banner_id
-			AND initiator_domain = ANY(@domains)
-			AND tracker_pattern_id IS NOT NULL
-	)
+WHERE id IN (
+	SELECT id
+	FROM tracker_patterns
+	WHERE
+		%[1]s
+		AND cookie_banner_id = @cookie_banner_id
+		AND id != @exclude_pattern_id
+		AND third_party_id IS NULL
+		AND mapping_requested_at IS NULL
+		AND (source IS NULL OR source != @extension_source)
+		AND id IN (
+			SELECT DISTINCT tracker_pattern_id
+			FROM detected_trackers
+			WHERE %[1]s
+				AND cookie_banner_id = @cookie_banner_id
+				AND initiator_domain = ANY(@domains)
+				AND tracker_pattern_id IS NOT NULL
+		)
+	ORDER BY id
+	FOR UPDATE
+)
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
