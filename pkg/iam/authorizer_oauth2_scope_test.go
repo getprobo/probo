@@ -24,7 +24,7 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam/oauth2"
-	"go.probo.inc/probo/pkg/iam/scopeset"
+	"go.probo.inc/probo/pkg/iam/oauth2scope"
 )
 
 func TestAuthorizer_checkOAuth2Scope(t *testing.T) {
@@ -66,7 +66,7 @@ func TestAuthorizer_checkOAuth2Scope(t *testing.T) {
 	t.Run("allows when registered scopes authorize the action", func(t *testing.T) {
 		t.Parallel()
 
-		scopeSet := scopeset.New().Register(
+		scopeSet := oauth2scope.NewRegistry().Register(
 			map[coredata.OAuth2Scope][]string{
 				scopeV1OrgRead: {action},
 			},

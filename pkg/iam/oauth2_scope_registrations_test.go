@@ -22,37 +22,37 @@ import (
 	"go.probo.inc/probo/pkg/agentrun"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/iam"
-	"go.probo.inc/probo/pkg/iam/scopeset"
+	"go.probo.inc/probo/pkg/iam/oauth2scope"
 	"go.probo.inc/probo/pkg/probo"
 )
 
-func allRegisteredOAuth2ScopeSets() *scopeset.ScopeSet {
-	return scopeset.New().
+func allRegisteredOAuth2ScopeRegistries() *oauth2scope.Registry {
+	return oauth2scope.NewRegistry().
 		Register(iam.IAMOAuth2ScopeMappings).
 		Register(probo.OAuth2ScopeMappings).
 		Register(accessreview.OAuth2ScopeMappings).
 		Register(agentrun.OAuth2ScopeMappings)
 }
 
-func TestRegisteredOAuth2ScopeSets_OrganizationRead(t *testing.T) {
+func TestRegisteredOAuth2ScopeRegistries_OrganizationRead(t *testing.T) {
 	t.Parallel()
 
-	scopeSet := allRegisteredOAuth2ScopeSets()
+	reg := allRegisteredOAuth2ScopeRegistries()
 	tokenScopes := coredata.OAuth2Scopes{probo.ScopeV1OrgRead}
 
-	assert.True(t, scopeSet.Allows(tokenScopes, probo.ActionOrganizationGet))
-	assert.False(t, scopeSet.Allows(tokenScopes, probo.ActionOrganizationUpdate))
-	assert.False(t, scopeSet.Allows(tokenScopes, probo.ActionThirdPartyList))
+	assert.True(t, reg.Allows(tokenScopes, probo.ActionOrganizationGet))
+	assert.False(t, reg.Allows(tokenScopes, probo.ActionOrganizationUpdate))
+	assert.False(t, reg.Allows(tokenScopes, probo.ActionThirdPartyList))
 }
 
-func TestRegisteredOAuth2ScopeSets_UnmappedActionDenies(t *testing.T) {
+func TestRegisteredOAuth2ScopeRegistries_UnmappedActionDenies(t *testing.T) {
 	t.Parallel()
 
-	scopeSet := allRegisteredOAuth2ScopeSets()
+	reg := allRegisteredOAuth2ScopeRegistries()
 	tokenScopes := coredata.OAuth2Scopes{
 		probo.ScopeV1OrgRead,
 		probo.ScopeV1ThirdPartyRead,
 	}
 
-	assert.False(t, scopeSet.Allows(tokenScopes, "core:unmapped:action"))
+	assert.False(t, reg.Allows(tokenScopes, "core:unmapped:action"))
 }

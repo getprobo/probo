@@ -37,6 +37,7 @@ func NewGraphQLHandler(svc *iam.Service, logger *log.Logger, fileManagerSvc *fil
 			batchAuthorize: authz.NewBatchAuthorizeFunc(svc, logger),
 			logger:         logger,
 			iam:            svc,
+			scopeRegistry:  svc.OAuth2ScopeRegistry,
 			fileManager:    fileManagerSvc,
 			baseURL:        baseURL,
 			sessionCookie:  authn.NewCookie(&cookieConfig),

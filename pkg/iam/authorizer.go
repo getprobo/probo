@@ -28,8 +28,8 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam/oauth2"
+	"go.probo.inc/probo/pkg/iam/oauth2scope"
 	"go.probo.inc/probo/pkg/iam/policy"
-	"go.probo.inc/probo/pkg/iam/scopeset"
 )
 
 // AuthorizationAttributer is implemented by entities that can provide
@@ -84,21 +84,21 @@ type AuthorizeMultiParams struct {
 
 // Authorizer evaluates authorization requests against registered policies.
 type Authorizer struct {
-	pg             *pg.Client
-	evaluator      *policy.Evaluator
-	policySet      *PolicySet
-	oauth2ScopeSet *scopeset.ScopeSet
-	logger         *log.Logger
+	pg            *pg.Client
+	evaluator     *policy.Evaluator
+	policySet     *PolicySet
+	scopeRegistry *oauth2scope.Registry
+	logger        *log.Logger
 }
 
 // NewAuthorizer creates a new Authorizer instance.
-func NewAuthorizer(pgClient *pg.Client, logger *log.Logger, scopeSet *scopeset.ScopeSet) *Authorizer {
+func NewAuthorizer(pgClient *pg.Client, logger *log.Logger, scopeRegistry *oauth2scope.Registry) *Authorizer {
 	return &Authorizer{
-		pg:             pgClient,
-		evaluator:      policy.NewEvaluator(),
-		policySet:      NewPolicySet(),
-		oauth2ScopeSet: scopeSet,
-		logger:         logger,
+		pg:            pgClient,
+		evaluator:     policy.NewEvaluator(),
+		policySet:     NewPolicySet(),
+		scopeRegistry: scopeRegistry,
+		logger:        logger,
 	}
 }
 
@@ -117,7 +117,7 @@ func (a *Authorizer) checkOAuth2Scope(
 		return nil
 	}
 
-	if a.oauth2ScopeSet == nil || !a.oauth2ScopeSet.Allows(accessToken.Scopes, action) {
+	if a.scopeRegistry == nil || !a.scopeRegistry.Allows(accessToken.Scopes, action) {
 		return NewInsufficientOAuth2ScopeError(principal, action)
 	}
 

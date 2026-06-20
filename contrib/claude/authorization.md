@@ -255,7 +255,7 @@ and `r.AuthorizeBatch` (MCP) — keep the returned scope and pass it down.
 | IAM role policies (`IAMPolicySet`) | `pkg/iam/iam_policies.go` |
 | Authorizer + `AuthorizationAttributer` | `pkg/iam/authorizer.go` |
 | PolicySet registration | `pkg/iam/policy_set.go` |
-| OAuth2 scope mappings (`ScopeSet`) | `pkg/iam/scope_set.go` |
+| OAuth2 scope registry (`oauth2scope.Registry`) | `pkg/iam/oauth2scope/registry.go` |
 | OAuth2 scope constants (per domain) | `pkg/<service>/oauth2_scopes.go` |
 | OAuth2 discovery + request context | `pkg/iam/oauth2/` |
 | GraphQL authz helper | `pkg/server/api/authz/authorization.go` |
@@ -291,9 +291,9 @@ Scopes are namespace- or product-level only — no resource segments (e.g. `v1:p
 - Authorization server (RFC 8414): `scopes_supported` on `/.well-known/oauth-authorization-server` lists OIDC + all API scopes; `protected_resources` links to the resource metadata document
 - Protected resource (RFC 9728): `scopes_supported` on `/.well-known/oauth-protected-resource` lists `openid` plus API scopes
 
-**Enforcement:** OAuth2 bearer-token requests carry the validated access token on the request context (`pkg/iam/oauth2/request_context.go`). Before IAM policy evaluation, `iam.Authorizer` checks registered `iam.ScopeSet` mappings via `ScopeSet.Allows` (`RegisterScopes`, same composition model as `RegisterPolicySet`). Each domain package exports an `OAuth2ScopeSet()` (or `IAMOAuth2ScopeSet()` in `pkg/iam`) and registers it at service startup. The check uses explicit scope→action lists — no `:read` / `:get` heuristics at enforcement time. Session, personal API key, and SCIM auth skip the check (no access token on context). Unmapped IAM actions **deny** OAuth requests (fail closed). Enforcement reads scopes from the access token directly.
+**Enforcement:** OAuth2 bearer-token requests carry the validated access token on the request context (`pkg/iam/oauth2/request_context.go`). Before IAM policy evaluation, `iam.Authorizer` checks registered `oauth2scope.Registry` mappings via `Registry.Allows`. Each domain package exports `OAuth2ScopeMappings` in its `oauth2_scopes.go`; `probod` registers all domain mappings on the shared registry before `iam.NewService`. The check uses explicit scope→action lists — no `:read` / `:get` heuristics at enforcement time. Session, personal API key, and SCIM auth skip the check (no access token on context). Unmapped IAM actions **deny** OAuth requests (fail closed). Enforcement reads scopes from the access token directly.
 
-Add new namespace-level scope constants in the owning package's `oauth2_scopes.go`, map their IAM actions in that package's `OAuth2ScopeSet()`, and register that set on the authorizer when the surface is ready for OAuth clients. Write scopes are registered only when their mutating IAM actions are mapped.
+Add new namespace-level scope constants in the owning package's `oauth2_scopes.go`, map their IAM actions in that package's `OAuth2ScopeMappings`, and add the mapping to `probod` wiring alongside the other domain registrations. Write scopes are registered only when their mutating IAM actions are mapped.
 
 **Well-known Probo CLI client:** `iam_oauth2_clients` scopes for `AAAAAAAAAAAASwAAAAAAAAAAcHJiY2xp` must match `CLIClientScopes` in `pkg/cli/config/config.go` (requested by `prb auth login`). When adding API scopes, update the client migration, `CLIClientScopes`, and scope registration together.
 

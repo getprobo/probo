@@ -31,8 +31,8 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
+	"go.probo.inc/probo/pkg/iam/oauth2scope"
 	"go.probo.inc/probo/pkg/iam/policy"
-	"go.probo.inc/probo/pkg/iam/scopeset"
 	"go.probo.inc/probo/pkg/mail"
 )
 
@@ -217,7 +217,7 @@ func TestAuthorizer_AuthorizeBatch(t *testing.T) {
 	t.Run("empty input", func(t *testing.T) {
 		t.Parallel()
 
-		authorizer := iam.NewAuthorizer(nil, log.NewLogger(log.WithOutput(io.Discard)), scopeset.New())
+		authorizer := iam.NewAuthorizer(nil, log.NewLogger(log.WithOutput(io.Discard)), oauth2scope.NewRegistry())
 
 		_, err := authorizer.AuthorizeBatch(
 			context.Background(),
@@ -645,7 +645,7 @@ func TestAuthorizer_AuthorizeMulti(t *testing.T) {
 	t.Run("rejects empty items", func(t *testing.T) {
 		t.Parallel()
 
-		authorizer := iam.NewAuthorizer(nil, log.NewLogger(log.WithOutput(io.Discard)), scopeset.New())
+		authorizer := iam.NewAuthorizer(nil, log.NewLogger(log.WithOutput(io.Discard)), oauth2scope.NewRegistry())
 
 		scope, decisions, err := authorizer.AuthorizeMulti(
 			context.Background(),
@@ -664,7 +664,7 @@ func TestAuthorizer_AuthorizeMulti(t *testing.T) {
 	t.Run("rejects unsupported principal type", func(t *testing.T) {
 		t.Parallel()
 
-		authorizer := iam.NewAuthorizer(nil, log.NewLogger(log.WithOutput(io.Discard)), scopeset.New())
+		authorizer := iam.NewAuthorizer(nil, log.NewLogger(log.WithOutput(io.Discard)), oauth2scope.NewRegistry())
 
 		scope, decisions, err := authorizer.AuthorizeMulti(
 			context.Background(),
@@ -783,7 +783,7 @@ func newTestAuthorizer(client *pg.Client, action string, allowResourceID *gid.GI
 }
 
 func newTestAuthorizerWithStatements(client *pg.Client, statements ...policy.Statement) *iam.Authorizer {
-	authorizer := iam.NewAuthorizer(client, log.NewLogger(log.WithOutput(io.Discard)), scopeset.New())
+	authorizer := iam.NewAuthorizer(client, log.NewLogger(log.WithOutput(io.Discard)), oauth2scope.NewRegistry())
 	authorizer.RegisterPolicySet(
 		iam.NewPolicySet().AddRolePolicy(
 			string(coredata.MembershipRoleOwner),
@@ -795,7 +795,7 @@ func newTestAuthorizerWithStatements(client *pg.Client, statements ...policy.Sta
 }
 
 func newTestAuthorizerWithIdentityScopedStatements(client *pg.Client, statements ...policy.Statement) *iam.Authorizer {
-	authorizer := iam.NewAuthorizer(client, log.NewLogger(log.WithOutput(io.Discard)), scopeset.New())
+	authorizer := iam.NewAuthorizer(client, log.NewLogger(log.WithOutput(io.Discard)), oauth2scope.NewRegistry())
 	authorizer.RegisterPolicySet(
 		iam.NewPolicySet().AddIdentityScopedPolicy(
 			policy.NewPolicy("batch-authorize-identity-test", "Batch Authorize Identity Test", statements...),

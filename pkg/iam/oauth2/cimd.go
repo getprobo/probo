@@ -400,15 +400,7 @@ func (s *Service) upsertCIMDClient(
 		clientURI = &doc.ClientURI
 	}
 
-	scopes := slices.Concat(
-		[]coredata.OAuth2Scope{
-			ScopeOpenID,
-			ScopeProfile,
-			ScopeEmail,
-			ScopeOfflineAccess,
-		},
-		s.scopeSet.APIScopes(),
-	)
+	scopes := coredata.OAuth2Scopes(authorizationServerScopes(s.registry.RegisteredScopes()))
 
 	now := time.Now()
 

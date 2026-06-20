@@ -12,33 +12,29 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package iam
+package oauth2
 
 import (
-	"testing"
+	"slices"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"go.probo.inc/probo/pkg/coredata"
-	"go.probo.inc/probo/pkg/iam/scopeset"
 )
 
-func TestAuthorizer_UsesOAuth2ScopeSet(t *testing.T) {
-	t.Parallel()
-
-	const scopeV1OrgRead = coredata.OAuth2Scope("v1:org:read")
-
-	scopeSet := scopeset.New().Register(
-		map[coredata.OAuth2Scope][]string{
-			scopeV1OrgRead: {"core:organization:get"},
+func authorizationServerScopes(registeredScopes []coredata.OAuth2Scope) []coredata.OAuth2Scope {
+	return slices.Concat(
+		[]coredata.OAuth2Scope{
+			ScopeOpenID,
+			ScopeProfile,
+			ScopeEmail,
+			ScopeOfflineAccess,
 		},
+		registeredScopes,
 	)
+}
 
-	authorizer := NewAuthorizer(nil, nil, scopeSet)
-
-	require.NotNil(t, authorizer.oauth2ScopeSet)
-
-	tokenScopes := coredata.OAuth2Scopes{scopeV1OrgRead}
-	assert.True(t, authorizer.oauth2ScopeSet.Allows(tokenScopes, "core:organization:get"))
-	assert.False(t, authorizer.oauth2ScopeSet.Allows(tokenScopes, "core:organization:update"))
+func protectedResourceScopes(registeredScopes []coredata.OAuth2Scope) []coredata.OAuth2Scope {
+	return slices.Concat(
+		[]coredata.OAuth2Scope{ScopeOpenID},
+		registeredScopes,
+	)
 }

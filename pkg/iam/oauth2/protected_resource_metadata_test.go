@@ -21,6 +21,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/iam/oauth2"
+	"go.probo.inc/probo/pkg/iam/oauth2scope"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/uri"
 )
@@ -28,12 +29,16 @@ import (
 func TestNewProtectedResourceMetadata(t *testing.T) {
 	t.Parallel()
 
-	apiScopes := []coredata.OAuth2Scope{probo.ScopeV1DocumentRead}
+	reg := oauth2scope.NewRegistry().Register(
+		map[coredata.OAuth2Scope][]string{
+			probo.ScopeV1DocumentRead: {"core:document:get"},
+		},
+	)
 
 	resource := uri.URI("https://app.example.com")
 	authorizationServer := uri.URI("https://app.example.com")
 
-	metadata := oauth2.NewProtectedResourceMetadata(resource, authorizationServer, apiScopes)
+	metadata := oauth2.NewProtectedResourceMetadata(resource, authorizationServer, reg.RegisteredScopes())
 	require.NotNil(t, metadata)
 
 	assert.Equal(t, resource, metadata.Resource)

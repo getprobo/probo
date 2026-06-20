@@ -22,6 +22,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/iam/oauth2"
+	"go.probo.inc/probo/pkg/iam/oauth2scope"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/uri"
 )
@@ -29,7 +30,11 @@ import (
 func TestNewMetadata(t *testing.T) {
 	t.Parallel()
 
-	apiScopes := []coredata.OAuth2Scope{probo.ScopeV1DocumentRead}
+	reg := oauth2scope.NewRegistry().Register(
+		map[coredata.OAuth2Scope][]string{
+			probo.ScopeV1DocumentRead: {"core:document:get"},
+		},
+	)
 
 	issuer := uri.URI("https://auth.example.com")
 	endpoints := oauth2.Endpoints{
@@ -43,7 +48,7 @@ func TestNewMetadata(t *testing.T) {
 		DeviceAuthorization: "https://auth.example.com/device",
 	}
 
-	metadata := oauth2.NewMetadata(issuer, endpoints, apiScopes)
+	metadata := oauth2.NewMetadata(issuer, endpoints, reg.RegisteredScopes())
 	require.NotNil(t, metadata)
 
 	t.Run(
@@ -83,7 +88,7 @@ func TestNewMetadata(t *testing.T) {
 					oauth2.ScopeEmail,
 					oauth2.ScopeOfflineAccess,
 				},
-				apiScopes,
+				reg.RegisteredScopes(),
 			)
 
 			assert.Equal(t, expectedScopes, metadata.ScopesSupported)

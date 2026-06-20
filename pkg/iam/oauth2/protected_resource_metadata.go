@@ -15,8 +15,6 @@
 package oauth2
 
 import (
-	"slices"
-
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/uri"
 )
@@ -33,7 +31,7 @@ type ProtectedResourceMetadata struct {
 func NewProtectedResourceMetadata(
 	resource uri.URI,
 	authorizationServer uri.URI,
-	apiScopes []coredata.OAuth2Scope,
+	registeredScopes []coredata.OAuth2Scope,
 ) *ProtectedResourceMetadata {
 	return &ProtectedResourceMetadata{
 		Resource:             resource,
@@ -41,9 +39,6 @@ func NewProtectedResourceMetadata(
 		BearerMethodsSupported: []string{
 			"header",
 		},
-		ScopesSupported: slices.Concat(
-			[]coredata.OAuth2Scope{ScopeOpenID},
-			apiScopes,
-		),
+		ScopesSupported: protectedResourceScopes(registeredScopes),
 	}
 }

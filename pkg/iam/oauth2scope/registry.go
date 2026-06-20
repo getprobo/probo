@@ -12,10 +12,11 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package scopeset
+package oauth2scope
 
 import (
 	"cmp"
+	"fmt"
 	"maps"
 	"slices"
 	"sync"
@@ -23,47 +24,47 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 )
 
-type ScopeSet struct {
-	mu           sync.RWMutex
-	scopeActions map[coredata.OAuth2Scope][]string
-	actionScopes map[string][]coredata.OAuth2Scope
+type Registry struct {
+	mu            sync.RWMutex
+	scopeActions  map[coredata.OAuth2Scope][]string
+	invertedIndex map[string][]coredata.OAuth2Scope
 }
 
-func New() *ScopeSet {
-	return &ScopeSet{
+func NewRegistry() *Registry {
+	return &Registry{
 		scopeActions: make(map[coredata.OAuth2Scope][]string),
 	}
 }
 
-func (s *ScopeSet) Register(mappings map[coredata.OAuth2Scope][]string) *ScopeSet {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+func (r *Registry) Register(mappings map[coredata.OAuth2Scope][]string) *Registry {
+	r.mu.Lock()
+	defer r.mu.Unlock()
 
 	for scope, actions := range mappings {
 		if len(actions) == 0 {
 			continue
 		}
 
-		s.scopeActions[scope] = append(s.scopeActions[scope], actions...)
+		r.scopeActions[scope] = append(r.scopeActions[scope], actions...)
 	}
 
-	s.rebuildActionScopes()
+	r.rebuildInvertedIndex()
 
-	return s
+	return r
 }
 
-func (s *ScopeSet) APIScopes() []coredata.OAuth2Scope {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
+func (r *Registry) RegisteredScopes() []coredata.OAuth2Scope {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
 
-	return sortedScopes(slices.Collect(maps.Keys(s.scopeActions)))
+	return sortedScopes(slices.Collect(maps.Keys(r.scopeActions)))
 }
 
-func (s *ScopeSet) Allows(tokenScopes coredata.OAuth2Scopes, action string) bool {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
+func (r *Registry) Allows(tokenScopes coredata.OAuth2Scopes, action string) bool {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
 
-	grantingScopes, ok := s.actionScopes[action]
+	grantingScopes, ok := r.invertedIndex[action]
 	if !ok {
 		return false
 	}
@@ -71,16 +72,29 @@ func (s *ScopeSet) Allows(tokenScopes coredata.OAuth2Scopes, action string) bool
 	return slices.ContainsFunc(grantingScopes, tokenScopes.Contains)
 }
 
-func (s *ScopeSet) rebuildActionScopes() {
-	actionScopes := make(map[string][]coredata.OAuth2Scope, len(s.scopeActions)*4)
+func (r *Registry) ValidateScopes(scopes coredata.OAuth2Scopes) error {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
 
-	for scope, actions := range s.scopeActions {
-		for _, action := range actions {
-			actionScopes[action] = append(actionScopes[action], scope)
+	for _, scope := range scopes {
+		if _, ok := r.scopeActions[scope]; !ok {
+			return fmt.Errorf("invalid scope: %s", scope)
 		}
 	}
 
-	s.actionScopes = actionScopes
+	return nil
+}
+
+func (r *Registry) rebuildInvertedIndex() {
+	invertedIndex := make(map[string][]coredata.OAuth2Scope, len(r.scopeActions)*4)
+
+	for scope, actions := range r.scopeActions {
+		for _, action := range actions {
+			invertedIndex[action] = append(invertedIndex[action], scope)
+		}
+	}
+
+	r.invertedIndex = invertedIndex
 }
 
 func sortedScopes(scopes []coredata.OAuth2Scope) []coredata.OAuth2Scope {

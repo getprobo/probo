@@ -36,11 +36,10 @@ func (r *mutationResolver) CreateOAuth2AccessToken(ctx context.Context, input ty
 	tokenValue, accessToken, err := r.iam.OAuth2ServerService.CreateManualAccessToken(
 		ctx,
 		&oauth2.CreateManualAccessTokenRequest{
-			IdentityID:       identity.ID,
-			Name:             strings.TrimSpace(input.Name),
-			ExpiresAt:        input.ExpiresAt,
-			Scopes:           scopes,
-			AllowedAPIScopes: r.iam.OAuth2ScopeSet.APIScopes(),
+			IdentityID: identity.ID,
+			Name:       strings.TrimSpace(input.Name),
+			ExpiresAt:  input.ExpiresAt,
+			Scopes:     scopes,
 		},
 	)
 	if err != nil {

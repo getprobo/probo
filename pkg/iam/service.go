@@ -34,10 +34,10 @@ import (
 	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam/oauth2"
+	"go.probo.inc/probo/pkg/iam/oauth2scope"
 	"go.probo.inc/probo/pkg/iam/oidc"
 	"go.probo.inc/probo/pkg/iam/saml"
 	"go.probo.inc/probo/pkg/iam/scim"
-	"go.probo.inc/probo/pkg/iam/scopeset"
 	"go.probo.inc/probo/pkg/uri"
 )
 
@@ -70,7 +70,7 @@ type (
 		APIKeyService         *APIKeyService
 		OAuth2ServerService   *oauth2.Service
 		Authorizer            *Authorizer
-		OAuth2ScopeSet        *scopeset.ScopeSet
+		OAuth2ScopeRegistry   *oauth2scope.Registry
 
 		samlDomainVerifier *SAMLDomainVerifier
 	}
@@ -99,6 +99,7 @@ type (
 		MicrosoftOIDC                  oidc.ProviderConfig
 		OAuth2ServerSigningKeys        oauth2.SigningKeys
 		OAuth2ServerOptions            []oauth2.Option
+		OAuth2ScopeRegistry            *oauth2scope.Registry
 	}
 )
 
@@ -134,6 +135,10 @@ func NewService(
 		return nil, fmt.Errorf("encryption key is required")
 	}
 
+	if cfg.OAuth2ScopeRegistry == nil {
+		return nil, fmt.Errorf("oauth2 scope registry is required")
+	}
+
 	svc := &Service{
 		pg:                         pgClient,
 		fm:                         fm,
@@ -159,13 +164,12 @@ func NewService(
 	svc.AuthService = NewAuthService(svc)
 	svc.APIKeyService = NewAPIKeyService(svc)
 
-	svc.OAuth2ScopeSet = scopeset.New()
-	svc.OAuth2ScopeSet.Register(IAMOAuth2ScopeMappings)
+	svc.OAuth2ScopeRegistry = cfg.OAuth2ScopeRegistry
 
 	svc.Authorizer = NewAuthorizer(
 		pgClient,
 		cfg.Logger.Named("authorizer"),
-		svc.OAuth2ScopeSet,
+		svc.OAuth2ScopeRegistry,
 	)
 	svc.Authorizer.RegisterPolicySet(IAMPolicySet())
 
@@ -206,7 +210,7 @@ func NewService(
 		uri.URI(cfg.BaseURL.String()),
 		cfg.Logger.Named("oauth2"),
 		append(
-			[]oauth2.Option{oauth2.WithScopeSet(svc.OAuth2ScopeSet)},
+			[]oauth2.Option{oauth2.WithRegistry(svc.OAuth2ScopeRegistry)},
 			cfg.OAuth2ServerOptions...,
 		)...,
 	)
@@ -224,12 +228,12 @@ func NewService(
 
 // OAuth2ServerMetadata returns the OIDC discovery document.
 func (s *Service) OAuth2ServerMetadata(endpoints oauth2.Endpoints) *oauth2.ServerMetadata {
-	return oauth2.NewMetadata(uri.URI(s.baseURL), endpoints, s.OAuth2ScopeSet.APIScopes())
+	return oauth2.NewMetadata(uri.URI(s.baseURL), endpoints, s.OAuth2ScopeRegistry.RegisteredScopes())
 }
 
 // OAuth2ProtectedResourceMetadata returns the RFC 9728 protected resource metadata document.
 func (s *Service) OAuth2ProtectedResourceMetadata(resource uri.URI) *oauth2.ProtectedResourceMetadata {
-	return oauth2.NewProtectedResourceMetadata(resource, resource, s.OAuth2ScopeSet.APIScopes())
+	return oauth2.NewProtectedResourceMetadata(resource, resource, s.OAuth2ScopeRegistry.RegisteredScopes())
 }
 
 func (s *Service) IsSignUpEnabled() bool {

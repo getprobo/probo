@@ -31,7 +31,7 @@ import (
 	"go.probo.inc/probo/pkg/crypto/jose"
 	"go.probo.inc/probo/pkg/crypto/rand"
 	"go.probo.inc/probo/pkg/gid"
-	"go.probo.inc/probo/pkg/iam/scopeset"
+	"go.probo.inc/probo/pkg/iam/oauth2scope"
 	"go.probo.inc/probo/pkg/net"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/uri"
@@ -63,7 +63,7 @@ type (
 		gc                        *GarbageCollector
 		cimd                      *cimdFetcher
 		cimdAllowedClientIDs      []string
-		scopeSet                  *scopeset.ScopeSet
+		registry                  *oauth2scope.Registry
 		accessTokenDuration       time.Duration
 		refreshTokenDuration      time.Duration
 		authorizationCodeDuration time.Duration
@@ -128,11 +128,10 @@ type (
 	}
 
 	CreateManualAccessTokenRequest struct {
-		IdentityID       gid.GID
-		Name             string
-		ExpiresAt        time.Time
-		Scopes           coredata.OAuth2Scopes
-		AllowedAPIScopes []coredata.OAuth2Scope
+		IdentityID gid.GID
+		Name       string
+		ExpiresAt  time.Time
+		Scopes     coredata.OAuth2Scopes
 	}
 )
 
@@ -160,9 +159,9 @@ func WithDeviceCodeDuration(d time.Duration) Option {
 	}
 }
 
-func WithScopeSet(scopeSet *scopeset.ScopeSet) Option {
+func WithRegistry(registry *oauth2scope.Registry) Option {
 	return func(s *Service) {
-		s.scopeSet = scopeSet
+		s.registry = registry
 	}
 }
 
@@ -1918,8 +1917,8 @@ func (s *Service) CreateManualAccessToken(
 		return "", nil, NewError(ErrInvalidRequest, WithDescription("scopes are required"))
 	}
 
-	if err := validateManualAccessTokenScopes(req.Scopes, req.AllowedAPIScopes); err != nil {
-		return "", nil, err
+	if err := s.registry.ValidateScopes(req.Scopes); err != nil {
+		return "", nil, NewError(ErrInvalidScope, WithDescription(err.Error()))
 	}
 
 	tokenValue := rand.MustHexString(tokenByteLength)
@@ -1950,19 +1949,4 @@ func (s *Service) CreateManualAccessToken(
 	}
 
 	return tokenValue, accessToken, nil
-}
-
-func validateManualAccessTokenScopes(scopes, allowedAPIScopes coredata.OAuth2Scopes) error {
-	allowed := make(map[coredata.OAuth2Scope]struct{}, len(allowedAPIScopes))
-	for _, scope := range allowedAPIScopes {
-		allowed[scope] = struct{}{}
-	}
-
-	for _, scope := range scopes {
-		if _, ok := allowed[scope]; !ok {
-			return NewError(ErrInvalidScope, WithDescription("invalid scope: "+string(scope)))
-		}
-	}
-
-	return nil
 }

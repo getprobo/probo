@@ -16,6 +16,7 @@ scalar CursorKey
 scalar Datetime
 scalar Upload
 scalar EmailAddr
+scalar OAuth2Scope
 
 interface Node {
   id: ID!
@@ -33,7 +34,7 @@ type Query {
   signUpEnabled: Boolean!
     @goField(forceResolver: true)
     @authentication(required: OPTIONAL)
-  oauth2ScopesSupported: [String!]!
+  oauth2ScopesSupported: [OAuth2Scope!]!
     @goField(forceResolver: true)
     @authentication(required: OPTIONAL)
 }

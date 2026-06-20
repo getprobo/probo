@@ -40,6 +40,7 @@ import (
 	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
+	"go.probo.inc/probo/pkg/iam/oauth2scope"
 	"go.probo.inc/probo/pkg/saferedirect"
 	"go.probo.inc/probo/pkg/securecookie"
 	"go.probo.inc/probo/pkg/server/api/authn"
@@ -53,6 +54,7 @@ type (
 		batchAuthorize authz.BatchAuthorizeFunc
 		logger         *log.Logger
 		iam            *iam.Service
+		scopeRegistry  *oauth2scope.Registry
 		fileManager    *filemanager.Service
 		baseURL        *baseurl.BaseURL
 		sessionCookie  *authn.Cookie

@@ -61,6 +61,7 @@ import (
 	"go.probo.inc/probo/pkg/html2pdf"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/iam/oauth2"
+	"go.probo.inc/probo/pkg/iam/oauth2scope"
 	"go.probo.inc/probo/pkg/iam/oidc"
 	"go.probo.inc/probo/pkg/mailer"
 	"go.probo.inc/probo/pkg/mailman"
@@ -453,6 +454,12 @@ func (impl *Implm) Run(
 		}
 	}
 
+	oauth2ScopeRegistry := oauth2scope.NewRegistry().
+		Register(iam.IAMOAuth2ScopeMappings).
+		Register(probo.OAuth2ScopeMappings).
+		Register(agentrun.OAuth2ScopeMappings).
+		Register(accessreview.OAuth2ScopeMappings)
+
 	iamService, err := iam.NewService(
 		ctx,
 		pgClient,
@@ -490,6 +497,7 @@ func (impl *Implm) Run(
 			},
 			OAuth2ServerSigningKeys: oauth2SigningKeys,
 			OAuth2ServerOptions:     oauth2ServerOptions(impl.cfg.Auth.OAuth2Server),
+			OAuth2ScopeRegistry:     oauth2ScopeRegistry,
 		},
 	)
 	if err != nil {
@@ -601,8 +609,6 @@ func (impl *Implm) Run(
 
 	iamService.Authorizer.RegisterPolicySet(agentrun.PolicySet())
 	iamService.Authorizer.RegisterPolicySet(accessreview.PolicySet())
-	iamService.OAuth2ScopeSet.Register(agentrun.OAuth2ScopeMappings)
-	iamService.OAuth2ScopeSet.Register(accessreview.OAuth2ScopeMappings)
 
 	thirdPartyService := thirdparty.NewService(pgClient, fileManagerService, thirdPartyVetter)
 	riskManagementService := riskmanagement.NewService(pgClient)

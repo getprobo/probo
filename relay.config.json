@@ -36,7 +36,8 @@
         "CursorKey": "string",
         "Duration": "string",
         "BigInt": "number",
-        "EmailAddr": "string"
+        "EmailAddr": "string",
+        "OAuth2Scope": "string"
       }
     },
     "trust": {

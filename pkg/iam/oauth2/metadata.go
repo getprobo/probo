@@ -15,8 +15,6 @@
 package oauth2
 
 import (
-	"slices"
-
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/uri"
 )
@@ -61,7 +59,7 @@ type (
 	}
 )
 
-func NewMetadata(issuer uri.URI, endpoints Endpoints, apiScopes []coredata.OAuth2Scope) *ServerMetadata {
+func NewMetadata(issuer uri.URI, endpoints Endpoints, registeredScopes []coredata.OAuth2Scope) *ServerMetadata {
 	return &ServerMetadata{
 		Issuer:                      issuer,
 		AuthorizationEndpoint:       endpoints.Authorization,
@@ -72,16 +70,8 @@ func NewMetadata(issuer uri.URI, endpoints Endpoints, apiScopes []coredata.OAuth
 		IntrospectionEndpoint:       endpoints.Introspection,
 		RevocationEndpoint:          endpoints.Revocation,
 		DeviceAuthorizationEndpoint: endpoints.DeviceAuthorization,
-		ScopesSupported: slices.Concat(
-			[]coredata.OAuth2Scope{
-				ScopeOpenID,
-				ScopeProfile,
-				ScopeEmail,
-				ScopeOfflineAccess,
-			},
-			apiScopes,
-		),
-		ProtectedResources: []uri.URI{issuer},
+		ScopesSupported:             authorizationServerScopes(registeredScopes),
+		ProtectedResources:          []uri.URI{issuer},
 		ResponseTypesSupported: []coredata.OAuth2ResponseType{
 			coredata.OAuth2ResponseTypeCode,
 		},
