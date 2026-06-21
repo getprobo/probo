@@ -436,6 +436,13 @@ WITH next_group AS (
 			WHERE q.id = document_version_approval_decisions.quorum_id
 				AND doc.deleted_at IS NULL
 				AND doc.archived_at IS NULL
+				AND dv.id = (
+					SELECT latest.id
+					FROM document_versions latest
+					WHERE latest.document_id = dv.document_id
+					ORDER BY latest.major DESC, latest.minor DESC
+					LIMIT 1
+				)
 		)
 		AND EXISTS (
 			SELECT 1
@@ -479,6 +486,13 @@ WHERE
 		WHERE q.id = d.quorum_id
 			AND doc.deleted_at IS NULL
 			AND doc.archived_at IS NULL
+			AND dv.id = (
+				SELECT latest.id
+				FROM document_versions latest
+				WHERE latest.document_id = dv.document_id
+				ORDER BY latest.major DESC, latest.minor DESC
+				LIMIT 1
+			)
 	)
 ORDER BY
 	d.quorum_id

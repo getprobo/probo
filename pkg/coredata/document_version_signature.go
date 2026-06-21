@@ -460,6 +460,8 @@ WITH next_group AS (
 			WHERE dv.id = document_version_signatures.document_version_id
 				AND doc.deleted_at IS NULL
 				AND doc.archived_at IS NULL
+				AND doc.current_published_major IS NOT NULL
+				AND dv.major = doc.current_published_major
 		)
 		AND EXISTS (
 			SELECT 1
@@ -502,6 +504,8 @@ WHERE
 		WHERE dv.id = s.document_version_id
 			AND doc.deleted_at IS NULL
 			AND doc.archived_at IS NULL
+			AND doc.current_published_major IS NOT NULL
+			AND dv.major = doc.current_published_major
 	)
 ORDER BY
 	s.document_version_id
