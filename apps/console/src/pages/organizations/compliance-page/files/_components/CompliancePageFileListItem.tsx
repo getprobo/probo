@@ -24,6 +24,8 @@ import type { CompliancePageFileListItem_fileFragment$data, CompliancePageFileLi
 import type { CompliancePageFileListItemMutation } from "#/__generated__/core/CompliancePageFileListItemMutation.graphql";
 import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 
+import { CompliancePageAliasField } from "../../_components/CompliancePageAliasField";
+
 const compliancePageFragment = graphql`
   fragment CompliancePageFileListItem_compliancePageFragment on TrustCenter {
     canUpdate: permission(action: "core:trust-center:update")
@@ -34,6 +36,9 @@ const fileFragment = graphql`
   fragment CompliancePageFileListItem_fileFragment on TrustCenterFile {
     id
     name
+    alias
+    canSetAlias: permission(action: "core:trust-center-alias:set")
+    canRemoveAlias: permission(action: "core:trust-center-alias:remove")
     category
     file {
       downloadUrl
@@ -103,6 +108,14 @@ export function CompliancePageFileListItem(props: {
       </Td>
       <Td>{file.category}</Td>
       <Td>{formatDate(file.createdAt)}</Td>
+      <Td noLink>
+        <CompliancePageAliasField
+          resourceId={file.id}
+          alias={file.alias}
+          canSetAlias={file.canSetAlias}
+          canRemoveAlias={file.canRemoveAlias}
+        />
+      </Td>
       <Td noLink width={130} className="pr-0">
         <Field
           type="select"

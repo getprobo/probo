@@ -25,6 +25,8 @@ import type { CompliancePageAuditListItem_updateAuditVisibilityMutation } from "
 import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
+import { CompliancePageAliasField } from "../../_components/CompliancePageAliasField";
+
 const compliancePageFragment = graphql`
   fragment CompliancePageAuditListItem_compliancePageFragment on TrustCenter {
     canUpdate: permission(action: "core:trust-center:update")
@@ -35,6 +37,9 @@ const auditFragment = graphql`
   fragment CompliancePageAuditListItem_auditFragment on Audit {
     id
     name
+    alias
+    canSetAlias: permission(action: "core:trust-center-alias:set")
+    canRemoveAlias: permission(action: "core:trust-center-alias:remove")
     framework {
       name
     }
@@ -110,6 +115,14 @@ export function CompliancePageAuditListItem(props: {
         <Badge variant={getAuditStateVariant(audit.state)}>
           {getAuditStateLabel(__, audit.state)}
         </Badge>
+      </Td>
+      <Td noLink>
+        <CompliancePageAliasField
+          resourceId={audit.id}
+          alias={audit.alias}
+          canSetAlias={audit.canSetAlias}
+          canRemoveAlias={audit.canRemoveAlias}
+        />
       </Td>
       <Td noLink width={130} className="pr-0">
         <Field

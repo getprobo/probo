@@ -24,6 +24,8 @@ import type { CompliancePageDocumentListItem_documentFragment$key } from "#/__ge
 import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
+import { CompliancePageAliasField } from "../../_components/CompliancePageAliasField";
+
 const compliancePageFragment = graphql`
   fragment CompliancePageDocumentListItem_compliancePageFragment on TrustCenter {
     canUpdate: permission(action: "core:trust-center:update")
@@ -33,6 +35,9 @@ const compliancePageFragment = graphql`
 const documentFragment = graphql`
   fragment CompliancePageDocumentListItem_documentFragment on Document {
     id
+    alias
+    canSetAlias: permission(action: "core:trust-center-alias:set")
+    canRemoveAlias: permission(action: "core:trust-center-alias:remove")
     trustCenterVisibility
     latestPublishedVersion: versions(
       first: 1
@@ -112,6 +117,14 @@ export function CompliancePageDocumentListItem(props: {
       </Td>
       <Td>
         {latestVersion && <DocumentTypeBadge type={latestVersion.documentType} />}
+      </Td>
+      <Td noLink>
+        <CompliancePageAliasField
+          resourceId={document.id}
+          alias={document.alias}
+          canSetAlias={document.canSetAlias}
+          canRemoveAlias={document.canRemoveAlias}
+        />
       </Td>
       <Td noLink width={130} className="pr-0">
         <Field

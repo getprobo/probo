@@ -53,6 +53,7 @@ export function CompliancePageAuditList(props: { fragmentRef: CompliancePageAudi
             <Th>{__("Name")}</Th>
             <Th>{__("Valid Until")}</Th>
             <Th>{__("State")}</Th>
+            <Th>{__("Alias")}</Th>
             <Th>{__("Visibility")}</Th>
           </Tr>
         </Thead>

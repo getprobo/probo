@@ -74,6 +74,7 @@ export function CompliancePageFileList(props: { fragmentRef: CompliancePageFileL
             <Th>{__("Name")}</Th>
             <Th>{__("Category")}</Th>
             <Th>{__("Upload Date")}</Th>
+            <Th>{__("Alias")}</Th>
             <Th>{__("Visibility")}</Th>
             <Th></Th>
           </Tr>
@@ -81,7 +82,7 @@ export function CompliancePageFileList(props: { fragmentRef: CompliancePageFileL
         <Tbody>
           {files.edges.length === 0 && (
             <Tr>
-              <Td colSpan={5} className="text-center text-txt-secondary">
+              <Td colSpan={6} className="text-center text-txt-secondary">
                 {__("No files available")}
               </Td>
             </Tr>
