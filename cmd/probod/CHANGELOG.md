@@ -4,6 +4,20 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.217.0] - 2026-06-22
+
+### Added
+
+- Resource aliases: trust center entries support a custom URL slug; alias field and set/remove mutations exposed in the console API, trust API, and MCP tools, with alias-based navigation in the trust center
+
+### Changed
+
+- Agent tool JSON schemas normalize required fields for OpenAI compatibility
+
+### Fixed
+
+- Alias resolver, field blur, and sitemap URL generation
+
 ## [0.216.1] - 2026-06-19
 
 ### Fixed
