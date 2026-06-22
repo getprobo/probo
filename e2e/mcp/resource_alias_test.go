@@ -22,7 +22,7 @@ import (
 	"go.probo.inc/probo/e2e/internal/testutil"
 )
 
-func TestMCP_SetTrustCenterAlias(t *testing.T) {
+func TestMCP_SetResourceAlias(t *testing.T) {
 	t.Parallel()
 
 	owner := testutil.NewClient(t, testutil.RoleOwner)
@@ -30,24 +30,24 @@ func TestMCP_SetTrustCenterAlias(t *testing.T) {
 	documentID := factory.NewDocument(owner).WithTitle("MCP Alias Document").Create()
 
 	var result struct {
-		TrustCenterAlias struct {
+		ResourceAlias struct {
 			ResourceID string `json:"resource_id"`
 			Alias      string `json:"alias"`
-		} `json:"trust_center_alias"`
+		} `json:"resource_alias"`
 	}
 
-	mc.CallToolInto("setTrustCenterAlias", map[string]any{
+	mc.CallToolInto("setResourceAlias", map[string]any{
 		"resource_id": documentID,
 		"alias":       "mcp-privacy-policy",
 	}, &result)
-	assert.Equal(t, documentID, result.TrustCenterAlias.ResourceID)
-	assert.Equal(t, "mcp-privacy-policy", result.TrustCenterAlias.Alias)
+	assert.Equal(t, documentID, result.ResourceAlias.ResourceID)
+	assert.Equal(t, "mcp-privacy-policy", result.ResourceAlias.Alias)
 
 	var removeResult struct {
 		DeletedResourceID string `json:"deleted_resource_id"`
 	}
 
-	mc.CallToolInto("removeTrustCenterAlias", map[string]any{
+	mc.CallToolInto("removeResourceAlias", map[string]any{
 		"resource_id": documentID,
 	}, &removeResult)
 	assert.Equal(t, documentID, removeResult.DeletedResourceID)

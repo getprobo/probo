@@ -23,16 +23,16 @@ import (
 	"go.probo.inc/probo/e2e/internal/testutil"
 )
 
-func TestTrustCenterAlias_SetAndRead(t *testing.T) {
+func TestResourceAlias_SetAndRead(t *testing.T) {
 	t.Parallel()
 
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 	documentID := factory.NewDocument(owner).WithTitle("Alias Test Document").Create()
 
 	const setAliasMutation = `
-		mutation($input: SetTrustCenterAliasInput!) {
-			setTrustCenterAlias(input: $input) {
-				alias {
+		mutation($input: SetResourceAliasInput!) {
+			setResourceAlias(input: $input) {
+				resourceAlias {
 					resourceId
 					alias
 				}
@@ -41,12 +41,12 @@ func TestTrustCenterAlias_SetAndRead(t *testing.T) {
 	`
 
 	var setResult struct {
-		SetTrustCenterAlias struct {
-			Alias struct {
+		SetResourceAlias struct {
+			ResourceAlias struct {
 				ResourceID string `json:"resourceId"`
 				Alias      string `json:"alias"`
-			} `json:"alias"`
-		} `json:"setTrustCenterAlias"`
+			} `json:"resourceAlias"`
+		} `json:"setResourceAlias"`
 	}
 
 	err := owner.Execute(setAliasMutation, map[string]any{
@@ -56,8 +56,8 @@ func TestTrustCenterAlias_SetAndRead(t *testing.T) {
 		},
 	}, &setResult)
 	require.NoError(t, err)
-	assert.Equal(t, documentID, setResult.SetTrustCenterAlias.Alias.ResourceID)
-	assert.Equal(t, "privacy-policy", setResult.SetTrustCenterAlias.Alias.Alias)
+	assert.Equal(t, documentID, setResult.SetResourceAlias.ResourceAlias.ResourceID)
+	assert.Equal(t, "privacy-policy", setResult.SetResourceAlias.ResourceAlias.Alias)
 
 	const getDocumentQuery = `
 		query($id: ID!) {
@@ -72,7 +72,7 @@ func TestTrustCenterAlias_SetAndRead(t *testing.T) {
 
 	var getResult struct {
 		Node struct {
-			ID               string  `json:"id"`
+			ID    string  `json:"id"`
 			Alias *string `json:"alias"`
 		} `json:"node"`
 	}
@@ -83,7 +83,7 @@ func TestTrustCenterAlias_SetAndRead(t *testing.T) {
 	assert.Equal(t, "privacy-policy", *getResult.Node.Alias)
 }
 
-func TestTrustCenterAlias_Conflict(t *testing.T) {
+func TestResourceAlias_Conflict(t *testing.T) {
 	t.Parallel()
 
 	owner := testutil.NewClient(t, testutil.RoleOwner)
@@ -91,9 +91,9 @@ func TestTrustCenterAlias_Conflict(t *testing.T) {
 	docB := factory.NewDocument(owner).WithTitle("Alias Conflict B").Create()
 
 	const setAliasMutation = `
-		mutation($input: SetTrustCenterAliasInput!) {
-			setTrustCenterAlias(input: $input) {
-				alias { alias }
+		mutation($input: SetResourceAliasInput!) {
+			setResourceAlias(input: $input) {
+				resourceAlias { alias }
 			}
 		}
 	`
