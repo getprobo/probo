@@ -17,7 +17,6 @@ package trustcenter
 import (
 	"github.com/spf13/cobra"
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
-	"go.probo.inc/probo/pkg/cmd/trust-center/alias"
 	"go.probo.inc/probo/pkg/cmd/trust-center/file"
 	"go.probo.inc/probo/pkg/cmd/trust-center/reference"
 	"go.probo.inc/probo/pkg/cmd/trust-center/update"
@@ -34,7 +33,6 @@ func NewCmdTrustCenter(f *cmdutil.Factory) *cobra.Command {
 	cmd.AddCommand(view.NewCmdView(f))
 	cmd.AddCommand(update.NewCmdUpdate(f))
 	cmd.AddCommand(reference.NewCmdReference(f))
-	cmd.AddCommand(alias.NewCmdAlias(f))
 	cmd.AddCommand(file.NewCmdFile(f))
 
 	return cmd

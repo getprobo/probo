@@ -12,19 +12,20 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package alias
+package resourcealias
 
 import (
 	"github.com/spf13/cobra"
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
-	"go.probo.inc/probo/pkg/cmd/trust-center/alias/remove"
-	"go.probo.inc/probo/pkg/cmd/trust-center/alias/set"
+	"go.probo.inc/probo/pkg/cmd/resource-alias/remove"
+	"go.probo.inc/probo/pkg/cmd/resource-alias/set"
 )
 
-func NewCmdAlias(f *cmdutil.Factory) *cobra.Command {
+func NewCmdResourceAlias(f *cmdutil.Factory) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "alias <command>",
-		Short: "Manage trust center aliases",
+		Use:     "resource-alias <command>",
+		Short:   "Manage resource aliases",
+		Aliases: []string{"ra"},
 	}
 
 	cmd.AddCommand(set.NewCmdSet(f))

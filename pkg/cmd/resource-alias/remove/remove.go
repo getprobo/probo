@@ -24,8 +24,8 @@ import (
 )
 
 const removeMutation = `
-mutation($input: RemoveTrustCenterAliasInput!) {
-  removeTrustCenterAlias(input: $input) {
+mutation($input: RemoveResourceAliasInput!) {
+  removeResourceAlias(input: $input) {
     deletedResourceId
   }
 }
@@ -36,7 +36,7 @@ func NewCmdRemove(f *cmdutil.Factory) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "remove <resource-id>",
-		Short: "Remove a trust center alias",
+		Short: "Remove a resource alias",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if !flagYes {

@@ -25,9 +25,9 @@ import (
 )
 
 const setMutation = `
-mutation($input: SetTrustCenterAliasInput!) {
-    setTrustCenterAlias(input: $input) {
-      alias {
+mutation($input: SetResourceAliasInput!) {
+    setResourceAlias(input: $input) {
+      resourceAlias {
         resourceId
         alias
       }
@@ -36,12 +36,12 @@ mutation($input: SetTrustCenterAliasInput!) {
 `
 
 type setResponse struct {
-		SetTrustCenterAlias struct {
-			Alias struct {
-				ResourceID string `json:"resourceId"`
-				Alias      string `json:"alias"`
-			} `json:"alias"`
-		} `json:"setTrustCenterAlias"`
+	SetResourceAlias struct {
+		ResourceAlias struct {
+			ResourceID string `json:"resourceId"`
+			Alias      string `json:"alias"`
+		} `json:"resourceAlias"`
+	} `json:"setResourceAlias"`
 }
 
 func NewCmdSet(f *cmdutil.Factory) *cobra.Command {
@@ -52,12 +52,12 @@ func NewCmdSet(f *cmdutil.Factory) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "set",
-		Short: "Set a trust center alias",
+		Short: "Set a resource alias",
 		Example: `  # Set an alias interactively
-  prb trust-center alias set --resource-id prbdoc_... 
+  prb resource-alias set --resource-id prbdoc_...
 
   # Set an alias non-interactively
-  prb trust-center alias set --resource-id prbdoc_... --alias privacy-policy`,
+  prb resource-alias set --resource-id prbdoc_... --alias privacy-policy`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, err := f.Config()
 			if err != nil {
@@ -80,7 +80,7 @@ func NewCmdSet(f *cmdutil.Factory) *cobra.Command {
 			if f.IOStreams.IsInteractive() {
 				if flagResourceID == "" {
 					err := huh.NewInput().
-						Title("Resource ID (document, file, or audit)").
+						Title("Resource ID").
 						Value(&flagResourceID).
 						Run()
 					if err != nil {
@@ -125,7 +125,7 @@ func NewCmdSet(f *cmdutil.Factory) *cobra.Command {
 				return fmt.Errorf("cannot parse response: %w", err)
 			}
 
-			a := resp.SetTrustCenterAlias.Alias
+			a := resp.SetResourceAlias.ResourceAlias
 			_, _ = fmt.Fprintf(
 				f.IOStreams.Out,
 				"Set alias %q for resource %s\n",
@@ -137,7 +137,7 @@ func NewCmdSet(f *cmdutil.Factory) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&flagResourceID, "resource-id", "", "Document, trust center file, or audit ID")
+	cmd.Flags().StringVar(&flagResourceID, "resource-id", "", "ID of the resource to alias")
 	cmd.Flags().StringVar(&flagAlias, "alias", "", "Human-readable alias slug")
 
 	return cmd
