@@ -57,6 +57,7 @@ const auditRowFragment = graphql`
     name
     reportFile {
       id
+      alias
       isUserAuthorized
       access {
         id
@@ -84,6 +85,7 @@ export function AuditRow(props: { audit: AuditRowFragment$key }) {
   const navigate = useNavigate();
 
   const audit = useFragment(auditRowFragment, props.audit);
+  const reportPath = audit.reportFile?.alias ?? audit.reportFile?.id;
   const hasRequested = audit.reportFile?.access?.status === "REQUESTED";
 
   const [requestAccess, isRequestingAccess]
@@ -146,7 +148,7 @@ export function AuditRow(props: { audit: AuditRowFragment$key }) {
                 className="w-full md:w-max"
                 variant="secondary"
                 icon={IconArrowLink}
-                to={`/documents/${audit.reportFile.id}`}
+                to={reportPath ? `/documents/${reportPath}` : undefined}
               >
                 {__("View")}
               </Button>

@@ -49,6 +49,7 @@ const requestAccessMutation = graphql`
 const trustCenterFileRowFragment = graphql`
   fragment TrustCenterFileRowFragment on TrustCenterFile {
     id
+    alias
     name
     isUserAuthorized
     access {
@@ -68,6 +69,7 @@ export function TrustCenterFileRow(props: {
   const navigate = useNavigate();
 
   const file = useFragment(trustCenterFileRowFragment, props.file);
+  const filePath = file.alias ?? file.id;
   const hasRequested = file.access?.status === "REQUESTED";
 
   const [requestAccess, isRequestingAccess]
@@ -131,7 +133,7 @@ export function TrustCenterFileRow(props: {
               className="w-full md:w-max"
               variant="secondary"
               icon={IconArrowLink}
-              onClick={() => void navigate(`/documents/${file.id}`)}
+              onClick={() => void navigate(`/documents/${filePath}`)}
             >
               {__("View")}
             </Button>

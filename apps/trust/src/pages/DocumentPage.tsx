@@ -45,7 +45,7 @@ import type { DocumentPageRequestReportAccessMutation } from "./__generated__/Do
 import type { DocumentPageRequestTrustCenterFileAccessMutation } from "./__generated__/DocumentPageRequestTrustCenterFileAccessMutation.graphql";
 
 export const documentPageQuery = graphql`
-  query DocumentPageQuery($id: ID!) {
+  query DocumentPageQuery($id: String!) {
     currentTrustCenter {
       logo {
         downloadUrl
