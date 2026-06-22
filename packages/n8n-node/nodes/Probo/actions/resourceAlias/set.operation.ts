@@ -22,12 +22,26 @@ export const description: INodeProperties[] = [
 		type: 'string',
 		displayOptions: {
 			show: {
-				resource: ['trustCenter'],
-				operation: ['removeAlias'],
+				resource: ['resourceAlias'],
+				operation: ['set'],
 			},
 		},
 		default: '',
-		description: 'Document, trust center file, or audit ID',
+		description: 'ID of the resource to alias',
+		required: true,
+	},
+	{
+		displayName: 'Alias',
+		name: 'alias',
+		type: 'string',
+		displayOptions: {
+			show: {
+				resource: ['resourceAlias'],
+				operation: ['set'],
+			},
+		},
+		default: '',
+		description: 'Human-readable alias slug',
 		required: true,
 	},
 ];
@@ -37,17 +51,21 @@ export async function execute(
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
 	const resourceId = this.getNodeParameter('resourceId', itemIndex) as string;
+	const alias = this.getNodeParameter('alias', itemIndex) as string;
 
 	const query = `
-		mutation RemoveTrustCenterAlias($input: RemoveTrustCenterAliasInput!) {
-			removeTrustCenterAlias(input: $input) {
-				deletedResourceId
+		mutation SetResourceAlias($input: SetResourceAliasInput!) {
+			setResourceAlias(input: $input) {
+				resourceAlias {
+					resourceId
+					alias
+				}
 			}
 		}
 	`;
 
 	const responseData = await proboApiRequest.call(this, query, {
-		input: { resourceId },
+		input: { resourceId, alias },
 	});
 
 	return {
