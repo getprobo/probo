@@ -241,6 +241,7 @@ func (s *Service) RenderRobotsTxt(
 
 func (s *Service) fetchDocumentIDs(ctx context.Context, scope coredata.Scoper, orgID gid.GID) ([]string, error) {
 	seen := make(map[gid.GID]struct{})
+
 	var resourceIDs []gid.GID
 
 	appendResourceID := func(id gid.GID) {

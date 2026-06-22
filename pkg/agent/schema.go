@@ -76,15 +76,19 @@ func normalizeRequiredJSON(data []byte) ([]byte, error) {
 			if err != nil {
 				return nil, err
 			}
+
 			obj["items"] = n
 		}
+
 		if addlRaw, ok := obj["additionalProperties"]; ok {
 			n, err := normalizeRequiredJSON(addlRaw)
 			if err != nil {
 				return nil, err
 			}
+
 			obj["additionalProperties"] = n
 		}
+
 		return json.Marshal(obj)
 	}
 
@@ -114,6 +118,7 @@ func normalizeRequiredJSON(data []byte) ([]byte, error) {
 			if err != nil {
 				return nil, err
 			}
+
 			required = append(required, name)
 			requiredSet[name] = true
 		}
@@ -125,6 +130,7 @@ func normalizeRequiredJSON(data []byte) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	obj["properties"] = propsData
 
 	if len(required) > 0 {
@@ -132,6 +138,7 @@ func normalizeRequiredJSON(data []byte) ([]byte, error) {
 		if err != nil {
 			return nil, err
 		}
+
 		obj["required"] = reqData
 	}
 
@@ -157,6 +164,7 @@ func makeNullableJSON(data []byte) ([]byte, error) {
 			arr, _ := json.Marshal([]string{single, "null"})
 			obj["type"] = arr
 		}
+
 		return json.Marshal(obj)
 	}
 
@@ -165,9 +173,11 @@ func makeNullableJSON(data []byte) ([]byte, error) {
 		if slices.Contains(arr, "null") {
 			return data, nil
 		}
+
 		arr = append(arr, "null")
 		nullable, _ := json.Marshal(arr)
 		obj["type"] = nullable
+
 		return json.Marshal(obj)
 	}
 

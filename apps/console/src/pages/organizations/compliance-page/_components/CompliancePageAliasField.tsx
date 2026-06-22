@@ -14,7 +14,7 @@
 
 import { useTranslate } from "@probo/i18n";
 import { Field } from "@probo/ui";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { graphql } from "relay-runtime";
 
 import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
@@ -52,10 +52,12 @@ export function CompliancePageAliasField(props: {
 
   const { __ } = useTranslate();
   const [value, setValue] = useState(alias ?? "");
+  const [prevAlias, setPrevAlias] = useState(alias);
 
-  useEffect(() => {
+  if (alias !== prevAlias) {
+    setPrevAlias(alias);
     setValue(alias ?? "");
-  }, [alias]);
+  }
 
   const [setResourceAlias, isSettingAlias] = useMutationWithToasts(
     setResourceAliasMutation,
