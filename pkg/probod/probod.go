@@ -66,6 +66,7 @@ import (
 	"go.probo.inc/probo/pkg/mailer"
 	"go.probo.inc/probo/pkg/mailman"
 	"go.probo.inc/probo/pkg/probo"
+	"go.probo.inc/probo/pkg/resourcealias"
 	"go.probo.inc/probo/pkg/riskmanagement"
 	"go.probo.inc/probo/pkg/securecookie"
 	"go.probo.inc/probo/pkg/server"
@@ -583,6 +584,8 @@ func (impl *Implm) Run(
 		return fmt.Errorf("cannot create probo service: %w", err)
 	}
 
+	resourceAliasService := resourcealias.NewService(pgClient)
+
 	trustService := trust.NewService(
 		pgClient,
 		s3Client,
@@ -595,6 +598,7 @@ func (impl *Implm) Run(
 		fileManagerService,
 		l,
 		slackService,
+		resourceAliasService,
 	)
 
 	accessReviewService := accessreview.NewService(
@@ -609,6 +613,11 @@ func (impl *Implm) Run(
 
 	iamService.Authorizer.RegisterPolicySet(agentrun.PolicySet())
 	iamService.Authorizer.RegisterPolicySet(accessreview.PolicySet())
+	iamService.Authorizer.RegisterPolicySet(resourcealias.PolicySet())
+	iamService.OAuth2ScopeRegistry.Register(agentrun.OAuth2ScopeMappings)
+	iamService.OAuth2ScopeRegistry.Register(accessreview.OAuth2ScopeMappings)
+	iamService.OAuth2ScopeRegistry.Register(iam.IAMOAuth2ScopeMappings)
+	iamService.OAuth2ScopeRegistry.Register(resourcealias.OAuth2ScopeMappings)
 
 	thirdPartyService := thirdparty.NewService(pgClient, fileManagerService, thirdPartyVetter)
 	riskManagementService := riskmanagement.NewService(pgClient)
@@ -618,6 +627,7 @@ func (impl *Implm) Run(
 			AllowedOrigins:    impl.cfg.Api.Cors.AllowedOrigins,
 			ExtraHeaderFields: impl.cfg.Api.ExtraHeaderFields,
 			Probo:             proboService,
+			ResourceAlias:     resourceAliasService,
 			File:              fileManagerService,
 			IAM:               iamService,
 			Trust:             trustService,

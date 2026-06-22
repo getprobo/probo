@@ -364,9 +364,9 @@ func (s *Service) fetchDocumentIDs(ctx context.Context, scope coredata.Scoper, o
 		cursorKey = &ck
 	}
 
-	aliases, err := s.TrustCenterAliases.LoadByResourceIDs(ctx, scope, resourceIDs)
+	aliases, err := s.resourceAlias.LoadByResourceIDs(ctx, scope, resourceIDs)
 	if err != nil {
-		return nil, fmt.Errorf("cannot load trust center aliases: %w", err)
+		return nil, fmt.Errorf("cannot load resource aliases: %w", err)
 	}
 
 	paths := make([]string, 0, len(resourceIDs))

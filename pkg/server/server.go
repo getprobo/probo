@@ -37,6 +37,7 @@ import (
 	"go.probo.inc/probo/pkg/iam/oauth2"
 	"go.probo.inc/probo/pkg/mailman"
 	"go.probo.inc/probo/pkg/probo"
+	"go.probo.inc/probo/pkg/resourcealias"
 	"go.probo.inc/probo/pkg/riskmanagement"
 	"go.probo.inc/probo/pkg/securecookie"
 	"go.probo.inc/probo/pkg/server/api"
@@ -55,6 +56,7 @@ type Config struct {
 	AllowedOrigins    []string
 	ExtraHeaderFields map[string]string
 	Probo             *probo.Service
+	ResourceAlias     *resourcealias.Service
 	File              *filemanager.Service
 	IAM               *iam.Service
 	Trust             *trust.Service
@@ -94,6 +96,7 @@ func NewServer(cfg Config) (*Server, error) {
 		BaseURL:           cfg.BaseURL,
 		AllowedOrigins:    cfg.AllowedOrigins,
 		Probo:             cfg.Probo,
+		ResourceAlias:     cfg.ResourceAlias,
 		File:              cfg.File,
 		IAM:               cfg.IAM,
 		Trust:             cfg.Trust,

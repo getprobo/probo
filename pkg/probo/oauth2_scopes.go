@@ -149,8 +149,6 @@ var OAuth2ScopeMappings = map[coredata.OAuth2Scope][]string{
 		ActionComplianceExternalURLDelete,
 		ActionCustomDomainCreate,
 		ActionCustomDomainDelete,
-		ActionTrustCenterAliasSet,
-		ActionTrustCenterAliasRemove,
 	},
 	ScopeV1ConnectorRead: {
 		ActionConnectorList,

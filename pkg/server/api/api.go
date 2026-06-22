@@ -37,6 +37,7 @@ import (
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/mailman"
 	"go.probo.inc/probo/pkg/probo"
+	"go.probo.inc/probo/pkg/resourcealias"
 	"go.probo.inc/probo/pkg/riskmanagement"
 	"go.probo.inc/probo/pkg/securecookie"
 	connect_v1 "go.probo.inc/probo/pkg/server/api/connect/v1"
@@ -56,6 +57,7 @@ type (
 		BaseURL           *baseurl.BaseURL
 		AllowedOrigins    []string
 		Probo             *probo.Service
+		ResourceAlias     *resourcealias.Service
 		File              *filemanager.Service
 		IAM               *iam.Service
 		Trust             *trust.Service
@@ -179,6 +181,7 @@ func NewServer(cfg Config) (*Server, error) {
 			cfg.Logger.Named("trust.v1"),
 			cfg.IAM,
 			cfg.Trust,
+			cfg.ResourceAlias,
 			cfg.File,
 			cfg.ESign,
 			cfg.Mailman,
@@ -189,6 +192,7 @@ func NewServer(cfg Config) (*Server, error) {
 		consoleHandler: console_v1.NewMux(
 			cfg.Logger.Named("console.v1"),
 			cfg.Probo,
+			cfg.ResourceAlias,
 			cfg.IAM,
 			cfg.ESign,
 			cfg.AccessReview,
@@ -221,6 +225,7 @@ func NewServer(cfg Config) (*Server, error) {
 		mcpHandler: mcp_v1.NewMux(
 			cfg.Logger.Named("mcp.v1"),
 			cfg.Probo,
+			cfg.ResourceAlias,
 			cfg.ThirdParty,
 			cfg.IAM,
 			cfg.AccessReview,

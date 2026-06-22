@@ -31,6 +31,7 @@ import (
 	"go.probo.inc/probo/pkg/html2pdf"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/probo"
+	"go.probo.inc/probo/pkg/resourcealias"
 	"go.probo.inc/probo/pkg/slack"
 )
 
@@ -62,7 +63,7 @@ type (
 		Reports                *ReportService
 		Organizations          *OrganizationService
 		ComplianceExternalURLs *ComplianceExternalURLService
-		TrustCenterAliases     *TrustCenterAliasService
+		resourceAlias          *resourcealias.Service
 	}
 )
 
@@ -78,6 +79,7 @@ func NewService(
 	fileManagerService *filemanager.Service,
 	logger *log.Logger,
 	slack *slack.Service,
+	resourceAliasSvc *resourcealias.Service,
 ) *Service {
 	svc := &Service{
 		pg:                 pgClient,
@@ -91,6 +93,7 @@ func NewService(
 		fileManager:        fileManagerService,
 		logger:             logger,
 		slack:              slack,
+		resourceAlias:      resourceAliasSvc,
 	}
 	svc.TrustCenters = &TrustCenterService{svc: svc}
 	svc.Documents = &DocumentService{svc: svc, html2pdfConverter: html2pdfConverter}
@@ -104,7 +107,6 @@ func NewService(
 	svc.Reports = &ReportService{svc: svc}
 	svc.Organizations = &OrganizationService{svc: svc}
 	svc.ComplianceExternalURLs = &ComplianceExternalURLService{svc: svc}
-	svc.TrustCenterAliases = &TrustCenterAliasService{svc: svc}
 
 	return svc
 }
