@@ -4,6 +4,12 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+## [0.197.0] - 2026-06-22
+
+### Added
+
+- `resourceAlias` resource with `setAlias` and `removeAlias` operations on the trust center node
+
 ## [0.196.0] - 2026-06-19
 
 ### Changed
