@@ -53,14 +53,13 @@ export function CompliancePageAuditList(props: { fragmentRef: CompliancePageAudi
             <Th>{__("Name")}</Th>
             <Th>{__("Valid Until")}</Th>
             <Th>{__("State")}</Th>
-            <Th>{__("Alias")}</Th>
             <Th>{__("Visibility")}</Th>
           </Tr>
         </Thead>
         <Tbody>
           {audits.edges.length === 0 && (
             <Tr>
-              <Td colSpan={6} className="text-center text-txt-secondary">
+              <Td colSpan={5} className="text-center text-txt-secondary">
                 {__("No audits available")}
               </Td>
             </Tr>

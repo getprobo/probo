@@ -37,8 +37,8 @@ const fileFragment = graphql`
     id
     name
     alias
-    canSetAlias: permission(action: "core:trust-center-alias:set")
-    canRemoveAlias: permission(action: "core:trust-center-alias:remove")
+    canSetAlias: permission(action: "resourcealias:alias:set")
+    canRemoveAlias: permission(action: "resourcealias:alias:remove")
     category
     file {
       downloadUrl

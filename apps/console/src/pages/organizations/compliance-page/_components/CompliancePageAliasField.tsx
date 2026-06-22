@@ -19,12 +19,12 @@ import { graphql } from "relay-runtime";
 
 import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 
-const setTrustCenterAliasMutation = graphql`
-  mutation CompliancePageAliasField_setTrustCenterAliasMutation(
-    $input: SetTrustCenterAliasInput!
+const setResourceAliasMutation = graphql`
+  mutation CompliancePageAliasField_setResourceAliasMutation(
+    $input: SetResourceAliasInput!
   ) {
-    setTrustCenterAlias(input: $input) {
-      alias {
+    setResourceAlias(input: $input) {
+      resourceAlias {
         resourceId
         alias
       }
@@ -32,11 +32,11 @@ const setTrustCenterAliasMutation = graphql`
   }
 `;
 
-const removeTrustCenterAliasMutation = graphql`
-  mutation CompliancePageAliasField_removeTrustCenterAliasMutation(
-    $input: RemoveTrustCenterAliasInput!
+const removeResourceAliasMutation = graphql`
+  mutation CompliancePageAliasField_removeResourceAliasMutation(
+    $input: RemoveResourceAliasInput!
   ) {
-    removeTrustCenterAlias(input: $input) {
+    removeResourceAlias(input: $input) {
       deletedResourceId
     }
   }
@@ -57,15 +57,15 @@ export function CompliancePageAliasField(props: {
     setValue(alias ?? "");
   }, [alias]);
 
-  const [setTrustCenterAlias, isSettingAlias] = useMutationWithToasts(
-    setTrustCenterAliasMutation,
+  const [setResourceAlias, isSettingAlias] = useMutationWithToasts(
+    setResourceAliasMutation,
     {
       successMessage: __("Alias updated successfully."),
       errorMessage: __("Failed to update alias"),
     },
   );
-  const [removeTrustCenterAlias, isRemovingAlias] = useMutationWithToasts(
-    removeTrustCenterAliasMutation,
+  const [removeResourceAlias, isRemovingAlias] = useMutationWithToasts(
+    removeResourceAliasMutation,
     {
       successMessage: __("Alias removed successfully."),
       errorMessage: __("Failed to remove alias"),
@@ -83,7 +83,7 @@ export function CompliancePageAliasField(props: {
     try {
       if (trimmed === "") {
         if (current !== "" && canRemoveAlias) {
-          await removeTrustCenterAlias({
+          await removeResourceAlias({
             variables: {
               input: {
                 resourceId,
@@ -100,7 +100,7 @@ export function CompliancePageAliasField(props: {
         return;
       }
 
-      await setTrustCenterAlias({
+      await setResourceAlias({
         variables: {
           input: {
             resourceId,
@@ -111,7 +111,7 @@ export function CompliancePageAliasField(props: {
     } catch {
       // useMutationWithToasts already shows an error toast.
     }
-  }, [alias, canRemoveAlias, canSetAlias, removeTrustCenterAlias, resourceId, setTrustCenterAlias, value]);
+  }, [alias, canRemoveAlias, canSetAlias, removeResourceAlias, resourceId, setResourceAlias, value]);
 
   const canEdit = canSetAlias || (canRemoveAlias && (alias ?? "") !== "");
 

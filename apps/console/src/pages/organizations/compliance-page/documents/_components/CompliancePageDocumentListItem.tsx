@@ -36,8 +36,8 @@ const documentFragment = graphql`
   fragment CompliancePageDocumentListItem_documentFragment on Document {
     id
     alias
-    canSetAlias: permission(action: "core:trust-center-alias:set")
-    canRemoveAlias: permission(action: "core:trust-center-alias:remove")
+    canSetAlias: permission(action: "resourcealias:alias:set")
+    canRemoveAlias: permission(action: "resourcealias:alias:remove")
     trustCenterVisibility
     latestPublishedVersion: versions(
       first: 1
