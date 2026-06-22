@@ -22,6 +22,8 @@ import * as getAllFilesOp from './getAllFiles.operation';
 import * as deleteFileOp from './deleteFile.operation';
 import * as createExternalUrlOp from './createExternalUrl.operation';
 import * as deleteExternalUrlOp from './deleteExternalUrl.operation';
+import * as setAliasOp from './setAlias.operation';
+import * as removeAliasOp from './removeAlias.operation';
 
 export const description: INodeProperties[] = [
 	{
@@ -84,6 +86,18 @@ export const description: INodeProperties[] = [
 				action: 'Get many trust center references',
 			},
 			{
+				name: 'Remove Alias',
+				value: 'removeAlias',
+				description: 'Remove a trust center alias from a resource',
+				action: 'Remove a trust center alias',
+			},
+			{
+				name: 'Set Alias',
+				value: 'setAlias',
+				description: 'Set a trust center alias for a document, file, or audit',
+				action: 'Set a trust center alias',
+			},
+			{
 				name: 'Update',
 				value: 'update',
 				description: 'Update trust center settings',
@@ -101,6 +115,8 @@ export const description: INodeProperties[] = [
 	...deleteFileOp.description,
 	...createExternalUrlOp.description,
 	...deleteExternalUrlOp.description,
+	...setAliasOp.description,
+	...removeAliasOp.description,
 ];
 
 export {
@@ -113,4 +129,6 @@ export {
 	deleteFileOp as deleteFile,
 	createExternalUrlOp as createExternalUrl,
 	deleteExternalUrlOp as deleteExternalUrl,
+	setAliasOp as setAlias,
+	removeAliasOp as removeAlias,
 };
