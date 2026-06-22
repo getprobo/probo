@@ -29,7 +29,7 @@
     "zod": "^3.25.71"
   },
   "devDependencies": {
-    "@babel/core": "^7.29.0",
+    "@babel/core": "^7.29.6",
     "@probo/eslint-plugin-relay-types": "^1.0.0",
     "@rolldown/plugin-babel": "^0.2.3",
     "@tailwindcss/vite": "^4.3.1",
