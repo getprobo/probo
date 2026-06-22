@@ -80,32 +80,37 @@ export function CompliancePageAliasField(props: {
       return;
     }
 
-    if (trimmed === "") {
-      if (current !== "" && canRemoveAlias) {
-        await removeTrustCenterAlias({
-          variables: {
-            input: {
-              resourceId,
+    try {
+      if (trimmed === "") {
+        if (current !== "" && canRemoveAlias) {
+          await removeTrustCenterAlias({
+            variables: {
+              input: {
+                resourceId,
+              },
             },
-          },
-        });
+          });
+        }
+
+        return;
       }
 
-      return;
-    }
+      if (!canSetAlias) {
+        setValue(current);
+        return;
+      }
 
-    if (!canSetAlias) {
-      return;
-    }
-
-    await setTrustCenterAlias({
-      variables: {
-        input: {
-          resourceId,
-          alias: trimmed,
+      await setTrustCenterAlias({
+        variables: {
+          input: {
+            resourceId,
+            alias: trimmed,
+          },
         },
-      },
-    });
+      });
+    } catch {
+      // useMutationWithToasts already shows an error toast.
+    }
   }, [alias, canRemoveAlias, canSetAlias, removeTrustCenterAlias, resourceId, setTrustCenterAlias, value]);
 
   const canEdit = canSetAlias || (canRemoveAlias && (alias ?? "") !== "");

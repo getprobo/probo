@@ -180,7 +180,13 @@ func (r *auditResolver) Alias(ctx context.Context, obj *types.Audit) (*string, e
 		return nil, err
 	}
 
-	return r.probo.TrustCenterAliases.GetByResourceID(ctx, scope, obj.ID)
+	alias, err := r.probo.TrustCenterAliases.GetByResourceID(ctx, scope, obj.ID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot get audit alias", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return alias, nil
 }
 
 // Permission is the resolver for the permission field.

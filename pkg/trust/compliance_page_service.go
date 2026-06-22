@@ -240,7 +240,17 @@ func (s *Service) RenderRobotsTxt(
 }
 
 func (s *Service) fetchDocumentIDs(ctx context.Context, scope coredata.Scoper, orgID gid.GID) ([]string, error) {
+	seen := make(map[gid.GID]struct{})
 	var resourceIDs []gid.GID
+
+	appendResourceID := func(id gid.GID) {
+		if _, ok := seen[id]; ok {
+			return
+		}
+
+		seen[id] = struct{}{}
+		resourceIDs = append(resourceIDs, id)
+	}
 
 	var cursorKey *page.CursorKey
 	for {
@@ -264,7 +274,7 @@ func (s *Service) fetchDocumentIDs(ctx context.Context, scope coredata.Scoper, o
 				continue
 			}
 
-			resourceIDs = append(resourceIDs, doc.ID)
+			appendResourceID(doc.ID)
 		}
 
 		if !result.Info.HasNext {
@@ -304,7 +314,7 @@ func (s *Service) fetchDocumentIDs(ctx context.Context, scope coredata.Scoper, o
 				continue
 			}
 
-			resourceIDs = append(resourceIDs, file.ID)
+			appendResourceID(file.ID)
 		}
 
 		if !result.Info.HasNext {
@@ -342,7 +352,7 @@ func (s *Service) fetchDocumentIDs(ctx context.Context, scope coredata.Scoper, o
 				continue
 			}
 
-			resourceIDs = append(resourceIDs, *audit.ReportFileID)
+			appendResourceID(*audit.ReportFileID)
 		}
 
 		if !result.Info.HasNext {
