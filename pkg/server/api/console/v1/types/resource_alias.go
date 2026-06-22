@@ -19,11 +19,6 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 )
 
-type ResourceAlias struct {
-	ResourceID gid.GID `json:"resourceId"`
-	Alias      string  `json:"alias"`
-}
-
 func NewResourceAlias(resourceID gid.GID, alias *coredata.ResourceAlias) *ResourceAlias {
 	return &ResourceAlias{
 		ResourceID: resourceID,
