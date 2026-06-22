@@ -28,18 +28,17 @@ import (
 )
 
 type (
-	TrustCenterAlias struct {
-		OrganizationID gid.GID   `db:"organization_id"`
-		Alias          string    `db:"alias"`
-		ResourceID     gid.GID   `db:"resource_id"`
-		CreatedAt      time.Time `db:"created_at"`
-		UpdatedAt      time.Time `db:"updated_at"`
+	ResourceAlias struct {
+		Alias      string    `db:"alias"`
+		ResourceID gid.GID   `db:"resource_id"`
+		CreatedAt  time.Time `db:"created_at"`
+		UpdatedAt  time.Time `db:"updated_at"`
 	}
 
-	TrustCenterAliases []*TrustCenterAlias
+	ResourceAliases []*ResourceAlias
 )
 
-func (t *TrustCenterAlias) Upsert(
+func (t *ResourceAlias) Upsert(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
@@ -49,9 +48,8 @@ func (t *TrustCenterAlias) Upsert(
 	now := time.Now()
 
 	q := `
-INSERT INTO trust_center_aliases (
+INSERT INTO resource_aliases (
 	tenant_id,
-	organization_id,
 	alias,
 	resource_id,
 	created_at,
@@ -59,11 +57,6 @@ INSERT INTO trust_center_aliases (
 )
 VALUES (
 	@tenant_id,
-	COALESCE(
-		(SELECT organization_id FROM documents WHERE id = @resource_id AND tenant_id = @tenant_id),
-		(SELECT organization_id FROM trust_center_files WHERE id = @resource_id AND tenant_id = @tenant_id),
-		(SELECT organization_id FROM files WHERE id = @resource_id AND tenant_id = @tenant_id)
-	),
 	@alias,
 	@resource_id,
 	@created_at,
@@ -74,7 +67,6 @@ SET
 	alias = EXCLUDED.alias,
 	updated_at = EXCLUDED.updated_at
 RETURNING
-	organization_id,
 	alias,
 	resource_id,
 	created_at,
@@ -92,17 +84,17 @@ RETURNING
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
 		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
-			if pgErr.Code == "23505" && pgErr.ConstraintName == "trust_center_aliases_organization_id_alias_key" {
+			if pgErr.Code == "23505" && pgErr.ConstraintName == "resource_aliases_tenant_id_alias_key" {
 				return ErrResourceAlreadyExists
 			}
 		}
 
-		return fmt.Errorf("cannot upsert trust center alias: %w", err)
+		return fmt.Errorf("cannot upsert resource alias: %w", err)
 	}
 
-	row, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[TrustCenterAlias])
+	row, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[ResourceAlias])
 	if err != nil {
-		return fmt.Errorf("cannot collect trust center alias: %w", err)
+		return fmt.Errorf("cannot collect resource alias: %w", err)
 	}
 
 	*t = row
@@ -110,25 +102,22 @@ RETURNING
 	return nil
 }
 
-func (t *TrustCenterAlias) LoadByAlias(
+func (t *ResourceAlias) LoadByAlias(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
-	organizationID gid.GID,
 	alias string,
 ) error {
 	q := `
 SELECT
-	organization_id,
 	alias,
 	resource_id,
 	created_at,
 	updated_at
 FROM
-	trust_center_aliases
+	resource_aliases
 WHERE
 	%s
-	AND organization_id = @organization_id
 	AND alias = @alias
 LIMIT 1;
 `
@@ -136,23 +125,22 @@ LIMIT 1;
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"organization_id": organizationID,
-		"alias":           alias,
+		"alias": alias,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot query trust center alias: %w", err)
+		return fmt.Errorf("cannot query resource alias: %w", err)
 	}
 
-	row, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[TrustCenterAlias])
+	row, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[ResourceAlias])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
 		}
 
-		return fmt.Errorf("cannot collect trust center alias: %w", err)
+		return fmt.Errorf("cannot collect resource alias: %w", err)
 	}
 
 	*t = row
@@ -160,7 +148,7 @@ LIMIT 1;
 	return nil
 }
 
-func (t *TrustCenterAlias) LoadByResourceID(
+func (t *ResourceAlias) LoadByResourceID(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
@@ -168,13 +156,12 @@ func (t *TrustCenterAlias) LoadByResourceID(
 ) error {
 	q := `
 SELECT
-	organization_id,
 	alias,
 	resource_id,
 	created_at,
 	updated_at
 FROM
-	trust_center_aliases
+	resource_aliases
 WHERE
 	%s
 	AND resource_id = @resource_id
@@ -188,16 +175,16 @@ LIMIT 1;
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot query trust center alias: %w", err)
+		return fmt.Errorf("cannot query resource alias: %w", err)
 	}
 
-	row, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[TrustCenterAlias])
+	row, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[ResourceAlias])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
 		}
 
-		return fmt.Errorf("cannot collect trust center alias: %w", err)
+		return fmt.Errorf("cannot collect resource alias: %w", err)
 	}
 
 	*t = row
@@ -205,7 +192,7 @@ LIMIT 1;
 	return nil
 }
 
-func (ts *TrustCenterAliases) LoadByResourceIDs(
+func (ts *ResourceAliases) LoadByResourceIDs(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
@@ -219,13 +206,12 @@ func (ts *TrustCenterAliases) LoadByResourceIDs(
 
 	q := `
 SELECT
-	organization_id,
 	alias,
 	resource_id,
 	created_at,
 	updated_at
 FROM
-	trust_center_aliases
+	resource_aliases
 WHERE
 	%s
 	AND resource_id = ANY(@resource_ids)
@@ -238,12 +224,12 @@ WHERE
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot query trust center aliases: %w", err)
+		return fmt.Errorf("cannot query resource aliases: %w", err)
 	}
 
-	aliases, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[TrustCenterAlias])
+	aliases, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[ResourceAlias])
 	if err != nil {
-		return fmt.Errorf("cannot collect trust center aliases: %w", err)
+		return fmt.Errorf("cannot collect resource aliases: %w", err)
 	}
 
 	*ts = aliases
@@ -251,13 +237,13 @@ WHERE
 	return nil
 }
 
-func (t *TrustCenterAlias) Delete(
+func (t *ResourceAlias) Delete(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
 ) error {
 	q := `
-DELETE FROM trust_center_aliases
+DELETE FROM resource_aliases
 WHERE
 	%s
 	AND resource_id = @resource_id
@@ -270,7 +256,7 @@ WHERE
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot delete trust center alias: %w", err)
+		return fmt.Errorf("cannot delete resource alias: %w", err)
 	}
 
 	return nil
