@@ -24,16 +24,16 @@ import (
 	"go.probo.inc/probo/pkg/server/gqlutils"
 )
 
-func (r *Resolver) trustCenterAliasForStorageResource(
+func (r *Resolver) resourceAliasForStorageResource(
 	ctx context.Context,
 	storageResourceID gid.GID,
 ) (*string, error) {
 	trustCenter := compliancepage.CompliancePageFromContext(ctx)
 	scope := coredata.NewScopeFromObjectID(trustCenter.ID)
 
-	alias, err := r.trust.TrustCenterAliases.GetByStorageResourceID(ctx, scope, storageResourceID)
+	alias, err := r.resourceAlias.GetByResourceID(ctx, scope, storageResourceID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot load trust center alias", log.Error(err))
+		r.logger.ErrorCtx(ctx, "cannot load resource alias", log.Error(err))
 
 		return nil, gqlutils.Internal(ctx)
 	}

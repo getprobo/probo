@@ -71,7 +71,7 @@ func (r *auditResolver) ReportFile(ctx context.Context, obj *types.Audit) (*type
 
 // Alias is the resolver for the alias field.
 func (r *auditReportResolver) Alias(ctx context.Context, obj *types.AuditReport) (*string, error) {
-	return r.trustCenterAliasForStorageResource(ctx, obj.ID)
+	return r.resourceAliasForStorageResource(ctx, obj.ID)
 }
 
 // IsUserAuthorized is the resolver for the isUserAuthorized field.
@@ -176,7 +176,7 @@ func (r *complianceFrameworkResolver) Framework(ctx context.Context, obj *types.
 
 // Alias is the resolver for the alias field.
 func (r *documentResolver) Alias(ctx context.Context, obj *types.Document) (*string, error) {
-	return r.trustCenterAliasForStorageResource(ctx, obj.ID)
+	return r.resourceAliasForStorageResource(ctx, obj.ID)
 }
 
 // IsUserAuthorized is the resolver for the isUserAuthorized field.
@@ -920,7 +920,7 @@ func (r *trustCenterResolver) Updates(ctx context.Context, obj *types.TrustCente
 
 // Alias is the resolver for the alias field.
 func (r *trustCenterFileResolver) Alias(ctx context.Context, obj *types.TrustCenterFile) (*string, error) {
-	return r.trustCenterAliasForStorageResource(ctx, obj.ID)
+	return r.resourceAliasForStorageResource(ctx, obj.ID)
 }
 
 // IsUserAuthorized is the resolver for the isUserAuthorized field.

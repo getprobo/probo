@@ -42,6 +42,7 @@ import (
 	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/mailman"
+	"go.probo.inc/probo/pkg/resourcealias"
 	"go.probo.inc/probo/pkg/securecookie"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/compliancepage"
@@ -62,6 +63,7 @@ type (
 
 	Resolver struct {
 		trust         *trust.Service
+		resourceAlias *resourcealias.Service
 		fileManager   *filemanager.Service
 		esign         *esign.Service
 		mailman       *mailman.Service
@@ -76,6 +78,7 @@ func NewMux(
 	logger *log.Logger,
 	iamSvc *iam.Service,
 	trustSvc *trust.Service,
+	resourceAliasSvc *resourcealias.Service,
 	fileManagerSvc *filemanager.Service,
 	esignSvc *esign.Service,
 	mailmanSvc *mailman.Service,
@@ -98,7 +101,18 @@ func NewMux(
 	)
 	r.Method(http.MethodGet, "/session-transfer", sessionTransferHandler)
 
-	graphqlHandler := NewGraphQLHandler(iamSvc, trustSvc, fileManagerSvc, esignSvc, mailmanSvc, logger, baseURL, cookieConfig, tokenSecret)
+	graphqlHandler := NewGraphQLHandler(
+		iamSvc,
+		trustSvc,
+		resourceAliasSvc,
+		fileManagerSvc,
+		esignSvc,
+		mailmanSvc,
+		logger,
+		baseURL,
+		cookieConfig,
+		tokenSecret,
+	)
 
 	r.Group(
 		func(r chi.Router) {

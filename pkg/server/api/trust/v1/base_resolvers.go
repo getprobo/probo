@@ -45,10 +45,9 @@ func (r *queryResolver) Node(ctx context.Context, id string) (types.Node, error)
 		trustCenter := compliancepage.CompliancePageFromContext(ctx)
 		scope := coredata.NewScopeFromObjectID(trustCenter.ID)
 
-		resourceID, err = r.trust.TrustCenterAliases.ResolveAlias(
+		resourceID, err = r.resourceAlias.ResolveAlias(
 			ctx,
 			scope,
-			trustCenter.OrganizationID,
 			id,
 		)
 		if err != nil {
@@ -56,7 +55,7 @@ func (r *queryResolver) Node(ctx context.Context, id string) (types.Node, error)
 				return nil, gqlutils.NotFoundf(ctx, "node %q not found", id)
 			}
 
-			r.logger.ErrorCtx(ctx, "cannot resolve trust center alias", log.Error(err))
+			r.logger.ErrorCtx(ctx, "cannot resolve resource alias", log.Error(err))
 
 			return nil, gqlutils.Internal(ctx)
 		}
