@@ -62,6 +62,7 @@ type (
 		Reports                *ReportService
 		Organizations          *OrganizationService
 		ComplianceExternalURLs *ComplianceExternalURLService
+		TrustCenterAliases     *TrustCenterAliasService
 	}
 )
 
@@ -103,6 +104,7 @@ func NewService(
 	svc.Reports = &ReportService{svc: svc}
 	svc.Organizations = &OrganizationService{svc: svc}
 	svc.ComplianceExternalURLs = &ComplianceExternalURLService{svc: svc}
+	svc.TrustCenterAliases = &TrustCenterAliasService{svc: svc}
 
 	return svc
 }
