@@ -32,6 +32,7 @@ import (
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/prosemirror"
+	"go.probo.inc/probo/pkg/resourcealias"
 	"go.probo.inc/probo/pkg/riskmanagement"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/thirdparty"
@@ -39,6 +40,7 @@ import (
 
 type Resolver struct {
 	proboSvc       *probo.Service
+	resourceAlias  *resourcealias.Service
 	thirdPartySvc  *thirdparty.Service
 	iamSvc         *iam.Service
 	accessReview   *accessreview.Service

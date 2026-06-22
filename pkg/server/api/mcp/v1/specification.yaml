@@ -9160,7 +9160,7 @@ components:
           $ref: "#/components/schemas/GID"
           description: Deleted trust center reference ID
 
-    TrustCenterAlias:
+    ResourceAlias:
       type: object
       required:
         - resource_id
@@ -9173,7 +9173,7 @@ components:
           type: string
           description: Human-readable alias slug
 
-    SetTrustCenterAliasInput:
+    SetResourceAliasInput:
       type: object
       required:
         - resource_id
@@ -9181,29 +9181,29 @@ components:
       properties:
         resource_id:
           $ref: "#/components/schemas/GID"
-          description: Document, trust center file, or audit ID
+          description: ID of the resource to alias
         alias:
           type: string
           description: Human-readable alias slug
 
-    SetTrustCenterAliasOutput:
+    SetResourceAliasOutput:
       type: object
       required:
-        - trust_center_alias
+        - resource_alias
       properties:
-        trust_center_alias:
-          $ref: "#/components/schemas/TrustCenterAlias"
+        resource_alias:
+          $ref: "#/components/schemas/ResourceAlias"
 
-    RemoveTrustCenterAliasInput:
+    RemoveResourceAliasInput:
       type: object
       required:
         - resource_id
       properties:
         resource_id:
           $ref: "#/components/schemas/GID"
-          description: Document, trust center file, or audit ID
+          description: ID of the resource whose alias to remove
 
-    RemoveTrustCenterAliasOutput:
+    RemoveResourceAliasOutput:
       type: object
       required:
         - deleted_resource_id
@@ -13676,23 +13676,23 @@ tools:
       $ref: "#/components/schemas/DeleteTrustCenterReferenceInput"
     outputSchema:
       $ref: "#/components/schemas/DeleteTrustCenterReferenceOutput"
-  - name: setTrustCenterAlias
-    description: Set a trust center alias for a document, file, or audit
+  - name: setResourceAlias
+    description: Set a resource alias for a resource
     hints:
       readonly: false
     inputSchema:
-      $ref: "#/components/schemas/SetTrustCenterAliasInput"
+      $ref: "#/components/schemas/SetResourceAliasInput"
     outputSchema:
-      $ref: "#/components/schemas/SetTrustCenterAliasOutput"
-  - name: removeTrustCenterAlias
-    description: Remove a trust center alias from a resource
+      $ref: "#/components/schemas/SetResourceAliasOutput"
+  - name: removeResourceAlias
+    description: Remove a resource alias from a resource
     hints:
       readonly: false
       destructive: true
     inputSchema:
-      $ref: "#/components/schemas/RemoveTrustCenterAliasInput"
+      $ref: "#/components/schemas/RemoveResourceAliasInput"
     outputSchema:
-      $ref: "#/components/schemas/RemoveTrustCenterAliasOutput"
+      $ref: "#/components/schemas/RemoveResourceAliasOutput"
   - name: listTrustCenterFiles
     description: List all files for the trust center
     hints:

@@ -21,6 +21,7 @@ import (
 	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/probo"
+	"go.probo.inc/probo/pkg/resourcealias"
 	"go.probo.inc/probo/pkg/riskmanagement"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/mcp/v1/types"
@@ -7044,40 +7045,41 @@ func (r *Resolver) DeleteRiskAssessmentBoundaryTool(ctx context.Context, req *mc
 	}, nil
 }
 
-func (r *Resolver) SetTrustCenterAliasTool(ctx context.Context, req *mcp.CallToolRequest, input *types.SetTrustCenterAliasInput) (*mcp.CallToolResult, types.SetTrustCenterAliasOutput, error) {
-	scope, err := r.Authorize(ctx, input.ResourceID, probo.ActionTrustCenterAliasSet)
+func (r *Resolver) SetResourceAliasTool(ctx context.Context, req *mcp.CallToolRequest, input *types.SetResourceAliasInput) (*mcp.CallToolResult, types.SetResourceAliasOutput, error) {
+	scope, err := r.Authorize(ctx, input.ResourceID, resourcealias.ActionAliasSet)
 	if err != nil {
-		return nil, types.SetTrustCenterAliasOutput{}, err
+		return nil, types.SetResourceAliasOutput{}, err
 	}
 
-	alias, err := r.proboSvc.TrustCenterAliases.Create(
+	alias, err := r.resourceAlias.Create(
 		ctx,
 		scope,
-		probo.CreateTrustCenterAliasRequest{
+		resourcealias.CreateRequest{
 			ResourceID: input.ResourceID,
 			Alias:      input.Alias,
 		},
 	)
 	if err != nil {
-		return nil, types.SetTrustCenterAliasOutput{}, fmt.Errorf("cannot set trust center alias: %w", err)
+		return nil, types.SetResourceAliasOutput{}, fmt.Errorf("cannot set resource alias: %w", err)
 	}
 
-	return nil, types.SetTrustCenterAliasOutput{
-		TrustCenterAlias: types.NewTrustCenterAlias(input.ResourceID, alias),
+	return nil, types.SetResourceAliasOutput{
+		ResourceAlias: types.NewResourceAlias(input.ResourceID, alias),
 	}, nil
 }
-func (r *Resolver) RemoveTrustCenterAliasTool(ctx context.Context, req *mcp.CallToolRequest, input *types.RemoveTrustCenterAliasInput) (*mcp.CallToolResult, types.RemoveTrustCenterAliasOutput, error) {
-	scope, err := r.Authorize(ctx, input.ResourceID, probo.ActionTrustCenterAliasRemove)
+
+func (r *Resolver) RemoveResourceAliasTool(ctx context.Context, req *mcp.CallToolRequest, input *types.RemoveResourceAliasInput) (*mcp.CallToolResult, types.RemoveResourceAliasOutput, error) {
+	scope, err := r.Authorize(ctx, input.ResourceID, resourcealias.ActionAliasRemove)
 	if err != nil {
-		return nil, types.RemoveTrustCenterAliasOutput{}, err
+		return nil, types.RemoveResourceAliasOutput{}, err
 	}
 
-	_, err = r.proboSvc.TrustCenterAliases.Remove(ctx, scope, input.ResourceID)
+	err = r.resourceAlias.Remove(ctx, scope, input.ResourceID)
 	if err != nil {
-		return nil, types.RemoveTrustCenterAliasOutput{}, fmt.Errorf("cannot remove trust center alias: %w", err)
+		return nil, types.RemoveResourceAliasOutput{}, fmt.Errorf("cannot remove resource alias: %w", err)
 	}
 
-	return nil, types.RemoveTrustCenterAliasOutput{
+	return nil, types.RemoveResourceAliasOutput{
 		DeletedResourceID: input.ResourceID,
 	}, nil
 }

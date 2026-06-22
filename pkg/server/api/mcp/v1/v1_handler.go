@@ -27,6 +27,7 @@ import (
 	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/probo"
+	"go.probo.inc/probo/pkg/resourcealias"
 	"go.probo.inc/probo/pkg/riskmanagement"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/mcp/mcputils"
@@ -37,6 +38,7 @@ import (
 func NewMux(
 	logger *log.Logger,
 	proboSvc *probo.Service,
+	resourceAliasSvc *resourcealias.Service,
 	thirdPartySvc *thirdparty.Service,
 	iamSvc *iam.Service,
 	accessReviewSvc *accessreview.Service,
@@ -52,6 +54,7 @@ func NewMux(
 
 	resolver := &Resolver{
 		proboSvc:       proboSvc,
+		resourceAlias:  resourceAliasSvc,
 		thirdPartySvc:  thirdPartySvc,
 		iamSvc:         iamSvc,
 		accessReview:   accessReviewSvc,
