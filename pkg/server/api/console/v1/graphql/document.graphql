@@ -269,6 +269,7 @@ type Document implements Node {
     currentPublishedMajor: Int
     currentPublishedMinor: Int
     trustCenterVisibility: TrustCenterVisibility!
+    alias: String @goField(forceResolver: true)
     organization: Organization! @goField(forceResolver: true)
 
     versions(

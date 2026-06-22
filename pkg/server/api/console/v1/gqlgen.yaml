@@ -41,3 +41,6 @@ models:
   EmailAddr:
     model:
       - "go.probo.inc/probo/pkg/server/gqlutils/types/mail.AddrScalar"
+  TrustCenterAlias:
+    model:
+      - "go.probo.inc/probo/pkg/server/api/console/v1/types.TrustCenterAlias"

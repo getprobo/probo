@@ -173,6 +173,16 @@ func (r *auditResolver) Findings(ctx context.Context, obj *types.Audit, first *i
 	return types.NewFindingConnection(p, r, obj.ID, filter), nil
 }
 
+// Alias is the resolver for the alias field.
+func (r *auditResolver) Alias(ctx context.Context, obj *types.Audit) (*string, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionAuditGet)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.probo.TrustCenterAliases.GetByResourceID(ctx, scope, obj.ID)
+}
+
 // Permission is the resolver for the permission field.
 func (r *auditResolver) Permission(ctx context.Context, obj *types.Audit, action string) (bool, error) {
 	return r.Resolver.Permission(ctx, obj, action)

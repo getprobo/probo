@@ -27,6 +27,16 @@ import (
 	"go.probo.inc/probo/pkg/validator"
 )
 
+// Alias is the resolver for the alias field.
+func (r *documentResolver) Alias(ctx context.Context, obj *types.Document) (*string, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionDocumentGet)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.probo.TrustCenterAliases.GetByResourceID(ctx, scope, obj.ID)
+}
+
 // Organization is the resolver for the organization field.
 func (r *documentResolver) Organization(ctx context.Context, obj *types.Document) (*types.Organization, error) {
 	if _, err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGet); err != nil {
