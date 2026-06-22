@@ -27,7 +27,7 @@ function DocumentPageQueryLoader() {
 
   useEffect(() => {
     if (documentId) {
-      loadQuery({ id: documentId });
+      loadQuery({ alias: documentId });
     }
   }, [documentId, loadQuery]);
 

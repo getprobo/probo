@@ -24,7 +24,8 @@ interface Node {
 
 type Query {
   viewer: Identity
-  node(id: String!): Node
+  node(id: ID!): Node
+  aliasedNode(alias: String!): Node
   currentTrustCenter: TrustCenter
   oidcProviders: [OIDCProviderInfo!]!
     @goField(forceResolver: true)

@@ -45,7 +45,7 @@ import type { DocumentPageRequestReportAccessMutation } from "./__generated__/Do
 import type { DocumentPageRequestTrustCenterFileAccessMutation } from "./__generated__/DocumentPageRequestTrustCenterFileAccessMutation.graphql";
 
 export const documentPageQuery = graphql`
-  query DocumentPageQuery($id: String!) {
+  query DocumentPageQuery($alias: String!) {
     currentTrustCenter {
       logo {
         downloadUrl
@@ -54,7 +54,7 @@ export const documentPageQuery = graphql`
         downloadUrl
       }
     }
-    node(id: $id) @required(action: THROW) {
+    aliasedNode(alias: $alias) @required(action: THROW) {
       __typename
       ... on Document {
         id
@@ -183,7 +183,7 @@ function extractMimeType(dataUri: string): string {
   return match?.[1] ?? "application/octet-stream";
 }
 
-function getNodeTitle(node: DocumentPageQueryType["response"]["node"]): string | undefined {
+function getNodeTitle(node: DocumentPageQueryType["response"]["aliasedNode"]): string | undefined {
   switch (node.__typename) {
     case "Document":
       return node.title;
@@ -196,7 +196,7 @@ function getNodeTitle(node: DocumentPageQueryType["response"]["node"]): string |
   }
 }
 
-function getNodeId(node: DocumentPageQueryType["response"]["node"]): string | undefined {
+function getNodeId(node: DocumentPageQueryType["response"]["aliasedNode"]): string | undefined {
   switch (node.__typename) {
     case "Document":
     case "TrustCenterFile":
@@ -220,7 +220,7 @@ export function DocumentPage({ queryRef }: Props) {
 
   const data = usePreloadedQuery<DocumentPageQueryType>(documentPageQuery, queryRef);
   const trustCenter = data.currentTrustCenter;
-  const node = data.node;
+  const node = data.aliasedNode;
 
   if (
     node.__typename !== "Document"
