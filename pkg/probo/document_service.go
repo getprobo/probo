@@ -68,6 +68,9 @@ type (
 	ErrDocumentVersionNotPublished struct {
 	}
 
+	ErrDocumentVersionNotCurrent struct {
+	}
+
 	ErrDocumentVersionPendingApproval struct {
 	}
 
@@ -268,6 +271,10 @@ func (e ErrDocumentVersionNotDraft) Error() string {
 
 func (e ErrDocumentVersionNotPublished) Error() string {
 	return "document version is not published"
+}
+
+func (e ErrDocumentVersionNotCurrent) Error() string {
+	return "document version is not the current published version"
 }
 
 func (e ErrDocumentVersionPendingApproval) Error() string {
@@ -1102,6 +1109,13 @@ func (s *DocumentService) RequestSignature(
 
 			if documentVersion.Status != coredata.DocumentVersionStatusPublished {
 				return &ErrDocumentVersionNotPublished{}
+			}
+
+			if document.CurrentPublishedMajor == nil ||
+				document.CurrentPublishedMinor == nil ||
+				documentVersion.Major != *document.CurrentPublishedMajor ||
+				documentVersion.Minor != *document.CurrentPublishedMinor {
+				return &ErrDocumentVersionNotCurrent{}
 			}
 
 			profile := &coredata.MembershipProfile{}

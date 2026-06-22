@@ -1337,6 +1337,10 @@ func (r *mutationResolver) RequestSignature(ctx context.Context, input types.Req
 			return nil, gqlutils.Conflict(ctx, errNotPublished)
 		}
 
+		if errNotCurrent, ok := errors.AsType[*probo.ErrDocumentVersionNotCurrent](err); ok {
+			return nil, gqlutils.Conflict(ctx, errNotCurrent)
+		}
+
 		if errContractEnded, ok := errors.AsType[*probo.ErrProfileContractEnded](err); ok {
 			return nil, gqlutils.Conflict(ctx, errContractEnded)
 		}

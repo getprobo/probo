@@ -2456,6 +2456,10 @@ func (r *Resolver) RequestDocumentVersionSignatureTool(ctx context.Context, req 
 		},
 	)
 	if err != nil {
+		if _, ok := errors.AsType[*probo.ErrDocumentVersionNotCurrent](err); ok {
+			return nil, types.RequestDocumentVersionSignatureOutput{}, fmt.Errorf("cannot request signature: %w", err)
+		}
+
 		panic(fmt.Errorf("cannot request signature: %w", err))
 	}
 

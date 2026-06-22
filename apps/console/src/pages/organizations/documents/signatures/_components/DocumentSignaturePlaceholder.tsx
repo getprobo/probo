@@ -42,6 +42,12 @@ const versionFragment = graphql`
   fragment DocumentSignaturePlaceholder_versionFragment on DocumentVersion {
     id
     status
+    major
+    minor
+    document {
+      currentPublishedMajor
+      currentPublishedMinor
+    }
   }
 `;
 
@@ -81,6 +87,11 @@ export function DocumentSignaturePlaceholder(props: {
   const person = useFragment<DocumentSignaturePlaceholder_personFragment$key>(personFragment, personFragmentRef);
   const version = useFragment<DocumentSignaturePlaceholder_versionFragment$key>(versionFragment, versionFragmentRef);
 
+  const isCurrentPublishedVersion
+    = version.status === "PUBLISHED"
+      && version.document.currentPublishedMajor === version.major
+      && version.document.currentPublishedMinor === version.minor;
+
   const [requestSignature, isSendingRequest] = useMutationWithToasts(
     requestSignatureMutation,
     {
@@ -99,7 +110,7 @@ export function DocumentSignaturePlaceholder(props: {
           {person.emailAddress}
         </div>
       </div>
-      {version.status === "PUBLISHED" && canRequestSignature && (
+      {isCurrentPublishedVersion && canRequestSignature && (
         <Button
           variant="secondary"
           className="ml-auto"
