@@ -16,6 +16,7 @@ import (
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/probo"
+	"go.probo.inc/probo/pkg/resourcealias"
 	"go.probo.inc/probo/pkg/server/api/console/v1/dataloader"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
@@ -688,75 +689,6 @@ func (r *mutationResolver) DeleteCustomDomain(ctx context.Context, input types.D
 	}, nil
 }
 
-// SetTrustCenterAlias is the resolver for the setTrustCenterAlias field.
-func (r *mutationResolver) SetTrustCenterAlias(ctx context.Context, input types.SetTrustCenterAliasInput) (*types.SetTrustCenterAliasPayload, error) {
-	scope, err := r.authorize(ctx, input.ResourceID, probo.ActionTrustCenterAliasSet)
-	if err != nil {
-		return nil, err
-	}
-
-	alias, err := r.probo.TrustCenterAliases.Create(
-		ctx,
-		scope,
-		probo.CreateTrustCenterAliasRequest{
-			ResourceID: input.ResourceID,
-			Alias:      input.Alias,
-		},
-	)
-	if err != nil {
-		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
-			return nil, gqlutils.Conflict(ctx, err)
-		}
-
-		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
-			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
-		}
-
-		if _, ok := errors.AsType[*probo.ErrTrustCenterAliasAuditReportMissing](err); ok {
-			return nil, gqlutils.Invalid(ctx, err)
-		}
-
-		if _, ok := errors.AsType[*probo.ErrTrustCenterAliasResourceInvalid](err); ok {
-			return nil, gqlutils.Invalid(ctx, err)
-		}
-
-		r.logger.ErrorCtx(ctx, "cannot set trust center alias", log.Error(err))
-
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	return &types.SetTrustCenterAliasPayload{
-		Alias: types.NewTrustCenterAlias(input.ResourceID, alias),
-	}, nil
-}
-
-// RemoveTrustCenterAlias is the resolver for the removeTrustCenterAlias field.
-func (r *mutationResolver) RemoveTrustCenterAlias(ctx context.Context, input types.RemoveTrustCenterAliasInput) (*types.RemoveTrustCenterAliasPayload, error) {
-	scope, err := r.authorize(ctx, input.ResourceID, probo.ActionTrustCenterAliasRemove)
-	if err != nil {
-		return nil, err
-	}
-
-	_, err = r.probo.TrustCenterAliases.Remove(ctx, scope, input.ResourceID)
-	if err != nil {
-		if _, ok := errors.AsType[*probo.ErrTrustCenterAliasAuditReportMissing](err); ok {
-			return nil, gqlutils.Invalid(ctx, err)
-		}
-
-		if _, ok := errors.AsType[*probo.ErrTrustCenterAliasResourceInvalid](err); ok {
-			return nil, gqlutils.Invalid(ctx, err)
-		}
-
-		r.logger.ErrorCtx(ctx, "cannot remove trust center alias", log.Error(err))
-
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	return &types.RemoveTrustCenterAliasPayload{
-		DeletedResourceID: input.ResourceID,
-	}, nil
-}
-
 // Logo is the resolver for the logo field.
 func (r *trustCenterResolver) Logo(ctx context.Context, obj *types.TrustCenter) (*types.File, error) {
 	if _, err := r.authorize(ctx, obj.ID, probo.ActionTrustCenterGet); err != nil {
@@ -1085,27 +1017,6 @@ func (r *trustCenterAccessResolver) Permission(ctx context.Context, obj *types.T
 	return r.Resolver.Permission(ctx, obj, action)
 }
 
-// Organization is the resolver for the organization field.
-func (r *trustCenterAliasResolver) Organization(ctx context.Context, obj *types.TrustCenterAlias) (*types.Organization, error) {
-	scope, err := r.authorize(ctx, obj.OrganizationID, probo.ActionOrganizationGet)
-	if err != nil {
-		return nil, err
-	}
-
-	organization, err := r.probo.Organizations.Get(ctx, scope, obj.OrganizationID)
-	if err != nil {
-		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
-		}
-
-		r.logger.ErrorCtx(ctx, "cannot get organization", log.Error(err))
-
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	return types.NewOrganization(organization), nil
-}
-
 // Document is the resolver for the document field.
 func (r *trustCenterDocumentAccessResolver) Document(ctx context.Context, obj *types.TrustCenterDocumentAccess) (*types.Document, error) {
 	scope, err := r.authorize(ctx, obj.ID, probo.ActionDocumentGet)
@@ -1229,12 +1140,12 @@ func (r *trustCenterFileResolver) File(ctx context.Context, obj *types.TrustCent
 
 // Alias is the resolver for the alias field.
 func (r *trustCenterFileResolver) Alias(ctx context.Context, obj *types.TrustCenterFile) (*string, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionTrustCenterFileGet)
+	scope, err := r.authorize(ctx, obj.ID, resourcealias.ActionAliasGet)
 	if err != nil {
 		return nil, err
 	}
 
-	return r.probo.TrustCenterAliases.GetByResourceID(ctx, scope, obj.ID)
+	return r.resourceAlias.GetByResourceID(ctx, scope, obj.ID)
 }
 
 // Organization is the resolver for the organization field.
@@ -1336,11 +1247,6 @@ func (r *Resolver) TrustCenterAccess() schema.TrustCenterAccessResolver {
 	return &trustCenterAccessResolver{r}
 }
 
-// TrustCenterAlias returns schema.TrustCenterAliasResolver implementation.
-func (r *Resolver) TrustCenterAlias() schema.TrustCenterAliasResolver {
-	return &trustCenterAliasResolver{r}
-}
-
 // TrustCenterDocumentAccess returns schema.TrustCenterDocumentAccessResolver implementation.
 func (r *Resolver) TrustCenterDocumentAccess() schema.TrustCenterDocumentAccessResolver {
 	return &trustCenterDocumentAccessResolver{r}
@@ -1376,7 +1282,6 @@ type complianceFrameworkResolver struct{ *Resolver }
 type customDomainResolver struct{ *Resolver }
 type trustCenterResolver struct{ *Resolver }
 type trustCenterAccessResolver struct{ *Resolver }
-type trustCenterAliasResolver struct{ *Resolver }
 type trustCenterDocumentAccessResolver struct{ *Resolver }
 type trustCenterDocumentAccessConnectionResolver struct{ *Resolver }
 type trustCenterFileResolver struct{ *Resolver }

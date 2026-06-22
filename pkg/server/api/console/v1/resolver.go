@@ -39,6 +39,7 @@ import (
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/mailman"
 	"go.probo.inc/probo/pkg/probo"
+	"go.probo.inc/probo/pkg/resourcealias"
 	"go.probo.inc/probo/pkg/riskmanagement"
 	"go.probo.inc/probo/pkg/saferedirect"
 	"go.probo.inc/probo/pkg/securecookie"
@@ -54,6 +55,7 @@ type (
 		authorize         authz.AuthorizeFunc
 		batchAuthorize    authz.BatchAuthorizeFunc
 		probo             *probo.Service
+		resourceAlias     *resourcealias.Service
 		iam               *iam.Service
 		esign             *esign.Service
 		accessReview      *accessreview.Service
@@ -74,6 +76,7 @@ type (
 func NewMux(
 	logger *log.Logger,
 	proboSvc *probo.Service,
+	resourceAliasSvc *resourcealias.Service,
 	iamSvc *iam.Service,
 	esignSvc *esign.Service,
 	accessReviewSvc *accessreview.Service,
@@ -97,6 +100,7 @@ func NewMux(
 	graphqlHandler := NewGraphQLHandler(
 		iamSvc,
 		proboSvc,
+		resourceAliasSvc,
 		esignSvc,
 		accessReviewSvc,
 		agentRunSvc,

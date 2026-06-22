@@ -173,7 +173,6 @@ type Audit implements Node {
     ): FindingConnection @goField(forceResolver: true)
 
     trustCenterVisibility: TrustCenterVisibility!
-    alias: String @goField(forceResolver: true)
     createdAt: Datetime!
     updatedAt: Datetime!
 

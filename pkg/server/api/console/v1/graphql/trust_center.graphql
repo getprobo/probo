@@ -550,12 +550,6 @@ extend type Mutation {
     deleteCustomDomain(
         input: DeleteCustomDomainInput!
     ): DeleteCustomDomainPayload!
-    setTrustCenterAlias(
-        input: SetTrustCenterAliasInput!
-    ): SetTrustCenterAliasPayload!
-    removeTrustCenterAlias(
-        input: RemoveTrustCenterAliasInput!
-    ): RemoveTrustCenterAliasPayload!
 }
 
 input UpdateTrustCenterInput {
@@ -764,27 +758,4 @@ type CreateCustomDomainPayload {
 
 type DeleteCustomDomainPayload {
     deletedCustomDomainId: ID!
-}
-
-input SetTrustCenterAliasInput {
-    resourceId: ID!
-    alias: String!
-}
-
-input RemoveTrustCenterAliasInput {
-    resourceId: ID!
-}
-
-type TrustCenterAlias {
-    resourceId: ID!
-    alias: String!
-    organization: Organization! @goField(forceResolver: true)
-}
-
-type SetTrustCenterAliasPayload {
-    alias: TrustCenterAlias!
-}
-
-type RemoveTrustCenterAliasPayload {
-    deletedResourceId: ID!
 }

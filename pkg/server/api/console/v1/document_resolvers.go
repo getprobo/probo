@@ -19,6 +19,7 @@ import (
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/probo"
+	"go.probo.inc/probo/pkg/resourcealias"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/console/v1/dataloader"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
@@ -29,12 +30,12 @@ import (
 
 // Alias is the resolver for the alias field.
 func (r *documentResolver) Alias(ctx context.Context, obj *types.Document) (*string, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionDocumentGet)
+	scope, err := r.authorize(ctx, obj.ID, resourcealias.ActionAliasGet)
 	if err != nil {
 		return nil, err
 	}
 
-	return r.probo.TrustCenterAliases.GetByResourceID(ctx, scope, obj.ID)
+	return r.resourceAlias.GetByResourceID(ctx, scope, obj.ID)
 }
 
 // Organization is the resolver for the organization field.

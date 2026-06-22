@@ -19,16 +19,14 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 )
 
-type TrustCenterAlias struct {
-	ResourceID     gid.GID `json:"resourceId"`
-	Alias          string  `json:"alias"`
-	OrganizationID gid.GID `json:"-"`
+type ResourceAlias struct {
+	ResourceID gid.GID `json:"resourceId"`
+	Alias      string  `json:"alias"`
 }
 
-func NewTrustCenterAlias(resourceID gid.GID, alias *coredata.TrustCenterAlias) *TrustCenterAlias {
-	return &TrustCenterAlias{
-		ResourceID:     resourceID,
-		Alias:          alias.Alias,
-		OrganizationID: alias.OrganizationID,
+func NewResourceAlias(resourceID gid.GID, alias *coredata.ResourceAlias) *ResourceAlias {
+	return &ResourceAlias{
+		ResourceID: resourceID,
+		Alias:      alias.Alias,
 	}
 }
