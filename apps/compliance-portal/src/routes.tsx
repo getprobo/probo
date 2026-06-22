@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,10 +12,24 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { RouterProvider } from "react-router";
+import { lazy } from "@probo/react-lazy";
+import { type AppRoute, routeFromAppRoute } from "@probo/routes";
+import { createBrowserRouter } from "react-router";
 
-import { router } from "#/routes";
+import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
 
-export function App() {
-  return <RouterProvider router={router} />;
-}
+const routes = [
+  {
+    path: "/",
+    Fallback: PageSkeleton,
+    Component: lazy(() => import("#/pages/MainLayout")),
+    children: [
+      {
+        index: true,
+        Component: lazy(() => import("#/pages/HomePage")),
+      },
+    ],
+  },
+] satisfies AppRoute[];
+
+export const router = createBrowserRouter(routes.map(routeFromAppRoute));

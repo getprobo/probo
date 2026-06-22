@@ -10,6 +10,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@probo/react-lazy": "1.0.0",
+    "@probo/routes": "1.0.0",
     "@probo/ui": "1.0.0",
     "clsx": "^2.1.1",
     "react": "^19.2.7",

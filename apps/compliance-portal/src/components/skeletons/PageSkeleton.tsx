@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,10 +12,10 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { RouterProvider } from "react-router";
-
-import { router } from "#/routes";
-
-export function App() {
-  return <RouterProvider router={router} />;
+export function PageSkeleton() {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-sand-1">
+      <div className="h-8 w-48 animate-pulse rounded bg-sand-4" />
+    </div>
+  );
 }
