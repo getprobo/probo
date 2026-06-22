@@ -12,30 +12,23 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package trustcenter
+package alias
 
 import (
 	"github.com/spf13/cobra"
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
-	"go.probo.inc/probo/pkg/cmd/trust-center/alias"
-	"go.probo.inc/probo/pkg/cmd/trust-center/file"
-	"go.probo.inc/probo/pkg/cmd/trust-center/reference"
-	"go.probo.inc/probo/pkg/cmd/trust-center/update"
-	"go.probo.inc/probo/pkg/cmd/trust-center/view"
+	"go.probo.inc/probo/pkg/cmd/trust-center/alias/remove"
+	"go.probo.inc/probo/pkg/cmd/trust-center/alias/set"
 )
 
-func NewCmdTrustCenter(f *cmdutil.Factory) *cobra.Command {
+func NewCmdAlias(f *cmdutil.Factory) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "trust-center <command>",
-		Short:   "Manage trust center",
-		Aliases: []string{"tc"},
+		Use:   "alias <command>",
+		Short: "Manage trust center aliases",
 	}
 
-	cmd.AddCommand(view.NewCmdView(f))
-	cmd.AddCommand(update.NewCmdUpdate(f))
-	cmd.AddCommand(reference.NewCmdReference(f))
-	cmd.AddCommand(alias.NewCmdAlias(f))
-	cmd.AddCommand(file.NewCmdFile(f))
+	cmd.AddCommand(set.NewCmdSet(f))
+	cmd.AddCommand(remove.NewCmdRemove(f))
 
 	return cmd
 }
