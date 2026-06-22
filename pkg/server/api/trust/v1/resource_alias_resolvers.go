@@ -24,7 +24,7 @@ import (
 	"go.probo.inc/probo/pkg/server/gqlutils"
 )
 
-func (r *Resolver) resourceAliasForStorageResource(
+func (r *Resolver) ResourceAliasResolver(
 	ctx context.Context,
 	storageResourceID gid.GID,
 ) (*string, error) {
