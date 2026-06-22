@@ -75,6 +75,10 @@ const (
 	ActionComplianceExternalURLUpdate = "core:compliance-external-url:update"
 	ActionComplianceExternalURLDelete = "core:compliance-external-url:delete"
 
+	// TrustCenterAlias actions
+	ActionTrustCenterAliasSet    = "core:trust-center-alias:set"
+	ActionTrustCenterAliasRemove = "core:trust-center-alias:remove"
+
 	// TrustCenterFile actions
 	ActionTrustCenterFileGet        = "core:trust-center-file:get"
 	ActionTrustCenterFileList       = "core:trust-center-file:list"
