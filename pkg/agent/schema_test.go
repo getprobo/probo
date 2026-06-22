@@ -25,6 +25,8 @@ import (
 func TestGenerateSchema_PointerFieldsStripNull(t *testing.T) {
 	t.Parallel()
 
+	// Pointer fields without omitempty are treated as required by the schema
+	// library. null is stripped and they appear as simple non-nullable types.
 	type Params struct {
 		Name  *string  `json:"name"`
 		Count *int     `json:"count"`
@@ -51,7 +53,6 @@ func TestGenerateSchema_PointerFieldsStripNull(t *testing.T) {
 	} {
 		prop := props[field.name].(map[string]any)
 		assert.Equal(t, field.wantType, prop["type"], "field %s", field.name)
-		assert.Nil(t, prop["types"], "field %s should not have union types", field.name)
 	}
 }
 
@@ -142,10 +143,12 @@ func TestGenerateSchema_NestedPointerStruct(t *testing.T) {
 
 	props := schema["properties"].(map[string]any)
 
+	// Pointer-to-struct without omitempty is in required with a simple type.
 	innerProp := props["inner"].(map[string]any)
 	assert.Equal(t, "object", innerProp["type"])
 	assert.Nil(t, innerProp["types"], "pointer to struct should not have union types")
 
+	// Nested pointer field without omitempty is also required and non-nullable.
 	innerProps := innerProp["properties"].(map[string]any)
 	valueProp := innerProps["value"].(map[string]any)
 	assert.Equal(t, "string", valueProp["type"])
@@ -239,11 +242,30 @@ func TestGenerateSchema_RequiredVsOptional(t *testing.T) {
 	var schema map[string]any
 	require.NoError(t, json.Unmarshal(raw, &schema))
 
+	// All properties must appear in required (OpenAI requirement).
 	required := schema["required"].([]any)
 	assert.Contains(t, required, "required")
 	assert.Contains(t, required, "also_needed")
-	assert.NotContains(t, required, "optional")
-	assert.NotContains(t, required, "omit_empty")
+	assert.Contains(t, required, "optional")
+	assert.Contains(t, required, "omit_empty")
+
+	// Optional properties must be nullable so the model can pass null.
+	props := schema["properties"].(map[string]any)
+
+	optionalType := props["optional"].(map[string]any)["type"].([]any)
+	assert.Contains(t, optionalType, "string")
+	assert.Contains(t, optionalType, "null")
+
+	omitEmptyType := props["omit_empty"].(map[string]any)["type"].([]any)
+	assert.Contains(t, omitEmptyType, "string")
+	assert.Contains(t, omitEmptyType, "null")
+
+	// Truly required properties must not be nullable.
+	requiredType := props["required"].(map[string]any)["type"]
+	assert.Equal(t, "string", requiredType)
+
+	alsoNeededType := props["also_needed"].(map[string]any)["type"]
+	assert.Equal(t, "integer", alsoNeededType)
 }
 
 func TestGenerateSchema_DeeplyNestedStructure(t *testing.T) {
@@ -327,8 +349,9 @@ func TestGenerateSchema_SliceOfStructs(t *testing.T) {
 	assert.Contains(t, itemProps, "count")
 
 	countProp := itemProps["count"].(map[string]any)
-	assert.Equal(t, "integer", countProp["type"])
-	assert.Nil(t, countProp["types"])
+	countType := countProp["type"].([]any)
+	assert.Contains(t, countType, "integer")
+	assert.Contains(t, countType, "null")
 	assert.Nil(t, countProp["minimum"])
 }
 

@@ -1279,7 +1279,7 @@ func executeSingleTool(
 			content = content[:200] + "... (truncated)"
 		}
 
-		logger.WarnCtx(
+		logger.ErrorCtx(
 			ctx,
 			"tool returned error",
 			log.String("tool", tool.Name()),

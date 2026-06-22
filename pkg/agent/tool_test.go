@@ -128,7 +128,7 @@ func TestFunctionTool_Definition(t *testing.T) {
 	)
 
 	t.Run(
-		"pointer fields are not nullable in schema",
+		"omitempty fields are nullable and in required",
 		func(t *testing.T) {
 			t.Parallel()
 
@@ -147,10 +147,16 @@ func TestFunctionTool_Definition(t *testing.T) {
 			var schema map[string]any
 			require.NoError(t, json.Unmarshal(tool.Definition().Parameters, &schema))
 
+			// OpenAI requires all properties to be in required; optional
+			// fields are represented as nullable.
+			required := schema["required"].([]any)
+			assert.Contains(t, required, "title")
+
 			props := schema["properties"].(map[string]any)
 			titleProp := props["title"].(map[string]any)
-			assert.Equal(t, "string", titleProp["type"])
-			assert.Nil(t, titleProp["types"])
+			titleType := titleProp["type"].([]any)
+			assert.Contains(t, titleType, "string")
+			assert.Contains(t, titleType, "null")
 		},
 	)
 }
