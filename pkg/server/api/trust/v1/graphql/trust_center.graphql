@@ -93,6 +93,7 @@ type Document implements Node @nda {
   id: ID!
   title: String!
   documentType: DocumentType!
+  alias: String @goField(forceResolver: true)
   isUserAuthorized: Boolean! @goField(forceResolver: true)
   access: DocumentAccess @goField(forceResolver: true)
 }
@@ -117,6 +118,7 @@ type Framework implements Node @nda {
 type AuditReport implements Node @nda {
   id: ID!
   fileName: String!
+  alias: String @goField(forceResolver: true)
   isUserAuthorized: Boolean! @goField(forceResolver: true)
   access: DocumentAccess @goField(forceResolver: true)
 }
@@ -279,6 +281,7 @@ type TrustCenterFile implements Node @nda {
   id: ID!
   name: String!
   category: String!
+  alias: String @goField(forceResolver: true)
   isUserAuthorized: Boolean! @goField(forceResolver: true)
   access: DocumentAccess @goField(forceResolver: true)
 }

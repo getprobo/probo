@@ -69,6 +69,11 @@ func (r *auditResolver) ReportFile(ctx context.Context, obj *types.Audit) (*type
 	return types.NewAuditReport(file), nil
 }
 
+// Alias is the resolver for the alias field.
+func (r *auditReportResolver) Alias(ctx context.Context, obj *types.AuditReport) (*string, error) {
+	return r.trustCenterAliasForStorageResource(ctx, obj.ID)
+}
+
 // IsUserAuthorized is the resolver for the isUserAuthorized field.
 func (r *auditReportResolver) IsUserAuthorized(ctx context.Context, obj *types.AuditReport) (bool, error) {
 	scope := coredata.NewScopeFromObjectID(obj.ID)
@@ -167,6 +172,11 @@ func (r *complianceFrameworkResolver) Framework(ctx context.Context, obj *types.
 	}
 
 	return types.NewFramework(framework), nil
+}
+
+// Alias is the resolver for the alias field.
+func (r *documentResolver) Alias(ctx context.Context, obj *types.Document) (*string, error) {
+	return r.trustCenterAliasForStorageResource(ctx, obj.ID)
 }
 
 // IsUserAuthorized is the resolver for the isUserAuthorized field.
@@ -906,6 +916,11 @@ func (r *trustCenterResolver) Updates(ctx context.Context, obj *types.TrustCente
 	}
 
 	return types.NewMailingListUpdateConnection(result), nil
+}
+
+// Alias is the resolver for the alias field.
+func (r *trustCenterFileResolver) Alias(ctx context.Context, obj *types.TrustCenterFile) (*string, error) {
+	return r.trustCenterAliasForStorageResource(ctx, obj.ID)
 }
 
 // IsUserAuthorized is the resolver for the isUserAuthorized field.
