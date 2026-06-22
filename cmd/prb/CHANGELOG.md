@@ -4,6 +4,12 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.197.0] - 2026-06-22
+
+### Added
+
+- `prb resource-alias` commands to set and remove aliases on trust center entries
+
 ## [0.196.0] - 2026-06-19
 
 ### Added
