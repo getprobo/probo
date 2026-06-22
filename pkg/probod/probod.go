@@ -459,7 +459,8 @@ func (impl *Implm) Run(
 		Register(iam.IAMOAuth2ScopeMappings).
 		Register(probo.OAuth2ScopeMappings).
 		Register(agentrun.OAuth2ScopeMappings).
-		Register(accessreview.OAuth2ScopeMappings)
+		Register(accessreview.OAuth2ScopeMappings).
+		Register(resourcealias.OAuth2ScopeMappings)
 
 	iamService, err := iam.NewService(
 		ctx,
@@ -614,10 +615,6 @@ func (impl *Implm) Run(
 	iamService.Authorizer.RegisterPolicySet(agentrun.PolicySet())
 	iamService.Authorizer.RegisterPolicySet(accessreview.PolicySet())
 	iamService.Authorizer.RegisterPolicySet(resourcealias.PolicySet())
-	iamService.OAuth2ScopeRegistry.Register(agentrun.OAuth2ScopeMappings)
-	iamService.OAuth2ScopeRegistry.Register(accessreview.OAuth2ScopeMappings)
-	iamService.OAuth2ScopeRegistry.Register(iam.IAMOAuth2ScopeMappings)
-	iamService.OAuth2ScopeRegistry.Register(resourcealias.OAuth2ScopeMappings)
 
 	thirdPartyService := thirdparty.NewService(pgClient, fileManagerService, thirdPartyVetter)
 	riskManagementService := riskmanagement.NewService(pgClient)
