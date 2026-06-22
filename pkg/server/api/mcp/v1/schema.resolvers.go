@@ -7043,3 +7043,41 @@ func (r *Resolver) DeleteRiskAssessmentBoundaryTool(ctx context.Context, req *mc
 		DeletedRiskAssessmentBoundaryID: input.ID,
 	}, nil
 }
+
+func (r *Resolver) SetTrustCenterAliasTool(ctx context.Context, req *mcp.CallToolRequest, input *types.SetTrustCenterAliasInput) (*mcp.CallToolResult, types.SetTrustCenterAliasOutput, error) {
+	scope, err := r.Authorize(ctx, input.ResourceID, probo.ActionTrustCenterAliasSet)
+	if err != nil {
+		return nil, types.SetTrustCenterAliasOutput{}, err
+	}
+
+	alias, err := r.proboSvc.TrustCenterAliases.Create(
+		ctx,
+		scope,
+		probo.CreateTrustCenterAliasRequest{
+			ResourceID: input.ResourceID,
+			Alias:      input.Alias,
+		},
+	)
+	if err != nil {
+		return nil, types.SetTrustCenterAliasOutput{}, fmt.Errorf("cannot set trust center alias: %w", err)
+	}
+
+	return nil, types.SetTrustCenterAliasOutput{
+		TrustCenterAlias: types.NewTrustCenterAlias(input.ResourceID, alias),
+	}, nil
+}
+func (r *Resolver) RemoveTrustCenterAliasTool(ctx context.Context, req *mcp.CallToolRequest, input *types.RemoveTrustCenterAliasInput) (*mcp.CallToolResult, types.RemoveTrustCenterAliasOutput, error) {
+	scope, err := r.Authorize(ctx, input.ResourceID, probo.ActionTrustCenterAliasRemove)
+	if err != nil {
+		return nil, types.RemoveTrustCenterAliasOutput{}, err
+	}
+
+	_, err = r.proboSvc.TrustCenterAliases.Remove(ctx, scope, input.ResourceID)
+	if err != nil {
+		return nil, types.RemoveTrustCenterAliasOutput{}, fmt.Errorf("cannot remove trust center alias: %w", err)
+	}
+
+	return nil, types.RemoveTrustCenterAliasOutput{
+		DeletedResourceID: input.ResourceID,
+	}, nil
+}
