@@ -43,7 +43,7 @@ require (
 	go.opentelemetry.io/otel/trace v1.44.0
 	go.probo.inc/mcpgen v0.0.0-20260428172408-1496ba9b4619
 	golang.org/x/crypto v0.52.0
-	golang.org/x/image v0.41.0
+	golang.org/x/image v0.43.0
 	golang.org/x/oauth2 v0.36.0
 	golang.org/x/sync v0.21.0
 	google.golang.org/api v0.283.0
@@ -248,7 +248,7 @@ require (
 	golang.org/x/net v0.55.0
 	golang.org/x/sys v0.45.0 // indirect
 	golang.org/x/term v0.43.0
-	golang.org/x/text v0.37.0 // indirect
+	golang.org/x/text v0.38.0 // indirect
 	golang.org/x/tools v0.45.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20260526163538-3dc84a4a5aaa // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260526163538-3dc84a4a5aaa // indirect
