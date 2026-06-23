@@ -1,63 +1,121 @@
-# UI system (`@probo/ui`)
+# UI system (`@probo/ui` v2 kit)
 
-Shared React UI for Probo apps lives in the **`@probo/ui`** workspace package ([`packages/ui`](../../packages/ui)), as well as ad-hoc components created in apps (under `apps/*/src`). This document describes **target** conventions for building and styling those components, whether shared or app-local.
+Shared React UI for Probo apps lives in the **`@probo/ui`** workspace package ([`packages/ui`](../../packages/ui)). The **v2 kit** ([`packages/ui/src/v2`](../../packages/ui/src/v2)) is the target system: a flat set of components styled on top of a headless primitive library, consuming the Radix-scale v2 theme. This document describes how to build and style those components.
 
-**Today's codebase does not fully match these rules.** The tree still uses layouts like `Atoms/`, `Molecules/`, and `Layouts/`, and many files mix ad-hoc Tailwind on `className` with `tailwind-variants`. Treat this guide as the direction for new work and refactors, not as a description of the current tree.
+These rules are the **source of truth**. The legacy tree (`Atoms/`, `Molecules/`, `Layouts/`, `clsx`-mixed `className`, imperative `DialogRef`) is non-compliant code to migrate, not precedent.
 
-For data loading and GraphQL on the console, see [`contrib/claude/relay.md`](relay.md).
+## Related guides
+
+| Topic | Guide |
+|-------|--------|
+| Component shape, props, naming/suffixes | [`contrib/claude/react-components.md`](react-components.md) |
+| v2 color system (Radix scale) | [`contrib/claude/v2-colors.md`](v2-colors.md) |
+| App folder layout and special folders | [`contrib/claude/app-arborescence.md`](app-arborescence.md) |
+| Error boundaries and error/fallback props | [`contrib/claude/error-handling.md`](error-handling.md) |
+| Relay data loading | [`contrib/claude/relay.md`](relay.md) |
 
 ## Package and tooling
 
 | Item | Convention |
 |------|------------|
-| Package | **`@probo/ui`** — import shared components from this package in apps. |
-| Styling | **Tailwind** (project uses Tailwind v4 in `packages/ui`). |
-| Variants API | **`tailwind-variants`** — `import { tv } from "tailwind-variants"` to define component styles and slot class names. |
+| Package | **`@probo/ui`** — v2 components under `src/v2`. Apps opt into v2 by importing the v2 theme (see [`v2-colors.md`](v2-colors.md)). |
+| Styling | **Tailwind v4** with the Radix-scale tokens (`bg-sand-3`, `text-sand-12`, `rounded-3`, `text-4`, …). |
+| Variants API | **`tailwind-variants`** only — `import { tv } from "tailwind-variants"`. |
+| Class composition | **Do not use `clsx` or `tailwind-merge`.** All conditional styling goes through `tv` variants and slots. |
+| Headless primitives | **Base UI** (`@base-ui-components/react`). We **style** these primitives; we do not re-implement their behavior. |
 
-Preview components with Storybook from `packages/ui`: `npm run dev` (Storybook on port 6006 per `package.json`).
+Preview components with Storybook from `packages/ui`: `npm run dev` (Storybook on port 6006).
 
-## Props typing
+> Base UI is migrating its package name from `@base-ui-components/react` to `@base-ui/react`. Import from whichever name the installed version publishes; examples below use `@base-ui-components/react`.
 
-When a component renders a native HTML element as its top-level node (not a custom component), **merge the component's own props with that element's intrinsic props** via `ComponentProps`. Destructure custom props and spread the rest onto the element so callers can pass standard HTML attributes (`id`, `className`, `aria-*`, event handlers, etc.) without wrapper boilerplate.
+## Headless primitives: style, don't re-implement
 
-### Do / don't: props merging
+Interactive components (dialogs, popovers, menus, selects, tabs, tooltips) are **Base UI primitives with our styling applied** — nothing more. The job of a v2 component is to bind `tv` classes to the primitive's parts. Do **not** add a custom behavior layer on top.
+
+Rules:
+
+- **Use the primitive's controlled API as-is.** A dialog is controlled with `open` / `onOpenChange` — the exact same API Base UI exposes. Opening *our* dialog is opening *the lib's* dialog.
+- **No custom imperative ref API.** Never invent `useDialogRef()` / `ref.current.open()` / `ref.current.close()`. If imperative control is genuinely needed, use the primitive's own mechanism (e.g. Base UI's `Dialog.createHandle()` / `actionsRef`), never a hand-rolled `useRef` + `useEffect` shim.
+- **No `cloneElement` / `Children.map` plumbing.** Compose with the primitive's parts and `asChild`-style props the library provides, not by cloning children to inject className/handlers.
+- **No local mirror state.** Don't copy `open` into `useState` and sync it with `useEffect`; pass `open`/`onOpenChange` straight through, or let the primitive stay uncontrolled.
+
+### Do / don't: dialog wrapper
 
 ```tsx
-// Good — own props merged with the native element's props, rest spread onto <span>
-type MyProps = ComponentProps<"span"> & { myPropName: string };
+// Bad — hand-rolled imperative ref, mirrored open state, cloneElement plumbing
+export const useDialogRef = () => useRef(null);
 
-export function MyComponent(props: MyProps) {
-  const { myPropName, ...spanProps } = props;
-
-  return <span {...spanProps}>{myPropName}</span>;
+export function Dialog({ trigger, ref, children }: Props) {
+  const [open, setOpen] = useState(false);
+  useEffect(() => {
+    if (ref) ref.current = { open: () => setOpen(true), close: () => setOpen(false) };
+  });
+  // ... Children.map / cloneElement to inject classes ...
+  return <Root open={open} onOpenChange={setOpen}>{/* … */}</Root>;
 }
 ```
 
 ```tsx
-// Bad — only custom props accepted; callers cannot set id, className, aria-*, etc.
-type MyProps = { myPropName: string };
+// Good — thin styling over Base UI; consumers use the lib's open/onOpenChange directly
+import { Dialog as BaseDialog } from "@base-ui-components/react/dialog";
+import { tv } from "tailwind-variants";
 
-export function MyComponent(props: MyProps) {
-  return <span>{props.myPropName}</span>;
+const dialog = tv({
+  slots: {
+    backdrop: "fixed inset-0 bg-sand-12/40",
+    popup: "fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-4 bg-sand-2 p-6 shadow-4",
+    title: "text-4 font-medium text-sand-12",
+  },
+});
+
+export type DialogProps = ComponentProps<typeof BaseDialog.Root>;
+
+export function Dialog(props: DialogProps) {
+  return <BaseDialog.Root {...props} />;
 }
+
+export function DialogPopup({ children, ...props }: ComponentProps<typeof BaseDialog.Popup>) {
+  const { backdrop, popup } = dialog();
+  return (
+    <BaseDialog.Portal>
+      <BaseDialog.Backdrop className={backdrop()} />
+      <BaseDialog.Popup className={popup()} {...props}>
+        {children}
+      </BaseDialog.Popup>
+    </BaseDialog.Portal>
+  );
+}
+```
+
+```tsx
+// Good — consumer controls it the same way they'd control the Base UI dialog
+const [open, setOpen] = useState(false);
+
+<Dialog open={open} onOpenChange={setOpen}>
+  <DialogTrigger>Open</DialogTrigger>
+  <DialogPopup>
+    <DialogTitle>Delete third party</DialogTitle>
+    {/* … */}
+  </DialogPopup>
+</Dialog>
 ```
 
 ## `tailwind-variants` and `className`
 
-In a **single component file**, do **not** mix arbitrary Tailwind utility strings on `className` with `tailwind-variants` for the same styling concerns. Put layout and look in **`tv` variants and `slots`** (and the APIs `tv` exposes for overrides). If consumers need extensibility, expose it through variant props or documented slot/class hooks—not by sprinkling raw utilities beside `tv()` output in the same file.
+In a **single component file**, do **not** mix arbitrary Tailwind utility strings on `className` with `tailwind-variants` for the same styling concern. Layout and look live in **`tv` slots and variants** (and the override APIs `tv` exposes). Extensibility is exposed through variant props or documented slot/class hooks — never by sprinkling raw utilities (or `clsx`) beside `tv()` output.
 
-For **compound / multi-slot** components, define `tv` in a **dedicated module** (see [Variants file](#variants-file)) so loading-only code paths can import styles without pulling the full interactive implementation.
+For **compound / multi-slot** components, define `tv` in a **dedicated `variants.ts` module** (see [Variants file](#variants-file)) so loading-only code paths can import styles without pulling the full interactive implementation.
 
 ### Do / don't: `tv` vs raw `className`
 
 ```tsx
-// Bad — same file mixes tv() output with ad-hoc Tailwind on className (clsx shown for the anti-pattern)
+// Bad — same file mixes tv() output with ad-hoc Tailwind / clsx on className
 import { clsx } from "clsx";
 import { tv } from "tailwind-variants";
 
 const row = tv({ base: "flex items-center gap-2" });
-export function Row({ children }: { children: React.ReactNode }) {
-  return <div className={clsx(row(), "rounded-md border border-border-low")}>{children}</div>;
+export function Row({ children }: { children: ReactNode }) {
+  return <div className={clsx(row(), "rounded-3 border border-sand-6")}>{children}</div>;
 }
 ```
 
@@ -66,26 +124,96 @@ export function Row({ children }: { children: React.ReactNode }) {
 import { tv } from "tailwind-variants";
 
 const row = tv({
-  base: "flex items-center gap-2 rounded-md border border-border-low",
+  base: "flex items-center gap-2 rounded-3 border border-sand-6",
 });
-export function Row({ children }: { children: React.ReactNode }) {
+export function Row({ children }: { children: ReactNode }) {
   return <div className={row()}>{children}</div>;
 }
 ```
 
 ```tsx
-// Good — optional styling toggles use tv variants, not extra className strings in this file
+// Good — optional styling toggles use tv variants, not extra className strings
 import { tv } from "tailwind-variants";
 
 const row = tv({
   base: "flex items-center gap-2",
   variants: {
-    bordered: { true: "rounded-md border border-border-low", false: "" },
+    bordered: { true: "rounded-3 border border-sand-6", false: "" },
   },
   defaultVariants: { bordered: true },
 });
-export function Row({ bordered, children }: { bordered?: boolean; children: React.ReactNode }) {
+export function Row({ bordered, children }: { bordered?: boolean; children: ReactNode }) {
   return <div className={row({ bordered })}>{children}</div>;
+}
+```
+
+## No structure-changing variants
+
+Variants tune **look** (size, tone, density) — they must not change a component's **structure, semantics, or prop contract**. When a "variant" would render a different element, accept different props, or fork the behavior, build a **separate component** instead. This keeps each component's typing simple and its rendered element predictable.
+
+The clearest case is the button family: a clickable action, a styled `<a>`, and a router link are three components, not one `Button` with an `as`/`href`/`to` union.
+
+### Do / don't: separate components over polymorphic props
+
+```tsx
+// Bad — one component forks structure on props; typing becomes a union mess
+type ButtonProps =
+  | { as?: "button"; onClick: () => void }
+  | { as: "a"; href: string }
+  | { as: "link"; to: string };
+
+export function Button(props: ButtonProps) {
+  if (props.as === "a") return <a href={props.href} className={button()} />;
+  if (props.as === "link") return <RouterLink to={props.to} className={button()} />;
+  return <button onClick={props.onClick} className={button()} />;
+}
+```
+
+```tsx
+// Good — three flat components sharing the same tv styles
+// variants.ts
+export const button = tv({ base: "inline-flex items-center …", variants: { /* size, tone */ } });
+
+// Button.tsx — renders <button>
+export function Button(props: ComponentProps<"button">) {
+  return <button className={button()} {...props} />;
+}
+
+// Anchor.tsx — renders <a>
+export function Anchor(props: ComponentProps<"a">) {
+  return <a className={button()} {...props} />;
+}
+
+// Link.tsx — renders a router link
+export function Link(props: ComponentProps<typeof RouterLink>) {
+  return <RouterLink className={button()} {...props} />;
+}
+```
+
+Size/tone differences (`size="sm"`, `tone="danger"`) are legitimate `tv` variants — they don't change the element or props.
+
+## Props typing
+
+When a component renders a native HTML element (or a single primitive part) as its top-level node, **merge the component's own props with that element's intrinsic props** via `ComponentProps`. Destructure custom props and spread the rest so callers can pass standard attributes (`id`, `className`, `aria-*`, event handlers) without wrapper boilerplate.
+
+### Do / don't: props merging
+
+```tsx
+// Good — own props merged with the native element's props, rest spread onto <span>
+type TextProps = ComponentProps<"span"> & { tone?: "default" | "muted" };
+
+export function Text(props: TextProps) {
+  const { tone = "default", className, ...spanProps } = props;
+  return <span className={text({ tone, className })} {...spanProps} />;
+}
+```
+
+```tsx
+// Bad — only custom props accepted; callers cannot set id, className, aria-*, etc.
+type TextProps = { children: ReactNode };
+
+export function Text(props: TextProps) {
+  return <span>{props.children}</span>;
 }
 ```
 
@@ -93,18 +221,18 @@ export function Row({ bordered, children }: { bordered?: boolean; children: Reac
 
 Icons come from two sources, in this order of preference:
 
-1. **`@phosphor-icons/react`** — the default icon library. Import the specific icon directly: `import { CookieIcon } from "@phosphor-icons/react"`. Prefer phosphor whenever it has the icon you need; it covers the vast majority of use cases and keeps the iconography consistent across the product.
-2. **`@probo/ui` `Icon*` set** — the curated, in-house icons (`IconBank`, `IconShield`, `IconCircleCheck`, …). Use these only when phosphor doesn't have a suitable equivalent, or when you specifically need a bespoke Probo-branded icon.
+1. **`@phosphor-icons/react`** — the default icon library. Import the specific icon directly: `import { CookieIcon } from "@phosphor-icons/react"`. Prefer phosphor whenever it has the icon you need.
+2. **`@probo/ui` `Icon*` set** — curated in-house icons. Use these only when phosphor has no suitable equivalent or you need a bespoke Probo-branded icon.
 
-**Never use emoji characters (🍪, ✅, ⚠️, …) as icons in UI.** Emojis render inconsistently across platforms, don't inherit `currentColor`, and can't be sized or styled like an SVG. If neither `@phosphor-icons/react` nor `@probo/ui` has what you need, add the missing icon to `@probo/ui` rather than falling back to emoji.
+**Never use emoji characters (🍪, ✅, ⚠️, …) as icons.** Emojis render inconsistently, don't inherit `currentColor`, and can't be sized like an SVG. If neither source has what you need, add the icon to `@probo/ui`.
 
 ### Phosphor import style
 
-Always import phosphor icons by their **`Icon`-suffixed name** (e.g. `EyeIcon`, `EyeSlashIcon`, `CookieIcon`). **Never** import the bare name and alias it with an `Icon` prefix — the library already exports the suffixed variant.
+Always import phosphor icons by their **`Icon`-suffixed name** (e.g. `EyeIcon`, `CookieIcon`). **Never** import the bare name and alias it with an `Icon` prefix.
 
 ```tsx
 // Bad — bare name aliased to add an Icon prefix
-import { Eye as IconEye, EyeSlash as IconEyeSlash } from "@phosphor-icons/react";
+import { Eye as IconEye } from "@phosphor-icons/react";
 
 // Good — use the Icon-suffixed export directly
 import { EyeIcon, EyeSlashIcon } from "@phosphor-icons/react";
@@ -114,138 +242,143 @@ import { EyeIcon, EyeSlashIcon } from "@phosphor-icons/react";
 
 ```tsx
 // Bad — emoji used as an icon
-<div className="mb-2 text-4xl">🍪</div>
+<div className="mb-2 text-9">🍪</div>
 ```
 
 ```tsx
 // Good — phosphor icon as the default choice
 import { CookieIcon } from "@phosphor-icons/react";
 
-<CookieIcon size={48} weight="duotone" className="text-muted-foreground" />
-```
-
-```tsx
-// Good — @probo/ui icon when phosphor has no suitable equivalent
-import { IconShield } from "@probo/ui";
-
-<IconShield className="size-6 text-muted-foreground" />
+<CookieIcon size={48} weight="duotone" className="text-sand-11" />
 ```
 
 ## Folder layout
 
-**Simple and layout primitives** belong in **usage-oriented** folders:
+The v2 tree is **flat** — there is no `Atoms/` / `Molecules/` / `Layouts/` hierarchy.
 
-- `typography/`
-- `form/`
-- `layouts/`
-
-**Other components** live in a folder **named after the component** (e.g. `ImageCard/`), with optional split files for subparts.
+- **Simple and layout primitives** live in **usage-oriented** folders: `typography/`, `form/`, `layouts/`.
+- A **complex component gets its own folder** named after the component (e.g. `Dropdown/`, `Dialog/`, `ImageCard/`), holding its parts, `variants.ts`, and skeleton.
 
 ### Do / don't: folder placement
 
 ```text
-// Good — target layout (usage folders for primitives, component folder for composites)
-packages/ui/src/
-  media/Image.tsx
-  media/ImageSkeleton.tsx
+// Good — usage folders for primitives, component folder for composites
+packages/ui/src/v2/
   typography/Text.tsx
   typography/TextSkeleton.tsx
   form/Field.tsx
   layouts/CenteredLayout.tsx
+  Dialog/Dialog.tsx
+  Dialog/DialogPopup.tsx
+  Dialog/variants.ts
+  Dropdown/Dropdown.tsx
+  Dropdown/DropdownItem.tsx
   ImageCard/variants.ts
   ImageCard/ImageCardRoot.tsx
   ImageCard/ImageCardShell.tsx
   ImageCard/ImageCardSkeleton.tsx
 
-// Bad — ad-hoc placement for a simple primitive (should live under typography / form / layouts)
-packages/ui/src/RandomFolder/Text.tsx
+// Bad — primitive buried in an ad-hoc folder (belongs under typography/)
+packages/ui/src/v2/RandomFolder/Text.tsx
+
+// Bad — legacy classification folders
+packages/ui/src/v2/Atoms/Button.tsx
 ```
+
+### Naming
+
+UI-kit components use **bare names** (no role suffix): `Button`, `Anchor`, `Link`, `Text`, `List`, `ListItem`, `Dialog`. Parts of a complex component are prefixed with the component name (`DialogPopup`, `DropdownItem`). App-level components use the suffix taxonomy in [`react-components.md`](react-components.md#naming-and-suffixes).
 
 ## Primitives vs compound components
 
-Components in `@probo/ui` fall into two categories: **primitives** and **compound** components.
+Components fall into two categories: **primitives** and **compound** components.
 
 ### Primitives
 
-**Primitives** (`Text`, `Image`, form inputs, layout helpers) are self-contained — they render a single semantic element with its own styling. A primitive **is its own shell**: it owns both its layout footprint and its visual output, so there is no separate shell wrapper. Each primitive has a paired skeleton (`TextSkeleton`, `ImageSkeleton`) that matches its dimensions.
+**Primitives** (`Text`, `Image`, form inputs, layout helpers, `ListItem`) are self-contained — they render a single semantic element with their own styling. A primitive **is its own shell**: there is no separate shell wrapper. Each primitive has a paired skeleton (`TextSkeleton`, `ImageSkeleton`) that matches its dimensions.
 
 ### Compound components
 
-**Compound components** (`ImageCard`, …) assemble multiple primitives into a larger UI region. When logic (state, effects, data fetching) lives inside the top-level component, a **shell** is required to separate layout from behavior:
+**Compound components** (`ImageCard`, …) assemble multiple primitives into a larger region. When logic (state, effects, data) lives inside the top-level component, a **shell** separates layout from behavior:
 
-- **Shell** — pure layout frame that accepts region props (`image`, `text`, …) as `ReactNode` and applies `tv` slot class names. No state, no effects, no data.
+- **Shell** — pure layout frame that accepts region props (`image`, `text`, …) as `ReactNode` and applies `tv` slot classes. No state, no effects, no data.
 - **Root** — owns the logic and renders the shell, passing primitives into its region props.
-- **Skeleton** — reuses the **same shell** with skeleton primitives, so the loading placeholder is structurally identical to the real component without pulling in the logic graph.
+- **Skeleton** — reuses the **same shell** with skeleton primitives, so the loading placeholder is structurally identical without pulling in the logic graph.
 
-The shell exists so that **skeletons can share the exact same layout** as the real component without importing Root and its dependencies. If the compound component is **purely presentational** (no logic needed), there is no Root — expose only the Shell.
+If a compound component is purely presentational (no logic), there is no Root — expose only the Shell.
 
 ## Skeletons
 
-For each meaningful component, provide a paired loading UI:
+Every meaningful component provides a paired loading UI named `ComponentName` / `ComponentNameSkeleton` (e.g. `Text` / `TextSkeleton`).
 
-- Naming: **`ComponentName`** and **`ComponentNameSkeleton`** (e.g. `Text` / `TextSkeleton`).
+Skeletons are **typography and shapes only** — pulse blocks sized to match the real layout (a `TextSkeleton` matches a line of text; a `Dialog` exposes a `DialogSkeleton` matching its frame). They must render instantly and carry **no data-fetching logic**.
 
-A partial precedent today: [`CenteredLayoutSkeleton`](../../packages/ui/src/Layouts/CenteredLayout.tsx) alongside the layout component.
+### Skeletons must stay out of the heavy bundle
 
-### Do / don't: skeleton naming
+A skeleton's whole point is to render *before* the real component (and its dependencies) load. A skeleton must therefore be importable **without dragging in Base UI or other heavy interactive dependencies**.
+
+- Keep `tv` slot definitions in a standalone **`variants.ts`** (see [Variants file](#variants-file)). The shell and the skeleton import `variants.ts`; neither imports the Root's logic.
+- Export each `*Skeleton` as a **standalone named export** from its own module — never as a property on a namespace object (`Dialog.Skeleton`) and never re-exported from a barrel that also pulls the interactive implementation into the same chunk.
+- A complex component **exposes its own skeleton** (`DialogSkeleton`, `ImageCardSkeleton`) so pages can show a faithful placeholder; that skeleton renders the **shell + skeleton primitives**, importing none of the Base UI parts.
+
+### Do / don't: skeleton naming and bundle safety
 
 ```tsx
-// Good — paired names
-export function Text(props: TextProps) { /* … */ }
-export function TextSkeleton() { /* … */ }
+// Good — paired names, skeleton imports only shell + skeleton primitives
+export function ImageCard(props: ImageCardProps) { /* … */ }
 
-// Bad — unrelated name or missing pair
-export function Text(props: TextProps) { /* … */ }
+// ImageCardSkeleton.tsx — no Base UI / Root imports reach this module
+import { ImageCardShell } from "./ImageCardShell";
+import { ImageSkeleton } from "../media/ImageSkeleton";
+import { TextSkeleton } from "../typography/TextSkeleton";
+
+export function ImageCardSkeleton() {
+  return <ImageCardShell image={<ImageSkeleton />} text={<TextSkeleton />} />;
+}
+```
+
+```tsx
+// Bad — skeleton nested on a namespace object (pulls the full interactive module in)
+import { ImageCard } from "@probo/ui";
+<ImageCard.Skeleton />
+
+// Bad — unrelated name / missing pair
 export function LoadingText() { /* … */ } // use TextSkeleton instead
 ```
 
 ## Compound component structure (e.g. `ImageCard`)
 
-Multi-region UI (card shell, media, text column, etc.) is exported as **individual named exports** — one per sub-component — all prefixed with the feature name (e.g. `ImageCardRoot`, `ImageCardShell`, `ImageCardSkeleton`). **Do not** group sub-components as static properties on a single namespace object (`ImageCard.Root`, `ImageCard.Shell`, …); flat named exports enable proper tree shaking and keep unwanted third-party dependencies out of loading-time bundles.
+Multi-region UI is exported as **individual named exports** — one per sub-component — all prefixed with the feature name (e.g. `ImageCardRoot`, `ImageCardShell`, `ImageCardSkeleton`). **Do not** group sub-components as static properties on a namespace object (`ImageCard.Root`, …); flat named exports enable proper tree shaking and keep heavy dependencies out of loading-time bundles.
 
-### Folder and exports
-
-- One directory per feature component (e.g. `ImageCard/`). Heavy logic may live in **separate files**; each public part is a **standalone named export**.
-- **`ImageCardRoot`** — top-level container **when it may hold business logic** (state, effects, data wiring, etc.).
-- **`ImageCardShell`** — **pure layout shell**: takes **`image`** and **`text`** (and other region) **props**—each a `ReactNode`—and places them in the matching **`tv` slots**. **No children** for layout regions on the shell; **no state or logic** in the shell. If the outer wrapper is layout-only, expose it as **`ImageCardShell`**, not **`ImageCardRoot`**.
-- **`Image`** and **`Text`** — **shared primitives** from **`@probo/ui`** (e.g. typography / media folders), not prefixed under `ImageCard`. **`ImageCardRoot`** composes them into **`ImageCardShell`**'s **`image`** / **`text`** props; apps import the same **`Image`** / **`Text`** everywhere.
-
-**Root vs Shell:** use **`ImageCardRoot`** when the container owns logic; use **`ImageCardShell`** for a presentational outer frame. **`ImageCardRoot` may render `ImageCardShell`** inside when logic sits outside the styled layout.
+- One directory per feature component. Heavy logic may live in separate files; each public part is a standalone named export.
+- **`ImageCardRoot`** — top-level container **when it holds logic** (state, effects, data wiring).
+- **`ImageCardShell`** — **pure layout shell**: takes region props (`image`, `text`, …), each a `ReactNode`, and places them in matching `tv` slots. No children for layout regions, no state, no logic. If the outer wrapper is layout-only, expose it as `ImageCardShell`, not `ImageCardRoot`.
+- **`Image`** and **`Text`** — shared primitives from the kit, not prefixed under `ImageCard`. `ImageCardRoot` composes them into `ImageCardShell`'s region props.
 
 ### `tailwind-variants` slots
 
-For this pattern, model regions with **`tv` `slots`** named consistently with the layout—for the example above:
-
-- `shell`
-- `image`
-- `text`
-
-Add or rename slots when the layout has more or different regions. **`ImageCardShell`** applies the matching slot output on its wrappers; **`Image`** / **`Text`** stay free of **`ImageCard`**-specific layout—keep the [no-mixing rule](#tailwind-variants-and-classname) in each file.
-
-### Do / don't: compound API and slots
-
-`variants.ts` holds `tv`; **`ImageCardShell`** applies slot class names on its wrapping tags only (no duplicate Tailwind strings for those regions in the same file).
+Model regions with `tv` `slots` named after the layout:
 
 ```ts
-// ImageCard/variants.ts — Good
+// ImageCard/variants.ts
 import { tv } from "tailwind-variants";
 
 export const imageCard = tv({
   slots: {
-    shell: "flex gap-4 rounded-lg border border-border-low p-4",
-    image: "shrink-0 overflow-hidden rounded-md",
+    shell: "flex gap-4 rounded-4 border border-sand-6 p-4",
+    image: "shrink-0 overflow-hidden rounded-3",
     text: "min-w-0 flex-1 flex flex-col gap-1",
   },
 });
 ```
 
-**`ImageCardShell`** calls **`imageCard()`** (or **`imageCard({ … })`** when the layout has variants), destructures **`shell`**, **`image`**, and **`text`**, and mounts each slot's class name on a **wrapper element** around the prop node. **`Image`** and **`Text`** supply semantics and styling for media and copy; **`ImageCardShell`** only owns the **card layout slot wrappers**.
+`ImageCardShell` calls `imageCard()`, destructures the slots, and mounts each slot's class on a wrapper element around the prop node:
 
 ```tsx
-// ImageCard/ImageCardShell.tsx — Good — slot class names on wrapping tags
+// ImageCard/ImageCardShell.tsx — slot classes on wrapping tags
 import { imageCard } from "./variants";
 
-export function ImageCardShell({ image, text }: { image: React.ReactNode; text: React.ReactNode }) {
+export function ImageCardShell({ image, text }: { image: ReactNode; text: ReactNode }) {
   const { shell, image: imageSlot, text: textSlot } = imageCard();
   return (
     <div className={shell()}>
@@ -257,90 +390,30 @@ export function ImageCardShell({ image, text }: { image: React.ReactNode; text: 
 ```
 
 ```tsx
-// ImageCard/ImageCardRoot.tsx — Good — Root owns logic; Shell receives region nodes as props
+// ImageCard/ImageCardRoot.tsx — Root owns logic; Shell receives region nodes as props
 import { Image, Text } from "@probo/ui";
 import { ImageCardShell } from "./ImageCardShell";
 
-function ImageCardRoot({ image, text }: { image: React.ReactNode; text: React.ReactNode }) {
-  const id = useId();
+export function ImageCardRoot({ image, text }: { image: ReactNode; text: ReactNode }) {
   // state, effects, data wiring …
-  return (
-    <ImageCardShell
-      image={<Image>{image}</Image>}
-      text={<Text>{text}</Text>}
-    />
-  );
+  return <ImageCardShell image={<Image>{image}</Image>} text={<Text>{text}</Text>} />;
 }
 
 // Bad — Shell takes regions as children instead of image / text props
-// <ImageCardShell>
-//   <Image>…</Image>
-//   <Text>…</Text>
-// </ImageCardShell>
-
-// Bad — data hooks or state live on Shell
-function ImageCardShellWithData({ image, text }: { image: React.ReactNode; text: React.ReactNode }) {
-  const data = useQuery(/* … */); // move to Root (or above)
-  return (
-    <div>
-      {image}
-      {text}
-    </div>
-  );
-}
+// Bad — data hooks or state live on Shell (move to Root or above)
 ```
-
-(The snippets above are illustrative; names and props should match the real component.)
-
-## Skeleton placement and composition
-
-For compound components, export **`ImageCardSkeleton`** as a **separate named export** (e.g. `ImageCardSkeleton.tsx` or the folder barrel) so routes can depend on **loading UI + shell layout** without importing the full `ImageCardRoot` graph—smaller initial bundles for skeleton-first views. That also avoids pulling in **Radix UI** and other dependencies that are **not needed at load time** for the skeleton-only path.
-
-**Implementation:** `ImageCardSkeleton` should **reuse the same layout as the real card** by rendering **`ImageCardShell`** with the same **`image` / `text` props** as **`ImageCardRoot`**, but passing **skeleton primitives** instead of **`Image`** / **`Text`**:
-
-- **`image`** → **`ImageSkeleton`**
-- **`text`** → **`TextSkeleton`**
-
-**`ImageCardRoot`** composes real content with **`Image`** and **`Text`** (same imports as elsewhere in the app). The skeleton passes **`ImageSkeleton`** and **`TextSkeleton`** directly into **`ImageCardShell`** so loading views avoid **`Image`** / **`Text`** when that keeps bundles or behavior simpler.
-
-Reuse existing **`ImageSkeleton`** / **`TextSkeleton`** from typography or media primitives when available; avoid duplicate one-off pulse blocks.
-
-### Do / don't: skeleton imports and composition
-
-```tsx
-// Bad — skeleton nested on a namespace object (pulls full card module into the route)
-import { ImageCard } from "@probo/ui";
-<ImageCard.Skeleton />
-
-// Good — each sub-component is a standalone named export
-import { ImageCardShell, ImageCardSkeleton } from "@probo/ui";
-
-// Inside ImageCardSkeleton.tsx (conceptually):
-export function ImageCardSkeleton() {
-  return (
-    <ImageCardShell
-      image={<ImageSkeleton />}
-      text={<TextSkeleton />}
-    />
-  );
-}
-```
-
-The important part is **separate `ImageCardSkeleton` export**, **one `ImageCardShell` API** (`image` / `text` props), **shared shell layout**, and **reused `ImageSkeleton` / `TextSkeleton`**.
 
 ## Variants file
 
-Keep the **`tv({ slots: { … } })` definition** (and derived slot functions) in a **standalone file**, conventionally **`variants.ts`** next to the component folder. Import it from **`ImageCardShell`** and **skeleton** modules so skeleton entry points can pull **variants + shell** without the rest of the compound component's business logic.
-
-### Do / don't: colocating `tv` with the heavy module
+Keep the `tv({ slots: { … } })` definition (and derived slot functions) in a standalone **`variants.ts`** next to the component folder. Import it from the shell and skeleton modules so skeleton entry points can pull **variants + shell** without the rest of the compound component's business logic (and without Base UI).
 
 ```tsx
-// Bad — variants defined only inside ImageCardRoot.tsx; ImageCardSkeleton imports it and drags Root / hooks
+// Bad — variants defined inside ImageCardRoot.tsx; the skeleton importing it drags Root + hooks (+ Base UI)
 // ImageCardRoot.tsx
 const imageCard = tv({ slots: { shell: "...", image: "...", text: "..." } });
 
 // Good — shared variants module imported by ImageCardShell and ImageCardSkeleton only
-// variants.ts — export imageCard (or slot helpers)
+// variants.ts        — export imageCard (or slot helpers)
 // ImageCardShell.tsx — import { imageCard } from "./variants"
 // ImageCardSkeleton.tsx — import { imageCard } from "./variants"
 ```

@@ -1,8 +1,8 @@
 # React component conventions
 
-This document describes **how to define and shape** React components in Probo frontends (`apps/console`, [`packages/ui`](../../packages/ui), and related apps). It complements styling and package layout in [`contrib/claude/ui.md`](ui.md) and data loading in [`contrib/claude/relay.md`](relay.md).
+This document describes **how to define and shape** React components in Probo frontends (`apps/compliance-portal`, [`packages/ui`](../../packages/ui), and related apps). It complements styling and package layout in [`contrib/claude/ui.md`](ui.md) and data loading in [`contrib/claude/relay.md`](relay.md).
 
-**The codebase does not fully match these rules yet.** Treat this guide as the target for new work and refactors.
+These rules are the **source of truth**. Where existing code (e.g. `apps/console` or the legacy `@probo/ui` `Atoms/`/`Molecules/` tree) disagrees, the code is non-compliant and should be migrated — it is not precedent.
 
 ## Related guides
 
@@ -10,6 +10,9 @@ This document describes **how to define and shape** React components in Probo fr
 |-------|--------|
 | `@probo/ui`, Tailwind, `tailwind-variants`, folders, skeletons, compound modules | [`contrib/claude/ui.md`](ui.md) |
 | Relay queries, fragments, loaders, `queryRef` | [`contrib/claude/relay.md`](relay.md) |
+| App folder layout, route segments, special folders | [`contrib/claude/app-arborescence.md`](app-arborescence.md) |
+| Error boundaries, error/fallback props, async `try`/`catch` | [`contrib/claude/error-handling.md`](error-handling.md) |
+| i18next, `_locales`, translation keys | [`contrib/claude/i18n.md`](i18n.md) |
 
 ## Destructuring
 
@@ -147,6 +150,53 @@ export default function ThirdPartiesPage({ queryRef }: ThirdPartiesPageProps) {
   // …
 }
 ```
+
+## Naming and suffixes
+
+Component names are built from a **base** (the resource or concept) plus a **role suffix**. The suffix tells you what kind of component it is at a glance, and mirrors the file's role in the route tree. UI-kit primitives are the exception — they use bare names (see [`contrib/claude/ui.md`](ui.md)).
+
+### Route / tree-level suffixes
+
+| Suffix | Role |
+|--------|------|
+| `*Page` | A leaf page rendering final content (no `<Outlet />`). Default export when it is the `lazy()` entry. |
+| `*Loader` | The lazy bundle entry: sets up providers, triggers the Relay query, renders a skeleton, then mounts the page. |
+| `*Layout` | A layout route that renders shared chrome and an `<Outlet />`. |
+| `*Skeleton` | The loading placeholder for a page, section, or component. |
+| `*Error` | The error UI rendered by a boundary at this level (see [`contrib/claude/error-handling.md`](error-handling.md)). |
+| `*Provider` | A context / Relay provider wrapper. |
+
+### Content / section-level suffixes
+
+| Suffix | Role |
+|--------|------|
+| `*Section` | A logical section of a page (owns its own fragment). |
+| `*List` | The component that renders a **collection** (the index/list region, including its empty + loading states). |
+| `*ListItem` | A **single item** within a `*List`. This is the canonical connection-item suffix. |
+| `*Form` | A form (owns its fields + submit wiring). |
+| `*Field` | A single form field. |
+| `*Empty` | An empty-state placeholder. |
+
+### Overlay suffixes
+
+`*Dialog`, `*Drawer`, `*Menu` — overlay surfaces, styled from the headless primitive (see [`contrib/claude/ui.md`](ui.md)).
+
+### Do / don't: `List` / `ListItem` over `Table` / `Row`
+
+A collection's identity is "a list of things"; whether it is laid out as a table, cards, or rows is a **presentation detail** that can change. Name after the data, not the current layout.
+
+```text
+// Bad — named after the current visual treatment
+ThirdPartiesTable.tsx
+ThirdPartyRow.tsx
+ThirdPartyCard.tsx
+
+// Good — named after the collection and its item
+ThirdPartyList.tsx
+ThirdPartyListItem.tsx
+```
+
+`*ListItem` replaces both the old `*Row` (table) and `*Card` (card list) connection-item suffixes. See [Connection items are components](#connection-items-are-components).
 
 ## Props ordering
 
@@ -333,6 +383,31 @@ export function PageSection({ className, title, icon, children }: PageSectionPro
 }
 ```
 
+## Error and fallback props
+
+Error handling is not reserved for route boundaries. A component that performs work which can fail (a query, a parse, a risky render) should be **wrappable in a boundary at any level**, and components that own a fallible region may expose error-handling props so the surrounding subtree can render its own error UI instead of taking down the whole page.
+
+- `fallback` / `errorFallback` — a `ReactNode` (or render function receiving the error) shown when the wrapped content fails.
+- `onError` — a callback invoked when the boundary catches, for logging / toasts.
+
+These are **configuration / composition** props (UI slots and callbacks), so they obey the same rules as the rest of this guide — they never carry fetched domain data. The full pattern (the reusable `ErrorBoundary`, where to place it, and the `async` event-handler `try`/`catch` that boundaries cannot catch) lives in [`contrib/claude/error-handling.md`](error-handling.md).
+
+```tsx
+// Good — a section that can fail accepts a fallback slot and an onError callback
+interface RiskSummarySectionProps {
+  fallback?: ReactNode;
+  onError?: (error: Error) => void;
+}
+
+export function RiskSummarySection({ fallback, onError }: RiskSummarySectionProps) {
+  return (
+    <ErrorBoundary fallback={fallback} onError={onError}>
+      <RiskSummarySectionContent />
+    </ErrorBoundary>
+  );
+}
+```
+
 ## Interaction-triggered data
 
 Data that is only needed after a user interaction (opening a dropdown, clicking a button, hovering) must **not** be fetched at page load. Instead, the parent component owns the query lifecycle with `useQueryLoader`, triggers `loadQuery` in the interaction event handler, and passes `queryRef` to a child component that reads data with `usePreloadedQuery`.
@@ -450,18 +525,18 @@ For sections that own a paginated connection, use `usePaginationFragment` with a
 
 ## Connection items are components
 
-When rendering items from a Relay connection (e.g. table rows via `edges.map(…)`), each item **must** be a dedicated component with its own colocated fragment — never inline the rendering of node fields directly in the parent's `.map()` body.
+When rendering items from a Relay connection (e.g. `edges.map(…)`), each item **must** be a dedicated component with its own colocated fragment — never inline the rendering of node fields directly in the parent's `.map()` body.
 
-Place the item component in `_components/` adjacent to the page. Name it after the GraphQL type it renders (e.g. `DetectedTrackerRow.tsx`, `ThirdPartyCard.tsx`). The component receives a single fragment key prop (e.g. `detectedTrackerKey: DetectedTrackerRow_detectedTracker$key`) and calls `useFragment` internally.
+Place the item component in `_components/` adjacent to the page. Name it `<Type>ListItem` after the GraphQL type it renders (e.g. `DetectedTrackerListItem.tsx`, `ThirdPartyListItem.tsx`) — never `*Row` or `*Card` (see [Naming and suffixes](#naming-and-suffixes)). The component receives a single fragment key prop (e.g. `detectedTrackerKey: DetectedTrackerListItem_detectedTracker$key`) and calls `useFragment` internally.
 
 ```tsx
-// Parent (page) — spreads the child fragment in the connection:
-edges { node { id ...DetectedTrackerRow_detectedTracker } }
+// Parent (the *List component) — spreads the item fragment in the connection:
+edges { node { id ...DetectedTrackerListItem_detectedTracker } }
 
 // Parent JSX:
 {trackers.map(tracker => (
-  <DetectedTrackerRow key={tracker.id} detectedTrackerKey={tracker} />
+  <DetectedTrackerListItem key={tracker.id} detectedTrackerKey={tracker} />
 ))}
 ```
 
-This ensures field additions/removals in the row never modify the parent's fragment, and keeps the item independently testable.
+This ensures field additions/removals in the item never modify the parent's fragment, and keeps the item independently testable. The layout the item renders (a table row, a card, a plain `<li>`) is internal to the component and does not affect its name.

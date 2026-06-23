@@ -12,27 +12,27 @@ inline the rendering of node fields directly in the parent's `.map()` body.
 
 This ensures:
 - Data requirements are colocated with the rendering component
-- Adding/removing fields in a row doesn't bloat the parent's fragment
-- The row component is independently testable and reusable
+- Adding/removing fields in an item doesn't bloat the parent's fragment
+- The item component is independently testable and reusable
 
 ## Pattern
 
 ```tsx
-// _components/ThingRow.tsx — owns its fragment
-const thingRowFragment = graphql`
-  fragment ThingRow_thing on Thing {
+// _components/ThingListItem.tsx — owns its fragment
+const thingListItemFragment = graphql`
+  fragment ThingListItem_thing on Thing {
     id
     name
     status
   }
 `;
 
-interface ThingRowProps {
-  thingKey: ThingRow_thing$key;
+interface ThingListItemProps {
+  thingKey: ThingListItem_thing$key;
 }
 
-export function ThingRow({ thingKey }: ThingRowProps) {
-  const thing = useFragment(thingRowFragment, thingKey);
+export function ThingListItem({ thingKey }: ThingListItemProps) {
+  const thing = useFragment(thingListItemFragment, thingKey);
   return (
     <Tr>
       <Td>{thing.name}</Td>
@@ -43,7 +43,7 @@ export function ThingRow({ thingKey }: ThingRowProps) {
 ```
 
 ```tsx
-// Parent — spreads the row fragment in its connection and renders the component
+// Parent — spreads the item fragment in its connection and renders the component
 const parentFragment = graphql`
   fragment ParentPage_things on Query
   @refetchable(queryName: "ParentPageRefetchQuery") {
@@ -51,7 +51,7 @@ const parentFragment = graphql`
       edges {
         node {
           id
-          ...ThingRow_thing
+          ...ThingListItem_thing
         }
       }
     }
@@ -60,13 +60,17 @@ const parentFragment = graphql`
 
 // In JSX:
 {things.map(thing => (
-  <ThingRow key={thing.id} thingKey={thing} />
+  <ThingListItem key={thing.id} thingKey={thing} />
 ))}
 ```
 
 ## Naming
 
-- File: `_components/<NodeType>Row.tsx` (for table rows) or
-  `_components/<NodeType>Card.tsx` (for card lists)
-- Fragment: `<ComponentName>_<typeName>` (e.g. `ThingRow_thing`)
+- File: `_components/<NodeType>ListItem.tsx` — the canonical connection-item
+  suffix, regardless of whether the item renders as a table row, a card, or a
+  plain list entry (the layout is internal to the component, not its identity).
+  Do **not** use `*Row` or `*Card` suffixes.
+- Fragment: `<ComponentName>_<typeName>` (e.g. `ThingListItem_thing`)
 - Prop: `<typeName>Key` (e.g. `thingKey`)
+
+See `contrib/claude/react-components.md` for the full suffix taxonomy.

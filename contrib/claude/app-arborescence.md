@@ -1,16 +1,18 @@
 # App arborescence (folder and file layout)
 
-Conventions for organising pages, routes, and supporting files in Probo frontend apps (`apps/console`). The guiding principle is **one arborescence**: the route hierarchy is expressed once, through the `pages/` folder tree, and everything related to a route lives next to it.
+Conventions for organising pages, routes, and supporting files in Probo frontend apps (`apps/compliance-portal`, `apps/console`). The guiding principle is **one arborescence**: the route hierarchy is expressed once, through the `pages/` folder tree, and everything related to a route lives next to it.
 
-**The codebase does not fully match these rules yet.** Some route definitions still live in a separate `src/routes/` folder. Treat this guide as the target for new work and refactors.
+These rules are the **source of truth**. Where existing code disagrees (e.g. `apps/console` still keeps some route definitions in a separate `src/routes/` folder), the code is non-compliant and should be migrated — it is not precedent.
 
 ## Related guides
 
 | Topic                                                                            | Guide                                                       |
 | -------------------------------------------------------------------------------- | ----------------------------------------------------------- |
 | `@probo/ui`, Tailwind, `tailwind-variants`, folders, skeletons, compound modules | [`contrib/claude/ui.md`](ui.md)                             |
-| React component shape, props, file/export conventions                            | [`contrib/claude/react-components.md`](react-components.md) |
+| React component shape, props, file/export conventions, naming/suffixes           | [`contrib/claude/react-components.md`](react-components.md) |
 | Relay queries, fragments, loaders, `queryRef`                                    | [`contrib/claude/relay.md`](relay.md)                       |
+| Error boundaries at any level, error/fallback props                              | [`contrib/claude/error-handling.md`](error-handling.md)     |
+| i18next translations and `_locales` folders                                      | [`contrib/claude/i18n.md`](i18n.md)                         |
 
 ## Single arborescence principle
 
@@ -66,8 +68,10 @@ Each page folder may contain a subset of these files. Names use PascalCase match
 | `MyPageLoader.tsx`   | Bundle entry point imported by `lazy()` in the route. **Default export.** loads data via Relay, renders a skeleton while loading, then mounts the page with `queryRef`. Only needed when the page reads data.  |
 | `MyPage.tsx`         | The actual page component. Receives `queryRef` from the loader (when data is loaded), or is the **default export** directly imported by `lazy()` when no data is needed.                                       |
 | `MyPageSkeleton.tsx` | `Suspense` fallback rendered while the page is still receiving data. Also used as the route-level `Fallback`. Only needed when the page reads data.                                                            |
-| `MyPageError.tsx`    | Error boundary rendering component for this page's error state.                                                                                                                                                |
+| `MyPageError.tsx`    | Error UI rendered by a boundary for this page (see [`error-handling.md`](error-handling.md)). An `*Error` file may exist at **any** level, not just the route root.                                              |
 | `_components/`       | Sub-components scoped to this page (see [below](#_components-folder)).                                                                                                                                         |
+| `_lib/`              | Non-component helpers scoped to this subtree: hooks, utilities, constants, types (see [below](#_lib-folder)).                                                                                                  |
+| `_locales/`          | i18next translation catalogs for this route segment, one file per locale (`en-US.json`). Colocated with `routes.ts` (see [below](#_locales-folder)).                                                          |
 
 ### Layout vs Page naming
 
@@ -244,7 +248,7 @@ export function ThirdPartiesPageError() {
 
 ## File naming
 
-Component files (`.tsx` that export a React component) use **PascalCase**: `ThirdPartiesPage.tsx`, `ThirdPartyContactRow.tsx`, `ThirdPartiesPageSkeleton.tsx`.
+Component files (`.tsx` that export a React component) use **PascalCase**: `ThirdPartiesPage.tsx`, `ThirdPartyContactListItem.tsx`, `ThirdPartiesPageSkeleton.tsx`.
 
 All other helper files (utilities, hooks, constants, configuration) use **camelCase**: `routes.ts`, `useThirdPartyFilters.ts`, `formatCurrency.ts`, `constants.ts`.
 
@@ -332,10 +336,53 @@ pages/organizations/_components/StatusBadge.tsx
 
 ```text
 // Bad — page-specific helper placed in a global folder
-src/components/ThirdPartyContactRow.tsx     # only used by ThirdPartyContactsTab
+src/components/ThirdPartyContactListItem.tsx     # only used by the third-parties feature
 
 // Good — scoped to the page that uses it
-pages/organizations/third-parties/_components/ThirdPartyContactRow.tsx
+pages/organizations/third-parties/_components/ThirdPartyContactListItem.tsx
+```
+
+## `_lib` folder
+
+Non-component code scoped to a subtree — hooks, utilities, constants, types — lives in a `_lib/` folder next to the pages that use it. The same hoisting rule as `_components/` applies: shared helpers move to the nearest common ancestor's `_lib/`; truly global helpers live in `src/lib/`. Files in `_lib/` use camelCase (`useThirdPartyFilters.ts`, `formatCurrency.ts`, `constants.ts`).
+
+```text
+// Good — feature-scoped helpers under _lib
+pages/organizations/third-parties/
+  _lib/
+    useThirdPartyFilters.ts
+    formatThirdPartyStatus.ts
+  _components/
+    ThirdPartyListItem.tsx
+```
+
+## `_locales` folder
+
+Translations are i18next catalogs in a `_locales/` folder, **one file per locale**, named by locale tag: `en-US.json`, `fr-FR.json`. See [`contrib/claude/i18n.md`](i18n.md) for key conventions and setup.
+
+`_locales/` is colocated with a `routes.ts`. The rule of thumb:
+
+- A `_locales/` folder belongs at a folder that **names a resource and owns a `routes.ts`** (e.g. `organizations/routes.ts` + `organizations/_locales/`, `organizations/measures/routes.ts` + `organizations/measures/_locales/`).
+- There must be **no more `_locales/` folders than there are `routes.ts` files.** If a folder has no `routes.ts`, it does not get its own `_locales/` — its strings live in the nearest ancestor that does.
+
+```text
+// Good — _locales sits beside routes.ts at each resource boundary
+pages/organizations/
+  routes.ts
+  _locales/
+    en-US.json
+    fr-FR.json
+  measures/
+    routes.ts
+    _locales/
+      en-US.json
+      fr-FR.json
+    MeasuresPage.tsx
+
+// Bad — a _locales folder with no sibling routes.ts (strings belong to the parent resource)
+pages/organizations/measures/_components/
+  _locales/
+    en-US.json
 ```
 
 ## Child-route folder naming
@@ -368,16 +415,22 @@ Target layout for a `third-parties` feature under `pages/organizations/`:
 ```text
 pages/organizations/third-parties/
   routes.ts                        # route definitions for third parties
+  _locales/                        # i18next catalogs (one _locales per routes.ts)
+    en-US.json
+    fr-FR.json
   ThirdPartiesPageLoader.tsx            # lazy entry — providers + Suspense + query loader
   ThirdPartiesPage.tsx                  # page component (usePreloadedQuery)
   ThirdPartiesPageSkeleton.tsx          # loading fallback
+  ThirdPartiesPageError.tsx             # error UI for this page's boundary
   ThirdPartyDetailLayoutLoader.tsx     # lazy entry for detail layout
   ThirdPartyDetailLayout.tsx           # layout — breadcrumbs, tabs, <Outlet />
   ThirdPartyDetailLayoutSkeleton.tsx   # detail loading fallback
   NewThirdPartyPage.tsx                # mutation-only page — default export, wraps itself in the Relay provider
+  _lib/                            # hooks / utils / constants scoped to third party pages
+    useThirdPartyFilters.ts
   _components/                     # sub-components used only by third party pages
-    ThirdPartyContactRow.tsx
-    ThirdPartyRiskSummary.tsx
+    ThirdPartyContactListItem.tsx
+    ThirdPartyRiskSummarySection.tsx
   overview/                        # child route: /third-parties/:thirdPartyId/overview
     ThirdPartyOverviewPage.tsx
   compliance/                      # child route: /third-parties/:thirdPartyId/compliance

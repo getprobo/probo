@@ -191,7 +191,7 @@ Fragments colocate data requirements with the component that reads them:
 
 ```tsx
 const contactFragment = graphql`
-  fragment ContactRow_contactFragment on ThirdPartyContact {
+  fragment ContactListItem_contactFragment on ThirdPartyContact {
     id
     fullName
     email
@@ -204,7 +204,7 @@ const contactFragment = graphql`
   }
 `;
 
-function ContactRow(props: { contactKey: ContactRow_contactFragment$key }) {
+function ContactListItem(props: { contactKey: ContactListItem_contactFragment$key }) {
   const contact = useFragment(contactFragment, props.contactKey);
   // ...
 }
@@ -539,9 +539,10 @@ pages/organizations/third-parties/
   _components/
     CreateContactDialog.tsx          # create mutation
     EditContactDialog.tsx            # update mutation
-  tabs/
-    ThirdPartyContactsTab.tsx            # refetchable fragment + item fragment
-    ThirdPartyComplianceTab.tsx
+    ThirdPartyContactListItem.tsx    # connection-item fragment
+  contacts/
+    ThirdPartyContactsPage.tsx           # refetchable fragment + list section
+    ThirdPartyContactsSection.tsx        # section fragment
 ```
 
 Component-specific operations (queries, fragments, mutations) are defined inline in the component file that uses them. Shared sub-components live in `_components/` next to the page (scoped to the nearest common ancestor).
