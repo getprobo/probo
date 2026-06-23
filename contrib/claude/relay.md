@@ -25,6 +25,26 @@ make relay  # merge split schemas + clean + compile
 
 Custom scalar mappings: `Datetime → string`, `GID → string`, `CursorKey → string`, `Duration → string`, `BigInt → number`, `EmailAddr → string`.
 
+## Naming operations and fragments
+
+Every operation (query, mutation, subscription) and fragment carries its **module-name prefix**: `<ModuleName><Type>` for operations, `<ModuleName>_<localName>` for fragments, where `<ModuleName>` is the file's basename.
+
+```tsx
+// PosterHovercard.tsx
+query PosterHovercardQuery { ... }                 // operation: <ModuleName><Type>
+fragment PosterHovercard_poster on Poster { ... }  // fragment:  <ModuleName>_<localName>
+```
+
+Relay 21 dropped the **compiler** requirement to prefix names with the filename for non-Haste projects (now opt-in via `enforce_module_name_prefix_for_non_haste`). We keep the prefix as mandatory house style:
+
+- **Operations still require it regardless** — the `relay/graphql-naming` rule (from `eslint-plugin-relay`'s `ts-recommended`) reports any operation whose name doesn't start with the module name. Dropping it only for fragments would split the convention.
+- **Uniqueness** — Relay still requires globally-unique operation/fragment names per project; the module prefix is the collision-free scheme that guarantees it.
+- **Discoverability** — generated artifact filenames and the `$key` / `$data` types derive from the name, so `PosterHovercard_poster$key` points straight back to its source module.
+
+We set `enforce_module_name_prefix_for_non_haste` in `relay.config.json` so the **compiler** guarantees the convention for fragments too — the lint rule only covers operations and legacy fragment containers, not hooks-based fragments.
+
+`<localName>` is the data the key feeds (the prop minus its `Key` suffix), never a redundant `Fragment` word: a `contactKey` prop reads a `ContactListItem_contact` fragment.
+
 ## Colocated queries
 
 Queries are defined inline in the file that uses them. Route-level queries are preloaded in a dedicated `*PageLoader` component before the page renders.
@@ -191,7 +211,7 @@ Fragments colocate data requirements with the component that reads them:
 
 ```tsx
 const contactFragment = graphql`
-  fragment ContactListItem_contactFragment on ThirdPartyContact {
+  fragment ContactListItem_contact on ThirdPartyContact {
     id
     fullName
     email
@@ -204,7 +224,7 @@ const contactFragment = graphql`
   }
 `;
 
-function ContactListItem(props: { contactKey: ContactListItem_contactFragment$key }) {
+function ContactListItem(props: { contactKey: ContactListItem_contact$key }) {
   const contact = useFragment(contactFragment, props.contactKey);
   // ...
 }
