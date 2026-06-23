@@ -4,6 +4,12 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.218.1] - 2026-06-23
+
+### Fixed
+
+- Bump `golang.org/x/image` to v0.43.0, remediating CVE-2026-33813 (denial of service via malformed WEBP parsing) and CVE-2026-46602 (missing tile-size limit in `x/image/tiff`)
+
 ## [0.218.0] - 2026-06-23
 
 ### Added
