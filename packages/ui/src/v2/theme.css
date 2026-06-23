@@ -26,7 +26,7 @@
  *   shadows.css     elevation scale (shadow-1…6)
  *
  * Spacing intentionally stays on Tailwind's native scale (not tokenized).
- * See contrib/claude/v2-colors.md for the full usage guide.
+ * See contrib/claude/v2-tokens.md for the full usage guide.
  */
 @import "./theme/colors.css";
 @import "./theme/typography.css";

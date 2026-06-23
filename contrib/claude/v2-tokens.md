@@ -1,8 +1,22 @@
-# v2 color system (Radix scale)
+# v2 design tokens
+
+The v2 UI kit is built on a small set of **numbered token scales** sourced from Radix and the "Probo Radix UI" Figma file. Every token family follows the same convention as color — a numbered scale exposed as Tailwind utilities — so the kit speaks one consistent visual language: `bg-sand-3`, `text-4`, `rounded-3`, `shadow-2`.
+
+Theme entry: [`packages/ui/src/v2/theme.css`](../../packages/ui/src/v2/theme.css), aggregating `theme/colors.css`, `theme/typography.css`, `theme/radius.css`, `theme/shadows.css`.
+
+| Family | Utilities | Steps | Source |
+|--------|-----------|-------|--------|
+| Color | `bg-/text-/border-<hue>-<1–12>` | 12 | Radix Colors |
+| Typography | `text-<1–9>` (+ font weights) | 9 | Radix type scale |
+| Radius | `rounded-<1–6>` | 6 | Radix "Medium" radius |
+| Shadow | `shadow-<1–6>`, `inset-shadow-<1–3>` | 6 / 3 | Radix elevation |
+| Spacing | Tailwind native (`p-4`, `gap-2`, …) | — | not tokenized |
+
+Each `--<family>-*` is reset to `initial` in its theme layer, so a v2 build exposes **only** the numbered scales — Tailwind's default palette, t-shirt type sizes, and `shadow-sm/md/lg` are intentionally unavailable. Use the numbered token; never reintroduce an ad-hoc value.
+
+# Colors (Radix scale)
 
 The v2 UI kit uses [Radix Colors](https://www.radix-ui.com/colors) 12-step scales as its color primitive. Each hue provides 12 numbered steps designed for specific use cases. Components consume these through Tailwind utility classes (`bg-sand-3`, `text-red-11`, `border-gold-7`, …).
-
-Theme file: [`packages/ui/src/v2/theme.css`](../../packages/ui/src/v2/theme.css)
 
 ## Available scales
 
@@ -162,4 +176,93 @@ Steps 9 and 10 are designed for prominent, solid-color backgrounds (primary butt
 
 // Good — amber badge with dark text (amber 9-10 are light/bright)
 <span className="bg-amber-9 text-amber-12">Warning</span>
+```
+
+# Typography (`text-1` … `text-9`)
+
+The type scale mirrors the color scale: numbered steps, not t-shirt sizes. Each `text-<n>` utility carries its paired font-size, line-height, and letter-spacing.
+
+Theme file: [`packages/ui/src/v2/theme/typography.css`](../../packages/ui/src/v2/theme/typography.css)
+
+| Step | Size | Typical use |
+|------|------|-------------|
+| 1 | 12px | Fine print, captions, metadata |
+| 2 | 14px | Secondary / dense body, table cells |
+| 3 | 16px | Body default |
+| 4 | 18px | Lead paragraph, small headings |
+| 5 | 20px | Section heading |
+| 6 | 24px | Page heading |
+| 7 | 28px | Large heading |
+| 8 | 35px | Display |
+| 9 | 60px | Hero |
+
+Font family is **Inter Variable** (`font-sans`); mono is a system stack (`font-mono`). Weights: `font-light` (300), `font-normal` (400), `font-medium` (500), `font-bold` (700).
+
+```tsx
+// Good — numbered type step + weight + color step
+<h1 className="text-6 font-medium text-sand-12">Measures</h1>
+<p className="text-3 text-sand-11">Description</p>
+
+// Bad — Tailwind default size (wiped in v2) or arbitrary value
+<h1 className="text-2xl">Measures</h1>
+<p className="text-[15px]">Description</p>
+```
+
+# Radius (`rounded-1` … `rounded-6`)
+
+Numbered radius scale (Radix "Medium" set). The static `rounded-none` / `rounded-full` utilities still work; the numeric ramp replaces Tailwind's `rounded-sm/md/lg`.
+
+Theme file: [`packages/ui/src/v2/theme/radius.css`](../../packages/ui/src/v2/theme/radius.css)
+
+| Step | Value | Typical use |
+|------|-------|-------------|
+| 1 | 3px | Subtle rounding (chips, small inputs) |
+| 2 | 4px | Inputs, small buttons |
+| 3 | 6px | Buttons, list items |
+| 4 | 8px | Cards, dialogs |
+| 5 | 12px | Large surfaces |
+| 6 | 16px | Hero panels, modals |
+
+```tsx
+// Good — numbered radius
+<div className="rounded-4 bg-sand-2">…</div>
+
+// Bad — Tailwind default radius (wiped) or arbitrary value
+<div className="rounded-lg">…</div>
+<div className="rounded-[10px]">…</div>
+```
+
+# Shadows (`shadow-1` … `shadow-6`, `inset-shadow-1` … `inset-shadow-3`)
+
+Drop-shadow elevation ramp, sand-tinted so it adapts to dark mode automatically (built from alpha tokens that flip light↔dark). Inset shadows live in the separate `inset-shadow-*` slot.
+
+Theme file: [`packages/ui/src/v2/theme/shadows.css`](../../packages/ui/src/v2/theme/shadows.css)
+
+| Step | Typical use |
+|------|-------------|
+| 1 | Hairline lift (resting cards) |
+| 2 | Raised cards, inputs |
+| 3 | Dropdowns, popovers |
+| 4 | Dialogs |
+| 5 | Large overlays |
+| 6 | Highest elevation (modals over modals) |
+
+```tsx
+// Good — numbered elevation; dark mode is automatic
+<div className="rounded-4 bg-sand-2 shadow-2">…</div>
+
+// Bad — Tailwind default shadow (wiped) or a manual dark: override
+<div className="shadow-md dark:shadow-none">…</div>
+```
+
+# Spacing (Tailwind native)
+
+Spacing is **not** tokenized — use Tailwind's native spacing scale (`p-4`, `gap-2`, `mt-6`, `size-8`). Do not invent a numbered spacing scale or use arbitrary pixel values where a native step fits.
+
+```tsx
+// Good — native spacing scale
+<div className="flex flex-col gap-3 p-4">…</div>
+
+// Bad — arbitrary spacing where a native step exists
+<div className="p-[15px] gap-[7px]">…</div>
 ```

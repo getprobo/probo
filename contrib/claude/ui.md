@@ -9,7 +9,7 @@ These rules are the **source of truth**. The legacy tree (`Atoms/`, `Molecules/`
 | Topic | Guide |
 |-------|--------|
 | Component shape, props, naming/suffixes | [`contrib/claude/react-components.md`](react-components.md) |
-| v2 color system (Radix scale) | [`contrib/claude/v2-colors.md`](v2-colors.md) |
+| v2 design tokens (color, type, radius, shadow, spacing) | [`contrib/claude/v2-tokens.md`](v2-tokens.md) |
 | App folder layout and special folders | [`contrib/claude/app-arborescence.md`](app-arborescence.md) |
 | Error boundaries and error/fallback props | [`contrib/claude/error-handling.md`](error-handling.md) |
 | Relay data loading | [`contrib/claude/relay.md`](relay.md) |
@@ -18,7 +18,7 @@ These rules are the **source of truth**. The legacy tree (`Atoms/`, `Molecules/`
 
 | Item | Convention |
 |------|------------|
-| Package | **`@probo/ui`** — v2 components under `src/v2`. Apps opt into v2 by importing the v2 theme (see [`v2-colors.md`](v2-colors.md)). |
+| Package | **`@probo/ui`** — v2 components under `src/v2`. Apps opt into v2 by importing the v2 theme (see [`v2-tokens.md`](v2-tokens.md)). |
 | Styling | **Tailwind v4** with the Radix-scale tokens (`bg-sand-3`, `text-sand-12`, `rounded-3`, `text-4`, …). |
 | Variants API | **`tailwind-variants`** only — `import { tv } from "tailwind-variants"`. |
 | Class composition | **Do not use `clsx` or `tailwind-merge`.** All conditional styling goes through `tv` variants and slots. |
@@ -417,3 +417,92 @@ const imageCard = tv({ slots: { shell: "...", image: "...", text: "..." } });
 // ImageCardShell.tsx — import { imageCard } from "./variants"
 // ImageCardSkeleton.tsx — import { imageCard } from "./variants"
 ```
+
+## User feedback (toasts)
+
+Transient feedback for an action's outcome uses **Base UI's Toast** (`@base-ui-components/react/toast`) — never `alert`, a hand-rolled banner, or a `console.log`. As with every other primitive, we **style** Base UI's toast; we do not build our own toast system. The legacy kit `useToast` / `Toaster` is non-compliant and is being removed — do not use it in v2.
+
+The kit exposes a styled **`Toaster`** (a `Toast.Portal` + `Toast.Viewport` rendering styled `Toast.Root`s, keyed off each toast's `type`). Mount Base UI's `Toast.Provider` and the `Toaster` **once** at the app root; everything else queues toasts through Base UI's manager.
+
+```tsx
+// app root — Base UI provider + the kit's styled viewport, mounted once
+import { Toast } from "@base-ui-components/react/toast";
+import { Toaster } from "@probo/ui";
+
+<Toast.Provider>
+  <App />
+  <Toaster />
+</Toast.Provider>
+```
+
+Queue a toast with `Toast.useToastManager().add(...)` — the same API Base UI exposes. Use `type` to drive the styled variant.
+
+```tsx
+import { Toast } from "@base-ui-components/react/toast";
+
+function CreateMeasureButton() {
+  const toast = Toast.useToastManager();
+  const { t } = useTranslation();
+  const [createMeasure] = useMutation<CreateMeasureMutation>(createMeasureMutation);
+
+  function onCreate() {
+    createMeasure({
+      variables: { input, connections: [connectionId] },
+      onCompleted() {
+        toast.add({ title: t("measures.created"), type: "success" });
+      },
+      onError(error) {
+        toast.add({
+          title: t("common.error"),
+          description: formatError(t("measures.createFailed"), error as GraphQLError),
+          type: "error",
+        });
+      },
+    });
+  }
+  // …
+}
+```
+
+For code outside the React tree, create a global manager with `Toast.createToastManager()` and pass it to `Toast.Provider` via `toastManager` — still the same renderer.
+
+Choose **toast vs. inline** by where the message belongs:
+
+- **Toast** — the result of an action not tied to a specific field: a successful save, a delete, an unexpected mutation failure.
+- **Inline** — validation tied to a field or region: render it in `Field.Error` (see [`forms.md`](forms.md)) or a section's error UI (see [`error-handling.md`](error-handling.md)), not a toast.
+
+```tsx
+// Bad — the legacy kit hook (removed in v2)
+const { toast } = useToast();
+toast({ title: "Saved", variant: "success" });
+
+// Bad — field validation surfaced as a toast (belongs inline on the field)
+toast.add({ title: "Name is required", type: "error" });
+
+// Bad — browser alert / ad-hoc UI for feedback
+alert("Saved!");
+```
+
+## Empty states
+
+A `*List` (or any collection region) renders an **empty state** when it has no items — never a blank gap. Empty states are part of the component, not an afterthought, and follow the `*Empty` suffix when extracted (see [`react-components.md`](react-components.md#naming-and-suffixes)).
+
+An empty state has: an icon (phosphor — never emoji), a short heading, optional one-line guidance, and, when the user can act, the primary call to action (gated by permission — see [`permissions.md`](permissions.md)).
+
+```tsx
+// Good — collection renders its own empty state
+{measures.length === 0
+  ? <MeasuresEmpty canCreate={canCreate} />
+  : measures.map((m) => <MeasureListItem key={m.id} measureKey={m} />)}
+```
+
+Distinguish empty (no data) from loading (`*Skeleton`) from error (`*Error`) — they are three different states, not one.
+
+## Accessibility
+
+Base UI primitives ship correct roles, focus management, and keyboard interaction — **do not re-implement or override them.** Our job is to keep that behavior intact while styling:
+
+- Keep accessible labels: every control has a visible label or an `aria-label`; icon-only buttons (`Button icon={…}`) require an `aria-label`.
+- Don't strip `aria-*` / `role` that primitives set, and don't trap or override focus the primitive manages.
+- Convey state with more than color (e.g. an icon + text alongside a `red-*` tone), so meaning survives for color-blind users — the [token contrast guarantees](v2-tokens.md#contrast-guarantees) cover text legibility, not state encoding.
+- Use semantic elements (`<button>`, `<a>`, `<nav>`, headings) — see the [Button vs Anchor vs Link](#no-structure-changing-variants) split.

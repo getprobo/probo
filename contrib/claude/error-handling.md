@@ -120,27 +120,27 @@ Boundaries will not catch a rejected promise in a submit handler. Wrap the risky
 ```tsx
 // Good — async event handler guards itself; the boundary above can't help here
 function PublishButton() {
-  const { __ } = useTranslate();
-  const { toast } = useToast();
+  const { t } = useTranslation();
+  const toast = Toast.useToastManager();
   const [isPublishing, setIsPublishing] = useState(false);
 
   async function onPublish() {
     setIsPublishing(true);
     try {
       await publishReport();
-      toast({ title: __("Published"), variant: "success" });
+      toast.add({ title: t("reports.published"), type: "success" });
     } catch (error) {
-      toast({
-        title: __("Publish failed"),
-        description: error instanceof Error ? error.message : __("Unknown error"),
-        variant: "error",
+      toast.add({
+        title: t("reports.publishFailed"),
+        description: error instanceof Error ? error.message : t("common.unknownError"),
+        type: "error",
       });
     } finally {
       setIsPublishing(false);
     }
   }
 
-  return <Button disabled={isPublishing} onClick={onPublish}>{__("Publish")}</Button>;
+  return <Button disabled={isPublishing} onClick={onPublish}>{t("reports.publish")}</Button>;
 }
 ```
 

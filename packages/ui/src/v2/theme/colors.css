@@ -44,7 +44,7 @@
  * Dark mode: toggle .dark on <html>. Radix dark imports handle the rest.
  * P3 wide gamut: included automatically via @radix-ui/colors @supports blocks.
  *
- * See contrib/claude/v2-colors.md for the full usage guide.
+ * See contrib/claude/v2-tokens.md for the full usage guide.
  */
 
 /* ---------------------------------------------------------------------------

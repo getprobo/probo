@@ -210,6 +210,8 @@ function ContactListItem(props: { contactKey: ContactListItem_contactFragment$ke
 }
 ```
 
+Select `permission(action:)` fields (aliased `canUpdate` / `canDelete`) in the fragment of the component that renders the action, and gate the UI on the resulting boolean. See [`contrib/claude/permissions.md`](permissions.md).
+
 ### Refetchable fragments
 
 For lists that support sorting and pagination, use `@refetchable` with `@argumentDefinitions`:
@@ -297,30 +299,29 @@ createCookieBanner({ variables: { ... } });
 const [deleteThirdParty] = useMutation<ThirdPartyGraphDeleteMutation>(deleteThirdPartyMutation);
 ```
 
-For mutations with user feedback, combine with `useToast` and use `onCompleted`/`onError` callbacks:
+For mutations with user feedback, queue a toast with Base UI's toast manager (`Toast.useToastManager()`; see [`ui.md`](ui.md#user-feedback-toasts)) from the `onCompleted` / `onError` callbacks:
 
 ```tsx
-const { toast } = useToast();
+const toast = Toast.useToastManager();
 const [createObligation, isCreating] = useMutation<CreateObligationMutation>(createObligationMutation);
 
-const onSubmit = (formData: FormData) => {
+const onSubmit = (input: ObligationInput) => {
   createObligation({
     variables: {
-      input: { ...formData },
+      input,
       connections: [connectionId],
     },
     onCompleted() {
-      toast({
-        title: __("Success"),
-        description: __("Obligation created successfully"),
-        variant: "success",
+      toast.add({
+        title: t("obligations.created"),
+        type: "success",
       });
     },
     onError(error) {
-      toast({
-        title: __("Error"),
-        description: formatError(__("Failed to create obligation"), error as GraphQLError),
-        variant: "error",
+      toast.add({
+        title: t("common.error"),
+        description: formatError(t("obligations.createFailed"), error as GraphQLError),
+        type: "error",
       });
     },
   });
@@ -329,7 +330,7 @@ const onSubmit = (formData: FormData) => {
 
 ### `useMutationWithToasts` (deprecated)
 
-**Do not use.** Use `useMutation` combined with `useToast` instead.
+**Do not use.** Use `useMutation` and queue feedback with Base UI's toast manager (see [`ui.md`](ui.md#user-feedback-toasts)).
 
 ### `promisifyMutation` (deprecated)
 

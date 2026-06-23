@@ -16,4 +16,4 @@ Use the Radix 12-step numbered scale for all colors in v2 components: `sand`, `g
 - Do not mix v1 and v2 color classes in the same component
 - Respect step ranges: 1–2 backgrounds, 3–5 component bg, 6–8 borders, 9–10 solid bg, 11–12 text
 
-Full guide: `contrib/claude/v2-colors.md`
+Full guide: `contrib/claude/v2-tokens.md`

@@ -13,6 +13,10 @@ These rules are the **source of truth**. Where existing code (e.g. `apps/console
 | App folder layout, route segments, special folders | [`contrib/claude/app-arborescence.md`](app-arborescence.md) |
 | Error boundaries, error/fallback props, async `try`/`catch` | [`contrib/claude/error-handling.md`](error-handling.md) |
 | i18next, `_locales`, translation keys | [`contrib/claude/i18n.md`](i18n.md) |
+| Forms and validation (Base UI Field/Form, zod, react-hook-form) | [`contrib/claude/forms.md`](forms.md) |
+| Routing, navigation, URL state, auth | [`contrib/claude/routing.md`](routing.md) |
+| Client state (Relay / URL / local / context / zustand) | [`contrib/claude/state-management.md`](state-management.md) |
+| Permission-gated UI | [`contrib/claude/permissions.md`](permissions.md) |
 
 ## Destructuring
 
