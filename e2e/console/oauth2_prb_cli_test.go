@@ -53,7 +53,7 @@ func TestOAuth2_PrbCLIDeviceFlowWithAPIScopes(t *testing.T) {
 	require.Equal(t, 200, pollRaw.StatusCode, "token poll body: %s", string(pollRaw.Body))
 	require.NotNil(t, tokenResp)
 	require.NotEmpty(t, tokenResp.AccessToken)
-	assert.Contains(t, tokenResp.Scope, "v1:org:read")
+	assert.Contains(t, tokenResp.Scope, "v1:org")
 
 	const getOrganizationQuery = `
 		query GetOrganization($id: ID!) {

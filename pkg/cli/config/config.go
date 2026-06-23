@@ -37,24 +37,24 @@ const (
 	// CLIClientScopes is the space-separated scope string requested at prb login.
 	// Keep in sync with iam_oauth2_clients.scopes for CLIClientID (see migrations).
 	CLIClientScopes = "openid profile email offline_access " +
-		"v1:access-review v1:access-review:read " +
-		"v1:agent v1:agent:read " +
-		"v1:asset v1:asset:read " +
-		"v1:audit v1:audit:read " +
-		"v1:common-third-party v1:common-third-party:read " +
-		"v1:compliance-page v1:compliance-page:read " +
-		"v1:connector v1:connector:read " +
-		"v1:control v1:control:read " +
-		"v1:datum v1:datum:read " +
-		"v1:document v1:document:read " +
-		"v1:iam v1:iam:read " +
-		"v1:org v1:org:read " +
-		"v1:privacy v1:privacy:read " +
-		"v1:risk v1:risk:read " +
-		"v1:slack-connection v1:slack-connection:read " +
-		"v1:task v1:task:read " +
-		"v1:third-party v1:third-party:read " +
-		"v1:webhook v1:webhook:read"
+		"v1:access-review " +
+		"v1:agent " +
+		"v1:asset " +
+		"v1:audit " +
+		"v1:common-third-party " +
+		"v1:compliance-page " +
+		"v1:connector " +
+		"v1:control " +
+		"v1:datum " +
+		"v1:document " +
+		"v1:iam " +
+		"v1:org " +
+		"v1:privacy " +
+		"v1:risk " +
+		"v1:slack-connection " +
+		"v1:task " +
+		"v1:third-party " +
+		"v1:webhook"
 )
 
 type (
