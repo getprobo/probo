@@ -4,6 +4,12 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.218.0] - 2026-06-23
+
+### Added
+
+- RFC 6750 `WWW-Authenticate` challenges on OAuth bearer APIs (MCP, Console and Connect GraphQL, Files, OAuth2 userinfo): responses now advertise `resource_metadata`, `invalid_token`, and `insufficient_scope` with the required scopes
+
 ## [0.217.0] - 2026-06-22
 
 ### Added
