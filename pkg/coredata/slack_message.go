@@ -42,6 +42,7 @@ type (
 		CreatedAt             time.Time        `db:"created_at"`
 		UpdatedAt             time.Time        `db:"updated_at"`
 		SentAt                *time.Time       `db:"sent_at"`
+		ProcessingStartedAt   *time.Time       `db:"processing_started_at"`
 		Error                 *string          `db:"error"`
 	}
 
@@ -181,7 +182,21 @@ func (s *SlackMessage) LoadNextUnsentForUpdate(
 	conn pg.Tx,
 ) error {
 	q := `
-SELECT id, organization_id, type, body, message_ts, channel_id, requester_email, metadata, initial_slack_message_id, created_at, updated_at, sent_at, error
+SELECT
+	id,
+	organization_id,
+	type,
+	body,
+	message_ts,
+	channel_id,
+	requester_email,
+	metadata,
+	initial_slack_message_id,
+	created_at,
+	updated_at,
+	sent_at,
+	processing_started_at,
+	error
 FROM slack_messages
 WHERE sent_at IS NULL AND error IS NULL
 ORDER BY created_at ASC
@@ -213,7 +228,21 @@ func (s *SlackMessage) LoadNextInitalUnsentForUpdate(
 	conn pg.Tx,
 ) error {
 	q := `
-SELECT id, organization_id, type, body, message_ts, channel_id, requester_email, metadata, initial_slack_message_id, created_at, updated_at, sent_at, error
+SELECT
+	id,
+	organization_id,
+	type,
+	body,
+	message_ts,
+	channel_id,
+	requester_email,
+	metadata,
+	initial_slack_message_id,
+	created_at,
+	updated_at,
+	sent_at,
+	processing_started_at,
+	error
 FROM slack_messages
 WHERE sent_at IS NULL AND error IS NULL AND id = initial_slack_message_id
 ORDER BY created_at ASC
@@ -258,6 +287,7 @@ SELECT
 	sm.created_at,
 	sm.updated_at,
 	sm.sent_at,
+	sm.processing_started_at,
 	sm.error
 FROM slack_messages sm
 INNER JOIN slack_messages original ON sm.initial_slack_message_id = original.id
@@ -290,6 +320,84 @@ FOR UPDATE OF sm
 	return nil
 }
 
+func (s *SlackMessage) LoadNextClaimableForUpdateSkipLocked(
+	ctx context.Context,
+	conn pg.Tx,
+) error {
+	q := `
+SELECT
+	sm.id,
+	sm.organization_id,
+	sm.type,
+	sm.body,
+	COALESCE(sm.message_ts, original.message_ts) as message_ts,
+	COALESCE(sm.channel_id, original.channel_id) as channel_id,
+	sm.requester_email,
+	sm.metadata,
+	sm.initial_slack_message_id,
+	sm.created_at,
+	sm.updated_at,
+	sm.sent_at,
+	sm.processing_started_at,
+	sm.error
+FROM slack_messages sm
+LEFT JOIN slack_messages original ON sm.initial_slack_message_id = original.id
+WHERE sm.sent_at IS NULL
+	AND sm.error IS NULL
+	AND sm.processing_started_at IS NULL
+	AND (
+		sm.id = sm.initial_slack_message_id
+		OR (original.sent_at IS NOT NULL AND original.error IS NULL)
+	)
+ORDER BY sm.created_at ASC
+LIMIT 1
+FOR UPDATE OF sm SKIP LOCKED
+	`
+
+	rows, err := conn.Query(ctx, q)
+	if err != nil {
+		return fmt.Errorf("cannot query slack messages: %w", err)
+	}
+
+	message, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[SlackMessage])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrNoUnsentSlackMessage{}
+		}
+
+		return fmt.Errorf("cannot collect slack message: %w", err)
+	}
+
+	*s = message
+
+	return nil
+}
+
+func ResetStaleProcessingSlackMessages(
+	ctx context.Context,
+	conn pg.Querier,
+	staleAfter time.Duration,
+) error {
+	q := `
+UPDATE slack_messages
+SET processing_started_at = NULL, updated_at = now()
+WHERE sent_at IS NULL
+	AND error IS NULL
+	AND processing_started_at IS NOT NULL
+	AND processing_started_at < @stale_threshold
+	`
+
+	args := pgx.StrictNamedArgs{
+		"stale_threshold": time.Now().Add(-staleAfter),
+	}
+
+	if _, err := conn.Exec(ctx, q, args); err != nil {
+		return fmt.Errorf("cannot reset stale processing slack messages: %w", err)
+	}
+
+	return nil
+}
+
 func (s *SlackMessage) LoadInitialByChannelAndTS(
 	ctx context.Context,
 	conn pg.Querier,
@@ -298,7 +406,21 @@ func (s *SlackMessage) LoadInitialByChannelAndTS(
 	messageTS string,
 ) error {
 	q := `
-SELECT id, organization_id, type, body, message_ts, channel_id, requester_email, metadata, initial_slack_message_id, created_at, updated_at, sent_at, error
+SELECT
+	id,
+	organization_id,
+	type,
+	body,
+	message_ts,
+	channel_id,
+	requester_email,
+	metadata,
+	initial_slack_message_id,
+	created_at,
+	updated_at,
+	sent_at,
+	processing_started_at,
+	error
 FROM slack_messages
 WHERE message_ts = @message_ts AND channel_id = @channel_id AND id = initial_slack_message_id AND %s
 LIMIT 1
@@ -338,15 +460,16 @@ func (s *SlackMessage) Update(
 ) error {
 	q := `
 UPDATE slack_messages
-SET sent_at = @sent_at, updated_at = @updated_at, error = @error
+SET sent_at = @sent_at, processing_started_at = @processing_started_at, updated_at = @updated_at, error = @error
 WHERE id = @id AND %s
 	`
 
 	args := pgx.StrictNamedArgs{
-		"id":         s.ID,
-		"sent_at":    s.SentAt,
-		"updated_at": s.UpdatedAt,
-		"error":      s.Error,
+		"id":                    s.ID,
+		"sent_at":               s.SentAt,
+		"processing_started_at": s.ProcessingStartedAt,
+		"updated_at":            s.UpdatedAt,
+		"error":                 s.Error,
 	}
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
@@ -402,7 +525,21 @@ func (s *SlackMessage) LoadById(
 	slackMessageID gid.GID,
 ) error {
 	q := `
-SELECT id, organization_id, type, body, message_ts, channel_id, requester_email, metadata, initial_slack_message_id, created_at, updated_at, sent_at, error
+SELECT
+	id,
+	organization_id,
+	type,
+	body,
+	message_ts,
+	channel_id,
+	requester_email,
+	metadata,
+	initial_slack_message_id,
+	created_at,
+	updated_at,
+	sent_at,
+	processing_started_at,
+	error
 FROM slack_messages
 WHERE id = @id
 AND %s
@@ -442,7 +579,21 @@ func (s *SlackMessage) LoadLatestByInitialMessageID(
 	initialSlackMessageID gid.GID,
 ) error {
 	q := `
-SELECT id, organization_id, type, body, message_ts, channel_id, requester_email, metadata, initial_slack_message_id, created_at, updated_at, sent_at, error
+SELECT
+	id,
+	organization_id,
+	type,
+	body,
+	message_ts,
+	channel_id,
+	requester_email,
+	metadata,
+	initial_slack_message_id,
+	created_at,
+	updated_at,
+	sent_at,
+	processing_started_at,
+	error
 FROM slack_messages
 WHERE %s
 	AND initial_slack_message_id = @initial_slack_message_id
@@ -486,7 +637,21 @@ func (s *SlackMessage) LoadLatestByRequesterEmailAndType(
 	since time.Time,
 ) error {
 	q := `
-SELECT id, organization_id, type, body, message_ts, channel_id, requester_email, metadata, initial_slack_message_id, created_at, updated_at, sent_at, error
+SELECT
+	id,
+	organization_id,
+	type,
+	body,
+	message_ts,
+	channel_id,
+	requester_email,
+	metadata,
+	initial_slack_message_id,
+	created_at,
+	updated_at,
+	sent_at,
+	processing_started_at,
+	error
 FROM slack_messages
 WHERE %s
 	AND organization_id = @organization_id

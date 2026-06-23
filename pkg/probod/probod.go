@@ -701,14 +701,19 @@ func (impl *Implm) Run(
 	)
 
 	slackSenderCtx, stopSlackSender := context.WithCancel(context.Background())
-	slackSender := slack.NewSender(pgClient, l.Named("slack-sender"), encryptionKey, slack.Config{
-		Interval: time.Duration(impl.cfg.Notifications.Slack.SenderInterval) * time.Second,
-	})
+	slackSendingWorker := slack.NewSendingWorker(
+		pgClient,
+		l.Named("slack-sending-worker"),
+		encryptionKey,
+		nil,
+		worker.WithInterval(time.Duration(impl.cfg.Notifications.Slack.SenderInterval)*time.Second),
+		worker.WithMaxConcurrency(1),
+	)
 
 	wg.Go(
 		func() {
-			if err := slackSender.Run(slackSenderCtx); err != nil {
-				cancel(fmt.Errorf("slack sender crashed: %w", err))
+			if err := slackSendingWorker.Run(slackSenderCtx); err != nil {
+				cancel(fmt.Errorf("slack sending worker crashed: %w", err))
 			}
 		},
 	)
