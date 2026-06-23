@@ -307,6 +307,43 @@ Components fall into two categories: **primitives** and **compound** components.
 
 If a compound component is purely presentational (no logic), there is no Root — expose only the Shell.
 
+## Typography: components over raw text elements
+
+Content text — prose, labels, headings, inline code — renders through the kit's typography **components** (`Text`, `Heading`, `Code`, …), not raw `<p>` / `<span>` / `<h1>` / `<code>` with hand-applied token classes. A typography component encodes three decisions in one place so app authors don't re-make them on every element:
+
+1. **Tokens** — the numbered type step + color step (`text-3 text-sand-12`, `text-1 text-sand-11`). v2 wipes Tailwind's default type scale (see [`v2-tokens.md`](v2-tokens.md)), so every raw element would otherwise re-pick these.
+2. **Semantics** — the component renders the correct semantic element (a real heading, paragraph, or `<code>`) so the document outline stays tied to the visual hierarchy rather than drifting from it.
+3. **Skeleton pairing** — each primitive has a matching `*Skeleton` (`TextSkeleton`); raw spans have no loading placeholder.
+
+Because these primitives merge the native element's props (see [Props typing](#props-typing)), using `Text` over `span` loses nothing — `id`, `className`, `aria-*`, and handlers still pass through.
+
+### Use a component when the node is typography
+
+```tsx
+// Good — typography flows through kit components
+<Heading>Measures</Heading>
+<Text tone="muted">{description}</Text>
+<Code>npm run dev</Code>
+```
+
+### Use a raw element only when it isn't typography
+
+Raw `<p>` / `<span>` / `<h*>` / `<code>` belong in exactly two places:
+
+- **Inside the kit**, authoring `Text` / `Heading` / `Code` themselves — a primitive *is its own shell*, so its raw element lives there and nowhere else.
+- **Structural, non-textual nodes** — a layout `<div>` / `<section>` / `<ul>`, styled with `tv`. These are not typography and must not be wrapped in a typography component.
+
+```tsx
+// Bad — raw heading/body with re-picked tokens scattered across app code
+<h1 className="text-6 font-medium text-sand-12">Measures</h1>
+<p className="text-3 text-sand-11">Description</p>
+
+// Bad — wrapping a layout container in a typography component
+<Text><div className="flex flex-col gap-3">…</div></Text>
+```
+
+> Rule of thumb: if a designer would call it "a heading," "body text," "a caption," or "inline code," it is a kit component. If it's a box, a row, or a layout region, it's a raw element styled with `tv`.
+
 ## Skeletons
 
 Every meaningful component provides a paired loading UI named `ComponentName` / `ComponentNameSkeleton` (e.g. `Text` / `TextSkeleton`).

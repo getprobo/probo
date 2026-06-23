@@ -208,6 +208,8 @@ Font family is **Inter Variable** (`font-sans`); mono is a system stack (`font-m
 <p className="text-[15px]">Description</p>
 ```
 
+> Prefer the kit's `Text` / `Heading` / `Code` components over raw elements with these classes — they encode the step choice once. See [Typography: components over raw text elements](ui.md#typography-components-over-raw-text-elements).
+
 # Radius (`rounded-1` … `rounded-6`)
 
 Numbered radius scale (Radix "Medium" set). The static `rounded-none` / `rounded-full` utilities still work; the numeric ramp replaces Tailwind's `rounded-sm/md/lg`.
