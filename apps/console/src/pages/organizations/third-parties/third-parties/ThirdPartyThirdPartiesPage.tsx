@@ -199,7 +199,7 @@ export default function ThirdPartyThirdPartiesPage({ queryRef }: Props) {
         <Thead>
           <Tr>
             <SortableTh field="NAME">{__("Third party")}</SortableTh>
-            <Th>{__("Accessed At")}</Th>
+            <Th>{__("Assessed At")}</Th>
             <Th>{__("Data Risk")}</Th>
             <Th>{__("Business Risk")}</Th>
             <Th />
