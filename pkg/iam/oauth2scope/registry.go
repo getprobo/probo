@@ -60,6 +60,20 @@ func (r *Registry) RegisteredScopes() []coredata.OAuth2Scope {
 	return sortedScopes(slices.Collect(maps.Keys(r.scopeActions)))
 }
 
+func (r *Registry) AllWriteScopes() []coredata.OAuth2Scope {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	writeScopes := make([]coredata.OAuth2Scope, 0, len(r.scopeActions))
+	for scope := range r.scopeActions {
+		if !scope.IsRead() {
+			writeScopes = append(writeScopes, scope)
+		}
+	}
+
+	return sortedScopes(writeScopes)
+}
+
 func (r *Registry) Allows(tokenScopes coredata.OAuth2Scopes, action string) bool {
 	r.mu.RLock()
 	defer r.mu.RUnlock()

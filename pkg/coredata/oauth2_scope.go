@@ -37,6 +37,10 @@ func (v OAuth2Scope) String() string {
 	return string(v)
 }
 
+func (v OAuth2Scope) IsRead() bool {
+	return strings.HasSuffix(string(v), ":read")
+}
+
 func (v OAuth2Scope) MarshalText() ([]byte, error) {
 	return []byte(v.String()), nil
 }

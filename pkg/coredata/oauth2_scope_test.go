@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,23 +12,38 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package resourcealias
+package coredata_test
 
-import "go.probo.inc/probo/pkg/coredata"
+import (
+	"testing"
 
-const (
-	ScopeV1ResourceAliasRead coredata.OAuth2Scope = "v1:resource-alias:read"
-	ScopeV1ResourceAlias     coredata.OAuth2Scope = "v1:resource-alias"
+	"github.com/stretchr/testify/assert"
+	"go.probo.inc/probo/pkg/coredata"
 )
 
-// OAuth2ScopeMappings maps OAuth2 scopes to resource-alias actions.
-var OAuth2ScopeMappings = map[coredata.OAuth2Scope][]string{
-	ScopeV1ResourceAliasRead: {
-		ActionAliasGet,
-	},
-	ScopeV1ResourceAlias: {
-		ActionAliasGet,
-		ActionAliasSet,
-		ActionAliasRemove,
-	},
+func TestOAuth2Scope_IsRead(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		scope coredata.OAuth2Scope
+		want  bool
+	}{
+		{scope: "v1:org:read", want: true},
+		{scope: "v1:document:read", want: true},
+		{scope: "v1:org", want: false},
+		{scope: "v1:privacy", want: false},
+		{scope: "openid", want: false},
+		{scope: "offline_access", want: false},
+	}
+
+	for _, tt := range tests {
+		t.Run(
+			tt.scope.String(),
+			func(t *testing.T) {
+				t.Parallel()
+
+				assert.Equal(t, tt.want, tt.scope.IsRead())
+			},
+		)
+	}
 }

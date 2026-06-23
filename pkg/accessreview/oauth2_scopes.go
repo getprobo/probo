@@ -33,6 +33,13 @@ var OAuth2ScopeMappings = map[coredata.OAuth2Scope][]string{
 		ActionDriverCatalogList,
 	},
 	ScopeV1AccessReview: {
+		ActionCampaignGet,
+		ActionCampaignList,
+		ActionEntryGet,
+		ActionEntryList,
+		ActionSourceGet,
+		ActionSourceList,
+		ActionDriverCatalogList,
 		ActionCampaignCreate,
 		ActionCampaignUpdate,
 		ActionCampaignDelete,

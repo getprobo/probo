@@ -400,7 +400,7 @@ func (s *Service) upsertCIMDClient(
 		clientURI = &doc.ClientURI
 	}
 
-	scopes := coredata.OAuth2Scopes(authorizationServerScopes(s.registry.RegisteredScopes()))
+	scopes := coredata.OAuth2Scopes(authorizationServerScopes(s.registry.AllWriteScopes()))
 
 	now := time.Now()
 

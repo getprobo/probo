@@ -105,6 +105,25 @@ func TestRegistry_ScopesForAction(t *testing.T) {
 	assert.Nil(t, reg.ScopesForAction("core:organization:delete"))
 }
 
+func TestRegistry_AllWriteScopes(t *testing.T) {
+	t.Parallel()
+
+	const (
+		scopeV1OrgRead  = coredata.OAuth2Scope("v1:org:read")
+		scopeV1OrgWrite = coredata.OAuth2Scope("v1:org")
+	)
+
+	reg := oauth2scope.NewRegistry().
+		Register(
+			map[coredata.OAuth2Scope][]string{
+				scopeV1OrgWrite: {"core:organization:update"},
+				scopeV1OrgRead:  {"core:organization:get"},
+			},
+		)
+
+	assert.Equal(t, []coredata.OAuth2Scope{scopeV1OrgWrite}, reg.AllWriteScopes())
+}
+
 func TestRegistry_RegisteredScopes(t *testing.T) {
 	t.Parallel()
 

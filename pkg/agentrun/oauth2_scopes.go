@@ -27,6 +27,8 @@ var OAuth2ScopeMappings = map[coredata.OAuth2Scope][]string{
 		ActionAgentRunList,
 	},
 	ScopeV1Agent: {
+		ActionAgentRunGet,
+		ActionAgentRunList,
 		ActionAgentRunApprove,
 	},
 }
