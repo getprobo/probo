@@ -4,6 +4,12 @@ All notable changes to the `proboctl` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.7.1] - 2026-06-23
+
+### Fixed
+
+- Bump `golang.org/x/image` to v0.43.0, remediating CVE-2026-33813 (denial of service via malformed WEBP parsing) and CVE-2026-46602 (missing tile-size limit in `x/image/tiff`)
+
 ## [0.7.0] - 2026-06-19
 
 ### Changed
