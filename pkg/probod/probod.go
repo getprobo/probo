@@ -713,8 +713,8 @@ func (impl *Implm) Run(
 		},
 	)
 
-	webhookSenderCtx, stopWebhookSender := context.WithCancel(context.Background())
-	webhookSender := webhook.NewSender(pgClient, l.Named("webhook-sender"), webhook.Config{
+	webhookWorkerCtx, stopWebhookWorker := context.WithCancel(context.Background())
+	webhookWorker := webhook.NewWebhookWorker(pgClient, l.Named("webhook-sender"), webhook.Config{
 		Interval:      time.Duration(impl.cfg.Notifications.Webhook.SenderInterval) * time.Second,
 		CacheTTL:      time.Duration(impl.cfg.Notifications.Webhook.CacheTTL) * time.Second,
 		EncryptionKey: encryptionKey,
@@ -723,8 +723,8 @@ func (impl *Implm) Run(
 
 	wg.Go(
 		func() {
-			if err := webhookSender.Run(webhookSenderCtx); err != nil {
-				cancel(fmt.Errorf("webhook sender crashed: %w", err))
+			if err := webhookWorker.Run(webhookWorkerCtx); err != nil {
+				cancel(fmt.Errorf("webhook worker crashed: %w", err))
 			}
 		},
 	)
@@ -1002,7 +1002,7 @@ func (impl *Implm) Run(
 
 	stopApiServer()
 	stopTrustCenterServer()
-	stopWebhookSender()
+	stopWebhookWorker()
 	stopESignService()
 	stopTrackerPatternAnalysisWorker()
 	stopTrackerPolicyWorker()

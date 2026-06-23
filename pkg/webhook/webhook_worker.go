@@ -32,13 +32,14 @@ import (
 	"go.gearno.de/kit/httpclient"
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
+	"go.gearno.de/kit/worker"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/cipher"
 	"go.probo.inc/probo/pkg/gid"
 )
 
 type (
-	Sender struct {
+	webhookHandler struct {
 		pg             *pg.Client
 		logger         *log.Logger
 		httpClient     *http.Client
@@ -47,7 +48,6 @@ type (
 		cache          sync.Map
 		cacheCreatedAt time.Time
 		cacheTTL       time.Duration
-		interval       time.Duration
 		timeout        time.Duration
 	}
 
@@ -68,11 +68,23 @@ type (
 		Event  *coredata.WebhookEvent
 		Config *coredata.WebhookSubscription
 	}
+
+	webhookTask struct {
+		webhookData *coredata.WebhookData
+		deliveries  []pendingDelivery
+	}
 )
 
 const maxResponseBodySize = 64 * 1024 // 64KB
 
-func NewSender(pg *pg.Client, logger *log.Logger, cfg Config) *Sender {
+var _ worker.Handler[webhookTask] = (*webhookHandler)(nil)
+
+func NewWebhookWorker(
+	pgClient *pg.Client,
+	logger *log.Logger,
+	cfg Config,
+	opts ...worker.Option,
+) *worker.Worker[webhookTask] {
 	if cfg.Interval <= 0 {
 		cfg.Interval = 5 * time.Second
 	}
@@ -85,59 +97,64 @@ func NewSender(pg *pg.Client, logger *log.Logger, cfg Config) *Sender {
 		cfg.CacheTTL = 24 * time.Hour
 	}
 
-	return &Sender{
-		pg:             pg,
+	h := &webhookHandler{
+		pg:             pgClient,
 		logger:         logger,
 		httpClient:     httpclient.DefaultPooledClient(httpclient.WithLogger(logger), httpclient.WithSSRFProtection()),
 		encryptionKey:  cfg.EncryptionKey,
 		host:           cfg.Host,
 		cacheCreatedAt: time.Now(),
 		cacheTTL:       cfg.CacheTTL,
-		interval:       cfg.Interval,
 		timeout:        cfg.Timeout,
 	}
+
+	workerOpts := append(
+		[]worker.Option{
+			worker.WithInterval(cfg.Interval),
+			worker.WithMaxConcurrency(1),
+		},
+		opts...,
+	)
+
+	return worker.New(
+		"webhook-sender",
+		h,
+		logger,
+		workerOpts...,
+	)
 }
 
-func (s *Sender) Run(ctx context.Context) error {
-	for {
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		case <-time.After(s.interval):
-			if err := s.processEvents(ctx); err != nil {
-				s.logger.ErrorCtx(ctx, "cannot process webhook events", log.Error(err))
-			}
-		}
-	}
-}
-
-func (s *Sender) processEvents(ctx context.Context) error {
-	if time.Since(s.cacheCreatedAt) >= s.cacheTTL {
-		s.cache = sync.Map{}
-		s.cacheCreatedAt = time.Now()
+func (h *webhookHandler) Claim(ctx context.Context) (webhookTask, error) {
+	if time.Since(h.cacheCreatedAt) >= h.cacheTTL {
+		h.cache = sync.Map{}
+		h.cacheCreatedAt = time.Now()
 	}
 
-	for {
-		webhookData, deliveries, err := s.claimNextWebhookData(ctx)
-		if err != nil {
-			if errors.Is(err, coredata.ErrResourceNotFound) {
-				return nil
-			}
-
-			return fmt.Errorf("cannot claim next webhook data: %w", err)
+	webhookData, deliveries, err := h.claimNextWebhookData(ctx)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return webhookTask{}, worker.ErrNoTask
 		}
 
-		s.processDeliveries(ctx, webhookData, deliveries)
+		return webhookTask{}, fmt.Errorf("cannot claim next webhook data: %w", err)
 	}
+
+	return webhookTask{webhookData: webhookData, deliveries: deliveries}, nil
 }
 
-func (s *Sender) claimNextWebhookData(ctx context.Context) (*coredata.WebhookData, []pendingDelivery, error) {
+func (h *webhookHandler) Process(ctx context.Context, task webhookTask) error {
+	h.processDeliveries(ctx, task.webhookData, task.deliveries)
+
+	return nil
+}
+
+func (h *webhookHandler) claimNextWebhookData(ctx context.Context) (*coredata.WebhookData, []pendingDelivery, error) {
 	var (
 		webhookData coredata.WebhookData
 		deliveries  []pendingDelivery
 	)
 
-	err := s.pg.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+	err := h.pg.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		if err := webhookData.LoadNextUnprocessedForUpdate(ctx, tx); err != nil {
 			return fmt.Errorf("cannot load next unprocessed webhook data: %w", err)
 		}
@@ -193,36 +210,36 @@ func (s *Sender) claimNextWebhookData(ctx context.Context) (*coredata.WebhookDat
 	return &webhookData, deliveries, nil
 }
 
-func (s *Sender) processDeliveries(ctx context.Context, webhookData *coredata.WebhookData, deliveries []pendingDelivery) {
+func (h *webhookHandler) processDeliveries(ctx context.Context, webhookData *coredata.WebhookData, deliveries []pendingDelivery) {
 	for _, d := range deliveries {
-		s.deliver(ctx, webhookData, d)
+		h.deliver(ctx, webhookData, d)
 	}
 }
 
-func (s *Sender) deliver(ctx context.Context, webhookData *coredata.WebhookData, d pendingDelivery) {
+func (h *webhookHandler) deliver(ctx context.Context, webhookData *coredata.WebhookData, d pendingDelivery) {
 	scope := coredata.NewScopeFromObjectID(d.Event.ID)
 
-	signingSecret, err := s.getSigningSecret(d.Config.ID.String(), d.Config.EncryptedSigningSecret)
+	signingSecret, err := h.getSigningSecret(d.Config.ID.String(), d.Config.EncryptedSigningSecret)
 	if err != nil {
-		s.logger.ErrorCtx(
+		h.logger.ErrorCtx(
 			ctx,
 			"cannot get signing secret",
 			log.Error(err),
 			log.String("webhook_data_id", webhookData.ID.String()),
 			log.String("subscription_id", d.Config.ID.String()),
 		)
-		s.updateEventStatus(ctx, d.Event, scope, coredata.WebhookEventStatusFailed, nil)
+		h.updateEventStatus(ctx, d.Event, scope, coredata.WebhookEventStatusFailed, nil)
 
 		return
 	}
 
-	response, sendErr := s.doHTTPCall(ctx, d.Event.ID, d.Config.EndpointURL, webhookData, d.Config.ID, signingSecret)
+	response, sendErr := h.doHTTPCall(ctx, d.Event.ID, d.Config.EndpointURL, webhookData, d.Config.ID, signingSecret)
 
 	eventStatus := coredata.WebhookEventStatusSucceeded
 	if sendErr != nil {
 		eventStatus = coredata.WebhookEventStatusFailed
 
-		s.logger.ErrorCtx(
+		h.logger.ErrorCtx(
 			ctx,
 			"error delivering webhook",
 			log.Error(sendErr),
@@ -231,10 +248,10 @@ func (s *Sender) deliver(ctx context.Context, webhookData *coredata.WebhookData,
 		)
 	}
 
-	s.updateEventStatus(ctx, d.Event, scope, eventStatus, response)
+	h.updateEventStatus(ctx, d.Event, scope, eventStatus, response)
 }
 
-func (s *Sender) updateEventStatus(
+func (h *webhookHandler) updateEventStatus(
 	ctx context.Context,
 	event *coredata.WebhookEvent,
 	scope coredata.Scoper,
@@ -244,11 +261,11 @@ func (s *Sender) updateEventStatus(
 	event.Status = status
 	event.Response = response
 
-	err := s.pg.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+	err := h.pg.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		return event.UpdateStatus(ctx, tx, scope)
 	})
 	if err != nil {
-		s.logger.ErrorCtx(
+		h.logger.ErrorCtx(
 			ctx,
 			"cannot update webhook event status",
 			log.Error(err),
@@ -258,21 +275,21 @@ func (s *Sender) updateEventStatus(
 	}
 }
 
-func (s *Sender) getSigningSecret(webhookSubscriptionID string, encryptedSigningSecret []byte) (string, error) {
-	if cached, ok := s.cache.Load(webhookSubscriptionID); ok {
+func (h *webhookHandler) getSigningSecret(webhookSubscriptionID string, encryptedSigningSecret []byte) (string, error) {
+	if cached, ok := h.cache.Load(webhookSubscriptionID); ok {
 		entry := cached.(*cachedSecret)
 		if bytes.Equal(entry.encryptedSecret, encryptedSigningSecret) {
 			return entry.plaintext, nil
 		}
 	}
 
-	plaintext, err := cipher.Decrypt(encryptedSigningSecret, s.encryptionKey)
+	plaintext, err := cipher.Decrypt(encryptedSigningSecret, h.encryptionKey)
 	if err != nil {
 		return "", fmt.Errorf("cannot decrypt signing secret: %w", err)
 	}
 
 	signingSecret := string(plaintext)
-	s.cache.Store(
+	h.cache.Store(
 		webhookSubscriptionID,
 		&cachedSecret{
 			encryptedSecret: encryptedSigningSecret,
@@ -283,7 +300,7 @@ func (s *Sender) getSigningSecret(webhookSubscriptionID string, encryptedSigning
 	return signingSecret, nil
 }
 
-func (s *Sender) doHTTPCall(
+func (h *webhookHandler) doHTTPCall(
 	ctx context.Context,
 	eventID gid.GID,
 	endpointURL string,
@@ -305,7 +322,7 @@ func (s *Sender) doHTTPCall(
 		return nil, fmt.Errorf("cannot marshal webhook payload: %w", err)
 	}
 
-	reqCtx, cancel := context.WithTimeout(ctx, s.timeout)
+	reqCtx, cancel := context.WithTimeout(ctx, h.timeout)
 	defer cancel()
 
 	req, err := http.NewRequestWithContext(reqCtx, http.MethodPost, endpointURL, bytes.NewReader(body))
@@ -321,9 +338,9 @@ func (s *Sender) doHTTPCall(
 	req.Header.Set("X-Probo-Webhook-Organization-Id", webhookData.OrganizationID.String())
 	req.Header.Set("X-Probo-Webhook-Timestamp", timestamp)
 	req.Header.Set("X-Probo-Webhook-Signature", signature)
-	req.Header.Set("X-Probo-Webhook-Host", s.host)
+	req.Header.Set("X-Probo-Webhook-Host", h.host)
 
-	resp, err := s.httpClient.Do(req)
+	resp, err := h.httpClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("cannot send request: %w", err)
 	}
