@@ -22,11 +22,11 @@ These rules are the **source of truth**. The legacy tree (`Atoms/`, `Molecules/`
 | Styling | **Tailwind v4** with the Radix-scale tokens (`bg-sand-3`, `text-sand-12`, `rounded-3`, `text-4`, …). |
 | Variants API | **`tailwind-variants`** only — `import { tv } from "tailwind-variants"`. |
 | Class composition | **Do not use `clsx` or `tailwind-merge`.** All conditional styling goes through `tv` variants and slots. |
-| Headless primitives | **Base UI** (`@base-ui-components/react`). We **style** these primitives; we do not re-implement their behavior. |
+| Headless primitives | **Base UI** (`@base-ui/react`). We **style** these primitives; we do not re-implement their behavior. |
 
 Preview components with Storybook from `packages/ui`: `npm run dev` (Storybook on port 6006).
 
-> Base UI is migrating its package name from `@base-ui-components/react` to `@base-ui/react`. Import from whichever name the installed version publishes; examples below use `@base-ui-components/react`.
+> Base UI is published as `@base-ui/react` (the earlier `@base-ui-components/react` name is frozen at an RC — do not use it). Import parts from per-component subpaths, e.g. `@base-ui/react/dialog`.
 
 ## Headless primitives: style, don't re-implement
 
@@ -57,7 +57,7 @@ export function Dialog({ trigger, ref, children }: Props) {
 
 ```tsx
 // Good — thin styling over Base UI; consumers use the lib's open/onOpenChange directly
-import { Dialog as BaseDialog } from "@base-ui-components/react/dialog";
+import { Dialog as BaseDialog } from "@base-ui/react/dialog";
 import { tv } from "tailwind-variants";
 
 const dialog = tv({
@@ -457,13 +457,13 @@ const imageCard = tv({ slots: { shell: "...", image: "...", text: "..." } });
 
 ## User feedback (toasts)
 
-Transient feedback for an action's outcome uses **Base UI's Toast** (`@base-ui-components/react/toast`) — never `alert`, a hand-rolled banner, or a `console.log`. As with every other primitive, we **style** Base UI's toast; we do not build our own toast system. The legacy kit `useToast` / `Toaster` is non-compliant and is being removed — do not use it in v2.
+Transient feedback for an action's outcome uses **Base UI's Toast** (`@base-ui/react/toast`) — never `alert`, a hand-rolled banner, or a `console.log`. As with every other primitive, we **style** Base UI's toast; we do not build our own toast system. The legacy kit `useToast` / `Toaster` is non-compliant and is being removed — do not use it in v2.
 
 The kit exposes a styled **`Toaster`** (a `Toast.Portal` + `Toast.Viewport` rendering styled `Toast.Root`s, keyed off each toast's `type`). Mount Base UI's `Toast.Provider` and the `Toaster` **once** at the app root; everything else queues toasts through Base UI's manager.
 
 ```tsx
 // app root — Base UI provider + the kit's styled viewport, mounted once
-import { Toast } from "@base-ui-components/react/toast";
+import { Toast } from "@base-ui/react/toast";
 import { Toaster } from "@probo/ui";
 
 <Toast.Provider>
@@ -475,7 +475,7 @@ import { Toaster } from "@probo/ui";
 Queue a toast with `Toast.useToastManager().add(...)` — the same API Base UI exposes. Use `type` to drive the styled variant.
 
 ```tsx
-import { Toast } from "@base-ui-components/react/toast";
+import { Toast } from "@base-ui/react/toast";
 
 function CreateMeasureButton() {
   const toast = Toast.useToastManager();

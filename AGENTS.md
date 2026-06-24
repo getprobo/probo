@@ -22,6 +22,7 @@ Detailed guides for specific subsystems live in `contrib/claude/`:
 - [`contrib/claude/agent.md`](contrib/claude/agent.md) — Agent orchestration framework (tools, handoffs, execution)
 - [`contrib/claude/app-arborescence.md`](contrib/claude/app-arborescence.md) — Frontend app folder layout (pages, routes at resource folders, loaders, skeletons, _components, _lib, _locales)
 - [`contrib/claude/relay.md`](contrib/claude/relay.md) — Frontend Relay client (queries, fragments, mutations, pagination)
+- [`contrib/claude/hooks.md`](contrib/claude/hooks.md) — Custom hooks (_lib placement, awaitable useMutation primitive, auto error handling)
 - [`contrib/claude/react-components.md`](contrib/claude/react-components.md) — React component shape (file/export, props, configure vs data via hooks, naming/suffix taxonomy, error props)
 - [`contrib/claude/ui.md`](contrib/claude/ui.md) — @probo/ui v2 kit (Base UI headless, Tailwind, tailwind-variants, flat folders, bundle-safe skeletons)
 - [`contrib/claude/v2-tokens.md`](contrib/claude/v2-tokens.md) — v2 design tokens (color, typography, radius, shadow scales; native spacing)

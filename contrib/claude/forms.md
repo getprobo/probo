@@ -32,8 +32,8 @@ Server-side errors map onto the `Form` `errors` prop in **every** tier (see [Ser
 Most forms need nothing more. Base UI validates native HTML constraints, and `<Field.Error>` renders the message. Use `match` to supply your own copy (and i18n) per validity state.
 
 ```tsx
-import { Form } from "@base-ui-components/react/form";
-import { Field } from "@base-ui-components/react/field";
+import { Form } from "@base-ui/react/form";
+import { Field } from "@base-ui/react/field";
 import { useTranslation } from "react-i18next";
 
 export function CreateMeasureForm({ onSubmit }: CreateMeasureFormProps) {
@@ -78,7 +78,7 @@ Async `validate` (e.g. a uniqueness check) is supported; note Base UI does not b
 When validation is complex or needs specific messages, parse a zod schema in `onFormSubmit` and feed the flattened field errors to `Form`'s `errors` prop. This keeps a single typed schema as the source of truth **without** pulling in react-hook-form.
 
 ```tsx
-import { Form } from "@base-ui-components/react/form";
+import { Form } from "@base-ui/react/form";
 import { z } from "zod";
 
 const schema = z.object({

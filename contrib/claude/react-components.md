@@ -17,6 +17,7 @@ These rules are the **source of truth**. Where existing code (e.g. `apps/console
 | Routing, navigation, URL state, auth | [`contrib/claude/routing.md`](routing.md) |
 | Client state (Relay / URL / local / context / zustand) | [`contrib/claude/state-management.md`](state-management.md) |
 | Permission-gated UI | [`contrib/claude/permissions.md`](permissions.md) |
+| Custom hooks, `_lib` placement, mutation hooks | [`contrib/claude/hooks.md`](hooks.md) |
 
 ## Destructuring
 
