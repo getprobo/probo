@@ -5,7 +5,7 @@
   "type": "module",
   "sideEffects": false,
   "main": "src/index.ts",
-  "license": "ISC",
+  "license": "MIT",
   "scripts": {
     "check": "tsc --noEmit"
   },
