@@ -18,7 +18,7 @@ import { type RouteObject } from "react-router";
 export type AppRoute = Omit<RouteObject, "children"> & {
   children?: AppRoute[];
   Fallback?: ComponentType;
-}
+};
 
 export function routeFromAppRoute(appRoute: AppRoute): RouteObject {
   const { Component, Fallback, children, ...rest } = appRoute;

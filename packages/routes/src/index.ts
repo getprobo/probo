@@ -12,5 +12,5 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-export { routeFromAppRoute, type AppRoute } from "./appRoute";
-export { withQueryRef, loaderFromQueryLoader } from "./relay";
+export { type AppRoute, routeFromAppRoute } from "./appRoute";
+export { loaderFromQueryLoader, withQueryRef } from "./relay";

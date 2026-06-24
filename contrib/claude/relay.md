@@ -288,7 +288,34 @@ Every mutation **must** update the Relay store so the UI reflects changes immedi
 
 ### `useMutation`
 
-Direct Relay hook for simple cases.
+The project mutation primitive — awaitable, preserves every `UseMutationConfig` option, and routes success/error feedback through an injected notifier.
+
+> Import `useMutation` from `#/lib/relay/useMutation`, never from `react-relay`. In compliance-portal this is enforced by a `no-restricted-imports` ESLint rule. See [`contrib/claude/hooks.md`](hooks.md#mutation-hooks).
+
+#### Shared hook, app binding
+
+The mechanics live in `@probo/relay` as `createUseMutation(useNotifier)` — a factory that wraps `react-relay`'s `useMutation` (promise wrapping, `onCompleted`/`onError` dispatch, `errorToast` semantics) but knows nothing about toasts or i18n. Each app binds it once to its own feedback stack via a `MutationNotifier` and re-exports the result as the canonical `useMutation`:
+
+```tsx
+// apps/compliance-portal/src/lib/relay/useMutation.ts — the only place feedback is wired
+import { createUseMutation, type MutationNotifier } from "@probo/relay";
+
+function useMutationNotifier(): MutationNotifier {
+  const toast = Toast.useToastManager();
+  const { t } = useTranslation();
+  return useMemo<MutationNotifier>(() => ({
+    notifySuccess: (title) => toast.add({ title, type: "success" }),
+    notifyError: (error, title) => {
+      const finalTitle = title ?? t("common.error");
+      toast.add({ title: finalTitle, description: formatError(finalTitle, error as GraphQLError), type: "error" });
+    },
+  }), [toast, t]);
+}
+
+export const useMutation = createUseMutation(useMutationNotifier);
+```
+
+This keeps `@probo/relay` free of UI and i18n dependencies (the toast system, `react-i18next`, and `formatError` stay in the app), while the awaitable behavior is shared. Pass `MutationFeedback` (`successMessage`, `errorToast`) to control notifications without writing `onCompleted`/`onError` by hand.
 
 #### Naming convention
 

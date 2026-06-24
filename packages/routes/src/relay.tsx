@@ -12,21 +12,31 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+import { useCleanup } from "@probo/hooks";
 import { type ComponentType } from "react";
 import type { EnvironmentProviderOptions, PreloadedQuery } from "react-relay";
 import { type LoaderFunction, type LoaderFunctionArgs, useLoaderData } from "react-router";
 import { type OperationType } from "relay-runtime";
-import { useCleanup } from "@probo/hooks";
 
-// Infer the concrete `queryRef` type from a naked type position. Relay 21's
-// first-party types model `PreloadedQuery#variables` as `VariablesOf<TQuery>`,
-// which prevents inferring `TQuery` through it, so we infer the whole queryRef.
+/**
+ * @deprecated Use a `*PageLoader` component with `useQueryLoader` +
+ * `usePreloadedQuery` instead. See contrib/claude/relay.md.
+ *
+ * Infer the concrete `queryRef` type from a naked type position. Relay 21's
+ * first-party types model `PreloadedQuery#variables` as `VariablesOf<TQuery>`,
+ * which prevents inferring `TQuery` through it, so we infer the whole queryRef.
+ */
 export function withQueryRef<
-  TQueryRef extends PreloadedQuery<OperationType>
+  TQueryRef extends PreloadedQuery<OperationType>,
 >(
   Component: ComponentType<{ queryRef: TQueryRef }>,
 ) {
-  return () => {
+  return function WithQueryRef() {
+    // `useLoaderData` is typed `any` (default generic), and its `SerializeFrom`
+    // generic would strip the `dispose` function type. Assert the loader's
+    // shape so the rest of the component stays type-safe; the assertion is not
+    // redundant despite the rule flagging it (the source is `any`).
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
     const { queryRef, dispose } = useLoaderData() as {
       queryRef: TQueryRef;
       dispose: () => void;
@@ -34,15 +44,19 @@ export function withQueryRef<
 
     useCleanup(dispose, 1000);
 
-    return <Component queryRef={queryRef} />
-  }
+    return <Component queryRef={queryRef} />;
+  };
 }
 
+/**
+ * @deprecated Use a `*PageLoader` component with `useQueryLoader` +
+ * `usePreloadedQuery` instead. See contrib/claude/relay.md.
+ */
 export function loaderFromQueryLoader<
   TQuery extends OperationType,
-  TEnvironmentProviderOptions = EnvironmentProviderOptions
+  TEnvironmentProviderOptions = EnvironmentProviderOptions,
 >(
-  queryLoader: (params: Record<string, string>) => PreloadedQuery<TQuery, TEnvironmentProviderOptions>
+  queryLoader: (params: Record<string, string>) => PreloadedQuery<TQuery, TEnvironmentProviderOptions>,
 ): LoaderFunction {
   return ({ params }: LoaderFunctionArgs) => {
     const query = queryLoader(params as Record<string, string>);
@@ -50,5 +64,5 @@ export function loaderFromQueryLoader<
       queryRef: query,
       dispose: query.dispose,
     };
-  }
+  };
 }

@@ -48,7 +48,7 @@ export class AssumptionRequiredError extends Error {
   constructor(message?: string) {
     super(message ?? "ASSUMPTION_REQUIRED");
     this.name = "AssumptionRequiredError";
-    Object.setPrototypeOf(this, AssumptionRequiredError.prototype)
+    Object.setPrototypeOf(this, AssumptionRequiredError.prototype);
   }
 }
 

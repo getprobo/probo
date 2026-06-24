@@ -5,7 +5,7 @@ import { defineConfig, globalIgnores } from "eslint/config";
 // sets below; everything else is ignored so a bare `eslint .` keeps the same
 // scope as the previous per-workspace configs.
 const appDirs = ["apps/console/**", "apps/trust/**", "apps/compliance-portal/**"];
-const reactDirs = [...appDirs, "packages/ui/**"];
+const reactDirs = [...appDirs, "packages/ui/**", "packages/relay/**", "packages/routes/**"];
 const lintedDirs = [...reactDirs, "packages/eslint-config/**"];
 
 export default defineConfig([
@@ -25,8 +25,6 @@ export default defineConfig([
     "packages/n8n-node/**",
     "packages/prosemirror/**",
     "packages/react-lazy/**",
-    "packages/relay/**",
-    "packages/routes/**",
     "packages/tsconfig/**",
   ]),
   {
@@ -47,6 +45,28 @@ export default defineConfig([
   {
     files: appDirs,
     extends: [configs.relay],
+  },
+  {
+    // compliance-portal mutates through the awaitable useMutation bound in
+    // #/lib/relay/useMutation (over @probo/relay's createUseMutation), never
+    // react-relay's useMutation directly. Scoped to this app only: console and
+    // trust still use react-relay's useMutation.
+    files: ["apps/compliance-portal/**"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          paths: [
+            {
+              name: "react-relay",
+              importNames: ["useMutation"],
+              message:
+                "Use useMutation from #/lib/relay/useMutation, not react-relay.",
+            },
+          ],
+        },
+      ],
+    },
   },
   {
     files: reactDirs,

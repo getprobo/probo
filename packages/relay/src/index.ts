@@ -14,3 +14,8 @@
 
 export { makeFetchQuery } from "./fetch";
 export * from "./errors";
+export {
+  createUseMutation,
+  type MutationFeedback,
+  type MutationNotifier,
+} from "./useMutation";

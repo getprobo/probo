@@ -344,7 +344,7 @@ pages/organizations/third-parties/_components/ThirdPartyContactListItem.tsx
 
 ## `_lib` folder
 
-Non-component code scoped to a subtree — hooks, utilities, constants, types — lives in a `_lib/` folder next to the pages that use it. The same hoisting rule as `_components/` applies: shared helpers move to the nearest common ancestor's `_lib/`; truly global helpers live in `src/lib/`. Files in `_lib/` use camelCase (`useThirdPartyFilters.ts`, `formatCurrency.ts`, `constants.ts`).
+Non-component code scoped to a subtree — hooks, utilities, constants, types — lives in a `_lib/` folder next to the pages that use it. The same hoisting rule as `_components/` applies: shared helpers move to the nearest common ancestor's `_lib/`; truly global helpers live in `src/lib/`. Files in `_lib/` use camelCase (`useThirdPartyFilters.ts`, `formatCurrency.ts`, `constants.ts`). See [`contrib/claude/hooks.md`](hooks.md) for custom-hook conventions.
 
 ```text
 // Good — feature-scoped helpers under _lib
@@ -354,6 +354,25 @@ pages/organizations/third-parties/
     formatThirdPartyStatus.ts
   _components/
     ThirdPartyListItem.tsx
+```
+
+## No barrel files
+
+App code imports every module by its **explicit path** (`#/lib/relay/useMutation`, `#/lib/http/endpoint`). Do **not** add `index.ts` re-export barrels inside an app's `src/` to shorten import paths.
+
+`index.ts` barrels are reserved for **package public entrypoints** (`packages/*`), where they define a real published API surface (`@probo/ui`, `@probo/relay`, …). An app has no published surface, so a barrel hides nothing — it only adds an indirection hop and invites Vite/tree-shaking and circular-import problems.
+
+```text
+// Bad — barrel inside the app just to shorten a path
+src/lib/relay/
+  index.ts            # export { useMutation } from "./useMutation"
+  useMutation.ts
+// import { useMutation } from "#/lib/relay"
+
+// Good — import the module directly; no index.ts
+src/lib/relay/
+  useMutation.ts
+// import { useMutation } from "#/lib/relay/useMutation"
 ```
 
 ## `_locales` folder
