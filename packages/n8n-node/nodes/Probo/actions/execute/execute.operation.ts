@@ -13,6 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
+import { NodeOperationError } from 'n8n-workflow';
 import { proboApiRequest, proboConnectApiRequest } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
@@ -82,14 +83,16 @@ export async function execute(
 	// Basic validation: check if query contains a GraphQL operation
 	const trimmedQuery = query.trim();
 	if (!trimmedQuery) {
-		throw new Error('GraphQL query cannot be empty');
+		throw new NodeOperationError(this.getNode(), 'GraphQL query cannot be empty', { itemIndex });
 	}
 
 	// Check for operation type (query, mutation, or subscription)
 	const operationMatch = trimmedQuery.match(/^\s*(query|mutation|subscription)\s+(\w+)/i);
 	if (!operationMatch) {
-		throw new Error(
+		throw new NodeOperationError(
+			this.getNode(),
 			'GraphQL operation must start with "query", "mutation", or "subscription" followed by an operation name (e.g., "query GetUser { ... }" or "mutation UpdateUser { ... }")',
+			{ itemIndex },
 		);
 	}
 
@@ -99,7 +102,10 @@ export async function execute(
 			variables =
 				typeof variablesParam === 'string' ? JSON.parse(variablesParam) : variablesParam;
 		} catch (error) {
-			throw new Error(`Invalid JSON in Variables: ${error instanceof Error ? error.message : String(error)}`);
+			throw new NodeOperationError(this.getNode(), error as Error, {
+				itemIndex,
+				description: 'Invalid JSON in Variables',
+			});
 		}
 	}
 
