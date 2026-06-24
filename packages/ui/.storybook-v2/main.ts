@@ -14,16 +14,11 @@
 
 import type { StorybookConfig } from "@storybook/react-vite";
 
+// The v2 kit is theme-isolated from v1 (v2 wipes Tailwind's palette), so it has
+// its own Storybook build scanning only src/v2 and loading the v2 theme.
 const config: StorybookConfig = {
-  // v2 components have their own theme-isolated Storybook (.storybook-v2).
-  stories: [
-    "../src/**/*.stories.@(js|jsx|mjs|ts|tsx)",
-    "!../src/v2/**",
-  ],
-  addons: [
-    import.meta.resolve("@chromatic-com/storybook"),
-    import.meta.resolve("@storybook/addon-vitest"),
-  ],
+  stories: ["../src/v2/**/*.stories.@(js|jsx|mjs|ts|tsx)"],
+  addons: [import.meta.resolve("@chromatic-com/storybook")],
   framework: {
     name: "@storybook/react-vite",
     options: {},

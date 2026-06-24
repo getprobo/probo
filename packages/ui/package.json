@@ -7,6 +7,8 @@
   "main": "src/index.ts",
   "scripts": {
     "dev": "storybook dev -p 6006 --no-open",
+    "dev:v2": "storybook dev -p 6007 -c .storybook-v2 --no-open",
+    "build:v2": "storybook build -c .storybook-v2",
     "check": "tsc --noEmit -p tsconfig.app.json",
     "icons": "bun run src/Atoms/Icons/generator.ts"
   },

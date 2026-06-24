@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,21 +12,23 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import type { StorybookConfig } from "@storybook/react-vite";
+import type { ComponentProps } from "react";
+import type { VariantProps } from "tailwind-variants";
 
-const config: StorybookConfig = {
-  // v2 components have their own theme-isolated Storybook (.storybook-v2).
-  stories: [
-    "../src/**/*.stories.@(js|jsx|mjs|ts|tsx)",
-    "!../src/v2/**",
-  ],
-  addons: [
-    import.meta.resolve("@chromatic-com/storybook"),
-    import.meta.resolve("@storybook/addon-vitest"),
-  ],
-  framework: {
-    name: "@storybook/react-vite",
-    options: {},
-  },
-};
-export default config;
+import { text } from "./variants";
+
+export type TextProps = ComponentProps<"span"> & VariantProps<typeof text>;
+
+// Foundational text primitive (Radix "Text"). Renders a single <span>; reach
+// for size/weight/align/color/highContrast variants rather than raw type
+// utilities. See contrib/claude/ui.md (typography).
+export function Text(props: TextProps) {
+  const { size, weight, align, color, highContrast, className, ...rest } = props;
+
+  return (
+    <span
+      className={text({ size, weight, align, color, highContrast, className })}
+      {...rest}
+    />
+  );
+}
