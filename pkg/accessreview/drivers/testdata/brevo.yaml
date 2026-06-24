@@ -1,0 +1,35 @@
+---
+# Recorded live against GET /v3/organization/invited/users (Brevo, api-key
+# header) on 2026-06-24, then anonymized: real ids, emails and locales are
+# replaced with synthetic values, while the {users} wrapper and member shape
+# are the verbatim live response — note is_owner is a JSON boolean (not the
+# string the docs/SDK show), an `id` is present, and feature_access carries
+# more keys than documented (transactional/phone/meetings/sequences) with a
+# "full" level. The api-key header is stripped on save.
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: api.brevo.com
+        headers:
+            Accept:
+                - application/json
+        url: https://api.brevo.com/v3/organization/invited/users
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"users":[{"id":"000000000000000000000001","email":"owner@example.com","is_owner":true,"status":"active","feature_access":{"marketing":"owner","conversations":"owner","crm":"owner","transactional":"owner","phone":"owner"},"locale":"fr_FR"},{"id":"000000000000000000000002","email":"member@example.com","is_owner":false,"status":"active","feature_access":{"marketing":"none","conversations":"none","crm":"full","transactional":"full","phone":"none","meetings":"none","sequences":"none"},"locale":"fr_FR"},{"id":"000000000000000000000003","email":"viewer@example.com","is_owner":false,"status":"active","feature_access":{"marketing":"none","conversations":"none","crm":"full","transactional":"full","phone":"none","meetings":"none","sequences":"none"},"locale":"en_US"}]}'
+        headers:
+            Content-Type:
+                - application/json
+        status: 200 OK
+        code: 200
+        duration: 124ms

@@ -17,6 +17,7 @@ package drivers
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"go.probo.inc/probo/pkg/coredata"
@@ -82,4 +83,26 @@ func parseRFC3339Ptr(s string) *time.Time {
 	}
 
 	return &t
+}
+
+// activeFromStatus maps a provider status string to the three-valued Active
+// signal for providers whose only "live" state is the literal "active" and
+// whose remaining status enum is not otherwise enumerated: "active" → active,
+// an empty status → nil (no signal), and any other non-empty status →
+// inactive. Used by drivers like Pylon and Brevo; a provider with a fully
+// known status enum (e.g. Render's active/inactive) maps its own values
+// explicitly instead, so an unrecognised value stays nil rather than false.
+func activeFromStatus(status string) *bool {
+	switch strings.ToLower(strings.TrimSpace(status)) {
+	case "active":
+		active := true
+
+		return &active
+	case "":
+		return nil
+	default:
+		inactive := false
+
+		return &inactive
+	}
 }

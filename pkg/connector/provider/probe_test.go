@@ -112,6 +112,48 @@ func TestBuildPostHogProbeURL(t *testing.T) {
 	assert.Equal(t, "https://us.posthog.com/api/organizations/@current/", probeURL)
 }
 
+func TestProbeOpenRouter(t *testing.T) {
+	t.Parallel()
+
+	// probeOpenRouter must reject 401/403 (bad key) and 404 (a valid but
+	// personal/non-organization key, which the members endpoint rejects with
+	// 404), while letting 2xx pass.
+	cases := []struct {
+		name       string
+		status     int
+		wantReject bool
+	}{
+		{"valid management key", http.StatusOK, false},
+		{"revoked key", http.StatusUnauthorized, true},
+		{"forbidden key", http.StatusForbidden, true},
+		{"personal (non-org) key", http.StatusNotFound, true},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			var gotURL string
+
+			client := &http.Client{Transport: probeRoundTripFunc(func(r *http.Request) (*http.Response, error) {
+				gotURL = r.URL.String()
+
+				return &http.Response{StatusCode: tc.status, Body: http.NoBody, Header: make(http.Header)}, nil
+			})}
+
+			err := probeOpenRouter(context.Background(), client, &coredata.Connector{Provider: coredata.ConnectorProviderOpenRouter})
+
+			assert.Equal(t, "https://openrouter.ai/api/v1/organization/members?limit=1", gotURL)
+
+			if tc.wantReject {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}
+
 func TestProbeHeroku(t *testing.T) {
 	t.Parallel()
 
