@@ -33,6 +33,14 @@
     "form-data": "^4.0.6",
     "js-yaml": "^4.2.0"
   },
+  "allowScripts": {
+    "esbuild": true,
+    "fsevents": true,
+    "unrs-resolver": true,
+    "core-js": false,
+    "isolated-vm": false,
+    "eslint-plugin-n8n-nodes-base": false
+  },
   "license": "MIT",
   "packageManager": "npm@11.8.0",
   "dependencies": {
