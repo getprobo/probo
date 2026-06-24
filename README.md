@@ -13,7 +13,7 @@ Probo is a self-hostable governance, risk, and compliance (GRC) platform built f
 - **AI-native by design.** 270+ MCP tools expose every entity and operation. Any MCP-compatible LLM agent can read and write your GRC data, draft policies, run risk assessments, and generate evidence packs.
 - **Full GRC coverage.** Risk management, controls, vendor risk, data privacy (DPIA/TIA), access reviews, audit programs.
 - **Multiple interfaces.** Web console, `prb` CLI (44+ command groups), MCP API, GraphQL, and an n8n community node for no-code automation.
-- **Open source and self-hostable.** ISC licensed. Run it on your own infrastructure with Docker.
+- **Open source and self-hostable.** MIT licensed. Run it on your own infrastructure with Docker.
 - **Audit-ready.** Policy-based RBAC, immutable audit logs, electronic document sign-off workflows, and evidence chains.
 
 ## Capabilities
@@ -135,4 +135,4 @@ To report a security vulnerability, email [security@probo.com](mailto:security@p
 
 ## License
 
-Probo is [ISC licensed](LICENSE).
+Probo is [MIT licensed](LICENSE).
