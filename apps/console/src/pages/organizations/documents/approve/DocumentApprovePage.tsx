@@ -38,7 +38,7 @@ import {
   useMutation,
   usePreloadedQuery,
 } from "react-relay";
-import { useNavigate } from "react-router";
+import { Navigate, useNavigate } from "react-router";
 import { graphql } from "relay-runtime";
 import { useWindowSize } from "usehooks-ts";
 
@@ -142,6 +142,7 @@ export function DocumentApprovePage(props: {
   queryRef: PreloadedQuery<DocumentApprovePageQuery>;
 }) {
   const { queryRef } = props;
+  const organizationId = useOrganizationId();
   const data = usePreloadedQuery<DocumentApprovePageQuery>(
     documentApprovePageQuery,
     queryRef,
@@ -150,9 +151,10 @@ export function DocumentApprovePage(props: {
   const document = data.viewer.approvableDocument;
   if (!document) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <Spinner />
-      </div>
+      <Navigate
+        to={`/organizations/${organizationId}/employee/approvals`}
+        replace
+      />
     );
   }
 
@@ -496,6 +498,15 @@ function DocumentApproveContent({
       pdfUrlRef.current = null;
     };
   }, [selectedVersion?.id, exportPDF, toast, __]);
+
+  if (versions.length === 0) {
+    return (
+      <Navigate
+        to={`/organizations/${organizationId}/employee/approvals`}
+        replace
+      />
+    );
+  }
 
   return (
     <div className="fixed inset-0 top-12 bg-level-2 flex flex-col">
