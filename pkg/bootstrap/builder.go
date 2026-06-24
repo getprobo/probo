@@ -209,7 +209,7 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 					Temperature: b.getEnvFloatPtr("AGENT_PROBO_TEMPERATURE"),
 					MaxTokens:   b.getEnvIntPtr("AGENT_PROBO_MAX_TOKENS"),
 				},
-				EvidenceDescriber: probodconfig.LLMAgentConfig{
+				EvidenceAssessor: probodconfig.LLMAgentConfig{
 					Provider:    b.getEnvOrDefault("AGENT_EVIDENCE_DESCRIBER_PROVIDER", ""),
 					ModelName:   b.getEnvOrDefault("AGENT_EVIDENCE_DESCRIBER_MODEL_NAME", ""),
 					Temperature: b.getEnvFloatPtr("AGENT_EVIDENCE_DESCRIBER_TEMPERATURE"),
@@ -284,7 +284,7 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 			ESign: probodconfig.ESignConfig{
 				TSAURL: b.getEnvOrDefault("ESIGN_TSA_URL", "http://timestamp.digicert.com"),
 			},
-			EvidenceDescriber: probodconfig.EvidenceDescriberConfig{
+			EvidenceAssessor: probodconfig.EvidenceAssessmentConfig{
 				Interval:       b.getEnvIntOrDefault("EVIDENCE_DESCRIBER_INTERVAL", 10),
 				StaleAfter:     b.getEnvIntOrDefault("EVIDENCE_DESCRIBER_STALE_AFTER", 300),
 				MaxConcurrency: b.getEnvIntOrDefault("EVIDENCE_DESCRIBER_MAX_CONCURRENCY", 10),
