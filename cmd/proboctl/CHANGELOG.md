@@ -4,6 +4,12 @@ All notable changes to the `proboctl` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.8.0] - 2026-06-24
+
+### Changed
+
+- Enriched common third-party catalog entries with DPA, ToS, SLA, status/security/trust pages, subprocessor lists, and certifications from production data
+
 ## [0.7.1] - 2026-06-23
 
 ### Fixed
