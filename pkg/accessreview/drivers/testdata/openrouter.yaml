@@ -1,0 +1,40 @@
+---
+# Recorded live against GET /api/v1/organization/members (with an OpenRouter
+# organization management key) on 2026-06-24, then anonymized: the real
+# member's id, name and email are replaced with synthetic values, while the
+# {data, total_count} wrapper and member shape (id, first_name, last_name,
+# email, role) are the verbatim live response shape. The Authorization header
+# is stripped on save. The org:member role and null-name fallbacks (absent
+# from this single-admin org) are covered by unit tests in the driver test.
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: openrouter.ai
+        form:
+            limit:
+                - "100"
+            offset:
+                - "0"
+        headers:
+            Accept:
+                - application/json
+        url: https://openrouter.ai/api/v1/organization/members?limit=100&offset=0
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: -1
+        uncompressed: true
+        body: '{"data":[{"id":"user_000000000000000000000admin","first_name":"Ada","last_name":"Admin","email":"ada.admin@example.com","role":"org:admin"}],"total_count":1}'
+        headers:
+            Content-Type:
+                - application/json
+        status: 200 OK
+        code: 200
+        duration: 454ms

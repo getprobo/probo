@@ -51,12 +51,13 @@ func newRecorder(t *testing.T, cassettePath string, envVar string) *recorder.Rec
 		)),
 		recorder.WithHook(func(i *cassette.Interaction) error {
 			i.Request.Headers.Del("Authorization")
-			// Providers like Anthropic (x-api-key) and SigNoz
-			// (SIGNOZ-API-KEY) authenticate via a custom header rather
-			// than Authorization; strip those too so a re-record never
-			// persists a raw key.
+			// Providers like Anthropic (x-api-key), SigNoz
+			// (SIGNOZ-API-KEY) and Brevo (api-key) authenticate via a
+			// custom header rather than Authorization; strip those too so a
+			// re-record never persists a raw key.
 			i.Request.Headers.Del("X-Api-Key")
 			i.Request.Headers.Del("Signoz-Api-Key")
+			i.Request.Headers.Del("Api-Key")
 
 			return nil
 		}, recorder.BeforeSaveHook),

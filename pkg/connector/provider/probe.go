@@ -22,6 +22,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"slices"
 	"strings"
 
 	"go.probo.inc/probo/pkg/connector"
@@ -29,14 +30,15 @@ import (
 )
 
 const (
-	anthropicAPIVersion     = "2023-06-01"
-	anthropicUsersProbeURL  = "https://api.anthropic.com/v1/organizations/users?limit=1"
-	herokuAccountProbeURL   = "https://api.heroku.com/account"
-	linearGraphQLEndpoint   = "https://api.linear.app/graphql"
-	mondayGraphQLEndpoint   = "https://api.monday.com/v2"
-	posthogOrganizationPath = "/api/organizations/@current/"
-	posthogUSBaseURL        = "https://us.posthog.com"
-	posthogEUBaseURL        = "https://eu.posthog.com"
+	anthropicAPIVersion       = "2023-06-01"
+	anthropicUsersProbeURL    = "https://api.anthropic.com/v1/organizations/users?limit=1"
+	herokuAccountProbeURL     = "https://api.heroku.com/account"
+	openRouterMembersProbeURL = "https://openrouter.ai/api/v1/organization/members?limit=1"
+	linearGraphQLEndpoint     = "https://api.linear.app/graphql"
+	mondayGraphQLEndpoint     = "https://api.monday.com/v2"
+	posthogOrganizationPath   = "/api/organizations/@current/"
+	posthogUSBaseURL          = "https://us.posthog.com"
+	posthogEUBaseURL          = "https://eu.posthog.com"
 )
 
 // ProbeConnection verifies that the connector credential is accepted by the
@@ -112,7 +114,12 @@ func probePOSTJSON(
 	return doProbeRequest(httpClient, req)
 }
 
-func doProbeRequest(httpClient *http.Client, req *http.Request) error {
+// doProbeRequest executes a probe request and maps the status to a verdict:
+// 401/403 always mean the credential is rejected, any 2xx/other status means
+// connected. extraReject lets a provider add statuses that also mean a hard
+// rejection (e.g. OpenRouter's 404 for a non-organization key); pass none for
+// the default 401/403-only contract.
+func doProbeRequest(httpClient *http.Client, req *http.Request, extraReject ...int) error {
 	resp, err := httpClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("probe request failed: %w", err)
@@ -123,7 +130,9 @@ func doProbeRequest(httpClient *http.Client, req *http.Request) error {
 		_ = resp.Body.Close()
 	}()
 
-	if resp.StatusCode == http.StatusUnauthorized || resp.StatusCode == http.StatusForbidden {
+	if resp.StatusCode == http.StatusUnauthorized ||
+		resp.StatusCode == http.StatusForbidden ||
+		slices.Contains(extraReject, resp.StatusCode) {
 		return fmt.Errorf("credential rejected: status %d", resp.StatusCode)
 	}
 
@@ -429,6 +438,27 @@ func probeHeroku(
 	req.Header.Set("Accept", "application/vnd.heroku+json; version=3")
 
 	return doProbeRequest(httpClient, req)
+}
+
+// probeOpenRouter verifies an OpenRouter management key. Beyond the usual
+// 401/403, it treats 404 as a rejection too: a personal (non-organization)
+// key authenticates but the members endpoint returns 404 "This endpoint is
+// only available for organization accounts" (verified live) — a permanent,
+// not transient, signal that the connector can never list anyone, so it
+// surfaces at connection time instead of failing a campaign later.
+func probeOpenRouter(
+	ctx context.Context,
+	httpClient *http.Client,
+	_ *coredata.Connector,
+) error {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, openRouterMembersProbeURL, nil)
+	if err != nil {
+		return fmt.Errorf("cannot create probe request: %w", err)
+	}
+
+	req.Header.Set("Accept", "application/json")
+
+	return doProbeRequest(httpClient, req, http.StatusNotFound)
 }
 
 func probePostHog(

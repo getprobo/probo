@@ -82,6 +82,16 @@ enum ConnectorProvider
         )
     LANGFUSE
         @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderLangfuse")
+    PYLON @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderPylon")
+    OPENROUTER
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderOpenRouter"
+        )
+    INCIDENT_IO
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderIncidentIO"
+        )
+    BREVO @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderBrevo")
 }
 
 type ConnectorProviderInfo {

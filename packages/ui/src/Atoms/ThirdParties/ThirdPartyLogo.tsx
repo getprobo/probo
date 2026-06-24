@@ -19,6 +19,7 @@ import { Apollo } from "./Apollo";
 import { Asana } from "./Asana";
 import { BetterStack } from "./BetterStack";
 import { Bitbucket } from "./Bitbucket";
+import { Brevo } from "./Brevo";
 import { Brex } from "./Brex";
 import { Clerk } from "./Clerk";
 import { ClickHouse } from "./ClickHouse";
@@ -35,6 +36,7 @@ import { Google } from "./Google";
 import { Grafana } from "./Grafana";
 import { Heroku } from "./Heroku";
 import { HubSpot } from "./HubSpot";
+import { IncidentIO } from "./IncidentIO";
 import { Intercom } from "./Intercom";
 import { Langfuse } from "./Langfuse";
 import { Linear } from "./Linear";
@@ -48,8 +50,10 @@ import { Notion } from "./Notion";
 import { Okta } from "./Okta";
 import { OnePassword } from "./OnePassword";
 import { OpenAI } from "./OpenAI";
+import { OpenRouter } from "./OpenRouter";
 import { PagerDuty } from "./PagerDuty";
 import { PostHog } from "./PostHog";
+import { Pylon } from "./Pylon";
 import { Qovery } from "./Qovery";
 import { Render } from "./Render";
 import { Resend } from "./Resend";
@@ -69,6 +73,7 @@ const thirdParties: Record<string, FC<ComponentProps<"svg">>> = {
   ASANA: Asana,
   BETTER_STACK: BetterStack,
   BITBUCKET: Bitbucket,
+  BREVO: Brevo,
   BREX: Brex,
   CLERK: Clerk,
   CLICKHOUSE: ClickHouse,
@@ -86,6 +91,7 @@ const thirdParties: Record<string, FC<ComponentProps<"svg">>> = {
   GRAFANA: Grafana,
   HEROKU: Heroku,
   HUBSPOT: HubSpot,
+  INCIDENT_IO: IncidentIO,
   INTERCOM: Intercom,
   LANGFUSE: Langfuse,
   LINEAR: Linear,
@@ -101,8 +107,10 @@ const thirdParties: Record<string, FC<ComponentProps<"svg">>> = {
   ONE_PASSWORD: OnePassword,
   ONEPASSWORD: OnePassword,
   OPENAI: OpenAI,
+  OPENROUTER: OpenRouter,
   PAGERDUTY: PagerDuty,
   POSTHOG: PostHog,
+  PYLON: Pylon,
   QOVERY: Qovery,
   RENDER: Render,
   RESEND: Resend,
