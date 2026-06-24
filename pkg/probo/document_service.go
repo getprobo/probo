@@ -2889,7 +2889,29 @@ func (s *DocumentService) publishMinorVersionInTx(
 		return nil, nil, err
 	}
 
+	if err := s.moveRequestedSignaturesToVersionInTx(ctx, scope, tx, documentVersion.ID); err != nil {
+		return nil, nil, err
+	}
+
 	return document, documentVersion, nil
+}
+
+// moveRequestedSignaturesToVersionInTx carries every still-pending signature
+// request from a prior minor of the same major onto the newly published minor
+// version. The new minor supersedes the previous one while keeping the same
+// signing obligations, so REQUESTED signatures follow along with their
+// notification schedule (time and count) intact. SIGNED signatures stay put.
+func (s *DocumentService) moveRequestedSignaturesToVersionInTx(
+	ctx context.Context, scope coredata.Scoper,
+	tx pg.Tx,
+	documentVersionID gid.GID,
+) error {
+	signatures := &coredata.DocumentVersionSignatures{}
+	if err := signatures.MoveRequestedToVersionWithinMajor(ctx, tx, scope, documentVersionID); err != nil {
+		return fmt.Errorf("cannot move signature requests to the newly published minor version: %w", err)
+	}
+
+	return nil
 }
 
 func (s *DocumentService) generateAndUploadPublicationPDF(

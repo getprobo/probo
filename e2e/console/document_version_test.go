@@ -2052,6 +2052,94 @@ func TestDocumentVersion_RequestSignatureDeduplicatesAcrossMinors(t *testing.T) 
 	assertRequestedSignatureCount(t, owner, v11ID, 1)
 }
 
+// requestedSignatureVersions returns a map of signature node ID -> the document
+// version ID it is currently attached to, for the REQUESTED signatures visible
+// from versionID (the signatures connection aggregates across every minor of
+// the major).
+func requestedSignatureVersions(
+	t *testing.T,
+	owner *testutil.Client,
+	versionID string,
+) map[string]string {
+	t.Helper()
+
+	var result struct {
+		Node struct {
+			Signatures struct {
+				Edges []struct {
+					Node struct {
+						ID              string `json:"id"`
+						State           string `json:"state"`
+						DocumentVersion struct {
+							ID string `json:"id"`
+						} `json:"documentVersion"`
+					} `json:"node"`
+				} `json:"edges"`
+			} `json:"signatures"`
+		} `json:"node"`
+	}
+
+	err := owner.Execute(`
+		query($id: ID!) {
+			node(id: $id) {
+				... on DocumentVersion {
+					signatures(first: 50, filter: { states: [REQUESTED] }) {
+						edges { node { id state documentVersion { id } } }
+					}
+				}
+			}
+		}
+	`, map[string]any{"id": versionID}, &result)
+	require.NoError(t, err)
+
+	out := make(map[string]string, len(result.Node.Signatures.Edges))
+	for _, edge := range result.Node.Signatures.Edges {
+		out[edge.Node.ID] = edge.Node.DocumentVersion.ID
+	}
+
+	return out
+}
+
+// TestDocumentVersion_MinorPublishMovesSignatureRequestsToNewVersion verifies
+// that publishing a new minor version carries the still-pending signature
+// requests from the previous version onto the newly published version. The same
+// signature row is reused (its ID is preserved), so its notification schedule
+// (count and last-notified time) is kept intact rather than reset.
+func TestDocumentVersion_MinorPublishMovesSignatureRequestsToNewVersion(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	signer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
+
+	docID, _ := createTestDocument(t, owner)
+
+	v10ID := publishMajorDocumentVersion(t, owner, docID)
+	requestDocumentSignature(t, owner, v10ID, signer.GetProfileID().String())
+
+	// The pending request starts attached to v1.0.
+	before := requestedSignatureVersions(t, owner, v10ID)
+	require.Len(t, before, 1)
+
+	var signatureID string
+	for id, versionID := range before {
+		signatureID = id
+
+		assert.Equal(t, v10ID, versionID, "the request must start on v1.0")
+	}
+
+	// A minor bump publishes v1.1 within the same major.
+	updateDocumentContent(t, owner, docID, "Updated content for 1.1")
+	v11ID := publishMinorDocumentVersion(t, owner, docID)
+	require.NotEqual(t, v10ID, v11ID)
+
+	// The same request row is now attached to the newly published v1.1.
+	after := requestedSignatureVersions(t, owner, v11ID)
+	require.Len(t, after, 1)
+
+	movedVersionID, ok := after[signatureID]
+	require.True(t, ok, "the signature request must keep its identity across the minor publish")
+	assert.Equal(t, v11ID, movedVersionID, "the pending request must move to the newly published minor version")
+}
+
 // signDocumentVersion signs the version as the authenticated client and returns
 // the resulting signature node's id, state and signing time.
 func signDocumentVersion(t *testing.T, signer *testutil.Client, versionID string) (id, state, signedAt string) {

@@ -728,6 +728,47 @@ WHERE
 	return nil
 }
 
+func (pvss *DocumentVersionSignatures) MoveRequestedToVersionWithinMajor(
+	ctx context.Context,
+	conn pg.Tx,
+	scope Scoper,
+	targetVersionID gid.GID,
+) error {
+	q := `
+UPDATE document_version_signatures
+SET
+	document_version_id = @target_version_id,
+	updated_at = @now
+WHERE
+	%s
+	AND state = @state
+	AND document_version_id <> @target_version_id
+	AND document_version_id IN (
+		SELECT dv.id
+		FROM document_versions dv
+		INNER JOIN document_versions target
+			ON target.document_id = dv.document_id
+			AND target.major = dv.major
+		WHERE target.id = @target_version_id
+	)
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"target_version_id": targetVersionID,
+		"state":             DocumentVersionSignatureStateRequested,
+		"now":               time.Now(),
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	if _, err := conn.Exec(ctx, q, args); err != nil {
+		return fmt.Errorf("cannot move requested document version signatures to the newly published version: %w", err)
+	}
+
+	return nil
+}
+
 func (pvss *DocumentVersionSignatures) DeleteRequestedByDocumentIDBelowMajor(
 	ctx context.Context,
 	conn pg.Tx,
