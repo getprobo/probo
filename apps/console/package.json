@@ -37,7 +37,6 @@
   },
   "devDependencies": {
     "@babel/core": "^7.29.0",
-    "@probo/eslint-plugin-relay-types": "^1.0.0",
     "@rolldown/plugin-babel": "^0.2.3",
     "@tailwindcss/vite": "^4.3.1",
     "@types/babel__core": "^7.20.5",

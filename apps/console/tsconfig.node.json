@@ -20,8 +20,7 @@
     "noUnusedParameters": true,
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true,
-    "noUncheckedSideEffectImports": true,
-    "types": ["@probo/eslint-plugin-relay-types"]
+    "noUncheckedSideEffectImports": true
   },
-  "include": ["vite.config.ts", "eslint.config.mjs"]
+  "include": ["vite.config.ts"]
 }
