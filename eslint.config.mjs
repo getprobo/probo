@@ -69,6 +69,34 @@ export default defineConfig([
     },
   },
   {
+    // The v2 kit styles with tailwind-variants/lite (no tailwind-merge): the
+    // numbered scales (text-1…9, rounded-1…6, shadow-1…6) collide with the
+    // color/utility namespaces and tailwind-merge would drop the scale class.
+    files: ["packages/ui/src/v2/**"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          paths: [
+            {
+              name: "tailwind-variants",
+              message:
+                "Import from tailwind-variants/lite (no tailwind-merge) in v2.",
+            },
+            {
+              name: "tailwind-merge",
+              message: "The v2 kit does not use tailwind-merge.",
+            },
+            {
+              name: "clsx",
+              message: "The v2 kit does not use clsx; style via tailwind-variants/lite.",
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
     files: reactDirs,
     ignores: ["packages/ui/tailwind.config.js"],
     extends: [configs.languageOptions.browser],

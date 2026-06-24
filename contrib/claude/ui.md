@@ -20,7 +20,7 @@ These rules are the **source of truth**. The legacy tree (`Atoms/`, `Molecules/`
 |------|------------|
 | Package | **`@probo/ui`** — v2 components under `src/v2`. Apps opt into v2 by importing the v2 theme (see [`v2-tokens.md`](v2-tokens.md)). |
 | Styling | **Tailwind v4** with the Radix-scale tokens (`bg-sand-3`, `text-sand-12`, `rounded-3`, `text-4`, …). |
-| Variants API | **`tailwind-variants`** only — `import { tv } from "tailwind-variants"`. |
+| Variants API | **`tailwind-variants/lite`** only — `import { tv } from "tailwind-variants/lite"`. The `/lite` entrypoint ships **without `tailwind-merge`**, which is required: the numbered scales (`text-1…9`, `rounded-1…6`, `shadow-1…6`) collide with the color/utility namespaces and tailwind-merge would silently drop the scale class (e.g. `text-3` next to `text-sand-11`). The legacy v1 kit stays on `tailwind-variants` (with merge). |
 | Class composition | **Do not use `clsx` or `tailwind-merge`.** All conditional styling goes through `tv` variants and slots. |
 | Headless primitives | **Base UI** (`@base-ui/react`). We **style** these primitives; we do not re-implement their behavior. |
 
@@ -58,7 +58,7 @@ export function Dialog({ trigger, ref, children }: Props) {
 ```tsx
 // Good — thin styling over Base UI; consumers use the lib's open/onOpenChange directly
 import { Dialog as BaseDialog } from "@base-ui/react/dialog";
-import { tv } from "tailwind-variants";
+import { tv } from "tailwind-variants/lite";
 
 const dialog = tv({
   slots: {
@@ -111,7 +111,7 @@ For **compound / multi-slot** components, define `tv` in a **dedicated `variants
 ```tsx
 // Bad — same file mixes tv() output with ad-hoc Tailwind / clsx on className
 import { clsx } from "clsx";
-import { tv } from "tailwind-variants";
+import { tv } from "tailwind-variants/lite";
 
 const row = tv({ base: "flex items-center gap-2" });
 export function Row({ children }: { children: ReactNode }) {
@@ -121,7 +121,7 @@ export function Row({ children }: { children: ReactNode }) {
 
 ```tsx
 // Good — layout and look live in tv
-import { tv } from "tailwind-variants";
+import { tv } from "tailwind-variants/lite";
 
 const row = tv({
   base: "flex items-center gap-2 rounded-3 border border-sand-6",
@@ -133,7 +133,7 @@ export function Row({ children }: { children: ReactNode }) {
 
 ```tsx
 // Good — optional styling toggles use tv variants, not extra className strings
-import { tv } from "tailwind-variants";
+import { tv } from "tailwind-variants/lite";
 
 const row = tv({
   base: "flex items-center gap-2",
@@ -398,7 +398,7 @@ Model regions with `tv` `slots` named after the layout:
 
 ```ts
 // ImageCard/variants.ts
-import { tv } from "tailwind-variants";
+import { tv } from "tailwind-variants/lite";
 
 export const imageCard = tv({
   slots: {

@@ -13,7 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 import type { ComponentProps } from "react";
-import type { VariantProps } from "tailwind-variants";
+import type { VariantProps } from "tailwind-variants/lite";
 
 import { textSkeleton } from "./variants";
 

@@ -12,7 +12,7 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { tv } from "tailwind-variants";
+import { tv } from "tailwind-variants/lite";
 
 // Numbered type scale (text-1 … text-9). Each utility carries its paired
 // font-size, line-height, and letter-spacing from the v2 theme. Shared between
