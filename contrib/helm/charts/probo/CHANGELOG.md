@@ -4,6 +4,12 @@ All notable changes to the Probo Helm chart will be documented in this file.
 
 ## Unreleased
 
+## [0.9.1] - 2026-06-25
+
+### Changed
+
+- Bump `kubernetes-ingress` (haproxy-ingress) dependency to `1.52.0`
+
 ## [0.9.0] - 2026-06-24
 
 ### Breaking Changes
