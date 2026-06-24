@@ -5,6 +5,7 @@ set -e
 CONFIG_FILE="${CONFIG_FILE:-/etc/probod/config.yml}"
 
 # If bootstrap env vars are set, always (re)generate the config from them.
+# This includes literal values and aws:// Secrets Manager references.
 # This ensures that updated env vars take effect even when a stale config
 # file exists on a persistent volume.  When no env vars are present, fall
 # back to an existing config file (e.g., mounted from a ConfigMap).

@@ -43,19 +43,19 @@ spec:
             - name: CONFIG_FILE
               value: "/data/probod/config.yml"
             # Observability - Metrics
-            - name: METRICS_ADDR
+            - name: PROBOD_METRICS_ADDR
               value: "0.0.0.0:{{ .Values.probo.metrics.port }}"
             {{- if .Values.probo.tracing.enabled }}
             # Observability - Tracing
-            - name: TRACING_ADDR
+            - name: PROBOD_TRACING_ADDR
               value: {{ .Values.probo.tracing.addr | quote }}
-            - name: TRACING_MAX_BATCH_SIZE
+            - name: PROBOD_TRACING_MAX_BATCH_SIZE
               value: {{ .Values.probo.tracing.maxBatchSize | quote }}
-            - name: TRACING_BATCH_TIMEOUT
+            - name: PROBOD_TRACING_BATCH_TIMEOUT
               value: {{ .Values.probo.tracing.batchTimeout | quote }}
-            - name: TRACING_EXPORT_TIMEOUT
+            - name: PROBOD_TRACING_EXPORT_TIMEOUT
               value: {{ .Values.probo.tracing.exportTimeout | quote }}
-            - name: TRACING_MAX_QUEUE_SIZE
+            - name: PROBOD_TRACING_MAX_QUEUE_SIZE
               value: {{ .Values.probo.tracing.maxQueueSize | quote }}
             {{- end }}
             # Application Configuration
@@ -66,96 +66,96 @@ spec:
                 secretKeyRef:
                   name: {{ include "probo.fullname" . }}
                   key: encryption-key
-            - name: CHROME_DP_ADDR
+            - name: PROBOD_CHROME_DP_ADDR
               value: {{ include "probo.chrome.addr" . | quote }}
-            - name: BRANDING
+            - name: PROBOD_BRANDING
               value: {{ .Values.probo.branding | quote }}
             # API Configuration
-            - name: API_ADDR
+            - name: PROBOD_API_ADDR
               value: ":{{ .Values.service.port }}"
-            - name: API_CORS_ALLOWED_ORIGINS
+            - name: PROBOD_API_CORS_ALLOWED_ORIGINS
               value: {{ join "," .Values.probo.cors.allowedOrigins | quote }}
             # PostgreSQL Database
-            - name: PG_ADDR
+            - name: PROBOD_PG_ADDR
               value: {{ printf "%s:%v" (include "probo.postgresql.host" .) (include "probo.postgresql.port" .) | quote }}
-            - name: PG_USERNAME
+            - name: PROBOD_PG_USERNAME
               value: {{ include "probo.postgresql.username" . | quote }}
-            - name: PG_PASSWORD
+            - name: PROBOD_PG_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: {{ include "probo.fullname" . }}
                   key: db-password
-            - name: PG_DATABASE
+            - name: PROBOD_PG_DATABASE
               value: {{ include "probo.postgresql.database" . | quote }}
-            - name: PG_POOL_SIZE
+            - name: PROBOD_PG_POOL_SIZE
               value: {{ .Values.postgresql.poolSize | default "100" | quote }}
-            - name: PG_MIN_POOL_SIZE
+            - name: PROBOD_PG_MIN_POOL_SIZE
               value: {{ .Values.postgresql.minPoolSize | default "10" | quote }}
-            - name: PG_MAX_CONN_IDLE_TIME_SECONDS
+            - name: PROBOD_PG_MAX_CONN_IDLE_TIME_SECONDS
               value: {{ .Values.postgresql.maxConnIdleTimeSeconds | default "1800" | quote }}
-            - name: PG_MAX_CONN_LIFETIME_SECONDS
+            - name: PROBOD_PG_MAX_CONN_LIFETIME_SECONDS
               value: {{ .Values.postgresql.maxConnLifetimeSeconds | default "3600" | quote }}
-            - name: PG_MAX_CONN_LIFETIME_JITTER_SECONDS
+            - name: PROBOD_PG_MAX_CONN_LIFETIME_JITTER_SECONDS
               value: {{ .Values.postgresql.maxConnLifetimeJitterSeconds | default "300" | quote }}
-            - name: PG_HEALTH_CHECK_PERIOD_SECONDS
+            - name: PROBOD_PG_HEALTH_CHECK_PERIOD_SECONDS
               value: {{ .Values.postgresql.healthCheckPeriodSeconds | default "60" | quote }}
             {{- if .Values.postgresql.caBundle }}
-            - name: PG_CA_BUNDLE
+            - name: PROBOD_PG_CA_BUNDLE
               valueFrom:
                 secretKeyRef:
                   name: {{ include "probo.fullname" . }}
                   key: pg-ca-bundle
             {{- else if .Values.postgresql.caBundlePath }}
-            - name: PG_CA_BUNDLE_PATH
+            - name: PROBOD_PG_CA_BUNDLE_PATH
               value: {{ .Values.postgresql.caBundlePath | quote }}
             {{- end }}
             # Authentication
-            - name: AUTH_DISABLE_SIGNUP
+            - name: PROBOD_AUTH_DISABLE_SIGNUP
               value: {{ .Values.probo.auth.disableSignup | quote }}
-            - name: AUTH_INVITATION_TOKEN_VALIDITY
+            - name: PROBOD_AUTH_INVITATION_TOKEN_VALIDITY
               value: {{ .Values.probo.auth.invitationTokenValidity | quote }}
-            - name: AUTH_COOKIE_NAME
+            - name: PROBOD_AUTH_COOKIE_NAME
               value: {{ .Values.probo.auth.cookieName | quote }}
-            - name: AUTH_COOKIE_DOMAIN
+            - name: PROBOD_AUTH_COOKIE_DOMAIN
               value: {{ .Values.probo.auth.cookieDomain | quote }}
-            - name: AUTH_COOKIE_SECRET
+            - name: PROBOD_AUTH_COOKIE_SECRET
               valueFrom:
                 secretKeyRef:
                   name: {{ include "probo.fullname" . }}
                   key: cookie-secret
-            - name: AUTH_COOKIE_DURATION
+            - name: PROBOD_AUTH_COOKIE_DURATION
               value: {{ .Values.probo.auth.cookieDuration | quote }}
-            - name: AUTH_PASSWORD_PEPPER
+            - name: PROBOD_AUTH_PASSWORD_PEPPER
               valueFrom:
                 secretKeyRef:
                   name: {{ include "probo.fullname" . }}
                   key: password-pepper
-            - name: OAUTH2_SERVER_SIGNING_KEY
+            - name: PROBOD_OAUTH2_SERVER_SIGNING_KEY
               valueFrom:
                 secretKeyRef:
                   name: {{ include "probo.fullname" . }}
                   key: oauth2-signing-key
             {{- if .Values.probo.oauth2.cimdAllowedClientIds }}
-            - name: OAUTH2_SERVER_CIMD_ALLOWED_CLIENT_IDS
+            - name: PROBOD_OAUTH2_SERVER_CIMD_ALLOWED_CLIENT_IDS
               value: {{ join "," .Values.probo.oauth2.cimdAllowedClientIds | quote }}
             {{- end }}
-            - name: AUTH_PASSWORD_ITERATIONS
+            - name: PROBOD_AUTH_PASSWORD_ITERATIONS
               value: {{ .Values.probo.auth.passwordIterations | quote }}
             {{- if .Values.probo.saml.enabled }}
             # SAML Authentication
-            - name: SAML_SESSION_DURATION
+            - name: PROBOD_SAML_SESSION_DURATION
               value: {{ .Values.probo.saml.sessionDuration | quote }}
-            - name: SAML_CLEANUP_INTERVAL_SECONDS
+            - name: PROBOD_SAML_CLEANUP_INTERVAL_SECONDS
               value: {{ .Values.probo.saml.cleanupIntervalSeconds | quote }}
             {{- if .Values.probo.saml.certificate }}
-            - name: SAML_CERTIFICATE
+            - name: PROBOD_SAML_CERTIFICATE
               valueFrom:
                 secretKeyRef:
                   name: {{ include "probo.fullname" . }}
                   key: saml-certificate
             {{- end }}
             {{- if .Values.probo.saml.privateKey }}
-            - name: SAML_PRIVATE_KEY
+            - name: PROBOD_SAML_PRIVATE_KEY
               valueFrom:
                 secretKeyRef:
                   name: {{ include "probo.fullname" . }}
@@ -163,93 +163,93 @@ spec:
             {{- end }}
             {{- end }}
             # Trust Center Authentication
-            - name: TRUST_AUTH_COOKIE_NAME
+            - name: PROBOD_TRUST_AUTH_COOKIE_NAME
               value: {{ .Values.probo.trustAuth.cookieName | quote }}
-            - name: TRUST_AUTH_COOKIE_DOMAIN
+            - name: PROBOD_TRUST_AUTH_COOKIE_DOMAIN
               value: {{ .Values.probo.trustAuth.cookieDomain | quote }}
-            - name: TRUST_AUTH_COOKIE_DURATION
+            - name: PROBOD_TRUST_AUTH_COOKIE_DURATION
               value: {{ .Values.probo.trustAuth.cookieDuration | quote }}
-            - name: TRUST_AUTH_TOKEN_DURATION
+            - name: PROBOD_TRUST_AUTH_TOKEN_DURATION
               value: {{ .Values.probo.trustAuth.tokenDuration | quote }}
-            - name: TRUST_AUTH_REPORT_URL_DURATION
+            - name: PROBOD_TRUST_AUTH_REPORT_URL_DURATION
               value: {{ .Values.probo.trustAuth.reportUrlDuration | quote }}
-            - name: TRUST_AUTH_TOKEN_SECRET
+            - name: PROBOD_TRUST_AUTH_TOKEN_SECRET
               valueFrom:
                 secretKeyRef:
                   name: {{ include "probo.fullname" . }}
                   key: trust-token-secret
-            - name: TRUST_AUTH_SCOPE
+            - name: PROBOD_TRUST_AUTH_SCOPE
               value: {{ .Values.probo.trustAuth.scope | quote }}
-            - name: TRUST_AUTH_TOKEN_TYPE
+            - name: PROBOD_TRUST_AUTH_TOKEN_TYPE
               value: {{ .Values.probo.trustAuth.tokenType | quote }}
             # AWS / S3 Storage
-            - name: AWS_REGION
+            - name: PROBOD_AWS_REGION
               value: {{ .Values.s3.region | quote }}
-            - name: AWS_BUCKET
+            - name: PROBOD_AWS_BUCKET
               value: {{ .Values.s3.bucket | quote }}
-            - name: AWS_ACCESS_KEY_ID
+            - name: PROBOD_AWS_ACCESS_KEY_ID
               valueFrom:
                 secretKeyRef:
                   name: {{ include "probo.fullname" . }}
                   key: s3-access-key
-            - name: AWS_SECRET_ACCESS_KEY
+            - name: PROBOD_AWS_SECRET_ACCESS_KEY
               valueFrom:
                 secretKeyRef:
                   name: {{ include "probo.fullname" . }}
                   key: s3-secret-key
             {{- $s3Endpoint := include "probo.s3.endpoint" . }}
             {{- if $s3Endpoint }}
-            - name: AWS_ENDPOINT
+            - name: PROBOD_AWS_ENDPOINT
               value: {{ $s3Endpoint | quote }}
             {{- end }}
             {{- if .Values.s3.usePathStyle }}
-            - name: AWS_USE_PATH_STYLE
+            - name: PROBOD_AWS_USE_PATH_STYLE
               value: "true"
             {{- end }}
             # Email (SMTP)
-            - name: MAILER_SENDER_NAME
+            - name: PROBOD_MAILER_SENDER_NAME
               value: {{ .Values.probo.mailer.senderName | quote }}
-            - name: MAILER_SENDER_EMAIL
+            - name: PROBOD_MAILER_SENDER_EMAIL
               value: {{ .Values.probo.mailer.senderEmail | quote }}
-            - name: SMTP_ADDR
+            - name: PROBOD_SMTP_ADDR
               value: {{ .Values.probo.mailer.smtp.addr | quote }}
             {{- if .Values.probo.mailer.smtp.user }}
-            - name: SMTP_USER
+            - name: PROBOD_SMTP_USER
               valueFrom:
                 secretKeyRef:
                   name: {{ include "probo.fullname" . }}
                   key: smtp-user
             {{- end }}
             {{- if .Values.probo.mailer.smtp.password }}
-            - name: SMTP_PASSWORD
+            - name: PROBOD_SMTP_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: {{ include "probo.fullname" . }}
                   key: smtp-password
             {{- end }}
-            - name: SMTP_TLS_REQUIRED
+            - name: PROBOD_SMTP_TLS_REQUIRED
               value: {{ .Values.probo.mailer.smtp.tlsRequired | quote }}
             {{- if .Values.probo.mailer.smtp.helloName }}
-            - name: SMTP_HELLO_NAME
+            - name: PROBOD_SMTP_HELLO_NAME
               value: {{ .Values.probo.mailer.smtp.helloName | quote }}
             {{- end }}
             # OpenAI Integration
             {{- if .Values.probo.openai.apiKey }}
-            - name: OPENAI_API_KEY
+            - name: PROBOD_OPENAI_API_KEY
               valueFrom:
                 secretKeyRef:
                   name: {{ include "probo.fullname" . }}
                   key: openai-api-key
-            - name: OPENAI_TEMPERATURE
+            - name: PROBOD_OPENAI_TEMPERATURE
               value: {{ .Values.probo.openai.temperature | quote }}
-            - name: OPENAI_MODEL_NAME
+            - name: PROBOD_OPENAI_MODEL_NAME
               value: {{ .Values.probo.openai.modelName | quote }}
-            - name: OPENAI_MAX_TOKENS
+            - name: PROBOD_OPENAI_MAX_TOKENS
               value: {{ .Values.probo.openai.maxTokens | quote }}
             {{- end }}
             # Agent Tools
             {{- if .Values.probo.agentTools.firecrawlApiKey }}
-            - name: FIRECRAWL_API_KEY
+            - name: PROBOD_FIRECRAWL_API_KEY
               valueFrom:
                 secretKeyRef:
                   name: {{ include "probo.fullname" . }}
@@ -257,193 +257,193 @@ spec:
             {{- end }}
             # Third-Party Vetter Agent
             {{- if .Values.probo.thirdPartyVetter.provider }}
-            - name: AGENT_THIRD_PARTY_VETTER_PROVIDER
+            - name: PROBOD_AGENT_THIRD_PARTY_VETTER_PROVIDER
               value: {{ .Values.probo.thirdPartyVetter.provider | quote }}
             {{- end }}
             {{- if .Values.probo.thirdPartyVetter.modelName }}
-            - name: AGENT_THIRD_PARTY_VETTER_MODEL_NAME
+            - name: PROBOD_AGENT_THIRD_PARTY_VETTER_MODEL_NAME
               value: {{ .Values.probo.thirdPartyVetter.modelName | quote }}
             {{- end }}
             {{- if .Values.probo.thirdPartyVetter.temperature }}
-            - name: AGENT_THIRD_PARTY_VETTER_TEMPERATURE
+            - name: PROBOD_AGENT_THIRD_PARTY_VETTER_TEMPERATURE
               value: {{ .Values.probo.thirdPartyVetter.temperature | quote }}
             {{- end }}
             {{- if .Values.probo.thirdPartyVetter.maxTokens }}
-            - name: AGENT_THIRD_PARTY_VETTER_MAX_TOKENS
+            - name: PROBOD_AGENT_THIRD_PARTY_VETTER_MAX_TOKENS
               value: {{ .Values.probo.thirdPartyVetter.maxTokens | quote }}
             {{- end }}
             # Third-Party Vetting Worker
             {{- if .Values.probo.thirdPartyVettingWorker.interval }}
-            - name: THIRD_PARTY_VETTING_INTERVAL
+            - name: PROBOD_THIRD_PARTY_VETTING_INTERVAL
               value: {{ .Values.probo.thirdPartyVettingWorker.interval | quote }}
             {{- end }}
             {{- if .Values.probo.thirdPartyVettingWorker.maxConcurrency }}
-            - name: THIRD_PARTY_VETTING_MAX_CONCURRENCY
+            - name: PROBOD_THIRD_PARTY_VETTING_MAX_CONCURRENCY
               value: {{ .Values.probo.thirdPartyVettingWorker.maxConcurrency | quote }}
             {{- end }}
             {{- if .Values.probo.thirdPartyVettingWorker.staleAfter }}
-            - name: THIRD_PARTY_VETTING_STALE_AFTER
+            - name: PROBOD_THIRD_PARTY_VETTING_STALE_AFTER
               value: {{ .Values.probo.thirdPartyVettingWorker.staleAfter | quote }}
             {{- end }}
             # Third-party Disambiguation Agent
             {{- if .Values.probo.thirdPartyDisambiguation.provider }}
-            - name: AGENT_THIRD_PARTY_DISAMBIGUATION_PROVIDER
+            - name: PROBOD_AGENT_THIRD_PARTY_DISAMBIGUATION_PROVIDER
               value: {{ .Values.probo.thirdPartyDisambiguation.provider | quote }}
             {{- end }}
             {{- if .Values.probo.thirdPartyDisambiguation.modelName }}
-            - name: AGENT_THIRD_PARTY_DISAMBIGUATION_MODEL_NAME
+            - name: PROBOD_AGENT_THIRD_PARTY_DISAMBIGUATION_MODEL_NAME
               value: {{ .Values.probo.thirdPartyDisambiguation.modelName | quote }}
             {{- end }}
             {{- if .Values.probo.thirdPartyDisambiguation.temperature }}
-            - name: AGENT_THIRD_PARTY_DISAMBIGUATION_TEMPERATURE
+            - name: PROBOD_AGENT_THIRD_PARTY_DISAMBIGUATION_TEMPERATURE
               value: {{ .Values.probo.thirdPartyDisambiguation.temperature | quote }}
             {{- end }}
             {{- if .Values.probo.thirdPartyDisambiguation.maxTokens }}
-            - name: AGENT_THIRD_PARTY_DISAMBIGUATION_MAX_TOKENS
+            - name: PROBOD_AGENT_THIRD_PARTY_DISAMBIGUATION_MAX_TOKENS
               value: {{ .Values.probo.thirdPartyDisambiguation.maxTokens | quote }}
             {{- end }}
             # Tracker Mapping Agent
             {{- if .Values.probo.trackerMapping.provider }}
-            - name: AGENT_TRACKER_MAPPING_PROVIDER
+            - name: PROBOD_AGENT_TRACKER_MAPPING_PROVIDER
               value: {{ .Values.probo.trackerMapping.provider | quote }}
             {{- end }}
             {{- if .Values.probo.trackerMapping.modelName }}
-            - name: AGENT_TRACKER_MAPPING_MODEL_NAME
+            - name: PROBOD_AGENT_TRACKER_MAPPING_MODEL_NAME
               value: {{ .Values.probo.trackerMapping.modelName | quote }}
             {{- end }}
             {{- if .Values.probo.trackerMapping.temperature }}
-            - name: AGENT_TRACKER_MAPPING_TEMPERATURE
+            - name: PROBOD_AGENT_TRACKER_MAPPING_TEMPERATURE
               value: {{ .Values.probo.trackerMapping.temperature | quote }}
             {{- end }}
             {{- if .Values.probo.trackerMapping.maxTokens }}
-            - name: AGENT_TRACKER_MAPPING_MAX_TOKENS
+            - name: PROBOD_AGENT_TRACKER_MAPPING_MAX_TOKENS
               value: {{ .Values.probo.trackerMapping.maxTokens | quote }}
             {{- end }}
             # Tracker Enrichment Agent
             {{- if .Values.probo.trackerEnrichment.provider }}
-            - name: AGENT_TRACKER_ENRICHMENT_PROVIDER
+            - name: PROBOD_AGENT_TRACKER_ENRICHMENT_PROVIDER
               value: {{ .Values.probo.trackerEnrichment.provider | quote }}
             {{- end }}
             {{- if .Values.probo.trackerEnrichment.modelName }}
-            - name: AGENT_TRACKER_ENRICHMENT_MODEL_NAME
+            - name: PROBOD_AGENT_TRACKER_ENRICHMENT_MODEL_NAME
               value: {{ .Values.probo.trackerEnrichment.modelName | quote }}
             {{- end }}
             {{- if .Values.probo.trackerEnrichment.temperature }}
-            - name: AGENT_TRACKER_ENRICHMENT_TEMPERATURE
+            - name: PROBOD_AGENT_TRACKER_ENRICHMENT_TEMPERATURE
               value: {{ .Values.probo.trackerEnrichment.temperature | quote }}
             {{- end }}
             {{- if .Values.probo.trackerEnrichment.maxTokens }}
-            - name: AGENT_TRACKER_ENRICHMENT_MAX_TOKENS
+            - name: PROBOD_AGENT_TRACKER_ENRICHMENT_MAX_TOKENS
               value: {{ .Values.probo.trackerEnrichment.maxTokens | quote }}
             {{- end }}
             # Tracker Mapping Worker
             {{- if .Values.probo.trackerMappingWorker.interval }}
-            - name: TRACKER_MAPPING_INTERVAL
+            - name: PROBOD_TRACKER_MAPPING_INTERVAL
               value: {{ .Values.probo.trackerMappingWorker.interval | quote }}
             {{- end }}
             {{- if .Values.probo.trackerMappingWorker.maxConcurrency }}
-            - name: TRACKER_MAPPING_MAX_CONCURRENCY
+            - name: PROBOD_TRACKER_MAPPING_MAX_CONCURRENCY
               value: {{ .Values.probo.trackerMappingWorker.maxConcurrency | quote }}
             {{- end }}
             {{- if .Values.probo.trackerMappingWorker.staleAfter }}
-            - name: TRACKER_MAPPING_STALE_AFTER
+            - name: PROBOD_TRACKER_MAPPING_STALE_AFTER
               value: {{ .Values.probo.trackerMappingWorker.staleAfter | quote }}
             {{- end }}
             {{- if .Values.probo.trackerMappingWorker.agentTimeout }}
-            - name: TRACKER_MAPPING_AGENT_TIMEOUT
+            - name: PROBOD_TRACKER_MAPPING_AGENT_TIMEOUT
               value: {{ .Values.probo.trackerMappingWorker.agentTimeout | quote }}
             {{- end }}
             {{- if .Values.probo.trackerMappingWorker.agentMaxTurns }}
-            - name: TRACKER_MAPPING_AGENT_MAX_TURNS
+            - name: PROBOD_TRACKER_MAPPING_AGENT_MAX_TURNS
               value: {{ .Values.probo.trackerMappingWorker.agentMaxTurns | quote }}
             {{- end }}
             {{- if .Values.probo.trackerMappingWorker.disambiguationAgentTimeout }}
-            - name: TRACKER_MAPPING_DISAMBIGUATION_AGENT_TIMEOUT
+            - name: PROBOD_TRACKER_MAPPING_DISAMBIGUATION_AGENT_TIMEOUT
               value: {{ .Values.probo.trackerMappingWorker.disambiguationAgentTimeout | quote }}
             {{- end }}
             # Common Pattern Enrichment Worker
             {{- if .Values.probo.commonPatternEnrichmentWorker.interval }}
-            - name: COMMON_PATTERN_ENRICHMENT_INTERVAL
+            - name: PROBOD_COMMON_PATTERN_ENRICHMENT_INTERVAL
               value: {{ .Values.probo.commonPatternEnrichmentWorker.interval | quote }}
             {{- end }}
             {{- if .Values.probo.commonPatternEnrichmentWorker.maxConcurrency }}
-            - name: COMMON_PATTERN_ENRICHMENT_MAX_CONCURRENCY
+            - name: PROBOD_COMMON_PATTERN_ENRICHMENT_MAX_CONCURRENCY
               value: {{ .Values.probo.commonPatternEnrichmentWorker.maxConcurrency | quote }}
             {{- end }}
             {{- if .Values.probo.commonPatternEnrichmentWorker.staleAfter }}
-            - name: COMMON_PATTERN_ENRICHMENT_STALE_AFTER
+            - name: PROBOD_COMMON_PATTERN_ENRICHMENT_STALE_AFTER
               value: {{ .Values.probo.commonPatternEnrichmentWorker.staleAfter | quote }}
             {{- end }}
             {{- if .Values.probo.commonPatternEnrichmentWorker.agentTimeout }}
-            - name: COMMON_PATTERN_ENRICHMENT_AGENT_TIMEOUT
+            - name: PROBOD_COMMON_PATTERN_ENRICHMENT_AGENT_TIMEOUT
               value: {{ .Values.probo.commonPatternEnrichmentWorker.agentTimeout | quote }}
             {{- end }}
             {{- if .Values.probo.commonPatternEnrichmentWorker.agentMaxTurns }}
-            - name: COMMON_PATTERN_ENRICHMENT_AGENT_MAX_TURNS
+            - name: PROBOD_COMMON_PATTERN_ENRICHMENT_AGENT_MAX_TURNS
               value: {{ .Values.probo.commonPatternEnrichmentWorker.agentMaxTurns | quote }}
             {{- end }}
             # Common Third Party Enrichment Agent
             {{- if .Values.probo.commonThirdPartyEnrichment.provider }}
-            - name: AGENT_COMMON_THIRD_PARTY_ENRICHMENT_PROVIDER
+            - name: PROBOD_AGENT_COMMON_THIRD_PARTY_ENRICHMENT_PROVIDER
               value: {{ .Values.probo.commonThirdPartyEnrichment.provider | quote }}
             {{- end }}
             {{- if .Values.probo.commonThirdPartyEnrichment.modelName }}
-            - name: AGENT_COMMON_THIRD_PARTY_ENRICHMENT_MODEL_NAME
+            - name: PROBOD_AGENT_COMMON_THIRD_PARTY_ENRICHMENT_MODEL_NAME
               value: {{ .Values.probo.commonThirdPartyEnrichment.modelName | quote }}
             {{- end }}
             {{- if .Values.probo.commonThirdPartyEnrichment.temperature }}
-            - name: AGENT_COMMON_THIRD_PARTY_ENRICHMENT_TEMPERATURE
+            - name: PROBOD_AGENT_COMMON_THIRD_PARTY_ENRICHMENT_TEMPERATURE
               value: {{ .Values.probo.commonThirdPartyEnrichment.temperature | quote }}
             {{- end }}
             {{- if .Values.probo.commonThirdPartyEnrichment.maxTokens }}
-            - name: AGENT_COMMON_THIRD_PARTY_ENRICHMENT_MAX_TOKENS
+            - name: PROBOD_AGENT_COMMON_THIRD_PARTY_ENRICHMENT_MAX_TOKENS
               value: {{ .Values.probo.commonThirdPartyEnrichment.maxTokens | quote }}
             {{- end }}
             # Common Third Party Enrichment Worker
             {{- if .Values.probo.commonThirdPartyEnrichmentWorker.interval }}
-            - name: COMMON_THIRD_PARTY_ENRICHMENT_INTERVAL
+            - name: PROBOD_COMMON_THIRD_PARTY_ENRICHMENT_INTERVAL
               value: {{ .Values.probo.commonThirdPartyEnrichmentWorker.interval | quote }}
             {{- end }}
             {{- if .Values.probo.commonThirdPartyEnrichmentWorker.maxConcurrency }}
-            - name: COMMON_THIRD_PARTY_ENRICHMENT_MAX_CONCURRENCY
+            - name: PROBOD_COMMON_THIRD_PARTY_ENRICHMENT_MAX_CONCURRENCY
               value: {{ .Values.probo.commonThirdPartyEnrichmentWorker.maxConcurrency | quote }}
             {{- end }}
             {{- if .Values.probo.commonThirdPartyEnrichmentWorker.staleAfter }}
-            - name: COMMON_THIRD_PARTY_ENRICHMENT_STALE_AFTER
+            - name: PROBOD_COMMON_THIRD_PARTY_ENRICHMENT_STALE_AFTER
               value: {{ .Values.probo.commonThirdPartyEnrichmentWorker.staleAfter | quote }}
             {{- end }}
             {{- if .Values.probo.commonThirdPartyEnrichmentWorker.agentTimeout }}
-            - name: COMMON_THIRD_PARTY_ENRICHMENT_AGENT_TIMEOUT
+            - name: PROBOD_COMMON_THIRD_PARTY_ENRICHMENT_AGENT_TIMEOUT
               value: {{ .Values.probo.commonThirdPartyEnrichmentWorker.agentTimeout | quote }}
             {{- end }}
             {{- if .Values.probo.commonThirdPartyEnrichmentWorker.agentMaxTurns }}
-            - name: COMMON_THIRD_PARTY_ENRICHMENT_AGENT_MAX_TURNS
+            - name: PROBOD_COMMON_THIRD_PARTY_ENRICHMENT_AGENT_MAX_TURNS
               value: {{ .Values.probo.commonThirdPartyEnrichmentWorker.agentMaxTurns | quote }}
             {{- end }}
             {{- if ne .Values.probo.commonThirdPartyEnrichmentWorker.confidenceThreshold nil }}
-            - name: COMMON_THIRD_PARTY_ENRICHMENT_CONFIDENCE_THRESHOLD
+            - name: PROBOD_COMMON_THIRD_PARTY_ENRICHMENT_CONFIDENCE_THRESHOLD
               value: {{ .Values.probo.commonThirdPartyEnrichmentWorker.confidenceThreshold | quote }}
             {{- end }}
             {{- if .Values.probo.commonThirdPartyEnrichmentWorker.maxAttempts }}
-            - name: COMMON_THIRD_PARTY_ENRICHMENT_MAX_ATTEMPTS
+            - name: PROBOD_COMMON_THIRD_PARTY_ENRICHMENT_MAX_ATTEMPTS
               value: {{ .Values.probo.commonThirdPartyEnrichmentWorker.maxAttempts | quote }}
             {{- end }}
             # Custom Domains
             {{- if .Values.probo.customDomains.enabled }}
-            - name: CUSTOM_DOMAINS_RENEWAL_INTERVAL
+            - name: PROBOD_CUSTOM_DOMAINS_RENEWAL_INTERVAL
               value: {{ .Values.probo.customDomains.renewalInterval | quote }}
-            - name: CUSTOM_DOMAINS_PROVISION_INTERVAL
+            - name: PROBOD_CUSTOM_DOMAINS_PROVISION_INTERVAL
               value: {{ .Values.probo.customDomains.provisionInterval | quote }}
-            - name: CUSTOM_DOMAINS_CNAME_TARGET
+            - name: PROBOD_CUSTOM_DOMAINS_CNAME_TARGET
               value: {{ .Values.probo.customDomains.cnameTarget | quote }}
-            - name: ACME_DIRECTORY
+            - name: PROBOD_ACME_DIRECTORY
               value: {{ .Values.probo.customDomains.acme.directory | quote }}
-            - name: ACME_EMAIL
+            - name: PROBOD_ACME_EMAIL
               value: {{ .Values.probo.customDomains.acme.email | quote }}
-            - name: ACME_KEY_TYPE
+            - name: PROBOD_ACME_KEY_TYPE
               value: {{ .Values.probo.customDomains.acme.keyType | quote }}
             {{- if .Values.probo.customDomains.acme.accountKey }}
-            - name: ACME_ACCOUNT_KEY
+            - name: PROBOD_ACME_ACCOUNT_KEY
               valueFrom:
                 secretKeyRef:
                   name: {{ include "probo.fullname" . }}
@@ -453,30 +453,30 @@ spec:
             # Connectors (Slack OAuth2)
             {{- range .Values.probo.connectors }}
             {{- if eq .name "slack" }}
-            - name: CONNECTOR_SLACK_CLIENT_ID
+            - name: PROBOD_CONNECTOR_SLACK_CLIENT_ID
               valueFrom:
                 secretKeyRef:
                   name: {{ include "probo.fullname" $ }}
                   key: connector-slack-client-id
-            - name: CONNECTOR_SLACK_CLIENT_SECRET
+            - name: PROBOD_CONNECTOR_SLACK_CLIENT_SECRET
               valueFrom:
                 secretKeyRef:
                   name: {{ include "probo.fullname" $ }}
                   key: connector-slack-client-secret
             {{- if .config.redirectUri }}
-            - name: CONNECTOR_SLACK_REDIRECT_URI
+            - name: PROBOD_CONNECTOR_SLACK_REDIRECT_URI
               value: {{ .config.redirectUri | quote }}
             {{- end }}
             {{- if .config.authUrl }}
-            - name: CONNECTOR_SLACK_AUTH_URL
+            - name: PROBOD_CONNECTOR_SLACK_AUTH_URL
               value: {{ .config.authUrl | quote }}
             {{- end }}
             {{- if .config.tokenUrl }}
-            - name: CONNECTOR_SLACK_TOKEN_URL
+            - name: PROBOD_CONNECTOR_SLACK_TOKEN_URL
               value: {{ .config.tokenUrl | quote }}
             {{- end }}
             {{- if .config.signingSecret }}
-            - name: CONNECTOR_SLACK_SIGNING_SECRET
+            - name: PROBOD_CONNECTOR_SLACK_SIGNING_SECRET
               valueFrom:
                 secretKeyRef:
                   name: {{ include "probo.fullname" $ }}

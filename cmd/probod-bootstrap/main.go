@@ -38,7 +38,7 @@ func main() {
 		return
 	}
 
-	builder := bootstrap.NewBuilder(nil)
+	builder := bootstrap.NewBuilder(bootstrap.NewResolver(nil))
 
 	cfg, err := builder.Build()
 	if err != nil {

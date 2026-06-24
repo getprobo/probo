@@ -4,42 +4,42 @@ services:
     environment:
       # Required secrets (use secure values in production)
       PROBOD_ENCRYPTION_KEY: ${PROBOD_ENCRYPTION_KEY}
-      AUTH_COOKIE_SECRET: ${AUTH_COOKIE_SECRET}
-      AUTH_PASSWORD_PEPPER: ${AUTH_PASSWORD_PEPPER}
-      TRUST_AUTH_TOKEN_SECRET: ${TRUST_AUTH_TOKEN_SECRET}
+      PROBOD_AUTH_COOKIE_SECRET: ${PROBOD_AUTH_COOKIE_SECRET}
+      PROBOD_AUTH_PASSWORD_PEPPER: ${PROBOD_AUTH_PASSWORD_PEPPER}
+      PROBOD_TRUST_AUTH_TOKEN_SECRET: ${PROBOD_TRUST_AUTH_TOKEN_SECRET}
 
       # Application settings
       PROBOD_BASE_URL: ${PROBOD_BASE_URL}
-      API_ADDR: ${API_ADDR}
-      API_CORS_ALLOWED_ORIGINS: ${API_CORS_ALLOWED_ORIGINS}
+      PROBOD_API_ADDR: ${PROBOD_API_ADDR}
+      PROBOD_API_CORS_ALLOWED_ORIGINS: ${PROBOD_API_CORS_ALLOWED_ORIGINS}
 
       # PostgreSQL database
-      PG_ADDR: "postgres:5432"
-      PG_USERNAME: "postgres"
-      PG_PASSWORD: "postgres"
-      PG_DATABASE: "probod"
-      PG_POOL_SIZE: "100"
+      PROBOD_PG_ADDR: "postgres:5432"
+      PROBOD_PG_USERNAME: "postgres"
+      PROBOD_PG_PASSWORD: "postgres"
+      PROBOD_PG_DATABASE: "probod"
+      PROBOD_PG_POOL_SIZE: "100"
 
       # S3-compatible storage (SeaweedFS)
-      AWS_REGION: "us-east-1"
-      AWS_BUCKET: "probod"
-      AWS_ACCESS_KEY_ID: "probod"
-      AWS_SECRET_ACCESS_KEY: "thisisnotasecret"
-      AWS_ENDPOINT: "http://seaweedfs:8333"
-      AWS_USE_PATH_STYLE: "true"
+      PROBOD_AWS_REGION: "us-east-1"
+      PROBOD_AWS_BUCKET: "probod"
+      PROBOD_AWS_ACCESS_KEY_ID: "probod"
+      PROBOD_AWS_SECRET_ACCESS_KEY: "thisisnotasecret"
+      PROBOD_AWS_ENDPOINT: "http://seaweedfs:8333"
+      PROBOD_AWS_USE_PATH_STYLE: "true"
 
       # Observability - Metrics & Tracing
-      METRICS_ADDR: "probo:8081"
-      TRACING_ADDR: ""
+      PROBOD_METRICS_ADDR: "probo:8081"
+      PROBOD_TRACING_ADDR: ""
 
       # Email notifications
-      SMTP_ADDR: "your.smtp.server:587"
-      SMTP_TLS_REQUIRED: "false"
-      MAILER_SENDER_NAME: "Probo"
-      MAILER_SENDER_EMAIL: "no-reply@notification.getprobo.com"
+      PROBOD_SMTP_ADDR: "your.smtp.server:587"
+      PROBOD_SMTP_TLS_REQUIRED: "false"
+      PROBOD_MAILER_SENDER_NAME: "Probo"
+      PROBOD_MAILER_SENDER_EMAIL: "no-reply@notification.getprobo.com"
 
       # Chrome for PDF generation
-      CHROME_DP_ADDR: "chrome:9222"
+      PROBOD_CHROME_DP_ADDR: "chrome:9222"
     ports:
       - "8080:8080"
       - "8081:8081"

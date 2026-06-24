@@ -201,19 +201,18 @@ $(CFG_DEV_OAUTH2_KEY):
 cfg/dev.yaml: bin/probod-bootstrap $(CFG_DEV_OAUTH2_KEY) compose/pebble/certs/rootCA.pem $(wildcard $(DEV_ENV))
 	@$(MKDIR) $(@D)
 	set -a; \
-	PROBOD_ENCRYPTION_KEY="thisisnotasecretAAAAAAAAAAAAAAAAAAAAAAAAAAA="; \
-	AUTH_COOKIE_SECRET="this-is-a-secure-secret-for-cookie-signing-at-least-32-bytes"; \
-	AUTH_PASSWORD_PEPPER="this-is-a-secure-pepper-for-password-hashing-at-least-32-bytes"; \
-	AUTH_COOKIE_SECURE=false; \
-	OAUTH2_SERVER_SIGNING_KEY="$$($(CAT) $(CFG_DEV_OAUTH2_KEY))"; \
-	API_CORS_ALLOWED_ORIGINS="http://localhost:8080,http://localhost:5173,http://localhost:5174"; \
-	AWS_ACCESS_KEY_ID=probod; \
-	AWS_SECRET_ACCESS_KEY=thisisnotasecret; \
-	AWS_ENDPOINT=http://127.0.0.1:8333; \
-	OPENAI_API_KEY=thisisnotasecret; \
-	AGENT_THIRD_PARTY_VETTER_PROVIDER=openai; \
-	ACME_DIRECTORY=https://localhost:14000/dir; \
-	ACME_ROOT_CA="$$($(CAT) compose/pebble/certs/rootCA.pem)"; \
+	PROBOD_ENCRYPTION_KEY="AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="; \
+	PROBOD_AUTH_COOKIE_SECRET="this-is-a-secure-secret-for-cookie-signing-at-least-32-bytes"; \
+	PROBOD_AUTH_PASSWORD_PEPPER="this-is-a-secure-pepper-for-password-hashing-at-least-32-bytes"; \
+	PROBOD_AUTH_COOKIE_SECURE=false; \
+	PROBOD_OAUTH2_SERVER_SIGNING_KEY="$$($(CAT) $(CFG_DEV_OAUTH2_KEY))"; \
+	PROBOD_API_CORS_ALLOWED_ORIGINS="http://localhost:8080,http://localhost:5173,http://localhost:5174"; \
+	PROBOD_AWS_ACCESS_KEY_ID=probod; \
+	PROBOD_AWS_SECRET_ACCESS_KEY=thisisnotasecret; \
+	PROBOD_AWS_ENDPOINT=http://127.0.0.1:8333; \
+	PROBOD_OPENAI_API_KEY=thisisnotasecret; \
+	PROBOD_AGENT_THIRD_PARTY_VETTER_PROVIDER=openai; \
+	PROBOD_ACME_DIRECTORY=https://localhost:14000/dir; \
 	if [ -f $(DEV_ENV) ]; then . $(DEV_ENV); fi; \
 	set +a; \
 	./bin/probod-bootstrap -output $@

@@ -322,6 +322,41 @@ spec:
         key: probo/db-password
 ```
 
+### Native AWS Secrets Manager (probod-bootstrap)
+
+Alternatively, `probod-bootstrap` can fetch secrets directly from AWS Secrets
+Manager without External Secrets Operator. Point env vars at individual secrets
+with the `aws://<secret-id>` prefix (e.g.
+`PROBOD_ENCRYPTION_KEY=aws://probo/sandbox/probod/encryption_key`). The path
+after `aws://` is the secret name or ARN; the plaintext `SecretString` is used
+directly. Each env var can reference a different secret. Plain env values are
+also supported for non-sensitive config.
+
+Grant the caller `secretsmanager:GetSecretValue` on each secret (EKS IRSA
+example):
+
+```yaml
+env:
+  - name: AWS_REGION
+    value: "us-east-1"
+  - name: PROBOD_BASE_URL
+    value: "https://app.example.com"
+  - name: PROBOD_ENCRYPTION_KEY
+    value: "aws://probo/sandbox/probod/encryption_key"
+  - name: PROBOD_AUTH_COOKIE_SECRET
+    value: "aws://probo/sandbox/probod/cookie_secret"
+  - name: PROBOD_AUTH_PASSWORD_PEPPER
+    value: "aws://probo/sandbox/probod/password_pepper"
+  - name: PROBOD_OAUTH2_SERVER_SIGNING_KEY
+    value: "aws://probo/sandbox/probod/oauth2_signing_key"
+```
+
+Each secret in AWS Secrets Manager stores a single plaintext value (for
+example a base64 key, password, or PEM).
+
+When `PROBOD_ENCRYPTION_KEY` or another bootstrap env var is set (including
+`aws://` references), the container entrypoint runs `probod-bootstrap`.
+
 ## Full Values
 
 | Key                                                     | Type    | Default                                            | Description                                                                                         |

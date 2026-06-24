@@ -114,21 +114,21 @@ if [ -f /workspace/.sandbox.env ]; then
 fi
 
 PROBOD_BASE_URL="http://${VM_IP}:8080" \
-AUTH_COOKIE_DOMAIN="${VM_IP}" \
-AUTH_COOKIE_SECURE=false \
-AUTH_COOKIE_SECRET="this-is-a-secure-secret-for-cookie-signing-at-least-32-bytes" \
-AUTH_PASSWORD_PEPPER="this-is-a-secure-pepper-for-password-hashing-at-least-32-bytes" \
+PROBOD_AUTH_COOKIE_DOMAIN="${VM_IP}" \
+PROBOD_AUTH_COOKIE_SECURE=false \
+PROBOD_AUTH_COOKIE_SECRET="this-is-a-secure-secret-for-cookie-signing-at-least-32-bytes" \
+PROBOD_AUTH_PASSWORD_PEPPER="this-is-a-secure-pepper-for-password-hashing-at-least-32-bytes" \
 PROBOD_ENCRYPTION_KEY="thisisnotasecretAAAAAAAAAAAAAAAAAAAAAAAAAAA=" \
-OAUTH2_SERVER_SIGNING_KEY="$(cat "${OAUTH2_SIGNING_KEY_PATH}")" \
-API_CORS_ALLOWED_ORIGINS="http://${VM_IP}:8080,http://${VM_IP}:5173,http://${VM_IP}:5174" \
-AWS_ENDPOINT="http://127.0.0.1:8333" \
-AWS_ACCESS_KEY_ID="probod" \
-AWS_SECRET_ACCESS_KEY="thisisnotasecret" \
-AWS_USE_PATH_STYLE=true \
-ACME_DIRECTORY="https://127.0.0.1:14000/dir" \
-ACME_EMAIL="admin@probo.com" \
-ACME_KEY_TYPE="EC256" \
-ACME_ROOT_CA="$(cat /workspace/compose/pebble/certs/rootCA.pem)" \
+PROBOD_OAUTH2_SERVER_SIGNING_KEY="$(cat "${OAUTH2_SIGNING_KEY_PATH}")" \
+PROBOD_API_CORS_ALLOWED_ORIGINS="http://${VM_IP}:8080,http://${VM_IP}:5173,http://${VM_IP}:5174" \
+PROBOD_AWS_ENDPOINT="http://127.0.0.1:8333" \
+PROBOD_AWS_ACCESS_KEY_ID="probod" \
+PROBOD_AWS_SECRET_ACCESS_KEY="thisisnotasecret" \
+PROBOD_AWS_USE_PATH_STYLE=true \
+PROBOD_ACME_DIRECTORY="https://127.0.0.1:14000/dir" \
+PROBOD_ACME_EMAIL="admin@probo.com" \
+PROBOD_ACME_KEY_TYPE="EC256" \
+PROBOD_ACME_ROOT_CA="$(cat /workspace/compose/pebble/certs/rootCA.pem)" \
     /workspace/bin/probod-bootstrap -output /etc/probod/config.yml
 
 # probod runs as ${LIMA_USER} but bootstrap writes config.yml as root with 0600
