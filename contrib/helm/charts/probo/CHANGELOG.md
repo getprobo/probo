@@ -4,6 +4,16 @@ All notable changes to the Probo Helm chart will be documented in this file.
 
 ## Unreleased
 
+## [0.9.0] - 2026-06-24
+
+### Breaking Changes
+
+- **Bootstrap env var names now use the `PROBOD_` prefix** (e.g. `AUTH_COOKIE_SECRET` → `PROBOD_AUTH_COOKIE_SECRET`), matching probod-bootstrap v0.2.0. Existing env injection must be updated before upgrading.
+
+### Changed
+
+- Default `appVersion` updated to `probod v0.219.0`
+
 ## [0.8.0] - 2026-06-19
 
 ### Added
