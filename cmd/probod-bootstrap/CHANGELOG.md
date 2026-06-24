@@ -4,6 +4,16 @@ All notable changes to `probod-bootstrap` will be documented in this file.
 
 ## Unreleased
 
+## [0.2.0] - 2026-06-24
+
+### Breaking Changes
+
+- **All bootstrap env vars are now prefixed with `PROBOD_`** (e.g. `AUTH_COOKIE_SECRET` → `PROBOD_AUTH_COOKIE_SECRET`). Deployments must rename every bootstrap env var before upgrading.
+
+### Added
+
+- AWS Secrets Manager resolution: env values prefixed with `aws://<secret-id>` are fetched at startup using the standard AWS SDK credential chain and cached per run
+
 ## [0.1.2] - 2026-06-11
 
 ### Changed
