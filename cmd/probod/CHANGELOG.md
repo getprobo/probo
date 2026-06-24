@@ -4,6 +4,25 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.219.0] - 2026-06-24
+
+### Added
+
+- DocuSign partner OAuth2 with PKCE: full authorization-code flow with account picker; the selected account is persisted and its data-center base URI resolved from /oauth/userinfo
+- Five new API-key access-review connectors: Mercury, Apollo.io, Deepgram, ClickHouse Cloud, and Langfuse
+- APIKeyBasicAuthUserPass auth mode for API-key connectors supporting username:password credentials
+- Read actions on all unprefixed OAuth scopes
+
+### Changed
+
+- Pending signature requests on a superseded version are moved to the newly published minor version, preserving the notification schedule
+
+### Fixed
+
+- Signature requests are now restricted to the current published version
+- Heroku connection probe sends the versioned `Accept: application/vnd.heroku+json; version=3` header, correctly detecting revoked tokens
+- Third party assessment header display
+
 ## [0.218.1] - 2026-06-23
 
 ### Fixed
