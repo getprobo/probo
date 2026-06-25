@@ -4,6 +4,16 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.220.0] - 2026-06-25
+
+### Added
+
+- Four new API-key access-review connectors: Pylon, OpenRouter, incident.io, and Brevo
+
+### Fixed
+
+- Advertised scopes for OAuth2 protected resources
+
 ## [0.219.0] - 2026-06-24
 
 ### Added
