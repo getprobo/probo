@@ -4,6 +4,12 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.197.1] - 2026-06-25
+
+### Fixed
+
+- `prb login` now requests the correct OAuth2 scopes (removed redundant `:read` suffix variants)
+
 ## [0.197.0] - 2026-06-22
 
 ### Added
