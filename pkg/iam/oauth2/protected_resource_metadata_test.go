@@ -32,19 +32,21 @@ func TestNewProtectedResourceMetadata(t *testing.T) {
 	reg := oauth2scope.NewRegistry().Register(
 		map[coredata.OAuth2Scope][]string{
 			probo.ScopeV1DocumentRead: {"core:document:get"},
+			probo.ScopeV1Document:     {"core:document:create"},
 		},
 	)
 
 	resource := uri.URI("https://app.example.com")
 	authorizationServer := uri.URI("https://app.example.com")
 
-	metadata := oauth2.NewProtectedResourceMetadata(resource, authorizationServer, reg.RegisteredScopes())
+	metadata := oauth2.NewProtectedResourceMetadata(resource, authorizationServer, reg.AllWriteScopes())
 	require.NotNil(t, metadata)
 
 	assert.Equal(t, resource, metadata.Resource)
 	assert.Equal(t, []uri.URI{authorizationServer}, metadata.AuthorizationServers)
 	assert.Equal(t, []string{"header"}, metadata.BearerMethodsSupported)
 	assert.Contains(t, metadata.ScopesSupported, oauth2.ScopeOpenID)
-	assert.Contains(t, metadata.ScopesSupported, probo.ScopeV1DocumentRead)
+	assert.Contains(t, metadata.ScopesSupported, probo.ScopeV1Document)
+	assert.NotContains(t, metadata.ScopesSupported, probo.ScopeV1DocumentRead)
 	assert.NotContains(t, metadata.ScopesSupported, oauth2.ScopeProfile)
 }

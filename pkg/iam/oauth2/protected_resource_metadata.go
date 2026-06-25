@@ -31,7 +31,7 @@ type ProtectedResourceMetadata struct {
 func NewProtectedResourceMetadata(
 	resource uri.URI,
 	authorizationServer uri.URI,
-	registeredScopes []coredata.OAuth2Scope,
+	writeScopes []coredata.OAuth2Scope,
 ) *ProtectedResourceMetadata {
 	return &ProtectedResourceMetadata{
 		Resource:             resource,
@@ -39,6 +39,6 @@ func NewProtectedResourceMetadata(
 		BearerMethodsSupported: []string{
 			"header",
 		},
-		ScopesSupported: protectedResourceScopes(registeredScopes),
+		ScopesSupported: protectedResourceScopes(writeScopes),
 	}
 }

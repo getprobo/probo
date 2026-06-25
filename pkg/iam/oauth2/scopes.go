@@ -32,9 +32,9 @@ func authorizationServerScopes(registeredScopes []coredata.OAuth2Scope) []coreda
 	)
 }
 
-func protectedResourceScopes(registeredScopes []coredata.OAuth2Scope) []coredata.OAuth2Scope {
+func protectedResourceScopes(writeScopes []coredata.OAuth2Scope) []coredata.OAuth2Scope {
 	return slices.Concat(
 		[]coredata.OAuth2Scope{ScopeOpenID},
-		registeredScopes,
+		writeScopes,
 	)
 }

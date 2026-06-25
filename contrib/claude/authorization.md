@@ -289,7 +289,7 @@ Scopes are namespace- or product-level only — no resource segments (e.g. `v1:p
 **Discovery:**
 
 - Authorization server (RFC 8414): `scopes_supported` on `/.well-known/oauth-authorization-server` lists OIDC + all API scopes; `protected_resources` links to the resource metadata document
-- Protected resource (RFC 9728): `scopes_supported` on `/.well-known/oauth-protected-resource` lists `openid` plus API scopes
+- Protected resource (RFC 9728): `scopes_supported` on `/.well-known/oauth-protected-resource` lists `openid` plus write API scopes only (no `:read` suffix); matches CIMD client registration
 
 **Enforcement:** OAuth2 bearer-token requests carry the validated access token on the request context (`pkg/iam/oauth2/request_context.go`). Before IAM policy evaluation, `iam.Authorizer` checks registered `oauth2scope.Registry` mappings via `Registry.Allows`. Each domain package exports `OAuth2ScopeMappings` in its `oauth2_scopes.go`; `probod` registers all domain mappings on the shared registry before `iam.NewService`. The check uses explicit scope→action lists — no `:read` / `:get` heuristics at enforcement time. Session, personal API key, and SCIM auth skip the check (no access token on context). Unmapped IAM actions **deny** OAuth requests (fail closed). Enforcement reads scopes from the access token directly.
 

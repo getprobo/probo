@@ -114,7 +114,8 @@ func TestOAuth2_ProtectedResourceMetadata(t *testing.T) {
 	assert.Contains(t, metadata.AuthorizationServers, expectedResource)
 	assert.Contains(t, metadata.BearerMethodsSupported, "header")
 	assert.Contains(t, metadata.ScopesSupported, "openid")
-	assert.Contains(t, metadata.ScopesSupported, "v1:document:read")
+	assert.Contains(t, metadata.ScopesSupported, "v1:document")
+	assert.NotContains(t, metadata.ScopesSupported, "v1:document:read")
 	assert.NotContains(t, metadata.ScopesSupported, "profile")
 }
 
