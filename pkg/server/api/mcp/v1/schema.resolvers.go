@@ -2954,6 +2954,10 @@ func (r *Resolver) RemoveUserTool(ctx context.Context, req *mcp.CallToolRequest,
 			return nil, types.RemoveUserOutput{}, fmt.Errorf("cannot remove last active owner: %w", err)
 		}
 
+		if _, ok := errors.AsType[*iam.ErrProfileInUse](err); ok {
+			return nil, types.RemoveUserOutput{}, fmt.Errorf("cannot remove person: referenced by other resources: %w", err)
+		}
+
 		return nil, types.RemoveUserOutput{}, fmt.Errorf("remove user: %w", err)
 	}
 

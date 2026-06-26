@@ -180,6 +180,18 @@ func (e ErrLastActiveOwner) Error() string {
 	return fmt.Sprintf("cannot remove profile %q: last active owner of the organization", e.MembershipID)
 }
 
+type ErrProfileInUse struct {
+	ProfileID gid.GID
+}
+
+func NewProfileInUseError(profileID gid.GID) error {
+	return &ErrProfileInUse{ProfileID: profileID}
+}
+
+func (e ErrProfileInUse) Error() string {
+	return fmt.Sprintf("cannot remove profile %q: referenced by other resources", e.ProfileID)
+}
+
 type ErrOrganizationNotFound struct{ OrganizationID gid.GID }
 
 func NewOrganizationNotFoundError(organizationID gid.GID) error {

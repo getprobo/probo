@@ -20,6 +20,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.probo.inc/probo/e2e/internal/factory"
 	"go.probo.inc/probo/e2e/internal/testutil"
 )
 
@@ -322,6 +323,67 @@ func TestUser_RemoveUser(t *testing.T) {
 	}
 
 	assert.False(t, removedUserFound, "Should not find removed user")
+}
+
+func TestUser_RemoveUser_ProfileInUse(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	profileID := factory.CreateUser(owner)
+
+	const createAssetMutation = `
+		mutation($input: CreateAssetInput!) {
+			createAsset(input: $input) {
+				assetEdge {
+					node {
+						id
+					}
+				}
+			}
+		}
+	`
+
+	var createAssetResult struct {
+		CreateAsset struct {
+			AssetEdge struct {
+				Node struct {
+					ID string `json:"id"`
+				} `json:"node"`
+			} `json:"assetEdge"`
+		} `json:"createAsset"`
+	}
+
+	err := owner.Execute(createAssetMutation, map[string]any{
+		"input": map[string]any{
+			"organizationId":  owner.GetOrganizationID().String(),
+			"name":            "Production Database Server",
+			"amount":          1,
+			"ownerId":         profileID,
+			"assetType":       "VIRTUAL",
+			"dataTypesStored": "Customer PII",
+		},
+	}, &createAssetResult)
+	require.NoError(t, err)
+	require.NotEmpty(t, createAssetResult.CreateAsset.AssetEdge.Node.ID)
+
+	const removeUserMutation = `
+		mutation($input: RemoveUserInput!) {
+			removeUser(input: $input) {
+				deletedProfileId
+			}
+		}
+	`
+
+	err = owner.ExecuteConnect(removeUserMutation, map[string]any{
+		"input": map[string]any{
+			"organizationId": owner.GetOrganizationID().String(),
+			"profileId":      profileID,
+		},
+	}, nil)
+	testutil.RequireErrorCode(t, err, "CONFLICT")
+
+	var gqlErrors testutil.GraphQLErrors
+	require.ErrorAs(t, err, &gqlErrors)
+	assert.Contains(t, gqlErrors[0].Message, "referenced by other resources")
 }
 
 func TestUser_ArchiveUser(t *testing.T) {

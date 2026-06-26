@@ -354,6 +354,10 @@ func (s *OrganizationService) RemoveUser(
 			}
 
 			if err := profile.Delete(ctx, tx, scope, profileID); err != nil {
+				if errors.Is(err, coredata.ErrResourceInUse) {
+					return NewProfileInUseError(profileID)
+				}
+
 				return fmt.Errorf("cannot delete profile: %w", err)
 			}
 
