@@ -16,14 +16,14 @@ import { lazy } from "@probo/react-lazy";
 import { type AppRoute, routeFromAppRoute } from "@probo/routes";
 import { createBrowserRouter } from "react-router";
 
-import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
 import { getPathPrefix } from "#/lib/http/pathPrefix";
 import { HomePageSkeleton } from "#/pages/HomePageSkeleton";
+import { MainLayoutSkeleton } from "#/pages/MainLayoutSkeleton";
 
 const routes = [
   {
     path: "/",
-    Fallback: PageSkeleton,
+    Fallback: MainLayoutSkeleton,
     Component: lazy(() => import("#/pages/MainLayoutLoader")),
     children: [
       {
