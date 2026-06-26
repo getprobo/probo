@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,15 +12,19 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { RouterProvider } from "react-router";
+import { Heading } from "@probo/ui/src/v2/typography/Heading";
+import { useLocation } from "react-router";
 
-import { RelayProvider } from "#/lib/relay/RelayProvider";
-import { router } from "#/routes";
+// Temporary stub for the Trust Center sections so the top-bar nav links resolve
+// and the active state renders. Real pages replace these per section.
+export default function PlaceholderPage() {
+  const { pathname } = useLocation();
+  const segment = pathname.replace(/^\//, "").split("/")[0] ?? "";
+  const title = segment.charAt(0).toUpperCase() + segment.slice(1);
 
-export function App() {
   return (
-    <RelayProvider>
-      <RouterProvider router={router} />
-    </RelayProvider>
+    <main className="mx-auto w-full max-w-[1024px] px-8 py-10">
+      <Heading>{title}</Heading>
+    </main>
   );
 }

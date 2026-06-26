@@ -17,19 +17,40 @@ import { type AppRoute, routeFromAppRoute } from "@probo/routes";
 import { createBrowserRouter } from "react-router";
 
 import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
+import { getPathPrefix } from "#/lib/http/pathPrefix";
 
 const routes = [
   {
     path: "/",
     Fallback: PageSkeleton,
-    Component: lazy(() => import("#/pages/MainLayout")),
+    Component: lazy(() => import("#/pages/MainLayoutLoader")),
     children: [
       {
         index: true,
         Component: lazy(() => import("#/pages/HomePage")),
       },
+      {
+        path: "documents",
+        Component: lazy(() => import("#/pages/PlaceholderPage")),
+      },
+      {
+        path: "subprocessors",
+        Component: lazy(() => import("#/pages/PlaceholderPage")),
+      },
+      {
+        path: "updates",
+        Component: lazy(() => import("#/pages/PlaceholderPage")),
+      },
+      {
+        path: "requests",
+        Component: lazy(() => import("#/pages/PlaceholderPage")),
+      },
     ],
   },
 ] satisfies AppRoute[];
 
-export const router = createBrowserRouter(routes.map(routeFromAppRoute));
+// The portal is served under a /trust/{slug} path prefix (or a bare custom
+// domain). Match the router basename to that prefix so the routes resolve.
+export const router = createBrowserRouter(routes.map(routeFromAppRoute), {
+  basename: getPathPrefix() || "/",
+});

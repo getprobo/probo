@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,15 +12,18 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { RouterProvider } from "react-router";
+import { makeFetchQuery } from "@probo/relay";
+import { Environment, Network, RecordSource, Store } from "relay-runtime";
 
-import { RelayProvider } from "#/lib/relay/RelayProvider";
-import { router } from "#/routes";
+import { buildEndpoint } from "#/lib/http/endpoint";
 
-export function App() {
-  return (
-    <RelayProvider>
-      <RouterProvider router={router} />
-    </RelayProvider>
-  );
-}
+const store = new Store(new RecordSource(), {
+  queryCacheExpirationTime: 1 * 60 * 1000,
+  gcReleaseBufferSize: 20,
+});
+
+export const environment = new Environment({
+  configName: "complianceportal",
+  network: Network.create(makeFetchQuery(buildEndpoint())),
+  store,
+});

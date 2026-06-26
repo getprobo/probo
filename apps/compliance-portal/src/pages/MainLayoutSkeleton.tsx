@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,15 +12,12 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { RouterProvider } from "react-router";
+import { TopBarSkeleton } from "#/components/TopBar/TopBarSkeleton";
 
-import { RelayProvider } from "#/lib/relay/RelayProvider";
-import { router } from "#/routes";
-
-export function App() {
+export function MainLayoutSkeleton() {
   return (
-    <RelayProvider>
-      <RouterProvider router={router} />
-    </RelayProvider>
+    <div className="min-h-screen bg-sand-1">
+      <TopBarSkeleton />
+    </div>
   );
 }
