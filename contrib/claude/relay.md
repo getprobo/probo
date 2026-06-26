@@ -232,6 +232,35 @@ function ContactListItem(props: { contactKey: ContactListItem_contact$key }) {
 
 Select `permission(action:)` fields (aliased `canUpdate` / `canDelete`) in the fragment of the component that renders the action, and gate the UI on the resulting boolean. See [`contrib/claude/permissions.md`](permissions.md).
 
+### Required fields (`@required`)
+
+GraphQL schemas mark many fields nullable defensively, but at a given call site you usually **expect** a value to be there. When a field is nullable in the schema but the component cannot meaningfully render without it, annotate it with `@required` so the **generated type is non-null**. This keeps typing honest and consistent: callers stop threading `?.` / `?? ""` / non-null `!` assertions through code that always expects data, and a genuinely-missing value surfaces as a real signal instead of silently rendering an empty UI.
+
+Pick the action by what should happen when the value is actually absent at runtime:
+
+- **`@required(action: THROW)`** — the value is an invariant for this view (e.g. a page's root entity, the `currentTrustCenter` a portal is built around). A null throws on read and propagates to the nearest error boundary (see [`error-handling.md`](error-handling.md)). The field becomes non-null in the type.
+- **`@required(action: LOG)`** — a missing value should degrade gracefully rather than crash: the null **bubbles up** to the nearest `@required` ancestor (or makes the fragment/field data null), and Relay logs it. Use when the surrounding UI can render a sensible fallback.
+- **`@required(action: NONE)`** — bubble nullability without logging; rarely needed.
+
+```graphql
+# Good — the view is built around this entity; THROW makes it non-null
+currentTrustCenter @required(action: THROW) {
+  organization {
+    name          # already String! in the schema — no @required needed
+    logo { downloadUrl }   # legitimately optional — leave nullable
+  }
+}
+```
+
+```tsx
+// Good — non-null typing falls out of @required; no defensive chaining
+const { organization } = data.currentTrustCenter;
+const name = organization.name;
+const logoUrl = organization.logo?.downloadUrl ?? undefined; // logo stays optional
+```
+
+Do **not** reach for `@required` to silence nullability on fields that are *genuinely* optional (an avatar, a logo, a description that may be empty). Those keep their nullable type and get a real empty/fallback state. Likewise, never select a field, mark it `@required(action: THROW)`, and rely on the throw as control flow for an expected-empty case — that is an error path, not a branch. And there is no need to annotate fields the schema already declares non-null (`String!`, `Organization!`).
+
 ### Refetchable fragments
 
 For lists that support sorting and pagination, use `@refetchable` with `@argumentDefinitions`:

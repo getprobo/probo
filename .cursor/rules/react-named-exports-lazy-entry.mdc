@@ -1,0 +1,45 @@
+---
+description: Named exports for components; default export only for lazy() bundle entries
+globs: "**/*.tsx"
+alwaysApply: false
+---
+
+# Named exports; `export default` only for lazy() entries
+
+React components use **named exports**. `export default` is reserved as an
+exception **only** for the component a router/`lazy()` imports as a bundle entry,
+because `lazy(() => import("./X"))` resolves the module's default export.
+
+In the Loader + Page/Layout pattern this means exactly **one** default export per
+chain — the Loader (the `lazy()` target). The Page/Layout it renders is imported
+**directly by the Loader**, not through `lazy()`, so it must be a named export.
+
+```tsx
+// GOOD — Loader is the lazy() entry → default export
+// MainLayoutLoader.tsx
+import { MainLayout, mainLayoutQuery } from "./MainLayout";
+export default function MainLayoutLoader() { /* useQueryLoader → <MainLayout /> */ }
+
+// GOOD — Layout/Page imported directly by the Loader → named export
+// MainLayout.tsx
+export const mainLayoutQuery = graphql`query MainLayoutQuery { ...TopBar_query }`;
+export function MainLayout({ queryRef }: MainLayoutProps) { /* usePreloadedQuery */ }
+
+// routes.tsx — only the Loader is referenced by lazy()
+Component: lazy(() => import("#/pages/MainLayoutLoader")),
+```
+
+```tsx
+// BAD — Page/Layout defaulted even though the Loader (not lazy) imports it
+// MainLayout.tsx
+export default function MainLayout(/* ... */) {}
+// MainLayoutLoader.tsx
+import MainLayout, { mainLayoutQuery } from "./MainLayout";
+```
+
+A page with no loader (no Relay data) that `lazy()` imports directly is itself
+the bundle entry, so it keeps the `export default`. The rule is about *who
+`lazy()` imports*, not about the "Page" vs "Layout" label.
+
+See `contrib/claude/react-components.md` (File and export) and
+`contrib/claude/app-arborescence.md`.
