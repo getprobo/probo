@@ -14,25 +14,13 @@
 
 import { tv } from "tailwind-variants/lite";
 
-// Trust Center top navigation bar. Slots are shared by the live TopBar and its
-// skeleton so the loading placeholder is structurally identical.
-export const topBar = tv({
+// Page header content rendered inside the shared HeaderBand: a size-7 title row
+// (with optional count and right-aligned actions) above an optional toolbar.
+export const pageHeader = tv({
   slots: {
-    bar: "flex h-14 items-center bg-sand-1 px-8",
-    inner: "mx-auto flex w-full max-w-5xl items-center gap-10",
-    brand: "flex items-center gap-2",
-    logo: "shrink-0",
-    spacer: "h-px flex-1",
-    nav: "flex items-center gap-1",
+    content: "flex w-full flex-col gap-2",
+    titleRow: "flex w-full items-center justify-between gap-4",
+    // Muted item count appended to the title (e.g. "Documents (3)").
+    count: "font-light text-sand-8",
   },
-});
-
-// Rounded pill that opens the authenticated user menu.
-export const topBarUserMenuTrigger = tv({
-  base: [
-    "flex h-8 items-center gap-2 rounded-full py-1 pr-2.5 pl-1",
-    "cursor-pointer outline-none transition-colors select-none",
-    "hover:bg-sand-3 data-[popup-open]:bg-sand-3",
-    "focus-visible:ring-2 focus-visible:ring-sand-8 focus-visible:ring-offset-1 focus-visible:ring-offset-sand-1",
-  ],
 });

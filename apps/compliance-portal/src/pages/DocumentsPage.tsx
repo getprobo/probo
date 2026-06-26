@@ -12,31 +12,10 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import type { PreloadedQuery } from "react-relay";
-import { graphql, usePreloadedQuery } from "react-relay";
-import { Outlet } from "react-router";
+import { PageHeader } from "#/components/PageHeader/PageHeader";
 
-import { TopBar } from "#/components/TopBar/TopBar";
-
-import type { MainLayoutQuery } from "./__generated__/MainLayoutQuery.graphql";
-
-export const mainLayoutQuery = graphql`
-  query MainLayoutQuery {
-    ...TopBar_query
-  }
-`;
-
-interface MainLayoutProps {
-  queryRef: PreloadedQuery<MainLayoutQuery>;
-}
-
-export function MainLayout({ queryRef }: MainLayoutProps) {
-  const data = usePreloadedQuery<MainLayoutQuery>(mainLayoutQuery, queryRef);
-
-  return (
-    <div className="min-h-screen bg-sand-2">
-      <TopBar queryKey={data} />
-      <Outlet />
-    </div>
-  );
+// Toolbar (All/Public/Private tabs, framework filter, search) and the document
+// count are deferred until the v2 Tabs/Select/TextField components exist.
+export default function DocumentsPage() {
+  return <PageHeader title="Documents" />;
 }

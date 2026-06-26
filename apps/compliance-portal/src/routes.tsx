@@ -18,6 +18,7 @@ import { createBrowserRouter } from "react-router";
 
 import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
 import { getPathPrefix } from "#/lib/http/pathPrefix";
+import { HomePageSkeleton } from "#/pages/HomePageSkeleton";
 
 const routes = [
   {
@@ -27,23 +28,24 @@ const routes = [
     children: [
       {
         index: true,
-        Component: lazy(() => import("#/pages/HomePage")),
+        Fallback: HomePageSkeleton,
+        Component: lazy(() => import("#/pages/HomePageLoader")),
       },
       {
         path: "documents",
-        Component: lazy(() => import("#/pages/PlaceholderPage")),
+        Component: lazy(() => import("#/pages/DocumentsPage")),
       },
       {
         path: "subprocessors",
-        Component: lazy(() => import("#/pages/PlaceholderPage")),
+        Component: lazy(() => import("#/pages/SubprocessorsPage")),
       },
       {
         path: "updates",
-        Component: lazy(() => import("#/pages/PlaceholderPage")),
+        Component: lazy(() => import("#/pages/UpdatesPage")),
       },
       {
         path: "requests",
-        Component: lazy(() => import("#/pages/PlaceholderPage")),
+        Component: lazy(() => import("#/pages/RequestsPage")),
       },
     ],
   },

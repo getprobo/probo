@@ -16,7 +16,7 @@ import { TopBarSkeleton } from "#/components/TopBar/TopBarSkeleton";
 
 export function MainLayoutSkeleton() {
   return (
-    <div className="min-h-screen bg-sand-1">
+    <div className="min-h-screen bg-sand-2">
       <TopBarSkeleton />
     </div>
   );

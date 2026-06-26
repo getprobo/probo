@@ -12,31 +12,20 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import type { PreloadedQuery } from "react-relay";
-import { graphql, usePreloadedQuery } from "react-relay";
-import { Outlet } from "react-router";
+import type { PropsWithChildren } from "react";
 
-import { TopBar } from "#/components/TopBar/TopBar";
+import { headerBand } from "./variants";
 
-import type { MainLayoutQuery } from "./__generated__/MainLayoutQuery.graphql";
+export type HeaderBandProps = PropsWithChildren;
 
-export const mainLayoutQuery = graphql`
-  query MainLayoutQuery {
-    ...TopBar_query
-  }
-`;
-
-interface MainLayoutProps {
-  queryRef: PreloadedQuery<MainLayoutQuery>;
-}
-
-export function MainLayout({ queryRef }: MainLayoutProps) {
-  const data = usePreloadedQuery<MainLayoutQuery>(mainLayoutQuery, queryRef);
+// Pure layout shell: the white band + centered content column. Consumers (Hero,
+// PageHeader) supply a single content column and own its internal spacing.
+export function HeaderBand({ children }: HeaderBandProps) {
+  const { band, inner } = headerBand();
 
   return (
-    <div className="min-h-screen bg-sand-2">
-      <TopBar queryKey={data} />
-      <Outlet />
-    </div>
+    <header className={band()}>
+      <div className={inner()}>{children}</div>
+    </header>
   );
 }

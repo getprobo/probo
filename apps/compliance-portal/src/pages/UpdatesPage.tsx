@@ -12,31 +12,20 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import type { PreloadedQuery } from "react-relay";
-import { graphql, usePreloadedQuery } from "react-relay";
-import { Outlet } from "react-router";
+import { BellIcon } from "@phosphor-icons/react";
+import { Button } from "@probo/ui/src/v2/Button/Button";
 
-import { TopBar } from "#/components/TopBar/TopBar";
+import { PageHeader } from "#/components/PageHeader/PageHeader";
 
-import type { MainLayoutQuery } from "./__generated__/MainLayoutQuery.graphql";
-
-export const mainLayoutQuery = graphql`
-  query MainLayoutQuery {
-    ...TopBar_query
-  }
-`;
-
-interface MainLayoutProps {
-  queryRef: PreloadedQuery<MainLayoutQuery>;
-}
-
-export function MainLayout({ queryRef }: MainLayoutProps) {
-  const data = usePreloadedQuery<MainLayoutQuery>(mainLayoutQuery, queryRef);
-
+export default function UpdatesPage() {
   return (
-    <div className="min-h-screen bg-sand-2">
-      <TopBar queryKey={data} />
-      <Outlet />
-    </div>
+    <PageHeader
+      title="Updates"
+      actions={(
+        <Button variant="soft" color="neutral" highContrast iconStart={<BellIcon />}>
+          Subscribe to updates
+        </Button>
+      )}
+    />
   );
 }

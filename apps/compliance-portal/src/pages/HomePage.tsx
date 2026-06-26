@@ -12,10 +12,37 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-export default function HomePage() {
+import type { PreloadedQuery } from "react-relay";
+import { graphql, usePreloadedQuery } from "react-relay";
+
+import { Hero } from "#/components/Hero/Hero";
+import { OrganizationContactInfo } from "#/components/Hero/OrganizationContactInfo";
+
+import type { HomePageQuery } from "./__generated__/HomePageQuery.graphql";
+
+export const homePageQuery = graphql`
+  query HomePageQuery {
+    currentTrustCenter @required(action: THROW) {
+      organization {
+        name
+        description
+        ...OrganizationContactInfo_organization
+      }
+    }
+  }
+`;
+
+interface HomePageProps {
+  queryRef: PreloadedQuery<HomePageQuery>;
+}
+
+export function HomePage({ queryRef }: HomePageProps) {
+  const data = usePreloadedQuery<HomePageQuery>(homePageQuery, queryRef);
+  const { organization } = data.currentTrustCenter;
+
   return (
-    <main className="flex min-h-screen items-center justify-center">
-      <h1 className="text-6 font-bold text-sand-12">Compliance Portal</h1>
-    </main>
+    <Hero title={`Trust at ${organization.name}.`} description={organization.description}>
+      <OrganizationContactInfo organizationKey={organization} />
+    </Hero>
   );
 }

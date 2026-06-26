@@ -12,19 +12,23 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { Heading } from "@probo/ui/src/v2/typography/Heading";
-import { useLocation } from "react-router";
+import { useEffect } from "react";
+import { useQueryLoader } from "react-relay";
 
-// Temporary stub for the Trust Center sections so the top-bar nav links resolve
-// and the active state renders. Real pages replace these per section.
-export default function PlaceholderPage() {
-  const { pathname } = useLocation();
-  const segment = pathname.replace(/^\//, "").split("/")[0] ?? "";
-  const title = segment.charAt(0).toUpperCase() + segment.slice(1);
+import type { HomePageQuery } from "./__generated__/HomePageQuery.graphql";
+import { HomePage, homePageQuery } from "./HomePage";
+import { HomePageSkeleton } from "./HomePageSkeleton";
 
-  return (
-    <main className="mx-auto w-full max-w-[1024px] px-8 py-10">
-      <Heading>{title}</Heading>
-    </main>
-  );
+export default function HomePageLoader() {
+  const [queryRef, loadQuery] = useQueryLoader<HomePageQuery>(homePageQuery);
+
+  useEffect(() => {
+    loadQuery({});
+  }, [loadQuery]);
+
+  if (!queryRef) {
+    return <HomePageSkeleton />;
+  }
+
+  return <HomePage queryRef={queryRef} />;
 }
