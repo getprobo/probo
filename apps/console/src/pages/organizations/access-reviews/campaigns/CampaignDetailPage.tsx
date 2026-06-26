@@ -148,6 +148,7 @@ export const campaignDetailPageQuery = graphql`
         id
         name
         status
+        pendingEntryCount
         canDelete: permission(action: "access-review:campaign:delete")
         sources {
           id
@@ -248,13 +249,7 @@ export default function CampaignDetailPage({ queryRef }: Props) {
   const [deleteCampaign, isDeleting]
     = useMutation<CampaignDetailPageDeleteMutation>(deleteCampaignMutation);
 
-  const allDecided = campaign.sources.length > 0
-    && campaign.sources.every(source =>
-      source.entries
-      && source.entries.edges.length > 0
-      && source.entries.edges.every(edge => edge.node.decision !== "PENDING")
-      && !source.entries.pageInfo.hasNextPage,
-    );
+  const canComplete = campaign.pendingEntryCount === 0;
 
   const handleStart = () => {
     startCampaign({
@@ -425,7 +420,7 @@ export default function CampaignDetailPage({ queryRef }: Props) {
         {isPendingActions && (
           <Button
             onClick={handleComplete}
-            disabled={!allDecided || isClosing}
+            disabled={!canComplete || isClosing}
           >
             {isClosing ? __("Completing...") : __("Complete campaign")}
           </Button>
