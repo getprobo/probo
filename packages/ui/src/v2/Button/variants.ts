@@ -53,6 +53,12 @@ export const button = tv({
       true: "",
       false: "",
     },
+    // Persistent "selected" treatment for nav items built on Anchor / Link
+    // (ghost / soft surfaces). Look-only — does not change structure.
+    active: {
+      true: "",
+      false: "",
+    },
   },
   compoundVariants: [
     // ── solid: filled step-9 background, white text (dark for light hues) ──
@@ -104,6 +110,21 @@ export const button = tv({
     { variant: "ghost", color: "amber", class: "text-amber-11 hover:bg-amber-3" },
     { variant: "ghost", color: "sky", class: "text-sky-11 hover:bg-sky-3" },
 
+    // ── active: persistent selected background + high-contrast text ──
+    // ghost goes from transparent to the step-3 tint; soft bumps to step-4.
+    { variant: "ghost", color: "neutral", active: true, class: "bg-sand-3 text-sand-12" },
+    { variant: "ghost", color: "gold", active: true, class: "bg-gold-3 text-gold-12" },
+    { variant: "ghost", color: "red", active: true, class: "bg-red-3 text-red-12" },
+    { variant: "ghost", color: "green", active: true, class: "bg-green-3 text-green-12" },
+    { variant: "ghost", color: "amber", active: true, class: "bg-amber-3 text-amber-12" },
+    { variant: "ghost", color: "sky", active: true, class: "bg-sky-3 text-sky-12" },
+    { variant: "soft", color: "neutral", active: true, class: "bg-sand-4 text-sand-12" },
+    { variant: "soft", color: "gold", active: true, class: "bg-gold-4 text-gold-12" },
+    { variant: "soft", color: "red", active: true, class: "bg-red-4 text-red-12" },
+    { variant: "soft", color: "green", active: true, class: "bg-green-4 text-green-12" },
+    { variant: "soft", color: "amber", active: true, class: "bg-amber-4 text-amber-12" },
+    { variant: "soft", color: "sky", active: true, class: "bg-sky-4 text-sky-12" },
+
     // ── high-contrast text bump for the tinted variants ──
     { variant: ["soft", "surface", "outline", "ghost"], color: "neutral", highContrast: true, class: "text-sand-12" },
     { variant: ["soft", "surface", "outline", "ghost"], color: "gold", highContrast: true, class: "text-gold-12" },
@@ -117,6 +138,7 @@ export const button = tv({
     variant: "solid",
     color: "gold",
     highContrast: false,
+    active: false,
   },
 });
 
