@@ -58,6 +58,8 @@ func newRecorder(t *testing.T, cassettePath string, envVar string) *recorder.Rec
 			i.Request.Headers.Del("X-Api-Key")
 			i.Request.Headers.Del("Signoz-Api-Key")
 			i.Request.Headers.Del("Api-Key")
+			// Scaleway authenticates with the secret key in X-Auth-Token.
+			i.Request.Headers.Del("X-Auth-Token")
 
 			return nil
 		}, recorder.BeforeSaveHook),

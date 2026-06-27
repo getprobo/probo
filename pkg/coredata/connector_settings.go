@@ -174,6 +174,20 @@ type (
 	LangfuseConnectorSettings struct {
 		BaseURL string `json:"base_url"`
 	}
+
+	// ScalewayConnectorSettings stores the Scaleway Organization ID. A secret
+	// key is bound to one Organization, but GET /iam/v1alpha1/users requires
+	// the organization_id explicitly, so it is captured up front.
+	ScalewayConnectorSettings struct {
+		OrganizationID string `json:"organization_id"`
+	}
+
+	// CrispConnectorSettings stores the Crisp Website ID. A plugin token can
+	// be connected to several websites, so the reviewed website is captured up
+	// front as the {website_id} path segment on /v1/website/{website_id}/...
+	CrispConnectorSettings struct {
+		WebsiteID string `json:"website_id"`
+	}
 )
 
 // GrantType returns the OAuth2 grant type recorded on the connector's

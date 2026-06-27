@@ -189,6 +189,18 @@ func apiKeyConnectorSettings(input types.CreateAPIKeyConnectorInput) (json.RawMe
 		}
 
 		return json.Marshal(&coredata.LangfuseConnectorSettings{BaseURL: *input.LangfuseBaseURL})
+	case coredata.ConnectorProviderScaleway:
+		if input.ScalewayOrganizationID == nil || *input.ScalewayOrganizationID == "" {
+			return nil, fmt.Errorf("cannot create scaleway connector: scalewayOrganizationId is required")
+		}
+
+		return json.Marshal(&coredata.ScalewayConnectorSettings{OrganizationID: *input.ScalewayOrganizationID})
+	case coredata.ConnectorProviderCrisp:
+		if input.CrispWebsiteID == nil || *input.CrispWebsiteID == "" {
+			return nil, fmt.Errorf("cannot create crisp connector: crispWebsiteId is required")
+		}
+
+		return json.Marshal(&coredata.CrispConnectorSettings{WebsiteID: *input.CrispWebsiteID})
 	}
 
 	return nil, nil
