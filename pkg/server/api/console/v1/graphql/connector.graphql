@@ -92,6 +92,13 @@ enum ConnectorProvider
             value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderIncidentIO"
         )
     BREVO @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderBrevo")
+    SCALEWAY
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderScaleway")
+    YOUSIGN
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderYousign")
+    RAILWAY
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderRailway")
+    CRISP @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderCrisp")
 }
 
 type ConnectorProviderInfo {
@@ -174,6 +181,8 @@ input CreateAPIKeyConnectorInput {
     renderWorkspaceId: String
     neonOrganizationId: String
     langfuseBaseUrl: String
+    scalewayOrganizationId: String
+    crispWebsiteId: String
 }
 
 type CreateAPIKeyConnectorPayload {

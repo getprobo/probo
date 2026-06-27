@@ -1532,3 +1532,136 @@ func (r *microsoft365NameResolver) ResolveInstanceName(ctx context.Context) (str
 
 	return "", nil
 }
+
+// railwayNameResolver resolves the Railway workspace name via GraphQL, for the
+// AccessReviewSource title. With a single workspace it uses that workspace's
+// name; with several it falls back to the account holder's name, since the
+// source spans all of the account's workspaces.
+type railwayNameResolver struct {
+	httpClient *http.Client
+}
+
+func NewRailwayNameResolver(httpClient *http.Client) NameResolver {
+	return &railwayNameResolver{httpClient: httpClient}
+}
+
+func (r *railwayNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
+	body := struct {
+		Query string `json:"query"`
+	}{
+		Query: `query { me { name workspaces { id name } } }`,
+	}
+
+	payload, err := json.Marshal(body)
+	if err != nil {
+		return "", fmt.Errorf("cannot marshal railway account query: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, railwayGraphQLEndpoint, bytes.NewReader(payload))
+	if err != nil {
+		return "", fmt.Errorf("cannot create railway account request: %w", err)
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json")
+
+	httpResp, err := r.httpClient.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("cannot execute railway account request: %w", err)
+	}
+
+	defer func() { _ = httpResp.Body.Close() }()
+
+	// Best-effort: a non-2xx must not make the source-name worker retry forever
+	// — keep the generic name. (Railway also signals auth failure with a 200 +
+	// errors body, handled below.)
+	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
+		return "", nil
+	}
+
+	var resp struct {
+		Data struct {
+			Me *struct {
+				Name       string `json:"name"`
+				Workspaces []struct {
+					Name string `json:"name"`
+				} `json:"workspaces"`
+			} `json:"me"`
+		} `json:"data"`
+		Errors []struct {
+			Message string `json:"message"`
+		} `json:"errors"`
+	}
+	if err := json.NewDecoder(httpResp.Body).Decode(&resp); err != nil {
+		return "", fmt.Errorf("cannot decode railway account response: %w", err)
+	}
+
+	if len(resp.Errors) > 0 || resp.Data.Me == nil {
+		return "", nil
+	}
+
+	// A single workspace names the source directly; with several (or none) fall
+	// back to the account holder's display name. Never the email — a terminal
+	// empty result keeps the generic source name, which the worker tolerates.
+	me := resp.Data.Me
+	if len(me.Workspaces) == 1 {
+		return me.Workspaces[0].Name, nil
+	}
+
+	return me.Name, nil
+}
+
+// crispNameResolver resolves the Crisp website name via GET /v1/website/{id},
+// for the AccessReviewSource title. Like the driver it sends the X-Crisp-Tier
+// header; the Basic credential is supplied by the connection transport.
+type crispNameResolver struct {
+	httpClient *http.Client
+	websiteID  string
+}
+
+func NewCrispNameResolver(httpClient *http.Client, websiteID string) NameResolver {
+	return &crispNameResolver{httpClient: httpClient, websiteID: websiteID}
+}
+
+func (r *crispNameResolver) ResolveInstanceName(ctx context.Context) (string, error) {
+	if r.websiteID == "" {
+		return "", nil
+	}
+
+	endpoint, err := url.JoinPath(crispAPIBaseURL, "website", url.PathEscape(r.websiteID))
+	if err != nil {
+		return "", fmt.Errorf("cannot build crisp website URL: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
+	if err != nil {
+		return "", fmt.Errorf("cannot create crisp website request: %w", err)
+	}
+
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set(crispTierHeader, crispTierValue)
+
+	httpResp, err := r.httpClient.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("cannot execute crisp website request: %w", err)
+	}
+
+	defer func() { _ = httpResp.Body.Close() }()
+
+	// Best-effort: a non-2xx (revoked token, stale website id) must not make the
+	// source-name worker retry forever — keep the generic name.
+	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
+		return "", nil
+	}
+
+	var resp struct {
+		Data struct {
+			Name string `json:"name"`
+		} `json:"data"`
+	}
+	if err := json.NewDecoder(httpResp.Body).Decode(&resp); err != nil {
+		return "", fmt.Errorf("cannot decode crisp website response: %w", err)
+	}
+
+	return resp.Data.Name, nil
+}

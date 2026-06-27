@@ -74,6 +74,10 @@ const (
 	ConnectorProviderOpenRouter   ConnectorProvider = "OPENROUTER"
 	ConnectorProviderIncidentIO   ConnectorProvider = "INCIDENT_IO"
 	ConnectorProviderBrevo        ConnectorProvider = "BREVO"
+	ConnectorProviderScaleway     ConnectorProvider = "SCALEWAY"
+	ConnectorProviderYousign      ConnectorProvider = "YOUSIGN"
+	ConnectorProviderRailway      ConnectorProvider = "RAILWAY"
+	ConnectorProviderCrisp        ConnectorProvider = "CRISP"
 )
 
 var (
@@ -135,6 +139,10 @@ func ConnectorProviders() []ConnectorProvider {
 		ConnectorProviderOpenRouter,
 		ConnectorProviderIncidentIO,
 		ConnectorProviderBrevo,
+		ConnectorProviderScaleway,
+		ConnectorProviderYousign,
+		ConnectorProviderRailway,
+		ConnectorProviderCrisp,
 	}
 }
 
@@ -191,7 +199,11 @@ func (v ConnectorProvider) IsValid() bool {
 		ConnectorProviderPylon,
 		ConnectorProviderOpenRouter,
 		ConnectorProviderIncidentIO,
-		ConnectorProviderBrevo:
+		ConnectorProviderBrevo,
+		ConnectorProviderScaleway,
+		ConnectorProviderYousign,
+		ConnectorProviderRailway,
+		ConnectorProviderCrisp:
 		return true
 	}
 

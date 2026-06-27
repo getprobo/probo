@@ -36,6 +36,7 @@ const (
 	openRouterMembersProbeURL = "https://openrouter.ai/api/v1/organization/members?limit=1"
 	linearGraphQLEndpoint     = "https://api.linear.app/graphql"
 	mondayGraphQLEndpoint     = "https://api.monday.com/v2"
+	railwayGraphQLEndpoint    = "https://backboard.railway.com/graphql/v2"
 	posthogOrganizationPath   = "/api/organizations/@current/"
 	posthogUSBaseURL          = "https://us.posthog.com"
 	posthogEUBaseURL          = "https://eu.posthog.com"
@@ -233,6 +234,29 @@ func buildNeonProbeURL(conn *coredata.Connector) (string, error) {
 	return endpoint + "?" + q.Encode(), nil
 }
 
+func buildScalewayProbeURL(conn *coredata.Connector) (string, error) {
+	s, err := coredata.ConnectorSettings[coredata.ScalewayConnectorSettings](conn)
+	if err != nil {
+		return "", fmt.Errorf("cannot read scaleway connector settings: %w", err)
+	}
+
+	if s.OrganizationID == "" {
+		return "", fmt.Errorf("missing scaleway organization_id")
+	}
+
+	endpoint := url.URL{
+		Scheme: "https",
+		Host:   "api.scaleway.com",
+		Path:   "/iam/v1alpha1/users",
+		RawQuery: url.Values{
+			"organization_id": {s.OrganizationID},
+			"page_size":       {"1"},
+		}.Encode(),
+	}
+
+	return endpoint.String(), nil
+}
+
 func buildRenderProbeURL(conn *coredata.Connector) (string, error) {
 	s, err := coredata.ConnectorSettings[coredata.RenderConnectorSettings](conn)
 	if err != nil {
@@ -402,6 +426,99 @@ func probeMonday(
 		map[string]string{"query": "query { users(limit: 1) { id } }"},
 		nil,
 	)
+}
+
+// probeRailway verifies a Railway account token. Railway returns HTTP 200 with
+// a populated errors array (and data.me null) for a rejected token rather than
+// 401/403, so the generic probe would falsely pass — this closure inspects the
+// response body instead.
+func probeRailway(
+	ctx context.Context,
+	httpClient *http.Client,
+	_ *coredata.Connector,
+) error {
+	body, err := json.Marshal(map[string]string{"query": "query { me { id } }"})
+	if err != nil {
+		return fmt.Errorf("cannot marshal railway probe request: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, railwayGraphQLEndpoint, bytes.NewReader(body))
+	if err != nil {
+		return fmt.Errorf("cannot create railway probe request: %w", err)
+	}
+
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("railway probe request failed: %w", err)
+	}
+
+	defer func() {
+		_, _ = io.Copy(io.Discard, resp.Body)
+		_ = resp.Body.Close()
+	}()
+
+	if resp.StatusCode == http.StatusUnauthorized || resp.StatusCode == http.StatusForbidden {
+		return fmt.Errorf("credential rejected: status %d", resp.StatusCode)
+	}
+
+	var parsed struct {
+		Data struct {
+			Me *struct {
+				ID string `json:"id"`
+			} `json:"me"`
+		} `json:"data"`
+		Errors []json.RawMessage `json:"errors"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&parsed); err != nil {
+		return fmt.Errorf("cannot decode railway probe response: %w", err)
+	}
+
+	if len(parsed.Errors) > 0 || parsed.Data.Me == nil {
+		return fmt.Errorf("credential rejected: railway returned no authenticated account")
+	}
+
+	return nil
+}
+
+// probeCrisp verifies a Crisp plugin token against the configured website.
+// Every Crisp request needs the non-auth X-Crisp-Tier header, which the default
+// probeGET does not set, so this closure builds the request itself; the Basic
+// credential is attached by the connection transport. Beyond the usual 401/403,
+// it treats 404 as a rejection too: a valid token whose website_id is wrong or
+// unbound returns 404 on operators/list — a permanent misconfiguration that
+// would otherwise pass the probe and fail every later access review, so it
+// surfaces at connection time instead.
+func probeCrisp(
+	ctx context.Context,
+	httpClient *http.Client,
+	conn *coredata.Connector,
+) error {
+	s, err := coredata.ConnectorSettings[coredata.CrispConnectorSettings](conn)
+	if err != nil {
+		return fmt.Errorf("cannot read crisp connector settings: %w", err)
+	}
+
+	if s.WebsiteID == "" {
+		return fmt.Errorf("missing crisp website_id")
+	}
+
+	endpoint, err := url.JoinPath("https://api.crisp.chat/v1", "website", url.PathEscape(s.WebsiteID), "operators", "list")
+	if err != nil {
+		return fmt.Errorf("cannot build crisp probe URL: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
+	if err != nil {
+		return fmt.Errorf("cannot create crisp probe request: %w", err)
+	}
+
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("X-Crisp-Tier", "plugin")
+
+	return doProbeRequest(httpClient, req, http.StatusNotFound)
 }
 
 func probeAnthropic(
