@@ -25,6 +25,7 @@ import { Clerk } from "./Clerk";
 import { ClickHouse } from "./ClickHouse";
 import { ClickUp } from "./ClickUp";
 import { Cloudflare } from "./Cloudflare";
+import { Crisp } from "./Crisp";
 import { Cursor } from "./Cursor";
 import { Datadog } from "./Datadog";
 import { Deepgram } from "./Deepgram";
@@ -55,8 +56,10 @@ import { PagerDuty } from "./PagerDuty";
 import { PostHog } from "./PostHog";
 import { Pylon } from "./Pylon";
 import { Qovery } from "./Qovery";
+import { Railway } from "./Railway";
 import { Render } from "./Render";
 import { Resend } from "./Resend";
+import { Scaleway } from "./Scaleway";
 import { SendGrid } from "./SendGrid";
 import { Sentry } from "./Sentry";
 import { SigNoz } from "./SigNoz";
@@ -65,6 +68,7 @@ import { Supabase } from "./Supabase";
 import { Tailscale } from "./Tailscale";
 import { Tally } from "./Tally";
 import { Vercel } from "./Vercel";
+import { Yousign } from "./Yousign";
 import { Zendesk } from "./Zendesk";
 
 const thirdParties: Record<string, FC<ComponentProps<"svg">>> = {
@@ -79,6 +83,7 @@ const thirdParties: Record<string, FC<ComponentProps<"svg">>> = {
   CLICKHOUSE: ClickHouse,
   CLICKUP: ClickUp,
   CLOUDFLARE: Cloudflare,
+  CRISP: Crisp,
   CURSOR: Cursor,
   DATADOG: Datadog,
   DEEPGRAM: Deepgram,
@@ -112,8 +117,10 @@ const thirdParties: Record<string, FC<ComponentProps<"svg">>> = {
   POSTHOG: PostHog,
   PYLON: Pylon,
   QOVERY: Qovery,
+  RAILWAY: Railway,
   RENDER: Render,
   RESEND: Resend,
+  SCALEWAY: Scaleway,
   SENDGRID: SendGrid,
   SENTRY: Sentry,
   SIGNOZ: SigNoz,
@@ -122,6 +129,7 @@ const thirdParties: Record<string, FC<ComponentProps<"svg">>> = {
   TAILSCALE: Tailscale,
   TALLY: Tally,
   VERCEL: Vercel,
+  YOUSIGN: Yousign,
   ZENDESK: Zendesk,
 };
 
