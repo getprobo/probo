@@ -38,11 +38,9 @@ const topBarFragment = graphql`
       ...TopBarUserMenu_identity
     }
     currentTrustCenter @required(action: THROW) {
+      themedLogoUrl
       organization {
         name
-        logo {
-          downloadUrl
-        }
       }
     }
   }
@@ -61,9 +59,9 @@ export function TopBar({ queryKey }: TopBarProps) {
   const data = useFragment(topBarFragment, queryKey);
   const { pathname } = useLocation();
 
-  const { organization } = data.currentTrustCenter;
-  const organizationName = organization.name;
-  const logoUrl = organization.logo?.downloadUrl ?? undefined;
+  const { currentTrustCenter } = data;
+  const organizationName = currentTrustCenter.organization.name;
+  const logoUrl = currentTrustCenter.themedLogoUrl ?? undefined;
 
   const slots = topBar();
 
