@@ -47,12 +47,15 @@ export const badge = tv({
   },
   compoundVariants: [
     // solid: filled step-9 background, white text (dark for light hues)
-    { variant: "solid", color: "neutral", class: "bg-sand-9 text-white" },
-    { variant: "solid", color: "gold", class: "bg-gold-9 text-white" },
-    { variant: "solid", color: "red", class: "bg-red-9 text-white" },
-    { variant: "solid", color: "green", class: "bg-green-9 text-white" },
-    { variant: "solid", color: "amber", class: "bg-amber-9 text-amber-12" },
-    { variant: "solid", color: "sky", class: "bg-sky-9 text-sky-12" },
+    // Gated on highContrast:false so the high-contrast rules below don't also
+    // apply (tailwind-variants/lite has no merge — both would emit and a static
+    // text-white would win, breaking dark mode).
+    { variant: "solid", color: "neutral", highContrast: false, class: "bg-sand-9 text-white" },
+    { variant: "solid", color: "gold", highContrast: false, class: "bg-gold-9 text-white" },
+    { variant: "solid", color: "red", highContrast: false, class: "bg-red-9 text-white" },
+    { variant: "solid", color: "green", highContrast: false, class: "bg-green-9 text-white" },
+    { variant: "solid", color: "amber", highContrast: false, class: "bg-amber-9 text-amber-12" },
+    { variant: "solid", color: "sky", highContrast: false, class: "bg-sky-9 text-sky-12" },
     { variant: "solid", color: "neutral", highContrast: true, class: "bg-sand-12 text-sand-1" },
     { variant: "solid", color: "gold", highContrast: true, class: "bg-gold-12 text-gold-1" },
     { variant: "solid", color: "red", highContrast: true, class: "bg-red-12 text-red-1" },

@@ -56,12 +56,15 @@ export const iconButton = tv({
   },
   compoundVariants: [
     // solid / classic
-    { variant: ["solid", "classic"], color: "neutral", class: "bg-sand-9 text-white hover:bg-sand-10" },
-    { variant: ["solid", "classic"], color: "gold", class: "bg-gold-9 text-white hover:bg-gold-10" },
-    { variant: ["solid", "classic"], color: "red", class: "bg-red-9 text-white hover:bg-red-10" },
-    { variant: ["solid", "classic"], color: "green", class: "bg-green-9 text-white hover:bg-green-10" },
-    { variant: ["solid", "classic"], color: "amber", class: "bg-amber-9 text-amber-12 hover:bg-amber-10" },
-    { variant: ["solid", "classic"], color: "sky", class: "bg-sky-9 text-sky-12 hover:bg-sky-10" },
+    // Gated on highContrast:false so the high-contrast rules below don't also
+    // apply (tailwind-variants/lite has no merge — both would emit and a static
+    // text-white would win, breaking dark mode).
+    { variant: ["solid", "classic"], color: "neutral", highContrast: false, class: "bg-sand-9 text-white hover:bg-sand-10" },
+    { variant: ["solid", "classic"], color: "gold", highContrast: false, class: "bg-gold-9 text-white hover:bg-gold-10" },
+    { variant: ["solid", "classic"], color: "red", highContrast: false, class: "bg-red-9 text-white hover:bg-red-10" },
+    { variant: ["solid", "classic"], color: "green", highContrast: false, class: "bg-green-9 text-white hover:bg-green-10" },
+    { variant: ["solid", "classic"], color: "amber", highContrast: false, class: "bg-amber-9 text-amber-12 hover:bg-amber-10" },
+    { variant: ["solid", "classic"], color: "sky", highContrast: false, class: "bg-sky-9 text-sky-12 hover:bg-sky-10" },
     { variant: "classic", class: "shadow-2" },
     { variant: ["solid", "classic"], color: "neutral", highContrast: true, class: "bg-sand-12 text-sand-1 hover:bg-sand-12" },
     { variant: ["solid", "classic"], color: "gold", highContrast: true, class: "bg-gold-12 text-gold-1 hover:bg-gold-12" },
