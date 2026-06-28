@@ -63,6 +63,12 @@ export default defineConfig([
               message:
                 "Use useMutation from #/lib/relay/useMutation, not react-relay.",
             },
+            {
+              name: "i18next",
+              importNames: ["default"],
+              message:
+                "Don't import i18next's default (global singleton). Build a dedicated instance via `import { createInstance } from \"i18next\"`.",
+            },
           ],
         },
       ],

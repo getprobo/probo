@@ -12,10 +12,13 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+import { useTranslation } from "react-i18next";
+
 import { PageHeader } from "#/components/PageHeader/PageHeader";
 
 // Toolbar (All/Public/Private tabs, framework filter, search) and the document
 // count are deferred until the v2 Tabs/Select/TextField components exist.
 export default function DocumentsPage() {
-  return <PageHeader title="Documents" />;
+  const { t } = useTranslation();
+  return <PageHeader title={t("documents.title")} />;
 }
