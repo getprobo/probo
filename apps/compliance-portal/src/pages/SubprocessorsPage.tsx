@@ -12,10 +12,13 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+import { useTranslation } from "react-i18next";
+
 import { PageHeader } from "#/components/PageHeader/PageHeader";
 
 // Toolbar (category/region filters, search, Download CSV) and the subprocessor
 // count are deferred until the v2 Select/TextField components exist.
 export default function SubprocessorsPage() {
-  return <PageHeader title="Subprocessors" />;
+  const { t } = useTranslation();
+  return <PageHeader title={t("subprocessors.title")} />;
 }

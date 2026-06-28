@@ -21,6 +21,7 @@ import { DropdownPopup } from "@probo/ui/src/v2/Dropdown/DropdownPopup";
 import { DropdownSeparator } from "@probo/ui/src/v2/Dropdown/DropdownSeparator";
 import { DropdownTrigger } from "@probo/ui/src/v2/Dropdown/DropdownTrigger";
 import { Text } from "@probo/ui/src/v2/typography/Text";
+import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 
 import type { TopBarUserMenu_identity$key } from "./__generated__/TopBarUserMenu_identity.graphql";
@@ -38,6 +39,7 @@ interface TopBarUserMenuProps {
 }
 
 export function TopBarUserMenu({ identityKey }: TopBarUserMenuProps) {
+  const { t } = useTranslation();
   const identity = useFragment(topBarUserMenuFragment, identityKey);
 
   return (
@@ -63,7 +65,7 @@ export function TopBarUserMenu({ identityKey }: TopBarUserMenuProps) {
         <DropdownGroupLabel>{identity.email}</DropdownGroupLabel>
         <DropdownSeparator />
         <DropdownItem color="error" iconStart={<SignOutIcon />}>
-          Sign out
+          {t("userMenu.signOut")}
         </DropdownItem>
       </DropdownPopup>
     </Dropdown>

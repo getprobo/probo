@@ -1,5 +1,32 @@
 {
+  "topBar": {
+    "tagline": "Compliance Portal",
+    "getAccess": "Get Access",
+    "nav": {
+      "documents": "Documents",
+      "subprocessors": "Subprocessors",
+      "updates": "Updates",
+      "requests": "Requests"
+    }
+  },
+  "userMenu": {
+    "signOut": "Sign out"
+  },
+  "home": {
+    "heroTitle": "Trust at {{name}}."
+  },
   "documents": {
     "title": "Documents"
+  },
+  "subprocessors": {
+    "title": "Subprocessors"
+  },
+  "updates": {
+    "title": "Updates",
+    "subscribe": "Subscribe to updates"
+  },
+  "requests": {
+    "title": "Data Requests",
+    "newRequest": "New Request"
   }
 }

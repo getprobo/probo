@@ -14,16 +14,18 @@
 
 import { BellIcon } from "@phosphor-icons/react";
 import { Button } from "@probo/ui/src/v2/Button/Button";
+import { useTranslation } from "react-i18next";
 
 import { PageHeader } from "#/components/PageHeader/PageHeader";
 
 export default function UpdatesPage() {
+  const { t } = useTranslation();
   return (
     <PageHeader
-      title="Updates"
+      title={t("updates.title")}
       actions={(
         <Button variant="soft" color="neutral" highContrast iconStart={<BellIcon />}>
-          Subscribe to updates
+          {t("updates.subscribe")}
         </Button>
       )}
     />

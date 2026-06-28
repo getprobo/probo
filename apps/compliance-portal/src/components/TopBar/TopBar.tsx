@@ -17,6 +17,7 @@ import { Avatar } from "@probo/ui/src/v2/Avatar/Avatar";
 import { Button } from "@probo/ui/src/v2/Button/Button";
 import { Link } from "@probo/ui/src/v2/Button/Link";
 import { Text } from "@probo/ui/src/v2/typography/Text";
+import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 import { Link as RouterLink, useLocation } from "react-router";
 
@@ -25,10 +26,10 @@ import { TopBarUserMenu } from "./TopBarUserMenu";
 import { topBar } from "./variants";
 
 const NAV_ITEMS = [
-  { to: "/documents", label: "Documents" },
-  { to: "/subprocessors", label: "Subprocessors" },
-  { to: "/updates", label: "Updates" },
-  { to: "/requests", label: "Requests" },
+  { to: "/documents", labelKey: "topBar.nav.documents" },
+  { to: "/subprocessors", labelKey: "topBar.nav.subprocessors" },
+  { to: "/updates", labelKey: "topBar.nav.updates" },
+  { to: "/requests", labelKey: "topBar.nav.requests" },
 ] as const;
 
 const topBarFragment = graphql`
@@ -57,6 +58,7 @@ function isActive(pathname: string, to: string): boolean {
 }
 
 export function TopBar({ queryKey }: TopBarProps) {
+  const { t } = useTranslation();
   const data = useFragment(topBarFragment, queryKey);
   const { pathname } = useLocation();
 
@@ -83,7 +85,7 @@ export function TopBar({ queryKey }: TopBarProps) {
             {organizationName}
           </Text>
           <Text size={2} color="neutral">
-            Compliance Portal
+            {t("topBar.tagline")}
           </Text>
         </RouterLink>
 
@@ -99,13 +101,13 @@ export function TopBar({ queryKey }: TopBarProps) {
               size={2}
               active={isActive(pathname, item.to)}
             >
-              {item.label}
+              {t(item.labelKey)}
             </Link>
           ))}
           {data.viewer == null
             ? (
                 <Button variant="solid" color="neutral" highContrast iconStart={<LockSimpleIcon />}>
-                  Get Access
+                  {t("topBar.getAccess")}
                 </Button>
               )
             : <TopBarUserMenu identityKey={data.viewer} />}

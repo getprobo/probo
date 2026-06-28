@@ -12,6 +12,7 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+import { useTranslation } from "react-i18next";
 import type { PreloadedQuery } from "react-relay";
 import { graphql, usePreloadedQuery } from "react-relay";
 
@@ -37,11 +38,15 @@ interface HomePageProps {
 }
 
 export function HomePage({ queryRef }: HomePageProps) {
+  const { t } = useTranslation();
   const data = usePreloadedQuery<HomePageQuery>(homePageQuery, queryRef);
   const { organization } = data.currentTrustCenter;
 
   return (
-    <Hero title={`Trust at ${organization.name}.`} description={organization.description}>
+    <Hero
+      title={t("home.heroTitle", { name: organization.name })}
+      description={organization.description}
+    >
       <OrganizationContactInfo organizationKey={organization} />
     </Hero>
   );

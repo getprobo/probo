@@ -14,16 +14,18 @@
 
 import { PlusIcon } from "@phosphor-icons/react";
 import { Button } from "@probo/ui/src/v2/Button/Button";
+import { useTranslation } from "react-i18next";
 
 import { PageHeader } from "#/components/PageHeader/PageHeader";
 
 export default function RequestsPage() {
+  const { t } = useTranslation();
   return (
     <PageHeader
-      title="Data Requests"
+      title={t("requests.title")}
       actions={(
         <Button variant="soft" color="neutral" highContrast iconStart={<PlusIcon />}>
-          New Request
+          {t("requests.newRequest")}
         </Button>
       )}
     />

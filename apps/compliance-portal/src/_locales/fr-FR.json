@@ -1,5 +1,32 @@
 {
+  "topBar": {
+    "tagline": "Portail de conformité",
+    "getAccess": "Obtenir l'accès",
+    "nav": {
+      "documents": "Documents",
+      "subprocessors": "Sous-traitants",
+      "updates": "Mises à jour",
+      "requests": "Demandes"
+    }
+  },
+  "userMenu": {
+    "signOut": "Se déconnecter"
+  },
+  "home": {
+    "heroTitle": "La confiance chez {{name}}."
+  },
   "documents": {
     "title": "Documents"
+  },
+  "subprocessors": {
+    "title": "Sous-traitants"
+  },
+  "updates": {
+    "title": "Mises à jour",
+    "subscribe": "S'abonner aux mises à jour"
+  },
+  "requests": {
+    "title": "Demandes de données",
+    "newRequest": "Nouvelle demande"
   }
 }
