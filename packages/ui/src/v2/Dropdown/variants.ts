@@ -19,8 +19,8 @@ import { tv } from "tailwind-variants/lite";
 
 export const dropdownPopup = tv({
   base: [
-    "min-w-40 origin-(--transform-origin) rounded-3 border border-sand-a2 bg-sand-1 p-2 shadow-5 outline-none",
-    "transition-[transform,opacity] data-starting-style:scale-95 data-starting-style:opacity-0",
+    "min-w-40 origin-(--transform-origin) rounded-3 bg-sand-1 p-2 shadow-5 outline-none",
+    "transition-[scale,opacity] duration-150 ease-out data-starting-style:scale-95 data-starting-style:opacity-0",
     "data-ending-style:scale-95 data-ending-style:opacity-0",
   ],
 });
