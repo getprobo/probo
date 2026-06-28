@@ -15,6 +15,7 @@
 import { CaretDownIcon, SignOutIcon, UserIcon } from "@phosphor-icons/react";
 import { Avatar } from "@probo/ui/src/v2/Avatar/Avatar";
 import { Dropdown } from "@probo/ui/src/v2/Dropdown/Dropdown";
+import { DropdownGroup } from "@probo/ui/src/v2/Dropdown/DropdownGroup";
 import { DropdownGroupLabel } from "@probo/ui/src/v2/Dropdown/DropdownGroupLabel";
 import { DropdownItem } from "@probo/ui/src/v2/Dropdown/DropdownItem";
 import { DropdownPopup } from "@probo/ui/src/v2/Dropdown/DropdownPopup";
@@ -62,7 +63,9 @@ export function TopBarUserMenu({ identityKey }: TopBarUserMenuProps) {
         )}
       />
       <DropdownPopup align="end">
-        <DropdownGroupLabel>{identity.email}</DropdownGroupLabel>
+        <DropdownGroup>
+          <DropdownGroupLabel>{identity.email}</DropdownGroupLabel>
+        </DropdownGroup>
         <DropdownSeparator />
         <DropdownItem color="error" iconStart={<SignOutIcon />}>
           {t("userMenu.signOut")}
