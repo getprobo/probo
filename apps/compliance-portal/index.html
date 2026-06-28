@@ -14,9 +14,11 @@
 
   <script>
     (function () {
-      if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
-        document.documentElement.classList.add("dark");
-      }
+      if (!window.matchMedia) return;
+      var mq = window.matchMedia("(prefers-color-scheme: dark)");
+      var apply = function () { document.documentElement.classList.toggle("dark", mq.matches); };
+      apply();
+      mq.addEventListener("change", apply);
     })();
   </script>
 
