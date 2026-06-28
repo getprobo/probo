@@ -16,7 +16,7 @@ import { EnvelopeIcon, GlobeSimpleIcon, MapPinSimpleIcon } from "@phosphor-icons
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { graphql, useFragment } from "react-relay";
 
-import { hostnameOf } from "#/lib/url/hostname";
+import { externalHref, hostnameOf } from "#/lib/url/hostname";
 
 import type { OrganizationContactInfo_organization$key } from "./__generated__/OrganizationContactInfo_organization.graphql";
 import { organizationContactInfo } from "./variants";
@@ -54,7 +54,7 @@ export function OrganizationContactInfo({ organizationKey }: OrganizationContact
       {hasWebsite && (
         <a
           className={link()}
-          href={organization.websiteUrl}
+          href={externalHref(organization.websiteUrl)}
           target="_blank"
           rel="noopener noreferrer"
         >

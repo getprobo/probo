@@ -23,11 +23,14 @@ const documentListItemFragment = graphql`
     title
     canUpdate: permission(action: "core:document:update")
     canDelete: permission(action: "core:document:delete")
+    ...EditDocumentDialog_document
   }
 `;
 ```
 
 Colocate the permission with the action it gates — never drill a `canDelete` boolean down as a prop from a parent (the same data-as-props rule as everywhere else; see [`react-components.md`](react-components.md#props-are-for-configuration-and-composition-not-data)).
+
+Spread a child's fragment (`...EditDocumentDialog_document`) when you forward the node to that child as a fragment key. `useFragment` returns plain data, but Relay keeps the spread fragment refs on it, so the resolved `document` doubles as the key the child's own `useFragment` expects. Without the spread, `documentKey={document}` would hand the child masked data with no ref and fail at runtime (see [`relay.md`](relay.md)).
 
 ## Gate the action on the boolean
 

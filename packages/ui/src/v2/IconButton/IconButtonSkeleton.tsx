@@ -24,5 +24,5 @@ export type IconButtonSkeletonProps = Omit<ComponentProps<"span">, "children"> &
 export function IconButtonSkeleton(props: IconButtonSkeletonProps) {
   const { size, className, ...rest } = props;
 
-  return <span aria-hidden className={iconButtonSkeleton({ size, className })} {...rest} />;
+  return <span className={iconButtonSkeleton({ size, className })} {...rest} aria-hidden />;
 }

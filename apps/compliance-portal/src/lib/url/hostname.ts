@@ -12,12 +12,25 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+// Prepend https:// when a URL carries no http(s) scheme, so a protocol-less
+// value (e.g. "blaxel.ai") parses as absolute instead of being treated as a
+// relative path.
+function withHttpScheme(url: string): string {
+  return /^https?:\/\//i.test(url) ? url : `https://${url}`;
+}
+
 // Show only the hostname for a URL (e.g. "https://blaxel.ai/x" -> "blaxel.ai"),
 // falling back to the raw value when it cannot be parsed.
 export function hostnameOf(url: string): string {
   try {
-    return new URL(url).host;
+    return new URL(withHttpScheme(url)).hostname;
   } catch {
     return url;
   }
+}
+
+// Build a safe absolute href for an external link, normalizing the scheme so a
+// protocol-less value does not resolve as a relative link.
+export function externalHref(url: string): string {
+  return withHttpScheme(url);
 }

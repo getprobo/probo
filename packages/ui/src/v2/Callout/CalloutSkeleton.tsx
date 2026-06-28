@@ -23,5 +23,5 @@ export type CalloutSkeletonProps = Omit<ComponentProps<"div">, "children"> & Var
 export function CalloutSkeleton(props: CalloutSkeletonProps) {
   const { size, className, ...rest } = props;
 
-  return <div aria-hidden className={calloutSkeleton({ size, className })} {...rest} />;
+  return <div className={calloutSkeleton({ size, className })} {...rest} aria-hidden />;
 }

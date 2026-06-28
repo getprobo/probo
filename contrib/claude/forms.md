@@ -93,10 +93,10 @@ export function CreateMeasureForm({ onValid }: CreateMeasureFormProps) {
     <Form
       errors={errors}
       onClearErrors={setErrors}
-      onFormSubmit={(formData) => {
-        const result = schema.safeParse(Object.fromEntries(formData));
+      onFormSubmit={(formValues) => {
+        const result = schema.safeParse(formValues);
         if (!result.success) {
-          setErrors(z.flattenError(result.error).fieldErrors);
+          setErrors(result.error.flatten().fieldErrors);
           return;
         }
         onValid(result.data);

@@ -81,11 +81,24 @@ export function createUseMutation(useNotifier: () => MutationNotifier) {
           );
         }
 
+        function toError(value: unknown): Error {
+          return value instanceof Error ? value : new Error(String(value));
+        }
+
         return new Promise<T["response"]>((resolve, reject) => {
           commit({
             ...config,
             onCompleted: (response, errors) => {
-              config.onCompleted?.(response, errors);
+              // A throwing caller callback must still settle the wrapper promise,
+              // otherwise `await mutate()` would hang forever.
+              try {
+                config.onCompleted?.(response, errors);
+              } catch (callbackError) {
+                const error = toError(callbackError);
+                notifyError(error);
+                reject(error);
+                return;
+              }
               if (errors && errors.length > 0) {
                 const [payloadError] = errors;
                 notifyError(payloadError);
@@ -102,7 +115,13 @@ export function createUseMutation(useNotifier: () => MutationNotifier) {
               resolve(response);
             },
             onError: (error) => {
-              config.onError?.(error);
+              // Swallow a throwing caller callback so the original mutation error
+              // still flows through to the notifier and the rejection.
+              try {
+                config.onError?.(error);
+              } catch {
+                // Intentionally ignored: the mutation error below is authoritative.
+              }
               notifyError(error);
               reject(error);
             },

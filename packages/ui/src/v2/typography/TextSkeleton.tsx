@@ -26,7 +26,7 @@ export function TextSkeleton(props: TextSkeletonProps) {
   const { size, className, ...rest } = props;
 
   return (
-    <span aria-hidden className={textSkeleton({ size, className })} {...rest}>
+    <span className={textSkeleton({ size, className })} {...rest} aria-hidden>
       {"\u00A0"}
     </span>
   );

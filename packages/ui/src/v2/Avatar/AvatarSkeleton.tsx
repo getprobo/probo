@@ -24,5 +24,5 @@ export type AvatarSkeletonProps = Omit<ComponentProps<"span">, "children"> & Var
 export function AvatarSkeleton(props: AvatarSkeletonProps) {
   const { size, radius, className, ...rest } = props;
 
-  return <span aria-hidden className={avatarSkeleton({ size, radius, className })} {...rest} />;
+  return <span className={avatarSkeleton({ size, radius, className })} {...rest} aria-hidden />;
 }

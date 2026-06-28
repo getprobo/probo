@@ -47,6 +47,10 @@ const routes = [
         path: "requests",
         Component: lazy(() => import("#/pages/RequestsPage")),
       },
+      {
+        path: "*",
+        Component: lazy(() => import("#/pages/NotFoundPage")),
+      },
     ],
   },
 ] satisfies AppRoute[];

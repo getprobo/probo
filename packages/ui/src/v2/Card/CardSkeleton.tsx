@@ -23,5 +23,5 @@ export type CardSkeletonProps = Omit<ComponentProps<"div">, "children"> & Varian
 export function CardSkeleton(props: CardSkeletonProps) {
   const { size, className, ...rest } = props;
 
-  return <div aria-hidden className={cardSkeleton({ size, className })} {...rest} />;
+  return <div className={cardSkeleton({ size, className })} {...rest} aria-hidden />;
 }

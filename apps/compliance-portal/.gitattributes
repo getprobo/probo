@@ -1,2 +1,1 @@
-__generated__/*.graphql linguist-generated
-__generated__/*.js linguist-generated
+**/__generated__/** linguist-generated

@@ -24,5 +24,5 @@ export type BadgeSkeletonProps = Omit<ComponentProps<"span">, "children"> & Vari
 export function BadgeSkeleton(props: BadgeSkeletonProps) {
   const { size, className, ...rest } = props;
 
-  return <span aria-hidden className={badgeSkeleton({ size, className })} {...rest} />;
+  return <span className={badgeSkeleton({ size, className })} {...rest} aria-hidden />;
 }

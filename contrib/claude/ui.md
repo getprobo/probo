@@ -295,13 +295,13 @@ Components fall into two categories: **primitives** and **compound** components.
 
 ### Primitives
 
-**Primitives** (`Text`, `Image`, form inputs, layout helpers, `ListItem`) are self-contained — they render a single semantic element with their own styling. A primitive **is its own shell**: there is no separate shell wrapper. Each primitive has a paired skeleton (`TextSkeleton`, `ImageSkeleton`) that matches its dimensions.
+**Primitives** (`Text`, `Avatar`, `Badge`, form inputs, layout helpers) are self-contained — they render a single semantic element with their own styling. A primitive **is its own shell**: there is no separate shell wrapper. Each primitive has a paired skeleton (`TextSkeleton`, `AvatarSkeleton`) that matches its dimensions.
 
 ### Compound components
 
-**Compound components** (`ImageCard`, …) assemble multiple primitives into a larger region. When logic (state, effects, data) lives inside the top-level component, a **shell** separates layout from behavior:
+**Compound components** (`Card`, `Dropdown`, …) assemble multiple primitives into a larger region. When logic (state, effects, data) lives inside the top-level component, a **shell** separates layout from behavior:
 
-- **Shell** — pure layout frame that accepts region props (`image`, `text`, …) as `ReactNode` and applies `tv` slot classes. No state, no effects, no data.
+- **Shell** — pure layout frame that accepts region props (`media`, `text`, …) as `ReactNode` and applies `tv` slot classes. No state, no effects, no data.
 - **Root** — owns the logic and renders the shell, passing primitives into its region props.
 - **Skeleton** — reuses the **same shell** with skeleton primitives, so the loading placeholder is structurally identical without pulling in the logic graph.
 

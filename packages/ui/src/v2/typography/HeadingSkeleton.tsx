@@ -26,7 +26,7 @@ export function HeadingSkeleton(props: HeadingSkeletonProps) {
   const { size, className, ...rest } = props;
 
   return (
-    <span aria-hidden className={headingSkeleton({ size, className })} {...rest}>
+    <span className={headingSkeleton({ size, className })} {...rest} aria-hidden>
       {"\u00A0"}
     </span>
   );
