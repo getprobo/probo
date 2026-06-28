@@ -12,10 +12,10 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { formatError } from "@probo/helpers";
+import { formatError, type GraphQLError } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import { Button, Field, IconChevronLeft, useToast } from "@probo/ui";
-import type { FormEventHandler } from "react";
+import { type FormEventHandler, useState } from "react";
 import { useMutation } from "react-relay";
 import { Link, matchPath, useLocation } from "react-router";
 import { graphql } from "relay-runtime";
@@ -33,12 +33,32 @@ const signInMutation = graphql`
   }
 `;
 
+function hasInvalidCredentialsError(
+  error: GraphQLError | GraphQLError[] | null | undefined,
+) {
+  const errors = Array.isArray(error)
+    ? error
+    : (error?.source?.errors ?? (error ? [error] : []));
+
+  return errors.some(error => error.extensions?.code === "INVALID_CREDENTIALS");
+}
+
+function forgotPasswordSearch(locationSearch: string, email: string) {
+  const searchParams = new URLSearchParams(locationSearch);
+  searchParams.set("email", email);
+
+  return `?${searchParams.toString()}`;
+}
+
 export default function PasswordSignInPage() {
   const location = useLocation();
   const safeContinueUrl = useSafeContinueUrl();
 
   const { __ } = useTranslate();
   const { toast } = useToast();
+  const [failedSignInEmail, setFailedSignInEmail] = useState<
+    string | null
+  >(null);
 
   const [signIn, isSigningIn]
     = useMutation<PasswordSignInPageMutation>(signInMutation);
@@ -50,6 +70,8 @@ export default function PasswordSignInPage() {
     const passwordValue = formData.get("password") ? (formData.get("password") as string).toString() : "";
 
     if (!emailValue || !passwordValue) return;
+
+    setFailedSignInEmail(null);
 
     const match = matchPath(
       { path: "/organizations/:organizationId", caseSensitive: false, end: false },
@@ -67,6 +89,10 @@ export default function PasswordSignInPage() {
       },
       onCompleted: (_, error) => {
         if (error) {
+          if (hasInvalidCredentialsError(error)) {
+            setFailedSignInEmail(emailValue);
+          }
+
           toast({
             title: __("Error"),
             description: formatError(
@@ -125,6 +151,29 @@ export default function PasswordSignInPage() {
           label={__("Password")}
         />
       </div>
+
+      {failedSignInEmail && (
+        <div
+          role="alert"
+          className="space-y-3 rounded-lg border border-border-low bg-subtle p-4 text-sm text-txt-secondary"
+        >
+          <p>
+            {__(
+              "Check your credentials, or set a password if you were invited and have not set one yet.",
+            )}
+          </p>
+          <Button
+            variant="secondary"
+            className="w-full h-10"
+            to={{
+              pathname: "/auth/forgot-password",
+              search: forgotPasswordSearch(location.search, failedSignInEmail),
+            }}
+          >
+            {__("Set or reset password")}
+          </Button>
+        </div>
+      )}
 
       <Button className="w-xs h-10 mx-auto mt-6" disabled={isSigningIn}>
         {isSigningIn ? __("Logging in...") : __("Login")}

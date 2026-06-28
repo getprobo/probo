@@ -9,7 +9,6 @@ import (
 	"context"
 	"errors"
 
-	"github.com/vektah/gqlparser/v2/gqlerror"
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/server/api/authn"
@@ -27,12 +26,12 @@ func (r *mutationResolver) SignIn(ctx context.Context, input types.SignInInput) 
 		}
 
 		if _, ok := errors.AsType[*iam.ErrInvalidCredentials](err); ok {
-			return nil, &gqlerror.Error{
-				Message: err.Error(),
-				Extensions: map[string]any{
-					"code": "INVALID_CREDENTIALS",
-				},
-			}
+			return nil, gqlutils.InvalidCredentials(ctx)
+		}
+
+		if _, ok := errors.AsType[*iam.ErrPasswordNotSet](err); ok {
+			// Keep passwordless identities indistinguishable from invalid credentials.
+			return nil, gqlutils.InvalidCredentials(ctx)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot check credentials", log.Error(err))
