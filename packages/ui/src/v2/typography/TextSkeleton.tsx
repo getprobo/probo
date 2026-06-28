@@ -20,7 +20,8 @@ import { textSkeleton } from "./variants";
 export type TextSkeletonProps = Omit<ComponentProps<"span">, "children"> & VariantProps<typeof textSkeleton>;
 
 // Loading placeholder paired with Text: a pulse block matching a line of text
-// at the given size. Defaults to full width; constrain with a width class.
+// at the given size. Supply a width class (e.g. w-24, or w-full for a full
+// line); with none the block collapses to its content.
 export function TextSkeleton(props: TextSkeletonProps) {
   const { size, className, ...rest } = props;
 

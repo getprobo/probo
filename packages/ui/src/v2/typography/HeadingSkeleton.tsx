@@ -20,7 +20,8 @@ import { headingSkeleton } from "./variants";
 export type HeadingSkeletonProps = Omit<ComponentProps<"span">, "children"> & VariantProps<typeof headingSkeleton>;
 
 // Loading placeholder paired with Heading: a pulse block matching a heading
-// line at the given size. Defaults to full width; constrain with a width class.
+// line at the given size. Supply a width class (e.g. w-80, or w-full for a full
+// line); with none the block collapses to its content.
 export function HeadingSkeleton(props: HeadingSkeletonProps) {
   const { size, className, ...rest } = props;
 

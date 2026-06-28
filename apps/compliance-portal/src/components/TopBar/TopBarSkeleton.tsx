@@ -18,7 +18,14 @@ import { TextSkeleton } from "@probo/ui/src/v2/typography/TextSkeleton";
 
 import { topBar } from "./variants";
 
-const NAV_ITEM_KEYS = ["documents", "subprocessors", "updates", "requests"] as const;
+// Width per nav item, sized to its English label so the placeholder row reads
+// like the real nav. See .cursor/rules/skeleton-width-sync.mdc.
+const NAV_ITEMS = [
+  { key: "documents", width: "w-16" },
+  { key: "subprocessors", width: "w-24" },
+  { key: "updates", width: "w-12" },
+  { key: "requests", width: "w-14" },
+] as const;
 
 // Loading placeholder paired with TopBar: reuses the same layout slots with
 // skeleton primitives. Imports no Relay / Base UI, so it renders instantly.
@@ -30,14 +37,14 @@ export function TopBarSkeleton() {
       <div className={slots.inner()}>
         <div className={slots.brand()}>
           <AvatarSkeleton size={1} radius="small" />
-          <TextSkeleton size={2} className="w-20" />
+          <TextSkeleton size={2} className="w-24" />
         </div>
 
         <div className={slots.spacer()} />
 
         <nav className={slots.nav()}>
-          {NAV_ITEM_KEYS.map(key => (
-            <TextSkeleton key={key} size={2} className="mx-3 w-16" />
+          {NAV_ITEMS.map(item => (
+            <TextSkeleton key={item.key} size={2} className={`mx-3 ${item.width}`} />
           ))}
           <ButtonSkeleton size={2} />
         </nav>

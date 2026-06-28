@@ -97,7 +97,7 @@ export const heading = tv({
   },
 });
 
-const skeletonBase = "inline-block w-full animate-pulse select-none rounded-2 bg-sand-3 text-transparent";
+const skeletonBase = "inline-block animate-pulse select-none rounded-2 bg-sand-3 text-transparent";
 
 export const textSkeleton = tv({
   base: skeletonBase,

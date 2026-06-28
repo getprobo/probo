@@ -19,7 +19,13 @@ import { HeaderBand } from "#/components/HeaderBand/HeaderBand";
 
 import { hero, organizationContactInfo } from "./variants";
 
-const CONTACT_ITEM_KEYS = ["website", "email", "location"] as const;
+// Width per contact item, roughly sized to its typical content (hostname /
+// email / address). See .cursor/rules/skeleton-width-sync.mdc.
+const CONTACT_ITEMS = [
+  { key: "website", width: "w-28" },
+  { key: "email", width: "w-40" },
+  { key: "location", width: "w-36" },
+] as const;
 
 // Loading placeholder paired with Hero: reuses the same layout slots with
 // skeleton primitives. Imports no Relay, so it renders instantly.
@@ -31,13 +37,13 @@ export function HeroSkeleton() {
     <HeaderBand>
       <div className={content()}>
         <div className={section()}>
-          <HeadingSkeleton size={8} className="w-96" />
+          <HeadingSkeleton size={8} className="w-80" />
           <TextSkeleton size={2} className="w-full max-w-2xl" />
         </div>
         <div className={root()}>
-          {CONTACT_ITEM_KEYS.map(key => (
-            <div key={key} className={item()}>
-              <TextSkeleton size={2} className="w-28" />
+          {CONTACT_ITEMS.map(contact => (
+            <div key={contact.key} className={item()}>
+              <TextSkeleton size={2} className={contact.width} />
             </div>
           ))}
         </div>

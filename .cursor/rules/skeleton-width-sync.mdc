@@ -1,0 +1,31 @@
+---
+description: Keep skeleton placeholder widths in sync with English (en-US) copy
+globs: "**/_locales/en-US.json"
+alwaysApply: false
+---
+
+# Skeleton widths follow English copy
+
+en-US is the reference locale for placeholder sizing. When you add or change a
+user-facing string here, update the paired `*Skeleton` for the component that
+renders it so its width still roughly matches the English text. Skeleton
+primitives (`TextSkeleton`, `HeadingSkeleton`) take width via the caller's
+`className` (e.g. `w-16`, `w-24`, `w-80`, or `w-full`); they do not default to a
+width, so the placeholder must carry one.
+
+Pairing convention: a component `Foo` has a sibling `FooSkeleton` that reuses the
+same layout (see `contrib/claude/ui.md` and `contrib/claude/app-arborescence.md`).
+
+```jsonc
+// en-US.json — label lengthened from "Subprocessors"
+"subprocessors": "Sub-processors & vendors"
+```
+
+```tsx
+// TopBarSkeleton.tsx — bump the matching nav bar so it still mirrors the label
+{ key: "subprocessors", width: "w-40" }, // was w-24
+```
+
+This is a best-effort visual convention, not a mechanically enforced link: match
+the placeholder width to the English string length so loading states stay
+harmonious. Other locales do not drive skeleton sizing.

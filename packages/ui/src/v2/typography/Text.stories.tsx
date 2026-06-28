@@ -104,7 +104,7 @@ export const Skeleton: Story = {
   render: () => (
     <div className="flex w-96 flex-col gap-3">
       <TextSkeleton size={6} className="w-1/2" />
-      <TextSkeleton size={3} />
+      <TextSkeleton size={3} className="w-full" />
       <TextSkeleton size={3} className="w-2/3" />
     </div>
   ),
