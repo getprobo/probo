@@ -35,7 +35,6 @@ const NAV_ITEMS = [
 const topBarFragment = graphql`
   fragment TopBar_query on Query {
     viewer {
-      id
       ...TopBarUserMenu_identity
     }
     currentTrustCenter @required(action: THROW) {
