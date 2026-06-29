@@ -166,15 +166,20 @@ func (h *sourceNameHandler) Process(ctx context.Context, source coredata.AccessS
 
 	instanceName, err := resolver.ResolveInstanceName(resolveCtx)
 	if err != nil {
+		// Resolution failures (e.g. an expired or revoked token returning
+		// 401) are not retryable on a 10s cadence: returning an error here
+		// leaves the source unsynced so it is re-claimed and re-logged every
+		// cycle. Keep the generic name and mark it synced instead, mirroring
+		// the no-resolver and empty-name branches above.
 		h.logger.WarnCtx(
 			ctx,
-			"cannot resolve instance name",
+			"cannot resolve instance name, keeping generic name",
 			log.String("source_id", source.ID.String()),
 			log.String("provider", dbConnector.Provider.String()),
 			log.Error(err),
 		)
 
-		return fmt.Errorf("cannot resolve instance name for source %s: %w", source.ID, err)
+		return h.markNameSynced(ctx, &source)
 	}
 
 	if instanceName == "" {

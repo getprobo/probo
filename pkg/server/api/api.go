@@ -218,6 +218,7 @@ func NewServer(cfg Config) (*Server, error) {
 			cfg.CookieBanner,
 			cfg.RiskManagement,
 			cfg.TokenSecret,
+			cfg.BaseURL,
 		),
 		slackHandler: slack_v1.NewMux(
 			cfg.Logger.Named("slack.v1"),

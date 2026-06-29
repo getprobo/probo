@@ -16,6 +16,7 @@ package mcp_v1
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 
 	"go.gearno.de/kit/httpserver"
@@ -25,6 +26,7 @@ import (
 
 func RequireAPIKeyHandler(
 	logger *log.Logger,
+	resourceMetadataURL string,
 	next http.Handler,
 ) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -46,7 +48,9 @@ func RequireAPIKeyHandler(
 
 		identity := authn.IdentityFromContext(ctx)
 		if identity == nil {
-			w.Header().Set("WWW-Authenticate", "Bearer")
+			// RFC 9728 §5.1: point the client at the protected resource
+			// metadata so it can discover the authorization server.
+			w.Header().Set("WWW-Authenticate", fmt.Sprintf(`Bearer resource_metadata=%q`, resourceMetadataURL))
 			httpserver.RenderError(w, http.StatusUnauthorized, errors.New("authentication required"))
 
 			return

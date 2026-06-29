@@ -22,6 +22,7 @@ import (
 	"go.gearno.de/kit/log"
 	mcpgenmcp "go.probo.inc/mcpgen/mcp"
 	"go.probo.inc/probo/pkg/accessreview"
+	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/cookiebanner"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/probo"
@@ -41,6 +42,7 @@ func NewMux(
 	cookieBannerSvc *cookiebanner.Service,
 	riskManagementSvc *riskmanagement.Service,
 	tokenSecret string,
+	baseURL *baseurl.BaseURL,
 ) *chi.Mux {
 	logger = logger.Named("mcp.v1")
 
@@ -74,9 +76,15 @@ func NewMux(
 	)
 	protectedHandler := http.NewCrossOriginProtection().Handler(handler)
 
+	resourceMetadataURL := baseURL.String() + "/.well-known/oauth-protected-resource/api/mcp/v1"
+
 	r := chi.NewMux()
+	// Accept either a personal API key or an OAuth2 access token. Each
+	// middleware is a no-op when its credential is absent, so the two can
+	// be chained; the OAuth middleware skips when an identity is already set.
 	r.Use(authn.NewAPIKeyMiddleware(iamSvc, tokenSecret))
-	r.Handle("/", RequireAPIKeyHandler(logger, protectedHandler))
+	r.Use(authn.NewOAuth2AccessTokenMiddleware(iamSvc))
+	r.Handle("/", RequireAPIKeyHandler(logger, resourceMetadataURL, protectedHandler))
 
 	logger.Info("MCP server initialized successfully")
 
