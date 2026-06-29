@@ -46,6 +46,7 @@ import (
 	"go.probo.inc/probo/pkg/securecookie"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/compliancepage"
+	"go.probo.inc/probo/pkg/server/gqlutils"
 	"go.probo.inc/probo/pkg/trust"
 )
 
@@ -85,6 +86,7 @@ func NewMux(
 	cookieConfig securecookie.Config,
 	tokenSecret string,
 	baseURL *baseurl.BaseURL,
+	graphqlLimits gqlutils.Limits,
 ) *chi.Mux {
 	r := chi.NewMux()
 
@@ -112,6 +114,7 @@ func NewMux(
 		baseURL,
 		cookieConfig,
 		tokenSecret,
+		graphqlLimits,
 	)
 
 	r.Group(

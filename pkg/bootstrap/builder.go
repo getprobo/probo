@@ -79,6 +79,12 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 					AllowedOrigins: b.parseOriginsList(b.resolver.getEnvOrDefault("PROBOD_API_CORS_ALLOWED_ORIGINS", "http://localhost:8080")),
 				},
 				ExtraHeaderFields: make(map[string]string),
+				GraphQL: probodconfig.GraphQLConfig{
+					ParserTokenLimit:  b.resolver.getEnvIntOrDefault("PROBOD_API_GRAPHQL_PARSER_TOKEN_LIMIT", 15000),
+					ComplexityLimit:   b.resolver.getEnvIntOrDefault("PROBOD_API_GRAPHQL_COMPLEXITY_LIMIT", 2000),
+					QueryCacheSize:    b.resolver.getEnvIntOrDefault("PROBOD_API_GRAPHQL_QUERY_CACHE_SIZE", 1000),
+					DisableSuggestion: b.resolver.getEnvBoolOrDefault("PROBOD_API_GRAPHQL_DISABLE_SUGGESTION", true),
+				},
 			},
 			Pg: probodconfig.PgConfig{
 				Addr:                         b.resolver.getEnvOrDefault("PROBOD_PG_ADDR", "localhost:5432"),

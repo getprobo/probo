@@ -30,7 +30,7 @@ import (
 	"go.probo.inc/probo/pkg/server/gqlutils/directives/session"
 )
 
-func NewGraphQLHandler(svc *iam.Service, logger *log.Logger, fileManagerSvc *filemanager.Service, baseURL *baseurl.BaseURL, cookieConfig securecookie.Config) http.Handler {
+func NewGraphQLHandler(svc *iam.Service, logger *log.Logger, fileManagerSvc *filemanager.Service, baseURL *baseurl.BaseURL, cookieConfig securecookie.Config, limits gqlutils.Limits) http.Handler {
 	config := schema.Config{
 		Resolvers: &Resolver{
 			authorize:      authz.NewAuthorizeFunc(svc, logger),
@@ -49,7 +49,7 @@ func NewGraphQLHandler(svc *iam.Service, logger *log.Logger, fileManagerSvc *fil
 	}
 
 	es := schema.NewExecutableSchema(config)
-	gqlh := gqlutils.NewHandler(es, logger)
+	gqlh := gqlutils.NewHandler(es, logger, limits)
 
 	return gqlh
 }

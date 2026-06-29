@@ -75,6 +75,14 @@ spec:
               value: ":{{ .Values.service.port }}"
             - name: PROBOD_API_CORS_ALLOWED_ORIGINS
               value: {{ join "," .Values.probo.cors.allowedOrigins | quote }}
+            - name: PROBOD_API_GRAPHQL_PARSER_TOKEN_LIMIT
+              value: {{ .Values.probo.graphql.parserTokenLimit | quote }}
+            - name: PROBOD_API_GRAPHQL_COMPLEXITY_LIMIT
+              value: {{ .Values.probo.graphql.complexityLimit | quote }}
+            - name: PROBOD_API_GRAPHQL_QUERY_CACHE_SIZE
+              value: {{ .Values.probo.graphql.queryCacheSize | quote }}
+            - name: PROBOD_API_GRAPHQL_DISABLE_SUGGESTION
+              value: {{ .Values.probo.graphql.disableSuggestion | quote }}
             # PostgreSQL Database
             - name: PROBOD_PG_ADDR
               value: {{ printf "%s:%v" (include "probo.postgresql.host" .) (include "probo.postgresql.port" .) | quote }}

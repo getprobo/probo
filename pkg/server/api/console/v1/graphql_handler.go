@@ -55,6 +55,7 @@ func NewGraphQLHandler(
 	riskManagementSvc *riskmanagement.Service,
 	fileManagerSvc *filemanager.Service,
 	baseURL *baseurl.BaseURL,
+	limits gqlutils.Limits,
 ) http.Handler {
 	config := schema.Config{
 		Resolvers: &Resolver{
@@ -80,7 +81,7 @@ func NewGraphQLHandler(
 	}
 
 	es := schema.NewExecutableSchema(config)
-	gqlh := gqlutils.NewHandler(es, logger)
+	gqlh := gqlutils.NewHandler(es, logger, limits)
 
 	return gqlh
 }

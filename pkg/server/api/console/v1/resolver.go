@@ -47,6 +47,7 @@ import (
 	"go.probo.inc/probo/pkg/server/api/authz"
 	"go.probo.inc/probo/pkg/server/api/console/v1/dataloader"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
+	"go.probo.inc/probo/pkg/server/gqlutils"
 	"go.probo.inc/probo/pkg/thirdparty"
 )
 
@@ -92,6 +93,7 @@ func NewMux(
 	customDomainCname string,
 	thirdPartySvc *thirdparty.Service,
 	riskManagementSvc *riskmanagement.Service,
+	graphqlLimits gqlutils.Limits,
 ) *chi.Mux {
 	r := chi.NewMux()
 
@@ -114,6 +116,7 @@ func NewMux(
 		riskManagementSvc,
 		fileManagerSvc,
 		baseURL,
+		graphqlLimits,
 	)
 
 	r.Group(func(r chi.Router) {

@@ -146,6 +146,10 @@ func TestBuilder_Build_Defaults(t *testing.T) {
 	assert.Equal(t, ":8080", cfg.Probod.Api.Addr)
 	assert.Nil(t, cfg.Probod.Api.ProxyProtocol.TrustedProxies)
 	assert.Equal(t, []string{"http://localhost:8080"}, cfg.Probod.Api.Cors.AllowedOrigins)
+	assert.Equal(t, 15000, cfg.Probod.Api.GraphQL.ParserTokenLimit)
+	assert.Equal(t, 2000, cfg.Probod.Api.GraphQL.ComplexityLimit)
+	assert.Equal(t, 1000, cfg.Probod.Api.GraphQL.QueryCacheSize)
+	assert.True(t, cfg.Probod.Api.GraphQL.DisableSuggestion)
 
 	// PG config
 	assert.Equal(t, "localhost:5432", cfg.Probod.Pg.Addr)
@@ -295,6 +299,10 @@ func TestBuilder_Build_CustomValues(t *testing.T) {
 	env["PROBOD_API_ADDR"] = "0.0.0.0:8080"
 	env["PROBOD_API_CORS_ALLOWED_ORIGINS"] = "https://app.example.com,https://admin.example.com"
 	env["PROBOD_API_PROXY_PROTOCOL_TRUSTED_PROXIES"] = "10.0.0.1,10.0.0.2"
+	env["PROBOD_API_GRAPHQL_PARSER_TOKEN_LIMIT"] = "20000"
+	env["PROBOD_API_GRAPHQL_COMPLEXITY_LIMIT"] = "5000"
+	env["PROBOD_API_GRAPHQL_QUERY_CACHE_SIZE"] = "2000"
+	env["PROBOD_API_GRAPHQL_DISABLE_SUGGESTION"] = "false"
 	// PG
 	env["PROBOD_PG_ADDR"] = "postgres.example.com:5432"
 	env["PROBOD_PG_USERNAME"] = "probo"
@@ -425,6 +433,10 @@ func TestBuilder_Build_CustomValues(t *testing.T) {
 	assert.Equal(t, "0.0.0.0:8080", cfg.Probod.Api.Addr)
 	assert.Equal(t, []string{"10.0.0.1", "10.0.0.2"}, cfg.Probod.Api.ProxyProtocol.TrustedProxies)
 	assert.Equal(t, []string{"https://app.example.com", "https://admin.example.com"}, cfg.Probod.Api.Cors.AllowedOrigins)
+	assert.Equal(t, 20000, cfg.Probod.Api.GraphQL.ParserTokenLimit)
+	assert.Equal(t, 5000, cfg.Probod.Api.GraphQL.ComplexityLimit)
+	assert.Equal(t, 2000, cfg.Probod.Api.GraphQL.QueryCacheSize)
+	assert.False(t, cfg.Probod.Api.GraphQL.DisableSuggestion)
 	// PG
 	assert.Equal(t, "postgres.example.com:5432", cfg.Probod.Pg.Addr)
 	assert.Equal(t, "probo", cfg.Probod.Pg.Username)

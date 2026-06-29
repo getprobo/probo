@@ -22,9 +22,17 @@ type ProxyProtocolConfig struct {
 	TrustedProxies []string `json:"trusted-proxies"`
 }
 
+type GraphQLConfig struct {
+	ParserTokenLimit  int  `json:"parser-token-limit"`
+	ComplexityLimit   int  `json:"complexity-limit"`
+	QueryCacheSize    int  `json:"query-cache-size"`
+	DisableSuggestion bool `json:"disable-suggestion"`
+}
+
 type APIConfig struct {
 	Addr              string              `json:"addr"`
 	ProxyProtocol     ProxyProtocolConfig `json:"proxy-protocol"`
 	Cors              CorsConfig          `json:"cors"`
 	ExtraHeaderFields map[string]string   `json:"extra-header-fields"`
+	GraphQL           GraphQLConfig       `json:"graphql"`
 }
