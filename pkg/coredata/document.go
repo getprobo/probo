@@ -920,7 +920,9 @@ func (p *Documents) BulkArchive(
 	scope Scoper,
 ) error {
 	q := `
-UPDATE documents SET status = 'ARCHIVED', archived_at = @archived_at, trust_center_visibility = 'NONE' WHERE %s AND id = ANY(@document_ids)
+UPDATE documents
+SET status = 'ARCHIVED', archived_at = @archived_at, trust_center_visibility = 'NONE', updated_at = @updated_at
+WHERE %s AND id = ANY(@document_ids)
 `
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
@@ -929,9 +931,11 @@ UPDATE documents SET status = 'ARCHIVED', archived_at = @archived_at, trust_cent
 		ids[i] = doc.ID
 	}
 
+	now := time.Now()
 	args := pgx.StrictNamedArgs{
 		"document_ids": ids,
-		"archived_at":  time.Now(),
+		"archived_at":  now,
+		"updated_at":   now,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
@@ -948,7 +952,7 @@ func (p *Documents) BulkUnarchive(
 	scope Scoper,
 ) error {
 	q := `
-UPDATE documents SET status = 'ACTIVE', archived_at = NULL WHERE %s AND id = ANY(@document_ids)
+UPDATE documents SET status = 'ACTIVE', archived_at = NULL, updated_at = @updated_at WHERE %s AND id = ANY(@document_ids)
 `
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
@@ -959,6 +963,7 @@ UPDATE documents SET status = 'ACTIVE', archived_at = NULL WHERE %s AND id = ANY
 
 	args := pgx.StrictNamedArgs{
 		"document_ids": ids,
+		"updated_at":   time.Now(),
 	}
 	maps.Copy(args, scope.SQLArguments())
 

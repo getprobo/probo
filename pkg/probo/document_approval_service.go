@@ -172,6 +172,8 @@ func (s *DocumentApprovalService) BulkPublishVersions(
 					continue
 				}
 
+				var requestedQuorum *coredata.DocumentVersionApprovalQuorum
+
 				if req.Minor {
 					var err error
 
@@ -191,9 +193,12 @@ func (s *DocumentApprovalService) BulkPublishVersions(
 							approverIDs[i] = a.ApproverProfileID
 						}
 
-						if _, err := s.RequestApprovalInTx(ctx, scope, tx, document, dv, approverIDs, &req.Changelog); err != nil {
+						quorum, err := s.RequestApprovalInTx(ctx, scope, tx, document, dv, approverIDs, &req.Changelog)
+						if err != nil {
 							return fmt.Errorf("cannot request approval for %q: %w", documentID, err)
 						}
+
+						requestedQuorum = quorum
 					} else {
 						var err error
 
@@ -206,6 +211,34 @@ func (s *DocumentApprovalService) BulkPublishVersions(
 
 				publishedVersions = append(publishedVersions, dv)
 				updatedDocuments = append(updatedDocuments, document)
+
+				if requestedQuorum != nil {
+					if err := s.svc.Documents.emitDocumentEventInTx(
+						ctx,
+						scope,
+						tx,
+						dv.DocumentID,
+						coredata.WebhookEventTypeDocumentVersionApprovalQuorumRequested,
+						dv,
+						nil,
+						&requestedQuorum.ID,
+					); err != nil {
+						return fmt.Errorf("cannot emit approval quorum requested webhook: %w", err)
+					}
+				} else {
+					if err := s.svc.Documents.emitDocumentEventInTx(
+						ctx,
+						scope,
+						tx,
+						dv.DocumentID,
+						coredata.WebhookEventTypeDocumentVersionPublished,
+						dv,
+						nil,
+						nil,
+					); err != nil {
+						return fmt.Errorf("cannot emit version published webhook: %w", err)
+					}
+				}
 			}
 
 			return nil
@@ -373,6 +406,31 @@ func (s *DocumentApprovalService) Approve(
 				return fmt.Errorf("cannot check quorum approval: %w", err)
 			}
 
+			if err := documentVersion.LoadByID(ctx, tx, scope, req.DocumentVersionID); err != nil {
+				return fmt.Errorf("cannot reload document version: %w", err)
+			}
+
+			if err := quorum.LoadByID(ctx, tx, scope, quorum.ID); err != nil {
+				return fmt.Errorf("cannot reload approval quorum: %w", err)
+			}
+
+			if quorum.Status == coredata.DocumentVersionApprovalQuorumStatusApproved {
+				return nil
+			}
+
+			if err := s.svc.Documents.emitDocumentEventInTx(
+				ctx,
+				scope,
+				tx,
+				documentVersion.DocumentID,
+				coredata.WebhookEventTypeDocumentVersionApprovalQuorumUpdated,
+				documentVersion,
+				nil,
+				&quorum.ID,
+			); err != nil {
+				return fmt.Errorf("cannot emit approval quorum updated webhook: %w", err)
+			}
+
 			return nil
 		},
 	)
@@ -458,6 +516,32 @@ func (s *DocumentApprovalService) Reject(
 				return fmt.Errorf("cannot update document version status: %w", err)
 			}
 
+			if err := s.svc.Documents.emitDocumentEventInTx(
+				ctx,
+				scope,
+				tx,
+				documentVersion.DocumentID,
+				coredata.WebhookEventTypeDocumentVersionApprovalQuorumRejected,
+				documentVersion,
+				nil,
+				&quorum.ID,
+			); err != nil {
+				return fmt.Errorf("cannot emit approval quorum rejected webhook: %w", err)
+			}
+
+			if err := s.svc.Documents.emitDocumentEventInTx(
+				ctx,
+				scope,
+				tx,
+				documentVersion.DocumentID,
+				coredata.WebhookEventTypeDocumentVersionRejected,
+				documentVersion,
+				nil,
+				nil,
+			); err != nil {
+				return fmt.Errorf("cannot emit document version rejected webhook: %w", err)
+			}
+
 			return nil
 		},
 	)
@@ -534,6 +618,19 @@ func (s *DocumentApprovalService) VoidApproval(
 
 			if err := documentVersion.Update(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot update document version status: %w", err)
+			}
+
+			if err := s.svc.Documents.emitDocumentEventInTx(
+				ctx,
+				scope,
+				tx,
+				documentVersion.DocumentID,
+				coredata.WebhookEventTypeDocumentVersionApprovalQuorumVoided,
+				documentVersion,
+				nil,
+				&quorum.ID,
+			); err != nil {
+				return fmt.Errorf("cannot emit approval quorum voided webhook: %w", err)
 			}
 
 			return nil
@@ -881,8 +978,35 @@ func (s *DocumentApprovalService) maybeApproveQuorum(
 		return fmt.Errorf("cannot update quorum: %w", err)
 	}
 
-	if err := s.publishVersion(ctx, scope, tx, quorum.VersionID); err != nil {
+	version, err := s.publishVersion(ctx, scope, tx, quorum.VersionID)
+	if err != nil {
 		return fmt.Errorf("cannot publish version: %w", err)
+	}
+
+	if err := s.svc.Documents.emitDocumentEventInTx(
+		ctx,
+		scope,
+		tx,
+		version.DocumentID,
+		coredata.WebhookEventTypeDocumentVersionApprovalQuorumApproved,
+		version,
+		nil,
+		&quorum.ID,
+	); err != nil {
+		return fmt.Errorf("cannot emit approval quorum approved webhook: %w", err)
+	}
+
+	if err := s.svc.Documents.emitDocumentEventInTx(
+		ctx,
+		scope,
+		tx,
+		version.DocumentID,
+		coredata.WebhookEventTypeDocumentVersionPublished,
+		version,
+		nil,
+		nil,
+	); err != nil {
+		return fmt.Errorf("cannot emit document version published webhook: %w", err)
 	}
 
 	return nil
@@ -892,27 +1016,27 @@ func (s *DocumentApprovalService) publishVersion(
 	ctx context.Context, scope coredata.Scoper,
 	tx pg.Tx,
 	versionID gid.GID,
-) error {
+) (*coredata.DocumentVersion, error) {
 	version := &coredata.DocumentVersion{}
 	if err := version.LoadByID(ctx, tx, scope, versionID); err != nil {
-		return fmt.Errorf("cannot load document version: %w", err)
+		return nil, fmt.Errorf("cannot load document version: %w", err)
 	}
 
 	document := &coredata.Document{}
 	if err := document.LoadByID(ctx, tx, scope, version.DocumentID); err != nil {
-		return fmt.Errorf("cannot load document: %w", err)
+		return nil, fmt.Errorf("cannot load document: %w", err)
 	}
 
 	document.CurrentPublishedMajor = &version.Major
 	document.CurrentPublishedMinor = &version.Minor
 
 	if err := s.svc.Documents.finalizePublish(ctx, scope, tx, document, version, nil); err != nil {
-		return fmt.Errorf("cannot finalize publish: %w", err)
+		return nil, fmt.Errorf("cannot finalize publish: %w", err)
 	}
 
 	if err := s.svc.Documents.cancelPreviousMajorSignatureRequestsInTx(ctx, scope, tx, version.DocumentID, version.Major); err != nil {
-		return fmt.Errorf("cannot cancel signature requests from previous major versions: %w", err)
+		return nil, fmt.Errorf("cannot cancel signature requests from previous major versions: %w", err)
 	}
 
-	return nil
+	return version, nil
 }

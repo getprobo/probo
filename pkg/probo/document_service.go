@@ -45,6 +45,8 @@ import (
 	"go.probo.inc/probo/pkg/pdfutils"
 	"go.probo.inc/probo/pkg/prosemirror"
 	"go.probo.inc/probo/pkg/validator"
+	"go.probo.inc/probo/pkg/webhook"
+	webhooktypes "go.probo.inc/probo/pkg/webhook/types"
 )
 
 const DocumentSignatureConsentText = "By clicking \"Review and sign\", I consent to sign this document electronically and agree that my electronic signature has the same legal validity as a handwritten signature."
@@ -607,6 +609,19 @@ func (s *DocumentService) PublishVersion(
 				result.Document = document
 				result.Version = version
 
+				if err := s.emitDocumentEventInTx(
+					ctx,
+					scope,
+					tx,
+					version.DocumentID,
+					coredata.WebhookEventTypeDocumentVersionPublished,
+					version,
+					nil,
+					nil,
+				); err != nil {
+					return fmt.Errorf("cannot emit document version published webhook: %w", err)
+				}
+
 				return nil
 			}
 
@@ -618,6 +633,19 @@ func (s *DocumentService) PublishVersion(
 
 				result.Document = document
 				result.Version = version
+
+				if err := s.emitDocumentEventInTx(
+					ctx,
+					scope,
+					tx,
+					version.DocumentID,
+					coredata.WebhookEventTypeDocumentVersionPublished,
+					version,
+					nil,
+					nil,
+				); err != nil {
+					return fmt.Errorf("cannot emit document version published webhook: %w", err)
+				}
 
 				return nil
 			}
@@ -660,6 +688,19 @@ func (s *DocumentService) PublishVersion(
 			result.Document = document
 			result.Version = dv
 			result.Quorum = quorum
+
+			if err := s.emitDocumentEventInTx(
+				ctx,
+				scope,
+				tx,
+				dv.DocumentID,
+				coredata.WebhookEventTypeDocumentVersionApprovalQuorumRequested,
+				dv,
+				nil,
+				&quorum.ID,
+			); err != nil {
+				return fmt.Errorf("cannot emit approval quorum requested webhook: %w", err)
+			}
 
 			return nil
 		},
@@ -747,6 +788,23 @@ func (s *DocumentService) Create(
 				if err := approvers.MergeByDocumentID(ctx, conn, scope, documentID, organization.ID, req.DefaultApproverIDs); err != nil {
 					return fmt.Errorf("cannot set default approvers: %w", err)
 				}
+			}
+
+			if err := s.emitDocumentEventInTx(ctx, scope, conn, documentID, coredata.WebhookEventTypeDocumentCreated, nil, nil, nil); err != nil {
+				return fmt.Errorf("cannot emit document created webhook: %w", err)
+			}
+
+			if err := s.emitDocumentEventInTx(
+				ctx,
+				scope,
+				conn,
+				documentVersion.DocumentID,
+				coredata.WebhookEventTypeDocumentVersionCreated,
+				documentVersion,
+				nil,
+				nil,
+			); err != nil {
+				return fmt.Errorf("cannot emit document version created webhook: %w", err)
 			}
 
 			return nil
@@ -911,6 +969,19 @@ func (s *DocumentService) SignDocumentVersionByIdentity(
 				return fmt.Errorf("cannot update document version signature: %w", err)
 			}
 
+			if err := s.emitDocumentEventInTx(
+				ctx,
+				scope,
+				tx,
+				documentVersion.DocumentID,
+				coredata.WebhookEventTypeDocumentVersionSignatureSigned,
+				documentVersion,
+				documentVersionSignature,
+				nil,
+			); err != nil {
+				return fmt.Errorf("cannot emit document version signature signed webhook: %w", err)
+			}
+
 			return nil
 		},
 	)
@@ -1010,13 +1081,35 @@ func (s *DocumentService) BulkRequestSignatures(
 					return &ErrDocumentVersionNotPublished{}
 				}
 
+				document := &coredata.Document{}
+				if err := document.LoadByID(ctx, tx, scope, documentVersion.DocumentID); err != nil {
+					return fmt.Errorf("cannot load document %q: %w", documentVersion.DocumentID, err)
+				}
+
 				for _, signatoryID := range req.SignatoryIDs {
-					signature, err := s.createSignatureRequestInTx(ctx, scope, tx, documentVersion.ID, signatoryID)
+					signature, created, err := s.createSignatureRequestInTx(ctx, scope, tx, documentVersion.ID, signatoryID)
 					if err != nil {
 						return fmt.Errorf("cannot create signature request for document %q and signatory %q: %w", documentID, signatoryID, err)
 					}
 
 					signatures = append(signatures, signature)
+
+					if !created {
+						continue
+					}
+
+					if err := s.emitLoadedDocumentEventInTx(
+						ctx,
+						scope,
+						tx,
+						document,
+						coredata.WebhookEventTypeDocumentVersionSignatureRequested,
+						documentVersion,
+						signature,
+						nil,
+					); err != nil {
+						return fmt.Errorf("cannot emit signature requested webhook: %w", err)
+					}
 				}
 			}
 
@@ -1035,16 +1128,16 @@ func (s *DocumentService) createSignatureRequestInTx(
 	tx pg.Tx,
 	documentVersionID gid.GID,
 	signatoryID gid.GID,
-) (*coredata.DocumentVersionSignature, error) {
+) (*coredata.DocumentVersionSignature, bool, error) {
 	signatory := &coredata.MembershipProfile{}
 	documentVersion := &coredata.DocumentVersion{}
 
 	if err := documentVersion.LoadByID(ctx, tx, scope, documentVersionID); err != nil {
-		return nil, fmt.Errorf("cannot load document version: %w", err)
+		return nil, false, fmt.Errorf("cannot load document version: %w", err)
 	}
 
 	if err := signatory.LoadByID(ctx, tx, scope, signatoryID); err != nil {
-		return nil, fmt.Errorf("cannot load signatory: %w", err)
+		return nil, false, fmt.Errorf("cannot load signatory: %w", err)
 	}
 
 	// A signature applies to the whole major version: minor publishes keep it
@@ -1056,11 +1149,11 @@ func (s *DocumentService) createSignatureRequestInTx(
 
 	err := existingSignature.LoadByDocumentMajorAndSignatory(ctx, tx, scope, documentVersionID, signatoryID)
 	if err == nil {
-		return existingSignature, nil
+		return existingSignature, false, nil
 	}
 
 	if !errors.Is(err, coredata.ErrResourceNotFound) {
-		return nil, fmt.Errorf("cannot load existing signature for signatory: %w", err)
+		return nil, false, fmt.Errorf("cannot load existing signature for signatory: %w", err)
 	}
 
 	documentVersionSignatureID := gid.New(scope.GetTenantID(), coredata.DocumentVersionSignatureEntityType)
@@ -1078,10 +1171,10 @@ func (s *DocumentService) createSignatureRequestInTx(
 	}
 
 	if err := documentVersionSignature.Insert(ctx, tx, scope); err != nil {
-		return nil, fmt.Errorf("cannot insert document version signature: %w", err)
+		return nil, false, fmt.Errorf("cannot insert document version signature: %w", err)
 	}
 
-	return documentVersionSignature, nil
+	return documentVersionSignature, true, nil
 }
 
 func (s *DocumentService) RequestSignature(
@@ -1127,11 +1220,31 @@ func (s *DocumentService) RequestSignature(
 				return &ErrProfileContractEnded{ProfileID: profile.ID}
 			}
 
-			var err error
+			var (
+				err     error
+				created bool
+			)
 
-			signature, err = s.createSignatureRequestInTx(ctx, scope, tx, req.DocumentVersionID, req.Signatory)
+			signature, created, err = s.createSignatureRequestInTx(ctx, scope, tx, req.DocumentVersionID, req.Signatory)
 			if err != nil {
 				return fmt.Errorf("cannot create signature request: %w", err)
+			}
+
+			if !created {
+				return nil
+			}
+
+			if err := s.emitDocumentEventInTx(
+				ctx,
+				scope,
+				tx,
+				documentVersion.DocumentID,
+				coredata.WebhookEventTypeDocumentVersionSignatureRequested,
+				documentVersion,
+				signature,
+				nil,
+			); err != nil {
+				return fmt.Errorf("cannot emit document version signature requested webhook: %w", err)
 			}
 
 			return nil
@@ -1240,6 +1353,162 @@ func (s *DocumentService) deleteDraftInTx(
 	return nil
 }
 
+// For deletion events this must be called before the document is soft-deleted,
+// since Document.LoadByID filters out soft-deleted rows.
+func (s *DocumentService) emitDocumentEventInTx(
+	ctx context.Context, scope coredata.Scoper,
+	tx pg.Tx,
+	documentID gid.GID,
+	eventType coredata.WebhookEventType,
+	version *coredata.DocumentVersion,
+	signature *coredata.DocumentVersionSignature,
+	quorumID *gid.GID,
+) error {
+	document := &coredata.Document{}
+	if err := document.LoadByID(ctx, tx, scope, documentID); err != nil {
+		return fmt.Errorf("cannot load document for %q webhook: %w", eventType, err)
+	}
+
+	return s.emitLoadedDocumentEventInTx(ctx, scope, tx, document, eventType, version, signature, quorumID)
+}
+
+func (s *DocumentService) emitLoadedDocumentEventInTx(
+	ctx context.Context, scope coredata.Scoper,
+	tx pg.Tx,
+	document *coredata.Document,
+	eventType coredata.WebhookEventType,
+	version *coredata.DocumentVersion,
+	signature *coredata.DocumentVersionSignature,
+	quorumID *gid.GID,
+) error {
+	subscriptions := coredata.WebhookSubscriptions{}
+
+	exists, err := subscriptions.ExistsByOrganizationIDAndEventType(ctx, tx, scope, document.OrganizationID, eventType)
+	if err != nil {
+		return fmt.Errorf("cannot check webhook subscriptions for %q: %w", eventType, err)
+	}
+
+	if !exists {
+		return nil
+	}
+
+	var payload any
+
+	switch {
+	case signature != nil:
+		payload = webhooktypes.NewDocumentVersionSignature(signature, version, document)
+	case quorumID != nil:
+		payload, err = s.loadDocumentApprovalQuorumForWebhook(ctx, scope, tx, *quorumID, version, document)
+		if err != nil {
+			return fmt.Errorf("cannot build approval quorum payload for %q webhook: %w", eventType, err)
+		}
+	case version != nil:
+		payload = webhooktypes.NewDocumentVersion(version, document)
+	default:
+		payload = webhooktypes.NewDocument(document)
+	}
+
+	if err := webhook.InsertData(
+		ctx,
+		tx,
+		scope,
+		document.OrganizationID,
+		eventType,
+		payload,
+	); err != nil {
+		return fmt.Errorf("cannot insert %q webhook event: %w", eventType, err)
+	}
+
+	return nil
+}
+
+func (s *DocumentService) emitDocumentLifecycleEventsInTx(
+	ctx context.Context, scope coredata.Scoper,
+	tx pg.Tx,
+	documentIDs []gid.GID,
+	eventType coredata.WebhookEventType,
+) error {
+	if len(documentIDs) == 0 {
+		return nil
+	}
+
+	documents := coredata.Documents{}
+	if err := documents.LoadByIDs(ctx, tx, scope, documentIDs); err != nil {
+		return fmt.Errorf("cannot load documents for %q webhook: %w", eventType, err)
+	}
+
+	subscribed := make(map[gid.GID]bool)
+
+	for _, document := range documents {
+		hasSubscription, cached := subscribed[document.OrganizationID]
+		if !cached {
+			subscriptions := coredata.WebhookSubscriptions{}
+
+			exists, err := subscriptions.ExistsByOrganizationIDAndEventType(ctx, tx, scope, document.OrganizationID, eventType)
+			if err != nil {
+				return fmt.Errorf("cannot check webhook subscriptions for %q: %w", eventType, err)
+			}
+
+			hasSubscription = exists
+			subscribed[document.OrganizationID] = exists
+		}
+
+		if !hasSubscription {
+			continue
+		}
+
+		if err := webhook.InsertData(
+			ctx,
+			tx,
+			scope,
+			document.OrganizationID,
+			eventType,
+			webhooktypes.NewDocument(document),
+		); err != nil {
+			return fmt.Errorf("cannot insert %q webhook event: %w", eventType, err)
+		}
+	}
+
+	return nil
+}
+
+func (s *DocumentService) loadDocumentApprovalQuorumForWebhook(
+	ctx context.Context, scope coredata.Scoper,
+	tx pg.Tx,
+	quorumID gid.GID,
+	version *coredata.DocumentVersion,
+	document *coredata.Document,
+) (*webhooktypes.DocumentApprovalQuorum, error) {
+	quorum := &coredata.DocumentVersionApprovalQuorum{}
+	if err := quorum.LoadByID(ctx, tx, scope, quorumID); err != nil {
+		return nil, fmt.Errorf("cannot load approval quorum for webhook: %w", err)
+	}
+
+	decisions, err := page.LoadAll(
+		ctx,
+		page.OrderBy[coredata.DocumentVersionApprovalDecisionOrderField]{
+			Field:     coredata.DocumentVersionApprovalDecisionOrderFieldCreatedAt,
+			Direction: page.OrderDirectionAsc,
+		},
+		func(
+			ctx context.Context,
+			cursor *page.Cursor[coredata.DocumentVersionApprovalDecisionOrderField],
+		) ([]*coredata.DocumentVersionApprovalDecision, error) {
+			var batch coredata.DocumentVersionApprovalDecisions
+			if err := batch.LoadByQuorumID(ctx, tx, scope, quorumID, cursor, coredata.NewDocumentVersionApprovalDecisionFilter(nil)); err != nil {
+				return nil, fmt.Errorf("cannot load approval decisions: %w", err)
+			}
+
+			return batch, nil
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("cannot load approval decisions for webhook: %w", err)
+	}
+
+	return webhooktypes.NewDocumentApprovalQuorum(quorum, decisions, version, document), nil
+}
+
 func (s *DocumentService) SoftDelete(
 	ctx context.Context, scope coredata.Scoper,
 	documentID gid.GID,
@@ -1249,6 +1518,10 @@ func (s *DocumentService) SoftDelete(
 	return s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
+			if err := s.emitDocumentEventInTx(ctx, scope, tx, documentID, coredata.WebhookEventTypeDocumentDeleted, nil, nil, nil); err != nil {
+				return fmt.Errorf("cannot emit document deleted webhook: %w", err)
+			}
+
 			if err := s.clearDocumentReferences(ctx, scope, tx, []gid.GID{documentID}); err != nil {
 				return err
 			}
@@ -1271,6 +1544,10 @@ func (s *DocumentService) BulkSoftDelete(
 	return s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
+			if err := s.emitDocumentLifecycleEventsInTx(ctx, scope, tx, documentIDs, coredata.WebhookEventTypeDocumentDeleted); err != nil {
+				return fmt.Errorf("cannot emit document deleted webhooks: %w", err)
+			}
+
 			if err := s.clearDocumentReferences(ctx, scope, tx, documentIDs); err != nil {
 				return err
 			}
@@ -1312,7 +1589,15 @@ func (s *DocumentService) BulkArchive(
 				return err
 			}
 
-			return documents.BulkArchive(ctx, tx, scope)
+			if err := documents.BulkArchive(ctx, tx, scope); err != nil {
+				return err
+			}
+
+			if err := s.emitDocumentLifecycleEventsInTx(ctx, scope, tx, documentIDs, coredata.WebhookEventTypeDocumentArchived); err != nil {
+				return fmt.Errorf("cannot emit document archived webhooks: %w", err)
+			}
+
+			return nil
 		},
 	)
 }
@@ -1327,10 +1612,18 @@ func (s *DocumentService) BulkUnarchive(
 		documents = append(documents, &coredata.Document{ID: documentID})
 	}
 
-	return s.svc.pg.WithConn(
+	return s.svc.pg.WithTx(
 		ctx,
-		func(ctx context.Context, conn pg.Querier) error {
-			return documents.BulkUnarchive(ctx, conn, scope)
+		func(ctx context.Context, tx pg.Tx) error {
+			if err := documents.BulkUnarchive(ctx, tx, scope); err != nil {
+				return err
+			}
+
+			if err := s.emitDocumentLifecycleEventsInTx(ctx, scope, tx, documentIDs, coredata.WebhookEventTypeDocumentUnarchived); err != nil {
+				return fmt.Errorf("cannot emit document unarchived webhooks: %w", err)
+			}
+
+			return nil
 		},
 	)
 }
@@ -1836,84 +2129,104 @@ func (s *DocumentService) Update(
 				return fmt.Errorf("cannot update document: %w", err)
 			}
 
-			// Handle draft version logic for title/content/classification/type changes.
 			latestVersion := &coredata.DocumentVersion{}
 			if err := latestVersion.LoadLatestVersion(ctx, tx, scope, req.DocumentID); err != nil {
 				return fmt.Errorf("cannot load latest version: %w", err)
 			}
 
 			hasVersionChanges := req.Title != nil || req.Content != nil || req.Classification != nil || req.DocumentType != nil
+			docLevelChanged := req.TrustCenterVisibility != nil || req.DefaultApproverIDs != nil
 
 			if req.Content != nil && document.WriteMode == coredata.DocumentWriteModeGenerated {
 				return &ErrDocumentVersionGenerated{}
-			}
-
-			if !hasVersionChanges {
-				if req.DefaultApproverIDs != nil {
-					defaultApprovers := &coredata.DocumentDefaultApprovers{}
-					if err := defaultApprovers.MergeByDocumentID(ctx, tx, scope, req.DocumentID, document.OrganizationID, *req.DefaultApproverIDs); err != nil {
-						return fmt.Errorf("cannot update default approvers: %w", err)
-					}
-				}
-
-				return nil
-			}
-
-			if latestVersion.Status == coredata.DocumentVersionStatusDraft {
-				// Draft exists: update it with any new values.
-				if err := s.updateVersionInTx(ctx, scope, tx, latestVersion, req.Content, req.Classification, req.DocumentType, req.Title); err != nil {
-					return err
-				}
-
-				// If there is a published version and the draft matches it, delete the draft.
-				// Never delete the initial draft (v0.1) since there's nothing to fall back to.
-				if document.CurrentPublishedMajor != nil && (latestVersion.Major != 0 || latestVersion.Minor != 1) {
-					publishedVersion := &coredata.DocumentVersion{}
-					if err := publishedVersion.LoadByDocumentIDAndVersion(
-						ctx,
-						tx,
-						scope,
-						req.DocumentID,
-						*document.CurrentPublishedMajor,
-						*document.CurrentPublishedMinor,
-					); err != nil {
-						return fmt.Errorf("cannot load published version: %w", err)
-					}
-
-					if latestVersion.Title == publishedVersion.Title &&
-						latestVersion.Content == publishedVersion.Content &&
-						latestVersion.Classification == publishedVersion.Classification &&
-						latestVersion.DocumentType == publishedVersion.DocumentType {
-						if err := s.deleteDraftInTx(ctx, scope, tx, latestVersion); err != nil {
-							return err
-						}
-
-						resultVersion = nil
-
-						return nil
-					}
-				}
-
-				resultVersion = latestVersion
-			} else {
-				// No draft exists: create one.
-				draftVersion, err := s.createDraftInTx(ctx, scope, tx, document, latestVersion)
-				if err != nil {
-					return err
-				}
-
-				if err := s.updateVersionInTx(ctx, scope, tx, draftVersion, req.Content, req.Classification, req.DocumentType, req.Title); err != nil {
-					return err
-				}
-
-				resultVersion = draftVersion
-				draftCreated = true
 			}
 
 			if req.DefaultApproverIDs != nil {
 				defaultApprovers := &coredata.DocumentDefaultApprovers{}
 				if err := defaultApprovers.MergeByDocumentID(ctx, tx, scope, req.DocumentID, document.OrganizationID, *req.DefaultApproverIDs); err != nil {
 					return fmt.Errorf("cannot update default approvers: %w", err)
+				}
+			}
+
+			versionDeleted := false
+
+			if hasVersionChanges {
+				if latestVersion.Status == coredata.DocumentVersionStatusDraft {
+					if err := s.updateVersionInTx(ctx, scope, tx, latestVersion, req.Content, req.Classification, req.DocumentType, req.Title); err != nil {
+						return err
+					}
+
+					if document.CurrentPublishedMajor != nil && (latestVersion.Major != 0 || latestVersion.Minor != 1) {
+						publishedVersion := &coredata.DocumentVersion{}
+						if err := publishedVersion.LoadByDocumentIDAndVersion(
+							ctx,
+							tx,
+							scope,
+							req.DocumentID,
+							*document.CurrentPublishedMajor,
+							*document.CurrentPublishedMinor,
+						); err != nil {
+							return fmt.Errorf("cannot load published version: %w", err)
+						}
+
+						if latestVersion.Title == publishedVersion.Title &&
+							latestVersion.Content == publishedVersion.Content &&
+							latestVersion.Classification == publishedVersion.Classification &&
+							latestVersion.DocumentType == publishedVersion.DocumentType {
+							if err := s.deleteDraftInTx(ctx, scope, tx, latestVersion); err != nil {
+								return err
+							}
+
+							resultVersion = nil
+							versionDeleted = true
+						}
+					}
+
+					if !versionDeleted {
+						resultVersion = latestVersion
+					}
+				} else {
+					draftVersion, err := s.createDraftInTx(ctx, scope, tx, document, latestVersion)
+					if err != nil {
+						return err
+					}
+
+					if err := s.updateVersionInTx(ctx, scope, tx, draftVersion, req.Content, req.Classification, req.DocumentType, req.Title); err != nil {
+						return err
+					}
+
+					resultVersion = draftVersion
+					draftCreated = true
+				}
+
+				if versionDeleted {
+					if err := s.emitDocumentEventInTx(
+						ctx,
+						scope,
+						tx,
+						latestVersion.DocumentID,
+						coredata.WebhookEventTypeDocumentVersionDeleted,
+						latestVersion,
+						nil,
+						nil,
+					); err != nil {
+						return fmt.Errorf("cannot emit document version deleted webhook: %w", err)
+					}
+				} else {
+					versionEvent := coredata.WebhookEventTypeDocumentVersionUpdated
+					if draftCreated {
+						versionEvent = coredata.WebhookEventTypeDocumentVersionCreated
+					}
+
+					if err := s.emitDocumentEventInTx(ctx, scope, tx, resultVersion.DocumentID, versionEvent, resultVersion, nil, nil); err != nil {
+						return fmt.Errorf("cannot emit document version webhook: %w", err)
+					}
+				}
+			}
+
+			if docLevelChanged {
+				if err := s.emitDocumentEventInTx(ctx, scope, tx, req.DocumentID, coredata.WebhookEventTypeDocumentUpdated, nil, nil, nil); err != nil {
+					return fmt.Errorf("cannot emit document updated webhook: %w", err)
 				}
 			}
 
@@ -1957,7 +2270,24 @@ func (s *DocumentService) DeleteDraft(
 				return &ErrDocumentDraftNotDeletable{}
 			}
 
-			return s.deleteDraftInTx(ctx, scope, tx, latestVersion)
+			if err := s.deleteDraftInTx(ctx, scope, tx, latestVersion); err != nil {
+				return err
+			}
+
+			if err := s.emitDocumentEventInTx(
+				ctx,
+				scope,
+				tx,
+				latestVersion.DocumentID,
+				coredata.WebhookEventTypeDocumentVersionDeleted,
+				latestVersion,
+				nil,
+				nil,
+			); err != nil {
+				return fmt.Errorf("cannot emit document version deleted webhook: %w", err)
+			}
+
+			return nil
 		},
 	)
 	if err != nil {
@@ -2013,6 +2343,10 @@ func (s *DocumentService) Archive(
 				return fmt.Errorf("cannot archive document: %w", err)
 			}
 
+			if err := s.emitDocumentEventInTx(ctx, scope, tx, documentID, coredata.WebhookEventTypeDocumentArchived, nil, nil, nil); err != nil {
+				return fmt.Errorf("cannot emit document archived webhook: %w", err)
+			}
+
 			return nil
 		},
 	)
@@ -2047,6 +2381,10 @@ func (s *DocumentService) Unarchive(
 
 			if err := document.Update(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot unarchive document: %w", err)
+			}
+
+			if err := s.emitDocumentEventInTx(ctx, scope, tx, documentID, coredata.WebhookEventTypeDocumentUnarchived, nil, nil, nil); err != nil {
+				return fmt.Errorf("cannot emit document unarchived webhook: %w", err)
 			}
 
 			return nil
@@ -2095,6 +2433,19 @@ func (s *DocumentService) CancelSignatureRequest(
 
 			if err := documentVersionSignature.Delete(ctx, tx, scope, documentVersionSignatureID); err != nil {
 				return fmt.Errorf("cannot delete document version signature: %w", err)
+			}
+
+			if err := s.emitDocumentEventInTx(
+				ctx,
+				scope,
+				tx,
+				documentVersion.DocumentID,
+				coredata.WebhookEventTypeDocumentVersionSignatureCancelled,
+				documentVersion,
+				documentVersionSignature,
+				nil,
+			); err != nil {
+				return fmt.Errorf("cannot emit document version signature cancelled webhook: %w", err)
 			}
 
 			return nil

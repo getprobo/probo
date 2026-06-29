@@ -33,6 +33,28 @@ const (
 	WebhookEventTypeObligationCreated WebhookEventType = "obligation:created"
 	WebhookEventTypeObligationUpdated WebhookEventType = "obligation:updated"
 	WebhookEventTypeObligationDeleted WebhookEventType = "obligation:deleted"
+
+	WebhookEventTypeDocumentCreated    WebhookEventType = "document:created"
+	WebhookEventTypeDocumentUpdated    WebhookEventType = "document:updated"
+	WebhookEventTypeDocumentArchived   WebhookEventType = "document:archived"
+	WebhookEventTypeDocumentUnarchived WebhookEventType = "document:unarchived"
+	WebhookEventTypeDocumentDeleted    WebhookEventType = "document:deleted"
+
+	WebhookEventTypeDocumentVersionCreated   WebhookEventType = "document-version:created"
+	WebhookEventTypeDocumentVersionUpdated   WebhookEventType = "document-version:updated"
+	WebhookEventTypeDocumentVersionPublished WebhookEventType = "document-version:published"
+	WebhookEventTypeDocumentVersionRejected  WebhookEventType = "document-version:rejected"
+	WebhookEventTypeDocumentVersionDeleted   WebhookEventType = "document-version:deleted"
+
+	WebhookEventTypeDocumentVersionSignatureRequested WebhookEventType = "document-version-signature:requested"
+	WebhookEventTypeDocumentVersionSignatureSigned    WebhookEventType = "document-version-signature:signed"
+	WebhookEventTypeDocumentVersionSignatureCancelled WebhookEventType = "document-version-signature:cancelled"
+
+	WebhookEventTypeDocumentVersionApprovalQuorumRequested WebhookEventType = "document-version-approval-quorum:requested"
+	WebhookEventTypeDocumentVersionApprovalQuorumUpdated   WebhookEventType = "document-version-approval-quorum:updated"
+	WebhookEventTypeDocumentVersionApprovalQuorumApproved  WebhookEventType = "document-version-approval-quorum:approved"
+	WebhookEventTypeDocumentVersionApprovalQuorumRejected  WebhookEventType = "document-version-approval-quorum:rejected"
+	WebhookEventTypeDocumentVersionApprovalQuorumVoided    WebhookEventType = "document-version-approval-quorum:voided"
 )
 
 var (
@@ -52,7 +74,25 @@ func (v WebhookEventType) IsValid() bool {
 		WebhookEventTypeUserDeleted,
 		WebhookEventTypeObligationCreated,
 		WebhookEventTypeObligationUpdated,
-		WebhookEventTypeObligationDeleted:
+		WebhookEventTypeObligationDeleted,
+		WebhookEventTypeDocumentCreated,
+		WebhookEventTypeDocumentUpdated,
+		WebhookEventTypeDocumentArchived,
+		WebhookEventTypeDocumentUnarchived,
+		WebhookEventTypeDocumentDeleted,
+		WebhookEventTypeDocumentVersionCreated,
+		WebhookEventTypeDocumentVersionUpdated,
+		WebhookEventTypeDocumentVersionPublished,
+		WebhookEventTypeDocumentVersionRejected,
+		WebhookEventTypeDocumentVersionDeleted,
+		WebhookEventTypeDocumentVersionSignatureRequested,
+		WebhookEventTypeDocumentVersionSignatureSigned,
+		WebhookEventTypeDocumentVersionSignatureCancelled,
+		WebhookEventTypeDocumentVersionApprovalQuorumRequested,
+		WebhookEventTypeDocumentVersionApprovalQuorumUpdated,
+		WebhookEventTypeDocumentVersionApprovalQuorumApproved,
+		WebhookEventTypeDocumentVersionApprovalQuorumRejected,
+		WebhookEventTypeDocumentVersionApprovalQuorumVoided:
 		return true
 	}
 

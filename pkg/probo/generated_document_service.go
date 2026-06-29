@@ -3214,6 +3214,8 @@ func (s *GeneratedDocumentService) publishOrRequestApproval(
 ) error {
 	previousVersion := &coredata.DocumentVersion{}
 
+	isFirstVersion := false
+
 	err := previousVersion.LoadLatestVersion(ctx, tx, scope, document.ID)
 	switch {
 	case err == nil:
@@ -3222,6 +3224,7 @@ func (s *GeneratedDocumentService) publishOrRequestApproval(
 		version.DocumentType = previousVersion.DocumentType
 	case errors.Is(err, coredata.ErrResourceNotFound):
 		// First publish: keep the caller-provided defaults.
+		isFirstVersion = true
 	default:
 		return fmt.Errorf("cannot load previous document version: %w", err)
 	}
@@ -3276,8 +3279,28 @@ func (s *GeneratedDocumentService) publishOrRequestApproval(
 			return fmt.Errorf("cannot save default approvers: %w", err)
 		}
 
-		if _, err := s.svc.DocumentApprovals.RequestApprovalInTx(ctx, scope, tx, document, version, approverIDs, nil); err != nil {
+		quorum, err := s.svc.DocumentApprovals.RequestApprovalInTx(ctx, scope, tx, document, version, approverIDs, nil)
+		if err != nil {
 			return fmt.Errorf("cannot request approval: %w", err)
+		}
+
+		if isFirstVersion {
+			if err := s.svc.Documents.emitDocumentEventInTx(ctx, scope, tx, document.ID, coredata.WebhookEventTypeDocumentCreated, nil, nil, nil); err != nil {
+				return fmt.Errorf("cannot emit document created webhook: %w", err)
+			}
+		}
+
+		if err := s.svc.Documents.emitDocumentEventInTx(
+			ctx,
+			scope,
+			tx,
+			version.DocumentID,
+			coredata.WebhookEventTypeDocumentVersionApprovalQuorumRequested,
+			version,
+			nil,
+			&quorum.ID,
+		); err != nil {
+			return fmt.Errorf("cannot emit approval quorum requested webhook: %w", err)
 		}
 
 		return nil
@@ -3295,6 +3318,25 @@ func (s *GeneratedDocumentService) publishOrRequestApproval(
 		if err := s.svc.Documents.cancelPreviousMajorSignatureRequestsInTx(ctx, scope, tx, document.ID, version.Major); err != nil {
 			return fmt.Errorf("cannot cancel signature requests from previous major versions: %w", err)
 		}
+	}
+
+	if isFirstVersion {
+		if err := s.svc.Documents.emitDocumentEventInTx(ctx, scope, tx, document.ID, coredata.WebhookEventTypeDocumentCreated, nil, nil, nil); err != nil {
+			return fmt.Errorf("cannot emit document created webhook: %w", err)
+		}
+	}
+
+	if err := s.svc.Documents.emitDocumentEventInTx(
+		ctx,
+		scope,
+		tx,
+		version.DocumentID,
+		coredata.WebhookEventTypeDocumentVersionPublished,
+		version,
+		nil,
+		nil,
+	); err != nil {
+		return fmt.Errorf("cannot emit document version published webhook: %w", err)
 	}
 
 	return nil
