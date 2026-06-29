@@ -15,45 +15,11 @@
 package bootstrap
 
 import (
-	"context"
-	"fmt"
 	"testing"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
-
-type mockSecretsManagerClient struct {
-	secrets map[string]string
-	called  []string
-}
-
-func (m *mockSecretsManagerClient) GetSecretValue(
-	_ context.Context,
-	params *secretsmanager.GetSecretValueInput,
-	_ ...func(*secretsmanager.Options),
-) (*secretsmanager.GetSecretValueOutput, error) {
-	secretID := aws.ToString(params.SecretId)
-	m.called = append(m.called, secretID)
-
-	value, ok := m.secrets[secretID]
-	if !ok {
-		return nil, fmt.Errorf("secret %q not found", secretID)
-	}
-
-	return &secretsmanager.GetSecretValueOutput{
-		SecretString: aws.String(value),
-	}, nil
-}
-
-func testResolver(env map[string]string, client SecretsManagerClient) *Resolver {
-	r := NewResolver(mockEnv(env))
-	r.secretsManagerClient = client
-
-	return r
-}
 
 func TestResolver_ResolveLiteralEnv(t *testing.T) {
 	t.Parallel()
@@ -63,117 +29,79 @@ func TestResolver_ResolveLiteralEnv(t *testing.T) {
 	require.NoError(t, r.Err())
 }
 
-func TestBuilder_Build_ResolvesAWSSecretRefs(t *testing.T) {
+func TestResolver_ResolveEmptyAWSSecretsManagerRef(t *testing.T) {
 	t.Parallel()
 
-	client := &mockSecretsManagerClient{
-		secrets: map[string]string{
-			"probo/sandbox/probod/encryption_key":     "test-encryption-key-32-bytes-long",
-			"probo/sandbox/probod/cookie_secret":      "test-cookie-secret-32-bytes-long!",
-			"probo/sandbox/probod/password_pepper":    "test-password-pepper-32-bytes-lo",
-			"probo/sandbox/probod/oauth2_signing_key": "test-oauth2-signing-key",
-		},
+	for _, value := range []string{"awssm://", "aws://"} {
+		t.Run(value, func(t *testing.T) {
+			t.Parallel()
+
+			r := NewResolver(mockEnv(map[string]string{
+				"PROBOD_ENCRYPTION_KEY": value,
+			}))
+
+			assert.Empty(t, r.getEnv("PROBOD_ENCRYPTION_KEY"))
+			require.Error(t, r.Err())
+			assert.Contains(t, r.Err().Error(), "cannot resolve PROBOD_ENCRYPTION_KEY")
+			assert.Contains(t, r.Err().Error(), "empty AWS reference")
+		})
 	}
-
-	env := map[string]string{
-		"PROBOD_ENCRYPTION_KEY":            "aws://probo/sandbox/probod/encryption_key",
-		"PROBOD_AUTH_COOKIE_SECRET":        "aws://probo/sandbox/probod/cookie_secret",
-		"PROBOD_AUTH_PASSWORD_PEPPER":      "aws://probo/sandbox/probod/password_pepper",
-		"PROBOD_OAUTH2_SERVER_SIGNING_KEY": "aws://probo/sandbox/probod/oauth2_signing_key",
-		"PROBOD_BASE_URL":                  "https://app.example.com",
-	}
-	b := NewBuilder(testResolver(env, client))
-
-	cfg, err := b.Build()
-	require.NoError(t, err)
-	require.Len(t, client.called, 4)
-
-	assert.Equal(t, "test-encryption-key-32-bytes-long", cfg.Probod.EncryptionKey)
-	assert.Equal(t, "https://app.example.com", cfg.Probod.BaseURL)
 }
 
-func TestResolver_ResolveAWSSecretRefsCachesBySecretID(t *testing.T) {
+func TestResolver_ResolveEmptyAWSParameterStoreRef(t *testing.T) {
 	t.Parallel()
 
-	client := &mockSecretsManagerClient{
-		secrets: map[string]string{
-			"probo/sandbox/probod/encryption_key": "secret-value",
-		},
-	}
-	r := testResolver(map[string]string{
-		"PROBOD_ENCRYPTION_KEY":            "aws://probo/sandbox/probod/encryption_key",
-		"PROBOD_AUTH_COOKIE_SECRET":        "aws://probo/sandbox/probod/encryption_key",
-		"PROBOD_AUTH_PASSWORD_PEPPER":      "plaintext-pepper",
-		"PROBOD_OAUTH2_SERVER_SIGNING_KEY": "plaintext-oauth2",
-	}, client)
-
-	assert.Equal(t, "secret-value", r.getEnv("PROBOD_ENCRYPTION_KEY"))
-	assert.Equal(t, "secret-value", r.getEnv("PROBOD_AUTH_COOKIE_SECRET"))
-	require.NoError(t, r.Err())
-	require.Len(t, client.called, 1)
-}
-
-func TestBuilder_Build_MixedPlaintextAndAWSSecrets(t *testing.T) {
-	t.Parallel()
-
-	client := &mockSecretsManagerClient{
-		secrets: map[string]string{
-			"probo/sandbox/probod/encryption_key": "test-encryption-key-32-bytes-long",
-		},
-	}
-	b := NewBuilder(testResolver(map[string]string{
-		"PROBOD_ENCRYPTION_KEY":            "aws://probo/sandbox/probod/encryption_key",
-		"PROBOD_AUTH_COOKIE_SECRET":        "test-cookie-secret-32-bytes-long!",
-		"PROBOD_AUTH_PASSWORD_PEPPER":      "test-password-pepper-32-bytes-lo",
-		"PROBOD_OAUTH2_SERVER_SIGNING_KEY": "test-oauth2-signing-key",
-	}, client))
-
-	cfg, err := b.Build()
-	require.NoError(t, err)
-	assert.Equal(t, "test-encryption-key-32-bytes-long", cfg.Probod.EncryptionKey)
-	assert.Equal(t, "test-cookie-secret-32-bytes-long!", cfg.Probod.Auth.Cookie.Secret)
-}
-
-func TestResolver_ResolveAWSSecretRefMissingSecret(t *testing.T) {
-	t.Parallel()
-
-	client := &mockSecretsManagerClient{secrets: map[string]string{}}
-	r := testResolver(map[string]string{
-		"PROBOD_ENCRYPTION_KEY": "aws://probo/sandbox/probod/encryption_key",
-	}, client)
+	r := NewResolver(mockEnv(map[string]string{
+		"PROBOD_ENCRYPTION_KEY": "awsps://",
+	}))
 
 	assert.Empty(t, r.getEnv("PROBOD_ENCRYPTION_KEY"))
 	require.Error(t, r.Err())
 	assert.Contains(t, r.Err().Error(), "cannot resolve PROBOD_ENCRYPTION_KEY")
+	assert.Contains(t, r.Err().Error(), "empty AWS reference")
 }
 
-func TestResolver_ResolveAWSSecretRefEmptySecretString(t *testing.T) {
+func TestParseAWSSecretsManagerRef(t *testing.T) {
 	t.Parallel()
 
-	client := &mockSecretsManagerClient{
-		secrets: map[string]string{
-			"probo/sandbox/probod/encryption_key": "",
-		},
-	}
-	r := testResolver(map[string]string{
-		"PROBOD_ENCRYPTION_KEY": "aws://probo/sandbox/probod/encryption_key",
-	}, client)
-
-	assert.Empty(t, r.getEnv("PROBOD_ENCRYPTION_KEY"))
-	require.Error(t, r.Err())
-	assert.Contains(t, r.Err().Error(), "empty SecretString")
-}
-
-func TestParseAWSSecretRef(t *testing.T) {
-	t.Parallel()
-
-	secretID, ok := parseAWSSecretRef("aws://probo/sandbox/probod/encryption_key")
+	secretID, ok := parseAWSSecretsManagerRef("awssm://probo/probod/encryption_key")
 	require.True(t, ok)
-	assert.Equal(t, "probo/sandbox/probod/encryption_key", secretID)
+	assert.Equal(t, "probo/probod/encryption_key", secretID)
 
-	_, ok = parseAWSSecretRef("literal-value")
+	_, ok = parseAWSSecretsManagerRef("literal-value")
 	assert.False(t, ok)
 
-	_, ok = parseAWSSecretRef("aws://")
+	_, ok = parseAWSSecretsManagerRef("awssm://")
 	assert.False(t, ok)
+
+	legacySecretID, ok := parseAWSSecretsManagerRef("aws://probo/probod/encryption_key")
+	require.True(t, ok)
+	assert.Equal(t, "probo/probod/encryption_key", legacySecretID)
+}
+
+func TestParseAWSParameterStoreRef(t *testing.T) {
+	t.Parallel()
+
+	paramName, ok := parseAWSParameterStoreRef("awsps:///probo/probod/encryption_key")
+	require.True(t, ok)
+	assert.Equal(t, "/probo/probod/encryption_key", paramName)
+
+	_, ok = parseAWSParameterStoreRef("literal-value")
+	assert.False(t, ok)
+
+	_, ok = parseAWSParameterStoreRef("awsps://")
+	assert.False(t, ok)
+}
+
+func TestEmptyAWSRefPrefix(t *testing.T) {
+	t.Parallel()
+
+	for _, value := range []string{"awssm://", "aws://", "awsps://"} {
+		prefix, empty := emptyAWSRefPrefix(value)
+		require.True(t, empty)
+		assert.Equal(t, value, prefix)
+	}
+
+	_, empty := emptyAWSRefPrefix("awssm://probo/probod/encryption_key")
+	assert.False(t, empty)
 }

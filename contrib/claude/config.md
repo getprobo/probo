@@ -27,7 +27,7 @@ Go struct (pkg/probod/)
   │
   ├─► bootstrap builder.go (env var → struct)
   │     │
-  │     ├─► Resolver (aws:// secret-id refs + plaintext env literals)
+  │     ├─► Resolver (aws:// / awssm:// / awsps:// refs + plaintext env literals)
   │     ├─► GNUmakefile dev-config    (env vars → probod-bootstrap → cfg/dev.yaml)
   │     ├─► e2e/internal/testutil/    (env map → bootstrap.Build, tests)
   │     ├─► contrib/lima/provision.sh  (env vars → probod-bootstrap)

@@ -24,26 +24,23 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
+	"github.com/aws/aws-sdk-go-v2/service/ssm"
 )
 
-const awsSecretRefPrefix = "aws://"
-
-type (
-	SecretsManagerClient interface {
-		GetSecretValue(
-			ctx context.Context,
-			params *secretsmanager.GetSecretValueInput,
-			optFns ...func(*secretsmanager.Options),
-		) (*secretsmanager.GetSecretValueOutput, error)
-	}
-
-	Resolver struct {
-		lookup               EnvGetter
-		secretsManagerClient SecretsManagerClient
-		smCache              map[string]string
-		err                  error
-	}
+const (
+	awsSecretsManagerRefPrefix       = "awssm://"
+	awsSecretsManagerLegacyRefPrefix = "aws://"
+	awsParameterStoreRefPrefix       = "awsps://"
 )
+
+type Resolver struct {
+	lookup   EnvGetter
+	smClient *secretsmanager.Client
+	psClient *ssm.Client
+	smCache  map[string]string
+	psCache  map[string]string
+	err      error
+}
 
 func NewResolver(lookup EnvGetter) *Resolver {
 	if lookup == nil {
@@ -133,17 +130,29 @@ func (r *Resolver) getEnvBoolOrDefault(key string, defaultValue bool) bool {
 func (r *Resolver) resolve(key string) (string, error) {
 	raw := r.lookup(key)
 
-	secretID, ok := parseAWSSecretRef(raw)
-	if !ok {
-		return raw, nil
+	if prefix, empty := emptyAWSRefPrefix(raw); empty {
+		return "", fmt.Errorf("cannot resolve %s: empty AWS reference after %s", key, prefix)
 	}
 
-	value, err := r.loadPlaintextSecret(secretID)
-	if err != nil {
-		return "", fmt.Errorf("cannot resolve %s: %w", key, err)
+	if secretID, ok := parseAWSSecretsManagerRef(raw); ok {
+		value, err := r.loadPlaintextSecret(secretID)
+		if err != nil {
+			return "", fmt.Errorf("cannot resolve %s: %w", key, err)
+		}
+
+		return value, nil
 	}
 
-	return value, nil
+	if paramName, ok := parseAWSRef(raw, awsParameterStoreRefPrefix); ok {
+		value, err := r.loadParameter(paramName)
+		if err != nil {
+			return "", fmt.Errorf("cannot resolve %s: %w", key, err)
+		}
+
+		return value, nil
+	}
+
+	return raw, nil
 }
 
 func (r *Resolver) loadPlaintextSecret(secretID string) (string, error) {
@@ -153,16 +162,23 @@ func (r *Resolver) loadPlaintextSecret(secretID string) (string, error) {
 		}
 	}
 
-	value, err := fetchPlaintextSecret(
-		context.Background(),
-		secretsManagerOptions{
-			SecretID: secretID,
-			Client:   r.secretsManagerClient,
-		},
-	)
+	client, err := r.secretsManagerClient(context.Background())
 	if err != nil {
 		return "", err
 	}
+
+	out, err := client.GetSecretValue(context.Background(), &secretsmanager.GetSecretValueInput{
+		SecretId: aws.String(secretID),
+	})
+	if err != nil {
+		return "", fmt.Errorf("cannot load secret from AWS Secrets Manager: %w", err)
+	}
+
+	if out.SecretString == nil || *out.SecretString == "" {
+		return "", fmt.Errorf("secret %q has an empty SecretString", secretID)
+	}
+
+	value := *out.SecretString
 
 	if r.smCache == nil {
 		r.smCache = make(map[string]string)
@@ -173,47 +189,44 @@ func (r *Resolver) loadPlaintextSecret(secretID string) (string, error) {
 	return value, nil
 }
 
-func parseAWSSecretRef(value string) (string, bool) {
-	if !strings.HasPrefix(value, awsSecretRefPrefix) {
-		return "", false
+func (r *Resolver) loadParameter(name string) (string, error) {
+	if r.psCache != nil {
+		if value, ok := r.psCache[name]; ok {
+			return value, nil
+		}
 	}
 
-	secretID := strings.TrimPrefix(value, awsSecretRefPrefix)
-	if secretID == "" {
-		return "", false
-	}
-
-	return secretID, true
-}
-
-type secretsManagerOptions struct {
-	SecretID string
-	Client   SecretsManagerClient
-}
-
-func fetchPlaintextSecret(ctx context.Context, opts secretsManagerOptions) (string, error) {
-	client, err := secretsManagerClient(ctx, opts)
+	client, err := r.parameterStoreClient(context.Background())
 	if err != nil {
 		return "", err
 	}
 
-	out, err := client.GetSecretValue(ctx, &secretsmanager.GetSecretValueInput{
-		SecretId: aws.String(opts.SecretID),
+	out, err := client.GetParameter(context.Background(), &ssm.GetParameterInput{
+		Name:           aws.String(name),
+		WithDecryption: aws.Bool(true),
 	})
 	if err != nil {
-		return "", fmt.Errorf("cannot load secret from AWS Secrets Manager: %w", err)
+		return "", fmt.Errorf("cannot load parameter from AWS Systems Manager Parameter Store: %w", err)
 	}
 
-	if out.SecretString == nil || *out.SecretString == "" {
-		return "", fmt.Errorf("secret %q has an empty SecretString", opts.SecretID)
+	if out.Parameter == nil || out.Parameter.Value == nil || *out.Parameter.Value == "" {
+		return "", fmt.Errorf("parameter %q has an empty value", name)
 	}
 
-	return *out.SecretString, nil
+	value := *out.Parameter.Value
+
+	if r.psCache == nil {
+		r.psCache = make(map[string]string)
+	}
+
+	r.psCache[name] = value
+
+	return value, nil
 }
 
-func secretsManagerClient(ctx context.Context, opts secretsManagerOptions) (SecretsManagerClient, error) {
-	if opts.Client != nil {
-		return opts.Client, nil
+func (r *Resolver) secretsManagerClient(ctx context.Context) (*secretsmanager.Client, error) {
+	if r.smClient != nil {
+		return r.smClient, nil
 	}
 
 	cfg, err := config.LoadDefaultConfig(ctx)
@@ -221,5 +234,61 @@ func secretsManagerClient(ctx context.Context, opts secretsManagerOptions) (Secr
 		return nil, fmt.Errorf("cannot load AWS config: %w", err)
 	}
 
-	return secretsmanager.NewFromConfig(cfg), nil
+	r.smClient = secretsmanager.NewFromConfig(cfg)
+
+	return r.smClient, nil
+}
+
+func (r *Resolver) parameterStoreClient(ctx context.Context) (*ssm.Client, error) {
+	if r.psClient != nil {
+		return r.psClient, nil
+	}
+
+	cfg, err := config.LoadDefaultConfig(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("cannot load AWS config: %w", err)
+	}
+
+	r.psClient = ssm.NewFromConfig(cfg)
+
+	return r.psClient, nil
+}
+
+func parseAWSRef(value, prefix string) (string, bool) {
+	if !strings.HasPrefix(value, prefix) {
+		return "", false
+	}
+
+	ref := strings.TrimPrefix(value, prefix)
+	if ref == "" {
+		return "", false
+	}
+
+	return ref, true
+}
+
+func emptyAWSRefPrefix(value string) (string, bool) {
+	for _, prefix := range []string{
+		awsSecretsManagerRefPrefix,
+		awsSecretsManagerLegacyRefPrefix,
+		awsParameterStoreRefPrefix,
+	} {
+		if strings.HasPrefix(value, prefix) && strings.TrimPrefix(value, prefix) == "" {
+			return prefix, true
+		}
+	}
+
+	return "", false
+}
+
+func parseAWSSecretsManagerRef(value string) (string, bool) {
+	if secretID, ok := parseAWSRef(value, awsSecretsManagerRefPrefix); ok {
+		return secretID, true
+	}
+
+	return parseAWSRef(value, awsSecretsManagerLegacyRefPrefix)
+}
+
+func parseAWSParameterStoreRef(value string) (string, bool) {
+	return parseAWSRef(value, awsParameterStoreRefPrefix)
 }

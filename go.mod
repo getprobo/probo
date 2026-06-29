@@ -60,6 +60,7 @@ require (
 	github.com/atotto/clipboard v0.1.4 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.18.28 // indirect
 	github.com/aws/aws-sdk-go-v2/service/signin v1.1.4 // indirect
+	github.com/aws/aws-sdk-go-v2/service/ssm v1.69.3 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sso v1.31.2 // indirect
 	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.36.5 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sts v1.43.2 // indirect
