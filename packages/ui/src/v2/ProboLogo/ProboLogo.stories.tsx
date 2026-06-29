@@ -19,7 +19,10 @@ import { ProboLogo } from "./ProboLogo";
 export default {
   title: "v2/ProboLogo",
   component: ProboLogo,
-  render: () => <ProboLogo className="h-6 w-auto text-sand-12" />,
+  args: {
+    className: "h-6 w-auto text-sand-12",
+  },
+  render: args => <ProboLogo {...args} />,
 } satisfies Meta<typeof ProboLogo>;
 
 type Story = StoryObj<typeof ProboLogo>;

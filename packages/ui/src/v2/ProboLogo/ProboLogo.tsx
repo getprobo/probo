@@ -29,6 +29,7 @@ export function ProboLogo(props: ProboLogoProps) {
       fill="none"
       viewBox="0 0 90 24"
       role="img"
+      aria-label="Probo"
       {...props}
     >
       <mask id={maskId} maskUnits="userSpaceOnUse">

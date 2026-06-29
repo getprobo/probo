@@ -28,7 +28,7 @@ export function Card(props: CardProps) {
 
   return (
     <div className={card({ size, padding, variant, interactive, className })} {...rest}>
-      <CardProvider value={size}>{children}</CardProvider>
+      <CardProvider value={padding}>{children}</CardProvider>
     </div>
   );
 }

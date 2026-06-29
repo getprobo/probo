@@ -63,43 +63,44 @@ export const card = tv({
 });
 
 // Negates the card's padding so content bleeds to its edges. The negative
-// margin must match the card's size padding (1→3, 2→4, 3→5, 4→6, 5→8), so the
-// matrix is keyed on both size and side. `overflow-hidden` clips bled media.
+// margin must match the card's resolved padding (1→3, 2→4, 3→5, 4→6, 5→8), so
+// the matrix is keyed on the padding (from context) and side. `padding="none"`
+// has nothing to negate. `overflow-hidden` clips bled media.
 export const cardInset = tv({
   base: "overflow-hidden",
   variants: {
-    size: { 1: "", 2: "", 3: "", 4: "", 5: "" },
+    padding: { 1: "", 2: "", 3: "", 4: "", 5: "", none: "" },
     side: { all: "", x: "", y: "", top: "", bottom: "" },
   },
   compoundVariants: [
-    { size: 1, side: "all", class: "-m-3" },
-    { size: 1, side: "x", class: "-mx-3" },
-    { size: 1, side: "y", class: "-my-3" },
-    { size: 1, side: "top", class: "-mx-3 -mt-3 mb-3" },
-    { size: 1, side: "bottom", class: "-mx-3 -mb-3 mt-3" },
-    { size: 2, side: "all", class: "-m-4" },
-    { size: 2, side: "x", class: "-mx-4" },
-    { size: 2, side: "y", class: "-my-4" },
-    { size: 2, side: "top", class: "-mx-4 -mt-4 mb-4" },
-    { size: 2, side: "bottom", class: "-mx-4 -mb-4 mt-4" },
-    { size: 3, side: "all", class: "-m-5" },
-    { size: 3, side: "x", class: "-mx-5" },
-    { size: 3, side: "y", class: "-my-5" },
-    { size: 3, side: "top", class: "-mx-5 -mt-5 mb-5" },
-    { size: 3, side: "bottom", class: "-mx-5 -mb-5 mt-5" },
-    { size: 4, side: "all", class: "-m-6" },
-    { size: 4, side: "x", class: "-mx-6" },
-    { size: 4, side: "y", class: "-my-6" },
-    { size: 4, side: "top", class: "-mx-6 -mt-6 mb-6" },
-    { size: 4, side: "bottom", class: "-mx-6 -mb-6 mt-6" },
-    { size: 5, side: "all", class: "-m-8" },
-    { size: 5, side: "x", class: "-mx-8" },
-    { size: 5, side: "y", class: "-my-8" },
-    { size: 5, side: "top", class: "-mx-8 -mt-8 mb-8" },
-    { size: 5, side: "bottom", class: "-mx-8 -mb-8 mt-8" },
+    { padding: 1, side: "all", class: "-m-3" },
+    { padding: 1, side: "x", class: "-mx-3" },
+    { padding: 1, side: "y", class: "-my-3" },
+    { padding: 1, side: "top", class: "-mx-3 -mt-3 mb-3" },
+    { padding: 1, side: "bottom", class: "-mx-3 -mb-3 mt-3" },
+    { padding: 2, side: "all", class: "-m-4" },
+    { padding: 2, side: "x", class: "-mx-4" },
+    { padding: 2, side: "y", class: "-my-4" },
+    { padding: 2, side: "top", class: "-mx-4 -mt-4 mb-4" },
+    { padding: 2, side: "bottom", class: "-mx-4 -mb-4 mt-4" },
+    { padding: 3, side: "all", class: "-m-5" },
+    { padding: 3, side: "x", class: "-mx-5" },
+    { padding: 3, side: "y", class: "-my-5" },
+    { padding: 3, side: "top", class: "-mx-5 -mt-5 mb-5" },
+    { padding: 3, side: "bottom", class: "-mx-5 -mb-5 mt-5" },
+    { padding: 4, side: "all", class: "-m-6" },
+    { padding: 4, side: "x", class: "-mx-6" },
+    { padding: 4, side: "y", class: "-my-6" },
+    { padding: 4, side: "top", class: "-mx-6 -mt-6 mb-6" },
+    { padding: 4, side: "bottom", class: "-mx-6 -mb-6 mt-6" },
+    { padding: 5, side: "all", class: "-m-8" },
+    { padding: 5, side: "x", class: "-mx-8" },
+    { padding: 5, side: "y", class: "-my-8" },
+    { padding: 5, side: "top", class: "-mx-8 -mt-8 mb-8" },
+    { padding: 5, side: "bottom", class: "-mx-8 -mb-8 mt-8" },
   ],
   defaultVariants: {
-    size: 1,
+    padding: 1,
     side: "all",
   },
 });

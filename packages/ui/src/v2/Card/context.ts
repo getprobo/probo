@@ -15,9 +15,11 @@
 import { createContext, useContext } from "react";
 
 export type CardSize = 1 | 2 | 3 | 4 | 5;
+export type CardPadding = CardSize | "none";
 
-// The card's size, shared with CardInset so it can negate the matching padding.
-const CardContext = createContext<CardSize>(1);
+// The card's resolved padding, shared with CardInset so it negates the actual
+// padding (which can be decoupled from `size` via the `padding` prop).
+const CardContext = createContext<CardPadding>(1);
 
 export const CardProvider = CardContext.Provider;
 

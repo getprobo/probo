@@ -23,11 +23,12 @@ export type CardInsetProps = ComponentProps<"div"> & {
 };
 
 // Content that bleeds past the Card's padding to its edges (Radix "Inset"),
-// e.g. a cover image. Negates the padding for the parent Card's size, read from
-// context, so it always lines up.
+// e.g. a cover image. Negates the parent Card's resolved padding (read from
+// context) so it always lines up, even when padding is decoupled from size. With
+// `padding="none"` there is nothing to negate, so this is a no-op wrapper.
 export function CardInset(props: CardInsetProps) {
   const { side = "all", className, ...rest } = props;
-  const size = useCardContext();
+  const padding = useCardContext();
 
-  return <div className={cardInset({ size, side, className })} {...rest} />;
+  return <div className={cardInset({ padding, side, className })} {...rest} />;
 }
