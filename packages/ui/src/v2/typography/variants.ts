@@ -46,8 +46,10 @@ const typographyVariants = {
   },
   // Hue only; the resolved text step comes from the color × highContrast
   // compound variants below (step 11 low-contrast, step 12 high-contrast).
+  // `faint` is a de-emphasized neutral (sand alpha 8) for fine-print metadata.
   color: {
     neutral: "",
+    faint: "",
     gold: "",
     red: "",
     green: "",
@@ -63,6 +65,9 @@ const typographyVariants = {
 const colorCompoundVariants = [
   { color: "neutral", highContrast: false, class: "text-sand-11" },
   { color: "neutral", highContrast: true, class: "text-sand-12" },
+  // Faint metadata; a single de-emphasized step regardless of highContrast.
+  { color: "faint", highContrast: false, class: "text-sand-a8" },
+  { color: "faint", highContrast: true, class: "text-sand-a8" },
   { color: "gold", highContrast: false, class: "text-gold-11" },
   { color: "gold", highContrast: true, class: "text-gold-12" },
   { color: "red", highContrast: false, class: "text-red-11" },

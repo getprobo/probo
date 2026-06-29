@@ -13,7 +13,16 @@
     "signOut": "Sign out"
   },
   "home": {
-    "heroTitle": "Trust at {{name}}."
+    "heroTitle": "Trust at {{name}}.",
+    "heroDescription": "Welcome to our Compliance Portal. Find our security documentation and certifications here.",
+    "sections": {
+      "compliance": "Compliance",
+      "trustedBy": "Trusted by",
+      "recentUpdates": "Recent updates"
+    },
+    "recentUpdates": {
+      "viewAll": "View all"
+    }
   },
   "documents": {
     "title": "Documents"
@@ -33,5 +42,8 @@
     "title": "Page not found",
     "description": "The page you are looking for does not exist or has moved.",
     "backHome": "Back to home"
+  },
+  "footer": {
+    "poweredBy": "Powered by"
   }
 }

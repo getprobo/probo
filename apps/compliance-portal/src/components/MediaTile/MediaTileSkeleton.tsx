@@ -12,23 +12,22 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import type { ComponentProps } from "react";
+import { TextSkeleton } from "@probo/ui/src/v2/typography/TextSkeleton";
 import type { VariantProps } from "tailwind-variants/lite";
 
-import { CardProvider } from "./context";
-import { card } from "./variants";
+import { MediaTile } from "./MediaTile";
+import type { mediaTile } from "./variants";
 
-export type CardProps = ComponentProps<"div"> & VariantProps<typeof card>;
+export type MediaTileSkeletonProps = VariantProps<typeof mediaTile>;
 
-// Container that groups related content (Radix "Card"). Renders a <div>; for a
-// clickable card set `interactive` and wrap the content in an anchor/link. Use
-// CardInset for content that should bleed to the card's edges.
-export function Card(props: CardProps) {
-  const { size = 1, padding = size, variant, interactive, className, children, ...rest } = props;
-
+// Loading placeholder paired with MediaTile: renders the same layout with a
+// pulse block for the media and a TextSkeleton for the caption.
+export function MediaTileSkeleton({ variant = "icon" }: MediaTileSkeletonProps) {
   return (
-    <div className={card({ size, padding, variant, interactive, className })} {...rest}>
-      <CardProvider value={size}>{children}</CardProvider>
-    </div>
+    <MediaTile
+      variant={variant}
+      media={<div className="size-full animate-pulse rounded-3 bg-sand-3" />}
+      label={<TextSkeleton size={2} className="w-20" />}
+    />
   );
 }

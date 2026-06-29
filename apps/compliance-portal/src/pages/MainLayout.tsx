@@ -12,10 +12,12 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+import { useTranslation } from "react-i18next";
 import type { PreloadedQuery } from "react-relay";
 import { graphql, usePreloadedQuery } from "react-relay";
 import { Outlet } from "react-router";
 
+import { PoweredBy } from "#/components/PoweredBy/PoweredBy";
 import { TopBar } from "#/components/TopBar/TopBar";
 
 import type { MainLayoutQuery } from "./__generated__/MainLayoutQuery.graphql";
@@ -31,12 +33,16 @@ interface MainLayoutProps {
 }
 
 export function MainLayout({ queryRef }: MainLayoutProps) {
+  const { t } = useTranslation();
   const data = usePreloadedQuery<MainLayoutQuery>(mainLayoutQuery, queryRef);
 
   return (
-    <div className="min-h-screen bg-sand-2">
+    <div className="flex min-h-screen flex-col bg-sand-2">
       <TopBar queryKey={data} />
-      <Outlet />
+      <div className="flex-1">
+        <Outlet />
+      </div>
+      <PoweredBy label={t("footer.poweredBy")} />
     </div>
   );
 }

@@ -12,23 +12,26 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import type { ComponentProps } from "react";
-import type { VariantProps } from "tailwind-variants/lite";
+import type { Meta, StoryObj } from "@storybook/react";
 
-import { CardProvider } from "./context";
-import { card } from "./variants";
+import { ProboLogo } from "./ProboLogo";
 
-export type CardProps = ComponentProps<"div"> & VariantProps<typeof card>;
+export default {
+  title: "v2/ProboLogo",
+  component: ProboLogo,
+  render: () => <ProboLogo className="h-6 w-auto text-sand-12" />,
+} satisfies Meta<typeof ProboLogo>;
 
-// Container that groups related content (Radix "Card"). Renders a <div>; for a
-// clickable card set `interactive` and wrap the content in an anchor/link. Use
-// CardInset for content that should bleed to the card's edges.
-export function Card(props: CardProps) {
-  const { size = 1, padding = size, variant, interactive, className, children, ...rest } = props;
+type Story = StoryObj<typeof ProboLogo>;
 
-  return (
-    <div className={card({ size, padding, variant, interactive, className })} {...rest}>
-      <CardProvider value={size}>{children}</CardProvider>
+export const Playground: Story = {};
+
+export const Sizes: Story = {
+  render: () => (
+    <div className="flex items-center gap-6 text-sand-11">
+      <ProboLogo className="h-4 w-auto" />
+      <ProboLogo className="h-6 w-auto" />
+      <ProboLogo className="h-10 w-auto" />
     </div>
-  );
-}
+  ),
+};

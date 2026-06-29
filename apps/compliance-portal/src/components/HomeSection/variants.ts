@@ -14,12 +14,11 @@
 
 import { tv } from "tailwind-variants/lite";
 
-// The white header band that sits over the grey body: full-width surface with a
-// bottom border and a centered max-w-5xl content column. Shared by the landing
-// Hero and the page headers so the band is defined once.
-export const headerBand = tv({
+// Home page section frame: a labelled header row (with an optional trailing
+// action) above the section body. Shared by the live sections and skeletons.
+export const homeSection = tv({
   slots: {
-    band: "flex w-full flex-col items-center border-b border-sand-a3 bg-sand-1 px-8 py-8",
-    inner: "w-full max-w-5xl",
+    root: "flex w-full flex-col gap-4 py-8",
+    header: "flex w-full items-center justify-between",
   },
 });

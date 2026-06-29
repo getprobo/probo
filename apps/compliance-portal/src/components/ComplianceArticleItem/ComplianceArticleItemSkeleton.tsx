@@ -12,23 +12,23 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import type { ComponentProps } from "react";
-import type { VariantProps } from "tailwind-variants/lite";
+import { TextSkeleton } from "@probo/ui/src/v2/typography/TextSkeleton";
 
-import { CardProvider } from "./context";
-import { card } from "./variants";
+import { complianceArticleItem } from "./variants";
 
-export type CardProps = ComponentProps<"div"> & VariantProps<typeof card>;
-
-// Container that groups related content (Radix "Card"). Renders a <div>; for a
-// clickable card set `interactive` and wrap the content in an anchor/link. Use
-// CardInset for content that should bleed to the card's edges.
-export function Card(props: CardProps) {
-  const { size = 1, padding = size, variant, interactive, className, children, ...rest } = props;
+// Loading placeholder paired with ComplianceArticleItem: same row layout with
+// a pulse icon and skeleton text.
+export function ComplianceArticleItemSkeleton() {
+  const slots = complianceArticleItem();
 
   return (
-    <div className={card({ size, padding, variant, interactive, className })} {...rest}>
-      <CardProvider value={size}>{children}</CardProvider>
+    <div className={slots.root()} aria-hidden>
+      <div className={slots.iconPlaceholder()} />
+      <div className={slots.content()}>
+        <TextSkeleton size={2} className="w-48" />
+        <TextSkeleton size={1} className="w-16" />
+      </div>
+      <TextSkeleton size={1} className="w-20 shrink-0" />
     </div>
   );
 }

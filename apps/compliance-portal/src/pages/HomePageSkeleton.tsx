@@ -12,8 +12,24 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+import { ComplianceFrameworksSectionSkeleton } from "#/components/ComplianceFrameworks/ComplianceFrameworksSectionSkeleton";
 import { HeroSkeleton } from "#/components/Hero/HeroSkeleton";
+import { RecentUpdatesSectionSkeleton } from "#/components/RecentUpdates/RecentUpdatesSectionSkeleton";
+import { SecurityCommitmentsSectionSkeleton } from "#/components/SecurityCommitments/SecurityCommitmentsSectionSkeleton";
+import { TrustedBySectionSkeleton } from "#/components/TrustedBy/TrustedBySectionSkeleton";
 
 export function HomePageSkeleton() {
-  return <HeroSkeleton />;
+  return (
+    <>
+      <HeroSkeleton />
+      <div className="flex w-full flex-col items-center px-8">
+        <div className="flex w-full max-w-5xl flex-col">
+          <ComplianceFrameworksSectionSkeleton />
+          <SecurityCommitmentsSectionSkeleton />
+          <TrustedBySectionSkeleton />
+          <RecentUpdatesSectionSkeleton />
+        </div>
+      </div>
+    </>
+  );
 }

@@ -12,23 +12,24 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import type { ComponentProps } from "react";
-import type { VariantProps } from "tailwind-variants/lite";
+import { TextSkeleton } from "@probo/ui/src/v2/typography/TextSkeleton";
 
-import { CardProvider } from "./context";
-import { card } from "./variants";
+import { homeSection } from "#/components/HomeSection/variants";
+import { MediaTileSkeleton } from "#/components/MediaTile/MediaTileSkeleton";
 
-export type CardProps = ComponentProps<"div"> & VariantProps<typeof card>;
-
-// Container that groups related content (Radix "Card"). Renders a <div>; for a
-// clickable card set `interactive` and wrap the content in an anchor/link. Use
-// CardInset for content that should bleed to the card's edges.
-export function Card(props: CardProps) {
-  const { size = 1, padding = size, variant, interactive, className, children, ...rest } = props;
+export function ComplianceFrameworksSectionSkeleton() {
+  const slots = homeSection();
 
   return (
-    <div className={card({ size, padding, variant, interactive, className })} {...rest}>
-      <CardProvider value={size}>{children}</CardProvider>
-    </div>
+    <section className={slots.root()} aria-hidden>
+      <div className={slots.header()}>
+        <TextSkeleton size={2} className="w-24" />
+      </div>
+      <div className="grid grid-cols-6 gap-4">
+        {Array.from({ length: 4 }, (_, index) => (
+          <MediaTileSkeleton key={index} />
+        ))}
+      </div>
+    </section>
   );
 }

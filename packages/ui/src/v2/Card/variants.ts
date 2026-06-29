@@ -19,17 +19,29 @@ import { tv } from "tailwind-variants/lite";
 export const card = tv({
   base: "block overflow-hidden",
   variants: {
-    // Padding scales with size; radius scales with it too (per the Figma).
+    // Radius scales with size (per the Figma).
     size: {
-      1: "rounded-4 p-3",
-      2: "rounded-4 p-4",
-      3: "rounded-5 p-5",
-      4: "rounded-5 p-6",
-      5: "rounded-6 p-8",
+      1: "rounded-4",
+      2: "rounded-4",
+      3: "rounded-5",
+      4: "rounded-5",
+      5: "rounded-6",
+    },
+    // Padding defaults to match `size` (set in Card.tsx); pass `padding="none"`
+    // for cards whose regions own their own padding (e.g. full-bleed media).
+    padding: {
+      1: "p-3",
+      2: "p-4",
+      3: "p-5",
+      4: "p-6",
+      5: "p-8",
+      none: "p-0",
     },
     variant: {
       surface: "border border-sand-6 bg-sand-2",
       classic: "border border-sand-6 bg-sand-2 shadow-2",
+      // Soft surface: translucent neutral border on the app background.
+      soft: "border border-sand-a3 bg-sand-1",
       ghost: "",
     },
     // Hover/active affordance for clickable cards. This tunes look only; wrap
@@ -40,7 +52,7 @@ export const card = tv({
     },
   },
   compoundVariants: [
-    { variant: ["surface", "classic"], interactive: true, class: "hover:bg-sand-3 active:bg-sand-4" },
+    { variant: ["surface", "classic", "soft"], interactive: true, class: "hover:bg-sand-3 active:bg-sand-4" },
     { variant: "ghost", interactive: true, class: "hover:bg-sand-3 active:bg-sand-4" },
   ],
   defaultVariants: {

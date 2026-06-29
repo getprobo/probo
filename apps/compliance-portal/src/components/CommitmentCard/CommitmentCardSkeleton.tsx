@@ -12,23 +12,19 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import type { ComponentProps } from "react";
-import type { VariantProps } from "tailwind-variants/lite";
+import { TextSkeleton } from "@probo/ui/src/v2/typography/TextSkeleton";
 
-import { CardProvider } from "./context";
-import { card } from "./variants";
+import { CommitmentCard } from "./CommitmentCard";
 
-export type CardProps = ComponentProps<"div"> & VariantProps<typeof card>;
-
-// Container that groups related content (Radix "Card"). Renders a <div>; for a
-// clickable card set `interactive` and wrap the content in an anchor/link. Use
-// CardInset for content that should bleed to the card's edges.
-export function Card(props: CardProps) {
-  const { size = 1, padding = size, variant, interactive, className, children, ...rest } = props;
-
+// Loading placeholder paired with CommitmentCard: renders the same layout with a
+// pulse icon and skeleton text lines.
+export function CommitmentCardSkeleton() {
   return (
-    <div className={card({ size, padding, variant, interactive, className })} {...rest}>
-      <CardProvider value={size}>{children}</CardProvider>
-    </div>
+    <CommitmentCard
+      icon={<div className="size-full animate-pulse rounded-2 bg-sand-3" />}
+      eyebrow={<TextSkeleton size={1} className="w-20" />}
+      title={<TextSkeleton size={4} className="w-48" />}
+      description={<TextSkeleton size={2} className="w-full" />}
+    />
   );
 }

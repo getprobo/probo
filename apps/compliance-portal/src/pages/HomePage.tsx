@@ -16,8 +16,12 @@ import { useTranslation } from "react-i18next";
 import type { PreloadedQuery } from "react-relay";
 import { graphql, usePreloadedQuery } from "react-relay";
 
+import { ComplianceFrameworksSection } from "#/components/ComplianceFrameworks/ComplianceFrameworksSection";
 import { Hero } from "#/components/Hero/Hero";
 import { OrganizationContactInfo } from "#/components/Hero/OrganizationContactInfo";
+import { RecentUpdatesSection } from "#/components/RecentUpdates/RecentUpdatesSection";
+import { SecurityCommitmentsSection } from "#/components/SecurityCommitments/SecurityCommitmentsSection";
+import { TrustedBySection } from "#/components/TrustedBy/TrustedBySection";
 
 import type { HomePageQuery } from "./__generated__/HomePageQuery.graphql";
 
@@ -26,9 +30,11 @@ export const homePageQuery = graphql`
     currentTrustCenter @required(action: THROW) {
       organization {
         name
-        description
         ...OrganizationContactInfo_organization
       }
+      ...ComplianceFrameworksSection_trustCenter
+      ...TrustedBySection_trustCenter
+      ...RecentUpdatesSection_trustCenter
     }
   }
 `;
@@ -40,14 +46,25 @@ interface HomePageProps {
 export function HomePage({ queryRef }: HomePageProps) {
   const { t } = useTranslation();
   const data = usePreloadedQuery<HomePageQuery>(homePageQuery, queryRef);
-  const { organization } = data.currentTrustCenter;
+  const { currentTrustCenter } = data;
+  const { organization } = currentTrustCenter;
 
   return (
-    <Hero
-      title={t("home.heroTitle", { name: organization.name })}
-      description={organization.description}
-    >
-      <OrganizationContactInfo organizationKey={organization} />
-    </Hero>
+    <>
+      <Hero
+        title={t("home.heroTitle", { name: organization.name })}
+        description={t("home.heroDescription")}
+      >
+        <OrganizationContactInfo organizationKey={organization} />
+      </Hero>
+      <div className="flex w-full flex-col items-center px-8">
+        <div className="flex w-full max-w-5xl flex-col">
+          <ComplianceFrameworksSection trustCenterKey={currentTrustCenter} />
+          <SecurityCommitmentsSection />
+          <TrustedBySection trustCenterKey={currentTrustCenter} />
+          <RecentUpdatesSection trustCenterKey={currentTrustCenter} />
+        </div>
+      </div>
+    </>
   );
 }

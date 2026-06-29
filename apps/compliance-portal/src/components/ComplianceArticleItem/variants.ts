@@ -14,12 +14,16 @@
 
 import { tv } from "tailwind-variants/lite";
 
-// The white header band that sits over the grey body: full-width surface with a
-// bottom border and a centered max-w-5xl content column. Shared by the landing
-// Hero and the page headers so the band is defined once.
-export const headerBand = tv({
+// Compliance article list row (Figma "Compliance Article Item"): a leading
+// icon, a title (+ optional eyebrow), and right-aligned meta. Designed to sit
+// inside a bordered list container; the last row drops its divider. Slots are
+// shared by the row and its skeleton.
+export const complianceArticleItem = tv({
   slots: {
-    band: "flex w-full flex-col items-center border-b border-sand-a3 bg-sand-1 px-8 py-8",
-    inner: "w-full max-w-5xl",
+    root: "flex w-full items-center gap-4 border-b border-sand-a2 px-8 py-4 last:border-b-0",
+    icon: "flex size-6 shrink-0 items-center justify-center text-gold-9 [&_svg]:size-full",
+    content: "flex min-w-0 flex-1 flex-col gap-1",
+    meta: "shrink-0",
+    iconPlaceholder: "size-6 shrink-0 animate-pulse rounded-2 bg-sand-3",
   },
 });

@@ -14,12 +14,13 @@
 
 import { tv } from "tailwind-variants/lite";
 
-// The white header band that sits over the grey body: full-width surface with a
-// bottom border and a centered max-w-5xl content column. Shared by the landing
-// Hero and the page headers so the band is defined once.
-export const headerBand = tv({
+// Security Commitments section: stacked groups, each a header above a grid of
+// commitment cards. Slots shared by the section and its skeleton.
+export const securityCommitments = tv({
   slots: {
-    band: "flex w-full flex-col items-center border-b border-sand-a3 bg-sand-1 px-8 py-8",
-    inner: "w-full max-w-5xl",
+    root: "flex w-full flex-col gap-8 py-8",
+    group: "flex w-full flex-col gap-4",
+    groupHeader: "flex w-full flex-col gap-2",
+    grid: "grid grid-cols-3 gap-4",
   },
 });

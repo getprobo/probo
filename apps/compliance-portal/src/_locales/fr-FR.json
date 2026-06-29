@@ -13,7 +13,16 @@
     "signOut": "Se déconnecter"
   },
   "home": {
-    "heroTitle": "La confiance chez {{name}}."
+    "heroTitle": "La confiance chez {{name}}.",
+    "heroDescription": "Bienvenue dans notre Compliance Portal. Retrouvez ici notre documentation et nos certifications de sécurité.",
+    "sections": {
+      "compliance": "Conformité",
+      "trustedBy": "Ils nous font confiance",
+      "recentUpdates": "Mises à jour récentes"
+    },
+    "recentUpdates": {
+      "viewAll": "Voir tout"
+    }
   },
   "documents": {
     "title": "Documents"
@@ -33,5 +42,8 @@
     "title": "Page introuvable",
     "description": "La page que vous recherchez n'existe pas ou a été déplacée.",
     "backHome": "Retour à l'accueil"
+  },
+  "footer": {
+    "poweredBy": "Propulsé par"
   }
 }

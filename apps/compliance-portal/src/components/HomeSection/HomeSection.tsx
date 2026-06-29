@@ -12,23 +12,32 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import type { ComponentProps } from "react";
-import type { VariantProps } from "tailwind-variants/lite";
+import { Text } from "@probo/ui/src/v2/typography/Text";
+import type { ReactNode } from "react";
 
-import { CardProvider } from "./context";
-import { card } from "./variants";
+import { homeSection } from "./variants";
 
-export type CardProps = ComponentProps<"div"> & VariantProps<typeof card>;
+interface HomeSectionProps {
+  title: ReactNode;
+  // Optional trailing element in the header row (e.g. a "View all" link).
+  action?: ReactNode;
+  children: ReactNode;
+}
 
-// Container that groups related content (Radix "Card"). Renders a <div>; for a
-// clickable card set `interactive` and wrap the content in an anchor/link. Use
-// CardInset for content that should bleed to the card's edges.
-export function Card(props: CardProps) {
-  const { size = 1, padding = size, variant, interactive, className, children, ...rest } = props;
+// Shared frame for the home page body sections: a labelled header above the
+// section content.
+export function HomeSection({ title, action, children }: HomeSectionProps) {
+  const slots = homeSection();
 
   return (
-    <div className={card({ size, padding, variant, interactive, className })} {...rest}>
-      <CardProvider value={size}>{children}</CardProvider>
-    </div>
+    <section className={slots.root()}>
+      <div className={slots.header()}>
+        <Text size={2} weight="medium" color="neutral" highContrast>
+          {title}
+        </Text>
+        {action}
+      </div>
+      {children}
+    </section>
   );
 }
