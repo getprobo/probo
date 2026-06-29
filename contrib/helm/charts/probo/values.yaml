@@ -201,6 +201,20 @@ probo:
       - "https://probo.example.com"
       - "http://probo.example.com"
 
+  # GraphQL request-cost guards (application-layer DoS protection).
+  # A value of 0 disables the corresponding guard.
+  graphql:
+    # Maximum number of lexer tokens accepted per query. Oversized queries
+    # (e.g. alias flooding) are rejected at parse time before execution.
+    parserTokenLimit: 15000
+    # Maximum query complexity (field-selection count). 0 disables complexity
+    # analysis.
+    complexityLimit: 2000
+    # Size of the LRU cache of parsed query documents.
+    queryCacheSize: 1000
+    # Disable field suggestions on invalid queries.
+    disableSuggestion: true
+
   # Show Probo branding
   branding: true
 

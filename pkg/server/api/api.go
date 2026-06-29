@@ -47,6 +47,7 @@ import (
 	mcp_v1 "go.probo.inc/probo/pkg/server/api/mcp/v1"
 	slack_v1 "go.probo.inc/probo/pkg/server/api/slack/v1"
 	trust_v1 "go.probo.inc/probo/pkg/server/api/trust/v1"
+	"go.probo.inc/probo/pkg/server/gqlutils"
 	"go.probo.inc/probo/pkg/slack"
 	"go.probo.inc/probo/pkg/thirdparty"
 	"go.probo.inc/probo/pkg/trust"
@@ -75,6 +76,7 @@ type (
 		ConnectorRegistry *connector.ConnectorRegistry
 		ProviderRegistry  *provider.Registry
 		CustomDomainCname string
+		GraphQLLimits     gqlutils.Limits
 		Logger            *log.Logger
 	}
 
@@ -188,6 +190,7 @@ func NewServer(cfg Config) (*Server, error) {
 			cfg.Cookie,
 			cfg.TokenSecret,
 			cfg.BaseURL,
+			cfg.GraphQLLimits,
 		),
 		consoleHandler: console_v1.NewMux(
 			cfg.Logger.Named("console.v1"),
@@ -208,6 +211,7 @@ func NewServer(cfg Config) (*Server, error) {
 			cfg.CustomDomainCname,
 			cfg.ThirdParty,
 			cfg.RiskManagement,
+			cfg.GraphQLLimits,
 		),
 		cookieBannerHandler: cookiebanner_v1.NewMux(
 			cfg.Logger.Named("cookiebanner.v1"),
@@ -261,6 +265,7 @@ func NewServer(cfg Config) (*Server, error) {
 				_, err := cfg.Trust.GetByDomainName(ctx, host)
 				return err == nil
 			},
+			cfg.GraphQLLimits,
 		),
 	}, nil
 }

@@ -42,6 +42,7 @@ import (
 	"go.probo.inc/probo/pkg/securecookie"
 	"go.probo.inc/probo/pkg/server/api"
 	"go.probo.inc/probo/pkg/server/api/compliancepage"
+	"go.probo.inc/probo/pkg/server/gqlutils"
 	"go.probo.inc/probo/pkg/server/mailactions"
 	trust_web "go.probo.inc/probo/pkg/server/trust"
 	console_web "go.probo.inc/probo/pkg/server/web"
@@ -74,6 +75,7 @@ type Config struct {
 	ConnectorRegistry *connector.ConnectorRegistry
 	ProviderRegistry  *provider.Registry
 	CustomDomainCname string
+	GraphQLLimits     gqlutils.Limits
 	Logger            *log.Logger
 }
 
@@ -114,6 +116,7 @@ func NewServer(cfg Config) (*Server, error) {
 		ConnectorRegistry: cfg.ConnectorRegistry,
 		ProviderRegistry:  cfg.ProviderRegistry,
 		CustomDomainCname: cfg.CustomDomainCname,
+		GraphQLLimits:     cfg.GraphQLLimits,
 		Logger:            cfg.Logger.Named("api"),
 	}
 

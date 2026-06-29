@@ -21,13 +21,27 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/handler/extension"
+	"github.com/99designs/gqlgen/graphql/handler/lru"
 	"github.com/99designs/gqlgen/graphql/handler/transport"
+	"github.com/vektah/gqlparser/v2/ast"
 	"go.gearno.de/kit/log"
 )
 
-type Handler struct {
-	gqlhandler *handler.Server
-}
+type (
+	Handler struct {
+		gqlhandler *handler.Server
+	}
+
+	// Limits bounds the per-request cost of a GraphQL operation to protect
+	// against alias-flooding and other application-layer denial-of-service
+	// vectors. A zero value disables the corresponding guard.
+	Limits struct {
+		ParserTokenLimit  int
+		ComplexityLimit   int
+		QueryCacheSize    int
+		DisableSuggestion bool
+	}
+)
 
 var (
 	mb int64 = 1024 * 1024
@@ -42,12 +56,26 @@ var (
 	introspectionExtension = extension.Introspection{}
 )
 
-func NewHandler[S graphql.ExecutableSchema](executableSchema S, logger *log.Logger) *Handler {
+func NewHandler[S graphql.ExecutableSchema](executableSchema S, logger *log.Logger, limits Limits) *Handler {
 	handler := handler.New(executableSchema)
 
 	handler.AddTransport(postTransport)
 	handler.AddTransport(optionsTransport)
 	handler.AddTransport(multipartTransport)
+
+	if limits.QueryCacheSize > 0 {
+		handler.SetQueryCache(lru.New[*ast.QueryDocument](limits.QueryCacheSize))
+	}
+
+	if limits.ParserTokenLimit > 0 {
+		handler.SetParserTokenLimit(limits.ParserTokenLimit)
+	}
+
+	if limits.ComplexityLimit > 0 {
+		handler.Use(extension.FixedComplexityLimit(limits.ComplexityLimit))
+	}
+
+	handler.SetDisableSuggestion(limits.DisableSuggestion)
 
 	handler.Use(introspectionExtension)
 	handler.Use(NewTracingExtension(logger))

@@ -46,6 +46,7 @@ import (
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/authz"
 	"go.probo.inc/probo/pkg/server/api/connect/v1/types"
+	"go.probo.inc/probo/pkg/server/gqlutils"
 )
 
 type (
@@ -70,6 +71,7 @@ func NewMux(
 	baseURL *baseurl.BaseURL,
 	allowedRedirectHost saferedirect.AllowedHostFunc,
 	isTrustCenterDomain IsTrustCenterDomainFunc,
+	graphqlLimits gqlutils.Limits,
 ) *chi.Mux {
 	r := chi.NewMux()
 
@@ -77,7 +79,7 @@ func NewMux(
 	apiKeyMiddleware := authn.NewAPIKeyMiddleware(svc, tokenSecret)
 	oauth2Middleware := authn.NewOAuth2AccessTokenMiddleware(svc)
 	identityPresenceMiddleware := authn.NewIdentityPresenceMiddleware(baseURL)
-	graphqlHandler := NewGraphQLHandler(svc, logger, fileManagerSvc, baseURL, cookieConfig)
+	graphqlHandler := NewGraphQLHandler(svc, logger, fileManagerSvc, baseURL, cookieConfig, graphqlLimits)
 	samlHandler := NewSAMLHandler(svc, cookieConfig, baseURL, logger)
 	scimHandler := NewSCIMHandler(svc, logger.Named("scim"))
 

@@ -111,6 +111,15 @@ probo:
     allowedOrigins:
       - "https://probo.example.com"
 
+  # GraphQL request-cost guards (application-layer DoS protection).
+  # Defaults are production-safe; tune only if a legitimate query is rejected
+  # or to enable complexity analysis. A value of 0 disables the guard.
+  graphql:
+    parserTokenLimit: 15000
+    complexityLimit: 2000
+    queryCacheSize: 1000
+    disableSuggestion: true
+
   # Extra HTTP headers to add to responses
   extraHeaderFields: {}
     # X-Custom-Header: "custom-value"

@@ -12,6 +12,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/bedrockruntime v1.53.4
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.103.2
 	github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.42.3
+	github.com/aws/aws-sdk-go-v2/service/ssm v1.69.3
 	github.com/brianvoe/gofakeit/v7 v7.15.0
 	github.com/charmbracelet/huh v1.0.0
 	github.com/charmbracelet/lipgloss v1.1.0
@@ -60,7 +61,6 @@ require (
 	github.com/atotto/clipboard v0.1.4 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.18.28 // indirect
 	github.com/aws/aws-sdk-go-v2/service/signin v1.1.4 // indirect
-	github.com/aws/aws-sdk-go-v2/service/ssm v1.69.3 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sso v1.31.2 // indirect
 	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.36.5 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sts v1.43.2 // indirect

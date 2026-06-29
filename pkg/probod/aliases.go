@@ -26,6 +26,7 @@ type (
 	TrustCenterConfig             = probodconfig.TrustCenterConfig
 	APIConfig                     = probodconfig.APIConfig
 	CorsConfig                    = probodconfig.CorsConfig
+	GraphQLConfig                 = probodconfig.GraphQLConfig
 	ProxyProtocolConfig           = probodconfig.ProxyProtocolConfig
 	AuthConfig                    = probodconfig.AuthConfig
 	OAuth2ServerConfig            = probodconfig.OAuth2ServerConfig

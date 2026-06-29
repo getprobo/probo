@@ -70,6 +70,7 @@ import (
 	"go.probo.inc/probo/pkg/riskmanagement"
 	"go.probo.inc/probo/pkg/securecookie"
 	"go.probo.inc/probo/pkg/server"
+	"go.probo.inc/probo/pkg/server/gqlutils"
 	"go.probo.inc/probo/pkg/server/trustedproxy"
 	"go.probo.inc/probo/pkg/slack"
 	"go.probo.inc/probo/pkg/thirdparty"
@@ -93,6 +94,12 @@ func New() *Implm {
 			BaseURL: "http://localhost:8080",
 			Api: APIConfig{
 				Addr: "localhost:8080",
+				GraphQL: GraphQLConfig{
+					ParserTokenLimit:  15000,
+					ComplexityLimit:   2000,
+					QueryCacheSize:    1000,
+					DisableSuggestion: true,
+				},
 			},
 			Pg: PgConfig{
 				Addr:                         "localhost:5432",
@@ -640,6 +647,12 @@ func (impl *Implm) Run(
 			ConnectorRegistry: defaultConnectorRegistry,
 			ProviderRegistry:  providerRegistry,
 			BaseURL:           baseURL,
+			GraphQLLimits: gqlutils.Limits{
+				ParserTokenLimit:  impl.cfg.Api.GraphQL.ParserTokenLimit,
+				ComplexityLimit:   impl.cfg.Api.GraphQL.ComplexityLimit,
+				QueryCacheSize:    impl.cfg.Api.GraphQL.QueryCacheSize,
+				DisableSuggestion: impl.cfg.Api.GraphQL.DisableSuggestion,
+			},
 
 			CustomDomainCname: impl.cfg.CustomDomains.CnameTarget,
 			TokenSecret:       impl.cfg.Auth.Cookie.Secret,
