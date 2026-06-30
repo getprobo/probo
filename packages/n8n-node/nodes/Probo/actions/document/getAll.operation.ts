@@ -87,6 +87,24 @@ export const description: INodeProperties[] = [
 				],
 			},
 			{
+				displayName: 'Query',
+				name: 'query',
+				type: 'string',
+				default: '',
+				description: 'Search query to filter documents',
+			},
+			{
+				displayName: 'Status',
+				name: 'status',
+				type: 'multiOptions',
+				default: [],
+				description: 'Filter by document status',
+				options: [
+					{ name: 'Active', value: 'ACTIVE' },
+					{ name: 'Archived', value: 'ARCHIVED' },
+				],
+			},
+			{
 				displayName: 'Type',
 				name: 'documentTypes',
 				type: 'multiOptions',
@@ -103,24 +121,6 @@ export const description: INodeProperties[] = [
 					{ name: 'Report', value: 'REPORT' },
 					{ name: 'Statement of Applicability', value: 'STATEMENT_OF_APPLICABILITY' },
 					{ name: 'Template', value: 'TEMPLATE' },
-				],
-			},
-			{
-				displayName: 'Query',
-				name: 'query',
-				type: 'string',
-				default: '',
-				description: 'Search query to filter documents',
-			},
-			{
-				displayName: 'Status',
-				name: 'status',
-				type: 'multiOptions',
-				default: [],
-				description: 'Filter by document status',
-				options: [
-					{ name: 'Active', value: 'ACTIVE' },
-					{ name: 'Archived', value: 'ARCHIVED' },
 				],
 			},
 			{
