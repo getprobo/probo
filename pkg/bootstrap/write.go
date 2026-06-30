@@ -59,15 +59,19 @@ func pruneEmptyStrings(value any) any {
 		for key, child := range v {
 			if s, ok := child.(string); ok && s == "" {
 				delete(v, key)
+
 				continue
 			}
+
 			v[key] = pruneEmptyStrings(child)
 		}
+
 		return v
 	case []any:
 		for i, child := range v {
 			v[i] = pruneEmptyStrings(child)
 		}
+
 		return v
 	default:
 		return v
