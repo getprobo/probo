@@ -4,6 +4,14 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.221.0] - 2026-06-30
+
+### Added
+
+- Compliance portal home page sections
+- v2 UI component library: Text, Heading, Avatar, Button, IconButton, Badge, Callout, Dropdown menu, Card, Anchor, and Link components
+- Webhook sender now runs on the kit worker framework
+
 ## [0.220.0] - 2026-06-25
 
 ### Added
