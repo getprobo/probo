@@ -4,6 +4,12 @@ All notable changes to `probod-bootstrap` will be documented in this file.
 
 ## Unreleased
 
+## [0.4.1] - 2026-07-01
+
+### Changed
+
+- String configuration defaults now defer to `probod`'s built-in values when the corresponding environment variable is unset
+
 ## [0.4.0] - 2026-06-30
 
 ### Added
