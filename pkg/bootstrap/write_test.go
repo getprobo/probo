@@ -85,6 +85,74 @@ func TestWriteConfig_FilePermissions(t *testing.T) {
 	assert.Equal(t, os.FileMode(0600), info.Mode().Perm())
 }
 
+func TestWriteConfig_DropsEmptyStrings(t *testing.T) {
+	tmpDir := t.TempDir()
+	configPath := filepath.Join(tmpDir, "probod.yml")
+
+	cfg := &probodconfig.FullConfig{
+		Unit: probodconfig.UnitConfig{
+			Metrics: probodconfig.MetricsConfig{Addr: "localhost:9090"},
+			Tracing: probodconfig.TracingConfig{Addr: ""},
+		},
+		Probod: probodconfig.Config{
+			BaseURL:       "http://localhost:8080",
+			EncryptionKey: "",
+			ChromeDPAddr:  "",
+			Pg: probodconfig.PgConfig{
+				Addr:     "localhost:5432",
+				Username: "postgres",
+				Password: "",
+				Database: "",
+				PoolSize: 100,
+			},
+		},
+	}
+
+	err := WriteConfig(cfg, configPath)
+	require.NoError(t, err)
+
+	data, err := os.ReadFile(configPath)
+	require.NoError(t, err)
+
+	var tree map[string]any
+
+	err = yaml.Unmarshal(data, &tree)
+	require.NoError(t, err)
+
+	probod, ok := tree["probod"].(map[string]any)
+	require.True(t, ok)
+
+	assert.Equal(t, "http://localhost:8080", probod["base-url"])
+	assert.NotContains(t, probod, "encryption-key")
+	assert.NotContains(t, probod, "chrome-dp-addr")
+
+	pg, ok := probod["pg"].(map[string]any)
+	require.True(t, ok)
+
+	assert.Equal(t, "localhost:5432", pg["addr"])
+	assert.Equal(t, "postgres", pg["username"])
+	assert.NotContains(t, pg, "password")
+	assert.NotContains(t, pg, "database")
+	assert.Contains(t, pg, "pool-size")
+
+	unit, ok := tree["unit"].(map[string]any)
+	require.True(t, ok)
+
+	metrics, ok := unit["metrics"].(map[string]any)
+	require.True(t, ok)
+	assert.Equal(t, "localhost:9090", metrics["addr"])
+
+	tracing, ok := unit["tracing"].(map[string]any)
+	require.True(t, ok)
+	assert.NotContains(t, tracing, "addr")
+
+	loaded := probodconfig.FullConfig{}
+	err = yaml.Unmarshal(data, &loaded)
+	require.NoError(t, err)
+	assert.Equal(t, cfg.Probod.BaseURL, loaded.Probod.BaseURL)
+	assert.Empty(t, loaded.Probod.EncryptionKey)
+}
+
 func TestWriteConfig_CompleteConfig(t *testing.T) {
 	tmpDir := t.TempDir()
 	configPath := filepath.Join(tmpDir, "probod.yml")

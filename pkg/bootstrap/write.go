@@ -34,9 +34,42 @@ func WriteConfig(cfg *probodconfig.FullConfig, path string) error {
 		return fmt.Errorf("marshal config: %w", err)
 	}
 
+	var tree any
+	if err := yaml.Unmarshal(data, &tree); err != nil {
+		return fmt.Errorf("unmarshal config: %w", err)
+	}
+
+	pruned := pruneEmptyStrings(tree)
+
+	data, err = yaml.Marshal(pruned)
+	if err != nil {
+		return fmt.Errorf("marshal pruned config: %w", err)
+	}
+
 	if err := os.WriteFile(path, data, 0600); err != nil {
 		return fmt.Errorf("write config file: %w", err)
 	}
 
 	return nil
+}
+
+func pruneEmptyStrings(value any) any {
+	switch v := value.(type) {
+	case map[string]any:
+		for key, child := range v {
+			if s, ok := child.(string); ok && s == "" {
+				delete(v, key)
+				continue
+			}
+			v[key] = pruneEmptyStrings(child)
+		}
+		return v
+	case []any:
+		for i, child := range v {
+			v[i] = pruneEmptyStrings(child)
+		}
+		return v
+	default:
+		return v
+	}
 }
