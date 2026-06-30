@@ -56,9 +56,9 @@ export async function execute(
 	const limit = this.getNodeParameter('limit', itemIndex, 50) as number;
 
 	const query = `
-		query GetOrganizations($first: Int, $after: CursorKey) {
+		query GetOrganizations($first: Int, $after: CursorKey, $filter: ProfileFilter) {
 			viewer {
-				profiles(first: $first, after: $after) {
+				profiles(first: $first, after: $after, filter: $filter) {
 					edges {
 						node {
 							organization {
@@ -95,7 +95,7 @@ export async function execute(
 	const memberships = await proboConnectApiRequestAllItems.call(
 		this,
 		query,
-		{},
+		{ filter: { state: 'ACTIVE' } },
 		(response: IDataObject) => {
 			const data = response?.data as IDataObject | undefined;
 			const viewer = data?.viewer as IDataObject | undefined;
