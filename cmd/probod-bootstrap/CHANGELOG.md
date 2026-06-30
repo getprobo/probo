@@ -4,6 +4,16 @@ All notable changes to `probod-bootstrap` will be documented in this file.
 
 ## Unreleased
 
+## [0.4.0] - 2026-06-30
+
+### Added
+
+- `--format` flag: pass `--format json` to emit the resolved configuration as JSON instead of YAML
+
+### Fixed
+
+- Empty-valued env vars are now omitted from the generated configuration file
+
 ## [0.3.0] - 2026-06-30
 
 ### Added
