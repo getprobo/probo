@@ -348,7 +348,6 @@ func TestAccessReviewCampaign_Create(t *testing.T) {
 		assert.Equal(t, "Campaign with Sources", node.Name)
 		assert.Len(t, node.CampaignSources, 2)
 	})
-
 }
 
 func TestAccessReviewCampaign_Update(t *testing.T) {
