@@ -498,42 +498,15 @@ func (s *DocumentApprovalService) VoidApproval(
 				return &ErrDocumentVersionNotPendingApproval{}
 			}
 
-			quorum = &coredata.DocumentVersionApprovalQuorum{}
-			if err := quorum.LoadLastByDocumentVersionID(ctx, tx, scope, documentVersionID); err != nil {
-				return fmt.Errorf("cannot load approval quorum: %w", err)
+			var err error
+
+			quorum, err = s.voidPendingApprovalInTx(ctx, scope, tx, document, documentVersion)
+			if err != nil {
+				return err
 			}
 
-			if quorum.Status != coredata.DocumentVersionApprovalQuorumStatusPending {
+			if quorum == nil {
 				return &ErrDocumentVersionNotPendingApproval{}
-			}
-
-			now := time.Now()
-
-			quorum.Status = coredata.DocumentVersionApprovalQuorumStatusVoided
-			quorum.UpdatedAt = now
-
-			if err := quorum.Update(ctx, tx, scope); err != nil {
-				return fmt.Errorf("cannot update approval quorum: %w", err)
-			}
-
-			decisions := &coredata.DocumentVersionApprovalDecisions{}
-			if err := decisions.VoidPendingByQuorumID(ctx, tx, scope, quorum.ID, now); err != nil {
-				return fmt.Errorf("cannot void pending decisions: %w", err)
-			}
-
-			documentVersion.Status = coredata.DocumentVersionStatusDraft
-			if document.CurrentPublishedMajor != nil {
-				documentVersion.Major = *document.CurrentPublishedMajor
-				documentVersion.Minor = *document.CurrentPublishedMinor + 1
-			} else {
-				documentVersion.Major = 0
-				documentVersion.Minor = 1
-			}
-
-			documentVersion.UpdatedAt = now
-
-			if err := documentVersion.Update(ctx, tx, scope); err != nil {
-				return fmt.Errorf("cannot update document version status: %w", err)
 			}
 
 			return nil
@@ -544,6 +517,86 @@ func (s *DocumentApprovalService) VoidApproval(
 	}
 
 	return quorum, documentVersion, nil
+}
+
+// voidPendingApprovalInTx voids the pending approval quorum on documentVersion
+// when one exists. It returns nil quorum when the version is not pending approval
+// or its last quorum is no longer pending. Used by VoidApproval and document
+// archive to cancel incomplete approval workflows.
+func (s *DocumentApprovalService) voidPendingApprovalInTx(
+	ctx context.Context, scope coredata.Scoper,
+	tx pg.Tx,
+	document *coredata.Document,
+	documentVersion *coredata.DocumentVersion,
+) (*coredata.DocumentVersionApprovalQuorum, error) {
+	if documentVersion.Status != coredata.DocumentVersionStatusPendingApproval {
+		return nil, nil
+	}
+
+	quorum := &coredata.DocumentVersionApprovalQuorum{}
+	if err := quorum.LoadLastByDocumentVersionID(ctx, tx, scope, documentVersion.ID); err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, nil
+		}
+
+		return nil, fmt.Errorf("cannot load approval quorum: %w", err)
+	}
+
+	if quorum.Status != coredata.DocumentVersionApprovalQuorumStatusPending {
+		return nil, nil
+	}
+
+	now := time.Now()
+
+	quorum.Status = coredata.DocumentVersionApprovalQuorumStatusVoided
+	quorum.UpdatedAt = now
+
+	if err := quorum.Update(ctx, tx, scope); err != nil {
+		return nil, fmt.Errorf("cannot update approval quorum: %w", err)
+	}
+
+	decisions := &coredata.DocumentVersionApprovalDecisions{}
+	if err := decisions.VoidPendingByQuorumID(ctx, tx, scope, quorum.ID, now); err != nil {
+		return nil, fmt.Errorf("cannot void pending decisions: %w", err)
+	}
+
+	documentVersion.Status = coredata.DocumentVersionStatusDraft
+	if document.CurrentPublishedMajor != nil {
+		documentVersion.Major = *document.CurrentPublishedMajor
+		documentVersion.Minor = *document.CurrentPublishedMinor + 1
+	} else {
+		documentVersion.Major = 0
+		documentVersion.Minor = 1
+	}
+
+	documentVersion.UpdatedAt = now
+
+	if err := documentVersion.Update(ctx, tx, scope); err != nil {
+		return nil, fmt.Errorf("cannot update document version status: %w", err)
+	}
+
+	return quorum, nil
+}
+
+func (s *DocumentApprovalService) voidPendingApprovalForDocumentInTx(
+	ctx context.Context, scope coredata.Scoper,
+	tx pg.Tx,
+	document *coredata.Document,
+) error {
+	documentVersion := &coredata.DocumentVersion{}
+	if err := documentVersion.LoadLatestVersion(ctx, tx, scope, document.ID); err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil
+		}
+
+		return fmt.Errorf("cannot load latest document version: %w", err)
+	}
+
+	if _, err := s.voidPendingApprovalInTx(ctx, scope, tx, document, documentVersion); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (s *DocumentApprovalService) GetQuorum(
