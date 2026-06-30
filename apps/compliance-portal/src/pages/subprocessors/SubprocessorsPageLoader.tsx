@@ -12,18 +12,25 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useQueryLoader } from "react-relay";
 
 import { SubprocessorsPage, subprocessorsPageQuery } from "./SubprocessorsPage";
 import { SubprocessorsPageSkeleton } from "./SubprocessorsPageSkeleton";
+import { toQueryVariables } from "./_lib/toQueryVariables";
+import { useSubprocessorFilters } from "./_lib/useSubprocessorFilters";
 import type { SubprocessorsPageQuery } from "./__generated__/SubprocessorsPageQuery.graphql";
 
 export default function SubprocessorsPageLoader() {
+  const filters = useSubprocessorFilters();
   const [queryRef, loadQuery] = useQueryLoader<SubprocessorsPageQuery>(subprocessorsPageQuery);
 
+  // Seed the first fetch with the URL's filter values; later changes are handled
+  // by the page's refetch.
+  const initialVariables = useRef(toQueryVariables(filters));
+
   useEffect(() => {
-    loadQuery({});
+    loadQuery(initialVariables.current);
   }, [loadQuery]);
 
   if (!queryRef) {

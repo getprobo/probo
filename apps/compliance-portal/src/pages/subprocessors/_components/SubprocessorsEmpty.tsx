@@ -12,25 +12,40 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { MagnifyingGlassIcon } from "@phosphor-icons/react";
+import { ArrowCounterClockwiseIcon, MagnifyingGlassIcon } from "@phosphor-icons/react";
+import { Button } from "@probo/ui/src/v2/Button/Button";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useTranslation } from "react-i18next";
 
-// Empty state shown when the trust center lists no subprocessors.
+import { useSubprocessorFilters } from "../_lib/useSubprocessorFilters";
+
+// Empty state for the subprocessor list. When filters are active it offers to
+// clear them; otherwise it states the trust center lists no subprocessors.
 export function SubprocessorsEmpty() {
   const { t } = useTranslation("subprocessors");
+  const { hasActiveFilters, clear } = useSubprocessorFilters();
 
   return (
     <div className="flex flex-col items-center gap-5 py-8 text-center">
       <MagnifyingGlassIcon className="size-6 text-sand-a8" />
       <div className="flex max-w-xs flex-col items-center gap-2">
         <Text size={2} weight="medium" color="faint">
-          {t("empty.title")}
+          {hasActiveFilters ? t("empty.filteredTitle") : t("empty.title")}
         </Text>
         <Text size={2} color="faint">
-          {t("empty.description")}
+          {hasActiveFilters ? t("empty.filteredDescription") : t("empty.description")}
         </Text>
       </div>
+      {hasActiveFilters && (
+        <Button
+          variant="soft"
+          color="neutral"
+          iconStart={<ArrowCounterClockwiseIcon />}
+          onClick={clear}
+        >
+          {t("empty.clearFilters")}
+        </Button>
+      )}
     </div>
   );
 }

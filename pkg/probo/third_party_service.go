@@ -174,7 +174,7 @@ func (s ThirdPartyService) CountForOrganizationID(
 	var count int
 
 	if filter == nil {
-		filter = coredata.NewThirdPartyFilter(nil, nil, nil)
+		filter = coredata.NewThirdPartyFilter(nil, nil, nil, nil, nil)
 	}
 
 	err := s.svc.pg.WithConn(

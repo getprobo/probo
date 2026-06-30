@@ -553,7 +553,10 @@ func (s *Service) fetchThirdParties(ctx context.Context, scope coredata.Scoper, 
 			},
 		)
 
-		result, err := s.ThirdParties.ListForOrganizationId(ctx, scope, orgID, cursor)
+		showOnTrustCenter := true
+		filter := coredata.NewThirdPartyFilter(&showOnTrustCenter, nil, nil, nil, nil)
+
+		result, err := s.ThirdParties.ListForOrganizationId(ctx, scope, orgID, cursor, filter)
 		if err != nil {
 			return nil, fmt.Errorf("cannot list thirdParties: %w", err)
 		}

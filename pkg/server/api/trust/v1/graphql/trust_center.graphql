@@ -30,6 +30,7 @@ type TrustCenter implements Node {
     after: CursorKey
     last: Int
     before: CursorKey
+    filter: SubprocessorFilter
   ): SubprocessorConnection! @goField(forceResolver: true)
 
   references(
@@ -243,6 +244,12 @@ type Subprocessor implements Node @nda {
   websiteUrl: String
   privacyPolicyUrl: String
   countries: [CountryCode!]!
+}
+
+input SubprocessorFilter {
+  query: String
+  category: SubprocessorCategory
+  country: CountryCode
 }
 
 type SubprocessorConnection

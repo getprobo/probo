@@ -28,6 +28,7 @@ type (
 
 		Resolver any
 		ParentID gid.GID
+		Filter   *coredata.ThirdPartyFilter
 	}
 )
 
@@ -35,6 +36,7 @@ func NewSubprocessorConnection(
 	p *page.Page[*coredata.ThirdParty, coredata.ThirdPartyOrderField],
 	parentType any,
 	parentID gid.GID,
+	filter *coredata.ThirdPartyFilter,
 ) *SubprocessorConnection {
 	edges := make([]*SubprocessorEdge, len(p.Data))
 	for i, thirdParty := range p.Data {
@@ -47,6 +49,7 @@ func NewSubprocessorConnection(
 
 		Resolver: parentType,
 		ParentID: parentID,
+		Filter:   filter,
 	}
 }
 

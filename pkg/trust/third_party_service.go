@@ -58,15 +58,13 @@ func (s ThirdPartyService) ListForOrganizationId(
 	scope coredata.Scoper,
 	organizationID gid.GID,
 	cursor *page.Cursor[coredata.ThirdPartyOrderField],
+	filter *coredata.ThirdPartyFilter,
 ) (*page.Page[*coredata.ThirdParty, coredata.ThirdPartyOrderField], error) {
 	var thirdParties coredata.ThirdParties
 
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			showOnTrustCenter := true
-			filter := coredata.NewThirdPartyFilter(&showOnTrustCenter, nil, nil)
-
 			err := thirdParties.LoadByOrganizationID(ctx, conn, scope, organizationID, cursor, filter)
 			if err != nil {
 				return fmt.Errorf("cannot load thirdParties: %w", err)
@@ -86,6 +84,7 @@ func (s ThirdPartyService) CountForTrustCenterId(
 	ctx context.Context,
 	scope coredata.Scoper,
 	trustCenterID gid.GID,
+	filter *coredata.ThirdPartyFilter,
 ) (int, error) {
 	var count int
 
@@ -98,8 +97,6 @@ func (s ThirdPartyService) CountForTrustCenterId(
 			}
 
 			thirdParties := &coredata.ThirdParties{}
-			showOnTrustCenter := true
-			filter := coredata.NewThirdPartyFilter(&showOnTrustCenter, nil, nil)
 
 			count, err = thirdParties.CountByOrganizationID(ctx, conn, scope, trustCenter.OrganizationID, filter)
 			if err != nil {

@@ -670,7 +670,7 @@ func (r *subprocessorConnectionResolver) TotalCount(ctx context.Context, obj *ty
 
 	switch obj.Resolver.(type) {
 	case *trustCenterResolver:
-		count, err := trustService.ThirdParties.CountForTrustCenterId(ctx, scope, obj.ParentID)
+		count, err := trustService.ThirdParties.CountForTrustCenterId(ctx, scope, obj.ParentID, obj.Filter)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count subprocessors", log.Error(err))
 			return 0, gqlutils.Internal(ctx)
@@ -798,7 +798,7 @@ func (r *trustCenterResolver) Audits(ctx context.Context, obj *types.TrustCenter
 }
 
 // Subprocessors is the resolver for the subprocessors field.
-func (r *trustCenterResolver) Subprocessors(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.SubprocessorConnection, error) {
+func (r *trustCenterResolver) Subprocessors(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey, filter *types.SubprocessorFilter) (*types.SubprocessorConnection, error) {
 	compliancePage := compliancepage.CompliancePageFromContext(ctx)
 	scope := coredata.NewScopeFromObjectID(compliancePage.OrganizationID)
 	trustService := r.trust
@@ -808,13 +808,27 @@ func (r *trustCenterResolver) Subprocessors(ctx context.Context, obj *types.Trus
 	}
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	thirdPartyPage, err := trustService.ThirdParties.ListForOrganizationId(ctx, scope, obj.Organization.ID, cursor)
+	var (
+		query    *string
+		category *coredata.ThirdPartyCategory
+		country  *coredata.CountryCode
+	)
+	if filter != nil {
+		query = filter.Query
+		category = filter.Category
+		country = filter.Country
+	}
+
+	showOnTrustCenter := true
+	thirdPartyFilter := coredata.NewThirdPartyFilter(&showOnTrustCenter, nil, query, category, country)
+
+	thirdPartyPage, err := trustService.ThirdParties.ListForOrganizationId(ctx, scope, obj.Organization.ID, cursor, thirdPartyFilter)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list subprocessors", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return types.NewSubprocessorConnection(thirdPartyPage, r, obj.ID), nil
+	return types.NewSubprocessorConnection(thirdPartyPage, r, obj.ID, thirdPartyFilter), nil
 }
 
 // References is the resolver for the references field.

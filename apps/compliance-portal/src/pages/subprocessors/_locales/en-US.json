@@ -1,8 +1,16 @@
 {
   "title": "Subprocessors",
+  "filters": {
+    "allCategories": "All categories",
+    "allRegions": "All regions",
+    "searchPlaceholder": "Search..."
+  },
   "empty": {
     "title": "No subprocessors listed.",
-    "description": "This trust center has not published any subprocessors yet."
+    "description": "This trust center has not published any subprocessors yet.",
+    "filteredTitle": "No subprocessors match your filters.",
+    "filteredDescription": "Adjust your search or filters to see available subprocessors.",
+    "clearFilters": "Clear filters"
   },
   "regions": {
     "global": "Global",
