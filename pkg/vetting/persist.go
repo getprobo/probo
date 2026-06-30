@@ -152,62 +152,274 @@ func persistVettingRiskAssessment(
 }
 
 func buildRiskAssessmentNotes(info ThirdPartyInfo) string {
+	sections := []string{"Automated vetting"}
+
+	appendSection := func(section string) {
+		if strings.TrimSpace(section) != "" {
+			sections = append(sections, section)
+		}
+	}
+
+	appendSection(vettingOverviewSection(info))
+	appendSection(vettingPillarSection(info))
+	appendSection(vettingClassificationSection(info))
+	appendSection(vettingRiskBreakdownSection(info))
+	appendSection(vettingPrivacySection(info))
+	appendSection(vettingAIGovernanceSection(info))
+	appendSection(vettingClausesSection(info))
+	appendSection(vettingProfessionalStandingSection(info))
+	appendSection(vettingBaselineSection(info))
+	appendSection(vettingGapsSection(info))
+
+	return strings.Join(sections, "\n\n")
+}
+
+func vettingBulletSection(title string, lines []string) string {
+	if len(lines) == 0 {
+		return ""
+	}
+
 	var b strings.Builder
 
-	b.WriteString("Automated vetting\n\n")
+	b.WriteString(title)
+
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		if line == "" {
+			continue
+		}
+
+		b.WriteString("\n· ")
+		b.WriteString(line)
+	}
+
+	return b.String()
+}
+
+func vettingOverviewSection(info ThirdPartyInfo) string {
+	var lines []string
 
 	switch {
 	case info.OverallRiskRating != "" && info.OverallRiskScore > 0:
-		fmt.Fprintf(
-			&b,
-			"Overall risk: %d/100 (%s)\n",
-			info.OverallRiskScore,
-			info.OverallRiskRating,
-		)
+		lines = append(lines, fmt.Sprintf("Overall risk: %d/100 (%s)", info.OverallRiskScore, info.OverallRiskRating))
 	case info.OverallRiskScore > 0:
-		fmt.Fprintf(&b, "Overall risk: %d/100\n", info.OverallRiskScore)
+		lines = append(lines, fmt.Sprintf("Overall risk: %d/100", info.OverallRiskScore))
 	case info.OverallRiskRating != "":
-		fmt.Fprintf(&b, "Overall risk: %s\n", info.OverallRiskRating)
+		lines = append(lines, fmt.Sprintf("Overall risk: %s", info.OverallRiskRating))
 	}
 
 	if info.Recommendation != "" {
-		fmt.Fprintf(&b, "Recommendation: %s\n", formatVettingRecommendation(info.Recommendation))
+		lines = append(lines, fmt.Sprintf("Recommendation: %s", formatVettingRecommendation(info.Recommendation)))
 	}
 
-	var scoreParts []string
+	return strings.Join(lines, "\n")
+}
+
+func vettingPillarSection(info ThirdPartyInfo) string {
+	var parts []string
 
 	if info.SecurityRiskScore > 0 {
-		scoreParts = append(scoreParts, fmt.Sprintf("Security %d/100", info.SecurityRiskScore))
+		parts = append(parts, fmt.Sprintf("Security %d/100", info.SecurityRiskScore))
 	}
 
 	if info.PrivacyRiskScore > 0 {
-		scoreParts = append(scoreParts, fmt.Sprintf("Privacy %d/100", info.PrivacyRiskScore))
+		parts = append(parts, fmt.Sprintf("Privacy %d/100", info.PrivacyRiskScore))
 	}
 
 	if info.InvolvesAI || info.AIRiskScore > 0 {
-		scoreParts = append(scoreParts, fmt.Sprintf("AI %d/100", info.AIRiskScore))
+		parts = append(parts, fmt.Sprintf("AI %d/100", info.AIRiskScore))
 	}
 
-	if len(scoreParts) > 0 {
-		b.WriteByte('\n')
-		b.WriteString(strings.Join(scoreParts, " · "))
-		b.WriteByte('\n')
+	return strings.Join(parts, " · ")
+}
+
+func vettingClassificationSection(info ThirdPartyInfo) string {
+	var lines []string
+
+	if info.ThirdPartyType != "" {
+		lines = append(lines, "Type: "+info.ThirdPartyType)
 	}
 
-	if len(info.InformationGaps) > 0 {
-		b.WriteString("\nGaps\n")
+	if info.PrivacyRole != "" {
+		lines = append(lines, "Privacy role: "+info.PrivacyRole)
+	}
 
-		gaps := info.InformationGaps
-		if len(gaps) > maxVettingNotesGaps {
-			gaps = gaps[:maxVettingNotesGaps]
+	lines = append(lines, "Processes PII: "+vettingYesNo(info.ProcessesPII))
+
+	if info.CrossBorderTransfer {
+		lines = append(lines, "Cross-border transfers: yes")
+	}
+
+	if info.InvolvesAI {
+		ai := "AI involvement: yes"
+		if useCases := nonEmptyStrings(info.AIUseCases); len(useCases) > 0 {
+			ai += " (" + strings.Join(useCases, ", ") + ")"
 		}
 
-		for _, gap := range gaps {
-			fmt.Fprintf(&b, "· %s\n", strings.TrimSpace(gap))
+		lines = append(lines, ai)
+	}
+
+	return vettingBulletSection("Classification", lines)
+}
+
+func vettingRiskBreakdownSection(info ThirdPartyInfo) string {
+	var lines []string
+
+	for _, score := range info.RiskScores {
+		if score.Category == "" {
+			continue
+		}
+
+		line := score.Category
+		if score.Rating != "" {
+			line += " — " + score.Rating
+		}
+
+		if score.Notes != "" {
+			line += ": " + score.Notes
+		}
+
+		lines = append(lines, line)
+	}
+
+	return vettingBulletSection("Risk breakdown", lines)
+}
+
+func vettingPrivacySection(info ThirdPartyInfo) string {
+	var lines []string
+
+	if info.DPAStatus != "" {
+		lines = append(lines, "DPA: "+info.DPAStatus)
+	}
+
+	if info.DSARCapability != "" {
+		lines = append(lines, "DSAR: "+info.DSARCapability)
+	}
+
+	if info.RetentionPolicy != "" {
+		lines = append(lines, "Retention: "+info.RetentionPolicy)
+	}
+
+	if info.DeletionPolicy != "" {
+		lines = append(lines, "Deletion: "+info.DeletionPolicy)
+	}
+
+	if info.DataMinimization != "" {
+		lines = append(lines, "Data minimization: "+info.DataMinimization)
+	}
+
+	if info.PurposeLimitation != "" {
+		lines = append(lines, "Purpose limitation: "+info.PurposeLimitation)
+	}
+
+	return vettingBulletSection("Privacy & data processing", lines)
+}
+
+func vettingAIGovernanceSection(info ThirdPartyInfo) string {
+	if !info.InvolvesAI {
+		return ""
+	}
+
+	var lines []string
+
+	if info.AITransparency != "" {
+		lines = append(lines, "Transparency: "+info.AITransparency)
+	}
+
+	if info.BiasControls != "" {
+		lines = append(lines, "Bias controls: "+info.BiasControls)
+	}
+
+	if info.HumanOversight != "" {
+		lines = append(lines, "Human oversight: "+info.HumanOversight)
+	}
+
+	if info.TrainingDataGovernance != "" {
+		lines = append(lines, "Training data governance: "+info.TrainingDataGovernance)
+	}
+
+	if info.AIGovernanceDocURL != "" {
+		lines = append(lines, "Governance doc: "+info.AIGovernanceDocURL)
+	}
+
+	return vettingBulletSection("AI governance", lines)
+}
+
+func vettingClausesSection(info ThirdPartyInfo) string {
+	var lines []string
+
+	for _, clause := range info.PrivacyClauses {
+		if strings.TrimSpace(clause) != "" {
+			lines = append(lines, "Privacy: "+clause)
 		}
 	}
 
-	return strings.TrimSpace(b.String())
+	for _, clause := range info.AIClauses {
+		if strings.TrimSpace(clause) != "" {
+			lines = append(lines, "AI: "+clause)
+		}
+	}
+
+	return vettingBulletSection("Contractual clauses", lines)
+}
+
+func vettingProfessionalStandingSection(info ThirdPartyInfo) string {
+	var lines []string
+
+	for _, license := range info.ProfessionalLicenses {
+		if strings.TrimSpace(license) != "" {
+			lines = append(lines, "License: "+license)
+		}
+	}
+
+	for _, membership := range info.IndustryMemberships {
+		if strings.TrimSpace(membership) != "" {
+			lines = append(lines, "Membership: "+membership)
+		}
+	}
+
+	if info.InsuranceCoverage != "" {
+		lines = append(lines, "Insurance: "+info.InsuranceCoverage)
+	}
+
+	return vettingBulletSection("Professional standing", lines)
+}
+
+func vettingBaselineSection(info ThirdPartyInfo) string {
+	failures := nonEmptyStrings(info.BaselineFailures)
+	if len(failures) == 0 {
+		return ""
+	}
+
+	return vettingBulletSection("Minimum baseline not met", failures)
+}
+
+func vettingGapsSection(info ThirdPartyInfo) string {
+	gaps := nonEmptyStrings(info.InformationGaps)
+	if len(gaps) > maxVettingNotesGaps {
+		gaps = gaps[:maxVettingNotesGaps]
+	}
+
+	return vettingBulletSection("Gaps", gaps)
+}
+
+func vettingYesNo(value bool) string {
+	if value {
+		return "yes"
+	}
+
+	return "no"
+}
+
+func nonEmptyStrings(values []string) []string {
+	out := make([]string, 0, len(values))
+	for _, value := range values {
+		if strings.TrimSpace(value) != "" {
+			out = append(out, strings.TrimSpace(value))
+		}
+	}
+
+	return out
 }
 
 func formatVettingRecommendation(recommendation string) string {
