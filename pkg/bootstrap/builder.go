@@ -67,16 +67,16 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 			},
 		},
 		Probod: probodconfig.Config{
-			BaseURL:       b.resolver.getEnvOrDefault("PROBOD_BASE_URL", "http://localhost:8080"),
+			BaseURL:       b.resolver.getEnv("PROBOD_BASE_URL"),
 			EncryptionKey: b.resolver.getEnv("PROBOD_ENCRYPTION_KEY"),
-			ChromeDPAddr:  b.resolver.getEnvOrDefault("PROBOD_CHROME_DP_ADDR", "localhost:9222"),
+			ChromeDPAddr:  b.resolver.getEnv("PROBOD_CHROME_DP_ADDR"),
 			Api: probodconfig.APIConfig{
-				Addr: b.resolver.getEnvOrDefault("PROBOD_API_ADDR", ":8080"),
+				Addr: b.resolver.getEnv("PROBOD_API_ADDR"),
 				ProxyProtocol: probodconfig.ProxyProtocolConfig{
 					TrustedProxies: b.parseOriginsList(b.resolver.getEnv("PROBOD_API_PROXY_PROTOCOL_TRUSTED_PROXIES")),
 				},
 				Cors: probodconfig.CorsConfig{
-					AllowedOrigins: b.parseOriginsList(b.resolver.getEnvOrDefault("PROBOD_API_CORS_ALLOWED_ORIGINS", "http://localhost:8080")),
+					AllowedOrigins: b.parseOriginsList(b.resolver.getEnv("PROBOD_API_CORS_ALLOWED_ORIGINS")),
 				},
 				ExtraHeaderFields: make(map[string]string),
 				GraphQL: probodconfig.GraphQLConfig{
@@ -87,10 +87,10 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 				},
 			},
 			Pg: probodconfig.PgConfig{
-				Addr:                         b.resolver.getEnvOrDefault("PROBOD_PG_ADDR", "localhost:5432"),
-				Username:                     b.resolver.getEnvOrDefault("PROBOD_PG_USERNAME", "probod"),
-				Password:                     b.resolver.getEnvOrDefault("PROBOD_PG_PASSWORD", "probod"),
-				Database:                     b.resolver.getEnvOrDefault("PROBOD_PG_DATABASE", "probod"),
+				Addr:                         b.resolver.getEnv("PROBOD_PG_ADDR"),
+				Username:                     b.resolver.getEnv("PROBOD_PG_USERNAME"),
+				Password:                     b.resolver.getEnv("PROBOD_PG_PASSWORD"),
+				Database:                     b.resolver.getEnv("PROBOD_PG_DATABASE"),
 				PoolSize:                     int32(b.resolver.getEnvIntOrDefault("PROBOD_PG_POOL_SIZE", 100)),
 				MinPoolSize:                  int32(b.resolver.getEnvIntOrDefault("PROBOD_PG_MIN_POOL_SIZE", 10)),
 				MaxConnIdleTimeSeconds:       b.resolver.getEnvIntOrDefault("PROBOD_PG_MAX_CONN_IDLE_TIME_SECONDS", 1800),
@@ -106,8 +106,8 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 				PasswordResetTokenValidity:          b.resolver.getEnvIntOrDefault("PROBOD_AUTH_PASSWORD_RESET_TOKEN_VALIDITY", 3600),
 				MagicLinkTokenValidity:              b.resolver.getEnvIntOrDefault("PROBOD_AUTH_MAGIC_LINK_TOKEN_VALIDITY", 900),
 				Cookie: probodconfig.CookieConfig{
-					Name:     b.resolver.getEnvOrDefault("PROBOD_AUTH_COOKIE_NAME", "SSID"),
-					Domain:   b.resolver.getEnvOrDefault("PROBOD_AUTH_COOKIE_DOMAIN", "localhost"),
+					Name:     b.resolver.getEnv("PROBOD_AUTH_COOKIE_NAME"),
+					Domain:   b.resolver.getEnv("PROBOD_AUTH_COOKIE_DOMAIN"),
 					Secret:   b.resolver.getEnv("PROBOD_AUTH_COOKIE_SECRET"),
 					Duration: b.resolver.getEnvIntOrDefault("PROBOD_AUTH_COOKIE_DURATION", 24),
 					Secure:   b.resolver.getEnvBoolOrDefault("PROBOD_AUTH_COOKIE_SECURE", true),
@@ -122,7 +122,7 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 					Certificate:                       samlCert,
 					PrivateKey:                        samlKey,
 					DomainVerificationIntervalSeconds: b.resolver.getEnvIntOrDefault("PROBOD_SAML_DOMAIN_VERIFICATION_INTERVAL_SECONDS", 60),
-					DomainVerificationResolverAddr:    b.resolver.getEnvOrDefault("PROBOD_SAML_DOMAIN_VERIFICATION_RESOLVER_ADDR", "8.8.8.8:53"),
+					DomainVerificationResolverAddr:    b.resolver.getEnv("PROBOD_SAML_DOMAIN_VERIFICATION_RESOLVER_ADDR"),
 				},
 				Google: probodconfig.OIDCProviderConfig{
 					ClientID:     b.resolver.getEnv("PROBOD_AUTH_GOOGLE_CLIENT_ID"),
@@ -150,15 +150,15 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 				},
 			},
 			TrustCenter: probodconfig.TrustCenterConfig{
-				HTTPAddr:  b.resolver.getEnvOrDefault("PROBOD_TRUST_CENTER_HTTP_ADDR", ":80"),
-				HTTPSAddr: b.resolver.getEnvOrDefault("PROBOD_TRUST_CENTER_HTTPS_ADDR", ":443"),
+				HTTPAddr:  b.resolver.getEnv("PROBOD_TRUST_CENTER_HTTP_ADDR"),
+				HTTPSAddr: b.resolver.getEnv("PROBOD_TRUST_CENTER_HTTPS_ADDR"),
 				ProxyProtocol: probodconfig.ProxyProtocolConfig{
 					TrustedProxies: b.parseOriginsList(b.resolver.getEnv("PROBOD_TRUST_CENTER_PROXY_PROTOCOL_TRUSTED_PROXIES")),
 				},
 			},
 			AWS: probodconfig.AWSConfig{
-				Region:          b.resolver.getEnvOrDefault("PROBOD_AWS_REGION", "us-east-1"),
-				Bucket:          b.resolver.getEnvOrDefault("PROBOD_AWS_BUCKET", "probod"),
+				Region:          b.resolver.getEnv("PROBOD_AWS_REGION"),
+				Bucket:          b.resolver.getEnv("PROBOD_AWS_BUCKET"),
 				AccessKeyID:     b.resolver.getEnv("PROBOD_AWS_ACCESS_KEY_ID"),
 				SecretAccessKey: b.resolver.getEnv("PROBOD_AWS_SECRET_ACCESS_KEY"),
 				Endpoint:        b.resolver.getEnv("PROBOD_AWS_ENDPOINT"),
@@ -166,11 +166,11 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 			},
 			Notifications: probodconfig.NotificationsConfig{
 				Mailer: probodconfig.MailerConfig{
-					SenderName:     b.resolver.getEnvOrDefault("PROBOD_MAILER_SENDER_NAME", "Probo"),
-					SenderEmail:    b.resolver.getEnvOrDefault("PROBOD_MAILER_SENDER_EMAIL", "no-reply@notification.getprobo.com"),
+					SenderName:     b.resolver.getEnv("PROBOD_MAILER_SENDER_NAME"),
+					SenderEmail:    b.resolver.getEnv("PROBOD_MAILER_SENDER_EMAIL"),
 					MailerInterval: b.resolver.getEnvIntOrDefault("PROBOD_MAILER_INTERVAL", 60),
 					SMTP: probodconfig.SMTPConfig{
-						Addr:        b.resolver.getEnvOrDefault("PROBOD_SMTP_ADDR", "localhost:1025"),
+						Addr:        b.resolver.getEnv("PROBOD_SMTP_ADDR"),
 						User:        b.resolver.getEnv("PROBOD_SMTP_USER"),
 						Password:    b.resolver.getEnv("PROBOD_SMTP_PASSWORD"),
 						TLSRequired: b.resolver.getEnvBoolOrDefault("PROBOD_SMTP_TLS_REQUIRED", false),
@@ -272,12 +272,12 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 				RenewalInterval:   b.resolver.getEnvIntOrDefault("PROBOD_CUSTOM_DOMAINS_RENEWAL_INTERVAL", 3600),
 				ProvisionInterval: b.resolver.getEnvIntOrDefault("PROBOD_CUSTOM_DOMAINS_PROVISION_INTERVAL", 30),
 				CnameTarget:       b.resolver.getEnvOrDefault("PROBOD_CUSTOM_DOMAINS_CNAME_TARGET", "custom.getprobo.com"),
-				ResolverAddr:      b.resolver.getEnvOrDefault("PROBOD_CUSTOM_DOMAINS_RESOLVER_ADDR", "8.8.8.8:53"),
+				ResolverAddr:      b.resolver.getEnv("PROBOD_CUSTOM_DOMAINS_RESOLVER_ADDR"),
 				CAAIssuerDomain:   b.resolver.getEnvOrDefault("PROBOD_CUSTOM_DOMAINS_CAA_ISSUER_DOMAIN", "letsencrypt.org"),
 				ACME: probodconfig.ACMEConfig{
-					Directory:  b.resolver.getEnvOrDefault("PROBOD_ACME_DIRECTORY", "https://acme-v02.api.letsencrypt.org/directory"),
-					Email:      b.resolver.getEnvOrDefault("PROBOD_ACME_EMAIL", "admin@probo.com"),
-					KeyType:    b.resolver.getEnvOrDefault("PROBOD_ACME_KEY_TYPE", "EC256"),
+					Directory:  b.resolver.getEnv("PROBOD_ACME_DIRECTORY"),
+					Email:      b.resolver.getEnv("PROBOD_ACME_EMAIL"),
+					KeyType:    b.resolver.getEnv("PROBOD_ACME_KEY_TYPE"),
 					RootCA:     b.resolver.getEnv("PROBOD_ACME_ROOT_CA"),
 					AccountKey: b.resolver.getEnv("PROBOD_ACME_ACCOUNT_KEY"),
 				},
@@ -287,7 +287,7 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 				PollInterval: b.resolver.getEnvIntOrDefault("PROBOD_SCIM_BRIDGE_POLL_INTERVAL", 30),
 			},
 			ESign: probodconfig.ESignConfig{
-				TSAURL: b.resolver.getEnvOrDefault("PROBOD_ESIGN_TSA_URL", "http://timestamp.digicert.com"),
+				TSAURL: b.resolver.getEnv("PROBOD_ESIGN_TSA_URL"),
 			},
 			EvidenceDescriber: probodconfig.EvidenceDescriberConfig{
 				Interval:       b.resolver.getEnvIntOrDefault("PROBOD_EVIDENCE_DESCRIBER_INTERVAL", 10),

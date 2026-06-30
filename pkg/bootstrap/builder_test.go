@@ -139,23 +139,23 @@ func TestBuilder_Build_Defaults(t *testing.T) {
 	assert.Equal(t, 2048, cfg.Unit.Tracing.MaxQueueSize)
 
 	// Probod base config
-	assert.Equal(t, "http://localhost:8080", cfg.Probod.BaseURL)
-	assert.Equal(t, "localhost:9222", cfg.Probod.ChromeDPAddr)
+	assert.Empty(t, cfg.Probod.BaseURL)
+	assert.Empty(t, cfg.Probod.ChromeDPAddr)
 
 	// API config
-	assert.Equal(t, ":8080", cfg.Probod.Api.Addr)
+	assert.Empty(t, cfg.Probod.Api.Addr)
 	assert.Nil(t, cfg.Probod.Api.ProxyProtocol.TrustedProxies)
-	assert.Equal(t, []string{"http://localhost:8080"}, cfg.Probod.Api.Cors.AllowedOrigins)
+	assert.Nil(t, cfg.Probod.Api.Cors.AllowedOrigins)
 	assert.Equal(t, 15000, cfg.Probod.Api.GraphQL.ParserTokenLimit)
 	assert.Equal(t, 2000, cfg.Probod.Api.GraphQL.ComplexityLimit)
 	assert.Equal(t, 1000, cfg.Probod.Api.GraphQL.QueryCacheSize)
 	assert.True(t, cfg.Probod.Api.GraphQL.DisableSuggestion)
 
 	// PG config
-	assert.Equal(t, "localhost:5432", cfg.Probod.Pg.Addr)
-	assert.Equal(t, "probod", cfg.Probod.Pg.Username)
-	assert.Equal(t, "probod", cfg.Probod.Pg.Password)
-	assert.Equal(t, "probod", cfg.Probod.Pg.Database)
+	assert.Empty(t, cfg.Probod.Pg.Addr)
+	assert.Empty(t, cfg.Probod.Pg.Username)
+	assert.Empty(t, cfg.Probod.Pg.Password)
+	assert.Empty(t, cfg.Probod.Pg.Database)
 	assert.Equal(t, int32(100), cfg.Probod.Pg.PoolSize)
 	assert.Equal(t, int32(10), cfg.Probod.Pg.MinPoolSize)
 	assert.Equal(t, 1800, cfg.Probod.Pg.MaxConnIdleTimeSeconds)
@@ -169,8 +169,8 @@ func TestBuilder_Build_Defaults(t *testing.T) {
 	assert.Equal(t, 3600, cfg.Probod.Auth.InvitationConfirmationTokenValidity)
 	assert.Equal(t, 3600, cfg.Probod.Auth.PasswordResetTokenValidity)
 	assert.Equal(t, 900, cfg.Probod.Auth.MagicLinkTokenValidity)
-	assert.Equal(t, "SSID", cfg.Probod.Auth.Cookie.Name)
-	assert.Equal(t, "localhost", cfg.Probod.Auth.Cookie.Domain)
+	assert.Empty(t, cfg.Probod.Auth.Cookie.Name)
+	assert.Empty(t, cfg.Probod.Auth.Cookie.Domain)
 	assert.Equal(t, 24, cfg.Probod.Auth.Cookie.Duration)
 	assert.True(t, cfg.Probod.Auth.Cookie.Secure)
 	assert.Equal(t, 1000000, cfg.Probod.Auth.Password.Iterations)
@@ -179,22 +179,22 @@ func TestBuilder_Build_Defaults(t *testing.T) {
 	assert.Equal(t, 604800, cfg.Probod.Auth.SAML.SessionDuration)
 	assert.Equal(t, 0, cfg.Probod.Auth.SAML.CleanupIntervalSeconds)
 	assert.Equal(t, 60, cfg.Probod.Auth.SAML.DomainVerificationIntervalSeconds)
-	assert.Equal(t, "8.8.8.8:53", cfg.Probod.Auth.SAML.DomainVerificationResolverAddr)
+	assert.Empty(t, cfg.Probod.Auth.SAML.DomainVerificationResolverAddr)
 
 	// Trust center config
-	assert.Equal(t, ":80", cfg.Probod.TrustCenter.HTTPAddr)
-	assert.Equal(t, ":443", cfg.Probod.TrustCenter.HTTPSAddr)
+	assert.Empty(t, cfg.Probod.TrustCenter.HTTPAddr)
+	assert.Empty(t, cfg.Probod.TrustCenter.HTTPSAddr)
 	assert.Nil(t, cfg.Probod.TrustCenter.ProxyProtocol.TrustedProxies)
 
 	// AWS config
-	assert.Equal(t, "us-east-1", cfg.Probod.AWS.Region)
-	assert.Equal(t, "probod", cfg.Probod.AWS.Bucket)
+	assert.Empty(t, cfg.Probod.AWS.Region)
+	assert.Empty(t, cfg.Probod.AWS.Bucket)
 	assert.False(t, cfg.Probod.AWS.UsePathStyle)
 
 	// Notifications config
-	assert.Equal(t, "Probo", cfg.Probod.Notifications.Mailer.SenderName)
-	assert.Equal(t, "no-reply@notification.getprobo.com", cfg.Probod.Notifications.Mailer.SenderEmail)
-	assert.Equal(t, "localhost:1025", cfg.Probod.Notifications.Mailer.SMTP.Addr)
+	assert.Empty(t, cfg.Probod.Notifications.Mailer.SenderName)
+	assert.Empty(t, cfg.Probod.Notifications.Mailer.SenderEmail)
+	assert.Empty(t, cfg.Probod.Notifications.Mailer.SMTP.Addr)
 	assert.False(t, cfg.Probod.Notifications.Mailer.SMTP.TLSRequired)
 	assert.Empty(t, cfg.Probod.Notifications.Mailer.SMTP.HelloName)
 	assert.Equal(t, 60, cfg.Probod.Notifications.Mailer.MailerInterval)
@@ -267,17 +267,17 @@ func TestBuilder_Build_Defaults(t *testing.T) {
 	assert.Equal(t, 3600, cfg.Probod.CustomDomains.RenewalInterval)
 	assert.Equal(t, 30, cfg.Probod.CustomDomains.ProvisionInterval)
 	assert.Equal(t, "custom.getprobo.com", cfg.Probod.CustomDomains.CnameTarget)
-	assert.Equal(t, "8.8.8.8:53", cfg.Probod.CustomDomains.ResolverAddr)
-	assert.Equal(t, "https://acme-v02.api.letsencrypt.org/directory", cfg.Probod.CustomDomains.ACME.Directory)
-	assert.Equal(t, "admin@probo.com", cfg.Probod.CustomDomains.ACME.Email)
-	assert.Equal(t, "EC256", cfg.Probod.CustomDomains.ACME.KeyType)
+	assert.Empty(t, cfg.Probod.CustomDomains.ResolverAddr)
+	assert.Empty(t, cfg.Probod.CustomDomains.ACME.Directory)
+	assert.Empty(t, cfg.Probod.CustomDomains.ACME.Email)
+	assert.Empty(t, cfg.Probod.CustomDomains.ACME.KeyType)
 
 	// SCIM bridge config
 	assert.Equal(t, 900, cfg.Probod.SCIMBridge.SyncInterval)
 	assert.Equal(t, 30, cfg.Probod.SCIMBridge.PollInterval)
 
 	// ESign config
-	assert.Equal(t, "http://timestamp.digicert.com", cfg.Probod.ESign.TSAURL)
+	assert.Empty(t, cfg.Probod.ESign.TSAURL)
 
 	// Branding
 	assert.True(t, cfg.Probod.Branding)
