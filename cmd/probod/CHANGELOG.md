@@ -4,6 +4,12 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.222.1] - 2026-07-01
+
+### Changed
+
+- String configuration defaults now come from `probod`'s built-in values when the corresponding environment variable is unset, ensuring bootstrap-generated and directly-configured deployments use the same defaults
+
 ## [0.222.0] - 2026-06-30
 
 ### Added
