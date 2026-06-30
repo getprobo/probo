@@ -87,11 +87,11 @@ export const description: INodeProperties[] = [
 				],
 			},
 			{
-				displayName: 'Document Types',
+				displayName: 'Type',
 				name: 'documentTypes',
 				type: 'multiOptions',
 				default: [],
-				description: 'Filter by document type',
+				description: 'Filter by document type, for example Policy',
 				options: [
 					{ name: 'Governance', value: 'GOVERNANCE' },
 					{ name: 'Other', value: 'OTHER' },
