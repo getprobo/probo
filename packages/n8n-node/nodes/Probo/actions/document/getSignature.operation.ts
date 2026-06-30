@@ -43,6 +43,9 @@ export async function execute(
 			node(id: $signatureId) {
 				... on DocumentVersionSignature {
 					id
+					documentVersion {
+						id
+					}
 					state
 					signedAt
 					requestedAt
