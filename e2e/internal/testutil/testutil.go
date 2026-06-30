@@ -331,7 +331,7 @@ func generateConfig() (string, error) {
 
 	path := filepath.Join(tmpDir, "probod.yml")
 
-	if err := bootstrap.WriteConfig(cfg, path); err != nil {
+	if err := bootstrap.WriteConfig(cfg, path, bootstrap.FormatYAML); err != nil {
 		return "", fmt.Errorf("write config: %w", err)
 	}
 

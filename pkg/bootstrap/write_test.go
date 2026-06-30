@@ -15,6 +15,7 @@
 package bootstrap
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"testing"
@@ -39,7 +40,7 @@ func TestWriteConfig(t *testing.T) {
 		},
 	}
 
-	err := WriteConfig(cfg, configPath)
+	err := WriteConfig(cfg, configPath, FormatYAML)
 	require.NoError(t, err)
 
 	data, err := os.ReadFile(configPath)
@@ -63,7 +64,7 @@ func TestWriteConfig_CreatesDirectory(t *testing.T) {
 		Probod: probodconfig.Config{BaseURL: "http://localhost:8080"},
 	}
 
-	err := WriteConfig(cfg, configPath)
+	err := WriteConfig(cfg, configPath, FormatYAML)
 	require.NoError(t, err)
 
 	_, err = os.Stat(configPath)
@@ -76,7 +77,7 @@ func TestWriteConfig_FilePermissions(t *testing.T) {
 
 	cfg := &probodconfig.FullConfig{}
 
-	err := WriteConfig(cfg, configPath)
+	err := WriteConfig(cfg, configPath, FormatYAML)
 	require.NoError(t, err)
 
 	info, err := os.Stat(configPath)
@@ -108,7 +109,7 @@ func TestWriteConfig_DropsEmptyStrings(t *testing.T) {
 		},
 	}
 
-	err := WriteConfig(cfg, configPath)
+	err := WriteConfig(cfg, configPath, FormatYAML)
 	require.NoError(t, err)
 
 	data, err := os.ReadFile(configPath)
@@ -205,7 +206,7 @@ func TestWriteConfig_CompleteConfig(t *testing.T) {
 		},
 	}
 
-	err := WriteConfig(cfg, configPath)
+	err := WriteConfig(cfg, configPath, FormatYAML)
 	require.NoError(t, err)
 
 	data, err := os.ReadFile(configPath)
@@ -225,4 +226,53 @@ func TestWriteConfig_CompleteConfig(t *testing.T) {
 	assert.Equal(t, cfg.Probod.Pg.MaxConnLifetimeSeconds, loaded.Probod.Pg.MaxConnLifetimeSeconds)
 	require.Len(t, loaded.Probod.Connectors, 1)
 	assert.Equal(t, "SLACK", loaded.Probod.Connectors[0].Provider)
+}
+
+func TestWriteConfig_JSON(t *testing.T) {
+	tmpDir := t.TempDir()
+	configPath := filepath.Join(tmpDir, "probod.json")
+
+	cfg := &probodconfig.FullConfig{
+		Unit: probodconfig.UnitConfig{
+			Metrics: probodconfig.MetricsConfig{Addr: "localhost:9090"},
+		},
+		Probod: probodconfig.Config{
+			BaseURL:       "http://localhost:8080",
+			EncryptionKey: "",
+		},
+	}
+
+	err := WriteConfig(cfg, configPath, FormatJSON)
+	require.NoError(t, err)
+
+	data, err := os.ReadFile(configPath)
+	require.NoError(t, err)
+
+	var tree map[string]any
+
+	err = json.Unmarshal(data, &tree)
+	require.NoError(t, err)
+
+	probod, ok := tree["probod"].(map[string]any)
+	require.True(t, ok)
+	assert.Equal(t, "http://localhost:8080", probod["base-url"])
+	assert.NotContains(t, probod, "encryption-key")
+
+	var loaded probodconfig.FullConfig
+
+	err = json.Unmarshal(data, &loaded)
+	require.NoError(t, err)
+
+	assert.Equal(t, cfg.Unit.Metrics.Addr, loaded.Unit.Metrics.Addr)
+	assert.Equal(t, cfg.Probod.BaseURL, loaded.Probod.BaseURL)
+}
+
+func TestWriteConfig_UnsupportedFormat(t *testing.T) {
+	tmpDir := t.TempDir()
+	configPath := filepath.Join(tmpDir, "probod.txt")
+
+	cfg := &probodconfig.FullConfig{}
+
+	err := WriteConfig(cfg, configPath, Format("toml"))
+	require.Error(t, err)
 }

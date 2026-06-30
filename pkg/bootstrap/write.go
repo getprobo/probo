@@ -15,6 +15,7 @@
 package bootstrap
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -23,7 +24,14 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-func WriteConfig(cfg *probodconfig.FullConfig, path string) error {
+type Format string
+
+const (
+	FormatYAML Format = "yaml"
+	FormatJSON Format = "json"
+)
+
+func WriteConfig(cfg *probodconfig.FullConfig, path string, format Format) error {
 	dir := filepath.Dir(path)
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		return fmt.Errorf("create directory %s: %w", dir, err)
@@ -41,9 +49,19 @@ func WriteConfig(cfg *probodconfig.FullConfig, path string) error {
 
 	pruned := pruneEmptyStrings(tree)
 
-	data, err = yaml.Marshal(pruned)
-	if err != nil {
-		return fmt.Errorf("marshal pruned config: %w", err)
+	switch format {
+	case FormatJSON:
+		data, err = json.MarshalIndent(pruned, "", "  ")
+		if err != nil {
+			return fmt.Errorf("marshal pruned config as json: %w", err)
+		}
+	case FormatYAML:
+		data, err = yaml.Marshal(pruned)
+		if err != nil {
+			return fmt.Errorf("marshal pruned config as yaml: %w", err)
+		}
+	default:
+		return fmt.Errorf("unsupported config format: %q", format)
 	}
 
 	if err := os.WriteFile(path, data, 0600); err != nil {

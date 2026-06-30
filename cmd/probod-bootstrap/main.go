@@ -29,6 +29,7 @@ var (
 
 func main() {
 	outputPath := flag.String("output", "/etc/probod/config.yml", "output path for the generated config file")
+	format := flag.String("format", "yaml", "output format for the generated config file (yaml or json)")
 	showVersion := flag.Bool("version", false, "print version and exit")
 
 	flag.Parse()
@@ -36,6 +37,17 @@ func main() {
 	if *showVersion {
 		fmt.Println(version)
 		return
+	}
+
+	var configFormat bootstrap.Format
+	switch *format {
+	case "yaml":
+		configFormat = bootstrap.FormatYAML
+	case "json":
+		configFormat = bootstrap.FormatJSON
+	default:
+		fmt.Fprintf(os.Stderr, "error: unsupported format %q, must be yaml or json\n", *format)
+		os.Exit(1)
 	}
 
 	builder := bootstrap.NewBuilder(bootstrap.NewResolver(nil))
@@ -46,7 +58,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err := bootstrap.WriteConfig(cfg, *outputPath); err != nil {
+	if err := bootstrap.WriteConfig(cfg, *outputPath, configFormat); err != nil {
 		fmt.Fprintf(os.Stderr, "error: %v\n", err)
 		os.Exit(1)
 	}
