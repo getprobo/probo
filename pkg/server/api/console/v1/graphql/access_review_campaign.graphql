@@ -364,8 +364,6 @@ type AccessReviewCampaign implements Node {
         filter: AccessReviewEntryFilter
     ): AccessReviewEntryConnection! @goField(forceResolver: true)
 
-    pendingEntryCount: Int! @goField(forceResolver: true)
-
     statistics: AccessReviewStatistics! @goField(forceResolver: true)
 
     permission(action: String!): Boolean! @goField(forceResolver: true)

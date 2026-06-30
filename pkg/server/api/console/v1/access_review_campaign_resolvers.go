@@ -98,23 +98,6 @@ func (r *accessReviewCampaignResolver) Entries(ctx context.Context, obj *types.A
 	return types.NewAccessReviewEntryConnection(p, r, obj.ID, nil, filter), nil
 }
 
-// PendingEntryCount is the resolver for the pendingEntryCount field.
-func (r *accessReviewCampaignResolver) PendingEntryCount(ctx context.Context, obj *types.AccessReviewCampaign) (int, error) {
-	scope, err := r.authorize(ctx, obj.ID, accessreview.ActionEntryList)
-	if err != nil {
-		return 0, err
-	}
-
-	count, err := r.accessReview.CountPendingEntriesForCampaignID(ctx, scope, obj.ID)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot count pending access entries", log.Error(err))
-
-		return 0, gqlutils.Internal(ctx)
-	}
-
-	return count, nil
-}
-
 // Statistics is the resolver for the statistics field.
 func (r *accessReviewCampaignResolver) Statistics(ctx context.Context, obj *types.AccessReviewCampaign) (*types.AccessReviewStatistics, error) {
 	scope, err := r.authorize(ctx, obj.ID, accessreview.ActionEntryList)

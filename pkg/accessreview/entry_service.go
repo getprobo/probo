@@ -378,33 +378,6 @@ func (s *Service) CountEntriesForCampaignIDAndSourceID(
 	return count, nil
 }
 
-func (s *Service) CountPendingEntriesForCampaignID(
-	ctx context.Context,
-	scope coredata.Scoper,
-	campaignID gid.GID,
-) (int, error) {
-	var count int
-
-	err := s.pg.WithConn(
-		ctx,
-		func(ctx context.Context, conn pg.Querier) (err error) {
-			entries := coredata.AccessReviewEntries{}
-
-			count, err = entries.CountPendingByCampaignID(ctx, conn, scope, campaignID)
-			if err != nil {
-				return fmt.Errorf("cannot count pending access entries: %w", err)
-			}
-
-			return nil
-		},
-	)
-	if err != nil {
-		return 0, err
-	}
-
-	return count, nil
-}
-
 func (s *Service) EntryDecisionHistory(
 	ctx context.Context,
 	scope coredata.Scoper,
