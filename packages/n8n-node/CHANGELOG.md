@@ -4,6 +4,12 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+## [0.199.0] - 2026-06-30
+
+### Added
+
+- `document.getSignature` now returns the document version ID alongside the signature record
+
 ## [0.198.0] - 2026-06-30
 
 ### Added
