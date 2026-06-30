@@ -4,6 +4,27 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.222.0] - 2026-06-30
+
+### Added
+
+- OAuth2 loopback redirect URIs now match regardless of port, enabling native OAuth clients such as Claude Code that use ephemeral ports at authorization time (RFC 8252 section 7.3)
+- Access review campaigns can now be closed when entries are in a failed state
+
+### Changed
+
+- Third-party risk assessment vetting notes now persist the full structured breakdown (risk classification, per-category analysis, privacy and data-processing practices, AI governance, contractual clauses, professional standing) instead of a short summary only
+
+### Fixed
+
+- Deleting a user still referenced elsewhere (e.g. as an asset owner) now returns a 409 Conflict instead of an internal error
+- GraphQL endpoint is now protected against alias-flooding DoS (GHSA-prh2-g8pv-m7p9): parser token limit, field complexity cap, LRU query cache, and field suggestion suppression added to all three GraphQL handlers
+
+### Removed
+
+- Access review campaigns no longer expose a framework-controls field
+- `pendingEntryCount` field removed from access review campaigns
+
 ## [0.221.0] - 2026-06-30
 
 ### Added
