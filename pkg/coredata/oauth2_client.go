@@ -19,6 +19,7 @@ import (
 	"errors"
 	"fmt"
 	"maps"
+	"net/url"
 	"slices"
 	"time"
 
@@ -26,6 +27,7 @@ import (
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam/policy"
+	"go.probo.inc/probo/pkg/netx"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/uri"
 )
@@ -54,7 +56,42 @@ type (
 )
 
 func (c *OAuth2Client) IsRedirectURIAllowed(rawURI string) bool {
-	return slices.Contains(c.RedirectURIs, uri.URI(rawURI))
+	if slices.Contains(c.RedirectURIs, uri.URI(rawURI)) {
+		return true
+	}
+
+	// RFC 8252 §7.3: native apps using a loopback redirect URI choose an
+	// ephemeral port at request time, so the port must be ignored when
+	// matching against the registered loopback redirect URIs.
+	requested, err := url.Parse(rawURI)
+	if err != nil || !netx.IsLoopback(requested.Hostname()) {
+		return false
+	}
+
+	for _, registered := range c.RedirectURIs {
+		candidate, err := url.Parse(registered.String())
+		if err != nil {
+			continue
+		}
+
+		if candidate.Scheme != requested.Scheme {
+			continue
+		}
+
+		if !netx.IsLoopback(candidate.Hostname()) {
+			continue
+		}
+
+		if candidate.Hostname() != requested.Hostname() {
+			continue
+		}
+
+		if candidate.Path == requested.Path && candidate.RawQuery == requested.RawQuery {
+			return true
+		}
+	}
+
+	return false
 }
 
 func (c *OAuth2Client) HasGrantType(grantType OAuth2GrantType) bool {

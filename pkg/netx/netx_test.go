@@ -12,13 +12,13 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package net_test
+package netx_test
 
 import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"go.probo.inc/probo/pkg/net"
+	"go.probo.inc/probo/pkg/netx"
 )
 
 func TestIsLoopback(t *testing.T) {
@@ -77,7 +77,7 @@ func TestIsLoopback(t *testing.T) {
 			func(t *testing.T) {
 				t.Parallel()
 
-				assert.Equal(t, tt.want, net.IsLoopback(tt.host))
+				assert.Equal(t, tt.want, netx.IsLoopback(tt.host))
 			},
 		)
 	}

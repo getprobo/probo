@@ -1,0 +1,96 @@
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+// OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
+
+package coredata_test
+
+import (
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/uri"
+)
+
+func TestOAuth2Client_IsRedirectURIAllowed(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name       string
+		registered []uri.URI
+		requested  string
+		want       bool
+	}{
+		{
+			name:       "exact https match",
+			registered: []uri.URI{"https://chatgpt.com/connector/oauth/callback"},
+			requested:  "https://chatgpt.com/connector/oauth/callback",
+			want:       true,
+		},
+		{
+			name:       "https mismatch",
+			registered: []uri.URI{"https://chatgpt.com/connector/oauth/callback"},
+			requested:  "https://evil.example/callback",
+			want:       false,
+		},
+		{
+			name:       "loopback ignores port when registered without port",
+			registered: []uri.URI{"http://localhost/callback"},
+			requested:  "http://localhost:3118/callback",
+			want:       true,
+		},
+		{
+			name:       "loopback ignores port when registered with a different port",
+			registered: []uri.URI{"http://127.0.0.1:53682/callback"},
+			requested:  "http://127.0.0.1:8080/callback",
+			want:       true,
+		},
+		{
+			name:       "loopback host must match (localhost vs 127.0.0.1)",
+			registered: []uri.URI{"http://127.0.0.1/callback"},
+			requested:  "http://localhost:3118/callback",
+			want:       false,
+		},
+		{
+			name:       "loopback path must match",
+			registered: []uri.URI{"http://localhost/callback"},
+			requested:  "http://localhost:3118/other",
+			want:       false,
+		},
+		{
+			name:       "loopback scheme must match",
+			registered: []uri.URI{"http://localhost/callback"},
+			requested:  "https://localhost:3118/callback",
+			want:       false,
+		},
+		{
+			name:       "non-loopback host does not get port flexibility",
+			registered: []uri.URI{"https://app.example.com/callback"},
+			requested:  "https://app.example.com:8443/callback",
+			want:       false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(
+			tt.name,
+			func(t *testing.T) {
+				t.Parallel()
+
+				client := &coredata.OAuth2Client{RedirectURIs: tt.registered}
+
+				assert.Equal(t, tt.want, client.IsRedirectURIAllowed(tt.requested))
+			},
+		)
+	}
+}

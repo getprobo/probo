@@ -32,7 +32,7 @@ import (
 	"go.probo.inc/probo/pkg/crypto/rand"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam/oauth2scope"
-	"go.probo.inc/probo/pkg/net"
+	"go.probo.inc/probo/pkg/netx"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/uri"
 )
@@ -1060,7 +1060,7 @@ func (s *Service) RegisterClient(
 			}
 		case coredata.OAuth2ClientVisibilityPrivate:
 			if parsed.Scheme == "http" {
-				if !net.IsLoopback(parsed.Hostname()) {
+				if !netx.IsLoopback(parsed.Hostname()) {
 					return gid.Nil,
 						"",
 						NewError(
@@ -1433,12 +1433,10 @@ func (s *Service) Authorize(
 	if err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			client, err := s.resolveClient(ctx, tx, req.ClientIDRaw, req.RedirectURI)
+			client, err := s.resolveClient(ctx, tx, req.ClientIDRaw)
 			if err != nil {
 				return err
 			}
-
-			fmt.Printf("X: %+v\n", client)
 
 			if !client.IsRedirectURIAllowed(req.RedirectURI) {
 				return ErrInvalidRedirectURI
@@ -1738,7 +1736,7 @@ func (s *Service) AuthenticateClient(
 	clientIDRaw string,
 	clientSecret string,
 ) (*coredata.OAuth2Client, error) {
-	client, err := s.resolveClient(ctx, nil, clientIDRaw, "")
+	client, err := s.resolveClient(ctx, nil, clientIDRaw)
 	if err != nil {
 		return nil, err
 	}

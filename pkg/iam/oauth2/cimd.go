@@ -33,7 +33,7 @@ import (
 	"go.probo.inc/probo/pkg/cachecontrol"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
-	"go.probo.inc/probo/pkg/net"
+	"go.probo.inc/probo/pkg/netx"
 )
 
 const (
@@ -239,7 +239,7 @@ func validateCIMDRedirectURI(redirectURI string) error {
 	switch parsed.Scheme {
 	case "https":
 	case "http":
-		if !net.IsLoopback(parsed.Hostname()) {
+		if !netx.IsLoopback(parsed.Hostname()) {
 			return NewError(
 				ErrInvalidClient,
 				WithDescription("client metadata document contains invalid redirect_uri"),
@@ -253,47 +253,6 @@ func validateCIMDRedirectURI(redirectURI string) error {
 	}
 
 	return nil
-}
-
-func cimdRedirectURIAllowed(doc *ClientMetadataDocument, redirectURI string) bool {
-	for _, allowed := range doc.RedirectURIs {
-		if redirectURI == allowed {
-			return true
-		}
-
-		if cimdLoopbackRedirectMatches(allowed, redirectURI) {
-			return true
-		}
-	}
-
-	return false
-}
-
-func cimdLoopbackRedirectMatches(registered, requested string) bool {
-	registeredURL, err := url.Parse(registered)
-	if err != nil {
-		return false
-	}
-
-	requestedURL, err := url.Parse(requested)
-	if err != nil {
-		return false
-	}
-
-	if registeredURL.Scheme != requestedURL.Scheme {
-		return false
-	}
-
-	if !net.IsLoopback(registeredURL.Hostname()) || !net.IsLoopback(requestedURL.Hostname()) {
-		return false
-	}
-
-	if registeredURL.Hostname() != requestedURL.Hostname() {
-		return false
-	}
-
-	return registeredURL.Path == requestedURL.Path &&
-		registeredURL.RawQuery == requestedURL.RawQuery
 }
 
 func (f *cimdFetcher) loadCache(clientIDURL string) (*ClientMetadataDocument, bool) {
@@ -338,7 +297,6 @@ func (s *Service) resolveClient(
 	ctx context.Context,
 	tx pg.Tx,
 	clientIDRaw string,
-	redirectURI string,
 ) (*coredata.OAuth2Client, error) {
 	if clientID, err := gid.ParseGID(clientIDRaw); err == nil {
 		if tx != nil {
@@ -371,10 +329,6 @@ func (s *Service) resolveClient(
 	doc, err := s.cimd.fetch(ctx, clientIDRaw)
 	if err != nil {
 		return nil, err
-	}
-
-	if redirectURI != "" && !cimdRedirectURIAllowed(doc, redirectURI) {
-		return nil, ErrInvalidRedirectURI
 	}
 
 	client, err := s.upsertCIMDClient(ctx, tx, clientIDRaw, doc)

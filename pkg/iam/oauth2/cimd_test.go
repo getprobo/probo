@@ -141,30 +141,6 @@ func TestValidateClientMetadataDocument(t *testing.T) {
 	)
 }
 
-func TestCIMDRedirectURIAllowed(t *testing.T) {
-	t.Parallel()
-
-	doc := &ClientMetadataDocument{
-		RedirectURIs: []string{
-			"https://chatgpt.com/connector/oauth/callback",
-			"http://127.0.0.1:53682/callback",
-		},
-	}
-
-	assert.True(
-		t,
-		cimdRedirectURIAllowed(doc, "https://chatgpt.com/connector/oauth/callback"),
-	)
-	assert.True(
-		t,
-		cimdRedirectURIAllowed(doc, "http://127.0.0.1:8080/callback"),
-	)
-	assert.False(
-		t,
-		cimdRedirectURIAllowed(doc, "https://evil.example/callback"),
-	)
-}
-
 func TestCIMDFetcherFetch(t *testing.T) {
 	t.Parallel()
 
