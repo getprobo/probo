@@ -40,6 +40,7 @@ func main() {
 	}
 
 	var configFormat bootstrap.Format
+
 	switch *format {
 	case "yaml":
 		configFormat = bootstrap.FormatYAML
