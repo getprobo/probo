@@ -370,8 +370,17 @@ func (s *Service) CloseCampaign(
 			}
 
 			entries := coredata.AccessReviewEntries{}
+			filter := &coredata.AccessReviewEntryFilter{
+				Decision: new(coredata.AccessReviewEntryDecisionPending),
+			}
 
-			pendingCount, err := entries.CountPendingByCampaignID(ctx, conn, scope, campaignID)
+			pendingCount, err := entries.CountByCampaignID(
+				ctx,
+				conn,
+				scope,
+				campaignID,
+				filter,
+			)
 			if err != nil {
 				return fmt.Errorf("cannot count pending entries: %w", err)
 			}
