@@ -4,6 +4,16 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+## [0.198.0] - 2026-06-30
+
+### Added
+
+- `document.getLatestPublishedVersionId` operation to retrieve the ID of the latest published version of a document
+
+### Fixed
+
+- `organization.getMany` failing when the organization has pending user invitations
+
 ## [0.197.0] - 2026-06-22
 
 ### Added
