@@ -21,6 +21,7 @@ import * as deleteOp from './delete.operation';
 import * as archiveOp from './archive.operation';
 import * as unarchiveOp from './unarchive.operation';
 import * as getVersionOp from './getVersion.operation';
+import * as getLatestPublishedVersionIdOp from './getLatestPublishedVersionId.operation';
 import * as getAllVersionsOp from './getAllVersions.operation';
 import * as createDraftVersionOp from './createDraftVersion.operation';
 import * as updateVersionOp from './updateVersion.operation';
@@ -101,6 +102,12 @@ export const description: INodeProperties[] = [
 				value: 'getApprovalQuorum',
 				description: 'Get an approval quorum',
 				action: 'Get an approval quorum',
+			},
+			{
+				name: 'Get Latest Published Version ID',
+				value: 'getLatestPublishedVersionId',
+				description: 'Get the latest published document version ID',
+				action: 'Get the latest published document version ID',
 			},
 			{
 				name: 'Get Many',
@@ -191,6 +198,7 @@ export const description: INodeProperties[] = [
 	...archiveOp.description,
 	...unarchiveOp.description,
 	...getVersionOp.description,
+	...getLatestPublishedVersionIdOp.description,
 	...getAllVersionsOp.description,
 	...createDraftVersionOp.description,
 	...updateVersionOp.description,
@@ -216,6 +224,7 @@ export {
 	archiveOp as archive,
 	unarchiveOp as unarchive,
 	getVersionOp as getVersion,
+	getLatestPublishedVersionIdOp as getLatestPublishedVersionId,
 	getAllVersionsOp as getAllVersions,
 	createDraftVersionOp as createDraftVersion,
 	updateVersionOp as updateVersion,
