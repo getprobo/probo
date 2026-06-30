@@ -4,6 +4,12 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.198.0] - 2026-06-30
+
+### Removed
+
+- Access review campaigns no longer expose a framework-controls field
+
 ## [0.197.1] - 2026-06-25
 
 ### Fixed
