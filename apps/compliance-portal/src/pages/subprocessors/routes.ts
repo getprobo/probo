@@ -12,13 +12,15 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { useTranslation } from "react-i18next";
+import { lazy } from "@probo/react-lazy";
+import type { AppRoute } from "@probo/routes";
 
-import { PageHeader } from "#/components/PageHeader/PageHeader";
+import { SubprocessorsPageSkeleton } from "./SubprocessorsPageSkeleton";
 
-// Toolbar (category/region filters, search, Download CSV) and the subprocessor
-// count are deferred until the v2 Select/TextField components exist.
-export default function SubprocessorsPage() {
-  const { t } = useTranslation();
-  return <PageHeader title={t("subprocessors.title")} />;
-}
+export const subprocessorRoutes = [
+  {
+    path: "subprocessors",
+    Fallback: SubprocessorsPageSkeleton,
+    Component: lazy(() => import("./SubprocessorsPageLoader")),
+  },
+] satisfies AppRoute[];

@@ -1,0 +1,101 @@
+{
+  "title": "Sous-traitants",
+  "empty": {
+    "title": "Aucun sous-traitant répertorié.",
+    "description": "Ce centre de confiance n'a pas encore publié de sous-traitants."
+  },
+  "regions": {
+    "global": "International",
+    "eu": "Union européenne"
+  },
+  "categories": {
+    "ANALYTICS": {
+      "label": "Analytique",
+      "description": "Analyse d'usage et télémétrie produit."
+    },
+    "CLOUD_MONITORING": {
+      "label": "Supervision cloud",
+      "description": "Observabilité, journalisation et supervision."
+    },
+    "CLOUD_PROVIDER": {
+      "label": "Fournisseur cloud",
+      "description": "Hébergement, calcul, stockage et réseau cloud."
+    },
+    "COLLABORATION": {
+      "label": "Collaboration",
+      "description": "Communication, planification et travail d'équipe."
+    },
+    "CUSTOMER_SUPPORT": {
+      "label": "Support client",
+      "description": "Assistance, tickets et messagerie client."
+    },
+    "DATA_STORAGE_AND_PROCESSING": {
+      "label": "Stockage et traitement des données",
+      "description": "Bases de données, entrepôts et traitements."
+    },
+    "DOCUMENT_MANAGEMENT": {
+      "label": "Gestion documentaire",
+      "description": "Stockage, signature et e-signature de documents."
+    },
+    "EMPLOYEE_MANAGEMENT": {
+      "label": "Gestion des employés",
+      "description": "RH, paie et opérations RH."
+    },
+    "ENGINEERING": {
+      "label": "Ingénierie",
+      "description": "Outils et plateformes d'ingénierie."
+    },
+    "FINANCE": {
+      "label": "Finance",
+      "description": "Facturation, paiements et comptabilité."
+    },
+    "IDENTITY_PROVIDER": {
+      "label": "Fournisseur d'identité",
+      "description": "Authentification, SSO et gestion des identités."
+    },
+    "IT": {
+      "label": "Informatique",
+      "description": "Administration informatique et gestion des appareils."
+    },
+    "MARKETING": {
+      "label": "Marketing",
+      "description": "Marketing, CRM et engagement de l'audience."
+    },
+    "OFFICE_OPERATIONS": {
+      "label": "Opérations de bureau",
+      "description": "Opérations et gestion des bureaux."
+    },
+    "OTHER": {
+      "label": "Autre",
+      "description": "Autres services de support."
+    },
+    "PASSWORD_MANAGEMENT": {
+      "label": "Gestion des mots de passe",
+      "description": "Gestion des identifiants et des secrets."
+    },
+    "PRODUCT_AND_DESIGN": {
+      "label": "Produit et design",
+      "description": "Outils de produit et de design."
+    },
+    "PROFESSIONAL_SERVICES": {
+      "label": "Services professionnels",
+      "description": "Conseil et services professionnels."
+    },
+    "RECRUITING": {
+      "label": "Recrutement",
+      "description": "Recrutement, sourcing et suivi des candidatures."
+    },
+    "SALES": {
+      "label": "Ventes",
+      "description": "Aide à la vente et CRM."
+    },
+    "SECURITY": {
+      "label": "Sécurité",
+      "description": "Sécurité, supervision et accès sécurisé."
+    },
+    "VERSION_CONTROL": {
+      "label": "Gestion de versions",
+      "description": "Gestion de sources et hébergement de code."
+    }
+  }
+}

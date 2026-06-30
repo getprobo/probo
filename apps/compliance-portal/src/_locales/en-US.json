@@ -27,9 +27,6 @@
   "documents": {
     "title": "Documents"
   },
-  "subprocessors": {
-    "title": "Subprocessors"
-  },
   "updates": {
     "title": "Updates",
     "subscribe": "Subscribe to updates"

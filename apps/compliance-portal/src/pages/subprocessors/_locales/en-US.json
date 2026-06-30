@@ -1,0 +1,101 @@
+{
+  "title": "Subprocessors",
+  "empty": {
+    "title": "No subprocessors listed.",
+    "description": "This trust center has not published any subprocessors yet."
+  },
+  "regions": {
+    "global": "Global",
+    "eu": "European Union"
+  },
+  "categories": {
+    "ANALYTICS": {
+      "label": "Analytics",
+      "description": "Usage analytics and product telemetry."
+    },
+    "CLOUD_MONITORING": {
+      "label": "Cloud Monitoring",
+      "description": "Observability, logging, and uptime monitoring."
+    },
+    "CLOUD_PROVIDER": {
+      "label": "Cloud Provider",
+      "description": "Cloud hosting, compute, storage, and networking."
+    },
+    "COLLABORATION": {
+      "label": "Collaboration",
+      "description": "Communication, scheduling, and teamwork tools."
+    },
+    "CUSTOMER_SUPPORT": {
+      "label": "Customer Support",
+      "description": "Help desk, ticketing, and customer messaging."
+    },
+    "DATA_STORAGE_AND_PROCESSING": {
+      "label": "Data Storage and Processing",
+      "description": "Databases, data warehouses, and processing pipelines."
+    },
+    "DOCUMENT_MANAGEMENT": {
+      "label": "Document Management",
+      "description": "Document storage, signing, and e-signature."
+    },
+    "EMPLOYEE_MANAGEMENT": {
+      "label": "Employee Management",
+      "description": "HR, payroll, and people operations."
+    },
+    "ENGINEERING": {
+      "label": "Engineering",
+      "description": "Developer tooling and engineering platforms."
+    },
+    "FINANCE": {
+      "label": "Finance",
+      "description": "Billing, payments, and accounting."
+    },
+    "IDENTITY_PROVIDER": {
+      "label": "Identity Provider",
+      "description": "Authentication, SSO, and identity management."
+    },
+    "IT": {
+      "label": "IT",
+      "description": "IT administration and device management."
+    },
+    "MARKETING": {
+      "label": "Marketing",
+      "description": "Marketing, CRM, and audience engagement."
+    },
+    "OFFICE_OPERATIONS": {
+      "label": "Office Operations",
+      "description": "Workplace and office operations."
+    },
+    "OTHER": {
+      "label": "Other",
+      "description": "Other supporting services."
+    },
+    "PASSWORD_MANAGEMENT": {
+      "label": "Password Management",
+      "description": "Credential and secret management."
+    },
+    "PRODUCT_AND_DESIGN": {
+      "label": "Product and Design",
+      "description": "Product and design tooling."
+    },
+    "PROFESSIONAL_SERVICES": {
+      "label": "Professional Services",
+      "description": "Consulting and professional services."
+    },
+    "RECRUITING": {
+      "label": "Recruiting",
+      "description": "Hiring, sourcing, and applicant tracking."
+    },
+    "SALES": {
+      "label": "Sales",
+      "description": "Sales enablement and CRM."
+    },
+    "SECURITY": {
+      "label": "Security",
+      "description": "Security, monitoring, and secure access."
+    },
+    "VERSION_CONTROL": {
+      "label": "Version Control",
+      "description": "Source control and code hosting."
+    }
+  }
+}

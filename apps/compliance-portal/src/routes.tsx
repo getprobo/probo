@@ -19,6 +19,7 @@ import { createBrowserRouter } from "react-router";
 import { getPathPrefix } from "#/lib/http/pathPrefix";
 import { HomePageSkeleton } from "#/pages/HomePageSkeleton";
 import { MainLayoutSkeleton } from "#/pages/MainLayoutSkeleton";
+import { subprocessorRoutes } from "#/pages/subprocessors/routes";
 
 const routes = [
   {
@@ -35,10 +36,7 @@ const routes = [
         path: "documents",
         Component: lazy(() => import("#/pages/DocumentsPage")),
       },
-      {
-        path: "subprocessors",
-        Component: lazy(() => import("#/pages/SubprocessorsPage")),
-      },
+      ...subprocessorRoutes,
       {
         path: "updates",
         Component: lazy(() => import("#/pages/UpdatesPage")),
