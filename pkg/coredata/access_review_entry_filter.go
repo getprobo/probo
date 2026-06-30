@@ -36,8 +36,8 @@ func (f *AccessReviewEntryFilter) SQLFragment() string {
 	return `
 (
 	CASE
-		WHEN @filter_decision::text IS NOT NULL THEN
-			decision = @filter_decision::text
+		WHEN @filter_decision::access_review_entry_decision IS NOT NULL THEN
+			decision = @filter_decision::access_review_entry_decision
 		ELSE TRUE
 	END
 	AND
@@ -48,8 +48,8 @@ func (f *AccessReviewEntryFilter) SQLFragment() string {
 	END
 	AND
 	CASE
-		WHEN @filter_incremental_tag::text IS NOT NULL THEN
-			incremental_tag = @filter_incremental_tag::text
+		WHEN @filter_incremental_tag::access_review_entry_incremental_tag IS NOT NULL THEN
+			incremental_tag = @filter_incremental_tag::access_review_entry_incremental_tag
 		ELSE TRUE
 	END
 	AND
@@ -66,8 +66,8 @@ func (f *AccessReviewEntryFilter) SQLFragment() string {
 	END
 	AND
 	CASE
-		WHEN @filter_auth_method::text IS NOT NULL THEN
-			auth_method = @filter_auth_method::text
+		WHEN @filter_auth_method::auth_method IS NOT NULL THEN
+			auth_method = @filter_auth_method::auth_method
 		ELSE TRUE
 	END
 	AND
