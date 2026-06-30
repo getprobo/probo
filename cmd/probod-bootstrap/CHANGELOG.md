@@ -4,6 +4,8 @@ All notable changes to `probod-bootstrap` will be documented in this file.
 
 ## Unreleased
 
+## [0.3.0] - 2026-06-30
+
 ### Added
 
 - AWS Systems Manager Parameter Store resolution: env values prefixed with `awsps://<parameter-name>` are fetched at startup using the standard AWS SDK credential chain and cached per run
