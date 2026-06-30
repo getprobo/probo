@@ -4,6 +4,21 @@ All notable changes to the Probo Helm chart will be documented in this file.
 
 ## Unreleased
 
+## [0.10.0] - 2026-06-30
+
+### Added
+
+- `probo.api.graphql.*` Helm values to tune GraphQL request limits (parser token cap, complexity limit, query cache size) for all three endpoints
+
+### Fixed
+
+- GraphQL endpoint is now protected against alias-flooding DoS (GHSA-prh2-g8pv-m7p9)
+
+### Changed
+
+- Default `appVersion` updated to `probod v0.222.0`
+- Bootstrap resolver now supports AWS Systems Manager Parameter Store (`awsps://` prefix)
+
 ## [0.9.1] - 2026-06-25
 
 ### Changed
