@@ -12,19 +12,33 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import mermaid from "mermaid";
 import { useEffect, useId, useState } from "react";
+
+import { mermaidRenderErrorToast, renderMermaidDiagram } from "../../lib/mermaid";
+import { useToast } from "../Toasts/Toasts";
 
 type Props = {
   chart: string;
 };
 
+type MermaidRenderState = {
+  source: string;
+  svg: string | null;
+  hasError: boolean;
+};
+
 export function MermaidDiagram({ chart }: Props) {
   const id = useId().replace(/:/g, "");
-  const [svg, setSvg] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [renderState, setRenderState] = useState<MermaidRenderState>({
+    source: "",
+    svg: null,
+    hasError: false,
+  });
+  const { toast } = useToast();
 
   const source = (chart ?? "").trim();
+  const svg = renderState.source === source ? renderState.svg : null;
+  const hasError = renderState.source === source && renderState.hasError;
 
   useEffect(() => {
     if (!source) {
@@ -33,28 +47,33 @@ export function MermaidDiagram({ chart }: Props) {
 
     let cancelled = false;
 
-    mermaid.initialize({ startOnLoad: false, theme: "neutral" });
-
-    mermaid
-      .render(`mermaid-${id}`, source)
+    renderMermaidDiagram(`mermaid-${id}`, source)
       .then((result) => {
         if (!cancelled) {
-          setSvg(result.svg);
-          setError(null);
+          setRenderState({
+            source,
+            svg: result.svg,
+            hasError: false,
+          });
         }
       })
-      .catch((err: unknown) => {
+      .catch(() => {
         if (!cancelled) {
-          setError(err instanceof Error ? err.message : String(err));
+          setRenderState({
+            source,
+            svg: null,
+            hasError: true,
+          });
+          toast(mermaidRenderErrorToast);
         }
       });
 
     return () => {
       cancelled = true;
     };
-  }, [source, id]);
+  }, [source, id, toast]);
 
-  if (error) {
+  if (hasError) {
     return (
       <pre className="border border-border-solid rounded p-4 bg-transparent font-mono text-sm overflow-x-auto text-inherit">
         <code>{chart}</code>

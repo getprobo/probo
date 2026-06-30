@@ -5,43 +5,64 @@
 import { CodeIcon, EyeIcon } from "@phosphor-icons/react";
 import type { ReactNodeViewProps } from "@tiptap/react";
 import { NodeViewContent, NodeViewWrapper } from "@tiptap/react";
-import mermaid from "mermaid";
 import { useEffect, useId, useState } from "react";
+
+import { useToast } from "../Atoms/Toasts/Toasts";
+import { mermaidRenderErrorToast, renderMermaidDiagram } from "../lib/mermaid";
 
 type MermaidMode = "code" | "preview";
 
+type MermaidRenderState = {
+  source: string;
+  svg: string | null;
+  hasError: boolean;
+};
+
 function MermaidPreview({ chart }: { chart: string }) {
   const id = useId().replace(/:/g, "");
-  const [svg, setSvg] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [renderState, setRenderState] = useState<MermaidRenderState>({
+    source: "",
+    svg: null,
+    hasError: false,
+  });
+  const { toast } = useToast();
 
   const source = chart.trim();
+  const svg = renderState.source === source ? renderState.svg : null;
+  const hasError = renderState.source === source && renderState.hasError;
 
   useEffect(() => {
-    if (source.length === 0) return;
+    if (source.length === 0) {
+      return;
+    }
 
     let cancelled = false;
 
-    mermaid.initialize({ startOnLoad: false, theme: "neutral" });
-
-    mermaid
-      .render(`mermaid-editor-${id}`, source)
+    renderMermaidDiagram(`mermaid-editor-${id}`, source)
       .then((result) => {
         if (!cancelled) {
-          setSvg(result.svg);
-          setError(null);
+          setRenderState({
+            source,
+            svg: result.svg,
+            hasError: false,
+          });
         }
       })
-      .catch((err: unknown) => {
+      .catch(() => {
         if (!cancelled) {
-          setError(err instanceof Error ? err.message : String(err));
+          setRenderState({
+            source,
+            svg: null,
+            hasError: true,
+          });
+          toast(mermaidRenderErrorToast);
         }
       });
 
     return () => {
       cancelled = true;
     };
-  }, [source, id]);
+  }, [source, id, toast]);
 
   if (source.length === 0) {
     return (
@@ -51,10 +72,10 @@ function MermaidPreview({ chart }: { chart: string }) {
     );
   }
 
-  if (error) {
+  if (hasError) {
     return (
       <div className="mermaid-error">
-        {error}
+        Unable to render diagram. Check the syntax and try again.
       </div>
     );
   }
