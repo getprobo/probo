@@ -736,7 +736,6 @@ func (r *mutationResolver) CreateAccessReviewCampaign(ctx context.Context, input
 			OrganizationID:        input.OrganizationID,
 			Name:                  input.Name,
 			Description:           description,
-			FrameworkControls:     input.FrameworkControls,
 			AccessReviewSourceIDs: input.AccessReviewSourceIds,
 		},
 	)
@@ -762,10 +761,9 @@ func (r *mutationResolver) UpdateAccessReviewCampaign(ctx context.Context, input
 		ctx,
 		scope,
 		accessreview.UpdateAccessReviewCampaignRequest{
-			CampaignID:        input.AccessReviewCampaignID,
-			Name:              gqlutils.UnwrapOmittable(input.Name),
-			Description:       gqlutils.UnwrapOmittable(input.Description),
-			FrameworkControls: gqlutils.UnwrapOmittable(input.FrameworkControls),
+			CampaignID:  input.AccessReviewCampaignID,
+			Name:        gqlutils.UnwrapOmittable(input.Name),
+			Description: gqlutils.UnwrapOmittable(input.Description),
 		},
 	)
 	if err != nil {

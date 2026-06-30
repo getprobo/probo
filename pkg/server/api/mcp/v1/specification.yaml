@@ -7644,11 +7644,6 @@ components:
             - "null"
           format: date-time
           description: Campaign completion time
-        framework_controls:
-          type: array
-          items:
-            type: string
-          description: Framework controls
         created_at:
           type: string
           format: date-time
@@ -8187,11 +8182,6 @@ components:
         description:
           type: string
           description: Campaign description
-        framework_controls:
-          type: array
-          items:
-            type: string
-          description: Framework control references
         access_review_source_ids:
           type: array
           items:
@@ -8220,15 +8210,6 @@ components:
         description:
           type: string
           description: New campaign description
-        framework_controls:
-          type:
-            - array
-            - "null"
-          items:
-            type: string
-          go.probo.inc/mcpgen/omittable: true
-          description: Framework control references (set to null to clear)
-
     UpdateAccessReviewCampaignMCPOutput:
       type: object
       required:

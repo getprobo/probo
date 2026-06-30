@@ -36,14 +36,13 @@ func (s *Service) CreateCampaign(
 
 	now := time.Now()
 	campaign := &coredata.AccessReviewCampaign{
-		ID:                gid.New(scope.GetTenantID(), coredata.AccessReviewCampaignEntityType),
-		OrganizationID:    req.OrganizationID,
-		Name:              req.Name,
-		Description:       req.Description,
-		Status:            coredata.AccessReviewCampaignStatusDraft,
-		FrameworkControls: req.FrameworkControls,
-		CreatedAt:         now,
-		UpdatedAt:         now,
+		ID:             gid.New(scope.GetTenantID(), coredata.AccessReviewCampaignEntityType),
+		OrganizationID: req.OrganizationID,
+		Name:           req.Name,
+		Description:    req.Description,
+		Status:         coredata.AccessReviewCampaignStatusDraft,
+		CreatedAt:      now,
+		UpdatedAt:      now,
 	}
 
 	err := s.pg.WithTx(
@@ -158,10 +157,6 @@ func (s *Service) UpdateCampaign(
 
 			if req.Description != nil && *req.Description != nil {
 				campaign.Description = **req.Description
-			}
-
-			if req.FrameworkControls != nil {
-				campaign.FrameworkControls = *req.FrameworkControls
 			}
 
 			campaign.UpdatedAt = time.Now()

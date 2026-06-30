@@ -27,15 +27,13 @@ type (
 		OrganizationID        gid.GID
 		Name                  string
 		Description           string
-		FrameworkControls     []string
 		AccessReviewSourceIDs []gid.GID
 	}
 
 	UpdateAccessReviewCampaignRequest struct {
-		CampaignID        gid.GID
-		Name              **string
-		Description       **string
-		FrameworkControls *[]string
+		CampaignID  gid.GID
+		Name        **string
+		Description **string
 	}
 
 	AddCampaignSourceRequest struct {

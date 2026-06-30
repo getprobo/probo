@@ -54,16 +54,15 @@ func NewListAccessReviewSourcesOutput(
 
 func NewAccessReviewCampaign(c *coredata.AccessReviewCampaign) *AccessReviewCampaign {
 	return &AccessReviewCampaign{
-		ID:                c.ID,
-		OrganizationID:    c.OrganizationID,
-		Name:              c.Name,
-		Description:       &c.Description,
-		Status:            c.Status,
-		StartedAt:         c.StartedAt,
-		CompletedAt:       c.CompletedAt,
-		FrameworkControls: c.FrameworkControls,
-		CreatedAt:         c.CreatedAt,
-		UpdatedAt:         c.UpdatedAt,
+		ID:             c.ID,
+		OrganizationID: c.OrganizationID,
+		Name:           c.Name,
+		Description:    &c.Description,
+		Status:         c.Status,
+		StartedAt:      c.StartedAt,
+		CompletedAt:    c.CompletedAt,
+		CreatedAt:      c.CreatedAt,
+		UpdatedAt:      c.UpdatedAt,
 	}
 }
 

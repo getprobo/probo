@@ -349,50 +349,6 @@ func TestAccessReviewCampaign_Create(t *testing.T) {
 		assert.Len(t, node.CampaignSources, 2)
 	})
 
-	t.Run("with framework controls", func(t *testing.T) {
-		t.Parallel()
-
-		const query = `
-			mutation($input: CreateAccessReviewCampaignInput!) {
-				createAccessReviewCampaign(input: $input) {
-					accessReviewCampaignEdge {
-						node {
-							id
-							name
-							frameworkControls
-						}
-					}
-				}
-			}
-		`
-
-		var result struct {
-			CreateAccessReviewCampaign struct {
-				AccessReviewCampaignEdge struct {
-					Node struct {
-						ID                string   `json:"id"`
-						Name              string   `json:"name"`
-						FrameworkControls []string `json:"frameworkControls"`
-					} `json:"node"`
-				} `json:"accessReviewCampaignEdge"`
-			} `json:"createAccessReviewCampaign"`
-		}
-
-		err := owner.Execute(query, map[string]any{
-			"input": map[string]any{
-				"organizationId":    orgID,
-				"name":              "SOC2 Campaign",
-				"frameworkControls": []string{"CC6.1", "CC6.2"},
-			},
-		}, &result)
-		require.NoError(t, err)
-
-		node := result.CreateAccessReviewCampaign.AccessReviewCampaignEdge.Node
-		assert.NotEmpty(t, node.ID)
-		assert.Equal(t, "SOC2 Campaign", node.Name)
-		assert.Contains(t, node.FrameworkControls, "CC6.1")
-		assert.Contains(t, node.FrameworkControls, "CC6.2")
-	})
 }
 
 func TestAccessReviewCampaign_Update(t *testing.T) {

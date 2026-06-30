@@ -215,14 +215,13 @@ func NewAccessReviewCampaign(c *coredata.AccessReviewCampaign) *AccessReviewCamp
 		Organization: &Organization{
 			ID: c.OrganizationID,
 		},
-		Name:              c.Name,
-		Description:       c.Description,
-		Status:            c.Status,
-		StartedAt:         c.StartedAt,
-		CompletedAt:       c.CompletedAt,
-		FrameworkControls: c.FrameworkControls,
-		CreatedAt:         c.CreatedAt,
-		UpdatedAt:         c.UpdatedAt,
+		Name:        c.Name,
+		Description: c.Description,
+		Status:      c.Status,
+		StartedAt:   c.StartedAt,
+		CompletedAt: c.CompletedAt,
+		CreatedAt:   c.CreatedAt,
+		UpdatedAt:   c.UpdatedAt,
 	}
 
 	return campaign

@@ -30,16 +30,15 @@ import (
 
 type (
 	AccessReviewCampaign struct {
-		ID                gid.GID                    `db:"id"`
-		OrganizationID    gid.GID                    `db:"organization_id"`
-		Name              string                     `db:"name"`
-		Description       string                     `db:"description"`
-		Status            AccessReviewCampaignStatus `db:"status"`
-		StartedAt         *time.Time                 `db:"started_at"`
-		CompletedAt       *time.Time                 `db:"completed_at"`
-		FrameworkControls []string                   `db:"framework_controls"`
-		CreatedAt         time.Time                  `db:"created_at"`
-		UpdatedAt         time.Time                  `db:"updated_at"`
+		ID             gid.GID                    `db:"id"`
+		OrganizationID gid.GID                    `db:"organization_id"`
+		Name           string                     `db:"name"`
+		Description    string                     `db:"description"`
+		Status         AccessReviewCampaignStatus `db:"status"`
+		StartedAt      *time.Time                 `db:"started_at"`
+		CompletedAt    *time.Time                 `db:"completed_at"`
+		CreatedAt      time.Time                  `db:"created_at"`
+		UpdatedAt      time.Time                  `db:"updated_at"`
 	}
 
 	AccessReviewCampaigns []*AccessReviewCampaign
@@ -136,7 +135,6 @@ SELECT
     status,
     started_at,
     completed_at,
-    framework_controls,
     created_at,
     updated_at
 FROM
@@ -186,7 +184,6 @@ INSERT INTO
         status,
         started_at,
         completed_at,
-        framework_controls,
         created_at,
         updated_at
     )
@@ -199,24 +196,22 @@ VALUES (
     @status,
     @started_at,
     @completed_at,
-    @framework_controls,
     @created_at,
     @updated_at
 );
 `
 
 	args := pgx.StrictNamedArgs{
-		"id":                 c.ID,
-		"tenant_id":          scope.GetTenantID(),
-		"organization_id":    c.OrganizationID,
-		"name":               c.Name,
-		"description":        c.Description,
-		"status":             c.Status,
-		"started_at":         c.StartedAt,
-		"completed_at":       c.CompletedAt,
-		"framework_controls": c.FrameworkControls,
-		"created_at":         c.CreatedAt,
-		"updated_at":         c.UpdatedAt,
+		"id":              c.ID,
+		"tenant_id":       scope.GetTenantID(),
+		"organization_id": c.OrganizationID,
+		"name":            c.Name,
+		"description":     c.Description,
+		"status":          c.Status,
+		"started_at":      c.StartedAt,
+		"completed_at":    c.CompletedAt,
+		"created_at":      c.CreatedAt,
+		"updated_at":      c.UpdatedAt,
 	}
 
 	_, err := conn.Exec(ctx, q, args)
@@ -240,7 +235,6 @@ SET
     status = @status,
     started_at = @started_at,
     completed_at = @completed_at,
-    framework_controls = @framework_controls,
     updated_at = @updated_at
 WHERE
     %s
@@ -249,14 +243,13 @@ WHERE
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"id":                 c.ID,
-		"name":               c.Name,
-		"description":        c.Description,
-		"status":             c.Status,
-		"started_at":         c.StartedAt,
-		"completed_at":       c.CompletedAt,
-		"framework_controls": c.FrameworkControls,
-		"updated_at":         c.UpdatedAt,
+		"id":           c.ID,
+		"name":         c.Name,
+		"description":  c.Description,
+		"status":       c.Status,
+		"started_at":   c.StartedAt,
+		"completed_at": c.CompletedAt,
+		"updated_at":   c.UpdatedAt,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
@@ -310,7 +303,6 @@ SELECT
     status,
     started_at,
     completed_at,
-    framework_controls,
     created_at,
     updated_at
 FROM
@@ -382,7 +374,6 @@ SELECT
     status,
     started_at,
     completed_at,
-    framework_controls,
     created_at,
     updated_at
 FROM

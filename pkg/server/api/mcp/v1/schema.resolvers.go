@@ -3752,7 +3752,6 @@ func (r *Resolver) CreateAccessReviewCampaignTool(ctx context.Context, req *mcp.
 		OrganizationID:        input.OrganizationID,
 		Name:                  input.Name,
 		Description:           description,
-		FrameworkControls:     input.FrameworkControls,
 		AccessReviewSourceIDs: input.AccessReviewSourceIds,
 	})
 	if err != nil {
@@ -3782,22 +3781,6 @@ func (r *Resolver) UpdateAccessReviewCampaignTool(ctx context.Context, req *mcp.
 
 	if input.Description != nil {
 		updateReq.Description = &input.Description
-	}
-
-	if rawControls := UnwrapOmittable(input.FrameworkControls); rawControls != nil {
-		if *rawControls != nil {
-			controls := make([]string, 0, len(**rawControls))
-			for _, v := range **rawControls {
-				if s, ok := v.(string); ok {
-					controls = append(controls, s)
-				}
-			}
-
-			updateReq.FrameworkControls = &controls
-		} else {
-			empty := []string{}
-			updateReq.FrameworkControls = &empty
-		}
 	}
 
 	campaign, err := r.accessReview.UpdateCampaign(ctx, scope, updateReq)

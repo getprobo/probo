@@ -349,7 +349,6 @@ type AccessReviewCampaign implements Node {
     status: AccessReviewCampaignStatus!
     startedAt: Datetime
     completedAt: Datetime
-    frameworkControls: [String!]
     createdAt: Datetime!
     updatedAt: Datetime!
 
@@ -578,7 +577,6 @@ input CreateAccessReviewCampaignInput {
     organizationId: ID!
     name: String!
     description: String
-    frameworkControls: [String!]
     accessReviewSourceIds: [ID!]
 }
 
@@ -590,7 +588,6 @@ input UpdateAccessReviewCampaignInput {
     accessReviewCampaignId: ID!
     name: String @goField(omittable: true)
     description: String @goField(omittable: true)
-    frameworkControls: [String!] @goField(omittable: true)
 }
 
 type UpdateAccessReviewCampaignPayload {

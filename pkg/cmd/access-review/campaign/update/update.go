@@ -47,10 +47,9 @@ type updateResponse struct {
 
 func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 	var (
-		flagName             string
-		flagDescription      string
-		flagFrameworkControl []string
-		flagOutput           *string
+		flagName        string
+		flagDescription string
+		flagOutput      *string
 	)
 
 	cmd := &cobra.Command{
@@ -92,10 +91,6 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 				input["description"] = flagDescription
 			}
 
-			if cmd.Flags().Changed("framework-control") {
-				input["frameworkControls"] = flagFrameworkControl
-			}
-
 			data, err := client.Do(
 				updateMutation,
 				map[string]any{"input": input},
@@ -125,12 +120,6 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 
 	cmd.Flags().StringVar(&flagName, "name", "", "Campaign name")
 	cmd.Flags().StringVar(&flagDescription, "description", "", "Campaign description")
-	cmd.Flags().StringSliceVar(
-		&flagFrameworkControl,
-		"framework-control",
-		nil,
-		"Framework control IDs (can be repeated)",
-	)
 	flagOutput = cmdutil.AddOutputFlag(cmd)
 
 	return cmd
