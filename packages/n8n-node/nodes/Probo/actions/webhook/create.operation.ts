@@ -14,6 +14,7 @@
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
 import { proboApiRequest } from '../../GenericFunctions';
+import { WEBHOOK_EVENT_OPTIONS } from './events';
 
 export const description: INodeProperties[] = [
 	{
@@ -54,20 +55,7 @@ export const description: INodeProperties[] = [
 				operation: ['create'],
 			},
 		},
-		options: [
-			{ name: 'Meeting Created', value: 'MEETING_CREATED' },
-			{ name: 'Meeting Deleted', value: 'MEETING_DELETED' },
-			{ name: 'Meeting Updated', value: 'MEETING_UPDATED' },
-			{ name: 'Obligation Created', value: 'OBLIGATION_CREATED' },
-			{ name: 'Obligation Deleted', value: 'OBLIGATION_DELETED' },
-			{ name: 'Obligation Updated', value: 'OBLIGATION_UPDATED' },
-			{ name: 'Third Party Created', value: 'THIRD_PARTY_CREATED' },
-			{ name: 'Third Party Deleted', value: 'THIRD_PARTY_DELETED' },
-			{ name: 'Third Party Updated', value: 'THIRD_PARTY_UPDATED' },
-			{ name: 'User Created', value: 'USER_CREATED' },
-			{ name: 'User Deleted', value: 'USER_DELETED' },
-			{ name: 'User Updated', value: 'USER_UPDATED' },
-		],
+		options: WEBHOOK_EVENT_OPTIONS,
 		default: [],
 		description: 'The event types to subscribe to',
 		required: true,

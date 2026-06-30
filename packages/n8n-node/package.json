@@ -25,7 +25,8 @@
       "dist/credentials/ProboApi.credentials.js"
     ],
     "nodes": [
-      "dist/nodes/Probo/Probo.node.js"
+      "dist/nodes/Probo/Probo.node.js",
+      "dist/nodes/ProboTrigger/ProboTrigger.node.js"
     ]
   },
   "license": "MIT",

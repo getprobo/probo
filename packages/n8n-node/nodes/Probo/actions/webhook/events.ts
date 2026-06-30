@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Probo Inc <hello@probo.com>.
+// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,19 +12,16 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package shared
+import type { INodePropertyOptions } from 'n8n-workflow';
 
-// ValidEvents is the set of event types accepted by the webhook
-// create and update commands. Keep in sync with
-// pkg/coredata/webhook_event_type.go.
-var ValidEvents = []string{
-	"THIRD_PARTY_CREATED",
-	"THIRD_PARTY_UPDATED",
-	"THIRD_PARTY_DELETED",
-	"USER_CREATED",
-	"USER_UPDATED",
-	"USER_DELETED",
-	"OBLIGATION_CREATED",
-	"OBLIGATION_UPDATED",
-	"OBLIGATION_DELETED",
-}
+export const WEBHOOK_EVENT_OPTIONS: INodePropertyOptions[] = [
+	{ name: 'Obligation Created', value: 'OBLIGATION_CREATED' },
+	{ name: 'Obligation Deleted', value: 'OBLIGATION_DELETED' },
+	{ name: 'Obligation Updated', value: 'OBLIGATION_UPDATED' },
+	{ name: 'Third Party Created', value: 'THIRD_PARTY_CREATED' },
+	{ name: 'Third Party Deleted', value: 'THIRD_PARTY_DELETED' },
+	{ name: 'Third Party Updated', value: 'THIRD_PARTY_UPDATED' },
+	{ name: 'User Created', value: 'USER_CREATED' },
+	{ name: 'User Deleted', value: 'USER_DELETED' },
+	{ name: 'User Updated', value: 'USER_UPDATED' },
+];
