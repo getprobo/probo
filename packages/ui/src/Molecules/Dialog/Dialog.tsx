@@ -69,6 +69,8 @@ type Props = {
   closable?: boolean;
 };
 
+type DialogContentPrimitiveProps = ComponentProps<typeof Content>;
+
 export const useDialogRef = (): DialogRef => {
   return useRef(null);
 };
@@ -85,6 +87,7 @@ export function Dialog({
 }: Props) {
   const { overlay, content, header, title: titleClassname } = dialog();
   const [open, setOpen] = useState(!!defaultOpen);
+  const contentRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (ref) {
@@ -109,8 +112,24 @@ export function Dialog({
     }
   };
 
+  const preventDismissWhenPointerIsInsideContent: DialogContentPrimitiveProps["onPointerDownOutside"] = (event) => {
+    const originalEvent = event.detail.originalEvent;
+    const rect = contentRef.current?.getBoundingClientRect();
+    if (
+      rect
+      && originalEvent.clientX >= rect.left
+      && originalEvent.clientX <= rect.right
+      && originalEvent.clientY >= rect.top
+      && originalEvent.clientY <= rect.bottom
+    ) {
+      event.preventDefault();
+    }
+  };
+
   const contentProps = closable
-    ? {}
+    ? {
+        onPointerDownOutside: preventDismissWhenPointerIsInsideContent,
+      }
     : {
         onEscapeKeyDown: (e: Event) => e.preventDefault(),
         onPointerDownOutside: (e: Event) => e.preventDefault(),
@@ -123,8 +142,10 @@ export function Dialog({
       <Portal>
         <Overlay className={overlay()} />
         <Content
+          ref={contentRef}
           aria-describedby={undefined}
           className={content({ className })}
+          style={{ pointerEvents: "auto" }}
           {...contentProps}
         >
           {title
