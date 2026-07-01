@@ -18,25 +18,25 @@ import { graphql, useFragment } from "react-relay";
 
 import { externalHref, hostnameOf } from "#/lib/url/hostname";
 
-import type { OrganizationContactInfo_trustCenter$key } from "./__generated__/OrganizationContactInfo_trustCenter.graphql";
-import { organizationContactInfo } from "./variants";
+import type { CompliancePageContactInfo_trustCenter$key } from "./__generated__/CompliancePageContactInfo_trustCenter.graphql";
+import { compliancePageContactInfo } from "./variants";
 
-const organizationContactInfoFragment = graphql`
-  fragment OrganizationContactInfo_trustCenter on TrustCenter {
+const compliancePageContactInfoFragment = graphql`
+  fragment CompliancePageContactInfo_trustCenter on TrustCenter {
     websiteUrl
     email
     headquarterAddress
   }
 `;
 
-interface OrganizationContactInfoProps {
-  trustCenterKey: OrganizationContactInfo_trustCenter$key;
+interface CompliancePageContactInfoProps {
+  trustCenterKey: CompliancePageContactInfo_trustCenter$key;
 }
 
 // Compliance page contact details (website, email, HQ) rendered as an icon + label
 // row. Owns its fragment so it can be reused wherever the trust center is in scope.
-export function OrganizationContactInfo({ trustCenterKey }: OrganizationContactInfoProps) {
-  const trustCenter = useFragment(organizationContactInfoFragment, trustCenterKey);
+export function CompliancePageContactInfo({ trustCenterKey }: CompliancePageContactInfoProps) {
+  const trustCenter = useFragment(compliancePageContactInfoFragment, trustCenterKey);
 
   const hasWebsite = trustCenter.websiteUrl != null && trustCenter.websiteUrl !== "";
   const hasEmail = trustCenter.email != null && trustCenter.email !== "";
@@ -47,7 +47,7 @@ export function OrganizationContactInfo({ trustCenterKey }: OrganizationContactI
     return null;
   }
 
-  const { root, item, link } = organizationContactInfo();
+  const { root, item, link } = compliancePageContactInfo();
 
   return (
     <div className={root()}>

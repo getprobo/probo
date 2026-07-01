@@ -18,7 +18,7 @@ import { graphql, usePreloadedQuery } from "react-relay";
 
 import { ComplianceFrameworksSection } from "#/components/ComplianceFrameworks/ComplianceFrameworksSection";
 import { Hero } from "#/components/Hero/Hero";
-import { OrganizationContactInfo } from "#/components/Hero/OrganizationContactInfo";
+import { CompliancePageContactInfo } from "#/components/Hero/CompliancePageContactInfo";
 import { RecentUpdatesSection } from "#/components/RecentUpdates/RecentUpdatesSection";
 import { SecurityCommitmentsSection } from "#/components/SecurityCommitments/SecurityCommitmentsSection";
 import { TrustedBySection } from "#/components/TrustedBy/TrustedBySection";
@@ -31,7 +31,7 @@ export const homePageQuery = graphql`
       organization {
         name
       }
-      ...OrganizationContactInfo_trustCenter
+      ...CompliancePageContactInfo_trustCenter
       ...ComplianceFrameworksSection_trustCenter
       ...TrustedBySection_trustCenter
       ...RecentUpdatesSection_trustCenter
@@ -55,7 +55,7 @@ export function HomePage({ queryRef }: HomePageProps) {
         title={t("home.heroTitle", { name: organization.name })}
         description={t("home.heroDescription")}
       >
-        <OrganizationContactInfo trustCenterKey={currentTrustCenter} />
+        <CompliancePageContactInfo trustCenterKey={currentTrustCenter} />
       </Hero>
       <div className="flex w-full flex-col items-center px-8">
         <div className="flex w-full max-w-5xl flex-col">
