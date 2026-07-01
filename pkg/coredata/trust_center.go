@@ -45,6 +45,7 @@ type (
 		WebsiteURL                   *string              `db:"website_url"`
 		Email                        *string              `db:"email"`
 		HeadquarterAddress           *string              `db:"headquarter_address"`
+		CustomDomainID               *gid.GID             `db:"custom_domain_id"`
 		CreatedAt                    time.Time            `db:"created_at"`
 		UpdatedAt                    time.Time            `db:"updated_at"`
 	}
@@ -122,6 +123,7 @@ SELECT
 	website_url,
 	email,
 	headquarter_address,
+	custom_domain_id,
 	created_at,
 	updated_at
 FROM
@@ -178,6 +180,7 @@ SELECT
 	website_url,
 	email,
 	headquarter_address,
+	custom_domain_id,
 	created_at,
 	updated_at
 FROM
@@ -234,6 +237,7 @@ SELECT
 	website_url,
 	email,
 	headquarter_address,
+	custom_domain_id,
 	created_at,
 	updated_at
 FROM
@@ -290,6 +294,7 @@ SELECT
 	website_url,
 	email,
 	headquarter_address,
+	custom_domain_id,
 	created_at,
 	updated_at
 FROM
@@ -341,6 +346,7 @@ INSERT INTO trust_centers (
 	website_url,
 	email,
 	headquarter_address,
+	custom_domain_id,
 	created_at,
 	updated_at
 ) VALUES (
@@ -358,6 +364,7 @@ INSERT INTO trust_centers (
 	@website_url,
 	@email,
 	@headquarter_address,
+	@custom_domain_id,
 	@created_at,
 	@updated_at
 )
@@ -378,6 +385,7 @@ INSERT INTO trust_centers (
 		"website_url":                      tc.WebsiteURL,
 		"email":                            tc.Email,
 		"headquarter_address":              tc.HeadquarterAddress,
+		"custom_domain_id":                 tc.CustomDomainID,
 		"created_at":                       tc.CreatedAt,
 		"updated_at":                       tc.UpdatedAt,
 	}
@@ -414,6 +422,7 @@ SET
 	website_url = @website_url,
 	email = @email,
 	headquarter_address = @headquarter_address,
+	custom_domain_id = @custom_domain_id,
 	updated_at = @updated_at
 WHERE
 	%s
@@ -434,6 +443,7 @@ WHERE
 		"website_url":                      tc.WebsiteURL,
 		"email":                            tc.Email,
 		"headquarter_address":              tc.HeadquarterAddress,
+		"custom_domain_id":                 tc.CustomDomainID,
 		"updated_at":                       tc.UpdatedAt,
 	}
 	maps.Copy(args, scope.SQLArguments())
@@ -442,6 +452,63 @@ WHERE
 	if err != nil {
 		return fmt.Errorf("cannot update trust center: %w", err)
 	}
+
+	return nil
+}
+
+func (tc *TrustCenter) LoadByCustomDomainID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	customDomainID gid.GID,
+) error {
+	q := `
+SELECT
+	id,
+	organization_id,
+	tenant_id,
+	mailing_list_id,
+	logo_file_id,
+	dark_logo_file_id,
+	active,
+	slug,
+	search_engine_indexing,
+	non_disclosure_agreement_file_id,
+	description,
+	website_url,
+	email,
+	headquarter_address,
+	custom_domain_id,
+	created_at,
+	updated_at
+FROM
+	trust_centers
+WHERE
+	%s
+	AND custom_domain_id = @custom_domain_id
+LIMIT 1;
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"custom_domain_id": customDomainID}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query trust center by custom domain: %w", err)
+	}
+
+	trustCenter, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[TrustCenter])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+
+		return fmt.Errorf("cannot collect trust center: %w", err)
+	}
+
+	*tc = trustCenter
 
 	return nil
 }

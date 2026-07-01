@@ -36,15 +36,15 @@ type (
 	}
 
 	CreateCustomDomainRequest struct {
-		OrganizationID gid.GID
-		Domain         string
+		TrustCenterID gid.GID
+		Domain        string
 	}
 )
 
 func (ccdr *CreateCustomDomainRequest) Validate() error {
 	v := validator.New()
 
-	v.Check(ccdr.OrganizationID, "organization_id", validator.Required(), validator.GID(coredata.OrganizationEntityType))
+	v.Check(ccdr.TrustCenterID, "trust_center_id", validator.Required(), validator.GID(coredata.TrustCenterEntityType))
 	v.Check(ccdr.Domain, "domain", validator.Required(), validator.NotEmpty(), validator.Domain())
 
 	return v.Error()
@@ -63,21 +63,25 @@ func (s *CustomDomainService) CreateCustomDomain(
 	err := s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
+			var trustCenter coredata.TrustCenter
+			if err := trustCenter.LoadByID(ctx, tx, scope, req.TrustCenterID); err != nil {
+				return fmt.Errorf("cannot load trust center: %w", err)
+			}
+
+			if trustCenter.CustomDomainID != nil {
+				return fmt.Errorf("trust center already has a custom domain")
+			}
+
 			domain = coredata.NewCustomDomain(scope.GetTenantID(), req.Domain)
-			domain.OrganizationID = req.OrganizationID
+			domain.OrganizationID = trustCenter.OrganizationID
 
 			if err := domain.Insert(ctx, tx, scope, s.encryptionKey); err != nil {
 				return fmt.Errorf("cannot insert custom domain: %w", err)
 			}
 
-			var org coredata.Organization
-			if err := org.LoadByID(ctx, tx, scope, req.OrganizationID); err != nil {
-				return fmt.Errorf("cannot load organization: %w", err)
-			}
-
-			org.CustomDomainID = &domain.ID
-			if err := org.Update(ctx, scope, tx); err != nil {
-				return fmt.Errorf("cannot update organization: %w", err)
+			trustCenter.CustomDomainID = &domain.ID
+			if err := trustCenter.Update(ctx, tx, scope); err != nil {
+				return fmt.Errorf("cannot update trust center: %w", err)
 			}
 
 			return nil
@@ -92,22 +96,22 @@ func (s *CustomDomainService) CreateCustomDomain(
 
 func (s *CustomDomainService) DeleteCustomDomain(
 	ctx context.Context, scope coredata.Scoper,
-	organizationID gid.GID,
+	trustCenterID gid.GID,
 ) error {
 	return s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			var org coredata.Organization
-			if err := org.LoadByID(ctx, tx, scope, organizationID); err != nil {
-				return fmt.Errorf("cannot load organization: %w", err)
+			var trustCenter coredata.TrustCenter
+			if err := trustCenter.LoadByID(ctx, tx, scope, trustCenterID); err != nil {
+				return fmt.Errorf("cannot load trust center: %w", err)
 			}
 
-			if org.CustomDomainID == nil {
-				return fmt.Errorf("organization has no custom domain")
+			if trustCenter.CustomDomainID == nil {
+				return fmt.Errorf("trust center has no custom domain")
 			}
 
 			domain := &coredata.CustomDomain{}
-			if err := domain.LoadByID(ctx, tx, scope, *org.CustomDomainID); err != nil {
+			if err := domain.LoadByID(ctx, tx, scope, *trustCenter.CustomDomainID); err != nil {
 				return fmt.Errorf("cannot load domain: %w", err)
 			}
 
@@ -115,9 +119,9 @@ func (s *CustomDomainService) DeleteCustomDomain(
 				return fmt.Errorf("cannot delete domain: %w", err)
 			}
 
-			org.CustomDomainID = nil
-			if err := org.Update(ctx, scope, tx); err != nil {
-				return fmt.Errorf("cannot update organization: %w", err)
+			trustCenter.CustomDomainID = nil
+			if err := trustCenter.Update(ctx, tx, scope); err != nil {
+				return fmt.Errorf("cannot update trust center: %w", err)
 			}
 
 			return nil
@@ -125,26 +129,26 @@ func (s *CustomDomainService) DeleteCustomDomain(
 	)
 }
 
-func (s *CustomDomainService) GetOrganizationCustomDomain(
+func (s *CustomDomainService) GetTrustCenterCustomDomain(
 	ctx context.Context, scope coredata.Scoper,
-	organizationID gid.GID,
+	trustCenterID gid.GID,
 ) (*coredata.CustomDomain, error) {
 	var domain *coredata.CustomDomain
 
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			var org coredata.Organization
-			if err := org.LoadByID(ctx, conn, scope, organizationID); err != nil {
-				return fmt.Errorf("cannot load organization: %w", err)
+			var trustCenter coredata.TrustCenter
+			if err := trustCenter.LoadByID(ctx, conn, scope, trustCenterID); err != nil {
+				return fmt.Errorf("cannot load trust center: %w", err)
 			}
 
-			if org.CustomDomainID == nil {
+			if trustCenter.CustomDomainID == nil {
 				return nil
 			}
 
 			domain = &coredata.CustomDomain{}
-			if err := domain.LoadByID(ctx, conn, scope, *org.CustomDomainID); err != nil {
+			if err := domain.LoadByID(ctx, conn, scope, *trustCenter.CustomDomainID); err != nil {
 				return fmt.Errorf("cannot load custom domain: %w", err)
 			}
 

@@ -70,17 +70,17 @@ func (s OrganizationService) GetOrganizationCustomDomain(
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			var org coredata.Organization
-			if err := org.LoadByID(ctx, conn, scope, organizationID); err != nil {
-				return fmt.Errorf("cannot load organization: %w", err)
+			var trustCenter coredata.TrustCenter
+			if err := trustCenter.LoadByOrganizationID(ctx, conn, scope, organizationID); err != nil {
+				return fmt.Errorf("cannot load trust center: %w", err)
 			}
 
-			if org.CustomDomainID == nil {
+			if trustCenter.CustomDomainID == nil {
 				return nil
 			}
 
 			domain = &coredata.CustomDomain{}
-			if err := domain.LoadByID(ctx, conn, scope, *org.CustomDomainID); err != nil {
+			if err := domain.LoadByID(ctx, conn, scope, *trustCenter.CustomDomainID); err != nil {
 				return fmt.Errorf("cannot load custom domain: %w", err)
 			}
 

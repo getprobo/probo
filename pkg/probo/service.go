@@ -407,12 +407,12 @@ func (s *Service) LoadOrganizationByDomain(ctx context.Context, domain string) (
 				return fmt.Errorf("cannot load custom domain: %w", err)
 			}
 
-			var org coredata.Organization
-			if err := org.LoadByCustomDomainID(ctx, conn, coredata.NewNoScope(), customDomain.ID); err != nil {
-				return fmt.Errorf("cannot load organization: %w", err)
+			var trustCenter coredata.TrustCenter
+			if err := trustCenter.LoadByCustomDomainID(ctx, conn, coredata.NewNoScope(), customDomain.ID); err != nil {
+				return fmt.Errorf("cannot load trust center: %w", err)
 			}
 
-			organizationID = org.ID
+			organizationID = trustCenter.OrganizationID
 
 			return nil
 		},

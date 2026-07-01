@@ -9348,12 +9348,12 @@ components:
     CreateCustomDomainInput:
       type: object
       required:
-        - organization_id
+        - trust_center_id
         - domain
       properties:
-        organization_id:
+        trust_center_id:
           $ref: "#/components/schemas/GID"
-          description: Organization ID
+          description: Trust center ID
         domain:
           type: string
           description: Custom domain name
@@ -9369,11 +9369,11 @@ components:
     DeleteCustomDomainInput:
       type: object
       required:
-        - organization_id
+        - trust_center_id
       properties:
-        organization_id:
+        trust_center_id:
           $ref: "#/components/schemas/GID"
-          description: Organization ID
+          description: Trust center ID
 
     DeleteCustomDomainOutput:
       type: object

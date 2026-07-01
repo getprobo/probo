@@ -256,6 +256,7 @@ type TrustCenter implements Node
     websiteUrl: String
     email: String
     headquarterAddress: String
+    customDomain: CustomDomain @goField(forceResolver: true)
     createdAt: Datetime!
     updatedAt: Datetime!
     organization: Organization! @goField(forceResolver: true)
@@ -676,12 +677,12 @@ input DeleteTrustCenterFileInput {
 }
 
 input CreateCustomDomainInput {
-    organizationId: ID!
+    trustCenterId: ID!
     domain: String!
 }
 
 input DeleteCustomDomainInput {
-    organizationId: ID!
+    trustCenterId: ID!
 }
 
 type UpdateTrustCenterPayload {

@@ -17,13 +17,14 @@ import { Button, Card, IconPlusLarge } from "@probo/ui";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
-import type { CompliancePageDomainSection_organization$key } from "#/__generated__/core/CompliancePageDomainSection_organization.graphql";
+import type { CompliancePageDomainSection_trustCenter$key } from "#/__generated__/core/CompliancePageDomainSection_trustCenter.graphql";
 
 import { CompliancePageDomainCard } from "../../domain/_components/CompliancePageDomainCard";
 import { NewCompliancePageDomainDialog } from "../../domain/_components/NewCompliancePageDomainDialog";
 
 const fragment = graphql`
-  fragment CompliancePageDomainSection_organization on Organization {
+  fragment CompliancePageDomainSection_trustCenter on TrustCenter {
+    id
     canCreateCustomDomain: permission(action: "core:custom-domain:create")
     customDomain {
       ...CompliancePageDomainCardFragment
@@ -32,12 +33,12 @@ const fragment = graphql`
 `;
 
 export function CompliancePageDomainSection(props: {
-  organizationKey: CompliancePageDomainSection_organization$key;
+  trustCenterKey: CompliancePageDomainSection_trustCenter$key;
 }) {
-  const { organizationKey } = props;
+  const { trustCenterKey } = props;
   const { __ } = useTranslate();
 
-  const organization = useFragment(fragment, organizationKey);
+  const trustCenter = useFragment(fragment, trustCenterKey);
 
   return (
     <div className="space-y-4">
@@ -48,9 +49,12 @@ export function CompliancePageDomainSection(props: {
         </p>
       </div>
 
-      {organization.customDomain
+      {trustCenter.customDomain
         ? (
-            <CompliancePageDomainCard fKey={organization.customDomain} />
+            <CompliancePageDomainCard
+              fKey={trustCenter.customDomain}
+              trustCenterId={trustCenter.id}
+            />
           )
         : (
             <Card padded>
@@ -64,8 +68,8 @@ export function CompliancePageDomainSection(props: {
                   )}
                 </p>
                 <div className="flex justify-center">
-                  {organization.canCreateCustomDomain && (
-                    <NewCompliancePageDomainDialog>
+                  {trustCenter.canCreateCustomDomain && (
+                    <NewCompliancePageDomainDialog trustCenterId={trustCenter.id}>
                       <Button icon={IconPlusLarge}>{__("Add Domain")}</Button>
                     </NewCompliancePageDomainDialog>
                   )}

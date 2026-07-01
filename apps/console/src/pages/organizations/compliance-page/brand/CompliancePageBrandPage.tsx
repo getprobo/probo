@@ -43,9 +43,9 @@ export const compliancePageBrandPageQuery = graphql`
     organization: node(id: $organizationId) {
       __typename
       ... on Organization {
-        ...CompliancePageDomainSection_organization
         compliancePage: trustCenter @required(action: THROW) {
           id
+          ...CompliancePageDomainSection_trustCenter
           logo {
             downloadUrl
           }
@@ -356,7 +356,7 @@ export function CompliancePageBrandPage(props: { queryRef: PreloadedQuery<Compli
 
       <CompliancePageContactInfoSection trustCenterKey={organization.compliancePage} />
 
-      <CompliancePageDomainSection organizationKey={organization} />
+      <CompliancePageDomainSection trustCenterKey={organization.compliancePage} />
 
       <div className="space-y-4">
         <div>

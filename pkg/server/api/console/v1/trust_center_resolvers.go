@@ -636,7 +636,7 @@ func (r *mutationResolver) DeleteTrustCenterFile(ctx context.Context, input type
 
 // CreateCustomDomain is the resolver for the createCustomDomain field.
 func (r *mutationResolver) CreateCustomDomain(ctx context.Context, input types.CreateCustomDomainInput) (*types.CreateCustomDomainPayload, error) {
-	scope, err := r.authorize(ctx, input.OrganizationID, probo.ActionCustomDomainCreate)
+	scope, err := r.authorize(ctx, input.TrustCenterID, probo.ActionCustomDomainCreate)
 	if err != nil {
 		return nil, err
 	}
@@ -644,8 +644,8 @@ func (r *mutationResolver) CreateCustomDomain(ctx context.Context, input types.C
 	domain, err := r.probo.CustomDomains.CreateCustomDomain(
 		ctx, scope,
 		probo.CreateCustomDomainRequest{
-			OrganizationID: input.OrganizationID,
-			Domain:         input.Domain,
+			TrustCenterID: input.TrustCenterID,
+			Domain:        input.Domain,
 		},
 	)
 	if err != nil {
@@ -665,26 +665,24 @@ func (r *mutationResolver) CreateCustomDomain(ctx context.Context, input types.C
 
 // DeleteCustomDomain is the resolver for the deleteCustomDomain field.
 func (r *mutationResolver) DeleteCustomDomain(ctx context.Context, input types.DeleteCustomDomainInput) (*types.DeleteCustomDomainPayload, error) {
-	scope, err := r.authorize(ctx, input.OrganizationID, probo.ActionCustomDomainDelete)
+	scope, err := r.authorize(ctx, input.TrustCenterID, probo.ActionCustomDomainDelete)
 	if err != nil {
 		return nil, err
 	}
 
-	// TODO Drop this wierd logic
-	// Get the current custom domain ID before deleting
-	domain, err := r.probo.CustomDomains.GetOrganizationCustomDomain(ctx, scope, input.OrganizationID)
+	domain, err := r.probo.CustomDomains.GetTrustCenterCustomDomain(ctx, scope, input.TrustCenterID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot get custom domain", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
 	if domain == nil {
-		return nil, fmt.Errorf("organization has no custom domain")
+		return nil, fmt.Errorf("trust center has no custom domain")
 	}
 
 	deletedDomainID := domain.ID
 
-	if err := r.probo.CustomDomains.DeleteCustomDomain(ctx, scope, input.OrganizationID); err != nil {
+	if err := r.probo.CustomDomains.DeleteCustomDomain(ctx, scope, input.TrustCenterID); err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete custom domain", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
@@ -733,6 +731,26 @@ func (r *trustCenterResolver) Nda(ctx context.Context, obj *types.TrustCenter) (
 	}
 
 	return r.loadFile(ctx, obj.Nda.ID)
+}
+
+// CustomDomain is the resolver for the customDomain field.
+func (r *trustCenterResolver) CustomDomain(ctx context.Context, obj *types.TrustCenter) (*types.CustomDomain, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionCustomDomainGet)
+	if err != nil {
+		return nil, err
+	}
+
+	domain, err := r.probo.CustomDomains.GetTrustCenterCustomDomain(ctx, scope, obj.ID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot get custom domain", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	if domain == nil {
+		return nil, nil
+	}
+
+	return types.NewCustomDomain(domain, r.customDomainCname), nil
 }
 
 // Organization is the resolver for the organization field.

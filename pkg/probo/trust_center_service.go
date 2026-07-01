@@ -16,7 +16,6 @@ package probo
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"mime"
@@ -658,9 +657,9 @@ func (s *TrustCenterService) EmailPresenterConfig(ctx context.Context, scope cor
 				return fmt.Errorf("cannot load organization: %w", err)
 			}
 
-			customDomain = &coredata.CustomDomain{}
-			if err := customDomain.LoadByOrganizationID(ctx, conn, scope, organization.ID); err != nil {
-				if !errors.Is(err, coredata.ErrResourceNotFound) {
+			if compliancePage.CustomDomainID != nil {
+				customDomain = &coredata.CustomDomain{}
+				if err := customDomain.LoadByID(ctx, conn, scope, *compliancePage.CustomDomainID); err != nil {
 					return fmt.Errorf("cannot load custom domain: %w", err)
 				}
 			}

@@ -315,7 +315,6 @@ type Organization implements Node {
     ): AgentRunConnection! @goField(forceResolver: true)
 
     trustCenter: TrustCenter @goField(forceResolver: true)
-    customDomain: CustomDomain @goField(forceResolver: true)
     trustCenterFiles(
         first: Int
         after: CursorKey

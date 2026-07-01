@@ -29,6 +29,7 @@ type TrustCenter struct {
 	WebsiteURL           *string                          `json:"websiteUrl,omitempty"`
 	Email                *string                          `json:"email,omitempty"`
 	HeadquarterAddress   *string                          `json:"headquarterAddress,omitempty"`
+	CustomDomain         *CustomDomain                    `json:"customDomain,omitempty"`
 	Logo                 *File                            `json:"logo,omitempty"`
 	DarkLogo             *File                            `json:"darkLogo,omitempty"`
 	Nda                  *File                            `json:"nda,omitempty"`
@@ -72,6 +73,10 @@ func NewTrustCenter(tc *coredata.TrustCenter) *TrustCenter {
 
 	if tc.NonDisclosureAgreementFileID != nil {
 		trustCenter.Nda = &File{ID: *tc.NonDisclosureAgreementFileID}
+	}
+
+	if tc.CustomDomainID != nil {
+		trustCenter.CustomDomain = &CustomDomain{ID: *tc.CustomDomainID}
 	}
 
 	return trustCenter

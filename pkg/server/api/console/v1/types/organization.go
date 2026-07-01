@@ -37,11 +37,5 @@ func NewOrganization(o *coredata.Organization) *Organization {
 		org.HorizontalLogo = &File{ID: *o.HorizontalLogoFileID}
 	}
 
-	if o.CustomDomainID != nil {
-		org.CustomDomain = &CustomDomain{
-			ID: *o.CustomDomainID,
-		}
-	}
-
 	return org
 }
