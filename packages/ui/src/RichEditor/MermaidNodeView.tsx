@@ -8,6 +8,8 @@ import { NodeViewContent, NodeViewWrapper } from "@tiptap/react";
 import mermaid from "mermaid";
 import { useEffect, useId, useState } from "react";
 
+import { mermaidRenderConfig } from "../mermaidConfig";
+
 type MermaidMode = "code" | "preview";
 
 function MermaidPreview({ chart }: { chart: string }) {
@@ -22,7 +24,7 @@ function MermaidPreview({ chart }: { chart: string }) {
 
     let cancelled = false;
 
-    mermaid.initialize({ startOnLoad: false, theme: "neutral" });
+    mermaid.initialize(mermaidRenderConfig);
 
     mermaid
       .render(`mermaid-editor-${id}`, source)

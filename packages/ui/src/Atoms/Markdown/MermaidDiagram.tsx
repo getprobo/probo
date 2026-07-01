@@ -15,6 +15,8 @@
 import mermaid from "mermaid";
 import { useEffect, useId, useState } from "react";
 
+import { mermaidRenderConfig } from "../../mermaidConfig";
+
 type Props = {
   chart: string;
 };
@@ -33,7 +35,7 @@ export function MermaidDiagram({ chart }: Props) {
 
     let cancelled = false;
 
-    mermaid.initialize({ startOnLoad: false, theme: "neutral" });
+    mermaid.initialize(mermaidRenderConfig);
 
     mermaid
       .render(`mermaid-${id}`, source)
