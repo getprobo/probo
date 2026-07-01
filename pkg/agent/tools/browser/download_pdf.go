@@ -132,41 +132,28 @@ func DownloadPDFTool() agent.Tool {
 				), nil
 			}
 
-			// Extract content to output dir.
-			outDir := filepath.Join(tmpDir, "out")
-			if err := os.MkdirAll(outDir, 0o700); err != nil {
-				return agent.ResultJSON(
-					downloadPDFResult{
-						ErrorDetail: fmt.Sprintf("cannot create output dir: %s", err),
-					},
-				), nil
-			}
+			// Extract content, digesting each page's content stream.
+			var sb strings.Builder
 
 			reader := bytes.NewReader(body)
-			if err := api.ExtractContent(reader, outDir, "content", nil, conf); err != nil {
+			digest := func(r io.Reader, _ int) error {
+				content, err := io.ReadAll(r)
+				if err != nil {
+					return err
+				}
+
+				sb.Write(content)
+				sb.WriteString("\n")
+
+				return nil
+			}
+
+			if err := api.ExtractContent(reader, nil, digest, conf); err != nil {
 				return agent.ResultJSON(
 					downloadPDFResult{
 						ErrorDetail: fmt.Sprintf("cannot extract PDF content: %s", err),
 					},
 				), nil
-			}
-
-			// Read all extracted content files.
-			var sb strings.Builder
-
-			entries, _ := os.ReadDir(outDir)
-			for _, entry := range entries {
-				if entry.IsDir() {
-					continue
-				}
-
-				content, err := os.ReadFile(filepath.Join(outDir, entry.Name()))
-				if err != nil {
-					continue
-				}
-
-				sb.Write(content)
-				sb.WriteString("\n")
 			}
 
 			text := sb.String()
