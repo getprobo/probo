@@ -58,6 +58,25 @@ if (existsSync(manifestPath)) {
   }
 }
 
+const mcpPath = join(root, ".mcp.json");
+if (existsSync(mcpPath)) {
+  try {
+    const mcpConfig = JSON.parse(readFileSync(mcpPath, "utf8"));
+    const servers = mcpConfig.mcpServers ?? {};
+    for (const [name, config] of Object.entries(servers)) {
+      if (config?.headers?.Authorization != null) {
+        console.error(
+          `.mcp.json: ${name} must use OAuth 2.0, not headers.Authorization`,
+        );
+        failed = true;
+      }
+    }
+  } catch (error) {
+    console.error(`.mcp.json is not valid JSON: ${error.message}`);
+    failed = true;
+  }
+}
+
 if (failed) {
   process.exit(1);
 }

@@ -58,13 +58,14 @@ Run `npm --workspace @probo/claude-plugin run validate` before publishing.
 
 ## Probo MCP configuration
 
-The plugin `.mcp.json` reads:
+The plugin `.mcp.json` expects one environment variable:
 
 - `PROBO_BASE_URL` — instance root URL
-- `PROBO_API_TOKEN` — personal API key or OAuth token
 
-Users must export both before launching Claude Code. Document new required
-variables in the plugin README when they change.
+Authentication is OAuth 2.0 only. Users complete sign-in via `/mcp` or
+`claude mcp login probo`. Do not document API keys or bearer tokens in the
+plugin config — a pre-set `Authorization` header prevents Claude Code from
+starting the OAuth flow.
 
 ## Adding a skill
 

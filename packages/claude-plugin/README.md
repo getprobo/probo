@@ -21,16 +21,28 @@ When consuming the published package, the marketplace entry resolves
 
 ### Configure Probo MCP
 
-Set environment variables before starting Claude Code:
+Set your Probo instance URL before starting Claude Code:
 
 ```bash
 export PROBO_BASE_URL="https://your-probo-instance.example.com"
-export PROBO_API_TOKEN="your-personal-api-key-or-oauth-token"
 ```
 
-The plugin ships a `.mcp.json` that connects to `${PROBO_BASE_URL}/mcp/v1`
-with bearer authentication. Create an API key in the Probo console under
-Settings → API keys.
+The plugin `.mcp.json` connects to `${PROBO_BASE_URL}/mcp/v1`. Probo MCP
+authenticates with **OAuth 2.0** — no API token or bearer header is required in
+the plugin config. On first use, sign in from Claude Code:
+
+```text
+/mcp
+```
+
+Or from your shell:
+
+```bash
+claude mcp login probo
+```
+
+Claude Code discovers Probo's authorization server via
+`/.well-known/oauth-protected-resource` and stores tokens securely.
 
 ### Local development
 

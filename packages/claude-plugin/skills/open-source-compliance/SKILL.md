@@ -11,7 +11,8 @@ first.
 
 ## Before you start
 
-1. Confirm the Probo MCP server is connected (`/mcp` or check plugin status).
+1. Confirm the Probo MCP server is connected. If not, ask the user to run
+   `/mcp` or `claude mcp login probo` to complete the OAuth 2.0 sign-in.
 2. Identify the target organization. List organizations if the user did not
    provide one.
 3. Prefer MCP tools over manual API calls. The Probo MCP API mirrors the

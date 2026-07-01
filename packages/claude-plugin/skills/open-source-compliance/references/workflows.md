@@ -6,14 +6,21 @@ obligations, risks, documents, audits, access reviews, and more.
 
 ## Authentication
 
-The plugin `.mcp.json` expects:
+Probo MCP uses OAuth 2.0. Users sign in once via `/mcp` or
+`claude mcp login probo`; Claude Code stores and refreshes tokens
+automatically. Do not ask the user for API keys or bearer tokens for MCP
+access.
 
 | Variable | Purpose |
 | --- | --- |
 | `PROBO_BASE_URL` | Probo instance root URL (no trailing slash) |
-| `PROBO_API_TOKEN` | Personal API key or OAuth access token |
 
 MCP endpoint: `${PROBO_BASE_URL}/mcp/v1`
+
+OAuth discovery:
+
+- Protected resource metadata: `/.well-known/oauth-protected-resource`
+- Authorization server metadata: `/.well-known/oauth-authorization-server`
 
 ## Tool discovery
 
