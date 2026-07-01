@@ -160,6 +160,12 @@ function mapAPIKeyExtraSettingToField(
     case "NEON":
       if (settingKey === "organizationId") return "neonOrganizationId";
       break;
+    case "SCALEWAY":
+      if (settingKey === "organizationId") return "scalewayOrganizationId";
+      break;
+    case "CRISP":
+      if (settingKey === "websiteId") return "crispWebsiteId";
+      break;
   }
   return null;
 }

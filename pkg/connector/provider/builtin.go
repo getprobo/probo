@@ -33,6 +33,7 @@ func NewBuiltinRegistry() *Registry {
 		clickhouseRegistration(),
 		clickupRegistration(),
 		cloudflareRegistration(),
+		crispRegistration(),
 		cursorRegistration(),
 		datadogRegistration(),
 		deepgramRegistration(),
@@ -62,8 +63,10 @@ func NewBuiltinRegistry() *Registry {
 		pagerdutyRegistration(),
 		pylonRegistration(),
 		qoveryRegistration(),
+		railwayRegistration(),
 		renderRegistration(),
 		resendRegistration(),
+		scalewayRegistration(),
 		sendgridRegistration(),
 		sentryRegistration(),
 		signozRegistration(),
@@ -72,6 +75,7 @@ func NewBuiltinRegistry() *Registry {
 		tailscaleRegistration(),
 		tallyRegistration(),
 		vercelRegistration(),
+		yousignRegistration(),
 		zendeskRegistration(),
 	} {
 		if err := r.Register(reg); err != nil {

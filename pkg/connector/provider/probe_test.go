@@ -16,7 +16,9 @@ package provider
 
 import (
 	"context"
+	"io"
 	"net/http"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -112,6 +114,23 @@ func TestBuildPostHogProbeURL(t *testing.T) {
 	assert.Equal(t, "https://us.posthog.com/api/organizations/@current/", probeURL)
 }
 
+func TestBuildScalewayProbeURL(t *testing.T) {
+	t.Parallel()
+
+	conn := &coredata.Connector{Provider: coredata.ConnectorProviderScaleway}
+	require.NoError(t, conn.SetSettings(&coredata.ScalewayConnectorSettings{
+		OrganizationID: "11111111-2222-3333-4444-555555555555",
+	}))
+
+	probeURL, err := buildScalewayProbeURL(conn)
+	require.NoError(t, err)
+	assert.Equal(
+		t,
+		"https://api.scaleway.com/iam/v1alpha1/users?organization_id=11111111-2222-3333-4444-555555555555&page_size=1",
+		probeURL,
+	)
+}
+
 func TestProbeOpenRouter(t *testing.T) {
 	t.Parallel()
 
@@ -188,6 +207,104 @@ func TestProbeHeroku(t *testing.T) {
 
 			assert.Equal(t, "application/vnd.heroku+json; version=3", gotAccept)
 			assert.Equal(t, "https://api.heroku.com/account", gotURL)
+
+			if tc.wantReject {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestProbeRailway(t *testing.T) {
+	t.Parallel()
+
+	// Railway returns HTTP 200 with a populated errors array (data.me null) for
+	// a rejected token instead of 401/403, so the probe must inspect the body —
+	// the generic 401/403-only contract would falsely accept a dead token.
+	cases := []struct {
+		name       string
+		status     int
+		body       string
+		wantReject bool
+	}{
+		{"valid token", http.StatusOK, `{"data":{"me":{"id":"u-1"}}}`, false},
+		{"rejected token (200 + errors)", http.StatusOK, `{"errors":[{"message":"Not Authorized"}],"data":null}`, true},
+		{"null me", http.StatusOK, `{"data":{"me":null}}`, true},
+		{"unauthorized status", http.StatusUnauthorized, ``, true},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			var gotURL, gotContentType string
+
+			client := &http.Client{Transport: probeRoundTripFunc(func(r *http.Request) (*http.Response, error) {
+				gotURL = r.URL.String()
+				gotContentType = r.Header.Get("Content-Type")
+
+				return &http.Response{
+					StatusCode: tc.status,
+					Body:       io.NopCloser(strings.NewReader(tc.body)),
+					Header:     make(http.Header),
+				}, nil
+			})}
+
+			err := probeRailway(context.Background(), client, &coredata.Connector{Provider: coredata.ConnectorProviderRailway})
+
+			assert.Equal(t, "https://backboard.railway.com/graphql/v2", gotURL)
+			assert.Equal(t, "application/json", gotContentType)
+
+			if tc.wantReject {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestProbeCrisp(t *testing.T) {
+	t.Parallel()
+
+	// probeCrisp must send the non-auth X-Crisp-Tier header (the generic
+	// probeGET does not) and hit the configured website's operators/list
+	// endpoint; 401/403 mean a rejected credential, and 404 means a valid token
+	// pointed at a wrong/unbound website_id — a permanent misconfiguration that
+	// must be rejected at connect time rather than fail every later review.
+	cases := []struct {
+		name       string
+		status     int
+		wantReject bool
+	}{
+		{"valid token", http.StatusOK, false},
+		{"revoked token", http.StatusUnauthorized, true},
+		{"forbidden token", http.StatusForbidden, true},
+		{"wrong or unbound website (404)", http.StatusNotFound, true},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			conn := &coredata.Connector{Provider: coredata.ConnectorProviderCrisp}
+			require.NoError(t, conn.SetSettings(&coredata.CrispConnectorSettings{WebsiteID: "abc-123"}))
+
+			var gotURL, gotTier string
+
+			client := &http.Client{Transport: probeRoundTripFunc(func(r *http.Request) (*http.Response, error) {
+				gotURL = r.URL.String()
+				gotTier = r.Header.Get("X-Crisp-Tier")
+
+				return &http.Response{StatusCode: tc.status, Body: http.NoBody, Header: make(http.Header)}, nil
+			})}
+
+			err := probeCrisp(context.Background(), client, conn)
+
+			assert.Equal(t, "https://api.crisp.chat/v1/website/abc-123/operators/list", gotURL)
+			assert.Equal(t, "plugin", gotTier)
 
 			if tc.wantReject {
 				require.Error(t, err)
