@@ -17,8 +17,8 @@ import type { PreloadedQuery } from "react-relay";
 import { graphql, usePreloadedQuery } from "react-relay";
 
 import { ComplianceFrameworksSection } from "#/components/ComplianceFrameworks/ComplianceFrameworksSection";
-import { Hero } from "#/components/Hero/Hero";
 import { CompliancePageContactInfo } from "#/components/Hero/CompliancePageContactInfo";
+import { Hero } from "#/components/Hero/Hero";
 import { RecentUpdatesSection } from "#/components/RecentUpdates/RecentUpdatesSection";
 import { SecurityCommitmentsSection } from "#/components/SecurityCommitments/SecurityCommitmentsSection";
 import { TrustedBySection } from "#/components/TrustedBy/TrustedBySection";

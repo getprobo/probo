@@ -17,7 +17,7 @@ import { TextSkeleton } from "@probo/ui/src/v2/typography/TextSkeleton";
 
 import { HeaderBand } from "#/components/HeaderBand/HeaderBand";
 
-import { hero, compliancePageContactInfo } from "./variants";
+import { compliancePageContactInfo, hero } from "./variants";
 
 // Width per contact item, roughly sized to its typical content (hostname /
 // email / address). See .cursor/rules/skeleton-width-sync.mdc.
