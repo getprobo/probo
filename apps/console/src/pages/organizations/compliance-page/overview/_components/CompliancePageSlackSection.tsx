@@ -12,15 +12,16 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { sprintf } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
-import { Badge, Button, Card, Slack, useConfirm } from "@probo/ui";
+import { Button, Card, Slack, useConfirm } from "@probo/ui";
 import { useFragment, useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
 
 import type { CompliancePageSlackSectionDeleteMutation } from "#/__generated__/core/CompliancePageSlackSectionDeleteMutation.graphql";
 import type { CompliancePageSlackSectionFragment$key } from "#/__generated__/core/CompliancePageSlackSectionFragment.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
+
+import { CompliancePageSlackConnectionCard } from "./CompliancePageSlackConnectionCard";
 
 const fragment = graphql`
   fragment CompliancePageSlackSectionFragment on Organization {
@@ -31,9 +32,7 @@ const fragment = graphql`
       edges {
         node {
           id
-          channel
-          createdAt
-          canDelete: permission(action: "core:connector:delete")
+          ...CompliancePageSlackConnectionCardFragment
         }
       }
     }
@@ -55,13 +54,14 @@ export function CompliancePageSlackSection(props: { fragmentRef: CompliancePageS
   const { fragmentRef } = props;
 
   const organizationId = useOrganizationId();
-  const { __, dateTimeFormat } = useTranslate();
+  const { __ } = useTranslate();
   const confirm = useConfirm();
 
   const organization = useFragment<CompliancePageSlackSectionFragment$key>(fragment, fragmentRef);
   const [deleteSlackConnection] = useMutation<CompliancePageSlackSectionDeleteMutation>(deleteMutation);
 
   const connectionId = organization.slackConnections.__id;
+  const scopes = organization.slackOAuth2Scopes;
 
   const handleDisconnect = (slackConnectionId: string) => {
     confirm(
@@ -87,48 +87,23 @@ export function CompliancePageSlackSection(props: { fragmentRef: CompliancePageS
     );
   };
 
+  // Passing connector_id reconnects in place (union of scopes), letting users
+  // pick a channel without disconnecting first.
+  const buildConnectionUrl = (connectorId?: string) =>
+    getSlackConnectionUrl(organizationId, scopes, connectorId);
+
   return (
     <div className="space-y-4">
       <h2 className="text-base font-medium">{__("Integrations")}</h2>
       <div className="space-y-2">
         {organization.slackConnections.edges.map(({ node: slackConnection }) => (
-          <Card
+          <CompliancePageSlackConnectionCard
             key={slackConnection.id}
-            padded
-            className="flex items-center gap-3"
-          >
-            <div className="h-10 w-10 flex items-center justify-center bg-subtle rounded">
-              <Slack className="h-6 w-6" />
-            </div>
-            <div className="mr-auto">
-              <h3 className="text-base font-semibold">Slack</h3>
-              <p className="text-sm text-txt-tertiary">
-                {sprintf(
-                  __("Connected on %s"),
-                  dateTimeFormat(slackConnection.createdAt),
-                )}
-                {slackConnection.channel && (
-                  <>
-                    {" • "}
-                    {sprintf(__("Channel: %s"), slackConnection.channel)}
-                  </>
-                )}
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
-              <Badge variant="success" size="md">
-                {__("Connected")}
-              </Badge>
-              {slackConnection.canDelete && (
-                <Button
-                  variant="secondary"
-                  onClick={() => handleDisconnect(slackConnection.id)}
-                >
-                  {__("Disconnect")}
-                </Button>
-              )}
-            </div>
-          </Card>
+            slackConnectionKey={slackConnection}
+            canConnect={organization.canConnectSlack}
+            buildConnectionUrl={connectorId => buildConnectionUrl(connectorId)}
+            onDisconnect={handleDisconnect}
+          />
         ))}
         {organization.canConnectSlack && organization.slackConnections.edges.length === 0 && (
           <Card
@@ -145,7 +120,7 @@ export function CompliancePageSlackSection(props: { fragmentRef: CompliancePageS
               </p>
             </div>
             <Button variant="secondary" asChild>
-              <a href={getSlackConnectionUrl(organizationId, organization.slackOAuth2Scopes)}>
+              <a href={buildConnectionUrl()}>
                 {__("Connect")}
               </a>
             </Button>
@@ -156,13 +131,20 @@ export function CompliancePageSlackSection(props: { fragmentRef: CompliancePageS
   );
 }
 
-function getSlackConnectionUrl(organizationId: string, scopes: readonly string[]): string {
+function getSlackConnectionUrl(
+  organizationId: string,
+  scopes: readonly string[],
+  connectorId?: string,
+): string {
   const baseUrl = import.meta.env.VITE_API_URL || window.location.origin;
   const url = new URL("/api/console/v1/connectors/initiate", baseUrl);
   url.searchParams.append("organization_id", organizationId);
   url.searchParams.append("provider", "SLACK");
   for (const scope of scopes) {
     url.searchParams.append("scope", scope);
+  }
+  if (connectorId) {
+    url.searchParams.append("connector_id", connectorId);
   }
   const redirectUrl = `/organizations/${organizationId}/compliance-page`;
   url.searchParams.append("continue", redirectUrl);
