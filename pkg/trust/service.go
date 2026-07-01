@@ -217,6 +217,7 @@ func (s *Service) GetCustomDomainByOrganizationID(ctx context.Context, organizat
 			}
 
 			customDomain = &coredata.CustomDomain{}
+
 			return customDomain.LoadByID(ctx, conn, coredata.NewNoScope(), *trustCenter.CustomDomainID)
 		},
 	)
