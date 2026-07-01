@@ -120,7 +120,7 @@ export function CompliancePageContactInfoSection(props: {
             {...register("description")}
             readOnly={disabled}
             name="description"
-            placeholder={__("Brief description of your organization")}
+            placeholder={__("Brief description for your compliance page")}
             rows={3}
           />
         </div>

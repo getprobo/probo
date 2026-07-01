@@ -46,6 +46,10 @@ export async function execute(
 						id
 						active
 						searchEngineIndexing
+						description
+						websiteUrl
+						email
+						headquarterAddress
 						logoFileUrl
 						darkLogoFileUrl
 						ndaFileName
