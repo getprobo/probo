@@ -17,7 +17,7 @@ jobs:
       id-token: write
       attestations: write
     steps:
-      - uses: "actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd" # v6
+      - uses: "actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0" # v6
         with:
           fetch-depth: 0
           submodules: recursive
@@ -60,7 +60,7 @@ jobs:
         with:
           subject-path: "packages/cookie-banner/dist/**"
           sbom-path: "packages/cookie-banner/sbom.json"
-      - uses: "actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32" # v4
+      - uses: "actions/attest-build-provenance@0f67c3f4856b2e3261c31976d6725780e5e4c373" # v4
         with:
           subject-path: "packages/cookie-banner/dist/**"
       - name: "Extract release notes"

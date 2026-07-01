@@ -15,9 +15,9 @@ jobs:
     permissions:
       contents: "read"
     steps:
-      - uses: "actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd" # v6
+      - uses: "actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0" # v6
       - uses: "runs-on/action@d141ef83eb66d096ce8afc767e09115a65c63b60" # v2
-      - uses: "azure/setup-helm@dda3372f752e03dde6b3237bc9431cdc2f7a02a2" # v5.0.0
+      - uses: "azure/setup-helm@9bc31f4ebc9c6b171d7bfbaa5d006ae7abdb4310" # v5.0.1
         with:
           version: "3.17.3"
       - name: "Validate chart version"
@@ -55,7 +55,7 @@ jobs:
     permissions:
       contents: "write"
     steps:
-      - uses: "actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd" # v6
+      - uses: "actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0" # v6
         with:
           fetch-depth: 0
       - uses: "runs-on/action@d141ef83eb66d096ce8afc767e09115a65c63b60" # v2
