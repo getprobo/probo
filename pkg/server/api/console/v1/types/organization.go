@@ -20,18 +20,13 @@ import (
 
 func NewOrganization(o *coredata.Organization) *Organization {
 	org := &Organization{
-		ID:          o.ID,
-		Name:        o.Name,
-		Description: o.Description,
-		WebsiteURL:  o.WebsiteURL,
-		Email:       o.Email,
+		ID:   o.ID,
+		Name: o.Name,
 		Context: &OrganizationContext{
 			OrganizationID: o.ID,
 		},
-
-		HeadquarterAddress: o.HeadquarterAddress,
-		CreatedAt:          o.CreatedAt,
-		UpdatedAt:          o.UpdatedAt,
+		CreatedAt: o.CreatedAt,
+		UpdatedAt: o.UpdatedAt,
 	}
 
 	if o.LogoFileID != nil {

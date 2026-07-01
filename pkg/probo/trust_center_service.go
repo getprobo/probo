@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"io"
 	"mime"
+	"net/mail"
 	"net/url"
 	"path/filepath"
 	"time"
@@ -54,9 +55,13 @@ type (
 	}
 
 	UpdateTrustCenterBrandRequest struct {
-		TrustCenterID gid.GID
-		LogoFile      **FileUpload
-		DarkLogoFile  **FileUpload
+		TrustCenterID      gid.GID
+		LogoFile           **FileUpload
+		DarkLogoFile       **FileUpload
+		Description        **string
+		WebsiteURL         **string
+		Email              **string
+		HeadquarterAddress **string
 	}
 )
 
@@ -82,6 +87,13 @@ func (utcndar *UploadTrustCenterNDARequest) Validate() error {
 }
 
 func (req *UpdateTrustCenterBrandRequest) Validate() error {
+	v := validator.New()
+
+	v.Check(req.Description, "description", validator.SafeText(ContentMaxLength))
+	v.Check(req.WebsiteURL, "website_url", validator.SafeText(2048))
+	v.Check(req.Email, "email", validator.SafeText(255))
+	v.Check(req.HeadquarterAddress, "headquarter_address", validator.SafeText(2048))
+
 	fv := filevalidation.NewValidator(
 		filevalidation.WithCategories(filevalidation.CategoryImage),
 		filevalidation.WithMaxFileSize(maxBrandFileSize),
@@ -375,6 +387,28 @@ func (s TrustCenterService) UpdateTrustCenterBrand(
 				}
 			}
 
+			if req.Description != nil {
+				trustCenter.Description = *req.Description
+			}
+
+			if req.WebsiteURL != nil {
+				trustCenter.WebsiteURL = *req.WebsiteURL
+			}
+
+			if req.Email != nil {
+				if *req.Email != nil {
+					if _, err := mail.ParseAddress(**req.Email); err != nil {
+						return fmt.Errorf("invalid email address: %w", err)
+					}
+				}
+
+				trustCenter.Email = *req.Email
+			}
+
+			if req.HeadquarterAddress != nil {
+				trustCenter.HeadquarterAddress = *req.HeadquarterAddress
+			}
+
 			trustCenter.UpdatedAt = now
 
 			if err := trustCenter.Update(ctx, conn, scope); err != nil {
@@ -665,12 +699,12 @@ func (s *TrustCenterService) EmailPresenterConfig(ctx context.Context, scope cor
 		emailPresenterCfg.SenderCompanyLogoPath = filepath.Join("/api/files/v1/public/", logoFile.ID.String())
 		emailPresenterCfg.SenderCompanyName = organization.Name
 
-		if organization.WebsiteURL != nil {
-			emailPresenterCfg.SenderCompanyWebsiteURL = *organization.WebsiteURL
+		if compliancePage.WebsiteURL != nil {
+			emailPresenterCfg.SenderCompanyWebsiteURL = *compliancePage.WebsiteURL
 		}
 
-		if organization.HeadquarterAddress != nil {
-			emailPresenterCfg.SenderCompanyHeadquarterAddress = *organization.HeadquarterAddress
+		if compliancePage.HeadquarterAddress != nil {
+			emailPresenterCfg.SenderCompanyHeadquarterAddress = *compliancePage.HeadquarterAddress
 		}
 	}
 

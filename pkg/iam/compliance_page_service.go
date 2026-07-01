@@ -156,12 +156,12 @@ func (s *CompliancePageService) EmailPresenterConfig(ctx context.Context, compli
 		emailPresenterCfg.SenderCompanyLogoPath = filepath.Join("/api/files/v1/public/", logoFile.ID.String())
 		emailPresenterCfg.SenderCompanyName = organization.Name
 
-		if organization.WebsiteURL != nil {
-			emailPresenterCfg.SenderCompanyWebsiteURL = *organization.WebsiteURL
+		if compliancePage.WebsiteURL != nil {
+			emailPresenterCfg.SenderCompanyWebsiteURL = *compliancePage.WebsiteURL
 		}
 
-		if organization.HeadquarterAddress != nil {
-			emailPresenterCfg.SenderCompanyHeadquarterAddress = *organization.HeadquarterAddress
+		if compliancePage.HeadquarterAddress != nil {
+			emailPresenterCfg.SenderCompanyHeadquarterAddress = *compliancePage.HeadquarterAddress
 		}
 	}
 

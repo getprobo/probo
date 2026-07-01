@@ -179,6 +179,11 @@ func (r *mutationResolver) UpdateTrustCenterBrand(ctx context.Context, input typ
 		}
 	}
 
+	req.Description = gqlutils.UnwrapOmittable(input.Description)
+	req.WebsiteURL = gqlutils.UnwrapOmittable(input.WebsiteURL)
+	req.Email = gqlutils.UnwrapOmittable(input.Email)
+	req.HeadquarterAddress = gqlutils.UnwrapOmittable(input.HeadquarterAddress)
+
 	trustCenter, _, err := r.probo.TrustCenters.UpdateTrustCenterBrand(ctx, scope, req)
 	if err != nil {
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {

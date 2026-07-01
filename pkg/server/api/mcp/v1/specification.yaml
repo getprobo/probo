@@ -616,7 +616,6 @@ components:
       required:
         - id
         - name
-        - description
         - created_at
         - updated_at
       properties:
@@ -626,11 +625,6 @@ components:
         name:
           type: string
           description: Organization name
-        description:
-          type:
-            - string
-            - "null"
-          description: Organization description
         created_at:
           type: string
           format: date-time

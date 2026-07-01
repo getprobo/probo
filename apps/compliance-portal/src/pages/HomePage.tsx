@@ -30,8 +30,8 @@ export const homePageQuery = graphql`
     currentTrustCenter @required(action: THROW) {
       organization {
         name
-        ...OrganizationContactInfo_organization
       }
+      ...OrganizationContactInfo_trustCenter
       ...ComplianceFrameworksSection_trustCenter
       ...TrustedBySection_trustCenter
       ...RecentUpdatesSection_trustCenter
@@ -55,7 +55,7 @@ export function HomePage({ queryRef }: HomePageProps) {
         title={t("home.heroTitle", { name: organization.name })}
         description={t("home.heroDescription")}
       >
-        <OrganizationContactInfo organizationKey={organization} />
+        <OrganizationContactInfo trustCenterKey={currentTrustCenter} />
       </Hero>
       <div className="flex w-full flex-col items-center px-8">
         <div className="flex w-full max-w-5xl flex-col">

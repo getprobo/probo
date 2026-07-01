@@ -20,9 +20,13 @@ import (
 
 func NewTrustCenter(tc *coredata.TrustCenter) *TrustCenter {
 	return &TrustCenter{
-		ID:     tc.ID,
-		Active: tc.Active,
-		Slug:   tc.Slug,
+		ID:                 tc.ID,
+		Active:             tc.Active,
+		Slug:               tc.Slug,
+		Description:        tc.Description,
+		WebsiteURL:         tc.WebsiteURL,
+		Email:              tc.Email,
+		HeadquarterAddress: tc.HeadquarterAddress,
 	}
 }
 

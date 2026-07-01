@@ -41,6 +41,10 @@ type (
 		LogoFileID                   *gid.GID             `db:"logo_file_id"`
 		DarkLogoFileID               *gid.GID             `db:"dark_logo_file_id"`
 		NonDisclosureAgreementFileID *gid.GID             `db:"non_disclosure_agreement_file_id"`
+		Description                  *string              `db:"description"`
+		WebsiteURL                   *string              `db:"website_url"`
+		Email                        *string              `db:"email"`
+		HeadquarterAddress           *string              `db:"headquarter_address"`
 		CreatedAt                    time.Time            `db:"created_at"`
 		UpdatedAt                    time.Time            `db:"updated_at"`
 	}
@@ -114,6 +118,10 @@ SELECT
 	slug,
 	search_engine_indexing,
 	non_disclosure_agreement_file_id,
+	description,
+	website_url,
+	email,
+	headquarter_address,
 	created_at,
 	updated_at
 FROM
@@ -166,6 +174,10 @@ SELECT
 	slug,
 	search_engine_indexing,
 	non_disclosure_agreement_file_id,
+	description,
+	website_url,
+	email,
+	headquarter_address,
 	created_at,
 	updated_at
 FROM
@@ -218,6 +230,10 @@ SELECT
 	slug,
 	search_engine_indexing,
 	non_disclosure_agreement_file_id,
+	description,
+	website_url,
+	email,
+	headquarter_address,
 	created_at,
 	updated_at
 FROM
@@ -270,6 +286,10 @@ SELECT
 	slug,
 	search_engine_indexing,
 	non_disclosure_agreement_file_id,
+	description,
+	website_url,
+	email,
+	headquarter_address,
 	created_at,
 	updated_at
 FROM
@@ -317,6 +337,10 @@ INSERT INTO trust_centers (
 	slug,
 	search_engine_indexing,
 	non_disclosure_agreement_file_id,
+	description,
+	website_url,
+	email,
+	headquarter_address,
 	created_at,
 	updated_at
 ) VALUES (
@@ -330,6 +354,10 @@ INSERT INTO trust_centers (
 	@slug,
 	@search_engine_indexing,
 	@non_disclosure_agreement_file_id,
+	@description,
+	@website_url,
+	@email,
+	@headquarter_address,
 	@created_at,
 	@updated_at
 )
@@ -346,6 +374,10 @@ INSERT INTO trust_centers (
 		"slug":                             tc.Slug,
 		"search_engine_indexing":           tc.SearchEngineIndexing,
 		"non_disclosure_agreement_file_id": tc.NonDisclosureAgreementFileID,
+		"description":                      tc.Description,
+		"website_url":                      tc.WebsiteURL,
+		"email":                            tc.Email,
+		"headquarter_address":              tc.HeadquarterAddress,
 		"created_at":                       tc.CreatedAt,
 		"updated_at":                       tc.UpdatedAt,
 	}
@@ -378,6 +410,10 @@ SET
 	logo_file_id = @logo_file_id,
 	dark_logo_file_id = @dark_logo_file_id,
 	non_disclosure_agreement_file_id = @non_disclosure_agreement_file_id,
+	description = @description,
+	website_url = @website_url,
+	email = @email,
+	headquarter_address = @headquarter_address,
 	updated_at = @updated_at
 WHERE
 	%s
@@ -394,6 +430,10 @@ WHERE
 		"slug":                             tc.Slug,
 		"search_engine_indexing":           tc.SearchEngineIndexing,
 		"non_disclosure_agreement_file_id": tc.NonDisclosureAgreementFileID,
+		"description":                      tc.Description,
+		"website_url":                      tc.WebsiteURL,
+		"email":                            tc.Email,
+		"headquarter_address":              tc.HeadquarterAddress,
 		"updated_at":                       tc.UpdatedAt,
 	}
 	maps.Copy(args, scope.SQLArguments())

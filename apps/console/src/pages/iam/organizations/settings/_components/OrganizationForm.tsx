@@ -25,7 +25,6 @@ import {
   IconTrashCan,
   Label,
   Spinner,
-  Textarea,
   useDialogRef,
 } from "@probo/ui";
 import { type ChangeEventHandler, useState } from "react";
@@ -47,10 +46,6 @@ const fragment = graphql`
     horizontalLogo {
       downloadUrl
     }
-    description
-    websiteUrl
-    email
-    headquarterAddress
     canUpdate: permission(action: "iam:organization:update")
   }
 `;
@@ -67,10 +62,6 @@ const updateOrganizationMutation = graphql`
         horizontalLogo {
           downloadUrl
         }
-        description
-        websiteUrl
-        email
-        headquarterAddress
       }
     }
   }
@@ -93,10 +84,6 @@ const deleteHorizontalLogoMutation = graphql`
 
 const organizationSchema = z.object({
   name: z.string().min(1, "Organization name is required"),
-  description: z.string().optional(),
-  websiteUrl: z.string().optional(),
-  email: z.string().optional(),
-  headquarterAddress: z.string().optional(),
 });
 
 type OrganizationFormData = z.infer<typeof organizationSchema>;
@@ -134,10 +121,6 @@ export function OrganizationForm(props: {
     {
       defaultValues: {
         name: organization.name,
-        description: organization.description || "",
-        websiteUrl: organization.websiteUrl || "",
-        email: organization.email || "",
-        headquarterAddress: organization.headquarterAddress || "",
       },
     },
   );
@@ -215,10 +198,6 @@ export function OrganizationForm(props: {
         input: {
           organizationId: organization.id,
           name: data.name,
-          description: data.description || null,
-          websiteUrl: data.websiteUrl || null,
-          email: data.email || null,
-          headquarterAddress: data.headquarterAddress || null,
         },
       },
     });
@@ -338,43 +317,6 @@ export function OrganizationForm(props: {
           label={__("Organization name")}
           placeholder={__("Organization name")}
         />
-        <div>
-          <Label>{__("Description")}</Label>
-          <Textarea
-            {...register("description")}
-            readOnly={formState.isSubmitting || !canUpdate}
-            name="description"
-            placeholder={__("Brief description of your organization")}
-            rows={3}
-          />
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Field
-            {...register("websiteUrl")}
-            readOnly={formState.isSubmitting || !canUpdate}
-            name="websiteUrl"
-            type="url"
-            label={__("Website URL")}
-            placeholder={__("https://example.com")}
-          />
-          <Field
-            {...register("email")}
-            readOnly={formState.isSubmitting || !canUpdate}
-            name="email"
-            type="email"
-            label={__("Email")}
-            placeholder={__("contact@example.com")}
-          />
-        </div>
-        <div>
-          <Label>{__("Headquarter Address")}</Label>
-          <Textarea
-            {...register("headquarterAddress")}
-            readOnly={formState.isSubmitting || !canUpdate}
-            name="headquarterAddress"
-            placeholder={__("123 Main St, City, Country")}
-          />
-        </div>
 
         {formState.isDirty && canUpdate && (
           <div className="flex justify-end pt-6">
