@@ -19,22 +19,22 @@ import type { ComponentProps } from "react";
 import { use } from "react";
 import { ConnectionHandler, graphql, usePaginationFragment } from "react-relay";
 
-import type { PeopleListFragment$key } from "#/__generated__/iam/PeopleListFragment.graphql";
-import type { PeopleListFragment_RefetchQuery } from "#/__generated__/iam/PeopleListFragment_RefetchQuery.graphql";
+import type { MembersListFragment$key } from "#/__generated__/iam/MembersListFragment.graphql";
+import type { MembersListFragment_RefetchQuery } from "#/__generated__/iam/MembersListFragment_RefetchQuery.graphql";
 import { type Order, SortableTable, SortableTh } from "#/components/SortableTable";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { CurrentUser } from "#/providers/CurrentUser";
 
-import { PeopleListItem } from "./PeopleListItem";
+import { MembersListItem } from "./MembersListItem";
 
 const fragment = graphql`
-  fragment PeopleListFragment on Organization
-  @refetchable(queryName: "PeopleListFragment_RefetchQuery")
+  fragment MembersListFragment on Organization
+  @refetchable(queryName: "MembersListFragment_RefetchQuery")
   @argumentDefinitions(
     first: { type: "Int", defaultValue: 20 }
     order: {
       type: "ProfileOrder"
-      defaultValue: { direction: ASC, field: FULL_NAME }
+      defaultValue: { direction: ASC, field: EMAIL_ADDRESS }
     }
     after: { type: "CursorKey", defaultValue: null }
     before: { type: "CursorKey", defaultValue: null }
@@ -46,21 +46,21 @@ const fragment = graphql`
       last: $last
       before: $before
       orderBy: $order
-    ) @connection(key: "PeopleListFragment_profiles", filters: ["orderBy"]) @required(action: THROW) {
+    ) @connection(key: "MembersListFragment_profiles", filters: ["orderBy"]) @required(action: THROW) {
       __id
       totalCount
       edges @required(action: THROW) {
         node {
           id
-          ...PeopleListItemFragment
+          ...MembersListItemFragment
         }
       }
     }
   }
 `;
 
-export function PeopleList(props: {
-  fKey: PeopleListFragment$key;
+export function MembersList(props: {
+  fKey: MembersListFragment$key;
   onConnectionIdChange: (connectionId: string) => void;
 }) {
   const { fKey, onConnectionIdChange } = props;
@@ -70,30 +70,32 @@ export function PeopleList(props: {
   const { role } = use(CurrentUser);
   const canManageRoles = getAssignableRoles(role).length > 0;
 
-  const peoplePagination = usePaginationFragment<
-    PeopleListFragment_RefetchQuery,
-    PeopleListFragment$key
+  const membersPagination = usePaginationFragment<
+    MembersListFragment_RefetchQuery,
+    MembersListFragment$key
   >(fragment, fKey);
 
-  const refetchPeople = () => {
-    peoplePagination.refetch({}, { fetchPolicy: "network-only" });
+  const refetchMembers = () => {
+    membersPagination.refetch({}, { fetchPolicy: "network-only" });
   };
 
   const handleOrderChange = (order: Order) => {
     onConnectionIdChange(
       ConnectionHandler.getConnectionID(
         organizationId,
-        "PeopleListFragment_profiles",
+        "MembersListFragment_profiles",
         { orderBy: order },
       ),
     );
   };
 
+  const columnCount = canManageRoles ? 3 : 2;
+
   return (
     <SortableTable
-      {...peoplePagination}
+      {...membersPagination}
       refetch={
-        peoplePagination.refetch as ComponentProps<
+        membersPagination.refetch as ComponentProps<
           typeof SortableTable
         >["refetch"]
       }
@@ -101,30 +103,27 @@ export function PeopleList(props: {
     >
       <Thead>
         <Tr>
-          <SortableTh field="FULL_NAME" onOrderChange={handleOrderChange}>{__("Name")}</SortableTh>
-          <SortableTh field="STATE">{__("Status")}</SortableTh>
           <SortableTh field="EMAIL_ADDRESS" onOrderChange={handleOrderChange}>{__("Email")}</SortableTh>
           {canManageRoles && <Th>{__("Role")}</Th>}
-          <SortableTh field="CREATED_AT" onOrderChange={handleOrderChange}>{__("Created on")}</SortableTh>
           <Th></Th>
         </Tr>
       </Thead>
       <Tbody>
-        {peoplePagination.data.profiles.totalCount === 0
+        {membersPagination.data.profiles.totalCount === 0
           ? (
               <Tr>
-                <Td colSpan={7} className="text-center text-txt-secondary">
-                  {__("No people")}
+                <Td colSpan={columnCount} className="text-center text-txt-secondary">
+                  {__("No members")}
                 </Td>
               </Tr>
             )
           : (
-              peoplePagination.data.profiles.edges.map(({ node: profile }) => (
-                <PeopleListItem
-                  connectionId={peoplePagination.data.profiles.__id}
+              membersPagination.data.profiles.edges.map(({ node: profile }) => (
+                <MembersListItem
+                  connectionId={membersPagination.data.profiles.__id}
                   key={profile.id}
                   fKey={profile}
-                  onRefetch={refetchPeople}
+                  onRefetch={refetchMembers}
                 />
               ))
             )}
