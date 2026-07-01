@@ -86,7 +86,7 @@ func TestWriteConfig_FilePermissions(t *testing.T) {
 	assert.Equal(t, os.FileMode(0600), info.Mode().Perm())
 }
 
-func TestWriteConfig_DropsEmptyStrings(t *testing.T) {
+func TestWriteConfig_OmitsOptionalFields(t *testing.T) {
 	tmpDir := t.TempDir()
 	configPath := filepath.Join(tmpDir, "probod.yml")
 
@@ -96,9 +96,8 @@ func TestWriteConfig_DropsEmptyStrings(t *testing.T) {
 			Tracing: probodconfig.TracingConfig{Addr: ""},
 		},
 		Probod: probodconfig.Config{
-			BaseURL:       "http://localhost:8080",
-			EncryptionKey: "",
-			ChromeDPAddr:  "",
+			BaseURL:      "http://localhost:8080",
+			ChromeDPAddr: "",
 			Pg: probodconfig.PgConfig{
 				Addr:     "localhost:5432",
 				Username: "postgres",
@@ -124,8 +123,8 @@ func TestWriteConfig_DropsEmptyStrings(t *testing.T) {
 	require.True(t, ok)
 
 	assert.Equal(t, "http://localhost:8080", probod["base-url"])
-	assert.NotContains(t, probod, "encryption-key")
 	assert.NotContains(t, probod, "chrome-dp-addr")
+	assert.NotContains(t, probod, "esign")
 
 	pg, ok := probod["pg"].(map[string]any)
 	require.True(t, ok)
@@ -146,12 +145,168 @@ func TestWriteConfig_DropsEmptyStrings(t *testing.T) {
 	tracing, ok := unit["tracing"].(map[string]any)
 	require.True(t, ok)
 	assert.NotContains(t, tracing, "addr")
+}
 
-	loaded := probodconfig.FullConfig{}
-	err = yaml.Unmarshal(data, &loaded)
+func TestWriteConfig_OmitsEmptyOptionalBlocks(t *testing.T) {
+	tmpDir := t.TempDir()
+	configPath := filepath.Join(tmpDir, "probod.yml")
+
+	cfg := &probodconfig.FullConfig{
+		Probod: probodconfig.Config{
+			BaseURL:       "http://localhost:8080",
+			EncryptionKey: "test-key",
+			Api: probodconfig.APIConfig{
+				Addr: ":8080",
+			},
+			Auth: probodconfig.AuthConfig{
+				Cookie: probodconfig.CookieConfig{
+					Name:   "SSID",
+					Secret: "secret",
+				},
+				Password: probodconfig.PasswordConfig{
+					Pepper: "pepper",
+				},
+			},
+			TrustCenter: probodconfig.TrustCenterConfig{
+				HTTPAddr: ":80",
+			},
+			CustomDomains: probodconfig.CustomDomainsConfig{
+				RenewalInterval: 3600,
+			},
+			Agents: probodconfig.AgentsConfig{
+				Default: probodconfig.LLMAgentConfig{
+					Provider:  "openai",
+					ModelName: "gpt-4o",
+				},
+				ThirdPartyDisambiguation: probodconfig.LLMAgentConfig{
+					MaxTokens: new(4096),
+				},
+			},
+		},
+	}
+
+	err := WriteConfig(cfg, configPath, FormatYAML)
 	require.NoError(t, err)
-	assert.Equal(t, cfg.Probod.BaseURL, loaded.Probod.BaseURL)
-	assert.Empty(t, loaded.Probod.EncryptionKey)
+
+	data, err := os.ReadFile(configPath)
+	require.NoError(t, err)
+
+	var tree map[string]any
+
+	err = yaml.Unmarshal(data, &tree)
+	require.NoError(t, err)
+
+	probod, ok := tree["probod"].(map[string]any)
+	require.True(t, ok)
+
+	assert.NotContains(t, probod, "esign")
+
+	api, ok := probod["api"].(map[string]any)
+	require.True(t, ok)
+	assert.NotContains(t, api, "cors")
+	assert.NotContains(t, api, "proxy-protocol")
+	assert.NotContains(t, api, "extra-header-fields")
+
+	auth, ok := probod["auth"].(map[string]any)
+	require.True(t, ok)
+	assert.NotContains(t, auth, "google")
+	assert.NotContains(t, auth, "microsoft")
+
+	customDomains, ok := probod["custom-domains"].(map[string]any)
+	require.True(t, ok)
+	assert.NotContains(t, customDomains, "acme")
+
+	trustCenter, ok := probod["trust-center"].(map[string]any)
+	require.True(t, ok)
+	assert.NotContains(t, trustCenter, "proxy-protocol")
+
+	llm, ok := probod["llm"].(map[string]any)
+	require.True(t, ok)
+	assert.NotContains(t, llm, "probo")
+	assert.NotContains(t, llm, "third-party-disambiguation")
+	assert.NotContains(t, llm, "tools")
+}
+
+func TestWriteConfig_OmitsEmptyProxyProtocolAndCorsSlices(t *testing.T) {
+	tmpDir := t.TempDir()
+	configPath := filepath.Join(tmpDir, "probod.yml")
+
+	cfg := &probodconfig.FullConfig{
+		Probod: probodconfig.Config{
+			BaseURL: "http://localhost:8080",
+			Api: probodconfig.APIConfig{
+				Addr: ":8080",
+				ProxyProtocol: probodconfig.ProxyProtocolConfig{
+					TrustedProxies: []string{},
+				},
+				Cors: probodconfig.CorsConfig{
+					AllowedOrigins: []string{},
+				},
+			},
+			TrustCenter: probodconfig.TrustCenterConfig{
+				HTTPAddr: ":10080",
+				ProxyProtocol: probodconfig.ProxyProtocolConfig{
+					TrustedProxies: make([]string, 0),
+				},
+			},
+		},
+	}
+
+	err := WriteConfig(cfg, configPath, FormatYAML)
+	require.NoError(t, err)
+
+	data, err := os.ReadFile(configPath)
+	require.NoError(t, err)
+
+	var tree map[string]any
+
+	err = yaml.Unmarshal(data, &tree)
+	require.NoError(t, err)
+
+	probod, ok := tree["probod"].(map[string]any)
+	require.True(t, ok)
+
+	api, ok := probod["api"].(map[string]any)
+	require.True(t, ok)
+	assert.NotContains(t, api, "proxy-protocol")
+	assert.NotContains(t, api, "cors")
+
+	trustCenter, ok := probod["trust-center"].(map[string]any)
+	require.True(t, ok)
+	assert.NotContains(t, trustCenter, "proxy-protocol")
+}
+
+func TestWriteConfig_OmitsEmptyExtraHeaderFieldsMap(t *testing.T) {
+	tmpDir := t.TempDir()
+	configPath := filepath.Join(tmpDir, "probod.yml")
+
+	cfg := &probodconfig.FullConfig{
+		Probod: probodconfig.Config{
+			BaseURL: "http://localhost:8080",
+			Api: probodconfig.APIConfig{
+				Addr:              ":8080",
+				ExtraHeaderFields: map[string]string{},
+			},
+		},
+	}
+
+	err := WriteConfig(cfg, configPath, FormatYAML)
+	require.NoError(t, err)
+
+	data, err := os.ReadFile(configPath)
+	require.NoError(t, err)
+
+	var tree map[string]any
+
+	err = yaml.Unmarshal(data, &tree)
+	require.NoError(t, err)
+
+	probod, ok := tree["probod"].(map[string]any)
+	require.True(t, ok)
+
+	api, ok := probod["api"].(map[string]any)
+	require.True(t, ok)
+	assert.NotContains(t, api, "extra-header-fields")
 }
 
 func TestWriteConfig_CompleteConfig(t *testing.T) {
@@ -178,7 +333,6 @@ func TestWriteConfig_CompleteConfig(t *testing.T) {
 				Cors: probodconfig.CorsConfig{
 					AllowedOrigins: []string{"http://localhost:8080"},
 				},
-				ExtraHeaderFields: map[string]string{},
 			},
 			Pg: probodconfig.PgConfig{
 				Addr:                   "localhost:5432",
@@ -256,7 +410,7 @@ func TestWriteConfig_JSON(t *testing.T) {
 	probod, ok := tree["probod"].(map[string]any)
 	require.True(t, ok)
 	assert.Equal(t, "http://localhost:8080", probod["base-url"])
-	assert.NotContains(t, probod, "encryption-key")
+	assert.Equal(t, "", probod["encryption-key"])
 
 	var loaded probodconfig.FullConfig
 

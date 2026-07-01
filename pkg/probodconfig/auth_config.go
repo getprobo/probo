@@ -27,8 +27,8 @@ type AuthConfig struct {
 	PasswordResetTokenValidity          int                `json:"password-reset-token-validity"`
 	MagicLinkTokenValidity              int                `json:"magic-link-token-validity"`
 	SAML                                SAMLConfig         `json:"saml"`
-	Google                              OIDCProviderConfig `json:"google"`
-	Microsoft                           OIDCProviderConfig `json:"microsoft"`
+	Google                              OIDCProviderConfig `json:"google,omitzero"`
+	Microsoft                           OIDCProviderConfig `json:"microsoft,omitzero"`
 	OAuth2Server                        OAuth2ServerConfig `json:"oauth2-server"`
 }
 
@@ -38,7 +38,7 @@ type OAuth2ServerConfig struct {
 	RefreshTokenDuration      int                      `json:"refresh-token-duration"`
 	AuthorizationCodeDuration int                      `json:"authorization-code-duration"`
 	DeviceCodeDuration        int                      `json:"device-code-duration"`
-	CIMDAllowedClientIDs      []string                 `json:"cimd-allowed-client-ids"`
+	CIMDAllowedClientIDs      []string                 `json:"cimd-allowed-client-ids,omitempty"`
 }
 
 type OAuth2SigningKeyConfig struct {
@@ -48,10 +48,10 @@ type OAuth2SigningKeyConfig struct {
 }
 
 type CookieConfig struct {
-	Domain   string `json:"domain"`
+	Domain   string `json:"domain,omitempty"`
 	Secret   string `json:"secret"`
 	Duration int    `json:"duration"`
-	Name     string `json:"name"`
+	Name     string `json:"name,omitempty"`
 	Secure   bool   `json:"secure"`
 }
 

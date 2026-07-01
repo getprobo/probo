@@ -24,7 +24,7 @@ type SAMLConfig struct {
 	Certificate                       string `json:"certificate"`
 	PrivateKey                        string `json:"private-key"`
 	DomainVerificationIntervalSeconds int    `json:"domain-verification-interval-seconds"`
-	DomainVerificationResolverAddr    string `json:"domain-verification-resolver-addr"`
+	DomainVerificationResolverAddr    string `json:"domain-verification-resolver-addr,omitempty"`
 }
 
 func (c SAMLConfig) SessionDurationTime() time.Duration {

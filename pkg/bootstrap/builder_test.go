@@ -214,6 +214,7 @@ func TestBuilder_Build_Defaults(t *testing.T) {
 	assert.Equal(t, "gpt-4o", cfg.Probod.Agents.Default.ModelName)
 	assert.Equal(t, new(0.1), cfg.Probod.Agents.Default.Temperature)
 	assert.Equal(t, new(4096), cfg.Probod.Agents.Default.MaxTokens)
+	assert.Nil(t, cfg.Probod.Agents.Providers)
 	// Agents config — per-agent overrides are empty (inherit from default)
 	assert.Empty(t, cfg.Probod.Agents.Probo.Provider)
 	assert.Empty(t, cfg.Probod.Agents.Probo.ModelName)

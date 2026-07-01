@@ -15,11 +15,19 @@
 package probodconfig
 
 type CorsConfig struct {
-	AllowedOrigins []string `json:"allowed-origins"`
+	AllowedOrigins []string `json:"allowed-origins,omitzero,omitempty"`
+}
+
+func (c CorsConfig) IsZero() bool {
+	return len(c.AllowedOrigins) == 0
 }
 
 type ProxyProtocolConfig struct {
-	TrustedProxies []string `json:"trusted-proxies"`
+	TrustedProxies []string `json:"trusted-proxies,omitzero,omitempty"`
+}
+
+func (c ProxyProtocolConfig) IsZero() bool {
+	return len(c.TrustedProxies) == 0
 }
 
 type GraphQLConfig struct {
@@ -30,9 +38,9 @@ type GraphQLConfig struct {
 }
 
 type APIConfig struct {
-	Addr              string              `json:"addr"`
-	ProxyProtocol     ProxyProtocolConfig `json:"proxy-protocol"`
-	Cors              CorsConfig          `json:"cors"`
-	ExtraHeaderFields map[string]string   `json:"extra-header-fields"`
-	GraphQL           GraphQLConfig       `json:"graphql"`
+	Addr              string              `json:"addr,omitempty"`
+	ProxyProtocol     ProxyProtocolConfig `json:"proxy-protocol,omitzero"`
+	Cors              CorsConfig          `json:"cors,omitzero"`
+	ExtraHeaderFields map[string]string   `json:"extra-header-fields,omitzero,omitempty"`
+	GraphQL           GraphQLConfig       `json:"graphql,omitzero"`
 }

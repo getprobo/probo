@@ -78,7 +78,7 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 				Cors: probodconfig.CorsConfig{
 					AllowedOrigins: b.parseOriginsList(b.resolver.getEnv("PROBOD_API_CORS_ALLOWED_ORIGINS")),
 				},
-				ExtraHeaderFields: make(map[string]string),
+				ExtraHeaderFields: nil,
 				GraphQL: probodconfig.GraphQLConfig{
 					ParserTokenLimit:  b.resolver.getEnvIntOrDefault("PROBOD_API_GRAPHQL_PARSER_TOKEN_LIMIT", 15000),
 					ComplexityLimit:   b.resolver.getEnvIntOrDefault("PROBOD_API_GRAPHQL_COMPLEXITY_LIMIT", 2000),
@@ -191,83 +191,78 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 					ReminderInterval: b.resolver.getEnvIntOrDefault("PROBOD_DOCUMENT_NOTIFICATION_REMINDER_INTERVAL", 86400),
 				},
 			},
-			Agents: probodconfig.AgentsConfig{
-				Providers: map[string]probodconfig.LLMProviderConfig{
-					"openai": {
-						Type:   "openai",
-						APIKey: b.resolver.getEnv("PROBOD_OPENAI_API_KEY"),
+			Agents: func() probodconfig.AgentsConfig {
+				defaultProvider := b.resolver.getEnvOrDefault("PROBOD_AGENT_DEFAULT_PROVIDER", "openai")
+
+				return probodconfig.AgentsConfig{
+					Providers: b.buildLLMProviders(),
+					Default: probodconfig.LLMAgentConfig{
+						Provider:    defaultProvider,
+						ModelName:   b.resolver.getEnvOrDefault("PROBOD_AGENT_DEFAULT_MODEL_NAME", "gpt-4o"),
+						Temperature: new(b.resolver.getEnvFloatOrDefault("PROBOD_AGENT_DEFAULT_TEMPERATURE", 0.1)),
+						MaxTokens:   new(b.resolver.getEnvIntOrDefault("PROBOD_AGENT_DEFAULT_MAX_TOKENS", 4096)),
 					},
-					"anthropic": {
-						Type:   "anthropic",
-						APIKey: b.resolver.getEnv("PROBOD_ANTHROPIC_API_KEY"),
+					Probo: probodconfig.LLMAgentConfig{
+						Provider:    b.resolver.getEnvOrDefault("PROBOD_AGENT_PROBO_PROVIDER", ""),
+						ModelName:   b.resolver.getEnvOrDefault("PROBOD_AGENT_PROBO_MODEL_NAME", ""),
+						Temperature: b.resolver.getEnvFloatPtr("PROBOD_AGENT_PROBO_TEMPERATURE"),
+						MaxTokens:   b.resolver.getEnvIntPtr("PROBOD_AGENT_PROBO_MAX_TOKENS"),
 					},
-				},
-				Default: probodconfig.LLMAgentConfig{
-					Provider:    b.resolver.getEnvOrDefault("PROBOD_AGENT_DEFAULT_PROVIDER", "openai"),
-					ModelName:   b.resolver.getEnvOrDefault("PROBOD_AGENT_DEFAULT_MODEL_NAME", "gpt-4o"),
-					Temperature: new(b.resolver.getEnvFloatOrDefault("PROBOD_AGENT_DEFAULT_TEMPERATURE", 0.1)),
-					MaxTokens:   new(b.resolver.getEnvIntOrDefault("PROBOD_AGENT_DEFAULT_MAX_TOKENS", 4096)),
-				},
-				Probo: probodconfig.LLMAgentConfig{
-					Provider:    b.resolver.getEnvOrDefault("PROBOD_AGENT_PROBO_PROVIDER", ""),
-					ModelName:   b.resolver.getEnvOrDefault("PROBOD_AGENT_PROBO_MODEL_NAME", ""),
-					Temperature: b.resolver.getEnvFloatPtr("PROBOD_AGENT_PROBO_TEMPERATURE"),
-					MaxTokens:   b.resolver.getEnvIntPtr("PROBOD_AGENT_PROBO_MAX_TOKENS"),
-				},
-				EvidenceDescriber: probodconfig.LLMAgentConfig{
-					Provider:    b.resolver.getEnvOrDefault("PROBOD_AGENT_EVIDENCE_DESCRIBER_PROVIDER", ""),
-					ModelName:   b.resolver.getEnvOrDefault("PROBOD_AGENT_EVIDENCE_DESCRIBER_MODEL_NAME", ""),
-					Temperature: b.resolver.getEnvFloatPtr("PROBOD_AGENT_EVIDENCE_DESCRIBER_TEMPERATURE"),
-					MaxTokens:   b.resolver.getEnvIntPtr("PROBOD_AGENT_EVIDENCE_DESCRIBER_MAX_TOKENS"),
-				},
-				ThirdPartyVetter: probodconfig.LLMAgentConfig{
-					Provider:    b.resolver.getEnvOrDefault("PROBOD_AGENT_THIRD_PARTY_VETTER_PROVIDER", ""),
-					ModelName:   b.resolver.getEnvOrDefault("PROBOD_AGENT_THIRD_PARTY_VETTER_MODEL_NAME", ""),
-					Temperature: b.resolver.getEnvFloatPtr("PROBOD_AGENT_THIRD_PARTY_VETTER_TEMPERATURE"),
-					MaxTokens:   b.resolver.getEnvIntPtr("PROBOD_AGENT_THIRD_PARTY_VETTER_MAX_TOKENS"),
-				},
-				ThirdPartyDisambiguation: probodconfig.LLMAgentConfig{
-					Provider:  b.resolver.getEnvOrDefault("PROBOD_AGENT_THIRD_PARTY_DISAMBIGUATION_PROVIDER", ""),
-					ModelName: b.resolver.getEnvOrDefault("PROBOD_AGENT_THIRD_PARTY_DISAMBIGUATION_MODEL_NAME", ""),
-					// The disambiguation agent emits a single id plus a
-					// short rationale, but the budget must leave headroom
-					// for reasoning models whose reasoning tokens count
-					// against max_tokens; too small a budget truncates the
-					// JSON.
-					Temperature: b.resolver.getEnvFloatPtr("PROBOD_AGENT_THIRD_PARTY_DISAMBIGUATION_TEMPERATURE"),
-					MaxTokens:   new(b.resolver.getEnvIntOrDefault("PROBOD_AGENT_THIRD_PARTY_DISAMBIGUATION_MAX_TOKENS", 4096)),
-				},
-				TrackerMapping: probodconfig.LLMAgentConfig{
-					Provider:  b.resolver.getEnvOrDefault("PROBOD_AGENT_TRACKER_MAPPING_PROVIDER", ""),
-					ModelName: b.resolver.getEnvOrDefault("PROBOD_AGENT_TRACKER_MAPPING_MODEL_NAME", ""),
-					// The tracker agents emit tiny structured JSON, but
-					// the budget must leave headroom for reasoning
-					// models whose reasoning tokens count against
-					// max_tokens; too small a budget truncates the JSON.
-					Temperature: b.resolver.getEnvFloatPtr("PROBOD_AGENT_TRACKER_MAPPING_TEMPERATURE"),
-					MaxTokens:   new(b.resolver.getEnvIntOrDefault("PROBOD_AGENT_TRACKER_MAPPING_MAX_TOKENS", 4096)),
-				},
-				TrackerEnrichment: probodconfig.LLMAgentConfig{
-					Provider:  b.resolver.getEnvOrDefault("PROBOD_AGENT_TRACKER_ENRICHMENT_PROVIDER", ""),
-					ModelName: b.resolver.getEnvOrDefault("PROBOD_AGENT_TRACKER_ENRICHMENT_MODEL_NAME", ""),
-					// See the tracker-mapping note: keep ample headroom so
-					// reasoning models do not truncate the structured JSON.
-					Temperature: b.resolver.getEnvFloatPtr("PROBOD_AGENT_TRACKER_ENRICHMENT_TEMPERATURE"),
-					MaxTokens:   new(b.resolver.getEnvIntOrDefault("PROBOD_AGENT_TRACKER_ENRICHMENT_MAX_TOKENS", 4096)),
-				},
-				CommonThirdPartyEnrichment: probodconfig.LLMAgentConfig{
-					Provider:  b.resolver.getEnvOrDefault("PROBOD_AGENT_COMMON_THIRD_PARTY_ENRICHMENT_PROVIDER", ""),
-					ModelName: b.resolver.getEnvOrDefault("PROBOD_AGENT_COMMON_THIRD_PARTY_ENRICHMENT_MODEL_NAME", ""),
-					// Agent B browses pages and emits a moderate structured
-					// output; the budget must leave headroom for reasoning
-					// models whose reasoning tokens count against max_tokens.
-					Temperature: b.resolver.getEnvFloatPtr("PROBOD_AGENT_COMMON_THIRD_PARTY_ENRICHMENT_TEMPERATURE"),
-					MaxTokens:   new(b.resolver.getEnvIntOrDefault("PROBOD_AGENT_COMMON_THIRD_PARTY_ENRICHMENT_MAX_TOKENS", 8192)),
-				},
-				Tools: probodconfig.AgentToolsConfig{
-					FirecrawlAPIKey: b.resolver.getEnv("PROBOD_FIRECRAWL_API_KEY"),
-				},
-			},
+					EvidenceDescriber: probodconfig.LLMAgentConfig{
+						Provider:    b.resolver.getEnvOrDefault("PROBOD_AGENT_EVIDENCE_DESCRIBER_PROVIDER", ""),
+						ModelName:   b.resolver.getEnvOrDefault("PROBOD_AGENT_EVIDENCE_DESCRIBER_MODEL_NAME", ""),
+						Temperature: b.resolver.getEnvFloatPtr("PROBOD_AGENT_EVIDENCE_DESCRIBER_TEMPERATURE"),
+						MaxTokens:   b.resolver.getEnvIntPtr("PROBOD_AGENT_EVIDENCE_DESCRIBER_MAX_TOKENS"),
+					},
+					ThirdPartyVetter: probodconfig.LLMAgentConfig{
+						Provider:    b.resolver.getEnvOrDefault("PROBOD_AGENT_THIRD_PARTY_VETTER_PROVIDER", ""),
+						ModelName:   b.resolver.getEnvOrDefault("PROBOD_AGENT_THIRD_PARTY_VETTER_MODEL_NAME", ""),
+						Temperature: b.resolver.getEnvFloatPtr("PROBOD_AGENT_THIRD_PARTY_VETTER_TEMPERATURE"),
+						MaxTokens:   b.resolver.getEnvIntPtr("PROBOD_AGENT_THIRD_PARTY_VETTER_MAX_TOKENS"),
+					},
+					ThirdPartyDisambiguation: probodconfig.LLMAgentConfig{
+						Provider:  b.resolver.getEnvOrDefault("PROBOD_AGENT_THIRD_PARTY_DISAMBIGUATION_PROVIDER", ""),
+						ModelName: b.resolver.getEnvOrDefault("PROBOD_AGENT_THIRD_PARTY_DISAMBIGUATION_MODEL_NAME", ""),
+						// The disambiguation agent emits a single id plus a
+						// short rationale, but the budget must leave headroom
+						// for reasoning models whose reasoning tokens count
+						// against max_tokens; too small a budget truncates the
+						// JSON.
+						Temperature: b.resolver.getEnvFloatPtr("PROBOD_AGENT_THIRD_PARTY_DISAMBIGUATION_TEMPERATURE"),
+						MaxTokens:   new(b.resolver.getEnvIntOrDefault("PROBOD_AGENT_THIRD_PARTY_DISAMBIGUATION_MAX_TOKENS", 4096)),
+					},
+					TrackerMapping: probodconfig.LLMAgentConfig{
+						Provider:  b.resolver.getEnvOrDefault("PROBOD_AGENT_TRACKER_MAPPING_PROVIDER", ""),
+						ModelName: b.resolver.getEnvOrDefault("PROBOD_AGENT_TRACKER_MAPPING_MODEL_NAME", ""),
+						// The tracker agents emit tiny structured JSON, but
+						// the budget must leave headroom for reasoning
+						// models whose reasoning tokens count against
+						// max_tokens; too small a budget truncates the JSON.
+						Temperature: b.resolver.getEnvFloatPtr("PROBOD_AGENT_TRACKER_MAPPING_TEMPERATURE"),
+						MaxTokens:   new(b.resolver.getEnvIntOrDefault("PROBOD_AGENT_TRACKER_MAPPING_MAX_TOKENS", 4096)),
+					},
+					TrackerEnrichment: probodconfig.LLMAgentConfig{
+						Provider:  b.resolver.getEnvOrDefault("PROBOD_AGENT_TRACKER_ENRICHMENT_PROVIDER", ""),
+						ModelName: b.resolver.getEnvOrDefault("PROBOD_AGENT_TRACKER_ENRICHMENT_MODEL_NAME", ""),
+						// See the tracker-mapping note: keep ample headroom so
+						// reasoning models do not truncate the structured JSON.
+						Temperature: b.resolver.getEnvFloatPtr("PROBOD_AGENT_TRACKER_ENRICHMENT_TEMPERATURE"),
+						MaxTokens:   new(b.resolver.getEnvIntOrDefault("PROBOD_AGENT_TRACKER_ENRICHMENT_MAX_TOKENS", 4096)),
+					},
+					CommonThirdPartyEnrichment: probodconfig.LLMAgentConfig{
+						Provider:  b.resolver.getEnvOrDefault("PROBOD_AGENT_COMMON_THIRD_PARTY_ENRICHMENT_PROVIDER", ""),
+						ModelName: b.resolver.getEnvOrDefault("PROBOD_AGENT_COMMON_THIRD_PARTY_ENRICHMENT_MODEL_NAME", ""),
+						// Agent B browses pages and emits a moderate structured
+						// output; the budget must leave headroom for reasoning
+						// models whose reasoning tokens count against max_tokens.
+						Temperature: b.resolver.getEnvFloatPtr("PROBOD_AGENT_COMMON_THIRD_PARTY_ENRICHMENT_TEMPERATURE"),
+						MaxTokens:   new(b.resolver.getEnvIntOrDefault("PROBOD_AGENT_COMMON_THIRD_PARTY_ENRICHMENT_MAX_TOKENS", 8192)),
+					},
+					Tools: probodconfig.AgentToolsConfig{
+						FirecrawlAPIKey: b.resolver.getEnv("PROBOD_FIRECRAWL_API_KEY"),
+					},
+				}
+			}(),
 			CustomDomains: probodconfig.CustomDomainsConfig{
 				RenewalInterval:   b.resolver.getEnvIntOrDefault("PROBOD_CUSTOM_DOMAINS_RENEWAL_INTERVAL", 3600),
 				ProvisionInterval: b.resolver.getEnvIntOrDefault("PROBOD_CUSTOM_DOMAINS_PROVISION_INTERVAL", 30),
@@ -645,6 +640,30 @@ func (b *Builder) getPgCACertBundle() string {
 	}
 
 	return b.resolver.getEnv("PROBOD_PG_CA_BUNDLE")
+}
+
+func (b *Builder) buildLLMProviders() map[string]probodconfig.LLMProviderConfig {
+	providers := map[string]probodconfig.LLMProviderConfig{}
+
+	if apiKey := b.resolver.getEnv("PROBOD_OPENAI_API_KEY"); apiKey != "" {
+		providers["openai"] = probodconfig.LLMProviderConfig{
+			Type:   "openai",
+			APIKey: apiKey,
+		}
+	}
+
+	if apiKey := b.resolver.getEnv("PROBOD_ANTHROPIC_API_KEY"); apiKey != "" {
+		providers["anthropic"] = probodconfig.LLMProviderConfig{
+			Type:   "anthropic",
+			APIKey: apiKey,
+		}
+	}
+
+	if len(providers) == 0 {
+		return nil
+	}
+
+	return providers
 }
 
 func (b *Builder) parseOriginsList(s string) []string {

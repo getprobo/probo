@@ -17,16 +17,16 @@ package probodconfig
 type CustomDomainsConfig struct {
 	RenewalInterval   int        `json:"renewal-interval"`
 	ProvisionInterval int        `json:"provision-interval"`
-	ResolverAddr      string     `json:"resolver-addr"`
+	ResolverAddr      string     `json:"resolver-addr,omitempty"`
 	CnameTarget       string     `json:"cname-target"`
 	CAAIssuerDomain   string     `json:"caa-issuer-domain"`
-	ACME              ACMEConfig `json:"acme"`
+	ACME              ACMEConfig `json:"acme,omitzero"`
 }
 
 type ACMEConfig struct {
-	Directory  string `json:"directory"`
-	Email      string `json:"email"`
-	KeyType    string `json:"key-type"`
-	AccountKey string `json:"account-key"`
-	RootCA     string `json:"root-ca"`
+	Directory  string `json:"directory,omitempty"`
+	Email      string `json:"email,omitempty"`
+	KeyType    string `json:"key-type,omitempty"`
+	AccountKey string `json:"account-key,omitempty"`
+	RootCA     string `json:"root-ca,omitempty"`
 }

@@ -16,5 +16,5 @@ package probodconfig
 
 type SlackConfig struct {
 	SenderInterval int    `json:"sender-interval"`
-	SigningSecret  string `json:"signing-secret"`
+	SigningSecret  string `json:"signing-secret,omitempty"`
 }

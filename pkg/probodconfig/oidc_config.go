@@ -15,7 +15,11 @@
 package probodconfig
 
 type OIDCProviderConfig struct {
-	ClientID     string `json:"client-id"`
-	ClientSecret string `json:"client-secret"`
-	Enabled      bool   `json:"enabled"`
+	ClientID     string `json:"client-id,omitempty"`
+	ClientSecret string `json:"client-secret,omitempty"`
+	Enabled      bool   `json:"enabled,omitempty"`
+}
+
+func (c OIDCProviderConfig) IsZero() bool {
+	return c.ClientID == "" && c.ClientSecret == ""
 }

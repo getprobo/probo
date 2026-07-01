@@ -37,28 +37,21 @@ func WriteConfig(cfg *probodconfig.FullConfig, path string, format Format) error
 		return fmt.Errorf("create directory %s: %w", dir, err)
 	}
 
-	data, err := yaml.Marshal(cfg)
-	if err != nil {
-		return fmt.Errorf("marshal config: %w", err)
-	}
-
-	var tree any
-	if err := yaml.Unmarshal(data, &tree); err != nil {
-		return fmt.Errorf("unmarshal config: %w", err)
-	}
-
-	pruned := pruneEmptyStrings(tree)
+	var (
+		data []byte
+		err  error
+	)
 
 	switch format {
 	case FormatJSON:
-		data, err = json.MarshalIndent(pruned, "", "  ")
+		data, err = json.MarshalIndent(cfg, "", "  ")
 		if err != nil {
-			return fmt.Errorf("marshal pruned config as json: %w", err)
+			return fmt.Errorf("marshal config as json: %w", err)
 		}
 	case FormatYAML:
-		data, err = yaml.Marshal(pruned)
+		data, err = yaml.Marshal(cfg)
 		if err != nil {
-			return fmt.Errorf("marshal pruned config as yaml: %w", err)
+			return fmt.Errorf("marshal config as yaml: %w", err)
 		}
 	default:
 		return fmt.Errorf("unsupported config format: %q", format)
@@ -69,29 +62,4 @@ func WriteConfig(cfg *probodconfig.FullConfig, path string, format Format) error
 	}
 
 	return nil
-}
-
-func pruneEmptyStrings(value any) any {
-	switch v := value.(type) {
-	case map[string]any:
-		for key, child := range v {
-			if s, ok := child.(string); ok && s == "" {
-				delete(v, key)
-
-				continue
-			}
-
-			v[key] = pruneEmptyStrings(child)
-		}
-
-		return v
-	case []any:
-		for i, child := range v {
-			v[i] = pruneEmptyStrings(child)
-		}
-
-		return v
-	default:
-		return v
-	}
 }

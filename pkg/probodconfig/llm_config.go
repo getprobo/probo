@@ -18,17 +18,17 @@ type (
 	// LLMProviderConfig holds authentication and connection settings for an
 	// LLM provider (e.g. OpenAI, Anthropic).
 	LLMProviderConfig struct {
-		Type   string `json:"type"`    // "openai", "anthropic", "bedrock"
-		APIKey string `json:"api-key"` // for OpenAI and Anthropic
+		Type   string `json:"type"`              // "openai", "anthropic", "bedrock"
+		APIKey string `json:"api-key,omitempty"` // for OpenAI and Anthropic
 	}
 
 	// LLMAgentConfig holds model parameters for a single agent. Provider
 	// references one of the keys in AgentsConfig.Providers.
 	LLMAgentConfig struct {
-		Provider    string   `json:"provider"` // key into AgentsConfig.Providers
-		ModelName   string   `json:"model-name"`
-		Temperature *float64 `json:"temperature"`
-		MaxTokens   *int     `json:"max-tokens"`
+		Provider    string   `json:"provider,omitempty"` // key into AgentsConfig.Providers
+		ModelName   string   `json:"model-name,omitempty"`
+		Temperature *float64 `json:"temperature,omitempty"`
+		MaxTokens   *int     `json:"max-tokens,omitempty"`
 	}
 
 	// EvidenceDescriberConfig holds worker-side tuning for the evidence
@@ -95,25 +95,37 @@ type (
 	// AgentToolsConfig holds API keys and settings for external tools
 	// that agents can use (web search, scraping, etc.).
 	AgentToolsConfig struct {
-		FirecrawlAPIKey string `json:"firecrawl-api-key"`
+		FirecrawlAPIKey string `json:"firecrawl-api-key,omitempty"`
 	}
 
 	// AgentsConfig groups LLM provider credentials and per-agent model
 	// settings. Default is used as a fallback when an agent-specific field
 	// is zero-valued.
 	AgentsConfig struct {
-		Providers                  map[string]LLMProviderConfig `json:"providers"`
+		Providers                  map[string]LLMProviderConfig `json:"providers,omitempty"`
 		Default                    LLMAgentConfig               `json:"defaults"`
-		Probo                      LLMAgentConfig               `json:"probo"`
-		EvidenceDescriber          LLMAgentConfig               `json:"evidence-describer"`
-		ThirdPartyVetter           LLMAgentConfig               `json:"third-party-vetter"`
-		ThirdPartyDisambiguation   LLMAgentConfig               `json:"third-party-disambiguation"`
-		TrackerMapping             LLMAgentConfig               `json:"tracker-mapping"`
-		TrackerEnrichment          LLMAgentConfig               `json:"tracker-enrichment"`
-		CommonThirdPartyEnrichment LLMAgentConfig               `json:"common-third-party-enrichment"`
-		Tools                      AgentToolsConfig             `json:"tools"`
+		Probo                      LLMAgentConfig               `json:"probo,omitzero"`
+		EvidenceDescriber          LLMAgentConfig               `json:"evidence-describer,omitzero"`
+		ThirdPartyVetter           LLMAgentConfig               `json:"third-party-vetter,omitzero"`
+		ThirdPartyDisambiguation   LLMAgentConfig               `json:"third-party-disambiguation,omitzero"`
+		TrackerMapping             LLMAgentConfig               `json:"tracker-mapping,omitzero"`
+		TrackerEnrichment          LLMAgentConfig               `json:"tracker-enrichment,omitzero"`
+		CommonThirdPartyEnrichment LLMAgentConfig               `json:"common-third-party-enrichment,omitzero"`
+		Tools                      AgentToolsConfig             `json:"tools,omitzero"`
 	}
 )
+
+func (c LLMProviderConfig) IsZero() bool {
+	return c.APIKey == ""
+}
+
+func (c LLMAgentConfig) IsZero() bool {
+	return c.Provider == "" && c.ModelName == ""
+}
+
+func (c AgentToolsConfig) IsZero() bool {
+	return c.FirecrawlAPIKey == ""
+}
 
 // ResolveAgent returns a fully populated LLMAgentConfig by filling in
 // zero-valued fields from the default config.

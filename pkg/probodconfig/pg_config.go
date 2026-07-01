@@ -23,17 +23,17 @@ import (
 )
 
 type PgConfig struct {
-	Addr                         string `json:"addr"`
-	Username                     string `json:"username"`
-	Password                     string `json:"password"`
-	Database                     string `json:"database"`
+	Addr                         string `json:"addr,omitempty"`
+	Username                     string `json:"username,omitempty"`
+	Password                     string `json:"password,omitempty"`
+	Database                     string `json:"database,omitempty"`
 	PoolSize                     int32  `json:"pool-size"`
 	MinPoolSize                  int32  `json:"min-pool-size"`
 	MaxConnIdleTimeSeconds       int    `json:"max-conn-idle-time-seconds"`
 	MaxConnLifetimeSeconds       int    `json:"max-conn-lifetime-seconds"`
 	MaxConnLifetimeJitterSeconds int    `json:"max-conn-lifetime-jitter-seconds"`
 	HealthCheckPeriodSeconds     int    `json:"health-check-period-seconds"`
-	CACertBundle                 string `json:"ca-cert-bundle"`
+	CACertBundle                 string `json:"ca-cert-bundle,omitempty"`
 	Debug                        bool   `json:"debug"`
 }
 
