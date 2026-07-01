@@ -1322,15 +1322,37 @@ func (s *DocumentService) BulkUnarchive(
 	documentIDs []gid.GID,
 ) error {
 	documents := coredata.Documents{}
+	archivedDocuments := coredata.Documents{}
 
 	for _, documentID := range documentIDs {
 		documents = append(documents, &coredata.Document{ID: documentID})
 	}
 
-	return s.svc.pg.WithConn(
+	return s.svc.pg.WithTx(
 		ctx,
-		func(ctx context.Context, conn pg.Querier) error {
-			return documents.BulkUnarchive(ctx, conn, scope)
+		func(ctx context.Context, tx pg.Tx) error {
+			for _, documentID := range documentIDs {
+				document := &coredata.Document{}
+				if err := document.LoadByID(ctx, tx, scope, documentID); err != nil {
+					return fmt.Errorf("cannot load document %q: %w", documentID, err)
+				}
+
+				if document.ArchivedAt != nil {
+					archivedDocuments = append(archivedDocuments, document)
+				}
+			}
+
+			if err := documents.BulkUnarchive(ctx, tx, scope); err != nil {
+				return fmt.Errorf("cannot bulk unarchive documents: %w", err)
+			}
+
+			for _, document := range archivedDocuments {
+				if err := s.ensureLatestDocumentVersionDraftInTx(ctx, scope, tx, document); err != nil {
+					return fmt.Errorf("cannot restore unarchived document draft: %w", err)
+				}
+			}
+
+			return nil
 		},
 	)
 }
@@ -2049,6 +2071,10 @@ func (s *DocumentService) Unarchive(
 				return fmt.Errorf("cannot unarchive document: %w", err)
 			}
 
+			if err := s.ensureLatestDocumentVersionDraftInTx(ctx, scope, tx, document); err != nil {
+				return err
+			}
+
 			return nil
 		},
 	)
@@ -2057,6 +2083,79 @@ func (s *DocumentService) Unarchive(
 	}
 
 	return document, nil
+}
+
+func (s *DocumentService) ensureLatestDocumentVersionDraftInTx(
+	ctx context.Context, scope coredata.Scoper,
+	tx pg.Tx,
+	document *coredata.Document,
+) error {
+	latestVersion := &coredata.DocumentVersion{}
+	if err := latestVersion.LoadLatestVersion(ctx, tx, scope, document.ID); err != nil {
+		return fmt.Errorf("cannot load latest document version: %w", err)
+	}
+
+	switch latestVersion.Status {
+	case coredata.DocumentVersionStatusDraft:
+		return nil
+	case coredata.DocumentVersionStatusPendingApproval:
+		return s.voidPendingDocumentApprovalInTx(ctx, scope, tx, document, latestVersion)
+	case coredata.DocumentVersionStatusPublished:
+		if _, err := s.createDraftInTx(ctx, scope, tx, document, latestVersion); err != nil {
+			return err
+		}
+
+		return nil
+	default:
+		return fmt.Errorf("unsupported document version status %q", latestVersion.Status)
+	}
+}
+
+func (s *DocumentService) voidPendingDocumentApprovalInTx(
+	ctx context.Context, scope coredata.Scoper,
+	tx pg.Tx,
+	document *coredata.Document,
+	documentVersion *coredata.DocumentVersion,
+) error {
+	quorum := &coredata.DocumentVersionApprovalQuorum{}
+	if err := quorum.LoadLastByDocumentVersionID(ctx, tx, scope, documentVersion.ID); err != nil {
+		return fmt.Errorf("cannot load approval quorum: %w", err)
+	}
+
+	if quorum.Status != coredata.DocumentVersionApprovalQuorumStatusPending {
+		return nil
+	}
+
+	now := time.Now()
+
+	quorum.Status = coredata.DocumentVersionApprovalQuorumStatusVoided
+	quorum.UpdatedAt = now
+
+	if err := quorum.Update(ctx, tx, scope); err != nil {
+		return fmt.Errorf("cannot update approval quorum: %w", err)
+	}
+
+	decisions := &coredata.DocumentVersionApprovalDecisions{}
+	if err := decisions.VoidPendingByQuorumID(ctx, tx, scope, quorum.ID, now); err != nil {
+		return fmt.Errorf("cannot void pending decisions: %w", err)
+	}
+
+	documentVersion.Status = coredata.DocumentVersionStatusDraft
+	if document.CurrentPublishedMajor != nil {
+		documentVersion.Major = *document.CurrentPublishedMajor
+		documentVersion.Minor = *document.CurrentPublishedMinor + 1
+	} else {
+		documentVersion.Major = 0
+		documentVersion.Minor = 1
+	}
+
+	documentVersion.UpdatedAt = now
+
+	if err := documentVersion.Update(ctx, tx, scope); err != nil {
+		return fmt.Errorf("cannot update document version status: %w", err)
+	}
+
+	return nil
 }
 
 func (s *DocumentService) CancelSignatureRequest(
