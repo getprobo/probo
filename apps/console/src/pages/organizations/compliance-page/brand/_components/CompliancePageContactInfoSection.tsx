@@ -18,8 +18,8 @@ import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 import { z } from "zod";
 
-import type { CompliancePageContactInfoSection_updateMutation } from "#/__generated__/core/CompliancePageContactInfoSection_updateMutation.graphql";
 import type { CompliancePageContactInfoSection_trustCenter$key } from "#/__generated__/core/CompliancePageContactInfoSection_trustCenter.graphql";
+import type { CompliancePageContactInfoSection_updateMutation } from "#/__generated__/core/CompliancePageContactInfoSection_updateMutation.graphql";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 
