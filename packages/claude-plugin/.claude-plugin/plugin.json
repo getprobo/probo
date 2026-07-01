@@ -1,0 +1,19 @@
+{
+  "name": "probo",
+  "version": "0.1.0",
+  "description": "Probo development skills, commands, and agents for Claude Code",
+  "author": {
+    "name": "Probo Inc",
+    "email": "hello@probo.com"
+  },
+  "homepage": "https://github.com/getprobo/probo/tree/main/packages/claude-plugin",
+  "repository": "https://github.com/getprobo/probo",
+  "license": "MIT",
+  "keywords": [
+    "probo",
+    "compliance",
+    "go",
+    "graphql",
+    "relay"
+  ]
+}

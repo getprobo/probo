@@ -41,3 +41,4 @@ Detailed guides for specific subsystems live in `contrib/claude/`:
 - [`contrib/claude/release/README.md`](contrib/claude/release/README.md) — Release process (per-track version bump, changelog, tag, push)
 - [`contrib/claude/sandbox.md`](contrib/claude/sandbox.md) — Lima sandbox environments (create, manage, access services)
 - [`contrib/claude/n8n.md`](contrib/claude/n8n.md) — n8n community node (resources, operations, GraphQL helpers)
+- [`contrib/claude/claude-plugin.md`](contrib/claude/claude-plugin.md) — Claude Code plugin package (skills, commands, agents, hooks)

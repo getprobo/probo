@@ -1,0 +1,26 @@
+{
+  "name": "probo",
+  "description": "Probo Claude Code plugins",
+  "owner": {
+    "name": "Probo Inc",
+    "email": "hello@probo.com"
+  },
+  "plugins": [
+    {
+      "name": "probo",
+      "description": "Probo development skills, commands, and agents",
+      "source": {
+        "source": "npm",
+        "package": "@probo/claude-plugin"
+      },
+      "homepage": "https://github.com/getprobo/probo/tree/main/packages/claude-plugin",
+      "repository": "https://github.com/getprobo/probo",
+      "license": "MIT",
+      "keywords": [
+        "probo",
+        "compliance",
+        "development"
+      ]
+    }
+  ]
+}

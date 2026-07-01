@@ -1,6 +1,6 @@
 # Release
 
-The repository ships eight independently-versioned tracks. Each has its own
+The repository ships nine independently-versioned tracks. Each has its own
 version source, its own `CHANGELOG.md`, its own tag pattern, and its own
 release workflow. Cutting a release means: bump the version, write a
 changelog entry, commit, tag, push.
@@ -14,6 +14,7 @@ changelog entry, commit, tag, push.
 | `probo-agent`           | `probo-agent/v*`               | [probo-agent.md](./probo-agent.md) |
 | `@probo/n8n-nodes-probo` | `@probo/n8n-nodes-probo/v*`   | [n8n-nodes-probo.md](./n8n-nodes-probo.md) |
 | `@probo/cookie-banner`  | `@probo/cookie-banner/v*`      | [cookie-banner.md](./cookie-banner.md) |
+| `@probo/claude-plugin`  | `@probo/claude-plugin/v*`      | [claude-plugin.md](./claude-plugin.md) |
 | Helm chart (`probo`)    | `helm/v*`                      | [helm.md](./helm.md)                   |
 
 When the user asks for a release **without specifying a track**, follow
@@ -75,6 +76,10 @@ git log $(git describe --tags --abbrev=0 --match='@probo/n8n-nodes-probo/v*')..H
 # @probo/cookie-banner
 git log $(git describe --tags --abbrev=0 --match='@probo/cookie-banner/v*')..HEAD --oneline \
   -- packages/cookie-banner
+
+# @probo/claude-plugin
+git log $(git describe --tags --abbrev=0 --match='@probo/claude-plugin/v*')..HEAD --oneline \
+  -- packages/claude-plugin
 
 # helm chart
 git log $(git describe --tags --abbrev=0 --match='helm/v*')..HEAD --oneline \
