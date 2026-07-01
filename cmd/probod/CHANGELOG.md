@@ -4,6 +4,12 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.222.2] - 2026-07-01
+
+### Changed
+
+- Bootstrap config output now omits empty fields and unset LLM provider blocks, producing cleaner generated YAML
+
 ## [0.222.1] - 2026-07-01
 
 ### Changed
