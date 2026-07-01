@@ -23,17 +23,17 @@
     "react-hook-form": "^7.56.4",
     "react-pdf": "^10.3.0",
     "react-relay": "^21.0.1",
-    "react-router": "^8.0.0",
+    "react-router": "^8.1.0",
     "relay-runtime": "^21.0.1",
     "usehooks-ts": "^3.1.1",
-    "zod": "^3.25.71"
+    "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@babel/core": "^7.29.0",
+    "@babel/core": "^8.0.1",
     "@rolldown/plugin-babel": "^0.2.3",
-    "@tailwindcss/vite": "^4.3.1",
+    "@tailwindcss/vite": "^4.3.2",
     "@types/babel__core": "^7.20.5",
-    "@types/node": "^24",
+    "@types/node": "^26",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.2",
@@ -41,7 +41,7 @@
     "graphql": "^17.0.1",
     "tailwindcss": "^4.3.1",
     "typescript": "~6.0.3",
-    "vite": "^8.0.16"
+    "vite": "^8.1.2"
   },
   "volta": {
     "node": "24.4.0"

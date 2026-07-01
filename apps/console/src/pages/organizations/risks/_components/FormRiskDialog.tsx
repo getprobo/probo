@@ -33,7 +33,6 @@ import {
   useToast,
 } from "@probo/ui";
 import { type ReactNode, useMemo } from "react";
-import type { FieldErrors } from "react-hook-form";
 import { useFragment, useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
 
@@ -344,12 +343,7 @@ function ImpactAndLikelihood({
   label: string;
   prefix: "inherent" | "residual";
   control: RiskForm["control"];
-  errors: FieldErrors<{
-    inherentImpact: string;
-    inherentLikelihood: string;
-    residualImpact: string;
-    residualLikelihood: string;
-  }>;
+  errors: RiskForm["formState"]["errors"];
 }) {
   const { __ } = useTranslate();
   return (

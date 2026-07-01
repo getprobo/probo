@@ -12,16 +12,16 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import type { z, ZodTypeAny } from "zod";
+import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
+import { type FieldValues, useForm, type UseFormReturn } from "react-hook-form";
+import type { z } from "zod";
 
-export function useFormWithSchema<T extends ZodTypeAny>(
+export function useFormWithSchema<T extends z.ZodType<FieldValues, FieldValues>>(
   schema: T,
-  options: Parameters<typeof useForm<z.infer<T>>>[0],
-) {
-  return useForm<z.infer<T>>({
+  options: Parameters<typeof useForm<z.input<T>, unknown, z.output<T>>>[0],
+): UseFormReturn<z.input<T>, unknown, z.output<T>> {
+  return useForm<z.input<T>, unknown, z.output<T>>({
     ...options,
-    resolver: zodResolver(schema),
+    resolver: standardSchemaResolver(schema),
   });
 }

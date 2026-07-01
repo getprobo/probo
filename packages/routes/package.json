@@ -17,7 +17,7 @@
   "peerDependencies": {
     "react": "^19.2.7",
     "react-relay": "^21.0.1",
-    "react-router": "^8.0.0",
+    "react-router": "^8.1.0",
     "relay-runtime": "^21.0.1"
   }
 }

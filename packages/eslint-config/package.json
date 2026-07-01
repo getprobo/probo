@@ -32,10 +32,10 @@
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-relay": "^2.0.0",
-    "eslint": "^10.5.0",
+    "eslint": "^10.6.0",
     "globals": "^17.6.0",
     "jiti": "^2.2.0",
-    "typescript-eslint": "^8.61.1",
+    "typescript-eslint": "^8.62.1",
     "typescript": "~6.0.3"
   }
 }

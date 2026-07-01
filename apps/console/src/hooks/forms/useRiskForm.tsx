@@ -41,10 +41,10 @@ export const riskSchema = z.object({
   description: z.string().optional().nullable(),
   ownerId: z.string().min(1, "Owner is required"),
   treatment: z.enum(["AVOIDED", "MITIGATED", "TRANSFERRED", "ACCEPTED"]),
-  inherentLikelihood: z.number({ coerce: true }).min(1).max(5),
-  inherentImpact: z.number({ coerce: true }).min(1).max(5),
-  residualLikelihood: z.number({ coerce: true }).min(1).max(5),
-  residualImpact: z.number({ coerce: true }).min(1).max(5),
+  inherentLikelihood: z.coerce.number().min(1).max(5),
+  inherentImpact: z.coerce.number().min(1).max(5),
+  residualLikelihood: z.coerce.number().min(1).max(5),
+  residualImpact: z.coerce.number().min(1).max(5),
   note: z.string().optional(),
 });
 

@@ -40,7 +40,7 @@ import { useStateWithSchema } from "#/hooks/useStateWithSchema";
 
 type ColumnDefinition = { label: string; field: string } | string;
 
-type EditableTableRowProps<T, S extends z.ZodSchema> = {
+type EditableTableRowProps<T, S extends z.ZodType<Record<string, unknown>>> = {
   item?: T;
   onUpdate: (key: keyof z.infer<S>, value: z.infer<S>[typeof key]) => void;
   errors: Record<string, string>;
@@ -51,7 +51,7 @@ type EditableTableRowProps<T, S extends z.ZodSchema> = {
  */
 export function EditableTable<
   T extends { id: string },
-  S extends z.ZodSchema,
+  S extends z.ZodType<Record<string, unknown>>,
 >(props: {
   // Schema to create a new item
   schema: S;
@@ -123,7 +123,10 @@ export function EditableTable<
   );
 }
 
-function NewItemRow<T extends { id: string }, S extends z.ZodSchema>(props: {
+function NewItemRow<
+  T extends { id: string },
+  S extends z.ZodType<Record<string, unknown>>,
+>(props: {
   schema: S;
   defaultValue: z.infer<S>;
   connectionId: string;
@@ -153,7 +156,10 @@ function NewItemRow<T extends { id: string }, S extends z.ZodSchema>(props: {
     });
   };
   return (
-    <EditableRow onUpdate={update} errors={errors}>
+    <EditableRow
+      onUpdate={update as (key: string, value: unknown) => void}
+      errors={errors}
+    >
       {props.row({ errors, onUpdate: update })}
       <Cell>
         <Button

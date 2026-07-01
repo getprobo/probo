@@ -13,17 +13,16 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 import { useCallback, useMemo, useState } from "react";
-import { z, ZodError, type ZodTypeAny } from "zod";
+import { z, ZodError } from "zod";
 
-export function useStateWithSchema<T extends ZodTypeAny>(
+export function useStateWithSchema<T extends z.ZodType<Record<string, unknown>>>(
   schema: T,
   initialValue: z.infer<T>,
 ) {
   const [state, setState] = useState(initialValue);
   const [value, errors] = useMemo((): [z.infer<T>, Record<string, string>] => {
     try {
-      schema.parse(state);
-      return [schema.parse(state) as z.TypeOf<T>, {}];
+      return [schema.parse(state), {}];
     } catch (error) {
       if (error instanceof ZodError) {
         return [
