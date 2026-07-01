@@ -1312,6 +1312,10 @@ func (s *DocumentService) BulkArchive(
 				return err
 			}
 
+			if err := s.cancelIncompleteWorkflowsForDocumentsInTx(ctx, scope, tx, documentIDs); err != nil {
+				return err
+			}
+
 			return documents.BulkArchive(ctx, tx, scope)
 		},
 	)
@@ -2001,6 +2005,10 @@ func (s *DocumentService) Archive(
 			}
 
 			if err := s.clearDocumentReferences(ctx, scope, tx, []gid.GID{documentID}); err != nil {
+				return err
+			}
+
+			if err := s.cancelIncompleteWorkflowsInTx(ctx, scope, tx, document); err != nil {
 				return err
 			}
 
@@ -2845,6 +2853,54 @@ func (s *DocumentService) publishMajorVersionInTx(
 	}
 
 	return document, documentVersion, nil
+}
+
+// cancelIncompleteWorkflowsInTx removes every still-pending signature request
+// and voids any pending approval quorum on the document. SIGNED signatures and
+// completed approvals are left untouched to preserve the audit trail.
+func (s *DocumentService) cancelIncompleteWorkflowsInTx(
+	ctx context.Context, scope coredata.Scoper,
+	tx pg.Tx,
+	document *coredata.Document,
+) error {
+	signatures := &coredata.DocumentVersionSignatures{}
+	if err := signatures.DeleteRequestedByDocumentID(ctx, tx, scope, document.ID); err != nil {
+		return fmt.Errorf("cannot cancel signature requests: %w", err)
+	}
+
+	if err := s.svc.DocumentApprovals.voidPendingApprovalForDocumentInTx(ctx, scope, tx, document); err != nil {
+		return fmt.Errorf("cannot cancel pending approval quorum: %w", err)
+	}
+
+	return nil
+}
+
+func (s *DocumentService) cancelIncompleteWorkflowsForDocumentsInTx(
+	ctx context.Context, scope coredata.Scoper,
+	tx pg.Tx,
+	documentIDs []gid.GID,
+) error {
+	signatures := &coredata.DocumentVersionSignatures{}
+	if err := signatures.DeleteRequestedByDocumentIDs(ctx, tx, scope, documentIDs); err != nil {
+		return fmt.Errorf("cannot cancel signature requests: %w", err)
+	}
+
+	for _, documentID := range documentIDs {
+		document := &coredata.Document{}
+		if err := document.LoadByID(ctx, tx, scope, documentID); err != nil {
+			return fmt.Errorf("cannot load document %q: %w", documentID, err)
+		}
+
+		if document.ArchivedAt != nil {
+			continue
+		}
+
+		if err := s.svc.DocumentApprovals.voidPendingApprovalForDocumentInTx(ctx, scope, tx, document); err != nil {
+			return fmt.Errorf("cannot cancel pending approval quorum for %q: %w", documentID, err)
+		}
+	}
+
+	return nil
 }
 
 // cancelPreviousMajorSignatureRequestsInTx cancels every still-pending

@@ -769,6 +769,76 @@ WHERE
 	return nil
 }
 
+func (pvss *DocumentVersionSignatures) DeleteRequestedByDocumentID(
+	ctx context.Context,
+	conn pg.Tx,
+	scope Scoper,
+	documentID gid.GID,
+) error {
+	q := `
+DELETE FROM document_version_signatures
+WHERE
+	%s
+	AND state = @state
+	AND document_version_id IN (
+		SELECT id
+		FROM document_versions
+		WHERE document_id = @document_id
+	)
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"document_id": documentID,
+		"state":       DocumentVersionSignatureStateRequested,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	if _, err := conn.Exec(ctx, q, args); err != nil {
+		return fmt.Errorf("cannot delete requested document version signatures: %w", err)
+	}
+
+	return nil
+}
+
+func (pvss *DocumentVersionSignatures) DeleteRequestedByDocumentIDs(
+	ctx context.Context,
+	conn pg.Tx,
+	scope Scoper,
+	documentIDs []gid.GID,
+) error {
+	if len(documentIDs) == 0 {
+		return nil
+	}
+
+	q := `
+DELETE FROM document_version_signatures
+WHERE
+	%s
+	AND state = @state
+	AND document_version_id IN (
+		SELECT id
+		FROM document_versions
+		WHERE document_id = ANY(@document_ids)
+	)
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"document_ids": documentIDs,
+		"state":        DocumentVersionSignatureStateRequested,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	if _, err := conn.Exec(ctx, q, args); err != nil {
+		return fmt.Errorf("cannot delete requested document version signatures: %w", err)
+	}
+
+	return nil
+}
+
 func (pvss *DocumentVersionSignatures) DeleteRequestedByDocumentIDBelowMajor(
 	ctx context.Context,
 	conn pg.Tx,

@@ -2281,3 +2281,134 @@ func TestDocumentVersion_SignArchivedDocumentFails(t *testing.T) {
 		},
 	})
 }
+
+// archiveTestDocument archives the given document.
+func archiveTestDocument(t *testing.T, owner *testutil.Client, docID string) {
+	t.Helper()
+
+	_, err := owner.Do(`
+		mutation($input: ArchiveDocumentInput!) {
+			archiveDocument(input: $input) {
+				document { id status }
+			}
+		}
+	`, map[string]any{
+		"input": map[string]any{
+			"documentId": docID,
+		},
+	})
+	require.NoError(t, err)
+}
+
+// TestDocumentVersion_ArchiveCancelsPendingSignature verifies that archiving a
+// document deletes every still-pending signature request on it.
+func TestDocumentVersion_ArchiveCancelsPendingSignature(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+
+	docID, _ := createTestDocument(t, owner)
+	approveTestDocument(t, owner, docID)
+
+	publishedVersionID := latestDocumentVersionID(t, owner, docID)
+	requestDocumentSignature(t, owner, publishedVersionID, getOwnerProfileID(t, owner))
+
+	before := requestedSignatureVersions(t, owner, publishedVersionID)
+	require.Len(t, before, 1)
+
+	archiveTestDocument(t, owner, docID)
+
+	after := requestedSignatureVersions(t, owner, publishedVersionID)
+	assert.Empty(t, after)
+}
+
+// TestDocumentVersion_ArchiveVoidsPendingApproval verifies that archiving a
+// document voids its pending approval quorum and every still-pending decision.
+func TestDocumentVersion_ArchiveVoidsPendingApproval(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+
+	docID, _ := createTestDocument(t, owner)
+	requestDocumentApproval(t, owner, docID, []string{getOwnerProfileID(t, owner)})
+
+	versionID := latestDocumentVersionID(t, owner, docID)
+
+	var before struct {
+		Node struct {
+			Status          string `json:"status"`
+			ApprovalQuorums struct {
+				Edges []struct {
+					Node struct {
+						Status string `json:"status"`
+					} `json:"node"`
+				} `json:"edges"`
+			} `json:"approvalQuorums"`
+		} `json:"node"`
+	}
+
+	err := owner.Execute(`
+		query($id: ID!) {
+			node(id: $id) {
+				... on DocumentVersion {
+					status
+					approvalQuorums(first: 1, orderBy: { field: CREATED_AT, direction: DESC }) {
+						edges { node { status } }
+					}
+				}
+			}
+		}
+	`, map[string]any{"id": versionID}, &before)
+	require.NoError(t, err)
+	assert.Equal(t, "PENDING_APPROVAL", before.Node.Status)
+	require.NotEmpty(t, before.Node.ApprovalQuorums.Edges)
+	assert.Equal(t, "PENDING", before.Node.ApprovalQuorums.Edges[0].Node.Status)
+
+	archiveTestDocument(t, owner, docID)
+
+	var after struct {
+		Node struct {
+			Status          string `json:"status"`
+			ApprovalQuorums struct {
+				Edges []struct {
+					Node struct {
+						Status    string `json:"status"`
+						Decisions struct {
+							Edges []struct {
+								Node struct {
+									State string `json:"state"`
+								} `json:"node"`
+							} `json:"edges"`
+						} `json:"decisions"`
+					} `json:"node"`
+				} `json:"edges"`
+			} `json:"approvalQuorums"`
+		} `json:"node"`
+	}
+
+	err = owner.Execute(`
+		query($id: ID!) {
+			node(id: $id) {
+				... on DocumentVersion {
+					status
+					approvalQuorums(first: 1, orderBy: { field: CREATED_AT, direction: DESC }) {
+						edges {
+							node {
+								status
+								decisions(first: 100) {
+									edges { node { state } }
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	`, map[string]any{"id": versionID}, &after)
+	require.NoError(t, err)
+	assert.Equal(t, "DRAFT", after.Node.Status)
+	require.NotEmpty(t, after.Node.ApprovalQuorums.Edges)
+	assert.Equal(t, "VOIDED", after.Node.ApprovalQuorums.Edges[0].Node.Status)
+
+	for _, edge := range after.Node.ApprovalQuorums.Edges[0].Node.Decisions.Edges {
+		assert.Equal(t, "VOIDED", edge.Node.State)
+	}
+}
