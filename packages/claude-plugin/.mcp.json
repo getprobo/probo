@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "probo": {
+      "type": "http",
+      "url": "${PROBO_BASE_URL}/mcp/v1",
+      "headers": {
+        "Authorization": "Bearer ${PROBO_API_TOKEN}"
+      }
+    }
+  }
+}

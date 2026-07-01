@@ -1,7 +1,7 @@
 {
   "name": "@probo/claude-plugin",
   "version": "0.1.0",
-  "description": "Claude Code plugin for Probo development (skills, commands, agents, hooks)",
+  "description": "Claude Code plugin for open-source compliance workflows powered by Probo MCP",
   "private": false,
   "scripts": {
     "validate": "node scripts/validate.mjs",
@@ -26,8 +26,10 @@
     "claude-code",
     "claude-plugin",
     "probo",
-    "skills",
-    "agents"
+    "compliance",
+    "grc",
+    "mcp",
+    "open-source"
   ],
   "license": "MIT",
   "repository": {

@@ -1,7 +1,7 @@
 {
   "name": "probo",
   "version": "0.1.0",
-  "description": "Probo development skills, commands, and agents for Claude Code",
+  "description": "Open-source compliance workflows for Claude Code, powered by Probo MCP",
   "author": {
     "name": "Probo Inc",
     "email": "hello@probo.com"
@@ -12,8 +12,8 @@
   "keywords": [
     "probo",
     "compliance",
-    "go",
-    "graphql",
-    "relay"
+    "grc",
+    "mcp",
+    "open-source"
   ]
 }

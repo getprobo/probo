@@ -8,7 +8,7 @@
   "plugins": [
     {
       "name": "probo",
-      "description": "Probo development skills, commands, and agents",
+      "description": "Open-source compliance workflows powered by Probo MCP",
       "source": {
         "source": "npm",
         "package": "@probo/claude-plugin"
@@ -19,7 +19,9 @@
       "keywords": [
         "probo",
         "compliance",
-        "development"
+        "grc",
+        "mcp",
+        "claude-plugin"
       ]
     }
   ]

@@ -20,7 +20,8 @@ const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
 const requiredPaths = [
   ".claude-plugin/plugin.json",
-  "skills/commit/SKILL.md",
+  ".mcp.json",
+  "skills/open-source-compliance/SKILL.md",
 ];
 
 let failed = false;
