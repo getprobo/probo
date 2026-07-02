@@ -2,6 +2,10 @@ type TrustCenter implements Node {
   id: ID!
   active: Boolean!
   slug: String!
+  description: String
+  websiteUrl: String
+  email: String
+  headquarterAddress: String
   logo: File @goField(forceResolver: true)
   darkLogo: File @goField(forceResolver: true)
 

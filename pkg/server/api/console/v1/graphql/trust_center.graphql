@@ -252,6 +252,11 @@ type TrustCenter implements Node
     logo: File @goField(forceResolver: true)
     darkLogo: File @goField(forceResolver: true)
     nda: File @goField(forceResolver: true)
+    description: String
+    websiteUrl: String
+    email: String
+    headquarterAddress: String
+    customDomain: CustomDomain @goField(forceResolver: true)
     createdAt: Datetime!
     updatedAt: Datetime!
     organization: Organization! @goField(forceResolver: true)
@@ -572,6 +577,10 @@ input UpdateTrustCenterBrandInput {
     trustCenterId: ID!
     logoFile: Upload @goField(omittable: true)
     darkLogoFile: Upload @goField(omittable: true)
+    description: String @goField(omittable: true)
+    websiteUrl: String @goField(omittable: true)
+    email: String @goField(omittable: true)
+    headquarterAddress: String @goField(omittable: true)
 }
 
 input TrustCenterDocumentAccessInput {
@@ -668,12 +677,12 @@ input DeleteTrustCenterFileInput {
 }
 
 input CreateCustomDomainInput {
-    organizationId: ID!
+    trustCenterId: ID!
     domain: String!
 }
 
 input DeleteCustomDomainInput {
-    organizationId: ID!
+    trustCenterId: ID!
 }
 
 type UpdateTrustCenterPayload {

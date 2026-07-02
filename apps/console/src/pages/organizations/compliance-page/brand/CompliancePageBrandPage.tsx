@@ -35,6 +35,9 @@ import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 import { CompliancePageExternalUrlsSection } from "../overview/_components/CompliancePageExternalUrlsSection";
 import { CompliancePageFrameworkList } from "../overview/_components/CompliancePageFrameworkList";
 
+import { CompliancePageContactInfoSection } from "./_components/CompliancePageContactInfoSection";
+import { CompliancePageDomainSection } from "./_components/CompliancePageDomainSection";
+
 export const compliancePageBrandPageQuery = graphql`
   query CompliancePageBrandPageQuery($organizationId: ID!) {
     organization: node(id: $organizationId) {
@@ -42,6 +45,7 @@ export const compliancePageBrandPageQuery = graphql`
       ... on Organization {
         compliancePage: trustCenter @required(action: THROW) {
           id
+          ...CompliancePageDomainSection_trustCenter
           logo {
             downloadUrl
           }
@@ -49,6 +53,7 @@ export const compliancePageBrandPageQuery = graphql`
             downloadUrl
           }
           canUpdate: permission(action: "core:trust-center:update")
+          ...CompliancePageContactInfoSection_trustCenter
           ...CompliancePageFrameworkList_compliancePageFragment
           ...CompliancePageExternalUrlsSection_trustCenterFragment
         }
@@ -348,6 +353,10 @@ export function CompliancePageBrandPage(props: { queryRef: PreloadedQuery<Compli
           </div>
         </Card>
       </div>
+
+      <CompliancePageContactInfoSection trustCenterKey={organization.compliancePage} />
+
+      <CompliancePageDomainSection trustCenterKey={organization.compliancePage} />
 
       <div className="space-y-4">
         <div>

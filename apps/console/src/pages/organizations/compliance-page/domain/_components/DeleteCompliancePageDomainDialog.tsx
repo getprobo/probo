@@ -28,7 +28,6 @@ import { graphql } from "relay-runtime";
 
 import type { DeleteCompliancePageDomainDialogMutation } from "#/__generated__/core/DeleteCompliancePageDomainDialogMutation.graphql";
 import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
-import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 const deleteCustomDomainMutation = graphql`
   mutation DeleteCompliancePageDomainDialogMutation($input: DeleteCustomDomainInput!) {
@@ -40,12 +39,12 @@ const deleteCustomDomainMutation = graphql`
 
 type DeleteCompliancePageDomainDialogProps = PropsWithChildren<{
   domain: string;
+  trustCenterId: string;
 }>;
 
 export function DeleteCompliancePageDomainDialog(props: DeleteCompliancePageDomainDialogProps) {
-  const { children, domain } = props;
+  const { children, domain, trustCenterId } = props;
 
-  const organizationId = useOrganizationId();
   const { __ } = useTranslate();
   const dialogRef = useDialogRef();
   const [inputValue, setInputValue] = useState("");
@@ -62,16 +61,15 @@ export function DeleteCompliancePageDomainDialog(props: DeleteCompliancePageDoma
   const handleDeleteDomain = async () => {
     return deleteCustomDomain({
       variables: {
-        input: { organizationId },
+        input: { trustCenterId },
       },
       onCompleted: () => {
         dialogRef.current?.close();
       },
       updater: (store) => {
-        // Update the cache by setting customDomain to null
-        const organizationRecord = store.get(organizationId);
-        if (organizationRecord) {
-          organizationRecord.setValue(null, "customDomain");
+        const trustCenterRecord = store.get(trustCenterId);
+        if (trustCenterRecord) {
+          trustCenterRecord.setValue(null, "customDomain");
         }
       },
     });

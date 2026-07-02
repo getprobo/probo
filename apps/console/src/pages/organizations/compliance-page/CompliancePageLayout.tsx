@@ -27,12 +27,12 @@ export const compliancePageLayoutQuery = graphql`
     organization: node(id: $organizationId) {
       __typename
       ... on Organization {
-        customDomain {
-          domain
-        }
         compliancePage: trustCenter {
           id
           active
+          customDomain {
+            domain
+          }
         }
       }
     }
@@ -53,8 +53,8 @@ export function CompliancePageLayout(props: { queryRef: PreloadedQuery<Complianc
   }
 
   const compliancePageUrl = organization.compliancePage?.id
-    ? organization.customDomain?.domain
-      ? `https://${organization.customDomain.domain}`
+    ? organization.compliancePage.customDomain?.domain
+      ? `https://${organization.compliancePage.customDomain.domain}`
       : `${window.location.origin}/trust/${organization.compliancePage.id}`
     : null;
 
@@ -92,10 +92,6 @@ export function CompliancePageLayout(props: { queryRef: PreloadedQuery<Complianc
         <TabLink to={`/organizations/${organizationId}/compliance-page/brand`}>
           <IconPencil className="size-4" />
           {__("Brand")}
-        </TabLink>
-        <TabLink to={`/organizations/${organizationId}/compliance-page/domain`}>
-          <IconStore className="size-4" />
-          {__("Domain")}
         </TabLink>
         <TabLink to={`/organizations/${organizationId}/compliance-page/references`}>
           <IconCheckmark1 className="size-4" />

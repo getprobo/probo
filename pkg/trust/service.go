@@ -182,17 +182,8 @@ func (s *Service) GetByDomainName(ctx context.Context, domain string) (*coredata
 				return fmt.Errorf("cannot load custom domain: %w", err)
 			}
 
-			var org coredata.Organization
-			if err := org.LoadByCustomDomainID(ctx, conn, coredata.NewNoScope(), customDomain.ID); err != nil {
-				if errors.Is(err, coredata.ErrResourceNotFound) {
-					return ErrPageNotFound
-				}
-
-				return fmt.Errorf("cannot load organization: %w", err)
-			}
-
 			trustCenter = &coredata.TrustCenter{}
-			if err := trustCenter.LoadByOrganizationID(ctx, conn, coredata.NewNoScope(), org.ID); err != nil {
+			if err := trustCenter.LoadByCustomDomainID(ctx, conn, coredata.NewNoScope(), customDomain.ID); err != nil {
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return ErrPageNotFound
 				}
@@ -211,12 +202,23 @@ func (s *Service) GetByDomainName(ctx context.Context, domain string) (*coredata
 }
 
 func (s *Service) GetCustomDomainByOrganizationID(ctx context.Context, organizationID gid.GID) (*coredata.CustomDomain, error) {
-	customDomain := &coredata.CustomDomain{}
+	var customDomain *coredata.CustomDomain
 
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			return customDomain.LoadByOrganizationID(ctx, conn, coredata.NewNoScope(), organizationID)
+			var trustCenter coredata.TrustCenter
+			if err := trustCenter.LoadByOrganizationID(ctx, conn, coredata.NewNoScope(), organizationID); err != nil {
+				return err
+			}
+
+			if trustCenter.CustomDomainID == nil {
+				return coredata.ErrResourceNotFound
+			}
+
+			customDomain = &coredata.CustomDomain{}
+
+			return customDomain.LoadByID(ctx, conn, coredata.NewNoScope(), *trustCenter.CustomDomainID)
 		},
 	)
 	if err != nil {

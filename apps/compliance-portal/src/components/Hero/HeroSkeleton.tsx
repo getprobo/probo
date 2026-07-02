@@ -17,7 +17,7 @@ import { TextSkeleton } from "@probo/ui/src/v2/typography/TextSkeleton";
 
 import { HeaderBand } from "#/components/HeaderBand/HeaderBand";
 
-import { hero, organizationContactInfo } from "./variants";
+import { compliancePageContactInfo, hero } from "./variants";
 
 // Width per contact item, roughly sized to its typical content (hostname /
 // email / address). See .cursor/rules/skeleton-width-sync.mdc.
@@ -31,7 +31,7 @@ const CONTACT_ITEMS = [
 // skeleton primitives. Imports no Relay, so it renders instantly.
 export function HeroSkeleton() {
   const { content, section } = hero();
-  const { root, item } = organizationContactInfo();
+  const { root, item } = compliancePageContactInfo();
 
   return (
     <HeaderBand>

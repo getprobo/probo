@@ -64,10 +64,6 @@ export async function execute(
 							organization {
 								id
 								name
-								description
-								websiteUrl
-								email
-								headquarterAddress
 								logo {
 									id
 									fileName

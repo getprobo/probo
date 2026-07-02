@@ -29,7 +29,6 @@ import { z } from "zod";
 import type { NewCompliancePageDomainDialogMutation } from "#/__generated__/core/NewCompliancePageDomainDialogMutation.graphql";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
-import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 const createCustomDomainMutation = graphql`
   mutation NewCompliancePageDomainDialogMutation($input: CreateCustomDomainInput!) {
@@ -64,10 +63,13 @@ const schema = z.object({
     ),
 });
 
-export function NewCompliancePageDomainDialog(props: PropsWithChildren) {
-  const { children } = props;
+type NewCompliancePageDomainDialogProps = PropsWithChildren<{
+  trustCenterId: string;
+}>;
 
-  const organizationId = useOrganizationId();
+export function NewCompliancePageDomainDialog(props: NewCompliancePageDomainDialogProps) {
+  const { children, trustCenterId } = props;
+
   const { __ } = useTranslate();
   const dialogRef = useDialogRef();
 
@@ -98,19 +100,18 @@ export function NewCompliancePageDomainDialog(props: PropsWithChildren) {
     await createCustomDomain({
       variables: {
         input: {
-          organizationId,
+          trustCenterId,
           domain: normalizedDomain,
         },
       },
       updater: (store, data) => {
-        // Update the cache by setting the new customDomain on the organization
-        const organizationRecord = store.get(organizationId);
-        if (organizationRecord && data?.createCustomDomain?.customDomain) {
+        const trustCenterRecord = store.get(trustCenterId);
+        if (trustCenterRecord && data?.createCustomDomain?.customDomain) {
           const customDomainRecord = store.get(
             data.createCustomDomain.customDomain.id,
           );
           if (customDomainRecord) {
-            organizationRecord.setLinkedRecord(
+            trustCenterRecord.setLinkedRecord(
               customDomainRecord,
               "customDomain",
             );

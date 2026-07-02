@@ -1172,26 +1172,6 @@ func (r *organizationResolver) TrustCenter(ctx context.Context, obj *types.Organ
 	return types.NewTrustCenter(trustCenter), nil
 }
 
-// CustomDomain is the resolver for the customDomain field.
-func (r *organizationResolver) CustomDomain(ctx context.Context, obj *types.Organization) (*types.CustomDomain, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionCustomDomainGet)
-	if err != nil {
-		return nil, err
-	}
-
-	domain, err := r.probo.CustomDomains.GetOrganizationCustomDomain(ctx, scope, obj.ID)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot get custom domain", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	if domain == nil {
-		return nil, nil
-	}
-
-	return types.NewCustomDomain(domain, r.customDomainCname), nil
-}
-
 // TrustCenterFiles is the resolver for the trustCenterFiles field.
 func (r *organizationResolver) TrustCenterFiles(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.OrderBy[coredata.TrustCenterFileOrderField]) (*types.TrustCenterFileConnection, error) {
 	scope, err := r.authorize(ctx, obj.ID, probo.ActionTrustCenterFileList)

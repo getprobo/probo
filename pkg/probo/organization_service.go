@@ -18,7 +18,6 @@ import (
 	"context"
 	"fmt"
 	"mime"
-	"net/mail"
 	"path/filepath"
 	"time"
 
@@ -42,10 +41,6 @@ type (
 		Name               *string
 		File               *File
 		HorizontalLogoFile *File
-		Description        **string
-		WebsiteURL         **string
-		Email              **string
-		HeadquarterAddress **string
 	}
 
 	UpdateOrganizationContextRequest struct {
@@ -63,10 +58,6 @@ func (uor *UpdateOrganizationRequest) Validate() error {
 
 	v.Check(uor.ID, "id", validator.Required(), validator.GID(coredata.OrganizationEntityType))
 	v.Check(uor.Name, "name", validator.SafeTextNoNewLine(TitleMaxLength))
-	v.Check(uor.Description, "description", validator.SafeText(ContentMaxLength))
-	v.Check(uor.WebsiteURL, "website_url", validator.SafeText(2048))
-	v.Check(uor.Email, "email", validator.SafeText(255))
-	v.Check(uor.HeadquarterAddress, "headquarter_address", validator.SafeText(2048))
 	v.Check(uor.File, "file", validator.NotEmpty())
 	v.Check(uor.HorizontalLogoFile, "horizontal_logo_file", validator.NotEmpty())
 
@@ -247,28 +238,6 @@ func (s OrganizationService) Update(
 
 			if req.Name != nil {
 				organization.Name = *req.Name
-			}
-
-			if req.Description != nil {
-				organization.Description = *req.Description
-			}
-
-			if req.WebsiteURL != nil {
-				organization.WebsiteURL = *req.WebsiteURL
-			}
-
-			if req.Email != nil {
-				if *req.Email != nil {
-					if _, err := mail.ParseAddress(**req.Email); err != nil {
-						return fmt.Errorf("invalid email address: %w", err)
-					}
-				}
-
-				organization.Email = *req.Email
-			}
-
-			if req.HeadquarterAddress != nil {
-				organization.HeadquarterAddress = *req.HeadquarterAddress
 			}
 
 			if err := organization.Update(ctx, scope, tx); err != nil {

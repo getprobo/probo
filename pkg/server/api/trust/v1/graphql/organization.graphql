@@ -2,9 +2,4 @@ type Organization implements Node {
   id: ID!
   name: String!
   logo: File @goField(forceResolver: true)
-
-  description: String
-  websiteUrl: String
-  email: String
-  headquarterAddress: String
 }

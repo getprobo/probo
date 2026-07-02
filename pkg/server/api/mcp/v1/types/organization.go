@@ -18,10 +18,9 @@ import "go.probo.inc/probo/pkg/coredata"
 
 func NewOrganization(o *coredata.Organization) *Organization {
 	return &Organization{
-		ID:          o.ID,
-		Name:        o.Name,
-		Description: o.Description,
-		CreatedAt:   o.CreatedAt,
-		UpdatedAt:   o.UpdatedAt,
+		ID:        o.ID,
+		Name:      o.Name,
+		CreatedAt: o.CreatedAt,
+		UpdatedAt: o.UpdatedAt,
 	}
 }

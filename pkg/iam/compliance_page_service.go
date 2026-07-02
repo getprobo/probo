@@ -16,7 +16,6 @@ package iam
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/url"
 	"path/filepath"
@@ -114,9 +113,9 @@ func (s *CompliancePageService) EmailPresenterConfig(ctx context.Context, compli
 				return fmt.Errorf("cannot load organization: %w", err)
 			}
 
-			customDomain = &coredata.CustomDomain{}
-			if err := customDomain.LoadByOrganizationID(ctx, conn, scope, organization.ID); err != nil {
-				if !errors.Is(err, coredata.ErrResourceNotFound) {
+			if compliancePage.CustomDomainID != nil {
+				customDomain = &coredata.CustomDomain{}
+				if err := customDomain.LoadByID(ctx, conn, scope, *compliancePage.CustomDomainID); err != nil {
 					return fmt.Errorf("cannot load custom domain: %w", err)
 				}
 			}
@@ -156,12 +155,12 @@ func (s *CompliancePageService) EmailPresenterConfig(ctx context.Context, compli
 		emailPresenterCfg.SenderCompanyLogoPath = filepath.Join("/api/files/v1/public/", logoFile.ID.String())
 		emailPresenterCfg.SenderCompanyName = organization.Name
 
-		if organization.WebsiteURL != nil {
-			emailPresenterCfg.SenderCompanyWebsiteURL = *organization.WebsiteURL
+		if compliancePage.WebsiteURL != nil {
+			emailPresenterCfg.SenderCompanyWebsiteURL = *compliancePage.WebsiteURL
 		}
 
-		if organization.HeadquarterAddress != nil {
-			emailPresenterCfg.SenderCompanyHeadquarterAddress = *organization.HeadquarterAddress
+		if compliancePage.HeadquarterAddress != nil {
+			emailPresenterCfg.SenderCompanyHeadquarterAddress = *compliancePage.HeadquarterAddress
 		}
 	}
 

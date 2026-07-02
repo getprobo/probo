@@ -24,10 +24,10 @@ export const hero = tv({
   },
 });
 
-// Organization contact block: a horizontal row of icon + label items, with a
+// Compliance page contact block: a horizontal row of icon + label items, with a
 // top divider so it reads as the hero's bottom section. Self-contained so the
 // divider only appears when there is contact info to show.
-export const organizationContactInfo = tv({
+export const compliancePageContactInfo = tv({
   slots: {
     // Only a top divider gap; the band's py-8 provides the bottom spacing.
     root: "flex w-full items-center gap-6 border-t border-sand-a2 pt-4",

@@ -124,24 +124,29 @@ func (s *Service) RenderCompliancePageMarkdown(
 		return fmt.Errorf("cannot load organization for compliance page: %w", err)
 	}
 
+	trustCenter, err := s.Get(ctx, trustCenterID)
+	if err != nil {
+		return fmt.Errorf("cannot load trust center for compliance page: %w", err)
+	}
+
 	data := &compliancePageData{
 		OrgName: org.Name,
 	}
 
-	if org.Description != nil && *org.Description != "" {
-		data.Description = *org.Description
+	if trustCenter.Description != nil && *trustCenter.Description != "" {
+		data.Description = *trustCenter.Description
 	}
 
-	if org.WebsiteURL != nil && *org.WebsiteURL != "" {
-		data.Details = append(data.Details, compliancePageDetail{Label: "Website", Value: *org.WebsiteURL})
+	if trustCenter.WebsiteURL != nil && *trustCenter.WebsiteURL != "" {
+		data.Details = append(data.Details, compliancePageDetail{Label: "Website", Value: *trustCenter.WebsiteURL})
 	}
 
-	if org.Email != nil && *org.Email != "" {
-		data.Details = append(data.Details, compliancePageDetail{Label: "Email", Value: *org.Email})
+	if trustCenter.Email != nil && *trustCenter.Email != "" {
+		data.Details = append(data.Details, compliancePageDetail{Label: "Email", Value: *trustCenter.Email})
 	}
 
-	if org.HeadquarterAddress != nil && *org.HeadquarterAddress != "" {
-		data.Details = append(data.Details, compliancePageDetail{Label: "Headquarters", Value: *org.HeadquarterAddress})
+	if trustCenter.HeadquarterAddress != nil && *trustCenter.HeadquarterAddress != "" {
+		data.Details = append(data.Details, compliancePageDetail{Label: "Headquarters", Value: *trustCenter.HeadquarterAddress})
 	}
 
 	data.Frameworks, err = s.fetchComplianceFrameworks(ctx, scope, trustCenterID)

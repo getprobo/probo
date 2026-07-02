@@ -18,57 +18,57 @@ import { graphql, useFragment } from "react-relay";
 
 import { externalHref, hostnameOf } from "#/lib/url/hostname";
 
-import type { OrganizationContactInfo_organization$key } from "./__generated__/OrganizationContactInfo_organization.graphql";
-import { organizationContactInfo } from "./variants";
+import type { CompliancePageContactInfo_trustCenter$key } from "./__generated__/CompliancePageContactInfo_trustCenter.graphql";
+import { compliancePageContactInfo } from "./variants";
 
-const organizationContactInfoFragment = graphql`
-  fragment OrganizationContactInfo_organization on Organization {
+const compliancePageContactInfoFragment = graphql`
+  fragment CompliancePageContactInfo_trustCenter on TrustCenter {
     websiteUrl
     email
     headquarterAddress
   }
 `;
 
-interface OrganizationContactInfoProps {
-  organizationKey: OrganizationContactInfo_organization$key;
+interface CompliancePageContactInfoProps {
+  trustCenterKey: CompliancePageContactInfo_trustCenter$key;
 }
 
-// Organization contact details (website, email, HQ) rendered as an icon + label
-// row. Owns its fragment so it can be reused wherever the org is in scope.
-export function OrganizationContactInfo({ organizationKey }: OrganizationContactInfoProps) {
-  const organization = useFragment(organizationContactInfoFragment, organizationKey);
+// Compliance page contact details (website, email, HQ) rendered as an icon + label
+// row. Owns its fragment so it can be reused wherever the trust center is in scope.
+export function CompliancePageContactInfo({ trustCenterKey }: CompliancePageContactInfoProps) {
+  const trustCenter = useFragment(compliancePageContactInfoFragment, trustCenterKey);
 
-  const hasWebsite = organization.websiteUrl != null && organization.websiteUrl !== "";
-  const hasEmail = organization.email != null && organization.email !== "";
-  const hasAddress = organization.headquarterAddress != null && organization.headquarterAddress !== "";
+  const hasWebsite = trustCenter.websiteUrl != null && trustCenter.websiteUrl !== "";
+  const hasEmail = trustCenter.email != null && trustCenter.email !== "";
+  const hasAddress = trustCenter.headquarterAddress != null && trustCenter.headquarterAddress !== "";
 
   // Nothing to show — render no row (and therefore no divider) at all.
   if (!hasWebsite && !hasEmail && !hasAddress) {
     return null;
   }
 
-  const { root, item, link } = organizationContactInfo();
+  const { root, item, link } = compliancePageContactInfo();
 
   return (
     <div className={root()}>
       {hasWebsite && (
         <a
           className={link()}
-          href={externalHref(organization.websiteUrl)}
+          href={externalHref(trustCenter.websiteUrl)}
           target="_blank"
           rel="noopener noreferrer"
         >
           <GlobeSimpleIcon />
           <Text size={2} color="neutral">
-            {hostnameOf(organization.websiteUrl)}
+            {hostnameOf(trustCenter.websiteUrl)}
           </Text>
         </a>
       )}
       {hasEmail && (
-        <a className={link()} href={`mailto:${organization.email}`}>
+        <a className={link()} href={`mailto:${trustCenter.email}`}>
           <EnvelopeIcon />
           <Text size={2} color="neutral">
-            {organization.email}
+            {trustCenter.email}
           </Text>
         </a>
       )}
@@ -76,7 +76,7 @@ export function OrganizationContactInfo({ organizationKey }: OrganizationContact
         <div className={item()}>
           <MapPinSimpleIcon />
           <Text size={2} color="neutral">
-            {organization.headquarterAddress}
+            {trustCenter.headquarterAddress}
           </Text>
         </div>
       )}

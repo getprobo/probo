@@ -5255,9 +5255,9 @@ func (r *Resolver) DeleteComplianceExternalURLTool(ctx context.Context, req *mcp
 }
 
 // CreateCustomDomainTool handles the createCustomDomain tool
-// Create a custom domain for the organization
+// Create a custom domain for the trust center
 func (r *Resolver) CreateCustomDomainTool(ctx context.Context, req *mcp.CallToolRequest, input *types.CreateCustomDomainInput) (*mcp.CallToolResult, types.CreateCustomDomainOutput, error) {
-	scope, err := r.Authorize(ctx, input.OrganizationID, probo.ActionCustomDomainCreate)
+	scope, err := r.Authorize(ctx, input.TrustCenterID, probo.ActionCustomDomainCreate)
 	if err != nil {
 		return nil, types.CreateCustomDomainOutput{}, err
 	}
@@ -5267,8 +5267,8 @@ func (r *Resolver) CreateCustomDomainTool(ctx context.Context, req *mcp.CallTool
 	domain, err := prb.CustomDomains.CreateCustomDomain(
 		ctx, scope,
 		probo.CreateCustomDomainRequest{
-			OrganizationID: input.OrganizationID,
-			Domain:         input.Domain,
+			TrustCenterID: input.TrustCenterID,
+			Domain:        input.Domain,
 		},
 	)
 	if err != nil {
@@ -5279,27 +5279,27 @@ func (r *Resolver) CreateCustomDomainTool(ctx context.Context, req *mcp.CallTool
 }
 
 // DeleteCustomDomainTool handles the deleteCustomDomain tool
-// Delete the custom domain for the organization
+// Delete the custom domain for the trust center
 func (r *Resolver) DeleteCustomDomainTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteCustomDomainInput) (*mcp.CallToolResult, types.DeleteCustomDomainOutput, error) {
-	scope, err := r.Authorize(ctx, input.OrganizationID, probo.ActionCustomDomainDelete)
+	scope, err := r.Authorize(ctx, input.TrustCenterID, probo.ActionCustomDomainDelete)
 	if err != nil {
 		return nil, types.DeleteCustomDomainOutput{}, err
 	}
 
 	prb := r.proboSvc
 
-	domain, err := prb.CustomDomains.GetOrganizationCustomDomain(ctx, scope, input.OrganizationID)
+	domain, err := prb.CustomDomains.GetTrustCenterCustomDomain(ctx, scope, input.TrustCenterID)
 	if err != nil {
 		return nil, types.DeleteCustomDomainOutput{}, fmt.Errorf("cannot get custom domain: %w", err)
 	}
 
 	if domain == nil {
-		return nil, types.DeleteCustomDomainOutput{}, fmt.Errorf("organization has no custom domain")
+		return nil, types.DeleteCustomDomainOutput{}, fmt.Errorf("trust center has no custom domain")
 	}
 
 	deletedDomain := types.NewCustomDomain(domain)
 
-	if err := prb.CustomDomains.DeleteCustomDomain(ctx, scope, input.OrganizationID); err != nil {
+	if err := prb.CustomDomains.DeleteCustomDomain(ctx, scope, input.TrustCenterID); err != nil {
 		return nil, types.DeleteCustomDomainOutput{}, fmt.Errorf("cannot delete custom domain: %w", err)
 	}
 

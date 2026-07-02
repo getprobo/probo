@@ -91,9 +91,9 @@ func (s *Service) mailingListEmailConfig(
 				return fmt.Errorf("cannot load organization: %w", err)
 			}
 
-			customDomain = &coredata.CustomDomain{}
-			if err := customDomain.LoadByOrganizationID(ctx, conn, scope, organization.ID); err != nil {
-				if !errors.Is(err, coredata.ErrResourceNotFound) {
+			if compliancePage.CustomDomainID != nil {
+				customDomain = &coredata.CustomDomain{}
+				if err := customDomain.LoadByID(ctx, conn, scope, *compliancePage.CustomDomainID); err != nil {
 					return fmt.Errorf("cannot load custom domain: %w", err)
 				}
 			}
@@ -153,12 +153,12 @@ func (s *Service) presenterConfigFromTrustCenter(
 		cfg.SenderCompanyLogoPath = filepath.Join("/api/files/v1/public/", logoFile.ID.String())
 
 		cfg.SenderCompanyName = organization.Name
-		if organization.WebsiteURL != nil {
-			cfg.SenderCompanyWebsiteURL = *organization.WebsiteURL
+		if compliancePage.WebsiteURL != nil {
+			cfg.SenderCompanyWebsiteURL = *compliancePage.WebsiteURL
 		}
 
-		if organization.HeadquarterAddress != nil {
-			cfg.SenderCompanyHeadquarterAddress = *organization.HeadquarterAddress
+		if compliancePage.HeadquarterAddress != nil {
+			cfg.SenderCompanyHeadquarterAddress = *compliancePage.HeadquarterAddress
 		}
 	}
 

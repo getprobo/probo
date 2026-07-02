@@ -33,14 +33,28 @@ export const description: INodeProperties[] = [
 	{
 		displayName: 'Active',
 		name: 'active',
-		type: 'boolean',
+		type: 'options',
 		displayOptions: {
 			show: {
 				resource: ['trustCenter'],
 				operation: ['update'],
 			},
 		},
-		default: false,
+		options: [
+			{
+				name: '(Unchanged)',
+				value: '',
+			},
+			{
+				name: 'Active',
+				value: 'true',
+			},
+			{
+				name: 'Inactive',
+				value: 'false',
+			},
+		],
+		default: '',
 		description: 'Whether the trust center is active',
 	},
 	{
@@ -70,6 +84,59 @@ export const description: INodeProperties[] = [
 		default: '',
 		description: 'Whether search engines should index the trust center',
 	},
+	{
+		displayName: 'Description',
+		name: 'description',
+		type: 'string',
+		displayOptions: {
+			show: {
+				resource: ['trustCenter'],
+				operation: ['update'],
+			},
+		},
+		default: '',
+		description: 'The description shown on the compliance page',
+	},
+	{
+		displayName: 'Website URL',
+		name: 'websiteUrl',
+		type: 'string',
+		displayOptions: {
+			show: {
+				resource: ['trustCenter'],
+				operation: ['update'],
+			},
+		},
+		default: '',
+		description: 'The website URL shown on the compliance page',
+	},
+	{
+		displayName: 'Email',
+		name: 'email',
+		type: 'string',
+		placeholder: 'name@example.com',
+		displayOptions: {
+			show: {
+				resource: ['trustCenter'],
+				operation: ['update'],
+			},
+		},
+		default: '',
+		description: 'The contact email shown on the compliance page',
+	},
+	{
+		displayName: 'Headquarter Address',
+		name: 'headquarterAddress',
+		type: 'string',
+		displayOptions: {
+			show: {
+				resource: ['trustCenter'],
+				operation: ['update'],
+			},
+		},
+		default: '',
+		description: 'The headquarter address shown on the compliance page',
+	},
 ];
 
 export async function execute(
@@ -77,28 +144,75 @@ export async function execute(
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
 	const trustCenterId = this.getNodeParameter('trustCenterId', itemIndex) as string;
-	const active = this.getNodeParameter('active', itemIndex) as boolean | undefined;
+	const active = this.getNodeParameter('active', itemIndex, '') as string;
 	const searchEngineIndexing = this.getNodeParameter('searchEngineIndexing', itemIndex, '') as string;
+	const description = this.getNodeParameter('description', itemIndex, '') as string;
+	const websiteUrl = this.getNodeParameter('websiteUrl', itemIndex, '') as string;
+	const email = this.getNodeParameter('email', itemIndex, '') as string;
+	const headquarterAddress = this.getNodeParameter('headquarterAddress', itemIndex, '') as string;
 
-	const query = `
-		mutation UpdateTrustCenter($input: UpdateTrustCenterInput!) {
-			updateTrustCenter(input: $input) {
-				trustCenter {
-					id
-					active
-					searchEngineIndexing
-					createdAt
-					updatedAt
+	const hasSettingsUpdate = active !== '' || searchEngineIndexing !== '';
+	const hasBrandUpdate = description || websiteUrl || email || headquarterAddress;
+
+	if (!hasSettingsUpdate && !hasBrandUpdate) {
+		throw new Error('At least one field must be provided to update the trust center');
+	}
+
+	let responseData: Record<string, unknown> = {};
+
+	if (hasSettingsUpdate) {
+		const query = `
+			mutation UpdateTrustCenter($input: UpdateTrustCenterInput!) {
+				updateTrustCenter(input: $input) {
+					trustCenter {
+						id
+						active
+						searchEngineIndexing
+						description
+						websiteUrl
+						email
+						headquarterAddress
+						createdAt
+						updatedAt
+					}
 				}
 			}
-		}
-	`;
+		`;
 
-	const input: Record<string, unknown> = { trustCenterId };
-	if (active !== undefined) input.active = active;
-	if (searchEngineIndexing) input.searchEngineIndexing = searchEngineIndexing;
+		const input: Record<string, unknown> = { trustCenterId };
+		if (active !== '') input.active = active === 'true';
+		if (searchEngineIndexing) input.searchEngineIndexing = searchEngineIndexing;
 
-	const responseData = await proboApiRequest.call(this, query, { input });
+		responseData = await proboApiRequest.call(this, query, { input }) as Record<string, unknown>;
+	}
+
+	if (hasBrandUpdate) {
+		const brandQuery = `
+			mutation UpdateTrustCenterBrand($input: UpdateTrustCenterBrandInput!) {
+				updateTrustCenterBrand(input: $input) {
+					trustCenter {
+						id
+						active
+						searchEngineIndexing
+						description
+						websiteUrl
+						email
+						headquarterAddress
+						createdAt
+						updatedAt
+					}
+				}
+			}
+		`;
+
+		const brandInput: Record<string, string> = { trustCenterId };
+		if (description) brandInput.description = description;
+		if (websiteUrl) brandInput.websiteUrl = websiteUrl;
+		if (email) brandInput.email = email;
+		if (headquarterAddress) brandInput.headquarterAddress = headquarterAddress;
+
+		responseData = await proboApiRequest.call(this, brandQuery, { input: brandInput }) as Record<string, unknown>;
+	}
 
 	return {
 		json: responseData,
