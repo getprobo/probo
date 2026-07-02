@@ -24,9 +24,10 @@ import {
   IconLockOpen,
   IconUser,
   IconUserCircle,
+  Spinner,
   useToast,
 } from "@probo/ui";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { type PreloadedQuery, useMutation, usePreloadedQuery } from "react-relay";
 import { graphql } from "relay-runtime";
 
@@ -159,14 +160,18 @@ export default function ConsentPage(props: {
   const { __ } = useTranslate();
   const { toast } = useToast();
   const [deviceResult, setDeviceResult] = useState<"authorized" | "denied" | null>(null);
+  const [pendingAction, setPendingAction] = useState<"allow" | "deny" | null>(null);
+  const [redirectState, setRedirectState] = useState<{
+    url: string;
+    approved: boolean;
+  } | null>(null);
 
   const data = usePreloadedQuery<ConsentPageQuery>(consentPageQuery, props.queryRef);
   usePageTitle(__("Authorize Application"));
 
   const { node: consent } = data;
 
-  const [approveConsent, isInFlight]
-    = useMutation<ConsentPageMutation>(approveConsentMutation);
+  const [approveConsent] = useMutation<ConsentPageMutation>(approveConsentMutation);
 
   const { oidcScopes, apiScopes } = useMemo(
     () => partitionScopes(consent.scopes ?? []),
@@ -178,9 +183,17 @@ export default function ConsentPage(props: {
     [__, apiScopes.length],
   );
 
+  useEffect(() => {
+    if (!redirectState) return;
+
+    window.location.href = redirectState.url;
+  }, [redirectState]);
+
   const handleAction = useCallback(
     (approved: boolean) => {
-      if (!consent.id) return;
+      if (!consent.id || pendingAction !== null) return;
+
+      setPendingAction(approved ? "allow" : "deny");
 
       approveConsent({
         variables: {
@@ -191,6 +204,7 @@ export default function ConsentPage(props: {
         },
         onCompleted: (response, errors) => {
           if (errors) {
+            setPendingAction(null);
             toast({
               title: __("Authorization failed"),
               description: formatError(
@@ -203,6 +217,7 @@ export default function ConsentPage(props: {
           }
 
           if (!response.approveConsent) {
+            setPendingAction(null);
             toast({
               title: __("Authorization failed"),
               description: __("Something went wrong. Please try again."),
@@ -217,10 +232,14 @@ export default function ConsentPage(props: {
           }
 
           if (response.approveConsent.redirectURL) {
-            window.location.href = response.approveConsent.redirectURL;
+            setRedirectState({
+              url: response.approveConsent.redirectURL,
+              approved,
+            });
           }
         },
         onError: (err) => {
+          setPendingAction(null);
           toast({
             title: __("Error"),
             description:
@@ -230,7 +249,7 @@ export default function ConsentPage(props: {
         },
       });
     },
-    [consent, approveConsent, __, toast],
+    [consent, approveConsent, __, toast, pendingAction],
   );
 
   if (!consent.application || !consent.scopes) {
@@ -262,6 +281,27 @@ export default function ConsentPage(props: {
         <p className="text-txt-tertiary">
           {__("You have denied the authorization request. You can close this window.")}
         </p>
+      </div>
+    );
+  }
+
+  if (redirectState) {
+    return (
+      <div className="w-full max-w-md mx-auto pt-8 space-y-6 text-center">
+        <Spinner size={24} centered className="text-txt-tertiary" />
+        <div className="space-y-2">
+          <h1 className="text-2xl font-bold">
+            {redirectState.approved ? __("Authorization Complete") : __("Access Denied")}
+          </h1>
+          <p className="text-txt-tertiary">
+            {__("You will be redirected to")}
+            {" "}
+            <span className="font-medium text-txt-secondary">
+              {consent.application.name}
+            </span>
+            …
+          </p>
+        </div>
       </div>
     );
   }
@@ -310,17 +350,19 @@ export default function ConsentPage(props: {
         <Button
           variant="secondary"
           className="flex-1 h-10"
-          disabled={isInFlight}
+          disabled={pendingAction !== null}
+          loading={pendingAction === "deny"}
           onClick={() => handleAction(false)}
         >
           {__("Deny")}
         </Button>
         <Button
           className="flex-1 h-10"
-          disabled={isInFlight}
+          disabled={pendingAction !== null}
+          loading={pendingAction === "allow"}
           onClick={() => handleAction(true)}
         >
-          {isInFlight ? __("Authorizing...") : __("Allow")}
+          {__("Allow")}
         </Button>
       </div>
 
