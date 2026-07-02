@@ -39,6 +39,8 @@ const apiScopeLabels: Record<string, string> = {
   "v1:org": "Manage organization",
   "v1:privacy:read": "Read privacy settings",
   "v1:privacy": "Manage privacy settings",
+  "v1:resource-alias:read": "Read resource aliases",
+  "v1:resource-alias": "Manage resource aliases",
   "v1:risk:read": "Read risks",
   "v1:risk": "Manage risks",
   "v1:slack-connection:read": "Read Slack connections",
