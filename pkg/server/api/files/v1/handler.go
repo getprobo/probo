@@ -125,6 +125,7 @@ func (h *Handler) handleGetPublicFile(w http.ResponseWriter, r *http.Request) {
 
 	conds := filemanager.FileConditions{
 		IfNoneMatch: r.Header.Get("If-None-Match"),
+		IfRange:     r.Header.Get("If-Range"),
 		Range:       r.Header.Get("Range"),
 	}
 	if ifModifiedSince := r.Header.Get("If-Modified-Since"); ifModifiedSince != "" {

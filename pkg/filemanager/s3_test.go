@@ -139,6 +139,111 @@ func TestOpenFile_RangeRequestReturnsPartialContent(t *testing.T) {
 	assert.Equal(t, content[:5], string(body))
 }
 
+func TestOpenFile_IfRangeMatchHonorsRange(t *testing.T) {
+	t.Parallel()
+
+	const (
+		etag    = `"abc123"`
+		content = "hello world"
+	)
+
+	svc := newTestS3Service(
+		t,
+		func(w http.ResponseWriter, r *http.Request) {
+			if r.Method == http.MethodHead {
+				w.Header().Set("ETag", etag)
+				w.WriteHeader(http.StatusOK)
+				return
+			}
+
+			assert.Equal(t, "bytes=0-4", r.Header.Get("Range"))
+
+			w.Header().Set("ETag", etag)
+			w.Header().Set("Content-Range", "bytes 0-4/11")
+			w.Header().Set("Content-Length", "5")
+			w.WriteHeader(http.StatusPartialContent)
+			_, _ = io.WriteString(w, content[:5])
+		},
+	)
+
+	file := &coredata.File{
+		BucketName: "uploads",
+		FileKey:    "tenant/file",
+		MimeType:   "text/plain",
+		FileSize:   int64(len(content)),
+	}
+
+	obj, err := svc.OpenFile(
+		context.Background(),
+		file,
+		filemanager.FileConditions{Range: "bytes=0-4", IfRange: etag},
+	)
+	require.NoError(t, err)
+	require.NotNil(t, obj)
+
+	defer func() { _ = obj.Body.Close() }()
+
+	assert.True(t, obj.PartialContent)
+	assert.Equal(t, "bytes 0-4/11", obj.ContentRange)
+
+	body, err := io.ReadAll(obj.Body)
+	require.NoError(t, err)
+	assert.Equal(t, content[:5], string(body))
+}
+
+func TestOpenFile_IfRangeMismatchServesFullContent(t *testing.T) {
+	t.Parallel()
+
+	const (
+		staleETag   = `"old"`
+		currentETag = `"new"`
+		content     = "hello world"
+	)
+
+	svc := newTestS3Service(
+		t,
+		func(w http.ResponseWriter, r *http.Request) {
+			if r.Method == http.MethodHead {
+				w.Header().Set("ETag", currentETag)
+				w.WriteHeader(http.StatusOK)
+
+				return
+			}
+
+			// The stale If-Range guard must have dropped the Range so S3
+			// returns the full object rather than a 206 of the fresh bytes.
+			assert.Empty(t, r.Header.Get("Range"))
+
+			w.Header().Set("ETag", currentETag)
+			_, _ = io.WriteString(w, content)
+		},
+	)
+
+	file := &coredata.File{
+		BucketName: "uploads",
+		FileKey:    "tenant/file",
+		MimeType:   "text/plain",
+		FileSize:   int64(len(content)),
+	}
+
+	obj, err := svc.OpenFile(
+		context.Background(),
+		file,
+		filemanager.FileConditions{Range: "bytes=0-4", IfRange: staleETag},
+	)
+	require.NoError(t, err)
+	require.NotNil(t, obj)
+
+	defer func() { _ = obj.Body.Close() }()
+
+	assert.False(t, obj.PartialContent)
+	assert.Empty(t, obj.ContentRange)
+
+	body, err := io.ReadAll(obj.Body)
+	require.NoError(t, err)
+	assert.Equal(t, content, string(body))
+}
+
 func TestOpenFile_RangeNotSatisfiable(t *testing.T) {
 	t.Parallel()
 

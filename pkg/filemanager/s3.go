@@ -45,6 +45,7 @@ type FileObject struct {
 type FileConditions struct {
 	IfNoneMatch     string
 	IfModifiedSince time.Time
+	IfRange         string
 	Range           string
 }
 
@@ -116,7 +117,36 @@ func (s *Service) OpenFile(
 	}
 
 	if conds.Range != "" {
-		input.Range = &conds.Range
+		honorRange := true
+
+		if conds.IfRange != "" {
+			head, err := s.s3Client.HeadObject(
+				ctx,
+				&s3.HeadObjectInput{
+					Bucket: new(file.BucketName),
+					Key:    new(file.FileKey),
+				},
+			)
+			if err != nil {
+				return nil, fmt.Errorf("cannot head file in S3: %w", err)
+			}
+
+			etag := ""
+			if head.ETag != nil {
+				etag = *head.ETag
+			}
+
+			lastModified := file.UpdatedAt
+			if head.LastModified != nil {
+				lastModified = *head.LastModified
+			}
+
+			honorRange = ifRangeMatches(conds.IfRange, etag, lastModified)
+		}
+
+		if honorRange {
+			input.Range = &conds.Range
+		}
 	}
 
 	result, err := s.s3Client.GetObject(ctx, input)
@@ -150,10 +180,11 @@ func (s *Service) OpenFile(
 		obj.LastModified = *result.LastModified
 	}
 
-	// A Range request that S3 honors comes back as 206 Partial Content with a
+	// A Range that S3 honors comes back as 206 Partial Content with a
 	// Content-Range header and a ContentLength scoped to the returned slice. An
-	// If-Range mismatch (or no Range) yields a normal 200 with the full object,
-	// so we only override the length/status when Content-Range is present.
+	// unranged request (or one whose Range we dropped above after an If-Range
+	// mismatch) yields a normal 200 with the full object, so we only override
+	// the length/status when Content-Range is present.
 	if result.ContentRange != nil {
 		obj.ContentRange = *result.ContentRange
 		obj.PartialContent = true
@@ -232,6 +263,35 @@ func (s *Service) GeneratePresignedURL(
 	}
 
 	return presignedReq.URL, nil
+}
+
+// ifRangeMatches reports whether an If-Range validator still matches the
+// current representation, following the strong-comparison rules of RFC 9110
+// section 13.1.3. S3 has no native If-Range support, so callers evaluate it
+// before deciding whether to forward a Range header. An entity-tag validator
+// must strong-match the current ETag (weak tags on either side never satisfy
+// If-Range); otherwise the validator is an HTTP-date compared for equality
+// against Last-Modified.
+func ifRangeMatches(ifRange, etag string, lastModified time.Time) bool {
+	ifRange = strings.TrimSpace(ifRange)
+	if ifRange == "" {
+		return true
+	}
+
+	if strings.HasPrefix(ifRange, `"`) {
+		return etag != "" && !strings.HasPrefix(etag, `W/`) && ifRange == etag
+	}
+
+	if strings.HasPrefix(ifRange, `W/`) {
+		return false
+	}
+
+	t, err := http.ParseTime(ifRange)
+	if err != nil {
+		return false
+	}
+
+	return !lastModified.IsZero() && lastModified.Truncate(time.Second).Equal(t)
 }
 
 func asciiFilename(filename string) string {
