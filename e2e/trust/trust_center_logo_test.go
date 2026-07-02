@@ -170,6 +170,7 @@ func TestTrustCenter_LogoFileDownloadURL(t *testing.T) {
 	// redirect) with cache headers, so the stable URL is CDN/browser cacheable.
 	resp, err := http.Get(downloadURL)
 	require.NoError(t, err)
+
 	defer func() { _ = resp.Body.Close() }()
 
 	require.Equal(t, http.StatusOK, resp.StatusCode)
@@ -199,6 +200,7 @@ func TestTrustCenter_LogoFileDownloadURL(t *testing.T) {
 
 	revalidateResp, err := http.DefaultClient.Do(revalidateReq)
 	require.NoError(t, err)
+
 	defer func() { _ = revalidateResp.Body.Close() }()
 
 	assert.Equal(t, http.StatusNotModified, revalidateResp.StatusCode)
@@ -214,6 +216,7 @@ func TestTrustCenter_LogoFileDownloadURL(t *testing.T) {
 
 	sinceResp, err := http.DefaultClient.Do(sinceReq)
 	require.NoError(t, err)
+
 	defer func() { _ = sinceResp.Body.Close() }()
 
 	assert.Equal(t, http.StatusNotModified, sinceResp.StatusCode)

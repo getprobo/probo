@@ -30,9 +30,6 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 )
 
-// FileObject carries a streamed S3 object body plus the metadata needed to set
-// HTTP response headers. NotModified is set when the caller's conditional
-// request matched the current object, in which case Body is nil.
 type FileObject struct {
 	Body          io.ReadCloser
 	ContentType   string
@@ -42,9 +39,6 @@ type FileObject struct {
 	NotModified   bool
 }
 
-// FileConditions carries HTTP conditional-request values forwarded to S3 so it
-// can answer with 304 Not Modified without transferring the body. Zero values
-// are omitted.
 type FileConditions struct {
 	IfNoneMatch     string
 	IfModifiedSince time.Time
@@ -100,10 +94,6 @@ func (s *Service) GetFileBytes(
 	return data, nil
 }
 
-// OpenFile streams an object from S3 without buffering it in memory. Conditional
-// request values in conds are forwarded to S3; a 304 Not Modified response is
-// surfaced as a FileObject with NotModified set (and a nil Body). The caller
-// owns closing Body.
 func (s *Service) OpenFile(
 	ctx context.Context,
 	file *coredata.File,
@@ -116,6 +106,7 @@ func (s *Service) OpenFile(
 	if conds.IfNoneMatch != "" {
 		input.IfNoneMatch = &conds.IfNoneMatch
 	}
+
 	if !conds.IfModifiedSince.IsZero() {
 		input.IfModifiedSince = &conds.IfModifiedSince
 	}
@@ -140,6 +131,7 @@ func (s *Service) OpenFile(
 	if result.ETag != nil {
 		obj.ETag = *result.ETag
 	}
+
 	if result.LastModified != nil {
 		obj.LastModified = *result.LastModified
 	}
