@@ -159,14 +159,14 @@ export default function ConsentPage(props: {
   const { __ } = useTranslate();
   const { toast } = useToast();
   const [deviceResult, setDeviceResult] = useState<"authorized" | "denied" | null>(null);
+  const [pendingAction, setPendingAction] = useState<"allow" | "deny" | null>(null);
 
   const data = usePreloadedQuery<ConsentPageQuery>(consentPageQuery, props.queryRef);
   usePageTitle(__("Authorize Application"));
 
   const { node: consent } = data;
 
-  const [approveConsent, isInFlight]
-    = useMutation<ConsentPageMutation>(approveConsentMutation);
+  const [approveConsent] = useMutation<ConsentPageMutation>(approveConsentMutation);
 
   const { oidcScopes, apiScopes } = useMemo(
     () => partitionScopes(consent.scopes ?? []),
@@ -180,7 +180,9 @@ export default function ConsentPage(props: {
 
   const handleAction = useCallback(
     (approved: boolean) => {
-      if (!consent.id) return;
+      if (!consent.id || pendingAction !== null) return;
+
+      setPendingAction(approved ? "allow" : "deny");
 
       approveConsent({
         variables: {
@@ -191,6 +193,7 @@ export default function ConsentPage(props: {
         },
         onCompleted: (response, errors) => {
           if (errors) {
+            setPendingAction(null);
             toast({
               title: __("Authorization failed"),
               description: formatError(
@@ -203,6 +206,7 @@ export default function ConsentPage(props: {
           }
 
           if (!response.approveConsent) {
+            setPendingAction(null);
             toast({
               title: __("Authorization failed"),
               description: __("Something went wrong. Please try again."),
@@ -221,6 +225,7 @@ export default function ConsentPage(props: {
           }
         },
         onError: (err) => {
+          setPendingAction(null);
           toast({
             title: __("Error"),
             description:
@@ -230,7 +235,7 @@ export default function ConsentPage(props: {
         },
       });
     },
-    [consent, approveConsent, __, toast],
+    [consent, approveConsent, __, toast, pendingAction],
   );
 
   if (!consent.application || !consent.scopes) {
@@ -310,17 +315,19 @@ export default function ConsentPage(props: {
         <Button
           variant="secondary"
           className="flex-1 h-10"
-          disabled={isInFlight}
+          disabled={pendingAction !== null}
+          loading={pendingAction === "deny"}
           onClick={() => handleAction(false)}
         >
           {__("Deny")}
         </Button>
         <Button
           className="flex-1 h-10"
-          disabled={isInFlight}
+          disabled={pendingAction !== null}
+          loading={pendingAction === "allow"}
           onClick={() => handleAction(true)}
         >
-          {isInFlight ? __("Authorizing...") : __("Allow")}
+          {__("Allow")}
         </Button>
       </div>
 
