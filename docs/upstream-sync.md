@@ -1,5 +1,5 @@
 # Syncing with upstream (getprobo/probo)
-
+<!-- 
 This is the playbook for pulling the latest changes from the original
 `getprobo/probo` repo into our fork at `Advance-Datasec/probo-platform`,
 preserving our Govrly rebrand and deployment customizations.
@@ -57,7 +57,7 @@ Then point `origin` through it:
 ```bash
 git remote set-url origin git@github-advance:Advance-Datasec/probo-platform.git
 ssh -T git@github-advance   # confirm the right user
-```
+``` -->
 
 ## The sync workflow
 
@@ -71,8 +71,7 @@ git stash push -m "wip before upstream sync $(date +%F)"
 ### 2. Fetch upstream
 
 ```bash
-git fetch upstream
-git rev-list --left-right --count main...upstream/main
+git git rev-list --left-right --count main...upstream/main
 # e.g. "5  998" → 5 ahead, 998 behind
 ```
 
@@ -112,6 +111,22 @@ Files in this category:
   public API contract, do not revert)
 - `README.md`, `contrib/claude/sandbox.md`
 - `.dockerignore`
+
+To take theirs and stage each of them:
+
+```bash
+git checkout --theirs packages/ui/src/Atoms/Logo/Logo.tsx && git add packages/ui/src/Atoms/Logo/Logo.tsx
+git checkout --theirs packages/ui/src/Atoms/Sidebar/Sidebar.tsx && git add packages/ui/src/Atoms/Sidebar/Sidebar.tsx
+git checkout --theirs packages/ui/src/theme.css && git add packages/ui/src/theme.css
+git checkout --theirs apps/console/src/main.tsx && git add apps/console/src/main.tsx
+git checkout --theirs apps/trust/src/main.tsx && git add apps/trust/src/main.tsx
+git checkout --theirs apps/console/src/pages/iam/organizations/_components/Sidebar.tsx && git add apps/console/src/pages/iam/organizations/_components/Sidebar.tsx
+git checkout --theirs apps/console/package.json && git add apps/console/package.json
+git checkout --theirs pkg/webhook/sender.go && git add pkg/webhook/sender.go
+git checkout --theirs README.md && git add README.md
+git checkout --theirs contrib/claude/sandbox.md && git add contrib/claude/sandbox.md
+git checkout --theirs .dockerignore && git add .dockerignore
+```
 
 #### Our deployment files → take ours
 
