@@ -24,9 +24,10 @@ import {
   IconLockOpen,
   IconUser,
   IconUserCircle,
+  Spinner,
   useToast,
 } from "@probo/ui";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { type PreloadedQuery, useMutation, usePreloadedQuery } from "react-relay";
 import { graphql } from "relay-runtime";
 
@@ -160,6 +161,10 @@ export default function ConsentPage(props: {
   const { toast } = useToast();
   const [deviceResult, setDeviceResult] = useState<"authorized" | "denied" | null>(null);
   const [pendingAction, setPendingAction] = useState<"allow" | "deny" | null>(null);
+  const [redirectState, setRedirectState] = useState<{
+    url: string;
+    approved: boolean;
+  } | null>(null);
 
   const data = usePreloadedQuery<ConsentPageQuery>(consentPageQuery, props.queryRef);
   usePageTitle(__("Authorize Application"));
@@ -177,6 +182,12 @@ export default function ConsentPage(props: {
     () => `${__("API access")} (${apiScopes.length})`,
     [__, apiScopes.length],
   );
+
+  useEffect(() => {
+    if (!redirectState) return;
+
+    window.location.href = redirectState.url;
+  }, [redirectState]);
 
   const handleAction = useCallback(
     (approved: boolean) => {
@@ -221,7 +232,10 @@ export default function ConsentPage(props: {
           }
 
           if (response.approveConsent.redirectURL) {
-            window.location.href = response.approveConsent.redirectURL;
+            setRedirectState({
+              url: response.approveConsent.redirectURL,
+              approved,
+            });
           }
         },
         onError: (err) => {
@@ -267,6 +281,27 @@ export default function ConsentPage(props: {
         <p className="text-txt-tertiary">
           {__("You have denied the authorization request. You can close this window.")}
         </p>
+      </div>
+    );
+  }
+
+  if (redirectState) {
+    return (
+      <div className="w-full max-w-md mx-auto pt-8 space-y-6 text-center">
+        <Spinner size={24} centered className="text-txt-tertiary" />
+        <div className="space-y-2">
+          <h1 className="text-2xl font-bold">
+            {redirectState.approved ? __("Authorization Complete") : __("Access Denied")}
+          </h1>
+          <p className="text-txt-tertiary">
+            {__("You will be redirected to")}
+            {" "}
+            <span className="font-medium text-txt-secondary">
+              {consent.application.name}
+            </span>
+            …
+          </p>
+        </div>
       </div>
     );
   }
