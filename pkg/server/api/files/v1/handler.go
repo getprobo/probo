@@ -158,8 +158,6 @@ func (h *Handler) handleGetPublicFile(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", file.MimeType)
 	w.Header().Set("Content-Length", strconv.FormatInt(file.FileSize, 10))
-	w.Header().Set("X-Content-Type-Options", "nosniff")
-	w.Header().Set("Content-Security-Policy", "default-src 'none'; style-src 'unsafe-inline'; sandbox")
 
 	if !obj.LastModified.IsZero() {
 		w.Header().Set("Last-Modified", obj.LastModified.UTC().Format(http.TimeFormat))
