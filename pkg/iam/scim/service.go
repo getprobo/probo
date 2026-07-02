@@ -359,18 +359,16 @@ func (s *Service) GetUser(
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			profile = &coredata.MembershipProfile{}
-			if err := profile.LoadByID(ctx, conn, scope, profileID); err != nil {
-				if err == coredata.ErrResourceNotFound {
+			p, err := s.loadProfileBySCIMID(ctx, conn, scope, config, profileID)
+			if err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return scimerrors.ScimErrorResourceNotFound(profileID.String())
 				}
 
-				return fmt.Errorf("cannot load profile: %w", err)
+				return fmt.Errorf("cannot load profile by SCIM id: %w", err)
 			}
 
-			if profile.OrganizationID != config.OrganizationID {
-				return scimerrors.ScimErrorResourceNotFound(profileID.String())
-			}
+			profile = p
 
 			return nil
 		},
@@ -493,18 +491,16 @@ func (s *Service) updateUser(
 	err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			profile = &coredata.MembershipProfile{}
-			if err := profile.LoadByID(ctx, tx, scope, profileID); err != nil {
+			p, err := s.loadProfileBySCIMID(ctx, tx, scope, config, profileID)
+			if err != nil {
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return scimerrors.ScimErrorResourceNotFound(profileID.String())
 				}
 
-				return fmt.Errorf("cannot load profile: %w", err)
+				return fmt.Errorf("cannot load profile by SCIM id: %w", err)
 			}
 
-			if profile.OrganizationID != config.OrganizationID {
-				return scimerrors.ScimErrorResourceNotFound(profileID.String())
-			}
+			profile = p
 
 			membership = &coredata.Membership{}
 			if err := membership.LoadByIdentityIDAndOrganizationID(ctx, tx, scope, profile.IdentityID, profile.OrganizationID); err != nil {
@@ -841,17 +837,13 @@ func (s *Service) DeleteUser(
 	return s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			profile := &coredata.MembershipProfile{}
-			if err := profile.LoadByID(ctx, tx, scope, profileID); err != nil {
+			profile, err := s.loadProfileBySCIMID(ctx, tx, scope, config, profileID)
+			if err != nil {
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return scimerrors.ScimErrorResourceNotFound(profileID.String())
 				}
 
-				return fmt.Errorf("cannot load profile: %w", err)
-			}
-
-			if profile.OrganizationID != config.OrganizationID {
-				return scimerrors.ScimErrorResourceNotFound(profileID.String())
+				return fmt.Errorf("cannot load profile by SCIM id: %w", err)
 			}
 
 			var membership *coredata.Membership
@@ -1744,4 +1736,54 @@ func userToResource(p *coredata.MembershipProfile) scim.Resource {
 			LastModified: &p.UpdatedAt,
 		},
 	}
+}
+
+// loadProfileBySCIMID resolves a SCIM resource id to its MembershipProfile,
+// falling back to the membership's identity when the id is a legacy Membership
+// GID. Returns coredata.ErrResourceNotFound when nothing matches in the org.
+func (s *Service) loadProfileBySCIMID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope coredata.Scoper,
+	config *coredata.SCIMConfiguration,
+	scimID gid.GID,
+) (*coredata.MembershipProfile, error) {
+	profile := &coredata.MembershipProfile{}
+
+	if scimID.EntityType() == coredata.MembershipEntityType {
+		s.logger.WarnCtx(
+			ctx,
+			"SCIM request used a legacy membership id",
+			log.String("membership_id", scimID.String()),
+		)
+
+		membership := &coredata.Membership{}
+		if err := membership.LoadByID(ctx, conn, scope, scimID); err != nil {
+			return nil, fmt.Errorf("cannot load membership by legacy SCIM id: %w", err)
+		}
+
+		if membership.OrganizationID != config.OrganizationID {
+			return nil, coredata.ErrResourceNotFound
+		}
+
+		if err := profile.LoadByIdentityIDAndOrganizationID(
+			ctx,
+			conn,
+			scope,
+			membership.IdentityID,
+			config.OrganizationID,
+		); err != nil {
+			return nil, fmt.Errorf("cannot load profile by membership identity: %w", err)
+		}
+	} else {
+		if err := profile.LoadByID(ctx, conn, scope, scimID); err != nil {
+			return nil, fmt.Errorf("cannot load profile by id: %w", err)
+		}
+	}
+
+	if profile.OrganizationID != config.OrganizationID {
+		return nil, coredata.ErrResourceNotFound
+	}
+
+	return profile, nil
 }
