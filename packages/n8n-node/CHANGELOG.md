@@ -4,6 +4,11 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+### Fixed
+
+- Use marketplace-supported codex metadata for the `ProboTrigger` node by fully
+  qualifying its node identifier and replacing unsupported categories
+
 ## [0.200.0] - 2026-07-02
 
 ### Added

@@ -16,7 +16,8 @@
     "email": "hello@probo.com"
   },
   "files": [
-    "dist"
+    "dist",
+    "README.md"
   ],
   "n8n": {
     "n8nNodesApiVersion": 1,
