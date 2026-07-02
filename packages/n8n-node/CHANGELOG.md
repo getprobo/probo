@@ -4,6 +4,22 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+## [0.200.0] - 2026-07-02
+
+### Added
+
+- `ProboTrigger` node that starts a workflow when Probo emits a webhook event; it owns the subscription lifecycle (creates it on activation, re-registers it when the webhook URL drifts, deletes it on deactivation) and verifies the HMAC-SHA256 signature constant-time
+- Document lifecycle webhook events — document created/updated/archived/unarchived/deleted, version created/updated/published/rejected/deleted, version signature requested/signed/cancelled, and version approval quorum requested/approved/rejected/updated/voided
+
+### Changed
+
+- Default Probo Server credential URL is now `https://us.probo.com` (was `https://us.console.getprobo.com`)
+- Update the node's codex metadata to satisfy n8n marketplace review — use supported `Development`/`Utility` categories and the scoped `@probo/n8n-nodes-probo.probo` node identifier
+
+### Removed
+
+- `MEETING_*` webhook event choices from the webhook create/update operations — they were never part of the backend event enum
+
 ## [0.199.0] - 2026-06-30
 
 ### Added
