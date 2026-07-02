@@ -60,7 +60,7 @@ All Probo nodes use the **Probo API** credential type. The node sends your API k
 
    | Field | Default | Description |
    |-------|---------|-------------|
-   | **Probo Server** | `https://us.console.getprobo.com` | Base URL of your Probo instance. Use `https://eu.console.getprobo.com` for the EU region, or your own URL when self-hosting. |
+   | **Probo Server** | `https://us.probo.com` | Base URL of your Probo instance. Use `https://eu.probo.com` for the EU region, or your own URL when self-hosting. |
    | **API Key** | — | A Probo API key with access to the organizations you automate against. |
 
 4. Click **Test** to verify connectivity. n8n calls the Probo GraphQL API and checks that the key is valid.

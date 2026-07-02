@@ -34,7 +34,7 @@ export class ProboApi implements ICredentialType {
 			displayName: 'Probo Server',
 			name: 'server',
 			type: 'string',
-			default: 'https://us.console.getprobo.com',
+			default: 'https://us.probo.com',
 			description: 'The server to connect to.',
 		},
 		{
