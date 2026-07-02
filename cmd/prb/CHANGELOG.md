@@ -4,9 +4,19 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.199.0] - 2026-07-02
+
+### Added
+
+- `prb webhook` event choices now cover the full document lifecycle: `document.created`/`updated`/`archived`/`unarchived`/`deleted`, the `document.version.*` events, and their `signature.*` and `approval.*` sub-events
+
 ### Changed
 
 - `prb auth login` defaults and region prompts now use `eu.probo.com` and `us.probo.com` instead of `*.console.getprobo.com`
+
+### Removed
+
+- `MEETING_*` webhook event choices removed from `prb webhook` create/update; they were never valid backend event types and only produced API rejections
 
 ## [0.198.0] - 2026-06-30
 
