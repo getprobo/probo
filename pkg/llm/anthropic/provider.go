@@ -47,6 +47,11 @@ type (
 	}
 )
 
+const (
+	anthropicThinkingMinBudgetTokens    = 1024
+	anthropicThinkingOutputTokenReserve = 1024
+)
+
 func WithHTTPClient(c *http.Client) Option {
 	return func(cfg *config) { cfg.httpClient = c }
 }
@@ -163,8 +168,8 @@ func buildParams(req *llm.ChatCompletionRequest) (anthropic.MessageNewParams, er
 		params.ToolChoice = buildToolChoice(req.ToolChoice)
 	}
 
-	if req.Thinking != nil && req.Thinking.Enabled {
-		params.Thinking = anthropic.ThinkingConfigParamOfEnabled(int64(req.Thinking.BudgetTokens))
+	if budgetTokens, ok := resolveThinkingBudget(*req.MaxTokens, req.Thinking); ok {
+		params.Thinking = anthropic.ThinkingConfigParamOfEnabled(int64(budgetTokens))
 	}
 
 	if req.ResponseFormat != nil {
@@ -190,6 +195,28 @@ func buildParams(req *llm.ChatCompletionRequest) (anthropic.MessageNewParams, er
 	}
 
 	return params, nil
+}
+
+func resolveThinkingBudget(maxTokens int, thinking *llm.ThinkingConfig) (int, bool) {
+	if thinking == nil || !thinking.Enabled || thinking.BudgetTokens <= 0 {
+		return 0, false
+	}
+
+	if maxTokens <= anthropicThinkingMinBudgetTokens {
+		return 0, false
+	}
+
+	maxBudgetTokens := maxTokens - anthropicThinkingOutputTokenReserve
+	if maxBudgetTokens < anthropicThinkingMinBudgetTokens {
+		maxBudgetTokens = maxTokens - 1
+	}
+
+	budgetTokens := max(min(thinking.BudgetTokens, maxBudgetTokens), anthropicThinkingMinBudgetTokens)
+	if budgetTokens >= maxTokens {
+		return 0, false
+	}
+
+	return budgetTokens, true
 }
 
 func extractSystem(messages []llm.Message) (system []string, rest []llm.Message) {
