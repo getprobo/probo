@@ -4,6 +4,25 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.223.0] - 2026-07-02
+
+### Added
+
+- Served files now support HTTP range requests, enabling seeking and resumable downloads
+- Document lifecycle webhook events (`document.*`, including the `version`, `signature`, and `approval` sub-events) can now be subscribed to
+
+### Changed
+
+- Public files are served from a stable URL so CDN infrastructure can cache them properly
+- Compliance report upload limit raised to 30MB
+- OAuth token and consent UIs now display friendly names for the `v1:resource-alias` scopes instead of the raw scope string
+
+### Fixed
+
+- Compliance page no longer treats every Slack connector as connected
+- Long Mermaid flowchart labels now wrap instead of being clipped in risk assessment diagrams
+- Dialogs no longer close when dismissing a nested dropdown or select whose pointer lands inside the dialog, preserving form state
+
 ## [0.222.2] - 2026-07-01
 
 ### Changed
