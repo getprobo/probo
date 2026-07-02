@@ -2,7 +2,7 @@
   "node": "n8n-nodes-probo",
   "nodeVersion": "1.0",
   "codexVersion": "1.0",
-  "categories": ["Development", "Developer Tools", "Automation"],
+  "categories": ["Development", "Utility"],
   "resources": {
     "credentialDocumentation": [
       {
