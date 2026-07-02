@@ -52,12 +52,6 @@ export class Probo implements INodeType {
 				},
 			},
 		],
-		requestDefaults: {
-			headers: {
-				Accept: 'application/json',
-				'Content-Type': 'application/json',
-			},
-		},
 		properties: [
 			{
 				displayName: 'Authentication',
