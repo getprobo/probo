@@ -1,0 +1,19 @@
+{
+  "name": "probo",
+  "version": "0.1.0",
+  "description": "Open-source compliance workflows for Claude Code, powered by Probo MCP",
+  "author": {
+    "name": "Probo Inc",
+    "email": "hello@probo.com"
+  },
+  "homepage": "https://github.com/getprobo/probo/tree/main/packages/claude-plugin",
+  "repository": "https://github.com/getprobo/probo",
+  "license": "MIT",
+  "keywords": [
+    "probo",
+    "compliance",
+    "grc",
+    "mcp",
+    "open-source"
+  ]
+}
