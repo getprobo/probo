@@ -1,0 +1,155 @@
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+// OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
+
+package filemanager_test
+
+import (
+	"context"
+	"io"
+	"net/http"
+	"net/http/httptest"
+	"testing"
+	"time"
+
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/credentials"
+	awss3 "github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/filemanager"
+)
+
+func newTestS3Service(t *testing.T, handler http.HandlerFunc) *filemanager.Service {
+	t.Helper()
+
+	srv := httptest.NewServer(handler)
+	t.Cleanup(srv.Close)
+
+	s3Client := awss3.NewFromConfig(
+		aws.Config{
+			Region:      "us-east-1",
+			Credentials: credentials.NewStaticCredentialsProvider("access-key", "secret-key", ""),
+		},
+		func(o *awss3.Options) {
+			o.BaseEndpoint = aws.String(srv.URL)
+			o.UsePathStyle = true
+		},
+	)
+
+	return filemanager.NewService(nil, nil, s3Client)
+}
+
+func TestOpenFile_StreamsBody(t *testing.T) {
+	t.Parallel()
+
+	const (
+		etag    = `"abc123"`
+		content = "hello world"
+	)
+
+	svc := newTestS3Service(
+		t,
+		func(w http.ResponseWriter, _ *http.Request) {
+			w.Header().Set("ETag", etag)
+			w.Header().Set("Content-Type", "application/octet-stream")
+			_, _ = io.WriteString(w, content)
+		},
+	)
+
+	file := &coredata.File{
+		BucketName: "uploads",
+		FileKey:    "tenant/file",
+		MimeType:   "text/plain",
+		FileSize:   int64(len(content)),
+	}
+
+	obj, err := svc.OpenFile(context.Background(), file, filemanager.FileConditions{})
+	require.NoError(t, err)
+	require.NotNil(t, obj)
+	require.False(t, obj.NotModified)
+
+	defer func() { _ = obj.Body.Close() }()
+
+	assert.Equal(t, etag, obj.ETag)
+	assert.Equal(t, "text/plain", obj.ContentType)
+	assert.Equal(t, int64(len(content)), obj.ContentLength)
+
+	body, err := io.ReadAll(obj.Body)
+	require.NoError(t, err)
+	assert.Equal(t, content, string(body))
+}
+
+func TestOpenFile_NotModifiedByETag(t *testing.T) {
+	t.Parallel()
+
+	const etag = `"abc123"`
+
+	svc := newTestS3Service(
+		t,
+		func(w http.ResponseWriter, r *http.Request) {
+			if r.Header.Get("If-None-Match") == etag {
+				w.WriteHeader(http.StatusNotModified)
+				return
+			}
+
+			w.Header().Set("ETag", etag)
+			_, _ = io.WriteString(w, "content")
+		},
+	)
+
+	file := &coredata.File{
+		BucketName: "uploads",
+		FileKey:    "tenant/file",
+		MimeType:   "text/plain",
+	}
+
+	obj, err := svc.OpenFile(context.Background(), file, filemanager.FileConditions{IfNoneMatch: etag})
+	require.NoError(t, err)
+	require.NotNil(t, obj)
+	assert.True(t, obj.NotModified)
+	assert.Nil(t, obj.Body)
+}
+
+func TestOpenFile_NotModifiedByModifiedSince(t *testing.T) {
+	t.Parallel()
+
+	svc := newTestS3Service(
+		t,
+		func(w http.ResponseWriter, r *http.Request) {
+			if r.Header.Get("If-Modified-Since") != "" {
+				w.WriteHeader(http.StatusNotModified)
+				return
+			}
+
+			_, _ = io.WriteString(w, "content")
+		},
+	)
+
+	file := &coredata.File{
+		BucketName: "uploads",
+		FileKey:    "tenant/file",
+		MimeType:   "text/plain",
+	}
+
+	obj, err := svc.OpenFile(
+		context.Background(),
+		file,
+		filemanager.FileConditions{IfModifiedSince: time.Now()},
+	)
+	require.NoError(t, err)
+	require.NotNil(t, obj)
+	assert.True(t, obj.NotModified)
+	assert.Nil(t, obj.Body)
+}

@@ -17,15 +17,38 @@ package filemanager
 import (
 	"context"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"io"
+	"net/http"
 	"net/url"
 	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	smithyhttp "github.com/aws/smithy-go/transport/http"
 	"go.probo.inc/probo/pkg/coredata"
 )
+
+// FileObject carries a streamed S3 object body plus the metadata needed to set
+// HTTP response headers. NotModified is set when the caller's conditional
+// request matched the current object, in which case Body is nil.
+type FileObject struct {
+	Body          io.ReadCloser
+	ContentType   string
+	ContentLength int64
+	ETag          string
+	LastModified  time.Time
+	NotModified   bool
+}
+
+// FileConditions carries HTTP conditional-request values forwarded to S3 so it
+// can answer with 304 Not Modified without transferring the body. Zero values
+// are omitted.
+type FileConditions struct {
+	IfNoneMatch     string
+	IfModifiedSince time.Time
+}
 
 func (s *Service) GetFileBase64(
 	ctx context.Context,
@@ -75,6 +98,53 @@ func (s *Service) GetFileBytes(
 	}
 
 	return data, nil
+}
+
+// OpenFile streams an object from S3 without buffering it in memory. Conditional
+// request values in conds are forwarded to S3; a 304 Not Modified response is
+// surfaced as a FileObject with NotModified set (and a nil Body). The caller
+// owns closing Body.
+func (s *Service) OpenFile(
+	ctx context.Context,
+	file *coredata.File,
+	conds FileConditions,
+) (*FileObject, error) {
+	input := &s3.GetObjectInput{
+		Bucket: new(file.BucketName),
+		Key:    new(file.FileKey),
+	}
+	if conds.IfNoneMatch != "" {
+		input.IfNoneMatch = &conds.IfNoneMatch
+	}
+	if !conds.IfModifiedSince.IsZero() {
+		input.IfModifiedSince = &conds.IfModifiedSince
+	}
+
+	result, err := s.s3Client.GetObject(ctx, input)
+	if err != nil {
+		if respErr, ok := errors.AsType[*smithyhttp.ResponseError](err); ok {
+			if respErr.HTTPStatusCode() == http.StatusNotModified {
+				return &FileObject{NotModified: true}, nil
+			}
+		}
+
+		return nil, fmt.Errorf("cannot get file from S3: %w", err)
+	}
+
+	obj := &FileObject{
+		Body:          result.Body,
+		ContentType:   file.MimeType,
+		ContentLength: file.FileSize,
+		LastModified:  file.UpdatedAt,
+	}
+	if result.ETag != nil {
+		obj.ETag = *result.ETag
+	}
+	if result.LastModified != nil {
+		obj.LastModified = *result.LastModified
+	}
+
+	return obj, nil
 }
 
 func (s *Service) PutFile(

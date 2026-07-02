@@ -15,6 +15,8 @@
 package trust_test
 
 import (
+	"io"
+	"net/http"
 	"strings"
 	"testing"
 
@@ -155,10 +157,64 @@ func TestTrustCenter_LogoFileDownloadURL(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, trustResult.CurrentTrustCenter.Logo)
 	assert.Equal(t, uploadResult.UpdateTrustCenterBrand.TrustCenter.Logo.ID, trustResult.CurrentTrustCenter.Logo.ID)
+
+	downloadURL := trustResult.CurrentTrustCenter.Logo.DownloadURL
 	assert.True(
 		t,
-		strings.Contains(trustResult.CurrentTrustCenter.Logo.DownloadURL, "/api/files/v1/public/"),
+		strings.Contains(downloadURL, "/api/files/v1/public/"),
 		"downloadUrl must route through the public files API, got %q",
-		trustResult.CurrentTrustCenter.Logo.DownloadURL,
+		downloadURL,
 	)
+
+	// The public endpoint streams the file bytes directly (no presigned
+	// redirect) with cache headers, so the stable URL is CDN/browser cacheable.
+	resp, err := http.Get(downloadURL)
+	require.NoError(t, err)
+	defer func() { _ = resp.Body.Close() }()
+
+	require.Equal(t, http.StatusOK, resp.StatusCode)
+
+	body, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+	assert.Equal(t, pngContent, body, "public endpoint must stream the original file bytes")
+
+	cacheControl := resp.Header.Get("Cache-Control")
+	assert.Contains(t, cacheControl, "public")
+	assert.Contains(t, cacheControl, "max-age=31536000")
+	assert.Contains(t, cacheControl, "immutable")
+
+	etag := resp.Header.Get("ETag")
+	require.NotEmpty(t, etag, "public file response must carry an ETag for revalidation")
+
+	// Untrusted, unauthenticated content served from the app origin must be
+	// hardened against MIME sniffing and script execution (e.g. SVG uploads).
+	assert.Equal(t, "nosniff", resp.Header.Get("X-Content-Type-Options"))
+	assert.Contains(t, resp.Header.Get("Content-Security-Policy"), "sandbox")
+
+	// A matching If-None-Match must revalidate to 304 without transferring
+	// the body again.
+	revalidateReq, err := http.NewRequest(http.MethodGet, downloadURL, nil)
+	require.NoError(t, err)
+	revalidateReq.Header.Set("If-None-Match", etag)
+
+	revalidateResp, err := http.DefaultClient.Do(revalidateReq)
+	require.NoError(t, err)
+	defer func() { _ = revalidateResp.Body.Close() }()
+
+	assert.Equal(t, http.StatusNotModified, revalidateResp.StatusCode)
+
+	// A matching If-Modified-Since (using the returned Last-Modified) must also
+	// revalidate to 304.
+	lastModified := resp.Header.Get("Last-Modified")
+	require.NotEmpty(t, lastModified, "public file response must carry Last-Modified")
+
+	sinceReq, err := http.NewRequest(http.MethodGet, downloadURL, nil)
+	require.NoError(t, err)
+	sinceReq.Header.Set("If-Modified-Since", lastModified)
+
+	sinceResp, err := http.DefaultClient.Do(sinceReq)
+	require.NoError(t, err)
+	defer func() { _ = sinceResp.Body.Close() }()
+
+	assert.Equal(t, http.StatusNotModified, sinceResp.StatusCode)
 }

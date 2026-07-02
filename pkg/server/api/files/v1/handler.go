@@ -17,7 +17,9 @@ package files_v1
 import (
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -121,11 +123,18 @@ func (h *Handler) handleGetPublicFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	presignedURL, err := h.fileSvc.GeneratePresignedURL(r.Context(), file, presignedURLExpiry)
+	conds := filemanager.FileConditions{IfNoneMatch: r.Header.Get("If-None-Match")}
+	if ifModifiedSince := r.Header.Get("If-Modified-Since"); ifModifiedSince != "" {
+		if t, parseErr := http.ParseTime(ifModifiedSince); parseErr == nil {
+			conds.IfModifiedSince = t
+		}
+	}
+
+	obj, err := h.fileSvc.OpenFile(r.Context(), file, conds)
 	if err != nil {
 		h.logger.ErrorCtx(
 			r.Context(),
-			"cannot get public file URL",
+			"cannot open public file",
 			log.Error(err),
 			log.String("file_id", fileIDStr),
 		)
@@ -134,7 +143,38 @@ func (h *Handler) handleGetPublicFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.Redirect(w, r, presignedURL, http.StatusTemporaryRedirect)
+	w.Header().Set("Cache-Control", "public, max-age=31536000, immutable")
+
+	if obj.ETag != "" {
+		w.Header().Set("ETag", obj.ETag)
+	}
+
+	if obj.NotModified {
+		w.WriteHeader(http.StatusNotModified)
+		return
+	}
+
+	defer func() { _ = obj.Body.Close() }()
+
+	w.Header().Set("Content-Type", file.MimeType)
+	w.Header().Set("Content-Length", strconv.FormatInt(file.FileSize, 10))
+	w.Header().Set("X-Content-Type-Options", "nosniff")
+	w.Header().Set("Content-Security-Policy", "default-src 'none'; style-src 'unsafe-inline'; sandbox")
+
+	if !obj.LastModified.IsZero() {
+		w.Header().Set("Last-Modified", obj.LastModified.UTC().Format(http.TimeFormat))
+	}
+
+	if _, err := io.Copy(w, obj.Body); err != nil {
+		h.logger.ErrorCtx(
+			r.Context(),
+			"cannot stream public file",
+			log.Error(err),
+			log.String("file_id", fileIDStr),
+		)
+
+		return
+	}
 }
 
 func (h *Handler) handleGetFile(w http.ResponseWriter, r *http.Request) {
