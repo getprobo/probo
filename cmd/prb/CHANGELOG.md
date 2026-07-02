@@ -4,6 +4,10 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+### Changed
+
+- `prb auth login` defaults and region prompts now use `eu.probo.com` and `us.probo.com` instead of `*.console.getprobo.com`
+
 ## [0.198.0] - 2026-06-30
 
 ### Removed

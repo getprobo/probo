@@ -34,8 +34,8 @@ import (
 )
 
 const (
-	hostEU = "eu.console.getprobo.com"
-	hostUS = "us.console.getprobo.com"
+	hostEU = "eu.probo.com"
+	hostUS = "us.probo.com"
 
 	regionEU     = "eu"
 	regionUS     = "us"
@@ -84,10 +84,10 @@ func NewCmdLogin(f *cmdutil.Factory) *cobra.Command {
   prb auth login
 
   # Login to Probo EU
-  prb auth login --hostname eu.console.getprobo.com
+  prb auth login --hostname eu.probo.com
 
   # Login to Probo US
-  prb auth login --hostname us.console.getprobo.com
+  prb auth login --hostname us.probo.com
 
   # Login to a self-hosted instance
   prb auth login --hostname probo.example.com`,
@@ -98,8 +98,8 @@ func NewCmdLogin(f *cmdutil.Factory) *cobra.Command {
 				err := huh.NewSelect[string]().
 					Title("Where is your Probo account hosted?").
 					Options(
-						huh.NewOption("Probo EU (eu.console.getprobo.com)", regionEU),
-						huh.NewOption("Probo US (us.console.getprobo.com)", regionUS),
+						huh.NewOption("Probo EU (eu.probo.com)", regionEU),
+						huh.NewOption("Probo US (us.probo.com)", regionUS),
 						huh.NewOption("Other (custom domain)", regionCustom),
 					).
 					Value(&region).
@@ -245,7 +245,7 @@ func NewCmdLogin(f *cmdutil.Factory) *cobra.Command {
 		&flagHost,
 		"hostname",
 		"",
-		"Probo hostname (e.g. eu.console.getprobo.com, us.console.getprobo.com)",
+		"Probo hostname (e.g. eu.probo.com, us.probo.com)",
 	)
 	cmd.Flags().StringVar(
 		&flagOrganization,
