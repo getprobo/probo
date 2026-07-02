@@ -83,8 +83,6 @@ func NewMux(
 	)
 	protectedHandler := http.NewCrossOriginProtection().Handler(handler)
 
-	resourceMetadataURL := baseURL.String() + "/.well-known/oauth-protected-resource/api/mcp/v1"
-
 	r := chi.NewMux()
 	// Accept either a personal API key or an OAuth2 access token. Each
 	// middleware is a no-op when its credential is absent, so the two can
