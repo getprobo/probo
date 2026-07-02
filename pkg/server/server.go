@@ -163,13 +163,6 @@ func (s *Server) setupRoutes(baseURL string) {
 	s.router.Get("/.well-known/oauth-authorization-server", s.oidcDiscoveryHandler)
 	s.router.Get("/.well-known/oauth-protected-resource", s.protectedResourceMetadataHandler)
 
-	// RFC 9728 OAuth 2.0 Protected Resource Metadata. MCP clients (e.g.
-	// Claude) discover the authorization server here after receiving a 401
-	// from the MCP endpoint. The metadata is served both at the well-known
-	// root and at the path-suffixed location that maps to the MCP resource.
-	s.router.Get("/.well-known/oauth-protected-resource", s.oauthProtectedResourceHandler)
-	s.router.Get("/.well-known/oauth-protected-resource/api/mcp/v1", s.oauthProtectedResourceHandler)
-
 	s.router.Mount("/api", http.StripPrefix("/api", s.apiServer))
 	s.router.Mount("/mail-actions", http.StripPrefix("/mail-actions", s.mailActionsHandler))
 
@@ -216,17 +209,6 @@ func (s *Server) oidcDiscoveryHandler(w http.ResponseWriter, r *http.Request) {
 func (s *Server) protectedResourceMetadataHandler(w http.ResponseWriter, r *http.Request) {
 	resource := uri.URI(s.baseURL)
 	metadata := s.iamService.OAuth2ProtectedResourceMetadata(resource)
-
-	w.Header().Set("Cache-Control", "public, max-age=3600")
-	httpserver.RenderJSON(w, http.StatusOK, metadata)
-}
-
-func (s *Server) oauthProtectedResourceHandler(w http.ResponseWriter, r *http.Request) {
-	metadata := map[string]any{
-		"resource":                 s.baseURL + "/api/mcp/v1",
-		"authorization_servers":    []string{s.baseURL},
-		"bearer_methods_supported": []string{"header"},
-	}
 
 	w.Header().Set("Cache-Control", "public, max-age=3600")
 	httpserver.RenderJSON(w, http.StatusOK, metadata)
