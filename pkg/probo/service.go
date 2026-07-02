@@ -214,6 +214,7 @@ func NewService(
 		svc: svc,
 		fileValidator: filevalidation.NewValidator(
 			filevalidation.WithCategories(filevalidation.CategoryDocument),
+			filevalidation.WithMaxFileSize(30*1024*1024), // 30MB
 		),
 	}
 	svc.ThirdPartyBusinessAssociateAgreements = &ThirdPartyBusinessAssociateAgreementService{svc: svc}

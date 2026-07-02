@@ -173,13 +173,13 @@ export function UploadComplianceReportDialog({
       <form onSubmit={e => void handleSubmit(onSubmit)(e)}>
         <DialogContent padded className="space-y-4">
           <Dropzone
-            description={__("Only PDF files up to 10MB are allowed")}
+            description={__("Only PDF files up to 30MB are allowed")}
             isUploading={isUploading}
             onDrop={handleDrop}
             accept={{
               "application/pdf": [".pdf"],
             }}
-            maxSize={10}
+            maxSize={30}
           />
 
           {uploadedFile && (
