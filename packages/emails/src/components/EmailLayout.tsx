@@ -23,6 +23,7 @@ import {
 } from 'react-email';
 import * as React from 'react';
 import { Logo } from './Logo';
+import { ProboLogo } from './ProboLogo';
 
 interface EmailLayoutProps {
   subject: string;
