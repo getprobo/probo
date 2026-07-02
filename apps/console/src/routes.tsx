@@ -15,6 +15,7 @@
 import { Role } from "@probo/helpers";
 import { lazy } from "@probo/react-lazy";
 import { type AppRoute, routeFromAppRoute } from "@probo/routes";
+import { CenteredLayout } from "@probo/ui";
 import { use } from "react";
 import {
   createBrowserRouter,
