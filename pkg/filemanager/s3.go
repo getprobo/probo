@@ -31,17 +31,21 @@ import (
 )
 
 type FileObject struct {
-	Body          io.ReadCloser
-	ContentType   string
-	ContentLength int64
-	ETag          string
-	LastModified  time.Time
-	NotModified   bool
+	Body                io.ReadCloser
+	ContentType         string
+	ContentLength       int64
+	ContentRange        string
+	ETag                string
+	LastModified        time.Time
+	NotModified         bool
+	PartialContent      bool
+	RangeNotSatisfiable bool
 }
 
 type FileConditions struct {
 	IfNoneMatch     string
 	IfModifiedSince time.Time
+	Range           string
 }
 
 func (s *Service) GetFileBase64(
@@ -111,11 +115,21 @@ func (s *Service) OpenFile(
 		input.IfModifiedSince = &conds.IfModifiedSince
 	}
 
+	if conds.Range != "" {
+		input.Range = &conds.Range
+	}
+
 	result, err := s.s3Client.GetObject(ctx, input)
 	if err != nil {
 		if respErr, ok := errors.AsType[*smithyhttp.ResponseError](err); ok {
-			if respErr.HTTPStatusCode() == http.StatusNotModified {
+			switch respErr.HTTPStatusCode() {
+			case http.StatusNotModified:
 				return &FileObject{NotModified: true}, nil
+			case http.StatusRequestedRangeNotSatisfiable:
+				return &FileObject{
+					RangeNotSatisfiable: true,
+					ContentLength:       file.FileSize,
+				}, nil
 			}
 		}
 
@@ -134,6 +148,19 @@ func (s *Service) OpenFile(
 
 	if result.LastModified != nil {
 		obj.LastModified = *result.LastModified
+	}
+
+	// A Range request that S3 honors comes back as 206 Partial Content with a
+	// Content-Range header and a ContentLength scoped to the returned slice. An
+	// If-Range mismatch (or no Range) yields a normal 200 with the full object,
+	// so we only override the length/status when Content-Range is present.
+	if result.ContentRange != nil {
+		obj.ContentRange = *result.ContentRange
+		obj.PartialContent = true
+	}
+
+	if result.ContentLength != nil {
+		obj.ContentLength = *result.ContentLength
 	}
 
 	return obj, nil

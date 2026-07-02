@@ -91,6 +91,87 @@ func TestOpenFile_StreamsBody(t *testing.T) {
 	assert.Equal(t, content, string(body))
 }
 
+func TestOpenFile_RangeRequestReturnsPartialContent(t *testing.T) {
+	t.Parallel()
+
+	const (
+		etag    = `"abc123"`
+		content = "hello world"
+	)
+
+	svc := newTestS3Service(
+		t,
+		func(w http.ResponseWriter, r *http.Request) {
+			assert.Equal(t, "bytes=0-4", r.Header.Get("Range"))
+
+			w.Header().Set("ETag", etag)
+			w.Header().Set("Content-Range", "bytes 0-4/11")
+			w.Header().Set("Content-Length", "5")
+			w.WriteHeader(http.StatusPartialContent)
+			_, _ = io.WriteString(w, content[:5])
+		},
+	)
+
+	file := &coredata.File{
+		BucketName: "uploads",
+		FileKey:    "tenant/file",
+		MimeType:   "text/plain",
+		FileSize:   int64(len(content)),
+	}
+
+	obj, err := svc.OpenFile(
+		context.Background(),
+		file,
+		filemanager.FileConditions{Range: "bytes=0-4"},
+	)
+	require.NoError(t, err)
+	require.NotNil(t, obj)
+
+	defer func() { _ = obj.Body.Close() }()
+
+	assert.True(t, obj.PartialContent)
+	assert.False(t, obj.NotModified)
+	assert.Equal(t, "bytes 0-4/11", obj.ContentRange)
+	assert.Equal(t, int64(5), obj.ContentLength)
+
+	body, err := io.ReadAll(obj.Body)
+	require.NoError(t, err)
+	assert.Equal(t, content[:5], string(body))
+}
+
+func TestOpenFile_RangeNotSatisfiable(t *testing.T) {
+	t.Parallel()
+
+	const content = "hello world"
+
+	svc := newTestS3Service(
+		t,
+		func(w http.ResponseWriter, _ *http.Request) {
+			w.Header().Set("Content-Range", "bytes */11")
+			w.WriteHeader(http.StatusRequestedRangeNotSatisfiable)
+		},
+	)
+
+	file := &coredata.File{
+		BucketName: "uploads",
+		FileKey:    "tenant/file",
+		MimeType:   "text/plain",
+		FileSize:   int64(len(content)),
+	}
+
+	obj, err := svc.OpenFile(
+		context.Background(),
+		file,
+		filemanager.FileConditions{Range: "bytes=999-1000"},
+	)
+	require.NoError(t, err)
+	require.NotNil(t, obj)
+	assert.True(t, obj.RangeNotSatisfiable)
+	assert.False(t, obj.PartialContent)
+	assert.Nil(t, obj.Body)
+	assert.Equal(t, int64(len(content)), obj.ContentLength)
+}
+
 func TestOpenFile_NotModifiedByETag(t *testing.T) {
 	t.Parallel()
 

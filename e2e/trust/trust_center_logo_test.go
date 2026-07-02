@@ -19,6 +19,7 @@ import (
 	"net/http"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -166,9 +167,13 @@ func TestTrustCenter_LogoFileDownloadURL(t *testing.T) {
 		downloadURL,
 	)
 
+	// Match the e2e HTTP client convention (see internal/testutil) so a hung
+	// server fails the request instead of blocking the parallel suite forever.
+	httpClient := &http.Client{Timeout: 30 * time.Second}
+
 	// The public endpoint streams the file bytes directly (no presigned
 	// redirect) with cache headers, so the stable URL is CDN/browser cacheable.
-	resp, err := http.Get(downloadURL)
+	resp, err := httpClient.Get(downloadURL)
 	require.NoError(t, err)
 
 	defer func() { _ = resp.Body.Close() }()
@@ -198,7 +203,7 @@ func TestTrustCenter_LogoFileDownloadURL(t *testing.T) {
 	require.NoError(t, err)
 	revalidateReq.Header.Set("If-None-Match", etag)
 
-	revalidateResp, err := http.DefaultClient.Do(revalidateReq)
+	revalidateResp, err := httpClient.Do(revalidateReq)
 	require.NoError(t, err)
 
 	defer func() { _ = revalidateResp.Body.Close() }()
@@ -214,7 +219,7 @@ func TestTrustCenter_LogoFileDownloadURL(t *testing.T) {
 	require.NoError(t, err)
 	sinceReq.Header.Set("If-Modified-Since", lastModified)
 
-	sinceResp, err := http.DefaultClient.Do(sinceReq)
+	sinceResp, err := httpClient.Do(sinceReq)
 	require.NoError(t, err)
 
 	defer func() { _ = sinceResp.Body.Close() }()

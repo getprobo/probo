@@ -123,7 +123,10 @@ func (h *Handler) handleGetPublicFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	conds := filemanager.FileConditions{IfNoneMatch: r.Header.Get("If-None-Match")}
+	conds := filemanager.FileConditions{
+		IfNoneMatch: r.Header.Get("If-None-Match"),
+		Range:       r.Header.Get("Range"),
+	}
 	if ifModifiedSince := r.Header.Get("If-Modified-Since"); ifModifiedSince != "" {
 		if t, parseErr := http.ParseTime(ifModifiedSince); parseErr == nil {
 			conds.IfModifiedSince = t
@@ -144,6 +147,7 @@ func (h *Handler) handleGetPublicFile(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Cache-Control", "public, max-age=31536000, immutable")
+	w.Header().Set("Accept-Ranges", "bytes")
 
 	if obj.ETag != "" {
 		w.Header().Set("ETag", obj.ETag)
@@ -154,13 +158,25 @@ func (h *Handler) handleGetPublicFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if obj.RangeNotSatisfiable {
+		w.Header().Set("Content-Range", fmt.Sprintf("bytes */%d", file.FileSize))
+		w.WriteHeader(http.StatusRequestedRangeNotSatisfiable)
+
+		return
+	}
+
 	defer func() { _ = obj.Body.Close() }()
 
 	w.Header().Set("Content-Type", file.MimeType)
-	w.Header().Set("Content-Length", strconv.FormatInt(file.FileSize, 10))
+	w.Header().Set("Content-Length", strconv.FormatInt(obj.ContentLength, 10))
 
 	if !obj.LastModified.IsZero() {
 		w.Header().Set("Last-Modified", obj.LastModified.UTC().Format(http.TimeFormat))
+	}
+
+	if obj.PartialContent {
+		w.Header().Set("Content-Range", obj.ContentRange)
+		w.WriteHeader(http.StatusPartialContent)
 	}
 
 	if _, err := io.Copy(w, obj.Body); err != nil {
