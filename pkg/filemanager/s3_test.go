@@ -153,6 +153,7 @@ func TestOpenFile_IfRangeMatchHonorsRange(t *testing.T) {
 			if r.Method == http.MethodHead {
 				w.Header().Set("ETag", etag)
 				w.WriteHeader(http.StatusOK)
+
 				return
 			}
 
