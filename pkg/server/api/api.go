@@ -22,6 +22,7 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
 	"go.gearno.de/kit/httpserver"
 	"go.gearno.de/kit/log"
@@ -305,12 +306,21 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	router.Group(func(r chi.Router) {
 		r.Use(cors.Handler(corsOpts))
-		r.Mount("/console/v1", http.StripPrefix("/console/v1", s.consoleHandler))
-		r.Mount("/connect/v1", http.StripPrefix("/connect/v1", s.connectHandler))
+
+		// The files handler streams binary payloads and honors Range
+		// requests, and the MCP handler streams Server-Sent Events;
+		// neither can be safely gzipped, so they are mounted outside the
+		// compressor.
 		r.Mount("/files/v1", http.StripPrefix("/files/v1", s.filesHandler))
-		r.Mount("/trust/v1", http.StripPrefix("/trust/v1", s.compliancePageHandler))
 		r.Mount("/mcp/v1", http.StripPrefix("/mcp/v1", s.mcpHandler))
-		r.Mount("/slack/v1", http.StripPrefix("/slack/v1", s.slackHandler))
+
+		r.Group(func(r chi.Router) {
+			r.Use(middleware.Compress(5))
+			r.Mount("/console/v1", http.StripPrefix("/console/v1", s.consoleHandler))
+			r.Mount("/connect/v1", http.StripPrefix("/connect/v1", s.connectHandler))
+			r.Mount("/trust/v1", http.StripPrefix("/trust/v1", s.compliancePageHandler))
+			r.Mount("/slack/v1", http.StripPrefix("/slack/v1", s.slackHandler))
+		})
 	})
 
 	s.csrf.Handler(router).ServeHTTP(w, r)
