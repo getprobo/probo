@@ -648,12 +648,7 @@ function TaskRow(props: TaskRowProps) {
         </div>
         {task.assignedTo?.fullName && (
           <div className="text-sm text-txt-secondary ml-auto mr-8">
-            <Link
-              className="hover:underline"
-              to={`/organizations/${organizationId}/people/${task.assignedTo.id}`}
-            >
-              {task.assignedTo.fullName}
-            </Link>
+            {task.assignedTo.fullName}
           </div>
         )}
         <div className="flex gap-2 items-center">

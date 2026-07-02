@@ -14,6 +14,7 @@
 
 import { useTranslate } from "@probo/i18n";
 import {
+  IconGroup1,
   IconKey,
   IconListStack,
   IconLock,
@@ -23,39 +24,90 @@ import {
   TabLink,
   Tabs,
 } from "@probo/ui";
+import { type PreloadedQuery, useFragment, usePreloadedQuery } from "react-relay";
 import { Outlet } from "react-router";
+import { graphql } from "relay-runtime";
 
+import type { SettingsLayoutFragment$key } from "#/__generated__/iam/SettingsLayoutFragment.graphql";
+import type { SettingsLayoutQuery } from "#/__generated__/iam/SettingsLayoutQuery.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
-export default function SettingsLayout() {
+export const settingsLayoutQuery = graphql`
+  query SettingsLayoutQuery($organizationId: ID!) {
+    organization: node(id: $organizationId) @required(action: THROW) {
+      __typename
+      ... on Organization {
+        ...SettingsLayoutFragment
+      }
+    }
+  }
+`;
+
+const fragment = graphql`
+  fragment SettingsLayoutFragment on Organization {
+    canListMembers: permission(action: "iam:membership:list")
+    canUpdateOrganization: permission(action: "iam:organization:update")
+  }
+`;
+
+export function SettingsLayout(props: {
+  queryRef: PreloadedQuery<SettingsLayoutQuery>;
+}) {
+  const { queryRef } = props;
+
   const organizationId = useOrganizationId();
   const { __ } = useTranslate();
 
+  const { organization } = usePreloadedQuery<SettingsLayoutQuery>(
+    settingsLayoutQuery,
+    queryRef,
+  );
+  if (organization.__typename !== "Organization") {
+    throw new Error("node is of invalid type");
+  }
+
+  const permissions = useFragment<SettingsLayoutFragment$key>(
+    fragment,
+    organization,
+  );
+
+  const prefix = `/organizations/${organizationId}/settings`;
+
   return (
     <div className="space-y-6">
-      <PageHeader title={__("Settings")} />
+      <PageHeader title={__("Organization")} />
 
       <Tabs>
-        <TabLink to={`/organizations/${organizationId}/settings/general`}>
-          <IconSettingsGear2 size={20} />
-          {__("General")}
-        </TabLink>
-        <TabLink to={`/organizations/${organizationId}/settings/saml-sso`}>
-          <IconLock size={20} />
-          {__("SAML SSO")}
-        </TabLink>
-        <TabLink to={`/organizations/${organizationId}/settings/scim`}>
-          <IconKey size={20} />
-          {__("SCIM")}
-        </TabLink>
-        <TabLink to={`/organizations/${organizationId}/settings/webhooks`}>
-          <IconSend size={20} />
-          {__("Webhooks")}
-        </TabLink>
-        <TabLink to={`/organizations/${organizationId}/settings/audit-log`}>
-          <IconListStack size={20} />
-          {__("Audit Log")}
-        </TabLink>
+        {permissions.canListMembers && (
+          <TabLink to={`${prefix}/members`}>
+            <IconGroup1 size={20} />
+            {__("Members")}
+          </TabLink>
+        )}
+        {permissions.canUpdateOrganization && (
+          <>
+            <TabLink to={`${prefix}/general`}>
+              <IconSettingsGear2 size={20} />
+              {__("General")}
+            </TabLink>
+            <TabLink to={`${prefix}/saml-sso`}>
+              <IconLock size={20} />
+              {__("SAML SSO")}
+            </TabLink>
+            <TabLink to={`${prefix}/scim`}>
+              <IconKey size={20} />
+              {__("SCIM")}
+            </TabLink>
+            <TabLink to={`${prefix}/webhooks`}>
+              <IconSend size={20} />
+              {__("Webhooks")}
+            </TabLink>
+            <TabLink to={`${prefix}/audit-log`}>
+              <IconListStack size={20} />
+              {__("Audit Log")}
+            </TabLink>
+          </>
+        )}
       </Tabs>
 
       <Outlet />

@@ -28,7 +28,6 @@ import { PageError } from "./components/PageError";
 import { RootErrorBoundary } from "./components/RootErrorBoundary";
 import { PageSkeleton } from "./components/skeletons/PageSkeleton";
 import { ViewerLayoutLoading } from "./pages/iam/memberships/ViewerLayoutLoading";
-import { peopleRoutes } from "./pages/iam/organizations/people/routes";
 import { compliancePageRoutes } from "./pages/organizations/compliance-page/routes";
 import { cookieBannerRoutes } from "./pages/organizations/cookie-banners/routes";
 import { riskAssessmentRoutes } from "./pages/organizations/risk-assessments/routes";
@@ -253,15 +252,22 @@ const routes = [
             path: "settings",
             Fallback: PageSkeleton,
             Component: lazy(
-              () => import("./pages/iam/organizations/settings/SettingsLayout"),
+              () => import("./pages/iam/organizations/settings/SettingsLayoutLoader"),
             ),
             children: [
               {
                 index: true,
                 loader: () => {
                   // eslint-disable-next-line
-                  throw redirect("general");
+                  throw redirect("members");
                 },
+              },
+              {
+                path: "members",
+                Component: lazy(
+                  () =>
+                    import("./pages/iam/organizations/settings/MembersSettingsPageLoader"),
+                ),
               },
               {
                 path: "general",
@@ -300,7 +306,25 @@ const routes = [
               },
             ],
           },
-          ...peopleRoutes,
+          {
+            path: "people",
+            children: [
+              {
+                index: true,
+                loader: () => {
+                  // eslint-disable-next-line
+                  throw redirect("../settings/members");
+                },
+              },
+              {
+                path: "*",
+                loader: () => {
+                  // eslint-disable-next-line
+                  throw redirect("../settings/members");
+                },
+              },
+            ],
+          },
           ...riskRoutes,
           ...riskAssessmentRoutes,
           ...measureRoutes,

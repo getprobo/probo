@@ -13,32 +13,32 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 import { useTranslate } from "@probo/i18n";
-import { Button, PageHeader } from "@probo/ui";
+import { Button } from "@probo/ui";
 import { useState } from "react";
 import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { ConnectionHandler, type DataID, graphql } from "relay-runtime";
 
-import type { PeoplePageQuery } from "#/__generated__/iam/PeoplePageQuery.graphql";
+import type { MembersSettingsPageQuery } from "#/__generated__/iam/MembersSettingsPageQuery.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
-import { AddPersonDialog } from "./_components/AddPersonDialog";
-import { PeopleList } from "./_components/PeopleList";
+import { AddMemberDialog } from "./_components/AddMemberDialog";
+import { MembersList } from "./_components/MembersList";
 
-export const peoplePageQuery = graphql`
-  query PeoplePageQuery($organizationId: ID!) {
+export const membersSettingsPageQuery = graphql`
+  query MembersSettingsPageQuery($organizationId: ID!) {
     organization: node(id: $organizationId) @required(action: THROW) {
       __typename
       ... on Organization {
         canCreateUser: permission(action: "iam:membership-profile:create")
-        ...PeopleListFragment
-          @arguments(first: 20, order: { direction: ASC, field: FULL_NAME })
+        ...MembersListFragment
+          @arguments(first: 20, order: { direction: ASC, field: EMAIL_ADDRESS })
       }
     }
   }
 `;
 
-export function PeoplePage(props: {
-  queryRef: PreloadedQuery<PeoplePageQuery>;
+export function MembersSettingsPage(props: {
+  queryRef: PreloadedQuery<MembersSettingsPageQuery>;
 }) {
   const { queryRef } = props;
 
@@ -48,13 +48,13 @@ export function PeoplePage(props: {
   const [connectionId, setConnectionId] = useState<DataID>(
     ConnectionHandler.getConnectionID(
       organizationId,
-      "PeopleListFragment_profiles",
-      { orderBy: { direction: "ASC", field: "FULL_NAME" } },
+      "MembersListFragment_profiles",
+      { orderBy: { direction: "ASC", field: "EMAIL_ADDRESS" } },
     ),
   );
 
-  const { organization } = usePreloadedQuery<PeoplePageQuery>(
-    peoplePageQuery,
+  const { organization } = usePreloadedQuery<MembersSettingsPageQuery>(
+    membersSettingsPageQuery,
     queryRef,
   );
   if (organization.__typename !== "Organization") {
@@ -63,21 +63,18 @@ export function PeoplePage(props: {
 
   return (
     <div className="space-y-6">
-      <PageHeader title={__("People")}>
-        {organization.canCreateUser
-          && (
-            <AddPersonDialog connectionId={connectionId}>
-              <Button variant="secondary">{__("Add Person")}</Button>
-            </AddPersonDialog>
-          )}
-      </PageHeader>
+      {organization.canCreateUser && (
+        <div className="flex justify-end">
+          <AddMemberDialog connectionId={connectionId}>
+            <Button variant="secondary">{__("Add member")}</Button>
+          </AddMemberDialog>
+        </div>
+      )}
 
-      <div className="pb-6 pt-6">
-        <PeopleList
-          fKey={organization}
-          onConnectionIdChange={setConnectionId}
-        />
-      </div>
+      <MembersList
+        fKey={organization}
+        onConnectionIdChange={setConnectionId}
+      />
     </div>
   );
 }

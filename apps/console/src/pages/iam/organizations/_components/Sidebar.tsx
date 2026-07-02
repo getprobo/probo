@@ -20,7 +20,6 @@ import {
   IconBox,
   IconCircleProgress,
   IconFire3,
-  IconGroup1,
   IconInboxEmpty,
   IconKey,
   IconListStack,
@@ -122,13 +121,6 @@ export function Sidebar(props: { fKey: SidebarFragment$key }) {
           to={`${prefix}/frameworks`}
         />
       )}
-      {organization.canListMembers && (
-        <SidebarItem
-          label={__("People")}
-          icon={IconGroup1}
-          to={`${prefix}/people`}
-        />
-      )}
       {organization.canListThirdParties && (
         <SidebarItem
           label={__("Third parties")}
@@ -220,9 +212,9 @@ export function Sidebar(props: { fKey: SidebarFragment$key }) {
           to={`${prefix}/cookie-banners`}
         />
       )}
-      {organization.canUpdateOrganization && (
+      {(organization.canUpdateOrganization || organization.canListMembers) && (
         <SidebarItem
-          label={__("Settings")}
+          label={__("Organization")}
           icon={IconSettingsGear2}
           to={`${prefix}/settings`}
         />
